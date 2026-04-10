@@ -11,7 +11,8 @@ import httpx
 from fastapi import APIRouter, Request, HTTPException
 
 from src.config import settings
-from src.flows.decision_tree import DecisionTree, ConversationState
+from src.flows.decision_tree import ConversationState
+from src.agents.supervisor import route_message
 
 logger = logging.getLogger("uvicorn.error")
 
@@ -19,8 +20,6 @@ router = APIRouter()
 
 # In-memory conversation states (will migrate to Redis/PostgreSQL later)
 conversations: dict[str, ConversationState] = {}
-
-decision_tree = DecisionTree()
 
 
 @router.post("/chatwoot")
@@ -76,8 +75,8 @@ async def handle_message(payload: dict):
 
     state = conversations[conversation_id]
 
-    # Process through decision tree (Phase 1: no LLM)
-    response = decision_tree.process_message(state, message)
+    # Route through supervisor (decision tree + RAG)
+    response = await route_message(state, message)
 
     # Send response back via Chatwoot API
     if response:
