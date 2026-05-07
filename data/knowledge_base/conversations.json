@@ -1,0 +1,334 @@
+{
+  "conversation_examples": [
+    {
+      "id": "whatsapp_jane_mixed_group_openwater_beginners",
+      "lang": "es",
+      "scenario": "Grupo mixto (certificados Open Water + principiantes) pregunta si pueden ir juntos en el mismo tour. Preguntan precio, cupos para mañana, horarios, equipos y regreso temprano.",
+      "customer": {
+        "messages": [
+          "Hola como estas? Estamos interesados en buceo.. que ofrecen de plan para bucear para alguien con open water?",
+          "Open water",
+          "Y tambien principiantes",
+          "No se pueden mezclar en un viaje 2 certificados y 2 principiantes en un mismo trayecto?",
+          "Vale, bueno para los principiantes creo que esta fuera del presupuesto",
+          "Pero si somos 2, tendrias puesto para mañana? Y es hasta qje hora?",
+          "Los equipos se pueden ver antes de salir?",
+          "Osea tienen los equipos en cartagena o en las islas?",
+          "Y no hay un tour con un regreso antes?"
+        ]
+      },
+      "diving_planet": {
+        "messages": [
+          "Se comparte link de plan para principiantes (minicurso) y link de 2 buceos 1 día para certificados.",
+          "Se indica precio aproximado por persona para principiantes y para certificados.",
+          "Se menciona que si hace mucho no buceas se recomienda refresh sin costo adicional.",
+          "Se confirma cupo para mañana; encuentro 8:00 AM; regreso aprox 4:30 PM.",
+          "Equipo disponible en las islas.",
+          "No hay tour con regreso antes; salida 3:00 PM de la isla llegando aprox 4:00 PM."
+        ]
+      },
+      "extracted_topics": [
+        "grupo_mixto",
+        "precios",
+        "disponibilidad_ultima_hora",
+        "horarios",
+        "ubicacion_equipo",
+        "refresh"
+      ]
+    },
+    {
+      "id": "whatsapp_sarah_snorkel_already_on_islands",
+      "lang": "es",
+      "scenario": "Cliente hospedada en Isla Grande pregunta por snorkel para mañana (aviso tardío), qué incluye, tarifas para 2 y si hay recogida en hotel.",
+      "customer": {
+        "messages": [
+          "Hola, nos hospedamos en Isla Grande (Hotel Isla Única) y nos gustaría ir a hacer snorkel mañana (disculpen el aviso tardío). Sería posible? Qué incluye la actividad? Cuáles son sus tarifas para dos personas?"
+        ]
+      },
+      "diving_planet": {
+        "messages": [
+          "Se ofrece plan para personas ya en islas (sin traslado desde Cartagena ni almuerzo).",
+          "Incluye recogida en hotel alrededor de 9:30 si hay acceso marítimo, seguro para buceadores, equipo completo, guía PADI, regreso alrededor de 2:15 PM.",
+          "Se comparte enlace con opciones para islas."
+        ]
+      },
+      "extracted_topics": [
+        "snorkel",
+        "recogida_en_hotel",
+        "planes_desde_islas",
+        "incluye",
+        "ultima_hora"
+      ]
+    },
+    {
+      "id": "whatsapp_valeria_fun_dive_colombian_price_and_reservation_flow",
+      "lang": "es",
+      "scenario": "Buzo certificado pregunta precio para colombianos, ubicación base en islas, y cómo reservar/pagar. Se explica pre-reserva, pago 50%, formulario exoneración, y envío de nombre/ID (dato sensible).",
+      "customer": {
+        "messages": [
+          "Quería averiguar con ustedes por fun dive, soy buzo certificado",
+          "Para colombianos cuánto es el precio?",
+          "Y pregunta en qué hotel queda el centro en las islas?",
+          "Pregunta para reservar entonces por la página?",
+          "Sería para el 23 de mayo",
+          "Queiro confirmar que si voy a bucear con ustedes el sábado 23 de mayo",
+          "Cuánto sería?"
+        ]
+      },
+      "diving_planet": {
+        "messages": [
+          "Se comparte link del plan 2 buceos 1 día.",
+          "Precio para colombianos indicado en pesos.",
+          "Base en islas: Hotel Cocoliso.",
+          "Para colombianos: se puede pagar 50% por transferencia/pasarela local y saldo el día de la salida.",
+          "Se solicita completar formulario de exoneración para buzo certificado (incluye foto de certificación) y enviar nombre/identificación por chat."
+        ]
+      },
+      "privacy_note": "Se deben evitar/ocultar datos personales (cédulas, cuentas, comprobantes) en respuestas del bot; para reservas, pedir esos datos solo por el canal definido.",
+      "extracted_topics": [
+        "precio_colombianos",
+        "base_en_islas",
+        "proceso_reserva",
+        "pago_50_por_ciento",
+        "formulario_exoneracion"
+      ]
+    },
+    {
+      "id": "whatsapp_camilo_equipment_included_weather_cancellation_refund_meeting_point",
+      "lang": "es",
+      "scenario": "Conversación larga: dudas sobre traer equipo (no hace falta), formulario exoneración, link de pago, clima, cancelación y reembolso, confirmación de punto de encuentro con ubicación, y alojamiento recomendado.",
+      "customer": {
+        "messages": [
+          "Por cierto, no pienso llevar nada de equipo. Todo ok con eso verdad?",
+          "Hola, listo, dejé haciendo esto para el 6 de febrero. Me confirmas o ya es fijo que se sale?",
+          "Pregunta, supongo que no están saliendo con el clima verdad?",
+          "En caso de que no pueda viajar podemos mover la fecha de esto? O cuál es la política para cancelación?",
+          "Podemos cancelar porfa?",
+          "De una, tienes por ahí la info de a donde vamos y el programa depronto?",
+          "Oye, par de preguntas. Si quisiera también me puedo hospedar con ustedes?"
+        ]
+      },
+      "diving_planet": {
+        "messages": [
+          "Todo el equipo obligatorio está incluido.",
+          "Para completar la reserva: llenar formulario de exoneración para buzos certificados y realizar pago en link.",
+          "Operación: salen todos los días; disponibilidad sujeta a cupos y condiciones.",
+          "Clima: se comunica estado y que puede cambiar.",
+          "Cancelación/reembolso: se confirma posibilidad de reembolso en el caso.",
+          "Punto de encuentro: Muelle de la Bodeguita 8:00 AM; indicación de puerta/entrada y link de ubicación.",
+          "Alojamiento: bases en Hotel San Pedro de Majagua y Hotel Cocoliso; alojamiento no incluido y se reserva directo con hotel."
+        ]
+      },
+      "privacy_note": "En la conversación hay datos sensibles (cédula, cuenta bancaria). No deben ser usados como contexto literal en respuestas del bot.",
+      "extracted_topics": [
+        "equipo_incluido",
+        "clima",
+        "cancelacion_reembolso",
+        "punto_de_encuentro",
+        "alojamiento_en_islas",
+        "formulario_exoneracion",
+        "pago"
+      ]
+    },
+    {
+      "id": "whatsapp_fran_prices_usd_cutoff_time_and_discount_confusion",
+      "lang": "es",
+      "scenario": "Buzo advanced pregunta precios en USD (2 buceos y paquete 5 buceos/2 días) y disponibilidad para mañana. Se menciona que por la hora ya no se puede reservar online y hay confusión sobre el 10%.",
+      "customer": {
+        "messages": [
+          "Queria saber los valores de dos buceos o del pack de 5 buceos en 2 dias",
+          "Tienen disponibilidad para mañana?",
+          "Desde cartagena porfi",
+          "Que valor tiene? Y como es el itinerario?",
+          "Y en el caso de tomar solo el buceo doble?",
+          "Pucha en realidad me parece un poco caro, quedaria en 160 dolares? Considerando el 10%"
+        ]
+      },
+      "diving_planet": {
+        "messages": [
+          "Se confirma cupo; por la hora no se puede reservar por internet.",
+          "Se comparte link a paquete de 5 buceos/2 días y se indica precio en USD.",
+          "Se comparte link a 2 buceos/1 día y se indica precio en USD.",
+          "Se aclara que el precio indicado ya contempla el 10%."
+        ]
+      },
+      "extracted_topics": [
+        "precios_usd",
+        "disponibilidad_ultima_hora",
+        "corte_reserva_online",
+        "descuento_10_por_ciento"
+      ]
+    },
+    {
+      "id": "whatsapp_veva_resident_colombia_pickup_hotels_payment_and_meeting_point_change",
+      "lang": "es",
+      "scenario": "Cliente (residente) consulta paquetes, hospedaje, disponibilidad, recogidas, descuento local, pagos, formulario exoneración, y cambio de punto de encuentro de último minuto (Todo Mar vs Bodeguita).",
+      "customer": {
+        "messages": [
+          "Estoy interesada en bucear en semana santa",
+          "Quiero quedarme en las islas",
+          "Veo q los 5 buceos serian por X pagando en el website",
+          "Hola para residentes en colombia no aplica el desc colombia o?",
+          "cuanto cuesta snorkeling y que incluye?",
+          "yo soy residente me aplica el descuento adicional?",
+          "Nos vemos mañana 8 am en la bodeguita no?"
+        ]
+      },
+      "diving_planet": {
+        "messages": [
+          "Se ofrecen 2 opciones: salir desde Cartagena o quedarse en islas y hacer paquete con nocturno.",
+          "Alojamiento: bases en San Pedro de Majagua y Cocoliso; no incluido; se reserva directo con hotel.",
+          "Para residentes/locales: se confirma que aplica precio local y se puede pagar con pasarela/transferencia.",
+          "Snorkel: se comparte link del plan; para residente se da precio en COP por persona.",
+          "Se solicita formulario de exoneración para actividad en superficie.",
+          "Cambio de punto de encuentro para mañana: Marina Todo Mar 8:00 AM con link de ubicación."
+        ]
+      },
+      "privacy_note": "Evitar incluir números de cuenta, comprobantes o identificaciones en el contexto del bot.",
+      "extracted_topics": [
+        "precio_local_residente",
+        "snorkel",
+        "alojamiento",
+        "cambio_punto_encuentro",
+        "pago_transferencia",
+        "formulario"
+      ]
+    },
+    {
+      "id": "whatsapp_maria_gabriela_hotel_cocoliso_prices_from_island_vs_cartagena_and_photos",
+      "lang": "es",
+      "scenario": "Pareja de buzos advanced consulta hotel/base en islas (Cocoliso), precio desde hotel, diferencia isla vs continente, paquete 5 buceos/2 días, quedarse noches extra y pedido de fotos.",
+      "customer": {
+        "messages": [
+          "Estaremos visitando Cartagena y queria coordinar inmersiones en Isla del Rosario. Somos una pareja Advanced O.W.",
+          "Me podrías decir cual es el hotel en islas de Rosario?",
+          "Me pasas el precio por noche?",
+          "Me puedes decir el precio de las 2 inmersiones? Desde ese hotel?",
+          "Este costo es el mismo saliendo del continente o de la isla?",
+          "Si nos quedamos una segunda noche en cocoliso, podremos regresar con ustedes con el regreso del dia siguiente?",
+          "Los guias sacaron fotos. Podran pasarnos algunas?"
+        ]
+      },
+      "diving_planet": {
+        "messages": [
+          "Base en islas: Hotel Cocoliso Island Resort.",
+          "Para precio por noche: contactar hotel directamente y mencionar recomendación.",
+          "Precio desde islas indicado en USD.",
+          "Aclaración: desde islas hay opciones más económicas que desde Cartagena.",
+          "Se comparte link de planes desde islas y link a paquete 5 buceos/2 días; alojamiento no incluido.",
+          "Se coordina posibilidad de regresar otro día (según logística) y se gestiona envío de fotos."
+        ]
+      },
+      "extracted_topics": [
+        "base_cocoliso",
+        "precio_desde_isla",
+        "diferencia_isla_vs_cartagena",
+        "paquete_5_buceos",
+        "no_incluye_alojamiento",
+        "fotos"
+      ]
+    },
+    {
+      "id": "whatsapp_myna_open_water_course_schedule_transfer_discount_code",
+      "lang": "en",
+      "scenario": "Open Water course lead asks about recommended hotels, course duration/schedule, photos policy, transfer included, staying extra day transfer back, meeting point, and 10% discount code.",
+      "customer": {
+        "messages": [
+          "Hi, I'm interested in taking PADI Open Water Diver certification course.",
+          "do you have any hotel in Rosario you recommend?",
+          "booking just for one night will be enough, right?",
+          "2 full days course, right?",
+          "also- I saw pictures and videos are not included...?",
+          "do you have a more detailed schedule?",
+          "Is the transportation to rosario included?",
+          "If I stay one day longer, can you provide the transfer back?",
+          "where is the meeting point in cartagena?",
+          "the discount of 10% is not showing up. what is the code?"
+        ]
+      },
+      "diving_planet": {
+        "messages": [
+          "Accommodation options list (bases: San Pedro de Majagua and Cocoliso).",
+          "Course: theory online (~12 hours) before; practice in 2 days.",
+          "First day ends around 4:30 PM.",
+          "Transfer included if plan is from Cartagena.",
+          "If staying longer: transfer back possible if notified in advance.",
+          "Meeting point: Muelle de la Bodeguita, 8:00 AM, Gate 3, with location link.",
+          "10% discount: already applied, no code needed."
+        ]
+      },
+      "extracted_topics": [
+        "open_water_course",
+        "schedule",
+        "transfer_included",
+        "meeting_point",
+        "discount_no_code",
+        "accommodation"
+      ]
+    },
+    {
+      "id": "whatsapp_group_es_mix_divers_snorkel_same_tour_and_prices_usd",
+      "lang": "es",
+      "scenario": "Grupo de 4 (2 buzos certificados + 2 snorkelers). Preguntan por planning y precios, y si se puede combinar en el mismo tour.",
+      "customer": {
+        "messages": [
+          "Somos dos españoles... nos gustaría realizar dos inmersiones...",
+          "somos un grupo de 4, pero 2 no hacen buceo... snorkel de mientras?",
+          "Cuanto cuesta el dia de submarinismo (por persona)"
+        ]
+      },
+      "diving_planet": {
+        "messages": [
+          "Se confirma que se pueden combinar actividades en un solo tour (buzos, minicurso, snorkel).",
+          "Todos viajan juntos a las islas y comparten base/almuerzo; durante actividades puede usarse lancha diferente para snorkel por seguridad.",
+          "Se indican precios en USD para buzos y snorkelers y qué incluye (traslado, impuesto parque, almuerzo, equipo, seguro para buzos).",
+          "Se sugiere reservar por la web."
+        ]
+      },
+      "extracted_topics": [
+        "grupo_mixto",
+        "snorkel",
+        "precios_usd",
+        "incluye",
+        "logistica_lanchas"
+      ]
+    },
+    {
+      "id": "whatsapp_maria_usa_rescue_diver_payment_meeting_point_seasick_and_logbook_sites",
+      "lang": "en",
+      "scenario": "Certified rescue diver asks about availability, price, meeting point, what to bring, seasickness tablets, last-minute booking/payment, and later asks for dive site names for SSI logbook.",
+      "customer": {
+        "messages": [
+          "I’m arriving 19-23rd, do you have available please?",
+          "What locations and options are available?",
+          "what’s the price",
+          "meeting point, is it near your office?",
+          "How can I make payment for tomorrow?",
+          "Is there anything I should bring? Towel? Sunscreen?",
+          "I get a little sea sick sometimes, do you have tablets?",
+          "I dove with your group... struggling to find the locations for my logbook... can you assist?",
+          "Rosario isn’t a registered location on my SSI app... Alex place?",
+          "Ok and the second is called Luis guerra?"
+        ]
+      },
+      "diving_planet": {
+        "messages": [
+          "Availability confirmed; price in USD.",
+          "Meeting point message for Muelle de la Bodeguita (Gate 3) with link.",
+          "Last-minute booking handled; form for certification required; can pay later depending on case.",
+          "Seasickness tablets: can find some in the marina.",
+          "Logbook assistance: dive sites named (e.g., Alex Place, Luis Guerra) and supporting info shared."
+        ]
+      },
+      "extracted_topics": [
+        "availability",
+        "price_usd",
+        "meeting_point",
+        "what_to_bring",
+        "seasickness",
+        "last_minute_booking",
+        "logbook_dive_sites"
+      ]
+    }
+  ]
+}

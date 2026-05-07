@@ -103,6 +103,37 @@ def load_knowledge_base() -> list[dict]:
             "metadata": {"source": "policies", "key": key, "lang": "en"},
         })
 
+    conversations_path = DATA_DIR / "conversations.json"
+    if conversations_path.exists():
+        with open(conversations_path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+
+        for i, conv in enumerate(data.get("conversation_examples", [])):
+            lang = conv.get("lang", "es")
+            scenario = conv.get("scenario", "")
+            customer_msgs = (conv.get("customer", {}) or {}).get("messages", [])
+            dp_msgs = (conv.get("diving_planet", {}) or {}).get("messages", [])
+            topics = conv.get("extracted_topics", [])
+
+            content = (
+                f"Conversación real (WhatsApp)\n"
+                f"Escenario: {scenario}\n\n"
+                f"Cliente dice:\n- " + "\n- ".join(customer_msgs) + "\n\n"
+                f"Diving Planet responde:\n- " + "\n- ".join(dp_msgs)
+            )
+            if topics:
+                content += "\n\nTemas: " + ", ".join(topics)
+
+            documents.append({
+                "content": content.strip(),
+                "metadata": {
+                    "source": "conversations",
+                    "index": i,
+                    "id": conv.get("id"),
+                    "lang": lang,
+                },
+            })
+
     return documents
 
 

@@ -15,6 +15,7 @@ Customer (WhatsApp / Web) → Chatwoot → FastAPI Webhook → Decision Tree (Ph
 - Guided flow: Tours → Experience level → Service → Location → Booking link
 - Escalation to human via Chatwoot
 
+
 **Phase 2** — LangGraph multi-agent system
 - Supervisor agent (GPT-4o-mini) for free-text queries
 - RAG agent for knowledge base (pgvector)
