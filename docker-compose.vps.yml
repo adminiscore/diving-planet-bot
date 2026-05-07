@@ -1,0 +1,198 @@
+# =============================================================================
+# Diving Planet Bot - VPS Deployment (Pre + Pro + Caddy + Chatwoot)
+# =============================================================================
+# Usage:
+#   docker compose -f docker-compose.vps.yml up -d --build
+#   docker compose -f docker-compose.vps.yml logs -f dp-pro-bot
+#   docker compose -f docker-compose.vps.yml down
+#
+# Prerequisites:
+#   1. DNS records pointing to this VPS:
+#      - pre.divingplanet.org
+#      - api.divingplanet.org
+#      - chatwoot.divingplanet.org
+#   2. .env.pre and .env.pro files with real API keys
+#   3. Create chatwoot_production DB after first startup:
+#      docker exec dp-pro-postgres psql -U postgres -c "CREATE DATABASE chatwoot_production;"
+# =============================================================================
+
+services:
+  # --- Shared Caddy Reverse Proxy (automatic HTTPS) ---
+  caddy:
+    image: caddy:2-alpine
+    container_name: dp-caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    networks:
+      - dp-net
+
+  # ==================== PRE (Staging) ====================
+  dp-pre-postgres:
+    image: pgvector/pgvector:pg16
+    container_name: dp-pre-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${PRE_POSTGRES_PASSWORD:-pre_changeme}
+      POSTGRES_DB: diving_planet
+    volumes:
+      - pgdata_pre:/var/lib/postgresql/data
+      - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - dp-net
+
+  dp-pre-redis:
+    image: redis:7-alpine
+    container_name: dp-pre-redis
+    restart: unless-stopped
+    command: redis-server --maxmemory 256mb --maxmemory-policy allkeys-lru --requirepass ${PRE_REDIS_PASSWORD:-pre_changeme}
+    volumes:
+      - redis_data_pre:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${PRE_REDIS_PASSWORD:-pre_changeme}", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - dp-net
+
+  dp-pre-bot:
+    build: .
+    container_name: dp-pre-bot
+    restart: unless-stopped
+    env_file:
+      - .env.pre
+    environment:
+      # Override DB/Redis URLs to use Docker hostnames
+      DATABASE_URL: postgresql://postgres:${PRE_POSTGRES_PASSWORD:-pre_changeme}@dp-pre-postgres:5432/diving_planet
+      REDIS_URL: redis://:${PRE_REDIS_PASSWORD:-pre_changeme}@dp-pre-redis:6379/0
+      APP_ENV: staging
+    depends_on:
+      dp-pre-postgres:
+        condition: service_healthy
+      dp-pre-redis:
+        condition: service_healthy
+    networks:
+      - dp-net
+
+  # ==================== PRO (Production) ====================
+  dp-pro-postgres:
+    image: pgvector/pgvector:pg16
+    container_name: dp-pro-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${PRO_POSTGRES_PASSWORD:-pro_changeme}
+      POSTGRES_DB: diving_planet
+    volumes:
+      - pgdata_pro:/var/lib/postgresql/data
+      - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - dp-net
+
+  dp-pro-redis:
+    image: redis:7-alpine
+    container_name: dp-pro-redis
+    restart: unless-stopped
+    command: redis-server --maxmemory 512mb --maxmemory-policy allkeys-lru --requirepass ${PRO_REDIS_PASSWORD:-pro_changeme}
+    volumes:
+      - redis_data_pro:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${PRO_REDIS_PASSWORD:-pro_changeme}", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - dp-net
+
+  dp-pro-bot:
+    build: .
+    container_name: dp-pro-bot
+    restart: unless-stopped
+    env_file:
+      - .env.pro
+    environment:
+      DATABASE_URL: postgresql://postgres:${PRO_POSTGRES_PASSWORD:-pro_changeme}@dp-pro-postgres:5432/diving_planet
+      REDIS_URL: redis://:${PRO_REDIS_PASSWORD:-pro_changeme}@dp-pro-redis:6379/0
+      APP_ENV: production
+    depends_on:
+      dp-pro-postgres:
+        condition: service_healthy
+      dp-pro-redis:
+        condition: service_healthy
+    networks:
+      - dp-net
+
+  # --- Chatwoot (Production, shared inbox) ---
+  dp-chatwoot:
+    image: chatwoot/chatwoot:latest
+    container_name: dp-chatwoot
+    restart: unless-stopped
+    depends_on:
+      dp-pro-postgres:
+        condition: service_healthy
+      dp-pro-redis:
+        condition: service_healthy
+    environment:
+      SECRET_KEY_BASE: ${CHATWOOT_SECRET_KEY_BASE:-change_me_to_a_random_secret_key_base}
+      FRONTEND_URL: https://chatwoot.divingplanet.org
+      DEFAULT_LOCALE: es
+      DATABASE_URL: postgresql://postgres:${PRO_POSTGRES_PASSWORD:-pro_changeme}@dp-pro-postgres:5432/chatwoot_production
+      REDIS_URL: redis://:${PRO_REDIS_PASSWORD:-pro_changeme}@dp-pro-redis:6379/1
+      REDIS_SIDEKIQ_URL: redis://:${PRO_REDIS_PASSWORD:-pro_changeme}@dp-pro-redis:6379/2?read_timeout=10&connect_timeout=10
+      RAILS_ENV: production
+      RAILS_LOG_TO_STDOUT: "true"
+      MAILER_SENDER_EMAIL: noreply@divingplanet.org
+    entrypoint: docker/entrypoints/rails.sh
+    command: ["bundle", "exec", "rails", "s", "-p", "3000", "-b", "0.0.0.0"]
+    networks:
+      - dp-net
+
+  dp-chatwoot-worker:
+    image: chatwoot/chatwoot:latest
+    container_name: dp-chatwoot-worker
+    restart: unless-stopped
+    depends_on:
+      dp-pro-postgres:
+        condition: service_healthy
+      dp-pro-redis:
+        condition: service_healthy
+    environment:
+      SECRET_KEY_BASE: ${CHATWOOT_SECRET_KEY_BASE:-change_me_to_a_random_secret_key_base}
+      FRONTEND_URL: https://chatwoot.divingplanet.org
+      DEFAULT_LOCALE: es
+      DATABASE_URL: postgresql://postgres:${PRO_POSTGRES_PASSWORD:-pro_changeme}@dp-pro-postgres:5432/chatwoot_production
+      REDIS_URL: redis://:${PRO_REDIS_PASSWORD:-pro_changeme}@dp-pro-redis:6379/1
+      REDIS_SIDEKIQ_URL: redis://:${PRO_REDIS_PASSWORD:-pro_changeme}@dp-pro-redis:6379/2?read_timeout=10&connect_timeout=10
+      RAILS_ENV: production
+    command: ["bundle", "exec", "sidekiq", "-C", "config/sidekiq.yml"]
+    networks:
+      - dp-net
+
+networks:
+  dp-net:
+    driver: bridge
+
+volumes:
+  caddy_data:
+  caddy_config:
+  pgdata_pre:
+  pgdata_pro:
+  redis_data_pre:
+  redis_data_pro:

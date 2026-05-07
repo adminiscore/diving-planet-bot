@@ -35,11 +35,32 @@ Customer (WhatsApp / Web) → Chatwoot → FastAPI Webhook → Decision Tree (Ph
 | Observability | LangSmith |
 | Channel | WhatsApp Business API |
 
-## Quick Start
+## Environments
+
+The project uses **3 environments**: dev (local), pre (staging VPS), pro (production VPS).
+
+| Environment | Where | Compose file | `.env` file |
+|---|---|---|---|
+| **dev** | Your PC (Windows) | `docker-compose.yml` | `.env.dev` |
+| **pre** | VPS | `docker-compose.vps.yml` | `.env.pre` |
+| **pro** | VPS (same server) | `docker-compose.vps.yml` | `.env.pro` |
+
+> **Important for the team**: `.env.*` files contain secrets and are **NOT** committed to git.
+> Each developer creates their own from the example templates:
+
+```bash
+# After git pull, copy the example and fill in your API keys
+cp .env.dev.example .env.dev
+# Edit .env.dev with your own OPENAI_API_KEY and other secrets
+```
+
+The `.example` files are tracked in git and serve as documentation for required variables.
+
+## Quick Start (DEV — Local)
 
 ### Prerequisites
-- Python 3.11+
-- Docker Desktop
+- Python 3.11+ ([download](https://www.python.org/downloads/))
+- Docker Desktop ([download](https://www.docker.com/products/docker-desktop/))
 - OpenAI API key
 - LangSmith API key (optional, for tracing)
 
@@ -50,24 +71,33 @@ Customer (WhatsApp / Web) → Chatwoot → FastAPI Webhook → Decision Tree (Ph
 git clone https://github.com/YOUR_USER/diving-planet-bot.git
 cd diving-planet-bot
 
-# Copy environment variables
-cp .env.example .env
-# Edit .env with your API keys
+# 1. Create your environment file (this file is gitignored — never commit it!)
+cp .env.dev.example .env.dev
+# Edit .env.dev with your OPENAI_API_KEY and other secrets
 
-# Start infrastructure (Chatwoot + PostgreSQL + Redis)
+# 2. Start infrastructure (PostgreSQL + Redis only)
 docker compose up -d
 
-# Install Python dependencies
+# 3. (Optional) Start Chatwoot locally
+docker compose --profile chatwoot up -d
+
+# 4. Create Chatwoot database (if using Chatwoot)
+docker exec dp-dev-postgres psql -U postgres -c "CREATE DATABASE chatwoot_dev;"
+
+# 5. Install Python dependencies
 pip install -e ".[dev]"
 
-# Run tests
+# 6. Load knowledge base embeddings
+python -m scripts.load_embeddings
+
+# 7. Run tests
 pytest
 
-# Start the bot API
-python -m src.main
+# 8. Start the bot API
+ENV_FILE=.env.dev python -m src.main
 ```
 
-### Access
+### Access (DEV)
 
 | Service | URL |
 |---|---|
@@ -75,6 +105,41 @@ python -m src.main
 | Health check | http://localhost:8000/health |
 | API docs | http://localhost:8000/docs |
 | Chatwoot | http://localhost:3000 |
+
+## Deploy (VPS — PRE + PRO)
+
+```bash
+# On the VPS, after cloning the repo:
+
+# 1. Create environment files with strong passwords
+cp .env.pre.example .env.pre
+cp .env.pro.example .env.pro
+# Edit both with real API keys and strong passwords
+
+# 2. Start all services
+docker compose -f docker-compose.vps.yml up -d --build
+
+# 3. Create Chatwoot database
+docker exec dp-pro-postgres psql -U postgres -c "CREATE DATABASE chatwoot_production;"
+
+# 4. Load embeddings (staging)
+docker exec dp-pre-bot python -m scripts.load_embeddings
+
+# 5. Load embeddings (production)
+docker exec dp-pro-bot python -m scripts.load_embeddings
+
+# 6. Verify
+curl https://pre.divingplanet.org/health
+curl https://api.divingplanet.org/health
+```
+
+### Access (VPS)
+
+| Service | URL |
+|---|---|
+| Staging API | https://pre.divingplanet.org |
+| Production API | https://api.divingplanet.org |
+| Chatwoot | https://chatwoot.divingplanet.org |
 
 ## Project Structure
 

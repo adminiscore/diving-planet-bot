@@ -1,0 +1,21 @@
+# =============================================================================
+# Diving Planet Bot - Caddy Reverse Proxy (VPS)
+# =============================================================================
+# Caddy handles automatic HTTPS via Let's Encrypt.
+# DNS for these domains must point to the VPS IP before starting.
+# =============================================================================
+
+# Staging bot API
+pre.divingplanet.org {
+    reverse_proxy dp-pre-bot:8000
+}
+
+# Production bot API
+api.divingplanet.org {
+    reverse_proxy dp-pro-bot:8000
+}
+
+# Chatwoot inbox (shared across environments)
+chatwoot.divingplanet.org {
+    reverse_proxy dp-chatwoot:3000
+}

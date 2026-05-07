@@ -1,17 +1,17 @@
 # =============================================================================
-# Diving Planet Bot - Local Development Stack
+# Diving Planet Bot - Local Development Stack (DEV)
 # =============================================================================
 # Usage:
-#   docker compose up -d          # Start all services
-#   docker compose down            # Stop all services
-#   docker compose logs chatwoot   # View Chatwoot logs
+#   docker compose up -d                        # PostgreSQL + Redis only
+#   docker compose --profile chatwoot up -d     # + Chatwoot (optional)
+#   docker compose down
 # =============================================================================
 
 services:
-  # --- PostgreSQL (shared by Chatwoot and our app) ---
+  # --- PostgreSQL + pgvector ---
   postgres:
     image: pgvector/pgvector:pg16
-    container_name: dp-postgres
+    container_name: dp-dev-postgres
     restart: unless-stopped
     environment:
       POSTGRES_USER: postgres
@@ -20,7 +20,7 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - pgdata:/var/lib/postgresql/data
+      - pgdata_dev:/var/lib/postgresql/data
       - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/init.sql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
@@ -28,42 +28,43 @@ services:
       timeout: 5s
       retries: 5
 
-  # --- Redis (shared by Chatwoot and our app for caching) ---
+  # --- Redis ---
   redis:
     image: redis:7-alpine
-    container_name: dp-redis
+    container_name: dp-dev-redis
     restart: unless-stopped
     command: redis-server --maxmemory 256mb --maxmemory-policy allkeys-lru --timeout 0 --tcp-keepalive 60
     ports:
       - "6379:6379"
     volumes:
-      - redis_data:/data
+      - redis_data_dev:/data
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
       timeout: 5s
       retries: 5
 
-  # --- Chatwoot (self-hosted) ---
+  # --- Chatwoot (optional, start with --profile chatwoot) ---
   chatwoot-rails:
     image: chatwoot/chatwoot:latest
-    container_name: dp-chatwoot
+    container_name: dp-dev-chatwoot
     restart: unless-stopped
+    profiles:
+      - chatwoot
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
     environment:
-      SECRET_KEY_BASE: change_me_to_a_random_secret_key_base
+      SECRET_KEY_BASE: dev_secret_key_base_change_in_production
       FRONTEND_URL: http://localhost:3000
       DEFAULT_LOCALE: es
-      DATABASE_URL: postgres://postgres:postgres@postgres:5432/chatwoot_production
+      DATABASE_URL: postgres://postgres:postgres@postgres:5432/chatwoot_dev
       REDIS_URL: redis://redis:6379/1
-      REDIS_SIDEKIQ_URL: redis://redis:6379/2?read_timeout=10&connect_timeout=10
+      REDIS_SIDEKIQ_URL: redis://redis:6379/2
       RAILS_ENV: production
       RAILS_LOG_TO_STDOUT: "true"
-      # Mail (optional for now)
       MAILER_SENDER_EMAIL: noreply@divingplanet.org
     entrypoint: docker/entrypoints/rails.sh
     command: ["bundle", "exec", "rails", "s", "-p", "3000", "-b", "0.0.0.0"]
@@ -72,23 +73,25 @@ services:
 
   chatwoot-sidekiq:
     image: chatwoot/chatwoot:latest
-    container_name: dp-chatwoot-worker
+    container_name: dp-dev-chatwoot-worker
     restart: unless-stopped
+    profiles:
+      - chatwoot
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
     environment:
-      SECRET_KEY_BASE: change_me_to_a_random_secret_key_base
+      SECRET_KEY_BASE: dev_secret_key_base_change_in_production
       FRONTEND_URL: http://localhost:3000
       DEFAULT_LOCALE: es
-      DATABASE_URL: postgres://postgres:postgres@postgres:5432/chatwoot_production
+      DATABASE_URL: postgres://postgres:postgres@postgres:5432/chatwoot_dev
       REDIS_URL: redis://redis:6379/1
-      REDIS_SIDEKIQ_URL: redis://redis:6379/2?read_timeout=10&connect_timeout=10
+      REDIS_SIDEKIQ_URL: redis://redis:6379/2
       RAILS_ENV: production
     command: ["bundle", "exec", "sidekiq", "-C", "config/sidekiq.yml"]
 
 volumes:
-  pgdata:
-  redis_data:
+  pgdata_dev:
+  redis_data_dev:
