@@ -5,7 +5,10 @@ Receives incoming messages from Chatwoot and routes them through
 the decision tree or LangGraph agents.
 """
 
+import asyncio
+import json
 import logging
+from time import time
 from urllib.parse import urlparse, urlunparse
 
 import httpx
@@ -21,6 +24,8 @@ router = APIRouter()
 
 # In-memory conversation states (will migrate to Redis/PostgreSQL later)
 conversations: dict[str, ConversationState] = {}
+processed_chatwoot_messages: set[str] = set()
+conversation_poll_started_at: dict[str, int] = {}
 
 
 @router.post("/chatwoot")
@@ -41,7 +46,7 @@ async def chatwoot_webhook(request: Request):
     event = payload.get("event")
     logger.info(f"[WEBHOOK] Event: {event}, message_type: {payload.get('message_type')}")
 
-    if event == "message_created":
+    if event in ("message_created", "message_updated"):
         await handle_message(payload)
     elif event == "conversation_created":
         logger.info(f"[WEBHOOK] New conversation: {payload.get('id')}")
@@ -53,17 +58,25 @@ async def chatwoot_webhook(request: Request):
 
 async def handle_message(payload: dict):
     """Process an incoming message from a customer."""
-    message = payload.get("content", "")
     message_type = payload.get("message_type")
     conversation = payload.get("conversation", {})
-    conversation_id = str(conversation.get("id", ""))
+    conversation_id = str(conversation.get("id") or payload.get("conversation_id") or "")
     sender = payload.get("sender", {})
 
-    # Chatwoot sends message_type as integer: 0=incoming, 1=outgoing, 2=activity
-    # Only process incoming messages (from customer)
-    if message_type not in ("incoming", 0):
-        logger.info(f"[WEBHOOK] Skipping non-incoming message_type={message_type}")
+    message = extract_incoming_content(payload)
+    if message is None:
+        logger.info(f"[WEBHOOK] Skipping non-actionable message_type={message_type}")
         return
+
+    message_id = str(payload.get("id"))
+    if message_type in ("incoming", 0):
+        processed_chatwoot_messages.add(f"{conversation_id}:{message_id}:incoming")
+    else:
+        dedupe_key = f"{conversation_id}:{message_id}:{message}"
+        if dedupe_key in processed_chatwoot_messages:
+            logger.info(f"[WEBHOOK] Skipping already processed interactive message={message_id}")
+            return
+        processed_chatwoot_messages.add(dedupe_key)
 
     logger.info(f"[BOT] Incoming from {sender.get('name', 'unknown')}: {message[:100]}")
 
@@ -73,6 +86,7 @@ async def handle_message(payload: dict):
             conversation_id=conversation_id,
             language=settings.default_language,
         )
+        conversation_poll_started_at[conversation_id] = int(time())
 
     state = conversations[conversation_id]
 
@@ -81,10 +95,94 @@ async def handle_message(payload: dict):
 
     # Send response back via Chatwoot API
     if response:
-        await send_chatwoot_message(conversation_id, response)
+        await send_chatwoot_message(conversation_id, response, state.quick_replies)
 
 
-async def send_chatwoot_message(conversation_id: str, message: str):
+async def poll_chatwoot_interactions():
+    while True:
+        try:
+            await poll_active_conversations_once()
+        except Exception as e:
+            logger.error(f"[BOT] Chatwoot interaction poll error: {e}")
+        await asyncio.sleep(1.0)
+
+
+async def poll_active_conversations_once():
+    if not conversations:
+        return
+
+    base_url = settings.chatwoot_base_url.rstrip("/")
+    headers = {"api_access_token": settings.chatwoot_api_token}
+
+    async with httpx.AsyncClient() as client:
+        for conversation_id, state in list(conversations.items()):
+            url = (
+                f"{base_url}/api/v1/accounts/{settings.chatwoot_account_id}"
+                f"/conversations/{conversation_id}/messages"
+            )
+            resp = await client.get(url, headers=headers, timeout=10.0)
+            resp.raise_for_status()
+            messages = resp.json().get("payload", [])
+            for chatwoot_message in reversed(messages):
+                message_id = str(chatwoot_message.get("id"))
+                message_type = chatwoot_message.get("message_type")
+                created_at = int(chatwoot_message.get("created_at") or 0)
+                if created_at and created_at < conversation_poll_started_at.get(conversation_id, 0):
+                    continue
+                selected = extract_submitted_value(chatwoot_message)
+
+                if selected is not None:
+                    dedupe_key = f"{conversation_id}:{message_id}:{selected}"
+                    if dedupe_key in processed_chatwoot_messages:
+                        continue
+
+                    processed_chatwoot_messages.add(dedupe_key)
+                    logger.info(f"[BOT] Processing Chatwoot button conv={conversation_id} message_id={message_id} value={selected}")
+                    response = await route_message(state, selected)
+                    if response:
+                        await send_chatwoot_message(conversation_id, response, state.quick_replies)
+                    continue
+
+                if message_type not in ("incoming", 0):
+                    continue
+
+                content = chatwoot_message.get("content", "")
+                dedupe_key = f"{conversation_id}:{message_id}:incoming"
+                if dedupe_key in processed_chatwoot_messages:
+                    continue
+
+                processed_chatwoot_messages.add(dedupe_key)
+                logger.info(f"[BOT] Processing polled incoming conv={conversation_id} message_id={message_id}: {content[:100]}")
+                response = await route_message(state, content)
+                if response:
+                    await send_chatwoot_message(conversation_id, response, state.quick_replies)
+
+
+def extract_submitted_value(payload: dict) -> str | None:
+    attributes = payload.get("content_attributes") or {}
+    if isinstance(attributes, str):
+        try:
+            attributes = json.loads(attributes)
+        except json.JSONDecodeError:
+            attributes = {}
+
+    submitted_values = attributes.get("submitted_values") or []
+    if not submitted_values:
+        return None
+
+    selected = submitted_values[-1]
+    return str(selected.get("value") or selected.get("title") or "")
+
+
+def extract_incoming_content(payload: dict) -> str | None:
+    message_type = payload.get("message_type")
+    if message_type in ("incoming", 0):
+        return payload.get("content", "")
+
+    return extract_submitted_value(payload)
+
+
+async def send_chatwoot_message(conversation_id: str, message: str, quick_replies: list[dict] | None = None):
     """Send a message back to the customer via Chatwoot API."""
     base_url = settings.chatwoot_base_url.rstrip("/")
     url = (
@@ -100,6 +198,14 @@ async def send_chatwoot_message(conversation_id: str, message: str):
         "message_type": 1,  # 1 = outgoing in Chatwoot API
         "private": False,
     }
+    if quick_replies:
+        payload["content_type"] = "input_select"
+        payload["content_attributes"] = {
+            "items": [
+                {"title": reply["title"], "value": reply["value"]}
+                for reply in quick_replies
+            ],
+        }
 
     async with httpx.AsyncClient() as client:
         try:

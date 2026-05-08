@@ -1,9 +1,11 @@
+import asyncio
+
 import structlog
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from src.config import settings
-from src.channels.chatwoot import router as chatwoot_router
+from src.channels.chatwoot import poll_chatwoot_interactions, router as chatwoot_router
 
 logger = structlog.get_logger()
 
@@ -22,6 +24,18 @@ app.add_middleware(
 )
 
 app.include_router(chatwoot_router, prefix="/webhooks", tags=["webhooks"])
+
+
+@app.on_event("startup")
+async def start_chatwoot_interaction_polling():
+    app.state.chatwoot_polling_task = asyncio.create_task(poll_chatwoot_interactions())
+
+
+@app.on_event("shutdown")
+async def stop_chatwoot_interaction_polling():
+    task = getattr(app.state, "chatwoot_polling_task", None)
+    if task:
+        task.cancel()
 
 
 @app.get("/health")

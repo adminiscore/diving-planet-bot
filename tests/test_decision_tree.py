@@ -245,3 +245,28 @@ class TestFullJourney:
         # Not Colombian
         r = self.tree.process_message(state, "2")
         assert "already-on-the-island" in r
+
+
+def test_decision_tree_sets_quick_replies_for_menu_steps():
+    tree = DecisionTree()
+    state = make_state()
+
+    response = tree.process_message(state, "hola")
+
+    assert state.step == Step.LANGUAGE
+    assert "1. Espanol" not in response
+    assert state.quick_replies[0]["value"] == "1"
+    assert state.quick_replies[1] == {"title": "English", "value": "2"}
+
+
+def test_decision_tree_accepts_quick_reply_title():
+    tree = DecisionTree()
+    state = make_state()
+    state.step = Step.MAIN_MENU
+    state.language = "en"
+
+    response = tree.process_message(state, "Diving and snorkel tours")
+
+    assert state.step == Step.TOURS_EXPERIENCE
+    assert "certification" in response.lower()
+    assert state.quick_replies[0]["title"] == "Yes, I'm certified"

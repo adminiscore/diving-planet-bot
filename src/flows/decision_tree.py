@@ -33,6 +33,15 @@ class Step(str, Enum):
     FREE_TEXT = "free_text"
 
 
+@dataclass(frozen=True)
+class ButtonOption:
+    title: str
+    value: str
+
+    def as_chatwoot_item(self) -> dict:
+        return {"title": self.title, "value": self.value}
+
+
 @dataclass
 class ConversationState:
     conversation_id: str
@@ -42,7 +51,12 @@ class ConversationState:
     is_certified: bool | None = None
     location: str | None = None
     is_colombian: bool | None = None
-    history: list[dict] = field(default_factory=list)
+    history: list[dict] = None
+    quick_replies: list[dict] = field(default_factory=list)
+
+    def __post_init__(self):
+        if self.history is None:
+            self.history = []
 
 
 # --- Service catalog (extracted from divingplanet.org) ---
@@ -243,123 +257,71 @@ MESSAGES = {
             "Hola! Bienvenido a *Diving Planet*, el primer centro de buceo "
             "PADI 5 Estrellas de Colombia, con 30 anos de experiencia en "
             "las Islas del Rosario, Cartagena.\n\n"
-            "Selecciona tu idioma / Select your language:\n"
-            "1. Espanol\n"
-            "2. English"
+            "Selecciona tu idioma / Select your language:"
         ),
         "en": (
             "Hello! Welcome to *Diving Planet*, Colombia's first "
             "PADI 5 Star Dive Center, with 30 years of experience in "
             "the Rosario Islands, Cartagena.\n\n"
-            "Select your language / Selecciona tu idioma:\n"
-            "1. Espanol\n"
-            "2. English"
+            "Select your language / Selecciona tu idioma:"
         ),
     },
     "main_menu": {
         "es": (
-            "Que te gustaria hacer?\n\n"
-            "1. Tours de buceo y snorkel\n"
-            "2. Cursos PADI\n"
-            "3. Informacion general\n"
-            "4. Hablar con un asesor"
+            "Que te gustaria hacer?"
         ),
         "en": (
-            "What would you like to do?\n\n"
-            "1. Diving and snorkel tours\n"
-            "2. PADI courses\n"
-            "3. General information\n"
-            "4. Speak with an advisor"
+            "What would you like to do?"
         ),
     },
     "tours_experience": {
         "es": (
-            "Tienes certificacion de buceo?\n\n"
-            "1. Si, soy buzo certificado\n"
-            "2. No, nunca he buceado\n"
-            "3. No estoy seguro / he buceado sin certificarme"
+            "Tienes certificacion de buceo?"
         ),
         "en": (
-            "Do you have a diving certification?\n\n"
-            "1. Yes, I'm a certified diver\n"
-            "2. No, I've never dived\n"
-            "3. I'm not sure / I've dived without certification"
+            "Do you have a diving certification?"
         ),
     },
     "tours_certified": {
         "es": (
-            "Excelente! Estas son nuestras opciones para buzos certificados:\n\n"
-            "1. 2 Buceos - 1 dia (desde U$178)\n"
-            "2. 5 Buceos - 2 dias (1 noche en isla)\n"
-            "3. 7 Buceos - 3 dias (2 noches en isla)\n"
-            "4. 9 Buceos - 4 dias (3 noches en isla)\n"
-            "5. Servicio Privado (grupos)"
+            "Excelente! Estas son nuestras opciones para buzos certificados:"
         ),
         "en": (
-            "Excellent! Here are our options for certified divers:\n\n"
-            "1. 2 Dives - 1 day (from U$178)\n"
-            "2. 5 Dives - 2 days (1 night on island)\n"
-            "3. 7 Dives - 3 days (2 nights on island)\n"
-            "4. 9 Dives - 4 days (3 nights on island)\n"
-            "5. Private Service (groups)"
+            "Excellent! Here are our options for certified divers:"
         ),
     },
     "tours_beginner": {
         "es": (
-            "Perfecto! No necesitas experiencia previa. Estas son tus opciones:\n\n"
-            "1. Minicurso de Buceo (1 dia, con instructor)\n"
-            "2. Tour de Snorkeling (1 dia, desde la superficie)\n"
-            "3. Servicio Privado (grupos)"
+            "Perfecto! No necesitas experiencia previa. Estas son tus opciones:"
         ),
         "en": (
-            "Perfect! No prior experience needed. Here are your options:\n\n"
-            "1. Dive Mini Course (1 day, with instructor)\n"
-            "2. Snorkeling Tour (1 day, from the surface)\n"
-            "3. Private Service (groups)"
+            "Perfect! No prior experience needed. Here are your options:"
         ),
     },
     "courses_menu": {
         "es": (
             "Nuestros cursos PADI en las Islas del Rosario:\n\n"
-            "1. Curso Basico (Open Water) - para empezar desde cero\n"
-            "2. Curso Avanzado - para buzos con Open Water\n"
-            "3. Rescate + Primeros Auxilios (EFR)\n"
-            "4. Dive Master - formacion profesional\n"
-            "5. Especialidades PADI\n\n"
             "Todos combinan teoria online + practica en las islas."
         ),
         "en": (
             "Our PADI courses in the Rosario Islands:\n\n"
-            "1. Basic Course (Open Water) - start from scratch\n"
-            "2. Advanced Course - for Open Water divers\n"
-            "3. Rescue + First Aid (EFR)\n"
-            "4. Dive Master - professional training\n"
-            "5. PADI Specialties\n\n"
             "All combine online theory + island practice."
         ),
     },
     "location": {
         "es": (
-            "Desde donde tomaras el tour?\n\n"
-            "1. Salgo desde Cartagena\n"
-            "2. Ya estoy en las Islas del Rosario"
+            "Desde donde tomaras el tour?"
         ),
         "en": (
-            "Where will you depart from?\n\n"
-            "1. Departing from Cartagena\n"
-            "2. I'm already on the Rosario Islands"
+            "Where will you depart from?"
         ),
     },
     "colombian": {
         "es": (
-            "Eres colombiano/a? Tenemos descuentos especiales para locales.\n\n"
-            "1. Si\n"
-            "2. No"
+            "Eres colombiano/a? Tenemos descuentos especiales para locales."
         ),
         "en": (
-            "Are you Colombian? We have special discounts for locals.\n\n"
-            "1. Yes\n"
-            "2. No"
+            "Are you Colombian? We have special discounts for locals."
         ),
     },
     "escalate": {
@@ -387,10 +349,7 @@ MESSAGES = {
             "⏰ *Hora de salida*: 8:00 AM desde el Muelle de la Bodeguita\n"
             "🏆 *Certificacion*: PADI 5 Estrellas (primero de Colombia)\n"
             "🌱 *Programa social*: DIVE TO HEAL (buceo adaptado + restauracion coralina)\n\n"
-            "Quieres saber algo mas?\n"
-            "1. Ver tours y actividades\n"
-            "2. Ver cursos PADI\n"
-            "3. Hablar con un asesor"
+            "Quieres saber algo mas?"
         ),
         "en": (
             "Here's general information about Diving Planet:\n\n"
@@ -400,23 +359,150 @@ MESSAGES = {
             "⏰ *Departure*: 8:00 AM from Muelle de la Bodeguita\n"
             "🏆 *Certification*: PADI 5 Star (first in Colombia)\n"
             "🌱 *Social program*: DIVE TO HEAL (adaptive diving + coral restoration)\n\n"
-            "Want to know more?\n"
-            "1. View tours and activities\n"
-            "2. View PADI courses\n"
-            "3. Speak with an advisor"
+            "Want to know more?"
         ),
     },
     "not_understood": {
         "es": (
-            "No entendi tu respuesta. Por favor, responde con el numero "
-            "de la opcion que prefieras."
+            "No entendi tu respuesta. Por favor, selecciona una de las opciones."
         ),
         "en": (
-            "I didn't understand your response. Please reply with the number "
-            "of your preferred option."
+            "I didn't understand your response. Please select one of the options."
         ),
     },
 }
+
+BUTTON_OPTIONS = {
+    "welcome": {
+        "es": [
+            {"title": "Español", "value": "1"},
+            {"title": "English", "value": "2"},
+        ],
+        "en": [
+            {"title": "Español", "value": "1"},
+            {"title": "English", "value": "2"},
+        ],
+    },
+    "main_menu": {
+        "es": [
+            {"title": "Tours de buceo y snorkel", "value": "1"},
+            {"title": "Cursos PADI", "value": "2"},
+            {"title": "Informacion general", "value": "3"},
+            {"title": "Hablar con un asesor", "value": "4"},
+        ],
+        "en": [
+            {"title": "Diving and snorkel tours", "value": "1"},
+            {"title": "PADI courses", "value": "2"},
+            {"title": "General information", "value": "3"},
+            {"title": "Speak with an advisor", "value": "4"},
+        ],
+    },
+    "tours_experience": {
+        "es": [
+            {"title": "Si, soy buzo certificado", "value": "1"},
+            {"title": "No, nunca he buceado", "value": "2"},
+            {"title": "No estoy seguro", "value": "3"},
+        ],
+        "en": [
+            {"title": "Yes, I'm certified", "value": "1"},
+            {"title": "No, never dived", "value": "2"},
+            {"title": "I'm not sure", "value": "3"},
+        ],
+    },
+    "tours_certified": {
+        "es": [
+            {"title": "2 Buceos - 1 dia", "value": "1"},
+            {"title": "5 Buceos - 2 dias", "value": "2"},
+            {"title": "7 Buceos - 3 dias", "value": "3"},
+            {"title": "9 Buceos - 4 dias", "value": "4"},
+            {"title": "Servicio Privado", "value": "5"},
+        ],
+        "en": [
+            {"title": "2 Dives - 1 day", "value": "1"},
+            {"title": "5 Dives - 2 days", "value": "2"},
+            {"title": "7 Dives - 3 days", "value": "3"},
+            {"title": "9 Dives - 4 days", "value": "4"},
+            {"title": "Private Service", "value": "5"},
+        ],
+    },
+    "tours_beginner": {
+        "es": [
+            {"title": "Minicurso de Buceo", "value": "1"},
+            {"title": "Tour de Snorkeling", "value": "2"},
+            {"title": "Servicio Privado", "value": "3"},
+        ],
+        "en": [
+            {"title": "Dive Mini Course", "value": "1"},
+            {"title": "Snorkeling Tour", "value": "2"},
+            {"title": "Private Service", "value": "3"},
+        ],
+    },
+    "courses_menu": {
+        "es": [
+            {"title": "Curso Basico Open Water", "value": "1"},
+            {"title": "Curso Avanzado", "value": "2"},
+            {"title": "Rescate + EFR", "value": "3"},
+            {"title": "Dive Master", "value": "4"},
+            {"title": "Especialidades PADI", "value": "5"},
+        ],
+        "en": [
+            {"title": "Basic Open Water", "value": "1"},
+            {"title": "Advanced Course", "value": "2"},
+            {"title": "Rescue + EFR", "value": "3"},
+            {"title": "Dive Master", "value": "4"},
+            {"title": "PADI Specialties", "value": "5"},
+        ],
+    },
+    "location": {
+        "es": [
+            {"title": "Salgo desde Cartagena", "value": "1"},
+            {"title": "Ya estoy en las islas", "value": "2"},
+        ],
+        "en": [
+            {"title": "Departing from Cartagena", "value": "1"},
+            {"title": "Already on the islands", "value": "2"},
+        ],
+    },
+    "colombian": {
+        "es": [
+            {"title": "Si", "value": "1"},
+            {"title": "No", "value": "2"},
+        ],
+        "en": [
+            {"title": "Yes", "value": "1"},
+            {"title": "No", "value": "2"},
+        ],
+    },
+    "summary": {
+        "es": [
+            {"title": "Si, tengo mas preguntas", "value": "1"},
+            {"title": "No, gracias", "value": "2"},
+        ],
+        "en": [
+            {"title": "Yes, I have more questions", "value": "1"},
+            {"title": "No, thanks", "value": "2"},
+        ],
+    },
+    "info_general": {
+        "es": [
+            {"title": "Ver tours y actividades", "value": "1"},
+            {"title": "Ver cursos PADI", "value": "2"},
+            {"title": "Hablar con un asesor", "value": "4"},
+        ],
+        "en": [
+            {"title": "View tours and activities", "value": "1"},
+            {"title": "View PADI courses", "value": "2"},
+            {"title": "Speak with an advisor", "value": "4"},
+        ],
+    },
+}
+
+
+def get_button_options(key: str, language: str) -> list[dict]:
+    return [
+        ButtonOption(title=option["title"], value=option["value"]).as_chatwoot_item()
+        for option in BUTTON_OPTIONS.get(key, {}).get(language, [])
+    ]
 
 
 class DecisionTree:
@@ -425,9 +511,13 @@ class DecisionTree:
     No LLM calls — pure logic for Phase 1.
     """
 
+    def set_quick_replies(self, state: ConversationState, key: str):
+        state.quick_replies = get_button_options(key, state.language)
+
     def process_message(self, state: ConversationState, message: str) -> str:
         """Process a user message and return the bot's response."""
         message = message.strip()
+        state.quick_replies = []
         state.history.append({"role": "user", "content": message})
 
         response = self._route(state, message)
@@ -455,6 +545,7 @@ class DecisionTree:
 
     def _handle_welcome(self, state: ConversationState, message: str) -> str:
         state.step = Step.LANGUAGE
+        self.set_quick_replies(state, "welcome")
         return MESSAGES["welcome"]["es"]
 
     def _handle_language(self, state: ConversationState, message: str) -> str:
@@ -470,28 +561,37 @@ class DecisionTree:
             elif any(w in message.lower() for w in ["espanol", "español", "es", "hola"]):
                 state.language = "es"
             else:
+                self.set_quick_replies(state, "welcome")
                 return MESSAGES["not_understood"]["es"]
 
         state.step = Step.MAIN_MENU
+        self.set_quick_replies(state, "main_menu")
         return MESSAGES["main_menu"][state.language]
 
     def _handle_main_menu(self, state: ConversationState, message: str) -> str:
         choice = self._parse_choice(message, 4)
         lang = state.language
 
+        if state.history is None:
+            state.history = []
+
         if choice == 1:
             state.step = Step.TOURS_EXPERIENCE
+            self.set_quick_replies(state, "tours_experience")
             return MESSAGES["tours_experience"][lang]
         elif choice == 2:
             state.step = Step.COURSES_MENU
+            self.set_quick_replies(state, "courses_menu")
             return MESSAGES["courses_menu"][lang]
         elif choice == 3:
             state.step = Step.MAIN_MENU
+            self.set_quick_replies(state, "info_general")
             return MESSAGES["info_general"][lang]
         elif choice == 4:
             state.step = Step.ESCALATE
             return MESSAGES["escalate"][lang]
         else:
+            self.set_quick_replies(state, "main_menu")
             return MESSAGES["not_understood"][lang]
 
     def _handle_tours_experience(self, state: ConversationState, message: str) -> str:
@@ -501,12 +601,15 @@ class DecisionTree:
         if choice == 1:
             state.is_certified = True
             state.step = Step.TOURS_CERTIFIED
+            self.set_quick_replies(state, "tours_certified")
             return MESSAGES["tours_certified"][lang]
         elif choice in (2, 3):
             state.is_certified = False
             state.step = Step.TOURS_BEGINNER
+            self.set_quick_replies(state, "tours_beginner")
             return MESSAGES["tours_beginner"][lang]
         else:
+            self.set_quick_replies(state, "tours_experience")
             return MESSAGES["not_understood"][lang]
 
     def _handle_tours_certified(self, state: ConversationState, message: str) -> str:
@@ -524,10 +627,13 @@ class DecisionTree:
             state.selected_service = service_map[choice]
             if state.selected_service == "private":
                 state.step = Step.ESCALATE
+                state.quick_replies = []
                 return self._format_service_detail(state) + "\n\n" + MESSAGES["escalate"][lang]
             state.step = Step.LOCATION
+            self.set_quick_replies(state, "location")
             return self._format_service_detail(state) + "\n\n" + MESSAGES["location"][lang]
         else:
+            self.set_quick_replies(state, "tours_certified")
             return MESSAGES["not_understood"][lang]
 
     def _handle_tours_beginner(self, state: ConversationState, message: str) -> str:
@@ -539,10 +645,13 @@ class DecisionTree:
             state.selected_service = service_map[choice]
             if state.selected_service == "private":
                 state.step = Step.ESCALATE
+                state.quick_replies = []
                 return self._format_service_detail(state) + "\n\n" + MESSAGES["escalate"][lang]
             state.step = Step.LOCATION
+            self.set_quick_replies(state, "location")
             return self._format_service_detail(state) + "\n\n" + MESSAGES["location"][lang]
         else:
+            self.set_quick_replies(state, "tours_beginner")
             return MESSAGES["not_understood"][lang]
 
     def _handle_courses_menu(self, state: ConversationState, message: str) -> str:
@@ -559,16 +668,20 @@ class DecisionTree:
         if choice in course_map:
             if course_map[choice] is None:
                 state.step = Step.ESCALATE
+                state.quick_replies = []
                 return MESSAGES["escalate"][lang]
             state.selected_service = course_map[choice]
             state.step = Step.COLOMBIAN
+            self.set_quick_replies(state, "colombian")
             return self._format_service_detail(state) + "\n\n" + MESSAGES["colombian"][lang]
         else:
+            self.set_quick_replies(state, "courses_menu")
             return MESSAGES["not_understood"][lang]
 
     def _handle_service_detail(self, state: ConversationState, message: str) -> str:
         # Fallback: show detail and go to location
         state.step = Step.LOCATION
+        self.set_quick_replies(state, "location")
         return MESSAGES["location"][state.language]
 
     def _handle_location(self, state: ConversationState, message: str) -> str:
@@ -580,9 +693,11 @@ class DecisionTree:
         elif choice == 2:
             state.location = "island"
         else:
+            self.set_quick_replies(state, "location")
             return MESSAGES["not_understood"][lang]
 
         state.step = Step.COLOMBIAN
+        self.set_quick_replies(state, "colombian")
         return MESSAGES["colombian"][lang]
 
     def _handle_colombian(self, state: ConversationState, message: str) -> str:
@@ -594,9 +709,11 @@ class DecisionTree:
         elif choice == 2:
             state.is_colombian = False
         else:
+            self.set_quick_replies(state, "colombian")
             return MESSAGES["not_understood"][lang]
 
         state.step = Step.SUMMARY
+        self.set_quick_replies(state, "summary")
         return self._format_summary(state)
 
     def _format_service_detail(self, state: ConversationState) -> str:
@@ -657,11 +774,7 @@ class DecisionTree:
                 summary += f"\n✈️ *Importante*: {flight_rule}\n"
 
             summary += f"\n👉 *Reserva aqui con 10% de descuento*:\n{booking_url}\n"
-            summary += (
-                "\nTienes alguna otra pregunta?\n"
-                "1. Si, tengo mas preguntas\n"
-                "2. No, gracias!"
-            )
+            summary += "\nTienes alguna otra pregunta?"
         else:
             summary = f"Perfect! Here's your summary:\n\n"
             summary += f"🤿 *Service*: {name}\n"
@@ -677,11 +790,7 @@ class DecisionTree:
                 summary += f"\n✈️ *Important*: {flight_rule}\n"
 
             summary += f"\n👉 *Book here with 10% off*:\n{booking_url}\n"
-            summary += (
-                "\nDo you have any other questions?\n"
-                "1. Yes, I have more questions\n"
-                "2. No, thanks!"
-            )
+            summary += "\nDo you have any other questions?"
 
         return summary
 
@@ -695,4 +804,15 @@ class DecisionTree:
                 return choice
         except ValueError:
             pass
+
+        cleaned_lower = cleaned.lower()
+        for replies_by_lang in BUTTON_OPTIONS.values():
+            for replies in replies_by_lang.values():
+                for reply in replies:
+                    value = reply.get("value")
+                    title = reply.get("title", "").strip().lower()
+                    if title == cleaned_lower and value and value.isdigit():
+                        choice = int(value)
+                        if 1 <= choice <= max_options:
+                            return choice
         return None
