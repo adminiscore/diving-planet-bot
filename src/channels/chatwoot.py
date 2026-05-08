@@ -6,6 +6,7 @@ the decision tree or LangGraph agents.
 """
 
 import logging
+from urllib.parse import urlparse, urlunparse
 
 import httpx
 from fastapi import APIRouter, Request, HTTPException
@@ -85,8 +86,9 @@ async def handle_message(payload: dict):
 
 async def send_chatwoot_message(conversation_id: str, message: str):
     """Send a message back to the customer via Chatwoot API."""
+    base_url = settings.chatwoot_base_url.rstrip("/")
     url = (
-        f"{settings.chatwoot_base_url}/api/v1/accounts/{settings.chatwoot_account_id}"
+        f"{base_url}/api/v1/accounts/{settings.chatwoot_account_id}"
         f"/conversations/{conversation_id}/messages"
     )
     headers = {
@@ -101,8 +103,28 @@ async def send_chatwoot_message(conversation_id: str, message: str):
 
     async with httpx.AsyncClient() as client:
         try:
+            logger.info(f"[BOT] Sending Chatwoot message conv={conversation_id} url={url}")
             resp = await client.post(url, json=payload, headers=headers, timeout=10.0)
             resp.raise_for_status()
             logger.info(f"[BOT] Message sent to conversation {conversation_id}")
+            return
+        except httpx.ConnectError as e:
+            parsed = urlparse(url)
+            if parsed.hostname == "localhost":
+                alt_parsed = parsed._replace(netloc=parsed.netloc.replace("localhost", "127.0.0.1"))
+                alt_url = urlunparse(alt_parsed)
+                try:
+                    logger.warning(
+                        f"[BOT] ConnectError to localhost; retrying with 127.0.0.1 conv={conversation_id} url={alt_url} err={e}"
+                    )
+                    resp = await client.post(alt_url, json=payload, headers=headers, timeout=10.0)
+                    resp.raise_for_status()
+                    logger.info(f"[BOT] Message sent to conversation {conversation_id}")
+                    return
+                except httpx.HTTPError as e2:
+                    logger.error(f"[BOT] Send error conv={conversation_id} url={alt_url}: {e2}")
+                    return
+
+            logger.error(f"[BOT] Send error conv={conversation_id} url={url}: {e}")
         except httpx.HTTPError as e:
-            logger.error(f"[BOT] Send error conv={conversation_id}: {e}")
+            logger.error(f"[BOT] Send error conv={conversation_id} url={url}: {e}")
