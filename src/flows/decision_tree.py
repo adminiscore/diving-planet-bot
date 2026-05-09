@@ -326,18 +326,12 @@ MESSAGES = {
     },
     "escalate": {
         "es": (
-            "Te conecto con un asesor de Diving Planet. "
-            "Un momento por favor, te atendera lo antes posible.\n\n"
-            "Mientras tanto, puedes contactarnos directamente:\n"
-            "WhatsApp: +57 320 2301515\n"
-            "Email: info@divingplanet.org"
+            "Para esta situacion especifica, prefiero transferirte con mi jefe.\n"
+            "Enseguida se pone en contacto con usted, muchas gracias :)"
         ),
         "en": (
-            "I'm connecting you with a Diving Planet advisor. "
-            "One moment please, they'll be with you shortly.\n\n"
-            "In the meantime, you can contact us directly:\n"
-            "WhatsApp: +57 320 2301515\n"
-            "Email: info@divingplanet.org"
+            "For this specific situation, I'd prefer to transfer you to my manager.\n"
+            "They will contact you shortly. Thank you :)"
         ),
     },
     "info_general": {
@@ -385,82 +379,82 @@ BUTTON_OPTIONS = {
     },
     "main_menu": {
         "es": [
-            {"title": "Tours de buceo y snorkel", "value": "1"},
-            {"title": "Cursos PADI", "value": "2"},
-            {"title": "Informacion general", "value": "3"},
-            {"title": "Hablar con un asesor", "value": "4"},
+            {"title": "🤿 Tours de buceo y snorkel", "value": "1"},
+            {"title": "📘 Cursos PADI", "value": "2"},
+            {"title": "ℹ️ Informacion general", "value": "3"},
+            {"title": "🧑‍💬 Hablar con un asesor", "value": "4"},
         ],
         "en": [
-            {"title": "Diving and snorkel tours", "value": "1"},
-            {"title": "PADI courses", "value": "2"},
-            {"title": "General information", "value": "3"},
-            {"title": "Speak with an advisor", "value": "4"},
+            {"title": "🤿 Diving and snorkel tours", "value": "1"},
+            {"title": "📘 PADI courses", "value": "2"},
+            {"title": "ℹ️ General information", "value": "3"},
+            {"title": "🧑‍💬 Speak with an advisor", "value": "4"},
         ],
     },
     "tours_experience": {
         "es": [
-            {"title": "Si, soy buzo certificado", "value": "1"},
-            {"title": "No, nunca he buceado", "value": "2"},
-            {"title": "No estoy seguro", "value": "3"},
+            {"title": "✅ Si, soy buzo certificado", "value": "1"},
+            {"title": "🆕 No, nunca he buceado", "value": "2"},
+            {"title": "❓ No estoy seguro", "value": "3"},
         ],
         "en": [
-            {"title": "Yes, I'm certified", "value": "1"},
-            {"title": "No, never dived", "value": "2"},
-            {"title": "I'm not sure", "value": "3"},
+            {"title": "✅ Yes, I'm certified", "value": "1"},
+            {"title": "🆕 No, never dived", "value": "2"},
+            {"title": "❓ I'm not sure", "value": "3"},
         ],
     },
     "tours_certified": {
         "es": [
-            {"title": "2 Buceos - 1 dia", "value": "1"},
-            {"title": "5 Buceos - 2 dias", "value": "2"},
-            {"title": "7 Buceos - 3 dias", "value": "3"},
-            {"title": "9 Buceos - 4 dias", "value": "4"},
-            {"title": "Servicio Privado", "value": "5"},
+            {"title": "🤿 2 Buceos - 1 dia", "value": "1"},
+            {"title": "🤿 5 Buceos - 2 dias", "value": "2"},
+            {"title": "🤿 7 Buceos - 3 dias", "value": "3"},
+            {"title": "🤿 9 Buceos - 4 dias", "value": "4"},
+            {"title": "🧑‍💬 Servicio Privado", "value": "5"},
         ],
         "en": [
-            {"title": "2 Dives - 1 day", "value": "1"},
-            {"title": "5 Dives - 2 days", "value": "2"},
-            {"title": "7 Dives - 3 days", "value": "3"},
-            {"title": "9 Dives - 4 days", "value": "4"},
-            {"title": "Private Service", "value": "5"},
+            {"title": "🤿 2 Dives - 1 day", "value": "1"},
+            {"title": "🤿 5 Dives - 2 days", "value": "2"},
+            {"title": "🤿 7 Dives - 3 days", "value": "3"},
+            {"title": "🤿 9 Dives - 4 days", "value": "4"},
+            {"title": "🧑‍💬 Private Service", "value": "5"},
         ],
     },
     "tours_beginner": {
         "es": [
-            {"title": "Minicurso de Buceo", "value": "1"},
-            {"title": "Tour de Snorkeling", "value": "2"},
-            {"title": "Servicio Privado", "value": "3"},
+            {"title": "🤿 Minicurso de Buceo", "value": "1"},
+            {"title": "🐠 Tour de Snorkeling", "value": "2"},
+            {"title": "🧑‍💬 Servicio Privado", "value": "3"},
         ],
         "en": [
-            {"title": "Dive Mini Course", "value": "1"},
-            {"title": "Snorkeling Tour", "value": "2"},
-            {"title": "Private Service", "value": "3"},
+            {"title": "🤿 Dive Mini Course", "value": "1"},
+            {"title": "🐠 Snorkeling Tour", "value": "2"},
+            {"title": "🧑‍💬 Private Service", "value": "3"},
         ],
     },
     "courses_menu": {
         "es": [
-            {"title": "Curso Basico Open Water", "value": "1"},
-            {"title": "Curso Avanzado", "value": "2"},
-            {"title": "Rescate + EFR", "value": "3"},
-            {"title": "Dive Master", "value": "4"},
-            {"title": "Especialidades PADI", "value": "5"},
+            {"title": "📘 Curso Basico Open Water", "value": "1"},
+            {"title": "📘 Curso Avanzado", "value": "2"},
+            {"title": "🛟 Rescate + EFR", "value": "3"},
+            {"title": "🏅 Dive Master", "value": "4"},
+            {"title": "✨ Especialidades PADI", "value": "5"},
         ],
         "en": [
-            {"title": "Basic Open Water", "value": "1"},
-            {"title": "Advanced Course", "value": "2"},
-            {"title": "Rescue + EFR", "value": "3"},
-            {"title": "Dive Master", "value": "4"},
-            {"title": "PADI Specialties", "value": "5"},
+            {"title": "📘 Basic Open Water", "value": "1"},
+            {"title": "📘 Advanced Course", "value": "2"},
+            {"title": "🛟 Rescue + EFR", "value": "3"},
+            {"title": "🏅 Dive Master", "value": "4"},
+            {"title": "✨ PADI Specialties", "value": "5"},
         ],
     },
     "location": {
         "es": [
-            {"title": "Salgo desde Cartagena", "value": "1"},
-            {"title": "Ya estoy en las islas", "value": "2"},
+            {"title": "🚤 Salgo desde Cartagena", "value": "1"},
+            {"title": "🏝️ Ya estoy en las islas", "value": "2"},
         ],
         "en": [
-            {"title": "Departing from Cartagena", "value": "1"},
-            {"title": "Already on the islands", "value": "2"},
+            {"title": "🚤 Departing from Cartagena", "value": "1"},
+            {"title": "🏝️ Already on the islands", "value": "2"},
         ],
     },
     "colombian": {
@@ -475,24 +469,24 @@ BUTTON_OPTIONS = {
     },
     "summary": {
         "es": [
-            {"title": "Si, tengo mas preguntas", "value": "1"},
-            {"title": "No, gracias", "value": "2"},
+            {"title": "❓ Si, tengo mas preguntas", "value": "1"},
+            {"title": "🙏 No, gracias", "value": "2"},
         ],
         "en": [
-            {"title": "Yes, I have more questions", "value": "1"},
-            {"title": "No, thanks", "value": "2"},
+            {"title": "❓ Yes, I have more questions", "value": "1"},
+            {"title": "🙏 No, thanks", "value": "2"},
         ],
     },
     "info_general": {
         "es": [
-            {"title": "Ver tours y actividades", "value": "1"},
-            {"title": "Ver cursos PADI", "value": "2"},
-            {"title": "Hablar con un asesor", "value": "4"},
+            {"title": "🤿 Ver tours y actividades", "value": "1"},
+            {"title": "📘 Ver cursos PADI", "value": "2"},
+            {"title": "🧑‍💬 Hablar con un asesor", "value": "4"},
         ],
         "en": [
-            {"title": "View tours and activities", "value": "1"},
-            {"title": "View PADI courses", "value": "2"},
-            {"title": "Speak with an advisor", "value": "4"},
+            {"title": "🤿 View tours and activities", "value": "1"},
+            {"title": "📘 View PADI courses", "value": "2"},
+            {"title": "🧑‍💬 Speak with an advisor", "value": "4"},
         ],
     },
 }
@@ -713,7 +707,7 @@ class DecisionTree:
             return MESSAGES["not_understood"][lang]
 
         state.step = Step.SUMMARY
-        self.set_quick_replies(state, "summary")
+        state.quick_replies = []
         return self._format_summary(state)
 
     def _format_service_detail(self, state: ConversationState) -> str:

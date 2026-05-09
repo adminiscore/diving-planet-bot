@@ -10,6 +10,7 @@ Requires OPENAI_API_KEY in .env for generating embeddings.
 import json
 import asyncio
 import logging
+import re
 from pathlib import Path
 
 import asyncpg
@@ -23,6 +24,83 @@ logger = logging.getLogger(__name__)
 DATA_DIR = Path(__file__).parent.parent / "data" / "knowledge_base"
 EMBEDDING_MODEL = settings.openai_embedding_model  # text-embedding-3-small
 EMBEDDING_DIM = 1536
+
+
+TOPIC_PATTERNS: list[tuple[str, re.Pattern]] = [
+    ("pricing", re.compile(r"\b(precio|precios|valor|cu[aá]nto cuesta|usd|d[oó]lares|pesos|cop)\b", re.IGNORECASE)),
+    ("discount", re.compile(r"(?:10%|\bdescuento\b|\bdiscount\b|descuento\s*10|discount\s*10)", re.IGNORECASE)),
+    ("availability", re.compile(r"\b(disponibilidad|cupos|hay cupo|available|availability|tomorrow|ma[nñ]ana)\b", re.IGNORECASE)),
+    ("booking", re.compile(r"\b(reservar|reserva|reservas|reservo|reservamos|apartar|booking|book|p[aá]gina|web|online)\b", re.IGNORECASE)),
+    ("meeting_point", re.compile(r"\b(punto de encuentro|muelle|bodeguita|gate|puerta|marina|todo mar)\b", re.IGNORECASE)),
+    ("schedule", re.compile(r"\b(horario|hora|itinerario|schedule|duraci[oó]n|duration|regreso|return)\b", re.IGNORECASE)),
+    ("reschedule", re.compile(r"\b(mover la fecha|cambiar la fecha|cambio de fecha|reprogramar|reagendar|move the date|change the date|reschedule)\b", re.IGNORECASE)),
+    ("certification", re.compile(r"\b(certificaci[oó]n|certificado|open water|advanced|rescue|padi|ssi|logbook)\b", re.IGNORECASE)),
+    ("refresher", re.compile(r"\b(refresh|refresher|refresh requirement|hace a[nñ]os no buceo|hace mucho no buceo|sin bucear|tiempo sin bucear)\b", re.IGNORECASE)),
+    ("location_islands", re.compile(r"\b(isla|islas|rosario|isla grande|cocoliso|majagua|mulata|hotel)\b", re.IGNORECASE)),
+    ("accommodation", re.compile(r"\b(alojamiento|accommodation|hotel|hospedaje|incluye alojamiento|is accommodation included)\b", re.IGNORECASE)),
+    ("discount_colombian", re.compile(r"\b(colombian|colombiano|colombiana|colombianos|colombianas|residente)\b", re.IGNORECASE)),
+    ("payment", re.compile(r"\b(pago|pagar|transferencia|qr|bancolombia|tarjeta|credit|pasarela|link de pago)\b", re.IGNORECASE)),
+    ("forms_waiver", re.compile(r"\b(formulario|exoneraci[oó]n|jotform|carn[eé]|carne|certification photo|foto)\b", re.IGNORECASE)),
+    ("equipment", re.compile(r"\b(equipo|equipment|incluye|include|insurance|seguro|qu[eé]\s+debo\s+llevar|qu[eé]\s+llevar|llevar|traer|bring|towel|toalla|bloqueador|sunscreen)\b", re.IGNORECASE)),
+    ("depth", re.compile(r"\b(profundidad|metros|m\b|maxima|max\s+depth|depth)\b", re.IGNORECASE)),
+    ("weather_cancellation", re.compile(r"\b(clima|weather|cancelaci[oó]n|reembolso|refund|pol[ií]tica)\b", re.IGNORECASE)),
+    ("photos_media", re.compile(r"\b(foto|fotos|photos|video|videos)\b", re.IGNORECASE)),
+    ("seasickness", re.compile(r"\b(mareo|sea sick|seasick|tabletas|pills)\b", re.IGNORECASE)),
+]
+
+
+def detect_topics(text: str) -> list[str]:
+    topics: list[str] = []
+    for name, pattern in TOPIC_PATTERNS:
+        if pattern.search(text):
+            topics.append(name)
+    return topics
+
+
+def normalize_conversation_topics(raw_topics: list[str] | None) -> list[str]:
+    if not raw_topics:
+        return []
+
+    topic_map: dict[str, str] = {
+        "punto_de_encuentro": "meeting_point",
+        "muelle_bodeguita": "meeting_point",
+        "cancelacion_reembolso": "weather_cancellation",
+        "clima": "weather_cancellation",
+        "alojamiento_en_islas": "accommodation",
+        "base_en_islas": "accommodation",
+        "recogida_en_hotel": "accommodation",
+        "proceso_reserva": "booking",
+        "corte_reserva_online": "booking",
+        "pago": "payment",
+        "pago_50_por_ciento": "payment",
+        "link_pago": "payment",
+        "formulario_exoneracion": "forms_waiver",
+        "foto_certificacion": "forms_waiver",
+        "precios": "pricing",
+        "precios_usd": "pricing",
+        "precio_colombianos": "discount_colombian",
+        "descuento_10_por_ciento": "discount",
+        "disponibilidad_ultima_hora": "availability",
+        "ultima_hora": "availability",
+        "horarios": "schedule",
+        "duracion": "schedule",
+        "ubicacion_equipo": "equipment",
+        "equipo_incluido": "equipment",
+        "incluye": "equipment",
+        "refresh": "refresher",
+        "refresher": "refresher",
+    }
+
+    normalized: list[str] = []
+    for t in raw_topics:
+        if not t:
+            continue
+        mapped = topic_map.get(t, t)
+        if mapped in topic_map.values() or any(mapped == known for known, _ in TOPIC_PATTERNS):
+            normalized.append(mapped)
+
+    deduped = list(dict.fromkeys(normalized))
+    return deduped
 
 
 def load_knowledge_base() -> list[dict]:
@@ -79,13 +157,15 @@ def load_knowledge_base() -> list[dict]:
         data = json.load(f)
 
     for i, faq in enumerate(data.get("faqs", [])):
+        topics_es = detect_topics(f"{faq['question_es']}\n{faq['answer_es']}")
+        topics_en = detect_topics(f"{faq['question_en']}\n{faq['answer_en']}")
         documents.append({
             "content": f"Pregunta: {faq['question_es']}\nRespuesta: {faq['answer_es']}",
-            "metadata": {"source": "faqs", "index": i, "lang": "es"},
+            "metadata": {"source": "faqs", "index": i, "lang": "es", "topics": topics_es},
         })
         documents.append({
             "content": f"Question: {faq['question_en']}\nAnswer: {faq['answer_en']}",
-            "metadata": {"source": "faqs", "index": i, "lang": "en"},
+            "metadata": {"source": "faqs", "index": i, "lang": "en", "topics": topics_en},
         })
 
     # --- Policies ---
@@ -94,13 +174,15 @@ def load_knowledge_base() -> list[dict]:
 
     for key, policy in data.get("policies", {}).items():
         policy_name = key.replace("_", " ").title()
+        topics_es = detect_topics(str(policy.get("es", "")))
+        topics_en = detect_topics(str(policy.get("en", "")))
         documents.append({
             "content": f"Política - {policy_name}: {policy['es']}",
-            "metadata": {"source": "policies", "key": key, "lang": "es"},
+            "metadata": {"source": "policies", "key": key, "lang": "es", "topics": topics_es},
         })
         documents.append({
             "content": f"Policy - {policy_name}: {policy['en']}",
-            "metadata": {"source": "policies", "key": key, "lang": "en"},
+            "metadata": {"source": "policies", "key": key, "lang": "en", "topics": topics_en},
         })
 
     conversations_path = DATA_DIR / "conversations.json"
@@ -113,7 +195,7 @@ def load_knowledge_base() -> list[dict]:
             scenario = conv.get("scenario", "")
             customer_msgs = (conv.get("customer", {}) or {}).get("messages", [])
             dp_msgs = (conv.get("diving_planet", {}) or {}).get("messages", [])
-            topics = conv.get("extracted_topics", [])
+            topics = normalize_conversation_topics(conv.get("extracted_topics", []))
 
             content = (
                 f"Conversación real (WhatsApp)\n"
@@ -131,6 +213,7 @@ def load_knowledge_base() -> list[dict]:
                     "index": i,
                     "id": conv.get("id"),
                     "lang": lang,
+                    "topics": topics,
                 },
             })
 

@@ -14,6 +14,7 @@ import logging
 
 from src.flows.decision_tree import DecisionTree, ConversationState, Step
 from src.agents.rag_agent import rag_answer
+from src.privacy import detect_pii, privacy_block_message
 
 logger = logging.getLogger("uvicorn.error")
 
@@ -58,6 +59,12 @@ async def route_message(state: ConversationState, message: str) -> str:
     5. If user sends free text while in a menu step -> RAG agent
     """
     msg_lower = message.strip().lower()
+
+    pii_hits = detect_pii(message)
+    if pii_hits:
+        state.step = Step.ESCALATE
+        logger.warning(f"[SUPERVISOR][PRIVACY] PII detected hits={pii_hits} step={state.step.value}")
+        return privacy_block_message(state.language)
 
     # Check for escalation keywords
     if any(kw in msg_lower for kw in ESCALATION_KEYWORDS):
