@@ -24,6 +24,9 @@ class Step(str, Enum):
     GROUP_TYPE = "group_type"
     TOURS_EXPERIENCE = "tours_experience"
     TOURS_CERTIFIED = "tours_certified"
+    CERTIFIED_LAST_DIVE = "certified_last_dive"
+    CERTIFIED_EXPERIENCE = "certified_experience"
+    REFRESHER_INTEREST = "refresher_interest"
     TOURS_BEGINNER = "tours_beginner"
     COURSES_MENU = "courses_menu"
     COURSES_OPEN_WATER_ORIGIN = "courses_open_water_origin"
@@ -62,6 +65,10 @@ class ConversationState:
     island: str | None = None
     hotel: str | None = None
     is_colombian: bool | None = None
+    last_dive_over_2_years: bool | None = None
+    has_500_dives_or_dive_master: bool | None = None
+    refresher_interested: bool | None = None
+    original_service: str | None = None
     history: list[dict] = None
     quick_replies: list[dict] = field(default_factory=list)
 
@@ -278,13 +285,17 @@ MESSAGES = {
             "Hola! Bienvenido a *Diving Planet*, el primer centro de buceo "
             "PADI 5 Estrellas de Colombia, con 30 anos de experiencia en "
             "las Islas del Rosario, Cartagena.\n\n"
-            "Selecciona tu idioma / Select your language:"
+            "Selecciona tu idioma / Select your language:\n\n"
+            ":flag_co: Español\n"
+            ":flag_us: English"
         ),
         "en": (
             "Hello! Welcome to *Diving Planet*, Colombia's first "
             "PADI 5 Star Dive Center, with 30 years of experience in "
             "the Rosario Islands, Cartagena.\n\n"
-            "Select your language / Selecciona tu idioma:"
+            "Select your language / Selecciona tu idioma:\n\n"
+            ":flag_co: Español\n"
+            ":flag_us: English"
         ),
     },
     "main_menu": {
@@ -309,6 +320,43 @@ MESSAGES = {
         ),
         "en": (
             "Excellent! Here are our options for certified divers:"
+        ),
+    },
+    "certified_last_dive": {
+        "es": (
+            "¿Han pasado *más de 2 años* desde tu última inmersión?\n\n"
+            "Si es así, te recomendamos hacer un *refresher* antes de la salida."
+        ),
+        "en": (
+            "Has it been *more than 2 years* since your last dive?\n\n"
+            "If so, we recommend doing a *refresher* before the trip."
+        ),
+    },
+    "certified_experience": {
+        "es": (
+            "¿Tienes *más de 500 inmersiones* o eres *Dive Master* (o nivel similar)?\n\n"
+            "Esto nos ayuda a recomendarte la mejor opción de forma segura."
+        ),
+        "en": (
+            "Do you have *500+ logged dives* or are you a *Dive Master* (or similar level)?\n\n"
+            "This helps us recommend the best option safely."
+        ),
+    },
+    "refresher_info": {
+        "es": (
+            "Te recomendamos hacer un *refresher* para volver al agua de forma segura:\n\n"
+            "✅ Repaso de teoría (señales, equipo y procedimientos)\n"
+            "🏊 Práctica en piscina\n"
+            "🤿 Buceo en el mar con instructor\n\n"
+            "Más información (itinerario completo):\n"
+            "https://divingplanet.org/tours-buceo-snorkel-cartagena/minicurso-principiantes/\n\n"
+            "¿Te interesa incluirlo?"
+        ),
+        "en": (
+            "A *refresher* is a quick review with an instructor before diving.\n"
+            "It typically covers signals, equipment setup, procedures, and a controlled skills practice "
+            "(depending on your level and the day's conditions).\n\n"
+            "Would you like to include it?"
         ),
     },
     "tours_beginner": {
@@ -389,10 +437,10 @@ MESSAGES = {
     },
     "colombian": {
         "es": (
-            "Eres colombiano/a? Tenemos descuentos especiales para locales."
+            ":flag_co: ¿Eres colombiano/a? Tenemos descuentos especiales para locales."
         ),
         "en": (
-            "Are you Colombian? We have special discounts for locals."
+            ":flag_co: Are you Colombian? We have special discounts for locals."
         ),
     },
     "escalate": {
@@ -440,12 +488,12 @@ MESSAGES = {
 BUTTON_OPTIONS = {
     "welcome": {
         "es": [
-            {"title": "Español", "value": "1"},
-            {"title": "English", "value": "2"},
+            {"title": ":flag_co: Español", "value": "1"},
+            {"title": ":flag_us: English", "value": "2"},
         ],
         "en": [
-            {"title": "Español", "value": "1"},
-            {"title": "English", "value": "2"},
+            {"title": ":flag_co: Español", "value": "1"},
+            {"title": ":flag_us: English", "value": "2"},
         ],
     },
     "main_menu": {
@@ -508,6 +556,36 @@ BUTTON_OPTIONS = {
             {"title": "🤿 7 Dives - 3 days", "value": "3"},
             {"title": "🤿 9 Dives - 4 days", "value": "4"},
             {"title": "🧑‍💬 Private Service", "value": "5"},
+        ],
+    },
+    "certified_last_dive": {
+        "es": [
+            {"title": "Sí", "value": "1"},
+            {"title": "No", "value": "2"},
+        ],
+        "en": [
+            {"title": "Yes", "value": "1"},
+            {"title": "No", "value": "2"},
+        ],
+    },
+    "certified_experience": {
+        "es": [
+            {"title": "Sí", "value": "1"},
+            {"title": "No", "value": "2"},
+        ],
+        "en": [
+            {"title": "Yes", "value": "1"},
+            {"title": "No", "value": "2"},
+        ],
+    },
+    "refresher_interest": {
+        "es": [
+            {"title": "Sí", "value": "1"},
+            {"title": "No", "value": "2"},
+        ],
+        "en": [
+            {"title": "Yes", "value": "1"},
+            {"title": "No", "value": "2"},
         ],
     },
     "tours_beginner": {
@@ -721,6 +799,9 @@ class DecisionTree:
             Step.GROUP_TYPE: self._handle_group_type,
             Step.TOURS_EXPERIENCE: self._handle_tours_experience,
             Step.TOURS_CERTIFIED: self._handle_tours_certified,
+            Step.CERTIFIED_LAST_DIVE: self._handle_certified_last_dive,
+            Step.CERTIFIED_EXPERIENCE: self._handle_certified_experience,
+            Step.REFRESHER_INTEREST: self._handle_refresher_interest,
             Step.TOURS_BEGINNER: self._handle_tours_beginner,
             Step.COURSES_MENU: self._handle_courses_menu,
             Step.COURSES_OPEN_WATER_ORIGIN: self._handle_courses_open_water_origin,
@@ -893,18 +974,72 @@ class DecisionTree:
                 state.step = Step.ESCALATE
                 state.quick_replies = []
                 return self._format_service_detail(state) + "\n\n" + MESSAGES["escalate"][lang]
-            # Si ya conocemos la ubicacion (Cartagena o islas), pasamos directo a pregunta de colombiano
-            if state.location:
-                state.step = Step.COLOMBIAN
-                self.set_quick_replies(state, "colombian")
-                return self._format_service_detail(state) + "\n\n" + MESSAGES["colombian"][lang]
 
-            state.step = Step.LOCATION
-            self.set_quick_replies(state, "location")
-            return self._format_service_detail(state) + "\n\n" + MESSAGES["location"][lang]
+            state.step = Step.CERTIFIED_LAST_DIVE
+            self.set_quick_replies(state, "certified_last_dive")
+            if state.selected_service == "2_dives_1_day":
+                return MESSAGES["certified_last_dive"][lang]
+            return self._format_service_detail(state) + "\n\n" + MESSAGES["certified_last_dive"][lang]
         else:
             self.set_quick_replies(state, "tours_certified")
             return MESSAGES["not_understood"][lang]
+
+    def _handle_certified_last_dive(self, state: ConversationState, message: str) -> str:
+        choice = self._parse_choice(message, 2)
+        lang = state.language
+
+        if choice == 1:
+            state.last_dive_over_2_years = True
+            state.step = Step.CERTIFIED_EXPERIENCE
+            self.set_quick_replies(state, "certified_experience")
+            return MESSAGES["certified_experience"][lang]
+        if choice == 2:
+            state.last_dive_over_2_years = False
+            state.step = Step.COLOMBIAN
+            self.set_quick_replies(state, "colombian")
+            if state.selected_service == "2_dives_1_day":
+                return self._format_service_detail(state) + "\n\n" + MESSAGES["colombian"][lang]
+            return MESSAGES["colombian"][lang]
+
+        self.set_quick_replies(state, "certified_last_dive")
+        return MESSAGES["not_understood"][lang]
+
+    def _handle_certified_experience(self, state: ConversationState, message: str) -> str:
+        choice = self._parse_choice(message, 2)
+        lang = state.language
+
+        if choice == 1:
+            state.has_500_dives_or_dive_master = True
+            state.step = Step.ESCALATE
+            state.quick_replies = []
+            return MESSAGES["escalate"][lang]
+        if choice == 2:
+            state.has_500_dives_or_dive_master = False
+            state.step = Step.REFRESHER_INTEREST
+            self.set_quick_replies(state, "refresher_interest")
+            return MESSAGES["refresher_info"][lang]
+
+        self.set_quick_replies(state, "certified_experience")
+        return MESSAGES["not_understood"][lang]
+
+    def _handle_refresher_interest(self, state: ConversationState, message: str) -> str:
+        choice = self._parse_choice(message, 2)
+        lang = state.language
+
+        if choice == 1:
+            state.refresher_interested = True
+            if state.original_service is None and state.selected_service is not None:
+                state.original_service = state.selected_service
+            state.selected_service = "minicourse"
+        elif choice == 2:
+            state.refresher_interested = False
+        else:
+            self.set_quick_replies(state, "refresher_interest")
+            return MESSAGES["not_understood"][lang]
+
+        state.step = Step.COLOMBIAN
+        self.set_quick_replies(state, "colombian")
+        return MESSAGES["colombian"][lang]
 
     def _handle_tours_beginner(self, state: ConversationState, message: str) -> str:
         choice = self._parse_choice(message, 3)
@@ -1609,9 +1744,31 @@ class DecisionTree:
             booking_url = service["booking_url"]
 
         if lang == "es":
-            summary = f"Perfecto! Aqui tienes el resumen:\n\n"
-            summary += f"🤿 *Servicio*: {name}\n"
-            summary += f"📍 *Salida*: {'Cartagena' if state.location == 'cartagena' else 'Islas del Rosario'}\n"
+            departure = "Cartagena" if state.location == "cartagena" else "Islas del Rosario"
+            meeting_note = ""
+            if state.location == "cartagena":
+                meeting_note = "\n⏰ Punto de encuentro: 8:00 AM en el Muelle de la Bodeguita."
+            elif state.location == "island":
+                meeting_note = "\n⏰ Recogida en hotel: alrededor de 9:30 AM (si hay acceso marítimo)."
+
+            includes_items = [
+                item.strip()
+                for item in service["includes_es"].split(",")
+                if item.strip()
+            ]
+            includes_block = "\n".join(f"✅ {item}" for item in includes_items)
+
+            summary = (
+                "Perfecto! Aqui tienes el resumen:\n\n"
+                f"🤿 Servicio: {service['name_es']}\n"
+                f"⏱ Duracion: {service['duration_es']}\n"
+                f"✅ Incluye:\n{includes_block}\n\n"
+                f"📍 Salida: {departure}"
+                f"{meeting_note}\n"
+            )
+
+            if state.refresher_interested:
+                summary += "\n🧑‍🏫 Refresher: Si (recomendado por inactividad)\n"
 
             if state.is_colombian:
                 summary += (
@@ -1620,14 +1777,19 @@ class DecisionTree:
                 )
 
             if flight_rule:
-                summary += f"\n✈️ *Importante*: {flight_rule}\n"
+                summary += f"\n✈️ Importante: {flight_rule}\n"
 
-            summary += f"\n👉 *Reserva aqui con 10% de descuento*:\n{booking_url}\n"
+            summary += f"\n👉 Reserva aqui con 10% de descuento:\n{booking_url}\n"
             summary += "\nTienes alguna otra pregunta?"
         else:
             summary = f"Perfect! Here's your summary:\n\n"
             summary += f"🤿 *Service*: {name}\n"
             summary += f"📍 *Departure*: {'Cartagena' if state.location == 'cartagena' else 'Rosario Islands'}\n"
+            summary += f"⏱ *Duration*: {service['duration_en']}\n"
+            summary += f"✅ *Includes*: {service['includes_en']}\n"
+
+            if state.refresher_interested:
+                summary += "\n🧑‍🏫 Refresher: Yes (recommended due to inactivity)\n"
 
             if state.is_colombian:
                 summary += (

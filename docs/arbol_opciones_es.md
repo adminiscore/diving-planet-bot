@@ -1,367 +1,104 @@
-# Árbol de opciones (ES) — combinaciones posibles
+# Árbol de opciones (ES) — árbol actual
 
 - **Idioma → Español**
-  - **Menú principal → 🤿 Tours de buceo y snorkel**
-    - **Experiencia → ✅ Sí, soy buzo certificado**
-      - **Tour certificados → 🤿 2 Buceos - 1 día**
-        - **Ubicación → 🚤 Salgo desde Cartagena**
-          - **¿Eres colombiano/a? → Sí**
-            - **Resumen final**
-          - **¿Eres colombiano/a? → No**
-            - **Resumen final**
-        - **Ubicación → 🏝️ Ya estoy en las islas**
-          - **¿Eres colombiano/a? → Sí**
-            - **Resumen final**
-          - **¿Eres colombiano/a? → No**
-            - **Resumen final**
-      - **Tour certificados → 🤿 5 Buceos - 2 días**
-        - **Ubicación → 🚤 Salgo desde Cartagena**
-          - **¿Eres colombiano/a? → Sí**
-            - **Resumen final**
-          - **¿Eres colombiano/a? → No**
-            - **Resumen final**
-        - **Ubicación → 🏝️ Ya estoy en las islas**
-          - **¿Eres colombiano/a? → Sí**
-            - **Resumen final**
-          - **¿Eres colombiano/a? → No**
-            - **Resumen final**
-      - **Tour certificados → 🤿 7 Buceos - 3 días**
-        - **Ubicación → 🚤 Salgo desde Cartagena**
-          - **¿Eres colombiano/a? → Sí**
-            - **Resumen final**
-          - **¿Eres colombiano/a? → No**
-            - **Resumen final**
-        - **Ubicación → 🏝️ Ya estoy en las islas**
-          - **¿Eres colombiano/a? → Sí**
-            - **Resumen final**
-          - **¿Eres colombiano/a? → No**
-            - **Resumen final**
-      - **Tour certificados → 🤿 9 Buceos - 4 días**
-        - **Ubicación → 🚤 Salgo desde Cartagena**
-          - **¿Eres colombiano/a? → Sí**
-            - **Resumen final**
-          - **¿Eres colombiano/a? → No**
-            - **Resumen final**
-        - **Ubicación → 🏝️ Ya estoy en las islas**
-          - **¿Eres colombiano/a? → Sí**
-            - **Resumen final**
-          - **¿Eres colombiano/a? → No**
-            - **Resumen final**
-      - **Tour certificados → 🧑‍💬 Servicio Privado**
-        - **Transferir con el jefe**
-    - **Experiencia → 🆕 No, nunca he buceado**
-      - **Tours principiantes → 🤿 Minicurso de Buceo**
-        - **Ubicación → 🚤 Salgo desde Cartagena**
-          - **¿Eres colombiano/a? → Sí**
-            - **Resumen final**
-          - **¿Eres colombiano/a? → No**
-            - **Resumen final**
-        - **Ubicación → 🏝️ Ya estoy en las islas**
-          - **¿Eres colombiano/a? → Sí**
-            - **Resumen final**
-          - **¿Eres colombiano/a? → No**
-            - **Resumen final**
-      - **Tours principiantes → 🐠 Tour de Snorkeling**
-        - **Ubicación → 🚤 Salgo desde Cartagena**
-          - **¿Eres colombiano/a? → Sí**
-            - **Resumen final**
-          - **¿Eres colombiano/a? → No**
-            - **Resumen final**
-        - **Ubicación → 🏝️ Ya estoy en las islas**
-          - **¿Eres colombiano/a? → Sí**
-            - **Resumen final**
-          - **¿Eres colombiano/a? → No**
-            - **Resumen final**
-      - **Tours principiantes → 🧑‍💬 Servicio Privado**
-        - **Transferir con el jefe**
-    - **Experiencia → ❓ No estoy seguro**
-      - **Tours principiantes → 🤿 Minicurso de Buceo**
-        - **Ubicación → 🚤 Salgo desde Cartagena**
-          - **¿Eres colombiano/a? → Sí**
-            - **Resumen final**
-          - **¿Eres colombiano/a? → No**
-            - **Resumen final**
-        - **Ubicación → 🏝️ Ya estoy en las islas**
-          - **¿Eres colombiano/a? → Sí**
-            - **Resumen final**
-          - **¿Eres colombiano/a? → No**
-            - **Resumen final**
-      - **Tours principiantes → 🐠 Tour de Snorkeling**
-        - **Ubicación → 🚤 Salgo desde Cartagena**
-          - **¿Eres colombiano/a? → Sí**
-            - **Resumen final**
-          - **¿Eres colombiano/a? → No**
-            - **Resumen final**
-        - **Ubicación → 🏝️ Ya estoy en las islas**
-          - **¿Eres colombiano/a? → Sí**
-            - **Resumen final**
-          - **¿Eres colombiano/a? → No**
-            - **Resumen final**
-      - **Tours principiantes → 🧑‍💬 Servicio Privado**
-        - **Transferir con el jefe**
-  - **Menú principal → 📘 Cursos PADI**
-    - **Cursos → 📘 Curso Básico Open Water**
-      - **¿Eres colombiano/a? → Sí**
-        - **Resumen final**
-      - **¿Eres colombiano/a? → No**
-        - **Resumen final**
-    - **Cursos → 📘 Curso Avanzado**
-      - **¿Eres colombiano/a? → Sí**
-        - **Resumen final**
-      - **¿Eres colombiano/a? → No**
-        - **Resumen final**
-    - **Cursos → 🛟 Rescate + EFR**
-      - **¿Eres colombiano/a? → Sí**
-        - **Resumen final**
-      - **¿Eres colombiano/a? → No**
-        - **Resumen final**
-    - **Cursos → 🏅 Dive Master**
-      - **¿Eres colombiano/a? → Sí**
-        - **Resumen final**
-      - **¿Eres colombiano/a? → No**
-        - **Resumen final**
-    - **Cursos → ✨ Especialidades PADI**
+  - **Menú principal**
+    - **1. 🤿 Tours de buceo y snorkel (desde Cartagena)**
+      - **Tipo de grupo**
+        - **1. Solo buzos certificados**
+          - **Tours certificados**
+            - **1. 🤿 2 Buceos - 1 dia**
+              - **¿Han pasado más de 2 años desde tu última inmersión?**
+                - **Sí**
+                  - **¿Tienes más de 500 inmersiones o eres Dive Master (o similar)?**
+                    - **Sí**
+                      - **Transferir con el jefe**
+                    - **No**
+                      - **Recomendación refresher (teoría + piscina + mar) → ¿Te interesa incluirlo?**
+                        - **Sí**
+                          - **(Cambia a plan Minicurso para reservar)**
+                          - **¿Eres colombiano/a?**
+                            - **Sí**
+                              - **Resumen final**
+                            - **No**
+                              - **Resumen final**
+                        - **No**
+                          - **¿Eres colombiano/a?**
+                            - **Sí**
+                              - **Resumen final**
+                            - **No**
+                              - **Resumen final**
+                - **No**
+                  - **Muestra detalle del plan (2 buceos) + ¿Eres colombiano/a?**
+                    - **Sí**
+                      - **Resumen final**
+                    - **No**
+                      - **Resumen final**
+            - **2. 🤿 5 Buceos - 2 dias**
+              - **Muestra detalle del plan**
+              - **¿Han pasado más de 2 años desde tu última inmersión?**
+                - **Sí**
+                  - **¿Tienes más de 500 inmersiones o eres Dive Master (o similar)?**
+                    - **Sí**
+                      - **Transferir con el jefe**
+                    - **No**
+                      - **Recomendación refresher → ¿Te interesa incluirlo?**
+                        - **Sí**
+                          - **(Cambia a plan Minicurso para reservar)**
+                          - **¿Eres colombiano/a? → Sí/No → Resumen final**
+                        - **No**
+                          - **¿Eres colombiano/a? → Sí/No → Resumen final**
+                - **No**
+                  - **¿Eres colombiano/a? → Sí/No → Resumen final**
+            - **3. 🤿 7 Buceos - 3 dias**
+              - **Muestra detalle del plan**
+              - **¿Han pasado más de 2 años desde tu última inmersión?**
+                - **Sí → ¿500+ / Dive Master? → Sí: Transferir | No: refresher interés → Sí/No → ¿Eres colombiano/a? → Resumen**
+                - **No → ¿Eres colombiano/a? → Resumen**
+            - **4. 🤿 9 Buceos - 4 dias**
+              - **Muestra detalle del plan**
+              - **¿Han pasado más de 2 años desde tu última inmersión?**
+                - **Sí → ¿500+ / Dive Master? → Sí: Transferir | No: refresher interés → Sí/No → ¿Eres colombiano/a? → Resumen**
+                - **No → ¿Eres colombiano/a? → Resumen**
+            - **5. 🧑‍💬 Servicio Privado**
+              - **Transferir con el jefe**
+        - **2. Solo principiantes**
+          - **Tours principiantes**
+            - **1. 🤿 Minicurso de Buceo → Muestra detalle → ¿Eres colombiano/a? → Sí/No → Resumen final**
+            - **2. 🐠 Tour de Snorkeling → Muestra detalle → ¿Eres colombiano/a? → Sí/No → Resumen final**
+            - **3. 🧑‍💬 Servicio Privado → Transferir con el jefe**
+        - **3. Grupo mixto (buceo + snorkel)**
+          - **Explicación del plan mixto**
+          - **Transferir con el jefe**
+        - **4. Solo snorkel / acompanantes**
+          - **Snorkeling → Muestra detalle → ¿Eres colombiano/a? → Sí/No → Resumen final**
+
+    - **2. 🏝️ Ya estoy en las islas**
+      - **Tipo de grupo**
+        - **1. Solo buzos certificados**
+          - **Tours certificados (mismas opciones 2/5/7/9/privado)**
+          - **Nota**: aquí los links pueden variar si el servicio tiene `booking_url_island`.
+        - **2. Solo principiantes**
+          - **Minicurso / Snorkeling / Privado**
+        - **3. Grupo mixto → Explicación + Transferir con el jefe**
+        - **4. Solo snorkel / acompanantes → Snorkeling**
+
+    - **3. 📘 Cursos PADI y certificaciones**
+      - **Menú cursos**
+        - **Open Water / Advanced / Rescue / Dive Master / Especialidades**
+        - **Especialidades**
+          - **Transferir con el jefe**
+
+    - **4. 💰 Precios y descuentos**
+      - **Menú precios**
+        - **Opciones informativas (sin ramas adicionales en árbol)**
+
+    - **5. 💳 Reserva y pagos**
+      - **Menú reservas/pagos**
+        - **Opciones informativas (sin ramas adicionales en árbol)**
+
+    - **6. ℹ️ Logistica y otras preguntas**
+      - **Menú logística**
+        - **Opciones informativas (sin ramas adicionales en árbol)**
+
+    - **7. 🧑‍💬 Hablar con un asesor**
       - **Transferir con el jefe**
-  - **Menú principal → ℹ️ Información general**
-    - **Info general → 🤿 Ver tours y actividades**
-      - **Experiencia → ✅ Sí, soy buzo certificado**
-        - **Tour certificados → 🤿 2 Buceos - 1 día**
-          - **Ubicación → 🚤 Salgo desde Cartagena**
-            - **¿Eres colombiano/a? → Sí**
-              - **Resumen final**
-            - **¿Eres colombiano/a? → No**
-              - **Resumen final**
-          - **Ubicación → 🏝️ Ya estoy en las islas**
-            - **¿Eres colombiano/a? → Sí**
-              - **Resumen final**
-            - **¿Eres colombiano/a? → No**
-              - **Resumen final**
-        - **Tour certificados → 🤿 5 Buceos - 2 días**
-          - **Ubicación → 🚤 Salgo desde Cartagena**
-            - **¿Eres colombiano/a? → Sí**
-              - **Resumen final**
-            - **¿Eres colombiano/a? → No**
-              - **Resumen final**
-          - **Ubicación → 🏝️ Ya estoy en las islas**
-            - **¿Eres colombiano/a? → Sí**
-              - **Resumen final**
-            - **¿Eres colombiano/a? → No**
-              - **Resumen final**
-        - **Tour certificados → 🤿 7 Buceos - 3 días**
-          - **Ubicación → 🚤 Salgo desde Cartagena**
-            - **¿Eres colombiano/a? → Sí**
-              - **Resumen final**
-            - **¿Eres colombiano/a? → No**
-              - **Resumen final**
-          - **Ubicación → 🏝️ Ya estoy en las islas**
-            - **¿Eres colombiano/a? → Sí**
-              - **Resumen final**
-            - **¿Eres colombiano/a? → No**
-              - **Resumen final**
-        - **Tour certificados → 🤿 9 Buceos - 4 días**
-          - **Ubicación → 🚤 Salgo desde Cartagena**
-            - **¿Eres colombiano/a? → Sí**
-              - **Resumen final**
-            - **¿Eres colombiano/a? → No**
-              - **Resumen final**
-          - **Ubicación → 🏝️ Ya estoy en las islas**
-            - **¿Eres colombiano/a? → Sí**
-              - **Resumen final**
-            - **¿Eres colombiano/a? → No**
-              - **Resumen final**
-        - **Tour certificados → 🧑‍💬 Servicio Privado**
-          - **Transferir con el jefe**
-      - **Experiencia → 🆕 No, nunca he buceado**
-        - **Tours principiantes → 🤿 Minicurso de Buceo**
-          - **Ubicación → 🚤 Salgo desde Cartagena**
-            - **¿Eres colombiano/a? → Sí**
-              - **Resumen final**
-            - **¿Eres colombiano/a? → No**
-              - **Resumen final**
-          - **Ubicación → 🏝️ Ya estoy en las islas**
-            - **¿Eres colombiano/a? → Sí**
-              - **Resumen final**
-            - **¿Eres colombiano/a? → No**
-              - **Resumen final**
-        - **Tours principiantes → 🐠 Tour de Snorkeling**
-          - **Ubicación → 🚤 Salgo desde Cartagena**
-            - **¿Eres colombiano/a? → Sí**
-              - **Resumen final**
-            - **¿Eres colombiano/a? → No**
-              - **Resumen final**
-          - **Ubicación → 🏝️ Ya estoy en las islas**
-            - **¿Eres colombiano/a? → Sí**
-              - **Resumen final**
-            - **¿Eres colombiano/a? → No**
-              - **Resumen final**
-        - **Tours principiantes → 🧑‍💬 Servicio Privado**
-          - **Transferir con el jefe**
-      - **Experiencia → ❓ No estoy seguro**
-        - **Tours principiantes → 🤿 Minicurso de Buceo**
-          - **Ubicación → 🚤 Salgo desde Cartagena**
-            - **¿Eres colombiano/a? → Sí**
-              - **Resumen final**
-            - **¿Eres colombiano/a? → No**
-              - **Resumen final**
-          - **Ubicación → 🏝️ Ya estoy en las islas**
-            - **¿Eres colombiano/a? → Sí**
-              - **Resumen final**
-            - **¿Eres colombiano/a? → No**
-              - **Resumen final**
-        - **Tours principiantes → 🐠 Tour de Snorkeling**
-          - **Ubicación → 🚤 Salgo desde Cartagena**
-            - **¿Eres colombiano/a? → Sí**
-              - **Resumen final**
-            - **¿Eres colombiano/a? → No**
-              - **Resumen final**
-          - **Ubicación → 🏝️ Ya estoy en las islas**
-            - **¿Eres colombiano/a? → Sí**
-              - **Resumen final**
-            - **¿Eres colombiano/a? → No**
-              - **Resumen final**
-        - **Tours principiantes → 🧑‍💬 Servicio Privado**
-          - **Transferir con el jefe**
-    - **Info general → 📘 Ver cursos PADI**
-      - **Cursos → 📘 Curso Básico Open Water**
-        - **¿Eres colombiano/a? → Sí**
-          - **Resumen final**
-        - **¿Eres colombiano/a? → No**
-          - **Resumen final**
-      - **Cursos → 📘 Curso Avanzado**
-        - **¿Eres colombiano/a? → Sí**
-          - **Resumen final**
-        - **¿Eres colombiano/a? → No**
-          - **Resumen final**
-      - **Cursos → 🛟 Rescate + EFR**
-        - **¿Eres colombiano/a? → Sí**
-          - **Resumen final**
-        - **¿Eres colombiano/a? → No**
-          - **Resumen final**
-      - **Cursos → 🏅 Dive Master**
-        - **¿Eres colombiano/a? → Sí**
-      - **Cursos → ✨ Especialidades PADI**
-        - **Transferir con el jefe**
-  - **Info general → 🧑‍💬 Hablar con un asesor**
-    - **Transferir con el jefe**
-- **Menú principal → 🧑‍💬 Hablar con un asesor**
-  - **Transferir con el jefe**
-
-## Árbol de opciones (ES) — versión extendida propuesta
-
-- **Idioma → Español**
-  - **Menú principal (v2 propuesto)**
-    - **Menú principal → 🤿 Tours de buceo y snorkel (salgo desde Cartagena)**
-      - **Tipo de grupo → ¿Quiénes vienen?**
-        - **Solo buzos certificados**
-          - (Reutiliza las ramas actuales de "Experiencia → ✅ Sí, soy buzo certificado" con tours de 2, 5, 7, 9 buceos y servicio privado.)
-        - **Solo principiantes (sin certificación)**
-          - (Reutiliza las ramas actuales de "Experiencia → 🆕 No, nunca he buceado" con minicurso, snorkel y servicio privado.)
-        - **Grupo mixto (certificados + principiantes/snorkel/acompañantes)**
-          - **Configuración del grupo → ¿Qué combinaciones traes?**
-            - **Certificados + minicurso + snorkel**
-            - **Certificados + snorkel**
-            - **Solo snorkel + acompañantes en lancha**
-          - **Detalle del plan mixto**
-            - Explicar que todos viajan juntos Cartagena ↔ Islas, comparten base y almuerzo.
-            - Durante las actividades, snorkel puede usar lancha diferente por seguridad.
-            - Cada subgrupo elige su plan (2 buceos, 5 buceos, minicurso, snorkel).
-      - **Ubicación de salida → ¿Desde dónde sales?**
-        - **🚤 Salgo desde Cartagena**
-        - **🏝️ Ya estoy en las islas**
-      - **¿Eres colombiano/a o residente?**
-        - **Sí → Aplican precios locales y opciones de pago en COP.**
-        - **No → Aplican precios estándar en USD.**
-      - **Resumen final → Detalle de servicio, precio base, moneda, reglas de vuelo, link de reserva.**
-
-    - **Menú principal → 🏝️ Ya estoy en las islas (plan desde islas)**
-      - **Hotel donde te alojas → Selección libre (Isla Grande, Ubuntu, Cocoliso, Majagua, etc.)**
-      - **¿Qué quieres hacer?**
-        - **🤿 Bucear (ya soy buzo certificado)**
-        - **🤿 Minicurso / primera vez (Discover / principiantes)**
-        - **🐠 Snorkel**
-        - **👨‍👩‍👧‍👦 Solo acompañar a alguien que bucea / hace snorkel**
-      - **Plan desde islas → Resumen estándar**
-        - Recogida en hotel ~9:30 (si hay acceso en lancha).
-        - Equipo y seguro incluidos.
-        - Regreso al hotel ~14:15.
-        - Normalmente sin almuerzo incluido (se aclara si aplica otra cosa).
-      - **¿Eres colombiano/a o residente? → Ajuste de precios si aplica.**
-
-    - **Menú principal → 📘 Cursos PADI y certificaciones**
-      - **Quiero certificarme (curso básico Open Water)**
-        - **Origen → ¿Desde Cartagena o ya en las islas?**
-        - **Tiempo disponible → ¿Tienes al menos 2 días completos para la práctica?**
-        - **Resumen del curso Open Water**
-          - Teoría online previa (~12 h) + 2 días de práctica en islas.
-          - Qué incluye (transporte desde Cartagena si aplica, equipo, seguro, etc.).
-          - Reglas de vuelo después del curso.
-      - **Quiero otro curso PADI (Avanzado / Rescue / Dive Master / especialidades)**
-        - Mostrar opciones de cursos avanzados y qué cubre cada uno.
-      - **Ya empecé un curso en otro centro (referral / reactivate)**
-        - Explicar qué documentos debe traer (formulario PADI firmado, acceso a e-learning, etc.).
-        - Explicar que se cobra la diferencia entre paquete de buceos y curso referral.
-
-    - **Menú principal → 💰 Precios, descuentos y formas de pago**
-      - **Moneda en la que quieres ver el precio**
-        - **USD → Mostrar precios base de cada plan.**
-        - **COP → Mostrar precios para colombianos/residentes cuando existan.**
-      - **Tipo de cliente**
-        - **Colombiano / residente en Colombia**
-        - **No colombiano**
-      - **¿Sobre qué plan quieres precios?**
-        - **🤿 2 buceos - 1 día**
-        - **🤿 5 buceos - 2 días (con nocturna)**
-        - **🤿 7/9 buceos (paquetes extendidos)**
-        - **🤿 Minicurso de buceo**
-        - **🐠 Tour de snorkel**
-        - **📘 Cursos PADI (Open Water, Avanzado, etc.)**
-      - **Dudas frecuentes de precio y descuentos**
-        - Si el 10% online ya está aplicado o no.
-        - Si se puede pagar 50% ahora y 50% después.
-        - Diferencia de precio saliendo desde Cartagena vs ya en las islas.
-
-    - **Menú principal → � Reserva y pagos**
-      - **¿Cómo quieres pagar?**
-        - Tarjeta de crédito extranjera.
-        - Pasarela local (COP).
-        - Transferencia bancaria.
-      - **¿Quieres pagar todo o solo anticipo?**
-        - 50% ahora y 50% el día de la salida.
-        - 100% online.
-      - **¿Quién hace el pago?**
-        - Cliente individual.
-        - Agencia / grupo (necesita links separados por actividad: buceo, minicurso, snorkel, acompañantes).
-
-    - **Menú principal → ℹ️ Logística, políticas y otras preguntas**
-      - **Horarios y programa del día**
-        - Hora de encuentro en Cartagena (Muelle de la Bodeguita / Marina Todo Mar).
-        - Hora de salida y regreso aproximados para cada plan.
-        - Número de inmersiones por día y tiempos entre buceos.
-      - **Punto de encuentro y recogidas**
-        - Detalle de puerta y punto exacto en Muelle de la Bodeguita.
-        - Diferencia entre Bodeguita y Todo Mar.
-        - Recogidas en hoteles de islas (hora y condiciones de acceso en lancha).
-        - Opción de guardar maletas en la oficina de Cartagena.
-      - **Alojamiento en las islas**
-        - Hoteles base (San Pedro de Majagua, Cocoliso) y otros recomendados.
-        - Aclarar que el alojamiento no está incluido en los planes de buceo.
-        - Explicar posibilidad de quedarse noches extra y regresar con Diving Planet otro día.
-      - **Qué incluye / no incluye cada plan**
-        - Equipo completo, seguro, tasas de parque, transporte, almuerzo.
-        - Qué no incluye (fotos, bebidas especiales, alojamiento, etc.).
-      - **Clima, cancelación y reembolso**
-        - Política cuando se cancela por clima.
-        - Cambios de fecha y condiciones de reembolso.
-      - **Qué llevar y bienestar**
-        - Recomendaciones: toalla, bloqueador, ropa cómoda.
-        - Información sobre mareo y disponibilidad de pastillas (o recomendación de comprarlas antes).
-      - **Profundidad máxima y puntos de buceo**
-        - Profundidad típica para principiantes vs certificados.
-        - Ejemplos de puntos de buceo (Alex Place, Luis Guerra, etc.).
-      - **Registro de buceos y fotos/videos**
-        - Cómo obtener los nombres de los sitios para logbook.
-        - Cómo solicitar fotos y videos después de la actividad.
-
-    - **Menú principal → 🧑‍💬 Hablar con un asesor humano**
-      - **Transferir con el jefe / asesor**
-      - Explicar que se puede escribir "menu" más tarde para volver al árbol.

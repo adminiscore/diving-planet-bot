@@ -74,10 +74,10 @@
 ## Pendientes (RAG)
 - [ ] Confirmar con cliente la info de: “¿Cuál es la profundidad máxima?” / “What is the max depth?”
 - [ ] Añadir FAQ específico de profundidad máxima (ES/EN) una vez confirmado.
-- [] Definir los precios de servicios
-- [] Memoria en el chat?
-- [] Almuerzo = Comida
-- [] Info sobre la comida
+- [ ] Definir los precios de servicios
+- [ ] Memoria en el chat?
+- [ ] Almuerzo = Comida
+- [ ] Info sobre la comida
 - [x] Inyectar contexto de ubicación y alojamiento (`state.location`, `state.island`, `state.hotel`) en las llamadas al RAG para que pueda mencionar recogidas/logística específicas.
 
 ## Pendientes (árbol de opciones / intents usuarios)
@@ -148,3 +148,38 @@ Lo que no está pasando todavía es:
 No se hace una lógica muy específica tipo:
 “si selected_service == "snorkeling" y el usuario dice ¿cuánto vale? => responde exactamente SERVICES['snorkeling']['price']”.
 Esa parte se la dejas al LLM/RAG, que con el contexto y la base de conocimiento debe deducir de qué está hablando. 
+
+## Notas sobre Q&A y copys concretos
+
+- [ ] Caso mixto "open water + certificado básico" (revisar mejor respuesta / posible escalado a humano).
+
+  Pregunta ejemplo:
+
+  > Somos dos personas. Una persona tiene el open water y el otro el certificado básico. Que me recomiendas?
+
+  Respuesta actual:
+
+  > Para esta situacion especifica, prefiero transferirte con mi jefe.
+  > Enseguida se pone en contacto con usted, muchas gracias :)
+
+- [x] Pregunta: "¿Se puede mezclar con principiantes?" (respuesta validada).
+
+  Respuesta propuesta:
+
+  > Sí, se pueden mezclar grupos con diferentes niveles. Podemos combinar buzos certificados, principiantes que deseen hacer el minicurso y snorkelers en el mismo tour.
+  >
+  > Mientras los buzos hacen su primera inmersión, los principiantes recibirán entrenamiento teórico y práctico en la piscina. En la segunda inmersión, si lo desean, pueden unirse a los del minicurso para bucear en aguas abiertas.
+  > Si necesitas más información o tienes alguna otra pregunta, ¡aquí estoy para ayudarte!
+
+- [ ] Pregunta: "¿El almuerzo de qué consta y dónde se realiza?" (añadir más detalle de menú).
+
+  Respuesta actual:
+
+  > El almuerzo está incluido en la experiencia y se realiza en una de las islas donde buceamos. Sin embargo, no tengo detalles específicos sobre el menú.
+  >
+  > Si tienes alguna otra pregunta o necesitas más información, ¡aquí estoy para ayudarte!
+
+## Notas rápidas
+
+- [x] 1. 🤿 2 Buceos - 1 dia → flujo del árbol actual OK.
+- [ ] Repasar todo el árbol con todas las actividades y validar copys/resúmenes.

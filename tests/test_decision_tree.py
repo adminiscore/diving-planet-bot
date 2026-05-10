@@ -62,25 +62,28 @@ class TestMainMenu:
     def test_select_tours(self):
         state = self._go_to_menu()
         response = self.tree.process_message(state, "1")
-        assert state.step == Step.TOURS_EXPERIENCE
-        assert "certificacion" in response.lower() or "certificación" in response.lower()
+        assert state.step == Step.GROUP_TYPE
+        assert state.location == "cartagena"
+        assert "grupo" in response.lower()
 
     def test_select_courses(self):
         state = self._go_to_menu()
         response = self.tree.process_message(state, "2")
-        assert state.step == Step.COURSES_MENU
-        assert "PADI" in response
+        assert state.step == Step.GROUP_TYPE
+        assert state.location == "island"
+        assert "grupo" in response.lower()
 
     def test_select_info(self):
         state = self._go_to_menu()
         response = self.tree.process_message(state, "3")
-        assert "Plaza de San Diego" in response
+        assert state.step == Step.COURSES_MENU
+        assert "PADI" in response
 
     def test_select_human(self):
         state = self._go_to_menu()
-        response = self.tree.process_message(state, "4")
+        response = self.tree.process_message(state, "7")
         assert state.step == Step.ESCALATE
-        assert "asesor" in response.lower() or "WhatsApp" in response
+        assert "jefe" in response.lower() or "manager" in response.lower()
 
     def test_invalid_option(self):
         state = self._go_to_menu()
@@ -103,8 +106,49 @@ class TestCertifiedDiverFlow:
         state = self._go_to_certified()
         response = self.tree.process_message(state, "1")
         assert state.selected_service == "2_dives_1_day"
-        assert state.step == Step.LOCATION
-        assert "U$178" in response
+        assert state.step == Step.CERTIFIED_LAST_DIVE
+        assert "2 años" in response
+
+    def test_last_dive_over_2_years_yes_then_interested_yes(self):
+        state = self._go_to_certified()
+        self.tree.process_message(state, "1")
+        assert state.step == Step.CERTIFIED_LAST_DIVE
+
+        r = self.tree.process_message(state, "1")
+        assert state.last_dive_over_2_years is True
+        assert state.step == Step.CERTIFIED_EXPERIENCE
+
+        r = self.tree.process_message(state, "2")
+        assert state.has_500_dives_or_dive_master is False
+        assert state.step == Step.REFRESHER_INTEREST
+        assert "refresher" in r.lower()
+
+        r = self.tree.process_message(state, "1")
+        assert state.refresher_interested is True
+        assert state.step == Step.COLOMBIAN
+
+    def test_last_dive_over_2_years_experienced_escalates(self):
+        state = self._go_to_certified()
+        self.tree.process_message(state, "1")
+        assert state.step == Step.CERTIFIED_LAST_DIVE
+
+        self.tree.process_message(state, "1")
+        assert state.step == Step.CERTIFIED_EXPERIENCE
+
+        r = self.tree.process_message(state, "1")
+        assert state.has_500_dives_or_dive_master is True
+        assert state.step == Step.ESCALATE
+
+    def test_last_dive_over_2_years_no(self):
+        state = self._go_to_certified()
+        self.tree.process_message(state, "1")
+        assert state.step == Step.CERTIFIED_LAST_DIVE
+
+        r = self.tree.process_message(state, "2")
+        assert state.last_dive_over_2_years is False
+        assert state.step == Step.COLOMBIAN
+        assert "U$178" in r
+        assert "descuentos" in r.lower() or "colomb" in r.lower()
 
     def test_select_private_escalates(self):
         state = self._go_to_certified()
@@ -203,18 +247,18 @@ class TestFullJourney:
 
         # Step 3: Tours
         r = self.tree.process_message(state, "1")
-        assert state.step == Step.TOURS_EXPERIENCE
+        assert state.step == Step.GROUP_TYPE
 
-        # Step 4: Certified
+        # Step 4: Only certified divers
         r = self.tree.process_message(state, "1")
         assert state.step == Step.TOURS_CERTIFIED
 
         # Step 5: 2 dives
         r = self.tree.process_message(state, "1")
-        assert state.step == Step.LOCATION
+        assert state.step == Step.CERTIFIED_LAST_DIVE
 
-        # Step 6: From Cartagena
-        r = self.tree.process_message(state, "1")
+        # Step 6: Last dive not over 2 years
+        r = self.tree.process_message(state, "2")
         assert state.step == Step.COLOMBIAN
 
         # Step 7: Not Colombian
@@ -231,17 +275,16 @@ class TestFullJourney:
         # English
         self.tree.process_message(state, "2")
         assert state.language == "en"
-        # Tours
-        self.tree.process_message(state, "1")
-        # Not certified
+        # Already on island
+        self.tree.process_message(state, "2")
+        assert state.location == "island"
+
+        # Only beginners
         self.tree.process_message(state, "2")
         assert state.step == Step.TOURS_BEGINNER
         # Snorkeling
         self.tree.process_message(state, "2")
         assert state.selected_service == "snorkeling"
-        # Already on island
-        self.tree.process_message(state, "2")
-        assert state.location == "island"
         # Not Colombian
         r = self.tree.process_message(state, "2")
         assert "already-on-the-island" in r
@@ -256,7 +299,7 @@ def test_decision_tree_sets_quick_replies_for_menu_steps():
     assert state.step == Step.LANGUAGE
     assert "1. Espanol" not in response
     assert state.quick_replies[0]["value"] == "1"
-    assert state.quick_replies[1] == {"title": "English", "value": "2"}
+    assert state.quick_replies[1] == {"title": ":flag_us: English", "value": "2"}
 
 
 def test_decision_tree_accepts_quick_reply_title():
@@ -265,8 +308,8 @@ def test_decision_tree_accepts_quick_reply_title():
     state.step = Step.MAIN_MENU
     state.language = "en"
 
-    response = tree.process_message(state, "Diving and snorkel tours")
+    response = tree.process_message(state, "🤿 Diving and snorkel tours (from Cartagena)")
 
-    assert state.step == Step.TOURS_EXPERIENCE
-    assert "certification" in response.lower()
-    assert state.quick_replies[0]["title"] == "Yes, I'm certified"
+    assert state.step == Step.GROUP_TYPE
+    assert "group" in response.lower()
+    assert state.quick_replies[0]["value"] == "1"
