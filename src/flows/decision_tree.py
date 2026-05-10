@@ -21,10 +21,19 @@ class Step(str, Enum):
     WELCOME = "welcome"
     LANGUAGE = "language"
     MAIN_MENU = "main_menu"
+    GROUP_TYPE = "group_type"
     TOURS_EXPERIENCE = "tours_experience"
     TOURS_CERTIFIED = "tours_certified"
     TOURS_BEGINNER = "tours_beginner"
     COURSES_MENU = "courses_menu"
+    COURSES_OPEN_WATER_ORIGIN = "courses_open_water_origin"
+    COURSES_OPEN_WATER_TIME = "courses_open_water_time"
+    COURSES_ADVANCED_MENU = "courses_advanced_menu"
+    PRICING_MENU = "pricing_menu"
+    BOOKING_MENU = "booking_menu"
+    LOGISTICS_MENU = "logistics_menu"
+    ISLAND_MENU = "island_menu"
+    ISLAND_HOTEL_MENU = "island_hotel_menu"
     SERVICE_DETAIL = "service_detail"
     LOCATION = "location"
     COLOMBIAN = "colombian"
@@ -50,6 +59,8 @@ class ConversationState:
     selected_service: str | None = None
     is_certified: bool | None = None
     location: str | None = None
+    island: str | None = None
+    hotel: str | None = None
     is_colombian: bool | None = None
     history: list[dict] = None
     quick_replies: list[dict] = field(default_factory=list)
@@ -101,6 +112,9 @@ SERVICES = {
             "pool training + 1 ocean dive with PADI instructor, "
             "full equipment, lunch, eco-social contribution DIVE TO HEAL"
         ),
+        "min_age": 10,
+        "extra_notes_es": "Para menores de edad se aplica el programa Discover Scuba Diving / DSD segun estandares PADI. Recomendamos consultar si hay menores de 12 anos en el grupo.",
+        "extra_notes_en": "For minors, the Discover Scuba Diving / DSD program applies according to PADI standards. Please contact us if there are children under 12 in the group.",
         "flight_rule_es": "Debes esperar al menos 12 horas para tomar un avion.",
         "flight_rule_en": "You must wait at least 12 hours before flying.",
         "booking_url": "https://book.divingplanet.org/book/minicurso-de-buceo/2?language=es",
@@ -123,6 +137,9 @@ SERVICES = {
             "2 guided snorkel sessions, full equipment, lunch, "
             "eco-social contribution DIVE TO HEAL"
         ),
+        "min_age": 6,
+        "extra_notes_es": "Recomendado para ninos a partir de unos 6 anos que sepan nadar y se sientan comodos en el mar. Para menores o casos especiales, mejor consultar primero con un asesor.",
+        "extra_notes_en": "Recommended for children from around 6 years old who can swim and feel comfortable in the sea. For younger children or special cases, please check with an advisor first.",
         "flight_rule_es": "",
         "flight_rule_en": "",
         "booking_url": "https://book.divingplanet.org/book/superficio/3?language=es",
@@ -179,6 +196,10 @@ SERVICES = {
         "duration_en": "Multi-day (online theory + island practice)",
         "includes_es": "Teoria online + entrenamiento + inmersiones en Islas del Rosario. Obtienes certificacion Open Water.",
         "includes_en": "Online theory + training + dives in Rosario Islands. You get Open Water certification.",
+        "min_age": 10,
+        "min_days_practice": 2,
+        "extra_notes_es": "La parte teorica suele requerir unas 10-12 horas online antes de viajar. Es recomendable disponer de al menos 2 dias completos en islas para la practica.",
+        "extra_notes_en": "The theory part usually takes around 10-12 hours of online study before traveling. It is recommended to have at least 2 full days on the islands for practice.",
         "flight_rule_es": "Debes esperar al menos 18 horas para tomar un avion.",
         "flight_rule_en": "You must wait at least 18 hours before flying.",
         "booking_url": "https://divingplanet.org/curso-padi-cartagena/basico-open-water/",
@@ -308,6 +329,56 @@ MESSAGES = {
             "All combine online theory + island practice."
         ),
     },
+    "group_type": {
+        "es": (
+            "Genial, cuentame como es tu grupo:\n"
+            "Elige la opcion que mejor se ajuste."
+        ),
+        "en": (
+            "Great! Tell me about your group:\n"
+            "Choose the option that fits best."
+        ),
+    },
+    "pricing_menu": {
+        "es": (
+            "Sobre que tipo de plan quieres ver *precios y descuentos*?"
+        ),
+        "en": (
+            "What would you like *prices and discounts* for?"
+        ),
+    },
+    "booking_menu": {
+        "es": (
+            "Te explico como funcionan las *reservas y pagos*.\n"
+            "Selecciona lo que mas se acerque a tu duda."
+        ),
+        "en": (
+            "Let me explain how *bookings and payments* work.\n"
+            "Choose what matches your question best."
+        ),
+    },
+    "logistics_menu": {
+        "es": (
+            "Te ayudo con la *logistica* de tu experiencia: horarios, punto de encuentro, "
+            "alojamiento, que llevar, clima y cancelaciones.\n"
+            "¿Por donde empezamos?"
+        ),
+        "en": (
+            "I can help with the *logistics* of your experience: schedule, meeting point, "
+            "accommodation, what to bring, weather and cancellations.\n"
+            "Where would you like to start?"
+        ),
+    },
+    "island_menu": {
+        "es": (
+            "Perfecto, dime en que isla te estas hospedando o vas a hospedarte.\n"
+            "Esto nos ayuda a coordinar mejor la recogida y la logistica."
+        ),
+        "en": (
+            "Great, tell me on which island you are staying or will be staying.\n"
+            "This helps us coordinate pickup and logistics."
+        ),
+    },
     "location": {
         "es": (
             "Desde donde tomaras el tour?"
@@ -379,16 +450,36 @@ BUTTON_OPTIONS = {
     },
     "main_menu": {
         "es": [
-            {"title": "🤿 Tours de buceo y snorkel", "value": "1"},
-            {"title": "📘 Cursos PADI", "value": "2"},
-            {"title": "ℹ️ Informacion general", "value": "3"},
-            {"title": "🧑‍💬 Hablar con un asesor", "value": "4"},
+            {"title": "🤿 Tours de buceo y snorkel (desde Cartagena)", "value": "1"},
+            {"title": "🏝️ Ya estoy en las islas", "value": "2"},
+            {"title": "📘 Cursos PADI y certificaciones", "value": "3"},
+            {"title": "💰 Precios y descuentos", "value": "4"},
+            {"title": "💳 Reserva y pagos", "value": "5"},
+            {"title": "ℹ️ Logistica y otras preguntas", "value": "6"},
+            {"title": "🧑‍💬 Hablar con un asesor", "value": "7"},
         ],
         "en": [
-            {"title": "🤿 Diving and snorkel tours", "value": "1"},
-            {"title": "📘 PADI courses", "value": "2"},
-            {"title": "ℹ️ General information", "value": "3"},
-            {"title": "🧑‍💬 Speak with an advisor", "value": "4"},
+            {"title": "🤿 Diving and snorkel tours (from Cartagena)", "value": "1"},
+            {"title": "🏝️ I'm already on the islands", "value": "2"},
+            {"title": "📘 PADI courses and certifications", "value": "3"},
+            {"title": "💰 Prices and discounts", "value": "4"},
+            {"title": "💳 Booking and payments", "value": "5"},
+            {"title": "ℹ️ Logistics and other questions", "value": "6"},
+            {"title": "🧑‍💬 Speak with an advisor", "value": "7"},
+        ],
+    },
+    "group_type": {
+        "es": [
+            {"title": "Solo buzos certificados", "value": "1"},
+            {"title": "Solo principiantes", "value": "2"},
+            {"title": "Grupo mixto (buceo + snorkel)", "value": "3"},
+            {"title": "Solo snorkel / acompanantes", "value": "4"},
+        ],
+        "en": [
+            {"title": "Only certified divers", "value": "1"},
+            {"title": "Only beginners", "value": "2"},
+            {"title": "Mixed group (diving + snorkel)", "value": "3"},
+            {"title": "Only snorkel / companions", "value": "4"},
         ],
     },
     "tours_experience": {
@@ -433,18 +524,120 @@ BUTTON_OPTIONS = {
     },
     "courses_menu": {
         "es": [
-            {"title": "📘 Curso Basico Open Water", "value": "1"},
-            {"title": "📘 Curso Avanzado", "value": "2"},
-            {"title": "🛟 Rescate + EFR", "value": "3"},
-            {"title": "🏅 Dive Master", "value": "4"},
-            {"title": "✨ Especialidades PADI", "value": "5"},
+            {"title": "Quiero certificarme (curso Basico Open Water)", "value": "1"},
+            {"title": "Quiero otro curso PADI (Avanzado / Rescate / Dive Master)", "value": "2"},
+            {"title": "Ya empecE un curso en otro centro (referral / reactivate)", "value": "3"},
         ],
         "en": [
-            {"title": "📘 Basic Open Water", "value": "1"},
-            {"title": "📘 Advanced Course", "value": "2"},
-            {"title": "🛟 Rescue + EFR", "value": "3"},
-            {"title": "🏅 Dive Master", "value": "4"},
-            {"title": "✨ PADI Specialties", "value": "5"},
+            {"title": "I want to get certified (Open Water)", "value": "1"},
+            {"title": "I want another PADI course (Advanced / Rescue / Divemaster)", "value": "2"},
+            {"title": "I already started a course elsewhere (referral / reactivate)", "value": "3"},
+        ],
+    },
+    "courses_open_water_origin": {
+        "es": [
+            {"title": "🚤 Salgo desde Cartagena", "value": "1"},
+            {"title": "🏝️ Ya estoy en las islas", "value": "2"},
+        ],
+        "en": [
+            {"title": "🚤 Departing from Cartagena", "value": "1"},
+            {"title": "🏝️ Already on the islands", "value": "2"},
+        ],
+    },
+    "courses_open_water_time": {
+        "es": [
+            {"title": "Si, tengo al menos 2 dias completos", "value": "1"},
+            {"title": "No estoy seguro / tengo menos tiempo", "value": "2"},
+        ],
+        "en": [
+            {"title": "Yes, I have at least 2 full days", "value": "1"},
+            {"title": "Not sure / I have less time", "value": "2"},
+        ],
+    },
+    "courses_advanced_menu": {
+        "es": [
+            {"title": "📘 Curso Avanzado", "value": "1"},
+            {"title": "🛟 Rescate + EFR", "value": "2"},
+            {"title": "🏅 Dive Master", "value": "3"},
+            {"title": "✨ Especialidades PADI (consultar)", "value": "4"},
+        ],
+        "en": [
+            {"title": "📘 Advanced Course", "value": "1"},
+            {"title": "🛟 Rescue + EFR", "value": "2"},
+            {"title": "🏅 Divemaster", "value": "3"},
+            {"title": "✨ PADI Specialties (ask us)", "value": "4"},
+        ],
+    },
+    "pricing_menu": {
+        "es": [
+            {"title": "Precios tours buceo/snorkel", "value": "1"},
+            {"title": "Precios principiantes / snorkel", "value": "2"},
+            {"title": "Precios cursos PADI", "value": "3"},
+            {"title": "Soy colombiano/residente", "value": "4"},
+        ],
+        "en": [
+            {"title": "Prices diving/snorkel tours", "value": "1"},
+            {"title": "Prices beginners / snorkel", "value": "2"},
+            {"title": "Prices PADI courses", "value": "3"},
+            {"title": "I'm Colombian / resident", "value": "4"},
+        ],
+    },
+    "booking_menu": {
+        "es": [
+            {"title": "Pagar todo online", "value": "1"},
+            {"title": "Pagar 50% ahora y 50% despues", "value": "2"},
+            {"title": "Formas de pago (tarjeta / transferencia)", "value": "3"},
+            {"title": "Reservas de grupo o agencia", "value": "4"},
+        ],
+        "en": [
+            {"title": "Pay everything online", "value": "1"},
+            {"title": "Pay 50% now and 50% later", "value": "2"},
+            {"title": "Payment methods (card / transfer)", "value": "3"},
+            {"title": "Group or agency bookings", "value": "4"},
+        ],
+    },
+    "logistics_menu": {
+        "es": [
+            {"title": "Horarios y programa del dia", "value": "1"},
+            {"title": "Punto de encuentro / recogidas", "value": "2"},
+            {"title": "Alojamiento en islas", "value": "3"},
+            {"title": "Que incluye / que llevar / clima", "value": "4"},
+        ],
+        "en": [
+            {"title": "Schedule and daily program", "value": "1"},
+            {"title": "Meeting point / hotel pickup", "value": "2"},
+            {"title": "Accommodation on the islands", "value": "3"},
+            {"title": "What's included / what to bring / weather", "value": "4"},
+        ],
+    },
+    "island_menu": {
+        "es": [
+            {"title": "Isla Grande", "value": "1"},
+            {"title": "Isla Marina", "value": "2"},
+            {"title": "Isla del Pirata", "value": "3"},
+            {"title": "Isla del Sol", "value": "4"},
+            {"title": "Isleta", "value": "5"},
+            {"title": "Isla Arena", "value": "6"},
+            {"title": "Isla Pavitos", "value": "7"},
+            {"title": "Isla Lizamar", "value": "8"},
+            {"title": "Isla Gigi", "value": "9"},
+            {"title": "Isla Rosa", "value": "10"},
+            {"title": "Isla Pelicano", "value": "11"},
+            {"title": "Isla Rosario", "value": "12"},
+        ],
+        "en": [
+            {"title": "Isla Grande", "value": "1"},
+            {"title": "Isla Marina", "value": "2"},
+            {"title": "Isla del Pirata", "value": "3"},
+            {"title": "Isla del Sol", "value": "4"},
+            {"title": "Isleta", "value": "5"},
+            {"title": "Isla Arena", "value": "6"},
+            {"title": "Isla Pavitos", "value": "7"},
+            {"title": "Isla Lizamar", "value": "8"},
+            {"title": "Isla Gigi", "value": "9"},
+            {"title": "Isla Rosa", "value": "10"},
+            {"title": "Isla Pelicano", "value": "11"},
+            {"title": "Isla Rosario", "value": "12"},
         ],
     },
     "location": {
@@ -525,10 +718,19 @@ class DecisionTree:
             Step.WELCOME: self._handle_welcome,
             Step.LANGUAGE: self._handle_language,
             Step.MAIN_MENU: self._handle_main_menu,
+            Step.GROUP_TYPE: self._handle_group_type,
             Step.TOURS_EXPERIENCE: self._handle_tours_experience,
             Step.TOURS_CERTIFIED: self._handle_tours_certified,
             Step.TOURS_BEGINNER: self._handle_tours_beginner,
             Step.COURSES_MENU: self._handle_courses_menu,
+            Step.COURSES_OPEN_WATER_ORIGIN: self._handle_courses_open_water_origin,
+            Step.COURSES_OPEN_WATER_TIME: self._handle_courses_open_water_time,
+            Step.COURSES_ADVANCED_MENU: self._handle_courses_advanced_menu,
+            Step.PRICING_MENU: self._handle_pricing_menu,
+            Step.BOOKING_MENU: self._handle_booking_menu,
+            Step.LOGISTICS_MENU: self._handle_logistics_menu,
+            Step.ISLAND_MENU: self._handle_island_menu,
+            Step.ISLAND_HOTEL_MENU: self._handle_island_hotel_menu,
             Step.SERVICE_DETAIL: self._handle_service_detail,
             Step.LOCATION: self._handle_location,
             Step.COLOMBIAN: self._handle_colombian,
@@ -563,30 +765,98 @@ class DecisionTree:
         return MESSAGES["main_menu"][state.language]
 
     def _handle_main_menu(self, state: ConversationState, message: str) -> str:
-        choice = self._parse_choice(message, 4)
+        choice = self._parse_choice(message, 7)
         lang = state.language
 
         if state.history is None:
             state.history = []
 
         if choice == 1:
-            state.step = Step.TOURS_EXPERIENCE
-            self.set_quick_replies(state, "tours_experience")
-            return MESSAGES["tours_experience"][lang]
+            # Tours desde Cartagena: fijamos ubicacion y pedimos tipo de grupo
+            state.location = "cartagena"
+            state.step = Step.GROUP_TYPE
+            self.set_quick_replies(state, "group_type")
+            return MESSAGES["group_type"][lang]
         elif choice == 2:
+            # Planes para quienes ya estan en las islas: fijamos ubicacion y pedimos tipo de grupo
+            state.location = "island"
+            state.step = Step.GROUP_TYPE
+            self.set_quick_replies(state, "group_type")
+            return MESSAGES["group_type"][lang]
+        elif choice == 3:
             state.step = Step.COURSES_MENU
             self.set_quick_replies(state, "courses_menu")
             return MESSAGES["courses_menu"][lang]
-        elif choice == 3:
-            state.step = Step.MAIN_MENU
-            self.set_quick_replies(state, "info_general")
-            return MESSAGES["info_general"][lang]
         elif choice == 4:
+            state.step = Step.PRICING_MENU
+            self.set_quick_replies(state, "pricing_menu")
+            return MESSAGES["pricing_menu"][lang]
+        elif choice == 5:
+            state.step = Step.BOOKING_MENU
+            self.set_quick_replies(state, "booking_menu")
+            return MESSAGES["booking_menu"][lang]
+        elif choice == 6:
+            state.step = Step.LOGISTICS_MENU
+            self.set_quick_replies(state, "logistics_menu")
+            return MESSAGES["logistics_menu"][lang]
+        elif choice == 7:
             state.step = Step.ESCALATE
             return MESSAGES["escalate"][lang]
         else:
             self.set_quick_replies(state, "main_menu")
             return MESSAGES["not_understood"][lang]
+
+    def _handle_group_type(self, state: ConversationState, message: str) -> str:
+        choice = self._parse_choice(message, 4)
+        lang = state.language
+
+        if choice == 1:
+            # Solo buzos certificados
+            state.is_certified = True
+            state.step = Step.TOURS_CERTIFIED
+            self.set_quick_replies(state, "tours_certified")
+            return MESSAGES["tours_certified"][lang]
+        elif choice == 2:
+            # Solo principiantes
+            state.is_certified = False
+            state.step = Step.TOURS_BEGINNER
+            self.set_quick_replies(state, "tours_beginner")
+            return MESSAGES["tours_beginner"][lang]
+        elif choice == 3:
+            # Grupo mixto: explicamos como funciona y derivamos a humano
+            state.step = Step.ESCALATE
+            state.quick_replies = []
+            if lang == "es":
+                return (
+                    "¡Perfecto! Para grupos mixtos (buzos certificados, principiantes y/o snorkel) "
+                    "podemos combinar actividades en un mismo tour:\n\n"
+                    "- Todos viajan juntos Cartagena ↔ Islas y comparten base y almuerzo.\n"
+                    "- Durante las actividades, los snorkelers pueden ir en otra lancha por seguridad.\n"
+                    "- Cada subgrupo elige su plan (2 buceos, paquete de varios dias, minicurso o snorkel).\n\n"
+                    "Como se trata de una reserva mas personalizada, te paso con un asesor para afinar "
+                    "fechas, cupos y precios segun tu grupo.\n\n"
+                    + MESSAGES["escalate"][lang]
+                )
+            return (
+                "Great! For mixed groups (certified divers, beginners and/or snorkelers) we can "
+                "combine activities in a single tour:\n\n"
+                "- Everyone travels together Cartagena ↔ Rosario Islands and shares the same base and lunch.\n"
+                "- Snorkelers may use a different boat during the activity for safety.\n"
+                "- Each subgroup chooses its plan (2 dives, multi-day packages, minicourse or snorkel).\n\n"
+                "Because this is a more customized booking, I'll transfer you to a human advisor to "
+                "confirm dates, availability and pricing for your group.\n\n"
+                + MESSAGES["escalate"][lang]
+            )
+        elif choice == 4:
+            # Solo snorkel / acompanantes: usamos el plan de snorkel directamente
+            state.is_certified = False
+            state.selected_service = "snorkeling"
+            state.step = Step.COLOMBIAN
+            self.set_quick_replies(state, "colombian")
+            return self._format_service_detail(state) + "\n\n" + MESSAGES["colombian"][lang]
+
+        self.set_quick_replies(state, "group_type")
+        return MESSAGES["not_understood"][lang]
 
     def _handle_tours_experience(self, state: ConversationState, message: str) -> str:
         choice = self._parse_choice(message, 3)
@@ -623,6 +893,12 @@ class DecisionTree:
                 state.step = Step.ESCALATE
                 state.quick_replies = []
                 return self._format_service_detail(state) + "\n\n" + MESSAGES["escalate"][lang]
+            # Si ya conocemos la ubicacion (Cartagena o islas), pasamos directo a pregunta de colombiano
+            if state.location:
+                state.step = Step.COLOMBIAN
+                self.set_quick_replies(state, "colombian")
+                return self._format_service_detail(state) + "\n\n" + MESSAGES["colombian"][lang]
+
             state.step = Step.LOCATION
             self.set_quick_replies(state, "location")
             return self._format_service_detail(state) + "\n\n" + MESSAGES["location"][lang]
@@ -641,6 +917,12 @@ class DecisionTree:
                 state.step = Step.ESCALATE
                 state.quick_replies = []
                 return self._format_service_detail(state) + "\n\n" + MESSAGES["escalate"][lang]
+            # Si ya conocemos la ubicacion (Cartagena o islas), pasamos directo a pregunta de colombiano
+            if state.location:
+                state.step = Step.COLOMBIAN
+                self.set_quick_replies(state, "colombian")
+                return self._format_service_detail(state) + "\n\n" + MESSAGES["colombian"][lang]
+
             state.step = Step.LOCATION
             self.set_quick_replies(state, "location")
             return self._format_service_detail(state) + "\n\n" + MESSAGES["location"][lang]
@@ -648,15 +930,573 @@ class DecisionTree:
             self.set_quick_replies(state, "tours_beginner")
             return MESSAGES["not_understood"][lang]
 
+    def _handle_pricing_menu(self, state: ConversationState, message: str) -> str:
+        choice = self._parse_choice(message, 4)
+        lang = state.language
+
+        if choice is None:
+            self.set_quick_replies(state, "pricing_menu")
+            return MESSAGES["not_understood"][lang]
+
+        if lang == "es":
+            if choice == 1:
+                response = (
+                    "Resumen rapido de precios de *tours de buceo/snorkel*:\n\n"
+                    f"- 2 buceos 1 dia: {SERVICES['2_dives_1_day']['price']}\n"
+                    f"- Minicurso principiantes: {SERVICES['minicourse']['price']}\n"
+                    f"- Tour de snorkel: {SERVICES['snorkeling']['price']}\n\n"
+                    "Los valores exactos y promociones se mantienen actualizados en la web. "
+                    "Al elegir el plan, te compartire el enlace de reserva correspondiente."
+                )
+            elif choice == 2:
+                response = (
+                    "Para *principiantes y snorkel* solemos trabajar con:\n\n"
+                    f"- Minicurso de buceo (piscina + 1 inmersion): {SERVICES['minicourse']['price']}\n"
+                    f"- Tour de snorkel: {SERVICES['snorkeling']['price']}\n\n"
+                    "El detalle final depende de si sales desde Cartagena o ya estas en las islas, "
+                    "y de la temporada. El bot te guiara al plan adecuado y te mostrara el link con el precio actual."
+                )
+            elif choice == 3:
+                response = (
+                    "En *cursos PADI* (Open Water, Avanzado, Rescue, Dive Master) los precios pueden cambiar "
+                    "por temporada y promociones.\n\n"
+                    "En la web veras siempre el valor actualizado y el 10% online aplicado cuando corresponda. "
+                    "Al seleccionar un curso te compartire el enlace exacto de reserva."
+                )
+            else:  # choice == 4
+                response = (
+                    "Para *colombianos y residentes* manejamos precios especiales en COP en varios planes.\n\n"
+                    "Normalmente veras un valor en USD en la web y, al contactarnos, podremos darte el "
+                    "equivalente en pesos y opciones de pago local (transferencia/pasarela).\n\n"
+                    "Si quieres un valor concreto para una fecha y plan especifico, es mejor hablar con un asesor."
+                )
+        else:
+            if choice == 1:
+                response = (
+                    "Quick overview of *diving/snorkel tour* prices:\n\n"
+                    f"- 2 dives 1 day: {SERVICES['2_dives_1_day']['price']}\n"
+                    f"- Beginner minicourse: {SERVICES['minicourse']['price']}\n"
+                    f"- Snorkeling tour: {SERVICES['snorkeling']['price']}\n\n"
+                    "Exact amounts and promotions are always updated on the website. "
+                    "Once you choose a plan, I'll share the booking link with the current price."
+                )
+            elif choice == 2:
+                response = (
+                    "For *beginners and snorkelers* we usually work with:\n\n"
+                    f"- Dive minicourse (pool + 1 ocean dive): {SERVICES['minicourse']['price']}\n"
+                    f"- Snorkeling tour: {SERVICES['snorkeling']['price']}\n\n"
+                    "The final amount depends on whether you depart from Cartagena or are already on the islands, "
+                    "and on the season. The bot will guide you to the right plan and show the booking link."
+                )
+            elif choice == 3:
+                response = (
+                    "For *PADI courses* (Open Water, Advanced, Rescue, Dive Master), prices may change "
+                    "with season and promotions.\n\n"
+                    "The website always shows the up-to-date value and the 10% online discount when applicable. "
+                    "Once you select a course, I'll share the exact booking link."
+                )
+            else:  # choice == 4
+                response = (
+                    "For *Colombian guests and residents* we offer special COP prices on several plans.\n\n"
+                    "You'll usually see a USD price on the website, and when contacting us we can quote "
+                    "the equivalent in pesos and offer local payment options (bank transfer/local gateway).\n\n"
+                    "For a precise quote on specific dates and plans it's best to speak with an advisor."
+                )
+
+        # Tras responder, volvemos al menu principal
+        state.step = Step.MAIN_MENU
+        self.set_quick_replies(state, "main_menu")
+        return response
+
+    def _handle_island_menu(self, state: ConversationState, message: str) -> str:
+        choice = self._parse_choice(message, 12)
+        lang = state.language
+
+        if choice is None:
+            self.set_quick_replies(state, "island_menu")
+            return MESSAGES["not_understood"][lang]
+
+        islands = {
+            1: "Isla Grande",
+            2: "Isla Marina",
+            3: "Isla del Pirata",
+            4: "Isla del Sol",
+            5: "Isleta",
+            6: "Isla Arena",
+            7: "Isla Pavitos",
+            8: "Isla Lizamar",
+            9: "Isla Gigi",
+            10: "Isla Rosa",
+            11: "Isla Pelicano",
+            12: "Isla Rosario",
+        }
+
+        island_name = islands.get(choice)
+        if not island_name:
+            self.set_quick_replies(state, "island_menu")
+            return MESSAGES["not_understood"][lang]
+
+        state.island = island_name
+
+        hotels_by_island: dict[str, list[str]] = {
+            "Isla Grande": [
+                "San Pedro de Majagua",
+                "Bora Bora Beach Club",
+                "Cocoliso Island Resort",
+                "Pao Pao Hotel",
+                "Fragata Island House",
+                "Secreto Hostel",
+                "Gente de Mar Resort",
+                "Luxury Beach Club",
+                "Ecohotel Las Flores",
+                "Ecohostal Playa Libre",
+            ],
+            "Isla Marina": [
+                "Islabela",
+                "Hotel El Hamaquero",
+                "Centro Ubuntu",
+            ],
+            "Isla del Pirata": [
+                "Hotel Isla del Pirata",
+            ],
+            "Isla del Sol": [
+                "Hotel Isla del Sol",
+            ],
+            "Isleta": [
+                "Coralina Island",
+                "Isleta Beach",
+            ],
+            "Isla Arena": [
+                "Isla Arena Eco Resort",
+            ],
+            "Isla Pavitos": [
+                "Isla Pavitos (Privada)",
+            ],
+            "Isla Lizamar": [
+                "Hotel Lizamar",
+            ],
+            "Isla Gigi": [
+                "Casa de Isla Gigi",
+            ],
+            "Isla Rosa": [
+                "Isla Rosa (Privada)",
+            ],
+            "Isla Pelicano": [
+                "Isla Pelicano",
+            ],
+            "Isla Rosario": [
+                "Rosario EcoHotel",
+                "Hotel San Tropel",
+            ],
+        }
+
+        island_hotels = hotels_by_island.get(island_name, [])
+        if island_hotels:
+            quick_replies: list[dict] = []
+            for idx, hotel_name in enumerate(island_hotels, start=1):
+                quick_replies.append({"title": hotel_name, "value": str(idx)})
+            quick_replies.append({"title": "Otro / No esta en la lista", "value": str(len(island_hotels) + 1)})
+
+            state.step = Step.ISLAND_HOTEL_MENU
+            state.quick_replies = quick_replies
+
+            if lang == "es":
+                return (
+                    f"Perfecto, estas en *{island_name}*.\n\n"
+                    "Ahora dime en que hotel te hospedas. Si no ves tu alojamiento, elige \"Otro / No esta en la lista\"."
+                )
+            return (
+                f"Great, you are on *{island_name}*.\n\n"
+                "Now tell me which hotel you are staying at. If you don't see it, choose \"Other / Not listed\"."
+            )
+
+        if lang == "es":
+            response = (
+                f"Perfecto, tomamos nota de que te hospedas en *{island_name}*.\n\n"
+                "Con esto podemos coordinar mejor horarios de recogida y regreso segun el acceso en lancha.\n\n"
+                "Si quieres, ahora puedes revisar otros puntos de logistica o volver al menu principal."
+            )
+        else:
+            response = (
+                f"Great, we have noted that you are staying on *{island_name}*.\n\n"
+                "This helps us coordinate pickup and return times depending on boat access.\n\n"
+                "You can now check other logistics topics or go back to the main menu."
+            )
+
+        state.step = Step.LOGISTICS_MENU
+        self.set_quick_replies(state, "logistics_menu")
+        return response
+
+    def _handle_island_hotel_menu(self, state: ConversationState, message: str) -> str:
+        lang = state.language
+        if not state.island:
+            state.step = Step.ISLAND_MENU
+            self.set_quick_replies(state, "island_menu")
+            return MESSAGES["island_menu"][lang]
+
+        hotels_by_island: dict[str, list[str]] = {
+            "Isla Grande": [
+                "San Pedro de Majagua",
+                "Bora Bora Beach Club",
+                "Cocoliso Island Resort",
+                "Pao Pao Hotel",
+                "Fragata Island House",
+                "Secreto Hostel",
+                "Gente de Mar Resort",
+                "Luxury Beach Club",
+                "Ecohotel Las Flores",
+                "Ecohostal Playa Libre",
+            ],
+            "Isla Marina": [
+                "Islabela",
+                "Hotel El Hamaquero",
+                "Centro Ubuntu",
+            ],
+            "Isla del Pirata": [
+                "Hotel Isla del Pirata",
+            ],
+            "Isla del Sol": [
+                "Hotel Isla del Sol",
+            ],
+            "Isleta": [
+                "Coralina Island",
+                "Isleta Beach",
+            ],
+            "Isla Arena": [
+                "Isla Arena Eco Resort",
+            ],
+            "Isla Pavitos": [
+                "Isla Pavitos (Privada)",
+            ],
+            "Isla Lizamar": [
+                "Hotel Lizamar",
+            ],
+            "Isla Gigi": [
+                "Casa de Isla Gigi",
+            ],
+            "Isla Rosa": [
+                "Isla Rosa (Privada)",
+            ],
+            "Isla Pelicano": [
+                "Isla Pelicano",
+            ],
+            "Isla Rosario": [
+                "Rosario EcoHotel",
+                "Hotel San Tropel",
+            ],
+        }
+
+        island_hotels = hotels_by_island.get(state.island, [])
+        max_options = len(island_hotels) + 1 if island_hotels else 1
+        choice = self._parse_choice(message, max_options)
+
+        if choice is None:
+            # reconstruir quick replies para este paso
+            quick_replies: list[dict] = []
+            for idx, hotel_name in enumerate(island_hotels, start=1):
+                quick_replies.append({"title": hotel_name, "value": str(idx)})
+            if island_hotels:
+                quick_replies.append({"title": "Otro / No esta en la lista", "value": str(len(island_hotels) + 1)})
+            state.quick_replies = quick_replies
+            return MESSAGES["not_understood"][lang]
+
+        if not island_hotels:
+            state.hotel = None
+        elif choice <= len(island_hotels):
+            state.hotel = island_hotels[choice - 1]
+        else:
+            state.hotel = "Otro / No esta en la lista"
+
+        island_name = state.island
+        hotel_name = state.hotel
+
+        if lang == "es":
+            if hotel_name and hotel_name != "Otro / No esta en la lista":
+                response = (
+                    f"Perfecto, tomamos nota de que te hospedas en *{hotel_name}* en *{island_name}*.\n\n"
+                    "Con esto podemos coordinar mejor horarios de recogida y regreso segun el acceso en lancha.\n\n"
+                    "Ahora puedes revisar otros puntos de logistica o volver al menu principal."
+                )
+            else:
+                response = (
+                    f"Perfecto, tomamos nota de que te hospedas en otro alojamiento de *{island_name}*.\n\n"
+                    "Aunque tu hotel no este en la lista, coordinaremos la logistica de recogida según el acceso disponible.\n\n"
+                    "Ahora puedes revisar otros puntos de logistica o volver al menu principal."
+                )
+        else:
+            if hotel_name and hotel_name != "Otro / No esta en la lista":
+                response = (
+                    f"Great, we have noted that you are staying at *{hotel_name}* on *{island_name}*.\n\n"
+                    "This helps us coordinate pickup and return times depending on boat access.\n\n"
+                    "You can now check other logistics topics or go back to the main menu."
+                )
+            else:
+                response = (
+                    f"Great, we have noted that you are staying at another place on *{island_name}*.\n\n"
+                    "Even if your hotel is not listed, we will coordinate logistics according to the available access.\n\n"
+                    "You can now check other logistics topics or go back to the main menu."
+                )
+
+        state.step = Step.LOGISTICS_MENU
+        self.set_quick_replies(state, "logistics_menu")
+        return response
+
+    def _handle_booking_menu(self, state: ConversationState, message: str) -> str:
+        choice = self._parse_choice(message, 4)
+        lang = state.language
+
+        if choice is None:
+            self.set_quick_replies(state, "booking_menu")
+            return MESSAGES["not_understood"][lang]
+
+        if lang == "es":
+            if choice == 1:
+                response = (
+                    "Puedes hacer la *reserva completa online* usando el enlace que te enviamos para cada plan.\n\n"
+                    "Al completar el pago recibes la confirmacion por correo y WhatsApp con todos los detalles "
+                    "de la salida."
+                )
+            elif choice == 2:
+                response = (
+                    "En muchos casos es posible pagar solo el *50% como anticipo* y el resto el dia de la salida.\n\n"
+                    "El asesor te indicara si aplica en tu caso (tipo de plan, fecha, numero de personas) y te "
+                    "enviara el enlace o instrucciones para el pago parcial."
+                )
+            elif choice == 3:
+                response = (
+                    "Manejamos diferentes *formas de pago*: tarjeta de credito extranjera, pasarela local y/o "
+                    "transferencia bancaria en Colombia.\n\n"
+                    "En el enlace de pago veras las opciones disponibles para tu moneda y pais."
+                )
+            else:  # choice == 4
+                response = (
+                    "Para *grupos y agencias* podemos generar enlaces de pago separados (buceo, minicurso, snorkel, "
+                    "acompanantes) o coordinar una reserva centralizada.\n\n"
+                    "Un asesor revisara fechas, numero de personas y necesidades especiales antes de confirmar."
+                )
+        else:
+            if choice == 1:
+                response = (
+                    "You can *book and pay everything online* using the link we send for each plan.\n\n"
+                    "Once payment is completed, you'll receive a confirmation by email and WhatsApp with all "
+                    "the details of your trip."
+                )
+            elif choice == 2:
+                response = (
+                    "In many cases you can pay only *50% as a deposit* and the rest on the day of the trip.\n\n"
+                    "The advisor will confirm if this applies to your case (plan type, dates, group size) and "
+                    "send you the right payment link or instructions."
+                )
+            elif choice == 3:
+                response = (
+                    "We support several *payment methods*: international credit card, local payment gateway and/or "
+                    "bank transfer within Colombia.\n\n"
+                    "The payment link will show the options available for your country and currency."
+                )
+            else:  # choice == 4
+                response = (
+                    "For *groups and agencies* we can create separate payment links (diving, minicourse, snorkel, "
+                    "companions) or coordinate a centralized booking.\n\n"
+                    "An advisor will review dates, group size and any special needs before confirming."
+                )
+
+        state.step = Step.MAIN_MENU
+        self.set_quick_replies(state, "main_menu")
+        return response
+
+    def _handle_logistics_menu(self, state: ConversationState, message: str) -> str:
+        choice = self._parse_choice(message, 4)
+        lang = state.language
+
+        if choice is None:
+            self.set_quick_replies(state, "logistics_menu")
+            return MESSAGES["not_understood"][lang]
+
+        if lang == "es":
+            if choice == 1:
+                response = (
+                    "En los *tours de un dia desde Cartagena* normalmente:\n\n"
+                    "- Encuentro: 8:00 a.m. en el Muelle de la Bodeguita.\n"
+                    "- Regreso aproximado: entre 4:00 y 4:30 p.m.\n\n"
+                    "En los paquetes de varios dias, el horario se ajusta segun el numero de inmersiones y noches "
+                    "en las islas, pero siempre tendras la informacion detallada en el enlace del plan."
+                )
+            elif choice == 2:
+                response = (
+                    "El *punto de encuentro habitual en Cartagena* es el Muelle de la Bodeguita a las 8:00 a.m.\n\n"
+                    "Para quienes ya estan en las islas, solemos hacer *recogidas en el hotel* alrededor de las "
+                    "9:30 a.m. (si hay acceso en lancha).\n\n"
+                    "En muchos casos podemos guardar tu maleta en nuestra oficina de Cartagena mientras estas en "
+                    "las islas."
+                )
+            elif choice == 3:
+                # Ir al selector de isla de alojamiento
+                state.step = Step.ISLAND_MENU
+                self.set_quick_replies(state, "island_menu")
+                return MESSAGES["island_menu"][lang]
+            else:  # choice == 4
+                response = (
+                    "En la mayoria de planes se incluye *equipo completo de buceo/snorkel, seguro, tasas de parque* "
+                    "y, en los tours desde Cartagena, el transporte en lancha. Muchos planes incluyen tambien "
+                    "almuerzo.\n\n"
+                    "Te recomendamos llevar: toalla, bloqueador, ropa comoda, gorra y, si te mareas, tu propia "
+                    "medicacion para el mareo. Las salidas dependen de las condiciones de clima y mar; si hay "
+                    "cambios o cancelaciones, coordinamos contigo reprogramacion o reembolso segun la politica "
+                    "del plan."
+                )
+        else:
+            if choice == 1:
+                response = (
+                    "For *one-day tours from Cartagena* you will typically:\n\n"
+                    "- Meet at 8:00 a.m. at Muelle de la Bodeguita.\n"
+                    "- Return around 4:00–4:30 p.m.\n\n"
+                    "For multi-day packages, the schedule depends on the number of dives and nights on the islands, "
+                    "and you'll see the detailed itinerary in the plan link."
+                )
+            elif choice == 2:
+                response = (
+                    "The usual *meeting point in Cartagena* is Muelle de la Bodeguita at 8:00 a.m.\n\n"
+                    "For guests already on the islands, we usually offer *hotel pickup* around 9:30 a.m. "
+                    "(when there is boat access).\n\n"
+                    "In many cases we can store your luggage at our Cartagena office while you are on the islands."
+                )
+            elif choice == 3:
+                state.step = Step.ISLAND_MENU
+                self.set_quick_replies(state, "island_menu")
+                return MESSAGES["island_menu"][lang]
+            else:  # choice == 4
+                response = (
+                    "Most plans include *full dive/snorkel equipment, insurance, park fees* and, for tours from "
+                    "Cartagena, the boat transfer. Many plans also include lunch.\n\n"
+                    "We recommend bringing: towel, sunscreen, comfortable clothes, a hat, and your own seasickness "
+                    "medication if needed. Trips depend on weather and sea conditions; if there are changes or "
+                    "cancellations we will coordinate rescheduling or refunds according to the plan policy."
+                )
+
+        state.step = Step.MAIN_MENU
+        self.set_quick_replies(state, "main_menu")
+        return response
+
     def _handle_courses_menu(self, state: ConversationState, message: str) -> str:
-        choice = self._parse_choice(message, 5)
+        choice = self._parse_choice(message, 3)
+        lang = state.language
+
+        if choice == 1:
+            state.selected_service = "open_water"
+            state.step = Step.COURSES_OPEN_WATER_ORIGIN
+            self.set_quick_replies(state, "courses_open_water_origin")
+            if lang == "es":
+                return (
+                    "Perfecto, vamos a ver tu curso Open Water.\n\n"
+                    "Primero, ¿desde donde harias la parte practica?"
+                )
+            return (
+                "Great, let's check your Open Water course.\n\n"
+                "First, where would you do the practical part?"
+            )
+        if choice == 2:
+            state.step = Step.COURSES_ADVANCED_MENU
+            self.set_quick_replies(state, "courses_advanced_menu")
+            if lang == "es":
+                return (
+                    "Estos son nuestros cursos PADI avanzados y profesionales.\n"
+                    "Elige el que mas te interese."
+                )
+            return (
+                "These are our advanced and professional PADI courses.\n"
+                "Choose the one you are most interested in."
+            )
+        if choice == 3:
+            state.step = Step.ESCALATE
+            state.quick_replies = []
+            if lang == "es":
+                return (
+                    "Genial que ya hayas empezado tu curso. Para completar un referral/reactivate en Diving Planet "
+                    "necesitamos revisar tu eLearning y formularios PADI, y ver cuantas inmersiones te faltan.\n\n"
+                    "Te paso con un asesor para que te indique exactamente que documentos traer y como funciona el precio en tu caso.\n\n"
+                    + MESSAGES["escalate"][lang]
+                )
+            return (
+                "Great that you already started your course. To finish a referral/reactivate with Diving Planet we "
+                "need to review your eLearning and PADI forms, and see how many dives you still need.\n\n"
+                "I will transfer you to a human advisor so they can tell you exactly which documents to bring and how pricing works in your case.\n\n"
+                + MESSAGES["escalate"][lang]
+            )
+
+        self.set_quick_replies(state, "courses_menu")
+        return MESSAGES["not_understood"][lang]
+
+    def _handle_courses_open_water_origin(self, state: ConversationState, message: str) -> str:
+        choice = self._parse_choice(message, 2)
+        lang = state.language
+
+        if choice == 1:
+            state.location = "cartagena"
+        elif choice == 2:
+            state.location = "island"
+        else:
+            self.set_quick_replies(state, "courses_open_water_origin")
+            return MESSAGES["not_understood"][lang]
+
+        state.step = Step.COURSES_OPEN_WATER_TIME
+        self.set_quick_replies(state, "courses_open_water_time")
+        if lang == "es":
+            return (
+                "Perfecto. Para la parte practica del curso Open Water en las Islas del Rosario, "
+                "lo ideal es que tengas al menos *2 dias completos* disponibles.\n\n"
+                "¿Cuentas con ese tiempo?"
+            )
+        return (
+            "Perfect. For the practical part of your Open Water course in the Rosario Islands, "
+            "it is ideal to have at least *2 full days* available.\n\n"
+            "Do you have that time available?"
+        )
+
+    def _handle_courses_open_water_time(self, state: ConversationState, message: str) -> str:
+        choice = self._parse_choice(message, 2)
+        lang = state.language
+
+        if choice is None:
+            self.set_quick_replies(state, "courses_open_water_time")
+            return MESSAGES["not_understood"][lang]
+
+        response = self._format_service_detail(state)
+
+        if lang == "es":
+            if choice == 1:
+                response += (
+                    "\n\nGenial, con 2 dias completos podemos organizar bien la practica en islas "
+                    "para que completes tu certificacion Open Water."
+                )
+            else:
+                response += (
+                    "\n\nSi tienes menos de 2 dias completos, podemos ver alternativas (por ejemplo combinar "
+                    "minicurso o buceos guiados) o ajustar el planning."
+                )
+        else:
+            if choice == 1:
+                response += (
+                    "\n\nGreat, with 2 full days we can comfortably organize the practice in the islands "
+                    "so you can complete your Open Water certification."
+                )
+            else:
+                response += (
+                    "\n\nIf you have less than 2 full days, we can look at alternatives (for example combining "
+                    "a mini course or guided dives) or adjust the plan."
+                )
+
+        state.step = Step.COLOMBIAN
+        self.set_quick_replies(state, "colombian")
+        return response + "\n\n" + MESSAGES["colombian"][lang]
+
+    def _handle_courses_advanced_menu(self, state: ConversationState, message: str) -> str:
+        choice = self._parse_choice(message, 4)
         lang = state.language
         course_map = {
-            1: "open_water",
-            2: "advanced",
-            3: "rescue",
-            4: "divemaster",
-            5: None,  # Specialties -> escalate
+            1: "advanced",
+            2: "rescue",
+            3: "divemaster",
+            4: None,
         }
 
         if choice in course_map:
@@ -668,9 +1508,9 @@ class DecisionTree:
             state.step = Step.COLOMBIAN
             self.set_quick_replies(state, "colombian")
             return self._format_service_detail(state) + "\n\n" + MESSAGES["colombian"][lang]
-        else:
-            self.set_quick_replies(state, "courses_menu")
-            return MESSAGES["not_understood"][lang]
+
+        self.set_quick_replies(state, "courses_advanced_menu")
+        return MESSAGES["not_understood"][lang]
 
     def _handle_service_detail(self, state: ConversationState, message: str) -> str:
         # Fallback: show detail and go to location
@@ -722,12 +1562,26 @@ class DecisionTree:
         duration = service[f"duration_{lang}"]
         includes = service[f"includes_{lang}"]
 
+        extra = ""
+        min_age = service.get("min_age")
+        if min_age is not None:
+            if lang == "es":
+                extra += f"\n👶 *Edad minima recomendada*: {min_age} anos."
+            else:
+                extra += f"\n👶 *Recommended minimum age*: {min_age} years."
+
+        notes_key = "extra_notes_" + lang
+        extra_notes = service.get(notes_key)
+        if extra_notes:
+            extra += "\nℹ️ " + extra_notes
+
         if lang == "es":
             return (
                 f"*{name}*\n\n"
                 f"💰 *Precio*: {price}\n"
                 f"⏱ *Duracion*: {duration}\n"
                 f"✅ *Incluye*: {includes}"
+                f"{extra}"
             )
         else:
             return (
@@ -735,6 +1589,7 @@ class DecisionTree:
                 f"💰 *Price*: {price}\n"
                 f"⏱ *Duration*: {duration}\n"
                 f"✅ *Includes*: {includes}"
+                f"{extra}"
             )
 
     def _format_summary(self, state: ConversationState) -> str:

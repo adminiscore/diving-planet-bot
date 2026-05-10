@@ -51,7 +51,12 @@ Advisor contact: WhatsApp +57 320 2301515.
 Answer in English."""
 
 
-async def rag_answer(query: str, lang: str = "es", history: list[dict] | None = None) -> str:
+async def rag_answer(
+    query: str,
+    lang: str = "es",
+    history: list[dict] | None = None,
+    extra_context: str | None = None,
+) -> str:
     """
     Retrieve relevant context from the knowledge base and generate
     an answer using the LLM.
@@ -102,9 +107,14 @@ async def rag_answer(query: str, lang: str = "es", history: list[dict] | None = 
         for msg in history[-6:]:
             messages.append({"role": msg["role"], "content": redact_pii(msg["content"])})
 
+    user_content = f"Contexto:\n{context}"
+    if extra_context:
+        user_content += f"\n\nContexto adicional de la situacion: {extra_context}"
+    user_content += f"\n\nPregunta del cliente: {safe_query}"
+
     messages.append({
         "role": "user",
-        "content": f"Contexto:\n{context}\n\nPregunta del cliente: {safe_query}",
+        "content": user_content,
     })
 
     # Call LLM

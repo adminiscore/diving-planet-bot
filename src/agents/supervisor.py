@@ -25,10 +25,19 @@ MENU_STEPS = {
     Step.WELCOME,
     Step.LANGUAGE,
     Step.MAIN_MENU,
+    Step.GROUP_TYPE,
     Step.TOURS_EXPERIENCE,
     Step.TOURS_CERTIFIED,
     Step.TOURS_BEGINNER,
     Step.COURSES_MENU,
+    Step.COURSES_OPEN_WATER_ORIGIN,
+    Step.COURSES_OPEN_WATER_TIME,
+    Step.COURSES_ADVANCED_MENU,
+    Step.PRICING_MENU,
+    Step.BOOKING_MENU,
+    Step.LOGISTICS_MENU,
+    Step.ISLAND_MENU,
+    Step.ISLAND_HOTEL_MENU,
     Step.SERVICE_DETAIL,
     Step.LOCATION,
     Step.COLOMBIAN,
@@ -97,7 +106,21 @@ async def route_message(state: ConversationState, message: str) -> str:
         # Free text while in menu -> use RAG but keep menu state
         logger.info(f"[SUPERVISOR] RAG (free text in menu step={state.step.value})")
         state.history.append({"role": "user", "content": message})
-        answer = await rag_answer(message, lang=state.language, history=state.history)
+
+        extra_parts = []
+        if state.location == "cartagena":
+            extra_parts.append("El cliente indica que saldra desde Cartagena para su experiencia.")
+        elif state.location == "island":
+            extra_parts.append("El cliente indica que ya esta en las Islas del Rosario.")
+
+        if state.island:
+            extra_parts.append(f"Se hospeda (o se hospedara) en la isla: {state.island}.")
+        if state.hotel:
+            extra_parts.append(f"Hotel/alojamiento reportado: {state.hotel}.")
+
+        extra_context = " ".join(extra_parts) if extra_parts else None
+
+        answer = await rag_answer(message, lang=state.language, history=state.history, extra_context=extra_context)
         state.history.append({"role": "assistant", "content": answer})
         return answer
 
@@ -124,7 +147,21 @@ async def route_message(state: ConversationState, message: str) -> str:
         # Free text question
         state.step = Step.FREE_TEXT
         state.history.append({"role": "user", "content": message})
-        answer = await rag_answer(message, lang=state.language, history=state.history)
+
+        extra_parts = []
+        if state.location == "cartagena":
+            extra_parts.append("El cliente indica que saldra desde Cartagena para su experiencia.")
+        elif state.location == "island":
+            extra_parts.append("El cliente indica que ya esta en las Islas del Rosario.")
+
+        if state.island:
+            extra_parts.append(f"Se hospeda (o se hospedara) en la isla: {state.island}.")
+        if state.hotel:
+            extra_parts.append(f"Hotel/alojamiento reportado: {state.hotel}.")
+
+        extra_context = " ".join(extra_parts) if extra_parts else None
+
+        answer = await rag_answer(message, lang=state.language, history=state.history, extra_context=extra_context)
         state.history.append({"role": "assistant", "content": answer})
         logger.info(f"[SUPERVISOR] RAG (post-menu)")
         return answer
@@ -133,7 +170,21 @@ async def route_message(state: ConversationState, message: str) -> str:
     if state.step == Step.ESCALATE:
         state.step = Step.FREE_TEXT
         state.history.append({"role": "user", "content": message})
-        answer = await rag_answer(message, lang=state.language, history=state.history)
+
+        extra_parts = []
+        if state.location == "cartagena":
+            extra_parts.append("El cliente indica que saldra desde Cartagena para su experiencia.")
+        elif state.location == "island":
+            extra_parts.append("El cliente indica que ya esta en las Islas del Rosario.")
+
+        if state.island:
+            extra_parts.append(f"Se hospeda (o se hospedara) en la isla: {state.island}.")
+        if state.hotel:
+            extra_parts.append(f"Hotel/alojamiento reportado: {state.hotel}.")
+
+        extra_context = " ".join(extra_parts) if extra_parts else None
+
+        answer = await rag_answer(message, lang=state.language, history=state.history, extra_context=extra_context)
         state.history.append({"role": "assistant", "content": answer})
         return answer
 

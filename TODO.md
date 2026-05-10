@@ -78,7 +78,73 @@
 - [] Memoria en el chat?
 - [] Almuerzo = Comida
 - [] Info sobre la comida
+- [x] Inyectar contexto de ubicación y alojamiento (`state.location`, `state.island`, `state.hotel`) en las llamadas al RAG para que pueda mencionar recogidas/logística específicas.
+
+## Pendientes (árbol de opciones / intents usuarios)
+- [ ] Modelar caso **grupo mixto** (buzos certificados + principiantes + snorkelers / acompañantes) viajando juntos en el mismo tour, con precios diferenciados y logística de actividades/lancha.
+- [ ] Cubrir preguntas de **disponibilidad de última hora** y **corte de reserva online** (hasta qué hora se puede reservar por web y qué pasa después).
+- [ ] Cubrir preguntas de **precios**: valores en USD vs COP, diferencia de tarifas saliendo desde Cartagena vs ya en las islas, y paquetes de varios días (5, 7, 9 buceos) con o sin nocturna.
+- [ ] Cubrir preguntas de **descuentos** para colombianos y residentes (precio local) y cómo se combina con el 10% online (si ya está aplicado o no, necesidad o no de código).
+- [ ] Modelar mejor las dudas sobre **alojamiento en islas**: hoteles recomendados (Cocoliso, San Pedro de Majagua, etc.), que el alojamiento no está incluido, noches extra y posibilidad de regresar con Diving Planet otro día.
+- [ ] Cubrir preguntas sobre **recogida en hotel en las islas**: horarios de pick-up y regreso, qué pasa si el hotel no tiene acceso en lancha, hoteles específicos (Isla Grande, Ubuntu, etc.).
+- [ ] Cubrir preguntas sobre **punto de encuentro en Cartagena / marinas**: Muelle de la Bodeguita vs Marina Todo Mar, puerta específica, link de ubicación y opción de guardar maletas en la oficina de Cartagena.
+- [ ] Detallar mejor **qué incluye cada plan**: equipo completo, tasas de parque, seguro de buceo, almuerzo/comida, si hay opciones sin almuerzo, snacks/bebidas y si se puede llevar comida propia.
+- [ ] Cubrir preguntas de **equipo**: si es necesario llevar equipo propio, si se puede ver/probar el equipo antes de salir, y dónde está el equipo (Cartagena vs islas).
+- [ ] Cubrir preguntas de **condiciones y políticas**: clima, cancelación y reembolsos, cambio de fecha, qué pasa si el cliente no puede viajar.
+- [ ] Cubrir preguntas de **qué llevar y bienestar**: toalla, bloqueador, mareo (si ofrecen pastillas o solo recomendación), qué no está permitido llevar.
+- [ ] Cubrir preguntas de **profundidad máxima, número de inmersiones y sitios**: metros máximos, diferencia entre principiantes/certificados, barcos hundidos u otros puntos “especiales” de la zona.
+- [ ] Cubrir preguntas sobre **tamaño de grupos y acompañantes**: mínimo/máximo de personas por instructor, acompañantes que solo van en la lancha o hacen snorkel, posibilidad de acompañar a alguien que hace minicurso.
+- [ ] Cubrir preguntas sobre el **proceso de reserva y pago**: porcentaje de anticipo (50% vs 100%), links de pago específicos por grupo/actividad, uso de pasaporte vs cédula para extranjeros, pago en pasarela local vs tarjeta extranjera vs transferencia.
+- [ ] Cubrir preguntas sobre **formularios y requisitos médicos**: cuestionarios PADI, exoneraciones, Discover Scuba / DSD eLearning, cuándo se requiere certificado médico si responden “sí” en el cuestionario.
+- [ ] Cubrir preguntas sobre **certificaciones y cursos**: diferencia entre minicurso y curso Open Water, upgrade de Discover/mini a Open Water, referrals desde otros centros/instructores (qué papeles deben traer).
+- [ ] Cubrir preguntas sobre **fotos y videos**: si están incluidos en el plan, cómo se solicitan luego, qué pasa con fotos que tomó el guía.
+- [ ] Cubrir preguntas sobre **registro de buceos / logbook**: nombres de puntos de buceo (Alex Place, Luis Guerra, etc.) y apoyo para registrar inmersiones en apps PADI/SSI.
+- [ ] Cubrir preguntas sobre **frecuencia de tours**: si hay salidas todos los días, horarios típicos por tipo de plan.
+- [ ] Cubrir preguntas sobre **edades mínimas y requisitos para niños** tanto en buceo como en snorkel.
+
+- [x] Añadir paso `GROUP_TYPE` para tipo de grupo y manejar el caso de grupo mixto (buceo + snorkel / acompañantes) con explicación y escalado a humano.
+- [x] Crear menús específicos de **precios**, **reservas/pagos** y **logística/FAQ** (`PRICING_MENU`, `BOOKING_MENU`, `LOGISTICS_MENU`) con mensajes ES/EN y retorno al menú principal.
+- [x] Ajustar flujos de tours certificados y principiantes para reutilizar la `location` seleccionada desde el menú principal y saltar directamente a `COLOMBIAN` cuando aplica.
+- [x] Actualizar el `Supervisor` para reconocer los nuevos pasos de menú y seguir ruteando correctamente al árbol de decisión.
+
+
+- [x] Rediseñar el flujo de **Cursos PADI y certificaciones** para alinearlo mejor con el árbol extendido (curso básico Open Water con origen Cartagena/islas, tiempo disponible, resumen claro del curso).
+- [x] Añadir granularidad en cursos: path específico para **referrals/reactivates** (cursos empezados en otro centro), explicando documentos requeridos y cómo se cobra la diferencia vs paquete de buceos.
+- [x] Incorporar de forma explícita en el árbol la **edad mínima y recomendaciones para niños** en minicurso y snorkel mediante notas adicionales en los detalles de servicio.
+- [x] Extender la estructura de `SERVICES` para reflejar mejor atributos de cursos y experiencias de principiantes/snorkel (edad mínima recomendada, días mínimos de práctica, notas adicionales), manteniendo compatibilidad con el resumen actual.
+- [x] Modelar un selector de **isla de alojamiento** para clientes que ya están en las islas y usarlo en los flujos de logística y recogida en hotel (Step `ISLAND_MENU` con almacenamiento en `state.island`).
+- [x] Cargar/configurar el listado de **hoteles por isla** (usando el detalle de alojamientos que tenemos para las 12 islas principales) y modelar submenús de hotel tras seleccionar isla (Step `ISLAND_HOTEL_MENU` con `state.hotel`).
+
+#### Islas del Rosario con muelle y hotel (para futuros selectores)
+
+- Isla Grande: la más extensa. Hoteles: San Pedro de Majagua, Pao Pao, Cocoliso. Tiene múltiples muelles.
+- Isla Marina: contigua a Isla Grande. Hoteles: Coralina Island, Islabela. Tiene muelle.
+- Isla del Pirata: ocupada casi totalmente por el Hotel Isla del Pirata. Tiene muelle.
+- Isla del Sol: isla-resort con el Hotel Isla del Sol. Tiene muelle.
+- Isleta: zona tranquila con hoteles como Hotel Isla Bela. Tiene muelle.
+- Isla Arena: sede del Hotel Isla Arena. Tiene muelle.
+- Isla Pavitos: donde se ubica el Bora Bora Beach Club. Tiene muelle.
+- Isla Lizamar: famosa por sus pasadías y el Hotel Lizamar. Tiene muelle.
+- Isla Gigi: isla privada con alojamiento de lujo. Tiene muelle.
+- Isla Rosa: isla exclusiva con club de playa. Tiene muelle.
+- Isla Pelícano: isla privada de alquiler íntegro (vivienda de lujo). Tiene dos muelles.
+- Isla Rosario: cuenta con alojamientos como Rosario de Mar. Tiene muelle.
+
+*Notas de contexto*: algunas islas (Gigi, Rosa, Pelícano, Pavitos) funcionan como villas privadas o clubes exclusivos, y muchos alojamientos sin muelle propio usan muelles comunitarios (como Playa Libre) o de nativos en Isla Grande.
+
+### Próximos pasos sugeridos (árbol ES)
+
+- [ ] Probar manualmente los principales recorridos del árbol ES (tours certificados, principiantes, grupo mixto, precios, reservas, logística y cursos) para ajustar copys y orden de mensajes.
+- [ ] Ajustar textos finos (copys) de menús de precios, reservas, logística, cursos, selector de isla y submenús de hoteles según feedback real de usuarios.
+- [ ] Evaluar si conviene añadir un submenú específico para edades de niños en logística o cursos una vez validadas las políticas de Diving Planet.
 
 ## A tener en cuenta (ajustes menores opcionales)
+
 - [ ] Q19 “alojamiento incluido”: el top-1 FAQ tiene topics raros (`meeting_point`/`schedule`/`equipment`). Indica que ese FAQ es multi-tema.
       Si la respuesta final sale bien, no tocar. Si no, revisar ese FAQ para hacerlo más atómico.
+
+Lo que no está pasando todavía es:
+
+No se hace una lógica muy específica tipo:
+“si selected_service == "snorkeling" y el usuario dice ¿cuánto vale? => responde exactamente SERVICES['snorkeling']['price']”.
+Esa parte se la dejas al LLM/RAG, que con el contexto y la base de conocimiento debe deducir de qué está hablando. 
