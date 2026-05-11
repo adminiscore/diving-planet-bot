@@ -60,9 +60,10 @@ services:
       SECRET_KEY_BASE: dev_secret_key_base_change_in_production
       FRONTEND_URL: http://localhost:3300
       DEFAULT_LOCALE: es
+      ENABLE_RACK_ATTACK_WIDGET_API: "false"
       DATABASE_URL: postgres://postgres:postgres@postgres:5432/chatwoot_dev
       REDIS_URL: redis://redis:6379/1
-      REDIS_SIDEKIQ_URL: redis://redis:6379/2
+      REDIS_SIDEKIQ_URL: redis://redis:6379/2?read_timeout=10&connect_timeout=10
       RAILS_ENV: production
       RAILS_LOG_TO_STDOUT: "true"
       MAILER_SENDER_EMAIL: noreply@divingplanet.org
@@ -86,12 +87,16 @@ services:
       SECRET_KEY_BASE: dev_secret_key_base_change_in_production
       FRONTEND_URL: http://localhost:3300
       DEFAULT_LOCALE: es
+      ENABLE_RACK_ATTACK_WIDGET_API: "false"
       DATABASE_URL: postgres://postgres:postgres@postgres:5432/chatwoot_dev
       REDIS_URL: redis://redis:6379/1
-      REDIS_SIDEKIQ_URL: redis://redis:6379/2
+      REDIS_SIDEKIQ_URL: redis://redis:6379/2?read_timeout=10&connect_timeout=10
+      SIDEKIQ_CONCURRENCY: 5
       RAILS_ENV: production
     command: ["bundle", "exec", "sidekiq", "-C", "config/sidekiq.yml"]
 
 volumes:
   pgdata_dev:
   redis_data_dev:
+
+

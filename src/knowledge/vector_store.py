@@ -83,7 +83,7 @@ def source_weight_for_topics(source: str | None, topics: list[str]) -> float:
 async def search_knowledge_base(
     query: str,
     lang: str = "es",
-    top_k: int = 4,
+    top_k: int | None = None,
 ) -> list[dict]:
     """
     Embed the query and return the top_k most similar documents.
@@ -96,6 +96,7 @@ async def search_knowledge_base(
     Returns:
         List of dicts with 'content', 'metadata', and 'score'.
     """
+    top_k = top_k or settings.rag_top_k
     client = AsyncOpenAI(api_key=settings.openai_api_key)
 
     # Generate query embedding

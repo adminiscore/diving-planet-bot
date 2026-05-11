@@ -12,6 +12,7 @@ keeping costs minimal.
 
 import logging
 
+from src.agents.escalation import detect_sensitive_escalation
 from src.flows.decision_tree import DecisionTree, ConversationState, Step
 from src.agents.rag_agent import rag_answer
 from src.privacy import detect_pii, privacy_block_message
@@ -58,6 +59,47 @@ ESCALATION_KEYWORDS = {
     "persona", "person", "hablar con", "speak with", "talk to",
 }
 
+LANGUAGE_SELECTION_KEYWORDS = {
+    "1", "2", "es", "en", "español", "espanol", "spanish", "english",
+}
+
+GREETING_ONLY_KEYWORDS = {
+    "hola", "hello", "hi", "buenas", "buenos dias", "buenos días",
+    "buenas tardes", "buenas noches", "hey",
+}
+
+ENGLISH_HINTS = {
+    "we", "are", "family", "certified", "divers", "snorkel", "snorkeling",
+    "can", "together", "price", "book", "booking", "discount", "payment",
+    "meeting", "point", "open water",
+}
+
+SPANISH_HINTS = {
+    "somos", "familia", "buzos", "certificados", "bucear", "snorkel",
+    "precio", "reservar", "reserva", "descuento", "pago", "juntos",
+    "punto de encuentro",
+}
+
+
+def _is_substantive_free_text(message: str) -> bool:
+    normalized = " ".join(message.strip().lower().split())
+    if not normalized or normalized in LANGUAGE_SELECTION_KEYWORDS:
+        return False
+    if normalized in GREETING_ONLY_KEYWORDS:
+        return False
+    return len(normalized.split()) >= 4 or "?" in normalized
+
+
+def _infer_language(message: str, fallback: str = "es") -> str:
+    normalized = f" {message.strip().lower()} "
+    english_matches = sum(1 for hint in ENGLISH_HINTS if f" {hint} " in normalized)
+    spanish_matches = sum(1 for hint in SPANISH_HINTS if f" {hint} " in normalized)
+    if english_matches > spanish_matches:
+        return "en"
+    if spanish_matches > english_matches:
+        return "es"
+    return fallback
+
 
 async def route_message(state: ConversationState, message: str) -> str:
     """
@@ -81,13 +123,23 @@ async def route_message(state: ConversationState, message: str) -> str:
     # Check for escalation keywords
     if any(kw in msg_lower for kw in ESCALATION_KEYWORDS):
         state.step = Step.ESCALATE
+        state.quick_replies = []
         from src.flows.decision_tree import MESSAGES
         logger.info(f"[SUPERVISOR] Escalation triggered by keyword")
         return MESSAGES["escalate"][state.language]
 
+    sensitive_escalation = detect_sensitive_escalation(message, state.language)
+    if sensitive_escalation:
+        reason, response = sensitive_escalation
+        state.step = Step.ESCALATE
+        state.quick_replies = []
+        logger.info(f"[SUPERVISOR] Sensitive escalation triggered reason={reason}")
+        return response
+
     # Check for menu reset keywords
     if msg_lower in MENU_KEYWORDS:
         state.step = Step.MAIN_MENU
+        decision_tree.set_quick_replies(state, "main_menu")
         from src.flows.decision_tree import MESSAGES
         logger.info(f"[SUPERVISOR] Menu reset triggered by keyword")
         return MESSAGES["main_menu"][state.language]
@@ -100,7 +152,17 @@ async def route_message(state: ConversationState, message: str) -> str:
             logger.info(f"[SUPERVISOR] Decision tree -> step={state.step.value}")
             return response
 
-        # If it's the welcome/language step, always use decision tree
+        if state.step in (Step.WELCOME, Step.LANGUAGE) and _is_substantive_free_text(message):
+            state.language = _infer_language(message, state.language)
+            state.step = Step.FREE_TEXT
+            state.quick_replies = []
+            logger.info(f"[SUPERVISOR] RAG (early free text) lang={state.language}")
+            state.history.append({"role": "user", "content": message})
+            answer = await rag_answer(message, lang=state.language, history=state.history)
+            state.history.append({"role": "assistant", "content": answer})
+            return answer
+
+        # If it's the welcome/language step and not a real question, use decision tree
         if state.step in (Step.WELCOME, Step.LANGUAGE):
             response = decision_tree.process_message(state, message)
             logger.info(f"[SUPERVISOR] Decision tree (early step) -> step={state.step.value}")
@@ -108,6 +170,7 @@ async def route_message(state: ConversationState, message: str) -> str:
 
         # Free text while in menu -> use RAG but keep menu state
         logger.info(f"[SUPERVISOR] RAG (free text in menu step={state.step.value})")
+        state.quick_replies = []
         state.history.append({"role": "user", "content": message})
 
         extra_parts = []
@@ -134,7 +197,8 @@ async def route_message(state: ConversationState, message: str) -> str:
             state.step = Step.MAIN_MENU
             from src.flows.decision_tree import MESSAGES
             return MESSAGES["main_menu"][state.language]
-        if msg_lower in ("2", "no", "gracias", "thanks"):
+        if msg_lower in ("2", "no", "gracias", "thanks", "no, gracias", "no, thanks"):
+            state.quick_replies = []
             if state.language == "es":
                 return (
                     "¡Gracias por contactar a Diving Planet! 🤿\n"
@@ -149,6 +213,7 @@ async def route_message(state: ConversationState, message: str) -> str:
 
         # Free text question
         state.step = Step.FREE_TEXT
+        state.quick_replies = []
         state.history.append({"role": "user", "content": message})
 
         extra_parts = []
@@ -172,6 +237,7 @@ async def route_message(state: ConversationState, message: str) -> str:
     # Escalate step -> let them ask freely via RAG
     if state.step == Step.ESCALATE:
         state.step = Step.FREE_TEXT
+        state.quick_replies = []
         state.history.append({"role": "user", "content": message})
 
         extra_parts = []

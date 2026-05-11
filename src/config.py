@@ -14,6 +14,8 @@ class Settings(BaseSettings):
     openai_api_key: str = ""
     openai_model: str = "gpt-4o-mini"
     openai_embedding_model: str = "text-embedding-3-small"
+    rag_top_k: int = 8
+    rag_min_score: float = 0.40
 
     # --- LangSmith ---
     langsmith_api_key: str = ""

@@ -24,6 +24,53 @@ from src.config import settings
 
 logger = structlog.get_logger()
 
+SENSITIVE_RULES = {
+    "medical_questions": {
+        "keywords": {
+            "asma", "embarazo", "embarazada", "corazón", "corazon", "cardíaco", "cardiaco",
+            "cirugía", "cirugia", "medicamento", "medicación", "medicacion", "diabetes",
+            "epilepsia", "presión", "presion", "oído", "oido", "medical", "asthma",
+            "pregnant", "pregnancy", "heart", "surgery", "medication", "medicine",
+        },
+        "es": "Para preguntas médicas específicas, es importante que hables con nuestro staff calificado para evaluar tu situación particular.\nWhatsApp: +57 320 2554961",
+        "en": "For specific medical questions, it's important that you speak with our qualified staff so they can assess your particular situation.\nWhatsApp: +57 320 2554961",
+    },
+    "weather_conditions": {
+        "keywords": {
+            "clima mañana", "clima hoy", "tiempo mañana", "tiempo hoy", "oleaje",
+            "viento", "tormenta", "lluvia mañana", "weather tomorrow", "weather today",
+            "wind", "storm", "waves", "rain tomorrow",
+        },
+        "es": "Las condiciones del tiempo pueden cambiar rápidamente. Te conecto con el equipo para darte información actualizada.\nWhatsApp: +57 320 2554961",
+        "en": "Weather conditions can change quickly. I'll connect you with the team for updated information.\nWhatsApp: +57 320 2554961",
+    },
+    "real_time_issues": {
+        "keywords": {
+            "disponible mañana", "cupo mañana", "hay cupo", "pagar", "pago", "reserva no",
+            "error reserva", "no puedo reservar", "available tomorrow", "availability tomorrow",
+            "payment", "booking error", "can't book", "cannot book",
+        },
+        "es": "Esta consulta depende de disponibilidad o soporte en tiempo real. Te conecto con alguien del equipo para ayudarte ahora.\nWhatsApp: +57 320 2554961",
+        "en": "This depends on real-time availability or support. I'll connect you with someone from the team to help you now.\nWhatsApp: +57 320 2554961",
+    },
+    "complaints_or_emergencies": {
+        "keywords": {
+            "queja", "reclamo", "emergencia", "accidente", "problema grave", "complaint",
+            "emergency", "accident", "serious problem",
+        },
+        "es": "Voy a transferirte inmediatamente con un miembro de nuestro staff para ayudarte con esta situación.\nWhatsApp: +57 320 2554961",
+        "en": "I'm immediately transferring you to a staff member to help with this situation.\nWhatsApp: +57 320 2554961",
+    },
+}
+
+
+def detect_sensitive_escalation(message: str, lang: str = "es") -> tuple[str, str] | None:
+    msg_lower = message.strip().lower()
+    for reason, rule in SENSITIVE_RULES.items():
+        if any(keyword in msg_lower for keyword in rule["keywords"]):
+            return reason, rule["es"] if lang == "es" else rule["en"]
+    return None
+
 
 async def escalate_to_human(
     conversation_id: str,
