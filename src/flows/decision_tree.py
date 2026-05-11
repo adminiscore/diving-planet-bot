@@ -110,18 +110,18 @@ SERVICES = {
         "duration_es": "1 dia (8:00 AM - 4:15 PM)",
         "duration_en": "1 day (8:00 AM - 4:15 PM)",
         "includes_es": (
-            "Entrada Parque Nacional, seguro de buceo, transporte en lancha, "
-            "entrenamiento en piscina + 1 inmersion en mar con instructor PADI, "
-            "equipo completo, almuerzo, aporte eco-social DIVE TO HEAL"
+            "Entrada Parque Nacional, seguro de buceo, transporte en lancha Cartagena-Islas-Cartagena, "
+            "entrenamiento en piscina, 1 inmersion en mar con instructor PADI, "
+            "equipo completo, almuerzo/comida, aporte eco-social DIVE TO HEAL"
         ),
         "includes_en": (
-            "National Park entrance, dive insurance, boat transfer, "
-            "pool training + 1 ocean dive with PADI instructor, "
-            "full equipment, lunch, eco-social contribution DIVE TO HEAL"
+            "National Park entrance, dive insurance, boat transfer Cartagena-Islands-Cartagena, "
+            "pool training, 1 ocean dive with a PADI instructor, "
+            "full equipment, lunch/meal, eco-social contribution DIVE TO HEAL"
         ),
         "min_age": 10,
-        "extra_notes_es": "Para menores de edad se aplica el programa Discover Scuba Diving / DSD segun estandares PADI. Recomendamos consultar si hay menores de 12 anos en el grupo.",
-        "extra_notes_en": "For minors, the Discover Scuba Diving / DSD program applies according to PADI standards. Please contact us if there are children under 12 in the group.",
+        "extra_notes_es": "No necesitas experiencia previa. Es ideal si quieres probar buceo por primera vez. Para menores de edad se aplica el programa Discover Scuba Diving / DSD segun estandares PADI; si hay menores de 12 anos, mejor confirmar con un asesor.",
+        "extra_notes_en": "No previous experience is needed. This is ideal if you want to try diving for the first time. For minors, the Discover Scuba Diving / DSD program applies according to PADI standards; if there are children under 12, it is best to confirm with an advisor.",
         "flight_rule_es": "Debes esperar al menos 12 horas para tomar un avion.",
         "flight_rule_en": "You must wait at least 12 hours before flying.",
         "booking_url": "https://book.divingplanet.org/book/minicurso-de-buceo/2?language=es",
@@ -136,17 +136,17 @@ SERVICES = {
         "duration_en": "1 day (8:00 AM - 4:15 PM)",
         "includes_es": (
             "Entrada Parque Nacional, transporte en lancha Cartagena-Islas-Cartagena, "
-            "2 salidas guiadas de snorkel, equipo completo, almuerzo, "
-            "aporte eco-social DIVE TO HEAL"
+            "2 salidas guiadas de snorkel en superficie, equipo completo de snorkel, "
+            "almuerzo/comida, aporte eco-social DIVE TO HEAL"
         ),
         "includes_en": (
             "National Park entrance, boat transfer Cartagena-Islands-Cartagena, "
-            "2 guided snorkel sessions, full equipment, lunch, "
-            "eco-social contribution DIVE TO HEAL"
+            "2 guided surface snorkel sessions, full snorkel equipment, "
+            "lunch/meal, eco-social contribution DIVE TO HEAL"
         ),
         "min_age": 6,
-        "extra_notes_es": "Recomendado para ninos a partir de unos 6 anos que sepan nadar y se sientan comodos en el mar. Para menores o casos especiales, mejor consultar primero con un asesor.",
-        "extra_notes_en": "Recommended for children from around 6 years old who can swim and feel comfortable in the sea. For younger children or special cases, please check with an advisor first.",
+        "extra_notes_es": "Actividad de superficie, ideal para acompanantes o personas que no quieren bucear. Recomendado para ninos a partir de unos 6 anos que sepan nadar y se sientan comodos en el mar. Para menores o casos especiales, mejor consultar primero con un asesor.",
+        "extra_notes_en": "Surface activity, ideal for companions or guests who do not want to dive. Recommended for children from around 6 years old who can swim and feel comfortable in the sea. For younger children or special cases, please check with an advisor first.",
         "flight_rule_es": "",
         "flight_rule_en": "",
         "booking_url": "https://book.divingplanet.org/book/superficio/3?language=es",
@@ -159,8 +159,10 @@ SERVICES = {
         "price": "Consultar precios online (10% descuento)",
         "duration_es": "2 dias con 1 noche en Islas del Rosario",
         "duration_en": "2 days with 1 night on Rosario Islands",
-        "includes_es": "4 buceos diurnos + 1 buceo nocturno con bioluminiscencia",
-        "includes_en": "4 daytime dives + 1 night dive with bioluminescence",
+        "includes_es": "4 buceos diurnos, 1 buceo nocturno con bioluminiscencia, equipo completo, seguro de buceo, coordinacion de salidas en islas",
+        "includes_en": "4 daytime dives, 1 night dive with bioluminescence, full equipment, dive insurance, island dive schedule coordination",
+        "extra_notes_es": "Paquete para buzos certificados que quieren dormir 1 noche en Islas del Rosario. El alojamiento no esta incluido y se reserva aparte con el hotel. Si quieres quitar la nocturna, cambiar noches o personalizar el paquete, lo revisamos con un asesor.",
+        "extra_notes_en": "Package for certified divers who want to spend 1 night on the Rosario Islands. Accommodation is not included and is booked separately with the hotel. If you want to remove the night dive, change nights or customize the package, an advisor should review it.",
         "flight_rule_es": "Debes esperar al menos 18 horas para tomar un avion.",
         "flight_rule_en": "You must wait at least 18 hours before flying.",
         "booking_url": "https://divingplanet.org/tours-buceo-snorkel-cartagena/5-buceos-2-dias/",
@@ -173,8 +175,10 @@ SERVICES = {
         "price": "Consultar precios online",
         "duration_es": "3 dias con 2 noches en Islas del Rosario",
         "duration_en": "3 days with 2 nights on Rosario Islands",
-        "includes_es": "6 buceos diurnos + 1 buceo nocturno",
-        "includes_en": "6 daytime dives + 1 night dive",
+        "includes_es": "6 buceos diurnos, 1 buceo nocturno, equipo completo, seguro de buceo, coordinacion de salidas en islas",
+        "includes_en": "6 daytime dives, 1 night dive, full equipment, dive insurance, island dive schedule coordination",
+        "extra_notes_es": "Paquete para buzos certificados que quieren dormir 2 noches en Islas del Rosario. El alojamiento no esta incluido y se reserva aparte con el hotel. Si quieres quitar la nocturna, cambiar noches o personalizar el paquete, lo revisamos con un asesor.",
+        "extra_notes_en": "Package for certified divers who want to spend 2 nights on the Rosario Islands. Accommodation is not included and is booked separately with the hotel. If you want to remove the night dive, change nights or customize the package, an advisor should review it.",
         "flight_rule_es": "Debes esperar al menos 18 horas para tomar un avion.",
         "flight_rule_en": "You must wait at least 18 hours before flying.",
         "booking_url": "https://divingplanet.org/tours-buceo-snorkel-cartagena/7-buceos-3-dias/",
@@ -187,8 +191,10 @@ SERVICES = {
         "price": "Consultar precios online",
         "duration_es": "4 dias con 3 noches en Islas del Rosario",
         "duration_en": "4 days with 3 nights on Rosario Islands",
-        "includes_es": "8 buceos diurnos + 1 buceo nocturno",
-        "includes_en": "8 daytime dives + 1 night dive",
+        "includes_es": "8 buceos diurnos, 1 buceo nocturno, equipo completo, seguro de buceo, coordinacion de salidas en islas",
+        "includes_en": "8 daytime dives, 1 night dive, full equipment, dive insurance, island dive schedule coordination",
+        "extra_notes_es": "Paquete para buzos certificados que quieren dormir 3 noches en Islas del Rosario. El alojamiento no esta incluido y se reserva aparte con el hotel. Si quieres quitar la nocturna, cambiar noches o personalizar el paquete, lo revisamos con un asesor.",
+        "extra_notes_en": "Package for certified divers who want to spend 3 nights on the Rosario Islands. Accommodation is not included and is booked separately with the hotel. If you want to remove the night dive, change nights or customize the package, an advisor should review it.",
         "flight_rule_es": "Debes esperar al menos 18 horas para tomar un avion.",
         "flight_rule_en": "You must wait at least 18 hours before flying.",
         "booking_url": "https://divingplanet.org/tours-buceo-snorkel-cartagena/9-buceos-4-dias/",
@@ -361,10 +367,16 @@ MESSAGES = {
     },
     "tours_beginner": {
         "es": (
-            "Perfecto! No necesitas experiencia previa. Estas son tus opciones:"
+            "Perfecto! No necesitas experiencia previa.\n\n"
+            "- Si quieres *probar buceo*, elige *Minicurso de Buceo*.\n"
+            "- Si prefieres ir en superficie o acompanar a alguien, elige *Tour de Snorkeling*.\n"
+            "- Para grupos especiales o algo privado, elige *Servicio Privado*."
         ),
         "en": (
-            "Perfect! No prior experience needed. Here are your options:"
+            "Perfect! No previous experience is needed.\n\n"
+            "- If you want to *try diving*, choose *Dive Mini Course*.\n"
+            "- If you prefer staying at the surface or accompanying someone, choose *Snorkeling Tour*.\n"
+            "- For special groups or a private setup, choose *Private Service*."
         ),
     },
     "courses_menu": {
@@ -1025,12 +1037,14 @@ class DecisionTree:
     def _handle_refresher_interest(self, state: ConversationState, message: str) -> str:
         choice = self._parse_choice(message, 2)
         lang = state.language
+        multi_day_services = {"5_dives_2_days", "7_dives_3_days", "9_dives_4_days"}
 
         if choice == 1:
             state.refresher_interested = True
             if state.original_service is None and state.selected_service is not None:
                 state.original_service = state.selected_service
-            state.selected_service = "minicourse"
+            if state.selected_service not in multi_day_services:
+                state.selected_service = "minicourse"
         elif choice == 2:
             state.refresher_interested = False
         else:
@@ -1039,6 +1053,22 @@ class DecisionTree:
 
         state.step = Step.COLOMBIAN
         self.set_quick_replies(state, "colombian")
+        if state.selected_service in multi_day_services and state.refresher_interested:
+            if lang == "es":
+                return (
+                    "Perfecto. Mantengo el paquete multi-dia seleccionado y dejo anotado que necesitas "
+                    "revisar/reforzar habilidades antes de las inmersiones.\n\n"
+                    "Como es un paquete de varios dias, un asesor confirmara la mejor forma de integrarlo "
+                    "sin cambiar tu plan principal.\n\n"
+                    + MESSAGES["colombian"][lang]
+                )
+            return (
+                "Perfect. I'll keep the selected multi-day package and note that you need to review/refresh "
+                "skills before the dives.\n\n"
+                "Because this is a multi-day package, an advisor will confirm the best way to include it "
+                "without changing your main plan.\n\n"
+                + MESSAGES["colombian"][lang]
+            )
         return MESSAGES["colombian"][lang]
 
     def _handle_tours_beginner(self, state: ConversationState, message: str) -> str:
@@ -1051,7 +1081,17 @@ class DecisionTree:
             if state.selected_service == "private":
                 state.step = Step.ESCALATE
                 state.quick_replies = []
-                return self._format_service_detail(state) + "\n\n" + MESSAGES["escalate"][lang]
+                if lang == "es":
+                    return (
+                        "Perfecto. Para un *servicio privado* necesitamos revisar fecha, numero de personas, "
+                        "nivel de experiencia, si habra snorkelers/acompanantes y preferencias de horario.\n\n"
+                        + MESSAGES["escalate"][lang]
+                    )
+                return (
+                    "Perfect. For a *private service* we need to review the date, group size, experience level, "
+                    "whether there will be snorkelers/companions, and schedule preferences.\n\n"
+                    + MESSAGES["escalate"][lang]
+                )
             # Si ya conocemos la ubicacion (Cartagena o islas), pasamos directo a pregunta de colombiano
             if state.location:
                 state.step = Step.COLOMBIAN
@@ -1782,11 +1822,28 @@ class DecisionTree:
             summary += f"\n👉 Reserva aqui con 10% de descuento:\n{booking_url}\n"
             summary += "\nTienes alguna otra pregunta?"
         else:
-            summary = f"Perfect! Here's your summary:\n\n"
-            summary += f"🤿 *Service*: {name}\n"
-            summary += f"📍 *Departure*: {'Cartagena' if state.location == 'cartagena' else 'Rosario Islands'}\n"
-            summary += f"⏱ *Duration*: {service['duration_en']}\n"
-            summary += f"✅ *Includes*: {service['includes_en']}\n"
+            departure = "Cartagena" if state.location == "cartagena" else "Rosario Islands"
+            meeting_note = ""
+            if state.location == "cartagena":
+                meeting_note = "\n⏰ Meeting point: 8:00 AM at Muelle de la Bodeguita."
+            elif state.location == "island":
+                meeting_note = "\n⏰ Hotel pickup: around 9:30 AM (if there is sea access)."
+
+            includes_items = [
+                item.strip()
+                for item in service["includes_en"].split(",")
+                if item.strip()
+            ]
+            includes_block = "\n".join(f"✅ {item}" for item in includes_items)
+
+            summary = (
+                "Perfect! Here's your summary:\n\n"
+                f"🤿 *Service*: {name}\n"
+                f"⏱ *Duration*: {service['duration_en']}\n"
+                f"✅ *Includes*:\n{includes_block}\n\n"
+                f"📍 *Departure*: {departure}"
+                f"{meeting_note}\n"
+            )
 
             if state.refresher_interested:
                 summary += "\n🧑‍🏫 Refresher: Yes (recommended due to inactivity)\n"

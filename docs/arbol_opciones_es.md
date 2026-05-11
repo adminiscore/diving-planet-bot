@@ -34,7 +34,7 @@
                     - **No**
                       - **Resumen final**
             - **2. 🤿 5 Buceos - 2 dias**
-              - **Muestra detalle del plan**
+              - **Muestra detalle del plan**: 4 buceos diurnos + 1 nocturno con bioluminiscencia, 1 noche en islas, alojamiento no incluido y personalización/nocturna con asesor.
               - **¿Han pasado más de 2 años desde tu última inmersión?**
                 - **Sí**
                   - **¿Tienes más de 500 inmersiones o eres Dive Master (o similar)?**
@@ -43,19 +43,19 @@
                     - **No**
                       - **Recomendación refresher → ¿Te interesa incluirlo?**
                         - **Sí**
-                          - **(Cambia a plan Minicurso para reservar)**
+                          - **Mantiene el paquete multi-día y deja anotado refresher para confirmar con asesor**
                           - **¿Eres colombiano/a? → Sí/No → Resumen final**
                         - **No**
                           - **¿Eres colombiano/a? → Sí/No → Resumen final**
                 - **No**
                   - **¿Eres colombiano/a? → Sí/No → Resumen final**
             - **3. 🤿 7 Buceos - 3 dias**
-              - **Muestra detalle del plan**
+              - **Muestra detalle del plan**: 6 buceos diurnos + 1 nocturno, 2 noches en islas, alojamiento no incluido y personalización/nocturna con asesor.
               - **¿Han pasado más de 2 años desde tu última inmersión?**
                 - **Sí → ¿500+ / Dive Master? → Sí: Transferir | No: refresher interés → Sí/No → ¿Eres colombiano/a? → Resumen**
                 - **No → ¿Eres colombiano/a? → Resumen**
             - **4. 🤿 9 Buceos - 4 dias**
-              - **Muestra detalle del plan**
+              - **Muestra detalle del plan**: 8 buceos diurnos + 1 nocturno, 3 noches en islas, alojamiento no incluido y personalización/nocturna con asesor.
               - **¿Han pasado más de 2 años desde tu última inmersión?**
                 - **Sí → ¿500+ / Dive Master? → Sí: Transferir | No: refresher interés → Sí/No → ¿Eres colombiano/a? → Resumen**
                 - **No → ¿Eres colombiano/a? → Resumen**
@@ -63,9 +63,16 @@
               - **Transferir con el jefe**
         - **2. Solo principiantes**
           - **Tours principiantes**
-            - **1. 🤿 Minicurso de Buceo → Muestra detalle → ¿Eres colombiano/a? → Sí/No → Resumen final**
-            - **2. 🐠 Tour de Snorkeling → Muestra detalle → ¿Eres colombiano/a? → Sí/No → Resumen final**
-            - **3. 🧑‍💬 Servicio Privado → Transferir con el jefe**
+            - El menú explica la diferencia entre probar buceo (minicurso), ir en superficie/acompañar (snorkel) y pedir algo privado.
+            - **1. 🤿 Minicurso de Buceo**
+              - Muestra detalle: no requiere experiencia previa, entrenamiento en piscina, 1 inmersión en mar con instructor PADI, edad mínima recomendada, almuerzo/comida y regla de vuelo de 12h.
+              - **¿Eres colombiano/a? → Sí/No → Resumen final**
+            - **2. 🐠 Tour de Snorkeling**
+              - Muestra detalle: actividad de superficie, ideal para acompañantes/personas que no quieren bucear, 2 salidas guiadas de snorkel, equipo, almuerzo/comida y edad recomendada.
+              - **¿Eres colombiano/a? → Sí/No → Resumen final**
+            - **3. 🧑‍💬 Servicio Privado**
+              - Explica que requiere revisar fecha, personas, experiencia, acompañantes/snorkelers y horarios.
+              - **Transferir con el jefe**
         - **3. Grupo mixto (buceo + snorkel)**
           - **Explicación del plan mixto**
           - **Transferir con el jefe**

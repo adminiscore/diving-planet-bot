@@ -163,6 +163,7 @@ Esa parte se la dejas al LLM/RAG, que con el contexto y la base de conocimiento 
   > Enseguida se pone en contacto con usted, muchas gracias :)
 
 - [x] Pregunta: "¿Se puede mezclar con principiantes?" (respuesta validada).
+- [x] Rama `Tours desde Cartagena → Solo principiantes` revisada: menú diferencia minicurso/snorkel/privado, detalles de minicurso y snorkel ampliados, privado deriva a asesor, y tests añadidos.
 
   Respuesta propuesta:
 
@@ -182,4 +183,6 @@ Esa parte se la dejas al LLM/RAG, que con el contexto y la base de conocimiento 
 ## Notas rápidas
 
 - [x] 1. 🤿 2 Buceos - 1 dia → flujo del árbol actual OK.
+- [x] 2. Solo principiantes desde Cartagena → minicurso/snorkel/privado revisado y cubierto con tests.
+- [x] 3. Paquetes certificados multi-día 5/7/9 → notas de noches/alojamiento/nocturna/personalización, refresher sin perder paquete original y tests añadidos.
 - [ ] Repasar todo el árbol con todas las actividades y validar copys/resúmenes.

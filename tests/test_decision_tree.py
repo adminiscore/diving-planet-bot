@@ -156,6 +156,60 @@ class TestCertifiedDiverFlow:
         assert state.selected_service == "private"
         assert state.step == Step.ESCALATE
 
+    def test_select_5_dives_shows_multiday_context(self):
+        state = self._go_to_certified()
+
+        response = self.tree.process_message(state, "2")
+
+        assert state.selected_service == "5_dives_2_days"
+        assert state.step == Step.CERTIFIED_LAST_DIVE
+        assert "1 noche" in response
+        assert "buceo nocturno" in response
+        assert "alojamiento no esta incluido" in response
+        assert "quitar la nocturna" in response
+
+    def test_5_dives_recent_last_dive_summary_keeps_package(self):
+        state = self._go_to_certified()
+        state.location = "cartagena"
+        self.tree.process_message(state, "2")
+
+        self.tree.process_message(state, "2")
+        summary = self.tree.process_message(state, "2")
+
+        assert state.step == Step.SUMMARY
+        assert state.selected_service == "5_dives_2_days"
+        assert "5-buceos-2-dias" in summary
+        assert "buceo nocturno" in summary
+        assert "18 horas" in summary
+
+    def test_7_and_9_dives_show_correct_nights(self):
+        state_7 = self._go_to_certified()
+        response_7 = self.tree.process_message(state_7, "3")
+        assert state_7.selected_service == "7_dives_3_days"
+        assert "2 noches" in response_7
+        assert "6 buceos diurnos" in response_7
+
+        state_9 = self._go_to_certified()
+        response_9 = self.tree.process_message(state_9, "4")
+        assert state_9.selected_service == "9_dives_4_days"
+        assert "3 noches" in response_9
+        assert "8 buceos diurnos" in response_9
+
+    def test_multiday_refresher_keeps_original_package(self):
+        state = self._go_to_certified()
+        state.location = "cartagena"
+        self.tree.process_message(state, "2")
+        self.tree.process_message(state, "1")
+        self.tree.process_message(state, "2")
+
+        response = self.tree.process_message(state, "1")
+
+        assert state.refresher_interested is True
+        assert state.original_service == "5_dives_2_days"
+        assert state.selected_service == "5_dives_2_days"
+        assert state.step == Step.COLOMBIAN
+        assert "Mantengo el paquete multi-dia" in response
+
 
 class TestBeginnerFlow:
     def setup_method(self):
@@ -179,6 +233,67 @@ class TestBeginnerFlow:
         response = self.tree.process_message(state, "2")
         assert state.selected_service == "snorkeling"
         assert state.step == Step.LOCATION
+
+    def test_beginner_menu_copy_explains_minicourse_vs_snorkel(self):
+        state = make_state()
+        state.step = Step.GROUP_TYPE
+        state.language = "es"
+        state.location = "cartagena"
+
+        response = self.tree.process_message(state, "2")
+
+        assert state.step == Step.TOURS_BEGINNER
+        assert "probar buceo" in response
+        assert "Tour de Snorkeling" in response
+        assert state.quick_replies[0]["title"] == "🤿 Minicurso de Buceo"
+
+    def test_minicourse_from_cartagena_summary_includes_beginner_details(self):
+        state = self._go_to_beginner()
+        state.location = "cartagena"
+
+        detail = self.tree.process_message(state, "🤿 Minicurso de Buceo")
+        assert state.selected_service == "minicourse"
+        assert state.step == Step.COLOMBIAN
+        assert "No necesitas experiencia previa" in detail
+        assert "piscina" in detail
+        assert "1 inmersion" in detail
+        assert "Edad minima recomendada" in detail
+
+        summary = self.tree.process_message(state, "2")
+        assert state.step == Step.SUMMARY
+        assert "minicurso-de-buceo" in summary
+        assert "12 horas" in summary
+        assert "almuerzo/comida" in summary
+        assert "Muelle de la Bodeguita" in summary
+
+    def test_snorkeling_from_cartagena_summary_has_no_flight_rule(self):
+        state = self._go_to_beginner()
+        state.location = "cartagena"
+
+        detail = self.tree.process_message(state, "🐠 Tour de Snorkeling")
+        assert state.selected_service == "snorkeling"
+        assert state.step == Step.COLOMBIAN
+        assert "Actividad de superficie" in detail
+        assert "acompanantes" in detail
+
+        summary = self.tree.process_message(state, "2")
+        assert state.step == Step.SUMMARY
+        assert "superficio" in summary
+        assert "snorkel en superficie" in summary
+        assert "18 horas" not in summary
+        assert "12 horas" not in summary
+
+    def test_beginner_private_service_escalates_without_service_detail(self):
+        state = self._go_to_beginner()
+        state.location = "cartagena"
+
+        response = self.tree.process_message(state, "🧑‍💬 Servicio Privado")
+
+        assert state.selected_service == "private"
+        assert state.step == Step.ESCALATE
+        assert "servicio privado" in response.lower()
+        assert "fecha" in response.lower()
+        assert "Cotizacion personalizada" not in response
 
 
 class TestSummaryFlow:

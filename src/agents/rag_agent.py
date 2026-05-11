@@ -16,6 +16,18 @@ from src.privacy import detect_pii, privacy_block_message, redact_pii
 
 logger = logging.getLogger("uvicorn.error")
 
+FALLBACK_ES = (
+    "No tengo información suficiente en mi base de conocimiento para responder eso con seguridad. "
+    "Te puedo conectar con un asesor de Diving Planet.\n"
+    "WhatsApp: +57 320 2301515"
+)
+
+FALLBACK_EN = (
+    "I don't have enough information in my knowledge base to answer that safely. "
+    "I can connect you with a Diving Planet advisor.\n"
+    "WhatsApp: +57 320 2301515"
+)
+
 SYSTEM_PROMPT_ES = """Eres el asistente especializado de Diving Planet (centro de buceo PADI 5 Estrellas en Cartagena). Tu estilo es cercano, confiable y profesional pero amigable.
 
 Enfoque:
@@ -51,6 +63,21 @@ Advisor contact: WhatsApp +57 320 2301515.
 Answer in English."""
 
 
+def build_retrieval_query(query: str, history: list[dict] | None = None) -> str:
+    if not history:
+        return query
+
+    recent_user_messages = [
+        msg["content"]
+        for msg in history[-6:]
+        if msg.get("role") == "user" and msg.get("content") != query
+    ]
+    if not recent_user_messages:
+        return query
+
+    return "\n".join([*recent_user_messages[-2:], query])
+
+
 async def rag_answer(
     query: str,
     lang: str = "es",
@@ -74,28 +101,32 @@ async def rag_answer(
         logger.warning(f"[RAG][PRIVACY] PII detected in query hits={pii_hits}")
         return privacy_block_message(lang)
 
-    safe_query = redact_pii(query)
+    retrieval_query = build_retrieval_query(query, history)
+    safe_query = redact_pii(retrieval_query)
 
     # Retrieve relevant documents
-    docs = await search_knowledge_base(safe_query, lang=lang, top_k=4)
+    docs = await search_knowledge_base(safe_query, lang=lang)
 
     if not docs:
-        if lang == "es":
-            return (
-                "No encontré información sobre eso en mi base de datos. "
-                "¿Quieres que te conecte con un asesor?\n"
-                "WhatsApp: +57 320 2301515"
-            )
-        return (
-            "I couldn't find information about that in my database. "
-            "Would you like me to connect you with an advisor?\n"
-            "WhatsApp: +57 320 2301515"
+        logger.info(f"[RAG] No docs found query={query[:60]}...")
+        return FALLBACK_ES if lang == "es" else FALLBACK_EN
+
+    top_score = max(float(doc.get("score", 0.0)) for doc in docs)
+    if top_score < settings.rag_min_score:
+        sources = [doc.get("metadata", {}).get("source", "unknown") for doc in docs]
+        logger.info(
+            f"[RAG] Low confidence query={query[:60]}... retrieval_query={safe_query[:120]}... "
+            f"top_score={top_score:.3f} threshold={settings.rag_min_score:.3f} sources={sources}"
         )
+        return FALLBACK_ES if lang == "es" else FALLBACK_EN
 
     # Build context from retrieved docs
     context_parts = []
     for i, doc in enumerate(docs, 1):
-        context_parts.append(f"[{i}] {redact_pii(doc['content'])}")
+        metadata = doc.get("metadata", {})
+        source = metadata.get("source", "unknown")
+        score = float(doc.get("score", 0.0))
+        context_parts.append(f"[{i}] Fuente: {source} | Score: {score:.3f}\n{redact_pii(doc['content'])}")
     context = "\n\n".join(context_parts)
 
     # Build messages for the LLM
@@ -110,7 +141,7 @@ async def rag_answer(
     user_content = f"Contexto:\n{context}"
     if extra_context:
         user_content += f"\n\nContexto adicional de la situacion: {extra_context}"
-    user_content += f"\n\nPregunta del cliente: {safe_query}"
+    user_content += f"\n\nPregunta del cliente: {redact_pii(query)}"
 
     messages.append({
         "role": "user",
@@ -127,5 +158,9 @@ async def rag_answer(
     )
 
     answer = response.choices[0].message.content
-    logger.info(f"[RAG] Query: {query[:60]}... | Docs: {len(docs)} | Tokens: {response.usage.total_tokens}")
+    sources = [doc.get("metadata", {}).get("source", "unknown") for doc in docs]
+    logger.info(
+        f"[RAG] Query: {query[:60]}... | Docs: {len(docs)} | TopScore: {top_score:.3f} | "
+        f"Sources: {sources} | Tokens: {response.usage.total_tokens}"
+    )
     return answer
