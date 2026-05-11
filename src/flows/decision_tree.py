@@ -660,16 +660,16 @@ BUTTON_OPTIONS = {
     },
     "pricing_menu": {
         "es": [
-            {"title": "Precios tours buceo/snorkel", "value": "1"},
-            {"title": "Precios principiantes / snorkel", "value": "2"},
-            {"title": "Precios cursos PADI", "value": "3"},
-            {"title": "Soy colombiano/residente", "value": "4"},
+            {"title": "Precios saliendo desde Cartagena", "value": "1"},
+            {"title": "Precios si ya estoy en las islas", "value": "2"},
+            {"title": "Paquetes 5/7/9 buceos (multi-dia)", "value": "3"},
+            {"title": "Descuentos para colombianos/residentes", "value": "4"},
         ],
         "en": [
-            {"title": "Prices diving/snorkel tours", "value": "1"},
-            {"title": "Prices beginners / snorkel", "value": "2"},
-            {"title": "Prices PADI courses", "value": "3"},
-            {"title": "I'm Colombian / resident", "value": "4"},
+            {"title": "Prices departing from Cartagena", "value": "1"},
+            {"title": "Prices if I'm already on the islands", "value": "2"},
+            {"title": "5/7/9-dive multi-day packages", "value": "3"},
+            {"title": "Discounts for Colombians/residents", "value": "4"},
         ],
     },
     "booking_menu": {
@@ -688,16 +688,16 @@ BUTTON_OPTIONS = {
     },
     "logistics_menu": {
         "es": [
-            {"title": "Horarios y programa del dia", "value": "1"},
-            {"title": "Punto de encuentro / recogidas", "value": "2"},
-            {"title": "Alojamiento en islas", "value": "3"},
-            {"title": "Que incluye / que llevar / clima", "value": "4"},
+            {"title": "Punto de encuentro y horarios", "value": "1"},
+            {"title": "Alojamiento en islas y recogida en hotel", "value": "2"},
+            {"title": "Que incluye / que no incluye el plan", "value": "3"},
+            {"title": "Que llevar y recomendaciones", "value": "4"},
         ],
         "en": [
-            {"title": "Schedule and daily program", "value": "1"},
-            {"title": "Meeting point / hotel pickup", "value": "2"},
-            {"title": "Accommodation on the islands", "value": "3"},
-            {"title": "What's included / what to bring / weather", "value": "4"},
+            {"title": "Meeting point and schedule", "value": "1"},
+            {"title": "Accommodation on the islands & hotel pickup", "value": "2"},
+            {"title": "What's included / not included", "value": "3"},
+            {"title": "What to bring & recommendations", "value": "4"},
         ],
     },
     "island_menu": {
@@ -1116,66 +1116,74 @@ class DecisionTree:
         if lang == "es":
             if choice == 1:
                 response = (
-                    "Resumen rapido de precios de *tours de buceo/snorkel*:\n\n"
+                    "Te cuento los precios de referencia *saliendo desde Cartagena*:\n\n"
                     f"- 2 buceos 1 dia: {SERVICES['2_dives_1_day']['price']}\n"
-                    f"- Minicurso principiantes: {SERVICES['minicourse']['price']}\n"
+                    f"- Minicurso de buceo: {SERVICES['minicourse']['price']}\n"
                     f"- Tour de snorkel: {SERVICES['snorkeling']['price']}\n\n"
-                    "Los valores exactos y promociones se mantienen actualizados en la web. "
-                    "Al elegir el plan, te compartire el enlace de reserva correspondiente."
+                    "Los montos exactos y promociones (como el 10% online) se actualizan siempre en la web. "
+                    "Cuando elijas un plan te compartire el enlace de reserva con el precio vigente."
                 )
             elif choice == 2:
+                location_note = ""
+                if state.location == "island":
+                    location_note = "Como ya indicaste que estas en las islas, "
                 response = (
-                    "Para *principiantes y snorkel* solemos trabajar con:\n\n"
-                    f"- Minicurso de buceo (piscina + 1 inmersion): {SERVICES['minicourse']['price']}\n"
-                    f"- Tour de snorkel: {SERVICES['snorkeling']['price']}\n\n"
-                    "El detalle final depende de si sales desde Cartagena o ya estas en las islas, "
-                    "y de la temporada. El bot te guiara al plan adecuado y te mostrara el link con el precio actual."
+                    f"{location_note}para quienes *ya estan en las Islas del Rosario* manejamos tarifas "
+                    "especiales sin transporte Cartagena-Islas ni almuerzo incluido.\n\n"
+                    "En los enlaces de reserva \"already on island\" veras el valor actualizado segun tu actividad "
+                    "(2 buceos, minicurso o snorkel) y la fecha elegida."
                 )
             elif choice == 3:
                 response = (
-                    "En *cursos PADI* (Open Water, Avanzado, Rescue, Dive Master) los precios pueden cambiar "
-                    "por temporada y promociones.\n\n"
-                    "En la web veras siempre el valor actualizado y el 10% online aplicado cuando corresponda. "
-                    "Al seleccionar un curso te compartire el enlace exacto de reserva."
+                    "Sobre los *paquetes multi-dia 5/7/9 buceos* (2, 3 o 4 dias en las islas):\n\n"
+                    f"- 5 buceos 2 dias: {SERVICES['5_dives_2_days']['price']}\n"
+                    f"- 7 buceos 3 dias: {SERVICES['7_dives_3_days']['price']}\n"
+                    f"- 9 buceos 4 dias: {SERVICES['9_dives_4_days']['price']}\n\n"
+                    "En todos los casos el alojamiento en las islas se reserva aparte directamente con el hotel. "
+                    "En la web veras siempre el valor actualizado y posibles promociones antes de confirmar."
                 )
             else:  # choice == 4
                 response = (
-                    "Para *colombianos y residentes* manejamos precios especiales en COP en varios planes.\n\n"
-                    "Normalmente veras un valor en USD en la web y, al contactarnos, podremos darte el "
-                    "equivalente en pesos y opciones de pago local (transferencia/pasarela).\n\n"
-                    "Si quieres un valor concreto para una fecha y plan especifico, es mejor hablar con un asesor."
+                    "Para *colombianos y residentes* tenemos precios especiales en COP y distintos tipos de "
+                    "descuentos (10% online, segundo dia, grupos, plan PARCEROS en algunas fechas).\n\n"
+                    "Normalmente veras un valor en USD en la web y, al contactarnos por WhatsApp, podemos "
+                    "aplicarte la tarifa local cuando corresponda y explicarte las condiciones."
                 )
         else:
             if choice == 1:
                 response = (
-                    "Quick overview of *diving/snorkel tour* prices:\n\n"
+                    "Here are reference prices *departing from Cartagena*:\n\n"
                     f"- 2 dives 1 day: {SERVICES['2_dives_1_day']['price']}\n"
-                    f"- Beginner minicourse: {SERVICES['minicourse']['price']}\n"
+                    f"- Dive minicourse: {SERVICES['minicourse']['price']}\n"
                     f"- Snorkeling tour: {SERVICES['snorkeling']['price']}\n\n"
-                    "Exact amounts and promotions are always updated on the website. "
-                    "Once you choose a plan, I'll share the booking link with the current price."
+                    "Exact amounts and promotions (such as the 10% online discount) are always updated "
+                    "on the website. Once you choose a plan I'll share the booking link with the current price."
                 )
             elif choice == 2:
+                location_note = ""
+                if state.location == "island":
+                    location_note = "Since you already indicated you are on the islands, "
                 response = (
-                    "For *beginners and snorkelers* we usually work with:\n\n"
-                    f"- Dive minicourse (pool + 1 ocean dive): {SERVICES['minicourse']['price']}\n"
-                    f"- Snorkeling tour: {SERVICES['snorkeling']['price']}\n\n"
-                    "The final amount depends on whether you depart from Cartagena or are already on the islands, "
-                    "and on the season. The bot will guide you to the right plan and show the booking link."
+                    f"{location_note}for guests *already on the Rosario Islands* we usually work with "
+                    "special rates that do not include transport from Cartagena or lunch.\n\n"
+                    "The dedicated \"already on island\" booking links will show the up-to-date amount for "
+                    "your activity (2 dives, minicourse or snorkel) and date."
                 )
             elif choice == 3:
                 response = (
-                    "For *PADI courses* (Open Water, Advanced, Rescue, Dive Master), prices may change "
-                    "with season and promotions.\n\n"
-                    "The website always shows the up-to-date value and the 10% online discount when applicable. "
-                    "Once you select a course, I'll share the exact booking link."
+                    "For *multi-day 5/7/9-dive packages* (2, 3 or 4 days on the islands):\n\n"
+                    f"- 5 dives 2 days: {SERVICES['5_dives_2_days']['price']}\n"
+                    f"- 7 dives 3 days: {SERVICES['7_dives_3_days']['price']}\n"
+                    f"- 9 dives 4 days: {SERVICES['9_dives_4_days']['price']}\n\n"
+                    "Accommodation on the islands is not included and is booked directly with the hotel. "
+                    "The website will always show the current amount and any promotions before you pay."
                 )
             else:  # choice == 4
                 response = (
-                    "For *Colombian guests and residents* we offer special COP prices on several plans.\n\n"
-                    "You'll usually see a USD price on the website, and when contacting us we can quote "
-                    "the equivalent in pesos and offer local payment options (bank transfer/local gateway).\n\n"
-                    "For a precise quote on specific dates and plans it's best to speak with an advisor."
+                    "We offer special COP prices and discounts for *Colombian guests and residents* "
+                    "(online discounts, second-day and group discounts, PARCEROS plan on selected dates).\n\n"
+                    "You'll usually see a USD price on the website, and when contacting us on WhatsApp we "
+                    "can apply the local rate when applicable and explain the conditions."
                 )
 
         # Tras responder, volvemos al menu principal
@@ -1489,63 +1497,95 @@ class DecisionTree:
 
         if lang == "es":
             if choice == 1:
-                response = (
-                    "En los *tours de un dia desde Cartagena* normalmente:\n\n"
-                    "- Encuentro: 8:00 a.m. en el Muelle de la Bodeguita.\n"
-                    "- Regreso aproximado: entre 4:00 y 4:30 p.m.\n\n"
-                    "En los paquetes de varios dias, el horario se ajusta segun el numero de inmersiones y noches "
-                    "en las islas, pero siempre tendras la informacion detallada en el enlace del plan."
-                )
+                # Punto de encuentro y horarios
+                if state.location == "cartagena":
+                    response = (
+                        "Para *salidas desde Cartagena*:\n\n"
+                        "- Punto de encuentro: Muelle de la Bodeguita a las 8:00 a.m. (entrada 3, a pocos minutos de la Ciudad Amurallada).\n"
+                        "- Regreso estimado de los tours de un dia: entre 4:00 y 4:30 p.m.\n\n"
+                        "En los paquetes de varios dias, el horario se ajusta segun el numero de inmersiones y noches "
+                        "en las islas, y veras el detalle en el enlace de cada plan."
+                    )
+                else:
+                    response = (
+                        "Normalmente las salidas operan asi:\n\n"
+                        "- Punto de encuentro en Cartagena: Muelle de la Bodeguita a las 8:00 a.m.\n"
+                        "- Regreso estimado de los tours de un dia: entre 4:00 y 4:30 p.m.\n\n"
+                        "Si estas en las islas o haces un paquete multi-dia, coordinamos contigo horarios especificos "
+                        "segun tu plan y alojamiento, y veras el detalle en el enlace de reserva."
+                    )
             elif choice == 2:
-                response = (
-                    "El *punto de encuentro habitual en Cartagena* es el Muelle de la Bodeguita a las 8:00 a.m.\n\n"
-                    "Para quienes ya estan en las islas, solemos hacer *recogidas en el hotel* alrededor de las "
-                    "9:30 a.m. (si hay acceso en lancha).\n\n"
-                    "En muchos casos podemos guardar tu maleta en nuestra oficina de Cartagena mientras estas en "
-                    "las islas."
-                )
-            elif choice == 3:
-                # Ir al selector de isla de alojamiento
+                # Alojamiento en islas y recogida en hotel -> ir al selector de isla
                 state.step = Step.ISLAND_MENU
                 self.set_quick_replies(state, "island_menu")
                 return MESSAGES["island_menu"][lang]
-            else:  # choice == 4
+            elif choice == 3:
+                # Que incluye / que no incluye el plan
+                if state.location == "island":
+                    location_line = (
+                        "Como ya estas en las islas, las tarifas suelen cubrir principalmente el servicio de buceo/snorkel "
+                        "sin transporte desde Cartagena ni almuerzo.\n\n"
+                    )
+                else:
+                    location_line = ""
                 response = (
-                    "En la mayoria de planes se incluye *equipo completo de buceo/snorkel, seguro, tasas de parque* "
-                    "y, en los tours desde Cartagena, el transporte en lancha. Muchos planes incluyen tambien "
-                    "almuerzo.\n\n"
-                    "Te recomendamos llevar: toalla, bloqueador, ropa comoda, gorra y, si te mareas, tu propia "
-                    "medicacion para el mareo. Las salidas dependen de las condiciones de clima y mar; si hay "
-                    "cambios o cancelaciones, coordinamos contigo reprogramacion o reembolso segun la politica "
-                    "del plan."
+                    f"{location_line}"
+                    "En general, los tours incluyen: entrada al Parque Nacional, seguro de buceo, equipo completo, "
+                    "transporte en lancha Cartagena-Islas-Cartagena y almuerzo, ademas del aporte eco-social a DIVE TO HEAL.\n\n"
+                    "No esta incluido normalmente: transporte terrestre al muelle, fotos/videos submarinos, propinas, "
+                    "comidas adicionales al almuerzo y regresos en fecha distinta."
+                )
+            else:  # choice == 4
+                # Que llevar y recomendaciones
+                response = (
+                    "Te recomendamos llevar: toalla, bloqueador solar, ropa comoda, gorra o sombrero, "
+                    "y si te mareas, tu propia medicacion para el mareo.\n\n"
+                    "Las salidas dependen de las condiciones de clima y mar; si hay cambios o cancelaciones, "
+                    "coordinamos contigo reprogramacion o reembolso segun la politica del plan."
                 )
         else:
             if choice == 1:
-                response = (
-                    "For *one-day tours from Cartagena* you will typically:\n\n"
-                    "- Meet at 8:00 a.m. at Muelle de la Bodeguita.\n"
-                    "- Return around 4:00–4:30 p.m.\n\n"
-                    "For multi-day packages, the schedule depends on the number of dives and nights on the islands, "
-                    "and you'll see the detailed itinerary in the plan link."
-                )
+                if state.location == "cartagena":
+                    response = (
+                        "For *departures from Cartagena*:\n\n"
+                        "- Meeting point: Muelle de la Bodeguita at 8:00 a.m. (gate 3, a few minutes from the old city).\n"
+                        "- Usual return time for one-day tours: around 4:00–4:30 p.m.\n\n"
+                        "For multi-day packages, the schedule depends on the number of dives and nights on the islands, "
+                        "and you'll see the details in each plan link."
+                    )
+                else:
+                    response = (
+                        "Trips typically operate as follows:\n\n"
+                        "- Meeting point in Cartagena: Muelle de la Bodeguita at 8:00 a.m.\n"
+                        "- Usual return time for one-day tours: around 4:00–4:30 p.m.\n\n"
+                        "If you are already on the islands or on a multi-day package, we coordinate exact times "
+                        "with you depending on your plan and accommodation, and you'll see them in the booking link."
+                    )
             elif choice == 2:
-                response = (
-                    "The usual *meeting point in Cartagena* is Muelle de la Bodeguita at 8:00 a.m.\n\n"
-                    "For guests already on the islands, we usually offer *hotel pickup* around 9:30 a.m. "
-                    "(when there is boat access).\n\n"
-                    "In many cases we can store your luggage at our Cartagena office while you are on the islands."
-                )
-            elif choice == 3:
                 state.step = Step.ISLAND_MENU
                 self.set_quick_replies(state, "island_menu")
                 return MESSAGES["island_menu"][lang]
+            elif choice == 3:
+                if state.location == "island":
+                    location_line = (
+                        "Since you are already on the islands, rates usually cover mainly the diving/snorkel service "
+                        "without transport from Cartagena or lunch.\n\n"
+                    )
+                else:
+                    location_line = ""
+                response = (
+                    f"{location_line}"
+                    "In general, tours include: National Park entrance, dive insurance, full equipment, "
+                    "boat transfer Cartagena–Islands–Cartagena and lunch, plus the eco-social contribution to DIVE TO HEAL.\n\n"
+                    "Not usually included: ground transportation to the dock, underwater photos/videos, tips, "
+                    "additional food beyond lunch, and returns on a different date."
+                )
             else:  # choice == 4
                 response = (
-                    "Most plans include *full dive/snorkel equipment, insurance, park fees* and, for tours from "
-                    "Cartagena, the boat transfer. Many plans also include lunch.\n\n"
-                    "We recommend bringing: towel, sunscreen, comfortable clothes, a hat, and your own seasickness "
-                    "medication if needed. Trips depend on weather and sea conditions; if there are changes or "
-                    "cancellations we will coordinate rescheduling or refunds according to the plan policy."
+                    "We recommend bringing: towel, sunscreen, comfortable clothes, a hat, and your own "
+                    "seasickness medication if needed.\n\n"
+                    "Trips depend on weather and sea conditions; if there are changes or cancellations we will "
+                    "coordinate rescheduling or refunds according to the plan policy."
                 )
 
         state.step = Step.MAIN_MENU

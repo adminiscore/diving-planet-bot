@@ -43,3 +43,7 @@ Merge reconciliation:
 ## Sensitive-data cleanup
 
 Raw WhatsApp exports and backup dumps from `wasap/` and `data/knowledge_base/*.bak` are not suitable for Git. They were removed from the index with `git rm --cached` and protected via `.gitignore`, while local files were kept on disk.
+
+## Decision tree pricing/logistics refinement
+
+- `TBD refine: pricing/logistics menus`: Updated `PRICING_MENU` and `LOGISTICS_MENU` (plus `ISLAND_MENU` / `ISLAND_HOTEL_MENU`) to better reflect real customer questions about prices (Cartagena vs. ya en las islas, paquetes 5/7/9 y descuentos para colombianos/residentes) and logistics (punto de encuentro y horarios, alojamiento en islas/recogida en hotel, qué incluye/no incluye el plan y qué llevar). Synchronized documentation in `docs/arbol_opciones_es.md` and marked corresponding copy work as done in `TODO.md`.

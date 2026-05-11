@@ -135,7 +135,7 @@
 ### Próximos pasos sugeridos (árbol ES)
 
 - [ ] Probar manualmente los principales recorridos del árbol ES (tours certificados, principiantes, grupo mixto, precios, reservas, logística y cursos) para ajustar copys y orden de mensajes.
-- [ ] Ajustar textos finos (copys) de menús de precios, reservas, logística, cursos, selector de isla y submenús de hoteles según feedback real de usuarios.
+- [x] Ajustar textos finos (copys) de menús de precios y logística (submenús de punto de encuentro/horarios, alojamiento/recogida, qué incluye y qué llevar). Pendiente afinar cursos, selector de isla y submenús de hoteles según feedback real de usuarios.
 - [ ] Evaluar si conviene añadir un submenú específico para edades de niños en logística o cursos una vez validadas las políticas de Diving Planet.
 
 ## A tener en cuenta (ajustes menores opcionales)

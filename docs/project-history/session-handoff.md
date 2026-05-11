@@ -15,6 +15,7 @@ Read this first when resuming work on the Diving Planet Bot.
 - Polling also handles missed incoming messages, with deduplication to prevent double replies.
 - Gadea expanded the decision tree, knowledge base, WhatsApp import tooling, retrieval/vector-store logic, and privacy handling.
 - RAG was reconciled to preserve PII handling and previous history-aware retrieval/fallback behavior.
+- Decision tree pricing (`PRICING_MENU`) and logistics (`LOGISTICS_MENU` + `ISLAND_MENU` / `ISLAND_HOTEL_MENU`) menus were refined based on real conversations: clearer options for salidas desde Cartagena vs. clientes ya en las islas, paquetes 5/7/9 buceos, y submenús de logística (punto de encuentro/horarios, alojamiento/recogida, qué incluye/no incluye y qué llevar). `docs/arbol_opciones_es.md` y `TODO.md` se actualizaron para reflejar estos cambios.
 - Raw WhatsApp exports and backups are treated as sensitive and should stay ignored/untracked.
 
 ## Before modifying code

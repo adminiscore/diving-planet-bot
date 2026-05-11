@@ -97,7 +97,20 @@
 
     - **4. 💰 Precios y descuentos**
       - **Menú precios**
-        - **Opciones informativas (sin ramas adicionales en árbol)**
+        - **1. Precios saliendo desde Cartagena**
+          - Explica precios de referencia para 2 buceos 1 día, minicurso y tour de snorkel saliendo desde Cartagena.
+          - Aclara que los montos exactos y promociones (10% online) se actualizan siempre en la web y que, al elegir plan, se envía el enlace de reserva con el precio vigente.
+        - **2. Precios si ya estoy en las islas**
+          - Explica que para quienes ya están en las Islas del Rosario se manejan tarifas especiales sin transporte Cartagena–Islas ni almuerzo incluido.
+          - Menciona los enlaces específicos "already on island" donde se ve el valor actualizado según actividad (2 buceos, minicurso o snorkel) y fecha.
+          - Si el usuario ya indicó ubicación "islas", se hace referencia a esa elección.
+        - **3. Paquetes 5/7/9 buceos (multi-día)**
+          - Resume los paquetes multi-día (5/7/9 buceos) usando la información de servicios.
+          - Deja claro que el alojamiento en las islas no está incluido y se reserva aparte directamente con el hotel.
+          - Indica que la web muestra siempre el valor actualizado y posibles promociones antes de confirmar.
+        - **4. Descuentos para colombianos/residentes**
+          - Explica que hay precios especiales en COP y distintos tipos de descuento (10% online, segundo día, grupos, plan PARCEROS en algunas fechas).
+          - Indica que normalmente se ve un valor en USD en la web y que, al contactar por WhatsApp, se puede aplicar la tarifa local cuando corresponda y aclarar condiciones.
 
     - **5. 💳 Reserva y pagos**
       - **Menú reservas/pagos**
@@ -105,7 +118,21 @@
 
     - **6. ℹ️ Logistica y otras preguntas**
       - **Menú logística**
-        - **Opciones informativas (sin ramas adicionales en árbol)**
+        - **1. Punto de encuentro y horarios**
+          - Para salidas desde Cartagena, indica punto de encuentro en el Muelle de la Bodeguita a las 8:00 a.m. (entrada 3) y regreso estimado entre 4:00 y 4:30 p.m.
+          - Para paquetes multi-día o clientes ya en las islas, explica que los horarios se ajustan según número de inmersiones/noches y que los detalles se ven en el enlace de cada plan.
+          - Usa `state.location` cuando está disponible para adaptar el mensaje.
+        - **2. Alojamiento en islas y recogida en hotel**
+          - Deriva al selector de isla (`ISLAND_MENU`) para que el usuario indique en qué isla se hospeda.
+          - Después se muestra un submenú de hoteles (`ISLAND_HOTEL_MENU`) y se guarda la isla y hotel en el estado para coordinar recogidas y regresos.
+          - Explica que, aunque el alojamiento no está incluido, se coordina la logística de recogida en función del acceso en lancha.
+        - **3. Qué incluye / qué no incluye el plan**
+          - Resume, de forma general, qué incluyen los tours: entrada al Parque Nacional, seguro de buceo, equipo completo, transporte en lancha Cartagena–Islas–Cartagena y almuerzo, además del aporte eco-social a DIVE TO HEAL.
+          - Indica qué no suele estar incluido: transporte terrestre al muelle, fotos/vídeos submarinos, propinas, comidas adicionales al almuerzo y regresos en fecha distinta.
+          - Si el usuario ya está en las islas (`location = island`), aclara que en esos casos las tarifas suelen cubrir principalmente el servicio de buceo/snorkel sin transporte ni almuerzo.
+        - **4. Qué llevar y recomendaciones**
+          - Recomienda llevar toalla, bloqueador solar, ropa cómoda, gorra o sombrero y medicación para el mareo si aplica.
+          - Recuerda que las salidas dependen de condiciones de clima y mar, y que ante cambios o cancelaciones se coordina reprogramación o reembolso según la política del plan.
 
     - **7. 🧑‍💬 Hablar con un asesor**
       - **Transferir con el jefe**
