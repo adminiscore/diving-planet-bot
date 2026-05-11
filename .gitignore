@@ -215,3 +215,15 @@ __marimo__/
 chatwoot_data/
 pgdata/
 redis_data/
+
+# Project specific - Raw private conversation exports and sensitive imports
+wasap/
+**/WhatsApp Chat - */
+**/_chat.txt
+data/knowledge_base/*.bak
+data/knowledge_base/*.pre_dedup.*
+data/knowledge_base/*pre_dedup*
+
+# Project specific - Raw media/contact artifacts from customer conversations
+*.opus
+*.vcf
