@@ -1,17 +1,13 @@
 # Project history
 
-This folder contains persistent context for future development sessions on the Diving Planet Bot.
-
-## Files
-
-- `timeline.md`: Chronological history of important commits, branch merges, and implementation milestones.
-- `architecture-notes.md`: Current technical architecture, major flows, and operational assumptions.
-- `session-handoff.md`: Quick context to read at the start of a new assistant/session before making changes.
+This folder contains the operating context needed to resume work on the Diving Planet Bot without losing traceability.
 
 ## How to use
 
-Read `session-handoff.md` first, then `architecture-notes.md` if the task touches Chatwoot, RAG, deployment, or the decision tree. Use `timeline.md` to understand why current decisions were made.
+- Read `docs/HISTORY.md` for a quick version-by-version overview of what has been built.
+- Read `docs/project-history/session-handoff.md` before changing code; it contains the current architecture, branch context, validation commands, risks, and privacy rules.
+- Use `/start-context` at the start of a session and `/close-work` before committing/pushing work.
 
 ## Privacy rule
 
-Raw customer exports, WhatsApp conversations, voice notes, contact cards, photos, PDFs, and backup dumps must not be committed. Only curated, sanitized knowledge-base content should be versioned.
+Raw customer exports, WhatsApp conversations, voice notes, contact cards, photos, PDFs, payment links, IDs, and backup dumps must not be committed. Only curated, sanitized knowledge-base content should be versioned.
