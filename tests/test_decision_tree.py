@@ -414,7 +414,7 @@ def test_decision_tree_sets_quick_replies_for_menu_steps():
     assert state.step == Step.LANGUAGE
     assert "1. Espanol" not in response
     assert state.quick_replies[0]["value"] == "1"
-    assert state.quick_replies[1] == {"title": ":flag_us: English", "value": "2"}
+    assert state.quick_replies[1] == {"title": "🇺🇸 English", "value": "2"}
 
 
 def test_decision_tree_accepts_quick_reply_title():

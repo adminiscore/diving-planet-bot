@@ -292,16 +292,16 @@ MESSAGES = {
             "PADI 5 Estrellas de Colombia, con 30 anos de experiencia en "
             "las Islas del Rosario, Cartagena.\n\n"
             "Selecciona tu idioma / Select your language:\n\n"
-            ":flag_co: Español\n"
-            ":flag_us: English"
+            "🇨🇴 Español\n"
+            "🇺🇸 English"
         ),
         "en": (
             "Hello! Welcome to *Diving Planet*, Colombia's first "
             "PADI 5 Star Dive Center, with 30 years of experience in "
             "the Rosario Islands, Cartagena.\n\n"
             "Select your language / Selecciona tu idioma:\n\n"
-            ":flag_co: Español\n"
-            ":flag_us: English"
+            "🇨🇴 Español\n"
+            "🇺🇸 English"
         ),
     },
     "main_menu": {
@@ -449,10 +449,10 @@ MESSAGES = {
     },
     "colombian": {
         "es": (
-            ":flag_co: ¿Eres colombiano/a? Tenemos descuentos especiales para locales."
+            "🇨🇴 ¿Eres colombiano/a? Tenemos descuentos especiales para locales."
         ),
         "en": (
-            ":flag_co: Are you Colombian? We have special discounts for locals."
+            "🇨🇴 Are you Colombian? We have special discounts for locals."
         ),
     },
     "escalate": {
@@ -500,12 +500,12 @@ MESSAGES = {
 BUTTON_OPTIONS = {
     "welcome": {
         "es": [
-            {"title": ":flag_co: Español", "value": "1"},
-            {"title": ":flag_us: English", "value": "2"},
+            {"title": "🇨🇴 Español", "value": "1"},
+            {"title": "🇺🇸 English", "value": "2"},
         ],
         "en": [
-            {"title": ":flag_co: Español", "value": "1"},
-            {"title": ":flag_us: English", "value": "2"},
+            {"title": "🇨🇴 Español", "value": "1"},
+            {"title": "🇺🇸 English", "value": "2"},
         ],
     },
     "main_menu": {
