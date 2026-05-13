@@ -1,4 +1,5 @@
 import json
+import hashlib
 import re
 from dataclasses import dataclass
 from pathlib import Path
@@ -224,7 +225,8 @@ def build_conversation_examples(chat_path: Path, parsed: list[ParsedMessage]) ->
     if not parsed:
         return []
 
-    folder_slug = slugify(chat_path.parent.name.replace("WhatsApp Chat -", ""))
+    folder_hash = hashlib.sha1(chat_path.parent.name.encode("utf-8", "replace")).hexdigest()[:10]
+    folder_slug = f"chat_{folder_hash}"
     first_customer_msg = next((m.text for m in parsed if "DIVING PLANET" not in m.sender.upper()), "")
 
     turns = build_turns(parsed)
@@ -290,7 +292,7 @@ def main() -> int:
 
         for example in new_examples:
             if example["id"] in existing_ids:
-                suffix = slugify(chat_path.parent.name)[:30]
+                suffix = hashlib.sha1(str(chat_path).encode("utf-8", "replace")).hexdigest()[:8]
                 example["id"] = f"{example['id']}_{suffix}"
             examples.append(example)
             existing_ids.add(example["id"])
