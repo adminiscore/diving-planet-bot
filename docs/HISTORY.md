@@ -5,6 +5,7 @@ History
 ---------------------
 * Align the decision tree with `services.json` as the service source of truth.
 * Add guided coverage for island service variants and PADI specialties.
+* Expand curated FAQs with beginner diving knowledge, safety guidance, equipment basics, course comparisons, and marine-life guidance.
 * Update visual tree docs, MVP KB audit, and decision-tree tests.
 
 0.9.0 - (2026-05-12)
