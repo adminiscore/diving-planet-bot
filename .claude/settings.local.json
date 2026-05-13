@@ -1,0 +1,32 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python -m compileall src/agents/lead_summary.py src/agents/supervisor.py src/agents/rag_agent.py src/channels/chatwoot.py src/flows/decision_tree.py -q)",
+      "Bash(python -m pytest tests/test_chatwoot_buttons.py tests/test_decision_tree.py tests/test_rag_safety.py -q)",
+      "Bash(python -m pytest tests/ -q)",
+      "Bash(python -m pytest tests/test_conversations.py -v)",
+      "Bash(python -m pytest tests/test_conversations.py -v --tb=short)",
+      "Bash(python -m pytest tests/test_conversations.py -q)",
+      "Bash(wsl -d Ubuntu -- bash -c \"ss -tlnp 2>/dev/null | grep 8000 || netstat -tlnp 2>/dev/null | grep 8000 || echo 'ss/netstat not available'\")",
+      "Bash(docker exec *)",
+      "Bash(wsl -d Ubuntu -- bash -c \"curl -s http://192.168.65.254:8000/health 2>&1 || echo FAIL\")",
+      "Bash(wsl -d Ubuntu -- bash -c \"curl -s -H 'api_access_token: cjBYC1AWndYpdC1tPd1v5EQf' http://localhost:3300/api/v1/accounts/1/integrations/webhooks | python3 -m json.tool 2>/dev/null || echo 'API_FAIL'\")",
+      "Bash(wsl -d Ubuntu -- bash -c \"curl -v -H 'api_access_token: cjBYC1AWndYpdC1tPd1v5EQf' http://localhost:3300/api/v1/accounts/1/integrations/webhooks 2>&1 | tail -30\")",
+      "Bash(wsl -d Ubuntu -- bash -c \"curl -s -H 'api_access_token: cjBYC1AWndYpdC1tPd1v5EQf' http://localhost:3300/auth/sign_in -o /dev/null -w '%{http_code}'; echo ''; curl -s -H 'api_access_token: cjBYC1AWndYpdC1tPd1v5EQf' http://localhost:3300/api/v1/profile | python3 -m json.tool 2>/dev/null | head -20\")",
+      "Bash(wsl -d Ubuntu -- bash -c \"curl -sL -H 'api_access_token: cjBYC1AWndYpdC1tPd1v5EQf' http://localhost:3300/api/v1/accounts/1/integrations/webhooks 2>&1 | python3 -m json.tool 2>/dev/null || echo 'RAW:'; curl -sL -H 'api_access_token: cjBYC1AWndYpdC1tPd1v5EQf' http://localhost:3300/api/v1/accounts/1/integrations/webhooks 2>&1 | head -5\")",
+      "Bash(wsl -d Ubuntu -- bash -c \"docker exec dp-dev-postgres psql -U postgres -d chatwoot_dev -c 'SELECT id, url, account_id FROM webhooks;' 2>&1\")",
+      "Bash(wsl -d Ubuntu -- bash -c \"docker exec dp-dev-chatwoot ruby -e \\\\\"require 'net/http'; require 'json'; uri=URI\\('http://host.docker.internal:8000/webhooks/chatwoot'\\); http=Net::HTTP.new\\(uri.host,uri.port\\); req=Net::HTTP::Post.new\\(uri.path,{'Content-Type'=>'application/json'}\\); req.body=JSON.generate\\({'event'=>'message_created','id'=>1,'message_type'=>0,'content'=>'hola test desde docker','conversation'=>{'id'=>9999},'sender'=>{'name'=>'tester'}}\\); resp=http.request\\(req\\); puts resp.code; puts resp.body\\\\\" 2>&1\")",
+      "Bash(wsl -d Ubuntu -- bash -c \"docker exec dp-dev-postgres psql -U postgres -d chatwoot_dev -c \\\\\"UPDATE webhooks SET url = 'http://host.docker.internal:8000/webhooks/chatwoot' WHERE id = 1;\\\\\" 2>&1\")",
+      "Bash(wsl -d Ubuntu -- bash -c \"docker exec dp-dev-postgres psql -U postgres -d chatwoot_dev -c 'SELECT id, url, subscriptions FROM webhooks;' 2>&1\")",
+      "Bash(wsl -d Ubuntu -- bash -c \"docker exec dp-dev-postgres psql -U postgres -d chatwoot_dev -c \\\\\"UPDATE webhooks SET subscriptions = '[\\\\\"message_created\\\\\", \\\\\"message_updated\\\\\", \\\\\"conversation_created\\\\\", \\\\\"conversation_status_changed\\\\\"]'::jsonb WHERE id = 1;\\\\\" 2>&1\")",
+      "Bash(wsl -d Ubuntu -- bash -c 'docker exec dp-dev-postgres psql -U postgres -d chatwoot_dev -c \"UPDATE webhooks SET subscriptions = '\"'\"'[\\\\\"message_created\\\\\", \\\\\"message_updated\\\\\", \\\\\"conversation_created\\\\\", \\\\\"conversation_status_changed\\\\\"]'\"'\"'::jsonb WHERE id = 1;\" 2>&1')",
+      "Bash(wsl -d Ubuntu -- bash -c \"cd '/mnt/c/Users/plaza/Visual_projects/ISCORE/DIVING PLANET/diving-planet-bot' && python -m pytest tests/test_chatwoot_buttons.py tests/test_decision_tree.py tests/test_rag_safety.py -v --tb=short 2>&1 | tail -40\")",
+      "Bash(wsl -d Ubuntu -- bash -c \"cd '/mnt/c/Users/plaza/Visual_projects/ISCORE/DIVING PLANET/diving-planet-bot' && python3 -m pytest tests/test_chatwoot_buttons.py tests/test_decision_tree.py tests/test_rag_safety.py -v --tb=short 2>&1 | tail -50\")",
+      "Bash(wsl -d Ubuntu -- bash -lc \"cd '/mnt/c/Users/plaza/Visual_projects/ISCORE/DIVING PLANET/diving-planet-bot' && python -m pytest tests/test_chatwoot_buttons.py tests/test_decision_tree.py tests/test_rag_safety.py -v --tb=short 2>&1 | tail -50\")",
+      "Bash(wsl -d Ubuntu -- bash -lc \"which conda && conda run -n base python -m pytest tests/test_chatwoot_buttons.py tests/test_decision_tree.py tests/test_rag_safety.py -v --tb=short 2>&1 | tail -50\")",
+      "Bash(wsl -d Ubuntu -- bash -c 'source /home/plaza_/.bashrc 2>/dev/null; source /home/plaza_/.profile 2>/dev/null; export PATH=\"/home/plaza_/anaconda3/bin:/home/plaza_/miniconda3/bin:__TRACKED_VAR__\"; cd '\\\\''/mnt/c/Users/plaza/Visual_projects/ISCORE/DIVING PLANET/diving-planet-bot'\\\\'' && python -m pytest tests/test_chatwoot_buttons.py tests/test_decision_tree.py tests/test_rag_safety.py --tb=short 2>&1 | tail -30')",
+      "Bash(wsl -d Ubuntu -- bash -c 'source /home/plaza_/.bashrc 2>/dev/null; export PATH=\"/home/plaza_/anaconda3/bin:/home/plaza_/miniconda3/bin:__TRACKED_VAR__\"; cd '\\\\''/mnt/c/Users/plaza/Visual_projects/ISCORE/DIVING PLANET/diving-planet-bot'\\\\'' && python -m pytest tests/test_chatwoot_buttons.py tests/test_decision_tree.py tests/test_rag_safety.py --tb=short 2>&1 | tail -15')",
+      "Bash(git add *)"
+    ]
+  }
+}

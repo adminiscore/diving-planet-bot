@@ -26,6 +26,10 @@ Read this file before changing code in the Diving Planet Bot. For a quick versio
 - Decision tree pricing (`PRICING_MENU`) and logistics (`LOGISTICS_MENU` + `ISLAND_MENU` / `ISLAND_HOTEL_MENU`) menus were refined based on real conversations: clearer options for salidas desde Cartagena vs. clientes ya en las islas, paquetes 5/7/9 buceos, y submenús de logística (punto de encuentro/horarios, alojamiento/recogida, qué incluye/no incluye y qué llevar). `docs/arbol_opciones_es.md` y `TODO.md` se actualizaron para reflejar estos cambios.
 - `services.json` is now the source of truth for service names, prices, inclusions, requirements, itineraries, and booking links used by the decision tree. The tree maps base services to `*_already_on_island` variants when the user is already in the islands and now exposes PADI specialties in the guided course menu.
 - Raw WhatsApp exports and backups are treated as sensitive and should stay ignored/untracked.
+- Country flag emojis (🇨🇴, 🇺🇸) do not render on Windows — replaced throughout with 🌎/🌐 for cross-platform compatibility.
+- `src/agents/lead_summary.py` builds structured private Chatwoot notes on escalation; `state.pending_note` holds the note until sent in `chatwoot.py`.
+- Lead notes are sent for all escalation types: keyword (`humano`, `agente`...), sensitive (medical, weather, complaints), and tree-internal escalation.
+- `.claude/commands/runtests.md` provides a `/runtests` skill to run the 127-test conversation dataset with block-level keyword filtering.
 
 ## Current product context
 
@@ -72,15 +76,27 @@ If retrieval, embeddings, or vector-store behavior changes, also run:
 python -m pytest tests/test_retrieval_rerank.py
 ```
 
+## Dev environment notes
+
+- Bot runs in WSL2 Ubuntu on port 8000: `python -m src.main` (with conda base active).
+- Chatwoot runs in Docker on port 3300: `docker compose --profile chatwoot up -d`.
+- Chatwoot webhook is configured in the DB (`chatwoot_dev.webhooks`) pointing to `http://host.docker.internal:8000/webhooks/chatwoot`.
+- Webhook subscriptions must include `message_created`, `message_updated`, `conversation_created`, `conversation_status_changed`. Missing `message_updated` means button clicks are ignored.
+- `host.docker.internal` from Docker resolves to `192.168.65.254` (Docker Desktop host), which reaches WSL2 bot via Docker Desktop port bridging.
+- `CHATWOOT_BASE_URL=http://localhost:3300` in `.env` is correct for bot→Chatwoot API calls from WSL2.
+- To verify webhook config: `docker exec dp-dev-postgres psql -U postgres -d chatwoot_dev -c 'SELECT id, url, subscriptions FROM webhooks;'`
+- `chatwood-test.html` uses websiteToken `rcTJ5Awm3fZN7eAtoMnXVzVF` (Diving Planet Web inbox).
+
 ## Manual Chatwoot checks
 
 When touching Chatwoot, buttons, routing, or conversation state:
 
-- Start the bot locally, commonly on port `8001` if `8000` is occupied.
-- Open `chatwood-test.html`.
-- Test `hola` -> language buttons only once.
-- Click `Español` -> main menu buttons.
-- Send free text from a menu -> RAG response without duplicate replies.
+- Start the bot: `python -m src.main` in WSL2 Ubuntu (conda base).
+- Start Chatwoot: `docker compose --profile chatwoot up -d`.
+- Open `chatwood-test.html` in a browser.
+- Test `hola` → language buttons (🌎 Español / 🌐 English).
+- Click `Español` → main menu buttons.
+- Send free text from a menu → RAG response without duplicate replies.
 - Click through at least one full booking path.
 
 ## Where to look first

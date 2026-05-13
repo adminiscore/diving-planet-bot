@@ -73,6 +73,7 @@ class ConversationState:
     original_service: str | None = None
     history: list[dict] = None
     quick_replies: list[dict] = field(default_factory=list)
+    pending_note: str | None = None
 
     def __post_init__(self):
         if self.history is None:
@@ -223,16 +224,16 @@ MESSAGES = {
             "PADI 5 Estrellas de Colombia, con 30 anos de experiencia en "
             "las Islas del Rosario, Cartagena.\n\n"
             "Selecciona tu idioma / Select your language:\n\n"
-            "🇨🇴 Español\n"
-            "🇺🇸 English"
+            "🌎 Español\n"
+            "🌐 English"
         ),
         "en": (
             "Hello! Welcome to *Diving Planet*, Colombia's first "
             "PADI 5 Star Dive Center, with 30 years of experience in "
             "the Rosario Islands, Cartagena.\n\n"
             "Select your language / Selecciona tu idioma:\n\n"
-            "🇨🇴 Español\n"
-            "🇺🇸 English"
+            "🌎 Español\n"
+            "🌐 English"
         ),
     },
     "main_menu": {
@@ -380,10 +381,10 @@ MESSAGES = {
     },
     "colombian": {
         "es": (
-            "🇨🇴 ¿Eres colombiano/a? Tenemos descuentos especiales para locales."
+            "🌎 ¿Eres colombiano/a? Tenemos descuentos especiales para locales."
         ),
         "en": (
-            "🇨🇴 Are you Colombian? We have special discounts for locals."
+            "🌎 Are you Colombian? We have special discounts for locals."
         ),
     },
     "escalate": {
@@ -431,12 +432,12 @@ MESSAGES = {
 BUTTON_OPTIONS = {
     "welcome": {
         "es": [
-            {"title": "🇨🇴 Español", "value": "1"},
-            {"title": "🇺🇸 English", "value": "2"},
+            {"title": "🌎 Español", "value": "1"},
+            {"title": "🌐 English", "value": "2"},
         ],
         "en": [
-            {"title": "🇨🇴 Español", "value": "1"},
-            {"title": "🇺🇸 English", "value": "2"},
+            {"title": "🌎 Español", "value": "1"},
+            {"title": "🌐 English", "value": "2"},
         ],
     },
     "main_menu": {
@@ -909,7 +910,7 @@ class DecisionTree:
         elif choice == 4:
             # Solo snorkel / acompanantes: usamos el plan de snorkel directamente
             state.is_certified = False
-            state.selected_service = "snorkeling"
+            state.selected_service = self._service_for_location("snorkeling", state)
             state.step = Step.COLOMBIAN
             self.set_quick_replies(state, "colombian")
             return self._format_service_detail(state) + "\n\n" + MESSAGES["colombian"][lang]
@@ -1864,7 +1865,7 @@ class DecisionTree:
 
             if state.is_colombian:
                 summary += (
-                    "\n🇨🇴 *Descuento colombiano*: Contactanos por WhatsApp "
+                    "\n🌎 *Descuento colombiano*: Contactanos por WhatsApp "
                     "al +57 320 2554961 para tu descuento especial.\n"
                 )
 
@@ -1906,7 +1907,7 @@ class DecisionTree:
 
             if state.is_colombian:
                 summary += (
-                    "\n🇨🇴 *Colombian discount*: Contact us via WhatsApp "
+                    "\n🌎 *Colombian discount*: Contact us via WhatsApp "
                     "at +57 320 2554961 for your special discount.\n"
                 )
 

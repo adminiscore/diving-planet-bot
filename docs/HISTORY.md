@@ -1,6 +1,16 @@
 History
 =======
 
+0.11.0 - (2026-05-13)
+---------------------
+* Add automatic lead-summary private notes in Chatwoot on escalation (keyword, sensitive, and tree-triggered).
+* Rewrite RAG system prompt with brand_tone.json: WhatsApp style, explicit prohibitions, escalation criteria.
+* Fix snorkeling bug: group_type choice 4 from islands now maps to the correct island variant.
+* Add exhaustive conversation test dataset (127 tests, 18 blocks covering all tree paths, escalation, RAG, PII, English flows, lead summaries, and quick replies).
+* Add /runtests Claude Code skill with block-level keyword filtering.
+* Fix dev environment: Chatwoot webhook was pointing to port 8001 instead of 8000; add message_updated event subscription so button clicks reach the bot.
+* Replace Windows-incompatible country flag emojis (🇨🇴/🇺🇸) with universally supported globe emojis (🌎/🌐).
+
 0.10.0 - (2026-05-13)
 ---------------------
 * Align the decision tree with `services.json` as the service source of truth.

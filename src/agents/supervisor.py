@@ -13,6 +13,7 @@ keeping costs minimal.
 import logging
 
 from src.agents.escalation import detect_sensitive_escalation
+from src.agents.lead_summary import build_lead_summary
 from src.flows.decision_tree import DecisionTree, ConversationState, Step
 from src.agents.rag_agent import rag_answer
 from src.privacy import detect_pii, privacy_block_message
@@ -124,6 +125,7 @@ async def route_message(state: ConversationState, message: str) -> str:
     if any(kw in msg_lower for kw in ESCALATION_KEYWORDS):
         state.step = Step.ESCALATE
         state.quick_replies = []
+        state.pending_note = build_lead_summary(state, escalation_reason="solicitó asesor")
         from src.flows.decision_tree import MESSAGES
         logger.info(f"[SUPERVISOR] Escalation triggered by keyword")
         return MESSAGES["escalate"][state.language]
@@ -133,6 +135,7 @@ async def route_message(state: ConversationState, message: str) -> str:
         reason, response = sensitive_escalation
         state.step = Step.ESCALATE
         state.quick_replies = []
+        state.pending_note = build_lead_summary(state, escalation_reason=reason)
         logger.info(f"[SUPERVISOR] Sensitive escalation triggered reason={reason}")
         return response
 
@@ -149,6 +152,8 @@ async def route_message(state: ConversationState, message: str) -> str:
         # If it looks like a menu choice (number), use decision tree
         if msg_lower.isdigit():
             response = decision_tree.process_message(state, message)
+            if state.step == Step.ESCALATE and not state.pending_note:
+                state.pending_note = build_lead_summary(state, escalation_reason="derivado por el árbol de opciones")
             logger.info(f"[SUPERVISOR] Decision tree -> step={state.step.value}")
             return response
 
@@ -259,4 +264,6 @@ async def route_message(state: ConversationState, message: str) -> str:
 
     # Fallback: welcome
     response = decision_tree.process_message(state, message)
+    if state.step == Step.ESCALATE and not state.pending_note:
+        state.pending_note = build_lead_summary(state, escalation_reason="derivado por el árbol de opciones")
     return response

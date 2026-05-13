@@ -93,6 +93,11 @@ async def handle_message(payload: dict):
     # Route through supervisor (decision tree + RAG)
     response = await route_message(state, message)
 
+    # Send internal lead note if escalation just happened
+    if state.pending_note:
+        await send_chatwoot_note(conversation_id, state.pending_note)
+        state.pending_note = None
+
     # Send response back via Chatwoot API
     if response:
         await send_chatwoot_message(conversation_id, response, state.quick_replies)
@@ -139,6 +144,9 @@ async def poll_active_conversations_once():
                     processed_chatwoot_messages.add(dedupe_key)
                     logger.info(f"[BOT] Processing Chatwoot button conv={conversation_id} message_id={message_id} value={selected}")
                     response = await route_message(state, selected)
+                    if state.pending_note:
+                        await send_chatwoot_note(conversation_id, state.pending_note)
+                        state.pending_note = None
                     if response:
                         await send_chatwoot_message(conversation_id, response, state.quick_replies)
                     continue
@@ -154,6 +162,9 @@ async def poll_active_conversations_once():
                 processed_chatwoot_messages.add(dedupe_key)
                 logger.info(f"[BOT] Processing polled incoming conv={conversation_id} message_id={message_id}: {content[:100]}")
                 response = await route_message(state, content)
+                if state.pending_note:
+                    await send_chatwoot_note(conversation_id, state.pending_note)
+                    state.pending_note = None
                 if response:
                     await send_chatwoot_message(conversation_id, response, state.quick_replies)
 
@@ -234,3 +245,28 @@ async def send_chatwoot_message(conversation_id: str, message: str, quick_replie
             logger.error(f"[BOT] Send error conv={conversation_id} url={url}: {e}")
         except httpx.HTTPError as e:
             logger.error(f"[BOT] Send error conv={conversation_id} url={url}: {e}")
+
+
+async def send_chatwoot_note(conversation_id: str, note: str):
+    """Send a private internal note to Chatwoot (visible only to agents, not the customer)."""
+    base_url = settings.chatwoot_base_url.rstrip("/")
+    url = (
+        f"{base_url}/api/v1/accounts/{settings.chatwoot_account_id}"
+        f"/conversations/{conversation_id}/messages"
+    )
+    headers = {
+        "api_access_token": settings.chatwoot_api_token,
+        "Content-Type": "application/json",
+    }
+    payload = {
+        "content": note,
+        "message_type": 1,
+        "private": True,
+    }
+    async with httpx.AsyncClient() as client:
+        try:
+            resp = await client.post(url, json=payload, headers=headers, timeout=10.0)
+            resp.raise_for_status()
+            logger.info(f"[BOT] Lead note sent conv={conversation_id}")
+        except httpx.HTTPError as e:
+            logger.error(f"[BOT] Note send error conv={conversation_id}: {e}")
