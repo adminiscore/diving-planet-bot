@@ -38,6 +38,7 @@ Read this file before changing code in the Diving Planet Bot. For a quick versio
   - Cartagena certified multi-day packages: 5/7/9 dives, lodging/nocturnal notes, and refresher handling.
   - Island-based certified and beginner service variants from `services.json`.
   - PADI advanced/professional courses and specialties.
+- `faqs.json` has been expanded with curated educational diving content for beginners, safety, equipment, course comparisons, underwater sensations, marine-life etiquette, and Rosario Islands destination knowledge.
 - Current MVP direction: inform, qualify, recommend, and prepare human-assisted conversion; do not automate live availability, payment, or final booking confirmation yet.
 - Use `docs/mvp-intent-matrix.md` and `docs/kb-audit-mvp.md` before expanding tree/RAG behavior.
 - `docs/infra-simple.excalidraw` contains the current minimal infrastructure scheme for team communication.
@@ -47,6 +48,7 @@ Read this file before changing code in the Diving Planet Bot. For a quick versio
 
 - Versioned KB lives under `data/knowledge_base/` and must be curated/sanitized.
 - Important KB files: `services.json`, `faqs.json`, `policies.json`, `pricing.json`, `availability.json`, `conversations.json`, `brand_tone.json`.
+- Treat `faqs.json` as curated public-facing content: keep new entries bilingual, consolidated by topic, and avoid adding medical clearance, live availability, unsanitized customer details, or unverified booking/payment claims.
 - Never stage raw exports or private customer data:
   - `wasap/`
   - raw `_chat.txt` exports
