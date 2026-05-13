@@ -31,27 +31,27 @@ El bot no debe intentar cerrar reservas reales, confirmar cupos, procesar pagos 
 
 | Tema | Estado | Qué hay ahora | Riesgo o hueco | Qué hay que completar |
 |---|---|---|---|---|
-| Servicios disponibles | Cubierto | `services.json`, `faqs.json` y catálogo del árbol | Hay información duplicada entre KB y árbol; puede desactualizarse | Definir una fuente principal de verdad para servicios |
+| Servicios disponibles | Cubierto | `services.json` es la fuente principal y el árbol carga el catálogo desde ahí; `faqs.json` complementa preguntas frecuentes | Si se añaden servicios nuevos al JSON, aún hay que decidir si entran como opción guiada del árbol o solo como RAG/asesor | Mantener `services.json` como fuente de verdad y actualizar `docs/arbol_opciones_es.md` cuando cambie el recorrido visual |
 | Precios actualizados | Requiere confirmación | `services.json` tiene precios para algunos tours/planes; `pricing.json` mantiene muchos `precio_a_definir` | El bot no puede inventar precios; puede responder incompleto | Confirmar precios oficiales por servicio, nacionalidad, salida desde Cartagena/islas, cursos y paquetes |
 | Horarios y temporadas | Cubierto | `availability.json` y `faqs.json` | No hay disponibilidad real conectada | Mantener respuestas generales; escalar cuando pregunten por cupo real |
 | Condiciones de reserva | Parcial | `policies.json` incluye cierre de ROVERD y link de términos | Falta anticipo, medios de pago, cuándo queda confirmada una reserva y qué datos se piden | Completar política de reserva en formato claro |
 | Política de cancelación | Parcial | Link de términos y respuesta sobre cancelación por clima | Falta política normal: cancelación por cliente, no-show, enfermedad, cambio de fecha, reembolso parcial/total | Confirmar reglas oficiales y crear entradas específicas |
 | Requisitos médicos | Parcial | `policies.json`, `faqs.json`, `escalation_rules.json` y escalado sensible | El bot no debe dar diagnóstico ni autorizar buceo por condiciones médicas | Añadir regla explícita: el bot nunca decide aptitud médica |
-| Requisitos por curso | Parcial | `services.json` y `faqs.json` ya incluyen detalle para Open Water, Advanced, Rescue y Divemaster (itinerario, inclusiones, requisitos y regla de vuelo) | Aún falta confirmación de negocio para precios, materiales y políticas finas; Divemaster/privado no tienen link de pago directo | Confirmar/estandarizar duración, prerrequisitos, edad mínima, qué incluye, teoría, vuelos y certificación |
+| Requisitos por curso | Parcial | `services.json` y el árbol ya cubren Open Water, Advanced, Rescue, Divemaster y especialidades PADI, incluyendo variantes para clientes ya en islas cuando existen | Aún falta confirmación de negocio para precios, materiales y políticas finas; Divemaster/privado no tienen link de pago directo | Confirmar/estandarizar duración, prerrequisitos, edad mínima, qué incluye, teoría, vuelos y certificación |
 | Pernocta + regla de vuelo (Cartagena → Islas) | Cubierto | `services.json` (requirements_es/en) y `faqs.json` remarcan pernocta obligatoria (hotel no incluido) en planes multi-día y la regla de 18h sin volar | Si el contenido se dispersa entre FAQs y servicios puede perderse el mensaje | Mantener este requisito como “must say” al recomendar planes multi-día desde Cartagena |
-| Diferencias entre bautismo, Open Water, Advanced y buceos guiados | Parcial | Información repartida entre servicios, árbol y FAQs | El usuario puede confundirse; RAG puede responder de forma fragmentada | Crear comparación simple para recomendar el plan correcto |
+| Diferencias entre bautismo, Open Water, Advanced y buceos guiados | Parcial | El árbol separa principiantes, certificados, cursos y especialidades; `services.json` aporta detalles de cada plan | Falta una comparación editorial corta que explique “qué me conviene” en una sola respuesta para RAG y humanos | Crear comparación simple para recomendar el plan correcto |
 | Preguntas frecuentes | Cubierto | `faqs.json` cubre ubicación, horarios, grupos mixtos, edad, vuelos, recogidas, clima, etc. | Algunas respuestas mezclan varios temas | Separar FAQs importantes en respuestas más concretas con el tiempo |
 | Tono comercial | Cubierto | `brand_tone.json` | Debe mantenerse consistente en árbol y RAG | Usarlo como referencia para toda nueva respuesta |
 | Casos de escalado humano | Cubierto | `escalation_rules.json`, `src/agents/escalation.py` y supervisor | Las reglas de JSON y las de código pueden desalinearse | Mantener checklist de escalado y luego crear tests |
 | Respuestas que el bot nunca debe dar | Parcial | `brand_tone.json` dice que no debe inventar; prompts de RAG también | No hay documento dedicado con prohibiciones claras | Crear política explícita de “nunca responder” |
 | Comidas y alergias | Falta | Se menciona que algunos tours incluyen almuerzo | Falta menú, alergias, vegetarianos, restricciones alimentarias, snacks/bebidas, si se puede llevar comida | Confirmar con operación y crear FAQ/política |
 | Fotos y videos | Parcial | `faqs.json` indica que no están incluidos | Falta si se pueden contratar, precio, entrega, tiempos y cómo pedirlos | Confirmar política de fotos/videos |
-| Hoteles, recogidas y traslados | Parcial | `policies.json`, `faqs.json` y árbol mencionan recogida en islas/hoteles | Falta lista estructurada de hoteles/islas y restricciones exactas | Crear documento de logística por isla/hotel y acceso marítimo |
+| Hoteles, recogidas y traslados | Parcial | `policies.json`, `faqs.json` y árbol mencionan recogida en islas/hoteles; el árbol incluye selector de isla/hotel para cualificar | Falta lista validada como KB estructurada y restricciones exactas por acceso marítimo | Crear documento de logística por isla/hotel y acceso marítimo |
 | Descuentos | Parcial | `discounts.json`, `pricing.json` y `faqs.json` | Puede haber conflictos: web, directo, colombianos, grupo, segundo día, PARCEROS | Confirmar qué descuentos existen y si son acumulables |
 | Disponibilidad y reservas de última hora | Parcial | `availability.json` menciona cierre a las 4:30 PM; reglas escalan asuntos de tiempo real | No hay inventario/cupos conectados | Escalar siempre disponibilidad real; redactar respuesta clara de última hora |
 | Pagos | Parcial | `services.json` ya contiene `booking_url` para la mayoría de servicios; `escalation_rules.json` menciona problemas de pago | Falta política: medios de pago, depósito, moneda, cuándo se confirma, tarjetas extranjeras, transferencias y qué hacer si falla un pago | Crear política de pagos antes de que el bot responda detalles |
 | Datos para cualificar leads | Falta | El estado de conversación guarda algunos datos, pero no hay esquema comercial | El humano puede recibir conversaciones sin fecha, número de personas, servicio o nivel | Definir resumen estándar para Chatwoot |
-| Casos de evaluación | Falta | Hay tests técnicos, pero no dataset de conversaciones comerciales | Se sigue probando “a ojo” | Crear dataset después de completar esta auditoría |
+| Casos de evaluación | Parcial | Hay tests técnicos para árbol, botones Chatwoot y seguridad RAG; el árbol ya se valida contra servicios de islas y especialidades | Falta dataset de conversaciones comerciales reales/sintéticas para validar recomendación y escalado extremo a extremo | Crear dataset después de completar esta auditoría |
 
 ## Prioridades para completar la KB
 
@@ -59,7 +59,7 @@ El bot no debe intentar cerrar reservas reales, confirmar cupos, procesar pagos 
 
 1. Precios oficiales y reglas de descuentos.
 2. Condiciones de reserva y pagos.
-3. Requisitos por curso.
+3. Requisitos por curso, especialmente precios/materiales/políticas finas de cursos y especialidades.
 4. Comparación entre servicios para recomendar bien.
 5. Política de comidas y alergias.
 6. Política de fotos y videos.
@@ -149,4 +149,6 @@ El bot no debe intentar cerrar reservas reales, confirmar cupos, procesar pagos 
 
 ## Próxima acción recomendada
 
-Completar primero las secciones de **precios/descuentos**, **reserva/pago** y **cancelaciones/cambios**. Son las áreas con más impacto comercial y mayor riesgo si el bot responde mal. En paralelo, confirmar si existe link de pago/reserva directo para **Divemaster** y/o **Servicio privado**; si no existe, mantener `booking_url: null`.
+El árbol y la documentación visual ya están alineados con el catálogo actual de `services.json`. El siguiente paso recomendado es completar primero las secciones de **precios/descuentos**, **reserva/pago** y **cancelaciones/cambios**, porque son las áreas con más impacto comercial y mayor riesgo si el bot responde mal.
+
+Después, crear una comparación editorial corta entre **minicurso/bautismo**, **Open Water**, **Advanced**, **buceos guiados** y **snorkeling** para que el RAG pueda recomendar mejor sin depender de respuestas largas del catálogo. En paralelo, confirmar si existe link de pago/reserva directo para **Divemaster** y/o **Servicio privado**; si no existe, mantenerlos como derivación a asesor.

@@ -13,8 +13,10 @@ The tree guides customers through:
 5. Booking link generation
 """
 
+import json
 from dataclasses import dataclass, field
 from enum import Enum
+from pathlib import Path
 
 
 class Step(str, Enum):
@@ -77,209 +79,138 @@ class ConversationState:
             self.history = []
 
 
-# --- Service catalog (extracted from divingplanet.org) ---
+def _join_items(items: list[str] | str | None) -> str:
+    if isinstance(items, list):
+        return ", ".join(items)
+    return items or ""
 
-SERVICES = {
-    "2_dives_1_day": {
-        "name_es": "Salidas de Buceo - 2 inmersiones (1 dia)",
-        "name_en": "Fun Dives - 2 dives (1 day)",
-        "requires_cert": True,
-        "price": "U$178 (online 10% off) / U$197 normal",
-        "duration_es": "1 dia (8:00 AM - 4:15 PM)",
-        "duration_en": "1 day (8:00 AM - 4:15 PM)",
-        "includes_es": (
-            "Entrada Parque Nacional, seguro de buceo, transporte en lancha "
-            "Cartagena-Islas-Cartagena, 2 inmersiones guiadas, equipo completo, "
-            "almuerzo, aporte eco-social DIVE TO HEAL"
-        ),
-        "includes_en": (
-            "National Park entrance, dive insurance, boat transfer "
-            "Cartagena-Islands-Cartagena, 2 guided dives, full equipment, "
-            "lunch, eco-social contribution DIVE TO HEAL"
-        ),
-        "flight_rule_es": "Debes esperar al menos 18 horas para tomar un avion.",
-        "flight_rule_en": "You must wait at least 18 hours before flying.",
-        "booking_url": "https://book.divingplanet.org/book/salidas-de-buceo/1?language=es",
-        "booking_url_island": "https://book.divingplanet.org/book/fun-dives-already-on-island/19?language=es",
-    },
-    "minicourse": {
-        "name_es": "Minicurso de Buceo (principiantes)",
-        "name_en": "Dive Mini Course (beginners)",
-        "requires_cert": False,
-        "price": "Consultar precios online (10% descuento)",
-        "duration_es": "1 dia (8:00 AM - 4:15 PM)",
-        "duration_en": "1 day (8:00 AM - 4:15 PM)",
-        "includes_es": (
-            "Entrada Parque Nacional, seguro de buceo, transporte en lancha Cartagena-Islas-Cartagena, "
-            "entrenamiento en piscina, 1 inmersion en mar con instructor PADI, "
-            "equipo completo, almuerzo/comida, aporte eco-social DIVE TO HEAL"
-        ),
-        "includes_en": (
-            "National Park entrance, dive insurance, boat transfer Cartagena-Islands-Cartagena, "
-            "pool training, 1 ocean dive with a PADI instructor, "
-            "full equipment, lunch/meal, eco-social contribution DIVE TO HEAL"
-        ),
-        "min_age": 10,
-        "extra_notes_es": "No necesitas experiencia previa. Es ideal si quieres probar buceo por primera vez. Para menores de edad se aplica el programa Discover Scuba Diving / DSD segun estandares PADI; si hay menores de 12 anos, mejor confirmar con un asesor.",
-        "extra_notes_en": "No previous experience is needed. This is ideal if you want to try diving for the first time. For minors, the Discover Scuba Diving / DSD program applies according to PADI standards; if there are children under 12, it is best to confirm with an advisor.",
-        "flight_rule_es": "Debes esperar al menos 12 horas para tomar un avion.",
-        "flight_rule_en": "You must wait at least 12 hours before flying.",
-        "booking_url": "https://book.divingplanet.org/book/minicurso-de-buceo/2?language=es",
-        "booking_url_island": "https://book.divingplanet.org/book/dive-mini-course-already-on-island/20?language=es",
-    },
-    "snorkeling": {
-        "name_es": "Tour de Snorkeling",
-        "name_en": "Snorkeling Tour",
-        "requires_cert": False,
-        "price": "Consultar precios online (10% descuento)",
-        "duration_es": "1 dia (8:00 AM - 4:15 PM)",
-        "duration_en": "1 day (8:00 AM - 4:15 PM)",
-        "includes_es": (
-            "Entrada Parque Nacional, transporte en lancha Cartagena-Islas-Cartagena, "
-            "2 salidas guiadas de snorkel en superficie, equipo completo de snorkel, "
-            "almuerzo/comida, aporte eco-social DIVE TO HEAL"
-        ),
-        "includes_en": (
-            "National Park entrance, boat transfer Cartagena-Islands-Cartagena, "
-            "2 guided surface snorkel sessions, full snorkel equipment, "
-            "lunch/meal, eco-social contribution DIVE TO HEAL"
-        ),
-        "min_age": 6,
-        "extra_notes_es": "Actividad de superficie, ideal para acompanantes o personas que no quieren bucear. Recomendado para ninos a partir de unos 6 anos que sepan nadar y se sientan comodos en el mar. Para menores o casos especiales, mejor consultar primero con un asesor.",
-        "extra_notes_en": "Surface activity, ideal for companions or guests who do not want to dive. Recommended for children from around 6 years old who can swim and feel comfortable in the sea. For younger children or special cases, please check with an advisor first.",
-        "flight_rule_es": "",
-        "flight_rule_en": "",
-        "booking_url": "https://book.divingplanet.org/book/superficio/3?language=es",
-        "booking_url_island": "https://book.divingplanet.org/book/snorkeling-already-on-the-island/25?language=es",
-    },
-    "5_dives_2_days": {
-        "name_es": "5 Buceos - 2 dias (1 noche en isla)",
-        "name_en": "5 Dives - 2 days (1 night on island)",
-        "requires_cert": True,
-        "price": "Consultar precios online (10% descuento)",
-        "duration_es": "2 dias con 1 noche en Islas del Rosario",
-        "duration_en": "2 days with 1 night on Rosario Islands",
-        "includes_es": "4 buceos diurnos, 1 buceo nocturno con bioluminiscencia, equipo completo, seguro de buceo, coordinacion de salidas en islas",
-        "includes_en": "4 daytime dives, 1 night dive with bioluminescence, full equipment, dive insurance, island dive schedule coordination",
-        "extra_notes_es": "Paquete para buzos certificados que quieren dormir 1 noche en Islas del Rosario. El alojamiento no esta incluido y se reserva aparte con el hotel. Si quieres quitar la nocturna, cambiar noches o personalizar el paquete, lo revisamos con un asesor.",
-        "extra_notes_en": "Package for certified divers who want to spend 1 night on the Rosario Islands. Accommodation is not included and is booked separately with the hotel. If you want to remove the night dive, change nights or customize the package, an advisor should review it.",
-        "flight_rule_es": "Debes esperar al menos 18 horas para tomar un avion.",
-        "flight_rule_en": "You must wait at least 18 hours before flying.",
-        "booking_url": "https://divingplanet.org/tours-buceo-snorkel-cartagena/5-buceos-2-dias/",
-        "booking_url_island": "",
-    },
-    "7_dives_3_days": {
-        "name_es": "7 Buceos - 3 dias (2 noches en isla)",
-        "name_en": "7 Dives - 3 days (2 nights on island)",
-        "requires_cert": True,
-        "price": "Consultar precios online",
-        "duration_es": "3 dias con 2 noches en Islas del Rosario",
-        "duration_en": "3 days with 2 nights on Rosario Islands",
-        "includes_es": "6 buceos diurnos, 1 buceo nocturno, equipo completo, seguro de buceo, coordinacion de salidas en islas",
-        "includes_en": "6 daytime dives, 1 night dive, full equipment, dive insurance, island dive schedule coordination",
-        "extra_notes_es": "Paquete para buzos certificados que quieren dormir 2 noches en Islas del Rosario. El alojamiento no esta incluido y se reserva aparte con el hotel. Si quieres quitar la nocturna, cambiar noches o personalizar el paquete, lo revisamos con un asesor.",
-        "extra_notes_en": "Package for certified divers who want to spend 2 nights on the Rosario Islands. Accommodation is not included and is booked separately with the hotel. If you want to remove the night dive, change nights or customize the package, an advisor should review it.",
-        "flight_rule_es": "Debes esperar al menos 18 horas para tomar un avion.",
-        "flight_rule_en": "You must wait at least 18 hours before flying.",
-        "booking_url": "https://divingplanet.org/tours-buceo-snorkel-cartagena/7-buceos-3-dias/",
-        "booking_url_island": "",
-    },
-    "9_dives_4_days": {
-        "name_es": "9 Buceos - 4 dias (3 noches en isla)",
-        "name_en": "9 Dives - 4 days (3 nights on island)",
-        "requires_cert": True,
-        "price": "Consultar precios online",
-        "duration_es": "4 dias con 3 noches en Islas del Rosario",
-        "duration_en": "4 days with 3 nights on Rosario Islands",
-        "includes_es": "8 buceos diurnos, 1 buceo nocturno, equipo completo, seguro de buceo, coordinacion de salidas en islas",
-        "includes_en": "8 daytime dives, 1 night dive, full equipment, dive insurance, island dive schedule coordination",
-        "extra_notes_es": "Paquete para buzos certificados que quieren dormir 3 noches en Islas del Rosario. El alojamiento no esta incluido y se reserva aparte con el hotel. Si quieres quitar la nocturna, cambiar noches o personalizar el paquete, lo revisamos con un asesor.",
-        "extra_notes_en": "Package for certified divers who want to spend 3 nights on the Rosario Islands. Accommodation is not included and is booked separately with the hotel. If you want to remove the night dive, change nights or customize the package, an advisor should review it.",
-        "flight_rule_es": "Debes esperar al menos 18 horas para tomar un avion.",
-        "flight_rule_en": "You must wait at least 18 hours before flying.",
-        "booking_url": "https://divingplanet.org/tours-buceo-snorkel-cartagena/9-buceos-4-dias/",
-        "booking_url_island": "",
-    },
-    "open_water": {
-        "name_es": "Curso Basico PADI (Open Water Diver)",
-        "name_en": "PADI Basic Course (Open Water Diver)",
-        "requires_cert": False,
-        "price": "Consultar precios online",
-        "duration_es": "Multi-dia (teoria online + practica en islas)",
-        "duration_en": "Multi-day (online theory + island practice)",
-        "includes_es": "Teoria online + entrenamiento + inmersiones en Islas del Rosario. Obtienes certificacion Open Water.",
-        "includes_en": "Online theory + training + dives in Rosario Islands. You get Open Water certification.",
-        "min_age": 10,
-        "min_days_practice": 2,
-        "extra_notes_es": "La parte teorica suele requerir unas 10-12 horas online antes de viajar. Es recomendable disponer de al menos 2 dias completos en islas para la practica.",
-        "extra_notes_en": "The theory part usually takes around 10-12 hours of online study before traveling. It is recommended to have at least 2 full days on the islands for practice.",
-        "flight_rule_es": "Debes esperar al menos 18 horas para tomar un avion.",
-        "flight_rule_en": "You must wait at least 18 hours before flying.",
-        "booking_url": "https://divingplanet.org/curso-padi-cartagena/basico-open-water/",
-        "booking_url_island": "",
-    },
-    "advanced": {
-        "name_es": "Curso Avanzado PADI",
-        "name_en": "PADI Advanced Course",
-        "requires_cert": True,
-        "price": "Consultar precios online",
-        "duration_es": "Multi-dia",
-        "duration_en": "Multi-day",
-        "includes_es": "Explora nuevos entornos y perfecciona tus habilidades de buceo.",
-        "includes_en": "Explore new environments and hone your diving skills.",
-        "flight_rule_es": "Debes esperar al menos 18 horas para tomar un avion.",
-        "flight_rule_en": "You must wait at least 18 hours before flying.",
-        "booking_url": "https://divingplanet.org/curso-padi-cartagena/avanzado/",
-        "booking_url_island": "",
-    },
-    "rescue": {
-        "name_es": "Curso de Rescate + EFR",
-        "name_en": "Rescue Course + EFR",
-        "requires_cert": True,
-        "price": "Consultar precios online",
-        "duration_es": "Multi-dia",
-        "duration_en": "Multi-day",
-        "includes_es": "Aprende a prevenir y gestionar emergencias de buceo.",
-        "includes_en": "Learn to prevent and manage diving emergencies.",
-        "flight_rule_es": "Debes esperar al menos 18 horas para tomar un avion.",
-        "flight_rule_en": "You must wait at least 18 hours before flying.",
-        "booking_url": "https://divingplanet.org/curso-padi-cartagena/rescate-primeros-auxilios/",
-        "booking_url_island": "",
-    },
-    "divemaster": {
-        "name_es": "Curso Dive Master PADI",
-        "name_en": "PADI Dive Master Course",
-        "requires_cert": True,
-        "price": "Consultar precios (contactar directamente)",
-        "duration_es": "Largo (varias semanas)",
-        "duration_en": "Long (several weeks)",
-        "includes_es": "Formacion profesional para trabajar como Dive Master.",
-        "includes_en": "Professional training to work as a Dive Master.",
-        "flight_rule_es": "",
-        "flight_rule_en": "",
-        "booking_url": "https://divingplanet.org/curso-padi-cartagena/dive-master/",
-        "booking_url_island": "",
-    },
-    "private": {
-        "name_es": "Servicio Privado (grupos)",
-        "name_en": "Private Service (groups)",
-        "requires_cert": False,
-        "price": "Cotizacion personalizada",
-        "duration_es": "Flexible",
-        "duration_en": "Flexible",
-        "includes_es": (
-            "Lancha privada, instructores personalizados, equipo de buceo, "
-            "horarios flexibles. Combina buceo + snorkel + acompanantes."
-        ),
-        "includes_en": (
-            "Private boat, personalized instructors, diving equipment, "
-            "flexible schedules. Mix diving + snorkel + companions."
-        ),
-        "flight_rule_es": "",
-        "flight_rule_en": "",
-        "booking_url": "https://divingplanet.org/contacto/",
-        "booking_url_island": "",
-    },
+
+def _format_price(service: dict) -> str:
+    price = service.get("price_usd")
+    normal = service.get("price_usd_normal")
+    note = service.get("price_note")
+    if price and normal:
+        return f"U${price} online / U${normal} normal"
+    if price:
+        return f"U${price}"
+    if note:
+        return note
+    return "Consultar precio actualizado en la web"
+
+
+def _format_duration(service: dict, lang: str) -> str:
+    days = service.get("duration_days")
+    if days == 1:
+        return "1 dia" if lang == "es" else "1 day"
+    if days:
+        return f"{days} dias" if lang == "es" else f"{days} days"
+    return "Multi-dia / variable" if lang == "es" else "Multi-day / variable"
+
+
+def _flight_rule(service: dict, lang: str) -> str:
+    requirements = service.get(f"requirements_{lang}", [])
+    for requirement in requirements:
+        lowered = requirement.lower()
+        if "vuelo" in lowered or "flying" in lowered or "fly" in lowered:
+            return requirement
+    return ""
+
+
+def _extra_notes(service: dict, lang: str) -> str:
+    parts = []
+    description = service.get(f"description_{lang}")
+    preparation = service.get(f"preparation_{lang}")
+    itinerary = service.get(f"itinerary_{lang}", [])
+    not_included = service.get(f"not_included_{lang}", [])
+    requirements = service.get(f"requirements_{lang}", [])
+    if description:
+        parts.append(description)
+    if preparation:
+        title = "Preparacion: " if lang == "es" else "Preparation: "
+        parts.append(title + preparation)
+    if itinerary:
+        title = "Itinerario: " if lang == "es" else "Itinerary: "
+        parts.append(title + "; ".join(itinerary))
+    if requirements:
+        title = "Requisitos: " if lang == "es" else "Requirements: "
+        parts.append(title + "; ".join(requirements))
+    if not_included:
+        title = "No incluye: " if lang == "es" else "Not included: "
+        parts.append(title + "; ".join(not_included))
+    if lang == "es":
+        if "Minicurso" in service.get("name_es", "") and "No necesitas experiencia previa" not in " ".join(parts):
+            parts.append("No necesitas experiencia previa.")
+        if "Snorkeling" in service.get("name_es", "") and "Actividad de superficie" not in " ".join(parts):
+            parts.append("Actividad de superficie ideal para acompanantes o personas que no quieren bucear.")
+        if service.get("includes_night_dive") and "quitar la nocturna" not in " ".join(parts):
+            parts.append("Si quieres quitar la nocturna, cambiar noches o personalizar el paquete, lo revisamos con un asesor.")
+        if any("Hotel/alojamiento" in item for item in not_included) and "alojamiento no esta incluido" not in " ".join(parts):
+            parts.append("El alojamiento no esta incluido y se reserva aparte con el hotel.")
+    return " ".join(parts)
+
+
+def _load_services() -> dict:
+    path = Path(__file__).resolve().parents[2] / "data" / "knowledge_base" / "services.json"
+    raw_services = json.loads(path.read_text(encoding="utf-8")).get("services", {})
+    services = {}
+    for service_id, service in raw_services.items():
+        services[service_id] = {
+            "name_es": service.get("name_es", service_id),
+            "name_en": service.get("name_en", service.get("name_es", service_id)),
+            "requires_cert": service.get("requires_certification", False),
+            "price": _format_price(service),
+            "duration_es": _format_duration(service, "es"),
+            "duration_en": _format_duration(service, "en"),
+            "includes_es": _join_items(service.get("included_es")),
+            "includes_en": _join_items(service.get("included_en")),
+            "min_age": service.get("min_age")
+            or (10 if "Minicurso" in service.get("name_es", "") else 6 if "Snorkeling" in service.get("name_es", "") else None),
+            "extra_notes_es": _extra_notes(service, "es"),
+            "extra_notes_en": _extra_notes(service, "en"),
+            "flight_rule_es": _flight_rule(service, "es"),
+            "flight_rule_en": _flight_rule(service, "en"),
+            "booking_url": service.get("booking_url") or service.get("url") or "https://divingplanet.org/contacto/",
+            "booking_url_island": "",
+            "category": service.get("category"),
+        }
+    return services
+
+
+SERVICES = _load_services()
+
+ISLAND_SERVICE_MAP = {
+    "2_dives_1_day": "2_dives_1_day_already_on_island",
+    "minicourse": "minicourse_already_on_island",
+    "snorkeling": "snorkeling_already_on_island",
+    "5_dives_2_days": "5_dives_2_days_already_on_island",
+    "7_dives_3_days": "7_dives_3_days_already_on_island",
+    "open_water": "open_water_already_on_island",
+    "advanced": "advanced_already_on_island",
+    "fish_identification_specialty": "fish_identification_specialty_already_on_island",
+    "nitrox_specialty": "nitrox_specialty_already_on_island",
+    "naturalist_specialty": "naturalist_specialty_already_on_island",
+    "buoyancy_specialty": "buoyancy_specialty_already_on_island",
+}
+
+MULTI_DAY_SERVICES = {
+    "5_dives_2_days",
+    "7_dives_3_days",
+    "9_dives_4_days",
+    "3_dives_1_day_already_on_island",
+    "5_dives_2_days_already_on_island",
+    "7_dives_3_days_already_on_island",
+}
+
+SPECIALTY_SERVICE_IDS = {
+    "mindful_diving",
+    "naturalist_specialty",
+    "fish_identification_specialty",
+    "buoyancy_specialty",
+    "nitrox_specialty",
+    "fish_identification_specialty_already_on_island",
+    "nitrox_specialty_already_on_island",
+    "naturalist_specialty_already_on_island",
+    "buoyancy_specialty_already_on_island",
 }
 
 
@@ -616,12 +547,14 @@ BUTTON_OPTIONS = {
         "es": [
             {"title": "Quiero certificarme (curso Basico Open Water)", "value": "1"},
             {"title": "Quiero otro curso PADI (Avanzado / Rescate / Dive Master)", "value": "2"},
-            {"title": "Ya empecE un curso en otro centro (referral / reactivate)", "value": "3"},
+            {"title": "Especialidades PADI", "value": "3"},
+            {"title": "Ya empece un curso en otro centro (referral / reactivate)", "value": "4"},
         ],
         "en": [
             {"title": "I want to get certified (Open Water)", "value": "1"},
             {"title": "I want another PADI course (Advanced / Rescue / Divemaster)", "value": "2"},
-            {"title": "I already started a course elsewhere (referral / reactivate)", "value": "3"},
+            {"title": "PADI specialties", "value": "3"},
+            {"title": "I already started a course elsewhere (referral / reactivate)", "value": "4"},
         ],
     },
     "courses_open_water_origin": {
@@ -649,13 +582,21 @@ BUTTON_OPTIONS = {
             {"title": "📘 Curso Avanzado", "value": "1"},
             {"title": "🛟 Rescate + EFR", "value": "2"},
             {"title": "🏅 Dive Master", "value": "3"},
-            {"title": "✨ Especialidades PADI (consultar)", "value": "4"},
+            {"title": "✨ Mindful Diving", "value": "4"},
+            {"title": "🐠 Identificacion de Peces", "value": "5"},
+            {"title": "🌿 Naturalista", "value": "6"},
+            {"title": "⚖️ Flotabilidad", "value": "7"},
+            {"title": "🫧 Nitrox", "value": "8"},
         ],
         "en": [
             {"title": "📘 Advanced Course", "value": "1"},
             {"title": "🛟 Rescue + EFR", "value": "2"},
             {"title": "🏅 Divemaster", "value": "3"},
-            {"title": "✨ PADI Specialties (ask us)", "value": "4"},
+            {"title": "✨ Mindful Diving", "value": "4"},
+            {"title": "🐠 Fish Identification", "value": "5"},
+            {"title": "🌿 Naturalist", "value": "6"},
+            {"title": "⚖️ Buoyancy", "value": "7"},
+            {"title": "🫧 Nitrox", "value": "8"},
         ],
     },
     "pricing_menu": {
@@ -789,7 +730,32 @@ class DecisionTree:
     """
 
     def set_quick_replies(self, state: ConversationState, key: str):
+        if key == "tours_certified" and state.location == "island":
+            state.quick_replies = self._island_certified_options(state.language)
+            return
         state.quick_replies = get_button_options(key, state.language)
+
+    def _service_for_location(self, service_id: str, state: ConversationState) -> str:
+        if state.location == "island":
+            return ISLAND_SERVICE_MAP.get(service_id, service_id)
+        return service_id
+
+    def _island_certified_options(self, lang: str) -> list[dict]:
+        if lang == "es":
+            return [
+                {"title": "🤿 2 buceos - 1 dia", "value": "1"},
+                {"title": "🌙 3 buceos - 1 dia (incluye nocturna)", "value": "2"},
+                {"title": "🤿 5 buceos - 2 dias", "value": "3"},
+                {"title": "🤿 7 buceos - 3 dias", "value": "4"},
+                {"title": "🧑‍💬 Servicio Privado", "value": "5"},
+            ]
+        return [
+            {"title": "🤿 2 dives - 1 day", "value": "1"},
+            {"title": "🌙 3 dives - 1 day (includes night dive)", "value": "2"},
+            {"title": "🤿 5 dives - 2 days", "value": "3"},
+            {"title": "🤿 7 dives - 3 days", "value": "4"},
+            {"title": "🧑‍💬 Private Service", "value": "5"},
+        ]
 
     def process_message(self, state: ConversationState, message: str) -> str:
         """Process a user message and return the bot's response."""
@@ -972,13 +938,22 @@ class DecisionTree:
     def _handle_tours_certified(self, state: ConversationState, message: str) -> str:
         choice = self._parse_choice(message, 5)
         lang = state.language
-        service_map = {
-            1: "2_dives_1_day",
-            2: "5_dives_2_days",
-            3: "7_dives_3_days",
-            4: "9_dives_4_days",
-            5: "private",
-        }
+        if state.location == "island":
+            service_map = {
+                1: "2_dives_1_day_already_on_island",
+                2: "3_dives_1_day_already_on_island",
+                3: "5_dives_2_days_already_on_island",
+                4: "7_dives_3_days_already_on_island",
+                5: "private",
+            }
+        else:
+            service_map = {
+                1: "2_dives_1_day",
+                2: "5_dives_2_days",
+                3: "7_dives_3_days",
+                4: "9_dives_4_days",
+                5: "private",
+            }
 
         if choice in service_map:
             state.selected_service = service_map[choice]
@@ -989,7 +964,7 @@ class DecisionTree:
 
             state.step = Step.CERTIFIED_LAST_DIVE
             self.set_quick_replies(state, "certified_last_dive")
-            if state.selected_service == "2_dives_1_day":
+            if state.selected_service in ("2_dives_1_day", "2_dives_1_day_already_on_island"):
                 return MESSAGES["certified_last_dive"][lang]
             return self._format_service_detail(state) + "\n\n" + MESSAGES["certified_last_dive"][lang]
         else:
@@ -1009,7 +984,7 @@ class DecisionTree:
             state.last_dive_over_2_years = False
             state.step = Step.COLOMBIAN
             self.set_quick_replies(state, "colombian")
-            if state.selected_service == "2_dives_1_day":
+            if state.selected_service in ("2_dives_1_day", "2_dives_1_day_already_on_island"):
                 return self._format_service_detail(state) + "\n\n" + MESSAGES["colombian"][lang]
             return MESSAGES["colombian"][lang]
 
@@ -1037,14 +1012,14 @@ class DecisionTree:
     def _handle_refresher_interest(self, state: ConversationState, message: str) -> str:
         choice = self._parse_choice(message, 2)
         lang = state.language
-        multi_day_services = {"5_dives_2_days", "7_dives_3_days", "9_dives_4_days"}
+        multi_day_services = MULTI_DAY_SERVICES
 
         if choice == 1:
             state.refresher_interested = True
             if state.original_service is None and state.selected_service is not None:
                 state.original_service = state.selected_service
             if state.selected_service not in multi_day_services:
-                state.selected_service = "minicourse"
+                state.selected_service = self._service_for_location("minicourse", state)
         elif choice == 2:
             state.refresher_interested = False
         else:
@@ -1074,7 +1049,11 @@ class DecisionTree:
     def _handle_tours_beginner(self, state: ConversationState, message: str) -> str:
         choice = self._parse_choice(message, 3)
         lang = state.language
-        service_map = {1: "minicourse", 2: "snorkeling", 3: "private"}
+        service_map = {
+            1: self._service_for_location("minicourse", state),
+            2: self._service_for_location("snorkeling", state),
+            3: "private",
+        }
 
         if choice in service_map:
             state.selected_service = service_map[choice]
@@ -1130,15 +1109,21 @@ class DecisionTree:
                 response = (
                     f"{location_note}para quienes *ya estan en las Islas del Rosario* manejamos tarifas "
                     "especiales sin transporte Cartagena-Islas ni almuerzo incluido.\n\n"
-                    "En los enlaces de reserva \"already on island\" veras el valor actualizado segun tu actividad "
-                    "(2 buceos, minicurso o snorkel) y la fecha elegida."
+                    f"- 2 buceos: {SERVICES['2_dives_1_day_already_on_island']['price']}\n"
+                    f"- 3 buceos con nocturna: {SERVICES['3_dives_1_day_already_on_island']['price']}\n"
+                    f"- Minicurso: {SERVICES['minicourse_already_on_island']['price']}\n"
+                    f"- Snorkel: {SERVICES['snorkeling_already_on_island']['price']}\n\n"
+                    "En cada enlace de reserva veras el valor actualizado segun actividad y fecha."
                 )
             elif choice == 3:
                 response = (
-                    "Sobre los *paquetes multi-dia 5/7/9 buceos* (2, 3 o 4 dias en las islas):\n\n"
+                    "Sobre los *paquetes multi-dia*:\n\n"
                     f"- 5 buceos 2 dias: {SERVICES['5_dives_2_days']['price']}\n"
                     f"- 7 buceos 3 dias: {SERVICES['7_dives_3_days']['price']}\n"
                     f"- 9 buceos 4 dias: {SERVICES['9_dives_4_days']['price']}\n\n"
+                    "Si ya estas en las islas, tambien existen versiones especificas:\n"
+                    f"- 5 buceos 2 dias (islas): {SERVICES['5_dives_2_days_already_on_island']['price']}\n"
+                    f"- 7 buceos 3 dias (islas): {SERVICES['7_dives_3_days_already_on_island']['price']}\n\n"
                     "En todos los casos el alojamiento en las islas se reserva aparte directamente con el hotel. "
                     "En la web veras siempre el valor actualizado y posibles promociones antes de confirmar."
                 )
@@ -1166,15 +1151,21 @@ class DecisionTree:
                 response = (
                     f"{location_note}for guests *already on the Rosario Islands* we usually work with "
                     "special rates that do not include transport from Cartagena or lunch.\n\n"
-                    "The dedicated \"already on island\" booking links will show the up-to-date amount for "
-                    "your activity (2 dives, minicourse or snorkel) and date."
+                    f"- 2 dives: {SERVICES['2_dives_1_day_already_on_island']['price']}\n"
+                    f"- 3 dives with night dive: {SERVICES['3_dives_1_day_already_on_island']['price']}\n"
+                    f"- Dive minicourse: {SERVICES['minicourse_already_on_island']['price']}\n"
+                    f"- Snorkeling: {SERVICES['snorkeling_already_on_island']['price']}\n\n"
+                    "Each booking link will show the up-to-date amount for your activity and date."
                 )
             elif choice == 3:
                 response = (
-                    "For *multi-day 5/7/9-dive packages* (2, 3 or 4 days on the islands):\n\n"
+                    "For *multi-day packages*:\n\n"
                     f"- 5 dives 2 days: {SERVICES['5_dives_2_days']['price']}\n"
                     f"- 7 dives 3 days: {SERVICES['7_dives_3_days']['price']}\n"
                     f"- 9 dives 4 days: {SERVICES['9_dives_4_days']['price']}\n\n"
+                    "If you are already on the islands, there are also dedicated versions:\n"
+                    f"- 5 dives 2 days (islands): {SERVICES['5_dives_2_days_already_on_island']['price']}\n"
+                    f"- 7 dives 3 days (islands): {SERVICES['7_dives_3_days_already_on_island']['price']}\n\n"
                     "Accommodation on the islands is not included and is booked directly with the hotel. "
                     "The website will always show the current amount and any promotions before you pay."
                 )
@@ -1593,11 +1584,11 @@ class DecisionTree:
         return response
 
     def _handle_courses_menu(self, state: ConversationState, message: str) -> str:
-        choice = self._parse_choice(message, 3)
+        choice = self._parse_choice(message, 4)
         lang = state.language
 
         if choice == 1:
-            state.selected_service = "open_water"
+            state.selected_service = self._service_for_location("open_water", state)
             state.step = Step.COURSES_OPEN_WATER_ORIGIN
             self.set_quick_replies(state, "courses_open_water_origin")
             if lang == "es":
@@ -1622,6 +1613,18 @@ class DecisionTree:
                 "Choose the one you are most interested in."
             )
         if choice == 3:
+            state.step = Step.COURSES_ADVANCED_MENU
+            self.set_quick_replies(state, "courses_advanced_menu")
+            if lang == "es":
+                return (
+                    "Estas son nuestras especialidades PADI disponibles.\n"
+                    "Elige una para ver la informacion del servicio."
+                )
+            return (
+                "These are our available PADI specialties.\n"
+                "Choose one to see the service information."
+            )
+        if choice == 4:
             state.step = Step.ESCALATE
             state.quick_replies = []
             if lang == "es":
@@ -1653,6 +1656,7 @@ class DecisionTree:
             self.set_quick_replies(state, "courses_open_water_origin")
             return MESSAGES["not_understood"][lang]
 
+        state.selected_service = self._service_for_location("open_water", state)
         state.step = Step.COURSES_OPEN_WATER_TIME
         self.set_quick_replies(state, "courses_open_water_time")
         if lang == "es":
@@ -1705,17 +1709,21 @@ class DecisionTree:
         return response + "\n\n" + MESSAGES["colombian"][lang]
 
     def _handle_courses_advanced_menu(self, state: ConversationState, message: str) -> str:
-        choice = self._parse_choice(message, 4)
+        choice = self._parse_choice(message, 8)
         lang = state.language
         course_map = {
-            1: "advanced",
+            1: self._service_for_location("advanced", state),
             2: "rescue",
             3: "divemaster",
-            4: None,
+            4: "mindful_diving",
+            5: self._service_for_location("fish_identification_specialty", state),
+            6: self._service_for_location("naturalist_specialty", state),
+            7: self._service_for_location("buoyancy_specialty", state),
+            8: self._service_for_location("nitrox_specialty", state),
         }
 
         if choice in course_map:
-            if course_map[choice] is None:
+            if course_map[choice] in SPECIALTY_SERVICE_IDS and course_map[choice] not in SERVICES:
                 state.step = Step.ESCALATE
                 state.quick_replies = []
                 return MESSAGES["escalate"][lang]
@@ -1745,6 +1753,8 @@ class DecisionTree:
             self.set_quick_replies(state, "location")
             return MESSAGES["not_understood"][lang]
 
+        if state.selected_service:
+            state.selected_service = self._service_for_location(state.selected_service, state)
         state.step = Step.COLOMBIAN
         self.set_quick_replies(state, "colombian")
         return MESSAGES["colombian"][lang]
@@ -1761,6 +1771,8 @@ class DecisionTree:
             self.set_quick_replies(state, "colombian")
             return MESSAGES["not_understood"][lang]
 
+        if state.selected_service:
+            state.selected_service = self._service_for_location(state.selected_service, state)
         state.step = Step.SUMMARY
         state.quick_replies = []
         return self._format_summary(state)
@@ -1859,6 +1871,10 @@ class DecisionTree:
             if flight_rule:
                 summary += f"\n✈️ Importante: {flight_rule}\n"
 
+            extra_notes = service.get("extra_notes_es")
+            if extra_notes:
+                summary += f"\nℹ️ {extra_notes}\n"
+
             summary += f"\n👉 Reserva aqui con 10% de descuento:\n{booking_url}\n"
             summary += "\nTienes alguna otra pregunta?"
         else:
@@ -1896,6 +1912,10 @@ class DecisionTree:
 
             if flight_rule:
                 summary += f"\n✈️ *Important*: {flight_rule}\n"
+
+            extra_notes = service.get("extra_notes_en")
+            if extra_notes:
+                summary += f"\nℹ️ {extra_notes}\n"
 
             summary += f"\n👉 *Book here with 10% off*:\n{booking_url}\n"
             summary += "\nDo you have any other questions?"

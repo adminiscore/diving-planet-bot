@@ -1,6 +1,12 @@
 History
 =======
 
+0.10.0 - (2026-05-13)
+---------------------
+* Align the decision tree with `services.json` as the service source of truth.
+* Add guided coverage for island service variants and PADI specialties.
+* Update visual tree docs, MVP KB audit, and decision-tree tests.
+
 0.9.0 - (2026-05-12)
 --------------------
 * Define MVP direction around informing, qualifying, recommending, and preparing human-assisted conversion.

@@ -15,7 +15,7 @@ Read this file before changing code in the Diving Planet Bot. For a quick versio
 1. Chatwoot sends webhooks to `/webhooks/chatwoot`.
 2. `src/channels/chatwoot.py` extracts user input, manages in-memory `ConversationState`, routes through the supervisor, and sends replies back to Chatwoot.
 3. `src/agents/supervisor.py` routes between deterministic decision tree, RAG, and escalation.
-4. `src/flows/decision_tree.py` owns menu states, services, quick replies, booking summaries, and deterministic flows.
+4. `src/flows/decision_tree.py` owns menu states, quick replies, booking summaries, and deterministic flows; it loads service details from `data/knowledge_base/services.json`.
 5. `src/agents/rag_agent.py` answers free text using sanitized knowledge-base content through `src/knowledge/vector_store.py`.
 
 - Real Chatwoot `input_select` buttons replaced numeric menu text in the decision tree.
@@ -24,6 +24,7 @@ Read this file before changing code in the Diving Planet Bot. For a quick versio
 - Gadea expanded the decision tree, knowledge base, WhatsApp import tooling, retrieval/vector-store logic, and privacy handling.
 - RAG was reconciled to preserve PII handling and previous history-aware retrieval/fallback behavior.
 - Decision tree pricing (`PRICING_MENU`) and logistics (`LOGISTICS_MENU` + `ISLAND_MENU` / `ISLAND_HOTEL_MENU`) menus were refined based on real conversations: clearer options for salidas desde Cartagena vs. clientes ya en las islas, paquetes 5/7/9 buceos, y submenús de logística (punto de encuentro/horarios, alojamiento/recogida, qué incluye/no incluye y qué llevar). `docs/arbol_opciones_es.md` y `TODO.md` se actualizaron para reflejar estos cambios.
+- `services.json` is now the source of truth for service names, prices, inclusions, requirements, itineraries, and booking links used by the decision tree. The tree maps base services to `*_already_on_island` variants when the user is already in the islands and now exposes PADI specialties in the guided course menu.
 - Raw WhatsApp exports and backups are treated as sensitive and should stay ignored/untracked.
 
 ## Current product context
@@ -35,10 +36,12 @@ Read this file before changing code in the Diving Planet Bot. For a quick versio
   - Cartagena certified 2 dives / 1 day.
   - Cartagena beginner branch: minicourse, snorkeling, private service.
   - Cartagena certified multi-day packages: 5/7/9 dives, lodging/nocturnal notes, and refresher handling.
+  - Island-based certified and beginner service variants from `services.json`.
+  - PADI advanced/professional courses and specialties.
 - Current MVP direction: inform, qualify, recommend, and prepare human-assisted conversion; do not automate live availability, payment, or final booking confirmation yet.
 - Use `docs/mvp-intent-matrix.md` and `docs/kb-audit-mvp.md` before expanding tree/RAG behavior.
 - `docs/infra-simple.excalidraw` contains the current minimal infrastructure scheme for team communication.
-- Mixed groups, private services, island-based flows, courses, pricing, booking/payment, and logistics menus are still areas for systematic polishing.
+- Mixed groups, private services, pricing, booking/payment, cancellation/change rules, food/allergy policy, photos/videos, and logistics constraints by hotel/island are still areas for systematic polishing.
 
 ## Knowledge base and privacy
 

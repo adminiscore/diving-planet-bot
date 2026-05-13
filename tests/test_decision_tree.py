@@ -178,7 +178,7 @@ class TestCertifiedDiverFlow:
 
         assert state.step == Step.SUMMARY
         assert state.selected_service == "5_dives_2_days"
-        assert "5-buceos-2-dias" in summary
+        assert "2-days-5-dives" in summary
         assert "buceo nocturno" in summary
         assert "18 horas" in summary
 
@@ -263,7 +263,7 @@ class TestBeginnerFlow:
         assert state.step == Step.SUMMARY
         assert "minicurso-de-buceo" in summary
         assert "12 horas" in summary
-        assert "almuerzo/comida" in summary
+        assert "Almuerzo" in summary
         assert "Muelle de la Bodeguita" in summary
 
     def test_snorkeling_from_cartagena_summary_has_no_flight_rule(self):
@@ -279,7 +279,7 @@ class TestBeginnerFlow:
         summary = self.tree.process_message(state, "2")
         assert state.step == Step.SUMMARY
         assert "superficio" in summary
-        assert "snorkel en superficie" in summary
+        assert "2 salidas guiadas" in summary
         assert "18 horas" not in summary
         assert "12 horas" not in summary
 
@@ -399,7 +399,7 @@ class TestFullJourney:
         assert state.step == Step.TOURS_BEGINNER
         # Snorkeling
         self.tree.process_message(state, "2")
-        assert state.selected_service == "snorkeling"
+        assert state.selected_service == "snorkeling_already_on_island"
         # Not Colombian
         r = self.tree.process_message(state, "2")
         assert "already-on-the-island" in r
