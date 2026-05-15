@@ -1,6 +1,12 @@
 History
 =======
 
+0.12.0 - (2026-05-15)
+---------------------
+* Implement real Chatwoot human handoff by toggling escalated conversations to `pending` after sending the internal lead note.
+* Add Chatwoot regression coverage for handoff delivery and failed-handoff retry preservation.
+* Harden decision-tree language detection to avoid false English positives from Spanish inputs such as `en español`.
+
 0.11.0 - (2026-05-13)
 ---------------------
 * Add automatic lead-summary private notes in Chatwoot on escalation (keyword, sensitive, and tree-triggered).

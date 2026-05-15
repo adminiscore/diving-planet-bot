@@ -48,6 +48,13 @@ class TestLanguageSelection:
         response = self.tree.process_message(state, "hola")
         assert state.language == "es"
 
+    def test_spanish_phrase_with_en_substring_is_not_detected_as_english(self):
+        state = make_state()
+        state.step = Step.LANGUAGE
+        response = self.tree.process_message(state, "en español")
+        assert state.language == "es"
+        assert state.step == Step.MAIN_MENU
+
 
 class TestMainMenu:
     def setup_method(self):

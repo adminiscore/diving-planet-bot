@@ -74,10 +74,22 @@ class ConversationState:
     history: list[dict] = None
     quick_replies: list[dict] = field(default_factory=list)
     pending_note: str | None = None
+    pending_escalation_reason: str | None = None
 
     def __post_init__(self):
         if self.history is None:
             self.history = []
+
+
+def _detect_language_from_text(message: str) -> str | None:
+    normalized = " ".join(message.strip().lower().split())
+    words = {word.strip(".,!?¡¿:;()[]{}\"'") for word in normalized.split()}
+
+    if normalized in {"en", "english"} or words.intersection({"english", "hello", "hi"}):
+        return "en"
+    if normalized in {"es", "espanol", "español", "spanish"} or words.intersection({"espanol", "español", "spanish", "hola"}):
+        return "es"
+    return None
 
 
 def _join_items(items: list[str] | str | None) -> str:
@@ -811,14 +823,11 @@ class DecisionTree:
         elif choice == 2:
             state.language = "en"
         else:
-            # Try to detect language from text
-            if any(w in message.lower() for w in ["english", "en", "hi", "hello"]):
-                state.language = "en"
-            elif any(w in message.lower() for w in ["espanol", "español", "es", "hola"]):
-                state.language = "es"
-            else:
+            detected_language = _detect_language_from_text(message)
+            if not detected_language:
                 self.set_quick_replies(state, "welcome")
                 return MESSAGES["not_understood"]["es"]
+            state.language = detected_language
 
         state.step = Step.MAIN_MENU
         self.set_quick_replies(state, "main_menu")
