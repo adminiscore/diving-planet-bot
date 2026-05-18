@@ -83,6 +83,73 @@ def test_extract_incoming_content_reads_plain_incoming_message():
 
 
 @pytest.mark.asyncio
+async def test_finalize_chatwoot_delivery_sends_note_handoff_and_message(monkeypatch):
+    actions = []
+
+    async def fake_send_note(conversation_id, note):
+        actions.append(("note", conversation_id, note))
+
+    async def fake_escalate(conversation_id, reason, summary=""):
+        actions.append(("handoff", conversation_id, reason, summary))
+        return True
+
+    async def fake_send_message(conversation_id, message, quick_replies=None):
+        actions.append(("message", conversation_id, message, quick_replies))
+
+    monkeypatch.setattr(chatwoot, "send_chatwoot_note", fake_send_note)
+    monkeypatch.setattr(chatwoot, "escalate_to_human", fake_escalate)
+    monkeypatch.setattr(chatwoot, "send_chatwoot_message", fake_send_message)
+
+    state = chatwoot.ConversationState(conversation_id="55")
+    state.pending_note = "lead summary"
+    state.pending_escalation_reason = "solicitó asesor"
+    state.quick_replies = [{"title": "Volver", "value": "menu"}]
+
+    await chatwoot.finalize_chatwoot_delivery("55", state, "te conecto con el equipo")
+
+    assert actions == [
+        ("note", "55", "lead summary"),
+        ("handoff", "55", "solicitó asesor", "lead summary"),
+        ("message", "55", "te conecto con el equipo", [{"title": "Volver", "value": "menu"}]),
+    ]
+    assert state.pending_note is None
+    assert state.pending_escalation_reason is None
+
+
+@pytest.mark.asyncio
+async def test_finalize_chatwoot_delivery_keeps_pending_reason_when_handoff_fails(monkeypatch):
+    actions = []
+
+    async def fake_send_note(conversation_id, note):
+        actions.append(("note", conversation_id, note))
+
+    async def fake_escalate(conversation_id, reason, summary=""):
+        actions.append(("handoff", conversation_id, reason, summary))
+        return False
+
+    async def fake_send_message(conversation_id, message, quick_replies=None):
+        actions.append(("message", conversation_id, message, quick_replies))
+
+    monkeypatch.setattr(chatwoot, "send_chatwoot_note", fake_send_note)
+    monkeypatch.setattr(chatwoot, "escalate_to_human", fake_escalate)
+    monkeypatch.setattr(chatwoot, "send_chatwoot_message", fake_send_message)
+
+    state = chatwoot.ConversationState(conversation_id="77")
+    state.pending_note = "lead summary"
+    state.pending_escalation_reason = "solicitó asesor"
+
+    await chatwoot.finalize_chatwoot_delivery("77", state, "te conecto con el equipo")
+
+    assert actions == [
+        ("note", "77", "lead summary"),
+        ("handoff", "77", "solicitó asesor", "lead summary"),
+        ("message", "77", "te conecto con el equipo", []),
+    ]
+    assert state.pending_note is None
+    assert state.pending_escalation_reason == "solicitó asesor"
+
+
+@pytest.mark.asyncio
 async def test_webhook_marks_incoming_as_processed(monkeypatch):
     sent = []
 
@@ -107,3 +174,44 @@ async def test_webhook_marks_incoming_as_processed(monkeypatch):
 
     assert "99:123:incoming" in chatwoot.processed_chatwoot_messages
     assert sent == [("99", "response", [])]
+
+
+@pytest.mark.asyncio
+async def test_handle_message_executes_handoff_when_supervisor_escalates(monkeypatch):
+    actions = []
+
+    async def fake_route_message(state, message):
+        state.pending_note = "lead note"
+        state.pending_escalation_reason = "medical_questions"
+        return "te conecto con el equipo"
+
+    async def fake_send_note(conversation_id, note):
+        actions.append(("note", conversation_id, note))
+
+    async def fake_escalate(conversation_id, reason, summary=""):
+        actions.append(("handoff", conversation_id, reason, summary))
+        return True
+
+    async def fake_send_message(conversation_id, message, quick_replies=None):
+        actions.append(("message", conversation_id, message, quick_replies))
+
+    monkeypatch.setattr(chatwoot, "route_message", fake_route_message)
+    monkeypatch.setattr(chatwoot, "send_chatwoot_note", fake_send_note)
+    monkeypatch.setattr(chatwoot, "escalate_to_human", fake_escalate)
+    monkeypatch.setattr(chatwoot, "send_chatwoot_message", fake_send_message)
+    chatwoot.conversations.clear()
+    chatwoot.processed_chatwoot_messages.clear()
+
+    await chatwoot.handle_message({
+        "id": 999,
+        "message_type": "incoming",
+        "content": "estoy embarazada, puedo bucear?",
+        "conversation": {"id": 321},
+        "sender": {"name": "test"},
+    })
+
+    assert actions == [
+        ("note", "321", "lead note"),
+        ("handoff", "321", "medical_questions", "lead note"),
+        ("message", "321", "te conecto con el equipo", []),
+    ]

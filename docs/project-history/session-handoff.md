@@ -29,6 +29,7 @@ Read this file before changing code in the Diving Planet Bot. For a quick versio
 - Country flag emojis (🇨🇴, 🇺🇸) do not render on Windows — replaced throughout with 🌎/🌐 for cross-platform compatibility.
 - `src/agents/lead_summary.py` builds structured private Chatwoot notes on escalation; `state.pending_note` holds the note until sent in `chatwoot.py`.
 - Lead notes are sent for all escalation types: keyword (`humano`, `agente`...), sensitive (medical, weather, complaints), and tree-internal escalation.
+- `chatwoot.py` now performs the real human handoff by calling `escalate_to_human()` after sending the private lead note; `pending_escalation_reason` is only cleared when Chatwoot confirms the status toggle, so failed handoffs can be retried on later activity.
 - `.claude/commands/runtests.md` provides a `/runtests` skill to run the 127-test conversation dataset with block-level keyword filtering.
 
 ## Current product context
@@ -44,6 +45,7 @@ Read this file before changing code in the Diving Planet Bot. For a quick versio
   - PADI advanced/professional courses and specialties.
 - `faqs.json` has been expanded with curated educational diving content for beginners, safety, equipment, course comparisons, underwater sensations, marine-life etiquette, and Rosario Islands destination knowledge.
 - Current MVP direction: inform, qualify, recommend, and prepare human-assisted conversion; do not automate live availability, payment, or final booking confirmation yet.
+- Conversation-state migration from in-memory storage to Redis/PostgreSQL is intentionally deferred during dev; treat it as a last hardening step right before moving to PRE.
 - Use `docs/mvp-intent-matrix.md` and `docs/kb-audit-mvp.md` before expanding tree/RAG behavior.
 - `docs/infra-simple.excalidraw` contains the current minimal infrastructure scheme for team communication.
 - Mixed groups, private services, pricing, booking/payment, cancellation/change rules, food/allergy policy, photos/videos, and logistics constraints by hotel/island are still areas for systematic polishing.

@@ -118,6 +118,7 @@ async def route_message(state: ConversationState, message: str) -> str:
     pii_hits = detect_pii(message)
     if pii_hits:
         state.step = Step.ESCALATE
+        state.pending_escalation_reason = "datos sensibles detectados"
         logger.warning(f"[SUPERVISOR][PRIVACY] PII detected hits={pii_hits} step={state.step.value}")
         return privacy_block_message(state.language)
 
@@ -125,6 +126,7 @@ async def route_message(state: ConversationState, message: str) -> str:
     if any(kw in msg_lower for kw in ESCALATION_KEYWORDS):
         state.step = Step.ESCALATE
         state.quick_replies = []
+        state.pending_escalation_reason = "solicitó asesor"
         state.pending_note = build_lead_summary(state, escalation_reason="solicitó asesor")
         from src.flows.decision_tree import MESSAGES
         logger.info(f"[SUPERVISOR] Escalation triggered by keyword")
@@ -135,6 +137,7 @@ async def route_message(state: ConversationState, message: str) -> str:
         reason, response = sensitive_escalation
         state.step = Step.ESCALATE
         state.quick_replies = []
+        state.pending_escalation_reason = reason
         state.pending_note = build_lead_summary(state, escalation_reason=reason)
         logger.info(f"[SUPERVISOR] Sensitive escalation triggered reason={reason}")
         return response
@@ -153,6 +156,7 @@ async def route_message(state: ConversationState, message: str) -> str:
         if msg_lower.isdigit():
             response = decision_tree.process_message(state, message)
             if state.step == Step.ESCALATE and not state.pending_note:
+                state.pending_escalation_reason = "derivado por el árbol de opciones"
                 state.pending_note = build_lead_summary(state, escalation_reason="derivado por el árbol de opciones")
             logger.info(f"[SUPERVISOR] Decision tree -> step={state.step.value}")
             return response
@@ -265,5 +269,6 @@ async def route_message(state: ConversationState, message: str) -> str:
     # Fallback: welcome
     response = decision_tree.process_message(state, message)
     if state.step == Step.ESCALATE and not state.pending_note:
+        state.pending_escalation_reason = "derivado por el árbol de opciones"
         state.pending_note = build_lead_summary(state, escalation_reason="derivado por el árbol de opciones")
     return response

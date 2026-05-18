@@ -14,6 +14,7 @@ from urllib.parse import urlparse, urlunparse
 import httpx
 from fastapi import APIRouter, Request, HTTPException
 
+from src.agents.escalation import escalate_to_human
 from src.config import settings
 from src.flows.decision_tree import ConversationState
 from src.agents.supervisor import route_message
@@ -93,14 +94,7 @@ async def handle_message(payload: dict):
     # Route through supervisor (decision tree + RAG)
     response = await route_message(state, message)
 
-    # Send internal lead note if escalation just happened
-    if state.pending_note:
-        await send_chatwoot_note(conversation_id, state.pending_note)
-        state.pending_note = None
-
-    # Send response back via Chatwoot API
-    if response:
-        await send_chatwoot_message(conversation_id, response, state.quick_replies)
+    await finalize_chatwoot_delivery(conversation_id, state, response)
 
 
 async def poll_chatwoot_interactions():
@@ -144,11 +138,7 @@ async def poll_active_conversations_once():
                     processed_chatwoot_messages.add(dedupe_key)
                     logger.info(f"[BOT] Processing Chatwoot button conv={conversation_id} message_id={message_id} value={selected}")
                     response = await route_message(state, selected)
-                    if state.pending_note:
-                        await send_chatwoot_note(conversation_id, state.pending_note)
-                        state.pending_note = None
-                    if response:
-                        await send_chatwoot_message(conversation_id, response, state.quick_replies)
+                    await finalize_chatwoot_delivery(conversation_id, state, response)
                     continue
 
                 if message_type not in ("incoming", 0):
@@ -162,11 +152,24 @@ async def poll_active_conversations_once():
                 processed_chatwoot_messages.add(dedupe_key)
                 logger.info(f"[BOT] Processing polled incoming conv={conversation_id} message_id={message_id}: {content[:100]}")
                 response = await route_message(state, content)
-                if state.pending_note:
-                    await send_chatwoot_note(conversation_id, state.pending_note)
-                    state.pending_note = None
-                if response:
-                    await send_chatwoot_message(conversation_id, response, state.quick_replies)
+                await finalize_chatwoot_delivery(conversation_id, state, response)
+
+
+async def finalize_chatwoot_delivery(conversation_id: str, state: ConversationState, response: str | None):
+    note = state.pending_note
+    reason = state.pending_escalation_reason
+
+    if note:
+        await send_chatwoot_note(conversation_id, note)
+        state.pending_note = None
+
+    if reason:
+        handoff_ok = await escalate_to_human(conversation_id, reason, summary=note or "")
+        if handoff_ok:
+            state.pending_escalation_reason = None
+
+    if response:
+        await send_chatwoot_message(conversation_id, response, state.quick_replies)
 
 
 def extract_submitted_value(payload: dict) -> str | None:

@@ -46,10 +46,10 @@
 
 ## Funcionalidad pendiente (Phase 2 - LangGraph multi-agent)
 - [x] Validar que `data/knowledge_base/conversations.json` está siendo indexado correctamente en `kb_documents`.
-- [ ] Ajustar/añadir reglas de privacidad para que el bot no pida ni repita datos sensibles (IDs, cuentas, comprobantes) y siempre derive a humano.
+- [x] Ajustar/añadir reglas de privacidad para que el bot no pida ni repita datos sensibles (IDs, cuentas, comprobantes) y siempre derive a humano.
 - [ ] Implementar **Booking Agent** (integración Roverd deep links).
-- [ ] Migrar estado de conversaciones de memoria (`dict`) a Redis/PostgreSQL.
-- [ ] Implementar **Escalation Agent** con handoff a humano en Chatwoot.
+- [ ] Migrar estado de conversaciones de memoria (`dict`) a Redis/PostgreSQL como último paso técnico antes de pasar a PRE (no prioritario mientras sigamos cerrando y validando en dev).
+- [x] Implementar **Escalation Agent** con handoff a humano en Chatwoot.
 
 ## Mejoras (baja prioridad)
 - [x] Expandir `conversations.json` con más ejemplos reales (WhatsApp) y sanitización básica.
@@ -59,8 +59,8 @@
 - [x] Normalizar topics legacy en conversaciones curadas al indexar (mapping a topics canónicos) para mejorar overlap en reranking.
 - [x] Logging de diagnóstico de retrieval (topics detectados + preview de scores).
 - [ ] Añadir un comando/shortcut (script) para re-indexar embeddings de forma segura (por ejemplo confirmación antes del `DELETE`).
-- [ ] Revisar el `SYSTEM_PROMPT` del `rag_agent` para reflejar el tono definido en `brand_tone.json` y las reglas de escalado.
-- [ ] Añadir tests para supervisor, RAG agent, escalado y webhook.
+- [x] Revisar el `SYSTEM_PROMPT` del `rag_agent` para reflejar el tono definido en `brand_tone.json` y las reglas de escalado.
+- [x] Añadir tests para supervisor, RAG agent, escalado y webhook.
 - [ ] Dashboard del dueño (analytics de conversaciones, servicios consultados, conversiones).
 - [ ] Alembic migrations para esquema de DB.
 
@@ -90,23 +90,15 @@
 - [ ] Cubrir preguntas sobre **punto de encuentro en Cartagena / marinas**: Muelle de la Bodeguita vs Marina Todo Mar, puerta específica, link de ubicación y opción de guardar maletas en la oficina de Cartagena.
 - [ ] Detallar mejor **qué incluye cada plan**: equipo completo, tasas de parque, seguro de buceo, almuerzo/comida, si hay opciones sin almuerzo, snacks/bebidas y si se puede llevar comida propia.
 - [ ] Cubrir preguntas de **equipo**: si es necesario llevar equipo propio, si se puede ver/probar el equipo antes de salir, y dónde está el equipo (Cartagena vs islas).
-- [ ] Cubrir preguntas de **condiciones y políticas**: clima, cancelación y reembolsos, cambio de fecha, qué pasa si el cliente no puede viajar.
 - [ ] Cubrir preguntas de **qué llevar y bienestar**: toalla, bloqueador, mareo (si ofrecen pastillas o solo recomendación), qué no está permitido llevar.
-- [ ] Cubrir preguntas de **profundidad máxima, número de inmersiones y sitios**: metros máximos, diferencia entre principiantes/certificados, barcos hundidos u otros puntos “especiales” de la zona.
-- [ ] Cubrir preguntas sobre **tamaño de grupos y acompañantes**: mínimo/máximo de personas por instructor, acompañantes que solo van en la lancha o hacen snorkel, posibilidad de acompañar a alguien que hace minicurso.
-- [ ] Cubrir preguntas sobre el **proceso de reserva y pago**: porcentaje de anticipo (50% vs 100%), links de pago específicos por grupo/actividad, uso de pasaporte vs cédula para extranjeros, pago en pasarela local vs tarjeta extranjera vs transferencia.
-- [ ] Cubrir preguntas sobre **formularios y requisitos médicos**: cuestionarios PADI, exoneraciones, Discover Scuba / DSD eLearning, cuándo se requiere certificado médico si responden “sí” en el cuestionario.
-- [ ] Cubrir preguntas sobre **certificaciones y cursos**: diferencia entre minicurso y curso Open Water, upgrade de Discover/mini a Open Water, referrals desde otros centros/instructores (qué papeles deben traer).
+- [x] Cubrir preguntas sobre **edades mínimas y requisitos para niños** tanto en buceo como en snorkel.
 - [ ] Cubrir preguntas sobre **fotos y videos**: si están incluidos en el plan, cómo se solicitan luego, qué pasa con fotos que tomó el guía.
 - [ ] Cubrir preguntas sobre **registro de buceos / logbook**: nombres de puntos de buceo (Alex Place, Luis Guerra, etc.) y apoyo para registrar inmersiones en apps PADI/SSI.
-- [ ] Cubrir preguntas sobre **frecuencia de tours**: si hay salidas todos los días, horarios típicos por tipo de plan.
-- [ ] Cubrir preguntas sobre **edades mínimas y requisitos para niños** tanto en buceo como en snorkel.
-
+- [ ] Cubrir preguntas sobre **condiciones y políticas**: clima, cancelación y reembolsos, cambio de fecha, qué pasa si el cliente no puede viajar.
 - [x] Añadir paso `GROUP_TYPE` para tipo de grupo y manejar el caso de grupo mixto (buceo + snorkel / acompañantes) con explicación y escalado a humano.
 - [x] Crear menús específicos de **precios**, **reservas/pagos** y **logística/FAQ** (`PRICING_MENU`, `BOOKING_MENU`, `LOGISTICS_MENU`) con mensajes ES/EN y retorno al menú principal.
 - [x] Ajustar flujos de tours certificados y principiantes para reutilizar la `location` seleccionada desde el menú principal y saltar directamente a `COLOMBIAN` cuando aplica.
 - [x] Actualizar el `Supervisor` para reconocer los nuevos pasos de menú y seguir ruteando correctamente al árbol de decisión.
-
 
 - [x] Rediseñar el flujo de **Cursos PADI y certificaciones** para alinearlo mejor con el árbol extendido (curso básico Open Water con origen Cartagena/islas, tiempo disponible, resumen claro del curso).
 - [x] Añadir granularidad en cursos: path específico para **referrals/reactivates** (cursos empezados en otro centro), explicando documentos requeridos y cómo se cobra la diferencia vs paquete de buceos.
