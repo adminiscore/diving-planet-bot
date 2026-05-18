@@ -1,118 +1,552 @@
 {
-  "pricing": {
-    "colombians_cartagena": {
-      "currency": "COP",
-      "includes": ["parque_nacional", "seguro_buceo", "almuerzo", "transporte"],
-      "services": {
-        "recreativo_dos_buceos": "precio_a_definir",
-        "recreativo_un_buceo": "precio_a_definir", 
-        "minicurso_buceo": "precio_a_definir",
-        "curso_open_water": "precio_a_definir",
-        "curso_advanced": "precio_a_definir",
-        "curso_rescate": "precio_a_definir",
-        "curso_referido": "precio_a_definir",
-        "curso_divemaster": "precio_a_definir",
-        "especialidad_mindful_diving": "precio_a_definir",
-        "especialidad_identificacion_peces": "precio_a_definir",
-        "especialidad_nitrox": "precio_a_definir",
-        "especialidad_naturalista": "precio_a_definir",
-        "especialidad_flotabilidad": "precio_a_definir",
-        "paquete_5_buceos_2_dias_con_nocturna": "precio_a_definir",
-        "paquete_7_buceos_3_dias_con_nocturna": "precio_a_definir",
-        "paquete_9_buceos_4_dias_con_nocturna": "precio_a_definir",
-        "snorkel": "precio_a_definir",
-        "servicio_privado": "precio_a_definir"
+  "_comment": "Tarifas Diving Planet 2026. Fuente: TARIFA PLENA FINAL.csv (mayo 2026). price_normal = tarifa plena sin descuento; price_online = precio con descuento online (~10%). Descuento equipo propio: $33.000 COP por dia.",
+  "pricing_year": 2026,
+  "own_equipment_discount_cop": 33000,
+  "own_equipment_discount_note_es": "Clientes con equipo propio reciben $33.000 COP de descuento por dia de buceo.",
+  "own_equipment_discount_note_en": "Clients with their own equipment receive a COP 33,000 discount per diving day.",
+
+  "from_cartagena": {
+    "context_note_es": "Sale desde Cartagena (Muelle de la Bodeguita). Incluye: tarifa de ingreso al PNN Corales del Rosario, seguro de buceo, transporte en lancha rapida Cartagena-Islas-Cartagena y almuerzo el primer dia (salvo indicacion contraria).",
+    "context_note_en": "Departing from Cartagena (Muelle de la Bodeguita). Includes: National Park entrance fee, dive insurance, speedboat transport Cartagena-Islands-Cartagena, and lunch on day 1 (unless otherwise noted).",
+
+    "servicios_buceo_snorkel": {
+      "buzo_certificado_doble": {
+        "name_es": "Buzo Certificado - 2 inmersiones (1 dia)",
+        "name_en": "Certified Diver - 2 dives (1 day)",
+        "num_dives": 2,
+        "num_pool_sessions": 0,
+        "cop_normal": 700000,
+        "cop_online": 630000,
+        "usd_normal": 197.29,
+        "usd_online": 178
       },
-      "notes": "Precios para colombianos reservando desde Cartagena. Incluye impuesto de entrada al parque, seguro de buceo y almuerzo."
+      "buzo_certificado_sencillo": {
+        "name_es": "Buzo Certificado - 1 inmersion (no disponible desde Cartagena)",
+        "name_en": "Certified Diver - 1 dive (not available from Cartagena)",
+        "num_dives": 1,
+        "available": false,
+        "note_es": "No disponible como servicio independiente desde Cartagena. Se cobra el precio del servicio de 2 inmersiones.",
+        "note_en": "Not available as a standalone service from Cartagena. The 2-dive service price applies."
+      },
+      "minicurso_refresh": {
+        "name_es": "Minicurso de Buceo / Refresh",
+        "name_en": "Dive Mini Course / Refresher",
+        "num_dives": 1,
+        "num_pool_sessions": 1,
+        "cop_normal": 727000,
+        "cop_online": 655000,
+        "usd_normal": 203.83,
+        "usd_online": 183
+      },
+      "snorkel_doble": {
+        "name_es": "Snorkel - 2 salidas (1 dia)",
+        "name_en": "Snorkeling - 2 sessions (1 day)",
+        "num_dives": 0,
+        "num_snorkel_sessions": 2,
+        "cop_normal": 497000,
+        "cop_online": 448000,
+        "usd_normal": 139.52,
+        "usd_online": 125.57
+      },
+      "snorkel_sencillo": {
+        "name_es": "Snorkel - 1 salida (no disponible desde Cartagena)",
+        "name_en": "Snorkeling - 1 session (not available from Cartagena)",
+        "num_snorkel_sessions": 1,
+        "available": false,
+        "note_es": "No disponible como servicio independiente desde Cartagena. Se cobra el precio del servicio de 2 salidas.",
+        "note_en": "Not available as a standalone service from Cartagena. The 2-session service price applies."
+      },
+      "buceo_nocturno": {
+        "name_es": "Buceo Nocturno (no disponible desde Cartagena)",
+        "name_en": "Night Dive (not available from Cartagena)",
+        "available": false,
+        "note_es": "Solo disponible para clientes que ya estan en las islas.",
+        "note_en": "Only available for guests already on the islands."
+      },
+      "snorkel_nocturno": {
+        "name_es": "Snorkel Nocturno (no disponible desde Cartagena)",
+        "name_en": "Night Snorkeling (not available from Cartagena)",
+        "available": false,
+        "note_es": "Solo disponible para clientes que ya estan en las islas.",
+        "note_en": "Only available for guests already on the islands."
+      },
+      "acompanante": {
+        "name_es": "Acompanante (no bucea ni hace snorkel)",
+        "name_en": "Companion (does not dive or snorkel)",
+        "cop_normal": 320000,
+        "cop_online": 288000,
+        "usd_normal": 89.38,
+        "usd_online": 80.44,
+        "note_es": "Para personas que acompanan al grupo pero no participan en la actividad acuatica.",
+        "note_en": "For people accompanying the group who do not participate in the water activity."
+      }
     },
-    "colombians_islands": {
-      "currency": "COP", 
-      "includes": ["servicio_buceo"],
-      "services": {
-        "recreativo_dos_buceos": "precio_a_definir",
-        "recreativo_un_buceo": "precio_a_definir",
-        "minicurso_buceo": "precio_a_definir",
-        "curso_open_water": "precio_a_definir",
-        "curso_advanced": "precio_a_definir",
-        "especialidad_identificacion_peces": "precio_a_definir",
-        "especialidad_nitrox": "precio_a_definir",
-        "especialidad_naturalista": "precio_a_definir",
-        "especialidad_flotabilidad": "precio_a_definir",
-        "snorkel": "precio_a_definir",
-        "paquete_3_buceos_con_nocturna": "precio_a_definir",
-        "paquete_5_buceos_2_dias_con_nocturna": "precio_a_definir",
-        "paquete_7_buceos_3_dias_con_nocturna": "precio_a_definir",
-        "servicio_privado": "precio_a_definir"
+
+    "paquetes": {
+      "paquete_3_buceos": {
+        "name_es": "Paquete 3 Buceos (2 diurnos + 1 nocturno)",
+        "name_en": "3-Dive Package (2 daytime + 1 night dive)",
+        "num_dives": 3,
+        "includes_night_dive": true,
+        "cop_normal": 1130000,
+        "cop_online": 1017000,
+        "usd_normal": 319.37,
+        "usd_online": 287
       },
-      "notes": "Precios para colombianos que ya están en las islas. No incluye transporte ni almuerzo."
+      "paquete_4_buceos_diurnos": {
+        "name_es": "Paquete 4 Buceos (4 diurnos)",
+        "name_en": "4-Dive Package (4 daytime dives)",
+        "num_dives": 4,
+        "includes_night_dive": false,
+        "cop_normal": 1282000,
+        "cop_online": 1154000,
+        "usd_normal": 350.98,
+        "usd_online": 316
+      },
+      "paquete_4_buceos_mixto": {
+        "name_es": "Paquete 4 Buceos (3 diurnos + 1 nocturno) - no disponible desde Cartagena",
+        "name_en": "4-Dive Package (3 daytime + 1 night dive) - not available from Cartagena",
+        "num_dives": 4,
+        "includes_night_dive": true,
+        "available": false,
+        "note_es": "Este paquete no esta disponible para salida desde Cartagena. Solo para clientes ya en las islas.",
+        "note_en": "This package is not available for Cartagena departures. Only for guests already on the islands."
+      },
+      "paquete_5_buceos": {
+        "name_es": "Paquete 5 Buceos - 2 dias (4 diurnos + 1 nocturno)",
+        "name_en": "5-Dive Package - 2 days (4 daytime + 1 night dive)",
+        "num_dives": 5,
+        "duration_days": 2,
+        "includes_night_dive": true,
+        "cop_normal": 1587000,
+        "cop_online": 1429000,
+        "usd_normal": 436,
+        "usd_online": 392
+      },
+      "paquete_7_buceos": {
+        "name_es": "Paquete 7 Buceos - 3 dias (6 diurnos + 1 nocturno)",
+        "name_en": "7-Dive Package - 3 days (6 daytime + 1 night dive)",
+        "num_dives": 7,
+        "duration_days": 3,
+        "includes_night_dive": true,
+        "cop_normal": 2015000,
+        "cop_online": 1813000,
+        "usd_normal": 558.08,
+        "usd_online": 503
+      },
+      "paquete_9_buceos": {
+        "name_es": "Paquete 9 Buceos - 4 dias (8 diurnos + 1 nocturno)",
+        "name_en": "9-Dive Package - 4 days (8 daytime + 1 night dive)",
+        "num_dives": 9,
+        "duration_days": 4,
+        "includes_night_dive": true,
+        "cop_normal": 2412000,
+        "cop_online": 2170000,
+        "usd_normal": 668.17,
+        "usd_online": 602
+      },
+      "buceo_adicional_al_plan": {
+        "name_es": "Buceo adicional al plan - no disponible desde Cartagena",
+        "name_en": "Additional dive add-on - not available from Cartagena",
+        "available": false,
+        "note_es": "No disponible desde Cartagena; no hay tiempo para una inmersion adicional en el horario de la lancha.",
+        "note_en": "Not available from Cartagena; there is no time for an additional dive within the boat schedule."
+      }
     },
-    "foreigners_cartagena": {
-      "currency": "USD",
-      "includes": ["parque_nacional", "seguro_buceo", "almuerzo", "transporte"],
-      "services": {
-        "recreativo_dos_buceos": "precio_a_definir",
-        "recreativo_un_buceo": "precio_a_definir",
-        "minicurso_buceo": "precio_a_definir", 
-        "curso_open_water": "precio_a_definir",
-        "curso_advanced": "precio_a_definir",
-        "curso_rescate": "precio_a_definir",
-        "curso_referido": "precio_a_definir",
-        "curso_divemaster": "precio_a_definir",
-        "especialidad_mindful_diving": "precio_a_definir",
-        "especialidad_identificacion_peces": "precio_a_definir",
-        "especialidad_nitrox": "precio_a_definir",
-        "especialidad_naturalista": "precio_a_definir",
-        "especialidad_flotabilidad": "precio_a_definir",
-        "paquete_5_buceos_2_dias_con_nocturna": "precio_a_definir",
-        "paquete_7_buceos_3_dias_con_nocturna": "precio_a_definir",
-        "paquete_9_buceos_4_dias_con_nocturna": "precio_a_definir",
-        "snorkel": "precio_a_definir",
-        "servicio_privado": "precio_a_definir"
+
+    "cursos_buceo": {
+      "curso_scuba_diver": {
+        "name_es": "Curso Scuba Diver PADI",
+        "name_en": "PADI Scuba Diver Course",
+        "num_dives": 2,
+        "num_pool_sessions": 1,
+        "cop_normal": 2190000,
+        "cop_online": 1971000,
+        "usd_normal": 619.12,
+        "usd_online": 557
       },
-      "notes": "Precios para extranjeros reservando desde Cartagena. Incluye impuesto de entrada al parque, seguro de buceo y almuerzo."
+      "curso_scuba_diver_to_open_water": {
+        "name_es": "Curso Scuba Diver a Open Water PADI",
+        "name_en": "PADI Scuba Diver to Open Water Upgrade",
+        "num_dives": 2,
+        "num_pool_sessions": 1,
+        "cop_normal": 1470000,
+        "cop_online": 1338000,
+        "usd_normal": 419.65,
+        "usd_online": 378,
+        "note_es": "Para quienes ya tienen la certificacion Scuba Diver y quieren completar el Open Water.",
+        "note_en": "For those who already hold the Scuba Diver certification and want to complete the Open Water."
+      },
+      "curso_open_water": {
+        "name_es": "Curso Open Water Diver PADI",
+        "name_en": "PADI Open Water Diver Course",
+        "num_dives": 4,
+        "num_pool_sessions": 2,
+        "cop_normal": 2722000,
+        "cop_online": 2450000,
+        "usd_normal": 769.55,
+        "usd_online": 693
+      },
+      "curso_avanzado": {
+        "name_es": "Curso Advanced Open Water PADI",
+        "name_en": "PADI Advanced Open Water Course",
+        "num_dives": 5,
+        "num_pool_sessions": 0,
+        "includes_night_dive": true,
+        "cop_normal": 2417000,
+        "cop_online": 2175000,
+        "usd_normal": 684.53,
+        "usd_online": 616
+      },
+      "curso_rescate_efr": {
+        "name_es": "Curso Rescue Diver + EFR (Primeros Auxilios) PADI",
+        "name_en": "PADI Rescue Diver + EFR (First Aid) Course",
+        "num_dives": 2,
+        "num_pool_sessions": 1,
+        "cop_normal": 3157000,
+        "cop_online": 2841000,
+        "usd_normal": 884,
+        "usd_online": 796
+      },
+      "curso_completar_elearning": {
+        "name_es": "Completar E-Learning (cliente compro eLearning directamente a PADI)",
+        "name_en": "Complete E-Learning (client purchased eLearning directly from PADI)",
+        "num_dives": 4,
+        "num_pool_sessions": 2,
+        "cop_normal": 1987000,
+        "cop_online": 1788000,
+        "usd_normal": 561.36,
+        "usd_online": 505,
+        "note_es": "Aplica cuando el cliente ya compro el eLearning directamente a PADI. Se descuenta el costo del eLearning de PADI del precio del curso Open Water.",
+        "note_en": "Applies when the client already purchased the eLearning directly from PADI. The PADI eLearning cost is deducted from the Open Water course price."
+      },
+      "curso_referido": {
+        "name_es": "Curso Referido Open Water (ya tiene teoria y piscina de otro centro PADI)",
+        "name_en": "Open Water Referral (theory and pool sessions done at another PADI center)",
+        "num_dives": 4,
+        "num_pool_sessions": 0,
+        "cop_normal": 1867000,
+        "cop_online": 1680000,
+        "usd_normal": 526.48,
+        "usd_online": 474,
+        "note_es": "Para quienes ya completaron teoria y piscina en su centro PADI de origen y vienen a terminar las inmersiones de certificacion.",
+        "note_en": "For those who completed theory and pool sessions at their home PADI center and come to finish the certification dives."
+      }
     },
-    "foreigners_islands": {
-      "currency": "USD",
-      "includes": ["servicio_buceo"],
-      "services": {
-        "recreativo_dos_buceos": "US$124 (US$138 regular)",
-        "recreativo_un_buceo": "precio_a_definir",
-        "minicurso_buceo": "US$134 (US$149 regular)",
-        "curso_open_water": "US$596 (US$662 regular)", 
-        "curso_advanced": "US$529 (US$588 regular)",
-        "especialidad_identificacion_peces": "US$344 (US$382 regular)",
-        "especialidad_nitrox": "US$344 (US$382 regular)",
-        "especialidad_naturalista": "US$344 (US$382 regular)",
-        "especialidad_flotabilidad": "US$344 (US$382 regular)",
-        "snorkel": "US$45 (US$50 regular)",
-        "paquete_3_buceos_con_nocturna": "US$188 (US$209 regular)",
-        "paquete_5_buceos_2_dias_con_nocturna": "US$319 (US$354 regular)",
-        "paquete_7_buceos_3_dias_con_nocturna": "US$432 (US$480 regular)",
-        "servicio_privado": "precio_a_definir"
+
+    "cursos_especialidades": {
+      "_note_es": "El precio varia segun el numero de inmersiones requeridas por la especialidad (2, 3 o 4 buceos).",
+      "_note_en": "Price varies based on the number of dives required by the specialty (2, 3, or 4 dives).",
+      "especialidad_2_buceos": {
+        "name_es": "Especialidad PADI - 2 inmersiones (ej: Naturalista, Identificacion de Peces, Flotabilidad, Nitrox)",
+        "name_en": "PADI Specialty - 2 dives (e.g.: Naturalist, Fish Identification, Buoyancy, Nitrox)",
+        "num_dives": 2,
+        "cop_normal": 1650000,
+        "cop_online": 1485000,
+        "usd_normal": 464.34,
+        "usd_online": 418
       },
-      "notes": "Precios para extranjeros que ya están en las islas. No incluye transporte ni almuerzo."
+      "especialidad_3_buceos": {
+        "name_es": "Especialidad PADI - 3 inmersiones",
+        "name_en": "PADI Specialty - 3 dives",
+        "num_dives": 3,
+        "cop_normal": 2007000,
+        "cop_online": 1806000,
+        "usd_normal": 566.81,
+        "usd_online": 510
+      },
+      "especialidad_4_buceos": {
+        "name_es": "Especialidad PADI - 4 inmersiones (ej: Mindful Diving)",
+        "name_en": "PADI Specialty - 4 dives (e.g.: Mindful Diving)",
+        "num_dives": 4,
+        "cop_normal": 2417000,
+        "cop_online": 2175000,
+        "usd_normal": 684.53,
+        "usd_online": 616
+      }
     }
   },
-  "pricing_notes": {
-    "roverd_discount": {
-      "es": "La página web ofrece 10% de descuento adicional reservando a través del sistema ROVERD",
-      "en": "The website offers an additional 10% discount booking through the ROVERD system"
+
+  "from_islands": {
+    "context_note_es": "Cliente ya esta en las Islas del Rosario. No incluye transporte desde Cartagena ni almuerzo. El centro recoge al cliente en su hotel (si tiene acceso maritimo).",
+    "context_note_en": "Client is already on the Rosario Islands. Does not include transport from Cartagena or lunch. The center picks up the client at their hotel (if maritime access is available).",
+
+    "servicios_buceo_snorkel": {
+      "buzo_certificado_doble": {
+        "name_es": "Buzo Certificado - 2 inmersiones",
+        "name_en": "Certified Diver - 2 dives",
+        "num_dives": 2,
+        "cop_normal": 489000,
+        "cop_online": 440000,
+        "usd_normal": 138,
+        "usd_online": 124.2
+      },
+      "buzo_certificado_sencillo": {
+        "name_es": "Buzo Certificado - 1 inmersion (se cobra precio de 2 inmersiones)",
+        "name_en": "Certified Diver - 1 dive (priced as 2 dives)",
+        "num_dives": 1,
+        "cop_normal": 489000,
+        "cop_online": 440000,
+        "usd_normal": 138,
+        "usd_online": 124.2,
+        "note_es": "Se puede hacer pero se cobra el mismo precio que el servicio de 2 inmersiones.",
+        "note_en": "Can be done but the same price as the 2-dive service applies."
+      },
+      "minicurso_refresh": {
+        "name_es": "Minicurso de Buceo / Refresh",
+        "name_en": "Dive Mini Course / Refresher",
+        "num_dives": 1,
+        "num_pool_sessions": 1,
+        "cop_normal": 528000,
+        "cop_online": 475000,
+        "usd_normal": 149,
+        "usd_online": 134.1
+      },
+      "snorkel_doble": {
+        "name_es": "Snorkel - 2 salidas",
+        "name_en": "Snorkeling - 2 sessions",
+        "num_snorkel_sessions": 2,
+        "cop_normal": 167000,
+        "cop_online": 150000,
+        "usd_normal": 50,
+        "usd_online": 45
+      },
+      "snorkel_sencillo": {
+        "name_es": "Snorkel - 1 salida (se cobra precio de 2 salidas)",
+        "name_en": "Snorkeling - 1 session (priced as 2 sessions)",
+        "num_snorkel_sessions": 1,
+        "cop_normal": 167000,
+        "cop_online": 150000,
+        "usd_normal": 50,
+        "usd_online": 45,
+        "note_es": "Se puede hacer pero se cobra el mismo precio que el servicio de 2 salidas.",
+        "note_en": "Can be done but the same price as the 2-session service applies."
+      },
+      "buceo_nocturno": {
+        "name_es": "Buceo Nocturno (solo para clientes en las islas)",
+        "name_en": "Night Dive (only for guests on the islands)",
+        "num_dives": 1,
+        "cop_normal": 328000,
+        "cop_online": 295000,
+        "usd_normal": 94,
+        "usd_online": 84.6
+      },
+      "snorkel_nocturno": {
+        "name_es": "Snorkel Nocturno (solo para clientes en las islas)",
+        "name_en": "Night Snorkeling (only for guests on the islands)",
+        "num_snorkel_sessions": 1,
+        "cop_normal": 189000,
+        "cop_online": 170000,
+        "usd_normal": 58,
+        "usd_online": 52.2
+      },
+      "buceo_adicional_al_plan": {
+        "name_es": "Buceo adicional al plan",
+        "name_en": "Additional dive add-on",
+        "num_dives": 1,
+        "cop_normal": 216000,
+        "cop_online": 195000,
+        "usd_normal": 64,
+        "usd_online": 57.6,
+        "note_es": "Disponible teoricamente pero operativamente no hay tiempo para hacerlo. Consultar disponibilidad.",
+        "note_en": "Theoretically available but operationally there is no time to do it. Check availability."
+      }
     },
-    "direct_booking_discount": {
-      "es": "10% de descuento reservando directamente con nosotros (no a través de terceros como PADI)",
-      "en": "10% discount booking directly with us (not through third parties like PADI)"
+
+    "paquetes": {
+      "paquete_3_buceos": {
+        "name_es": "Paquete 3 Buceos (2 diurnos + 1 nocturno)",
+        "name_en": "3-Dive Package (2 daytime + 1 night dive)",
+        "num_dives": 3,
+        "includes_night_dive": true,
+        "cop_normal": 739000,
+        "cop_online": 665000,
+        "usd_normal": 209,
+        "usd_online": 188.1
+      },
+      "paquete_4_buceos_diurnos": {
+        "name_es": "Paquete 4 Buceos (4 diurnos)",
+        "name_en": "4-Dive Package (4 daytime dives)",
+        "num_dives": 4,
+        "includes_night_dive": false,
+        "cop_normal": 922000,
+        "cop_online": 830000,
+        "usd_normal": 227,
+        "usd_online": 204.3
+      },
+      "paquete_4_buceos_mixto": {
+        "name_es": "Paquete 4 Buceos (3 diurnos + 1 nocturno)",
+        "name_en": "4-Dive Package (3 daytime + 1 night dive)",
+        "num_dives": 4,
+        "includes_night_dive": true,
+        "cop_normal": 800000,
+        "cop_online": 720000,
+        "usd_normal": 262,
+        "usd_online": 235.8,
+        "note_es": "Solo disponible para clientes ya en las islas. No activado para salida desde Cartagena.",
+        "note_en": "Only available for guests already on the islands. Not activated for Cartagena departures."
+      },
+      "paquete_5_buceos": {
+        "name_es": "Paquete 5 Buceos (4 diurnos + 1 nocturno)",
+        "name_en": "5-Dive Package (4 daytime + 1 night dive)",
+        "num_dives": 5,
+        "includes_night_dive": true,
+        "cop_normal": 1110000,
+        "cop_online": 1000000,
+        "usd_normal": 354,
+        "usd_online": 318.6
+      },
+      "paquete_7_buceos": {
+        "name_es": "Paquete 7 Buceos (6 diurnos + 1 nocturno)",
+        "name_en": "7-Dive Package (6 daytime + 1 night dive)",
+        "num_dives": 7,
+        "includes_night_dive": true,
+        "cop_normal": 1526000,
+        "cop_online": 1375000,
+        "usd_normal": 480,
+        "usd_online": 432
+      },
+      "paquete_9_buceos": {
+        "name_es": "Paquete 9 Buceos (8 diurnos + 1 nocturno)",
+        "name_en": "9-Dive Package (8 daytime + 1 night dive)",
+        "num_dives": 9,
+        "includes_night_dive": true,
+        "cop_normal": 1882000,
+        "cop_online": 1695000,
+        "usd_normal": 605,
+        "usd_online": 544.5
+      }
+    },
+
+    "cursos_buceo": {
+      "curso_scuba_diver": {
+        "name_es": "Curso Scuba Diver PADI",
+        "name_en": "PADI Scuba Diver Course",
+        "num_dives": 2,
+        "num_pool_sessions": 1,
+        "cop_normal": 1649000,
+        "cop_online": 1485000,
+        "usd_normal": 467,
+        "usd_online": 420.3
+      },
+      "curso_scuba_diver_to_open_water": {
+        "name_es": "Curso Scuba Diver a Open Water PADI",
+        "name_en": "PADI Scuba Diver to Open Water Upgrade",
+        "num_dives": 2,
+        "num_pool_sessions": 1,
+        "cop_normal": 1280000,
+        "cop_online": 1150000,
+        "usd_normal": 362,
+        "usd_online": 325.8
+      },
+      "curso_open_water": {
+        "name_es": "Curso Open Water Diver PADI",
+        "name_en": "PADI Open Water Diver Course",
+        "num_dives": 4,
+        "num_pool_sessions": 2,
+        "cop_normal": 2335000,
+        "cop_online": 2100000,
+        "usd_normal": 662,
+        "usd_online": 595.8
+      },
+      "curso_avanzado": {
+        "name_es": "Curso Advanced Open Water PADI",
+        "name_en": "PADI Advanced Open Water Course",
+        "num_dives": 5,
+        "includes_night_dive": true,
+        "cop_normal": 2080000,
+        "cop_online": 1870000,
+        "usd_normal": 588,
+        "usd_online": 529.2
+      },
+      "curso_rescate_efr": {
+        "name_es": "Curso Rescue Diver + EFR PADI",
+        "name_en": "PADI Rescue Diver + EFR Course",
+        "num_dives": 2,
+        "num_pool_sessions": 1,
+        "cop_normal": 2830000,
+        "cop_online": 2550000,
+        "usd_normal": 720,
+        "usd_online": 648
+      },
+      "curso_completar_elearning": {
+        "name_es": "Completar E-Learning (cliente compro eLearning directamente a PADI)",
+        "name_en": "Complete E-Learning (client purchased eLearning directly from PADI)",
+        "num_dives": 4,
+        "num_pool_sessions": 2,
+        "cop_normal": 1660000,
+        "cop_online": 1495000,
+        "usd_normal": 472,
+        "usd_online": 424.8
+      },
+      "curso_referido": {
+        "name_es": "Curso Referido Open Water",
+        "name_en": "Open Water Referral Course",
+        "num_dives": 4,
+        "cop_normal": 1740000,
+        "cop_online": 1565000,
+        "usd_normal": 480,
+        "usd_online": 432
+      }
+    },
+
+    "cursos_especialidades": {
+      "_note_es": "El precio varia segun el numero de inmersiones requeridas por la especialidad.",
+      "_note_en": "Price varies based on the number of dives required by the specialty.",
+      "especialidad_2_buceos": {
+        "name_es": "Especialidad PADI - 2 inmersiones (ej: Naturalista, Identificacion de Peces, Flotabilidad, Nitrox)",
+        "name_en": "PADI Specialty - 2 dives (e.g.: Naturalist, Fish Identification, Buoyancy, Nitrox)",
+        "num_dives": 2,
+        "cop_normal": 1350000,
+        "cop_online": 1215000,
+        "usd_normal": 382,
+        "usd_online": 343.8
+      },
+      "especialidad_3_buceos": {
+        "name_es": "Especialidad PADI - 3 inmersiones",
+        "name_en": "PADI Specialty - 3 dives",
+        "num_dives": 3,
+        "cop_normal": 1600000,
+        "cop_online": 1440000,
+        "usd_normal": 451,
+        "usd_online": 405.9
+      },
+      "especialidad_4_buceos": {
+        "name_es": "Especialidad PADI - 4 inmersiones (ej: Mindful Diving)",
+        "name_en": "PADI Specialty - 4 dives (e.g.: Mindful Diving)",
+        "num_dives": 4,
+        "cop_normal": 1810000,
+        "cop_online": 1630000,
+        "usd_normal": 512,
+        "usd_online": 460.8
+      }
+    }
+  },
+
+  "discount_policies": {
+    "online_booking": {
+      "es": "Precio online/con descuento: aproximadamente 10% de descuento sobre la tarifa plena al reservar directamente a traves de la web o ROVERD.",
+      "en": "Online/discounted price: approximately 10% off the full rate when booking directly through the website or ROVERD."
+    },
+    "own_equipment": {
+      "es": "$33.000 COP de descuento por dia para clientes con equipo propio.",
+      "en": "COP 33,000 discount per day for clients with their own equipment."
     },
     "group_discount": {
-      "es": "5% de descuento para grupos de 4 personas o más (previa solicitud)",
-      "en": "5% discount for groups of 4 or more people (upon request)"
+      "es": "5% de descuento para grupos de 4 personas o mas (consultar disponibilidad).",
+      "en": "5% discount for groups of 4 or more people (check availability)."
     },
     "second_day_discount": {
-      "es": "10% de descuento para segundo día de buceo",
-      "en": "10% discount for second day of diving"
+      "es": "10% de descuento para segundo dia de buceo.",
+      "en": "10% discount for a second day of diving."
     },
     "parceros_plan": {
-      "es": "Plan PARCEROS: 30% de descuento para clientes registrados en Cartagena cuando hay cupo disponible para el día siguiente",
-      "en": "PARCEROS plan: 30% discount for registered customers in Cartagena when space is available for the next day"
+      "es": "Plan PARCEROS: 30% de descuento para clientes registrados en Cartagena cuando hay cupo disponible para el dia siguiente.",
+      "en": "PARCEROS plan: 30% discount for registered customers in Cartagena when space is available for the next day."
+    },
+    "roverd": {
+      "es": "La pagina web ofrece descuento adicional reservando a traves del sistema ROVERD.",
+      "en": "The website offers an additional discount when booking through the ROVERD system."
     }
   }
 }

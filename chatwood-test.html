@@ -2,26 +2,86 @@
 <html>
   <head>
     <meta charset="utf-8" />
-    <title>Chatwoot Test</title>
+    <title>Diving Planet — Chat Test</title>
+    <style>
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      body {
+        font-family: system-ui, sans-serif;
+        background: #0a1628;
+        color: #e2e8f0;
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+      }
+      h1 { font-size: 1rem; opacity: 0.4; letter-spacing: 0.05em; }
+
+      /* Forzar el panel del widget a tamaño grande */
+      .woot-widget-holder {
+        width:  680px !important;
+        height: 88vh !important;
+        max-height: 88vh !important;
+        bottom: 16px !important;
+        right:  16px !important;
+      }
+      .woot-widget-holder iframe {
+        width:  680px !important;
+        height: 88vh !important;
+      }
+    </style>
   </head>
   <body>
-    <h1>Chatwoot Widget Test</h1>
+    <h1>DIVING PLANET · Dev Chat</h1>
 
     <script>
-      (function(d,t) {
-        var BASE_URL="http://localhost:3300";
-        var g=d.createElement(t),s=d.getElementsByTagName(t)[0];
-        g.src=BASE_URL+"/packs/js/sdk.js";
+      (function(d, t) {
+        var BASE_URL = "http://localhost:3300";
+        var g = d.createElement(t), s = d.getElementsByTagName(t)[0];
+        g.src   = BASE_URL + "/packs/js/sdk.js";
         g.defer = true;
         g.async = true;
-        s.parentNode.insertBefore(g,s);
-        g.onload=function(){
+        s.parentNode.insertBefore(g, s);
+
+        g.onload = function() {
           window.chatwootSDK.run({
             websiteToken: 'rcTJ5Awm3fZN7eAtoMnXVzVF',
             baseUrl: BASE_URL
-          })
-        }
-      })(document,"script");
+          });
+
+          // Abrir el widget automáticamente
+          window.addEventListener('chatwoot:ready', function() {
+            window.$chatwoot.toggle('open');
+          });
+
+          // MutationObserver: en cuanto el SDK inyecte el holder, forzar dimensiones
+          var observer = new MutationObserver(function() {
+            var holder = document.querySelector('.woot-widget-holder');
+            if (!holder) return;
+
+            function resize() {
+              holder.style.setProperty('width',      '680px',  'important');
+              holder.style.setProperty('height',     '88vh',   'important');
+              holder.style.setProperty('max-height', '88vh',   'important');
+              holder.style.setProperty('bottom',     '16px',   'important');
+              holder.style.setProperty('right',      '16px',   'important');
+              var iframe = holder.querySelector('iframe');
+              if (iframe) {
+                iframe.style.setProperty('width',  '680px', 'important');
+                iframe.style.setProperty('height', '88vh',  'important');
+              }
+            }
+
+            resize();
+            // Re-aplicar si el SDK resetea los estilos al abrir/cerrar
+            new MutationObserver(resize).observe(holder, { attributes: true, attributeFilter: ['style'] });
+            observer.disconnect();
+          });
+
+          observer.observe(document.body, { childList: true, subtree: true });
+        };
+      })(document, "script");
     </script>
   </body>
 </html>

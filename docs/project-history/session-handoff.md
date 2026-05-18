@@ -30,7 +30,11 @@ Read this file before changing code in the Diving Planet Bot. For a quick versio
 - `src/agents/lead_summary.py` builds structured private Chatwoot notes on escalation; `state.pending_note` holds the note until sent in `chatwoot.py`.
 - Lead notes are sent for all escalation types: keyword (`humano`, `agente`...), sensitive (medical, weather, complaints), and tree-internal escalation.
 - `chatwoot.py` now performs the real human handoff by calling `escalate_to_human()` after sending the private lead note; `pending_escalation_reason` is only cleared when Chatwoot confirms the status toggle, so failed handoffs can be retried on later activity.
-- `.claude/commands/runtests.md` provides a `/runtests` skill to run the 127-test conversation dataset with block-level keyword filtering.
+- `.claude/commands/runtests.md` provides a `/runtests` skill to run the conversation dataset (223 tests, 21 blocks) with block-level keyword filtering.
+- `chatwoot.py` auto-assigns new conversations to the owner agent (`CHATWOOT_OWNER_AGENT_ID` in `.env`) via `POST /conversations/{id}/assignments` so they appear in the "Mine" view without relying on Chatwoot UI auto-assignment. Set `CHATWOOT_OWNER_AGENT_ID=0` to disable.
+- `supervisor.py` routing hardening: `_matches_escalation_keyword` uses word-boundary regex to prevent "persona" false positive; `_is_substantive_free_text` strips trailing punctuation so "hey?" routes to welcome; any bare greeting mid-flow (hola, hi, buenas…) resets state to WELCOME step.
+- RAG system prompt (ES + EN) has an explicit DIVE TO HEAL exception: disability/accessibility questions about the adaptive diving program are answered with factual program info, not escalated as medical.
+- `load_embeddings.py` now indexes `pricing.json` fully (8 origin × section pairs × 2 langs + 2 discount_policy docs = 441 total KB documents) and includes COP prices in `services.json` embeddings.
 
 ## Current product context
 
@@ -48,7 +52,10 @@ Read this file before changing code in the Diving Planet Bot. For a quick versio
 - Conversation-state migration from in-memory storage to Redis/PostgreSQL is intentionally deferred during dev; treat it as a last hardening step right before moving to PRE.
 - Use `docs/mvp-intent-matrix.md` and `docs/kb-audit-mvp.md` before expanding tree/RAG behavior.
 - `docs/infra-simple.excalidraw` contains the current minimal infrastructure scheme for team communication.
-- Mixed groups, private services, pricing, booking/payment, cancellation/change rules, food/allergy policy, photos/videos, and logistics constraints by hotel/island are still areas for systematic polishing.
+- Mixed groups, private services, pricing, booking/payment, **cancellation/change rules** (major KB gap — needs owner confirmation), and logistics constraints by hotel/island are still areas for systematic polishing.
+- COP pricing is now in the KB; bot needs a restart in WSL2 to serve it after the re-index run.
+- `CHATWOOT_OWNER_AGENT_ID=1` should be added to `.env` (owner agent ID confirmed via `/api/v1/profile`).
+- Next session priorities: cancellation/payment policy KB completion, PRE deployment checklist, and live E2E test of COP price answers after bot restart.
 
 ## Knowledge base and privacy
 

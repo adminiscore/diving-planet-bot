@@ -119,13 +119,20 @@ def load_knowledge_base() -> list[dict]:
             f"Requiere certificación: {'Sí' if svc.get('requires_certification') else 'No'}\n"
         )
         if svc.get("price_usd"):
-            text_es += f"Precio: ${svc['price_usd']} USD\n"
+            text_es += f"Precio (online): ${svc['price_usd']} USD\n"
         if svc.get("price_note"):
             text_es += f"Nota de precio: {svc['price_note']}\n"
         if svc.get("duration_days"):
             text_es += f"Duración: {svc['duration_days']} día(s)\n"
         if svc.get("url"):
             text_es += f"URL: {svc['url']}\n"
+
+        if svc.get("price_usd_normal"):
+            text_es += f"Precio normal (sin descuento): ${svc['price_usd_normal']} USD\n"
+        if svc.get("price_cop"):
+            text_es += f"Precio en pesos (online): ${svc['price_cop']:,} COP\n"
+        if svc.get("price_cop_normal"):
+            text_es += f"Precio en pesos (normal): ${svc['price_cop_normal']:,} COP\n"
 
         documents.append({
             "content": text_es.strip(),
@@ -139,7 +146,13 @@ def load_knowledge_base() -> list[dict]:
             f"Requires certification: {'Yes' if svc.get('requires_certification') else 'No'}\n"
         )
         if svc.get("price_usd"):
-            text_en += f"Price: ${svc['price_usd']} USD\n"
+            text_en += f"Price (online): ${svc['price_usd']} USD\n"
+        if svc.get("price_usd_normal"):
+            text_en += f"Price (regular): ${svc['price_usd_normal']} USD\n"
+        if svc.get("price_cop"):
+            text_en += f"Price in COP (online): ${svc['price_cop']:,} COP\n"
+        if svc.get("price_cop_normal"):
+            text_en += f"Price in COP (regular): ${svc['price_cop_normal']:,} COP\n"
         if svc.get("price_note"):
             text_en += f"Price note: {svc['price_note']}\n"
         if svc.get("duration_days"):
@@ -184,6 +197,121 @@ def load_knowledge_base() -> list[dict]:
             "content": f"Policy - {policy_name}: {policy['en']}",
             "metadata": {"source": "policies", "key": key, "lang": "en", "topics": topics_en},
         })
+
+    # --- Pricing ---
+    pricing_path = DATA_DIR / "pricing.json"
+    if pricing_path.exists():
+        with open(pricing_path, "r", encoding="utf-8") as f:
+            pricing_data = json.load(f)
+
+        year = pricing_data.get("pricing_year", "")
+        eq_disc = pricing_data.get("own_equipment_discount_cop", 0)
+
+        def _fmt_entry_es(entry: dict) -> str:
+            if entry.get("available") is False:
+                return entry.get("note_es", "No disponible")
+            parts = []
+            if entry.get("cop_online"):
+                parts.append(f"${entry['cop_online']:,} COP online / ${entry.get('cop_normal', '?'):,} COP normal")
+            if entry.get("usd_online"):
+                parts.append(f"${entry['usd_online']} USD online / ${entry.get('usd_normal', '?')} USD normal")
+            price = " | ".join(parts) if parts else entry.get("note_es", "consultar")
+            note = entry.get("note_es", "")
+            return f"{price}" + (f" ({note})" if note and note not in price else "")
+
+        def _fmt_entry_en(entry: dict) -> str:
+            if entry.get("available") is False:
+                return entry.get("note_en", "Not available")
+            parts = []
+            if entry.get("cop_online"):
+                parts.append(f"COP ${entry['cop_online']:,} online / ${entry.get('cop_normal', '?'):,} normal")
+            if entry.get("usd_online"):
+                parts.append(f"${entry['usd_online']} USD online / ${entry.get('usd_normal', '?')} USD regular")
+            price = " | ".join(parts) if parts else entry.get("note_en", "contact us")
+            note = entry.get("note_en", "")
+            return f"{price}" + (f" ({note})" if note and note not in price else "")
+
+        section_labels = {
+            "servicios_buceo_snorkel": ("Servicios de buceo y snorkel", "Diving and snorkeling services"),
+            "paquetes": ("Paquetes multi-día", "Multi-day packages"),
+            "cursos_buceo": ("Cursos de buceo", "Diving courses"),
+            "cursos_especialidades": ("Especialidades PADI", "PADI specialties"),
+        }
+
+        for origin_key, origin_label_es, origin_label_en, ctx_key_es, ctx_key_en in [
+            ("from_cartagena", "desde Cartagena", "from Cartagena", "context_note_es", "context_note_en"),
+            ("from_islands", "desde las Islas del Rosario", "from the Rosario Islands", "context_note_es", "context_note_en"),
+        ]:
+            origin = pricing_data.get(origin_key, {})
+            ctx_es = origin.get(ctx_key_es, "")
+            ctx_en = origin.get(ctx_key_en, "")
+
+            for section_key, (label_es, label_en) in section_labels.items():
+                section = origin.get(section_key)
+                if not section:
+                    continue
+
+                lines_es = [f"Precios {origin_label_es} — {label_es} ({year})", ctx_es, ""]
+                lines_en = [f"Prices {origin_label_en} — {label_en} ({year})", ctx_en, ""]
+
+                for svc_key, entry in section.items():
+                    if not isinstance(entry, dict):
+                        continue
+                    name_es = entry.get("name_es", svc_key)
+                    name_en = entry.get("name_en", svc_key)
+                    lines_es.append(f"- {name_es}: {_fmt_entry_es(entry)}")
+                    lines_en.append(f"- {name_en}: {_fmt_entry_en(entry)}")
+
+                lines_es.append(f"\nDescuento equipo propio: ${eq_disc:,} COP por día de buceo.")
+                lines_en.append(f"\nOwn equipment discount: COP ${eq_disc:,} per diving day.")
+
+                topics = ["pricing"]
+                if "colombian" in section_key or "descuento" in section_key:
+                    topics.append("discount_colombian")
+                if "curso" in section_key or "especialidad" in section_key:
+                    topics.append("certification")
+
+                documents.append({
+                    "content": "\n".join(lines_es).strip(),
+                    "metadata": {
+                        "source": "pricing",
+                        "origin": origin_key,
+                        "section": section_key,
+                        "lang": "es",
+                        "topics": topics,
+                    },
+                })
+                documents.append({
+                    "content": "\n".join(lines_en).strip(),
+                    "metadata": {
+                        "source": "pricing",
+                        "origin": origin_key,
+                        "section": section_key,
+                        "lang": "en",
+                        "topics": topics,
+                    },
+                })
+
+        # Discount policies
+        disc = pricing_data.get("discount_policies", {})
+        if disc:
+            lines_es = [f"Políticas de descuento Diving Planet ({year})", ""]
+            lines_en = [f"Diving Planet discount policies ({year})", ""]
+            for disc_key, disc_entry in disc.items():
+                name_es = disc_entry.get("name_es", disc_key)
+                name_en = disc_entry.get("name_en", disc_key)
+                desc_es = disc_entry.get("description_es", "")
+                desc_en = disc_entry.get("description_en", "")
+                lines_es.append(f"- {name_es}: {desc_es}")
+                lines_en.append(f"- {name_en}: {desc_en}")
+            documents.append({
+                "content": "\n".join(lines_es).strip(),
+                "metadata": {"source": "pricing", "section": "discount_policies", "lang": "es", "topics": ["discount", "discount_colombian", "pricing"]},
+            })
+            documents.append({
+                "content": "\n".join(lines_en).strip(),
+                "metadata": {"source": "pricing", "section": "discount_policies", "lang": "en", "topics": ["discount", "discount_colombian", "pricing"]},
+            })
 
     conversations_path = DATA_DIR / "conversations.json"
     if conversations_path.exists():

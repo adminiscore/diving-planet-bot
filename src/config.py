@@ -32,6 +32,7 @@ class Settings(BaseSettings):
     chatwoot_api_token: str = ""
     chatwoot_account_id: int = 1
     chatwoot_inbox_id: int = 1
+    chatwoot_owner_agent_id: int = 0  # 0 = auto-assign disabled
 
     # --- Redis ---
     redis_url: str = "redis://localhost:6379/0"

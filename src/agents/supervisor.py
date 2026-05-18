@@ -11,6 +11,7 @@ keeping costs minimal.
 """
 
 import logging
+import re
 
 from src.agents.escalation import detect_sensitive_escalation
 from src.agents.lead_summary import build_lead_summary
@@ -82,13 +83,32 @@ SPANISH_HINTS = {
 }
 
 
+def _matches_escalation_keyword(msg_lower: str) -> bool:
+    """Word-boundary matching for escalation keywords to avoid false positives.
+
+    Multi-word phrases ("hablar con") use substring matching; single words use
+    word boundaries so "persona" does not match inside "personas".
+    """
+    for kw in ESCALATION_KEYWORDS:
+        if " " in kw:
+            if kw in msg_lower:
+                return True
+        else:
+            if re.search(r"\b" + re.escape(kw) + r"\b", msg_lower):
+                return True
+    return False
+
+
 def _is_substantive_free_text(message: str) -> bool:
     normalized = " ".join(message.strip().lower().split())
-    if not normalized or normalized in LANGUAGE_SELECTION_KEYWORDS:
+    normalized_clean = normalized.strip("?!.,;:")
+    if not normalized_clean:
         return False
-    if normalized in GREETING_ONLY_KEYWORDS:
+    if normalized_clean in LANGUAGE_SELECTION_KEYWORDS:
         return False
-    return len(normalized.split()) >= 4 or "?" in normalized
+    if normalized_clean in GREETING_ONLY_KEYWORDS:
+        return False
+    return len(normalized_clean.split()) >= 4 or "?" in normalized
 
 
 def _infer_language(message: str, fallback: str = "es") -> str:
@@ -123,7 +143,7 @@ async def route_message(state: ConversationState, message: str) -> str:
         return privacy_block_message(state.language)
 
     # Check for escalation keywords
-    if any(kw in msg_lower for kw in ESCALATION_KEYWORDS):
+    if _matches_escalation_keyword(msg_lower):
         state.step = Step.ESCALATE
         state.quick_replies = []
         state.pending_escalation_reason = "solicitó asesor"
@@ -149,6 +169,14 @@ async def route_message(state: ConversationState, message: str) -> str:
         from src.flows.decision_tree import MESSAGES
         logger.info(f"[SUPERVISOR] Menu reset triggered by keyword")
         return MESSAGES["main_menu"][state.language]
+
+    # Greeting at any step → restart welcome / language selection
+    if msg_lower.strip("?!.,;:") in GREETING_ONLY_KEYWORDS and state.step not in (Step.WELCOME, Step.LANGUAGE):
+        state.step = Step.WELCOME
+        state.quick_replies = []
+        response = decision_tree.process_message(state, message)
+        logger.info(f"[SUPERVISOR] Greeting restart -> step=WELCOME")
+        return response
 
     # If user is in a menu step
     if state.step in MENU_STEPS:

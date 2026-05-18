@@ -88,6 +88,8 @@ async def handle_message(payload: dict):
             language=settings.default_language,
         )
         conversation_poll_started_at[conversation_id] = int(time())
+        if settings.chatwoot_owner_agent_id:
+            await assign_conversation_to_owner(conversation_id)
 
     state = conversations[conversation_id]
 
@@ -194,6 +196,31 @@ def extract_incoming_content(payload: dict) -> str | None:
         return payload.get("content", "")
 
     return extract_submitted_value(payload)
+
+
+async def assign_conversation_to_owner(conversation_id: str):
+    """Assign a new conversation to the owner agent so it appears in their 'Mine' view."""
+    base_url = settings.chatwoot_base_url.rstrip("/")
+    url = (
+        f"{base_url}/api/v1/accounts/{settings.chatwoot_account_id}"
+        f"/conversations/{conversation_id}/assignments"
+    )
+    headers = {
+        "api_access_token": settings.chatwoot_api_token,
+        "Content-Type": "application/json",
+    }
+    async with httpx.AsyncClient() as client:
+        try:
+            resp = await client.post(
+                url,
+                json={"assignee_id": settings.chatwoot_owner_agent_id},
+                headers=headers,
+                timeout=10.0,
+            )
+            resp.raise_for_status()
+            logger.info(f"[BOT] Conversation {conversation_id} assigned to agent {settings.chatwoot_owner_agent_id}")
+        except httpx.HTTPError as e:
+            logger.error(f"[BOT] Assignment error conv={conversation_id}: {e}")
 
 
 async def send_chatwoot_message(conversation_id: str, message: str, quick_replies: list[dict] | None = None):

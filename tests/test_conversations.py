@@ -1235,3 +1235,298 @@ async def test_welcome_has_2_language_buttons():
     state = make_state()
     await route_message(state, "hola")
     assert len(state.quick_replies) == 2
+
+
+# ===========================================================================
+# BLOQUE 19 — ENRUTAMIENTO RAG: NUEVOS TEMAS OPERATIVOS
+# Tests that verify questions about food, photos, hours, closed days, Barú,
+# adaptive diving, and other PDF-sourced topics reach RAG (not escalation).
+# ===========================================================================
+
+@pytest.mark.asyncio
+async def test_lunch_question_routes_to_rag():
+    state = await reach_main_menu()
+    with patch("src.agents.supervisor.rag_answer", new_callable=AsyncMock, return_value=RAG_MOCK) as mock_rag:
+        resp = await route_message(state, "qué incluye el almuerzo?")
+    assert resp == RAG_MOCK
+    mock_rag.assert_called_once()
+
+
+@pytest.mark.asyncio
+async def test_vegetarian_food_question_routes_to_rag():
+    state = await reach_main_menu()
+    with patch("src.agents.supervisor.rag_answer", new_callable=AsyncMock, return_value=RAG_MOCK) as mock_rag:
+        resp = await route_message(state, "soy vegetariana, qué hay para comer?")
+    assert resp == RAG_MOCK
+    mock_rag.assert_called_once()
+
+
+@pytest.mark.asyncio
+async def test_food_allergy_question_routes_to_rag():
+    state = await reach_main_menu()
+    with patch("src.agents.supervisor.rag_answer", new_callable=AsyncMock, return_value=RAG_MOCK) as mock_rag:
+        resp = await route_message(state, "tengo alergia al mariscos, hay problema?")
+    assert resp == RAG_MOCK
+    mock_rag.assert_called_once()
+
+
+@pytest.mark.asyncio
+async def test_photos_question_routes_to_rag():
+    state = await reach_main_menu()
+    with patch("src.agents.supervisor.rag_answer", new_callable=AsyncMock, return_value=RAG_MOCK) as mock_rag:
+        resp = await route_message(state, "hacen fotos durante la inmersión?")
+    assert resp == RAG_MOCK
+    mock_rag.assert_called_once()
+
+
+@pytest.mark.asyncio
+async def test_videos_question_routes_to_rag():
+    state = await reach_main_menu()
+    with patch("src.agents.supervisor.rag_answer", new_callable=AsyncMock, return_value=RAG_MOCK) as mock_rag:
+        resp = await route_message(state, "graban video bajo el agua?")
+    assert resp == RAG_MOCK
+    mock_rag.assert_called_once()
+
+
+@pytest.mark.asyncio
+async def test_operating_hours_question_routes_to_rag():
+    state = await reach_main_menu()
+    with patch("src.agents.supervisor.rag_answer", new_callable=AsyncMock, return_value=RAG_MOCK) as mock_rag:
+        resp = await route_message(state, "hasta qué hora atienden?")
+    assert resp == RAG_MOCK
+    mock_rag.assert_called_once()
+
+
+@pytest.mark.asyncio
+async def test_closed_days_question_routes_to_rag():
+    state = await reach_main_menu()
+    with patch("src.agents.supervisor.rag_answer", new_callable=AsyncMock, return_value=RAG_MOCK) as mock_rag:
+        resp = await route_message(state, "abren el 25 de diciembre?")
+    assert resp == RAG_MOCK
+    mock_rag.assert_called_once()
+
+
+@pytest.mark.asyncio
+async def test_new_year_closed_question_routes_to_rag():
+    state = await reach_main_menu()
+    with patch("src.agents.supervisor.rag_answer", new_callable=AsyncMock, return_value=RAG_MOCK) as mock_rag:
+        resp = await route_message(state, "salen el 1 de enero?")
+    assert resp == RAG_MOCK
+    mock_rag.assert_called_once()
+
+
+@pytest.mark.asyncio
+async def test_baru_question_routes_to_rag():
+    state = await reach_main_menu()
+    with patch("src.agents.supervisor.rag_answer", new_callable=AsyncMock, return_value=RAG_MOCK) as mock_rag:
+        resp = await route_message(state, "también van a Barú?")
+    assert resp == RAG_MOCK
+    mock_rag.assert_called_once()
+
+
+@pytest.mark.asyncio
+async def test_night_dive_alternative_question_routes_to_rag():
+    state = await reach_main_menu()
+    with patch("src.agents.supervisor.rag_answer", new_callable=AsyncMock, return_value=RAG_MOCK) as mock_rag:
+        resp = await route_message(state, "hay algún paquete sin buceo nocturno?")
+    assert resp == RAG_MOCK
+    mock_rag.assert_called_once()
+
+
+@pytest.mark.asyncio
+async def test_divemaster_payment_question_routes_to_rag():
+    state = await reach_main_menu()
+    with patch("src.agents.supervisor.rag_answer", new_callable=AsyncMock, return_value=RAG_MOCK) as mock_rag:
+        resp = await route_message(state, "cómo se paga el curso de divemaster?")
+    assert resp == RAG_MOCK
+    mock_rag.assert_called_once()
+
+
+@pytest.mark.asyncio
+async def test_two_day_course_accommodation_question_routes_to_rag():
+    state = await reach_main_menu()
+    with patch("src.agents.supervisor.rag_answer", new_callable=AsyncMock, return_value=RAG_MOCK) as mock_rag:
+        resp = await route_message(state, "si hago el Open Water necesito quedarme a dormir en las islas?")
+    assert resp == RAG_MOCK
+    mock_rag.assert_called_once()
+
+
+@pytest.mark.asyncio
+async def test_private_service_free_text_routes_to_rag():
+    state = await reach_main_menu()
+    with patch("src.agents.supervisor.rag_answer", new_callable=AsyncMock, return_value=RAG_MOCK) as mock_rag:
+        resp = await route_message(state, "pueden organizar un servicio privado para mi grupo?")
+    assert resp == RAG_MOCK
+    mock_rag.assert_called_once()
+
+
+@pytest.mark.asyncio
+async def test_island_pickup_free_question_routes_to_rag():
+    state = await reach_main_menu()
+    state.location = "island"
+    with patch("src.agents.supervisor.rag_answer", new_callable=AsyncMock, return_value=RAG_MOCK) as mock_rag:
+        resp = await route_message(state, "la recogida en lancha tiene algún costo extra?")
+    assert resp == RAG_MOCK
+    mock_rag.assert_called_once()
+
+
+@pytest.mark.asyncio
+async def test_post_summary_food_question_routes_to_rag():
+    state = await reach_main_menu()
+    await send(state, "1", "1", "1", "2", "2")  # llega a SUMMARY
+    assert state.step == Step.SUMMARY
+    with patch("src.agents.supervisor.rag_answer", new_callable=AsyncMock, return_value=RAG_MOCK) as mock_rag:
+        resp = await route_message(state, "y qué hay para comer exactamente?")
+    assert resp == RAG_MOCK
+
+
+@pytest.mark.asyncio
+async def test_post_summary_photos_question_routes_to_rag():
+    state = await reach_main_menu()
+    await send(state, "1", "1", "1", "2", "2")  # llega a SUMMARY
+    assert state.step == Step.SUMMARY
+    with patch("src.agents.supervisor.rag_answer", new_callable=AsyncMock, return_value=RAG_MOCK) as mock_rag:
+        resp = await route_message(state, "el instructor saca fotos?")
+    assert resp == RAG_MOCK
+
+
+# ===========================================================================
+# BLOQUE 20 — BUCEO ADAPTADO: NO ESCALA COMO MÉDICO
+# Disability-related questions must go to RAG, not trigger medical escalation.
+# The escalation keywords cover medical conditions (asthma, heart, surgery...)
+# but not disability/accessibility inquiries.
+# ===========================================================================
+
+@pytest.mark.asyncio
+async def test_down_syndrome_does_not_escalate():
+    state = await reach_main_menu()
+    with patch("src.agents.supervisor.rag_answer", new_callable=AsyncMock, return_value=RAG_MOCK):
+        resp = await route_message(state, "mi hijo tiene síndrome de Down, puede hacer el minicurso?")
+    assert state.step != Step.ESCALATE
+
+
+@pytest.mark.asyncio
+async def test_deaf_diver_does_not_escalate():
+    state = await reach_main_menu()
+    with patch("src.agents.supervisor.rag_answer", new_callable=AsyncMock, return_value=RAG_MOCK):
+        resp = await route_message(state, "soy sordo, puedo bucear con ustedes?")
+    assert state.step != Step.ESCALATE
+
+
+@pytest.mark.asyncio
+async def test_reduced_mobility_does_not_escalate():
+    state = await reach_main_menu()
+    with patch("src.agents.supervisor.rag_answer", new_callable=AsyncMock, return_value=RAG_MOCK):
+        resp = await route_message(state, "tengo movilidad reducida, hacen buceo adaptado?")
+    assert state.step != Step.ESCALATE
+
+
+@pytest.mark.asyncio
+async def test_autism_does_not_escalate():
+    state = await reach_main_menu()
+    with patch("src.agents.supervisor.rag_answer", new_callable=AsyncMock, return_value=RAG_MOCK):
+        resp = await route_message(state, "mi hija tiene autismo, pueden atenderla?")
+    assert state.step != Step.ESCALATE
+
+
+@pytest.mark.asyncio
+async def test_visual_impairment_does_not_escalate():
+    state = await reach_main_menu()
+    with patch("src.agents.supervisor.rag_answer", new_callable=AsyncMock, return_value=RAG_MOCK):
+        resp = await route_message(state, "soy invidente, han trabajado con personas con discapacidad visual?")
+    assert state.step != Step.ESCALATE
+
+
+@pytest.mark.asyncio
+async def test_cerebral_palsy_does_not_escalate():
+    state = await reach_main_menu()
+    with patch("src.agents.supervisor.rag_answer", new_callable=AsyncMock, return_value=RAG_MOCK):
+        resp = await route_message(state, "tengo parálisis cerebral leve, es posible bucear?")
+    assert state.step != Step.ESCALATE
+
+
+@pytest.mark.asyncio
+async def test_dive_to_heal_mention_routes_to_rag():
+    state = await reach_main_menu()
+    with patch("src.agents.supervisor.rag_answer", new_callable=AsyncMock, return_value=RAG_MOCK) as mock_rag:
+        resp = await route_message(state, "qué es DIVE TO HEAL y cómo funciona el buceo adaptado?")
+    assert resp == RAG_MOCK
+    mock_rag.assert_called_once()
+
+
+# ===========================================================================
+# BLOQUE 21 — CONTENIDO DE RESPUESTAS DEL ÁRBOL (NUEVOS DATOS)
+# Tests that verify tree-generated responses include key factual content
+# from the expanded knowledge base.
+# ===========================================================================
+
+@pytest.mark.asyncio
+async def test_divemaster_response_mentions_professional_level():
+    state = await reach_main_menu()
+    await send(state, "3", "2")
+    resp = await route_message(state, "3")  # Divemaster
+    assert state.selected_service == "divemaster"
+    assert any(w in resp.lower() for w in ["divemaster", "profesional", "professional", "nivel"])
+
+
+@pytest.mark.asyncio
+async def test_pricing_cartagena_response_has_service_price():
+    state = await reach_main_menu()
+    await route_message(state, "4")
+    resp = await route_message(state, "1")  # precios desde Cartagena
+    assert "$" in resp or "USD" in resp
+    assert any(svc in resp.lower() for svc in ["buceo", "dive", "minicurso", "snorkel"])
+
+
+@pytest.mark.asyncio
+async def test_pricing_multiday_response_mentions_5_7_9():
+    state = await reach_main_menu()
+    await route_message(state, "4")
+    resp = await route_message(state, "3")  # paquetes multi-día
+    assert "5" in resp and "7" in resp and "9" in resp
+
+
+@pytest.mark.asyncio
+async def test_island_certified_summary_no_extra_pickup_charge():
+    state = await reach_main_menu()
+    responses = await send(state, "2", "1", "1", "2", "2")  # islas + cert + 2 buceos + recent + no colombiano
+    summary = responses[-1]
+    # Pickup should be mentioned as included, not as an extra charge
+    assert "recog" in summary.lower() or "pickup" in summary.lower() or "hotel" in summary.lower()
+    assert "cargo extra" not in summary.lower() and "extra charge" not in summary.lower()
+
+
+@pytest.mark.asyncio
+async def test_open_water_cartagena_mentions_overnight_need():
+    state = await reach_main_menu()
+    await send(state, "3", "1", "1")  # cursos > Open Water > Cartagena
+    resp = await route_message(state, "1")  # 2 días completos
+    assert state.selected_service == "open_water"
+    assert any(w in resp.lower() for w in ["isla", "noche", "island", "night", "alojamiento", "accommodation", "2 día", "2 dia"])
+
+
+@pytest.mark.asyncio
+async def test_en_closed_days_question_routes_to_rag():
+    state = await reach_main_menu("en")
+    with patch("src.agents.supervisor.rag_answer", new_callable=AsyncMock, return_value=RAG_MOCK_EN) as mock_rag:
+        resp = await route_message(state, "are you open on Christmas day?")
+    assert resp == RAG_MOCK_EN
+    mock_rag.assert_called_once()
+
+
+@pytest.mark.asyncio
+async def test_en_food_question_routes_to_rag():
+    state = await reach_main_menu("en")
+    with patch("src.agents.supervisor.rag_answer", new_callable=AsyncMock, return_value=RAG_MOCK_EN) as mock_rag:
+        resp = await route_message(state, "what food is included in the tour?")
+    assert resp == RAG_MOCK_EN
+    mock_rag.assert_called_once()
+
+
+@pytest.mark.asyncio
+async def test_en_adaptive_diving_routes_to_rag():
+    state = await reach_main_menu("en")
+    with patch("src.agents.supervisor.rag_answer", new_callable=AsyncMock, return_value=RAG_MOCK_EN) as mock_rag:
+        resp = await route_message(state, "my son has Down Syndrome, can he try diving?")
+    assert state.step != Step.ESCALATE
+    assert resp == RAG_MOCK_EN

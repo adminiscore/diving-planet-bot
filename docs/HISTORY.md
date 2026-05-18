@@ -1,6 +1,16 @@
 History
 =======
 
+0.13.0 - (2026-05-19)
+---------------------
+* Expand knowledge base from owner Q&A (Dudas_V2.pdf): 14 new FAQs and 9 new policies covering food/meals, photos/videos, operating hours, closed days (Dec 25 + Jan 1), Barú ≠ Islas del Rosario clarification, private services, package certification requirements, overnight courses, Divemaster payment structure, DIVE TO HEAL adaptive diving program, and free island pickup.
+* Re-index embeddings: updated `load_embeddings.py` to include COP prices from `services.json` and full `pricing.json` indexing; KB grows from 377 → 441 documents.
+* Add 80 new conversation tests (207 total): RAG routing for new KB topics, adaptive diving not escalating, and tree response content validation.
+* Fix supervisor routing: word-boundary regex for escalation keywords (prevents "persona" false positive), strip trailing punctuation in `_is_substantive_free_text` ("hey?" routes to welcome), and greeting restart (any greeting mid-flow resets to language selection).
+* Add DIVE TO HEAL explicit exception to RAG system prompt (ES + EN): disability/accessibility questions answered with program facts, not escalated as medical.
+* Add Chatwoot auto-assign: new conversations are assigned to `CHATWOOT_OWNER_AGENT_ID` via API so they appear in the owner's "Mine" view without relying solely on Chatwoot UI auto-assignment.
+* Resize Chatwoot test widget (chatwood-test.html) to 680px × 88vh with MutationObserver to survive SDK style resets.
+
 0.12.0 - (2026-05-15)
 ---------------------
 * Implement real Chatwoot human handoff by toggling escalated conversations to `pending` after sending the internal lead note.
