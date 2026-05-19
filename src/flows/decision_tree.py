@@ -162,6 +162,54 @@ def _extra_notes(service: dict, lang: str) -> str:
     return " ".join(parts)
 
 
+def _extra_notes_multiline(service: dict, lang: str) -> str:
+    lines: list[str] = []
+    description = service.get(f"description_{lang}")
+    preparation = service.get(f"preparation_{lang}")
+    itinerary = service.get(f"itinerary_{lang}", [])
+    not_included = service.get(f"not_included_{lang}", [])
+    requirements = service.get(f"requirements_{lang}", [])
+
+    if description:
+        lines.append(description)
+
+    if preparation:
+        title = "Preparacion:" if lang == "es" else "Preparation:"
+        lines.append(title)
+        lines.append(f"- {preparation}")
+
+    if itinerary:
+        title = "Itinerario:" if lang == "es" else "Itinerary:"
+        lines.append(title)
+        for item in itinerary:
+            lines.append(f"- {item}")
+
+    if requirements:
+        title = "Requisitos:" if lang == "es" else "Requirements:"
+        lines.append(title)
+        for item in requirements:
+            lines.append(f"- {item}")
+
+    if not_included:
+        title = "No incluye:" if lang == "es" else "Not included:"
+        lines.append(title)
+        for item in not_included:
+            lines.append(f"- {item}")
+
+    if lang == "es":
+        name_es = service.get("name_es", "")
+        if "Minicurso" in name_es and not any("No necesitas experiencia previa" in ln for ln in lines):
+            lines.append("No necesitas experiencia previa.")
+        if "Snorkeling" in name_es and not any("Actividad de superficie" in ln for ln in lines):
+            lines.append("Actividad de superficie ideal para acompanantes o personas que no quieren bucear.")
+        if service.get("includes_night_dive") and not any("nocturna" in ln for ln in lines):
+            lines.append("Si quieres quitar la nocturna, cambiar noches o personalizar el paquete, lo revisamos con un asesor.")
+        if any("Hotel/alojamiento" in item for item in not_included) and not any("alojamiento no esta incluido" in ln for ln in lines):
+            lines.append("El alojamiento no esta incluido y se reserva aparte con el hotel.")
+
+    return "\n".join(lines)
+
+
 def _load_services() -> dict:
     path = Path(__file__).resolve().parents[2] / "data" / "knowledge_base" / "services.json"
     raw_services = json.loads(path.read_text(encoding="utf-8")).get("services", {})
@@ -180,6 +228,8 @@ def _load_services() -> dict:
             or (10 if "Minicurso" in service.get("name_es", "") else 6 if "Snorkeling" in service.get("name_es", "") else None),
             "extra_notes_es": _extra_notes(service, "es"),
             "extra_notes_en": _extra_notes(service, "en"),
+            "extra_block_es": _extra_notes_multiline(service, "es"),
+            "extra_block_en": _extra_notes_multiline(service, "en"),
             "flight_rule_es": _flight_rule(service, "es"),
             "flight_rule_en": _flight_rule(service, "en"),
             "booking_url": service.get("booking_url") or service.get("url") or "https://divingplanet.org/contacto/",
@@ -1798,34 +1848,36 @@ class DecisionTree:
         price = service["price"]
         duration = service[f"duration_{lang}"]
         includes = service[f"includes_{lang}"]
+        includes_items = [item.strip() for item in includes.split(",") if item.strip()]
+        includes_block = "\n".join(f"- {item}" for item in includes_items)
 
         extra = ""
         min_age = service.get("min_age")
         if min_age is not None:
             if lang == "es":
-                extra += f"\n👶 *Edad minima recomendada*: {min_age} anos."
+                extra += f"\n\n*Edad minima recomendada*: {min_age} anos."
             else:
-                extra += f"\n👶 *Recommended minimum age*: {min_age} years."
+                extra += f"\n\n*Recommended minimum age*: {min_age} years."
 
-        notes_key = "extra_notes_" + lang
-        extra_notes = service.get(notes_key)
-        if extra_notes:
-            extra += "\nℹ️ " + extra_notes
+        block_key = "extra_block_" + lang
+        extra_block = service.get(block_key)
+        if extra_block:
+            extra += "\n\n" + extra_block
 
         if lang == "es":
             return (
-                f"*{name}*\n\n"
+                f"🤿 *{name}*\n\n"
                 f"💰 *Precio*: {price}\n"
-                f"⏱ *Duracion*: {duration}\n"
-                f"✅ *Incluye*: {includes}"
+                f"⏱ *Duracion*: {duration}\n\n"
+                f"✅ *Incluye*:\n{includes_block}"
                 f"{extra}"
             )
         else:
             return (
-                f"*{name}*\n\n"
+                f"🤿 *{name}*\n\n"
                 f"💰 *Price*: {price}\n"
-                f"⏱ *Duration*: {duration}\n"
-                f"✅ *Includes*: {includes}"
+                f"⏱ *Duration*: {duration}\n\n"
+                f"✅ *Includes*:\n{includes_block}"
                 f"{extra}"
             )
 

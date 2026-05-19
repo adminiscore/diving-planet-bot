@@ -178,3 +178,32 @@ Esa parte se la dejas al LLM/RAG, que con el contexto y la base de conocimiento 
 - [x] 2. Solo principiantes desde Cartagena → minicurso/snorkel/privado revisado y cubierto con tests.
 - [x] 3. Paquetes certificados multi-día 5/7/9 → notas de noches/alojamiento/nocturna/personalización, refresher sin perder paquete original y tests añadidos.
 - [ ] Repasar todo el árbol con todas las actividades y validar copys/resúmenes.
+
+## Guía rápida: si `chatwood-test.html` no muestra el widget o no permite escribir
+
+- [ ] **Verificar Chatwoot corriendo**:
+      - `docker compose --profile chatwoot ps` debe mostrar `dp-dev-chatwoot` y `dp-dev-chatwoot-worker` Up.
+      - Abrir `http://localhost:3300` y confirmar que carga la UI.
+- [ ] **Habilitar registro y preparar BD (si vienes de otro PC/volumen nuevo)**:
+      - En `docker-compose.yml` agregar `ENABLE_ACCOUNT_SIGNUP: "true"` en `chatwoot-rails` y `chatwoot-sidekiq`.
+      - Recrear contenedores Chatwoot: `docker compose --profile chatwoot up -d --force-recreate`.
+      - Preparar BD (si tabla `users` no existe): `docker exec dp-dev-chatwoot bundle exec rails db:chatwoot_prepare`.
+- [ ] **Crear admin e Inbox Website**:
+      - En `http://localhost:3300/app/login` usa “crear nueva cuenta”.
+      - Crea un Inbox “Website” y copia el `websiteToken` del snippet.
+- [ ] **Actualizar `chatwood-test.html`**:
+      - `BASE_URL = "http://localhost:3300"`.
+      - `websiteToken = '<tu-websiteToken>'` (cambiar si reinstalas o creas nuevo Inbox).
+      - Hard refresh `Ctrl+F5`. Verifica que `http://localhost:3300/packs/js/sdk.js` responde 200.
+- [ ] **Configurar webhook (para que el bot responda y botones funcionen)**:
+      - URL: `http://host.docker.internal:8000/webhooks/chatwoot`.
+      - Subs: `message_created`, `message_updated`, `conversation_created`, `conversation_status_changed`.
+- [ ] **Si el widget abre pero el bot no responde (401 Unauthorized)**:
+      - En `.env.dev`: `CHATWOOT_BASE_URL=http://localhost:3300`, `CHATWOOT_API_TOKEN=<token perfil>`, `CHATWOOT_ACCOUNT_ID=<id de tu cuenta>`.
+      - Reinicia el bot (WSL2): `py -m src.main` (con `ENV_FILE=.env.dev`).
+      - Valida tu token: `GET /api/v1/profile` con header `api_access_token` debe responder 200 y mostrar tus cuentas.
+- [ ] **Si los botones no reaccionan**:
+      - Falta `message_updated` en el webhook o Chatwoot no está enviando `message_updated`.
+- [ ] **Comprobaciones rápidas**:
+      - Bot salud: `http://localhost:8000/health` → 200.
+      - El widget debe abrirse automáticamente; si no, forzado por `setTimeout` ya está incluido.

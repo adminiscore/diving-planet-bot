@@ -46,7 +46,7 @@
 
         g.onload = function() {
           window.chatwootSDK.run({
-            websiteToken: 'rcTJ5Awm3fZN7eAtoMnXVzVF',
+            websiteToken: 'RdySkocFvELeJfdKZKcKbe8q',
             baseUrl: BASE_URL
           });
 
@@ -54,6 +54,11 @@
           window.addEventListener('chatwoot:ready', function() {
             window.$chatwoot.toggle('open');
           });
+          setTimeout(function(){
+            if (window.$chatwoot && typeof window.$chatwoot.toggle === 'function') {
+              window.$chatwoot.toggle('open');
+            }
+          }, 1500);
 
           // MutationObserver: en cuanto el SDK inyecte el holder, forzar dimensiones
           var observer = new MutationObserver(function() {
