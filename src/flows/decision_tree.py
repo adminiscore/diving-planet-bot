@@ -133,23 +133,12 @@ def _extra_notes(service: dict, lang: str) -> str:
     parts = []
     description = service.get(f"description_{lang}")
     preparation = service.get(f"preparation_{lang}")
-    itinerary = service.get(f"itinerary_{lang}", [])
     not_included = service.get(f"not_included_{lang}", [])
-    requirements = service.get(f"requirements_{lang}", [])
     if description:
         parts.append(description)
     if preparation:
         title = "Preparacion: " if lang == "es" else "Preparation: "
         parts.append(title + preparation)
-    if itinerary:
-        title = "Itinerario: " if lang == "es" else "Itinerary: "
-        parts.append(title + "; ".join(itinerary))
-    if requirements:
-        title = "Requisitos: " if lang == "es" else "Requirements: "
-        parts.append(title + "; ".join(requirements))
-    if not_included:
-        title = "No incluye: " if lang == "es" else "Not included: "
-        parts.append(title + "; ".join(not_included))
     if lang == "es":
         if "Minicurso" in service.get("name_es", "") and "No necesitas experiencia previa" not in " ".join(parts):
             parts.append("No necesitas experiencia previa.")
@@ -224,6 +213,14 @@ def _load_services() -> dict:
             "duration_en": _format_duration(service, "en"),
             "includes_es": _join_items(service.get("included_es")),
             "includes_en": _join_items(service.get("included_en")),
+            "description_es": service.get("description_es", ""),
+            "description_en": service.get("description_en", ""),
+            "itinerary_es": service.get("itinerary_es", []) or [],
+            "itinerary_en": service.get("itinerary_en", []) or [],
+            "requirements_es": service.get("requirements_es", []) or [],
+            "requirements_en": service.get("requirements_en", []) or [],
+            "not_included_es": service.get("not_included_es", []) or [],
+            "not_included_en": service.get("not_included_en", []) or [],
             "min_age": service.get("min_age")
             or (10 if "Minicurso" in service.get("name_es", "") else 6 if "Snorkeling" in service.get("name_es", "") else None),
             "extra_notes_es": _extra_notes(service, "es"),
@@ -232,6 +229,7 @@ def _load_services() -> dict:
             "extra_block_en": _extra_notes_multiline(service, "en"),
             "flight_rule_es": _flight_rule(service, "es"),
             "flight_rule_en": _flight_rule(service, "en"),
+            "web_url": service.get("url") or "https://divingplanet.org/contacto/",
             "booking_url": service.get("booking_url") or service.get("url") or "https://divingplanet.org/contacto/",
             "booking_url_island": "",
             "category": service.get("category"),
@@ -764,6 +762,16 @@ BUTTON_OPTIONS = {
             {"title": "🙏 No, thanks", "value": "2"},
         ],
     },
+    "itinerary_offer": {
+        "es": [
+            {"title": "🗺️ Si, ver itinerario completo", "value": "1"},
+            {"title": "🙏 No, gracias", "value": "2"},
+        ],
+        "en": [
+            {"title": "🗺️ Yes, show full itinerary", "value": "1"},
+            {"title": "🙏 No, thanks", "value": "2"},
+        ],
+    },
     "info_general": {
         "es": [
             {"title": "🤿 Ver tours y actividades", "value": "1"},
@@ -856,6 +864,7 @@ class DecisionTree:
             Step.SERVICE_DETAIL: self._handle_service_detail,
             Step.LOCATION: self._handle_location,
             Step.COLOMBIAN: self._handle_colombian,
+            Step.SUMMARY: self._handle_summary,
         }
 
         handler = handlers.get(state.step, self._handle_welcome)
@@ -1044,8 +1053,6 @@ class DecisionTree:
             state.last_dive_over_2_years = False
             state.step = Step.COLOMBIAN
             self.set_quick_replies(state, "colombian")
-            if state.selected_service in ("2_dives_1_day", "2_dives_1_day_already_on_island"):
-                return self._format_service_detail(state) + "\n\n" + MESSAGES["colombian"][lang]
             return MESSAGES["colombian"][lang]
 
         self.set_quick_replies(state, "certified_last_dive")
@@ -1131,15 +1138,16 @@ class DecisionTree:
                     "whether there will be snorkelers/companions, and schedule preferences.\n\n"
                     + MESSAGES["escalate"][lang]
                 )
-            # Si ya conocemos la ubicacion (Cartagena o islas), pasamos directo a pregunta de colombiano
+            # Si ya conocemos la ubicacion (Cartagena o islas), mostramos el detalle del plan y preguntamos colombiano
             if state.location:
+                state.selected_service = self._service_for_location(state.selected_service, state)
                 state.step = Step.COLOMBIAN
                 self.set_quick_replies(state, "colombian")
                 return self._format_service_detail(state) + "\n\n" + MESSAGES["colombian"][lang]
 
             state.step = Step.LOCATION
             self.set_quick_replies(state, "location")
-            return self._format_service_detail(state) + "\n\n" + MESSAGES["location"][lang]
+            return MESSAGES["location"][lang]
         else:
             self.set_quick_replies(state, "tours_beginner")
             return MESSAGES["not_understood"][lang]
@@ -1834,8 +1842,103 @@ class DecisionTree:
         if state.selected_service:
             state.selected_service = self._service_for_location(state.selected_service, state)
         state.step = Step.SUMMARY
-        state.quick_replies = []
+        self.set_quick_replies(state, "itinerary_offer")
         return self._format_summary(state)
+
+    def _handle_summary(self, state: ConversationState, message: str) -> str:
+        lang = state.language
+        msg = " ".join(message.strip().lower().split())
+        choice = self._parse_choice(message, 2)
+        if choice is None:
+            if msg in ("si", "sí", "yes"):
+                choice = 1
+            elif msg in (
+                "no",
+                "gracias",
+                "no gracias",
+                "no, gracias",
+                "thanks",
+                "no thanks",
+                "no, thanks",
+            ):
+                choice = 2
+
+        if choice == 1:
+            state.step = Step.FREE_TEXT
+            state.quick_replies = []
+            if lang == "es":
+                return self._format_full_itinerary(state) + "\n\n¿Quieres preguntarme algo más?"
+            return self._format_full_itinerary(state) + "\n\nWould you like to ask anything else?"
+
+        if choice == 2:
+            state.step = Step.FREE_TEXT
+            state.quick_replies = []
+            if lang == "es":
+                return "Perfecto. ¿Quieres preguntarme algo más?"
+            return "Perfect. Would you like to ask anything else?"
+
+        self.set_quick_replies(state, "itinerary_offer")
+        return MESSAGES["not_understood"][lang]
+
+    def _format_full_itinerary(self, state: ConversationState) -> str:
+        service = SERVICES.get(state.selected_service)
+        if not service:
+            return MESSAGES["escalate"][state.language]
+
+        lang = state.language
+        if lang == "es":
+            description = service.get("description_es")
+            itinerary = service.get("itinerary_es") or []
+            requirements = service.get("requirements_es") or []
+            not_included = service.get("not_included_es") or []
+            web_url = service.get("web_url")
+            title_itinerary = "🗺️ Itinerario:"
+            title_requirements = "✅ Requisitos:"
+            title_not_included = "❌ No incluye:"
+            title_link = "🔗 Link de la actividad en la web:"
+        else:
+            description = service.get("description_en")
+            itinerary = service.get("itinerary_en") or []
+            requirements = service.get("requirements_en") or []
+            not_included = service.get("not_included_en") or []
+            web_url = service.get("web_url")
+            title_itinerary = "🗺️ Itinerary:"
+            title_requirements = "✅ Requirements:"
+            title_not_included = "❌ Not included:"
+            title_link = "🔗 Activity page link:"
+
+        lines: list[str] = []
+        if description:
+            lines.append(f"ℹ️ {description}")
+
+        if itinerary:
+            if lines:
+                lines.append("")
+            lines.append(title_itinerary)
+            for item in itinerary:
+                lines.append(f"- {item}")
+
+        if requirements:
+            if lines:
+                lines.append("")
+            lines.append(title_requirements)
+            for item in requirements:
+                lines.append(f"- {item}")
+
+        if not_included:
+            if lines:
+                lines.append("")
+            lines.append(title_not_included)
+            for item in not_included:
+                lines.append(f"- {item}")
+
+        if web_url:
+            if lines:
+                lines.append("")
+            lines.append(title_link)
+            lines.append(web_url)
+
+        return "\n".join(lines)
 
     def _format_service_detail(self, state: ConversationState) -> str:
         """Format service details for the selected service."""
@@ -1927,7 +2030,7 @@ class DecisionTree:
             if state.is_colombian:
                 summary += (
                     "\n🌎 *Descuento colombiano*: Contactanos por WhatsApp "
-                    "al +57 320 2554961 para tu descuento especial.\n"
+                    "al +57 320 231515 para tu descuento especial.\n"
                 )
 
             if flight_rule:
@@ -1938,7 +2041,7 @@ class DecisionTree:
                 summary += f"\nℹ️ {extra_notes}\n"
 
             summary += f"\n👉 Reserva aqui con 10% de descuento:\n{booking_url}\n"
-            summary += "\nTienes alguna otra pregunta?"
+            summary += "\n¿Quieres ver el itinerario completo de la actividad?"
         else:
             departure = "Cartagena" if state.location == "cartagena" else "Rosario Islands"
             meeting_note = ""
@@ -1969,7 +2072,7 @@ class DecisionTree:
             if state.is_colombian:
                 summary += (
                     "\n🌎 *Colombian discount*: Contact us via WhatsApp "
-                    "at +57 320 2554961 for your special discount.\n"
+                    "at +57 320 231515 for your special discount.\n"
                 )
 
             if flight_rule:
@@ -1980,7 +2083,7 @@ class DecisionTree:
                 summary += f"\nℹ️ {extra_notes}\n"
 
             summary += f"\n👉 *Book here with 10% off*:\n{booking_url}\n"
-            summary += "\nDo you have any other questions?"
+            summary += "\nWould you like to see the full itinerary for the activity?"
 
         return summary
 

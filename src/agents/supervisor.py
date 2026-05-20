@@ -227,13 +227,58 @@ async def route_message(state: ConversationState, message: str) -> str:
         state.history.append({"role": "assistant", "content": answer})
         return answer
 
-    # Post-menu steps (SUMMARY, ESCALATE, FREE_TEXT) -> RAG agent
-    if state.step in (Step.SUMMARY, Step.FREE_TEXT):
+    # Post-menu steps (SUMMARY, FREE_TEXT) -> summary may still have quick replies (itinerary offer)
+    if state.step == Step.SUMMARY:
+        summary_choices = {
+            "1",
+            "2",
+            "si",
+            "sí",
+            "yes",
+            "no",
+            "gracias",
+            "no gracias",
+            "no, gracias",
+            "thanks",
+            "no thanks",
+            "no, thanks",
+        }
+        if msg_lower in summary_choices:
+            response = decision_tree.process_message(state, message)
+            logger.info(f"[SUPERVISOR] Decision tree (summary) -> step={state.step.value}")
+            return response
+
+        # Free text question after the summary -> use RAG
+        state.step = Step.FREE_TEXT
+        state.quick_replies = []
+        state.history.append({"role": "user", "content": message})
+
+        extra_parts = []
+        if state.location == "cartagena":
+            extra_parts.append("El cliente indica que saldra desde Cartagena para su experiencia.")
+        elif state.location == "island":
+            extra_parts.append("El cliente indica que ya esta en las Islas del Rosario.")
+
+        if state.island:
+            extra_parts.append(f"Se hospeda (o se hospedara) en la isla: {state.island}.")
+        if state.hotel:
+            extra_parts.append(f"Hotel/alojamiento reportado: {state.hotel}.")
+
+        extra_context = " ".join(extra_parts) if extra_parts else None
+
+        answer = await rag_answer(message, lang=state.language, history=state.history, extra_context=extra_context)
+        state.history.append({"role": "assistant", "content": answer})
+        logger.info(f"[SUPERVISOR] RAG (post-summary)")
+        return answer
+
+    if state.step == Step.FREE_TEXT:
         # Check if user wants to restart
         if msg_lower in ("1", "si", "sí", "yes"):
-            state.step = Step.MAIN_MENU
-            from src.flows.decision_tree import MESSAGES
-            return MESSAGES["main_menu"][state.language]
+            state.quick_replies = []
+            if state.language == "es":
+                return "Perfecto. ¿Qué te gustaría preguntarme?"
+            return "Perfect. What would you like to ask me?"
+
         if msg_lower in ("2", "no", "gracias", "thanks", "no, gracias", "no, thanks"):
             state.quick_replies = []
             if state.language == "es":

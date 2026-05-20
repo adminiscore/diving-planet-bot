@@ -154,8 +154,7 @@ class TestCertifiedDiverFlow:
         r = self.tree.process_message(state, "2")
         assert state.last_dive_over_2_years is False
         assert state.step == Step.COLOMBIAN
-        assert "U$178" in r
-        assert "descuentos" in r.lower() or "colomb" in r.lower()
+        assert "descuent" in r.lower() or "colomb" in r.lower()
 
     def test_select_private_escalates(self):
         state = self._go_to_certified()
@@ -285,7 +284,7 @@ class TestBeginnerFlow:
 
         summary = self.tree.process_message(state, "2")
         assert state.step == Step.SUMMARY
-        assert "superficio" in summary
+        assert "superfic" in summary
         assert "2 salidas guiadas" in summary
         assert "18 horas" not in summary
         assert "12 horas" not in summary
@@ -316,7 +315,7 @@ class TestSummaryFlow:
 
         response = self.tree.process_message(state, "1")  # Yes, Colombian
         assert state.is_colombian is True
-        assert "+57 320 2554961" in response
+        assert "+57 320 231515" in response
 
     def test_non_colombian_gets_booking_link(self):
         state = make_state()

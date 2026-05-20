@@ -1180,16 +1180,18 @@ async def test_invalid_island_menu_option():
 async def test_summary_restart_returns_to_main():
     state = await reach_main_menu()
     await send(state, "1", "1", "1", "2", "2")  # llega a SUMMARY
-    resp = await route_message(state, "1")  # sí, tengo más preguntas
-    assert state.step == Step.MAIN_MENU
+    resp = await route_message(state, "1")  # ver itinerario completo
+    assert state.step == Step.FREE_TEXT
+    assert "itinerario" in resp.lower() or "🗺️" in resp
 
 
 @pytest.mark.asyncio
 async def test_summary_no_thanks_ends_conversation():
     state = await reach_main_menu()
     await send(state, "1", "1", "1", "2", "2")
-    resp = await route_message(state, "2")  # no, gracias
-    assert "gracias" in resp.lower() or "thanks" in resp.lower() or "Diving Planet" in resp
+    resp = await route_message(state, "2")  # no, gracias (no ver itinerario)
+    assert state.step == Step.FREE_TEXT
+    assert "pregunt" in resp.lower() or "ask" in resp.lower()
 
 
 # ===========================================================================
