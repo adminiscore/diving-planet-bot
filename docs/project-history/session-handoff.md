@@ -4,7 +4,7 @@ Read this file before changing code in the Diving Planet Bot. For a quick versio
 
 ## Current branch and workflow
 
-- Main collaboration branch: `feature/dev_alvaro`.
+- Main collaboration branch: `feature/dev_gadea`.
 - Always start with `git status --short --branch` and check whether the branch is ahead/behind the remote.
 - Use `/start-context` at the beginning of a session and `/close-work` before committing/pushing.
 - `/close-work` must review this file and update it whenever architecture, workflow, risks, validation, current product context, environment details, or next-session priorities changed.
@@ -43,6 +43,7 @@ Read this file before changing code in the Diving Planet Bot. For a quick versio
 - Local Chatwoot may not always emit incoming webhooks for button clicks, so the bot includes polling/deduplication logic.
 - The decision tree has recently been improved for:
   - Cartagena certified 2 dives / 1 day.
+  - Summary flow: initial summary is short and offers an optional full itinerary; the itinerary offer is handled in `Step.SUMMARY` and then transitions to `FREE_TEXT` for follow-up questions.
   - Cartagena beginner branch: minicourse, snorkeling, private service.
   - Cartagena certified multi-day packages: 5/7/9 dives, lodging/nocturnal notes, and refresher handling.
   - Island-based certified and beginner service variants from `services.json`.

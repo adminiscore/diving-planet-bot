@@ -1,6 +1,14 @@
 History
 =======
 
+0.13.1 - (2026-05-20)
+---------------------
+* Refine booking flow: ask certified divers about last dive recency, then Colombian status, then show the service summary.
+* Simplify the initial service summary to remove long itinerary/requirements blocks; offer the full itinerary as an optional follow-up.
+* Update summary follow-up handling so “yes/no” responses show itinerary or close into free-text Q&A.
+* Correct official WhatsApp number across summaries and escalation messages (+57 320 231515).
+* Update decision-tree and conversation tests to match the new summary/itinerary behavior.
+
 0.13.0 - (2026-05-19)
 ---------------------
 * Expand knowledge base from owner Q&A (Dudas_V2.pdf): 14 new FAQs and 9 new policies covering food/meals, photos/videos, operating hours, closed days (Dec 25 + Jan 1), Barú ≠ Islas del Rosario clarification, private services, package certification requirements, overnight courses, Divemaster payment structure, DIVE TO HEAL adaptive diving program, and free island pickup.
