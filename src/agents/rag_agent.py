@@ -108,17 +108,14 @@ async def rag_answer(
     history: list[dict] | None = None,
     extra_context: str | None = None,
 ) -> str:
-    """
-    Retrieve relevant context from the knowledge base and generate
-    an answer using the LLM.
+    """Retrieve context from the knowledge base and answer using the LLM.
 
-    Args:
-        query: The user's question.
-        lang: Language for the response.
-        history: Previous messages for conversational context.
-
-    Returns:
-        The LLM-generated answer grounded in retrieved documents.
+    Comportamiento en orden de prioridad:
+    - Si hay documentos relevantes por encima del umbral -> usar esos docs como contexto principal.
+    - Si NO hay docs o la confianza es baja PERO hay ``extra_context`` (por ejemplo, un
+      resumen del estado de la conversacion) -> responder usando SOLO ese contexto
+      adicional y el historial.
+    - Si no hay ni docs ni ``extra_context`` util -> devolver el fallback seguro.
     """
     pii_hits = detect_pii(query)
     if pii_hits:
@@ -131,10 +128,49 @@ async def rag_answer(
     # Retrieve relevant documents
     docs = await search_knowledge_base(safe_query, lang=lang)
 
+    # Helper to call the LLM with unstructured context (either KB docs o solo extra_context)
+    async def _answer_with_llm(context: str, context_sources: list[str] | None = None) -> str:
+        system_prompt = SYSTEM_PROMPT_ES if lang == "es" else SYSTEM_PROMPT_EN
+        messages = [{"role": "system", "content": system_prompt}]
+
+        # Add conversation history (last 6 messages max)
+        if history:
+            for msg in history[-6:]:
+                messages.append({"role": msg["role"], "content": redact_pii(msg["content"])})
+
+        user_content = f"Contexto:\n{context}"
+        if extra_context and context != extra_context:
+            # Si ya tenemos contexto KB y ademas extra_context, lo anexamos explicito
+            user_content += f"\n\nContexto adicional de la situacion: {extra_context}"
+        user_content += f"\n\nPregunta del cliente: {redact_pii(query)}"
+
+        messages.append({"role": "user", "content": user_content})
+
+        client = AsyncOpenAI(api_key=settings.openai_api_key)
+        response = await client.chat.completions.create(
+            model=settings.openai_model,
+            messages=messages,
+            temperature=0.3,
+            max_tokens=500,
+        )
+
+        answer = response.choices[0].message.content
+        logger.info(
+            f"[RAG] Query: {query[:60]}... | Docs: {len(docs) if docs else 0} | "
+            f"Tokens: {response.usage.total_tokens} | Sources: {context_sources or []}"
+        )
+        return answer
+
+    # 1) Sin documentos del KB
     if not docs:
         logger.info(f"[RAG] No docs found query={query[:60]}...")
+        if extra_context:
+            # No hay nada util en el KB, pero si tenemos resumen de estado: dejamos que el LLM
+            # razone SOLO con ese contexto en lugar de ir directo al fallback.
+            return await _answer_with_llm(extra_context, context_sources=["extra_context_only"])
         return FALLBACK_ES if lang == "es" else FALLBACK_EN
 
+    # 2) Hay documentos pero con score bajo
     top_score = max(float(doc.get("score", 0.0)) for doc in docs)
     if top_score < settings.rag_min_score:
         sources = [doc.get("metadata", {}).get("source", "unknown") for doc in docs]
@@ -142,49 +178,21 @@ async def rag_answer(
             f"[RAG] Low confidence query={query[:60]}... retrieval_query={safe_query[:120]}... "
             f"top_score={top_score:.3f} threshold={settings.rag_min_score:.3f} sources={sources}"
         )
+        if extra_context:
+            # Igual que en el caso sin docs: ignoramos estos resultados de baja confianza
+            # y dejamos que el LLM trabaje solo con el contexto de estado.
+            return await _answer_with_llm(extra_context, context_sources=["extra_context_only"])
         return FALLBACK_ES if lang == "es" else FALLBACK_EN
 
-    # Build context from retrieved docs
+    # 3) Hay documentos suficientemente relevantes -> los usamos como contexto principal
     context_parts = []
+    sources = []
     for i, doc in enumerate(docs, 1):
         metadata = doc.get("metadata", {})
         source = metadata.get("source", "unknown")
         score = float(doc.get("score", 0.0))
+        sources.append(source)
         context_parts.append(f"[{i}] Fuente: {source} | Score: {score:.3f}\n{redact_pii(doc['content'])}")
     context = "\n\n".join(context_parts)
 
-    # Build messages for the LLM
-    system_prompt = SYSTEM_PROMPT_ES if lang == "es" else SYSTEM_PROMPT_EN
-    messages = [{"role": "system", "content": system_prompt}]
-
-    # Add conversation history (last 6 messages max)
-    if history:
-        for msg in history[-6:]:
-            messages.append({"role": msg["role"], "content": redact_pii(msg["content"])})
-
-    user_content = f"Contexto:\n{context}"
-    if extra_context:
-        user_content += f"\n\nContexto adicional de la situacion: {extra_context}"
-    user_content += f"\n\nPregunta del cliente: {redact_pii(query)}"
-
-    messages.append({
-        "role": "user",
-        "content": user_content,
-    })
-
-    # Call LLM
-    client = AsyncOpenAI(api_key=settings.openai_api_key)
-    response = await client.chat.completions.create(
-        model=settings.openai_model,
-        messages=messages,
-        temperature=0.3,
-        max_tokens=500,
-    )
-
-    answer = response.choices[0].message.content
-    sources = [doc.get("metadata", {}).get("source", "unknown") for doc in docs]
-    logger.info(
-        f"[RAG] Query: {query[:60]}... | Docs: {len(docs)} | TopScore: {top_score:.3f} | "
-        f"Sources: {sources} | Tokens: {response.usage.total_tokens}"
-    )
-    return answer
+    return await _answer_with_llm(context, context_sources=sources)

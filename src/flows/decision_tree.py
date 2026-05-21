@@ -199,6 +199,35 @@ def _extra_notes_multiline(service: dict, lang: str) -> str:
     return "\n".join(lines)
 
 
+def _group_itinerary_by_day(itinerary: list[str], lang: str) -> list[str]:
+    """Group raw itinerary lines by day so we show 'Dia 1:' / 'Day 1:' once
+    and then the steps beneath it, instead of repeating the day prefix on
+    every line.
+    """
+    grouped: list[str] = []
+    current_day_label = None
+    day_prefix = "dia " if lang == "es" else "day "
+
+    for item in itinerary:
+        stripped = item.strip()
+        lowered = stripped.lower()
+        if lowered.startswith(day_prefix):
+            parts = stripped.split(":", 1)
+            if len(parts) == 2:
+                day_label_raw, rest = parts
+                day_label = day_label_raw.strip()
+                if current_day_label != day_label:
+                    grouped.append(f"{day_label}:")
+                    current_day_label = day_label
+                rest = rest.strip()
+                if rest:
+                    grouped.append(rest)
+                continue
+        grouped.append(item)
+
+    return grouped
+
+
 def _load_services() -> dict:
     path = Path(__file__).resolve().parents[2] / "data" / "knowledge_base" / "services.json"
     raw_services = json.loads(path.read_text(encoding="utf-8")).get("services", {})
@@ -209,6 +238,12 @@ def _load_services() -> dict:
             "name_en": service.get("name_en", service.get("name_es", service_id)),
             "requires_cert": service.get("requires_certification", False),
             "price": _format_price(service),
+            # Precios crudos para poder elegir COP/USD segun el cliente
+            "price_usd": service.get("price_usd"),
+            "price_usd_normal": service.get("price_usd_normal"),
+            "price_cop": service.get("price_cop"),
+            "price_cop_normal": service.get("price_cop_normal"),
+            "price_note": service.get("price_note"),
             "duration_es": _format_duration(service, "es"),
             "duration_en": _format_duration(service, "en"),
             "includes_es": _join_items(service.get("included_es")),
@@ -260,6 +295,7 @@ MULTI_DAY_SERVICES = {
     "3_dives_1_day_already_on_island",
     "5_dives_2_days_already_on_island",
     "7_dives_3_days_already_on_island",
+    "9_dives_4_days_already_on_island",
 }
 
 SPECIALTY_SERVICE_IDS = {
@@ -351,9 +387,12 @@ MESSAGES = {
             "¿Te interesa incluirlo?"
         ),
         "en": (
-            "A *refresher* is a quick review with an instructor before diving.\n"
-            "It typically covers signals, equipment setup, procedures, and a controlled skills practice "
-            "(depending on your level and the day's conditions).\n\n"
+            "We recommend doing a *refresher* to get back in the water safely:\n\n"
+            "✅ Theory review (signals, equipment and procedures)\n"
+            "🏊 Pool / confined water practice\n"
+            "🤿 Open water dive with an instructor\n\n"
+            "More information (full itinerary):\n"
+            "https://divingplanet.org/tours-buceo-snorkel-cartagena/minicurso-principiantes/\n\n"
             "Would you like to include it?"
         ),
     },
@@ -1033,7 +1072,19 @@ class DecisionTree:
 
             state.step = Step.CERTIFIED_LAST_DIVE
             self.set_quick_replies(state, "certified_last_dive")
-            if state.selected_service in ("2_dives_1_day", "2_dives_1_day_already_on_island"):
+            # Servicios en los que primero preguntamos por la ultima inmersión y nacionalidad,
+            # y solo mostramos el resumen completo al final (estructura comun de 2, 5, 7 y 9 buceos).
+            core_split_services = {
+                "2_dives_1_day",
+                "2_dives_1_day_already_on_island",
+                "5_dives_2_days",
+                "5_dives_2_days_already_on_island",
+                "7_dives_3_days",
+                "7_dives_3_days_already_on_island",
+                "9_dives_4_days",
+                "9_dives_4_days_already_on_island",
+            }
+            if state.selected_service in core_split_services:
                 return MESSAGES["certified_last_dive"][lang]
             return self._format_service_detail(state) + "\n\n" + MESSAGES["certified_last_dive"][lang]
         else:
@@ -1849,6 +1900,7 @@ class DecisionTree:
         lang = state.language
         msg = " ".join(message.strip().lower().split())
         choice = self._parse_choice(message, 2)
+        service_id = state.selected_service
         if choice is None:
             if msg in ("si", "sí", "yes"):
                 choice = 1
@@ -1873,6 +1925,22 @@ class DecisionTree:
         if choice == 2:
             state.step = Step.FREE_TEXT
             state.quick_replies = []
+            if lang == "es" and service_id == "2_dives_1_day" and state.is_certified:
+                return (
+                    "Perfecto. Si en algún momento quieres reservar este plan, el siguiente paso "
+                    "es completar un formulario de exoneración para buzos certificados "
+                    "(es obligatorio para el seguro y el zarpe):\n"
+                    "https://form.jotform.com/divingplanetcartagena/exoneracion-buzo-en-espanol\n\n"
+                    "¿Quieres preguntarme algo más?"
+                )
+            if lang == "en" and service_id == "2_dives_1_day" and state.is_certified:
+                return (
+                    "Great. If at any point you decide to book this plan, the next step is to complete "
+                    "a liability waiver form for certified divers (it's mandatory for insurance and "
+                    "boat clearance):\n"
+                    "https://form.jotform.com/divingplanetcartagena/exoneracion-buzo-en-espanol\n\n"
+                    "Would you like to ask anything else?"
+                )
             if lang == "es":
                 return "Perfecto. ¿Quieres preguntarme algo más?"
             return "Perfect. Would you like to ask anything else?"
@@ -1886,59 +1954,123 @@ class DecisionTree:
             return MESSAGES["escalate"][state.language]
 
         lang = state.language
+        service_id = state.selected_service
         if lang == "es":
             description = service.get("description_es")
             itinerary = service.get("itinerary_es") or []
             requirements = service.get("requirements_es") or []
             not_included = service.get("not_included_es") or []
             web_url = service.get("web_url")
-            title_itinerary = "🗺️ Itinerario:"
-            title_requirements = "✅ Requisitos:"
-            title_not_included = "❌ No incluye:"
+            title_itinerary = "🗺️ **Itinerario:**"
+            title_requirements = "✅ **Requisitos:**"
+            title_not_included = "❌ **No incluye:**"
             title_link = "🔗 Link de la actividad en la web:"
+            payment_title = "👉 Reserva aqui con 10% de descuento:"
         else:
             description = service.get("description_en")
             itinerary = service.get("itinerary_en") or []
             requirements = service.get("requirements_en") or []
             not_included = service.get("not_included_en") or []
             web_url = service.get("web_url")
-            title_itinerary = "🗺️ Itinerary:"
-            title_requirements = "✅ Requirements:"
-            title_not_included = "❌ Not included:"
+            title_itinerary = "🗺️ **Itinerary:**"
+            title_requirements = "✅ **Requirements:**"
+            title_not_included = "❌ **Not included:**"
             title_link = "🔗 Activity page link:"
+            payment_title = "👉 *Book here with 10% off*:"
 
-        lines: list[str] = []
-        if description:
-            lines.append(f"ℹ️ {description}")
+        # Elegimos el booking_url igual que en el resumen
+        if state.location == "island" and service.get("booking_url_island"):
+            booking_url = service["booking_url_island"]
+        else:
+            booking_url = service.get("booking_url")
 
+        # Mientras el flujo de pago para colombianos esté pendiente de confirmación,
+        # no mostramos el link real de pasarela/reserva a clientes colombianos.
+        if state.is_colombian:
+            booking_url = "PENDIENTE"
+
+        # Reagrupamos el itinerario por dia para no repetir "Dia 1:" / "Day 1:" en cada linea
         if itinerary:
-            if lines:
-                lines.append("")
-            lines.append(title_itinerary)
-            for item in itinerary:
-                lines.append(f"- {item}")
+            itinerary = _group_itinerary_by_day(itinerary, lang)
 
+        # Filtramos reglas genericas de vuelo y propinas del detalle completo
         if requirements:
-            if lines:
-                lines.append("")
-            lines.append(title_requirements)
-            for item in requirements:
-                lines.append(f"- {item}")
+            if lang == "es":
+                requirements = [
+                    item
+                    for item in requirements
+                    if not ("esperar minimo 18 horas" in item.lower() and "vuelo" in item.lower())
+                ]
+            else:
+                requirements = [
+                    item
+                    for item in requirements
+                    if not ("18 hours" in item.lower() and ("fly" in item.lower() or "flying" in item.lower()))
+                ]
 
         if not_included:
-            if lines:
-                lines.append("")
-            lines.append(title_not_included)
+            if lang == "es":
+                not_included = [
+                    item for item in not_included if "propinas voluntarias" not in item.lower()
+                ]
+            else:
+                not_included = [
+                    item for item in not_included if "voluntary tips" not in item.lower()
+                ]
+
+        # Construimos bloques separados para controlar bien los espacios entre secciones
+        blocks: list[list[str]] = []
+
+        if description:
+            blocks.append([f"ℹ️ {description}"])
+
+        if itinerary:
+            block = [title_itinerary]
+            for item in itinerary:
+                # Sin guion al inicio para evitar formato de lista Markdown y el espacio extra
+                block.append(item)
+            blocks.append(block)
+
+        if requirements:
+            block = [title_requirements]
+            for item in requirements:
+                block.append(item)
+            blocks.append(block)
+
+        if not_included:
+            block = [title_not_included]
             for item in not_included:
-                lines.append(f"- {item}")
+                block.append(item)
+            blocks.append(block)
 
         if web_url:
-            if lines:
-                lines.append("")
-            lines.append(title_link)
-            lines.append(web_url)
+            block = [title_link, web_url]
+            blocks.append(block)
 
-        return "\n".join(lines)
+        # Bloque final con link de pago si hay booking_url
+        if booking_url:
+            block = [payment_title, booking_url]
+            blocks.append(block)
+
+        # Bloque con formulario de exoneración para buzos certificados
+        # (implementado inicialmente solo para 2 buceos - 1 día en español)
+        if service_id == "2_dives_1_day" and state.is_certified:
+            if lang == "es":
+                exo_block = [
+                    "📝 Siguiente paso si quieres reservar este plan:",
+                    "Antes de salir al mar necesitamos que completes un formulario de exoneración para buzos certificados (es obligatorio para el seguro y el zarpe):",
+                    "https://form.jotform.com/divingplanetcartagena/exoneracion-buzo-en-espanol",
+                ]
+            else:
+                exo_block = [
+                    "📝 Next step if you would like to book this plan:",
+                    "Before going out to sea we need you to complete a liability waiver form for certified divers (it's mandatory for insurance and boat clearance):",
+                    "https://form.jotform.com/divingplanetcartagena/exoneracion-buzo-en-espanol",
+                ]
+            blocks.append(exo_block)
+
+        # Una línea en blanco entre bloques, sin línea en blanco entre título y sus elementos
+        return "\n\n".join("\n".join(block) for block in blocks)
 
     def _format_service_detail(self, state: ConversationState) -> str:
         """Format service details for the selected service."""
@@ -1992,6 +2124,7 @@ class DecisionTree:
 
         lang = state.language
         name = service[f"name_{lang}"]
+        service_id = state.selected_service
         flight_rule = service[f"flight_rule_{lang}"]
 
         # Choose booking URL based on location
@@ -2000,48 +2133,114 @@ class DecisionTree:
         else:
             booking_url = service["booking_url"]
 
+        # Mientras no esté definido el flujo de pago para clientes colombianos,
+        # evitamos exponer la URL real de la pasarela de pago en sus resúmenes.
+        if state.is_colombian:
+            booking_url = "PENDIENTE"
+
         if lang == "es":
+            # Datos base
             departure = "Cartagena" if state.location == "cartagena" else "Islas del Rosario"
             meeting_note = ""
             if state.location == "cartagena":
-                meeting_note = "\n⏰ Punto de encuentro: 8:00 AM en el Muelle de la Bodeguita."
+                meeting_note = "⏰ Punto de encuentro: 8:00 AM en el Muelle de la Bodeguita."
             elif state.location == "island":
-                meeting_note = "\n⏰ Recogida en hotel: alrededor de 9:30 AM (si hay acceso marítimo)."
+                meeting_note = "⏰ Recogida en hotel: alrededor de 9:30 AM (si hay acceso marítimo)."
 
             includes_items = [
                 item.strip()
                 for item in service["includes_es"].split(",")
                 if item.strip()
             ]
-            includes_block = "\n".join(f"✅ {item}" for item in includes_items)
 
-            summary = (
-                "Perfecto! Aqui tienes el resumen:\n\n"
-                f"🤿 Servicio: {service['name_es']}\n"
-                f"⏱ Duracion: {service['duration_es']}\n"
-                f"✅ Incluye:\n{includes_block}\n\n"
-                f"📍 Salida: {departure}"
-                f"{meeting_note}\n"
-            )
+            # Precio: COP para colombianos, USD para el resto (cuando haya datos)
+            price_text = ""
+            price_usd = service.get("price_usd")
+            price_usd_normal = service.get("price_usd_normal")
+            price_cop = service.get("price_cop")
+            price_cop_normal = service.get("price_cop_normal")
+            price_note = service.get("price_note")
+
+            def _fmt_cop(value):
+                try:
+                    return f"{int(value):,}".replace(",", ".")
+                except (TypeError, ValueError):
+                    return str(value)
+
+            if state.is_colombian and price_cop:
+                if price_cop_normal:
+                    price_text = f"💰 Precio: {_fmt_cop(price_cop)} COP online / {_fmt_cop(price_cop_normal)} COP"
+                else:
+                    price_text = f"💰 Precio: {_fmt_cop(price_cop)} COP"
+            elif price_usd:
+                if price_usd_normal:
+                    price_text = f"💰 Precio: {price_usd}USD online / {price_usd_normal}USD"
+                else:
+                    price_text = f"💰 Precio: {price_usd}USD"
+            elif price_note:
+                price_text = f"💰 Precio: {price_note}"
+
+            # Construimos línea a línea para controlar los espacios
+            lines: list[str] = []
+            lines.append("Perfecto! Aqui tienes el resumen:")
+            lines.append("")
+            lines.append(f"🤿 **Servicio: {service['name_es']}**")
+            lines.append("")
+
+            if price_text:
+                lines.append(price_text)
+                lines.append("")
+
+            lines.append(f"⏱ Duracion: {service['duration_es']}")
+            lines.append("")
+
+            # Bloque incluye: sin línea en blanco entre el título y el primer ítem
+            lines.append("✅ Incluye:")
+            for item in includes_items:
+                lines.append(item)
+
+            # Espacio antes de la salida
+            lines.append("")
+            lines.append(f"📍 Salida: {departure}")
+            if meeting_note:
+                lines.append(meeting_note)
+
+            # Refresher, descuento y regla de vuelo, cada uno separado por una línea en blanco
+            if flight_rule or state.refresher_interested or state.is_colombian:
+                lines.append("")
 
             if state.refresher_interested:
-                summary += "\n🧑‍🏫 Refresher: Si (recomendado por inactividad)\n"
+                lines.append("🧑‍🏫 Refresher: Si (recomendado por inactividad)")
 
             if state.is_colombian:
-                summary += (
-                    "\n🌎 *Descuento colombiano*: Contactanos por WhatsApp "
-                    "al +57 320 231515 para tu descuento especial.\n"
+                lines.append(
+                    "🌎 *Descuento colombiano*: Contactanos por WhatsApp "
+                    "al +57 320 231515 para tu descuento especial."
                 )
 
             if flight_rule:
-                summary += f"\n✈️ Importante: {flight_rule}\n"
+                lines.append(f"✈️ Importante: {flight_rule}")
 
+            # Notas extra (no se muestran para 2_dives_1_day en el resumen)
             extra_notes = service.get("extra_notes_es")
-            if extra_notes:
-                summary += f"\nℹ️ {extra_notes}\n"
+            # Para paquetes multi-dia, simplificamos la nota extra para enfatizar solo
+            # que el alojamiento no esta incluido.
+            if service_id in MULTI_DAY_SERVICES:
+                not_included_es = service.get("not_included_es", [])
+                if any("Hotel/alojamiento" in item for item in not_included_es):
+                    extra_notes = "El alojamiento no esta incluido."
+            if extra_notes and service_id != "2_dives_1_day":
+                lines.append("")
+                lines.append(f"ℹ️ {extra_notes}")
 
-            summary += f"\n👉 Reserva aqui con 10% de descuento:\n{booking_url}\n"
-            summary += "\n¿Quieres ver el itinerario completo de la actividad?"
+            # Link de reserva
+            lines.append("")
+            lines.append("👉 Reserva aqui con 10% de descuento:")
+            lines.append(booking_url)
+            lines.append("")
+            lines.append("¿Quieres ver el itinerario completo de la actividad?")
+
+            summary = "\n".join(lines)
         else:
             departure = "Cartagena" if state.location == "cartagena" else "Rosario Islands"
             meeting_note = ""
@@ -2079,6 +2278,10 @@ class DecisionTree:
                 summary += f"\n✈️ *Important*: {flight_rule}\n"
 
             extra_notes = service.get("extra_notes_en")
+            if service_id in MULTI_DAY_SERVICES:
+                not_included_en = service.get("not_included_en", [])
+                if any("Hotel/accommodation" in item for item in not_included_en):
+                    extra_notes = "Accommodation on the islands is not included."
             if extra_notes:
                 summary += f"\nℹ️ {extra_notes}\n"
 

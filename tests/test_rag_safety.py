@@ -111,7 +111,7 @@ async def test_supervisor_routes_early_free_text_to_rag(monkeypatch):
 
 
 @pytest.mark.asyncio
-async def test_rag_low_confidence_returns_fallback(monkeypatch):
+async def test_rag_low_confidence_returns_fallback_without_extra_context(monkeypatch):
     async def fake_search(query, lang="es"):
         return [{"content": "Documento poco relacionado", "metadata": {"source": "faqs"}, "score": 0.2}]
 
@@ -121,6 +121,21 @@ async def test_rag_low_confidence_returns_fallback(monkeypatch):
     response = await rag_agent.rag_answer("Pregunta rara", lang="es")
 
     assert "No tengo información suficiente" in response
+
+
+@pytest.mark.asyncio
+async def test_rag_low_confidence_uses_extra_context_when_available(monkeypatch):
+    async def fake_search(query, lang="es"):
+        return [{"content": "Documento poco relacionado", "metadata": {"source": "faqs"}, "score": 0.2}]
+
+    monkeypatch.setattr(rag_agent, "search_knowledge_base", fake_search)
+    monkeypatch.setattr(rag_agent.settings, "rag_min_score", 0.72)
+    monkeypatch.setattr(rag_agent, "AsyncOpenAI", DummyOpenAI)
+
+    # Con extra_context deberia intentar responder usando el LLM en lugar de devolver el fallback
+    response = await rag_agent.rag_answer("Pregunta rara", lang="es", extra_context="Resumen de estado")
+
+    assert response == "Respuesta basada en contexto"
 
 
 @pytest.mark.asyncio
