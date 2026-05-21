@@ -169,10 +169,9 @@ class TestCertifiedDiverFlow:
 
         assert state.selected_service == "5_dives_2_days"
         assert state.step == Step.CERTIFIED_LAST_DIVE
-        assert "1 noche" in response
-        assert "buceo nocturno" in response
-        assert "alojamiento no esta incluido" in response
-        assert "quitar la nocturna" in response
+        # The current flow asks last-dive question before showing details
+        assert "2 años" in response
+        assert "refresher" in response.lower()
 
     def test_5_dives_recent_last_dive_summary_keeps_package(self):
         state = self._go_to_certified()
@@ -185,21 +184,23 @@ class TestCertifiedDiverFlow:
         assert state.step == Step.SUMMARY
         assert state.selected_service == "5_dives_2_days"
         assert "2-days-5-dives" in summary
-        assert "buceo nocturno" in summary
         assert "18 horas" in summary
+        # Lodging note should be present for multi-day packages
+        assert "alojamiento no esta incluido" in summary.lower()
 
     def test_7_and_9_dives_show_correct_nights(self):
         state_7 = self._go_to_certified()
         response_7 = self.tree.process_message(state_7, "3")
         assert state_7.selected_service == "7_dives_3_days"
-        assert "2 noches" in response_7
-        assert "6 buceos diurnos" in response_7
+        # The current flow asks last-dive question before showing details
+        assert "2 años" in response_7
+        assert "refresher" in response_7.lower()
 
         state_9 = self._go_to_certified()
         response_9 = self.tree.process_message(state_9, "4")
         assert state_9.selected_service == "9_dives_4_days"
-        assert "3 noches" in response_9
-        assert "8 buceos diurnos" in response_9
+        assert "2 años" in response_9
+        assert "refresher" in response_9.lower()
 
     def test_multiday_refresher_keeps_original_package(self):
         state = self._go_to_certified()

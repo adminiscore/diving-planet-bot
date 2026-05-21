@@ -90,8 +90,10 @@ async def test_supervisor_escalates_sensitive_message_before_rag(monkeypatch):
 
 @pytest.mark.asyncio
 async def test_supervisor_routes_early_free_text_to_rag(monkeypatch):
-    async def fake_rag(message, lang="es", history=None):
+    async def fake_rag(message, lang="es", history=None, extra_context=None):
         assert lang == "en"
+        # Ensure supervisor passes some context summary when available
+        assert extra_context is not None
         return "Sure! We can help with that 🤿"
 
     monkeypatch.setattr("src.agents.supervisor.rag_answer", fake_rag)
