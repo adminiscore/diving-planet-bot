@@ -32,8 +32,8 @@ SENSITIVE_RULES = {
             "epilepsia", "presión", "presion", "oído", "oido", "medical", "asthma",
             "pregnant", "pregnancy", "heart", "surgery", "medication", "medicine",
         },
-        "es": "Para preguntas médicas específicas, es importante que hables con nuestro staff calificado para evaluar tu situación particular.\nWhatsApp: +57 320 2554961",
-        "en": "For specific medical questions, it's important that you speak with our qualified staff so they can assess your particular situation.\nWhatsApp: +57 320 2554961",
+        "es": "Para preguntas médicas específicas, es importante que hables con nuestro staff calificado para evaluar tu situación particular.\nWhatsApp: +57 320 231515",
+        "en": "For specific medical questions, it's important that you speak with our qualified staff so they can assess your particular situation.\nWhatsApp: +57 320 231515",
     },
     "weather_conditions": {
         "keywords": {
@@ -41,8 +41,8 @@ SENSITIVE_RULES = {
             "viento", "tormenta", "lluvia mañana", "weather tomorrow", "weather today",
             "wind", "storm", "waves", "rain tomorrow",
         },
-        "es": "Las condiciones del tiempo pueden cambiar rápidamente. Te conecto con el equipo para darte información actualizada.\nWhatsApp: +57 320 2554961",
-        "en": "Weather conditions can change quickly. I'll connect you with the team for updated information.\nWhatsApp: +57 320 2554961",
+        "es": "Las condiciones del tiempo pueden cambiar rápidamente. Te conecto con el equipo para darte información actualizada.\nWhatsApp: +57 320 231515",
+        "en": "Weather conditions can change quickly. I'll connect you with the team for updated information.\nWhatsApp: +57 320 231515",
     },
     "real_time_issues": {
         "keywords": {
@@ -50,16 +50,16 @@ SENSITIVE_RULES = {
             "error reserva", "no puedo reservar", "available tomorrow", "availability tomorrow",
             "payment", "booking error", "can't book", "cannot book",
         },
-        "es": "Esta consulta depende de disponibilidad o soporte en tiempo real. Te conecto con alguien del equipo para ayudarte ahora.\nWhatsApp: +57 320 2554961",
-        "en": "This depends on real-time availability or support. I'll connect you with someone from the team to help you now.\nWhatsApp: +57 320 2554961",
+        "es": "Esta consulta depende de disponibilidad o soporte en tiempo real. Te conecto con alguien del equipo para ayudarte ahora.\nWhatsApp: +57 320 231515",
+        "en": "This depends on real-time availability or support. I'll connect you with someone from the team to help you now.\nWhatsApp: +57 320 231515",
     },
     "complaints_or_emergencies": {
         "keywords": {
             "queja", "reclamo", "emergencia", "accidente", "problema grave", "complaint",
             "emergency", "accident", "serious problem",
         },
-        "es": "Voy a transferirte inmediatamente con un miembro de nuestro staff para ayudarte con esta situación.\nWhatsApp: +57 320 2554961",
-        "en": "I'm immediately transferring you to a staff member to help with this situation.\nWhatsApp: +57 320 2554961",
+        "es": "Voy a transferirte inmediatamente con un miembro de nuestro staff para ayudarte con esta situación.\nWhatsApp: +57 320 231515",
+        "en": "I'm immediately transferring you to a staff member to help with this situation.\nWhatsApp: +57 320 231515",
     },
 }
 

@@ -178,3 +178,49 @@ Esa parte se la dejas al LLM/RAG, que con el contexto y la base de conocimiento 
 - [x] 2. Solo principiantes desde Cartagena → minicurso/snorkel/privado revisado y cubierto con tests.
 - [x] 3. Paquetes certificados multi-día 5/7/9 → notas de noches/alojamiento/nocturna/personalización, refresher sin perder paquete original y tests añadidos.
 - [ ] Repasar todo el árbol con todas las actividades y validar copys/resúmenes.
+
+## Guía rápida: si `chatwood-test.html` no muestra el widget o no permite escribir
+
+- [ ] **Verificar Chatwoot corriendo**:
+      - `docker compose --profile chatwoot ps` debe mostrar `dp-dev-chatwoot` y `dp-dev-chatwoot-worker` Up.
+      - Abrir `http://localhost:3300` y confirmar que carga la UI.
+- [ ] **Habilitar registro y preparar BD (instalación nueva o equipo nuevo)**:
+      - En `docker-compose.yml` confirmar `ENABLE_ACCOUNT_SIGNUP: "true"` en `chatwoot-rails` y `chatwoot-sidekiq`.
+      - Comprobar dentro del contenedor: `docker exec dp-dev-chatwoot sh -lc 'echo ENABLE_ACCOUNT_SIGNUP=$ENABLE_ACCOUNT_SIGNUP FRONTEND_URL=$FRONTEND_URL'` → debe mostrar `ENABLE_ACCOUNT_SIGNUP=true`.
+      - Preparar esquema (migraciones/semillas): `docker exec dp-dev-chatwoot bundle exec rails db:chatwoot_prepare`.
+- [ ] **Si no aparece el registro o hay errores de tablas — Opción B (reset TOTAL, destruye datos locales de Chatwoot)**:
+      - `docker compose stop chatwoot-rails chatwoot-sidekiq`
+      - `docker exec dp-dev-postgres psql -U postgres -c "DROP DATABASE chatwoot_dev;"`
+      - `docker exec dp-dev-postgres psql -U postgres -c "CREATE DATABASE chatwoot_dev;"`
+      - `docker compose --profile chatwoot up -d --force-recreate`
+      - `docker exec dp-dev-chatwoot bundle exec rails db:chatwoot_prepare`
+      - Ir directo a registro: `http://localhost:3300/app/sign_up` (o `.../app/signup`).
+- [ ] **Crear admin e Inbox Website**:
+      - En `http://localhost:3300/app/sign_up` crea la cuenta admin (usa ventana de incógnito si fuera necesario).
+      - Crea un Inbox “Website” y copia el `websiteToken` del snippet.
+      - Para DEV actual: `websiteToken = 'je14uP7MjRFcSfcmNy45AWvp'` (si reinstalas o cambias de Inbox, actualízalo).
+- [ ] **Actualizar `chatwood-test.html`**:
+      - `BASE_URL = "http://localhost:3300"`.
+      - `websiteToken = 'je14uP7MjRFcSfcmNy45AWvp'`.
+      - Hard refresh `Ctrl+F5`. Verifica que `http://localhost:3300/packs/js/sdk.js` responde 200.
+- [ ] **Configurar webhook (para que el bot responda y los botones funcionen)**:
+      - URL: `http://host.docker.internal:8000/webhooks/chatwoot`.
+      - Eventos suscritos: `message_created`, `message_updated`, `conversation_created`, `conversation_status_changed`.
+- [ ] **Configurar variables del bot en `.env.dev`**:
+      - Ejemplo:
+        ```dotenv
+        CHATWOOT_BASE_URL=http://localhost:3300
+        CHATWOOT_API_TOKEN=<TU_TOKEN_DE_PERFIL_ACTUAL>
+        CHATWOOT_ACCOUNT_ID=1
+        # Opcional: asignar automáticamente conversaciones nuevas a un agente
+        # CHATWOOT_OWNER_AGENT_ID=<ID_AGENTE>
+        ```
+- [ ] **Validar tu token de Chatwoot (PowerShell)**:
+      - `iwr -Uri http://localhost:3300/api/v1/profile -Headers @{api_access_token="<TU_TOKEN_DE_PERFIL_ACTUAL>"}` → debe responder 200 y mostrar tus cuentas.
+- [ ] **Reiniciar el bot con el entorno correcto**:
+      - `ENV_FILE=.env.dev python -m src.main` (o en WSL2 `py -m src.main`).
+- [ ] **Si los botones no reaccionan**:
+      - Falta `message_updated` en el webhook o Chatwoot no está enviando `message_updated`.
+- [ ] **Comprobaciones rápidas**:
+      - Bot salud: `http://localhost:8000/health` → 200.
+      - El widget debe abrirse automáticamente; si no, ya hay un `setTimeout` de apertura forzada.

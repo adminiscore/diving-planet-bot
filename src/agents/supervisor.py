@@ -102,6 +102,7 @@ def _matches_escalation_keyword(msg_lower: str) -> bool:
 def _is_substantive_free_text(message: str) -> bool:
     normalized = " ".join(message.strip().lower().split())
     normalized_clean = normalized.strip("?!.,;:")
+    words = normalized_clean.split()
     if not normalized_clean:
         return False
     if normalized_clean in LANGUAGE_SELECTION_KEYWORDS:
@@ -120,6 +121,324 @@ def _infer_language(message: str, fallback: str = "es") -> str:
     if spanish_matches > english_matches:
         return "es"
     return fallback
+
+
+def _build_extra_context(state: ConversationState) -> str | None:
+    """Build a compact natural-language summary of the current state to help RAG.
+
+    Se usa como extra_context para que el agente de conocimiento tenga claro:
+    - Actividad seleccionada
+    - Si el cliente es buzo certificado
+    - Si es colombiano
+    - Desde donde sale (Cartagena / islas)
+    - Isla / hotel reportado
+    - Inactividad (>2 años) y si mostro interes en refresher
+    """
+
+    parts: list[str] = []
+
+    # Idioma actual de la conversación
+    if state.language == "es":
+        parts.append("La conversación se esta llevando a cabo en español.")
+    elif state.language == "en":
+        parts.append("The conversation is currently happening in English.")
+
+    # Ubicacion base
+    if state.location == "cartagena":
+        parts.append("El cliente indica que saldra desde Cartagena para su experiencia.")
+    elif state.location == "island":
+        parts.append("El cliente indica que ya esta en las Islas del Rosario.")
+
+    # Isla / hotel
+    if getattr(state, "island", None):
+        parts.append(f"Se hospeda (o se hospedara) en la isla: {state.island}.")
+    if getattr(state, "hotel", None):
+        parts.append(f"Hotel/alojamiento reportado: {state.hotel}.")
+
+    # Actividad seleccionada
+    if getattr(state, "selected_service", None):
+        try:
+            from src.flows.decision_tree import SERVICES
+
+            service = SERVICES.get(state.selected_service)
+            if service:
+                name_es = service.get("name_es", state.selected_service)
+                parts.append(f"Actividad seleccionada en el arbol de opciones: {name_es} (id={state.selected_service}).")
+        except Exception:
+            parts.append(f"Actividad seleccionada en el arbol de opciones con id={state.selected_service}.")
+
+    # Buzo certificado / principiante
+    if getattr(state, "is_certified", None) is True:
+        parts.append("El cliente marco que es buzo certificado (solo buzos certificados en el grupo).")
+    elif getattr(state, "is_certified", None) is False:
+        parts.append("El cliente marco que no es buzo certificado o que viene como principiante/snorkel.")
+
+    # Colombiano o no
+    if getattr(state, "is_colombian", None) is True:
+        parts.append("El cliente indico que es colombiano/a (aplican tarifas locales y descuentos especiales).")
+    elif getattr(state, "is_colombian", None) is False:
+        parts.append("El cliente indico que no es colombiano/a.")
+
+    # Inactividad y refresher
+    if getattr(state, "last_dive_over_2_years", None) is True:
+        parts.append("Segun el arbol, lleva mas de 2 años sin bucear.")
+    elif getattr(state, "last_dive_over_2_years", None) is False:
+        parts.append("Segun el arbol, su ultima inmersión fue hace menos de 2 años.")
+
+    if getattr(state, "refresher_interested", None) is True:
+        parts.append("En el flujo marco que SI le interesa incluir un refresher.")
+    elif getattr(state, "refresher_interested", None) is False:
+        parts.append("En el flujo marco que NO le interesa incluir un refresher.")
+
+    if not parts:
+        return None
+    return " ".join(parts)
+
+
+def _answer_state_introspection(state: ConversationState, message: str) -> str | None:
+    """Answer simple meta-questions using the current conversation state.
+
+    Esto evita respuestas genéricas de RAG cuando el usuario pregunta por
+    cosas que ya sabemos del flujo guiado (actividad elegida, si es buzo
+    certificado, si es colombiano, etc.).
+    """
+
+    normalized = " ".join(message.strip().lower().split())
+    normalized_clean = normalized.strip("?!.,;:")
+    words = normalized_clean.split()
+    lang = state.language or "es"
+
+    # Por ahora cubrimos solo las preguntas en español e inglés que ya se han visto
+    if lang == "es":
+        # Preguntas sobre la actividad elegida ("Que actividad hago?", "Que actividad he seleccionado?",
+        # "Actividad seleccionada?", etc.). Usamos heuristicas amplias pero intentando no
+        # interceptar preguntas generales sobre "actividades" en plural.
+        ask_activity_es = False
+        # Trabajamos con palabra exacta "actividad" para no confundir con "actividades"
+        if "actividad" in words:
+            text = normalized_clean
+
+            # Casos directos tipo "actividad seleccionada?" (con o sin una "c")
+            if "actividad seleccionad" in text or "actividad selecionad" in text:
+                ask_activity_es = True
+
+            # Casos tipo "que actividad ..." / "qué actividad ..." en singular. En este punto ya
+            # sabemos que hay la palabra exacta "actividad", asi que asumimos que se refiere a
+            # la actividad concreta de esta conversacion y no a una lista generica de actividades.
+            if not ask_activity_es and ("que actividad" in text or "qué actividad" in text):
+                ask_activity_es = True
+
+            # Casos tipo "cual es la actividad?" / "cual es mi actividad?"
+            if not ask_activity_es and ("cual es la actividad" in text or "cuál es la actividad" in text):
+                ask_activity_es = True
+
+        if ask_activity_es:
+            if state.selected_service:
+                try:
+                    from src.flows.decision_tree import SERVICES
+
+                    service = SERVICES.get(state.selected_service)
+                    if service:
+                        name = service.get(f"name_{lang}", state.selected_service)
+                        return f"En esta conversación seleccionaste la actividad: {name}."
+                except Exception:
+                    # Si algo falla al leer SERVICES, caemos en el fallback genérico
+                    pass
+            return "Todavia no has elegido ninguna actividad concreta en esta conversación."
+
+        # "Soy buzo certificado?"
+        if "soy buzo" in normalized_clean and "certificado" in normalized_clean:
+            if state.is_certified is True:
+                return "En esta conversación marcaste que eres buzo certificado (solo buzos certificados en el grupo)."
+            if state.is_certified is False:
+                return "En esta conversación marcaste que no eres buzo certificado o que vienes como principiante/snorkel."
+            return "Aun no me has dicho si eres buzo certificado o no en esta conversación."
+
+        # "Soy colombiano?" / "Soy colombiana?"
+        if "soy " in normalized_clean and "colombian" in normalized_clean:
+            if state.is_colombian is True:
+                return "En esta conversación me dijiste que eres colombiano/a."
+            if state.is_colombian is False:
+                return "En esta conversación me dijiste que no eres colombiano/a."
+            return "Aun no me has dicho si eres colombiano/a en esta conversación."
+
+        # "De donde soy?" / "De dónde soy?" -> origen aproximado del cliente
+        if ("de donde" in normalized_clean or "de dónde" in normalized_clean) and "soy" in normalized_clean:
+            idioma_actual = "español" if state.language == "es" else "inglés"
+            if state.is_colombian is True:
+                return (
+                    "En esta conversación me dijiste que eres colombiano/a. "
+                    "No tengo mas detalles sobre tu ciudad especifica."
+                )
+            if state.is_colombian is False:
+                return (
+                    "En esta conversación no me has dicho exactamente de que pais o ciudad eres. "
+                    f"Solo se que marcaste que no eres colombiano/a y que estamos hablando en {idioma_actual}."
+                )
+            return (
+                "Todavia no me has dicho de donde eres en esta conversación. "
+                f"Solo se que estamos hablando en {idioma_actual}."
+            )
+
+        # "Cual es mi nacionalidad?" / "De que nacionalidad soy?"
+        if "nacionalidad" in normalized_clean:
+            idioma_actual = "español" if state.language == "es" else "inglés"
+            if state.is_colombian is True:
+                return (
+                    "En esta conversación me dijiste que eres colombiano/a. "
+                    "No tengo mas información sobre si tienes otra nacionalidad."
+                )
+            if state.is_colombian is False:
+                return (
+                    "En esta conversación marcaste que no eres colombiano/a, "
+                    "pero no me has dicho exactamente cuál es tu nacionalidad."
+                )
+            return (
+                "Todavia no me has dicho cuál es tu nacionalidad en esta conversación. "
+                f"Solo se que estamos hablando en {idioma_actual}."
+            )
+
+        # "Llevo mas de X anos/años sin bucear?" o "Han pasado mas de X anos desde que bucee/hice buceo?"
+        ask_last_dive = False
+        if "llevo" in normalized_clean and "sin bucear" in normalized_clean:
+            ask_last_dive = True
+        elif "han pasado" in normalized_clean and (
+            "buceo" in normalized_clean
+            or "bucee" in normalized_clean
+            or "bucear" in normalized_clean
+            or "inmersion" in normalized_clean
+            or "inmersión" in normalized_clean
+        ):
+            ask_last_dive = True
+
+        if ask_last_dive:
+            if state.last_dive_over_2_years is True:
+                return "En esta conversación marcaste que si, que llevas mas de 2 años sin bucear."
+            if state.last_dive_over_2_years is False:
+                return "En esta conversación marcaste que no, que tu ultima inmersión fue hace menos de 2 años."
+            return "Aun no hemos hablado de hace cuanto fue tu ultima inmersión en esta conversación."
+
+        # "Necesito el curso de refresco?" / "Necesito refresher?"
+        if ("refres" in normalized_clean or "refresher" in normalized_clean) and (
+            "necesito" in normalized_clean
+            or "necesitamos" in normalized_clean
+            or "tengo que" in normalized_clean
+            or "tenemos que" in normalized_clean
+        ):
+            if state.last_dive_over_2_years is True:
+                # Ya marco que lleva mas de 2 anos sin bucear
+                if getattr(state, "refresher_interested", None) is True:
+                    return (
+                        "En esta conversación marcaste que llevas mas de 2 años sin bucear y que SI te interesa "
+                        "incluir el refresher. Por seguridad, es muy recomendable hacerlo antes de tus inmersiones."
+                    )
+                if getattr(state, "refresher_interested", None) is False:
+                    return (
+                        "En esta conversación marcaste que llevas mas de 2 años sin bucear. Por seguridad, te "
+                        "recomendamos hacer un refresher aunque anteriormente dijiste que no te interesaba incluirlo."
+                    )
+                return (
+                    "En esta conversación marcaste que llevas mas de 2 años sin bucear. En esos casos, por seguridad, "
+                    "si recomendamos hacer un refresher antes de tus inmersiones."
+                )
+
+            if state.last_dive_over_2_years is False:
+                if getattr(state, "refresher_interested", None) is True:
+                    return (
+                        "En esta conversación marcaste que tu ultima inmersión fue hace menos de 2 años, pero que SI "
+                        "te interesa hacer un refresher. No es obligatorio en todos los casos, pero puede ser una buena "
+                        "idea si sientes que necesitas repasar habilidades."
+                    )
+                return (
+                    "En esta conversación marcaste que tu ultima inmersión fue hace menos de 2 años. En principio "
+                    "no es obligatorio hacer un refresher, aunque en algunos casos puede ser recomendable si te sientes "
+                    "inseguro o llevas tiempo sin bucear."
+                )
+
+            # Si aun no sabemos nada sobre la inactividad, respondemos que falta ese dato
+            return (
+                "Todavia no me has dicho hace cuanto fue tu ultima inmersión en esta conversación. Si ha pasado "
+                "mas de 1–2 años, normalmente recomendamos hacer un refresher por seguridad."
+            )
+
+        # "Desde donde salgo?" / "Desde donde salimos?"
+        if (
+            ("desde donde" in normalized_clean or "desde dónde" in normalized_clean or "de donde" in normalized_clean)
+            and ("salgo" in normalized_clean or "salimos" in normalized_clean)
+        ):
+            if state.location == "cartagena":
+                return "En esta conversación marcaste que sales desde Cartagena."
+            if state.location == "island":
+                return "En esta conversación marcaste que ya estas en las Islas del Rosario."
+            return "Aun no me has dicho desde donde sales (si desde Cartagena o si ya estas en las islas) en esta conversación."
+
+    if lang == "en":
+        # "What activity did I choose?" / "Which activity have I chosen?"
+        if "activity" in normalized_clean and (
+            "have i chosen" in normalized_clean
+            or "did i choose" in normalized_clean
+            or "did i pick" in normalized_clean
+            or "am i going to do" in normalized_clean
+            or "am i going to be doing" in normalized_clean
+            or "am i doing" in normalized_clean
+            or "will i do" in normalized_clean
+            or "will i be doing" in normalized_clean
+        ):
+            if state.selected_service:
+                try:
+                    from src.flows.decision_tree import SERVICES
+
+                    service = SERVICES.get(state.selected_service)
+                    if service:
+                        name = service.get(f"name_{lang}", state.selected_service)
+                        return f"In this conversation you selected the activity: {name}."
+                except Exception:
+                    pass
+            return "You have not selected a specific activity yet in this conversation."
+
+        # "Am I a certified diver?"
+        if "certified" in normalized_clean and (
+            "am i" in normalized_clean
+            or "i am" in normalized_clean
+            or "i'm" in normalized_clean
+        ) and ("diver" in normalized_clean or "dive" in normalized_clean):
+            if state.is_certified is True:
+                return "In this conversation you indicated that you are a certified diver (only certified divers in the group)."
+            if state.is_certified is False:
+                return "In this conversation you indicated that you are not a certified diver or that you are joining as a beginner/snorkeler."
+            return "You haven't told me yet in this conversation whether you are a certified diver or not."
+
+        # "Am I Colombian?"
+        if "colombian" in normalized_clean and (
+            "am i" in normalized_clean
+            or "i am" in normalized_clean
+            or "i'm" in normalized_clean
+        ):
+            if state.is_colombian is True:
+                return "In this conversation you told me that you are Colombian."
+            if state.is_colombian is False:
+                return "In this conversation you told me that you are not Colombian."
+            return "You haven't told me yet in this conversation whether you are Colombian or not."
+
+        # "Has it been more than X years since my last dive?" / similar
+        ask_last_dive_en = False
+        if "last dive" in normalized_clean and "since" in normalized_clean:
+            ask_last_dive_en = True
+        elif "since my last" in normalized_clean and ("dive" in normalized_clean or "time i dived" in normalized_clean):
+            ask_last_dive_en = True
+        elif "since i last" in normalized_clean and ("dive" in normalized_clean or "dived" in normalized_clean or "went diving" in normalized_clean):
+            ask_last_dive_en = True
+        elif "since i dived" in normalized_clean or "since i went diving" in normalized_clean:
+            ask_last_dive_en = True
+
+        if ask_last_dive_en:
+            if state.last_dive_over_2_years is True:
+                return "In this conversation you indicated that yes, it has been more than 2 years since your last dive."
+            if state.last_dive_over_2_years is False:
+                return "In this conversation you indicated that no, your last dive was less than 2 years ago."
+            return "We haven't talked yet in this conversation about when your last dive was."
+
+    return None
 
 
 async def route_message(state: ConversationState, message: str) -> str:
@@ -195,7 +514,8 @@ async def route_message(state: ConversationState, message: str) -> str:
             state.quick_replies = []
             logger.info(f"[SUPERVISOR] RAG (early free text) lang={state.language}")
             state.history.append({"role": "user", "content": message})
-            answer = await rag_answer(message, lang=state.language, history=state.history)
+            extra_context = _build_extra_context(state)
+            answer = await rag_answer(message, lang=state.language, history=state.history, extra_context=extra_context)
             state.history.append({"role": "assistant", "content": answer})
             return answer
 
@@ -209,31 +529,56 @@ async def route_message(state: ConversationState, message: str) -> str:
         logger.info(f"[SUPERVISOR] RAG (free text in menu step={state.step.value})")
         state.quick_replies = []
         state.history.append({"role": "user", "content": message})
-
-        extra_parts = []
-        if state.location == "cartagena":
-            extra_parts.append("El cliente indica que saldra desde Cartagena para su experiencia.")
-        elif state.location == "island":
-            extra_parts.append("El cliente indica que ya esta en las Islas del Rosario.")
-
-        if state.island:
-            extra_parts.append(f"Se hospeda (o se hospedara) en la isla: {state.island}.")
-        if state.hotel:
-            extra_parts.append(f"Hotel/alojamiento reportado: {state.hotel}.")
-
-        extra_context = " ".join(extra_parts) if extra_parts else None
-
+        extra_context = _build_extra_context(state)
         answer = await rag_answer(message, lang=state.language, history=state.history, extra_context=extra_context)
         state.history.append({"role": "assistant", "content": answer})
         return answer
 
-    # Post-menu steps (SUMMARY, ESCALATE, FREE_TEXT) -> RAG agent
-    if state.step in (Step.SUMMARY, Step.FREE_TEXT):
+    # Post-menu steps (SUMMARY, FREE_TEXT) -> summary may still have quick replies (itinerary offer)
+    if state.step == Step.SUMMARY:
+        summary_choices = {
+            "1",
+            "2",
+            "si",
+            "sí",
+            "yes",
+            "no",
+            "gracias",
+            "no gracias",
+            "no, gracias",
+            "thanks",
+            "no thanks",
+            "no, thanks",
+        }
+        if msg_lower in summary_choices:
+            response = decision_tree.process_message(state, message)
+            logger.info(f"[SUPERVISOR] Decision tree (summary) -> step={state.step.value}")
+            return response
+
+        # Preguntas de estado simples ("que actividad he elegido?", "soy buzo certificado?", etc.)
+        introspective = _answer_state_introspection(state, message)
+        if introspective is not None:
+            logger.info("[SUPERVISOR] State introspection answer (summary)")
+            return introspective
+
+        # Free text question after the summary -> use RAG
+        state.step = Step.FREE_TEXT
+        state.quick_replies = []
+        state.history.append({"role": "user", "content": message})
+        extra_context = _build_extra_context(state)
+        answer = await rag_answer(message, lang=state.language, history=state.history, extra_context=extra_context)
+        state.history.append({"role": "assistant", "content": answer})
+        logger.info(f"[SUPERVISOR] RAG (post-summary)")
+        return answer
+
+    if state.step == Step.FREE_TEXT:
         # Check if user wants to restart
         if msg_lower in ("1", "si", "sí", "yes"):
-            state.step = Step.MAIN_MENU
-            from src.flows.decision_tree import MESSAGES
-            return MESSAGES["main_menu"][state.language]
+            state.quick_replies = []
+            if state.language == "es":
+                return "Perfecto. ¿Qué te gustaría preguntarme?"
+            return "Perfect. What would you like to ask me?"
+
         if msg_lower in ("2", "no", "gracias", "thanks", "no, gracias", "no, thanks"):
             state.quick_replies = []
             if state.language == "es":
@@ -248,24 +593,17 @@ async def route_message(state: ConversationState, message: str) -> str:
                 "We look forward to seeing you at the Rosario Islands!"
             )
 
+        # Preguntas de estado simples ("que actividad he elegido?", "soy buzo certificado?", etc.)
+        introspective = _answer_state_introspection(state, message)
+        if introspective is not None:
+            logger.info("[SUPERVISOR] State introspection answer (free_text)")
+            return introspective
+
         # Free text question
         state.step = Step.FREE_TEXT
         state.quick_replies = []
         state.history.append({"role": "user", "content": message})
-
-        extra_parts = []
-        if state.location == "cartagena":
-            extra_parts.append("El cliente indica que saldra desde Cartagena para su experiencia.")
-        elif state.location == "island":
-            extra_parts.append("El cliente indica que ya esta en las Islas del Rosario.")
-
-        if state.island:
-            extra_parts.append(f"Se hospeda (o se hospedara) en la isla: {state.island}.")
-        if state.hotel:
-            extra_parts.append(f"Hotel/alojamiento reportado: {state.hotel}.")
-
-        extra_context = " ".join(extra_parts) if extra_parts else None
-
+        extra_context = _build_extra_context(state)
         answer = await rag_answer(message, lang=state.language, history=state.history, extra_context=extra_context)
         state.history.append({"role": "assistant", "content": answer})
         logger.info(f"[SUPERVISOR] RAG (post-menu)")
@@ -276,20 +614,7 @@ async def route_message(state: ConversationState, message: str) -> str:
         state.step = Step.FREE_TEXT
         state.quick_replies = []
         state.history.append({"role": "user", "content": message})
-
-        extra_parts = []
-        if state.location == "cartagena":
-            extra_parts.append("El cliente indica que saldra desde Cartagena para su experiencia.")
-        elif state.location == "island":
-            extra_parts.append("El cliente indica que ya esta en las Islas del Rosario.")
-
-        if state.island:
-            extra_parts.append(f"Se hospeda (o se hospedara) en la isla: {state.island}.")
-        if state.hotel:
-            extra_parts.append(f"Hotel/alojamiento reportado: {state.hotel}.")
-
-        extra_context = " ".join(extra_parts) if extra_parts else None
-
+        extra_context = _build_extra_context(state)
         answer = await rag_answer(message, lang=state.language, history=state.history, extra_context=extra_context)
         state.history.append({"role": "assistant", "content": answer})
         return answer
