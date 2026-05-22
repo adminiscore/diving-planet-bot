@@ -12,6 +12,7 @@ keeping costs minimal.
 
 import logging
 import re
+import unicodedata
 
 from src.agents.escalation import detect_sensitive_escalation
 from src.agents.lead_summary import build_lead_summary
@@ -28,6 +29,9 @@ MENU_STEPS = {
     Step.WELCOME,
     Step.LANGUAGE,
     Step.MAIN_MENU,
+    Step.RESERVA_MENU,
+    Step.INFO_MENU,
+    Step.TOURS_LOCATION,
     Step.GROUP_TYPE,
     Step.TOURS_EXPERIENCE,
     Step.TOURS_CERTIFIED,
@@ -35,6 +39,7 @@ MENU_STEPS = {
     Step.CERTIFIED_EXPERIENCE,
     Step.REFRESHER_INTEREST,
     Step.TOURS_BEGINNER,
+    Step.BEGINNER_AGE,
     Step.COURSES_MENU,
     Step.COURSES_OPEN_WATER_ORIGIN,
     Step.COURSES_OPEN_WATER_TIME,
@@ -81,6 +86,111 @@ SPANISH_HINTS = {
     "precio", "reservar", "reserva", "descuento", "pago", "juntos",
     "punto de encuentro",
 }
+
+# Words that should NOT count as button-title evidence on their own.
+MENU_MATCH_STOP_WORDS = {
+    "de", "la", "el", "y", "o", "para", "con", "en", "un", "una",
+    "los", "las", "del", "al", "que", "es", "se", "lo", "mi", "mis",
+    "and", "or", "the", "to", "in", "for", "with", "an", "is",
+    "i", "me", "my", "you", "your", "we", "our", "do", "have",
+    "quiero", "elijo", "selecciono", "want", "would", "like",
+}
+
+# If any of these appear, treat the message as a question (route to RAG, not the menu).
+MENU_MATCH_QUESTION_WORDS = {
+    "cuánto", "cuanto", "cómo", "como", "qué", "que",
+    "dónde", "donde", "cuándo", "cuando", "cuál", "cual",
+    "how", "what", "when", "where", "why", "which",
+}
+
+
+def _strip_accents(text: str) -> str:
+    """Remove diacritics (á→a, ñ→n, ü→u, …) so text comparison is accent-insensitive."""
+    return "".join(
+        c for c in unicodedata.normalize("NFD", text)
+        if unicodedata.category(c) != "Mn"
+    )
+
+
+def _normalize_for_menu_match(text: str) -> str:
+    """Lowercase, drop diacritics, strip punctuation/emoji, collapse whitespace.
+
+    Accent stripping is critical: users frequently type "informacion" instead of
+    "información", "espanol" instead of "español", etc., and the matcher must
+    treat these as equivalent to the button titles.
+    """
+    cleaned = _strip_accents(text.strip().lower())
+    cleaned = re.sub(r"[¿¡?!.,;:()\[\]\"'/\\]", " ", cleaned)
+    cleaned = re.sub(r"[^\w\s]", " ", cleaned)
+    return " ".join(cleaned.split())
+
+
+def _detect_language_intent(message: str) -> str | None:
+    """Detect an explicit language switch request.
+
+    Matches words like "english/ingles", "spanish/espanol/castellano". Accent-insensitive.
+    Returns "es", "en", or None when the message contains no language keyword.
+    """
+    normalized = _strip_accents(message.strip().lower())
+    # Word-boundary match so "english" inside another word would not trigger;
+    # at the same time tolerate adjacent punctuation.
+    if re.search(r"\b(english|ingles)\b", normalized):
+        return "en"
+    if re.search(r"\b(spanish|espanol|castellano)\b", normalized):
+        return "es"
+    return None
+
+
+def _match_quick_reply_text(state: ConversationState, message: str) -> str | None:
+    """If user free text clearly maps to a current quick-reply button, return its value.
+
+    Only matches against `state.quick_replies` (the buttons actually displayed now), so a
+    text match cannot push the user off the current branch of the decision tree.
+    """
+    if not state.quick_replies:
+        return None
+
+    msg_clean = _normalize_for_menu_match(message)
+    if not msg_clean:
+        return None
+
+    msg_words = msg_clean.split()
+    msg_words_set = set(msg_words)
+
+    # Question-word guard: questions belong to RAG even if they contain a button keyword.
+    if msg_words_set & MENU_MATCH_QUESTION_WORDS:
+        return None
+
+    sig_msg = {w for w in msg_words_set if len(w) >= 3 and w not in MENU_MATCH_STOP_WORDS}
+    if not sig_msg:
+        return None
+
+    best_value: str | None = None
+    best_score = 0.0
+
+    for reply in state.quick_replies:
+        title = reply.get("title", "")
+        title_clean = _normalize_for_menu_match(title)
+        if not title_clean:
+            continue
+
+        if msg_clean == title_clean:
+            return reply.get("value")
+
+        title_words = set(title_clean.split())
+        sig_title = {w for w in title_words if len(w) >= 3 and w not in MENU_MATCH_STOP_WORDS}
+        if not sig_title:
+            continue
+
+        common = sig_msg & sig_title
+        if not common:
+            continue
+        score = len(common) / max(len(sig_msg), 1)
+        if score > best_score and score >= 0.5:
+            best_score = score
+            best_value = reply.get("value")
+
+    return best_value
 
 
 def _matches_escalation_keyword(msg_lower: str) -> bool:
@@ -489,13 +599,40 @@ async def route_message(state: ConversationState, message: str) -> str:
         logger.info(f"[SUPERVISOR] Menu reset triggered by keyword")
         return MESSAGES["main_menu"][state.language]
 
-    # Greeting at any step → restart welcome / language selection
-    if msg_lower.strip("?!.,;:") in GREETING_ONLY_KEYWORDS and state.step not in (Step.WELCOME, Step.LANGUAGE):
+    # Greeting at any step (except the very first WELCOME) → restart welcome / language selection.
+    # We include LANGUAGE here so that a bare "hola" / "hi" at the language step re-shows the
+    # welcome screen instead of auto-selecting Spanish (which felt unexpected to users).
+    if msg_lower.strip("?!.,;:") in GREETING_ONLY_KEYWORDS and state.step != Step.WELCOME:
         state.step = Step.WELCOME
         state.quick_replies = []
         response = decision_tree.process_message(state, message)
         logger.info(f"[SUPERVISOR] Greeting restart -> step=WELCOME")
         return response
+
+    # Explicit language-switch request ("in english", "spanish please",
+    # "me lo puedes decir en español?", etc.) at any step.
+    language_intent = _detect_language_intent(message)
+    if language_intent is not None:
+        from src.flows.decision_tree import MESSAGES
+        if state.step in (Step.WELCOME, Step.LANGUAGE):
+            # Treat as language selection; advance to MAIN_MENU.
+            state.language = language_intent
+            state.step = Step.MAIN_MENU
+            decision_tree.set_quick_replies(state, "main_menu")
+            logger.info(f"[SUPERVISOR] Language intent at start -> lang={language_intent}")
+            return MESSAGES["main_menu"][language_intent]
+        if state.language != language_intent:
+            # Mid-conversation switch: acknowledge in new language and re-show main menu.
+            state.language = language_intent
+            state.step = Step.MAIN_MENU
+            decision_tree.set_quick_replies(state, "main_menu")
+            ack = (
+                "¡Listo! Sigamos en español. "
+                if language_intent == "es"
+                else "Got it! Continuing in English. "
+            )
+            logger.info(f"[SUPERVISOR] Language switch mid-conversation -> lang={language_intent}")
+            return ack + MESSAGES["main_menu"][language_intent]
 
     # If user is in a menu step
     if state.step in MENU_STEPS:
@@ -506,6 +643,17 @@ async def route_message(state: ConversationState, message: str) -> str:
                 state.pending_escalation_reason = "derivado por el árbol de opciones"
                 state.pending_note = build_lead_summary(state, escalation_reason="derivado por el árbol de opciones")
             logger.info(f"[SUPERVISOR] Decision tree -> step={state.step.value}")
+            return response
+
+        # Free text that clearly matches one of the current quick-reply buttons
+        # is treated as if the user clicked that button.
+        matched_value = _match_quick_reply_text(state, message)
+        if matched_value is not None:
+            response = decision_tree.process_message(state, matched_value)
+            if state.step == Step.ESCALATE and not state.pending_note:
+                state.pending_escalation_reason = "derivado por el árbol de opciones"
+                state.pending_note = build_lead_summary(state, escalation_reason="derivado por el árbol de opciones")
+            logger.info(f"[SUPERVISOR] Quick-reply text match value={matched_value} -> step={state.step.value}")
             return response
 
         if state.step in (Step.WELCOME, Step.LANGUAGE) and _is_substantive_free_text(message):

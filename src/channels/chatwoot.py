@@ -27,6 +27,11 @@ router = APIRouter()
 conversations: dict[str, ConversationState] = {}
 processed_chatwoot_messages: set[str] = set()
 conversation_poll_started_at: dict[str, int] = {}
+# Button titles sent as quick replies, keyed by conversation.
+# Used to suppress the automatic incoming-echo message Chatwoot creates when a user
+# clicks a button (Chatwoot sends both a message_updated with submitted_values AND a
+# message_created with the button title as content; we only want to process one of them).
+conversation_pending_echo_titles: dict[str, set[str]] = {}
 
 
 @router.post("/chatwoot")
@@ -71,7 +76,18 @@ async def handle_message(payload: dict):
 
     message_id = str(payload.get("id"))
     if message_type in ("incoming", 0):
-        processed_chatwoot_messages.add(f"{conversation_id}:{message_id}:incoming")
+        content_lower = (payload.get("content", "") or "").strip().lower()
+        pending = conversation_pending_echo_titles.get(conversation_id, set())
+        if content_lower and content_lower in pending:
+            pending.discard(content_lower)
+            processed_chatwoot_messages.add(f"{conversation_id}:{message_id}:incoming")
+            logger.info(f"[WEBHOOK] Skipping button echo: {content_lower[:60]}")
+            return
+        dedupe_key = f"{conversation_id}:{message_id}:incoming"
+        if dedupe_key in processed_chatwoot_messages:
+            logger.info(f"[WEBHOOK] Skipping already processed incoming message={message_id}")
+            return
+        processed_chatwoot_messages.add(dedupe_key)
     else:
         dedupe_key = f"{conversation_id}:{message_id}:{message}"
         if dedupe_key in processed_chatwoot_messages:
@@ -147,8 +163,16 @@ async def poll_active_conversations_once():
                     continue
 
                 content = chatwoot_message.get("content", "")
+                content_lower = (content or "").strip().lower()
                 dedupe_key = f"{conversation_id}:{message_id}:incoming"
                 if dedupe_key in processed_chatwoot_messages:
+                    continue
+
+                pending = conversation_pending_echo_titles.get(conversation_id, set())
+                if content_lower and content_lower in pending:
+                    pending.discard(content_lower)
+                    processed_chatwoot_messages.add(dedupe_key)
+                    logger.info(f"[BOT] Skipping button echo from poll: {content_lower[:60]}")
                     continue
 
                 processed_chatwoot_messages.add(dedupe_key)
@@ -199,20 +223,21 @@ def extract_incoming_content(payload: dict) -> str | None:
 
 
 async def assign_conversation_to_owner(conversation_id: str):
-    """Assign a new conversation to the owner agent so it appears in their 'Mine' view."""
+    """Assign a new conversation to the owner agent and set it to open so it appears in 'Mine'."""
     base_url = settings.chatwoot_base_url.rstrip("/")
-    url = (
-        f"{base_url}/api/v1/accounts/{settings.chatwoot_account_id}"
-        f"/conversations/{conversation_id}/assignments"
-    )
     headers = {
         "api_access_token": settings.chatwoot_api_token,
         "Content-Type": "application/json",
     }
     async with httpx.AsyncClient() as client:
+        # Assign to owner
+        assign_url = (
+            f"{base_url}/api/v1/accounts/{settings.chatwoot_account_id}"
+            f"/conversations/{conversation_id}/assignments"
+        )
         try:
             resp = await client.post(
-                url,
+                assign_url,
                 json={"assignee_id": settings.chatwoot_owner_agent_id},
                 headers=headers,
                 timeout=10.0,
@@ -221,6 +246,23 @@ async def assign_conversation_to_owner(conversation_id: str):
             logger.info(f"[BOT] Conversation {conversation_id} assigned to agent {settings.chatwoot_owner_agent_id}")
         except httpx.HTTPError as e:
             logger.error(f"[BOT] Assignment error conv={conversation_id}: {e}")
+
+        # Set status to open so it appears in the agent's inbox (not stuck in Pending)
+        toggle_url = (
+            f"{base_url}/api/v1/accounts/{settings.chatwoot_account_id}"
+            f"/conversations/{conversation_id}/toggle_status"
+        )
+        try:
+            resp = await client.post(
+                toggle_url,
+                json={"status": "open"},
+                headers=headers,
+                timeout=10.0,
+            )
+            resp.raise_for_status()
+            logger.info(f"[BOT] Conversation {conversation_id} set to open")
+        except httpx.HTTPError as e:
+            logger.error(f"[BOT] Status toggle error conv={conversation_id}: {e}")
 
 
 async def send_chatwoot_message(conversation_id: str, message: str, quick_replies: list[dict] | None = None):
@@ -247,6 +289,12 @@ async def send_chatwoot_message(conversation_id: str, message: str, quick_replie
                 for reply in quick_replies
             ],
         }
+        # Register button titles so the automatic incoming echo from Chatwoot is suppressed
+        pending = conversation_pending_echo_titles.setdefault(conversation_id, set())
+        for reply in quick_replies:
+            title = reply.get("title", "").strip().lower()
+            if title:
+                pending.add(title)
 
     async with httpx.AsyncClient() as client:
         try:

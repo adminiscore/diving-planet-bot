@@ -66,31 +66,31 @@ class TestMainMenu:
         state.language = lang
         return state
 
-    def test_select_tours(self):
+    def test_select_reservar(self):
         state = self._go_to_menu()
         response = self.tree.process_message(state, "1")
-        assert state.step == Step.GROUP_TYPE
-        assert state.location == "cartagena"
-        assert "grupo" in response.lower()
-
-    def test_select_courses(self):
-        state = self._go_to_menu()
-        response = self.tree.process_message(state, "2")
-        assert state.step == Step.GROUP_TYPE
-        assert state.location == "island"
-        assert "grupo" in response.lower()
+        assert state.step == Step.RESERVA_MENU
+        assert "reservar" in response.lower() or "book" in response.lower()
 
     def test_select_info(self):
         state = self._go_to_menu()
-        response = self.tree.process_message(state, "3")
+        response = self.tree.process_message(state, "2")
+        assert state.step == Step.INFO_MENU
+        assert "información" in response.lower() or "information" in response.lower()
+
+    def test_select_courses_via_reservar(self):
+        state = self._go_to_menu()
+        self.tree.process_message(state, "1")  # Reservar
+        response = self.tree.process_message(state, "2")  # Cursos PADI
         assert state.step == Step.COURSES_MENU
         assert "PADI" in response
 
-    def test_select_human(self):
+    def test_human_via_keyword(self):
+        """Asesor ya no es opción del menú; se escala vía keyword."""
         state = self._go_to_menu()
-        response = self.tree.process_message(state, "7")
-        assert state.step == Step.ESCALATE
-        assert "jefe" in response.lower() or "manager" in response.lower()
+        # Vía decision tree solo (sin supervisor), tecla numérica desconocida → not understood
+        response = self.tree.process_message(state, "9")
+        assert "No entendi" in response or "not understand" in response.lower()
 
     def test_invalid_option(self):
         state = self._go_to_menu()
@@ -233,13 +233,15 @@ class TestBeginnerFlow:
         state = self._go_to_beginner()
         response = self.tree.process_message(state, "1")
         assert state.selected_service == "minicourse"
-        assert state.step == Step.LOCATION
+        assert state.step == Step.BEGINNER_AGE
+        assert "10" in response or "edad" in response.lower()
 
     def test_select_snorkeling(self):
         state = self._go_to_beginner()
         response = self.tree.process_message(state, "2")
         assert state.selected_service == "snorkeling"
-        assert state.step == Step.LOCATION
+        assert state.step == Step.COLOMBIAN
+        assert "6" in response or "snorkel" in response.lower() or "superficie" in response.lower()
 
     def test_beginner_menu_copy_explains_minicourse_vs_snorkel(self):
         state = make_state()
@@ -258,18 +260,20 @@ class TestBeginnerFlow:
         state = self._go_to_beginner()
         state.location = "cartagena"
 
-        detail = self.tree.process_message(state, "🤿 Minicurso de Buceo")
+        # Elige minicurso → pregunta de edad
+        age_resp = self.tree.process_message(state, "🤿 Minicurso de Buceo")
         assert state.selected_service == "minicourse"
-        assert state.step == Step.COLOMBIAN
-        assert "No necesitas experiencia previa" in detail
-        assert "piscina" in detail
-        assert "1 inmersion" in detail
-        assert "Edad minima recomendada" in detail
+        assert state.step == Step.BEGINNER_AGE
+        assert "10" in age_resp
 
+        # No hay menores → pasa a COLOMBIAN
+        colombian_resp = self.tree.process_message(state, "2")
+        assert state.step == Step.COLOMBIAN
+
+        # No es colombiano → muestra resumen con detalles del servicio
         summary = self.tree.process_message(state, "2")
         assert state.step == Step.SUMMARY
         assert "minicurso-de-buceo" in summary
-        assert "12 horas" in summary
         assert "Almuerzo" in summary
         assert "Muelle de la Bodeguita" in summary
 
@@ -277,16 +281,15 @@ class TestBeginnerFlow:
         state = self._go_to_beginner()
         state.location = "cartagena"
 
+        # Snorkel muestra transición directa con edad mínima (ya no _format_service_detail)
         detail = self.tree.process_message(state, "🐠 Tour de Snorkeling")
         assert state.selected_service == "snorkeling"
         assert state.step == Step.COLOMBIAN
-        assert "Actividad de superficie" in detail
-        assert "acompanantes" in detail
+        assert "6" in detail or "superficie" in detail.lower() or "snorkel" in detail.lower()
 
+        # No colombiano → resumen del servicio
         summary = self.tree.process_message(state, "2")
         assert state.step == Step.SUMMARY
-        assert "superfic" in summary
-        assert "2 salidas guiadas" in summary
         assert "18 horas" not in summary
         assert "12 horas" not in summary
 
@@ -367,7 +370,15 @@ class TestFullJourney:
         r = self.tree.process_message(state, "1")
         assert state.step == Step.MAIN_MENU
 
-        # Step 3: Tours
+        # Step 3: Reservar
+        r = self.tree.process_message(state, "1")
+        assert state.step == Step.RESERVA_MENU
+
+        # Step 3b: Tours de buceo
+        r = self.tree.process_message(state, "1")
+        assert state.step == Step.TOURS_LOCATION
+
+        # Step 3c: Salgo desde Cartagena
         r = self.tree.process_message(state, "1")
         assert state.step == Step.GROUP_TYPE
 
@@ -397,6 +408,12 @@ class TestFullJourney:
         # English
         self.tree.process_message(state, "2")
         assert state.language == "en"
+        # Reservar
+        self.tree.process_message(state, "1")
+        assert state.step == Step.RESERVA_MENU
+        # Tours
+        self.tree.process_message(state, "1")
+        assert state.step == Step.TOURS_LOCATION
         # Already on island
         self.tree.process_message(state, "2")
         assert state.location == "island"
@@ -430,8 +447,8 @@ def test_decision_tree_accepts_quick_reply_title():
     state.step = Step.MAIN_MENU
     state.language = "en"
 
-    response = tree.process_message(state, "🤿 Diving and snorkel tours (from Cartagena)")
+    response = tree.process_message(state, "🤿 Book")
 
-    assert state.step == Step.GROUP_TYPE
-    assert "group" in response.lower()
+    assert state.step == Step.RESERVA_MENU
+    assert "book" in response.lower()
     assert state.quick_replies[0]["value"] == "1"

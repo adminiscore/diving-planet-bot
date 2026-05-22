@@ -30,9 +30,14 @@ Read this file before changing code in the Diving Planet Bot. For a quick versio
 - `src/agents/lead_summary.py` builds structured private Chatwoot notes on escalation; `state.pending_note` holds the note until sent in `chatwoot.py`.
 - Lead notes are sent for all escalation types: keyword (`humano`, `agente`...), sensitive (medical, weather, complaints), and tree-internal escalation.
 - `chatwoot.py` now performs the real human handoff by calling `escalate_to_human()` after sending the private lead note; `pending_escalation_reason` is only cleared when Chatwoot confirms the status toggle, so failed handoffs can be retried on later activity.
-- `.claude/commands/runtests.md` provides a `/runtests` skill to run the conversation dataset (223 tests, 21 blocks) with block-level keyword filtering.
-- `chatwoot.py` auto-assigns new conversations to the owner agent (`CHATWOOT_OWNER_AGENT_ID` in `.env`) via `POST /conversations/{id}/assignments` so they appear in the "Mine" view without relying on Chatwoot UI auto-assignment. Set `CHATWOOT_OWNER_AGENT_ID=0` to disable.
+- `.claude/commands/runtests.md` provides a `/runtests` skill to run the conversation dataset (241 tests total) with block-level keyword filtering.
+- `chatwoot.py` auto-assigns new conversations to the owner agent (`CHATWOOT_OWNER_AGENT_ID` in `.env`) via `POST /conversations/{id}/assignments` AND toggles them to `open` via `POST /conversations/{id}/toggle_status` so they appear in the agent inbox instead of getting stuck in Pending. Set `CHATWOOT_OWNER_AGENT_ID=0` to disable.
+- `chatwoot.py` dedupe: incoming text messages now check `{conversation_id}:{message_id}:incoming` before processing so Chatwoot's `message_created` + `message_updated` pair for the same id no longer produces double replies. Button echoes are still suppressed via `conversation_pending_echo_titles`.
 - `supervisor.py` routing hardening: `_matches_escalation_keyword` uses word-boundary regex to prevent "persona" false positive; `_is_substantive_free_text` strips trailing punctuation so "hey?" routes to welcome; any bare greeting mid-flow (hola, hi, buenas…) resets state to WELCOME step.
+- `supervisor.py` natural-language menu navigation: `_match_quick_reply_text` compares free text against the CURRENT `state.quick_replies` (not all BUTTON_OPTIONS) and, when it confidently matches a button, feeds the button value into the decision tree. Accent-insensitive via `_strip_accents` (NFD). Question words (`cuánto/how/what`…) short-circuit to RAG to avoid hijacking real questions.
+- `supervisor.py` language-intent: `_detect_language_intent` recognises "english/ingles" and "spanish/espanol/castellano" anywhere in the message; at LANGUAGE step it picks the language and advances to MAIN_MENU, mid-conversation it switches `state.language`, acknowledges in the new language and re-shows the main menu.
+- Two-level main menu: after language selection the user picks 🤿 Reservar or ℹ️ Información; Reservar → tours-de-buceo/snorkel OR cursos PADI; Información → precios / reservas y pago / logística. New `Step.RESERVA_MENU`, `Step.INFO_MENU`, `Step.TOURS_LOCATION`, `Step.BEGINNER_AGE`.
+- Info-leaf responses (pricing/booking/logistics) append a "back to menu" hint built by `DecisionTree._back_to_menu_hint`, paired with main_menu quick replies, so users can navigate to Reservar without re-greeting.
 - RAG system prompt (ES + EN) has an explicit DIVE TO HEAL exception: disability/accessibility questions about the adaptive diving program are answered with factual program info, not escalated as medical.
 - `load_embeddings.py` now indexes `pricing.json` fully (8 origin × section pairs × 2 langs + 2 discount_policy docs = 441 total KB documents) and includes COP prices in `services.json` embeddings.
 
@@ -56,7 +61,13 @@ Read this file before changing code in the Diving Planet Bot. For a quick versio
 - Mixed groups, private services, pricing, booking/payment, **cancellation/change rules** (major KB gap — needs owner confirmation), and logistics constraints by hotel/island are still areas for systematic polishing.
 - COP pricing is now in the KB; bot needs a restart in WSL2 to serve it after the re-index run.
 - `CHATWOOT_OWNER_AGENT_ID=1` should be added to `.env` (owner agent ID confirmed via `/api/v1/profile`).
-- Next session priorities: cancellation/payment policy KB completion, PRE deployment checklist, and live E2E test of COP price answers after bot restart.
+- Next session priorities:
+  - Live E2E retest of the new menu structure (Reservar/Información), fuzzy text matching, and mid-conversation language switch in the Chatwoot widget.
+  - RAG content gaps surfaced during testing: Dive Master is missing from the "cursos" answer; output formatting of multi-section RAG answers needs review (markdown not rendering line breaks properly in the widget).
+  - Optional: bulk-assign old NULL-assignee_id conversations in dev Chatwoot DB to clean the inbox (`UPDATE conversations SET assignee_id=1 WHERE assignee_id IS NULL;`) — pending user confirmation.
+  - Cancellation/payment policy KB completion.
+  - PRE deployment checklist.
+  - Live E2E test of COP price answers after bot restart.
 
 ## Knowledge base and privacy
 
@@ -105,8 +116,11 @@ When touching Chatwoot, buttons, routing, or conversation state:
 - Start Chatwoot: `docker compose --profile chatwoot up -d`.
 - Open `chatwood-test.html` in a browser.
 - Test `hola` → language buttons (🌎 Español / 🌐 English).
-- Click `Español` → main menu buttons.
+- Click `Español` → main menu buttons (🤿 Reservar / ℹ️ Información).
+- Type `reservar` (text instead of clicking) → must advance to RESERVA_MENU (fuzzy text match).
+- Type `in english` or `me lo puedes decir en español?` mid-conversation → must switch language and re-show main menu.
 - Send free text from a menu → RAG response without duplicate replies.
+- After a pricing/booking/logistics answer, confirm the back-to-menu hint appears and quick replies are main_menu.
 - Click through at least one full booking path.
 
 ## Where to look first

@@ -23,6 +23,9 @@ class Step(str, Enum):
     WELCOME = "welcome"
     LANGUAGE = "language"
     MAIN_MENU = "main_menu"
+    RESERVA_MENU = "reserva_menu"
+    INFO_MENU = "info_menu"
+    TOURS_LOCATION = "tours_location"
     GROUP_TYPE = "group_type"
     TOURS_EXPERIENCE = "tours_experience"
     TOURS_CERTIFIED = "tours_certified"
@@ -30,6 +33,7 @@ class Step(str, Enum):
     CERTIFIED_EXPERIENCE = "certified_experience"
     REFRESHER_INTEREST = "refresher_interest"
     TOURS_BEGINNER = "tours_beginner"
+    BEGINNER_AGE = "beginner_age"
     COURSES_MENU = "courses_menu"
     COURSES_OPEN_WATER_ORIGIN = "courses_open_water_origin"
     COURSES_OPEN_WATER_TIME = "courses_open_water_time"
@@ -143,7 +147,7 @@ def _extra_notes(service: dict, lang: str) -> str:
         if "Minicurso" in service.get("name_es", "") and "No necesitas experiencia previa" not in " ".join(parts):
             parts.append("No necesitas experiencia previa.")
         if "Snorkeling" in service.get("name_es", "") and "Actividad de superficie" not in " ".join(parts):
-            parts.append("Actividad de superficie ideal para acompanantes o personas que no quieren bucear.")
+            parts.append("Actividad de superficie ideal para acompañantes o personas que no quieren bucear.")
         if service.get("includes_night_dive") and "quitar la nocturna" not in " ".join(parts):
             parts.append("Si quieres quitar la nocturna, cambiar noches o personalizar el paquete, lo revisamos con un asesor.")
         if any("Hotel/alojamiento" in item for item in not_included) and "alojamiento no esta incluido" not in " ".join(parts):
@@ -190,7 +194,7 @@ def _extra_notes_multiline(service: dict, lang: str) -> str:
         if "Minicurso" in name_es and not any("No necesitas experiencia previa" in ln for ln in lines):
             lines.append("No necesitas experiencia previa.")
         if "Snorkeling" in name_es and not any("Actividad de superficie" in ln for ln in lines):
-            lines.append("Actividad de superficie ideal para acompanantes o personas que no quieren bucear.")
+            lines.append("Actividad de superficie ideal para acompañantes o personas que no quieren bucear.")
         if service.get("includes_night_dive") and not any("nocturna" in ln for ln in lines):
             lines.append("Si quieres quitar la nocturna, cambiar noches o personalizar el paquete, lo revisamos con un asesor.")
         if any("Hotel/alojamiento" in item for item in not_included) and not any("alojamiento no esta incluido" in ln for ln in lines):
@@ -317,7 +321,7 @@ MESSAGES = {
     "welcome": {
         "es": (
             "Hola! Bienvenido a *Diving Planet*, el primer centro de buceo "
-            "PADI 5 Estrellas de Colombia, con 30 anos de experiencia en "
+            "PADI 5 Estrellas de Colombia, con 30 años de experiencia en "
             "las Islas del Rosario, Cartagena.\n\n"
             "Selecciona tu idioma / Select your language:\n\n"
             "🌎 Español\n"
@@ -338,6 +342,30 @@ MESSAGES = {
         ),
         "en": (
             "What would you like to do?"
+        ),
+    },
+    "reserva_menu": {
+        "es": (
+            "¡Perfecto! ¿Qué te gustaría reservar?"
+        ),
+        "en": (
+            "Great! What would you like to book?"
+        ),
+    },
+    "info_menu": {
+        "es": (
+            "¿Sobre qué información tienes dudas?"
+        ),
+        "en": (
+            "What information do you need?"
+        ),
+    },
+    "tours_location": {
+        "es": (
+            "¿Desde dónde harás el tour?"
+        ),
+        "en": (
+            "Where will you depart from?"
         ),
     },
     "tours_experience": {
@@ -399,15 +427,27 @@ MESSAGES = {
     "tours_beginner": {
         "es": (
             "Perfecto! No necesitas experiencia previa.\n\n"
-            "- Si quieres *probar buceo*, elige *Minicurso de Buceo*.\n"
-            "- Si prefieres ir en superficie o acompanar a alguien, elige *Tour de Snorkeling*.\n"
-            "- Para grupos especiales o algo privado, elige *Servicio Privado*."
+            "- *Minicurso de Buceo*: si quieres *probar buceo* por primera vez (vas debajo del agua con tanque e instructor, 1 inmersión guiada).\n"
+            "- *Tour de Snorkeling*: actividad en *superficie* con mascara y aletas; ves los corales y peces sin necesidad de bucear. Ideal para acompañantes o quienes prefieren no sumergirse.\n"
+            "- *Servicio Privado*: para grupos especiales o experiencia personalizada."
         ),
         "en": (
             "Perfect! No previous experience is needed.\n\n"
-            "- If you want to *try diving*, choose *Dive Mini Course*.\n"
-            "- If you prefer staying at the surface or accompanying someone, choose *Snorkeling Tour*.\n"
-            "- For special groups or a private setup, choose *Private Service*."
+            "- *Dive Mini Course*: if you want to *try diving* for the first time (you go underwater with tank and instructor, 1 guided dive).\n"
+            "- *Snorkeling Tour*: a *surface* activity with mask and fins; you see corals and fish without going underwater. Ideal for companions or anyone who prefers not to dive.\n"
+            "- *Private Service*: for special groups or a customized experience."
+        ),
+    },
+    "beginner_age": {
+        "es": (
+            "El *Minicurso de Buceo* es ideal para quien quiere vivir la experiencia de bucear por primera vez 🤿\n\n"
+            "*Edad mínima: 10 años.*\n\n"
+            "¿Hay personas menores de 10 años en el grupo que quieran hacer el minicurso?"
+        ),
+        "en": (
+            "The *Dive Mini Course* is perfect for anyone experiencing diving for the first time 🤿\n\n"
+            "*Minimum age: 10 years.*\n\n"
+            "Are there any children under 10 in the group who want to do the minicourse?"
         ),
     },
     "courses_menu": {
@@ -541,36 +581,56 @@ BUTTON_OPTIONS = {
     },
     "main_menu": {
         "es": [
-            {"title": "🤿 Tours de buceo y snorkel (desde Cartagena)", "value": "1"},
-            {"title": "🏝️ Ya estoy en las islas", "value": "2"},
-            {"title": "📘 Cursos PADI y certificaciones", "value": "3"},
-            {"title": "💰 Precios y descuentos", "value": "4"},
-            {"title": "💳 Reserva y pagos", "value": "5"},
-            {"title": "ℹ️ Logistica y otras preguntas", "value": "6"},
-            {"title": "🧑‍💬 Hablar con un asesor", "value": "7"},
+            {"title": "🤿 Reservar", "value": "1"},
+            {"title": "ℹ️ Información", "value": "2"},
         ],
         "en": [
-            {"title": "🤿 Diving and snorkel tours (from Cartagena)", "value": "1"},
-            {"title": "🏝️ I'm already on the islands", "value": "2"},
-            {"title": "📘 PADI courses and certifications", "value": "3"},
-            {"title": "💰 Prices and discounts", "value": "4"},
-            {"title": "💳 Booking and payments", "value": "5"},
-            {"title": "ℹ️ Logistics and other questions", "value": "6"},
-            {"title": "🧑‍💬 Speak with an advisor", "value": "7"},
+            {"title": "🤿 Book", "value": "1"},
+            {"title": "ℹ️ Information", "value": "2"},
+        ],
+    },
+    "reserva_menu": {
+        "es": [
+            {"title": "🤿 Tours de buceo y snorkel", "value": "1"},
+            {"title": "📘 Cursos PADI y certificaciones", "value": "2"},
+        ],
+        "en": [
+            {"title": "🤿 Diving and snorkel tours", "value": "1"},
+            {"title": "📘 PADI courses and certifications", "value": "2"},
+        ],
+    },
+    "info_menu": {
+        "es": [
+            {"title": "💰 Precios y descuentos", "value": "1"},
+            {"title": "💳 Reservas y pago", "value": "2"},
+            {"title": "📍 Logística", "value": "3"},
+        ],
+        "en": [
+            {"title": "💰 Prices and discounts", "value": "1"},
+            {"title": "💳 Bookings and payment", "value": "2"},
+            {"title": "📍 Logistics", "value": "3"},
+        ],
+    },
+    "tours_location": {
+        "es": [
+            {"title": "🚤 Salgo desde Cartagena", "value": "1"},
+            {"title": "🏝️ Ya estoy en las islas", "value": "2"},
+        ],
+        "en": [
+            {"title": "🚤 Departing from Cartagena", "value": "1"},
+            {"title": "🏝️ Already on the islands", "value": "2"},
         ],
     },
     "group_type": {
         "es": [
-            {"title": "Solo buzos certificados", "value": "1"},
-            {"title": "Solo principiantes", "value": "2"},
-            {"title": "Grupo mixto (buceo + snorkel)", "value": "3"},
-            {"title": "Solo snorkel / acompanantes", "value": "4"},
+            {"title": "🤿 Solo buzos certificados", "value": "1"},
+            {"title": "🆕 Solo principiantes", "value": "2"},
+            {"title": "👥 Grupo mixto (buceo + snorkel)", "value": "3"},
         ],
         "en": [
-            {"title": "Only certified divers", "value": "1"},
-            {"title": "Only beginners", "value": "2"},
-            {"title": "Mixed group (diving + snorkel)", "value": "3"},
-            {"title": "Only snorkel / companions", "value": "4"},
+            {"title": "🤿 Only certified divers", "value": "1"},
+            {"title": "🆕 Only beginners", "value": "2"},
+            {"title": "👥 Mixed group (diving + snorkel)", "value": "3"},
         ],
     },
     "tours_experience": {
@@ -643,6 +703,16 @@ BUTTON_OPTIONS = {
             {"title": "🧑‍💬 Private Service", "value": "3"},
         ],
     },
+    "beginner_age": {
+        "es": [
+            {"title": "Sí", "value": "1"},
+            {"title": "No", "value": "2"},
+        ],
+        "en": [
+            {"title": "Yes", "value": "1"},
+            {"title": "No", "value": "2"},
+        ],
+    },
     "courses_menu": {
         "es": [
             {"title": "Quiero certificarme (curso Basico Open Water)", "value": "1"},
@@ -701,44 +771,44 @@ BUTTON_OPTIONS = {
     },
     "pricing_menu": {
         "es": [
-            {"title": "Precios saliendo desde Cartagena", "value": "1"},
-            {"title": "Precios si ya estoy en las islas", "value": "2"},
-            {"title": "Paquetes 5/7/9 buceos (multi-dia)", "value": "3"},
-            {"title": "Descuentos para colombianos/residentes", "value": "4"},
+            {"title": "🚤 Precios saliendo desde Cartagena", "value": "1"},
+            {"title": "🏝️ Precios si ya estoy en las islas", "value": "2"},
+            {"title": "📦 Paquetes 5/7/9 buceos (multi-día)", "value": "3"},
+            {"title": "🇨🇴 Descuentos para colombianos/residentes", "value": "4"},
         ],
         "en": [
-            {"title": "Prices departing from Cartagena", "value": "1"},
-            {"title": "Prices if I'm already on the islands", "value": "2"},
-            {"title": "5/7/9-dive multi-day packages", "value": "3"},
-            {"title": "Discounts for Colombians/residents", "value": "4"},
+            {"title": "🚤 Prices departing from Cartagena", "value": "1"},
+            {"title": "🏝️ Prices if I'm already on the islands", "value": "2"},
+            {"title": "📦 5/7/9-dive multi-day packages", "value": "3"},
+            {"title": "🇨🇴 Discounts for Colombians/residents", "value": "4"},
         ],
     },
     "booking_menu": {
         "es": [
-            {"title": "Pagar todo online", "value": "1"},
-            {"title": "Pagar 50% ahora y 50% despues", "value": "2"},
-            {"title": "Formas de pago (tarjeta / transferencia)", "value": "3"},
-            {"title": "Reservas de grupo o agencia", "value": "4"},
+            {"title": "💳 Pagar todo online", "value": "1"},
+            {"title": "🤝 Pagar 50% ahora y 50% después", "value": "2"},
+            {"title": "💰 Formas de pago (tarjeta / transferencia)", "value": "3"},
+            {"title": "👥 Reservas de grupo o agencia", "value": "4"},
         ],
         "en": [
-            {"title": "Pay everything online", "value": "1"},
-            {"title": "Pay 50% now and 50% later", "value": "2"},
-            {"title": "Payment methods (card / transfer)", "value": "3"},
-            {"title": "Group or agency bookings", "value": "4"},
+            {"title": "💳 Pay everything online", "value": "1"},
+            {"title": "🤝 Pay 50% now and 50% later", "value": "2"},
+            {"title": "💰 Payment methods (card / transfer)", "value": "3"},
+            {"title": "👥 Group or agency bookings", "value": "4"},
         ],
     },
     "logistics_menu": {
         "es": [
-            {"title": "Punto de encuentro y horarios", "value": "1"},
-            {"title": "Alojamiento en islas y recogida en hotel", "value": "2"},
-            {"title": "Que incluye / que no incluye el plan", "value": "3"},
-            {"title": "Que llevar y recomendaciones", "value": "4"},
+            {"title": "📍 Punto de encuentro y horarios", "value": "1"},
+            {"title": "🏨 Alojamiento en islas y recogida en hotel", "value": "2"},
+            {"title": "✅ Qué incluye / qué no incluye el plan", "value": "3"},
+            {"title": "🎒 Qué llevar y recomendaciones", "value": "4"},
         ],
         "en": [
-            {"title": "Meeting point and schedule", "value": "1"},
-            {"title": "Accommodation on the islands & hotel pickup", "value": "2"},
-            {"title": "What's included / not included", "value": "3"},
-            {"title": "What to bring & recommendations", "value": "4"},
+            {"title": "📍 Meeting point and schedule", "value": "1"},
+            {"title": "🏨 Accommodation on the islands & hotel pickup", "value": "2"},
+            {"title": "✅ What's included / not included", "value": "3"},
+            {"title": "🎒 What to bring & recommendations", "value": "4"},
         ],
     },
     "island_menu": {
@@ -845,6 +915,19 @@ class DecisionTree:
             return
         state.quick_replies = get_button_options(key, state.language)
 
+    @staticmethod
+    def _back_to_menu_hint(lang: str) -> str:
+        """Closing line shown after an info-tree leaf so users see they can switch branches."""
+        if lang == "es":
+            return (
+                "\n\n¿Quieres *reservar* ahora o seguir consultando *información*? "
+                "También puedes escribir tu pregunta."
+            )
+        return (
+            "\n\nWould you like to *book* now or keep checking *information*? "
+            "You can also type your question."
+        )
+
     def _service_for_location(self, service_id: str, state: ConversationState) -> str:
         if state.location == "island":
             return ISLAND_SERVICE_MAP.get(service_id, service_id)
@@ -884,6 +967,9 @@ class DecisionTree:
             Step.WELCOME: self._handle_welcome,
             Step.LANGUAGE: self._handle_language,
             Step.MAIN_MENU: self._handle_main_menu,
+            Step.RESERVA_MENU: self._handle_reserva_menu,
+            Step.INFO_MENU: self._handle_info_menu,
+            Step.TOURS_LOCATION: self._handle_tours_location,
             Step.GROUP_TYPE: self._handle_group_type,
             Step.TOURS_EXPERIENCE: self._handle_tours_experience,
             Step.TOURS_CERTIFIED: self._handle_tours_certified,
@@ -891,6 +977,7 @@ class DecisionTree:
             Step.CERTIFIED_EXPERIENCE: self._handle_certified_experience,
             Step.REFRESHER_INTEREST: self._handle_refresher_interest,
             Step.TOURS_BEGINNER: self._handle_tours_beginner,
+            Step.BEGINNER_AGE: self._handle_beginner_age,
             Step.COURSES_MENU: self._handle_courses_menu,
             Step.COURSES_OPEN_WATER_ORIGIN: self._handle_courses_open_water_origin,
             Step.COURSES_OPEN_WATER_TIME: self._handle_courses_open_water_time,
@@ -932,49 +1019,82 @@ class DecisionTree:
         return MESSAGES["main_menu"][state.language]
 
     def _handle_main_menu(self, state: ConversationState, message: str) -> str:
-        choice = self._parse_choice(message, 7)
+        choice = self._parse_choice(message, 2)
         lang = state.language
 
         if state.history is None:
             state.history = []
 
         if choice == 1:
-            # Tours desde Cartagena: fijamos ubicacion y pedimos tipo de grupo
-            state.location = "cartagena"
-            state.step = Step.GROUP_TYPE
-            self.set_quick_replies(state, "group_type")
-            return MESSAGES["group_type"][lang]
-        elif choice == 2:
-            # Planes para quienes ya estan en las islas: fijamos ubicacion y pedimos tipo de grupo
-            state.location = "island"
-            state.step = Step.GROUP_TYPE
-            self.set_quick_replies(state, "group_type")
-            return MESSAGES["group_type"][lang]
-        elif choice == 3:
+            # Reservar: tours de buceo / cursos PADI
+            state.step = Step.RESERVA_MENU
+            self.set_quick_replies(state, "reserva_menu")
+            return MESSAGES["reserva_menu"][lang]
+        if choice == 2:
+            # Información: precios / reservas y pago / logística
+            state.step = Step.INFO_MENU
+            self.set_quick_replies(state, "info_menu")
+            return MESSAGES["info_menu"][lang]
+
+        self.set_quick_replies(state, "main_menu")
+        return MESSAGES["not_understood"][lang]
+
+    def _handle_reserva_menu(self, state: ConversationState, message: str) -> str:
+        choice = self._parse_choice(message, 2)
+        lang = state.language
+
+        if choice == 1:
+            # Tours de buceo y snorkel: primero preguntamos desde dónde sale
+            state.step = Step.TOURS_LOCATION
+            self.set_quick_replies(state, "tours_location")
+            return MESSAGES["tours_location"][lang]
+        if choice == 2:
+            # Cursos PADI y certificaciones
             state.step = Step.COURSES_MENU
             self.set_quick_replies(state, "courses_menu")
             return MESSAGES["courses_menu"][lang]
-        elif choice == 4:
+
+        self.set_quick_replies(state, "reserva_menu")
+        return MESSAGES["not_understood"][lang]
+
+    def _handle_info_menu(self, state: ConversationState, message: str) -> str:
+        choice = self._parse_choice(message, 3)
+        lang = state.language
+
+        if choice == 1:
             state.step = Step.PRICING_MENU
             self.set_quick_replies(state, "pricing_menu")
             return MESSAGES["pricing_menu"][lang]
-        elif choice == 5:
+        if choice == 2:
             state.step = Step.BOOKING_MENU
             self.set_quick_replies(state, "booking_menu")
             return MESSAGES["booking_menu"][lang]
-        elif choice == 6:
+        if choice == 3:
             state.step = Step.LOGISTICS_MENU
             self.set_quick_replies(state, "logistics_menu")
             return MESSAGES["logistics_menu"][lang]
-        elif choice == 7:
-            state.step = Step.ESCALATE
-            return MESSAGES["escalate"][lang]
+
+        self.set_quick_replies(state, "info_menu")
+        return MESSAGES["not_understood"][lang]
+
+    def _handle_tours_location(self, state: ConversationState, message: str) -> str:
+        choice = self._parse_choice(message, 2)
+        lang = state.language
+
+        if choice == 1:
+            state.location = "cartagena"
+        elif choice == 2:
+            state.location = "island"
         else:
-            self.set_quick_replies(state, "main_menu")
+            self.set_quick_replies(state, "tours_location")
             return MESSAGES["not_understood"][lang]
 
+        state.step = Step.GROUP_TYPE
+        self.set_quick_replies(state, "group_type")
+        return MESSAGES["group_type"][lang]
+
     def _handle_group_type(self, state: ConversationState, message: str) -> str:
-        choice = self._parse_choice(message, 4)
+        choice = self._parse_choice(message, 3)
         lang = state.language
 
         if choice == 1:
@@ -983,13 +1103,13 @@ class DecisionTree:
             state.step = Step.TOURS_CERTIFIED
             self.set_quick_replies(state, "tours_certified")
             return MESSAGES["tours_certified"][lang]
-        elif choice == 2:
-            # Solo principiantes
+        if choice == 2:
+            # Solo principiantes (incluye snorkel y minicurso)
             state.is_certified = False
             state.step = Step.TOURS_BEGINNER
             self.set_quick_replies(state, "tours_beginner")
             return MESSAGES["tours_beginner"][lang]
-        elif choice == 3:
+        if choice == 3:
             # Grupo mixto: explicamos como funciona y derivamos a humano
             state.step = Step.ESCALATE
             state.quick_replies = []
@@ -999,9 +1119,9 @@ class DecisionTree:
                     "podemos combinar actividades en un mismo tour:\n\n"
                     "- Todos viajan juntos Cartagena ↔ Islas y comparten base y almuerzo.\n"
                     "- Durante las actividades, los snorkelers pueden ir en otra lancha por seguridad.\n"
-                    "- Cada subgrupo elige su plan (2 buceos, paquete de varios dias, minicurso o snorkel).\n\n"
-                    "Como se trata de una reserva mas personalizada, te paso con un asesor para afinar "
-                    "fechas, cupos y precios segun tu grupo.\n\n"
+                    "- Cada subgrupo elige su plan (2 buceos, paquete de varios días, minicurso o snorkel).\n\n"
+                    "Como se trata de una reserva más personalizada, te paso con un asesor para afinar "
+                    "fechas, cupos y precios según tu grupo.\n\n"
                     + MESSAGES["escalate"][lang]
                 )
             return (
@@ -1014,13 +1134,6 @@ class DecisionTree:
                 "confirm dates, availability and pricing for your group.\n\n"
                 + MESSAGES["escalate"][lang]
             )
-        elif choice == 4:
-            # Solo snorkel / acompanantes: usamos el plan de snorkel directamente
-            state.is_certified = False
-            state.selected_service = self._service_for_location("snorkeling", state)
-            state.step = Step.COLOMBIAN
-            self.set_quick_replies(state, "colombian")
-            return self._format_service_detail(state) + "\n\n" + MESSAGES["colombian"][lang]
 
         self.set_quick_replies(state, "group_type")
         return MESSAGES["not_understood"][lang]
@@ -1167,41 +1280,86 @@ class DecisionTree:
     def _handle_tours_beginner(self, state: ConversationState, message: str) -> str:
         choice = self._parse_choice(message, 3)
         lang = state.language
-        service_map = {
-            1: self._service_for_location("minicourse", state),
-            2: self._service_for_location("snorkeling", state),
-            3: "private",
-        }
 
-        if choice in service_map:
-            state.selected_service = service_map[choice]
-            if state.selected_service == "private":
-                state.step = Step.ESCALATE
-                state.quick_replies = []
-                if lang == "es":
-                    return (
-                        "Perfecto. Para un *servicio privado* necesitamos revisar fecha, numero de personas, "
-                        "nivel de experiencia, si habra snorkelers/acompanantes y preferencias de horario.\n\n"
-                        + MESSAGES["escalate"][lang]
-                    )
+        if choice == 1:
+            # Minicurso: verificar edad minima antes de continuar
+            state.selected_service = self._service_for_location("minicourse", state)
+            state.step = Step.BEGINNER_AGE
+            self.set_quick_replies(state, "beginner_age")
+            return MESSAGES["beginner_age"][lang]
+
+        if choice == 2:
+            # Snorkel: transicion directa con nota de edad minima, sin mostrar detalle aun
+            state.selected_service = self._service_for_location("snorkeling", state)
+            state.step = Step.COLOMBIAN
+            self.set_quick_replies(state, "colombian")
+            if lang == "es":
                 return (
-                    "Perfect. For a *private service* we need to review the date, group size, experience level, "
-                    "whether there will be snorkelers/companions, and schedule preferences.\n\n"
+                    "El *Tour de Snorkeling* es ideal para explorar las Islas del Rosario "
+                    "en la superficie 🐠\n\n"
+                    "*Edad mínima: 6 años.*\n\n"
+                    + MESSAGES["colombian"][lang]
+                )
+            return (
+                "The *Snorkeling Tour* is perfect for exploring the Rosario Islands "
+                "from the surface 🐠\n\n"
+                "*Minimum age: 6 years.*\n\n"
+                + MESSAGES["colombian"][lang]
+            )
+
+        if choice == 3:
+            state.selected_service = "private"
+            state.step = Step.ESCALATE
+            state.quick_replies = []
+            if lang == "es":
+                return (
+                    "Perfecto. Para un *servicio privado* necesitamos revisar fecha, numero de personas, "
+                    "nivel de experiencia, si habrá snorkelers/acompañantes y preferencias de horario.\n\n"
                     + MESSAGES["escalate"][lang]
                 )
-            # Si ya conocemos la ubicacion (Cartagena o islas), mostramos el detalle del plan y preguntamos colombiano
-            if state.location:
-                state.selected_service = self._service_for_location(state.selected_service, state)
-                state.step = Step.COLOMBIAN
-                self.set_quick_replies(state, "colombian")
-                return self._format_service_detail(state) + "\n\n" + MESSAGES["colombian"][lang]
+            return (
+                "Perfect. For a *private service* we need to review the date, group size, experience level, "
+                "whether there will be snorkelers/companions, and schedule preferences.\n\n"
+                + MESSAGES["escalate"][lang]
+            )
 
-            state.step = Step.LOCATION
-            self.set_quick_replies(state, "location")
-            return MESSAGES["location"][lang]
-        else:
-            self.set_quick_replies(state, "tours_beginner")
-            return MESSAGES["not_understood"][lang]
+        self.set_quick_replies(state, "tours_beginner")
+        return MESSAGES["not_understood"][lang]
+
+    def _handle_beginner_age(self, state: ConversationState, message: str) -> str:
+        choice = self._parse_choice(message, 2)
+        lang = state.language
+
+        if choice == 1:
+            # Hay menores de 10 años: explicar Bubble Makers y derivar a asesor
+            state.step = Step.ESCALATE
+            state.quick_replies = []
+            if lang == "es":
+                return (
+                    "Para niños de *8 a 10 años* tenemos el programa *Bubble Makers*: una experiencia "
+                    "de buceo en piscina y aguas poco profundas (máx. 2 m), diseñada especialmente para "
+                    "niños. Es diferente al minicurso regular.\n\n"
+                    "Para coordinar disponibilidad y detalles según las edades del grupo, "
+                    "te paso con un asesor.\n\n"
+                    + MESSAGES["escalate"][lang]
+                )
+            return (
+                "For children aged *8 to 10 years* we offer the *Bubble Makers* program: a diving "
+                "experience in a pool and shallow water (max. 2 m), specially designed for children. "
+                "This is different from the regular minicourse.\n\n"
+                "To arrange availability and details for the group's age range, "
+                "I will connect you with an advisor.\n\n"
+                + MESSAGES["escalate"][lang]
+            )
+
+        if choice == 2:
+            # Todos tienen 10+ años: continuar con flujo normal hacia resumen
+            state.step = Step.COLOMBIAN
+            self.set_quick_replies(state, "colombian")
+            return MESSAGES["colombian"][lang]
+
+        self.set_quick_replies(state, "beginner_age")
+        return MESSAGES["not_understood"][lang]
 
     def _handle_pricing_menu(self, state: ConversationState, message: str) -> str:
         choice = self._parse_choice(message, 4)
@@ -1299,7 +1457,7 @@ class DecisionTree:
         # Tras responder, volvemos al menu principal
         state.step = Step.MAIN_MENU
         self.set_quick_replies(state, "main_menu")
-        return response
+        return response + self._back_to_menu_hint(lang)
 
     def _handle_island_menu(self, state: ConversationState, message: str) -> str:
         choice = self._parse_choice(message, 12)
@@ -1564,7 +1722,7 @@ class DecisionTree:
             else:  # choice == 4
                 response = (
                     "Para *grupos y agencias* podemos generar enlaces de pago separados (buceo, minicurso, snorkel, "
-                    "acompanantes) o coordinar una reserva centralizada.\n\n"
+                    "acompañantes) o coordinar una reserva centralizada.\n\n"
                     "Un asesor revisara fechas, numero de personas y necesidades especiales antes de confirmar."
                 )
         else:
@@ -1595,7 +1753,7 @@ class DecisionTree:
 
         state.step = Step.MAIN_MENU
         self.set_quick_replies(state, "main_menu")
-        return response
+        return response + self._back_to_menu_hint(lang)
 
     def _handle_logistics_menu(self, state: ConversationState, message: str) -> str:
         choice = self._parse_choice(message, 4)
@@ -1700,7 +1858,7 @@ class DecisionTree:
 
         state.step = Step.MAIN_MENU
         self.set_quick_replies(state, "main_menu")
-        return response
+        return response + self._back_to_menu_hint(lang)
 
     def _handle_courses_menu(self, state: ConversationState, message: str) -> str:
         choice = self._parse_choice(message, 4)
@@ -2090,7 +2248,7 @@ class DecisionTree:
         min_age = service.get("min_age")
         if min_age is not None:
             if lang == "es":
-                extra += f"\n\n*Edad minima recomendada*: {min_age} anos."
+                extra += f"\n\n*Edad mínima recomendada*: {min_age} años."
             else:
                 extra += f"\n\n*Recommended minimum age*: {min_age} years."
 
@@ -2194,6 +2352,11 @@ class DecisionTree:
             lines.append(f"⏱ Duracion: {service['duration_es']}")
             lines.append("")
 
+            min_age = service.get("min_age")
+            if min_age is not None:
+                lines.append(f"👶 Edad mínima: {min_age} años")
+                lines.append("")
+
             # Bloque incluye: sin línea en blanco entre el título y el primer ítem
             lines.append("✅ Incluye:")
             for item in includes_items:
@@ -2256,10 +2419,14 @@ class DecisionTree:
             ]
             includes_block = "\n".join(f"✅ {item}" for item in includes_items)
 
+            min_age = service.get("min_age")
+            min_age_line = f"\n👶 *Minimum age*: {min_age} years" if min_age is not None else ""
+
             summary = (
                 "Perfect! Here's your summary:\n\n"
                 f"🤿 *Service*: {name}\n"
-                f"⏱ *Duration*: {service['duration_en']}\n"
+                f"⏱ *Duration*: {service['duration_en']}"
+                f"{min_age_line}\n"
                 f"✅ *Includes*:\n{includes_block}\n\n"
                 f"📍 *Departure*: {departure}"
                 f"{meeting_note}\n"

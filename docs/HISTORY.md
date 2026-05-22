@@ -1,6 +1,20 @@
 History
 =======
 
+0.14.0 - (2026-05-22)
+---------------------
+* Restructure top-level menu into two branches: 🤿 Reservar (tours / cursos PADI) and ℹ️ Información (precios / reservas y pago / logística). "Hablar con asesor" remains available via escalation keyword.
+* Add `TOURS_LOCATION` step inside the booking branch ("¿Desde dónde harás el tour?") and a `BEGINNER_AGE` qualifier (Bubble Makers vs. 10-year minimum) for the minicourse path.
+* Add fuzzy text-to-button matching: typing a button title (e.g. "reservar", "información", "book") triggers the same action as clicking; matching is accent-insensitive so "informacion" maps to "Información". Question words ("cuánto", "how"…) keep their messages on the RAG path.
+* Add language-intent detection: "in english", "spanish please", "me lo puedes decir en español?" switch language both at the language step and mid-conversation, acknowledging in the new language and re-showing the main menu.
+* Append a back-to-menu hint at the end of pricing / booking / logistics responses so users can navigate to Reservar without re-greeting.
+* Add emojis to pricing, booking, and logistics quick-reply buttons.
+* Fix duplicate-message bug: incoming text webhooks are now dedupe-checked so Chatwoot's `message_created` + `message_updated` pair for the same id no longer produces double replies.
+* New conversations are now auto-toggled to `open` (in addition to being assigned to the owner agent) so they appear in the agent's inbox instead of getting stuck in Pending.
+* Fix multiple accent / ñ typos across decision-tree messages (años, niños, acompañantes, mínima, según, multi-día, qué incluye, qué llevar…).
+* Update `chatwood-test.html` websiteToken to the active Diving Planet Web inbox token.
+* 17 new conversation tests for fuzzy matching, accent-insensitive matching, language switching, and the back-to-menu hint (full suite: 241 tests).
+
 0.13.1 - (2026-05-20)
 ---------------------
 * Refine booking flow: ask certified divers about last dive recency, then Colombian status, then show the service summary.
