@@ -30,7 +30,7 @@ Read this file before changing code in the Diving Planet Bot. For a quick versio
 - `src/agents/lead_summary.py` builds structured private Chatwoot notes on escalation; `state.pending_note` holds the note until sent in `chatwoot.py`.
 - Lead notes are sent for all escalation types: keyword (`humano`, `agente`...), sensitive (medical, weather, complaints), and tree-internal escalation.
 - `chatwoot.py` now performs the real human handoff by calling `escalate_to_human()` after sending the private lead note; `pending_escalation_reason` is only cleared when Chatwoot confirms the status toggle, so failed handoffs can be retried on later activity.
-- `.claude/commands/runtests.md` provides a `/runtests` skill to run the conversation dataset (241 tests total) with block-level keyword filtering.
+- `.claude/commands/runtests.md` provides a `/runtests` skill to run the conversation dataset (253 tests total) with block-level keyword filtering.
 - `chatwoot.py` auto-assigns new conversations to the owner agent (`CHATWOOT_OWNER_AGENT_ID` in `.env`) via `POST /conversations/{id}/assignments` AND toggles them to `open` via `POST /conversations/{id}/toggle_status` so they appear in the agent inbox instead of getting stuck in Pending. Set `CHATWOOT_OWNER_AGENT_ID=0` to disable.
 - `chatwoot.py` dedupe: incoming text messages now check `{conversation_id}:{message_id}:incoming` before processing so Chatwoot's `message_created` + `message_updated` pair for the same id no longer produces double replies. Button echoes are still suppressed via `conversation_pending_echo_titles`.
 - `supervisor.py` routing hardening: `_matches_escalation_keyword` uses word-boundary regex to prevent "persona" false positive; `_is_substantive_free_text` strips trailing punctuation so "hey?" routes to welcome; any bare greeting mid-flow (hola, hi, buenas…) resets state to WELCOME step.
@@ -38,6 +38,8 @@ Read this file before changing code in the Diving Planet Bot. For a quick versio
 - `supervisor.py` language-intent: `_detect_language_intent` recognises "english/ingles" and "spanish/espanol/castellano" anywhere in the message; at LANGUAGE step it picks the language and advances to MAIN_MENU, mid-conversation it switches `state.language`, acknowledges in the new language and re-shows the main menu.
 - Two-level main menu: after language selection the user picks 🤿 Reservar or ℹ️ Información; Reservar → tours-de-buceo/snorkel OR cursos PADI; Información → precios / reservas y pago / logística. New `Step.RESERVA_MENU`, `Step.INFO_MENU`, `Step.TOURS_LOCATION`, `Step.BEGINNER_AGE`.
 - Info-leaf responses (pricing/booking/logistics) append a "back to menu" hint built by `DecisionTree._back_to_menu_hint`, paired with main_menu quick replies, so users can navigate to Reservar without re-greeting.
+- Reservar branch has explicit "🔙 Volver" buttons (value=`back`) on every screen (reserva_menu, tours_location, group_type, tours_certified incl. island variant, tours_beginner, beginner_age, courses_menu, courses_open_water_origin, courses_open_water_time, courses_advanced_menu). Yes/no qualifier screens (certified_last_dive, certified_experience, refresher_interest) intentionally omit the back button — they are flow control, not branch choices.
+- `supervisor.py` splits menu keywords: `MENU_KEYWORDS` (`menu/inicio/start/opciones`) resets to MAIN_MENU; `BACK_KEYWORDS` (`volver/back/atras/atrás/regresar`) goes ONE STEP up via the `BACK_STEP` map (`_go_back_one_step`). When the current step has no mapping (e.g. SUMMARY/FREE_TEXT) the back keyword falls back to MAIN_MENU. The fuzzy text-to-button matcher routes "back" matches through the same back handler so the button works whether the user clicks it or types its title.
 - RAG system prompt (ES + EN) has an explicit DIVE TO HEAL exception: disability/accessibility questions about the adaptive diving program are answered with factual program info, not escalated as medical.
 - `load_embeddings.py` now indexes `pricing.json` fully (8 origin × section pairs × 2 langs + 2 discount_policy docs = 441 total KB documents) and includes COP prices in `services.json` embeddings.
 
@@ -121,6 +123,8 @@ When touching Chatwoot, buttons, routing, or conversation state:
 - Type `in english` or `me lo puedes decir en español?` mid-conversation → must switch language and re-show main menu.
 - Send free text from a menu → RAG response without duplicate replies.
 - After a pricing/booking/logistics answer, confirm the back-to-menu hint appears and quick replies are main_menu.
+- At any Reservar step, click `🔙 Volver` → must go ONE step up (e.g., TOURS_CERTIFIED → GROUP_TYPE), not all the way to MAIN_MENU.
+- Type `volver` or `atrás` mid-Reservar → same one-step-up behaviour as the button.
 - Click through at least one full booking path.
 
 ## Where to look first

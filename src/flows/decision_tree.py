@@ -460,6 +460,34 @@ MESSAGES = {
             "All combine online theory + island practice."
         ),
     },
+    "courses_open_water_origin": {
+        "es": (
+            "Perfecto, vamos a ver tu curso Open Water.\n\n"
+            "Primero, ¿desde dónde harías la parte práctica?"
+        ),
+        "en": (
+            "Great, let's check your Open Water course.\n\n"
+            "First, where would you do the practical part?"
+        ),
+    },
+    "courses_open_water_time": {
+        "es": (
+            "¿Tienes al menos *2 días completos* para hacer la parte práctica del curso?"
+        ),
+        "en": (
+            "Do you have at least *2 full days* for the practical part of the course?"
+        ),
+    },
+    "courses_advanced_menu": {
+        "es": (
+            "Estos son nuestros cursos PADI avanzados y profesionales.\n"
+            "Elige el que más te interese."
+        ),
+        "en": (
+            "These are our advanced and professional PADI courses.\n"
+            "Choose the one you are most interested in."
+        ),
+    },
     "group_type": {
         "es": (
             "Genial, cuentame como es tu grupo:\n"
@@ -593,10 +621,12 @@ BUTTON_OPTIONS = {
         "es": [
             {"title": "🤿 Tours de buceo y snorkel", "value": "1"},
             {"title": "📘 Cursos PADI y certificaciones", "value": "2"},
+            {"title": "🔙 Volver al menú principal", "value": "back"},
         ],
         "en": [
             {"title": "🤿 Diving and snorkel tours", "value": "1"},
             {"title": "📘 PADI courses and certifications", "value": "2"},
+            {"title": "🔙 Back to main menu", "value": "back"},
         ],
     },
     "info_menu": {
@@ -615,10 +645,12 @@ BUTTON_OPTIONS = {
         "es": [
             {"title": "🚤 Salgo desde Cartagena", "value": "1"},
             {"title": "🏝️ Ya estoy en las islas", "value": "2"},
+            {"title": "🔙 Volver", "value": "back"},
         ],
         "en": [
             {"title": "🚤 Departing from Cartagena", "value": "1"},
             {"title": "🏝️ Already on the islands", "value": "2"},
+            {"title": "🔙 Back", "value": "back"},
         ],
     },
     "group_type": {
@@ -626,11 +658,13 @@ BUTTON_OPTIONS = {
             {"title": "🤿 Solo buzos certificados", "value": "1"},
             {"title": "🆕 Solo principiantes", "value": "2"},
             {"title": "👥 Grupo mixto (buceo + snorkel)", "value": "3"},
+            {"title": "🔙 Volver", "value": "back"},
         ],
         "en": [
             {"title": "🤿 Only certified divers", "value": "1"},
             {"title": "🆕 Only beginners", "value": "2"},
             {"title": "👥 Mixed group (diving + snorkel)", "value": "3"},
+            {"title": "🔙 Back", "value": "back"},
         ],
     },
     "tours_experience": {
@@ -652,6 +686,7 @@ BUTTON_OPTIONS = {
             {"title": "🤿 7 Buceos - 3 dias", "value": "3"},
             {"title": "🤿 9 Buceos - 4 dias", "value": "4"},
             {"title": "🧑‍💬 Servicio Privado", "value": "5"},
+            {"title": "🔙 Volver", "value": "back"},
         ],
         "en": [
             {"title": "🤿 2 Dives - 1 day", "value": "1"},
@@ -659,6 +694,7 @@ BUTTON_OPTIONS = {
             {"title": "🤿 7 Dives - 3 days", "value": "3"},
             {"title": "🤿 9 Dives - 4 days", "value": "4"},
             {"title": "🧑‍💬 Private Service", "value": "5"},
+            {"title": "🔙 Back", "value": "back"},
         ],
     },
     "certified_last_dive": {
@@ -696,21 +732,25 @@ BUTTON_OPTIONS = {
             {"title": "🤿 Minicurso de Buceo", "value": "1"},
             {"title": "🐠 Tour de Snorkeling", "value": "2"},
             {"title": "🧑‍💬 Servicio Privado", "value": "3"},
+            {"title": "🔙 Volver", "value": "back"},
         ],
         "en": [
             {"title": "🤿 Dive Mini Course", "value": "1"},
             {"title": "🐠 Snorkeling Tour", "value": "2"},
             {"title": "🧑‍💬 Private Service", "value": "3"},
+            {"title": "🔙 Back", "value": "back"},
         ],
     },
     "beginner_age": {
         "es": [
             {"title": "Sí", "value": "1"},
             {"title": "No", "value": "2"},
+            {"title": "🔙 Volver", "value": "back"},
         ],
         "en": [
             {"title": "Yes", "value": "1"},
             {"title": "No", "value": "2"},
+            {"title": "🔙 Back", "value": "back"},
         ],
     },
     "courses_menu": {
@@ -719,32 +759,38 @@ BUTTON_OPTIONS = {
             {"title": "Quiero otro curso PADI (Avanzado / Rescate / Dive Master)", "value": "2"},
             {"title": "Especialidades PADI", "value": "3"},
             {"title": "Ya empece un curso en otro centro (referral / reactivate)", "value": "4"},
+            {"title": "🔙 Volver", "value": "back"},
         ],
         "en": [
             {"title": "I want to get certified (Open Water)", "value": "1"},
             {"title": "I want another PADI course (Advanced / Rescue / Divemaster)", "value": "2"},
             {"title": "PADI specialties", "value": "3"},
             {"title": "I already started a course elsewhere (referral / reactivate)", "value": "4"},
+            {"title": "🔙 Back", "value": "back"},
         ],
     },
     "courses_open_water_origin": {
         "es": [
             {"title": "🚤 Salgo desde Cartagena", "value": "1"},
             {"title": "🏝️ Ya estoy en las islas", "value": "2"},
+            {"title": "🔙 Volver", "value": "back"},
         ],
         "en": [
             {"title": "🚤 Departing from Cartagena", "value": "1"},
             {"title": "🏝️ Already on the islands", "value": "2"},
+            {"title": "🔙 Back", "value": "back"},
         ],
     },
     "courses_open_water_time": {
         "es": [
             {"title": "Si, tengo al menos 2 dias completos", "value": "1"},
             {"title": "No estoy seguro / tengo menos tiempo", "value": "2"},
+            {"title": "🔙 Volver", "value": "back"},
         ],
         "en": [
             {"title": "Yes, I have at least 2 full days", "value": "1"},
             {"title": "Not sure / I have less time", "value": "2"},
+            {"title": "🔙 Back", "value": "back"},
         ],
     },
     "courses_advanced_menu": {
@@ -757,6 +803,7 @@ BUTTON_OPTIONS = {
             {"title": "🌿 Naturalista", "value": "6"},
             {"title": "⚖️ Flotabilidad", "value": "7"},
             {"title": "🫧 Nitrox", "value": "8"},
+            {"title": "🔙 Volver", "value": "back"},
         ],
         "en": [
             {"title": "📘 Advanced Course", "value": "1"},
@@ -767,6 +814,7 @@ BUTTON_OPTIONS = {
             {"title": "🌿 Naturalist", "value": "6"},
             {"title": "⚖️ Buoyancy", "value": "7"},
             {"title": "🫧 Nitrox", "value": "8"},
+            {"title": "🔙 Back", "value": "back"},
         ],
     },
     "pricing_menu": {
@@ -941,6 +989,7 @@ class DecisionTree:
                 {"title": "🤿 5 buceos - 2 dias", "value": "3"},
                 {"title": "🤿 7 buceos - 3 dias", "value": "4"},
                 {"title": "🧑‍💬 Servicio Privado", "value": "5"},
+                {"title": "🔙 Volver", "value": "back"},
             ]
         return [
             {"title": "🤿 2 dives - 1 day", "value": "1"},
@@ -948,6 +997,7 @@ class DecisionTree:
             {"title": "🤿 5 dives - 2 days", "value": "3"},
             {"title": "🤿 7 dives - 3 days", "value": "4"},
             {"title": "🧑‍💬 Private Service", "value": "5"},
+            {"title": "🔙 Back", "value": "back"},
         ]
 
     def process_message(self, state: ConversationState, message: str) -> str:

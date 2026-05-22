@@ -54,10 +54,31 @@ MENU_STEPS = {
     Step.COLOMBIAN,
 }
 
-# Keywords that indicate the user wants to go back to the menu
+# Keywords that send the user all the way back to the main menu.
 MENU_KEYWORDS = {
     "menu", "menú", "inicio", "start", "opciones", "options",
-    "volver", "back", "atras", "atrás",
+}
+
+# Keywords that take the user one step UP in the decision tree (see BACK_STEP).
+BACK_KEYWORDS = {
+    "volver", "back", "atras", "atrás", "regresar",
+}
+
+# For each step inside the Reservar branch, the (previous_step, quick_reply_key)
+# to use when the user clicks "🔙 Volver" or types a back keyword. Steps that
+# are not listed fall back to MAIN_MENU.
+BACK_STEP: dict[Step, tuple[Step, str]] = {
+    Step.RESERVA_MENU: (Step.MAIN_MENU, "main_menu"),
+    Step.INFO_MENU: (Step.MAIN_MENU, "main_menu"),
+    Step.TOURS_LOCATION: (Step.RESERVA_MENU, "reserva_menu"),
+    Step.GROUP_TYPE: (Step.TOURS_LOCATION, "tours_location"),
+    Step.TOURS_CERTIFIED: (Step.GROUP_TYPE, "group_type"),
+    Step.TOURS_BEGINNER: (Step.GROUP_TYPE, "group_type"),
+    Step.BEGINNER_AGE: (Step.TOURS_BEGINNER, "tours_beginner"),
+    Step.COURSES_MENU: (Step.RESERVA_MENU, "reserva_menu"),
+    Step.COURSES_OPEN_WATER_ORIGIN: (Step.COURSES_MENU, "courses_menu"),
+    Step.COURSES_OPEN_WATER_TIME: (Step.COURSES_OPEN_WATER_ORIGIN, "courses_open_water_origin"),
+    Step.COURSES_ADVANCED_MENU: (Step.COURSES_MENU, "courses_menu"),
 }
 
 # Keywords that indicate escalation to a human
@@ -191,6 +212,19 @@ def _match_quick_reply_text(state: ConversationState, message: str) -> str | Non
             best_value = reply.get("value")
 
     return best_value
+
+
+def _go_back_one_step(state: ConversationState) -> str:
+    """Move state one step up in the decision tree and return the previous prompt.
+
+    Falls back to MAIN_MENU when the current step has no mapping in BACK_STEP.
+    """
+    from src.flows.decision_tree import MESSAGES
+
+    target_step, qr_key = BACK_STEP.get(state.step, (Step.MAIN_MENU, "main_menu"))
+    state.step = target_step
+    decision_tree.set_quick_replies(state, qr_key)
+    return MESSAGES[qr_key][state.language]
 
 
 def _matches_escalation_keyword(msg_lower: str) -> bool:
@@ -599,6 +633,11 @@ async def route_message(state: ConversationState, message: str) -> str:
         logger.info(f"[SUPERVISOR] Menu reset triggered by keyword")
         return MESSAGES["main_menu"][state.language]
 
+    # Step-back: "🔙 Volver" button (value="back") or back keyword
+    if msg_lower == "back" or msg_lower in BACK_KEYWORDS:
+        logger.info(f"[SUPERVISOR] Back navigation from step={state.step.value}")
+        return _go_back_one_step(state)
+
     # Greeting at any step (except the very first WELCOME) → restart welcome / language selection.
     # We include LANGUAGE here so that a bare "hola" / "hi" at the language step re-shows the
     # welcome screen instead of auto-selecting Spanish (which felt unexpected to users).
@@ -648,6 +687,9 @@ async def route_message(state: ConversationState, message: str) -> str:
         # Free text that clearly matches one of the current quick-reply buttons
         # is treated as if the user clicked that button.
         matched_value = _match_quick_reply_text(state, message)
+        if matched_value == "back":
+            logger.info(f"[SUPERVISOR] Back via quick-reply text from step={state.step.value}")
+            return _go_back_one_step(state)
         if matched_value is not None:
             response = decision_tree.process_message(state, matched_value)
             if state.step == Step.ESCALATE and not state.pending_note:

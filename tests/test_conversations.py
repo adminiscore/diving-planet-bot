@@ -327,6 +327,114 @@ async def test_user_can_reserve_after_info_leaf_without_greeting():
     assert state.step == Step.RESERVA_MENU
 
 
+# ---------------------------------------------------------------------------
+# Back navigation in the Reservar branch (button value="back" or keyword)
+# ---------------------------------------------------------------------------
+
+@pytest.mark.asyncio
+async def test_back_button_value_from_reserva_menu_returns_to_main_menu():
+    state = await reach_main_menu("es")
+    await route_message(state, "1")  # RESERVA_MENU
+    assert state.step == Step.RESERVA_MENU
+    await route_message(state, "back")  # Chatwoot sends value="back" when button is clicked
+    assert state.step == Step.MAIN_MENU
+
+
+@pytest.mark.asyncio
+async def test_back_button_value_from_tours_location_returns_to_reserva_menu():
+    state = await reach_main_menu("es")
+    await send(state, "1", "1")  # RESERVA_MENU → TOURS_LOCATION
+    assert state.step == Step.TOURS_LOCATION
+    await route_message(state, "back")
+    assert state.step == Step.RESERVA_MENU
+
+
+@pytest.mark.asyncio
+async def test_back_button_value_from_group_type_returns_to_tours_location():
+    state = await reach_group_type()
+    await route_message(state, "back")
+    assert state.step == Step.TOURS_LOCATION
+
+
+@pytest.mark.asyncio
+async def test_back_button_value_from_tours_certified_returns_to_group_type():
+    state = await reach_group_type()
+    await route_message(state, "1")  # → TOURS_CERTIFIED
+    assert state.step == Step.TOURS_CERTIFIED
+    await route_message(state, "back")
+    assert state.step == Step.GROUP_TYPE
+
+
+@pytest.mark.asyncio
+async def test_back_button_value_from_tours_beginner_returns_to_group_type():
+    state = await reach_group_type()
+    await route_message(state, "2")  # → TOURS_BEGINNER
+    assert state.step == Step.TOURS_BEGINNER
+    await route_message(state, "back")
+    assert state.step == Step.GROUP_TYPE
+
+
+@pytest.mark.asyncio
+async def test_back_button_value_from_beginner_age_returns_to_tours_beginner():
+    state = await reach_group_type()
+    await send(state, "2", "1")  # TOURS_BEGINNER → BEGINNER_AGE (minicurso)
+    assert state.step == Step.BEGINNER_AGE
+    await route_message(state, "back")
+    assert state.step == Step.TOURS_BEGINNER
+
+
+@pytest.mark.asyncio
+async def test_back_button_value_from_courses_menu_returns_to_reserva_menu():
+    state = await reach_courses_menu()
+    await route_message(state, "back")
+    assert state.step == Step.RESERVA_MENU
+
+
+@pytest.mark.asyncio
+async def test_back_button_value_from_courses_advanced_menu_returns_to_courses_menu():
+    state = await reach_courses_menu()
+    await route_message(state, "2")  # → COURSES_ADVANCED_MENU
+    assert state.step == Step.COURSES_ADVANCED_MENU
+    await route_message(state, "back")
+    assert state.step == Step.COURSES_MENU
+
+
+@pytest.mark.asyncio
+async def test_back_text_volver_from_tours_certified_returns_to_group_type():
+    """Typing 'volver' (text, not button click) at TOURS_CERTIFIED goes back one step."""
+    state = await reach_group_type()
+    await route_message(state, "1")
+    assert state.step == Step.TOURS_CERTIFIED
+    await route_message(state, "volver")
+    assert state.step == Step.GROUP_TYPE
+
+
+@pytest.mark.asyncio
+async def test_back_button_present_in_reservar_quick_replies():
+    state = await reach_main_menu("es")
+    await route_message(state, "1")  # RESERVA_MENU
+    titles = [qr["title"] for qr in state.quick_replies]
+    assert any("Volver" in t or "Back" in t for t in titles)
+
+
+@pytest.mark.asyncio
+async def test_back_button_not_present_in_info_menu():
+    """Info branch keeps the existing back-to-menu hint approach; no explicit back button there."""
+    state = await reach_main_menu("es")
+    await route_message(state, "2")  # INFO_MENU
+    titles = [qr["title"] for qr in state.quick_replies]
+    assert not any("Volver" in t or "Back" in t for t in titles)
+
+
+@pytest.mark.asyncio
+async def test_back_keyword_outside_reservar_branch_falls_back_to_main_menu():
+    """When back keyword is used at a step with no BACK_STEP mapping, fall back to MAIN_MENU."""
+    state = make_state()
+    state.step = Step.FREE_TEXT
+    await route_message(state, "volver")
+    assert state.step == Step.MAIN_MENU
+
+
 # ===========================================================================
 # BLOQUE 2 — TOURS CERTIFICADOS DESDE CARTAGENA
 # ===========================================================================
@@ -966,18 +1074,21 @@ async def test_keyword_menu_resets_from_deep_step():
 
 
 @pytest.mark.asyncio
-async def test_keyword_volver_resets():
+async def test_keyword_volver_goes_back_one_step():
+    """'volver' from TOURS_CERTIFIED must return to GROUP_TYPE (one step up), not MAIN_MENU."""
     state = await reach_group_type()
-    await send(state, "1")
-    resp = await route_message(state, "volver")
-    assert state.step == Step.MAIN_MENU
+    await send(state, "1")  # → TOURS_CERTIFIED
+    assert state.step == Step.TOURS_CERTIFIED
+    await route_message(state, "volver")
+    assert state.step == Step.GROUP_TYPE
 
 
 @pytest.mark.asyncio
-async def test_keyword_atras_resets():
+async def test_keyword_atras_goes_back_one_step():
+    """'atrás' from COURSES_MENU must return to RESERVA_MENU (one step up), not MAIN_MENU."""
     state = await reach_courses_menu()
-    resp = await route_message(state, "atrás")
-    assert state.step == Step.MAIN_MENU
+    await route_message(state, "atrás")
+    assert state.step == Step.RESERVA_MENU
 
 
 @pytest.mark.asyncio

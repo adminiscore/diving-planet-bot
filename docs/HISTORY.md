@@ -1,6 +1,13 @@
 History
 =======
 
+0.14.1 - (2026-05-22)
+---------------------
+* Add a "🔙 Volver" button to every step in the Reservar branch (reserva_menu, tours_location, group_type, tours_certified incl. island variant, tours_beginner, beginner_age, courses_menu, courses_open_water_origin, courses_open_water_time, courses_advanced_menu). Clicking it moves the user one step UP in the tree so changing one's mind no longer requires saying "hola" again.
+* Split menu keywords: "menu/inicio/start/opciones" still resets to MAIN_MENU; "volver/back/atras/atrás/regresar" now goes one step up (defined per-step via BACK_STEP). Falls back to MAIN_MENU when the current step has no mapping.
+* Add MESSAGES entries for courses_open_water_origin / courses_open_water_time / courses_advanced_menu so back-navigation has a prompt to show.
+* 12 new conversation tests covering back navigation from each Reservar step plus updates to the two existing 'volver/atrás' tests now asserting one-step-back semantics (suite: 253 tests).
+
 0.14.0 - (2026-05-22)
 ---------------------
 * Restructure top-level menu into two branches: 🤿 Reservar (tours / cursos PADI) and ℹ️ Información (precios / reservas y pago / logística). "Hablar con asesor" remains available via escalation keyword.
