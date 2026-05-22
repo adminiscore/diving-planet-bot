@@ -23,7 +23,7 @@ Read this file before changing code in the Diving Planet Bot. For a quick versio
 - Polling also handles missed incoming messages, with deduplication to prevent double replies.
 - Gadea expanded the decision tree, knowledge base, WhatsApp import tooling, retrieval/vector-store logic, and privacy handling.
 - RAG was reconciled to preserve PII handling and previous history-aware retrieval/fallback behavior.
-- Decision tree pricing (`PRICING_MENU`) and logistics (`LOGISTICS_MENU` + `ISLAND_MENU` / `ISLAND_HOTEL_MENU`) menus were refined based on real conversations: clearer options for salidas desde Cartagena vs. clientes ya en las islas, paquetes 5/7/9 buceos, y submenús de logística (punto de encuentro/horarios, alojamiento/recogida, qué incluye/no incluye y qué llevar). `docs/arbol_opciones_es.md` y `TODO.md` se actualizaron para reflejar estos cambios.
+- Decision tree pricing (`PRICING_MENU`) and logistics (`LOGISTICS_MENU` + `ISLAND_MENU` / `ISLAND_HOTEL_MENU`) menus were refined based on real conversations: clearer options for salidas desde Cartagena vs. clientes ya en las islas, paquetes 5/7/9 buceos (incluido ahora 9 buceos (islas) en el bloque de precios), y submenús de logística (punto de encuentro/horarios, alojamiento/recogida, qué incluye/no incluye y qué llevar). `docs/arbol_opciones_es.md` y `TODO.md` se actualizaron para reflejar estos cambios.
 - `services.json` is now the source of truth for service names, prices, inclusions, requirements, itineraries, and booking links used by the decision tree. The tree maps base services to `*_already_on_island` variants when the user is already in the islands and now exposes PADI specialties in the guided course menu.
 - Raw WhatsApp exports and backups are treated as sensitive and should stay ignored/untracked.
 - Country flag emojis (🇨🇴, 🇺🇸) do not render on Windows — replaced throughout with 🌎/🌐 for cross-platform compatibility.
@@ -50,7 +50,7 @@ Read this file before changing code in the Diving Planet Bot. For a quick versio
 - Local Chatwoot may not always emit incoming webhooks for button clicks, so the bot includes polling/deduplication logic.
 - The decision tree has recently been improved for:
   - Cartagena certified 2 dives / 1 day.
-  - Summary flow: initial summary is short and offers an optional full itinerary; the itinerary offer is handled in `Step.SUMMARY` and then transitions to `FREE_TEXT` for follow-up questions.
+  - Summary flow: initial summary is short and offers an optional full itinerary; the itinerary offer is handled in `Step.SUMMARY` and then transitions to `FREE_TEXT` for follow-up questions. 3 buceos (islas) pasó a "core split" (pide última inmersión y nacionalidad antes del resumen), igual que 2/5/7/9.
   - Cartagena beginner branch: minicourse, snorkeling, private service.
   - Cartagena certified multi-day packages: 5/7/9 dives, lodging/nocturnal notes, and refresher handling.
   - Island-based certified and beginner service variants from `services.json`.
@@ -61,7 +61,7 @@ Read this file before changing code in the Diving Planet Bot. For a quick versio
 - Use `docs/mvp-intent-matrix.md` and `docs/kb-audit-mvp.md` before expanding tree/RAG behavior.
 - `docs/infra-simple.excalidraw` contains the current minimal infrastructure scheme for team communication.
 - Mixed groups, private services, pricing, booking/payment, **cancellation/change rules** (major KB gap — needs owner confirmation), and logistics constraints by hotel/island are still areas for systematic polishing.
-- COP pricing is now in the KB; bot needs a restart in WSL2 to serve it after the re-index run.
+- COP pricing is now in the KB; bot needs a restart in WSL2 to serve it after the re-index run. Embeddings reindex done (445 docs) para incluir nuevos servicios y ajustes de precios.
 - `CHATWOOT_OWNER_AGENT_ID=1` should be added to `.env` (owner agent ID confirmed via `/api/v1/profile`).
 - Next session priorities:
   - Live E2E retest of the new menu structure (Reservar/Información), fuzzy text matching, and mid-conversation language switch in the Chatwoot widget.

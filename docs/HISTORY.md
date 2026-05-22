@@ -1,6 +1,17 @@
 History
 =======
 
+0.14.2 - (2026-05-23)
+---------------------
+* Standardize certified-diver flows: treat the 3-dives (islands) package as a core split (ask last-dive + nationality before the final summary), matching 2/5/7/9.
+* Add the 9-dives / 4 days (islands) package to the islands certified menu and to the pricing menu info (ES/EN).
+* Create two island-only services for RAG and quotes: 1-dive / 1 day (islands) and 9-dives / 4 days (islands). Keep 1-dive (islands) out of menus (by-consultation only).
+* Add Scuba Diver, Scuba Diver → Open Water, and Open Water with prior PADI e‑learning to the services catalog for RAG (no new buttons to avoid menu noise).
+* Normalize USD in JSON to two decimals; in messages display USD as integers (rounded) and COP with thousand separators.
+* Unify night-dive notes in summaries: explicitly say when a package includes a night dive; if not, say it doesn’t (ES/EN).
+* EN UI: add a checkmark to the “Includes:” label in summaries and service details for visual parity.
+* Re-index embeddings to include the new/updated services and pricing.
+
 0.14.1 - (2026-05-22)
 ---------------------
 * Add a "🔙 Volver" button to every step in the Reservar branch (reserva_menu, tours_location, group_type, tours_certified incl. island variant, tours_beginner, beginner_age, courses_menu, courses_open_water_origin, courses_open_water_time, courses_advanced_menu). Clicking it moves the user one step UP in the tree so changing one's mind no longer requires saying "hola" again.
