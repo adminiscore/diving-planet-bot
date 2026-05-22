@@ -106,10 +106,15 @@ def _format_price(service: dict) -> str:
     price = service.get("price_usd")
     normal = service.get("price_usd_normal")
     note = service.get("price_note")
+    def _round_usd_display(v):
+        try:
+            return int(round(float(v)))
+        except (TypeError, ValueError):
+            return v
     if price and normal:
-        return f"U${price} online / U${normal} normal"
+        return f"U${_round_usd_display(price)} online / U${_round_usd_display(normal)} normal"
     if price:
-        return f"U${price}"
+        return f"U${_round_usd_display(price)}"
     if note:
         return note
     return "Consultar precio actualizado en la web"
@@ -268,6 +273,7 @@ def _load_services() -> dict:
             "extra_block_en": _extra_notes_multiline(service, "en"),
             "flight_rule_es": _flight_rule(service, "es"),
             "flight_rule_en": _flight_rule(service, "en"),
+            "includes_night_dive": service.get("includes_night_dive", False),
             "web_url": service.get("url") or "https://divingplanet.org/contacto/",
             "booking_url": service.get("booking_url") or service.get("url") or "https://divingplanet.org/contacto/",
             "booking_url_island": "",
@@ -284,6 +290,7 @@ ISLAND_SERVICE_MAP = {
     "snorkeling": "snorkeling_already_on_island",
     "5_dives_2_days": "5_dives_2_days_already_on_island",
     "7_dives_3_days": "7_dives_3_days_already_on_island",
+    "9_dives_4_days": "9_dives_4_days_already_on_island",
     "open_water": "open_water_already_on_island",
     "advanced": "advanced_already_on_island",
     "fish_identification_specialty": "fish_identification_specialty_already_on_island",
@@ -988,7 +995,8 @@ class DecisionTree:
                 {"title": "🌙 3 buceos - 1 dia (incluye nocturna)", "value": "2"},
                 {"title": "🤿 5 buceos - 2 dias", "value": "3"},
                 {"title": "🤿 7 buceos - 3 dias", "value": "4"},
-                {"title": "🧑‍💬 Servicio Privado", "value": "5"},
+                {"title": "🤿 9 buceos - 4 dias", "value": "5"},
+                {"title": "🧑‍💬 Servicio Privado", "value": "6"},
                 {"title": "🔙 Volver", "value": "back"},
             ]
         return [
@@ -996,7 +1004,8 @@ class DecisionTree:
             {"title": "🌙 3 dives - 1 day (includes night dive)", "value": "2"},
             {"title": "🤿 5 dives - 2 days", "value": "3"},
             {"title": "🤿 7 dives - 3 days", "value": "4"},
-            {"title": "🧑‍💬 Private Service", "value": "5"},
+            {"title": "🤿 9 dives - 4 days", "value": "5"},
+            {"title": "🧑‍💬 Private Service", "value": "6"},
             {"title": "🔙 Back", "value": "back"},
         ]
 
@@ -1207,7 +1216,7 @@ class DecisionTree:
             return MESSAGES["not_understood"][lang]
 
     def _handle_tours_certified(self, state: ConversationState, message: str) -> str:
-        choice = self._parse_choice(message, 5)
+        choice = self._parse_choice(message, 6)
         lang = state.language
         if state.location == "island":
             service_map = {
@@ -1215,7 +1224,8 @@ class DecisionTree:
                 2: "3_dives_1_day_already_on_island",
                 3: "5_dives_2_days_already_on_island",
                 4: "7_dives_3_days_already_on_island",
-                5: "private",
+                5: "9_dives_4_days_already_on_island",
+                6: "private",
             }
         else:
             service_map = {
@@ -1246,6 +1256,7 @@ class DecisionTree:
                 "7_dives_3_days_already_on_island",
                 "9_dives_4_days",
                 "9_dives_4_days_already_on_island",
+                "3_dives_1_day_already_on_island",
             }
             if state.selected_service in core_split_services:
                 return MESSAGES["certified_last_dive"][lang]
@@ -1450,7 +1461,8 @@ class DecisionTree:
                     f"- 9 buceos 4 dias: {SERVICES['9_dives_4_days']['price']}\n\n"
                     "Si ya estas en las islas, tambien existen versiones especificas:\n"
                     f"- 5 buceos 2 dias (islas): {SERVICES['5_dives_2_days_already_on_island']['price']}\n"
-                    f"- 7 buceos 3 dias (islas): {SERVICES['7_dives_3_days_already_on_island']['price']}\n\n"
+                    f"- 7 buceos 3 dias (islas): {SERVICES['7_dives_3_days_already_on_island']['price']}\n"
+                    f"- 9 buceos 4 dias (islas): {SERVICES['9_dives_4_days_already_on_island']['price']}\n\n"
                     "En todos los casos el alojamiento en las islas se reserva aparte directamente con el hotel. "
                     "En la web veras siempre el valor actualizado y posibles promociones antes de confirmar."
                 )
@@ -1492,7 +1504,8 @@ class DecisionTree:
                     f"- 9 dives 4 days: {SERVICES['9_dives_4_days']['price']}\n\n"
                     "If you are already on the islands, there are also dedicated versions:\n"
                     f"- 5 dives 2 days (islands): {SERVICES['5_dives_2_days_already_on_island']['price']}\n"
-                    f"- 7 dives 3 days (islands): {SERVICES['7_dives_3_days_already_on_island']['price']}\n\n"
+                    f"- 7 dives 3 days (islands): {SERVICES['7_dives_3_days_already_on_island']['price']}\n"
+                    f"- 9 dives 4 days (islands): {SERVICES['9_dives_4_days_already_on_island']['price']}\n\n"
                     "Accommodation on the islands is not included and is booked directly with the hotel. "
                     "The website will always show the current amount and any promotions before you pay."
                 )
@@ -2320,7 +2333,7 @@ class DecisionTree:
                 f"🤿 *{name}*\n\n"
                 f"💰 *Price*: {price}\n"
                 f"⏱ *Duration*: {duration}\n\n"
-                f"✅ *Includes*:\n{includes_block}"
+                f"*Includes*:\n{includes_block}"
                 f"{extra}"
             )
 
@@ -2375,6 +2388,12 @@ class DecisionTree:
                 except (TypeError, ValueError):
                     return str(value)
 
+            def _fmt_usd_es(value):
+                try:
+                    return str(int(round(float(value))))
+                except (TypeError, ValueError):
+                    return str(value)
+
             if state.is_colombian and price_cop:
                 if price_cop_normal:
                     price_text = f"💰 Precio: {_fmt_cop(price_cop)} COP online / {_fmt_cop(price_cop_normal)} COP"
@@ -2382,9 +2401,9 @@ class DecisionTree:
                     price_text = f"💰 Precio: {_fmt_cop(price_cop)} COP"
             elif price_usd:
                 if price_usd_normal:
-                    price_text = f"💰 Precio: {price_usd}USD online / {price_usd_normal}USD"
+                    price_text = f"💰 Precio: {_fmt_usd_es(price_usd)}USD online / {_fmt_usd_es(price_usd_normal)}USD"
                 else:
-                    price_text = f"💰 Precio: {price_usd}USD"
+                    price_text = f"💰 Precio: {_fmt_usd_es(price_usd)}USD"
             elif price_note:
                 price_text = f"💰 Precio: {price_note}"
 
@@ -2417,6 +2436,14 @@ class DecisionTree:
             lines.append(f"📍 Salida: {departure}")
             if meeting_note:
                 lines.append(meeting_note)
+
+            # Nota de nocturna si aplica (paquetes con includes_night_dive o 3 buceos en 1 día)
+            if service.get("includes_night_dive") or service_id in {"3_dives_1_day_already_on_island"}:
+                lines.append("")
+                lines.append("🌙 Incluye buceo nocturno (bioluminiscencia)")
+            elif service.get("category") == "package":
+                lines.append("")
+                lines.append("🌙 Este paquete no incluye buceo nocturno")
 
             # Refresher, descuento y regla de vuelo, cada uno separado por una línea en blanco
             if flight_rule or state.refresher_interested or state.is_colombian:
@@ -2467,20 +2494,59 @@ class DecisionTree:
                 for item in service["includes_en"].split(",")
                 if item.strip()
             ]
-            includes_block = "\n".join(f"✅ {item}" for item in includes_items)
+            includes_block = "\n".join(item for item in includes_items)
 
             min_age = service.get("min_age")
             min_age_line = f"\n👶 *Minimum age*: {min_age} years" if min_age is not None else ""
+
+            # Price line: show COP for Colombians, otherwise USD; fall back to price_note if present
+            price_usd = service.get("price_usd")
+            price_usd_normal = service.get("price_usd_normal")
+            price_cop = service.get("price_cop")
+            price_cop_normal = service.get("price_cop_normal")
+            price_note = service.get("price_note")
+
+            def _fmt_cop_en(value):
+                try:
+                    return f"{int(value):,}"
+                except (TypeError, ValueError):
+                    return str(value)
+            def _fmt_usd_en(value):
+                try:
+                    return str(int(round(float(value))))
+                except (TypeError, ValueError):
+                    return str(value)
+
+            price_line = ""
+            if state.is_colombian and price_cop:
+                if price_cop_normal:
+                    price_line = f"\n💰 *Price*: {_fmt_cop_en(price_cop)} COP online / {_fmt_cop_en(price_cop_normal)} COP"
+                else:
+                    price_line = f"\n💰 *Price*: {_fmt_cop_en(price_cop)} COP"
+            elif price_usd:
+                if price_usd_normal:
+                    price_line = f"\n💰 *Price*: {_fmt_usd_en(price_usd)} USD online / {_fmt_usd_en(price_usd_normal)} USD"
+                else:
+                    price_line = f"\n💰 *Price*: {_fmt_usd_en(price_usd)} USD"
+            elif price_note:
+                price_line = f"\n💰 *Price*: {price_note}"
 
             summary = (
                 "Perfect! Here's your summary:\n\n"
                 f"🤿 *Service*: {name}\n"
                 f"⏱ *Duration*: {service['duration_en']}"
+                f"{price_line}"
                 f"{min_age_line}\n"
-                f"✅ *Includes*:\n{includes_block}\n\n"
+                f"*Includes*:\n{includes_block}\n\n"
                 f"📍 *Departure*: {departure}"
                 f"{meeting_note}\n"
             )
+
+            # Night-dive note if applicable
+            if service.get("includes_night_dive") or service_id in {"3_dives_1_day_already_on_island"}:
+                summary += "\n🌙 Includes a night dive (bioluminescence)\n"
+            elif service.get("category") == "package":
+                summary += "\n🌙 This package does not include a night dive\n"
 
             if state.refresher_interested:
                 summary += "\n🧑‍🏫 Refresher: Yes (recommended due to inactivity)\n"
