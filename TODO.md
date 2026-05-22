@@ -64,12 +64,30 @@
 - [ ] Dashboard del dueño (analytics de conversaciones, servicios consultados, conversiones).
 - [ ] Alembic migrations para esquema de DB.
 
-## Próximos pasos inmediatos
-1. **Testing end-to-end**: Verificar flujo completo desde widget hasta reserva
-2. **Optimización RAG**: Mejorar respuestas con más contexto de negocios
-3. **Privacy rules**: Implementar filtros para datos sensibles
-4. **Booking integration**: Conectar con Roverd API para reservas automáticas
-5. **Deploy VPS**: Configurar entorno de pre-producción
+## División de trabajo activa
+
+### Gadea (`feature/dev_gadea`)
+- [ ] Flujos buceo multi-día (árbol de opciones)
+- [ ] Persistencia de memoria de conversación (Redis/PostgreSQL)
+- [ ] Corrección minicurso de snorkel y flujos de principiantes/recuperación
+- [ ] Flujo de pago en el árbol (pendiente definir: IBAN, QR, Nequi, etc.)
+- [ ] Mejoras generales del árbol de decisión
+
+### Álvaro (`feature/dev_alvaro`) — no pisar trabajo de Gadea
+- [ ] **KB: Política de cancelaciones y cambios** — confirmar reglas con el dueño (gap crítico RAG)
+- [ ] **KB: Medios de pago** — documentar opciones (QR, Nequi, Bancolombia, tarjeta, efectivo) para cobertura RAG independiente del árbol
+- [ ] **KB: Editorial "¿qué plan me conviene?"** — comparativa de opciones para ayudar al indeciso
+- [ ] **Infraestructura PRE** — VPS + Docker + Caddy + SSL (ver checklist PRE abajo)
+- [ ] **Canal WhatsApp Business API** — conexión real vía Meta Cloud API o 360dialog
+- [ ] **Chatwoot operacional** — notificaciones móviles del owner, etiquetas automáticas, horario de atención + mensaje fuera de horario
+- [ ] **Monitorización básica** — logs estructurados de conversaciones, alerta de latencia, tracking de escalaciones
+
+## Próximos pasos inmediatos (Álvaro)
+1. **KB cancelaciones** — reunión con dueño para definir política; redactar `policies.json` + re-indexar
+2. **KB pagos RAG** — documentar medios de pago disponibles en `faqs.json` / `policies.json`
+3. **PRE deployment** — provisionar VPS y hacer el primer deploy funcional
+4. **Chatwoot operacional** — configurar notificaciones móviles y etiquetas antes del primer piloto real
+5. **WhatsApp Business API** — solicitar acceso Meta y conectar al Chatwoot de PRE
 
 ## Pendientes (RAG)
 - [ ] Confirmar con cliente la info de: “¿Cuál es la profundidad máxima?” / “What is the max depth?”
@@ -224,3 +242,59 @@ Esa parte se la dejas al LLM/RAG, que con el contexto y la base de conocimiento 
 - [ ] **Comprobaciones rápidas**:
       - Bot salud: `http://localhost:8000/health` → 200.
       - El widget debe abrirse automáticamente; si no, ya hay un `setTimeout` de apertura forzada.
+
+---
+
+## Roadmap hasta producto terminado
+
+### Núcleo funcional
+| Estado | Elemento |
+|--------|----------|
+| ✅ | Arquitectura supervisor + árbol + RAG |
+| ✅ | Integración Chatwoot (buttons, polling, escalación, handoff) |
+| ✅ | Árbol de decisión: tours certificados, principiantes, cursos, precios, logística |
+| ✅ | Base de conocimiento + embeddings pgvector (441 docs) |
+| ✅ | Privacidad / PII + bloqueo de datos sensibles |
+| ✅ | Auto-asignación conversaciones al owner en Chatwoot |
+| 🔄 Gadea | Flujos buceo multi-día (5/7/9 con nocturna) |
+| 🔄 Gadea | Persistencia de memoria (Redis/PostgreSQL) |
+| 🔄 Gadea | Flujo de pago en el árbol |
+| 🔄 Gadea | Corrección minicurso / snorkel / principiantes |
+| ⬜ Álvaro | Política de cancelaciones y cambios (KB + RAG) |
+| ⬜ Álvaro | Medios de pago completos (KB + RAG) |
+| ⬜ Álvaro | Editorial "¿qué plan me conviene?" (comparativa RAG) |
+| ⬜ | Cobertura KB: registro de buceos / logbook / puntos de buceo |
+| ⬜ | Cobertura KB: disponibilidad de última hora / corte de reserva online |
+
+### Canal e infraestructura
+| Estado | Elemento |
+|--------|----------|
+| ⬜ | **WhatsApp Business API** (canal real — Meta Cloud API o 360dialog) |
+| ⬜ | **Despliegue PRE** (VPS + Docker + Caddy + SSL) |
+| ⬜ | **Despliegue PRO** (hardening, backup, monitorización) |
+| ⬜ | Estado de conversación en PostgreSQL + Redis (prep para PRE) |
+| ⬜ | CI/CD básico (GitHub Actions → VPS) |
+| ⬜ | Chatwoot en producción: inbox WhatsApp real, etiquetas, horarios |
+
+### Calidad y refinamiento final
+| Estado | Elemento |
+|--------|----------|
+| ⬜ | Tuning RAG con conversaciones reales del canal WhatsApp |
+| ⬜ | Ajuste de tono/voz con feedback del dueño tras piloto |
+| ⬜ | Monitorización: logs estructurados, alerta de latencia, tracking escalaciones |
+| ⬜ | Optimización de coste por conversación (tokens, modelo) |
+| ⬜ | Tests de carga básicos antes de PRO |
+| ⬜ | Revisión legal/GDPR (tratamiento datos de clientes) |
+| ⬜ | Notificaciones móviles Chatwoot configuradas para el owner |
+
+### Funcionalidades adicionales atractivas *(post-MVP)*
+| Elemento | Valor estimado |
+|----------|---------------|
+| Integración con sistema de reservas (Roverd / Checkfront / custom) | Alto — cierra el ciclo sin humano |
+| Mensajes proactivos: recordatorio 24h antes, confirmación de salida | Alto — reduce no-shows |
+| Seguimiento post-buceo: fotos, certificado PADI, reseña Google | Alto — fidelización |
+| Dashboard de analítica (intents, escalaciones, conversiones) | Medio |
+| Campañas por temporada (Semana Santa, diciembre, Carnaval) | Medio |
+| Soporte multiidioma adicional (FR, PT para cruceristas) | Medio |
+| Mensajes de media enriquecida (fotos del arrecife, vídeo del centro) | Medio |
+| Integración con CRM para historial del cliente recurrente | Bajo / largo plazo |
