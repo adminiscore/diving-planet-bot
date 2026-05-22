@@ -2333,7 +2333,7 @@ class DecisionTree:
                 f"🤿 *{name}*\n\n"
                 f"💰 *Price*: {price}\n"
                 f"⏱ *Duration*: {duration}\n\n"
-                f"*Includes*:\n{includes_block}"
+                f"✅ *Includes*:\n{includes_block}"
                 f"{extra}"
             )
 
@@ -2537,7 +2537,7 @@ class DecisionTree:
                 f"⏱ *Duration*: {service['duration_en']}"
                 f"{price_line}"
                 f"{min_age_line}\n"
-                f"*Includes*:\n{includes_block}\n\n"
+                f"✅ *Includes*:\n{includes_block}\n\n"
                 f"📍 *Departure*: {departure}"
                 f"{meeting_note}\n"
             )
