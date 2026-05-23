@@ -1,6 +1,13 @@
 History
 =======
 
+0.14.4 - (2026-05-23)
+---------------------
+* Split the PADI booking flow into separate Go Pro and Specialties submenus, with guided access to Advanced, Rescue + EFR, Divemaster, and each specialty.
+* Keep summary/itinerary follow-up inside `SUMMARY`, add a `🔙 Volver` / `🔙 Back` button there, and preserve the correct return target for each course menu.
+* Refine Divemaster as a contact-only program: richer localized summary/itinerary copy, info link instead of booking link, and a direct Contact/Book CTA that escalates cleanly.
+* Update decision-tree and conversation tests for the new PADI navigation and Divemaster contact flow.
+
 0.14.3 - (2026-05-23)
 ---------------------
 * Reorganize the tours booking flow so, after choosing Cartagena vs. islands, users choose the activity first: diving, snorkeling, or mixed group.

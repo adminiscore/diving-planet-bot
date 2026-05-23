@@ -38,9 +38,12 @@ Read this file before changing code in the Diving Planet Bot. For a quick versio
 - `supervisor.py` language-intent: `_detect_language_intent` recognises "english/ingles" and "spanish/espanol/castellano" anywhere in the message; at LANGUAGE step it picks the language and advances to MAIN_MENU, mid-conversation it switches `state.language`, acknowledges in the new language and re-shows the main menu.
 - Two-level main menu: after language selection the user picks 🤿 Reservar or ℹ️ Información; Reservar → tours-de-buceo/snorkel OR cursos PADI; Información → precios / reservas y pago / logística. New `Step.RESERVA_MENU`, `Step.INFO_MENU`, `Step.TOURS_LOCATION`, `Step.BEGINNER_AGE`.
 - Tours booking flow is now activity-first after location: `TOURS_LOCATION` → `GROUP_TYPE` (`diving / snorkeling / mixed diving+snorkeling`). Choosing diving opens `TOURS_EXPERIENCE` (`certified / beginners / mixed certified+beginners`). Snorkeling goes directly to the snorkeling service flow.
+- PADI courses are split into focused submenus: `COURSES_ADVANCED_MENU` (Advanced / Rescue + EFR / Divemaster) and `COURSES_SPECIALTIES_MENU` (Mindful Diving, Fish ID, Naturalist, Buoyancy, Nitrox). Back navigation from summaries returns to the correct originating course menu.
 - Info-leaf responses (pricing/booking/logistics) append a "back to menu" hint built by `DecisionTree._back_to_menu_hint`, paired with main_menu quick replies, so users can navigate to Reservar without re-greeting.
 - Reservar branch has explicit "🔙 Volver" buttons (value=`back`) on every screen (reserva_menu, tours_location, group_type, tours_experience, tours_certified incl. island variant, tours_beginner compatibility step, beginner_age, courses_menu, courses_open_water_origin, courses_open_water_time, courses_advanced_menu). Yes/no qualifier screens (certified_last_dive, certified_experience, refresher_interest) intentionally omit the back button — they are flow control, not branch choices.
 - `supervisor.py` splits menu keywords: `MENU_KEYWORDS` (`menu/inicio/start/opciones`) resets to MAIN_MENU; `BACK_KEYWORDS` (`volver/back/atras/atrás/regresar`) goes ONE STEP up via the `BACK_STEP` map (`_go_back_one_step`). When the current step has no mapping (e.g. SUMMARY/FREE_TEXT) the back keyword falls back to MAIN_MENU. The fuzzy text-to-button matcher routes "back" matches through the same back handler so the button works whether the user clicks it or types its title.
+- Summary follow-up now stays inside `Step.SUMMARY` via `summary_mode`, including a dedicated `back` quick reply on itinerary-offer and follow-up states, so course summaries can show the itinerary, answer follow-up questions, and still return to the right menu without resetting the conversation.
+- Divemaster is now treated as `contact_only` in `services.json` and the decision tree: summary and itinerary use localized intro/overview blocks, show the website as an info link instead of an online booking CTA, and expose a `Contactar/Reservar` path that escalates directly to the manager with a single non-duplicated confirmation message.
 - RAG system prompt (ES + EN) has an explicit DIVE TO HEAL exception: disability/accessibility questions about the adaptive diving program are answered with factual program info, not escalated as medical.
 - `load_embeddings.py` now indexes `pricing.json` fully (8 origin × section pairs × 2 langs + 2 discount_policy docs = 441 total KB documents) and includes COP prices in `services.json` embeddings.
 
@@ -51,12 +54,13 @@ Read this file before changing code in the Diving Planet Bot. For a quick versio
 - Local Chatwoot may not always emit incoming webhooks for button clicks, so the bot includes polling/deduplication logic.
 - The decision tree has recently been improved for:
   - Cartagena certified 2 dives / 1 day.
-  - Summary flow: initial summary is short and offers an optional full itinerary; the itinerary offer is handled in `Step.SUMMARY` and then transitions to `FREE_TEXT` for follow-up questions. 3 buceos (islas) pasó a "core split" (pide última inmersión y nacionalidad antes del resumen), igual que 2/5/7/9.
+  - Summary flow: initial summary is short and offers an optional full itinerary; the itinerary offer is handled in `Step.SUMMARY` with `summary_mode`, supports `back`, and only then transitions to `FREE_TEXT` when the user chooses to ask more. 3 buceos (islas) pasó a "core split" (pide última inmersión y nacionalidad antes del resumen), igual que 2/5/7/9.
   - Tours branch restructure: after location the user chooses diving / snorkeling / mixed; snorkeling is direct and diving has its own certified/beginners/mixed submenu.
   - Cartagena diving beginners: `Only beginners` now goes directly to the minicourse age question (no private-service option in that branch).
   - Cartagena certified multi-day packages: 5/7/9 dives, lodging/nocturnal notes, and refresher handling.
   - Island-based certified and beginner service variants from `services.json`.
-  - PADI advanced/professional courses and specialties.
+  - PADI advanced/professional courses and specialties, now separated into Go Pro vs. Specialties submenus.
+  - Divemaster contact-only selling flow with richer summary/itinerary copy and manager handoff CTA.
 - `faqs.json` has been expanded with curated educational diving content for beginners, safety, equipment, course comparisons, underwater sensations, marine-life etiquette, and Rosario Islands destination knowledge.
 - Current MVP direction: inform, qualify, recommend, and prepare human-assisted conversion; do not automate live availability, payment, or final booking confirmation yet.
 - Conversation-state migration from in-memory storage to Redis/PostgreSQL is intentionally deferred during dev; treat it as a last hardening step right before moving to PRE.
@@ -66,6 +70,8 @@ Read this file before changing code in the Diving Planet Bot. For a quick versio
 - COP pricing is now in the KB; bot needs a restart in WSL2 to serve it after the re-index run. Embeddings reindex done (445 docs) para incluir nuevos servicios y ajustes de precios.
 - `CHATWOOT_OWNER_AGENT_ID=1` should be added to `.env` (owner agent ID confirmed via `/api/v1/profile`).
 - Next session priorities:
+  - Live E2E retest of the PADI course menus in the Chatwoot widget (Go Pro vs. Specialties, back button from summary/itinerary, and Rescue + EFR emoji rendering on Windows).
+  - Live E2E retest of the Divemaster contact-only flow in the widget (summary CTA, itinerary CTA, single escalation message, and lead note delivery).
   - Live E2E retest of the tours restructure in the Chatwoot widget (activity-first menu, snorkeling direct path, diving submenu, and direct beginner minicourse path).
   - Live E2E retest of the new menu structure (Reservar/Información), fuzzy text matching, and mid-conversation language switch in the Chatwoot widget.
   - RAG content gaps surfaced during testing: Dive Master is missing from the "cursos" answer; output formatting of multi-section RAG answers needs review (markdown not rendering line breaks properly in the widget).
