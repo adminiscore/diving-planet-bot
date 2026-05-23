@@ -236,14 +236,26 @@ class TestBeginnerFlow:
         assert state.step == Step.BEGINNER_AGE
         assert "10" in response or "edad" in response.lower()
 
-    def test_select_snorkeling(self):
+    def test_select_private_service(self):
         state = self._go_to_beginner()
         response = self.tree.process_message(state, "2")
-        assert state.selected_service == "snorkeling"
-        assert state.step == Step.COLOMBIAN
-        assert "6" in response or "snorkel" in response.lower() or "superficie" in response.lower()
+        assert state.selected_service == "private"
+        assert state.step == Step.ESCALATE
+        assert "privado" in response.lower() or "private" in response.lower()
 
-    def test_beginner_menu_copy_explains_minicourse_vs_snorkel(self):
+    def test_group_type_menu_routes_diving_to_diving_submenu(self):
+        state = make_state()
+        state.step = Step.GROUP_TYPE
+        state.language = "es"
+        state.location = "cartagena"
+
+        response = self.tree.process_message(state, "1")
+
+        assert state.step == Step.TOURS_EXPERIENCE
+        assert "dentro de buceo" in response.lower()
+        assert state.quick_replies[0]["title"] == "🤿 Solo buzos certificados"
+
+    def test_snorkeling_from_top_activity_menu_goes_direct_to_colombian(self):
         state = make_state()
         state.step = Step.GROUP_TYPE
         state.language = "es"
@@ -251,10 +263,39 @@ class TestBeginnerFlow:
 
         response = self.tree.process_message(state, "2")
 
+        assert state.selected_service == "snorkeling"
+        assert state.step == Step.COLOMBIAN
+        assert "6" in response or "snorkel" in response.lower() or "superficie" in response.lower()
+
+    def test_beginner_quick_replies_match_updated_spanish_menu(self):
+        state = make_state()
+        state.step = Step.TOURS_EXPERIENCE
+        state.language = "es"
+        state.location = "cartagena"
+
+        self.tree.process_message(state, "2")
+
         assert state.step == Step.TOURS_BEGINNER
-        assert "probar buceo" in response
-        assert "Tour de Snorkeling" in response
-        assert state.quick_replies[0]["title"] == "🤿 Minicurso de Buceo"
+        assert [item["title"] for item in state.quick_replies] == [
+            "🤿 Minicurso de Buceo",
+            "🧑‍💬 Servicio Privado",
+            "🔙 Volver",
+        ]
+
+    def test_beginner_quick_replies_match_updated_english_menu(self):
+        state = make_state()
+        state.step = Step.TOURS_EXPERIENCE
+        state.language = "en"
+        state.location = "cartagena"
+
+        self.tree.process_message(state, "2")
+
+        assert state.step == Step.TOURS_BEGINNER
+        assert [item["title"] for item in state.quick_replies] == [
+            "🤿 Dive Mini Course",
+            "🧑‍💬 Private Service",
+            "🔙 Back",
+        ]
 
     def test_minicourse_from_cartagena_summary_includes_beginner_details(self):
         state = self._go_to_beginner()
@@ -278,11 +319,12 @@ class TestBeginnerFlow:
         assert "Muelle de la Bodeguita" in summary
 
     def test_snorkeling_from_cartagena_summary_has_no_flight_rule(self):
-        state = self._go_to_beginner()
+        state = make_state()
+        state.step = Step.GROUP_TYPE
+        state.language = "es"
         state.location = "cartagena"
 
-        # Snorkel muestra transición directa con edad mínima (ya no _format_service_detail)
-        detail = self.tree.process_message(state, "🐠 Tour de Snorkeling")
+        detail = self.tree.process_message(state, "2")
         assert state.selected_service == "snorkeling"
         assert state.step == Step.COLOMBIAN
         assert "6" in detail or "superficie" in detail.lower() or "snorkel" in detail.lower()
@@ -297,7 +339,7 @@ class TestBeginnerFlow:
         state = self._go_to_beginner()
         state.location = "cartagena"
 
-        response = self.tree.process_message(state, "🧑‍💬 Servicio Privado")
+        response = self.tree.process_message(state, "2")
 
         assert state.selected_service == "private"
         assert state.step == Step.ESCALATE
@@ -382,19 +424,23 @@ class TestFullJourney:
         r = self.tree.process_message(state, "1")
         assert state.step == Step.GROUP_TYPE
 
-        # Step 4: Only certified divers
+        # Step 4: Buceo
+        r = self.tree.process_message(state, "1")
+        assert state.step == Step.TOURS_EXPERIENCE
+
+        # Step 5: Only certified divers
         r = self.tree.process_message(state, "1")
         assert state.step == Step.TOURS_CERTIFIED
 
-        # Step 5: 2 dives
+        # Step 6: 2 dives
         r = self.tree.process_message(state, "1")
         assert state.step == Step.CERTIFIED_LAST_DIVE
 
-        # Step 6: Last dive not over 2 years
+        # Step 7: Last dive not over 2 years
         r = self.tree.process_message(state, "2")
         assert state.step == Step.COLOMBIAN
 
-        # Step 7: Not Colombian
+        # Step 8: Not Colombian
         r = self.tree.process_message(state, "2")
         assert state.step == Step.SUMMARY
         assert "book.divingplanet.org" in r
@@ -418,9 +464,6 @@ class TestFullJourney:
         self.tree.process_message(state, "2")
         assert state.location == "island"
 
-        # Only beginners
-        self.tree.process_message(state, "2")
-        assert state.step == Step.TOURS_BEGINNER
         # Snorkeling
         self.tree.process_message(state, "2")
         assert state.selected_service == "snorkeling_already_on_island"

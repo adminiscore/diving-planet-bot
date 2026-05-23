@@ -385,10 +385,10 @@ MESSAGES = {
     },
     "tours_experience": {
         "es": (
-            "Tienes certificacion de buceo?"
+            "Perfecto. Dentro de buceo, ¿como esta compuesto tu grupo?"
         ),
         "en": (
-            "Do you have a diving certification?"
+            "Perfect. Within diving, how is your group made up?"
         ),
     },
     "tours_certified": {
@@ -443,13 +443,11 @@ MESSAGES = {
         "es": (
             "Perfecto! No necesitas experiencia previa.\n\n"
             "- *Minicurso de Buceo*: si quieres *probar buceo* por primera vez (vas debajo del agua con tanque e instructor, 1 inmersión guiada).\n"
-            "- *Tour de Snorkeling*: actividad en *superficie* con mascara y aletas; ves los corales y peces sin necesidad de bucear. Ideal para acompañantes o quienes prefieren no sumergirse.\n"
             "- *Servicio Privado*: para grupos especiales o experiencia personalizada."
         ),
         "en": (
             "Perfect! No previous experience is needed.\n\n"
             "- *Dive Mini Course*: if you want to *try diving* for the first time (you go underwater with tank and instructor, 1 guided dive).\n"
-            "- *Snorkeling Tour*: a *surface* activity with mask and fins; you see corals and fish without going underwater. Ideal for companions or anyone who prefers not to dive.\n"
             "- *Private Service*: for special groups or a customized experience."
         ),
     },
@@ -505,11 +503,11 @@ MESSAGES = {
     },
     "group_type": {
         "es": (
-            "Genial, cuentame como es tu grupo:\n"
+            "Genial, cuentame que tipo de plan buscas:\n"
             "Elige la opcion que mejor se ajuste."
         ),
         "en": (
-            "Great! Tell me about your group:\n"
+            "Great! Tell me what kind of plan you're looking for:\n"
             "Choose the option that fits best."
         ),
     },
@@ -670,28 +668,30 @@ BUTTON_OPTIONS = {
     },
     "group_type": {
         "es": [
-            {"title": "🤿 Solo buzos certificados", "value": "1"},
-            {"title": "🆕 Solo principiantes", "value": "2"},
+            {"title": "🤿 Buceo", "value": "1"},
+            {"title": "🐠 Snorkel", "value": "2"},
             {"title": "👥 Grupo mixto (buceo + snorkel)", "value": "3"},
             {"title": "🔙 Volver", "value": "back"},
         ],
         "en": [
-            {"title": "🤿 Only certified divers", "value": "1"},
-            {"title": "🆕 Only beginners", "value": "2"},
+            {"title": "🤿 Diving", "value": "1"},
+            {"title": "🐠 Snorkeling", "value": "2"},
             {"title": "👥 Mixed group (diving + snorkel)", "value": "3"},
             {"title": "🔙 Back", "value": "back"},
         ],
     },
     "tours_experience": {
         "es": [
-            {"title": "✅ Si, soy buzo certificado", "value": "1"},
-            {"title": "🆕 No, nunca he buceado", "value": "2"},
-            {"title": "❓ No estoy seguro", "value": "3"},
+            {"title": "🤿 Solo buzos certificados", "value": "1"},
+            {"title": "🆕 Solo principiantes", "value": "2"},
+            {"title": "👥 Grupo mixto (certificados + principiantes)", "value": "3"},
+            {"title": "🔙 Volver", "value": "back"},
         ],
         "en": [
-            {"title": "✅ Yes, I'm certified", "value": "1"},
-            {"title": "🆕 No, never dived", "value": "2"},
-            {"title": "❓ I'm not sure", "value": "3"},
+            {"title": "🤿 Only certified divers", "value": "1"},
+            {"title": "🆕 Only beginners", "value": "2"},
+            {"title": "👥 Mixed group (certified + beginners)", "value": "3"},
+            {"title": "🔙 Back", "value": "back"},
         ],
     },
     "tours_certified": {
@@ -745,14 +745,12 @@ BUTTON_OPTIONS = {
     "tours_beginner": {
         "es": [
             {"title": "🤿 Minicurso de Buceo", "value": "1"},
-            {"title": "🐠 Tour de Snorkeling", "value": "2"},
-            {"title": "🧑‍💬 Servicio Privado", "value": "3"},
+            {"title": "🧑‍💬 Servicio Privado", "value": "2"},
             {"title": "🔙 Volver", "value": "back"},
         ],
         "en": [
             {"title": "🤿 Dive Mini Course", "value": "1"},
-            {"title": "🐠 Snorkeling Tour", "value": "2"},
-            {"title": "🧑‍💬 Private Service", "value": "3"},
+            {"title": "🧑‍💬 Private Service", "value": "2"},
             {"title": "🔙 Back", "value": "back"},
         ],
     },
@@ -1165,38 +1163,46 @@ class DecisionTree:
         lang = state.language
 
         if choice == 1:
-            # Solo buzos certificados
-            state.is_certified = True
-            state.step = Step.TOURS_CERTIFIED
-            self.set_quick_replies(state, "tours_certified")
-            return MESSAGES["tours_certified"][lang]
+            state.step = Step.TOURS_EXPERIENCE
+            self.set_quick_replies(state, "tours_experience")
+            return MESSAGES["tours_experience"][lang]
         if choice == 2:
-            # Solo principiantes (incluye snorkel y minicurso)
-            state.is_certified = False
-            state.step = Step.TOURS_BEGINNER
-            self.set_quick_replies(state, "tours_beginner")
-            return MESSAGES["tours_beginner"][lang]
+            state.selected_service = self._service_for_location("snorkeling", state)
+            state.step = Step.COLOMBIAN
+            self.set_quick_replies(state, "colombian")
+            if lang == "es":
+                return (
+                    "El *Tour de Snorkeling* es ideal para explorar las Islas del Rosario "
+                    "en la superficie 🐠\n\n"
+                    "*Edad mínima: 6 años.*\n\n"
+                    + MESSAGES["colombian"][lang]
+                )
+            return (
+                "The *Snorkeling Tour* is perfect for exploring the Rosario Islands "
+                "from the surface 🐠\n\n"
+                "*Minimum age: 6 years.*\n\n"
+                + MESSAGES["colombian"][lang]
+            )
         if choice == 3:
-            # Grupo mixto: explicamos como funciona y derivamos a humano
             state.step = Step.ESCALATE
             state.quick_replies = []
             if lang == "es":
                 return (
-                    "¡Perfecto! Para grupos mixtos (buzos certificados, principiantes y/o snorkel) "
+                    "¡Perfecto! Para grupos mixtos de *buceo + snorkel* "
                     "podemos combinar actividades en un mismo tour:\n\n"
                     "- Todos viajan juntos Cartagena ↔ Islas y comparten base y almuerzo.\n"
                     "- Durante las actividades, los snorkelers pueden ir en otra lancha por seguridad.\n"
-                    "- Cada subgrupo elige su plan (2 buceos, paquete de varios días, minicurso o snorkel).\n\n"
+                    "- El subgrupo de buceo puede elegir entre 2 buceos, paquetes de varios dias o minicurso, y el otro subgrupo hace snorkel.\n\n"
                     "Como se trata de una reserva más personalizada, te paso con un asesor para afinar "
                     "fechas, cupos y precios según tu grupo.\n\n"
                     + MESSAGES["escalate"][lang]
                 )
             return (
-                "Great! For mixed groups (certified divers, beginners and/or snorkelers) we can "
+                "Great! For *diving + snorkeling* mixed groups we can "
                 "combine activities in a single tour:\n\n"
                 "- Everyone travels together Cartagena ↔ Rosario Islands and shares the same base and lunch.\n"
                 "- Snorkelers may use a different boat during the activity for safety.\n"
-                "- Each subgroup chooses its plan (2 dives, multi-day packages, minicourse or snorkel).\n\n"
+                "- The diving subgroup can choose 2 dives, multi-day packages or a minicourse, while the other subgroup does snorkeling.\n\n"
                 "Because this is a more customized booking, I'll transfer you to a human advisor to "
                 "confirm dates, availability and pricing for your group.\n\n"
                 + MESSAGES["escalate"][lang]
@@ -1214,14 +1220,36 @@ class DecisionTree:
             state.step = Step.TOURS_CERTIFIED
             self.set_quick_replies(state, "tours_certified")
             return MESSAGES["tours_certified"][lang]
-        elif choice in (2, 3):
+        if choice == 2:
             state.is_certified = False
             state.step = Step.TOURS_BEGINNER
             self.set_quick_replies(state, "tours_beginner")
             return MESSAGES["tours_beginner"][lang]
-        else:
-            self.set_quick_replies(state, "tours_experience")
-            return MESSAGES["not_understood"][lang]
+        if choice == 3:
+            state.step = Step.ESCALATE
+            state.quick_replies = []
+            if lang == "es":
+                return (
+                    "¡Perfecto! Para grupos mixtos de *buzos certificados + principiantes* "
+                    "podemos combinar actividades en un mismo tour:\n\n"
+                    "- Todos viajan juntos Cartagena ↔ Islas y comparten base y almuerzo.\n"
+                    "- Los buzos certificados pueden hacer su plan de inmersiones mientras los principiantes realizan minicurso.\n\n"
+                    "Como se trata de una reserva más personalizada, te paso con un asesor para afinar "
+                    "fechas, cupos y precios según tu grupo.\n\n"
+                    + MESSAGES["escalate"][lang]
+                )
+            return (
+                "Great! For mixed groups of *certified divers + beginners* we can combine activities "
+                "in a single tour:\n\n"
+                "- Everyone travels together Cartagena ↔ Rosario Islands and shares the same base and lunch.\n"
+                "- Certified divers can do their dive plan while beginners do the minicourse.\n\n"
+                "Because this is a more customized booking, I'll transfer you to a human advisor to "
+                "confirm dates, availability and pricing for your group.\n\n"
+                + MESSAGES["escalate"][lang]
+            )
+
+        self.set_quick_replies(state, "tours_experience")
+        return MESSAGES["not_understood"][lang]
 
     def _handle_tours_certified(self, state: ConversationState, message: str) -> str:
         choice = self._parse_choice(message, 6)
@@ -1347,48 +1375,28 @@ class DecisionTree:
         return MESSAGES["colombian"][lang]
 
     def _handle_tours_beginner(self, state: ConversationState, message: str) -> str:
-        choice = self._parse_choice(message, 3)
+        choice = self._parse_choice(message, 2)
         lang = state.language
 
         if choice == 1:
-            # Minicurso: verificar edad minima antes de continuar
             state.selected_service = self._service_for_location("minicourse", state)
             state.step = Step.BEGINNER_AGE
             self.set_quick_replies(state, "beginner_age")
             return MESSAGES["beginner_age"][lang]
 
         if choice == 2:
-            # Snorkel: transicion directa con nota de edad minima, sin mostrar detalle aun
-            state.selected_service = self._service_for_location("snorkeling", state)
-            state.step = Step.COLOMBIAN
-            self.set_quick_replies(state, "colombian")
-            if lang == "es":
-                return (
-                    "El *Tour de Snorkeling* es ideal para explorar las Islas del Rosario "
-                    "en la superficie 🐠\n\n"
-                    "*Edad mínima: 6 años.*\n\n"
-                    + MESSAGES["colombian"][lang]
-                )
-            return (
-                "The *Snorkeling Tour* is perfect for exploring the Rosario Islands "
-                "from the surface 🐠\n\n"
-                "*Minimum age: 6 years.*\n\n"
-                + MESSAGES["colombian"][lang]
-            )
-
-        if choice == 3:
             state.selected_service = "private"
             state.step = Step.ESCALATE
             state.quick_replies = []
             if lang == "es":
                 return (
                     "Perfecto. Para un *servicio privado* necesitamos revisar fecha, numero de personas, "
-                    "nivel de experiencia, si habrá snorkelers/acompañantes y preferencias de horario.\n\n"
+                    "nivel de experiencia y preferencias de horario.\n\n"
                     + MESSAGES["escalate"][lang]
                 )
             return (
                 "Perfect. For a *private service* we need to review the date, group size, experience level, "
-                "whether there will be snorkelers/companions, and schedule preferences.\n\n"
+                "and schedule preferences.\n\n"
                 + MESSAGES["escalate"][lang]
             )
 

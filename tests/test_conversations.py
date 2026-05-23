@@ -53,6 +53,14 @@ async def reach_group_type(lang: str = "es", location: str = "cartagena") -> Con
     return state
 
 
+async def reach_diving_experience(lang: str = "es", location: str = "cartagena") -> ConversationState:
+    """Reservar > Tours > Location > Buceo → TOURS_EXPERIENCE."""
+    state = await reach_group_type(lang, location)
+    await route_message(state, "1")
+    assert state.step == Step.TOURS_EXPERIENCE
+    return state
+
+
 async def reach_courses_menu(lang: str = "es") -> ConversationState:
     state = await reach_main_menu(lang)
     await send(state, "1", "2")
@@ -358,25 +366,25 @@ async def test_back_button_value_from_group_type_returns_to_tours_location():
 
 @pytest.mark.asyncio
 async def test_back_button_value_from_tours_certified_returns_to_group_type():
-    state = await reach_group_type()
+    state = await reach_diving_experience()
     await route_message(state, "1")  # → TOURS_CERTIFIED
     assert state.step == Step.TOURS_CERTIFIED
     await route_message(state, "back")
-    assert state.step == Step.GROUP_TYPE
+    assert state.step == Step.TOURS_EXPERIENCE
 
 
 @pytest.mark.asyncio
 async def test_back_button_value_from_tours_beginner_returns_to_group_type():
-    state = await reach_group_type()
+    state = await reach_diving_experience()
     await route_message(state, "2")  # → TOURS_BEGINNER
     assert state.step == Step.TOURS_BEGINNER
     await route_message(state, "back")
-    assert state.step == Step.GROUP_TYPE
+    assert state.step == Step.TOURS_EXPERIENCE
 
 
 @pytest.mark.asyncio
 async def test_back_button_value_from_beginner_age_returns_to_tours_beginner():
-    state = await reach_group_type()
+    state = await reach_diving_experience()
     await send(state, "2", "1")  # TOURS_BEGINNER → BEGINNER_AGE (minicurso)
     assert state.step == Step.BEGINNER_AGE
     await route_message(state, "back")
@@ -402,11 +410,11 @@ async def test_back_button_value_from_courses_advanced_menu_returns_to_courses_m
 @pytest.mark.asyncio
 async def test_back_text_volver_from_tours_certified_returns_to_group_type():
     """Typing 'volver' (text, not button click) at TOURS_CERTIFIED goes back one step."""
-    state = await reach_group_type()
+    state = await reach_diving_experience()
     await route_message(state, "1")
     assert state.step == Step.TOURS_CERTIFIED
     await route_message(state, "volver")
-    assert state.step == Step.GROUP_TYPE
+    assert state.step == Step.TOURS_EXPERIENCE
 
 
 @pytest.mark.asyncio
@@ -441,7 +449,7 @@ async def test_back_keyword_outside_reservar_branch_falls_back_to_main_menu():
 
 @pytest.mark.asyncio
 async def test_certified_2_dives_full_happy_path():
-    state = await reach_group_type()
+    state = await reach_diving_experience()
     responses = await send(state, "1", "1", "2", "2")
     assert state.step == Step.SUMMARY
     assert state.selected_service == "2_dives_1_day"
@@ -452,7 +460,7 @@ async def test_certified_2_dives_full_happy_path():
 
 @pytest.mark.asyncio
 async def test_certified_2_dives_colombian_discount():
-    state = await reach_group_type()
+    state = await reach_diving_experience()
     await send(state, "1", "1", "2")
     resp = await route_message(state, "1")  # es colombiano
     assert state.is_colombian is True
@@ -462,7 +470,7 @@ async def test_certified_2_dives_colombian_discount():
 
 @pytest.mark.asyncio
 async def test_certified_last_dive_over_2_years_asks_experience():
-    state = await reach_group_type()
+    state = await reach_diving_experience()
     await send(state, "1", "1")
     resp = await route_message(state, "1")  # > 2 años
     assert state.step == Step.CERTIFIED_EXPERIENCE
@@ -471,7 +479,7 @@ async def test_certified_last_dive_over_2_years_asks_experience():
 
 @pytest.mark.asyncio
 async def test_certified_500_plus_dives_escalates_with_note():
-    state = await reach_group_type()
+    state = await reach_diving_experience()
     await send(state, "1", "1", "1")  # > 2 años
     resp = await route_message(state, "1")  # 500+ / Divemaster
     assert state.step == Step.ESCALATE
@@ -481,7 +489,7 @@ async def test_certified_500_plus_dives_escalates_with_note():
 
 @pytest.mark.asyncio
 async def test_certified_refresher_yes_updates_service_for_2_dives():
-    state = await reach_group_type()
+    state = await reach_diving_experience()
     await send(state, "1", "1", "1", "2")  # > 2 años, no 500+
     resp = await route_message(state, "1")       # quiere refresher
     assert state.refresher_interested is True
@@ -491,7 +499,7 @@ async def test_certified_refresher_yes_updates_service_for_2_dives():
 
 @pytest.mark.asyncio
 async def test_certified_refresher_no_keeps_service():
-    state = await reach_group_type()
+    state = await reach_diving_experience()
     await send(state, "1", "1", "1", "2")  # > 2 años, no 500+
     resp = await route_message(state, "2")       # no quiere refresher
     assert state.refresher_interested is False
@@ -501,7 +509,7 @@ async def test_certified_refresher_no_keeps_service():
 
 @pytest.mark.asyncio
 async def test_certified_5_dives_selected():
-    state = await reach_group_type()
+    state = await reach_diving_experience()
     await send(state, "1")
     await route_message(state, "2")  # 5 buceos → asks last dive recency first
     assert state.selected_service == "5_dives_2_days"
@@ -509,7 +517,7 @@ async def test_certified_5_dives_selected():
 
 @pytest.mark.asyncio
 async def test_certified_7_dives_selected():
-    state = await reach_group_type()
+    state = await reach_diving_experience()
     await send(state, "1")
     await route_message(state, "3")
     assert state.selected_service == "7_dives_3_days"
@@ -517,7 +525,7 @@ async def test_certified_7_dives_selected():
 
 @pytest.mark.asyncio
 async def test_certified_9_dives_selected():
-    state = await reach_group_type()
+    state = await reach_diving_experience()
     await send(state, "1")
     await route_message(state, "4")
     assert state.selected_service == "9_dives_4_days"
@@ -525,7 +533,7 @@ async def test_certified_9_dives_selected():
 
 @pytest.mark.asyncio
 async def test_certified_private_service_escalates():
-    state = await reach_group_type()
+    state = await reach_diving_experience()
     await send(state, "1")
     resp = await route_message(state, "5")  # servicio privado
     assert state.step == Step.ESCALATE
@@ -534,7 +542,7 @@ async def test_certified_private_service_escalates():
 
 @pytest.mark.asyncio
 async def test_certified_multiday_refresher_keeps_original_service():
-    state = await reach_group_type()
+    state = await reach_diving_experience()
     await send(state, "1", "2", "1", "2")  # 5 dives, > 2 años, no 500+
     resp = await route_message(state, "1")       # refresher sí en paquete multi-día
     assert state.refresher_interested is True
@@ -544,7 +552,7 @@ async def test_certified_multiday_refresher_keeps_original_service():
 
 @pytest.mark.asyncio
 async def test_certified_summary_includes_meeting_point_cartagena():
-    state = await reach_group_type()
+    state = await reach_diving_experience()
     responses = await send(state, "1", "1", "2", "2")
     summary = responses[-1]
     assert "Bodeguita" in summary or "8:00" in summary or "Cartagena" in summary
@@ -552,7 +560,7 @@ async def test_certified_summary_includes_meeting_point_cartagena():
 
 @pytest.mark.asyncio
 async def test_certified_summary_includes_flight_rule_for_multiday():
-    state = await reach_group_type()
+    state = await reach_diving_experience()
     await send(state, "1", "2", "2", "2")  # 5 dives, sin refresher, no colombiano
     # flight rule applies only when service has it; at least booking link should appear
     assert state.step == Step.SUMMARY
@@ -564,7 +572,7 @@ async def test_certified_summary_includes_flight_rule_for_multiday():
 
 @pytest.mark.asyncio
 async def test_beginner_minicourse_cartagena_full_path():
-    state = await reach_group_type()
+    state = await reach_diving_experience()
     await send(state, "2")   # principiantes
     resp = await route_message(state, "1")  # minicurso
     assert state.selected_service == "minicourse"
@@ -575,7 +583,6 @@ async def test_beginner_minicourse_cartagena_full_path():
 @pytest.mark.asyncio
 async def test_beginner_snorkeling_cartagena():
     state = await reach_group_type()
-    await send(state, "2")
     resp = await route_message(state, "2")  # snorkel
     assert state.selected_service == "snorkeling"
     assert state.step == Step.COLOMBIAN
@@ -583,9 +590,9 @@ async def test_beginner_snorkeling_cartagena():
 
 @pytest.mark.asyncio
 async def test_beginner_private_escalates_with_note():
-    state = await reach_group_type()
+    state = await reach_diving_experience()
     await send(state, "2")
-    resp = await route_message(state, "3")  # privado
+    resp = await route_message(state, "2")  # privado
     assert state.step == Step.ESCALATE
     assert state.pending_note is not None
     assert "privado" in resp.lower() or "private" in resp.lower()
@@ -593,7 +600,7 @@ async def test_beginner_private_escalates_with_note():
 
 @pytest.mark.asyncio
 async def test_beginner_minicourse_min_age_shown():
-    state = await reach_group_type()
+    state = await reach_diving_experience()
     await send(state, "2")
     resp = await route_message(state, "1")
     assert "10" in resp or "edad" in resp.lower() or "age" in resp.lower() or "min" in resp.lower()
@@ -602,7 +609,6 @@ async def test_beginner_minicourse_min_age_shown():
 @pytest.mark.asyncio
 async def test_beginner_snorkeling_min_age_shown():
     state = await reach_group_type()
-    await send(state, "2")
     resp = await route_message(state, "2")
     assert "6" in resp or "edad" in resp.lower() or "superficie" in resp.lower() or "snorkel" in resp.lower()
 
@@ -613,8 +619,8 @@ async def test_beginner_snorkeling_min_age_shown():
 
 @pytest.mark.asyncio
 async def test_island_certified_2_dives():
-    state = await reach_group_type(location="island")
-    await send(state, "1")  # islas + certificados
+    state = await reach_diving_experience(location="island")
+    await send(state, "1")  # certificados
     resp = await route_message(state, "1")  # 2 buceos
     assert state.location == "island"
     assert state.selected_service == "2_dives_1_day_already_on_island"
@@ -622,8 +628,8 @@ async def test_island_certified_2_dives():
 
 @pytest.mark.asyncio
 async def test_island_certified_3_dives_night():
-    state = await reach_group_type(location="island")
-    await send(state, "1")  # islas + certificados
+    state = await reach_diving_experience(location="island")
+    await send(state, "1")  # certificados
     resp = await route_message(state, "2")  # 3 buceos con nocturna
     assert state.location == "island"
     assert state.selected_service == "3_dives_1_day_already_on_island"
@@ -631,7 +637,7 @@ async def test_island_certified_3_dives_night():
 
 @pytest.mark.asyncio
 async def test_island_certified_5_dives():
-    state = await reach_group_type(location="island")
+    state = await reach_diving_experience(location="island")
     await send(state, "1")
     await route_message(state, "3")
     assert state.selected_service == "5_dives_2_days_already_on_island"
@@ -639,7 +645,7 @@ async def test_island_certified_5_dives():
 
 @pytest.mark.asyncio
 async def test_island_certified_7_dives():
-    state = await reach_group_type(location="island")
+    state = await reach_diving_experience(location="island")
     await send(state, "1")
     await route_message(state, "4")
     assert state.selected_service == "7_dives_3_days_already_on_island"
@@ -647,8 +653,8 @@ async def test_island_certified_7_dives():
 
 @pytest.mark.asyncio
 async def test_island_beginner_minicourse():
-    state = await reach_group_type(location="island")
-    await send(state, "2")  # islas + principiantes
+    state = await reach_diving_experience(location="island")
+    await send(state, "2")  # principiantes
     resp = await route_message(state, "1")  # minicurso
     assert state.location == "island"
     assert state.selected_service == "minicourse_already_on_island"
@@ -656,17 +662,15 @@ async def test_island_beginner_minicourse():
 
 @pytest.mark.asyncio
 async def test_island_snorkel_companion():
-    # Tras restructure, snorkel se elige dentro de Principiantes (no como opción de group_type).
     state = await reach_group_type(location="island")
-    await route_message(state, "2")  # principiantes
-    resp = await route_message(state, "2")  # snorkel dentro del menu de principiantes
+    resp = await route_message(state, "2")  # snorkel directo
     assert state.location == "island"
     assert state.selected_service == "snorkeling_already_on_island"
 
 
 @pytest.mark.asyncio
 async def test_island_summary_shows_hotel_pickup():
-    state = await reach_group_type(location="island")
+    state = await reach_diving_experience(location="island")
     responses = await send(state, "1", "1", "2", "2")  # islas + cert + 2 buceos + recent + no colombiano
     summary = responses[-1]
     assert "9:30" in summary or "recogida" in summary.lower() or "pickup" in summary.lower() or "isla" in summary.lower()
@@ -1067,7 +1071,7 @@ async def test_keyword_advisor_english():
 
 @pytest.mark.asyncio
 async def test_keyword_menu_resets_from_deep_step():
-    state = await reach_group_type()
+    state = await reach_diving_experience()
     await send(state, "1", "1", "1")  # en certified_experience
     resp = await route_message(state, "menu")
     assert state.step == Step.MAIN_MENU
@@ -1075,12 +1079,12 @@ async def test_keyword_menu_resets_from_deep_step():
 
 @pytest.mark.asyncio
 async def test_keyword_volver_goes_back_one_step():
-    """'volver' from TOURS_CERTIFIED must return to GROUP_TYPE (one step up), not MAIN_MENU."""
-    state = await reach_group_type()
+    """'volver' from TOURS_CERTIFIED must return to TOURS_EXPERIENCE (one step up), not MAIN_MENU."""
+    state = await reach_diving_experience()
     await send(state, "1")  # → TOURS_CERTIFIED
     assert state.step == Step.TOURS_CERTIFIED
     await route_message(state, "volver")
-    assert state.step == Step.GROUP_TYPE
+    assert state.step == Step.TOURS_EXPERIENCE
 
 
 @pytest.mark.asyncio
@@ -1093,7 +1097,7 @@ async def test_keyword_atras_goes_back_one_step():
 
 @pytest.mark.asyncio
 async def test_escalation_note_includes_service_if_known():
-    state = await reach_group_type()
+    state = await reach_diving_experience()
     await send(state, "1", "1", "2")  # 2 dives, recent dive
     resp = await route_message(state, "asesor")
     assert state.pending_note is not None
@@ -1263,7 +1267,7 @@ async def test_free_text_in_welcome_step_not_sent_to_rag_if_too_short():
 
 @pytest.mark.asyncio
 async def test_post_summary_free_text_routes_to_rag():
-    state = await reach_group_type()
+    state = await reach_diving_experience()
     await send(state, "1", "1", "2", "2")  # llega a SUMMARY
     assert state.step == Step.SUMMARY
     with patch("src.agents.supervisor.rag_answer", new_callable=AsyncMock, return_value=RAG_MOCK) as mock_rag:
@@ -1287,7 +1291,7 @@ async def test_post_escalate_free_text_routes_to_rag():
 
 @pytest.mark.asyncio
 async def test_en_certified_2_dives_cartagena():
-    state = await reach_group_type("en")
+    state = await reach_diving_experience("en")
     responses = await send(state, "1", "1", "2", "2")
     assert state.language == "en"
     assert state.selected_service == "2_dives_1_day"
@@ -1298,7 +1302,6 @@ async def test_en_certified_2_dives_cartagena():
 @pytest.mark.asyncio
 async def test_en_beginner_snorkel():
     state = await reach_group_type("en")
-    await send(state, "2")
     resp = await route_message(state, "2")
     assert state.language == "en"
     assert state.selected_service == "snorkeling"
@@ -1424,7 +1427,7 @@ async def test_invalid_main_menu_option():
 
 @pytest.mark.asyncio
 async def test_invalid_tours_certified_option():
-    state = await reach_group_type()
+    state = await reach_diving_experience()
     await send(state, "1")
     resp = await route_message(state, "9")
     assert state.step == Step.TOURS_CERTIFIED
@@ -1432,7 +1435,7 @@ async def test_invalid_tours_certified_option():
 
 @pytest.mark.asyncio
 async def test_invalid_beginner_option():
-    state = await reach_group_type()
+    state = await reach_diving_experience()
     await send(state, "2")
     resp = await route_message(state, "9")
     assert state.step == Step.TOURS_BEGINNER
@@ -1440,7 +1443,7 @@ async def test_invalid_beginner_option():
 
 @pytest.mark.asyncio
 async def test_invalid_certified_last_dive():
-    state = await reach_group_type()
+    state = await reach_diving_experience()
     await send(state, "1", "1")
     resp = await route_message(state, "9")
     assert state.step == Step.CERTIFIED_LAST_DIVE
@@ -1448,7 +1451,7 @@ async def test_invalid_certified_last_dive():
 
 @pytest.mark.asyncio
 async def test_invalid_colombian_option():
-    state = await reach_group_type()
+    state = await reach_diving_experience()
     await send(state, "1", "1", "2")
     resp = await route_message(state, "9")
     assert state.step == Step.COLOMBIAN
@@ -1464,7 +1467,7 @@ async def test_invalid_island_menu_option():
 
 @pytest.mark.asyncio
 async def test_summary_restart_returns_to_main():
-    state = await reach_group_type()
+    state = await reach_diving_experience()
     await send(state, "1", "1", "2", "2")  # llega a SUMMARY
     resp = await route_message(state, "1")  # ver itinerario completo
     assert state.step == Step.FREE_TEXT
@@ -1473,7 +1476,7 @@ async def test_summary_restart_returns_to_main():
 
 @pytest.mark.asyncio
 async def test_summary_no_thanks_ends_conversation():
-    state = await reach_group_type()
+    state = await reach_diving_experience()
     await send(state, "1", "1", "2", "2")
     resp = await route_message(state, "2")  # no, gracias (no ver itinerario)
     assert state.step == Step.FREE_TEXT
@@ -1492,14 +1495,14 @@ async def test_quick_replies_set_at_main_menu():
 
 @pytest.mark.asyncio
 async def test_quick_replies_set_at_tours_certified():
-    state = await reach_group_type()
+    state = await reach_diving_experience()
     await send(state, "1")
     assert len(state.quick_replies) > 0
 
 
 @pytest.mark.asyncio
 async def test_quick_replies_set_at_colombian():
-    state = await reach_group_type()
+    state = await reach_diving_experience()
     await send(state, "1", "1", "2")
     assert len(state.quick_replies) == 2
 
@@ -1660,7 +1663,7 @@ async def test_island_pickup_free_question_routes_to_rag():
 
 @pytest.mark.asyncio
 async def test_post_summary_food_question_routes_to_rag():
-    state = await reach_group_type()
+    state = await reach_diving_experience()
     await send(state, "1", "1", "2", "2")  # llega a SUMMARY
     assert state.step == Step.SUMMARY
     with patch("src.agents.supervisor.rag_answer", new_callable=AsyncMock, return_value=RAG_MOCK) as mock_rag:
@@ -1670,7 +1673,7 @@ async def test_post_summary_food_question_routes_to_rag():
 
 @pytest.mark.asyncio
 async def test_post_summary_photos_question_routes_to_rag():
-    state = await reach_group_type()
+    state = await reach_diving_experience()
     await send(state, "1", "1", "2", "2")  # llega a SUMMARY
     assert state.step == Step.SUMMARY
     with patch("src.agents.supervisor.rag_answer", new_callable=AsyncMock, return_value=RAG_MOCK) as mock_rag:
@@ -1774,7 +1777,7 @@ async def test_pricing_multiday_response_mentions_5_7_9():
 
 @pytest.mark.asyncio
 async def test_island_certified_summary_no_extra_pickup_charge():
-    state = await reach_group_type(location="island")
+    state = await reach_diving_experience(location="island")
     responses = await send(state, "1", "1", "2", "2")  # islas + cert + 2 buceos + recent + no colombiano
     summary = responses[-1]
     # Pickup should be mentioned as included, not as an extra charge
