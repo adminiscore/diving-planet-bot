@@ -222,26 +222,31 @@ class TestBeginnerFlow:
     def setup_method(self):
         self.tree = DecisionTree()
 
-    def _go_to_beginner(self) -> ConversationState:
+    def _go_to_diving_experience(self) -> ConversationState:
         state = make_state()
-        state.step = Step.TOURS_BEGINNER
+        state.step = Step.TOURS_EXPERIENCE
         state.language = "es"
-        state.is_certified = False
+        state.location = "cartagena"
         return state
 
-    def test_select_minicourse(self):
-        state = self._go_to_beginner()
-        response = self.tree.process_message(state, "1")
+    def test_beginner_choice_goes_direct_to_minicourse_age_question(self):
+        state = self._go_to_diving_experience()
+        response = self.tree.process_message(state, "2")
         assert state.selected_service == "minicourse"
         assert state.step == Step.BEGINNER_AGE
         assert "10" in response or "edad" in response.lower()
 
-    def test_select_private_service(self):
-        state = self._go_to_beginner()
-        response = self.tree.process_message(state, "2")
-        assert state.selected_service == "private"
-        assert state.step == Step.ESCALATE
-        assert "privado" in response.lower() or "private" in response.lower()
+    def test_tours_beginner_compatibility_menu_only_shows_minicourse(self):
+        state = make_state()
+        state.step = Step.TOURS_BEGINNER
+        state.language = "es"
+        state.location = "cartagena"
+
+        response = self.tree.process_message(state, "1")
+
+        assert state.selected_service == "minicourse"
+        assert state.step == Step.BEGINNER_AGE
+        assert "10" in response or "edad" in response.lower()
 
     def test_group_type_menu_routes_diving_to_diving_submenu(self):
         state = make_state()
@@ -267,7 +272,7 @@ class TestBeginnerFlow:
         assert state.step == Step.COLOMBIAN
         assert "6" in response or "snorkel" in response.lower() or "superficie" in response.lower()
 
-    def test_beginner_quick_replies_match_updated_spanish_menu(self):
+    def test_beginner_choice_sets_age_quick_replies_in_spanish(self):
         state = make_state()
         state.step = Step.TOURS_EXPERIENCE
         state.language = "es"
@@ -275,14 +280,14 @@ class TestBeginnerFlow:
 
         self.tree.process_message(state, "2")
 
-        assert state.step == Step.TOURS_BEGINNER
+        assert state.step == Step.BEGINNER_AGE
         assert [item["title"] for item in state.quick_replies] == [
-            "🤿 Minicurso de Buceo",
-            "🧑‍💬 Servicio Privado",
+            "Sí",
+            "No",
             "🔙 Volver",
         ]
 
-    def test_beginner_quick_replies_match_updated_english_menu(self):
+    def test_beginner_choice_sets_age_quick_replies_in_english(self):
         state = make_state()
         state.step = Step.TOURS_EXPERIENCE
         state.language = "en"
@@ -290,19 +295,18 @@ class TestBeginnerFlow:
 
         self.tree.process_message(state, "2")
 
-        assert state.step == Step.TOURS_BEGINNER
+        assert state.step == Step.BEGINNER_AGE
         assert [item["title"] for item in state.quick_replies] == [
-            "🤿 Dive Mini Course",
-            "🧑‍💬 Private Service",
+            "Yes",
+            "No",
             "🔙 Back",
         ]
 
     def test_minicourse_from_cartagena_summary_includes_beginner_details(self):
-        state = self._go_to_beginner()
-        state.location = "cartagena"
+        state = self._go_to_diving_experience()
 
-        # Elige minicurso → pregunta de edad
-        age_resp = self.tree.process_message(state, "🤿 Minicurso de Buceo")
+        # Elige solo principiantes → pregunta de edad del minicurso
+        age_resp = self.tree.process_message(state, "2")
         assert state.selected_service == "minicourse"
         assert state.step == Step.BEGINNER_AGE
         assert "10" in age_resp
@@ -335,17 +339,15 @@ class TestBeginnerFlow:
         assert "18 horas" not in summary
         assert "12 horas" not in summary
 
-    def test_beginner_private_service_escalates_without_service_detail(self):
-        state = self._go_to_beginner()
-        state.location = "cartagena"
+    def test_invalid_input_after_beginner_choice_keeps_age_question(self):
+        state = self._go_to_diving_experience()
 
-        response = self.tree.process_message(state, "2")
+        self.tree.process_message(state, "2")
+        response = self.tree.process_message(state, "9")
 
-        assert state.selected_service == "private"
-        assert state.step == Step.ESCALATE
-        assert "servicio privado" in response.lower()
-        assert "fecha" in response.lower()
-        assert "Cotizacion personalizada" not in response
+        assert state.selected_service == "minicourse"
+        assert state.step == Step.BEGINNER_AGE
+        assert "no entendi" in response.lower()
 
 
 class TestSummaryFlow:

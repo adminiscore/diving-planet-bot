@@ -374,21 +374,21 @@ async def test_back_button_value_from_tours_certified_returns_to_group_type():
 
 
 @pytest.mark.asyncio
-async def test_back_button_value_from_tours_beginner_returns_to_group_type():
+async def test_beginner_choice_goes_direct_to_beginner_age():
     state = await reach_diving_experience()
-    await route_message(state, "2")  # → TOURS_BEGINNER
-    assert state.step == Step.TOURS_BEGINNER
-    await route_message(state, "back")
-    assert state.step == Step.TOURS_EXPERIENCE
+    resp = await route_message(state, "2")  # → BEGINNER_AGE
+    assert state.step == Step.BEGINNER_AGE
+    assert state.selected_service == "minicourse"
+    assert "10" in resp or "edad" in resp.lower() or "age" in resp.lower()
 
 
 @pytest.mark.asyncio
-async def test_back_button_value_from_beginner_age_returns_to_tours_beginner():
+async def test_back_button_value_from_beginner_age_returns_to_tours_experience():
     state = await reach_diving_experience()
-    await send(state, "2", "1")  # TOURS_BEGINNER → BEGINNER_AGE (minicurso)
+    await send(state, "2")  # → BEGINNER_AGE directo
     assert state.step == Step.BEGINNER_AGE
     await route_message(state, "back")
-    assert state.step == Step.TOURS_BEGINNER
+    assert state.step == Step.TOURS_EXPERIENCE
 
 
 @pytest.mark.asyncio
@@ -573,8 +573,7 @@ async def test_certified_summary_includes_flight_rule_for_multiday():
 @pytest.mark.asyncio
 async def test_beginner_minicourse_cartagena_full_path():
     state = await reach_diving_experience()
-    await send(state, "2")   # principiantes
-    resp = await route_message(state, "1")  # minicurso
+    resp = await route_message(state, "2")  # principiantes → minicurso directo
     assert state.selected_service == "minicourse"
     assert state.step == Step.BEGINNER_AGE
     assert "10" in resp or "edad" in resp.lower()
@@ -589,20 +588,9 @@ async def test_beginner_snorkeling_cartagena():
 
 
 @pytest.mark.asyncio
-async def test_beginner_private_escalates_with_note():
-    state = await reach_diving_experience()
-    await send(state, "2")
-    resp = await route_message(state, "2")  # privado
-    assert state.step == Step.ESCALATE
-    assert state.pending_note is not None
-    assert "privado" in resp.lower() or "private" in resp.lower()
-
-
-@pytest.mark.asyncio
 async def test_beginner_minicourse_min_age_shown():
     state = await reach_diving_experience()
-    await send(state, "2")
-    resp = await route_message(state, "1")
+    resp = await route_message(state, "2")
     assert "10" in resp or "edad" in resp.lower() or "age" in resp.lower() or "min" in resp.lower()
 
 
@@ -1438,7 +1426,7 @@ async def test_invalid_beginner_option():
     state = await reach_diving_experience()
     await send(state, "2")
     resp = await route_message(state, "9")
-    assert state.step == Step.TOURS_BEGINNER
+    assert state.step == Step.BEGINNER_AGE
 
 
 @pytest.mark.asyncio

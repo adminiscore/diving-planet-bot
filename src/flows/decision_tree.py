@@ -442,13 +442,11 @@ MESSAGES = {
     "tours_beginner": {
         "es": (
             "Perfecto! No necesitas experiencia previa.\n\n"
-            "- *Minicurso de Buceo*: si quieres *probar buceo* por primera vez (vas debajo del agua con tanque e instructor, 1 inmersión guiada).\n"
-            "- *Servicio Privado*: para grupos especiales o experiencia personalizada."
+            "- *Minicurso de Buceo*: si quieres *probar buceo* por primera vez (vas debajo del agua con tanque e instructor, 1 inmersión guiada)."
         ),
         "en": (
             "Perfect! No previous experience is needed.\n\n"
-            "- *Dive Mini Course*: if you want to *try diving* for the first time (you go underwater with tank and instructor, 1 guided dive).\n"
-            "- *Private Service*: for special groups or a customized experience."
+            "- *Dive Mini Course*: if you want to *try diving* for the first time (you go underwater with tank and instructor, 1 guided dive)."
         ),
     },
     "beginner_age": {
@@ -745,12 +743,10 @@ BUTTON_OPTIONS = {
     "tours_beginner": {
         "es": [
             {"title": "🤿 Minicurso de Buceo", "value": "1"},
-            {"title": "🧑‍💬 Servicio Privado", "value": "2"},
             {"title": "🔙 Volver", "value": "back"},
         ],
         "en": [
             {"title": "🤿 Dive Mini Course", "value": "1"},
-            {"title": "🧑‍💬 Private Service", "value": "2"},
             {"title": "🔙 Back", "value": "back"},
         ],
     },
@@ -1222,9 +1218,10 @@ class DecisionTree:
             return MESSAGES["tours_certified"][lang]
         if choice == 2:
             state.is_certified = False
-            state.step = Step.TOURS_BEGINNER
-            self.set_quick_replies(state, "tours_beginner")
-            return MESSAGES["tours_beginner"][lang]
+            state.selected_service = self._service_for_location("minicourse", state)
+            state.step = Step.BEGINNER_AGE
+            self.set_quick_replies(state, "beginner_age")
+            return MESSAGES["beginner_age"][lang]
         if choice == 3:
             state.step = Step.ESCALATE
             state.quick_replies = []
@@ -1375,7 +1372,7 @@ class DecisionTree:
         return MESSAGES["colombian"][lang]
 
     def _handle_tours_beginner(self, state: ConversationState, message: str) -> str:
-        choice = self._parse_choice(message, 2)
+        choice = self._parse_choice(message, 1)
         lang = state.language
 
         if choice == 1:
@@ -1383,22 +1380,6 @@ class DecisionTree:
             state.step = Step.BEGINNER_AGE
             self.set_quick_replies(state, "beginner_age")
             return MESSAGES["beginner_age"][lang]
-
-        if choice == 2:
-            state.selected_service = "private"
-            state.step = Step.ESCALATE
-            state.quick_replies = []
-            if lang == "es":
-                return (
-                    "Perfecto. Para un *servicio privado* necesitamos revisar fecha, numero de personas, "
-                    "nivel de experiencia y preferencias de horario.\n\n"
-                    + MESSAGES["escalate"][lang]
-                )
-            return (
-                "Perfect. For a *private service* we need to review the date, group size, experience level, "
-                "and schedule preferences.\n\n"
-                + MESSAGES["escalate"][lang]
-            )
 
         self.set_quick_replies(state, "tours_beginner")
         return MESSAGES["not_understood"][lang]

@@ -75,7 +75,7 @@ BACK_STEP: dict[Step, tuple[Step, str]] = {
     Step.TOURS_EXPERIENCE: (Step.GROUP_TYPE, "group_type"),
     Step.TOURS_CERTIFIED: (Step.TOURS_EXPERIENCE, "tours_experience"),
     Step.TOURS_BEGINNER: (Step.TOURS_EXPERIENCE, "tours_experience"),
-    Step.BEGINNER_AGE: (Step.TOURS_BEGINNER, "tours_beginner"),
+    Step.BEGINNER_AGE: (Step.TOURS_EXPERIENCE, "tours_experience"),
     Step.COURSES_MENU: (Step.RESERVA_MENU, "reserva_menu"),
     Step.COURSES_OPEN_WATER_ORIGIN: (Step.COURSES_MENU, "courses_menu"),
     Step.COURSES_OPEN_WATER_TIME: (Step.COURSES_OPEN_WATER_ORIGIN, "courses_open_water_origin"),
