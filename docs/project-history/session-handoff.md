@@ -30,15 +30,16 @@ Read this file before changing code in the Diving Planet Bot. For a quick versio
 - `src/agents/lead_summary.py` builds structured private Chatwoot notes on escalation; `state.pending_note` holds the note until sent in `chatwoot.py`.
 - Lead notes are sent for all escalation types: keyword (`humano`, `agente`...), sensitive (medical, weather, complaints), and tree-internal escalation.
 - `chatwoot.py` now performs the real human handoff by calling `escalate_to_human()` after sending the private lead note; `pending_escalation_reason` is only cleared when Chatwoot confirms the status toggle, so failed handoffs can be retried on later activity.
-- `.claude/commands/runtests.md` provides a `/runtests` skill to run the conversation dataset (253 tests total) with block-level keyword filtering.
+- `.claude/commands/runtests.md` provides a `/runtests` skill to run the conversation dataset with block-level keyword filtering.
 - `chatwoot.py` auto-assigns new conversations to the owner agent (`CHATWOOT_OWNER_AGENT_ID` in `.env`) via `POST /conversations/{id}/assignments` AND toggles them to `open` via `POST /conversations/{id}/toggle_status` so they appear in the agent inbox instead of getting stuck in Pending. Set `CHATWOOT_OWNER_AGENT_ID=0` to disable.
 - `chatwoot.py` dedupe: incoming text messages now check `{conversation_id}:{message_id}:incoming` before processing so Chatwoot's `message_created` + `message_updated` pair for the same id no longer produces double replies. Button echoes are still suppressed via `conversation_pending_echo_titles`.
 - `supervisor.py` routing hardening: `_matches_escalation_keyword` uses word-boundary regex to prevent "persona" false positive; `_is_substantive_free_text` strips trailing punctuation so "hey?" routes to welcome; any bare greeting mid-flow (hola, hi, buenas…) resets state to WELCOME step.
 - `supervisor.py` natural-language menu navigation: `_match_quick_reply_text` compares free text against the CURRENT `state.quick_replies` (not all BUTTON_OPTIONS) and, when it confidently matches a button, feeds the button value into the decision tree. Accent-insensitive via `_strip_accents` (NFD). Question words (`cuánto/how/what`…) short-circuit to RAG to avoid hijacking real questions.
 - `supervisor.py` language-intent: `_detect_language_intent` recognises "english/ingles" and "spanish/espanol/castellano" anywhere in the message; at LANGUAGE step it picks the language and advances to MAIN_MENU, mid-conversation it switches `state.language`, acknowledges in the new language and re-shows the main menu.
 - Two-level main menu: after language selection the user picks 🤿 Reservar or ℹ️ Información; Reservar → tours-de-buceo/snorkel OR cursos PADI; Información → precios / reservas y pago / logística. New `Step.RESERVA_MENU`, `Step.INFO_MENU`, `Step.TOURS_LOCATION`, `Step.BEGINNER_AGE`.
+- Tours booking flow is now activity-first after location: `TOURS_LOCATION` → `GROUP_TYPE` (`diving / snorkeling / mixed diving+snorkeling`). Choosing diving opens `TOURS_EXPERIENCE` (`certified / beginners / mixed certified+beginners`). Snorkeling goes directly to the snorkeling service flow.
 - Info-leaf responses (pricing/booking/logistics) append a "back to menu" hint built by `DecisionTree._back_to_menu_hint`, paired with main_menu quick replies, so users can navigate to Reservar without re-greeting.
-- Reservar branch has explicit "🔙 Volver" buttons (value=`back`) on every screen (reserva_menu, tours_location, group_type, tours_certified incl. island variant, tours_beginner, beginner_age, courses_menu, courses_open_water_origin, courses_open_water_time, courses_advanced_menu). Yes/no qualifier screens (certified_last_dive, certified_experience, refresher_interest) intentionally omit the back button — they are flow control, not branch choices.
+- Reservar branch has explicit "🔙 Volver" buttons (value=`back`) on every screen (reserva_menu, tours_location, group_type, tours_experience, tours_certified incl. island variant, tours_beginner compatibility step, beginner_age, courses_menu, courses_open_water_origin, courses_open_water_time, courses_advanced_menu). Yes/no qualifier screens (certified_last_dive, certified_experience, refresher_interest) intentionally omit the back button — they are flow control, not branch choices.
 - `supervisor.py` splits menu keywords: `MENU_KEYWORDS` (`menu/inicio/start/opciones`) resets to MAIN_MENU; `BACK_KEYWORDS` (`volver/back/atras/atrás/regresar`) goes ONE STEP up via the `BACK_STEP` map (`_go_back_one_step`). When the current step has no mapping (e.g. SUMMARY/FREE_TEXT) the back keyword falls back to MAIN_MENU. The fuzzy text-to-button matcher routes "back" matches through the same back handler so the button works whether the user clicks it or types its title.
 - RAG system prompt (ES + EN) has an explicit DIVE TO HEAL exception: disability/accessibility questions about the adaptive diving program are answered with factual program info, not escalated as medical.
 - `load_embeddings.py` now indexes `pricing.json` fully (8 origin × section pairs × 2 langs + 2 discount_policy docs = 441 total KB documents) and includes COP prices in `services.json` embeddings.
@@ -51,7 +52,8 @@ Read this file before changing code in the Diving Planet Bot. For a quick versio
 - The decision tree has recently been improved for:
   - Cartagena certified 2 dives / 1 day.
   - Summary flow: initial summary is short and offers an optional full itinerary; the itinerary offer is handled in `Step.SUMMARY` and then transitions to `FREE_TEXT` for follow-up questions. 3 buceos (islas) pasó a "core split" (pide última inmersión y nacionalidad antes del resumen), igual que 2/5/7/9.
-  - Cartagena beginner branch: minicourse, snorkeling, private service.
+  - Tours branch restructure: after location the user chooses diving / snorkeling / mixed; snorkeling is direct and diving has its own certified/beginners/mixed submenu.
+  - Cartagena diving beginners: `Only beginners` now goes directly to the minicourse age question (no private-service option in that branch).
   - Cartagena certified multi-day packages: 5/7/9 dives, lodging/nocturnal notes, and refresher handling.
   - Island-based certified and beginner service variants from `services.json`.
   - PADI advanced/professional courses and specialties.
@@ -64,6 +66,7 @@ Read this file before changing code in the Diving Planet Bot. For a quick versio
 - COP pricing is now in the KB; bot needs a restart in WSL2 to serve it after the re-index run. Embeddings reindex done (445 docs) para incluir nuevos servicios y ajustes de precios.
 - `CHATWOOT_OWNER_AGENT_ID=1` should be added to `.env` (owner agent ID confirmed via `/api/v1/profile`).
 - Next session priorities:
+  - Live E2E retest of the tours restructure in the Chatwoot widget (activity-first menu, snorkeling direct path, diving submenu, and direct beginner minicourse path).
   - Live E2E retest of the new menu structure (Reservar/Información), fuzzy text matching, and mid-conversation language switch in the Chatwoot widget.
   - RAG content gaps surfaced during testing: Dive Master is missing from the "cursos" answer; output formatting of multi-section RAG answers needs review (markdown not rendering line breaks properly in the widget).
   - Optional: bulk-assign old NULL-assignee_id conversations in dev Chatwoot DB to clean the inbox (`UPDATE conversations SET assignee_id=1 WHERE assignee_id IS NULL;`) — pending user confirmation.
@@ -108,7 +111,7 @@ python -m pytest tests/test_retrieval_rerank.py
 - `host.docker.internal` from Docker resolves to `192.168.65.254` (Docker Desktop host), which reaches WSL2 bot via Docker Desktop port bridging.
 - `CHATWOOT_BASE_URL=http://localhost:3300` in `.env` is correct for bot→Chatwoot API calls from WSL2.
 - To verify webhook config: `docker exec dp-dev-postgres psql -U postgres -d chatwoot_dev -c 'SELECT id, url, subscriptions FROM webhooks;'`
-- `chatwood-test.html` uses websiteToken `rcTJ5Awm3fZN7eAtoMnXVzVF` (Diving Planet Web inbox).
+- `chatwood-test.html` currently uses websiteToken `T49iSq16SvRnqUqbayMQWmni` (Diving Planet Web inbox).
 
 ## Manual Chatwoot checks
 
@@ -123,7 +126,7 @@ When touching Chatwoot, buttons, routing, or conversation state:
 - Type `in english` or `me lo puedes decir en español?` mid-conversation → must switch language and re-show main menu.
 - Send free text from a menu → RAG response without duplicate replies.
 - After a pricing/booking/logistics answer, confirm the back-to-menu hint appears and quick replies are main_menu.
-- At any Reservar step, click `🔙 Volver` → must go ONE step up (e.g., TOURS_CERTIFIED → GROUP_TYPE), not all the way to MAIN_MENU.
+- At any Reservar step, click `🔙 Volver` → must go ONE step up (e.g., TOURS_CERTIFIED → TOURS_EXPERIENCE), not all the way to MAIN_MENU.
 - Type `volver` or `atrás` mid-Reservar → same one-step-up behaviour as the button.
 - Click through at least one full booking path.
 
