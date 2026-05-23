@@ -85,6 +85,88 @@ class TestMainMenu:
         assert state.step == Step.COURSES_MENU
         assert "PADI" in response
 
+    def test_courses_menu_quick_replies_use_new_titles_in_spanish(self):
+        state = self._go_to_menu()
+        self.tree.process_message(state, "1")
+        self.tree.process_message(state, "2")
+
+        assert [item["title"] for item in state.quick_replies[:3]] == [
+            "🐠 Descubriendo el buceo (Open Water Diver)",
+            "🚀 Convierte en pro (Advanced / Rescue / Dive Master)",
+            "✨ Amplía tus habilidades (Especialidades PADI)",
+        ]
+
+    def test_courses_menu_quick_replies_use_new_titles_in_english(self):
+        state = self._go_to_menu("en")
+        self.tree.process_message(state, "1")
+        self.tree.process_message(state, "2")
+
+        assert [item["title"] for item in state.quick_replies[:3]] == [
+            "🐠 Discover diving (Open Water Diver)",
+            "🚀 Go pro (Advanced / Rescue / Divemaster)",
+            "✨ Expand your skills (PADI Specialties)",
+        ]
+
+    def test_go_pro_submenu_shows_only_advanced_rescue_and_divemaster_in_spanish(self):
+        state = self._go_to_menu()
+        self.tree.process_message(state, "1")
+        self.tree.process_message(state, "2")
+        response = self.tree.process_message(state, "2")
+
+        assert state.step == Step.COURSES_ADVANCED_MENU
+        assert "avanzados" in response.lower()
+        assert [item["title"] for item in state.quick_replies[:3]] == [
+            "📘 Curso Avanzado",
+            "🚑 Rescate + EFR",
+            "🏅 Dive Master",
+        ]
+
+    def test_go_pro_submenu_shows_only_advanced_rescue_and_divemaster_in_english(self):
+        state = self._go_to_menu("en")
+        self.tree.process_message(state, "1")
+        self.tree.process_message(state, "2")
+        response = self.tree.process_message(state, "2")
+
+        assert state.step == Step.COURSES_ADVANCED_MENU
+        assert "advanced and professional" in response.lower()
+        assert [item["title"] for item in state.quick_replies[:3]] == [
+            "📘 Advanced Course",
+            "🚑 Rescue + EFR",
+            "🏅 Divemaster",
+        ]
+
+    def test_specialties_submenu_shows_only_specialties_in_spanish(self):
+        state = self._go_to_menu()
+        self.tree.process_message(state, "1")
+        self.tree.process_message(state, "2")
+        response = self.tree.process_message(state, "3")
+
+        assert state.step == Step.COURSES_SPECIALTIES_MENU
+        assert "especialidades" in response.lower()
+        assert [item["title"] for item in state.quick_replies[:5]] == [
+            "✨ Mindful Diving",
+            "🐠 Identificación de peces",
+            "🌿 Naturalista",
+            "⚖️ Flotabilidad",
+            "🫧 Nitrox",
+        ]
+
+    def test_specialties_submenu_shows_only_specialties_in_english(self):
+        state = self._go_to_menu("en")
+        self.tree.process_message(state, "1")
+        self.tree.process_message(state, "2")
+        response = self.tree.process_message(state, "3")
+
+        assert state.step == Step.COURSES_SPECIALTIES_MENU
+        assert "specialties" in response.lower()
+        assert [item["title"] for item in state.quick_replies[:5]] == [
+            "✨ Mindful Diving",
+            "🐠 Fish Identification",
+            "🌿 Naturalist",
+            "⚖️ Buoyancy",
+            "🫧 Nitrox",
+        ]
+
     def test_human_via_keyword(self):
         """Asesor ya no es opción del menú; se escala vía keyword."""
         state = self._go_to_menu()
@@ -395,6 +477,97 @@ class TestSummaryFlow:
 
         response = self.tree.process_message(state, "2")
         assert "18 horas" in response
+
+    def test_open_water_summary_skips_repeated_info_block_in_spanish(self):
+        state = make_state()
+        state.step = Step.COLOMBIAN
+        state.language = "es"
+        state.selected_service = "open_water"
+        state.location = "cartagena"
+
+        response = self.tree.process_message(state, "2")
+
+        assert state.step == Step.SUMMARY
+        assert "ℹ️" not in response
+        assert "itinerario completo" in response.lower()
+        assert [item["value"] for item in state.quick_replies] == ["itinerary", "skip", "back"]
+
+    def test_open_water_summary_skips_repeated_info_block_in_english(self):
+        state = make_state()
+        state.step = Step.COLOMBIAN
+        state.language = "en"
+        state.selected_service = "open_water"
+        state.location = "cartagena"
+
+        response = self.tree.process_message(state, "2")
+
+        assert state.step == Step.SUMMARY
+        assert "ℹ️" not in response
+        assert "full itinerary" in response.lower()
+        assert [item["value"] for item in state.quick_replies] == ["itinerary", "skip", "back"]
+
+    def test_divemaster_summary_in_spanish_uses_info_link_and_contact_prompt(self):
+        state = make_state()
+        state.step = Step.COLOMBIAN
+        state.language = "es"
+        state.selected_service = "divemaster"
+        state.location = "cartagena"
+
+        response = self.tree.process_message(state, "2")
+
+        assert state.step == Step.SUMMARY
+        assert "Los honorarios del instructor y los materiales PADI se pagan por separado" in response
+        assert "Instructor fee and PADI materials are separate" not in response
+        assert "👉 Reserva aqui con 10% de descuento:" not in response
+        assert "🔗 Más información del programa:" in response
+        assert "https://divingplanet.org/curso-padi-cartagena/dive-master/" in response
+        assert "Es el primer nivel profesional de PADI" in response
+        assert "¿Quieres ver el itinerario completo o prefieres contactar con nuestro jefe" in response
+        assert [item["value"] for item in state.quick_replies] == ["itinerary", "contact", "back"]
+
+    def test_divemaster_itinerary_in_spanish_adds_overview_and_contact_options(self):
+        state = make_state()
+        state.step = Step.COLOMBIAN
+        state.language = "es"
+        state.selected_service = "divemaster"
+        state.location = "cartagena"
+
+        self.tree.process_message(state, "2")
+        response = self.tree.process_message(state, "itinerary")
+
+        assert state.step == Step.SUMMARY
+        assert "Resumen del programa" in response
+        assert "El curso se divide en tres módulos" in response
+        assert "La parte práctica solo comienza cuando toda la teoría está completa" in response
+        assert "https://divingplanet.org/curso-padi-cartagena/dive-master/" in response
+        assert "¿Quieres contactar con nuestro jefe para solicitar el curso de Dive Master?" in response
+        assert [item["value"] for item in state.quick_replies] == ["contact", "ask", "done", "back"]
+
+    def test_summary_follow_up_keeps_back_button_after_showing_itinerary(self):
+        state = make_state()
+        state.step = Step.COLOMBIAN
+        state.language = "es"
+        state.selected_service = "open_water"
+        state.location = "cartagena"
+
+        self.tree.process_message(state, "2")
+        response = self.tree.process_message(state, "itinerary")
+
+        assert state.step == Step.SUMMARY
+        assert "itinerario" in response.lower() or "🗺️" in response
+        assert [item["value"] for item in state.quick_replies] == ["ask", "done", "back"]
+
+    def test_open_water_full_itinerary_skips_repeated_info_block(self):
+        state = make_state()
+        state.language = "es"
+        state.selected_service = "open_water"
+        state.location = "cartagena"
+        state.is_colombian = False
+
+        response = self.tree._format_full_itinerary(state)
+
+        assert "ℹ️" not in response
+        assert "🗺️" in response
 
 
 class TestFullJourney:

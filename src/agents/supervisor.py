@@ -44,6 +44,7 @@ MENU_STEPS = {
     Step.COURSES_OPEN_WATER_ORIGIN,
     Step.COURSES_OPEN_WATER_TIME,
     Step.COURSES_ADVANCED_MENU,
+    Step.COURSES_SPECIALTIES_MENU,
     Step.PRICING_MENU,
     Step.BOOKING_MENU,
     Step.LOGISTICS_MENU,
@@ -80,6 +81,7 @@ BACK_STEP: dict[Step, tuple[Step, str]] = {
     Step.COURSES_OPEN_WATER_ORIGIN: (Step.COURSES_MENU, "courses_menu"),
     Step.COURSES_OPEN_WATER_TIME: (Step.COURSES_OPEN_WATER_ORIGIN, "courses_open_water_origin"),
     Step.COURSES_ADVANCED_MENU: (Step.COURSES_MENU, "courses_menu"),
+    Step.COURSES_SPECIALTIES_MENU: (Step.COURSES_MENU, "courses_menu"),
 }
 
 # Keywords that indicate escalation to a human
@@ -222,7 +224,12 @@ def _go_back_one_step(state: ConversationState) -> str:
     """
     from src.flows.decision_tree import MESSAGES
 
-    target_step, qr_key = BACK_STEP.get(state.step, (Step.MAIN_MENU, "main_menu"))
+    dynamic_target = decision_tree.resolve_back_target(state)
+    if dynamic_target is not None:
+        target_step, qr_key = dynamic_target
+        state.summary_mode = None
+    else:
+        target_step, qr_key = BACK_STEP.get(state.step, (Step.MAIN_MENU, "main_menu"))
     state.step = target_step
     decision_tree.set_quick_replies(state, qr_key)
     return MESSAGES[qr_key][state.language]
@@ -727,6 +734,18 @@ async def route_message(state: ConversationState, message: str) -> str:
 
     # Post-menu steps (SUMMARY, FREE_TEXT) -> summary may still have quick replies (itinerary offer)
     if state.step == Step.SUMMARY:
+        matched_value = _match_quick_reply_text(state, message)
+        if matched_value == "back":
+            logger.info(f"[SUPERVISOR] Back via summary quick-reply from step={state.step.value}")
+            return _go_back_one_step(state)
+        if matched_value is not None:
+            response = decision_tree.process_message(state, matched_value)
+            if state.step == Step.ESCALATE and not state.pending_note:
+                reason = state.pending_escalation_reason or "derivado por el árbol de opciones"
+                state.pending_note = build_lead_summary(state, escalation_reason=reason)
+            logger.info(f"[SUPERVISOR] Decision tree (summary quick-reply={matched_value}) -> step={state.step.value}")
+            return response
+
         summary_choices = {
             "1",
             "2",
@@ -740,9 +759,17 @@ async def route_message(state: ConversationState, message: str) -> str:
             "thanks",
             "no thanks",
             "no, thanks",
+            "itinerary",
+            "skip",
+            "ask",
+            "done",
+            "contact",
         }
         if msg_lower in summary_choices:
             response = decision_tree.process_message(state, message)
+            if state.step == Step.ESCALATE and not state.pending_note:
+                reason = state.pending_escalation_reason or "derivado por el árbol de opciones"
+                state.pending_note = build_lead_summary(state, escalation_reason=reason)
             logger.info(f"[SUPERVISOR] Decision tree (summary) -> step={state.step.value}")
             return response
 

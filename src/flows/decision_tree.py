@@ -38,6 +38,7 @@ class Step(str, Enum):
     COURSES_OPEN_WATER_ORIGIN = "courses_open_water_origin"
     COURSES_OPEN_WATER_TIME = "courses_open_water_time"
     COURSES_ADVANCED_MENU = "courses_advanced_menu"
+    COURSES_SPECIALTIES_MENU = "courses_specialties_menu"
     PRICING_MENU = "pricing_menu"
     BOOKING_MENU = "booking_menu"
     LOGISTICS_MENU = "logistics_menu"
@@ -79,6 +80,9 @@ class ConversationState:
     quick_replies: list[dict] = field(default_factory=list)
     pending_note: str | None = None
     pending_escalation_reason: str | None = None
+    summary_mode: str | None = None
+    back_step_override: Step | None = None
+    back_quick_replies_key: str | None = None
 
     def __post_init__(self):
         if self.history is None:
@@ -144,6 +148,22 @@ def _flight_rule(service: dict, lang: str) -> str:
         if "vuelo" in lowered or "flying" in lowered or "fly" in lowered:
             return requirement
     return ""
+
+
+def _is_contact_only_service(service_id: str | None) -> bool:
+    return service_id == "divemaster"
+
+
+def _divemaster_itinerary_offer_prompt(lang: str) -> str:
+    if lang == "es":
+        return "¿Quieres ver el itinerario completo o prefieres contactar con nuestro jefe para solicitar el curso de Dive Master?"
+    return "Would you like to see the full itinerary or would you prefer to contact our manager to request the Dive Master course?"
+
+
+def _divemaster_follow_up_prompt(lang: str) -> str:
+    if lang == "es":
+        return "¿Quieres contactar con nuestro jefe para solicitar el curso de Dive Master?"
+    return "Would you like to contact our manager to request the Dive Master course?"
 
 
 def _extra_notes(service: dict, lang: str) -> str:
@@ -261,14 +281,22 @@ def _load_services() -> dict:
             "price_cop": service.get("price_cop"),
             "price_cop_normal": service.get("price_cop_normal"),
             "price_note": service.get("price_note"),
+            "price_note_es": service.get("price_note_es"),
+            "price_note_en": service.get("price_note_en"),
             "duration_es": _format_duration(service, "es"),
             "duration_en": _format_duration(service, "en"),
             "includes_es": _join_items(_sanitize_includes(service.get("included_es"))),
             "includes_en": _join_items(_sanitize_includes(service.get("included_en"))),
             "description_es": service.get("description_es", ""),
             "description_en": service.get("description_en", ""),
+            "preparation_es": service.get("preparation_es", ""),
+            "preparation_en": service.get("preparation_en", ""),
             "itinerary_es": service.get("itinerary_es", []) or [],
             "itinerary_en": service.get("itinerary_en", []) or [],
+            "summary_intro_es": service.get("summary_intro_es", []) or [],
+            "summary_intro_en": service.get("summary_intro_en", []) or [],
+            "itinerary_overview_es": service.get("itinerary_overview_es", []) or [],
+            "itinerary_overview_en": service.get("itinerary_overview_en", []) or [],
             "requirements_es": service.get("requirements_es", []) or [],
             "requirements_en": service.get("requirements_en", []) or [],
             "not_included_es": service.get("not_included_es", []) or [],
@@ -286,6 +314,7 @@ def _load_services() -> dict:
             "booking_url": service.get("booking_url") or service.get("url") or "https://divingplanet.org/contacto/",
             "booking_url_island": "",
             "category": service.get("category"),
+            "contact_only": service.get("contact_only", False),
         }
     return services
 
@@ -328,6 +357,11 @@ SPECIALTY_SERVICE_IDS = {
     "naturalist_specialty_already_on_island",
     "buoyancy_specialty_already_on_island",
 }
+
+
+def _is_padi_course_service(service_id: str | None) -> bool:
+    service = SERVICES.get(service_id)
+    return bool(service and service.get("category") == "course")
 
 
 # --- Messages templates ---
@@ -497,6 +531,16 @@ MESSAGES = {
         "en": (
             "These are our advanced and professional PADI courses.\n"
             "Choose the one you are most interested in."
+        ),
+    },
+    "courses_specialties_menu": {
+        "es": (
+            "Estas son nuestras especialidades PADI disponibles.\n"
+            "Elige una para ver la información del servicio."
+        ),
+        "en": (
+            "These are our available PADI specialties.\n"
+            "Choose one to see the service information."
         ),
     },
     "group_type": {
@@ -764,16 +808,16 @@ BUTTON_OPTIONS = {
     },
     "courses_menu": {
         "es": [
-            {"title": "Quiero certificarme (curso Basico Open Water)", "value": "1"},
-            {"title": "Quiero otro curso PADI (Avanzado / Rescate / Dive Master)", "value": "2"},
-            {"title": "Especialidades PADI", "value": "3"},
+            {"title": "🐠 Descubriendo el buceo (Open Water Diver)", "value": "1"},
+            {"title": "🚀 Convierte en pro (Advanced / Rescue / Dive Master)", "value": "2"},
+            {"title": "✨ Amplía tus habilidades (Especialidades PADI)", "value": "3"},
             {"title": "Ya empece un curso en otro centro (referral / reactivate)", "value": "4"},
             {"title": "🔙 Volver", "value": "back"},
         ],
         "en": [
-            {"title": "I want to get certified (Open Water)", "value": "1"},
-            {"title": "I want another PADI course (Advanced / Rescue / Divemaster)", "value": "2"},
-            {"title": "PADI specialties", "value": "3"},
+            {"title": "🐠 Discover diving (Open Water Diver)", "value": "1"},
+            {"title": "🚀 Go pro (Advanced / Rescue / Divemaster)", "value": "2"},
+            {"title": "✨ Expand your skills (PADI Specialties)", "value": "3"},
             {"title": "I already started a course elsewhere (referral / reactivate)", "value": "4"},
             {"title": "🔙 Back", "value": "back"},
         ],
@@ -805,24 +849,32 @@ BUTTON_OPTIONS = {
     "courses_advanced_menu": {
         "es": [
             {"title": "📘 Curso Avanzado", "value": "1"},
-            {"title": "🛟 Rescate + EFR", "value": "2"},
+            {"title": "🚑 Rescate + EFR", "value": "2"},
             {"title": "🏅 Dive Master", "value": "3"},
-            {"title": "✨ Mindful Diving", "value": "4"},
-            {"title": "🐠 Identificacion de Peces", "value": "5"},
-            {"title": "🌿 Naturalista", "value": "6"},
-            {"title": "⚖️ Flotabilidad", "value": "7"},
-            {"title": "🫧 Nitrox", "value": "8"},
             {"title": "🔙 Volver", "value": "back"},
         ],
         "en": [
             {"title": "📘 Advanced Course", "value": "1"},
-            {"title": "🛟 Rescue + EFR", "value": "2"},
+            {"title": "🚑 Rescue + EFR", "value": "2"},
             {"title": "🏅 Divemaster", "value": "3"},
-            {"title": "✨ Mindful Diving", "value": "4"},
-            {"title": "🐠 Fish Identification", "value": "5"},
-            {"title": "🌿 Naturalist", "value": "6"},
-            {"title": "⚖️ Buoyancy", "value": "7"},
-            {"title": "🫧 Nitrox", "value": "8"},
+            {"title": "🔙 Back", "value": "back"},
+        ],
+    },
+    "courses_specialties_menu": {
+        "es": [
+            {"title": "✨ Mindful Diving", "value": "1"},
+            {"title": "🐠 Identificación de peces", "value": "2"},
+            {"title": "🌿 Naturalista", "value": "3"},
+            {"title": "⚖️ Flotabilidad", "value": "4"},
+            {"title": "🫧 Nitrox", "value": "5"},
+            {"title": "🔙 Volver", "value": "back"},
+        ],
+        "en": [
+            {"title": "✨ Mindful Diving", "value": "1"},
+            {"title": "🐠 Fish Identification", "value": "2"},
+            {"title": "🌿 Naturalist", "value": "3"},
+            {"title": "⚖️ Buoyancy", "value": "4"},
+            {"title": "🫧 Nitrox", "value": "5"},
             {"title": "🔙 Back", "value": "back"},
         ],
     },
@@ -920,22 +972,52 @@ BUTTON_OPTIONS = {
     },
     "summary": {
         "es": [
-            {"title": "❓ Si, tengo mas preguntas", "value": "1"},
-            {"title": "🙏 No, gracias", "value": "2"},
+            {"title": "❓ Si, tengo mas preguntas", "value": "ask"},
+            {"title": "🙏 No, gracias", "value": "done"},
+            {"title": "🔙 Volver", "value": "back"},
         ],
         "en": [
-            {"title": "❓ Yes, I have more questions", "value": "1"},
-            {"title": "🙏 No, thanks", "value": "2"},
+            {"title": "❓ Yes, I have more questions", "value": "ask"},
+            {"title": "🙏 No, thanks", "value": "done"},
+            {"title": "🔙 Back", "value": "back"},
+        ],
+    },
+    "summary_contact": {
+        "es": [
+            {"title": "🧑‍💼 Contactar/Reservar", "value": "contact"},
+            {"title": "❓ Tengo mas preguntas", "value": "ask"},
+            {"title": "🙏 No, gracias", "value": "done"},
+            {"title": "🔙 Volver", "value": "back"},
+        ],
+        "en": [
+            {"title": "🧑‍💼 Contact / Book", "value": "contact"},
+            {"title": "❓ I have more questions", "value": "ask"},
+            {"title": "🙏 No, thanks", "value": "done"},
+            {"title": "🔙 Back", "value": "back"},
         ],
     },
     "itinerary_offer": {
         "es": [
-            {"title": "🗺️ Si, ver itinerario completo", "value": "1"},
-            {"title": "🙏 No, gracias", "value": "2"},
+            {"title": "🗺️ Si, ver itinerario completo", "value": "itinerary"},
+            {"title": "🙏 No, gracias", "value": "skip"},
+            {"title": "🔙 Volver", "value": "back"},
         ],
         "en": [
-            {"title": "🗺️ Yes, show full itinerary", "value": "1"},
-            {"title": "🙏 No, thanks", "value": "2"},
+            {"title": "🗺️ Yes, show full itinerary", "value": "itinerary"},
+            {"title": "🙏 No, thanks", "value": "skip"},
+            {"title": "🔙 Back", "value": "back"},
+        ],
+    },
+    "itinerary_offer_contact": {
+        "es": [
+            {"title": "🗺️ Ver itinerario", "value": "itinerary"},
+            {"title": "🧑‍💼 Contactar/Reservar", "value": "contact"},
+            {"title": "🔙 Volver", "value": "back"},
+        ],
+        "en": [
+            {"title": "🗺️ View itinerary", "value": "itinerary"},
+            {"title": "🧑‍💼 Contact / Book", "value": "contact"},
+            {"title": "🔙 Back", "value": "back"},
         ],
     },
     "info_general": {
@@ -971,6 +1053,25 @@ class DecisionTree:
             state.quick_replies = self._island_certified_options(state.language)
             return
         state.quick_replies = get_button_options(key, state.language)
+
+    def _set_back_target(self, state: ConversationState, step: Step, quick_replies_key: str):
+        state.back_step_override = step
+        state.back_quick_replies_key = quick_replies_key
+
+    def resolve_back_target(self, state: ConversationState) -> tuple[Step, str] | None:
+        if state.step == Step.SUMMARY and state.back_step_override and state.back_quick_replies_key:
+            return state.back_step_override, state.back_quick_replies_key
+        return None
+
+    def _summary_quick_replies_key(self, state: ConversationState) -> str:
+        if _is_contact_only_service(state.selected_service):
+            return "summary_contact"
+        return "summary"
+
+    def _itinerary_offer_quick_replies_key(self, state: ConversationState) -> str:
+        if _is_contact_only_service(state.selected_service):
+            return "itinerary_offer_contact"
+        return "itinerary_offer"
 
     @staticmethod
     def _back_to_menu_hint(lang: str) -> str:
@@ -1043,6 +1144,7 @@ class DecisionTree:
             Step.COURSES_OPEN_WATER_ORIGIN: self._handle_courses_open_water_origin,
             Step.COURSES_OPEN_WATER_TIME: self._handle_courses_open_water_time,
             Step.COURSES_ADVANCED_MENU: self._handle_courses_advanced_menu,
+            Step.COURSES_SPECIALTIES_MENU: self._handle_courses_specialties_menu,
             Step.PRICING_MENU: self._handle_pricing_menu,
             Step.BOOKING_MENU: self._handle_booking_menu,
             Step.LOGISTICS_MENU: self._handle_logistics_menu,
@@ -1163,6 +1265,7 @@ class DecisionTree:
             self.set_quick_replies(state, "tours_experience")
             return MESSAGES["tours_experience"][lang]
         if choice == 2:
+            self._set_back_target(state, Step.GROUP_TYPE, "group_type")
             state.selected_service = self._service_for_location("snorkeling", state)
             state.step = Step.COLOMBIAN
             self.set_quick_replies(state, "colombian")
@@ -1218,6 +1321,7 @@ class DecisionTree:
             return MESSAGES["tours_certified"][lang]
         if choice == 2:
             state.is_certified = False
+            self._set_back_target(state, Step.TOURS_EXPERIENCE, "tours_experience")
             state.selected_service = self._service_for_location("minicourse", state)
             state.step = Step.BEGINNER_AGE
             self.set_quick_replies(state, "beginner_age")
@@ -1276,6 +1380,7 @@ class DecisionTree:
                 state.quick_replies = []
                 return self._format_service_detail(state) + "\n\n" + MESSAGES["escalate"][lang]
 
+            self._set_back_target(state, Step.TOURS_CERTIFIED, "tours_certified")
             state.step = Step.CERTIFIED_LAST_DIVE
             self.set_quick_replies(state, "certified_last_dive")
             # Servicios en los que primero preguntamos por la ultima inmersión y nacionalidad,
@@ -1376,6 +1481,7 @@ class DecisionTree:
         lang = state.language
 
         if choice == 1:
+            self._set_back_target(state, Step.TOURS_BEGINNER, "tours_beginner")
             state.selected_service = self._service_for_location("minicourse", state)
             state.step = Step.BEGINNER_AGE
             self.set_quick_replies(state, "beginner_age")
@@ -1925,16 +2031,17 @@ class DecisionTree:
         lang = state.language
 
         if choice == 1:
+            self._set_back_target(state, Step.COURSES_MENU, "courses_menu")
             state.selected_service = self._service_for_location("open_water", state)
             state.step = Step.COURSES_OPEN_WATER_ORIGIN
             self.set_quick_replies(state, "courses_open_water_origin")
             if lang == "es":
                 return (
-                    "Perfecto, vamos a ver tu curso Open Water.\n\n"
+                    "🐠 Perfecto, vamos a ver tu curso Open Water.\n\n"
                     "Primero, ¿desde donde harias la parte practica?"
                 )
             return (
-                "Great, let's check your Open Water course.\n\n"
+                "🐠 Great, let's check your Open Water course.\n\n"
                 "First, where would you do the practical part?"
             )
         if choice == 2:
@@ -1942,23 +2049,23 @@ class DecisionTree:
             self.set_quick_replies(state, "courses_advanced_menu")
             if lang == "es":
                 return (
-                    "Estos son nuestros cursos PADI avanzados y profesionales.\n"
+                    "🚀 Estos son nuestros cursos PADI avanzados y profesionales.\n"
                     "Elige el que mas te interese."
                 )
             return (
-                "These are our advanced and professional PADI courses.\n"
+                "🚀 These are our advanced and professional PADI courses.\n"
                 "Choose the one you are most interested in."
             )
         if choice == 3:
-            state.step = Step.COURSES_ADVANCED_MENU
-            self.set_quick_replies(state, "courses_advanced_menu")
+            state.step = Step.COURSES_SPECIALTIES_MENU
+            self.set_quick_replies(state, "courses_specialties_menu")
             if lang == "es":
                 return (
-                    "Estas son nuestras especialidades PADI disponibles.\n"
+                    "✨ Estas son nuestras especialidades PADI disponibles.\n"
                     "Elige una para ver la informacion del servicio."
                 )
             return (
-                "These are our available PADI specialties.\n"
+                "✨ These are our available PADI specialties.\n"
                 "Choose one to see the service information."
             )
         if choice == 4:
@@ -2016,47 +2123,17 @@ class DecisionTree:
             self.set_quick_replies(state, "courses_open_water_time")
             return MESSAGES["not_understood"][lang]
 
-        response = self._format_service_detail(state)
-
-        if lang == "es":
-            if choice == 1:
-                response += (
-                    "\n\nGenial, con 2 dias completos podemos organizar bien la practica en islas "
-                    "para que completes tu certificacion Open Water."
-                )
-            else:
-                response += (
-                    "\n\nSi tienes menos de 2 dias completos, podemos ver alternativas (por ejemplo combinar "
-                    "minicurso o buceos guiados) o ajustar el planning."
-                )
-        else:
-            if choice == 1:
-                response += (
-                    "\n\nGreat, with 2 full days we can comfortably organize the practice in the islands "
-                    "so you can complete your Open Water certification."
-                )
-            else:
-                response += (
-                    "\n\nIf you have less than 2 full days, we can look at alternatives (for example combining "
-                    "a mini course or guided dives) or adjust the plan."
-                )
-
         state.step = Step.COLOMBIAN
         self.set_quick_replies(state, "colombian")
-        return response + "\n\n" + MESSAGES["colombian"][lang]
+        return MESSAGES["colombian"][lang]
 
     def _handle_courses_advanced_menu(self, state: ConversationState, message: str) -> str:
-        choice = self._parse_choice(message, 8)
+        choice = self._parse_choice(message, 3)
         lang = state.language
         course_map = {
             1: self._service_for_location("advanced", state),
             2: "rescue",
             3: "divemaster",
-            4: "mindful_diving",
-            5: self._service_for_location("fish_identification_specialty", state),
-            6: self._service_for_location("naturalist_specialty", state),
-            7: self._service_for_location("buoyancy_specialty", state),
-            8: self._service_for_location("nitrox_specialty", state),
         }
 
         if choice in course_map:
@@ -2064,12 +2141,38 @@ class DecisionTree:
                 state.step = Step.ESCALATE
                 state.quick_replies = []
                 return MESSAGES["escalate"][lang]
+            self._set_back_target(state, Step.COURSES_ADVANCED_MENU, "courses_advanced_menu")
             state.selected_service = course_map[choice]
             state.step = Step.COLOMBIAN
             self.set_quick_replies(state, "colombian")
-            return self._format_service_detail(state) + "\n\n" + MESSAGES["colombian"][lang]
+            return MESSAGES["colombian"][lang]
 
         self.set_quick_replies(state, "courses_advanced_menu")
+        return MESSAGES["not_understood"][lang]
+
+    def _handle_courses_specialties_menu(self, state: ConversationState, message: str) -> str:
+        choice = self._parse_choice(message, 5)
+        lang = state.language
+        course_map = {
+            1: "mindful_diving",
+            2: self._service_for_location("fish_identification_specialty", state),
+            3: self._service_for_location("naturalist_specialty", state),
+            4: self._service_for_location("buoyancy_specialty", state),
+            5: self._service_for_location("nitrox_specialty", state),
+        }
+
+        if choice in course_map:
+            if course_map[choice] in SPECIALTY_SERVICE_IDS and course_map[choice] not in SERVICES:
+                state.step = Step.ESCALATE
+                state.quick_replies = []
+                return MESSAGES["escalate"][lang]
+            self._set_back_target(state, Step.COURSES_SPECIALTIES_MENU, "courses_specialties_menu")
+            state.selected_service = course_map[choice]
+            state.step = Step.COLOMBIAN
+            self.set_quick_replies(state, "colombian")
+            return MESSAGES["colombian"][lang]
+
+        self.set_quick_replies(state, "courses_specialties_menu")
         return MESSAGES["not_understood"][lang]
 
     def _handle_service_detail(self, state: ConversationState, message: str) -> str:
@@ -2111,14 +2214,27 @@ class DecisionTree:
         if state.selected_service:
             state.selected_service = self._service_for_location(state.selected_service, state)
         state.step = Step.SUMMARY
-        self.set_quick_replies(state, "itinerary_offer")
+        state.summary_mode = "itinerary_offer"
+        self.set_quick_replies(state, self._itinerary_offer_quick_replies_key(state))
         return self._format_summary(state)
 
     def _handle_summary(self, state: ConversationState, message: str) -> str:
         lang = state.language
         msg = " ".join(message.strip().lower().split())
-        choice = self._parse_choice(message, 2)
         service_id = state.selected_service
+        summary_mode = state.summary_mode or "itinerary_offer"
+        contact_only = _is_contact_only_service(service_id)
+        max_options = 2
+        if summary_mode == "itinerary_offer" and contact_only:
+            max_options = 2
+        elif summary_mode != "itinerary_offer" and contact_only:
+            max_options = 3
+        choice = self._parse_choice(message, max_options)
+        action = None
+
+        if msg in ("itinerary", "skip", "ask", "done", "contact"):
+            action = msg
+
         if choice is None:
             if msg in ("si", "sí", "yes"):
                 choice = 1
@@ -2131,39 +2247,106 @@ class DecisionTree:
                 "no thanks",
                 "no, thanks",
             ):
-                choice = 2
+                if contact_only and summary_mode == "itinerary_offer":
+                    action = "skip"
+                elif contact_only:
+                    choice = 3
+                else:
+                    choice = 2
 
-        if choice == 1:
+        if summary_mode == "itinerary_offer":
+            if action == "itinerary" or choice == 1:
+                state.summary_mode = "follow_up"
+                self.set_quick_replies(state, self._summary_quick_replies_key(state))
+                if contact_only:
+                    return self._format_full_itinerary(state) + "\n\n" + _divemaster_follow_up_prompt(lang)
+                if lang == "es":
+                    return self._format_full_itinerary(state) + "\n\n¿Quieres preguntarme algo más?"
+                return self._format_full_itinerary(state) + "\n\nWould you like to ask anything else?"
+
+            if contact_only and (action == "contact" or choice == 2):
+                state.summary_mode = None
+                state.step = Step.ESCALATE
+                state.quick_replies = []
+                state.pending_escalation_reason = "solicitó contacto para curso divemaster"
+                if lang == "es":
+                    return (
+                        "Perfecto. Si ya estas 100% interesado/a en el curso Dive Master, te pongo en contacto con mi jefe "
+                        "para revisar tu perfil, fechas y modalidad del programa."
+                    )
+                return (
+                    "Perfect. If you are already 100% interested in the Dive Master course, I'll connect you with my manager "
+                    "to review your profile, dates, and the best program format for you."
+                )
+
+            if action == "skip" or choice == 2:
+                state.summary_mode = "follow_up"
+                self.set_quick_replies(state, self._summary_quick_replies_key(state))
+                if contact_only:
+                    return _divemaster_follow_up_prompt(lang)
+                if lang == "es" and service_id == "2_dives_1_day" and state.is_certified:
+                    return (
+                        "Perfecto. Si en algún momento quieres reservar este plan, el siguiente paso "
+                        "es completar un formulario de exoneración para buzos certificados "
+                        "(es obligatorio para el seguro y el zarpe):\n"
+                        "https://form.jotform.com/divingplanetcartagena/exoneracion-buzo-en-espanol\n\n"
+                        "¿Quieres preguntarme algo más?"
+                    )
+                if lang == "en" and service_id == "2_dives_1_day" and state.is_certified:
+                    return (
+                        "Great. If at any point you decide to book this plan, the next step is to complete "
+                        "a liability waiver form for certified divers (it's mandatory for insurance and "
+                        "boat clearance):\n"
+                        "https://form.jotform.com/divingplanetcartagena/exoneracion-buzo-en-espanol\n\n"
+                        "Would you like to ask anything else?"
+                    )
+                if lang == "es":
+                    return "Perfecto. ¿Quieres preguntarme algo más?"
+                return "Perfect. Would you like to ask anything else?"
+
+            self.set_quick_replies(state, self._itinerary_offer_quick_replies_key(state))
+            return MESSAGES["not_understood"][lang]
+
+        if contact_only and (action == "contact" or choice == 1):
+            state.summary_mode = None
+            state.step = Step.ESCALATE
+            state.quick_replies = []
+            state.pending_escalation_reason = "solicitó contacto para curso divemaster"
+            if lang == "es":
+                return (
+                    "Perfecto. Si ya estas 100% interesado/a en el curso Dive Master, te pongo en contacto con mi jefe "
+                    "para revisar tu perfil, fechas y modalidad del programa."
+                )
+            return (
+                "Perfect. If you are already 100% interested in the Dive Master course, I'll connect you with my manager "
+                "to review your profile, dates, and the best program format for you."
+            )
+
+        if action == "ask" or choice == (2 if contact_only else 1):
+            state.summary_mode = None
             state.step = Step.FREE_TEXT
             state.quick_replies = []
             if lang == "es":
-                return self._format_full_itinerary(state) + "\n\n¿Quieres preguntarme algo más?"
-            return self._format_full_itinerary(state) + "\n\nWould you like to ask anything else?"
+                return "Perfecto. ¿Qué te gustaría preguntarme?"
+            return "Perfect. What would you like to ask me?"
 
-        if choice == 2:
+        if action == "done" or choice == (3 if contact_only else 2):
+            state.summary_mode = None
             state.step = Step.FREE_TEXT
             state.quick_replies = []
-            if lang == "es" and service_id == "2_dives_1_day" and state.is_certified:
-                return (
-                    "Perfecto. Si en algún momento quieres reservar este plan, el siguiente paso "
-                    "es completar un formulario de exoneración para buzos certificados "
-                    "(es obligatorio para el seguro y el zarpe):\n"
-                    "https://form.jotform.com/divingplanetcartagena/exoneracion-buzo-en-espanol\n\n"
-                    "¿Quieres preguntarme algo más?"
-                )
-            if lang == "en" and service_id == "2_dives_1_day" and state.is_certified:
-                return (
-                    "Great. If at any point you decide to book this plan, the next step is to complete "
-                    "a liability waiver form for certified divers (it's mandatory for insurance and "
-                    "boat clearance):\n"
-                    "https://form.jotform.com/divingplanetcartagena/exoneracion-buzo-en-espanol\n\n"
-                    "Would you like to ask anything else?"
-                )
             if lang == "es":
-                return "Perfecto. ¿Quieres preguntarme algo más?"
-            return "Perfect. Would you like to ask anything else?"
+                return (
+                    "¡Gracias por contactar a Diving Planet! 🤿\n"
+                    "Si necesitas algo más, escribe *menu* para volver al inicio.\n"
+                    "¡Te esperamos en las Islas del Rosario!"
+                )
+            return (
+                "Thank you for contacting Diving Planet! 🤿\n"
+                "If you need anything else, type *menu* to go back.\n"
+                "We look forward to seeing you at the Rosario Islands!"
+            )
 
-        self.set_quick_replies(state, "itinerary_offer")
+        self.set_quick_replies(state, self._summary_quick_replies_key(state))
         return MESSAGES["not_understood"][lang]
 
     def _format_full_itinerary(self, state: ConversationState) -> str:
@@ -2175,10 +2358,14 @@ class DecisionTree:
         service_id = state.selected_service
         if lang == "es":
             description = service.get("description_es")
+            preparation = service.get("preparation_es")
+            overview = service.get("itinerary_overview_es") or []
             itinerary = service.get("itinerary_es") or []
             requirements = service.get("requirements_es") or []
             not_included = service.get("not_included_es") or []
             web_url = service.get("web_url")
+            contact_only = service.get("contact_only", False)
+            title_overview = "📘 **Resumen del programa:**"
             title_itinerary = "🗺️ **Itinerario:**"
             title_requirements = "✅ **Requisitos:**"
             title_not_included = "❌ **No incluye:**"
@@ -2186,10 +2373,14 @@ class DecisionTree:
             payment_title = "👉 Reserva aqui con 10% de descuento:"
         else:
             description = service.get("description_en")
+            preparation = service.get("preparation_en")
+            overview = service.get("itinerary_overview_en") or []
             itinerary = service.get("itinerary_en") or []
             requirements = service.get("requirements_en") or []
             not_included = service.get("not_included_en") or []
             web_url = service.get("web_url")
+            contact_only = service.get("contact_only", False)
+            title_overview = "📘 **Program overview:**"
             title_itinerary = "🗺️ **Itinerary:**"
             title_requirements = "✅ **Requirements:**"
             title_not_included = "❌ **Not included:**"
@@ -2239,8 +2430,16 @@ class DecisionTree:
         # Construimos bloques separados para controlar bien los espacios entre secciones
         blocks: list[list[str]] = []
 
-        if description:
+        if description and not _is_padi_course_service(service_id):
             blocks.append([f"ℹ️ {description}"])
+
+        if overview or (preparation and contact_only):
+            block = [title_overview]
+            for item in overview:
+                block.append(item)
+            if preparation:
+                block.append(preparation)
+            blocks.append(block)
 
         if itinerary:
             block = [title_itinerary]
@@ -2266,7 +2465,7 @@ class DecisionTree:
             blocks.append(block)
 
         # Bloque final con link de pago si hay booking_url
-        if booking_url:
+        if booking_url and not contact_only:
             block = [payment_title, booking_url]
             blocks.append(block)
 
@@ -2344,6 +2543,7 @@ class DecisionTree:
         name = service[f"name_{lang}"]
         service_id = state.selected_service
         flight_rule = service[f"flight_rule_{lang}"]
+        contact_only = service.get("contact_only", False)
 
         # Choose booking URL based on location
         if state.location == "island" and service.get("booking_url_island"):
@@ -2377,7 +2577,8 @@ class DecisionTree:
             price_usd_normal = service.get("price_usd_normal")
             price_cop = service.get("price_cop")
             price_cop_normal = service.get("price_cop_normal")
-            price_note = service.get("price_note")
+            price_note = service.get("price_note_es") or service.get("price_note")
+            summary_intro = service.get("summary_intro_es") or []
 
             def _fmt_cop(value):
                 try:
@@ -2423,6 +2624,11 @@ class DecisionTree:
                 lines.append(f"👶 Edad mínima: {min_age} años")
                 lines.append("")
 
+            if summary_intro:
+                for item in summary_intro:
+                    lines.append(item)
+                lines.append("")
+
             # Bloque incluye: sin línea en blanco entre el título y el primer ítem
             lines.append("✅ Incluye:")
             for item in includes_items:
@@ -2466,16 +2672,22 @@ class DecisionTree:
                 not_included_es = service.get("not_included_es", [])
                 if any("Hotel/alojamiento" in item for item in not_included_es):
                     extra_notes = "El alojamiento no esta incluido."
-            if extra_notes and service_id != "2_dives_1_day":
+            if extra_notes and service_id != "2_dives_1_day" and not _is_padi_course_service(service_id):
                 lines.append("")
                 lines.append(f"ℹ️ {extra_notes}")
 
-            # Link de reserva
             lines.append("")
-            lines.append("👉 Reserva aqui con 10% de descuento:")
-            lines.append(booking_url)
+            if contact_only:
+                lines.append("🔗 Más información del programa:")
+                lines.append(service["web_url"])
+            else:
+                lines.append("👉 Reserva aqui con 10% de descuento:")
+                lines.append(booking_url)
             lines.append("")
-            lines.append("¿Quieres ver el itinerario completo de la actividad?")
+            if contact_only:
+                lines.append(_divemaster_itinerary_offer_prompt(lang))
+            else:
+                lines.append("¿Quieres ver el itinerario completo de la actividad?")
 
             summary = "\n".join(lines)
         else:
@@ -2501,7 +2713,8 @@ class DecisionTree:
             price_usd_normal = service.get("price_usd_normal")
             price_cop = service.get("price_cop")
             price_cop_normal = service.get("price_cop_normal")
-            price_note = service.get("price_note")
+            price_note = service.get("price_note_en") or service.get("price_note")
+            summary_intro = service.get("summary_intro_en") or []
 
             def _fmt_cop_en(value):
                 try:
@@ -2528,12 +2741,17 @@ class DecisionTree:
             elif price_note:
                 price_line = f"\n💰 *Price*: {price_note}"
 
+            summary_intro_block = ""
+            if summary_intro:
+                summary_intro_block = "\n" + "\n".join(summary_intro) + "\n"
+
             summary = (
                 "Perfect! Here's your summary:\n\n"
                 f"🤿 *Service*: {name}\n"
                 f"⏱ *Duration*: {service['duration_en']}"
                 f"{price_line}"
                 f"{min_age_line}\n"
+                f"{summary_intro_block}"
                 f"✅ *Includes*:\n{includes_block}\n\n"
                 f"📍 *Departure*: {departure}"
                 f"{meeting_note}\n"
@@ -2562,11 +2780,15 @@ class DecisionTree:
                 not_included_en = service.get("not_included_en", [])
                 if any("Hotel/accommodation" in item for item in not_included_en):
                     extra_notes = "Accommodation on the islands is not included."
-            if extra_notes:
+            if extra_notes and not _is_padi_course_service(service_id):
                 summary += f"\nℹ️ {extra_notes}\n"
 
-            summary += f"\n👉 *Book here with 10% off*:\n{booking_url}\n"
-            summary += "\nWould you like to see the full itinerary for the activity?"
+            if contact_only:
+                summary += f"\n🔗 *Program info*:\n{service['web_url']}\n"
+                summary += "\n" + _divemaster_itinerary_offer_prompt(lang)
+            else:
+                summary += f"\n👉 *Book here with 10% off*:\n{booking_url}\n"
+                summary += "\nWould you like to see the full itinerary for the activity?"
 
         return summary
 

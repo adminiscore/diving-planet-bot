@@ -68,6 +68,26 @@ async def reach_courses_menu(lang: str = "es") -> ConversationState:
     return state
 
 
+@pytest.mark.asyncio
+async def test_courses_menu_titles_in_spanish():
+    state = await reach_courses_menu()
+    assert [item["title"] for item in state.quick_replies[:3]] == [
+        "🐠 Descubriendo el buceo (Open Water Diver)",
+        "🚀 Convierte en pro (Advanced / Rescue / Dive Master)",
+        "✨ Amplía tus habilidades (Especialidades PADI)",
+    ]
+
+
+@pytest.mark.asyncio
+async def test_courses_menu_titles_in_english():
+    state = await reach_courses_menu("en")
+    assert [item["title"] for item in state.quick_replies[:3]] == [
+        "🐠 Discover diving (Open Water Diver)",
+        "🚀 Go pro (Advanced / Rescue / Divemaster)",
+        "✨ Expand your skills (PADI Specialties)",
+    ]
+
+
 async def reach_pricing_menu(lang: str = "es") -> ConversationState:
     state = await reach_main_menu(lang)
     await send(state, "2", "1")
@@ -408,6 +428,15 @@ async def test_back_button_value_from_courses_advanced_menu_returns_to_courses_m
 
 
 @pytest.mark.asyncio
+async def test_back_button_value_from_courses_specialties_menu_returns_to_courses_menu():
+    state = await reach_courses_menu()
+    await route_message(state, "3")  # → COURSES_SPECIALTIES_MENU
+    assert state.step == Step.COURSES_SPECIALTIES_MENU
+    await route_message(state, "back")
+    assert state.step == Step.COURSES_MENU
+
+
+@pytest.mark.asyncio
 async def test_back_text_volver_from_tours_certified_returns_to_group_type():
     """Typing 'volver' (text, not button click) at TOURS_CERTIFIED goes back one step."""
     state = await reach_diving_experience()
@@ -705,6 +734,18 @@ async def test_open_water_from_cartagena_enough_time():
     assert state.selected_service == "open_water"
     assert state.location == "cartagena"
     assert state.step == Step.COLOMBIAN
+    assert resp == "🌎 ¿Eres colombiano/a? Tenemos descuentos especiales para locales."
+
+
+@pytest.mark.asyncio
+async def test_divemaster_summary_contact_button_escalates_to_manager():
+    state = await reach_courses_menu()
+    await send(state, "2", "3", "2")  # go pro > divemaster > no colombiano
+    assert state.step == Step.SUMMARY
+    resp = await route_message(state, "contact")
+    assert state.step == Step.ESCALATE
+    assert state.pending_note is not None
+    assert "mi jefe" in resp.lower() or "my manager" in resp.lower()
 
 
 @pytest.mark.asyncio
@@ -714,7 +755,7 @@ async def test_open_water_from_cartagena_not_enough_time():
     resp = await route_message(state, "2")  # menos tiempo
     assert state.selected_service == "open_water"
     assert state.step == Step.COLOMBIAN
-    assert "alternativa" in resp.lower() or "alternative" in resp.lower() or "minicurso" in resp.lower()
+    assert resp == "🌎 ¿Eres colombiano/a? Tenemos descuentos especiales para locales."
 
 
 @pytest.mark.asyncio
@@ -733,6 +774,7 @@ async def test_advanced_course_selected():
     resp = await route_message(state, "1")  # Advanced
     assert state.selected_service in ("advanced", "advanced_already_on_island")
     assert state.step == Step.COLOMBIAN
+    assert resp == "🌎 ¿Eres colombiano/a? Tenemos descuentos especiales para locales."
 
 
 @pytest.mark.asyncio
@@ -742,6 +784,7 @@ async def test_rescue_course_selected():
     resp = await route_message(state, "2")  # Rescate + EFR
     assert state.selected_service == "rescue"
     assert state.step == Step.COLOMBIAN
+    assert resp == "🌎 ¿Eres colombiano/a? Tenemos descuentos especiales para locales."
 
 
 @pytest.mark.asyncio
@@ -751,21 +794,35 @@ async def test_divemaster_course_selected():
     resp = await route_message(state, "3")  # Divemaster
     assert state.selected_service == "divemaster"
     assert state.step == Step.COLOMBIAN
+    assert resp == "🌎 ¿Eres colombiano/a? Tenemos descuentos especiales para locales."
+
+
+@pytest.mark.asyncio
+async def test_go_pro_menu_shows_only_advanced_rescue_and_divemaster():
+    state = await reach_courses_menu()
+    resp = await route_message(state, "2")
+    assert state.step == Step.COURSES_ADVANCED_MENU
+    assert [item["title"] for item in state.quick_replies[:3]] == [
+        "📘 Curso Avanzado",
+        "🚑 Rescate + EFR",
+        "🏅 Dive Master",
+    ]
+    assert "avanzados" in resp.lower()
 
 
 @pytest.mark.asyncio
 async def test_fish_identification_specialty():
     state = await reach_courses_menu()
-    await send(state, "2")
-    resp = await route_message(state, "5")  # Identificación de peces
+    await send(state, "3")
+    resp = await route_message(state, "2")  # Identificación de peces
     assert "fish" in state.selected_service or "peces" in state.selected_service or state.step in (Step.COLOMBIAN, Step.ESCALATE)
 
 
 @pytest.mark.asyncio
 async def test_nitrox_specialty():
     state = await reach_courses_menu()
-    await send(state, "2")
-    resp = await route_message(state, "8")  # Nitrox
+    await send(state, "3")
+    resp = await route_message(state, "5")  # Nitrox
     assert "nitrox" in state.selected_service or state.step in (Step.COLOMBIAN, Step.ESCALATE)
 
 
@@ -782,7 +839,22 @@ async def test_referral_reactivate_escalates():
 async def test_specialties_menu_choice_3():
     state = await reach_courses_menu()
     resp = await route_message(state, "3")  # especialidades
-    assert state.step == Step.COURSES_ADVANCED_MENU
+    assert state.step == Step.COURSES_SPECIALTIES_MENU
+
+
+@pytest.mark.asyncio
+async def test_specialties_menu_shows_only_mindful_fish_naturalist_buoyancy_and_nitrox():
+    state = await reach_courses_menu()
+    resp = await route_message(state, "3")
+    assert state.step == Step.COURSES_SPECIALTIES_MENU
+    assert [item["title"] for item in state.quick_replies[:5]] == [
+        "✨ Mindful Diving",
+        "🐠 Identificación de peces",
+        "🌿 Naturalista",
+        "⚖️ Flotabilidad",
+        "🫧 Nitrox",
+    ]
+    assert "especialidades" in resp.lower()
 
 
 # ===========================================================================
@@ -1458,8 +1530,9 @@ async def test_summary_restart_returns_to_main():
     state = await reach_diving_experience()
     await send(state, "1", "1", "2", "2")  # llega a SUMMARY
     resp = await route_message(state, "1")  # ver itinerario completo
-    assert state.step == Step.FREE_TEXT
+    assert state.step == Step.SUMMARY
     assert "itinerario" in resp.lower() or "🗺️" in resp
+    assert [item["value"] for item in state.quick_replies] == ["ask", "done", "back"]
 
 
 @pytest.mark.asyncio
@@ -1467,8 +1540,58 @@ async def test_summary_no_thanks_ends_conversation():
     state = await reach_diving_experience()
     await send(state, "1", "1", "2", "2")
     resp = await route_message(state, "2")  # no, gracias (no ver itinerario)
-    assert state.step == Step.FREE_TEXT
+    assert state.step == Step.SUMMARY
     assert "pregunt" in resp.lower() or "ask" in resp.lower()
+    assert [item["value"] for item in state.quick_replies] == ["ask", "done", "back"]
+
+
+@pytest.mark.asyncio
+async def test_open_water_summary_back_returns_to_courses_menu():
+    state = await reach_courses_menu()
+    await send(state, "1", "1", "1", "2")  # open water > Cartagena > 2 días > no colombiano
+    assert state.step == Step.SUMMARY
+    await route_message(state, "back")
+    assert state.step == Step.COURSES_MENU
+
+
+@pytest.mark.asyncio
+async def test_go_pro_summary_back_returns_to_go_pro_menu():
+    state = await reach_courses_menu()
+    await send(state, "2", "2", "2")  # go pro > rescue > no colombiano
+    assert state.step == Step.SUMMARY
+    await route_message(state, "back")
+    assert state.step == Step.COURSES_ADVANCED_MENU
+
+
+@pytest.mark.asyncio
+async def test_specialties_summary_back_returns_to_specialties_menu():
+    state = await reach_courses_menu()
+    await send(state, "3", "5", "2")  # specialties > nitrox > no colombiano
+    assert state.step == Step.SUMMARY
+    await route_message(state, "back")
+    assert state.step == Step.COURSES_SPECIALTIES_MENU
+
+
+@pytest.mark.asyncio
+async def test_go_pro_itinerary_back_returns_to_go_pro_menu():
+    state = await reach_courses_menu()
+    await send(state, "2", "1", "2")  # go pro > advanced > no colombiano
+    assert state.step == Step.SUMMARY
+    await route_message(state, "1")  # ver itinerario
+    assert state.step == Step.SUMMARY
+    await route_message(state, "back")
+    assert state.step == Step.COURSES_ADVANCED_MENU
+
+
+@pytest.mark.asyncio
+async def test_specialties_itinerary_back_returns_to_specialties_menu():
+    state = await reach_courses_menu()
+    await send(state, "3", "1", "2")  # specialties > mindful diving > no colombiano
+    assert state.step == Step.SUMMARY
+    await route_message(state, "1")  # ver itinerario
+    assert state.step == Step.SUMMARY
+    await route_message(state, "back")
+    assert state.step == Step.COURSES_SPECIALTIES_MENU
 
 
 # ===========================================================================
@@ -1745,7 +1868,7 @@ async def test_divemaster_response_mentions_professional_level():
     await send(state, "2")
     resp = await route_message(state, "3")  # Divemaster
     assert state.selected_service == "divemaster"
-    assert any(w in resp.lower() for w in ["divemaster", "profesional", "professional", "nivel"])
+    assert "colombian" in resp.lower() or "colombiano" in resp.lower()
 
 
 @pytest.mark.asyncio
@@ -1779,7 +1902,7 @@ async def test_open_water_cartagena_mentions_overnight_need():
     await send(state, "1", "1")  # cursos > Open Water > Cartagena
     resp = await route_message(state, "1")  # 2 días completos
     assert state.selected_service == "open_water"
-    assert any(w in resp.lower() for w in ["isla", "noche", "island", "night", "alojamiento", "accommodation", "2 día", "2 dia"])
+    assert "colombian" in resp.lower() or "colombiano" in resp.lower()
 
 
 @pytest.mark.asyncio
