@@ -247,7 +247,7 @@ def _group_itinerary_by_day(itinerary: list[str], lang: str) -> list[str]:
 
 def _load_services() -> dict:
     path = Path(__file__).resolve().parents[2] / "data" / "knowledge_base" / "services.json"
-    raw_services = json.loads(path.read_text(encoding="utf-8")).get("services", {})
+    raw_services = json.loads(path.read_text(encoding="utf-8-sig")).get("services", {})
     services = {}
     for service_id, service in raw_services.items():
         services[service_id] = {
