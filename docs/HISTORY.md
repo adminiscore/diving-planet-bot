@@ -1,6 +1,14 @@
 History
 =======
 
+0.14.3 - (2026-05-23)
+---------------------
+* Reorganize the tours booking flow so, after choosing Cartagena vs. islands, users choose the activity first: diving, snorkeling, or mixed group.
+* Route snorkeling directly to the snorkeling service flow, and keep diving-specific decisions inside a new diving submenu (certified / beginners / mixed certified+beginners).
+* Simplify the diving beginner branch so `Only beginners` goes straight to the minicourse age check; remove the private-service option from that branch.
+* Align Spanish/English copy, quick replies, and back-navigation with the new tours structure.
+* Update decision-tree and conversation regression tests for the new tours paths and beginner direct-routing behavior.
+
 0.14.2 - (2026-05-23)
 ---------------------
 * Standardize certified-diver flows: treat the 3-dives (islands) package as a core split (ask last-dive + nationality before the final summary), matching 2/5/7/9.
