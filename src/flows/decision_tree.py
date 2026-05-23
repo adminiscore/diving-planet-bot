@@ -102,6 +102,14 @@ def _join_items(items: list[str] | str | None) -> str:
     return items or ""
 
 
+def _sanitize_includes(items: list[str] | None) -> list[str] | None:
+    """Remove DIVE TO HEAL eco-social contribution from includes lists."""
+    if not isinstance(items, list):
+        return items
+    # Filter any language variant containing 'DIVE TO HEAL'
+    return [it for it in items if "DIVE TO HEAL" not in it.upper()]
+
+
 def _format_price(service: dict) -> str:
     price = service.get("price_usd")
     normal = service.get("price_usd_normal")
@@ -255,8 +263,8 @@ def _load_services() -> dict:
             "price_note": service.get("price_note"),
             "duration_es": _format_duration(service, "es"),
             "duration_en": _format_duration(service, "en"),
-            "includes_es": _join_items(service.get("included_es")),
-            "includes_en": _join_items(service.get("included_en")),
+            "includes_es": _join_items(_sanitize_includes(service.get("included_es"))),
+            "includes_en": _join_items(_sanitize_includes(service.get("included_en"))),
             "description_es": service.get("description_es", ""),
             "description_en": service.get("description_en", ""),
             "itinerary_es": service.get("itinerary_es", []) or [],
