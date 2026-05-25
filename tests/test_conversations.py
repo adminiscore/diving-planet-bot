@@ -829,9 +829,26 @@ async def test_nitrox_specialty():
 @pytest.mark.asyncio
 async def test_referral_reactivate_escalates():
     state = await reach_courses_menu()
-    resp = await route_message(state, "4")  # referral / reactivate
+    # Paso 1: seleccionar opcion referral / reactivate desde el menú de cursos
+    resp = await route_message(state, "4")
+    assert state.step == Step.LOCATION
+    assert state.selected_service == "referral"
+    assert "refer" in resp.lower()  # referido / referral
+
+    # Paso 2: indicar que sale desde Cartagena
+    resp = await route_message(state, "1")
+    assert state.location == "cartagena"
+    assert state.step == Step.COLOMBIAN
+
+    # Paso 3: responder que no es colombiano (para ver precios en USD)
+    resp = await route_message(state, "2")
+    assert state.step == Step.SUMMARY
+    assert "referral" in state.selected_service or "referido" in resp.lower()
+
+    # Paso 4: desde el resumen, elegir Contactar/Reservar -> escalar a humano
+    resp = await route_message(state, "1")  # "🧑‍💼 Contactar/Reservar" (summary_referral)
     assert state.step == Step.ESCALATE
-    assert state.pending_note is not None
+    # El mensaje de escalada debe incluir la explicacion de referral/reactivate
     assert "eLearning" in resp or "documento" in resp.lower() or "price" in resp.lower() or "precio" in resp.lower()
 
 

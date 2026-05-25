@@ -166,6 +166,49 @@ def _divemaster_follow_up_prompt(lang: str) -> str:
     return "Would you like to contact our manager to request the Dive Master course?"
 
 
+def _referral_escalation_message(state: "ConversationState") -> str:
+    lang = state.language
+    service = SERVICES.get(state.selected_service)
+
+    booking_url: str | None = None
+    if service:
+        if state.location == "island" and service.get("booking_url_island"):
+            booking_url = service["booking_url_island"]
+        else:
+            booking_url = service.get("booking_url")
+
+        # Para clientes colombianos seguimos sin mostrar el link real de pago
+        if state.is_colombian:
+            booking_url = None
+
+    if lang == "es":
+        base = (
+            "Genial que ya hayas empezado tu curso. Para completar un referral/reactivate en Diving Planet "
+            "necesitamos revisar tu eLearning y formularios PADI, y ver cuantas inmersiones te faltan.\n\n"
+            "Te paso con un asesor para que te indique exactamente que documentos traer y como funciona el precio en tu caso.\n\n"
+            + MESSAGES["escalate"][lang]
+        )
+        if booking_url:
+            base += (
+                "\n\nCuando mi jefe te confirme los detalles, podras completar el pago aqui:\n"
+                f"{booking_url}"
+            )
+        return base
+
+    base = (
+        "Great that you already started your course. To finish a referral/reactivate with Diving Planet we "
+        "need to review your eLearning and PADI forms, and see how many dives you still need.\n\n"
+        "I will transfer you to a human advisor so they can tell you exactly which documents to bring and how pricing works in your case.\n\n"
+        + MESSAGES["escalate"][lang]
+    )
+    if booking_url:
+        base += (
+            "\n\nOnce our manager confirms the details with you, you can complete the payment here:\n"
+            f"{booking_url}"
+        )
+    return base
+
+
 def _extra_notes(service: dict, lang: str) -> str:
     parts = []
     description = service.get(f"description_{lang}")
@@ -334,6 +377,7 @@ ISLAND_SERVICE_MAP = {
     "nitrox_specialty": "nitrox_specialty_already_on_island",
     "naturalist_specialty": "naturalist_specialty_already_on_island",
     "buoyancy_specialty": "buoyancy_specialty_already_on_island",
+    "referral": "referral_already_on_island",
 }
 
 MULTI_DAY_SERVICES = {
@@ -982,6 +1026,16 @@ BUTTON_OPTIONS = {
             {"title": "🔙 Back", "value": "back"},
         ],
     },
+    "summary_referral": {
+        "es": [
+            {"title": "🧑‍💼 Contactar/Reservar", "value": "contact"},
+            {"title": "🔙 Volver", "value": "back"},
+        ],
+        "en": [
+            {"title": "🧑‍💼 Contact / Book", "value": "contact"},
+            {"title": "🔙 Back", "value": "back"},
+        ],
+    },
     "summary_contact": {
         "es": [
             {"title": "🧑‍💼 Contactar/Reservar", "value": "contact"},
@@ -1064,7 +1118,10 @@ class DecisionTree:
         return None
 
     def _summary_quick_replies_key(self, state: ConversationState) -> str:
-        if _is_contact_only_service(state.selected_service):
+        service_id = state.selected_service
+        if service_id in {"referral", "referral_already_on_island"}:
+            return "summary_referral"
+        if _is_contact_only_service(service_id):
             return "summary_contact"
         return "summary"
 
@@ -2069,20 +2126,37 @@ class DecisionTree:
                 "Choose one to see the service information."
             )
         if choice == 4:
-            state.step = Step.ESCALATE
-            state.quick_replies = []
+            # Referral / reactivate: seguimos flujo estructurado (origen -> descuento colombiano -> resumen)
+            # y mantenemos el back al menú de cursos.
+            self._set_back_target(state, Step.COURSES_MENU, "courses_menu")
+            state.selected_service = "referral"
+
+            # Si todavía no sabemos si sale de Cartagena o ya está en las islas, preguntamos la ubicación.
+            if state.location is None:
+                state.step = Step.LOCATION
+                self.set_quick_replies(state, "location")
+                if lang == "es":
+                    return (
+                        "Perfecto, vamos a revisar tu curso referido (Open Water).\n\n"
+                        + MESSAGES["location"][lang]
+                    )
+                return (
+                    "Great, let's review your referral Open Water course.\n\n"
+                    + MESSAGES["location"][lang]
+                )
+
+            # Si la ubicación ya está definida, vamos directo a la pregunta de descuento colombiano.
+            state.selected_service = self._service_for_location("referral", state)
+            state.step = Step.COLOMBIAN
+            self.set_quick_replies(state, "colombian")
             if lang == "es":
                 return (
-                    "Genial que ya hayas empezado tu curso. Para completar un referral/reactivate en Diving Planet "
-                    "necesitamos revisar tu eLearning y formularios PADI, y ver cuantas inmersiones te faltan.\n\n"
-                    "Te paso con un asesor para que te indique exactamente que documentos traer y como funciona el precio en tu caso.\n\n"
-                    + MESSAGES["escalate"][lang]
+                    "Perfecto, vamos a revisar tu curso referido (Open Water).\n\n"
+                    + MESSAGES["colombian"][lang]
                 )
             return (
-                "Great that you already started your course. To finish a referral/reactivate with Diving Planet we "
-                "need to review your eLearning and PADI forms, and see how many dives you still need.\n\n"
-                "I will transfer you to a human advisor so they can tell you exactly which documents to bring and how pricing works in your case.\n\n"
-                + MESSAGES["escalate"][lang]
+                "Great, let's review your referral Open Water course.\n\n"
+                + MESSAGES["colombian"][lang]
             )
 
         self.set_quick_replies(state, "courses_menu")
@@ -2260,6 +2334,18 @@ class DecisionTree:
                 self.set_quick_replies(state, self._summary_quick_replies_key(state))
                 if contact_only:
                     return self._format_full_itinerary(state) + "\n\n" + _divemaster_follow_up_prompt(lang)
+                # Para el curso referral, orientamos el follow-up a contactar/reservar con el jefe.
+                if service_id in {"referral", "referral_already_on_island"}:
+                    if lang == "es":
+                        return (
+                            self._format_full_itinerary(state)
+                            + "\n\nSi quieres avanzar con tu curso referido o aclarar tu caso especifico, puedo ponerse en contacto con mi jefe para ayudarte a reservar."
+                        )
+                    return (
+                        self._format_full_itinerary(state)
+                        + "\n\nIf you would like to move forward with your referral course or clarify your specific case, I can connect you with my manager to help you book."
+                    )
+
                 if lang == "es":
                     return self._format_full_itinerary(state) + "\n\n¿Quieres preguntarme algo más?"
                 return self._format_full_itinerary(state) + "\n\nWould you like to ask anything else?"
@@ -2284,6 +2370,16 @@ class DecisionTree:
                 self.set_quick_replies(state, self._summary_quick_replies_key(state))
                 if contact_only:
                     return _divemaster_follow_up_prompt(lang)
+                if service_id in {"referral", "referral_already_on_island"}:
+                    if lang == "es":
+                        return (
+                            "Perfecto. Si quieres avanzar con tu curso referido o resolver dudas especificas de tu caso, "
+                            "puedo ponerte en contacto con mi jefe para ayudarte a reservar."
+                        )
+                    return (
+                        "Great. If you would like to move forward with your referral course or clarify your specific case, "
+                        "I can connect you with my manager to help you book."
+                    )
                 if lang == "es" and service_id == "2_dives_1_day" and state.is_certified:
                     return (
                         "Perfecto. Si en algún momento quieres reservar este plan, el siguiente paso "
@@ -2322,8 +2418,24 @@ class DecisionTree:
                 "to review your profile, dates, and the best program format for you."
             )
 
+        # Para referral, 'contact' en modo follow_up dispara la escalada con el mensaje específico
+        if service_id in {"referral", "referral_already_on_island"} and (action == "contact" or choice == 1):
+            state.summary_mode = None
+            state.step = Step.ESCALATE
+            state.quick_replies = []
+            state.pending_escalation_reason = "solicitó contacto para curso referido"
+            return _referral_escalation_message(state)
+
         if action == "ask" or choice == (2 if contact_only else 1):
             state.summary_mode = None
+            # Para el curso referido, en lugar de pasar a FREE_TEXT derivamos directamente a humano
+            # con el mensaje explicativo de referral + el mensaje generico de escalada.
+            if service_id in {"referral", "referral_already_on_island"}:
+                state.step = Step.ESCALATE
+                state.quick_replies = []
+                state.pending_escalation_reason = "solicitó contacto para curso referido"
+                return _referral_escalation_message(state)
+
             state.step = Step.FREE_TEXT
             state.quick_replies = []
             if lang == "es":
@@ -2464,8 +2576,8 @@ class DecisionTree:
             block = [title_link, web_url]
             blocks.append(block)
 
-        # Bloque final con link de pago si hay booking_url
-        if booking_url and not contact_only:
+        # Bloque final con link de pago si hay booking_url (excepto para referral)
+        if booking_url and not contact_only and service_id not in {"referral", "referral_already_on_island"}:
             block = [payment_title, booking_url]
             blocks.append(block)
 
@@ -2677,16 +2789,19 @@ class DecisionTree:
                 lines.append(f"ℹ️ {extra_notes}")
 
             lines.append("")
-            if contact_only:
+
+            # Para el curso referido no mostramos link de pago directo en el resumen.
+            if service_id in {"referral", "referral_already_on_island"}:
+                lines.append("¿Quieres ver el itinerario completo de la actividad?")
+            elif contact_only:
                 lines.append("🔗 Más información del programa:")
                 lines.append(service["web_url"])
+                lines.append("")
+                lines.append(_divemaster_itinerary_offer_prompt(lang))
             else:
                 lines.append("👉 Reserva aqui con 10% de descuento:")
                 lines.append(booking_url)
-            lines.append("")
-            if contact_only:
-                lines.append(_divemaster_itinerary_offer_prompt(lang))
-            else:
+                lines.append("")
                 lines.append("¿Quieres ver el itinerario completo de la actividad?")
 
             summary = "\n".join(lines)
@@ -2783,7 +2898,10 @@ class DecisionTree:
             if extra_notes and not _is_padi_course_service(service_id):
                 summary += f"\nℹ️ {extra_notes}\n"
 
-            if contact_only:
+            if service_id in {"referral", "referral_already_on_island"}:
+                # Para referral, no mostramos link de pago directo en el resumen.
+                summary += "\n\nWould you like to see the full itinerary for the activity?"
+            elif contact_only:
                 summary += f"\n🔗 *Program info*:\n{service['web_url']}\n"
                 summary += "\n" + _divemaster_itinerary_offer_prompt(lang)
             else:
