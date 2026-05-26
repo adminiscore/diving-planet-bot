@@ -1,6 +1,12 @@
 History
 =======
 
+0.14.5 - (2026-05-26)
+---------------------
+* Set Cartagena certified `3 dives` back to `1 day` and align the guided flow, service IDs, and tests with the night-dive variant.
+* Standardize lodging guidance for certified packages: main menu warning, per-package accommodation notes, and short `ℹ️` summary blocks that only state hotel/accommodation is not included.
+* Keep island certified package variants consistent, including the 4-dives variant back-navigation and updated regression coverage for Cartagena/island summaries.
+
 0.14.4 - (2026-05-23)
 ---------------------
 * Split the PADI booking flow into separate Go Pro and Specialties submenus, with guided access to Advanced, Rescue + EFR, Divemaster, and each specialty.

@@ -198,6 +198,56 @@ class TestCertifiedDiverFlow:
         assert state.step == Step.CERTIFIED_LAST_DIVE
         assert "2 años" in response
 
+    def test_select_3_dives_cartagena(self):
+        state = self._go_to_certified()
+        response = self.tree.process_message(state, "2")
+        assert state.selected_service == "3_dives_1_day"
+        assert state.step == Step.CERTIFIED_LAST_DIVE
+        assert "2 años" in response
+
+    def test_certified_menu_mentions_lodging_requirement(self):
+        state = make_state()
+        state.step = Step.TOURS_EXPERIENCE
+        state.language = "es"
+        state.location = "cartagena"
+
+        response = self.tree.process_message(state, "1")
+
+        assert state.step == Step.TOURS_CERTIFIED
+        assert "hospedarte en un hotel en las islas" in response.lower()
+        assert "3 inmersiones (1 día)" in response
+
+    def test_3_dives_summary_mentions_night_stay_requirement(self):
+        state = self._go_to_certified()
+        state.location = "cartagena"
+
+        self.tree.process_message(state, "2")
+        self.tree.process_message(state, "2")
+        summary = self.tree.process_message(state, "2")
+
+        assert state.step == Step.SUMMARY
+        assert "hospedaje requerido" in summary.lower()
+        assert "inmersión nocturna" in summary.lower()
+
+    def test_3_dives_cartagena_summary_uses_short_info_block(self):
+        state = self._go_to_certified()
+        state.location = "cartagena"
+
+        self.tree.process_message(state, "2")
+        self.tree.process_message(state, "2")
+        summary = self.tree.process_message(state, "2")
+
+        assert state.step == Step.SUMMARY
+        assert "ℹ️ El alojamiento no esta incluido." in summary
+        assert "ℹ️ Paquete para buzos certificados desde Cartagena" not in summary
+
+    def test_select_4_dives_cartagena(self):
+        state = self._go_to_certified()
+        response = self.tree.process_message(state, "3")
+        assert state.selected_service == "4_dives_2_days"
+        assert state.step == Step.CERTIFIED_LAST_DIVE
+        assert "2 años" in response
+
     def test_last_dive_over_2_years_yes_then_interested_yes(self):
         state = self._go_to_certified()
         self.tree.process_message(state, "1")
@@ -240,14 +290,14 @@ class TestCertifiedDiverFlow:
 
     def test_select_private_escalates(self):
         state = self._go_to_certified()
-        response = self.tree.process_message(state, "5")
+        response = self.tree.process_message(state, "7")
         assert state.selected_service == "private"
         assert state.step == Step.ESCALATE
 
     def test_select_5_dives_shows_multiday_context(self):
         state = self._go_to_certified()
 
-        response = self.tree.process_message(state, "2")
+        response = self.tree.process_message(state, "4")
 
         assert state.selected_service == "5_dives_2_days"
         assert state.step == Step.CERTIFIED_LAST_DIVE
@@ -258,7 +308,7 @@ class TestCertifiedDiverFlow:
     def test_5_dives_recent_last_dive_summary_keeps_package(self):
         state = self._go_to_certified()
         state.location = "cartagena"
-        self.tree.process_message(state, "2")
+        self.tree.process_message(state, "4")
 
         self.tree.process_message(state, "2")
         summary = self.tree.process_message(state, "2")
@@ -270,16 +320,28 @@ class TestCertifiedDiverFlow:
         # Lodging note should be present for multi-day packages
         assert "alojamiento no esta incluido" in summary.lower()
 
+    def test_island_3_dives_summary_uses_lodging_note_in_info_block(self):
+        state = self._go_to_certified()
+        state.location = "island"
+
+        self.tree.process_message(state, "2")
+        self.tree.process_message(state, "2")
+        summary = self.tree.process_message(state, "2")
+
+        assert state.step == Step.SUMMARY
+        assert "ℹ️ El alojamiento no esta incluido." in summary
+        assert "ℹ️ Plan para buzos certificados" not in summary
+
     def test_7_and_9_dives_show_correct_nights(self):
         state_7 = self._go_to_certified()
-        response_7 = self.tree.process_message(state_7, "3")
+        response_7 = self.tree.process_message(state_7, "5")
         assert state_7.selected_service == "7_dives_3_days"
         # The current flow asks last-dive question before showing details
         assert "2 años" in response_7
         assert "refresher" in response_7.lower()
 
         state_9 = self._go_to_certified()
-        response_9 = self.tree.process_message(state_9, "4")
+        response_9 = self.tree.process_message(state_9, "6")
         assert state_9.selected_service == "9_dives_4_days"
         assert "2 años" in response_9
         assert "refresher" in response_9.lower()
@@ -287,7 +349,7 @@ class TestCertifiedDiverFlow:
     def test_multiday_refresher_keeps_original_package(self):
         state = self._go_to_certified()
         state.location = "cartagena"
-        self.tree.process_message(state, "2")
+        self.tree.process_message(state, "4")
         self.tree.process_message(state, "1")
         self.tree.process_message(state, "2")
 

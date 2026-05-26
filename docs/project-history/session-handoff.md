@@ -55,6 +55,8 @@ Read this file before changing code in the Diving Planet Bot. For a quick versio
 - The decision tree has recently been improved for:
   - Cartagena certified 2 dives / 1 day.
   - Summary flow: initial summary is short and offers an optional full itinerary; the itinerary offer is handled in `Step.SUMMARY` with `summary_mode`, supports `back`, and only then transitions to `FREE_TEXT` when the user chooses to ask more. 3 buceos (islas) pasó a "core split" (pide última inmersión y nacionalidad antes del resumen), igual que 2/5/7/9.
+  - Certified package standardization: Cartagena `3 dives` is again `1 day` (2 daytime + 1 night dive), and all certified multi-day/night-dive packages now show explicit island-accommodation requirements in menus, summaries, and itinerary/detail views.
+  - Certified summary `ℹ️` blocks for Cartagena/island packages were shortened so they emphasize only that hotel/accommodation is not included, instead of repeating long descriptive text.
   - Tours branch restructure: after location the user chooses diving / snorkeling / mixed; snorkeling is direct and diving has its own certified/beginners/mixed submenu.
   - Cartagena diving beginners: `Only beginners` now goes directly to the minicourse age question (no private-service option in that branch).
   - Cartagena certified multi-day packages: 5/7/9 dives, lodging/nocturnal notes, and refresher handling.
@@ -70,6 +72,7 @@ Read this file before changing code in the Diving Planet Bot. For a quick versio
 - COP pricing is now in the KB; bot needs a restart in WSL2 to serve it after the re-index run. Embeddings reindex done (445 docs) para incluir nuevos servicios y ajustes de precios.
 - `CHATWOOT_OWNER_AGENT_ID=1` should be added to `.env` (owner agent ID confirmed via `/api/v1/profile`).
 - Next session priorities:
+  - Live E2E retest of certified dive package summaries in Chatwoot (especially Cartagena `3 dives (1 day)` and island variants) to confirm the short `ℹ️` block and lodging notices render correctly.
   - Live E2E retest of the PADI course menus in the Chatwoot widget (Go Pro vs. Specialties, back button from summary/itinerary, and Rescue + EFR emoji rendering on Windows).
   - Live E2E retest of the Divemaster contact-only flow in the widget (summary CTA, itinerary CTA, single escalation message, and lead note delivery).
   - Live E2E retest of the tours restructure in the Chatwoot widget (activity-first menu, snorkeling direct path, diving submenu, and direct beginner minicourse path).

@@ -29,6 +29,7 @@ class Step(str, Enum):
     GROUP_TYPE = "group_type"
     TOURS_EXPERIENCE = "tours_experience"
     TOURS_CERTIFIED = "tours_certified"
+    CERTIFIED_4_DIVES_VARIANT = "certified_4_dives_variant"
     CERTIFIED_LAST_DIVE = "certified_last_dive"
     CERTIFIED_EXPERIENCE = "certified_experience"
     REFRESHER_INTEREST = "refresher_interest"
@@ -147,6 +148,24 @@ def _flight_rule(service: dict, lang: str) -> str:
         lowered = requirement.lower()
         if "vuelo" in lowered or "flying" in lowered or "fly" in lowered:
             return requirement
+    return ""
+
+
+def _accommodation_requirement_note(service_id: str | None, service: dict, lang: str) -> str:
+    if service_id in {"3_dives_1_day", "3_dives_1_day_already_on_island"}:
+        if lang == "es":
+            return "🏨 *Hospedaje requerido*: para este tour debes hospedarte en la isla por la noche, porque incluye inmersión nocturna."
+        return "🏨 *Accommodation required*: for this tour you need to stay on the island that night because it includes a night dive."
+
+    days = service.get("duration_days")
+    if isinstance(days, int) and days > 1:
+        nights = days - 1
+        if lang == "es":
+            night_label = "noche" if nights == 1 else "noches"
+            return f"🏨 *Hospedaje requerido*: para este plan debes alojarte en un hotel en las islas al menos *{nights} {night_label}* entre jornadas de inmersión."
+        night_label = "night" if nights == 1 else "nights"
+        return f"🏨 *Accommodation required*: for this plan you must stay at a hotel on the islands for at least *{nights} {night_label}* between dive days."
+
     return ""
 
 
@@ -381,10 +400,26 @@ ISLAND_SERVICE_MAP = {
 }
 
 MULTI_DAY_SERVICES = {
+    "4_dives_2_days",
+    "5_dives_2_days",
+    "7_dives_3_days",
+    "9_dives_4_days",
+    "4_dives_2_days_already_on_island",
+    "4_dives_2_days_mixed_already_on_island",
+    "5_dives_2_days_already_on_island",
+    "7_dives_3_days_already_on_island",
+    "9_dives_4_days_already_on_island",
+}
+
+REFRESHER_PRESERVE_SERVICES = {
+    "3_dives_1_day",
+    "4_dives_2_days",
     "5_dives_2_days",
     "7_dives_3_days",
     "9_dives_4_days",
     "3_dives_1_day_already_on_island",
+    "4_dives_2_days_already_on_island",
+    "4_dives_2_days_mixed_already_on_island",
     "5_dives_2_days_already_on_island",
     "7_dives_3_days_already_on_island",
     "9_dives_4_days_already_on_island",
@@ -471,10 +506,28 @@ MESSAGES = {
     },
     "tours_certified": {
         "es": (
-            "Excelente! Estas son nuestras opciones para buzos certificados:"
+            "Excelente! Estas son nuestras opciones para buzos certificados:\n\n"
+            "🏨 *Importante*: si eliges un plan con inmersiones en días distintos, debes hospedarte en un hotel en las islas entre jornadas.\n"
+            "- *4 inmersiones (2 días)* y *5 inmersiones (2 días)*: al menos *1 noche*\n"
+            "- *7 inmersiones (3 días)*: al menos *2 noches*\n"
+            "- *9 inmersiones (4 días)*: al menos *3 noches*\n\n"
+            "✳️ *3 inmersiones (1 día)*: también se requiere hospedaje en la isla por la noche, porque incluye inmersión nocturna."
         ),
         "en": (
-            "Excellent! Here are our options for certified divers:"
+            "Excellent! Here are our options for certified divers:\n\n"
+            "🏨 *Important*: if you choose a plan with dives on different days, you must stay at a hotel on the islands between dive days.\n"
+            "- *4 dives (2 days)* and *5 dives (2 days)*: at least *1 night*\n"
+            "- *7 dives (3 days)*: at least *2 nights*\n"
+            "- *9 dives (4 days)*: at least *3 nights*\n\n"
+            "✳️ *3 dives (1 day)*: island accommodation is also required that night because it includes a night dive."
+        ),
+    },
+    "certified_4_dives_variant": {
+        "es": (
+            "Perfecto. Para *4 inmersiones (2 días)* desde las islas, ¿qué opción prefieres?"
+        ),
+        "en": (
+            "Perfect. For *4 dives (2 days)* from the islands, which option would you prefer?"
         ),
     },
     "certified_last_dive": {
@@ -782,19 +835,35 @@ BUTTON_OPTIONS = {
     },
     "tours_certified": {
         "es": [
-            {"title": "🤿 2 Buceos - 1 dia", "value": "1"},
-            {"title": "🤿 5 Buceos - 2 dias", "value": "2"},
-            {"title": "🤿 7 Buceos - 3 dias", "value": "3"},
-            {"title": "🤿 9 Buceos - 4 dias", "value": "4"},
-            {"title": "🧑‍💬 Servicio Privado", "value": "5"},
+            {"title": "🤿 2 inmersiones (1 día)", "value": "1"},
+            {"title": "🤿 3 inmersiones (1 día)*", "value": "2"},
+            {"title": "🤿 4 inmersiones (2 días)", "value": "3"},
+            {"title": "🤿 5 inmersiones (2 días)", "value": "4"},
+            {"title": "🤿 7 inmersiones (3 días)", "value": "5"},
+            {"title": "🤿 9 inmersiones (4 días)", "value": "6"},
+            {"title": "🧑‍💬 Servicio Privado", "value": "7"},
             {"title": "🔙 Volver", "value": "back"},
         ],
         "en": [
-            {"title": "🤿 2 Dives - 1 day", "value": "1"},
-            {"title": "🤿 5 Dives - 2 days", "value": "2"},
-            {"title": "🤿 7 Dives - 3 days", "value": "3"},
-            {"title": "🤿 9 Dives - 4 days", "value": "4"},
-            {"title": "🧑‍💬 Private Service", "value": "5"},
+            {"title": "🤿 2 Dives (1 day)", "value": "1"},
+            {"title": "🤿 3 Dives (1 day)*", "value": "2"},
+            {"title": "🤿 4 Dives (2 days)", "value": "3"},
+            {"title": "🤿 5 Dives (2 days)", "value": "4"},
+            {"title": "🤿 7 Dives (3 days)", "value": "5"},
+            {"title": "🤿 9 Dives (4 days)", "value": "6"},
+            {"title": "🧑‍💬 Private Service", "value": "7"},
+            {"title": "🔙 Back", "value": "back"},
+        ],
+    },
+    "certified_4_dives_variant": {
+        "es": [
+            {"title": "🤿 4 inmersiones (2 días) · 4 diurnas", "value": "1"},
+            {"title": "🤿 4 inmersiones (2 días) · 3 diurnas + 1 nocturna", "value": "2"},
+            {"title": "🔙 Volver", "value": "back"},
+        ],
+        "en": [
+            {"title": "🤿 4 Dives (2 days) · 4 daytime dives", "value": "1"},
+            {"title": "🤿 4 Dives (2 days) · 3 daytime + 1 night dive", "value": "2"},
             {"title": "🔙 Back", "value": "back"},
         ],
     },
@@ -1113,7 +1182,7 @@ class DecisionTree:
         state.back_quick_replies_key = quick_replies_key
 
     def resolve_back_target(self, state: ConversationState) -> tuple[Step, str] | None:
-        if state.step == Step.SUMMARY and state.back_step_override and state.back_quick_replies_key:
+        if state.step in {Step.SUMMARY, Step.CERTIFIED_LAST_DIVE} and state.back_step_override and state.back_quick_replies_key:
             return state.back_step_override, state.back_quick_replies_key
         return None
 
@@ -1151,21 +1220,23 @@ class DecisionTree:
     def _island_certified_options(self, lang: str) -> list[dict]:
         if lang == "es":
             return [
-                {"title": "🤿 2 buceos - 1 dia", "value": "1"},
-                {"title": "🌙 3 buceos - 1 dia (incluye nocturna)", "value": "2"},
-                {"title": "🤿 5 buceos - 2 dias", "value": "3"},
-                {"title": "🤿 7 buceos - 3 dias", "value": "4"},
-                {"title": "🤿 9 buceos - 4 dias", "value": "5"},
-                {"title": "🧑‍💬 Servicio Privado", "value": "6"},
+                {"title": "🤿 2 inmersiones (1 día)", "value": "1"},
+                {"title": "🤿 3 inmersiones (1 día)*", "value": "2"},
+                {"title": "🤿 4 inmersiones (2 días)", "value": "3"},
+                {"title": "🤿 5 inmersiones (2 días)", "value": "4"},
+                {"title": "🤿 7 inmersiones (3 días)", "value": "5"},
+                {"title": "🤿 9 inmersiones (4 días)", "value": "6"},
+                {"title": "🧑‍💬 Servicio Privado", "value": "7"},
                 {"title": "🔙 Volver", "value": "back"},
             ]
         return [
-            {"title": "🤿 2 dives - 1 day", "value": "1"},
-            {"title": "🌙 3 dives - 1 day (includes night dive)", "value": "2"},
-            {"title": "🤿 5 dives - 2 days", "value": "3"},
-            {"title": "🤿 7 dives - 3 days", "value": "4"},
-            {"title": "🤿 9 dives - 4 days", "value": "5"},
-            {"title": "🧑‍💬 Private Service", "value": "6"},
+            {"title": "🤿 2 Dives (1 day)", "value": "1"},
+            {"title": "🤿 3 Dives (1 day)*", "value": "2"},
+            {"title": "🤿 4 Dives (2 days)", "value": "3"},
+            {"title": "🤿 5 Dives (2 days)", "value": "4"},
+            {"title": "🤿 7 Dives (3 days)", "value": "5"},
+            {"title": "🤿 9 Dives (4 days)", "value": "6"},
+            {"title": "🧑‍💬 Private Service", "value": "7"},
             {"title": "🔙 Back", "value": "back"},
         ]
 
@@ -1192,6 +1263,7 @@ class DecisionTree:
             Step.GROUP_TYPE: self._handle_group_type,
             Step.TOURS_EXPERIENCE: self._handle_tours_experience,
             Step.TOURS_CERTIFIED: self._handle_tours_certified,
+            Step.CERTIFIED_4_DIVES_VARIANT: self._handle_certified_4_dives_variant,
             Step.CERTIFIED_LAST_DIVE: self._handle_certified_last_dive,
             Step.CERTIFIED_EXPERIENCE: self._handle_certified_experience,
             Step.REFRESHER_INTEREST: self._handle_refresher_interest,
@@ -1410,25 +1482,32 @@ class DecisionTree:
         return MESSAGES["not_understood"][lang]
 
     def _handle_tours_certified(self, state: ConversationState, message: str) -> str:
-        choice = self._parse_choice(message, 6)
+        choice = self._parse_choice(message, 7)
         lang = state.language
         if state.location == "island":
             service_map = {
                 1: "2_dives_1_day_already_on_island",
                 2: "3_dives_1_day_already_on_island",
-                3: "5_dives_2_days_already_on_island",
-                4: "7_dives_3_days_already_on_island",
-                5: "9_dives_4_days_already_on_island",
-                6: "private",
+                4: "5_dives_2_days_already_on_island",
+                5: "7_dives_3_days_already_on_island",
+                6: "9_dives_4_days_already_on_island",
+                7: "private",
             }
         else:
             service_map = {
                 1: "2_dives_1_day",
-                2: "5_dives_2_days",
-                3: "7_dives_3_days",
-                4: "9_dives_4_days",
-                5: "private",
+                2: "3_dives_1_day",
+                3: "4_dives_2_days",
+                4: "5_dives_2_days",
+                5: "7_dives_3_days",
+                6: "9_dives_4_days",
+                7: "private",
             }
+
+        if state.location == "island" and choice == 3:
+            state.step = Step.CERTIFIED_4_DIVES_VARIANT
+            self.set_quick_replies(state, "certified_4_dives_variant")
+            return MESSAGES["certified_4_dives_variant"][lang]
 
         if choice in service_map:
             state.selected_service = service_map[choice]
@@ -1444,8 +1523,12 @@ class DecisionTree:
             # y solo mostramos el resumen completo al final (estructura comun de 2, 5, 7 y 9 buceos).
             core_split_services = {
                 "2_dives_1_day",
+                "3_dives_1_day",
                 "2_dives_1_day_already_on_island",
+                "4_dives_2_days",
                 "5_dives_2_days",
+                "4_dives_2_days_already_on_island",
+                "4_dives_2_days_mixed_already_on_island",
                 "5_dives_2_days_already_on_island",
                 "7_dives_3_days",
                 "7_dives_3_days_already_on_island",
@@ -1459,6 +1542,23 @@ class DecisionTree:
         else:
             self.set_quick_replies(state, "tours_certified")
             return MESSAGES["not_understood"][lang]
+
+    def _handle_certified_4_dives_variant(self, state: ConversationState, message: str) -> str:
+        choice = self._parse_choice(message, 2)
+        lang = state.language
+
+        if choice == 1:
+            state.selected_service = "4_dives_2_days_already_on_island"
+        elif choice == 2:
+            state.selected_service = "4_dives_2_days_mixed_already_on_island"
+        else:
+            self.set_quick_replies(state, "certified_4_dives_variant")
+            return MESSAGES["not_understood"][lang]
+
+        self._set_back_target(state, Step.CERTIFIED_4_DIVES_VARIANT, "certified_4_dives_variant")
+        state.step = Step.CERTIFIED_LAST_DIVE
+        self.set_quick_replies(state, "certified_last_dive")
+        return MESSAGES["certified_last_dive"][lang]
 
     def _handle_certified_last_dive(self, state: ConversationState, message: str) -> str:
         choice = self._parse_choice(message, 2)
@@ -1500,12 +1600,13 @@ class DecisionTree:
         choice = self._parse_choice(message, 2)
         lang = state.language
         multi_day_services = MULTI_DAY_SERVICES
+        refresher_preserve_services = REFRESHER_PRESERVE_SERVICES
 
         if choice == 1:
             state.refresher_interested = True
             if state.original_service is None and state.selected_service is not None:
                 state.original_service = state.selected_service
-            if state.selected_service not in multi_day_services:
+            if state.selected_service not in refresher_preserve_services:
                 state.selected_service = self._service_for_location("minicourse", state)
         elif choice == 2:
             state.refresher_interested = False
@@ -1529,6 +1630,22 @@ class DecisionTree:
                 "skills before the dives.\n\n"
                 "Because this is a multi-day package, an advisor will confirm the best way to include it "
                 "without changing your main plan.\n\n"
+                + MESSAGES["colombian"][lang]
+            )
+        if state.selected_service in {"3_dives_1_day", "3_dives_1_day_already_on_island"} and state.refresher_interested:
+            if lang == "es":
+                return (
+                    "Perfecto. Mantengo el paquete seleccionado y dejo anotado que necesitas "
+                    "revisar/reforzar habilidades antes de las inmersiones.\n\n"
+                    "Como este tour incluye inmersión nocturna y requiere hospedaje en la isla, "
+                    "un asesor confirmará contigo la logística completa.\n\n"
+                    + MESSAGES["colombian"][lang]
+                )
+            return (
+                "Perfect. I'll keep the selected package and note that you need to review/refresh "
+                "skills before the dives.\n\n"
+                "Because this tour includes a night dive and requires staying on the island, an "
+                "advisor will confirm the full logistics with you.\n\n"
                 + MESSAGES["colombian"][lang]
             )
         return MESSAGES["colombian"][lang]
@@ -2468,6 +2585,7 @@ class DecisionTree:
 
         lang = state.language
         service_id = state.selected_service
+        accommodation_note = _accommodation_requirement_note(service_id, service, lang)
         if lang == "es":
             description = service.get("description_es")
             preparation = service.get("preparation_es")
@@ -2545,6 +2663,9 @@ class DecisionTree:
         if description and not _is_padi_course_service(service_id):
             blocks.append([f"ℹ️ {description}"])
 
+        if accommodation_note:
+            blocks.append([accommodation_note])
+
         if overview or (preparation and contact_only):
             block = [title_overview]
             for item in overview:
@@ -2608,6 +2729,7 @@ class DecisionTree:
             return ""
 
         lang = state.language
+        service_id = state.selected_service
         name = service[f"name_{lang}"]
         price = service["price"]
         duration = service[f"duration_{lang}"]
@@ -2627,6 +2749,10 @@ class DecisionTree:
         extra_block = service.get(block_key)
         if extra_block:
             extra += "\n\n" + extra_block
+
+        accommodation_note = _accommodation_requirement_note(service_id, service, lang)
+        if accommodation_note:
+            extra += "\n\n" + accommodation_note
 
         if lang == "es":
             return (
@@ -2656,6 +2782,7 @@ class DecisionTree:
         service_id = state.selected_service
         flight_rule = service[f"flight_rule_{lang}"]
         contact_only = service.get("contact_only", False)
+        accommodation_note = _accommodation_requirement_note(service_id, service, lang)
 
         # Choose booking URL based on location
         if state.location == "island" and service.get("booking_url_island"):
@@ -2760,6 +2887,10 @@ class DecisionTree:
                 lines.append("")
                 lines.append("🌙 Este paquete no incluye buceo nocturno")
 
+            if accommodation_note:
+                lines.append("")
+                lines.append(accommodation_note)
+
             # Refresher, descuento y regla de vuelo, cada uno separado por una línea en blanco
             if flight_rule or state.refresher_interested or state.is_colombian:
                 lines.append("")
@@ -2780,10 +2911,12 @@ class DecisionTree:
             extra_notes = service.get("extra_notes_es")
             # Para paquetes multi-dia, simplificamos la nota extra para enfatizar solo
             # que el alojamiento no esta incluido.
-            if service_id in MULTI_DAY_SERVICES:
+            if service_id in MULTI_DAY_SERVICES or service_id == "3_dives_1_day":
                 not_included_es = service.get("not_included_es", [])
-                if any("Hotel/alojamiento" in item for item in not_included_es):
+                if service_id == "3_dives_1_day" or any("Hotel/alojamiento" in item for item in not_included_es):
                     extra_notes = "El alojamiento no esta incluido."
+            elif state.location == "island" and service_id and service_id.endswith("_already_on_island"):
+                extra_notes = "El alojamiento no esta incluido."
             if extra_notes and service_id != "2_dives_1_day" and not _is_padi_course_service(service_id):
                 lines.append("")
                 lines.append(f"ℹ️ {extra_notes}")
@@ -2878,6 +3011,9 @@ class DecisionTree:
             elif service.get("category") == "package":
                 summary += "\n🌙 This package does not include a night dive\n"
 
+            if accommodation_note:
+                summary += f"\n{accommodation_note}\n"
+
             if state.refresher_interested:
                 summary += "\n🧑‍🏫 Refresher: Yes (recommended due to inactivity)\n"
 
@@ -2891,9 +3027,9 @@ class DecisionTree:
                 summary += f"\n✈️ *Important*: {flight_rule}\n"
 
             extra_notes = service.get("extra_notes_en")
-            if service_id in MULTI_DAY_SERVICES:
+            if service_id in MULTI_DAY_SERVICES or service_id == "3_dives_1_day":
                 not_included_en = service.get("not_included_en", [])
-                if any("Hotel/accommodation" in item for item in not_included_en):
+                if service_id == "3_dives_1_day" or any("Hotel/accommodation" in item for item in not_included_en):
                     extra_notes = "Accommodation on the islands is not included."
             if extra_notes and not _is_padi_course_service(service_id):
                 summary += f"\nℹ️ {extra_notes}\n"

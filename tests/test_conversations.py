@@ -447,6 +447,16 @@ async def test_back_text_volver_from_tours_certified_returns_to_group_type():
 
 
 @pytest.mark.asyncio
+async def test_back_from_island_4_dives_variant_returns_to_certified_menu():
+    state = await reach_diving_experience(location="island")
+    await route_message(state, "1")
+    await route_message(state, "3")
+    assert state.step == Step.CERTIFIED_4_DIVES_VARIANT
+    await route_message(state, "back")
+    assert state.step == Step.TOURS_CERTIFIED
+
+
+@pytest.mark.asyncio
 async def test_back_button_present_in_reservar_quick_replies():
     state = await reach_main_menu("es")
     await route_message(state, "1")  # RESERVA_MENU
@@ -537,10 +547,26 @@ async def test_certified_refresher_no_keeps_service():
 
 
 @pytest.mark.asyncio
+async def test_certified_3_dives_selected():
+    state = await reach_diving_experience()
+    await send(state, "1")
+    await route_message(state, "2")
+    assert state.selected_service == "3_dives_1_day"
+
+
+@pytest.mark.asyncio
+async def test_certified_4_dives_selected():
+    state = await reach_diving_experience()
+    await send(state, "1")
+    await route_message(state, "3")
+    assert state.selected_service == "4_dives_2_days"
+
+
+@pytest.mark.asyncio
 async def test_certified_5_dives_selected():
     state = await reach_diving_experience()
     await send(state, "1")
-    await route_message(state, "2")  # 5 buceos → asks last dive recency first
+    await route_message(state, "4")  # 5 buceos → asks last dive recency first
     assert state.selected_service == "5_dives_2_days"
 
 
@@ -548,7 +574,7 @@ async def test_certified_5_dives_selected():
 async def test_certified_7_dives_selected():
     state = await reach_diving_experience()
     await send(state, "1")
-    await route_message(state, "3")
+    await route_message(state, "5")
     assert state.selected_service == "7_dives_3_days"
 
 
@@ -556,7 +582,7 @@ async def test_certified_7_dives_selected():
 async def test_certified_9_dives_selected():
     state = await reach_diving_experience()
     await send(state, "1")
-    await route_message(state, "4")
+    await route_message(state, "6")
     assert state.selected_service == "9_dives_4_days"
 
 
@@ -564,7 +590,7 @@ async def test_certified_9_dives_selected():
 async def test_certified_private_service_escalates():
     state = await reach_diving_experience()
     await send(state, "1")
-    resp = await route_message(state, "5")  # servicio privado
+    resp = await route_message(state, "7")  # servicio privado
     assert state.step == Step.ESCALATE
     assert state.pending_note is not None
 
@@ -572,7 +598,7 @@ async def test_certified_private_service_escalates():
 @pytest.mark.asyncio
 async def test_certified_multiday_refresher_keeps_original_service():
     state = await reach_diving_experience()
-    await send(state, "1", "2", "1", "2")  # 5 dives, > 2 años, no 500+
+    await send(state, "1", "4", "1", "2")  # 5 dives, > 2 años, no 500+
     resp = await route_message(state, "1")       # refresher sí en paquete multi-día
     assert state.refresher_interested is True
     assert state.selected_service == "5_dives_2_days"  # paquete original intacto
@@ -590,7 +616,7 @@ async def test_certified_summary_includes_meeting_point_cartagena():
 @pytest.mark.asyncio
 async def test_certified_summary_includes_flight_rule_for_multiday():
     state = await reach_diving_experience()
-    await send(state, "1", "2", "2", "2")  # 5 dives, sin refresher, no colombiano
+    await send(state, "1", "4", "2", "2")  # 5 dives, sin refresher, no colombiano
     # flight rule applies only when service has it; at least booking link should appear
     assert state.step == Step.SUMMARY
 
@@ -656,15 +682,35 @@ async def test_island_certified_3_dives_night():
 async def test_island_certified_5_dives():
     state = await reach_diving_experience(location="island")
     await send(state, "1")
-    await route_message(state, "3")
+    await route_message(state, "4")
     assert state.selected_service == "5_dives_2_days_already_on_island"
+
+
+@pytest.mark.asyncio
+async def test_island_certified_4_dives_daytime_variant():
+    state = await reach_diving_experience(location="island")
+    await send(state, "1")
+    resp = await route_message(state, "3")
+    assert state.step == Step.CERTIFIED_4_DIVES_VARIANT
+    assert "4 inmersiones" in resp.lower() or "4 dives" in resp.lower()
+    await route_message(state, "1")
+    assert state.selected_service == "4_dives_2_days_already_on_island"
+
+
+@pytest.mark.asyncio
+async def test_island_certified_4_dives_mixed_variant():
+    state = await reach_diving_experience(location="island")
+    await send(state, "1")
+    await route_message(state, "3")
+    await route_message(state, "2")
+    assert state.selected_service == "4_dives_2_days_mixed_already_on_island"
 
 
 @pytest.mark.asyncio
 async def test_island_certified_7_dives():
     state = await reach_diving_experience(location="island")
     await send(state, "1")
-    await route_message(state, "4")
+    await route_message(state, "5")
     assert state.selected_service == "7_dives_3_days_already_on_island"
 
 
@@ -845,8 +891,12 @@ async def test_referral_reactivate_escalates():
     assert state.step == Step.SUMMARY
     assert "referral" in state.selected_service or "referido" in resp.lower()
 
-    # Paso 4: desde el resumen, elegir Contactar/Reservar -> escalar a humano
-    resp = await route_message(state, "1")  # "🧑‍💼 Contactar/Reservar" (summary_referral)
+    # Paso 4: desde el resumen inicial, avanzar al follow-up
+    resp = await route_message(state, "2")
+    assert state.step == Step.SUMMARY
+
+    # Paso 5: elegir Contactar/Reservar -> escalar a humano
+    resp = await route_message(state, "1")
     assert state.step == Step.ESCALATE
     # El mensaje de escalada debe incluir la explicacion de referral/reactivate
     assert "eLearning" in resp or "documento" in resp.lower() or "price" in resp.lower() or "precio" in resp.lower()
