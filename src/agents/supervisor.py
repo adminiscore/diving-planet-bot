@@ -31,6 +31,16 @@ MENU_STEPS = {
     Step.MAIN_MENU,
     Step.RESERVA_MENU,
     Step.INFO_MENU,
+    Step.INFO_ACTIVITY_LOCATION,
+    Step.INFO_ACTIVITIES_MENU,
+    Step.INFO_TOURS_MENU,
+    Step.INFO_PACKAGES_MENU,
+    Step.INFO_COURSES_MENU,
+    Step.INFO_SPECIALTIES_MENU,
+    Step.INFO_TOUR_DETAIL,
+    Step.INFO_PACKAGE_DETAIL,
+    Step.INFO_COURSE_DETAIL,
+    Step.INFO_SPECIALTY_DETAIL,
     Step.TOURS_LOCATION,
     Step.GROUP_TYPE,
     Step.TOURS_EXPERIENCE,
@@ -45,9 +55,17 @@ MENU_STEPS = {
     Step.COURSES_OPEN_WATER_TIME,
     Step.COURSES_ADVANCED_MENU,
     Step.COURSES_SPECIALTIES_MENU,
+    Step.PRICING_COLOMBIAN,
     Step.PRICING_MENU,
+    Step.PRICING_CARTAGENA,
+    Step.PRICING_ISLANDS,
+    Step.PRICING_PACKAGES,
+    Step.PRICING_DISCOUNTS,
     Step.BOOKING_MENU,
     Step.LOGISTICS_MENU,
+    Step.LOGISTICS_MEETING,
+    Step.LOGISTICS_INCLUDES,
+    Step.LOGISTICS_WHAT_TO_BRING,
     Step.ISLAND_MENU,
     Step.ISLAND_HOTEL_MENU,
     Step.SERVICE_DETAIL,
@@ -71,6 +89,29 @@ BACK_KEYWORDS = {
 BACK_STEP: dict[Step, tuple[Step, str]] = {
     Step.RESERVA_MENU: (Step.MAIN_MENU, "main_menu"),
     Step.INFO_MENU: (Step.MAIN_MENU, "main_menu"),
+    Step.PRICING_COLOMBIAN: (Step.INFO_MENU, "info_menu"),
+    Step.PRICING_MENU: (Step.INFO_MENU, "info_menu"),
+    Step.PRICING_CARTAGENA: (Step.PRICING_MENU, "pricing_menu"),
+    Step.PRICING_ISLANDS: (Step.PRICING_MENU, "pricing_menu"),
+    Step.PRICING_PACKAGES: (Step.PRICING_MENU, "pricing_menu"),
+    Step.PRICING_DISCOUNTS: (Step.PRICING_MENU, "pricing_menu"),
+    Step.BOOKING_MENU: (Step.INFO_MENU, "info_menu"),
+    Step.LOGISTICS_MENU: (Step.INFO_MENU, "info_menu"),
+    Step.LOGISTICS_MEETING: (Step.LOGISTICS_MENU, "logistics_menu"),
+    Step.LOGISTICS_INCLUDES: (Step.LOGISTICS_MENU, "logistics_menu"),
+    Step.LOGISTICS_WHAT_TO_BRING: (Step.LOGISTICS_MENU, "logistics_menu"),
+    Step.ISLAND_MENU: (Step.LOGISTICS_MENU, "logistics_menu"),
+    Step.ISLAND_HOTEL_MENU: (Step.ISLAND_MENU, "island_menu"),
+    Step.INFO_ACTIVITY_LOCATION: (Step.INFO_MENU, "info_menu"),
+    Step.INFO_ACTIVITIES_MENU: (Step.INFO_ACTIVITY_LOCATION, "info_activity_location"),
+    Step.INFO_TOURS_MENU: (Step.INFO_ACTIVITIES_MENU, "info_activities_menu"),
+    Step.INFO_PACKAGES_MENU: (Step.INFO_ACTIVITIES_MENU, "info_activities_menu"),
+    Step.INFO_COURSES_MENU: (Step.INFO_ACTIVITIES_MENU, "info_activities_menu"),
+    Step.INFO_SPECIALTIES_MENU: (Step.INFO_ACTIVITIES_MENU, "info_activities_menu"),
+    Step.INFO_TOUR_DETAIL: (Step.INFO_TOURS_MENU, "info_tours_menu"),
+    Step.INFO_PACKAGE_DETAIL: (Step.INFO_PACKAGES_MENU, "info_packages_menu"),
+    Step.INFO_COURSE_DETAIL: (Step.INFO_COURSES_MENU, "info_courses_menu"),
+    Step.INFO_SPECIALTY_DETAIL: (Step.INFO_SPECIALTIES_MENU, "info_specialties_menu"),
     Step.TOURS_LOCATION: (Step.RESERVA_MENU, "reserva_menu"),
     Step.GROUP_TYPE: (Step.TOURS_LOCATION, "tours_location"),
     Step.TOURS_EXPERIENCE: (Step.GROUP_TYPE, "group_type"),
@@ -706,6 +747,20 @@ async def route_message(state: ConversationState, message: str) -> str:
             logger.info(f"[SUPERVISOR] Quick-reply text match value={matched_value} -> step={state.step.value}")
             return response
 
+        if state.step in {
+            Step.INFO_TOUR_DETAIL,
+            Step.INFO_PACKAGE_DETAIL,
+            Step.INFO_COURSE_DETAIL,
+            Step.INFO_SPECIALTY_DETAIL,
+        } and state.selected_service:
+            normalized = _strip_accents(msg_lower)
+            if re.search(r"\b(itinerario|itinerary)\b", normalized):
+                response = decision_tree.process_message(state, "itinerary")
+                logger.info(
+                    f"[SUPERVISOR] Decision tree (itinerary keyword) -> step={state.step.value}"
+                )
+                return response
+
         if state.step in (Step.WELCOME, Step.LANGUAGE) and _is_substantive_free_text(message):
             state.language = _infer_language(message, state.language)
             state.step = Step.FREE_TEXT
@@ -725,7 +780,6 @@ async def route_message(state: ConversationState, message: str) -> str:
 
         # Free text while in menu -> use RAG but keep menu state
         logger.info(f"[SUPERVISOR] RAG (free text in menu step={state.step.value})")
-        state.quick_replies = []
         state.history.append({"role": "user", "content": message})
         extra_context = _build_extra_context(state)
         answer = await rag_answer(message, lang=state.language, history=state.history, extra_context=extra_context)
@@ -810,6 +864,17 @@ async def route_message(state: ConversationState, message: str) -> str:
                 "If you need anything else, type *menu* to go back.\n"
                 "We look forward to seeing you at the Rosario Islands!"
             )
+
+        if state.selected_service:
+            normalized = _strip_accents(msg_lower)
+            if re.search(r"\b(itinerario|itinerary)\b", normalized):
+                state.step = Step.SUMMARY
+                state.summary_mode = "follow_up"
+                decision_tree.set_quick_replies(state, decision_tree._summary_quick_replies_key(state))
+                itinerary = decision_tree._format_full_itinerary(state)
+                if state.language == "es":
+                    return itinerary + "\n\n¿Quieres preguntarme algo más?"
+                return itinerary + "\n\nWould you like to ask anything else?"
 
         # Preguntas de estado simples ("que actividad he elegido?", "soy buzo certificado?", etc.)
         introspective = _answer_state_introspection(state, message)

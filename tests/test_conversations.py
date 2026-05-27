@@ -90,21 +90,21 @@ async def test_courses_menu_titles_in_english():
 
 async def reach_pricing_menu(lang: str = "es") -> ConversationState:
     state = await reach_main_menu(lang)
-    await send(state, "2", "1")
+    await send(state, "2", "2", "2")
     assert state.step == Step.PRICING_MENU
     return state
 
 
 async def reach_booking_menu(lang: str = "es") -> ConversationState:
     state = await reach_main_menu(lang)
-    await send(state, "2", "2")
+    await send(state, "2", "3")
     assert state.step == Step.BOOKING_MENU
     return state
 
 
 async def reach_logistics_menu(lang: str = "es") -> ConversationState:
     state = await reach_main_menu(lang)
-    await send(state, "2", "3")
+    await send(state, "2", "4")
     assert state.step == Step.LOGISTICS_MENU
     return state
 
@@ -330,11 +330,12 @@ async def test_mid_conversation_language_switch_en_to_es():
 
 
 @pytest.mark.asyncio
-async def test_pricing_response_appends_back_to_menu_hint_es():
+async def test_pricing_response_shows_back_button_es():
     state = await reach_pricing_menu("es")
     resp = await route_message(state, "1")
-    assert "reservar" in resp.lower()
-    assert "información" in resp.lower() or "informacion" in resp.lower()
+    assert state.step == Step.PRICING_CARTAGENA
+    assert "precio" in resp.lower() or "precios" in resp.lower()
+    assert any(item.get("value") == "back" for item in state.quick_replies)
 
 
 @pytest.mark.asyncio
@@ -350,7 +351,7 @@ async def test_user_can_reserve_after_info_leaf_without_greeting():
     """After a pricing answer, typing 'quiero reservar' must navigate to RESERVA_MENU."""
     state = await reach_pricing_menu("es")
     await route_message(state, "1")
-    assert state.step == Step.MAIN_MENU
+    assert state.step == Step.PRICING_CARTAGENA
     await route_message(state, "quiero reservar")
     assert state.step == Step.RESERVA_MENU
 
@@ -460,7 +461,7 @@ async def test_back_button_not_present_in_info_menu():
     state = await reach_main_menu("es")
     await route_message(state, "2")  # INFO_MENU
     titles = [qr["title"] for qr in state.quick_replies]
-    assert not any("Volver" in t or "Back" in t for t in titles)
+    assert any("Volver" in t or "Back" in t for t in titles)
 
 
 @pytest.mark.asyncio
@@ -846,6 +847,7 @@ async def test_referral_reactivate_escalates():
     assert "referral" in state.selected_service or "referido" in resp.lower()
 
     # Paso 4: desde el resumen, elegir Contactar/Reservar -> escalar a humano
+    resp = await route_message(state, "2")  # "🙏 No, gracias" (itinerary_offer) -> follow_up
     resp = await route_message(state, "1")  # "🧑‍💼 Contactar/Reservar" (summary_referral)
     assert state.step == Step.ESCALATE
     # El mensaje de escalada debe incluir la explicacion de referral/reactivate
@@ -882,7 +884,7 @@ async def test_specialties_menu_shows_only_mindful_fish_naturalist_buoyancy_and_
 async def test_pricing_menu_cartagena_shows_usd():
     state = await reach_pricing_menu()  # precios
     resp = await route_message(state, "1")  # desde Cartagena
-    assert state.step == Step.MAIN_MENU
+    assert state.step == Step.PRICING_CARTAGENA
     assert "USD" in resp or "$" in resp or "precio" in resp.lower()
 
 
@@ -890,7 +892,7 @@ async def test_pricing_menu_cartagena_shows_usd():
 async def test_pricing_menu_islands():
     state = await reach_pricing_menu()
     resp = await route_message(state, "2")  # ya en islas
-    assert state.step == Step.MAIN_MENU
+    assert state.step == Step.PRICING_ISLANDS
     assert "isla" in resp.lower() or "island" in resp.lower() or "tarifa" in resp.lower()
 
 
@@ -898,7 +900,7 @@ async def test_pricing_menu_islands():
 async def test_pricing_menu_multiday_packages():
     state = await reach_pricing_menu()
     resp = await route_message(state, "3")  # paquetes 5/7/9
-    assert state.step == Step.MAIN_MENU
+    assert state.step == Step.PRICING_PACKAGES
     assert "5" in resp and "7" in resp
 
 
@@ -906,7 +908,7 @@ async def test_pricing_menu_multiday_packages():
 async def test_pricing_menu_colombian_discounts():
     state = await reach_pricing_menu()
     resp = await route_message(state, "4")  # descuentos colombianos
-    assert state.step == Step.MAIN_MENU
+    assert state.step == Step.PRICING_DISCOUNTS
     assert "colombian" in resp.lower() or "PARCEROS" in resp or "local" in resp.lower()
 
 
@@ -915,7 +917,8 @@ async def test_pricing_menu_island_context_aware():
     state = await reach_main_menu()
     state.location = "island"  # preestablecido como ya en islas
     await route_message(state, "2")  # Información
-    await route_message(state, "1")  # Precios
+    await route_message(state, "2")  # Precios
+    await route_message(state, "2")  # No es colombiano/a
     resp = await route_message(state, "2")  # precios islas
     assert "ya indicaste" in resp.lower() or "already indicated" in resp.lower() or "isla" in resp.lower()
 
@@ -972,8 +975,9 @@ async def test_logistics_meeting_point_cartagena():
     state = await reach_main_menu()
     state.location = "cartagena"
     await route_message(state, "2")  # Información
-    await route_message(state, "3")  # Logística
+    await route_message(state, "4")  # Logística
     resp = await route_message(state, "1")
+    assert state.step == Step.LOGISTICS_MEETING
     assert "Bodeguita" in resp or "8:00" in resp
 
 
@@ -981,6 +985,7 @@ async def test_logistics_meeting_point_cartagena():
 async def test_logistics_meeting_point_without_location():
     state = await reach_logistics_menu()
     resp = await route_message(state, "1")
+    assert state.step == Step.LOGISTICS_MEETING
     assert "Bodeguita" in resp or "8:00" in resp or "horario" in resp.lower()
 
 
@@ -995,7 +1000,7 @@ async def test_logistics_accommodation_leads_to_island_menu():
 async def test_logistics_whats_included():
     state = await reach_logistics_menu()
     resp = await route_message(state, "3")
-    assert state.step == Step.MAIN_MENU
+    assert state.step == Step.LOGISTICS_INCLUDES
     assert "equipo" in resp.lower() or "seguro" in resp.lower() or "equipment" in resp.lower()
 
 
@@ -1010,7 +1015,7 @@ async def test_logistics_not_included_mentions_photos():
 async def test_logistics_what_to_bring():
     state = await reach_logistics_menu()
     resp = await route_message(state, "4")
-    assert state.step == Step.MAIN_MENU
+    assert state.step == Step.LOGISTICS_WHAT_TO_BRING
     assert "toalla" in resp.lower() or "bloqueador" in resp.lower() or "towel" in resp.lower()
 
 
@@ -1019,8 +1024,9 @@ async def test_logistics_island_context_not_included():
     state = await reach_main_menu()
     state.location = "island"
     await route_message(state, "2")  # Información
-    await route_message(state, "3")  # Logística
+    await route_message(state, "4")  # Logística
     resp = await route_message(state, "3")  # qué incluye / no incluye
+    assert state.step == Step.LOGISTICS_INCLUDES
     assert "isla" in resp.lower() or "island" in resp.lower() or "transporte" in resp.lower()
 
 
@@ -1414,7 +1420,7 @@ async def test_en_advisor_keyword():
 async def test_en_pricing_cartagena():
     state = await reach_pricing_menu("en")
     resp = await route_message(state, "1")
-    assert state.step == Step.MAIN_MENU
+    assert state.step == Step.PRICING_CARTAGENA
     assert "USD" in resp or "price" in resp.lower()
 
 
@@ -1646,7 +1652,7 @@ async def test_quick_replies_cleared_on_escalation():
 async def test_island_menu_has_12_options():
     state = await reach_logistics_menu()
     await send(state, "2")
-    assert len(state.quick_replies) == 12
+    assert len(state.quick_replies) == 14
 
 
 @pytest.mark.asyncio
