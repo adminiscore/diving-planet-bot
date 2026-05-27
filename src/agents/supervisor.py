@@ -16,6 +16,7 @@ import unicodedata
 
 from src.agents.escalation import detect_sensitive_escalation
 from src.agents.lead_summary import build_lead_summary
+from src.agents.intent_classifier import classify_menu_intent
 from src.flows.decision_tree import DecisionTree, ConversationState, Step
 from src.agents.rag_agent import rag_answer
 from src.privacy import detect_pii, privacy_block_message
@@ -56,6 +57,17 @@ MENU_STEPS = {
     Step.COURSES_ADVANCED_MENU,
     Step.COURSES_SPECIALTIES_MENU,
     Step.PRICING_COLOMBIAN,
+    Step.MIXED_ENTRY,
+    Step.MIXED_ADD_ACTIVITY,
+    Step.MIXED_ADD_CERT_PLAN,
+    Step.MIXED_ADD_QTY,
+    Step.MIXED_CART_REVIEW,
+    Step.MIXED_CART_MODIFY_PICK,
+    Step.MIXED_CART_REMOVE_PICK,
+    Step.MIXED_FINAL_COLOMBIAN,
+    Step.MIXED_FINAL_KIDS,
+    Step.MIXED_FINAL_PRIVATE,
+    Step.MIXED_FINAL_SUMMARY,
     Step.PRICING_MENU,
     Step.PRICING_CARTAGENA,
     Step.PRICING_ISLANDS,
@@ -71,6 +83,21 @@ MENU_STEPS = {
     Step.SERVICE_DETAIL,
     Step.LOCATION,
     Step.COLOMBIAN,
+}
+
+# Steps that route through the LLM intent classifier when free text doesn't match a button.
+_MIXED_FLOW_STEPS = {
+    Step.MIXED_ENTRY,
+    Step.MIXED_ADD_ACTIVITY,
+    Step.MIXED_ADD_CERT_PLAN,
+    Step.MIXED_ADD_QTY,
+    Step.MIXED_CART_REVIEW,
+    Step.MIXED_CART_MODIFY_PICK,
+    Step.MIXED_CART_REMOVE_PICK,
+    Step.MIXED_FINAL_COLOMBIAN,
+    Step.MIXED_FINAL_KIDS,
+    Step.MIXED_FINAL_PRIVATE,
+    Step.MIXED_FINAL_SUMMARY,
 }
 
 # Keywords that send the user all the way back to the main menu.
@@ -113,7 +140,7 @@ BACK_STEP: dict[Step, tuple[Step, str]] = {
     Step.INFO_COURSE_DETAIL: (Step.INFO_COURSES_MENU, "info_courses_menu"),
     Step.INFO_SPECIALTY_DETAIL: (Step.INFO_SPECIALTIES_MENU, "info_specialties_menu"),
     Step.TOURS_LOCATION: (Step.RESERVA_MENU, "reserva_menu"),
-    Step.GROUP_TYPE: (Step.TOURS_LOCATION, "tours_location"),
+    Step.GROUP_TYPE: (Step.RESERVA_MENU, "reserva_menu"),
     Step.TOURS_EXPERIENCE: (Step.GROUP_TYPE, "group_type"),
     Step.TOURS_CERTIFIED: (Step.TOURS_EXPERIENCE, "tours_experience"),
     Step.CERTIFIED_4_DIVES_VARIANT: (Step.TOURS_CERTIFIED, "tours_certified"),
@@ -124,12 +151,46 @@ BACK_STEP: dict[Step, tuple[Step, str]] = {
     Step.COURSES_OPEN_WATER_TIME: (Step.COURSES_OPEN_WATER_ORIGIN, "courses_open_water_origin"),
     Step.COURSES_ADVANCED_MENU: (Step.COURSES_MENU, "courses_menu"),
     Step.COURSES_SPECIALTIES_MENU: (Step.COURSES_MENU, "courses_menu"),
+    # Cart-style mixed flow: most steps loop back to the cart review for "back".
+    # MIXED_ENTRY goes back to GROUP_TYPE. Final-question steps are intentionally
+    # not back-navigable individually — restart via "empezar de nuevo" if needed.
+    Step.MIXED_ENTRY: (Step.GROUP_TYPE, "group_type"),
+    Step.MIXED_ADD_ACTIVITY: (Step.MIXED_CART_REVIEW, "mixed_cart_actions"),
+    Step.MIXED_ADD_CERT_PLAN: (Step.MIXED_ADD_ACTIVITY, "mixed_add_activity"),
+    Step.MIXED_ADD_QTY: (Step.MIXED_CART_REVIEW, "mixed_cart_actions"),
+    Step.MIXED_CART_REVIEW: (Step.GROUP_TYPE, "group_type"),
+    Step.MIXED_CART_MODIFY_PICK: (Step.MIXED_CART_REVIEW, "mixed_cart_actions"),
+    Step.MIXED_CART_REMOVE_PICK: (Step.MIXED_CART_REVIEW, "mixed_cart_actions"),
+    Step.MIXED_FINAL_COLOMBIAN: (Step.MIXED_CART_REVIEW, "mixed_cart_actions"),
+    Step.MIXED_FINAL_KIDS: (Step.MIXED_FINAL_COLOMBIAN, "mixed_yes_no"),
+    Step.MIXED_FINAL_PRIVATE: (Step.MIXED_FINAL_COLOMBIAN, "mixed_yes_no"),
 }
 
 # Keywords that indicate escalation to a human
 ESCALATION_KEYWORDS = {
     "humano", "human", "agente", "agent", "asesor", "advisor",
     "persona", "person", "hablar con", "speak with", "talk to",
+}
+
+# Phrases that indicate a customer complaining about a broken link/URL/form.
+BROKEN_LINK_COMPLAINT_PHRASES = {
+    # ES
+    "no funciona", "no me funciona", "no abre", "no me abre", "no carga",
+    "no me carga", "está roto", "esta roto", "está caído", "esta caido",
+    "no me lleva", "da error", "me da error", "no entra", "no se abre",
+    "no se carga", "está mal", "esta mal", "el link mal", "url mal",
+    "no sirve",
+    # EN
+    "doesn't work", "does not work", "doesnt work", "not working",
+    "is broken", "broken link", "won't load", "wont load", "won't open",
+    "wont open", "doesn't load", "doesn't open", "is down", "shows an error",
+    "gives an error", "not loading",
+}
+
+BROKEN_LINK_TARGET_TOKENS = {
+    "link", "links", "enlace", "enlaces", "url", "urls",
+    "form", "formulario", "formularios", "form jotform", "jotform",
+    "página", "pagina", "page", "site", "sitio",
 }
 
 LANGUAGE_SELECTION_KEYWORDS = {
@@ -290,6 +351,40 @@ def _matches_escalation_keyword(msg_lower: str) -> bool:
         else:
             if re.search(r"\b" + re.escape(kw) + r"\b", msg_lower):
                 return True
+    return False
+
+
+def _detect_broken_link_complaint(message: str, state_history: list[dict] | None = None) -> bool:
+    """Return True if the user is complaining about a broken link/form/URL.
+
+    Requires either:
+    - The message itself mentions a link-like token AND a complaint phrase, OR
+    - The complaint phrase is present AND the bot's last reply contained a URL
+      (so "no me funciona" right after the bot sends a link is captured).
+    """
+    msg_lower = " ".join(message.strip().lower().split())
+    if not msg_lower:
+        return False
+
+    has_complaint = any(phrase in msg_lower for phrase in BROKEN_LINK_COMPLAINT_PHRASES)
+    if not has_complaint:
+        return False
+
+    has_link_token_in_msg = any(
+        re.search(r"\b" + re.escape(tok) + r"\b", msg_lower)
+        for tok in BROKEN_LINK_TARGET_TOKENS
+    )
+    if has_link_token_in_msg:
+        return True
+
+    # Otherwise, check if the bot's most recent message contained a URL.
+    if state_history:
+        for entry in reversed(state_history):
+            if entry.get("role") == "assistant":
+                content = (entry.get("content") or "").lower()
+                if "http://" in content or "https://" in content:
+                    return True
+                break
     return False
 
 
@@ -665,6 +760,28 @@ async def route_message(state: ConversationState, message: str) -> str:
         logger.info(f"[SUPERVISOR] Escalation triggered by keyword")
         return MESSAGES["escalate"][state.language]
 
+    # Customer reports a broken link/form/URL → escalate with high priority.
+    # Must run BEFORE sensitive_escalation because phrases like "reserva no funciona"
+    # otherwise match the generic real_time_issues rule.
+    if _detect_broken_link_complaint(message, state.history):
+        reason = "🚨 LINK ROTO reportado por el cliente — revisar URLs"
+        state.step = Step.ESCALATE
+        state.quick_replies = []
+        state.pending_escalation_reason = reason
+        state.pending_note = build_lead_summary(state, escalation_reason=reason)
+        logger.warning(f"[SUPERVISOR] Broken-link complaint detected msg={message[:80]!r}")
+        if state.language == "es":
+            return (
+                "Lamento que el enlace no te haya funcionado. Aviso al equipo para revisarlo y te paso "
+                "con un asesor para confirmar el siguiente paso o enviarte el link correcto.\n\n"
+                "Enseguida se pone en contacto contigo. ¡Gracias!"
+            )
+        return (
+            "Sorry the link didn't work. I'll let the team know to check it and connect you with a "
+            "advisor who can confirm the next step or share the correct link.\n\n"
+            "They will get in touch with you shortly. Thanks!"
+        )
+
     sensitive_escalation = detect_sensitive_escalation(message, state.language)
     if sensitive_escalation:
         reason, response = sensitive_escalation
@@ -686,6 +803,9 @@ async def route_message(state: ConversationState, message: str) -> str:
     # Step-back: "🔙 Volver" button (value="back") or back keyword
     if msg_lower == "back" or msg_lower in BACK_KEYWORDS:
         logger.info(f"[SUPERVISOR] Back navigation from step={state.step.value}")
+        # Cart-flow steps that manage their own back/cancel inline
+        if state.step in (Step.MIXED_ADD_ACTIVITY, Step.MIXED_ADD_CERT_PLAN, Step.MIXED_ADD_QTY):
+            return decision_tree.process_message(state, "back")
         return _go_back_one_step(state)
 
     # Greeting at any step (except the very first WELCOME) → restart welcome / language selection.
@@ -725,12 +845,32 @@ async def route_message(state: ConversationState, message: str) -> str:
 
     # If user is in a menu step
     if state.step in MENU_STEPS:
+        # Exact button-value match: user sent the raw value of one of the displayed buttons.
+        # Handles non-digit values like "6+" that isdigit() would miss.
+        raw_msg = message.strip()
+        exact_value = next(
+            (r.get("value") for r in state.quick_replies if r.get("value") == raw_msg),
+            None,
+        )
+        if exact_value is not None:
+            if exact_value == "back":
+                logger.info(f"[SUPERVISOR] Back via exact button value from step={state.step.value}")
+                return _go_back_one_step(state)
+            response = decision_tree.process_message(state, exact_value)
+            if state.step == Step.ESCALATE and not state.pending_note:
+                reason = state.pending_escalation_reason or "derivado por el árbol de opciones"
+                state.pending_escalation_reason = reason
+                state.pending_note = build_lead_summary(state, escalation_reason=reason)
+            logger.info(f"[SUPERVISOR] Decision tree (exact button value={exact_value}) -> step={state.step.value}")
+            return response
+
         # If it looks like a menu choice (number), use decision tree
         if msg_lower.isdigit():
             response = decision_tree.process_message(state, message)
             if state.step == Step.ESCALATE and not state.pending_note:
-                state.pending_escalation_reason = "derivado por el árbol de opciones"
-                state.pending_note = build_lead_summary(state, escalation_reason="derivado por el árbol de opciones")
+                reason = state.pending_escalation_reason or "derivado por el árbol de opciones"
+                state.pending_escalation_reason = reason
+                state.pending_note = build_lead_summary(state, escalation_reason=reason)
             logger.info(f"[SUPERVISOR] Decision tree -> step={state.step.value}")
             return response
 
@@ -743,8 +883,9 @@ async def route_message(state: ConversationState, message: str) -> str:
         if matched_value is not None:
             response = decision_tree.process_message(state, matched_value)
             if state.step == Step.ESCALATE and not state.pending_note:
-                state.pending_escalation_reason = "derivado por el árbol de opciones"
-                state.pending_note = build_lead_summary(state, escalation_reason="derivado por el árbol de opciones")
+                reason = state.pending_escalation_reason or "derivado por el árbol de opciones"
+                state.pending_escalation_reason = reason
+                state.pending_note = build_lead_summary(state, escalation_reason=reason)
             logger.info(f"[SUPERVISOR] Quick-reply text match value={matched_value} -> step={state.step.value}")
             return response
 
@@ -778,6 +919,50 @@ async def route_message(state: ConversationState, message: str) -> str:
             response = decision_tree.process_message(state, message)
             logger.info(f"[SUPERVISOR] Decision tree (early step) -> step={state.step.value}")
             return response
+
+        # LLM intent classifier — only inside the cart-style mixed flow.
+        # Maps natural-language inputs ("añade otro", "quítalo", "en pesos") to button values.
+        if state.step in _MIXED_FLOW_STEPS and state.quick_replies:
+            intent = await classify_menu_intent(
+                message,
+                step_name=state.step.value,
+                button_options=list(state.quick_replies),
+                lang=state.language,
+            )
+            if intent == "back":
+                logger.info(f"[SUPERVISOR] Intent=back from step={state.step.value}")
+                if state.step in (Step.MIXED_ADD_ACTIVITY, Step.MIXED_ADD_CERT_PLAN, Step.MIXED_ADD_QTY):
+                    return decision_tree.process_message(state, "back")
+                return _go_back_one_step(state)
+            if intent == "restart":
+                logger.info(f"[SUPERVISOR] Intent=restart from step={state.step.value}")
+                decision_tree._reset_mixed_state(state)
+                state.step = Step.MIXED_ENTRY
+                decision_tree.set_quick_replies(state, "mixed_entry")
+                from src.flows.decision_tree import MESSAGES as _M
+                return _M["mixed_entry"][state.language]
+            if intent in ("currency_switch_cop", "currency_switch_usd"):
+                target = "COP" if intent == "currency_switch_cop" else "USD"
+                state.mixed_display_currency = target
+                logger.info(f"[SUPERVISOR] Intent=currency_switch -> {target}")
+                # Re-render the final summary if we're already there; otherwise just acknowledge
+                if state.step == Step.MIXED_FINAL_SUMMARY:
+                    return decision_tree._format_mixed_final_summary(state)
+                ack_es = "Listo, te muestro los precios en pesos cuando lleguemos al resumen." if target == "COP" \
+                    else "Listo, te muestro los precios en dólares cuando lleguemos al resumen."
+                ack_en = "Got it, prices will display in COP at the summary." if target == "COP" \
+                    else "Got it, prices will display in USD at the summary."
+                return ack_es if state.language == "es" else ack_en
+            if intent != "RAG":
+                # Resolved to a button value
+                response = decision_tree.process_message(state, intent)
+                if state.step == Step.ESCALATE and not state.pending_note:
+                    reason = state.pending_escalation_reason or "derivado por el árbol de opciones"
+                    state.pending_escalation_reason = reason
+                    state.pending_note = build_lead_summary(state, escalation_reason=reason)
+                logger.info(f"[SUPERVISOR] Intent={intent} -> step={state.step.value}")
+                return response
+            # intent == "RAG" → fall through to RAG below
 
         # Free text while in menu -> use RAG but keep menu state
         logger.info(f"[SUPERVISOR] RAG (free text in menu step={state.step.value})")
@@ -819,6 +1004,8 @@ async def route_message(state: ConversationState, message: str) -> str:
             "ask",
             "done",
             "contact",
+            "reservar",
+            "book",
         }
         if msg_lower in summary_choices:
             response = decision_tree.process_message(state, message)
@@ -906,6 +1093,7 @@ async def route_message(state: ConversationState, message: str) -> str:
     # Fallback: welcome
     response = decision_tree.process_message(state, message)
     if state.step == Step.ESCALATE and not state.pending_note:
-        state.pending_escalation_reason = "derivado por el árbol de opciones"
-        state.pending_note = build_lead_summary(state, escalation_reason="derivado por el árbol de opciones")
+        reason = state.pending_escalation_reason or "derivado por el árbol de opciones"
+        state.pending_escalation_reason = reason
+        state.pending_note = build_lead_summary(state, escalation_reason=reason)
     return response

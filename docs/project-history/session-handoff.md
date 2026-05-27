@@ -46,6 +46,17 @@ Read this file before changing code in the Diving Planet Bot. For a quick versio
 - Divemaster is now treated as `contact_only` in `services.json` and the decision tree: summary and itinerary use localized intro/overview blocks, show the website as an info link instead of an online booking CTA, and expose a `Contactar/Reservar` path that escalates directly to the manager with a single non-duplicated confirmation message.
 - RAG system prompt (ES + EN) has an explicit DIVE TO HEAL exception: disability/accessibility questions about the adaptive diving program are answered with factual program info, not escalated as medical.
 - `load_embeddings.py` now indexes `pricing.json` fully (8 origin × section pairs × 2 langs + 2 discount_policy docs = 441 total KB documents) and includes COP prices in `services.json` embeddings.
+- Mixed-group cart flow (`src/agents/intent_classifier.py` + MIXED_* steps in decision_tree): items of the same type/plan now aggregate into a single line. Modify/remove pick use dynamic emoji buttons (`1️⃣ 2 × Buceo certificado` + `🔙 Cancelar`) instead of free-text "respond with number". `ConversationState.mixed_entry_path` ("diving_snorkel" | "cert_beg") drives the activity menu filter (snorkel hidden in cert+beg) and a separate `mixed_entry_cert_beg` intro that does not mention snorkel.
+- Mixed summary refactored: per-person + total-bold formatting (`*qty × label*` + `qty × $price p.p. = *$total*`), `$` instead of `U$`, includes shows only when there are items. Booking links are NOT in the summary anymore — they are stored in `state.mixed_booking_links` and sent only when the user clicks the `📝 Reservar` button.
+- Sequential location/Colombian for tours: `_goto_location_with_costs` puts the user through LOCATION (with bilingual cost-aware prompt: "Desde Cartagena $X / Ya en las islas $Y") → COLOMBIAN → SUMMARY. If `state.location` is already set (tests, restored conversation), LOCATION is skipped and the flow goes straight to COLOMBIAN.
+- New `📝 Reservar` button on `itinerary_offer` (and on `summary` follow-up after "Ver itinerario completo"). On click: escalates to advisor + sends booking link (10% off) inline — for Colombian users the link is omitted and the advisor coordinates the discount. Removed `🙏 No gracias`.
+- Itinerary view split: full itinerary and follow-up prompt are sent as two separate chat messages via `MESSAGE_SPLIT` sentinel. `src/channels/chatwoot.py` detects the sentinel and dispatches two messages (quick_replies only on the last one).
+- Tours certified menu: items renamed "Buceos" → "Inmersiones" and copy of the question emphasises days. Open Water origin shows price for each option.
+- Beginner age question: 3 buttons now (`👶 menores de 8` → escalate snorkel only; `👦 8-10 Bubble Makers` → escalate; `🧑 todos 10+` → normal flow). Bubble Makers wording clarified to "máximo 2 metros de profundidad".
+- `_handle_reserva_menu`: choice 1 (Tours) now goes directly to GROUP_TYPE — the deprecated TOURS_LOCATION step is bypassed (the location question moved to LOCATION between service selection and COLOMBIAN).
+- `mixed_add_cert_plan` ahora describe brevemente cada opción (2 inmersiones / 1 día vs. multi-día). `mixed_cart_modify_pick` y `mixed_cart_remove_pick` ya no piden número en texto.
+- `MESSAGES["escalate"]` reescrito: "Te paso con un asesor del equipo de Diving Planet" (sin "humano", sin "Para esta situación específica..."). Mismo cambio aplicado en RAG fallback y broken-link complaint.
+- Servicio Privado: `services.json` ahora tiene `price_note_es`/`price_note_en` bilingüe y la sección "✅ Incluye:" del summary se oculta cuando el servicio no tiene items.
 
 ## Current product context
 
@@ -72,10 +83,17 @@ Read this file before changing code in the Diving Planet Bot. For a quick versio
 - COP pricing is now in the KB; bot needs a restart in WSL2 to serve it after the re-index run. Embeddings reindex done (445 docs) para incluir nuevos servicios y ajustes de precios.
 - `CHATWOOT_OWNER_AGENT_ID=1` should be added to `.env` (owner agent ID confirmed via `/api/v1/profile`).
 - Next session priorities:
+  - Live E2E retest of the new cart-style mixed-group flow after server restart (item aggregation, emoji modify/remove buttons, snorkel-hidden in cert+beg, restaurant-bill summary, Reservar sends booking links + advisor msg).
+  - Live E2E retest of the tours `Reservar` button on regular itinerary_offer (sends booking link + advisor message; link omitted for Colombian users).
+  - Live E2E retest of the LOCATION step (Cartagena/Islas with cost-aware prompt) for cert/snorkel/beginner branches — investigate user-reported "location not asked" bug (may be stale state).
+  - Live E2E investigation of user-reported "Colombian asked twice" in diving flow — need an exact transcript to reproduce.
+  - Apply same sequential LOCATION/COLOMBIAN deferral pattern to PADI courses (Open Water origin question has cost context, but Advanced/Specialties/Referral go COLOMBIAN inline — should adopt the same `_goto_location_with_costs` pattern for consistency).
+  - Verify "Ver itinerario completo" actually splits into two messages on Chatwoot widget (MESSAGE_SPLIT sentinel handling).
+  - Investigate user-reported "stuck" bugs at MIXED_FINAL_KIDS and MIXED_FINAL_PRIVATE — likely state-loss on server restart (in-memory `conversations` dict); persistent state store would fix it but is deferred to pre-PRE hardening.
+  - Investigate "cuánto es el precio en euros?" routing to escalation — RAG should answer with current exchange context, not escalate.
   - Live E2E retest of certified dive package summaries in Chatwoot (especially Cartagena `3 dives (1 day)` and island variants) to confirm the short `ℹ️` block and lodging notices render correctly.
   - Live E2E retest of the PADI course menus in the Chatwoot widget (Go Pro vs. Specialties, back button from summary/itinerary, and Rescue + EFR emoji rendering on Windows).
   - Live E2E retest of the Divemaster contact-only flow in the widget (summary CTA, itinerary CTA, single escalation message, and lead note delivery).
-  - Live E2E retest of the tours restructure in the Chatwoot widget (activity-first menu, snorkeling direct path, diving submenu, and direct beginner minicourse path).
   - Live E2E retest of the new menu structure (Reservar/Información), fuzzy text matching, and mid-conversation language switch in the Chatwoot widget.
   - RAG content gaps surfaced during testing: Dive Master is missing from the "cursos" answer; output formatting of multi-section RAG answers needs review (markdown not rendering line breaks properly in the widget).
   - Optional: bulk-assign old NULL-assignee_id conversations in dev Chatwoot DB to clean the inbox (`UPDATE conversations SET assignee_id=1 WHERE assignee_id IS NULL;`) — pending user confirmation.

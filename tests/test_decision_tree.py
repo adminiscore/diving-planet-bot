@@ -189,6 +189,9 @@ class TestCertifiedDiverFlow:
         state.step = Step.TOURS_CERTIFIED
         state.language = "es"
         state.is_certified = True
+        # location seteada programáticamente para tests del flujo histórico
+        # (en producción se difiere al SUMMARY via botones).
+        state.location = "cartagena"
         return state
 
     def test_select_2_dives(self):
@@ -285,6 +288,7 @@ class TestCertifiedDiverFlow:
 
         r = self.tree.process_message(state, "2")
         assert state.last_dive_over_2_years is False
+        # Recent dive → LOCATION (saltada por location preset) → COLOMBIAN
         assert state.step == Step.COLOMBIAN
         assert "descuent" in r.lower() or "colomb" in r.lower()
 
@@ -310,12 +314,14 @@ class TestCertifiedDiverFlow:
         state.location = "cartagena"
         self.tree.process_message(state, "4")
 
+        # Recent dive → LOCATION (saltada) → COLOMBIAN
         self.tree.process_message(state, "2")
+        # No colombiano → SUMMARY
         summary = self.tree.process_message(state, "2")
 
         assert state.step == Step.SUMMARY
         assert state.selected_service == "5_dives_2_days"
-        assert "2-days-5-dives" in summary
+        # Booking URL ya no se incluye (se envía al pulsar Reservar)
         assert "18 horas" in summary
         # Lodging note should be present for multi-day packages
         assert "alojamiento no esta incluido" in summary.lower()
@@ -378,7 +384,8 @@ class TestBeginnerFlow:
         response = self.tree.process_message(state, "2")
         assert state.selected_service == "minicourse"
         assert state.step == Step.BEGINNER_AGE
-        assert "10" in response or "edad" in response.lower()
+        # El copy ahora pide elegir opción que describa al grupo (3 opciones)
+        assert "grupo" in response.lower() or "minicurso" in response.lower()
 
     def test_tours_beginner_compatibility_menu_only_shows_minicourse(self):
         state = make_state()
@@ -390,7 +397,7 @@ class TestBeginnerFlow:
 
         assert state.selected_service == "minicourse"
         assert state.step == Step.BEGINNER_AGE
-        assert "10" in response or "edad" in response.lower()
+        assert "grupo" in response.lower() or "minicurso" in response.lower()
 
     def test_group_type_menu_routes_diving_to_diving_submenu(self):
         state = make_state()
@@ -405,6 +412,7 @@ class TestBeginnerFlow:
         assert state.quick_replies[0]["title"] == "🤿 Solo buzos certificados"
 
     def test_snorkeling_from_top_activity_menu_goes_direct_to_colombian(self):
+        # Snorkel → LOCATION (saltada por location preset) → COLOMBIAN
         state = make_state()
         state.step = Step.GROUP_TYPE
         state.language = "es"
@@ -425,11 +433,9 @@ class TestBeginnerFlow:
         self.tree.process_message(state, "2")
 
         assert state.step == Step.BEGINNER_AGE
-        assert [item["title"] for item in state.quick_replies] == [
-            "Sí",
-            "No",
-            "🔙 Volver",
-        ]
+        # Ahora son 3 opciones (menores 8 / 8-10 / 10+) + Volver
+        values = [item["value"] for item in state.quick_replies]
+        assert values == ["1", "2", "3", "back"]
 
     def test_beginner_choice_sets_age_quick_replies_in_english(self):
         state = make_state()
@@ -440,29 +446,24 @@ class TestBeginnerFlow:
         self.tree.process_message(state, "2")
 
         assert state.step == Step.BEGINNER_AGE
-        assert [item["title"] for item in state.quick_replies] == [
-            "Yes",
-            "No",
-            "🔙 Back",
-        ]
+        values = [item["value"] for item in state.quick_replies]
+        assert values == ["1", "2", "3", "back"]
 
     def test_minicourse_from_cartagena_summary_includes_beginner_details(self):
         state = self._go_to_diving_experience()
 
-        # Elige solo principiantes → pregunta de edad del minicurso
+        # Elige solo principiantes → pregunta de edad del minicurso (3 opciones)
         age_resp = self.tree.process_message(state, "2")
         assert state.selected_service == "minicourse"
         assert state.step == Step.BEGINNER_AGE
-        assert "10" in age_resp
 
-        # No hay menores → pasa a COLOMBIAN
-        colombian_resp = self.tree.process_message(state, "2")
+        # Opción 3: todos 10+ → LOCATION (saltada) → COLOMBIAN
+        self.tree.process_message(state, "3")
         assert state.step == Step.COLOMBIAN
-
-        # No es colombiano → muestra resumen con detalles del servicio
+        # No colombiano → SUMMARY
         summary = self.tree.process_message(state, "2")
         assert state.step == Step.SUMMARY
-        assert "minicurso-de-buceo" in summary
+        # Booking URL ya no se incluye en summary (se envía al pulsar Reservar)
         assert "Almuerzo" in summary
         assert "Muelle de la Bodeguita" in summary
 
@@ -472,12 +473,11 @@ class TestBeginnerFlow:
         state.language = "es"
         state.location = "cartagena"
 
-        detail = self.tree.process_message(state, "2")
+        # Snorkel → LOCATION (saltada) → COLOMBIAN
+        self.tree.process_message(state, "2")
         assert state.selected_service == "snorkeling"
         assert state.step == Step.COLOMBIAN
-        assert "6" in detail or "superficie" in detail.lower() or "snorkel" in detail.lower()
-
-        # No colombiano → resumen del servicio
+        # No colombiano → SUMMARY
         summary = self.tree.process_message(state, "2")
         assert state.step == Step.SUMMARY
         assert "18 horas" not in summary
@@ -516,9 +516,10 @@ class TestSummaryFlow:
         state.selected_service = "2_dives_1_day"
         state.location = "cartagena"
 
-        response = self.tree.process_message(state, "2")  # Not Colombian
+        response = self.tree.process_message(state, "2")  # Not Colombian → SUMMARY
         assert state.is_colombian is False
-        assert "book.divingplanet.org" in response
+        # Booking URL ya no en summary (ahora se envía al pulsar Reservar)
+        assert state.step == Step.SUMMARY
 
     def test_island_location_different_link(self):
         state = make_state()
@@ -528,7 +529,9 @@ class TestSummaryFlow:
         state.location = "island"
 
         response = self.tree.process_message(state, "2")
-        assert "already-on-island" in response
+        # El servicio fue remapeado a la variante de isla
+        assert state.selected_service == "2_dives_1_day_already_on_island"
+        assert state.step == Step.SUMMARY
 
     def test_flight_rule_shown(self):
         state = make_state()
@@ -551,8 +554,8 @@ class TestSummaryFlow:
 
         assert state.step == Step.SUMMARY
         assert "ℹ️" not in response
-        assert "itinerario completo" in response.lower()
-        assert [item["value"] for item in state.quick_replies] == ["itinerary", "skip", "back"]
+        # itinerary_offer ahora tiene: reservar + itinerary + back
+        assert [item["value"] for item in state.quick_replies] == ["reservar", "itinerary", "back"]
 
     def test_open_water_summary_skips_repeated_info_block_in_english(self):
         state = make_state()
@@ -565,8 +568,7 @@ class TestSummaryFlow:
 
         assert state.step == Step.SUMMARY
         assert "ℹ️" not in response
-        assert "full itinerary" in response.lower()
-        assert [item["value"] for item in state.quick_replies] == ["itinerary", "skip", "back"]
+        assert [item["value"] for item in state.quick_replies] == ["reservar", "itinerary", "back"]
 
     def test_divemaster_summary_in_spanish_uses_info_link_and_contact_prompt(self):
         state = make_state()
@@ -617,7 +619,8 @@ class TestSummaryFlow:
 
         assert state.step == Step.SUMMARY
         assert "itinerario" in response.lower() or "🗺️" in response
-        assert [item["value"] for item in state.quick_replies] == ["ask", "done", "back"]
+        # Follow-up ahora muestra Reservar como botón principal (no "done")
+        assert [item["value"] for item in state.quick_replies] == ["reservar", "ask", "back"]
 
     def test_open_water_full_itinerary_skips_repeated_info_block(self):
         state = make_state()
@@ -653,13 +656,12 @@ class TestFullJourney:
         r = self.tree.process_message(state, "1")
         assert state.step == Step.RESERVA_MENU
 
-        # Step 3b: Tours de buceo
-        r = self.tree.process_message(state, "1")
-        assert state.step == Step.TOURS_LOCATION
-
-        # Step 3c: Salgo desde Cartagena
+        # Step 3b: Tours de buceo → ahora directo a GROUP_TYPE (TOURS_LOCATION se difiere al SUMMARY)
         r = self.tree.process_message(state, "1")
         assert state.step == Step.GROUP_TYPE
+
+        # Para este test del flujo histórico Cartagena, seteamos location programáticamente
+        state.location = "cartagena"
 
         # Step 4: Buceo
         r = self.tree.process_message(state, "1")
@@ -673,14 +675,14 @@ class TestFullJourney:
         r = self.tree.process_message(state, "1")
         assert state.step == Step.CERTIFIED_LAST_DIVE
 
-        # Step 7: Last dive not over 2 years
+        # Step 7: Last dive not over 2 years → LOCATION (saltada) → COLOMBIAN
         r = self.tree.process_message(state, "2")
         assert state.step == Step.COLOMBIAN
 
-        # Step 8: Not Colombian
+        # Step 8: Not Colombian → SUMMARY
         r = self.tree.process_message(state, "2")
         assert state.step == Step.SUMMARY
-        assert "book.divingplanet.org" in r
+        # Booking URL ya no se incluye en summary (se envía al pulsar Reservar)
         assert "18 horas" in r
 
     def test_beginner_english_from_island(self):
@@ -694,19 +696,18 @@ class TestFullJourney:
         # Reservar
         self.tree.process_message(state, "1")
         assert state.step == Step.RESERVA_MENU
-        # Tours
+        # Tours → ahora directo a GROUP_TYPE (TOURS_LOCATION se difiere)
         self.tree.process_message(state, "1")
-        assert state.step == Step.TOURS_LOCATION
-        # Already on island
-        self.tree.process_message(state, "2")
-        assert state.location == "island"
+        assert state.step == Step.GROUP_TYPE
+        # Seteamos location programáticamente para simular "ya en la isla"
+        state.location = "island"
 
-        # Snorkeling
+        # Snorkeling → LOCATION (saltada por location preset) → COLOMBIAN
         self.tree.process_message(state, "2")
         assert state.selected_service == "snorkeling_already_on_island"
-        # Not Colombian
+        # Not Colombian → SUMMARY (booking URL ya no se incluye, ahora viene al pulsar Reservar)
         r = self.tree.process_message(state, "2")
-        assert "already-on-the-island" in r
+        assert state.step == Step.SUMMARY
 
 
 def test_decision_tree_sets_quick_replies_for_menu_steps():

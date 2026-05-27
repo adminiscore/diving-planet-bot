@@ -108,7 +108,7 @@ def load_knowledge_base() -> list[dict]:
     documents = []
 
     # --- Services ---
-    with open(DATA_DIR / "services.json", "r", encoding="utf-8") as f:
+    with open(DATA_DIR / "services.json", "r", encoding="utf-8-sig") as f:
         data = json.load(f)
 
     for key, svc in data.get("services", {}).items():
@@ -166,7 +166,7 @@ def load_knowledge_base() -> list[dict]:
         })
 
     # --- FAQs ---
-    with open(DATA_DIR / "faqs.json", "r", encoding="utf-8") as f:
+    with open(DATA_DIR / "faqs.json", "r", encoding="utf-8-sig") as f:
         data = json.load(f)
 
     for i, faq in enumerate(data.get("faqs", [])):
@@ -182,7 +182,7 @@ def load_knowledge_base() -> list[dict]:
         })
 
     # --- Policies ---
-    with open(DATA_DIR / "policies.json", "r", encoding="utf-8") as f:
+    with open(DATA_DIR / "policies.json", "r", encoding="utf-8-sig") as f:
         data = json.load(f)
 
     for key, policy in data.get("policies", {}).items():
@@ -201,7 +201,7 @@ def load_knowledge_base() -> list[dict]:
     # --- Pricing ---
     pricing_path = DATA_DIR / "pricing.json"
     if pricing_path.exists():
-        with open(pricing_path, "r", encoding="utf-8") as f:
+        with open(pricing_path, "r", encoding="utf-8-sig") as f:
             pricing_data = json.load(f)
 
         year = pricing_data.get("pricing_year", "")
@@ -315,7 +315,7 @@ def load_knowledge_base() -> list[dict]:
 
     conversations_path = DATA_DIR / "conversations.json"
     if conversations_path.exists():
-        with open(conversations_path, "r", encoding="utf-8") as f:
+        with open(conversations_path, "r", encoding="utf-8-sig") as f:
             data = json.load(f)
 
         for i, conv in enumerate(data.get("conversation_examples", [])):

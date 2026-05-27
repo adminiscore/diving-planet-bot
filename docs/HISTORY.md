@@ -1,6 +1,20 @@
 History
 =======
 
+0.15.0 - (2026-05-28)
+---------------------
+* Cart-style mixed-group flow with item aggregation (same type/plan merges qty), dynamic emoji-button cart pick (no more "respond with number"), per-person + total-bold price breakdown, and snorkel filtered out of the cert+beg mixed branch.
+* New LOCATION step with cost-aware prompt (Cartagena vs. islands shows price + transport-included note) inserted between service selection and COLOMBIAN for tours.
+* Reservar button added to itinerary_offer and summary follow-up; booking links now only sent on Reservar click (not in summary), accompanied by single advisor message.
+* Itinerary view splits into two chat messages via `MESSAGE_SPLIT` sentinel (itinerary + follow-up prompt with buttons).
+* Beginner age question now has three options (under 8 / 8-10 Bubble Makers / 10+) routing to escalation or normal flow.
+* Open Water origin prompt explains price for each location option. tours_certified copy emphasizes days (each option shows days + dives).
+* Copy polish: "buceos" → "inmersiones" in menus; `U$` → `$` in mixed summary; Refresher line clarifies no extra cost; bioluminescence line expands description; Bubble Makers depth clarified ("máximo 2 metros de profundidad"); "asesor confirmará el precio final al reservar" replaces vague "cotización aparte"; escalate fallback no longer says "Para esta situación específica...".
+* Servicio Privado now uses bilingual `price_note_es`/`price_note_en`; summary hides `✅ Incluye:` when service has no items.
+* New cart-flow entry-path tracking (`mixed_entry_path: "diving_snorkel" | "cert_beg"`) drives both the activity menu filter and a separate cert+beg intro that no longer mentions snorkel.
+* `mixed_add_cert_plan` shows brief description per option.
+* `tools/intent_classifier.py` (new): LLM-based mapping of free text to button values for mixed-flow steps with currency-switch/restart/back/RAG fallback.
+
 0.14.5 - (2026-05-26)
 ---------------------
 * Set Cartagena certified `3 dives` back to `1 day` and align the guided flow, service IDs, and tests with the night-dive variant.

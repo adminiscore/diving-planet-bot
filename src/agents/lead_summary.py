@@ -55,6 +55,28 @@ def build_lead_summary(state: "ConversationState", escalation_reason: str = "") 
     elif state.refresher_interested is False:
         lines.append("🔄 Interesado en refresher: No")
 
+    if state.mixed_cart:
+        lines.append("─────────────────────")
+        lines.append("👥 *Grupo mixto (carrito)*")
+        for item in state.mixed_cart:
+            lines.append(f"  • {item.get('qty', 0)} × {item.get('label', item.get('type', ''))}")
+        if any(it.get("qty", 0) >= 6 for it in state.mixed_cart):
+            lines.append("  • 🚨 Grupo grande (6+ en algún subgrupo)")
+        if state.mixed_final_is_colombian is True:
+            lines.append("  • 🇨🇴 Colombiano/residente: Sí (aplica descuento)")
+        elif state.mixed_final_is_colombian is False:
+            lines.append("  • 🇨🇴 Colombiano/residente: No")
+        if state.mixed_final_has_kids_8_10:
+            lines.append("  • 👶 Niños 8-10 (Bubble Makers) — requiere supervisor")
+        if state.mixed_final_wants_private:
+            lines.append("  • 🚤 Solicita lancha privada exclusiva")
+    if state.mixed_last_summary:
+        lines.append("─────────────────────")
+        lines.append("💰 Resumen compartido con el cliente:")
+        for summary_line in state.mixed_last_summary.split("\n")[:25]:
+            if summary_line.strip():
+                lines.append(f"  {summary_line}")
+
     recent_user_messages = [
         msg["content"]
         for msg in (state.history or [])[-6:]
