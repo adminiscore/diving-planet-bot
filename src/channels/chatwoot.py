@@ -16,7 +16,7 @@ from fastapi import APIRouter, Request, HTTPException
 
 from src.agents.escalation import escalate_to_human
 from src.config import settings
-from src.flows.decision_tree import ConversationState
+from src.flows.decision_tree import ConversationState, MESSAGE_SPLIT
 from src.agents.supervisor import route_message
 
 logger = logging.getLogger("uvicorn.error")
@@ -195,7 +195,16 @@ async def finalize_chatwoot_delivery(conversation_id: str, state: ConversationSt
             state.pending_escalation_reason = None
 
     if response:
-        await send_chatwoot_message(conversation_id, response, state.quick_replies)
+        # Si la respuesta contiene un separador especial, la dividimos en mensajes
+        # independientes. Los quick_replies solo se adjuntan al último mensaje para
+        # que los botones aparezcan junto al prompt final.
+        if MESSAGE_SPLIT in response:
+            parts = [p.strip() for p in response.split(MESSAGE_SPLIT) if p.strip()]
+            for i, part in enumerate(parts):
+                qr = state.quick_replies if i == len(parts) - 1 else None
+                await send_chatwoot_message(conversation_id, part, qr)
+        else:
+            await send_chatwoot_message(conversation_id, response, state.quick_replies)
 
 
 def extract_submitted_value(payload: dict) -> str | None:
