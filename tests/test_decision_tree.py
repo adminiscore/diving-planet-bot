@@ -449,6 +449,28 @@ class TestBeginnerFlow:
         values = [item["value"] for item in state.quick_replies]
         assert values == ["1", "2", "3", "back"]
 
+    def test_beginner_under_8_escalation_uses_single_custom_message(self):
+        state = self._go_to_diving_experience()
+
+        self.tree.process_message(state, "2")
+        response = self.tree.process_message(state, "1")
+
+        assert state.step == Step.ESCALATE
+        assert "Te paso con un asesor del equipo de Diving Planet para coordinar la salida según las edades del grupo." in response
+        assert response.count("Te paso con un asesor") == 1
+        assert "Te paso con un asesor del equipo de Diving Planet.\nEnseguida se pone en contacto contigo. ¡Gracias! :)" not in response
+
+    def test_beginner_bubble_makers_escalation_uses_single_custom_message(self):
+        state = self._go_to_diving_experience()
+
+        self.tree.process_message(state, "2")
+        response = self.tree.process_message(state, "2")
+
+        assert state.step == Step.ESCALATE
+        assert "Te paso con un asesor del equipo de Diving Planet para coordinar fechas y detalles." in response
+        assert response.count("Te paso con un asesor") == 1
+        assert "Te paso con un asesor del equipo de Diving Planet.\nEnseguida se pone en contacto contigo. ¡Gracias! :)" not in response
+
     def test_minicourse_from_cartagena_summary_includes_beginner_details(self):
         state = self._go_to_diving_experience()
 
@@ -466,6 +488,9 @@ class TestBeginnerFlow:
         # Booking URL ya no se incluye en summary (se envía al pulsar Reservar)
         assert "Almuerzo" in summary
         assert "Muelle de la Bodeguita" in summary
+        assert "ℹ️ Experiencia ideal si es tu primera vez buceando. No necesitas experiencia previa." in summary
+        assert "📘 Incluye teoría online: después de reservar recibirás un correo con instrucciones para completar la teoría. Es indispensable terminarla antes de comenzar la práctica." in summary
+        assert "ℹ️ Experiencia ideal si es tu primera vez buceando: incluye teoria online" not in summary
 
     def test_snorkeling_from_cartagena_summary_has_no_flight_rule(self):
         state = make_state()
