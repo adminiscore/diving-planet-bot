@@ -3104,8 +3104,8 @@ class DecisionTree:
                 return (
                     "Los *menores de 8 años* todavía no pueden bucear, pero sí pueden hacer "
                     "*snorkel* (mínimo 6 años) en familia 🐠\n\n"
-                    "Te paso con un asesor para coordinar la salida según las edades del grupo.\n\n"
-                    + MESSAGES["escalate"][lang]
+                    "Te paso con un asesor del equipo de Diving Planet para coordinar la salida según las edades del grupo.\n"
+                    "Enseguida se pone en contacto contigo. ¡Gracias! :)"
                 )
             return (
                 "Children *under 8* cannot dive yet, but they can do *snorkeling* "
@@ -3124,8 +3124,8 @@ class DecisionTree:
                     "Para niños de *8 a 10 años* tenemos el programa *Bubble Makers*: una "
                     "experiencia de buceo en piscina y aguas poco profundas (máximo 2 metros de profundidad), "
                     "diseñada especialmente para niños.\n\n"
-                    "Te paso con un asesor para coordinar fechas y detalles.\n\n"
-                    + MESSAGES["escalate"][lang]
+                    "Te paso con un asesor del equipo de Diving Planet para coordinar fechas y detalles.\n"
+                    "Enseguida se pone en contacto contigo. ¡Gracias! :)"
                 )
             return (
                 "For children aged *8 to 10* we offer the *Bubble Makers* program: a diving "
@@ -4825,6 +4825,10 @@ class DecisionTree:
                 lines.append(f"👶 Edad mínima: {min_age} años")
                 lines.append("")
 
+            if service_id in {"minicourse", "minicourse_already_on_island"}:
+                lines.append("ℹ️ Experiencia ideal si es tu primera vez buceando. No necesitas experiencia previa.")
+                lines.append("")
+
             if summary_intro:
                 for item in summary_intro:
                     lines.append(item)
@@ -4876,6 +4880,11 @@ class DecisionTree:
             if flight_rule:
                 lines.append(f"✈️ Importante: {flight_rule}")
 
+            if service_id in {"minicourse", "minicourse_already_on_island"}:
+                lines.append(
+                    "📘 Incluye teoría online: después de reservar recibirás un correo con instrucciones para completar la teoría. Es indispensable terminarla antes de comenzar la práctica."
+                )
+
             # Notas extra (no se muestran para 2_dives_1_day en el resumen)
             extra_notes = service.get("extra_notes_es")
             # Para paquetes multi-dia, simplificamos la nota extra para enfatizar solo
@@ -4884,6 +4893,8 @@ class DecisionTree:
                 not_included_es = service.get("not_included_es", [])
                 if service_id == "3_dives_1_day" or any("Hotel/alojamiento" in item for item in not_included_es):
                     extra_notes = "El alojamiento no esta incluido."
+            elif service_id in {"minicourse", "minicourse_already_on_island"}:
+                extra_notes = ""
             elif state.location == "island" and service_id and service_id.endswith("_already_on_island"):
                 extra_notes = "El alojamiento no esta incluido."
             if extra_notes and service_id != "2_dives_1_day" and not _is_padi_course_service(service_id):
