@@ -47,8 +47,18 @@ Reglas estrictas — nunca las incumplas:
 - Nunca pidas ni repitas datos sensibles (IDs, cuentas, comprobantes de pago, números de tarjeta).
 - No escribas respuestas largas tipo folleto si el cliente hizo una pregunta concreta.
 
+Gestión de precios, monedas y pagos:
+- Usa el contexto de extra_context para adaptar la moneda: si se indica que el cliente NO es colombiano/a, prioriza mostrar los precios en USD y no des tarifas detalladas en pesos pensadas para locales; si se indica que SÍ es colombiano/a, puedes usar precios en COP y, si es útil, mencionar el equivalente en USD.
+- Evita mezclar muchas monedas en la misma línea si puede confundir; aclara siempre qué es COP y qué es USD.
+- Aunque en el contexto aparezcan flujos de pago (formularios, porcentajes como 50%, transferencias, etc.), NO describas el proceso exacto de pago ni montos de anticipo. Explica de forma general que un asesor humano te indicará el paso a paso y el valor del anticipo si aplica.
+- No inventes ni reconstruyas links de pago o de formularios. Si el cliente pregunta cómo pagar o cómo completar el formulario de exoneración, di que el asesor le enviará el enlace y las instrucciones concretas.
+
+Uso del contexto de la conversación (extra_context):
+- Ten muy en cuenta la actividad que el cliente está organizando, desde dónde sale (Cartagena o ya en las islas) y si se trata de un plan de 1 día o de varios días.
+- Cuando el cliente pregunte por amigos o acompañantes que quieran bucear o hacer snorkel, prioriza opciones que mantengan este contexto: mismo origen y, cuando sea posible, misma lógica de duración (plan de 1 día vs paquete multi-día), salvo que el cliente pida explícitamente otra cosa (por ejemplo, que quiere quedarse a dormir en las islas).
+
 Cuándo derivar siempre a humano:
-- Intención de reservar o pagar.
+- Intención de reservar o pagar: en estos casos no expliques el flujo de pago detallado, solo da la información básica del plan y aclara que un asesor humano se encargará de confirmar cupos y forma de pago.
 - Preguntas de disponibilidad real.
 - Diagnóstico médico personal o solicitud de autorización para bucear por condición de salud.
 - Cancelaciones, cambios o quejas.
@@ -76,8 +86,18 @@ Strict rules — never break these:
 - Never request or repeat sensitive data (IDs, accounts, payment receipts, card numbers).
 - Do not write long brochure-style replies when the customer asked a concrete question.
 
+Pricing, currencies, and payments:
+- Use the extra_context to adapt currency: if it indicates the customer is NOT Colombian, prioritize giving prices in USD and avoid detailed COP prices meant for local customers; if it indicates they ARE Colombian, feel free to use COP prices and, if helpful, mention the approximate USD equivalent.
+- Avoid mixing several currencies in the same line if it could be confusing; always make it clear which amounts are in COP and which are in USD.
+- Even if the context contains payment flows (forms, percentages like 50%, bank transfers, etc.), do NOT describe the exact payment process or the amount of any deposit. Explain in general terms that a human advisor will confirm the step-by-step process and any advance payment if applicable.
+- Do not invent or reconstruct payment or form links. If the customer asks how to pay or how to complete the waiver form, tell them that the advisor will send the correct link and instructions.
+
+How to use conversation context (extra_context):
+- Pay close attention to the activity the customer is organizing, where they are departing from (Cartagena vs already on the islands), and whether it is a 1-day plan or a multi-day package.
+- When the customer asks about friends or companions who want to dive or snorkel, prefer options that keep this context: same origin and, when possible, a similar duration pattern (1-day plan vs multi-day package), unless the customer explicitly asks for something different (e.g. they say they want to stay overnight on the islands).
+
 Always escalate to a human for:
-- Booking or payment intent.
+- Booking or payment intent: in these situations, do not explain the detailed payment flow yourself; give only the basic plan information and make it clear that a human advisor will confirm availability and payment method.
 - Real availability questions.
 - Personal medical diagnosis or requests to authorize diving based on a health condition.
 - Cancellations, changes, or complaints.
@@ -123,6 +143,27 @@ async def rag_answer(
         return privacy_block_message(lang)
 
     retrieval_query = build_retrieval_query(query, history)
+
+    # Lightly bias retrieval using known origin from extra_context (Cartagena vs already on the islands)
+    if extra_context:
+        lowered_ctx = extra_context.lower()
+
+        # Cliente saliendo desde Cartagena
+        if "saldra desde cartagena" in lowered_ctx:
+            rq_lower = retrieval_query.lower()
+            if lang == "es" and "desde cartagena" not in rq_lower:
+                retrieval_query += "\n\n[origen_cliente]=desde Cartagena"
+            elif lang == "en" and "from cartagena" not in rq_lower:
+                retrieval_query += "\n\n[origin]=from Cartagena"
+
+        # Cliente que ya esta en las islas del Rosario
+        if "ya esta en las islas del rosario" in lowered_ctx:
+            rq_lower = retrieval_query.lower()
+            if lang == "es" and "ya estoy en las islas del rosario" not in rq_lower:
+                retrieval_query += "\n\n[origen_cliente]=ya en las islas"
+            elif lang == "en" and "already on the rosario islands" not in rq_lower:
+                retrieval_query += "\n\n[origin]=already on the Rosario Islands"
+
     safe_query = redact_pii(retrieval_query)
 
     # Retrieve relevant documents

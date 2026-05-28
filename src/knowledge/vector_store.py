@@ -106,7 +106,8 @@ async def search_knowledge_base(
     )
     query_embedding = resp.data[0].embedding
 
-    query_topics = detect_query_topics(query)
+    last_line = query.splitlines()[-1] if "\n" in query else query
+    query_topics = detect_query_topics(last_line)
     candidate_limit = max(top_k * 6, top_k)
 
     # Similarity search in pgvector
