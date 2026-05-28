@@ -78,7 +78,12 @@ async def handle_message(payload: dict):
     if message_type in ("incoming", 0):
         content_lower = (payload.get("content", "") or "").strip().lower()
         pending = conversation_pending_echo_titles.get(conversation_id, set())
-        if content_lower and content_lower in pending:
+        # Only suppress the automatic button-echo message for titles that are
+        # unlikely to be genuine free-text replies. Very common short replies
+        # like "si", "sí" or "no" should still be processed normally even
+        # if they match a button title.
+        echo_exceptions = {"si", "sí", "no"}
+        if content_lower and content_lower in pending and content_lower not in echo_exceptions:
             pending.discard(content_lower)
             processed_chatwoot_messages.add(f"{conversation_id}:{message_id}:incoming")
             logger.info(f"[WEBHOOK] Skipping button echo: {content_lower[:60]}")

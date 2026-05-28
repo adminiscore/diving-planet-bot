@@ -268,6 +268,193 @@ def _detect_language_intent(message: str) -> str | None:
     return None
 
 
+def _detect_companion_intent(message: str) -> bool:
+    """Detect if the user is talking about friends/companions joining the activity.
+
+    Used to offer upgrading a single-activity flow (e.g. solo snorkel) into the
+    cart-style mixed-group flow. Accent-insensitive and language-agnostic.
+    """
+    normalized = _strip_accents(message.strip().lower())
+    if not normalized:
+        return False
+    tokens = set(normalized.split())
+
+    companion_keywords = {
+        # ES
+        "amigo",
+        "amigos",
+        "amiga",
+        "amigas",
+        "pareja",
+        "novio",
+        "novia",
+        "novios",
+        "novias",
+        "esposo",
+        "esposa",
+        "esposos",
+        "esposas",
+        "acompanante",
+        "acompanantes",
+        "familia",
+        "familiares",
+        "hijo",
+        "hija",
+        "hijos",
+        "hijas",
+        "nino",
+        "nina",
+        "ninos",
+        "ninas",
+        # EN
+        "friend",
+        "friends",
+        "partner",
+        "partners",
+        "companion",
+        "companions",
+        "family",
+        "kids",
+        "kid",
+        "children",
+        "son",
+        "daughter",
+        "sons",
+        "daughters",
+    }
+
+    return any(word in tokens for word in companion_keywords)
+
+
+def _map_service_to_cart_item(service_id: str) -> tuple[str, str | None] | None:
+    """Map a concrete service_id to a cart item type/plan for the mixed flow.
+
+    We only support the main day-tour services that already participate in the
+    mixed cart: snorkeling, 2_dives_1_day (certified), and minicourse.
+    """
+    if not service_id:
+        return None
+
+    base_id = service_id
+    suffix = "_already_on_island"
+    if base_id.endswith(suffix):
+        base_id = base_id[: -len(suffix)]
+
+    if base_id == "snorkeling":
+        return "snorkel", None
+    if base_id == "2_dives_1_day":
+        # Certified 2-dives / 1-day plan
+        return "cert", "2_dives_1_day"
+    if base_id == "minicourse":
+        return "beginner", None
+    return None
+
+
+def _enter_mixed_flow_from_single(state: ConversationState) -> str:
+    """Switch from a single-activity flow into the mixed cart, preloading 1× current service.
+
+    This keeps the existing selected_service/location/colombian state but
+    resets the mixed_* fields and appends a single cart item representing the
+    current activity for the main user. The user can then add their friend's
+    activity from the standard mixed cart UI.
+    """
+    svc_id = getattr(state, "selected_service", None)
+    item = _map_service_to_cart_item(svc_id or "")
+    if not item:
+        # Fallback: show the standard mixed group menu so an advisor can help
+        # structure the group; this should be rare.
+        state.step = Step.GROUP_TYPE
+        decision_tree.set_quick_replies(state, "group_type")
+        from src.flows.decision_tree import MESSAGES as _M
+
+        lang = getattr(state, "language", "es") or "es"
+        return _M["group_type"][lang]
+
+    item_type, plan = item
+
+    # Reset cart-style state and enter via the diving+snorkel entry path.
+    decision_tree._reset_mixed_state(state)
+    state.mixed_entry_path = "diving_snorkel"
+
+    # Preload 1× of the current activity for the main user.
+    lang = getattr(state, "language", "es") or "es"
+    label = decision_tree._cart_label_for(item_type, plan, lang)
+    state.mixed_cart.append({
+        "type": item_type,
+        "qty": 1,
+        "plan": plan,
+        "label": label,
+    })
+
+    # Jump straight to the cart review so they immediately see their cart and
+    # can add the friend's activity.
+    return decision_tree._goto_mixed_cart_review(state)
+
+
+def _maybe_offer_mixed_from_single(state: ConversationState, message: str, answer: str) -> str:
+    """Optionally append an invitation to switch into the mixed cart flow.
+
+    We keep the natural RAG answer, and only when the user mentions friends or
+    companions AND we're in a simple tour (snorkel / 2 dives / minicourse) that
+    is not already inside the mixed cart flow.
+    """
+    try:
+        svc_id = getattr(state, "selected_service", None)
+        if not svc_id:
+            return answer
+
+        # Do not re-offer if we've already handled this path, and never offer
+        # while already inside the mixed flow.
+        if getattr(state, "mixed_from_single_offer_handled", False):
+            return answer
+        if decision_tree._is_in_mixed_flow(state):
+            return answer
+
+        # Only consider services we know how to represent in the cart.
+        if _map_service_to_cart_item(svc_id or "") is None:
+            return answer
+
+        if not _detect_companion_intent(message):
+            return answer
+
+        lang = getattr(state, "language", "es") or "es"
+        if lang == "es":
+            follow_up = (
+                "Si quieres, puedo ayudarte a armar la reserva como *grupo mixto* (carrito), "
+                "dejando esta actividad para ti y luego añadiendo la de tu amigo o acompañante.\n\n"
+                "¿Te gustaría que preparemos la reserva también para esa persona?\n"
+                "1️⃣ Sí, añadirlo al carrito\n"
+                "2️⃣ No, dejar solo mi actividad"
+            )
+            quick_replies = [
+                {"title": "1️⃣ Sí, añadirlo al carrito", "value": "1"},
+                {"title": "2️⃣ No, dejar solo mi actividad", "value": "2"},
+            ]
+        else:
+            follow_up = (
+                "If you want, I can help you build this as a *mixed group* booking (cart), "
+                "keeping this activity for you and then adding your friend or companion.\n\n"
+                "Would you like me to prepare the booking for them as well?\n"
+                "1️⃣ Yes, add them to the cart\n"
+                "2️⃣ No, keep only my activity"
+            )
+            quick_replies = [
+                {"title": "1️⃣ Yes, add to cart", "value": "1"},
+                {"title": "2️⃣ No, only my activity", "value": "2"},
+            ]
+
+        # Mark that we're waiting for a yes/no answer about entering the mixed cart.
+        setattr(state, "mixed_from_single_offer_pending", True)
+        state.quick_replies = quick_replies
+
+        if answer:
+            return f"{answer}\n\n{follow_up}"
+        return follow_up
+    except Exception:
+        # Fail-safe: never break the main flow because of this helper.
+        return answer
+
+
 def _match_quick_reply_text(state: ConversationState, message: str) -> str | None:
     """If user free text clearly maps to a current quick-reply button, return its value.
 
@@ -447,14 +634,50 @@ def _build_extra_context(state: ConversationState) -> str | None:
     # Actividad seleccionada
     if getattr(state, "selected_service", None):
         try:
-            from src.flows.decision_tree import SERVICES
+            from src.flows.decision_tree import SERVICES, MULTI_DAY_SERVICES
 
-            service = SERVICES.get(state.selected_service)
+            service_id = state.selected_service
+            service = SERVICES.get(service_id)
             if service:
-                name_es = service.get("name_es", state.selected_service)
-                parts.append(f"Actividad seleccionada en el arbol de opciones: {name_es} (id={state.selected_service}).")
+                name_es = service.get("name_es", service_id)
+                parts.append(
+                    f"Actividad seleccionada en el arbol de opciones: {name_es} (id={service_id})."
+                )
+
+                # Contexto de tipo de plan: 1 día vs paquete/multi-día
+                is_multi_day = service_id in MULTI_DAY_SERVICES or service.get("includes_night_dive", False)
+                if state.language == "es":
+                    if is_multi_day:
+                        parts.append(
+                            "El plan seleccionado es un paquete de varios dias o requiere al menos una noche de alojamiento en las islas."
+                        )
+                    else:
+                        parts.append(
+                            "El plan seleccionado es de un solo dia (ida y vuelta el mismo dia)."
+                        )
+                    parts.append(
+                        "Si el cliente pregunta por amigos o acompanantes que quieran bucear o hacer snorkel, "
+                        "prioriza opciones que respeten este contexto: mismo origen (Cartagena vs ya en las islas) "
+                        "y, cuando sea posible, misma logica de duracion (plan de 1 dia vs paquete multi-dia), salvo que el cliente pida explicitamente otra cosa."
+                    )
+                else:
+                    if is_multi_day:
+                        parts.append(
+                            "The selected plan is a multi-day package or requires at least one overnight stay on the islands."
+                        )
+                    else:
+                        parts.append(
+                            "The selected plan is a one-day experience (go and return on the same day)."
+                        )
+                    parts.append(
+                        "If the customer asks about friends or companions who want to dive or snorkel, "
+                        "prioritize options that keep this context: same origin (Cartagena vs already on the islands) "
+                        "and, when possible, a similar duration pattern (1-day plan vs multi-day package), unless the customer explicitly asks otherwise."
+                    )
         except Exception:
-            parts.append(f"Actividad seleccionada en el arbol de opciones con id={state.selected_service}.")
+            parts.append(
+                f"Actividad seleccionada en el arbol de opciones con id={state.selected_service}."
+            )
 
     # Buzo certificado / principiante
     if getattr(state, "is_certified", None) is True:
@@ -646,8 +869,8 @@ def _answer_state_introspection(state: ConversationState, message: str) -> str |
 
             # Si aun no sabemos nada sobre la inactividad, respondemos que falta ese dato
             return (
-                "Todavia no me has dicho hace cuanto fue tu ultima inmersión en esta conversación. Si ha pasado "
-                "mas de 1–2 años, normalmente recomendamos hacer un refresher por seguridad."
+                "Todavia no me has dicho hace cuanto fue tu ultima inmersión en esta conversación. "
+                "Si ha pasado mas de 2 años sin bucear, normalmente recomendamos hacer un refresher por seguridad."
             )
 
         # "Desde donde salgo?" / "Desde donde salimos?"
@@ -969,6 +1192,7 @@ async def route_message(state: ConversationState, message: str) -> str:
         state.history.append({"role": "user", "content": message})
         extra_context = _build_extra_context(state)
         answer = await rag_answer(message, lang=state.language, history=state.history, extra_context=extra_context)
+        answer = _maybe_offer_mixed_from_single(state, message, answer)
         state.history.append({"role": "assistant", "content": answer})
         return answer
 
@@ -1027,12 +1251,39 @@ async def route_message(state: ConversationState, message: str) -> str:
         state.history.append({"role": "user", "content": message})
         extra_context = _build_extra_context(state)
         answer = await rag_answer(message, lang=state.language, history=state.history, extra_context=extra_context)
+        answer = _maybe_offer_mixed_from_single(state, message, answer)
         state.history.append({"role": "assistant", "content": answer})
         logger.info(f"[SUPERVISOR] RAG (post-summary)")
         return answer
 
     if state.step == Step.FREE_TEXT:
-        # Check if user wants to restart
+        # First, handle the yes/no offer to switch into the mixed cart flow.
+        if getattr(state, "mixed_from_single_offer_pending", False):
+            if msg_lower in {"1", "si", "sí", "yes"}:
+                # User accepted: enter the mixed cart preloaded with their current activity.
+                setattr(state, "mixed_from_single_offer_pending", False)
+                setattr(state, "mixed_from_single_offer_handled", True)
+                state.quick_replies = []
+                logger.info("[SUPERVISOR] Mixed-from-single: user accepted cart offer")
+                return _enter_mixed_flow_from_single(state)
+            if msg_lower in {"2", "no"}:
+                # User declined: keep the current activity only.
+                setattr(state, "mixed_from_single_offer_pending", False)
+                setattr(state, "mixed_from_single_offer_handled", True)
+                state.quick_replies = []
+                if state.language == "es":
+                    return (
+                        "Perfecto, entonces mantenemos solo la actividad que ya tenías. "
+                        "Si más adelante quieres que te ayude a armar un plan mixto para tu amigo o acompañante, solo dime."
+                    )
+                return (
+                    "Perfect, we'll keep only your current activity. "
+                    "If later you want help building a mixed plan for your friend or companion, just let me know."
+                )
+            # Any other response: clear the pending flag and continue with normal FREE_TEXT handling.
+            setattr(state, "mixed_from_single_offer_pending", False)
+
+        # Check if user wants to restart the free-text Q&A closing flow.
         if msg_lower in ("1", "si", "sí", "yes"):
             state.quick_replies = []
             if state.language == "es":
@@ -1076,6 +1327,7 @@ async def route_message(state: ConversationState, message: str) -> str:
         state.history.append({"role": "user", "content": message})
         extra_context = _build_extra_context(state)
         answer = await rag_answer(message, lang=state.language, history=state.history, extra_context=extra_context)
+        answer = _maybe_offer_mixed_from_single(state, message, answer)
         state.history.append({"role": "assistant", "content": answer})
         logger.info(f"[SUPERVISOR] RAG (post-menu)")
         return answer
@@ -1087,6 +1339,7 @@ async def route_message(state: ConversationState, message: str) -> str:
         state.history.append({"role": "user", "content": message})
         extra_context = _build_extra_context(state)
         answer = await rag_answer(message, lang=state.language, history=state.history, extra_context=extra_context)
+        answer = _maybe_offer_mixed_from_single(state, message, answer)
         state.history.append({"role": "assistant", "content": answer})
         return answer
 
