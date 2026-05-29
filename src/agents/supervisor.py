@@ -268,19 +268,20 @@ def _detect_language_intent(message: str) -> str | None:
     return None
 
 
-def _detect_companion_intent(message: str) -> bool:
+def _detect_companion_intent(message: str, state: ConversationState | None = None) -> bool:
     """Detect if the user is talking about friends/companions joining the activity.
 
     Used to offer upgrading a single-activity flow (e.g. solo snorkel) into the
     cart-style mixed-group flow. Accent-insensitive and language-agnostic.
     """
-    normalized = _strip_accents(message.strip().lower())
+    # Reuse the same normalization pipeline used for menu/intent matching so
+    # that tokens like "buceo," or "diving?" are recognised correctly.
+    normalized = _normalize_for_menu_match(message)
     if not normalized:
         return False
     tokens = set(normalized.split())
 
     companion_keywords = {
-        # ES
         "amigo",
         "amigos",
         "amiga",
@@ -294,8 +295,33 @@ def _detect_companion_intent(message: str) -> bool:
         "esposa",
         "esposos",
         "esposas",
+        "marido",
+        "mujer",
+        "chica",
+        "chico",
+        "madre",
+        "padre",
+        "mama",
+        "papa",
+        "hermano",
+        "hermana",
+        "hermanos",
+        "hermanas",
+        "companero",
+        "companera",
+        "companeros",
+        "companeras",
+        "compa",
+        "parce",
+        "parcero",
+        "parcera",
+        "pana",
         "acompanante",
         "acompanantes",
+        "adulto",
+        "adulta",
+        "participante",
+        "participantes",
         "familia",
         "familiares",
         "hijo",
@@ -306,7 +332,6 @@ def _detect_companion_intent(message: str) -> bool:
         "nina",
         "ninos",
         "ninas",
-        # EN
         "friend",
         "friends",
         "partner",
@@ -323,7 +348,335 @@ def _detect_companion_intent(message: str) -> bool:
         "daughters",
     }
 
-    return any(word in tokens for word in companion_keywords)
+    companion_patterns = (
+        r"\bmi\s+(pareja|novi[oa]|espos[oa]|marido|mujer|madre|padre|mama|papa|chic[oa])\b",
+        r"\b(vengo|voy|vamos|venimos)\s+con\s+mi\b",
+        r"\b(otro|otra|otros|otras)\s+(persona|adult[oa]s?|participante?s?)\b",
+        r"\b(alguien|alguno|alguna)\s+mas\b",
+        r"\b(uno|una)\s+mas\b",
+        r"\b(vamos|venimos)\s+en\s+pareja\b",
+        r"\breservar\s+para\s+(dos|2)\s+(personas|adultos|adultas|participantes)\b",
+    )
+    group_patterns = (
+        r"\b(venimos|somos|vamos)\s+(dos|2)\b",
+        r"\b(venimos|somos|vamos)\s+(tres|3)\b",
+        r"\bpara\s+(dos|2)\s+(personas|adultos|adultas|participantes)\b",
+    )
+    pronoun_patterns = (
+        r"\bel\s+quiere\b",
+        r"\bella\s+quiere\b",
+        r"\bel\s+haria\b",
+        r"\bella\s+haria\b",
+        r"\bel\s+prefiere\b",
+        r"\bella\s+prefiere\b",
+        r"\bel\s+tambien\b",
+        r"\bella\s+tambien\b",
+        r"\bla\s+otra\s+persona\b",
+    )
+    activity_patterns = (
+        r"\b(snorkel|snorkeling|esnorquel|caretear)\b",
+        r"\b(minicurso|curso\s+de\s+iniciacion|bautizo\s+de\s+buceo)\b",
+        r"\b(buceo|bucear|buceos|buceando|dive|dives|diving|scuba)\b",
+    )
+
+    if any(word in tokens for word in companion_keywords):
+        return True
+    if any(re.search(pattern, normalized) for pattern in companion_patterns):
+        return True
+    if any(re.search(pattern, normalized) for pattern in group_patterns):
+        return True
+
+    has_activity_reference = any(re.search(pattern, normalized) for pattern in activity_patterns)
+    has_companion_context = bool(getattr(state, "mixed_from_single_companion_context_active", False)) if state else False
+    if any(re.search(pattern, normalized) for pattern in pronoun_patterns):
+        return has_activity_reference or has_companion_context
+
+    return False
+
+
+def _mentions_diving_intent(message: str) -> bool:
+    """Detect diving-related terms in the message (buceo, diving, scuba, etc.).
+
+    Used to specialise friend/companion answers when the main user picked snorkel
+    and the friend wants to dive.
+    """
+    normalized = _normalize_for_menu_match(message)
+    if not normalized:
+        return False
+    tokens = set(normalized.split())
+
+    diving_keywords = {
+        # ES
+        "buceo",
+        "bucear",
+        "buceos",
+        "buceando",
+        # EN
+        "dive",
+        "dives",
+        "diving",
+        "scuba",
+    }
+
+    return any(word in tokens for word in diving_keywords)
+
+
+def _mentions_snorkeling_intent(message: str) -> bool:
+    """Detect snorkeling-related terms in the message (snorkel, snorkeling, etc.)."""
+    normalized = _normalize_for_menu_match(message)
+    if not normalized:
+        return False
+    tokens = set(normalized.split())
+
+    snorkeling_keywords = {
+        "snorkel",
+        "snorkeling",
+        "esnorquel",
+        "caretear",
+    }
+
+    return any(word in tokens for word in snorkeling_keywords)
+
+
+def _mentions_minicourse_intent(message: str) -> bool:
+    """Detect explicit mini-course wording for a companion diving plan."""
+    normalized = _normalize_for_menu_match(message)
+    if not normalized:
+        return False
+
+    minicourse_patterns = (
+        r"\bminicurso\b",
+        r"\bcurso\s+de\s+iniciacion\b",
+        r"\bcurso\s+de\s+iniciación\b",
+        r"\bbautizo\s+de\s+buceo\b",
+    )
+    return any(re.search(pattern, normalized) for pattern in minicourse_patterns)
+
+
+def _detect_companion_activity_intent(message: str, base_id: str | None = None) -> str | None:
+    normalized = _normalize_for_menu_match(message)
+    if not normalized:
+        return None
+    if _mentions_minicourse_intent(message):
+        return "minicourse"
+    if _mentions_snorkeling_intent(message):
+        return "snorkeling"
+    if _mentions_diving_intent(message):
+        return "diving"
+    if not base_id:
+        return None
+
+    same_activity_patterns = (
+        r"\bhacer\s+lo\s+mismo\b",
+        r"\blo\s+mismo\b",
+        r"\bla\s+misma\s+actividad\b",
+        r"\bel\s+mismo\s+plan\b",
+        r"\bigual\s+que\s+yo\b",
+        r"\bigual\s+a\s+mi\b",
+        r"\btambien\s+quiere\s+venir\b",
+        r"\btambien\s+viene\b",
+        r"\bse\s+apunta\b",
+        r"\bse\s+suma\b",
+    )
+    if any(re.search(pattern, normalized) for pattern in same_activity_patterns):
+        return "same"
+    return None
+
+
+def _normalize_base_service_id(service_id: str | None) -> str | None:
+    if not service_id:
+        return None
+    suffix = "_already_on_island"
+    if service_id.endswith(suffix):
+        return service_id[: -len(suffix)]
+    return service_id
+
+
+def _build_mixed_from_single_follow_up(base_id: str | None, lang: str) -> tuple[str, list[dict]]:
+    if lang == "es":
+        if base_id == "snorkeling":
+            my_activity = "tu reserva de snorkel"
+        elif base_id == "2_dives_1_day":
+            my_activity = "tu reserva de buceo"
+        elif base_id == "minicourse":
+            my_activity = "tu minicurso de buceo"
+        else:
+            my_activity = "la actividad que ya tenías seleccionada"
+
+        follow_up = (
+            f"Si quieres, puedo añadir al carrito {my_activity}, "
+            "dejando esta actividad para ti y tú puedes añadir la de tu amigo o acompañante.\n\n"
+            "¿Te gustaría que preparemos la reserva también para esa persona?\n"
+            "1️⃣ Sí, añadirlo al carrito\n"
+            "2️⃣ No, dejar solo mi actividad"
+        )
+        quick_replies = [
+            {"title": "1️⃣ Sí, añadirlo al carrito", "value": "1"},
+            {"title": "2️⃣ No, dejar solo mi actividad", "value": "2"},
+        ]
+        return follow_up, quick_replies
+
+    follow_up = (
+        "If you want, I can add your current activity to a *mixed group* booking (cart), "
+        "keeping it for you so you can then add your friend or companion.\n\n"
+        "Would you like me to prepare the booking for them as well?\n"
+        "1️⃣ Yes, add them to the cart\n"
+        "2️⃣ No, keep only my activity"
+    )
+    quick_replies = [
+        {"title": "1️⃣ Yes, add to cart", "value": "1"},
+        {"title": "2️⃣ No, only my activity", "value": "2"},
+    ]
+    return follow_up, quick_replies
+
+
+def _build_mixed_from_single_cert_question() -> tuple[str, list[dict]]:
+    prompt = (
+        "¡Claro! Pueden ir juntos sin problema.\n\n"
+        "Para recomendarle bien el plan a tu amigo, necesito saber una cosa:\n\n"
+        "¿Tu amigo es *buzo certificado*?\n"
+        "1️⃣ Sí, está certificado\n"
+        "2️⃣ No, sería su primera vez"
+    )
+    quick_replies = [
+        {"title": "1️⃣ Sí, está certificado", "value": "1"},
+        {"title": "2️⃣ No, sería su primera vez", "value": "2"},
+    ]
+    return prompt, quick_replies
+
+
+def _build_mixed_from_single_activity_question() -> tuple[str, list[dict]]:
+    prompt = (
+        "¡Claro! Pueden ir juntos sin problema.\n\n"
+        "Para recomendarle bien el plan a tu acompañante, necesito saber qué actividad quiere hacer:\n\n"
+        "1️⃣ Snorkel\n"
+        "2️⃣ Minicurso de buceo\n"
+        "3️⃣ Buceo"
+    )
+    quick_replies = [
+        {"title": "1️⃣ Snorkel", "value": "1"},
+        {"title": "2️⃣ Minicurso de buceo", "value": "2"},
+        {"title": "3️⃣ Buceo", "value": "3"},
+    ]
+    return prompt, quick_replies
+
+
+def _detect_companion_activity_answer(message: str, base_id: str | None) -> str | None:
+    normalized = _normalize_for_menu_match(message)
+    if not normalized:
+        return None
+    if normalized == "1":
+        return "snorkeling"
+    if normalized == "2":
+        return "minicourse"
+    if normalized == "3":
+        return "diving"
+
+    activity_intent = _detect_companion_activity_intent(message, base_id)
+    if activity_intent != "same":
+        return activity_intent
+    if base_id == "snorkeling":
+        return "snorkeling"
+    if base_id == "minicourse":
+        return "minicourse"
+    if base_id == "2_dives_1_day":
+        return "diving"
+    return None
+
+
+def _detect_companion_certification_answer(message: str) -> bool | None:
+    normalized = _normalize_for_menu_match(message)
+    if not normalized:
+        return None
+
+    if normalized in {"1", "si", "sí"}:
+        return True
+    if normalized in {"2", "no"}:
+        return False
+
+    negative_patterns = (
+        r"\bno\s+esta\s+certificad[oa]\b",
+        r"\bno\s+es\s+certificad[oa]\b",
+        r"\bsin\s+certificacion\b",
+        r"\bprimera\s+vez\b",
+        r"\bnunca\s+ha\s+buceado\b",
+        r"\bnunca\s+bucea\b",
+        r"\bprincipiante\b",
+    )
+    for pattern in negative_patterns:
+        if re.search(pattern, normalized):
+            return False
+
+    positive_patterns = (
+        r"\bcertificad[oa]\b",
+        r"\bopen\s+water\b",
+        r"\badvanced\b",
+        r"\brescue\b",
+        r"\bdive\s*master\b",
+        r"\bdivemaster\b",
+    )
+    for pattern in positive_patterns:
+        if re.search(pattern, normalized):
+            return True
+
+    return None
+
+
+def _render_service_info_card_for_current_location(state: ConversationState, service_id: str) -> str:
+    info_state = ConversationState(conversation_id=state.conversation_id)
+    info_state.language = state.language
+    info_state.location = state.location
+    info_state.selected_service = decision_tree._service_for_location(service_id, state)
+    return decision_tree._format_info_card(info_state)
+
+
+def _build_mixed_from_single_activity_response(
+    state: ConversationState,
+    base_id: str | None,
+    lang: str,
+    target_service_id: str,
+    intro: str,
+) -> str:
+    info_card = _render_service_info_card_for_current_location(state, target_service_id)
+    follow_up, quick_replies = _build_mixed_from_single_follow_up(base_id, lang)
+    setattr(state, "mixed_from_single_offer_pending", True)
+    state.quick_replies = quick_replies
+    return f"{intro}\n\n{info_card}\n\n{follow_up}"
+
+
+def _handle_companion_activity_intent(
+    state: ConversationState,
+    base_id: str | None,
+    lang: str,
+    activity_intent: str | None,
+) -> str:
+    setattr(state, "mixed_from_single_companion_context_active", True)
+    if activity_intent == "minicourse":
+        return _build_mixed_from_single_activity_response(
+            state,
+            base_id,
+            lang,
+            "minicourse",
+            "¡Claro! Pueden ir juntos sin problema. Para tu acompañante, esta es la información completa del minicurso de buceo:",
+        )
+    if activity_intent == "snorkeling":
+        return _build_mixed_from_single_activity_response(
+            state,
+            base_id,
+            lang,
+            "snorkeling",
+            "¡Claro! Pueden ir juntos sin problema. Para tu acompañante, esta es la información completa del plan de snorkel:",
+        )
+    if activity_intent == "diving":
+        prompt, quick_replies = _build_mixed_from_single_cert_question()
+        setattr(state, "mixed_from_single_cert_question_pending", True)
+        state.quick_replies = quick_replies
+        return prompt
+
+    prompt, quick_replies = _build_mixed_from_single_activity_question()
+    setattr(state, "mixed_from_single_activity_question_pending", True)
+    state.quick_replies = quick_replies
+    return prompt
 
 
 def _map_service_to_cart_item(service_id: str) -> tuple[str, str | None] | None:
@@ -414,34 +767,22 @@ def _maybe_offer_mixed_from_single(state: ConversationState, message: str, answe
         if _map_service_to_cart_item(svc_id or "") is None:
             return answer
 
-        if not _detect_companion_intent(message):
+        if not _detect_companion_intent(message, state):
             return answer
 
+        # Normalise the concrete service_id to its base variant.
+        base_id = _normalize_base_service_id(svc_id)
+
         lang = getattr(state, "language", "es") or "es"
-        if lang == "es":
-            follow_up = (
-                "Si quieres, puedo ayudarte a armar la reserva como *grupo mixto* (carrito), "
-                "dejando esta actividad para ti y luego añadiendo la de tu amigo o acompañante.\n\n"
-                "¿Te gustaría que preparemos la reserva también para esa persona?\n"
-                "1️⃣ Sí, añadirlo al carrito\n"
-                "2️⃣ No, dejar solo mi actividad"
-            )
-            quick_replies = [
-                {"title": "1️⃣ Sí, añadirlo al carrito", "value": "1"},
-                {"title": "2️⃣ No, dejar solo mi actividad", "value": "2"},
-            ]
-        else:
-            follow_up = (
-                "If you want, I can help you build this as a *mixed group* booking (cart), "
-                "keeping this activity for you and then adding your friend or companion.\n\n"
-                "Would you like me to prepare the booking for them as well?\n"
-                "1️⃣ Yes, add them to the cart\n"
-                "2️⃣ No, keep only my activity"
-            )
-            quick_replies = [
-                {"title": "1️⃣ Yes, add to cart", "value": "1"},
-                {"title": "2️⃣ No, only my activity", "value": "2"},
-            ]
+        setattr(state, "mixed_from_single_companion_context_active", True)
+
+        if lang == "es" and base_id in {"snorkeling", "2_dives_1_day", "minicourse"}:
+            activity_intent = _detect_companion_activity_intent(message, base_id)
+            if activity_intent == "same":
+                activity_intent = _detect_companion_activity_answer(message, base_id)
+            return _handle_companion_activity_intent(state, base_id, lang, activity_intent)
+
+        follow_up, quick_replies = _build_mixed_from_single_follow_up(base_id, lang)
 
         # Mark that we're waiting for a yes/no answer about entering the mixed cart.
         setattr(state, "mixed_from_single_offer_pending", True)
@@ -1257,12 +1598,50 @@ async def route_message(state: ConversationState, message: str) -> str:
         return answer
 
     if state.step == Step.FREE_TEXT:
+        if getattr(state, "mixed_from_single_activity_question_pending", False):
+            base_id = _normalize_base_service_id(getattr(state, "selected_service", None))
+            activity_answer = _detect_companion_activity_answer(message, base_id)
+            if activity_answer is None:
+                prompt, quick_replies = _build_mixed_from_single_activity_question()
+                state.quick_replies = quick_replies
+                return "No te entendí del todo.\n\n" + prompt
+
+            setattr(state, "mixed_from_single_activity_question_pending", False)
+            return _handle_companion_activity_intent(state, base_id, state.language, activity_answer)
+
+        if getattr(state, "mixed_from_single_cert_question_pending", False):
+            cert_answer = _detect_companion_certification_answer(message)
+            if cert_answer is None:
+                prompt, quick_replies = _build_mixed_from_single_cert_question()
+                state.quick_replies = quick_replies
+                return "No te entendí del todo.\n\n" + prompt
+
+            setattr(state, "mixed_from_single_cert_question_pending", False)
+            service_id = "2_dives_1_day" if cert_answer else "minicourse"
+            info_card = _render_service_info_card_for_current_location(state, service_id)
+            base_id = _normalize_base_service_id(getattr(state, "selected_service", None))
+            follow_up, quick_replies = _build_mixed_from_single_follow_up(base_id, state.language)
+            setattr(state, "mixed_from_single_offer_pending", True)
+            state.quick_replies = quick_replies
+
+            if cert_answer:
+                intro = (
+                    "Perfecto. Si tu amigo ya está certificado, esta es la opción adecuada. "
+                    "Si hace más de 2 años que no bucea, luego revisamos si necesita refresh:"
+                )
+            else:
+                intro = "Perfecto. Si no está certificado, lo ideal es empezar con este minicurso de iniciación:"
+            return f"{intro}\n\n{info_card}\n\n{follow_up}"
+
         # First, handle the yes/no offer to switch into the mixed cart flow.
         if getattr(state, "mixed_from_single_offer_pending", False):
             if msg_lower in {"1", "si", "sí", "yes"}:
                 # User accepted: enter the mixed cart preloaded with their current activity.
                 setattr(state, "mixed_from_single_offer_pending", False)
                 setattr(state, "mixed_from_single_offer_handled", True)
+                setattr(state, "mixed_from_single_companion_context_active", False)
+                setattr(state, "mixed_from_single_activity_question_pending", False)
+                setattr(state, "mixed_from_single_cert_question_pending", False)
                 state.quick_replies = []
                 logger.info("[SUPERVISOR] Mixed-from-single: user accepted cart offer")
                 return _enter_mixed_flow_from_single(state)
@@ -1270,6 +1649,9 @@ async def route_message(state: ConversationState, message: str) -> str:
                 # User declined: keep the current activity only.
                 setattr(state, "mixed_from_single_offer_pending", False)
                 setattr(state, "mixed_from_single_offer_handled", True)
+                setattr(state, "mixed_from_single_companion_context_active", False)
+                setattr(state, "mixed_from_single_activity_question_pending", False)
+                setattr(state, "mixed_from_single_cert_question_pending", False)
                 state.quick_replies = []
                 if state.language == "es":
                     return (
