@@ -399,10 +399,11 @@ def _detect_companion_intent(message: str, state: ConversationState | None = Non
         # Elipsis: "él el minicurso" / "ella la actividad" (pronombre + artículo +
         # actividad, sin verbo explícito). Conservador: solo cuando va seguido del
         # nombre concreto de la actividad para minimizar falsos positivos.
-        r"\b(el|ella)\s+(el|la|los|las)\s+(snorkel|minicurso|buceo|curso)\b",
+        # Incluye typos comunes (snorke, buseo, etc.).
+        r"\b(el|ella)\s+(el|la|los|las)\s+(snorkel|snorke|snorkl|esnorquel|esnorkel|minicurso|buceo|buseo|curso)\b",
         # "ella solo snorkel" / "él solamente buceo" (adverbio entre pronombre y
-        # actividad).
-        r"\b(el|ella)\s+(solo|solamente)\s+(snorkel|minicurso|buceo|esnorquel)\b",
+        # actividad), incluyendo typos comunes.
+        r"\b(el|ella)\s+(solo|solamente)\s+(snorkel|snorke|snorkl|esnorquel|esnorkel|minicurso|buceo|buseo)\b",
     )
     distribution_patterns = (
         r"\buno\s+quiere\b",
@@ -460,6 +461,10 @@ def _mentions_diving_intent(message: str) -> bool:
         "buceando",
         "bucea",
         "bucean",
+        # Typos comunes
+        "buseo",
+        "buseando",
+        "bucearr",
         "dive",
         "dives",
         "diving",
@@ -480,6 +485,12 @@ def _mentions_snorkeling_intent(message: str) -> bool:
         "snorkel",
         "snorkeling",
         "esnorquel",
+        # Typos comunes (truncamientos / variantes ortográficas)
+        "snorke",
+        "snorkl",
+        "esnorkel",
+        "esnorke",
+        "esnokel",
         "caretear",
         "caretea",
         "caretean",

@@ -1883,6 +1883,21 @@ async def test_block2_yo_buceo_y_ella_solo_snorkel_offers_snorkel_card_from_cert
 
 
 @pytest.mark.asyncio
+async def test_block2_companion_detection_tolerates_snorkel_typo():
+    """Con typo 'snorke' (sin la 'l' final), debe seguir entrando al flujo companion."""
+    state = await reach_diving_experience()
+    await send(state, "1", "1", "2", "2")
+    await route_message(state, "reservar")
+
+    with patch("src.agents.supervisor.rag_answer", new_callable=AsyncMock, return_value=RAG_MOCK):
+        resp = await route_message(state, "Yo quiero buceo y ella solo snorke")
+
+    assert state.step == Step.FREE_TEXT
+    assert "Snorkeling" in resp or "Tour de Snorkeling" in resp
+    assert getattr(state, "mixed_from_single_offer_pending", False) is True
+
+
+@pytest.mark.asyncio
 async def test_companion_variant_three_people_two_want_snorkel_routes_to_snorkel_card():
     state = await reach_diving_experience()
     await send(state, "1", "1", "2", "2")
