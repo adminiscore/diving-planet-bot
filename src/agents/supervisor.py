@@ -25,6 +25,17 @@ logger = logging.getLogger("uvicorn.error")
 
 decision_tree = DecisionTree()
 
+_GROUP_COUNT_WORDS = {
+    "un": 1,
+    "uno": 1,
+    "una": 1,
+    "dos": 2,
+    "tres": 3,
+    "cuatro": 4,
+    "cinco": 5,
+    "seis": 6,
+}
+
 # Steps where the user is actively navigating the decision tree menu
 MENU_STEPS = {
     Step.WELCOME,
@@ -58,9 +69,15 @@ MENU_STEPS = {
     Step.COURSES_SPECIALTIES_MENU,
     Step.PRICING_COLOMBIAN,
     Step.MIXED_ENTRY,
+    Step.MIXED_LOCATION,
     Step.MIXED_ADD_ACTIVITY,
     Step.MIXED_ADD_CERT_PLAN,
     Step.MIXED_ADD_QTY,
+    Step.MIXED_CERT_LAST_DIVE,
+    Step.MIXED_CERT_REFRESH_INTEREST,
+    Step.MIXED_CERT_REFRESH_QTY,
+    Step.MIXED_CERT_SPLIT_REVIEW,
+    Step.MIXED_ADD_PREVIEW,
     Step.MIXED_CART_REVIEW,
     Step.MIXED_CART_MODIFY_PICK,
     Step.MIXED_CART_REMOVE_PICK,
@@ -88,9 +105,15 @@ MENU_STEPS = {
 # Steps that route through the LLM intent classifier when free text doesn't match a button.
 _MIXED_FLOW_STEPS = {
     Step.MIXED_ENTRY,
+    Step.MIXED_LOCATION,
     Step.MIXED_ADD_ACTIVITY,
     Step.MIXED_ADD_CERT_PLAN,
     Step.MIXED_ADD_QTY,
+    Step.MIXED_CERT_LAST_DIVE,
+    Step.MIXED_CERT_REFRESH_INTEREST,
+    Step.MIXED_CERT_REFRESH_QTY,
+    Step.MIXED_CERT_SPLIT_REVIEW,
+    Step.MIXED_ADD_PREVIEW,
     Step.MIXED_CART_REVIEW,
     Step.MIXED_CART_MODIFY_PICK,
     Step.MIXED_CART_REMOVE_PICK,
@@ -155,9 +178,15 @@ BACK_STEP: dict[Step, tuple[Step, str]] = {
     # MIXED_ENTRY goes back to GROUP_TYPE. Final-question steps are intentionally
     # not back-navigable individually — restart via "empezar de nuevo" if needed.
     Step.MIXED_ENTRY: (Step.GROUP_TYPE, "group_type"),
+    Step.MIXED_LOCATION: (Step.MIXED_ENTRY, "mixed_entry"),
     Step.MIXED_ADD_ACTIVITY: (Step.MIXED_CART_REVIEW, "mixed_cart_actions"),
     Step.MIXED_ADD_CERT_PLAN: (Step.MIXED_ADD_ACTIVITY, "mixed_add_activity"),
     Step.MIXED_ADD_QTY: (Step.MIXED_CART_REVIEW, "mixed_cart_actions"),
+    Step.MIXED_CERT_LAST_DIVE: (Step.MIXED_ADD_QTY, "mixed_quantity"),
+    Step.MIXED_CERT_REFRESH_INTEREST: (Step.MIXED_CERT_LAST_DIVE, "certified_last_dive"),
+    Step.MIXED_CERT_REFRESH_QTY: (Step.MIXED_CERT_REFRESH_INTEREST, "refresher_interest"),
+    Step.MIXED_CERT_SPLIT_REVIEW: (Step.MIXED_CART_REVIEW, "mixed_cart_actions"),
+    Step.MIXED_ADD_PREVIEW: (Step.MIXED_ADD_ACTIVITY, "mixed_add_activity"),
     Step.MIXED_CART_REVIEW: (Step.GROUP_TYPE, "group_type"),
     Step.MIXED_CART_MODIFY_PICK: (Step.MIXED_CART_REVIEW, "mixed_cart_actions"),
     Step.MIXED_CART_REMOVE_PICK: (Step.MIXED_CART_REVIEW, "mixed_cart_actions"),
@@ -296,17 +325,6 @@ def _detect_companion_intent(message: str, state: ConversationState | None = Non
         "esposos",
         "esposas",
         "marido",
-        "mujer",
-        "chica",
-        "chico",
-        "madre",
-        "padre",
-        "mama",
-        "papa",
-        "hermano",
-        "hermana",
-        "hermanos",
-        "hermanas",
         "companero",
         "companera",
         "companeros",
@@ -318,20 +336,6 @@ def _detect_companion_intent(message: str, state: ConversationState | None = Non
         "pana",
         "acompanante",
         "acompanantes",
-        "adulto",
-        "adulta",
-        "participante",
-        "participantes",
-        "familia",
-        "familiares",
-        "hijo",
-        "hija",
-        "hijos",
-        "hijas",
-        "nino",
-        "nina",
-        "ninos",
-        "ninas",
         "friend",
         "friends",
         "partner",
@@ -350,7 +354,11 @@ def _detect_companion_intent(message: str, state: ConversationState | None = Non
 
     companion_patterns = (
         r"\bmi\s+(pareja|novi[oa]|espos[oa]|marido|mujer|madre|padre|mama|papa|chic[oa])\b",
+        r"\bmi\s+(herman[oa]|hij[oa])\b",
+        r"\bmis\s+(hij[oa]s|herman[oa]s)\b",
+        r"\bmi\s+familia\b",
         r"\b(vengo|voy|vamos|venimos)\s+con\s+mi\b",
+        r"\b(vengo|voy|vamos|venimos)\s+con\s+(mis\s+hij[oa]s|mi\s+familia)\b",
         r"\b(otro|otra|otros|otras)\s+(persona|adult[oa]s?|participante?s?)\b",
         r"\b(alguien|alguno|alguna)\s+mas\b",
         r"\b(uno|una)\s+mas\b",
@@ -367,16 +375,32 @@ def _detect_companion_intent(message: str, state: ConversationState | None = Non
         r"\bella\s+quiere\b",
         r"\bel\s+haria\b",
         r"\bella\s+haria\b",
+        r"\bel\s+hace\b",
+        r"\bella\s+hace\b",
         r"\bel\s+prefiere\b",
         r"\bella\s+prefiere\b",
+        r"\bel\s+bucea\b",
+        r"\bella\s+bucea\b",
+        r"\bel\s+caretea\b",
+        r"\bella\s+caretea\b",
         r"\bel\s+tambien\b",
         r"\bella\s+tambien\b",
         r"\bla\s+otra\s+persona\b",
     )
+    distribution_patterns = (
+        r"\buno\s+quiere\b",
+        r"\buna\s+quiere\b",
+        r"\buno\s+prefiere\b",
+        r"\buna\s+prefiere\b",
+        r"\bel\s+otro\b",
+        r"\bla\s+otra\b",
+        r"\b(dos|2|tres|3)\s+quieren\b",
+        r"\b(dos|2|tres|3)\s+prefieren\b",
+    )
     activity_patterns = (
-        r"\b(snorkel|snorkeling|esnorquel|caretear)\b",
+        r"\b(snorkel|snorkeling|esnorquel|caretear|caretea|caretean)\b",
         r"\b(minicurso|curso\s+de\s+iniciacion|bautizo\s+de\s+buceo)\b",
-        r"\b(buceo|bucear|buceos|buceando|dive|dives|diving|scuba)\b",
+        r"\b(buceo|bucear|buceos|buceando|bucea|bucean|dive|dives|diving|scuba)\b",
     )
 
     if any(word in tokens for word in companion_keywords):
@@ -388,6 +412,8 @@ def _detect_companion_intent(message: str, state: ConversationState | None = Non
 
     has_activity_reference = any(re.search(pattern, normalized) for pattern in activity_patterns)
     has_companion_context = bool(getattr(state, "mixed_from_single_companion_context_active", False)) if state else False
+    if any(re.search(pattern, normalized) for pattern in distribution_patterns):
+        return has_activity_reference or has_companion_context
     if any(re.search(pattern, normalized) for pattern in pronoun_patterns):
         return has_activity_reference or has_companion_context
 
@@ -403,15 +429,20 @@ def _mentions_diving_intent(message: str) -> bool:
     normalized = _normalize_for_menu_match(message)
     if not normalized:
         return False
-    tokens = set(normalized.split())
+    sanitized = re.sub(
+        r"\b(minicurso(\s+de\s+buceo)?|curso\s+de\s+iniciacion|curso\s+de\s+iniciacion\s+al\s+buceo|bautizo\s+de\s+buceo)\b",
+        " ",
+        normalized,
+    )
+    tokens = set(sanitized.split())
 
     diving_keywords = {
-        # ES
         "buceo",
         "bucear",
         "buceos",
         "buceando",
-        # EN
+        "bucea",
+        "bucean",
         "dive",
         "dives",
         "diving",
@@ -433,6 +464,8 @@ def _mentions_snorkeling_intent(message: str) -> bool:
         "snorkeling",
         "esnorquel",
         "caretear",
+        "caretea",
+        "caretean",
     }
 
     return any(word in tokens for word in snorkeling_keywords)
@@ -453,18 +486,41 @@ def _mentions_minicourse_intent(message: str) -> bool:
     return any(re.search(pattern, normalized) for pattern in minicourse_patterns)
 
 
+def _base_service_to_activity_intent(base_id: str | None) -> str | None:
+    if base_id == "snorkeling":
+        return "snorkeling"
+    if base_id == "minicourse":
+        return "minicourse"
+    if base_id == "2_dives_1_day":
+        return "diving"
+    return None
+
+
+def _extract_activity_mentions(message: str) -> set[str]:
+    activity_mentions: set[str] = set()
+    if _mentions_minicourse_intent(message):
+        activity_mentions.add("minicourse")
+    if _mentions_snorkeling_intent(message):
+        activity_mentions.add("snorkeling")
+    if _mentions_diving_intent(message):
+        activity_mentions.add("diving")
+    return activity_mentions
+
+
 def _detect_companion_activity_intent(message: str, base_id: str | None = None) -> str | None:
     normalized = _normalize_for_menu_match(message)
     if not normalized:
         return None
-    if _mentions_minicourse_intent(message):
-        return "minicourse"
-    if _mentions_snorkeling_intent(message):
-        return "snorkeling"
-    if _mentions_diving_intent(message):
-        return "diving"
-    if not base_id:
-        return None
+    activity_mentions = _extract_activity_mentions(message)
+
+    if len(activity_mentions) == 1:
+        return next(iter(activity_mentions))
+
+    base_activity = _base_service_to_activity_intent(base_id)
+    if len(activity_mentions) > 1 and base_activity in activity_mentions:
+        non_base_mentions = activity_mentions - {base_activity}
+        if len(non_base_mentions) == 1:
+            return next(iter(non_base_mentions))
 
     same_activity_patterns = (
         r"\bhacer\s+lo\s+mismo\b",
@@ -480,7 +536,238 @@ def _detect_companion_activity_intent(message: str, base_id: str | None = None) 
     )
     if any(re.search(pattern, normalized) for pattern in same_activity_patterns):
         return "same"
+
+    if len(activity_mentions) > 1:
+        return None
     return None
+
+
+def _parse_group_count_token(token: str | None) -> int | None:
+    if not token:
+        return None
+    normalized = _normalize_for_menu_match(token)
+    if not normalized:
+        return None
+    if normalized.isdigit():
+        value = int(normalized)
+        return value if 1 <= value <= 99 else None
+    return _GROUP_COUNT_WORDS.get(normalized)
+
+
+def _extract_total_people_count(message: str) -> int | None:
+    normalized = _normalize_for_menu_match(message)
+    if not normalized:
+        return None
+
+    patterns = (
+        r"\b(?:somos|venimos|vamos)\s+(?P<count>\d+|un|uno|una|dos|tres|cuatro|cinco|seis)\b",
+        r"\bpara\s+(?P<count>\d+|un|uno|una|dos|tres|cuatro|cinco|seis)\s+(?:personas|adultos|adultas|participantes)\b",
+    )
+    for pattern in patterns:
+        match = re.search(pattern, normalized)
+        if match:
+            return _parse_group_count_token(match.group("count"))
+    return None
+
+
+def _extract_segment_person_count(segment: str) -> int | None:
+    if not segment:
+        return None
+
+    numeric_match = re.search(
+        r"\b(?P<count>\d+|un|uno|una|dos|tres|cuatro|cinco|seis)\s+(?:amig[oa]s?|personas?|adult[oa]s?|participantes?|acompanantes?)?\b",
+        segment,
+    )
+    if numeric_match:
+        value = _parse_group_count_token(numeric_match.group("count"))
+        if value is not None:
+            return value
+
+    single_person_patterns = (
+        r"\b(el|la)\s+otro\b",
+        r"\botr[oa]\b",
+        r"\bla\s+otra\s+persona\b",
+        r"\bella\b",
+        r"\bel\s+(?:quiere|prefiere|hace|haria|bucea|caretea)\b",
+        r"\bmi\s+(pareja|amig[oa]|espos[oa]|novi[oa]|parcer[oa]|companero|companera|acompanante|herman[oa]|hij[oa])\b",
+    )
+    if any(re.search(pattern, segment) for pattern in single_person_patterns):
+        return 1
+    return None
+
+
+def _merge_group_allocations(allocations: list[dict]) -> list[dict]:
+    merged: list[dict] = []
+    for allocation in allocations:
+        activity = allocation.get("activity")
+        qty = allocation.get("qty")
+        if not activity or not isinstance(qty, int) or qty <= 0:
+            continue
+        existing = next((item for item in merged if item["activity"] == activity), None)
+        if existing is not None:
+            existing["qty"] += qty
+        else:
+            merged.append({"activity": activity, "qty": qty})
+    return merged
+
+
+def _extract_group_activity_allocations(message: str) -> tuple[str | None, list[dict]]:
+    normalized = _normalize_for_menu_match(message)
+    if not normalized:
+        return None, []
+
+    speaker_activity: str | None = None
+    allocations: list[dict] = []
+    segments = [
+        segment.strip()
+        for segment in re.split(r"\s*(?:,|;|\by\b|\bpero\b|\bmientras\b)\s*", normalized)
+        if segment.strip()
+    ]
+
+    for segment in segments:
+        activity_mentions = _extract_activity_mentions(segment)
+        if len(activity_mentions) != 1:
+            continue
+        activity = next(iter(activity_mentions))
+        if re.search(r"\byo\b", segment):
+            speaker_activity = activity
+            continue
+        count = _extract_segment_person_count(segment)
+        if count is None:
+            continue
+        allocations.append({"activity": activity, "qty": count})
+
+    return speaker_activity, _merge_group_allocations(allocations)
+
+
+def _build_companion_group_context(message: str, base_id: str | None = None) -> dict | None:
+    normalized = _normalize_for_menu_match(message)
+    if not normalized:
+        return None
+
+    total_people = _extract_total_people_count(message)
+    speaker_activity, allocations = _extract_group_activity_allocations(message)
+    base_activity = _base_service_to_activity_intent(base_id)
+    companion_count = sum(item["qty"] for item in allocations)
+
+    if not allocations and total_people and total_people > 1:
+        companion_count = max(total_people - 1, 1)
+
+    if not allocations and companion_count == 0:
+        return None
+
+    if speaker_activity and base_activity and speaker_activity != base_activity:
+        return {
+            "total_people": total_people,
+            "speaker_activity": speaker_activity,
+            "companion_count": companion_count or None,
+            "allocations": allocations,
+            "needs_activity_clarification": True,
+        }
+
+    if total_people and allocations and speaker_activity is None and companion_count > max(total_people - 1, 0):
+        return {
+            "total_people": total_people,
+            "speaker_activity": speaker_activity,
+            "companion_count": companion_count,
+            "allocations": allocations,
+            "needs_activity_clarification": True,
+        }
+
+    if allocations and base_activity and speaker_activity is None and not total_people:
+        allocation_activities = {item["activity"] for item in allocations if item.get("activity")}
+        if len(allocation_activities) > 1 and base_activity not in allocation_activities:
+            return {
+                "total_people": total_people,
+                "speaker_activity": speaker_activity,
+                "companion_count": companion_count or None,
+                "allocations": allocations,
+                "needs_activity_clarification": True,
+            }
+
+    return {
+        "total_people": total_people,
+        "speaker_activity": speaker_activity,
+        "companion_count": companion_count or None,
+        "allocations": allocations,
+        "needs_activity_clarification": not allocations,
+    }
+
+
+def _extract_menu_mixed_group_context(message: str) -> dict | None:
+    group_context = _build_companion_group_context(message)
+    if not group_context:
+        return None
+    if group_context.get("needs_activity_clarification"):
+        return None
+
+    speaker_activity = group_context.get("speaker_activity")
+    allocations = group_context.get("allocations", [])
+    if not speaker_activity or not allocations:
+        return None
+
+    activities = {speaker_activity}
+    activities.update(
+        allocation.get("activity")
+        for allocation in allocations
+        if allocation.get("activity")
+    )
+    if len(activities) != 2:
+        return None
+    if "snorkeling" not in activities:
+        return None
+    if not activities.issubset({"snorkeling", "minicourse", "diving"}):
+        return None
+    return group_context
+
+
+def _build_group_context_from_activity(activity: str, companion_count: int = 1, total_people: int | None = None) -> dict:
+    qty = companion_count if companion_count > 0 else 1
+    return {
+        "total_people": total_people,
+        "speaker_activity": None,
+        "companion_count": qty,
+        "allocations": [{"activity": activity, "qty": qty}],
+        "needs_activity_clarification": False,
+    }
+
+
+def _detect_companion_group_question_answer(
+    message: str,
+    base_id: str | None,
+    default_companion_count: int | None,
+    default_total_people: int | None,
+) -> dict | None:
+    normalized = _normalize_for_menu_match(message)
+    if not normalized:
+        return None
+
+    if normalized == "1":
+        return _build_group_context_from_activity("snorkeling", default_companion_count or 1, default_total_people)
+    if normalized == "2":
+        return _build_group_context_from_activity("minicourse", default_companion_count or 1, default_total_people)
+    if normalized == "3":
+        return _build_group_context_from_activity("diving", default_companion_count or 1, default_total_people)
+
+    parsed = _build_companion_group_context(message, base_id)
+    if parsed and parsed.get("allocations"):
+        if default_total_people and not parsed.get("total_people"):
+            parsed["total_people"] = default_total_people
+        if not parsed.get("companion_count"):
+            parsed["companion_count"] = default_companion_count or sum(
+                item["qty"] for item in parsed.get("allocations", [])
+            )
+        parsed["needs_activity_clarification"] = False
+        return parsed
+
+    activity_answer = _detect_companion_activity_answer(message, base_id)
+    if activity_answer is None:
+        return None
+    return _build_group_context_from_activity(
+        activity_answer,
+        default_companion_count or 1,
+        default_total_people,
+    )
 
 
 def _normalize_base_service_id(service_id: str | None) -> str | None:
@@ -493,23 +780,35 @@ def _normalize_base_service_id(service_id: str | None) -> str | None:
 
 
 def _build_mixed_from_single_follow_up(base_id: str | None, lang: str) -> tuple[str, list[dict]]:
+    companion_count = base_id.get("companion_count") if isinstance(base_id, dict) else None
+    actual_base_id = base_id.get("base_id") if isinstance(base_id, dict) else base_id
     if lang == "es":
-        if base_id == "snorkeling":
+        if actual_base_id == "snorkeling":
             my_activity = "tu reserva de snorkel"
-        elif base_id == "2_dives_1_day":
+        elif actual_base_id == "2_dives_1_day":
             my_activity = "tu reserva de buceo"
-        elif base_id == "minicourse":
+        elif actual_base_id == "minicourse":
             my_activity = "tu minicurso de buceo"
         else:
             my_activity = "la actividad que ya tenías seleccionada"
 
-        follow_up = (
-            f"Si quieres, puedo añadir al carrito {my_activity}, "
-            "dejando esta actividad para ti y tú puedes añadir la de tu amigo o acompañante.\n\n"
-            "¿Te gustaría que preparemos la reserva también para esa persona?\n"
-            "1️⃣ Sí, añadirlo al carrito\n"
-            "2️⃣ No, dejar solo mi actividad"
-        )
+        if companion_count == 1 or companion_count is None:
+            follow_up = (
+                f"Si quieres, puedo añadir al carrito {my_activity}, "
+                "dejando esta actividad para ti y tú puedes añadir la de tu amigo o acompañante.\n\n"
+                "¿Te gustaría que preparemos la reserva también para esa persona?\n"
+                "1️⃣ Sí, añadirlo al carrito\n"
+                "2️⃣ No, dejar solo mi actividad"
+            )
+        else:
+            group_phrase = f"tus {companion_count} acompañantes"
+            follow_up = (
+                f"Si quieres, puedo añadir al carrito {my_activity}, "
+                f"dejando esta actividad para ti y preparando también la de {group_phrase}.\n\n"
+                f"¿Te gustaría que preparemos la reserva también para {group_phrase}?\n"
+                "1️⃣ Sí, añadirlo al carrito\n"
+                "2️⃣ No, dejar solo mi actividad"
+            )
         quick_replies = [
             {"title": "1️⃣ Sí, añadirlo al carrito", "value": "1"},
             {"title": "2️⃣ No, dejar solo mi actividad", "value": "2"},
@@ -530,7 +829,21 @@ def _build_mixed_from_single_follow_up(base_id: str | None, lang: str) -> tuple[
     return follow_up, quick_replies
 
 
-def _build_mixed_from_single_cert_question() -> tuple[str, list[dict]]:
+def _build_mixed_from_single_cert_question(diving_qty: int = 1) -> tuple[str, list[dict]]:
+    if diving_qty > 1:
+        prompt = (
+            "¡Claro! Pueden ir juntos sin problema.\n\n"
+            "Para recomendarle bien el plan al grupo que quiere buceo, necesito saber una cosa:\n\n"
+            f"¿Estas {diving_qty} personas son *buzos certificados*?\n"
+            "1️⃣ Sí, todos están certificados\n"
+            "2️⃣ No, alguno sería su primera vez"
+        )
+        quick_replies = [
+            {"title": "1️⃣ Sí, todos están certificados", "value": "1"},
+            {"title": "2️⃣ No, alguno sería su primera vez", "value": "2"},
+        ]
+        return prompt, quick_replies
+
     prompt = (
         "¡Claro! Pueden ir juntos sin problema.\n\n"
         "Para recomendarle bien el plan a tu amigo, necesito saber una cosa:\n\n"
@@ -545,14 +858,24 @@ def _build_mixed_from_single_cert_question() -> tuple[str, list[dict]]:
     return prompt, quick_replies
 
 
-def _build_mixed_from_single_activity_question() -> tuple[str, list[dict]]:
-    prompt = (
-        "¡Claro! Pueden ir juntos sin problema.\n\n"
-        "Para recomendarle bien el plan a tu acompañante, necesito saber qué actividad quiere hacer:\n\n"
-        "1️⃣ Snorkel\n"
-        "2️⃣ Minicurso de buceo\n"
-        "3️⃣ Buceo"
-    )
+def _build_mixed_from_single_activity_question(companion_count: int | None = None) -> tuple[str, list[dict]]:
+    if companion_count and companion_count > 1:
+        prompt = (
+            "¡Claro! Pueden ir juntos sin problema.\n\n"
+            "Para recomendar bien el plan de tu grupo, necesito saber qué actividad quiere hacer cada persona. "
+            "Si quieres, puedes responder con una sola opción o con algo como 'dos snorkel y uno buceo':\n\n"
+            "1️⃣ Snorkel\n"
+            "2️⃣ Minicurso de buceo\n"
+            "3️⃣ Buceo"
+        )
+    else:
+        prompt = (
+            "¡Claro! Pueden ir juntos sin problema.\n\n"
+            "Para recomendarle bien el plan a tu acompañante, necesito saber qué actividad quiere hacer:\n\n"
+            "1️⃣ Snorkel\n"
+            "2️⃣ Minicurso de buceo\n"
+            "3️⃣ Buceo"
+        )
     quick_replies = [
         {"title": "1️⃣ Snorkel", "value": "1"},
         {"title": "2️⃣ Minicurso de buceo", "value": "2"},
@@ -622,12 +945,337 @@ def _detect_companion_certification_answer(message: str) -> bool | None:
     return None
 
 
+def _detect_binary_yes_no_answer(message: str) -> bool | None:
+    normalized = _normalize_for_menu_match(message)
+    if not normalized:
+        return None
+    if normalized in {"1", "si", "sí", "yes"}:
+        return True
+    if normalized in {"2", "no"}:
+        return False
+    return None
+
+
 def _render_service_info_card_for_current_location(state: ConversationState, service_id: str) -> str:
     info_state = ConversationState(conversation_id=state.conversation_id)
     info_state.language = state.language
     info_state.location = state.location
     info_state.selected_service = decision_tree._service_for_location(service_id, state)
     return decision_tree._format_info_card(info_state)
+
+
+def _set_mixed_from_single_group_context(state: ConversationState, group_context: dict | None) -> None:
+    setattr(state, "mixed_from_single_group_context", group_context)
+
+
+def _get_mixed_from_single_group_context(state: ConversationState) -> dict | None:
+    group_context = getattr(state, "mixed_from_single_group_context", None)
+    return group_context if isinstance(group_context, dict) else None
+
+
+def _clear_mixed_from_single_group_context(state: ConversationState) -> None:
+    setattr(state, "mixed_from_single_group_context", None)
+
+
+def _activity_to_service_id(activity: str) -> str | None:
+    if activity == "snorkeling":
+        return "snorkeling"
+    if activity == "minicourse":
+        return "minicourse"
+    if activity == "diving":
+        return "2_dives_1_day"
+    return None
+
+
+def _activity_to_cart_item(activity: str) -> tuple[str, str | None] | None:
+    if activity == "snorkeling":
+        return "snorkel", None
+    if activity == "minicourse":
+        return "beginner", None
+    if activity == "diving":
+        return "cert", "2_dives_1_day"
+    return None
+
+
+def _cart_item_to_service_id(item: dict) -> str | None:
+    item_type = item.get("type")
+    plan = item.get("plan")
+    if item_type == "snorkel":
+        return "snorkeling"
+    if item_type == "beginner":
+        return "minicourse"
+    if item_type == "cert" and plan == "2_dives_1_day":
+        return "2_dives_1_day"
+    return None
+
+
+def _infer_companion_base_service_id(state: ConversationState) -> str | None:
+    selected_service = _normalize_base_service_id(getattr(state, "selected_service", None))
+    if _map_service_to_cart_item(selected_service or "") is not None:
+        return selected_service
+
+    if decision_tree._is_in_mixed_flow(state) and len(getattr(state, "mixed_cart", [])) == 1:
+        inferred = _cart_item_to_service_id(state.mixed_cart[0])
+        return _normalize_base_service_id(inferred)
+    return None
+
+
+def _append_mixed_cart_item(state: ConversationState, item_type: str, plan: str | None, qty: int) -> None:
+    if qty <= 0:
+        return
+    lang = getattr(state, "language", "es") or "es"
+    existing = next(
+        (item for item in state.mixed_cart if item.get("type") == item_type and item.get("plan") == plan),
+        None,
+    )
+    if existing is not None:
+        existing["qty"] += qty
+        return
+    state.mixed_cart.append({
+        "type": item_type,
+        "qty": qty,
+        "plan": plan,
+        "label": decision_tree._cart_label_for(item_type, plan, lang),
+    })
+
+
+def _append_group_context_to_existing_mixed_cart(state: ConversationState, group_context: dict | None) -> str:
+    if group_context:
+        for allocation in group_context.get("allocations", []):
+            activity = allocation.get("activity")
+            qty = allocation.get("qty")
+            if not activity or not isinstance(qty, int):
+                continue
+            cart_item = _activity_to_cart_item(activity)
+            if cart_item is None:
+                continue
+            item_type, plan = cart_item
+            _append_mixed_cart_item(state, item_type, plan, qty)
+    _clear_mixed_from_single_group_context(state)
+    return decision_tree._goto_mixed_cart_review(state)
+
+
+def _build_group_allocations_summary_line(activity: str, qty: int, lang: str) -> str:
+    if lang == "es":
+        label = {
+            "snorkeling": "Snorkel",
+            "minicourse": "Minicurso de buceo",
+            "diving": "Buceo certificado",
+        }.get(activity, activity)
+        person_label = "1 persona" if qty == 1 else f"{qty} personas"
+        return f"*{person_label} — {label}*"
+    label = {
+        "snorkeling": "Snorkeling",
+        "minicourse": "Mini-course",
+        "diving": "Certified diving",
+    }.get(activity, activity)
+    person_label = "1 person" if qty == 1 else f"{qty} people"
+    return f"*{person_label} — {label}*"
+
+
+def _activity_display_label(activity: str, lang: str) -> str:
+    if lang == "es":
+        return {
+            "snorkeling": "snorkel",
+            "minicourse": "minicurso de buceo",
+            "diving": "buceo certificado",
+        }.get(activity, activity)
+    return {
+        "snorkeling": "snorkeling",
+        "minicourse": "mini-course",
+        "diving": "certified diving",
+    }.get(activity, activity)
+
+
+def _build_menu_mixed_group_offer_text(state: ConversationState, group_context: dict) -> str:
+    lang = getattr(state, "language", "es") or "es"
+    speaker_activity = group_context.get("speaker_activity")
+    allocations = group_context.get("allocations", [])
+    if lang != "es":
+        return (
+            "You can book a mixed group without a problem.\n\n"
+            "If you want, continue with *👥 Mixed group (diving + snorkeling)* and I'll guide you through the cart step by step."
+        )
+
+    speaker_label = _activity_display_label(speaker_activity, lang) if speaker_activity else "tu actividad"
+    if len(allocations) == 1:
+        allocation = allocations[0]
+        qty = allocation.get("qty", 1)
+        companion_label = _activity_display_label(allocation.get("activity", ""), lang)
+        companion_phrase = (
+            f"tu acompañante puede hacer *{companion_label}*"
+            if qty == 1 else
+            f"tus {qty} acompañantes pueden hacer *{companion_label}*"
+        )
+        plan_line = f"Tú puedes hacer *{speaker_label}* y {companion_phrase} en la misma salida."
+    else:
+        plan_line = "Podemos organizar un plan mixto para el grupo con actividades distintas en la misma salida."
+
+    cta = (
+        "Si quieres, pulsa *👥 Grupo mixto (buceo + snorkel)* "
+        "y te organizo la reserva paso a paso."
+    )
+    return f"¡Claro! {plan_line}\n\n{cta}"
+
+
+def _render_group_info_cards(state: ConversationState, allocations: list[dict]) -> str:
+    if not allocations:
+        return ""
+    if len(allocations) == 1:
+        service_id = _activity_to_service_id(allocations[0]["activity"])
+        return _render_service_info_card_for_current_location(state, service_id) if service_id else ""
+
+    sections: list[str] = []
+    for allocation in allocations:
+        service_id = _activity_to_service_id(allocation["activity"])
+        if not service_id:
+            continue
+        sections.append(
+            _build_group_allocations_summary_line(allocation["activity"], allocation["qty"], state.language)
+            + "\n"
+            + _render_service_info_card_for_current_location(state, service_id)
+        )
+    return "\n\n".join(section for section in sections if section)
+
+
+def _resolve_group_certification(group_context: dict, cert_answer: bool) -> dict:
+    resolved_allocations: list[dict] = []
+    for allocation in group_context.get("allocations", []):
+        activity = allocation.get("activity")
+        qty = allocation.get("qty")
+        if not isinstance(qty, int) or qty <= 0 or not activity:
+            continue
+        if activity == "diving" and not cert_answer:
+            resolved_allocations.append({"activity": "minicourse", "qty": qty})
+        else:
+            resolved_allocations.append({"activity": activity, "qty": qty})
+
+    resolved_context = dict(group_context)
+    resolved_context["allocations"] = _merge_group_allocations(resolved_allocations)
+    resolved_context["companion_count"] = sum(item["qty"] for item in resolved_context["allocations"])
+    resolved_context["needs_activity_clarification"] = False
+    return resolved_context
+
+
+def _replace_group_activity(group_context: dict, source_activity: str, target_activity: str) -> dict:
+    replaced_allocations: list[dict] = []
+    for allocation in group_context.get("allocations", []):
+        activity = allocation.get("activity")
+        qty = allocation.get("qty")
+        if not isinstance(qty, int) or qty <= 0 or not activity:
+            continue
+        replaced_allocations.append({
+            "activity": target_activity if activity == source_activity else activity,
+            "qty": qty,
+        })
+
+    resolved_context = dict(group_context)
+    resolved_context["allocations"] = _merge_group_allocations(replaced_allocations)
+    resolved_context["companion_count"] = sum(item["qty"] for item in resolved_context["allocations"])
+    resolved_context["needs_activity_clarification"] = False
+    return resolved_context
+
+
+def _build_companion_last_dive_question(state: ConversationState, diving_qty: int) -> str:
+    lang = getattr(state, "language", "es") or "es"
+    decision_tree.set_quick_replies(state, "certified_last_dive")
+    from src.flows.decision_tree import MESSAGES as _M
+
+    prompt = _M["certified_last_dive"][lang]
+    if lang != "es":
+        return prompt
+    target = "esas personas" if diving_qty > 1 else "tu acompañante"
+    return f"Perfecto. Antes de confirmar ese plan, necesito saber una cosa sobre {target}:\n\n{prompt}"
+
+
+def _build_companion_refresher_prompt(state: ConversationState) -> str:
+    lang = getattr(state, "language", "es") or "es"
+    decision_tree.set_quick_replies(state, "refresher_interest")
+    from src.flows.decision_tree import MESSAGES as _M
+
+    return _M["refresher_info"][lang]
+
+
+def _build_group_activity_intro(lang: str, allocations: list[dict]) -> str:
+    if lang != "es":
+        return "Your group can go together without a problem. Here is the information for each activity:"
+    if not allocations:
+        return "¡Claro! Pueden ir juntos sin problema."
+    if len(allocations) == 1:
+        allocation = allocations[0]
+        qty = allocation["qty"]
+        people_phrase = "tu acompañante" if qty == 1 else f"tus {qty} acompañantes"
+        if allocation["activity"] == "snorkeling":
+            return f"¡Claro! Pueden ir juntos sin problema. Para {people_phrase}, esta es la información completa del plan de snorkel:"
+        if allocation["activity"] == "minicourse":
+            return f"¡Claro! Pueden ir juntos sin problema. Para {people_phrase}, esta es la información completa del minicurso de buceo:"
+        return f"¡Claro! Pueden ir juntos sin problema. Para {people_phrase}, esta es la información completa del plan de buceo para buzos certificados:"
+    return "¡Claro! Pueden ir juntos sin problema. Para tu grupo, te comparto la información de cada actividad:"
+
+
+def _show_group_activity_cards(state: ConversationState, base_id: str | None, group_context: dict) -> str:
+    allocations = group_context.get("allocations", [])
+    companion_count = group_context.get("companion_count")
+    _set_mixed_from_single_group_context(state, group_context)
+    info_cards = _render_group_info_cards(state, allocations)
+    follow_up, quick_replies = _build_mixed_from_single_follow_up(
+        {"base_id": base_id, "companion_count": companion_count},
+        state.language,
+    )
+    setattr(state, "mixed_from_single_offer_pending", True)
+    state.quick_replies = quick_replies
+    intro = _build_group_activity_intro(state.language, allocations)
+    return f"{intro}\n\n{info_cards}\n\n{follow_up}" if info_cards else f"{intro}\n\n{follow_up}"
+
+
+def _coerce_group_context_with_activity_intent(
+    message: str,
+    base_id: str | None,
+    parsed_group_context: dict | None,
+) -> dict | None:
+    activity_intent = _detect_companion_activity_intent(message, base_id)
+    if activity_intent == "same":
+        activity_intent = _base_service_to_activity_intent(base_id)
+
+    if activity_intent is None:
+        return parsed_group_context
+
+    if parsed_group_context is None:
+        return _build_group_context_from_activity(activity_intent)
+
+    if parsed_group_context.get("allocations"):
+        return parsed_group_context
+
+    companion_count = parsed_group_context.get("companion_count") or 1
+    total_people = parsed_group_context.get("total_people")
+    return _build_group_context_from_activity(activity_intent, companion_count, total_people)
+
+
+def _handle_companion_group_context(state: ConversationState, base_id: str | None, lang: str, group_context: dict | None) -> str:
+    setattr(state, "mixed_from_single_companion_context_active", True)
+    if not group_context:
+        prompt, quick_replies = _build_mixed_from_single_activity_question()
+        setattr(state, "mixed_from_single_activity_question_pending", True)
+        state.quick_replies = quick_replies
+        return prompt
+
+    _set_mixed_from_single_group_context(state, group_context)
+    companion_count = group_context.get("companion_count")
+    allocations = group_context.get("allocations", [])
+    if group_context.get("needs_activity_clarification") or not allocations:
+        prompt, quick_replies = _build_mixed_from_single_activity_question(companion_count)
+        setattr(state, "mixed_from_single_activity_question_pending", True)
+        state.quick_replies = quick_replies
+        return prompt
+
+    diving_qty = sum(item["qty"] for item in allocations if item.get("activity") == "diving")
+    if diving_qty > 0:
+        prompt, quick_replies = _build_mixed_from_single_cert_question(diving_qty)
+        setattr(state, "mixed_from_single_cert_question_pending", True)
+        state.quick_replies = quick_replies
+        return prompt
+
+    return _show_group_activity_cards(state, base_id, group_context)
 
 
 def _build_mixed_from_single_activity_response(
@@ -638,8 +1286,9 @@ def _build_mixed_from_single_activity_response(
     intro: str,
 ) -> str:
     info_card = _render_service_info_card_for_current_location(state, target_service_id)
-    follow_up, quick_replies = _build_mixed_from_single_follow_up(base_id, lang)
+    follow_up, quick_replies = _build_mixed_from_single_follow_up({"base_id": base_id, "companion_count": 1}, lang)
     setattr(state, "mixed_from_single_offer_pending", True)
+    _set_mixed_from_single_group_context(state, _build_group_context_from_activity(_base_service_to_activity_intent(target_service_id) or "snorkeling"))
     state.quick_replies = quick_replies
     return f"{intro}\n\n{info_card}\n\n{follow_up}"
 
@@ -650,33 +1299,18 @@ def _handle_companion_activity_intent(
     lang: str,
     activity_intent: str | None,
 ) -> str:
-    setattr(state, "mixed_from_single_companion_context_active", True)
-    if activity_intent == "minicourse":
-        return _build_mixed_from_single_activity_response(
-            state,
-            base_id,
-            lang,
-            "minicourse",
-            "¡Claro! Pueden ir juntos sin problema. Para tu acompañante, esta es la información completa del minicurso de buceo:",
-        )
-    if activity_intent == "snorkeling":
-        return _build_mixed_from_single_activity_response(
-            state,
-            base_id,
-            lang,
-            "snorkeling",
-            "¡Claro! Pueden ir juntos sin problema. Para tu acompañante, esta es la información completa del plan de snorkel:",
-        )
-    if activity_intent == "diving":
-        prompt, quick_replies = _build_mixed_from_single_cert_question()
-        setattr(state, "mixed_from_single_cert_question_pending", True)
-        state.quick_replies = quick_replies
-        return prompt
-
-    prompt, quick_replies = _build_mixed_from_single_activity_question()
-    setattr(state, "mixed_from_single_activity_question_pending", True)
-    state.quick_replies = quick_replies
-    return prompt
+    if activity_intent is None:
+        return _handle_companion_group_context(state, base_id, lang, None)
+    if activity_intent == "same":
+        activity_intent = _base_service_to_activity_intent(base_id)
+    if activity_intent is None:
+        return _handle_companion_group_context(state, base_id, lang, None)
+    return _handle_companion_group_context(
+        state,
+        base_id,
+        lang,
+        _build_group_context_from_activity(activity_intent),
+    )
 
 
 def _map_service_to_cart_item(service_id: str) -> tuple[str, str | None] | None:
@@ -730,14 +1364,22 @@ def _enter_mixed_flow_from_single(state: ConversationState) -> str:
     state.mixed_entry_path = "diving_snorkel"
 
     # Preload 1× of the current activity for the main user.
-    lang = getattr(state, "language", "es") or "es"
-    label = decision_tree._cart_label_for(item_type, plan, lang)
-    state.mixed_cart.append({
-        "type": item_type,
-        "qty": 1,
-        "plan": plan,
-        "label": label,
-    })
+    _append_mixed_cart_item(state, item_type, plan, 1)
+
+    group_context = _get_mixed_from_single_group_context(state)
+    if group_context:
+        for allocation in group_context.get("allocations", []):
+            activity = allocation.get("activity")
+            qty = allocation.get("qty")
+            if not activity or not isinstance(qty, int):
+                continue
+            cart_item = _activity_to_cart_item(activity)
+            if cart_item is None:
+                continue
+            companion_item_type, companion_plan = cart_item
+            _append_mixed_cart_item(state, companion_item_type, companion_plan, qty)
+
+    _clear_mixed_from_single_group_context(state)
 
     # Jump straight to the cart review so they immediately see their cart and
     # can add the friend's activity.
@@ -756,10 +1398,7 @@ def _maybe_offer_mixed_from_single(state: ConversationState, message: str, answe
         if not svc_id:
             return answer
 
-        # Do not re-offer if we've already handled this path, and never offer
-        # while already inside the mixed flow.
-        if getattr(state, "mixed_from_single_offer_handled", False):
-            return answer
+        # Never offer while already inside the mixed flow.
         if decision_tree._is_in_mixed_flow(state):
             return answer
 
@@ -777,10 +1416,9 @@ def _maybe_offer_mixed_from_single(state: ConversationState, message: str, answe
         setattr(state, "mixed_from_single_companion_context_active", True)
 
         if lang == "es" and base_id in {"snorkeling", "2_dives_1_day", "minicourse"}:
-            activity_intent = _detect_companion_activity_intent(message, base_id)
-            if activity_intent == "same":
-                activity_intent = _detect_companion_activity_answer(message, base_id)
-            return _handle_companion_activity_intent(state, base_id, lang, activity_intent)
+            parsed_group_context = _build_companion_group_context(message, base_id)
+            group_context = _coerce_group_context_with_activity_intent(message, base_id, parsed_group_context)
+            return _handle_companion_group_context(state, base_id, lang, group_context)
 
         follow_up, quick_replies = _build_mixed_from_single_follow_up(base_id, lang)
 
@@ -794,6 +1432,177 @@ def _maybe_offer_mixed_from_single(state: ConversationState, message: str, answe
     except Exception:
         # Fail-safe: never break the main flow because of this helper.
         return answer
+
+
+def _maybe_handle_mixed_group_from_menu(state: ConversationState, message: str) -> str | None:
+    if state.step not in {Step.MAIN_MENU, Step.RESERVA_MENU, Step.GROUP_TYPE}:
+        return None
+    if not _detect_companion_intent(message, state):
+        return None
+
+    group_context = _extract_menu_mixed_group_context(message)
+    if not group_context:
+        return None
+
+    state.step = Step.GROUP_TYPE
+    state.quick_replies = [
+        {"title": "👥 Grupo mixto (buceo + snorkel)", "value": "3"},
+        {"title": "🔙 Volver", "value": "back"},
+    ]
+    return _build_menu_mixed_group_offer_text(state, group_context)
+
+
+def _maybe_handle_companion_request_inside_mixed_flow(state: ConversationState, message: str) -> str | None:
+    if not decision_tree._is_in_mixed_flow(state):
+        return None
+    if getattr(state, "language", "es") != "es":
+        return None
+    if not _detect_companion_intent(message, state):
+        return None
+
+    base_id = _infer_companion_base_service_id(state)
+    if base_id is None:
+        return None
+
+    parsed_group_context = _build_companion_group_context(message, base_id)
+    group_context = _coerce_group_context_with_activity_intent(message, base_id, parsed_group_context)
+    return _handle_companion_group_context(state, base_id, state.language, group_context)
+
+
+def _handle_pending_companion_flow(state: ConversationState, message: str, msg_lower: str) -> str | None:
+    if not any(
+        getattr(state, attr, False)
+        for attr in (
+            "mixed_from_single_activity_question_pending",
+            "mixed_from_single_cert_question_pending",
+            "mixed_from_single_last_dive_question_pending",
+            "mixed_from_single_refresher_interest_pending",
+            "mixed_from_single_offer_pending",
+        )
+    ):
+        return None
+
+    base_id = _infer_companion_base_service_id(state)
+
+    if getattr(state, "mixed_from_single_activity_question_pending", False):
+        current_group_context = _get_mixed_from_single_group_context(state) or {}
+        group_answer = _detect_companion_group_question_answer(
+            message,
+            base_id,
+            current_group_context.get("companion_count"),
+            current_group_context.get("total_people"),
+        )
+        if group_answer is None:
+            prompt, quick_replies = _build_mixed_from_single_activity_question(
+                current_group_context.get("companion_count")
+            )
+            state.quick_replies = quick_replies
+            return "No te entendí del todo.\n\n" + prompt
+
+        setattr(state, "mixed_from_single_activity_question_pending", False)
+        return _handle_companion_group_context(state, base_id, state.language, group_answer)
+
+    if getattr(state, "mixed_from_single_cert_question_pending", False):
+        current_group_context = _get_mixed_from_single_group_context(state) or _build_group_context_from_activity("diving")
+        diving_qty = sum(
+            item["qty"]
+            for item in current_group_context.get("allocations", [])
+            if item.get("activity") == "diving"
+        ) or 1
+        cert_answer = _detect_companion_certification_answer(message)
+        if cert_answer is None:
+            prompt, quick_replies = _build_mixed_from_single_cert_question(diving_qty)
+            state.quick_replies = quick_replies
+            return "No te entendí del todo.\n\n" + prompt
+
+        setattr(state, "mixed_from_single_cert_question_pending", False)
+        resolved_group_context = _resolve_group_certification(current_group_context, cert_answer)
+        _set_mixed_from_single_group_context(state, resolved_group_context)
+        if cert_answer:
+            setattr(state, "mixed_from_single_last_dive_question_pending", True)
+            return _build_companion_last_dive_question(state, diving_qty)
+        response = _show_group_activity_cards(state, base_id, resolved_group_context)
+        intro = (
+            "Perfecto. Si no todos están certificados, lo ideal es pasar ese subgrupo a minicurso de iniciación:"
+            if diving_qty > 1 else
+            "Perfecto. Si no está certificado, lo ideal es empezar con este minicurso de iniciación:"
+        )
+        return f"{intro}\n\n{response}"
+
+    if getattr(state, "mixed_from_single_last_dive_question_pending", False):
+        current_group_context = _get_mixed_from_single_group_context(state) or _build_group_context_from_activity("diving")
+        diving_qty = sum(
+            item["qty"]
+            for item in current_group_context.get("allocations", [])
+            if item.get("activity") == "diving"
+        ) or 1
+        last_dive_over_2_years = _detect_binary_yes_no_answer(message)
+        if last_dive_over_2_years is None:
+            return "No te entendí del todo.\n\n" + _build_companion_last_dive_question(state, diving_qty)
+
+        setattr(state, "mixed_from_single_last_dive_question_pending", False)
+        updated_group_context = dict(current_group_context)
+        updated_group_context["last_dive_over_2_years"] = last_dive_over_2_years
+        _set_mixed_from_single_group_context(state, updated_group_context)
+        if last_dive_over_2_years:
+            setattr(state, "mixed_from_single_refresher_interest_pending", True)
+            return _build_companion_refresher_prompt(state)
+        return _show_group_activity_cards(state, base_id, updated_group_context)
+
+    if getattr(state, "mixed_from_single_refresher_interest_pending", False):
+        current_group_context = _get_mixed_from_single_group_context(state) or _build_group_context_from_activity("diving")
+        refresher_interested = _detect_binary_yes_no_answer(message)
+        if refresher_interested is None:
+            return "No te entendí del todo.\n\n" + _build_companion_refresher_prompt(state)
+
+        setattr(state, "mixed_from_single_refresher_interest_pending", False)
+        updated_group_context = dict(current_group_context)
+        updated_group_context["refresher_interested"] = refresher_interested
+        if refresher_interested:
+            updated_group_context = _replace_group_activity(updated_group_context, "diving", "minicourse")
+        _set_mixed_from_single_group_context(state, updated_group_context)
+        return _show_group_activity_cards(state, base_id, updated_group_context)
+
+    if getattr(state, "mixed_from_single_offer_pending", False):
+        if msg_lower in {"1", "si", "sí", "yes"}:
+            setattr(state, "mixed_from_single_offer_pending", False)
+            setattr(state, "mixed_from_single_companion_context_active", False)
+            setattr(state, "mixed_from_single_activity_question_pending", False)
+            setattr(state, "mixed_from_single_cert_question_pending", False)
+            setattr(state, "mixed_from_single_last_dive_question_pending", False)
+            setattr(state, "mixed_from_single_refresher_interest_pending", False)
+            state.quick_replies = []
+            if decision_tree._is_in_mixed_flow(state):
+                logger.info("[SUPERVISOR] Mixed companion: user accepted add-to-existing-cart offer")
+                return _append_group_context_to_existing_mixed_cart(state, _get_mixed_from_single_group_context(state))
+            logger.info("[SUPERVISOR] Mixed-from-single: user accepted cart offer")
+            return _enter_mixed_flow_from_single(state)
+        if msg_lower in {"2", "no"}:
+            setattr(state, "mixed_from_single_offer_pending", False)
+            setattr(state, "mixed_from_single_companion_context_active", False)
+            setattr(state, "mixed_from_single_activity_question_pending", False)
+            setattr(state, "mixed_from_single_cert_question_pending", False)
+            setattr(state, "mixed_from_single_last_dive_question_pending", False)
+            setattr(state, "mixed_from_single_refresher_interest_pending", False)
+            if decision_tree._is_in_mixed_flow(state):
+                _clear_mixed_from_single_group_context(state)
+                state.quick_replies = []
+                return decision_tree._goto_mixed_cart_review(state)
+            _clear_mixed_from_single_group_context(state)
+            state.quick_replies = []
+            if state.language == "es":
+                return (
+                    "Perfecto, entonces mantenemos solo la actividad que ya tenías. "
+                    "Si más adelante quieres que te ayude a armar un plan mixto para tu amigo o acompañante, solo dime."
+                )
+            return (
+                "Perfect, we'll keep only your current activity. "
+                "If later you want help building a mixed plan for your friend or companion, just let me know."
+            )
+        setattr(state, "mixed_from_single_offer_pending", False)
+        _clear_mixed_from_single_group_context(state)
+
+    return None
 
 
 def _match_quick_reply_text(state: ConversationState, message: str) -> str | None:
@@ -1368,7 +2177,17 @@ async def route_message(state: ConversationState, message: str) -> str:
     if msg_lower == "back" or msg_lower in BACK_KEYWORDS:
         logger.info(f"[SUPERVISOR] Back navigation from step={state.step.value}")
         # Cart-flow steps that manage their own back/cancel inline
-        if state.step in (Step.MIXED_ADD_ACTIVITY, Step.MIXED_ADD_CERT_PLAN, Step.MIXED_ADD_QTY):
+        if state.step in (
+            Step.MIXED_LOCATION,
+            Step.MIXED_ADD_ACTIVITY,
+            Step.MIXED_ADD_CERT_PLAN,
+            Step.MIXED_ADD_QTY,
+            Step.MIXED_CERT_LAST_DIVE,
+            Step.MIXED_CERT_REFRESH_INTEREST,
+            Step.MIXED_CERT_REFRESH_QTY,
+            Step.MIXED_CERT_SPLIT_REVIEW,
+            Step.MIXED_ADD_PREVIEW,
+        ):
             return decision_tree.process_message(state, "back")
         return _go_back_one_step(state)
 
@@ -1409,6 +2228,10 @@ async def route_message(state: ConversationState, message: str) -> str:
 
     # If user is in a menu step
     if state.step in MENU_STEPS:
+        pending_companion_response = _handle_pending_companion_flow(state, message, msg_lower)
+        if pending_companion_response is not None:
+            return pending_companion_response
+
         # Exact button-value match: user sent the raw value of one of the displayed buttons.
         # Handles non-digit values like "6+" that isdigit() would miss.
         raw_msg = message.strip()
@@ -1484,6 +2307,10 @@ async def route_message(state: ConversationState, message: str) -> str:
             logger.info(f"[SUPERVISOR] Decision tree (early step) -> step={state.step.value}")
             return response
 
+        mixed_companion_response = _maybe_handle_companion_request_inside_mixed_flow(state, message)
+        if mixed_companion_response is not None:
+            return mixed_companion_response
+
         # LLM intent classifier — only inside the cart-style mixed flow.
         # Maps natural-language inputs ("añade otro", "quítalo", "en pesos") to button values.
         if state.step in _MIXED_FLOW_STEPS and state.quick_replies:
@@ -1495,7 +2322,17 @@ async def route_message(state: ConversationState, message: str) -> str:
             )
             if intent == "back":
                 logger.info(f"[SUPERVISOR] Intent=back from step={state.step.value}")
-                if state.step in (Step.MIXED_ADD_ACTIVITY, Step.MIXED_ADD_CERT_PLAN, Step.MIXED_ADD_QTY):
+                if state.step in (
+                    Step.MIXED_LOCATION,
+                    Step.MIXED_ADD_ACTIVITY,
+                    Step.MIXED_ADD_CERT_PLAN,
+                    Step.MIXED_ADD_QTY,
+                    Step.MIXED_CERT_LAST_DIVE,
+                    Step.MIXED_CERT_REFRESH_INTEREST,
+                    Step.MIXED_CERT_REFRESH_QTY,
+                    Step.MIXED_CERT_SPLIT_REVIEW,
+                    Step.MIXED_ADD_PREVIEW,
+                ):
                     return decision_tree.process_message(state, "back")
                 return _go_back_one_step(state)
             if intent == "restart":
@@ -1528,6 +2365,12 @@ async def route_message(state: ConversationState, message: str) -> str:
                 return response
             # intent == "RAG" → fall through to RAG below
 
+        deterministic_mixed_response = _maybe_handle_mixed_group_from_menu(state, message)
+        if deterministic_mixed_response is not None:
+            state.history.append({"role": "user", "content": message})
+            state.history.append({"role": "assistant", "content": deterministic_mixed_response})
+            return deterministic_mixed_response
+
         # Free text while in menu -> use RAG but keep menu state
         logger.info(f"[SUPERVISOR] RAG (free text in menu step={state.step.value})")
         state.history.append({"role": "user", "content": message})
@@ -1536,6 +2379,18 @@ async def route_message(state: ConversationState, message: str) -> str:
         answer = _maybe_offer_mixed_from_single(state, message, answer)
         state.history.append({"role": "assistant", "content": answer})
         return answer
+
+    if state.step == Step.SUMMARY and any(
+        getattr(state, attr, False)
+        for attr in (
+            "mixed_from_single_offer_pending",
+            "mixed_from_single_activity_question_pending",
+            "mixed_from_single_cert_question_pending",
+            "mixed_from_single_last_dive_question_pending",
+            "mixed_from_single_refresher_interest_pending",
+        )
+    ):
+        state.step = Step.FREE_TEXT
 
     # Post-menu steps (SUMMARY, FREE_TEXT) -> summary may still have quick replies (itinerary offer)
     if state.step == Step.SUMMARY:
@@ -1598,72 +2453,9 @@ async def route_message(state: ConversationState, message: str) -> str:
         return answer
 
     if state.step == Step.FREE_TEXT:
-        if getattr(state, "mixed_from_single_activity_question_pending", False):
-            base_id = _normalize_base_service_id(getattr(state, "selected_service", None))
-            activity_answer = _detect_companion_activity_answer(message, base_id)
-            if activity_answer is None:
-                prompt, quick_replies = _build_mixed_from_single_activity_question()
-                state.quick_replies = quick_replies
-                return "No te entendí del todo.\n\n" + prompt
-
-            setattr(state, "mixed_from_single_activity_question_pending", False)
-            return _handle_companion_activity_intent(state, base_id, state.language, activity_answer)
-
-        if getattr(state, "mixed_from_single_cert_question_pending", False):
-            cert_answer = _detect_companion_certification_answer(message)
-            if cert_answer is None:
-                prompt, quick_replies = _build_mixed_from_single_cert_question()
-                state.quick_replies = quick_replies
-                return "No te entendí del todo.\n\n" + prompt
-
-            setattr(state, "mixed_from_single_cert_question_pending", False)
-            service_id = "2_dives_1_day" if cert_answer else "minicourse"
-            info_card = _render_service_info_card_for_current_location(state, service_id)
-            base_id = _normalize_base_service_id(getattr(state, "selected_service", None))
-            follow_up, quick_replies = _build_mixed_from_single_follow_up(base_id, state.language)
-            setattr(state, "mixed_from_single_offer_pending", True)
-            state.quick_replies = quick_replies
-
-            if cert_answer:
-                intro = (
-                    "Perfecto. Si tu amigo ya está certificado, esta es la opción adecuada. "
-                    "Si hace más de 2 años que no bucea, luego revisamos si necesita refresh:"
-                )
-            else:
-                intro = "Perfecto. Si no está certificado, lo ideal es empezar con este minicurso de iniciación:"
-            return f"{intro}\n\n{info_card}\n\n{follow_up}"
-
-        # First, handle the yes/no offer to switch into the mixed cart flow.
-        if getattr(state, "mixed_from_single_offer_pending", False):
-            if msg_lower in {"1", "si", "sí", "yes"}:
-                # User accepted: enter the mixed cart preloaded with their current activity.
-                setattr(state, "mixed_from_single_offer_pending", False)
-                setattr(state, "mixed_from_single_offer_handled", True)
-                setattr(state, "mixed_from_single_companion_context_active", False)
-                setattr(state, "mixed_from_single_activity_question_pending", False)
-                setattr(state, "mixed_from_single_cert_question_pending", False)
-                state.quick_replies = []
-                logger.info("[SUPERVISOR] Mixed-from-single: user accepted cart offer")
-                return _enter_mixed_flow_from_single(state)
-            if msg_lower in {"2", "no"}:
-                # User declined: keep the current activity only.
-                setattr(state, "mixed_from_single_offer_pending", False)
-                setattr(state, "mixed_from_single_offer_handled", True)
-                setattr(state, "mixed_from_single_companion_context_active", False)
-                setattr(state, "mixed_from_single_activity_question_pending", False)
-                setattr(state, "mixed_from_single_cert_question_pending", False)
-                state.quick_replies = []
-                if state.language == "es":
-                    return (
-                        "Perfecto, entonces mantenemos solo la actividad que ya tenías. "
-                        "Si más adelante quieres que te ayude a armar un plan mixto para tu amigo o acompañante, solo dime."
-                    )
-                return (
-                    "Perfect, we'll keep only your current activity. "
-                    "If later you want help building a mixed plan for your friend or companion, just let me know."
-                )
-            # Any other response: clear the pending flag and continue with normal FREE_TEXT handling.
-            setattr(state, "mixed_from_single_offer_pending", False)
+        pending_companion_response = _handle_pending_companion_flow(state, message, msg_lower)
+        if pending_companion_response is not None:
+            return pending_companion_response
 
         # Check if user wants to restart the free-text Q&A closing flow.
         if msg_lower in ("1", "si", "sí", "yes"):

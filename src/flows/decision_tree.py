@@ -58,9 +58,15 @@ class Step(str, Enum):
     COURSES_SPECIALTIES_MENU = "courses_specialties_menu"
     # Cart-style mixed-group flow
     MIXED_ENTRY = "mixed_entry"
+    MIXED_LOCATION = "mixed_location"
     MIXED_ADD_ACTIVITY = "mixed_add_activity"
     MIXED_ADD_CERT_PLAN = "mixed_add_cert_plan"
     MIXED_ADD_QTY = "mixed_add_qty"
+    MIXED_CERT_LAST_DIVE = "mixed_cert_last_dive"
+    MIXED_CERT_REFRESH_INTEREST = "mixed_cert_refresh_interest"
+    MIXED_CERT_REFRESH_QTY = "mixed_cert_refresh_qty"
+    MIXED_CERT_SPLIT_REVIEW = "mixed_cert_split_review"
+    MIXED_ADD_PREVIEW = "mixed_add_preview"
     MIXED_CART_REVIEW = "mixed_cart_review"
     MIXED_CART_MODIFY_PICK = "mixed_cart_modify_pick"
     MIXED_CART_REMOVE_PICK = "mixed_cart_remove_pick"
@@ -126,6 +132,11 @@ class ConversationState:
     #             "plan": "2_dives_1_day"|None, "label": str}
     mixed_pending_qty_type: str | None = None    # which type is being added/edited
     mixed_pending_qty_plan: str | None = None    # holds cert plan while qty is collected
+    mixed_pending_qty_value: int | None = None
+    mixed_pending_preview_service_id: str | None = None
+    mixed_pending_cert_total_qty: int | None = None
+    mixed_pending_cert_remaining_qty: int | None = None
+    mixed_pending_refresh_added_qty: int | None = None
     mixed_pending_modify_idx: int | None = None  # cart index when editing an item
     mixed_pending_exact: bool = False            # waiting for exact count after "6+"
     mixed_display_currency: str = "USD"          # "USD" | "COP"
@@ -892,6 +903,18 @@ MESSAGES = {
         "es": "¿Para *cuántas personas*?",
         "en": "For *how many people*?",
     },
+    "mixed_location": {
+        "es": "Antes de añadir actividades, ¿desde dónde saldrá el grupo?",
+        "en": "Before adding activities, where will the group depart from?",
+    },
+    "mixed_add_preview": {
+        "es": "¿Quieres añadir esta actividad al carrito?",
+        "en": "Would you like to add this activity to the cart?",
+    },
+    "mixed_cert_refresh_qty": {
+        "es": "¿Cuántas personas quieren incluir el *Minicurso / Refresher*?",
+        "en": "How many people want to include the *Mini-course / Refresher*?",
+    },
     "mixed_cart_empty": {
         "es": "Tu carrito está vacío. Añade al menos una actividad para continuar.",
         "en": "Your cart is empty. Add at least one activity to continue.",
@@ -1300,6 +1323,30 @@ BUTTON_OPTIONS = {
             {"title": "5", "value": "5"},
             {"title": "6 or more", "value": "6+"},
             {"title": "🔙 Cancel", "value": "back"},
+        ],
+    },
+    "mixed_preview_actions": {
+        "es": [
+            {"title": "🛒 Añadir al carrito", "value": "1"},
+            {"title": "🗺️ Ver itinerario completo", "value": "itinerary"},
+            {"title": "🔙 Cancelar", "value": "back"},
+        ],
+        "en": [
+            {"title": "🛒 Add to cart", "value": "1"},
+            {"title": "🗺️ View full itinerary", "value": "itinerary"},
+            {"title": "🔙 Cancel", "value": "back"},
+        ],
+    },
+    "mixed_cert_split_review": {
+        "es": [
+            {"title": "🎓 Continuar con el buceo", "value": "1"},
+            {"title": "❌ Quitar Minicurso / Refresher", "value": "2"},
+            {"title": "🔄 Empezar de nuevo", "value": "3"},
+        ],
+        "en": [
+            {"title": "🎓 Continue with diving", "value": "1"},
+            {"title": "❌ Remove Mini-course / Refresher", "value": "2"},
+            {"title": "🔄 Start over", "value": "3"},
         ],
     },
     "mixed_yes_no": {
@@ -1891,9 +1938,15 @@ class DecisionTree:
             Step.COURSES_SPECIALTIES_MENU: self._handle_courses_specialties_menu,
             Step.PRICING_COLOMBIAN: self._handle_pricing_colombian,
             Step.MIXED_ENTRY: self._handle_mixed_entry,
+            Step.MIXED_LOCATION: self._handle_mixed_location,
             Step.MIXED_ADD_ACTIVITY: self._handle_mixed_add_activity,
             Step.MIXED_ADD_CERT_PLAN: self._handle_mixed_add_cert_plan,
             Step.MIXED_ADD_QTY: self._handle_mixed_add_qty,
+            Step.MIXED_CERT_LAST_DIVE: self._handle_mixed_cert_last_dive,
+            Step.MIXED_CERT_REFRESH_INTEREST: self._handle_mixed_cert_refresh_interest,
+            Step.MIXED_CERT_REFRESH_QTY: self._handle_mixed_cert_refresh_qty,
+            Step.MIXED_CERT_SPLIT_REVIEW: self._handle_mixed_cert_split_review,
+            Step.MIXED_ADD_PREVIEW: self._handle_mixed_add_preview,
             Step.MIXED_CART_REVIEW: self._handle_mixed_cart_review,
             Step.MIXED_CART_MODIFY_PICK: self._handle_mixed_cart_modify_pick,
             Step.MIXED_CART_REMOVE_PICK: self._handle_mixed_cart_remove_pick,
@@ -2507,9 +2560,15 @@ class DecisionTree:
     def _is_in_mixed_flow(state: ConversationState) -> bool:
         return bool(state.mixed_cart) or state.step in {
             Step.MIXED_ENTRY,
+            Step.MIXED_LOCATION,
             Step.MIXED_ADD_ACTIVITY,
             Step.MIXED_ADD_CERT_PLAN,
             Step.MIXED_ADD_QTY,
+            Step.MIXED_CERT_LAST_DIVE,
+            Step.MIXED_CERT_REFRESH_INTEREST,
+            Step.MIXED_CERT_REFRESH_QTY,
+            Step.MIXED_CERT_SPLIT_REVIEW,
+            Step.MIXED_ADD_PREVIEW,
             Step.MIXED_CART_REVIEW,
             Step.MIXED_CART_MODIFY_PICK,
             Step.MIXED_CART_REMOVE_PICK,
@@ -2540,6 +2599,11 @@ class DecisionTree:
         state.mixed_cart = []
         state.mixed_pending_qty_type = None
         state.mixed_pending_qty_plan = None
+        state.mixed_pending_qty_value = None
+        state.mixed_pending_preview_service_id = None
+        state.mixed_pending_cert_total_qty = None
+        state.mixed_pending_cert_remaining_qty = None
+        state.mixed_pending_refresh_added_qty = None
         state.mixed_pending_modify_idx = None
         state.mixed_pending_exact = False
         state.mixed_display_currency = "USD"
@@ -2549,6 +2613,16 @@ class DecisionTree:
         state.mixed_last_summary = None
         state.mixed_booking_links = []
 
+    def _clear_mixed_pending_add(self, state: ConversationState) -> None:
+        state.mixed_pending_qty_type = None
+        state.mixed_pending_qty_plan = None
+        state.mixed_pending_qty_value = None
+        state.mixed_pending_preview_service_id = None
+        state.mixed_pending_cert_total_qty = None
+        state.mixed_pending_cert_remaining_qty = None
+        state.mixed_pending_refresh_added_qty = None
+        state.mixed_pending_exact = False
+
     def _cart_label_for(self, item_type: str, plan: str | None, lang: str) -> str:
         """Human-readable label for a cart item."""
         if item_type == "cert":
@@ -2557,6 +2631,8 @@ class DecisionTree:
             return "Certified diving (2 dives)" if plan == "2_dives_1_day" else "Certified diving"
         if item_type == "beginner":
             return "Buceo principiantes (Minicurso)" if lang == "es" else "Beginner diving (Mini-course)"
+        if item_type == "refresh":
+            return "Minicurso / Refresher" if lang == "es" else "Mini-course / Refresher"
         if item_type == "snorkel":
             return "Snorkel" if lang == "es" else "Snorkeling"
         if item_type == "companion":
@@ -2569,9 +2645,44 @@ class DecisionTree:
             return self._service_for_location("2_dives_1_day", state)
         if item_type == "beginner":
             return self._service_for_location("minicourse", state)
+        if item_type == "refresh":
+            return self._service_for_location("minicourse", state)
         if item_type == "snorkel":
             return self._service_for_location("snorkeling", state)
         return None  # companion has its own pricing from pricing.json
+
+    def _append_mixed_cart_item(self, state: ConversationState, item_type: str, plan: str | None, qty: int) -> None:
+        if qty <= 0:
+            return
+        lang = state.language
+        label = self._cart_label_for(item_type, plan, lang)
+        existing = next(
+            (it for it in state.mixed_cart if it["type"] == item_type and it.get("plan") == plan),
+            None,
+        )
+        if existing is not None:
+            existing["qty"] += qty
+            existing["label"] = label
+            return
+        state.mixed_cart.append({
+            "type": item_type,
+            "qty": qty,
+            "plan": plan,
+            "label": label,
+        })
+
+    def _remove_mixed_cart_item_qty(self, state: ConversationState, item_type: str, plan: str | None, qty: int) -> None:
+        if qty <= 0:
+            return
+        existing = next(
+            (it for it in state.mixed_cart if it["type"] == item_type and it.get("plan") == plan),
+            None,
+        )
+        if existing is None:
+            return
+        existing["qty"] -= qty
+        if existing["qty"] <= 0:
+            state.mixed_cart.remove(existing)
 
     def _parse_mixed_quantity(self, message: str) -> int | None:
         msg = " ".join(message.strip().lower().split())
@@ -2585,15 +2696,72 @@ class DecisionTree:
             return None
         return None
 
+    def _mixed_preview_state(self, state: ConversationState, service_id: str) -> ConversationState:
+        preview_state = ConversationState(conversation_id=state.conversation_id)
+        preview_state.language = state.language
+        preview_state.location = state.location
+        preview_state.selected_service = service_id
+        preview_state.is_colombian = False
+        preview_state.is_certified = service_id.startswith("2_dives") or service_id.startswith("3_dives")
+        return preview_state
+
+    def _prepare_mixed_add_preview(self, state: ConversationState, service_id: str) -> str:
+        state.mixed_pending_preview_service_id = service_id
+        state.step = Step.MIXED_ADD_PREVIEW
+        self.set_quick_replies(state, "mixed_preview_actions")
+        preview_state = self._mixed_preview_state(state, service_id)
+        return self._format_summary(preview_state, final_prompt=MESSAGES["mixed_add_preview"][state.language])
+
+    def _build_mixed_cert_split_review_message(self, state: ConversationState) -> str:
+        lang = state.language
+        remaining_qty = state.mixed_pending_cert_remaining_qty or 0
+        cart_lines = self._format_cart_lines(state, lang)
+        if lang == "es":
+            person_phrase = "1 persona" if remaining_qty == 1 else f"{remaining_qty} personas"
+            pending_line = (
+                f"Aún queda {person_phrase} pendiente de continuar con la reserva de *Buceo certificado (2 inmersiones)*."
+            )
+            prompt = "¿Cómo quieres continuar?"
+        else:
+            person_phrase = "1 person" if remaining_qty == 1 else f"{remaining_qty} people"
+            pending_line = (
+                f"There is still {person_phrase} pending to continue with the *Certified diving (2 dives)* booking."
+            )
+            prompt = "How would you like to continue?"
+        return f"{cart_lines}\n\n{pending_line}\n\n{prompt}"
+
     # ─── Step handlers ───
 
     def _handle_mixed_entry(self, state: ConversationState, message: str) -> str:
         lang = state.language
         choice = self._parse_choice(message, 1)
         if choice == 1 or message.strip().lower() in ("start", "empezar", "ok", "vale", "si", "sí", "yes"):
+            if state.location is None:
+                state.step = Step.MIXED_LOCATION
+                self.set_quick_replies(state, "tours_location")
+                return MESSAGES["mixed_location"][lang]
             return self._goto_mixed_add_activity(state)
         # Default: also advance (the entry step is just an intro)
+        if state.location is None:
+            state.step = Step.MIXED_LOCATION
+            self.set_quick_replies(state, "tours_location")
+            return MESSAGES["mixed_location"][lang]
         return self._goto_mixed_add_activity(state)
+
+    def _handle_mixed_location(self, state: ConversationState, message: str) -> str:
+        choice = self._parse_choice(message, 2)
+        lang = state.language
+        msg = message.strip().lower()
+        if msg in ("back", "cancel", "cancelar"):
+            return self._goto_mixed_entry(state)
+        if choice == 1:
+            state.location = "cartagena"
+            return self._goto_mixed_add_activity(state)
+        if choice == 2:
+            state.location = "island"
+            return self._goto_mixed_add_activity(state)
+        self.set_quick_replies(state, "tours_location")
+        return MESSAGES["not_understood"][lang]
 
     def _goto_mixed_add_activity(self, state: ConversationState) -> str:
         lang = state.language
@@ -2669,9 +2837,7 @@ class DecisionTree:
         if msg in ("back", "cancel", "cancelar"):
             # If editing an item, cancel sends back to cart review (don't drop the existing item)
             state.mixed_pending_modify_idx = None
-            state.mixed_pending_qty_type = None
-            state.mixed_pending_qty_plan = None
-            state.mixed_pending_exact = False
+            self._clear_mixed_pending_add(state)
             return self._goto_mixed_cart_review(state) if state.mixed_cart else self._goto_mixed_entry(state)
 
         if message.strip() == "6+" and not state.mixed_pending_exact:
@@ -2691,32 +2857,168 @@ class DecisionTree:
             return MESSAGES["not_understood"][lang]
 
         state.mixed_pending_exact = False
-        # Save into cart: either modify existing or append new
         item_type = state.mixed_pending_qty_type or "cert"
         plan = state.mixed_pending_qty_plan
-        label = self._cart_label_for(item_type, plan, lang)
         if state.mixed_pending_modify_idx is not None and 0 <= state.mixed_pending_modify_idx < len(state.mixed_cart):
             state.mixed_cart[state.mixed_pending_modify_idx]["qty"] = n
             state.mixed_pending_modify_idx = None
-        else:
-            # Si ya hay un item del mismo type+plan en el carrito, sumamos cantidad
-            # en vez de crear una línea duplicada.
-            existing = next(
-                (it for it in state.mixed_cart if it["type"] == item_type and it.get("plan") == plan),
-                None,
-            )
-            if existing is not None:
-                existing["qty"] += n
-            else:
-                state.mixed_cart.append({
-                    "type": item_type,
-                    "qty": n,
-                    "plan": plan,
-                    "label": label,
-                })
-        state.mixed_pending_qty_type = None
-        state.mixed_pending_qty_plan = None
+            self._clear_mixed_pending_add(state)
+            return self._goto_mixed_cart_review(state)
+
+        state.mixed_pending_qty_value = n
+        if item_type == "companion":
+            self._append_mixed_cart_item(state, item_type, plan, n)
+            self._clear_mixed_pending_add(state)
+            return self._goto_mixed_cart_review(state)
+
+        if item_type == "cert":
+            state.mixed_pending_cert_total_qty = n
+            state.mixed_pending_cert_remaining_qty = n
+            state.step = Step.MIXED_CERT_LAST_DIVE
+            self.set_quick_replies(state, "certified_last_dive")
+            return MESSAGES["certified_last_dive"][lang]
+
+        if item_type == "beginner":
+            return self._prepare_mixed_add_preview(state, self._service_for_location("minicourse", state))
+        if item_type == "snorkel":
+            return self._prepare_mixed_add_preview(state, self._service_for_location("snorkeling", state))
+
+        self._clear_mixed_pending_add(state)
         return self._goto_mixed_cart_review(state)
+
+    def _handle_mixed_cert_last_dive(self, state: ConversationState, message: str) -> str:
+        choice = self._parse_choice(message, 2)
+        lang = state.language
+        msg = message.strip().lower()
+        if msg in ("back", "cancel", "cancelar"):
+            state.step = Step.MIXED_ADD_QTY
+            self.set_quick_replies(state, "mixed_quantity")
+            return MESSAGES["mixed_add_qty"][lang]
+        if choice == 1:
+            state.step = Step.MIXED_CERT_REFRESH_INTEREST
+            self.set_quick_replies(state, "refresher_interest")
+            return MESSAGES["refresher_info"][lang]
+        if choice == 2:
+            return self._prepare_mixed_add_preview(state, self._service_for_location("2_dives_1_day", state))
+        self.set_quick_replies(state, "certified_last_dive")
+        return MESSAGES["not_understood"][lang]
+
+    def _handle_mixed_cert_refresh_interest(self, state: ConversationState, message: str) -> str:
+        choice = self._parse_choice(message, 2)
+        lang = state.language
+        msg = message.strip().lower()
+        if msg in ("back", "cancel", "cancelar"):
+            state.step = Step.MIXED_CERT_LAST_DIVE
+            self.set_quick_replies(state, "certified_last_dive")
+            return MESSAGES["certified_last_dive"][lang]
+        if choice == 1:
+            state.step = Step.MIXED_CERT_REFRESH_QTY
+            self.set_quick_replies(state, "mixed_quantity")
+            return MESSAGES["mixed_cert_refresh_qty"][lang]
+        if choice == 2:
+            return self._prepare_mixed_add_preview(state, self._service_for_location("2_dives_1_day", state))
+        self.set_quick_replies(state, "refresher_interest")
+        return MESSAGES["not_understood"][lang]
+
+    def _handle_mixed_cert_refresh_qty(self, state: ConversationState, message: str) -> str:
+        lang = state.language
+        msg = message.strip().lower()
+        total_qty = state.mixed_pending_cert_total_qty or state.mixed_pending_qty_value or 0
+        if msg in ("back", "cancel", "cancelar"):
+            state.step = Step.MIXED_CERT_REFRESH_INTEREST
+            self.set_quick_replies(state, "refresher_interest")
+            return MESSAGES["refresher_info"][lang]
+
+        if message.strip() == "6+" and not state.mixed_pending_exact:
+            state.mixed_pending_exact = True
+            state.quick_replies = []
+            return ("Son 6 o más. ¿Cuántas personas exactamente? Escribe el número (ej: 7, 8, 10...)."
+                    if lang == "es" else
+                    "6 or more. How many exactly? Type the number (e.g. 7, 8, 10...).")
+
+        n = self._parse_mixed_quantity(message)
+        if n is None or n > total_qty:
+            if state.mixed_pending_exact:
+                state.quick_replies = []
+                return ("Escribe un número exacto válido para ese subgrupo, por favor."
+                        if lang == "es" else "Please enter a valid exact number for that subgroup.")
+            self.set_quick_replies(state, "mixed_quantity")
+            return MESSAGES["not_understood"][lang]
+
+        state.mixed_pending_exact = False
+        self._append_mixed_cart_item(state, "refresh", None, n)
+        state.mixed_pending_refresh_added_qty = n
+        remaining_qty = total_qty - n
+        state.mixed_pending_cert_remaining_qty = remaining_qty
+        if remaining_qty <= 0:
+            self._clear_mixed_pending_add(state)
+            return self._goto_mixed_cart_review(state)
+
+        state.mixed_pending_qty_type = "cert"
+        state.mixed_pending_qty_plan = "2_dives_1_day"
+        state.mixed_pending_qty_value = remaining_qty
+        state.step = Step.MIXED_CERT_SPLIT_REVIEW
+        self.set_quick_replies(state, "mixed_cert_split_review")
+        return self._build_mixed_cert_split_review_message(state)
+
+    def _handle_mixed_cert_split_review(self, state: ConversationState, message: str) -> str:
+        choice = self._parse_choice(message, 3)
+        lang = state.language
+        msg = message.strip().lower()
+        if msg in ("back", "cancel", "cancelar"):
+            refresh_qty = state.mixed_pending_refresh_added_qty or 0
+            self._remove_mixed_cart_item_qty(state, "refresh", None, refresh_qty)
+            state.mixed_pending_refresh_added_qty = None
+            state.mixed_pending_cert_remaining_qty = state.mixed_pending_cert_total_qty or state.mixed_pending_qty_value or 0
+            state.step = Step.MIXED_CERT_REFRESH_QTY
+            self.set_quick_replies(state, "mixed_quantity")
+            return MESSAGES["mixed_cert_refresh_qty"][lang]
+        if choice == 1:
+            return self._prepare_mixed_add_preview(state, self._service_for_location("2_dives_1_day", state))
+        if choice == 2:
+            refresh_qty = state.mixed_pending_refresh_added_qty or 0
+            self._remove_mixed_cart_item_qty(state, "refresh", None, refresh_qty)
+            total_qty = state.mixed_pending_cert_total_qty or state.mixed_pending_qty_value or 0
+            state.mixed_pending_refresh_added_qty = None
+            state.mixed_pending_cert_remaining_qty = total_qty
+            state.mixed_pending_qty_type = "cert"
+            state.mixed_pending_qty_plan = "2_dives_1_day"
+            state.mixed_pending_qty_value = total_qty
+            return self._prepare_mixed_add_preview(state, self._service_for_location("2_dives_1_day", state))
+        if choice == 3:
+            self._reset_mixed_state(state)
+            return self._goto_mixed_entry(state)
+        self.set_quick_replies(state, "mixed_cert_split_review")
+        return self._build_mixed_cert_split_review_message(state)
+
+    def _handle_mixed_add_preview(self, state: ConversationState, message: str) -> str:
+        lang = state.language
+        msg = " ".join(message.strip().lower().split())
+        service_id = state.mixed_pending_preview_service_id
+        if msg in ("back", "cancel", "cancelar"):
+            if state.mixed_pending_refresh_added_qty and (state.mixed_pending_cert_remaining_qty or 0) > 0:
+                state.step = Step.MIXED_CERT_SPLIT_REVIEW
+                self.set_quick_replies(state, "mixed_cert_split_review")
+                return self._build_mixed_cert_split_review_message(state)
+            self._clear_mixed_pending_add(state)
+            return self._goto_mixed_add_activity(state)
+        if msg == "itinerary":
+            preview_state = self._mixed_preview_state(state, service_id or self._service_for_location("snorkeling", state))
+            self.set_quick_replies(state, "mixed_preview_actions")
+            return self._format_full_itinerary(preview_state) + MESSAGE_SPLIT + MESSAGES["mixed_add_preview"][lang]
+
+        choice = self._parse_choice(message, 1)
+        if choice == 1:
+            item_type = state.mixed_pending_qty_type
+            plan = state.mixed_pending_qty_plan
+            qty = state.mixed_pending_qty_value or 0
+            if item_type and qty > 0:
+                self._append_mixed_cart_item(state, item_type, plan, qty)
+            self._clear_mixed_pending_add(state)
+            return self._goto_mixed_cart_review(state)
+
+        self.set_quick_replies(state, "mixed_preview_actions")
+        return MESSAGES["not_understood"][lang]
 
     # Emojis numéricos para listas dinámicas (botones de modificar/quitar item)
     _NUMBER_EMOJIS = ["1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣", "6️⃣", "7️⃣", "8️⃣", "9️⃣", "🔟"]
@@ -4480,7 +4782,7 @@ class DecisionTree:
                 cop = svc.get("price_cop")
                 booking_url = svc.get("booking_url")
                 svc_name = svc.get(f"name_{lang}")
-                if svc_name:
+                if svc_name and item_type != "refresh":
                     label = svc_name
             sub_usd = (float(usd) * qty) if usd else None
             sub_cop = (int(cop) * qty) if cop else None
@@ -4729,7 +5031,7 @@ class DecisionTree:
         lines.append(line_island)
         return "\n".join(lines)
 
-    def _format_summary(self, state: ConversationState) -> str:
+    def _format_summary(self, state: ConversationState, final_prompt: str | None = None) -> str:
         """Format final summary with booking link."""
         service = SERVICES.get(state.selected_service)
         if not service:
@@ -4911,7 +5213,7 @@ class DecisionTree:
                 lines.append("")
                 lines.append(_divemaster_itinerary_offer_prompt(lang))
             else:
-                lines.append("¿Qué te gustaría hacer?")
+                lines.append(final_prompt or "¿Qué te gustaría hacer?")
 
             summary = "\n".join(lines)
         else:
@@ -5031,7 +5333,7 @@ class DecisionTree:
                 summary += f"\n🔗 *Program info*:\n{service['web_url']}\n"
                 summary += "\n" + _divemaster_itinerary_offer_prompt(lang)
             else:
-                summary += "\n\nWhat would you like to do?"
+                summary += "\n\n" + (final_prompt or "What would you like to do?")
 
         return summary
 
