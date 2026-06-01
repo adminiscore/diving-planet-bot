@@ -1930,6 +1930,109 @@ async def test_block2_pure_ellipsis_does_not_match_article_usage():
     assert resp == RAG_MOCK
 
 
+# ─── Bloque 3 (Gadea): varios acompañantes, misma actividad ───
+
+@pytest.mark.asyncio
+async def test_block3_dos_acompanantes_quieren_buceo_asks_cert():
+    """Yo snorkel + dos acompañantes buceo → debe pedir la pregunta de certificación (plural)."""
+    state = await reach_snorkeling_summary()
+    await route_message(state, "reservar")
+
+    with patch("src.agents.supervisor.rag_answer", new_callable=AsyncMock, return_value=RAG_MOCK):
+        resp = await route_message(state, "Dos acompañantes quieren buceo")
+
+    # Acepta tanto el wording singular ("Tu amigo es buzo certificado")
+    # como el plural ("Estas N personas son buzos certificados").
+    assert "buzo certificado" in resp.lower() or "buzos certificados" in resp.lower()
+    assert getattr(state, "mixed_from_single_cert_question_pending", False) is True
+
+
+@pytest.mark.asyncio
+async def test_block3_tres_amigos_snorkel_conmigo_offers_snorkel_card():
+    """Yo buceo cert + tres amigos snorkel → tarjeta snorkel."""
+    state = await reach_diving_experience()
+    await send(state, "1", "1", "2", "2")
+    await route_message(state, "reservar")
+
+    with patch("src.agents.supervisor.rag_answer", new_callable=AsyncMock, return_value=RAG_MOCK):
+        resp = await route_message(state, "Tres amigos quieren hacer snorkel conmigo")
+
+    assert "Tour de Snorkeling" in resp or "Snorkeling" in resp
+    assert getattr(state, "mixed_from_single_offer_pending", False) is True
+
+
+@pytest.mark.asyncio
+async def test_block3_tengo_dos_amigos_minicurso_offers_minicourse_card():
+    """Yo buceo cert + dos amigos minicurso → tarjeta minicurso."""
+    state = await reach_diving_experience()
+    await send(state, "1", "1", "2", "2")
+    await route_message(state, "reservar")
+
+    with patch("src.agents.supervisor.rag_answer", new_callable=AsyncMock, return_value=RAG_MOCK):
+        resp = await route_message(state, "Tengo dos amigos que quieren el minicurso")
+
+    assert "Minicurso" in resp or "minicurso" in resp.lower()
+    assert getattr(state, "mixed_from_single_offer_pending", False) is True
+
+
+@pytest.mark.asyncio
+async def test_block3_mis_dos_hijos_snorkel_offers_snorkel_card():
+    """Yo buceo cert + dos hijos snorkel → tarjeta snorkel."""
+    state = await reach_diving_experience()
+    await send(state, "1", "1", "2", "2")
+    await route_message(state, "reservar")
+
+    with patch("src.agents.supervisor.rag_answer", new_callable=AsyncMock, return_value=RAG_MOCK):
+        resp = await route_message(state, "Mis dos hijos quieren snorkel")
+
+    assert "Tour de Snorkeling" in resp or "Snorkeling" in resp
+    assert getattr(state, "mixed_from_single_offer_pending", False) is True
+
+
+@pytest.mark.asyncio
+async def test_block3_mis_amigos_prefieren_snorkel_offers_snorkel_card():
+    """Yo buceo cert + amigos snorkel (sin cantidad) → tarjeta snorkel."""
+    state = await reach_diving_experience()
+    await send(state, "1", "1", "2", "2")
+    await route_message(state, "reservar")
+
+    with patch("src.agents.supervisor.rag_answer", new_callable=AsyncMock, return_value=RAG_MOCK):
+        resp = await route_message(state, "Mis amigos prefieren snorkel")
+
+    assert "Tour de Snorkeling" in resp or "Snorkeling" in resp
+    assert getattr(state, "mixed_from_single_offer_pending", False) is True
+
+
+@pytest.mark.asyncio
+async def test_block3_venimos_tres_y_todos_snorkel_offers_snorkel_card():
+    """Grupo 3 + todos snorkel desde resumen buceo → tarjeta snorkel (no pide aclaración)."""
+    state = await reach_diving_experience()
+    await send(state, "1", "1", "2", "2")
+    await route_message(state, "reservar")
+
+    with patch("src.agents.supervisor.rag_answer", new_callable=AsyncMock, return_value=RAG_MOCK):
+        resp = await route_message(state, "Venimos tres y todos quieren snorkel")
+
+    assert "Tour de Snorkeling" in resp or "Snorkeling" in resp
+    # No debe pedir aclaración porque "todos" identifica una sola actividad
+    assert "qué actividad quiere hacer cada persona" not in resp.lower()
+    assert getattr(state, "mixed_from_single_offer_pending", False) is True
+
+
+@pytest.mark.asyncio
+async def test_block3_venimos_cuatro_y_los_tres_amigos_buceo_asks_cert():
+    """Grupo 4, 3 amigos buceo (yo ya hago buceo) → debe preguntar cert (plural) para los amigos."""
+    state = await reach_diving_experience()
+    await send(state, "1", "1", "2", "2")
+    await route_message(state, "reservar")
+
+    with patch("src.agents.supervisor.rag_answer", new_callable=AsyncMock, return_value=RAG_MOCK):
+        resp = await route_message(state, "Venimos cuatro y los tres amigos quieren buceo")
+
+    assert "buzo certificado" in resp.lower() or "buzos certificados" in resp.lower()
+    assert getattr(state, "mixed_from_single_cert_question_pending", False) is True
+
+
 @pytest.mark.asyncio
 async def test_companion_variant_three_people_two_want_snorkel_routes_to_snorkel_card():
     state = await reach_diving_experience()

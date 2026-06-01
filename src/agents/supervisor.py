@@ -366,6 +366,8 @@ def _detect_companion_intent(message: str, state: ConversationState | None = Non
         r"\bmi\s+(pareja|novi[oa]|espos[oa]|marido|mujer|madre|padre|mama|papa|chic[oa])\b",
         r"\bmi\s+(herman[oa]|hij[oa])\b",
         r"\bmis\s+(hij[oa]s|herman[oa]s)\b",
+        # "mis 2 hijos" / "mis dos hermanos" / "mis tres amigos" — número en medio.
+        r"\bmis\s+(?:\d+|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|diez)\s+(hij[oa]s|herman[oa]s|amig[oa]s|companer[oa]s|acompanantes)\b",
         r"\bmi\s+familia\b",
         r"\b(vengo|voy|vamos|venimos)\s+con\s+mi\b",
         r"\b(vengo|voy|vamos|venimos)\s+con\s+(mis\s+hij[oa]s|mi\s+familia)\b",
