@@ -396,6 +396,13 @@ def _detect_companion_intent(message: str, state: ConversationState | None = Non
         r"\bel\s+tambien\b",
         r"\bella\s+tambien\b",
         r"\bla\s+otra\s+persona\b",
+        # Elipsis: "él el minicurso" / "ella la actividad" (pronombre + artículo +
+        # actividad, sin verbo explícito). Conservador: solo cuando va seguido del
+        # nombre concreto de la actividad para minimizar falsos positivos.
+        r"\b(el|ella)\s+(el|la|los|las)\s+(snorkel|minicurso|buceo|curso)\b",
+        # "ella solo snorkel" / "él solamente buceo" (adverbio entre pronombre y
+        # actividad).
+        r"\b(el|ella)\s+(solo|solamente)\s+(snorkel|minicurso|buceo|esnorquel)\b",
     )
     distribution_patterns = (
         r"\buno\s+quiere\b",
