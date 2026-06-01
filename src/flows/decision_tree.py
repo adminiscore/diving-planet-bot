@@ -215,9 +215,7 @@ def _format_price_from(service: dict, lang: str) -> str:
             return v
 
     if price:
-        if lang == "es":
-            return f"U${_round_usd_display(price)} (online)"
-        return f"U${_round_usd_display(price)} (online)"
+        return f"${_round_usd_display(price)} USD (online)"
     if note:
         return note
     if lang == "es":
@@ -3408,6 +3406,17 @@ class DecisionTree:
 
     def _goto_mixed_final_colombian(self, state: ConversationState) -> str:
         lang = state.language
+        # Si ya conocemos la respuesta del flujo lineal previo (state.is_colombian),
+        # la heredamos y saltamos directo a la siguiente pregunta para no
+        # repetir la pregunta al cliente.
+        if state.is_colombian is not None and state.mixed_final_is_colombian is None:
+            state.mixed_final_is_colombian = state.is_colombian
+            state.mixed_display_currency = "COP" if state.is_colombian else "USD"
+            if self._cart_includes(state, "beginner"):
+                state.step = Step.MIXED_FINAL_KIDS
+                self.set_quick_replies(state, "mixed_yes_no")
+                return MESSAGES["mixed_final_kids"][lang]
+            return self._goto_mixed_final_private(state)
         state.step = Step.MIXED_FINAL_COLOMBIAN
         self.set_quick_replies(state, "mixed_yes_no")
         return MESSAGES["mixed_final_colombian"][lang]

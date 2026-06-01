@@ -870,11 +870,12 @@ def _build_mixed_from_single_cert_question(diving_qty: int = 1) -> tuple[str, li
             "Para recomendarle bien el plan al grupo que quiere buceo, necesito saber una cosa:\n\n"
             f"¿Estas {diving_qty} personas son *buzos certificados*?\n"
             "1️⃣ Sí, todos están certificados\n"
-            "2️⃣ No, alguno sería su primera vez"
+            "2️⃣ No, todos serían su primera vez (les ofrecemos minicurso)\n"
+            "_Si hay una mezcla (algunos certificados, otros no), elige Sí y un asesor lo ajusta._"
         )
         quick_replies = [
             {"title": "1️⃣ Sí, todos están certificados", "value": "1"},
-            {"title": "2️⃣ No, alguno sería su primera vez", "value": "2"},
+            {"title": "2️⃣ No, todos primera vez (minicurso)", "value": "2"},
         ]
         return prompt, quick_replies
 
@@ -1247,7 +1248,13 @@ def _build_group_activity_intro(lang: str, allocations: list[dict]) -> str:
     return "¡Claro! Pueden ir juntos sin problema. Para tu grupo, te comparto la información de cada actividad:"
 
 
-def _show_group_activity_cards(state: ConversationState, base_id: str | None, group_context: dict) -> str:
+def _show_group_activity_cards(state: ConversationState, base_id: str | None, group_context: dict, skip_intro: bool = False) -> str:
+    """Build the response with the info card(s) + follow-up offer.
+
+    `skip_intro=True` lets the caller suppress the standard "¡Claro! Pueden ir
+    juntos…" line when it has already provided its own context message
+    (e.g. the cert-no path that says "Si no todos están certificados…").
+    """
     allocations = group_context.get("allocations", [])
     companion_count = group_context.get("companion_count")
     _set_mixed_from_single_group_context(state, group_context)
@@ -1258,6 +1265,8 @@ def _show_group_activity_cards(state: ConversationState, base_id: str | None, gr
     )
     setattr(state, "mixed_from_single_offer_pending", True)
     state.quick_replies = quick_replies
+    if skip_intro:
+        return f"{info_cards}\n\n{follow_up}" if info_cards else follow_up
     intro = _build_group_activity_intro(state.language, allocations)
     return f"{intro}\n\n{info_cards}\n\n{follow_up}" if info_cards else f"{intro}\n\n{follow_up}"
 
@@ -1555,11 +1564,13 @@ def _handle_pending_companion_flow(state: ConversationState, message: str, msg_l
         if cert_answer:
             setattr(state, "mixed_from_single_last_dive_question_pending", True)
             return _build_companion_last_dive_question(state, diving_qty)
-        response = _show_group_activity_cards(state, base_id, resolved_group_context)
+        # Cert-no path: el caller añade su propia intro explicativa, así que
+        # suprimimos la intro estándar para no duplicar el "¡Claro!".
+        response = _show_group_activity_cards(state, base_id, resolved_group_context, skip_intro=True)
         intro = (
-            "Perfecto. Si no todos están certificados, lo ideal es pasar ese subgrupo a minicurso de iniciación:"
+            "Perfecto. Como no todos están certificados, le ofrecemos a ese grupo el minicurso de iniciación:"
             if diving_qty > 1 else
-            "Perfecto. Si no está certificado, lo ideal es empezar con este minicurso de iniciación:"
+            "Perfecto. Como no está certificado, le ofrecemos empezar con el minicurso de iniciación:"
         )
         return f"{intro}\n\n{response}"
 
@@ -1623,15 +1634,19 @@ def _handle_pending_companion_flow(state: ConversationState, message: str, msg_l
                 state.quick_replies = []
                 return decision_tree._goto_mixed_cart_review(state)
             _clear_mixed_from_single_group_context(state)
-            state.quick_replies = []
+            # Devolvemos al cliente al SUMMARY en modo follow_up con sus botones
+            # (Reservar, Preguntar, Volver al menú) para que no se quede sin opciones.
+            state.step = Step.SUMMARY
+            state.summary_mode = "follow_up"
+            decision_tree.set_quick_replies(state, decision_tree._summary_quick_replies_key(state))
             if state.language == "es":
                 return (
-                    "Perfecto, entonces mantenemos solo la actividad que ya tenías. "
-                    "Si más adelante quieres que te ayude a armar un plan mixto para tu amigo o acompañante, solo dime."
+                    "Perfecto, mantenemos solo tu actividad. "
+                    "¿Quieres reservarla ya, preguntar algo más o volver al menú?"
                 )
             return (
-                "Perfect, we'll keep only your current activity. "
-                "If later you want help building a mixed plan for your friend or companion, just let me know."
+                "Perfect, we'll keep only your activity. "
+                "Would you like to book it now, ask anything else, or go back to the menu?"
             )
         setattr(state, "mixed_from_single_offer_pending", False)
         _clear_mixed_from_single_group_context(state)

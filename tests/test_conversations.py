@@ -1717,7 +1717,10 @@ async def test_companion_variant_pair_term_reopens_canonical_diving_flow_after_d
     assert "Salidas de Buceo - 2 inmersiones" in resp
 
     resp = await route_message(state, "2")
-    assert "mantenemos solo la actividad que ya tenías" in resp.lower()
+    # Tras declinar: vuelve al SUMMARY follow_up con botones (Reservar/Ask/Volver).
+    assert "mantenemos solo tu actividad" in resp.lower()
+    assert state.step == Step.SUMMARY
+    assert state.summary_mode == "follow_up"
 
     with patch("src.agents.supervisor.rag_answer", new_callable=AsyncMock, return_value=RAG_MOCK):
         resp = await route_message(state, "Mi pareja quiere bucear")
