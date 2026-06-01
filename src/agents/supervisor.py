@@ -871,11 +871,12 @@ def _build_mixed_from_single_cert_question(diving_qty: int = 1) -> tuple[str, li
             f"¿Estas {diving_qty} personas son *buzos certificados*?\n"
             "1️⃣ Sí, todos están certificados\n"
             "2️⃣ No, todos serían su primera vez (les ofrecemos minicurso)\n"
-            "_Si hay una mezcla (algunos certificados, otros no), elige Sí y un asesor lo ajusta._"
+            "3️⃣ Algunos sí, algunos no"
         )
         quick_replies = [
             {"title": "1️⃣ Sí, todos están certificados", "value": "1"},
             {"title": "2️⃣ No, todos primera vez (minicurso)", "value": "2"},
+            {"title": "3️⃣ Algunos sí, algunos no", "value": "3"},
         ]
         return prompt, quick_replies
 
@@ -891,6 +892,52 @@ def _build_mixed_from_single_cert_question(diving_qty: int = 1) -> tuple[str, li
         {"title": "2️⃣ No, sería su primera vez", "value": "2"},
     ]
     return prompt, quick_replies
+
+
+def _build_mixed_from_single_cert_split_question(diving_qty: int) -> tuple[str, list[dict]]:
+    """Para el caso 'algunos sí, algunos no': preguntar cuántos están certificados.
+
+    Para diving_qty=2 hay un único reparto posible (1+1) — el caller no debería
+    llegar aquí. Para diving_qty>=3 genera N-1 botones (1 cert, 2 cert, ...,
+    diving_qty-1 cert).
+    """
+    if diving_qty < 3:
+        # Caso degenerado: solo hay un split posible, el caller lo procesa directo.
+        return "", []
+    lines = [
+        "Perfecto. ¿Cuántos de los que quieren bucear están certificados?",
+        "Los demás los apuntamos al minicurso de iniciación:",
+        "",
+    ]
+    quick_replies: list[dict] = []
+    for cert_count in range(1, diving_qty):
+        mini_count = diving_qty - cert_count
+        cert_word = "certificado" if cert_count == 1 else "certificados"
+        mini_word = "minicurso" if mini_count == 1 else "minicursos"
+        title = f"{cert_count} {cert_word} + {mini_count} {mini_word}"
+        lines.append(f"{cert_count}️⃣ {title}")
+        quick_replies.append({"title": f"{cert_count}️⃣ {title}", "value": str(cert_count)})
+    return "\n".join(lines), quick_replies
+
+
+def _split_diving_for_mixed_cert(group_context: dict, cert_count: int) -> dict:
+    """Divide la qty 'diving' en cert_count (queda diving) + resto (pasa a minicourse)."""
+    new_allocs: list[dict] = []
+    for alloc in group_context.get("allocations", []):
+        if alloc.get("activity") == "diving":
+            total_qty = alloc.get("qty", 0)
+            mini_count = max(total_qty - cert_count, 0)
+            if cert_count > 0:
+                new_allocs.append({"activity": "diving", "qty": cert_count})
+            if mini_count > 0:
+                new_allocs.append({"activity": "minicourse", "qty": mini_count})
+        else:
+            new_allocs.append(alloc)
+    result = dict(group_context)
+    result["allocations"] = _merge_group_allocations(new_allocs)
+    result["companion_count"] = sum(item["qty"] for item in result["allocations"])
+    result["needs_activity_clarification"] = False
+    return result
 
 
 def _build_mixed_from_single_activity_question(companion_count: int | None = None) -> tuple[str, list[dict]]:
@@ -1518,6 +1565,7 @@ def _handle_pending_companion_flow(state: ConversationState, message: str, msg_l
         for attr in (
             "mixed_from_single_activity_question_pending",
             "mixed_from_single_cert_question_pending",
+            "mixed_from_single_cert_split_question_pending",
             "mixed_from_single_last_dive_question_pending",
             "mixed_from_single_refresher_interest_pending",
             "mixed_from_single_offer_pending",
@@ -1552,6 +1600,34 @@ def _handle_pending_companion_flow(state: ConversationState, message: str, msg_l
             for item in current_group_context.get("allocations", [])
             if item.get("activity") == "diving"
         ) or 1
+
+        # NUEVO: respuesta "mixto" (botón 3 o palabras 'mezcla'/'algunos').
+        normalized_msg = _normalize_for_menu_match(message)
+        is_mixed_answer = (
+            msg_lower == "3"
+            or "algunos si algunos no" in normalized_msg
+            or "algunos certificados" in normalized_msg
+            or "mezcla" in normalized_msg
+            or "mixto" in normalized_msg
+        )
+        if is_mixed_answer and diving_qty >= 2:
+            setattr(state, "mixed_from_single_cert_question_pending", False)
+            if diving_qty == 2:
+                # Único split posible: 1 cert + 1 minicurso. Procesa directo.
+                cert_count = 1
+                updated_context = _split_diving_for_mixed_cert(current_group_context, cert_count)
+                _set_mixed_from_single_group_context(state, updated_context)
+                setattr(state, "mixed_from_single_last_dive_question_pending", True)
+                return (
+                    "Perfecto. Entonces el certificado hace buceo y el otro hace minicurso de iniciación.\n\n"
+                    + _build_companion_last_dive_question(state, cert_count)
+                )
+            # Para 3+ personas, preguntamos cuántos certificados (botones N-1).
+            prompt, quick_replies = _build_mixed_from_single_cert_split_question(diving_qty)
+            setattr(state, "mixed_from_single_cert_split_question_pending", True)
+            state.quick_replies = quick_replies
+            return prompt
+
         cert_answer = _detect_companion_certification_answer(message)
         if cert_answer is None:
             prompt, quick_replies = _build_mixed_from_single_cert_question(diving_qty)
@@ -1573,6 +1649,34 @@ def _handle_pending_companion_flow(state: ConversationState, message: str, msg_l
             "Perfecto. Como no está certificado, le ofrecemos empezar con el minicurso de iniciación:"
         )
         return f"{intro}\n\n{response}"
+
+    # NUEVO: pregunta de reparto cuando el usuario eligió "algunos sí, algunos no" para grupos 3+.
+    if getattr(state, "mixed_from_single_cert_split_question_pending", False):
+        current_group_context = _get_mixed_from_single_group_context(state) or _build_group_context_from_activity("diving")
+        diving_qty = sum(
+            item["qty"]
+            for item in current_group_context.get("allocations", [])
+            if item.get("activity") == "diving"
+        ) or 1
+        try:
+            cert_count = int(message.strip())
+        except (ValueError, TypeError):
+            cert_count = None
+        if cert_count is None or cert_count < 1 or cert_count >= diving_qty:
+            prompt, quick_replies = _build_mixed_from_single_cert_split_question(diving_qty)
+            state.quick_replies = quick_replies
+            return f"No te entendí del todo.\n\n{prompt}"
+
+        setattr(state, "mixed_from_single_cert_split_question_pending", False)
+        updated_context = _split_diving_for_mixed_cert(current_group_context, cert_count)
+        _set_mixed_from_single_group_context(state, updated_context)
+        mini_count = diving_qty - cert_count
+        setattr(state, "mixed_from_single_last_dive_question_pending", True)
+        return (
+            f"Perfecto. {cert_count} hace{'n' if cert_count > 1 else ''} buceo certificado "
+            f"y {mini_count} hace{'n' if mini_count > 1 else ''} minicurso de iniciación.\n\n"
+            + _build_companion_last_dive_question(state, cert_count)
+        )
 
     if getattr(state, "mixed_from_single_last_dive_question_pending", False):
         current_group_context = _get_mixed_from_single_group_context(state) or _build_group_context_from_activity("diving")
@@ -1614,6 +1718,7 @@ def _handle_pending_companion_flow(state: ConversationState, message: str, msg_l
             setattr(state, "mixed_from_single_companion_context_active", False)
             setattr(state, "mixed_from_single_activity_question_pending", False)
             setattr(state, "mixed_from_single_cert_question_pending", False)
+            setattr(state, "mixed_from_single_cert_split_question_pending", False)
             setattr(state, "mixed_from_single_last_dive_question_pending", False)
             setattr(state, "mixed_from_single_refresher_interest_pending", False)
             state.quick_replies = []
@@ -1627,6 +1732,7 @@ def _handle_pending_companion_flow(state: ConversationState, message: str, msg_l
             setattr(state, "mixed_from_single_companion_context_active", False)
             setattr(state, "mixed_from_single_activity_question_pending", False)
             setattr(state, "mixed_from_single_cert_question_pending", False)
+            setattr(state, "mixed_from_single_cert_split_question_pending", False)
             setattr(state, "mixed_from_single_last_dive_question_pending", False)
             setattr(state, "mixed_from_single_refresher_interest_pending", False)
             if decision_tree._is_in_mixed_flow(state):
@@ -2435,6 +2541,7 @@ async def route_message(state: ConversationState, message: str) -> str:
             "mixed_from_single_offer_pending",
             "mixed_from_single_activity_question_pending",
             "mixed_from_single_cert_question_pending",
+            "mixed_from_single_cert_split_question_pending",
             "mixed_from_single_last_dive_question_pending",
             "mixed_from_single_refresher_interest_pending",
         )

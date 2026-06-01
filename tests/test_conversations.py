@@ -2023,6 +2023,62 @@ async def test_block3_venimos_tres_y_todos_snorkel_offers_snorkel_card():
 
 
 @pytest.mark.asyncio
+async def test_mixed_cert_two_people_direct_split_1_plus_1():
+    """2 personas + click 'algunos sí, algunos no' → split 1 cert + 1 minicurso directo."""
+    state = await reach_snorkeling_summary()
+    await route_message(state, "reservar")
+
+    with patch("src.agents.supervisor.rag_answer", new_callable=AsyncMock, return_value=RAG_MOCK):
+        resp = await route_message(state, "Dos acompañantes quieren buceo")
+
+    # Cert question con 3 botones
+    assert "Algunos sí, algunos no" in resp
+    assert "buzos certificados" in resp.lower()
+
+    # Click 3 → para 2 personas el split es directo (1+1)
+    resp = await route_message(state, "3")
+    assert "el certificado hace buceo y el otro hace minicurso" in resp.lower()
+    # Inmediatamente pregunta last_dive para 1 persona certificada
+    assert "última inmersión" in resp.lower() or "ultima inmersion" in resp.lower()
+
+    # Verifico que allocations se dividieron
+    ctx = getattr(state, "mixed_from_single_group_context", None)
+    if ctx:
+        allocs = ctx.get("allocations", [])
+        diving = next((a for a in allocs if a["activity"] == "diving"), None)
+        minicourse = next((a for a in allocs if a["activity"] == "minicourse"), None)
+        assert diving is not None and diving["qty"] == 1
+        assert minicourse is not None and minicourse["qty"] == 1
+
+
+@pytest.mark.asyncio
+async def test_mixed_cert_three_people_asks_split_count():
+    """3 personas + click 'algunos sí, algunos no' → pregunta cuántos certificados (2 botones)."""
+    state = await reach_snorkeling_summary()
+    await route_message(state, "reservar")
+
+    with patch("src.agents.supervisor.rag_answer", new_callable=AsyncMock, return_value=RAG_MOCK):
+        resp = await route_message(state, "Tres amigos quieren buceo")
+
+    assert "Algunos sí, algunos no" in resp
+
+    # Click 3 → debe preguntar el reparto con N-1 = 2 botones
+    resp = await route_message(state, "3")
+    assert "cuántos" in resp.lower() or "cuantos" in resp.lower()
+    # Verifico que hay opciones para 1 cert y 2 cert
+    titles = [b["title"] for b in state.quick_replies]
+    assert any("1" in t and "certificado" in t.lower() for t in titles)
+    assert any("2" in t and "certificados" in t.lower() for t in titles)
+
+    # Click 2 → 2 cert + 1 minicurso
+    resp = await route_message(state, "2")
+    assert "2 hacen buceo certificado" in resp.lower() or "2 hacen buceo" in resp.lower()
+    assert "1 hace minicurso" in resp.lower() or "1 hace" in resp.lower()
+    # Inmediatamente pregunta last_dive
+    assert "última inmersión" in resp.lower() or "ultima inmersion" in resp.lower()
+
+
+@pytest.mark.asyncio
 async def test_block3_venimos_cuatro_y_los_tres_amigos_buceo_asks_cert():
     """Grupo 4, 3 amigos buceo (yo ya hago buceo) → debe preguntar cert (plural) para los amigos."""
     state = await reach_diving_experience()
