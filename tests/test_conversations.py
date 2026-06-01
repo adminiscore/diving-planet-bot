@@ -1898,6 +1898,39 @@ async def test_block2_companion_detection_tolerates_snorkel_typo():
 
 
 @pytest.mark.asyncio
+async def test_block2_pure_ellipsis_after_conjunction_routes_to_snorkel_card():
+    """Elipsis pura: 'yo quiero buceo y ella snorke' (pronombre + actividad, sin verbo/adverbio).
+
+    Caso reportado: el usuario escribe 'yo quiero buceo y ella snorke' (con typo).
+    El pattern debe matchear porque va precedido del conector 'y'.
+    """
+    state = await reach_diving_experience()
+    await send(state, "1", "1", "2", "2")
+    await route_message(state, "reservar")
+
+    with patch("src.agents.supervisor.rag_answer", new_callable=AsyncMock, return_value=RAG_MOCK):
+        resp = await route_message(state, "yo quiero buceo y ella snorke")
+
+    assert state.step == Step.FREE_TEXT
+    assert "Snorkeling" in resp or "Tour de Snorkeling" in resp
+    assert getattr(state, "mixed_from_single_offer_pending", False) is True
+
+
+@pytest.mark.asyncio
+async def test_block2_pure_ellipsis_does_not_match_article_usage():
+    """Falso positivo guard: 'el snorkel es divertido' (artículo + sustantivo, sin 'y'/'pero').
+
+    No debe disparar el flujo companion — debe caer a RAG normal.
+    """
+    state = await reach_main_menu("es")
+    with patch("src.agents.supervisor.rag_answer", new_callable=AsyncMock, return_value=RAG_MOCK) as mock_rag:
+        resp = await route_message(state, "el snorkel es divertido")
+    # Debe caer a RAG, no a companion
+    mock_rag.assert_awaited()
+    assert resp == RAG_MOCK
+
+
+@pytest.mark.asyncio
 async def test_companion_variant_three_people_two_want_snorkel_routes_to_snorkel_card():
     state = await reach_diving_experience()
     await send(state, "1", "1", "2", "2")

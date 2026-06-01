@@ -404,6 +404,10 @@ def _detect_companion_intent(message: str, state: ConversationState | None = Non
         # "ella solo snorkel" / "él solamente buceo" (adverbio entre pronombre y
         # actividad), incluyendo typos comunes.
         r"\b(el|ella)\s+(solo|solamente)\s+(snorkel|snorke|snorkl|esnorquel|esnorkel|minicurso|buceo|buseo)\b",
+        # Elipsis pura: "yo X y ella snorkel" / "yo X pero él buceo" (pronombre +
+        # actividad sin nada en medio). Anclado al conector y/pero anterior para
+        # evitar el falso positivo "el snorkel es divertido" (artículo + sustantivo).
+        r"\b(?:y|pero)\s+(el|ella)\s+(snorkel|snorke|snorkl|esnorquel|esnorkel|esnorke|esnokel|minicurso|buceo|buseo)\b",
     )
     distribution_patterns = (
         r"\buno\s+quiere\b",
