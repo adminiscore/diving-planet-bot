@@ -1296,31 +1296,28 @@ def _build_companion_refresher_prompt(state: ConversationState, diving_qty: int 
     if lang == "es":
         if diving_qty > 1:
             return (
-                "Les recomendamos hacer un *refresher* para que vuelvan al agua de forma segura:\n\n"
+                "Les recomendamos un *refresher* antes de salir al mar — un repaso rápido para volver al agua con confianza:\n\n"
                 "✅ Repaso de teoría (señales, equipo y procedimientos)\n"
                 "🏊 Práctica en piscina\n"
-                "🤿 Buceo en el mar con instructor\n\n"
-                "Más información (itinerario completo):\n"
-                "https://divingplanet.org/tours-buceo-snorkel-cartagena/minicurso-principiantes/\n\n"
+                "🤿 1 buceo en el mar con instructor\n\n"
+                "⚠️ No es el minicurso de principiantes — está pensado para *buzos ya certificados* que quieren actualizarse.\n\n"
                 "¿Quieres incluirlo en su plan?"
             )
         return (
-            "Le recomendamos hacer un *refresher* para que vuelva al agua de forma segura:\n\n"
+            "Le recomendamos un *refresher* antes de salir al mar — un repaso rápido para volver al agua con confianza:\n\n"
             "✅ Repaso de teoría (señales, equipo y procedimientos)\n"
             "🏊 Práctica en piscina\n"
-            "🤿 Buceo en el mar con instructor\n\n"
-            "Más información (itinerario completo):\n"
-            "https://divingplanet.org/tours-buceo-snorkel-cartagena/minicurso-principiantes/\n\n"
+            "🤿 1 buceo en el mar con instructor\n\n"
+            "⚠️ No es el minicurso de principiantes — está pensado para *buzos ya certificados* que quieren actualizarse.\n\n"
             "¿Quieres incluirlo en su plan?"
         )
     target = "they" if diving_qty > 1 else "they"
     return (
-        f"We recommend a *refresher* so {target} can safely return to the water:\n\n"
+        f"We recommend a *refresher* before going out to sea — a quick review to help {target} get back in the water with confidence:\n\n"
         "✅ Theory review (signals, gear, procedures)\n"
         "🏊 Pool practice\n"
-        "🤿 Open-water dive with an instructor\n\n"
-        "Full itinerary:\n"
-        "https://divingplanet.org/tours-buceo-snorkel-cartagena/minicurso-principiantes/\n\n"
+        "🤿 1 open-water dive with an instructor\n\n"
+        "⚠️ This is not the beginner course — it's designed for *already-certified divers* who want to brush up.\n\n"
         "Would you like to include it in their plan?"
     )
 
@@ -1533,6 +1530,26 @@ def _maybe_offer_mixed_from_single(state: ConversationState, message: str, answe
     try:
         svc_id = getattr(state, "selected_service", None)
         if not svc_id:
+            # No service selected yet. If companion+activity intent detected, offer mixed group routing.
+            lang = getattr(state, "language", "es") or "es"
+            if _detect_companion_intent(message, state) and (
+                _mentions_diving_intent(message)
+                or _mentions_snorkeling_intent(message)
+                or _mentions_minicourse_intent(message)
+            ):
+                state.step = Step.GROUP_TYPE
+                decision_tree.set_quick_replies(state, "group_type")
+                if lang == "es":
+                    return (
+                        "¡Claro! Para organizar el plan de todo el grupo, "
+                        "dime: ¿todos hacéis la misma actividad o queréis cosas distintas?\n\n"
+                        + decision_tree.MESSAGES["group_type"]["es"]
+                    )
+                return (
+                    "Sure! To plan for the whole group, tell me: "
+                    "is everyone doing the same activity or do you want different things?\n\n"
+                    + decision_tree.MESSAGES["group_type"]["en"]
+                )
             return answer
 
         # Never offer while already inside the mixed flow.

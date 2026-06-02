@@ -824,21 +824,19 @@ MESSAGES = {
     },
     "refresher_info": {
         "es": (
-            "Te recomendamos hacer un *refresher* para volver al agua de forma segura:\n\n"
+            "Te recomendamos hacer un *refresher* antes de salir al mar — un repaso rápido para volver al agua con confianza:\n\n"
             "✅ Repaso de teoría (señales, equipo y procedimientos)\n"
             "🏊 Práctica en piscina\n"
-            "🤿 Buceo en el mar con instructor\n\n"
-            "Más información (itinerario completo):\n"
-            "https://divingplanet.org/tours-buceo-snorkel-cartagena/minicurso-principiantes/\n\n"
+            "🤿 1 buceo en el mar con instructor\n\n"
+            "⚠️ No es el minicurso de principiantes — está pensado para *buzos ya certificados* que quieren actualizarse.\n\n"
             "¿Te interesa incluirlo?"
         ),
         "en": (
-            "We recommend doing a *refresher* to get back in the water safely:\n\n"
+            "We recommend doing a *refresher* before going out to sea — a quick review to get back in the water with confidence:\n\n"
             "✅ Theory review (signals, equipment and procedures)\n"
             "🏊 Pool / confined water practice\n"
-            "🤿 Open water dive with an instructor\n\n"
-            "More information (full itinerary):\n"
-            "https://divingplanet.org/tours-buceo-snorkel-cartagena/minicurso-principiantes/\n\n"
+            "🤿 1 open water dive with an instructor\n\n"
+            "⚠️ This is not the beginner course — it's designed for *already-certified divers* who want to brush up.\n\n"
             "Would you like to include it?"
         ),
     },
@@ -3658,6 +3656,21 @@ class DecisionTree:
                 "without changing your main plan.\n\n"
             )
             return intro + self._goto_location_with_costs(state)
+
+        # Para planes de 1 día, el refresher se gestiona como el minicurso de iniciación
+        # (mismo formato: piscina + mar), pero el asesor confirma si se factura aparte.
+        if state.refresher_interested and state.original_service:
+            intro = (
+                "Perfecto. Como han pasado más de 2 años, te incluimos el *refresher* — "
+                "tiene el mismo formato de práctica en piscina + buceo en el mar.\n\n"
+                "El asesor confirma si se gestiona como actividad aparte o se integra en tu plan.\n\n"
+                if lang == "es"
+                else "Perfect. Since it's been more than 2 years, we'll include the *refresher* — "
+                "same pool practice + sea dive format.\n\n"
+                "The advisor will confirm whether it's billed separately or integrated into your plan.\n\n"
+            )
+            return intro + self._goto_location_with_costs(state)
+
         return self._goto_location_with_costs(state)
 
     def _handle_tours_beginner(self, state: ConversationState, message: str) -> str:

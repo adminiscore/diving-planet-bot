@@ -3095,7 +3095,7 @@ async def test_mixed_cart_review_friend_wants_certified_diving_refresher_yes_kee
     assert ("¿Han pasado *más de 2 años* desde tu última inmersión?" in resp or "¿Han pasado *más de 2 años* desde su última inmersión?" in resp)
 
     resp = await route_message(state, "1")
-    assert "recomendamos hacer un *refresher*" in resp
+    assert "recomendamos" in resp and "refresher" in resp
     assert "¿Quieres incluirlo en su plan?" in resp or "¿Te interesa incluirlo?" in resp
 
     resp = await route_message(state, "1")
