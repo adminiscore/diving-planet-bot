@@ -7,10 +7,12 @@ decision tree.
 """
 
 import logging
+import re
 
 from openai import AsyncOpenAI
 
 from src.config import settings
+from src.knowledge.loader import load_faqs, load_policies
 from src.knowledge.vector_store import search_knowledge_base
 from src.privacy import detect_pii, privacy_block_message, redact_pii
 
@@ -106,6 +108,27 @@ Always escalate to a human for:
 Advisor contact: WhatsApp +57 320 2301515.
 Answer in English."""
 
+FOOD_QUERY_PATTERN = re.compile(
+    r"\b(comida|almuerzo|lunch|meal|meals|food|vegetariano|vegetariana|vegetarian|vegano|vegana|vegan|celiaco|celiaca|celiac|alergia|alergias|allergy|allergies)\b",
+    re.IGNORECASE,
+)
+
+DIETARY_QUERY_PATTERN = re.compile(
+    r"\b(vegetariano|vegetariana|vegetarian|vegano|vegana|vegan|celiaco|celiaca|celiac|alergia|alergias|allergy|allergies)\b",
+    re.IGNORECASE,
+)
+
+FOOD_FAQ_QUESTIONS = {
+    "meal": {
+        "es": "¿Que comida incluye el tour?",
+        "en": "What food is included in the tour?",
+    },
+    "dietary": {
+        "es": "Soy vegetariano o tengo una alergia alimentaria, ¿pueden atenderme?",
+        "en": "I'm vegetarian or have a food allergy. Can you accommodate me?",
+    },
+}
+
 
 def build_retrieval_query(query: str, history: list[dict] | None = None) -> str:
     if not history:
@@ -120,6 +143,51 @@ def build_retrieval_query(query: str, history: list[dict] | None = None) -> str:
         return query
 
     return "\n".join([*recent_user_messages[-2:], query])
+
+
+def _normalize_text(value: str) -> str:
+    return " ".join(value.strip().lower().split())
+
+
+def _find_food_faq_answer(question: str, lang: str) -> str | None:
+    faqs = load_faqs().get("faqs") or []
+    question_key = "question_es" if lang == "es" else "question_en"
+    answer_key = "answer_es" if lang == "es" else "answer_en"
+    normalized_question = _normalize_text(question)
+
+    for faq in faqs:
+        faq_question = faq.get(question_key)
+        faq_answer = faq.get(answer_key)
+        if not isinstance(faq_question, str) or not isinstance(faq_answer, str):
+            continue
+        if _normalize_text(faq_question) == normalized_question and faq_answer.strip():
+            return faq_answer.strip()
+    return None
+
+
+def _food_policy_answer(lang: str) -> str | None:
+    policies = load_policies().get("policies") or {}
+    food_policy = policies.get("food_policy") or {}
+    answer = food_policy.get(lang)
+    if isinstance(answer, str) and answer.strip():
+        return answer.strip()
+    return None
+
+
+def _canonical_food_answer(query: str, lang: str) -> str | None:
+    if not FOOD_QUERY_PATTERN.search(query):
+        return None
+
+    if DIETARY_QUERY_PATTERN.search(query):
+        dietary_answer = _find_food_faq_answer(FOOD_FAQ_QUESTIONS["dietary"][lang], lang)
+        if dietary_answer:
+            return dietary_answer
+
+    meal_answer = _find_food_faq_answer(FOOD_FAQ_QUESTIONS["meal"][lang], lang)
+    if meal_answer:
+        return meal_answer
+
+    return _food_policy_answer(lang)
 
 
 async def rag_answer(
@@ -141,6 +209,11 @@ async def rag_answer(
     if pii_hits:
         logger.warning(f"[RAG][PRIVACY] PII detected in query hits={pii_hits}")
         return privacy_block_message(lang)
+
+    canonical_food_answer = _canonical_food_answer(query, lang)
+    if canonical_food_answer:
+        logger.info(f"[RAG] Using canonical food answer query={query[:60]}... lang={lang}")
+        return canonical_food_answer
 
     retrieval_query = build_retrieval_query(query, history)
 

@@ -41,6 +41,11 @@ class Step(str, Enum):
     INFO_PACKAGE_DETAIL = "info_package_detail"
     INFO_COURSE_DETAIL = "info_course_detail"
     INFO_SPECIALTY_DETAIL = "info_specialty_detail"
+    INFO_TOURS_CERTIFIED_MENU = "info_tours_certified_menu"
+    INFO_COURSES_ADVANCED_MENU = "info_courses_advanced_menu"
+    INFO_MIXED_ACTIVITY_MENU = "info_mixed_activity_menu"
+    INFO_MIXED_CERT_BEG_MENU = "info_mixed_cert_beg_menu"
+    INFO_CERTIFIED_4_DIVES_VARIANT = "info_certified_4_dives_variant"
     TOURS_LOCATION = "tours_location"
     GROUP_TYPE = "group_type"
     TOURS_EXPERIENCE = "tours_experience"
@@ -657,42 +662,104 @@ MESSAGES = {
     },
     "info_activities_menu": {
         "es": (
-            "🧭 Elige el tipo de actividad que quieres conocer:"
+            "🧭 Dentro de actividades, ¿qué te gustaría explorar?"
         ),
         "en": (
-            "🧭 Choose what you want to learn about:"
+            "🧭 Within activities, what would you like to explore?"
         ),
     },
     "info_tours_menu": {
         "es": (
-            "🤿 Elige una actividad para ver un resumen corto (con link a la web)."
+            "Genial, cuentame que tipo de plan buscas:\n"
+            "Elige la opcion que mejor se ajuste."
         ),
         "en": (
-            "🤿 Choose an activity to see a short summary (with a website link)."
+            "Great! Tell me what kind of plan you're looking for:\n"
+            "Choose the option that fits best."
         ),
     },
     "info_packages_menu": {
         "es": (
-            "📦 Elige un paquete para ver un resumen corto (con link a la web)."
+            "Perfecto. Dentro de buceo, ¿como esta compuesto tu grupo?"
         ),
         "en": (
-            "📦 Choose a package to see a short summary (with a website link)."
+            "Perfect. Within diving, how is your group made up?"
         ),
     },
     "info_courses_menu": {
         "es": (
-            "📘 Elige un curso para ver un resumen corto (con link a la web)."
+            "Nuestros cursos PADI en las Islas del Rosario:\n\n"
+            "Todos combinan teoria online + practica en las islas."
         ),
         "en": (
-            "📘 Choose a course to see a short summary (with a website link)."
+            "Our PADI courses in the Rosario Islands:\n\n"
+            "All combine online theory + island practice."
         ),
     },
     "info_specialties_menu": {
         "es": (
-            "✨ Elige una especialidad para ver un resumen corto (con link a la web)."
+            "Estas son nuestras especialidades PADI disponibles.\n"
+            "Elige una para ver la informacion del servicio."
         ),
         "en": (
-            "✨ Choose a specialty to see a short summary (with a website link)."
+            "These are our available PADI specialties.\n"
+            "Choose one to see the service information."
+        ),
+    },
+    "info_tours_certified_menu": {
+        "es": (
+            "Excelente! Estas son nuestras opciones para buzos certificados:\n\n"
+            "🏨 *Importante*: si eliges un plan con inmersiones en días distintos, debes hospedarte en un hotel en las islas entre jornadas.\n"
+            "- *4 inmersiones (2 días)* y *5 inmersiones (2 días)*: al menos *1 noche*\n"
+            "- *7 inmersiones (3 días)*: al menos *2 noches*\n"
+            "- *9 inmersiones (4 días)*: al menos *3 noches*\n\n"
+            "✳️ *3 inmersiones (1 día)*: también se requiere hospedaje en la isla por la noche, porque incluye inmersión nocturna."
+        ),
+        "en": (
+            "Excellent! Here are our options for certified divers:\n\n"
+            "🏨 *Important*: if you choose a plan with dives on different days, you must stay at a hotel on the islands between dive days.\n"
+            "- *4 dives (2 days)* and *5 dives (2 days)*: at least *1 night*\n"
+            "- *7 dives (3 days)*: at least *2 nights*\n"
+            "- *9 dives (4 days)*: at least *3 nights*\n\n"
+            "✳️ *3 dives (1 day)*: island accommodation is also required that night because it includes a night dive."
+        ),
+    },
+    "info_courses_advanced_menu": {
+        "es": (
+            "Estos son nuestros cursos PADI avanzados y profesionales.\n"
+            "Elige el que más te interese."
+        ),
+        "en": (
+            "These are our advanced and professional PADI courses.\n"
+            "Choose the one you are most interested in."
+        ),
+    },
+    "info_mixed_activity_menu": {
+        "es": (
+            "Perfecto. Para grupos mixtos *buceo + snorkel* combinamos actividades en un mismo tour.\n\n"
+            "¿Sobre qué actividad quieres ver información primero?"
+        ),
+        "en": (
+            "Great. For *diving + snorkeling* mixed groups we combine activities in a single tour.\n\n"
+            "Which activity would you like to see information about first?"
+        ),
+    },
+    "info_mixed_cert_beg_menu": {
+        "es": (
+            "Perfecto. Para grupos mixtos *certificados + principiantes* combinamos actividades en un mismo tour.\n\n"
+            "¿Qué parte quieres revisar primero?"
+        ),
+        "en": (
+            "Great. For *certified + beginners* mixed groups we combine activities in a single tour.\n\n"
+            "Which part would you like to review first?"
+        ),
+    },
+    "info_certified_4_dives_variant": {
+        "es": (
+            "Perfecto. Para *4 inmersiones (2 días)* desde las islas, ¿qué opción prefieres?"
+        ),
+        "en": (
+            "Perfect. For *4 dives (2 days)* from the islands, which option would you prefer?"
         ),
     },
     "tours_location": {
@@ -1122,72 +1189,64 @@ BUTTON_OPTIONS = {
     },
     "info_activities_menu": {
         "es": [
-            {"title": "🤿 Tours y actividades", "value": "1"},
-            {"title": "📦 Paquetes multi-día", "value": "2"},
-            {"title": "📘 Cursos PADI", "value": "3"},
-            {"title": "✨ Especialidades PADI", "value": "4"},
+            {"title": "🤿 Tours de buceo / snorkel", "value": "1"},
+            {"title": "📘 Cursos PADI y certificaciones", "value": "2"},
             {"title": "⬅️ Volver", "value": "back"},
             {"title": "🏠 Inicio", "value": "inicio"},
         ],
         "en": [
-            {"title": "🤿 Tours and activities", "value": "1"},
-            {"title": "📦 Multi-day packages", "value": "2"},
-            {"title": "📘 PADI courses", "value": "3"},
-            {"title": "✨ PADI specialties", "value": "4"},
+            {"title": "🤿 Diving / snorkel tours", "value": "1"},
+            {"title": "📘 PADI courses and certifications", "value": "2"},
             {"title": "⬅️ Back", "value": "back"},
             {"title": "🏠 Home", "value": "inicio"},
         ],
     },
     "info_tours_menu": {
         "es": [
-            {"title": "🤿 Buceo: 2 inmersiones", "value": "1"},
-            {"title": "🆕 Minicurso de buceo", "value": "2"},
-            {"title": "🐠 Tour de snorkeling", "value": "3"},
-            {"title": "🧑‍💬 Servicio privado", "value": "4"},
+            {"title": "🤿 Buceo", "value": "1"},
+            {"title": "🐠 Snorkel", "value": "2"},
+            {"title": "👥 Grupo mixto (buceo + snorkel)", "value": "3"},
             {"title": "⬅️ Volver", "value": "back"},
             {"title": "🏠 Inicio", "value": "inicio"},
         ],
         "en": [
-            {"title": "🤿 Diving: 2 dives", "value": "1"},
-            {"title": "🆕 Dive mini course", "value": "2"},
-            {"title": "🐠 Snorkeling tour", "value": "3"},
-            {"title": "🧑‍💬 Private service", "value": "4"},
+            {"title": "🤿 Diving", "value": "1"},
+            {"title": "🐠 Snorkeling", "value": "2"},
+            {"title": "👥 Mixed group (diving + snorkel)", "value": "3"},
             {"title": "⬅️ Back", "value": "back"},
             {"title": "🏠 Home", "value": "inicio"},
         ],
     },
     "info_packages_menu": {
         "es": [
-            {"title": "📦 5 buceos (2 días)", "value": "1"},
-            {"title": "📦 7 buceos (3 días)", "value": "2"},
-            {"title": "📦 9 buceos (4 días)", "value": "3"},
+            {"title": "🤿 Solo buzos certificados", "value": "1"},
+            {"title": "🆕 Solo principiantes", "value": "2"},
+            {"title": "👥 Grupo mixto (certificados + principiantes)", "value": "3"},
             {"title": "⬅️ Volver", "value": "back"},
             {"title": "🏠 Inicio", "value": "inicio"},
         ],
         "en": [
-            {"title": "📦 5 dives (2 days)", "value": "1"},
-            {"title": "📦 7 dives (3 days)", "value": "2"},
-            {"title": "📦 9 dives (4 days)", "value": "3"},
+            {"title": "🤿 Only certified divers", "value": "1"},
+            {"title": "🆕 Only beginners", "value": "2"},
+            {"title": "👥 Mixed group (certified + beginners)", "value": "3"},
             {"title": "⬅️ Back", "value": "back"},
             {"title": "🏠 Home", "value": "inicio"},
         ],
     },
     "info_courses_menu": {
         "es": [
-            {"title": "🐠 Open Water (básico)", "value": "1"},
-            {"title": "📘 Avanzado", "value": "2"},
-            {"title": "🚑 Rescate + EFR", "value": "3"},
-            {"title": "🏅 Dive Master", "value": "4"},
-            {"title": "🧾 Referral / reactivate", "value": "5"},
+            {"title": "🐠 Descubriendo el buceo (Open Water Diver)", "value": "1"},
+            {"title": "🚀 Convierte en pro (Advanced / Rescue / Dive Master)", "value": "2"},
+            {"title": "✨ Amplía tus habilidades (Especialidades PADI)", "value": "3"},
+            {"title": "Ya empece un curso en otro centro (referral / reactivate)", "value": "4"},
             {"title": "⬅️ Volver", "value": "back"},
             {"title": "🏠 Inicio", "value": "inicio"},
         ],
         "en": [
-            {"title": "🐠 Open Water (basic)", "value": "1"},
-            {"title": "📘 Advanced", "value": "2"},
-            {"title": "🚑 Rescue + EFR", "value": "3"},
-            {"title": "🏅 Divemaster", "value": "4"},
-            {"title": "🧾 Referral / reactivate", "value": "5"},
+            {"title": "🐠 Discover diving (Open Water Diver)", "value": "1"},
+            {"title": "🚀 Go pro (Advanced / Rescue / Divemaster)", "value": "2"},
+            {"title": "✨ Expand your skills (PADI Specialties)", "value": "3"},
+            {"title": "I already started a course elsewhere (referral / reactivate)", "value": "4"},
             {"title": "⬅️ Back", "value": "back"},
             {"title": "🏠 Home", "value": "inicio"},
         ],
@@ -1208,6 +1267,90 @@ BUTTON_OPTIONS = {
             {"title": "🌿 Naturalist", "value": "3"},
             {"title": "⚖️ Buoyancy", "value": "4"},
             {"title": "🫧 Nitrox", "value": "5"},
+            {"title": "⬅️ Back", "value": "back"},
+            {"title": "🏠 Home", "value": "inicio"},
+        ],
+    },
+    "info_tours_certified_menu": {
+        "es": [
+            {"title": "🤿 2 inmersiones (1 día)", "value": "1"},
+            {"title": "🤿 3 inmersiones (1 día)*", "value": "2"},
+            {"title": "🤿 4 inmersiones (2 días)", "value": "3"},
+            {"title": "🤿 5 inmersiones (2 días)", "value": "4"},
+            {"title": "🤿 7 inmersiones (3 días)", "value": "5"},
+            {"title": "🤿 9 inmersiones (4 días)", "value": "6"},
+            {"title": "🧑‍💬 Servicio Privado", "value": "7"},
+            {"title": "⬅️ Volver", "value": "back"},
+            {"title": "🏠 Inicio", "value": "inicio"},
+        ],
+        "en": [
+            {"title": "🤿 2 Dives (1 day)", "value": "1"},
+            {"title": "🤿 3 Dives (1 day)*", "value": "2"},
+            {"title": "🤿 4 Dives (2 days)", "value": "3"},
+            {"title": "🤿 5 Dives (2 days)", "value": "4"},
+            {"title": "🤿 7 Dives (3 days)", "value": "5"},
+            {"title": "🤿 9 Dives (4 days)", "value": "6"},
+            {"title": "🧑‍💬 Private Service", "value": "7"},
+            {"title": "⬅️ Back", "value": "back"},
+            {"title": "🏠 Home", "value": "inicio"},
+        ],
+    },
+    "info_courses_advanced_menu": {
+        "es": [
+            {"title": "📘 Curso Avanzado", "value": "1"},
+            {"title": "🚑 Rescate + EFR", "value": "2"},
+            {"title": "🏅 Dive Master", "value": "3"},
+            {"title": "⬅️ Volver", "value": "back"},
+            {"title": "🏠 Inicio", "value": "inicio"},
+        ],
+        "en": [
+            {"title": "📘 Advanced Course", "value": "1"},
+            {"title": "🚑 Rescue + EFR", "value": "2"},
+            {"title": "🏅 Divemaster", "value": "3"},
+            {"title": "⬅️ Back", "value": "back"},
+            {"title": "🏠 Home", "value": "inicio"},
+        ],
+    },
+    "info_mixed_activity_menu": {
+        "es": [
+            {"title": "🎓 Buceo certificado", "value": "1"},
+            {"title": "🆕 Buceo principiantes (Minicurso)", "value": "2"},
+            {"title": "🐠 Snorkel", "value": "3"},
+            {"title": "⬅️ Volver", "value": "back"},
+            {"title": "🏠 Inicio", "value": "inicio"},
+        ],
+        "en": [
+            {"title": "🎓 Certified diving", "value": "1"},
+            {"title": "🆕 Beginner diving (Mini-course)", "value": "2"},
+            {"title": "🐠 Snorkeling", "value": "3"},
+            {"title": "⬅️ Back", "value": "back"},
+            {"title": "🏠 Home", "value": "inicio"},
+        ],
+    },
+    "info_mixed_cert_beg_menu": {
+        "es": [
+            {"title": "🎓 Buceo certificado", "value": "1"},
+            {"title": "🆕 Buceo principiantes (Minicurso)", "value": "2"},
+            {"title": "⬅️ Volver", "value": "back"},
+            {"title": "🏠 Inicio", "value": "inicio"},
+        ],
+        "en": [
+            {"title": "🎓 Certified diving", "value": "1"},
+            {"title": "🆕 Beginner diving (Mini-course)", "value": "2"},
+            {"title": "⬅️ Back", "value": "back"},
+            {"title": "🏠 Home", "value": "inicio"},
+        ],
+    },
+    "info_certified_4_dives_variant": {
+        "es": [
+            {"title": "🤿 4 inmersiones (2 días) · 4 diurnas", "value": "1"},
+            {"title": "🤿 4 inmersiones (2 días) · 3 diurnas + 1 nocturna", "value": "2"},
+            {"title": "⬅️ Volver", "value": "back"},
+            {"title": "🏠 Inicio", "value": "inicio"},
+        ],
+        "en": [
+            {"title": "🤿 4 Dives (2 days) · 4 daytime dives", "value": "1"},
+            {"title": "🤿 4 Dives (2 days) · 3 daytime + 1 night dive", "value": "2"},
             {"title": "⬅️ Back", "value": "back"},
             {"title": "🏠 Home", "value": "inicio"},
         ],
@@ -1677,12 +1820,10 @@ BUTTON_OPTIONS = {
     },
     "summary": {
         "es": [
-            {"title": "📝 Reservar", "value": "reservar"},
             {"title": "❓ Sí, tengo más preguntas", "value": "ask"},
             {"title": "🔙 Volver al menú", "value": "back"},
         ],
         "en": [
-            {"title": "📝 Book", "value": "reservar"},
             {"title": "❓ Yes, I have more questions", "value": "ask"},
             {"title": "🔙 Back to menu", "value": "back"},
         ],
@@ -1713,24 +1854,22 @@ BUTTON_OPTIONS = {
     },
     "itinerary_offer": {
         "es": [
-            {"title": "📝 Reservar", "value": "reservar"},
-            {"title": "🗺️ Ver itinerario completo", "value": "itinerary"},
+            {"title": "🗺️ Ver itinerario completo + link de reserva", "value": "itinerary"},
             {"title": "🔙 Volver al menú", "value": "back"},
         ],
         "en": [
-            {"title": "📝 Book", "value": "reservar"},
-            {"title": "🗺️ View full itinerary", "value": "itinerary"},
+            {"title": "🗺️ View full itinerary + booking link", "value": "itinerary"},
             {"title": "🔙 Back to menu", "value": "back"},
         ],
     },
     "itinerary_offer_contact": {
         "es": [
-            {"title": "🗺️ Ver itinerario", "value": "itinerary"},
+            {"title": "🗺️ Ver itinerario completo", "value": "itinerary"},
             {"title": "🧑‍💼 Contactar/Reservar", "value": "contact"},
             {"title": "🔙 Volver", "value": "back"},
         ],
         "en": [
-            {"title": "🗺️ View itinerary", "value": "itinerary"},
+            {"title": "🗺️ View full itinerary", "value": "itinerary"},
             {"title": "🧑‍💼 Contact / Book", "value": "contact"},
             {"title": "🔙 Back", "value": "back"},
         ],
@@ -1767,11 +1906,8 @@ class DecisionTree:
         if key == "tours_certified" and state.location == "island":
             state.quick_replies = self._island_certified_options(state.language)
             return
-        if key == "info_tours_menu" and state.location == "island":
-            state.quick_replies = self._info_island_tours_options(state.language)
-            return
-        if key == "info_packages_menu" and state.location == "island":
-            state.quick_replies = self._info_island_packages_options(state.language)
+        if key == "info_tours_certified_menu" and state.location == "island":
+            state.quick_replies = self._info_island_certified_options(state.language)
             return
         if key == "mixed_add_activity" and state.mixed_entry_path == "cert_beg":
             # Filtramos snorkel cuando entran por la rama de certificados + principiantes.
@@ -1784,46 +1920,28 @@ class DecisionTree:
         state.quick_replies = get_button_options(key, state.language)
 
     @staticmethod
-    def _info_island_tours_options(lang: str) -> list[dict]:
+    def _info_island_certified_options(lang: str) -> list[dict]:
         if lang == "es":
             options = [
-                {"title": "🤿 Buceo: 1 inmersión", "value": "1"},
-                {"title": "🤿 Buceo: 2 inmersiones", "value": "2"},
-                {"title": "🆕 Minicurso de buceo", "value": "3"},
-                {"title": "🐠 Tour de snorkeling", "value": "4"},
-                {"title": "🧑‍💬 Servicio privado", "value": "5"},
+                {"title": "🤿 2 inmersiones (1 día)", "value": "1"},
+                {"title": "🤿 3 inmersiones (1 día)*", "value": "2"},
+                {"title": "🤿 4 inmersiones (2 días)", "value": "3"},
+                {"title": "🤿 5 inmersiones (2 días)", "value": "4"},
+                {"title": "🤿 7 inmersiones (3 días)", "value": "5"},
+                {"title": "🤿 9 inmersiones (4 días)", "value": "6"},
+                {"title": "🧑‍💬 Servicio Privado", "value": "7"},
                 {"title": "⬅️ Volver", "value": "back"},
                 {"title": "🏠 Inicio", "value": "inicio"},
             ]
         else:
             options = [
-                {"title": "🤿 Diving: 1 dive", "value": "1"},
-                {"title": "🤿 Diving: 2 dives", "value": "2"},
-                {"title": "🆕 Dive mini course", "value": "3"},
-                {"title": "🐠 Snorkeling tour", "value": "4"},
-                {"title": "🧑‍💬 Private service", "value": "5"},
-                {"title": "⬅️ Back", "value": "back"},
-                {"title": "🏠 Home", "value": "inicio"},
-            ]
-        return [ButtonOption(title=option["title"], value=option["value"]).as_chatwoot_item() for option in options]
-
-    @staticmethod
-    def _info_island_packages_options(lang: str) -> list[dict]:
-        if lang == "es":
-            options = [
-                {"title": "🌙 3 buceos (incluye nocturna)", "value": "1"},
-                {"title": "📦 5 buceos (2 días)", "value": "2"},
-                {"title": "📦 7 buceos (3 días)", "value": "3"},
-                {"title": "📦 9 buceos (4 días)", "value": "4"},
-                {"title": "⬅️ Volver", "value": "back"},
-                {"title": "🏠 Inicio", "value": "inicio"},
-            ]
-        else:
-            options = [
-                {"title": "🌙 3 dives (includes night dive)", "value": "1"},
-                {"title": "📦 5 dives (2 days)", "value": "2"},
-                {"title": "📦 7 dives (3 days)", "value": "3"},
-                {"title": "📦 9 dives (4 days)", "value": "4"},
+                {"title": "🤿 2 Dives (1 day)", "value": "1"},
+                {"title": "🤿 3 Dives (1 day)*", "value": "2"},
+                {"title": "🤿 4 Dives (2 days)", "value": "3"},
+                {"title": "🤿 5 Dives (2 days)", "value": "4"},
+                {"title": "🤿 7 Dives (3 days)", "value": "5"},
+                {"title": "🤿 9 Dives (4 days)", "value": "6"},
+                {"title": "🧑‍💬 Private Service", "value": "7"},
                 {"title": "⬅️ Back", "value": "back"},
                 {"title": "🏠 Home", "value": "inicio"},
             ]
@@ -1834,7 +1952,14 @@ class DecisionTree:
         state.back_quick_replies_key = quick_replies_key
 
     def resolve_back_target(self, state: ConversationState) -> tuple[Step, str] | None:
-        if state.step in {Step.SUMMARY, Step.CERTIFIED_LAST_DIVE} and state.back_step_override and state.back_quick_replies_key:
+        if state.step in {
+            Step.SUMMARY,
+            Step.CERTIFIED_LAST_DIVE,
+            Step.INFO_TOUR_DETAIL,
+            Step.INFO_PACKAGE_DETAIL,
+            Step.INFO_COURSE_DETAIL,
+            Step.INFO_SPECIALTY_DETAIL,
+        } and state.back_step_override and state.back_quick_replies_key:
             return state.back_step_override, state.back_quick_replies_key
         return None
 
@@ -1921,6 +2046,11 @@ class DecisionTree:
             Step.INFO_PACKAGE_DETAIL: self._handle_info_package_detail,
             Step.INFO_COURSE_DETAIL: self._handle_info_course_detail,
             Step.INFO_SPECIALTY_DETAIL: self._handle_info_specialty_detail,
+            Step.INFO_TOURS_CERTIFIED_MENU: self._handle_info_tours_certified_menu,
+            Step.INFO_COURSES_ADVANCED_MENU: self._handle_info_courses_advanced_menu,
+            Step.INFO_MIXED_ACTIVITY_MENU: self._handle_info_mixed_activity_menu,
+            Step.INFO_MIXED_CERT_BEG_MENU: self._handle_info_mixed_cert_beg_menu,
+            Step.INFO_CERTIFIED_4_DIVES_VARIANT: self._handle_info_certified_4_dives_variant,
             Step.TOURS_LOCATION: self._handle_tours_location,
             Step.GROUP_TYPE: self._handle_group_type,
             Step.TOURS_EXPERIENCE: self._handle_tours_experience,
@@ -2198,7 +2328,7 @@ class DecisionTree:
         return MESSAGES["info_activities_menu"][lang]
 
     def _handle_info_activities_menu(self, state: ConversationState, message: str) -> str:
-        choice = self._parse_choice(message, 4)
+        choice = self._parse_choice(message, 2)
         lang = state.language
 
         if choice == 1:
@@ -2206,105 +2336,158 @@ class DecisionTree:
             self.set_quick_replies(state, "info_tours_menu")
             return MESSAGES["info_tours_menu"][lang]
         if choice == 2:
-            state.step = Step.INFO_PACKAGES_MENU
-            self.set_quick_replies(state, "info_packages_menu")
-            return MESSAGES["info_packages_menu"][lang]
-        if choice == 3:
             state.step = Step.INFO_COURSES_MENU
             self.set_quick_replies(state, "info_courses_menu")
             return MESSAGES["info_courses_menu"][lang]
-        if choice == 4:
-            state.step = Step.INFO_SPECIALTIES_MENU
-            self.set_quick_replies(state, "info_specialties_menu")
-            return MESSAGES["info_specialties_menu"][lang]
 
         self.set_quick_replies(state, "info_activities_menu")
         return MESSAGES["not_understood"][lang]
 
     def _handle_info_tours_menu(self, state: ConversationState, message: str) -> str:
         lang = state.language
-        max_choice = 5 if state.location == "island" else 4
-        choice = self._parse_choice(message, max_choice)
+        choice = self._parse_choice(message, 3)
         if choice is None:
             self.set_quick_replies(state, "info_tours_menu")
             return MESSAGES["not_understood"][lang]
 
-        if state.location == "island":
-            service_map = {
-                1: "1_dive_1_day_already_on_island",
-                2: self._service_for_location("2_dives_1_day", state),
-                3: self._service_for_location("minicourse", state),
-                4: self._service_for_location("snorkeling", state),
-                5: "private",
-            }
-        else:
-            service_map = {
-                1: self._service_for_location("2_dives_1_day", state),
-                2: self._service_for_location("minicourse", state),
-                3: self._service_for_location("snorkeling", state),
-                4: "private",
-            }
+        if choice == 1:
+            state.step = Step.INFO_PACKAGES_MENU
+            self.set_quick_replies(state, "info_packages_menu")
+            return MESSAGES["info_packages_menu"][lang]
+        if choice == 2:
+            return self._show_info_service(
+                state,
+                self._service_for_location("snorkeling", state),
+                Step.INFO_TOURS_MENU,
+                "info_tours_menu",
+            )
+        if choice == 3:
+            state.step = Step.INFO_MIXED_ACTIVITY_MENU
+            self.set_quick_replies(state, "info_mixed_activity_menu")
+            return MESSAGES["info_mixed_activity_menu"][lang]
 
-        if choice not in service_map:
-            self.set_quick_replies(state, "info_tours_menu")
-            return MESSAGES["not_understood"][lang]
-
-        state.selected_service = service_map[choice]
-        state.step = Step.INFO_TOUR_DETAIL
-        self.set_quick_replies(state, "info_detail_actions")
-        return self._format_info_card(state)
+        self.set_quick_replies(state, "info_tours_menu")
+        return MESSAGES["not_understood"][lang]
 
     def _handle_info_packages_menu(self, state: ConversationState, message: str) -> str:
         lang = state.language
-        max_choice = 4 if state.location == "island" else 3
-        choice = self._parse_choice(message, max_choice)
+        choice = self._parse_choice(message, 3)
         if choice is None:
             self.set_quick_replies(state, "info_packages_menu")
             return MESSAGES["not_understood"][lang]
 
+        if choice == 1:
+            state.step = Step.INFO_TOURS_CERTIFIED_MENU
+            self.set_quick_replies(state, "info_tours_certified_menu")
+            return MESSAGES["info_tours_certified_menu"][lang]
+        if choice == 2:
+            return self._show_info_service(
+                state,
+                self._service_for_location("minicourse", state),
+                Step.INFO_PACKAGES_MENU,
+                "info_packages_menu",
+            )
+        if choice == 3:
+            state.step = Step.INFO_MIXED_CERT_BEG_MENU
+            self.set_quick_replies(state, "info_mixed_cert_beg_menu")
+            return MESSAGES["info_mixed_cert_beg_menu"][lang]
+
+        self.set_quick_replies(state, "info_packages_menu")
+        return MESSAGES["not_understood"][lang]
+
+    def _handle_info_tours_certified_menu(self, state: ConversationState, message: str) -> str:
+        lang = state.language
+        choice = self._parse_choice(message, 7)
+        if choice is None:
+            self.set_quick_replies(state, "info_tours_certified_menu")
+            return MESSAGES["not_understood"][lang]
+
         if state.location == "island":
             service_map = {
-                1: "3_dives_1_day_already_on_island",
-                2: "5_dives_2_days_already_on_island",
-                3: "7_dives_3_days_already_on_island",
-                4: "9_dives_4_days_already_on_island",
+                1: "2_dives_1_day_already_on_island",
+                2: "3_dives_1_day_already_on_island",
+                4: "5_dives_2_days_already_on_island",
+                5: "7_dives_3_days_already_on_island",
+                6: "9_dives_4_days_already_on_island",
+                7: "private",
             }
         else:
             service_map = {
-                1: "5_dives_2_days",
-                2: "7_dives_3_days",
-                3: "9_dives_4_days",
+                1: "2_dives_1_day",
+                2: "3_dives_1_day",
+                3: "4_dives_2_days",
+                4: "5_dives_2_days",
+                5: "7_dives_3_days",
+                6: "9_dives_4_days",
+                7: "private",
             }
 
+        if state.location == "island" and choice == 3:
+            state.step = Step.INFO_CERTIFIED_4_DIVES_VARIANT
+            self.set_quick_replies(state, "info_certified_4_dives_variant")
+            return MESSAGES["info_certified_4_dives_variant"][lang]
+
         if choice not in service_map:
-            self.set_quick_replies(state, "info_packages_menu")
+            self.set_quick_replies(state, "info_tours_certified_menu")
             return MESSAGES["not_understood"][lang]
 
-        state.selected_service = service_map[choice]
-        state.step = Step.INFO_PACKAGE_DETAIL
-        self.set_quick_replies(state, "info_detail_actions")
-        return self._format_info_card(state)
+        return self._show_info_service(
+            state,
+            service_map[choice],
+            Step.INFO_TOURS_CERTIFIED_MENU,
+            "info_tours_certified_menu",
+        )
 
     def _handle_info_courses_menu(self, state: ConversationState, message: str) -> str:
-        choice = self._parse_choice(message, 5)
+        choice = self._parse_choice(message, 4)
+        lang = state.language
+
+        if choice == 1:
+            return self._show_info_service(
+                state,
+                self._service_for_location("open_water", state),
+                Step.INFO_COURSES_MENU,
+                "info_courses_menu",
+            )
+        if choice == 2:
+            state.step = Step.INFO_COURSES_ADVANCED_MENU
+            self.set_quick_replies(state, "info_courses_advanced_menu")
+            return MESSAGES["info_courses_advanced_menu"][lang]
+        if choice == 3:
+            state.step = Step.INFO_SPECIALTIES_MENU
+            self.set_quick_replies(state, "info_specialties_menu")
+            return MESSAGES["info_specialties_menu"][lang]
+        if choice == 4:
+            return self._show_info_service(
+                state,
+                self._service_for_location("referral", state),
+                Step.INFO_COURSES_MENU,
+                "info_courses_menu",
+            )
+
+        self.set_quick_replies(state, "info_courses_menu")
+        return MESSAGES["not_understood"][lang]
+
+    def _handle_info_courses_advanced_menu(self, state: ConversationState, message: str) -> str:
+        choice = self._parse_choice(message, 3)
         lang = state.language
 
         service_map = {
-            1: self._service_for_location("open_water", state),
-            2: self._service_for_location("advanced", state),
-            3: "rescue",
-            4: "divemaster",
-            5: self._service_for_location("referral", state),
+            1: self._service_for_location("advanced", state),
+            2: "rescue",
+            3: "divemaster",
         }
 
         if choice not in service_map:
-            self.set_quick_replies(state, "info_courses_menu")
+            self.set_quick_replies(state, "info_courses_advanced_menu")
             return MESSAGES["not_understood"][lang]
 
-        state.selected_service = service_map[choice]
-        state.step = Step.INFO_COURSE_DETAIL
-        self.set_quick_replies(state, "info_detail_actions")
-        return self._format_info_card(state)
+        return self._show_info_service(
+            state,
+            service_map[choice],
+            Step.INFO_COURSES_ADVANCED_MENU,
+            "info_courses_advanced_menu",
+        )
 
     def _handle_info_specialties_menu(self, state: ConversationState, message: str) -> str:
         choice = self._parse_choice(message, 5)
@@ -2322,8 +2505,97 @@ class DecisionTree:
             self.set_quick_replies(state, "info_specialties_menu")
             return MESSAGES["not_understood"][lang]
 
-        state.selected_service = service_map[choice]
-        state.step = Step.INFO_SPECIALTY_DETAIL
+        return self._show_info_service(
+            state,
+            service_map[choice],
+            Step.INFO_SPECIALTIES_MENU,
+            "info_specialties_menu",
+        )
+
+    def _handle_info_mixed_activity_menu(self, state: ConversationState, message: str) -> str:
+        choice = self._parse_choice(message, 3)
+        lang = state.language
+
+        if choice == 1:
+            state.step = Step.INFO_TOURS_CERTIFIED_MENU
+            self.set_quick_replies(state, "info_tours_certified_menu")
+            return MESSAGES["info_tours_certified_menu"][lang]
+        if choice == 2:
+            return self._show_info_service(
+                state,
+                self._service_for_location("minicourse", state),
+                Step.INFO_MIXED_ACTIVITY_MENU,
+                "info_mixed_activity_menu",
+            )
+        if choice == 3:
+            return self._show_info_service(
+                state,
+                self._service_for_location("snorkeling", state),
+                Step.INFO_MIXED_ACTIVITY_MENU,
+                "info_mixed_activity_menu",
+            )
+
+        self.set_quick_replies(state, "info_mixed_activity_menu")
+        return MESSAGES["not_understood"][lang]
+
+    def _handle_info_mixed_cert_beg_menu(self, state: ConversationState, message: str) -> str:
+        choice = self._parse_choice(message, 2)
+        lang = state.language
+
+        if choice == 1:
+            state.step = Step.INFO_TOURS_CERTIFIED_MENU
+            self.set_quick_replies(state, "info_tours_certified_menu")
+            return MESSAGES["info_tours_certified_menu"][lang]
+        if choice == 2:
+            return self._show_info_service(
+                state,
+                self._service_for_location("minicourse", state),
+                Step.INFO_MIXED_CERT_BEG_MENU,
+                "info_mixed_cert_beg_menu",
+            )
+
+        self.set_quick_replies(state, "info_mixed_cert_beg_menu")
+        return MESSAGES["not_understood"][lang]
+
+    def _handle_info_certified_4_dives_variant(self, state: ConversationState, message: str) -> str:
+        choice = self._parse_choice(message, 2)
+        lang = state.language
+
+        if choice == 1:
+            service_id = "4_dives_2_days_already_on_island"
+        elif choice == 2:
+            service_id = "4_dives_2_days_mixed_already_on_island"
+        else:
+            self.set_quick_replies(state, "info_certified_4_dives_variant")
+            return MESSAGES["not_understood"][lang]
+
+        return self._show_info_service(
+            state,
+            service_id,
+            Step.INFO_CERTIFIED_4_DIVES_VARIANT,
+            "info_certified_4_dives_variant",
+        )
+
+    def _show_info_service(self, state: ConversationState, service_id: str, back_step: Step, back_quick_replies_key: str) -> str:
+        service = SERVICES.get(service_id)
+        if not service:
+            state.step = Step.INFO_MENU
+            self.set_quick_replies(state, "info_menu")
+            return MESSAGES["info_menu"][state.language]
+
+        category = service.get("category")
+        if category == "course":
+            detail_step = Step.INFO_COURSE_DETAIL
+        elif category == "specialty":
+            detail_step = Step.INFO_SPECIALTY_DETAIL
+        elif category == "package":
+            detail_step = Step.INFO_PACKAGE_DETAIL
+        else:
+            detail_step = Step.INFO_TOUR_DETAIL
+
+        state.selected_service = service_id
+        self._set_back_target(state, back_step, back_quick_replies_key)
+        state.step = detail_step
         self.set_quick_replies(state, "info_detail_actions")
         return self._format_info_card(state)
 
@@ -4319,6 +4591,8 @@ class DecisionTree:
             max_options = 2
         elif summary_mode != "itinerary_offer" and contact_only:
             max_options = 3
+        elif summary_mode != "itinerary_offer":
+            max_options = 1
         choice = self._parse_choice(message, max_options)
         action = None
 
@@ -4346,10 +4620,17 @@ class DecisionTree:
                     action = "skip"
 
         if summary_mode == "itinerary_offer":
-            # NUEVO: Reservar → escalate al asesor + enviar link de reserva
-            # Para itinerary_offer (no contact_only): choice 1 = reservar, choice 2 = itinerary
-            if (action == "reservar" or (choice == 1 and not contact_only)) and not contact_only:
-                # Construir link de reserva
+            if service_id in {"referral", "referral_already_on_island"} and action == "reservar":
+                state.summary_mode = None
+                state.step = Step.ESCALATE
+                state.quick_replies = []
+                state.pending_escalation_reason = "solicitó contacto para curso referido"
+                return _referral_escalation_message(state)
+
+            if contact_only and action == "reservar":
+                action = "contact"
+
+            if action == "reservar" and not contact_only:
                 svc = SERVICES.get(service_id) or {}
                 if state.location == "island" and svc.get("booking_url_island"):
                     booking_url = svc.get("booking_url_island")
@@ -4382,13 +4663,11 @@ class DecisionTree:
                     + link_block
                 )
 
-            if action == "itinerary" or (choice == 2 and not contact_only) or (contact_only and choice == 1):
+            if action == "itinerary" or choice == 1:
                 state.summary_mode = "follow_up"
                 self.set_quick_replies(state, self._summary_quick_replies_key(state))
-                # El itinerario va en un mensaje y el follow-up en otro (separador MESSAGE_SPLIT)
                 if contact_only:
                     return self._format_full_itinerary(state) + MESSAGE_SPLIT + _divemaster_follow_up_prompt(lang)
-                # Para el curso referral, orientamos el follow-up a contactar/reservar con el jefe.
                 if service_id in {"referral", "referral_already_on_island"}:
                     if lang == "es":
                         return (
@@ -4474,15 +4753,13 @@ class DecisionTree:
                 "to review your profile, dates, and the best program format for you."
             )
 
-        # Para referral, 'contact' en modo follow_up dispara la escalada con el mensaje específico
-        if service_id in {"referral", "referral_already_on_island"} and (action == "contact" or choice == 1):
+        if service_id in {"referral", "referral_already_on_island"} and (action == "contact" or action == "reservar" or choice == 1):
             state.summary_mode = None
             state.step = Step.ESCALATE
             state.quick_replies = []
             state.pending_escalation_reason = "solicitó contacto para curso referido"
             return _referral_escalation_message(state)
 
-        # NUEVO: Reservar en modo follow_up (tras ver itinerario completo)
         if action == "reservar" and not contact_only and service_id not in {"referral", "referral_already_on_island"}:
             svc = SERVICES.get(service_id) or {}
             if state.location == "island" and svc.get("booking_url_island"):
@@ -4511,7 +4788,8 @@ class DecisionTree:
                 + link_block
             )
 
-        if action == "ask" or choice == (2 if contact_only else 2):
+        ask_choice = 2 if contact_only else (None if service_id in {"referral", "referral_already_on_island"} else 1)
+        if action == "ask" or (ask_choice is not None and choice == ask_choice):
             state.summary_mode = None
             # Para el curso referido, en lugar de pasar a FREE_TEXT derivamos directamente a humano
             # con el mensaje explicativo de referral + el mensaje generico de escalada.
@@ -4568,7 +4846,7 @@ class DecisionTree:
             title_requirements = "✅ **Requisitos:**"
             title_not_included = "❌ **No incluye:**"
             title_link = "🔗 Link de la actividad en la web:"
-            payment_title = "👉 Reserva aqui con 10% de descuento:"
+            payment_title = "🔗 Link de reserva (10% off online):"
         else:
             description = service.get("description_en")
             preparation = service.get("preparation_en")
@@ -4583,7 +4861,7 @@ class DecisionTree:
             title_requirements = "✅ **Requirements:**"
             title_not_included = "❌ **Not included:**"
             title_link = "🔗 Activity page link:"
-            payment_title = "👉 *Book here with 10% off*:"
+            payment_title = "🔗 Booking link (10% off online):"
 
         # Elegimos el booking_url igual que en el resumen
         if state.location == "island" and service.get("booking_url_island"):

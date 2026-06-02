@@ -78,6 +78,54 @@ class TestMainMenu:
         assert state.step == Step.INFO_MENU
         assert "información" in response.lower() or "information" in response.lower()
 
+    def test_info_activities_menu_uses_booking_top_level_structure(self):
+        state = self._go_to_menu()
+        self.tree.process_message(state, "2")
+        self.tree.process_message(state, "1")
+        response = self.tree.process_message(state, "1")
+
+        assert state.step == Step.INFO_ACTIVITIES_MENU
+        assert "actividades" in response.lower() or "activities" in response.lower()
+        assert [item["title"] for item in state.quick_replies[:2]] == [
+            "🤿 Tours de buceo / snorkel",
+            "📘 Cursos PADI y certificaciones",
+        ]
+
+    def test_info_certified_menu_from_island_mirrors_booking_options(self):
+        state = self._go_to_menu()
+        self.tree.process_message(state, "2")
+        self.tree.process_message(state, "1")
+        self.tree.process_message(state, "2")
+        self.tree.process_message(state, "1")
+        self.tree.process_message(state, "1")
+        response = self.tree.process_message(state, "1")
+
+        assert state.step == Step.INFO_TOURS_CERTIFIED_MENU
+        assert "buzos certificados" in response.lower()
+        assert [item["title"] for item in state.quick_replies[:4]] == [
+            "🤿 2 inmersiones (1 día)",
+            "🤿 3 inmersiones (1 día)*",
+            "🤿 4 inmersiones (2 días)",
+            "🤿 5 inmersiones (2 días)",
+        ]
+
+    def test_info_island_certified_4_dives_opens_variant_menu(self):
+        state = self._go_to_menu()
+        self.tree.process_message(state, "2")
+        self.tree.process_message(state, "1")
+        self.tree.process_message(state, "2")
+        self.tree.process_message(state, "1")
+        self.tree.process_message(state, "1")
+        self.tree.process_message(state, "1")
+        response = self.tree.process_message(state, "3")
+
+        assert state.step == Step.INFO_CERTIFIED_4_DIVES_VARIANT
+        assert "4 inmersiones" in response.lower()
+        assert [item["title"] for item in state.quick_replies[:2]] == [
+            "🤿 4 inmersiones (2 días) · 4 diurnas",
+            "🤿 4 inmersiones (2 días) · 3 diurnas + 1 nocturna",
+        ]
+
     def test_select_courses_via_reservar(self):
         state = self._go_to_menu()
         self.tree.process_message(state, "1")  # Reservar
@@ -579,8 +627,8 @@ class TestSummaryFlow:
 
         assert state.step == Step.SUMMARY
         assert "ℹ️" not in response
-        # itinerary_offer ahora tiene: reservar + itinerary + back
-        assert [item["value"] for item in state.quick_replies] == ["reservar", "itinerary", "back"]
+        assert [item["value"] for item in state.quick_replies] == ["itinerary", "back"]
+        assert state.quick_replies[0]["title"] == "🗺️ Ver itinerario completo + link de reserva"
 
     def test_open_water_summary_skips_repeated_info_block_in_english(self):
         state = make_state()
@@ -593,7 +641,8 @@ class TestSummaryFlow:
 
         assert state.step == Step.SUMMARY
         assert "ℹ️" not in response
-        assert [item["value"] for item in state.quick_replies] == ["reservar", "itinerary", "back"]
+        assert [item["value"] for item in state.quick_replies] == ["itinerary", "back"]
+        assert state.quick_replies[0]["title"] == "🗺️ View full itinerary + booking link"
 
     def test_divemaster_summary_in_spanish_uses_info_link_and_contact_prompt(self):
         state = make_state()
@@ -644,8 +693,7 @@ class TestSummaryFlow:
 
         assert state.step == Step.SUMMARY
         assert "itinerario" in response.lower() or "🗺️" in response
-        # Follow-up ahora muestra Reservar como botón principal (no "done")
-        assert [item["value"] for item in state.quick_replies] == ["reservar", "ask", "back"]
+        assert [item["value"] for item in state.quick_replies] == ["ask", "back"]
 
     def test_open_water_full_itinerary_skips_repeated_info_block(self):
         state = make_state()
@@ -658,6 +706,7 @@ class TestSummaryFlow:
 
         assert "ℹ️" not in response
         assert "🗺️" in response
+        assert "🔗 Link de reserva (10% off online):" in response
 
 
 class TestFullJourney:

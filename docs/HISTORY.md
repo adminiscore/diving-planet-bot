@@ -1,6 +1,14 @@
 History
 =======
 
+0.15.1 - (2026-06-02)
+---------------------
+* Harden meal / dietary RAG answers so food questions return the canonical KB answer from `faqs.json` / `policies.json` before retrieval, preventing hallucinated menu items.
+* Simplify visible summary CTAs for reservable services: the user now sees only the full-itinerary option plus back, while the booking link remains inside the full itinerary and typed `reservar` behavior is preserved.
+* Rename the itinerary booking block to a neutral booking-link label and keep referral/contact-only variants on their specialized summary flows.
+* Mirror `Información > Actividades` to the current `Reserva` hierarchy: diving/snorkel tours, certified/beginner/mixed diving branches, course/go-pro/specialties structure, and the island `4 dives` variant.
+* Add/update regression tests for canonical food answers, summary CTA behavior, and the new info-branch navigation/back behavior.
+
 0.15.0 - (2026-05-28)
 ---------------------
 * Cart-style mixed-group flow with item aggregation (same type/plan merges qty), dynamic emoji-button cart pick (no more "respond with number"), per-person + total-bold price breakdown, and snorkel filtered out of the cert+beg mixed branch.

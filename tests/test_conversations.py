@@ -512,6 +512,23 @@ async def test_back_button_not_present_in_info_menu():
 
 
 @pytest.mark.asyncio
+async def test_info_island_4_dives_detail_back_returns_to_variant_menu():
+    state = await reach_main_menu("es")
+    await send(state, "2", "1", "2", "1", "1", "1", "3", "2")
+
+    assert state.step == Step.INFO_PACKAGE_DETAIL
+    assert state.selected_service == "4_dives_2_days_mixed_already_on_island"
+
+    await route_message(state, "back")
+
+    assert state.step == Step.INFO_CERTIFIED_4_DIVES_VARIANT
+    assert [qr["title"] for qr in state.quick_replies[:2]] == [
+        "🤿 4 inmersiones (2 días) · 4 diurnas",
+        "🤿 4 inmersiones (2 días) · 3 diurnas + 1 nocturna",
+    ]
+
+
+@pytest.mark.asyncio
 async def test_back_keyword_outside_reservar_branch_falls_back_to_main_menu():
     """When back keyword is used at a step with no BACK_STEP mapping, fall back to MAIN_MENU."""
     state = make_state()
@@ -930,7 +947,7 @@ async def test_referral_reactivate_escalates():
     assert "referral" in state.selected_service or "referido" in resp.lower()
 
     # Paso 4: desde el resumen inicial, avanzar al follow-up
-    resp = await route_message(state, "2")
+    resp = await route_message(state, "itinerary")
     assert state.step == Step.SUMMARY
 
     # Paso 5: elegir Contactar/Reservar -> escalar a humano
@@ -2087,21 +2104,18 @@ async def test_invalid_island_menu_option():
 async def test_summary_restart_returns_to_main():
     state = await reach_diving_experience()
     await send(state, "1", "1", "2", "2")  # llega a SUMMARY (itinerary_offer)
-    # En el nuevo flujo: choice 1 = reservar (escalate). Para ver itinerario: choice 2 o action 'itinerary'.
     resp = await route_message(state, "itinerary")
     assert state.step == Step.SUMMARY
     assert "itinerario" in resp.lower() or "🗺️" in resp
-    # Summary follow_up ahora incluye Reservar como botón principal
-    assert [item["value"] for item in state.quick_replies] == ["reservar", "ask", "back"]
+    assert [item["value"] for item in state.quick_replies] == ["ask", "back"]
 
 
 @pytest.mark.asyncio
 async def test_summary_no_thanks_ends_conversation():
     state = await reach_diving_experience()
     await send(state, "1", "1", "2", "2")  # llega a SUMMARY (itinerary_offer)
-    # En el nuevo flujo el itinerary_offer tiene 3 botones: reservar, itinerary, back.
     assert state.step == Step.SUMMARY
-    assert [item["value"] for item in state.quick_replies] == ["reservar", "itinerary", "back"]
+    assert [item["value"] for item in state.quick_replies] == ["itinerary", "back"]
 
 
 @pytest.mark.asyncio
@@ -2136,7 +2150,6 @@ async def test_go_pro_itinerary_back_returns_to_go_pro_menu():
     state = await reach_courses_menu()
     await send(state, "2", "1", "2")  # go pro > advanced > no colombiano
     assert state.step == Step.SUMMARY
-    # En el nuevo itinerary_offer: choice 1 = reservar (escalate). Usar 'itinerary' explícito.
     await route_message(state, "itinerary")
     assert state.step == Step.SUMMARY
     await route_message(state, "back")
