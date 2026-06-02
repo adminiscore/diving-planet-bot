@@ -552,6 +552,8 @@ MULTI_DAY_SERVICES = {
 }
 
 REFRESHER_PRESERVE_SERVICES = {
+    "2_dives_1_day",
+    "2_dives_1_day_already_on_island",
     "3_dives_1_day",
     "4_dives_2_days",
     "5_dives_2_days",
@@ -975,8 +977,8 @@ MESSAGES = {
         "en": "Would you like to add this activity to the cart?",
     },
     "mixed_cert_refresh_qty": {
-        "es": "¿Cuántas personas quieren incluir el *Minicurso / Refresher*?",
-        "en": "How many people want to include the *Mini-course / Refresher*?",
+        "es": "¿Cuántas de estas personas quieren hacer el *refresher*?\n_(Sin coste adicional — el guía adapta la inmersión a su nivel)_",
+        "en": "How many of these people want to do the *refresher*?\n_(No extra cost — the guide adapts the dive to their level)_",
     },
     "mixed_cart_empty": {
         "es": "Tu carrito está vacío. Añade al menos una actividad para continuar.",
@@ -2108,7 +2110,7 @@ class DecisionTree:
             return cleaned
         return cleaned[: max_len - 1].rstrip() + "…"
 
-    def _format_info_card(self, state: ConversationState) -> str:
+    def _format_info_card(self, state: ConversationState, compact: bool = False) -> str:
         service = SERVICES.get(state.selected_service)
         if not service:
             return MESSAGES["not_understood"][state.language]
@@ -2168,17 +2170,18 @@ class DecisionTree:
                 lines.append(f"👶 *Edad mínima*: {min_age} años")
             lines.append("")
             lines.append(f"💰 *Precio desde*: {price_from}")
-            if includes_lines:
+            if not compact:
+                if includes_lines:
+                    lines.append("")
+                    lines.append("✅ *Qué incluye* (resumen):")
+                    lines.append(includes_lines)
+                if not_included_lines:
+                    lines.append("")
+                    lines.append("❌ *Qué no incluye* (típico):")
+                    lines.append(not_included_lines)
                 lines.append("")
-                lines.append("✅ *Qué incluye* (resumen):")
-                lines.append(includes_lines)
-            if not_included_lines:
-                lines.append("")
-                lines.append("❌ *Qué no incluye* (típico):")
-                lines.append(not_included_lines)
-            lines.append("")
-            lines.append("🔗 *Info completa en la web*:")
-            lines.append(web_url)
+                lines.append("🔗 *Info completa en la web*:")
+                lines.append(web_url)
             return "\n".join(lines)
 
         lines = []
@@ -2199,17 +2202,18 @@ class DecisionTree:
             lines.append(f"👶 *Minimum age*: {min_age} years")
         lines.append("")
         lines.append(f"💰 *Price from*: {price_from}")
-        if includes_lines:
+        if not compact:
+            if includes_lines:
+                lines.append("")
+                lines.append("✅ *What's included* (summary):")
+                lines.append(includes_lines)
+            if not_included_lines:
+                lines.append("")
+                lines.append("❌ *Not included* (typical):")
+                lines.append(not_included_lines)
             lines.append("")
-            lines.append("✅ *What's included* (summary):")
-            lines.append(includes_lines)
-        if not_included_lines:
-            lines.append("")
-            lines.append("❌ *Not included* (typical):")
-            lines.append(not_included_lines)
-        lines.append("")
-        lines.append("🔗 *Full info on the website*:")
-        lines.append(web_url)
+            lines.append("🔗 *Full info on the website*:")
+            lines.append(web_url)
         return "\n".join(lines)
 
     def _handle_welcome(self, state: ConversationState, message: str) -> str:
@@ -2900,7 +2904,7 @@ class DecisionTree:
         if item_type == "beginner":
             return "Buceo principiantes (Minicurso)" if lang == "es" else "Beginner diving (Mini-course)"
         if item_type == "refresh":
-            return "Minicurso / Refresher" if lang == "es" else "Mini-course / Refresher"
+            return "Refresher (sin coste)" if lang == "es" else "Refresher (no extra cost)"
         if item_type == "snorkel":
             return "Snorkel" if lang == "es" else "Snorkeling"
         if item_type == "companion":
@@ -3662,12 +3666,10 @@ class DecisionTree:
         if state.refresher_interested and state.original_service:
             intro = (
                 "Perfecto. Como han pasado más de 2 años, te incluimos el *refresher* — "
-                "tiene el mismo formato de práctica en piscina + buceo en el mar.\n\n"
-                "El asesor confirma si se gestiona como actividad aparte o se integra en tu plan.\n\n"
+                "el asesor lo coordina al confirmar la reserva (sin coste adicional).\n\n"
                 if lang == "es"
                 else "Perfect. Since it's been more than 2 years, we'll include the *refresher* — "
-                "same pool practice + sea dive format.\n\n"
-                "The advisor will confirm whether it's billed separately or integrated into your plan.\n\n"
+                "the advisor coordinates it when confirming the booking (no extra cost).\n\n"
             )
             return intro + self._goto_location_with_costs(state)
 
@@ -4928,6 +4930,10 @@ class DecisionTree:
         # Construimos bloques separados para controlar bien los espacios entre secciones
         blocks: list[list[str]] = []
 
+        svc_title = service.get(f"name_{lang}") or service.get("name_es") or ""
+        if svc_title:
+            blocks.append([f"🤿 *{svc_title}*"])
+
         if description and not _is_padi_course_service(service_id):
             blocks.append([f"ℹ️ {description}"])
 
@@ -5070,6 +5076,9 @@ class DecisionTree:
         for item in state.mixed_cart:
             qty = item.get("qty", 0)
             item_type = item.get("type")
+            # Refresh is free — never add to paid rows or totals.
+            if item_type == "refresh":
+                continue
             label = item.get("label") or self._cart_label_for(item_type, item.get("plan"), lang)
             if item_type == "companion":
                 usd = COMPANION_PRICE.get("usd_online")
@@ -5082,7 +5091,7 @@ class DecisionTree:
                 cop = svc.get("price_cop")
                 booking_url = svc.get("booking_url")
                 svc_name = svc.get(f"name_{lang}")
-                if svc_name and item_type != "refresh":
+                if svc_name:
                     label = svc_name
             sub_usd = (float(usd) * qty) if usd else None
             sub_cop = (int(cop) * qty) if cop else None
@@ -5155,6 +5164,14 @@ class DecisionTree:
 
         # EXTRAS / DESCUENTOS block (only if any apply)
         extras_lines: list[str] = []
+        refresh_qty = sum(item["qty"] for item in state.mixed_cart if item.get("type") == "refresh")
+        if refresh_qty > 0:
+            word = "persona" if refresh_qty == 1 else "personas"
+            extras_lines.append(
+                f"  🧑‍🏫 Refresher incluido: {refresh_qty} {word} — sin coste adicional"
+                if lang == "es"
+                else f"  🧑‍🏫 Refresher included: {refresh_qty} person{'s' if refresh_qty > 1 else ''} — no extra cost"
+            )
         if state.mixed_final_is_colombian:
             extras_lines.append(
                 "  💚 Descuento colombianos/residentes — el asesor confirmará el descuento al reservar"

@@ -590,7 +590,8 @@ async def test_certified_refresher_yes_updates_service_for_2_dives():
     resp = await route_message(state, "1")       # quiere refresher → COLOMBIAN
     assert state.refresher_interested is True
     assert state.step == Step.COLOMBIAN
-    assert state.selected_service == "minicourse"
+    # Service stays as 2_dives_1_day — refresher is an annotation, not a swap to minicourse
+    assert state.selected_service == "2_dives_1_day"
 
 
 @pytest.mark.asyncio
@@ -2032,7 +2033,6 @@ async def test_mixed_cert_two_people_direct_split_1_plus_1():
         resp = await route_message(state, "Dos acompañantes quieren buceo")
 
     # Cert question con 3 botones
-    assert "Algunos sí, algunos no" in resp
     assert "buzos certificados" in resp.lower()
 
     # Click 3 → para 2 personas el split es directo (1+1)
@@ -2068,8 +2068,11 @@ async def test_companion_cert_yes_refresher_yes_stays_as_buceo_not_minicurso():
     resp = await route_message(state, "1")
     # Click "Sí, >2 años" → pregunta refresher
     resp = await route_message(state, "1")
-    # Click "Sí, refresher" → debe mostrar tarjeta BUCEO (no minicurso) + nota
+    # Click "Sí, refresher" → con diving_qty=3 pregunta cuántos quieren refresher
     resp = await route_message(state, "1")
+    assert "cuántas" in resp.lower() or "cuantas" in resp.lower()
+    # Indicamos que los 3 quieren refresher → debe mostrar tarjeta BUCEO + nota
+    resp = await route_message(state, "3")
 
     # Aceptamos buceo en la tarjeta y que NO aparece el título principal del minicurso
     # (la palabra 'Minicurso' podría aparecer en la nota; el title del card es lo que importa).
@@ -2084,6 +2087,7 @@ async def test_companion_cert_yes_refresher_yes_stays_as_buceo_not_minicurso():
         diving = next((a for a in allocs if a["activity"] == "diving"), None)
         assert diving is not None and diving["qty"] == 3
         assert ctx.get("refresher_interested") is True
+        assert ctx.get("refresher_qty") == 3
 
 
 @pytest.mark.asyncio
@@ -2095,7 +2099,7 @@ async def test_mixed_cert_three_people_asks_split_count():
     with patch("src.agents.supervisor.rag_answer", new_callable=AsyncMock, return_value=RAG_MOCK):
         resp = await route_message(state, "Tres amigos quieren buceo")
 
-    assert "Algunos sí, algunos no" in resp
+    assert "buzos certificados" in resp.lower()
 
     # Click 3 → debe preguntar el reparto con N-1 = 2 botones
     resp = await route_message(state, "3")
@@ -2973,11 +2977,11 @@ async def test_mixed_cert_refresher_split_keeps_refresh_in_cart_and_continues_di
 
     resp = await route_message(state, "1")  # wants refresher
     assert state.step == Step.MIXED_CERT_REFRESH_QTY
-    assert "cuántas personas" in resp.lower() or "how many people" in resp.lower()
+    assert "refresher" in resp.lower()
 
     resp = await route_message(state, "1")  # only 1 wants refresher
     assert state.step == Step.MIXED_CERT_SPLIT_REVIEW
-    assert "Minicurso / Refresher" in resp
+    assert "refresher" in resp.lower()
     assert "queda 1 persona pendiente" in resp.lower()
 
     resp = await route_message(state, "1")  # continue with remaining diving
@@ -2987,7 +2991,7 @@ async def test_mixed_cert_refresher_split_keeps_refresh_in_cart_and_continues_di
     resp = await route_message(state, "1")  # add remaining diving
     assert state.step == Step.MIXED_CART_REVIEW
     labels = [item["label"] for item in state.mixed_cart]
-    assert "Minicurso / Refresher" in labels
+    assert "Refresher (sin coste)" in labels
     assert "Buceo certificado (2 inmersiones)" in labels
 
 

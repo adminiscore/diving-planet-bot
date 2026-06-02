@@ -1,6 +1,18 @@
 History
 =======
 
+0.15.2 - (2026-06-03)
+---------------------
+* Refresher no longer converts certified `2 dives / 1 day` into a minicourse: `2_dives_1_day` (and its island variant) added to `REFRESHER_PRESERVE_SERVICES`, so the service stays as buceo certificado and the refresher is annotated.
+* Companion-from-single + cart flow now asks "¿Cuántas de las N personas quieren hacer el *refresher*?" when there are 2+ certified divers, and persists `refresher_qty` into the mixed cart on entry so it shows in the final summary.
+* Speaker's own refresher (from the initial 2_dives_1_day flow) is now carried into the mixed cart when joining companions, so the cart counts both speaker + companions who confirmed refresher.
+* Cart cleanup: `refresh` items are skipped from the paid rows of `RESERVA DIVING PLANET` and rendered as a free `🧑‍🏫 Refresher incluido: N personas — sin coste adicional` line in the EXTRAS block. Cart label changed from "Minicurso / Refresher" to "Refresher (sin coste)".
+* Companion intent detection covers digit/word-noun concatenations (`3amigos`, `sieteamigos`, `4hijos`) via a normalization pass that splits them before regex matching.
+* Mixed-group info cards are now compact when there are 2+ allocations (drops includes/not_included/link blocks), separated by a horizontal rule. Single-allocation cards keep the full detail.
+* Itinerary view now shows the activity title at the top.
+* Cert question text (`¿Son buzos certificados?`) trimmed to remove the numbered list duplicated by the quick replies; "Anotado" confirmation prefixed with `✅` and clarified.
+* Local dev page `chatwood-test.html` is gitignored (contains personal Chatwoot tokens) and got SDK retry + status indicator so the chat button no longer fails silently when Docker is still starting.
+
 0.15.1 - (2026-06-02)
 ---------------------
 * Harden meal / dietary RAG answers so food questions return the canonical KB answer from `faqs.json` / `policies.json` before retrieval, preventing hallucinated menu items.
