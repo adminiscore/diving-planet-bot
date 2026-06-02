@@ -18,6 +18,20 @@
       }
       h1 { font-size: 1rem; opacity: 0.4; letter-spacing: 0.05em; }
 
+      #status {
+        font-size: 0.75rem;
+        padding: 6px 14px;
+        border-radius: 6px;
+        background: rgba(255,255,255,0.07);
+        max-width: 520px;
+        text-align: center;
+        line-height: 1.6;
+        opacity: 0.85;
+      }
+      #status.ok    { color: #68d391; }
+      #status.error { color: #fc8181; }
+      #status.warn  { color: #f6ad55; }
+
       /* Forzar el panel del widget a tamaño grande */
       .woot-widget-holder {
         width:  680px !important;
@@ -34,59 +48,106 @@
   </head>
   <body>
     <h1>DIVING PLANET · Dev Chat</h1>
+    <div id="status">🔄 Conectando a Chatwoot en localhost:3300…</div>
 
     <script>
-      (function(d, t) {
-        var BASE_URL = "http://localhost:3300";
-        var g = d.createElement(t), s = d.getElementsByTagName(t)[0];
-        g.src   = BASE_URL + "/packs/js/sdk.js";
-        g.defer = true;
-        g.async = true;
-        s.parentNode.insertBefore(g, s);
+      (function(d) {
+        var BASE_URL   = "http://localhost:3300";
+        var TOKEN      = "T49iSq16SvRnqUqbayMQWmni";
+        var MAX_RETRIES = 8;
+        var attempt    = 0;
+        var widgetReady = false;
 
-        g.onload = function() {
-          window.chatwootSDK.run({
-            websiteToken: 'T49iSq16SvRnqUqbayMQWmni',
-            baseUrl: BASE_URL
-          });
+        function setStatus(msg, cls) {
+          var el = d.getElementById('status');
+          el.textContent = msg;
+          el.className   = cls || '';
+        }
 
-          // Abrir el widget automáticamente
+        function setupWidget() {
+          window.chatwootSDK.run({ websiteToken: TOKEN, baseUrl: BASE_URL });
+
+          // Timeout: si en 8s no llega chatwoot:ready, avisamos
+          var readyTimer = setTimeout(function() {
+            if (!widgetReady) {
+              setStatus(
+                '⚠️ SDK cargado pero widget sin respuesta — verifica que el token "' + TOKEN +
+                '" coincide con Chatwoot → Settings → Integrations → Website Widget',
+                'warn'
+              );
+            }
+          }, 8000);
+
           window.addEventListener('chatwoot:ready', function() {
+            widgetReady = true;
+            clearTimeout(readyTimer);
+            setStatus('✅ Widget listo  ·  token: ' + TOKEN, 'ok');
             window.$chatwoot.toggle('open');
           });
-          setTimeout(function(){
+
+          // Fallback toggle por si el evento ya disparó antes de este listener
+          setTimeout(function() {
             if (window.$chatwoot && typeof window.$chatwoot.toggle === 'function') {
               window.$chatwoot.toggle('open');
             }
           }, 1500);
 
-          // MutationObserver: en cuanto el SDK inyecte el holder, forzar dimensiones
+          // MutationObserver: forzar dimensiones del holder cuando aparezca
           var observer = new MutationObserver(function() {
-            var holder = document.querySelector('.woot-widget-holder');
+            var holder = d.querySelector('.woot-widget-holder');
             if (!holder) return;
-
             function resize() {
-              holder.style.setProperty('width',      '680px',  'important');
-              holder.style.setProperty('height',     '88vh',   'important');
-              holder.style.setProperty('max-height', '88vh',   'important');
-              holder.style.setProperty('bottom',     '16px',   'important');
-              holder.style.setProperty('right',      '16px',   'important');
+              holder.style.setProperty('width',      '680px', 'important');
+              holder.style.setProperty('height',     '88vh',  'important');
+              holder.style.setProperty('max-height', '88vh',  'important');
+              holder.style.setProperty('bottom',     '16px',  'important');
+              holder.style.setProperty('right',      '16px',  'important');
               var iframe = holder.querySelector('iframe');
               if (iframe) {
                 iframe.style.setProperty('width',  '680px', 'important');
                 iframe.style.setProperty('height', '88vh',  'important');
               }
             }
-
             resize();
-            // Re-aplicar si el SDK resetea los estilos al abrir/cerrar
             new MutationObserver(resize).observe(holder, { attributes: true, attributeFilter: ['style'] });
             observer.disconnect();
           });
+          observer.observe(d.body, { childList: true, subtree: true });
+        }
 
-          observer.observe(document.body, { childList: true, subtree: true });
-        };
-      })(document, "script");
+        function loadSDK() {
+          attempt++;
+          setStatus('🔄 Cargando SDK… (intento ' + attempt + '/' + MAX_RETRIES + ')');
+
+          var s = d.createElement('script');
+          s.src   = BASE_URL + '/packs/js/sdk.js?_=' + Date.now();
+          s.defer = true;
+          s.async = true;
+
+          s.onload = function() { setupWidget(); };
+
+          s.onerror = function() {
+            if (attempt < MAX_RETRIES) {
+              setStatus(
+                '❌ No se pudo conectar a localhost:3300 (intento ' + attempt + '/' + MAX_RETRIES + ')' +
+                ' — ¿está Docker corriendo? Reintentando en 5s…',
+                'error'
+              );
+              setTimeout(loadSDK, 5000);
+            } else {
+              setStatus(
+                '❌ localhost:3300 no responde tras ' + MAX_RETRIES + ' intentos.\n' +
+                'Ejecuta: docker compose --profile chatwoot up -d',
+                'error'
+              );
+            }
+          };
+
+          d.head.appendChild(s);
+        }
+
+        loadSDK();
+      })(document);
     </script>
   </body>
 </html>
