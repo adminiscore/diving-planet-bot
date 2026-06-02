@@ -2052,6 +2052,41 @@ async def test_mixed_cert_two_people_direct_split_1_plus_1():
 
 
 @pytest.mark.asyncio
+async def test_companion_cert_yes_refresher_yes_stays_as_buceo_not_minicurso():
+    """Bug reportado: cert + refresher Sí convertía el subgrupo a minicurso.
+
+    Ahora debe quedarse como buceo certificado + nota de que el asesor coordina
+    el refresher.
+    """
+    state = await reach_snorkeling_summary()
+    await route_message(state, "reservar")
+
+    with patch("src.agents.supervisor.rag_answer", new_callable=AsyncMock, return_value=RAG_MOCK):
+        resp = await route_message(state, "Tres amigos quieren buceo")
+
+    # Click "Sí, todos certificados"
+    resp = await route_message(state, "1")
+    # Click "Sí, >2 años" → pregunta refresher
+    resp = await route_message(state, "1")
+    # Click "Sí, refresher" → debe mostrar tarjeta BUCEO (no minicurso) + nota
+    resp = await route_message(state, "1")
+
+    # Aceptamos buceo en la tarjeta y que NO aparece el título principal del minicurso
+    # (la palabra 'Minicurso' podría aparecer en la nota; el title del card es lo que importa).
+    assert "Buceo" in resp or "buceo certificado" in resp.lower()
+    # Nota explícita de que el asesor coordina el refresher
+    assert "refresher" in resp.lower()
+    assert "asesor" in resp.lower()
+    # Allocations: deben seguir siendo diving (no convertidas a minicourse)
+    ctx = getattr(state, "mixed_from_single_group_context", None)
+    if ctx:
+        allocs = ctx.get("allocations", [])
+        diving = next((a for a in allocs if a["activity"] == "diving"), None)
+        assert diving is not None and diving["qty"] == 3
+        assert ctx.get("refresher_interested") is True
+
+
+@pytest.mark.asyncio
 async def test_mixed_cert_three_people_asks_split_count():
     """3 personas + click 'algunos sí, algunos no' → pregunta cuántos certificados (2 botones)."""
     state = await reach_snorkeling_summary()
@@ -3044,7 +3079,11 @@ async def test_mixed_cart_review_friend_wants_certified_diving_recent_dive_uses_
 
 
 @pytest.mark.asyncio
-async def test_mixed_cart_review_friend_wants_certified_diving_refresher_yes_switches_to_minicourse():
+async def test_mixed_cart_review_friend_wants_certified_diving_refresher_yes_keeps_buceo_with_note():
+    """Cert + refresher Sí ya no convierte a minicurso (bug fix). Se queda como buceo certificado.
+
+    El asesor coordina el refresher al confirmar la reserva (nota en respuesta).
+    """
     state = await reach_mixed_add_activity()
     await send(state, "1", "1", "1", "2", "1")  # cert, 2 dives/1 day, qty 1, recent dive, preview add
     assert state.step == Step.MIXED_CART_REVIEW
@@ -3056,17 +3095,19 @@ async def test_mixed_cart_review_friend_wants_certified_diving_refresher_yes_swi
     assert ("¿Han pasado *más de 2 años* desde tu última inmersión?" in resp or "¿Han pasado *más de 2 años* desde su última inmersión?" in resp)
 
     resp = await route_message(state, "1")
-    # Wording adapted to companion (tercera persona): "Le/Les recomendamos"
     assert "recomendamos hacer un *refresher*" in resp
     assert "¿Quieres incluirlo en su plan?" in resp or "¿Te interesa incluirlo?" in resp
 
     resp = await route_message(state, "1")
-    assert "Minicurso de Buceo" in resp
+    # NUEVO: el subgrupo cert NO se convierte a minicurso. Se queda como buceo certificado
+    # + nota de que el asesor coordina el refresher.
+    assert "asesor" in resp.lower() and "refresher" in resp.lower()
+    assert "Buceo" in resp or "buceo certificado" in resp.lower()
     assert "Te gustaría que preparemos la reserva también para esa persona" in resp
 
     cart_resp = await route_message(state, "1")
     assert "Tu carrito" in cart_resp
-    assert "Minicurso" in cart_resp or "Buceo principiantes" in cart_resp
+    assert "Buceo certificado" in cart_resp
 
 
 @pytest.mark.asyncio

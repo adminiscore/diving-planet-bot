@@ -1759,10 +1759,24 @@ def _handle_pending_companion_flow(state: ConversationState, message: str, msg_l
         setattr(state, "mixed_from_single_refresher_interest_pending", False)
         updated_group_context = dict(current_group_context)
         updated_group_context["refresher_interested"] = refresher_interested
-        if refresher_interested:
-            updated_group_context = _replace_group_activity(updated_group_context, "diving", "minicourse")
+        # NOTA: NO convertimos diving → minicourse cuando el usuario dijo "Sí, todos
+        # certificados" + "Sí, refresher". Eso confundía al cliente porque después
+        # de confirmar la certificación veía la tarjeta del minicurso.
+        # El subgrupo cert se queda como buceo certificado; la bandera
+        # refresher_interested viaja en el group_context y el asesor coordina
+        # el refresher al confirmar la reserva.
         _set_mixed_from_single_group_context(state, updated_group_context)
-        return _show_group_activity_cards(state, base_id, updated_group_context)
+        cards = _show_group_activity_cards(state, base_id, updated_group_context)
+        if refresher_interested:
+            note = (
+                "Anotado: incluimos el refresher con el plan de buceo certificado. "
+                "El asesor lo coordina al confirmar la reserva (sin coste adicional)."
+                if state.language == "es"
+                else "Noted: we'll include the refresher with the certified-diving plan. "
+                "The advisor coordinates it when confirming the booking (no extra cost)."
+            )
+            return f"{note}\n\n{cards}"
+        return cards
 
     if getattr(state, "mixed_from_single_offer_pending", False):
         if msg_lower in {"1", "si", "sí", "yes"}:
