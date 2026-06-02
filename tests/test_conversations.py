@@ -1500,7 +1500,7 @@ async def test_snorkel_reserved_friend_dive_follow_up_shows_correct_info_card_wi
         await route_message(state, "Tengo un amigo que quiere hacer buceo, podemos ir juntos?")
 
     certified_resp = await route_message(state, "1")
-    assert "¿Han pasado *más de 2 años* desde tu última inmersión?" in certified_resp
+    assert ("¿Han pasado *más de 2 años* desde tu última inmersión?" in certified_resp or "¿Han pasado *más de 2 años* desde su última inmersión?" in certified_resp)
     certified_resp = await route_message(state, "2")
     assert "Salidas de Buceo - 2 inmersiones" in certified_resp
     assert "🔗 *Info completa en la web*:" in certified_resp
@@ -1548,7 +1548,7 @@ async def test_certified_2_dives_reserved_friend_dive_follow_up_uses_canonical_c
         await route_message(state, "Tengo un amigo que también quiere hacer buceo, qué me recomiendas?")
 
     certified_resp = await route_message(state, "1")
-    assert "¿Han pasado *más de 2 años* desde tu última inmersión?" in certified_resp
+    assert ("¿Han pasado *más de 2 años* desde tu última inmersión?" in certified_resp or "¿Han pasado *más de 2 años* desde su última inmersión?" in certified_resp)
     certified_resp = await route_message(state, "2")
     assert "Salidas de Buceo - 2 inmersiones" in certified_resp
     assert "🔗 *Info completa en la web*:" in certified_resp
@@ -1652,7 +1652,7 @@ async def test_minicourse_reserved_friend_dive_follow_up_uses_canonical_cards():
         await route_message(state, "Tengo un amigo que quiere hacer buceo, qué me recomiendas?")
 
     certified_resp = await route_message(state, "1")
-    assert "¿Han pasado *más de 2 años* desde tu última inmersión?" in certified_resp
+    assert ("¿Han pasado *más de 2 años* desde tu última inmersión?" in certified_resp or "¿Han pasado *más de 2 años* desde su última inmersión?" in certified_resp)
     certified_resp = await route_message(state, "2")
     assert "Salidas de Buceo - 2 inmersiones" in certified_resp
     assert "🔗 *Info completa en la web*:" in certified_resp
@@ -1711,7 +1711,7 @@ async def test_companion_variant_pair_term_reopens_canonical_diving_flow_after_d
     assert "¿Tu amigo es *buzo certificado*?" in resp
 
     resp = await route_message(state, "1")
-    assert "¿Han pasado *más de 2 años* desde tu última inmersión?" in resp
+    assert ("¿Han pasado *más de 2 años* desde tu última inmersión?" in resp or "¿Han pasado *más de 2 años* desde su última inmersión?" in resp)
 
     resp = await route_message(state, "2")
     assert "Salidas de Buceo - 2 inmersiones" in resp
@@ -2160,7 +2160,7 @@ async def test_companion_variant_mixed_group_after_certification_preloads_multip
 
     assert "¿Tu amigo es *buzo certificado*?" in resp
     resp = await route_message(state, "1")
-    assert "¿Han pasado *más de 2 años* desde tu última inmersión?" in resp
+    assert ("¿Han pasado *más de 2 años* desde tu última inmersión?" in resp or "¿Han pasado *más de 2 años* desde su última inmersión?" in resp)
 
     resp = await route_message(state, "2")
     assert "Buceo certificado" in resp
@@ -3031,7 +3031,7 @@ async def test_mixed_cart_review_friend_wants_certified_diving_recent_dive_uses_
     assert "¿Tu amigo es *buzo certificado*?" in resp
 
     resp = await route_message(state, "1")
-    assert "¿Han pasado *más de 2 años* desde tu última inmersión?" in resp
+    assert ("¿Han pasado *más de 2 años* desde tu última inmersión?" in resp or "¿Han pasado *más de 2 años* desde su última inmersión?" in resp)
 
     resp = await route_message(state, "2")
     assert "Salidas de Buceo - 2 inmersiones" in resp
@@ -3053,11 +3053,12 @@ async def test_mixed_cart_review_friend_wants_certified_diving_refresher_yes_swi
     assert "¿Tu amigo es *buzo certificado*?" in resp
 
     resp = await route_message(state, "1")
-    assert "¿Han pasado *más de 2 años* desde tu última inmersión?" in resp
+    assert ("¿Han pasado *más de 2 años* desde tu última inmersión?" in resp or "¿Han pasado *más de 2 años* desde su última inmersión?" in resp)
 
     resp = await route_message(state, "1")
-    assert "Te recomendamos hacer un *refresher*" in resp
-    assert "¿Te interesa incluirlo?" in resp
+    # Wording adapted to companion (tercera persona): "Le/Les recomendamos"
+    assert "recomendamos hacer un *refresher*" in resp
+    assert "¿Quieres incluirlo en su plan?" in resp or "¿Te interesa incluirlo?" in resp
 
     resp = await route_message(state, "1")
     assert "Minicurso de Buceo" in resp

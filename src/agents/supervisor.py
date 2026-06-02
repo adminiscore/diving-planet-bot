@@ -1261,21 +1261,68 @@ def _replace_group_activity(group_context: dict, source_activity: str, target_ac
 def _build_companion_last_dive_question(state: ConversationState, diving_qty: int) -> str:
     lang = getattr(state, "language", "es") or "es"
     decision_tree.set_quick_replies(state, "certified_last_dive")
-    from src.flows.decision_tree import MESSAGES as _M
 
-    prompt = _M["certified_last_dive"][lang]
-    if lang != "es":
-        return prompt
-    target = "esas personas" if diving_qty > 1 else "tu acompañante"
-    return f"Perfecto. Antes de confirmar ese plan, necesito saber una cosa sobre {target}:\n\n{prompt}"
+    # Texto adaptado al companion (tercera persona) para que quede claro de quién
+    # se está preguntando. No empezamos con "Perfecto." porque el caller
+    # frecuentemente ya añade contexto previo.
+    if lang == "es":
+        if diving_qty > 1:
+            return (
+                "Antes de confirmar el plan, necesito saber una cosa sobre esas personas:\n\n"
+                "¿Han pasado *más de 2 años* desde su última inmersión?\n\n"
+                "Si es así, les recomendamos hacer un *refresher* antes de la salida."
+            )
+        return (
+            "Antes de confirmar el plan, necesito saber una cosa sobre tu acompañante:\n\n"
+            "¿Han pasado *más de 2 años* desde su última inmersión?\n\n"
+            "Si es así, le recomendamos hacer un *refresher* antes de la salida."
+        )
+    if diving_qty > 1:
+        return (
+            "Before I confirm the plan, I need to know one thing about those people:\n\n"
+            "Has it been *more than 2 years* since their last dive?\n\n"
+            "If so, we recommend a *refresher* before the trip."
+        )
+    return (
+        "Before I confirm the plan, I need to know one thing about your companion:\n\n"
+        "Has it been *more than 2 years* since their last dive?\n\n"
+        "If so, we recommend a *refresher* before the trip."
+    )
 
 
-def _build_companion_refresher_prompt(state: ConversationState) -> str:
+def _build_companion_refresher_prompt(state: ConversationState, diving_qty: int = 1) -> str:
     lang = getattr(state, "language", "es") or "es"
     decision_tree.set_quick_replies(state, "refresher_interest")
-    from src.flows.decision_tree import MESSAGES as _M
-
-    return _M["refresher_info"][lang]
+    if lang == "es":
+        if diving_qty > 1:
+            return (
+                "Les recomendamos hacer un *refresher* para que vuelvan al agua de forma segura:\n\n"
+                "✅ Repaso de teoría (señales, equipo y procedimientos)\n"
+                "🏊 Práctica en piscina\n"
+                "🤿 Buceo en el mar con instructor\n\n"
+                "Más información (itinerario completo):\n"
+                "https://divingplanet.org/tours-buceo-snorkel-cartagena/minicurso-principiantes/\n\n"
+                "¿Quieres incluirlo en su plan?"
+            )
+        return (
+            "Le recomendamos hacer un *refresher* para que vuelva al agua de forma segura:\n\n"
+            "✅ Repaso de teoría (señales, equipo y procedimientos)\n"
+            "🏊 Práctica en piscina\n"
+            "🤿 Buceo en el mar con instructor\n\n"
+            "Más información (itinerario completo):\n"
+            "https://divingplanet.org/tours-buceo-snorkel-cartagena/minicurso-principiantes/\n\n"
+            "¿Quieres incluirlo en su plan?"
+        )
+    target = "they" if diving_qty > 1 else "they"
+    return (
+        f"We recommend a *refresher* so {target} can safely return to the water:\n\n"
+        "✅ Theory review (signals, gear, procedures)\n"
+        "🏊 Pool practice\n"
+        "🤿 Open-water dive with an instructor\n\n"
+        "Full itinerary:\n"
+        "https://divingplanet.org/tours-buceo-snorkel-cartagena/minicurso-principiantes/\n\n"
+        "Would you like to include it in their plan?"
+    )
 
 
 def _build_group_activity_intro(lang: str, allocations: list[dict]) -> str:
@@ -1695,14 +1742,19 @@ def _handle_pending_companion_flow(state: ConversationState, message: str, msg_l
         _set_mixed_from_single_group_context(state, updated_group_context)
         if last_dive_over_2_years:
             setattr(state, "mixed_from_single_refresher_interest_pending", True)
-            return _build_companion_refresher_prompt(state)
+            return _build_companion_refresher_prompt(state, diving_qty)
         return _show_group_activity_cards(state, base_id, updated_group_context)
 
     if getattr(state, "mixed_from_single_refresher_interest_pending", False):
         current_group_context = _get_mixed_from_single_group_context(state) or _build_group_context_from_activity("diving")
+        diving_qty = sum(
+            item["qty"]
+            for item in current_group_context.get("allocations", [])
+            if item.get("activity") == "diving"
+        ) or 1
         refresher_interested = _detect_binary_yes_no_answer(message)
         if refresher_interested is None:
-            return "No te entendí del todo.\n\n" + _build_companion_refresher_prompt(state)
+            return "No te entendí del todo.\n\n" + _build_companion_refresher_prompt(state, diving_qty)
 
         setattr(state, "mixed_from_single_refresher_interest_pending", False)
         updated_group_context = dict(current_group_context)
