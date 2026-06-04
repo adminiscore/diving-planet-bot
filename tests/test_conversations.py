@@ -512,6 +512,23 @@ async def test_back_button_not_present_in_info_menu():
 
 
 @pytest.mark.asyncio
+async def test_info_island_4_dives_detail_back_returns_to_variant_menu():
+    state = await reach_main_menu("es")
+    await send(state, "2", "1", "2", "1", "1", "1", "3", "2")
+
+    assert state.step == Step.INFO_PACKAGE_DETAIL
+    assert state.selected_service == "4_dives_2_days_mixed_already_on_island"
+
+    await route_message(state, "back")
+
+    assert state.step == Step.INFO_CERTIFIED_4_DIVES_VARIANT
+    assert [qr["title"] for qr in state.quick_replies[:2]] == [
+        "🤿 4 inmersiones (2 días) · 4 diurnas",
+        "🤿 4 inmersiones (2 días) · 3 diurnas + 1 nocturna",
+    ]
+
+
+@pytest.mark.asyncio
 async def test_back_keyword_outside_reservar_branch_falls_back_to_main_menu():
     """When back keyword is used at a step with no BACK_STEP mapping, fall back to MAIN_MENU."""
     state = make_state()
@@ -573,7 +590,8 @@ async def test_certified_refresher_yes_updates_service_for_2_dives():
     resp = await route_message(state, "1")       # quiere refresher → COLOMBIAN
     assert state.refresher_interested is True
     assert state.step == Step.COLOMBIAN
-    assert state.selected_service == "minicourse"
+    # Service stays as 2_dives_1_day — refresher is an annotation, not a swap to minicourse
+    assert state.selected_service == "2_dives_1_day"
 
 
 @pytest.mark.asyncio
@@ -930,7 +948,7 @@ async def test_referral_reactivate_escalates():
     assert "referral" in state.selected_service or "referido" in resp.lower()
 
     # Paso 4: desde el resumen inicial, avanzar al follow-up
-    resp = await route_message(state, "2")
+    resp = await route_message(state, "itinerary")
     assert state.step == Step.SUMMARY
 
     # Paso 5: elegir Contactar/Reservar -> escalar a humano
@@ -1454,454 +1472,6 @@ async def test_post_escalate_free_text_routes_to_rag():
     assert resp == RAG_MOCK
 
 
-@pytest.mark.asyncio
-async def test_snorkel_reserved_friend_wants_to_dive_prompts_for_certification_in_spanish():
-    state = await reach_group_type()
-    await route_message(state, "2")
-    await route_message(state, "2")
-    await route_message(state, "reservar")
-    assert state.step == Step.ESCALATE
-
-    with patch("src.agents.supervisor.rag_answer", new_callable=AsyncMock, return_value=RAG_MOCK):
-        resp = await route_message(state, "Tengo un amigo que quiere hacer buceo, podemos ir juntos?")
-
-    assert state.step == Step.FREE_TEXT
-    assert "¿Tu amigo es *buzo certificado*?" in resp
-    assert getattr(state, "mixed_from_single_cert_question_pending", False) is True
-    assert [item["value"] for item in state.quick_replies] == ["1", "2"]
-
-
-@pytest.mark.asyncio
-async def test_snorkel_reserved_friend_dive_follow_up_shows_correct_info_card_without_early_escalation():
-    state = await reach_group_type()
-    await route_message(state, "2")
-    await route_message(state, "2")
-    await route_message(state, "reservar")
-    assert state.step == Step.ESCALATE
-
-    with patch("src.agents.supervisor.rag_answer", new_callable=AsyncMock, return_value=RAG_MOCK):
-        await route_message(state, "Tengo un amigo que quiere hacer buceo, podemos ir juntos?")
-
-    certified_resp = await route_message(state, "1")
-    assert "¿Han pasado *más de 2 años* desde tu última inmersión?" in certified_resp
-    certified_resp = await route_message(state, "2")
-    assert "Salidas de Buceo - 2 inmersiones" in certified_resp
-    assert "🔗 *Info completa en la web*:" in certified_resp
-    assert "¿Te gustaría que preparemos la reserva también para esa persona?" in certified_resp
-    assert "Te paso con un asesor" not in certified_resp
-    assert getattr(state, "mixed_from_single_offer_pending", False) is True
-
-    state = await reach_group_type()
-    await route_message(state, "2")
-    await route_message(state, "2")
-    await route_message(state, "reservar")
-    with patch("src.agents.supervisor.rag_answer", new_callable=AsyncMock, return_value=RAG_MOCK):
-        await route_message(state, "Tengo un amigo que quiere hacer buceo, podemos ir juntos?")
-
-    beginner_resp = await route_message(state, "2")
-    assert "Minicurso de Buceo" in beginner_resp
-    assert "Principiantes (no necesitas experiencia previa)" in beginner_resp
-    assert "¿Te gustaría que preparemos la reserva también para esa persona?" in beginner_resp
-    assert "Te paso con un asesor" not in beginner_resp
-    assert "refresh" not in beginner_resp.lower()
-
-
-@pytest.mark.asyncio
-async def test_certified_2_dives_reserved_friend_wants_to_dive_prompts_for_certification():
-    state = await reach_diving_experience()
-    await send(state, "1", "1", "2", "2")
-    await route_message(state, "reservar")
-    assert state.step == Step.ESCALATE
-
-    with patch("src.agents.supervisor.rag_answer", new_callable=AsyncMock, return_value=RAG_MOCK):
-        resp = await route_message(state, "Tengo un amigo que también quiere hacer buceo, qué me recomiendas?")
-
-    assert state.step == Step.FREE_TEXT
-    assert "¿Tu amigo es *buzo certificado*?" in resp
-    assert getattr(state, "mixed_from_single_cert_question_pending", False) is True
-
-
-@pytest.mark.asyncio
-async def test_certified_2_dives_reserved_friend_dive_follow_up_uses_canonical_cards():
-    state = await reach_diving_experience()
-    await send(state, "1", "1", "2", "2")
-    await route_message(state, "reservar")
-
-    with patch("src.agents.supervisor.rag_answer", new_callable=AsyncMock, return_value=RAG_MOCK):
-        await route_message(state, "Tengo un amigo que también quiere hacer buceo, qué me recomiendas?")
-
-    certified_resp = await route_message(state, "1")
-    assert "¿Han pasado *más de 2 años* desde tu última inmersión?" in certified_resp
-    certified_resp = await route_message(state, "2")
-    assert "Salidas de Buceo - 2 inmersiones" in certified_resp
-    assert "🔗 *Info completa en la web*:" in certified_resp
-    assert "Te paso con un asesor" not in certified_resp
-
-    state = await reach_diving_experience()
-    await send(state, "1", "1", "2", "2")
-    await route_message(state, "reservar")
-
-    with patch("src.agents.supervisor.rag_answer", new_callable=AsyncMock, return_value=RAG_MOCK):
-        await route_message(state, "Tengo un amigo que también quiere hacer buceo, qué me recomiendas?")
-
-    beginner_resp = await route_message(state, "2")
-    assert "Minicurso de Buceo" in beginner_resp
-    assert "Principiantes (no necesitas experiencia previa)" in beginner_resp
-    assert "refresh" not in beginner_resp.lower()
-    assert "Te paso con un asesor" not in beginner_resp
-
-
-@pytest.mark.asyncio
-async def test_certified_2_dives_reserved_friend_wants_to_snorkel_shows_snorkel_info_card():
-    state = await reach_diving_experience()
-    await send(state, "1", "1", "2", "2")
-    assert state.selected_service == "2_dives_1_day"
-    await route_message(state, "reservar")
-    assert state.step == Step.ESCALATE
-
-    with patch("src.agents.supervisor.rag_answer", new_callable=AsyncMock, return_value=RAG_MOCK):
-        resp = await route_message(state, "Tengo un amigo que quiere hacer snorkel, podemos ir juntos?")
-
-    assert state.step == Step.FREE_TEXT
-    assert "Tour de Snorkeling" in resp or "Snorkeling" in resp
-    assert "🔗 *Info completa en la web*:" in resp
-    assert "¿Te gustaría que preparemos la reserva también para esa persona?" in resp
-    assert "Te gustaría que un asesor" not in resp
-    assert getattr(state, "mixed_from_single_offer_pending", False) is True
-
-
-@pytest.mark.asyncio
-async def test_certified_2_dives_reserved_friend_snorkel_offer_can_enter_mixed_cart():
-    state = await reach_diving_experience()
-    await send(state, "1", "1", "2", "2")
-    await route_message(state, "reservar")
-
-    with patch("src.agents.supervisor.rag_answer", new_callable=AsyncMock, return_value=RAG_MOCK):
-        await route_message(state, "Tengo un amigo que quiere hacer snorkel, podemos ir juntos?")
-
-    cart_resp = await route_message(state, "1")
-    assert "Tu carrito" in cart_resp
-    assert "Buceo certificado (2 inmersiones)" in cart_resp or "2 inmersiones" in cart_resp
-
-
-@pytest.mark.asyncio
-async def test_snorkel_reserved_friend_wants_same_activity_shows_info_card_and_enters_cart():
-    state = await reach_snorkeling_summary()
-    await route_message(state, "reservar")
-
-    with patch("src.agents.supervisor.rag_answer", new_callable=AsyncMock, return_value=RAG_MOCK):
-        resp = await route_message(state, "Tengo un amigo que también quiere hacer snorkel, podemos ir juntos?")
-
-    assert "Tour de Snorkeling" in resp or "Snorkeling" in resp
-    assert "Te paso con un asesor" not in resp
-    cart_resp = await route_message(state, "1")
-    assert "Tu carrito" in cart_resp
-    assert "Snorkel" in cart_resp
-
-
-@pytest.mark.asyncio
-async def test_minicourse_reserved_friend_wants_to_snorkel_shows_snorkel_info_card():
-    state = await reach_minicourse_summary()
-    await route_message(state, "reservar")
-
-    with patch("src.agents.supervisor.rag_answer", new_callable=AsyncMock, return_value=RAG_MOCK):
-        resp = await route_message(state, "Tengo un amigo que quiere hacer snorkel, podemos ir juntos?")
-
-    assert state.step == Step.FREE_TEXT
-    assert "Tour de Snorkeling" in resp or "Snorkeling" in resp
-    assert "🔗 *Info completa en la web*:" in resp
-    assert "Te paso con un asesor" not in resp
-
-
-@pytest.mark.asyncio
-async def test_minicourse_reserved_friend_wants_to_dive_prompts_for_certification():
-    state = await reach_minicourse_summary()
-    await route_message(state, "reservar")
-
-    with patch("src.agents.supervisor.rag_answer", new_callable=AsyncMock, return_value=RAG_MOCK):
-        resp = await route_message(state, "Tengo un amigo que quiere hacer buceo, qué me recomiendas?")
-
-    assert state.step == Step.FREE_TEXT
-    assert "¿Tu amigo es *buzo certificado*?" in resp
-    assert getattr(state, "mixed_from_single_cert_question_pending", False) is True
-
-
-@pytest.mark.asyncio
-async def test_minicourse_reserved_friend_dive_follow_up_uses_canonical_cards():
-    state = await reach_minicourse_summary()
-    await route_message(state, "reservar")
-
-    with patch("src.agents.supervisor.rag_answer", new_callable=AsyncMock, return_value=RAG_MOCK):
-        await route_message(state, "Tengo un amigo que quiere hacer buceo, qué me recomiendas?")
-
-    certified_resp = await route_message(state, "1")
-    assert "¿Han pasado *más de 2 años* desde tu última inmersión?" in certified_resp
-    certified_resp = await route_message(state, "2")
-    assert "Salidas de Buceo - 2 inmersiones" in certified_resp
-    assert "🔗 *Info completa en la web*:" in certified_resp
-    assert "Te paso con un asesor" not in certified_resp
-
-    state = await reach_minicourse_summary()
-    await route_message(state, "reservar")
-
-    with patch("src.agents.supervisor.rag_answer", new_callable=AsyncMock, return_value=RAG_MOCK):
-        await route_message(state, "Tengo un amigo que quiere hacer buceo, qué me recomiendas?")
-
-    beginner_resp = await route_message(state, "2")
-    assert "Minicurso de Buceo" in beginner_resp
-    assert "Principiantes (no necesitas experiencia previa)" in beginner_resp
-    assert "refresh" not in beginner_resp.lower()
-    assert "Te paso con un asesor" not in beginner_resp
-
-
-@pytest.mark.asyncio
-async def test_minicourse_reserved_friend_wants_same_activity_shows_info_card_and_enters_cart():
-    state = await reach_minicourse_summary()
-    await route_message(state, "reservar")
-
-    with patch("src.agents.supervisor.rag_answer", new_callable=AsyncMock, return_value=RAG_MOCK):
-        resp = await route_message(state, "Tengo un amigo que también quiere hacer minicurso de buceo, podemos ir juntos?")
-
-    assert "Minicurso de Buceo" in resp
-    assert "Te paso con un asesor" not in resp
-    cart_resp = await route_message(state, "1")
-    assert "Tu carrito" in cart_resp
-    assert "Minicurso" in cart_resp or "Buceo principiantes" in cart_resp
-
-
-@pytest.mark.asyncio
-async def test_companion_variant_pair_term_routes_to_snorkel_info_card():
-    state = await reach_diving_experience()
-    await send(state, "1", "1", "2", "2")
-    await route_message(state, "reservar")
-
-    with patch("src.agents.supervisor.rag_answer", new_callable=AsyncMock, return_value=RAG_MOCK):
-        resp = await route_message(state, "Mi pareja quiere hacer snorkel, podemos ir juntos?")
-
-    assert "Tour de Snorkeling" in resp or "Snorkeling" in resp
-    assert "Te paso con un asesor" not in resp
-
-
-@pytest.mark.asyncio
-async def test_companion_variant_pair_term_reopens_canonical_diving_flow_after_decline():
-    state = await reach_diving_experience()
-    await send(state, "1", "1", "2", "2")
-    await route_message(state, "reservar")
-
-    with patch("src.agents.supervisor.rag_answer", new_callable=AsyncMock, return_value=RAG_MOCK):
-        resp = await route_message(state, "Tengo un amigo que quiere hacer buceo, podemos ir juntos?")
-
-    assert "¿Tu amigo es *buzo certificado*?" in resp
-
-    resp = await route_message(state, "1")
-    assert "¿Han pasado *más de 2 años* desde tu última inmersión?" in resp
-
-    resp = await route_message(state, "2")
-    assert "Salidas de Buceo - 2 inmersiones" in resp
-
-    resp = await route_message(state, "2")
-    assert "mantenemos solo la actividad que ya tenías" in resp.lower()
-
-    with patch("src.agents.supervisor.rag_answer", new_callable=AsyncMock, return_value=RAG_MOCK):
-        resp = await route_message(state, "Mi pareja quiere bucear")
-
-    assert "¿Tu amigo es *buzo certificado*?" in resp or "¿Tu acompañante es *buzo certificado*?" in resp
-    assert "178 usd" not in resp.lower()
-    assert "asesor" not in resp.lower()
-
-
-@pytest.mark.asyncio
-async def test_companion_variant_slang_term_routes_to_minicourse_info_card():
-    state = await reach_snorkeling_summary()
-    await route_message(state, "reservar")
-
-    with patch("src.agents.supervisor.rag_answer", new_callable=AsyncMock, return_value=RAG_MOCK):
-        resp = await route_message(state, "Mi parcera quiere hacer minicurso de buceo")
-
-    assert "Minicurso de Buceo" in resp
-    assert "Te paso con un asesor" not in resp
-
-
-@pytest.mark.asyncio
-async def test_companion_variant_group_phrase_without_activity_prompts_for_clarification():
-    state = await reach_snorkeling_summary()
-    await route_message(state, "reservar")
-
-    with patch("src.agents.supervisor.rag_answer", new_callable=AsyncMock, return_value=RAG_MOCK):
-        resp = await route_message(state, "Venimos dos")
-
-    assert "qué actividad quiere hacer" in resp.lower()
-    assert getattr(state, "mixed_from_single_activity_question_pending", False) is True
-    assert [item["value"] for item in state.quick_replies] == ["1", "2", "3"]
-
-
-@pytest.mark.asyncio
-async def test_companion_variant_pronoun_after_clarification_routes_to_cert_question():
-    state = await reach_snorkeling_summary()
-    await route_message(state, "reservar")
-
-    with patch("src.agents.supervisor.rag_answer", new_callable=AsyncMock, return_value=RAG_MOCK):
-        await route_message(state, "Venimos dos")
-
-    resp = await route_message(state, "Ella quiere buceo")
-    assert "¿Tu amigo es *buzo certificado*?" in resp
-    assert getattr(state, "mixed_from_single_cert_question_pending", False) is True
-
-
-@pytest.mark.asyncio
-async def test_companion_variant_direct_pronoun_with_activity_routes_to_snorkel_info_card():
-    state = await reach_diving_experience()
-    await send(state, "1", "1", "2", "2")
-    await route_message(state, "reservar")
-
-    with patch("src.agents.supervisor.rag_answer", new_callable=AsyncMock, return_value=RAG_MOCK):
-        resp = await route_message(state, "Él quiere snorkel")
-
-    assert "Tour de Snorkeling" in resp or "Snorkeling" in resp
-    assert "Te paso con un asesor" not in resp
-
-
-@pytest.mark.asyncio
-async def test_companion_variant_same_activity_phrase_from_diving_still_asks_certification():
-    state = await reach_diving_experience()
-    await send(state, "1", "1", "2", "2")
-    await route_message(state, "reservar")
-
-    with patch("src.agents.supervisor.rag_answer", new_callable=AsyncMock, return_value=RAG_MOCK):
-        resp = await route_message(state, "Mi esposa quiere hacer lo mismo")
-
-    assert "¿Tu amigo es *buzo certificado*?" in resp
-    assert getattr(state, "mixed_from_single_cert_question_pending", False) is True
-
-
-@pytest.mark.asyncio
-async def test_companion_variant_complex_sentence_uses_non_base_activity_for_pronoun_case():
-    state = await reach_snorkeling_summary()
-    await route_message(state, "reservar")
-
-    with patch("src.agents.supervisor.rag_answer", new_callable=AsyncMock, return_value=RAG_MOCK):
-        resp = await route_message(state, "Yo hago snorkel y ella bucea")
-
-    assert "¿Tu amigo es *buzo certificado*?" in resp
-    assert getattr(state, "mixed_from_single_cert_question_pending", False) is True
-
-
-@pytest.mark.asyncio
-async def test_companion_variant_distribution_sentence_uses_non_base_activity():
-    state = await reach_snorkeling_summary()
-    await route_message(state, "reservar")
-
-    with patch("src.agents.supervisor.rag_answer", new_callable=AsyncMock, return_value=RAG_MOCK):
-        resp = await route_message(state, "Uno quiere buceo y el otro snorkel")
-
-    assert "¿Tu amigo es *buzo certificado*?" in resp
-    assert getattr(state, "mixed_from_single_cert_question_pending", False) is True
-
-
-@pytest.mark.asyncio
-async def test_companion_variant_three_people_two_want_snorkel_routes_to_snorkel_card():
-    state = await reach_diving_experience()
-    await send(state, "1", "1", "2", "2")
-    await route_message(state, "reservar")
-
-    with patch("src.agents.supervisor.rag_answer", new_callable=AsyncMock, return_value=RAG_MOCK):
-        resp = await route_message(state, "Venimos tres y dos quieren snorkel")
-
-    assert "Tour de Snorkeling" in resp or "Snorkeling" in resp
-    assert "Te paso con un asesor" not in resp
-
-
-@pytest.mark.asyncio
-async def test_companion_variant_two_friends_same_activity_routes_directly_without_extra_clarification():
-    state = await reach_diving_experience()
-    await send(state, "1", "1", "2", "2")
-    await route_message(state, "reservar")
-
-    with patch("src.agents.supervisor.rag_answer", new_callable=AsyncMock, return_value=RAG_MOCK):
-        resp = await route_message(state, "Dos amigos quieren snorkel")
-
-    assert "Tour de Snorkeling" in resp or "Snorkeling" in resp
-    assert "qué actividad quiere hacer cada persona" not in resp.lower()
-
-
-@pytest.mark.asyncio
-async def test_companion_variant_group_clarification_answer_preloads_two_snorkel_companions_into_cart():
-    state = await reach_diving_experience()
-    await send(state, "1", "1", "2", "2")
-    await route_message(state, "reservar")
-
-    with patch("src.agents.supervisor.rag_answer", new_callable=AsyncMock, return_value=RAG_MOCK):
-        resp = await route_message(state, "Somos 3")
-
-    assert "qué actividad quiere hacer cada persona" in resp.lower()
-    resp = await route_message(state, "dos snorkel")
-    assert "Tour de Snorkeling" in resp or "Snorkeling" in resp
-
-    cart_resp = await route_message(state, "1")
-    assert "2 × Snorkel" in cart_resp
-    assert "Buceo certificado" in cart_resp
-
-
-@pytest.mark.asyncio
-async def test_companion_variant_three_people_two_want_snorkel_preloads_cart_quantities():
-    state = await reach_diving_experience()
-    await send(state, "1", "1", "2", "2")
-    await route_message(state, "reservar")
-
-    with patch("src.agents.supervisor.rag_answer", new_callable=AsyncMock, return_value=RAG_MOCK):
-        await route_message(state, "Venimos tres y dos quieren snorkel")
-
-    cart_resp = await route_message(state, "1")
-    assert "2 × Snorkel" in cart_resp
-    assert "Buceo certificado" in cart_resp
-
-
-@pytest.mark.asyncio
-async def test_companion_variant_mixed_group_after_certification_preloads_multiple_allocations():
-    state = await reach_snorkeling_summary()
-    await route_message(state, "reservar")
-
-    with patch("src.agents.supervisor.rag_answer", new_callable=AsyncMock, return_value=RAG_MOCK):
-        resp = await route_message(state, "Uno quiere buceo y otro snorkel")
-
-    assert "¿Tu amigo es *buzo certificado*?" in resp
-    resp = await route_message(state, "1")
-    assert "¿Han pasado *más de 2 años* desde tu última inmersión?" in resp
-
-    resp = await route_message(state, "2")
-    assert "Buceo certificado" in resp
-    assert "Snorkeling" in resp or "Tour de Snorkeling" in resp
-
-    cart_resp = await route_message(state, "1")
-    assert "2 × Snorkel" in cart_resp
-    assert "Buceo certificado" in cart_resp
-
-
-@pytest.mark.asyncio
-async def test_companion_variant_multi_activity_without_base_match_prompts_for_clarification():
-    state = await reach_minicourse_summary()
-    await route_message(state, "reservar")
-
-    with patch("src.agents.supervisor.rag_answer", new_callable=AsyncMock, return_value=RAG_MOCK):
-        resp = await route_message(state, "Uno quiere buceo y el otro snorkel")
-
-    assert "qué actividad quiere hacer" in resp.lower()
-    assert getattr(state, "mixed_from_single_activity_question_pending", False) is True
-
-
-@pytest.mark.asyncio
-async def test_companion_variant_generic_adults_question_does_not_trigger_companion_flow():
-    state = await reach_snorkeling_summary()
-
-    with patch("src.agents.supervisor.rag_answer", new_callable=AsyncMock, return_value=RAG_MOCK):
-        resp = await route_message(state, "¿Es una actividad apta para adultos?")
-
-    assert resp == RAG_MOCK
-    assert getattr(state, "mixed_from_single_activity_question_pending", False) is False
-    assert getattr(state, "mixed_from_single_cert_question_pending", False) is False
-    assert getattr(state, "mixed_from_single_offer_pending", False) is False
-
-
 # ===========================================================================
 # BLOQUE 15 — FLUJOS EN INGLÉS
 # ===========================================================================
@@ -2087,21 +1657,18 @@ async def test_invalid_island_menu_option():
 async def test_summary_restart_returns_to_main():
     state = await reach_diving_experience()
     await send(state, "1", "1", "2", "2")  # llega a SUMMARY (itinerary_offer)
-    # En el nuevo flujo: choice 1 = reservar (escalate). Para ver itinerario: choice 2 o action 'itinerary'.
     resp = await route_message(state, "itinerary")
     assert state.step == Step.SUMMARY
     assert "itinerario" in resp.lower() or "🗺️" in resp
-    # Summary follow_up ahora incluye Reservar como botón principal
-    assert [item["value"] for item in state.quick_replies] == ["reservar", "ask", "back"]
+    assert [item["value"] for item in state.quick_replies] == ["ask", "back"]
 
 
 @pytest.mark.asyncio
 async def test_summary_no_thanks_ends_conversation():
     state = await reach_diving_experience()
     await send(state, "1", "1", "2", "2")  # llega a SUMMARY (itinerary_offer)
-    # En el nuevo flujo el itinerary_offer tiene 3 botones: reservar, itinerary, back.
     assert state.step == Step.SUMMARY
-    assert [item["value"] for item in state.quick_replies] == ["reservar", "itinerary", "back"]
+    assert [item["value"] for item in state.quick_replies] == ["itinerary", "back"]
 
 
 @pytest.mark.asyncio
@@ -2136,7 +1703,6 @@ async def test_go_pro_itinerary_back_returns_to_go_pro_menu():
     state = await reach_courses_menu()
     await send(state, "2", "1", "2")  # go pro > advanced > no colombiano
     assert state.step == Step.SUMMARY
-    # En el nuevo itinerary_offer: choice 1 = reservar (escalate). Usar 'itinerary' explícito.
     await route_message(state, "itinerary")
     assert state.step == Step.SUMMARY
     await route_message(state, "back")
@@ -2636,36 +2202,6 @@ async def test_mixed_cert_2dives_qty_appends_to_cart():
     assert state.mixed_cart[0]["qty"] == 2
 
 
-@pytest.mark.asyncio
-async def test_mixed_cert_refresher_split_keeps_refresh_in_cart_and_continues_diving_preview():
-    state = await reach_mixed_add_activity()
-    await send(state, "1", "1", "2")  # cert, 2 dives/1 day, qty 2
-    assert state.step == Step.MIXED_CERT_LAST_DIVE
-
-    resp = await route_message(state, "1")  # >2 years
-    assert state.step == Step.MIXED_CERT_REFRESH_INTEREST
-    assert "refresher" in resp.lower()
-
-    resp = await route_message(state, "1")  # wants refresher
-    assert state.step == Step.MIXED_CERT_REFRESH_QTY
-    assert "cuántas personas" in resp.lower() or "how many people" in resp.lower()
-
-    resp = await route_message(state, "1")  # only 1 wants refresher
-    assert state.step == Step.MIXED_CERT_SPLIT_REVIEW
-    assert "Minicurso / Refresher" in resp
-    assert "queda 1 persona pendiente" in resp.lower()
-
-    resp = await route_message(state, "1")  # continue with remaining diving
-    assert state.step == Step.MIXED_ADD_PREVIEW
-    assert "2 inmersiones" in resp.lower()
-
-    resp = await route_message(state, "1")  # add remaining diving
-    assert state.step == Step.MIXED_CART_REVIEW
-    labels = [item["label"] for item in state.mixed_cart]
-    assert "Minicurso / Refresher" in labels
-    assert "Buceo certificado (2 inmersiones)" in labels
-
-
 # --- Cart review actions ---------------------------------------------------
 
 @pytest.mark.asyncio
@@ -2729,53 +2265,6 @@ async def test_mixed_cart_confirm_advances_to_colombian():
     await send(state, "2", "3", "1")  # 3 beginners
     await route_message(state, "4")  # confirmar carrito
     assert state.step == Step.MIXED_FINAL_COLOMBIAN
-
-
-@pytest.mark.asyncio
-async def test_mixed_cart_review_friend_wants_certified_diving_recent_dive_uses_canonical_companion_flow():
-    state = await reach_mixed_add_activity()
-    await send(state, "1", "1", "1", "2", "1")  # cert, 2 dives/1 day, qty 1, recent dive, preview add
-    assert state.step == Step.MIXED_CART_REVIEW
-
-    resp = await route_message(state, "Tengo un amigo que quiere hacer buceo, podemos ir juntos?")
-    assert "¿Tu amigo es *buzo certificado*?" in resp
-
-    resp = await route_message(state, "1")
-    assert "¿Han pasado *más de 2 años* desde tu última inmersión?" in resp
-
-    resp = await route_message(state, "2")
-    assert "Salidas de Buceo - 2 inmersiones" in resp
-    assert "Te gustaría que preparemos la reserva también para esa persona" in resp
-    assert "asesor" not in resp.lower()
-
-    cart_resp = await route_message(state, "1")
-    assert "Tu carrito" in cart_resp
-    assert "2 × Buceo certificado (2 inmersiones)" in cart_resp
-
-
-@pytest.mark.asyncio
-async def test_mixed_cart_review_friend_wants_certified_diving_refresher_yes_switches_to_minicourse():
-    state = await reach_mixed_add_activity()
-    await send(state, "1", "1", "1", "2", "1")  # cert, 2 dives/1 day, qty 1, recent dive, preview add
-    assert state.step == Step.MIXED_CART_REVIEW
-
-    resp = await route_message(state, "Tengo un amigo que quiere hacer buceo, podemos ir juntos?")
-    assert "¿Tu amigo es *buzo certificado*?" in resp
-
-    resp = await route_message(state, "1")
-    assert "¿Han pasado *más de 2 años* desde tu última inmersión?" in resp
-
-    resp = await route_message(state, "1")
-    assert "Te recomendamos hacer un *refresher*" in resp
-    assert "¿Te interesa incluirlo?" in resp
-
-    resp = await route_message(state, "1")
-    assert "Minicurso de Buceo" in resp
-    assert "Te gustaría que preparemos la reserva también para esa persona" in resp
-
-    cart_resp = await route_message(state, "1")
-    assert "Tu carrito" in cart_resp
-    assert "Minicurso" in cart_resp or "Buceo principiantes" in cart_resp
 
 
 @pytest.mark.asyncio

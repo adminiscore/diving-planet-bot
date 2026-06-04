@@ -53,6 +53,11 @@ MENU_STEPS = {
     Step.INFO_PACKAGE_DETAIL,
     Step.INFO_COURSE_DETAIL,
     Step.INFO_SPECIALTY_DETAIL,
+    Step.INFO_TOURS_CERTIFIED_MENU,
+    Step.INFO_COURSES_ADVANCED_MENU,
+    Step.INFO_MIXED_ACTIVITY_MENU,
+    Step.INFO_MIXED_CERT_BEG_MENU,
+    Step.INFO_CERTIFIED_4_DIVES_VARIANT,
     Step.TOURS_LOCATION,
     Step.GROUP_TYPE,
     Step.TOURS_EXPERIENCE,
@@ -155,13 +160,18 @@ BACK_STEP: dict[Step, tuple[Step, str]] = {
     Step.INFO_ACTIVITY_LOCATION: (Step.INFO_MENU, "info_menu"),
     Step.INFO_ACTIVITIES_MENU: (Step.INFO_ACTIVITY_LOCATION, "info_activity_location"),
     Step.INFO_TOURS_MENU: (Step.INFO_ACTIVITIES_MENU, "info_activities_menu"),
-    Step.INFO_PACKAGES_MENU: (Step.INFO_ACTIVITIES_MENU, "info_activities_menu"),
+    Step.INFO_PACKAGES_MENU: (Step.INFO_TOURS_MENU, "info_tours_menu"),
     Step.INFO_COURSES_MENU: (Step.INFO_ACTIVITIES_MENU, "info_activities_menu"),
-    Step.INFO_SPECIALTIES_MENU: (Step.INFO_ACTIVITIES_MENU, "info_activities_menu"),
+    Step.INFO_SPECIALTIES_MENU: (Step.INFO_COURSES_MENU, "info_courses_menu"),
     Step.INFO_TOUR_DETAIL: (Step.INFO_TOURS_MENU, "info_tours_menu"),
     Step.INFO_PACKAGE_DETAIL: (Step.INFO_PACKAGES_MENU, "info_packages_menu"),
     Step.INFO_COURSE_DETAIL: (Step.INFO_COURSES_MENU, "info_courses_menu"),
     Step.INFO_SPECIALTY_DETAIL: (Step.INFO_SPECIALTIES_MENU, "info_specialties_menu"),
+    Step.INFO_TOURS_CERTIFIED_MENU: (Step.INFO_PACKAGES_MENU, "info_packages_menu"),
+    Step.INFO_COURSES_ADVANCED_MENU: (Step.INFO_COURSES_MENU, "info_courses_menu"),
+    Step.INFO_MIXED_ACTIVITY_MENU: (Step.INFO_TOURS_MENU, "info_tours_menu"),
+    Step.INFO_MIXED_CERT_BEG_MENU: (Step.INFO_PACKAGES_MENU, "info_packages_menu"),
+    Step.INFO_CERTIFIED_4_DIVES_VARIANT: (Step.INFO_TOURS_CERTIFIED_MENU, "info_tours_certified_menu"),
     Step.TOURS_LOCATION: (Step.RESERVA_MENU, "reserva_menu"),
     Step.GROUP_TYPE: (Step.RESERVA_MENU, "reserva_menu"),
     Step.TOURS_EXPERIENCE: (Step.GROUP_TYPE, "group_type"),
@@ -274,10 +284,21 @@ def _normalize_for_menu_match(text: str) -> str:
     Accent stripping is critical: users frequently type "informacion" instead of
     "información", "espanol" instead of "español", etc., and the matcher must
     treat these as equivalent to the button titles.
+
+    Also splits number+companion-noun concatenations like "3amigos" or
+    "sieteamigos" so the downstream count/intent regexes (which expect a space)
+    can find both parts.
     """
     cleaned = _strip_accents(text.strip().lower())
     cleaned = re.sub(r"[¿¡?!.,;:()\[\]\"'/\\]", " ", cleaned)
     cleaned = re.sub(r"[^\w\s]", " ", cleaned)
+    # Split "3amigos" / "tresamigos" → "3 amigos" / "tres amigos" so person-count
+    # parsing (which requires whitespace between the count and the noun) works.
+    cleaned = re.sub(
+        r"\b(?:uno|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|diez|\d+)(amig[oa]s?|person[ao]s?|companer[oa]s?|hij[oa]s?|herman[oa]s?|acompanantes?)\b",
+        lambda m: m.group(0)[: -len(m.group(1))] + " " + m.group(1),
+        cleaned,
+    )
     return " ".join(cleaned.split())
 
 
@@ -356,6 +377,11 @@ def _detect_companion_intent(message: str, state: ConversationState | None = Non
         r"\bmi\s+(pareja|novi[oa]|espos[oa]|marido|mujer|madre|padre|mama|papa|chic[oa])\b",
         r"\bmi\s+(herman[oa]|hij[oa])\b",
         r"\bmis\s+(hij[oa]s|herman[oa]s)\b",
+        # "mis 2 hijos" / "mis dos hermanos" / "mis tres amigos" — número en medio.
+        r"\bmis\s+(?:\d+|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|diez)\s+(hij[oa]s|herman[oa]s|amig[oa]s|companer[oa]s|acompanantes)\b",
+        # "sieteamigos" / "6amigos" — número pegado a la palabra compañero sin espacio.
+        r"\b(?:\d+|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|diez)amig[oa]s?\b",
+        r"\b(?:\d+|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|diez)person[ao]s?\b",
         r"\bmi\s+familia\b",
         r"\b(vengo|voy|vamos|venimos)\s+con\s+mi\b",
         r"\b(vengo|voy|vamos|venimos)\s+con\s+(mis\s+hij[oa]s|mi\s+familia)\b",
@@ -386,6 +412,18 @@ def _detect_companion_intent(message: str, state: ConversationState | None = Non
         r"\bel\s+tambien\b",
         r"\bella\s+tambien\b",
         r"\bla\s+otra\s+persona\b",
+        # Elipsis: "él el minicurso" / "ella la actividad" (pronombre + artículo +
+        # actividad, sin verbo explícito). Conservador: solo cuando va seguido del
+        # nombre concreto de la actividad para minimizar falsos positivos.
+        # Incluye typos comunes (snorke, buseo, etc.).
+        r"\b(el|ella)\s+(el|la|los|las)\s+(snorkel|snorke|snorkl|esnorquel|esnorkel|minicurso|buceo|buseo|curso)\b",
+        # "ella solo snorkel" / "él solamente buceo" (adverbio entre pronombre y
+        # actividad), incluyendo typos comunes.
+        r"\b(el|ella)\s+(solo|solamente)\s+(snorkel|snorke|snorkl|esnorquel|esnorkel|minicurso|buceo|buseo)\b",
+        # Elipsis pura: "yo X y ella snorkel" / "yo X pero él buceo" (pronombre +
+        # actividad sin nada en medio). Anclado al conector y/pero anterior para
+        # evitar el falso positivo "el snorkel es divertido" (artículo + sustantivo).
+        r"\b(?:y|pero)\s+(el|ella)\s+(snorkel|snorke|snorkl|esnorquel|esnorkel|esnorke|esnokel|minicurso|buceo|buseo)\b",
     )
     distribution_patterns = (
         r"\buno\s+quiere\b",
@@ -443,6 +481,10 @@ def _mentions_diving_intent(message: str) -> bool:
         "buceando",
         "bucea",
         "bucean",
+        # Typos comunes
+        "buseo",
+        "buseando",
+        "bucearr",
         "dive",
         "dives",
         "diving",
@@ -463,6 +505,12 @@ def _mentions_snorkeling_intent(message: str) -> bool:
         "snorkel",
         "snorkeling",
         "esnorquel",
+        # Typos comunes (truncamientos / variantes ortográficas)
+        "snorke",
+        "snorkl",
+        "esnorkel",
+        "esnorke",
+        "esnokel",
         "caretear",
         "caretea",
         "caretean",
@@ -831,31 +879,66 @@ def _build_mixed_from_single_follow_up(base_id: str | None, lang: str) -> tuple[
 
 def _build_mixed_from_single_cert_question(diving_qty: int = 1) -> tuple[str, list[dict]]:
     if diving_qty > 1:
-        prompt = (
-            "¡Claro! Pueden ir juntos sin problema.\n\n"
-            "Para recomendarle bien el plan al grupo que quiere buceo, necesito saber una cosa:\n\n"
-            f"¿Estas {diving_qty} personas son *buzos certificados*?\n"
-            "1️⃣ Sí, todos están certificados\n"
-            "2️⃣ No, alguno sería su primera vez"
-        )
+        prompt = f"Para recomendar bien el plan a las {diving_qty} personas que quieren bucear, ¿son *buzos certificados*?"
         quick_replies = [
             {"title": "1️⃣ Sí, todos están certificados", "value": "1"},
-            {"title": "2️⃣ No, alguno sería su primera vez", "value": "2"},
+            {"title": "2️⃣ No, todos primera vez (minicurso)", "value": "2"},
+            {"title": "3️⃣ Algunos sí, algunos no", "value": "3"},
         ]
         return prompt, quick_replies
 
-    prompt = (
-        "¡Claro! Pueden ir juntos sin problema.\n\n"
-        "Para recomendarle bien el plan a tu amigo, necesito saber una cosa:\n\n"
-        "¿Tu amigo es *buzo certificado*?\n"
-        "1️⃣ Sí, está certificado\n"
-        "2️⃣ No, sería su primera vez"
-    )
+    prompt = "¿Tu amigo es *buzo certificado*?"
     quick_replies = [
         {"title": "1️⃣ Sí, está certificado", "value": "1"},
         {"title": "2️⃣ No, sería su primera vez", "value": "2"},
     ]
     return prompt, quick_replies
+
+
+def _build_mixed_from_single_cert_split_question(diving_qty: int) -> tuple[str, list[dict]]:
+    """Para el caso 'algunos sí, algunos no': preguntar cuántos están certificados.
+
+    Para diving_qty=2 hay un único reparto posible (1+1) — el caller no debería
+    llegar aquí. Para diving_qty>=3 genera N-1 botones (1 cert, 2 cert, ...,
+    diving_qty-1 cert).
+    """
+    if diving_qty < 3:
+        # Caso degenerado: solo hay un split posible, el caller lo procesa directo.
+        return "", []
+    lines = [
+        "Perfecto. ¿Cuántos de los que quieren bucear están certificados?",
+        "Los demás los apuntamos al minicurso de iniciación:",
+        "",
+    ]
+    quick_replies: list[dict] = []
+    for cert_count in range(1, diving_qty):
+        mini_count = diving_qty - cert_count
+        cert_word = "certificado" if cert_count == 1 else "certificados"
+        mini_word = "minicurso" if mini_count == 1 else "minicursos"
+        title = f"{cert_count} {cert_word} + {mini_count} {mini_word}"
+        lines.append(f"{cert_count}️⃣ {title}")
+        quick_replies.append({"title": f"{cert_count}️⃣ {title}", "value": str(cert_count)})
+    return "\n".join(lines), quick_replies
+
+
+def _split_diving_for_mixed_cert(group_context: dict, cert_count: int) -> dict:
+    """Divide la qty 'diving' en cert_count (queda diving) + resto (pasa a minicourse)."""
+    new_allocs: list[dict] = []
+    for alloc in group_context.get("allocations", []):
+        if alloc.get("activity") == "diving":
+            total_qty = alloc.get("qty", 0)
+            mini_count = max(total_qty - cert_count, 0)
+            if cert_count > 0:
+                new_allocs.append({"activity": "diving", "qty": cert_count})
+            if mini_count > 0:
+                new_allocs.append({"activity": "minicourse", "qty": mini_count})
+        else:
+            new_allocs.append(alloc)
+    result = dict(group_context)
+    result["allocations"] = _merge_group_allocations(new_allocs)
+    result["companion_count"] = sum(item["qty"] for item in result["allocations"])
+    result["needs_activity_clarification"] = False
+    return result
 
 
 def _build_mixed_from_single_activity_question(companion_count: int | None = None) -> tuple[str, list[dict]]:
@@ -956,12 +1039,12 @@ def _detect_binary_yes_no_answer(message: str) -> bool | None:
     return None
 
 
-def _render_service_info_card_for_current_location(state: ConversationState, service_id: str) -> str:
+def _render_service_info_card_for_current_location(state: ConversationState, service_id: str, compact: bool = False) -> str:
     info_state = ConversationState(conversation_id=state.conversation_id)
     info_state.language = state.language
     info_state.location = state.location
     info_state.selected_service = decision_tree._service_for_location(service_id, state)
-    return decision_tree._format_info_card(info_state)
+    return decision_tree._format_info_card(info_state, compact=compact)
 
 
 def _set_mixed_from_single_group_context(state: ConversationState, group_context: dict | None) -> None:
@@ -1040,6 +1123,7 @@ def _append_mixed_cart_item(state: ConversationState, item_type: str, plan: str 
 
 
 def _append_group_context_to_existing_mixed_cart(state: ConversationState, group_context: dict | None) -> str:
+    diving_qty_total = 0
     if group_context:
         for allocation in group_context.get("allocations", []):
             activity = allocation.get("activity")
@@ -1051,6 +1135,13 @@ def _append_group_context_to_existing_mixed_cart(state: ConversationState, group
                 continue
             item_type, plan = cart_item
             _append_mixed_cart_item(state, item_type, plan, qty)
+            if activity == "diving":
+                diving_qty_total += qty
+        if group_context.get("refresher_interested") and diving_qty_total > 0:
+            refresher_qty = group_context.get("refresher_qty") or diving_qty_total
+            refresher_qty = min(refresher_qty, diving_qty_total)
+            if refresher_qty > 0:
+                _append_mixed_cart_item(state, "refresh", None, refresher_qty)
     _clear_mixed_from_single_group_context(state)
     return decision_tree._goto_mixed_cart_review(state)
 
@@ -1133,9 +1224,10 @@ def _render_group_info_cards(state: ConversationState, allocations: list[dict]) 
         sections.append(
             _build_group_allocations_summary_line(allocation["activity"], allocation["qty"], state.language)
             + "\n"
-            + _render_service_info_card_for_current_location(state, service_id)
+            + _render_service_info_card_for_current_location(state, service_id, compact=True)
         )
-    return "\n\n".join(section for section in sections if section)
+    separator = "\n\n─────────────────────────\n\n"
+    return separator.join(section for section in sections if section)
 
 
 def _resolve_group_certification(group_context: dict, cert_answer: bool) -> dict:
@@ -1179,21 +1271,83 @@ def _replace_group_activity(group_context: dict, source_activity: str, target_ac
 def _build_companion_last_dive_question(state: ConversationState, diving_qty: int) -> str:
     lang = getattr(state, "language", "es") or "es"
     decision_tree.set_quick_replies(state, "certified_last_dive")
-    from src.flows.decision_tree import MESSAGES as _M
 
-    prompt = _M["certified_last_dive"][lang]
-    if lang != "es":
-        return prompt
-    target = "esas personas" if diving_qty > 1 else "tu acompañante"
-    return f"Perfecto. Antes de confirmar ese plan, necesito saber una cosa sobre {target}:\n\n{prompt}"
+    # Texto adaptado al companion (tercera persona) para que quede claro de quién
+    # se está preguntando. No empezamos con "Perfecto." porque el caller
+    # frecuentemente ya añade contexto previo.
+    if lang == "es":
+        if diving_qty > 1:
+            return (
+                "Antes de confirmar el plan, necesito saber una cosa sobre esas personas:\n\n"
+                "¿Han pasado *más de 2 años* desde su última inmersión?\n\n"
+                "Si es así, les recomendamos hacer un *refresher* antes de la salida."
+            )
+        return (
+            "Antes de confirmar el plan, necesito saber una cosa sobre tu acompañante:\n\n"
+            "¿Han pasado *más de 2 años* desde su última inmersión?\n\n"
+            "Si es así, le recomendamos hacer un *refresher* antes de la salida."
+        )
+    if diving_qty > 1:
+        return (
+            "Before I confirm the plan, I need to know one thing about those people:\n\n"
+            "Has it been *more than 2 years* since their last dive?\n\n"
+            "If so, we recommend a *refresher* before the trip."
+        )
+    return (
+        "Before I confirm the plan, I need to know one thing about your companion:\n\n"
+        "Has it been *more than 2 years* since their last dive?\n\n"
+        "If so, we recommend a *refresher* before the trip."
+    )
 
 
-def _build_companion_refresher_prompt(state: ConversationState) -> str:
+def _build_companion_refresher_qty_prompt(state: ConversationState, diving_qty: int) -> tuple[str, list[dict]]:
+    lang = getattr(state, "language", "es") or "es"
+    if lang == "es":
+        prompt = (
+            f"¿Cuántas de las {diving_qty} personas quieren hacer el *refresher*?\n"
+            "_(Sin coste adicional — el guía adapta la inmersión a su nivel)_"
+        )
+    else:
+        prompt = (
+            f"How many of the {diving_qty} people want to do the *refresher*?\n"
+            "_(No extra cost — the guide adapts the dive to their level)_"
+        )
+    quick_replies = [
+        {"title": f"{n}", "value": str(n)} for n in range(1, diving_qty + 1)
+    ]
+    return prompt, quick_replies
+
+
+def _build_companion_refresher_prompt(state: ConversationState, diving_qty: int = 1) -> str:
     lang = getattr(state, "language", "es") or "es"
     decision_tree.set_quick_replies(state, "refresher_interest")
-    from src.flows.decision_tree import MESSAGES as _M
-
-    return _M["refresher_info"][lang]
+    if lang == "es":
+        if diving_qty > 1:
+            return (
+                "Les recomendamos un *refresher* antes de salir al mar — un repaso rápido para volver al agua con confianza:\n\n"
+                "✅ Repaso de teoría (señales, equipo y procedimientos)\n"
+                "🏊 Práctica en piscina\n"
+                "🤿 1 buceo en el mar con instructor\n\n"
+                "⚠️ No es el minicurso de principiantes — está pensado para *buzos ya certificados* que quieren actualizarse.\n\n"
+                "¿Quieres incluirlo en su plan?"
+            )
+        return (
+            "Le recomendamos un *refresher* antes de salir al mar — un repaso rápido para volver al agua con confianza:\n\n"
+            "✅ Repaso de teoría (señales, equipo y procedimientos)\n"
+            "🏊 Práctica en piscina\n"
+            "🤿 1 buceo en el mar con instructor\n\n"
+            "⚠️ No es el minicurso de principiantes — está pensado para *buzos ya certificados* que quieren actualizarse.\n\n"
+            "¿Quieres incluirlo en su plan?"
+        )
+    target = "they" if diving_qty > 1 else "they"
+    return (
+        f"We recommend a *refresher* before going out to sea — a quick review to help {target} get back in the water with confidence:\n\n"
+        "✅ Theory review (signals, gear, procedures)\n"
+        "🏊 Pool practice\n"
+        "🤿 1 open-water dive with an instructor\n\n"
+        "⚠️ This is not the beginner course — it's designed for *already-certified divers* who want to brush up.\n\n"
+        "Would you like to include it in their plan?"
+    )
 
 
 def _build_group_activity_intro(lang: str, allocations: list[dict]) -> str:
@@ -1213,7 +1367,13 @@ def _build_group_activity_intro(lang: str, allocations: list[dict]) -> str:
     return "¡Claro! Pueden ir juntos sin problema. Para tu grupo, te comparto la información de cada actividad:"
 
 
-def _show_group_activity_cards(state: ConversationState, base_id: str | None, group_context: dict) -> str:
+def _show_group_activity_cards(state: ConversationState, base_id: str | None, group_context: dict, skip_intro: bool = False) -> str:
+    """Build the response with the info card(s) + follow-up offer.
+
+    `skip_intro=True` lets the caller suppress the standard "¡Claro! Pueden ir
+    juntos…" line when it has already provided its own context message
+    (e.g. the cert-no path that says "Si no todos están certificados…").
+    """
     allocations = group_context.get("allocations", [])
     companion_count = group_context.get("companion_count")
     _set_mixed_from_single_group_context(state, group_context)
@@ -1224,6 +1384,8 @@ def _show_group_activity_cards(state: ConversationState, base_id: str | None, gr
     )
     setattr(state, "mixed_from_single_offer_pending", True)
     state.quick_replies = quick_replies
+    if skip_intro:
+        return f"{info_cards}\n\n{follow_up}" if info_cards else follow_up
     intro = _build_group_activity_intro(state.language, allocations)
     return f"{intro}\n\n{info_cards}\n\n{follow_up}" if info_cards else f"{intro}\n\n{follow_up}"
 
@@ -1365,8 +1527,13 @@ def _enter_mixed_flow_from_single(state: ConversationState) -> str:
 
     # Preload 1× of the current activity for the main user.
     _append_mixed_cart_item(state, item_type, plan, 1)
+    # If the speaker already confirmed a refresher in the single-activity flow,
+    # carry it into the mixed cart so it shows in the final summary.
+    speaker_refresher = bool(getattr(state, "refresher_interested", False)) and item_type == "cert"
 
     group_context = _get_mixed_from_single_group_context(state)
+    diving_qty_total = 1 if item_type == "cert" else 0
+    companion_diving_qty = 0
     if group_context:
         for allocation in group_context.get("allocations", []):
             activity = allocation.get("activity")
@@ -1378,6 +1545,22 @@ def _enter_mixed_flow_from_single(state: ConversationState) -> str:
                 continue
             companion_item_type, companion_plan = cart_item
             _append_mixed_cart_item(state, companion_item_type, companion_plan, qty)
+            if activity == "diving":
+                companion_diving_qty += qty
+                diving_qty_total += qty
+        # If companions confirmed refresher for the certified subgroup, use the
+        # explicit refresher_qty when set (collected via qty question for 2+);
+        # otherwise default to the companion diving qty.
+        companion_refresher_qty = 0
+        if group_context.get("refresher_interested") and companion_diving_qty > 0:
+            companion_refresher_qty = group_context.get("refresher_qty") or companion_diving_qty
+            companion_refresher_qty = min(companion_refresher_qty, companion_diving_qty)
+    else:
+        companion_refresher_qty = 0
+
+    total_refresher_qty = (1 if speaker_refresher else 0) + companion_refresher_qty
+    if total_refresher_qty > 0:
+        _append_mixed_cart_item(state, "refresh", None, total_refresher_qty)
 
     _clear_mixed_from_single_group_context(state)
 
@@ -1396,6 +1579,26 @@ def _maybe_offer_mixed_from_single(state: ConversationState, message: str, answe
     try:
         svc_id = getattr(state, "selected_service", None)
         if not svc_id:
+            # No service selected yet. If companion+activity intent detected, offer mixed group routing.
+            lang = getattr(state, "language", "es") or "es"
+            if _detect_companion_intent(message, state) and (
+                _mentions_diving_intent(message)
+                or _mentions_snorkeling_intent(message)
+                or _mentions_minicourse_intent(message)
+            ):
+                state.step = Step.GROUP_TYPE
+                decision_tree.set_quick_replies(state, "group_type")
+                if lang == "es":
+                    return (
+                        "¡Claro! Para organizar el plan de todo el grupo, "
+                        "dime: ¿todos hacéis la misma actividad o queréis cosas distintas?\n\n"
+                        + decision_tree.MESSAGES["group_type"]["es"]
+                    )
+                return (
+                    "Sure! To plan for the whole group, tell me: "
+                    "is everyone doing the same activity or do you want different things?\n\n"
+                    + decision_tree.MESSAGES["group_type"]["en"]
+                )
             return answer
 
         # Never offer while already inside the mixed flow.
@@ -1475,8 +1678,10 @@ def _handle_pending_companion_flow(state: ConversationState, message: str, msg_l
         for attr in (
             "mixed_from_single_activity_question_pending",
             "mixed_from_single_cert_question_pending",
+            "mixed_from_single_cert_split_question_pending",
             "mixed_from_single_last_dive_question_pending",
             "mixed_from_single_refresher_interest_pending",
+            "mixed_from_single_refresher_qty_pending",
             "mixed_from_single_offer_pending",
         )
     ):
@@ -1509,6 +1714,34 @@ def _handle_pending_companion_flow(state: ConversationState, message: str, msg_l
             for item in current_group_context.get("allocations", [])
             if item.get("activity") == "diving"
         ) or 1
+
+        # NUEVO: respuesta "mixto" (botón 3 o palabras 'mezcla'/'algunos').
+        normalized_msg = _normalize_for_menu_match(message)
+        is_mixed_answer = (
+            msg_lower == "3"
+            or "algunos si algunos no" in normalized_msg
+            or "algunos certificados" in normalized_msg
+            or "mezcla" in normalized_msg
+            or "mixto" in normalized_msg
+        )
+        if is_mixed_answer and diving_qty >= 2:
+            setattr(state, "mixed_from_single_cert_question_pending", False)
+            if diving_qty == 2:
+                # Único split posible: 1 cert + 1 minicurso. Procesa directo.
+                cert_count = 1
+                updated_context = _split_diving_for_mixed_cert(current_group_context, cert_count)
+                _set_mixed_from_single_group_context(state, updated_context)
+                setattr(state, "mixed_from_single_last_dive_question_pending", True)
+                return (
+                    "Perfecto. Entonces el certificado hace buceo y el otro hace minicurso de iniciación.\n\n"
+                    + _build_companion_last_dive_question(state, cert_count)
+                )
+            # Para 3+ personas, preguntamos cuántos certificados (botones N-1).
+            prompt, quick_replies = _build_mixed_from_single_cert_split_question(diving_qty)
+            setattr(state, "mixed_from_single_cert_split_question_pending", True)
+            state.quick_replies = quick_replies
+            return prompt
+
         cert_answer = _detect_companion_certification_answer(message)
         if cert_answer is None:
             prompt, quick_replies = _build_mixed_from_single_cert_question(diving_qty)
@@ -1521,13 +1754,43 @@ def _handle_pending_companion_flow(state: ConversationState, message: str, msg_l
         if cert_answer:
             setattr(state, "mixed_from_single_last_dive_question_pending", True)
             return _build_companion_last_dive_question(state, diving_qty)
-        response = _show_group_activity_cards(state, base_id, resolved_group_context)
+        # Cert-no path: el caller añade su propia intro explicativa, así que
+        # suprimimos la intro estándar para no duplicar el "¡Claro!".
+        response = _show_group_activity_cards(state, base_id, resolved_group_context, skip_intro=True)
         intro = (
-            "Perfecto. Si no todos están certificados, lo ideal es pasar ese subgrupo a minicurso de iniciación:"
+            "Perfecto. Como no todos están certificados, le ofrecemos a ese grupo el minicurso de iniciación:"
             if diving_qty > 1 else
-            "Perfecto. Si no está certificado, lo ideal es empezar con este minicurso de iniciación:"
+            "Perfecto. Como no está certificado, le ofrecemos empezar con el minicurso de iniciación:"
         )
         return f"{intro}\n\n{response}"
+
+    # NUEVO: pregunta de reparto cuando el usuario eligió "algunos sí, algunos no" para grupos 3+.
+    if getattr(state, "mixed_from_single_cert_split_question_pending", False):
+        current_group_context = _get_mixed_from_single_group_context(state) or _build_group_context_from_activity("diving")
+        diving_qty = sum(
+            item["qty"]
+            for item in current_group_context.get("allocations", [])
+            if item.get("activity") == "diving"
+        ) or 1
+        try:
+            cert_count = int(message.strip())
+        except (ValueError, TypeError):
+            cert_count = None
+        if cert_count is None or cert_count < 1 or cert_count >= diving_qty:
+            prompt, quick_replies = _build_mixed_from_single_cert_split_question(diving_qty)
+            state.quick_replies = quick_replies
+            return f"No te entendí del todo.\n\n{prompt}"
+
+        setattr(state, "mixed_from_single_cert_split_question_pending", False)
+        updated_context = _split_diving_for_mixed_cert(current_group_context, cert_count)
+        _set_mixed_from_single_group_context(state, updated_context)
+        mini_count = diving_qty - cert_count
+        setattr(state, "mixed_from_single_last_dive_question_pending", True)
+        return (
+            f"Perfecto. {cert_count} hace{'n' if cert_count > 1 else ''} buceo certificado "
+            f"y {mini_count} hace{'n' if mini_count > 1 else ''} minicurso de iniciación.\n\n"
+            + _build_companion_last_dive_question(state, cert_count)
+        )
 
     if getattr(state, "mixed_from_single_last_dive_question_pending", False):
         current_group_context = _get_mixed_from_single_group_context(state) or _build_group_context_from_activity("diving")
@@ -1546,22 +1809,73 @@ def _handle_pending_companion_flow(state: ConversationState, message: str, msg_l
         _set_mixed_from_single_group_context(state, updated_group_context)
         if last_dive_over_2_years:
             setattr(state, "mixed_from_single_refresher_interest_pending", True)
-            return _build_companion_refresher_prompt(state)
+            return _build_companion_refresher_prompt(state, diving_qty)
         return _show_group_activity_cards(state, base_id, updated_group_context)
 
     if getattr(state, "mixed_from_single_refresher_interest_pending", False):
         current_group_context = _get_mixed_from_single_group_context(state) or _build_group_context_from_activity("diving")
+        diving_qty = sum(
+            item["qty"]
+            for item in current_group_context.get("allocations", [])
+            if item.get("activity") == "diving"
+        ) or 1
         refresher_interested = _detect_binary_yes_no_answer(message)
         if refresher_interested is None:
-            return "No te entendí del todo.\n\n" + _build_companion_refresher_prompt(state)
+            return "No te entendí del todo.\n\n" + _build_companion_refresher_prompt(state, diving_qty)
 
         setattr(state, "mixed_from_single_refresher_interest_pending", False)
         updated_group_context = dict(current_group_context)
         updated_group_context["refresher_interested"] = refresher_interested
-        if refresher_interested:
-            updated_group_context = _replace_group_activity(updated_group_context, "diving", "minicourse")
         _set_mixed_from_single_group_context(state, updated_group_context)
-        return _show_group_activity_cards(state, base_id, updated_group_context)
+        if refresher_interested:
+            # For 2+ certified divers, ask how many of them want the refresher.
+            if diving_qty > 1:
+                setattr(state, "mixed_from_single_refresher_qty_pending", True)
+                prompt, quick_replies = _build_companion_refresher_qty_prompt(state, diving_qty)
+                state.quick_replies = quick_replies
+                return prompt
+            # diving_qty == 1: auto-assign 1.
+            updated_group_context["refresher_qty"] = 1
+            _set_mixed_from_single_group_context(state, updated_group_context)
+            note = (
+                "✅ *Refresher añadido* — el asesor lo coordina al confirmar la reserva (sin coste adicional)."
+                if state.language == "es"
+                else "✅ *Refresher added* — the advisor coordinates it when confirming the booking (no extra cost)."
+            )
+            cards = _show_group_activity_cards(state, base_id, updated_group_context, skip_intro=True)
+            return f"{note}\n\n{cards}"
+        cards = _show_group_activity_cards(state, base_id, updated_group_context)
+        return cards
+
+    if getattr(state, "mixed_from_single_refresher_qty_pending", False):
+        current_group_context = _get_mixed_from_single_group_context(state) or _build_group_context_from_activity("diving")
+        diving_qty = sum(
+            item["qty"]
+            for item in current_group_context.get("allocations", [])
+            if item.get("activity") == "diving"
+        ) or 1
+        try:
+            refresher_qty = int(message.strip())
+        except (ValueError, TypeError):
+            refresher_qty = None
+        if refresher_qty is None or refresher_qty < 1 or refresher_qty > diving_qty:
+            prompt, quick_replies = _build_companion_refresher_qty_prompt(state, diving_qty)
+            state.quick_replies = quick_replies
+            return "No te entendí del todo.\n\n" + prompt
+
+        setattr(state, "mixed_from_single_refresher_qty_pending", False)
+        updated_group_context = dict(current_group_context)
+        updated_group_context["refresher_qty"] = refresher_qty
+        _set_mixed_from_single_group_context(state, updated_group_context)
+        person_word_es = "persona" if refresher_qty == 1 else "personas"
+        person_word_en = "person" if refresher_qty == 1 else "people"
+        note = (
+            f"✅ *Refresher añadido para {refresher_qty} {person_word_es}* — el asesor lo coordina al confirmar la reserva (sin coste adicional)."
+            if state.language == "es"
+            else f"✅ *Refresher added for {refresher_qty} {person_word_en}* — the advisor coordinates it when confirming the booking (no extra cost)."
+        )
+        cards = _show_group_activity_cards(state, base_id, updated_group_context, skip_intro=True)
+        return f"{note}\n\n{cards}"
 
     if getattr(state, "mixed_from_single_offer_pending", False):
         if msg_lower in {"1", "si", "sí", "yes"}:
@@ -1569,8 +1883,10 @@ def _handle_pending_companion_flow(state: ConversationState, message: str, msg_l
             setattr(state, "mixed_from_single_companion_context_active", False)
             setattr(state, "mixed_from_single_activity_question_pending", False)
             setattr(state, "mixed_from_single_cert_question_pending", False)
+            setattr(state, "mixed_from_single_cert_split_question_pending", False)
             setattr(state, "mixed_from_single_last_dive_question_pending", False)
             setattr(state, "mixed_from_single_refresher_interest_pending", False)
+            setattr(state, "mixed_from_single_refresher_qty_pending", False)
             state.quick_replies = []
             if decision_tree._is_in_mixed_flow(state):
                 logger.info("[SUPERVISOR] Mixed companion: user accepted add-to-existing-cart offer")
@@ -1582,22 +1898,28 @@ def _handle_pending_companion_flow(state: ConversationState, message: str, msg_l
             setattr(state, "mixed_from_single_companion_context_active", False)
             setattr(state, "mixed_from_single_activity_question_pending", False)
             setattr(state, "mixed_from_single_cert_question_pending", False)
+            setattr(state, "mixed_from_single_cert_split_question_pending", False)
             setattr(state, "mixed_from_single_last_dive_question_pending", False)
             setattr(state, "mixed_from_single_refresher_interest_pending", False)
+            setattr(state, "mixed_from_single_refresher_qty_pending", False)
             if decision_tree._is_in_mixed_flow(state):
                 _clear_mixed_from_single_group_context(state)
                 state.quick_replies = []
                 return decision_tree._goto_mixed_cart_review(state)
             _clear_mixed_from_single_group_context(state)
-            state.quick_replies = []
+            # Devolvemos al cliente al SUMMARY en modo follow_up con sus botones
+            # (Reservar, Preguntar, Volver al menú) para que no se quede sin opciones.
+            state.step = Step.SUMMARY
+            state.summary_mode = "follow_up"
+            decision_tree.set_quick_replies(state, decision_tree._summary_quick_replies_key(state))
             if state.language == "es":
                 return (
-                    "Perfecto, entonces mantenemos solo la actividad que ya tenías. "
-                    "Si más adelante quieres que te ayude a armar un plan mixto para tu amigo o acompañante, solo dime."
+                    "Perfecto, mantenemos solo tu actividad. "
+                    "¿Quieres reservarla ya, preguntar algo más o volver al menú?"
                 )
             return (
-                "Perfect, we'll keep only your current activity. "
-                "If later you want help building a mixed plan for your friend or companion, just let me know."
+                "Perfect, we'll keep only your activity. "
+                "Would you like to book it now, ask anything else, or go back to the menu?"
             )
         setattr(state, "mixed_from_single_offer_pending", False)
         _clear_mixed_from_single_group_context(state)
@@ -2386,6 +2708,7 @@ async def route_message(state: ConversationState, message: str) -> str:
             "mixed_from_single_offer_pending",
             "mixed_from_single_activity_question_pending",
             "mixed_from_single_cert_question_pending",
+            "mixed_from_single_cert_split_question_pending",
             "mixed_from_single_last_dive_question_pending",
             "mixed_from_single_refresher_interest_pending",
         )

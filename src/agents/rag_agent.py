@@ -7,10 +7,12 @@ decision tree.
 """
 
 import logging
+import re
 
 from openai import AsyncOpenAI
 
 from src.config import settings
+from src.knowledge.loader import load_faqs, load_policies
 from src.knowledge.vector_store import search_knowledge_base
 from src.privacy import detect_pii, privacy_block_message, redact_pii
 
@@ -46,6 +48,17 @@ Reglas estrictas — nunca las incumplas:
 - EXCEPCIÓN: preguntas sobre el programa de buceo adaptado DIVE TO HEAL (personas con discapacidad, accesibilidad, síndrome de Down, autismo, movilidad reducida, discapacidad visual, auditiva, parálisis cerebral) SÍ puedes responderlas con la información factual del programa. Es información pública del centro, no consejo médico personal.
 - Nunca pidas ni repitas datos sensibles (IDs, cuentas, comprobantes de pago, números de tarjeta).
 - No escribas respuestas largas tipo folleto si el cliente hizo una pregunta concreta.
+- Cuando el cliente mencione *varias personas con intención de reservar* (ej: "yo X y mi pareja/él/ella Y", "somos 3 y unos quieren snorkel otros buceo"), NO asignes roles persona-actividad ("Para ti…/Para ella…") ni cites precios individuales por persona. Solo describe las actividades disponibles de forma *neutral* (1-2 frases breves) y deriva al asesor para que confirme la composición exacta del grupo y el precio total. El flujo estructurado del bot ya se encarga de armar el carrito con cantidades; tu única labor en este caso es contextualizar brevemente y escalar.
+
+Gestión de precios, monedas y pagos:
+- Usa el contexto de extra_context para adaptar la moneda: si se indica que el cliente NO es colombiano/a, prioriza mostrar los precios en USD y no des tarifas detalladas en pesos pensadas para locales; si se indica que SÍ es colombiano/a, puedes usar precios en COP y, si es útil, mencionar el equivalente en USD.
+- Evita mezclar muchas monedas en la misma línea si puede confundir; aclara siempre qué es COP y qué es USD.
+- Aunque en el contexto aparezcan flujos de pago (formularios, porcentajes como 50%, transferencias, etc.), NO describas el proceso exacto de pago ni montos de anticipo. Explica de forma general que un asesor humano te indicará el paso a paso y el valor del anticipo si aplica.
+- No inventes ni reconstruyas links de pago o de formularios. Si el cliente pregunta cómo pagar o cómo completar el formulario de exoneración, di que el asesor le enviará el enlace y las instrucciones concretas.
+
+Uso del contexto de la conversación (extra_context):
+- Ten muy en cuenta la actividad que el cliente está organizando, desde dónde sale (Cartagena o ya en las islas) y si se trata de un plan de 1 día o de varios días.
+- Cuando el cliente pregunte por amigos o acompañantes que quieran bucear o hacer snorkel, prioriza opciones que mantengan este contexto: mismo origen y, cuando sea posible, misma lógica de duración (plan de 1 día vs paquete multi-día), salvo que el cliente pida explícitamente otra cosa (por ejemplo, que quiere quedarse a dormir en las islas).
 
 Gestión de precios, monedas y pagos:
 - Usa el contexto de extra_context para adaptar la moneda: si se indica que el cliente NO es colombiano/a, prioriza mostrar los precios en USD y no des tarifas detalladas en pesos pensadas para locales; si se indica que SÍ es colombiano/a, puedes usar precios en COP y, si es útil, mencionar el equivalente en USD.
@@ -85,6 +98,17 @@ Strict rules — never break these:
 - EXCEPTION: questions about the DIVE TO HEAL adaptive diving program (people with disabilities, accessibility, Down Syndrome, autism, reduced mobility, visual or hearing impairment, cerebral palsy) CAN be answered using the program's factual information. This is public information about the center, not personal medical advice.
 - Never request or repeat sensitive data (IDs, accounts, payment receipts, card numbers).
 - Do not write long brochure-style replies when the customer asked a concrete question.
+- When the customer mentions *multiple people with booking intent* (e.g. "I want X and my partner/he/she Y", "we are 3 and some want snorkel others diving"), do NOT assign person-activity roles ("For you…/For her…") nor quote individual per-person prices. Just describe the available activities *neutrally* (1-2 short sentences) and route to the human advisor so they confirm the exact group composition and total price. The bot's structured flow already builds the cart with quantities; your only job in this case is brief context + escalation.
+
+Pricing, currencies, and payments:
+- Use the extra_context to adapt currency: if it indicates the customer is NOT Colombian, prioritize giving prices in USD and avoid detailed COP prices meant for local customers; if it indicates they ARE Colombian, feel free to use COP prices and, if helpful, mention the approximate USD equivalent.
+- Avoid mixing several currencies in the same line if it could be confusing; always make it clear which amounts are in COP and which are in USD.
+- Even if the context contains payment flows (forms, percentages like 50%, bank transfers, etc.), do NOT describe the exact payment process or the amount of any deposit. Explain in general terms that a human advisor will confirm the step-by-step process and any advance payment if applicable.
+- Do not invent or reconstruct payment or form links. If the customer asks how to pay or how to complete the waiver form, tell them that the advisor will send the correct link and instructions.
+
+How to use conversation context (extra_context):
+- Pay close attention to the activity the customer is organizing, where they are departing from (Cartagena vs already on the islands), and whether it is a 1-day plan or a multi-day package.
+- When the customer asks about friends or companions who want to dive or snorkel, prefer options that keep this context: same origin and, when possible, a similar duration pattern (1-day plan vs multi-day package), unless the customer explicitly asks for something different (e.g. they say they want to stay overnight on the islands).
 
 Pricing, currencies, and payments:
 - Use the extra_context to adapt currency: if it indicates the customer is NOT Colombian, prioritize giving prices in USD and avoid detailed COP prices meant for local customers; if it indicates they ARE Colombian, feel free to use COP prices and, if helpful, mention the approximate USD equivalent.
@@ -106,6 +130,27 @@ Always escalate to a human for:
 Advisor contact: WhatsApp +57 320 2301515.
 Answer in English."""
 
+FOOD_QUERY_PATTERN = re.compile(
+    r"\b(comida|almuerzo|lunch|meal|meals|food|vegetariano|vegetariana|vegetarian|vegano|vegana|vegan|celiaco|celiaca|celiac|alergia|alergias|allergy|allergies)\b",
+    re.IGNORECASE,
+)
+
+DIETARY_QUERY_PATTERN = re.compile(
+    r"\b(vegetariano|vegetariana|vegetarian|vegano|vegana|vegan|celiaco|celiaca|celiac|alergia|alergias|allergy|allergies)\b",
+    re.IGNORECASE,
+)
+
+FOOD_FAQ_QUESTIONS = {
+    "meal": {
+        "es": "¿Que comida incluye el tour?",
+        "en": "What food is included in the tour?",
+    },
+    "dietary": {
+        "es": "Soy vegetariano o tengo una alergia alimentaria, ¿pueden atenderme?",
+        "en": "I'm vegetarian or have a food allergy. Can you accommodate me?",
+    },
+}
+
 
 def build_retrieval_query(query: str, history: list[dict] | None = None) -> str:
     if not history:
@@ -120,6 +165,51 @@ def build_retrieval_query(query: str, history: list[dict] | None = None) -> str:
         return query
 
     return "\n".join([*recent_user_messages[-2:], query])
+
+
+def _normalize_text(value: str) -> str:
+    return " ".join(value.strip().lower().split())
+
+
+def _find_food_faq_answer(question: str, lang: str) -> str | None:
+    faqs = load_faqs().get("faqs") or []
+    question_key = "question_es" if lang == "es" else "question_en"
+    answer_key = "answer_es" if lang == "es" else "answer_en"
+    normalized_question = _normalize_text(question)
+
+    for faq in faqs:
+        faq_question = faq.get(question_key)
+        faq_answer = faq.get(answer_key)
+        if not isinstance(faq_question, str) or not isinstance(faq_answer, str):
+            continue
+        if _normalize_text(faq_question) == normalized_question and faq_answer.strip():
+            return faq_answer.strip()
+    return None
+
+
+def _food_policy_answer(lang: str) -> str | None:
+    policies = load_policies().get("policies") or {}
+    food_policy = policies.get("food_policy") or {}
+    answer = food_policy.get(lang)
+    if isinstance(answer, str) and answer.strip():
+        return answer.strip()
+    return None
+
+
+def _canonical_food_answer(query: str, lang: str) -> str | None:
+    if not FOOD_QUERY_PATTERN.search(query):
+        return None
+
+    if DIETARY_QUERY_PATTERN.search(query):
+        dietary_answer = _find_food_faq_answer(FOOD_FAQ_QUESTIONS["dietary"][lang], lang)
+        if dietary_answer:
+            return dietary_answer
+
+    meal_answer = _find_food_faq_answer(FOOD_FAQ_QUESTIONS["meal"][lang], lang)
+    if meal_answer:
+        return meal_answer
+
+    return _food_policy_answer(lang)
 
 
 async def rag_answer(
@@ -141,6 +231,11 @@ async def rag_answer(
     if pii_hits:
         logger.warning(f"[RAG][PRIVACY] PII detected in query hits={pii_hits}")
         return privacy_block_message(lang)
+
+    canonical_food_answer = _canonical_food_answer(query, lang)
+    if canonical_food_answer:
+        logger.info(f"[RAG] Using canonical food answer query={query[:60]}... lang={lang}")
+        return canonical_food_answer
 
     retrieval_query = build_retrieval_query(query, history)
 

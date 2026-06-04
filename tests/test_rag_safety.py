@@ -158,3 +158,18 @@ async def test_rag_uses_sources_when_confident(monkeypatch):
     response = await rag_agent.rag_answer("Puedo volar después de bucear?", lang="es")
 
     assert response == "Respuesta basada en contexto"
+
+
+@pytest.mark.asyncio
+async def test_rag_food_query_returns_canonical_kb_answer_without_search(monkeypatch):
+    async def fail_search(*args, **kwargs):
+        raise AssertionError("Food queries should use the canonical KB answer before retrieval")
+
+    monkeypatch.setattr(rag_agent, "search_knowledge_base", fail_search)
+
+    response = await rag_agent.rag_answer("¿Qué comida incluye el tour?", lang="es")
+
+    assert "arroz con pollo o arroz con vegetales" in response
+    assert "Pescado a la plancha" not in response
+    assert "Ensaladas frescas" not in response
+    assert "Frutas de temporada" not in response
