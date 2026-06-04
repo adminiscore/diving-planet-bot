@@ -58,7 +58,7 @@ Read this file before changing code in the Diving Planet Bot. For a quick versio
 - Tours certified menu: items renamed "Buceos" → "Inmersiones" and copy of the question emphasises days. Open Water origin shows price for each option.
 - Beginner age question: 3 buttons now (`👶 menores de 8` → escalate snorkel only; `👦 8-10 Bubble Makers` → escalate; `🧑 todos 10+` → normal flow). Bubble Makers wording clarified to "máximo 2 metros de profundidad".
 - `_handle_reserva_menu`: choice 1 (Tours) now goes directly to GROUP_TYPE — the deprecated TOURS_LOCATION step is bypassed (the location question moved to LOCATION between service selection and COLOMBIAN).
-- `mixed_add_cert_plan` ahora describe brevemente cada opción (2 inmersiones / 1 día vs. multi-día). `mixed_cart_modify_pick` y `mixed_cart_remove_pick` ya no piden número en texto.
+- `mixed_add_cert_plan` in the mixed cart now uses a restored two-level certified flow: first `2 inmersiones / 1 día` vs. `paquete multi-día (3 o más inmersiones)`, then a dedicated multiday submenu with the exact packages from `services.json`. The mixed cart preserves the exact certified service id/label through split handling, summary, and lead-note generation. `mixed_cart_modify_pick` y `mixed_cart_remove_pick` ya no piden número en texto.
 - `MESSAGES["escalate"]` reescrito: "Te paso con un asesor del equipo de Diving Planet" (sin "humano", sin "Para esta situación específica..."). Mismo cambio aplicado en RAG fallback y broken-link complaint.
 - Servicio Privado: `services.json` ahora tiene `price_note_es`/`price_note_en` bilingüe y la sección "✅ Incluye:" del summary se oculta cuando el servicio no tiene items.
 
@@ -71,6 +71,7 @@ Read this file before changing code in the Diving Planet Bot. For a quick versio
   - Cartagena certified 2 dives / 1 day.
   - Summary flow: initial summary is short and offers an optional full itinerary; the itinerary offer is handled in `Step.SUMMARY` with `summary_mode`, supports `back`, and only then transitions to `FREE_TEXT` when the user chooses to ask more. The visible CTA for regular services is now itinerary-only (`Ver itinerario completo + link de reserva` + `Volver`), while typed `reservar` still works. 3 buceos (islas) pasó a "core split" (pide última inmersión y nacionalidad antes del resumen), igual que 2/5/7/9.
   - Certified package standardization: Cartagena `3 dives` is again `1 day` (2 daytime + 1 night dive), and all certified multi-day/night-dive packages now show explicit island-accommodation requirements in menus, summaries, and itinerary/detail views.
+  - Mixed cart certified booking: the user again sees a short top-level certified menu (`2 dives / 1 day` vs. `multi-day package`) and a second-level submenu with all restored multi-day packages from `services.json`, including island variants.
   - Certified summary `ℹ️` blocks for Cartagena/island packages were shortened so they emphasize only that hotel/accommodation is not included, instead of repeating long descriptive text.
   - Tours branch restructure: after location the user chooses diving / snorkeling / mixed; snorkeling is direct and diving has its own certified/beginners/mixed submenu.
   - Cartagena diving beginners: `Only beginners` now goes directly to the minicourse age question (no private-service option in that branch).
@@ -89,6 +90,7 @@ Read this file before changing code in the Diving Planet Bot. For a quick versio
 - COP pricing is now in the KB; bot needs a restart in WSL2 to serve it after the re-index run. Embeddings reindex done (445 docs) para incluir nuevos servicios y ajustes de precios.
 - `CHATWOOT_OWNER_AGENT_ID=1` should be added to `.env` (owner agent ID confirmed via `/api/v1/profile`).
 - Next session priorities:
+  - Live E2E retest of the restored mixed-cart certified flow in the Chatwoot widget: top-level `2 dives / 1 day` vs. `multi-day package`, submenu buttons, `cancel/back`, and exact package label in final lead note.
   - Live E2E retest of the new cart-style mixed-group flow after server restart (item aggregation, emoji modify/remove buttons, snorkel-hidden in cert+beg, restaurant-bill summary, Reservar sends booking links + advisor msg).
   - Live E2E retest of the tours `Reservar` button on regular itinerary_offer (sends booking link + advisor message; link omitted for Colombian users).
   - Live E2E retest of `Información > Actividades` in the Chatwoot widget, especially diving → certified → island `4 dives` and back-navigation from each informational card.

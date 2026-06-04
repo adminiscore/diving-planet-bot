@@ -1,6 +1,13 @@
 History
 =======
 
+0.15.3 - (2026-06-04)
+---------------------
+* Restore the certified-diving booking flow in the mixed cart to a two-step menu: `2 dives / 1 day` first, then a dedicated `multi-day package (3 or more dives)` submenu.
+* Bring back all certified multi-day packages from `services.json` inside booking, including Cartagena `3/4/5/7/9 dives` and the island-only `4 dives` night-dive variant.
+* Keep the exact certified service ID through cart preview, refresher/split handling, final summary, and lead-note generation so mixed-group bookings preserve the chosen package.
+* Add regression coverage for the restored menus, island variants, and mixed-cart certified package handling.
+
 0.15.2 - (2026-06-03)
 ---------------------
 * Refresher no longer converts certified `2 dives / 1 day` into a minicourse: `2_dives_1_day` (and its island variant) added to `REFRESHER_PRESERVE_SERVICES`, so the service stays as buceo certificado and the refresher is annotated.
