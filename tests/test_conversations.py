@@ -2104,9 +2104,14 @@ async def test_mixed_entry_without_location_asks_departure_before_add_activity()
 @pytest.mark.asyncio
 async def test_mixed_add_cert_goes_to_cert_plan():
     state = await reach_mixed_add_activity()
-    await route_message(state, "1")  # Buceo certificado
+    resp = await route_message(state, "1")  # Buceo certificado
     assert state.step == Step.MIXED_ADD_CERT_PLAN
     assert state.mixed_pending_qty_type == "cert"
+    assert [item["title"] for item in state.quick_replies[:2]] == [
+        "🤿 2 Inmersiones / 1 día",
+        "📅 Paquete multi-día (3 o más inmersiones)",
+    ]
+    assert "qué idea tienes" in resp.lower()
 
 
 @pytest.mark.asyncio
@@ -2134,13 +2139,57 @@ async def test_mixed_add_companion_skips_to_qty():
 
 
 @pytest.mark.asyncio
-async def test_mixed_cert_multiday_plan_escalates():
+async def test_mixed_certified_5_dives_goes_to_qty_and_keeps_exact_plan():
     state = await reach_mixed_add_activity()
     await route_message(state, "1")  # cert
-    resp = await route_message(state, "2")  # paquete multi-día
-    assert state.step == Step.ESCALATE
-    assert "multi-dia" in resp.lower() or "multi-día" in resp.lower()
-    assert state.mixed_cart == []  # wiped before escalation
+    resp = await route_message(state, "2")  # multi-day
+    assert state.step == Step.MIXED_ADD_CERT_MULTI_DAY
+    resp = await route_message(state, "3")  # 5 inmersiones / 2 días
+    assert state.step == Step.MIXED_ADD_QTY
+    assert state.mixed_pending_qty_plan == "5_dives_2_days"
+    assert "cuántas personas" in resp.lower() or "how many people" in resp.lower()
+
+
+@pytest.mark.asyncio
+async def test_mixed_certified_island_menu_shows_both_4_dive_variants():
+    state = await reach_mixed_add_activity(location="island")
+    resp = await route_message(state, "1")
+
+    assert state.step == Step.MIXED_ADD_CERT_PLAN
+    assert "paquete multi-día" in resp.lower()
+    assert [item["title"] for item in state.quick_replies[:2]] == [
+        "🤿 2 Inmersiones / 1 día",
+        "📅 Paquete multi-día (3 o más inmersiones)",
+    ]
+
+    resp = await route_message(state, "2")
+
+    assert state.step == Step.MIXED_ADD_CERT_MULTI_DAY
+    assert "3 o más inmersiones" in resp
+    assert [item["title"] for item in state.quick_replies[:6]] == [
+        "🤿 3 inmersiones (1 día)*",
+        "🤿 4 inmersiones (2 días) · 4 diurnas",
+        "🤿 4 inmersiones (2 días) · 3 diurnas + 1 nocturna",
+        "🤿 5 inmersiones (2 días)",
+        "🤿 7 inmersiones (3 días)",
+        "🤿 9 inmersiones (4 días)",
+    ]
+
+
+@pytest.mark.asyncio
+async def test_mixed_certified_island_night_variant_is_added_to_cart_with_exact_service():
+    state = await reach_mixed_add_activity(location="island")
+    await route_message(state, "1")  # cert
+    await route_message(state, "2")  # multi-day
+    await route_message(state, "3")  # 4 dives island variant with night dive
+    await route_message(state, "2")  # qty 2
+    await route_message(state, "2")  # recent dive / no refresher
+    await route_message(state, "1")  # add to cart
+
+    assert state.step == Step.MIXED_CART_REVIEW
+    assert state.mixed_cart[0]["type"] == "cert"
+    assert state.mixed_cart[0]["plan"] == "4_dives_2_days_mixed_already_on_island"
+    assert state.mixed_cart[0]["qty"] == 2
 
 
 # --- Qty handling ----------------------------------------------------------
@@ -2424,7 +2473,13 @@ async def test_mixed_lead_note_includes_cart_items():
     await route_message(state, "1")  # Reservar
     note = state.pending_note or ""
     assert "Grupo mixto" in note
-    assert "Buceo certificado" in note or "Certified" in note
+    assert (
+        "Buceo certificado" in note
+        or "Certified" in note
+        or "2 inmersiones" in note
+        or "2 dives" in note
+        or "buzos certificados" in note.lower()
+    )
     assert "Minicurso" in note or "principiantes" in note.lower() or "beginner" in note.lower()
 
 

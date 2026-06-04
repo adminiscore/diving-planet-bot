@@ -66,6 +66,7 @@ class Step(str, Enum):
     MIXED_LOCATION = "mixed_location"
     MIXED_ADD_ACTIVITY = "mixed_add_activity"
     MIXED_ADD_CERT_PLAN = "mixed_add_cert_plan"
+    MIXED_ADD_CERT_MULTI_DAY = "mixed_add_cert_multi_day"
     MIXED_ADD_QTY = "mixed_add_qty"
     MIXED_CERT_LAST_DIVE = "mixed_cert_last_dive"
     MIXED_CERT_REFRESH_INTEREST = "mixed_cert_refresh_interest"
@@ -961,17 +962,36 @@ MESSAGES = {
     },
     "mixed_add_cert_plan": {
         "es": (
-            "Para *buceo certificado*, ¿qué plan?\n\n"
-            "🤿 *2 inmersiones / 1 día*: salida de día completo a las Islas del Rosario "
-            "con 2 inmersiones guiadas.\n"
-            "📅 *Paquete multi-día (5/7/9 inmersiones)*: varios días seguidos para profundizar "
-            "tu experiencia. Requiere coordinación con el asesor."
+            "Para *buceo certificado*, ¿qué idea tienes?\n\n"
+            "🤿 *2 inmersiones / 1 día*: salida de día completo a las Islas del Rosario con 2 inmersiones guiadas.\n"
+            "📅 *Paquete multi-día (3 o más inmersiones)*: varios días seguidos para profundizar tu experiencia. "
+            "Requiere dormir en las islas entre jornadas."
         ),
         "en": (
-            "For *certified diving*, which plan?\n\n"
+            "For *certified diving*, what do you have in mind?\n\n"
             "🤿 *2 dives / 1 day*: full-day trip to the Rosario Islands with 2 guided dives.\n"
-            "📅 *Multi-day package (5/7/9 dives)*: several consecutive days to deepen your "
-            "experience. Requires coordination with the advisor."
+            "📅 *Multi-day package (3 or more dives)*: several consecutive days to deepen your experience. "
+            "Requires staying on the islands between dive days."
+        ),
+    },
+    "mixed_add_cert_multi_day": {
+        "es": (
+            "Para *buceo certificado*, estas son las opciones de *3 o más inmersiones*:\n\n"
+            "🏨 *Importante*: si eliges un plan con inmersiones en días distintos, debes hospedarte en un hotel en las islas entre jornadas.\n"
+            "- *4 inmersiones (2 días)* y *5 inmersiones (2 días)*: al menos *1 noche*\n"
+            "- *7 inmersiones (3 días)*: al menos *2 noches*\n"
+            "- *9 inmersiones (4 días)*: al menos *3 noches*\n\n"
+            "✳️ *3 inmersiones (1 día)*: también se requiere hospedaje en la isla por la noche, porque incluye inmersión nocturna.\n\n"
+            "¿Qué paquete quieres añadir al carrito?"
+        ),
+        "en": (
+            "For *certified diving*, these are the *3 or more dives* options:\n\n"
+            "🏨 *Important*: if you choose a plan with dives on different days, you must stay at a hotel on the islands between dive days.\n"
+            "- *4 dives (2 days)* and *5 dives (2 days)*: at least *1 night*\n"
+            "- *7 dives (3 days)*: at least *2 nights*\n"
+            "- *9 dives (4 days)*: at least *3 nights*\n\n"
+            "✳️ *3 dives (1 day)*: island accommodation is also required that night because it includes a night dive.\n\n"
+            "Which package would you like to add to the cart?"
         ),
     },
     "mixed_add_qty": {
@@ -1441,12 +1461,30 @@ BUTTON_OPTIONS = {
     "mixed_add_cert_plan": {
         "es": [
             {"title": "🤿 2 Inmersiones / 1 día", "value": "1"},
-            {"title": "📅 Paquete multi-día (5/7/9 inmersiones)", "value": "2"},
+            {"title": "📅 Paquete multi-día (3 o más inmersiones)", "value": "2"},
             {"title": "🔙 Cancelar", "value": "back"},
         ],
         "en": [
             {"title": "🤿 2 Dives / 1 day", "value": "1"},
-            {"title": "📅 Multi-day package (5/7/9 dives)", "value": "2"},
+            {"title": "📅 Multi-day package (3 or more dives)", "value": "2"},
+            {"title": "🔙 Cancel", "value": "back"},
+        ],
+    },
+    "mixed_add_cert_multi_day": {
+        "es": [
+            {"title": "🤿 3 inmersiones (1 día)*", "value": "1"},
+            {"title": "🤿 4 inmersiones (2 días)", "value": "2"},
+            {"title": "🤿 5 inmersiones (2 días)", "value": "3"},
+            {"title": "🤿 7 inmersiones (3 días)", "value": "4"},
+            {"title": "🤿 9 inmersiones (4 días)", "value": "5"},
+            {"title": "🔙 Cancelar", "value": "back"},
+        ],
+        "en": [
+            {"title": "🤿 3 Dives (1 day)*", "value": "1"},
+            {"title": "🤿 4 Dives (2 days)", "value": "2"},
+            {"title": "🤿 5 Dives (2 days)", "value": "3"},
+            {"title": "🤿 7 Dives (3 days)", "value": "4"},
+            {"title": "🤿 9 Dives (4 days)", "value": "5"},
             {"title": "🔙 Cancel", "value": "back"},
         ],
     },
@@ -1911,6 +1949,9 @@ class DecisionTree:
         if key == "info_tours_certified_menu" and state.location == "island":
             state.quick_replies = self._info_island_certified_options(state.language)
             return
+        if key == "mixed_add_cert_multi_day" and state.location == "island":
+            state.quick_replies = self._mixed_island_certified_multiday_options(state.language)
+            return
         if key == "mixed_add_activity" and state.mixed_entry_path == "cert_beg":
             # Filtramos snorkel cuando entran por la rama de certificados + principiantes.
             options = [
@@ -2019,6 +2060,48 @@ class DecisionTree:
             {"title": "🔙 Back", "value": "back"},
         ]
 
+    def _mixed_island_certified_multiday_options(self, lang: str) -> list[dict]:
+        if lang == "es":
+            return [
+                {"title": "🤿 3 inmersiones (1 día)*", "value": "1"},
+                {"title": "🤿 4 inmersiones (2 días) · 4 diurnas", "value": "2"},
+                {"title": "🤿 4 inmersiones (2 días) · 3 diurnas + 1 nocturna", "value": "3"},
+                {"title": "🤿 5 inmersiones (2 días)", "value": "4"},
+                {"title": "🤿 7 inmersiones (3 días)", "value": "5"},
+                {"title": "🤿 9 inmersiones (4 días)", "value": "6"},
+                {"title": "🔙 Cancelar", "value": "back"},
+            ]
+        return [
+            {"title": "🤿 3 Dives (1 day)*", "value": "1"},
+            {"title": "🤿 4 Dives (2 days) · 4 daytime dives", "value": "2"},
+            {"title": "🤿 4 Dives (2 days) · 3 daytime + 1 night dive", "value": "3"},
+            {"title": "🤿 5 Dives (2 days)", "value": "4"},
+            {"title": "🤿 7 Dives (3 days)", "value": "5"},
+            {"title": "🤿 9 Dives (4 days)", "value": "6"},
+            {"title": "🔙 Cancel", "value": "back"},
+        ]
+
+    def _mixed_cert_multi_day_service_map(self, state: ConversationState) -> dict[int, str]:
+        if state.location == "island":
+            return {
+                1: "3_dives_1_day_already_on_island",
+                2: "4_dives_2_days_already_on_island",
+                3: "4_dives_2_days_mixed_already_on_island",
+                4: "5_dives_2_days_already_on_island",
+                5: "7_dives_3_days_already_on_island",
+                6: "9_dives_4_days_already_on_island",
+            }
+        return {
+            1: "3_dives_1_day",
+            2: "4_dives_2_days",
+            3: "5_dives_2_days",
+            4: "7_dives_3_days",
+            5: "9_dives_4_days",
+        }
+
+    def _current_mixed_cert_service_id(self, state: ConversationState) -> str:
+        return state.mixed_pending_qty_plan or self._service_for_location("2_dives_1_day", state)
+
     def process_message(self, state: ConversationState, message: str) -> str:
         """Process a user message and return the bot's response."""
         message = message.strip()
@@ -2073,6 +2156,7 @@ class DecisionTree:
             Step.MIXED_LOCATION: self._handle_mixed_location,
             Step.MIXED_ADD_ACTIVITY: self._handle_mixed_add_activity,
             Step.MIXED_ADD_CERT_PLAN: self._handle_mixed_add_cert_plan,
+            Step.MIXED_ADD_CERT_MULTI_DAY: self._handle_mixed_add_cert_multi_day,
             Step.MIXED_ADD_QTY: self._handle_mixed_add_qty,
             Step.MIXED_CERT_LAST_DIVE: self._handle_mixed_cert_last_dive,
             Step.MIXED_CERT_REFRESH_INTEREST: self._handle_mixed_cert_refresh_interest,
@@ -2832,6 +2916,7 @@ class DecisionTree:
             Step.MIXED_LOCATION,
             Step.MIXED_ADD_ACTIVITY,
             Step.MIXED_ADD_CERT_PLAN,
+            Step.MIXED_ADD_CERT_MULTI_DAY,
             Step.MIXED_ADD_QTY,
             Step.MIXED_CERT_LAST_DIVE,
             Step.MIXED_CERT_REFRESH_INTEREST,
@@ -2897,11 +2982,17 @@ class DecisionTree:
     def _cart_label_for(self, item_type: str, plan: str | None, lang: str) -> str:
         """Human-readable label for a cart item."""
         if item_type == "cert":
+            service = SERVICES.get(plan) or {}
+            label = service.get(f"name_{lang}") or service.get("name_es")
+            if label:
+                return label
             if lang == "es":
                 return "Buceo certificado (2 inmersiones)" if plan == "2_dives_1_day" else "Buceo certificado"
             return "Certified diving (2 dives)" if plan == "2_dives_1_day" else "Certified diving"
         if item_type == "beginner":
             return "Buceo principiantes (Minicurso)" if lang == "es" else "Beginner diving (Mini-course)"
+        if item_type == "refresh":
+            return "Refresher para certificados" if lang == "es" else "Certified diver refresher"
         if item_type == "snorkel":
             return "Snorkel" if lang == "es" else "Snorkeling"
         if item_type == "course":
@@ -2913,8 +3004,8 @@ class DecisionTree:
 
     def _cart_service_id(self, item_type: str, plan: str | None, state: ConversationState) -> str | None:
         """Map a cart item to the catalog service ID (for prices and booking URLs)."""
-        if item_type == "cert" and plan == "2_dives_1_day":
-            return self._service_for_location("2_dives_1_day", state)
+        if item_type == "cert":
+            return plan or self._service_for_location("2_dives_1_day", state)
         if item_type == "beginner":
             return self._service_for_location("minicourse", state)
         if item_type == "refresh":
@@ -3005,7 +3096,7 @@ class DecisionTree:
         preview_state.location = state.location
         preview_state.selected_service = service_id
         preview_state.is_colombian = False
-        preview_state.is_certified = service_id.startswith("2_dives") or service_id.startswith("3_dives")
+        preview_state.is_certified = bool((SERVICES.get(service_id) or {}).get("requires_certification"))
         return preview_state
 
     def _prepare_mixed_add_preview(self, state: ConversationState, service_id: str) -> str:
@@ -3021,16 +3112,17 @@ class DecisionTree:
         lang = state.language
         remaining_qty = state.mixed_pending_cert_remaining_qty or 0
         cart_lines = self._format_cart_lines(state, lang)
+        cert_label = self._cart_label_for("cert", state.mixed_pending_qty_plan, lang)
         if lang == "es":
             person_phrase = "1 persona" if remaining_qty == 1 else f"{remaining_qty} personas"
             pending_line = (
-                f"Aún queda {person_phrase} pendiente de continuar con la reserva de *Buceo certificado (2 inmersiones)*."
+                f"Aún queda {person_phrase} pendiente de continuar con la reserva de *{cert_label}*."
             )
             prompt = "¿Cómo quieres continuar?"
         else:
             person_phrase = "1 person" if remaining_qty == 1 else f"{remaining_qty} people"
             pending_line = (
-                f"There is still {person_phrase} pending to continue with the *Certified diving (2 dives)* booking."
+                f"There are still {person_phrase} pending to continue with the *{cert_label}* booking."
             )
             prompt = "How would you like to continue?"
         return f"{cart_lines}\n\n{pending_line}\n\n{prompt}"
@@ -3116,30 +3208,28 @@ class DecisionTree:
             return self._goto_mixed_add_activity(state)
         choice = self._parse_choice(message, 2)
         if choice == 1:
-            state.mixed_pending_qty_plan = "2_dives_1_day"
+            state.mixed_pending_qty_plan = self._service_for_location("2_dives_1_day", state)
             return self._goto_mixed_add_qty(state)
         if choice == 2:
-            # Multi-day mixed packages → still requires advisor (price/logistics unknown)
-            state.step = Step.ESCALATE
-            state.quick_replies = []
-            state.pending_escalation_reason = (
-                "grupo mixto con paquete multi-dia (5/7/9 buceos) - requiere cotizacion personalizada"
-            )
-            self._reset_mixed_state(state)
-            if lang == "es":
-                return (
-                    "Los paquetes multi-dia (5/7/9 buceos) en grupos mixtos requieren cotizar fechas, "
-                    "alojamiento en las islas y compatibilidad entre subgrupos. Te paso con un asesor para "
-                    "armar la propuesta completa.\n\n"
-                    + MESSAGES["escalate"][lang]
-                )
-            return (
-                "Multi-day packages (5/7/9 dives) in mixed groups require quoting dates, island accommodation, "
-                "and compatibility between subgroups. Let me connect you with an advisor to build the "
-                "complete proposal.\n\n"
-                + MESSAGES["escalate"][lang]
-            )
+            state.step = Step.MIXED_ADD_CERT_MULTI_DAY
+            self.set_quick_replies(state, "mixed_add_cert_multi_day")
+            return MESSAGES["mixed_add_cert_multi_day"][lang]
         self.set_quick_replies(state, "mixed_add_cert_plan")
+        return MESSAGES["not_understood"][lang]
+
+    def _handle_mixed_add_cert_multi_day(self, state: ConversationState, message: str) -> str:
+        lang = state.language
+        msg = message.strip().lower()
+        if msg in ("back", "cancel", "cancelar"):
+            state.step = Step.MIXED_ADD_CERT_PLAN
+            self.set_quick_replies(state, "mixed_add_cert_plan")
+            return MESSAGES["mixed_add_cert_plan"][lang]
+        service_map = self._mixed_cert_multi_day_service_map(state)
+        choice = self._parse_choice(message, len(service_map))
+        if choice in service_map:
+            state.mixed_pending_qty_plan = service_map[choice]
+            return self._goto_mixed_add_qty(state)
+        self.set_quick_replies(state, "mixed_add_cert_multi_day")
         return MESSAGES["not_understood"][lang]
 
     def _goto_mixed_add_qty(self, state: ConversationState) -> str:
@@ -3227,7 +3317,7 @@ class DecisionTree:
             self.set_quick_replies(state, "refresher_interest")
             return MESSAGES["refresher_info"][lang]
         if choice == 2:
-            return self._prepare_mixed_add_preview(state, self._service_for_location("2_dives_1_day", state))
+            return self._prepare_mixed_add_preview(state, self._current_mixed_cert_service_id(state))
         self.set_quick_replies(state, "certified_last_dive")
         return MESSAGES["not_understood"][lang]
 
@@ -3244,7 +3334,7 @@ class DecisionTree:
             self.set_quick_replies(state, "mixed_quantity")
             return MESSAGES["mixed_cert_refresh_qty"][lang]
         if choice == 2:
-            return self._prepare_mixed_add_preview(state, self._service_for_location("2_dives_1_day", state))
+            return self._prepare_mixed_add_preview(state, self._current_mixed_cert_service_id(state))
         self.set_quick_replies(state, "refresher_interest")
         return MESSAGES["not_understood"][lang]
 
@@ -3252,6 +3342,7 @@ class DecisionTree:
         lang = state.language
         msg = message.strip().lower()
         total_qty = state.mixed_pending_cert_total_qty or state.mixed_pending_qty_value or 0
+        current_plan = self._current_mixed_cert_service_id(state)
         if msg in ("back", "cancel", "cancelar"):
             state.step = Step.MIXED_CERT_REFRESH_INTEREST
             self.set_quick_replies(state, "refresher_interest")
@@ -3279,11 +3370,13 @@ class DecisionTree:
         remaining_qty = total_qty - n
         state.mixed_pending_cert_remaining_qty = remaining_qty
         if remaining_qty <= 0:
-            self._clear_mixed_pending_add(state)
-            return self._goto_mixed_cart_review(state)
+            state.mixed_pending_qty_type = "cert"
+            state.mixed_pending_qty_plan = current_plan
+            state.mixed_pending_qty_value = total_qty
+            return self._prepare_mixed_add_preview(state, current_plan)
 
         state.mixed_pending_qty_type = "cert"
-        state.mixed_pending_qty_plan = "2_dives_1_day"
+        state.mixed_pending_qty_plan = current_plan
         state.mixed_pending_qty_value = remaining_qty
         state.step = Step.MIXED_CERT_SPLIT_REVIEW
         self.set_quick_replies(state, "mixed_cert_split_review")
@@ -3293,6 +3386,7 @@ class DecisionTree:
         choice = self._parse_choice(message, 3)
         lang = state.language
         msg = message.strip().lower()
+        current_plan = self._current_mixed_cert_service_id(state)
         if msg in ("back", "cancel", "cancelar"):
             refresh_qty = state.mixed_pending_refresh_added_qty or 0
             self._remove_mixed_cart_item_qty(state, "refresh", None, refresh_qty)
@@ -3302,7 +3396,7 @@ class DecisionTree:
             self.set_quick_replies(state, "mixed_quantity")
             return MESSAGES["mixed_cert_refresh_qty"][lang]
         if choice == 1:
-            return self._prepare_mixed_add_preview(state, self._service_for_location("2_dives_1_day", state))
+            return self._prepare_mixed_add_preview(state, current_plan)
         if choice == 2:
             refresh_qty = state.mixed_pending_refresh_added_qty or 0
             self._remove_mixed_cart_item_qty(state, "refresh", None, refresh_qty)
@@ -3310,9 +3404,9 @@ class DecisionTree:
             state.mixed_pending_refresh_added_qty = None
             state.mixed_pending_cert_remaining_qty = total_qty
             state.mixed_pending_qty_type = "cert"
-            state.mixed_pending_qty_plan = "2_dives_1_day"
+            state.mixed_pending_qty_plan = current_plan
             state.mixed_pending_qty_value = total_qty
-            return self._prepare_mixed_add_preview(state, self._service_for_location("2_dives_1_day", state))
+            return self._prepare_mixed_add_preview(state, current_plan)
         if choice == 3:
             self._reset_mixed_state(state)
             return self._goto_mixed_entry(state)

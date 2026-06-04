@@ -135,6 +135,59 @@ class TestMainMenu:
         assert state.step == Step.COURSES_MENU
         assert "PADI" in response
 
+    def test_mixed_certified_menu_lists_all_packages_from_cartagena(self):
+        state = self._go_to_menu()
+        self.tree.process_message(state, "1")
+        state.location = "cartagena"
+        self.tree.process_message(state, "1")
+        response = self.tree.process_message(state, "1")
+
+        assert state.step == Step.MIXED_ADD_CERT_PLAN
+        assert "¿qué idea tienes" in response.lower()
+        assert [item["title"] for item in state.quick_replies[:2]] == [
+            "🤿 2 Inmersiones / 1 día",
+            "📅 Paquete multi-día (3 o más inmersiones)",
+        ]
+
+        response = self.tree.process_message(state, "2")
+
+        assert state.step == Step.MIXED_ADD_CERT_MULTI_DAY
+        assert "3 o más inmersiones" in response
+        assert [item["title"] for item in state.quick_replies[:5]] == [
+            "🤿 3 inmersiones (1 día)*",
+            "🤿 4 inmersiones (2 días)",
+            "🤿 5 inmersiones (2 días)",
+            "🤿 7 inmersiones (3 días)",
+            "🤿 9 inmersiones (4 días)",
+        ]
+
+    def test_mixed_certified_menu_lists_island_4_dive_variants(self):
+        state = self._go_to_menu()
+        self.tree.process_message(state, "1")
+        state.location = "island"
+        self.tree.process_message(state, "1")
+        response = self.tree.process_message(state, "1")
+
+        assert state.step == Step.MIXED_ADD_CERT_PLAN
+        assert "paquete multi-día" in response.lower()
+        assert [item["title"] for item in state.quick_replies[:2]] == [
+            "🤿 2 Inmersiones / 1 día",
+            "📅 Paquete multi-día (3 o más inmersiones)",
+        ]
+
+        response = self.tree.process_message(state, "2")
+
+        assert state.step == Step.MIXED_ADD_CERT_MULTI_DAY
+        assert "3 o más inmersiones" in response
+        assert [item["title"] for item in state.quick_replies[:6]] == [
+            "🤿 3 inmersiones (1 día)*",
+            "🤿 4 inmersiones (2 días) · 4 diurnas",
+            "🤿 4 inmersiones (2 días) · 3 diurnas + 1 nocturna",
+            "🤿 5 inmersiones (2 días)",
+            "🤿 7 inmersiones (3 días)",
+            "🤿 9 inmersiones (4 días)",
+        ]
+
     def test_courses_menu_quick_replies_use_new_titles_in_spanish(self):
         state = self._go_to_menu()
         self.tree.process_message(state, "1")
