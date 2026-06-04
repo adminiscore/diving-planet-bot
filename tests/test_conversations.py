@@ -289,18 +289,27 @@ async def test_clear_mixed_phrase_at_main_menu_replaces_generic_buttons_with_mix
     mock_rag.assert_not_awaited()
     assert "Tú puedes hacer *minicurso de buceo*" in resp
     assert "tu acompañante puede hacer *snorkel*" in resp
-    assert "Grupo mixto (buceo + snorkel)" in resp
+    assert "carrito" in resp.lower() or "paso a paso" in resp.lower()
+    assert "Si quieres, te llevo directamente al carrito" not in resp
     assert "asesor" not in resp.lower()
     assert "segunda inmers" not in resp.lower()
-    assert state.step == Step.GROUP_TYPE
-    assert [item["title"] for item in state.quick_replies] == [
-        "👥 Grupo mixto (buceo + snorkel)",
-        "🔙 Volver",
-    ]
-
-    resp = await route_message(state, "3")
     assert state.step == Step.MIXED_ENTRY
+    assert [item["value"] for item in state.quick_replies] == ["1", "back"]
+
+
+@pytest.mark.asyncio
+async def test_clear_mixed_phrase_snorkel_and_his_minicourse_enters_mixed_entry_directly():
+    state = await reach_main_menu("es")
+    with patch("src.agents.supervisor.rag_answer", new_callable=AsyncMock) as mock_rag:
+        resp = await route_message(state, "Yo haría snorkel y él el minicurso")
+
+    mock_rag.assert_not_awaited()
+    assert "Tú puedes hacer *snorkel*" in resp
+    assert "tu acompañante puede hacer *minicurso de buceo*" in resp
     assert "carrito" in resp.lower() or "paso a paso" in resp.lower()
+    assert "asesor" not in resp.lower()
+    assert state.step == Step.MIXED_ENTRY
+    assert [item["value"] for item in state.quick_replies] == ["1", "back"]
 
 
 @pytest.mark.asyncio
@@ -2193,8 +2202,9 @@ async def test_mixed_cert_2dives_qty_appends_to_cart():
     await route_message(state, "1")  # 2 dives/1 day
     await route_message(state, "2")  # qty 2
     assert state.step == Step.MIXED_CERT_LAST_DIVE
-    await route_message(state, "2")  # recent dive / no refresher needed
+    resp = await route_message(state, "2")  # recent dive / no refresher needed
     assert state.step == Step.MIXED_ADD_PREVIEW
+    assert "añadir esta actividad al carrito" in resp.lower() or "itinerario completo" in resp.lower()
     await route_message(state, "1")  # add to cart
     assert state.step == Step.MIXED_CART_REVIEW
     assert state.mixed_cart[0]["type"] == "cert"

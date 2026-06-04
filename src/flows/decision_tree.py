@@ -945,6 +945,14 @@ MESSAGES = {
             "and we'll review everything before you confirm."
         ),
     },
+    "mixed_location": {
+        "es": (
+            "Antes de añadir actividades, dime desde dónde tomarán la salida."
+        ),
+        "en": (
+            "Before adding activities, tell me where you will depart from."
+        ),
+    },
     "mixed_add_activity": {
         "es": "¿Qué actividad quieres *añadir* al carrito?",
         "en": "Which activity would you like to *add* to the cart?",
@@ -967,6 +975,10 @@ MESSAGES = {
     "mixed_add_qty": {
         "es": "¿Para *cuántas personas*?",
         "en": "For *how many people*?",
+    },
+    "mixed_add_preview": {
+        "es": "¿Quieres *añadir esta actividad al carrito* o ver primero el itinerario completo?",
+        "en": "Would you like to *add this activity to the cart* or view the full itinerary first?",
     },
     "mixed_cart_empty": {
         "es": "Tu carrito está vacío. Añade al menos una actividad para continuar.",

@@ -636,6 +636,8 @@ def _extract_segment_person_count(segment: str) -> int | None:
         r"\botr[oa]\b",
         r"\bla\s+otra\s+persona\b",
         r"\bella\b",
+        r"\bel\s+(el|la|los|las)\s+(snorkel|snorke|snorkl|esnorquel|esnorkel|minicurso|buceo|buseo|curso)\b",
+        r"\bel\s+(solo|solamente)\s+(snorkel|snorke|snorkl|esnorquel|esnorkel|minicurso|buceo|buseo)\b",
         r"\bel\s+(?:quiere|prefiere|hace|haria|bucea|caretea)\b",
         r"\bmi\s+(pareja|amig[oa]|espos[oa]|novi[oa]|parcer[oa]|companero|companera|acompanante|herman[oa]|hij[oa])\b",
     )
@@ -1183,10 +1185,7 @@ def _build_menu_mixed_group_offer_text(state: ConversationState, group_context: 
     speaker_activity = group_context.get("speaker_activity")
     allocations = group_context.get("allocations", [])
     if lang != "es":
-        return (
-            "You can book a mixed group without a problem.\n\n"
-            "If you want, continue with *👥 Mixed group (diving + snorkeling)* and I'll guide you through the cart step by step."
-        )
+        return "You can book a mixed group without a problem."
 
     speaker_label = _activity_display_label(speaker_activity, lang) if speaker_activity else "tu actividad"
     if len(allocations) == 1:
@@ -1202,11 +1201,7 @@ def _build_menu_mixed_group_offer_text(state: ConversationState, group_context: 
     else:
         plan_line = "Podemos organizar un plan mixto para el grupo con actividades distintas en la misma salida."
 
-    cta = (
-        "Si quieres, pulsa *👥 Grupo mixto (buceo + snorkel)* "
-        "y te organizo la reserva paso a paso."
-    )
-    return f"¡Claro! {plan_line}\n\n{cta}"
+    return f"¡Claro! {plan_line}"
 
 
 def _render_group_info_cards(state: ConversationState, allocations: list[dict]) -> str:
@@ -1647,12 +1642,14 @@ def _maybe_handle_mixed_group_from_menu(state: ConversationState, message: str) 
     if not group_context:
         return None
 
-    state.step = Step.GROUP_TYPE
-    state.quick_replies = [
-        {"title": "👥 Grupo mixto (buceo + snorkel)", "value": "3"},
-        {"title": "🔙 Volver", "value": "back"},
-    ]
-    return _build_menu_mixed_group_offer_text(state, group_context)
+    decision_tree._reset_mixed_state(state)
+    state.mixed_entry_path = "diving_snorkel"
+    decision_tree._set_back_target(state, Step.GROUP_TYPE, "group_type")
+    state.step = Step.MIXED_ENTRY
+    decision_tree.set_quick_replies(state, "mixed_entry")
+    from src.flows.decision_tree import MESSAGES
+    intro = _build_menu_mixed_group_offer_text(state, group_context)
+    return f"{intro}\n\n{MESSAGES['mixed_entry'][state.language]}"
 
 
 def _maybe_handle_companion_request_inside_mixed_flow(state: ConversationState, message: str) -> str | None:
