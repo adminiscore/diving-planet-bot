@@ -69,8 +69,8 @@ class TestMainMenu:
     def test_select_reservar(self):
         state = self._go_to_menu()
         response = self.tree.process_message(state, "1")
-        assert state.step == Step.RESERVA_MENU
-        assert "reservar" in response.lower() or "book" in response.lower()
+        assert state.step == Step.MIXED_ENTRY
+        assert "paso a paso" in response.lower() or "step by step" in response.lower()
 
     def test_select_info(self):
         state = self._go_to_menu()
@@ -129,14 +129,18 @@ class TestMainMenu:
     def test_select_courses_via_reservar(self):
         state = self._go_to_menu()
         self.tree.process_message(state, "1")  # Reservar
-        response = self.tree.process_message(state, "2")  # Cursos PADI
+        state.location = "cartagena"
+        self.tree.process_message(state, "1")  # Añadir actividades
+        response = self.tree.process_message(state, "4")  # Curso PADI
         assert state.step == Step.COURSES_MENU
         assert "PADI" in response
 
     def test_courses_menu_quick_replies_use_new_titles_in_spanish(self):
         state = self._go_to_menu()
         self.tree.process_message(state, "1")
-        self.tree.process_message(state, "2")
+        state.location = "cartagena"
+        self.tree.process_message(state, "1")
+        self.tree.process_message(state, "4")
 
         assert [item["title"] for item in state.quick_replies[:3]] == [
             "🐠 Descubriendo el buceo (Open Water Diver)",
@@ -147,7 +151,9 @@ class TestMainMenu:
     def test_courses_menu_quick_replies_use_new_titles_in_english(self):
         state = self._go_to_menu("en")
         self.tree.process_message(state, "1")
-        self.tree.process_message(state, "2")
+        state.location = "cartagena"
+        self.tree.process_message(state, "1")
+        self.tree.process_message(state, "4")
 
         assert [item["title"] for item in state.quick_replies[:3]] == [
             "🐠 Discover diving (Open Water Diver)",
@@ -158,7 +164,9 @@ class TestMainMenu:
     def test_go_pro_submenu_shows_only_advanced_rescue_and_divemaster_in_spanish(self):
         state = self._go_to_menu()
         self.tree.process_message(state, "1")
-        self.tree.process_message(state, "2")
+        state.location = "cartagena"
+        self.tree.process_message(state, "1")
+        self.tree.process_message(state, "4")
         response = self.tree.process_message(state, "2")
 
         assert state.step == Step.COURSES_ADVANCED_MENU
@@ -172,7 +180,9 @@ class TestMainMenu:
     def test_go_pro_submenu_shows_only_advanced_rescue_and_divemaster_in_english(self):
         state = self._go_to_menu("en")
         self.tree.process_message(state, "1")
-        self.tree.process_message(state, "2")
+        state.location = "cartagena"
+        self.tree.process_message(state, "1")
+        self.tree.process_message(state, "4")
         response = self.tree.process_message(state, "2")
 
         assert state.step == Step.COURSES_ADVANCED_MENU
@@ -186,7 +196,9 @@ class TestMainMenu:
     def test_specialties_submenu_shows_only_specialties_in_spanish(self):
         state = self._go_to_menu()
         self.tree.process_message(state, "1")
-        self.tree.process_message(state, "2")
+        state.location = "cartagena"
+        self.tree.process_message(state, "1")
+        self.tree.process_message(state, "4")
         response = self.tree.process_message(state, "3")
 
         assert state.step == Step.COURSES_SPECIALTIES_MENU
@@ -202,7 +214,9 @@ class TestMainMenu:
     def test_specialties_submenu_shows_only_specialties_in_english(self):
         state = self._go_to_menu("en")
         self.tree.process_message(state, "1")
-        self.tree.process_message(state, "2")
+        state.location = "cartagena"
+        self.tree.process_message(state, "1")
+        self.tree.process_message(state, "4")
         response = self.tree.process_message(state, "3")
 
         assert state.step == Step.COURSES_SPECIALTIES_MENU
@@ -728,34 +742,34 @@ class TestFullJourney:
 
         # Step 3: Reservar
         r = self.tree.process_message(state, "1")
-        assert state.step == Step.RESERVA_MENU
+        assert state.step == Step.MIXED_ENTRY
 
-        # Step 3b: Tours de buceo → ahora directo a GROUP_TYPE (TOURS_LOCATION se difiere al SUMMARY)
+        # El entry principal ahora va al carrito. Para mantener cobertura del subárbol
+        # histórico de tours, continuamos explícitamente desde GROUP_TYPE.
+        state.step = Step.GROUP_TYPE
         r = self.tree.process_message(state, "1")
-        assert state.step == Step.GROUP_TYPE
+        assert state.step == Step.TOURS_EXPERIENCE
 
         # Para este test del flujo histórico Cartagena, seteamos location programáticamente
         state.location = "cartagena"
 
         # Step 4: Buceo
         r = self.tree.process_message(state, "1")
-        assert state.step == Step.TOURS_EXPERIENCE
+        assert state.step == Step.TOURS_CERTIFIED
 
         # Step 5: Only certified divers
         r = self.tree.process_message(state, "1")
-        assert state.step == Step.TOURS_CERTIFIED
-
-        # Step 6: 2 dives
-        r = self.tree.process_message(state, "1")
         assert state.step == Step.CERTIFIED_LAST_DIVE
 
-        # Step 7: Last dive not over 2 years → LOCATION (saltada) → COLOMBIAN
+        # Step 6: 2 dives
         r = self.tree.process_message(state, "2")
         assert state.step == Step.COLOMBIAN
 
-        # Step 8: Not Colombian → SUMMARY
+        # Step 7: Last dive not over 2 years → LOCATION (saltada) → COLOMBIAN
         r = self.tree.process_message(state, "2")
         assert state.step == Step.SUMMARY
+
+        # Step 8: Not Colombian → SUMMARY
         # Booking URL ya no se incluye en summary (se envía al pulsar Reservar)
         assert "18 horas" in r
 
@@ -769,10 +783,8 @@ class TestFullJourney:
         assert state.language == "en"
         # Reservar
         self.tree.process_message(state, "1")
-        assert state.step == Step.RESERVA_MENU
-        # Tours → ahora directo a GROUP_TYPE (TOURS_LOCATION se difiere)
-        self.tree.process_message(state, "1")
-        assert state.step == Step.GROUP_TYPE
+        assert state.step == Step.MIXED_ENTRY
+        state.step = Step.GROUP_TYPE
         # Seteamos location programáticamente para simular "ya en la isla"
         state.location = "island"
 
@@ -804,6 +816,6 @@ def test_decision_tree_accepts_quick_reply_title():
 
     response = tree.process_message(state, "🤿 Book")
 
-    assert state.step == Step.RESERVA_MENU
-    assert "book" in response.lower()
+    assert state.step == Step.MIXED_ENTRY
+    assert "step by step" in response.lower()
     assert state.quick_replies[0]["value"] == "1"

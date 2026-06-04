@@ -179,15 +179,15 @@ BACK_STEP: dict[Step, tuple[Step, str]] = {
     Step.CERTIFIED_4_DIVES_VARIANT: (Step.TOURS_CERTIFIED, "tours_certified"),
     Step.TOURS_BEGINNER: (Step.TOURS_EXPERIENCE, "tours_experience"),
     Step.BEGINNER_AGE: (Step.TOURS_EXPERIENCE, "tours_experience"),
-    Step.COURSES_MENU: (Step.RESERVA_MENU, "reserva_menu"),
+    Step.COURSES_MENU: (Step.MIXED_ADD_ACTIVITY, "mixed_add_activity"),
     Step.COURSES_OPEN_WATER_ORIGIN: (Step.COURSES_MENU, "courses_menu"),
-    Step.COURSES_OPEN_WATER_TIME: (Step.COURSES_OPEN_WATER_ORIGIN, "courses_open_water_origin"),
+    Step.COURSES_OPEN_WATER_TIME: (Step.MIXED_ADD_QTY, "mixed_quantity"),
     Step.COURSES_ADVANCED_MENU: (Step.COURSES_MENU, "courses_menu"),
     Step.COURSES_SPECIALTIES_MENU: (Step.COURSES_MENU, "courses_menu"),
     # Cart-style mixed flow: most steps loop back to the cart review for "back".
-    # MIXED_ENTRY goes back to GROUP_TYPE. Final-question steps are intentionally
+    # MIXED_ENTRY goes back to main menu. Final-question steps are intentionally
     # not back-navigable individually — restart via "empezar de nuevo" if needed.
-    Step.MIXED_ENTRY: (Step.GROUP_TYPE, "group_type"),
+    Step.MIXED_ENTRY: (Step.MAIN_MENU, "main_menu"),
     Step.MIXED_LOCATION: (Step.MIXED_ENTRY, "mixed_entry"),
     Step.MIXED_ADD_ACTIVITY: (Step.MIXED_CART_REVIEW, "mixed_cart_actions"),
     Step.MIXED_ADD_CERT_PLAN: (Step.MIXED_ADD_ACTIVITY, "mixed_add_activity"),
@@ -197,7 +197,7 @@ BACK_STEP: dict[Step, tuple[Step, str]] = {
     Step.MIXED_CERT_REFRESH_QTY: (Step.MIXED_CERT_REFRESH_INTEREST, "refresher_interest"),
     Step.MIXED_CERT_SPLIT_REVIEW: (Step.MIXED_CART_REVIEW, "mixed_cart_actions"),
     Step.MIXED_ADD_PREVIEW: (Step.MIXED_ADD_ACTIVITY, "mixed_add_activity"),
-    Step.MIXED_CART_REVIEW: (Step.GROUP_TYPE, "group_type"),
+    Step.MIXED_CART_REVIEW: (Step.MAIN_MENU, "main_menu"),
     Step.MIXED_CART_MODIFY_PICK: (Step.MIXED_CART_REVIEW, "mixed_cart_actions"),
     Step.MIXED_CART_REMOVE_PICK: (Step.MIXED_CART_REVIEW, "mixed_cart_actions"),
     Step.MIXED_FINAL_COLOMBIAN: (Step.MIXED_CART_REVIEW, "mixed_cart_actions"),
@@ -1505,14 +1505,15 @@ def _enter_mixed_flow_from_single(state: ConversationState) -> str:
     svc_id = getattr(state, "selected_service", None)
     item = _map_service_to_cart_item(svc_id or "")
     if not item:
-        # Fallback: show the standard mixed group menu so an advisor can help
-        # structure the group; this should be rare.
-        state.step = Step.GROUP_TYPE
-        decision_tree.set_quick_replies(state, "group_type")
+        state.step = Step.MIXED_ENTRY
+        decision_tree._reset_mixed_state(state)
+        state.mixed_entry_path = "booking"
+        decision_tree._set_back_target(state, Step.MAIN_MENU, "main_menu")
+        decision_tree.set_quick_replies(state, "mixed_entry")
         from src.flows.decision_tree import MESSAGES as _M
 
         lang = getattr(state, "language", "es") or "es"
-        return _M["group_type"][lang]
+        return _M["mixed_entry"][lang]
 
     item_type, plan = item
 
@@ -1581,18 +1582,21 @@ def _maybe_offer_mixed_from_single(state: ConversationState, message: str, answe
                 or _mentions_snorkeling_intent(message)
                 or _mentions_minicourse_intent(message)
             ):
-                state.step = Step.GROUP_TYPE
-                decision_tree.set_quick_replies(state, "group_type")
+                decision_tree._reset_mixed_state(state)
+                state.mixed_entry_path = "booking"
+                decision_tree._set_back_target(state, Step.MAIN_MENU, "main_menu")
+                state.step = Step.MIXED_ENTRY
+                decision_tree.set_quick_replies(state, "mixed_entry")
                 if lang == "es":
                     return (
                         "¡Claro! Para organizar el plan de todo el grupo, "
-                        "dime: ¿todos hacéis la misma actividad o queréis cosas distintas?\n\n"
-                        + decision_tree.MESSAGES["group_type"]["es"]
+                        "vamos a armar el carrito paso a paso.\n\n"
+                        + decision_tree.MESSAGES["mixed_entry"]["es"]
                     )
                 return (
                     "Sure! To plan for the whole group, tell me: "
-                    "is everyone doing the same activity or do you want different things?\n\n"
-                    + decision_tree.MESSAGES["group_type"]["en"]
+                    "let's build the booking cart step by step.\n\n"
+                    + decision_tree.MESSAGES["mixed_entry"]["en"]
                 )
             return answer
 
@@ -1643,8 +1647,8 @@ def _maybe_handle_mixed_group_from_menu(state: ConversationState, message: str) 
         return None
 
     decision_tree._reset_mixed_state(state)
-    state.mixed_entry_path = "diving_snorkel"
-    decision_tree._set_back_target(state, Step.GROUP_TYPE, "group_type")
+    state.mixed_entry_path = "booking"
+    decision_tree._set_back_target(state, Step.MAIN_MENU, "main_menu")
     state.step = Step.MIXED_ENTRY
     decision_tree.set_quick_replies(state, "mixed_entry")
     from src.flows.decision_tree import MESSAGES

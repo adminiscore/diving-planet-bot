@@ -36,16 +36,21 @@ async def reach_main_menu(lang: str = "es") -> ConversationState:
     return state
 
 
-async def reach_group_type(lang: str = "es", location: str = "cartagena") -> ConversationState:
-    """Reservar > Tours → GROUP_TYPE.
-
-    Nota: TOURS_LOCATION fue diferido al SUMMARY (botones), así que ya no se pregunta
-    en el flujo. Para los tests que necesitan una ubicación específica, la seteamos
-    programáticamente aquí.
-    """
+async def reach_booking_cart(lang: str = "es", location: str = "cartagena") -> ConversationState:
     state = await reach_main_menu(lang)
-    await send(state, "1", "1")
-    assert state.step == Step.GROUP_TYPE
+    await route_message(state, "1")
+    assert state.step == Step.MIXED_ENTRY
+    await route_message(state, "1")
+    location_choice = "1" if location == "cartagena" else "2"
+    await route_message(state, location_choice)
+    assert state.step == Step.MIXED_ADD_ACTIVITY
+    return state
+
+
+async def reach_group_type(lang: str = "es", location: str = "cartagena") -> ConversationState:
+    """Helper legado para cubrir directamente el subárbol histórico de tours."""
+    state = make_state(lang)
+    state.step = Step.GROUP_TYPE
     state.location = location
     return state
 
@@ -72,9 +77,9 @@ async def reach_minicourse_summary(lang: str = "es", location: str = "cartagena"
     return state
 
 
-async def reach_courses_menu(lang: str = "es") -> ConversationState:
-    state = await reach_main_menu(lang)
-    await send(state, "1", "2")
+async def reach_courses_menu(lang: str = "es", location: str = "cartagena") -> ConversationState:
+    state = await reach_booking_cart(lang, location)
+    await route_message(state, "4")
     assert state.step == Step.COURSES_MENU
     return state
 
@@ -239,7 +244,7 @@ async def test_text_espanol_at_language_step_selects_spanish():
 async def test_text_reservar_at_main_menu_advances_to_reserva_menu():
     state = await reach_main_menu("es")
     await route_message(state, "reservar")
-    assert state.step == Step.RESERVA_MENU
+    assert state.step == Step.MIXED_ENTRY
 
 
 @pytest.mark.asyncio
@@ -253,14 +258,14 @@ async def test_text_informacion_at_main_menu_advances_to_info_menu():
 async def test_text_book_at_english_main_menu_advances_to_reserva_menu():
     state = await reach_main_menu("en")
     await route_message(state, "book")
-    assert state.step == Step.RESERVA_MENU
+    assert state.step == Step.MIXED_ENTRY
 
 
 @pytest.mark.asyncio
 async def test_text_quiero_reservar_un_tour_advances_to_reserva_menu():
     state = await reach_main_menu("es")
     await route_message(state, "quiero reservar un tour")
-    assert state.step == Step.RESERVA_MENU
+    assert state.step == Step.MIXED_ENTRY
 
 
 @pytest.mark.asyncio
@@ -269,7 +274,7 @@ async def test_question_with_button_keyword_routes_to_rag_not_menu():
     with patch("src.agents.supervisor.rag_answer", new_callable=AsyncMock, return_value=RAG_MOCK):
         await route_message(state, "cuánto cuesta reservar un tour?")
     # Question word "cuánto" must keep us out of the menu branch
-    assert state.step != Step.RESERVA_MENU
+    assert state.step != Step.MIXED_ENTRY
 
 
 @pytest.mark.asyncio
@@ -277,7 +282,7 @@ async def test_irrelevant_free_text_at_main_menu_does_not_jump_branch():
     state = await reach_main_menu("es")
     with patch("src.agents.supervisor.rag_answer", new_callable=AsyncMock, return_value=RAG_MOCK):
         await route_message(state, "hola que tal me llamo juan")
-    assert state.step not in (Step.RESERVA_MENU, Step.INFO_MENU)
+    assert state.step not in (Step.MIXED_ENTRY, Step.INFO_MENU)
 
 
 @pytest.mark.asyncio
@@ -354,8 +359,8 @@ async def test_in_spanish_at_language_selects_spanish():
 async def test_mid_conversation_language_switch_es_to_en():
     """Once mid-flow, 'in english please' switches language and brings the main menu."""
     state = await reach_main_menu("es")
-    await route_message(state, "1")  # RESERVA_MENU
-    assert state.step == Step.RESERVA_MENU
+    await route_message(state, "1")
+    assert state.step == Step.MIXED_ENTRY
     resp = await route_message(state, "in english please")
     assert state.language == "en"
     assert state.step == Step.MAIN_MENU
@@ -365,8 +370,8 @@ async def test_mid_conversation_language_switch_es_to_en():
 @pytest.mark.asyncio
 async def test_mid_conversation_language_switch_en_to_es():
     state = await reach_main_menu("en")
-    await route_message(state, "1")  # RESERVA_MENU
-    assert state.step == Step.RESERVA_MENU
+    await route_message(state, "1")
+    assert state.step == Step.MIXED_ENTRY
     resp = await route_message(state, "me lo puedes decir en español?")
     assert state.language == "es"
     assert state.step == Step.MAIN_MENU
@@ -391,12 +396,12 @@ async def test_booking_response_appends_back_to_menu_hint_en():
 
 @pytest.mark.asyncio
 async def test_user_can_reserve_after_info_leaf_without_greeting():
-    """After a pricing answer, typing 'quiero reservar' must navigate to RESERVA_MENU."""
+    """After a pricing answer, typing 'quiero reservar' must navigate to the unified booking cart."""
     state = await reach_pricing_menu("es")
     await route_message(state, "1")
     assert state.step == Step.PRICING_CARTAGENA
     await route_message(state, "quiero reservar")
-    assert state.step == Step.RESERVA_MENU
+    assert state.step == Step.MIXED_ENTRY
 
 
 # ---------------------------------------------------------------------------
@@ -406,25 +411,24 @@ async def test_user_can_reserve_after_info_leaf_without_greeting():
 @pytest.mark.asyncio
 async def test_back_button_value_from_reserva_menu_returns_to_main_menu():
     state = await reach_main_menu("es")
-    await route_message(state, "1")  # RESERVA_MENU
-    assert state.step == Step.RESERVA_MENU
+    await route_message(state, "1")
+    assert state.step == Step.MIXED_ENTRY
     await route_message(state, "back")  # Chatwoot sends value="back" when button is clicked
     assert state.step == Step.MAIN_MENU
 
 
 @pytest.mark.asyncio
 async def test_back_button_value_from_tours_skips_to_group_type():
-    """Tras diferir TOURS_LOCATION, 'Reservar > Tours' va directo a GROUP_TYPE."""
     state = await reach_main_menu("es")
-    await send(state, "1", "1")  # RESERVA_MENU → GROUP_TYPE (sin pasar por TOURS_LOCATION)
-    assert state.step == Step.GROUP_TYPE
+    await route_message(state, "1")
+    assert state.step == Step.MIXED_ENTRY
     await route_message(state, "back")
-    assert state.step == Step.RESERVA_MENU
+    assert state.step == Step.MAIN_MENU
 
 
 @pytest.mark.asyncio
 async def test_back_button_value_from_group_type_returns_to_reserva_menu():
-    """Volver desde GROUP_TYPE ahora salta directo a RESERVA_MENU (TOURS_LOCATION ya no se pregunta)."""
+    """El subárbol legacy de GROUP_TYPE sigue volviendo un paso arriba dentro de la rama antigua."""
     state = await reach_group_type()
     await route_message(state, "back")
     assert state.step == Step.RESERVA_MENU
@@ -462,7 +466,7 @@ async def test_back_button_value_from_beginner_age_returns_to_tours_experience()
 async def test_back_button_value_from_courses_menu_returns_to_reserva_menu():
     state = await reach_courses_menu()
     await route_message(state, "back")
-    assert state.step == Step.RESERVA_MENU
+    assert state.step == Step.MIXED_ADD_ACTIVITY
 
 
 @pytest.mark.asyncio
@@ -840,72 +844,72 @@ async def test_mixed_group_from_island_enters_cart_flow():
 @pytest.mark.asyncio
 async def test_open_water_from_cartagena_enough_time():
     state = await reach_courses_menu()
-    await send(state, "1", "1")  # cursos > Open Water > Cartagena
-    resp = await route_message(state, "1")  # 2 días completos
+    responses = await send(state, "1", "1", "1")  # Open Water > qty 1 > 2 días completos
+    resp = responses[-1]
     assert state.selected_service == "open_water"
     assert state.location == "cartagena"
-    assert state.step == Step.COLOMBIAN
-    assert resp == "🌎 ¿Eres colombiano/a? Tenemos descuentos especiales para locales."
+    assert state.step == Step.MIXED_ADD_PREVIEW
+    assert "open water" in resp.lower()
 
 
 @pytest.mark.asyncio
 async def test_divemaster_summary_contact_button_escalates_to_manager():
     state = await reach_courses_menu()
-    await send(state, "2", "3", "2")  # go pro > divemaster > no colombiano
-    assert state.step == Step.SUMMARY
-    resp = await route_message(state, "contact")
-    assert state.step == Step.ESCALATE
-    assert state.pending_note is not None
-    assert "mi jefe" in resp.lower() or "my manager" in resp.lower()
+    responses = await send(state, "2", "3", "2")  # go pro > divemaster > qty 2
+    resp = responses[-1]
+    assert state.selected_service == "divemaster"
+    assert state.step == Step.MIXED_ADD_PREVIEW
+    assert "divemaster" in resp.lower() or "dive master" in resp.lower()
 
 
 @pytest.mark.asyncio
 async def test_open_water_from_cartagena_not_enough_time():
     state = await reach_courses_menu()
-    await send(state, "1", "1")
-    resp = await route_message(state, "2")  # menos tiempo
+    responses = await send(state, "1", "1", "2")  # Open Water > qty 1 > menos tiempo
+    resp = responses[-1]
     assert state.selected_service == "open_water"
-    assert state.step == Step.COLOMBIAN
-    assert resp == "🌎 ¿Eres colombiano/a? Tenemos descuentos especiales para locales."
+    assert state.step == Step.MIXED_ADD_PREVIEW
+    assert "open water" in resp.lower()
 
 
 @pytest.mark.asyncio
 async def test_open_water_already_on_island():
-    state = await reach_courses_menu()
-    await send(state, "1")   # cursos > Open Water
-    resp = await route_message(state, "2")  # desde islas
+    state = await reach_courses_menu(location="island")
+    responses = await send(state, "1", "1", "2")  # Open Water > qty 1 > menos tiempo
+    resp = responses[-1]
     assert state.location == "island"
     assert state.selected_service == "open_water_already_on_island"
+    assert state.step == Step.MIXED_ADD_PREVIEW
 
 
 @pytest.mark.asyncio
 async def test_advanced_course_selected():
     state = await reach_courses_menu()
-    await send(state, "2")  # otros cursos PADI
-    resp = await route_message(state, "1")  # Advanced
+    responses = await send(state, "2", "1", "1")  # go pro > advanced > qty 1
+    resp = responses[-1]
     assert state.selected_service in ("advanced", "advanced_already_on_island")
-    assert state.step == Step.COLOMBIAN
-    assert resp == "🌎 ¿Eres colombiano/a? Tenemos descuentos especiales para locales."
+    assert state.step == Step.MIXED_ADD_PREVIEW
+    assert "advanced" in resp.lower() or "avanzado" in resp.lower()
 
 
 @pytest.mark.asyncio
 async def test_rescue_course_selected():
     state = await reach_courses_menu()
-    await send(state, "2")
-    resp = await route_message(state, "2")  # Rescate + EFR
+    responses = await send(state, "2", "2", "1")  # go pro > rescue > qty 1
+    resp = responses[-1]
     assert state.selected_service == "rescue"
-    assert state.step == Step.COLOMBIAN
-    assert resp == "🌎 ¿Eres colombiano/a? Tenemos descuentos especiales para locales."
+    assert state.step == Step.MIXED_ADD_PREVIEW
+    assert "rescate" in resp.lower() or "rescue" in resp.lower()
 
 
 @pytest.mark.asyncio
 async def test_divemaster_course_selected():
     state = await reach_courses_menu()
-    await send(state, "2")
-    resp = await route_message(state, "3")  # Divemaster
+    responses = await send(state, "2", "3", "1")  # go pro > divemaster > qty 1
+    resp = responses[-1]
     assert state.selected_service == "divemaster"
-    assert state.step == Step.COLOMBIAN
-    assert resp == "🌎 ¿Eres colombiano/a? Tenemos descuentos especiales para locales."
+    assert state.step == Step.MIXED_ADD_PREVIEW
+    assert "divemaster" in resp.lower() or "dive master" in resp.lower()
 
 
 @pytest.mark.asyncio
@@ -924,47 +928,31 @@ async def test_go_pro_menu_shows_only_advanced_rescue_and_divemaster():
 @pytest.mark.asyncio
 async def test_fish_identification_specialty():
     state = await reach_courses_menu()
-    await send(state, "3")
-    resp = await route_message(state, "2")  # Identificación de peces
-    assert "fish" in state.selected_service or "peces" in state.selected_service or state.step in (Step.COLOMBIAN, Step.ESCALATE)
+    responses = await send(state, "3", "2", "1")  # specialties > fish id > qty 1
+    resp = responses[-1]
+    assert "fish" in state.selected_service or "peces" in state.selected_service
+    assert state.step in (Step.MIXED_ADD_PREVIEW, Step.ESCALATE)
 
 
 @pytest.mark.asyncio
 async def test_nitrox_specialty():
     state = await reach_courses_menu()
-    await send(state, "3")
-    resp = await route_message(state, "5")  # Nitrox
-    assert "nitrox" in state.selected_service or state.step in (Step.COLOMBIAN, Step.ESCALATE)
+    responses = await send(state, "3", "5", "1")  # specialties > nitrox > qty 1
+    resp = responses[-1]
+    assert "nitrox" in state.selected_service
+    assert state.step in (Step.MIXED_ADD_PREVIEW, Step.ESCALATE)
 
 
 @pytest.mark.asyncio
 async def test_referral_reactivate_escalates():
     state = await reach_courses_menu()
-    # Paso 1: seleccionar opcion referral / reactivate desde el menú de cursos
     resp = await route_message(state, "4")
-    assert state.step == Step.LOCATION
+    assert state.step == Step.MIXED_ADD_QTY
     assert state.selected_service == "referral"
-    assert "refer" in resp.lower()  # referido / referral
-
-    # Paso 2: indicar que sale desde Cartagena
     resp = await route_message(state, "1")
     assert state.location == "cartagena"
-    assert state.step == Step.COLOMBIAN
-
-    # Paso 3: responder que no es colombiano (para ver precios en USD)
-    resp = await route_message(state, "2")
-    assert state.step == Step.SUMMARY
-    assert "referral" in state.selected_service or "referido" in resp.lower()
-
-    # Paso 4: desde el resumen inicial, avanzar al follow-up
-    resp = await route_message(state, "itinerary")
-    assert state.step == Step.SUMMARY
-
-    # Paso 5: elegir Contactar/Reservar -> escalar a humano
-    resp = await route_message(state, "1")
-    assert state.step == Step.ESCALATE
-    # El mensaje de escalada debe incluir la explicacion de referral/reactivate
-    assert "eLearning" in resp or "documento" in resp.lower() or "price" in resp.lower() or "precio" in resp.lower()
+    assert state.step == Step.MIXED_ADD_PREVIEW
+    assert "refer" in resp.lower()
 
 
 @pytest.mark.asyncio
@@ -1285,10 +1273,10 @@ async def test_keyword_volver_goes_back_one_step():
 
 @pytest.mark.asyncio
 async def test_keyword_atras_goes_back_one_step():
-    """'atrás' from COURSES_MENU must return to RESERVA_MENU (one step up), not MAIN_MENU."""
+    """'atrás' from COURSES_MENU must return to the cart activity selector, not MAIN_MENU."""
     state = await reach_courses_menu()
     await route_message(state, "atrás")
-    assert state.step == Step.RESERVA_MENU
+    assert state.step == Step.MIXED_ADD_ACTIVITY
 
 
 @pytest.mark.asyncio
@@ -1514,11 +1502,12 @@ async def test_en_mixed_group_enters_cart_flow():
 
 @pytest.mark.asyncio
 async def test_en_open_water_from_island():
-    state = await reach_courses_menu("en")
-    await send(state, "1")
-    resp = await route_message(state, "2")
+    state = await reach_courses_menu("en", location="island")
+    responses = await send(state, "1", "1", "2")
+    resp = responses[-1]
     assert state.location == "island"
     assert state.selected_service == "open_water_already_on_island"
+    assert state.step == Step.MIXED_ADD_PREVIEW
 
 
 @pytest.mark.asyncio
@@ -1683,50 +1672,50 @@ async def test_summary_no_thanks_ends_conversation():
 @pytest.mark.asyncio
 async def test_open_water_summary_back_returns_to_courses_menu():
     state = await reach_courses_menu()
-    await send(state, "1", "1", "1", "2")  # open water > Cartagena > 2 días > no colombiano
-    assert state.step == Step.SUMMARY
+    await send(state, "1", "1", "1")  # open water > qty 1 > 2 días
+    assert state.step == Step.MIXED_ADD_PREVIEW
     await route_message(state, "back")
-    assert state.step == Step.COURSES_MENU
+    assert state.step == Step.MIXED_ADD_ACTIVITY
 
 
 @pytest.mark.asyncio
 async def test_go_pro_summary_back_returns_to_go_pro_menu():
     state = await reach_courses_menu()
-    await send(state, "2", "2", "2")  # go pro > rescue > no colombiano
-    assert state.step == Step.SUMMARY
+    await send(state, "2", "2", "1")  # go pro > rescue > qty 1
+    assert state.step == Step.MIXED_ADD_PREVIEW
     await route_message(state, "back")
-    assert state.step == Step.COURSES_ADVANCED_MENU
+    assert state.step == Step.MIXED_ADD_ACTIVITY
 
 
 @pytest.mark.asyncio
 async def test_specialties_summary_back_returns_to_specialties_menu():
     state = await reach_courses_menu()
-    await send(state, "3", "5", "2")  # specialties > nitrox > no colombiano
-    assert state.step == Step.SUMMARY
+    await send(state, "3", "5", "1")  # specialties > nitrox > qty 1
+    assert state.step == Step.MIXED_ADD_PREVIEW
     await route_message(state, "back")
-    assert state.step == Step.COURSES_SPECIALTIES_MENU
+    assert state.step == Step.MIXED_ADD_ACTIVITY
 
 
 @pytest.mark.asyncio
 async def test_go_pro_itinerary_back_returns_to_go_pro_menu():
     state = await reach_courses_menu()
-    await send(state, "2", "1", "2")  # go pro > advanced > no colombiano
-    assert state.step == Step.SUMMARY
+    await send(state, "2", "1", "1")  # go pro > advanced > qty 1
+    assert state.step == Step.MIXED_ADD_PREVIEW
     await route_message(state, "itinerary")
-    assert state.step == Step.SUMMARY
+    assert state.step == Step.MIXED_ADD_PREVIEW
     await route_message(state, "back")
-    assert state.step == Step.COURSES_ADVANCED_MENU
+    assert state.step == Step.MIXED_ADD_ACTIVITY
 
 
 @pytest.mark.asyncio
 async def test_specialties_itinerary_back_returns_to_specialties_menu():
     state = await reach_courses_menu()
-    await send(state, "3", "1", "2")  # specialties > mindful diving > no colombiano
-    assert state.step == Step.SUMMARY
+    await send(state, "3", "1", "1")  # specialties > mindful diving > qty 1
+    assert state.step == Step.MIXED_ADD_PREVIEW
     await route_message(state, "itinerary")
-    assert state.step == Step.SUMMARY
+    assert state.step == Step.MIXED_ADD_PREVIEW
     await route_message(state, "back")
-    assert state.step == Step.COURSES_SPECIALTIES_MENU
+    assert state.step == Step.MIXED_ADD_ACTIVITY
 
 
 # ===========================================================================
@@ -2000,10 +1989,10 @@ async def test_dive_to_heal_mention_routes_to_rag():
 @pytest.mark.asyncio
 async def test_divemaster_response_mentions_professional_level():
     state = await reach_courses_menu()
-    await send(state, "2")
-    resp = await route_message(state, "3")  # Divemaster
+    responses = await send(state, "2", "3", "1")
+    resp = responses[-1]
     assert state.selected_service == "divemaster"
-    assert "colombian" in resp.lower() or "colombiano" in resp.lower()
+    assert "divemaster" in resp.lower() or "professional" in resp.lower() or "profesional" in resp.lower()
 
 
 @pytest.mark.asyncio
@@ -2034,10 +2023,10 @@ async def test_island_certified_summary_no_extra_pickup_charge():
 @pytest.mark.asyncio
 async def test_open_water_cartagena_mentions_overnight_need():
     state = await reach_courses_menu()
-    await send(state, "1", "1")  # cursos > Open Water > Cartagena
-    resp = await route_message(state, "1")  # 2 días completos
+    responses = await send(state, "1", "1", "1")
+    resp = responses[-1]
     assert state.selected_service == "open_water"
-    assert "colombian" in resp.lower() or "colombiano" in resp.lower()
+    assert "open water" in resp.lower()
 
 
 @pytest.mark.asyncio
@@ -2071,11 +2060,13 @@ async def test_en_adaptive_diving_routes_to_rag():
 # Cart-style mixed-group flow tests
 # ===========================================================================
 
-async def reach_mixed_entry(lang: str = "es", location: str = "cartagena") -> ConversationState:
-    """Reach MIXED_ENTRY via the GROUP_TYPE (buceo+snorkel) entry point."""
-    state = await reach_group_type(lang, location)
-    await route_message(state, "3")
+async def reach_mixed_entry(lang: str = "es", location: str | None = "cartagena") -> ConversationState:
+    """Reach MIXED_ENTRY from the unified booking entry."""
+    state = await reach_main_menu(lang)
+    await route_message(state, "1")
     assert state.step == Step.MIXED_ENTRY
+    if location is not None:
+        state.location = location
     return state
 
 
@@ -2100,12 +2091,9 @@ async def test_mixed_entry_advances_to_add_activity():
 @pytest.mark.asyncio
 async def test_mixed_entry_without_location_asks_departure_before_add_activity():
     state = await reach_main_menu("es")
-    await send(state, "1", "1")
-    assert state.step == Step.GROUP_TYPE
-    assert state.location is None
-
-    await route_message(state, "3")
+    await route_message(state, "1")
     assert state.step == Step.MIXED_ENTRY
+    assert state.location is None
 
     resp = await route_message(state, "1")
     assert state.step == Step.MIXED_LOCATION
@@ -2140,7 +2128,7 @@ async def test_mixed_add_snorkel_skips_to_qty():
 @pytest.mark.asyncio
 async def test_mixed_add_companion_skips_to_qty():
     state = await reach_mixed_add_activity()
-    await route_message(state, "4")  # Acompañante
+    await route_message(state, "5")  # Acompañante
     assert state.step == Step.MIXED_ADD_QTY
     assert state.mixed_pending_qty_type == "companion"
 

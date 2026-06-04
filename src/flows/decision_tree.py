@@ -133,11 +133,12 @@ class ConversationState:
     back_quick_replies_key: str | None = None
     # Cart-style mixed-group state (replaces all previous mixed_* per-subgroup fields)
     mixed_cart: list[dict] = field(default_factory=list)
-    # Each item: {"type": "cert"|"beginner"|"snorkel"|"companion", "qty": int,
-    #             "plan": "2_dives_1_day"|None, "label": str}
+    # Each item: {"type": "cert"|"beginner"|"snorkel"|"course"|"companion", "qty": int,
+    #             "plan": service-specific plan/service_id, "label": str}
     mixed_pending_qty_type: str | None = None    # which type is being added/edited
     mixed_pending_qty_plan: str | None = None    # holds cert plan while qty is collected
     mixed_pending_qty_value: int | None = None
+    mixed_pending_course_question: str | None = None
     mixed_pending_preview_service_id: str | None = None
     mixed_pending_cert_total_qty: int | None = None
     mixed_pending_cert_remaining_qty: int | None = None
@@ -149,8 +150,9 @@ class ConversationState:
     mixed_final_has_kids_8_10: bool | None = None
     mixed_final_wants_private: bool | None = None
     mixed_last_summary: str | None = None        # final summary text (for lead note)
-    # Ruta de entrada al flujo mixto: "diving_snorkel" (GROUP_TYPE opt 3) o
-    # "cert_beg" (TOURS_EXPERIENCE opt 3). Si es "cert_beg" no ofrecemos snorkel.
+    # Ruta de entrada al flujo carrito: "booking" (entrada principal),
+    # "diving_snorkel" (grupo mixto legacy) o "cert_beg" (certificados + principiantes).
+    # Si es "cert_beg" no ofrecemos snorkel.
     mixed_entry_path: str | None = None
     # Lista de (label, booking_url) para enviar al cliente cuando pulse "Reservar"
     # en el resumen final del flujo mixto.
@@ -924,12 +926,12 @@ MESSAGES = {
     "mixed_entry": {
         "es": (
             "¡Genial! Vamos a armar tu reserva paso a paso. 🛒\n\n"
-            "Puedes añadir varias actividades (buceo, snorkel, minicurso, acompañantes) "
+            "Puedes añadir varias reservas (buceo certificado, snorkel, minicurso, cursos PADI, acompañantes) "
             "y al final revisamos todo antes de confirmar."
         ),
         "en": (
             "Great! Let's build your booking step by step. 🛒\n\n"
-            "You can add several activities (diving, snorkel, mini-course, companions) "
+            "You can add several bookings (certified diving, snorkeling, mini-course, PADI courses, companions) "
             "and we'll review everything before you confirm."
         ),
     },
@@ -1423,14 +1425,16 @@ BUTTON_OPTIONS = {
             {"title": "🎓 Buceo certificado", "value": "1"},
             {"title": "🆕 Buceo principiantes (Minicurso)", "value": "2"},
             {"title": "🐠 Snorkel", "value": "3"},
-            {"title": "👤 Acompañante (sin actividad)", "value": "4"},
+            {"title": "🤿 Curso PADI", "value": "4"},
+            {"title": "👤 Acompañante (sin actividad)", "value": "5"},
             {"title": "🔙 Cancelar", "value": "back"},
         ],
         "en": [
             {"title": "🎓 Certified diving", "value": "1"},
             {"title": "🆕 Beginner diving (Mini-course)", "value": "2"},
             {"title": "🐠 Snorkeling", "value": "3"},
-            {"title": "👤 Companion (no activity)", "value": "4"},
+            {"title": "🤿 PADI course", "value": "4"},
+            {"title": "👤 Companion (no activity)", "value": "5"},
             {"title": "🔙 Cancel", "value": "back"},
         ],
     },
@@ -2238,6 +2242,19 @@ class DecisionTree:
         self.set_quick_replies(state, "main_menu")
         return MESSAGES["main_menu"][state.language]
 
+    def _enter_booking_cart(
+        self,
+        state: ConversationState,
+        back_step: Step = Step.MAIN_MENU,
+        back_quick_replies_key: str = "main_menu",
+    ) -> str:
+        self._reset_mixed_state(state)
+        state.mixed_entry_path = "booking"
+        self._set_back_target(state, back_step, back_quick_replies_key)
+        state.step = Step.MIXED_ENTRY
+        self.set_quick_replies(state, "mixed_entry")
+        return MESSAGES["mixed_entry"][state.language]
+
     def _handle_main_menu(self, state: ConversationState, message: str) -> str:
         choice = self._parse_choice(message, 2)
         lang = state.language
@@ -2246,10 +2263,7 @@ class DecisionTree:
             state.history = []
 
         if choice == 1:
-            # Reservar: tours de buceo / cursos PADI
-            state.step = Step.RESERVA_MENU
-            self.set_quick_replies(state, "reserva_menu")
-            return MESSAGES["reserva_menu"][lang]
+            return self._enter_booking_cart(state)
         if choice == 2:
             # Información: precios / reservas y pago / logística
             state.step = Step.INFO_MENU
@@ -2260,24 +2274,7 @@ class DecisionTree:
         return MESSAGES["not_understood"][lang]
 
     def _handle_reserva_menu(self, state: ConversationState, message: str) -> str:
-        choice = self._parse_choice(message, 2)
-        lang = state.language
-
-        if choice == 1:
-            # Tours de buceo y snorkel: vamos directo al tipo de grupo.
-            # La ubicación (Cartagena / ya en islas) se difiere al SUMMARY como botones.
-            self._set_back_target(state, Step.RESERVA_MENU, "reserva_menu")
-            state.step = Step.GROUP_TYPE
-            self.set_quick_replies(state, "group_type")
-            return MESSAGES["group_type"][lang]
-        if choice == 2:
-            # Cursos PADI y certificaciones
-            state.step = Step.COURSES_MENU
-            self.set_quick_replies(state, "courses_menu")
-            return MESSAGES["courses_menu"][lang]
-
-        self.set_quick_replies(state, "reserva_menu")
-        return MESSAGES["not_understood"][lang]
+        return self._enter_booking_cart(state)
 
     def _handle_info_menu(self, state: ConversationState, message: str) -> str:
         choice = self._parse_choice(message, 4)
@@ -2872,6 +2869,7 @@ class DecisionTree:
         state.mixed_pending_qty_type = None
         state.mixed_pending_qty_plan = None
         state.mixed_pending_qty_value = None
+        state.mixed_pending_course_question = None
         state.mixed_pending_preview_service_id = None
         state.mixed_pending_cert_total_qty = None
         state.mixed_pending_cert_remaining_qty = None
@@ -2889,6 +2887,7 @@ class DecisionTree:
         state.mixed_pending_qty_type = None
         state.mixed_pending_qty_plan = None
         state.mixed_pending_qty_value = None
+        state.mixed_pending_course_question = None
         state.mixed_pending_preview_service_id = None
         state.mixed_pending_cert_total_qty = None
         state.mixed_pending_cert_remaining_qty = None
@@ -2905,6 +2904,9 @@ class DecisionTree:
             return "Buceo principiantes (Minicurso)" if lang == "es" else "Beginner diving (Mini-course)"
         if item_type == "snorkel":
             return "Snorkel" if lang == "es" else "Snorkeling"
+        if item_type == "course":
+            service = SERVICES.get(plan) or {}
+            return service.get(f"name_{lang}") or service.get("name_es") or ("Curso PADI" if lang == "es" else "PADI course")
         if item_type == "companion":
             return "Acompañante (sin actividad)" if lang == "es" else "Companion (no activity)"
         return item_type
@@ -2919,7 +2921,38 @@ class DecisionTree:
             return self._service_for_location("minicourse", state)
         if item_type == "snorkel":
             return self._service_for_location("snorkeling", state)
+        if item_type == "course":
+            return plan
         return None  # companion has its own pricing from pricing.json
+
+    @staticmethod
+    def _cart_has_boat_activities(state: ConversationState) -> bool:
+        return any(it.get("type") in {"cert", "beginner", "snorkel"} for it in state.mixed_cart)
+
+    def _mixed_open_water_time_prompt(self, lang: str) -> str:
+        if lang == "es":
+            return (
+                "Perfecto. Para la parte practica del curso Open Water en las Islas del Rosario, "
+                "lo ideal es que tengas al menos *2 dias completos* disponibles.\n\n"
+                "¿Cuentas con ese tiempo?"
+            )
+        return (
+            "Perfect. For the practical part of your Open Water course in the Rosario Islands, "
+            "it is ideal to have at least *2 full days* available.\n\n"
+            "Do you have that time available?"
+        )
+
+    def _start_mixed_course_add(
+        self,
+        state: ConversationState,
+        service_id: str,
+        follow_up_question: str | None = None,
+    ) -> str:
+        state.selected_service = service_id
+        state.mixed_pending_qty_type = "course"
+        state.mixed_pending_qty_plan = service_id
+        state.mixed_pending_course_question = follow_up_question
+        return self._goto_mixed_add_qty(state)
 
     def _append_mixed_cart_item(self, state: ConversationState, item_type: str, plan: str | None, qty: int) -> None:
         if qty <= 0:
@@ -2980,6 +3013,8 @@ class DecisionTree:
         state.step = Step.MIXED_ADD_PREVIEW
         self.set_quick_replies(state, "mixed_preview_actions")
         preview_state = self._mixed_preview_state(state, service_id)
+        if _is_contact_only_service(service_id):
+            return self._format_info_card(preview_state) + "\n\n" + MESSAGES["mixed_add_preview"][state.language]
         return self._format_summary(preview_state, final_prompt=MESSAGES["mixed_add_preview"][state.language])
 
     def _build_mixed_cert_split_review_message(self, state: ConversationState) -> str:
@@ -3004,8 +3039,15 @@ class DecisionTree:
 
     def _handle_mixed_entry(self, state: ConversationState, message: str) -> str:
         lang = state.language
+        msg = message.strip().lower()
+        if msg in ("back", "cancel", "cancelar"):
+            target_step = state.back_step_override or Step.MAIN_MENU
+            quick_replies_key = state.back_quick_replies_key or "main_menu"
+            state.step = target_step
+            self.set_quick_replies(state, quick_replies_key)
+            return MESSAGES[quick_replies_key][lang]
         choice = self._parse_choice(message, 1)
-        if choice == 1 or message.strip().lower() in ("start", "empezar", "ok", "vale", "si", "sí", "yes"):
+        if choice == 1 or msg in ("start", "empezar", "ok", "vale", "si", "sí", "yes"):
             if state.location is None:
                 state.step = Step.MIXED_LOCATION
                 self.set_quick_replies(state, "tours_location")
@@ -3044,18 +3086,24 @@ class DecisionTree:
         msg = message.strip().lower()
         if msg in ("back", "cancel", "cancelar"):
             return self._goto_mixed_cart_review(state) if state.mixed_cart else self._goto_mixed_entry(state)
-        choice = self._parse_choice(message, 4)
+        choice = self._parse_choice(message, 5)
         if choice == 1:
             state.mixed_pending_qty_type = "cert"
             state.step = Step.MIXED_ADD_CERT_PLAN
             self.set_quick_replies(state, "mixed_add_cert_plan")
             return MESSAGES["mixed_add_cert_plan"][lang]
-        if choice in (2, 3, 4):
+        if choice == 4:
+            state.step = Step.COURSES_MENU
+            self.set_quick_replies(state, "courses_menu")
+            if lang == "es":
+                return "Perfecto, vamos a añadir un curso PADI al carrito.\n\n" + MESSAGES["courses_menu"][lang]
+            return "Perfect, let's add a PADI course to the cart.\n\n" + MESSAGES["courses_menu"][lang]
+        if choice in (2, 3, 5):
             # Si entran via cert+ppt, snorkel (choice 3) no está disponible
             if choice == 3 and state.mixed_entry_path == "cert_beg":
                 self.set_quick_replies(state, "mixed_add_activity")
                 return MESSAGES["not_understood"][lang]
-            state.mixed_pending_qty_type = {2: "beginner", 3: "snorkel", 4: "companion"}[choice]
+            state.mixed_pending_qty_type = {2: "beginner", 3: "snorkel", 5: "companion"}[choice]
             state.mixed_pending_qty_plan = None
             return self._goto_mixed_add_qty(state)
         self.set_quick_replies(state, "mixed_add_activity")
@@ -3147,6 +3195,16 @@ class DecisionTree:
             state.step = Step.MIXED_CERT_LAST_DIVE
             self.set_quick_replies(state, "certified_last_dive")
             return MESSAGES["certified_last_dive"][lang]
+
+        if item_type == "course":
+            if state.mixed_pending_course_question == "open_water_time":
+                state.step = Step.COURSES_OPEN_WATER_TIME
+                self.set_quick_replies(state, "courses_open_water_time")
+                return self._mixed_open_water_time_prompt(lang)
+            return self._prepare_mixed_add_preview(
+                state,
+                plan or self._service_for_location("open_water", state),
+            )
 
         if item_type == "beginner":
             return self._prepare_mixed_add_preview(state, self._service_for_location("minicourse", state))
@@ -3416,6 +3474,8 @@ class DecisionTree:
                 state.step = Step.MIXED_FINAL_KIDS
                 self.set_quick_replies(state, "mixed_yes_no")
                 return MESSAGES["mixed_final_kids"][lang]
+            if not self._cart_has_boat_activities(state):
+                return self._goto_mixed_final_summary(state)
             return self._goto_mixed_final_private(state)
         state.step = Step.MIXED_FINAL_COLOMBIAN
         self.set_quick_replies(state, "mixed_yes_no")
@@ -3438,6 +3498,8 @@ class DecisionTree:
             state.step = Step.MIXED_FINAL_KIDS
             self.set_quick_replies(state, "mixed_yes_no")
             return MESSAGES["mixed_final_kids"][lang]
+        if not self._cart_has_boat_activities(state):
+            return self._goto_mixed_final_summary(state)
         return self._goto_mixed_final_private(state)
 
     def _handle_mixed_final_kids(self, state: ConversationState, message: str) -> str:
@@ -3450,6 +3512,8 @@ class DecisionTree:
         else:
             self.set_quick_replies(state, "mixed_yes_no")
             return MESSAGES["not_understood"][lang]
+        if not self._cart_has_boat_activities(state):
+            return self._goto_mixed_final_summary(state)
         return self._goto_mixed_final_private(state)
 
     def _goto_mixed_final_private(self, state: ConversationState) -> str:
@@ -3860,9 +3924,7 @@ class DecisionTree:
         msg = " ".join(message.strip().lower().split())
         choice = self._parse_choice(message, 1)
         if msg == "reserve" or choice == 1:
-            state.step = Step.RESERVA_MENU
-            self.set_quick_replies(state, "reserva_menu")
-            return MESSAGES["reserva_menu"][state.language]
+            return self._enter_booking_cart(state)
         self.set_quick_replies(state, "pricing_leaf")
         return MESSAGES["not_understood"][state.language]
 
@@ -3870,9 +3932,7 @@ class DecisionTree:
         msg = " ".join(message.strip().lower().split())
         choice = self._parse_choice(message, 1)
         if msg == "reserve" or choice == 1:
-            state.step = Step.RESERVA_MENU
-            self.set_quick_replies(state, "reserva_menu")
-            return MESSAGES["reserva_menu"][state.language]
+            return self._enter_booking_cart(state)
         self.set_quick_replies(state, "pricing_leaf")
         return MESSAGES["not_understood"][state.language]
 
@@ -3880,9 +3940,7 @@ class DecisionTree:
         msg = " ".join(message.strip().lower().split())
         choice = self._parse_choice(message, 1)
         if msg == "reserve" or choice == 1:
-            state.step = Step.RESERVA_MENU
-            self.set_quick_replies(state, "reserva_menu")
-            return MESSAGES["reserva_menu"][state.language]
+            return self._enter_booking_cart(state)
         self.set_quick_replies(state, "pricing_leaf")
         return MESSAGES["not_understood"][state.language]
 
@@ -3890,9 +3948,7 @@ class DecisionTree:
         msg = " ".join(message.strip().lower().split())
         choice = self._parse_choice(message, 1)
         if msg == "reserve" or choice == 1:
-            state.step = Step.RESERVA_MENU
-            self.set_quick_replies(state, "reserva_menu")
-            return MESSAGES["reserva_menu"][state.language]
+            return self._enter_booking_cart(state)
         self.set_quick_replies(state, "pricing_leaf")
         return MESSAGES["not_understood"][state.language]
 
@@ -4360,56 +4416,15 @@ class DecisionTree:
         lang = state.language
 
         if choice == 1:
-            self._set_back_target(state, Step.COURSES_MENU, "courses_menu")
-            state.selected_service = self._service_for_location("open_water", state)
-            state.step = Step.COURSES_OPEN_WATER_ORIGIN
-            self.set_quick_replies(state, "courses_open_water_origin")
-
-            # Precios para dar contexto de coste en cada opción
-            ow_cart = SERVICES.get("open_water") or {}
-            ow_isl = SERVICES.get("open_water_already_on_island") or {}
-
-            def _fmt_p(p):
-                try:
-                    return f"${int(round(float(p)))}"
-                except (TypeError, ValueError):
-                    return None
-
-            p_cart = _fmt_p(ow_cart.get("price_usd"))
-            p_isl = _fmt_p(ow_isl.get("price_usd"))
-
-            if lang == "es":
-                lines = [
-                    "🐠 Perfecto, vamos a ver tu curso Open Water.",
-                    "",
-                    "Primero, ¿desde dónde harás la parte práctica?",
-                    "",
-                ]
-                line_c = "🚤 *Desde Cartagena* — Incluye transporte ida y vuelta a las islas para los días de práctica"
-                if p_cart:
-                    line_c += f" ({p_cart})"
-                line_i = "🏝️ *Ya estoy en las islas* — Sin transporte desde Cartagena, precio reducido"
-                if p_isl:
-                    line_i += f" ({p_isl})"
-                lines.append(line_c)
-                lines.append(line_i)
-                return "\n".join(lines)
-
-            lines = [
-                "🐠 Great, let's check your Open Water course.",
-                "",
-                "First, where will you do the practical part?",
-                "",
-            ]
-            line_c = "🚤 *From Cartagena* — Includes round-trip transport to the islands for practical days"
-            if p_cart:
-                line_c += f" ({p_cart})"
-            line_i = "🏝️ *Already on the islands* — No transport from Cartagena, reduced price"
-            if p_isl:
-                line_i += f" ({p_isl})"
-            lines.append(line_c)
-            lines.append(line_i)
-            return "\n".join(lines)
+            if state.location is None:
+                state.step = Step.COURSES_OPEN_WATER_ORIGIN
+                self.set_quick_replies(state, "courses_open_water_origin")
+                return MESSAGES["courses_open_water_origin"][lang]
+            return self._start_mixed_course_add(
+                state,
+                self._service_for_location("open_water", state),
+                "open_water_time",
+            )
         if choice == 2:
             state.step = Step.COURSES_ADVANCED_MENU
             self.set_quick_replies(state, "courses_advanced_menu")
@@ -4435,37 +4450,9 @@ class DecisionTree:
                 "Choose one to see the service information."
             )
         if choice == 4:
-            # Referral / reactivate: seguimos flujo estructurado (origen -> descuento colombiano -> resumen)
-            # y mantenemos el back al menú de cursos.
-            self._set_back_target(state, Step.COURSES_MENU, "courses_menu")
-            state.selected_service = "referral"
-
-            # Si todavía no sabemos si sale de Cartagena o ya está en las islas, preguntamos la ubicación.
-            if state.location is None:
-                state.step = Step.LOCATION
-                self.set_quick_replies(state, "location")
-                if lang == "es":
-                    return (
-                        "Perfecto, vamos a revisar tu curso referido (Open Water).\n\n"
-                        + MESSAGES["location"][lang]
-                    )
-                return (
-                    "Great, let's review your referral Open Water course.\n\n"
-                    + MESSAGES["location"][lang]
-                )
-
-            # Si la ubicación ya está definida, vamos directo a la pregunta de descuento colombiano.
-            state.selected_service = self._service_for_location("referral", state)
-            state.step = Step.COLOMBIAN
-            self.set_quick_replies(state, "colombian")
-            if lang == "es":
-                return (
-                    "Perfecto, vamos a revisar tu curso referido (Open Water).\n\n"
-                    + MESSAGES["colombian"][lang]
-                )
-            return (
-                "Great, let's review your referral Open Water course.\n\n"
-                + MESSAGES["colombian"][lang]
+            return self._start_mixed_course_add(
+                state,
+                self._service_for_location("referral", state),
             )
 
         self.set_quick_replies(state, "courses_menu")
@@ -4483,19 +4470,10 @@ class DecisionTree:
             self.set_quick_replies(state, "courses_open_water_origin")
             return MESSAGES["not_understood"][lang]
 
-        state.selected_service = self._service_for_location("open_water", state)
-        state.step = Step.COURSES_OPEN_WATER_TIME
-        self.set_quick_replies(state, "courses_open_water_time")
-        if lang == "es":
-            return (
-                "Perfecto. Para la parte practica del curso Open Water en las Islas del Rosario, "
-                "lo ideal es que tengas al menos *2 dias completos* disponibles.\n\n"
-                "¿Cuentas con ese tiempo?"
-            )
-        return (
-            "Perfect. For the practical part of your Open Water course in the Rosario Islands, "
-            "it is ideal to have at least *2 full days* available.\n\n"
-            "Do you have that time available?"
+        return self._start_mixed_course_add(
+            state,
+            self._service_for_location("open_water", state),
+            "open_water_time",
         )
 
     def _handle_courses_open_water_time(self, state: ConversationState, message: str) -> str:
@@ -4506,9 +4484,10 @@ class DecisionTree:
             self.set_quick_replies(state, "courses_open_water_time")
             return MESSAGES["not_understood"][lang]
 
-        state.step = Step.COLOMBIAN
-        self.set_quick_replies(state, "colombian")
-        return MESSAGES["colombian"][lang]
+        return self._prepare_mixed_add_preview(
+            state,
+            state.mixed_pending_qty_plan or self._service_for_location("open_water", state),
+        )
 
     def _handle_courses_advanced_menu(self, state: ConversationState, message: str) -> str:
         choice = self._parse_choice(message, 3)
@@ -4524,11 +4503,7 @@ class DecisionTree:
                 state.step = Step.ESCALATE
                 state.quick_replies = []
                 return MESSAGES["escalate"][lang]
-            self._set_back_target(state, Step.COURSES_ADVANCED_MENU, "courses_advanced_menu")
-            state.selected_service = course_map[choice]
-            state.step = Step.COLOMBIAN
-            self.set_quick_replies(state, "colombian")
-            return MESSAGES["colombian"][lang]
+            return self._start_mixed_course_add(state, course_map[choice])
 
         self.set_quick_replies(state, "courses_advanced_menu")
         return MESSAGES["not_understood"][lang]
@@ -4549,11 +4524,7 @@ class DecisionTree:
                 state.step = Step.ESCALATE
                 state.quick_replies = []
                 return MESSAGES["escalate"][lang]
-            self._set_back_target(state, Step.COURSES_SPECIALTIES_MENU, "courses_specialties_menu")
-            state.selected_service = course_map[choice]
-            state.step = Step.COLOMBIAN
-            self.set_quick_replies(state, "colombian")
-            return MESSAGES["colombian"][lang]
+            return self._start_mixed_course_add(state, course_map[choice])
 
         self.set_quick_replies(state, "courses_specialties_menu")
         return MESSAGES["not_understood"][lang]
@@ -5087,10 +5058,16 @@ class DecisionTree:
                 svc = SERVICES.get(svc_id) or {}
                 usd = svc.get("price_usd")
                 cop = svc.get("price_cop")
-                booking_url = svc.get("booking_url")
+                if state.location == "island" and svc.get("booking_url_island"):
+                    booking_url = svc.get("booking_url_island")
+                else:
+                    booking_url = svc.get("booking_url")
                 svc_name = svc.get(f"name_{lang}")
                 if svc_name and item_type != "refresh":
                     label = svc_name
+                if _is_contact_only_service(svc_id) or svc_id in {"referral", "referral_already_on_island"}:
+                    booking_url = None
+                    any_consultable = True
             sub_usd = (float(usd) * qty) if usd else None
             sub_cop = (int(cop) * qty) if cop else None
             if sub_usd is not None:
@@ -5155,7 +5132,9 @@ class DecisionTree:
 
         # Includes line (Cartagena origin)
         includes = ""
-        if state.location == "cartagena":
+        has_course_items = self._cart_includes(state, "course")
+        has_boat_items = self._cart_has_boat_activities(state)
+        if state.location == "cartagena" and has_boat_items:
             includes = ("\n✅ _Incluye: transporte Cartagena-Islas-Cartagena, almuerzo y equipo._"
                         if lang == "es"
                         else "\n✅ _Includes: Cartagena-Islands transport, lunch and gear._")
@@ -5205,6 +5184,22 @@ class DecisionTree:
                 "  • Niños 8-10 (Bubble Makers): supervisor especializado — el asesor confirmará el precio final al reservar"
                 if lang == "es"
                 else "  • Kids 8-10 (Bubble Makers): specialized supervisor — advisor confirms the final price at booking"
+            )
+        if has_boat_items and has_course_items:
+            avisos_lines.append(
+                "  • Este carrito mezcla tours y cursos PADI — el asesor confirmará la coordinación final de fechas y logística"
+                if lang == "es"
+                else "  • This cart mixes tours and PADI courses — the advisor will confirm the final schedule and logistics"
+            )
+        if any(
+            item.get("type") == "course"
+            and self._cart_service_id(item.get("type"), item.get("plan"), state) in {"divemaster", "referral", "referral_already_on_island"}
+            for item in state.mixed_cart
+        ):
+            avisos_lines.append(
+                "  • Algunos cursos requieren validación manual con el asesor antes de confirmar"
+                if lang == "es"
+                else "  • Some courses require manual advisor validation before confirmation"
             )
         if any_consultable:
             avisos_lines.append(
