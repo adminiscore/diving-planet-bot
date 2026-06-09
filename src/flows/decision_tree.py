@@ -645,7 +645,7 @@ MESSAGES = {
     },
     "main_menu": {
         "es": (
-            "Que te gustaria hacer?"
+            "¿Qué te gustaría hacer?"
         ),
         "en": (
             "What would you like to do?"
@@ -653,10 +653,12 @@ MESSAGES = {
     },
     "reserva_menu": {
         "es": (
-            "¡Perfecto! ¿Qué te gustaría reservar?"
+            "¡Perfecto! Vamos a armar tu reserva *paso a paso* desde el carrito.\n\n"
+            "Cuando quieras, empezamos."
         ),
         "en": (
-            "Great! What would you like to book?"
+            "Great! Let's build your booking *step by step* from the cart flow.\n\n"
+            "Whenever you're ready, let's begin."
         ),
     },
     "info_menu": {
@@ -685,8 +687,8 @@ MESSAGES = {
     },
     "info_tours_menu": {
         "es": (
-            "Genial, cuentame que tipo de plan buscas:\n"
-            "Elige la opcion que mejor se ajuste."
+            "Genial, cuéntame qué tipo de plan buscas:\n"
+            "Elige la opción que mejor se ajuste."
         ),
         "en": (
             "Great! Tell me what kind of plan you're looking for:\n"
@@ -695,7 +697,7 @@ MESSAGES = {
     },
     "info_packages_menu": {
         "es": (
-            "Perfecto. Dentro de buceo, ¿como esta compuesto tu grupo?"
+            "Perfecto. Dentro de buceo, ¿cómo está compuesto tu grupo?"
         ),
         "en": (
             "Perfect. Within diving, how is your group made up?"
@@ -1219,13 +1221,11 @@ BUTTON_OPTIONS = {
     },
     "reserva_menu": {
         "es": [
-            {"title": "🤿 Tours de buceo / snorkel", "value": "1"},
-            {"title": "📘 Cursos PADI y certificaciones", "value": "2"},
+            {"title": "🛒 Empezar reserva paso a paso", "value": "1"},
             {"title": "🔙 Volver al menú principal", "value": "back"},
         ],
         "en": [
-            {"title": "🤿 Diving / snorkel tours", "value": "1"},
-            {"title": "📘 PADI courses and certifications", "value": "2"},
+            {"title": "🛒 Start booking step by step", "value": "1"},
             {"title": "🔙 Back to main menu", "value": "back"},
         ],
     },
@@ -1501,7 +1501,7 @@ BUTTON_OPTIONS = {
             {"title": "🐠 Snorkel", "value": "3"},
             {"title": "🤿 Curso PADI", "value": "4"},
             {"title": "👤 Acompañante (sin actividad)", "value": "5"},
-            {"title": "🔙 Cancelar", "value": "back"},
+            {"title": "🔙 Volver", "value": "back"},
         ],
         "en": [
             {"title": "🎓 Certified diving", "value": "1"},
@@ -1509,19 +1509,19 @@ BUTTON_OPTIONS = {
             {"title": "🐠 Snorkeling", "value": "3"},
             {"title": "🤿 PADI course", "value": "4"},
             {"title": "👤 Companion (no activity)", "value": "5"},
-            {"title": "🔙 Cancel", "value": "back"},
+            {"title": "🔙 Back", "value": "back"},
         ],
     },
     "mixed_add_cert_plan": {
         "es": [
             {"title": "🤿 2 Inmersiones / 1 día", "value": "1"},
             {"title": "📅 Paquete multi-día (3 o más inmersiones)", "value": "2"},
-            {"title": "🔙 Cancelar", "value": "back"},
+            {"title": "🔙 Volver", "value": "back"},
         ],
         "en": [
             {"title": "🤿 2 Dives / 1 day", "value": "1"},
             {"title": "📅 Multi-day package (3 or more dives)", "value": "2"},
-            {"title": "🔙 Cancel", "value": "back"},
+            {"title": "🔙 Back", "value": "back"},
         ],
     },
     "mixed_add_cert_multi_day": {
@@ -1531,7 +1531,7 @@ BUTTON_OPTIONS = {
             {"title": "🤿 5 inmersiones (2 días)", "value": "3"},
             {"title": "🤿 7 inmersiones (3 días)", "value": "4"},
             {"title": "🤿 9 inmersiones (4 días)", "value": "5"},
-            {"title": "🔙 Cancelar", "value": "back"},
+            {"title": "🔙 Volver", "value": "back"},
         ],
         "en": [
             {"title": "🤿 3 Dives (1 day)*", "value": "1"},
@@ -1539,7 +1539,7 @@ BUTTON_OPTIONS = {
             {"title": "🤿 5 Dives (2 days)", "value": "3"},
             {"title": "🤿 7 Dives (3 days)", "value": "4"},
             {"title": "🤿 9 Dives (4 days)", "value": "5"},
-            {"title": "🔙 Cancel", "value": "back"},
+            {"title": "🔙 Back", "value": "back"},
         ],
     },
     "mixed_quantity": {
@@ -1550,7 +1550,7 @@ BUTTON_OPTIONS = {
             {"title": "4", "value": "4"},
             {"title": "5", "value": "5"},
             {"title": "6 o mas", "value": "6+"},
-            {"title": "🔙 Cancelar", "value": "back"},
+            {"title": "🔙 Volver", "value": "back"},
         ],
         "en": [
             {"title": "1", "value": "1"},
@@ -1559,19 +1559,19 @@ BUTTON_OPTIONS = {
             {"title": "4", "value": "4"},
             {"title": "5", "value": "5"},
             {"title": "6 or more", "value": "6+"},
-            {"title": "🔙 Cancel", "value": "back"},
+            {"title": "🔙 Back", "value": "back"},
         ],
     },
     "mixed_preview_actions": {
         "es": [
             {"title": "🛒 Añadir al carrito", "value": "1"},
             {"title": "🗺️ Ver itinerario completo", "value": "itinerary"},
-            {"title": "🔙 Cancelar", "value": "back"},
+            {"title": "🔙 Volver", "value": "back"},
         ],
         "en": [
             {"title": "🛒 Add to cart", "value": "1"},
             {"title": "🗺️ View full itinerary", "value": "itinerary"},
-            {"title": "🔙 Cancel", "value": "back"},
+            {"title": "🔙 Back", "value": "back"},
         ],
     },
     "mixed_cert_split_review": {
@@ -2141,7 +2141,7 @@ class DecisionTree:
                 {"title": "🤿 5 inmersiones (2 días)", "value": "4"},
                 {"title": "🤿 7 inmersiones (3 días)", "value": "5"},
                 {"title": "🤿 9 inmersiones (4 días)", "value": "6"},
-                {"title": "🔙 Cancelar", "value": "back"},
+                {"title": "🔙 Volver", "value": "back"},
             ]
         return [
             {"title": "🤿 3 Dives (1 day)*", "value": "1"},
@@ -2150,7 +2150,7 @@ class DecisionTree:
             {"title": "🤿 5 Dives (2 days)", "value": "4"},
             {"title": "🤿 7 Dives (3 days)", "value": "5"},
             {"title": "🤿 9 Dives (4 days)", "value": "6"},
-            {"title": "🔙 Cancel", "value": "back"},
+            {"title": "🔙 Back", "value": "back"},
         ]
 
     def _mixed_cert_multi_day_service_map(self, state: ConversationState) -> dict[int, str]:
@@ -2434,7 +2434,11 @@ class DecisionTree:
         return MESSAGES["not_understood"][lang]
 
     def _handle_reserva_menu(self, state: ConversationState, message: str) -> str:
-        return self._enter_booking_cart(state)
+        choice = self._parse_choice(message, 1)
+        if choice == 1:
+            return self._enter_booking_cart(state)
+        self.set_quick_replies(state, "reserva_menu")
+        return MESSAGES["not_understood"][state.language]
 
     def _handle_info_menu(self, state: ConversationState, message: str) -> str:
         choice = self._parse_choice(message, 4)
@@ -3116,6 +3120,27 @@ class DecisionTree:
             "Do you have that time available?"
         )
 
+    def _open_water_time_warning(self, state: ConversationState) -> str:
+        if state.language == "es":
+            if state.location == "island":
+                return (
+                    "⚠️ *Importante*: este curso sigue requiriendo *2 dias completos* en las Islas del Rosario. "
+                    "Si vas justo de tiempo, revisa bien tus horarios antes de reservar."
+                )
+            return (
+                "⚠️ *Importante*: este curso requiere *2 dias completos* y pasar al menos *1 noche en las Islas del Rosario*. "
+                "Si no tienes ese tiempo confirmado todavia, revisalo antes de reservar."
+            )
+        if state.location == "island":
+            return (
+                "⚠️ *Important*: this course still requires *2 full days* on the Rosario Islands. "
+                "If your timing is tight, please double-check your schedule before booking."
+            )
+        return (
+            "⚠️ *Important*: this course requires *2 full days* and at least *1 overnight stay on the Rosario Islands*. "
+            "If you do not have that time confirmed yet, please review it before booking."
+        )
+
     def _start_mixed_course_add(
         self,
         state: ConversationState,
@@ -3448,7 +3473,7 @@ class DecisionTree:
         """
         lang = state.language
         total_qty = state.mixed_pending_cert_total_qty or state.mixed_pending_qty_value or 0
-        cancel_title = "🔙 Cancelar" if lang == "es" else "🔙 Cancel"
+        cancel_title = "🔙 Volver" if lang == "es" else "🔙 Back"
         if total_qty <= 0:
             return [{"title": cancel_title, "value": "back"}]
         max_button = min(total_qty, 5)
@@ -3631,9 +3656,9 @@ class DecisionTree:
                 title = title[:57] + "..."
             options.append({"title": title, "value": str(raw_idx + 1)})
         cancel = (
-            {"title": "🔙 Cancelar", "value": "back"}
+            {"title": "🔙 Volver", "value": "back"}
             if state.language == "es"
-            else {"title": "🔙 Cancel", "value": "back"}
+            else {"title": "🔙 Back", "value": "back"}
         )
         options.append(cancel)
         return options
@@ -3947,7 +3972,7 @@ class DecisionTree:
         can type the exact number on the next turn (same UX as MIXED_ADD_QTY).
         """
         lang = state.language
-        cancel_title = "🔙 Cancelar" if lang == "es" else "🔙 Cancel"
+        cancel_title = "🔙 Volver" if lang == "es" else "🔙 Back"
         pending = self._pending_beginner_qty(state)
         max_qty = max(pending or 6, 1)
         if max_qty <= 9:
@@ -5092,27 +5117,11 @@ class DecisionTree:
         if choice == 2:
             state.step = Step.COURSES_ADVANCED_MENU
             self.set_quick_replies(state, "courses_advanced_menu")
-            if lang == "es":
-                return (
-                    "🚀 Estos son nuestros cursos PADI avanzados y profesionales.\n"
-                    "Elige el que mas te interese."
-                )
-            return (
-                "🚀 These are our advanced and professional PADI courses.\n"
-                "Choose the one you are most interested in."
-            )
+            return MESSAGES["courses_advanced_menu"][lang]
         if choice == 3:
             state.step = Step.COURSES_SPECIALTIES_MENU
             self.set_quick_replies(state, "courses_specialties_menu")
-            if lang == "es":
-                return (
-                    "✨ Estas son nuestras especialidades PADI disponibles.\n"
-                    "Elige una para ver la informacion del servicio."
-                )
-            return (
-                "✨ These are our available PADI specialties.\n"
-                "Choose one to see the service information."
-            )
+            return MESSAGES["courses_specialties_menu"][lang]
         if choice == 4:
             return self._start_mixed_course_add(
                 state,
@@ -5148,10 +5157,13 @@ class DecisionTree:
             self.set_quick_replies(state, "courses_open_water_time")
             return MESSAGES["not_understood"][lang]
 
-        return self._prepare_mixed_add_preview(
+        preview = self._prepare_mixed_add_preview(
             state,
             state.mixed_pending_qty_plan or self._service_for_location("open_water", state),
         )
+        if choice == 2:
+            return self._open_water_time_warning(state) + "\n\n" + preview
+        return preview
 
     def _handle_courses_advanced_menu(self, state: ConversationState, message: str) -> str:
         choice = self._parse_choice(message, 3)

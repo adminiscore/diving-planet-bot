@@ -17,7 +17,7 @@ import unicodedata
 from src.agents.escalation import detect_sensitive_escalation
 from src.agents.lead_summary import build_lead_summary
 from src.agents.intent_classifier import classify_menu_intent
-from src.flows.decision_tree import DecisionTree, ConversationState, Step
+from src.flows.decision_tree import DecisionTree, ConversationState, Step, SERVICES
 from src.agents.rag_agent import rag_answer
 from src.privacy import detect_pii, privacy_block_message
 
@@ -580,11 +580,13 @@ def _mentions_minicourse_intent(message: str) -> bool:
 
 
 def _base_service_to_activity_intent(base_id: str | None) -> str | None:
-    if base_id == "snorkeling":
+    normalized_base_id = _normalize_base_service_id(base_id)
+    if normalized_base_id == "snorkeling":
         return "snorkeling"
-    if base_id == "minicourse":
+    if normalized_base_id == "minicourse":
         return "minicourse"
-    if base_id == "2_dives_1_day":
+    service = SERVICES.get(base_id or "") or SERVICES.get(normalized_base_id or "") or {}
+    if bool(service.get("requires_cert")) and service.get("category") in {"tour", "package"}:
         return "diving"
     return None
 
@@ -696,13 +698,23 @@ def _merge_group_allocations(allocations: list[dict]) -> list[dict]:
     for allocation in allocations:
         activity = allocation.get("activity")
         qty = allocation.get("qty")
+        service_id = allocation.get("service_id")
         if not activity or not isinstance(qty, int) or qty <= 0:
             continue
-        existing = next((item for item in merged if item["activity"] == activity), None)
+        existing = next(
+            (
+                item for item in merged
+                if item["activity"] == activity and item.get("service_id") == service_id
+            ),
+            None,
+        )
         if existing is not None:
             existing["qty"] += qty
         else:
-            merged.append({"activity": activity, "qty": qty})
+            merged_item = {"activity": activity, "qty": qty}
+            if service_id:
+                merged_item["service_id"] = service_id
+            merged.append(merged_item)
     return merged
 
 
@@ -816,13 +828,21 @@ def _extract_menu_mixed_group_context(message: str) -> dict | None:
     return group_context
 
 
-def _build_group_context_from_activity(activity: str, companion_count: int = 1, total_people: int | None = None) -> dict:
+def _build_group_context_from_activity(
+    activity: str,
+    companion_count: int = 1,
+    total_people: int | None = None,
+    service_id: str | None = None,
+) -> dict:
     qty = companion_count if companion_count > 0 else 1
+    allocation = {"activity": activity, "qty": qty}
+    if service_id:
+        allocation["service_id"] = service_id
     return {
         "total_people": total_people,
         "speaker_activity": None,
         "companion_count": qty,
-        "allocations": [{"activity": activity, "qty": qty}],
+        "allocations": [allocation],
         "needs_activity_clarification": False,
     }
 
@@ -838,11 +858,26 @@ def _detect_companion_group_question_answer(
         return None
 
     if normalized == "1":
-        return _build_group_context_from_activity("snorkeling", default_companion_count or 1, default_total_people)
+        return _build_group_context_from_activity(
+            "snorkeling",
+            default_companion_count or 1,
+            default_total_people,
+            _preferred_service_id_for_activity(base_id, "snorkeling"),
+        )
     if normalized == "2":
-        return _build_group_context_from_activity("minicourse", default_companion_count or 1, default_total_people)
+        return _build_group_context_from_activity(
+            "minicourse",
+            default_companion_count or 1,
+            default_total_people,
+            _preferred_service_id_for_activity(base_id, "minicourse"),
+        )
     if normalized == "3":
-        return _build_group_context_from_activity("diving", default_companion_count or 1, default_total_people)
+        return _build_group_context_from_activity(
+            "diving",
+            default_companion_count or 1,
+            default_total_people,
+            _preferred_service_id_for_activity(base_id, "diving"),
+        )
 
     parsed = _build_companion_group_context(message, base_id)
     if parsed and parsed.get("allocations"):
@@ -862,6 +897,7 @@ def _detect_companion_group_question_answer(
         activity_answer,
         default_companion_count or 1,
         default_total_people,
+        _preferred_service_id_for_activity(base_id, activity_answer),
     )
 
 
@@ -877,6 +913,9 @@ def _normalize_base_service_id(service_id: str | None) -> str | None:
 def _build_mixed_from_single_follow_up(base_id: str | None, lang: str) -> tuple[str, list[dict]]:
     companion_count = base_id.get("companion_count") if isinstance(base_id, dict) else None
     actual_base_id = base_id.get("base_id") if isinstance(base_id, dict) else base_id
+    service = SERVICES.get(actual_base_id) or {}
+    category = service.get("category")
+    requires_cert = bool(service.get("requires_cert"))
     if lang == "es":
         if actual_base_id == "snorkeling":
             my_activity = "tu reserva de snorkel"
@@ -884,6 +923,10 @@ def _build_mixed_from_single_follow_up(base_id: str | None, lang: str) -> tuple[
             my_activity = "tu reserva de buceo"
         elif actual_base_id == "minicourse":
             my_activity = "tu minicurso de buceo"
+        elif category == "course":
+            my_activity = "tu curso PADI"
+        elif requires_cert:
+            my_activity = "tu plan de buceo certificado"
         else:
             my_activity = "la actividad que ya tenías seleccionada"
 
@@ -910,8 +953,20 @@ def _build_mixed_from_single_follow_up(base_id: str | None, lang: str) -> tuple[
         ]
         return follow_up, quick_replies
 
+    if actual_base_id == "snorkeling":
+        my_activity = "your snorkeling booking"
+    elif actual_base_id == "2_dives_1_day":
+        my_activity = "your diving booking"
+    elif actual_base_id == "minicourse":
+        my_activity = "your beginner diving mini-course"
+    elif category == "course":
+        my_activity = "your PADI course"
+    elif requires_cert:
+        my_activity = "your certified diving plan"
+    else:
+        my_activity = "your current activity"
     follow_up = (
-        "If you want, I can add your current activity to a *mixed group* booking (cart), "
+        f"If you want, I can add {my_activity} to a *mixed group* booking (cart), "
         "keeping it for you so you can then add your friend or companion.\n\n"
         "Would you like me to prepare the booking for them as well?\n"
         "1️⃣ Yes, add them to the cart\n"
@@ -975,8 +1030,12 @@ def _split_diving_for_mixed_cert(group_context: dict, cert_count: int) -> dict:
         if alloc.get("activity") == "diving":
             total_qty = alloc.get("qty", 0)
             mini_count = max(total_qty - cert_count, 0)
+            service_id = alloc.get("service_id")
             if cert_count > 0:
-                new_allocs.append({"activity": "diving", "qty": cert_count})
+                cert_alloc = {"activity": "diving", "qty": cert_count}
+                if service_id:
+                    cert_alloc["service_id"] = service_id
+                new_allocs.append(cert_alloc)
             if mini_count > 0:
                 new_allocs.append({"activity": "minicourse", "qty": mini_count})
         else:
@@ -1107,7 +1166,25 @@ def _clear_mixed_from_single_group_context(state: ConversationState) -> None:
     setattr(state, "mixed_from_single_group_context", None)
 
 
-def _activity_to_service_id(activity: str) -> str | None:
+def _preferred_service_id_for_activity(base_id: str | None, activity: str | None) -> str | None:
+    if not base_id or not activity:
+        return None
+    if _base_service_to_activity_intent(base_id) != activity:
+        return None
+    return base_id
+
+
+def _activity_to_service_id(activity: str, preferred_service_id: str | None = None) -> str | None:
+    if preferred_service_id:
+        mapped = _map_service_to_cart_item(preferred_service_id)
+        if mapped is not None:
+            mapped_type, mapped_plan = mapped
+            if activity == "snorkeling" and mapped_type == "snorkel":
+                return preferred_service_id
+            if activity == "minicourse" and mapped_type == "beginner":
+                return preferred_service_id
+            if activity == "diving" and mapped_type == "cert":
+                return mapped_plan
     if activity == "snorkeling":
         return "snorkeling"
     if activity == "minicourse":
@@ -1117,7 +1194,17 @@ def _activity_to_service_id(activity: str) -> str | None:
     return None
 
 
-def _activity_to_cart_item(activity: str) -> tuple[str, str | None] | None:
+def _activity_to_cart_item(activity: str, preferred_service_id: str | None = None) -> tuple[str, str | None] | None:
+    if preferred_service_id:
+        mapped = _map_service_to_cart_item(preferred_service_id)
+        if mapped is not None:
+            mapped_type, mapped_plan = mapped
+            if activity == "snorkeling" and mapped_type == "snorkel":
+                return mapped
+            if activity == "minicourse" and mapped_type == "beginner":
+                return mapped
+            if activity == "diving" and mapped_type == "cert":
+                return mapped_type, mapped_plan
     if activity == "snorkeling":
         return "snorkel", None
     if activity == "minicourse":
@@ -1134,19 +1221,21 @@ def _cart_item_to_service_id(item: dict) -> str | None:
         return "snorkeling"
     if item_type == "beginner":
         return "minicourse"
-    if item_type == "cert" and plan == "2_dives_1_day":
-        return "2_dives_1_day"
+    if item_type == "cert" and plan:
+        return plan
+    if item_type == "course" and plan:
+        return plan
     return None
 
 
 def _infer_companion_base_service_id(state: ConversationState) -> str | None:
-    selected_service = _normalize_base_service_id(getattr(state, "selected_service", None))
+    selected_service = getattr(state, "selected_service", None)
     if _map_service_to_cart_item(selected_service or "") is not None:
         return selected_service
 
     if decision_tree._is_in_mixed_flow(state) and len(getattr(state, "mixed_cart", [])) == 1:
         inferred = _cart_item_to_service_id(state.mixed_cart[0])
-        return _normalize_base_service_id(inferred)
+        return inferred
     return None
 
 
@@ -1175,9 +1264,10 @@ def _append_group_context_to_existing_mixed_cart(state: ConversationState, group
         for allocation in group_context.get("allocations", []):
             activity = allocation.get("activity")
             qty = allocation.get("qty")
+            service_id = allocation.get("service_id")
             if not activity or not isinstance(qty, int):
                 continue
-            cart_item = _activity_to_cart_item(activity)
+            cart_item = _activity_to_cart_item(activity, service_id)
             if cart_item is None:
                 continue
             item_type, plan = cart_item
@@ -1253,12 +1343,12 @@ def _render_group_info_cards(state: ConversationState, allocations: list[dict]) 
     if not allocations:
         return ""
     if len(allocations) == 1:
-        service_id = _activity_to_service_id(allocations[0]["activity"])
+        service_id = _activity_to_service_id(allocations[0]["activity"], allocations[0].get("service_id"))
         return _render_service_info_card_for_current_location(state, service_id) if service_id else ""
 
     sections: list[str] = []
     for allocation in allocations:
-        service_id = _activity_to_service_id(allocation["activity"])
+        service_id = _activity_to_service_id(allocation["activity"], allocation.get("service_id"))
         if not service_id:
             continue
         sections.append(
@@ -1275,12 +1365,16 @@ def _resolve_group_certification(group_context: dict, cert_answer: bool) -> dict
     for allocation in group_context.get("allocations", []):
         activity = allocation.get("activity")
         qty = allocation.get("qty")
+        service_id = allocation.get("service_id")
         if not isinstance(qty, int) or qty <= 0 or not activity:
             continue
         if activity == "diving" and not cert_answer:
             resolved_allocations.append({"activity": "minicourse", "qty": qty})
         else:
-            resolved_allocations.append({"activity": activity, "qty": qty})
+            resolved_allocation = {"activity": activity, "qty": qty}
+            if service_id:
+                resolved_allocation["service_id"] = service_id
+            resolved_allocations.append(resolved_allocation)
 
     resolved_context = dict(group_context)
     resolved_context["allocations"] = _merge_group_allocations(resolved_allocations)
@@ -1443,14 +1537,22 @@ def _coerce_group_context_with_activity_intent(
         return parsed_group_context
 
     if parsed_group_context is None:
-        return _build_group_context_from_activity(activity_intent)
+        return _build_group_context_from_activity(
+            activity_intent,
+            service_id=_preferred_service_id_for_activity(base_id, activity_intent),
+        )
 
     if parsed_group_context.get("allocations"):
         return parsed_group_context
 
     companion_count = parsed_group_context.get("companion_count") or 1
     total_people = parsed_group_context.get("total_people")
-    return _build_group_context_from_activity(activity_intent, companion_count, total_people)
+    return _build_group_context_from_activity(
+        activity_intent,
+        companion_count,
+        total_people,
+        _preferred_service_id_for_activity(base_id, activity_intent),
+    )
 
 
 def _handle_companion_group_context(state: ConversationState, base_id: str | None, lang: str, group_context: dict | None) -> str:
@@ -1490,7 +1592,11 @@ def _build_mixed_from_single_activity_response(
     info_card = _render_service_info_card_for_current_location(state, target_service_id)
     follow_up, quick_replies = _build_mixed_from_single_follow_up({"base_id": base_id, "companion_count": 1}, lang)
     setattr(state, "mixed_from_single_offer_pending", True)
-    _set_mixed_from_single_group_context(state, _build_group_context_from_activity(_base_service_to_activity_intent(target_service_id) or "snorkeling"))
+    target_activity = _base_service_to_activity_intent(target_service_id) or "snorkeling"
+    _set_mixed_from_single_group_context(
+        state,
+        _build_group_context_from_activity(target_activity, service_id=_preferred_service_id_for_activity(target_service_id, target_activity)),
+    )
     state.quick_replies = quick_replies
     return f"{intro}\n\n{info_card}\n\n{follow_up}"
 
@@ -1511,7 +1617,10 @@ def _handle_companion_activity_intent(
         state,
         base_id,
         lang,
-        _build_group_context_from_activity(activity_intent),
+        _build_group_context_from_activity(
+            activity_intent,
+            service_id=_preferred_service_id_for_activity(base_id, activity_intent),
+        ),
     )
 
 
@@ -1529,13 +1638,18 @@ def _map_service_to_cart_item(service_id: str) -> tuple[str, str | None] | None:
     if base_id.endswith(suffix):
         base_id = base_id[: -len(suffix)]
 
+    service = SERVICES.get(service_id) or SERVICES.get(base_id) or {}
+    category = service.get("category")
+    requires_cert = bool(service.get("requires_cert"))
+
     if base_id == "snorkeling":
         return "snorkel", None
-    if base_id == "2_dives_1_day":
-        # Certified 2-dives / 1-day plan
-        return "cert", "2_dives_1_day"
     if base_id == "minicourse":
         return "beginner", None
+    if category == "course":
+        return "course", service_id
+    if requires_cert and category in {"tour", "package"}:
+        return "cert", service_id
     return None
 
 
@@ -1579,9 +1693,10 @@ def _enter_mixed_flow_from_single(state: ConversationState) -> str:
         for allocation in group_context.get("allocations", []):
             activity = allocation.get("activity")
             qty = allocation.get("qty")
+            service_id = allocation.get("service_id")
             if not activity or not isinstance(qty, int):
                 continue
-            cart_item = _activity_to_cart_item(activity)
+            cart_item = _activity_to_cart_item(activity, service_id)
             if cart_item is None:
                 continue
             companion_item_type, companion_plan = cart_item
@@ -1666,6 +1781,12 @@ def _maybe_offer_mixed_from_single(state: ConversationState, message: str, answe
             parsed_group_context = _build_companion_group_context(message, base_id)
             group_context = _coerce_group_context_with_activity_intent(message, base_id, parsed_group_context)
             return _handle_companion_group_context(state, base_id, lang, group_context)
+
+        if lang == "es":
+            parsed_group_context = _build_companion_group_context(message, svc_id)
+            group_context = _coerce_group_context_with_activity_intent(message, svc_id, parsed_group_context)
+            if group_context is not None:
+                return _handle_companion_group_context(state, svc_id, lang, group_context)
 
         follow_up, quick_replies = _build_mixed_from_single_follow_up(base_id, lang)
 

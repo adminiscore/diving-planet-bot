@@ -870,6 +870,8 @@ async def test_open_water_from_cartagena_not_enough_time():
     assert state.selected_service == "open_water"
     assert state.step == Step.MIXED_ADD_PREVIEW
     assert "open water" in resp.lower()
+    assert "2 dias completos" in resp.lower() or "2 días completos" in resp.lower()
+    assert "1 noche" in resp.lower()
 
 
 @pytest.mark.asyncio
@@ -880,6 +882,8 @@ async def test_open_water_already_on_island():
     assert state.location == "island"
     assert state.selected_service == "open_water_already_on_island"
     assert state.step == Step.MIXED_ADD_PREVIEW
+    assert "2 dias completos" in resp.lower() or "2 días completos" in resp.lower()
+    assert "1 noche" not in resp.lower()
 
 
 @pytest.mark.asyncio
@@ -1508,6 +1512,8 @@ async def test_en_open_water_from_island():
     assert state.location == "island"
     assert state.selected_service == "open_water_already_on_island"
     assert state.step == Step.MIXED_ADD_PREVIEW
+    assert "2 full days" in resp.lower()
+    assert "overnight stay" not in resp.lower()
 
 
 @pytest.mark.asyncio
@@ -2056,6 +2062,113 @@ async def test_en_adaptive_diving_routes_to_rag():
     assert resp == RAG_MOCK_EN
 
 
+@pytest.mark.asyncio
+async def test_single_open_water_can_upgrade_to_mixed_cart_preserving_course_plan():
+    state = make_state("es")
+    state.step = Step.SUMMARY
+    state.selected_service = "open_water"
+    state.location = "cartagena"
+    state.history = []
+
+    with patch("src.agents.supervisor.rag_answer", new_callable=AsyncMock, return_value=RAG_MOCK):
+        resp = await route_message(state, "voy con un amigo")
+
+    assert "curso padi" in resp.lower()
+    assert getattr(state, "mixed_from_single_offer_pending", False) is True
+
+    confirm = await route_message(state, "1")
+
+    assert state.step == Step.MIXED_CART_REVIEW
+    assert state.mixed_cart[0]["type"] == "course"
+    assert state.mixed_cart[0]["plan"] == "open_water"
+    assert "carrito" in confirm.lower() or "cart" in confirm.lower()
+
+
+@pytest.mark.asyncio
+async def test_single_island_certified_package_can_upgrade_to_mixed_cart_preserving_exact_plan():
+    state = make_state("es")
+    state.step = Step.SUMMARY
+    state.selected_service = "5_dives_2_days_already_on_island"
+    state.location = "island"
+    state.history = []
+
+    with patch("src.agents.supervisor.rag_answer", new_callable=AsyncMock, return_value=RAG_MOCK):
+        resp = await route_message(state, "voy con mi pareja")
+
+    assert "buceo certificado" in resp.lower()
+    assert getattr(state, "mixed_from_single_offer_pending", False) is True
+
+    await route_message(state, "1")
+
+    assert state.step == Step.MIXED_CART_REVIEW
+    assert state.mixed_cart[0]["type"] == "cert"
+    assert state.mixed_cart[0]["plan"] == "5_dives_2_days_already_on_island"
+
+
+@pytest.mark.asyncio
+async def test_single_exact_certified_same_activity_preserves_exact_plan_for_companion():
+    state = make_state("es")
+    state.step = Step.SUMMARY
+    state.selected_service = "5_dives_2_days_already_on_island"
+    state.location = "island"
+    state.history = []
+
+    with patch("src.agents.supervisor.rag_answer", new_callable=AsyncMock, return_value=RAG_MOCK):
+        resp = await route_message(state, "voy con mi pareja y hará lo mismo")
+
+    assert "buzo certificado" in resp.lower() or "buzos certificados" in resp.lower()
+    assert getattr(state, "mixed_from_single_cert_question_pending", False) is True
+
+    resp = await route_message(state, "1")
+    assert "última inmersión" in resp.lower() or "ultima inmersion" in resp.lower()
+
+    resp = await route_message(state, "2")
+    assert getattr(state, "mixed_from_single_offer_pending", False) is True
+    assert "5 inmersiones" in resp.lower()
+
+    await route_message(state, "1")
+
+    assert state.step == Step.MIXED_CART_REVIEW
+    assert len(state.mixed_cart) == 1
+    assert state.mixed_cart[0]["type"] == "cert"
+    assert state.mixed_cart[0]["plan"] == "5_dives_2_days_already_on_island"
+    assert state.mixed_cart[0]["qty"] == 2
+
+
+@pytest.mark.asyncio
+async def test_mixed_flow_same_activity_on_exact_certified_plan_preserves_exact_plan():
+    state = make_state("es")
+    state.step = Step.MIXED_CART_REVIEW
+    state.location = "island"
+    state.mixed_cart = [
+        {
+            "type": "cert",
+            "qty": 1,
+            "plan": "5_dives_2_days_already_on_island",
+            "label": "5 inmersiones / 2 días",
+        }
+    ]
+
+    resp = await route_message(state, "mi pareja hace lo mismo")
+
+    assert "buzo certificado" in resp.lower() or "buzos certificados" in resp.lower()
+    assert getattr(state, "mixed_from_single_cert_question_pending", False) is True
+
+    await route_message(state, "1")
+    resp = await route_message(state, "2")
+
+    assert getattr(state, "mixed_from_single_offer_pending", False) is True
+    assert "5 inmersiones" in resp.lower()
+
+    await route_message(state, "1")
+
+    assert state.step == Step.MIXED_CART_REVIEW
+    assert len(state.mixed_cart) == 1
+    assert state.mixed_cart[0]["type"] == "cert"
+    assert state.mixed_cart[0]["plan"] == "5_dives_2_days_already_on_island"
+    assert state.mixed_cart[0]["qty"] == 2
+
+
 # ===========================================================================
 # Cart-style mixed-group flow tests
 # ===========================================================================
@@ -2112,6 +2225,20 @@ async def test_mixed_add_cert_goes_to_cert_plan():
         "📅 Paquete multi-día (3 o más inmersiones)",
     ]
     assert "qué idea tienes" in resp.lower()
+
+
+@pytest.mark.asyncio
+async def test_mixed_add_activity_uses_back_label_in_spanish():
+    state = await reach_mixed_add_activity()
+    assert state.quick_replies[-1]["title"] == "🔙 Volver"
+    assert state.quick_replies[-1]["value"] == "back"
+
+
+@pytest.mark.asyncio
+async def test_mixed_add_activity_uses_back_label_in_english():
+    state = await reach_mixed_add_activity("en")
+    assert state.quick_replies[-1]["title"] == "🔙 Back"
+    assert state.quick_replies[-1]["value"] == "back"
 
 
 @pytest.mark.asyncio

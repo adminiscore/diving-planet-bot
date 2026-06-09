@@ -1,6 +1,13 @@
 History
 =======
 
+0.16.1 - (2026-06-09)
+---------------------
+* Align the `Reservar` entry with the real cart-based booking flow so the menu and handler now point to the same step-by-step booking path.
+* Open Water now keeps the cart preview but shows an explicit timing warning when the user says they may not have enough time, with different wording for Cartagena vs. already-on-island cases.
+* Standardize mixed-cart navigation labels so buttons that go back now consistently read `Volver` / `Back` instead of `Cancelar` / `Cancel`.
+* Expand the single-to-mixed upgrade path to support PADI courses and exact certified packages, preserving the exact service id through companion handling and mixed-cart entry.
+
 0.16.0 - (2026-06-05)
 ---------------------
 * Mixed cart: kids age question now fires INLINE when adding Minicurso (not at end of checkout), supports `<8` / `8-10` / `10+` / `Varios rangos`, and re-prompts on modify; delete-then-re-add starts fresh.
