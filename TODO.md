@@ -66,12 +66,16 @@
 
 ## División de trabajo activa
 
-### Gadea (`feature/dev_gadea`)
-- [ ] Flujos buceo multi-día (árbol de opciones)
-- [ ] Persistencia de memoria de conversación (Redis/PostgreSQL)
-- [ ] Corrección minicurso de snorkel y flujos de principiantes/recuperación
-- [ ] Flujo de pago en el árbol (pendiente definir: IBAN, QR, Nequi, etc.)
-- [ ] Mejoras generales del árbol de decisión
+### Estado real del árbol y del producto (junio 2026)
+- [x] Entrada principal `Reservar` alineada con el flujo real **cart-first** (`MIXED_ENTRY`).
+- [x] Grupo mixto funcional en reserva: mezcla tours, cursos PADI y acompañantes dentro del mismo carrito.
+- [x] Flujos guiados de buceo certificado multi-día disponibles en árbol y carrito (incluidas variantes de islas).
+- [x] Cursos PADI separados en submenús de **Go Pro** y **Especialidades**.
+- [x] `Información > Actividades` espeja la estructura comercial actual del árbol.
+- [x] Selector de isla y hotel operativo en logística (`ISLAND_MENU` / `ISLAND_HOTEL_MENU`).
+- [ ] Persistencia de estado conversacional fuera de memoria (`Redis`/`PostgreSQL`).
+- [ ] Política de pago definitiva y cerrada en árbol/KB (anticipo, medios locales, combinaciones y excepciones).
+- [ ] Repaso manual final de recorridos E2E y pulido de copys antes de demo/piloto.
 
 ### Álvaro (`feature/dev_alvaro`) — no pisar trabajo de Gadea
 - [ ] **KB: Política de cancelaciones y cambios** — confirmar reglas con el dueño (gap crítico RAG)
@@ -92,38 +96,31 @@
 ## Pendientes (RAG)
 - [ ] Confirmar con cliente la info de: “¿Cuál es la profundidad máxima?” / “What is the max depth?”
 - [ ] Añadir FAQ específico de profundidad máxima (ES/EN) una vez confirmado.
-- [ ] Definir los precios de servicios
+- [ ] Confirmar / cerrar precios oficiales y reglas de descuento que siguen parciales o pendientes de validación de negocio
 - [ ] Memoria en el chat?
 - [ ] Almuerzo = Comida
 - [ ] Info sobre la comida
 - [x] Inyectar contexto de ubicación y alojamiento (`state.location`, `state.island`, `state.hotel`) en las llamadas al RAG para que pueda mencionar recogidas/logística específicas.
 
-## Pendientes (árbol de opciones / intents usuarios)
-- [ ] Modelar caso **grupo mixto** (buzos certificados + principiantes + snorkelers / acompañantes) viajando juntos en el mismo tour, con precios diferenciados y logística de actividades/lancha.
-- [ ] Cubrir preguntas de **disponibilidad de última hora** y **corte de reserva online** (hasta qué hora se puede reservar por web y qué pasa después).
-- [ ] Cubrir preguntas de **precios**: valores en USD vs COP, diferencia de tarifas saliendo desde Cartagena vs ya en las islas, y paquetes de varios días (5, 7, 9 buceos) con o sin nocturna.
-- [ ] Cubrir preguntas de **descuentos** para colombianos y residentes (precio local) y cómo se combina con el 10% online (si ya está aplicado o no, necesidad o no de código).
-- [ ] Modelar mejor las dudas sobre **alojamiento en islas**: hoteles recomendados (Cocoliso, San Pedro de Majagua, etc.), que el alojamiento no está incluido, noches extra y posibilidad de regresar con Diving Planet otro día.
-- [ ] Cubrir preguntas sobre **recogida en hotel en las islas**: horarios de pick-up y regreso, qué pasa si el hotel no tiene acceso en lancha, hoteles específicos (Isla Grande, Ubuntu, etc.).
-- [ ] Cubrir preguntas sobre **punto de encuentro en Cartagena / marinas**: Muelle de la Bodeguita vs Marina Todo Mar, puerta específica, link de ubicación y opción de guardar maletas en la oficina de Cartagena.
-- [ ] Detallar mejor **qué incluye cada plan**: equipo completo, tasas de parque, seguro de buceo, almuerzo/comida, si hay opciones sin almuerzo, snacks/bebidas y si se puede llevar comida propia.
-- [ ] Cubrir preguntas de **equipo**: si es necesario llevar equipo propio, si se puede ver/probar el equipo antes de salir, y dónde está el equipo (Cartagena vs islas).
-- [ ] Cubrir preguntas de **qué llevar y bienestar**: toalla, bloqueador, mareo (si ofrecen pastillas o solo recomendación), qué no está permitido llevar.
-- [x] Cubrir preguntas sobre **edades mínimas y requisitos para niños** tanto en buceo como en snorkel.
-- [ ] Cubrir preguntas sobre **fotos y videos**: si están incluidos en el plan, cómo se solicitan luego, qué pasa con fotos que tomó el guía.
-- [ ] Cubrir preguntas sobre **registro de buceos / logbook**: nombres de puntos de buceo (Alex Place, Luis Guerra, etc.) y apoyo para registrar inmersiones en apps PADI/SSI.
-- [ ] Cubrir preguntas sobre **condiciones y políticas**: clima, cancelación y reembolsos, cambio de fecha, qué pasa si el cliente no puede viajar.
-- [x] Añadir paso `GROUP_TYPE` para tipo de grupo y manejar el caso de grupo mixto (buceo + snorkel / acompañantes) con explicación y escalado a humano.
-- [x] Crear menús específicos de **precios**, **reservas/pagos** y **logística/FAQ** (`PRICING_MENU`, `BOOKING_MENU`, `LOGISTICS_MENU`) con mensajes ES/EN y retorno al menú principal.
-- [x] Ajustar flujos de tours certificados y principiantes para reutilizar la `location` seleccionada desde el menú principal y saltar directamente a `COLOMBIAN` cuando aplica.
-- [x] Actualizar el `Supervisor` para reconocer los nuevos pasos de menú y seguir ruteando correctamente al árbol de decisión.
-
-- [x] Rediseñar el flujo de **Cursos PADI y certificaciones** para alinearlo mejor con el árbol extendido (curso básico Open Water con origen Cartagena/islas, tiempo disponible, resumen claro del curso).
-- [x] Añadir granularidad en cursos: path específico para **referrals/reactivates** (cursos empezados en otro centro), explicando documentos requeridos y cómo se cobra la diferencia vs paquete de buceos.
-- [x] Incorporar de forma explícita en el árbol la **edad mínima y recomendaciones para niños** en minicurso y snorkel mediante notas adicionales en los detalles de servicio.
-- [x] Extender la estructura de `SERVICES` para reflejar mejor atributos de cursos y experiencias de principiantes/snorkel (edad mínima recomendada, días mínimos de práctica, notas adicionales), manteniendo compatibilidad con el resumen actual.
-- [x] Modelar un selector de **isla de alojamiento** para clientes que ya están en las islas y usarlo en los flujos de logística y recogida en hotel (Step `ISLAND_MENU` con almacenamiento en `state.island`).
-- [x] Cargar/configurar el listado de **hoteles por isla** (usando el detalle de alojamientos que tenemos para las 12 islas principales) y modelar submenús de hotel tras seleccionar isla (Step `ISLAND_HOTEL_MENU` con `state.hotel`).
+## Pendientes reales (árbol de opciones / intents usuarios)
+- [x] Reserva principal cart-first con carrito mixto (`MIXED_ENTRY`).
+- [x] Caso **grupo mixto** para reserva (certificados + principiantes + snorkel + acompañantes) dentro del mismo carrito.
+- [x] Menús específicos de **precios**, **reservas/pagos** y **logística/FAQ** (`PRICING_MENU`, `BOOKING_MENU`, `LOGISTICS_MENU`).
+- [x] Flujos de tours certificados y principiantes reutilizando `location` y pasando por `COLOMBIAN` / resumen cuando aplica.
+- [x] Flujos de **Cursos PADI y certificaciones** alineados con el árbol actual, incluyendo Open Water, Go Pro, especialidades y referral/reactivate.
+- [x] Cobertura de **edades mínimas y requisitos para niños** en minicurso / snorkel.
+- [x] Selector de **isla** y **hotel** para logística de clientes ya en islas.
+- [ ] Cubrir mejor preguntas de **disponibilidad de última hora** y **corte de reserva online** (hasta qué hora se puede reservar por web y qué pasa después).
+- [ ] Cerrar mejor las preguntas de **precios y descuentos**: USD vs COP, Cartagena vs islas y cómo se combinan los descuentos realmente vigentes.
+- [ ] Modelar mejor las dudas sobre **alojamiento en islas**: hoteles recomendados, noches extra y retorno otro día.
+- [ ] Cubrir preguntas sobre **recogida en hotel en las islas**: horarios, hoteles concretos y qué pasa si no hay acceso marítimo claro.
+- [ ] Cubrir preguntas sobre **punto de encuentro en Cartagena / marinas**: Muelle de la Bodeguita vs Marina Todo Mar, puerta específica, link de ubicación y maletas.
+- [ ] Detallar mejor **qué incluye cada plan**: equipo, tasas, seguro, almuerzo/comida, snacks/bebidas y si se puede llevar comida propia.
+- [ ] Cubrir preguntas de **equipo**: si hace falta llevar equipo propio, si se puede ver/probar antes y dónde se entrega según origen.
+- [ ] Cubrir preguntas de **qué llevar y bienestar**: toalla, bloqueador, mareo y restricciones prácticas.
+- [ ] Cubrir preguntas sobre **fotos y videos**: si están incluidos, cómo se solicitan y qué pasa con fotos tomadas por el guía.
+- [ ] Cubrir preguntas sobre **registro de buceos / logbook**: puntos de buceo y apoyo para registrar inmersiones.
+- [ ] Cubrir mejor **condiciones y políticas**: clima, cancelación, reembolsos y cambios de fecha.
 
 #### Islas del Rosario con muelle y hotel (para futuros selectores)
 
@@ -256,10 +253,10 @@ Esa parte se la dejas al LLM/RAG, que con el contexto y la base de conocimiento 
 | ✅ | Base de conocimiento + embeddings pgvector (441 docs) |
 | ✅ | Privacidad / PII + bloqueo de datos sensibles |
 | ✅ | Auto-asignación conversaciones al owner en Chatwoot |
-| 🔄 Gadea | Flujos buceo multi-día (5/7/9 con nocturna) |
-| 🔄 Gadea | Persistencia de memoria (Redis/PostgreSQL) |
-| 🔄 Gadea | Flujo de pago en el árbol |
-| 🔄 Gadea | Corrección minicurso / snorkel / principiantes |
+| ✅ | Flujos guiados de buceo multi-día en árbol y carrito |
+| ⬜ | Persistencia de memoria (Redis/PostgreSQL) |
+| ⬜ | Flujo de pago definitivo en árbol / KB |
+| 🔄 | Pulido final minicurso / snorkel / principiantes con pruebas E2E |
 | ⬜ Álvaro | Política de cancelaciones y cambios (KB + RAG) |
 | ⬜ Álvaro | Medios de pago completos (KB + RAG) |
 | ⬜ Álvaro | Editorial "¿qué plan me conviene?" (comparativa RAG) |

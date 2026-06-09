@@ -4,160 +4,234 @@ Este documento refleja el árbol de decisión actual y los servicios disponibles
 
 ## Catálogo incorporado al árbol
 
-- **Tours desde Cartagena**
-  - **Salidas de Buceo - 2 inmersiones** (`2_dives_1_day`)
-  - **Minicurso de Buceo** (`minicourse`)
-  - **Tour de Snorkeling** (`snorkeling`)
-  - **Servicio Privado** (`private`)
-- **Tours / paquetes para clientes ya en las islas**
-  - **Salidas de Buceo - 2 inmersiones (ya en las islas)** (`2_dives_1_day_already_on_island`)
-  - **Paquete de 3 buceos (2 diurnos + 1 nocturno) - ya en las islas** (`3_dives_1_day_already_on_island`)
-  - **Paquete de 5 buceos (2 dias) - ya en las islas** (`5_dives_2_days_already_on_island`)
-  - **Paquete de 7 buceos (3 dias) - ya en las islas** (`7_dives_3_days_already_on_island`)
-  - **Minicurso de Buceo (ya en las islas)** (`minicourse_already_on_island`)
-  - **Tour de Snorkeling (ya en las islas)** (`snorkeling_already_on_island`)
-- **Paquetes certificados desde Cartagena**
-  - **5 Buceos - 2 dias** (`5_dives_2_days`)
-  - **7 Buceos - 3 dias** (`7_dives_3_days`)
-  - **9 Buceos - 4 dias** (`9_dives_4_days`)
+- **Tours / paquetes de buceo y snorkel**
+  - `2_dives_1_day`
+  - `3_dives_1_day`
+  - `4_dives_2_days`
+  - `5_dives_2_days`
+  - `7_dives_3_days`
+  - `9_dives_4_days`
+  - `minicourse`
+  - `snorkeling`
+  - `private`
+- **Variantes para clientes ya en las islas**
+  - `2_dives_1_day_already_on_island`
+  - `3_dives_1_day_already_on_island`
+  - `4_dives_2_days_already_on_island`
+  - `4_dives_2_days_mixed_already_on_island`
+  - `5_dives_2_days_already_on_island`
+  - `7_dives_3_days_already_on_island`
+  - `9_dives_4_days_already_on_island`
+  - `minicourse_already_on_island`
+  - `snorkeling_already_on_island`
 - **Cursos PADI**
-  - **Curso Basico PADI (Open Water)** (`open_water`)
-  - **Curso Basico PADI (Open Water) - ya en las islas** (`open_water_already_on_island`)
-  - **Curso Avanzado PADI** (`advanced`)
-  - **Curso Avanzado PADI - ya en las islas** (`advanced_already_on_island`)
-  - **Curso de Rescate + EFR** (`rescue`)
-  - **Curso Referido (Open Water)** (`referral`)
-  - **Curso Dive Master PADI** (`divemaster`)
+  - `open_water`
+  - `open_water_already_on_island`
+  - `advanced`
+  - `advanced_already_on_island`
+  - `rescue`
+  - `referral`
+  - `referral_already_on_island`
+  - `divemaster`
 - **Especialidades PADI**
-  - **Especialidad Mindful Diving** (`mindful_diving`)
-  - **Especialidad PADI: Naturalista** (`naturalist_specialty`)
-  - **Especialidad PADI: Identificacion de Peces** (`fish_identification_specialty`)
-  - **Especialidad PADI: Flotabilidad** (`buoyancy_specialty`)
-  - **Especialidad PADI: Nitrox** (`nitrox_specialty`)
-  - **Especialidad PADI: Identificacion de Peces - ya en las islas** (`fish_identification_specialty_already_on_island`)
-  - **Especialidad PADI: Nitrox - ya en las islas** (`nitrox_specialty_already_on_island`)
-  - **Especialidad PADI: Naturalista - ya en las islas** (`naturalist_specialty_already_on_island`)
-  - **Especialidad PADI: Flotabilidad - ya en las islas** (`buoyancy_specialty_already_on_island`)
+  - `mindful_diving`
+  - `fish_identification_specialty`
+  - `fish_identification_specialty_already_on_island`
+  - `naturalist_specialty`
+  - `naturalist_specialty_already_on_island`
+  - `buoyancy_specialty`
+  - `buoyancy_specialty_already_on_island`
+  - `nitrox_specialty`
+  - `nitrox_specialty_already_on_island`
 
-## Árbol visual
+## Árbol visual actual
 
 - **Idioma**
   - **Español**
     - **Menú principal**
-      - **1. 🤿 Tours de buceo y snorkel (desde Cartagena)**
-        - Fija `location = cartagena`.
-        - **Tipo de grupo**
-          - **1. Solo buzos certificados**
-            - **Tours certificados desde Cartagena**
-              - **1. Salidas de Buceo - 2 inmersiones**
-                - Pregunta inactividad: **¿más de 2 años desde la última inmersión?**
-                  - **Sí** → pregunta experiencia **500+ inmersiones / Dive Master**
-                    - **Sí** → **Transferir con asesor/jefe**
-                    - **No** → recomienda refresher → pregunta si quiere incluirlo
-                      - **Sí** → cambia a `minicourse` como alternativa/refuerzo → pregunta colombiano/residente → resumen
-                      - **No** → pregunta colombiano/residente → resumen
-                  - **No** → muestra detalle del servicio → pregunta colombiano/residente → resumen
-              - **2. 5 Buceos - 2 dias**
-                - Muestra detalle desde `services.json`.
-                - Flujo de inactividad/refresher igual que arriba.
-                - Si acepta refresher, mantiene el paquete multi-día y deja anotación para asesor.
-              - **3. 7 Buceos - 3 dias**
-                - Muestra detalle desde `services.json`.
-                - Flujo de inactividad/refresher igual.
-              - **4. 9 Buceos - 4 dias**
-                - Muestra detalle desde `services.json`.
-                - Flujo de inactividad/refresher igual.
-              - **5. Servicio Privado**
-                - Explica que requiere revisar fecha, número de personas, experiencia, acompañantes/snorkelers y horarios.
-                - **Transferir con asesor/jefe**
-          - **2. Solo principiantes**
-            - **Tours principiantes desde Cartagena**
-              - **1. Minicurso de Buceo** → detalle desde `services.json` → pregunta ubicación si falta → pregunta colombiano/residente → resumen
-              - **2. Tour de Snorkeling** → detalle desde `services.json` → pregunta ubicación si falta → pregunta colombiano/residente → resumen
-              - **3. Servicio Privado** → explicación + transferencia
-          - **3. Grupo mixto (buceo + snorkel)**
-            - Explica que se puede combinar grupo con buzos, principiantes y snorkelers, pero puede requerir coordinación por seguridad.
-            - **Transferir con asesor/jefe**
-          - **4. Solo snorkel / acompañantes**
-            - Selecciona `snorkeling` → detalle → pregunta colombiano/residente → resumen
+      - **1. 🤿 Reservar**
+        - Entra directamente al flujo **cart-first** (`MIXED_ENTRY`).
+        - El usuario arma un **carrito único de reserva** y puede mezclar actividades.
+        - **Inicio del carrito**
+          - **1. 🤿 Añadir actividades**
+            - Si aún no existe `location`, pregunta origen:
+              - **🚤 Salgo desde Cartagena**
+              - **🏝️ Ya estoy en las islas**
+            - Luego abre **¿Qué actividad quieres añadir al carrito?**
+              - **1. 🎓 Buceo certificado**
+                - Submenú:
+                  - **🤿 2 inmersiones / 1 día**
+                  - **📅 Paquete multi-día (3 o más inmersiones)**
+                - Si elige multi-día, muestra:
+                  - **3 inmersiones (1 día)**
+                  - **4 inmersiones (2 días)**
+                  - **5 inmersiones (2 días)**
+                  - **7 inmersiones (3 días)**
+                  - **9 inmersiones (4 días)**
+                - Después pide cantidad.
+                - Luego aplica calificación de seguridad:
+                  - **¿Han pasado más de 2 años desde la última inmersión?**
+                  - Si **sí**, pregunta **500+ inmersiones / Dive Master**.
+                  - Si no aplica excepción, recomienda **refresher**.
+                - Antes de añadir, muestra **preview** con opción de:
+                  - **añadir al carrito**
+                  - **ver itinerario completo**
+              - **2. 🆕 Buceo principiantes (Minicurso)**
+                - Pide cantidad.
+                - Si hay menores o el contexto lo sugiere, aplica calificación de edades:
+                  - **menores de 8**
+                  - **8 a 10 (Bubble Makers)**
+                  - **10+**
+                  - **mezcla de rangos** en el flujo mixto
+                - Luego muestra preview antes de añadir al carrito.
+              - **3. 🐠 Snorkel**
+                - Pide cantidad.
+                - Muestra preview antes de añadir.
+              - **4. 🤿 Curso PADI**
+                - Abre menú de cursos:
+                  - **🐠 Descubriendo el buceo (Open Water Diver)**
+                  - **🚀 Convierte en pro (Advanced / Rescue / Dive Master)**
+                  - **✨ Amplía tus habilidades (Especialidades PADI)**
+                  - **Referral / reactivate**
+                - **Open Water** pregunta origen de práctica y si tiene al menos **2 días completos**.
+                - **Go Pro** separa:
+                  - **Advanced**
+                  - **Rescue + EFR**
+                  - **Dive Master**
+                - **Especialidades** separa:
+                  - **Mindful Diving**
+                  - **Identificación de peces**
+                  - **Naturalista**
+                  - **Flotabilidad**
+                  - **Nitrox**
+                - Luego pide cantidad y enseña preview antes de añadir.
+              - **5. 👤 Acompañante (sin actividad)**
+                - Pide cantidad y lo añade como línea independiente del carrito.
+          - **Revisión del carrito**
+            - Después de añadir items, el usuario puede:
+              - **📍 Cambiar origen**
+              - **➕ Añadir otra actividad**
+              - **🔧 Modificar item**
+              - **❌ Quitar item**
+              - **🔄 Empezar de nuevo**
+              - **✅ Confirmar carrito**
+            - Al cambiar origen, el árbol **remapea servicios y precios** entre Cartagena / islas cuando existe variante equivalente.
+          - **Cierre del carrito**
+            - Pregunta si es **colombiano/a o residente**.
+            - Si hay actividades de lancha/tour, pregunta si quiere **lancha privada exclusiva**.
+            - Genera un **resumen final tipo factura** del carrito.
+            - CTA final:
+              - **🧑‍💼 Reservar / contactar asesor**
+              - **🔄 Empezar de nuevo**
+            - Si el usuario confirma, el flujo prepara el handoff a asesor con contexto del carrito.
+        - **Atajos / ramas relacionadas que siguen existiendo**
+          - El árbol conserva subflujos guiados de tours (`GROUP_TYPE`, `TOURS_EXPERIENCE`, `TOURS_CERTIFIED`, `BEGINNER_AGE`) para compatibilidad, navegación desde información y algunos casos guiados internos.
+          - Los grupos mixtos ya **no** se documentan como “escalar siempre”: ahora pueden entrar al carrito y combinar actividades.
 
-      - **2. 🏝️ Ya estoy en las islas**
-        - Fija `location = island`.
-        - **Tipo de grupo**
-          - **1. Solo buzos certificados**
-            - **Tours certificados ya en islas**
-              - **1. Salidas de Buceo - 2 inmersiones (ya en las islas)**
-              - **2. Paquete de 3 buceos (2 diurnos + 1 nocturno) - ya en las islas**
-              - **3. Paquete de 5 buceos (2 dias) - ya en las islas**
-              - **4. Paquete de 7 buceos (3 dias) - ya en las islas**
-              - **5. Servicio Privado**
-            - Los servicios usan las variantes `*_already_on_island` cuando existen.
-            - Flujo de inactividad/refresher igual; si el refresher aplica a un plan de 1 día, usa `minicourse_already_on_island`.
-          - **2. Solo principiantes**
-            - **1. Minicurso de Buceo (ya en las islas)**
-            - **2. Tour de Snorkeling (ya en las islas)**
-            - **3. Servicio Privado**
-          - **3. Grupo mixto** → explicación + transferencia
-          - **4. Solo snorkel / acompañantes** → `snorkeling_already_on_island`
-
-      - **3. 📘 Cursos PADI y certificaciones**
-        - **Menú cursos**
-          - **1. Quiero certificarme (Open Water)**
-            - Pregunta origen de práctica:
-              - **Salgo desde Cartagena** → `open_water`
-              - **Ya estoy en las islas** → `open_water_already_on_island`
-            - Pregunta si tiene al menos 2 días completos.
-            - Muestra detalle → pregunta colombiano/residente → resumen.
-          - **2. Otro curso PADI avanzado/profesional**
-            - Abre menú avanzado/especialidades:
-              - **1. Curso Avanzado PADI** (`advanced` / `advanced_already_on_island` si location island)
-              - **2. Curso de Rescate + EFR** (`rescue`)
-              - **3. Curso Dive Master PADI** (`divemaster`)
-              - **4. Especialidad Mindful Diving** (`mindful_diving`)
-              - **5. Identificacion de Peces** (`fish_identification_specialty` / versión islas)
-              - **6. Naturalista** (`naturalist_specialty` / versión islas)
-              - **7. Flotabilidad** (`buoyancy_specialty` / versión islas)
-              - **8. Nitrox** (`nitrox_specialty` / versión islas)
-          - **3. Especialidades PADI**
-            - Abre el mismo menú avanzado/especialidades para elegir especialidad.
-          - **4. Ya empecé un curso en otro centro (referral / reactivate)**
-            - Explica que debe revisarse eLearning, formularios PADI e inmersiones pendientes.
-            - **Transferir con asesor/jefe**
-
-      - **4. 💰 Precios y descuentos**
-        - **1. Precios saliendo desde Cartagena**
-          - Muestra referencias de `2_dives_1_day`, `minicourse`, `snorkeling`.
-        - **2. Precios si ya estoy en las islas**
-          - Muestra referencias de `2_dives_1_day_already_on_island`, `3_dives_1_day_already_on_island`, `minicourse_already_on_island`, `snorkeling_already_on_island`.
-        - **3. Paquetes multi-día**
-          - Muestra `5_dives_2_days`, `7_dives_3_days`, `9_dives_4_days`.
-          - También muestra versiones islas `5_dives_2_days_already_on_island` y `7_dives_3_days_already_on_island`.
-        - **4. Descuentos para colombianos/residentes**
-          - Explica descuentos locales/COP y condiciones a confirmar por WhatsApp.
-
-      - **5. 💳 Reserva y pagos**
-        - **1. Pagar todo online**
-        - **2. Pagar 50% ahora y 50% después**
-        - **3. Formas de pago (tarjeta / transferencia)**
-        - **4. Reservas de grupo o agencia**
-        - Después vuelve al menú principal.
-
-      - **6. ℹ️ Logística y otras preguntas**
-        - **1. Punto de encuentro y horarios**
-          - Cartagena: Muelle de la Bodeguita 8:00 a.m.; regreso aprox. 4:00-4:30 p.m.
-          - Islas/multi-día: horarios coordinados según alojamiento y plan.
-        - **2. Alojamiento en islas y recogida en hotel**
-          - Va a selector de isla y luego hotel.
-        - **3. Qué incluye / qué no incluye el plan**
-          - Usa regla general y diferencia Cartagena vs. ya en islas.
-        - **4. Qué llevar y recomendaciones**
-          - Toalla, bloqueador, ropa cómoda, gorra/sombrero, medicación para mareo si aplica, clima y cancelaciones.
-
-      - **7. 🧑‍💬 Hablar con un asesor**
-        - **Transferir con asesor/jefe**
+      - **2. ℹ️ Información**
+        - Abre `INFO_MENU`:
+          - **1. 🧭 Actividades y cursos**
+          - **2. 💰 Precios y descuentos**
+          - **3. 💳 Reservas y pago**
+          - **4. 📍 Logística**
+        - **Información > Actividades y cursos**
+          - Si no se conoce `location`, pregunta primero:
+            - **Salgo desde Cartagena**
+            - **Ya estoy en las islas**
+          - Luego muestra:
+            - **🤿 Tours de buceo / snorkel**
+            - **📘 Cursos PADI y certificaciones**
+          - **Tours de buceo / snorkel**
+            - **🤿 Buceo**
+              - **🤿 Solo buzos certificados**
+                - Menú informativo con:
+                  - **2 inmersiones (1 día)**
+                  - **3 inmersiones (1 día)**
+                  - **4 inmersiones (2 días)**
+                  - **5 inmersiones (2 días)**
+                  - **7 inmersiones (3 días)**
+                  - **9 inmersiones (4 días)**
+                  - **Servicio Privado**
+                - Si `location = island` y elige **4 inmersiones (2 días)**, aparece un selector adicional:
+                  - **4 diurnas**
+                  - **3 diurnas + 1 nocturna**
+              - **🆕 Solo principiantes**
+                - Muestra la ficha de **Minicurso**.
+              - **👥 Grupo mixto (certificados + principiantes)**
+                - Permite revisar primero:
+                  - **Buceo certificado**
+                  - **Minicurso**
+            - **🐠 Snorkel**
+              - Muestra la ficha de **Snorkeling** según origen.
+            - **👥 Grupo mixto (buceo + snorkel)**
+              - Permite revisar primero:
+                - **Buceo certificado**
+                - **Minicurso**
+                - **Snorkel**
+          - **Cursos PADI y certificaciones**
+            - **🐠 Open Water Diver**
+            - **🚀 Go Pro (Advanced / Rescue / Dive Master)**
+            - **✨ Especialidades PADI**
+            - **Referral / reactivate**
+            - En la parte informativa, cada servicio abre una **ficha de información** con:
+              - **🤿 Reservar esta opción**
+              - **🗺️ Ver itinerario**
+            - **Divemaster** y **referral/reactivate** derivan a asesor en lugar de enviar un link de reserva normal.
+        - **Información > Precios y descuentos**
+          - Si aún no se conoce si es colombiano, pregunta primero.
+          - Menú:
+            - **🚤 Precios saliendo desde Cartagena**
+            - **🏝️ Precios si ya estoy en las islas**
+            - **📦 Paquetes 5/7/9 inmersiones (multi-día)**
+            - **🇨🇴 Descuentos para colombianos/residentes**
+          - Las hojas de precio incluyen CTA:
+            - **🤿 Reservar**
+            - **⬅️ Volver**
+            - **🏠 Inicio**
+        - **Información > Reservas y pago**
+          - Menú:
+            - **💳 Pagar todo online**
+            - **🤝 Pagar 50% ahora y 50% después**
+            - **💰 Formas de pago (tarjeta / transferencia)**
+            - **👥 Reservas de grupo o agencia**
+          - Tras responder, vuelve al **menú principal** con hint para seguir navegando.
+        - **Información > Logística**
+          - Menú:
+            - **📍 Punto de encuentro y horarios**
+            - **🏨 Alojamiento en islas y recogida en hotel**
+            - **✅ Qué incluye / qué no incluye el plan**
+            - **🎒 Qué llevar y recomendaciones**
+          - **Punto de encuentro y horarios**
+            - Cartagena: **Muelle de la Bodeguita, entrada 3, 8:00 a.m.**
+            - Regreso estimado 1 día: **4:00–4:30 p.m.**
+            - Multi-día / islas: horarios coordinados según plan y alojamiento.
+          - **Alojamiento en islas y recogida en hotel**
+            - Pasa por selector de isla (`ISLAND_MENU`):
+              - Isla Grande
+              - Isla Marina
+              - Isla del Pirata
+              - Isla del Sol
+              - Isleta
+              - Isla Arena
+              - Isla Pavitos
+              - Isla Lizamar
+              - Isla Gigi
+              - Isla Rosa
+              - Isla Pelicano
+              - Isla Rosario
+            - Luego muestra hoteles concretos por isla y opción:
+              - **Otro / No está en la lista**
+            - Guarda `state.island` y `state.hotel`, y vuelve al menú de logística.
+          - **Qué incluye / qué no incluye**
+            - Da una regla general y adapta el copy si el cliente ya indicó que está en islas.
+          - **Qué llevar y recomendaciones**
+            - Resume elementos prácticos y recordatorios logísticos.
 
 ## Notas de implementación
 
 - `src/flows/decision_tree.py` carga `SERVICES` desde `services.json`, por lo que nombres, precios, inclusiones, requisitos, itinerarios y booking links salen del catálogo actualizado.
-- `ISLAND_SERVICE_MAP` convierte servicios base a sus variantes `*_already_on_island` cuando el usuario indica que ya está en las islas.
-- Los servicios complejos, privados, grupos mixtos, referral/reactivate y excepciones se escalan a asesor porque el MVP no confirma disponibilidad, pagos finales ni reservas cerradas automáticamente.
+- `ISLAND_SERVICE_MAP` convierte servicios base a sus variantes `*_already_on_island` cuando el usuario indica que ya está en las islas, tanto en flujos lineales como al cambiar el origen desde el carrito.
+- La entrada principal de reserva es **cart-first** (`MIXED_ENTRY`), no el árbol histórico de tours como primer punto de entrada.
+- `Información > Actividades` **espeja la estructura comercial actual**: tours, cursos, submenús de Go Pro / especialidades y variantes de islas.
+- Las fichas informativas (`INFO_*_DETAIL`) permiten **reservar** o **ver itinerario**. En servicios `contact_only` o `referral`, el flujo deriva a asesor.
+- El MVP sigue sin confirmar disponibilidad en tiempo real ni cerrar reservas automáticamente: el resumen del carrito prepara el contexto y luego deriva a una persona del equipo cuando el usuario quiere reservar.

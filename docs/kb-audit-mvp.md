@@ -44,11 +44,11 @@ El bot no debe intentar cerrar reservas reales, confirmar cupos, procesar pagos 
 | Tono comercial | Cubierto | `brand_tone.json` | Debe mantenerse consistente en árbol y RAG | Usarlo como referencia para toda nueva respuesta |
 | Casos de escalado humano | Cubierto | `escalation_rules.json`, `src/agents/escalation.py` y supervisor | Las reglas de JSON y las de código pueden desalinearse | Mantener checklist de escalado y luego crear tests |
 | Respuestas que el bot nunca debe dar | Parcial | `brand_tone.json` dice que no debe inventar; prompts de RAG también | No hay documento dedicado con prohibiciones claras | Crear política explícita de “nunca responder” |
-| Comidas y alergias | Falta | Se menciona que algunos tours incluyen almuerzo | Falta menú, alergias, vegetarianos, restricciones alimentarias, snacks/bebidas, si se puede llevar comida | Confirmar con operación y crear FAQ/política |
-| Fotos y videos | Parcial | `faqs.json` indica que no están incluidos | Falta si se pueden contratar, precio, entrega, tiempos y cómo pedirlos | Confirmar política de fotos/videos |
+| Comidas y alergias | Cubierto para MVP | `policies.json` y `faqs.json` ya cubren almuerzo, agua, dulces de coco, opción vegetariana/vegana/celíaca y aviso previo por alergias; además se define que el bot no pregunta proactivamente por alergias | Quedan matices finos: snacks/bebidas adicionales, si se puede llevar comida propia y hasta dónde se pueden prometer adaptaciones | Validar wording final con operación, pero no bloquea la demo |
+| Fotos y videos | Cubierto para MVP | `policies.json` y `faqs.json` ya cubren que no están incluidos, no se ofrecen proactivamente, pueden hacerse voluntariamente, se entregan como máximo al día siguiente y no aplican a minicursos / primeras experiencias | Conviene validar si la política y la propina orientativa son estables antes de comunicarlo de forma más comercial | Mantener respuesta conservadora y validar wording final |
 | Hoteles, recogidas y traslados | Parcial | `policies.json`, `faqs.json` y árbol mencionan recogida en islas/hoteles; el árbol incluye selector de isla/hotel para cualificar | Falta lista validada como KB estructurada y restricciones exactas por acceso marítimo | Crear documento de logística por isla/hotel y acceso marítimo |
 | Descuentos | Parcial | `discounts.json`, `pricing.json` y `faqs.json` | Puede haber conflictos: web, directo, colombianos, grupo, segundo día, PARCEROS | Confirmar qué descuentos existen y si son acumulables |
-| Disponibilidad y reservas de última hora | Parcial | `availability.json` menciona cierre a las 4:30 PM; reglas escalan asuntos de tiempo real | No hay inventario/cupos conectados | Escalar siempre disponibilidad real; redactar respuesta clara de última hora |
+| Disponibilidad y reservas de última hora | Cubierto para MVP | `policies.json` y `faqs.json` ya explican que ROVERD cierra a las 4:30 PM del día anterior y que después de esa hora hay que pasar a WhatsApp | No hay inventario/cupos conectados, así que el bot no puede confirmar disponibilidad real | Mantener el corte horario como respuesta FAQ y escalar siempre la disponibilidad en tiempo real |
 | Pagos | Parcial | `services.json` ya contiene `booking_url` para la mayoría de servicios; `escalation_rules.json` menciona problemas de pago | Falta política: medios de pago, depósito, moneda, cuándo se confirma, tarjetas extranjeras, transferencias y qué hacer si falla un pago | Crear política de pagos antes de que el bot responda detalles. El flujo de pago para clientes colombianos (anticipo, medios, pasarela) **requiere confirmación con Andrés**; mientras tanto, el bot no debe exponer link de pasarela para colombianos y mostrará `PENDIENTE` como marcador interno. |
 | Datos para cualificar leads | Falta | El estado de conversación guarda algunos datos, pero no hay esquema comercial | El humano puede recibir conversaciones sin fecha, número de personas, servicio o nivel | Definir resumen estándar para Chatwoot |
 | Casos de evaluación | Parcial | Hay tests técnicos para árbol, botones Chatwoot y seguridad RAG; el árbol ya se valida contra servicios de islas y especialidades | Falta dataset de conversaciones comerciales reales/sintéticas para validar recomendación y escalado extremo a extremo | Crear dataset después de completar esta auditoría |
@@ -61,10 +61,9 @@ El bot no debe intentar cerrar reservas reales, confirmar cupos, procesar pagos 
 2. Condiciones de reserva y pagos.
 3. Requisitos por curso, especialmente precios/materiales/políticas finas de cursos y especialidades.
 4. Comparación entre servicios para recomendar bien.
-5. Política de comidas y alergias.
-6. Política de fotos y videos.
-7. Política de respuestas prohibidas.
-8. Esquema de resumen para pasar leads a un humano.
+5. Política de respuestas prohibidas.
+6. Esquema de resumen para pasar leads a un humano.
+7. Validación final de wording para comida/alergias y fotos/videos.
 
 ### Prioridad 2: puede escalarse a humano durante el MVP
 
@@ -127,13 +126,13 @@ El bot no debe intentar cerrar reservas reales, confirmar cupos, procesar pagos 
 
 ### Comida, fotos y extras
 
-- Qué incluye el almuerzo.
-- Opciones vegetarianas/veganas.
-- Manejo de alergias.
-- Snacks/bebidas.
-- Fotos/videos: incluidos o no.
-- Precio de fotos/videos si aplica.
-- Entrega de material.
+- Validar si el almuerzo cambia según operación/proveedor o si puede comunicarse como menú estándar.
+- Confirmar snacks/bebidas adicionales más allá de agua y dulces de coco.
+- Confirmar si se puede llevar comida propia.
+- Confirmar qué adaptaciones por alergias/restricciones se pueden prometer con seguridad.
+- Validar si la política actual de fotos/videos puede comunicarse tal cual en demo.
+- Confirmar si la propina orientativa y la entrega al día siguiente son regla estable.
+- Confirmar si la exclusión en minicursos / primeras experiencias aplica siempre.
 
 ## Reglas MVP para el bot
 
