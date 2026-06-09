@@ -66,7 +66,15 @@ def build_lead_summary(state: "ConversationState", escalation_reason: str = "") 
             lines.append("  • 🇨🇴 Colombiano/residente: Sí (aplica descuento)")
         elif state.mixed_final_is_colombian is False:
             lines.append("  • 🇨🇴 Colombiano/residente: No")
-        if state.mixed_final_has_kids_8_10:
+        kids_under_8 = state.kids_under_8_count or 0
+        kids_8_10 = state.kids_eight_to_ten_count or 0
+        if kids_under_8 > 0:
+            label = "menor de 8" if kids_under_8 == 1 else "menores de 8"
+            lines.append(f"  • 👶 {kids_under_8} {label}")
+        if kids_8_10 > 0:
+            label = "niño 8-10" if kids_8_10 == 1 else "niños 8-10"
+            lines.append(f"  • 👶 {kids_8_10} {label} (Bubble Makers) — requiere supervisor")
+        elif state.mixed_final_has_kids_8_10:
             lines.append("  • 👶 Niños 8-10 (Bubble Makers) — requiere supervisor")
         if state.mixed_final_wants_private:
             lines.append("  • 🚤 Solicita lancha privada exclusiva")

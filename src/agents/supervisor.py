@@ -87,6 +87,7 @@ MENU_STEPS = {
     Step.MIXED_CART_REVIEW,
     Step.MIXED_CART_MODIFY_PICK,
     Step.MIXED_CART_REMOVE_PICK,
+    Step.MIXED_CART_LOCATION,
     Step.MIXED_FINAL_COLOMBIAN,
     Step.MIXED_FINAL_KIDS,
     Step.MIXED_FINAL_PRIVATE,
@@ -124,8 +125,12 @@ _MIXED_FLOW_STEPS = {
     Step.MIXED_CART_REVIEW,
     Step.MIXED_CART_MODIFY_PICK,
     Step.MIXED_CART_REMOVE_PICK,
+    Step.MIXED_CART_LOCATION,
     Step.MIXED_FINAL_COLOMBIAN,
     Step.MIXED_FINAL_KIDS,
+    Step.MIXED_FINAL_KIDS_QTY,
+    Step.MIXED_FINAL_KIDS_U8,
+    Step.MIXED_FINAL_KIDS_810,
     Step.MIXED_FINAL_PRIVATE,
     Step.MIXED_FINAL_SUMMARY,
 }
@@ -203,8 +208,12 @@ BACK_STEP: dict[Step, tuple[Step, str]] = {
     Step.MIXED_CART_REVIEW: (Step.MAIN_MENU, "main_menu"),
     Step.MIXED_CART_MODIFY_PICK: (Step.MIXED_CART_REVIEW, "mixed_cart_actions"),
     Step.MIXED_CART_REMOVE_PICK: (Step.MIXED_CART_REVIEW, "mixed_cart_actions"),
+    Step.MIXED_CART_LOCATION: (Step.MIXED_CART_REVIEW, "mixed_cart_actions"),
     Step.MIXED_FINAL_COLOMBIAN: (Step.MIXED_CART_REVIEW, "mixed_cart_actions"),
     Step.MIXED_FINAL_KIDS: (Step.MIXED_FINAL_COLOMBIAN, "mixed_yes_no"),
+    Step.MIXED_FINAL_KIDS_QTY: (Step.MIXED_FINAL_KIDS, "mixed_kids_age"),
+    Step.MIXED_FINAL_KIDS_U8: (Step.MIXED_FINAL_KIDS, "mixed_kids_age"),
+    Step.MIXED_FINAL_KIDS_810: (Step.MIXED_FINAL_KIDS, "mixed_kids_age"),
     Step.MIXED_FINAL_PRIVATE: (Step.MIXED_FINAL_COLOMBIAN, "mixed_yes_no"),
 }
 
@@ -459,6 +468,39 @@ def _detect_companion_intent(message: str, state: ConversationState | None = Non
         return has_activity_reference or has_companion_context
 
     return False
+
+
+def _detect_kids_mention(message: str) -> bool:
+    """Detect mentions of kids/children/family in free text.
+
+    Stricter than companion intent: only matches words that clearly imply minors
+    (hijo, niño, menor, kid, child, sobrino, familia con hijos/niños). Excludes
+    generic companion words (amigo, pareja, esposo) — those don't justify asking
+    age ranges. Used to disparar la pregunta de edad en el cart-mixto cuando no
+    haya minicurso ni snorkel pero el cliente sí trae niños.
+    """
+    normalized = _normalize_for_menu_match(message)
+    if not normalized:
+        return False
+    tokens = set(normalized.split())
+
+    kids_keywords = {
+        "hijo", "hija", "hijos", "hijas",
+        "nino", "nina", "ninos", "ninas",
+        "menor", "menores",
+        "sobrino", "sobrina", "sobrinos", "sobrinas",
+        "kid", "kids", "child", "children",
+    }
+    if tokens & kids_keywords:
+        return True
+
+    kids_patterns = (
+        r"\bmi\s+(hij[oa]|sobrin[oa]|nin[oa])\b",
+        r"\bmis\s+(hij[oa]s|sobrin[oa]s|nin[oa]s)\b",
+        r"\bmi\s+familia\s+con\s+(hij[oa]s|nin[oa]s|menores)\b",
+        r"\b(?:\d+|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|diez)\s+(hij[oa]s|nin[oa]s|sobrin[oa]s|menores)\b",
+    )
+    return any(re.search(pattern, normalized) for pattern in kids_patterns)
 
 
 def _mentions_diving_intent(message: str) -> bool:
@@ -2442,6 +2484,12 @@ async def route_message(state: ConversationState, message: str) -> str:
     """
     msg_lower = message.strip().lower()
 
+    # Sticky detection: once the speaker mentions kids/children/family-with-kids,
+    # we remember it for the rest of the conversation so the cart-mixto question
+    # about age ranges fires even if the cart ends up cert-only.
+    if not getattr(state, "kids_mention_detected", False) and _detect_kids_mention(message):
+        state.kids_mention_detected = True
+
     pii_hits = detect_pii(message)
     if pii_hits:
         state.step = Step.ESCALATE
@@ -2502,7 +2550,9 @@ async def route_message(state: ConversationState, message: str) -> str:
     # Step-back: "🔙 Volver" button (value="back") or back keyword
     if msg_lower == "back" or msg_lower in BACK_KEYWORDS:
         logger.info(f"[SUPERVISOR] Back navigation from step={state.step.value}")
-        # Cart-flow steps that manage their own back/cancel inline
+        # Cart-flow steps that manage their own back/cancel inline (handlers
+        # return _goto_mixed_cart_review which renders cart_lines + prompt;
+        # _go_back_one_step would only return the prompt without the cart).
         if state.step in (
             Step.MIXED_LOCATION,
             Step.MIXED_ADD_ACTIVITY,
@@ -2514,6 +2564,11 @@ async def route_message(state: ConversationState, message: str) -> str:
             Step.MIXED_CERT_REFRESH_QTY,
             Step.MIXED_CERT_SPLIT_REVIEW,
             Step.MIXED_ADD_PREVIEW,
+            Step.MIXED_CART_MODIFY_PICK,
+            Step.MIXED_CART_REMOVE_PICK,
+            Step.MIXED_CART_LOCATION,
+            Step.MIXED_FINAL_KIDS_U8,
+            Step.MIXED_FINAL_KIDS_810,
         ):
             return decision_tree.process_message(state, "back")
         return _go_back_one_step(state)
@@ -2660,6 +2715,11 @@ async def route_message(state: ConversationState, message: str) -> str:
                     Step.MIXED_CERT_REFRESH_QTY,
                     Step.MIXED_CERT_SPLIT_REVIEW,
                     Step.MIXED_ADD_PREVIEW,
+                    Step.MIXED_CART_MODIFY_PICK,
+                    Step.MIXED_CART_REMOVE_PICK,
+                    Step.MIXED_CART_LOCATION,
+                    Step.MIXED_FINAL_KIDS_U8,
+                    Step.MIXED_FINAL_KIDS_810,
                 ):
                     return decision_tree.process_message(state, "back")
                 return _go_back_one_step(state)

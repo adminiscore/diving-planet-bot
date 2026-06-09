@@ -2198,9 +2198,11 @@ async def test_mixed_certified_island_night_variant_is_added_to_cart_with_exact_
 async def test_mixed_qty_appends_to_cart_and_goes_to_review():
     state = await reach_mixed_add_activity()
     await route_message(state, "2")  # beginner
-    resp = await route_message(state, "3")  # qty 3
-    assert state.step == Step.MIXED_ADD_PREVIEW
+    resp = await route_message(state, "3")  # qty 3 → kids question (inline)
+    assert state.step == Step.MIXED_FINAL_KIDS
     assert state.mixed_cart == []
+    resp = await route_message(state, "3")  # ten_plus → preview
+    assert state.step == Step.MIXED_ADD_PREVIEW
     assert "añadir esta actividad al carrito" in resp.lower() or "add this activity to the cart" in resp.lower()
     resp = await route_message(state, "1")
     assert state.step == Step.MIXED_CART_REVIEW
@@ -2254,16 +2256,16 @@ async def test_mixed_cert_2dives_qty_appends_to_cart():
 @pytest.mark.asyncio
 async def test_mixed_cart_add_more_returns_to_add_activity():
     state = await reach_mixed_add_activity()
-    await send(state, "2", "3", "1")  # beginner, qty 3, preview add -> CART_REVIEW
-    await route_message(state, "1")  # add another
+    await send(state, "2", "3", "3", "1")  # beginner, qty 3, kids ten_plus, preview add
+    await route_message(state, "2")  # add another (cart-action 2)
     assert state.step == Step.MIXED_ADD_ACTIVITY
 
 
 @pytest.mark.asyncio
 async def test_mixed_cart_add_two_items_accumulates():
     state = await reach_mixed_add_activity()
-    await send(state, "2", "3", "1")  # 3 beginners
-    await send(state, "1", "1", "1", "2", "2", "1")  # add: cart-action 1, cert, 2-dives, qty 2, recent dive, preview add
+    await send(state, "2", "3", "3", "1")  # 3 beginners (kids 10+)
+    await send(state, "2", "1", "1", "2", "2", "1")  # add: cart-action 2, cert, 2-dives, qty 2, recent dive, preview add
     assert len(state.mixed_cart) == 2
     types = [it["type"] for it in state.mixed_cart]
     assert "beginner" in types and "cert" in types
@@ -2272,12 +2274,14 @@ async def test_mixed_cart_add_two_items_accumulates():
 @pytest.mark.asyncio
 async def test_mixed_cart_modify_item_updates_qty():
     state = await reach_mixed_add_activity()
-    await send(state, "2", "3", "1")  # 3 beginners → CART_REVIEW
-    await route_message(state, "2")  # modify item
+    await send(state, "2", "3", "3", "1")  # 3 beginners (kids 10+) → CART_REVIEW
+    await route_message(state, "3")  # modify item (cart-action 3)
     assert state.step == Step.MIXED_CART_MODIFY_PICK
     await route_message(state, "1")  # pick item 1
     assert state.step == Step.MIXED_ADD_QTY
-    await route_message(state, "5")  # new qty
+    await route_message(state, "5")  # new qty → kids re-asked inline
+    assert state.step == Step.MIXED_FINAL_KIDS
+    await route_message(state, "3")  # ten_plus → cart_review
     assert state.step == Step.MIXED_CART_REVIEW
     assert state.mixed_cart[0]["qty"] == 5
     assert state.mixed_pending_modify_idx is None
@@ -2286,10 +2290,10 @@ async def test_mixed_cart_modify_item_updates_qty():
 @pytest.mark.asyncio
 async def test_mixed_cart_remove_item_drops_it():
     state = await reach_mixed_add_activity()
-    await send(state, "2", "3", "1")  # add beginner x3
-    await send(state, "1", "3", "2", "1")  # add snorkel x2
+    await send(state, "2", "3", "3", "1")  # add beginner x3 (kids 10+)
+    await send(state, "2", "3", "2", "1")  # add (cart-action 2) snorkel x2
     assert len(state.mixed_cart) == 2
-    await route_message(state, "3")  # remove item
+    await route_message(state, "4")  # remove item (cart-action 4)
     await route_message(state, "1")  # remove item #1 (beginner)
     assert len(state.mixed_cart) == 1
     assert state.mixed_cart[0]["type"] == "snorkel"
@@ -2298,9 +2302,9 @@ async def test_mixed_cart_remove_item_drops_it():
 @pytest.mark.asyncio
 async def test_mixed_cart_restart_wipes_state():
     state = await reach_mixed_add_activity()
-    await send(state, "2", "3", "1")  # 3 beginners
+    await send(state, "2", "3", "3", "1")  # 3 beginners (kids 10+)
     state.mixed_final_is_colombian = True  # something to wipe
-    await route_message(state, "5")  # restart
+    await route_message(state, "5")  # restart (cart-action 5)
     assert state.step == Step.MIXED_ENTRY
     assert state.mixed_cart == []
     assert state.mixed_final_is_colombian is None
@@ -2309,18 +2313,18 @@ async def test_mixed_cart_restart_wipes_state():
 @pytest.mark.asyncio
 async def test_mixed_cart_confirm_advances_to_colombian():
     state = await reach_mixed_add_activity()
-    await send(state, "2", "3", "1")  # 3 beginners
-    await route_message(state, "4")  # confirmar carrito
+    await send(state, "2", "3", "3", "1")  # 3 beginners (kids 10+)
+    await route_message(state, "6")  # confirmar carrito (cart-action 6)
     assert state.step == Step.MIXED_FINAL_COLOMBIAN
 
 
 @pytest.mark.asyncio
 async def test_mixed_cart_confirm_empty_does_not_advance():
     state = await reach_mixed_add_activity()
-    await send(state, "2", "3", "1")  # add then remove
-    await send(state, "3", "1")  # remove item 1
+    await send(state, "2", "3", "3", "1")  # add then remove
+    await send(state, "4", "1")  # remove (cart-action 4) item 1
     assert state.mixed_cart == []
-    await route_message(state, "4")  # confirmar
+    await route_message(state, "6")  # confirmar (cart-action 6)
     assert state.step != Step.MIXED_FINAL_COLOMBIAN
 
 
@@ -2330,28 +2334,37 @@ async def test_mixed_cart_confirm_empty_does_not_advance():
 async def test_mixed_final_kids_skipped_when_no_beginner():
     state = await reach_mixed_add_activity()
     await send(state, "3", "2", "1")  # snorkel x2
-    await route_message(state, "4")  # confirm cart
+    await route_message(state, "6")  # confirm cart (cart-action 6)
     await route_message(state, "2")  # not colombian → no beginner → skip kids → private
     assert state.step == Step.MIXED_FINAL_PRIVATE
     assert state.mixed_final_has_kids_8_10 is None
 
 
 @pytest.mark.asyncio
-async def test_mixed_final_kids_asked_when_beginner_in_cart():
+async def test_mixed_final_kids_asked_inline_when_adding_beginner():
+    """Kids fires INLINE after qty when adding a Minicurso (not at checkout)."""
     state = await reach_mixed_add_activity()
-    await send(state, "2", "3", "1")  # 3 beginners
-    await route_message(state, "4")  # confirm cart
-    await route_message(state, "2")  # not colombian
+    await route_message(state, "2")  # beginner
+    await route_message(state, "3")  # qty 3 → kids inline
     assert state.step == Step.MIXED_FINAL_KIDS
+
+
+@pytest.mark.asyncio
+async def test_mixed_final_kids_not_asked_again_at_checkout():
+    """Kids was answered inline; checkout no longer fires the kids step."""
+    state = await reach_mixed_add_activity()
+    await send(state, "2", "3", "3", "1")  # 3 beginners, kids ten_plus inline
+    await route_message(state, "6")  # confirm cart (cart-action 6)
+    await route_message(state, "2")  # not colombian → straight to private (no kids step)
+    assert state.step == Step.MIXED_FINAL_PRIVATE
 
 
 @pytest.mark.asyncio
 async def test_mixed_full_path_lands_on_final_summary():
     state = await reach_mixed_add_activity()
-    await send(state, "2", "3", "1")  # 3 beginners
-    await route_message(state, "4")  # confirm
+    await send(state, "2", "3", "3", "1")  # 3 beginners, kids 10+ inline
+    await route_message(state, "6")  # confirm (cart-action 6)
     await route_message(state, "2")  # not colombian
-    await route_message(state, "2")  # no kids
     await route_message(state, "2")  # no private
     assert state.step == Step.MIXED_FINAL_SUMMARY
 
@@ -2360,8 +2373,8 @@ async def test_mixed_full_path_lands_on_final_summary():
 async def test_mixed_final_summary_shows_restaurant_bill():
     state = await reach_mixed_add_activity()
     await send(state, "1", "1", "2", "2", "1")  # cert 2-dives x2, recent dive, preview add
-    await send(state, "1", "3", "1", "1")  # add snorkel x1
-    await send(state, "4", "2", "2")  # confirm, not colombian, no private
+    await send(state, "2", "3", "1", "1")  # add (cart-action 2) snorkel x1
+    await send(state, "6", "2", "2")  # confirm (cart-action 6), not colombian, no private
     assert state.step == Step.MIXED_FINAL_SUMMARY
     resp = state.mixed_last_summary or ""
     assert "RESERVA" in resp or "BOOKING" in resp
@@ -2375,7 +2388,7 @@ async def test_mixed_final_summary_avisos_only_when_relevant():
     """Small group (qty<6), no kids, no private → no Avisos block."""
     state = await reach_mixed_add_activity()
     await send(state, "3", "2", "1")  # snorkel x2
-    await send(state, "4", "2", "2")  # confirm, not colombian, no private
+    await send(state, "6", "2", "2")  # confirm (cart-action 6), not colombian, no private
     resp = state.mixed_last_summary or ""
     assert "Avisos" not in resp
 
@@ -2386,7 +2399,7 @@ async def test_mixed_final_summary_large_group_shows_aviso():
     await send(state, "3", "6+")
     await route_message(state, "8")  # 8 snorkelers
     await route_message(state, "1")  # preview add
-    await send(state, "4", "2", "2")
+    await send(state, "6", "2", "2")  # confirm (cart-action 6), not colombian, no private
     resp = state.mixed_last_summary or ""
     assert "Avisos" in resp
     assert "Grupo grande" in resp or "Large group" in resp
@@ -2394,11 +2407,16 @@ async def test_mixed_final_summary_large_group_shows_aviso():
 
 @pytest.mark.asyncio
 async def test_mixed_final_summary_kids_yes_shows_aviso_and_stays_in_summary():
+    """Kids 8-10 answered inline at minicurso add; summary shows Bubble Makers warning."""
     state = await reach_mixed_add_activity()
-    await send(state, "2", "3", "1")  # 3 beginners
-    await send(state, "4", "2", "1", "2")  # confirm, not colombian, YES kids, no private
+    # beginner, qty 3, kids 8-10 (choice 2), 2 kids in that range, preview add
+    await send(state, "2", "3", "2", "2", "1")
+    # confirm (cart-action 6), not colombian, no private
+    await send(state, "6", "2", "2")
     assert state.step == Step.MIXED_FINAL_SUMMARY
     assert state.mixed_final_has_kids_8_10 is True
+    assert state.kids_age_group == "eight_to_ten"
+    assert state.kids_count == 2
     resp = state.mixed_last_summary or ""
     assert "Bubble Makers" in resp or "8-10" in resp
 
@@ -2407,7 +2425,7 @@ async def test_mixed_final_summary_kids_yes_shows_aviso_and_stays_in_summary():
 async def test_mixed_final_summary_private_yes_shows_aviso():
     state = await reach_mixed_add_activity()
     await send(state, "3", "2", "1")  # snorkel x2
-    await send(state, "4", "2", "1")  # confirm, not colombian, YES private
+    await send(state, "6", "2", "1")  # confirm (cart-action 6), not colombian, YES private
     assert state.step == Step.MIXED_FINAL_SUMMARY
     assert state.mixed_final_wants_private is True
     resp = state.mixed_last_summary or ""
@@ -2417,8 +2435,10 @@ async def test_mixed_final_summary_private_yes_shows_aviso():
 @pytest.mark.asyncio
 async def test_mixed_final_summary_colombian_shows_cop_primary():
     state = await reach_mixed_add_activity()
-    await send(state, "2", "2", "1")  # 2 beginners
-    await send(state, "4", "1", "2", "2")  # confirm, COLOMBIAN, no kids, no private
+    # beginner, qty 2, kids 10+ inline, preview add
+    await send(state, "2", "2", "3", "1")
+    # confirm (cart-action 6), COLOMBIAN, no private
+    await send(state, "6", "1", "2")
     resp = state.mixed_last_summary or ""
     assert "COP" in resp
     assert "descuento" in resp.lower() or "discount" in resp.lower()
@@ -2428,7 +2448,7 @@ async def test_mixed_final_summary_colombian_shows_cop_primary():
 async def test_mixed_final_summary_cartagena_shows_transport_note():
     state = await reach_mixed_add_activity(location="cartagena")
     await send(state, "3", "2", "1")  # snorkel x2
-    await send(state, "4", "2", "2")
+    await send(state, "6", "2", "2")  # confirm (cart-action 6), not colombian, no private
     resp = state.mixed_last_summary or ""
     assert "transporte" in resp.lower() or "transport" in resp.lower()
 
@@ -2438,7 +2458,7 @@ async def test_mixed_final_summary_snorkel_waiver_only_when_snorkel():
     """Without snorkel the snorkel-specific note must NOT appear."""
     state = await reach_mixed_add_activity()
     await send(state, "1", "1", "2", "2", "1")  # cert 2-dives x2 (no snorkel in cart)
-    await send(state, "4", "2", "2")
+    await send(state, "6", "2", "2")  # confirm (cart-action 6), not colombian, no private
     resp = state.mixed_last_summary or ""
     assert "formulario específico de snorkel" not in resp.lower()
 
@@ -2447,7 +2467,7 @@ async def test_mixed_final_summary_snorkel_waiver_only_when_snorkel():
 async def test_mixed_final_summary_reservar_escalates():
     state = await reach_mixed_add_activity()
     await send(state, "3", "2", "1")  # snorkel x2
-    await send(state, "4", "2", "2")  # confirm, not colombian, no private
+    await send(state, "6", "2", "2")  # confirm (cart-action 6), not colombian, no private
     await route_message(state, "1")  # Reservar
     assert state.step == Step.ESCALATE
     assert state.pending_note is not None
@@ -2458,7 +2478,7 @@ async def test_mixed_final_summary_reservar_escalates():
 async def test_mixed_final_summary_restart_wipes_state():
     state = await reach_mixed_add_activity()
     await send(state, "3", "2", "1")
-    await send(state, "4", "2", "2")
+    await send(state, "6", "2", "2")  # confirm (cart-action 6), not colombian, no private
     await route_message(state, "2")  # Empezar de nuevo
     assert state.step == Step.MIXED_ENTRY
     assert state.mixed_cart == []
@@ -2468,8 +2488,9 @@ async def test_mixed_final_summary_restart_wipes_state():
 async def test_mixed_lead_note_includes_cart_items():
     state = await reach_mixed_add_activity()
     await send(state, "1", "1", "2", "2", "1")  # cert 2-dives x2
-    await send(state, "1", "2", "3", "1")  # add buceo principiantes x3
-    await send(state, "4", "2", "2", "2")  # confirm, not colombian, no kids, no private
+    await send(state, "2", "2", "3", "3", "1")  # add (cart-action 2) beginner x3 (kids 10+ inline)
+    # confirm (cart-action 6), not colombian, no private
+    await send(state, "6", "2", "2")
     await route_message(state, "1")  # Reservar
     note = state.pending_note or ""
     assert "Grupo mixto" in note
@@ -2486,8 +2507,10 @@ async def test_mixed_lead_note_includes_cart_items():
 @pytest.mark.asyncio
 async def test_mixed_final_summary_non_colombian_stores_booking_links():
     state = await reach_mixed_add_activity()
-    await send(state, "2", "2", "1")  # 2 beginners
-    await send(state, "4", "2", "2", "2")  # confirm, not colombian, no kids, no private
+    # beginner, qty 2, kids 10+ inline, preview add
+    await send(state, "2", "2", "3", "1")
+    # confirm (cart-action 6), not colombian, no private
+    await send(state, "6", "2", "2")
     # En el nuevo flujo los links NO se incluyen en el summary; se guardan en estado y
     # se envían al pulsar "Reservar".
     resp = state.mixed_last_summary or ""
@@ -2500,8 +2523,8 @@ async def test_mixed_final_summary_non_colombian_stores_booking_links():
 @pytest.mark.asyncio
 async def test_mixed_final_summary_colombian_no_whatsapp_note_inline():
     state = await reach_mixed_add_activity()
-    await send(state, "2", "2", "1")
-    await send(state, "4", "1", "2", "2")  # COLOMBIAN
+    await send(state, "2", "2", "3", "1")  # 2 beginners, kids 10+ inline
+    await send(state, "6", "1", "2")  # confirm (cart-action 6), COLOMBIAN, no private
     resp = state.mixed_last_summary or ""
     # Quitamos la nota inline de WhatsApp; el descuento se coordina en escalación.
     assert "book.divingplanet.org" not in resp
@@ -2617,5 +2640,610 @@ async def test_broken_link_lead_note_has_priority_marker():
     await route_message(state, "el link de pago no carga")
     assert state.pending_note is not None
     assert "LINK ROTO" in state.pending_note
+
+
+# ---------------------------------------------------------------------------
+# Kids age question (MIXED_FINAL_KIDS) — 3 ranges, smart trigger
+# ---------------------------------------------------------------------------
+
+async def _put_cert_in_cart(state: ConversationState, qty: int = 2) -> None:
+    """Helper: enter mixed flow with a single cert × qty item, no refresher."""
+    state.step = Step.MIXED_ADD_QTY
+    state.mixed_pending_qty_type = "cert"
+    state.mixed_pending_qty_plan = "2_dives_1_day"
+    state.location = "cartagena"
+    state.mixed_entry_path = "diving_snorkel"
+    await route_message(state, str(qty))   # qty → cert_last_dive
+    await route_message(state, "2")        # < 2 years
+    await route_message(state, "1")        # add to cart → cart_review
+
+
+async def _put_snorkel_in_cart(state: ConversationState, qty: int = 3) -> None:
+    state.step = Step.MIXED_ADD_QTY
+    state.mixed_pending_qty_type = "snorkel"
+    state.location = "cartagena"
+    state.mixed_entry_path = "diving_snorkel"
+    await route_message(state, str(qty))   # qty → preview
+    await route_message(state, "1")        # add to cart → cart_review
+
+
+async def _put_beginner_in_cart(state: ConversationState, qty: int = 2, kids_choice: str = "3") -> None:
+    """Helper: enter mixed flow with a single beginner × qty item.
+
+    Inline kids question fires after qty; defaults to "3" (all 10+) so callers
+    that don't care about kids context get a clean cart. Tests that DO care
+    can pass kids_choice (and answer the count/U8/810 sub-questions themselves
+    via subsequent route_message calls).
+    """
+    state.step = Step.MIXED_ADD_QTY
+    state.mixed_pending_qty_type = "beginner"
+    state.location = "cartagena"
+    state.mixed_entry_path = "diving_snorkel"
+    await route_message(state, str(qty))       # qty → kids question
+    await route_message(state, kids_choice)    # kids range (default "3" = ten_plus → preview)
+    await route_message(state, "1")            # add to cart → cart_review
+
+
+async def _arrive_at_kids_inline(qty: int = 2) -> ConversationState:
+    """Helper: reach MIXED_FINAL_KIDS step inline (after picking beginner + qty)."""
+    state = await reach_mixed_add_activity()
+    await route_message(state, "2")          # pick beginner
+    await route_message(state, str(qty))     # qty → MIXED_FINAL_KIDS
+    return state
+
+
+@pytest.mark.asyncio
+async def test_kids_question_three_age_buttons_when_adding_beginner():
+    """Picking minicurso + qty fires kids question with 3 age-range buttons (+ Varios)."""
+    state = await _arrive_at_kids_inline(2)
+    assert state.step == Step.MIXED_FINAL_KIDS
+    titles_lower = [b["title"].lower() for b in state.quick_replies]
+    assert any("menores de 8" in t for t in titles_lower)
+    assert any("8 a 10" in t for t in titles_lower)
+    assert any("10+" in t for t in titles_lower)
+
+
+@pytest.mark.asyncio
+async def test_kids_question_not_asked_for_snorkel_only_cart():
+    """Snorkel-only cart never goes through the kids inline flow."""
+    state = make_state()
+    await _put_snorkel_in_cart(state, 3)
+    # Cart has only snorkel — never hit MIXED_FINAL_KIDS at any point.
+    await route_message(state, "6")  # checkout (cart-action 6)
+    await route_message(state, "2")  # No colombiano
+    assert state.step != Step.MIXED_FINAL_KIDS
+
+
+@pytest.mark.asyncio
+async def test_kids_question_skipped_for_cert_only_adult_cart():
+    """Cert-only cart never triggers kids question (inline only fires on beginner add)."""
+    state = make_state()
+    await _put_cert_in_cart(state, 2)
+    await route_message(state, "6")  # checkout (cart-action 6)
+    await route_message(state, "2")  # No colombiano
+    assert state.step != Step.MIXED_FINAL_KIDS
+    assert state.step == Step.MIXED_FINAL_PRIVATE
+
+
+@pytest.mark.asyncio
+async def test_kids_under_8_with_dive_cart_shows_warning():
+    """Range under_8 inline + dive cart → summary warns 'cannot dive, snorkel from 6'."""
+    state = await _arrive_at_kids_inline(2)
+    await route_message(state, "1")              # under_8 inline
+    assert state.kids_age_group == "under_8"
+    await route_message(state, "1")              # 1 kid under 8 → preview
+    assert state.kids_count == 1
+    await route_message(state, "1")              # preview confirm → cart_review
+    # checkout (cart-action 6) → no colombian → no private → summary
+    await send(state, "6", "2", "2")
+    summary = state.mixed_last_summary or ""
+    assert "menores de 8" in summary.lower() or "under 8" in summary.lower()
+    assert "no pueden bucear" in summary.lower() or "cannot dive" in summary.lower()
+
+
+@pytest.mark.asyncio
+async def test_kids_ten_plus_adds_no_warning():
+    """Range 10+ inline → summary has no kids-related warning."""
+    state = await _arrive_at_kids_inline(2)
+    await route_message(state, "3")              # 10+ → preview
+    assert state.kids_age_group == "ten_plus"
+    assert state.mixed_final_has_kids_8_10 is False
+    await route_message(state, "1")              # preview confirm
+    await send(state, "6", "2", "2")             # checkout (cart-action 6), not colombian, no private
+    summary = state.mixed_last_summary or ""
+    assert "menores de 8" not in summary.lower()
+    assert "bubble makers" not in summary.lower()
+
+
+@pytest.mark.asyncio
+async def test_kids_mention_persists_across_turns():
+    """Once kids_mention_detected, stays True for the rest of conversation."""
+    state = make_state()
+    await route_message(state, "1")
+    await route_message(state, "tengo 3 hijos pequeños")
+    assert state.kids_mention_detected is True
+    await route_message(state, "menu")
+    await route_message(state, "1")
+    assert state.kids_mention_detected is True
+
+
+@pytest.mark.asyncio
+async def test_detect_kids_mention_excludes_friends():
+    """Companion words alone (amigos, pareja) do NOT activate kids detection."""
+    from src.agents.supervisor import _detect_kids_mention
+    assert _detect_kids_mention("tengo 3 amigos") is False
+    assert _detect_kids_mention("voy con mi pareja") is False
+    assert _detect_kids_mention("vengo con mi esposo") is False
+    # But explicit kid words do
+    assert _detect_kids_mention("tengo 3 hijos") is True
+    assert _detect_kids_mention("voy con mis sobrinos") is True
+    assert _detect_kids_mention("with my children") is True
+
+
+@pytest.mark.asyncio
+async def test_kids_re_asked_when_modifying_beginner_item():
+    """Modify a beginner cart item → kids question re-fires inline after the new qty."""
+    state = make_state()
+    await _put_beginner_in_cart(state, 3)  # 3 beginners (kids 10+ default)
+    # Simulate user had answered something different
+    state.kids_age_group = "eight_to_ten"
+    state.kids_eight_to_ten_count = 2
+    state.mixed_final_has_kids_8_10 = True
+    # Modify the beginner from qty 3 → 1
+    await route_message(state, "3")  # modify pick (cart-action 3)
+    await route_message(state, "1")  # pick item 1 (beginner)
+    await route_message(state, "1")  # new qty = 1 → kids inline re-asked
+    assert state.step == Step.MIXED_FINAL_KIDS
+    # Previous kids answer was invalidated on modify
+    assert state.kids_age_group is None
+    assert state.mixed_final_has_kids_8_10 is None
+    assert state.kids_eight_to_ten_count == 0
+
+
+@pytest.mark.asyncio
+async def test_kids_age_group_invalidated_on_beginner_remove():
+    """Remove a beginner cart item → kids answer is cleared."""
+    state = make_state()
+    state.mixed_cart = [
+        {"type": "cert", "qty": 2, "plan": "2_dives_1_day", "label": "Buceo certificado"},
+        {"type": "beginner", "qty": 3, "plan": None, "label": "Minicurso"},
+    ]
+    state.location = "cartagena"
+    state.mixed_entry_path = "diving_snorkel"
+    state.step = Step.MIXED_CART_REVIEW
+    state.kids_age_group = "under_8"
+    state.mixed_final_has_kids_8_10 = False
+    await route_message(state, "4")  # remove pick (cart-action 4)
+    await route_message(state, "2")  # pick second visible (beginner)
+    assert state.kids_age_group is None
+    assert state.mixed_final_has_kids_8_10 is None
+    # Cart now cert-only without kids mention → next checkout skips question
+    await route_message(state, "6")  # checkout (cart-action 6)
+    await route_message(state, "2")
+    assert state.step != Step.MIXED_FINAL_KIDS
+
+
+@pytest.mark.asyncio
+async def test_kids_question_text_explains_each_range():
+    """The kids question body lists each range so user can decide informed."""
+    state = await _arrive_at_kids_inline(2)
+    assert state.step == Step.MIXED_FINAL_KIDS
+    # Re-render the kids question text to inspect content
+    from src.flows.decision_tree import MESSAGES
+    resp = MESSAGES["mixed_final_kids"]["es"]
+    assert "Bubble Makers" in resp
+    assert "menores de 8" in resp.lower() or "under 8" in resp.lower()
+    assert "snorkel" in resp.lower()
+
+
+@pytest.mark.asyncio
+async def test_kids_under_8_or_8_10_asks_for_count_then_shows_sub_bullet():
+    """After picking <8 or 8-10 inline, bot asks 'how many kids?' then shows sub-bullet in cart."""
+    state = await _arrive_at_kids_inline(3)
+    assert state.step == Step.MIXED_FINAL_KIDS
+    await route_message(state, "2")              # 8-10
+    assert state.step == Step.MIXED_FINAL_KIDS_QTY
+    titles = [b["title"] for b in state.quick_replies]
+    assert "1" in titles and "2" in titles and "3" in titles  # clipped to beginner qty=3
+    assert "4" not in titles
+    await route_message(state, "2")              # 2 kids in that range → preview
+    assert state.kids_count == 2
+    assert state.step == Step.MIXED_ADD_PREVIEW
+    await route_message(state, "1")              # preview confirm → cart_review
+    # Cart shows sub-bullet under beginner row
+    from src.flows.decision_tree import DecisionTree
+    cart = DecisionTree()._format_cart_lines(state, "es")
+    assert "↳" in cart and "2 niños" in cart and "Bubble Makers" in cart
+
+
+@pytest.mark.asyncio
+async def test_kids_ten_plus_skips_qty_question():
+    """Selecting 10+ does not trigger the count question — goes straight to preview."""
+    state = await _arrive_at_kids_inline(3)
+    await route_message(state, "3")              # 10+ → preview
+    assert state.step != Step.MIXED_FINAL_KIDS_QTY
+    assert state.step == Step.MIXED_ADD_PREVIEW
+    assert state.kids_count is None
+
+
+@pytest.mark.asyncio
+async def test_kids_qty_rejects_value_above_beginner_qty():
+    """If beginner qty is 4, selecting 5 returns specific error."""
+    state = await _arrive_at_kids_inline(4)
+    await route_message(state, "1")              # under_8 → KIDS_QTY
+    resp = await route_message(state, "5")
+    assert state.step == Step.MIXED_FINAL_KIDS_QTY  # didn't advance
+    assert "máximo" in resp.lower() or "at most" in resp.lower() or "between 1 and 4" in resp.lower()
+
+
+@pytest.mark.asyncio
+async def test_final_summary_shows_bubble_makers_split_rows():
+    """RESERVA summary splits beginner row: adult Minicurso + Bubble Makers rows (no sub-bullet)."""
+    state = await _arrive_at_kids_inline(3)
+    await route_message(state, "2")              # 8-10
+    await route_message(state, "2")              # 2 kids → preview
+    await route_message(state, "1")              # preview confirm → cart_review
+    await send(state, "6", "2", "2")             # checkout (cart-action 6), not colombian, no private
+    summary = state.mixed_last_summary or ""
+    assert "Minicurso" in summary
+    assert "Bubble Makers" in summary
+    # Split rows are used — no ↳ sub-bullet in the final summary
+    assert "↳" not in summary
+
+
+@pytest.mark.asyncio
+async def test_kids_eight_to_ten_keeps_bubble_makers_warning():
+    """Range 8-10 inline still triggers the existing Bubble Makers warning."""
+    state = await _arrive_at_kids_inline(2)
+    await route_message(state, "2")              # 8-10 (Bubble Makers)
+    assert state.kids_age_group == "eight_to_ten"
+    assert state.mixed_final_has_kids_8_10 is True
+    await route_message(state, "2")              # 2 kids in 8-10 → preview
+    await route_message(state, "1")              # preview confirm
+    await send(state, "6", "2", "2")             # checkout (cart-action 6), not colombian, no private
+    summary = state.mixed_last_summary or ""
+    assert "bubble makers" in summary.lower()
+
+
+# ────────────────────────────────────────────────────────────────────────
+# Mixed-age ranges within a single beginner cart item (Varios rangos)
+# ────────────────────────────────────────────────────────────────────────
+
+
+@pytest.mark.asyncio
+async def test_kids_mixed_button_appears_in_kids_step():
+    """MIXED_FINAL_KIDS (inline) shows a 4th button 'Varios rangos' alongside the 3 ranges."""
+    state = await _arrive_at_kids_inline(3)
+    assert state.step == Step.MIXED_FINAL_KIDS
+    titles_lower = [b["title"].lower() for b in state.quick_replies]
+    assert any("menores de 8" in t for t in titles_lower)
+    assert any("8 a 10" in t for t in titles_lower)
+    assert any("10+" in t for t in titles_lower)
+    assert any("varios rangos" in t or "mezcla" in t for t in titles_lower)
+
+
+@pytest.mark.asyncio
+async def test_kids_mixed_path_collects_two_counts():
+    """Pick 'Varios rangos' inline → two count questions → state has both counters set."""
+    state = await _arrive_at_kids_inline(5)
+    assert state.step == Step.MIXED_FINAL_KIDS
+    await route_message(state, "4")              # Varios rangos
+    assert state.step == Step.MIXED_FINAL_KIDS_U8
+    await route_message(state, "2")              # 2 menores de 8
+    assert state.kids_under_8_count == 2
+    assert state.step == Step.MIXED_FINAL_KIDS_810
+    await route_message(state, "1")              # 1 entre 8-10 → preview
+    assert state.kids_eight_to_ten_count == 1
+    assert state.kids_age_group == "mixed"
+    assert state.kids_count == 3
+    assert state.mixed_final_has_kids_8_10 is True
+
+
+@pytest.mark.asyncio
+async def test_kids_mixed_summary_shows_three_split_rows():
+    """RESERVA summary splits a mixed beginner row into adult + snorkel-kids + bubble-makers."""
+    state = await _arrive_at_kids_inline(5)
+    await route_message(state, "4")              # Varios rangos
+    await route_message(state, "2")              # 2 menores de 8
+    await route_message(state, "1")              # 1 entre 8-10 → preview
+    await route_message(state, "1")              # preview confirm → cart_review
+    await send(state, "6", "2", "2")             # checkout (cart-action 6), not colombian, no private
+    summary = state.mixed_last_summary or ""
+    assert "Minicurso" in summary
+    assert "Snorkel" in summary
+    assert "menores de 8" in summary.lower() or "[menores de 8]" in summary
+    assert "Bubble Makers" in summary
+    # Adult portion = 2 (5 - 2 - 1) at minicurso, kids u8=2 at snorkel, e10=1 at minicurso
+    assert "2 × Minicurso de Buceo" in summary  # adult row
+    assert "2 × Tour de Snorkeling [menores de 8]" in summary
+    assert "1 × Minicurso de Buceo [Bubble Makers]" in summary
+
+
+@pytest.mark.asyncio
+async def test_kids_mixed_summary_shows_both_warnings():
+    """Both 'under 8 cannot dive' and 'Bubble Makers' warnings appear together."""
+    state = await _arrive_at_kids_inline(4)
+    await route_message(state, "4")              # Varios rangos
+    await route_message(state, "1")              # 1 menor de 8
+    await route_message(state, "1")              # 1 entre 8-10 → preview
+    await route_message(state, "1")              # preview confirm
+    await send(state, "6", "2", "2")             # checkout (cart-action 6), not colombian, no private
+    summary = (state.mixed_last_summary or "").lower()
+    assert "menores de 8" in summary
+    assert "no pueden bucear" in summary
+    assert "bubble makers" in summary
+
+
+@pytest.mark.asyncio
+async def test_kids_mixed_lead_note_lists_two_lines():
+    """build_lead_summary emits separate lines for u8 and 8-10 when both present."""
+    from src.agents.lead_summary import build_lead_summary
+    state = await _arrive_at_kids_inline(4)
+    await route_message(state, "4")              # Varios rangos
+    await route_message(state, "2")              # 2 menores de 8
+    await route_message(state, "1")              # 1 entre 8-10 → preview
+    await route_message(state, "1")              # preview confirm
+    await send(state, "6", "2", "2")             # checkout (cart-action 6), not colombian, no private
+    note = build_lead_summary(state)
+    assert "2 menores de 8" in note
+    assert "1 niños 8-10" in note or "1 niño 8-10" in note
+
+
+@pytest.mark.asyncio
+async def test_kids_mixed_both_zero_collapses_to_ten_plus():
+    """If user picks 'Varios rangos' and answers 0 + 0, downgrades to ten_plus (no warnings)."""
+    state = await _arrive_at_kids_inline(3)
+    await route_message(state, "4")              # Varios rangos
+    await route_message(state, "0")              # 0 menores de 8
+    await route_message(state, "0")              # 0 entre 8-10 → preview
+    assert state.kids_age_group == "ten_plus"
+    assert state.kids_under_8_count == 0
+    assert state.kids_eight_to_ten_count == 0
+    assert state.kids_count is None
+    await route_message(state, "1")              # preview confirm
+    await send(state, "6", "2", "2")             # checkout (cart-action 6), not colombian, no private
+    summary = (state.mixed_last_summary or "").lower()
+    assert "menores de 8" not in summary
+    assert "bubble makers" not in summary
+
+
+@pytest.mark.asyncio
+async def test_kids_mixed_810_cap_respects_remaining():
+    """KIDS_810 buttons are capped to beginner_qty - kids_under_8_count."""
+    state = await _arrive_at_kids_inline(5)
+    await route_message(state, "4")              # Varios rangos
+    await route_message(state, "3")              # 3 menores de 8 → remaining = 2
+    assert state.step == Step.MIXED_FINAL_KIDS_810
+    button_values = [int(b["value"]) for b in state.quick_replies if b["value"].isdigit()]
+    assert max(button_values) == 2  # cap = 5 - 3 = 2
+
+
+@pytest.mark.asyncio
+async def test_kids_single_range_path_unchanged():
+    """The single-range branch still sets the per-range counter (legacy path intact)."""
+    state = await _arrive_at_kids_inline(3)
+    await route_message(state, "1")              # menores de 8 (single)
+    await route_message(state, "2")              # 2 niños → preview
+    assert state.kids_under_8_count == 2
+    assert state.kids_eight_to_ten_count == 0
+    assert state.kids_age_group == "under_8"
+    assert state.kids_count == 2
+
+
+# ────────────────────────────────────────────────────────────────────────
+# Large-group kids quantity ("6+" → escribir número exacto)
+# ────────────────────────────────────────────────────────────────────────
+
+
+async def _arrive_at_kids_inline_large(qty: int) -> ConversationState:
+    """Helper: reach MIXED_FINAL_KIDS with a beginner of qty > 6 (uses 6+ exact path)."""
+    state = await reach_mixed_add_activity()
+    await route_message(state, "2")              # pick beginner
+    await route_message(state, "6+")             # 6 or more → ask exact
+    await route_message(state, str(qty))         # exact qty → kids step
+    return state
+
+
+@pytest.mark.asyncio
+async def test_kids_qty_single_range_shows_6plus_for_large_group():
+    """When beginner qty > 9, KIDS_QTY buttons show 1..5 + '6+' instead of clipping at 9."""
+    state = await _arrive_at_kids_inline_large(20)
+    assert state.step == Step.MIXED_FINAL_KIDS
+    await route_message(state, "1")              # under_8 → KIDS_QTY
+    assert state.step == Step.MIXED_FINAL_KIDS_QTY
+    values = [b["value"] for b in state.quick_replies]
+    assert "6+" in values
+    # Numeric buttons stop at 5 (the rest is via exact input)
+    numeric = [int(v) for v in values if v.isdigit()]
+    assert max(numeric) == 5
+
+
+@pytest.mark.asyncio
+async def test_kids_qty_single_range_accepts_exact_above_9_for_large_group():
+    """For beginner qty=20, user can pick '6+' then type '12' as kids under 8."""
+    state = await _arrive_at_kids_inline_large(20)
+    await route_message(state, "1")              # under_8 → KIDS_QTY
+    resp = await route_message(state, "6+")      # ask exact
+    assert state.mixed_pending_exact is True
+    assert "6 o más" in resp or "6 or more" in resp
+    await route_message(state, "12")             # type 12 → preview
+    assert state.kids_count == 12
+    assert state.kids_under_8_count == 12
+    assert state.mixed_pending_exact is False
+    assert state.step == Step.MIXED_ADD_PREVIEW
+
+
+@pytest.mark.asyncio
+async def test_kids_qty_single_range_rejects_above_cap():
+    """For beginner qty=20, typing 25 is rejected."""
+    state = await _arrive_at_kids_inline_large(20)
+    await route_message(state, "1")              # under_8 → KIDS_QTY
+    await route_message(state, "6+")             # ask exact
+    resp = await route_message(state, "25")      # over cap
+    assert state.step == Step.MIXED_FINAL_KIDS_QTY  # still here
+    assert "20" in resp  # error message mentions the cap
+
+
+@pytest.mark.asyncio
+async def test_kids_u8_shows_6plus_for_large_group():
+    """For beginner qty=20, KIDS_U8 buttons cap at 5 + '6+'."""
+    state = await _arrive_at_kids_inline_large(20)
+    await route_message(state, "4")              # Varios rangos → KIDS_U8
+    assert state.step == Step.MIXED_FINAL_KIDS_U8
+    values = [b["value"] for b in state.quick_replies]
+    assert "6+" in values
+    numeric = [int(v) for v in values if v.isdigit()]
+    assert max(numeric) == 5
+    assert 0 in numeric  # Ninguno button still present
+
+
+@pytest.mark.asyncio
+async def test_kids_u8_and_810_accept_typed_numbers_for_large_group():
+    """For beginner qty=20, Varios → 6+ → type 10 → 6+ → type 5 captures 10 + 5."""
+    state = await _arrive_at_kids_inline_large(20)
+    await route_message(state, "4")              # Varios → KIDS_U8
+    await route_message(state, "6+")             # exact prompt
+    await route_message(state, "10")             # u8 = 10 → KIDS_810
+    assert state.kids_under_8_count == 10
+    assert state.step == Step.MIXED_FINAL_KIDS_810
+    # Remaining cap = 20 - 10 = 10, still > 8 so 6+ button is shown
+    values = [b["value"] for b in state.quick_replies]
+    assert "6+" in values
+    await route_message(state, "6+")
+    await route_message(state, "5")              # e10 = 5
+    assert state.kids_eight_to_ten_count == 5
+    assert state.kids_age_group == "mixed"
+    assert state.kids_count == 15
+    assert state.step == Step.MIXED_ADD_PREVIEW
+
+
+# ────────────────────────────────────────────────────────────────────────
+# Cambiar origen desde el carrito
+# ────────────────────────────────────────────────────────────────────────
+
+
+@pytest.mark.asyncio
+async def test_cart_change_location_action_appears_in_cart_review():
+    """mixed_cart_actions includes a 'Cambiar origen' option."""
+    state = await reach_mixed_add_activity()
+    await send(state, "3", "2", "1")             # snorkel x2 → CART_REVIEW
+    titles = [b["title"].lower() for b in state.quick_replies]
+    assert any("cambiar origen" in t or "change origin" in t for t in titles)
+
+
+@pytest.mark.asyncio
+async def test_cart_change_location_cartagena_to_island_remaps_prices():
+    """Changing from Cartagena to Islas swaps service IDs and updates summary prices."""
+    state = await reach_mixed_add_activity(location="cartagena")
+    await send(state, "1", "1", "2", "2", "1")   # cert 2-dives x2 (Cartagena)
+    assert state.location == "cartagena"
+    await route_message(state, "1")              # Cambiar origen (cart-action 1)
+    assert state.step == Step.MIXED_CART_LOCATION
+    resp = await route_message(state, "2")       # Ya estoy en las islas
+    assert state.location == "island"
+    assert state.step == Step.MIXED_CART_REVIEW
+    assert "actualizado" in resp.lower() or "updated" in resp.lower()
+    # Cart item's plan should have been remapped to the island variant.
+    from src.flows.decision_tree import DecisionTree, SERVICES
+    dt = DecisionTree()
+    cert_item = next(it for it in state.mixed_cart if it["type"] == "cert")
+    assert cert_item["plan"] == "2_dives_1_day_already_on_island"
+    svc_id = dt._cart_service_id("cert", cert_item["plan"], state)
+    assert svc_id == "2_dives_1_day_already_on_island"
+    cartagena_price = SERVICES["2_dives_1_day"]["price_usd"]
+    island_price = SERVICES["2_dives_1_day_already_on_island"]["price_usd"]
+    assert island_price < cartagena_price
+
+
+@pytest.mark.asyncio
+async def test_cart_change_location_same_value_is_noop():
+    """Picking the same origin shows a 'no changes' ack and stays at cart_review."""
+    state = await reach_mixed_add_activity(location="cartagena")
+    await send(state, "3", "2", "1")             # snorkel x2
+    await route_message(state, "1")              # Cambiar origen (cart-action 1)
+    resp = await route_message(state, "1")       # Cartagena (same)
+    assert state.location == "cartagena"
+    assert state.step == Step.MIXED_CART_REVIEW
+    assert "sin cambios" in resp.lower() or "no changes" in resp.lower()
+
+
+@pytest.mark.asyncio
+async def test_cart_change_location_back_returns_to_cart_review_unchanged():
+    """Pressing 'Volver' from the location prompt returns without changing state."""
+    state = await reach_mixed_add_activity(location="cartagena")
+    await send(state, "3", "2", "1")             # snorkel x2
+    await route_message(state, "1")              # Cambiar origen (cart-action 1)
+    assert state.step == Step.MIXED_CART_LOCATION
+    resp = await route_message(state, "back")
+    assert state.step == Step.MIXED_CART_REVIEW
+    assert state.location == "cartagena"
+    # Cart contents must still be visible after back (regression for bug
+    # where supervisor's intent=back wiped the cart view, only showing prompt).
+    assert "carrito" in resp.lower() or "cart" in resp.lower()
+    assert "snorkel" in resp.lower() or "tour de snorkel" in resp.lower()
+
+
+@pytest.mark.asyncio
+async def test_cart_change_location_back_via_intent_classifier_keeps_cart_visible():
+    """Even when supervisor's LLM intent classifier returns 'back', cart_lines are shown."""
+    from unittest.mock import AsyncMock, patch
+    state = await reach_mixed_add_activity(location="cartagena")
+    await send(state, "3", "2", "1")             # snorkel x2
+    await route_message(state, "1")              # Cambiar origen (cart-action 1)
+    assert state.step == Step.MIXED_CART_LOCATION
+    with patch("src.agents.supervisor.classify_menu_intent",
+               new_callable=AsyncMock, return_value="back"):
+        resp = await route_message(state, "atras por favor")
+    assert state.step == Step.MIXED_CART_REVIEW
+    assert state.location == "cartagena"
+    assert "carrito" in resp.lower() or "cart" in resp.lower()
+    assert "snorkel" in resp.lower() or "tour de snorkel" in resp.lower()
+
+
+@pytest.mark.asyncio
+async def test_cart_remove_pick_back_keeps_cart_visible():
+    """Cancel from the 'pick item to remove' prompt returns to cart with cart_lines visible."""
+    state = await reach_mixed_add_activity()
+    await send(state, "3", "2", "1")             # snorkel x2
+    await route_message(state, "4")              # Quitar item (cart-action 4) → REMOVE_PICK
+    assert state.step == Step.MIXED_CART_REMOVE_PICK
+    resp = await route_message(state, "back")
+    assert state.step == Step.MIXED_CART_REVIEW
+    # Regression: cart must still be rendered (not just the prompt).
+    assert "carrito" in resp.lower() or "cart" in resp.lower()
+    assert "snorkel" in resp.lower() or "tour de snorkel" in resp.lower()
+
+
+@pytest.mark.asyncio
+async def test_cart_modify_pick_back_keeps_cart_visible():
+    """Cancel from the 'pick item to modify' prompt returns to cart with cart_lines visible."""
+    state = await reach_mixed_add_activity()
+    await send(state, "3", "2", "1")             # snorkel x2
+    await route_message(state, "3")              # Modificar item (cart-action 3) → MODIFY_PICK
+    assert state.step == Step.MIXED_CART_MODIFY_PICK
+    resp = await route_message(state, "back")
+    assert state.step == Step.MIXED_CART_REVIEW
+    assert "carrito" in resp.lower() or "cart" in resp.lower()
+    assert "snorkel" in resp.lower() or "tour de snorkel" in resp.lower()
+
+
+@pytest.mark.asyncio
+async def test_cart_change_location_course_plan_remaps_to_island_variant():
+    """For course items with location-variant plans, the plan field is swapped."""
+    state = make_state()
+    state.location = "cartagena"
+    state.language = "es"
+    state.mixed_cart = [
+        {"type": "course", "qty": 1, "plan": "open_water", "label": "Curso Open Water Diver PADI"},
+    ]
+    from src.flows.decision_tree import DecisionTree
+    dt = DecisionTree()
+    state.location = "island"
+    dt._remap_cart_for_location(state)
+    assert state.mixed_cart[0]["plan"] == "open_water_already_on_island"
+    # And back
+    state.location = "cartagena"
+    dt._remap_cart_for_location(state)
+    assert state.mixed_cart[0]["plan"] == "open_water"
 
 

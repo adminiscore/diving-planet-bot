@@ -76,8 +76,12 @@ class Step(str, Enum):
     MIXED_CART_REVIEW = "mixed_cart_review"
     MIXED_CART_MODIFY_PICK = "mixed_cart_modify_pick"
     MIXED_CART_REMOVE_PICK = "mixed_cart_remove_pick"
+    MIXED_CART_LOCATION = "mixed_cart_location"
     MIXED_FINAL_COLOMBIAN = "mixed_final_colombian"
     MIXED_FINAL_KIDS = "mixed_final_kids"
+    MIXED_FINAL_KIDS_QTY = "mixed_final_kids_qty"
+    MIXED_FINAL_KIDS_U8 = "mixed_final_kids_u8"
+    MIXED_FINAL_KIDS_810 = "mixed_final_kids_810"
     MIXED_FINAL_PRIVATE = "mixed_final_private"
     MIXED_FINAL_SUMMARY = "mixed_final_summary"
     PRICING_MENU = "pricing_menu"
@@ -145,11 +149,19 @@ class ConversationState:
     mixed_pending_cert_remaining_qty: int | None = None
     mixed_pending_refresh_added_qty: int | None = None
     mixed_pending_modify_idx: int | None = None  # cart index when editing an item
+    mixed_pending_modify_refresh: bool = False   # cert qty just changed → re-ask refresher
     mixed_pending_exact: bool = False            # waiting for exact count after "6+"
     mixed_display_currency: str = "USD"          # "USD" | "COP"
     mixed_final_is_colombian: bool | None = None
     mixed_final_has_kids_8_10: bool | None = None
     mixed_final_wants_private: bool | None = None
+    # Kids age question — disparada en el cart-mixto si hay actividad para niños
+    # o si el cliente mencionó hijos/familia en texto libre.
+    kids_mention_detected: bool = False
+    kids_age_group: str | None = None  # "under_8" | "eight_to_ten" | "ten_plus" | "mixed"
+    kids_count: int | None = None  # cuántos niños (derivado para single-rango / mixed)
+    kids_under_8_count: int = 0
+    kids_eight_to_ten_count: int = 0
     mixed_last_summary: str | None = None        # final summary text (for lead note)
     # Ruta de entrada al flujo carrito: "booking" (entrada principal),
     # "diving_snorkel" (grupo mixto legacy) o "cert_beg" (certificados + principiantes).
@@ -1002,6 +1014,10 @@ MESSAGES = {
         "es": "¿Quieres *añadir esta actividad al carrito* o ver primero el itinerario completo?",
         "en": "Would you like to *add this activity to the cart* or view the full itinerary first?",
     },
+    "mixed_cert_refresh_qty": {
+        "es": "¿Cuántas de estas personas quieren hacer el *refresher*?\n_(Sin coste adicional — el guía adapta la inmersión a su nivel)_",
+        "en": "How many of these people want to do the *refresher*?\n_(No extra cost — the guide adapts the dive to their level)_",
+    },
     "mixed_cart_empty": {
         "es": "Tu carrito está vacío. Añade al menos una actividad para continuar.",
         "en": "Your cart is empty. Add at least one activity to continue.",
@@ -1018,23 +1034,61 @@ MESSAGES = {
         "es": "¿Qué *item del carrito* quieres quitar?",
         "en": "Which *cart item* do you want to remove?",
     },
+    "mixed_cart_location": {
+        "es": "¿Desde dónde tomarán la salida? Los precios se actualizarán según tu elección.",
+        "en": "Where will you depart from? Prices will update according to your choice.",
+    },
     "mixed_final_colombian": {
         "es": "Para terminar, ¿eres *colombiano/a o residente en Colombia*? (aplica descuento)",
         "en": "Last few questions: are you *Colombian / resident in Colombia*? (discount applies)",
     },
     "mixed_final_kids": {
         "es": (
-            "¿Hay *niños entre 8 y 10 años* en el grupo?\n\n"
-            "• Menores de 8 años: solo pueden hacer snorkel (mín. 6 años).\n"
-            "• De 8 a 10 años: programa *Bubble Makers* (piscina y aguas poco profundas, máximo 2 metros de profundidad).\n"
-            "• A partir de 10 años: pueden hacer el minicurso normal."
+            "¿Hay *niños menores de 10 años* en el grupo? Dime el rango para planificar bien la actividad:\n\n"
+            "• 👶 *Menores de 8 años*: solo pueden hacer *snorkel* (mín. 6 años); no pueden bucear.\n"
+            "• 👦 *De 8 a 10 años*: programa *Bubble Makers* — sesión especializada en piscina y mar poco profundo "
+            "(máx. 2 m de profundidad) con un instructor dedicado.\n"
+            "• 🧑 *Todos 10+*: pueden hacer el minicurso normal sin cambios.\n"
+            "• 🧒 *Varios rangos (mezcla)*: te pregunto cuántos hay en cada rango."
         ),
         "en": (
-            "Are there any *children aged 8 to 10* in the group?\n\n"
-            "• Under 8: snorkeling only (min. 6 years).\n"
-            "• Ages 8-10: *Bubble Makers* program (pool + max 2 m depth).\n"
-            "• 10 and over: regular mini-course."
+            "Are there any *children under 10* in the group? Tell me the range so I can plan the activity properly:\n\n"
+            "• 👶 *Under 8*: snorkeling only (min. 6 years); cannot dive.\n"
+            "• 👦 *Ages 8-10*: *Bubble Makers* program — specialized pool + shallow-water session "
+            "(max. 2 m depth) with a dedicated instructor.\n"
+            "• 🧑 *Everyone 10+*: regular mini-course, no changes.\n"
+            "• 🧒 *Multiple ranges (mix)*: I'll ask how many are in each range."
         ),
+    },
+    "mixed_final_kids_qty": {
+        "es": "¿*Cuántos niños* son en ese rango? Esto nos ayuda a desglosar bien la actividad:",
+        "en": "*How many kids* in that range? This helps us break down the activity properly:",
+    },
+    "mixed_kids_age": {
+        "es": (
+            "¿Hay *niños menores de 10 años* en el grupo? Dime el rango para planificar bien la actividad:\n\n"
+            "• 👶 *Menores de 8 años*: solo pueden hacer *snorkel* (mín. 6 años); no pueden bucear.\n"
+            "• 👦 *De 8 a 10 años*: programa *Bubble Makers* — sesión especializada en piscina y mar poco profundo "
+            "(máx. 2 m de profundidad) con un instructor dedicado.\n"
+            "• 🧑 *Todos 10+*: pueden hacer el minicurso normal sin cambios.\n"
+            "• 🧒 *Varios rangos (mezcla)*: te pregunto cuántos hay en cada rango."
+        ),
+        "en": (
+            "Are there any *children under 10* in the group? Tell me the range so I can plan the activity properly:\n\n"
+            "• 👶 *Under 8*: snorkeling only (min. 6 years); cannot dive.\n"
+            "• 👦 *Ages 8-10*: *Bubble Makers* program — specialized pool + shallow-water session "
+            "(max. 2 m depth) with a dedicated instructor.\n"
+            "• 🧑 *Everyone 10+*: regular mini-course, no changes.\n"
+            "• 🧒 *Multiple ranges (mix)*: I'll ask how many are in each range."
+        ),
+    },
+    "mixed_final_kids_u8": {
+        "es": "¿Cuántos *menores de 8* hay en el grupo? (no pueden bucear, snorkel desde 6 años)",
+        "en": "How many *under 8* are in the group? (cannot dive, snorkel from age 6)",
+    },
+    "mixed_final_kids_810": {
+        "es": "¿Y cuántos *entre 8 y 10*? (Bubble Makers — supervisor especializado)",
+        "en": "And how many *between 8 and 10*? (Bubble Makers — specialized supervisor)",
     },
     "mixed_final_private": {
         "es": "¿Os interesa una *lancha privada exclusiva* para el grupo?",
@@ -1544,18 +1598,20 @@ BUTTON_OPTIONS = {
     },
     "mixed_cart_actions": {
         "es": [
-            {"title": "➕ Añadir otra actividad", "value": "1"},
-            {"title": "🔧 Modificar item", "value": "2"},
-            {"title": "❌ Quitar item", "value": "3"},
-            {"title": "✅ Confirmar carrito", "value": "4"},
+            {"title": "📍 Cambiar origen", "value": "1"},
+            {"title": "➕ Añadir otra actividad", "value": "2"},
+            {"title": "🔧 Modificar item", "value": "3"},
+            {"title": "❌ Quitar item", "value": "4"},
             {"title": "🔄 Empezar de nuevo", "value": "5"},
+            {"title": "✅ Confirmar carrito", "value": "6"},
         ],
         "en": [
-            {"title": "➕ Add another activity", "value": "1"},
-            {"title": "🔧 Modify item", "value": "2"},
-            {"title": "❌ Remove item", "value": "3"},
-            {"title": "✅ Confirm cart", "value": "4"},
+            {"title": "📍 Change origin", "value": "1"},
+            {"title": "➕ Add another activity", "value": "2"},
+            {"title": "🔧 Modify item", "value": "3"},
+            {"title": "❌ Remove item", "value": "4"},
             {"title": "🔄 Start over", "value": "5"},
+            {"title": "✅ Confirm cart", "value": "6"},
         ],
     },
     "mixed_final_summary_actions": {
@@ -1653,6 +1709,22 @@ BUTTON_OPTIONS = {
             {"title": "👶 Under 8 years old", "value": "1"},
             {"title": "👦 Kids 8-10 (Bubble Makers)", "value": "2"},
             {"title": "🧑 Everyone 10+ years old", "value": "3"},
+            {"title": "🔙 Back", "value": "back"},
+        ],
+    },
+    "mixed_kids_age": {
+        "es": [
+            {"title": "👶 Hay menores de 8 años", "value": "1"},
+            {"title": "👦 De 8 a 10 (Bubble Makers)", "value": "2"},
+            {"title": "🧑 Todos tienen 10+ años", "value": "3"},
+            {"title": "🧒 Varios rangos (mezcla)", "value": "4"},
+            {"title": "🔙 Volver", "value": "back"},
+        ],
+        "en": [
+            {"title": "👶 Under 8 years old", "value": "1"},
+            {"title": "👦 Ages 8-10 (Bubble Makers)", "value": "2"},
+            {"title": "🧑 Everyone 10+ years old", "value": "3"},
+            {"title": "🧒 Multiple ranges (mix)", "value": "4"},
             {"title": "🔙 Back", "value": "back"},
         ],
     },
@@ -2166,8 +2238,12 @@ class DecisionTree:
             Step.MIXED_CART_REVIEW: self._handle_mixed_cart_review,
             Step.MIXED_CART_MODIFY_PICK: self._handle_mixed_cart_modify_pick,
             Step.MIXED_CART_REMOVE_PICK: self._handle_mixed_cart_remove_pick,
+            Step.MIXED_CART_LOCATION: self._handle_mixed_cart_location,
             Step.MIXED_FINAL_COLOMBIAN: self._handle_mixed_final_colombian,
             Step.MIXED_FINAL_KIDS: self._handle_mixed_final_kids,
+            Step.MIXED_FINAL_KIDS_QTY: self._handle_mixed_final_kids_qty,
+            Step.MIXED_FINAL_KIDS_U8: self._handle_mixed_final_kids_u8,
+            Step.MIXED_FINAL_KIDS_810: self._handle_mixed_final_kids_810,
             Step.MIXED_FINAL_PRIVATE: self._handle_mixed_final_private,
             Step.MIXED_FINAL_SUMMARY: self._handle_mixed_final_summary,
             Step.PRICING_MENU: self._handle_pricing_menu,
@@ -2960,11 +3036,18 @@ class DecisionTree:
         state.mixed_pending_cert_remaining_qty = None
         state.mixed_pending_refresh_added_qty = None
         state.mixed_pending_modify_idx = None
+        state.mixed_pending_modify_refresh = False
         state.mixed_pending_exact = False
         state.mixed_display_currency = "USD"
         state.mixed_final_is_colombian = None
         state.mixed_final_has_kids_8_10 = None
         state.mixed_final_wants_private = None
+        # kids_mention_detected NO se resetea — es un atributo del speaker que
+        # debe persistir entre flujos. Solo se limpia el age_group respondido.
+        state.kids_age_group = None
+        state.kids_count = None
+        state.kids_under_8_count = 0
+        state.kids_eight_to_ten_count = 0
         state.mixed_last_summary = None
         state.mixed_booking_links = []
 
@@ -3064,6 +3147,10 @@ class DecisionTree:
             "plan": plan,
             "label": label,
         })
+        # NOTE: kids info is now collected INLINE before append (in
+        # `_handle_mixed_add_qty` for the beginner branch), so we do NOT
+        # invalidate here — that would wipe the answer the user just gave.
+        # Invalidation lives in the add/modify entry handlers instead.
 
     def _remove_mixed_cart_item_qty(self, state: ConversationState, item_type: str, plan: str | None, qty: int) -> None:
         if qty <= 0:
@@ -3268,7 +3355,35 @@ class DecisionTree:
         item_type = state.mixed_pending_qty_type or "cert"
         plan = state.mixed_pending_qty_plan
         if state.mixed_pending_modify_idx is not None and 0 <= state.mixed_pending_modify_idx < len(state.mixed_cart):
-            state.mixed_cart[state.mixed_pending_modify_idx]["qty"] = n
+            modified_item = state.mixed_cart[state.mixed_pending_modify_idx]
+            modified_item["qty"] = n
+            had_refresh = any(it.get("type") == "refresh" for it in state.mixed_cart)
+            # Changing the cert qty invalidates any refresher tied to it: drop refresh
+            # items and re-ask the user (different qty → different subgroup).
+            if modified_item.get("type") == "cert" and had_refresh:
+                state.mixed_cart = [it for it in state.mixed_cart if it.get("type") != "refresh"]
+                state.mixed_pending_modify_idx = None
+                state.mixed_pending_modify_refresh = True
+                state.mixed_pending_cert_total_qty = n
+                state.mixed_pending_qty_value = n
+                state.mixed_pending_qty_type = "cert"
+                state.mixed_pending_qty_plan = "2_dives_1_day"
+                state.step = Step.MIXED_CERT_REFRESH_INTEREST
+                self.set_quick_replies(state, "refresher_interest")
+                intro = (
+                    f"✏️ Actualizado a {n} buceadores. Como cambió la cantidad, vuelvo a preguntar por el *refresher*:\n\n"
+                    if lang == "es"
+                    else f"✏️ Updated to {n} divers. Since the quantity changed, I'll re-ask about the *refresher*:\n\n"
+                )
+                return intro + MESSAGES["refresher_info"][lang]
+            # Modifying a beginner line changes how many minors might be in the
+            # group → wipe previous kids answer and re-ask ranges inline. The
+            # modify_idx stays set; _continue_after_kids reads it to know it's
+            # a modify-in-progress and returns to cart_review (no preview).
+            if modified_item.get("type") == "beginner":
+                self._invalidate_kids_answer(state)
+                state.mixed_pending_qty_value = n
+                return self._enter_mixed_final_kids(state)
             state.mixed_pending_modify_idx = None
             self._clear_mixed_pending_add(state)
             return self._goto_mixed_cart_review(state)
@@ -3297,7 +3412,10 @@ class DecisionTree:
             )
 
         if item_type == "beginner":
-            return self._prepare_mixed_add_preview(state, self._service_for_location("minicourse", state))
+            # Inline kids question — invalidate any previous answer (e.g. from
+            # a removed-and-re-added beginner) so the ranges are asked fresh.
+            self._invalidate_kids_answer(state)
+            return self._enter_mixed_final_kids(state)
         if item_type == "snorkel":
             return self._prepare_mixed_add_preview(state, self._service_for_location("snorkeling", state))
 
@@ -3321,6 +3439,26 @@ class DecisionTree:
         self.set_quick_replies(state, "certified_last_dive")
         return MESSAGES["not_understood"][lang]
 
+    def _refresh_qty_quick_replies(self, state: ConversationState) -> list[dict]:
+        """Buttons for MIXED_CERT_REFRESH_QTY clipped to the certified-divers total.
+
+        Without this the bot offered 1..5 + 6+ even when only 3 certified divers
+        were in the cart, letting users click an out-of-range value that the
+        handler then had to reject. Clipping at total_qty keeps the UI honest.
+        """
+        lang = state.language
+        total_qty = state.mixed_pending_cert_total_qty or state.mixed_pending_qty_value or 0
+        cancel_title = "🔙 Cancelar" if lang == "es" else "🔙 Cancel"
+        if total_qty <= 0:
+            return [{"title": cancel_title, "value": "back"}]
+        max_button = min(total_qty, 5)
+        buttons = [{"title": str(n), "value": str(n)} for n in range(1, max_button + 1)]
+        if total_qty >= 6:
+            six_plus_title = "6 o mas" if lang == "es" else "6 or more"
+            buttons.append({"title": six_plus_title, "value": "6+"})
+        buttons.append({"title": cancel_title, "value": "back"})
+        return buttons
+
     def _handle_mixed_cert_refresh_interest(self, state: ConversationState, message: str) -> str:
         choice = self._parse_choice(message, 2)
         lang = state.language
@@ -3331,9 +3469,15 @@ class DecisionTree:
             return MESSAGES["certified_last_dive"][lang]
         if choice == 1:
             state.step = Step.MIXED_CERT_REFRESH_QTY
-            self.set_quick_replies(state, "mixed_quantity")
+            state.quick_replies = self._refresh_qty_quick_replies(state)
             return MESSAGES["mixed_cert_refresh_qty"][lang]
         if choice == 2:
+            # In modify mode, cert is already in the cart with the updated qty —
+            # "No" just means no refresher; return straight to cart review.
+            if state.mixed_pending_modify_refresh:
+                state.mixed_pending_modify_refresh = False
+                self._clear_mixed_pending_add(state)
+                return self._goto_mixed_cart_review(state)
             return self._prepare_mixed_add_preview(state, self._current_mixed_cert_service_id(state))
         self.set_quick_replies(state, "refresher_interest")
         return MESSAGES["not_understood"][lang]
@@ -3361,10 +3505,30 @@ class DecisionTree:
                 state.quick_replies = []
                 return ("Escribe un número exacto válido para ese subgrupo, por favor."
                         if lang == "es" else "Please enter a valid exact number for that subgroup.")
-            self.set_quick_replies(state, "mixed_quantity")
+            state.quick_replies = self._refresh_qty_quick_replies(state)
+            if n is not None and n > total_qty:
+                people_word = "persona" if total_qty == 1 else "personas"
+                return (
+                    f"Solo hay {total_qty} {people_word} en el subgrupo certificado. Elige un número entre 1 y {total_qty}."
+                    if lang == "es"
+                    else f"There are only {total_qty} certified people. Pick a number between 1 and {total_qty}."
+                )
             return MESSAGES["not_understood"][lang]
 
         state.mixed_pending_exact = False
+        # Modify mode: the cert is already in the cart with the updated qty.
+        # Just attach the refresher count and return to cart review (no preview,
+        # no split-review).
+        if state.mixed_pending_modify_refresh:
+            self._append_mixed_cart_item(state, "refresh", None, n)
+            state.mixed_pending_refresh_added_qty = n
+            state.mixed_pending_modify_refresh = False
+            self._clear_mixed_pending_add(state)
+            return self._goto_mixed_cart_review(state)
+
+        # Normal add flow: cert is appended via the preview/split-review path,
+        # not here. We only append the refresher and then route depending on
+        # whether all certs got refresher (preview) or only some (split-review).
         self._append_mixed_cart_item(state, "refresh", None, n)
         state.mixed_pending_refresh_added_qty = n
         remaining_qty = total_qty - n
@@ -3393,7 +3557,7 @@ class DecisionTree:
             state.mixed_pending_refresh_added_qty = None
             state.mixed_pending_cert_remaining_qty = state.mixed_pending_cert_total_qty or state.mixed_pending_qty_value or 0
             state.step = Step.MIXED_CERT_REFRESH_QTY
-            self.set_quick_replies(state, "mixed_quantity")
+            state.quick_replies = self._refresh_qty_quick_replies(state)
             return MESSAGES["mixed_cert_refresh_qty"][lang]
         if choice == 1:
             return self._prepare_mixed_add_preview(state, current_plan)
@@ -3446,16 +3610,26 @@ class DecisionTree:
     _NUMBER_EMOJIS = ["1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣", "6️⃣", "7️⃣", "8️⃣", "9️⃣", "🔟"]
 
     def _cart_pick_buttons(self, state: ConversationState) -> list[dict]:
-        """Genera botones dinámicos para elegir un item del carrito (modify/remove)."""
+        """Genera botones dinámicos para elegir un item del carrito (modify/remove).
+
+        Refresher items don't get their own button — they are an attribute of
+        the cert line, not an independent service. The button value uses the
+        raw 1-based index into state.mixed_cart so existing handlers keep
+        working as-is.
+        """
         options: list[dict] = []
-        for idx, item in enumerate(state.mixed_cart, start=1):
-            emoji = self._NUMBER_EMOJIS[idx - 1] if idx <= len(self._NUMBER_EMOJIS) else f"{idx}."
+        visible_idx = 0
+        for raw_idx, item in enumerate(state.mixed_cart):
+            if item.get("type") == "refresh":
+                continue
+            visible_idx += 1
+            emoji = self._NUMBER_EMOJIS[visible_idx - 1] if visible_idx <= len(self._NUMBER_EMOJIS) else f"{visible_idx}."
             # Truncamos el label para que el botón no quede gigante (límite suave de Chatwoot)
             label = item["label"]
             title = f"{emoji} {item['qty']} × {label}"
             if len(title) > 60:
                 title = title[:57] + "..."
-            options.append({"title": title, "value": str(idx)})
+            options.append({"title": title, "value": str(raw_idx + 1)})
         cancel = (
             {"title": "🔙 Cancelar", "value": "back"}
             if state.language == "es"
@@ -3464,13 +3638,60 @@ class DecisionTree:
         options.append(cancel)
         return options
 
+    def _kids_sub_bullet(self, state: ConversationState, lang: str) -> str | None:
+        """Sub-bullet line(s) shown under the beginner cart row when kids info is known.
+
+        Returns None if no kids are flagged. For single-range answers shows one bullet.
+        For mixed answers (both u8 and 8-10 > 0) returns two concatenated bullets.
+        """
+        u8 = state.kids_under_8_count or 0
+        e10 = state.kids_eight_to_ten_count or 0
+        bullets: list[str] = []
+        if u8 > 0:
+            if lang == "es":
+                noun = "menor" if u8 == 1 else "menores"
+                bullets.append(f"       _↳ {u8} {noun} de 8 — no pueden bucear, snorkel desde 6 años_")
+            else:
+                noun = "child" if u8 == 1 else "children"
+                bullets.append(f"       _↳ {u8} {noun} under 8 — cannot dive, snorkel from age 6_")
+        if e10 > 0:
+            if lang == "es":
+                noun = "niño" if e10 == 1 else "niños"
+                bullets.append(f"       _↳ {e10} {noun} de 8 a 10 (Bubble Makers — supervisor especializado)_")
+            else:
+                noun = "kid" if e10 == 1 else "kids"
+                bullets.append(f"       _↳ {e10} {noun} aged 8-10 (Bubble Makers — specialized supervisor)_")
+        if not bullets:
+            return None
+        return "\n".join(bullets)
+
     def _format_cart_lines(self, state: ConversationState, lang: str) -> str:
         if not state.mixed_cart:
             return MESSAGES["mixed_cart_empty"][lang]
         title = "🛒 *Tu carrito:*" if lang == "es" else "🛒 *Your cart:*"
         lines = [title]
-        for idx, item in enumerate(state.mixed_cart, start=1):
-            lines.append(f"  *{idx}.* {item['qty']} × {item['label']}")
+        # Refresher items are nested as a sub-bullet under the certified-diving line,
+        # not shown as a top-level cart entry (no separate price, no separate row).
+        refresh_qty = sum(it["qty"] for it in state.mixed_cart if it.get("type") == "refresh")
+        kids_sub = self._kids_sub_bullet(state, lang)
+        visible_idx = 0
+        for item in state.mixed_cart:
+            if item.get("type") == "refresh":
+                continue
+            visible_idx += 1
+            lines.append(f"  *{visible_idx}.* {item['qty']} × {item['label']}")
+            if item.get("type") == "cert" and refresh_qty > 0:
+                people_word = "persona" if refresh_qty == 1 else "personas"
+                sub = (
+                    f"       _↳ {refresh_qty} {people_word} con refresher (sin coste adicional)_"
+                    if lang == "es"
+                    else f"       _↳ {refresh_qty} {'person' if refresh_qty == 1 else 'people'} with refresher (no extra cost)_"
+                )
+                lines.append(sub)
+                refresh_qty = 0
+            if item.get("type") == "beginner" and kids_sub:
+                lines.append(kids_sub)
+                kids_sub = None
         return "\n".join(lines)
 
     def _goto_mixed_cart_review(self, state: ConversationState) -> str:
@@ -3490,29 +3711,31 @@ class DecisionTree:
 
     def _handle_mixed_cart_review(self, state: ConversationState, message: str) -> str:
         lang = state.language
-        choice = self._parse_choice(message, 5)
+        choice = self._parse_choice(message, 6)
         if choice == 1:
-            return self._goto_mixed_add_activity(state)
+            return self._enter_mixed_cart_location(state)
         if choice == 2:
+            return self._goto_mixed_add_activity(state)
+        if choice == 3:
             if not state.mixed_cart:
                 return self._goto_mixed_add_activity(state)
             state.step = Step.MIXED_CART_MODIFY_PICK
             state.quick_replies = self._cart_pick_buttons(state)
             return self._format_cart_lines(state, lang) + "\n\n" + MESSAGES["mixed_cart_modify_pick"][lang]
-        if choice == 3:
+        if choice == 4:
             if not state.mixed_cart:
                 return self._goto_mixed_add_activity(state)
             state.step = Step.MIXED_CART_REMOVE_PICK
             state.quick_replies = self._cart_pick_buttons(state)
             return self._format_cart_lines(state, lang) + "\n\n" + MESSAGES["mixed_cart_remove_pick"][lang]
-        if choice == 4:
+        if choice == 5:
+            self._reset_mixed_state(state)
+            return self._goto_mixed_entry(state)
+        if choice == 6:
             if not state.mixed_cart:
                 self.set_quick_replies(state, "mixed_cart_actions")
                 return MESSAGES["mixed_cart_empty"][lang]
             return self._goto_mixed_final_colombian(state)
-        if choice == 5:
-            self._reset_mixed_state(state)
-            return self._goto_mixed_entry(state)
         self.set_quick_replies(state, "mixed_cart_actions")
         return MESSAGES["not_understood"][lang]
 
@@ -3549,12 +3772,124 @@ class DecisionTree:
             state.quick_replies = self._cart_pick_buttons(state)
             return self._format_cart_lines(state, lang) + "\n\n" + MESSAGES["mixed_cart_remove_pick"][lang]
         removed = state.mixed_cart.pop(idx)
+        # Refresher is meaningless without the certified-diving line it sits
+        # under, so dropping the cert auto-removes any refresh items too.
+        if removed.get("type") == "cert":
+            state.mixed_cart = [it for it in state.mixed_cart if it.get("type") != "refresh"]
+        # Removing a beginner line changes the kids-context — invalidate any
+        # previous age-range answer so the next checkout re-asks if needed.
+        if removed.get("type") == "beginner":
+            self._invalidate_kids_answer(state)
         ack = (f"✅ Quitado del carrito: {removed['qty']} × {removed['label']}"
                if lang == "es" else
                f"✅ Removed from cart: {removed['qty']} × {removed['label']}")
         return ack + "\n\n" + self._goto_mixed_cart_review(state)
 
+    # ─── Cambiar origen desde el carrito ───
+
+    def _enter_mixed_cart_location(self, state: ConversationState) -> str:
+        lang = state.language
+        state.step = Step.MIXED_CART_LOCATION
+        self.set_quick_replies(state, "tours_location")
+        return MESSAGES["mixed_cart_location"][lang]
+
+    def _remap_cart_for_location(self, state: ConversationState) -> None:
+        """Refresh cart item labels and plans after a location change.
+
+        `cert` and `course` items carry a plan that may embed a location
+        variant (e.g. `2_dives_1_day` ↔ `2_dives_1_day_already_on_island`,
+        `open_water` ↔ `open_water_already_on_island`); we swap them to the
+        equivalent for the new location when one exists in ISLAND_SERVICE_MAP.
+        `beginner`/`snorkel`/`refresh` resolve their service via
+        `_cart_service_id` dynamically and don't need plan rewriting; only
+        their labels are refreshed.
+        """
+        island_to_base = {island: base for base, island in ISLAND_SERVICE_MAP.items()}
+        for item in state.mixed_cart:
+            item_type = item.get("type")
+            plan = item.get("plan")
+            if item_type in {"cert", "course"} and plan:
+                if state.location == "island" and plan in ISLAND_SERVICE_MAP:
+                    new_plan = ISLAND_SERVICE_MAP[plan]
+                    if new_plan in SERVICES:
+                        item["plan"] = new_plan
+                elif state.location == "cartagena" and plan in island_to_base:
+                    new_plan = island_to_base[plan]
+                    if new_plan in SERVICES:
+                        item["plan"] = new_plan
+            # Refresh the label for the (possibly new) plan and language.
+            item["label"] = self._cart_label_for(item_type, item.get("plan"), state.language)
+
+    def _handle_mixed_cart_location(self, state: ConversationState, message: str) -> str:
+        lang = state.language
+        msg = message.strip().lower()
+        if msg in ("back", "cancel", "cancelar"):
+            return self._goto_mixed_cart_review(state)
+        choice = self._parse_choice(message, 2)
+        if choice == 1:
+            new_loc = "cartagena"
+        elif choice == 2:
+            new_loc = "island"
+        else:
+            self.set_quick_replies(state, "tours_location")
+            return MESSAGES["not_understood"][lang]
+        if new_loc == state.location:
+            ack = (
+                "📍 Ya estabas con ese origen, sin cambios."
+                if lang == "es"
+                else "📍 Already set to that origin, no changes."
+            )
+            return ack + "\n\n" + self._goto_mixed_cart_review(state)
+        state.location = new_loc
+        self._remap_cart_for_location(state)
+        loc_label = (
+            ("Cartagena" if new_loc == "cartagena" else "Islas del Rosario")
+            if lang == "es"
+            else ("Cartagena" if new_loc == "cartagena" else "Rosario Islands")
+        )
+        ack = (
+            f"📍 Origen actualizado a *{loc_label}*. Precios y servicios ajustados."
+            if lang == "es"
+            else f"📍 Origin updated to *{loc_label}*. Prices and services adjusted."
+        )
+        return ack + "\n\n" + self._goto_mixed_cart_review(state)
+
     # ─── Final-question handlers ───
+
+    def _invalidate_kids_answer(self, state: ConversationState) -> None:
+        """Forget the previous kids answer (range + counts) so the question is re-asked.
+
+        Invoked whenever the cart mutates in a way that may change the kids-age
+        context (add/modify/remove a beginner line). The next checkout will
+        re-ask via _needs_kids_question if the trigger condition still applies.
+        """
+        state.kids_age_group = None
+        state.kids_count = None
+        state.kids_under_8_count = 0
+        state.kids_eight_to_ten_count = 0
+        state.mixed_final_has_kids_8_10 = None
+
+    def _needs_kids_question(self, state: ConversationState) -> bool:
+        """Decide if we should ask about kids ages at the end of the cart-mixto.
+
+        Trigger only when there's a real signal of minors in the booking:
+        (a) cart contains minicurso (beginner) — ages matter for Bubble Makers, or
+        (b) the speaker explicitly mentioned kids/family in free text.
+        Snorkel-only and cert-only adult carts are not bothered with the question;
+        the speaker can still surface "voy con mis hijos" any time and the detector
+        catches it.
+        """
+        if state.kids_age_group is not None:
+            return False  # ya respondida
+        if self._cart_includes(state, "beginner"):
+            return True
+        return bool(getattr(state, "kids_mention_detected", False))
+
+    def _enter_mixed_final_kids(self, state: ConversationState) -> str:
+        lang = state.language
+        state.step = Step.MIXED_FINAL_KIDS
+        self.set_quick_replies(state, "mixed_kids_age")
+        return MESSAGES["mixed_final_kids"][lang]
 
     def _goto_mixed_final_colombian(self, state: ConversationState) -> str:
         lang = state.language
@@ -3564,10 +3899,6 @@ class DecisionTree:
         if state.is_colombian is not None and state.mixed_final_is_colombian is None:
             state.mixed_final_is_colombian = state.is_colombian
             state.mixed_display_currency = "COP" if state.is_colombian else "USD"
-            if self._cart_includes(state, "beginner"):
-                state.step = Step.MIXED_FINAL_KIDS
-                self.set_quick_replies(state, "mixed_yes_no")
-                return MESSAGES["mixed_final_kids"][lang]
             if not self._cart_has_boat_activities(state):
                 return self._goto_mixed_final_summary(state)
             return self._goto_mixed_final_private(state)
@@ -3587,28 +3918,267 @@ class DecisionTree:
         else:
             self.set_quick_replies(state, "mixed_yes_no")
             return MESSAGES["not_understood"][lang]
-        # If beginner in cart → ask kids; else skip to private
-        if self._cart_includes(state, "beginner"):
-            state.step = Step.MIXED_FINAL_KIDS
-            self.set_quick_replies(state, "mixed_yes_no")
-            return MESSAGES["mixed_final_kids"][lang]
+        if not self._cart_has_boat_activities(state):
+            return self._goto_mixed_final_summary(state)
+        return self._goto_mixed_final_private(state)
+
+    def _pending_beginner_qty(self, state: ConversationState) -> int | None:
+        """qty for the Minicurso item under consideration (in-cart or pending add).
+
+        Returns None when no beginner context is known. The kids questions can
+        run either inline at add (before the item is committed to the cart) or
+        on modify (after qty is updated in-cart); both should cap correctly.
+        """
+        if state.mixed_pending_modify_idx is not None and 0 <= state.mixed_pending_modify_idx < len(state.mixed_cart):
+            item = state.mixed_cart[state.mixed_pending_modify_idx]
+            if item.get("type") == "beginner":
+                return int(item.get("qty") or 0)
+        if state.mixed_pending_qty_type == "beginner" and state.mixed_pending_qty_value:
+            return int(state.mixed_pending_qty_value)
+        beginner_item = next((it for it in state.mixed_cart if it.get("type") == "beginner"), None)
+        if beginner_item:
+            return int(beginner_item.get("qty") or 0)
+        return None
+
+    def _kids_qty_quick_replies(self, state: ConversationState) -> list[dict]:
+        """Buttons for MIXED_FINAL_KIDS_QTY clipped to the beginner qty context.
+
+        When the cap exceeds 9 (large group), shows 1..5 + "6+" so the user
+        can type the exact number on the next turn (same UX as MIXED_ADD_QTY).
+        """
+        lang = state.language
+        cancel_title = "🔙 Cancelar" if lang == "es" else "🔙 Cancel"
+        pending = self._pending_beginner_qty(state)
+        max_qty = max(pending or 6, 1)
+        if max_qty <= 9:
+            buttons = [{"title": str(n), "value": str(n)} for n in range(1, max_qty + 1)]
+        else:
+            plus_title = "6 o mas" if lang == "es" else "6 or more"
+            buttons = [{"title": str(n), "value": str(n)} for n in range(1, 6)]
+            buttons.append({"title": plus_title, "value": "6+"})
+        buttons.append({"title": cancel_title, "value": "back"})
+        return buttons
+
+    def _enter_mixed_final_kids_qty(self, state: ConversationState) -> str:
+        lang = state.language
+        state.step = Step.MIXED_FINAL_KIDS_QTY
+        state.quick_replies = self._kids_qty_quick_replies(state)
+        return MESSAGES["mixed_final_kids_qty"][lang]
+
+    def _kids_mixed_qty_quick_replies(self, state: ConversationState, cap: int) -> list[dict]:
+        """Buttons for KIDS_U8 / KIDS_810 questions. Allows 'Ninguno' (0) and caps.
+
+        When the cap exceeds 8 (large remaining group), shows 0..5 + "6+" so
+        the user can type the exact number on the next turn.
+        """
+        lang = state.language
+        none_title = "0 — Ninguno" if lang == "es" else "0 — None"
+        cancel_title = "🔙 Volver" if lang == "es" else "🔙 Back"
+        cap = max(0, cap)
+        buttons = [{"title": none_title, "value": "0"}]
+        if cap <= 8:
+            for n in range(1, cap + 1):
+                buttons.append({"title": str(n), "value": str(n)})
+        else:
+            for n in range(1, 6):
+                buttons.append({"title": str(n), "value": str(n)})
+            plus_title = "6 o mas" if lang == "es" else "6 or more"
+            buttons.append({"title": plus_title, "value": "6+"})
+        buttons.append({"title": cancel_title, "value": "back"})
+        return buttons
+
+    def _enter_mixed_final_kids_u8(self, state: ConversationState) -> str:
+        lang = state.language
+        state.step = Step.MIXED_FINAL_KIDS_U8
+        cap = self._pending_beginner_qty(state) or 9
+        state.quick_replies = self._kids_mixed_qty_quick_replies(state, cap)
+        return MESSAGES["mixed_final_kids_u8"][lang]
+
+    def _enter_mixed_final_kids_810(self, state: ConversationState) -> str:
+        lang = state.language
+        state.step = Step.MIXED_FINAL_KIDS_810
+        total = self._pending_beginner_qty(state) or 9
+        cap = max(0, total - (state.kids_under_8_count or 0))
+        state.quick_replies = self._kids_mixed_qty_quick_replies(state, cap)
+        return MESSAGES["mixed_final_kids_810"][lang]
+
+    def _continue_after_kids(self, state: ConversationState) -> str:
+        """Routes after kids info is captured.
+
+        Three contexts:
+          - MODIFY (modify_idx set): qty already updated → return to cart_review.
+          - ADD (pending qty type is beginner): show preview before commit.
+          - Fallback: legacy end-of-flow (private/summary).
+        """
+        # MODIFY in-progress: the beginner item was already updated; just clean
+        # up pending state and go back to cart_review.
+        if state.mixed_pending_modify_idx is not None:
+            state.mixed_pending_modify_idx = None
+            self._clear_mixed_pending_add(state)
+            return self._goto_mixed_cart_review(state)
+        # ADD in-progress: show preview before committing.
+        if state.mixed_pending_qty_type == "beginner":
+            return self._prepare_mixed_add_preview(
+                state,
+                self._service_for_location("minicourse", state),
+            )
+        # Fallback (legacy paths that may still call this).
         if not self._cart_has_boat_activities(state):
             return self._goto_mixed_final_summary(state)
         return self._goto_mixed_final_private(state)
 
     def _handle_mixed_final_kids(self, state: ConversationState, message: str) -> str:
         lang = state.language
-        choice = self._parse_choice(message, 2)
+        choice = self._parse_choice(message, 4)
         if choice == 1:
-            state.mixed_final_has_kids_8_10 = True
-        elif choice == 2:
+            state.kids_age_group = "under_8"
             state.mixed_final_has_kids_8_10 = False
+        elif choice == 2:
+            state.kids_age_group = "eight_to_ten"
+            state.mixed_final_has_kids_8_10 = True
+        elif choice == 3:
+            state.kids_age_group = "ten_plus"
+            state.mixed_final_has_kids_8_10 = False
+            state.kids_count = None  # 10+ no necesita desglose
+            state.kids_under_8_count = 0
+            state.kids_eight_to_ten_count = 0
+            return self._continue_after_kids(state)
+        elif choice == 4:
+            # Mixed: ask u8 first, then 8-10
+            state.kids_age_group = "mixed"
+            state.kids_under_8_count = 0
+            state.kids_eight_to_ten_count = 0
+            return self._enter_mixed_final_kids_u8(state)
         else:
-            self.set_quick_replies(state, "mixed_yes_no")
+            self.set_quick_replies(state, "mixed_kids_age")
             return MESSAGES["not_understood"][lang]
-        if not self._cart_has_boat_activities(state):
-            return self._goto_mixed_final_summary(state)
-        return self._goto_mixed_final_private(state)
+        # under_8 / eight_to_ten → preguntar cuántos
+        return self._enter_mixed_final_kids_qty(state)
+
+    def _handle_mixed_final_kids_qty(self, state: ConversationState, message: str) -> str:
+        lang = state.language
+        msg = message.strip().lower()
+        if msg in ("back", "cancel", "cancelar"):
+            state.mixed_pending_exact = False
+            return self._enter_mixed_final_kids(state)
+        if message.strip() == "6+" and not state.mixed_pending_exact:
+            state.mixed_pending_exact = True
+            state.quick_replies = []
+            max_qty = self._pending_beginner_qty(state) or 9
+            return (
+                f"Son 6 o más. ¿Cuántos *niños* exactamente? Escribe el número (máx. {max_qty})."
+                if lang == "es"
+                else f"6 or more. How many *kids* exactly? Type the number (max {max_qty})."
+            )
+        n = self._parse_mixed_quantity(message)
+        max_qty = self._pending_beginner_qty(state) or 9
+        if n is None or n < 1 or n > max_qty:
+            state.mixed_pending_exact = False
+            state.quick_replies = self._kids_qty_quick_replies(state)
+            if n is not None and n > max_qty:
+                noun = "niño" if max_qty == 1 else "niños"
+                return (
+                    f"En el carrito hay {max_qty} {noun} como máximo en esa actividad. Elige un número entre 1 y {max_qty}."
+                    if lang == "es"
+                    else f"There are at most {max_qty} kids possible for that activity in the cart. Pick a number between 1 and {max_qty}."
+                )
+            return MESSAGES["not_understood"][lang]
+        state.mixed_pending_exact = False
+        state.kids_count = n
+        if state.kids_age_group == "under_8":
+            state.kids_under_8_count = n
+            state.kids_eight_to_ten_count = 0
+        elif state.kids_age_group == "eight_to_ten":
+            state.kids_under_8_count = 0
+            state.kids_eight_to_ten_count = n
+        return self._continue_after_kids(state)
+
+    def _handle_mixed_final_kids_u8(self, state: ConversationState, message: str) -> str:
+        lang = state.language
+        msg = message.strip().lower()
+        if msg in ("back", "cancel", "cancelar"):
+            state.mixed_pending_exact = False
+            return self._enter_mixed_final_kids(state)
+        max_qty = self._pending_beginner_qty(state) or 9
+        if message.strip() == "6+" and not state.mixed_pending_exact:
+            state.mixed_pending_exact = True
+            state.quick_replies = []
+            return (
+                f"Son 6 o más. ¿Cuántos *menores de 8* exactamente? Escribe el número (máx. {max_qty})."
+                if lang == "es"
+                else f"6 or more. How many *under 8* exactly? Type the number (max {max_qty})."
+            )
+        n = self._parse_mixed_quantity(message)
+        if n is None:
+            # Accept literal "0" or "ninguno"/"none"
+            if msg in ("0", "ninguno", "ninguna", "none", "no"):
+                n = 0
+        if n is None or n < 0 or n > max_qty:
+            state.mixed_pending_exact = False
+            beginner_cap = max_qty
+            state.quick_replies = self._kids_mixed_qty_quick_replies(state, beginner_cap)
+            if n is not None and n > max_qty:
+                return (
+                    f"Solo hay {max_qty} en el minicurso. Elige un número entre 0 y {max_qty}."
+                    if lang == "es"
+                    else f"Only {max_qty} in the mini-course. Pick a number between 0 and {max_qty}."
+                )
+            return MESSAGES["not_understood"][lang]
+        state.mixed_pending_exact = False
+        state.kids_under_8_count = n
+        return self._enter_mixed_final_kids_810(state)
+
+    def _handle_mixed_final_kids_810(self, state: ConversationState, message: str) -> str:
+        lang = state.language
+        msg = message.strip().lower()
+        if msg in ("back", "cancel", "cancelar"):
+            state.mixed_pending_exact = False
+            return self._enter_mixed_final_kids_u8(state)
+        total = self._pending_beginner_qty(state) or 9
+        cap = max(0, total - (state.kids_under_8_count or 0))
+        if message.strip() == "6+" and not state.mixed_pending_exact:
+            state.mixed_pending_exact = True
+            state.quick_replies = []
+            return (
+                f"Son 6 o más. ¿Cuántos *entre 8 y 10* exactamente? Escribe el número (máx. {cap})."
+                if lang == "es"
+                else f"6 or more. How many *between 8 and 10* exactly? Type the number (max {cap})."
+            )
+        n = self._parse_mixed_quantity(message)
+        if n is None:
+            if msg in ("0", "ninguno", "ninguna", "none", "no"):
+                n = 0
+        if n is None or n < 0 or n > cap:
+            state.mixed_pending_exact = False
+            state.quick_replies = self._kids_mixed_qty_quick_replies(state, cap)
+            if n is not None and n > cap:
+                return (
+                    f"Solo quedan {cap} en el minicurso después de los menores de 8. Elige un número entre 0 y {cap}."
+                    if lang == "es"
+                    else f"Only {cap} remain after the under-8 kids. Pick a number between 0 and {cap}."
+                )
+            return MESSAGES["not_understood"][lang]
+        state.mixed_pending_exact = False
+        state.kids_eight_to_ten_count = n
+        u8 = state.kids_under_8_count or 0
+        e10 = state.kids_eight_to_ten_count or 0
+        if u8 == 0 and e10 == 0:
+            state.kids_age_group = "ten_plus"
+            state.kids_count = None
+            state.mixed_final_has_kids_8_10 = False
+        elif u8 > 0 and e10 == 0:
+            state.kids_age_group = "under_8"
+            state.kids_count = u8
+            state.mixed_final_has_kids_8_10 = False
+        elif u8 == 0 and e10 > 0:
+            state.kids_age_group = "eight_to_ten"
+            state.kids_count = e10
+            state.mixed_final_has_kids_8_10 = True
+        else:
+            state.kids_age_group = "mixed"
+            state.kids_count = u8 + e10
+            state.mixed_final_has_kids_8_10 = True
+        return self._continue_after_kids(state)
 
     def _goto_mixed_final_private(self, state: ConversationState) -> str:
         lang = state.language
@@ -5142,6 +5712,88 @@ class DecisionTree:
             # Refresh is free — never add to paid rows or totals.
             if item_type == "refresh":
                 continue
+            # Split beginner row when kids info requires different activities/pricing.
+            # Supports mixed ranges: adult portion + under_8 (snorkel) + 8-10 (Bubble Makers).
+            if item_type == "beginner":
+                u8 = min(state.kids_under_8_count or 0, qty)
+                e10 = min(state.kids_eight_to_ten_count or 0, max(0, qty - u8))
+                if u8 > 0 or e10 > 0:
+                    adult_qty = max(0, qty - u8 - e10)
+                    svc_id_beg = self._cart_service_id("beginner", None, state)
+                    svc_beg = SERVICES.get(svc_id_beg) or {}
+                    usd_beg = svc_beg.get("price_usd")
+                    cop_beg = svc_beg.get("price_cop")
+                    beg_name = svc_beg.get(f"name_{lang}") or ("Minicurso de Buceo" if lang == "es" else "Dive Mini Course")
+                    beg_url = svc_beg.get("booking_url")
+                    if adult_qty > 0:
+                        sub_usd_a = (float(usd_beg) * adult_qty) if usd_beg else None
+                        sub_cop_a = (int(cop_beg) * adult_qty) if cop_beg else None
+                        if sub_usd_a is not None:
+                            total_usd += sub_usd_a
+                        else:
+                            any_consultable = True
+                        if sub_cop_a is not None:
+                            total_cop += sub_cop_a
+                        items_rows.append({
+                            "type": "beginner",
+                            "label": beg_name,
+                            "qty": adult_qty,
+                            "usd_per_person": float(usd_beg) if usd_beg else None,
+                            "cop_per_person": int(cop_beg) if cop_beg else None,
+                            "sub_usd": sub_usd_a,
+                            "sub_cop": sub_cop_a,
+                        })
+                        if beg_url:
+                            booking_links.append((beg_name, beg_url))
+                    if u8 > 0:
+                        snk_id = self._service_for_location("snorkeling", state)
+                        snk_svc = SERVICES.get(snk_id) or {}
+                        usd_snk = snk_svc.get("price_usd")
+                        cop_snk = snk_svc.get("price_cop")
+                        snk_base = snk_svc.get(f"name_{lang}") or ("Tour de Snorkeling" if lang == "es" else "Snorkeling Tour")
+                        snk_label = snk_base + (" [menores de 8]" if lang == "es" else " [under 8]")
+                        sub_usd_k = (float(usd_snk) * u8) if usd_snk else None
+                        sub_cop_k = (int(cop_snk) * u8) if cop_snk else None
+                        if sub_usd_k is not None:
+                            total_usd += sub_usd_k
+                        else:
+                            any_consultable = True
+                        if sub_cop_k is not None:
+                            total_cop += sub_cop_k
+                        items_rows.append({
+                            "type": "snorkel_kids",
+                            "label": snk_label,
+                            "qty": u8,
+                            "usd_per_person": float(usd_snk) if usd_snk else None,
+                            "cop_per_person": int(cop_snk) if cop_snk else None,
+                            "sub_usd": sub_usd_k,
+                            "sub_cop": sub_cop_k,
+                        })
+                        snk_url = snk_svc.get("booking_url")
+                        if snk_url:
+                            booking_links.append((snk_label, snk_url))
+                    if e10 > 0:
+                        bubble_label = beg_name + " [Bubble Makers]"
+                        sub_usd_b = (float(usd_beg) * e10) if usd_beg else None
+                        sub_cop_b = (int(cop_beg) * e10) if cop_beg else None
+                        if sub_usd_b is not None:
+                            total_usd += sub_usd_b
+                        else:
+                            any_consultable = True
+                        if sub_cop_b is not None:
+                            total_cop += sub_cop_b
+                        items_rows.append({
+                            "type": "beginner_bubble",
+                            "label": bubble_label,
+                            "qty": e10,
+                            "usd_per_person": float(usd_beg) if usd_beg else None,
+                            "cop_per_person": int(cop_beg) if cop_beg else None,
+                            "sub_usd": sub_usd_b,
+                            "sub_cop": sub_cop_b,
+                        })
+                        if beg_url:
+                            booking_links.append((bubble_label, beg_url))
+                    continue
             label = item.get("label") or self._cart_label_for(item_type, item.get("plan"), lang)
             if item_type == "companion":
                 usd = COMPANION_PRICE.get("usd_online")
@@ -5171,6 +5823,7 @@ class DecisionTree:
             if sub_cop is not None:
                 total_cop += sub_cop
             items_rows.append({
+                "type": item_type,
                 "label": label,
                 "qty": qty,
                 "usd_per_person": float(usd) if usd else None,
@@ -5196,6 +5849,11 @@ class DecisionTree:
         section_title = "*ACTIVIDADES*" if lang == "es" else "*ACTIVITIES*"
         rows_text: list[str] = [section_title, ""]
         pp_label = "p.p." if lang == "es" else "p.p."
+        _kids_rows_split = (
+            (state.kids_under_8_count or 0) > 0
+            or (state.kids_eight_to_ten_count or 0) > 0
+        )
+        kids_sub = None if _kids_rows_split else self._kids_sub_bullet(state, lang)
         for row in items_rows:
             qty = row["qty"]
             label = row["label"]
@@ -5215,6 +5873,9 @@ class DecisionTree:
             else:
                 consult_word = "a consultar" if lang == "es" else "to confirm"
                 rows_text.append(f"    _{consult_word}_")
+            if row.get("type") == "beginner" and kids_sub:
+                rows_text.append(kids_sub)
+                kids_sub = None
             rows_text.append("")
 
         subtotal_label = "*SUBTOTAL*" if lang == "es" else "*SUBTOTAL*"
@@ -5273,12 +5934,31 @@ class DecisionTree:
                 if lang == "es"
                 else "  • Large group (6+ people): special conditions — advisor confirms"
             )
-        if state.mixed_final_has_kids_8_10:
+        _u8 = state.kids_under_8_count or 0
+        _e10 = state.kids_eight_to_ten_count or 0
+        if _u8 > 0:
+            cart_has_dive = self._cart_includes(state, "beginner") or self._cart_includes(state, "cert")
+            if cart_has_dive:
+                avisos_lines.append(
+                    "  • ⚠️ Hay menores de 8 — no pueden bucear. Snorkel desde 6 años; el asesor confirmará la planificación."
+                    if lang == "es"
+                    else "  • ⚠️ Under 8 in the group — cannot dive. Snorkel from age 6; advisor will confirm the plan."
+                )
+            else:
+                avisos_lines.append(
+                    "  • ⚠️ Hay menores de 8 — snorkel desde 6 años; confirmar edad exacta con el asesor."
+                    if lang == "es"
+                    else "  • ⚠️ Under 8 in the group — snorkel from age 6; confirm exact age with advisor."
+                )
+        if _e10 > 0 or (
+            _u8 == 0 and (state.kids_age_group == "eight_to_ten" or state.mixed_final_has_kids_8_10)
+        ):
             avisos_lines.append(
                 "  • Niños 8-10 (Bubble Makers): supervisor especializado — el asesor confirmará el precio final al reservar"
                 if lang == "es"
                 else "  • Kids 8-10 (Bubble Makers): specialized supervisor — advisor confirms the final price at booking"
             )
+        # kids_age_group == "ten_plus" (u8=0 y e10=0) → sin aviso (todo normal)
         if has_boat_items and has_course_items:
             avisos_lines.append(
                 "  • Este carrito mezcla tours y cursos PADI — el asesor confirmará la coordinación final de fechas y logística"
@@ -5315,10 +5995,18 @@ class DecisionTree:
                 f"  • {lbl}: https://form.jotform.com/divingplanetcartagena/exoneracion-buzo-en-espanol"
             )
         if self._cart_includes(state, "beginner"):
-            lbl = "Minicurso" if lang == "es" else "Mini-course"
-            waiver_lines.append(
-                f"  • {lbl}: https://form.jotform.com/divingplanetcartagena/exoneracion-curso-en-espanol"
-            )
+            beg_item = next((it for it in state.mixed_cart if it.get("type") == "beginner"), None)
+            total_beg = beg_item["qty"] if beg_item else 0
+            _u8w = min(state.kids_under_8_count or 0, total_beg)
+            _e10w = min(state.kids_eight_to_ten_count or 0, max(0, total_beg - _u8w))
+            _adult_beg = max(0, total_beg - _u8w - _e10w)
+            if _adult_beg > 0 or _e10w > 0:
+                lbl = "Minicurso" if lang == "es" else "Mini-course"
+                if _e10w > 0:
+                    lbl = ("Minicurso / Bubble Makers" if lang == "es" else "Mini-course / Bubble Makers")
+                waiver_lines.append(
+                    f"  • {lbl}: https://form.jotform.com/divingplanetcartagena/exoneracion-curso-en-espanol"
+                )
         if waiver_lines:
             waiver_lines.insert(
                 0,
@@ -5326,7 +6014,11 @@ class DecisionTree:
                 if lang == "es"
                 else "📝 *Required forms before going out to sea*:"
             )
-        if self._cart_includes(state, "snorkel"):
+        _has_snorkel_activity = self._cart_includes(state, "snorkel") or (
+            self._cart_includes(state, "beginner")
+            and (state.kids_under_8_count or 0) > 0
+        )
+        if _has_snorkel_activity:
             waiver_lines.append(
                 "_El formulario específico de snorkel lo envía el asesor por correo._"
                 if lang == "es"

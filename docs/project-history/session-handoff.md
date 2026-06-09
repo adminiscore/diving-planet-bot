@@ -4,7 +4,8 @@ Read this file before changing code in the Diving Planet Bot. For a quick versio
 
 ## Current branch and workflow
 
-- Main collaboration branch: `feature/dev_alvaro` (Gadea trabaja en `feature/dev_gadea` y se mergea periódicamente).
+- Main collaboration branch: `feature/dev_alvaro` (Gadea trabaja en `feature/dev_gadea` y se mergea periódicamente; Gonzalo en `feature/pruebaGon`).
+- **2026-06-05**: `feature/dev_alvaro` fue rebaseado sobre `feature/pruebaGon` (tip `e1ee6b6`) replicando el árbol completo como un único commit de port. Esto soluciona el problema de "historias no relacionadas" que estaba bloqueando los merges con Gonzalo/Gadea. Backup en `backup/dev_alvaro_pre_pruebaGon_rebase_2026-06-05`. El push a `origin/feature/dev_alvaro` requiere `--force-with-lease` porque la historia cambió. Después de pushear, Gonzalo y Gadea pueden hacer `git fetch && git merge origin/feature/dev_alvaro` con fast-forward limpio.
 - Always start with `git status --short --branch` and check whether the branch is ahead/behind the remote.
 - Use `/start-context` at the beginning of a session and `/close-work` before committing/pushing.
 - `/close-work` must review this file and update it whenever architecture, workflow, risks, validation, current product context, environment details, or next-session priorities changed.
@@ -61,6 +62,11 @@ Read this file before changing code in the Diving Planet Bot. For a quick versio
 - `mixed_add_cert_plan` in the mixed cart now uses a restored two-level certified flow: first `2 inmersiones / 1 día` vs. `paquete multi-día (3 o más inmersiones)`, then a dedicated multiday submenu with the exact packages from `services.json`. The mixed cart preserves the exact certified service id/label through split handling, summary, and lead-note generation. `mixed_cart_modify_pick` y `mixed_cart_remove_pick` ya no piden número en texto.
 - `MESSAGES["escalate"]` reescrito: "Te paso con un asesor del equipo de Diving Planet" (sin "humano", sin "Para esta situación específica..."). Mismo cambio aplicado en RAG fallback y broken-link complaint.
 - Servicio Privado: `services.json` ahora tiene `price_note_es`/`price_note_en` bilingüe y la sección "✅ Incluye:" del summary se oculta cuando el servicio no tiene items.
+- Kids inline (0.16.0): la pregunta `MIXED_FINAL_KIDS` (`<8` / `8-10` / `10+` / `Varios rangos`) se dispara INLINE al añadir Minicurso al carrito mixto, no al final del checkout. `_continue_after_kids` rutea: MODIFY → cart_review, ADD → preview, legacy → private/summary. `_pending_beginner_qty()` resuelve el qty en ambos contextos (pending para add, item.qty para modify). Borrar el beginner item invalida `kids_*` counters; añadirlo de nuevo dispara la secuencia fresca.
+- Cambiar origen desde carrito (0.16.0): `mixed_cart_actions` ahora tiene 6 botones (Añadir/Modificar/Quitar/Confirmar/`📍 Cambiar origen`/Empezar). `Step.MIXED_CART_LOCATION` re-pregunta Cartagena/Islas; `_remap_cart_for_location` itera el cart y cambia la `plan` field (variantes `*_already_on_island`) y los labels para `cert`/`course` items.
+- Large-group kids qty (0.16.0): `_kids_qty_quick_replies` y `_kids_mixed_qty_quick_replies` ahora muestran `6+` cuando el cap es > 9 (o > 8 para la variante mixed), y los handlers usan `mixed_pending_exact` flag para pedir el número exacto en un segundo paso (mismo patrón que `MIXED_ADD_QTY`).
+- Back-routing (0.16.0): `supervisor.py` tiene DOS rutas de back (literal keyword `volver/back/atras` ~línea 2548; LLM intent classifier ~línea 2694). Ambas deben listar los steps que tienen `Volver` button propio (`MIXED_CART_LOCATION`, `MIXED_CART_MODIFY_PICK`, `MIXED_CART_REMOVE_PICK`, `MIXED_FINAL_KIDS_U8`, `MIXED_FINAL_KIDS_810`) para que el back vaya por el handler (que llama `_goto_mixed_cart_review` con cart_lines) en vez de `_go_back_one_step` (que solo retorna el prompt sin cart).
+- Lead summary (0.16.0): `src/agents/lead_summary.py` usa `kids_under_8_count` y `kids_eight_to_ten_count` para mostrar dos líneas independientes en el grupo mixto. Fallback legacy para estados sin counters (mira `kids_age_group`).
 
 ## Current product context
 
@@ -90,6 +96,9 @@ Read this file before changing code in the Diving Planet Bot. For a quick versio
 - COP pricing is now in the KB; bot needs a restart in WSL2 to serve it after the re-index run. Embeddings reindex done (445 docs) para incluir nuevos servicios y ajustes de precios.
 - `CHATWOOT_OWNER_AGENT_ID=1` should be added to `.env` (owner agent ID confirmed via `/api/v1/profile`).
 - Next session priorities:
+  - Live E2E retest of the new kids-inline question when adding Minicurso to mixed cart (`<8` / `8-10` / `10+` / `Varios rangos`), including the count sub-question for non-mixed ranges, and the two-step `6+` exact-count path when total qty > 9.
+  - Live E2E retest of `📍 Cambiar origen` from `mixed_cart_actions`: confirm prices update for cert/snorkel/beginner items and cert plan labels swap between Cartagena and island variants.
+  - Live E2E retest of Volver from `MIXED_CART_LOCATION`, `MIXED_CART_MODIFY_PICK`, `MIXED_CART_REMOVE_PICK`, `MIXED_FINAL_KIDS_U8`, `MIXED_FINAL_KIDS_810` — confirm the cart_lines render again, not just the prompt.
   - Live E2E retest of the restored mixed-cart certified flow in the Chatwoot widget: top-level `2 dives / 1 day` vs. `multi-day package`, submenu buttons, `cancel/back`, and exact package label in final lead note.
   - Live E2E retest of the new cart-style mixed-group flow after server restart (item aggregation, emoji modify/remove buttons, snorkel-hidden in cert+beg, restaurant-bill summary, Reservar sends booking links + advisor msg).
   - Live E2E retest of the tours `Reservar` button on regular itinerary_offer (sends booking link + advisor message; link omitted for Colombian users).

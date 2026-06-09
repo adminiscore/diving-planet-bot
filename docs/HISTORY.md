@@ -1,6 +1,15 @@
 History
 =======
 
+0.16.0 - (2026-06-05)
+---------------------
+* Mixed cart: kids age question now fires INLINE when adding Minicurso (not at end of checkout), supports `<8` / `8-10` / `10+` / `Varios rangos`, and re-prompts on modify; delete-then-re-add starts fresh.
+* Mixed cart: new `📍 Cambiar origen` action in `mixed_cart_actions` re-asks Cartagena vs. Islas and remaps prices and cert/course plan variants on the fly via `_remap_cart_for_location`.
+* Mixed final summary splits the Minicurso row into adult minicurso + kids snorkel + Bubble Makers sub-rows with correct per-range pricing; `kids_under_8_count` and `kids_eight_to_ten_count` drive lead-note breakdown.
+* Large-group `6+` exact-count UX for kids quantity (mirrors `MIXED_ADD_QTY` pattern via `mixed_pending_exact` flag).
+* Back-routing: Volver from `MIXED_CART_LOCATION`, `MIXED_CART_MODIFY_PICK`, `MIXED_CART_REMOVE_PICK`, `MIXED_FINAL_KIDS_U8`, `MIXED_FINAL_KIDS_810` now routes through each handler so `cart_lines` is shown (both literal-keyword and LLM-intent back paths in supervisor).
+* Branch reset: `feature/dev_alvaro` was rebased onto `feature/pruebaGon`'s tip (e1ee6b6) by replaying the full working tree as a single port commit, so Gonzalo and Gadea can fast-forward without conflicts. Backup retained at `backup/dev_alvaro_pre_pruebaGon_rebase_2026-06-05`.
+
 0.15.3 - (2026-06-04)
 ---------------------
 * Restore the certified-diving booking flow in the mixed cart to a two-step menu: `2 dives / 1 day` first, then a dedicated `multi-day package (3 or more dives)` submenu.
