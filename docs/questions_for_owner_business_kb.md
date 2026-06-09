@@ -197,6 +197,12 @@ Necesitamos confirmar:
 - ¿Qué datos mínimos se necesitan para considerar una reserva cerrada?
 - ¿Cuando entra una reserva, el Excel se rellena automáticamente o lo actualiza alguien manualmente?
 - En reservas mixtas (varias actividades en el mismo día), ¿ROVERD permite hacer la reserva online en un solo booking o siempre hay que gestionarlas manualmente por WhatsApp?
+- ¿Envían recordatorios automáticos antes de la actividad (email, WhatsApp, SMS)? ¿Con cuánta antelación?
+- ¿Existe un máximo de personas por salida / tour?
+- ¿Qué ocurre operativamente cuando un tour está lleno (overbooking, cierre automático, bloqueo manual, etc.)?
+- ¿Cómo controlan hoy la disponibilidad (sistema, Excel, calendario manual, ROVERD, mezcla de varios)?
+- ¿Quieren que el chatbot tenga acceso a disponibilidad en tiempo real, o siempre mostrará información genérica y derivará dudas de cupos a un asesor?
+- ¿Existe lista de espera cuando no hay cupos, y cómo se gestiona?
 
 **Impacto**: el bot hoy puede explicar el canal, pero no la confirmación real exacta.
 
@@ -300,6 +306,38 @@ Necesitamos confirmar:
 - ¿Qué alergias pueden gestionarse y cuáles no podemos prometer manejar?
 
 **Impacto**: mejora la conversación comercial sin comprometer operación.
+
+---
+
+### 15. Entrega de fotos y videos
+
+La KB ya indica que las fotos y videos no se ofrecen proactivamente, que no están incluidos en el precio y que la entrega suele hacerse como máximo al día siguiente.
+
+Necesitamos confirmar:
+- ¿Cómo se entregan normalmente las fotos y videos? (Drive, enlace de descarga, WhatsApp, AirDrop en sitio, etc.)
+- ¿Quién gestiona esa entrega (instructor directamente, recepción, equipo de operaciones)?
+- ¿Hay algún plazo oficial distinto a "como máximo al día siguiente" para ciertos planes?
+
+**Impacto**: el bot puede explicar hoy que no están incluidos y que se entregan al día siguiente, pero no puede detallar el canal de entrega sin riesgo de inventar.
+
+---
+
+### 16. Post-actividad y soporte posterior
+
+No tenemos documentado cómo se gestionan las consultas después de la actividad.
+
+Necesitamos confirmar:
+- ¿Cómo gestionan consultas posteriores al tour, por ejemplo:
+  - fotos pendientes,
+  - objetos perdidos,
+  - detalles de una inmersión concreta,
+  - certificados,
+  - incidencias durante el servicio?
+- ¿Quién responde estas consultas (instructores, recepción, un área específica de servicio al cliente)?
+- ¿En qué canal deberían entrar estas consultas si las inicia el chatbot (seguir en chat, pasar a WhatsApp, correo, etc.)?
+- ¿Quieren que el chatbot pueda seguir ayudando después de la actividad, o siempre debe derivar a un humano en estos casos?
+
+**Impacto**: estas situaciones son muy frecuentes; si no están claras, el bot debería limitarse a escalar siempre y no intentar resolver nada post-actividad.
 
 ---
 
