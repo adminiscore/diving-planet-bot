@@ -173,3 +173,149 @@ async def test_rag_food_query_returns_canonical_kb_answer_without_search(monkeyp
     assert "Pescado a la plancha" not in response
     assert "Ensaladas frescas" not in response
     assert "Frutas de temporada" not in response
+
+
+def test_system_prompt_has_no_duplicated_currency_section_es():
+    """Regression: 'Gestion de precios, monedas y pagos:' header must appear exactly once."""
+    prompt = rag_agent.build_system_prompt("es")
+    assert prompt.count("Gestión de precios, monedas y pagos:") == 1
+    # The body of that section should also appear exactly once.
+    assert prompt.count("Evita mezclar muchas monedas") == 1
+
+
+def test_system_prompt_has_no_duplicated_currency_section_en():
+    """Regression: 'Pricing, currencies, and payments:' header must appear exactly once."""
+    prompt = rag_agent.build_system_prompt("en")
+    assert prompt.count("Pricing, currencies, and payments:") == 1
+    assert prompt.count("Avoid mixing several currencies") == 1
+
+
+def test_brand_tone_injected_from_json_es(monkeypatch):
+    """build_system_prompt must read brand_tone.json. Changes to the JSON must be reflected."""
+    fake_tone = {
+        "brand_tone": {
+            "personality": {"es": "BrandPersonalityMarker"},
+            "whatsapp_style": {
+                "es": {
+                    "message_shape": ["BrandShapeMarker"],
+                    "human_touches": ["BrandTouchMarker"],
+                },
+            },
+            "age_demographic_consideration": {"es": "BrandAgeMarker"},
+        }
+    }
+
+    # Bust the module-level cache so the patch takes effect.
+    monkeypatch.setattr(rag_agent, "_BRAND_TONE_CACHE", None)
+    monkeypatch.setattr(rag_agent, "load_brand_tone", lambda: fake_tone)
+
+    prompt = rag_agent.build_system_prompt("es")
+
+    assert "BrandPersonalityMarker" in prompt
+    assert "BrandShapeMarker" in prompt
+    assert "BrandTouchMarker" in prompt
+    assert "BrandAgeMarker" in prompt
+
+    # Reset cache so other tests get the real values back.
+    monkeypatch.setattr(rag_agent, "_BRAND_TONE_CACHE", None)
+
+
+def test_fewshot_examples_selected_by_topic_overlap(monkeypatch):
+    """_select_fewshot_examples picks examples whose extracted_topics overlap with query topics."""
+    fake_examples = [
+        {
+            "id": "ex_pricing",
+            "lang": "es",
+            "scenario": "Cliente pregunta precio",
+            "customer": {"messages": ["cuanto cuesta?"]},
+            "diving_planet": {"messages": ["Se da precio en COP."]},
+            "extracted_topics": ["precios"],
+        },
+        {
+            "id": "ex_weather",
+            "lang": "es",
+            "scenario": "Cliente pregunta clima",
+            "customer": {"messages": ["llueve manana?"]},
+            "diving_planet": {"messages": ["Se escala a asesor."]},
+            "extracted_topics": ["weather_cancellation"],
+        },
+        {
+            "id": "ex_pricing_en",
+            "lang": "en",
+            "scenario": "EN pricing",
+            "customer": {"messages": ["how much?"]},
+            "diving_planet": {"messages": ["Price quoted in USD."]},
+            "extracted_topics": ["pricing"],
+        },
+    ]
+
+    monkeypatch.setattr(rag_agent, "_CONVERSATIONS_CACHE", None)
+    monkeypatch.setattr(rag_agent, "load_conversations", lambda: {"conversation_examples": fake_examples})
+
+    picked = rag_agent._select_fewshot_examples("cuanto cuesta para colombianos?", "es", k=2)
+    picked_ids = {ex["id"] for ex in picked}
+
+    assert "ex_pricing" in picked_ids  # topic 'precios' alias -> 'pricing' matches query 'pricing'
+    assert "ex_weather" not in picked_ids  # no overlap with pricing query
+    assert "ex_pricing_en" not in picked_ids  # wrong language
+
+    monkeypatch.setattr(rag_agent, "_CONVERSATIONS_CACHE", None)
+
+
+def test_fewshot_block_appended_when_query_provided(monkeypatch):
+    """build_system_prompt appends the few-shot section only when query is provided AND examples match."""
+    monkeypatch.setattr(rag_agent, "_CONVERSATIONS_CACHE", None)
+    monkeypatch.setattr(
+        rag_agent,
+        "load_conversations",
+        lambda: {
+            "conversation_examples": [
+                {
+                    "id": "ex_pricing",
+                    "lang": "es",
+                    "scenario": "Test pricing scenario",
+                    "customer": {"messages": ["cuanto cuesta?"]},
+                    "diving_planet": {"messages": ["Precio dado en COP."]},
+                    "extracted_topics": ["precios"],
+                }
+            ]
+        },
+    )
+
+    # No query -> no few-shot block
+    prompt_no_query = rag_agent.build_system_prompt("es")
+    assert "Situaciones reales" not in prompt_no_query
+
+    # With pricing-related query -> few-shot block appears
+    prompt_with_query = rag_agent.build_system_prompt("es", query="cuanto cuesta el buceo?")
+    assert "Situaciones reales" in prompt_with_query
+    assert "Test pricing scenario" in prompt_with_query
+
+    monkeypatch.setattr(rag_agent, "_CONVERSATIONS_CACHE", None)
+
+
+def test_fewshot_no_examples_when_query_topics_unknown(monkeypatch):
+    """Query with no detected topics -> no examples picked, no block appended."""
+    monkeypatch.setattr(rag_agent, "_CONVERSATIONS_CACHE", None)
+    monkeypatch.setattr(
+        rag_agent,
+        "load_conversations",
+        lambda: {
+            "conversation_examples": [
+                {
+                    "id": "ex_any",
+                    "lang": "es",
+                    "scenario": "x",
+                    "customer": {"messages": ["x"]},
+                    "diving_planet": {"messages": ["x"]},
+                    "extracted_topics": ["precios"],
+                }
+            ]
+        },
+    )
+
+    # "hola" has no topic match in TOPIC_PATTERNS -> nothing picked
+    prompt = rag_agent.build_system_prompt("es", query="hola")
+    assert "Situaciones reales" not in prompt
+
+    monkeypatch.setattr(rag_agent, "_CONVERSATIONS_CACHE", None)
