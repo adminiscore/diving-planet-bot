@@ -60,11 +60,11 @@ def privacy_block_message(lang: str = "es") -> str:
         return (
             "For your privacy and security, please don't share personal or payment data (ID numbers, bank accounts, card numbers) here.\n"
             "If you need help with a reservation or payment, I can connect you with an advisor.\n"
-            "WhatsApp: +57 320 2301515"
+            "WhatsApp: +57 320 231515"
         )
 
     return (
         "Por tu privacidad y seguridad, por favor no compartas datos personales o de pago por este chat (cédulas, cuentas, tarjetas).\n"
         "Si necesitas ayuda con una reserva o pago, puedo conectarte con un asesor.\n"
-        "WhatsApp: +57 320 2301515"
+        "WhatsApp: +57 320 231515"
     )

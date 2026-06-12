@@ -6,11 +6,15 @@ services, policies, and FAQs that fall outside the predefined
 decision tree.
 """
 
+import json
 import logging
 import re
 
+import asyncpg
 from openai import AsyncOpenAI
 
+from src.agents.grounding_check import is_grounded
+from src.agents.query_rewriter import condense_query
 from src.config import settings
 from src.knowledge.loader import (
     load_brand_tone,
@@ -182,13 +186,13 @@ def _format_fewshot_block(examples: list[dict], lang: str) -> str:
 FALLBACK_ES = (
     "No tengo información suficiente en mi base de conocimiento para responder eso con seguridad. "
     "Te puedo conectar con un asesor de Diving Planet.\n"
-    "WhatsApp: +57 320 2301515"
+    "WhatsApp: +57 320 231515"
 )
 
 FALLBACK_EN = (
     "I don't have enough information in my knowledge base to answer that safely. "
     "I can connect you with a Diving Planet advisor.\n"
-    "WhatsApp: +57 320 2301515"
+    "WhatsApp: +57 320 231515"
 )
 
 _INTRO_ES = (
@@ -228,7 +232,7 @@ Cuándo derivar siempre a humano:
 - Cancelaciones, cambios o quejas.
 - Preguntas con baja confianza o fuera del contexto.
 
-Contacto asesor: WhatsApp +57 320 2301515.
+Contacto asesor: WhatsApp +57 320 231515.
 Responde en español."""
 
 _SYSTEM_PROMPT_EN_BODY = """Strict rules — never break these:
@@ -258,7 +262,7 @@ Always escalate to a human for:
 - Cancellations, changes, or complaints.
 - Low-confidence answers or questions outside the context.
 
-Advisor contact: WhatsApp +57 320 2301515.
+Advisor contact: WhatsApp +57 320 231515.
 Answer in English."""
 
 
@@ -373,6 +377,96 @@ def _canonical_food_answer(query: str, lang: str) -> str | None:
     return _food_policy_answer(lang)
 
 
+def _coerce_metadata(value: object) -> dict:
+    if isinstance(value, dict):
+        return value
+    if isinstance(value, str):
+        try:
+            parsed = json.loads(value)
+            if isinstance(parsed, dict):
+                return parsed
+        except json.JSONDecodeError:
+            return {}
+    return {}
+
+
+def _score_for_threshold(doc: dict) -> float:
+    raw_score = doc.get("score_final", doc.get("score", 0.0))
+    try:
+        return float(raw_score)
+    except (TypeError, ValueError):
+        return 0.0
+
+
+async def _expand_with_parent_context(docs: list[dict], lang: str) -> list[dict]:
+    parent_ids_needed: set[str] = set()
+    existing_keys = {
+        str((doc.get("metadata") or {}).get("key"))
+        for doc in docs
+        if (doc.get("metadata") or {}).get("key")
+    }
+    parent_scores: dict[str, float] = {}
+
+    for doc in docs:
+        metadata = doc.get("metadata") or {}
+        parent_id = metadata.get("parent_id")
+        key = metadata.get("key")
+        if not parent_id or parent_id == key or parent_id in existing_keys:
+            continue
+        parent_key = str(parent_id)
+        parent_ids_needed.add(parent_key)
+        parent_scores[parent_key] = max(parent_scores.get(parent_key, 0.0), _score_for_threshold(doc))
+
+    if not parent_ids_needed:
+        return docs
+
+    try:
+        conn = await asyncpg.connect(settings.database_url)
+        try:
+            rows = await conn.fetch(
+                """
+                SELECT id, content, metadata
+                FROM kb_documents
+                WHERE metadata->>'lang' = $1
+                  AND metadata->>'key' = ANY($2::text[])
+                """,
+                lang,
+                list(parent_ids_needed),
+            )
+        finally:
+            await conn.close()
+    except Exception as exc:
+        logger.warning(f"[RAG][PARENT] failed to expand parent context: {exc}")
+        return docs
+
+    parents: list[dict] = []
+    seen_parent_keys: set[str] = set()
+    for row in rows:
+        metadata = _coerce_metadata(row["metadata"])
+        parent_key = str(metadata.get("key") or "")
+        if not parent_key or parent_key in seen_parent_keys:
+            continue
+        seen_parent_keys.add(parent_key)
+        score = parent_scores.get(parent_key, 0.0)
+        parents.append({
+            "id": row["id"],
+            "content": row["content"],
+            "metadata": metadata,
+            "score": score,
+            "score_final": score,
+        })
+
+    if not parents:
+        return docs
+    return parents + docs
+
+
+def _build_grounding_context(context: str, extra_context: str | None = None) -> str:
+    if extra_context and context != extra_context:
+        return f"{context}\n\nContexto adicional de la situacion: {extra_context}"
+    return context
+
+
 async def rag_answer(
     query: str,
     lang: str = "es",
@@ -398,7 +492,8 @@ async def rag_answer(
         logger.info(f"[RAG] Using canonical food answer query={query[:60]}... lang={lang}")
         return canonical_food_answer
 
-    retrieval_query = build_retrieval_query(query, history)
+    condensed_query = await condense_query(query, history=history, lang=lang)
+    retrieval_query = build_retrieval_query(condensed_query, history)
 
     # Lightly bias retrieval using known origin from extra_context (Cartagena vs already on the islands)
     if extra_context:
@@ -424,10 +519,11 @@ async def rag_answer(
 
     # Retrieve relevant documents
     docs = await search_knowledge_base(safe_query, lang=lang)
+    docs = await _expand_with_parent_context(docs, lang=lang)
 
     # Helper to call the LLM with unstructured context (either KB docs o solo extra_context)
     async def _answer_with_llm(context: str, context_sources: list[str] | None = None) -> str:
-        system_prompt = build_system_prompt(lang, query=query)
+        system_prompt = build_system_prompt(lang, query=condensed_query)
         messages = [{"role": "system", "content": system_prompt}]
 
         # Add conversation history (last 6 messages max)
@@ -443,15 +539,26 @@ async def rag_answer(
 
         messages.append({"role": "user", "content": user_content})
 
-        client = AsyncOpenAI(api_key=settings.openai_api_key)
-        response = await client.chat.completions.create(
-            model=settings.openai_model,
-            messages=messages,
-            temperature=0.3,
-            max_tokens=500,
-        )
+        try:
+            client = AsyncOpenAI(api_key=settings.openai_api_key)
+            response = await client.chat.completions.create(
+                model=settings.openai_model,
+                messages=messages,
+                temperature=0.3,
+                max_tokens=500,
+            )
+        except Exception as exc:
+            logger.warning(f"[RAG][LLM] failed to answer query={query[:60]}... error={exc}")
+            return FALLBACK_ES if lang == "es" else FALLBACK_EN
 
         answer = response.choices[0].message.content
+        grounding_context = _build_grounding_context(context, extra_context=extra_context)
+        grounded, reason = await is_grounded(answer or "", grounding_context, lang=lang)
+        if not grounded:
+            logger.warning(
+                f"[RAG][GROUNDING] Rejecting answer query={query[:60]}... reason={reason}"
+            )
+            return FALLBACK_ES if lang == "es" else FALLBACK_EN
         logger.info(
             f"[RAG] Query: {query[:60]}... | Docs: {len(docs) if docs else 0} | "
             f"Tokens: {response.usage.total_tokens} | Sources: {context_sources or []}"
@@ -468,7 +575,7 @@ async def rag_answer(
         return FALLBACK_ES if lang == "es" else FALLBACK_EN
 
     # 2) Hay documentos pero con score bajo
-    top_score = max(float(doc.get("score", 0.0)) for doc in docs)
+    top_score = max(_score_for_threshold(doc) for doc in docs)
     if top_score < settings.rag_min_score:
         sources = [doc.get("metadata", {}).get("source", "unknown") for doc in docs]
         logger.info(
@@ -487,7 +594,7 @@ async def rag_answer(
     for i, doc in enumerate(docs, 1):
         metadata = doc.get("metadata", {})
         source = metadata.get("source", "unknown")
-        score = float(doc.get("score", 0.0))
+        score = _score_for_threshold(doc)
         sources.append(source)
         context_parts.append(f"[{i}] Fuente: {source} | Score: {score:.3f}\n{redact_pii(doc['content'])}")
     context = "\n\n".join(context_parts)

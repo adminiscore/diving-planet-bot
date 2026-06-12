@@ -13,15 +13,31 @@ Este documento describe las mejoras pendientes al pipeline RAG y al uso del LLM 
 1. **Prompt dedup**: el system prompt del RAG tenía dos secciones copy-pasteadas duplicadas en ES y EN. Quitadas.
 2. **Brand tone dinámico desde JSON**: las reglas de tono ya no están hardcoded en `rag_agent.py`. Se leen al vuelo desde `data/knowledge_base/brand_tone.json` vía `build_system_prompt(lang)`.
 3. **Few-shot examples**: cuando hay query de texto libre, se inyectan 1-2 ejemplos reales desde `data/knowledge_base/conversations.json` cuyos `extracted_topics` solapan con los topics detectados en la query.
+4. **Hybrid retrieval compatible hacia atrás**: `vector_store.py` ya ejecuta búsqueda vectorial + BM25/FTS en paralelo, fusiona con RRF y mantiene el rerank por topics/source. Si la migración FTS aún no existe en la DB, degrada sin romper y sigue con vector search.
+5. **Query rewriting multi-turno**: `rag_agent.py` ya condensa follow-ups cortos usando `src/agents/query_rewriter.py` antes de recuperar contexto.
+6. **Grounding check post-respuesta**: `rag_agent.py` ya valida la respuesta generada con `src/agents/grounding_check.py` y cae a fallback si detecta una respuesta no sustentada por el contexto.
+7. **Sub-chunking de servicios preparado**: `scripts/load_embeddings.py` ya genera chunks por resumen/itinerario/incluye/requisitos/precios con `parent_id`, y `rag_agent.py` ya expande summary parent cuando recupera un subchunk hijo.
 
 ### Falta por implementar (este documento)
 
 | Fase | Descripción | Riesgo | Esfuerzo aprox. |
 |---|---|---|---|
-| **1.1** | Hybrid search BM25 + pgvector con Reciprocal Rank Fusion (RRF) | Medio (toca DB) | 1-2 días |
-| **1.2** | Sub-chunking de `services.json` + parent-doc retrieval | Medio (re-index) | 1-2 días |
-| **1.3** | Query rewriting / condensación de follow-ups multi-turno | Bajo (módulo nuevo) | 1 día |
-| **2.1** | Grounding check post-respuesta (detectar hallucinations) | Bajo (módulo nuevo) | 1 día |
+| **1.1** | Hybrid search BM25 + pgvector con Reciprocal Rank Fusion (RRF) | Implementado en código; pendiente aplicar migración SQL en entornos existentes | 15 min |
+| **1.2** | Sub-chunking de `services.json` + parent-doc retrieval | Implementado en código; pendiente reindexar embeddings para poblar los nuevos subchunks | 15-30 min |
+| **1.3** | Query rewriting / condensación de follow-ups multi-turno | Implementado | 0 |
+| **2.1** | Grounding check post-respuesta (detectar hallucinations) | Implementado | 0 |
+
+### Pendings operativos / revisión post-activación
+
+- **Curación KB / review de pesos de rerank**: en algunas queries validadas end-to-end, el top doc sigue viniendo de `conversations.json` o `faqs.json` antes que de `services.json`. No es un bug por sí mismo, pero sí indica que el comportamiento final depende mucho de cómo esté curada la KB y de los pesos actuales de retrieval/rerank. Revisar si conviene:
+  - reforzar `services.json` en temas donde debería ser fuente principal,
+  - bajar peso relativo de `conversations` en ciertos topics,
+  - o añadir reglas de priorización por `source` para intents concretos (pricing / service details / requirements).
+
+- **Queries ultra-cortas ambiguas de hotel/lugar**: tras la limpieza de KB, queries como `Pao Pao`, `Cocoliso` o `San Pedro de Majagua` ya recuperan bien contexto relevante, pero el LLM todavía puede inferir un plan concreto aunque el cliente no lo haya pedido. Revisar si conviene:
+  - pedir aclaración breve cuando solo llegue un nombre propio o un hotel sin intención explícita,
+  - endurecer el prompt para no asumir actividad/plan en queries ambiguas,
+  - o añadir una heurística ligera previa al LLM para hoteles / lugares / puntos de recogida.
 
 ### Constraints heredados del plan original
 
@@ -44,9 +60,12 @@ rag_agent.rag_answer(query, lang, history, extra_context)
    ↓
    1. detect_pii() — corta si hay datos sensibles
    2. _canonical_food_answer() — short-circuit para preguntas de comida
-   3. build_retrieval_query() — agrega contexto de history a la query
-   4. search_knowledge_base() — busca en pgvector (top_k=8, threshold=0.40)
-   5. _answer_with_llm() — llama a gpt-4o-mini con system prompt + docs
+   3. condense_query() — reescribe follow-ups cortos en pregunta standalone
+   4. build_retrieval_query() — agrega contexto de history a la query
+   5. search_knowledge_base() — busca con vector + BM25/FTS, fusiona con RRF
+   6. _expand_with_parent_context() — suma el summary parent si llegó un subchunk hijo
+   7. _answer_with_llm() — llama a gpt-4o-mini con system prompt + docs
+   8. is_grounded() — verifica que la respuesta esté respaldada por el contexto
    ↓
 Respuesta al usuario
 ```
@@ -54,13 +73,14 @@ Respuesta al usuario
 ### Archivos clave a conocer
 
 - `src/agents/rag_agent.py` — pipeline RAG principal y construcción del prompt.
-- `src/knowledge/vector_store.py` — búsqueda en pgvector + topic boost + source weighting.
+- `src/knowledge/vector_store.py` — búsqueda híbrida vector + BM25/FTS + RRF + topic/source boost.
 - `src/knowledge/loader.py` — carga de archivos JSON de la KB.
-- `scripts/load_embeddings.py` — script que indexa la KB en pgvector.
+- `scripts/load_embeddings.py` — script que indexa la KB en pgvector y ahora genera subchunks parent/child para `services.json`.
 - `src/config.py` — configuración (modelo, dimensiones de embedding, top-K, threshold).
 - `data/knowledge_base/` — los JSON: `services.json`, `faqs.json`, `policies.json`, `pricing.json`, `conversations.json`, `brand_tone.json`, `availability.json`, `escalation_rules.json`, `discounts.json`.
 - `tests/test_rag_safety.py` — tests de seguridad y comportamiento del RAG.
 - `tests/test_retrieval_rerank.py` — tests del rerank y topic detection.
+- `migrations/001_add_fts_to_kb_documents.sql` — migración para habilitar `content_tsv` e índice GIN.
 
 ### Modelo y parámetros (en `src/config.py`)
 
@@ -953,11 +973,25 @@ Después de cada fase, probar en Chatwoot estas queries y comparar antes/despué
 
 | Query | Fase que mejora |
 |---|---|
-| "¿Cuánto cuesta el minicurso?" → "¿Y los niños?" | 1.3 (rewriting) |
-| "Hotel Pao Pao recogida?" | 1.1 (hybrid search) |
-| "$178 dos buceos qué incluye?" | 1.1 + 1.2 |
-| "¿Qué incluye el de 5 buceos?" | 1.2 (parent-doc) |
-| "¿Cuál es el precio en euros?" | (cualquiera) — debería devolver fallback grounded |
+| "¿Cuál es el punto de encuentro?" | retrieval base + grounding |
+| "Si llevo más de 2 años sin bucear, ¿necesito refresh?" | 1.2 + grounding |
+| "¿Cómo es el Curso Básico PADI Open Water si ya estoy en las Islas del Rosario?" | 1.1 + 1.2 |
+| "¿Tienen opciones de alojamiento en las Islas del Rosario?" | 1.1 (hybrid search exact match) |
+| "¿Cómo es el Curso Básico PADI Open Water?" → "¿y si ya estoy en las islas?" | 1.3 (rewriting) |
+| "¿Qué comida incluye el tour?" | canonical short-circuit |
+| "San Pedro de Majagua" | 1.1 (hybrid search exact match) |
+| "Hotel Pao Pao recogida?" | KB curada + query ambigua corta: debe recuperar FAQs de alojamiento/recogida sin inventar un plan |
+
+### Hallazgos de la validación E2E (2026-06-12)
+
+- **Activación OK**: migración FTS aplicada, reindexado ejecutado y smoke test end-to-end satisfactorio.
+- **FTS ya aporta valor**: queries como `San Pedro de Majagua` y alojamiento en Islas del Rosario recuperan docs con ramas `bm25 + vector`.
+- **Query rewriting útil**: el follow-up `¿y si ya estoy en las islas?` con historial sobre Open Water se resolvió en el contexto correcto.
+- **Canónicos intactos**: la pregunta `¿Qué comida incluye el tour?` sigue saliendo por la ruta canónica esperada.
+- **KB curada limpiada y reindexada**: se normalizó el WhatsApp oficial en `services.json`, `faqs.json` y `policies.json`, se reforzó cobertura factual de hoteles/islas, y se reindexó la base con 735 documentos.
+- **Gap de contenido resuelto**: `Pao Pao` ya aparece en la KB curada actual y ahora recupera FAQs relevantes de alojamiento/recogida.
+- **Hallazgo útil adicional**: en queries ultra-cortas como `Pao Pao`, el retrieval ya va bien, pero la respuesta final todavía puede inferir un plan concreto aunque el cliente no lo haya pedido. Esto apunta más a comportamiento generativo / necesidad de aclaración que a un problema de cobertura KB.
+- **Hallazgo útil para revisar**: en algunas queries, el top doc sigue viniendo de `conversations` o `faqs` antes que de `services`. No es un bug por sí mismo, pero sí señala que la calidad final depende de la curación de la KB y del balance actual de weights / boosts / source priorities.
 
 ---
 

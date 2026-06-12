@@ -37,6 +37,10 @@ class DummyOpenAI:
         self.chat = DummyChat()
 
 
+async def grounded_ok(*args, **kwargs):
+    return True, "GROUNDED"
+
+
 def test_detect_medical_escalation_spanish():
     result = detect_sensitive_escalation("Tengo asma, puedo bucear?", "es")
 
@@ -133,6 +137,7 @@ async def test_rag_low_confidence_uses_extra_context_when_available(monkeypatch)
     monkeypatch.setattr(rag_agent, "search_knowledge_base", fake_search)
     monkeypatch.setattr(rag_agent.settings, "rag_min_score", 0.72)
     monkeypatch.setattr(rag_agent, "AsyncOpenAI", DummyOpenAI)
+    monkeypatch.setattr(rag_agent, "is_grounded", grounded_ok)
 
     # Con extra_context deberia intentar responder usando el LLM en lugar de devolver el fallback
     response = await rag_agent.rag_answer("Pregunta rara", lang="es", extra_context="Resumen de estado")
@@ -154,6 +159,7 @@ async def test_rag_uses_sources_when_confident(monkeypatch):
     monkeypatch.setattr(rag_agent, "search_knowledge_base", fake_search)
     monkeypatch.setattr(rag_agent.settings, "rag_min_score", 0.72)
     monkeypatch.setattr(rag_agent, "AsyncOpenAI", DummyOpenAI)
+    monkeypatch.setattr(rag_agent, "is_grounded", grounded_ok)
 
     response = await rag_agent.rag_answer("Puedo volar después de bucear?", lang="es")
 
@@ -319,3 +325,147 @@ def test_fewshot_no_examples_when_query_topics_unknown(monkeypatch):
     assert "Situaciones reales" not in prompt
 
     monkeypatch.setattr(rag_agent, "_CONVERSATIONS_CACHE", None)
+
+
+@pytest.mark.asyncio
+async def test_rag_returns_fallback_when_grounding_check_rejects(monkeypatch):
+    async def fake_search(query, lang="es"):
+        return [
+            {
+                "content": "Política: esperar 18 horas antes de volar después de bucear.",
+                "metadata": {"source": "policies"},
+                "score": 0.91,
+            }
+        ]
+
+    async def not_grounded(*args, **kwargs):
+        return False, "HALLUCINATED"
+
+    monkeypatch.setattr(rag_agent, "search_knowledge_base", fake_search)
+    monkeypatch.setattr(rag_agent.settings, "rag_min_score", 0.72)
+    monkeypatch.setattr(rag_agent, "AsyncOpenAI", DummyOpenAI)
+    monkeypatch.setattr(rag_agent, "is_grounded", not_grounded)
+
+    response = await rag_agent.rag_answer("Puedo volar después de bucear?", lang="es")
+
+    assert "No tengo información suficiente" in response
+    assert "+57 320 231515" in response
+
+
+@pytest.mark.asyncio
+async def test_query_rewriter_condenses_short_follow_up(monkeypatch):
+    from src.agents import query_rewriter
+
+    async def fake_create(**kwargs):
+        return type(
+            "R",
+            (),
+            {
+                "choices": [
+                    type(
+                        "C",
+                        (),
+                        {"message": type("M", (), {"content": "Cuanto cuesta el minicurso para ninos?"})},
+                    )
+                ]
+            },
+        )()
+
+    class FakeOpenAI:
+        def __init__(self, **kwargs):
+            self.chat = type(
+                "Chat",
+                (),
+                {"completions": type("Comp", (), {"create": staticmethod(fake_create)})()},
+            )
+
+    monkeypatch.setattr(query_rewriter, "AsyncOpenAI", FakeOpenAI)
+
+    history = [
+        {"role": "user", "content": "Cuanto cuesta el minicurso?"},
+        {"role": "assistant", "content": "$183 USD por persona."},
+        {"role": "user", "content": "Y para los ninos hay alguna diferencia?"},
+        {"role": "assistant", "content": "Te confirmo solo la tarifa base actual."},
+    ]
+
+    result = await query_rewriter.condense_query("y los ninos?", history=history, lang="es")
+
+    assert "ninos" in result.lower()
+    assert "minicurso" in result.lower()
+
+
+@pytest.mark.asyncio
+async def test_query_rewriter_returns_original_on_llm_error(monkeypatch):
+    from src.agents import query_rewriter
+
+    class BrokenOpenAI:
+        def __init__(self, **kwargs):
+            self.chat = type(
+                "Chat",
+                (),
+                {
+                    "completions": type(
+                        "Comp",
+                        (),
+                        {"create": staticmethod(lambda **kwargs: (_ for _ in ()).throw(RuntimeError("API down")))},
+                    )()
+                },
+            )
+
+    monkeypatch.setattr(query_rewriter, "AsyncOpenAI", BrokenOpenAI)
+
+    result = await query_rewriter.condense_query(
+        "y los ninos?",
+        history=[
+            {"role": "user", "content": "minicurso?"},
+            {"role": "assistant", "content": "OK"},
+        ],
+        lang="es",
+    )
+
+    assert result == "y los ninos?"
+
+
+@pytest.mark.asyncio
+async def test_parent_doc_expansion_loads_summary_for_subchunk(monkeypatch):
+    fetched = {}
+
+    class FakeConn:
+        async def fetch(self, query, lang, parent_ids):
+            fetched["lang"] = lang
+            fetched["parent_ids"] = parent_ids
+            return [
+                {
+                    "id": 99,
+                    "content": "Resumen del servicio",
+                    "metadata": '{"source": "services", "key": "minicourse:summary", "lang": "es"}',
+                }
+            ]
+
+        async def close(self):
+            return None
+
+    async def fake_connect(*args, **kwargs):
+        return FakeConn()
+
+    monkeypatch.setattr(rag_agent.asyncpg, "connect", fake_connect)
+
+    docs = [
+        {
+            "id": 1,
+            "content": "Itinerario del servicio",
+            "metadata": {
+                "source": "services",
+                "key": "minicourse:itinerary",
+                "parent_id": "minicourse:summary",
+                "lang": "es",
+            },
+            "score": 0.88,
+        }
+    ]
+
+    expanded = await rag_agent._expand_with_parent_context(docs, lang="es")
+
+    assert expanded[0]["metadata"]["key"] == "minicourse:summary"
+    assert expanded[1]["metadata"]["key"] == "minicourse:itinerary"
+    assert fetched["parent_ids"] == ["minicourse:summary"]
