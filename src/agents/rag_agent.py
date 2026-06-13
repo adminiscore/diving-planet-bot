@@ -336,6 +336,138 @@ def _normalize_text(value: str) -> str:
     return " ".join(value.strip().lower().split())
 
 
+AMBIGUOUS_LOCATION_NAMES = (
+    "Isla Grande",
+    "Isla Marina",
+    "Isla del Pirata",
+    "Isla del Sol",
+    "Isleta",
+    "Isla Arena",
+    "Isla Pavitos",
+    "Isla Lizamar",
+    "Isla Gigi",
+    "Isla Rosa",
+    "Isla Pelicano",
+    "Isla Rosario",
+    "San Pedro de Majagua",
+    "Bora Bora Beach Club",
+    "Cocoliso Island Resort",
+    "Pao Pao Hotel",
+    "Fragata Island House",
+    "Secreto Hostel",
+    "Gente de Mar Resort",
+    "Luxury Beach Club",
+    "Ecohotel Las Flores",
+    "Ecohostal Playa Libre",
+    "Islabela",
+    "Hotel El Hamaquero",
+    "Centro Ubuntu",
+    "Hotel Isla del Pirata",
+    "Hotel Isla del Sol",
+    "Coralina Island",
+    "Isleta Beach",
+    "Isla Arena Eco Resort",
+    "Isla Pavitos (Privada)",
+    "Hotel Lizamar",
+    "Casa de Isla Gigi",
+    "Isla Rosa (Privada)",
+    "Isla Pelicano",
+    "Rosario EcoHotel",
+    "Hotel San Tropel",
+)
+
+AMBIGUOUS_LOCATION_PREFIXES = (
+    "hotel ",
+    "casa de ",
+    "centro ",
+)
+
+AMBIGUOUS_LOCATION_SUFFIXES = (
+    " hotel",
+    " island resort",
+    " island house",
+    " beach club",
+    " eco resort",
+    " resort",
+    " hostel",
+    " island",
+    " ecohotel",
+)
+
+LOCATION_QUERY_INTENT_PATTERN = re.compile(
+    r"\b(recog(?:er|ida|en|eme|emos|ernos)?|pickup|pick\s*up|alojamiento|hosped(?:aje|arme|arnos)?|stay|staying|buce(?:o|ar|a|an)|div(?:e|ing)|snorkel|curso|minicurso|tour|plan|paquete|package|precio|cost|cu[aá]nto|reserv(?:a|ar)|book(?:ing)?|availability|disponibilidad|itinerario|schedule|ubicaci[oó]n|location|d[oó]nde|where|c[oó]mo|how)\b",
+    re.IGNORECASE,
+)
+
+
+def _is_safe_location_alias(value: str) -> bool:
+    words = value.split()
+    return len(words) >= 2 or len(value) >= 7
+
+
+def _build_ambiguous_location_catalog() -> frozenset[str]:
+    aliases: set[str] = set()
+    for raw_name in AMBIGUOUS_LOCATION_NAMES:
+        cleaned = re.sub(r"\s*\([^)]*\)", "", raw_name).strip()
+        normalized = _normalize_text(cleaned)
+        if not normalized:
+            continue
+
+        candidates = {normalized}
+        for prefix in AMBIGUOUS_LOCATION_PREFIXES:
+            if normalized.startswith(prefix):
+                candidate = normalized[len(prefix):].strip()
+                if candidate:
+                    candidates.add(candidate)
+        for suffix in AMBIGUOUS_LOCATION_SUFFIXES:
+            if normalized.endswith(suffix):
+                candidate = normalized[: -len(suffix)].strip()
+                if candidate:
+                    candidates.add(candidate)
+
+        for candidate in candidates:
+            if candidate == normalized or _is_safe_location_alias(candidate):
+                aliases.add(candidate)
+
+    aliases.add("majagua")
+    return frozenset(aliases)
+
+
+AMBIGUOUS_LOCATION_CATALOG = _build_ambiguous_location_catalog()
+
+
+def _is_ultra_short_ambiguous_location_query(query: str) -> bool:
+    normalized = _normalize_text(query)
+    if not normalized:
+        return False
+    if len(re.findall(r"\w+", normalized, re.UNICODE)) > 5:
+        return False
+    if normalized not in AMBIGUOUS_LOCATION_CATALOG:
+        return False
+    if LOCATION_QUERY_INTENT_PATTERN.search(normalized):
+        return False
+    return True
+
+
+def _ambiguous_location_clarification(query: str, lang: str) -> str | None:
+    if not _is_ultra_short_ambiguous_location_query(query):
+        return None
+
+    place = query.strip().strip("¿?¡!.,;:")
+    if not place:
+        place = query.strip()
+
+    if lang == "es":
+        return (
+            f"¿Te refieres a {place} para recogida, alojamiento o para saber qué plan aplica si ya estás allí? "
+            "Si me dices eso, te respondo más preciso."
+        )
+    return (
+        f"Do you mean {place} for pickup, accommodation, or to know which plan applies if you're already there? "
+        "If you tell me that, I can answer more precisely."
+    )
+
+
 def _find_food_faq_answer(question: str, lang: str) -> str | None:
     faqs = load_faqs().get("faqs") or []
     question_key = "question_es" if lang == "es" else "question_en"
@@ -493,6 +625,11 @@ async def rag_answer(
         return canonical_food_answer
 
     condensed_query = await condense_query(query, history=history, lang=lang)
+    ambiguous_location_clarification = _ambiguous_location_clarification(condensed_query, lang)
+    if ambiguous_location_clarification:
+        logger.info(f"[RAG] Using ambiguous-location clarification query={query[:60]}... lang={lang}")
+        return ambiguous_location_clarification
+
     retrieval_query = build_retrieval_query(condensed_query, history)
 
     # Lightly bias retrieval using known origin from extra_context (Cartagena vs already on the islands)

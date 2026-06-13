@@ -34,10 +34,9 @@ Este documento describe las mejoras pendientes al pipeline RAG y al uso del LLM 
   - bajar peso relativo de `conversations` en ciertos topics,
   - o añadir reglas de priorización por `source` para intents concretos (pricing / service details / requirements).
 
-- **Queries ultra-cortas ambiguas de hotel/lugar**: tras la limpieza de KB, queries como `Pao Pao`, `Cocoliso` o `San Pedro de Majagua` ya recuperan bien contexto relevante, pero el LLM todavía puede inferir un plan concreto aunque el cliente no lo haya pedido. Revisar si conviene:
-  - pedir aclaración breve cuando solo llegue un nombre propio o un hotel sin intención explícita,
-  - endurecer el prompt para no asumir actividad/plan en queries ambiguas,
-  - o añadir una heurística ligera previa al LLM para hoteles / lugares / puntos de recogida.
+- **Queries ultra-cortas ambiguas de hotel/lugar**: ya existe una heurística ligera previa al LLM para nombres sueltos de islas/hoteles del catálogo (`Pao Pao`, `Cocoliso`, `San Pedro de Majagua`, `Islabela`, `Bora Bora`, etc.). En esos casos el RAG pide aclaración breve en vez de inferir un plan concreto. Pendiente revisar más adelante si además conviene:
+  - endurecer todavía más el prompt para no asumir actividad/plan en queries ambiguas fuera del catálogo,
+  - o ampliar la misma lógica a otros nombres/location aliases que aparezcan en producción.
 
 ### Constraints heredados del plan original
 
@@ -990,7 +989,7 @@ Después de cada fase, probar en Chatwoot estas queries y comparar antes/despué
 - **Canónicos intactos**: la pregunta `¿Qué comida incluye el tour?` sigue saliendo por la ruta canónica esperada.
 - **KB curada limpiada y reindexada**: se normalizó el WhatsApp oficial en `services.json`, `faqs.json` y `policies.json`, se reforzó cobertura factual de hoteles/islas, y se reindexó la base con 735 documentos.
 - **Gap de contenido resuelto**: `Pao Pao` ya aparece en la KB curada actual y ahora recupera FAQs relevantes de alojamiento/recogida.
-- **Hallazgo útil adicional**: en queries ultra-cortas como `Pao Pao`, el retrieval ya va bien, pero la respuesta final todavía puede inferir un plan concreto aunque el cliente no lo haya pedido. Esto apunta más a comportamiento generativo / necesidad de aclaración que a un problema de cobertura KB.
+- **Hallazgo útil adicional**: en queries ultra-cortas de hotel/lugar, el retrieval ya iba bien y ahora el RAG también pide aclaración breve para nombres sueltos del catálogo antes de inferir un plan concreto. El siguiente ajuste, si hace falta, sería extender esta protección a aliases o nombres nuevos que aparezcan en producción.
 - **Hallazgo útil para revisar**: en algunas queries, el top doc sigue viniendo de `conversations` o `faqs` antes que de `services`. No es un bug por sí mismo, pero sí señala que la calidad final depende de la curación de la KB y del balance actual de weights / boosts / source priorities.
 
 ---

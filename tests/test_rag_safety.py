@@ -181,6 +181,54 @@ async def test_rag_food_query_returns_canonical_kb_answer_without_search(monkeyp
     assert "Frutas de temporada" not in response
 
 
+def test_ambiguous_location_helper_detects_ultra_short_place_only_queries():
+    assert rag_agent._is_ultra_short_ambiguous_location_query("Pao Pao") is True
+    assert rag_agent._is_ultra_short_ambiguous_location_query("Cocoliso") is True
+    assert rag_agent._is_ultra_short_ambiguous_location_query("San Pedro de Majagua") is True
+    assert rag_agent._is_ultra_short_ambiguous_location_query("Islabela") is True
+    assert rag_agent._is_ultra_short_ambiguous_location_query("Bora Bora") is True
+    assert rag_agent._is_ultra_short_ambiguous_location_query("Isla Grande") is True
+
+
+def test_ambiguous_location_helper_ignores_queries_with_explicit_intent():
+    assert rag_agent._is_ultra_short_ambiguous_location_query("Hotel Pao Pao recogida?") is False
+    assert rag_agent._is_ultra_short_ambiguous_location_query("Pao Pao alojamiento") is False
+    assert rag_agent._is_ultra_short_ambiguous_location_query("Cocoliso pickup") is False
+    assert rag_agent._is_ultra_short_ambiguous_location_query("Islabela hotel pickup") is False
+
+
+def test_ambiguous_location_helper_ignores_unknown_short_queries():
+    assert rag_agent._is_ultra_short_ambiguous_location_query("Cartagena") is False
+    assert rag_agent._is_ultra_short_ambiguous_location_query("Open Water") is False
+
+
+@pytest.mark.asyncio
+async def test_rag_returns_clarification_for_ambiguous_location_query_before_search(monkeypatch):
+    async def fail_search(*args, **kwargs):
+        raise AssertionError("Ambiguous ultra-short hotel queries should clarify before retrieval")
+
+    monkeypatch.setattr(rag_agent, "search_knowledge_base", fail_search)
+
+    response = await rag_agent.rag_answer("Pao Pao", lang="es")
+
+    assert "¿Te refieres a Pao Pao" in response
+    assert "recogida" in response
+    assert "alojamiento" in response
+
+
+@pytest.mark.asyncio
+async def test_rag_returns_clarification_for_catalog_location_alias_before_search(monkeypatch):
+    async def fail_search(*args, **kwargs):
+        raise AssertionError("Catalog place aliases should clarify before retrieval")
+
+    monkeypatch.setattr(rag_agent, "search_knowledge_base", fail_search)
+
+    response = await rag_agent.rag_answer("Bora Bora", lang="es")
+
+    assert "¿Te refieres a Bora Bora" in response
+    assert "recogida" in response
+
+
 def test_system_prompt_has_no_duplicated_currency_section_es():
     """Regression: 'Gestion de precios, monedas y pagos:' header must appear exactly once."""
     prompt = rag_agent.build_system_prompt("es")
