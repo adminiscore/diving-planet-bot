@@ -103,6 +103,133 @@ def normalize_conversation_topics(raw_topics: list[str] | None) -> list[str]:
     return deduped
 
 
+def _service_subchunks(service_id: str, service: dict, lang: str) -> list[dict]:
+    name = service.get(f"name_{lang}", service_id)
+    description = service.get(f"description_{lang}", "")
+    category = service.get("category", "")
+    url = service.get("url", "")
+    price_note = service.get("price_note", "")
+    duration_days = service.get("duration_days")
+    requires_certification = service.get("requires_certification")
+
+    summary_lines = [
+        f"Servicio: {name}" if lang == "es" else f"Service: {name}",
+        f"Categoría: {category}" if lang == "es" else f"Category: {category}",
+        (
+            f"Requiere certificación: {'Sí' if requires_certification else 'No'}"
+            if lang == "es"
+            else f"Requires certification: {'Yes' if requires_certification else 'No'}"
+        ),
+    ]
+    if description:
+        summary_lines.append(description)
+    if duration_days:
+        summary_lines.append(
+            f"Duración: {duration_days} día(s)"
+            if lang == "es"
+            else f"Duration: {duration_days} day(s)"
+        )
+    if url:
+        summary_lines.append(f"URL: {url}")
+
+    summary_key = f"{service_id}:summary"
+    chunks: list[dict] = []
+
+    def add_chunk(key: str, content: str, subtype: str) -> None:
+        text = content.strip()
+        if not text:
+            return
+        chunks.append({
+            "content": text,
+            "metadata": {
+                "source": "services",
+                "key": key,
+                "lang": lang,
+                "service_id": service_id,
+                "subtype": subtype,
+                "topics": detect_topics(text),
+            },
+        })
+
+    add_chunk(summary_key, "\n".join(summary_lines), "summary")
+
+    itinerary = service.get(f"itinerary_{lang}", []) or []
+    if itinerary:
+        title = f"Itinerario de {name}:" if lang == "es" else f"Itinerary for {name}:"
+        add_chunk(
+            f"{service_id}:itinerary",
+            "\n".join([title, *[f"- {step}" for step in itinerary]]),
+            "itinerary",
+        )
+        chunks[-1]["metadata"]["parent_id"] = summary_key
+
+    included = service.get(f"included_{lang}", []) or []
+    not_included = service.get(f"not_included_{lang}", []) or []
+    if included or not_included:
+        body_lines: list[str] = []
+        if included:
+            body_lines.append(
+                f"Qué incluye {name}:" if lang == "es" else f"What is included in {name}:"
+            )
+            body_lines.extend(f"- {item}" for item in included)
+        if not_included:
+            body_lines.append("")
+            body_lines.append(
+                "Qué NO incluye:" if lang == "es" else "What is NOT included:"
+            )
+            body_lines.extend(f"- {item}" for item in not_included)
+        add_chunk(f"{service_id}:included", "\n".join(body_lines), "included")
+        chunks[-1]["metadata"]["parent_id"] = summary_key
+
+    requirements = service.get(f"requirements_{lang}", []) or []
+    if requirements:
+        title = f"Requisitos para {name}:" if lang == "es" else f"Requirements for {name}:"
+        add_chunk(
+            f"{service_id}:requirements",
+            "\n".join([title, *[f"- {item}" for item in requirements]]),
+            "requirements",
+        )
+        chunks[-1]["metadata"]["parent_id"] = summary_key
+
+    pricing_lines: list[str] = []
+    if service.get("price_usd"):
+        pricing_lines.append(
+            f"Precio online: ${service['price_usd']} USD"
+            if lang == "es"
+            else f"Online price: ${service['price_usd']} USD"
+        )
+    if service.get("price_usd_normal"):
+        pricing_lines.append(
+            f"Precio normal: ${service['price_usd_normal']} USD"
+            if lang == "es"
+            else f"Regular price: ${service['price_usd_normal']} USD"
+        )
+    if service.get("price_cop"):
+        pricing_lines.append(
+            f"Precio en COP online: ${service['price_cop']:,} COP"
+            if lang == "es"
+            else f"Online price in COP: ${service['price_cop']:,} COP"
+        )
+    if service.get("price_cop_normal"):
+        pricing_lines.append(
+            f"Precio en COP normal: ${service['price_cop_normal']:,} COP"
+            if lang == "es"
+            else f"Regular price in COP: ${service['price_cop_normal']:,} COP"
+        )
+    if price_note:
+        pricing_lines.append(
+            f"Nota de precio: {price_note}"
+            if lang == "es"
+            else f"Price note: {price_note}"
+        )
+    if pricing_lines:
+        title = f"Precios de {name}:" if lang == "es" else f"Pricing for {name}:"
+        add_chunk(f"{service_id}:pricing", "\n".join([title, *pricing_lines]), "pricing")
+        chunks[-1]["metadata"]["parent_id"] = summary_key
+
+    return chunks
+
+
 def load_knowledge_base() -> list[dict]:
     """Convert JSON knowledge base files into documents for embedding."""
     documents = []
@@ -112,58 +239,8 @@ def load_knowledge_base() -> list[dict]:
         data = json.load(f)
 
     for key, svc in data.get("services", {}).items():
-        # Spanish document
-        text_es = (
-            f"Servicio: {svc.get('name_es', key)}\n"
-            f"Categoría: {svc.get('category', '')}\n"
-            f"Requiere certificación: {'Sí' if svc.get('requires_certification') else 'No'}\n"
-        )
-        if svc.get("price_usd"):
-            text_es += f"Precio (online): ${svc['price_usd']} USD\n"
-        if svc.get("price_note"):
-            text_es += f"Nota de precio: {svc['price_note']}\n"
-        if svc.get("duration_days"):
-            text_es += f"Duración: {svc['duration_days']} día(s)\n"
-        if svc.get("url"):
-            text_es += f"URL: {svc['url']}\n"
-
-        if svc.get("price_usd_normal"):
-            text_es += f"Precio normal (sin descuento): ${svc['price_usd_normal']} USD\n"
-        if svc.get("price_cop"):
-            text_es += f"Precio en pesos (online): ${svc['price_cop']:,} COP\n"
-        if svc.get("price_cop_normal"):
-            text_es += f"Precio en pesos (normal): ${svc['price_cop_normal']:,} COP\n"
-
-        documents.append({
-            "content": text_es.strip(),
-            "metadata": {"source": "services", "key": key, "lang": "es"},
-        })
-
-        # English document
-        text_en = (
-            f"Service: {svc.get('name_en', key)}\n"
-            f"Category: {svc.get('category', '')}\n"
-            f"Requires certification: {'Yes' if svc.get('requires_certification') else 'No'}\n"
-        )
-        if svc.get("price_usd"):
-            text_en += f"Price (online): ${svc['price_usd']} USD\n"
-        if svc.get("price_usd_normal"):
-            text_en += f"Price (regular): ${svc['price_usd_normal']} USD\n"
-        if svc.get("price_cop"):
-            text_en += f"Price in COP (online): ${svc['price_cop']:,} COP\n"
-        if svc.get("price_cop_normal"):
-            text_en += f"Price in COP (regular): ${svc['price_cop_normal']:,} COP\n"
-        if svc.get("price_note"):
-            text_en += f"Price note: {svc['price_note']}\n"
-        if svc.get("duration_days"):
-            text_en += f"Duration: {svc['duration_days']} day(s)\n"
-        if svc.get("url"):
-            text_en += f"URL: {svc['url']}\n"
-
-        documents.append({
-            "content": text_en.strip(),
-            "metadata": {"source": "services", "key": key, "lang": "en"},
-        })
+        documents.extend(_service_subchunks(key, svc, "es"))
+        documents.extend(_service_subchunks(key, svc, "en"))
 
     # --- FAQs ---
     with open(DATA_DIR / "faqs.json", "r", encoding="utf-8-sig") as f:

@@ -6,41 +6,206 @@ services, policies, and FAQs that fall outside the predefined
 decision tree.
 """
 
+import json
 import logging
 import re
 
+import asyncpg
 from openai import AsyncOpenAI
 
+from src.agents.grounding_check import is_grounded
+from src.agents.query_rewriter import condense_query
 from src.config import settings
-from src.knowledge.loader import load_faqs, load_policies
-from src.knowledge.vector_store import search_knowledge_base
+from src.knowledge.loader import (
+    load_brand_tone,
+    load_conversations,
+    load_faqs,
+    load_policies,
+)
+from src.knowledge.vector_store import detect_query_topics, search_knowledge_base
 from src.privacy import detect_pii, privacy_block_message, redact_pii
 
 logger = logging.getLogger("uvicorn.error")
 
+_BRAND_TONE_CACHE: dict | None = None
+_CONVERSATIONS_CACHE: list[dict] | None = None
+FEWSHOT_MAX_CHARS = 220
+
+
+def _load_brand_tone_cached() -> dict:
+    """Load and cache brand_tone.json at first access."""
+    global _BRAND_TONE_CACHE
+    if _BRAND_TONE_CACHE is None:
+        _BRAND_TONE_CACHE = (load_brand_tone() or {}).get("brand_tone", {})
+    return _BRAND_TONE_CACHE
+
+
+def _build_tone_section(lang: str) -> str:
+    """Compose the Style/Tone bullets dynamically from brand_tone.json.
+
+    Falls back to a minimal hard-coded set if the file is missing or malformed.
+    """
+    tone = _load_brand_tone_cached()
+    bullets: list[str] = []
+
+    personality = (tone.get("personality") or {}).get(lang, "")
+    if personality:
+        # Capitalize first char only; preserve the rest of the casing (e.g. brand names).
+        cap_personality = personality[:1].upper() + personality[1:]
+        if lang == "es":
+            bullets.append(
+                f"- {cap_personality}. Suenas como un asesor real "
+                "hablando por WhatsApp: amable, rapido, informal-profesional y orientado a resolver."
+            )
+        else:
+            bullets.append(
+                f"- {cap_personality}. Sound like a real Diving Planet advisor on WhatsApp: "
+                "warm, fast, informal-professional, and focused on solving the customer's need."
+            )
+
+    ws_lang = (tone.get("whatsapp_style") or {}).get(lang) or {}
+    for shape in ws_lang.get("message_shape", []):
+        bullets.append(f"- {shape}")
+
+    human = ws_lang.get("human_touches", [])
+    if human:
+        bullets.append(f"- {human[0]}")
+
+    age = (tone.get("age_demographic_consideration") or {}).get(lang, "")
+    if age:
+        bullets.append(f"- {age}")
+
+    if not bullets:
+        # Defensive fallback if brand_tone.json is empty or unreadable.
+        if lang == "es":
+            return (
+                "- Cercano, confiable, profesional pero amigable.\n"
+                "- Usa frases cortas y naturales.\n"
+                "- Cierra con una pregunta util o un siguiente paso claro."
+            )
+        return (
+            "- Approachable, trustworthy, professional but friendly.\n"
+            "- Use short, natural sentences.\n"
+            "- End with a useful question or clear next step."
+        )
+
+    return "\n".join(bullets)
+
+
+def _load_conversations_cached() -> list[dict]:
+    """Load and cache conversation_examples from conversations.json at first access."""
+    global _CONVERSATIONS_CACHE
+    if _CONVERSATIONS_CACHE is None:
+        _CONVERSATIONS_CACHE = (load_conversations() or {}).get("conversation_examples", []) or []
+    return _CONVERSATIONS_CACHE
+
+
+def _select_fewshot_examples(query: str, lang: str, k: int = 2) -> list[dict]:
+    """Pick up to k conversation examples whose extracted_topics overlap with the query topics.
+
+    Returns the raw example dicts (filtered by lang). Empty list if no useful match.
+    Uses detect_query_topics() to score overlap; ties broken by example order in JSON.
+    """
+    if not query:
+        return []
+    query_topics = set(detect_query_topics(query))
+    if not query_topics:
+        return []
+
+    candidates = []
+    for example in _load_conversations_cached():
+        if (example.get("lang") or "").lower() != lang:
+            continue
+        ex_topics = set(str(t) for t in (example.get("extracted_topics") or []))
+        # Translate JSON topic labels (e.g. "precios") into TOPIC_PATTERNS labels (e.g. "pricing")
+        # by intersecting against a small alias map. Keep loose: any overlap counts.
+        aliases = {
+            "precios": "pricing",
+            "disponibilidad_ultima_hora": "availability",
+            "horarios": "schedule",
+            "punto_encuentro": "meeting_point",
+            "punto_de_encuentro": "meeting_point",
+            "recogida_en_hotel": "location_islands",
+            "planes_desde_islas": "location_islands",
+            "ubicacion_equipo": "equipment",
+            "refresh": "refresher",
+            "incluye": "equipment",
+            "grupo_mixto": "booking",
+            "snorkel": "schedule",
+            "ultima_hora": "availability",
+        }
+        normalized = {aliases.get(t, t) for t in ex_topics}
+        overlap = len(query_topics & normalized)
+        if overlap > 0:
+            candidates.append((overlap, example))
+
+    candidates.sort(key=lambda pair: pair[0], reverse=True)
+    return [example for _, example in candidates[:k]]
+
+
+def _format_fewshot_block(examples: list[dict], lang: str) -> str:
+    """Render a compact reference block from picked conversation examples.
+
+    Each example is summarised in <= FEWSHOT_MAX_CHARS chars to keep the prompt cheap.
+    Framed as 'real situations the center has handled' so the model treats them as
+    domain context, not as a template to imitate verbatim.
+    """
+    if not examples:
+        return ""
+
+    header = (
+        "Situaciones reales del centro (referencia, NO copies el formato literal):"
+        if lang == "es"
+        else "Real situations the center has handled (reference, do NOT copy the literal format):"
+    )
+    lines = [header]
+    for ex in examples:
+        scenario = (ex.get("scenario") or "").strip()
+        first_customer_msg = ""
+        customer_msgs = ((ex.get("customer") or {}).get("messages") or [])
+        if customer_msgs:
+            first_customer_msg = str(customer_msgs[0]).strip()
+        first_bot_action = ""
+        bot_msgs = ((ex.get("diving_planet") or {}).get("messages") or [])
+        if bot_msgs:
+            first_bot_action = str(bot_msgs[0]).strip()
+
+        cust_q = f"\"{first_customer_msg[:80]}{'...' if len(first_customer_msg) > 80 else ''}\""
+        action = first_bot_action[:120] + ("..." if len(first_bot_action) > 120 else "")
+        bullet = f"- {scenario[:60]} | Cliente: {cust_q} | Asesor cubrio: {action}"
+        if lang == "en":
+            bullet = f"- {scenario[:60]} | Customer: {cust_q} | Advisor covered: {action}"
+        # Hard cap per bullet
+        if len(bullet) > FEWSHOT_MAX_CHARS:
+            bullet = bullet[:FEWSHOT_MAX_CHARS - 3] + "..."
+        lines.append(bullet)
+
+    return "\n".join(lines)
+
+
 FALLBACK_ES = (
     "No tengo información suficiente en mi base de conocimiento para responder eso con seguridad. "
     "Te puedo conectar con un asesor de Diving Planet.\n"
-    "WhatsApp: +57 320 2301515"
+    "WhatsApp: +57 320 231515"
 )
 
 FALLBACK_EN = (
     "I don't have enough information in my knowledge base to answer that safely. "
     "I can connect you with a Diving Planet advisor.\n"
-    "WhatsApp: +57 320 2301515"
+    "WhatsApp: +57 320 231515"
 )
 
-SYSTEM_PROMPT_ES = """Eres el asistente especializado de Diving Planet, el primer centro de buceo PADI 5 Estrellas de Colombia con 30 años de experiencia en las Islas del Rosario, Cartagena.
+_INTRO_ES = (
+    "Eres el asistente especializado de Diving Planet, el primer centro de buceo PADI 5 Estrellas "
+    "de Colombia con 30 años de experiencia en las Islas del Rosario, Cartagena."
+)
 
-Estilo y tono:
-- Cercano, confiable, profesional pero amigable. Suenas como un asesor real hablando por WhatsApp: amable, rápido, informal-profesional y orientado a resolver.
-- Usa frases cortas y naturales. Separa información compleja en bloques pequeños.
-- Usa expresiones como "Perfecto", "Claro", "Estamos aquí para ayudarte".
-- Usa emojis marinos o de acción con moderación, no en cada frase.
-- Cierra siempre con una pregunta útil o un siguiente paso claro.
-- Adapta el lenguaje para clientes de todas las edades, incluyendo 60+.
+_INTRO_EN = (
+    "You are the specialized assistant for Diving Planet, Colombia's first PADI 5 Star Dive Center "
+    "with 30 years of experience in the Rosario Islands, Cartagena."
+)
 
-Reglas estrictas — nunca las incumplas:
+_SYSTEM_PROMPT_ES_BODY = """Reglas estrictas — nunca las incumplas:
 - Responde SOLO con la información del contexto proporcionado.
 - Si la respuesta no está en el contexto o hay duda, dilo y ofrece: "Te paso con un asesor para que te ayude".
 - Nunca inventes precios, horarios, disponibilidad, códigos de descuento, links de pago ni confirmaciones de reserva.
@@ -60,16 +225,6 @@ Uso del contexto de la conversación (extra_context):
 - Ten muy en cuenta la actividad que el cliente está organizando, desde dónde sale (Cartagena o ya en las islas) y si se trata de un plan de 1 día o de varios días.
 - Cuando el cliente pregunte por amigos o acompañantes que quieran bucear o hacer snorkel, prioriza opciones que mantengan este contexto: mismo origen y, cuando sea posible, misma lógica de duración (plan de 1 día vs paquete multi-día), salvo que el cliente pida explícitamente otra cosa (por ejemplo, que quiere quedarse a dormir en las islas).
 
-Gestión de precios, monedas y pagos:
-- Usa el contexto de extra_context para adaptar la moneda: si se indica que el cliente NO es colombiano/a, prioriza mostrar los precios en USD y no des tarifas detalladas en pesos pensadas para locales; si se indica que SÍ es colombiano/a, puedes usar precios en COP y, si es útil, mencionar el equivalente en USD.
-- Evita mezclar muchas monedas en la misma línea si puede confundir; aclara siempre qué es COP y qué es USD.
-- Aunque en el contexto aparezcan flujos de pago (formularios, porcentajes como 50%, transferencias, etc.), NO describas el proceso exacto de pago ni montos de anticipo. Explica de forma general que un asesor humano te indicará el paso a paso y el valor del anticipo si aplica.
-- No inventes ni reconstruyas links de pago o de formularios. Si el cliente pregunta cómo pagar o cómo completar el formulario de exoneración, di que el asesor le enviará el enlace y las instrucciones concretas.
-
-Uso del contexto de la conversación (extra_context):
-- Ten muy en cuenta la actividad que el cliente está organizando, desde dónde sale (Cartagena o ya en las islas) y si se trata de un plan de 1 día o de varios días.
-- Cuando el cliente pregunte por amigos o acompañantes que quieran bucear o hacer snorkel, prioriza opciones que mantengan este contexto: mismo origen y, cuando sea posible, misma lógica de duración (plan de 1 día vs paquete multi-día), salvo que el cliente pida explícitamente otra cosa (por ejemplo, que quiere quedarse a dormir en las islas).
-
 Cuándo derivar siempre a humano:
 - Intención de reservar o pagar: en estos casos no expliques el flujo de pago detallado, solo da la información básica del plan y aclara que un asesor humano se encargará de confirmar cupos y forma de pago.
 - Preguntas de disponibilidad real.
@@ -77,20 +232,10 @@ Cuándo derivar siempre a humano:
 - Cancelaciones, cambios o quejas.
 - Preguntas con baja confianza o fuera del contexto.
 
-Contacto asesor: WhatsApp +57 320 2301515.
+Contacto asesor: WhatsApp +57 320 231515.
 Responde en español."""
 
-SYSTEM_PROMPT_EN = """You are the specialized assistant for Diving Planet, Colombia's first PADI 5 Star Dive Center with 30 years of experience in the Rosario Islands, Cartagena.
-
-Style and tone:
-- Approachable, trustworthy, professional but friendly. Sound like a real Diving Planet advisor on WhatsApp: warm, fast, informal-professional, and focused on solving the customer's need.
-- Use short and natural sentences. Break complex information into small blocks.
-- Use expressions like "Perfect", "Sure", "No worries", "We're here to help".
-- Use ocean or action emojis moderately, not in every sentence.
-- End with a useful question or clear next step.
-- Adapt communication for clients of all ages, including 60+.
-
-Strict rules — never break these:
+_SYSTEM_PROMPT_EN_BODY = """Strict rules — never break these:
 - Answer ONLY using the provided context.
 - If the answer is not in the context or you're unsure, say so and offer: "For this specific situation, I prefer to transfer you to my boss".
 - Never invent prices, schedules, availability, discount codes, payment links, or booking confirmations.
@@ -110,16 +255,6 @@ How to use conversation context (extra_context):
 - Pay close attention to the activity the customer is organizing, where they are departing from (Cartagena vs already on the islands), and whether it is a 1-day plan or a multi-day package.
 - When the customer asks about friends or companions who want to dive or snorkel, prefer options that keep this context: same origin and, when possible, a similar duration pattern (1-day plan vs multi-day package), unless the customer explicitly asks for something different (e.g. they say they want to stay overnight on the islands).
 
-Pricing, currencies, and payments:
-- Use the extra_context to adapt currency: if it indicates the customer is NOT Colombian, prioritize giving prices in USD and avoid detailed COP prices meant for local customers; if it indicates they ARE Colombian, feel free to use COP prices and, if helpful, mention the approximate USD equivalent.
-- Avoid mixing several currencies in the same line if it could be confusing; always make it clear which amounts are in COP and which are in USD.
-- Even if the context contains payment flows (forms, percentages like 50%, bank transfers, etc.), do NOT describe the exact payment process or the amount of any deposit. Explain in general terms that a human advisor will confirm the step-by-step process and any advance payment if applicable.
-- Do not invent or reconstruct payment or form links. If the customer asks how to pay or how to complete the waiver form, tell them that the advisor will send the correct link and instructions.
-
-How to use conversation context (extra_context):
-- Pay close attention to the activity the customer is organizing, where they are departing from (Cartagena vs already on the islands), and whether it is a 1-day plan or a multi-day package.
-- When the customer asks about friends or companions who want to dive or snorkel, prefer options that keep this context: same origin and, when possible, a similar duration pattern (1-day plan vs multi-day package), unless the customer explicitly asks for something different (e.g. they say they want to stay overnight on the islands).
-
 Always escalate to a human for:
 - Booking or payment intent: in these situations, do not explain the detailed payment flow yourself; give only the basic plan information and make it clear that a human advisor will confirm availability and payment method.
 - Real availability questions.
@@ -127,8 +262,38 @@ Always escalate to a human for:
 - Cancellations, changes, or complaints.
 - Low-confidence answers or questions outside the context.
 
-Advisor contact: WhatsApp +57 320 2301515.
+Advisor contact: WhatsApp +57 320 231515.
 Answer in English."""
+
+
+def build_system_prompt(lang: str, query: str | None = None) -> str:
+    """Compose the full system prompt: intro + dynamic tone + body + optional few-shot block.
+
+    When ``query`` is provided, picks up to 2 topic-matching examples from conversations.json
+    and appends them as compact reference context (not as imitation templates).
+    """
+    fewshot_block = ""
+    if query:
+        examples = _select_fewshot_examples(query, lang, k=2)
+        fewshot_block = _format_fewshot_block(examples, lang)
+
+    if lang == "es":
+        prompt = (
+            f"{_INTRO_ES}\n\n"
+            f"Estilo y tono:\n{_build_tone_section('es')}\n\n"
+            f"{_SYSTEM_PROMPT_ES_BODY}"
+        )
+    else:
+        prompt = (
+            f"{_INTRO_EN}\n\n"
+            f"Style and tone:\n{_build_tone_section('en')}\n\n"
+            f"{_SYSTEM_PROMPT_EN_BODY}"
+        )
+
+    if fewshot_block:
+        prompt = f"{prompt}\n\n{fewshot_block}"
+    return prompt
+
 
 FOOD_QUERY_PATTERN = re.compile(
     r"\b(comida|almuerzo|lunch|meal|meals|food|vegetariano|vegetariana|vegetarian|vegano|vegana|vegan|celiaco|celiaca|celiac|alergia|alergias|allergy|allergies)\b",
@@ -169,6 +334,138 @@ def build_retrieval_query(query: str, history: list[dict] | None = None) -> str:
 
 def _normalize_text(value: str) -> str:
     return " ".join(value.strip().lower().split())
+
+
+AMBIGUOUS_LOCATION_NAMES = (
+    "Isla Grande",
+    "Isla Marina",
+    "Isla del Pirata",
+    "Isla del Sol",
+    "Isleta",
+    "Isla Arena",
+    "Isla Pavitos",
+    "Isla Lizamar",
+    "Isla Gigi",
+    "Isla Rosa",
+    "Isla Pelicano",
+    "Isla Rosario",
+    "San Pedro de Majagua",
+    "Bora Bora Beach Club",
+    "Cocoliso Island Resort",
+    "Pao Pao Hotel",
+    "Fragata Island House",
+    "Secreto Hostel",
+    "Gente de Mar Resort",
+    "Luxury Beach Club",
+    "Ecohotel Las Flores",
+    "Ecohostal Playa Libre",
+    "Islabela",
+    "Hotel El Hamaquero",
+    "Centro Ubuntu",
+    "Hotel Isla del Pirata",
+    "Hotel Isla del Sol",
+    "Coralina Island",
+    "Isleta Beach",
+    "Isla Arena Eco Resort",
+    "Isla Pavitos (Privada)",
+    "Hotel Lizamar",
+    "Casa de Isla Gigi",
+    "Isla Rosa (Privada)",
+    "Isla Pelicano",
+    "Rosario EcoHotel",
+    "Hotel San Tropel",
+)
+
+AMBIGUOUS_LOCATION_PREFIXES = (
+    "hotel ",
+    "casa de ",
+    "centro ",
+)
+
+AMBIGUOUS_LOCATION_SUFFIXES = (
+    " hotel",
+    " island resort",
+    " island house",
+    " beach club",
+    " eco resort",
+    " resort",
+    " hostel",
+    " island",
+    " ecohotel",
+)
+
+LOCATION_QUERY_INTENT_PATTERN = re.compile(
+    r"\b(recog(?:er|ida|en|eme|emos|ernos)?|pickup|pick\s*up|alojamiento|hosped(?:aje|arme|arnos)?|stay|staying|buce(?:o|ar|a|an)|div(?:e|ing)|snorkel|curso|minicurso|tour|plan|paquete|package|precio|cost|cu[aá]nto|reserv(?:a|ar)|book(?:ing)?|availability|disponibilidad|itinerario|schedule|ubicaci[oó]n|location|d[oó]nde|where|c[oó]mo|how)\b",
+    re.IGNORECASE,
+)
+
+
+def _is_safe_location_alias(value: str) -> bool:
+    words = value.split()
+    return len(words) >= 2 or len(value) >= 7
+
+
+def _build_ambiguous_location_catalog() -> frozenset[str]:
+    aliases: set[str] = set()
+    for raw_name in AMBIGUOUS_LOCATION_NAMES:
+        cleaned = re.sub(r"\s*\([^)]*\)", "", raw_name).strip()
+        normalized = _normalize_text(cleaned)
+        if not normalized:
+            continue
+
+        candidates = {normalized}
+        for prefix in AMBIGUOUS_LOCATION_PREFIXES:
+            if normalized.startswith(prefix):
+                candidate = normalized[len(prefix):].strip()
+                if candidate:
+                    candidates.add(candidate)
+        for suffix in AMBIGUOUS_LOCATION_SUFFIXES:
+            if normalized.endswith(suffix):
+                candidate = normalized[: -len(suffix)].strip()
+                if candidate:
+                    candidates.add(candidate)
+
+        for candidate in candidates:
+            if candidate == normalized or _is_safe_location_alias(candidate):
+                aliases.add(candidate)
+
+    aliases.add("majagua")
+    return frozenset(aliases)
+
+
+AMBIGUOUS_LOCATION_CATALOG = _build_ambiguous_location_catalog()
+
+
+def _is_ultra_short_ambiguous_location_query(query: str) -> bool:
+    normalized = _normalize_text(query)
+    if not normalized:
+        return False
+    if len(re.findall(r"\w+", normalized, re.UNICODE)) > 5:
+        return False
+    if normalized not in AMBIGUOUS_LOCATION_CATALOG:
+        return False
+    if LOCATION_QUERY_INTENT_PATTERN.search(normalized):
+        return False
+    return True
+
+
+def _ambiguous_location_clarification(query: str, lang: str) -> str | None:
+    if not _is_ultra_short_ambiguous_location_query(query):
+        return None
+
+    place = query.strip().strip("¿?¡!.,;:")
+    if not place:
+        place = query.strip()
+
+    if lang == "es":
+        return (
+            f"¿Te refieres a {place} para recogida, alojamiento o para saber qué plan aplica si ya estás allí? "
+            "Si me dices eso, te respondo más preciso."
+        )
+    return (
+        f"Do you mean {place} for pickup, accommodation, or to know which plan applies if you're already there? "
+        "If you tell me that, I can answer more precisely."
+    )
 
 
 def _find_food_faq_answer(question: str, lang: str) -> str | None:
@@ -212,6 +509,96 @@ def _canonical_food_answer(query: str, lang: str) -> str | None:
     return _food_policy_answer(lang)
 
 
+def _coerce_metadata(value: object) -> dict:
+    if isinstance(value, dict):
+        return value
+    if isinstance(value, str):
+        try:
+            parsed = json.loads(value)
+            if isinstance(parsed, dict):
+                return parsed
+        except json.JSONDecodeError:
+            return {}
+    return {}
+
+
+def _score_for_threshold(doc: dict) -> float:
+    raw_score = doc.get("score_final", doc.get("score", 0.0))
+    try:
+        return float(raw_score)
+    except (TypeError, ValueError):
+        return 0.0
+
+
+async def _expand_with_parent_context(docs: list[dict], lang: str) -> list[dict]:
+    parent_ids_needed: set[str] = set()
+    existing_keys = {
+        str((doc.get("metadata") or {}).get("key"))
+        for doc in docs
+        if (doc.get("metadata") or {}).get("key")
+    }
+    parent_scores: dict[str, float] = {}
+
+    for doc in docs:
+        metadata = doc.get("metadata") or {}
+        parent_id = metadata.get("parent_id")
+        key = metadata.get("key")
+        if not parent_id or parent_id == key or parent_id in existing_keys:
+            continue
+        parent_key = str(parent_id)
+        parent_ids_needed.add(parent_key)
+        parent_scores[parent_key] = max(parent_scores.get(parent_key, 0.0), _score_for_threshold(doc))
+
+    if not parent_ids_needed:
+        return docs
+
+    try:
+        conn = await asyncpg.connect(settings.database_url)
+        try:
+            rows = await conn.fetch(
+                """
+                SELECT id, content, metadata
+                FROM kb_documents
+                WHERE metadata->>'lang' = $1
+                  AND metadata->>'key' = ANY($2::text[])
+                """,
+                lang,
+                list(parent_ids_needed),
+            )
+        finally:
+            await conn.close()
+    except Exception as exc:
+        logger.warning(f"[RAG][PARENT] failed to expand parent context: {exc}")
+        return docs
+
+    parents: list[dict] = []
+    seen_parent_keys: set[str] = set()
+    for row in rows:
+        metadata = _coerce_metadata(row["metadata"])
+        parent_key = str(metadata.get("key") or "")
+        if not parent_key or parent_key in seen_parent_keys:
+            continue
+        seen_parent_keys.add(parent_key)
+        score = parent_scores.get(parent_key, 0.0)
+        parents.append({
+            "id": row["id"],
+            "content": row["content"],
+            "metadata": metadata,
+            "score": score,
+            "score_final": score,
+        })
+
+    if not parents:
+        return docs
+    return parents + docs
+
+
+def _build_grounding_context(context: str, extra_context: str | None = None) -> str:
+    if extra_context and context != extra_context:
+        return f"{context}\n\nContexto adicional de la situacion: {extra_context}"
+    return context
+
+
 async def rag_answer(
     query: str,
     lang: str = "es",
@@ -237,7 +624,13 @@ async def rag_answer(
         logger.info(f"[RAG] Using canonical food answer query={query[:60]}... lang={lang}")
         return canonical_food_answer
 
-    retrieval_query = build_retrieval_query(query, history)
+    condensed_query = await condense_query(query, history=history, lang=lang)
+    ambiguous_location_clarification = _ambiguous_location_clarification(condensed_query, lang)
+    if ambiguous_location_clarification:
+        logger.info(f"[RAG] Using ambiguous-location clarification query={query[:60]}... lang={lang}")
+        return ambiguous_location_clarification
+
+    retrieval_query = build_retrieval_query(condensed_query, history)
 
     # Lightly bias retrieval using known origin from extra_context (Cartagena vs already on the islands)
     if extra_context:
@@ -263,10 +656,11 @@ async def rag_answer(
 
     # Retrieve relevant documents
     docs = await search_knowledge_base(safe_query, lang=lang)
+    docs = await _expand_with_parent_context(docs, lang=lang)
 
     # Helper to call the LLM with unstructured context (either KB docs o solo extra_context)
     async def _answer_with_llm(context: str, context_sources: list[str] | None = None) -> str:
-        system_prompt = SYSTEM_PROMPT_ES if lang == "es" else SYSTEM_PROMPT_EN
+        system_prompt = build_system_prompt(lang, query=condensed_query)
         messages = [{"role": "system", "content": system_prompt}]
 
         # Add conversation history (last 6 messages max)
@@ -282,15 +676,26 @@ async def rag_answer(
 
         messages.append({"role": "user", "content": user_content})
 
-        client = AsyncOpenAI(api_key=settings.openai_api_key)
-        response = await client.chat.completions.create(
-            model=settings.openai_model,
-            messages=messages,
-            temperature=0.3,
-            max_tokens=500,
-        )
+        try:
+            client = AsyncOpenAI(api_key=settings.openai_api_key)
+            response = await client.chat.completions.create(
+                model=settings.openai_model,
+                messages=messages,
+                temperature=0.3,
+                max_tokens=500,
+            )
+        except Exception as exc:
+            logger.warning(f"[RAG][LLM] failed to answer query={query[:60]}... error={exc}")
+            return FALLBACK_ES if lang == "es" else FALLBACK_EN
 
         answer = response.choices[0].message.content
+        grounding_context = _build_grounding_context(context, extra_context=extra_context)
+        grounded, reason = await is_grounded(answer or "", grounding_context, lang=lang)
+        if not grounded:
+            logger.warning(
+                f"[RAG][GROUNDING] Rejecting answer query={query[:60]}... reason={reason}"
+            )
+            return FALLBACK_ES if lang == "es" else FALLBACK_EN
         logger.info(
             f"[RAG] Query: {query[:60]}... | Docs: {len(docs) if docs else 0} | "
             f"Tokens: {response.usage.total_tokens} | Sources: {context_sources or []}"
@@ -307,7 +712,7 @@ async def rag_answer(
         return FALLBACK_ES if lang == "es" else FALLBACK_EN
 
     # 2) Hay documentos pero con score bajo
-    top_score = max(float(doc.get("score", 0.0)) for doc in docs)
+    top_score = max(_score_for_threshold(doc) for doc in docs)
     if top_score < settings.rag_min_score:
         sources = [doc.get("metadata", {}).get("source", "unknown") for doc in docs]
         logger.info(
@@ -326,7 +731,7 @@ async def rag_answer(
     for i, doc in enumerate(docs, 1):
         metadata = doc.get("metadata", {})
         source = metadata.get("source", "unknown")
-        score = float(doc.get("score", 0.0))
+        score = _score_for_threshold(doc)
         sources.append(source)
         context_parts.append(f"[{i}] Fuente: {source} | Score: {score:.3f}\n{redact_pii(doc['content'])}")
     context = "\n\n".join(context_parts)

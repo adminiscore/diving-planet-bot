@@ -1,6 +1,15 @@
 History
 =======
 
+0.16.2 - (2026-06-12)
+---------------------
+* RAG prompt cleanup: removed the duplicated "Gestión de precios/monedas/pagos" + "extra_context" sections that were copy-pasted twice in both ES and EN system prompts (≈200 tokens lighter per call, removes ambiguity for the model).
+* Brand tone now loaded dynamically from `data/knowledge_base/brand_tone.json` via `build_system_prompt(lang)` instead of being hardcoded in `rag_agent.py`. Editing the JSON immediately changes the bot's tone with no code change.
+* Few-shot examples from `data/knowledge_base/conversations.json` are now injected into the RAG system prompt: when a free-text query is detected, up to 2 real anonymized conversations with overlapping topics are appended as "Situaciones reales del centro (referencia, NO copies el formato)". Bot stays anchored to real domain situations; adding more examples in JSON requires no code change.
+* New caches: `_BRAND_TONE_CACHE` and `_CONVERSATIONS_CACHE` lazy-load both JSON files at first access; `load_brand_tone()` and `load_conversations()` added to `src/knowledge/loader.py`.
+* Six new tests in `test_rag_safety.py` covering dedup regression (ES + EN), brand-tone injection from JSON, few-shot selection by topic overlap, few-shot only when query has detectable topics, and few-shot suppression for off-topic queries.
+* Owner question document `docs/questions_for_owner_business_kb.md` grew from 19 to 42 pending questions: added §2.5 Q20 (special pickup logistics), §2.6 (intake/weather operativa), §2.7 (PADI extras: languages, baptism vs. discovery, eCard, combos, Divemaster duration), §2.8 (equipment: own gear, sizes, masks, kids, Nitrox operativa), §2.9 (upsells/extras), §2.10 (automated reminders).
+
 0.16.1 - (2026-06-09)
 ---------------------
 * Align the `Reservar` entry with the real cart-based booking flow so the menu and handler now point to the same step-by-step booking path.
