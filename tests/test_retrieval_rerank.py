@@ -4,7 +4,11 @@ from dataclasses import dataclass
 
 import pytest
 
-from src.knowledge.vector_store import detect_query_topics, source_weight_for_topics
+from src.knowledge.vector_store import (
+    detect_query_topics,
+    source_weight_for_topics,
+    subtype_boost_for_topics,
+)
 
 
 @dataclass(frozen=True)
@@ -82,3 +86,16 @@ def test_rerank_policies_win_for_cancellation_even_if_semantically_close():
 
     ordered = sorted(candidates, key=lambda c: boosted_score(c, query_topics), reverse=True)
     assert ordered[0].source == "policies"
+
+
+def test_subtype_boost_matches_intent_to_service_subchunk():
+    assert subtype_boost_for_topics("pricing", ["pricing"]) > 0
+    assert subtype_boost_for_topics("itinerary", ["schedule"]) > 0
+    assert subtype_boost_for_topics("requirements", ["certification"]) > 0
+    assert subtype_boost_for_topics("included", ["equipment"]) > 0
+
+
+def test_subtype_boost_zero_when_subtype_mismatched_or_missing():
+    assert subtype_boost_for_topics("pricing", ["schedule"]) == 0.0
+    assert subtype_boost_for_topics(None, ["pricing"]) == 0.0
+    assert subtype_boost_for_topics("itinerary", []) == 0.0

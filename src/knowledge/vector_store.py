@@ -19,6 +19,31 @@ logger = logging.getLogger("uvicorn.error")
 
 RRF_K = 60
 
+_pool: asyncpg.Pool | None = None
+_pool_lock = asyncio.Lock()
+
+
+async def _get_pool() -> asyncpg.Pool:
+    """Return a lazily-created shared asyncpg pool.
+
+    A failed creation leaves ``_pool`` as None so the next call retries; the
+    exception propagates to the caller's try/except (which degrades to []).
+    """
+    global _pool
+    if _pool is not None:
+        return _pool
+    async with _pool_lock:
+        if _pool is None:
+            _pool = await asyncpg.create_pool(
+                settings.database_url, min_size=1, max_size=10
+            )
+    return _pool
+
+
+async def get_pool() -> asyncpg.Pool:
+    """Public accessor for the shared pool (reused by rag_agent)."""
+    return await _get_pool()
+
 
 TOPIC_PATTERNS: list[tuple[str, re.Pattern]] = [
     ("pricing", re.compile(r"\b(precio|precios|valor|cu[aá]nto cuesta|usd|d[oó]lares|pesos|cop)\b", re.IGNORECASE)),
@@ -81,6 +106,27 @@ def source_weight_for_topics(source: str | None, topics: list[str]) -> float:
     for t in topics:
         total += weights_by_topic.get(t, {}).get(source, 0.0)
     return total
+
+
+# Map a query topic to the service sub-chunk subtype that should answer it.
+# Only `services` docs carry a `subtype`, so this also nudges services up for
+# these detail-oriented intents without overriding strong source signals.
+SUBTYPE_BY_TOPIC: dict[str, str] = {
+    "pricing": "pricing",
+    "discount": "pricing",
+    "discount_colombian": "pricing",
+    "schedule": "itinerary",
+    "equipment": "included",
+    "certification": "requirements",
+    "refresher": "requirements",
+}
+
+
+def subtype_boost_for_topics(subtype: str | None, topics: list[str]) -> float:
+    if not subtype or not topics:
+        return 0.0
+    preferred = {SUBTYPE_BY_TOPIC[t] for t in topics if t in SUBTYPE_BY_TOPIC}
+    return 0.08 if subtype in preferred else 0.0
 
 
 def _coerce_metadata(value: object) -> dict:
@@ -149,6 +195,8 @@ def _apply_topic_and_source_boost(results: list[dict], query_topics: list[str]) 
         if query_topics:
             source = metadata.get("source")
             boost += source_weight_for_topics(str(source) if source is not None else None, query_topics)
+            subtype = metadata.get("subtype")
+            boost += subtype_boost_for_topics(str(subtype) if subtype is not None else None, query_topics)
 
         reranked_doc = dict(doc)
         reranked_doc["score_boosted"] = float(doc.get("score_final", doc.get("score", 0.0)) or 0.0) + boost
@@ -166,8 +214,8 @@ async def _vector_search(query: str, lang: str = "es", k: int = 8) -> list[dict]
         )
         query_embedding = resp.data[0].embedding
 
-        conn = await asyncpg.connect(settings.database_url)
-        try:
+        pool = await _get_pool()
+        async with pool.acquire() as conn:
             rows = await conn.fetch(
                 """
                 SELECT id, content, metadata, 1 - (embedding <=> $1::vector) AS score
@@ -180,8 +228,6 @@ async def _vector_search(query: str, lang: str = "es", k: int = 8) -> list[dict]
                 lang,
                 k,
             )
-        finally:
-            await conn.close()
     except Exception as exc:
         logger.info(f"[RAG][VECTOR] unavailable or failed: {exc}")
         return []
@@ -203,15 +249,15 @@ async def _vector_search(query: str, lang: str = "es", k: int = 8) -> list[dict]
 
 async def _bm25_search(query: str, lang: str = "es", k: int = 8) -> list[dict]:
     try:
-        conn = await asyncpg.connect(settings.database_url)
-        try:
+        pool = await _get_pool()
+        async with pool.acquire() as conn:
             rows = await conn.fetch(
                 """
                 SELECT id, content, metadata,
-                       ts_rank_cd(content_tsv, plainto_tsquery('simple', $1)) AS score
+                       ts_rank_cd(content_tsv, websearch_to_tsquery('simple', $1)) AS score
                 FROM kb_documents
                 WHERE metadata->>'lang' = $2
-                  AND content_tsv @@ plainto_tsquery('simple', $1)
+                  AND content_tsv @@ websearch_to_tsquery('simple', $1)
                 ORDER BY score DESC
                 LIMIT $3
                 """,
@@ -219,8 +265,6 @@ async def _bm25_search(query: str, lang: str = "es", k: int = 8) -> list[dict]:
                 lang,
                 k,
             )
-        finally:
-            await conn.close()
     except Exception as exc:
         logger.info(f"[RAG][BM25] unavailable or failed: {exc}")
         return []

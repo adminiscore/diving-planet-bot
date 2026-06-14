@@ -16,6 +16,9 @@ class Settings(BaseSettings):
     openai_embedding_model: str = "text-embedding-3-small"
     rag_top_k: int = 8
     rag_min_score: float = 0.40
+    # Minimum raw ts_rank_cd score for a BM25-only hit to count as "confident".
+    # Vector hits gate on rag_min_score (cosine); lexical hits gate on this.
+    rag_min_bm25_rank: float = 0.05
 
     # --- LangSmith ---
     langsmith_api_key: str = ""

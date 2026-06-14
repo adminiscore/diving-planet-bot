@@ -461,10 +461,63 @@ async def store_documents(documents: list[dict], embeddings: list[list[float]]):
         await conn.close()
 
 
-async def main():
+def _log_document_summary(documents: list[dict]) -> None:
+    """Log how many documents were built per source (useful for dry-run/sanity)."""
+    from collections import Counter
+
+    by_source: Counter[str] = Counter(
+        str((doc.get("metadata") or {}).get("source", "unknown")) for doc in documents
+    )
+    logger.info("Document summary by source:")
+    for source, count in sorted(by_source.items()):
+        logger.info(f"  {source}: {count}")
+    logger.info(f"  TOTAL: {len(documents)}")
+
+
+async def _current_doc_count() -> int:
+    """Return the current row count in kb_documents, or -1 if it can't be read."""
+    try:
+        conn = await asyncpg.connect(settings.database_url)
+        try:
+            return int(await conn.fetchval("SELECT COUNT(*) FROM kb_documents") or 0)
+        finally:
+            await conn.close()
+    except Exception as exc:
+        logger.warning(f"Could not read current document count: {exc}")
+        return -1
+
+
+async def _confirm_destructive_reindex(new_count: int) -> bool:
+    """Prompt before the DELETE. Returns True only on explicit confirmation."""
+    existing = await _current_doc_count()
+    existing_label = str(existing) if existing >= 0 else "unknown (table missing or DB unreachable)"
+    print(
+        "\n⚠️  Reindex is DESTRUCTIVE: it will DELETE every row in kb_documents "
+        "and insert the freshly built ones.\n"
+        f"   Database : {settings.database_url}\n"
+        f"   Current  : {existing_label} rows\n"
+        f"   New      : {new_count} rows\n"
+    )
+    try:
+        reply = input("   Type 'yes' to continue (anything else cancels): ").strip().lower()
+    except EOFError:
+        return False
+    return reply in {"yes", "y", "si", "sí"}
+
+
+async def main(force: bool = False, dry_run: bool = False):
     logger.info("Loading knowledge base...")
     documents = load_knowledge_base()
     logger.info(f"Created {len(documents)} documents from knowledge base")
+    _log_document_summary(documents)
+
+    if dry_run:
+        logger.info("Dry run: no embeddings generated and no DB changes made.")
+        return
+
+    if not force and not await _confirm_destructive_reindex(len(documents)):
+        logger.info("Reindex cancelled by user. No changes made.")
+        return
 
     logger.info(f"Generating embeddings with {EMBEDDING_MODEL}...")
     client = OpenAI(api_key=settings.openai_api_key)
@@ -481,4 +534,21 @@ async def main():
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    import argparse
+
+    parser = argparse.ArgumentParser(description="Load the knowledge base into pgvector.")
+    parser.add_argument(
+        "--yes",
+        "--force",
+        dest="force",
+        action="store_true",
+        help="Skip the confirmation prompt before deleting and reindexing.",
+    )
+    parser.add_argument(
+        "--dry-run",
+        dest="dry_run",
+        action="store_true",
+        help="Build documents and print a per-source summary without touching the DB or OpenAI.",
+    )
+    args = parser.parse_args()
+    asyncio.run(main(force=args.force, dry_run=args.dry_run))

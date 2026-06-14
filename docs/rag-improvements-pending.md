@@ -992,6 +992,34 @@ Después de cada fase, probar en Chatwoot estas queries y comparar antes/despué
 - **Hallazgo útil adicional**: en queries ultra-cortas de hotel/lugar, el retrieval ya iba bien y ahora el RAG también pide aclaración breve para nombres sueltos del catálogo antes de inferir un plan concreto. El siguiente ajuste, si hace falta, sería extender esta protección a aliases o nombres nuevos que aparezcan en producción.
 - **Hallazgo útil para revisar**: en algunas queries, el top doc sigue viniendo de `conversations` o `faqs` antes que de `services`. No es un bug por sí mismo, pero sí señala que la calidad final depende de la curación de la KB y del balance actual de weights / boosts / source priorities.
 
+### Tanda de fiabilidad + rendimiento (2026-06-14)
+
+Aplicada sobre `feature/pruebaGon` tras el merge de `dev_gadea`. Tres cambios de bajo riesgo, todos con tests (`tests/test_rag_safety.py`):
+
+- **Gate de confianza arreglado (antes anulado)**: el `score_final` híbrido (cosine + RRF + boost) hacía que el umbral `rag_min_score` casi nunca disparara fallback, porque el top de BM25 normaliza siempre a `1.0`. Ahora `rag_agent._is_confident()` evalúa cada señal en su escala: cosine `>= rag_min_score` para hits vectoriales y `ts_rank_cd` crudo `>= rag_min_bm25_rank` (nuevo setting, default `0.05`) para hits léxicos. La expansión de padres se hace **después** del gate para que un `:summary` no infle la confianza. Docs sin branch scores (tests/legacy) siguen gateando por `score`.
+- **BM25 con `websearch_to_tsquery('simple', …)`** en lugar de `plainto_tsquery`: parsing más seguro (comillas, OR, negación, sin errores con puntuación). Mantiene AND por defecto, así que un hit BM25 sigue implicando match fuerte.
+- **Pool de conexiones compartido**: `vector_store._get_pool()` / `get_pool()` reemplaza el `asyncpg.connect()` por query en `_vector_search`, `_bm25_search` y `rag_agent._expand_with_parent_context`. Menos latencia y sin riesgo de agotar conexiones.
+
+Pendiente de tanda futura (no incluido aquí): bypass del grounding check cuando la confianza de retrieval es muy alta (latencia), recalibración fina de `rag_min_bm25_rank` con datos reales, y revisión de pesos de source/topic boost.
+
+### Tanda de correctness (2026-06-14, 2ª)
+
+Enfocada en "mínima equivocación posible", también con tests:
+
+- **Guard determinista de importes** (`grounding_check.currency_amounts_grounded`): antes del grounding por LLM, se verifica sin coste que todo precio/porcentaje de la respuesta (`$178`, `178 USD`, `630.000 COP`, `10%`) aparezca en el contexto. Si hay un importe que no está, se devuelve el fallback. Normaliza decimales USD (`178.00`) y miles COP (`630.000`) para no generar falsos positivos. Los números no monetarios (días, metros, teléfono) se ignoran. Corre **antes** del verificador LLM (que también puede alucinar su veredicto), así que cubre el peor caso: dar un precio inventado.
+- **Limpieza de contexto**: se quitó el `Score: X` que se inyectaba en el contexto visible para el LLM (ruido innecesario que no aporta a la respuesta).
+
+### Tanda de correctness + retrieval (2026-06-14, 3ª)
+
+- **Guard determinista de URLs** (`grounding_check.urls_grounded`): cualquier link `http(s)://` o `www.` en la respuesta debe aparecer en el contexto; si no, fallback. Los links de reserva/pago deben venir del flujo estructurado, no del LLM. Respuestas sin links no se ven afectadas.
+- **Boost por subtipo de servicio** (`vector_store.subtype_boost_for_topics` + `SUBTYPE_BY_TOPIC`): aprovecha los sub-chunks de `services.json` (`summary`/`itinerary`/`included`/`requirements`/`pricing`) para subir el subchunk correcto según la intención de la query (pricing→`pricing`, schedule→`itinerary`, equipment→`included`, certification/refresher→`requirements`). Se aplica como segundo nivel de rerank (`+0.08`), sin sobrescribir las señales de `source`. Esto también ayuda a que `services` compita mejor en intents de detalle, en lugar de tocar magic-numbers a ciegas.
+
+### Tanda de mantenibilidad + operativa (2026-06-14, 4ª)
+
+- **Reindex seguro** (`scripts/load_embeddings.py`): el `main()` ahora confirma antes del `DELETE FROM kb_documents` mostrando filas actuales vs. nuevas y la DB destino. Flags: `--yes`/`--force` para saltar la confirmación (CI/automatización) y `--dry-run` para construir documentos e imprimir un resumen por `source` sin tocar DB ni OpenAI. Cubre el TODO de "confirmación antes del DELETE".
+- **Few-shot alias map a nivel de módulo** (`rag_agent._FEWSHOT_TOPIC_ALIASES`): se extrajo el mapa (antes reconstruido en cada llamada) y se amplió con las etiquetas legacy/español reales de `conversations.json` (`precio_colombianos`, `clima`, `cancelacion_reembolso`, `alojamiento`, `proceso_reserva`, `open_water_course`, etc.), mejorando el overlap de topics para seleccionar ejemplos.
+- **Caché de KB en `rag_agent`** (`_load_faqs_cached`/`_load_policies_cached`): las respuestas canónicas de comida ya no leen disco en cada query.
+
 ---
 
 ## 8. Lo que NO está en este alcance

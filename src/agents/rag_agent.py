@@ -10,10 +10,9 @@ import json
 import logging
 import re
 
-import asyncpg
 from openai import AsyncOpenAI
 
-from src.agents.grounding_check import is_grounded
+from src.agents.grounding_check import currency_amounts_grounded, is_grounded, urls_grounded
 from src.agents.query_rewriter import condense_query
 from src.config import settings
 from src.knowledge.loader import (
@@ -22,13 +21,15 @@ from src.knowledge.loader import (
     load_faqs,
     load_policies,
 )
-from src.knowledge.vector_store import detect_query_topics, search_knowledge_base
+from src.knowledge.vector_store import detect_query_topics, get_pool, search_knowledge_base
 from src.privacy import detect_pii, privacy_block_message, redact_pii
 
 logger = logging.getLogger("uvicorn.error")
 
 _BRAND_TONE_CACHE: dict | None = None
 _CONVERSATIONS_CACHE: list[dict] | None = None
+_FAQS_CACHE: list | None = None
+_POLICIES_CACHE: dict | None = None
 FEWSHOT_MAX_CHARS = 220
 
 
@@ -38,6 +39,22 @@ def _load_brand_tone_cached() -> dict:
     if _BRAND_TONE_CACHE is None:
         _BRAND_TONE_CACHE = (load_brand_tone() or {}).get("brand_tone", {})
     return _BRAND_TONE_CACHE
+
+
+def _load_faqs_cached() -> list:
+    """Load and cache the faqs list at first access."""
+    global _FAQS_CACHE
+    if _FAQS_CACHE is None:
+        _FAQS_CACHE = (load_faqs() or {}).get("faqs") or []
+    return _FAQS_CACHE
+
+
+def _load_policies_cached() -> dict:
+    """Load and cache the policies dict at first access."""
+    global _POLICIES_CACHE
+    if _POLICIES_CACHE is None:
+        _POLICIES_CACHE = (load_policies() or {}).get("policies") or {}
+    return _POLICIES_CACHE
 
 
 def _build_tone_section(lang: str) -> str:
@@ -100,6 +117,58 @@ def _load_conversations_cached() -> list[dict]:
     return _CONVERSATIONS_CACHE
 
 
+# Translate the legacy/Spanish `extracted_topics` labels stored in
+# conversations.json into the canonical TOPIC_PATTERNS labels used by
+# detect_query_topics(). Canonical labels (certification, location_islands,
+# availability, schedule, meeting_point, pricing, equipment, discount_colombian,
+# refresher, accommodation, weather_cancellation, booking...) pass through
+# unchanged via aliases.get(t, t).
+_FEWSHOT_TOPIC_ALIASES: dict[str, str] = {
+    # Pricing / currency
+    "precios": "pricing",
+    "precios_usd": "pricing",
+    "price_usd": "pricing",
+    "precio_desde_isla": "pricing",
+    # Colombian / resident pricing
+    "precio_colombianos": "discount_colombian",
+    "precio_local_residente": "discount_colombian",
+    "precio_local": "discount_colombian",
+    # Availability / booking cutoff
+    "disponibilidad_ultima_hora": "availability",
+    "ultima_hora": "availability",
+    "corte_reserva_online": "availability",
+    # Schedule
+    "horarios": "schedule",
+    "snorkel": "schedule",
+    # Meeting point
+    "punto_encuentro": "meeting_point",
+    "punto_de_encuentro": "meeting_point",
+    # Islands / pickup / base location
+    "recogida_en_hotel": "location_islands",
+    "planes_desde_islas": "location_islands",
+    "base_en_islas": "location_islands",
+    "base_cocoliso": "location_islands",
+    "diferencia_isla_vs_cartagena": "location_islands",
+    # Equipment / included
+    "ubicacion_equipo": "equipment",
+    "equipo_incluido": "equipment",
+    "transfer_included": "equipment",
+    "incluye": "equipment",
+    # Booking process
+    "grupo_mixto": "booking",
+    "proceso_reserva": "booking",
+    # Refresher
+    "refresh": "refresher",
+    # Weather / cancellation
+    "clima": "weather_cancellation",
+    "cancelacion_reembolso": "weather_cancellation",
+    # Accommodation
+    "alojamiento": "accommodation",
+    # Courses
+    "open_water_course": "certification",
+}
+
+
 def _select_fewshot_examples(query: str, lang: str, k: int = 2) -> list[dict]:
     """Pick up to k conversation examples whose extracted_topics overlap with the query topics.
 
@@ -117,24 +186,7 @@ def _select_fewshot_examples(query: str, lang: str, k: int = 2) -> list[dict]:
         if (example.get("lang") or "").lower() != lang:
             continue
         ex_topics = set(str(t) for t in (example.get("extracted_topics") or []))
-        # Translate JSON topic labels (e.g. "precios") into TOPIC_PATTERNS labels (e.g. "pricing")
-        # by intersecting against a small alias map. Keep loose: any overlap counts.
-        aliases = {
-            "precios": "pricing",
-            "disponibilidad_ultima_hora": "availability",
-            "horarios": "schedule",
-            "punto_encuentro": "meeting_point",
-            "punto_de_encuentro": "meeting_point",
-            "recogida_en_hotel": "location_islands",
-            "planes_desde_islas": "location_islands",
-            "ubicacion_equipo": "equipment",
-            "refresh": "refresher",
-            "incluye": "equipment",
-            "grupo_mixto": "booking",
-            "snorkel": "schedule",
-            "ultima_hora": "availability",
-        }
-        normalized = {aliases.get(t, t) for t in ex_topics}
+        normalized = {_FEWSHOT_TOPIC_ALIASES.get(t, t) for t in ex_topics}
         overlap = len(query_topics & normalized)
         if overlap > 0:
             candidates.append((overlap, example))
@@ -469,7 +521,7 @@ def _ambiguous_location_clarification(query: str, lang: str) -> str | None:
 
 
 def _find_food_faq_answer(question: str, lang: str) -> str | None:
-    faqs = load_faqs().get("faqs") or []
+    faqs = _load_faqs_cached()
     question_key = "question_es" if lang == "es" else "question_en"
     answer_key = "answer_es" if lang == "es" else "answer_en"
     normalized_question = _normalize_text(question)
@@ -485,7 +537,7 @@ def _find_food_faq_answer(question: str, lang: str) -> str | None:
 
 
 def _food_policy_answer(lang: str) -> str | None:
-    policies = load_policies().get("policies") or {}
+    policies = _load_policies_cached()
     food_policy = policies.get("food_policy") or {}
     answer = food_policy.get(lang)
     if isinstance(answer, str) and answer.strip():
@@ -530,6 +582,37 @@ def _score_for_threshold(doc: dict) -> float:
         return 0.0
 
 
+def _is_confident(doc: dict) -> bool:
+    """Decide whether a retrieved doc is a confident match.
+
+    Hybrid retrieval mixes a dense cosine score (0-1) with a normalized BM25
+    score whose top value is always 1.0, so the combined ``score_final`` cannot
+    be compared against a fixed threshold. Gate each signal on its own scale:
+
+    - vector hits: cosine >= ``rag_min_score``
+    - lexical hits: raw ts_rank_cd >= ``rag_min_bm25_rank``
+
+    Docs without branch scores (test fixtures / legacy shape) fall back to the
+    generic ``score`` against ``rag_min_score``.
+    """
+    has_branch_scores = ("score_vector" in doc) or ("score_bm25_raw" in doc)
+    if has_branch_scores:
+        try:
+            vector_score = float(doc.get("score_vector", 0.0) or 0.0)
+        except (TypeError, ValueError):
+            vector_score = 0.0
+        try:
+            bm25_raw = float(doc.get("score_bm25_raw", 0.0) or 0.0)
+        except (TypeError, ValueError):
+            bm25_raw = 0.0
+        return vector_score >= settings.rag_min_score or bm25_raw >= settings.rag_min_bm25_rank
+
+    try:
+        return float(doc.get("score", 0.0) or 0.0) >= settings.rag_min_score
+    except (TypeError, ValueError):
+        return False
+
+
 async def _expand_with_parent_context(docs: list[dict], lang: str) -> list[dict]:
     parent_ids_needed: set[str] = set()
     existing_keys = {
@@ -553,8 +636,8 @@ async def _expand_with_parent_context(docs: list[dict], lang: str) -> list[dict]
         return docs
 
     try:
-        conn = await asyncpg.connect(settings.database_url)
-        try:
+        pool = await get_pool()
+        async with pool.acquire() as conn:
             rows = await conn.fetch(
                 """
                 SELECT id, content, metadata
@@ -565,8 +648,6 @@ async def _expand_with_parent_context(docs: list[dict], lang: str) -> list[dict]
                 lang,
                 list(parent_ids_needed),
             )
-        finally:
-            await conn.close()
     except Exception as exc:
         logger.warning(f"[RAG][PARENT] failed to expand parent context: {exc}")
         return docs
@@ -654,9 +735,8 @@ async def rag_answer(
 
     safe_query = redact_pii(retrieval_query)
 
-    # Retrieve relevant documents
+    # Retrieve relevant documents (parent expansion happens later, only if confident)
     docs = await search_knowledge_base(safe_query, lang=lang)
-    docs = await _expand_with_parent_context(docs, lang=lang)
 
     # Helper to call the LLM with unstructured context (either KB docs o solo extra_context)
     async def _answer_with_llm(context: str, context_sources: list[str] | None = None) -> str:
@@ -690,6 +770,21 @@ async def rag_answer(
 
         answer = response.choices[0].message.content
         grounding_context = _build_grounding_context(context, extra_context=extra_context)
+
+        # Deterministic guard first: never let a price/percentage that is not in
+        # the context reach the customer (e.g. "$180" when the real price is "$178").
+        if not currency_amounts_grounded(answer or "", grounding_context):
+            logger.warning(
+                f"[RAG][GROUNDING] Rejecting answer with ungrounded amount query={query[:60]}..."
+            )
+            return FALLBACK_ES if lang == "es" else FALLBACK_EN
+
+        if not urls_grounded(answer or "", grounding_context):
+            logger.warning(
+                f"[RAG][GROUNDING] Rejecting answer with ungrounded URL query={query[:60]}..."
+            )
+            return FALLBACK_ES if lang == "es" else FALLBACK_EN
+
         grounded, reason = await is_grounded(answer or "", grounding_context, lang=lang)
         if not grounded:
             logger.warning(
@@ -711,13 +806,14 @@ async def rag_answer(
             return await _answer_with_llm(extra_context, context_sources=["extra_context_only"])
         return FALLBACK_ES if lang == "es" else FALLBACK_EN
 
-    # 2) Hay documentos pero con score bajo
-    top_score = max(_score_for_threshold(doc) for doc in docs)
-    if top_score < settings.rag_min_score:
+    # 2) Hay documentos pero ninguno con confianza suficiente
+    if not any(_is_confident(doc) for doc in docs):
         sources = [doc.get("metadata", {}).get("source", "unknown") for doc in docs]
+        top_score = max((_score_for_threshold(doc) for doc in docs), default=0.0)
         logger.info(
             f"[RAG] Low confidence query={query[:60]}... retrieval_query={safe_query[:120]}... "
-            f"top_score={top_score:.3f} threshold={settings.rag_min_score:.3f} sources={sources}"
+            f"top_score={top_score:.3f} min_cosine={settings.rag_min_score:.3f} "
+            f"min_bm25={settings.rag_min_bm25_rank:.3f} sources={sources}"
         )
         if extra_context:
             # Igual que en el caso sin docs: ignoramos estos resultados de baja confianza
@@ -725,15 +821,15 @@ async def rag_answer(
             return await _answer_with_llm(extra_context, context_sources=["extra_context_only"])
         return FALLBACK_ES if lang == "es" else FALLBACK_EN
 
-    # 3) Hay documentos suficientemente relevantes -> los usamos como contexto principal
+    # 3) Hay documentos suficientemente relevantes -> expandimos contexto padre y respondemos
+    docs = await _expand_with_parent_context(docs, lang=lang)
     context_parts = []
     sources = []
     for i, doc in enumerate(docs, 1):
         metadata = doc.get("metadata", {})
         source = metadata.get("source", "unknown")
-        score = _score_for_threshold(doc)
         sources.append(source)
-        context_parts.append(f"[{i}] Fuente: {source} | Score: {score:.3f}\n{redact_pii(doc['content'])}")
+        context_parts.append(f"[{i}] Fuente: {source}\n{redact_pii(doc['content'])}")
     context = "\n\n".join(context_parts)
 
     return await _answer_with_llm(context, context_sources=sources)

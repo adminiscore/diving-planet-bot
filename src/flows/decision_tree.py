@@ -1166,28 +1166,6 @@ MESSAGES = {
             "They will contact you shortly. Thanks! :)"
         ),
     },
-    "info_general": {
-        "es": (
-            "Aqui tienes informacion general sobre Diving Planet:\n\n"
-            "📍 *Ubicacion*: Plaza de San Diego, Cl. 39 #8-24 Piso 2, "
-            "Ciudad Amurallada, Cartagena\n"
-            "🤿 *Zona de buceo*: Islas del Rosario (Parque Nacional Natural)\n"
-            "⏰ *Hora de salida*: 8:00 AM desde el Muelle de la Bodeguita\n"
-            "🏆 *Certificacion*: PADI 5 Estrellas (primero de Colombia)\n"
-            "🌱 *Programa social*: DIVE TO HEAL (buceo adaptado + restauracion coralina)\n\n"
-            "Quieres saber algo mas?"
-        ),
-        "en": (
-            "Here's general information about Diving Planet:\n\n"
-            "📍 *Location*: Plaza de San Diego, Cl. 39 #8-24 Floor 2, "
-            "Walled City, Cartagena\n"
-            "🤿 *Dive zone*: Rosario Islands (National Natural Park)\n"
-            "⏰ *Departure*: 8:00 AM from Muelle de la Bodeguita\n"
-            "🏆 *Certification*: PADI 5 Star (first in Colombia)\n"
-            "🌱 *Social program*: DIVE TO HEAL (adaptive diving + coral restoration)\n\n"
-            "Want to know more?"
-        ),
-    },
     "not_understood": {
         "es": (
             "No entendi tu respuesta. Por favor, selecciona una de las opciones."
@@ -1984,18 +1962,6 @@ BUTTON_OPTIONS = {
             {"title": "🗺️ View full itinerary", "value": "itinerary"},
             {"title": "🧑‍💼 Contact / Book", "value": "contact"},
             {"title": "🔙 Back", "value": "back"},
-        ],
-    },
-    "info_general": {
-        "es": [
-            {"title": "🤿 Ver tours y actividades", "value": "1"},
-            {"title": "📘 Ver cursos PADI", "value": "2"},
-            {"title": "🧑‍💬 Hablar con un asesor", "value": "4"},
-        ],
-        "en": [
-            {"title": "🤿 View tours and activities", "value": "1"},
-            {"title": "📘 View PADI courses", "value": "2"},
-            {"title": "🧑‍💬 Speak with an advisor", "value": "4"},
         ],
     },
 }

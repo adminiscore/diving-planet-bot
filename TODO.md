@@ -94,8 +94,8 @@
 5. **WhatsApp Business API** — solicitar acceso Meta y conectar al Chatwoot de PRE
 
 ## Pendientes (RAG)
-- [ ] Confirmar con cliente la info de: “¿Cuál es la profundidad máxima?” / “What is the max depth?”
-- [ ] Añadir FAQ específico de profundidad máxima (ES/EN) una vez confirmado.
+- [x] Confirmar con cliente la info de: “¿Cuál es la profundidad máxima?” / “What is the max depth?” (minicurso/bautizo 12 m, Open Water 18 m, Advanced/paquetes 30 m, Bubble Makers 2 m).
+- [x] Añadir FAQ específico de profundidad máxima (ES/EN) — añadido en `faqs.json`. Pendiente reindexar embeddings para que el RAG lo sirva.
 - [ ] Confirmar / cerrar precios oficiales y reglas de descuento que siguen parciales o pendientes de validación de negocio
 - [ ] Memoria en el chat?
 - [ ] Almuerzo = Comida

@@ -1,7 +1,7 @@
 import pytest
 
 from src.agents.escalation import detect_sensitive_escalation
-from src.agents import rag_agent
+from src.agents import grounding_check, rag_agent
 from src.flows.decision_tree import ConversationState, Step
 from src.agents.supervisor import route_message
 
@@ -164,6 +164,226 @@ async def test_rag_uses_sources_when_confident(monkeypatch):
     response = await rag_agent.rag_answer("Puedo volar después de bucear?", lang="es")
 
     assert response == "Respuesta basada en contexto"
+
+
+def test_is_confident_vector_branch_uses_cosine(monkeypatch):
+    monkeypatch.setattr(rag_agent.settings, "rag_min_score", 0.40)
+    monkeypatch.setattr(rag_agent.settings, "rag_min_bm25_rank", 0.05)
+
+    assert rag_agent._is_confident({"score_vector": 0.55, "score_bm25_raw": 0.0}) is True
+    assert rag_agent._is_confident({"score_vector": 0.30, "score_bm25_raw": 0.0}) is False
+
+
+def test_is_confident_bm25_branch_uses_raw_rank(monkeypatch):
+    monkeypatch.setattr(rag_agent.settings, "rag_min_score", 0.40)
+    monkeypatch.setattr(rag_agent.settings, "rag_min_bm25_rank", 0.05)
+
+    # Normalized BM25 top is always 1.0, but the raw rank is below the floor and
+    # the cosine is low -> must NOT be considered confident.
+    weak = {"score": 1.0, "score_bm25": 1.0, "score_bm25_raw": 0.01, "score_vector": 0.1}
+    assert rag_agent._is_confident(weak) is False
+
+    strong = {"score_bm25_raw": 0.20, "score_vector": 0.1}
+    assert rag_agent._is_confident(strong) is True
+
+
+def test_is_confident_legacy_shape_uses_generic_score(monkeypatch):
+    monkeypatch.setattr(rag_agent.settings, "rag_min_score", 0.72)
+
+    assert rag_agent._is_confident({"score": 0.9}) is True
+    assert rag_agent._is_confident({"score": 0.2}) is False
+
+
+@pytest.mark.asyncio
+async def test_rag_fallback_when_only_weak_lexical_match(monkeypatch):
+    """Regression: a normalized BM25 top (score=1.0) with raw rank below the
+    floor and a low cosine must not pass the confidence gate."""
+    async def fake_search(query, lang="es"):
+        return [{
+            "content": "Doc con coincidencia lexica debil",
+            "metadata": {"source": "faqs"},
+            "score": 1.0,
+            "score_bm25": 1.0,
+            "score_bm25_raw": 0.01,
+            "score_vector": 0.12,
+        }]
+
+    monkeypatch.setattr(rag_agent, "search_knowledge_base", fake_search)
+    monkeypatch.setattr(rag_agent.settings, "rag_min_score", 0.40)
+    monkeypatch.setattr(rag_agent.settings, "rag_min_bm25_rank", 0.05)
+
+    response = await rag_agent.rag_answer("algo raro", lang="es")
+
+    assert "No tengo información suficiente" in response
+
+
+@pytest.mark.asyncio
+async def test_rag_answers_on_strong_lexical_match(monkeypatch):
+    """A strong lexical hit (raw rank above the floor) should pass the gate even
+    when the cosine is low — this is the value hybrid search adds."""
+    async def fake_search(query, lang="es"):
+        return [{
+            "content": "San Pedro de Majagua: recogida incluida.",
+            "metadata": {"source": "faqs"},
+            "score": 1.0,
+            "score_bm25": 1.0,
+            "score_bm25_raw": 0.25,
+            "score_vector": 0.20,
+        }]
+
+    monkeypatch.setattr(rag_agent, "search_knowledge_base", fake_search)
+    monkeypatch.setattr(rag_agent.settings, "rag_min_score", 0.40)
+    monkeypatch.setattr(rag_agent.settings, "rag_min_bm25_rank", 0.05)
+    monkeypatch.setattr(rag_agent, "AsyncOpenAI", DummyOpenAI)
+    monkeypatch.setattr(rag_agent, "is_grounded", grounded_ok)
+
+    response = await rag_agent.rag_answer("San Pedro de Majagua recogida", lang="es")
+
+    assert response == "Respuesta basada en contexto"
+
+
+def test_currency_guard_accepts_matching_price():
+    assert grounding_check.currency_amounts_grounded(
+        "El minicurso cuesta $178 USD.",
+        "Precio: 178.00 USD reservando online.",
+    ) is True
+
+
+def test_currency_guard_rejects_invented_price():
+    assert grounding_check.currency_amounts_grounded(
+        "El minicurso cuesta $180 USD.",
+        "Precio: 178.00 USD reservando online.",
+    ) is False
+
+
+def test_currency_guard_handles_cop_thousands():
+    assert grounding_check.currency_amounts_grounded(
+        "Son $630.000 COP.",
+        "Precio en COP: 630000 COP.",
+    ) is True
+
+
+def test_currency_guard_ignores_non_currency_numbers():
+    assert grounding_check.currency_amounts_grounded(
+        "El plan dura 2 días y bajas hasta 18 metros.",
+        "Itinerario de 1 día en las islas.",
+    ) is True
+
+
+def test_currency_guard_rejects_percentage_not_in_context():
+    assert grounding_check.currency_amounts_grounded(
+        "Tienes 25% de descuento.",
+        "Descuento del 10% reservando online.",
+    ) is False
+
+
+@pytest.mark.asyncio
+async def test_rag_falls_back_when_answer_has_ungrounded_price(monkeypatch):
+    """The deterministic currency guard must reject an invented price even if the
+    LLM grounding verifier would have approved it."""
+    async def fake_search(query, lang="es"):
+        return [{
+            "content": "El minicurso para principiantes en Cartagena.",
+            "metadata": {"source": "services"},
+            "score": 0.9,
+        }]
+
+    class PriceMessage:
+        content = "El minicurso cuesta $999 USD."
+
+    class PriceChoice:
+        message = PriceMessage()
+
+    class PriceUsage:
+        total_tokens = 10
+
+    class PriceResponse:
+        choices = [PriceChoice()]
+        usage = PriceUsage()
+
+    class PriceCompletions:
+        async def create(self, **kwargs):
+            return PriceResponse()
+
+    class PriceChat:
+        completions = PriceCompletions()
+
+    class PriceOpenAI:
+        def __init__(self, api_key=None):
+            self.chat = PriceChat()
+
+    monkeypatch.setattr(rag_agent, "search_knowledge_base", fake_search)
+    monkeypatch.setattr(rag_agent.settings, "rag_min_score", 0.72)
+    monkeypatch.setattr(rag_agent, "AsyncOpenAI", PriceOpenAI)
+    monkeypatch.setattr(rag_agent, "is_grounded", grounded_ok)
+
+    response = await rag_agent.rag_answer("precio del minicurso?", lang="es")
+
+    assert "No tengo información suficiente" in response
+
+
+def test_url_guard_accepts_link_present_in_context():
+    assert grounding_check.urls_grounded(
+        "Reserva aquí: https://divingplanet.org/reservar",
+        "Link de reserva: https://divingplanet.org/reservar",
+    ) is True
+
+
+def test_url_guard_rejects_invented_link():
+    assert grounding_check.urls_grounded(
+        "Paga en https://pagos-falsos.com/checkout",
+        "El asesor te enviará el enlace de pago.",
+    ) is False
+
+
+def test_url_guard_ignores_answers_without_links():
+    assert grounding_check.urls_grounded(
+        "Te paso con un asesor para coordinar el pago.",
+        "El asesor confirma el pago.",
+    ) is True
+
+
+@pytest.mark.asyncio
+async def test_rag_falls_back_when_answer_has_ungrounded_link(monkeypatch):
+    async def fake_search(query, lang="es"):
+        return [{
+            "content": "El minicurso para principiantes en Cartagena.",
+            "metadata": {"source": "services"},
+            "score": 0.9,
+        }]
+
+    class LinkMessage:
+        content = "Reserva en https://link-inventado.com/checkout"
+
+    class LinkChoice:
+        message = LinkMessage()
+
+    class LinkUsage:
+        total_tokens = 10
+
+    class LinkResponse:
+        choices = [LinkChoice()]
+        usage = LinkUsage()
+
+    class LinkCompletions:
+        async def create(self, **kwargs):
+            return LinkResponse()
+
+    class LinkChat:
+        completions = LinkCompletions()
+
+    class LinkOpenAI:
+        def __init__(self, api_key=None):
+            self.chat = LinkChat()
+
+    monkeypatch.setattr(rag_agent, "search_knowledge_base", fake_search)
+    monkeypatch.setattr(rag_agent.settings, "rag_min_score", 0.72)
+    monkeypatch.setattr(rag_agent, "AsyncOpenAI", LinkOpenAI)
+    monkeypatch.setattr(rag_agent, "is_grounded", grounded_ok)
+
+    response = await rag_agent.rag_answer("cómo reservo el minicurso?", lang="es")
+
+    assert "No tengo información suficiente" in response
 
 
 @pytest.mark.asyncio
@@ -490,13 +710,21 @@ async def test_parent_doc_expansion_loads_summary_for_subchunk(monkeypatch):
                 }
             ]
 
-        async def close(self):
-            return None
+    class FakeAcquire:
+        async def __aenter__(self):
+            return FakeConn()
 
-    async def fake_connect(*args, **kwargs):
-        return FakeConn()
+        async def __aexit__(self, *args):
+            return False
 
-    monkeypatch.setattr(rag_agent.asyncpg, "connect", fake_connect)
+    class FakePool:
+        def acquire(self):
+            return FakeAcquire()
+
+    async def fake_get_pool():
+        return FakePool()
+
+    monkeypatch.setattr(rag_agent, "get_pool", fake_get_pool)
 
     docs = [
         {
