@@ -1,6 +1,16 @@
 History
 =======
 
+0.16.3 - (2026-06-14)
+---------------------
+* RAG reliability: the low-confidence fallback works again — hybrid retrieval gates vector hits on cosine and lexical (BM25) hits on raw rank, so weak matches no longer slip through. BM25 now uses `websearch_to_tsquery` for safer parsing.
+* RAG correctness guards: deterministic checks reject any answer that cites a price/percentage or a link not present in the retrieved context (before the LLM grounding check), so the bot can't invent prices or URLs.
+* Retrieval quality: service answers are boosted to the right sub-chunk by intent (pricing/itinerary/included/requirements); shared DB connection pool reduces latency; faqs/policies are cached.
+* Safe reindex: `scripts/load_embeddings.py` now confirms before deleting and supports `--yes`/`--force` and `--dry-run` (per-source summary without touching DB/OpenAI).
+* KB: added a max-depth FAQ (ES/EN) — mini-course/discovery 12 m, Open Water 18 m, Advanced/packages 30 m, Bubble Makers 2 m (needs reindex to be served by RAG).
+* Decision tree cleanup: removed the dead `info_general` config (defined in MESSAGES and BUTTON_OPTIONS but never referenced).
+* Tests: new coverage in `test_rag_safety.py` (confidence gate, currency/URL guards) and `test_retrieval_rerank.py` (subtype boost). Full suite green.
+
 0.16.2 - (2026-06-12)
 ---------------------
 * RAG prompt cleanup: removed the duplicated "Gestión de precios/monedas/pagos" + "extra_context" sections that were copy-pasted twice in both ES and EN system prompts (≈200 tokens lighter per call, removes ambiguity for the model).
