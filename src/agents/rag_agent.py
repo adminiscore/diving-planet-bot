@@ -680,6 +680,16 @@ def _build_grounding_context(context: str, extra_context: str | None = None) -> 
     return context
 
 
+async def _verify_grounding_with_retry(answer: str, context: str, lang: str) -> tuple[bool, str]:
+    grounded, reason = await is_grounded(answer, context, lang=lang)
+    if grounded:
+        return True, reason
+    grounded_retry, reason_retry = await is_grounded(answer, context, lang=lang)
+    if grounded_retry:
+        return True, f"{reason}|retry:{reason_retry}"
+    return False, f"{reason}|retry:{reason_retry}"
+
+
 async def rag_answer(
     query: str,
     lang: str = "es",
@@ -785,7 +795,7 @@ async def rag_answer(
             )
             return FALLBACK_ES if lang == "es" else FALLBACK_EN
 
-        grounded, reason = await is_grounded(answer or "", grounding_context, lang=lang)
+        grounded, reason = await _verify_grounding_with_retry(answer or "", grounding_context, lang=lang)
         if not grounded:
             logger.warning(
                 f"[RAG][GROUNDING] Rejecting answer query={query[:60]}... reason={reason}"

@@ -24,11 +24,15 @@ _ANSWER_AMOUNT = re.compile(
 def _number_variants(raw: str) -> set[str]:
     """Normalize a number token into comparable variants.
 
-    Handles USD two-decimal formatting ("178.00") and COP thousands separators
-    ("630.000") so an answer's "$178" matches a context "178.00 USD".
+    Handles USD decimal formatting ("178.0" / "178.00") and COP thousands
+    separators ("630.000") so an answer's "$178" matches a context
+    "178.0 USD" or "178.00 USD".
     """
     digits_only = re.sub(r"[.,\s]", "", raw)
     variants = {digits_only}
+    trailing_single_zero_decimal = re.search(r"[.,](0)$", raw)
+    if trailing_single_zero_decimal:
+        variants.add(re.sub(r"[.,\s]", "", raw[: trailing_single_zero_decimal.start()]))
     trailing_decimals = re.search(r"[.,](\d{2})$", raw)
     if trailing_decimals and trailing_decimals.group(1) == "00":
         variants.add(re.sub(r"[.,\s]", "", raw[: trailing_decimals.start()]))

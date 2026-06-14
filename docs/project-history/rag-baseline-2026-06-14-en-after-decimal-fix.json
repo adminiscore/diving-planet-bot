@@ -1,0 +1,88 @@
+{
+  "generated_at": "2026-06-14T20:34:53.284206+00:00",
+  "lang": "en",
+  "total_cases": 6,
+  "results": [
+    {
+      "id": "en_meeting_point",
+      "lang": "en",
+      "category": "meeting_point_schedule",
+      "query": "Where is the meeting point?",
+      "expected_mode": "answer",
+      "actual_mode": "answer",
+      "history": null,
+      "extra_context": null,
+      "answer": "Sure! The meeting point is at Muelle de la Bodeguita at 8:00 AM. Just ask for DIVING PLANET at Gate 3 when you arrive. 🌊 \n\nIf you have any more questions or need help with anything else, feel free to ask!",
+      "matches_expected_mode": true
+    },
+    {
+      "id": "en_price_2_dives",
+      "lang": "en",
+      "category": "pricing",
+      "query": "How much is the 2 dives 1 day plan in USD?",
+      "expected_mode": "answer",
+      "actual_mode": "fallback",
+      "history": null,
+      "extra_context": null,
+      "answer": "I don't have enough information in my knowledge base to answer that safely. I can connect you with a Diving Planet advisor.\nWhatsApp: +57 320 231515",
+      "matches_expected_mode": false
+    },
+    {
+      "id": "en_refresher",
+      "lang": "en",
+      "category": "certification",
+      "query": "I haven't dived in years, do I need a refresher?",
+      "expected_mode": "answer",
+      "actual_mode": "answer",
+      "history": null,
+      "extra_context": null,
+      "answer": "Sure! If it’s been more than 2 years since your last dive, we usually recommend a refresher to help you get back in the water safely. \n\nIf you want to confirm your specific situation, just message us on WhatsApp at +57 320 231515, and we can help you out! \n\nAre you thinking about booking a fun dive? 🌊",
+      "matches_expected_mode": true
+    },
+    {
+      "id": "en_accommodation",
+      "lang": "en",
+      "category": "accommodation",
+      "query": "Is accommodation included?",
+      "expected_mode": "answer",
+      "actual_mode": "answer",
+      "history": null,
+      "extra_context": null,
+      "answer": "No worries! Accommodation is not included in our dive packages. You'll need to book it directly with your chosen hotel. \n\nWe have our dive base at two hotels: San Pedro de Majagua and Cocoliso, but you can also stay at other options in the area. \n\nDo you have a hotel in mind already? 🏝️",
+      "matches_expected_mode": true
+    },
+    {
+      "id": "en_followup_islands",
+      "lang": "en",
+      "category": "followup_rewrite",
+      "query": "and if I'm already on the islands?",
+      "expected_mode": "answer",
+      "actual_mode": "answer",
+      "history": [
+        {
+          "role": "user",
+          "content": "How does the PADI Open Water course work?"
+        },
+        {
+          "role": "assistant",
+          "content": "I can explain the course structure."
+        }
+      ],
+      "extra_context": null,
+      "answer": "Perfect! If you're already on the Rosario Islands, we have several options for diving and snorkeling. \n\n1. **PADI Open Water Course** - This includes theory (eLearning) and practical sessions over 2 days. \n   - Price: US$662 (Regular) or US$596 (Online payment).\n   \n2. **5-Dive Package (2 days)** - For certified divers, includes 5 dives over 2 days.\n   - Price: US$354 (Regular) or US$319 (Online payment).\n\n3. **3-Dive Package (1 day)** - Includes 2 daytime dives and 1 night dive.\n   - Price: US$209 (Regular) or US$188 (Online payment).\n\n4. **Snorkeling Plan** - 2 snorkeling sessions on the reefs.\n   - Price: US$50 (Regular) or US$45 (Online payment).\n\n5. **Dive Mini Course** - For beginners, includes theory and 1 open-water dive.\n   - Price: US$149 (Regular) or US$134 (Online booking).\n\nAll these plans do not include transport from Cartagena or lunch. \n\nWhich hotel are you staying at, and does it have dock/boat access? 🌊",
+      "matches_expected_mode": true
+    },
+    {
+      "id": "en_ambiguous_pao_pao",
+      "lang": "en",
+      "category": "ambiguous_location",
+      "query": "Pao Pao",
+      "expected_mode": "clarify",
+      "actual_mode": "clarify",
+      "history": null,
+      "extra_context": null,
+      "answer": "Do you mean Pao Pao for pickup, accommodation, or to know which plan applies if you're already there? If you tell me that, I can answer more precisely.",
+      "matches_expected_mode": true
+    }
+  ]
+}

@@ -249,6 +249,13 @@ def test_currency_guard_accepts_matching_price():
     ) is True
 
 
+def test_currency_guard_accepts_single_zero_decimal_equivalence():
+    assert grounding_check.currency_amounts_grounded(
+        "The plan costs $178 USD.",
+        "Online price: 178.0 USD.",
+    ) is True
+
+
 def test_currency_guard_rejects_invented_price():
     assert grounding_check.currency_amounts_grounded(
         "El minicurso cuesta $180 USD.",
@@ -618,6 +625,35 @@ async def test_rag_returns_fallback_when_grounding_check_rejects(monkeypatch):
 
     assert "No tengo información suficiente" in response
     assert "+57 320 231515" in response
+
+
+@pytest.mark.asyncio
+async def test_rag_accepts_answer_when_grounding_retry_passes(monkeypatch):
+    async def fake_search(query, lang="es"):
+        return [
+            {
+                "content": "Política: esperar 18 horas antes de volar después de bucear.",
+                "metadata": {"source": "policies"},
+                "score": 0.91,
+            }
+        ]
+
+    verdicts = iter([
+        (False, "HALLUCINATED"),
+        (True, "GROUNDED"),
+    ])
+
+    async def flaky_grounding(*args, **kwargs):
+        return next(verdicts)
+
+    monkeypatch.setattr(rag_agent, "search_knowledge_base", fake_search)
+    monkeypatch.setattr(rag_agent.settings, "rag_min_score", 0.72)
+    monkeypatch.setattr(rag_agent, "AsyncOpenAI", DummyOpenAI)
+    monkeypatch.setattr(rag_agent, "is_grounded", flaky_grounding)
+
+    response = await rag_agent.rag_answer("Puedo volar después de bucear?", lang="es")
+
+    assert response == "Respuesta basada en contexto"
 
 
 @pytest.mark.asyncio
