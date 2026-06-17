@@ -1,6 +1,14 @@
 History
 =======
 
+0.16.6 - (2026-06-17)
+---------------------
+* Tool-calling orchestrator (Fase 2 of `docs/conversation-orchestrator-plan.md`): new `src/agents/orchestrator.py` with 9 OpenAI function-calling tools (`set_location`, `start_booking`, `add_to_cart`, `cart_action`, `remove_item`, `set_profile`, `note_logistics`, `escalate`, `answer_question`). Free text inside the cart flow now changes the tree directly: "estoy en las islas" → set_location, "quita el snorkel" → remove_item, "quiero reservarlo" → checkout. Dispatcher `_dispatch_orchestrator` in `supervisor.py` routes before the legacy intent classifier (kept as fallback). Helpers in `decision_tree.py` (`orchestrator_set_location`, `orchestrator_remove_activity`, `orchestrator_start_activity`, `orchestrator_add_to_cart`) reuse existing button handlers.
+* Model upgrade (Fase 3): all LLM calls now use `gpt-4o` (config default + `.env`); orchestrator `max_tokens` set to 150.
+* Tests (Fase 4): new `tests/test_orchestrator.py` with 14 tests (parsing/fallback, dispatcher per tool, context snapshot). Full suite green: 439 passed (425 + 14).
+* Dockerfile: added `COPY README.md .` to fix build (missing file during install).
+* See `docs/conversation-orchestrator-plan.md` for the full plan and design notes.
+
 0.16.5 - (2026-06-17)
 ---------------------
 * RAG retrieval: a self-contained question asked right after an unrelated one no longer gets polluted with the previous question (which caused false fallbacks). History is only prepended for genuine follow-ups (`_looks_like_follow_up`: short fragments, connector-prefixed, anaphoric, or declarative location statements like "en el hotel Pao Pao").

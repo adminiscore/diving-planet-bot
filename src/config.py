@@ -12,7 +12,7 @@ class Settings(BaseSettings):
 
     # --- OpenAI ---
     openai_api_key: str = ""
-    openai_model: str = "gpt-4o-mini"
+    openai_model: str = "gpt-4o"
     openai_embedding_model: str = "text-embedding-3-small"
     rag_top_k: int = 8
     rag_min_score: float = 0.40

@@ -17,6 +17,7 @@ import unicodedata
 from src.agents.escalation import detect_sensitive_escalation
 from src.agents.lead_summary import build_lead_summary
 from src.agents.intent_classifier import classify_menu_intent
+from src.agents import orchestrator
 from src.flows.decision_tree import DecisionTree, ConversationState, Step, SERVICES
 from src.agents.rag_agent import rag_answer
 from src.privacy import detect_pii, privacy_block_message
@@ -2371,6 +2372,138 @@ def _build_extra_context(state: ConversationState) -> str | None:
     return " ".join(parts)
 
 
+def _finalize_tree_response(state: ConversationState, message: str, response: str) -> str:
+    """Persist a tool-driven turn in history and fill the lead note if we escalated."""
+    state.history.append({"role": "user", "content": message})
+    state.history.append({"role": "assistant", "content": response})
+    if state.step == Step.ESCALATE and not state.pending_note:
+        reason = state.pending_escalation_reason or "derivado por el árbol de opciones"
+        state.pending_escalation_reason = reason
+        state.pending_note = build_lead_summary(state, escalation_reason=reason)
+    return response
+
+
+async def _dispatch_orchestrator(state: ConversationState, message: str) -> str | None:
+    """Fase 2 — tool-calling orchestrator for free text inside the cart flow.
+
+    Returns the rendered response when the orchestrator chose a concrete tree
+    action, or None to let the caller fall back (legacy intent classifier / RAG).
+    """
+    snapshot = _build_extra_context(state)
+    decision = await orchestrator.orchestrate(
+        message,
+        state_snapshot=snapshot,
+        history=state.history,
+        lang=state.language,
+    )
+    tool = decision.tool
+    args = decision.args or {}
+
+    # Informational question -> let the caller route to RAG.
+    if tool == orchestrator.TOOL_ANSWER_QUESTION:
+        return None
+
+    if tool == orchestrator.TOOL_SET_LOCATION:
+        origin = args.get("origin")
+        response = decision_tree.orchestrator_set_location(state, origin)
+        if response is None:
+            return None
+        logger.info(f"[SUPERVISOR] Orchestrator set_location({origin}) -> step={state.step.value}")
+        return _finalize_tree_response(state, message, response)
+
+    if tool == orchestrator.TOOL_REMOVE_ITEM:
+        cart_type = orchestrator.ACTIVITY_TO_CART_TYPE.get(args.get("activity", ""))
+        if not cart_type:
+            return None
+        response = decision_tree.orchestrator_remove_activity(state, cart_type)
+        if response is None:
+            # Nothing of that type in the cart — acknowledge + re-show the cart.
+            not_there = (
+                "No tenías esa actividad en el carrito."
+                if state.language == "es"
+                else "You didn't have that activity in the cart."
+            )
+            response = not_there + "\n\n" + decision_tree._goto_mixed_cart_review(state)
+        logger.info(f"[SUPERVISOR] Orchestrator remove_item({cart_type}) -> step={state.step.value}")
+        return _finalize_tree_response(state, message, response)
+
+    if tool == orchestrator.TOOL_START_BOOKING:
+        cart_type = orchestrator.ACTIVITY_TO_CART_TYPE.get(args.get("activity", ""))
+        if not cart_type:
+            return None
+        response = decision_tree.orchestrator_start_activity(state, cart_type)
+        if response is None:
+            return None
+        logger.info(f"[SUPERVISOR] Orchestrator start_booking({cart_type}) -> step={state.step.value}")
+        return _finalize_tree_response(state, message, response)
+
+    if tool == orchestrator.TOOL_ADD_TO_CART:
+        cart_type = orchestrator.ACTIVITY_TO_CART_TYPE.get(args.get("activity", ""))
+        qty = args.get("qty")
+        if not cart_type or not isinstance(qty, int):
+            return None
+        response = decision_tree.orchestrator_add_to_cart(state, cart_type, qty)
+        if response is None:
+            return None
+        logger.info(f"[SUPERVISOR] Orchestrator add_to_cart({cart_type}, {qty}) -> step={state.step.value}")
+        return _finalize_tree_response(state, message, response)
+
+    if tool == orchestrator.TOOL_CART_ACTION:
+        action = args.get("action")
+        value_map = {
+            "change_origin": "1",
+            "add": "2",
+            "modify": "3",
+            "remove": "4",
+            "restart": "5",
+            "confirm": "6",
+        }
+        value = value_map.get(action)
+        if value is None:
+            return None
+        # Cart-level actions are resolved by the review handler.
+        state.step = Step.MIXED_CART_REVIEW
+        state.quick_replies = []
+        response = decision_tree._route(state, value)
+        logger.info(f"[SUPERVISOR] Orchestrator cart_action({action}) -> step={state.step.value}")
+        return _finalize_tree_response(state, message, response)
+
+    if tool == orchestrator.TOOL_SET_PROFILE:
+        field = args.get("field")
+        value = args.get("value")
+        if isinstance(value, bool):
+            if field == "certified":
+                state.is_certified = value
+            elif field == "colombian":
+                state.is_colombian = value
+                state.mixed_final_is_colombian = value
+            elif field == "refresher":
+                state.refresher_interested = value
+            logger.info(f"[SUPERVISOR] Orchestrator set_profile({field}={value})")
+        # Let the conversational reply come from RAG with the updated context.
+        return None
+
+    if tool == orchestrator.TOOL_NOTE_LOGISTICS:
+        if args.get("hotel"):
+            state.hotel = str(args["hotel"]).strip()
+        if args.get("island"):
+            state.island = str(args["island"]).strip()
+        logger.info(f"[SUPERVISOR] Orchestrator note_logistics hotel={state.hotel!r} island={state.island!r}")
+        return None
+
+    if tool == orchestrator.TOOL_ESCALATE:
+        reason = args.get("reason") or "derivado por el orquestador"
+        state.step = Step.ESCALATE
+        state.quick_replies = []
+        state.pending_escalation_reason = reason
+        state.pending_note = build_lead_summary(state, escalation_reason=reason)
+        from src.flows.decision_tree import MESSAGES
+        logger.info(f"[SUPERVISOR] Orchestrator escalate reason={reason}")
+        return _finalize_tree_response(state, message, MESSAGES["escalate"][state.language])
+
+    return None
+
+
 def _answer_state_introspection(state: ConversationState, message: str) -> str | None:
     """Answer simple meta-questions using the current conversation state.
 
@@ -2838,6 +2971,15 @@ async def route_message(state: ConversationState, message: str) -> str:
         mixed_companion_response = _maybe_handle_companion_request_inside_mixed_flow(state, message)
         if mixed_companion_response is not None:
             return mixed_companion_response
+
+        # Tool-calling orchestrator (Fase 2) — only inside the cart-style mixed flow.
+        # Turns free text into structured tree actions ("estoy en las islas" ->
+        # set_location, "quita el snorkel" -> remove_item, "quiero reservar" -> confirm).
+        # Falls back to the legacy intent classifier when it picks answer_question.
+        if state.step in _MIXED_FLOW_STEPS and state.quick_replies:
+            orchestrator_response = await _dispatch_orchestrator(state, message)
+            if orchestrator_response is not None:
+                return orchestrator_response
 
         # LLM intent classifier — only inside the cart-style mixed flow.
         # Maps natural-language inputs ("añade otro", "quítalo", "en pesos") to button values.

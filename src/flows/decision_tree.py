@@ -3807,6 +3807,89 @@ class DecisionTree:
         )
         return ack + "\n\n" + self._goto_mixed_cart_review(state)
 
+    # ───────── Orchestrator (Fase 2) public helpers ─────────
+    # These let the tool-calling orchestrator (src/agents/orchestrator.py) drive
+    # the cart flow from free text, reusing the exact same handlers the buttons use.
+
+    def orchestrator_set_location(self, state: ConversationState, origin: str) -> str | None:
+        """Set the departure origin from free text, remap the cart, re-render.
+
+        Returns the rendered response, or None if `origin` is invalid.
+        """
+        if origin not in ("cartagena", "island"):
+            return None
+        lang = state.language
+        changed = state.location != origin
+        state.location = origin
+        if state.mixed_cart:
+            self._remap_cart_for_location(state)
+        if lang == "es":
+            loc_label = "Cartagena" if origin == "cartagena" else "Islas del Rosario"
+            ack = (
+                f"📍 Origen actualizado a *{loc_label}*. Precios y servicios ajustados."
+                if changed
+                else "📍 Ya estabas con ese origen, sin cambios."
+            )
+        else:
+            loc_label = "Cartagena" if origin == "cartagena" else "Rosario Islands"
+            ack = (
+                f"📍 Origin updated to *{loc_label}*. Prices and services adjusted."
+                if changed
+                else "📍 Already set to that origin, no changes."
+            )
+        if state.mixed_cart:
+            return ack + "\n\n" + self._goto_mixed_cart_review(state)
+        if state.step == Step.MIXED_ADD_ACTIVITY:
+            return ack + "\n\n" + self._goto_mixed_add_activity(state)
+        return ack + "\n\n" + self._goto_mixed_entry(state)
+
+    def orchestrator_remove_activity(self, state: ConversationState, activity_type: str) -> str | None:
+        """Remove every cart item of `activity_type` directly (no pick menu).
+
+        Returns the rendered response, or None if nothing matched.
+        """
+        items = [it for it in state.mixed_cart if it.get("type") == activity_type]
+        if not items:
+            return None
+        label = items[0].get("label") or activity_type
+        qty = sum(it.get("qty", 0) for it in items)
+        state.mixed_cart = [it for it in state.mixed_cart if it.get("type") != activity_type]
+        # Refresher is meaningless without the certified line it sits under.
+        if activity_type == "cert":
+            state.mixed_cart = [it for it in state.mixed_cart if it.get("type") != "refresh"]
+        # Removing a beginner line changes kids-context — re-ask next checkout.
+        if activity_type == "beginner":
+            self._invalidate_kids_answer(state)
+        lang = state.language
+        ack = (
+            f"✅ Quitado del carrito: {qty} × {label}"
+            if lang == "es"
+            else f"✅ Removed from cart: {qty} × {label}"
+        )
+        return ack + "\n\n" + self._goto_mixed_cart_review(state)
+
+    def orchestrator_start_activity(self, state: ConversationState, activity_type: str) -> str | None:
+        """Enter the add sub-flow for an activity, reusing _handle_mixed_add_activity."""
+        choice_map = {"cert": "1", "beginner": "2", "snorkel": "3", "course": "4", "companion": "5"}
+        choice = choice_map.get(activity_type)
+        if choice is None:
+            return None
+        self._goto_mixed_add_activity(state)
+        return self._handle_mixed_add_activity(state, choice)
+
+    def orchestrator_add_to_cart(self, state: ConversationState, activity_type: str, qty: int) -> str | None:
+        """Add `qty` of a simple activity (beginner/snorkel/companion) to the cart.
+
+        For cert/course the plan must be chosen first, so we just start the
+        sub-flow and let the existing prompts collect the remaining detail.
+        """
+        resp = self.orchestrator_start_activity(state, activity_type)
+        if resp is None:
+            return None
+        if state.step == Step.MIXED_ADD_QTY and isinstance(qty, int) and qty > 0:
+            return self._handle_mixed_add_qty(state, str(qty))
+        return resp
+
     # ─── Final-question handlers ───
 
     def _invalidate_kids_answer(self, state: ConversationState) -> None:
