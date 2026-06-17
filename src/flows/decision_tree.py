@@ -46,16 +46,7 @@ class Step(str, Enum):
     INFO_MIXED_ACTIVITY_MENU = "info_mixed_activity_menu"
     INFO_MIXED_CERT_BEG_MENU = "info_mixed_cert_beg_menu"
     INFO_CERTIFIED_4_DIVES_VARIANT = "info_certified_4_dives_variant"
-    TOURS_LOCATION = "tours_location"
-    GROUP_TYPE = "group_type"
-    TOURS_EXPERIENCE = "tours_experience"
-    TOURS_CERTIFIED = "tours_certified"
-    CERTIFIED_4_DIVES_VARIANT = "certified_4_dives_variant"
-    CERTIFIED_LAST_DIVE = "certified_last_dive"
-    CERTIFIED_EXPERIENCE = "certified_experience"
-    REFRESHER_INTEREST = "refresher_interest"
-    TOURS_BEGINNER = "tours_beginner"
-    BEGINNER_AGE = "beginner_age"
+    # Flujo antiguo eliminado - ahora todo va por el carrito (MIXED_*)
     COURSES_MENU = "courses_menu"
     COURSES_OPEN_WATER_ORIGIN = "courses_open_water_origin"
     COURSES_OPEN_WATER_TIME = "courses_open_water_time"
@@ -170,6 +161,18 @@ class ConversationState:
     # Lista de (label, booking_url) para enviar al cliente cuando pulse "Reservar"
     # en el resumen final del flujo mixto.
     mixed_booking_links: list[tuple[str, str]] = field(default_factory=list)
+    # Intent detection fields - información detectada automáticamente de texto libre
+    detected_language: str | None = None
+    detected_activity: str | None = None
+    detected_service_id: str | None = None
+    detected_is_certified: bool | None = None
+    detected_group_size: int | None = None
+    detected_group_allocation: dict | None = None
+    detected_last_dive_over_2_years: bool | None = None
+    detected_duration: str | None = None
+    detected_location: str | None = None
+    detected_island: str | None = None
+    detected_hotel: str | None = None
 
     def __post_init__(self):
         if self.history is None:
@@ -758,106 +761,6 @@ MESSAGES = {
             "Perfect. For *4 dives (2 days)* from the islands, which option would you prefer?"
         ),
     },
-    "tours_location": {
-        "es": (
-            "¿Desde dónde harás el tour?"
-        ),
-        "en": (
-            "Where will you depart from?"
-        ),
-    },
-    "tours_experience": {
-        "es": (
-            "Perfecto. Dentro de buceo, ¿como esta compuesto tu grupo?"
-        ),
-        "en": (
-            "Perfect. Within diving, how is your group made up?"
-        ),
-    },
-    "tours_certified": {
-        "es": (
-            "Excelente! Estas son nuestras opciones para buzos certificados:\n\n"
-            "🏨 *Importante*: si eliges un plan con inmersiones en días distintos, debes hospedarte en un hotel en las islas entre jornadas.\n"
-            "- *4 inmersiones (2 días)* y *5 inmersiones (2 días)*: al menos *1 noche*\n"
-            "- *7 inmersiones (3 días)*: al menos *2 noches*\n"
-            "- *9 inmersiones (4 días)*: al menos *3 noches*\n\n"
-            "✳️ *3 inmersiones (1 día)*: también se requiere hospedaje en la isla por la noche, porque incluye inmersión nocturna."
-        ),
-        "en": (
-            "Excellent! Here are our options for certified divers:\n\n"
-            "🏨 *Important*: if you choose a plan with dives on different days, you must stay at a hotel on the islands between dive days.\n"
-            "- *4 dives (2 days)* and *5 dives (2 days)*: at least *1 night*\n"
-            "- *7 dives (3 days)*: at least *2 nights*\n"
-            "- *9 dives (4 days)*: at least *3 nights*\n\n"
-            "✳️ *3 dives (1 day)*: island accommodation is also required that night because it includes a night dive."
-        ),
-    },
-    "certified_4_dives_variant": {
-        "es": (
-            "Perfecto. Para *4 inmersiones (2 días)* desde las islas, ¿qué opción prefieres?"
-        ),
-        "en": (
-            "Perfect. For *4 dives (2 days)* from the islands, which option would you prefer?"
-        ),
-    },
-    "certified_last_dive": {
-        "es": (
-            "¿Han pasado *más de 2 años* desde tu última inmersión?\n\n"
-            "Si es así, te recomendamos hacer un *refresher* antes de la salida."
-        ),
-        "en": (
-            "Has it been *more than 2 years* since your last dive?\n\n"
-            "If so, we recommend doing a *refresher* before the trip."
-        ),
-    },
-    "certified_experience": {
-        "es": (
-            "¿Tienes *más de 500 inmersiones* o eres *Dive Master* (o nivel similar)?\n\n"
-            "Esto nos ayuda a recomendarte la mejor opción de forma segura."
-        ),
-        "en": (
-            "Do you have *500+ logged dives* or are you a *Dive Master* (or similar level)?\n\n"
-            "This helps us recommend the best option safely."
-        ),
-    },
-    "refresher_info": {
-        "es": (
-            "Te recomendamos hacer un *refresher* antes de salir al mar — un repaso rápido para volver al agua con confianza:\n\n"
-            "✅ Repaso de teoría (señales, equipo y procedimientos)\n"
-            "🏊 Práctica en piscina\n"
-            "🤿 1 buceo en el mar con instructor\n\n"
-            "⚠️ No es el minicurso de principiantes — está pensado para *buzos ya certificados* que quieren actualizarse.\n\n"
-            "¿Te interesa incluirlo?"
-        ),
-        "en": (
-            "We recommend doing a *refresher* before going out to sea — a quick review to get back in the water with confidence:\n\n"
-            "✅ Theory review (signals, equipment and procedures)\n"
-            "🏊 Pool / confined water practice\n"
-            "🤿 1 open water dive with an instructor\n\n"
-            "⚠️ This is not the beginner course — it's designed for *already-certified divers* who want to brush up.\n\n"
-            "Would you like to include it?"
-        ),
-    },
-    "tours_beginner": {
-        "es": (
-            "Perfecto! No necesitas experiencia previa.\n\n"
-            "- *Minicurso de Buceo*: si quieres *probar buceo* por primera vez (vas debajo del agua con tanque e instructor, 1 inmersión guiada)."
-        ),
-        "en": (
-            "Perfect! No previous experience is needed.\n\n"
-            "- *Dive Mini Course*: if you want to *try diving* for the first time (you go underwater with tank and instructor, 1 guided dive)."
-        ),
-    },
-    "beginner_age": {
-        "es": (
-            "El *Minicurso de Buceo* es ideal para vivir la experiencia de bucear por primera vez 🤿\n\n"
-            "Selecciona la opción que mejor describa al grupo:"
-        ),
-        "en": (
-            "The *Dive Mini Course* is perfect for first-time divers 🤿\n\n"
-            "Pick the option that best describes the group:"
-        ),
-    },
     "courses_menu": {
         "es": (
             "Nuestros cursos PADI en las Islas del Rosario:\n\n"
@@ -904,16 +807,6 @@ MESSAGES = {
         "en": (
             "These are our available PADI specialties.\n"
             "Choose one to see the service information."
-        ),
-    },
-    "group_type": {
-        "es": (
-            "Genial, cuentame que tipo de plan buscas:\n"
-            "Elige la opcion que mejor se ajuste."
-        ),
-        "en": (
-            "Great! Tell me what kind of plan you're looking for:\n"
-            "Choose the option that fits best."
         ),
     },
     # ─── Cart-style mixed-group MESSAGES ───
@@ -994,6 +887,16 @@ MESSAGES = {
     "mixed_add_preview": {
         "es": "¿Quieres *añadir esta actividad al carrito* o ver primero el itinerario completo?",
         "en": "Would you like to *add this activity to the cart* or view the full itinerary first?",
+    },
+    "mixed_cert_last_dive": {
+        "es": (
+            "¿Han pasado *más de 2 años* desde tu última inmersión?\n\n"
+            "Si es así, te recomendamos hacer un *refresher* antes de la salida."
+        ),
+        "en": (
+            "Has it been *more than 2 years* since your last dive?\n\n"
+            "If so, we recommend doing a *refresher* before the trip."
+        ),
     },
     "mixed_cert_refresh_qty": {
         "es": "¿Cuántas de estas personas quieren hacer el *refresher*?\n_(Sin coste adicional — el guía adapta la inmersión a su nivel)_",
@@ -1445,6 +1348,18 @@ BUTTON_OPTIONS = {
             {"title": "🔙 Back", "value": "back"},
         ],
     },
+    "tours_location": {
+        "es": [
+            {"title": "🚤 Salgo desde Cartagena", "value": "1"},
+            {"title": "🏝️ Ya estoy en las islas", "value": "2"},
+            {"title": "🔙 Volver", "value": "back"},
+        ],
+        "en": [
+            {"title": "🚤 Departing from Cartagena", "value": "1"},
+            {"title": "🏝️ Already on the islands", "value": "2"},
+            {"title": "🔙 Back", "value": "back"},
+        ],
+    },
     "mixed_add_activity": {
         "es": [
             {"title": "🎓 Buceo certificado", "value": "1"},
@@ -1537,6 +1452,16 @@ BUTTON_OPTIONS = {
             {"title": "🔄 Start over", "value": "3"},
         ],
     },
+    "mixed_cert_last_dive": {
+        "es": [
+            {"title": "Sí", "value": "1"},
+            {"title": "No", "value": "2"},
+        ],
+        "en": [
+            {"title": "Yes", "value": "1"},
+            {"title": "No", "value": "2"},
+        ],
+    },
     "mixed_yes_no": {
         "es": [
             {"title": "✅ Si", "value": "1"},
@@ -1573,94 +1498,6 @@ BUTTON_OPTIONS = {
         "en": [
             {"title": "🧑‍💼 Book / contact advisor", "value": "1"},
             {"title": "🔄 Start over", "value": "2"},
-        ],
-    },
-    "tours_certified": {
-        "es": [
-            {"title": "🤿 2 inmersiones (1 día)", "value": "1"},
-            {"title": "🤿 3 inmersiones (1 día)*", "value": "2"},
-            {"title": "🤿 4 inmersiones (2 días)", "value": "3"},
-            {"title": "🤿 5 inmersiones (2 días)", "value": "4"},
-            {"title": "🤿 7 inmersiones (3 días)", "value": "5"},
-            {"title": "🤿 9 inmersiones (4 días)", "value": "6"},
-            {"title": "🧑‍💬 Servicio Privado", "value": "7"},
-            {"title": "🔙 Volver", "value": "back"},
-        ],
-        "en": [
-            {"title": "🤿 2 Dives (1 day)", "value": "1"},
-            {"title": "🤿 3 Dives (1 day)*", "value": "2"},
-            {"title": "🤿 4 Dives (2 days)", "value": "3"},
-            {"title": "🤿 5 Dives (2 days)", "value": "4"},
-            {"title": "🤿 7 Dives (3 days)", "value": "5"},
-            {"title": "🤿 9 Dives (4 days)", "value": "6"},
-            {"title": "🧑‍💬 Private Service", "value": "7"},
-            {"title": "🔙 Back", "value": "back"},
-        ],
-    },
-    "certified_4_dives_variant": {
-        "es": [
-            {"title": "🤿 4 inmersiones (2 días) · 4 diurnas", "value": "1"},
-            {"title": "🤿 4 inmersiones (2 días) · 3 diurnas + 1 nocturna", "value": "2"},
-            {"title": "🔙 Volver", "value": "back"},
-        ],
-        "en": [
-            {"title": "🤿 4 Dives (2 days) · 4 daytime dives", "value": "1"},
-            {"title": "🤿 4 Dives (2 days) · 3 daytime + 1 night dive", "value": "2"},
-            {"title": "🔙 Back", "value": "back"},
-        ],
-    },
-    "certified_last_dive": {
-        "es": [
-            {"title": "Sí", "value": "1"},
-            {"title": "No", "value": "2"},
-        ],
-        "en": [
-            {"title": "Yes", "value": "1"},
-            {"title": "No", "value": "2"},
-        ],
-    },
-    "certified_experience": {
-        "es": [
-            {"title": "Sí", "value": "1"},
-            {"title": "No", "value": "2"},
-        ],
-        "en": [
-            {"title": "Yes", "value": "1"},
-            {"title": "No", "value": "2"},
-        ],
-    },
-    "refresher_interest": {
-        "es": [
-            {"title": "Sí", "value": "1"},
-            {"title": "No", "value": "2"},
-        ],
-        "en": [
-            {"title": "Yes", "value": "1"},
-            {"title": "No", "value": "2"},
-        ],
-    },
-    "tours_beginner": {
-        "es": [
-            {"title": "🤿 Minicurso de Buceo", "value": "1"},
-            {"title": "🔙 Volver", "value": "back"},
-        ],
-        "en": [
-            {"title": "🤿 Dive Mini Course", "value": "1"},
-            {"title": "🔙 Back", "value": "back"},
-        ],
-    },
-    "beginner_age": {
-        "es": [
-            {"title": "👶 Hay menores de 8 años", "value": "1"},
-            {"title": "👦 Hay niños de 8 a 10 (Bubble Makers)", "value": "2"},
-            {"title": "🧑 Todos tienen 10+ años", "value": "3"},
-            {"title": "🔙 Volver", "value": "back"},
-        ],
-        "en": [
-            {"title": "👶 Under 8 years old", "value": "1"},
-            {"title": "👦 Kids 8-10 (Bubble Makers)", "value": "2"},
-            {"title": "🧑 Everyone 10+ years old", "value": "3"},
-            {"title": "🔙 Back", "value": "back"},
         ],
     },
     "mixed_kids_age": {
@@ -2008,7 +1845,6 @@ class DecisionTree:
     def resolve_back_target(self, state: ConversationState) -> tuple[Step, str] | None:
         if state.step in {
             Step.SUMMARY,
-            Step.CERTIFIED_LAST_DIVE,
             Step.INFO_TOUR_DETAIL,
             Step.INFO_PACKAGE_DETAIL,
             Step.INFO_COURSE_DETAIL,
@@ -2147,16 +1983,7 @@ class DecisionTree:
             Step.INFO_MIXED_ACTIVITY_MENU: self._handle_info_mixed_activity_menu,
             Step.INFO_MIXED_CERT_BEG_MENU: self._handle_info_mixed_cert_beg_menu,
             Step.INFO_CERTIFIED_4_DIVES_VARIANT: self._handle_info_certified_4_dives_variant,
-            Step.TOURS_LOCATION: self._handle_tours_location,
-            Step.GROUP_TYPE: self._handle_group_type,
-            Step.TOURS_EXPERIENCE: self._handle_tours_experience,
-            Step.TOURS_CERTIFIED: self._handle_tours_certified,
-            Step.CERTIFIED_4_DIVES_VARIANT: self._handle_certified_4_dives_variant,
-            Step.CERTIFIED_LAST_DIVE: self._handle_certified_last_dive,
-            Step.CERTIFIED_EXPERIENCE: self._handle_certified_experience,
-            Step.REFRESHER_INTEREST: self._handle_refresher_interest,
-            Step.TOURS_BEGINNER: self._handle_tours_beginner,
-            Step.BEGINNER_AGE: self._handle_beginner_age,
+            # Flujo antiguo eliminado - ahora todo va por el carrito (MIXED_*)
             Step.COURSES_MENU: self._handle_courses_menu,
             Step.COURSES_OPEN_WATER_ORIGIN: self._handle_courses_open_water_origin,
             Step.COURSES_OPEN_WATER_TIME: self._handle_courses_open_water_time,
@@ -2822,99 +2649,6 @@ class DecisionTree:
         self.set_quick_replies(state, "pricing_menu")
         return MESSAGES["pricing_menu"][lang]
 
-    def _handle_tours_location(self, state: ConversationState, message: str) -> str:
-        choice = self._parse_choice(message, 2)
-        lang = state.language
-
-        if choice == 1:
-            state.location = "cartagena"
-        elif choice == 2:
-            state.location = "island"
-        else:
-            self.set_quick_replies(state, "tours_location")
-            return MESSAGES["not_understood"][lang]
-
-        state.step = Step.GROUP_TYPE
-        self.set_quick_replies(state, "group_type")
-        return MESSAGES["group_type"][lang]
-
-    def _handle_group_type(self, state: ConversationState, message: str) -> str:
-        choice = self._parse_choice(message, 3)
-        lang = state.language
-
-        if choice == 1:
-            state.step = Step.TOURS_EXPERIENCE
-            self.set_quick_replies(state, "tours_experience")
-            return MESSAGES["tours_experience"][lang]
-        if choice == 2:
-            self._set_back_target(state, Step.GROUP_TYPE, "group_type")
-            state.selected_service = self._service_for_location("snorkeling", state)
-            intro = (
-                "El *Tour de Snorkeling* es ideal para explorar las Islas del Rosario "
-                "en la superficie 🐠\n\n"
-                "*Edad mínima: 6 años.*\n\n"
-                if lang == "es"
-                else "The *Snorkeling Tour* is perfect for exploring the Rosario Islands "
-                "from the surface 🐠\n\n"
-                "*Minimum age: 6 years.*\n\n"
-            )
-            return intro + self._goto_location_with_costs(state)
-        if choice == 3:
-            # Enter cart-style mixed flow
-            self._reset_mixed_state(state)
-            state.mixed_entry_path = "diving_snorkel"
-            self._set_back_target(state, Step.GROUP_TYPE, "group_type")
-            state.step = Step.MIXED_ENTRY
-            self.set_quick_replies(state, "mixed_entry")
-            intro_es = (
-                "¡Perfecto! Para grupos mixtos *buceo + snorkel* combinamos actividades en un mismo tour: "
-                "todos viajan juntos a las islas y comparten almuerzo.\n\n"
-            )
-            intro_en = (
-                "Great! For *diving + snorkeling* mixed groups we combine activities in a single tour: "
-                "everyone travels together to the islands and shares lunch.\n\n"
-            )
-            return (intro_es if lang == "es" else intro_en) + MESSAGES["mixed_entry"][lang]
-
-        self.set_quick_replies(state, "group_type")
-        return MESSAGES["not_understood"][lang]
-
-    def _handle_tours_experience(self, state: ConversationState, message: str) -> str:
-        choice = self._parse_choice(message, 3)
-        lang = state.language
-
-        if choice == 1:
-            state.is_certified = True
-            state.step = Step.TOURS_CERTIFIED
-            self.set_quick_replies(state, "tours_certified")
-            return MESSAGES["tours_certified"][lang]
-        if choice == 2:
-            state.is_certified = False
-            self._set_back_target(state, Step.TOURS_EXPERIENCE, "tours_experience")
-            state.selected_service = self._service_for_location("minicourse", state)
-            state.step = Step.BEGINNER_AGE
-            self.set_quick_replies(state, "beginner_age")
-            return MESSAGES["beginner_age"][lang]
-        if choice == 3:
-            # Enter cart-style mixed flow (cert + ppt → NO snorkel)
-            self._reset_mixed_state(state)
-            state.mixed_entry_path = "cert_beg"
-            self._set_back_target(state, Step.TOURS_EXPERIENCE, "tours_experience")
-            state.step = Step.MIXED_ENTRY
-            self.set_quick_replies(state, "mixed_entry")
-            intro_es = (
-                "¡Perfecto! Para grupos mixtos *certificados + principiantes* combinamos actividades en un mismo tour: "
-                "todos viajan juntos a las islas y comparten almuerzo.\n\n"
-            )
-            intro_en = (
-                "Great! For *certified + beginners* mixed groups we combine activities in a single tour: "
-                "everyone travels together to the islands and shares lunch.\n\n"
-            )
-            return (intro_es if lang == "es" else intro_en) + MESSAGES["mixed_entry_cert_beg"][lang]
-
-        self.set_quick_replies(state, "tours_experience")
-        return MESSAGES["not_understood"][lang]
-
     # ───────────────────── Cart-style mixed group flow ─────────────────────
 
     @staticmethod
@@ -3196,14 +2930,30 @@ class DecisionTree:
         choice = self._parse_choice(message, 2)
         lang = state.language
         msg = message.strip().lower()
+        
         if msg in ("back", "cancel", "cancelar"):
             return self._goto_mixed_entry(state)
-        if choice == 1:
+        
+        # Detectar texto libre: Cartagena
+        if choice == 1 or "cartagena" in msg or "ctg" in msg:
             state.location = "cartagena"
+            # Si ya tenemos marcado que queremos buceo certificado, ir directo al plan
+            if state.mixed_pending_qty_type == "cert":
+                state.step = Step.MIXED_ADD_CERT_PLAN
+                self.set_quick_replies(state, "mixed_add_cert_plan")
+                return MESSAGES["mixed_add_cert_plan"][lang]
             return self._goto_mixed_add_activity(state)
-        if choice == 2:
+        
+        # Detectar texto libre: Islas del Rosario
+        if choice == 2 or "isla" in msg or "rosario" in msg:
             state.location = "island"
+            # Si ya tenemos marcado que queremos buceo certificado, ir directo al plan
+            if state.mixed_pending_qty_type == "cert":
+                state.step = Step.MIXED_ADD_CERT_PLAN
+                self.set_quick_replies(state, "mixed_add_cert_plan")
+                return MESSAGES["mixed_add_cert_plan"][lang]
             return self._goto_mixed_add_activity(state)
+        
         self.set_quick_replies(state, "tours_location")
         return MESSAGES["not_understood"][lang]
 
@@ -3351,8 +3101,8 @@ class DecisionTree:
             state.mixed_pending_cert_total_qty = n
             state.mixed_pending_cert_remaining_qty = n
             state.step = Step.MIXED_CERT_LAST_DIVE
-            self.set_quick_replies(state, "certified_last_dive")
-            return MESSAGES["certified_last_dive"][lang]
+            self.set_quick_replies(state, "mixed_cert_last_dive")
+            return MESSAGES["mixed_cert_last_dive"][lang]
 
         if item_type == "course":
             if state.mixed_pending_course_question == "open_water_time":
@@ -3389,7 +3139,7 @@ class DecisionTree:
             return MESSAGES["refresher_info"][lang]
         if choice == 2:
             return self._prepare_mixed_add_preview(state, self._current_mixed_cert_service_id(state))
-        self.set_quick_replies(state, "certified_last_dive")
+        self.set_quick_replies(state, "mixed_cert_last_dive")
         return MESSAGES["not_understood"][lang]
 
     def _refresh_qty_quick_replies(self, state: ConversationState) -> list[dict]:
@@ -3418,8 +3168,8 @@ class DecisionTree:
         msg = message.strip().lower()
         if msg in ("back", "cancel", "cancelar"):
             state.step = Step.MIXED_CERT_LAST_DIVE
-            self.set_quick_replies(state, "certified_last_dive")
-            return MESSAGES["certified_last_dive"][lang]
+            self.set_quick_replies(state, "mixed_cert_last_dive")
+            return MESSAGES["mixed_cert_last_dive"][lang]
         if choice == 1:
             state.step = Step.MIXED_CERT_REFRESH_QTY
             state.quick_replies = self._refresh_qty_quick_replies(state)
@@ -4263,229 +4013,6 @@ class DecisionTree:
             self._reset_mixed_state(state)
             return self._goto_mixed_entry(state)
         self.set_quick_replies(state, "mixed_final_summary_actions")
-        return MESSAGES["not_understood"][lang]
-
-    def _handle_tours_certified(self, state: ConversationState, message: str) -> str:
-        choice = self._parse_choice(message, 7)
-        lang = state.language
-        if state.location == "island":
-            service_map = {
-                1: "2_dives_1_day_already_on_island",
-                2: "3_dives_1_day_already_on_island",
-                4: "5_dives_2_days_already_on_island",
-                5: "7_dives_3_days_already_on_island",
-                6: "9_dives_4_days_already_on_island",
-                7: "private",
-            }
-        else:
-            service_map = {
-                1: "2_dives_1_day",
-                2: "3_dives_1_day",
-                3: "4_dives_2_days",
-                4: "5_dives_2_days",
-                5: "7_dives_3_days",
-                6: "9_dives_4_days",
-                7: "private",
-            }
-
-        if state.location == "island" and choice == 3:
-            state.step = Step.CERTIFIED_4_DIVES_VARIANT
-            self.set_quick_replies(state, "certified_4_dives_variant")
-            return MESSAGES["certified_4_dives_variant"][lang]
-
-        if choice in service_map:
-            state.selected_service = service_map[choice]
-            if state.selected_service == "private":
-                state.step = Step.ESCALATE
-                state.quick_replies = []
-                return self._format_service_detail(state) + "\n\n" + MESSAGES["escalate"][lang]
-
-            self._set_back_target(state, Step.TOURS_CERTIFIED, "tours_certified")
-            state.step = Step.CERTIFIED_LAST_DIVE
-            self.set_quick_replies(state, "certified_last_dive")
-            # Servicios en los que primero preguntamos por la ultima inmersión y nacionalidad,
-            # y solo mostramos el resumen completo al final (estructura comun de 2, 5, 7 y 9 buceos).
-            core_split_services = {
-                "2_dives_1_day",
-                "3_dives_1_day",
-                "2_dives_1_day_already_on_island",
-                "4_dives_2_days",
-                "5_dives_2_days",
-                "4_dives_2_days_already_on_island",
-                "4_dives_2_days_mixed_already_on_island",
-                "5_dives_2_days_already_on_island",
-                "7_dives_3_days",
-                "7_dives_3_days_already_on_island",
-                "9_dives_4_days",
-                "9_dives_4_days_already_on_island",
-                "3_dives_1_day_already_on_island",
-            }
-            if state.selected_service in core_split_services:
-                return MESSAGES["certified_last_dive"][lang]
-            return self._format_service_detail(state) + "\n\n" + MESSAGES["certified_last_dive"][lang]
-        else:
-            self.set_quick_replies(state, "tours_certified")
-            return MESSAGES["not_understood"][lang]
-
-    def _handle_certified_4_dives_variant(self, state: ConversationState, message: str) -> str:
-        choice = self._parse_choice(message, 2)
-        lang = state.language
-
-        if choice == 1:
-            state.selected_service = "4_dives_2_days_already_on_island"
-        elif choice == 2:
-            state.selected_service = "4_dives_2_days_mixed_already_on_island"
-        else:
-            self.set_quick_replies(state, "certified_4_dives_variant")
-            return MESSAGES["not_understood"][lang]
-
-        self._set_back_target(state, Step.CERTIFIED_4_DIVES_VARIANT, "certified_4_dives_variant")
-        state.step = Step.CERTIFIED_LAST_DIVE
-        self.set_quick_replies(state, "certified_last_dive")
-        return MESSAGES["certified_last_dive"][lang]
-
-    def _handle_certified_last_dive(self, state: ConversationState, message: str) -> str:
-        choice = self._parse_choice(message, 2)
-        lang = state.language
-
-        if choice == 1:
-            state.last_dive_over_2_years = True
-            state.step = Step.CERTIFIED_EXPERIENCE
-            self.set_quick_replies(state, "certified_experience")
-            return MESSAGES["certified_experience"][lang]
-        if choice == 2:
-            state.last_dive_over_2_years = False
-            return self._goto_location_with_costs(state)
-
-        self.set_quick_replies(state, "certified_last_dive")
-        return MESSAGES["not_understood"][lang]
-
-    def _handle_certified_experience(self, state: ConversationState, message: str) -> str:
-        choice = self._parse_choice(message, 2)
-        lang = state.language
-
-        if choice == 1:
-            state.has_500_dives_or_dive_master = True
-            state.step = Step.ESCALATE
-            state.quick_replies = []
-            return MESSAGES["escalate"][lang]
-        if choice == 2:
-            state.has_500_dives_or_dive_master = False
-            state.step = Step.REFRESHER_INTEREST
-            self.set_quick_replies(state, "refresher_interest")
-            return MESSAGES["refresher_info"][lang]
-
-        self.set_quick_replies(state, "certified_experience")
-        return MESSAGES["not_understood"][lang]
-
-    def _handle_refresher_interest(self, state: ConversationState, message: str) -> str:
-        choice = self._parse_choice(message, 2)
-        lang = state.language
-        multi_day_services = MULTI_DAY_SERVICES
-        refresher_preserve_services = REFRESHER_PRESERVE_SERVICES
-
-        if choice == 1:
-            state.refresher_interested = True
-            if state.original_service is None and state.selected_service is not None:
-                state.original_service = state.selected_service
-            if state.selected_service not in refresher_preserve_services:
-                state.selected_service = self._service_for_location("minicourse", state)
-        elif choice == 2:
-            state.refresher_interested = False
-        else:
-            self.set_quick_replies(state, "refresher_interest")
-            return MESSAGES["not_understood"][lang]
-
-        if state.selected_service in multi_day_services and state.refresher_interested:
-            intro = (
-                "Perfecto. Mantengo el paquete multi-dia seleccionado y dejo anotado que necesitas "
-                "revisar/reforzar habilidades antes de las inmersiones.\n\n"
-                "Como es un paquete de varios dias, un asesor confirmara la mejor forma de integrarlo "
-                "sin cambiar tu plan principal.\n\n"
-                if lang == "es"
-                else "Perfect. I'll keep the selected multi-day package and note that you need to review/refresh "
-                "skills before the dives.\n\n"
-                "Because this is a multi-day package, an advisor will confirm the best way to include it "
-                "without changing your main plan.\n\n"
-            )
-            return intro + self._goto_location_with_costs(state)
-
-        # Para planes de 1 día, el refresher se gestiona como el minicurso de iniciación
-        # (mismo formato: piscina + mar), pero el asesor confirma si se factura aparte.
-        if state.refresher_interested and state.original_service:
-            intro = (
-                "Perfecto. Como han pasado más de 2 años, te incluimos el *refresher* — "
-                "el asesor lo coordina al confirmar la reserva (sin coste adicional).\n\n"
-                if lang == "es"
-                else "Perfect. Since it's been more than 2 years, we'll include the *refresher* — "
-                "the advisor coordinates it when confirming the booking (no extra cost).\n\n"
-            )
-            return intro + self._goto_location_with_costs(state)
-
-        return self._goto_location_with_costs(state)
-
-    def _handle_tours_beginner(self, state: ConversationState, message: str) -> str:
-        choice = self._parse_choice(message, 1)
-        lang = state.language
-
-        if choice == 1:
-            self._set_back_target(state, Step.TOURS_BEGINNER, "tours_beginner")
-            state.selected_service = self._service_for_location("minicourse", state)
-            state.step = Step.BEGINNER_AGE
-            self.set_quick_replies(state, "beginner_age")
-            return MESSAGES["beginner_age"][lang]
-
-        self.set_quick_replies(state, "tours_beginner")
-        return MESSAGES["not_understood"][lang]
-
-    def _handle_beginner_age(self, state: ConversationState, message: str) -> str:
-        choice = self._parse_choice(message, 3)
-        lang = state.language
-
-        if choice == 1:
-            # Menores de 8: solo pueden hacer snorkel
-            state.step = Step.ESCALATE
-            state.quick_replies = []
-            state.pending_escalation_reason = "menores de 8 - solo snorkel disponible"
-            if lang == "es":
-                return (
-                    "Los *menores de 8 años* todavía no pueden bucear, pero sí pueden hacer "
-                    "*snorkel* (mínimo 6 años) en familia 🐠\n\n"
-                    "Te paso con un asesor del equipo de Diving Planet para coordinar la salida según las edades del grupo.\n"
-                    "Enseguida se pone en contacto contigo. ¡Gracias! :)"
-                )
-            return (
-                "Children *under 8* cannot dive yet, but they can do *snorkeling* "
-                "(minimum age 6) with the family 🐠\n\n"
-                "I'll connect you with an advisor to arrange the trip based on the group's ages.\n\n"
-                + MESSAGES["escalate"][lang]
-            )
-
-        if choice == 2:
-            # Niños 8-10: programa Bubble Makers (escala al asesor)
-            state.step = Step.ESCALATE
-            state.quick_replies = []
-            state.pending_escalation_reason = "ninos 8-10 - programa Bubble Makers"
-            if lang == "es":
-                return (
-                    "Para niños de *8 a 10 años* tenemos el programa *Bubble Makers*: una "
-                    "experiencia de buceo en piscina y aguas poco profundas (máximo 2 metros de profundidad), "
-                    "diseñada especialmente para niños.\n\n"
-                    "Te paso con un asesor del equipo de Diving Planet para coordinar fechas y detalles.\n"
-                    "Enseguida se pone en contacto contigo. ¡Gracias! :)"
-                )
-            return (
-                "For children aged *8 to 10* we offer the *Bubble Makers* program: a diving "
-                "experience in a pool and shallow water (max. 2 meters deep), specially designed for kids.\n\n"
-                "I'll connect you with an advisor to arrange dates and details.\n\n"
-                + MESSAGES["escalate"][lang]
-            )
-
-        if choice == 3:
-            # Todos tienen 10+ años: continuar con LOCATION → COLOMBIAN → SUMMARY
-            return self._goto_location_with_costs(state)
-
-        self.set_quick_replies(state, "beginner_age")
         return MESSAGES["not_understood"][lang]
 
     def _handle_pricing_menu(self, state: ConversationState, message: str) -> str:

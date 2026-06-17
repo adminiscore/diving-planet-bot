@@ -18,6 +18,7 @@ from src.agents.escalation import detect_sensitive_escalation
 from src.agents.lead_summary import build_lead_summary
 from src.agents.intent_classifier import classify_menu_intent
 from src.agents import orchestrator
+from src.agents.intent_detector import IntentDetector
 from src.flows.decision_tree import DecisionTree, ConversationState, Step, SERVICES
 from src.agents.rag_agent import rag_answer
 from src.privacy import detect_pii, privacy_block_message
@@ -25,6 +26,7 @@ from src.privacy import detect_pii, privacy_block_message
 logger = logging.getLogger("uvicorn.error")
 
 decision_tree = DecisionTree()
+intent_detector = IntentDetector()
 
 _GROUP_COUNT_WORDS = {
     "un": 1,
@@ -59,15 +61,7 @@ MENU_STEPS = {
     Step.INFO_MIXED_ACTIVITY_MENU,
     Step.INFO_MIXED_CERT_BEG_MENU,
     Step.INFO_CERTIFIED_4_DIVES_VARIANT,
-    Step.TOURS_LOCATION,
-    Step.GROUP_TYPE,
-    Step.TOURS_EXPERIENCE,
-    Step.TOURS_CERTIFIED,
-    Step.CERTIFIED_LAST_DIVE,
-    Step.CERTIFIED_EXPERIENCE,
-    Step.REFRESHER_INTEREST,
-    Step.TOURS_BEGINNER,
-    Step.BEGINNER_AGE,
+    # Flujo antiguo eliminado
     Step.COURSES_MENU,
     Step.COURSES_OPEN_WATER_ORIGIN,
     Step.COURSES_OPEN_WATER_TIME,
@@ -180,13 +174,7 @@ BACK_STEP: dict[Step, tuple[Step, str]] = {
     Step.INFO_MIXED_ACTIVITY_MENU: (Step.INFO_TOURS_MENU, "info_tours_menu"),
     Step.INFO_MIXED_CERT_BEG_MENU: (Step.INFO_PACKAGES_MENU, "info_packages_menu"),
     Step.INFO_CERTIFIED_4_DIVES_VARIANT: (Step.INFO_TOURS_CERTIFIED_MENU, "info_tours_certified_menu"),
-    Step.TOURS_LOCATION: (Step.RESERVA_MENU, "reserva_menu"),
-    Step.GROUP_TYPE: (Step.RESERVA_MENU, "reserva_menu"),
-    Step.TOURS_EXPERIENCE: (Step.GROUP_TYPE, "group_type"),
-    Step.TOURS_CERTIFIED: (Step.TOURS_EXPERIENCE, "tours_experience"),
-    Step.CERTIFIED_4_DIVES_VARIANT: (Step.TOURS_CERTIFIED, "tours_certified"),
-    Step.TOURS_BEGINNER: (Step.TOURS_EXPERIENCE, "tours_experience"),
-    Step.BEGINNER_AGE: (Step.TOURS_EXPERIENCE, "tours_experience"),
+    # Flujo antiguo eliminado - ahora todo va por el carrito (MIXED_*)
     Step.COURSES_MENU: (Step.MIXED_ADD_ACTIVITY, "mixed_add_activity"),
     Step.COURSES_OPEN_WATER_ORIGIN: (Step.COURSES_MENU, "courses_menu"),
     Step.COURSES_OPEN_WATER_TIME: (Step.MIXED_ADD_QTY, "mixed_quantity"),
@@ -1804,7 +1792,7 @@ def _maybe_offer_mixed_from_single(state: ConversationState, message: str, answe
 
 
 def _maybe_handle_mixed_group_from_menu(state: ConversationState, message: str) -> str | None:
-    if state.step not in {Step.MAIN_MENU, Step.RESERVA_MENU, Step.GROUP_TYPE}:
+    if state.step not in {Step.MAIN_MENU, Step.RESERVA_MENU}:
         return None
     if not _detect_companion_intent(message, state):
         return None
@@ -2750,6 +2738,123 @@ def _answer_state_introspection(state: ConversationState, message: str) -> str |
     return None
 
 
+def _apply_detected_intent(intent, state: ConversationState) -> None:
+    if intent.language and not state.detected_language:
+        state.detected_language = intent.language
+        state.language = intent.language
+        logger.info(f"[INTENT] Detected language: {intent.language}")
+    
+    if intent.activity and not state.detected_activity:
+        state.detected_activity = intent.activity
+        state.detected_service_id = intent.service_id
+        logger.info(f"[INTENT] Detected activity: {intent.activity} (service: {intent.service_id})")
+    
+    if intent.is_certified is not None and state.detected_is_certified is None:
+        state.detected_is_certified = intent.is_certified
+        state.is_certified = intent.is_certified
+        logger.info(f"[INTENT] Detected certification: {intent.is_certified}")
+    
+    if intent.group_size and not state.detected_group_size:
+        state.detected_group_size = intent.group_size
+        logger.info(f"[INTENT] Detected group size: {intent.group_size}")
+    
+    if intent.group_allocation and not state.detected_group_allocation:
+        state.detected_group_allocation = intent.group_allocation
+        logger.info(f"[INTENT] Detected group allocation: {intent.group_allocation}")
+    
+    if intent.last_dive_over_2_years is not None and state.detected_last_dive_over_2_years is None:
+        state.detected_last_dive_over_2_years = intent.last_dive_over_2_years
+        state.last_dive_over_2_years = intent.last_dive_over_2_years
+        logger.info(f"[INTENT] Detected last dive: {intent.last_dive_over_2_years}")
+    
+    if intent.duration and not state.detected_duration:
+        state.detected_duration = intent.duration
+        logger.info(f"[INTENT] Detected duration: {intent.duration}")
+    
+    if intent.location and not state.detected_location:
+        state.detected_location = intent.location
+        state.location = intent.location
+        logger.info(f"[INTENT] Detected location: {intent.location}")
+    
+    if intent.island and not state.detected_island:
+        state.detected_island = intent.island
+        state.island = intent.island
+        logger.info(f"[INTENT] Detected island: {intent.island}")
+    
+    if intent.hotel and not state.detected_hotel:
+        state.detected_hotel = intent.hotel
+        state.hotel = intent.hotel
+        logger.info(f"[INTENT] Detected hotel: {intent.hotel}")
+
+
+def _build_confirmation_message(intent, state: ConversationState) -> str | None:
+    lang = state.language
+    
+    if intent.activity == "certified_diving" and intent.is_certified:
+        if intent.group_size and intent.group_size > 1:
+            if lang == "es":
+                return f"¡Genial! Veo que son {intent.group_size} buzos certificados. Para ofrecerles la mejor experiencia, necesito saber:"
+            return f"Great! I see you are {intent.group_size} certified divers. To offer you the best experience, I need to know:"
+        else:
+            if lang == "es":
+                return "¡Genial! Veo que eres buzo certificado. Para ofrecerte la mejor experiencia, necesito saber:"
+            return "Great! I see you are a certified diver. To offer you the best experience, I need to know:"
+    
+    if intent.activity == "certified_diving" and intent.is_certified is None:
+        if lang == "es":
+            return "Perfecto, te ayudo con el buceo. Para continuar necesito saber:"
+        return "Perfect, I'll help you with diving. To continue I need to know:"
+    
+    if intent.activity == "minicourse":
+        if lang == "es":
+            return "¡Perfecto! El minicurso de buceo es ideal para principiantes. Déjame preparar la información..."
+        return "Perfect! The diving minicourse is ideal for beginners. Let me prepare the information..."
+    
+    if intent.group_allocation and len(intent.group_allocation) > 1:
+        activities_es = []
+        activities_en = []
+        for activity, qty in intent.group_allocation.items():
+            if activity == "certified_diving":
+                activities_es.append(f"{qty} persona(s): Buceo certificado")
+                activities_en.append(f"{qty} person(s): Certified diving")
+            elif activity == "snorkel":
+                activities_es.append(f"{qty} persona(s): Snorkel")
+                activities_en.append(f"{qty} person(s): Snorkel")
+            elif activity == "minicourse":
+                activities_es.append(f"{qty} persona(s): Minicurso")
+                activities_en.append(f"{qty} person(s): Minicourse")
+        
+        if lang == "es":
+            return "Entiendo que quieren hacer actividades diferentes:\n" + "\n".join(f"- {a}" for a in activities_es) + "\n\nVoy a preparar tu reserva con estas actividades."
+        return "I understand you want to do different activities:\n" + "\n".join(f"- {a}" for a in activities_en) + "\n\nI'll prepare your booking with these activities."
+    
+    return None
+
+
+def _should_skip_to_certified_flow(intent, state: ConversationState) -> bool:
+    return (
+        intent.activity == "certified_diving" 
+        and intent.is_certified is True
+        and state.step in (Step.WELCOME, Step.LANGUAGE, Step.MAIN_MENU)
+    )
+
+
+def _should_ask_certification(intent, state: ConversationState) -> bool:
+    return (
+        intent.activity == "certified_diving"
+        and intent.is_certified is None
+        and state.step in (Step.WELCOME, Step.LANGUAGE, Step.MAIN_MENU)
+    )
+
+
+def _should_enter_mixed_flow(intent, state: ConversationState) -> bool:
+    return (
+        intent.group_allocation is not None
+        and len(intent.group_allocation) > 1
+        and state.step in (Step.WELCOME, Step.LANGUAGE, Step.MAIN_MENU)
+    )
+
+
 async def route_message(state: ConversationState, message: str) -> str:
     """
     Supervisor: decides how to handle each incoming message.
@@ -2775,6 +2880,103 @@ async def route_message(state: ConversationState, message: str) -> str:
         state.pending_escalation_reason = "datos sensibles detectados"
         logger.warning(f"[SUPERVISOR][PRIVACY] PII detected hits={pii_hits} step={state.step.value}")
         return privacy_block_message(state.language)
+
+    # Intent detection: detect user intent from free text and apply to state
+    if not msg_lower.isdigit() and len(message.strip()) > 3:
+        intent = intent_detector.detect(message, state)
+        
+        if intent.confidence > 0.2:
+            _apply_detected_intent(intent, state)
+            
+            # Skip to certified diving flow if we detected certified diver
+            if _should_skip_to_certified_flow(intent, state):
+                confirmation = _build_confirmation_message(intent, state)
+                
+                # Ir al flujo de carrito
+                state.step = Step.MIXED_ENTRY
+                state.mixed_cart = []
+                
+                # Marcar que queremos buceo certificado
+                state.mixed_pending_qty_type = "cert"
+                
+                # Si no tenemos ubicación, preguntar primero
+                if not state.detected_location and not state.location:
+                    state.step = Step.MIXED_LOCATION
+                    decision_tree.set_quick_replies(state, "mixed_location")
+                    from src.flows.decision_tree import MESSAGES
+                    logger.info(f"[INTENT] Detected certified diving, asking location first")
+                    if confirmation:
+                        return confirmation + "\n\n" + MESSAGES["mixed_location"][state.language]
+                    return MESSAGES["mixed_location"][state.language]
+                
+                # Si tenemos ubicación, ir directo a preguntar plan de buceo certificado
+                state.location = state.detected_location or state.location
+                state.mixed_pending_qty_type = "cert"
+                state.step = Step.MIXED_ADD_CERT_PLAN
+                decision_tree.set_quick_replies(state, "mixed_add_cert_plan")
+                from src.flows.decision_tree import MESSAGES
+                logger.info(f"[INTENT] Going to cart with location, asking certified diving plan")
+                if confirmation:
+                    return confirmation + "\n\n" + MESSAGES["mixed_add_cert_plan"][state.language]
+                return MESSAGES["mixed_add_cert_plan"][state.language]
+            
+            # Ask certification if activity is diving but certification unknown
+            elif _should_ask_certification(intent, state):
+                # Redirigir al carrito para que elija actividad
+                confirmation = _build_confirmation_message(intent, state)
+                state.step = Step.MIXED_ENTRY
+                state.mixed_cart = []
+                decision_tree.set_quick_replies(state, "mixed_entry")
+                from src.flows.decision_tree import MESSAGES
+                logger.info(f"[INTENT] Detected diving but no certification, going to cart")
+                if confirmation:
+                    return confirmation + "\n\n" + MESSAGES["mixed_entry"][state.language]
+                return MESSAGES["mixed_entry"][state.language]
+            
+            # Enter mixed flow if we detected mixed group allocation
+            elif _should_enter_mixed_flow(intent, state):
+                confirmation = _build_confirmation_message(intent, state)
+                
+                # Pre-load cart with detected activities
+                state.mixed_cart = []
+                for activity, qty in intent.group_allocation.items():
+                    if activity == "certified_diving":
+                        # Need to ask last dive first
+                        state.mixed_pending_qty_type = "cert"
+                        state.mixed_pending_qty_value = qty
+                    elif activity == "minicourse":
+                        state.mixed_cart.append({
+                            "type": "beginner",
+                            "qty": qty,
+                            "plan": "minicourse",
+                            "label": "Minicurso" if state.language == "es" else "Minicourse"
+                        })
+                    elif activity == "snorkel":
+                        state.mixed_cart.append({
+                            "type": "snorkel",
+                            "qty": qty,
+                            "plan": "snorkeling",
+                            "label": "Snorkel"
+                        })
+                
+                # If we have certified divers, ask about last dive first
+                if state.mixed_pending_qty_type == "cert":
+                    state.step = Step.MIXED_CERT_LAST_DIVE
+                    decision_tree.set_quick_replies(state, "certified_last_dive")
+                    from src.flows.decision_tree import MESSAGES
+                    logger.info(f"[INTENT] Entering mixed flow, asking last dive for certified")
+                    if confirmation:
+                        return confirmation + "\n\n" + MESSAGES["certified_last_dive"][state.language]
+                    return MESSAGES["certified_last_dive"][state.language]
+                else:
+                    # Go directly to cart review
+                    state.step = Step.MIXED_CART_REVIEW
+                    state.location = state.detected_location or state.location
+                    logger.info(f"[INTENT] Entering mixed flow with pre-loaded cart")
+                    response = decision_tree.process_message(state, "")
+                    if confirmation:
+                        return confirmation + "\n\n" + response
+                    return response
 
     # Check for escalation keywords
     if _matches_escalation_keyword(msg_lower):

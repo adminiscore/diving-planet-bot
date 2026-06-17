@@ -3383,3 +3383,212 @@ async def test_cart_change_location_course_plan_remaps_to_island_variant():
     assert state.mixed_cart[0]["plan"] == "open_water"
 
 
+# ---------------------------------------------------------------------------
+# Intent Detection - Smart Free Text Understanding
+# ---------------------------------------------------------------------------
+
+@pytest.mark.asyncio
+async def test_intent_certified_divers_spanish_skips_to_last_dive():
+    """'Hola somos dos personas certificadas queremos buceo' should skip language and cert questions."""
+    state = make_state()
+    resp = await route_message(state, "Hola somos dos personas que queremos hacer buceo y estamos certificados")
+    
+    # Should detect Spanish, certified, group of 2, and skip to last dive question
+    assert state.language == "es"
+    assert state.detected_is_certified is True
+    assert state.detected_group_size == 2
+    assert state.detected_activity == "certified_diving"
+    assert state.step == Step.CERTIFIED_LAST_DIVE
+    assert "genial" in resp.lower() or "perfecto" in resp.lower()
+    assert "última inmersión" in resp.lower() or "last dive" in resp.lower()
+
+
+@pytest.mark.asyncio
+async def test_intent_certified_diver_english_skips_to_last_dive():
+    """'Hello I am a certified diver and want to dive' should skip to last dive."""
+    state = make_state()
+    resp = await route_message(state, "Hello I am a certified diver and want to dive")
+    
+    assert state.language == "en"
+    assert state.detected_is_certified is True
+    assert state.detected_activity == "certified_diving"
+    assert state.step == Step.CERTIFIED_LAST_DIVE
+    assert "great" in resp.lower() or "perfect" in resp.lower()
+    assert "last dive" in resp.lower()
+
+
+@pytest.mark.asyncio
+async def test_intent_diving_ambiguous_asks_certification():
+    """'Hola quiero bucear' should detect diving but ask certification."""
+    state = make_state()
+    resp = await route_message(state, "Hola quiero bucear")
+    
+    assert state.language == "es"
+    assert state.detected_activity == "certified_diving"
+    assert state.detected_is_certified is None
+    assert state.step == Step.TOURS_EXPERIENCE
+    # Should ask about group composition or certification
+    assert "grupo" in resp.lower() or "certificado" in resp.lower()
+
+
+@pytest.mark.asyncio
+async def test_intent_minicourse_skips_certification():
+    """'Quiero hacer el minicurso' should detect beginner and skip cert question."""
+    state = make_state()
+    resp = await route_message(state, "Hola quiero hacer el minicurso de buceo, es mi primera vez")
+    
+    assert state.language == "es"
+    assert state.detected_activity == "minicourse"
+    assert state.detected_is_certified is False
+
+
+@pytest.mark.asyncio
+async def test_intent_mixed_group_enters_cart_flow():
+    """'Somos dos, yo buceo certificado y mi novia snorkel' should detect certified and skip to last dive."""
+    state = make_state()
+    resp = await route_message(state, "Somos dos, yo quiero buceo certificado y mi novia snorkel")
+    
+    assert state.language == "es"
+    assert state.detected_group_size == 2
+    assert state.detected_is_certified is True
+    # Should skip to last dive question for certified divers
+    assert state.step == Step.CERTIFIED_LAST_DIVE
+    assert "última inmersión" in resp.lower() or "last dive" in resp.lower()
+
+
+@pytest.mark.asyncio
+async def test_intent_mixed_group_minicourse_snorkel():
+    """'Yo minicurso y mi amigo snorkel' should pre-load cart with both."""
+    state = make_state()
+    resp = await route_message(state, "Hola somos dos, yo haría el minicurso y mi amigo snorkel")
+    
+    assert state.language == "es"
+    assert state.detected_group_allocation is not None
+    assert state.detected_group_allocation.get("minicourse") == 1
+    assert state.detected_group_allocation.get("snorkel") == 1
+    # Should go to cart review since no certification questions needed
+    assert state.step == Step.MIXED_CART_REVIEW
+    assert len(state.mixed_cart) == 2
+
+
+@pytest.mark.asyncio
+async def test_intent_group_size_detected():
+    """'Somos tres personas' should detect group size."""
+    state = make_state()
+    await route_message(state, "Hola somos tres personas que queremos hacer snorkel")
+    
+    assert state.detected_group_size == 3
+    assert state.detected_activity == "snorkel"
+
+
+@pytest.mark.asyncio
+async def test_intent_location_detected():
+    """'Estoy en Cartagena' should detect location."""
+    state = make_state()
+    await route_message(state, "Hola quiero bucear, estoy en Cartagena y soy certificado")
+    
+    assert state.detected_location == "cartagena"
+    assert state.location == "cartagena"
+    assert state.detected_is_certified is True
+
+
+@pytest.mark.asyncio
+async def test_intent_last_dive_detected():
+    """'Mi última inmersión fue hace 6 meses' should detect recent dive."""
+    state = make_state()
+    state.step = Step.CERTIFIED_LAST_DIVE
+    state.language = "es"
+    
+    # Simulate being in the last dive question and answering with free text
+    from src.flows.decision_tree import DecisionTree
+    dt = DecisionTree()
+    dt.set_quick_replies(state, "certified_last_dive")
+    
+    resp = await route_message(state, "mi última inmersión fue hace 6 meses")
+    
+    # Should detect it was less than 2 years
+    assert state.detected_last_dive_over_2_years is False
+
+
+@pytest.mark.asyncio
+async def test_intent_continues_working_mid_conversation():
+    """Intent detection should work at any point in the conversation."""
+    state = await reach_main_menu()
+    
+    # User is at main menu and sends complete intent
+    resp = await route_message(state, "somos dos buzos certificados")
+    
+    assert state.detected_is_certified is True
+    assert state.detected_group_size == 2
+    # Should skip to last dive question
+    assert state.step == Step.CERTIFIED_LAST_DIVE
+
+
+@pytest.mark.asyncio
+async def test_intent_padi_course_detection():
+    """'Quiero hacer el curso Open Water' should detect PADI course."""
+    state = make_state()
+    resp = await route_message(state, "Hola quiero hacer el curso PADI Open Water")
+    
+    # Should detect Spanish and PADI course intent
+    assert state.detected_activity == "padi_course"
+    assert state.detected_service_id == "open_water"
+
+
+@pytest.mark.asyncio
+async def test_intent_specialty_detection():
+    """'Quiero hacer el curso de nitrox' should detect specialty."""
+    state = make_state()
+    resp = await route_message(state, "Hola quiero hacer el curso de nitrox")
+    
+    assert state.language == "es"
+    assert state.detected_activity == "specialty"
+    assert state.detected_service_id == "nitrox"
+
+
+@pytest.mark.asyncio
+async def test_intent_hotel_detection():
+    """'Estoy en el hotel Pao Pao' should detect hotel."""
+    state = make_state()
+    await route_message(state, "Hola estoy en el hotel Pao Pao y quiero hacer snorkel")
+    
+    assert state.detected_hotel == "pao_pao"
+    assert state.hotel == "pao_pao"
+
+
+@pytest.mark.asyncio
+async def test_intent_duration_multi_day():
+    """'Estoy varios días' should detect multi-day."""
+    state = make_state()
+    await route_message(state, "Quiero bucear, estoy varios días en las islas")
+    
+    assert state.detected_duration == "multi_day"
+
+
+@pytest.mark.asyncio
+async def test_intent_does_not_trigger_on_digit_input():
+    """Intent detection should not run on digit inputs (menu selections)."""
+    state = await reach_main_menu()
+    
+    # Clear any previous detections
+    state.detected_activity = None
+    
+    # Send digit (menu choice)
+    await route_message(state, "1")
+    
+    # Should not have triggered intent detection
+    assert state.detected_activity is None
+
+
+@pytest.mark.asyncio
+async def test_intent_does_not_trigger_on_very_short_input():
+    """Intent detection should not run on very short inputs."""
+    state = make_state()
+    
+    # Send very short message
+    await route_message(state, "hi")
+    
+    # Should not have triggered significant intent detection
+    # (might detect language but that's ok)
+
+
