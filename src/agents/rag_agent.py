@@ -382,6 +382,20 @@ _FOLLOW_UP_INDICATORS = re.compile(
 # Queries that begin with a connector are almost always continuations ("y ...", "and ...").
 _FOLLOW_UP_PREFIX = re.compile(r"^[¿¡\s]*(y|e|and|pero|but|o|or|entonces|then)\b", re.IGNORECASE)
 
+# Declarative location/situation statements answering a prior question
+# ("en el hotel Pao Pao", "estoy en Isla Grande", "at the X hotel"). These are
+# follow-ups that need the conversation context to be understood for retrieval.
+# Note: interrogatives like "¿en qué consiste...?" are NOT matched (require "en el/la").
+_LOCATION_STATEMENT_PREFIX = re.compile(
+    r"^[¿¡\s]*("
+    r"estoy en|estamos en|me hospedo|nos hospedamos|me alojo|nos alojamos|"
+    r"en el|en la|en isla|en hotel|"
+    r"i'?m (at|in|staying)|we'?re (at|in|staying)|i am (at|in|staying)|"
+    r"we are (at|in|staying)|staying at|staying in|at the|in the"
+    r")\b",
+    re.IGNORECASE,
+)
+
 
 def _looks_like_follow_up(query: str) -> bool:
     """Heuristic: does this query rely on previous turns to be understood?
@@ -398,6 +412,9 @@ def _looks_like_follow_up(query: str) -> bool:
     if len(text.split()) < 4:
         return True
     if _FOLLOW_UP_PREFIX.match(text):
+        return True
+    # Declarative location/situation answers ("en el hotel Pao Pao") need context.
+    if _LOCATION_STATEMENT_PREFIX.match(text):
         return True
     return bool(_FOLLOW_UP_INDICATORS.search(text))
 

@@ -101,11 +101,33 @@ def test_looks_like_follow_up_heuristic():
     assert rag_agent._looks_like_follow_up("¿Cuál es la diferencia entre Open Water y Advanced?") is False
     assert rag_agent._looks_like_follow_up("where is the meeting point?") is False
     assert rag_agent._looks_like_follow_up("cuánto cuesta el minicurso?") is False
+    # Interrogative "en qué" must NOT be treated as a location statement
+    assert rag_agent._looks_like_follow_up("¿En qué consiste el Open Water?") is False
     # Genuine follow-ups
     assert rag_agent._looks_like_follow_up("y los niños?") is True
     assert rag_agent._looks_like_follow_up("the prices") is True
     assert rag_agent._looks_like_follow_up("¿qué incluye ese plan?") is True
     assert rag_agent._looks_like_follow_up("I'd like to learn more about these packages") is True
+
+
+def test_location_statement_answer_is_follow_up():
+    """Regression: a bare hotel/location answer ("en el hotel Pao Pao") to the
+    bot's "which hotel?" question must be treated as a follow-up so the pickup
+    context from earlier is carried into retrieval."""
+    assert rag_agent._looks_like_follow_up("en el hotel pao pao") is True
+    assert rag_agent._looks_like_follow_up("estoy en el hotel pao pao") is True
+    assert rag_agent._looks_like_follow_up("en isla grande") is True
+    assert rag_agent._looks_like_follow_up("at the pao pao hotel") is True
+
+    history = [
+        {"role": "user", "content": "Si ya estoy en Isla Grande, ¿me recogen?"},
+        {"role": "assistant", "content": "¿En qué hotel estás?"},
+        {"role": "user", "content": "en el hotel pao pao"},
+    ]
+    retrieval_query = rag_agent.build_retrieval_query("en el hotel pao pao", history)
+    # The pickup intent from the earlier turn must be present in the retrieval query.
+    assert "recogen" in retrieval_query.lower()
+    assert "pao pao" in retrieval_query.lower()
 
 
 @pytest.mark.asyncio
