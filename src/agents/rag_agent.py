@@ -369,8 +369,47 @@ FOOD_FAQ_QUESTIONS = {
 }
 
 
+# Anaphoric / follow-up indicators: demonstratives and pronouns that refer back
+# to something said earlier ("these packages", "ese plan", "lo mismo"...).
+_FOLLOW_UP_INDICATORS = re.compile(
+    r"\b("
+    r"this|that|these|those|it|them|they|same|also|previous|one|ones|"
+    r"ese|esa|eso|esos|esas|este|esta|esto|estos|estas|"
+    r"mismo|misma|mismos|mismas|anterior|tambi[eé]n|aquel|aquella|aquello"
+    r")\b",
+    re.IGNORECASE,
+)
+# Queries that begin with a connector are almost always continuations ("y ...", "and ...").
+_FOLLOW_UP_PREFIX = re.compile(r"^[¿¡\s]*(y|e|and|pero|but|o|or|entonces|then)\b", re.IGNORECASE)
+
+
+def _looks_like_follow_up(query: str) -> bool:
+    """Heuristic: does this query rely on previous turns to be understood?
+
+    A self-contained question (names its own subject) returns False so we do NOT
+    pollute its retrieval with unrelated earlier questions. Short queries and
+    anaphoric ones return True so they get conversational context.
+    """
+    text = (query or "").strip()
+    if not text:
+        return False
+    # Very short fragments ("the prices", "y los niños?") are almost always
+    # follow-ups; condense_query also handles these, this is a safety net.
+    if len(text.split()) < 4:
+        return True
+    if _FOLLOW_UP_PREFIX.match(text):
+        return True
+    return bool(_FOLLOW_UP_INDICATORS.search(text))
+
+
 def build_retrieval_query(query: str, history: list[dict] | None = None) -> str:
     if not history:
+        return query
+
+    # Only enrich genuine follow-ups with conversation history. A self-contained
+    # question must be retrieved on its own — otherwise an unrelated previous
+    # question dilutes the embedding and the right doc falls below the threshold.
+    if not _looks_like_follow_up(query):
         return query
 
     recent_user_messages = [

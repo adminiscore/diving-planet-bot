@@ -66,6 +66,7 @@ def test_build_retrieval_query_uses_recent_user_history():
         {"role": "user", "content": "I'd like to learn more about these packages"},
     ]
 
+    # Anaphoric follow-up ("these packages") must pull in the prior context.
     retrieval_query = rag_agent.build_retrieval_query(
         "I'd like to learn more about these packages",
         history,
@@ -73,6 +74,38 @@ def test_build_retrieval_query_uses_recent_user_history():
 
     assert "family of 6" in retrieval_query
     assert "these packages" in retrieval_query
+
+
+def test_build_retrieval_query_does_not_pollute_self_contained_question():
+    """Regression: a self-contained question after an unrelated one must NOT be
+    polluted with the previous question (which diluted retrieval and caused a
+    false fallback)."""
+    history = [
+        {"role": "user", "content": "¿A qué hora es la salida?"},
+        {"role": "assistant", "content": "La salida es a las 8:00 AM desde el Muelle de la Bodeguita."},
+        {"role": "user", "content": "¿Cuál es la diferencia entre Open Water y Advanced?"},
+    ]
+
+    retrieval_query = rag_agent.build_retrieval_query(
+        "¿Cuál es la diferencia entre Open Water y Advanced?",
+        history,
+    )
+
+    # The unrelated previous question must not leak into the retrieval query.
+    assert "salida" not in retrieval_query.lower()
+    assert retrieval_query == "¿Cuál es la diferencia entre Open Water y Advanced?"
+
+
+def test_looks_like_follow_up_heuristic():
+    # Self-contained questions
+    assert rag_agent._looks_like_follow_up("¿Cuál es la diferencia entre Open Water y Advanced?") is False
+    assert rag_agent._looks_like_follow_up("where is the meeting point?") is False
+    assert rag_agent._looks_like_follow_up("cuánto cuesta el minicurso?") is False
+    # Genuine follow-ups
+    assert rag_agent._looks_like_follow_up("y los niños?") is True
+    assert rag_agent._looks_like_follow_up("the prices") is True
+    assert rag_agent._looks_like_follow_up("¿qué incluye ese plan?") is True
+    assert rag_agent._looks_like_follow_up("I'd like to learn more about these packages") is True
 
 
 @pytest.mark.asyncio
