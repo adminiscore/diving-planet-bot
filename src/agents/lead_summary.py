@@ -7,10 +7,46 @@ the human agent who picks up the conversation has full context.
 
 from __future__ import annotations
 
+import re
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from src.flows.decision_tree import ConversationState
+
+# Pure button-choice inputs we don't want to echo back to the advisor as
+# "client messages": menu numbers ("1", "2", "6+"), and navigation tokens.
+_BUTTON_NUMBER_RE = re.compile(r"^\d+\+?$")
+_NAV_TOKENS = {"back", "volver", "atras", "atrás", "inicio", "home", "menu", "menú", "start"}
+
+
+def _is_free_text(content: str) -> bool:
+    """True only for genuine free-text messages (not button picks/navigation).
+
+    Filters out menu number choices ("1", "2", "6+") and navigation keywords so
+    the advisor only sees what the client actually typed in their own words.
+    """
+    text = (content or "").strip()
+    if not text:
+        return False
+    if _BUTTON_NUMBER_RE.match(text):
+        return False
+    if text.lower() in _NAV_TOKENS:
+        return False
+    return True
+
+
+def _service_display_name(service_id: str, lang: str) -> str:
+    """Resolve a service id to its human-readable name for the advisor note.
+
+    Falls back to the raw id only if the catalog has no name for it.
+    """
+    try:
+        from src.flows.decision_tree import SERVICES
+    except Exception:
+        return service_id
+    service = SERVICES.get(service_id) or {}
+    name = service.get(f"name_{lang}") or service.get("name_es") or service.get("name_en")
+    return name or service_id
 
 
 def build_lead_summary(state: "ConversationState", escalation_reason: str = "") -> str:
@@ -19,8 +55,13 @@ def build_lead_summary(state: "ConversationState", escalation_reason: str = "") 
     lang_label = "Español" if state.language == "es" else "English"
     lines.append(f"🌐 Idioma: {lang_label}")
 
-    if state.selected_service:
-        lines.append(f"🎯 Servicio de interés: {state.selected_service}")
+    # Solo mostramos "Servicio de interés" en flujos de servicio único. En grupo
+    # mixto el carrito (más abajo) refleja el interés real; el selected_service
+    # suele quedar obsoleto de cuando el cliente navegó por Información.
+    if state.selected_service and not state.mixed_cart:
+        lines.append(
+            f"🎯 Servicio de interés: {_service_display_name(state.selected_service, state.language)}"
+        )
 
     if state.location == "cartagena":
         lines.append("📍 Salida desde: Cartagena")
@@ -78,17 +119,11 @@ def build_lead_summary(state: "ConversationState", escalation_reason: str = "") 
             lines.append("  • 👶 Niños 8-10 (Bubble Makers) — requiere supervisor")
         if state.mixed_final_wants_private:
             lines.append("  • 🚤 Solicita lancha privada exclusiva")
-    if state.mixed_last_summary:
-        lines.append("─────────────────────")
-        lines.append("💰 Resumen compartido con el cliente:")
-        for summary_line in state.mixed_last_summary.split("\n")[:25]:
-            if summary_line.strip():
-                lines.append(f"  {summary_line}")
 
     recent_user_messages = [
         msg["content"]
         for msg in (state.history or [])[-6:]
-        if msg.get("role") == "user"
+        if msg.get("role") == "user" and _is_free_text(msg.get("content", ""))
     ]
     if recent_user_messages:
         lines.append("─────────────────────")

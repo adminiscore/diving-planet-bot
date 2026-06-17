@@ -1,6 +1,15 @@
 History
 =======
 
+0.16.4 - (2026-06-17)
+---------------------
+* Booking/payment links are no longer shown to the client anywhere: finishing the cart, the tree "Reservar" action, the full itinerary, the info-branch "book" action and the referral flow all now escalate to an advisor who sends the link. Consistent pattern across all branches.
+* Info menu cleanup: removed the redundant "⬅️ Volver" button from `info_menu` (it went to MAIN_MENU, identical to "🏠 Inicio").
+* Info branch no longer offers mixed-group options — only separate activities. Removed "👥 Grupo mixto" from `info_tours_menu` (diving+snorkel) and `info_packages_menu` (certified+beginners); the Reservar branch keeps mixed groups.
+* Lead note fixes: removed the "💰 Resumen compartido con el cliente / 🧾 RESERVA DIVING PLANET" block; "💬 Últimos mensajes del cliente" now lists only genuine free-text messages (button number picks and navigation keywords are filtered out via `_is_free_text`).
+* Lead note "🎯 Servicio de interés" now shows the friendly service name (e.g. "Especialidad PADI: Flotabilidad") instead of the raw id, and is hidden entirely when a mixed cart exists (the cart reflects the real interest; selected_service was often stale from browsing Información).
+* Tests updated for all the above; full suite green.
+
 0.16.3 - (2026-06-14)
 ---------------------
 * RAG reliability: the low-confidence fallback works again — hybrid retrieval gates vector hits on cosine and lexical (BM25) hits on raw rank, so weak matches no longer slip through. BM25 now uses `websearch_to_tsquery` for safer parsing.

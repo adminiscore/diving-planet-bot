@@ -695,7 +695,7 @@ class TestSummaryFlow:
         assert state.step == Step.SUMMARY
         assert "ℹ️" not in response
         assert [item["value"] for item in state.quick_replies] == ["itinerary", "back"]
-        assert state.quick_replies[0]["title"] == "🗺️ Ver itinerario completo + link de reserva"
+        assert state.quick_replies[0]["title"] == "🗺️ Ver itinerario completo"
 
     def test_open_water_summary_skips_repeated_info_block_in_english(self):
         state = make_state()
@@ -709,7 +709,7 @@ class TestSummaryFlow:
         assert state.step == Step.SUMMARY
         assert "ℹ️" not in response
         assert [item["value"] for item in state.quick_replies] == ["itinerary", "back"]
-        assert state.quick_replies[0]["title"] == "🗺️ View full itinerary + booking link"
+        assert state.quick_replies[0]["title"] == "🗺️ View full itinerary"
 
     def test_divemaster_summary_in_spanish_uses_info_link_and_contact_prompt(self):
         state = make_state()
@@ -773,7 +773,9 @@ class TestSummaryFlow:
 
         assert "ℹ️" not in response
         assert "🗺️" in response
-        assert "🔗 Link de reserva (10% off online):" in response
+        # El link de reserva/pago ya no se muestra al cliente: lo envía el asesor.
+        assert "Link de reserva" not in response
+        assert "Booking link" not in response
 
 
 class TestFullJourney:

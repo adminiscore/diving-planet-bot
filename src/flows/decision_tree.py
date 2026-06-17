@@ -292,45 +292,24 @@ def _divemaster_follow_up_prompt(lang: str) -> str:
 
 def _referral_escalation_message(state: "ConversationState") -> str:
     lang = state.language
-    service = SERVICES.get(state.selected_service)
-
-    booking_url: str | None = None
-    if service:
-        if state.location == "island" and service.get("booking_url_island"):
-            booking_url = service["booking_url_island"]
-        else:
-            booking_url = service.get("booking_url")
-
-        # Para clientes colombianos seguimos sin mostrar el link real de pago
-        if state.is_colombian:
-            booking_url = None
 
     if lang == "es":
-        base = (
+        # El asesor envía el link de pago tras revisar el caso (patrón unificado).
+        return (
             "Genial que ya hayas empezado tu curso. Para completar un referral/reactivate en Diving Planet "
             "necesitamos revisar tu eLearning y formularios PADI, y ver cuantas inmersiones te faltan.\n\n"
-            "Te paso con un asesor para que te indique exactamente que documentos traer y como funciona el precio en tu caso.\n\n"
+            "Te paso con un asesor para que te indique exactamente que documentos traer, como funciona el precio "
+            "en tu caso y te envie el link para completar la reserva.\n\n"
             + MESSAGES["escalate"][lang]
         )
-        if booking_url:
-            base += (
-                "\n\nCuando mi jefe te confirme los detalles, podras completar el pago aqui:\n"
-                f"{booking_url}"
-            )
-        return base
 
-    base = (
+    return (
         "Great that you already started your course. To finish a referral/reactivate with Diving Planet we "
         "need to review your eLearning and PADI forms, and see how many dives you still need.\n\n"
-        "I will transfer you to an advisor so they can tell you exactly which documents to bring and how pricing works in your case.\n\n"
+        "I will transfer you to an advisor so they can tell you exactly which documents to bring, how pricing "
+        "works in your case, and send you the link to complete the booking.\n\n"
         + MESSAGES["escalate"][lang]
     )
-    if booking_url:
-        base += (
-            "\n\nOnce our manager confirms the details with you, you can complete the payment here:\n"
-            f"{booking_url}"
-        )
-    return base
 
 
 def _extra_notes(service: dict, lang: str) -> str:
@@ -1213,7 +1192,6 @@ BUTTON_OPTIONS = {
             {"title": "💰 Precios y descuentos", "value": "2"},
             {"title": "💳 Reservas y pago", "value": "3"},
             {"title": "📍 Logística", "value": "4"},
-            {"title": "⬅️ Volver", "value": "back"},
             {"title": "🏠 Inicio", "value": "inicio"},
         ],
         "en": [
@@ -1221,7 +1199,6 @@ BUTTON_OPTIONS = {
             {"title": "💰 Prices and discounts", "value": "2"},
             {"title": "💳 Bookings and payment", "value": "3"},
             {"title": "📍 Logistics", "value": "4"},
-            {"title": "⬅️ Back", "value": "back"},
             {"title": "🏠 Home", "value": "inicio"},
         ],
     },
@@ -1257,14 +1234,12 @@ BUTTON_OPTIONS = {
         "es": [
             {"title": "🤿 Buceo", "value": "1"},
             {"title": "🐠 Snorkel", "value": "2"},
-            {"title": "👥 Grupo mixto (buceo + snorkel)", "value": "3"},
             {"title": "⬅️ Volver", "value": "back"},
             {"title": "🏠 Inicio", "value": "inicio"},
         ],
         "en": [
             {"title": "🤿 Diving", "value": "1"},
             {"title": "🐠 Snorkeling", "value": "2"},
-            {"title": "👥 Mixed group (diving + snorkel)", "value": "3"},
             {"title": "⬅️ Back", "value": "back"},
             {"title": "🏠 Home", "value": "inicio"},
         ],
@@ -1273,14 +1248,12 @@ BUTTON_OPTIONS = {
         "es": [
             {"title": "🤿 Solo buzos certificados", "value": "1"},
             {"title": "🆕 Solo principiantes", "value": "2"},
-            {"title": "👥 Grupo mixto (certificados + principiantes)", "value": "3"},
             {"title": "⬅️ Volver", "value": "back"},
             {"title": "🏠 Inicio", "value": "inicio"},
         ],
         "en": [
             {"title": "🤿 Only certified divers", "value": "1"},
             {"title": "🆕 Only beginners", "value": "2"},
-            {"title": "👥 Mixed group (certified + beginners)", "value": "3"},
             {"title": "⬅️ Back", "value": "back"},
             {"title": "🏠 Home", "value": "inicio"},
         ],
@@ -1944,11 +1917,11 @@ BUTTON_OPTIONS = {
     },
     "itinerary_offer": {
         "es": [
-            {"title": "🗺️ Ver itinerario completo + link de reserva", "value": "itinerary"},
+            {"title": "🗺️ Ver itinerario completo", "value": "itinerary"},
             {"title": "🔙 Volver al menú", "value": "back"},
         ],
         "en": [
-            {"title": "🗺️ View full itinerary + booking link", "value": "itinerary"},
+            {"title": "🗺️ View full itinerary", "value": "itinerary"},
             {"title": "🔙 Back to menu", "value": "back"},
         ],
     },
@@ -2472,7 +2445,7 @@ class DecisionTree:
 
     def _handle_info_tours_menu(self, state: ConversationState, message: str) -> str:
         lang = state.language
-        choice = self._parse_choice(message, 3)
+        choice = self._parse_choice(message, 2)
         if choice is None:
             self.set_quick_replies(state, "info_tours_menu")
             return MESSAGES["not_understood"][lang]
@@ -2488,17 +2461,13 @@ class DecisionTree:
                 Step.INFO_TOURS_MENU,
                 "info_tours_menu",
             )
-        if choice == 3:
-            state.step = Step.INFO_MIXED_ACTIVITY_MENU
-            self.set_quick_replies(state, "info_mixed_activity_menu")
-            return MESSAGES["info_mixed_activity_menu"][lang]
 
         self.set_quick_replies(state, "info_tours_menu")
         return MESSAGES["not_understood"][lang]
 
     def _handle_info_packages_menu(self, state: ConversationState, message: str) -> str:
         lang = state.language
-        choice = self._parse_choice(message, 3)
+        choice = self._parse_choice(message, 2)
         if choice is None:
             self.set_quick_replies(state, "info_packages_menu")
             return MESSAGES["not_understood"][lang]
@@ -2514,10 +2483,6 @@ class DecisionTree:
                 Step.INFO_PACKAGES_MENU,
                 "info_packages_menu",
             )
-        if choice == 3:
-            state.step = Step.INFO_MIXED_CERT_BEG_MENU
-            self.set_quick_replies(state, "info_mixed_cert_beg_menu")
-            return MESSAGES["info_mixed_cert_beg_menu"][lang]
 
         self.set_quick_replies(state, "info_packages_menu")
         return MESSAGES["not_understood"][lang]
@@ -2744,24 +2709,21 @@ class DecisionTree:
                 return "Perfecto. Para este caso, te paso con un asesor.\n\n" + MESSAGES["escalate"][lang]
             return "Perfect. For this case, I'll connect you with an advisor.\n\n" + MESSAGES["escalate"][lang]
 
-        booking_url = service.get("booking_url")
-        web_url = service.get("web_url")
-        url = booking_url or web_url or "https://divingplanet.org/contacto/"
-
-        state.step = Step.MAIN_MENU
-        self.set_quick_replies(state, "main_menu")
+        # Patrón unificado: no mostramos el link de reserva/pago al cliente.
+        # Escalamos al asesor, que confirma disponibilidad y envía el link.
+        state.step = Step.ESCALATE
+        state.quick_replies = []
+        state.pending_escalation_reason = "cliente quiere reservar desde información - confirma asesor"
         if lang == "es":
             return (
-                "🔗 Aquí tienes el link para reservar (verás el precio actualizado según fecha y disponibilidad):\n"
-                + url
-                + "\n\n"
-                + MESSAGES["main_menu"][lang]
+                "¡Perfecto! Te paso con un asesor para confirmar disponibilidad y precio final. "
+                "Enseguida se pone en contacto contigo y te envía el link de reserva.\n\n"
+                + MESSAGES["escalate"][lang]
             )
         return (
-            "🔗 Here is the booking link (you will see the up-to-date price depending on date and availability):\n"
-            + url
-            + "\n\n"
-            + MESSAGES["main_menu"][lang]
+            "Great! I'll connect you with an advisor to confirm availability and the final price. "
+            "They will be in touch shortly with the booking link.\n\n"
+            + MESSAGES["escalate"][lang]
         )
 
     def _handle_info_tour_detail(self, state: ConversationState, message: str) -> str:
@@ -4198,34 +4160,21 @@ class DecisionTree:
         lang = state.language
         choice = self._parse_choice(message, 2)
         if choice == 1:
-            # Reservar → escalate + enviar links de reserva
+            # Reservar → escalate. El asesor envía el link de reserva tras confirmar.
             state.step = Step.ESCALATE
             state.quick_replies = []
             state.pending_escalation_reason = "grupo mixto - cliente confirma carrito y quiere reservar"
 
-            # Construir bloque de links si los tenemos guardados
-            links_block = ""
-            if state.mixed_booking_links and not state.mixed_final_is_colombian:
-                if lang == "es":
-                    lines = ["\n🔗 *Links de reserva* (10% off online):"]
-                    for name, url in state.mixed_booking_links:
-                        lines.append(f"  • Reserva aquí ({name}): {url}")
-                else:
-                    lines = ["\n🔗 *Booking links* (10% off online):"]
-                    for name, url in state.mixed_booking_links:
-                        lines.append(f"  • Book here ({name}): {url}")
-                links_block = "\n".join(lines) + "\n"
-
             if lang == "es":
                 return (
                     "¡Perfecto! Te paso con un asesor para confirmar disponibilidad, "
-                    "número exacto de personas y precio final. Enseguida se pone en contacto contigo."
-                    + links_block
+                    "número exacto de personas y precio final. Enseguida se pone en contacto contigo "
+                    "y te envía el link de reserva."
                 )
             return (
                 "Great! I'll connect you with an advisor to confirm availability, exact "
-                "number of people, and the final price. They will be in touch shortly."
-                + links_block
+                "number of people, and the final price. They will be in touch shortly "
+                "with the booking link."
             )
         if choice == 2:
             self._reset_mixed_state(state)
@@ -5266,36 +5215,19 @@ class DecisionTree:
                 action = "contact"
 
             if action == "reservar" and not contact_only:
-                svc = SERVICES.get(service_id) or {}
-                if state.location == "island" and svc.get("booking_url_island"):
-                    booking_url = svc.get("booking_url_island")
-                else:
-                    booking_url = svc.get("booking_url")
                 state.summary_mode = None
                 state.step = Step.ESCALATE
                 state.quick_replies = []
                 state.pending_escalation_reason = "cliente quiere reservar - confirma asesor"
 
                 if lang == "es":
-                    link_block = ""
-                    if booking_url and not state.is_colombian:
-                        link_block = (
-                            f"\n\n🔗 *Link de reserva* (10% off online):\n{booking_url}\n"
-                        )
                     return (
                         "¡Perfecto! Te paso con un asesor para confirmar disponibilidad "
-                        "y precio final. Enseguida se pone en contacto contigo."
-                        + link_block
-                    )
-                link_block = ""
-                if booking_url and not state.is_colombian:
-                    link_block = (
-                        f"\n\n🔗 *Booking link* (10% off online):\n{booking_url}\n"
+                        "y precio final. Enseguida se pone en contacto contigo y te envía el link de reserva."
                     )
                 return (
                     "Great! I'll connect you with an advisor to confirm availability "
-                    "and the final price. They will be in touch shortly."
-                    + link_block
+                    "and the final price. They will be in touch shortly with the booking link."
                 )
 
             if action == "itinerary" or choice == 1:
@@ -5396,31 +5328,18 @@ class DecisionTree:
             return _referral_escalation_message(state)
 
         if action == "reservar" and not contact_only and service_id not in {"referral", "referral_already_on_island"}:
-            svc = SERVICES.get(service_id) or {}
-            if state.location == "island" and svc.get("booking_url_island"):
-                booking_url = svc.get("booking_url_island")
-            else:
-                booking_url = svc.get("booking_url")
             state.summary_mode = None
             state.step = Step.ESCALATE
             state.quick_replies = []
             state.pending_escalation_reason = "cliente quiere reservar - confirma asesor"
-            link_block = ""
-            if booking_url and not state.is_colombian:
-                if lang == "es":
-                    link_block = f"\n\n🔗 *Link de reserva* (10% off online):\n{booking_url}\n"
-                else:
-                    link_block = f"\n\n🔗 *Booking link* (10% off online):\n{booking_url}\n"
             if lang == "es":
                 return (
                     "¡Perfecto! Te paso con un asesor para confirmar disponibilidad "
-                    "y precio final. Enseguida se pone en contacto contigo."
-                    + link_block
+                    "y precio final. Enseguida se pone en contacto contigo y te envía el link de reserva."
                 )
             return (
                 "Great! I'll connect you with an advisor to confirm availability "
-                "and the final price. They will be in touch shortly."
-                + link_block
+                "and the final price. They will be in touch shortly with the booking link."
             )
 
         ask_choice = 2 if contact_only else (None if service_id in {"referral", "referral_already_on_island"} else 1)
@@ -5582,10 +5501,8 @@ class DecisionTree:
             block = [title_link, web_url]
             blocks.append(block)
 
-        # Bloque final con link de pago si hay booking_url (excepto para referral)
-        if booking_url and not contact_only and service_id not in {"referral", "referral_already_on_island"}:
-            block = [payment_title, booking_url]
-            blocks.append(block)
+        # El link de reserva/pago ya no se muestra al cliente: lo envía el asesor
+        # tras confirmar disponibilidad y precio final (patrón unificado).
 
         # Bloque con formulario de exoneración para buzos certificados
         # (implementado inicialmente solo para 2 buceos - 1 día en español)

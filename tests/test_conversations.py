@@ -517,11 +517,13 @@ async def test_back_button_present_in_reservar_quick_replies():
 
 @pytest.mark.asyncio
 async def test_back_button_not_present_in_info_menu():
-    """Info branch keeps the existing back-to-menu hint approach; no explicit back button there."""
+    """INFO_MENU back goes to MAIN_MENU, same as Inicio — so the redundant
+    Volver button is removed and only Inicio remains."""
     state = await reach_main_menu("es")
     await route_message(state, "2")  # INFO_MENU
     titles = [qr["title"] for qr in state.quick_replies]
-    assert any("Volver" in t or "Back" in t for t in titles)
+    assert not any("Volver" in t or "Back" in t for t in titles)
+    assert any("Inicio" in t or "Home" in t for t in titles)
 
 
 @pytest.mark.asyncio
@@ -689,7 +691,7 @@ async def test_certified_summary_includes_meeting_point_cartagena():
 async def test_certified_summary_includes_flight_rule_for_multiday():
     state = await reach_diving_experience()
     await send(state, "1", "4", "2", "2")  # 5 dives, sin refresher, no colombiano
-    # flight rule applies only when service has it; at least booking link should appear
+    # Reaches the summary; booking link is no longer shown to the client (advisor sends it).
     assert state.step == Step.SUMMARY
 
 
@@ -1289,7 +1291,10 @@ async def test_escalation_note_includes_service_if_known():
     await send(state, "1", "1", "2")  # 2 dives, recent dive
     resp = await route_message(state, "asesor")
     assert state.pending_note is not None
-    assert "2_dives_1_day" in state.pending_note
+    # Advisor note shows the friendly service name, not the raw id.
+    assert "2_dives_1_day" not in state.pending_note
+    assert "Servicio de interés:" in state.pending_note
+    assert "2 inmersiones" in state.pending_note or "Salidas de Buceo" in state.pending_note
 
 
 @pytest.mark.asyncio
@@ -1553,7 +1558,9 @@ async def test_lead_summary_full_fields():
     state.history = [{"role": "user", "content": "hola, quiero bucear"}]
     note = build_lead_summary(state, "solicitó asesor")
     assert "Español" in note
-    assert "5_dives_2_days" in note
+    # Friendly service name, not the raw id, in the advisor note.
+    assert "5_dives_2_days" not in note
+    assert "Servicio de interés:" in note and "5 inmersiones" in note
     assert "Islas del Rosario" in note
     assert "Isla Grande" in note
     assert "Cocoliso" in note
@@ -1574,7 +1581,9 @@ async def test_lead_summary_english():
     state.is_certified = False
     note = build_lead_summary(state, "requested advisor")
     assert "English" in note
-    assert "2_dives_1_day" in note
+    # Friendly service name, not the raw id.
+    assert "2_dives_1_day" not in note
+    assert "Fun Dives" in note
     assert "Cartagena" in note
     assert "principiante" in note.lower() or "No" in note
 
