@@ -809,9 +809,9 @@ async def rag_answer(
         system_prompt = build_system_prompt(lang, query=condensed_query)
         messages = [{"role": "system", "content": system_prompt}]
 
-        # Add conversation history (last 6 messages max)
+        # Add conversation history (last 12 messages max, to keep a longer thread)
         if history:
-            for msg in history[-6:]:
+            for msg in history[-12:]:
                 messages.append({"role": msg["role"], "content": redact_pii(msg["content"])})
 
         user_content = f"Contexto:\n{context}"

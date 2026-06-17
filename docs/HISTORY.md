@@ -1,6 +1,13 @@
 History
 =======
 
+0.16.5 - (2026-06-17)
+---------------------
+* RAG retrieval: a self-contained question asked right after an unrelated one no longer gets polluted with the previous question (which caused false fallbacks). History is only prepended for genuine follow-ups (`_looks_like_follow_up`: short fragments, connector-prefixed, anaphoric, or declarative location statements like "en el hotel Pao Pao").
+* Query rewriter prompt now handles a short ANSWER/statement (not just questions) as the last message, combining the client's earlier intent with their reply (advisor asked about pickup + "en el hotel Pao Pao" → "¿Me recogen en el hotel Pao Pao?").
+* Conversation context (Fase 1 of the orchestrator plan): `_build_extra_context` now includes the full cart and the current guided-flow step so the LLM stops asking for things the client already chose; the LLM answer history grew from the last 6 to the last 12 messages.
+* See `docs/conversation-orchestrator-plan.md` for the pending Fases 0/2/3/4 (reindex, tool-calling orchestrator so free text can change the tree, gpt-4o, tests).
+
 0.16.4 - (2026-06-17)
 ---------------------
 * Booking/payment links are no longer shown to the client anywhere: finishing the cart, the tree "Reservar" action, the full itinerary, the info-branch "book" action and the referral flow all now escalate to an advisor who sends the link. Consistent pattern across all branches.

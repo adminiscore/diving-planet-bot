@@ -2341,6 +2341,31 @@ def _build_extra_context(state: ConversationState) -> str | None:
     elif getattr(state, "refresher_interested", None) is False:
         parts.append("En el flujo marco que NO le interesa incluir un refresher.")
 
+    # Carrito actual (clave para no preguntar cosas que el cliente ya eligio)
+    cart = getattr(state, "mixed_cart", None) or []
+    if cart:
+        items = ", ".join(
+            f"{it.get('qty', 0)} x {it.get('label') or it.get('type', '')}" for it in cart
+        )
+        if state.language == "es":
+            parts.append(
+                f"El cliente YA tiene estas actividades en su carrito: {items}. "
+                "No vuelvas a preguntar por estas actividades; tenlas en cuenta como contexto."
+            )
+        else:
+            parts.append(
+                f"The customer ALREADY has these activities in their cart: {items}. "
+                "Do not ask again about these activities; treat them as known context."
+            )
+
+    # Paso actual del flujo guiado (para que el LLM sepa que esta esperando el bot)
+    step_value = getattr(getattr(state, "step", None), "value", None)
+    if step_value:
+        if state.language == "es":
+            parts.append(f"Paso actual del flujo guiado: {step_value}.")
+        else:
+            parts.append(f"Current guided-flow step: {step_value}.")
+
     if not parts:
         return None
     return " ".join(parts)
