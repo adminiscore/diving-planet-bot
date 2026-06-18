@@ -2790,6 +2790,29 @@ def _apply_detected_intent(intent, state: ConversationState) -> None:
 def _build_confirmation_message(intent, state: ConversationState) -> str | None:
     lang = state.language
     
+    # PRIMERO: Verificar si es grupo mixto (tiene prioridad)
+    if intent.group_allocation and len(intent.group_allocation) > 1:
+        # Construir descripción de actividades
+        activities_es = []
+        activities_en = []
+        total_people = 0
+        for activity, qty in intent.group_allocation.items():
+            total_people += qty
+            if activity == "certified_diving":
+                activities_es.append(f"{qty} para buceo certificado")
+                activities_en.append(f"{qty} for certified diving")
+            elif activity == "snorkel":
+                activities_es.append(f"{qty} para snorkel")
+                activities_en.append(f"{qty} for snorkeling")
+            elif activity == "minicourse":
+                activities_es.append(f"{qty} para minicurso")
+                activities_en.append(f"{qty} for minicourse")
+        
+        if lang == "es":
+            return f"¡Bienvenidos! Veo que son {total_people} personas: {' y '.join(activities_es)}."
+        return f"Welcome! I see you are {total_people} people: {' and '.join(activities_en)}."
+    
+    # Buceo certificado (solo si NO es grupo mixto)
     if intent.activity == "certified_diving" and intent.is_certified:
         if intent.group_size and intent.group_size > 1:
             if lang == "es":
@@ -2800,34 +2823,13 @@ def _build_confirmation_message(intent, state: ConversationState) -> str | None:
                 return "¡Genial! Veo que eres buzo certificado. Para ofrecerte la mejor experiencia, necesito saber:"
             return "Great! I see you are a certified diver. To offer you the best experience, I need to know:"
     
-    if intent.activity == "certified_diving" and intent.is_certified is None:
-        if lang == "es":
-            return "Perfecto, te ayudo con el buceo. Para continuar necesito saber:"
-        return "Perfect, I'll help you with diving. To continue I need to know:"
-    
+    # Minicurso
     if intent.activity == "minicourse":
         if lang == "es":
             return "¡Perfecto! El minicurso de buceo es ideal para principiantes. Déjame preparar la información..."
         return "Perfect! The diving minicourse is ideal for beginners. Let me prepare the information..."
     
-    if intent.group_allocation and len(intent.group_allocation) > 1:
-        activities_es = []
-        activities_en = []
-        for activity, qty in intent.group_allocation.items():
-            if activity == "certified_diving":
-                activities_es.append(f"{qty} persona(s): Buceo certificado")
-                activities_en.append(f"{qty} person(s): Certified diving")
-            elif activity == "snorkel":
-                activities_es.append(f"{qty} persona(s): Snorkel")
-                activities_en.append(f"{qty} person(s): Snorkel")
-            elif activity == "minicourse":
-                activities_es.append(f"{qty} persona(s): Minicurso")
-                activities_en.append(f"{qty} person(s): Minicourse")
-        
-        if lang == "es":
-            return "Entiendo que quieren hacer actividades diferentes:\n" + "\n".join(f"- {a}" for a in activities_es) + "\n\nVoy a preparar tu reserva con estas actividades."
-        return "I understand you want to do different activities:\n" + "\n".join(f"- {a}" for a in activities_en) + "\n\nI'll prepare your booking with these activities."
-    
+    # No mostrar mensaje de confirmación cuando va al carrito sin certificación clara
     return None
 
 
@@ -2888,8 +2890,22 @@ async def route_message(state: ConversationState, message: str) -> str:
         if intent.confidence > 0.2:
             _apply_detected_intent(intent, state)
             
+            # PRIMERO: Verificar si es grupo mixto (tiene prioridad sobre flujos individuales)
+            if _should_enter_mixed_flow(intent, state):
+                confirmation = _build_confirmation_message(intent, state)
+                
+                # Ir al carrito (sin pre-cargar actividades, que el usuario las añada manualmente)
+                state.step = Step.MIXED_ENTRY
+                state.mixed_cart = []
+                decision_tree.set_quick_replies(state, "mixed_entry")
+                from src.flows.decision_tree import MESSAGES
+                logger.info(f"[INTENT] Detected mixed group, going to cart")
+                if confirmation:
+                    return confirmation + "\n\n" + MESSAGES["mixed_entry"][state.language]
+                return MESSAGES["mixed_entry"][state.language]
+            
             # Skip to certified diving flow if we detected certified diver
-            if _should_skip_to_certified_flow(intent, state):
+            elif _should_skip_to_certified_flow(intent, state):
                 confirmation = _build_confirmation_message(intent, state)
                 
                 # Ir al flujo de carrito
@@ -2902,7 +2918,7 @@ async def route_message(state: ConversationState, message: str) -> str:
                 # Si no tenemos ubicación, preguntar primero
                 if not state.detected_location and not state.location:
                     state.step = Step.MIXED_LOCATION
-                    decision_tree.set_quick_replies(state, "mixed_location")
+                    decision_tree.set_quick_replies(state, "tours_location")
                     from src.flows.decision_tree import MESSAGES
                     logger.info(f"[INTENT] Detected certified diving, asking location first")
                     if confirmation:
@@ -2920,63 +2936,52 @@ async def route_message(state: ConversationState, message: str) -> str:
                     return confirmation + "\n\n" + MESSAGES["mixed_add_cert_plan"][state.language]
                 return MESSAGES["mixed_add_cert_plan"][state.language]
             
-            # Ask certification if activity is diving but certification unknown
-            elif _should_ask_certification(intent, state):
-                # Redirigir al carrito para que elija actividad
+            # Detectar actividades específicas (minicurso, PADI, snorkel, etc.) → ir directo al carrito
+            elif intent.activity in ("minicourse", "snorkel", "padi_open_water", "padi_advanced", 
+                                      "padi_rescue", "padi_divemaster", "padi_specialty"):
                 confirmation = _build_confirmation_message(intent, state)
                 state.step = Step.MIXED_ENTRY
                 state.mixed_cart = []
-                decision_tree.set_quick_replies(state, "mixed_entry")
-                from src.flows.decision_tree import MESSAGES
-                logger.info(f"[INTENT] Detected diving but no certification, going to cart")
-                if confirmation:
-                    return confirmation + "\n\n" + MESSAGES["mixed_entry"][state.language]
-                return MESSAGES["mixed_entry"][state.language]
-            
-            # Enter mixed flow if we detected mixed group allocation
-            elif _should_enter_mixed_flow(intent, state):
-                confirmation = _build_confirmation_message(intent, state)
                 
-                # Pre-load cart with detected activities
-                state.mixed_cart = []
-                for activity, qty in intent.group_allocation.items():
-                    if activity == "certified_diving":
-                        # Need to ask last dive first
-                        state.mixed_pending_qty_type = "cert"
-                        state.mixed_pending_qty_value = qty
-                    elif activity == "minicourse":
-                        state.mixed_cart.append({
-                            "type": "beginner",
-                            "qty": qty,
-                            "plan": "minicourse",
-                            "label": "Minicurso" if state.language == "es" else "Minicourse"
-                        })
-                    elif activity == "snorkel":
-                        state.mixed_cart.append({
-                            "type": "snorkel",
-                            "qty": qty,
-                            "plan": "snorkeling",
-                            "label": "Snorkel"
-                        })
+                # Mapear actividad a tipo de carrito
+                if intent.activity == "minicourse":
+                    state.mixed_pending_qty_type = "beginner"
+                elif intent.activity == "snorkel":
+                    state.mixed_pending_qty_type = "snorkel"
+                elif intent.activity in ("padi_open_water", "padi_advanced", "padi_rescue", 
+                                          "padi_divemaster", "padi_specialty"):
+                    state.mixed_pending_qty_type = "course"
+                    # TODO: setear el curso específico según intent.activity
                 
-                # If we have certified divers, ask about last dive first
-                if state.mixed_pending_qty_type == "cert":
-                    state.step = Step.MIXED_CERT_LAST_DIVE
-                    decision_tree.set_quick_replies(state, "certified_last_dive")
+                # Si no tenemos ubicación, preguntar primero
+                if not state.detected_location and not state.location:
+                    state.step = Step.MIXED_LOCATION
+                    decision_tree.set_quick_replies(state, "tours_location")
                     from src.flows.decision_tree import MESSAGES
-                    logger.info(f"[INTENT] Entering mixed flow, asking last dive for certified")
+                    logger.info(f"[INTENT] Detected {intent.activity}, asking location first")
                     if confirmation:
-                        return confirmation + "\n\n" + MESSAGES["certified_last_dive"][state.language]
-                    return MESSAGES["certified_last_dive"][state.language]
-                else:
-                    # Go directly to cart review
-                    state.step = Step.MIXED_CART_REVIEW
-                    state.location = state.detected_location or state.location
-                    logger.info(f"[INTENT] Entering mixed flow with pre-loaded cart")
-                    response = decision_tree.process_message(state, "")
-                    if confirmation:
-                        return confirmation + "\n\n" + response
-                    return response
+                        return confirmation + "\n\n" + MESSAGES["mixed_location"][state.language]
+                    return MESSAGES["mixed_location"][state.language]
+                
+                # Si tenemos ubicación, ir directo a preguntar cantidad
+                state.location = state.detected_location or state.location
+                state.step = Step.MIXED_ADD_QTY
+                decision_tree.set_quick_replies(state, "mixed_quantity")
+                from src.flows.decision_tree import MESSAGES
+                logger.info(f"[INTENT] Detected {intent.activity} with location, asking quantity")
+                if confirmation:
+                    return confirmation + "\n\n" + MESSAGES["mixed_add_qty"][state.language]
+                return MESSAGES["mixed_add_qty"][state.language]
+            
+            # Ask certification if activity is diving but certification unknown
+            elif _should_ask_certification(intent, state):
+                # Preguntar certificación con botones
+                state.step = Step.MIXED_ASK_CERTIFICATION
+                state.mixed_cart = []
+                decision_tree.set_quick_replies(state, "mixed_ask_certification")
+                from src.flows.decision_tree import MESSAGES
+                logger.info(f"[INTENT] Detected diving but no certification, asking certification")
+                return MESSAGES["mixed_ask_certification"][state.language]
 
     # Check for escalation keywords
     if _matches_escalation_keyword(msg_lower):
@@ -3240,6 +3245,23 @@ async def route_message(state: ConversationState, message: str) -> str:
                     state.pending_escalation_reason = reason
                     state.pending_note = build_lead_summary(state, escalation_reason=reason)
                 logger.info(f"[SUPERVISOR] Intent={intent} -> step={state.step.value}")
+                return response
+            
+            # intent == "RAG" → Para steps críticos que esperan respuestas específicas,
+            # enviar al decision_tree en lugar de RAG (el handler detectará texto libre)
+            if state.step in (
+                Step.MIXED_LOCATION,
+                Step.MIXED_ADD_QTY,
+                Step.MIXED_CERT_LAST_DIVE,
+                Step.MIXED_CERT_REFRESH_INTEREST,
+                Step.MIXED_CERT_REFRESH_QTY,
+            ):
+                logger.info(f"[SUPERVISOR] Classifier returned RAG but step={state.step.value} expects specific input, sending to decision_tree")
+                response = decision_tree.process_message(state, message)
+                if state.step == Step.ESCALATE and not state.pending_note:
+                    reason = state.pending_escalation_reason or "derivado por el árbol de opciones"
+                    state.pending_escalation_reason = reason
+                    state.pending_note = build_lead_summary(state, escalation_reason=reason)
                 return response
             # intent == "RAG" → fall through to RAG below
 

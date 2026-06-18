@@ -21,15 +21,17 @@ async def test_location_free_text():
     state1.language = "es"
     
     msg1 = "Hola somos dos personas que queremos hacer buceo y estamos certificados"
-    print(f"\n👤 Usuario: {msg1}")
+    print(f"\nUsuario: {msg1}")
     resp1 = await route_message(state1, msg1)
-    print(f"\n🤖 Bot:\n{resp1}")
+    print(f"\nBot:\n{resp1}")
+    print(f"Estado despues msg1: step={state1.step.value}, quick_replies={len(state1.quick_replies) if state1.quick_replies else 0}")
     
     msg2 = "Cartagena"
-    print(f"\n👤 Usuario: {msg2}")
+    print(f"\nUsuario: {msg2}")
+    print(f"Estado antes msg2: step={state1.step.value}, quick_replies={len(state1.quick_replies) if state1.quick_replies else 0}")
     resp2 = await route_message(state1, msg2)
-    print(f"\n🤖 Bot:\n{resp2}")
-    print(f"\n📊 Estado: location={state1.location}")
+    print(f"\nBot:\n{resp2}")
+    print(f"\nEstado despues msg2: location={state1.location}, step={state1.step.value}")
     
     assert state1.location == "cartagena", f"Expected location='cartagena', got '{state1.location}'"
     print("✅ Cartagena detectado correctamente")
@@ -40,15 +42,15 @@ async def test_location_free_text():
     state2.language = "es"
     
     msg1 = "Hola somos dos personas que queremos hacer buceo y estamos certificados"
-    print(f"\n👤 Usuario: {msg1}")
+    print(f"\nUsuario: {msg1}")
     resp1 = await route_message(state2, msg1)
-    print(f"\n🤖 Bot:\n{resp1}")
+    print(f"\nBot:\n{resp1}")
     
     msg2 = "Ya estoy en las islas del rosario"
-    print(f"\n👤 Usuario: {msg2}")
+    print(f"\nUsuario: {msg2}")
     resp2 = await route_message(state2, msg2)
-    print(f"\n🤖 Bot:\n{resp2}")
-    print(f"\n📊 Estado: location={state2.location}")
+    print(f"\nBot:\n{resp2}")
+    print(f"\nEstado: location={state2.location}")
     
     assert state2.location == "island", f"Expected location='island', got '{state2.location}'"
     print("✅ Islas del Rosario detectado correctamente")
@@ -59,14 +61,14 @@ async def test_location_free_text():
     state3.language = "es"
     
     msg1 = "Hola somos dos personas que queremos hacer buceo y estamos certificados"
-    print(f"\n👤 Usuario: {msg1}")
+    print(f"\nUsuario: {msg1}")
     resp1 = await route_message(state3, msg1)
     
     msg2 = "Estoy en las islas"
-    print(f"\n👤 Usuario: {msg2}")
+    print(f"\nUsuario: {msg2}")
     resp2 = await route_message(state3, msg2)
-    print(f"\n🤖 Bot:\n{resp2}")
-    print(f"\n📊 Estado: location={state3.location}")
+    print(f"\nBot:\n{resp2}")
+    print(f"\nEstado: location={state3.location}")
     
     assert state3.location == "island", f"Expected location='island', got '{state3.location}'"
     print("✅ 'en las islas' detectado correctamente")

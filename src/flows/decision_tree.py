@@ -55,6 +55,7 @@ class Step(str, Enum):
     # Cart-style mixed-group flow
     MIXED_ENTRY = "mixed_entry"
     MIXED_LOCATION = "mixed_location"
+    MIXED_ASK_CERTIFICATION = "mixed_ask_certification"
     MIXED_ADD_ACTIVITY = "mixed_add_activity"
     MIXED_ADD_CERT_PLAN = "mixed_add_cert_plan"
     MIXED_ADD_CERT_MULTI_DAY = "mixed_add_cert_multi_day"
@@ -842,6 +843,16 @@ MESSAGES = {
             "Before adding activities, tell me where you will depart from."
         ),
     },
+    "mixed_ask_certification": {
+        "es": (
+            "Perfecto, te ayudo con el buceo. Para continuar necesito saber:\n\n"
+            "¿Eres buzo certificado?"
+        ),
+        "en": (
+            "Perfect, I'll help you with diving. To continue I need to know:\n\n"
+            "Are you a certified diver?"
+        ),
+    },
     "mixed_add_activity": {
         "es": "¿Qué actividad quieres *añadir* al carrito?",
         "en": "Which activity would you like to *add* to the cart?",
@@ -1357,6 +1368,18 @@ BUTTON_OPTIONS = {
         "en": [
             {"title": "🚤 Departing from Cartagena", "value": "1"},
             {"title": "🏝️ Already on the islands", "value": "2"},
+            {"title": "🔙 Back", "value": "back"},
+        ],
+    },
+    "mixed_ask_certification": {
+        "es": [
+            {"title": "✅ Sí, estoy certificado", "value": "1"},
+            {"title": "❌ No, soy principiante", "value": "2"},
+            {"title": "🔙 Volver", "value": "back"},
+        ],
+        "en": [
+            {"title": "✅ Yes, I'm certified", "value": "1"},
+            {"title": "❌ No, I'm a beginner", "value": "2"},
             {"title": "🔙 Back", "value": "back"},
         ],
     },
@@ -1992,6 +2015,7 @@ class DecisionTree:
             Step.PRICING_COLOMBIAN: self._handle_pricing_colombian,
             Step.MIXED_ENTRY: self._handle_mixed_entry,
             Step.MIXED_LOCATION: self._handle_mixed_location,
+            Step.MIXED_ASK_CERTIFICATION: self._handle_mixed_ask_certification,
             Step.MIXED_ADD_ACTIVITY: self._handle_mixed_add_activity,
             Step.MIXED_ADD_CERT_PLAN: self._handle_mixed_add_cert_plan,
             Step.MIXED_ADD_CERT_MULTI_DAY: self._handle_mixed_add_cert_multi_day,
@@ -2868,6 +2892,8 @@ class DecisionTree:
         preview_state = ConversationState(conversation_id=state.conversation_id)
         preview_state.language = state.language
         preview_state.location = state.location
+        preview_state.island = state.island  # Preservar isla para mostrar en resumen
+        preview_state.hotel = state.hotel  # Preservar hotel para coordinar recogida
         preview_state.selected_service = service_id
         preview_state.is_colombian = False
         preview_state.is_certified = bool((SERVICES.get(service_id) or {}).get("requires_certification"))
@@ -2937,25 +2963,189 @@ class DecisionTree:
         # Detectar texto libre: Cartagena
         if choice == 1 or "cartagena" in msg or "ctg" in msg:
             state.location = "cartagena"
-            # Si ya tenemos marcado que queremos buceo certificado, ir directo al plan
+            # Si ya tenemos una actividad detectada, saltar directo a esa actividad
             if state.mixed_pending_qty_type == "cert":
                 state.step = Step.MIXED_ADD_CERT_PLAN
                 self.set_quick_replies(state, "mixed_add_cert_plan")
                 return MESSAGES["mixed_add_cert_plan"][lang]
+            elif state.mixed_pending_qty_type in ("beginner", "snorkel", "course", "companion"):
+                # Ir directo a preguntar cantidad
+                state.step = Step.MIXED_ADD_QTY
+                self.set_quick_replies(state, "mixed_quantity")
+                return MESSAGES["mixed_add_qty"][lang]
             return self._goto_mixed_add_activity(state)
         
         # Detectar texto libre: Islas del Rosario
         if choice == 2 or "isla" in msg or "rosario" in msg:
             state.location = "island"
-            # Si ya tenemos marcado que queremos buceo certificado, ir directo al plan
+            # Si ya tenemos una actividad detectada, saltar directo a esa actividad
             if state.mixed_pending_qty_type == "cert":
                 state.step = Step.MIXED_ADD_CERT_PLAN
                 self.set_quick_replies(state, "mixed_add_cert_plan")
                 return MESSAGES["mixed_add_cert_plan"][lang]
+            elif state.mixed_pending_qty_type in ("beginner", "snorkel", "course", "companion"):
+                # Ir directo a preguntar cantidad
+                state.step = Step.MIXED_ADD_QTY
+                self.set_quick_replies(state, "mixed_quantity")
+                return MESSAGES["mixed_add_qty"][lang]
             return self._goto_mixed_add_activity(state)
         
         self.set_quick_replies(state, "tours_location")
         return MESSAGES["not_understood"][lang]
+
+    def _handle_mixed_ask_certification(self, state: ConversationState, message: str) -> str:
+        """Handler para pregunta de certificación cuando detectamos buceo sin certificación clara."""
+        choice = self._parse_choice(message, 2)
+        lang = state.language
+        msg = message.strip().lower()
+        
+        if msg in ("back", "cancel", "cancelar"):
+            return self._goto_mixed_entry(state)
+        
+        # Opción 1: Sí, estoy certificado
+        if choice == 1:
+            state.detected_is_certified = True
+            state.mixed_pending_qty_type = "cert"
+            
+            # Si tenemos isla pero NO hotel, preguntar hotel específico
+            if state.location == "island" and state.island and not state.hotel:
+                return self._goto_island_hotel_menu(state)
+            
+            # Si ya tenemos ubicación completa, ir directo a elegir plan
+            if state.location:
+                state.step = Step.MIXED_ADD_CERT_PLAN
+                self.set_quick_replies(state, "mixed_add_cert_plan")
+                return MESSAGES["mixed_add_cert_plan"][lang]
+            
+            # Si no tenemos ubicación, preguntar primero
+            state.step = Step.MIXED_LOCATION
+            self.set_quick_replies(state, "tours_location")
+            return MESSAGES["mixed_location"][lang]
+        
+        # Opción 2: No, soy principiante
+        if choice == 2:
+            state.detected_is_certified = False
+            state.mixed_pending_qty_type = "beginner"
+            
+            # Si tenemos isla pero NO hotel, preguntar hotel específico
+            if state.location == "island" and state.island and not state.hotel:
+                return self._goto_island_hotel_menu(state)
+            
+            # Si ya tenemos ubicación completa, ir directo a cantidad
+            if state.location:
+                state.step = Step.MIXED_ADD_QTY
+                self.set_quick_replies(state, "mixed_quantity")
+                return MESSAGES["mixed_add_qty"][lang]
+            
+            # Si no tenemos ubicación, preguntar primero
+            state.step = Step.MIXED_LOCATION
+            self.set_quick_replies(state, "tours_location")
+            return MESSAGES["mixed_location"][lang]
+        
+        # No entendido
+        self.set_quick_replies(state, "mixed_ask_certification")
+        return MESSAGES["not_understood"][lang]
+
+    def _goto_island_hotel_menu(self, state: ConversationState) -> str:
+        """Ir al menú de hoteles según la isla detectada."""
+        lang = state.language
+        
+        # Mapeo de island_id a nombre de isla
+        island_names = {
+            "isla_grande": "Isla Grande",
+            "isla_marina": "Isla Marina",
+            "isla_del_pirata": "Isla del Pirata",
+            "isla_del_sol": "Isla del Sol",
+            "isleta": "Isleta",
+            "isla_arena": "Isla Arena",
+            "isla_pavitos": "Isla Pavitos",
+            "isla_lizamar": "Isla Lizamar",
+            "isla_gigi": "Isla Gigi",
+            "isla_rosa": "Isla Rosa",
+            "isla_pelicano": "Isla Pelicano",
+            "isla_rosario": "Isla Rosario",
+        }
+        
+        island_name = island_names.get(state.island, state.island)
+        
+        hotels_by_island: dict[str, list[str]] = {
+            "Isla Grande": [
+                "San Pedro de Majagua",
+                "Bora Bora Beach Club",
+                "Cocoliso Island Resort",
+                "Pao Pao Hotel",
+                "Fragata Island House",
+                "Secreto Hostel",
+                "Gente de Mar Resort",
+                "Luxury Beach Club",
+                "Ecohotel Las Flores",
+                "Ecohostal Playa Libre",
+            ],
+            "Isla Marina": [
+                "Islabela",
+                "Hotel El Hamaquero",
+                "Centro Ubuntu",
+            ],
+            "Isla del Pirata": [
+                "Hotel Isla del Pirata",
+            ],
+            "Isla del Sol": [
+                "Hotel Isla del Sol",
+            ],
+            "Isleta": [
+                "Coralina Island",
+                "Isleta Beach",
+            ],
+            "Isla Arena": [
+                "Isla Arena Eco Resort",
+            ],
+            "Isla Pavitos": [
+                "Isla Pavitos (Privada)",
+            ],
+            "Isla Lizamar": [
+                "Hotel Lizamar",
+            ],
+            "Isla Gigi": [
+                "Casa de Isla Gigi",
+            ],
+            "Isla Rosa": [
+                "Isla Rosa (Privada)",
+            ],
+            "Isla Pelicano": [
+                "Isla Pelicano",
+            ],
+            "Isla Rosario": [
+                "Rosario EcoHotel",
+                "Hotel San Tropel",
+            ],
+        }
+        
+        island_hotels = hotels_by_island.get(island_name, [])
+        if island_hotels:
+            quick_replies: list[dict] = []
+            for idx, hotel_name in enumerate(island_hotels, start=1):
+                quick_replies.append({"title": hotel_name, "value": str(idx)})
+            other_title = "Otro / No esta en la lista" if lang == "es" else "Other / Not listed"
+            quick_replies.append({"title": other_title, "value": str(len(island_hotels) + 1)})
+            quick_replies.append({"title": "🔙 Volver" if lang == "es" else "🔙 Back", "value": "back"})
+            
+            state.step = Step.ISLAND_HOTEL_MENU
+            state.quick_replies = quick_replies
+            
+            if lang == "es":
+                return (
+                    f"Perfecto, estás en *{island_name}*.\n\n"
+                    "¿En qué hotel te hospedas? (Necesario para coordinar la recogida)"
+                )
+            return (
+                f"Great, you are on *{island_name}*.\n\n"
+                "Which hotel are you staying at? (Needed to coordinate pickup)"
+            )
+        
+        # Si no hay hoteles para esa isla, continuar sin hotel
+        if lang == "es":
+            return f"Perfecto, tomamos nota de que estás en *{island_name}*."
+        return f"Great, we've noted you are on *{island_name}*."
 
     def _goto_mixed_add_activity(self, state: ConversationState) -> str:
         lang = state.language
@@ -4299,6 +4489,24 @@ class DecisionTree:
             self.set_quick_replies(state, "island_menu")
             return MESSAGES["island_menu"][lang]
 
+        # Mapeo de island_id a nombre de isla
+        island_names = {
+            "isla_grande": "Isla Grande",
+            "isla_marina": "Isla Marina",
+            "isla_del_pirata": "Isla del Pirata",
+            "isla_del_sol": "Isla del Sol",
+            "isleta": "Isleta",
+            "isla_arena": "Isla Arena",
+            "isla_pavitos": "Isla Pavitos",
+            "isla_lizamar": "Isla Lizamar",
+            "isla_gigi": "Isla Gigi",
+            "isla_rosa": "Isla Rosa",
+            "isla_pelicano": "Isla Pelicano",
+            "isla_rosario": "Isla Rosario",
+        }
+        
+        island_name = island_names.get(state.island, state.island)
+
         hotels_by_island: dict[str, list[str]] = {
             "Isla Grande": [
                 "San Pedro de Majagua",
@@ -4351,7 +4559,7 @@ class DecisionTree:
             ],
         }
 
-        island_hotels = hotels_by_island.get(state.island, [])
+        island_hotels = hotels_by_island.get(island_name, [])
         max_options = len(island_hotels) + 1 if island_hotels else 1
         choice = self._parse_choice(message, max_options)
 
@@ -4382,6 +4590,20 @@ class DecisionTree:
         island_name = state.island
         hotel_name = state.hotel
 
+        # Si venimos del flujo de reserva (mixed flow), continuar con ese flujo
+        if state.mixed_pending_qty_type:
+            # Certificado → ir a elegir plan
+            if state.mixed_pending_qty_type == "cert":
+                state.step = Step.MIXED_ADD_CERT_PLAN
+                self.set_quick_replies(state, "mixed_add_cert_plan")
+                return MESSAGES["mixed_add_cert_plan"][lang]
+            # Principiante, snorkel, etc. → ir a cantidad
+            else:
+                state.step = Step.MIXED_ADD_QTY
+                self.set_quick_replies(state, "mixed_quantity")
+                return MESSAGES["mixed_add_qty"][lang]
+        
+        # Si NO venimos del flujo de reserva, es el flujo de logística normal
         if lang == "es":
             if hotel_name and hotel_name != "Otro / No esta en la lista":
                 response = (
@@ -5653,12 +5875,31 @@ class DecisionTree:
 
         if lang == "es":
             # Datos base
-            departure = "Cartagena" if state.location == "cartagena" else "Islas del Rosario"
-            meeting_note = ""
             if state.location == "cartagena":
+                departure = "Cartagena"
                 meeting_note = "⏰ Punto de encuentro: 8:00 AM en el Muelle de la Bodeguita."
             elif state.location == "island":
+                # Mapeo de island_id a nombre de isla
+                island_names = {
+                    "isla_grande": "Isla Grande",
+                    "isla_marina": "Isla Marina",
+                    "isla_del_pirata": "Isla del Pirata",
+                    "isla_del_sol": "Isla del Sol",
+                    "isleta": "Isleta",
+                    "isla_arena": "Isla Arena",
+                    "isla_pavitos": "Isla Pavitos",
+                    "isla_lizamar": "Isla Lizamar",
+                    "isla_gigi": "Isla Gigi",
+                    "isla_rosa": "Isla Rosa",
+                    "isla_pelicano": "Isla Pelícano",
+                    "isla_rosario": "Isla Rosario",
+                }
+                # Si tenemos isla específica, mostrarla; si no, mostrar genérico
+                departure = island_names.get(state.island, "Islas del Rosario") if state.island else "Islas del Rosario"
                 meeting_note = "⏰ Recogida en hotel: alrededor de 9:30 AM (si hay acceso marítimo)."
+            else:
+                departure = "Islas del Rosario"
+                meeting_note = ""
 
             includes_raw = service.get("includes_es") or ""
             includes_items = [
@@ -5818,12 +6059,32 @@ class DecisionTree:
 
             summary = "\n".join(lines)
         else:
-            departure = "Cartagena" if state.location == "cartagena" else "Rosario Islands"
-            meeting_note = ""
+            # English
             if state.location == "cartagena":
+                departure = "Cartagena"
                 meeting_note = "\n⏰ Meeting point: 8:00 AM at Muelle de la Bodeguita."
             elif state.location == "island":
+                # Mapeo de island_id a nombre de isla en inglés
+                island_names_en = {
+                    "isla_grande": "Isla Grande",
+                    "isla_marina": "Isla Marina",
+                    "isla_del_pirata": "Isla del Pirata",
+                    "isla_del_sol": "Isla del Sol",
+                    "isleta": "Isleta",
+                    "isla_arena": "Isla Arena",
+                    "isla_pavitos": "Isla Pavitos",
+                    "isla_lizamar": "Isla Lizamar",
+                    "isla_gigi": "Isla Gigi",
+                    "isla_rosa": "Isla Rosa",
+                    "isla_pelicano": "Isla Pelícano",
+                    "isla_rosario": "Isla Rosario",
+                }
+                # Si tenemos isla específica, mostrarla; si no, mostrar genérico
+                departure = island_names_en.get(state.island, "Rosario Islands") if state.island else "Rosario Islands"
                 meeting_note = "\n⏰ Hotel pickup: around 9:30 AM (if there is sea access)."
+            else:
+                departure = "Rosario Islands"
+                meeting_note = ""
 
             includes_raw = service.get("includes_en") or ""
             includes_items = [

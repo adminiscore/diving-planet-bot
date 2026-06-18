@@ -1,6 +1,21 @@
 History
 =======
 
+0.17.0 - (2026-06-18)
+---------------------
+* Sprint 3 de detección de intención: detección mejorada de isla/hotel + pregunta inteligente de certificación.
+* Detección de 28 hoteles con variantes y aliases (Pao Pao, Cocoliso, San Pedro de Majagua, etc.) y mapeo automático hotel→isla.
+* Detección de 12 islas (Isla Grande, Isla Marina, Isla del Pirata, etc.) con regex extensivo.
+* Pregunta de certificación cuando es ambigua: "Hola quiero bucear" → "¿Eres buzo certificado?" con botones [Sí/No].
+* Pregunta de hotel específico: cuando detecta isla pero no hotel, muestra lista de hoteles de esa isla (ej: 10 hoteles de Isla Grande).
+* Resumen personalizado: muestra isla específica ("📍 Salida: Isla Grande") en lugar de genérico ("Islas del Rosario").
+* Nuevo step `MIXED_ASK_CERTIFICATION` en `decision_tree.py` con handler y quick_replies.
+* Función `_goto_island_hotel_menu()` para mostrar hoteles según isla detectada.
+* Fix crítico: `_mixed_preview_state()` ahora preserva `island` y `hotel` para que aparezcan en el resumen.
+* Documentación reorganizada en `docs/FreeText/` con nuevo `SPRINT3_LOCATION_HOTEL_DETECTION.md`.
+* Tests movidos a `tests/FreeText/`: `test_diving_certification_flow.py`, `test_island_hotel_flow.py`, `test_hotel_detection.py` (89 casos, 100% pasando).
+* Ver `docs/FreeText/SPRINT3_LOCATION_HOTEL_DETECTION.md` para detalles completos.
+
 0.16.6 - (2026-06-17)
 ---------------------
 * Tool-calling orchestrator (Fase 2 of `docs/conversation-orchestrator-plan.md`): new `src/agents/orchestrator.py` with 9 OpenAI function-calling tools (`set_location`, `start_booking`, `add_to_cart`, `cart_action`, `remove_item`, `set_profile`, `note_logistics`, `escalate`, `answer_question`). Free text inside the cart flow now changes the tree directly: "estoy en las islas" → set_location, "quita el snorkel" → remove_item, "quiero reservarlo" → checkout. Dispatcher `_dispatch_orchestrator` in `supervisor.py` routes before the legacy intent classifier (kept as fallback). Helpers in `decision_tree.py` (`orchestrator_set_location`, `orchestrator_remove_activity`, `orchestrator_start_activity`, `orchestrator_add_to_cart`) reuse existing button handlers.

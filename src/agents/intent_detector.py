@@ -216,11 +216,15 @@ class IntentDetector:
                     break
         
         mixed_group_patterns = [
-            (r'\byo\s+(?:quiero|hago|haría|haré)\s+(?:el\s+)?(\w+)\s+y\s+(?:mi\s+)?(?:novia|novio|amigo|amiga|pareja|compañero|compañera|él|ella)\s+(?:quiere|hace|haría|hará)?\s*(?:el\s+)?(\w+)', 'es'),
-            (r'\b(?:uno|una)\s+(?:quiere|hace)\s+(?:el\s+)?(\w+)\s+y\s+(?:el\s+otro|la\s+otra|otro|otra)\s+(?:el\s+)?(\w+)', 'es'),
+            # "yo quiero buceo certificado y mi novia snorkel" - captura hasta 3 palabras
+            (r'\byo\s+(?:quiero|hago|haría|haré)\s+(?:el\s+)?(\w+(?:\s+\w+){0,2}?)\s+y\s+(?:mi\s+)?(?:novia|novio|amigo|amiga|pareja|compañero|compañera|él|ella)\s+(?:quiere|hace|haría|hará)?\s*(?:el\s+)?(\w+(?:\s+\w+){0,2})', 'es'),
+            # "uno quiere buceo y el otro snorkel"
+            (r'\b(?:uno|una)\s+(?:quiere|hace)\s+(?:el\s+)?(\w+(?:\s+\w+)?)\s+y\s+(?:el\s+otro|la\s+otra|otro|otra)\s+(?:el\s+)?(\w+(?:\s+\w+)?)', 'es'),
+            # "yo buceo y mi novia snorkel" (sin verbo querer)
             (r'\byo\s+(?:buceo|snorkel|minicurso)\s+y\s+(?:mi\s+)?(?:novia|novio|amigo|amiga|pareja|compañero|compañera|él|ella)\s+(\w+)', 'es'),
-            (r'\bi\s+(?:want|do)\s+(\w+)\s+and\s+(?:my\s+)?(?:girlfriend|boyfriend|friend|partner|he|she)\s+(?:wants|does)?\s*(\w+)', 'en'),
-            (r'\bone\s+(?:wants|does)\s+(\w+)\s+and\s+(?:the\s+)?other\s+(\w+)', 'en'),
+            # English patterns
+            (r'\bi\s+(?:want|do)\s+(\w+(?:\s+\w+)?)\s+and\s+(?:my\s+)?(?:girlfriend|boyfriend|friend|partner|he|she)\s+(?:wants|does)?\s*(\w+(?:\s+\w+)?)', 'en'),
+            (r'\bone\s+(?:wants|does)\s+(\w+(?:\s+\w+)?)\s+and\s+(?:the\s+)?other\s+(\w+(?:\s+\w+)?)', 'en'),
         ]
         
         for pattern, lang in mixed_group_patterns:
@@ -232,12 +236,15 @@ class IntentDetector:
                 allocation = {}
                 
                 for activity_text in [activity1, activity2]:
-                    if any(kw in activity_text for kw in ['buceo', 'dive', 'diving']):
-                        allocation['certified_diving'] = allocation.get('certified_diving', 0) + 1
+                    # Primero verificar minicurso (tiene prioridad sobre buceo genérico)
+                    if any(kw in activity_text for kw in ['minicurso', 'bautismo', 'discover', 'principiante']):
+                        allocation['minicourse'] = allocation.get('minicourse', 0) + 1
+                    # Luego snorkel
                     elif any(kw in activity_text for kw in ['snorkel', 'careteo']):
                         allocation['snorkel'] = allocation.get('snorkel', 0) + 1
-                    elif any(kw in activity_text for kw in ['minicurso', 'bautismo', 'discover']):
-                        allocation['minicourse'] = allocation.get('minicourse', 0) + 1
+                    # Finalmente buceo (certificado o genérico)
+                    elif any(kw in activity_text for kw in ['buceo', 'dive', 'diving', 'certificado', 'certified']):
+                        allocation['certified_diving'] = allocation.get('certified_diving', 0) + 1
                 
                 if allocation:
                     intent.group_allocation = allocation
@@ -298,60 +305,216 @@ class IntentDetector:
             intent.detected_fields.append("duration")
     
     def _detect_location(self, message: str, intent: DetectedIntent) -> None:
-        if 'cartagena' in message:
+        msg_lower = message.lower()
+        
+        # Detectar Cartagena
+        if 'cartagena' in msg_lower or 'ctg' in msg_lower:
             intent.location = "cartagena"
             intent.detected_fields.append("location")
         
+        # Mapeo de hoteles a islas
+        hotel_to_island = {
+            # Isla Grande
+            'san_pedro_majagua': 'isla_grande',
+            'bora_bora': 'isla_grande',
+            'cocoliso': 'isla_grande',
+            'pao_pao': 'isla_grande',
+            'fragata': 'isla_grande',
+            'secreto': 'isla_grande',
+            'gente_de_mar': 'isla_grande',
+            'luxury_beach': 'isla_grande',
+            'ecohotel_flores': 'isla_grande',
+            'playa_libre': 'isla_grande',
+            # Isla Marina
+            'islabela': 'isla_marina',
+            'hamaquero': 'isla_marina',
+            'ubuntu': 'isla_marina',
+            # Isla del Pirata
+            'isla_del_pirata_hotel': 'isla_del_pirata',
+            # Isla del Sol
+            'isla_del_sol_hotel': 'isla_del_sol',
+            # Isleta
+            'coralina': 'isleta',
+            'isleta_beach': 'isleta',
+            # Isla Arena
+            'isla_arena_resort': 'isla_arena',
+            # Isla Pavitos
+            'isla_pavitos_hotel': 'isla_pavitos',
+            # Isla Lizamar
+            'lizamar': 'isla_lizamar',
+            # Isla Gigi
+            'gigi': 'isla_gigi',
+            # Isla Rosa
+            'isla_rosa_hotel': 'isla_rosa',
+            # Isla Pelícano
+            'isla_pelicano_hotel': 'isla_pelicano',
+            # Isla Rosario
+            'rosario_ecohotel': 'isla_rosario',
+            'san_tropel': 'isla_rosario',
+        }
+        
+        # Patrones de islas (con variantes)
         island_patterns = {
-            'isla_grande': [r'\bisla\s+grande\b'],
-            'isla_marina': [r'\bisla\s+marina\b'],
-            'isla_del_pirata': [r'\bisla\s+del\s+pirata\b'],
+            'isla_grande': [r'\bisla\s+grande\b', r'\bgrande\b'],
+            'isla_marina': [r'\bisla\s+marina\b', r'\bmarina\b'],
+            'isla_del_pirata': [r'\bisla\s+del\s+pirata\b', r'\bpirata\b'],
             'isla_del_sol': [r'\bisla\s+del\s+sol\b'],
-            'isleta': [r'\bisleta\b'],
-            'isla_arena': [r'\bisla\s+arena\b'],
-            'isla_pavitos': [r'\bisla\s+pavitos\b'],
+            'isleta': [r'\bisleta\b', r'\bisla\s+isleta\b'],
+            'isla_arena': [r'\bisla\s+arena\b', r'\barena\b'],
+            'isla_pavitos': [r'\bisla\s+pavitos\b', r'\bpavitos\b'],
             'isla_lizamar': [r'\bisla\s+lizamar\b'],
             'isla_gigi': [r'\bisla\s+gigi\b'],
             'isla_rosa': [r'\bisla\s+rosa\b'],
-            'isla_pelicano': [r'\bisla\s+pelicano\b', r'\bisla\s+pelícano\b'],
-            'isla_rosario': [r'\bisla\s+rosario\b', r'\bislas\s+del\s+rosario\b'],
+            'isla_pelicano': [r'\bisla\s+pelicano\b', r'\bisla\s+pelícano\b', r'\bpelicano\b', r'\bpelícano\b'],
+            'isla_rosario': [r'\bisla\s+rosario\b', r'\bislas\s+del\s+rosario\b', r'\brosario\b'],
         }
         
+        # Detectar isla primero
         for island_id, patterns in island_patterns.items():
-            if any(re.search(pattern, message) for pattern in patterns):
+            if any(re.search(pattern, msg_lower) for pattern in patterns):
                 intent.island = island_id
                 intent.location = "island"
                 intent.detected_fields.extend(["island", "location"])
                 break
         
+        # Patrones de hoteles (con muchas más variantes)
         hotel_patterns = {
-            'pao_pao': [r'\bpao\s+pao\b'],
-            'san_pedro_majagua': [r'\bsan\s+pedro\s+de\s+majagua\b', r'\bmajagua\b'],
-            'bora_bora': [r'\bbora\s+bora\b'],
-            'cocoliso': [r'\bcocoliso\b'],
-            'fragata': [r'\bfragata\b'],
-            'secreto': [r'\bsecreto\b'],
-            'gente_de_mar': [r'\bgente\s+de\s+mar\b'],
-            'luxury_beach': [r'\bluxury\s+beach\b'],
-            'ecohotel_flores': [r'\becohotel\s+las\s+flores\b', r'\blas\s+flores\b'],
-            'playa_libre': [r'\bplaya\s+libre\b'],
-            'islabela': [r'\bislabela\b'],
-            'hamaquero': [r'\bhamaquero\b'],
-            'ubuntu': [r'\bubuntu\b'],
-            'isla_del_pirata_hotel': [r'\bhotel\s+isla\s+del\s+pirata\b'],
-            'isla_del_sol_hotel': [r'\bhotel\s+isla\s+del\s+sol\b'],
-            'coralina': [r'\bcoralina\b'],
-            'isleta_beach': [r'\bisleta\s+beach\b'],
-            'isla_arena_resort': [r'\bisla\s+arena\s+eco\s+resort\b'],
-            'lizamar': [r'\blizamar\b'],
-            'gigi': [r'\bcasa\s+de\s+isla\s+gigi\b'],
-            'rosario_ecohotel': [r'\brosario\s+ecohotel\b'],
-            'san_tropel': [r'\bsan\s+tropel\b'],
+            # Isla Grande
+            'san_pedro_majagua': [
+                r'\bsan\s+pedro\s+de\s+majagua\b',
+                r'\bsan\s+pedro\b',
+                r'\bmajagua\b',
+                r'\bhotel\s+majagua\b',
+            ],
+            'bora_bora': [
+                r'\bbora\s+bora\b',
+                r'\bbora\b',
+                r'\bhotel\s+bora\b',
+            ],
+            'cocoliso': [
+                r'\bcocoliso\b',
+                r'\bhotel\s+cocoliso\b',
+                r'\bcocoliso\s+island\b',
+                r'\bcocoliso\s+resort\b',
+            ],
+            'pao_pao': [
+                r'\bpao\s+pao\b',
+                r'\bpaopao\b',
+                r'\bhotel\s+pao\b',
+            ],
+            'fragata': [
+                r'\bfragata\b',
+                r'\bhotel\s+fragata\b',
+                r'\bfragata\s+island\b',
+            ],
+            'secreto': [
+                r'\bsecreto\b',
+                r'\bhotel\s+secreto\b',
+                r'\bhostel\s+secreto\b',
+            ],
+            'gente_de_mar': [
+                r'\bgente\s+de\s+mar\b',
+                r'\bhotel\s+gente\b',
+            ],
+            'luxury_beach': [
+                r'\bluxury\s+beach\b',
+                r'\bluxury\b',
+            ],
+            'ecohotel_flores': [
+                r'\becohotel\s+las\s+flores\b',
+                r'\blas\s+flores\b',
+                r'\bflores\b',
+            ],
+            'playa_libre': [
+                r'\bplaya\s+libre\b',
+                r'\becohostal\s+playa\b',
+            ],
+            # Isla Marina
+            'islabela': [
+                r'\bislabela\b',
+                r'\bisla\s+bella\b',
+                r'\bhotel\s+islabela\b',
+            ],
+            'hamaquero': [
+                r'\bhamaquero\b',
+                r'\bel\s+hamaquero\b',
+                r'\bhotel\s+hamaquero\b',
+            ],
+            'ubuntu': [
+                r'\bubuntu\b',
+                r'\bcentro\s+ubuntu\b',
+            ],
+            # Isla del Pirata
+            'isla_del_pirata_hotel': [
+                r'\bhotel\s+isla\s+del\s+pirata\b',
+                r'\bisla\s+del\s+pirata\b',
+            ],
+            # Isla del Sol
+            'isla_del_sol_hotel': [
+                r'\bhotel\s+isla\s+del\s+sol\b',
+                r'\bisla\s+del\s+sol\b',
+            ],
+            # Isleta
+            'coralina': [
+                r'\bcoralina\b',
+                r'\bhotel\s+coralina\b',
+                r'\bcoralina\s+island\b',
+            ],
+            'isleta_beach': [
+                r'\bisleta\s+beach\b',
+            ],
+            # Isla Arena
+            'isla_arena_resort': [
+                r'\bisla\s+arena\s+eco\s+resort\b',
+                r'\bisla\s+arena\s+resort\b',
+                r'\bisla\s+arena\b',
+            ],
+            # Isla Pavitos
+            'isla_pavitos_hotel': [
+                r'\bisla\s+pavitos\b',
+                r'\bpavitos\b',
+            ],
+            # Isla Lizamar
+            'lizamar': [
+                r'\blizamar\b',
+                r'\bhotel\s+lizamar\b',
+            ],
+            # Isla Gigi
+            'gigi': [
+                r'\bcasa\s+de\s+isla\s+gigi\b',
+                r'\bisla\s+gigi\b',
+                r'\bgigi\b',
+            ],
+            # Isla Rosa
+            'isla_rosa_hotel': [
+                r'\bisla\s+rosa\b',
+            ],
+            # Isla Pelícano
+            'isla_pelicano_hotel': [
+                r'\bisla\s+pelicano\b',
+                r'\bisla\s+pelícano\b',
+                r'\bpelicano\b',
+                r'\bpelícano\b',
+            ],
+            # Isla Rosario
+            'rosario_ecohotel': [
+                r'\brosario\s+ecohotel\b',
+                r'\becohotel\s+rosario\b',
+            ],
+            'san_tropel': [
+                r'\bsan\s+tropel\b',
+                r'\btropel\b',
+            ],
         }
         
+        # Detectar hotel
         for hotel_id, patterns in hotel_patterns.items():
-            if any(re.search(pattern, message) for pattern in patterns):
+            if any(re.search(pattern, msg_lower) for pattern in patterns):
                 intent.hotel = hotel_id
+                # Detectar isla automáticamente desde el hotel
+                if hotel_id in hotel_to_island and not intent.island:
+                    intent.island = hotel_to_island[hotel_id]
+                    intent.detected_fields.append("island")
                 if not intent.location:
                     intent.location = "island"
                 intent.detected_fields.append("hotel")

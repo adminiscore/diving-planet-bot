@@ -286,29 +286,41 @@ class ConversationState:
 
 ## Plan de Ejecución
 
-### Sprint 1: Fundamentos (Fases 1-3)
-- [ ] Crear `IntentDetector` base con detección de idioma
-- [ ] Implementar detección de actividad principal
-- [ ] Implementar detección de certificación
-- [ ] Integrar en `Supervisor` con saltos básicos
-- [ ] Tests unitarios de detección
-- [ ] Tests de conversación end-to-end
+### Sprint 1: Fundamentos (Fases 1-3) ✅ COMPLETADO
+- [x] Crear `IntentDetector` base con detección de idioma
+- [x] Implementar detección de actividad principal
+- [x] Implementar detección de certificación
+- [x] Integrar en `Supervisor` con saltos básicos
+- [x] Tests unitarios de detección (39 tests)
+- [x] Tests de conversación end-to-end (21 tests)
 
-### Sprint 2: Grupos y Contexto (Fases 4-5)
-- [ ] Detección de número de personas
-- [ ] Detección de distribución de actividades (grupo mixto)
-- [ ] Detección de última inmersión
-- [ ] Pre-carga de cart en flujo mixto
-- [ ] Mensajes de confirmación naturales
-- [ ] Tests de grupos y mixtos
+**Ver**: `docs/SPRINT1_INTENT_DETECTION_SUMMARY.md`
 
-### Sprint 3: Contexto Avanzado (Fases 6-7)
-- [ ] Detección de duración (un día vs multi-día)
-- [ ] Detección de ubicación/isla/hotel
-- [ ] Refinamiento de confianza y fallbacks
-- [ ] Optimización de prompts LLM
-- [ ] Tests de edge cases
-- [ ] Documentación de uso
+### Sprint 2: Refinamiento de Carrito y Grupos ✅ COMPLETADO
+- [x] Eliminación completa del flujo antiguo (no-carrito)
+- [x] Detección de actividades específicas (minicurso, snorkel, PADI)
+- [x] Salto inteligente de preguntas ya respondidas
+- [x] Detección de número de personas mejorada
+- [x] Detección de distribución de actividades (grupo mixto) mejorada
+- [x] Detección de ubicación con botones y texto libre
+- [x] Mensajes de confirmación personalizados para grupos mixtos
+- [x] Tests específicos (ubicación, minicurso, grupos mixtos)
+
+**Ver**: `docs/SPRINT2_CART_FLOW_REFINEMENT.md`
+
+### Sprint 3: Contexto Avanzado (Fases 6-7) ✅ COMPLETADO
+- [x] Detección de ubicación/isla/hotel mejorada
+- [x] Pregunta de certificación cuando es ambigua
+- [x] Pregunta de hotel específico según isla detectada
+- [x] Resumen muestra isla específica (no genérico)
+- [x] Mapeo automático hotel → isla
+- [x] 28 hoteles con múltiples variantes y aliases
+- [x] 12 islas con detección automática
+- [x] Tests completos de flujo isla/hotel
+- [ ] Detección de duración (un día vs multi-día) - pendiente
+- [ ] Refinamiento de confianza y fallbacks - pendiente
+
+**Ver**: `docs/FreeText/SPRINT3_LOCATION_HOTEL_DETECTION.md`
 
 ### Sprint 4: Refinamiento y Producción
 - [ ] Logging y observabilidad de detecciones
@@ -430,7 +442,11 @@ class ConversationState:
 ## Próximos Pasos
 
 1. ✅ Crear este documento de diseño
-2. ⏳ Revisar y aprobar diseño con el equipo
-3. ⏳ Implementar Sprint 1 (Fases 1-3)
-4. ⏳ Validar con casos de prueba
-5. ⏳ Iterar según feedback
+2. ✅ Revisar y aprobar diseño con el equipo
+3. ✅ Implementar Sprint 1 (Fases 1-3)
+4. ✅ Implementar Sprint 2 (Refinamiento de carrito y grupos)
+5. ✅ Validar con casos de prueba (60+ tests pasando)
+6. 📋 Validar con conversaciones reales de WhatsApp
+7. 📋 Implementar Sprint 3 (Contexto avanzado)
+8. 📋 Implementar Sprint 4 (Refinamiento y producción)
+9. 📋 Deploy a staging/producción

@@ -29,6 +29,14 @@ python -m pytest tests/ -v
 
 # Solo tests de intent detection
 python -m pytest tests/test_intent_detector.py tests/test_conversations.py -k "intent_" -v
+
+# Tests específicos de FreeText (Sprints 2 y 3)
+python -m pytest tests/FreeText/ -v
+
+# Tests individuales de Sprint 3
+python tests/FreeText/test_diving_certification_flow.py
+python tests/FreeText/test_island_hotel_flow.py
+python tests/FreeText/test_hotel_detection.py
 ```
 
 ---
@@ -144,9 +152,10 @@ Esperado:
 Mensaje: "Somos dos, yo quiero buceo certificado y mi novia snorkel"
 
 Esperado:
-✅ Detecta: idioma=es, grupo=2, certificado=True
-✅ Salta a: Step.CERTIFIED_LAST_DIVE
-✅ Respuesta incluye: confirmación de grupo y pregunta de última inmersión
+✅ Detecta: idioma=es, grupo=2, group_allocation={'certified_diving': 1, 'snorkel': 1}
+✅ Va a: Step.MIXED_ENTRY (carrito)
+✅ Respuesta incluye: "¡Bienvenidos! Veo que son 2 personas: 1 para buceo certificado y 1 para snorkel."
+✅ Luego muestra mensaje del carrito
 ```
 
 ### Caso 6: Grupo Mixto - Minicurso + Snorkel
@@ -282,9 +291,22 @@ Una vez validado en desarrollo:
 
 ## Recursos
 
-- **Documento de diseño**: `docs/free-text-intent-detection.md`
-- **Resumen Sprint 1**: `docs/SPRINT1_INTENT_DETECTION_SUMMARY.md`
-- **Código detector**: `src/agents/intent_detector.py`
-- **Integración supervisor**: `src/agents/supervisor.py`
+### Documentación
+- **Documento de diseño**: `docs/FreeText/free-text-intent-detection.md`
+- **Resumen Sprint 1**: `docs/FreeText/SPRINT1_INTENT_DETECTION_SUMMARY.md`
+- **Resumen Sprint 2**: `docs/FreeText/SPRINT2_CART_FLOW_REFINEMENT.md`
+- **Resumen Sprint 3**: `docs/FreeText/SPRINT3_LOCATION_HOTEL_DETECTION.md` ✨ NUEVO
+- **Testing**: `docs/FreeText/TESTING_INTENT_DETECTION.md` (este documento)
+
+### Código
+- **Detector**: `src/agents/intent_detector.py`
+- **Supervisor**: `src/agents/supervisor.py`
+- **Decision Tree**: `src/flows/decision_tree.py`
+
+### Tests
 - **Tests unitarios**: `tests/test_intent_detector.py`
 - **Tests end-to-end**: `tests/test_conversations.py`
+- **Tests FreeText Sprint 3**: `tests/FreeText/` ✨ NUEVO
+  - `test_diving_certification_flow.py`
+  - `test_island_hotel_flow.py`
+  - `test_hotel_detection.py`
