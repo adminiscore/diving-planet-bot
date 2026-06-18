@@ -853,6 +853,16 @@ MESSAGES = {
             "Are you a certified diver?"
         ),
     },
+    "mixed_ask_certification_group": {
+        "es": (
+            "Perfecto, os ayudo con el buceo. Para continuar necesito saber:\n\n"
+            "¿Estáis certificados?"
+        ),
+        "en": (
+            "Perfect, I'll help you with diving. To continue I need to know:\n\n"
+            "Are you all certified divers?"
+        ),
+    },
     "mixed_add_activity": {
         "es": "¿Qué actividad quieres *añadir* al carrito?",
         "en": "Which activity would you like to *add* to the cart?",
@@ -907,6 +917,28 @@ MESSAGES = {
         "en": (
             "Has it been *more than 2 years* since your last dive?\n\n"
             "If so, we recommend doing a *refresher* before the trip."
+        ),
+    },
+    "mixed_cert_last_dive_group": {
+        "es": (
+            "¿Ha pasado *más de 2 años* desde la última inmersión de alguno del grupo?\n\n"
+            "Si es así, recomendamos un *refresher* antes de la salida."
+        ),
+        "en": (
+            "Has it been *more than 2 years* since any diver in the group last dived?\n\n"
+            "If so, we recommend a *refresher* before the trip."
+        ),
+    },
+    "refresher_info": {
+        "es": (
+            "El *refresher* es una sesión corta de repaso en el agua antes de la inmersión. "
+            "Sin coste adicional — el guía adapta el ritmo a tu nivel.\n\n"
+            "¿Te interesa el refresher?"
+        ),
+        "en": (
+            "The *refresher* is a short in-water review session before the dive. "
+            "No extra cost — the guide adapts the pace to your level.\n\n"
+            "Are you interested in the refresher?"
         ),
     },
     "mixed_cert_refresh_qty": {
@@ -1383,6 +1415,20 @@ BUTTON_OPTIONS = {
             {"title": "🔙 Back", "value": "back"},
         ],
     },
+    "mixed_ask_certification_group": {
+        "es": [
+            {"title": "✅ Todos certificados", "value": "1"},
+            {"title": "❌ Ninguno certificado", "value": "2"},
+            {"title": "⚠️ Algunos sí, otros no", "value": "3"},
+            {"title": "🔙 Volver", "value": "back"},
+        ],
+        "en": [
+            {"title": "✅ All certified", "value": "1"},
+            {"title": "❌ None certified", "value": "2"},
+            {"title": "⚠️ Some yes, some no", "value": "3"},
+            {"title": "🔙 Back", "value": "back"},
+        ],
+    },
     "mixed_add_activity": {
         "es": [
             {"title": "🎓 Buceo certificado", "value": "1"},
@@ -1483,6 +1529,16 @@ BUTTON_OPTIONS = {
         "en": [
             {"title": "Yes", "value": "1"},
             {"title": "No", "value": "2"},
+        ],
+    },
+    "refresher_interest": {
+        "es": [
+            {"title": "✅ Sí, quiero el refresher", "value": "1"},
+            {"title": "❌ No, lo saltamos", "value": "2"},
+        ],
+        "en": [
+            {"title": "✅ Yes, I want the refresher", "value": "1"},
+            {"title": "❌ No, skip it", "value": "2"},
         ],
     },
     "mixed_yes_no": {
@@ -2877,6 +2933,7 @@ class DecisionTree:
             state.mixed_cart.remove(existing)
 
     def _parse_mixed_quantity(self, message: str) -> int | None:
+        import re as _re
         msg = " ".join(message.strip().lower().split())
         if msg in {"6+", "6 o mas", "6 o más", "6 or more", "more"}:
             return 6
@@ -2885,7 +2942,32 @@ class DecisionTree:
             if 1 <= n <= 99:
                 return n
         except ValueError:
-            return None
+            pass
+        # Accept word numbers
+        _word_num = {
+            'uno': 1, 'una': 1, 'one': 1,
+            'dos': 2, 'two': 2,
+            'tres': 3, 'three': 3,
+            'cuatro': 4, 'four': 4,
+            'cinco': 5, 'five': 5,
+            'seis': 6, 'six': 6,
+            'siete': 7, 'seven': 7,
+            'ocho': 8, 'eight': 8,
+            'nueve': 9, 'nine': 9,
+            'diez': 10, 'ten': 10,
+        }
+        if msg in _word_num:
+            return _word_num[msg]
+        # Extract number from phrases like "somos 3", "vamos 2", "3 personas", "we are 4"
+        m = _re.search(r'\b(\d+)\b', msg)
+        if m:
+            n = int(m.group(1))
+            if 1 <= n <= 99:
+                return n
+        # Extract word number from phrase
+        for word, val in _word_num.items():
+            if _re.search(rf'\b{word}\b', msg):
+                return val
         return None
 
     def _mixed_preview_state(self, state: ConversationState, service_id: str) -> ConversationState:
@@ -2960,90 +3042,113 @@ class DecisionTree:
         if msg in ("back", "cancel", "cancelar"):
             return self._goto_mixed_entry(state)
         
+        def _after_location_set() -> str:
+            """Lógica común tras fijar la ubicación: auto-añade snorkel/minicurso
+            detectados y enruta según lo que queda pendiente."""
+            allocation = getattr(state, "detected_group_allocation", None) or {}
+
+            # Auto-añadir actividades no-cert ya conocidas (snorkel, minicurso)
+            for act, qty in allocation.items():
+                if act == "snorkel":
+                    snorkel_svc = self._service_for_location("snorkeling", state)
+                    self._append_mixed_cart_item(state, "snorkel", snorkel_svc, qty)
+                elif act == "minicourse":
+                    self._append_mixed_cart_item(state, "beginner", None, qty)
+
+            # Ahora decidir el siguiente step
+            if state.mixed_pending_qty_type == "cert":
+                state.step = Step.MIXED_ADD_CERT_PLAN
+                self.set_quick_replies(state, "mixed_add_cert_plan")
+                return MESSAGES["mixed_add_cert_plan"][lang]
+            elif state.mixed_pending_qty_type in ("beginner", "snorkel", "course", "companion"):
+                # Use _goto_mixed_add_qty so it auto-skips if qty is already known
+                return self._goto_mixed_add_qty(state)
+            elif state.mixed_cart:
+                return self._goto_mixed_cart_review(state)
+            return self._goto_mixed_add_activity(state)
+
         # Detectar texto libre: Cartagena
         if choice == 1 or "cartagena" in msg or "ctg" in msg:
             state.location = "cartagena"
-            # Si ya tenemos una actividad detectada, saltar directo a esa actividad
-            if state.mixed_pending_qty_type == "cert":
-                state.step = Step.MIXED_ADD_CERT_PLAN
-                self.set_quick_replies(state, "mixed_add_cert_plan")
-                return MESSAGES["mixed_add_cert_plan"][lang]
-            elif state.mixed_pending_qty_type in ("beginner", "snorkel", "course", "companion"):
-                # Ir directo a preguntar cantidad
-                state.step = Step.MIXED_ADD_QTY
-                self.set_quick_replies(state, "mixed_quantity")
-                return MESSAGES["mixed_add_qty"][lang]
-            return self._goto_mixed_add_activity(state)
-        
+            return _after_location_set()
+
         # Detectar texto libre: Islas del Rosario
         if choice == 2 or "isla" in msg or "rosario" in msg:
             state.location = "island"
-            # Si ya tenemos una actividad detectada, saltar directo a esa actividad
-            if state.mixed_pending_qty_type == "cert":
-                state.step = Step.MIXED_ADD_CERT_PLAN
-                self.set_quick_replies(state, "mixed_add_cert_plan")
-                return MESSAGES["mixed_add_cert_plan"][lang]
-            elif state.mixed_pending_qty_type in ("beginner", "snorkel", "course", "companion"):
-                # Ir directo a preguntar cantidad
-                state.step = Step.MIXED_ADD_QTY
-                self.set_quick_replies(state, "mixed_quantity")
-                return MESSAGES["mixed_add_qty"][lang]
-            return self._goto_mixed_add_activity(state)
+            return _after_location_set()
         
         self.set_quick_replies(state, "tours_location")
         return MESSAGES["not_understood"][lang]
 
+    def _ask_certification_message(self, state: ConversationState) -> str:
+        """Devuelve mensaje + quick replies de certificación adaptados a singular/plural/grupo."""
+        lang = state.language
+        group_qty = (state.mixed_pending_cert_total_qty or 0) + sum(
+            it["qty"] for it in state.mixed_cart if it.get("type") == "cert"
+        )
+        is_group = group_qty > 1 or (state.detected_group_size or 0) > 1
+        if is_group:
+            self.set_quick_replies(state, "mixed_ask_certification_group")
+            return MESSAGES["mixed_ask_certification_group"][lang]
+        self.set_quick_replies(state, "mixed_ask_certification")
+        return MESSAGES["mixed_ask_certification"][lang]
+
     def _handle_mixed_ask_certification(self, state: ConversationState, message: str) -> str:
         """Handler para pregunta de certificación cuando detectamos buceo sin certificación clara."""
-        choice = self._parse_choice(message, 2)
         lang = state.language
         msg = message.strip().lower()
-        
+        group_qty = (state.mixed_pending_cert_total_qty or 0) + sum(
+            it["qty"] for it in state.mixed_cart if it.get("type") == "cert"
+        )
+        is_group = group_qty > 1 or (state.detected_group_size or 0) > 1
+        max_choice = 3 if is_group else 2
+        choice = self._parse_choice(message, max_choice)
+
         if msg in ("back", "cancel", "cancelar"):
             return self._goto_mixed_entry(state)
-        
-        # Opción 1: Sí, estoy certificado
-        if choice == 1:
-            state.detected_is_certified = True
-            state.mixed_pending_qty_type = "cert"
-            
-            # Si tenemos isla pero NO hotel, preguntar hotel específico
+
+        def _after_cert(cert_type: str) -> str:
+            state.mixed_pending_qty_type = cert_type
             if state.location == "island" and state.island and not state.hotel:
                 return self._goto_island_hotel_menu(state)
-            
-            # Si ya tenemos ubicación completa, ir directo a elegir plan
+            if state.location:
+                if cert_type == "cert":
+                    state.step = Step.MIXED_ADD_CERT_PLAN
+                    self.set_quick_replies(state, "mixed_add_cert_plan")
+                    return MESSAGES["mixed_add_cert_plan"][lang]
+                # Use _goto_mixed_add_qty so it auto-skips if qty is already known
+                return self._goto_mixed_add_qty(state)
+            state.step = Step.MIXED_LOCATION
+            self.set_quick_replies(state, "tours_location")
+            return MESSAGES["mixed_location"][lang]
+
+        # Opción 1: Sí / Todos certificados
+        if choice == 1:
+            state.detected_is_certified = True
+            return _after_cert("cert")
+
+        # Opción 2: No / Ninguno
+        if choice == 2:
+            state.detected_is_certified = False
+            return _after_cert("beginner")
+
+        # Opción 3 (solo grupo): Algunos sí, otros no
+        if choice == 3 and is_group:
+            # Preguntar cuántos certificados (el flujo normal de split)
+            state.detected_is_certified = None
+            state.mixed_pending_qty_type = "cert"
             if state.location:
                 state.step = Step.MIXED_ADD_CERT_PLAN
                 self.set_quick_replies(state, "mixed_add_cert_plan")
-                return MESSAGES["mixed_add_cert_plan"][lang]
-            
-            # Si no tenemos ubicación, preguntar primero
+                if lang == "es":
+                    return "Perfecto, empezamos con los buceadores certificados.\n\n" + MESSAGES["mixed_add_cert_plan"][lang]
+                return "Great, let's start with the certified divers.\n\n" + MESSAGES["mixed_add_cert_plan"][lang]
             state.step = Step.MIXED_LOCATION
             self.set_quick_replies(state, "tours_location")
             return MESSAGES["mixed_location"][lang]
-        
-        # Opción 2: No, soy principiante
-        if choice == 2:
-            state.detected_is_certified = False
-            state.mixed_pending_qty_type = "beginner"
-            
-            # Si tenemos isla pero NO hotel, preguntar hotel específico
-            if state.location == "island" and state.island and not state.hotel:
-                return self._goto_island_hotel_menu(state)
-            
-            # Si ya tenemos ubicación completa, ir directo a cantidad
-            if state.location:
-                state.step = Step.MIXED_ADD_QTY
-                self.set_quick_replies(state, "mixed_quantity")
-                return MESSAGES["mixed_add_qty"][lang]
-            
-            # Si no tenemos ubicación, preguntar primero
-            state.step = Step.MIXED_LOCATION
-            self.set_quick_replies(state, "tours_location")
-            return MESSAGES["mixed_location"][lang]
-        
-        # No entendido
-        self.set_quick_replies(state, "mixed_ask_certification")
+
+        qr_key = "mixed_ask_certification_group" if is_group else "mixed_ask_certification"
+        self.set_quick_replies(state, qr_key)
         return MESSAGES["not_understood"][lang]
 
     def _goto_island_hotel_menu(self, state: ConversationState) -> str:
@@ -3181,6 +3286,19 @@ class DecisionTree:
         self.set_quick_replies(state, "mixed_add_activity")
         return MESSAGES["not_understood"][lang]
 
+    def _goto_mixed_cert_last_dive_or_qty(self, state: ConversationState) -> str:
+        """Salta la pregunta de cantidad si ya la conocemos del mensaje inicial."""
+        lang = state.language
+        pre_qty = state.mixed_pending_cert_total_qty
+        if pre_qty and pre_qty > 0:
+            # Cantidad ya conocida → ir directamente a última inmersión
+            state.mixed_pending_qty_value = pre_qty
+            state.step = Step.MIXED_CERT_LAST_DIVE
+            msg_key = "mixed_cert_last_dive_group" if pre_qty > 1 else "mixed_cert_last_dive"
+            self.set_quick_replies(state, "mixed_cert_last_dive")
+            return MESSAGES[msg_key][lang]
+        return self._goto_mixed_add_qty(state)
+
     def _handle_mixed_add_cert_plan(self, state: ConversationState, message: str) -> str:
         lang = state.language
         msg = message.strip().lower()
@@ -3189,7 +3307,7 @@ class DecisionTree:
         choice = self._parse_choice(message, 2)
         if choice == 1:
             state.mixed_pending_qty_plan = self._service_for_location("2_dives_1_day", state)
-            return self._goto_mixed_add_qty(state)
+            return self._goto_mixed_cert_last_dive_or_qty(state)
         if choice == 2:
             state.step = Step.MIXED_ADD_CERT_MULTI_DAY
             self.set_quick_replies(state, "mixed_add_cert_multi_day")
@@ -3208,11 +3326,18 @@ class DecisionTree:
         choice = self._parse_choice(message, len(service_map))
         if choice in service_map:
             state.mixed_pending_qty_plan = service_map[choice]
-            return self._goto_mixed_add_qty(state)
+            return self._goto_mixed_cert_last_dive_or_qty(state)
         self.set_quick_replies(state, "mixed_add_cert_multi_day")
         return MESSAGES["not_understood"][lang]
 
     def _goto_mixed_add_qty(self, state: ConversationState) -> str:
+        # If we already know the quantity (pre-set by supervisor or from detected group size),
+        # skip the question and auto-answer it.
+        known_qty = state.mixed_pending_qty_value
+        if not known_qty and state.detected_group_size and state.detected_group_size > 0:
+            known_qty = state.detected_group_size
+        if known_qty and known_qty > 0:
+            return self._handle_mixed_add_qty(state, str(known_qty))
         lang = state.language
         state.step = Step.MIXED_ADD_QTY
         state.mixed_pending_exact = False
@@ -3292,7 +3417,8 @@ class DecisionTree:
             state.mixed_pending_cert_remaining_qty = n
             state.step = Step.MIXED_CERT_LAST_DIVE
             self.set_quick_replies(state, "mixed_cert_last_dive")
-            return MESSAGES["mixed_cert_last_dive"][lang]
+            msg_key = "mixed_cert_last_dive_group" if n > 1 else "mixed_cert_last_dive"
+            return MESSAGES[msg_key][lang]
 
         if item_type == "course":
             if state.mixed_pending_course_question == "open_water_time":

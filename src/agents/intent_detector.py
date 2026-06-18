@@ -71,6 +71,8 @@ class IntentDetector:
         certified_diving_patterns = [
             r'\bbuceo\b(?!\s+(bautismo|principiante|primera\s+vez|minicurso))',
             r'\bdive\b(?!\s+(baptism|beginner|first\s+time))',
+            r'\bdiving\b(?!\s+(first|beginner|class|course|lesson|trip\s+first))',
+            r'\bscuba\b(?!\s+(class|course|lesson))',
             r'\bbucear\b',
             r'\bbuzo\s+certificado\b',
             r'\bbuzos\s+certificados\b',
@@ -78,13 +80,19 @@ class IntentDetector:
             r'\bdos\s+inmersiones\b',
             r'\btwo\s+dives\b',
             r'\bfun\s+dive',
+            r'\bwant\s+(?:to\s+)?(?:go\s+)?diving\b',
+            r'\binterested\s+in\s+diving\b',
+            r'\bdiving\s+trip\b',
         ]
-        
+
         minicourse_patterns = [
             r'\bminicurso\b',
             r'\bbautismo\b',
             r'\bprimera\s+vez\b',
             r'\bnunca\s+he\s+buceado\b',
+            r'\bnever\s+(?:tried|dived|done\s+it|been\s+diving)\b',
+            r'\bno\s+experience\b',
+            r'\bsin\s+experiencia\b',
             r'\bdiscover\s+scuba\b',
             r'\bbeginner\s+dive\b',
             r'\bfirst\s+time\s+diving\b',
@@ -164,14 +172,21 @@ class IntentDetector:
             r'\bcertificado\b',
             r'\bcertificados\b',
             r'\bcertified\b',
+            r'\bcertificaci[oó]n\b',
             r'\bestamos\s+certificados\b',
             r'\bsomos\s+certificados\b',
             r'\btengo\s+licencia\b',
-            r'\bhave\s+license\b',
+            r'\btenemos\s+licencia\b',
+            r'\bhave\s+(?:a\s+)?(?:license|licence|card|certification)\b',
+            r'\b(?:padi|ssi|cmas|naui|bsac)\s+(?:certified|card|license|licence|certification|open\s+water|advanced)\b',
+            r'\blicencia\s+(?:padi|ssi|cmas|naui|bsac)\b',
+            r'\b(?:padi|ssi|cmas|naui|bsac)\s+licencia\b',
             r'\bpadi\s+(certified|card|license)\b',
             r'\bssi\s+(certified|card|license)\b',
             r'\bbuzo\s+certificado\b',
             r'\bbuzos\s+certificados\b',
+            r'\bwith\s+(?:open\s+water|advanced|rescue|divemaster|padi|ssi|cmas)\s+certification\b',
+            r'\b(?:\d+\s+)?dives?\s+(?:each|of\s+experience)\b',
         ]
         
         not_certified_patterns = [
@@ -195,11 +210,17 @@ class IntentDetector:
     
     def _detect_group_info(self, message: str, intent: DetectedIntent) -> None:
         group_size_patterns = [
-            (r'\bsomos\s+(\d+|dos|tres|cuatro|cinco|seis)\b', {'dos': 2, 'tres': 3, 'cuatro': 4, 'cinco': 5, 'seis': 6}),
-            (r'\bvenimos\s+(\d+|dos|tres|cuatro|cinco|seis)\b', {'dos': 2, 'tres': 3, 'cuatro': 4, 'cinco': 5, 'seis': 6}),
-            (r'\bwe\s+are\s+(\d+|two|three|four|five|six)\b', {'two': 2, 'three': 3, 'four': 4, 'five': 5, 'six': 6}),
-            (r'\bgroup\s+of\s+(\d+|two|three|four|five|six)\b', {'two': 2, 'three': 3, 'four': 4, 'five': 5, 'six': 6}),
-            (r'\b(\d+)\s+(personas|people)\b', {}),
+            (r'\bsomos\s+(\d+|dos|tres|cuatro|cinco|seis|siete|ocho)\b', {'dos': 2, 'tres': 3, 'cuatro': 4, 'cinco': 5, 'seis': 6, 'siete': 7, 'ocho': 8}),
+            (r'\bvenimos\s+(\d+|dos|tres|cuatro|cinco|seis|siete|ocho)\b', {'dos': 2, 'tres': 3, 'cuatro': 4, 'cinco': 5, 'seis': 6, 'siete': 7, 'ocho': 8}),
+            (r'\bvamos\s+(\d+|dos|tres|cuatro|cinco|seis|siete|ocho)\b', {'dos': 2, 'tres': 3, 'cuatro': 4, 'cinco': 5, 'seis': 6, 'siete': 7, 'ocho': 8}),
+            (r'\bwe\s+are\s+(\d+|two|three|four|five|six|seven|eight)\b', {'two': 2, 'three': 3, 'four': 4, 'five': 5, 'six': 6, 'seven': 7, 'eight': 8}),
+            (r'\b(\d+)\s+of\s+us\b', {}),
+            (r'\bgroup\s+of\s+(\d+|two|three|four|five|six|seven|eight)\b', {'two': 2, 'three': 3, 'four': 4, 'five': 5, 'six': 6, 'seven': 7, 'eight': 8}),
+            (r'\b(\d+)\s+(personas|people|friends|amigos|friend)\b', {}),
+            # "una pareja" / "somos pareja" → 2 (capturing group required by loop)
+            (r'\b(?:somos\s+)?(?:una?\s+)?(pareja)\b', {'pareja': 2}),
+            # "familia de N" → N personas
+            (r'\bfamilia\s+de\s+(\d+|dos|tres|cuatro|cinco|seis|siete|ocho)\b', {'dos': 2, 'tres': 3, 'cuatro': 4, 'cinco': 5, 'seis': 6, 'siete': 7, 'ocho': 8}),
         ]
         
         for pattern, word_map in group_size_patterns:
@@ -215,6 +236,153 @@ class IntentDetector:
                     intent.detected_fields.append("group_size")
                     break
         
+        # ── Numeric split: "3 de buceo y 2 de snorkel", "5 snorkel y 2 buceo" ──
+        _ACTIVITY_KW = r'(buceo|bucear|buceando|snorkel|snorkeling|careteo|caretear|minicurso|bautismo|bautizo|diving|scuba)'
+        _NUM = r'(\d+|dos|tres|cuatro|cinco|seis|two|three|four|five|six)'
+        _word_num_map: dict[str, int] = {
+            'dos': 2, 'tres': 3, 'cuatro': 4, 'cinco': 5, 'seis': 6,
+            'two': 2, 'three': 3, 'four': 4, 'five': 5, 'six': 6,
+        }
+
+        def _parse_num(s: str) -> int:
+            return int(s) if s.isdigit() else _word_num_map.get(s, 1)
+
+        def _activity_key(text: str) -> str | None:
+            if any(k in text for k in ('minicurso', 'bautismo', 'bautizo', 'discover', 'principiante')):
+                return 'minicourse'
+            if any(k in text for k in ('snorkel', 'careteo', 'snorkeling')):
+                return 'snorkel'
+            if any(k in text for k in ('buceo', 'bucear', 'dive', 'diving', 'certificado', 'certified', 'scuba')):
+                return 'certified_diving'
+            return None
+
+        # Pattern A: "3 de buceo y 2 de snorkel" / "3 buceos y 2 snorkel"
+        # También cubre "buceo 3 y snorkel 2" (número después del keyword)
+        # y "3 for diving and 2 for snorkel" (inglés)
+        # y "2 queremos hacer buceo y 1 snorkel" / "2 hacen snorkel y 3 buceo"
+        _SEP = r'\s+(?:y|and|,)\s+'
+        # Verb fillers: "hacen", "harán", "quieren hacer", "queremos hacer", "vamos a hacer", etc.
+        _VERB_FILLER = (
+            r'(?:'
+            r'(?:queremos?|quieren?|hacemos?|hacen?|hago|hace|haremos?|har[aá]n?)\s+(?:hacer\s+)?'
+            r'|vamos?\s+a\s+(?:hacer\s+)?'
+            r')?'
+        )
+        # Prefix: "N de", "N para", "N personas", "N hacen", or bare "N "
+        _QUANT_PREFIX = rf'{_NUM}\s+(?:de\s+|para\s+|for\s+|personas?\s+(?:de\s+|para\s+|for\s+)?|{_VERB_FILLER})'
+        pat_numeric_fwd = (
+            rf'{_QUANT_PREFIX}{_ACTIVITY_KW}(?:\s+certificad[ao])?'
+            rf'{_SEP}'
+            rf'{_QUANT_PREFIX}{_ACTIVITY_KW}(?:\s+certificad[ao])?'
+        )
+        pat_numeric_rev = (
+            rf'{_ACTIVITY_KW}(?:\s+certificad[ao])?\w*\s+{_NUM}'
+            rf'{_SEP}'
+            rf'{_ACTIVITY_KW}(?:\s+certificad[ao])?\w*\s+{_NUM}'
+        )
+        # ── Pattern B (priority): cert/no-cert splits — BEFORE numeric split ──
+        # "2 buceadores (1 certificado y otro no)" / "N cert y M principiante"
+        _WORD_NUM = r'(\d+|un[ao]?|dos|tres|cuatro|cinco|seis|one|two|three|four|five|six)'
+        cert_split_patterns = [
+            # "2 buceadores (1 certificado y otro/s no)" / "4 buceadores (2 cert y 2 no)"
+            rf'(\d+)\s+buceador[aes]*[^,\(]*[\(,]\s*{_WORD_NUM}\s+certificad[ao]s?\s+y\s+(?:{_WORD_NUM}\s+)?(?:el\s+)?otr[ao]s?\s+no',
+            # "4 buceadores (2 certificados y 2 no)" — with explicit "2 no"
+            rf'(\d+)\s+buceador[aes]*[^,\(]*[\(,]\s*{_WORD_NUM}\s+certificad[ao]s?\s+y\s+{_WORD_NUM}\s+no\b',
+            # "N certificados y M no certificados/principiantes"
+            r'(\d+)\s+certificad[ao]s?\s+y\s+(\d+)\s+(?:no\s+certificad[ao]s?|principiantes?|sin\s+certificar)',
+            # "uno certificado y dos minicurso" (palabras)
+            rf'{_WORD_NUM}\s+certificad[ao]s?\s+y\s+{_WORD_NUM}\s+(?:minicurso|bautismo|no\s+certificad[ao]|principiante)',
+            # "N buceo certificado y M minicurso/no certificado"
+            r'(\d+)\s+(?:de\s+)?buceo\s+certificado\s+y\s+(\d+)\s+(?:minicurso|no\s+certificad[ao]|principiante|bautismo)',
+            # "somos N, M certificados y el/los otro/s no"
+            r'(\d+)\s+certificad[ao]s?\s+y\s+(?:el\s+)?otr[ao]s?\s+(?:\d+\s+)?(?:no|sin\s+certific)',
+            # English: "N certified and M not certified/beginners"
+            r'(\d+)\s+certified\s+and\s+(\d+)\s+(?:not\s+certified|beginners?|uncertified)',
+        ]
+        for pat_idx, pat in enumerate(cert_split_patterns):
+            m_split = re.search(pat, message, re.IGNORECASE)
+            if m_split:
+                g = m_split.groups()
+                n1_raw = g[0]
+                # Para pat 0: g = (total, cert, maybe_beg_qty)
+                # Para pat 2 (palabras): g = (cert_word, beg_word) — sin grupo total
+                n2_raw = g[1] if len(g) > 1 else None
+                n1 = _parse_num(n1_raw) if n1_raw else 1
+                n2 = _parse_num(n2_raw) if n2_raw else 1
+
+                if pat_idx in (0, 1):
+                    # "N buceadores (M cert y [K] otros/K no)" — n1=total, n2=cert
+                    total = n1
+                    cert_n = n2
+                    # si hay tercer grupo (K no cert), usarlo; si no, resto
+                    n3_raw = g[2] if len(g) > 2 else None
+                    if n3_raw and re.match(r'\d+|dos|tres|cuatro|cinco|seis', n3_raw, re.IGNORECASE):
+                        beg_n = _parse_num(n3_raw)
+                        total = cert_n + beg_n
+                    else:
+                        beg_n = total - cert_n
+                elif pat_idx == 3:
+                    # "uno certificado y dos minicurso" — n1=cert_word, n2=beg_word
+                    cert_n = n1
+                    beg_n = n2
+                    total = cert_n + beg_n
+                else:
+                    cert_n = n1
+                    beg_n = n2 if n2 > 0 else (intent.group_size - cert_n if intent.group_size else 1)
+                    total = cert_n + beg_n
+
+                if cert_n > 0 and beg_n > 0:
+                    intent.group_allocation = {'certified_diving': cert_n, 'minicourse': beg_n}
+                    intent.group_size = total
+                    intent.detected_fields.append("group_allocation")
+                break
+
+        # ── Pattern A: "3 de buceo y 2 de snorkel" / "buceo 3 y snorkel 2" ──
+        if not intent.group_allocation:
+            m_num = re.search(pat_numeric_fwd, message, re.IGNORECASE)
+            m_num_r = re.search(pat_numeric_rev, message, re.IGNORECASE) if not m_num else None
+            if m_num:
+                qty1 = _parse_num(m_num.group(1))
+                act1 = _activity_key(m_num.group(2).lower())
+                qty2 = _parse_num(m_num.group(3))
+                act2 = _activity_key(m_num.group(4).lower())
+                if act1 and act2 and act1 != act2:
+                    allocation: dict[str, int] = {}
+                    allocation[act1] = allocation.get(act1, 0) + qty1
+                    allocation[act2] = allocation.get(act2, 0) + qty2
+                    intent.group_allocation = allocation
+                    intent.group_size = sum(allocation.values())
+                    intent.detected_fields.append("group_allocation")
+            elif m_num_r:
+                act1 = _activity_key(m_num_r.group(1).lower())
+                qty1 = _parse_num(m_num_r.group(2))
+                act2 = _activity_key(m_num_r.group(3).lower())
+                qty2 = _parse_num(m_num_r.group(4))
+                if act1 and act2 and act1 != act2:
+                    allocation = {}
+                    allocation[act1] = allocation.get(act1, 0) + qty1
+                    allocation[act2] = allocation.get(act2, 0) + qty2
+                    intent.group_allocation = allocation
+                    intent.group_size = sum(allocation.values())
+                    intent.detected_fields.append("group_allocation")
+
+        # Pattern C: "somos N personas, M de buceo y el resto snorkel/minicurso"
+        pat_rest = (
+            r'somos\s+(\d+)\s*(?:personas?)?\s*[,;]?\s*'
+            r'(\d+)\s+(?:de\s+)?(\w+(?:\s+\w+)?)\s+y\s+(?:el\s+)?rest[oa]s?\s+(?:de\s+)?(\w+)'
+        )
+        m_rest = re.search(pat_rest, message, re.IGNORECASE)
+        if m_rest and not intent.group_allocation:
+            total = int(m_rest.group(1))
+            n1 = int(m_rest.group(2))
+            act1 = _activity_key(m_rest.group(3).lower())
+            act2 = _activity_key(m_rest.group(4).lower())
+            n2 = total - n1
+            if act1 and act2 and act1 != act2 and n1 > 0 and n2 > 0:
+                intent.group_allocation = {act1: n1, act2: n2}
+                intent.group_size = total
+                intent.detected_fields.append("group_allocation")
+
         mixed_group_patterns = [
             # "yo quiero buceo certificado y mi novia snorkel" - captura hasta 3 palabras
             (r'\byo\s+(?:quiero|hago|haría|haré)\s+(?:el\s+)?(\w+(?:\s+\w+){0,2}?)\s+y\s+(?:mi\s+)?(?:novia|novio|amigo|amiga|pareja|compañero|compañera|él|ella)\s+(?:quiere|hace|haría|hará)?\s*(?:el\s+)?(\w+(?:\s+\w+){0,2})', 'es'),
@@ -226,15 +394,20 @@ class IntentDetector:
             (r'\bi\s+(?:want|do)\s+(\w+(?:\s+\w+)?)\s+and\s+(?:my\s+)?(?:girlfriend|boyfriend|friend|partner|he|she)\s+(?:wants|does)?\s*(\w+(?:\s+\w+)?)', 'en'),
             (r'\bone\s+(?:wants|does)\s+(\w+(?:\s+\w+)?)\s+and\s+(?:the\s+)?other\s+(\w+(?:\s+\w+)?)', 'en'),
         ]
-        
+
         for pattern, lang in mixed_group_patterns:
+            if intent.group_allocation:
+                break  # Ya detectado por los patrones numéricos anteriores
             match = re.search(pattern, message)
             if match:
                 activity1 = match.group(1).lower()
-                activity2 = match.group(2).lower()
-                
+                try:
+                    activity2 = match.group(2).lower()
+                except IndexError:
+                    activity2 = ""
+
                 allocation = {}
-                
+
                 for activity_text in [activity1, activity2]:
                     # Primero verificar minicurso (tiene prioridad sobre buceo genérico)
                     if any(kw in activity_text for kw in ['minicurso', 'bautismo', 'discover', 'principiante']):
@@ -245,7 +418,7 @@ class IntentDetector:
                     # Finalmente buceo (certificado o genérico)
                     elif any(kw in activity_text for kw in ['buceo', 'dive', 'diving', 'certificado', 'certified']):
                         allocation['certified_diving'] = allocation.get('certified_diving', 0) + 1
-                
+
                 if allocation:
                     intent.group_allocation = allocation
                     if not intent.group_size:
