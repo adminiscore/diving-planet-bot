@@ -187,6 +187,12 @@ class IntentDetector:
             r'\bbuzos\s+certificados\b',
             r'\bwith\s+(?:open\s+water|advanced|rescue|divemaster|padi|ssi|cmas)\s+certification\b',
             r'\b(?:\d+\s+)?dives?\s+(?:each|of\s+experience)\b',
+            # "buzos con open water" / "tenemos open water" / "open water divers"
+            r'\bcon\s+open\s+water\b',
+            r'\btenemos\s+open\s+water\b',
+            r'\bopen\s+water\s+divers?\b',
+            r'\bopen\s+water\s+certified\b',
+            r'\bsomos\s+(?:buzos?|divers?)\b',  # "somos buzos" implica cert
         ]
         
         not_certified_patterns = [

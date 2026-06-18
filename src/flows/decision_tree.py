@@ -941,6 +941,18 @@ MESSAGES = {
             "Are you interested in the refresher?"
         ),
     },
+    "refresher_info_group": {
+        "es": (
+            "El *refresher* es una sesión corta de repaso en el agua antes de la inmersión. "
+            "Sin coste adicional — el guía adapta el ritmo a vuestro nivel.\n\n"
+            "¿Os interesa el refresher?"
+        ),
+        "en": (
+            "The *refresher* is a short in-water review session before the dive. "
+            "No extra cost — the guide adapts the pace to your group's level.\n\n"
+            "Is your group interested in the refresher?"
+        ),
+    },
     "mixed_cert_refresh_qty": {
         "es": "¿Cuántas de estas personas quieren hacer el *refresher*?\n_(Sin coste adicional — el guía adapta la inmersión a su nivel)_",
         "en": "How many of these people want to do the *refresher*?\n_(No extra cost — the guide adapts the dive to their level)_",
@@ -3286,6 +3298,14 @@ class DecisionTree:
         self.set_quick_replies(state, "mixed_add_activity")
         return MESSAGES["not_understood"][lang]
 
+    def _refresher_info_msg(self, state: ConversationState) -> str:
+        """Devuelve el mensaje de refresher en singular o plural según el grupo."""
+        lang = state.language
+        qty = state.mixed_pending_cert_total_qty or state.mixed_pending_qty_value or 0
+        is_group = qty > 1 or (state.detected_group_size or 0) > 1
+        key = "refresher_info_group" if is_group else "refresher_info"
+        return MESSAGES[key][lang]
+
     def _goto_mixed_cert_last_dive_or_qty(self, state: ConversationState) -> str:
         """Salta la pregunta de cantidad si ya la conocemos del mensaje inicial."""
         lang = state.language
@@ -3393,7 +3413,7 @@ class DecisionTree:
                     if lang == "es"
                     else f"✏️ Updated to {n} divers. Since the quantity changed, I'll re-ask about the *refresher*:\n\n"
                 )
-                return intro + MESSAGES["refresher_info"][lang]
+                return intro + self._refresher_info_msg(state)
             # Modifying a beginner line changes how many minors might be in the
             # group → wipe previous kids answer and re-ask ranges inline. The
             # modify_idx stays set; _continue_after_kids reads it to know it's
@@ -3452,7 +3472,7 @@ class DecisionTree:
         if choice == 1:
             state.step = Step.MIXED_CERT_REFRESH_INTEREST
             self.set_quick_replies(state, "refresher_interest")
-            return MESSAGES["refresher_info"][lang]
+            return self._refresher_info_msg(state)
         if choice == 2:
             return self._prepare_mixed_add_preview(state, self._current_mixed_cert_service_id(state))
         self.set_quick_replies(state, "mixed_cert_last_dive")
@@ -3509,7 +3529,7 @@ class DecisionTree:
         if msg in ("back", "cancel", "cancelar"):
             state.step = Step.MIXED_CERT_REFRESH_INTEREST
             self.set_quick_replies(state, "refresher_interest")
-            return MESSAGES["refresher_info"][lang]
+            return self._refresher_info_msg(state)
 
         if message.strip() == "6+" and not state.mixed_pending_exact:
             state.mixed_pending_exact = True
