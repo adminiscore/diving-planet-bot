@@ -8,9 +8,6 @@ o bien:   python tests/FreeText/test_100_conversations.py
 import sys
 import io
 
-# Fix encoding for Windows terminal
-sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
-
 from src.agents.intent_detector import IntentDetector
 from src.flows.decision_tree import ConversationState
 
@@ -274,4 +271,6 @@ def main():
 
 
 if __name__ == "__main__":
+    # Fix encoding for Windows terminal (only when run as a script, not under pytest).
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
     main()

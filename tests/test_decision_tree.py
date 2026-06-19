@@ -5,7 +5,20 @@ Simulates common customer journeys to verify the bot
 responds correctly at each step.
 """
 
+import pytest
+
 from src.flows.decision_tree import DecisionTree, ConversationState, Step
+
+# The v0.17.0 free-text refactor (IntentDetector + orchestrator) removed the old
+# guided menu flow and its Step members (TOURS_CERTIFIED, GROUP_TYPE, ...). The
+# test classes below drive that removed flow and reference steps that no longer
+# exist. They are skipped (not deleted) so they can be rewritten against the new
+# free-text flow; current behavior is covered by tests/FreeText/ and
+# tests/test_orchestrator.py.
+_LEGACY_GUIDED_FLOW = pytest.mark.skip(
+    reason="Legacy guided menu flow removed in v0.17.0 free-text refactor; "
+    "see tests/FreeText/ and tests/test_orchestrator.py"
+)
 
 
 def make_state(conversation_id: str = "test-001") -> ConversationState:
@@ -295,6 +308,7 @@ class TestMainMenu:
         assert "No entendi" in response or "not understand" in response.lower()
 
 
+@_LEGACY_GUIDED_FLOW
 class TestCertifiedDiverFlow:
     def setup_method(self):
         self.tree = DecisionTree()
@@ -483,6 +497,7 @@ class TestCertifiedDiverFlow:
         assert "Mantengo el paquete multi-dia" in response
 
 
+@_LEGACY_GUIDED_FLOW
 class TestBeginnerFlow:
     def setup_method(self):
         self.tree = DecisionTree()
@@ -778,6 +793,7 @@ class TestSummaryFlow:
         assert "Booking link" not in response
 
 
+@_LEGACY_GUIDED_FLOW
 class TestFullJourney:
     """End-to-end test simulating a complete customer interaction."""
 

@@ -2894,8 +2894,51 @@ async def route_message(state: ConversationState, message: str) -> str:
         logger.warning(f"[SUPERVISOR][PRIVACY] PII detected hits={pii_hits} step={state.step.value}")
         return privacy_block_message(state.language)
 
-    # Intent detection: detect user intent from free text and apply to state
-    if not msg_lower.isdigit() and len(message.strip()) > 3:
+    # SAFETY FIRST: broken-link complaints and sensitive topics (medical,
+    # weather, complaints) must escalate BEFORE the intent detector runs.
+    # Otherwise a message like "Estoy embarazada, puedo bucear?" gets hijacked
+    # by the booking intent ("bucear") and routed into the cart flow instead of
+    # being handed to human staff. Broken-link runs before sensitive on purpose
+    # (see the note at the original sensitive block below).
+    if _detect_broken_link_complaint(message, state.history):
+        reason = "🚨 LINK ROTO reportado por el cliente — revisar URLs"
+        state.step = Step.ESCALATE
+        state.quick_replies = []
+        state.pending_escalation_reason = reason
+        state.pending_note = build_lead_summary(state, escalation_reason=reason)
+        logger.warning(f"[SUPERVISOR] Broken-link complaint detected (early) msg={message[:80]!r}")
+        if state.language == "es":
+            return (
+                "Lamento que el enlace no te haya funcionado. Aviso al equipo para revisarlo y te paso "
+                "con un asesor para confirmar el siguiente paso o enviarte el link correcto.\n\n"
+                "Enseguida se pone en contacto contigo. ¡Gracias!"
+            )
+        return (
+            "Sorry the link didn't work. I'll let the team know to check it and connect you with a "
+            "advisor who can confirm the next step or share the correct link.\n\n"
+            "They will get in touch with you shortly. Thanks!"
+        )
+
+    sensitive_escalation_early = detect_sensitive_escalation(message, state.language)
+    if sensitive_escalation_early:
+        reason, response = sensitive_escalation_early
+        state.step = Step.ESCALATE
+        state.quick_replies = []
+        state.pending_escalation_reason = reason
+        state.pending_note = build_lead_summary(state, escalation_reason=reason)
+        logger.info(f"[SUPERVISOR] Sensitive escalation triggered (early) reason={reason}")
+        return response
+
+    # Intent detection: detect user intent from free text and apply to state.
+    # NOT inside the cart-style mixed flow: there the tool-calling orchestrator
+    # (further down) owns free text. Running the detector here would hijack
+    # messages like "quita el snorkel" and wipe the cart (it pre-clears
+    # state.mixed_cart when it thinks it's a fresh mixed group).
+    if (
+        not msg_lower.isdigit()
+        and len(message.strip()) > 3
+        and state.step not in _MIXED_FLOW_STEPS
+    ):
         intent = intent_detector.detect(message, state)
         
         if intent.confidence > 0.2:

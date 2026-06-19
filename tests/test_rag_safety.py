@@ -161,9 +161,11 @@ async def test_supervisor_routes_early_free_text_to_rag(monkeypatch):
     state.step = Step.LANGUAGE
     state.language = "es"
 
+    # A genuine informational question (not a booking request, so the v0.17.0
+    # IntentDetector does not route it into the cart flow) must still reach RAG.
     response = await route_message(
         state,
-        "We are a family of 6. Three are certified divers and three want to snorkel. Can we do it together?",
+        "What marine life and corals can we usually see underwater in the Rosario Islands?",
     )
 
     assert state.step == Step.FREE_TEXT
