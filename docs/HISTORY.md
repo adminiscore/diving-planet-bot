@@ -1,6 +1,13 @@
 History
 =======
 
+0.17.2 - (2026-06-20)
+---------------------
+* Mixed certification fix: a group described as "some certified, some not" (e.g. "somos 3, dos con open water y una no") no longer books everyone as certified divers. Choosing "⚠️ Algunos sí, otros no" now asks how many are certified (new `MIXED_ASK_CERT_COUNT` step), runs the certified subgroup flow, and then automatically starts the dive mini-course for the remaining non-certified people. The final cart correctly shows e.g. `2 × Buceo certificado + 1 × Minicurso` instead of `3 × Buceo certificado`.
+* Refresher split UX: the confusing "Aún queda 1 persona pendiente de continuar..." line now reads "El resto del grupo (N) hará/harán <plan> sin refresher"; the split-review button "❌ Quitar Minicurso / Refresher" (no minicurso was involved) is now "❌ Quitar el refresher".
+* New `mixed_pending_beginner_after_cert` state field + `_maybe_start_pending_beginner` / `_cert_count_quick_replies` / `_handle_mixed_ask_cert_count` helpers. Reset in `_reset_mixed_state`.
+* Tests: new `TestMixedCertificationSplit` (4 cases) in `test_decision_tree.py`. Suite: 404 passed, 100 skipped.
+
 0.17.1 - (2026-06-20)
 ---------------------
 * Safety fix: sensitive escalation (medical/weather/complaints) and broken-link complaints now run BEFORE the free-text IntentDetector. A message like "Estoy embarazada, ¿puedo bucear?" was being hijacked by the booking intent ("bucear") and routed into the cart flow instead of escalating to human staff; it now escalates correctly from any step.

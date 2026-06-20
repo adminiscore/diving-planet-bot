@@ -56,6 +56,7 @@ class Step(str, Enum):
     MIXED_ENTRY = "mixed_entry"
     MIXED_LOCATION = "mixed_location"
     MIXED_ASK_CERTIFICATION = "mixed_ask_certification"
+    MIXED_ASK_CERT_COUNT = "mixed_ask_cert_count"
     MIXED_ADD_ACTIVITY = "mixed_add_activity"
     MIXED_ADD_CERT_PLAN = "mixed_add_cert_plan"
     MIXED_ADD_CERT_MULTI_DAY = "mixed_add_cert_multi_day"
@@ -140,6 +141,9 @@ class ConversationState:
     mixed_pending_cert_total_qty: int | None = None
     mixed_pending_cert_remaining_qty: int | None = None
     mixed_pending_refresh_added_qty: int | None = None
+    # When the group is "some certified, some not": how many non-certified people
+    # still need a minicurso added AFTER the certified subgroup is committed.
+    mixed_pending_beginner_after_cert: int = 0
     mixed_pending_modify_idx: int | None = None  # cart index when editing an item
     mixed_pending_modify_refresh: bool = False   # cert qty just changed → re-ask refresher
     mixed_pending_exact: bool = False            # waiting for exact count after "6+"
@@ -1524,12 +1528,12 @@ BUTTON_OPTIONS = {
     "mixed_cert_split_review": {
         "es": [
             {"title": "🎓 Continuar con el buceo", "value": "1"},
-            {"title": "❌ Quitar Minicurso / Refresher", "value": "2"},
+            {"title": "❌ Quitar el refresher", "value": "2"},
             {"title": "🔄 Empezar de nuevo", "value": "3"},
         ],
         "en": [
             {"title": "🎓 Continue with diving", "value": "1"},
-            {"title": "❌ Remove Mini-course / Refresher", "value": "2"},
+            {"title": "❌ Remove the refresher", "value": "2"},
             {"title": "🔄 Start over", "value": "3"},
         ],
     },
@@ -2084,6 +2088,7 @@ class DecisionTree:
             Step.MIXED_ENTRY: self._handle_mixed_entry,
             Step.MIXED_LOCATION: self._handle_mixed_location,
             Step.MIXED_ASK_CERTIFICATION: self._handle_mixed_ask_certification,
+            Step.MIXED_ASK_CERT_COUNT: self._handle_mixed_ask_cert_count,
             Step.MIXED_ADD_ACTIVITY: self._handle_mixed_add_activity,
             Step.MIXED_ADD_CERT_PLAN: self._handle_mixed_add_cert_plan,
             Step.MIXED_ADD_CERT_MULTI_DAY: self._handle_mixed_add_cert_multi_day,
@@ -2793,6 +2798,7 @@ class DecisionTree:
         state.mixed_pending_cert_total_qty = None
         state.mixed_pending_cert_remaining_qty = None
         state.mixed_pending_refresh_added_qty = None
+        state.mixed_pending_beginner_after_cert = 0
         state.mixed_pending_modify_idx = None
         state.mixed_pending_modify_refresh = False
         state.mixed_pending_exact = False
@@ -3009,14 +3015,16 @@ class DecisionTree:
         cert_label = self._cart_label_for("cert", state.mixed_pending_qty_plan, lang)
         if lang == "es":
             person_phrase = "1 persona" if remaining_qty == 1 else f"{remaining_qty} personas"
+            verb = "hará" if remaining_qty == 1 else "harán"
             pending_line = (
-                f"Aún queda {person_phrase} pendiente de continuar con la reserva de *{cert_label}*."
+                f"El resto del grupo ({person_phrase}) {verb} *{cert_label}* sin refresher."
             )
             prompt = "¿Cómo quieres continuar?"
         else:
             person_phrase = "1 person" if remaining_qty == 1 else f"{remaining_qty} people"
+            verb = "will do" if remaining_qty == 1 else "will do"
             pending_line = (
-                f"There are still {person_phrase} pending to continue with the *{cert_label}* booking."
+                f"The rest of the group ({person_phrase}) {verb} *{cert_label}* without a refresher."
             )
             prompt = "How would you like to continue?"
         return f"{cart_lines}\n\n{pending_line}\n\n{prompt}"
@@ -3144,10 +3152,24 @@ class DecisionTree:
             state.detected_is_certified = False
             return _after_cert("beginner")
 
-        # Opción 3 (solo grupo): Algunos sí, otros no
+        # Opción 3 (solo grupo): Algunos sí, otros no → preguntar cuántos certificados
+        # para luego añadir un minicurso a los no certificados.
         if choice == 3 and is_group:
-            # Preguntar cuántos certificados (el flujo normal de split)
             state.detected_is_certified = None
+            group_size = (state.detected_group_size or 0)
+            if group_size > 1:
+                state.step = Step.MIXED_ASK_CERT_COUNT
+                state.quick_replies = self._cert_count_quick_replies(group_size)
+                if lang == "es":
+                    return (
+                        f"Sois {group_size} en total. ¿Cuántos son *buzos certificados*? "
+                        "Al resto les preparo el minicurso de buceo."
+                    )
+                return (
+                    f"You are {group_size} in total. How many are *certified divers*? "
+                    "I'll set up the dive mini-course for the rest."
+                )
+            # No conocemos el tamaño del grupo: caemos al flujo cert clásico.
             state.mixed_pending_qty_type = "cert"
             if state.location:
                 state.step = Step.MIXED_ADD_CERT_PLAN
@@ -3162,6 +3184,59 @@ class DecisionTree:
         qr_key = "mixed_ask_certification_group" if is_group else "mixed_ask_certification"
         self.set_quick_replies(state, qr_key)
         return MESSAGES["not_understood"][lang]
+
+    def _cert_count_quick_replies(self, group_size: int) -> list[dict]:
+        """Buttons 1..(group_size-1) to pick how many of the group are certified.
+
+        We cap at group_size-1 because choosing all would not be a mixed group.
+        """
+        cap = max(1, min(group_size - 1, 8))
+        return [{"title": str(n), "value": str(n)} for n in range(1, cap + 1)]
+
+    def _handle_mixed_ask_cert_count(self, state: ConversationState, message: str) -> str:
+        """How many of the group are certified (rest get a minicurso)."""
+        lang = state.language
+        msg = message.strip().lower()
+        if msg in ("back", "cancel", "cancelar"):
+            return self._ask_certification_message(state)
+
+        group_size = state.detected_group_size or 0
+        n = self._parse_mixed_quantity(message)
+        if n is None or n < 1 or n >= group_size:
+            state.quick_replies = self._cert_count_quick_replies(group_size)
+            if lang == "es":
+                return (
+                    f"Dime un número entre 1 y {group_size - 1} (los certificados; "
+                    "al resto les preparo el minicurso)."
+                )
+            return (
+                f"Please pick a number between 1 and {group_size - 1} (the certified ones; "
+                "the rest get the mini-course)."
+            )
+
+        cert_qty = n
+        beginner_qty = group_size - n
+        # Pre-cargar el subgrupo certificado y recordar los principiantes pendientes.
+        state.mixed_pending_qty_type = "cert"
+        state.mixed_pending_cert_total_qty = cert_qty
+        state.mixed_pending_cert_remaining_qty = cert_qty
+        state.mixed_pending_qty_value = cert_qty
+        state.mixed_pending_beginner_after_cert = beginner_qty
+
+        intro = (
+            f"Perfecto: {cert_qty} certificado/s y {beginner_qty} para minicurso. "
+            "Empezamos con los buceadores certificados.\n\n"
+            if lang == "es"
+            else f"Got it: {cert_qty} certified and {beginner_qty} for the mini-course. "
+            "Let's start with the certified divers.\n\n"
+        )
+        if state.location:
+            state.step = Step.MIXED_ADD_CERT_PLAN
+            self.set_quick_replies(state, "mixed_add_cert_plan")
+            return intro + MESSAGES["mixed_add_cert_plan"][lang]
+        state.step = Step.MIXED_LOCATION
+        self.set_quick_replies(state, "tours_location")
+        return intro + MESSAGES["mixed_location"][lang]
 
     def _goto_island_hotel_menu(self, state: ConversationState) -> str:
         """Ir al menú de hoteles según la isla detectada."""
@@ -3640,10 +3715,45 @@ class DecisionTree:
             if item_type and qty > 0:
                 self._append_mixed_cart_item(state, item_type, plan, qty)
             self._clear_mixed_pending_add(state)
+            # "Some certified, some not": after the cert is in the cart, add the
+            # minicurso for the remaining non-certified people automatically.
+            pending_beginner = self._maybe_start_pending_beginner(state)
+            if pending_beginner is not None:
+                return pending_beginner
             return self._goto_mixed_cart_review(state)
 
         self.set_quick_replies(state, "mixed_preview_actions")
         return MESSAGES["not_understood"][lang]
+
+    def _maybe_start_pending_beginner(self, state: ConversationState) -> str | None:
+        """If a 'some certified, some not' group still has non-certified people
+        waiting, start the minicurso flow for them. Returns the next message, or
+        None if there's nothing pending.
+        """
+        beginner_qty = state.mixed_pending_beginner_after_cert or 0
+        if beginner_qty <= 0:
+            return None
+        state.mixed_pending_beginner_after_cert = 0
+        lang = state.language
+        # Pre-set the beginner subgroup qty and enter the minicurso add flow
+        # (which handles the kids question, preview and cart commit as usual).
+        state.mixed_pending_qty_type = "beginner"
+        state.mixed_pending_qty_plan = None
+        state.mixed_pending_qty_value = beginner_qty
+        if lang == "es":
+            who = "la persona no certificada" if beginner_qty == 1 else f"las {beginner_qty} personas no certificadas"
+            intro = (
+                "Listo, los buceadores certificados ya están en el carrito. "
+                f"Ahora preparo el *minicurso de buceo* para {who}.\n\n"
+            )
+        else:
+            who = "the non-certified person" if beginner_qty == 1 else f"the {beginner_qty} non-certified people"
+            intro = (
+                "Done, the certified divers are in the cart. Now let's set up the "
+                f"*dive mini-course* for {who}.\n\n"
+            )
+        next_msg = self._goto_mixed_add_qty(state)
+        return intro + next_msg
 
     # Emojis numéricos para listas dinámicas (botones de modificar/quitar item)
     _NUMBER_EMOJIS = ["1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣", "6️⃣", "7️⃣", "8️⃣", "9️⃣", "🔟"]

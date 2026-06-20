@@ -890,3 +890,58 @@ def test_decision_tree_accepts_quick_reply_title():
     assert state.step == Step.MIXED_ENTRY
     assert "step by step" in response.lower()
     assert state.quick_replies[0]["value"] == "1"
+
+
+class TestMixedCertificationSplit:
+    """v0.17.1: a group with 'some certified, some not' must split into a
+    certified subgroup + a minicurso for the non-certified people, instead of
+    booking everyone as certified divers."""
+
+    def setup_method(self):
+        self.tree = DecisionTree()
+
+    def _start(self, group_size=3):
+        state = make_state()
+        state.language = "es"
+        state.location = "cartagena"
+        state.detected_group_size = group_size
+        state.detected_is_certified = None
+        state.step = Step.MIXED_ASK_CERTIFICATION
+        return state
+
+    def test_some_certified_asks_how_many_are_certified(self):
+        state = self._start(group_size=3)
+        response = self.tree.process_message(state, "3")  # Algunos sí, otros no
+        assert state.step == Step.MIXED_ASK_CERT_COUNT
+        assert "certificados" in response.lower()
+        values = [b["value"] for b in state.quick_replies]
+        assert values == ["1", "2"]
+
+    def test_cert_count_records_split(self):
+        state = self._start(group_size=3)
+        self.tree.process_message(state, "3")
+        self.tree.process_message(state, "2")  # 2 certified
+        assert state.mixed_pending_beginner_after_cert == 1
+        assert state.mixed_pending_cert_total_qty == 2
+
+    def test_full_split_flow_builds_cert_plus_minicourse_cart(self):
+        state = self._start(group_size=3)
+        self.tree.process_message(state, "3")   # some certified
+        self.tree.process_message(state, "2")   # 2 certified
+        self.tree.process_message(state, "1")   # 2 dives / 1 day
+        self.tree.process_message(state, "2")   # last dive < 2 years (No)
+        resp = self.tree.process_message(state, "1")  # confirm cert preview
+        assert state.step == Step.MIXED_FINAL_KIDS
+        assert "minicurso" in resp.lower()
+        self.tree.process_message(state, "3")   # kids: all 10+
+        self.tree.process_message(state, "1")   # confirm minicourse preview
+        assert state.step == Step.MIXED_CART_REVIEW
+        types = sorted((it["type"], it["qty"]) for it in state.mixed_cart)
+        assert types == [("beginner", 1), ("cert", 2)]
+
+    def test_cert_count_rejects_full_group(self):
+        state = self._start(group_size=3)
+        self.tree.process_message(state, "3")
+        resp = self.tree.process_message(state, "3")  # all 3 invalid for mixed
+        assert state.step == Step.MIXED_ASK_CERT_COUNT
+        assert "entre 1 y 2" in resp.lower()
