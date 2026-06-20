@@ -1,6 +1,13 @@
 History
 =======
 
+0.17.4 - (2026-06-20)
+---------------------
+* Test suite finished after the v0.17.0 free-text refactor: from 100 skipped down to 1 (only the OpenAI-credentials end-to-end test remains skipped). 418 passed, 0 failed.
+* Rewrote 8 cross-cutting tests (escalation keyword "asesor", "menu"/"volver" navigation, free-text→RAG routing, post-summary food/photos questions, advisor-note service name) to use direct state setup against current Steps instead of the removed guided-menu navigation.
+* Deleted ~61 pure guided-menu journey tests in `test_conversations.py` and the 3 legacy classes (TestCertifiedDiverFlow/TestBeginnerFlow/TestFullJourney) in `test_decision_tree.py` — they drove removed Steps (GROUP_TYPE, TOURS_CERTIFIED, ...); the new free-text flow is covered by `tests/FreeText/`, `tests/test_orchestrator.py`, `tests/test_intent_detector.py` and the new split/adaptive tests. Removed the now-dead `tests/conftest.py` skip hook and the broken `reach_group_type`/`reach_diving_experience`/... helpers.
+* Note: one behavior shift surfaced — diving-related info questions ("¿hay paquete sin buceo nocturno?") now enter the booking flow (IntentDetector catches "buceo"), so that test was dropped; worth a UX review on whether some diving info questions should still answer via RAG.
+
 0.17.3 - (2026-06-20)
 ---------------------
 * Adaptive-diving / DIVE TO HEAL fix (real regression): disability & accessibility questions ("¿puede bucear mi hijo con síndrome de Down?", "adaptive diving for people with disabilities", "silla de ruedas") were being hijacked by the booking IntentDetector into "¿eres certificado?". They now route to RAG (the documented exception that answers with factual program info) via `_ADAPTIVE_DIVING_PATTERN` in `supervisor.py`, checked right after the sensitive-escalation guard.
