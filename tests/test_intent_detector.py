@@ -240,3 +240,24 @@ class TestConfidenceScoring:
     def test_low_confidence_minimal_info(self, detector, state):
         intent = detector.detect("Hola", state)
         assert intent.confidence <= 0.2
+
+
+class TestOpenWaterCertSplit:
+    """v0.17.2: 'dos tenemos open water y una no' must yield a cert+minicourse
+    allocation so the bot skips the ambiguous certification question."""
+
+    def test_es_open_water_and_one_not(self, detector, state):
+        intent = detector.detect(
+            "hola somos tres personas que queremos bucear, dos tenemos el open water y una no",
+            state,
+        )
+        assert intent.group_allocation == {"certified_diving": 2, "minicourse": 1}
+        assert intent.group_size == 3
+
+    def test_es_con_open_water_short(self, detector, state):
+        intent = detector.detect("somos 3, 2 con open water y 1 no", state)
+        assert intent.group_allocation == {"certified_diving": 2, "minicourse": 1}
+
+    def test_en_have_open_water(self, detector, state):
+        intent = detector.detect("we are three, two have open water and one does not", state)
+        assert intent.group_allocation == {"certified_diving": 2, "minicourse": 1}

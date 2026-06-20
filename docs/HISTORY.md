@@ -1,6 +1,13 @@
 History
 =======
 
+0.17.3 - (2026-06-20)
+---------------------
+* Adaptive-diving / DIVE TO HEAL fix (real regression): disability & accessibility questions ("¿puede bucear mi hijo con síndrome de Down?", "adaptive diving for people with disabilities", "silla de ruedas") were being hijacked by the booking IntentDetector into "¿eres certificado?". They now route to RAG (the documented exception that answers with factual program info) via `_ADAPTIVE_DIVING_PATTERN` in `supervisor.py`, checked right after the sensitive-escalation guard.
+* IntentDetector now extracts the cert/non-cert split directly from "N tenemos/con open water y M no" (ES) and "N have open water and M not/doesn't" (EN) → `group_allocation = {certified_diving: N, minicourse: M}`. The supervisor queues the minicurso (`mixed_pending_beginner_after_cert`) so the bot skips the ambiguous certification question entirely.
+* Legacy test triage: 2 adaptive-diving routing tests un-skipped (now pass). 9 cross-cutting tests (RAG routing / escalation keywords) stay skipped — they test still-valid behavior but their SETUP uses removed Steps (GROUP_TYPE); they need their navigation rewritten, not the assertion. Now 98 skipped (was 100).
+* New regression tests: `TestOpenWaterCertSplit` (intent detector) and `test_adaptive_diving_question_routes_to_rag_not_booking`. Suite: 410 passed, 98 skipped.
+
 0.17.2 - (2026-06-20)
 ---------------------
 * Mixed certification fix: a group described as "some certified, some not" (e.g. "somos 3, dos con open water y una no") no longer books everyone as certified divers. Choosing "⚠️ Algunos sí, otros no" now asks how many are certified (new `MIXED_ASK_CERT_COUNT` step), runs the certified subgroup flow, and then automatically starts the dive mini-course for the remaining non-certified people. The final cart correctly shows e.g. `2 × Buceo certificado + 1 × Minicurso` instead of `3 × Buceo certificado`.

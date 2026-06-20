@@ -304,6 +304,15 @@ class IntentDetector:
             r'(\d+)\s+certificad[ao]s?\s+y\s+(?:el\s+)?otr[ao]s?\s+(?:\d+\s+)?(?:no|sin\s+certific)',
             # English: "N certified and M not certified/beginners"
             r'(\d+)\s+certified\s+and\s+(\d+)\s+(?:not\s+certified|beginners?|uncertified)',
+            # "dos tenemos (el) open water y una no" / "2 con open water y 1 no"
+            rf'{_WORD_NUM}\s+(?:tenemos|tienen|tiene|tengo|con|somos)\s+'
+            rf'(?:el\s+|la\s+|los\s+|las\s+|nuestro\s+)?'
+            rf'(?:open\s*water|advanced|rescue|divemaster|licencia|certificad[ao]s?|padi|ssi|cmas|naui)\b'
+            rf'[^,.;]*?\s+y\s+{_WORD_NUM}\s+no\b',
+            # English: "two have (their) open water and one doesn't/does not/not"
+            rf'{_WORD_NUM}\s+(?:have|with|are)\s+(?:their\s+|the\s+)?'
+            rf'(?:open\s*water|advanced|rescue|certified|padi|ssi)\b'
+            rf'[^,.;]*?\s+and\s+{_WORD_NUM}\s+(?:no|not|doesn\'?t|does\s+not|don\'?t|do\s+not)\b',
         ]
         for pat_idx, pat in enumerate(cert_split_patterns):
             m_split = re.search(pat, message, re.IGNORECASE)

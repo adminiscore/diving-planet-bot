@@ -838,3 +838,26 @@ async def test_parent_doc_expansion_loads_summary_for_subchunk(monkeypatch):
     assert expanded[0]["metadata"]["key"] == "minicourse:summary"
     assert expanded[1]["metadata"]["key"] == "minicourse:itinerary"
     assert fetched["parent_ids"] == ["minicourse:summary"]
+
+
+@pytest.mark.asyncio
+async def test_adaptive_diving_question_routes_to_rag_not_booking(monkeypatch):
+    """v0.17.2: disability / DIVE TO HEAL questions must be ANSWERED via RAG
+    (the documented exception), not hijacked by the booking IntentDetector into
+    the certification question."""
+    async def fake_rag(message, lang="es", history=None, extra_context=None):
+        return "INFO DIVE TO HEAL"
+
+    monkeypatch.setattr("src.agents.supervisor.rag_answer", fake_rag)
+
+    for msg in [
+        "puede bucear mi hijo con sindrome de down?",
+        "do you offer adaptive diving for people with disabilities?",
+        "mi madre va en silla de ruedas, puede hacer snorkel?",
+    ]:
+        state = ConversationState(conversation_id="test")
+        state.step = Step.MAIN_MENU
+        state.language = "es"
+        response = await route_message(state, msg)
+        assert state.step != Step.MIXED_ASK_CERTIFICATION
+        assert response == "INFO DIVE TO HEAL"

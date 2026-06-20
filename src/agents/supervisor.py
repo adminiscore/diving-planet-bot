@@ -28,6 +28,22 @@ logger = logging.getLogger("uvicorn.error")
 decision_tree = DecisionTree()
 intent_detector = IntentDetector()
 
+# Adaptive diving / DIVE TO HEAL: disability & accessibility questions that must
+# be answered with the program's factual info (via RAG) instead of being routed
+# into the booking flow. NOT a medical escalation — it's the documented exception.
+_ADAPTIVE_DIVING_PATTERN = re.compile(
+    r"\b("
+    r"dive\s*to\s*heal|buceo\s+adaptado|adaptive\s+diving|"
+    r"discapacidad|discapacitad[ao]s?|disabilit(?:y|ies)|disabled|accesibilidad|accessibilit(?:y)|"
+    r"s[ií]ndrome\s+de\s+down|down\s+syndrome|autismo|autis(?:m|tic)|"
+    r"par[aá]lisis\s+cerebral|cerebral\s+palsy|"
+    r"movilidad\s+reducida|reduced\s+mobility|silla\s+de\s+ruedas|wheelchair|"
+    r"sord[ao]s?|deaf|cieg[ao]s?|invidente|blind|"
+    r"discapacidad\s+(?:visual|auditiva|motora|f[ií]sica|intelectual)"
+    r")\b",
+    re.IGNORECASE,
+)
+
 _GROUP_COUNT_WORDS = {
     "un": 1,
     "uno": 1,
@@ -2929,6 +2945,17 @@ async def route_message(state: ConversationState, message: str) -> str:
         logger.info(f"[SUPERVISOR] Sensitive escalation triggered (early) reason={reason}")
         return response
 
+    # Adaptive diving / DIVE TO HEAL questions (disability, accessibility) must
+    # be ANSWERED with the program's factual info (RAG handles the exception),
+    # not hijacked by the booking IntentDetector into "¿eres certificado?".
+    if _ADAPTIVE_DIVING_PATTERN.search(message) and state.step not in _MIXED_FLOW_STEPS:
+        logger.info("[SUPERVISOR] Adaptive-diving/DIVE TO HEAL question -> RAG")
+        state.history.append({"role": "user", "content": message})
+        extra_context = _build_extra_context(state)
+        answer = await rag_answer(message, lang=state.language, history=state.history, extra_context=extra_context)
+        state.history.append({"role": "assistant", "content": answer})
+        return answer
+
     # Intent detection: detect user intent from free text and apply to state.
     # NOT inside the cart-style mixed flow: there the tool-calling orchestrator
     # (further down) owns free text. Running the detector here would hijack
@@ -2953,11 +2980,16 @@ async def route_message(state: ConversationState, message: str) -> str:
 
                 # Pre-setar cantidades conocidas para saltarnos preguntas
                 cert_qty = (intent.group_allocation or {}).get("certified_diving", 0)
+                beginner_qty = (intent.group_allocation or {}).get("minicourse", 0)
                 if cert_qty > 0:
                     state.mixed_pending_qty_type = "cert"
                     state.mixed_pending_cert_total_qty = cert_qty
                     state.mixed_pending_cert_remaining_qty = cert_qty
                     state.mixed_pending_qty_value = cert_qty
+                    # "some certified, some not": queue the minicurso for the rest
+                    # so it's added automatically after the certified subgroup.
+                    if beginner_qty > 0:
+                        state.mixed_pending_beginner_after_cert = beginner_qty
 
                 # Aplicar ubicación si ya la detectamos
                 if intent.location and not state.location:
