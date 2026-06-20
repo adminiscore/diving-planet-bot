@@ -19,9 +19,23 @@ class TestLanguageSelection:
 
     def test_welcome_message(self):
         state = make_state()
-        response = self.tree.process_message(state, "hola")
+        response = self.tree.process_message(state, "zzz")
         assert "Diving Planet" in response
         assert state.step == Step.LANGUAGE
+
+    def test_welcome_detects_spanish_greeting_and_skips_language_step(self):
+        state = make_state()
+        response = self.tree.process_message(state, "hola")
+        assert "Diving Planet" in response
+        assert state.language == "es"
+        assert state.step == Step.MAIN_MENU
+
+    def test_welcome_detects_english_greeting_and_skips_language_step(self):
+        state = make_state()
+        response = self.tree.process_message(state, "hello")
+        assert "Diving Planet" in response
+        assert state.language == "en"
+        assert state.step == Step.MAIN_MENU
 
     def test_select_spanish(self):
         state = make_state()
@@ -444,7 +458,7 @@ def test_decision_tree_sets_quick_replies_for_menu_steps():
     tree = DecisionTree()
     state = make_state()
 
-    response = tree.process_message(state, "hola")
+    response = tree.process_message(state, "zzz")
 
     assert state.step == Step.LANGUAGE
     assert "1. Espanol" not in response
@@ -504,8 +518,9 @@ class TestMixedCertificationSplit:
         self.tree.process_message(state, "1")   # 2 dives / 1 day
         self.tree.process_message(state, "2")   # last dive < 2 years (No)
         resp = self.tree.process_message(state, "1")  # confirm cert preview
-        assert state.step == Step.MIXED_FINAL_KIDS
+        assert state.step == Step.MIXED_ASK_BEGINNER_ACTIVITY
         assert "minicurso" in resp.lower()
+        self.tree.process_message(state, "1")   # Minicurso de buceo
         self.tree.process_message(state, "3")   # kids: all 10+
         self.tree.process_message(state, "1")   # confirm minicourse preview
         assert state.step == Step.MIXED_CART_REVIEW
@@ -518,3 +533,80 @@ class TestMixedCertificationSplit:
         resp = self.tree.process_message(state, "3")  # all 3 invalid for mixed
         assert state.step == Step.MIXED_ASK_CERT_COUNT
         assert "entre 1 y 2" in resp.lower()
+
+    def _reach_beginner_activity_question(self, cert_plan_choices: list[str]) -> tuple["DecisionTree", "ConversationState"]:
+        """Drive the cert subgroup through to the point where the
+        MIXED_ASK_BEGINNER_ACTIVITY question is shown for the non-certified
+        person. `cert_plan_choices` are the answers for MIXED_ADD_CERT_PLAN
+        (and, for multi-day, MIXED_ADD_CERT_MULTI_DAY)."""
+        state = self._start(group_size=2)
+        self.tree.process_message(state, "3")   # some certified
+        self.tree.process_message(state, "1")   # 1 certified, 1 minicourse
+        for choice in cert_plan_choices:
+            self.tree.process_message(state, choice)
+        resp = self.tree.process_message(state, "2")  # last dive < 2 years -> No
+        resp = self.tree.process_message(state, "1")  # confirm cert preview -> ask beginner activity
+        return state, resp
+
+    def test_beginner_activity_question_one_day_plan_has_no_open_water_option(self):
+        state, resp = self._reach_beginner_activity_question(["1"])  # 2 dives / 1 day
+        assert state.step == Step.MIXED_ASK_BEGINNER_ACTIVITY
+        assert "open water" not in resp.lower()
+        values = [b["value"] for b in state.quick_replies]
+        assert values == ["1", "2"]
+
+    def test_beginner_activity_question_multi_day_plan_offers_open_water(self):
+        state, resp = self._reach_beginner_activity_question(["2", "1"])  # multi-day -> first package
+        assert state.step == Step.MIXED_ASK_BEGINNER_ACTIVITY
+        assert "open water" in resp.lower()
+        values = [b["value"] for b in state.quick_replies]
+        assert values == ["1", "2", "3"]
+
+    def test_beginner_activity_choice_minicourse(self):
+        state, _ = self._reach_beginner_activity_question(["1"])
+        self.tree.process_message(state, "1")  # Minicurso de buceo
+        self.tree.process_message(state, "3")  # kids: all 10+
+        resp = self.tree.process_message(state, "1")  # confirm minicourse preview
+        assert state.step == Step.MIXED_CART_REVIEW
+        beginner_item = next(it for it in state.mixed_cart if it["type"] == "beginner")
+        assert beginner_item["qty"] == 1
+
+    def test_beginner_activity_choice_snorkel(self):
+        state, _ = self._reach_beginner_activity_question(["1"])
+        resp = self.tree.process_message(state, "2")  # Snorkel
+        assert state.step == Step.MIXED_ADD_PREVIEW
+        assert "snorkel" in resp.lower()
+        self.tree.process_message(state, "1")  # confirm snorkel preview
+        assert state.step == Step.MIXED_CART_REVIEW
+        snorkel_item = next(it for it in state.mixed_cart if it["type"] == "snorkel")
+        assert snorkel_item["qty"] == 1
+
+    def test_beginner_activity_choice_open_water_only_offered_when_multi_day(self):
+        state, _ = self._reach_beginner_activity_question(["2", "1"])  # multi-day
+        resp = self.tree.process_message(state, "3")  # Curso Open Water
+        assert state.step == Step.COURSES_OPEN_WATER_TIME
+        assert "2 dias completos" in resp.lower() or "2 días completos" in resp.lower()
+
+    def test_split_flow_on_island_asks_hotel_before_cert_plan(self):
+        """Regression: choosing "Algunos sí, otros no" then answering the
+        location question with "Ya estoy en las islas" skipped straight to the
+        cert-plan question without ever asking which hotel — pickup couldn't
+        be coordinated. Location is asked AFTER cert count here (group_size
+        known up front, location still unset), so this exercises
+        _handle_mixed_location's _after_location_set hotel check."""
+        state = self._start(group_size=5)
+        state.location = None
+        self.tree.process_message(state, "3")   # some certified
+        self.tree.process_message(state, "3")   # 3 certified, 2 minicourse
+        assert state.step == Step.MIXED_LOCATION
+        resp = self.tree.process_message(state, "2")  # Ya estoy en las islas
+        assert state.step == Step.ISLAND_MENU
+        assert "isla" in resp.lower()
+
+        resp = self.tree.process_message(state, "1")  # Isla Grande
+        assert state.step == Step.ISLAND_HOTEL_MENU
+
+        resp = self.tree.process_message(state, "1")  # first hotel
+        assert state.step == Step.MIXED_ADD_CERT_PLAN
+        assert state.hotel == "San Pedro de Majagua"
+        assert state.island == "Isla Grande"

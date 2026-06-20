@@ -261,3 +261,49 @@ class TestOpenWaterCertSplit:
     def test_en_have_open_water(self, detector, state):
         intent = detector.detect("we are three, two have open water and one does not", state)
         assert intent.group_allocation == {"certified_diving": 2, "minicourse": 1}
+
+
+class TestCertificationOnlyNotCertifiedCount:
+    """Regression: "somos 2 ... y uno no esta certificado" only states the
+    NOT-certified count (no explicit "N certified" phrase) — the certified
+    count must be inferred as the complement of the known group size, and the
+    activity must be inferred as diving even without the word "buceo", since
+    certification is a diving-only concept in this business. Also covers the
+    typo "certficado" that was breaking detection entirely."""
+
+    def test_es_only_not_certified_count_no_activity_word(self, detector, state):
+        intent = detector.detect(
+            "Hola somos dos personas y uno no esta certificado", state
+        )
+        assert intent.activity == "certified_diving"
+        assert intent.group_allocation == {"certified_diving": 1, "minicourse": 1}
+        assert intent.confidence > 0.2
+
+    def test_es_typo_certficado_still_detected(self, detector, state):
+        """The exact reported typo: "certficado" (missing the second "i")."""
+        intent = detector.detect(
+            "Hola somos dos personas y uno no esta certficado", state
+        )
+        assert intent.activity == "certified_diving"
+        assert intent.is_certified is False
+        assert intent.group_allocation == {"certified_diving": 1, "minicourse": 1}
+
+    def test_es_three_people_one_not_certified(self, detector, state):
+        intent = detector.detect("somos 3, uno no esta certificado", state)
+        assert intent.group_allocation == {"certified_diving": 2, "minicourse": 1}
+
+    def test_en_one_is_not_certified(self, detector, state):
+        intent = detector.detect(
+            "we are 2 and one is not certified", state
+        )
+        assert intent.activity == "certified_diving"
+        assert intent.group_allocation == {"certified_diving": 1, "minicourse": 1}
+
+    def test_certification_mention_without_group_size_still_infers_activity(
+        self, detector, state
+    ):
+        """No group size at all — still infers diving from "certficado" alone
+        (typo) so a solo "estoy certficado" doesn't fall through to RAG."""
+        intent = detector.detect("hola estoy certficado", state)
+        assert intent.activity == "certified_diving"
+        assert intent.is_certified is True

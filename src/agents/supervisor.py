@@ -19,7 +19,15 @@ from src.agents.lead_summary import build_lead_summary
 from src.agents.intent_classifier import classify_menu_intent
 from src.agents import orchestrator
 from src.agents.intent_detector import IntentDetector
-from src.flows.decision_tree import DecisionTree, ConversationState, Step, SERVICES
+from src.agents.language_detector import detect_language_llm
+from src.flows.decision_tree import (
+    DecisionTree,
+    ConversationState,
+    Step,
+    SERVICES,
+    MESSAGES as _TREE_MESSAGES,
+    _detect_language_from_text,
+)
 from src.agents.rag_agent import rag_answer
 from src.privacy import detect_pii, privacy_block_message
 
@@ -43,6 +51,61 @@ _ADAPTIVE_DIVING_PATTERN = re.compile(
     r")\b",
     re.IGNORECASE,
 )
+
+# Generic "what days / when is there availability" questions. The real
+# calendar (exact date + headcount) only exists on the booking link, so we
+# never invent a date here — just reassure the client (tours run daily, there
+# is availability) and point them to the link's calendar. NOT the same as the
+# urgent real_time_issues keywords ("disponible mañana", "hay cupo"...) in
+# escalation.py, which still take priority — this check runs after those.
+_AVAILABILITY_PATTERN = re.compile(
+    r"\b("
+    r"qu[ée]\s+d[ií]as?\s+(hay|tienen|disponibles?)|"
+    r"d[ií]as?\s+disponibles?|"
+    r"fechas?\s+disponibles?|"
+    r"qu[ée]\s+fechas?\s+(hay|tienen)|"
+    r"disponibilidad\s+de\s+fechas?|"
+    r"cu[áa]ndo\s+(hay|puedo|podemos|tienen)\s+\w|"
+    r"hay\s+disponibilidad|"
+    r"what\s+days|"
+    r"which\s+days|"
+    r"available\s+dates?|"
+    r"what\s+dates?\s+(are|is)|"
+    r"any\s+availability|"
+    r"is\s+there\s+availability|"
+    r"when\s+can\s+(we|i)\s+(go|book)"
+    r")\b",
+    re.IGNORECASE,
+)
+
+# Question starters used to recognize plain informational questions ("incluye
+# comida?", "what's included?") inside the cart-style mixed flow. Real bug this
+# guards against: the tool-calling orchestrator (an LLM) occasionally
+# misclassified an info question as a cart action — e.g. "Incluye algún
+# servicio de comida y bebida" got turned into add_to_cart(companion, 4),
+# silently adding 4 bogus companions to the cart. Routing obvious questions
+# straight to RAG, before the orchestrator ever sees them, removes that
+# failure mode entirely instead of trying to prompt-engineer it away.
+_INFO_QUESTION_STARTER_PATTERN = re.compile(
+    r"^("
+    r"qu[ée]|cu[áa]nto|cu[áa]ndo|c[óo]mo|d[óo]nde|cu[áa]l|"
+    r"inclu[yi]e|tiene|tienen|hay|puedo\s+saber|"
+    r"what|how|when|where|which|does|is\s+there|are\s+there|do\s+you|can\s+i\s+know"
+    r")\b"
+)
+
+
+def _looks_like_info_question(message: str) -> bool:
+    """True for plain informational questions ("incluye comida?", "what's
+    included?"). Deliberately conservative: only starter words that signal
+    "I'm asking for information" (qué/incluye/hay/what/does...), NOT polite
+    request phrasing like "puedo añadir..." / "can you remove..." — those are
+    real cart actions and must still reach the orchestrator.
+    """
+    normalized = _strip_accents(message.strip().lower())
+    if not normalized:
+        return False
+    return bool(_INFO_QUESTION_STARTER_PATTERN.match(normalized))
 
 _GROUP_COUNT_WORDS = {
     "un": 1,
@@ -2246,13 +2309,19 @@ def _infer_language(message: str, fallback: str = "es") -> str:
 def _build_extra_context(state: ConversationState) -> str | None:
     """Build a compact natural-language summary of the current state to help RAG.
 
-    Se usa como extra_context para que el agente de conocimiento tenga claro:
-    - Actividad seleccionada
-    - Si el cliente es buzo certificado
-    - Si es colombiano
-    - Desde donde sale (Cartagena / islas)
-    - Isla / hotel reportado
-    - Inactividad (>2 años) y si mostro interes en refresher
+    Called before EVERY rag_answer(...) in this file — no matter where in the
+    tree the free-text question was asked, the LLM gets everything we already
+    know about the client so it never re-asks or contradicts it:
+    - Idioma de la conversacion
+    - Ubicacion (Cartagena / isla / hotel)
+    - Actividad activa: seleccionada en el arbol O en previsualizacion del
+      carrito sin confirmar, con su "incluye"/"no incluye" real (ground truth,
+      no depende de que la busqueda vectorial acierte el chunk)
+    - Si es buzo certificado, colombiano, inactivo >2 anios, interes en refresher
+    - Tamano de grupo (detectado o pendiente de confirmar), duracion (1 dia vs
+      varios), menores de edad ya contabilizados, lancha privada
+    - Carrito actual completo, con ground truth de incluye/no incluye por item
+    - Paso actual del flujo guiado
     """
 
     parts: list[str] = []
@@ -2265,9 +2334,37 @@ def _build_extra_context(state: ConversationState) -> str | None:
 
     # Ubicacion base
     if state.location == "cartagena":
-        parts.append("El cliente indica que saldra desde Cartagena para su experiencia.")
+        if state.language == "es":
+            parts.append(
+                "El cliente indica que saldra desde Cartagena para su experiencia. "
+                "Si pregunta por punto de encuentro, recogida u horarios, responde SOLO "
+                "con la informacion de salida desde Cartagena (Muelle de la Bodeguita); "
+                "no menciones la opcion de recogida en hotel/islas salvo que el cliente "
+                "pregunte explicitamente por ese caso."
+            )
+        else:
+            parts.append(
+                "The customer is departing from Cartagena for their experience. "
+                "If they ask about the meeting point, pickup, or schedule, answer ONLY "
+                "with the Cartagena departure info (Muelle de la Bodeguita); do not "
+                "mention the hotel/island pickup option unless they explicitly ask about it."
+            )
     elif state.location == "island":
-        parts.append("El cliente indica que ya esta en las Islas del Rosario.")
+        if state.language == "es":
+            parts.append(
+                "El cliente indica que ya esta en las Islas del Rosario. "
+                "Si pregunta por punto de encuentro, recogida u horarios, responde SOLO "
+                "con la informacion de recogida en hotel/isla; no menciones la salida "
+                "desde el Muelle de la Bodeguita en Cartagena salvo que el cliente "
+                "pregunte explicitamente por ese caso."
+            )
+        else:
+            parts.append(
+                "The customer is already on the Rosario Islands. If they ask about the "
+                "meeting point, pickup, or schedule, answer ONLY with the hotel/island "
+                "pickup info; do not mention the Cartagena Muelle de la Bodeguita "
+                "departure unless they explicitly ask about it."
+            )
 
     # Isla / hotel
     if getattr(state, "island", None):
@@ -2323,6 +2420,52 @@ def _build_extra_context(state: ConversationState) -> str | None:
                 f"Actividad seleccionada en el arbol de opciones con id={state.selected_service}."
             )
 
+    # Ground truth de la actividad activa (seleccionada en el arbol O en
+    # previsualizacion del carrito sin confirmar aun) — inyecta directamente
+    # que incluye/no incluye para que preguntas como "tengo que llevar equipo?"
+    # o "esta el seguro incluido?" no dependan de que la busqueda vectorial
+    # encuentre el chunk correcto del servicio.
+    active_service_id = (
+        getattr(state, "mixed_pending_preview_service_id", None)
+        # Set as soon as the client picks a specific cert/course plan (e.g.
+        # "Paquete multi-dia" -> "5 buceos"), well before the final preview
+        # card — without this, questions asked mid cert-plan sub-flow (last
+        # dive question, refresher interest/qty) had no service context.
+        or getattr(state, "mixed_pending_qty_plan", None)
+        or getattr(state, "selected_service", None)
+    )
+    if active_service_id:
+        try:
+            from src.flows.decision_tree import SERVICES
+
+            active_service = SERVICES.get(active_service_id)
+            if active_service:
+                name = active_service.get(f"name_{state.language}", active_service_id)
+                includes = active_service.get(f"includes_{state.language}")
+                not_included = active_service.get(f"not_included_{state.language}") or []
+                if state.language == "es":
+                    parts.append(f"Actividad que el cliente esta viendo/considerando ahora: {name}.")
+                    if includes:
+                        parts.append(f"Esta actividad SI incluye: {includes}.")
+                    if not_included:
+                        parts.append(f"Esta actividad NO incluye: {', '.join(not_included)}.")
+                    parts.append(
+                        "Usa esta lista como fuente de verdad para preguntas de equipo, seguro o "
+                        "que incluye/no incluye; no necesitas buscar en otra parte."
+                    )
+                else:
+                    parts.append(f"Activity the customer is currently viewing/considering: {name}.")
+                    if includes:
+                        parts.append(f"This activity DOES include: {includes}.")
+                    if not_included:
+                        parts.append(f"This activity does NOT include: {', '.join(not_included)}.")
+                    parts.append(
+                        "Use this list as the source of truth for equipment, insurance, or "
+                        "what's included/not included questions; no need to search elsewhere."
+                    )
+        except Exception:
+            pass
+
     # Buzo certificado / principiante
     if getattr(state, "is_certified", None) is True:
         parts.append("El cliente marco que es buzo certificado (solo buzos certificados en el grupo).")
@@ -2346,6 +2489,67 @@ def _build_extra_context(state: ConversationState) -> str | None:
     elif getattr(state, "refresher_interested", None) is False:
         parts.append("En el flujo marco que NO le interesa incluir un refresher.")
 
+    # Tamano de grupo ya conocido (detectado en texto libre o pendiente de
+    # confirmar cantidad) — para que el LLM no pida "cuantos son" si el
+    # cliente ya lo dijo en otro punto de la conversacion.
+    group_size = getattr(state, "detected_group_size", None) or getattr(state, "mixed_pending_qty_value", None)
+    if group_size:
+        if state.language == "es":
+            parts.append(f"El cliente ya indico que son {group_size} persona(s) en total.")
+        else:
+            parts.append(f"The customer already said there are {group_size} people in total.")
+
+    # Duracion detectada (un dia vs varios dias)
+    duration = getattr(state, "detected_duration", None)
+    if duration == "single_day":
+        parts.append(
+            "El cliente indico que estara solo un dia." if state.language == "es"
+            else "The customer indicated they will be there for a single day."
+        )
+    elif duration == "multi_day":
+        parts.append(
+            "El cliente indico que estara varios dias." if state.language == "es"
+            else "The customer indicated they will be there for multiple days."
+        )
+
+    # Menores de edad ya contabilizados en el grupo
+    kids_u8 = getattr(state, "kids_under_8_count", 0) or 0
+    kids_8_10 = getattr(state, "kids_eight_to_ten_count", 0) or 0
+    if kids_u8 or kids_8_10:
+        if state.language == "es":
+            parts.append(
+                f"En el grupo ya se contabilizaron {kids_u8} menor(es) de 8 años "
+                f"y {kids_8_10} de 8 a 10 años. No vuelvas a preguntar por edades de niños. "
+                "Regla de edades (fuente de verdad): los menores de 8 años SOLO pueden hacer "
+                "snorkel (edad minima 6 años), no pueden bucear. De 8 a 10 años: programa "
+                "Bubble Makers — sesion especializada de buceo en piscina y aguas poco "
+                "profundas (maximo 2 metros de profundidad) con un instructor PADI dedicado, "
+                "es la forma en que los niños de esa edad si pueden iniciarse en el buceo de "
+                "forma segura. Desde los 10 años: minicurso de buceo normal y cursos PADI."
+            )
+        else:
+            parts.append(
+                f"The group already accounts for {kids_u8} child(ren) under 8 and "
+                f"{kids_8_10} aged 8-10. Do not ask about kids' ages again. "
+                "Age rule (source of truth): children under 8 can ONLY do snorkeling "
+                "(minimum age 6), they cannot dive. Ages 8 to 10: Bubble Makers program — "
+                "a specialized dive session in a pool or very shallow water (max 2 meters "
+                "deep) with a dedicated PADI instructor; that's how kids that age can safely "
+                "start diving. From age 10: the regular dive mini-course and PADI courses."
+            )
+
+    # Lancha privada
+    if getattr(state, "mixed_final_wants_private", None) is True:
+        parts.append(
+            "El cliente ya solicito lancha privada para el grupo." if state.language == "es"
+            else "The customer already requested a private boat for the group."
+        )
+    elif getattr(state, "mixed_final_wants_private", None) is False:
+        parts.append(
+            "El cliente indico que NO quiere lancha privada." if state.language == "es"
+            else "The customer indicated they do NOT want a private boat."
+        )
+
     # Carrito actual (clave para no preguntar cosas que el cliente ya eligio)
     cart = getattr(state, "mixed_cart", None) or []
     if cart:
@@ -2355,13 +2559,54 @@ def _build_extra_context(state: ConversationState) -> str | None:
         if state.language == "es":
             parts.append(
                 f"El cliente YA tiene estas actividades en su carrito: {items}. "
-                "No vuelvas a preguntar por estas actividades; tenlas en cuenta como contexto."
+                "No vuelvas a preguntar por estas actividades; tenlas en cuenta como contexto. "
+                "Cuando hables de equipo, seguro u otros detalles de la actividad, usa el "
+                "mismo termino que tiene en el carrito (buceo, snorkel o minicurso) sin "
+                "mezclarlo con otra actividad — por ejemplo, si el carrito tiene snorkel, "
+                "habla de 'equipo de snorkel', no de 'equipo de buceo'."
             )
         else:
             parts.append(
                 f"The customer ALREADY has these activities in their cart: {items}. "
-                "Do not ask again about these activities; treat them as known context."
+                "Do not ask again about these activities; treat them as known context. "
+                "When talking about equipment, insurance, or other activity details, use "
+                "the SAME term as the cart item (diving, snorkeling, or mini-course) — do "
+                "not mix it with another activity (e.g. if the cart has snorkeling, say "
+                "'snorkeling gear', not 'diving gear')."
             )
+
+        # Ground truth de incluye/no incluye por cada tipo de actividad distinto
+        # en el carrito — mismo motivo que para la previsualizacion: evita que
+        # la respuesta dependa de que la busqueda vectorial acierte el chunk.
+        try:
+            from src.flows.decision_tree import SERVICES
+
+            seen_service_ids: set[str] = set()
+            for item in cart:
+                cart_service_id = decision_tree._cart_service_id(
+                    item.get("type"), item.get("plan"), state
+                )
+                if not cart_service_id or cart_service_id in seen_service_ids:
+                    continue
+                seen_service_ids.add(cart_service_id)
+                cart_service = SERVICES.get(cart_service_id)
+                if not cart_service:
+                    continue
+                name = cart_service.get(f"name_{state.language}", cart_service_id)
+                includes = cart_service.get(f"includes_{state.language}")
+                not_included = cart_service.get(f"not_included_{state.language}") or []
+                if state.language == "es":
+                    if includes:
+                        parts.append(f"'{name}' SI incluye: {includes}.")
+                    if not_included:
+                        parts.append(f"'{name}' NO incluye: {', '.join(not_included)}.")
+                else:
+                    if includes:
+                        parts.append(f"'{name}' DOES include: {includes}.")
+                    if not_included:
+                        parts.append(f"'{name}' does NOT include: {', '.join(not_included)}.")
+        except Exception:
+            pass
 
     # Paso actual del flujo guiado (para que el LLM sepa que esta esperando el bot)
     step_value = getattr(getattr(state, "step", None), "value", None)
@@ -2803,6 +3048,28 @@ def _apply_detected_intent(intent, state: ConversationState) -> None:
         logger.info(f"[INTENT] Detected hotel: {intent.hotel}")
 
 
+def _continue_booking_quick_replies(state: ConversationState) -> list[dict]:
+    """Buttons appended after answering an info question mid-flow (availability,
+    food/included questions, etc.) without losing the pending cart action.
+
+    Reuses the CURRENT step's primary quick reply value (by convention the
+    first option in every mixed_* menu is the main forward action — "Añadir
+    al carrito", "Confirmar carrito", etc.) so clicking "Continuar con la
+    reserva" resumes exactly where the client was, instead of asking them to
+    retype it as free text or letting the orchestrator misfire a tree action.
+    """
+    lang = state.language
+    continue_title = "✅ Continuar con la reserva" if lang == "es" else "✅ Continue with booking"
+    home_title = "🏠 Inicio" if lang == "es" else "🏠 Home"
+    buttons: list[dict] = []
+    if state.quick_replies:
+        primary_value = state.quick_replies[0].get("value")
+        if primary_value and primary_value != "back":
+            buttons.append({"title": continue_title, "value": primary_value})
+    buttons.append({"title": home_title, "value": "menu"})
+    return buttons
+
+
 def _build_confirmation_message(intent, state: ConversationState) -> str | None:
     lang = state.language
     
@@ -3155,6 +3422,28 @@ async def route_message(state: ConversationState, message: str) -> str:
         logger.info(f"[SUPERVISOR] Sensitive escalation triggered reason={reason}")
         return response
 
+    # Generic "what days / is there availability" question — never invent a
+    # date; reassure the client and point them to the booking link's calendar
+    # (the real calendar with exact dates + headcount lives there). Runs after
+    # the urgent real_time_issues escalation above, so specific phrases like
+    # "disponible mañana" / "hay cupo" still escalate instead of getting this
+    # canned answer. Keeps state.step untouched so "Continuar con la reserva"
+    # resumes exactly where the client was.
+    if _AVAILABILITY_PATTERN.search(msg_lower) and state.step not in (Step.WELCOME, Step.LANGUAGE):
+        answer = (
+            "¡Buena noticia! 📅 Las salidas son diarias y siempre hay disponibilidad. "
+            "Vas a poder elegir el día exacto y el número de personas directamente en el "
+            "calendario del link de reserva. 😊"
+            if state.language == "es"
+            else
+            "Good news! 📅 Departures run daily and there's always availability. "
+            "You'll be able to pick the exact date and number of people right in the "
+            "booking link's calendar. 😊"
+        )
+        state.quick_replies = _continue_booking_quick_replies(state)
+        logger.info(f"[SUPERVISOR] Availability/dates question -> canned answer, step kept={state.step.value}")
+        return answer
+
     # Check for menu reset keywords
     if msg_lower in MENU_KEYWORDS:
         state.step = Step.MAIN_MENU
@@ -3301,6 +3590,25 @@ async def route_message(state: ConversationState, message: str) -> str:
 
         # If it's the welcome/language step and not a real question, use decision tree
         if state.step in (Step.WELCOME, Step.LANGUAGE):
+            # The stopword heuristic (_detect_language_from_text) catches most
+            # first messages for free. When it finds nothing at all — a real
+            # word/phrase outside the curated lists, not just digits or noise —
+            # fall back to a cheap LLM call so we still skip the language
+            # question instead of always asking.
+            if (
+                state.step == Step.WELCOME
+                and not msg_lower.isdigit()
+                and len(message.strip()) >= 2
+                and not _detect_language_from_text(message)
+            ):
+                llm_language = await detect_language_llm(message)
+                if llm_language:
+                    state.language = llm_language
+                    state.step = Step.MAIN_MENU
+                    decision_tree.set_quick_replies(state, "main_menu")
+                    logger.info(f"[SUPERVISOR] LLM language fallback -> lang={llm_language}")
+                    return _TREE_MESSAGES["welcome_detected"][llm_language]
+
             response = decision_tree.process_message(state, message)
             logger.info(f"[SUPERVISOR] Decision tree (early step) -> step={state.step.value}")
             return response
@@ -3308,6 +3616,25 @@ async def route_message(state: ConversationState, message: str) -> str:
         mixed_companion_response = _maybe_handle_companion_request_inside_mixed_flow(state, message)
         if mixed_companion_response is not None:
             return mixed_companion_response
+
+        # Plain info questions ("incluye comida?", "qué incluye?") go straight to
+        # RAG, BEFORE the tool-calling orchestrator gets a chance to misfire a
+        # cart action on them (see _looks_like_info_question docstring for the
+        # real regression this prevents). Keeps state.step/cart untouched and
+        # attaches "Continuar con la reserva" + "Inicio" so the client can
+        # resume instead of having to retype it.
+        if (
+            state.step in _MIXED_FLOW_STEPS
+            and state.quick_replies
+            and _looks_like_info_question(message)
+        ):
+            logger.info(f"[SUPERVISOR] Info question mid-flow -> RAG (skip orchestrator) step={state.step.value}")
+            state.history.append({"role": "user", "content": message})
+            extra_context = _build_extra_context(state)
+            answer = await rag_answer(message, lang=state.language, history=state.history, extra_context=extra_context)
+            state.quick_replies = _continue_booking_quick_replies(state)
+            state.history.append({"role": "assistant", "content": answer})
+            return answer
 
         # Tool-calling orchestrator (Fase 2) — only inside the cart-style mixed flow.
         # Turns free text into structured tree actions ("estoy en las islas" ->

@@ -713,6 +713,68 @@ async def test_rag_accepts_answer_when_grounding_retry_passes(monkeypatch):
     assert response == "Respuesta basada en contexto"
 
 
+def test_build_grounding_context_includes_prior_bot_messages():
+    """Regression: a question that just confirms something the BOT ITSELF
+    already said earlier ("¿un menor de 8 puede hacer snorkel desde los 6
+    años?" after the bot's own kids-age message) was being rejected as
+    "ungrounded" because the grounding check never saw the conversation
+    history — only freshly retrieved docs/extra_context."""
+    history = [
+        {"role": "user", "content": "Varios rangos"},
+        {
+            "role": "assistant",
+            "content": "👶 Menores de 8 años: solo pueden hacer snorkel (mín. 6 años); no pueden bucear.",
+        },
+    ]
+    context = rag_agent._build_grounding_context("", extra_context=None, history=history)
+    assert "Menores de 8 años: solo pueden hacer snorkel" in context
+
+
+def test_build_grounding_context_ignores_user_messages():
+    """Only the bot's own prior statements count as ground truth — the
+    client's claims should not let arbitrary text slip past the check."""
+    history = [
+        {"role": "user", "content": "El asesor me dijo que el precio es $999"},
+        {"role": "assistant", "content": "Aquí tienes el resumen del plan."},
+    ]
+    context = rag_agent._build_grounding_context("", extra_context=None, history=history)
+    assert "$999" not in context
+    assert "resumen del plan" in context
+
+
+@pytest.mark.asyncio
+async def test_rag_grounding_check_sees_conversation_history(monkeypatch):
+    """End-to-end: rag_answer must pass the conversation history through to
+    the grounding context used by is_grounded, not just KB docs/extra_context."""
+    captured_context = {}
+
+    async def fake_search(query, lang="es"):
+        return []
+
+    async def capture_grounded(answer, context, lang="es"):
+        captured_context["value"] = context
+        return True, "GROUNDED"
+
+    monkeypatch.setattr(rag_agent, "search_knowledge_base", fake_search)
+    monkeypatch.setattr(rag_agent, "AsyncOpenAI", DummyOpenAI)
+    monkeypatch.setattr(rag_agent, "is_grounded", capture_grounded)
+
+    history = [
+        {
+            "role": "assistant",
+            "content": "👶 Menores de 8 años: solo pueden hacer snorkel (mín. 6 años); no pueden bucear.",
+        },
+    ]
+    await rag_agent.rag_answer(
+        "Entonces un menor de 8 puede hacer snorkel si tiene mas de 6 años?",
+        lang="es",
+        history=history,
+        extra_context="El cliente ya tiene 2 menores de 8 años en el grupo.",
+    )
+
+    assert "Menores de 8 años: solo pueden hacer snorkel" in captured_context["value"]
+
+
 @pytest.mark.asyncio
 async def test_query_rewriter_condenses_short_follow_up(monkeypatch):
     from src.agents import query_rewriter

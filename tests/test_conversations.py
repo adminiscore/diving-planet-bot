@@ -20,6 +20,18 @@ def make_state(lang: str = "es") -> ConversationState:
     return s
 
 
+@pytest.fixture(autouse=True)
+def _no_llm_language_fallback(monkeypatch):
+    """Default the welcome-step LLM language fallback to "no detection" so
+    existing tests stay deterministic and don't hit the network regardless of
+    whether a real OPENAI_API_KEY is configured locally. Tests that exercise
+    the LLM fallback path explicitly override this mock."""
+    monkeypatch.setattr(
+        "src.agents.supervisor.detect_language_llm",
+        AsyncMock(return_value=None),
+    )
+
+
 async def send(state: ConversationState, *messages: str) -> list[str]:
     responses = []
     for msg in messages:
@@ -30,9 +42,10 @@ async def send(state: ConversationState, *messages: str) -> list[str]:
 
 async def reach_main_menu(lang: str = "es") -> ConversationState:
     state = make_state()
-    choice = "1" if lang == "es" else "2"
-    await send(state, "hola", choice)
+    greeting = "hola" if lang == "es" else "hello"
+    await send(state, greeting)
     assert state.step == Step.MAIN_MENU
+    assert state.language == lang
     return state
 
 
@@ -43,6 +56,12 @@ async def reach_booking_cart(lang: str = "es", location: str = "cartagena") -> C
     await route_message(state, "1")
     location_choice = "1" if location == "cartagena" else "2"
     await route_message(state, location_choice)
+    if location == "island":
+        # Unknown hotel yet -> asks island, then hotel, before the activity menu.
+        assert state.step == Step.ISLAND_MENU
+        await route_message(state, "1")  # Isla Grande
+        assert state.step == Step.ISLAND_HOTEL_MENU
+        await route_message(state, "1")  # first hotel in the list
     assert state.step == Step.MIXED_ADD_ACTIVITY
     return state
 
@@ -108,16 +127,92 @@ RAG_MOCK_EN = "rag_answer_simulated"
 @pytest.mark.asyncio
 async def test_welcome_shows_both_languages():
     state = make_state()
-    resp = await route_message(state, "hola")
+    resp = await route_message(state, "zzz")  # truly ambiguous: no language signal at all
     assert state.step == Step.LANGUAGE
     assert "Español" in resp
     assert "English" in resp
 
 
 @pytest.mark.asyncio
+async def test_hola_detects_spanish_and_skips_language_step():
+    state = make_state()
+    resp = await route_message(state, "hola")
+    assert state.language == "es"
+    assert state.step == Step.MAIN_MENU
+    assert "Diving Planet" in resp
+
+
+@pytest.mark.asyncio
+async def test_hello_detects_english_and_skips_language_step():
+    state = make_state()
+    resp = await route_message(state, "hello")
+    assert state.language == "en"
+    assert state.step == Step.MAIN_MENU
+    assert "Diving Planet" in resp
+
+
+@pytest.mark.asyncio
+async def test_buenas_detects_spanish_and_skips_language_step():
+    """"buenas" carries no English meaning at all, so it's not actually
+    ambiguous: the bot should detect Spanish and skip the language question,
+    same as "hola"."""
+    state = make_state()
+    resp = await route_message(state, "buenas")
+    assert state.language == "es"
+    assert state.step == Step.MAIN_MENU
+
+
+@pytest.mark.asyncio
+async def test_generic_spanish_phrase_at_welcome_detects_spanish():
+    """Any free text that reveals the language ("qué pasó", no greeting word
+    at all) should skip the language question too, not just exact greetings."""
+    state = make_state()
+    resp = await route_message(state, "que paso")
+    assert state.language == "es"
+    assert state.step == Step.MAIN_MENU
+
+
+@pytest.mark.asyncio
+async def test_generic_english_phrase_at_welcome_detects_english():
+    state = make_state()
+    resp = await route_message(state, "welcome")
+    assert state.language == "en"
+    assert state.step == Step.MAIN_MENU
+
+
+@pytest.mark.asyncio
+async def test_unrecognized_first_message_falls_back_to_llm_language_detection(monkeypatch):
+    """When the stopword heuristic finds zero signal (a word/phrase outside the
+    curated lists), the bot asks an LLM instead of defaulting to the language
+    buttons, so it still skips the question when the LLM is confident."""
+    monkeypatch.setattr(
+        "src.agents.supervisor.detect_language_llm",
+        AsyncMock(return_value="en"),
+    )
+    state = make_state()
+    resp = await route_message(state, "g'day mate")
+    assert state.language == "en"
+    assert state.step == Step.MAIN_MENU
+    assert "Diving Planet" in resp
+
+
+@pytest.mark.asyncio
+async def test_llm_language_fallback_failure_still_asks_explicitly(monkeypatch):
+    """If the LLM call also can't tell (returns None / errors out), the bot
+    falls back to asking the language explicitly instead of guessing."""
+    monkeypatch.setattr(
+        "src.agents.supervisor.detect_language_llm",
+        AsyncMock(return_value=None),
+    )
+    state = make_state()
+    resp = await route_message(state, "g'day mate")
+    assert state.step == Step.LANGUAGE
+
+
+@pytest.mark.asyncio
 async def test_select_spanish_by_number():
     state = make_state()
-    await route_message(state, "hola")
+    await route_message(state, "zzz")
     await route_message(state, "1")
     assert state.language == "es"
     assert state.step == Step.MAIN_MENU
@@ -126,7 +221,7 @@ async def test_select_spanish_by_number():
 @pytest.mark.asyncio
 async def test_select_english_by_number():
     state = make_state()
-    await route_message(state, "hola")
+    await route_message(state, "zzz")
     await route_message(state, "2")
     assert state.language == "en"
     assert state.step == Step.MAIN_MENU
@@ -135,7 +230,7 @@ async def test_select_english_by_number():
 @pytest.mark.asyncio
 async def test_language_detection_english_text():
     state = make_state()
-    await route_message(state, "hello")
+    await route_message(state, "zzz")
     resp = await route_message(state, "english")
     assert state.language == "en"
 
@@ -143,22 +238,15 @@ async def test_language_detection_english_text():
 @pytest.mark.asyncio
 async def test_language_detection_spanish_text():
     state = make_state()
-    await route_message(state, "hola")
+    await route_message(state, "zzz")
     resp = await route_message(state, "español")
     assert state.language == "es"
 
 
 @pytest.mark.asyncio
-async def test_greeting_only_goes_to_language_step():
-    state = make_state()
-    await route_message(state, "buenas")
-    assert state.step == Step.LANGUAGE
-
-
-@pytest.mark.asyncio
 async def test_invalid_language_choice_shows_not_understood():
     state = make_state()
-    await route_message(state, "hola")
+    await route_message(state, "zzz")
     resp = await route_message(state, "9")
     assert state.step == Step.LANGUAGE
 
@@ -177,7 +265,7 @@ async def test_main_menu_shows_all_options():
 @pytest.mark.asyncio
 async def test_text_in_english_at_language_step_switches_to_english():
     state = make_state()
-    await route_message(state, "hello")
+    await route_message(state, "zzz")
     assert state.step == Step.LANGUAGE
     await route_message(state, "in english?")
     assert state.language == "en"
@@ -187,7 +275,7 @@ async def test_text_in_english_at_language_step_switches_to_english():
 @pytest.mark.asyncio
 async def test_text_espanol_at_language_step_selects_spanish():
     state = make_state()
-    await route_message(state, "hola")
+    await route_message(state, "zzz")
     assert state.step == Step.LANGUAGE
     await route_message(state, "español")
     assert state.language == "es"
@@ -1055,7 +1143,7 @@ async def test_free_text_passes_island_and_hotel_context():
 @pytest.mark.asyncio
 async def test_free_text_in_welcome_step_not_sent_to_rag_if_too_short():
     state = make_state()
-    await route_message(state, "hola")  # LANGUAGE step
+    await route_message(state, "zzz")  # no language signal -> stays at LANGUAGE step
     with patch("src.agents.supervisor.rag_answer", new_callable=AsyncMock, return_value=RAG_MOCK) as mock_rag:
         resp = await route_message(state, "si")  # 1 palabra, sin "?" → tree, no RAG
     mock_rag.assert_not_called()
@@ -1693,6 +1781,41 @@ async def reach_mixed_add_activity(lang: str = "es", location: str = "cartagena"
     return state
 
 
+# --- Free-text cert split: no double-add of the minicourse -----------------
+
+@pytest.mark.asyncio
+async def test_free_text_cert_split_does_not_duplicate_minicourse_qty():
+    """Regression: "somos 2 ... uno no esta certificado" detects
+    group_allocation={certified_diving:1, minicourse:1} and queues the
+    minicourse via mixed_pending_beginner_after_cert (added automatically once
+    the certified subgroup is in the cart). _after_location_set() ALSO used to
+    auto-add the same allocation immediately when the location question was
+    answered, so the minicourse ended up in the cart with qty=2 instead of 1."""
+    state = ConversationState(conversation_id="cert-split-no-dup-test")
+    await route_message(state, "Hola somos dos personas y uno no esta certficado")
+    assert state.step == Step.MIXED_LOCATION
+
+    await route_message(state, "1")  # Cartagena -> triggers _after_location_set
+    assert state.step == Step.MIXED_ADD_CERT_PLAN
+    # The minicourse must NOT have been added yet here (still queued).
+    assert state.mixed_cart == []
+    assert state.mixed_pending_beginner_after_cert == 1
+
+    await route_message(state, "1")  # 2 inmersiones / 1 dia
+    await route_message(state, "2")  # last dive < 2 years -> No
+    await route_message(state, "1")  # Añadir cert al carrito -> asks beginner activity next
+    cert_item = next(it for it in state.mixed_cart if it["type"] == "cert")
+    assert cert_item["qty"] == 1
+    assert state.step == Step.MIXED_ASK_BEGINNER_ACTIVITY
+
+    await route_message(state, "1")  # Minicurso de buceo
+    await route_message(state, "3")  # kids: Todos 10+
+    await route_message(state, "1")  # Añadir minicurso al carrito
+    beginner_item = next(it for it in state.mixed_cart if it["type"] == "beginner")
+    assert beginner_item["qty"] == 1
+    assert len(state.mixed_cart) == 2
+
+
 # --- Entry / add activity ---------------------------------------------------
 
 @pytest.mark.asyncio
@@ -1819,6 +1942,243 @@ async def test_mixed_certified_island_night_variant_is_added_to_cart_with_exact_
     assert state.mixed_cart[0]["type"] == "cert"
     assert state.mixed_cart[0]["plan"] == "4_dives_2_days_mixed_already_on_island"
     assert state.mixed_cart[0]["qty"] == 2
+
+
+# --- Preview shows total price for a known group size -----------------------
+
+@pytest.mark.asyncio
+async def test_preview_shows_group_total_price_when_qty_known_from_free_text():
+    """"somos 4 ... snorkel" already reveals qty=4 -> the pre-add preview card
+    should show 4 × unit = total, not just the per-person price."""
+    from src.flows.decision_tree import SERVICES
+
+    state = ConversationState(conversation_id="preview-qty-test")
+    await route_message(state, "hola")
+    await route_message(state, "somos 4 que vamos a hacer snorkel")
+    resp = await route_message(state, "1")  # Cartagena
+    assert state.step == Step.MIXED_ADD_PREVIEW
+
+    svc = SERVICES["snorkeling"]
+    discount_total = round(svc["price_usd"] * 4)
+    normal_total = round(svc["price_usd_normal"] * 4)
+    assert "Tarifa normal" in resp
+    # The final total of both the normal rate and the discounted rate are
+    # bold ("**") — the labels and "× qty =" stay plain (this chat renderer
+    # treats single "*" as italic, not bold).
+    assert f"× 4 = **${normal_total}**" in resp
+    assert "Reservando online **(10% off)**" in resp
+    assert f"${round(svc['price_usd'])} × 4 = **${discount_total}**" in resp
+    assert "**Reservando online" not in resp
+
+
+@pytest.mark.asyncio
+async def test_preview_shows_single_price_without_multiplication_when_qty_is_one():
+    """A single-person booking keeps the plain per-person price (no "× 1" noise)."""
+    state = await reach_mixed_add_activity()
+    resp = await route_message(state, "3")  # snorkel
+    resp = await route_message(state, "1")  # qty 1 -> preview
+    assert state.step == Step.MIXED_ADD_PREVIEW
+    assert "×" not in resp.split("💰 Precio:")[1].split("⏱")[0]
+
+
+# --- Availability/dates questions mid-flow ----------------------------------
+
+@pytest.mark.asyncio
+async def test_availability_question_gets_canned_answer_and_resume_buttons():
+    """A "what days/dates are available" question mid-flow must never invent a
+    date — it gets a reassuring canned answer pointing to the booking link's
+    calendar, plus a real "Continuar con la reserva" button (not free text)
+    that resumes exactly where the client was."""
+    state = ConversationState(conversation_id="availability-test")
+    await route_message(state, "hola")
+    await route_message(state, "somos 4 que vamos a hacer snorkel")
+    await route_message(state, "1")  # Cartagena -> MIXED_ADD_PREVIEW
+    assert state.step == Step.MIXED_ADD_PREVIEW
+
+    resp = await route_message(state, "y que dias hay disponibles?")
+    assert state.step == Step.MIXED_ADD_PREVIEW  # untouched -> can resume
+    assert "diari" in resp.lower()
+    assert "disponibilidad" in resp.lower()
+    assert "calendario" in resp.lower() and "link" in resp.lower()
+    assert [r["title"] for r in state.quick_replies] == [
+        "✅ Continuar con la reserva",
+        "🏠 Inicio",
+    ]
+    # The continue button reuses the original primary action's value (here
+    # "1" = "Añadir al carrito"), so clicking it resumes, doesn't restart.
+    assert state.quick_replies[0]["value"] == "1"
+
+    resp = await route_message(state, state.quick_replies[0]["value"])
+    assert state.step == Step.MIXED_CART_REVIEW
+    assert state.mixed_cart == [
+        {"type": "snorkel", "qty": 4, "plan": None, "label": "Snorkel"}
+    ]
+
+
+@pytest.mark.asyncio
+async def test_availability_question_english():
+    state = await reach_mixed_add_activity("en")
+    await route_message(state, "3")  # snorkel
+    resp = await route_message(state, "1")  # qty 1 -> preview
+    assert state.step == Step.MIXED_ADD_PREVIEW
+
+    resp = await route_message(state, "what days are available?")
+    assert state.step == Step.MIXED_ADD_PREVIEW
+    assert "daily" in resp.lower()
+    assert "availability" in resp.lower()
+    assert [r["title"] for r in state.quick_replies] == [
+        "✅ Continue with booking",
+        "🏠 Home",
+    ]
+
+
+@pytest.mark.asyncio
+async def test_urgent_availability_phrase_still_escalates():
+    """"disponible mañana" / "hay cupo" are urgent real-time checks and must
+    still escalate — the generic canned answer must not swallow them."""
+    state = await reach_main_menu("es")
+    resp = await route_message(state, "tienen cupo disponible mañana?")
+    assert state.step == Step.ESCALATE
+
+
+@pytest.mark.asyncio
+async def test_availability_question_home_button_returns_to_main_menu():
+    state = ConversationState(conversation_id="availability-home-test")
+    await route_message(state, "hola")
+    await route_message(state, "somos 4 que vamos a hacer snorkel")
+    await route_message(state, "1")  # Cartagena -> MIXED_ADD_PREVIEW
+    await route_message(state, "y que dias hay disponibles?")
+    home_value = state.quick_replies[1]["value"]
+    resp = await route_message(state, home_value)
+    assert state.step == Step.MAIN_MENU
+
+
+# --- Info questions mid-cart never get misfired as cart actions ------------
+
+@pytest.mark.asyncio
+async def test_info_question_in_cart_review_answers_via_rag_not_orchestrator():
+    """Regression: "Incluye algún servicio de comida y bebida" inside
+    MIXED_CART_REVIEW was being misclassified by the tool-calling orchestrator
+    as add_to_cart(companion, 4), silently adding 4 bogus companions. Plain
+    info questions must go straight to RAG and leave the cart untouched."""
+    state = ConversationState(conversation_id="info-question-cart-test")
+    await route_message(state, "hola")
+    await route_message(state, "somos 4 que vamos a hacer snorkel")
+    await route_message(state, "1")  # Cartagena -> MIXED_ADD_PREVIEW
+    await route_message(state, "1")  # Añadir al carrito -> MIXED_CART_REVIEW
+    assert state.step == Step.MIXED_CART_REVIEW
+    assert len(state.mixed_cart) == 1
+
+    rag_text = "Sí, incluye almuerzo y bebidas durante el tour."
+    with patch(
+        "src.agents.supervisor.rag_answer", new_callable=AsyncMock, return_value=rag_text
+    ) as mock_rag:
+        resp = await route_message(state, "Incluye algún servicio de comida y bebida")
+
+    mock_rag.assert_called_once()
+    assert resp == rag_text
+    assert state.step == Step.MIXED_CART_REVIEW
+    assert len(state.mixed_cart) == 1  # untouched — no bogus companion added
+    assert [r["title"] for r in state.quick_replies] == [
+        "✅ Continuar con la reserva",
+        "🏠 Inicio",
+    ]
+
+
+@pytest.mark.asyncio
+async def test_action_phrased_as_polite_request_still_reaches_orchestrator():
+    """"Puedo añadir otro snorkel?" is a real cart action (polite phrasing,
+    not an info question) — must NOT be hijacked into the RAG/info-question
+    shortcut just because it ends with "?". The orchestrator must still get a
+    chance to turn it into a real cart_action."""
+    from src.agents import orchestrator, supervisor
+    from src.agents.orchestrator import OrchestratorDecision
+
+    state = await reach_mixed_add_activity()
+    await route_message(state, "3")  # snorkel
+    await route_message(state, "2")  # qty 2 -> preview
+    await route_message(state, "1")  # Añadir al carrito -> MIXED_CART_REVIEW
+    assert state.step == Step.MIXED_CART_REVIEW
+
+    decision = OrchestratorDecision(tool=orchestrator.TOOL_CART_ACTION, args={"action": "add"})
+    with patch.object(supervisor.orchestrator, "orchestrate", new=AsyncMock(return_value=decision)) as mock_orch:
+        await route_message(state, "puedo añadir otro snorkel?")
+    mock_orch.assert_called_once()
+    assert state.step == Step.MIXED_ADD_ACTIVITY
+
+
+# --- extra_context injects ground-truth includes/not_included --------------
+
+@pytest.mark.asyncio
+async def test_extra_context_includes_pending_preview_service_ground_truth():
+    """Regression: "Tengo que llevar equipo?" asked from the un-confirmed
+    preview card (before clicking "Añadir al carrito") had no service context
+    at all, so RAG had to guess via vector search and sometimes fell back to
+    "no tengo información suficiente". The preview's includes/not_included
+    must be injected directly into extra_context."""
+    from src.agents.supervisor import _build_extra_context
+
+    state = await reach_mixed_add_activity()
+    await route_message(state, "3")  # snorkel
+    await route_message(state, "1")  # qty 1 -> preview
+    assert state.step == Step.MIXED_ADD_PREVIEW
+    assert state.mixed_pending_preview_service_id == "snorkeling"
+
+    context = _build_extra_context(state)
+    assert "Tour de Snorkeling" in context
+    assert "SI incluye" in context
+    assert "Equipo de snorkeling" in context
+    assert "Seguro de la actividad" in context
+    assert "NO incluye" in context
+
+
+@pytest.mark.asyncio
+async def test_extra_context_includes_cart_item_ground_truth():
+    """Same ground truth, but for an item already confirmed into the cart."""
+    from src.agents.supervisor import _build_extra_context
+
+    state = await reach_mixed_add_activity()
+    await route_message(state, "3")  # snorkel
+    await route_message(state, "1")  # qty 1 -> preview
+    await route_message(state, "1")  # Añadir al carrito -> MIXED_CART_REVIEW
+    assert state.step == Step.MIXED_CART_REVIEW
+
+    context = _build_extra_context(state)
+    assert "'Tour de Snorkeling' SI incluye" in context
+    assert "Equipo de snorkeling" in context
+    assert "'Tour de Snorkeling' NO incluye" in context
+
+
+@pytest.mark.asyncio
+async def test_extra_context_includes_group_size_detected_from_free_text():
+    """A group size mentioned anywhere ("somos 4") must reach the LLM context
+    so a later free-text question doesn't get asked "para cuantas personas?"
+    again — regardless of which tree step the question comes from."""
+    from src.agents.supervisor import _build_extra_context
+
+    state = ConversationState(conversation_id="extra-context-group-size")
+    await route_message(state, "hola")
+    await route_message(state, "somos 4 que vamos a hacer snorkel")
+    await route_message(state, "1")  # Cartagena -> MIXED_ADD_PREVIEW
+    assert state.step == Step.MIXED_ADD_PREVIEW
+
+    context = _build_extra_context(state)
+    assert "4 persona" in context
+
+
+@pytest.mark.asyncio
+async def test_extra_context_includes_kids_and_private_boat_flags():
+    from src.agents.supervisor import _build_extra_context
+
+    state = await reach_mixed_add_activity()
+    state.kids_under_8_count = 2
+    state.kids_eight_to_ten_count = 1
+    state.mixed_final_wants_private = True
+
+    context = _build_extra_context(state)
+    assert "2 menor(es) de 8" in context
+    assert "1 de 8 a 10" in context
+    assert "lancha privada" in context.lower()
 
 
 # --- Qty handling ----------------------------------------------------------
@@ -2762,15 +3122,21 @@ async def test_cart_change_location_action_appears_in_cart_review():
 
 @pytest.mark.asyncio
 async def test_cart_change_location_cartagena_to_island_remaps_prices():
-    """Changing from Cartagena to Islas swaps service IDs and updates summary prices."""
+    """Changing from Cartagena to Islas asks for the hotel (unknown yet, needed
+    for pickup) before swapping service IDs and updating summary prices."""
     state = await reach_mixed_add_activity(location="cartagena")
     await send(state, "1", "1", "2", "2", "1")   # cert 2-dives x2 (Cartagena)
     assert state.location == "cartagena"
     await route_message(state, "1")              # Cambiar origen (cart-action 1)
     assert state.step == Step.MIXED_CART_LOCATION
-    resp = await route_message(state, "2")       # Ya estoy en las islas
+    await route_message(state, "2")              # Ya estoy en las islas
     assert state.location == "island"
+    assert state.step == Step.ISLAND_MENU         # hotel unknown -> ask island/hotel first
+    await route_message(state, "1")               # Isla Grande
+    assert state.step == Step.ISLAND_HOTEL_MENU
+    resp = await route_message(state, "1")         # first hotel
     assert state.step == Step.MIXED_CART_REVIEW
+    assert state.hotel == "San Pedro de Majagua"
     assert "actualizado" in resp.lower() or "updated" in resp.lower()
     # Cart item's plan should have been remapped to the island variant.
     from src.flows.decision_tree import DecisionTree, SERVICES
@@ -2782,6 +3148,32 @@ async def test_cart_change_location_cartagena_to_island_remaps_prices():
     cartagena_price = SERVICES["2_dives_1_day"]["price_usd"]
     island_price = SERVICES["2_dives_1_day_already_on_island"]["price_usd"]
     assert island_price < cartagena_price
+
+
+@pytest.mark.asyncio
+async def test_orchestrator_set_location_to_island_asks_hotel_before_remapping():
+    """Same regression via free text mid-cart ("estoy en las islas") routed
+    through the tool-calling orchestrator, not the Cambiar-origen button."""
+    from src.agents import orchestrator, supervisor
+    from src.agents.orchestrator import OrchestratorDecision
+
+    state = await reach_mixed_add_activity(location="cartagena")
+    await send(state, "1", "1", "2", "2", "1")  # cert 2-dives x2 (Cartagena)
+    assert state.step == Step.MIXED_CART_REVIEW
+
+    decision = OrchestratorDecision(tool=orchestrator.TOOL_SET_LOCATION, args={"origin": "island"})
+    with patch.object(supervisor.orchestrator, "orchestrate", new=AsyncMock(return_value=decision)):
+        await route_message(state, "estoy en las islas")
+    assert state.step == Step.ISLAND_MENU
+    assert state.location == "island"
+
+    await route_message(state, "1")   # Isla Grande
+    assert state.step == Step.ISLAND_HOTEL_MENU
+    resp = await route_message(state, "1")  # first hotel
+    assert state.step == Step.MIXED_CART_REVIEW
+    assert state.hotel == "San Pedro de Majagua"
+    cert_item = next(it for it in state.mixed_cart if it["type"] == "cert")
+    assert cert_item["plan"] == "2_dives_1_day_already_on_island"
 
 
 @pytest.mark.asyncio

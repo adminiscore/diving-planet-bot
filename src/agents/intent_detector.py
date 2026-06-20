@@ -39,7 +39,17 @@ class IntentDetector:
         self._detect_last_dive(message_lower, intent)
         self._detect_duration(message_lower, intent)
         self._detect_location(message_lower, intent)
-        
+
+        # Certification ("certificado"/"no certificado") is a diving-only
+        # concept in this business — if the message mentions it but never
+        # says "buceo"/"dive" explicitly (e.g. "somos 2 y uno no esta
+        # certificado"), infer the activity instead of leaving it ambiguous,
+        # so the booking flow still asks for what's missing (location, etc.)
+        # instead of falling through to a generic LLM answer.
+        if intent.activity is None and intent.is_certified is not None:
+            intent.activity = "certified_diving"
+            intent.detected_fields.append("activity")
+
         self._calculate_confidence(intent)
         
         return intent
@@ -193,11 +203,16 @@ class IntentDetector:
             r'\bopen\s+water\s+divers?\b',
             r'\bopen\s+water\s+certified\b',
             r'\bsomos\s+(?:buzos?|divers?)\b',  # "somos buzos" implica cert
+            # Typo-tolerant fallback: matches "certficado", "certifcado",
+            # "certificacion", "certified"... anything starting with "cert".
+            # Checked LAST so the more specific not_certified_patterns below
+            # (which also start with "cert") always get first chance.
+            r'\bcert\w*\b',
         ]
-        
+
         not_certified_patterns = [
-            r'\bno\s+(certificado|certified)\b',
-            r'\bsin\s+certificado\b',
+            r'\bno\s+(?:esta\s+|estoy\s+|estamos\s+|est[aá]n\s+)?cert\w*\b',
+            r'\bsin\s+cert\w*\b',
             r'\bnunca\s+he\s+buceado\b',
             r'\bprimera\s+vez\b',
             r'\bnot\s+certified\b',
@@ -351,6 +366,27 @@ class IntentDetector:
                     intent.group_size = total
                     intent.detected_fields.append("group_allocation")
                 break
+
+        # "Somos 2 ... y uno no esta certificado" — only the NOT-certified count
+        # is stated explicitly; the certified count is the complement against
+        # the already-known group_size (typo-tolerant: "certficado" matches
+        # cert\w*). Without this, a message that only describes who is NOT
+        # certified (instead of spelling out "N certified and M not") never
+        # resolves to a group_allocation and falls through to a generic answer.
+        if not intent.group_allocation and intent.group_size:
+            m_not_cert_only = re.search(
+                rf'{_WORD_NUM}\s+no\s+(?:esta[nb]?\s+|son\s+)?cert\w*\b'
+                rf'|\b(?:y\s+)?(?:el\s+|la\s+)?otr[ao]s?\s+no\s+(?:esta[nb]?\s+)?cert\w*\b'
+                rf'|{_WORD_NUM}\s+(?:is|are)\s+not\s+cert\w*\b',
+                message, re.IGNORECASE,
+            )
+            if m_not_cert_only:
+                groups = m_not_cert_only.groups()
+                beg_n = _parse_num(groups[0]) if groups and groups[0] else 1
+                if 0 < beg_n < intent.group_size:
+                    cert_n = intent.group_size - beg_n
+                    intent.group_allocation = {'certified_diving': cert_n, 'minicourse': beg_n}
+                    intent.detected_fields.append("group_allocation")
 
         # ── Pattern A: "3 de buceo y 2 de snorkel" / "buceo 3 y snorkel 2" ──
         if not intent.group_allocation:

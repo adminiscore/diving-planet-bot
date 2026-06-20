@@ -57,6 +57,7 @@ class Step(str, Enum):
     MIXED_LOCATION = "mixed_location"
     MIXED_ASK_CERTIFICATION = "mixed_ask_certification"
     MIXED_ASK_CERT_COUNT = "mixed_ask_cert_count"
+    MIXED_ASK_BEGINNER_ACTIVITY = "mixed_ask_beginner_activity"
     MIXED_ADD_ACTIVITY = "mixed_add_activity"
     MIXED_ADD_CERT_PLAN = "mixed_add_cert_plan"
     MIXED_ADD_CERT_MULTI_DAY = "mixed_add_cert_multi_day"
@@ -166,6 +167,12 @@ class ConversationState:
     # Lista de (label, booking_url) para enviar al cliente cuando pulse "Reservar"
     # en el resumen final del flujo mixto.
     mixed_booking_links: list[tuple[str, str]] = field(default_factory=list)
+    # True while the client is being asked for hotel/island after changing the
+    # cart's origin to "island" mid-flow (Step.MIXED_CART_LOCATION or the
+    # orchestrator's set_location). Tells _handle_island_hotel_menu to remap
+    # the existing cart prices and return to the cart review afterward,
+    # instead of resuming an add-activity flow that was never pending.
+    mixed_pending_location_change: bool = False
     # Intent detection fields - información detectada automáticamente de texto libre
     detected_language: str | None = None
     detected_activity: str | None = None
@@ -184,6 +191,65 @@ class ConversationState:
             self.history = []
 
 
+# Common Spanish/English words used to guess the language of ANY free-text
+# first message (not just exact greetings), so the bot never re-asks something
+# the user already revealed implicitly. Single-letter tokens are intentionally
+# excluded (too ambiguous / often punctuation leftovers).
+_SPANISH_STOPWORDS = {
+    "hola", "buenas", "buenos", "dias", "días", "tardes", "noches", "como",
+    "estas", "está", "esta", "que", "pasa", "paso", "quiero", "quisiera",
+    "necesito", "somos", "queremos", "tengo", "gracias", "favor", "hacer",
+    "puedo", "podemos", "disponible", "disponibilidad", "cuanto", "cuánto",
+    "cuesta", "precio", "reservar", "reserva", "informacion", "información",
+    "ayuda", "el", "la", "los", "las", "de", "en", "un", "una", "unos",
+    "unas", "es", "son", "con", "por", "para", "no", "si", "sí", "mi", "tu",
+    "su", "nos", "les", "mas", "más", "pero", "cuando", "donde", "dónde",
+    "quien", "quién", "porque", "aqui", "aquí", "alli", "allí", "esto",
+    "eso", "esa", "ese", "esos", "esas", "estos", "estas", "yo", "tú",
+    "él", "ella", "nosotros", "ustedes", "ellos", "ellas", "te", "me",
+    "lo", "nuestro", "vamos", "estamos", "estoy", "tenemos", "podria",
+    "podría", "bien", "muy", "todo", "todos", "buceo", "bucear", "buzo",
+    "snorkel", "curso", "minicurso", "certificado", "personas", "día",
+    "días", "inmersión", "información", "viaje", "isla", "islas",
+}
+
+_ENGLISH_STOPWORDS = {
+    "hello", "hi", "hey", "welcome", "good", "morning", "afternoon",
+    "evening", "want", "wanna", "need", "we", "are", "is", "the", "to",
+    "of", "and", "in", "that", "have", "it", "for", "not", "on", "with",
+    "as", "you", "do", "at", "this", "but", "his", "from", "they", "say",
+    "her", "she", "or", "will", "my", "would", "there", "their", "what",
+    "so", "up", "out", "if", "about", "who", "get", "which", "go", "me",
+    "when", "make", "can", "like", "time", "just", "him", "know", "take",
+    "people", "into", "your", "some", "could", "them", "see", "other",
+    "than", "then", "now", "look", "only", "come", "its", "over", "think",
+    "also", "back", "after", "use", "two", "how", "our", "work", "first",
+    "well", "way", "even", "new", "because", "any", "these", "give",
+    "day", "most", "us", "please", "thanks", "thank", "book", "booking",
+    "price", "cost", "diving", "dive", "snorkel", "course", "certified",
+    "beginner", "group", "trip", "island", "islands", "people",
+}
+
+
+def _detect_language_heuristic(message: str) -> str | None:
+    """Guess "es"/"en" from common stopwords in ANY free-text message.
+
+    Falls back to None when there's no usable signal (digits-only, emoji-only,
+    a single unrecognized word) so the caller can still ask explicitly.
+    """
+    normalized = " ".join(message.strip().lower().split())
+    if not normalized:
+        return None
+    words = {word.strip(".,!?¡¿:;()[]{}\"'") for word in normalized.split()}
+    es_count = len(words & _SPANISH_STOPWORDS)
+    en_count = len(words & _ENGLISH_STOPWORDS)
+    if es_count > en_count:
+        return "es"
+    if en_count > es_count:
+        return "en"
+    return None
+
+
 def _detect_language_from_text(message: str) -> str | None:
     normalized = " ".join(message.strip().lower().split())
     words = {word.strip(".,!?¡¿:;()[]{}\"'") for word in normalized.split()}
@@ -192,7 +258,7 @@ def _detect_language_from_text(message: str) -> str | None:
         return "en"
     if normalized in {"es", "espanol", "español", "spanish"} or words.intersection({"espanol", "español", "spanish", "hola"}):
         return "es"
-    return None
+    return _detect_language_heuristic(message)
 
 
 def _join_items(items: list[str] | str | None) -> str:
@@ -635,6 +701,20 @@ MESSAGES = {
             "¿Qué te gustaría hacer?"
         ),
         "en": (
+            "What would you like to do?"
+        ),
+    },
+    "welcome_detected": {
+        "es": (
+            "Hola! Bienvenido a *Diving Planet*, el primer centro de buceo "
+            "PADI 5 Estrellas de Colombia, con 30 años de experiencia en "
+            "las Islas del Rosario, Cartagena.\n\n"
+            "¿Qué te gustaría hacer?"
+        ),
+        "en": (
+            "Hello! Welcome to *Diving Planet*, Colombia's first "
+            "PADI 5 Star Dive Center, with 30 years of experience in "
+            "the Rosario Islands, Cartagena.\n\n"
             "What would you like to do?"
         ),
     },
@@ -2089,6 +2169,7 @@ class DecisionTree:
             Step.MIXED_LOCATION: self._handle_mixed_location,
             Step.MIXED_ASK_CERTIFICATION: self._handle_mixed_ask_certification,
             Step.MIXED_ASK_CERT_COUNT: self._handle_mixed_ask_cert_count,
+            Step.MIXED_ASK_BEGINNER_ACTIVITY: self._handle_mixed_ask_beginner_activity,
             Step.MIXED_ADD_ACTIVITY: self._handle_mixed_add_activity,
             Step.MIXED_ADD_CERT_PLAN: self._handle_mixed_add_cert_plan,
             Step.MIXED_ADD_CERT_MULTI_DAY: self._handle_mixed_add_cert_multi_day,
@@ -2244,6 +2325,16 @@ class DecisionTree:
         return "\n".join(lines)
 
     def _handle_welcome(self, state: ConversationState, message: str) -> str:
+        # If the very first message already signals a language ("hola" / "hello" /
+        # "hi" / "español" / "english"...), skip the language question entirely
+        # instead of asking something the user already answered implicitly.
+        detected_language = _detect_language_from_text(message)
+        if detected_language:
+            state.language = detected_language
+            state.step = Step.MAIN_MENU
+            self.set_quick_replies(state, "main_menu")
+            return MESSAGES["welcome_detected"][detected_language]
+
         state.step = Step.LANGUAGE
         self.set_quick_replies(state, "welcome")
         return MESSAGES["welcome"]["es"]
@@ -2997,6 +3088,9 @@ class DecisionTree:
         preview_state.selected_service = service_id
         preview_state.is_colombian = False
         preview_state.is_certified = bool((SERVICES.get(service_id) or {}).get("requires_certification"))
+        # Preservar la cantidad ya conocida (grupo detectado o respondida) para
+        # que el resumen muestre el precio total del grupo, no solo el de 1 persona.
+        preview_state.mixed_pending_qty_value = state.mixed_pending_qty_value
         return preview_state
 
     def _prepare_mixed_add_preview(self, state: ConversationState, service_id: str) -> str:
@@ -3067,13 +3161,23 @@ class DecisionTree:
             detectados y enruta según lo que queda pendiente."""
             allocation = getattr(state, "detected_group_allocation", None) or {}
 
-            # Auto-añadir actividades no-cert ya conocidas (snorkel, minicurso)
+            # Auto-añadir actividades no-cert ya conocidas (snorkel, minicurso).
+            # OJO: si hay un "algunos certificados, otros no" en curso, el
+            # minicurso de los no-certificados ya esta en cola via
+            # mixed_pending_beginner_after_cert (se añade despues del subgrupo
+            # certificado, no aqui) — añadirlo tambien aqui lo duplicaba.
             for act, qty in allocation.items():
                 if act == "snorkel":
                     snorkel_svc = self._service_for_location("snorkeling", state)
                     self._append_mixed_cart_item(state, "snorkel", snorkel_svc, qty)
-                elif act == "minicourse":
+                elif act == "minicourse" and not state.mixed_pending_beginner_after_cert:
                     self._append_mixed_cart_item(state, "beginner", None, qty)
+
+            # Si ya estamos en las islas pero no sabemos el hotel, preguntarlo
+            # antes de seguir (necesario para coordinar la recogida) — aplica a
+            # cualquier actividad pendiente (cert, beginner, snorkel, course...).
+            if state.location == "island" and not state.hotel:
+                return self._goto_island_hotel_menu_or_unknown(state)
 
             # Ahora decidir el siguiente step
             if state.mixed_pending_qty_type == "cert":
@@ -3129,8 +3233,8 @@ class DecisionTree:
 
         def _after_cert(cert_type: str) -> str:
             state.mixed_pending_qty_type = cert_type
-            if state.location == "island" and state.island and not state.hotel:
-                return self._goto_island_hotel_menu(state)
+            if state.location == "island" and not state.hotel:
+                return self._goto_island_hotel_menu_or_unknown(state)
             if state.location:
                 if cert_type == "cert":
                     state.step = Step.MIXED_ADD_CERT_PLAN
@@ -3171,6 +3275,8 @@ class DecisionTree:
                 )
             # No conocemos el tamaño del grupo: caemos al flujo cert clásico.
             state.mixed_pending_qty_type = "cert"
+            if state.location == "island" and not state.hotel:
+                return self._goto_island_hotel_menu_or_unknown(state)
             if state.location:
                 state.step = Step.MIXED_ADD_CERT_PLAN
                 self.set_quick_replies(state, "mixed_add_cert_plan")
@@ -3230,6 +3336,8 @@ class DecisionTree:
             else f"Got it: {cert_qty} certified and {beginner_qty} for the mini-course. "
             "Let's start with the certified divers.\n\n"
         )
+        if state.location == "island" and not state.hotel:
+            return intro + self._goto_island_hotel_menu_or_unknown(state)
         if state.location:
             state.step = Step.MIXED_ADD_CERT_PLAN
             self.set_quick_replies(state, "mixed_add_cert_plan")
@@ -3237,6 +3345,21 @@ class DecisionTree:
         state.step = Step.MIXED_LOCATION
         self.set_quick_replies(state, "tours_location")
         return intro + MESSAGES["mixed_location"][lang]
+
+    def _goto_island_hotel_menu_or_unknown(self, state: ConversationState) -> str:
+        """Ask for hotel to coordinate pickup when the client is on the islands.
+
+        If we don't even know WHICH island yet (e.g. a generic "Ya estoy en
+        las islas" button click, with no island mentioned in free text), ask
+        that first via Step.ISLAND_MENU; _handle_island_hotel_menu already
+        knows how to resume the pending mixed-cart flow afterward via
+        state.mixed_pending_qty_type.
+        """
+        if state.island:
+            return self._goto_island_hotel_menu(state)
+        state.step = Step.ISLAND_MENU
+        self.set_quick_replies(state, "island_menu")
+        return MESSAGES["island_menu"][state.language]
 
     def _goto_island_hotel_menu(self, state: ConversationState) -> str:
         """Ir al menú de hoteles según la isla detectada."""
@@ -3725,35 +3848,111 @@ class DecisionTree:
         self.set_quick_replies(state, "mixed_preview_actions")
         return MESSAGES["not_understood"][lang]
 
+    def _cert_subgroup_is_multi_day(self, state: ConversationState) -> bool:
+        """True if the certified subgroup's plan requires an island overnight
+        stay — used to decide whether Open Water makes sense as an option for
+        the non-certified people (they'd already be staying on the islands).
+        Covers both real multi-day packages (MULTI_DAY_SERVICES) and
+        "3_dives_1_day" — confusingly a single calendar day, but it still
+        requires sleeping on the island that night because of the night dive
+        (see _accommodation_requirement_note's special case for that id).
+        """
+        cert_item = next((it for it in state.mixed_cart if it.get("type") == "cert"), None)
+        plan = (cert_item or {}).get("plan") or state.mixed_pending_qty_plan
+        if not plan:
+            return False
+        service = SERVICES.get(plan) or {}
+        return plan in MULTI_DAY_SERVICES or bool(service.get("includes_night_dive"))
+
+    def _beginner_activity_quick_replies(self, lang: str, include_open_water: bool) -> list[dict]:
+        if lang == "es":
+            options = [
+                {"title": "🤿 Minicurso de buceo", "value": "1"},
+                {"title": "🌊 Snorkel", "value": "2"},
+            ]
+            if include_open_water:
+                options.append({"title": "🎓 Curso Open Water", "value": "3"})
+        else:
+            options = [
+                {"title": "🤿 Dive mini-course", "value": "1"},
+                {"title": "🌊 Snorkel", "value": "2"},
+            ]
+            if include_open_water:
+                options.append({"title": "🎓 Open Water course", "value": "3"})
+        return options
+
     def _maybe_start_pending_beginner(self, state: ConversationState) -> str | None:
         """If a 'some certified, some not' group still has non-certified people
-        waiting, start the minicurso flow for them. Returns the next message, or
-        None if there's nothing pending.
+        waiting, ask what they'd like to do (we only know they're not
+        certified — minicurso, snorkel, or, if the group is already staying
+        overnight on the islands for the certified plan, Open Water). Returns
+        the next message, or None if there's nothing pending.
         """
         beginner_qty = state.mixed_pending_beginner_after_cert or 0
         if beginner_qty <= 0:
             return None
-        state.mixed_pending_beginner_after_cert = 0
         lang = state.language
-        # Pre-set the beginner subgroup qty and enter the minicurso add flow
-        # (which handles the kids question, preview and cart commit as usual).
-        state.mixed_pending_qty_type = "beginner"
-        state.mixed_pending_qty_plan = None
-        state.mixed_pending_qty_value = beginner_qty
+        include_open_water = self._cert_subgroup_is_multi_day(state)
+        state.step = Step.MIXED_ASK_BEGINNER_ACTIVITY
+        state.quick_replies = self._beginner_activity_quick_replies(lang, include_open_water)
+
         if lang == "es":
             who = "la persona no certificada" if beginner_qty == 1 else f"las {beginner_qty} personas no certificadas"
-            intro = (
-                "Listo, los buceadores certificados ya están en el carrito. "
-                f"Ahora preparo el *minicurso de buceo* para {who}.\n\n"
+            intro = f"Listo, los buceadores certificados ya están en el carrito.\n\nPara {who}, hay varias opciones:\n"
+            body = (
+                "• 🤿 *Minicurso de buceo*: probar el buceo en una sesión introductoria con instructor, sin certificación.\n"
+                "• 🌊 *Snorkel*: disfrutar del arrecife desde la superficie, sin necesidad de bucear.\n"
             )
+            if include_open_water:
+                body += (
+                    "• 🎓 *Curso Open Water*: ya que se alojarán en las islas con el grupo certificado, "
+                    "puede aprovechar y certificarse como buzo.\n"
+                )
+            outro = "\n¿Qué prefiere?" if beginner_qty == 1 else "\n¿Qué prefieren?"
         else:
             who = "the non-certified person" if beginner_qty == 1 else f"the {beginner_qty} non-certified people"
-            intro = (
-                "Done, the certified divers are in the cart. Now let's set up the "
-                f"*dive mini-course* for {who}.\n\n"
+            intro = f"Done, the certified divers are in the cart.\n\nFor {who}, there are a few options:\n"
+            body = (
+                "• 🤿 *Dive mini-course*: try diving in an introductory session with an instructor, no certification.\n"
+                "• 🌊 *Snorkel*: enjoy the reef from the surface, no diving needed.\n"
             )
-        next_msg = self._goto_mixed_add_qty(state)
-        return intro + next_msg
+            if include_open_water:
+                body += (
+                    "• 🎓 *Open Water course*: since they'll already be staying on the islands with the "
+                    "certified group, they could get certified too.\n"
+                )
+            outro = "\nWhat would they prefer?"
+        return intro + body + outro
+
+    def _handle_mixed_ask_beginner_activity(self, state: ConversationState, message: str) -> str:
+        lang = state.language
+        msg = message.strip().lower()
+        include_open_water = self._cert_subgroup_is_multi_day(state)
+        max_choice = 3 if include_open_water else 2
+        if msg in ("back", "cancel", "cancelar"):
+            return self._goto_mixed_cart_review(state)
+        choice = self._parse_choice(message, max_choice)
+        beginner_qty = state.mixed_pending_beginner_after_cert or 0
+        if choice is None or beginner_qty <= 0:
+            state.quick_replies = self._beginner_activity_quick_replies(lang, include_open_water)
+            return MESSAGES["not_understood"][lang]
+
+        state.mixed_pending_beginner_after_cert = 0
+        state.mixed_pending_qty_value = beginner_qty
+        if choice == 1:
+            state.mixed_pending_qty_type = "beginner"
+            state.mixed_pending_qty_plan = None
+            return self._goto_mixed_add_qty(state)
+        if choice == 2:
+            state.mixed_pending_qty_type = "snorkel"
+            state.mixed_pending_qty_plan = self._service_for_location("snorkeling", state)
+            return self._goto_mixed_add_qty(state)
+        # choice == 3: Open Water (only offered when include_open_water is True)
+        return self._start_mixed_course_add(
+            state,
+            self._service_for_location("open_water", state),
+            "open_water_time",
+        )
 
     # Emojis numéricos para listas dinámicas (botones de modificar/quitar item)
     _NUMBER_EMOJIS = ["1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣", "6️⃣", "7️⃣", "8️⃣", "9️⃣", "🔟"]
@@ -3990,6 +4189,11 @@ class DecisionTree:
             )
             return ack + "\n\n" + self._goto_mixed_cart_review(state)
         state.location = new_loc
+        # Switching to "island" without a known hotel: ask for it (needed for
+        # pickup) before remapping prices and showing the cart again.
+        if new_loc == "island" and not state.hotel:
+            state.mixed_pending_location_change = True
+            return self._goto_island_hotel_menu_or_unknown(state)
         self._remap_cart_for_location(state)
         loc_label = (
             ("Cartagena" if new_loc == "cartagena" else "Islas del Rosario")
@@ -4017,6 +4221,11 @@ class DecisionTree:
         lang = state.language
         changed = state.location != origin
         state.location = origin
+        # Switching to "island" without a known hotel: ask for it (needed for
+        # pickup) before remapping prices and showing the cart again.
+        if origin == "island" and not state.hotel:
+            state.mixed_pending_location_change = True
+            return self._goto_island_hotel_menu_or_unknown(state)
         if state.mixed_cart:
             self._remap_cart_for_location(state)
         if lang == "es":
@@ -4846,6 +5055,26 @@ class DecisionTree:
         island_name = state.island
         hotel_name = state.hotel
 
+        # Venimos de cambiar el origen del carrito a "island" (Cambiar origen
+        # o "estoy en las islas" por texto libre) — remapear precios y volver
+        # al resumen del carrito, no a un flujo de añadir que nunca empezo.
+        if state.mixed_pending_location_change:
+            state.mixed_pending_location_change = False
+            self._remap_cart_for_location(state)
+            if hotel_name and hotel_name != "Otro / No esta en la lista":
+                intro = (
+                    f"📍 Origen actualizado a *{island_name}* (*{hotel_name}*). Precios y servicios ajustados.\n\n"
+                    if lang == "es"
+                    else f"📍 Origin updated to *{island_name}* (*{hotel_name}*). Prices and services adjusted.\n\n"
+                )
+            else:
+                intro = (
+                    f"📍 Origen actualizado a *{island_name}*. Precios y servicios ajustados.\n\n"
+                    if lang == "es"
+                    else f"📍 Origin updated to *{island_name}*. Prices and services adjusted.\n\n"
+                )
+            return intro + self._goto_mixed_cart_review(state)
+
         # Si venimos del flujo de reserva (mixed flow), continuar con ese flujo
         if state.mixed_pending_qty_type:
             # Certificado → ir a elegir plan
@@ -4858,7 +5087,20 @@ class DecisionTree:
                 state.step = Step.MIXED_ADD_QTY
                 self.set_quick_replies(state, "mixed_quantity")
                 return MESSAGES["mixed_add_qty"][lang]
-        
+
+        # Estamos en el flujo de carrito pero aun sin actividad elegida (p.ej.
+        # se pregunto el hotel justo despues de fijar la ubicacion, antes de
+        # elegir que añadir) → volver al menu de actividades, no a logistica.
+        if state.mixed_entry_path:
+            intro = ""
+            if hotel_name and hotel_name != "Otro / No esta en la lista":
+                intro = (
+                    f"Perfecto, tomamos nota de que te hospedas en *{hotel_name}* en *{island_name}*.\n\n"
+                    if lang == "es"
+                    else f"Great, we've noted you're staying at *{hotel_name}* on *{island_name}*.\n\n"
+                )
+            return intro + self._goto_mixed_add_activity(state)
+
         # Si NO venimos del flujo de reserva, es el flujo de logística normal
         if lang == "es":
             if hotel_name and hotel_name != "Otro / No esta en la lista":
@@ -6185,24 +6427,53 @@ class DecisionTree:
                 except (TypeError, ValueError):
                     return str(value)
 
+            # Cantidad ya conocida (grupo detectado en texto libre o respondida
+            # en la pregunta de cantidad) -> mostramos el total del grupo, no
+            # solo el precio por persona.
+            qty_for_price = state.mixed_pending_qty_value if (state.mixed_pending_qty_value or 0) > 1 else None
+
             if state.is_colombian and price_cop:
                 if price_cop_normal:
+                    normal_unit = f"{_fmt_cop(price_cop_normal)} COP"
+                    discount_unit = f"{_fmt_cop(price_cop)} COP"
+                    if qty_for_price:
+                        normal_total = f"{_fmt_cop(price_cop_normal * qty_for_price)} COP"
+                        discount_total = f"{_fmt_cop(price_cop * qty_for_price)} COP"
+                        normal_line = f"{normal_unit} × {qty_for_price} = **{normal_total}**"
+                        discount_line = f"{discount_unit} × {qty_for_price} = **{discount_total}**"
+                    else:
+                        normal_line = f"**{normal_unit}**"
+                        discount_line = f"**{discount_unit}**"
                     price_text = (
                         f"💰 Precio:\n"
-                        f"  • {_fmt_cop(price_cop)} COP reservando online (10% off)\n"
-                        f"  • {_fmt_cop(price_cop_normal)} COP tarifa normal"
+                        f"  • Tarifa normal\n"
+                        f"    {normal_line}\n"
+                        f"  • Reservando online **(10% off)**\n"
+                        f"    {discount_line}"
                     )
                 else:
                     price_text = f"💰 Precio: {_fmt_cop(price_cop)} COP"
             elif price_usd:
                 if price_usd_normal:
+                    normal_unit = f"${_fmt_usd_es(price_usd_normal)}"
+                    discount_unit = f"${_fmt_usd_es(price_usd)}"
+                    if qty_for_price:
+                        normal_total = f"${_fmt_usd_es(price_usd_normal * qty_for_price)}"
+                        discount_total = f"${_fmt_usd_es(price_usd * qty_for_price)}"
+                        normal_line = f"{normal_unit} × {qty_for_price} = **{normal_total}**"
+                        discount_line = f"{discount_unit} × {qty_for_price} = **{discount_total}**"
+                    else:
+                        normal_line = f"**{normal_unit}**"
+                        discount_line = f"**{discount_unit}**"
                     price_text = (
                         f"💰 Precio:\n"
-                        f"  • {_fmt_usd_es(price_usd)} USD reservando online (10% off)\n"
-                        f"  • {_fmt_usd_es(price_usd_normal)} USD tarifa normal"
+                        f"  • Tarifa normal\n"
+                        f"    {normal_line}\n"
+                        f"  • Reservando online **(10% off)**\n"
+                        f"    {discount_line}"
                     )
                 else:
-                    price_text = f"💰 Precio: {_fmt_usd_es(price_usd)} USD"
+                    price_text = f"💰 Precio: ${_fmt_usd_es(price_usd)}"
             elif price_note:
                 price_text = f"💰 Precio: {price_note}"
 
@@ -6372,27 +6643,53 @@ class DecisionTree:
                 except (TypeError, ValueError):
                     return str(value)
 
+            qty_for_price = state.mixed_pending_qty_value if (state.mixed_pending_qty_value or 0) > 1 else None
+
             price_line = ""
             if state.is_colombian and price_cop:
                 if price_cop_normal:
+                    normal_unit = f"{_fmt_cop_en(price_cop_normal)} COP"
+                    discount_unit = f"{_fmt_cop_en(price_cop)} COP"
+                    if qty_for_price:
+                        normal_total = f"{_fmt_cop_en(price_cop_normal * qty_for_price)} COP"
+                        discount_total = f"{_fmt_cop_en(price_cop * qty_for_price)} COP"
+                        normal_line = f"{normal_unit} × {qty_for_price} = **{normal_total}**"
+                        discount_line = f"{discount_unit} × {qty_for_price} = **{discount_total}**"
+                    else:
+                        normal_line = f"**{normal_unit}**"
+                        discount_line = f"**{discount_unit}**"
                     price_line = (
-                        f"\n💰 *Price*:\n"
-                        f"  • {_fmt_cop_en(price_cop)} COP booking online (10% off)\n"
-                        f"  • {_fmt_cop_en(price_cop_normal)} COP standard rate"
+                        f"\n💰 **Price**:\n"
+                        f"  • Standard rate\n"
+                        f"    {normal_line}\n"
+                        f"  • Booking online **(10% off)**\n"
+                        f"    {discount_line}"
                     )
                 else:
-                    price_line = f"\n💰 *Price*: {_fmt_cop_en(price_cop)} COP"
+                    price_line = f"\n💰 **Price**: {_fmt_cop_en(price_cop)} COP"
             elif price_usd:
                 if price_usd_normal:
+                    normal_unit = f"${_fmt_usd_en(price_usd_normal)}"
+                    discount_unit = f"${_fmt_usd_en(price_usd)}"
+                    if qty_for_price:
+                        normal_total = f"${_fmt_usd_en(price_usd_normal * qty_for_price)}"
+                        discount_total = f"${_fmt_usd_en(price_usd * qty_for_price)}"
+                        normal_line = f"{normal_unit} × {qty_for_price} = **{normal_total}**"
+                        discount_line = f"{discount_unit} × {qty_for_price} = **{discount_total}**"
+                    else:
+                        normal_line = f"**{normal_unit}**"
+                        discount_line = f"**{discount_unit}**"
                     price_line = (
-                        f"\n💰 *Price*:\n"
-                        f"  • {_fmt_usd_en(price_usd)} USD booking online (10% off)\n"
-                        f"  • {_fmt_usd_en(price_usd_normal)} USD standard rate"
+                        f"\n💰 **Price**:\n"
+                        f"  • Standard rate\n"
+                        f"    {normal_line}\n"
+                        f"  • Booking online **(10% off)**\n"
+                        f"    {discount_line}"
                     )
                 else:
-                    price_line = f"\n💰 *Price*: {_fmt_usd_en(price_usd)} USD"
+                    price_line = f"\n💰 **Price**: ${_fmt_usd_en(price_usd)}"
             elif price_note:
-                price_line = f"\n💰 *Price*: {price_note}"
+                price_line = f"\n💰 **Price**: {price_note}"
 
             summary_intro_block = ""
             if summary_intro:

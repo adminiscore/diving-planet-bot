@@ -730,10 +730,38 @@ async def _expand_with_parent_context(docs: list[dict], lang: str) -> list[dict]
     return parents + docs
 
 
-def _build_grounding_context(context: str, extra_context: str | None = None) -> str:
+def _build_grounding_context(
+    context: str,
+    extra_context: str | None = None,
+    history: list[dict] | None = None,
+) -> str:
+    """Assemble everything the grounding check is allowed to treat as truth.
+
+    Without the conversation history, a perfectly accurate answer that just
+    confirms something the BOT ITSELF already said earlier (e.g. "menores de
+    8 solo pueden hacer snorkel, min. 6 anos" stated a few turns ago in the
+    kids-age question) gets rejected as "ungrounded" because that fact isn't
+    in the freshly retrieved docs/extra_context — even though it's exactly
+    what the client is asking to confirm. Only the bot's OWN prior messages
+    are included (not the client's), since those came from deterministic tree
+    templates / KB data, not free-form guesses.
+    """
+    parts = [context] if context else []
     if extra_context and context != extra_context:
-        return f"{context}\n\nContexto adicional de la situacion: {extra_context}"
-    return context
+        parts.append(f"Contexto adicional de la situacion: {extra_context}")
+    if history:
+        prior_bot_messages = [
+            turn.get("content", "")
+            for turn in history[-12:]
+            if turn.get("role") == "assistant" and turn.get("content")
+        ]
+        if prior_bot_messages:
+            parts.append(
+                "Mensajes que el propio bot ya envio antes en esta conversacion "
+                "(puedes usarlos para confirmar datos que ya mencionaste):\n"
+                + "\n---\n".join(prior_bot_messages)
+            )
+    return "\n\n".join(parts)
 
 
 async def _verify_grounding_with_retry(answer: str, context: str, lang: str) -> tuple[bool, str]:
@@ -835,7 +863,7 @@ async def rag_answer(
             return FALLBACK_ES if lang == "es" else FALLBACK_EN
 
         answer = response.choices[0].message.content
-        grounding_context = _build_grounding_context(context, extra_context=extra_context)
+        grounding_context = _build_grounding_context(context, extra_context=extra_context, history=history)
 
         # Deterministic guard first: never let a price/percentage that is not in
         # the context reach the customer (e.g. "$180" when the real price is "$178").
