@@ -1,6 +1,19 @@
 History
 =======
 
+0.17.7 - (2026-06-21)
+---------------------
+* Typo resilience — Capa 3 (final layer): `_match_quick_reply_text` in `supervisor.py` now falls back to per-word fuzzy matching (new `word_ratio()` helper in `src/utils/fuzzy.py`, cutoff 0.80) when there's zero exact word overlap with a button title — catches single-word typos like "snorlkel" → 🤿 Snorkel. `DetectedIntent.confidence` is now used to gate routing: `>= 0.30` applies the detected intent directly (previous behavior, extracted into `_route_detected_intent`); `0.2–0.3` with a concrete activity guess asks "¿Te refieres a X? (Sí/No)" via new `state.pending_intent_confirmation`, resolved by yes/no at the top of `route_message`. New pure predicate `_intent_would_route()` mirrors the routing conditions without mutating state, so a weak detection that wouldn't have changed anything anyway (e.g. a RAG-bound question mentioning a course) still falls through silently instead of asking a pointless confirmation. `docs/typo-resilience-plan.md` marked Capas 1–3 ✅ complete.
+* Business KB round of owner-confirmed answers implemented (see `docs/questions_for_owner_business_kb.md` for full Q&A history):
+  - PARCEROS removed everywhere (obsolete product): `discounts.json`, `decision_tree.py` pricing-discounts message (ES/EN), and the one historical few-shot example in `conversations.json` that mentioned the code.
+  - Group discount: 4+/5% rule replaced by 5+ people = 10%, stacking with the 10% online discount (20% total) — `discounts.json` + `pricing.json`.
+  - Own-equipment discount: fixed $33.000 COP/day replaced by 5%, only when the client brings the COMPLETE gear — `pricing.json`.
+  - New FAQs: payment methods (Colombians 50% online + 50% in person; foreigners 100% online or in person), deposit policy, currency (COP/USD), failed-payment retry message, and a note that online payment registers instantly in ROVERD but the team reconciles it manually afterward.
+  - Food policy: clients may bring their own food (allergy/diet) — `policies.json` + `faqs.json`.
+  - Private-service backup instructor: copy now says "we coordinate an available instructor" instead of implying only Andrés/Antonio cover it — `policies.json` + `faqs.json`.
+  - New cancellation/reschedule detector in `supervisor.py` (`_detect_cancellation_request`/`_detect_reschedule_request`): a free-text request to cancel or change the date of an existing booking now gets the policy text from the KB plus two buttons (talk to an advisor / main menu) instead of being answered ad hoc or silently escalated. New `policies.json` `reschedule` entry.
+* Suite: 644 passed, 1 skipped, 1 xfailed (unchanged pass count, no regressions).
+
 0.17.6 - (2026-06-21)
 ---------------------
 * Typo resilience — Capa 1 (fuzzy navigation): new `src/utils/fuzzy.py` module (stdlib `difflib`, no new deps). Adaptive thresholds: exact-only for ≤2 chars, ratio ≥ 0.72 for 3–4 chars, ≥ 0.82 for 5+ chars. Replaces 23 hardcoded `msg in ("back","cancel","cancelar")` checks in `decision_tree.py` and yes/no checks in `supervisor.py` with `is_back/is_affirmative/is_negative/is_agree/is_none_selection/fuzzy_word_number`. Catches "sii"→sí, "cancellar"→cancelar, "cuatr"→4. 152 unit tests in `tests/test_fuzzy.py`.

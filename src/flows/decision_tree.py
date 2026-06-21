@@ -187,6 +187,9 @@ class ConversationState:
     detected_location: str | None = None
     detected_island: str | None = None
     detected_hotel: str | None = None
+    # Low-confidence intent detection (0.2 < confidence < 0.30): awaiting a
+    # yes/no confirmation from the user before applying it (Capa 3, typo plan).
+    pending_intent_confirmation: object | None = None
 
     def __post_init__(self):
         if self.history is None:
@@ -4817,8 +4820,7 @@ class DecisionTree:
                 response = (
                     "🇨🇴 *Descuentos para colombianos y residentes*:\n\n"
                     "💸 10% online\n"
-                    "👥 Descuentos para grupos\n"
-                    "📆 Plan PARCEROS (según fechas)\n\n"
+                    "👥 Descuentos para grupos\n\n"
                     "📲 Escríbenos por WhatsApp y te aplicamos la tarifa local cuando corresponda "
                     "(te pediremos cédula o documento de residencia)."
                 )
@@ -4863,8 +4865,7 @@ class DecisionTree:
                 response = (
                     "🇨🇴 *Discounts for Colombian guests and residents*:\n\n"
                     "💸 Online discount\n"
-                    "👥 Group discounts\n"
-                    "📆 PARCEROS plan (selected dates)\n\n"
+                    "👥 Group discounts\n\n"
                     "📲 Contact us on WhatsApp and we can apply the local rate when applicable and explain the conditions."
                 )
 

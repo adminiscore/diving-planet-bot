@@ -80,6 +80,15 @@ def _ratio(a: str, b: str) -> float:
     return SequenceMatcher(None, a, b).ratio()
 
 
+def word_ratio(a: str, b: str) -> float:
+    """Public SequenceMatcher ratio between two single words (0.0-1.0).
+
+    For callers that need fuzzy word-vs-word scoring with their own cutoff
+    (e.g. menu-button matching), rather than membership in a canonical set.
+    """
+    return _ratio(a, b)
+
+
 def _fuzzy_in(value: str, candidates: frozenset[str]) -> bool:
     """Return True if *value* exactly or fuzzily matches any candidate.
 

@@ -13,24 +13,19 @@
       "applicability": "buceo recreativo y cursos"
     },
     "group_discount": {
-      "percentage": 5,
-      "min_people": 4,
-      "description_es": "5% de descuento para grupos de 4 personas o más (previa solicitud)",
-      "description_en": "5% discount for groups of 4 or more people (upon request)",
-      "applicability": "todos los servicios"
-    },
-    "parceros_plan": {
-      "percentage": 30,
-      "description_es": "Plan PARCEROS: 30% de descuento para clientes registrados en Cartagena cuando hay cupo disponible para el día siguiente",
-      "description_en": "PARCEROS plan: 30% discount for registered customers in Cartagena when space is available for the next day",
-      "applicability": "solo para clientes locales registrados",
-      "conditions": "sujeto a disponibilidad de cupo en la lancha"
+      "percentage": 10,
+      "min_people": 5,
+      "description_es": "10% de descuento para grupos de 5 personas o más, que se suma al 10% de descuento online (20% total reservando online)",
+      "description_en": "10% discount for groups of 5 or more people, which stacks with the 10% online discount (20% total when booking online)",
+      "applicability": "todos los servicios",
+      "combinable_with": ["roverd_web_discount"]
     },
     "roverd_web_discount": {
       "percentage": 10,
       "description_es": "10% de descuento adicional reservando a través del sistema ROVERD en la página web",
       "description_en": "Additional 10% discount booking through the ROVERD system on the website",
-      "applicability": "reservas web"
+      "applicability": "reservas web",
+      "combinable_with": ["group_discount"]
     },
     "colombian_special": {
       "description_es": "Bono adicional para locales colombianos. Contactar por WhatsApp para obtener descuento.",
@@ -41,12 +36,8 @@
   },
   "discount_policies": {
     "non_cumulative": {
-      "es": "Los descuentos no son acumulables excepto en casos especiales autorizados por el staff",
-      "en": "Discounts are not cumulative except in special cases authorized by staff"
-    },
-    "verification_required": {
-      "es": "Algunos descuentos requieren verificación (ej: residencia local para plan PARCEROS)",
-      "en": "Some discounts require verification (e.g., local residence for PARCEROS plan)"
+      "es": "Los descuentos no son acumulables excepto en casos especiales autorizados por el staff o donde se indique explícitamente lo contrario (ej: grupo + online sí se suman)",
+      "en": "Discounts are not cumulative except in special cases authorized by staff or where explicitly stated otherwise (e.g. group + online do stack)"
     }
   }
 }

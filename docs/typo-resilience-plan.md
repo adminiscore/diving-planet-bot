@@ -1,8 +1,8 @@
 # Plan — Tolerancia a errores tipográficos (3 capas)
 
 > Última actualización: 2026-06-21.
-> Branch: `feature/dev_alvaro`
-> **Estado global: Capa 1 ✅ · Capa 2 ✅ · Capa 3 ⏳**
+> Branch: `feature/dev_gadea`
+> **Estado global: Capa 1 ✅ · Capa 2 ✅ · Capa 3 ✅**
 
 ---
 
@@ -142,48 +142,74 @@ Parche de corto plazo. El orquestador LLM (Fase 2) resolverá esto de forma nati
 
 ---
 
-## Capa 3 — Menú sin botón + umbral de confianza ⏳ PENDIENTE
+## Capa 3 — Menú sin botón + umbral de confianza ✅ COMPLETADA
 
-### Problema A — `_match_text_to_button` (supervisor.py)
+### Problema A — `_match_quick_reply_text` (supervisor.py)
 
-El word-overlap (≥ 0.5) falla con palabras sueltas mal escritas.
-"snorlkel" no coincide con el botón "🤿 Snorkel".
+El word-overlap (≥ 0.5) fallaba con palabras sueltas mal escritas.
+"snorlkel" no coincidía con el botón "🤿 Snorkel".
 
-### Solución A
+### Solución A implementada
 
-Añadir fuzzy por palabra en el scoring:
+Fuzzy por palabra en el scoring, vía `word_ratio()` (nuevo helper público en
+`src/utils/fuzzy.py`, envuelve `SequenceMatcher`):
 
 ```python
-# Antes
-score = len(user_words & button_words) / max(...)
-
-# Después — si no hay coincidencia exacta, intentar fuzzy por palabra
-for uw in user_words:
-    for bw in button_words:
-        if uw == bw or _ratio(uw, bw) >= 0.80:
-            fuzzy_matches += 1
-score = fuzzy_matches / max(...)
+common = sig_msg & sig_title
+matched = len(common)
+remaining_title_words = sig_title - common
+for uw in sig_msg - common:
+    for tw in remaining_title_words:
+        if word_ratio(uw, tw) >= 0.80:
+            matched += 1
+            remaining_title_words.discard(tw)
+            break
+score = matched / max(len(sig_msg), 1)
 ```
 
 ### Problema B — Confidence threshold en IntentDetector
 
-`DetectedIntent.confidence` se calcula pero nunca se usa para enrutar.
-Resultado: una detección con 0.1 de confianza se trata igual que 0.9.
+`DetectedIntent.confidence` se calculaba pero el único gate existente era
+`confidence > 0.2` para aplicar el intent directamente — sin distinguir una
+detección débil (0.21) de una fuerte (0.9).
 
-### Solución B
+### Solución B implementada
 
-Añadir un umbral en supervisor.py: si `confidence < 0.30`, antes de avanzar
-pedir confirmación al usuario:
+`src/agents/supervisor.py`:
 
-```
-"¿Te refieres a [actividad detectada]? (Sí / No)"
-```
+- El bloque de aplicación de intent (antes inline) se extrajo a
+  `_route_detected_intent(intent, state) -> str | None`.
+- `confidence >= 0.30` → aplica y enruta directo (comportamiento previo).
+- `0.2 < confidence < 0.30` y hay `intent.activity` y
+  `_intent_would_route(intent, state)` es `True` (predicado puro que repite
+  las condiciones de `_route_detected_intent` sin mutar estado, para no
+  preguntar cuando la detección de todas formas no iba a cambiar el flujo,
+  p.ej. una pregunta sobre "el curso de divemaster" que debe ir a RAG) →
+  se guarda el intent en `state.pending_intent_confirmation` y se responde:
 
-### Archivos a tocar
+  ```
+  "¿Te refieres a snorkel? (Sí / No)"
+  ```
+
+- Al inicio de `route_message`, si hay `pending_intent_confirmation`:
+  - `is_affirmative(message)` → aplica el intent guardado vía
+    `_route_detected_intent` y devuelve esa respuesta.
+  - `is_negative(message)` → descarta el intent, vuelve a `MAIN_MENU`.
+  - cualquier otra cosa → limpia el pending y deja que el mensaje siga el
+    routing normal.
+
+### Tests
+
+- Suite completa: **644 tests green** (sin tests nuevos dedicados; verificado
+  manualmente con smoke tests de la rama confianza-baja confirm/Sí/No).
+
+### Archivos tocados
 
 | Archivo | Cambio |
 |---------|--------|
-| `src/agents/supervisor.py` | `_match_text_to_button` + confidence threshold |
+| `src/utils/fuzzy.py` | + `word_ratio()` público |
+| `src/agents/supervisor.py` | fuzzy en `_match_quick_reply_text`; extracción a `_route_detected_intent`; nuevo `_intent_would_route`; gate de confianza 0.30 + confirmación pendiente |
+| `src/flows/decision_tree.py` | + `ConversationState.pending_intent_confirmation` |
 
 ### Nota
 
@@ -198,7 +224,7 @@ La Capa 3 es también un parche temporal. El orquestador con `answer_question` y
 |------|--------|-------|-------|
 | **Capa 1** — fuzzy navegación | ✅ Completada | 152 tests | `src/utils/fuzzy.py` · 609 suite green |
 | **Capa 2** — regex actividades | ✅ Completada | +33 tests | `intent_detector.py` · 642 suite green |
-| **Capa 3** — menú fuzzy + confidence | ⏳ Pendiente | — | `supervisor.py` · ver sección abajo |
+| **Capa 3** — menú fuzzy + confidence | ✅ Completada | 644 suite green | `supervisor.py` + `fuzzy.py` + `decision_tree.py` |
 | **Orquestador (Fase 2)** | ⏳ Pendiente (plan separado) | — | Reemplaza Capas 2 y 3 |
 
 ---

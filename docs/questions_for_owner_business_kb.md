@@ -1,5 +1,12 @@
 # Preguntas para el owner — negocio / KB antes de demo
 
+> **Ronda 1 de respuestas recibida 2026-06-21** (notas crudas del owner, sin
+> implementar todavía). Cada pregunta afectada tiene un bloque
+> `**Respuesta (ronda 1):**` con la nota literal + estado:
+> ✅ resuelto · 🟡 parcial / necesita aclaración · ⏳ sin respuesta todavía.
+> Ver `## 3. Seguimiento ronda 1` al final del documento para la lista de
+> aclaraciones pendientes antes de poder implementar con seguridad.
+
 Este documento recoge los huecos de negocio que siguen siendo sensibles para la demo.
 
 Objetivo:
@@ -98,7 +105,12 @@ Fuentes:
 
 ## 2.1 Precios y descuentos
 
-### 1. Fuente oficial de precios para demo
+### 1. Fuente oficial de precios para demo 🟡 PARCIAL — acción: revisión conjunta
+
+**Respuesta (ronda 3):** no hay una fuente clara todavía; el owner pidió
+**revisar `pricing.json` y `services.json` juntos** antes de decidir cuál
+manda. ⚠️ **Acción**: agendar/hacer esa revisión fila por fila para
+detectar discrepancias concretas antes de poder cerrar esta pregunta.
 
 Hoy tenemos precios en `pricing.json` y también precios en `services.json`.
 
@@ -111,7 +123,13 @@ Necesitamos confirmar:
 
 ---
 
-### 2. Descuento para colombianos
+### 2. Descuento para colombianos ⏳ SIN RESPUESTA
+
+**Respuesta (ronda 1):** "pendiente" — el owner no lo ha cerrado todavía.
+
+**Respuesta (ronda 3):** confirmado que **todavía no está definido**. El
+bot debe seguir mencionando que existe descuento para colombianos sin
+prometer cifra, y derivar el detalle a un asesor.
 
 Sabemos que existe, pero no está suficientemente cerrado.
 
@@ -125,7 +143,16 @@ Necesitamos confirmar:
 
 ---
 
-### 3. Acumulabilidad de descuentos
+### 3. Acumulabilidad de descuentos 🟡 PARCIAL — acción: eliminar PARCEROS
+
+**Respuesta (ronda 2):** PARCEROS es **un producto obsoleto y debe
+eliminarse** de la KB y del bot (no es que dé "0% descuento", es que ya no
+existe como plan). ⚠️ **Acción de implementación**: quitar todas las
+referencias a PARCEROS en `discounts.json`, `policies.json`, `faqs.json` y
+en cualquier flujo/mensaje del árbol o RAG que lo mencione.
+
+Grupo + web: confirmado que se suman (10% grupo + 10% online = 20%, ver
+pregunta 4). Pendiente aún: colombiano + web, segundo día + grupo.
 
 La KB dice que los descuentos no son acumulables salvo autorización del staff, pero falta bajarlo a casos concretos.
 
@@ -142,7 +169,14 @@ Necesitamos confirmar:
 
 ---
 
-### 4. Descuento de grupo
+### 4. Descuento de grupo ✅ RESUELTO (regla principal)
+
+**Respuesta (ronda 2):** la regla de **4+ personas = 5%** queda **obsoleta
+y se elimina**. Nueva regla: **5+ personas = 10% extra**, y si además
+reservan online se suma el 10% online = **20% total**. Pendiente todavía
+(no bloqueante): ¿aplica a cursos?, ¿aplica a grupos mixtos?, ¿automático o
+requiere aprobación del staff?, ¿hay tarifa cerrada para 6+ / lancha
+privada automática?
 
 Sabemos que existe 5% para grupos de 4+, pero faltan detalles.
 
@@ -158,7 +192,10 @@ Necesitamos confirmar:
 
 ---
 
-### 5. Precio Bubble Makers (8-10 años)
+### 5. Precio Bubble Makers (8-10 años) ⏳ SIN RESPUESTA
+
+**Respuesta (ronda 3):** aún no está definido. El bot debe seguir
+escalando esta consulta sin dar precio.
 
 El flujo ya contempla derivar a Bubble Makers para niños de 8 a 10 años, pero no tenemos precio en la KB.
 
@@ -172,7 +209,11 @@ Necesitamos confirmar:
 
 ---
 
-### 6. Servicio privado: rangos de precio indicativos
+### 6. Servicio privado: rangos de precio indicativos ✅ RESUELTO
+
+**Respuesta (ronda 3):** no hay rango fijo — el bot debe **escalar siempre
+sin dar ninguna cifra** (confirma que el comportamiento actual de
+"contact only" es correcto, no hace falta cambiar nada).
 
 Hoy el servicio privado (lancha exclusiva) se maneja como "contact only" sin precios en la KB.
 
@@ -186,7 +227,18 @@ Necesitamos confirmar:
 
 ## 2.2 Reserva y pagos
 
-### 7. Confirmación real de reserva
+### 7. Confirmación real de reserva 🟡 PARCIAL
+
+**Respuesta (ronda 2):** al pagar online, el pago se sube automáticamente
+al sistema ROVERD, pero **el equipo consolida después manualmente** todos
+los pagos en un Excel con su estado. Es decir: **no es 100% automático**
+— hay un paso de conciliación manual posterior. Para el bot: puede decir
+que el pago se registra al instante en el sistema y que el equipo
+confirma/concilia el estado poco después; evitar prometer "confirmación
+instantánea sin revisión". Sigue sin responder: máximo de personas por
+salida, manejo de overbooking, control de disponibilidad, lista de espera,
+reservas mixtas en un solo booking de ROVERD. (Ver pregunta 40 para
+recordatorios, ya resuelta: van por email.)
 
 Hoy sabemos que existe ROVERD y que el sistema cierra a las 4:30 p.m. del día anterior.
 
@@ -209,7 +261,15 @@ Necesitamos confirmar:
 ---
 
 
-### 8. Anticipo / depósitos
+### 8. Anticipo / depósitos ✅ RESUELTO
+
+**Respuesta (ronda 2):**
+- **Colombianos**: pagan **50% online** (métodos de pago colombianos) al
+  reservar, y el otro 50% presencial (tarjeta o efectivo).
+- **No colombianos**: pagan el **100%** vía la URL de pago online (tarjeta)
+  o presencial (tarjeta o efectivo) — no se menciona anticipo parcial para
+  ellos.
+- No depende de si es privado/grupo grande, depende de si es colombiano o no.
 
 Necesitamos confirmar:
 - ¿Se paga el 100% o solo un anticipo?
@@ -221,7 +281,16 @@ Necesitamos confirmar:
 
 ---
 
-### 9. Medios de pago aceptados
+### 9. Medios de pago aceptados ✅ RESUELTO
+
+**Respuesta (ronda 2):**
+- **Colombianos**: pagan 50% online con métodos de pago colombianos
+  (incluye Llave — Bancolombia/ACH), el otro 50% presencial con tarjeta o
+  efectivo (ver pregunta 8, anticipo).
+- **No colombianos / extranjeros**: pagan vía la URL de pago online con
+  tarjeta, o presencial con tarjeta o efectivo. No se menciona PayPal — se
+  entiende que tarjeta internacional (Visa/Mastercard) cubre este caso.
+  Sin acción pendiente bloqueante.
 
 Necesitamos confirmar:
 - ¿Qué medios aceptamos exactamente?
@@ -236,7 +305,16 @@ Necesitamos confirmar:
 
 ---
 
-### 10. Moneda y pago fallido
+### 10. Moneda y pago fallido ✅ RESUELTO
+
+**Respuesta (ronda 3):**
+- **Moneda**: colombianos pagan en **COP**, el resto (extranjeros) en
+  **USD**.
+- **Pago fallido**: el bot debe decir al cliente que **reintente en unos
+  minutos** y revise que los datos introducidos sean correctos; si sigue
+  fallando, ofrecer **dos botones** — escalar con un asesor / volver al
+  menú principal (home). No mencionar reintento "con el mismo link"
+  específicamente, solo reintentar en general.
 
 Necesitamos confirmar:
 - ¿Qué monedas aceptamos realmente?
@@ -250,7 +328,17 @@ Necesitamos confirmar:
 
 ## 2.3 Cancelaciones y cambios
 
-### 11. Cancelación por parte del cliente
+### 11. Cancelación por parte del cliente ✅ RESUELTO (comportamiento del bot)
+
+**Respuesta (ronda 2):** el bot debe **informar la política de
+cancelación/reembolso** usando los JSON de la KB (`policies.json` /
+`faqs.json`, que ya remiten a términos y condiciones), y a continuación
+mostrar **dos botones**: uno para contactar al staff (escalar) y otro para
+volver al menú principal (home). Esto define el comportamiento de UX —
+sigue pendiente (no bloqueante para implementar el flujo) el detalle fino
+de plazos sin penalización, penalización parcial, casos sin reembolso y
+no-show, que vendrán reflejados en el texto de política una vez se
+redacten.
 
 la idea es que en caso de cancelación el bot termine pasando con un agente, aunque pueda dar un resumen básico de la política.
 
@@ -266,7 +354,12 @@ Necesitamos confirmar:
 
 ---
 
-### 12. Cambio de fecha
+### 12. Cambio de fecha ✅ RESUELTO (comportamiento del bot)
+
+**Respuesta (ronda 3):** mismo patrón que cancelaciones (#11): el bot debe
+informar lo que diga la política/JSON de la KB sobre cambio de fecha, y
+mostrar dos botones — escalar a asesor / volver al menú principal (home).
+No decide ni promete plazos o costos por su cuenta.
 
 Aquí queremos que, ante una petición concreta de cambio de fecha, el bot pase siempre con un agente en lugar de decidir solo.
 
@@ -280,7 +373,11 @@ Necesitamos confirmar:
 
 ---
 
-### 13. Clima / capitanía / reembolsos
+### 13. Clima / capitanía / reembolsos ⏳ EN PAUSA
+
+**Respuesta (ronda 3):** el owner pidió dejarla **en pendiente** por ahora
+(no la respondió todavía). No tocar el comportamiento actual hasta que la
+responda.
 
 Aquí sí tenemos una parte cubierta: si Capitanía cierra salidas, se menciona reembolso 100%.
 
@@ -295,7 +392,14 @@ Necesitamos confirmar:
 
 ## 2.4 Comida, alergias, fotos y extras
 
-### 14. Comida y alergias — matiz fino
+### 14. Comida y alergias — matiz fino ✅ RESUELTO (parcial)
+
+**Respuesta (ronda 3):** el menú es siempre el mismo (arroz con pollo /
+arroz con vegetales), **no cambia** según día/proveedor. **Sí se permite
+llevar comida propia** (útil para alergias o dietas especiales). Sigue
+sin responder qué alergias concretas se pueden gestionar vs. cuáles no se
+pueden prometer manejar — pero con "puede traer su propia comida" ya hay
+una respuesta segura por defecto.
 
 Aunque ya tenemos una base útil, faltan detalles finos.
 
@@ -309,7 +413,15 @@ Necesitamos confirmar:
 
 ---
 
-### 15. Entrega de fotos y videos
+### 15. Entrega de fotos y videos ✅ RESUELTO (canal) — falta plazo/gestión
+
+**Respuesta (ronda 1):** "si no se ve bien o no son buenas, propina al
+instructor (solo buzos certificados), las mandan por WhatsApp" — confirma
+canal de entrega = WhatsApp, y que el matiz de calidad/propina es
+**exclusivo de buceadores certificados** (no minicursos, coherente con la
+KB actual). Sigue sin responder: quién gestiona el envío (instructor
+directo vs. recepción) y si hay plazo oficial distinto al "día siguiente"
+para algunos planes.
 
 La KB ya indica que las fotos y videos no se ofrecen proactivamente, que no están incluidos en el precio y que la entrega suele hacerse como máximo al día siguiente.
 
@@ -322,7 +434,13 @@ Necesitamos confirmar:
 
 ---
 
-### 16. Post-actividad y soporte posterior
+### 16. Post-actividad y soporte posterior 🟡 PARCIAL
+
+**Respuesta (ronda 1):** "preguntas de cosas perdidas: asesor" — objetos
+perdidos siempre escalan a un asesor humano. Sigue sin responder: fotos
+pendientes (más allá del canal ya confirmado en la 15), certificados,
+incidencias durante el servicio, y si el chatbot puede seguir ayudando
+post-actividad en algún caso o siempre debe escalar.
 
 No tenemos documentado cómo se gestionan las consultas después de la actividad.
 
@@ -343,7 +461,16 @@ Necesitamos confirmar:
 
 ## 2.5 Hoteles y recogidas
 
-### 17. Matriz hotel → recogida sí/no
+### 17. Matriz hotel → recogida sí/no 🟡 PARCIAL (precio resuelto, matriz pendiente)
+
+**Respuesta (ronda 1):** "islas del rosario: mismo valor para todos / baru:
+como si fueras de cartagena - les puede recoger de aquí pero el coste es lo
+mismo" — esto resuelve que el **precio** no varía por hotel dentro de
+Islas del Rosario, y que Barú se trata como salida desde Cartagena a
+efectos de precio (con posibilidad de recogida igualmente). **No resuelve**
+la matriz sí/no de recogida física por hotel (muelle propio/comunitario/
+coordinación manual) — sigue pendiente la pregunta 19 (hoteles
+prioritarios) para cerrarlo.
 
 Este es probablemente el mayor hueco operativo que sigue vivo.
 
@@ -357,7 +484,15 @@ Necesitamos confirmar:
 
 ---
 
-### 18. Grupos mixtos multi-día (certificados + principiantes / snorkel)
+### 18. Grupos mixtos multi-día (certificados + principiantes / snorkel) ✅ RESUELTO
+
+**Respuesta (ronda 1):** "paquetes multidía: solo son buceos certificados,
+a los que no, les ofrece el curso certificado" — confirma que no existe
+combinación multi-día mixta: los paquetes 5/7/9 son solo para certificados,
+y a los no certificados se les ofrece el curso Open Water en su lugar (esto
+también resuelve la pregunta 21). Ya no aplican las dudas de logística de
+alojamiento para principiantes/snorkelers en multi-día, porque ese
+escenario mixto no existe.
 
 Para grupos mixtos que quieren varios días en islas, la logística no está clara.
 
@@ -370,7 +505,12 @@ Necesitamos confirmar:
 
 ---
 
-### 19. Hoteles prioritarios para cerrar antes de demo
+### 19. Hoteles prioritarios para cerrar antes de demo ⏳ EN PAUSA — acción pendiente
+
+**Respuesta (ronda 3):** varía por hotel, el owner necesita **revisarlo
+con su equipo** antes de poder confirmar la matriz. ⚠️ Queda como tarea
+de seguimiento (no es que falte preguntarlo, es que requiere que él lo
+verifique internamente).
 
 Si no podemos cerrar la matriz completa, al menos deberíamos validar primero los hoteles que más salen en conversación.
 
@@ -397,7 +537,13 @@ Necesitamos confirmar por cada uno:
 
 ---
 
-### 20. Casos especiales de logística y recogida
+### 20. Casos especiales de logística y recogida 🟡 PARCIAL
+
+**Respuesta (ronda 3):** "cliente que pierde la salida" → **pendiente**,
+no respondida todavía (debe seguir escalando sin prometer reembolso ni
+no-show). El resto de sub-preguntas (tarifas por zona, hoteles fuera del
+selector, punto de encuentro alternativo, grupo con hoteles distintos,
+equipaje/mochila, edad máxima) sigue sin respuesta.
 
 Aparte de la matriz hotel sí/no (pregunta 17), faltan los matices operativos que más generan preguntas reales.
 
@@ -416,7 +562,13 @@ Necesitamos confirmar:
 
 ## 2.6 Operativa de entrada al servicio
 
-### 21. Detección automática de nivel en paquetes 5/7/9
+### 21. Detección automática de nivel en paquetes 5/7/9 ✅ RESUELTO
+
+**Respuesta (ronda 1):** ver pregunta 18 — si el cliente no es certificado,
+se le ofrece directamente el curso Open Water como alternativa al paquete
+5/7/9. Falta solo confirmar si existe alguna combinación válida (uno
+certificado + otro haciendo curso en paralelo) pero no bloquea
+implementación de la regla principal.
 
 Hoy los paquetes 5/7/9 inmersiones son sólo para certificados (KB lo dice), pero el bot no detecta proactivamente si el cliente lo es.
 
@@ -429,7 +581,12 @@ Necesitamos confirmar:
 
 ---
 
-### 22. Backup de instructor en servicios privados
+### 22. Backup de instructor en servicios privados ✅ RESUELTO
+
+**Respuesta (ronda 3):** sí hay backup, se coordina sin problema. El bot
+debe presentarlo de forma genérica: "te contactamos para coordinar
+instructor disponible", sin mencionar nombre ni prometer a Andrés
+específicamente.
 
 Hoy el servicio privado se asocia mucho a Andrés, pero no está claro qué ocurre cuando no está disponible.
 
@@ -471,7 +628,10 @@ Necesitamos confirmar:
 
 ## 2.7 Cursos PADI — operativa, idiomas y combos
 
-### 25. Idiomas del staff y materiales PADI
+### 25. Idiomas del staff y materiales PADI ⏳ EN PAUSA
+
+**Respuesta (ronda 3):** "pendiente" — no respondida todavía. El bot debe
+seguir asumiendo solo ES/EN hasta nueva confirmación.
 
 Hoy todo el bot trabaja en ES/EN, pero no sabemos qué soportan los instructores y el material PADI.
 
@@ -485,7 +645,13 @@ Necesitamos confirmar:
 
 ---
 
-### 26. Bautismo vs. discovery dive vs. Open Water — diferenciación
+### 26. Bautismo vs. discovery dive vs. Open Water — diferenciación ✅ RESUELTO
+
+**Respuesta (ronda 3):** "bautismo" = "Discover Scuba Diving" = nuestro
+**minicurso** — son el mismo producto con distintos nombres (primera
+experiencia de buceo sin certificación). Open Water es un producto
+distinto (curso de certificación completo). El árbol del bot puede tratar
+estos términos como sinónimos sin riesgo de confundir productos.
 
 Hoy el árbol del bot mezcla "minicurso", "primer buceo", "bautismo" sin distinguirlos formalmente.
 
@@ -499,7 +665,9 @@ Necesitamos confirmar:
 
 ---
 
-### 27. Entrega de certificación PADI
+### 27. Entrega de certificación PADI ⏳ EN PAUSA
+
+**Respuesta (ronda 3):** "pendiente" — no respondida todavía.
 
 Hoy el bot menciona que el cliente recibe certificación tras el curso, pero no detalla el cómo.
 
@@ -513,7 +681,9 @@ Necesitamos confirmar:
 
 ---
 
-### 28. Combos de cursos y especialidades
+### 28. Combos de cursos y especialidades ⏳ EN PAUSA
+
+**Respuesta (ronda 3):** "pendiente" — no respondida todavía.
 
 Hoy cada curso/especialidad se vende como producto independiente.
 
@@ -526,7 +696,10 @@ Necesitamos confirmar:
 
 ---
 
-### 29. Divemaster — duración y operativa
+### 29. Divemaster — duración y operativa ⏳ EN PAUSA
+
+**Respuesta (ronda 3):** "pendiente" — no respondida todavía. Sigue
+escalando como contact-only sin detalles.
 
 Hoy el flujo Divemaster es contact-only y escala directamente. Falta información mínima para guiar la conversación previa.
 
@@ -541,7 +714,14 @@ Necesitamos confirmar:
 
 ## 2.8 Equipo (alquiler, propio, tallas y especiales)
 
-### 30. Definición de "equipo propio" y aplicabilidad
+### 30. Definición de "equipo propio" y aplicabilidad ✅ RESUELTO (regla principal)
+
+**Respuesta (ronda 2):** el **5% sustituye** el monto fijo actual de
+$33.000 COP/día (queda obsoleto). El 5% aplica solo si el cliente trae el
+equipo **completo** (regulador, chaleco/BCD, traje, máscara, aletas, etc.
+— "TODO"); traer solo parte del equipo no da descuento. Pendiente
+(no bloqueante): confirmar en qué actividades aplica exactamente (cursos
+PADI, minicurso, snorkel) más allá de buceo certificado.
 
 Hoy la KB sabe que hay un descuento de $33.000 COP/día por equipo propio, pero no qué cuenta como "equipo propio" ni en qué actividades aplica.
 
@@ -621,7 +801,10 @@ Necesitamos confirmar:
 
 ## 2.9 Upsells y extras
 
-### 36. Catálogo actual de extras
+### 36. Catálogo actual de extras ⏳ EN PAUSA
+
+**Respuesta (ronda 3):** todavía no está definido. El bot no debe ofrecer
+ningún upsell por ahora.
 
 Hoy el bot no ofrece nada que esté fuera del paquete contratado.
 
@@ -672,7 +855,13 @@ Necesitamos confirmar:
 
 ## 2.10 Recordatorios automáticos
 
-### 40. Qué recordatorios envían hoy
+### 40. Qué recordatorios envían hoy 🟡 PARCIAL (canal resuelto, contenido pendiente)
+
+**Respuesta (ronda 1):** "roverd lo manda por mail" — confirma que el
+canal es **email**, vía ROVERD (no WhatsApp/SMS), lo que también responde
+la pregunta 42. Sigue sin responder qué contenido exacto llevan esos
+emails (confirmación de datos, recordatorio pre-actividad, documentos
+pendientes, recomendaciones, post-actividad) y su timing (pregunta 41).
 
 Necesitamos confirmar:
 - ¿Recordatorio post-reserva confirmando datos (fecha, hora, punto de encuentro, qué llevar)?
@@ -696,7 +885,11 @@ Necesitamos confirmar:
 
 ---
 
-### 42. Canal de envío
+### 42. Canal de envío ✅ RESUELTO
+
+**Respuesta (ronda 1):** ver pregunta 40 — el canal es email (ROVERD), no
+WhatsApp. Falta solo confirmar si hay clientes que rechazan email o algún
+límite operativo, pero no bloquea implementación.
 
 Necesitamos confirmar:
 - ¿WhatsApp, email o ambos por canal?
@@ -704,5 +897,68 @@ Necesitamos confirmar:
 - ¿Hay límite legal/operativo de mensajes WhatsApp por día?
 
 **Impacto**: si el bot va a tomar los recordatorios, debe usar el canal correcto.
+
+---
+
+## 3. Seguimiento ronda 1 (2026-06-21)
+
+### Listas para implementar ya (✅ resuelto, sin ambigüedad bloqueante)
+
+- **#3** PARCEROS es un producto obsoleto → **eliminar** todas sus referencias de la KB (`discounts.json`, `policies.json`, `faqs.json`) y de cualquier mensaje del bot.
+- **#4** Descuento de grupo: la regla 4+/5% queda obsoleta. Nueva regla: 5+ personas = 10%, +10% online = 20% total.
+- **#7** Confirmación de reserva: el pago online sube al sistema ROVERD al instante, pero el equipo concilia manualmente los pagos en un Excel después — el bot no debe decir "confirmación instantánea sin revisión".
+- **#8 / #9** Pagos: colombianos pagan 50% online (métodos colombianos, incl. Llave) + 50% presencial (tarjeta/efectivo). No colombianos pagan 100% vía URL online (tarjeta) o presencial (tarjeta/efectivo).
+- **#11** Cancelación: el bot debe informar la política desde los JSON de KB y mostrar dos botones — contactar staff / volver al menú principal.
+- **#15** Fotos/videos: entrega por WhatsApp, propina solo aplica a buceadores certificados.
+- **#16** (parcial) Objetos perdidos → siempre escalar a asesor.
+- **#17** (parcial) Precio igual para todos los hoteles de Islas del Rosario; Barú se cotiza como salida desde Cartagena (recogida posible, mismo costo).
+- **#18 / #21** Paquetes multi-día (5/7/9) solo para certificados; no certificado → se ofrece Open Water en su lugar. No existen paquetes multi-día mixtos.
+- **#30** Equipo propio: 5% de descuento (sustituye el monto fijo $33.000 COP/día), solo si el cliente trae el equipo completo.
+- **#40 / #42** Recordatorios van por email vía ROVERD, no por WhatsApp/SMS.
+
+### Detalles menores que quedan abiertos pero no bloquean implementar lo de arriba
+
+- #4: ¿aplica a cursos?, ¿grupos mixtos?, ¿automático o requiere aprobación?, ¿tarifa cerrada 6+?
+- #9: PayPal no mencionado explícitamente (asumimos que tarjeta internacional cubre extranjeros sin cuenta colombiana) — confirmar si hace falta.
+- #11: plazos exactos sin penalización, penalización parcial, no-show (vendrá del texto de política cuando se redacte).
+- #16: fotos pendientes/certificados/incidencias (más allá de objetos perdidos).
+- #30: en qué actividades aplica el 5% además de buceo certificado.
+
+### Siguen totalmente sin respuesta (⏳)
+
+#1 (fuente oficial de precios), #2 (colombianos — descuento, no medios de pago), #5 (Bubble Makers precio), #6 (servicio privado rango), #10 (moneda/pago fallido), #12 (cambio de fecha), #13 (clima/reembolsos matiz), #14 (alergias matiz), #19 (matriz hoteles prioritarios), #20 (casos especiales logística), #22 (backup instructor privado), #23 (clima por actividad), #24 (cursos interrumpidos por clima), #25 (idiomas staff), #26 (bautismo vs discovery vs OW), #27 (entrega certificación PADI), #28 (combos cursos), #29 (Divemaster duración), #31–35 (tallas, lastres, máscara graduada, equipo niños, Nitrox), #36–39 (extras y promociones), #41 (timing recordatorios).
+
+**Siguiente paso:** con el bloque 🟡 anterior ya resuelto, lo lógico es implementar estos cambios en la KB/bot (sobre todo: borrar PARCEROS, actualizar descuento de grupo y equipo propio, añadir botones de cancelación, matizar mensaje de confirmación de pago) antes de seguir preguntando por el bloque ⏳.
+
+## 4. Seguimiento ronda 3 (2026-06-21)
+
+### Nuevos ✅ resueltos esta ronda
+
+- **#6** Servicio privado: confirmado que se escala siempre sin dar cifra (no cambia nada del comportamiento actual).
+- **#10** Moneda: colombianos en COP, extranjeros en USD. Pago fallido: el bot debe pedir reintentar en unos minutos revisando los datos, y si persiste dar botones de escalar/home.
+- **#12** Cambio de fecha: mismo patrón que cancelación — informar política desde KB + botones escalar/home.
+- **#14** Comida/alergias: menú fijo, sí se permite comida propia.
+- **#22** Backup de instructor: sí existe, el bot debe hablar en genérico ("coordinamos instructor disponible") sin nombrar a Andrés.
+- **#26** Bautismo = Discover Scuba Diving = minicurso (mismo producto, distinto nombre).
+
+### Quedan en pausa — el owner necesita verificar internamente o decidir (⏳)
+
+- **#1** Fuente oficial de precios — pendiente revisión conjunta `pricing.json` vs `services.json`.
+- **#2** Descuento colombianos — política aún no definida.
+- **#5** Precio Bubble Makers — aún no definido.
+- **#13** Clima/capitanía/reembolsos — puesta en pausa explícitamente por el owner.
+- **#19** Matriz de hoteles prioritarios — varía por hotel, requiere que el owner lo revise con su equipo.
+- **#20** (parcial) Cliente que pierde la salida — pendiente; resto de sub-casos (tarifas por zona, hoteles fuera del selector, etc.) sin responder.
+- **#25** Idiomas del staff — pendiente.
+- **#27** Entrega de certificación PADI — pendiente.
+- **#28** Combos de cursos/especialidades — pendiente.
+- **#29** Divemaster (duración/requisitos) — pendiente.
+- **#36** Catálogo de extras — todavía no definido, no ofrecer upsell por ahora.
+
+### Sin tocar todavía (no se han preguntado)
+
+#23 (clima por actividad), #24 (cursos interrumpidos por clima), #31–35 (tallas, lastres, máscara graduada, equipo niños, Nitrox), #37–39 (pago/momento de extras, cuándo ofrecerlos, packs y promociones), #41 (timing exacto de recordatorios).
+
+**Nota:** dado que varias preguntas técnicas/operativas (idiomas, certificación, combos, Divemaster, hoteles, extras) están volviendo como "pendiente", probablemente requieran que el owner consulte con su equipo en vez de responder sobre la marcha. Vale la pena dejarlas para una ronda posterior y priorizar mientras tanto implementar todo lo ya resuelto.
 
 
