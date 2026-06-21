@@ -1,6 +1,16 @@
 History
 =======
 
+0.17.6 - (2026-06-21)
+---------------------
+* Typo resilience — Capa 1 (fuzzy navigation): new `src/utils/fuzzy.py` module (stdlib `difflib`, no new deps). Adaptive thresholds: exact-only for ≤2 chars, ratio ≥ 0.72 for 3–4 chars, ≥ 0.82 for 5+ chars. Replaces 23 hardcoded `msg in ("back","cancel","cancelar")` checks in `decision_tree.py` and yes/no checks in `supervisor.py` with `is_back/is_affirmative/is_negative/is_agree/is_none_selection/fuzzy_word_number`. Catches "sii"→sí, "cancellar"→cancelar, "cuatr"→4. 152 unit tests in `tests/test_fuzzy.py`.
+* Typo resilience — Capa 2 (activity regex): extended `intent_detector.py` patterns — `\bbuce\w{0,5}\b` (bucereo), `\bbauti[sz]\w{0,3}\b` (bautizo+bautismo), `\be?snork\w{1,6}\b`+`\be?snorqu\w{0,6}\b` (esnorkel/snorquel/snorkle), `mini[\s-]?curso`, `no sé bucear`, `nunca h[ae] buceado`, `submarinismo`. `_ACTIVITY_KW` + `_activity_key` also updated for group-split detection. 33 new tests in `tests/test_intent_typo_tolerance.py`.
+* `services.json` 1-day labels: `2_dives_1_day`, `1_dive_1_day_already_on_island`, `2_dives_1_day_already_on_island` now include "(1 día)" in their Spanish and English names for consistency with multi-day packages.
+* Fix: "somos cuatr personas" at `MIXED_ADD_QTY` step was bypassing the tree handler and reaching the LLM orchestrator, which re-showed the cert-plan selection. Two-part fix: (1) passthrough in `supervisor.py` MENU_STEPS block forces `MIXED_ADD_QTY` and `MIXED_CERT_REFRESH_QTY` free text directly to the tree handler; (2) `_parse_mixed_quantity` now tries `fuzzy_word_number` per token (not on the whole phrase) so "somos cuatr personas" → 4. Regression test added.
+* Refresher split bugs fixed: split review showed wrong service; only partial group added to cart; refresh sub-bullet attached to first cert item regardless of which item it belonged to.
+* `docs/typo-resilience-plan.md`: new living doc tracking the 3-layer typo-tolerance plan. Capas 1 and 2 marked complete; Capa 3 (fuzzy per-word in `_match_text_to_button` + confidence threshold) pending.
+* Suite: 644 passed, 1 skipped, 1 xfailed.
+
 0.17.5 - (2026-06-20)
 ---------------------
 * Welcome-step language detection: a bare first message ("hola"/"hello"/"buenas"/"que tal"...) now detects the language from a broad stopword heuristic (`decision_tree._detect_language_from_text`) and skips the explicit language-selection question entirely; falls back to a cheap LLM call (`language_detector.detect_language_llm`) only when the heuristic finds zero signal, never re-asking when the message already revealed the language.

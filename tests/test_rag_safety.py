@@ -923,3 +923,34 @@ async def test_adaptive_diving_question_routes_to_rag_not_booking(monkeypatch):
         response = await route_message(state, msg)
         assert state.step != Step.MIXED_ASK_CERTIFICATION
         assert response == "INFO DIVE TO HEAL"
+
+
+@pytest.mark.asyncio
+async def test_general_interest_query_routes_to_main_menu():
+    """v0.17.6: 'que me recomiendas?' / 'qué servicios tienen?' and similar
+    general-interest queries must NOT assume booking intent. They route to the
+    MAIN_MENU with a warm catalog overview and let the user pick info vs booking,
+    instead of generating a generic RAG text or pushing straight into the cart."""
+    for msg in [
+        "hola buenas, he visto vuestra empresa, que me recomiendas?",
+        "qué me recomendáis?",
+        "¿qué actividades tienen?",
+        "qué servicios ofrecen?",
+        "qué podemos hacer?",
+        "what do you recommend?",
+        "what activities do you have?",
+        "what services do you offer?",
+    ]:
+        state = ConversationState(conversation_id="test")
+        state.step = Step.WELCOME
+        state.language = "es" if not msg.startswith("what") else "en"
+        response = await route_message(state, msg)
+        assert state.step == Step.MAIN_MENU, (
+            f"Expected MAIN_MENU for {msg!r}, got {state.step.value}"
+        )
+        # Both branch buttons must be offered (info + booking), respecting autonomy
+        titles = " ".join(qr["title"] for qr in state.quick_replies)
+        assert ("Información" in titles or "Information" in titles)
+        assert ("Reservar" in titles or "Book" in titles)
+        # Response gives a catalog overview, not a generic RAG answer
+        assert "Diving Planet" in response

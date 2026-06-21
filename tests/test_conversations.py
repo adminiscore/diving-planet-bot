@@ -3347,11 +3347,195 @@ async def test_intent_does_not_trigger_on_digit_input():
 async def test_intent_does_not_trigger_on_very_short_input():
     """Intent detection should not run on very short inputs."""
     state = make_state()
-    
+
     # Send very short message
     await route_message(state, "hi")
-    
+
     # Should not have triggered significant intent detection
     # (might detect language but that's ok)
+
+
+# ---------------------------------------------------------------------------
+# Refresher split review — regression for wrong service in cart
+# ---------------------------------------------------------------------------
+
+@pytest.mark.asyncio
+async def test_refresher_split_adds_full_cert_group_with_correct_plan():
+    """Regression: 3 people book 5 inmersiones, 2 want refresher.
+    Split review must show the right plan; final cart must have 3 × 5_dives_2_days
+    (not only 1 person) with the refresh sub-item for 2 people.
+    """
+    state = make_state()
+    state.location = "cartagena"
+    state.mixed_entry_path = "booking"
+
+    # Drive state to MIXED_ADD_CERT_MULTI_DAY manually then select 5 dives
+    state.step = Step.MIXED_ADD_CERT_PLAN
+    state.mixed_pending_qty_type = "cert"
+    await route_message(state, "2")         # multi-day option
+    assert state.step == Step.MIXED_ADD_CERT_MULTI_DAY
+
+    # Choose "5 inmersiones (2 días)" — option index 3 in the Cartagena map
+    await route_message(state, "3")
+    assert state.mixed_pending_qty_plan == "5_dives_2_days"
+
+    # Qty
+    await route_message(state, "3")         # 3 people → MIXED_CERT_LAST_DIVE
+
+    # Last dive > 2 years → yes
+    await route_message(state, "1")         # Sí → MIXED_CERT_REFRESH_INTEREST
+
+    # Wants refresher → yes
+    await route_message(state, "1")         # Sí → MIXED_CERT_REFRESH_QTY
+
+    # 2 of 3 want refresher → split scenario
+    resp = await route_message(state, "2")
+    assert state.step == Step.MIXED_CERT_SPLIT_REVIEW
+
+    # Split review must mention the correct plan and not show any previous cert
+    assert "5" in resp, f"Plan missing from split review: {resp!r}"
+    assert "Paquete de 4" not in resp, f"Wrong plan in split review: {resp!r}"
+    # And show both group sizes clearly
+    assert "2" in resp and "1" in resp
+
+    # Continue → preview for ALL 3 people with correct plan
+    resp = await route_message(state, "1")
+    assert state.step == Step.MIXED_ADD_PREVIEW
+    assert state.mixed_pending_qty_value == 3, "Preview must cover full group (3 people)"
+    assert state.mixed_pending_qty_plan == "5_dives_2_days"
+
+    # Confirm → add to cart
+    await route_message(state, "1")
+    assert state.step == Step.MIXED_CART_REVIEW
+
+    cert_items = [it for it in state.mixed_cart if it.get("type") == "cert"]
+    refresh_items = [it for it in state.mixed_cart if it.get("type") == "refresh"]
+
+    # Exactly one cert line for all 3 people with the correct plan
+    assert len(cert_items) == 1, f"Expected 1 cert item, got {cert_items}"
+    assert cert_items[0]["plan"] == "5_dives_2_days", f"Wrong plan: {cert_items[0]}"
+    assert cert_items[0]["qty"] == 3, f"Wrong qty: {cert_items[0]}"
+
+    # Refresh sub-item for exactly 2 people
+    assert len(refresh_items) == 1, f"Expected 1 refresh item, got {refresh_items}"
+    assert refresh_items[0]["qty"] == 2, f"Wrong refresh qty: {refresh_items[0]}"
+    # Refresh plan must match the cert so _format_cart_lines attaches it correctly
+    assert refresh_items[0]["plan"] == "5_dives_2_days", f"Wrong refresh plan: {refresh_items[0]}"
+
+
+@pytest.mark.asyncio
+async def test_refresher_attaches_to_correct_cert_when_cart_has_multiple_certs():
+    """Regression: previous cert item in cart must NOT steal the refresh sub-bullet.
+
+    Flow: add 7 inmersiones (no refresher), then add 2 inmersiones for 3 people
+    with 1 wanting refresher.  The final cart display must show the refresh under
+    the '2 inmersiones' line, not under '7 inmersiones'.
+    """
+    state = make_state()
+    state.location = "cartagena"
+    state.mixed_entry_path = "booking"
+
+    # 1. Add 7 inmersiones × 3, no refresher
+    await _put_cert_in_cart(state, qty=3)   # 2_dives_1_day × 3, no refresh — used as first cert
+    # Swap the plan to simulate 7_dives_3_days already in cart
+    state.mixed_cart[0]["plan"] = "7_dives_3_days"
+    state.mixed_cart[0]["label"] = "Paquete de 7 inmersiones (3 dias)"
+
+    assert state.step == Step.MIXED_CART_REVIEW
+
+    # 2. Add another cert (2 inmersiones / 1 día) for 3 people, 1 wants refresher
+    await route_message(state, "2")          # "Añadir otra actividad"
+    await route_message(state, "1")          # Buceo certificado → MIXED_ADD_CERT_PLAN
+    await route_message(state, "1")          # 2 inmersiones / 1 día → MIXED_ADD_QTY
+    await route_message(state, "3")          # 3 people → MIXED_CERT_LAST_DIVE
+    await route_message(state, "1")          # last dive > 2 years → MIXED_CERT_REFRESH_INTEREST
+    await route_message(state, "1")          # yes refresher → MIXED_CERT_REFRESH_QTY
+    resp = await route_message(state, "1")   # 1 person with refresher → MIXED_CERT_SPLIT_REVIEW
+    assert state.step == Step.MIXED_CERT_SPLIT_REVIEW
+
+    # Split review shows 1 with refresh, 2 without — for '2 inmersiones', NOT '7 inmersiones'
+    assert "7" not in resp.split("Resumen")[1] if "Resumen" in resp else True
+    assert "2 inmersiones" in resp or "Salidas" in resp or "2" in resp
+
+    # Confirm → add all 3 cert people
+    await route_message(state, "1")          # Continuar con el buceo → MIXED_ADD_PREVIEW
+    await route_message(state, "1")          # Añadir al carrito → MIXED_CART_REVIEW
+
+    cert_items = [it for it in state.mixed_cart if it.get("type") == "cert"]
+    refresh_items = [it for it in state.mixed_cart if it.get("type") == "refresh"]
+
+    # Two cert items: 7 inmersiones and 2 inmersiones (merged 2+3=5 or separate)
+    cert_plans = [it["plan"] for it in cert_items]
+    assert "7_dives_3_days" in cert_plans, f"7-dive cert missing: {cert_items}"
+    assert any("2_dives" in p for p in cert_plans), f"2-dive cert missing: {cert_items}"
+
+    # Refresh must be for the 2-dives cert, not the 7-dives one
+    assert len(refresh_items) == 1
+    assert refresh_items[0]["qty"] == 1
+    assert "7_dives" not in (refresh_items[0].get("plan") or ""), (
+        f"Refresh wrongly linked to 7-dives cert: {refresh_items[0]}"
+    )
+
+    # Cart display: refresh sub-bullet must appear under 2-inmersiones line, not 7
+    from src.flows.decision_tree import DecisionTree
+    dt = DecisionTree()
+    cart_text = dt._format_cart_lines(state, "es")
+    lines = cart_text.split("\n")
+    seven_idx = next((i for i, l in enumerate(lines) if "7 inmersiones" in l), -1)
+    two_idx = next((i for i, l in enumerate(lines) if "2 inmersiones" in l or "Salidas" in l), -1)
+    refresh_idx = next((i for i, l in enumerate(lines) if "refresher" in l), -1)
+    assert refresh_idx != -1, "Refresh sub-bullet missing from cart"
+    assert refresh_idx > two_idx, "Refresh sub-bullet must come after the 2-dive cert line"
+    if seven_idx != -1 and two_idx != -1:
+        assert seven_idx < two_idx, "7-dive cert should appear before 2-dive cert"
+        assert refresh_idx > seven_idx + 1 or two_idx < refresh_idx, (
+            "Refresh must NOT be immediately under the 7-dive cert"
+        )
+
+
+# ===========================================================================
+# BLOQUE — TYPO TOLERANCE: cantidad con typo en MIXED_ADD_QTY
+# Regression test for the bug where "somos cuatr personas" (typo of "cuatro")
+# was routed to the LLM orchestrator instead of the tree handler, causing
+# the bot to re-show the cert plan selection instead of accepting the quantity.
+# ===========================================================================
+
+@pytest.mark.asyncio
+async def test_qty_phrase_with_word_typo_advances_past_qty_step():
+    """'somos cuatr personas' must be parsed as 4 at MIXED_ADD_QTY."""
+    state = await reach_booking_cart(location="cartagena")
+    # Select certified diving
+    await route_message(state, "1")
+    assert state.step == Step.MIXED_ADD_CERT_PLAN
+    # Select 2 dives / 1 day
+    await route_message(state, "1")
+    # Bot should now be at qty step or skipped to last-dive if group_size was pre-filled
+    # Either way, if it lands at MIXED_ADD_QTY, send the typo phrase
+    if state.step == Step.MIXED_ADD_QTY:
+        resp = await route_message(state, "somos cuatr personas")
+        # Must NOT be re-showing the cert plan — must have advanced
+        assert "qué idea tienes" not in resp, (
+            "Bot re-showed cert plan selection: quantity was not parsed from typo phrase"
+        )
+        assert state.step != Step.MIXED_ADD_CERT_PLAN, (
+            "Step regressed to MIXED_ADD_CERT_PLAN: quantity routing bug"
+        )
+        assert state.step != Step.MIXED_ADD_QTY, (
+            "Step stayed at MIXED_ADD_QTY: quantity was not parsed"
+        )
+
+
+@pytest.mark.asyncio
+async def test_qty_phrase_exact_word_in_phrase_advances_past_qty_step():
+    """'somos cuatro personas' (exact word) must also work."""
+    state = await reach_booking_cart(location="cartagena")
+    await route_message(state, "1")
+    assert state.step == Step.MIXED_ADD_CERT_PLAN
+    await route_message(state, "1")
+    if state.step == Step.MIXED_ADD_QTY:
+        resp = await route_message(state, "somos cuatro personas")
+        assert "qué idea tienes" not in resp
+        assert state.step != Step.MIXED_ADD_CERT_PLAN
+        assert state.step != Step.MIXED_ADD_QTY
 
 

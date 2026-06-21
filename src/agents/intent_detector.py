@@ -79,11 +79,11 @@ class IntentDetector:
     
     def _detect_activity(self, message: str, intent: DetectedIntent, state: ConversationState) -> None:
         certified_diving_patterns = [
-            r'\bbuceo\b(?!\s+(bautismo|principiante|primera\s+vez|minicurso))',
+            r'\bbuce\w{0,5}\b(?!\s+(bautismo|principiante|primera\s+vez|minicurso))',  # buceo, bucear, bucereo, buceando
+            r'\bbuse[ao]\w{0,2}\b',        # buseo (common u/c swap typo)
             r'\bdive\b(?!\s+(baptism|beginner|first\s+time))',
             r'\bdiving\b(?!\s+(first|beginner|class|course|lesson|trip\s+first))',
             r'\bscuba\b(?!\s+(class|course|lesson))',
-            r'\bbucear\b',
             r'\bbuzo\s+certificado\b',
             r'\bbuzos\s+certificados\b',
             r'\bcertified\s+diver',
@@ -93,13 +93,14 @@ class IntentDetector:
             r'\bwant\s+(?:to\s+)?(?:go\s+)?diving\b',
             r'\binterested\s+in\s+diving\b',
             r'\bdiving\s+trip\b',
+            r'\bsubmarinismo\b',           # synonym
         ]
 
         minicourse_patterns = [
-            r'\bminicurso\b',
-            r'\bbautismo\b',
+            r'\bmini[\s\-]?curso\b',       # minicurso, mini curso, mini-curso
+            r'\bbauti[sz]\w{0,3}\b',       # bautismo, bautizo, bautismos, bautizos
             r'\bprimera\s+vez\b',
-            r'\bnunca\s+he\s+buceado\b',
+            r'\bnunca\s+(?:h[ae]\s+)?bucea\w*\b',  # nunca he/ha buceado, nunca buceado
             r'\bnever\s+(?:tried|dived|done\s+it|been\s+diving)\b',
             r'\bno\s+experience\b',
             r'\bsin\s+experiencia\b',
@@ -107,12 +108,13 @@ class IntentDetector:
             r'\bbeginner\s+dive\b',
             r'\bfirst\s+time\s+diving\b',
             r'\btry\s+dive',
+            r'\bno\s+s[eé]\s+bucear\b',   # "no sé bucear"
         ]
-        
+
         snorkel_patterns = [
-            r'\bsnorkel\b',
-            r'\bsnorkeling\b',
-            r'\bcareteo\b',
+            r'\be?snork\w{1,6}\b',         # snorkel, snorkeling, snorkle, esnorkel, esnorkeling
+            r'\be?snorqu\w{0,6}\b',        # snorquel, snorqueling, esnorquel, esnorqueling
+            r'\bcarete[ao]\w{0,3}\b',      # careteo, caretear
         ]
         
         padi_course_patterns = [
@@ -258,7 +260,7 @@ class IntentDetector:
                     break
         
         # ── Numeric split: "3 de buceo y 2 de snorkel", "5 snorkel y 2 buceo" ──
-        _ACTIVITY_KW = r'(buceo|bucear|buceando|snorkel|snorkeling|careteo|caretear|minicurso|bautismo|bautizo|diving|scuba)'
+        _ACTIVITY_KW = r'(buceo|buseo|bucear|buceando|snorkel|snorkeling|esnorkel|careteo|caretear|minicurso|mini\s?curso|bautismo|bautizo|diving|scuba|submarinismo)'
         _NUM = r'(\d+|dos|tres|cuatro|cinco|seis|two|three|four|five|six)'
         _word_num_map: dict[str, int] = {
             'dos': 2, 'tres': 3, 'cuatro': 4, 'cinco': 5, 'seis': 6,
@@ -269,11 +271,11 @@ class IntentDetector:
             return int(s) if s.isdigit() else _word_num_map.get(s, 1)
 
         def _activity_key(text: str) -> str | None:
-            if any(k in text for k in ('minicurso', 'bautismo', 'bautizo', 'discover', 'principiante')):
+            if any(k in text for k in ('minicurso', 'mini curso', 'bautismo', 'bautizo', 'discover', 'principiante')):
                 return 'minicourse'
-            if any(k in text for k in ('snorkel', 'careteo', 'snorkeling')):
+            if any(k in text for k in ('snorkel', 'esnorkel', 'careteo', 'snorkeling')):
                 return 'snorkel'
-            if any(k in text for k in ('buceo', 'bucear', 'dive', 'diving', 'certificado', 'certified', 'scuba')):
+            if any(k in text for k in ('buceo', 'buseo', 'bucear', 'dive', 'diving', 'certificado', 'certified', 'scuba', 'submarinismo')):
                 return 'certified_diving'
             return None
 

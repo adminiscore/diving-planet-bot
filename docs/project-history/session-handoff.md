@@ -5,6 +5,14 @@ Read this file before changing code in the Diving Planet Bot. For a quick versio
 ## Current branch and workflow
 
 - Main collaboration branch: `feature/dev_alvaro` (Gadea trabaja en `feature/dev_gadea` y se mergea periódicamente; Gonzalo en `feature/pruebaGon`).
+- **2026-06-21 (v0.17.6)**: tolerancia a typos (Capas 1 y 2) + bugfix cantidad mixta. Resumen:
+  - **Capa 1** (`src/utils/fuzzy.py` nuevo): `is_back/is_affirmative/is_negative/is_agree/is_none_selection/fuzzy_word_number` con `difflib.SequenceMatcher` (sin deps nuevas). Cubre "sii"→sí, "cancellar"→cancelar, "cuatr"→4. Reemplaza 23 comprobaciones hardcoded en `decision_tree.py` y los yes/no en `supervisor.py`. 152 tests en `tests/test_fuzzy.py`.
+  - **Capa 2** (`src/agents/intent_detector.py`): patrones de actividad con tolerancia a typos — `buce\w{0,5}` (bucereo), `bauti[sz]\w{0,3}` (bautizo), `e?snork\w{1,6}`+`e?snorqu\w{0,6}` (esnorkel/snorkle/snorquel), `mini[\s-]?curso`, `no sé bucear`, `nunca h[ae] buceado`, `submarinismo`. 33 tests en `tests/test_intent_typo_tolerance.py`.
+  - **Bugfix `MIXED_ADD_QTY`**: "somos cuatr personas" caía al orquestador LLM (que re-mostraba la selección de plan) porque el bloque MENU_STEPS no hacía return para texto libre que no matchea botones. Fix doble: passthrough explícito en `supervisor.py` para `MIXED_ADD_QTY`/`MIXED_CERT_REFRESH_QTY`, y fuzzy por token en `_parse_mixed_quantity`. Test de regresión añadido.
+  - **Refresher split bugs** (sesión anterior): review mostraba servicio incorrecto, solo añadía subgrupo parcial, sub-bullet del refresh iba bajo el primer cert item. Todo corregido.
+  - `services.json`: nombres de servicios de 1 día actualizados con "(1 día)".
+  - `docs/typo-resilience-plan.md`: plan vivo de 3 capas. Capas 1 y 2 ✅. **Capa 3 pendiente**: fuzzy por palabra en `_match_text_to_button` + uso del umbral `confidence` en `supervisor.py` (ambos en `src/agents/supervisor.py`, ~0.5 días).
+  - Suite: **644 passed**, 1 skipped, 1 xfailed.
 - **2026-06-20 (v0.17.5)**: sesión larga de pulido del flujo de texto libre y RAG tras feedback real de conversaciones de prueba. Resumen (detalle completo en `docs/HISTORY.md`):
   - Detección de idioma en el primer mensaje (heurística de stopwords + fallback LLM en `src/agents/language_detector.py`, nuevo módulo) — ya no se repregunta el idioma si el mensaje ya lo revela.
   - Precio total de grupo en la tarjeta de previsualización (antes de confirmar "Añadir al carrito") cuando la cantidad ya se conoce; negrita solo en "(10% off)" y en los montos finales.
@@ -135,6 +143,7 @@ Read this file before changing code in the Diving Planet Bot. For a quick versio
 - COP pricing is now in the KB; bot needs a restart in WSL2 to serve it after the re-index run. Embeddings reindex done (445 docs) para incluir nuevos servicios y ajustes de precios.
 - `CHATWOOT_OWNER_AGENT_ID=1` should be added to `.env` (owner agent ID confirmed via `/api/v1/profile`).
 - Next session priorities:
+  - **Capa 3 typo tolerance** (`src/agents/supervisor.py`, ~0.5 días): (A) fuzzy per-word en `_match_text_to_button` — si no hay coincidencia exacta entre palabras, intentar ratio ≥ 0.80 por palabra para capturar "snorlkel" → botón Snorkel; (B) usar `DetectedIntent.confidence` como umbral de enrutamiento: si `confidence < 0.30`, preguntar confirmación antes de avanzar. Ver `docs/typo-resilience-plan.md` para el diseño completo.
   - **Reindex KB** (`$env:ENV_FILE=".env.dev"; python -m scripts.load_embeddings`) so RAG serves the v0.17.5 `faqs.json`/`services.json` changes (Bubble Makers FAQ, insurance FAQ, snorkeling Cartagena "Seguro").
   - RAG plan pending phases (see `C:\Users\plaza\.claude\plans\gleaming-sniffing-snail.md`): (1.1) hybrid search BM25+pgvector con RRF — requiere migración SQL (`tsvector` + GIN); (1.2) sub-chunking de `services.json` con parent-doc retrieval — requiere re-index (~600-800 chunks vs 445 actuales); (1.3) query rewriting / condense follow-ups en `src/agents/query_rewriter.py` (módulo nuevo + 1 LLM call extra); (2.1) grounding check post-respuesta en `src/agents/grounding_check.py` (módulo nuevo + 1 LLM call extra). Las fases 2.2, 2.3, 2.4 ya están hechas (brand tone dinámico, few-shot, prompt dedup).
   - Live E2E retest del nuevo prompt RAG: comprobar tono coherente con `brand_tone.json` y que las "Situaciones reales del centro" aparecen cuando la query tiene topics detectables (pricing, refresher, accommodation, etc.).

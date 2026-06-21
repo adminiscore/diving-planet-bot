@@ -18,6 +18,8 @@ from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
 
+from src.utils.fuzzy import is_back, is_affirmative, is_negative, is_agree, is_none_selection, fuzzy_word_number
+
 
 # Separador interno: si una respuesta del bot contiene este token, el canal
 # (Chatwoot) la divide en mensajes independientes. Útil para mandar el itinerario
@@ -605,6 +607,38 @@ ISLAND_SERVICE_MAP = {
     "naturalist_specialty": "naturalist_specialty_already_on_island",
     "buoyancy_specialty": "buoyancy_specialty_already_on_island",
     "referral": "referral_already_on_island",
+}
+
+# Maps service_id (from the info detail card) to the cart activity type used by
+# orchestrator_start_activity. Services not listed here (contact_only, referral,
+# private) are excluded on purpose — they still escalate.
+SERVICE_TO_CART_TYPE: dict[str, str] = {
+    # Certified diving plans
+    "2_dives_1_day": "cert", "3_dives_1_day": "cert",
+    "4_dives_2_days": "cert", "5_dives_2_days": "cert",
+    "7_dives_3_days": "cert", "9_dives_4_days": "cert",
+    "1_dive_1_day_already_on_island": "cert",
+    "2_dives_1_day_already_on_island": "cert",
+    "3_dives_1_day_already_on_island": "cert",
+    "4_dives_2_days_already_on_island": "cert",
+    "4_dives_2_days_mixed_already_on_island": "cert",
+    "5_dives_2_days_already_on_island": "cert",
+    "7_dives_3_days_already_on_island": "cert",
+    "9_dives_4_days_already_on_island": "cert",
+    # Beginner / minicourse
+    "minicourse": "beginner", "minicourse_already_on_island": "beginner",
+    # Snorkel
+    "snorkeling": "snorkel", "snorkeling_already_on_island": "snorkel",
+    # PADI courses and specialties
+    "open_water": "course", "open_water_already_on_island": "course",
+    "advanced": "course", "advanced_already_on_island": "course",
+    "rescue": "course", "divemaster": "course",
+    "nitrox_specialty": "course", "nitrox_specialty_already_on_island": "course",
+    "buoyancy_specialty": "course", "buoyancy_specialty_already_on_island": "course",
+    "naturalist_specialty": "course", "naturalist_specialty_already_on_island": "course",
+    "fish_identification_specialty": "course",
+    "fish_identification_specialty_already_on_island": "course",
+    "mindful_diving": "course",
 }
 
 MULTI_DAY_SERVICES = {
@@ -2724,22 +2758,41 @@ class DecisionTree:
                 return "Perfecto. Para este caso, te paso con un asesor.\n\n" + MESSAGES["escalate"][lang]
             return "Perfect. For this case, I'll connect you with an advisor.\n\n" + MESSAGES["escalate"][lang]
 
-        # Patrón unificado: no mostramos el link de reserva/pago al cliente.
-        # Escalamos al asesor, que confirma disponibilidad y envía el link.
-        state.step = Step.ESCALATE
-        state.quick_replies = []
-        state.pending_escalation_reason = "cliente quiere reservar desde información - confirma asesor"
-        if lang == "es":
-            return (
-                "¡Perfecto! Te paso con un asesor para confirmar disponibilidad y precio final. "
-                "Enseguida se pone en contacto contigo y te envía el link de reserva.\n\n"
-                + MESSAGES["escalate"][lang]
-            )
-        return (
-            "Great! I'll connect you with an advisor to confirm availability and the final price. "
-            "They will be in touch shortly with the booking link.\n\n"
-            + MESSAGES["escalate"][lang]
-        )
+        # Route into the booking cart, jumping to the deepest point we can reach
+        # given what we already know from the info card the user just read.
+        cart_type = SERVICE_TO_CART_TYPE.get(service_id)
+        self._reset_mixed_state(state)
+        state.mixed_entry_path = "booking"
+        self._set_back_target(state, Step.MAIN_MENU, "main_menu")
+
+        # If the service is an island variant, location is implicit.
+        if service_id.endswith("_already_on_island") and not state.location:
+            state.location = "island"
+
+        if cart_type == "cert":
+            # User already chose the exact plan on the info card — pre-select it so
+            # the flow skips MIXED_ADD_CERT_PLAN / MIXED_ADD_CERT_MULTI_DAY entirely
+            # and goes straight to "¿cuántos buzos?" → "¿última inmersión?".
+            state.mixed_pending_qty_type = "cert"
+            state.mixed_pending_qty_plan = service_id
+            return self._goto_mixed_cert_last_dive_or_qty(state)
+
+        if cart_type in ("beginner", "snorkel"):
+            # No plan choice needed — skip straight to qty question.
+            state.mixed_pending_qty_type = cart_type
+            state.mixed_pending_qty_plan = None
+            return self._goto_mixed_add_qty(state)
+
+        if cart_type == "course":
+            # Courses still need to pick the specific course type → use orchestrator helper.
+            response = self.orchestrator_start_activity(state, "course")
+            if response:
+                return response
+
+        # Fallback: generic MIXED_ENTRY if mapping fails or unknown cart type.
+        state.step = Step.MIXED_ENTRY
+        self.set_quick_replies(state, "mixed_entry")
+        return MESSAGES["mixed_entry"][lang]
 
     def _handle_info_tour_detail(self, state: ConversationState, message: str) -> str:
         msg = " ".join(message.strip().lower().split())
@@ -2925,8 +2978,8 @@ class DecisionTree:
             if label:
                 return label
             if lang == "es":
-                return "Buceo certificado (2 inmersiones)" if plan == "2_dives_1_day" else "Buceo certificado"
-            return "Certified diving (2 dives)" if plan == "2_dives_1_day" else "Certified diving"
+                return "Salidas de Buceo - 2 inmersiones (1 día)" if plan == "2_dives_1_day" else "Buceo certificado"
+            return "Fun Dives - 2 dives (1 day)" if plan == "2_dives_1_day" else "Certified diving"
         if item_type == "beginner":
             return "Buceo principiantes (Minicurso)" if lang == "es" else "Beginner diving (Mini-course)"
         if item_type == "refresh":
@@ -3052,7 +3105,7 @@ class DecisionTree:
                 return n
         except ValueError:
             pass
-        # Accept word numbers
+        # Accept word numbers (with typo tolerance via fuzzy helper)
         _word_num = {
             'uno': 1, 'una': 1, 'one': 1,
             'dos': 2, 'two': 2,
@@ -3065,18 +3118,23 @@ class DecisionTree:
             'nueve': 9, 'nine': 9,
             'diez': 10, 'ten': 10,
         }
-        if msg in _word_num:
-            return _word_num[msg]
+        _fuzzy_n = fuzzy_word_number(msg)
+        if _fuzzy_n is not None:
+            return _fuzzy_n
         # Extract number from phrases like "somos 3", "vamos 2", "3 personas", "we are 4"
         m = _re.search(r'\b(\d+)\b', msg)
         if m:
             n = int(m.group(1))
             if 1 <= n <= 99:
                 return n
-        # Extract word number from phrase
+        # Extract word number from phrase — exact match first, then fuzzy per token
         for word, val in _word_num.items():
             if _re.search(rf'\b{word}\b', msg):
                 return val
+        for token in msg.split():
+            _n = fuzzy_word_number(token)
+            if _n is not None:
+                return _n
         return None
 
     def _mixed_preview_state(self, state: ConversationState, service_id: str) -> ConversationState:
@@ -3104,38 +3162,45 @@ class DecisionTree:
 
     def _build_mixed_cert_split_review_message(self, state: ConversationState) -> str:
         lang = state.language
+        total_qty = state.mixed_pending_cert_total_qty or 0
+        refresh_qty = state.mixed_pending_refresh_added_qty or 0
         remaining_qty = state.mixed_pending_cert_remaining_qty or 0
-        cart_lines = self._format_cart_lines(state, lang)
         cert_label = self._cart_label_for("cert", state.mixed_pending_qty_plan, lang)
         if lang == "es":
-            person_phrase = "1 persona" if remaining_qty == 1 else f"{remaining_qty} personas"
-            verb = "hará" if remaining_qty == 1 else "harán"
-            pending_line = (
-                f"El resto del grupo ({person_phrase}) {verb} *{cert_label}* sin refresher."
+            total_word = "persona" if total_qty == 1 else "personas"
+            with_word = "persona" if refresh_qty == 1 else "personas"
+            without_word = "persona" if remaining_qty == 1 else "personas"
+            msg = (
+                f"*Resumen del grupo ({total_qty} {total_word} · {cert_label}):*\n\n"
+                f"✅ {refresh_qty} {with_word} harán el refresher antes de bucear\n"
+                f"➡️ {remaining_qty} {without_word} bucearán directamente (sin refresher)\n\n"
+                f"¿Cómo quieres continuar?"
             )
-            prompt = "¿Cómo quieres continuar?"
         else:
-            person_phrase = "1 person" if remaining_qty == 1 else f"{remaining_qty} people"
-            verb = "will do" if remaining_qty == 1 else "will do"
-            pending_line = (
-                f"The rest of the group ({person_phrase}) {verb} *{cert_label}* without a refresher."
+            total_word = "person" if total_qty == 1 else "people"
+            with_word = "person" if refresh_qty == 1 else "people"
+            without_word = "person" if remaining_qty == 1 else "people"
+            msg = (
+                f"*Group summary ({total_qty} {total_word} · {cert_label}):*\n\n"
+                f"✅ {refresh_qty} {with_word} will do the refresher before diving\n"
+                f"➡️ {remaining_qty} {without_word} will dive directly (no refresher)\n\n"
+                f"How would you like to continue?"
             )
-            prompt = "How would you like to continue?"
-        return f"{cart_lines}\n\n{pending_line}\n\n{prompt}"
+        return msg
 
     # ─── Step handlers ───
 
     def _handle_mixed_entry(self, state: ConversationState, message: str) -> str:
         lang = state.language
         msg = message.strip().lower()
-        if msg in ("back", "cancel", "cancelar"):
+        if is_back(msg):
             target_step = state.back_step_override or Step.MAIN_MENU
             quick_replies_key = state.back_quick_replies_key or "main_menu"
             state.step = target_step
             self.set_quick_replies(state, quick_replies_key)
             return MESSAGES[quick_replies_key][lang]
         choice = self._parse_choice(message, 1)
-        if choice == 1 or msg in ("start", "empezar", "ok", "vale", "si", "sí", "yes"):
+        if choice == 1 or is_agree(msg):
             if state.location is None:
                 state.step = Step.MIXED_LOCATION
                 self.set_quick_replies(state, "tours_location")
@@ -3153,7 +3218,7 @@ class DecisionTree:
         lang = state.language
         msg = message.strip().lower()
         
-        if msg in ("back", "cancel", "cancelar"):
+        if is_back(msg):
             return self._goto_mixed_entry(state)
         
         def _after_location_set() -> str:
@@ -3228,7 +3293,7 @@ class DecisionTree:
         max_choice = 3 if is_group else 2
         choice = self._parse_choice(message, max_choice)
 
-        if msg in ("back", "cancel", "cancelar"):
+        if is_back(msg):
             return self._goto_mixed_entry(state)
 
         def _after_cert(cert_type: str) -> str:
@@ -3303,7 +3368,7 @@ class DecisionTree:
         """How many of the group are certified (rest get a minicurso)."""
         lang = state.language
         msg = message.strip().lower()
-        if msg in ("back", "cancel", "cancelar"):
+        if is_back(msg):
             return self._ask_certification_message(state)
 
         group_size = state.detected_group_size or 0
@@ -3471,7 +3536,7 @@ class DecisionTree:
     def _handle_mixed_add_activity(self, state: ConversationState, message: str) -> str:
         lang = state.language
         msg = message.strip().lower()
-        if msg in ("back", "cancel", "cancelar"):
+        if is_back(msg):
             return self._goto_mixed_cart_review(state) if state.mixed_cart else self._goto_mixed_entry(state)
         choice = self._parse_choice(message, 5)
         if choice == 1:
@@ -3520,7 +3585,7 @@ class DecisionTree:
     def _handle_mixed_add_cert_plan(self, state: ConversationState, message: str) -> str:
         lang = state.language
         msg = message.strip().lower()
-        if msg in ("back", "cancel", "cancelar"):
+        if is_back(msg):
             return self._goto_mixed_add_activity(state)
         choice = self._parse_choice(message, 2)
         if choice == 1:
@@ -3536,7 +3601,7 @@ class DecisionTree:
     def _handle_mixed_add_cert_multi_day(self, state: ConversationState, message: str) -> str:
         lang = state.language
         msg = message.strip().lower()
-        if msg in ("back", "cancel", "cancelar"):
+        if is_back(msg):
             state.step = Step.MIXED_ADD_CERT_PLAN
             self.set_quick_replies(state, "mixed_add_cert_plan")
             return MESSAGES["mixed_add_cert_plan"][lang]
@@ -3565,7 +3630,7 @@ class DecisionTree:
     def _handle_mixed_add_qty(self, state: ConversationState, message: str) -> str:
         lang = state.language
         msg = message.strip().lower()
-        if msg in ("back", "cancel", "cancelar"):
+        if is_back(msg):
             # If editing an item, cancel sends back to cart review (don't drop the existing item)
             state.mixed_pending_modify_idx = None
             self._clear_mixed_pending_add(state)
@@ -3663,7 +3728,7 @@ class DecisionTree:
         choice = self._parse_choice(message, 2)
         lang = state.language
         msg = message.strip().lower()
-        if msg in ("back", "cancel", "cancelar"):
+        if is_back(msg):
             state.step = Step.MIXED_ADD_QTY
             self.set_quick_replies(state, "mixed_quantity")
             return MESSAGES["mixed_add_qty"][lang]
@@ -3700,7 +3765,7 @@ class DecisionTree:
         choice = self._parse_choice(message, 2)
         lang = state.language
         msg = message.strip().lower()
-        if msg in ("back", "cancel", "cancelar"):
+        if is_back(msg):
             state.step = Step.MIXED_CERT_LAST_DIVE
             self.set_quick_replies(state, "mixed_cert_last_dive")
             return MESSAGES["mixed_cert_last_dive"][lang]
@@ -3724,7 +3789,7 @@ class DecisionTree:
         msg = message.strip().lower()
         total_qty = state.mixed_pending_cert_total_qty or state.mixed_pending_qty_value or 0
         current_plan = self._current_mixed_cert_service_id(state)
-        if msg in ("back", "cancel", "cancelar"):
+        if is_back(msg):
             state.step = Step.MIXED_CERT_REFRESH_INTEREST
             self.set_quick_replies(state, "refresher_interest")
             return self._refresher_info_msg(state)
@@ -3757,7 +3822,7 @@ class DecisionTree:
         # Just attach the refresher count and return to cart review (no preview,
         # no split-review).
         if state.mixed_pending_modify_refresh:
-            self._append_mixed_cart_item(state, "refresh", None, n)
+            self._append_mixed_cart_item(state, "refresh", current_plan, n)
             state.mixed_pending_refresh_added_qty = n
             state.mixed_pending_modify_refresh = False
             self._clear_mixed_pending_add(state)
@@ -3766,7 +3831,7 @@ class DecisionTree:
         # Normal add flow: cert is appended via the preview/split-review path,
         # not here. We only append the refresher and then route depending on
         # whether all certs got refresher (preview) or only some (split-review).
-        self._append_mixed_cart_item(state, "refresh", None, n)
+        self._append_mixed_cart_item(state, "refresh", current_plan, n)
         state.mixed_pending_refresh_added_qty = n
         remaining_qty = total_qty - n
         state.mixed_pending_cert_remaining_qty = remaining_qty
@@ -3788,19 +3853,24 @@ class DecisionTree:
         lang = state.language
         msg = message.strip().lower()
         current_plan = self._current_mixed_cert_service_id(state)
-        if msg in ("back", "cancel", "cancelar"):
+        if is_back(msg):
             refresh_qty = state.mixed_pending_refresh_added_qty or 0
-            self._remove_mixed_cart_item_qty(state, "refresh", None, refresh_qty)
+            self._remove_mixed_cart_item_qty(state, "refresh", current_plan, refresh_qty)
             state.mixed_pending_refresh_added_qty = None
             state.mixed_pending_cert_remaining_qty = state.mixed_pending_cert_total_qty or state.mixed_pending_qty_value or 0
             state.step = Step.MIXED_CERT_REFRESH_QTY
             state.quick_replies = self._refresh_qty_quick_replies(state)
             return MESSAGES["mixed_cert_refresh_qty"][lang]
         if choice == 1:
+            # Preview and add ALL people under one cert line; the refresh sub-item
+            # already in the cart will show as a sub-bullet under that cert line.
+            total_qty = state.mixed_pending_cert_total_qty or 0
+            if total_qty:
+                state.mixed_pending_qty_value = total_qty
             return self._prepare_mixed_add_preview(state, current_plan)
         if choice == 2:
             refresh_qty = state.mixed_pending_refresh_added_qty or 0
-            self._remove_mixed_cart_item_qty(state, "refresh", None, refresh_qty)
+            self._remove_mixed_cart_item_qty(state, "refresh", current_plan, refresh_qty)
             total_qty = state.mixed_pending_cert_total_qty or state.mixed_pending_qty_value or 0
             state.mixed_pending_refresh_added_qty = None
             state.mixed_pending_cert_remaining_qty = total_qty
@@ -3818,7 +3888,7 @@ class DecisionTree:
         lang = state.language
         msg = " ".join(message.strip().lower().split())
         service_id = state.mixed_pending_preview_service_id
-        if msg in ("back", "cancel", "cancelar"):
+        if is_back(msg):
             if state.mixed_pending_refresh_added_qty and (state.mixed_pending_cert_remaining_qty or 0) > 0:
                 state.step = Step.MIXED_CERT_SPLIT_REVIEW
                 self.set_quick_replies(state, "mixed_cert_split_review")
@@ -3929,7 +3999,7 @@ class DecisionTree:
         msg = message.strip().lower()
         include_open_water = self._cert_subgroup_is_multi_day(state)
         max_choice = 3 if include_open_water else 2
-        if msg in ("back", "cancel", "cancelar"):
+        if is_back(msg):
             return self._goto_mixed_cart_review(state)
         choice = self._parse_choice(message, max_choice)
         beginner_qty = state.mixed_pending_beginner_after_cert or 0
@@ -4018,9 +4088,14 @@ class DecisionTree:
             return MESSAGES["mixed_cart_empty"][lang]
         title = "🛒 *Tu carrito:*" if lang == "es" else "🛒 *Your cart:*"
         lines = [title]
-        # Refresher items are nested as a sub-bullet under the certified-diving line,
-        # not shown as a top-level cart entry (no separate price, no separate row).
-        refresh_qty = sum(it["qty"] for it in state.mixed_cart if it.get("type") == "refresh")
+        # Build per-plan refresh map so each sub-bullet appears under the right cert
+        # item, not always the first cert in the cart.
+        # plan=None entries are legacy (pre-fix carts): fall back to the first cert.
+        refresh_by_plan: dict[str | None, int] = {}
+        for it in state.mixed_cart:
+            if it.get("type") == "refresh":
+                plan = it.get("plan")
+                refresh_by_plan[plan] = refresh_by_plan.get(plan, 0) + it["qty"]
         kids_sub = self._kids_sub_bullet(state, lang)
         visible_idx = 0
         for item in state.mixed_cart:
@@ -4028,15 +4103,22 @@ class DecisionTree:
                 continue
             visible_idx += 1
             lines.append(f"  *{visible_idx}.* {item['qty']} × {item['label']}")
-            if item.get("type") == "cert" and refresh_qty > 0:
-                people_word = "persona" if refresh_qty == 1 else "personas"
-                sub = (
-                    f"       _↳ {refresh_qty} {people_word} con refresher (sin coste adicional)_"
-                    if lang == "es"
-                    else f"       _↳ {refresh_qty} {'person' if refresh_qty == 1 else 'people'} with refresher (no extra cost)_"
-                )
-                lines.append(sub)
-                refresh_qty = 0
+            if item.get("type") == "cert":
+                plan = item.get("plan")
+                if plan in refresh_by_plan:
+                    r_qty = refresh_by_plan.pop(plan)
+                elif None in refresh_by_plan:
+                    r_qty = refresh_by_plan.pop(None)
+                else:
+                    r_qty = 0
+                if r_qty > 0:
+                    people_word = "persona" if r_qty == 1 else "personas"
+                    sub = (
+                        f"       _↳ {r_qty} {people_word} con refresher (sin coste adicional)_"
+                        if lang == "es"
+                        else f"       _↳ {r_qty} {'person' if r_qty == 1 else 'people'} with refresher (no extra cost)_"
+                    )
+                    lines.append(sub)
             if item.get("type") == "beginner" and kids_sub:
                 lines.append(kids_sub)
                 kids_sub = None
@@ -4090,7 +4172,7 @@ class DecisionTree:
     def _handle_mixed_cart_modify_pick(self, state: ConversationState, message: str) -> str:
         lang = state.language
         msg = message.strip().lower()
-        if msg in ("back", "cancel", "cancelar"):
+        if is_back(msg):
             return self._goto_mixed_cart_review(state)
         try:
             idx = int(message.strip()) - 1
@@ -4109,7 +4191,7 @@ class DecisionTree:
     def _handle_mixed_cart_remove_pick(self, state: ConversationState, message: str) -> str:
         lang = state.language
         msg = message.strip().lower()
-        if msg in ("back", "cancel", "cancelar"):
+        if is_back(msg):
             return self._goto_mixed_cart_review(state)
         try:
             idx = int(message.strip()) - 1
@@ -4171,7 +4253,7 @@ class DecisionTree:
     def _handle_mixed_cart_location(self, state: ConversationState, message: str) -> str:
         lang = state.language
         msg = message.strip().lower()
-        if msg in ("back", "cancel", "cancelar"):
+        if is_back(msg):
             return self._goto_mixed_cart_review(state)
         choice = self._parse_choice(message, 2)
         if choice == 1:
@@ -4499,7 +4581,7 @@ class DecisionTree:
     def _handle_mixed_final_kids_qty(self, state: ConversationState, message: str) -> str:
         lang = state.language
         msg = message.strip().lower()
-        if msg in ("back", "cancel", "cancelar"):
+        if is_back(msg):
             state.mixed_pending_exact = False
             return self._enter_mixed_final_kids(state)
         if message.strip() == "6+" and not state.mixed_pending_exact:
@@ -4537,7 +4619,7 @@ class DecisionTree:
     def _handle_mixed_final_kids_u8(self, state: ConversationState, message: str) -> str:
         lang = state.language
         msg = message.strip().lower()
-        if msg in ("back", "cancel", "cancelar"):
+        if is_back(msg):
             state.mixed_pending_exact = False
             return self._enter_mixed_final_kids(state)
         max_qty = self._pending_beginner_qty(state) or 9
@@ -4552,7 +4634,7 @@ class DecisionTree:
         n = self._parse_mixed_quantity(message)
         if n is None:
             # Accept literal "0" or "ninguno"/"none"
-            if msg in ("0", "ninguno", "ninguna", "none", "no"):
+            if is_none_selection(msg):
                 n = 0
         if n is None or n < 0 or n > max_qty:
             state.mixed_pending_exact = False
@@ -4572,7 +4654,7 @@ class DecisionTree:
     def _handle_mixed_final_kids_810(self, state: ConversationState, message: str) -> str:
         lang = state.language
         msg = message.strip().lower()
-        if msg in ("back", "cancel", "cancelar"):
+        if is_back(msg):
             state.mixed_pending_exact = False
             return self._enter_mixed_final_kids_u8(state)
         total = self._pending_beginner_qty(state) or 9
@@ -4587,7 +4669,7 @@ class DecisionTree:
             )
         n = self._parse_mixed_quantity(message)
         if n is None:
-            if msg in ("0", "ninguno", "ninguna", "none", "no"):
+            if is_none_selection(msg):
                 n = 0
         if n is None or n < 0 or n > cap:
             state.mixed_pending_exact = False
@@ -5514,7 +5596,7 @@ class DecisionTree:
             action = "reservar" if msg == "book" else msg
 
         if choice is None:
-            if msg in ("si", "sí", "yes"):
+            if is_affirmative(msg):
                 choice = 1
             elif msg in (
                 "no",

@@ -18,6 +18,7 @@ from src.agents.escalation import detect_sensitive_escalation
 from src.agents.lead_summary import build_lead_summary
 from src.agents.intent_classifier import classify_menu_intent
 from src.agents import orchestrator
+from src.utils.fuzzy import is_affirmative, is_negative
 from src.agents.intent_detector import IntentDetector
 from src.agents.language_detector import detect_language_llm
 from src.flows.decision_tree import (
@@ -74,6 +75,40 @@ _AVAILABILITY_PATTERN = re.compile(
     r"any\s+availability|"
     r"is\s+there\s+availability|"
     r"when\s+can\s+(we|i)\s+(go|book)"
+    r")\b",
+    re.IGNORECASE,
+)
+
+# General recommendation / interest queries that have no specific activity keyword.
+# "que me recomiendas?", "qué actividades tienen?", "qué ofrecéis?" → route to the
+# booking tree (MIXED_ENTRY) so the bot gathers experience/group info instead of
+# generating a generic RAG text answer. Only fires outside the cart flow and when
+# the cart is empty (mid-flow orchestrator handles these already).
+_GENERAL_INTEREST_PATTERN = re.compile(
+    r"\b("
+    # Recommendation requests (tú/usted/vosotros)
+    r"qu[eé]\s+(?:me|nos)\s+recomend\w*|"
+    r"qu[eé]\s+(?:me|nos)\s+recomiend\w*|"
+    r"qu[eé]\s+recomend\w*|"
+    r"qu[eé]\s+recomiend\w*|"
+    r"(?:me|nos)\s+recomend\w*\s+algo|"
+    # "qué servicios/actividades/opciones/planes tienen/tenéis/hay/ofrecen/hacen/hacéis"
+    r"qu[eé]\s+(?:actividades|opciones|planes|servicios|experiencias?)"
+    r"\s+(?:tienen|ten[eé]is|hay|ofrecen|hac[eé]is|hacen|ofrecéis|ofreceis)|"
+    # "qué hacen/hacéis/ofrecen/ofrecéis [allí/ahí/ustedes]"
+    r"qu[eé]\s+(?:hac[eé]is|hacen|ofrecen|ofrecéis|ofreceis)(?:\s+(?:all[ií]|ah[ií]|ustedes))?|"
+    # "qué actividades/cosas puedo hacer"
+    r"qu[eé]\s+(?:actividades|cosas|experiencias?)\s+puedo\s+(?:hacer|realizar)|"
+    r"qu[eé]\s+puedo?\s+(?:hacer|reservar)(?:\s+(?:all[ií]|ah[ií]))?|"
+    r"qu[eé]\s+podemos\s+(?:hacer|reservar)|"
+    # Generic "qué ofrecen/ofrecéis" family
+    r"qu[eé]\s+ofrec[eé]\w*|"
+    # English equivalents
+    r"what\s+do\s+you\s+(?:recommend|offer|have)|"
+    r"what\s+(?:activities|options|services|experiences?)\s+do\s+you\s+(?:have|offer)|"
+    r"what\s+(?:can|could)\s+(?:i|we)\s+do|"
+    r"any\s+recommendations?|"
+    r"what\s+(?:would\s+you\s+)?recommend"
     r")\b",
     re.IGNORECASE,
 )
@@ -1169,9 +1204,9 @@ def _detect_companion_certification_answer(message: str) -> bool | None:
     if not normalized:
         return None
 
-    if normalized in {"1", "si", "sí"}:
+    if normalized == "1" or is_affirmative(normalized):
         return True
-    if normalized in {"2", "no"}:
+    if normalized == "2" or is_negative(normalized):
         return False
 
     negative_patterns = (
@@ -1206,9 +1241,9 @@ def _detect_binary_yes_no_answer(message: str) -> bool | None:
     normalized = _normalize_for_menu_match(message)
     if not normalized:
         return None
-    if normalized in {"1", "si", "sí", "yes"}:
+    if normalized == "1" or is_affirmative(normalized):
         return True
-    if normalized in {"2", "no"}:
+    if normalized == "2" or is_negative(normalized):
         return False
     return None
 
@@ -3223,6 +3258,40 @@ async def route_message(state: ConversationState, message: str) -> str:
         state.history.append({"role": "assistant", "content": answer})
         return answer
 
+    # General recommendation/interest query ("que me recomiendas?", "qué servicios
+    # tienen?", "what do you offer?") — no specific activity keyword, so the
+    # IntentDetector would score ≤0.2 and fall through to a generic RAG text.
+    # We must NOT assume booking intent (pushing them straight into the cart is
+    # presumptuous when they may just want to browse). Instead we land them on the
+    # MAIN_MENU with a warm one-line catalog overview (immediate value for the
+    # info-seeker) and let THEM choose the path: ℹ️ Información vs 🤿 Reservar.
+    if (
+        _GENERAL_INTEREST_PATTERN.search(message)
+        and state.step not in _MIXED_FLOW_STEPS
+        and not state.mixed_cart
+    ):
+        state.step = Step.MAIN_MENU
+        decision_tree.set_quick_replies(state, "main_menu")
+        response_es = (
+            "¡Con gusto! 🌊 En *Diving Planet* tenemos buceo para certificados, "
+            "minicursos para principiantes, snorkel y cursos PADI, todo en las "
+            "Islas del Rosario.\n\n"
+            "¿Prefieres que te cuente más sobre las opciones, o ya tienes una idea "
+            "y empezamos a armar tu reserva?"
+        )
+        response_en = (
+            "Happy to help! 🌊 At *Diving Planet* we offer diving for certified "
+            "divers, mini-courses for beginners, snorkeling, and PADI courses, "
+            "all in the Rosario Islands.\n\n"
+            "Would you like to hear more about the options, or do you already have "
+            "an idea and we start building your booking?"
+        )
+        logger.info("[SUPERVISOR] General-interest query -> MAIN_MENU (info vs booking)")
+        state.history.append({"role": "user", "content": message})
+        response = response_es if state.language == "es" else response_en
+        state.history.append({"role": "assistant", "content": response})
+        return response
+
     # Intent detection: detect user intent from free text and apply to state.
     # NOT inside the cart-style mixed flow: there the tool-calling orchestrator
     # (further down) owns free text. Running the detector here would hijack
@@ -3561,6 +3630,15 @@ async def route_message(state: ConversationState, message: str) -> str:
                 state.pending_escalation_reason = reason
                 state.pending_note = build_lead_summary(state, escalation_reason=reason)
             logger.info(f"[SUPERVISOR] Quick-reply text match value={matched_value} -> step={state.step.value}")
+            return response
+
+        # Quantity-input steps expect a typed number, not an orchestrator action.
+        # Route free text directly to the tree handler so "somos cuatro personas"
+        # reaches _handle_mixed_add_qty / _handle_mixed_cert_refresh_qty instead
+        # of leaking to the LLM orchestrator which re-shows the plan selection.
+        if state.step in {Step.MIXED_ADD_QTY, Step.MIXED_CERT_REFRESH_QTY}:
+            response = decision_tree.process_message(state, message)
+            logger.info(f"[SUPERVISOR] Decision tree (qty-input free text) -> step={state.step.value}")
             return response
 
         if state.step in {
