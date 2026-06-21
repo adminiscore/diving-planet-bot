@@ -283,6 +283,20 @@ async def test_text_espanol_at_language_step_selects_spanish():
 
 
 @pytest.mark.asyncio
+async def test_back_from_free_text_certification_question_returns_to_mixed_entry():
+    """Regression: 'quiero bucear' jumps straight into MIXED_ASK_CERTIFICATION
+    via the IntentDetector (no prior button click). Typing 'volver' there used
+    to skip the special-case back routing (the step wasn't registered in
+    MENU_STEPS/_MIXED_FLOW_STEPS) and reset all the way to MAIN_MENU instead
+    of going one step back."""
+    state = await reach_main_menu("es")
+    r1 = await route_message(state, "quiero bucear")
+    assert state.step == Step.MIXED_ASK_CERTIFICATION
+    r2 = await route_message(state, "volver")
+    assert state.step == Step.MIXED_ENTRY
+
+
+@pytest.mark.asyncio
 async def test_text_reservar_at_main_menu_advances_to_reserva_menu():
     state = await reach_main_menu("es")
     await route_message(state, "reservar")
@@ -1503,6 +1517,49 @@ async def test_island_pickup_free_question_routes_to_rag():
 
 
 @pytest.mark.asyncio
+async def test_summary_reservar_non_colombian_sends_link_directly():
+    """Single-service booking: non-Colombian clients get the link immediately."""
+    state = make_state()
+    state.step = Step.SUMMARY
+    state.summary_mode = "itinerary_offer"
+    state.selected_service = "2_dives_1_day"
+    state.is_colombian = False
+    resp = await route_message(state, "reservar")
+    assert state.step == Step.FREE_TEXT
+    assert state.pending_escalation_reason is None
+    assert "divingplanet.org" in resp
+    assert state.pending_note is not None
+
+
+@pytest.mark.asyncio
+async def test_summary_reservar_colombian_still_escalates():
+    """Colombian clients keep going through the advisor (split payment + discount)."""
+    state = make_state()
+    state.step = Step.SUMMARY
+    state.summary_mode = "itinerary_offer"
+    state.selected_service = "2_dives_1_day"
+    state.is_colombian = True
+    resp = await route_message(state, "reservar")
+    assert state.step == Step.ESCALATE
+    assert state.pending_note is not None
+
+
+@pytest.mark.asyncio
+async def test_summary_cash_payment_escalates_even_for_non_colombian():
+    """The 'pay in person' button always escalates, regardless of nationality."""
+    state = make_state()
+    state.step = Step.SUMMARY
+    state.summary_mode = "itinerary_offer"
+    state.selected_service = "2_dives_1_day"
+    state.is_colombian = False
+    resp = await route_message(state, "cash")
+    assert state.step == Step.ESCALATE
+    assert "presencial" in resp.lower()
+    assert "divingplanet.org" not in resp
+    assert state.pending_note is not None
+
+
+@pytest.mark.asyncio
 async def test_post_summary_food_question_routes_to_rag():
     state = make_state()
     state.step = Step.SUMMARY
@@ -2453,14 +2510,64 @@ async def test_mixed_final_summary_snorkel_waiver_only_when_snorkel():
 
 
 @pytest.mark.asyncio
-async def test_mixed_final_summary_reservar_escalates():
+async def test_mixed_final_summary_reservar_non_colombian_sends_links():
+    """Non-Colombian clients pay 100% online: Reservar sends the booking
+    link(s) directly instead of escalating to an advisor."""
     state = await reach_mixed_add_activity()
     await send(state, "3", "2", "1")  # snorkel x2
     await send(state, "6", "2", "2")  # confirm (cart-action 6), not colombian, no private
+    response = await route_message(state, "1")  # Reservar
+    assert state.step == Step.FREE_TEXT
+    assert state.pending_escalation_reason is None
+    assert "divingplanet.org" in response
+    assert state.pending_note is not None
+    assert "Lead Diving Planet" in state.pending_note
+
+
+@pytest.mark.asyncio
+async def test_mixed_final_summary_reservar_no_link_falls_back_to_escalation():
+    """When the cart has no direct link to give (contact-only item), Reservar
+    still escalates even for a non-Colombian client."""
+    from src.flows.decision_tree import DecisionTree
+
+    state = make_state()
+    state.mixed_cart = [
+        {"type": "course", "qty": 1, "plan": "divemaster", "label": "Divemaster"}
+    ]
+    DecisionTree()._format_mixed_final_summary(state)  # populates mixed_booking_links
+    state.step = Step.MIXED_FINAL_SUMMARY
+    state.mixed_final_is_colombian = False
+    assert not state.mixed_booking_links
+    await route_message(state, "1")  # Reservar
+    assert state.step == Step.ESCALATE
+    assert state.pending_note is not None
+
+
+@pytest.mark.asyncio
+async def test_mixed_final_summary_reservar_colombian_still_escalates():
+    """Colombian clients still go through an advisor (split payment + discount)."""
+    state = await reach_mixed_add_activity()
+    await send(state, "3", "2", "1")  # snorkel x2
+    await send(state, "6", "1", "2")  # confirm (cart-action 6), COLOMBIAN, no private
     await route_message(state, "1")  # Reservar
     assert state.step == Step.ESCALATE
     assert state.pending_note is not None
     assert "Lead Diving Planet" in state.pending_note
+
+
+@pytest.mark.asyncio
+async def test_mixed_final_summary_cash_payment_escalates_for_non_colombian():
+    """Non-Colombian clients who don't want to pay online get a dedicated
+    'pay in person' option that always escalates (no booking link sent)."""
+    state = await reach_mixed_add_activity()
+    await send(state, "3", "2", "1")  # snorkel x2
+    await send(state, "6", "2", "2")  # confirm (cart-action 6), not colombian, no private
+    response = await route_message(state, "3")  # Pagar en persona
+    assert state.step == Step.ESCALATE
+    assert "presencial" in response.lower()
+    assert "divingplanet.org" not in response
+    assert state.pending_note is not None
+    assert state.pending_escalation_reason == "grupo mixto - quiere pagar en persona, no online"
 
 
 @pytest.mark.asyncio

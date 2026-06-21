@@ -129,6 +129,10 @@ class ConversationState:
     quick_replies: list[dict] = field(default_factory=list)
     pending_note: str | None = None
     pending_escalation_reason: str | None = None
+    # Set when a lead note should be generated WITHOUT escalating to a human
+    # (e.g. a booking link was sent directly to a non-Colombian client) — the
+    # conversation stays open instead of being toggled to "pending" in Chatwoot.
+    pending_lead_note_reason: str | None = None
     summary_mode: str | None = None
     back_step_override: Step | None = None
     back_quick_replies_key: str | None = None
@@ -389,6 +393,17 @@ def _referral_escalation_message(state: "ConversationState") -> str:
         "works in your case, and send you the link to complete the booking.\n\n"
         + MESSAGES["escalate"][lang]
     )
+
+
+def _resolve_service_booking_url(service: dict, state: "ConversationState") -> str | None:
+    """Pick the right booking link for the service's catalog entry given location."""
+    if state.location == "island" and service.get("booking_url_island"):
+        return service["booking_url_island"]
+    return service.get("booking_url")
+
+
+def _format_booking_links_block(links: list[tuple[str, str]], lang: str) -> str:
+    return "\n".join(f"🔗 *{label}*: {url}" for label, url in links)
 
 
 def _extra_notes(service: dict, lang: str) -> str:
@@ -1706,10 +1721,12 @@ BUTTON_OPTIONS = {
         "es": [
             {"title": "🧑‍💼 Reservar / contactar asesor", "value": "1"},
             {"title": "🔄 Empezar de nuevo", "value": "2"},
+            {"title": "💵 Pagar en persona", "value": "3"},
         ],
         "en": [
             {"title": "🧑‍💼 Book / contact advisor", "value": "1"},
             {"title": "🔄 Start over", "value": "2"},
+            {"title": "💵 Pay in person", "value": "3"},
         ],
     },
     "mixed_kids_age": {
@@ -1933,10 +1950,12 @@ BUTTON_OPTIONS = {
     "summary": {
         "es": [
             {"title": "❓ Sí, tengo más preguntas", "value": "ask"},
+            {"title": "💵 Pagar en persona", "value": "cash"},
             {"title": "🔙 Volver al menú", "value": "back"},
         ],
         "en": [
             {"title": "❓ Yes, I have more questions", "value": "ask"},
+            {"title": "💵 Pay in person", "value": "cash"},
             {"title": "🔙 Back to menu", "value": "back"},
         ],
     },
@@ -1967,10 +1986,12 @@ BUTTON_OPTIONS = {
     "itinerary_offer": {
         "es": [
             {"title": "🗺️ Ver itinerario completo", "value": "itinerary"},
+            {"title": "💵 Pagar en persona", "value": "cash"},
             {"title": "🔙 Volver al menú", "value": "back"},
         ],
         "en": [
             {"title": "🗺️ View full itinerary", "value": "itinerary"},
+            {"title": "💵 Pay in person", "value": "cash"},
             {"title": "🔙 Back to menu", "value": "back"},
         ],
     },
@@ -3275,6 +3296,7 @@ class DecisionTree:
     def _ask_certification_message(self, state: ConversationState) -> str:
         """Devuelve mensaje + quick replies de certificación adaptados a singular/plural/grupo."""
         lang = state.language
+        state.step = Step.MIXED_ASK_CERTIFICATION
         group_qty = (state.mixed_pending_cert_total_qty or 0) + sum(
             it["qty"] for it in state.mixed_cart if it.get("type") == "cert"
         )
@@ -3365,7 +3387,9 @@ class DecisionTree:
         We cap at group_size-1 because choosing all would not be a mixed group.
         """
         cap = max(1, min(group_size - 1, 8))
-        return [{"title": str(n), "value": str(n)} for n in range(1, cap + 1)]
+        options = [{"title": str(n), "value": str(n)} for n in range(1, cap + 1)]
+        options.append({"title": "🔙 Volver", "value": "back"})
+        return options
 
     def _handle_mixed_ask_cert_count(self, state: ConversationState, message: str) -> str:
         """How many of the group are certified (rest get a minicurso)."""
@@ -3945,6 +3969,7 @@ class DecisionTree:
             ]
             if include_open_water:
                 options.append({"title": "🎓 Curso Open Water", "value": "3"})
+            options.append({"title": "🔙 Volver", "value": "back"})
         else:
             options = [
                 {"title": "🤿 Dive mini-course", "value": "1"},
@@ -3952,6 +3977,7 @@ class DecisionTree:
             ]
             if include_open_water:
                 options.append({"title": "🎓 Open Water course", "value": "3"})
+            options.append({"title": "🔙 Volver", "value": "back"})
         return options
 
     def _maybe_start_pending_beginner(self, state: ConversationState) -> str | None:
@@ -4731,8 +4757,35 @@ class DecisionTree:
 
     def _handle_mixed_final_summary(self, state: ConversationState, message: str) -> str:
         lang = state.language
-        choice = self._parse_choice(message, 2)
+        choice = self._parse_choice(message, 3)
         if choice == 1:
+            # No-Colombian clients pay 100% online, so we can send the booking
+            # link(s) right away instead of waiting on an advisor. Colombian
+            # clients (split payment + discount coordination) and carts where
+            # no direct link is available (contact-only/referral items) still
+            # escalate as before.
+            if state.mixed_final_is_colombian is False and state.mixed_booking_links:
+                links_block = _format_booking_links_block(state.mixed_booking_links, lang)
+                state.step = Step.FREE_TEXT
+                state.quick_replies = []
+                state.pending_lead_note_reason = (
+                    "grupo mixto - cliente confirmó carrito, link(es) de reserva enviados directamente"
+                )
+                plural = len(state.mixed_booking_links) > 1
+                if lang == "es":
+                    intro = "tus links de reserva" if plural else "tu link de reserva"
+                    return (
+                        f"¡Perfecto! 🎉 Aquí tienes {intro} (10% de descuento pagando online):\n\n{links_block}\n\n"
+                        "Al completar el pago tu reserva queda registrada. Si tienes alguna duda, escríbeme.\n\n"
+                        "Si necesitas algo más, escribe *menu* para volver al inicio."
+                    )
+                intro = "your booking links" if plural else "your booking link"
+                return (
+                    f"Great! 🎉 Here's {intro} (10% off paying online):\n\n{links_block}\n\n"
+                    "Once payment is completed your booking is confirmed. If you have any questions, just ask.\n\n"
+                    "If you need anything else, type *menu* to go back."
+                )
+
             # Reservar → escalate. El asesor envía el link de reserva tras confirmar.
             state.step = Step.ESCALATE
             state.quick_replies = []
@@ -4752,6 +4805,24 @@ class DecisionTree:
         if choice == 2:
             self._reset_mixed_state(state)
             return self._goto_mixed_entry(state)
+        if choice == 3:
+            # Client wants to book but pay in person (no online payment at all) —
+            # always escalate, regardless of nationality; the advisor coordinates
+            # the in-person payment instead of sending a booking link.
+            state.step = Step.ESCALATE
+            state.quick_replies = []
+            state.pending_escalation_reason = "grupo mixto - quiere pagar en persona, no online"
+            if lang == "es":
+                return (
+                    "¡Perfecto! Te paso con un asesor para coordinar el pago presencial y confirmar "
+                    "disponibilidad, número exacto de personas y precio final. Enseguida se pone en "
+                    "contacto contigo."
+                )
+            return (
+                "Great! I'll connect you with an advisor to arrange in-person payment and confirm "
+                "availability, exact number of people, and the final price. They will be in touch "
+                "shortly."
+            )
         self.set_quick_replies(state, "mixed_final_summary_actions")
         return MESSAGES["not_understood"][lang]
 
@@ -5576,6 +5647,66 @@ class DecisionTree:
         self.set_quick_replies(state, self._itinerary_offer_quick_replies_key(state))
         return self._format_summary(state)
 
+    def _single_service_reservar_response(self, state: ConversationState) -> str:
+        """Resolve the 'Reservar' action for a single bookable service.
+
+        Non-Colombian clients pay 100% online, so we send the booking link
+        directly instead of escalating. Colombian clients (split payment +
+        discount coordination) and services without a resolvable link still
+        go through the advisor as before.
+        """
+        lang = state.language
+        service = SERVICES.get(state.selected_service) or {}
+        url = None if state.is_colombian else _resolve_service_booking_url(service, state)
+        if url:
+            label = service.get(f"name_{lang}") or state.selected_service
+            state.step = Step.FREE_TEXT
+            state.quick_replies = []
+            state.pending_lead_note_reason = "cliente confirmó reserva, link enviado directamente"
+            block = _format_booking_links_block([(label, url)], lang)
+            if lang == "es":
+                return (
+                    f"¡Perfecto! 🎉 Aquí tienes tu link de reserva (10% de descuento pagando online):\n\n{block}\n\n"
+                    "Al completar el pago tu reserva queda registrada. Si tienes alguna duda, escríbeme.\n\n"
+                    "Si necesitas algo más, escribe *menu* para volver al inicio."
+                )
+            return (
+                f"Great! 🎉 Here's your booking link (10% off paying online):\n\n{block}\n\n"
+                "Once payment is completed your booking is confirmed. If you have any questions, just ask.\n\n"
+                "If you need anything else, type *menu* to go back."
+            )
+
+        state.step = Step.ESCALATE
+        state.quick_replies = []
+        state.pending_escalation_reason = "cliente quiere reservar - confirma asesor"
+        if lang == "es":
+            return (
+                "¡Perfecto! Te paso con un asesor para confirmar disponibilidad "
+                "y precio final. Enseguida se pone en contacto contigo y te envía el link de reserva."
+            )
+        return (
+            "Great! I'll connect you with an advisor to confirm availability "
+            "and the final price. They will be in touch shortly with the booking link."
+        )
+
+    def _single_service_cash_payment_response(self, state: ConversationState) -> str:
+        """Client wants to book but pay in person (no online payment at all) —
+        always escalate, regardless of nationality; the advisor coordinates
+        the in-person payment instead of sending a booking link."""
+        lang = state.language
+        state.step = Step.ESCALATE
+        state.quick_replies = []
+        state.pending_escalation_reason = "cliente quiere pagar en persona, no online"
+        if lang == "es":
+            return (
+                "¡Perfecto! Te paso con un asesor para coordinar el pago presencial y confirmar "
+                "disponibilidad y precio final. Enseguida se pone en contacto contigo."
+            )
+        return (
+            "Great! I'll connect you with an advisor to arrange in-person payment and confirm "
+            "availability and the final price. They will be in touch shortly."
+        )
+
     def _handle_summary(self, state: ConversationState, message: str) -> str:
         lang = state.language
         msg = " ".join(message.strip().lower().split())
@@ -5593,8 +5724,13 @@ class DecisionTree:
         choice = self._parse_choice(message, max_options)
         action = None
 
-        if msg in ("itinerary", "skip", "ask", "done", "contact", "reservar", "book"):
-            action = "reservar" if msg == "book" else msg
+        if msg in ("itinerary", "skip", "ask", "done", "contact", "reservar", "book", "cash", "efectivo", "pago presencial"):
+            if msg == "book":
+                action = "reservar"
+            elif msg in ("efectivo", "pago presencial"):
+                action = "cash"
+            else:
+                action = msg
 
         if choice is None:
             if is_affirmative(msg):
@@ -5629,19 +5765,11 @@ class DecisionTree:
 
             if action == "reservar" and not contact_only:
                 state.summary_mode = None
-                state.step = Step.ESCALATE
-                state.quick_replies = []
-                state.pending_escalation_reason = "cliente quiere reservar - confirma asesor"
+                return self._single_service_reservar_response(state)
 
-                if lang == "es":
-                    return (
-                        "¡Perfecto! Te paso con un asesor para confirmar disponibilidad "
-                        "y precio final. Enseguida se pone en contacto contigo y te envía el link de reserva."
-                    )
-                return (
-                    "Great! I'll connect you with an advisor to confirm availability "
-                    "and the final price. They will be in touch shortly with the booking link."
-                )
+            if action == "cash" and not contact_only and service_id not in {"referral", "referral_already_on_island"}:
+                state.summary_mode = None
+                return self._single_service_cash_payment_response(state)
 
             if action == "itinerary" or choice == 1:
                 state.summary_mode = "follow_up"
@@ -5742,18 +5870,11 @@ class DecisionTree:
 
         if action == "reservar" and not contact_only and service_id not in {"referral", "referral_already_on_island"}:
             state.summary_mode = None
-            state.step = Step.ESCALATE
-            state.quick_replies = []
-            state.pending_escalation_reason = "cliente quiere reservar - confirma asesor"
-            if lang == "es":
-                return (
-                    "¡Perfecto! Te paso con un asesor para confirmar disponibilidad "
-                    "y precio final. Enseguida se pone en contacto contigo y te envía el link de reserva."
-                )
-            return (
-                "Great! I'll connect you with an advisor to confirm availability "
-                "and the final price. They will be in touch shortly with the booking link."
-            )
+            return self._single_service_reservar_response(state)
+
+        if action == "cash" and not contact_only and service_id not in {"referral", "referral_already_on_island"}:
+            state.summary_mode = None
+            return self._single_service_cash_payment_response(state)
 
         ask_choice = 2 if contact_only else (None if service_id in {"referral", "referral_already_on_island"} else 1)
         if action == "ask" or (ask_choice is not None and choice == ask_choice):
@@ -5831,10 +5952,7 @@ class DecisionTree:
             payment_title = "🔗 Booking link (10% off online):"
 
         # Elegimos el booking_url igual que en el resumen
-        if state.location == "island" and service.get("booking_url_island"):
-            booking_url = service["booking_url_island"]
-        else:
-            booking_url = service.get("booking_url")
+        booking_url = _resolve_service_booking_url(service, state)
 
         # Mientras el flujo de pago para colombianos esté pendiente de confirmación,
         # no mostramos el link real de pasarela/reserva a clientes colombianos.

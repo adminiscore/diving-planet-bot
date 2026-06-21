@@ -202,6 +202,9 @@ MENU_STEPS = {
     Step.MIXED_FINAL_KIDS,
     Step.MIXED_FINAL_PRIVATE,
     Step.MIXED_FINAL_SUMMARY,
+    Step.MIXED_ASK_CERTIFICATION,
+    Step.MIXED_ASK_CERT_COUNT,
+    Step.MIXED_ASK_BEGINNER_ACTIVITY,
     Step.PRICING_MENU,
     Step.PRICING_CARTAGENA,
     Step.PRICING_ISLANDS,
@@ -243,6 +246,9 @@ _MIXED_FLOW_STEPS = {
     Step.MIXED_FINAL_KIDS_810,
     Step.MIXED_FINAL_PRIVATE,
     Step.MIXED_FINAL_SUMMARY,
+    Step.MIXED_ASK_CERTIFICATION,
+    Step.MIXED_ASK_CERT_COUNT,
+    Step.MIXED_ASK_BEGINNER_ACTIVITY,
 }
 
 # Keywords that send the user all the way back to the main menu.
@@ -319,6 +325,13 @@ BACK_STEP: dict[Step, tuple[Step, str]] = {
     Step.MIXED_FINAL_KIDS_U8: (Step.MIXED_FINAL_KIDS, "mixed_kids_age"),
     Step.MIXED_FINAL_KIDS_810: (Step.MIXED_FINAL_KIDS, "mixed_kids_age"),
     Step.MIXED_FINAL_PRIVATE: (Step.MIXED_FINAL_COLOMBIAN, "mixed_yes_no"),
+    # "Ask" steps reachable directly from free text (IntentDetector jumps),
+    # not from a button click in an earlier MIXED_* screen. The handlers'
+    # own is_back() logic (routed via the special-case list below) takes
+    # precedence; these are just the defensive fallback.
+    Step.MIXED_ASK_CERTIFICATION: (Step.MIXED_ENTRY, "mixed_entry"),
+    Step.MIXED_ASK_CERT_COUNT: (Step.MIXED_ASK_CERTIFICATION, "mixed_ask_certification"),
+    Step.MIXED_ASK_BEGINNER_ACTIVITY: (Step.MIXED_CART_REVIEW, "mixed_cart_actions"),
 }
 
 # Keywords that indicate escalation to a human
@@ -2716,14 +2729,23 @@ def _build_extra_context(state: ConversationState) -> str | None:
     return " ".join(parts)
 
 
-def _finalize_tree_response(state: ConversationState, message: str, response: str) -> str:
-    """Persist a tool-driven turn in history and fill the lead note if we escalated."""
-    state.history.append({"role": "user", "content": message})
-    state.history.append({"role": "assistant", "content": response})
+def _maybe_build_pending_note(state: ConversationState) -> None:
+    """Build the lead note after a tree call, either via a real escalation or
+    a silent note (e.g. a booking link was sent directly, no handoff needed)."""
     if state.step == Step.ESCALATE and not state.pending_note:
         reason = state.pending_escalation_reason or "derivado por el árbol de opciones"
         state.pending_escalation_reason = reason
         state.pending_note = build_lead_summary(state, escalation_reason=reason)
+    elif state.pending_lead_note_reason and not state.pending_note:
+        state.pending_note = build_lead_summary(state, escalation_reason=state.pending_lead_note_reason)
+        state.pending_lead_note_reason = None
+
+
+def _finalize_tree_response(state: ConversationState, message: str, response: str) -> str:
+    """Persist a tool-driven turn in history and fill the lead note if we escalated."""
+    state.history.append({"role": "user", "content": message})
+    state.history.append({"role": "assistant", "content": response})
+    _maybe_build_pending_note(state)
     return response
 
 
@@ -3721,6 +3743,9 @@ async def route_message(state: ConversationState, message: str) -> str:
             Step.MIXED_CART_LOCATION,
             Step.MIXED_FINAL_KIDS_U8,
             Step.MIXED_FINAL_KIDS_810,
+            Step.MIXED_ASK_CERTIFICATION,
+            Step.MIXED_ASK_CERT_COUNT,
+            Step.MIXED_ASK_BEGINNER_ACTIVITY,
         ):
             return decision_tree.process_message(state, "back")
         return _go_back_one_step(state)
@@ -3778,20 +3803,14 @@ async def route_message(state: ConversationState, message: str) -> str:
                 logger.info(f"[SUPERVISOR] Back via exact button value from step={state.step.value}")
                 return _go_back_one_step(state)
             response = decision_tree.process_message(state, exact_value)
-            if state.step == Step.ESCALATE and not state.pending_note:
-                reason = state.pending_escalation_reason or "derivado por el árbol de opciones"
-                state.pending_escalation_reason = reason
-                state.pending_note = build_lead_summary(state, escalation_reason=reason)
+            _maybe_build_pending_note(state)
             logger.info(f"[SUPERVISOR] Decision tree (exact button value={exact_value}) -> step={state.step.value}")
             return response
 
         # If it looks like a menu choice (number), use decision tree
         if msg_lower.isdigit():
             response = decision_tree.process_message(state, message)
-            if state.step == Step.ESCALATE and not state.pending_note:
-                reason = state.pending_escalation_reason or "derivado por el árbol de opciones"
-                state.pending_escalation_reason = reason
-                state.pending_note = build_lead_summary(state, escalation_reason=reason)
+            _maybe_build_pending_note(state)
             logger.info(f"[SUPERVISOR] Decision tree -> step={state.step.value}")
             return response
 
@@ -3803,10 +3822,7 @@ async def route_message(state: ConversationState, message: str) -> str:
             return _go_back_one_step(state)
         if matched_value is not None:
             response = decision_tree.process_message(state, matched_value)
-            if state.step == Step.ESCALATE and not state.pending_note:
-                reason = state.pending_escalation_reason or "derivado por el árbol de opciones"
-                state.pending_escalation_reason = reason
-                state.pending_note = build_lead_summary(state, escalation_reason=reason)
+            _maybe_build_pending_note(state)
             logger.info(f"[SUPERVISOR] Quick-reply text match value={matched_value} -> step={state.step.value}")
             return response
 
@@ -3928,6 +3944,9 @@ async def route_message(state: ConversationState, message: str) -> str:
                     Step.MIXED_CART_LOCATION,
                     Step.MIXED_FINAL_KIDS_U8,
                     Step.MIXED_FINAL_KIDS_810,
+                    Step.MIXED_ASK_CERTIFICATION,
+                    Step.MIXED_ASK_CERT_COUNT,
+                    Step.MIXED_ASK_BEGINNER_ACTIVITY,
                 ):
                     return decision_tree.process_message(state, "back")
                 return _go_back_one_step(state)
@@ -3953,10 +3972,7 @@ async def route_message(state: ConversationState, message: str) -> str:
             if intent != "RAG":
                 # Resolved to a button value
                 response = decision_tree.process_message(state, intent)
-                if state.step == Step.ESCALATE and not state.pending_note:
-                    reason = state.pending_escalation_reason or "derivado por el árbol de opciones"
-                    state.pending_escalation_reason = reason
-                    state.pending_note = build_lead_summary(state, escalation_reason=reason)
+                _maybe_build_pending_note(state)
                 logger.info(f"[SUPERVISOR] Intent={intent} -> step={state.step.value}")
                 return response
             
@@ -3971,10 +3987,7 @@ async def route_message(state: ConversationState, message: str) -> str:
             ):
                 logger.info(f"[SUPERVISOR] Classifier returned RAG but step={state.step.value} expects specific input, sending to decision_tree")
                 response = decision_tree.process_message(state, message)
-                if state.step == Step.ESCALATE and not state.pending_note:
-                    reason = state.pending_escalation_reason or "derivado por el árbol de opciones"
-                    state.pending_escalation_reason = reason
-                    state.pending_note = build_lead_summary(state, escalation_reason=reason)
+                _maybe_build_pending_note(state)
                 return response
             # intent == "RAG" → fall through to RAG below
 
@@ -4014,9 +4027,7 @@ async def route_message(state: ConversationState, message: str) -> str:
             return _go_back_one_step(state)
         if matched_value is not None:
             response = decision_tree.process_message(state, matched_value)
-            if state.step == Step.ESCALATE and not state.pending_note:
-                reason = state.pending_escalation_reason or "derivado por el árbol de opciones"
-                state.pending_note = build_lead_summary(state, escalation_reason=reason)
+            _maybe_build_pending_note(state)
             logger.info(f"[SUPERVISOR] Decision tree (summary quick-reply={matched_value}) -> step={state.step.value}")
             return response
 
@@ -4040,12 +4051,13 @@ async def route_message(state: ConversationState, message: str) -> str:
             "contact",
             "reservar",
             "book",
+            "cash",
+            "efectivo",
+            "pago presencial",
         }
         if msg_lower in summary_choices:
             response = decision_tree.process_message(state, message)
-            if state.step == Step.ESCALATE and not state.pending_note:
-                reason = state.pending_escalation_reason or "derivado por el árbol de opciones"
-                state.pending_note = build_lead_summary(state, escalation_reason=reason)
+            _maybe_build_pending_note(state)
             logger.info(f"[SUPERVISOR] Decision tree (summary) -> step={state.step.value}")
             return response
 
@@ -4133,8 +4145,5 @@ async def route_message(state: ConversationState, message: str) -> str:
 
     # Fallback: welcome
     response = decision_tree.process_message(state, message)
-    if state.step == Step.ESCALATE and not state.pending_note:
-        reason = state.pending_escalation_reason or "derivado por el árbol de opciones"
-        state.pending_escalation_reason = reason
-        state.pending_note = build_lead_summary(state, escalation_reason=reason)
+    _maybe_build_pending_note(state)
     return response

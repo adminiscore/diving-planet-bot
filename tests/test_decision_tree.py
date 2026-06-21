@@ -370,7 +370,7 @@ class TestSummaryFlow:
 
         assert state.step == Step.SUMMARY
         assert "ℹ️" not in response
-        assert [item["value"] for item in state.quick_replies] == ["itinerary", "back"]
+        assert [item["value"] for item in state.quick_replies] == ["itinerary", "cash", "back"]
         assert state.quick_replies[0]["title"] == "🗺️ Ver itinerario completo"
 
     def test_open_water_summary_skips_repeated_info_block_in_english(self):
@@ -384,7 +384,7 @@ class TestSummaryFlow:
 
         assert state.step == Step.SUMMARY
         assert "ℹ️" not in response
-        assert [item["value"] for item in state.quick_replies] == ["itinerary", "back"]
+        assert [item["value"] for item in state.quick_replies] == ["itinerary", "cash", "back"]
         assert state.quick_replies[0]["title"] == "🗺️ View full itinerary"
 
     def test_divemaster_summary_in_spanish_uses_info_link_and_contact_prompt(self):
@@ -436,7 +436,7 @@ class TestSummaryFlow:
 
         assert state.step == Step.SUMMARY
         assert "itinerario" in response.lower() or "🗺️" in response
-        assert [item["value"] for item in state.quick_replies] == ["ask", "back"]
+        assert [item["value"] for item in state.quick_replies] == ["ask", "cash", "back"]
 
     def test_open_water_full_itinerary_skips_repeated_info_block(self):
         state = make_state()
@@ -502,7 +502,7 @@ class TestMixedCertificationSplit:
         assert state.step == Step.MIXED_ASK_CERT_COUNT
         assert "certificados" in response.lower()
         values = [b["value"] for b in state.quick_replies]
-        assert values == ["1", "2"]
+        assert values == ["1", "2", "back"]
 
     def test_cert_count_records_split(self):
         state = self._start(group_size=3)
@@ -526,6 +526,15 @@ class TestMixedCertificationSplit:
         assert state.step == Step.MIXED_CART_REVIEW
         types = sorted((it["type"], it["qty"]) for it in state.mixed_cart)
         assert types == [("beginner", 1), ("cert", 2)]
+
+    def test_cert_count_back_returns_to_certification_question(self):
+        """'back' from MIXED_ASK_CERT_COUNT must re-show the certification
+        question (and reset state.step accordingly), not jump to MAIN_MENU."""
+        state = self._start(group_size=3)
+        self.tree.process_message(state, "3")  # some certified -> MIXED_ASK_CERT_COUNT
+        resp = self.tree.process_message(state, "back")
+        assert state.step == Step.MIXED_ASK_CERTIFICATION
+        assert "certificados" in resp.lower()
 
     def test_cert_count_rejects_full_group(self):
         state = self._start(group_size=3)
@@ -553,14 +562,22 @@ class TestMixedCertificationSplit:
         assert state.step == Step.MIXED_ASK_BEGINNER_ACTIVITY
         assert "open water" not in resp.lower()
         values = [b["value"] for b in state.quick_replies]
-        assert values == ["1", "2"]
+        assert values == ["1", "2", "back"]
 
     def test_beginner_activity_question_multi_day_plan_offers_open_water(self):
         state, resp = self._reach_beginner_activity_question(["2", "1"])  # multi-day -> first package
         assert state.step == Step.MIXED_ASK_BEGINNER_ACTIVITY
         assert "open water" in resp.lower()
         values = [b["value"] for b in state.quick_replies]
-        assert values == ["1", "2", "3"]
+        assert values == ["1", "2", "3", "back"]
+
+    def test_beginner_activity_back_returns_to_cart_review(self):
+        """'back' from MIXED_ASK_BEGINNER_ACTIVITY must return to the cart
+        review (showing the cert items already added), not MAIN_MENU."""
+        state, _ = self._reach_beginner_activity_question(["1"])
+        resp = self.tree.process_message(state, "back")
+        assert state.step == Step.MIXED_CART_REVIEW
+        assert any(it.get("type") == "cert" for it in state.mixed_cart)
 
     def test_beginner_activity_choice_minicourse(self):
         state, _ = self._reach_beginner_activity_question(["1"])
