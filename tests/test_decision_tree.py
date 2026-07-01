@@ -302,19 +302,19 @@ class TestMainMenu:
         state = self._go_to_menu()
         # Vía decision tree solo (sin supervisor), tecla numérica desconocida → not understood
         response = self.tree.process_message(state, "9")
-        assert "No entendi" in response or "not understand" in response.lower()
+        assert "entend" in response.lower() or "get that" in response.lower()
 
     def test_invalid_option(self):
         state = self._go_to_menu()
         response = self.tree.process_message(state, "99")
-        assert "No entendi" in response or "not understand" in response.lower()
+        assert "entend" in response.lower() or "get that" in response.lower()
 
 
 class TestSummaryFlow:
     def setup_method(self):
         self.tree = DecisionTree()
 
-    def test_colombian_gets_discount_info(self):
+    def test_colombian_gets_cop_price_summary(self):
         state = make_state()
         state.step = Step.COLOMBIAN
         state.language = "es"
@@ -323,7 +323,9 @@ class TestSummaryFlow:
 
         response = self.tree.process_message(state, "1")  # Yes, Colombian
         assert state.is_colombian is True
-        assert "+57 320 231515" in response
+        # Should advance to SUMMARY with COP price shown; no discount claim
+        assert state.step == Step.SUMMARY
+        assert "COP" in response or "$" in response  # price shown in some currency
 
     def test_non_colombian_gets_booking_link(self):
         state = make_state()

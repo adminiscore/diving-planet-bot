@@ -1,10 +1,11 @@
 {
   "discounts": {
-    "direct_booking": {
+    "online_direct_booking": {
       "percentage": 10,
-      "description_es": "10% de descuento reservando directamente con nosotros (no a través de terceros como PADI)",
-      "description_en": "10% discount booking directly with us (not through third parties like PADI)",
-      "applicability": "todos los servicios"
+      "description_es": "10% de descuento reservando online directamente con nosotros a través de la página web (sistema ROVERD), no a través de terceros como PADI. Este es el descuento online estándar y se aplica automáticamente al reservar por la web.",
+      "description_en": "10% discount when booking online directly with us through our website (ROVERD system), not through third parties like PADI. This is the standard online discount and is applied automatically when booking on the web.",
+      "applicability": "todos los servicios",
+      "combinable_with": ["group_discount", "own_equipment_discount"]
     },
     "second_day": {
       "percentage": 10,
@@ -18,26 +19,25 @@
       "description_es": "10% de descuento para grupos de 5 personas o más, que se suma al 10% de descuento online (20% total reservando online)",
       "description_en": "10% discount for groups of 5 or more people, which stacks with the 10% online discount (20% total when booking online)",
       "applicability": "todos los servicios",
-      "combinable_with": ["roverd_web_discount"]
+      "combinable_with": ["online_direct_booking"]
     },
-    "roverd_web_discount": {
-      "percentage": 10,
-      "description_es": "10% de descuento adicional reservando a través del sistema ROVERD en la página web",
-      "description_en": "Additional 10% discount booking through the ROVERD system on the website",
-      "applicability": "reservas web",
-      "combinable_with": ["group_discount"]
+    "own_equipment_discount": {
+      "percentage": 5,
+      "description_es": "5% de descuento si el cliente trae su propio equipo COMPLETO (regulador, BCD/chaleco, traje, máscara, aletas, etc.). No aplica si solo trae parte del equipo.",
+      "description_en": "5% discount if the client brings their COMPLETE own gear (regulator, BCD, wetsuit, mask, fins, etc.). Does not apply if they only bring part of the equipment.",
+      "applicability": "buceo recreativo y cursos",
+      "combinable_with": ["online_direct_booking"]
     },
-    "colombian_special": {
-      "description_es": "Bono adicional para locales colombianos. Contactar por WhatsApp para obtener descuento.",
-      "description_en": "Additional bonus for local Colombians. Contact via WhatsApp to get discount.",
-      "applicability": "colombianos",
-      "contact": "+57 320 231515"
+    "colombian_cop_pricing": {
+      "description_es": "Los clientes colombianos y residentes en Colombia pagan en pesos colombianos (COP). Los clientes internacionales pagan en dólares (USD). No hay un descuento especial por ser colombiano; el precio es el mismo, solo cambia la moneda.",
+      "description_en": "Colombian clients and residents pay in Colombian pesos (COP). International clients pay in US dollars (USD). There is no special discount for being Colombian; the price is the same, only the currency changes.",
+      "applicability": "todos los servicios"
     }
   },
   "discount_policies": {
     "non_cumulative": {
-      "es": "Los descuentos no son acumulables excepto en casos especiales autorizados por el staff o donde se indique explícitamente lo contrario (ej: grupo + online sí se suman)",
-      "en": "Discounts are not cumulative except in special cases authorized by staff or where explicitly stated otherwise (e.g. group + online do stack)"
+      "es": "Los descuentos no son acumulables excepto en casos especiales autorizados por el staff o donde se indique explícitamente lo contrario (ej: grupo + online sí se suman; equipo propio + online también).",
+      "en": "Discounts are not cumulative except in special cases authorized by staff or where explicitly stated otherwise (e.g. group + online do stack; own equipment + online also stack)."
     }
   }
 }

@@ -364,15 +364,21 @@ BROKEN_LINK_TARGET_TOKENS = {
 # Phrases that indicate the customer wants to cancel an existing booking
 # (different from the in-tree "cancelar"/"back" navigation keyword).
 CANCEL_BOOKING_PHRASES = {
-    # ES
+    # ES — con objeto implícito o explícito
     "cancelar mi reserva", "cancelar la reserva", "cancelar mi tour",
     "cancelar mi cita", "cancelar mi booking", "anular mi reserva",
     "anular la reserva", "anular mi tour", "quiero cancelar mi",
     "necesito cancelar mi", "puedo cancelar mi",
-    # EN
+    "quisiera cancelar mi", "quisiera cancelar la",
+    "quiero cancelar la", "necesito cancelar la",
+    "cancelar el tour", "cancelar el buceo", "cancelar la actividad",
+    "cancelar mi pedido", "anular mi pedido",
+    # EN — additional common phrasings
     "cancel my booking", "cancel my reservation", "cancel my trip",
     "cancel my tour", "cancel my dive", "i want to cancel my",
     "i need to cancel my", "can i cancel my",
+    "i'd like to cancel", "how do i cancel", "how can i cancel",
+    "cancel the booking", "cancel the reservation", "cancel the tour",
 }
 
 # Phrases that indicate the customer wants to change the date of an
@@ -384,19 +390,31 @@ RESCHEDULE_BOOKING_PHRASES = {
     "cambiar fecha de mi reserva", "cambiar la fecha de mi reserva",
     "reprogramar mi reserva", "reprogramar mi tour", "reprogramar mi cita",
     "mover mi reserva", "mover la fecha",
-    # EN
+    "quisiera cambiar la fecha", "quisiera cambiar mi fecha",
+    "quiero cambiar la fecha", "necesito cambiar la fecha",
+    "puedo cambiar la fecha", "como cambio la fecha",
+    "cambiar el dia", "cambiar mi dia", "cambiar la cita",
+    "posponer mi reserva", "postergar mi reserva",
+    # EN — additional common phrasings
     "change my date", "change the date", "reschedule my booking",
     "reschedule my reservation", "reschedule my trip", "move my booking",
     "move my reservation",
+    "i'd like to reschedule", "how do i reschedule", "how can i change",
+    "change my booking date", "change my reservation date",
+    "postpone my booking", "postpone my reservation",
 }
 
 
 def _detect_cancellation_request(msg_lower: str) -> bool:
-    return any(phrase in msg_lower for phrase in CANCEL_BOOKING_PHRASES)
+    # Accent-insensitive so "cancelar mi reservación" also matches the
+    # accent-free phrases; CANCEL_BOOKING_PHRASES are stored without accents.
+    normalized = _strip_accents(msg_lower)
+    return any(phrase in normalized for phrase in CANCEL_BOOKING_PHRASES)
 
 
 def _detect_reschedule_request(msg_lower: str) -> bool:
-    return any(phrase in msg_lower for phrase in RESCHEDULE_BOOKING_PHRASES)
+    normalized = _strip_accents(msg_lower)
+    return any(phrase in normalized for phrase in RESCHEDULE_BOOKING_PHRASES)
 
 
 def _booking_change_buttons(lang: str) -> list[dict]:
@@ -2582,9 +2600,9 @@ def _build_extra_context(state: ConversationState) -> str | None:
 
     # Colombiano o no
     if getattr(state, "is_colombian", None) is True:
-        parts.append("El cliente indico que es colombiano/a (aplican tarifas locales y descuentos especiales).")
+        parts.append("El cliente indico que es colombiano/a (mostrar precios en COP, no hay descuento especial por ser colombiano).")
     elif getattr(state, "is_colombian", None) is False:
-        parts.append("El cliente indico que no es colombiano/a.")
+        parts.append("El cliente indico que no es colombiano/a (mostrar precios en USD).")
 
     # Inactividad y refresher
     if getattr(state, "last_dive_over_2_years", None) is True:

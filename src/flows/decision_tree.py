@@ -18,7 +18,7 @@ from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
 
-from src.utils.fuzzy import is_back, is_affirmative, is_negative, is_agree, is_none_selection, fuzzy_word_number
+from src.utils.fuzzy import is_back, is_affirmative, is_agree, is_none_selection, fuzzy_word_number
 
 
 # Separador interno: si una respuesta del bot contiene este token, el canal
@@ -732,7 +732,7 @@ COMPANION_PRICE = _load_companion_price()
 MESSAGES = {
     "welcome": {
         "es": (
-            "Hola! Bienvenido a *Diving Planet*, el primer centro de buceo "
+            "¡Hola! Bienvenido a *Diving Planet*, el primer centro de buceo "
             "PADI 5 Estrellas de Colombia, con 30 años de experiencia en "
             "las Islas del Rosario, Cartagena.\n\n"
             "Selecciona tu idioma / Select your language:\n\n"
@@ -750,7 +750,7 @@ MESSAGES = {
     },
     "main_menu": {
         "es": (
-            "¿Qué te gustaría hacer?"
+            "¡Cuéntame! ¿Qué te gustaría hacer?"
         ),
         "en": (
             "What would you like to do?"
@@ -758,10 +758,10 @@ MESSAGES = {
     },
     "welcome_detected": {
         "es": (
-            "Hola! Bienvenido a *Diving Planet*, el primer centro de buceo "
+            "¡Hola! Bienvenido a *Diving Planet*, el primer centro de buceo "
             "PADI 5 Estrellas de Colombia, con 30 años de experiencia en "
             "las Islas del Rosario, Cartagena.\n\n"
-            "¿Qué te gustaría hacer?"
+            "¡Cuéntame! ¿Qué te gustaría hacer?"
         ),
         "en": (
             "Hello! Welcome to *Diving Planet*, Colombia's first "
@@ -1114,8 +1114,8 @@ MESSAGES = {
         "en": "Where will you depart from? Prices will update according to your choice.",
     },
     "mixed_final_colombian": {
-        "es": "Para terminar, ¿eres *colombiano/a o residente en Colombia*? (aplica descuento)",
-        "en": "Last few questions: are you *Colombian / resident in Colombia*? (discount applies)",
+        "es": "Para terminar, ¿eres *colombiano/a o residente en Colombia*? (para mostrarte el precio en pesos o en dólares)",
+        "en": "Last question: are you *Colombian / resident in Colombia*? (so we show you the price in COP or USD)",
     },
     "mixed_final_kids": {
         "es": (
@@ -1223,10 +1223,10 @@ MESSAGES = {
     },
     "colombian": {
         "es": (
-            "🌎 ¿Eres colombiano/a? Tenemos descuentos especiales para locales."
+            "🌎 ¿Eres colombiano/a o residente en Colombia? Así te mostramos el precio en pesos o en dólares."
         ),
         "en": (
-            "🌎 Are you Colombian? We have special discounts for locals."
+            "🌎 Are you Colombian or a resident in Colombia? That way we show you the price in COP or USD."
         ),
     },
     "escalate": {
@@ -1241,10 +1241,10 @@ MESSAGES = {
     },
     "not_understood": {
         "es": (
-            "No entendi tu respuesta. Por favor, selecciona una de las opciones."
+            "¡Uy! No te entendí bien 🙈 ¿Puedes elegir una de las opciones de abajo?"
         ),
         "en": (
-            "I didn't understand your response. Please select one of the options."
+            "Hmm, I didn't quite get that. Could you pick one of the options below?"
         ),
     },
 }
@@ -1822,7 +1822,7 @@ BUTTON_OPTIONS = {
             {"title": "🚤 Precios saliendo desde Cartagena", "value": "1"},
             {"title": "🏝️ Precios si ya estoy en las islas", "value": "2"},
             {"title": "📦 Paquetes 5/7/9 inmersiones (multi-día)", "value": "3"},
-            {"title": "🇨🇴 Descuentos para colombianos/residentes", "value": "4"},
+            {"title": "🎁 Descuentos disponibles", "value": "4"},
             {"title": "⬅️ Volver", "value": "back"},
             {"title": "🏠 Inicio", "value": "inicio"},
         ],
@@ -1830,7 +1830,7 @@ BUTTON_OPTIONS = {
             {"title": "🚤 Prices departing from Cartagena", "value": "1"},
             {"title": "🏝️ Prices if I'm already on the islands", "value": "2"},
             {"title": "📦 5/7/9-dive multi-day packages", "value": "3"},
-            {"title": "🇨🇴 Discounts for Colombians/residents", "value": "4"},
+            {"title": "🎁 Available discounts", "value": "4"},
             {"title": "⬅️ Back", "value": "back"},
             {"title": "🏠 Home", "value": "inicio"},
         ],
@@ -4889,11 +4889,12 @@ class DecisionTree:
             else:  # choice == 4
                 state.step = Step.PRICING_DISCOUNTS
                 response = (
-                    "🇨🇴 *Descuentos para colombianos y residentes*:\n\n"
-                    "💸 10% online\n"
-                    "👥 Descuentos para grupos\n\n"
-                    "📲 Escríbenos por WhatsApp y te aplicamos la tarifa local cuando corresponda "
-                    "(te pediremos cédula o documento de residencia)."
+                    "🎁 *Descuentos disponibles*:\n\n"
+                    "💸 *10% online*: pagando por la web de Diving Planet (se aplica automáticamente).\n"
+                    "👥 *Grupos de 5+ personas*: 10% adicional, acumulable con el descuento online (20% total).\n"
+                    "🤿 *Equipo propio completo*: 5% de descuento si traes tu propio equipo completo.\n\n"
+                    "Los colombianos y residentes pagan en COP; los clientes internacionales en USD.\n"
+                    "Si tienes dudas con el precio, escríbenos por WhatsApp al +57 320 231515."
                 )
         else:
             if choice == 1:
@@ -4934,10 +4935,12 @@ class DecisionTree:
             else:  # choice == 4
                 state.step = Step.PRICING_DISCOUNTS
                 response = (
-                    "🇨🇴 *Discounts for Colombian guests and residents*:\n\n"
-                    "💸 Online discount\n"
-                    "👥 Group discounts\n\n"
-                    "📲 Contact us on WhatsApp and we can apply the local rate when applicable and explain the conditions."
+                    "🎁 *Available discounts*:\n\n"
+                    "💸 *10% online*: booking through the Diving Planet website (applied automatically).\n"
+                    "👥 *Groups of 5+ people*: extra 10%, stackable with the online discount (20% total).\n"
+                    "🤿 *Full own equipment*: 5% off if you bring your complete gear.\n\n"
+                    "Colombian/resident clients pay in COP; international clients pay in USD.\n"
+                    "For any pricing questions, message us on WhatsApp at +57 320 231515."
                 )
 
         self.set_quick_replies(state, "pricing_leaf")
@@ -5934,7 +5937,6 @@ class DecisionTree:
             title_requirements = "✅ **Requisitos:**"
             title_not_included = "❌ **No incluye:**"
             title_link = "🔗 Link de la actividad en la web:"
-            payment_title = "🔗 Link de reserva (10% off online):"
         else:
             description = service.get("description_en")
             preparation = service.get("preparation_en")
@@ -5949,15 +5951,6 @@ class DecisionTree:
             title_requirements = "✅ **Requirements:**"
             title_not_included = "❌ **Not included:**"
             title_link = "🔗 Activity page link:"
-            payment_title = "🔗 Booking link (10% off online):"
-
-        # Elegimos el booking_url igual que en el resumen
-        booking_url = _resolve_service_booking_url(service, state)
-
-        # Mientras el flujo de pago para colombianos esté pendiente de confirmación,
-        # no mostramos el link real de pasarela/reserva a clientes colombianos.
-        if state.is_colombian:
-            booking_url = "PENDIENTE"
 
         # Reagrupamos el itinerario por dia para no repetir "Dia 1:" / "Day 1:" en cada linea
         if itinerary:
@@ -6332,9 +6325,9 @@ class DecisionTree:
             )
         if state.mixed_final_is_colombian:
             extras_lines.append(
-                "  💚 Descuento colombianos/residentes — el asesor confirmará el descuento al reservar"
+                "  🌎 Precio en pesos colombianos (COP)"
                 if lang == "es"
-                else "  💚 Local-resident discount — advisor confirms the discount at booking"
+                else "  🌎 Price shown in Colombian pesos (COP)"
             )
         if state.mixed_final_wants_private:
             extras_lines.append(
@@ -6733,20 +6726,14 @@ class DecisionTree:
                 lines.append("")
                 lines.append(accommodation_note)
 
-            # Refresher, descuento y regla de vuelo, cada uno separado por una línea en blanco
-            if flight_rule or state.refresher_interested or state.is_colombian:
+            # Refresher y regla de vuelo, cada uno separado por una línea en blanco
+            if flight_rule or state.refresher_interested:
                 lines.append("")
 
             if state.refresher_interested:
                 lines.append(
                     "🧑‍🏫 Refresher: Sí (recomendado por inactividad) — sin coste adicional, "
                     "el guía adapta la inmersión a tu nivel"
-                )
-
-            if state.is_colombian:
-                lines.append(
-                    "🌎 *Descuento colombiano*: Contactanos por WhatsApp "
-                    "al +57 320 231515 para tu descuento especial."
                 )
 
             if flight_rule:
@@ -6925,12 +6912,6 @@ class DecisionTree:
                 summary += (
                     "\n🧑‍🏫 Refresher: Yes (recommended due to inactivity) — no extra cost, "
                     "the guide adapts the dive to your level\n"
-                )
-
-            if state.is_colombian:
-                summary += (
-                    "\n🌎 *Colombian discount*: Contact us via WhatsApp "
-                    "at +57 320 231515 for your special discount.\n"
                 )
 
             if flight_rule:

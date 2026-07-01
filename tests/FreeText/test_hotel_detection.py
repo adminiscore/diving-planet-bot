@@ -145,13 +145,12 @@ def test_hotel_detection():
     print("="*80)
     
     if failed == 0:
-        print("\n🎉 ¡Todos los tests pasaron!")
+        print("\n¡Todos los tests pasaron!")
     else:
-        print(f"\n⚠️  {failed} tests fallaron")
-    
-    return failed == 0
+        print(f"\n{failed} tests fallaron")
+
+    assert failed == 0, f"{failed} caso(s) de detección de hotel/isla fallaron (ver output arriba)"
 
 
 if __name__ == "__main__":
-    success = test_hotel_detection()
-    exit(0 if success else 1)
+    test_hotel_detection()

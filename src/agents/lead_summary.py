@@ -104,7 +104,7 @@ def build_lead_summary(state: "ConversationState", escalation_reason: str = "") 
         if any(it.get("qty", 0) >= 6 for it in state.mixed_cart):
             lines.append("  • 🚨 Grupo grande (6+ en algún subgrupo)")
         if state.mixed_final_is_colombian is True:
-            lines.append("  • 🇨🇴 Colombiano/residente: Sí (aplica descuento)")
+            lines.append("  • 🇨🇴 Colombiano/residente: Sí (precio en COP)")
         elif state.mixed_final_is_colombian is False:
             lines.append("  • 🇨🇴 Colombiano/residente: No")
         kids_under_8 = state.kids_under_8_count or 0

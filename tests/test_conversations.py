@@ -711,11 +711,15 @@ async def test_pricing_menu_multiday_packages():
 
 
 @pytest.mark.asyncio
-async def test_pricing_menu_colombian_discounts():
+async def test_pricing_menu_discounts():
     state = await reach_pricing_menu()
-    resp = await route_message(state, "4")  # descuentos colombianos
+    resp = await route_message(state, "4")  # descuentos disponibles
     assert state.step == Step.PRICING_DISCOUNTS
-    assert "colombian" in resp.lower() or "PARCEROS" in resp or "local" in resp.lower()
+    # Verifica que muestra los descuentos reales (online, grupo, equipo propio)
+    assert "10%" in resp or "grupo" in resp.lower() or "discount" in resp.lower() or "descuento" in resp.lower()
+    # No debe mencionar descuento especial colombiano
+    assert "descuento colombian" not in resp.lower()
+    assert "especial para colombian" not in resp.lower()
 
 
 @pytest.mark.asyncio
@@ -3644,5 +3648,152 @@ async def test_qty_phrase_exact_word_in_phrase_advances_past_qty_step():
         assert "qué idea tienes" not in resp
         assert state.step != Step.MIXED_ADD_CERT_PLAN
         assert state.step != Step.MIXED_ADD_QTY
+
+
+# ===========================================================================
+# BLOQUE — CANCELACIÓN Y REPROGRAMACIÓN DE RESERVAS EXISTENTES
+# Los clientes que piden cancelar o cambiar la fecha de una reserva existente
+# deben recibir el texto de política + dos botones (asesor / menú principal),
+# nunca entrar al flujo de reserva ni recibir una respuesta genérica de RAG.
+# ===========================================================================
+
+@pytest.mark.asyncio
+async def test_cancel_booking_explicit_es_shows_policy_and_buttons():
+    """'quiero cancelar mi reserva' → policy text + advisor/home buttons."""
+    state = make_state()
+    resp = await route_message(state, "quiero cancelar mi reserva")
+    assert state.step != Step.ESCALATE, "Debe mostrar botones, no escalar automáticamente"
+    assert "terminos" in resp.lower() or "condiciones" in resp.lower() or "cancelaci" in resp.lower()
+    button_values = [b["value"] for b in state.quick_replies]
+    assert "asesor" in button_values
+    assert "inicio" in button_values
+
+
+@pytest.mark.asyncio
+async def test_cancel_booking_phrase_without_possessive_es():
+    """'cancelar la reserva' (sin 'mi') también activa la detección."""
+    state = make_state()
+    resp = await route_message(state, "cancelar la reserva")
+    button_values = [b["value"] for b in state.quick_replies]
+    assert "asesor" in button_values
+
+
+@pytest.mark.asyncio
+async def test_cancel_booking_quisiera_variant_es():
+    """'quisiera cancelar mi reserva' también activa la detección."""
+    state = make_state()
+    resp = await route_message(state, "quisiera cancelar mi reserva")
+    button_values = [b["value"] for b in state.quick_replies]
+    assert "asesor" in button_values
+
+
+@pytest.mark.asyncio
+async def test_cancel_booking_anular_variant_es():
+    """'anular mi reserva' debe activar el detector."""
+    state = make_state()
+    resp = await route_message(state, "anular mi reserva")
+    button_values = [b["value"] for b in state.quick_replies]
+    assert "asesor" in button_values
+
+
+@pytest.mark.asyncio
+async def test_cancel_booking_accent_insensitive_es():
+    """Con tildes ('cancelar mi reservación') también debe detectarse."""
+    state = make_state()
+    resp = await route_message(state, "necesito cancelar mi reservación")
+    button_values = [b["value"] for b in state.quick_replies]
+    assert "asesor" in button_values
+
+
+@pytest.mark.asyncio
+async def test_cancel_booking_explicit_en_shows_policy_and_buttons():
+    """'cancel my booking' → policy text + advisor/home buttons (EN)."""
+    state = make_state(lang="en")
+    resp = await route_message(state, "cancel my booking")
+    assert "terms" in resp.lower() or "condition" in resp.lower() or "cancel" in resp.lower()
+    button_values = [b["value"] for b in state.quick_replies]
+    assert "asesor" in button_values
+    assert "inicio" in button_values
+
+
+@pytest.mark.asyncio
+async def test_cancel_booking_how_do_i_cancel_en():
+    """'how do i cancel my booking' also triggers detection (EN)."""
+    state = make_state(lang="en")
+    resp = await route_message(state, "how do i cancel my booking")
+    button_values = [b["value"] for b in state.quick_replies]
+    assert "asesor" in button_values
+
+
+@pytest.mark.asyncio
+async def test_cancel_advisor_button_escalates():
+    """After the cancel-info response, clicking 'asesor' escalates correctly."""
+    state = make_state()
+    await route_message(state, "quiero cancelar mi reserva")
+    resp = await route_message(state, "asesor")
+    assert state.step == Step.ESCALATE
+
+
+@pytest.mark.asyncio
+async def test_reschedule_explicit_es_shows_policy_and_buttons():
+    """'cambiar la fecha' → reschedule policy text + advisor/home buttons."""
+    state = make_state()
+    resp = await route_message(state, "cambiar la fecha de mi reserva")
+    assert "fecha" in resp.lower() or "disponibilidad" in resp.lower() or "condiciones" in resp.lower()
+    button_values = [b["value"] for b in state.quick_replies]
+    assert "asesor" in button_values
+    assert "inicio" in button_values
+
+
+@pytest.mark.asyncio
+async def test_reschedule_quisiera_variant_es():
+    """'quisiera cambiar la fecha' también activa la detección."""
+    state = make_state()
+    resp = await route_message(state, "quisiera cambiar la fecha")
+    button_values = [b["value"] for b in state.quick_replies]
+    assert "asesor" in button_values
+
+
+@pytest.mark.asyncio
+async def test_reschedule_reprogramar_variant_es():
+    """'reprogramar mi reserva' activa la detección."""
+    state = make_state()
+    resp = await route_message(state, "reprogramar mi reserva")
+    button_values = [b["value"] for b in state.quick_replies]
+    assert "asesor" in button_values
+
+
+@pytest.mark.asyncio
+async def test_reschedule_explicit_en_shows_policy_and_buttons():
+    """'reschedule my booking' → reschedule policy text + advisor/home buttons (EN)."""
+    state = make_state(lang="en")
+    resp = await route_message(state, "reschedule my booking")
+    button_values = [b["value"] for b in state.quick_replies]
+    assert "asesor" in button_values
+    assert "inicio" in button_values
+
+
+@pytest.mark.asyncio
+async def test_reschedule_i_would_like_to_reschedule_en():
+    """'i'd like to reschedule' triggers detection (EN)."""
+    state = make_state(lang="en")
+    resp = await route_message(state, "i'd like to reschedule my booking")
+    button_values = [b["value"] for b in state.quick_replies]
+    assert "asesor" in button_values
+
+
+@pytest.mark.asyncio
+async def test_cancel_does_not_trigger_mid_booking_navigation():
+    """The word 'cancelar' typed during navigation (e.g. as back) must NOT be
+    confused with cancelling an existing booking when no other cancel-booking
+    phrase is present."""
+    state = await reach_booking_cart(location="cartagena")
+    # At MIXED_ADD_ACTIVITY, typing "cancelar" alone = back navigation, not booking-cancel
+    await route_message(state, "cancelar")
+    # Should have navigated back, NOT shown cancellation policy buttons
+    cancel_button_values = [b["value"] for b in state.quick_replies]
+    assert "asesor" not in cancel_button_values or state.step in (
+        Step.MIXED_ENTRY, Step.MAIN_MENU, Step.MIXED_ADD_ACTIVITY
+    )
 
 
