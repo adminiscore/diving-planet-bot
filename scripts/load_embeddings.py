@@ -223,7 +223,14 @@ def _service_subchunks(service_id: str, service: dict, lang: str) -> list[dict]:
             else f"Price note: {price_note}"
         )
     if pricing_lines:
-        title = f"Precios de {name}:" if lang == "es" else f"Pricing for {name}:"
+        # Prefix the service_id so BM25 can discriminate between packages with
+        # similar names (e.g. "2 dives 1 day" vs "3-dive 1 day") — the
+        # underscore-separated id tokenizes cleanly under the 'simple' dictionary.
+        title = (
+            f"[{service_id}] Precios de {name}:"
+            if lang == "es"
+            else f"[{service_id}] Pricing for {name}:"
+        )
         add_chunk(f"{service_id}:pricing", "\n".join([title, *pricing_lines]), "pricing")
         chunks[-1]["metadata"]["parent_id"] = summary_key
 

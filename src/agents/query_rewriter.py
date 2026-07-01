@@ -41,8 +41,10 @@ def _should_condense(query: str, history: list[dict] | None) -> bool:
         return False
     if len(query.split()) >= 8:
         return False
+    # A single prior user turn is enough to condense a follow-up — a 2-turn
+    # conversation (1 Q + 1 follow-up) only has 1 user message in history.
     user_msgs = [m for m in history if m.get("role") == "user"]
-    return len(user_msgs) >= 2
+    return len(user_msgs) >= 1
 
 
 def _format_history_for_prompt(history: list[dict], lang: str, max_turns: int = 4) -> str:

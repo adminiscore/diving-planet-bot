@@ -192,3 +192,35 @@ Recomendación de continuación:
 - Empezar por `en_followup_islands`.
 - Mantener `es_price_local_cop` y `es_hotel_pickup_pao_pao` como siguiente tanda de refinamiento de calidad.
 - Repetir la baseline completa `all` después de cada cambio que toque prompt, rewriter o grounding.
+
+## Baseline 2026-07-01 (post merge feature/pruebaGon + fix retrieval EN)
+
+### Cambios aplicados antes de esta baseline
+
+1. **Merge feature/pruebaGon → feature/dev_gadea**: cambios de negocio v0.18.0 (tono costeño, descuento colombiano eliminado, cancelación/reprogramación).
+2. **KB reindexada**: 753 documentos (faqs: 234, services: 350, policies: 44, pricing: 18, conversations: 107). Sirve los cambios de `brand_tone.json`, `discounts.json`, `policies.json`, `faqs.json`.
+3. **Fix de retrieval EN** (`scripts/load_embeddings.py`): los chunks de pricing ahora llevan el `service_id` como prefijo (`[2_dives_1_day] Pricing for ...`). El `service_id` con guiones bajos se tokeniza como palabras separadas en el índice BM25 (`simple` dictionary), dando ventaja léxica al chunk correcto cuando la query menciona el número de inmersiones exacto. `2_dives_1_day:pricing` pasó de posición 4ª a 2ª en EN para "How much is the 2 dives 1 day plan in USD?".
+
+### Resultado
+
+- Snapshot: `docs/project-history/rag-baseline-2026-07-01-final.json`
+- **39/39** casos cumplen la expectativa de modo (mejora de 38/39 de junio).
+- 35 respuestas, 0 fallbacks, 4 clarificaciones.
+- `en_price_2_dives` corregido: dejó de dar fallback gracias al fix de retrieval.
+- `es_payment_transfer_qr` también corregido: antes era fallback, ahora responde (mejoró con la nueva KB).
+
+### Pendientes cualitativos (modo correcto pero calidad mejorable)
+
+1. ~~**`en_followup_islands`**~~ ✅ **RESUELTO** — Fix en `query_rewriter._should_condense`: umbral bajado de 2 user messages previos a 1. La query "and if I'm already on the islands?" ahora se condensa a "How does the PADI Open Water course work if I'm already on the islands?" y el retrieval devuelve el FAQ específico de OW en isla.
+2. **`es_price_local_cop`**: lista 6 paquetes (3/4/5/7/9 dives + snorkeling) pero omite 2_dives ($630.000 COP) y minicurso ($655.000 COP). El test pasa en modo (answer), pero la respuesta es incompleta.
+   - **Causa raíz confirmada**: el top-8 cutoff excluye `2_dives_1_day:pricing` (rank 9, score 0.5184) y `minicourse:pricing` (rank 10, score 0.5053). Los rankings 1-8 los ocupan 2 FAQs de divisa + 6 chunks de precios de paquetes grandes.
+   - **Intentos de fix (todos revertidos)**:
+     - `top_k=8→10`: trae los 2 chunks faltantes pero el verifier LLM se vuelve inestable con más contexto — `en_price_2_dives` y `es_isla_grande_from_there` empezaron a dar fallback. Revertido.
+     - FAQ comprensivo de precios COP añadido a `faqs.json` (question: "¿Cuanto cuesta en pesos para colombianos? Lista de precios COP…"): queda en rank 21+. El embedding se diluye por la respuesta larga con muchos números. No se recupera en top-8.
+     - Enriquecimiento del FAQ "Los colombianos pagan diferente?" con mini-lista de precios: causó rechazo por grounding (formato de montos "$630.000" vs "$630,000" confunde el verifier). Revertido.
+   - **Estado actual**: FAQ comprensivo de precios COP queda en KB (`faqs.json`, último entry). Útil para consultas directas ("cuánto cuestan todos los servicios en pesos") pero no rescata `es_price_local_cop`. Limitación documentada, sin fix limpio conocido.
+3. **`es_hotel_pickup_pao_pao`**: responde pero sin certeza sobre si el hotel tiene muelle propio. La KB no tiene una matriz hotel→acceso marítimo explícita; pendiente confirmar con el owner.
+
+### Lección sobre el verifier LLM
+
+El verifier LLM (`is_grounded`) tiene no-determinismo inherente incluso a `temperature=0`. Los guards deterministas (`currency_amounts_grounded`, `urls_grounded`) son los que realmente protegen contra precios inventados — el verifier añade una segunda capa para otro tipo de hallucinations pero no debe considerarse 100% estable run a run. Cambios en su prompt deben validarse con al menos 3 runs del baseline para descartar que son solo ruido aleatorio.
