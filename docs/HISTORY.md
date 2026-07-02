@@ -1,6 +1,11 @@
 History
 =======
 
+0.18.2 - (2026-07-02)
+---------------------
+* KB update desde Q&A del owner (10 cambios): (1) `discounts.json` → `group_discount.applicability` corregido: no aplica a cursos PADI y no se aplica automáticamente (requiere contactar al equipo). (2-11) `faqs.json` → 10 nuevas FAQs: precio Bubble Makers ($187 USD), política de clima cuando se pierde un día de curso (retoma al día siguiente, cliente paga hotel extra), llegada tarde con lancha ya partida (no hay reembolso), idiomas de instructores (español e inglés únicamente), certificación PADI = eCard digital (no existe tarjeta física), combinación de cursos/especialidades en el mismo viaje (sí, si hay tiempo), máscaras graduadas disponibles (dioptrias 2, 3, 4), equipo para niños (BCD pequeño + botellas pequeñas), tanques de Nitrox bajo pedido ($10/tanque, $20 para 2 buceos). También actualizada la FAQ de clima para reflejar que siempre se prefiere reprogramar antes que reembolsar.
+* KB: 779 docs tras reindexar (+18 vs v0.18.1). Baseline RAG: **39/39** estable.
+
 0.18.1 - (2026-07-02)
 ---------------------
 * Fix RAG `es_price_local_cop`: los chunks de pricing de `2_dives_1_day` y `minicurso` caían en rank 9-10 (fuera del top-8) para queries de COP. Solución: campo `price_note_es` en `services.json` con texto "En pesos colombianos (COP): $X COP" — da señal BM25 directa para "pesos colombianos". `load_embeddings.py` ya elige `price_note_{lang}` antes de `price_note` genérico (mismo patrón que `name_{lang}` / `description_{lang}`). El `price_note` EN permanece limpio (sin texto en español) para evitar que el verificador `is_grounded` rechace respuestas en USD al ver contenido mixto.
