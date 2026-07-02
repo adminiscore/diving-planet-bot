@@ -252,4 +252,7 @@ El verifier LLM (`is_grounded`) tiene no-determinismo inherente incluso a `tempe
    - **Causa raíz**: gap de KB — no había ninguna entrada que mencionara euros.
    - **Fix**: añadida FAQ bilingüe "¿Puedo pagar en euros?" en `faqs.json`. BM25 ahora matchea el token `euros` directamente al chunk correcto. Baseline 39/39 sin regresiones.
 
-4. **Sin pendientes cualitativos activos.** Próxima área de trabajo: MESSAGE_SPLIT, PADI Advanced sin pregunta de ubicación/costo, y hotel aliases (ver session-handoff.md).
+4. ~~**`MESSAGE_SPLIT verification`**~~ ✅ **VERIFICADO (2026-07-02)** — El sentinel `<<<SPLIT>>>` funciona correctamente end-to-end: `decision_tree.py` lo produce al solicitar el itinerario completo, y `finalize_chatwoot_delivery` en `chatwoot.py` lo divide en 2 mensajes separados con quick_replies solo en el último.
+   - **Tests añadidos**: `TestMessageSplitSentinel` (4 casos en `test_decision_tree.py`) + 2 tests en `test_chatwoot_buttons.py`. 66/66 suite completa.
+
+5. **Siguiente área de trabajo**: PADI Advanced/Specialties sin pregunta de ubicación/costo y hotel aliases (ver session-handoff.md).

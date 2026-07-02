@@ -215,3 +215,51 @@ async def test_handle_message_executes_handoff_when_supervisor_escalates(monkeyp
         ("handoff", "321", "medical_questions", "lead note"),
         ("message", "321", "te conecto con el equipo", []),
     ]
+
+
+@pytest.mark.asyncio
+async def test_finalize_chatwoot_delivery_splits_message_on_sentinel(monkeypatch):
+    """MESSAGE_SPLIT sentinel must produce two separate send_chatwoot_message calls.
+    Quick replies are attached only to the last part.
+    """
+    from src.flows.decision_tree import MESSAGE_SPLIT, ConversationState
+    from src.channels.chatwoot import finalize_chatwoot_delivery
+
+    sent = []
+
+    async def fake_send(conversation_id, message, quick_replies=None):
+        sent.append((conversation_id, message, quick_replies))
+
+    monkeypatch.setattr(chatwoot, "send_chatwoot_message", fake_send)
+
+    state = ConversationState(conversation_id="test-split")
+    state.quick_replies = [{"title": "Sí", "value": "1"}]
+
+    response = f"Primera parte del itinerario{MESSAGE_SPLIT}¿Quieres saber algo más?"
+    await finalize_chatwoot_delivery("42", state, response)
+
+    assert len(sent) == 2, "Should dispatch exactly 2 messages when MESSAGE_SPLIT present"
+    assert sent[0] == ("42", "Primera parte del itinerario", None)
+    assert sent[1] == ("42", "¿Quieres saber algo más?", [{"title": "Sí", "value": "1"}])
+
+
+@pytest.mark.asyncio
+async def test_finalize_chatwoot_delivery_single_message_without_sentinel(monkeypatch):
+    """Without MESSAGE_SPLIT, a single send_chatwoot_message call is made with quick_replies."""
+    from src.flows.decision_tree import ConversationState
+    from src.channels.chatwoot import finalize_chatwoot_delivery
+
+    sent = []
+
+    async def fake_send(conversation_id, message, quick_replies=None):
+        sent.append((conversation_id, message, quick_replies))
+
+    monkeypatch.setattr(chatwoot, "send_chatwoot_message", fake_send)
+
+    state = ConversationState(conversation_id="test-single")
+    state.quick_replies = [{"title": "Ok", "value": "1"}]
+
+    await finalize_chatwoot_delivery("99", state, "Respuesta normal sin split")
+
+    assert len(sent) == 1
+    assert sent[0] == ("99", "Respuesta normal sin split", [{"title": "Ok", "value": "1"}])

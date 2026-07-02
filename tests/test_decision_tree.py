@@ -631,6 +631,69 @@ class TestMixedCertificationSplit:
         assert state.island == "Isla Grande"
 
 
+class TestMessageSplitSentinel:
+    """Verify that 'Ver itinerario completo' produces MESSAGE_SPLIT in the response
+    so that chatwoot.py can dispatch two separate chat messages.
+
+    The sentinel is defined in decision_tree.py as MESSAGE_SPLIT = '<<<SPLIT>>>'.
+    chatwoot.py detects it in finalize_chatwoot_delivery and sends each part as
+    a separate message, attaching quick_replies only to the last one.
+    """
+
+    def setup_method(self):
+        self.tree = DecisionTree()
+
+    def _reach_itinerary_offer(self, service="2_dives_1_day", lang="es") -> "ConversationState":
+        state = make_state()
+        state.language = lang
+        state.step = Step.COLOMBIAN
+        state.selected_service = service
+        state.location = "cartagena"
+        self.tree.process_message(state, "2")  # No soy colombiano → SUMMARY/itinerary_offer
+        return state
+
+    def test_itinerary_action_contains_message_split_sentinel(self):
+        from src.flows.decision_tree import MESSAGE_SPLIT
+        state = self._reach_itinerary_offer()
+        assert state.step == Step.SUMMARY
+
+        response = self.tree.process_message(state, "itinerary")
+
+        assert MESSAGE_SPLIT in response, (
+            "Response must contain MESSAGE_SPLIT so chatwoot sends two messages"
+        )
+
+    def test_itinerary_response_splits_into_two_non_empty_parts(self):
+        from src.flows.decision_tree import MESSAGE_SPLIT
+        state = self._reach_itinerary_offer()
+
+        response = self.tree.process_message(state, "itinerary")
+
+        parts = [p.strip() for p in response.split(MESSAGE_SPLIT) if p.strip()]
+        assert len(parts) == 2, f"Expected 2 parts after split, got {len(parts)}"
+        assert len(parts[0]) > 20, "First part (itinerary) should not be empty"
+        assert len(parts[1]) > 3, "Second part (follow-up prompt) should not be empty"
+
+    def test_itinerary_first_part_contains_itinerary_content(self):
+        from src.flows.decision_tree import MESSAGE_SPLIT
+        state = self._reach_itinerary_offer()
+
+        response = self.tree.process_message(state, "itinerary")
+        first_part = response.split(MESSAGE_SPLIT)[0].strip()
+
+        assert "🗺️" in first_part or "itinerario" in first_part.lower() or "Itinerary" in first_part
+
+    def test_itinerary_second_part_is_follow_up_prompt(self):
+        from src.flows.decision_tree import MESSAGE_SPLIT
+        state = self._reach_itinerary_offer()
+
+        response = self.tree.process_message(state, "itinerary")
+        second_part = response.split(MESSAGE_SPLIT)[-1].strip()
+
+        assert len(second_part) > 0
+        assert MESSAGE_SPLIT not in second_part
+
+
 class TestColombianNotAskedTwice:
     """Regression: COLOMBIAN must be skipped when state.is_colombian is already known.
 
