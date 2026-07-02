@@ -260,4 +260,7 @@ El verifier LLM (`is_grounded`) tiene no-determinismo inherente incluso a `tempe
    - **Fix**: guard `state.location is None and base_service in ISLAND_SERVICE_MAP` en los 3 puntos (advanced_menu, specialties_menu, referral en courses_menu). Handler genérico usa `state.selected_service` como curso pendiente. `mindful_diving`, `rescue` y `divemaster` (sin variante isla) no se ven afectados.
    - **Tests**: `TestPadiCoursesLocationQuestion` (7 casos). Suite completa: 73/73.
 
-6. **Siguiente área de trabajo**: hotel aliases y E2E retests pendientes (ver session-handoff.md).
+6. ~~**`en_followup_islands`**~~ ✅ **CONFIRMADO RESUELTO (2026-07-02)** — Baseline `rag-baseline-2026-07-02-check.json` ejecutado: 39/39, 35 respuestas / 0 fallbacks / 4 clarificaciones. `en_followup_islands` produce respuesta centrada en Open Water desde islas (itinerario 2 días, precio, requisitos) sin abrir el catálogo general.
+   - **Mecanismo**: query rewriter condensa `"and if I'm already on the islands?"` (7 palabras, activa `_should_condense`) → `"How does the PADI Open Water course work if I'm already on the islands?"`. BM25 matchea `open_water` + `islands` directamente al FAQ de OW en isla.
+   - **Fix original**: `query_rewriter._should_condense` — umbral bajado de `>=2` a `>=1` user messages (2026-07-01). La referencia como "pendiente" en session-handoff era un stale de los JSONs capturados antes de ese fix.
+   - **No quedan fallos cualitativos pendientes en la baseline actual.**

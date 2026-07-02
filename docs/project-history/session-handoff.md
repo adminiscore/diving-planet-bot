@@ -170,7 +170,7 @@ Read this file before changing code in the Diving Planet Bot. For a quick versio
 - COP pricing is now in the KB; bot needs a restart in WSL2 to serve it after the re-index run. Embeddings reindex done (445 docs) para incluir nuevos servicios y ajustes de precios.
 - `CHATWOOT_OWNER_AGENT_ID=1` should be added to `.env` (owner agent ID confirmed via `/api/v1/profile`).
 - Next session priorities:
-  - **RAG calidad (en curso)**: `en_followup_islands` (responde pero abre catálogo completo en vez de mantenerse en Open Water). Ver `docs/rag-prioridades-baseline.md` baseline 2026-07-02.
+  - **RAG calidad**: ~~`en_followup_islands`~~ ✅ resuelto (fix 2026-07-01, confirmado 2026-07-02 — baseline 39/39). No quedan fallos cualitativos RAG pendientes en la baseline actual. Ver `docs/rag-prioridades-baseline.md` para detalle.
   - **Live E2E retests requeridos (v0.18.1)** — requieren Chatwoot widget activo:
     - Preguntar "¿cuánto en pesos colombianos?" → RAG debe responder con precios COP de 2 buceos y minicurso (ya indexados).
     - Preguntar "¿me recogen en Pao Pao?" → RAG debe expresar incertidumbre sobre el muelle (no sobreafirmar acceso marítimo).
