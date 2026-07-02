@@ -212,15 +212,32 @@ Recomendación de continuación:
 ### Pendientes cualitativos (modo correcto pero calidad mejorable)
 
 1. ~~**`en_followup_islands`**~~ ✅ **RESUELTO** — Fix en `query_rewriter._should_condense`: umbral bajado de 2 user messages previos a 1. La query "and if I'm already on the islands?" ahora se condensa a "How does the PADI Open Water course work if I'm already on the islands?" y el retrieval devuelve el FAQ específico de OW en isla.
-2. **`es_price_local_cop`**: lista 6 paquetes (3/4/5/7/9 dives + snorkeling) pero omite 2_dives ($630.000 COP) y minicurso ($655.000 COP). El test pasa en modo (answer), pero la respuesta es incompleta.
-   - **Causa raíz confirmada**: el top-8 cutoff excluye `2_dives_1_day:pricing` (rank 9, score 0.5184) y `minicourse:pricing` (rank 10, score 0.5053). Los rankings 1-8 los ocupan 2 FAQs de divisa + 6 chunks de precios de paquetes grandes.
-   - **Intentos de fix (todos revertidos)**:
-     - `top_k=8→10`: trae los 2 chunks faltantes pero el verifier LLM se vuelve inestable con más contexto — `en_price_2_dives` y `es_isla_grande_from_there` empezaron a dar fallback. Revertido.
-     - FAQ comprensivo de precios COP añadido a `faqs.json` (question: "¿Cuanto cuesta en pesos para colombianos? Lista de precios COP…"): queda en rank 21+. El embedding se diluye por la respuesta larga con muchos números. No se recupera en top-8.
-     - Enriquecimiento del FAQ "Los colombianos pagan diferente?" con mini-lista de precios: causó rechazo por grounding (formato de montos "$630.000" vs "$630,000" confunde el verifier). Revertido.
-   - **Estado actual**: FAQ comprensivo de precios COP queda en KB (`faqs.json`, último entry). Útil para consultas directas ("cuánto cuestan todos los servicios en pesos") pero no rescata `es_price_local_cop`. Limitación documentada, sin fix limpio conocido.
+2. ~~**`es_price_local_cop`**~~ ✅ **RESUELTO (2026-07-02)** — La respuesta ahora incluye `2_dives_1_day` ($630,000 COP) y `minicourse` ($655,000 COP) en los 3 runs de verificación. Baseline 39/39 sin regresiones.
+   - **Causa raíz**: el top-8 cutoff excluía `2_dives_1_day:pricing` (rank 9) y `minicourse:pricing` (rank 10). Los 6 paquetes grandes tenían mayor cosine similarity para "pesos colombianos" porque los chunks de 1 día no contenían esos tokens.
+   - **Fix aplicado**: se añadió `"En pesos colombianos (COP): $630,000 COP online / $700,000 COP precio normal."` al campo `price_note` de `2_dives_1_day` en `services.json`. Igual para `minicourse` con sus valores. Esto introduce los tokens BM25 `pesos` + `colombianos` exclusivamente en esos dos chunks → RRF los sube a ranks 1 y 2 (scores 0.5637 y 0.5389).
+   - **Intentos previos (todos revertidos)**: `top_k=8→10` (inestabilidad del verifier LLM), FAQ comprensivo largo (embedding dilution, rank 21+), enriquecimiento del FAQ de moneda (conflicto de formato periodo vs coma con el verifier).
+   - **También corregido**: formato `$727.000` → `$727,000` en `price_note` de minicourse para evitar confusión futura del verifier LLM.
 3. **`es_hotel_pickup_pao_pao`**: responde pero sin certeza sobre si el hotel tiene muelle propio. La KB no tiene una matriz hotel→acceso marítimo explícita; pendiente confirmar con el owner.
 
 ### Lección sobre el verifier LLM
 
 El verifier LLM (`is_grounded`) tiene no-determinismo inherente incluso a `temperature=0`. Los guards deterministas (`currency_amounts_grounded`, `urls_grounded`) son los que realmente protegen contra precios inventados — el verifier añade una segunda capa para otro tipo de hallucinations pero no debe considerarse 100% estable run a run. Cambios en su prompt deben validarse con al menos 3 runs del baseline para descartar que son solo ruido aleatorio.
+
+## Baseline 2026-07-02 (fix es_price_local_cop via price_note BM25 enrichment)
+
+### Cambios aplicados antes de esta baseline
+
+1. **`services.json` — `price_note` enrichment**: añadido `"En pesos colombianos (COP): $630,000 COP online / $700,000 COP precio normal."` a `2_dives_1_day`. Añadido `"En pesos colombianos (COP): $655,000 COP online / $727,000 COP precio normal."` a `minicourse`. Corregido también formato `$727.000` → `$727,000` en el `price_note` previo de minicourse.
+2. **`faqs.json`** — FAQ corto de precios COP para colombianos añadido (para cobertura de consultas directas). FAQ comprensivo de precios COP ya existente: formato corregido de periodo a coma en todos los montos.
+3. **KB reindexada**: 757 documentos tras el reindex.
+4. `2_dives_1_day:pricing` subió de rank 9 (score 0.5184) a rank 1 (score 0.5637). `minicourse:pricing` subió de rank 10 (score 0.5053) a rank 2 (score 0.5389).
+
+### Resultado
+
+- **39/39** casos cumplen la expectativa de modo.
+- 35 respuestas, 0 fallbacks, 4 clarificaciones.
+- `es_price_local_cop` corregido: ahora incluye 2_dives ($630,000 COP) y minicurso ($655,000 COP) de forma consistente (3/3 runs verificados).
+
+### Pendientes cualitativos
+
+1. **`es_hotel_pickup_pao_pao`**: responde pero sin certeza sobre si el hotel tiene muelle propio. Pendiente confirmar matriz hotel→acceso marítimo con el owner.
