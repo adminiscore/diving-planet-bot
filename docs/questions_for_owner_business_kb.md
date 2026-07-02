@@ -169,7 +169,7 @@ Necesitamos confirmar:
 
 ---
 
-### 4. Descuento de grupo ✅ RESUELTO (regla principal)
+### 4. Descuento de grupo ✅ RESUELTO (ronda 4 — completo en lo clave)
 
 **Respuesta (ronda 2):** la regla de **4+ personas = 5%** queda **obsoleta
 y se elimina**. Nueva regla: **5+ personas = 10% extra**, y si además
@@ -192,10 +192,9 @@ Necesitamos confirmar:
 
 ---
 
-### 5. Precio Bubble Makers (8-10 años) ⏳ SIN RESPUESTA
+### 5. Precio Bubble Makers (8-10 años) ✅ RESUELTO (ronda 4)
 
-**Respuesta (ronda 3):** aún no está definido. El bot debe seguir
-escalando esta consulta sin dar precio.
+**Respuesta (ronda 4):** $187 USD por persona. Implementado en `faqs.json`. El bot ya puede responder con precio.
 
 El flujo ya contempla derivar a Bubble Makers para niños de 8 a 10 años, pero no tenemos precio en la KB.
 
@@ -373,11 +372,10 @@ Necesitamos confirmar:
 
 ---
 
-### 13. Clima / capitanía / reembolsos ⏳ EN PAUSA
+### 13. Clima / capitanía / reembolsos ✅ RESUELTO (ronda 4 — parcial)
 
-**Respuesta (ronda 3):** el owner pidió dejarla **en pendiente** por ahora
-(no la respondió todavía). No tocar el comportamiento actual hasta que la
-responda.
+**Respuesta (ronda 3):** el owner pidió dejarla **en pendiente** por ahora.
+**Respuesta (ronda 4):** siempre se prefiere reprogramar antes de reembolsar. Si Capitanía cierra y no es posible reagendar → reembolso 100%. Implementado en `faqs.json` (FAQ clima actualizada). Pendiente: ¿cuánto tarda el reembolso?, ¿qué pasa si el clima no cancela oficialmente pero cambia el plan?
 
 Aquí sí tenemos una parte cubierta: si Capitanía cierra salidas, se menciona reembolso 100%.
 
@@ -612,7 +610,9 @@ Necesitamos confirmar:
 
 ---
 
-### 24. Cursos interrumpidos por clima
+### 24. Cursos interrumpidos por clima ✅ RESUELTO (ronda 4 — parcial)
+
+**Respuesta (ronda 4):** si un curso pierde un día por clima, la actividad se retoma al día siguiente. El cliente asume el coste de la noche de hotel adicional (el alojamiento no está incluido). Implementado en `faqs.json`. Pendiente: ¿hay límite de días que se puede alargar?, ¿qué pasa si el cliente ya tiene vuelo?, ¿reembolso parcial si no puede completarse?
 
 Hoy no tenemos política clara sobre cursos multi-día cuando el clima interrumpe una jornada.
 
@@ -628,10 +628,9 @@ Necesitamos confirmar:
 
 ## 2.7 Cursos PADI — operativa, idiomas y combos
 
-### 25. Idiomas del staff y materiales PADI ⏳ EN PAUSA
+### 25. Idiomas del staff y materiales PADI ✅ RESUELTO (ronda 4)
 
-**Respuesta (ronda 3):** "pendiente" — no respondida todavía. El bot debe
-seguir asumiendo solo ES/EN hasta nueva confirmación.
+**Respuesta (ronda 4):** los instructores imparten en **español e inglés únicamente**. No hay instrucción en otros idiomas. Implementado en `faqs.json`.
 
 Hoy todo el bot trabaja en ES/EN, pero no sabemos qué soportan los instructores y el material PADI.
 
@@ -665,9 +664,9 @@ Necesitamos confirmar:
 
 ---
 
-### 27. Entrega de certificación PADI ⏳ EN PAUSA
+### 27. Entrega de certificación PADI ✅ RESUELTO (ronda 4)
 
-**Respuesta (ronda 3):** "pendiente" — no respondida todavía.
+**Respuesta (ronda 4):** PADI ya **no emite tarjeta física**. La certificación es una **eCard digital** entregada via la app de PADI. Válida para bucear en cualquier parte del mundo. Implementado en `faqs.json`.
 
 Hoy el bot menciona que el cliente recibe certificación tras el curso, pero no detalla el cómo.
 
@@ -681,9 +680,9 @@ Necesitamos confirmar:
 
 ---
 
-### 28. Combos de cursos y especialidades ⏳ EN PAUSA
+### 28. Combos de cursos y especialidades ✅ RESUELTO (ronda 4 — parcial)
 
-**Respuesta (ronda 3):** "pendiente" — no respondida todavía.
+**Respuesta (ronda 4):** sí es posible combinar cursos y especialidades en el mismo viaje si hay tiempo suficiente. El cliente debe contactar por WhatsApp para planificar el itinerario. Implementado en `faqs.json`. Pendiente: ¿hay descuento o pack si se compran varias especialidades juntas?
 
 Hoy cada curso/especialidad se vende como producto independiente.
 
@@ -760,7 +759,9 @@ Necesitamos confirmar:
 
 ---
 
-### 33. Máscara graduada / corrección dioptrías
+### 33. Máscara graduada / corrección dioptrías ✅ RESUELTO (ronda 4)
+
+**Respuesta (ronda 4):** disponibles en **dioptrías 2, 3 y 4**. Sin coste adicional (incluido en el equipo). Avisar al reservar. Implementado en `faqs.json`.
 
 Hoy no hay información en la KB.
 
@@ -773,7 +774,9 @@ Necesitamos confirmar:
 
 ---
 
-### 34. Equipo para niños (Bubble Makers y minicurso)
+### 34. Equipo para niños (Bubble Makers y minicurso) ✅ RESUELTO (ronda 4)
+
+**Respuesta (ronda 4):** disponemos de **BCD pequeño y botellas pequeñas** para niños. Cubre Bubble Makers (8-10 años) y minicurso (desde 10 años). Implementado en `faqs.json`.
 
 Hoy el flujo deriva a Bubble Makers para 8-10 años, pero no sabemos si hay equipo dedicado.
 
@@ -786,7 +789,9 @@ Necesitamos confirmar:
 
 ---
 
-### 35. Nitrox — operativa más allá del curso
+### 35. Nitrox — operativa más allá del curso ✅ RESUELTO (ronda 4)
+
+**Respuesta (ronda 4):** tanques de Nitrox disponibles **bajo pedido** (avisar al reservar). Precio: **$10 USD/tanque** ($20 USD si se hacen 2 inmersiones). Requiere certificación Nitrox. Implementado en `faqs.json`.
 
 La KB tiene el precio del curso Nitrox, pero falta la operativa de uso post-certificación.
 
@@ -960,5 +965,35 @@ Necesitamos confirmar:
 #23 (clima por actividad), #24 (cursos interrumpidos por clima), #31–35 (tallas, lastres, máscara graduada, equipo niños, Nitrox), #37–39 (pago/momento de extras, cuándo ofrecerlos, packs y promociones), #41 (timing exacto de recordatorios).
 
 **Nota:** dado que varias preguntas técnicas/operativas (idiomas, certificación, combos, Divemaster, hoteles, extras) están volviendo como "pendiente", probablemente requieran que el owner consulte con su equipo en vez de responder sobre la marcha. Vale la pena dejarlas para una ronda posterior y priorizar mientras tanto implementar todo lo ya resuelto.
+
+## 5. Seguimiento ronda 4 (2026-07-02)
+
+### Nuevos ✅ resueltos esta ronda (implementados en KB v0.18.2)
+
+- **#4** (complemento) Descuento de grupo: NO aplica a cursos PADI y NO es automático — el grupo debe contactar al equipo.
+- **#5** Precio Bubble Makers: $187 USD/persona. `faqs.json`.
+- **#13** (parcial) Clima: preferir reprogramar antes de reembolsar; si no es posible → 100% reembolso. `faqs.json` actualizada.
+- **#24** (parcial) Curso interrumpido por clima: retoma al día siguiente, cliente paga hotel extra. `faqs.json`.
+- **#25** Idiomas staff: español e inglés únicamente. `faqs.json`.
+- **#27** Certificación PADI: eCard digital, no existe tarjeta física. `faqs.json`.
+- **#28** (parcial) Combos cursos/especialidades: sí, si hay tiempo; contactar por WhatsApp para planificar. `faqs.json`.
+- **#33** Máscara graduada: dioptrías 2, 3, 4. `faqs.json`.
+- **#34** Equipo para niños: BCD pequeño + botellas pequeñas. `faqs.json`.
+- **#35** Nitrox post-certificación: disponible bajo pedido, $10/tanque ($20 para 2 buceos). `faqs.json`.
+- También añadido: llegada tarde con lancha ya partida → no hay reembolso (sub-caso de #20). `faqs.json`.
+
+### Siguen pendientes (no respondidas o necesitan más info)
+
+- **#1** Fuente oficial de precios (pricing.json vs services.json) — revisión conjunta pendiente.
+- **#2** Descuento colombianos — política aún no definida.
+- **#13** (matiz) ¿Cuánto tarda el reembolso? ¿Qué pasa si el clima no cancela oficialmente?
+- **#19** Matriz hoteles prioritarios — el owner necesita verificar con su equipo.
+- **#20** (resto) Tarifas por zona, hoteles fuera del selector, punto de encuentro alternativo, grupo con hoteles distintos, equipaje.
+- **#24** (matiz) ¿Límite de días para alargar curso? ¿Cliente con vuelo fijo? ¿Reembolso parcial si no puede completarse?
+- **#28** (matiz) ¿Descuento o pack por varias especialidades juntas?
+- **#29** Divemaster (duración, requisitos visibles) — pendiente.
+- **#31–32** Tallas extremas, lastres/tanques para biotipos — sin preguntar.
+- **#36–39** Catálogo de extras, momento de pago, cuándo ofrecerlos, packs/promociones — sin definir.
+- **#40–41** Contenido y timing exacto de recordatorios — canal resuelto (email ROVERD), contenido pendiente.
 
 
