@@ -5627,6 +5627,11 @@ class DecisionTree:
 
         if state.selected_service:
             state.selected_service = self._service_for_location(state.selected_service, state)
+        if state.is_colombian is not None:
+            state.step = Step.SUMMARY
+            state.summary_mode = "itinerary_offer"
+            self.set_quick_replies(state, self._itinerary_offer_quick_replies_key(state))
+            return self._format_summary(state)
         state.step = Step.COLOMBIAN
         self.set_quick_replies(state, "colombian")
         return MESSAGES["colombian"][lang]
@@ -6479,13 +6484,19 @@ class DecisionTree:
         """Manda al usuario al step LOCATION con un prompt que explica el coste
         de cada opción (Cartagena con transporte vs ya en islas con precio reducido).
 
-        Si state.location ya está seteada (por ejemplo desde tests o conversación
-        restaurada), saltamos LOCATION y vamos directo a COLOMBIAN.
+        Si state.location ya está seteada, saltamos LOCATION. Si además
+        state.is_colombian ya se conoce (de un flujo de pricing previo u otra
+        rama), saltamos también COLOMBIAN y vamos directo a SUMMARY.
         """
         lang = state.language
         if state.location is not None:
             if state.selected_service:
                 state.selected_service = self._service_for_location(state.selected_service, state)
+            if state.is_colombian is not None:
+                state.step = Step.SUMMARY
+                state.summary_mode = "itinerary_offer"
+                self.set_quick_replies(state, self._itinerary_offer_quick_replies_key(state))
+                return self._format_summary(state)
             state.step = Step.COLOMBIAN
             self.set_quick_replies(state, "colombian")
             return MESSAGES["colombian"][lang]

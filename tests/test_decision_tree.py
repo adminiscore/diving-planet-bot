@@ -629,3 +629,83 @@ class TestMixedCertificationSplit:
         assert state.step == Step.MIXED_ADD_CERT_PLAN
         assert state.hotel == "San Pedro de Majagua"
         assert state.island == "Isla Grande"
+
+
+class TestColombianNotAskedTwice:
+    """Regression: COLOMBIAN must be skipped when state.is_colombian is already known.
+
+    Bug: _handle_location and _goto_location_with_costs both transition unconditionally
+    to Step.COLOMBIAN, ignoring a previously set is_colombian value. This causes the
+    bot to ask 'Eres colombiano?' twice in the same session.
+    """
+
+    def setup_method(self):
+        self.tree = DecisionTree()
+
+    def _make_es_state(self) -> ConversationState:
+        state = make_state()
+        state.language = "es"
+        return state
+
+    def test_colombian_not_asked_after_pricing_flow(self):
+        """Scenario: user answers PRICING_COLOMBIAN, then starts a service booking.
+        When _handle_location fires, it must skip COLOMBIAN and go straight to SUMMARY.
+        """
+        state = self._make_es_state()
+        # Simulate user already answered Colombian via pricing flow
+        state.is_colombian = True
+        state.step = Step.LOCATION
+        state.selected_service = "2_dives_1_day"
+
+        # User picks Cartagena
+        resp = self.tree.process_message(state, "1")
+
+        # Must NOT land on COLOMBIAN - should jump to SUMMARY
+        assert state.step != Step.COLOMBIAN, (
+            "Bot asked '¿eres colombiano?' again even though is_colombian was already set"
+        )
+        assert state.step == Step.SUMMARY
+
+    def test_non_colombian_not_asked_after_pricing_flow(self):
+        """Same as above but for is_colombian=False (international guest)."""
+        state = self._make_es_state()
+        state.is_colombian = False
+        state.step = Step.LOCATION
+        state.selected_service = "2_dives_1_day"
+
+        resp = self.tree.process_message(state, "1")
+
+        assert state.step != Step.COLOMBIAN
+        assert state.step == Step.SUMMARY
+
+    def test_colombian_not_asked_when_location_already_set(self):
+        """Scenario: _goto_location_with_costs fires with location pre-set.
+        If is_colombian is already known, must skip COLOMBIAN and go to SUMMARY.
+        """
+        state = self._make_es_state()
+        state.is_colombian = True
+        state.location = "cartagena"
+        state.selected_service = "2_dives_1_day"
+
+        # Trigger _goto_location_with_costs path (location already set)
+        from src.flows.decision_tree import DecisionTree
+        tree = DecisionTree()
+        resp = tree._goto_location_with_costs(state)
+
+        assert state.step != Step.COLOMBIAN, (
+            "_goto_location_with_costs asked colombiano even though is_colombian was set"
+        )
+        assert state.step == Step.SUMMARY
+
+    def test_colombian_still_asked_when_not_yet_known(self):
+        """Guard: COLOMBIAN must still be asked when is_colombian is None."""
+        state = self._make_es_state()
+        state.is_colombian = None
+        state.step = Step.LOCATION
+        state.selected_service = "2_dives_1_day"
+
+        resp = self.tree.process_message(state, "1")
+
+        assert state.step == Step.COLOMBIAN, (
+            "Bot should ask colombiano when is_colombian is still None"
+        )

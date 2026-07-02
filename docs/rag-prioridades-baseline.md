@@ -244,4 +244,8 @@ El verifier LLM (`is_grounded`) tiene no-determinismo inherente incluso a `tempe
    - **Fix**: reescritura del FAQ 11083 (Pao Pao pickup) para separar explícitamente San Pedro/Cocoliso (base confirmada) de Pao Pao (logística pendiente de confirmar). El LLM dejó de overclaimar "Como Pao Pao tiene acceso marítimo."
    - **Pendiente a largo plazo**: si el owner confirma que Pao Pao tiene muelle propio, actualizar el FAQ con esa certeza para dar una respuesta más directa.
 
-2. **Sin pendientes cualitativos activos.** Próxima área de trabajo: decisión tree gaps y hotel aliases (ver session-handoff.md).
+2. ~~**`colombiano preguntado dos veces`**~~ ✅ **RESUELTO (2026-07-02)** — El bot ya no repite "¿eres colombiano/a?" si `state.is_colombian` ya fue respondido en la misma conversación (ej. vía flujo de precios → flujo de reserva).
+   - **Causa raíz**: `_handle_location` y `_goto_location_with_costs` transitaban incondicionalmente a `Step.COLOMBIAN` sin verificar `state.is_colombian`.
+   - **Fix**: añadido guard `if state.is_colombian is not None` en ambos puntos; si ya se conoce, salta directamente a `Step.SUMMARY` con `itinerary_offer`. Tests: `TestColombianNotAskedTwice` (4 casos, 52/52 suite completa).
+
+3. **Sin pendientes cualitativos activos.** Próxima área de trabajo: decision tree gaps restantes (euros routing, MESSAGE_SPLIT, PADI Advanced) y hotel aliases (ver session-handoff.md).
