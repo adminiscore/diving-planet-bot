@@ -772,3 +772,103 @@ class TestColombianNotAskedTwice:
         assert state.step == Step.COLOMBIAN, (
             "Bot should ask colombiano when is_colombian is still None"
         )
+
+
+class TestPadiCoursesLocationQuestion:
+    """Advanced/Specialties/Referral must ask location (Cartagena vs islands)
+    before adding to cart when state.location is None, just like Open Water does.
+
+    Bug: _handle_courses_advanced_menu and _handle_courses_specialties_menu
+    called _service_for_location before location was known, always defaulting
+    to the Cartagena variant regardless of where the user actually is.
+    """
+
+    def setup_method(self):
+        self.tree = DecisionTree()
+
+    def _make_es_state(self) -> "ConversationState":
+        state = make_state()
+        state.language = "es"
+        return state
+
+    def test_advanced_course_asks_location_when_unknown(self):
+        """Selecting Advanced when location is None must ask origin question."""
+        state = self._make_es_state()
+        state.step = Step.COURSES_ADVANCED_MENU
+
+        resp = self.tree.process_message(state, "1")  # Advanced
+
+        assert state.step == Step.COURSES_OPEN_WATER_ORIGIN, (
+            "Advanced course should ask location when state.location is None"
+        )
+        assert state.selected_service == "advanced"
+
+    def test_advanced_course_skips_location_when_already_set(self):
+        """If location is already known, Advanced goes straight to cart."""
+        state = self._make_es_state()
+        state.step = Step.COURSES_ADVANCED_MENU
+        state.location = "cartagena"
+
+        resp = self.tree.process_message(state, "1")  # Advanced
+
+        assert state.step != Step.COURSES_OPEN_WATER_ORIGIN
+
+    def test_specialty_asks_location_when_unknown(self):
+        """Selecting a specialty with island variant when location is None asks origin."""
+        state = self._make_es_state()
+        state.step = Step.COURSES_SPECIALTIES_MENU
+
+        resp = self.tree.process_message(state, "2")  # Fish ID
+
+        assert state.step == Step.COURSES_OPEN_WATER_ORIGIN, (
+            "Specialty with island variant should ask location when state.location is None"
+        )
+        assert state.selected_service == "fish_identification_specialty"
+
+    def test_mindful_diving_skips_location_question(self):
+        """mindful_diving has no island variant, so no location question."""
+        state = self._make_es_state()
+        state.step = Step.COURSES_SPECIALTIES_MENU
+
+        resp = self.tree.process_message(state, "1")  # mindful_diving
+
+        assert state.step != Step.COURSES_OPEN_WATER_ORIGIN
+
+    def test_referral_asks_location_when_unknown(self):
+        """Referral has an island variant so must ask location when unknown."""
+        state = self._make_es_state()
+        state.step = Step.COURSES_MENU
+
+        resp = self.tree.process_message(state, "4")  # Referral
+
+        assert state.step == Step.COURSES_OPEN_WATER_ORIGIN, (
+            "Referral should ask location when state.location is None"
+        )
+        assert state.selected_service == "referral"
+
+    def test_origin_answer_uses_pending_service_not_open_water(self):
+        """After answering Cartagena for Advanced, cart gets 'advanced' not 'open_water'."""
+        state = self._make_es_state()
+        state.step = Step.COURSES_ADVANCED_MENU
+        self.tree.process_message(state, "1")  # Advanced → origin question
+
+        assert state.step == Step.COURSES_OPEN_WATER_ORIGIN
+
+        self.tree.process_message(state, "1")  # Cartagena
+
+        # Should not be on origin step anymore; advanced added to cart or in qty step
+        assert state.step != Step.COURSES_OPEN_WATER_ORIGIN
+        # The pending course should be advanced, not open_water
+        pending_plan = state.mixed_pending_qty_plan
+        assert pending_plan in ("advanced", "advanced_already_on_island"), (
+            f"Expected advanced in cart, got {pending_plan}"
+        )
+
+    def test_origin_answer_island_maps_to_island_variant(self):
+        """After answering 'already on islands' for Advanced, gets island variant."""
+        state = self._make_es_state()
+        state.step = Step.COURSES_ADVANCED_MENU
+        self.tree.process_message(state, "1")  # Advanced → origin question
+        self.tree.process_message(state, "2")  # Already on islands
+
+        assert state.mixed_pending_qty_plan == "advanced_already_on_island"

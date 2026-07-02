@@ -5525,10 +5525,12 @@ class DecisionTree:
             self.set_quick_replies(state, "courses_specialties_menu")
             return MESSAGES["courses_specialties_menu"][lang]
         if choice == 4:
-            return self._start_mixed_course_add(
-                state,
-                self._service_for_location("referral", state),
-            )
+            if state.location is None and "referral" in ISLAND_SERVICE_MAP:
+                state.selected_service = "referral"
+                state.step = Step.COURSES_OPEN_WATER_ORIGIN
+                self.set_quick_replies(state, "courses_open_water_origin")
+                return MESSAGES["courses_open_water_origin"][lang]
+            return self._start_mixed_course_add(state, self._service_for_location("referral", state))
 
         self.set_quick_replies(state, "courses_menu")
         return MESSAGES["not_understood"][lang]
@@ -5545,11 +5547,13 @@ class DecisionTree:
             self.set_quick_replies(state, "courses_open_water_origin")
             return MESSAGES["not_understood"][lang]
 
-        return self._start_mixed_course_add(
-            state,
-            self._service_for_location("open_water", state),
-            "open_water_time",
-        )
+        # state.selected_service holds the pending course when this step is
+        # reused for Advanced/Specialties/Referral. Fallback to open_water
+        # for the original Open Water path.
+        pending = state.selected_service or "open_water"
+        is_open_water = pending in ("open_water", "open_water_already_on_island")
+        follow_up = "open_water_time" if is_open_water else None
+        return self._start_mixed_course_add(state, self._service_for_location(pending, state), follow_up)
 
     def _handle_courses_open_water_time(self, state: ConversationState, message: str) -> str:
         choice = self._parse_choice(message, 2)
@@ -5570,42 +5574,60 @@ class DecisionTree:
     def _handle_courses_advanced_menu(self, state: ConversationState, message: str) -> str:
         choice = self._parse_choice(message, 3)
         lang = state.language
-        course_map = {
-            1: self._service_for_location("advanced", state),
+        base_course_map = {
+            1: "advanced",
             2: "rescue",
             3: "divemaster",
         }
 
-        if choice in course_map:
-            if course_map[choice] in SPECIALTY_SERVICE_IDS and course_map[choice] not in SERVICES:
-                state.step = Step.ESCALATE
-                state.quick_replies = []
-                return MESSAGES["escalate"][lang]
-            return self._start_mixed_course_add(state, course_map[choice])
+        if choice not in base_course_map:
+            self.set_quick_replies(state, "courses_advanced_menu")
+            return MESSAGES["not_understood"][lang]
 
-        self.set_quick_replies(state, "courses_advanced_menu")
-        return MESSAGES["not_understood"][lang]
+        base_service = base_course_map[choice]
+
+        if base_service in SPECIALTY_SERVICE_IDS and base_service not in SERVICES:
+            state.step = Step.ESCALATE
+            state.quick_replies = []
+            return MESSAGES["escalate"][lang]
+
+        if state.location is None and base_service in ISLAND_SERVICE_MAP:
+            state.selected_service = base_service
+            state.step = Step.COURSES_OPEN_WATER_ORIGIN
+            self.set_quick_replies(state, "courses_open_water_origin")
+            return MESSAGES["courses_open_water_origin"][lang]
+
+        return self._start_mixed_course_add(state, self._service_for_location(base_service, state))
 
     def _handle_courses_specialties_menu(self, state: ConversationState, message: str) -> str:
         choice = self._parse_choice(message, 5)
         lang = state.language
-        course_map = {
+        base_course_map = {
             1: "mindful_diving",
-            2: self._service_for_location("fish_identification_specialty", state),
-            3: self._service_for_location("naturalist_specialty", state),
-            4: self._service_for_location("buoyancy_specialty", state),
-            5: self._service_for_location("nitrox_specialty", state),
+            2: "fish_identification_specialty",
+            3: "naturalist_specialty",
+            4: "buoyancy_specialty",
+            5: "nitrox_specialty",
         }
 
-        if choice in course_map:
-            if course_map[choice] in SPECIALTY_SERVICE_IDS and course_map[choice] not in SERVICES:
-                state.step = Step.ESCALATE
-                state.quick_replies = []
-                return MESSAGES["escalate"][lang]
-            return self._start_mixed_course_add(state, course_map[choice])
+        if choice not in base_course_map:
+            self.set_quick_replies(state, "courses_specialties_menu")
+            return MESSAGES["not_understood"][lang]
 
-        self.set_quick_replies(state, "courses_specialties_menu")
-        return MESSAGES["not_understood"][lang]
+        base_service = base_course_map[choice]
+
+        if base_service in SPECIALTY_SERVICE_IDS and base_service not in SERVICES:
+            state.step = Step.ESCALATE
+            state.quick_replies = []
+            return MESSAGES["escalate"][lang]
+
+        if state.location is None and base_service in ISLAND_SERVICE_MAP:
+            state.selected_service = base_service
+            state.step = Step.COURSES_OPEN_WATER_ORIGIN
+            self.set_quick_replies(state, "courses_open_water_origin")
+            return MESSAGES["courses_open_water_origin"][lang]
+
+        return self._start_mixed_course_add(state, self._service_for_location(base_service, state))
 
     def _handle_service_detail(self, state: ConversationState, message: str) -> str:
         # Fallback: show detail and go to location

@@ -255,4 +255,9 @@ El verifier LLM (`is_grounded`) tiene no-determinismo inherente incluso a `tempe
 4. ~~**`MESSAGE_SPLIT verification`**~~ ✅ **VERIFICADO (2026-07-02)** — El sentinel `<<<SPLIT>>>` funciona correctamente end-to-end: `decision_tree.py` lo produce al solicitar el itinerario completo, y `finalize_chatwoot_delivery` en `chatwoot.py` lo divide en 2 mensajes separados con quick_replies solo en el último.
    - **Tests añadidos**: `TestMessageSplitSentinel` (4 casos en `test_decision_tree.py`) + 2 tests en `test_chatwoot_buttons.py`. 66/66 suite completa.
 
-5. **Siguiente área de trabajo**: PADI Advanced/Specialties sin pregunta de ubicación/costo y hotel aliases (ver session-handoff.md).
+5. ~~**`PADI Advanced/Specialties sin pregunta de ubicación`**~~ ✅ **RESUELTO (2026-07-02)** — Advanced, Specialties y Referral ahora preguntan origen (Cartagena vs islas) cuando `state.location is None`, igual que Open Water. Se reusa el step `COURSES_OPEN_WATER_ORIGIN` haciéndolo genérico vía `state.selected_service`.
+   - **Causa raíz**: `_handle_courses_advanced_menu` y `_handle_courses_specialties_menu` llamaban `_service_for_location` antes de conocer la ubicación → siempre retornaban la variante Cartagena. `_handle_courses_open_water_origin` hardcodeaba "open_water".
+   - **Fix**: guard `state.location is None and base_service in ISLAND_SERVICE_MAP` en los 3 puntos (advanced_menu, specialties_menu, referral en courses_menu). Handler genérico usa `state.selected_service` como curso pendiente. `mindful_diving`, `rescue` y `divemaster` (sin variante isla) no se ven afectados.
+   - **Tests**: `TestPadiCoursesLocationQuestion` (7 casos). Suite completa: 73/73.
+
+6. **Siguiente área de trabajo**: hotel aliases y E2E retests pendientes (ver session-handoff.md).
