@@ -248,4 +248,8 @@ El verifier LLM (`is_grounded`) tiene no-determinismo inherente incluso a `tempe
    - **Causa raíz**: `_handle_location` y `_goto_location_with_costs` transitaban incondicionalmente a `Step.COLOMBIAN` sin verificar `state.is_colombian`.
    - **Fix**: añadido guard `if state.is_colombian is not None` en ambos puntos; si ya se conoce, salta directamente a `Step.SUMMARY` con `itinerary_offer`. Tests: `TestColombianNotAskedTwice` (4 casos, 52/52 suite completa).
 
-3. **Sin pendientes cualitativos activos.** Próxima área de trabajo: decision tree gaps restantes (euros routing, MESSAGE_SPLIT, PADI Advanced) y hotel aliases (ver session-handoff.md).
+3. ~~**`euros routing`**~~ ✅ **RESUELTO (2026-07-02)** — Queries como "¿cuánto cuesta en euros?" ahora reciben respuesta directa: "no manejamos precios en euros, los internacionales pagan en USD y tu banco hace la conversión automática."
+   - **Causa raíz**: gap de KB — no había ninguna entrada que mencionara euros.
+   - **Fix**: añadida FAQ bilingüe "¿Puedo pagar en euros?" en `faqs.json`. BM25 ahora matchea el token `euros` directamente al chunk correcto. Baseline 39/39 sin regresiones.
+
+4. **Sin pendientes cualitativos activos.** Próxima área de trabajo: MESSAGE_SPLIT, PADI Advanced sin pregunta de ubicación/costo, y hotel aliases (ver session-handoff.md).
