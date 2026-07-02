@@ -227,10 +227,10 @@ El verifier LLM (`is_grounded`) tiene no-determinismo inherente incluso a `tempe
 
 ### Cambios aplicados antes de esta baseline
 
-1. **`services.json` — `price_note` enrichment**: añadido `"En pesos colombianos (COP): $630,000 COP online / $700,000 COP precio normal."` a `2_dives_1_day`. Añadido `"En pesos colombianos (COP): $655,000 COP online / $727,000 COP precio normal."` a `minicourse`. Corregido también formato `$727.000` → `$727,000` en el `price_note` previo de minicourse.
-2. **`faqs.json`** — FAQ corto de precios COP para colombianos añadido (para cobertura de consultas directas). FAQ comprensivo de precios COP ya existente: formato corregido de periodo a coma en todos los montos.
-3. **KB reindexada**: 757 documentos tras el reindex.
-4. `2_dives_1_day:pricing` subió de rank 9 (score 0.5184) a rank 1 (score 0.5637). `minicourse:pricing` subió de rank 10 (score 0.5053) a rank 2 (score 0.5389).
+1. **`services.json` — `price_note_es` (nuevo campo)**: se añadió `price_note_es` a `2_dives_1_day` y `minicourse` con el texto "En pesos colombianos (COP): $630,000/$655,000 COP online / $700,000/$727,000 COP precio normal." El campo `price_note` queda como parte neutral (EN-safe). `load_embeddings.py` ahora usa `price_note_{lang}` con fallback a `price_note`, siguiendo el patrón existente de otros campos. Esto garantiza que el texto "pesos colombianos" solo entra en chunks ES (para BM25) y no en chunks EN (que el verifier LLM confundiría).
+2. **`faqs.json`** — FAQ corto de precios COP para colombianos añadido. FAQ comprensivo de precios COP: formato de periodo → coma en todos los montos. FAQ 11083 (Pao Pao pickup): reescrito para separar San Pedro/Cocoliso (base confirmada) de Pao Pao (necesita confirmación de muelle).
+3. **KB reindexada**: 759 documentos (2 más por el split de chunks ES/EN con contenido diferente).
+4. `2_dives_1_day:pricing` ES: rank 1 (score 0.5637, era rank 9). `minicourse:pricing` ES: rank 2 (score 0.5389, era rank 10).
 
 ### Resultado
 
@@ -240,4 +240,8 @@ El verifier LLM (`is_grounded`) tiene no-determinismo inherente incluso a `tempe
 
 ### Pendientes cualitativos
 
-1. **`es_hotel_pickup_pao_pao`**: responde pero sin certeza sobre si el hotel tiene muelle propio. Pendiente confirmar matriz hotel→acceso marítimo con el owner.
+1. ~~**`es_hotel_pickup_pao_pao`**~~ ✅ **RESUELTO (2026-07-02)** — La respuesta ahora expresa incertidumbre correctamente: "coordinamos recogida en Pao Pao, pero necesitamos confirmar la logística contigo. Dependiendo del acceso del hotel, la lancha puede llegar directo o puede que haya una caminata corta al muelle." 5/5 runs consistentes.
+   - **Fix**: reescritura del FAQ 11083 (Pao Pao pickup) para separar explícitamente San Pedro/Cocoliso (base confirmada) de Pao Pao (logística pendiente de confirmar). El LLM dejó de overclaimar "Como Pao Pao tiene acceso marítimo."
+   - **Pendiente a largo plazo**: si el owner confirma que Pao Pao tiene muelle propio, actualizar el FAQ con esa certeza para dar una respuesta más directa.
+
+2. **Sin pendientes cualitativos activos.** Próxima área de trabajo: decisión tree gaps y hotel aliases (ver session-handoff.md).

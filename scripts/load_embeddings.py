@@ -108,7 +108,7 @@ def _service_subchunks(service_id: str, service: dict, lang: str) -> list[dict]:
     description = service.get(f"description_{lang}", "")
     category = service.get("category", "")
     url = service.get("url", "")
-    price_note = service.get("price_note", "")
+    price_note = service.get(f"price_note_{lang}", service.get("price_note", ""))
     duration_days = service.get("duration_days")
     requires_certification = service.get("requires_certification")
 
