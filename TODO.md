@@ -19,8 +19,7 @@
 - [ ] Configurar DNS: `pre.divingplanet.org` → IP del VPS.
 - [ ] Copiar repo al VPS (`git clone`).
 - [ ] Copiar `.env.pre.example` a `.env.pre` y configurar API keys + contraseñas fuertes.
-- [ ] Levantar VPS: `docker compose -f docker-compose.vps.yml up -d --build`.
-- [ ] Crear DB de Chatwoot: `docker exec dp-pro-postgres psql -U postgres -c "CREATE DATABASE chatwoot_production;"`.
+- [ ] Levantar VPS: `docker compose -f docker-compose.vps.yml up -d --build` (Chatwoot usa su propio Postgres/Redis dedicados, `dp-chatwoot-postgres`/`dp-chatwoot-redis`, la DB `chatwoot_production` se crea sola al arrancar).
 - [ ] Cargar embeddings en pre: `docker exec dp-pre-bot python -m scripts.load_embeddings`.
 - [ ] Verificar: `curl https://pre.divingplanet.org/health`.
 

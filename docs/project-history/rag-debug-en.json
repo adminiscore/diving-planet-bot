@@ -1,0 +1,88 @@
+{
+  "generated_at": "2026-07-01T16:50:33.560704+00:00",
+  "lang": "en",
+  "total_cases": 6,
+  "results": [
+    {
+      "id": "en_meeting_point",
+      "lang": "en",
+      "category": "meeting_point_schedule",
+      "query": "Where is the meeting point?",
+      "expected_mode": "answer",
+      "actual_mode": "answer",
+      "history": null,
+      "extra_context": null,
+      "answer": "Sure thing! 🌊 The meeting point is at Muelle de la Bodeguita at 8:00 a.m. Just ask for DIVING PLANET at Gate 3 when you arrive. \n\nIf you need the location link, here it is: [Muelle de la Bodeguita](https://tinyurl.com/MuelleDeLaBodeguita). \n\nAny other questions? We're here to help! 🐠",
+      "matches_expected_mode": true
+    },
+    {
+      "id": "en_price_2_dives",
+      "lang": "en",
+      "category": "pricing",
+      "query": "How much is the 2 dives 1 day plan in USD?",
+      "expected_mode": "answer",
+      "actual_mode": "answer",
+      "history": null,
+      "extra_context": null,
+      "answer": "Sure thing! The Fun Dives - 2 dives (1 day) plan is priced at $178 USD if you book online. 🌊 \n\nLet me know if you need more details or if you'd like to proceed with a booking!",
+      "matches_expected_mode": true
+    },
+    {
+      "id": "en_refresher",
+      "lang": "en",
+      "category": "certification",
+      "query": "I haven't dived in years, do I need a refresher?",
+      "expected_mode": "answer",
+      "actual_mode": "answer",
+      "history": null,
+      "extra_context": null,
+      "answer": "If it's been more than 2 years since your last dive, we usually recommend a refresher to help you get back in the water safely. 🌊 \n\nWould you like to confirm your situation with one of our advisors? They can help you with the details!",
+      "matches_expected_mode": true
+    },
+    {
+      "id": "en_accommodation",
+      "lang": "en",
+      "category": "accommodation",
+      "query": "Is accommodation included?",
+      "expected_mode": "answer",
+      "actual_mode": "answer",
+      "history": null,
+      "extra_context": null,
+      "answer": "Accommodation is not included in our dive packages. You’ll need to book it directly with your preferred hotel. 🏨 \n\nWe recommend staying at Hotel San Pedro de Majagua or Hotel Cocoliso for convenience, but there are other options too! \n\nWhich hotel are you considering? 🌊",
+      "matches_expected_mode": true
+    },
+    {
+      "id": "en_followup_islands",
+      "lang": "en",
+      "category": "followup_rewrite",
+      "query": "and if I'm already on the islands?",
+      "expected_mode": "answer",
+      "actual_mode": "fallback",
+      "history": [
+        {
+          "role": "user",
+          "content": "How does the PADI Open Water course work?"
+        },
+        {
+          "role": "assistant",
+          "content": "I can explain the course structure."
+        }
+      ],
+      "extra_context": null,
+      "answer": "I don't have enough information in my knowledge base to answer that safely. I can connect you with a Diving Planet advisor.\nWhatsApp: +57 320 231515",
+      "matches_expected_mode": false
+    },
+    {
+      "id": "en_ambiguous_pao_pao",
+      "lang": "en",
+      "category": "ambiguous_location",
+      "query": "Pao Pao",
+      "expected_mode": "clarify",
+      "actual_mode": "clarify",
+      "history": null,
+      "extra_context": null,
+      "answer": "Do you mean Pao Pao for pickup, accommodation, or to know which plan applies if you're already there? If you tell me that, I can answer more precisely.",
+      "matches_expected_mode": true
+    }
+  ]
+}

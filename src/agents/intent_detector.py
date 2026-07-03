@@ -158,18 +158,23 @@ class IntentDetector:
             intent.service_id = "snorkeling"
             intent.detected_fields.append("activity")
         elif any(re.search(pattern, message) for pattern in padi_course_patterns):
-            intent.activity = "padi_course"
             if 'open water' in message or 'open-water' in message:
+                intent.activity = "padi_open_water"
                 intent.service_id = "open_water"
             elif 'advanced' in message:
+                intent.activity = "padi_advanced"
                 intent.service_id = "advanced"
             elif 'rescue' in message:
+                intent.activity = "padi_rescue"
                 intent.service_id = "rescue"
             elif 'divemaster' in message or 'dive master' in message:
+                intent.activity = "padi_divemaster"
                 intent.service_id = "divemaster"
+            else:
+                intent.activity = "padi_course"
             intent.detected_fields.append("activity")
         elif any(re.search(pattern, message) for pattern in specialty_patterns):
-            intent.activity = "specialty"
+            intent.activity = "padi_specialty"
             if 'nitrox' in message:
                 intent.service_id = "nitrox"
             elif 'buoyancy' in message or 'flotabilidad' in message:

@@ -47,7 +47,7 @@ class Message(Base):
     conversation_id = Column(String(50), nullable=False, index=True)
     role = Column(String(20), nullable=False)  # user, assistant, system
     content = Column(Text, nullable=False)
-    metadata = Column(JSON, nullable=True)
+    msg_metadata = Column("metadata", JSON, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
 
 

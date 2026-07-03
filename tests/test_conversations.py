@@ -3405,7 +3405,7 @@ async def test_intent_padi_course_detection():
     resp = await route_message(state, "Hola quiero hacer el curso PADI Open Water")
     
     # Should detect Spanish and PADI course intent
-    assert state.detected_activity == "padi_course"
+    assert state.detected_activity == "padi_open_water"
     assert state.detected_service_id == "open_water"
 
 
@@ -3416,7 +3416,7 @@ async def test_intent_specialty_detection():
     resp = await route_message(state, "Hola quiero hacer el curso de nitrox")
     
     assert state.language == "es"
-    assert state.detected_activity == "specialty"
+    assert state.detected_activity == "padi_specialty"
     assert state.detected_service_id == "nitrox"
 
 

@@ -51,17 +51,17 @@ class TestActivityDetection:
     
     def test_detect_padi_open_water(self, detector, state):
         intent = detector.detect("quiero hacer el curso open water", state)
-        assert intent.activity == "padi_course"
+        assert intent.activity == "padi_open_water"
         assert intent.service_id == "open_water"
-    
+
     def test_detect_advanced_course(self, detector, state):
         intent = detector.detect("I want to do the advanced course", state)
-        assert intent.activity == "padi_course"
+        assert intent.activity == "padi_advanced"
         assert intent.service_id == "advanced"
-    
+
     def test_detect_specialty_nitrox(self, detector, state):
         intent = detector.detect("quiero hacer el curso de nitrox", state)
-        assert intent.activity == "specialty"
+        assert intent.activity == "padi_specialty"
         assert intent.service_id == "nitrox"
 
 

@@ -1,65 +1,67 @@
 """
 Test de detección de grupos mixtos.
+
+Decisión de diseño confirmada: cuando se detecta un grupo mixto sin ubicación
+conocida, el bot pregunta primero dónde sale el usuario (MIXED_LOCATION) antes
+de montar el carrito. No hay mensaje de confirmación intermedio — va directo a
+la pregunta, igual que haría un humano.
 """
 
-import asyncio
-
 import pytest
+from unittest.mock import AsyncMock
 
 from src.agents.supervisor import route_message
-from src.flows.decision_tree import ConversationState
+from src.flows.decision_tree import ConversationState, Step
 
 
-@pytest.mark.xfail(
-    reason="Detección de grupo mixto va a MIXED_LOCATION (pregunta origen primero) "
-    "en vez de MIXED_ENTRY. Decisión de diseño pendiente de confirmar por Gonzalo.",
-    strict=False,
-)
+@pytest.fixture(autouse=True)
+def _no_llm(monkeypatch):
+    monkeypatch.setattr(
+        "src.agents.supervisor.detect_language_llm",
+        AsyncMock(return_value=None),
+    )
+
+
 @pytest.mark.asyncio
-async def test_mixed_group():
-    """
-    Prueba que cuando el usuario dice "Somos dos, yo quiero buceo certificado y mi novia snorkel",
-    el bot detecte correctamente que son 2 actividades diferentes.
-    """
-    print("="*80)
-    print("TEST: Detección de grupos mixtos")
-    print("="*80)
-    
+async def test_mixed_group_asks_location_first():
+    """Grupo mixto sin ubicación → bot pregunta origen antes de montar el carrito."""
     state = ConversationState(conversation_id="test-mixed")
     state.language = "es"
-    
-    # Mensaje: Usuario menciona grupo mixto
-    msg = "Somos dos, yo quiero buceo certificado y mi novia snorkel"
-    print(f"\nUsuario: {msg}")
-    resp = await route_message(state, msg)
-    print(f"\nBot:\n{resp}")
-    print(f"\nEstado: step={state.step.value}")
-    print(f"Actividad detectada: {state.detected_activity}")
-    print(f"Grupo detectado: {state.detected_group_size}")
-    print(f"Group allocation: {state.detected_group_allocation}")
-    
-    # Verificar que detectó grupo mixto
-    assert state.detected_group_allocation is not None, "Debería detectar group_allocation"
-    assert len(state.detected_group_allocation) == 2, f"Debería detectar 2 actividades, detectó {len(state.detected_group_allocation)}"
-    assert 'certified_diving' in state.detected_group_allocation, "Debería detectar buceo certificado"
-    assert 'snorkel' in state.detected_group_allocation, "Debería detectar snorkel"
-    assert state.step.value == "mixed_entry", f"Debería ir al carrito, está en {state.step.value}"
-    
-    # Verificar mensaje de bienvenida
-    assert "bienvenidos" in resp.lower() or "welcome" in resp.lower(), "Debería decir 'Bienvenidos'"
-    assert "2 personas" in resp.lower() or "2 people" in resp.lower(), "Debería mencionar 2 personas"
-    assert "buceo certificado" in resp.lower() or "certified diving" in resp.lower(), "Debería mencionar buceo certificado"
-    assert "snorkel" in resp.lower(), "Debería mencionar snorkel"
-    
-    print("\n" + "="*80)
-    print("EXITO: Detección de grupos mixtos funciona correctamente!")
-    print("="*80)
-    print("\nResumen:")
-    print(f"- Detectó {len(state.detected_group_allocation)} actividades diferentes")
-    print(f"- Actividades: {list(state.detected_group_allocation.keys())}")
-    print(f"- Mensaje personalizado: 'Bienvenidos! Veo que son 2 personas: 1 para buceo certificado y 1 para snorkel.'")
-    print(f"- Redirigió al carrito (step={state.step.value})")
+
+    resp = await route_message(state, "Somos dos, yo quiero buceo certificado y mi novia snorkel")
+
+    assert state.step == Step.MIXED_LOCATION, (
+        f"Esperaba MIXED_LOCATION, got {state.step.value}"
+    )
+    assert state.detected_group_allocation is not None
+    assert "certified_diving" in state.detected_group_allocation
+    assert "snorkel" in state.detected_group_allocation
 
 
-if __name__ == "__main__":
-    asyncio.run(test_mixed_group())
+@pytest.mark.asyncio
+async def test_mixed_group_with_location_goes_to_cart():
+    """Grupo mixto con ubicación ya conocida → salta la pregunta de origen."""
+    state = ConversationState(conversation_id="test-mixed-loc")
+    state.language = "es"
+    state.location = "cartagena"
+
+    await route_message(state, "Somos dos, yo quiero buceo certificado y mi novia snorkel")
+
+    assert state.step != Step.MIXED_LOCATION, (
+        "Con ubicación ya conocida no debe preguntar de nuevo"
+    )
+    assert state.detected_group_allocation is not None
+    assert "certified_diving" in state.detected_group_allocation
+    assert "snorkel" in state.detected_group_allocation
+
+
+@pytest.mark.asyncio
+async def test_mixed_group_en():
+    """Same flow in English."""
+    state = ConversationState(conversation_id="test-mixed-en")
+    state.language = "en"
+
+    await route_message(state, "There are two of us, I want certified diving and my partner wants snorkel")
+
+    assert state.step == Step.MIXED_LOCATION
+    assert state.detected_group_allocation is not None

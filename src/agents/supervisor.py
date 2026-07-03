@@ -3313,7 +3313,21 @@ def _should_enter_mixed_flow(intent, state: ConversationState) -> bool:
     )
 
 
-def _intent_would_route(intent, state: ConversationState) -> bool:
+def _message_looks_like_question(message: str) -> bool:
+    """True if the message contains a literal "?".
+
+    A message that asks ABOUT a course ("¿cómo se paga el curso de
+    divemaster?") should never be treated the same as a message that
+    REQUESTS one ("quiero el curso de divemaster"). Deliberately narrower
+    than a question-word set: common Spanish words like "que"/"como"/"cual"
+    double as ordinary conjunctions ("somos 4 que vamos a hacer snorkel"),
+    so word-matching false-positives on plain statements. "?" presence is
+    the same signal _is_substantive_free_text already uses for this.
+    """
+    return "?" in message
+
+
+def _intent_would_route(intent, state: ConversationState, message: str = "") -> bool:
     """Pure check: would _route_detected_intent actually act on this intent?
 
     Mirrors the branch conditions in _route_detected_intent without mutating
@@ -3327,13 +3341,13 @@ def _intent_would_route(intent, state: ConversationState) -> bool:
         return True
     if intent.activity in ("minicourse", "snorkel", "padi_open_water", "padi_advanced",
                             "padi_rescue", "padi_divemaster", "padi_specialty"):
-        return True
+        return not _message_looks_like_question(message)
     if _should_ask_certification(intent, state):
         return True
     return False
 
 
-def _route_detected_intent(intent, state: ConversationState) -> str | None:
+def _route_detected_intent(intent, state: ConversationState, message: str = "") -> str | None:
     """Apply a detected intent to state and route to the matching flow step.
 
     Returns the response string if a flow branch matched, or None if nothing
@@ -3428,9 +3442,12 @@ def _route_detected_intent(intent, state: ConversationState) -> str | None:
             return confirmation + "\n\n" + MESSAGES["mixed_add_cert_plan"][state.language]
         return MESSAGES["mixed_add_cert_plan"][state.language]
 
-    # Detectar actividades específicas (minicurso, PADI, snorkel, etc.) → ir directo al carrito
+    # Detectar actividades específicas (minicurso, PADI, snorkel, etc.) → ir directo al carrito.
+    # Skip when the message is a QUESTION about the course ("¿cómo se paga el
+    # curso de divemaster?") rather than a request to book it — those belong to RAG.
     elif intent.activity in ("minicourse", "snorkel", "padi_open_water", "padi_advanced",
-                              "padi_rescue", "padi_divemaster", "padi_specialty"):
+                              "padi_rescue", "padi_divemaster", "padi_specialty") \
+            and not _message_looks_like_question(message):
         confirmation = _build_confirmation_message(intent, state)
         state.step = Step.MIXED_ENTRY
         state.mixed_cart = []
@@ -3443,7 +3460,8 @@ def _route_detected_intent(intent, state: ConversationState) -> str | None:
         elif intent.activity in ("padi_open_water", "padi_advanced", "padi_rescue",
                                   "padi_divemaster", "padi_specialty"):
             state.mixed_pending_qty_type = "course"
-            # TODO: setear el curso específico según intent.activity
+            state.mixed_pending_qty_plan = intent.service_id
+            state.selected_service = intent.service_id
 
         # Pre-fill qty if group size is known
         if intent.group_size and intent.group_size > 0:
@@ -3507,7 +3525,7 @@ async def route_message(state: ConversationState, message: str) -> str:
         state.pending_intent_confirmation = None
         if is_affirmative(message):
             state.history.append({"role": "user", "content": message})
-            result = _route_detected_intent(pending_intent, state)
+            result = _route_detected_intent(pending_intent, state)  # yes/no reply, not the original question
             if result is not None:
                 state.history.append({"role": "assistant", "content": result})
                 return result
@@ -3671,7 +3689,7 @@ async def route_message(state: ConversationState, message: str) -> str:
         intent = intent_detector.detect(message, state)
         
         if intent.confidence >= 0.30:
-            result = _route_detected_intent(intent, state)
+            result = _route_detected_intent(intent, state, message)
             if result is not None:
                 return result
 
@@ -3679,7 +3697,7 @@ async def route_message(state: ConversationState, message: str) -> str:
         # with the user instead of silently committing to a flow (Capa 3,
         # typo-resilience plan). Without an activity there's nothing concrete
         # to ask "did you mean X?" about, so those stay below the gate.
-        elif intent.confidence > 0.2 and intent.activity and _intent_would_route(intent, state):
+        elif intent.confidence > 0.2 and intent.activity and _intent_would_route(intent, state, message):
             state.pending_intent_confirmation = intent
             activity_label = _activity_display_label(intent.activity, state.language)
             if state.language == "es":

@@ -116,19 +116,17 @@ cp .env.pre.example .env.pre
 cp .env.pro.example .env.pro
 # Edit both with real API keys and strong passwords
 
-# 2. Start all services
+# 2. Start all services (Chatwoot has its own dedicated Postgres/Redis,
+#    independent of dp-pre-* and dp-pro-*)
 docker compose -f docker-compose.vps.yml up -d --build
 
-# 3. Create Chatwoot database
-docker exec dp-pro-postgres psql -U postgres -c "CREATE DATABASE chatwoot_production;"
-
-# 4. Load embeddings (staging)
+# 3. Load embeddings (staging)
 docker exec dp-pre-bot python -m scripts.load_embeddings
 
-# 5. Load embeddings (production)
+# 4. Load embeddings (production)
 docker exec dp-pro-bot python -m scripts.load_embeddings
 
-# 6. Verify
+# 5. Verify
 curl https://pre.divingplanet.org/health
 curl https://api.divingplanet.org/health
 ```
