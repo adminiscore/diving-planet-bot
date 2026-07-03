@@ -1,6 +1,18 @@
 History
 =======
 
+0.18.3 - (2026-07-02)
+---------------------
+* Primera pasada de los 20 escenarios "cubiertos por tests pero nunca probados en Chatwoot real": los 20 pasan conducidos por la API pública del widget (mismo pipeline webhook → supervisor → respuesta). La pasada destapó 2 bugs y 3 nits, todos corregidos y verificados en vivo.
+* Fix (bug real): un número **tecleado** en un paso de cantidad (ej. "2" en "¿cuántas personas?") se descartaba como falso eco de botón, porque el título del botón de cantidad es el número literal. Los clicks reales no se veían afectados (llevan `submitted_values`). Corregido en el origen (`send_chatwoot_message` ya no registra títulos que igualan su valor o son números) + nuevo helper `_is_plausible_typed_reply` compartido por webhook y poller (el poller además no tenía el guard de sí/no que sí tenía el webhook). Cubre 0/ninguno/6+ en los menús de niños.
+* Fix (infra): la columna `content_tsv` faltaba en la DB local, así que el RAG corría solo con vector, sin la mitad BM25. Aplicada la migración FTS (`migrations/001_add_fts_to_kb_documents.sql`); 779 docs indexados. Gotcha: los setups de DB nuevos deben correr la migración tras el reindex.
+* Nit 1 (`intent_detector.py`): la detección de idioma comparaba keywords como substrings, así que "ahi" contenía "hi" → inglés. Ahora match por palabra completa. "Estoy en el hotel Pao Pao, me recogen ahi?" → es.
+* Nit 2 (`escalation.py`): el verbo suelto "pagar"/"pago" escalaba preguntas informativas como "¿puedo pagar en euros?". Restringido a frases de problema de pago; los fallos reales ("no puedo pagar", "payment failed") siguen escalando.
+* Nit 3 (`supervisor.py`): las respuestas RAG que ofrecen pasar con un asesor (cursos contact-only como Divemaster) mostraban botones de menú genéricos. Ahora se detecta el ofrecimiento (robusto a la redacción variable del LLM) y se muestran botones asesor/inicio.
+* Tests: +25 (`test_chatwoot_buttons.py`, `test_nit_fixes.py`). Suite: **709 passed**, 1 skipped, 1 xfailed.
+* Auditoría de pre-lanzamiento actualizada (`readiness-audit-2026-07-02.html`) + checklist colaborativo (`pre-launch-checklist.csv` para Google Sheets).
+* **Hallazgo pendiente (owner)**: el owner entregó la matriz definitiva hotel→recogida (`Dudas_V2.docx`), que resuelve la pregunta #19. Comparada con el bot: principio alineado, datos muy desincronizados — el bot reconoce 25 hoteles, el owner lista ~40 en 5 categorías (base / muelle propio / camina al centro / camina al muelle / isla privada). El bot detecta 8 hoteles que el owner ya no lista (incluido **Pao Pao**, nuestro caso "especial") y le faltan ~21 que el owner sí lista. Pendiente de investigación del equipo antes de construir un `hoteles.json` mantenible. Ver `TODO.md` y `docs/questions_for_owner_business_kb.md` #19.
+
 0.18.2 - (2026-07-02)
 ---------------------
 * KB update desde Q&A del owner (10 cambios): (1) `discounts.json` → `group_discount.applicability` corregido: no aplica a cursos PADI y no se aplica automáticamente (requiere contactar al equipo). (2-11) `faqs.json` → 10 nuevas FAQs: precio Bubble Makers ($187 USD), política de clima cuando se pierde un día de curso (retoma al día siguiente, cliente paga hotel extra), llegada tarde con lancha ya partida (no hay reembolso), idiomas de instructores (español e inglés únicamente), certificación PADI = eCard digital (no existe tarjeta física), combinación de cursos/especialidades en el mismo viaje (sí, si hay tiempo), máscaras graduadas disponibles (dioptrias 2, 3, 4), equipo para niños (BCD pequeño + botellas pequeñas), tanques de Nitrox bajo pedido ($10/tanque, $20 para 2 buceos). También actualizada la FAQ de clima para reflejar que siempre se prefiere reprogramar antes que reembolsar.

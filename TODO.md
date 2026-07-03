@@ -122,7 +122,28 @@
 - [ ] Cubrir preguntas sobre **registro de buceos / logbook**: puntos de buceo y apoyo para registrar inmersiones.
 - [ ] Cubrir mejor **condiciones y políticas**: clima, cancelación, reembolsos y cambios de fecha.
 
-#### Islas del Rosario con muelle y hotel (para futuros selectores)
+#### 🔴 Matriz hotel→recogida del owner (Dudas_V2.docx, 2026-07-02) — EN INVESTIGACIÓN
+
+El owner entregó por fin la matriz definitiva de recogida por hotel (resuelve la pregunta #19 de `docs/questions_for_owner_business_kb.md`). Clasifica ~40 hoteles en 5 categorías:
+
+- **Base (recogida directo en el hotel):** Cocoliso Island Resort, San Pedro de Majagua.
+- **Muelle propio (lancha llega directo):** Isla del Pirata, Isla única, Casa Rosario, Rosario de mar, Centro Ubuntu, Coralina Island, IslaBela, Isla del Sol, Isla Lizamar, Isla Tijereto, Fragata Island House, Rosario Ecohotel, Secreto, Luxury Beach Club, El Hamaquero Hostal EcoNativo, Coral Sand, Cocotera beach, Mangata, Mulata, Orika de mar, Bora Bora, Los erizos.
+- **Deben caminar al centro de buceo:** Eco Hotel Las Palmeras, Eco Hotel Bosque Encantado, Isla Grande Eco hotel, Eco hostel coco encantado.
+- **Deben caminar al muelle más cercano:** Golden Frog Hostel, Eco Hotel Mar Adentro, Ecohotel Las Flores Econativo, Eco Hotel Arte y Aventura, Coral Sand, Eco hotel casitas de mar adentro, Eco camping el frugal.
+- **Islas privadas (directo allá):** Isla Rosa, Isla amor, Isla Pelícano, Isla Matamba.
+
+Notas del owner: recogida solo desde islas del Rosario con acceso por mar (**Barú NO**); transfer incluido sin importar la distancia; *"todos los días abren un nuevo hotel o cambian el nombre… esto hay que estar actualizándolo"*.
+
+Gap analysis vs. el bot actual (25 hoteles en `intent_detector.py`, 2 FAQs de recogida en `faqs.json`):
+- **Bot reconoce pero el owner NO lista (posibles obsoletos, verificar):** Pao Pao, gente de mar, Playa Libre, Isleta Beach, Isla Arena, Isla Pavitos, Gigi, San Tropel. ⚠️ **Pao Pao** es nuestro caso "especial" en la KB y no aparece en la lista del owner.
+- **Owner lista pero el bot NO detecta (~21 faltantes):** Isla única, Casa Rosario, Rosario de mar, Isla Tijereto, Coral Sand, Cocotera beach, Mangata, Mulata, Orika de mar, Los erizos, Las Palmeras, Bosque Encantado, Isla Grande Eco, Coco Encantado, Golden Frog, Mar Adentro, Arte y Aventura, Casitas de mar adentro, Camping el frugal, Isla Amor, Isla Matamba.
+- **Sin estructura de categorías:** el bot solo mapea hotel→isla; la KB solo distingue confirmado/incierto para 3 hoteles.
+
+- [ ] **DECISIÓN PENDIENTE (equipo investiga):** confirmar cuáles de los 8 "posibles obsoletos" siguen vivos antes de tocar nada.
+- [ ] **Propuesta:** montar `data/knowledge_base/hoteles.json` (nombre → categoría de recogida) como fuente única, mantenible por Gadea/Andrés sin tocar código; que alimente la detección (`intent_detector.py`) y las respuestas del RAG. Reemplaza las 2 FAQs sueltas + la lista de regex desincronizada. Reindexar tras crearlo.
+- [ ] Retirar/actualizar el manejo especial de Pao Pao una vez confirmado su estado.
+
+#### Islas del Rosario con muelle y hotel (notas antiguas — superadas por la matriz del owner de arriba)
 
 - Isla Grande: la más extensa. Hoteles: San Pedro de Majagua, Pao Pao, Cocoliso. Tiene múltiples muelles.
 - Isla Marina: contigua a Isla Grande. Hoteles: Coralina Island, Islabela. Tiene muelle.

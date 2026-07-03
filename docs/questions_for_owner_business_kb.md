@@ -503,7 +503,17 @@ Necesitamos confirmar:
 
 ---
 
-### 19. Hoteles prioritarios para cerrar antes de demo ⏳ EN PAUSA — acción pendiente
+### 19. Hoteles prioritarios para cerrar antes de demo ✅ RESUELTO (ronda 5 — matriz entregada)
+
+**Respuesta (ronda 5, `Dudas_V2.docx` 2026-07-02):** el owner entregó la
+**matriz completa hotel→recogida** en 5 categorías (base / muelle propio /
+camina al centro / camina al muelle / isla privada). Recogida solo desde
+islas del Rosario con acceso por mar (Barú NO); transfer incluido sin
+importar la distancia. Aviso del owner: la lista cambia constantemente.
+**Estado de implementación:** matriz documentada en `TODO.md`; pendiente
+(1) verificar 8 hoteles que el bot reconoce y el owner ya no lista (incl.
+Pao Pao) y (2) montar `data/knowledge_base/hoteles.json` como fuente única.
+Ver el gap analysis completo en `TODO.md`.
 
 **Respuesta (ronda 3):** varía por hotel, el owner necesita **revisarlo
 con su equipo** antes de poder confirmar la matriz. ⚠️ Queda como tarea
