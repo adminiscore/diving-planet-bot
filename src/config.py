@@ -32,13 +32,25 @@ class Settings(BaseSettings):
 
     # --- Chatwoot ---
     chatwoot_base_url: str = "http://localhost:3000"
+    # Backend-to-Chatwoot API calls (sending messages, polling, assignments).
+    # Defaults to chatwoot_base_url. Override when the bot should reach Chatwoot
+    # over an internal network path (e.g. Docker service name) instead of the
+    # public URL — needed on the VPS where the reverse proxy silently drops the
+    # api_access_token header (underscore in the name) before forwarding it.
+    chatwoot_api_base_url: str = ""
     chatwoot_api_token: str = ""
     chatwoot_account_id: int = 1
     chatwoot_inbox_id: int = 1
     chatwoot_owner_agent_id: int = 0  # 0 = auto-assign disabled
+    chatwoot_website_token: str = "T49iSq16SvRnqUqbayMQWmni"  # inbox website channel token (widget SDK)
+
+    @property
+    def chatwoot_api_url(self) -> str:
+        return self.chatwoot_api_base_url or self.chatwoot_base_url
 
     # --- Redis ---
     redis_url: str = "redis://localhost:6379/0"
+    conversation_state_ttl_seconds: int = 30 * 24 * 3600
 
     # --- App ---
     app_env: str = "development"

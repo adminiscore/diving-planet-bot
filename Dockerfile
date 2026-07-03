@@ -15,6 +15,8 @@ RUN pip install --no-cache-dir .
 # Copy data and scripts (not needed for pip install but useful inside container)
 COPY data/ data/
 COPY scripts/ scripts/
+COPY alembic.ini .
+COPY alembic/ alembic/
 
 EXPOSE 8000
 

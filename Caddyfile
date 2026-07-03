@@ -6,16 +6,25 @@
 # =============================================================================
 
 # Staging bot API
-pre.divingplanet.org {
+# Temporary domain (is-core.dev) while we don't have DNS access on divingplanet.org
+# (HostGator). Swap back to pre.divingplanet.org once that access is sorted.
+pre.is-core.dev {
     reverse_proxy dp-pre-bot:8000
 }
 
-# Production bot API
-api.divingplanet.org {
-    reverse_proxy dp-pro-bot:8000
-}
+# Production bot API — not deployed yet (dp-pro-bot isn't running). Uncomment
+# once PRO is provisioned and its DNS is live, to avoid Caddy retrying a
+# certificate request against a domain that isn't pointed here.
+# api.divingplanet.org {
+#     reverse_proxy dp-pro-bot:8000
+# }
 
 # Chatwoot inbox (shared across environments)
-chatwoot.divingplanet.org {
+# Note: Caddy silently drops the api_access_token header (underscore in the
+# name) before proxying, so the bot's OWN API calls to Chatwoot must NOT go
+# through this public route — they use CHATWOOT_API_BASE_URL (internal Docker
+# hostname) instead. This route only serves the dashboard UI and the widget
+# SDK loaded by real browsers.
+chatwoot.is-core.dev {
     reverse_proxy dp-chatwoot:3000
 }

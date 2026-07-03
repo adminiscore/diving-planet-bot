@@ -3,6 +3,43 @@ import pytest
 from src.channels import chatwoot
 
 
+@pytest.fixture
+def fake_store(monkeypatch):
+    """In-memory stand-in for state_store, so these tests don't need real Redis."""
+    states = {}
+    processed = set()
+    poll_started = {}
+
+    async def fake_load_state(conversation_id):
+        return states.get(conversation_id)
+
+    async def fake_save_state(conversation_id, state):
+        states[conversation_id] = state
+
+    async def fake_check_and_mark_processed(dedupe_key):
+        if dedupe_key in processed:
+            return True
+        processed.add(dedupe_key)
+        return False
+
+    async def fake_set_poll_started_at(conversation_id, epoch_seconds):
+        poll_started[conversation_id] = epoch_seconds
+
+    async def fake_get_poll_started_at(conversation_id):
+        return poll_started.get(conversation_id, 0)
+
+    async def fake_list_active_conversation_ids():
+        return list(states.keys())
+
+    monkeypatch.setattr(chatwoot.state_store, "load_state", fake_load_state)
+    monkeypatch.setattr(chatwoot.state_store, "save_state", fake_save_state)
+    monkeypatch.setattr(chatwoot.state_store, "check_and_mark_processed", fake_check_and_mark_processed)
+    monkeypatch.setattr(chatwoot.state_store, "set_poll_started_at", fake_set_poll_started_at)
+    monkeypatch.setattr(chatwoot.state_store, "get_poll_started_at", fake_get_poll_started_at)
+    monkeypatch.setattr(chatwoot.state_store, "list_active_conversation_ids", fake_list_active_conversation_ids)
+    return {"states": states, "processed": processed, "poll_started": poll_started}
+
+
 class DummyResponse:
     def raise_for_status(self):
         return None
@@ -150,7 +187,7 @@ async def test_finalize_chatwoot_delivery_keeps_pending_reason_when_handoff_fail
 
 
 @pytest.mark.asyncio
-async def test_webhook_marks_incoming_as_processed(monkeypatch):
+async def test_webhook_marks_incoming_as_processed(monkeypatch, fake_store):
     sent = []
 
     async def fake_route_message(state, message):
@@ -161,8 +198,6 @@ async def test_webhook_marks_incoming_as_processed(monkeypatch):
 
     monkeypatch.setattr(chatwoot, "route_message", fake_route_message)
     monkeypatch.setattr(chatwoot, "send_chatwoot_message", fake_send_message)
-    chatwoot.conversations.clear()
-    chatwoot.processed_chatwoot_messages.clear()
 
     await chatwoot.handle_message({
         "id": 123,
@@ -172,7 +207,7 @@ async def test_webhook_marks_incoming_as_processed(monkeypatch):
         "sender": {"name": "test"},
     })
 
-    assert "99:123:incoming" in chatwoot.processed_chatwoot_messages
+    assert "99:123:incoming" in fake_store["processed"]
     assert sent == [("99", "response", [])]
 
 
@@ -210,7 +245,7 @@ async def test_bare_number_titles_not_registered_as_echo(monkeypatch):
 
 
 @pytest.mark.asyncio
-async def test_typed_number_at_qty_step_is_not_swallowed(monkeypatch):
+async def test_typed_number_at_qty_step_is_not_swallowed(monkeypatch, fake_store):
     """Regression: typing '2' after a quantity prompt must reach the tree, even
     though a button titled '2' is pending. Real clicks were unaffected; typed
     numbers used to be dropped as phantom echoes."""
@@ -225,8 +260,6 @@ async def test_typed_number_at_qty_step_is_not_swallowed(monkeypatch):
 
     monkeypatch.setattr(chatwoot, "route_message", fake_route_message)
     monkeypatch.setattr(chatwoot, "send_chatwoot_message", fake_send_message)
-    chatwoot.conversations.clear()
-    chatwoot.processed_chatwoot_messages.clear()
     # Simulate a qty prompt having been sent: number titles would previously land here.
     chatwoot.conversation_pending_echo_titles["55"] = {"1", "2", "3", "🔙 volver"}
 
@@ -242,7 +275,7 @@ async def test_typed_number_at_qty_step_is_not_swallowed(monkeypatch):
 
 
 @pytest.mark.asyncio
-async def test_decorated_button_echo_still_suppressed(monkeypatch):
+async def test_decorated_button_echo_still_suppressed(monkeypatch, fake_store):
     """A genuine click-echo of a decorated label (e.g. '🤿 Reservar') must still
     be dropped so it is not double-processed as free text."""
     routed = []
@@ -256,8 +289,6 @@ async def test_decorated_button_echo_still_suppressed(monkeypatch):
 
     monkeypatch.setattr(chatwoot, "route_message", fake_route_message)
     monkeypatch.setattr(chatwoot, "send_chatwoot_message", fake_send_message)
-    chatwoot.conversations.clear()
-    chatwoot.processed_chatwoot_messages.clear()
     chatwoot.conversation_pending_echo_titles["66"] = {"🤿 reservar"}
 
     await chatwoot.handle_message({
@@ -272,7 +303,7 @@ async def test_decorated_button_echo_still_suppressed(monkeypatch):
 
 
 @pytest.mark.asyncio
-async def test_handle_message_executes_handoff_when_supervisor_escalates(monkeypatch):
+async def test_handle_message_executes_handoff_when_supervisor_escalates(monkeypatch, fake_store):
     actions = []
 
     async def fake_route_message(state, message):
@@ -294,8 +325,6 @@ async def test_handle_message_executes_handoff_when_supervisor_escalates(monkeyp
     monkeypatch.setattr(chatwoot, "send_chatwoot_note", fake_send_note)
     monkeypatch.setattr(chatwoot, "escalate_to_human", fake_escalate)
     monkeypatch.setattr(chatwoot, "send_chatwoot_message", fake_send_message)
-    chatwoot.conversations.clear()
-    chatwoot.processed_chatwoot_messages.clear()
 
     await chatwoot.handle_message({
         "id": 999,

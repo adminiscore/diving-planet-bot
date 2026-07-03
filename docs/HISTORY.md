@@ -1,6 +1,14 @@
 History
 =======
 
+0.19.0 - (2026-07-03)
+---------------------
+* **Bloqueante resuelto: estado conversacional migrado a Redis.** Nuevo `src/state_store.py` reemplaza los dicts en memoria de `src/channels/chatwoot.py` (`conversations`, `processed_chatwoot_messages`, `conversation_poll_started_at`) — causa raíz de los bugs "stuck" (el estado se borraba en cada deploy/reinicio). TTL deslizante de 30 días, lock por conversación (`asyncio.Lock`) para evitar carreras entre el webhook y el poller de 1s, set de conversaciones activas auto-limpiante. `conversation_pending_echo_titles` se queda en memoria a propósito (bajo riesgo, autocorregible). Verificado con un reinicio real de proceso: el estado sobrevive. 8 tests unitarios de round-trip (`tests/test_state_store.py`) + 9 de integración contra Redis real (`tests/test_state_store_integration.py`, nuevo servicio `redis` en `.github/workflows/ci.yml`).
+* **Bloqueante resuelto: entorno PRE desplegado y probado en vivo.** VPS Hetzner CX23 con `docker-compose.vps.yml` (Caddy + Postgres/Redis de PRE + bot + Chatwoot con su propia base de datos dedicada, independiente de PRO). HTTPS real vía Let's Encrypt sobre un dominio temporal (`is-core.dev`) mientras se gestiona el acceso a HostGator de `divingplanet.org`. Migraciones Alembic aplicadas hasta 003, 779 docs de KB cargados, Chatwoot con cuenta admin/inbox/webhook configurados por API. Probado end-to-end en un navegador real: el bot responde en vivo a través del widget.
+* Fix: `Dockerfile` no copiaba `alembic.ini`/`alembic/` a la imagen — bloqueaba correr migraciones dentro del contenedor (`alembic upgrade head` fallaba con "No 'script_location' key found").
+* Fix: Caddy descarta silenciosamente cualquier cabecera HTTP con guion bajo (`api_access_token`) antes de reenviarla — rompía la autenticación del bot contra la API de Chatwoot cuando pasaba por el reverse proxy público (aunque el mismo token funcionaba perfecto en la red interna de Docker). Solución: nuevo `settings.chatwoot_api_url` (`CHATWOOT_API_BASE_URL`) — el bot llama a Chatwoot por el hostname interno de Docker (`http://dp-chatwoot:3000`) para sus propias operaciones de API (mandar mensajes, poll, asignaciones), mientras `chatwoot_base_url` se sigue usando tal cual para lo que ve el navegador (CORS + widget SDK embebido en `/chat`). Cero cambio de comportamiento en dev (donde ambas URLs son iguales).
+* Eliminados `docker-compose.public.yml` y `docs/PUBLIC_TESTING.md` (túnel Cloudflare para pruebas rápidas) — sustituidos por el despliegue real a PRE.
+
 0.18.3 - (2026-07-02)
 ---------------------
 * Primera pasada de los 20 escenarios "cubiertos por tests pero nunca probados en Chatwoot real": los 20 pasan conducidos por la API pública del widget (mismo pipeline webhook → supervisor → respuesta). La pasada destapó 2 bugs y 3 nits, todos corregidos y verificados en vivo.

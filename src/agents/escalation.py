@@ -90,7 +90,7 @@ async def escalate_to_human(
     via the Chatwoot app (mobile push notification + sound).
     """
     url = (
-        f"{settings.chatwoot_base_url}/api/v1/accounts/{settings.chatwoot_account_id}"
+        f"{settings.chatwoot_api_url}/api/v1/accounts/{settings.chatwoot_account_id}"
         f"/conversations/{conversation_id}/toggle_status"
     )
     headers = {

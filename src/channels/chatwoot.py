@@ -14,6 +14,7 @@ from urllib.parse import urlparse, urlunparse
 import httpx
 from fastapi import APIRouter, Request, HTTPException
 
+from src import state_store
 from src.agents.escalation import escalate_to_human
 from src.config import settings
 from src.flows.decision_tree import ConversationState, MESSAGE_SPLIT
@@ -23,15 +24,22 @@ logger = logging.getLogger("uvicorn.error")
 
 router = APIRouter()
 
-# In-memory conversation states (will migrate to Redis/PostgreSQL later)
-conversations: dict[str, ConversationState] = {}
-processed_chatwoot_messages: set[str] = set()
-conversation_poll_started_at: dict[str, int] = {}
 # Button titles sent as quick replies, keyed by conversation.
 # Used to suppress the automatic incoming-echo message Chatwoot creates when a user
 # clicks a button (Chatwoot sends both a message_updated with submitted_values AND a
 # message_created with the button title as content; we only want to process one of them).
+# Kept in-memory (not Redis): only suppresses a 1-2s echo race, self-heals on the next
+# turn if lost to a restart.
 conversation_pending_echo_titles: dict[str, set[str]] = {}
+
+# Per-conversation locks guarding the load -> route_message -> save sequence against
+# the webhook handler and the 1s poller racing on the same conversation. Pure
+# in-process concurrency control, not data — fine to lose on restart.
+_conversation_locks: dict[str, asyncio.Lock] = {}
+
+
+def _lock_for(conversation_id: str) -> asyncio.Lock:
+    return _conversation_locks.setdefault(conversation_id, asyncio.Lock())
 
 
 def _is_plausible_typed_reply(content_lower: str) -> bool:
@@ -100,39 +108,38 @@ async def handle_message(payload: dict):
         # (see _is_plausible_typed_reply).
         if content_lower and content_lower in pending and not _is_plausible_typed_reply(content_lower):
             pending.discard(content_lower)
-            processed_chatwoot_messages.add(f"{conversation_id}:{message_id}:incoming")
+            await state_store.check_and_mark_processed(f"{conversation_id}:{message_id}:incoming")
             logger.info(f"[WEBHOOK] Skipping button echo: {content_lower[:60]}")
             return
         dedupe_key = f"{conversation_id}:{message_id}:incoming"
-        if dedupe_key in processed_chatwoot_messages:
+        if await state_store.check_and_mark_processed(dedupe_key):
             logger.info(f"[WEBHOOK] Skipping already processed incoming message={message_id}")
             return
-        processed_chatwoot_messages.add(dedupe_key)
     else:
         dedupe_key = f"{conversation_id}:{message_id}:{message}"
-        if dedupe_key in processed_chatwoot_messages:
+        if await state_store.check_and_mark_processed(dedupe_key):
             logger.info(f"[WEBHOOK] Skipping already processed interactive message={message_id}")
             return
-        processed_chatwoot_messages.add(dedupe_key)
 
     logger.info(f"[BOT] Incoming from {sender.get('name', 'unknown')}: {message[:100]}")
 
-    # Get or create conversation state
-    if conversation_id not in conversations:
-        conversations[conversation_id] = ConversationState(
-            conversation_id=conversation_id,
-            language=settings.default_language,
-        )
-        conversation_poll_started_at[conversation_id] = int(time())
-        if settings.chatwoot_owner_agent_id:
-            await assign_conversation_to_owner(conversation_id)
+    async with _lock_for(conversation_id):
+        # Get or create conversation state
+        state = await state_store.load_state(conversation_id)
+        if state is None:
+            state = ConversationState(
+                conversation_id=conversation_id,
+                language=settings.default_language,
+            )
+            await state_store.set_poll_started_at(conversation_id, int(time()))
+            if settings.chatwoot_owner_agent_id:
+                await assign_conversation_to_owner(conversation_id)
 
-    state = conversations[conversation_id]
+        # Route through supervisor (decision tree + RAG)
+        response = await route_message(state, message)
 
-    # Route through supervisor (decision tree + RAG)
-    response = await route_message(state, message)
-
-    await finalize_chatwoot_delivery(conversation_id, state, response)
+        await finalize_chatwoot_delivery(conversation_id, state, response)
+        await state_store.save_state(conversation_id, state)
 
 
 async def poll_chatwoot_interactions():
@@ -145,60 +152,71 @@ async def poll_chatwoot_interactions():
 
 
 async def poll_active_conversations_once():
-    if not conversations:
+    conversation_ids = await state_store.list_active_conversation_ids()
+    if not conversation_ids:
         return
 
-    base_url = settings.chatwoot_base_url.rstrip("/")
+    base_url = settings.chatwoot_api_url.rstrip("/")
     headers = {"api_access_token": settings.chatwoot_api_token}
 
     async with httpx.AsyncClient() as client:
-        for conversation_id, state in list(conversations.items()):
-            url = (
-                f"{base_url}/api/v1/accounts/{settings.chatwoot_account_id}"
-                f"/conversations/{conversation_id}/messages"
-            )
-            resp = await client.get(url, headers=headers, timeout=10.0)
-            resp.raise_for_status()
-            messages = resp.json().get("payload", [])
-            for chatwoot_message in reversed(messages):
-                message_id = str(chatwoot_message.get("id"))
-                message_type = chatwoot_message.get("message_type")
-                created_at = int(chatwoot_message.get("created_at") or 0)
-                if created_at and created_at < conversation_poll_started_at.get(conversation_id, 0):
+        for conversation_id in conversation_ids:
+            async with _lock_for(conversation_id):
+                state = await state_store.load_state(conversation_id)
+                if state is None:
                     continue
-                selected = extract_submitted_value(chatwoot_message)
 
-                if selected is not None:
-                    dedupe_key = f"{conversation_id}:{message_id}:{selected}"
-                    if dedupe_key in processed_chatwoot_messages:
+                poll_started_at = await state_store.get_poll_started_at(conversation_id)
+
+                url = (
+                    f"{base_url}/api/v1/accounts/{settings.chatwoot_account_id}"
+                    f"/conversations/{conversation_id}/messages"
+                )
+                resp = await client.get(url, headers=headers, timeout=10.0)
+                resp.raise_for_status()
+                messages = resp.json().get("payload", [])
+                routed = False
+                for chatwoot_message in reversed(messages):
+                    message_id = str(chatwoot_message.get("id"))
+                    message_type = chatwoot_message.get("message_type")
+                    created_at = int(chatwoot_message.get("created_at") or 0)
+                    if created_at and created_at < poll_started_at:
+                        continue
+                    selected = extract_submitted_value(chatwoot_message)
+
+                    if selected is not None:
+                        dedupe_key = f"{conversation_id}:{message_id}:{selected}"
+                        if await state_store.check_and_mark_processed(dedupe_key):
+                            continue
+
+                        logger.info(f"[BOT] Processing Chatwoot button conv={conversation_id} message_id={message_id} value={selected}")
+                        response = await route_message(state, selected)
+                        await finalize_chatwoot_delivery(conversation_id, state, response)
+                        routed = True
                         continue
 
-                    processed_chatwoot_messages.add(dedupe_key)
-                    logger.info(f"[BOT] Processing Chatwoot button conv={conversation_id} message_id={message_id} value={selected}")
-                    response = await route_message(state, selected)
+                    if message_type not in ("incoming", 0):
+                        continue
+
+                    content = chatwoot_message.get("content", "")
+                    content_lower = (content or "").strip().lower()
+                    dedupe_key = f"{conversation_id}:{message_id}:incoming"
+                    if await state_store.check_and_mark_processed(dedupe_key):
+                        continue
+
+                    pending = conversation_pending_echo_titles.get(conversation_id, set())
+                    if content_lower and content_lower in pending and not _is_plausible_typed_reply(content_lower):
+                        pending.discard(content_lower)
+                        logger.info(f"[BOT] Skipping button echo from poll: {content_lower[:60]}")
+                        continue
+
+                    logger.info(f"[BOT] Processing polled incoming conv={conversation_id} message_id={message_id}: {content[:100]}")
+                    response = await route_message(state, content)
                     await finalize_chatwoot_delivery(conversation_id, state, response)
-                    continue
+                    routed = True
 
-                if message_type not in ("incoming", 0):
-                    continue
-
-                content = chatwoot_message.get("content", "")
-                content_lower = (content or "").strip().lower()
-                dedupe_key = f"{conversation_id}:{message_id}:incoming"
-                if dedupe_key in processed_chatwoot_messages:
-                    continue
-
-                pending = conversation_pending_echo_titles.get(conversation_id, set())
-                if content_lower and content_lower in pending and not _is_plausible_typed_reply(content_lower):
-                    pending.discard(content_lower)
-                    processed_chatwoot_messages.add(dedupe_key)
-                    logger.info(f"[BOT] Skipping button echo from poll: {content_lower[:60]}")
-                    continue
-
-                processed_chatwoot_messages.add(dedupe_key)
-                logger.info(f"[BOT] Processing polled incoming conv={conversation_id} message_id={message_id}: {content[:100]}")
-                response = await route_message(state, content)
-                await finalize_chatwoot_delivery(conversation_id, state, response)
+                if routed:
+                    await state_store.save_state(conversation_id, state)
 
 
 async def finalize_chatwoot_delivery(conversation_id: str, state: ConversationState, response: str | None):
@@ -253,7 +271,7 @@ def extract_incoming_content(payload: dict) -> str | None:
 
 async def assign_conversation_to_owner(conversation_id: str):
     """Assign a new conversation to the owner agent and set it to open so it appears in 'Mine'."""
-    base_url = settings.chatwoot_base_url.rstrip("/")
+    base_url = settings.chatwoot_api_url.rstrip("/")
     headers = {
         "api_access_token": settings.chatwoot_api_token,
         "Content-Type": "application/json",
@@ -296,7 +314,7 @@ async def assign_conversation_to_owner(conversation_id: str):
 
 async def send_chatwoot_message(conversation_id: str, message: str, quick_replies: list[dict] | None = None):
     """Send a message back to the customer via Chatwoot API."""
-    base_url = settings.chatwoot_base_url.rstrip("/")
+    base_url = settings.chatwoot_api_url.rstrip("/")
     url = (
         f"{base_url}/api/v1/accounts/{settings.chatwoot_account_id}"
         f"/conversations/{conversation_id}/messages"
@@ -361,7 +379,7 @@ async def send_chatwoot_message(conversation_id: str, message: str, quick_replie
 
 async def send_chatwoot_note(conversation_id: str, note: str):
     """Send a private internal note to Chatwoot (visible only to agents, not the customer)."""
-    base_url = settings.chatwoot_base_url.rstrip("/")
+    base_url = settings.chatwoot_api_url.rstrip("/")
     url = (
         f"{base_url}/api/v1/accounts/{settings.chatwoot_account_id}"
         f"/conversations/{conversation_id}/messages"

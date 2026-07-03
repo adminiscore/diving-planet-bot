@@ -8,7 +8,7 @@ from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
 
 from src.config import settings
-from src.channels.chatwoot import poll_chatwoot_interactions, router as chatwoot_router, conversations
+from src.channels.chatwoot import poll_chatwoot_interactions, router as chatwoot_router
 from src.flows.decision_tree import ConversationState
 from src.agents.supervisor import route_message
 
@@ -100,7 +100,7 @@ async def chat_widget():
       s.parentNode.insertBefore(g,s);
       g.onload=function(){{
         window.chatwootSDK.run({{
-          websiteToken:'T49iSq16SvRnqUqbayMQWmni',
+          websiteToken:'{settings.chatwoot_website_token}',
           baseUrl:BASE_URL,
           locale:'es',
           position:'right'
