@@ -169,11 +169,43 @@ _FEWSHOT_TOPIC_ALIASES: dict[str, str] = {
 }
 
 
+# Stale few-shot guard: the "Colombian discount" was removed (v0.18.0) — Colombian
+# clients now simply pay in COP (same price, currency only). Imported WhatsApp
+# examples where the ADVISOR offered a special Colombian discount/bonus would
+# teach the model the old behavior, so we skip them from few-shot selection.
+# We only exclude examples whose ADVISOR messages pair a discount word with a
+# Colombian/resident word — examples that merely quote a COP price for Colombians
+# ("el valor para colombianos es 630.000") stay, since that is still correct.
+_STALE_DISCOUNT_WORDS = ("descuento", "bono", "tarifa especial", "precio especial", "rebaja")
+_STALE_COLOMBIAN_WORDS = ("colombian", "residente", "descuento local", "precio local")
+
+
+def _strip_accents_lower(text: str) -> str:
+    import unicodedata
+    return "".join(
+        c for c in unicodedata.normalize("NFD", text.lower())
+        if unicodedata.category(c) != "Mn"
+    )
+
+
+def _example_teaches_stale_colombian_discount(example: dict) -> bool:
+    """True if the ADVISOR messages offer a (now-removed) Colombian discount."""
+    bot_msgs = (example.get("diving_planet") or {}).get("messages") or []
+    for msg in bot_msgs:
+        norm = _strip_accents_lower(str(msg))
+        if any(d in norm for d in _STALE_DISCOUNT_WORDS) and any(
+            c in norm for c in _STALE_COLOMBIAN_WORDS
+        ):
+            return True
+    return False
+
+
 def _select_fewshot_examples(query: str, lang: str, k: int = 2) -> list[dict]:
     """Pick up to k conversation examples whose extracted_topics overlap with the query topics.
 
     Returns the raw example dicts (filtered by lang). Empty list if no useful match.
     Uses detect_query_topics() to score overlap; ties broken by example order in JSON.
+    Examples that teach the removed Colombian discount are skipped entirely.
     """
     if not query:
         return []
@@ -184,6 +216,8 @@ def _select_fewshot_examples(query: str, lang: str, k: int = 2) -> list[dict]:
     candidates = []
     for example in _load_conversations_cached():
         if (example.get("lang") or "").lower() != lang:
+            continue
+        if _example_teaches_stale_colombian_discount(example):
             continue
         ex_topics = set(str(t) for t in (example.get("extracted_topics") or []))
         normalized = {_FEWSHOT_TOPIC_ALIASES.get(t, t) for t in ex_topics}
