@@ -55,20 +55,26 @@ class IntentDetector:
         return intent
     
     def _detect_language(self, message: str, intent: DetectedIntent) -> None:
-        spanish_keywords = [
+        spanish_keywords = {
             'hola', 'quiero', 'buceo', 'snorkel', 'curso', 'minicurso',
             'certificado', 'somos', 'personas', 'día', 'días', 'inmersión',
-            'buzo', 'bautismo', 'precio', 'información', 'reservar'
-        ]
-        
-        english_keywords = [
+            'buzo', 'bautismo', 'precio', 'información', 'reservar',
+            # common function words / verbs that disambiguate ES vs EN
+            'estoy', 'recogen', 'puedo', 'gracias', 'cuánto', 'dónde', 'está',
+        }
+
+        english_keywords = {
             'hello', 'hi', 'want', 'diving', 'dive', 'snorkel', 'course',
             'certified', 'people', 'day', 'days', 'price', 'information',
-            'book', 'booking', 'diver', 'beginner'
-        ]
-        
-        spanish_count = sum(1 for kw in spanish_keywords if kw in message)
-        english_count = sum(1 for kw in english_keywords if kw in message)
+            'book', 'booking', 'diver', 'beginner',
+            'can', 'you', 'the', 'my', 'how', 'where', 'much', 'pick',
+        }
+
+        # Match whole words only. Substring matching wrongly flags e.g. "ahi"
+        # (Spanish) as English because it contains "hi".
+        words = set(re.findall(r"[a-zá-úñü]+", message.lower()))
+        spanish_count = len(words & spanish_keywords)
+        english_count = len(words & english_keywords)
         
         if spanish_count > english_count and spanish_count > 0:
             intent.language = "es"

@@ -34,6 +34,22 @@ conversation_poll_started_at: dict[str, int] = {}
 conversation_pending_echo_titles: dict[str, set[str]] = {}
 
 
+def _is_plausible_typed_reply(content_lower: str) -> bool:
+    """True if the content could be a genuine free-text reply the user typed,
+    so it must NEVER be swallowed as a phantom button-echo.
+
+    The echo-suppression matches on button *titles*. Some titles collide with
+    what a user would legitimately type: bare numbers on quantity menus
+    ("1".."5"), "0"/"ninguno" on the kids menus, "6+", and yes/no on qualifier
+    menus. Typing any of these must reach the tree, not be dropped. Real button
+    *clicks* are unaffected — they still carry submitted_values and go through
+    the interactive path before this check runs.
+    """
+    if content_lower in {"si", "sí", "no", "0", "6+", "ninguno", "ninguna", "none"}:
+        return True
+    return content_lower.isdigit()
+
+
 @router.post("/chatwoot")
 async def chatwoot_webhook(request: Request):
     """
@@ -79,11 +95,10 @@ async def handle_message(payload: dict):
         content_lower = (payload.get("content", "") or "").strip().lower()
         pending = conversation_pending_echo_titles.get(conversation_id, set())
         # Only suppress the automatic button-echo message for titles that are
-        # unlikely to be genuine free-text replies. Very common short replies
-        # like "si", "sí" or "no" should still be processed normally even
-        # if they match a button title.
-        echo_exceptions = {"si", "sí", "no"}
-        if content_lower and content_lower in pending and content_lower not in echo_exceptions:
+        # unlikely to be genuine free-text replies. Numbers, yes/no, "ninguno"
+        # etc. must be processed normally even if they match a button title
+        # (see _is_plausible_typed_reply).
+        if content_lower and content_lower in pending and not _is_plausible_typed_reply(content_lower):
             pending.discard(content_lower)
             processed_chatwoot_messages.add(f"{conversation_id}:{message_id}:incoming")
             logger.info(f"[WEBHOOK] Skipping button echo: {content_lower[:60]}")
@@ -174,7 +189,7 @@ async def poll_active_conversations_once():
                     continue
 
                 pending = conversation_pending_echo_titles.get(conversation_id, set())
-                if content_lower and content_lower in pending:
+                if content_lower and content_lower in pending and not _is_plausible_typed_reply(content_lower):
                     pending.discard(content_lower)
                     processed_chatwoot_messages.add(dedupe_key)
                     logger.info(f"[BOT] Skipping button echo from poll: {content_lower[:60]}")
@@ -303,11 +318,16 @@ async def send_chatwoot_message(conversation_id: str, message: str, quick_replie
                 for reply in quick_replies
             ],
         }
-        # Register button titles so the automatic incoming echo from Chatwoot is suppressed
+        # Register button titles so the automatic incoming echo from Chatwoot is suppressed.
+        # Skip titles that are themselves a plausible typed reply (e.g. the bare-number
+        # titles on quantity menus, where title == value): suppressing those would eat a
+        # user who TYPES the number instead of clicking. Real clicks still work — they
+        # carry submitted_values and never depend on this echo set.
         pending = conversation_pending_echo_titles.setdefault(conversation_id, set())
         for reply in quick_replies:
             title = reply.get("title", "").strip().lower()
-            if title:
+            value = str(reply.get("value", "")).strip().lower()
+            if title and title != value and not _is_plausible_typed_reply(title):
                 pending.add(title)
 
     async with httpx.AsyncClient() as client:

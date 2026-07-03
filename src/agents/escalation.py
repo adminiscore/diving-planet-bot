@@ -46,9 +46,15 @@ SENSITIVE_RULES = {
     },
     "real_time_issues": {
         "keywords": {
-            "disponible mañana", "cupo mañana", "hay cupo", "pagar", "pago", "reserva no",
+            "disponible mañana", "cupo mañana", "hay cupo",
+            # payment PROBLEMS only — the bare verb "pagar"/"pago" wrongly caught
+            # info questions like "¿puedo pagar en euros?" / "¿cómo pago?".
+            "no puedo pagar", "no me deja pagar", "pago no", "pago fallo", "pago falló",
+            "pago fallido", "error de pago", "error en el pago", "pago rechazado",
+            "falla el pago", "falló el pago", "reserva no",
             "error reserva", "no puedo reservar", "available tomorrow", "availability tomorrow",
-            "payment", "booking error", "can't book", "cannot book",
+            "payment failed", "payment error", "payment didn't", "payment not going",
+            "booking error", "can't book", "cannot book",
         },
         "es": "Esta consulta depende de disponibilidad o soporte en tiempo real. Te conecto con alguien del equipo para ayudarte ahora.\nWhatsApp: +57 320 231515",
         "en": "This depends on real-time availability or support. I'll connect you with someone from the team to help you now.\nWhatsApp: +57 320 231515",

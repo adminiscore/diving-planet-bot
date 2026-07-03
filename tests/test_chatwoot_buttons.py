@@ -176,6 +176,101 @@ async def test_webhook_marks_incoming_as_processed(monkeypatch):
     assert sent == [("99", "response", [])]
 
 
+def test_is_plausible_typed_reply():
+    # Numbers and known bare replies must never be treated as button echoes.
+    for c in ("1", "2", "5", "10", "0", "6+", "si", "sí", "no", "ninguno", "ninguna", "none"):
+        assert chatwoot._is_plausible_typed_reply(c), c
+    # Decorated button labels are safe to echo-suppress.
+    for c in ("🤿 reservar", "salgo desde cartagena", "ver itinerario completo"):
+        assert not chatwoot._is_plausible_typed_reply(c), c
+
+
+@pytest.mark.asyncio
+async def test_bare_number_titles_not_registered_as_echo(monkeypatch):
+    """Quantity menus use bare-number titles (title == value). Registering them
+    would eat a user who TYPES the number instead of clicking it."""
+    monkeypatch.setattr(chatwoot.httpx, "AsyncClient", DummyAsyncClient)
+    chatwoot.conversation_pending_echo_titles.pop("77", None)
+
+    await chatwoot.send_chatwoot_message(
+        "77",
+        "¿Para cuántas personas?",
+        [
+            {"title": "1", "value": "1"},
+            {"title": "2", "value": "2"},
+            {"title": "6 o mas", "value": "6+"},
+            {"title": "🔙 Volver", "value": "back"},
+        ],
+    )
+
+    pending = chatwoot.conversation_pending_echo_titles.get("77", set())
+    assert "1" not in pending and "2" not in pending  # bare numbers skipped
+    assert "6+" not in pending                          # value form skipped
+    assert "🔙 volver" in pending                       # real label still registered
+
+
+@pytest.mark.asyncio
+async def test_typed_number_at_qty_step_is_not_swallowed(monkeypatch):
+    """Regression: typing '2' after a quantity prompt must reach the tree, even
+    though a button titled '2' is pending. Real clicks were unaffected; typed
+    numbers used to be dropped as phantom echoes."""
+    routed = []
+
+    async def fake_route_message(state, message):
+        routed.append(message)
+        return "ok"
+
+    async def fake_send_message(conversation_id, message, quick_replies=None):
+        return None
+
+    monkeypatch.setattr(chatwoot, "route_message", fake_route_message)
+    monkeypatch.setattr(chatwoot, "send_chatwoot_message", fake_send_message)
+    chatwoot.conversations.clear()
+    chatwoot.processed_chatwoot_messages.clear()
+    # Simulate a qty prompt having been sent: number titles would previously land here.
+    chatwoot.conversation_pending_echo_titles["55"] = {"1", "2", "3", "🔙 volver"}
+
+    await chatwoot.handle_message({
+        "id": 4242,
+        "message_type": "incoming",
+        "content": "2",
+        "conversation": {"id": 55},
+        "sender": {"name": "test"},
+    })
+
+    assert routed == ["2"], "typed qty '2' must be routed, not suppressed as echo"
+
+
+@pytest.mark.asyncio
+async def test_decorated_button_echo_still_suppressed(monkeypatch):
+    """A genuine click-echo of a decorated label (e.g. '🤿 Reservar') must still
+    be dropped so it is not double-processed as free text."""
+    routed = []
+
+    async def fake_route_message(state, message):
+        routed.append(message)
+        return "ok"
+
+    async def fake_send_message(conversation_id, message, quick_replies=None):
+        return None
+
+    monkeypatch.setattr(chatwoot, "route_message", fake_route_message)
+    monkeypatch.setattr(chatwoot, "send_chatwoot_message", fake_send_message)
+    chatwoot.conversations.clear()
+    chatwoot.processed_chatwoot_messages.clear()
+    chatwoot.conversation_pending_echo_titles["66"] = {"🤿 reservar"}
+
+    await chatwoot.handle_message({
+        "id": 4343,
+        "message_type": "incoming",
+        "content": "🤿 Reservar",
+        "conversation": {"id": 66},
+        "sender": {"name": "test"},
+    })
+
+    assert routed == [], "decorated button echo should be suppressed"
+
+
 @pytest.mark.asyncio
 async def test_handle_message_executes_handoff_when_supervisor_escalates(monkeypatch):
     actions = []

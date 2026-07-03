@@ -428,6 +428,33 @@ def _booking_change_buttons(lang: str) -> list[dict]:
         {"title": "🏠 Main menu", "value": "inicio"},
     ]
 
+
+# Verbs the LLM uses when offering to hand the user off ("te paso con un asesor",
+# "contactes a un asesor", "connect you with an advisor"...). The exact phrasing
+# varies run to run, so we anchor on advisor-noun + offer-verb + a question
+# rather than fixed phrases.
+_ADVISOR_OFFER_VERBS = (
+    "pasar", "pase ", "paso ", "pasart", "contact", "conect", "hablar",
+    "connect", "speak", "reach out", "put you in touch", "get you in touch",
+)
+
+
+def _answer_offers_advisor(answer: str) -> bool:
+    """True if a free-text answer offers to hand the user to an advisor, so the
+    reply can carry matching 'advisor / home' buttons instead of the generic
+    main-menu ones (e.g. contact-only courses like Divemaster).
+
+    Robust to the LLM's varying wording: requires the advisor noun, a question,
+    and an offer verb — not one fixed phrase.
+    """
+    a = (answer or "").lower()
+    if "asesor" not in a and "advisor" not in a:
+        return False
+    if "?" not in a:
+        return False
+    return any(v in a for v in _ADVISOR_OFFER_VERBS)
+
+
 LANGUAGE_SELECTION_KEYWORDS = {
     "1", "2", "es", "en", "español", "espanol", "spanish", "english",
 }
@@ -4021,6 +4048,11 @@ async def route_message(state: ConversationState, message: str) -> str:
         extra_context = _build_extra_context(state)
         answer = await rag_answer(message, lang=state.language, history=state.history, extra_context=extra_context)
         answer = _maybe_offer_mixed_from_single(state, message, answer)
+        # When the answer offers to hand off to an advisor (e.g. contact-only
+        # courses), show matching advisor/home buttons instead of the stale
+        # main-menu ones the conversation was carrying.
+        if _answer_offers_advisor(answer):
+            state.quick_replies = _booking_change_buttons(state.language)
         state.history.append({"role": "assistant", "content": answer})
         return answer
 
