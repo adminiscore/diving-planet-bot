@@ -1,0 +1,787 @@
+<title>Diving Planet Bot — Pre-Launch Readiness Audit</title>
+<style>
+  :root {
+    --paper: #f3f6f5;
+    --paper-raised: #ffffff;
+    --ink: #12262a;
+    --ink-soft: #4c6367;
+    --ink-faint: #7c8f92;
+    --line: #d9e0dd;
+    --teal: #0d6b78;
+    --teal-deep: #0a3f47;
+    --coral: #d9603a;
+    --sev-blocker: #b3392c;
+    --sev-blocker-bg: #fbeae7;
+    --sev-important: #a06a12;
+    --sev-important-bg: #faf1e0;
+    --sev-known: #2f6b52;
+    --sev-known-bg: #e9f2ec;
+    --sev-untested: #4a5a9e;
+    --sev-untested-bg: #eceeff;
+    --sev-good: #1f7a4d;
+    --font-display: Georgia, "Iowan Old Style", "Palatino Linotype", "URW Palladio L", serif;
+    --font-body: -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --font-mono: ui-monospace, "SF Mono", "Cascadia Code", "Consolas", "Courier New", monospace;
+  }
+
+  * { box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--font-body);
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  a { color: var(--teal); text-decoration-thickness: 1px; text-underline-offset: 2px; }
+  a:focus-visible, button:focus-visible, summary:focus-visible {
+    outline: 2px solid var(--teal); outline-offset: 2px;
+  }
+
+  /* ---------- header ---------- */
+
+  header.masthead {
+    background: linear-gradient(160deg, var(--teal-deep), #0d5761 78%);
+    color: #eef6f5;
+    padding: 44px clamp(20px, 5vw, 64px) 34px;
+  }
+
+  .eyebrow {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: #9fd6ce;
+    margin: 0 0 10px;
+  }
+
+  header.masthead h1 {
+    font-family: var(--font-display);
+    font-weight: 400;
+    font-size: clamp(28px, 4vw, 42px);
+    line-height: 1.12;
+    margin: 0 0 12px;
+    text-wrap: balance;
+    max-width: 18ch;
+  }
+
+  header.masthead p.lede {
+    max-width: 62ch;
+    color: #cfe6e2;
+    font-size: 15.5px;
+    margin: 0;
+  }
+
+  header.masthead p.lede code {
+    font-family: var(--font-mono);
+    background: rgba(255,255,255,0.12);
+    padding: 1px 5px;
+    border-radius: 3px;
+    font-size: 0.92em;
+  }
+
+  /* ---------- stats readout ---------- */
+
+  .readout {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1px;
+    background: var(--line);
+    border: 1px solid var(--line);
+    margin: 0 clamp(20px, 5vw, 64px);
+    transform: translateY(-22px);
+    box-shadow: 0 8px 28px rgba(10, 40, 45, 0.14);
+  }
+
+  .readout .cell {
+    background: var(--paper-raised);
+    padding: 16px 18px;
+  }
+
+  .readout .cell .label {
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin: 0 0 6px;
+  }
+
+  .readout .cell .value {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+    font-size: 22px;
+    font-weight: 600;
+    color: var(--ink);
+  }
+
+  .readout .cell .value.good { color: var(--sev-good); }
+  .readout .cell .value.warn { color: var(--sev-important); }
+  .readout .cell .sub {
+    font-size: 11px;
+    color: var(--ink-faint);
+    margin-top: 2px;
+  }
+
+  /* ---------- layout shell ---------- */
+
+  .shell {
+    display: grid;
+    grid-template-columns: 210px minmax(0, 1fr);
+    gap: 40px;
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 8px clamp(20px, 5vw, 64px) 80px;
+  }
+
+  @media (max-width: 880px) {
+    .shell { grid-template-columns: 1fr; }
+    nav.toc { display: none; }
+  }
+
+  nav.toc {
+    position: sticky;
+    top: 24px;
+    align-self: start;
+    font-size: 13px;
+    padding-top: 6px;
+  }
+
+  nav.toc .toc-title {
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin: 0 0 10px;
+  }
+
+  nav.toc ol {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  nav.toc a {
+    display: flex;
+    gap: 8px;
+    align-items: baseline;
+    color: var(--ink-soft);
+    text-decoration: none;
+    padding: 5px 0;
+    border-left: 2px solid transparent;
+    padding-left: 10px;
+  }
+
+  nav.toc a:hover { color: var(--teal); border-left-color: var(--teal); }
+
+  nav.toc .n {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--ink-faint);
+    min-width: 1.4em;
+  }
+
+  main { min-width: 0; }
+
+  section.block { margin-bottom: 52px; scroll-margin-top: 18px; }
+
+  section.block > .block-head {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    margin-bottom: 6px;
+    flex-wrap: wrap;
+  }
+
+  section.block h2 {
+    font-family: var(--font-display);
+    font-weight: 400;
+    font-size: 23px;
+    margin: 0;
+  }
+
+  .count-chip {
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    padding: 2px 8px;
+    border-radius: 3px;
+    font-weight: 600;
+  }
+
+  section.block > p.intro {
+    color: var(--ink-soft);
+    max-width: 68ch;
+    margin: 0 0 22px;
+    font-size: 14.5px;
+  }
+
+  /* severity accents per block */
+  #blockers .count-chip, .stripe.blocker { color: var(--sev-blocker); }
+  #blockers .count-chip { background: var(--sev-blocker-bg); }
+  #important .count-chip { color: var(--sev-important); background: var(--sev-important-bg); }
+  #known-issues .count-chip { color: var(--sev-known); background: var(--sev-known-bg); }
+  #untested .count-chip { color: var(--sev-untested); background: var(--sev-untested-bg); }
+
+  /* ---------- entry cards ---------- */
+
+  .entry {
+    display: flex;
+    gap: 0;
+    background: var(--paper-raised);
+    border: 1px solid var(--line);
+    border-left: 3px solid var(--line);
+    margin-bottom: 10px;
+  }
+
+  .entry.blocker { border-left-color: var(--sev-blocker); }
+  .entry.important { border-left-color: var(--sev-important); }
+  .entry.known { border-left-color: var(--sev-known); }
+  .entry.untested { border-left-color: var(--sev-untested); }
+
+  .entry-body { padding: 14px 18px; flex: 1; min-width: 0; }
+
+  .entry-title {
+    font-weight: 600;
+    font-size: 15px;
+    margin: 0 0 4px;
+    display: flex;
+    gap: 8px;
+    align-items: baseline;
+    flex-wrap: wrap;
+  }
+
+  .entry-title .ref {
+    font-family: var(--font-mono);
+    font-weight: 400;
+    font-size: 12px;
+    color: var(--ink-faint);
+  }
+
+  .entry-desc { margin: 0; color: var(--ink-soft); font-size: 13.8px; }
+  .entry-desc + .entry-desc { margin-top: 6px; }
+
+  .entry-desc b { color: var(--ink); font-weight: 600; }
+
+  /* ---------- validated checklist ---------- */
+
+  .check-group { margin-bottom: 22px; }
+  .check-group h3 {
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--sev-good);
+    margin: 0 0 10px;
+  }
+  ul.checklist { list-style: none; margin: 0; padding: 0; }
+  ul.checklist li {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    padding: 7px 0;
+    border-bottom: 1px solid var(--line);
+    font-size: 13.8px;
+  }
+  ul.checklist li:last-child { border-bottom: none; }
+  ul.checklist li::before {
+    content: "✓";
+    color: var(--sev-good);
+    font-weight: 700;
+    font-size: 14px;
+    line-height: 1.4;
+    flex-shrink: 0;
+  }
+
+  /* fixed-this-pass rows */
+  #validated .entry.fixed { border-left-color: var(--sev-good); }
+  #validated .count-chip { color: var(--sev-good); background: var(--sev-known-bg); }
+  .fixed-tag {
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    color: var(--sev-good);
+    background: var(--sev-known-bg);
+    padding: 1px 7px;
+    border-radius: 3px;
+    text-transform: uppercase;
+    flex-shrink: 0;
+  }
+
+  /* ---------- verdict callout ---------- */
+
+  .verdict {
+    background: var(--paper-raised);
+    border: 1px solid var(--line);
+    border-top: 3px solid var(--coral);
+    padding: 22px 24px;
+    margin: 4px 0 48px;
+  }
+  .verdict h2 {
+    font-family: var(--font-display);
+    font-weight: 400;
+    font-size: 21px;
+    margin: 0 0 10px;
+  }
+  .verdict p { margin: 0 0 10px; font-size: 14.5px; color: var(--ink-soft); max-width: 74ch; }
+  .verdict p:last-child { margin-bottom: 0; }
+  .verdict strong { color: var(--ink); }
+
+  /* ---------- business questions table ---------- */
+
+  table.biz {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13.5px;
+    background: var(--paper-raised);
+    border: 1px solid var(--line);
+  }
+  table.biz th, table.biz td {
+    text-align: left;
+    padding: 9px 12px;
+    border-bottom: 1px solid var(--line);
+    vertical-align: top;
+  }
+  table.biz thead th {
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    font-weight: 600;
+    border-bottom: 1px solid var(--ink-faint);
+  }
+  table.biz td.id { font-family: var(--font-mono); color: var(--ink-faint); white-space: nowrap; }
+  table.biz tbody tr:last-child td { border-bottom: none; }
+  table.biz tbody tr:hover { background: var(--paper); }
+
+  /* ---------- backlog list ---------- */
+
+  .backlog-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 10px;
+  }
+  .backlog-item {
+    background: var(--paper-raised);
+    border: 1px solid var(--line);
+    padding: 12px 14px;
+    font-size: 13.5px;
+    color: var(--ink-soft);
+  }
+  .backlog-item b { color: var(--ink); display: block; margin-bottom: 3px; font-size: 14px; }
+
+  footer.notes {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 0 clamp(20px, 5vw, 64px) 60px;
+    color: var(--ink-faint);
+    font-size: 12.5px;
+    border-top: 1px solid var(--line);
+    padding-top: 20px;
+  }
+  footer.notes p { max-width: 74ch; }
+  footer.notes code { font-family: var(--font-mono); }
+
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+  }
+</style>
+
+<header class="masthead">
+  <p class="eyebrow">Diving Planet Bot · Pre-launch readiness audit</p>
+  <h1>What's left before this goes live</h1>
+  <p class="lede">
+    Full pass over <code>feature/dev_alvaro</code> at commit <code>0e9e7be</code> — code,
+    tests, docs, and the KB Q&amp;A trail with the owner. Compiled 2026-07-02, after merging
+    the latest work from Gadea's branch.
+  </p>
+</header>
+
+<div class="readout">
+  <div class="cell">
+    <p class="label">Live scenarios</p>
+    <p class="value good">20/20</p>
+    <p class="sub">all passed in a real Chatwoot session (2026-07-02)</p>
+  </div>
+  <div class="cell">
+    <p class="label">Test suite</p>
+    <p class="value good">709<span style="font-size:13px;color:var(--ink-faint);"> / 711</span></p>
+    <p class="sub">+25 regression tests from this pass · 1 skipped · 1 xfailed</p>
+  </div>
+  <div class="cell">
+    <p class="label">RAG baseline</p>
+    <p class="value good">39/39</p>
+    <p class="sub">0 fallbacks · BM25 half restored (content_tsv)</p>
+  </div>
+  <div class="cell">
+    <p class="label">Environments live</p>
+    <p class="value warn">1<span style="font-size:13px;color:var(--ink-faint);"> / 3</span></p>
+    <p class="sub">DEV only — PRE and PRO never provisioned</p>
+  </div>
+  <div class="cell">
+    <p class="label">Channel connected</p>
+    <p class="value warn">Widget</p>
+    <p class="sub">WhatsApp Business API not wired up yet</p>
+  </div>
+</div>
+
+<div class="shell">
+  <nav class="toc" aria-label="Section index">
+    <p class="toc-title">On this page</p>
+    <ol>
+      <li><a href="#verdict"><span class="n">—</span> Verdict</a></li>
+      <li><a href="#blockers"><span class="n">01</span> Blockers</a></li>
+      <li><a href="#important"><span class="n">02</span> Important gaps</a></li>
+      <li><a href="#known-issues"><span class="n">03</span> Known issues</a></li>
+      <li><a href="#validated"><span class="n">04</span> Validated live</a></li>
+      <li><a href="#fixed"><span class="n">05</span> Fixed in pass</a></li>
+      <li><a href="#business"><span class="n">06</span> Owner questions</a></li>
+      <li><a href="#backlog"><span class="n">07</span> Post-launch backlog</a></li>
+    </ol>
+  </nav>
+
+  <main>
+    <section class="verdict" id="verdict">
+      <h2>Where this actually stands</h2>
+      <p>
+        The <strong>conversation engine is solid and now proven live</strong>: on 2026-07-02
+        all <strong>20 previously-untested scenarios were driven through a real Chatwoot
+        session and passed</strong>. 709 tests green, the RAG baseline holds 39/39. The pass
+        surfaced two real bugs (a typed number at a quantity step could be swallowed; the RAG
+        BM25 index column was missing) and three UX nits — <strong>all five are fixed, verified
+        live, and locked in with regression tests</strong> (commit <code>bc6044d</code>). This
+        is demo-ready and pilot-ready inside the Chatwoot widget today.
+      </p>
+      <p>
+        It is <strong>not production-ready as a WhatsApp service</strong>. Three things block
+        that specifically: conversation state lives in an in-memory Python <code>dict</code>
+        that resets on every deploy or crash, there is no WhatsApp Business API connection at
+        all (only the Chatwoot website widget has been exercised), and neither the PRE nor PRO
+        VPS has ever been provisioned — every infra checklist item in <code>TODO.md</code> past
+        DEV is still unchecked.
+      </p>
+      <p>
+        Layered on top: a handful of commercial rules the bot needs to speak confidently —
+        cancellation deadlines, the Colombian discount, the hotel pickup matrix — are still
+        open questions with the owner after four rounds of Q&amp;A.
+      </p>
+    </section>
+
+    <section class="block" id="blockers">
+      <div class="block-head">
+        <h2>Blockers</h2>
+        <span class="count-chip">5 · won't survive a real launch</span>
+      </div>
+      <p class="intro">Nothing here is a code bug — it's scope that was deliberately deferred during dev and now sits directly between this build and a real WhatsApp launch.</p>
+
+      <div class="entry blocker">
+        <div class="entry-body">
+          <p class="entry-title">No persistent conversation state <span class="ref">in-memory dict, src/channels/chatwoot.py</span></p>
+          <p class="entry-desc">Every conversation lives in a Python dict in process memory. A restart, deploy, or crash silently wipes every in-progress booking. This is the confirmed root cause of the reported "stuck" bugs at <b>MIXED_FINAL_KIDS</b> and <b>MIXED_FINAL_PRIVATE</b>. Migration to Redis/PostgreSQL was deliberately deferred as "the last hardening step before PRE" — that step hasn't been taken yet.</p>
+        </div>
+      </div>
+
+      <div class="entry blocker">
+        <div class="entry-body">
+          <p class="entry-title">WhatsApp Business API never connected</p>
+          <p class="entry-desc">Chatwoot is only wired to the website widget (<code>chatwoot-test.html</code>, plus the Cloudflare-tunnel public demo). The bot's entire premise is a WhatsApp assistant, and that channel — Meta Cloud API or 360dialog — has not been requested or integrated.</p>
+        </div>
+      </div>
+
+      <div class="entry blocker">
+        <div class="entry-body">
+          <p class="entry-title">PRE and PRO infrastructure not provisioned <span class="ref">TODO.md — infra checklist</span></p>
+          <p class="entry-desc"><code>docker-compose.vps.yml</code> exists and looks complete, but no VPS has been bought, no DNS configured, and it has never been deployed once. Every item under "PRE (staging)" and "PRO (producción)" in <code>TODO.md</code> is unchecked.</p>
+        </div>
+      </div>
+
+      <div class="entry blocker">
+        <div class="entry-body">
+          <p class="entry-title">Booking Agent is an empty stub <span class="ref">src/agents/booking_agent.py</span></p>
+          <p class="entry-desc">The whole file is a docstring and one <code>TODO: Implement with Roverd deep link generation</code>. Booking today works entirely through pre-built links in <code>services.json</code> and human escalation — functional, but the "Phase 2" automated booking layer described in the architecture was never started.</p>
+        </div>
+      </div>
+
+      <div class="entry blocker">
+        <div class="entry-body">
+          <p class="entry-title">Cancellation / payment deadlines still missing from the KB</p>
+          <p class="entry-desc">The bot's <em>behavior</em> is correct and shipped — it states the general policy and always hands off to a human with two buttons. But the actual policy text (how many days before check-in is penalty-free, partial-penalty windows, no-show rule, refund turnaround) was never supplied by the owner across four Q&amp;A rounds. Anyone testing a real cancellation today gets escalation, not an answer.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="block" id="important">
+      <div class="block-head">
+        <h2>Important gaps</h2>
+        <span class="count-chip">7 · fix before a wide rollout</span>
+      </div>
+      <p class="intro">Won't stop a controlled pilot, but each one is a live risk of an inconsistent answer, a missed revenue moment, or an operational blind spot once volume goes up.</p>
+
+      <div class="entry important">
+        <div class="entry-body">
+          <p class="entry-title">Colombian discount still undefined <span class="ref">questions_for_owner_business_kb.md #2</span></p>
+          <p class="entry-desc">Confirmed to exist, never closed after 4 rounds. The bot can only say "hay descuento, un asesor te da el detalle" — it cannot quote a number, confirm which services it applies to, or say whether it covers courses.</p>
+        </div>
+      </div>
+
+      <div class="entry important">
+        <div class="entry-body">
+          <p class="entry-title">Pricing source of truth never reconciled <span class="ref">questions_for_owner_business_kb.md #1</span></p>
+          <p class="entry-desc"><code>pricing.json</code> and <code>services.json</code> both hold prices and nobody has decided which one is authoritative when they eventually disagree. No placeholder prices leak today, but the side-by-side review the owner asked for has never happened — this is a silent-drift risk, not a today-bug.</p>
+        </div>
+      </div>
+
+      <div class="entry important">
+        <div class="entry-body">
+          <p class="entry-title">Hotel → pickup matrix mostly unvalidated <span class="ref">questions_for_owner_business_kb.md #19</span></p>
+          <p class="entry-desc">Only San Pedro de Majagua and Cocoliso are confirmed with maritime access. Pao Pao's FAQ was rewritten to express uncertainty rather than overclaim, which is the right interim fix — but the other ~10 priority hotels on the owner's own shortlist (Bora Bora Beach Club, Islabela, Isla del Pirata, Lizamar…) were never validated one by one.</p>
+        </div>
+      </div>
+
+      <div class="entry important">
+        <div class="entry-body">
+          <p class="entry-title">Divemaster stays fully contact-only</p>
+          <p class="entry-desc">No duration, prerequisites, or pricing structure in the KB, so the bot can't pre-qualify a Divemaster lead before escalating — every inquiry, even an obviously non-viable one, reaches a human cold.</p>
+        </div>
+      </div>
+
+      <div class="entry important">
+        <div class="entry-body">
+          <p class="entry-title">Extras / upsells catalog is empty by design</p>
+          <p class="entry-desc">The owner's explicit instruction is "don't offer anything" until the catalog is defined — correctly implemented, but it means a real revenue lever (premium gear, private transport, logbook, extra dives) sits completely idle at launch.</p>
+        </div>
+      </div>
+
+      <div class="entry important">
+        <div class="entry-body">
+          <p class="entry-title">No CI/CD, no DB migrations, no owner dashboard</p>
+          <p class="entry-desc">All three are explicitly unchecked in the <code>TODO.md</code> roadmap: GitHub Actions → VPS pipeline, Alembic migrations for schema changes, and any analytics view of conversations/conversions for the owner. None are launch-blocking on day one, but the longer they're deferred the more manual every release and audit becomes.</p>
+        </div>
+      </div>
+
+      <div class="entry important">
+        <div class="entry-body">
+          <p class="entry-title">Chatwoot isn't operationally ready for the owner's team</p>
+          <p class="entry-desc">No mobile push notifications configured, no conversation tags/labels, and no business-hours auto-message for off-hours contacts. Escalations work technically, but nobody on the human side has been set up to actually notice them reliably yet.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="block" id="known-issues">
+      <div class="block-head">
+        <h2>Known code-level issues</h2>
+        <span class="count-chip">5 · small, already located</span>
+      </div>
+      <p class="intro">Concrete, cheap to fix — flagged here so they don't get lost, not because any of them are urgent on their own.</p>
+
+      <div class="entry known">
+        <div class="entry-body">
+          <p class="entry-title">PADI sub-course not set from free text <span class="ref">src/agents/supervisor.py:3419</span></p>
+          <p class="entry-desc">When the IntentDetector routes a free-text message straight to a PADI course, the code sets the generic <code>"course"</code> cart type but the <code>TODO</code> comment confirms the specific course (Open Water vs. Advanced vs. Rescue vs. Divemaster) is never actually written to state — it can silently fall through to a default rather than the one the customer named.</p>
+        </div>
+      </div>
+
+      <div class="entry known">
+        <div class="entry-body">
+          <p class="entry-title">Mixed-group routing decision left open <span class="ref">tests/FreeText/test_mixed_group.py</span></p>
+          <p class="entry-desc">Marked <code>xfail(strict=False)</code>, not broken: "Somos dos, yo buceo certificado y mi novia snorkel" currently lands on <code>MIXED_LOCATION</code> (asks origin first) instead of <code>MIXED_ENTRY</code>. The test documents this as a pending design call for Gonzalo, not a regression — worth a deliberate yes/no before launch so it's not accidentally "temporary" forever.</p>
+        </div>
+      </div>
+
+      <div class="entry known">
+        <div class="entry-body">
+          <p class="entry-title">Dead import in the app entrypoint <span class="ref">src/main.py:11</span></p>
+          <p class="entry-desc"><code>conversations</code> is imported from <code>chatwoot.py</code> but never referenced anywhere in <code>main.py</code>. Harmless today, but worth a quick cleanup pass.</p>
+        </div>
+      </div>
+
+      <div class="entry known">
+        <div class="entry-body">
+          <p class="entry-title">Hardcoded Chatwoot token in the public demo route <span class="ref">src/main.py — GET /chat</span></p>
+          <p class="entry-desc">The <code>/chat</code> route embeds a specific website token for the Cloudflare-tunnel testing setup described in <code>docs/PUBLIC_TESTING.md</code>. Correct for that purpose, but it needs to be swapped for the real production inbox token (ideally read from settings, not hardcoded) before this route is ever exposed on a real domain.</p>
+        </div>
+      </div>
+
+      <div class="entry known">
+        <div class="entry-body">
+          <p class="entry-title">Two internal docs are stale <span class="ref">docs/kb-audit-mvp.md · docs/mvp-intent-matrix.md</span></p>
+          <p class="entry-desc">Both predate the Q&amp;A rounds captured in <code>questions_for_owner_business_kb.md</code> — e.g. the KB audit still claims pricing has "many <code>precio_a_definir</code> placeholders," which is no longer true. Not wrong enough to mislead the team today, but worth a pass so a newcomer doesn't read three docs and get three different pictures.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="block" id="validated">
+      <div class="block-head">
+        <h2>Validated live in a real Chatwoot session</h2>
+        <span class="count-chip">20/20 passed · 2026-07-02</span>
+      </div>
+      <p class="intro">Every scenario below was driven through an actual Chatwoot conversation (real webhook → supervisor → reply pipeline) and behaved as expected. This was the highest-leverage unknown before a pilot — it is now closed. The pass also caught 5 real defects, all fixed and verified live in the same session (see below).</p>
+
+      <div class="check-group">
+        <h3>RAG &amp; knowledge base</h3>
+        <ul class="checklist">
+          <li>"¿Cuánto en pesos colombianos?" → correct COP prices for 2 dives and the mini-course</li>
+          <li>"¿Me recogen en Pao Pao?" → expresses real uncertainty about the dock, doesn't overclaim</li>
+          <li>Colombian nationality asked only once across pricing + booking</li>
+          <li>"¿Puedo pagar en euros?" → explains EUR isn't handled, bank converts from USD</li>
+          <li>"Ver itinerario completo" → arrives as <b>two separate</b> messages (<code>MESSAGE_SPLIT</code>)</li>
+          <li>Guided PADI courses ask origin before adding to cart</li>
+        </ul>
+      </div>
+
+      <div class="check-group">
+        <h3>Booking &amp; checkout</h3>
+        <ul class="checklist">
+          <li>Non-Colombian client, cart confirmed → booking link sent directly, no escalation</li>
+          <li>Colombian client → escalates to advisor (COP shown), no direct link</li>
+          <li>"💵 Pagar en persona" → always escalates, never shows a link</li>
+          <li>"volver" goes back one step at a time, never resets to Inicio</li>
+          <li>Typo "esnorkel" resolved directly to snorkel</li>
+          <li>"Quiero cancelar mi reserva" → policy + advisor/home buttons that navigate correctly</li>
+        </ul>
+      </div>
+
+      <div class="check-group">
+        <h3>Summaries, menus &amp; the "stuck" reports</h3>
+        <ul class="checklist">
+          <li>Certified 3-dive/1-day summary and island-variant selector render correctly</li>
+          <li>PADI menus: Go Pro vs. Specialties split works</li>
+          <li>Divemaster contact-only, no payment link</li>
+          <li><b>MIXED_FINAL_KIDS</b> (mixed age ranges) completes without getting stuck</li>
+          <li><b>MIXED_FINAL_PRIVATE</b> (private boat) completes without getting stuck</li>
+          <li>Full certified and full beginner paths, start to finish, clean</li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="block" id="fixed">
+      <div class="block-head">
+        <h2>Found &amp; fixed during the pass</h2>
+        <span class="count-chip" style="color:var(--sev-good);background:var(--sev-known-bg);">5 · all verified live</span>
+      </div>
+      <p class="intro">The live run turned up two real bugs and three UX nits. All are fixed, re-tested in Chatwoot, and covered by regression tests (commit <code>bc6044d</code>, +25 tests).</p>
+
+      <div class="entry fixed">
+        <div class="entry-body">
+          <p class="entry-title"><span class="fixed-tag">Fixed</span> Typed number swallowed at quantity steps <span class="ref">src/channels/chatwoot.py</span></p>
+          <p class="entry-desc">Typing a number (e.g. "2" at "¿cuántas personas?") could be dropped as a phantom button-echo because the button's title was the bare number. Real clicks were unaffected. Fixed at the source (don't register ambiguous titles) and unified the webhook + poller echo guards — the poller also lacked the yes/no guard the webhook had.</p>
+        </div>
+      </div>
+
+      <div class="entry fixed">
+        <div class="entry-body">
+          <p class="entry-title"><span class="fixed-tag">Fixed</span> RAG running without its BM25 half <span class="ref">content_tsv column missing</span></p>
+          <p class="entry-desc">The full-text column and GIN index were absent on the local DB, so every RAG query silently fell back to vector-only retrieval — the half that helps with proper nouns and exact prices. Applied the FTS migration; all 779 docs indexed. <b>Team gotcha:</b> fresh DB setups must run <code>migrations/001_add_fts_to_kb_documents.sql</code> after a reindex.</p>
+        </div>
+      </div>
+
+      <div class="entry fixed">
+        <div class="entry-body">
+          <p class="entry-title"><span class="fixed-tag">Fixed</span> Language mis-detected on Spanish text <span class="ref">src/agents/intent_detector.py</span></p>
+          <p class="entry-desc">Keyword matching was substring-based, so "ahi" matched "hi" and flipped a Spanish message to English. Now whole-word matching. "Estoy en el hotel Pao Pao, me recogen ahi?" now answers in Spanish.</p>
+        </div>
+      </div>
+
+      <div class="entry fixed">
+        <div class="entry-body">
+          <p class="entry-title"><span class="fixed-tag">Fixed</span> Payment info question escalated <span class="ref">src/agents/escalation.py</span></p>
+          <p class="entry-desc">The bare verb "pagar"/"pago" escalated info questions like "¿puedo pagar en euros?". Narrowed to real payment-problem phrases; genuine failures ("no puedo pagar", "payment failed") still escalate.</p>
+        </div>
+      </div>
+
+      <div class="entry fixed">
+        <div class="entry-body">
+          <p class="entry-title"><span class="fixed-tag">Fixed</span> Advisor offer showed generic menu buttons <span class="ref">src/agents/supervisor.py</span></p>
+          <p class="entry-desc">When a RAG answer offered to connect the user with an advisor (contact-only courses like Divemaster), it showed "Reservar / Información" instead of advisor buttons. Now detected (robust to the LLM's varying wording) and given matching advisor/home buttons.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="block" id="business">
+      <div class="block-head">
+        <h2>Still waiting on the owner</h2>
+        <span class="count-chip">5 core · questions_for_owner_business_kb.md</span>
+      </div>
+      <p class="intro">Four Q&amp;A rounds have closed most of the list — the remaining core items are the ones the owner has explicitly deferred, not ones nobody asked about.</p>
+
+      <div style="overflow-x:auto;">
+        <table class="biz">
+          <thead>
+            <tr><th>#</th><th>Question</th><th>Where it bites today</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="id">#2</td>
+              <td>Colombian discount — rate, scope, whether it covers courses</td>
+              <td>Bot mentions it exists, can't quote a figure or confirm eligibility</td>
+            </tr>
+            <tr>
+              <td class="id">#1</td>
+              <td>Pricing source of truth — <code>pricing.json</code> vs. <code>services.json</code></td>
+              <td>No visible bug today; risk grows the longer both files can diverge unnoticed</td>
+            </tr>
+            <tr>
+              <td class="id">#19</td>
+              <td>Hotel-by-hotel pickup matrix (owner reviewing with his own team)</td>
+              <td>~10 priority hotels beyond San Pedro/Cocoliso still answered with "coordinamos, hay que confirmar"</td>
+            </tr>
+            <tr>
+              <td class="id">#29</td>
+              <td>Divemaster duration, visible prerequisites, minimum timeline</td>
+              <td>Every Divemaster lead escalates cold, no pre-qualification possible</td>
+            </tr>
+            <tr>
+              <td class="id">#36–39</td>
+              <td>Extras / upsell catalog, pricing, and when the bot should offer them</td>
+              <td>Bot stays fully silent on upsell — correct per current instruction, but idle revenue lever</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p style="font-size:13px;color:var(--ink-faint);margin-top:14px;">
+        Smaller open nuances tracked in the same doc: exact refund turnaround time, course-interrupted-by-weather day limit,
+        multi-specialty combo discounts, extreme gear sizing (XS/XXL+), and the precise timing of ROVERD's email reminders.
+        None of these block a pilot on their own.
+      </p>
+    </section>
+
+    <section class="block" id="backlog">
+      <div class="block-head">
+        <h2>Post-launch backlog</h2>
+        <span class="count-chip">no urgency</span>
+      </div>
+      <p class="intro">Real value, explicitly out of scope for getting to a working pilot. Listed so nothing gets forgotten once the blockers above are cleared.</p>
+
+      <div class="backlog-grid">
+        <div class="backlog-item"><b>Owner analytics dashboard</b>Conversations, services asked about, conversion tracking.</div>
+        <div class="backlog-item"><b>Proactive WhatsApp reminders</b>24h-before confirmation, meeting point, what to bring.</div>
+        <div class="backlog-item"><b>Post-dive follow-up</b>Photos, PADI certificate delivery, review request.</div>
+        <div class="backlog-item"><b>CRM for repeat customers</b>Conversation history across visits.</div>
+        <div class="backlog-item"><b>More languages</b>French / Portuguese for cruise-ship passengers.</div>
+        <div class="backlog-item"><b>Load testing</b>Before PRO takes real traffic volume.</div>
+        <div class="backlog-item"><b>RAG technical backlog</b>Semantic cache, local reranker, model cascading, observability (LangSmith/Phoenix).</div>
+        <div class="backlog-item"><b>Legal / GDPR review</b>Customer data handling ahead of real production traffic.</div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<footer class="notes">
+  <p>
+    Originally compiled from <code>TODO.md</code>, <code>docs/project-history/session-handoff.md</code>,
+    <code>docs/questions_for_owner_business_kb.md</code> and the test suite.
+    Updated 2026-07-02 after driving all 20 scenarios through a live Chatwoot session and
+    fixing the 5 defects that surfaced (commit <code>bc6044d</code>, 709 tests green). The
+    collaborative task tracker lives in <code>pre-launch-checklist.csv</code> (import into Google Sheets).
+  </p>
+</footer>

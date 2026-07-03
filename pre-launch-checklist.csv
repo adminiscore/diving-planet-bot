@@ -1,0 +1,52 @@
+Sección,Tarea,Tipo,Estado,Responsable,Notas
+Bloqueantes,Migrar estado conversacional de memoria a Redis/PostgreSQL,Bloqueante,Pendiente,,Causa raíz de los bugs "stuck"; el dict en memoria se borra en cada deploy/reload
+Bloqueantes,Conectar WhatsApp Business API (Meta Cloud o 360dialog),Bloqueante,Pendiente,,Reloj externo - solicitar cuanto antes (aprobación/verificación de negocio)
+Bloqueantes,Provisionar entorno PRE (VPS + DNS + Docker + SSL + deploy),Bloqueante,Pendiente,,Todo el checklist PRE de TODO.md sin marcar; docker-compose.vps.yml existe pero nunca desplegado
+Bloqueantes,Provisionar entorno PRO (hardening + backup + monitorización),Bloqueante,Pendiente,,Depende de PRE
+Bloqueantes,Implementar Booking Agent (Roverd deep links),Bloqueante,Pendiente,,src/agents/booking_agent.py es un stub vacío; hoy funciona con links de services.json + escalado
+Bloqueantes,KB: política de cancelación/pagos (plazos y penalizaciones),Bloqueante,Pendiente,Owner,El bot informa y escala bien; falta el texto de política (plazos sin penalización, no-show, reembolso)
+Gaps importantes,Descuento colombiano (tarifa/alcance/cursos),Importante,Pendiente,Owner,4 rondas sin cerrar; el bot solo dice "existe, un asesor te lo detalla"
+Gaps importantes,Fuente oficial de precios (pricing.json vs services.json),Importante,Pendiente,,Riesgo de deriva silenciosa; hacer revisión fila a fila
+Gaps importantes,Matriz hotel → recogida (sí/no por hotel),Importante,Pendiente,Owner,Solo San Pedro y Cocoliso confirmados; ~10 hoteles prioritarios sin validar
+Gaps importantes,Divemaster: duración/prerrequisitos/precio,Importante,Pendiente,Owner,Contact-only; no se puede pre-cualificar el lead
+Gaps importantes,Catálogo de extras/upsells,Importante,Pendiente,Owner,Bot silencioso por instrucción; palanca de ingresos sin usar
+Gaps importantes,CI/CD + migraciones Alembic + dashboard del owner,Importante,Pendiente,,Los tres sin marcar en el roadmap
+Gaps importantes,Chatwoot operacional (push móvil + etiquetas + horario),Importante,Pendiente,,El equipo humano aún no está configurado para ver escalaciones de forma fiable
+Issues de código,PADI sub-curso no se setea desde texto libre (supervisor.py:3419),Menor,Pendiente,,TODO confirmado; el curso concreto (OW/Advanced/Rescue/DM) no se escribe al estado
+Issues de código,Decisión de diseño en routing de grupo mixto (xfail),Menor,Pendiente,,test_mixed_group xfail; MIXED_LOCATION vs MIXED_ENTRY - decidir con Gonzalo
+Issues de código,Import muerto en main.py:11 (conversations),Menor,Pendiente,,Limpieza rápida
+Issues de código,Token de Chatwoot hardcoded en la ruta /chat,Menor,Pendiente,,Cambiar por token de inbox de producción (leer de settings) antes de exponer
+Issues de código,Docs internos desactualizados (kb-audit-mvp / mvp-intent-matrix),Menor,Pendiente,,Predatan las rondas de Q&A; kb-audit aún dice "precio_a_definir"
+Corregido esta sesión,content_tsv faltante → RAG corría sin BM25,Corregido,Hecho,,Migración FTS aplicada; 779 docs indexados
+Corregido esta sesión,Número tecleado en pasos de cantidad se descartaba,Corregido,Hecho,,chatwoot.py + 4 tests de regresión (commit bc6044d)
+Corregido esta sesión,Detección de idioma por substring ("ahi"→inglés),Corregido,Hecho,,intent_detector.py whole-word matching
+Corregido esta sesión,"Pagar en euros" escalaba en vez de responder,Corregido,Hecho,,escalation.py - narrowed a problemas de pago reales
+Corregido esta sesión,Divemaster mostraba botones de menú genéricos,Corregido,Hecho,,supervisor.py - botones asesor/inicio al ofrecer asesor
+Escenarios validados,#1 Precios en COP (2 buceos + minicurso),Escenario,Hecho,,COP correctos vía RAG
+Escenarios validados,#2 Pao Pao expresa incertidumbre del muelle,Escenario,Hecho,,No sobreafirma acceso marítimo
+Escenarios validados,#3 Colombiano no se pregunta dos veces,Escenario,Hecho,,Preguntado una sola vez
+Escenarios validados,#4 Euros: explica USD + conversión del banco,Escenario,Hecho,,FAQ responde (mejorado con el nit 2)
+Escenarios validados,#5 Ver itinerario completo llega en 2 mensajes,Escenario,Hecho,,MESSAGE_SPLIT funciona
+Escenarios validados,#6 Cursos PADI preguntan origen,Escenario,Hecho,,Menú guiado correcto
+Escenarios validados,#7 No-colombiano recibe link directo,Escenario,Hecho,,Sin escalar
+Escenarios validados,#8 Colombiano escala en vez de link,Escenario,Hecho,,Resumen en COP; asesor coordina
+Escenarios validados,#9 Pagar en persona escala sin link,Escenario,Hecho,,
+Escenarios validados,#10 Volver retrocede un paso (no resetea),Escenario,Hecho,,
+Escenarios validados,#11 Typo "esnorkel" se resuelve,Escenario,Hecho,,Capa 2 lo resuelve directo
+Escenarios validados,#12 Cancelar muestra política + botones que navegan,Escenario,Hecho,,Botón asesor escala limpio
+Escenarios validados,#13 Resumen paquete 3 buceos correcto,Escenario,Hecho,,Menú multi-día
+Escenarios validados,#14 Variante isla (selector isla/hotel),Escenario,Hecho,,12 islas + Volver/Inicio
+Escenarios validados,#15 Menús PADI (Go Pro vs Especialidades),Escenario,Hecho,,Navegación y submenús
+Escenarios validados,#16 Divemaster contact-only sin link,Escenario,Hecho,,Detalle correcto (botones corregidos con nit 3)
+Escenarios validados,#17 Niños rango mixto completa sin atascarse,Escenario,Hecho,,MIXED_FINAL_KIDS sólido
+Escenarios validados,#18 Lancha privada completa sin atascarse,Escenario,Hecho,,MIXED_FINAL_PRIVATE sólido
+Escenarios validados,#19 Reserva certificado completa inicio a fin,Escenario,Hecho,,Limpio
+Escenarios validados,#20 Minicurso principiante completo,Escenario,Hecho,,Limpio
+Backlog post-lanzamiento,Dashboard de analítica del owner,Backlog,Pendiente,,
+Backlog post-lanzamiento,Recordatorios proactivos por WhatsApp (24h antes),Backlog,Pendiente,,
+Backlog post-lanzamiento,Seguimiento post-buceo (fotos/certificado/reseña),Backlog,Pendiente,,
+Backlog post-lanzamiento,CRM para clientes recurrentes,Backlog,Pendiente,,
+Backlog post-lanzamiento,Más idiomas (FR/PT para cruceristas),Backlog,Pendiente,,
+Backlog post-lanzamiento,Tests de carga antes de PRO,Backlog,Pendiente,,
+Backlog post-lanzamiento,Backlog técnico RAG (semantic cache / reranker / observabilidad),Backlog,Pendiente,,
+Backlog post-lanzamiento,Revisión legal / GDPR,Backlog,Pendiente,,
