@@ -2805,7 +2805,7 @@ def _build_extra_context(state: ConversationState) -> str | None:
 _AGE_ELIGIBILITY_CUE = re.compile(
     r"(edad\s+m[ií]nima|edad\s+minima|minimum\s+age|hay\s+(?:una\s+)?edad|"
     r"a\s+partir\s+de\s+qu[eé]\s+edad|desde\s+qu[eé]\s+edad|"
-    r"\bpuede[n]?\b|\bpodr[íi]a[n]?\b|se\s+puede|es\s+posible|"
+    r"\bpued[eo](?:n|s)?\b|\bpodemos\b|\bpodr[íi]a[n]?\b|se\s+puede|es\s+posible|"
     r"\bcan\s+(?:my|he|she|they|the|a|i|we|kids?|children)\b|"
     r"\bis\s+it\s+possible|old\s+enough|too\s+young|"
     r"dejan?\s+(?:bucear|entrar)|permit|allowed|"
@@ -2828,6 +2828,20 @@ def _maybe_answer_age_eligibility(message: str, state: ConversationState) -> str
         return None
     intent = intent_detector.detect(message, state)
     ages = sorted({a for a in (intent.ages or []) if 1 <= a <= 99})
+    # Persist any age mentioned here so a later follow-up can reuse it (this
+    # responder returns before the conversation agent's _apply_detected_intent).
+    if ages:
+        state.detected_ages = sorted(set((state.detected_ages or []) + ages))
+    # Multi-turn: if this message has no age but refers to a specific person
+    # ("pero mi hijo puede bucear?" after "mi hijo tiene 9 años"), reuse the
+    # remembered age. Guarded by a person reference so a bare "¿puede bucear?"
+    # is not answered with a stale age.
+    if not ages and re.search(
+        r"\b(mi\s+\w+|hij[oa]s?|niñ[oa]s?|nin[oa]s?|él|ella|ellos|ellas|"
+        r"my\s+\w+|son|daughter|kids?|child(?:ren)?|he|she|they)\b",
+        message, re.IGNORECASE,
+    ):
+        ages = sorted({a for a in (state.detected_ages or []) if 1 <= a <= 99})
     if not ages:
         return None
     lang = state.language or "es"
@@ -3424,7 +3438,13 @@ def _apply_detected_intent(intent, state: ConversationState) -> None:
     if intent.group_allocation and not state.detected_group_allocation:
         state.detected_group_allocation = intent.group_allocation
         logger.info(f"[INTENT] Detected group allocation: {intent.group_allocation}")
-    
+
+    if intent.ages:
+        merged = sorted(set((state.detected_ages or []) + list(intent.ages)))
+        if merged != (state.detected_ages or []):
+            state.detected_ages = merged
+            logger.info(f"[INTENT] Detected ages: {merged}")
+
     if intent.last_dive_over_2_years is not None and state.detected_last_dive_over_2_years is None:
         state.detected_last_dive_over_2_years = intent.last_dive_over_2_years
         state.last_dive_over_2_years = intent.last_dive_over_2_years

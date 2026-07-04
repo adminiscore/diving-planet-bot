@@ -1,6 +1,14 @@
 History
 =======
 
+0.19.6 - (2026-07-04)
+---------------------
+* **Memoria de edad multi-turno** (`supervisor.py` + `ConversationState.detected_ages`): las edades detectadas se recuerdan a lo largo de la conversación. Un follow-up como "pero mi hijo puede bucear?" (sin repetir la edad) reutiliza el "9 años" dicho antes. Guarda: solo se reutiliza la edad recordada si el mensaje referencia a una persona ("mi hijo", "él/ella"); un "¿se puede bucear de noche?" genérico NO se responde con una edad vieja.
+* **Oferta adaptada por edad en el flujo mixto** (`decision_tree.py`): cuando el no-certificado es un menor con edad conocida por debajo de la edad de buceo (10), el bot ya NO le ofrece el minicurso de adulto — ofrece solo lo que su edad permite, con la nota de elegibilidad positiva: <6 → solo acompañante; 6-7 → snorkel + acompañante; 8-9 → Bubble Makers + snorkel + acompañante. 10+ mantiene la oferta general (minicurso/snorkel/Open Water/acompañante). Nuevos `_single_beginner_child_age`, `_child_beginner_options`, `_offer_young_child_activity`, `_handle_child_beginner_activity`; campo `mixed_beginner_child_age`.
+* **Mejoras de detección de edad (casos enrevesados)**: edades coordinadas en contexto de sustantivo-niño ("dos niños de 8 y 10" → [8,10], "mis hijos de 6, 8 y 11" → [6,8,11]); el respondedor de elegibilidad ahora también dispara con primera persona ("¿*puedo* bucear con mi bebé de 2 años?" → responde que el bebé puede acompañar, snorkel desde 6). Preguntas con varias edades explican cada una ("un niño de 8 y otro de 12" → notas para 8 y 12).
+* Auditoría con 10+ composiciones complejas ("familia de 5: 2 adultos buzos, dos niños de 8 y 10, y un bebé de 3"; "yo tengo open water, mi mujer no bucea y traemos a nuestro hijo de 5"): la capa determinista entiende actividad+certificación+grupo+edades y aplica las reglas de elegibilidad por persona. Límite conocido: la asignación completa persona→actividad de grupos muy mixtos (2 buzos + 2 no de distintas edades) sigue apoyándose en el orquestador LLM; el split cert + oferta por edad ya cubren el caso de 1 acompañante/menor.
+* Tests: `test_eligibility.py` (+6) y `test_companion_split.py` (+6, oferta por edad 5/7/9/14). Suite: ver cierre.
+
 0.19.5 - (2026-07-04)
 ---------------------
 * **Elegibilidad por edad como fuente única de verdad** (`src/flows/eligibility.py`, nuevo): centraliza "qué puede hacer cada persona" según edad y certificación (snorkel 6+, Bubble Makers 8-10, minicurso/Open Water 10+, Advanced 12, Divemaster 18, buceo certificado = Open Water + 10+). `activities_for_age()`, `can_fun_dive()`, `age_eligibility_note(age, lang)` (frase clara y SIEMPRE positiva: cuando algo no está disponible por edad, señala lo que SÍ puede hacer, nunca "no puede nada").

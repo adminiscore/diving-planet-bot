@@ -81,6 +81,8 @@ def test_age_note_mentions_right_activity_es(age, must_include):
     ("kids aged 8 and 10", [8, 10]),
     ("tenemos 25 y 30 años", [25, 30]),
     ("familia de 4, un niño de 8 y otro de 5", [5, 8]),   # group-size 4 excluded
+    ("dos niños de 8 y 10", [8, 10]),                      # coordinated kid ages
+    ("mis hijos de 6, 8 y 11", [6, 8, 11]),
 ])
 def test_age_detection(msg, expected):
     assert _detect(msg).ages == expected
@@ -124,6 +126,22 @@ async def test_child_5_too_young_offered_companion():
 
 
 @pytest.mark.asyncio
+async def test_first_person_puedo_with_baby_fires_responder():
+    """'¿puedo bucear con mi bebé de 2 años?' (first-person 'puedo') must be
+    answered deterministically, not fall through to RAG."""
+    resp = await route_message(_state(), "puedo bucear con mi bebé de 2 años?")
+    assert "acompañar" in resp.lower()   # 2yo -> companion framing
+    assert "6" in resp                    # snorkel-age reference
+
+
+@pytest.mark.asyncio
+async def test_two_kids_different_ages_both_explained():
+    resp = await route_message(_state(), "tengo un niño de 8 y otro de 12, qué pueden hacer?")
+    assert "8 años" in resp and "12 años" in resp
+    assert "Bubble Makers" in resp        # the 8-year-old's option
+
+
+@pytest.mark.asyncio
 async def test_teen_14_can_do_everything_positive():
     resp = await route_message(_state(), "una persona de 14 años puede bucear?")
     assert "Open Water" in resp or "minicurso" in resp.lower()
@@ -148,6 +166,28 @@ async def test_owner_scenario6a_child_9_options_question():
     )
     assert "Bubble Makers" in resp
     assert "snorkel" in resp.lower()
+
+
+@pytest.mark.asyncio
+async def test_multiturn_age_remembered_for_followup():
+    """Owner scenario 6: '...mi hijo, tiene 9 años, qué opciones?' then a bare
+    follow-up 'pero mi hijo puede hacer buceo?' must reuse the remembered age."""
+    st = _state()
+    await route_message(st, "estoy pensando en hacer buceo con mi hijo, tiene 9 años, que opciones teneis?")
+    assert st.detected_ages == [9]
+    resp = await route_message(st, "pero mi hijo puede hacer buceo?")
+    assert "Bubble Makers" in resp        # answered about the 9-year-old
+    assert "10" in resp
+
+
+@pytest.mark.asyncio
+async def test_bare_can_dive_without_person_ref_does_not_use_stale_age():
+    """A generic '¿puede bucear?' with no person reference and no age must NOT
+    be answered from a stale remembered age."""
+    from src.agents.supervisor import _maybe_answer_age_eligibility
+    st = _state()
+    st.detected_ages = [9]
+    assert _maybe_answer_age_eligibility("¿se puede bucear de noche?", st) is None
 
 
 @pytest.mark.asyncio

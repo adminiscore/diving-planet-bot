@@ -21,6 +21,7 @@ from enum import Enum
 from pathlib import Path
 
 from src.utils.fuzzy import is_back, is_affirmative, is_agree, is_none_selection, fuzzy_word_number
+from src.flows import eligibility
 
 
 # Separador interno: si una respuesta del bot contiene este token, el canal
@@ -188,6 +189,8 @@ class ConversationState:
     detected_is_certified: bool | None = None
     detected_group_size: int | None = None
     detected_group_allocation: dict | None = None
+    detected_ages: list = field(default_factory=list)   # person ages mentioned across the conversation
+    mixed_beginner_child_age: int | None = None          # age of the single non-cert minor being offered activities
     detected_last_dive_over_2_years: bool | None = None
     detected_duration: str | None = None
     detected_location: str | None = None
@@ -4103,6 +4106,95 @@ class DecisionTree:
             options.append({"title": "🔙 Back", "value": "back"})
         return options
 
+    def _single_beginner_child_age(self, state: ConversationState) -> int | None:
+        """Age of the non-certified person when it's a single known minor under
+        the diving age (10). Returns None when there are several non-cert people
+        or no under-10 age is known (then the general offer applies)."""
+        if (state.mixed_pending_beginner_after_cert or 0) != 1:
+            return None
+        minors = [a for a in (state.detected_ages or []) if a < eligibility.MIN_DIVE]
+        # Exactly one under-diving-age person known -> adapt to that age.
+        return minors[0] if len(minors) == 1 else None
+
+    def _child_beginner_options(self, age: int) -> list[str]:
+        """Ordered action keys a non-certified minor of this age may pick."""
+        if age < eligibility.MIN_SNORKEL:            # < 6: nothing in water
+            return ["companion"]
+        if age < eligibility.BUBBLE_MAKERS_MIN:      # 6-7: snorkel only
+            return ["snorkel", "companion"]
+        return ["bubble", "snorkel", "companion"]    # 8-9: Bubble Makers + snorkel
+
+    def _child_beginner_quick_replies(self, lang: str, age: int) -> list[dict]:
+        titles = {
+            "bubble": "🤿 Buceo para niños (Bubble Makers)" if lang == "es" else "🤿 Kids diving (Bubble Makers)",
+            "snorkel": "🌊 Snorkel" if lang == "es" else "🌊 Snorkel",
+            "companion": "👤 Solo acompañante" if lang == "es" else "👤 Just a companion",
+        }
+        opts = [
+            {"title": titles[a], "value": str(i + 1)}
+            for i, a in enumerate(self._child_beginner_options(age))
+        ]
+        opts.append({"title": "🔙 Volver" if lang == "es" else "🔙 Back", "value": "back"})
+        return opts
+
+    def _clear_child_beginner(self, state: ConversationState) -> None:
+        state.mixed_beginner_child_age = None
+        state.mixed_pending_beginner_after_cert = 0
+
+    def _handle_child_beginner_activity(self, state: ConversationState, message: str) -> str:
+        """Handle the age-restricted offer for a non-certified minor <10."""
+        lang = state.language
+        msg = message.strip().lower()
+        if is_back(msg):
+            self._clear_child_beginner(state)
+            return self._goto_mixed_cart_review(state)
+        age = state.mixed_beginner_child_age or 0
+        actions = self._child_beginner_options(age)
+        choice = self._parse_choice(message, len(actions))
+        action = None
+        if choice is not None and 1 <= choice <= len(actions):
+            action = actions[choice - 1]
+        else:  # free-text fallback
+            if "bubble" in msg or ("niñ" in msg and "buce" in msg) or "buceo" in msg:
+                action = "bubble" if "bubble" in actions else None
+            elif any(w in msg for w in ("snorkel", "esnorkel", "careteo")):
+                action = "snorkel" if "snorkel" in actions else None
+            elif any(w in msg for w in ("acompañante", "acompanante", "companion", "solo mira", "nada", "no hace")):
+                action = "companion"
+        if action is None:
+            state.quick_replies = self._child_beginner_quick_replies(lang, age)
+            return MESSAGES["not_understood"][lang]
+
+        if action == "bubble":
+            # 8-9 yo dive intro is priced/handled as Bubble Makers (8-10 range).
+            state.kids_eight_to_ten_count = (state.kids_eight_to_ten_count or 0) + 1
+            self._append_mixed_cart_item(state, "beginner", None, 1)
+        elif action == "snorkel":
+            self._append_mixed_cart_item(state, "snorkel", self._service_for_location("snorkeling", state), 1)
+        else:  # companion
+            self._append_mixed_cart_item(state, "companion", None, 1)
+        self._clear_child_beginner(state)
+        self._clear_mixed_pending_add(state)
+        return self._goto_mixed_cart_review(state)
+
+    def _offer_young_child_activity(self, state: ConversationState, age: int) -> str:
+        lang = state.language
+        state.mixed_beginner_child_age = age
+        state.step = Step.MIXED_ASK_BEGINNER_ACTIVITY
+        state.quick_replies = self._child_beginner_quick_replies(lang, age)
+        note = eligibility.age_eligibility_note(age, lang)
+        if lang == "es":
+            intro = (
+                "¡Listo! Los buceadores certificados ya están en el carrito. 🤿\n\n"
+                f"{note}\n\n¿Qué prefiere para él/ella?"
+            )
+        else:
+            intro = (
+                "Done! The certified divers are in the cart. 🤿\n\n"
+                f"{note}\n\nWhat would they prefer?"
+            )
+        return intro
+
     def _maybe_start_pending_beginner(self, state: ConversationState) -> str | None:
         """If a 'some certified, some not' group still has non-certified people
         waiting, ask what they'd like to do (we only know they're not
@@ -4114,6 +4206,14 @@ class DecisionTree:
         if beginner_qty <= 0:
             return None
         lang = state.language
+
+        # Age-aware offering: if the single non-certified person is a known minor
+        # under the diving age (10), don't offer the adult mini-course — offer
+        # only what their age allows (snorkel / Bubble Makers / companion).
+        child_age = self._single_beginner_child_age(state)
+        if child_age is not None:
+            return self._offer_young_child_activity(state, child_age)
+
         include_open_water = self._cert_subgroup_is_multi_day(state)
         state.step = Step.MIXED_ASK_BEGINNER_ACTIVITY
         state.quick_replies = self._beginner_activity_quick_replies(lang, include_open_water)
@@ -4163,6 +4263,12 @@ class DecisionTree:
     def _handle_mixed_ask_beginner_activity(self, state: ConversationState, message: str) -> str:
         lang = state.language
         msg = message.strip().lower()
+
+        # Age-restricted branch: the non-certified person is a known minor <10,
+        # so the offered options are snorkel / Bubble Makers / companion only.
+        if state.mixed_beginner_child_age is not None:
+            return self._handle_child_beginner_activity(state, message)
+
         include_open_water = self._cert_subgroup_is_multi_day(state)
         companion_choice = 4 if include_open_water else 3
         max_choice = companion_choice

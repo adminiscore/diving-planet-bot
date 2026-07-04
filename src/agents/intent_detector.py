@@ -524,9 +524,11 @@ class IntentDetector:
             if re.search(r'\b(hace|ultimo|ultima|last)\b', preceding):
                 continue
             _add(m.group(1))
-        # 2) Kid-noun context without the word "años": "niño de 8", "hijo de 9".
+        # 2) Kid-noun context without the word "años", incl. coordinated ages:
+        #    "niño de 8", "hijo de 9", "niños de 8 y 10".
         for m in re.finditer(
-            r'\b(?:niñ[oa]|nin[oa]|hij[oa]|niet[oa]|beb[eé]|kid|child|son|daughter|grandchild)s?\s+de\s+(\d{1,2})\b',
+            r'\b(?:niñ[oa]|nin[oa]|hij[oa]|niet[oa]|beb[eé]|kid|child|son|daughter|grandchild)s?\s+de\s+'
+            r'((?:\d{1,2}\s*(?:,|y|e|and|&)\s*)*\d{1,2})',
             message,
         ):
             _add(m.group(1))

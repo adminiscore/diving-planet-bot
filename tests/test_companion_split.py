@@ -144,3 +144,70 @@ def test_group_size_detects_feminine_nouns(msg, expected):
     from src.agents.intent_detector import IntentDetector
     intent = IntentDetector().detect(msg, ConversationState(conversation_id="fem"))
     assert intent.group_size == expected
+
+
+# --- Age-aware offering for a non-certified minor ---------------------------
+
+def _cert_qty_state_with_child(age: int) -> ConversationState:
+    st = _cert_qty_state()
+    st.detected_ages = [age]
+    return st
+
+
+def _reach_child_offer(age: int) -> tuple[ConversationState, str]:
+    st = _cert_qty_state_with_child(age)
+    tree.process_message(st, "somos 2, yo buzo y mi hijo no bucea")
+    tree.process_message(st, "2")             # last dive <2y -> preview
+    offer = tree.process_message(st, "1")     # add cert -> child offer
+    return st, offer
+
+
+def test_child_5_offered_companion_only():
+    st, offer = _reach_child_offer(5)
+    assert st.step == Step.MIXED_ASK_BEGINNER_ACTIVITY
+    titles = [b["title"] for b in st.quick_replies]
+    assert not any("minicurso" in t.lower() for t in titles)
+    assert not any("snorkel" in t.lower() for t in titles)   # <6 cannot snorkel
+    assert any("acompañante" in t.lower() for t in titles)
+    assert "acompañar" in offer.lower()
+
+
+def test_child_7_offered_snorkel_not_minicourse():
+    st, _ = _reach_child_offer(7)
+    titles = [b["title"] for b in st.quick_replies]
+    assert any("snorkel" in t.lower() for t in titles)
+    assert not any("minicurso" in t.lower() for t in titles)
+    assert not any("bubble" in t.lower() for t in titles)
+
+
+def test_child_9_offered_bubble_makers_and_snorkel_not_adult_minicourse():
+    st, offer = _reach_child_offer(9)
+    titles = [b["title"] for b in st.quick_replies]
+    assert any("bubble" in t.lower() for t in titles)
+    assert any("snorkel" in t.lower() for t in titles)
+    assert not any("minicurso" in t.lower() for t in titles)
+    assert "Bubble Makers" in offer
+
+
+def test_child_14_uses_general_offer_with_minicourse():
+    """14 >= diving age -> the normal offer (incl. minicourse) applies."""
+    st, _ = _reach_child_offer(14)
+    assert st.mixed_beginner_child_age is None
+    titles = [b["title"] for b in st.quick_replies]
+    assert any("minicurso" in t.lower() for t in titles)
+
+
+def test_child_9_pick_snorkel_adds_snorkel_line():
+    st, _ = _reach_child_offer(9)
+    # options for 9: 1=bubble, 2=snorkel, 3=companion
+    tree.process_message(st, "2")
+    assert st.step == Step.MIXED_CART_REVIEW
+    assert any(it.get("type") == "snorkel" for it in st.mixed_cart)
+
+
+def test_child_9_pick_bubble_makers_adds_beginner_line():
+    st, _ = _reach_child_offer(9)
+    tree.process_message(st, "1")   # Bubble Makers
+    assert st.step == Step.MIXED_CART_REVIEW
+    assert any(it.get("type") == "beginner" for it in st.mixed_cart)
+    assert st.kids_eight_to_ten_count == 1
