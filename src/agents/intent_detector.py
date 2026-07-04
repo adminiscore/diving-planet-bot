@@ -226,6 +226,12 @@ class IntentDetector:
         not_certified_patterns = [
             r'\bno\s+(?:esta\s+|estoy\s+|estamos\s+|est[aá]n\s+)?cert\w*\b',
             r'\bsin\s+cert\w*\b',
+            # Reflexive "certificarme/certificarnos/certificarte/certificarse" =
+            # wants to GET certified (Open Water course), so NOT yet certified.
+            # Must be listed here (checked before the generic \bcert\w*\b catch-all).
+            r'\bcertificar(?:me|nos|te|se)\b',
+            r'\bquiero\s+(?:sacar|obtener|hacer)\s+(?:el\s+|la\s+|mi\s+)?(?:open\s+water|certificaci|licencia)\w*\b',
+            r'\bget\s+certified\b',
             r'\bnunca\s+(?:\w+\s+){0,3}buce\w*\b',  # nunca he/ha/hemos/han (hecho) bucea(do)/buceo
             r'\bprimera\s+vez\b',
             r'\bnot\s+certified\b',

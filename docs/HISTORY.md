@@ -1,6 +1,13 @@
 History
 =======
 
+0.19.3 - (2026-07-04)
+---------------------
+* **Continuación de la verificación de las 8 conversaciones del owner (Fase 1)**: re-ejecutados los 8 escenarios contra la capa determinista actual (post-merge de `pre_gadea`) para confirmar que el merge preservó los fixes de `e70a8cb`. Los 8 se comportan correctamente: ninguno dispara escalación por keyword (fix de "persona" intacto) y la detección de principiante (1, 2, 5 → minicurso, `is_certified=False`) funciona.
+* **Fix: "quiero certificarme" leído como YA certificado** (`intent_detector.py`, `_detect_certification`): la forma reflexiva "certificar**me**/certificar**nos**/certificar**se**" (= quiere OBTENER la certificación, aún no la tiene) caía en el catch-all `\bcert\w*\b` y ponía `is_certified=True`. En el escenario 7 ("quiero certificarme de open water...") eso no daba problema visible porque el orquestador lo clasificaba como pregunta, pero con otra redacción ("quiero certificarme y reservar ya") podría enrutar a reserva saltándose la ruta de principiante. Añadidos patrones reflexivos + "quiero sacar/obtener el open water" + EN "get certified" a `not_certified_patterns` (que se evalúan antes del catch-all). Ahora "quiero certificarme de open water" → `padi_open_water` + `is_certified=False`.
+* **Tests de regresión de los 8 escenarios del owner** (`tests/test_owner_conversations_fase1.py`, nuevo): hasta ahora esos 8 casos solo se habían probado a mano / en vivo, sin tests que los protegieran. Fijan la capa determinista donde vivían los 4 bugs de `e70a8cb` (guard de escalación por "persona" en los 8 mensajes, detección de principiante en never-dived/bautismo, headcount, y el fix reflexivo de "certificarme"). Deterministas, sin red ni DB.
+* Suite: **897 passed**, 15 skipped, sin regresiones.
+
 0.19.2 - (2026-07-04)
 ---------------------
 * **Verificación en vivo de las 8 conversaciones del owner que motivaron el refactor "Fase 1"** (commit `59a90ae`, agente conversacional en la entrada): ejecutadas contra el código real (Postgres+Redis locales, KB 779 docs) en vez de inferir de capturas. 6/8 ya funcionaban correctamente; 2 seguían rotas y se corrigieron aquí. Baseline RAG re-confirmado **39/39** tras el `verify_grounding=False` del commit anterior (quedaba pendiente de validar).
