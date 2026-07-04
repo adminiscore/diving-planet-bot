@@ -30,6 +30,7 @@ from src.flows.decision_tree import (
     _detect_language_from_text,
 )
 from src.agents.rag_agent import rag_answer
+from src.flows import eligibility
 from src.knowledge.loader import load_policies
 from src.privacy import detect_pii, privacy_block_message
 
@@ -2799,6 +2800,58 @@ def _build_extra_context(state: ConversationState) -> str | None:
     return " ".join(parts)
 
 
+# Cues that turn an age mention into an eligibility QUESTION we should answer
+# from the rules ("puede bucear?", "hay edad mínima?", "can my son dive?").
+_AGE_ELIGIBILITY_CUE = re.compile(
+    r"(edad\s+m[ií]nima|edad\s+minima|minimum\s+age|hay\s+(?:una\s+)?edad|"
+    r"a\s+partir\s+de\s+qu[eé]\s+edad|desde\s+qu[eé]\s+edad|"
+    r"\bpuede[n]?\b|\bpodr[íi]a[n]?\b|se\s+puede|es\s+posible|"
+    r"\bcan\s+(?:my|he|she|they|the|a|i|we|kids?|children)\b|"
+    r"\bis\s+it\s+possible|old\s+enough|too\s+young|"
+    r"dejan?\s+(?:bucear|entrar)|permit|allowed|"
+    # options / what-can-they-do questions (valuable when a minor is involved)
+    r"qu[eé]\s+opciones|qu[eé]\s+(?:actividad(?:es)?|plan(?:es)?)|"
+    r"qu[eé]\s+(?:puede[n]?|podemos|pueden)\s+hacer|"
+    r"what\s+(?:can|activities|options)|which\s+activities)",
+    re.IGNORECASE,
+)
+
+
+def _maybe_answer_age_eligibility(message: str, state: ConversationState) -> str | None:
+    """Deterministic answer to an age-eligibility question.
+
+    Fires only when the message both mentions a concrete age and reads like an
+    eligibility question, so it never hijacks a plain booking phrase like
+    "reservar para mi hijo de 14". Returns None otherwise.
+    """
+    if not _AGE_ELIGIBILITY_CUE.search(message):
+        return None
+    intent = intent_detector.detect(message, state)
+    ages = sorted({a for a in (intent.ages or []) if 1 <= a <= 99})
+    if not ages:
+        return None
+    lang = state.language or "es"
+    # One clear note per distinct age (cap to keep the message readable).
+    notes = [eligibility.age_eligibility_note(a, lang) for a in ages[:3]]
+    body = "\n\n".join(notes)
+    if lang == "es":
+        outro = (
+            "\n\n¿Quieres que te ayude a armar el plan para tu grupo? "
+            "Escribe *reservar* o cuéntame qué actividad les interesa. 🐠"
+        )
+    else:
+        outro = (
+            "\n\nWant me to help put together the plan for your group? "
+            "Type *book* or tell me which activity you're interested in. 🐠"
+        )
+    # Stay conversational: leave the welcome/language step so a later reply isn't
+    # misread, but don't force menu buttons.
+    if state.step in (Step.WELCOME, Step.LANGUAGE):
+        state.step = Step.MAIN_MENU
+    state.quick_replies = []
+    return body + outro
+
+
 def _maybe_build_pending_note(state: ConversationState) -> None:
     """Build the lead note after a tree call, either via a real escalation or
     a silent note (e.g. a booking link was sent directly, no handoff needed)."""
@@ -3826,6 +3879,18 @@ async def route_message(state: ConversationState, message: str) -> str:
         state.history.append({"role": "user", "content": message})
         state.history.append({"role": "assistant", "content": response})
         return response
+
+    # Age-eligibility question ("mi hijo de 9 años puede bucear?", "hay edad
+    # mínima?", "una persona de 14 puede?"). Answer deterministically from the
+    # single source of truth (eligibility.py) so age limitations are always
+    # correct and framed positively — no hallucination, no need for RAG.
+    if state.step not in _MIXED_FLOW_STEPS:
+        age_answer = _maybe_answer_age_eligibility(message, state)
+        if age_answer is not None:
+            logger.info("[SUPERVISOR] Age-eligibility question answered deterministically")
+            state.history.append({"role": "user", "content": message})
+            state.history.append({"role": "assistant", "content": age_answer})
+            return age_answer
 
     # Adaptive diving / DIVE TO HEAL questions (disability, accessibility) must
     # be ANSWERED with the program's factual info (RAG handles the exception),

@@ -1,6 +1,14 @@
 History
 =======
 
+0.19.5 - (2026-07-04)
+---------------------
+* **Elegibilidad por edad como fuente única de verdad** (`src/flows/eligibility.py`, nuevo): centraliza "qué puede hacer cada persona" según edad y certificación (snorkel 6+, Bubble Makers 8-10, minicurso/Open Water 10+, Advanced 12, Divemaster 18, buceo certificado = Open Water + 10+). `activities_for_age()`, `can_fun_dive()`, `age_eligibility_note(age, lang)` (frase clara y SIEMPRE positiva: cuando algo no está disponible por edad, señala lo que SÍ puede hacer, nunca "no puede nada").
+* **Detección de edades en texto libre** (`intent_detector.py`, `_detect_ages` + campo `DetectedIntent.ages`): "mi hijo de 9 años", "uno tiene 14", "a 6 year old and a 12 year old", "kids aged 8 and 10", edades coordinadas ("25 y 30 años"). Evita falsos positivos: "hace 2 años" (última inmersión), "de 2 días" (duración), "familia de 4" (tamaño de grupo) NO se leen como edades. También reconoce sustantivos de grupo en femenino ("N amigas/compañeras").
+* **Respondedor determinista de elegibilidad** (`supervisor.py`, `_maybe_answer_age_eligibility`): cuando el mensaje menciona una edad concreta Y es una pregunta de elegibilidad ("¿puede bucear?", "¿hay edad mínima?", "qué opciones para mi hijo de 9?"), responde directamente desde `eligibility.py` — información siempre correcta, positiva, sin alucinación ni RAG. No secuestra reservas normales ("reservar para mi hijo de 14" no dispara) ni preguntas de edad sin edad concreta. Cubre los escenarios del owner #5 (familia + 14 + bautismo + "hay edad mínima") y #6a (hijo de 9 + "qué opciones").
+* **Auditoría con casos enrevesados**: harness con composiciones complejas ("somos 4, 2 buzos y 2 no, uno de 9 y otro de 14"; "familia de 4: dos adultos certificados, un niño de 8 y otro de 5") — reveló y corrigió 2 falsos positivos de edad y 1 hueco de recall (edades coordinadas). El detector ahora entiende actividad+certificación+grupo+edades por mensaje.
+* Tests: nuevo `tests/test_eligibility.py` (34 casos: reglas, detección de edad + no-falsos-positivos, respondedor end-to-end vía route_message). Suite: **953 passed**, 15 skipped.
+
 0.19.4 - (2026-07-04)
 ---------------------
 * **Acompañante no-certificado detectado en el paso de cantidad** (`decision_tree.py`): cuando el cliente ya dijo que es buzo certificado y, al preguntarle cuántas personas, responde que viene un acompañante que NO bucea ("somos 2, yo buzo y mi novia no lo es", "ella no bucea", "otro sin certificar"), el bot ahora entiende que son 2 = 1 certificado + 1 no certificado, hace el subgrupo certificado y luego ofrece al acompañante sus opciones — en vez de meter a los dos como certificados. Nuevos `_reveals_non_certified_companion()` (detector conservador: la negación debe ir pegada a certificación/buceo, no dispara con "no queremos separarnos") y `_start_cert_companion_split()`. Funciona con número ("somos 2...") o sin él (default 2).

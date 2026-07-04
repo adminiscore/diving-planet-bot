@@ -19,6 +19,7 @@ class DetectedIntent:
     location: Optional[str] = None
     island: Optional[str] = None
     hotel: Optional[str] = None
+    ages: list = field(default_factory=list)   # person ages mentioned in the message
     confidence: float = 0.0
     detected_fields: list = field(default_factory=list)
 
@@ -36,6 +37,7 @@ class IntentDetector:
         self._detect_activity(message_lower, intent, state)
         self._detect_certification(message_lower, intent)
         self._detect_group_info(message_lower, intent)
+        self._detect_ages(message_lower, intent)
         self._detect_last_dive(message_lower, intent)
         self._detect_duration(message_lower, intent)
         self._detect_location(message_lower, intent)
@@ -496,6 +498,53 @@ class IntentDetector:
                     intent.detected_fields.append("group_allocation")
                     break
     
+    def _detect_ages(self, message: str, intent: DetectedIntent) -> None:
+        """Extract person ages mentioned in the message ("mi hijo de 9 años",
+        "uno tiene 14", "a 6 year old", "kids aged 8 and 10").
+
+        Skips clear non-age numbers: 'hace N años' / 'N years ago' (last-dive
+        context), and durations like 'N días/horas'. Ages are 1-99.
+        """
+        ages: list[int] = []
+
+        def _add(group: str) -> None:
+            for num in re.findall(r'\d{1,2}', group):
+                a = int(num)
+                if 1 <= a <= 99:
+                    ages.append(a)
+
+        # 1) Numbers explicitly qualified by an age unit, including coordinated
+        #    lists: "9 años", "8 y 10 años", "6 and 12 years old", "14yo".
+        #    Skip "hace N años" / "N years ago" (last-dive context, not an age).
+        for m in re.finditer(
+            r'((?:\d{1,2}\s*(?:,|y|e|and|&)\s*)*\d{1,2})\s*(?:años?|year[s]?(?:\s*old)?|y(?:/|-)?o)\b',
+            message,
+        ):
+            preceding = message[max(0, m.start() - 8):m.start()]
+            if re.search(r'\b(hace|ultimo|ultima|last)\b', preceding):
+                continue
+            _add(m.group(1))
+        # 2) Kid-noun context without the word "años": "niño de 8", "hijo de 9".
+        for m in re.finditer(
+            r'\b(?:niñ[oa]|nin[oa]|hij[oa]|niet[oa]|beb[eé]|kid|child|son|daughter|grandchild)s?\s+de\s+(\d{1,2})\b',
+            message,
+        ):
+            _add(m.group(1))
+        # 3) "uno/una/otro/otra de N" — a specific group member's age (NOT
+        #    "familia de N" / "grupo de N", which are group sizes).
+        for m in re.finditer(r'\b(?:uno|una|otr[oa]|el\s+otro|la\s+otra)\s+de\s+(\d{1,2})\b', message):
+            _add(m.group(1))
+        # 4) "aged 8 and 10", "edad 8 y 10".
+        for m in re.finditer(
+            r'\b(?:aged|edad(?:\s+de)?)\s+((?:\d{1,2}\s*(?:,|y|e|and|&)\s*)*\d{1,2})',
+            message,
+        ):
+            _add(m.group(1))
+
+        if ages:
+            intent.ages = sorted(set(ages))
+            intent.detected_fields.append("ages")
+
     def _detect_last_dive(self, message: str, intent: DetectedIntent) -> None:
         last_dive_patterns = [
             (r'\búltima\s+inmersión\s+(?:fue\s+)?hace\s+(\d+)\s+(año|años|mes|meses)', 'es'),
