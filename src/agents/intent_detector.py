@@ -256,7 +256,7 @@ class IntentDetector:
             (r'\bwe\s+are\s+(\d+|two|three|four|five|six|seven|eight)\b', {'two': 2, 'three': 3, 'four': 4, 'five': 5, 'six': 6, 'seven': 7, 'eight': 8}),
             (r'\b(\d+)\s+of\s+us\b', {}),
             (r'\bgroup\s+of\s+(\d+|two|three|four|five|six|seven|eight)\b', {'two': 2, 'three': 3, 'four': 4, 'five': 5, 'six': 6, 'seven': 7, 'eight': 8}),
-            (r'\b(\d+)\s+(personas|people|friends|amigos|friend)\b', {}),
+            (r'\b(\d+)\s+(personas|people|friends|amig[oa]s|friend|compañer[oa]s|companer[oa]s|acompañantes|acompanantes)\b', {}),
             # "una pareja" / "somos pareja" → 2 (capturing group required by loop)
             (r'\b(?:somos\s+)?(?:una?\s+)?(pareja)\b', {'pareja': 2}),
             # "familia de N" → N personas

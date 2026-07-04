@@ -564,14 +564,20 @@ class TestMixedCertificationSplit:
         assert state.step == Step.MIXED_ASK_BEGINNER_ACTIVITY
         assert "open water" not in resp.lower()
         values = [b["value"] for b in state.quick_replies]
-        assert values == ["1", "2", "back"]
+        # 1=minicurso, 2=snorkel, 3=solo acompañante, back
+        assert values == ["1", "2", "3", "back"]
+        titles = [b["title"] for b in state.quick_replies]
+        assert any("acompañante" in t.lower() for t in titles)
 
     def test_beginner_activity_question_multi_day_plan_offers_open_water(self):
         state, resp = self._reach_beginner_activity_question(["2", "1"])  # multi-day -> first package
         assert state.step == Step.MIXED_ASK_BEGINNER_ACTIVITY
         assert "open water" in resp.lower()
         values = [b["value"] for b in state.quick_replies]
-        assert values == ["1", "2", "3", "back"]
+        # 1=minicurso, 2=snorkel, 3=open water, 4=solo acompañante, back
+        assert values == ["1", "2", "3", "4", "back"]
+        titles = [b["title"] for b in state.quick_replies]
+        assert any("acompañante" in t.lower() for t in titles)
 
     def test_beginner_activity_back_returns_to_cart_review(self):
         """'back' from MIXED_ASK_BEGINNER_ACTIVITY must return to the cart

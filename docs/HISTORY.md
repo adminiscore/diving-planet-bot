@@ -1,6 +1,15 @@
 History
 =======
 
+0.19.4 - (2026-07-04)
+---------------------
+* **Acompañante no-certificado detectado en el paso de cantidad** (`decision_tree.py`): cuando el cliente ya dijo que es buzo certificado y, al preguntarle cuántas personas, responde que viene un acompañante que NO bucea ("somos 2, yo buzo y mi novia no lo es", "ella no bucea", "otro sin certificar"), el bot ahora entiende que son 2 = 1 certificado + 1 no certificado, hace el subgrupo certificado y luego ofrece al acompañante sus opciones — en vez de meter a los dos como certificados. Nuevos `_reveals_non_certified_companion()` (detector conservador: la negación debe ir pegada a certificación/buceo, no dispara con "no queremos separarnos") y `_start_cert_companion_split()`. Funciona con número ("somos 2...") o sin él (default 2).
+* **Nueva opción "👤 Solo acompañante"** en el paso `MIXED_ASK_BEGINNER_ACTIVITY` (`_beginner_activity_quick_replies` + handler): además de minicurso/snorkel/(Open Water), el no-buzo puede venir solo de acompañante (sin actividad en el agua, sin coste de buceo). El handler ahora también entiende la elección por texto libre ("snorkel", "minicurso", "solo mirar"...), no solo por número.
+* **Upsell proactivo y positivo al acompañante**: el mensaje que ofrece las opciones ahora anima explícitamente ("¡Y buenísimo que vengan juntos! ... El minicurso es la forma perfecta de iniciarse") en vez de listar opciones en frío.
+* **Framing SIEMPRE positivo en RAG** (`rag_agent.py`, prompts ES+EN): nueva sección que obliga a responder en positivo ante cualquier fecha/mes/estación/nº de personas/lugar/actividad/comparación — nunca decir que la elección del cliente es mala ("esa fecha no es buena"), siempre sacar el lado bueno. No autoriza a inventar datos ni a ocultar seguridad (cierres reales 25-dic/1-ene, clima, médico se siguen informando/derivando, pero con tono constructivo y alternativas). En comparaciones, resaltar lo bueno sin desacreditar otros sitios.
+* **Entendimiento en femenino**: `intent_detector.py` `_detect_group_info` ahora reconoce "N amigas / compañeras / acompañantes" (antes solo "amigos"). `re`/`unicodedata` importados a nivel de módulo en `decision_tree.py`.
+* Tests: nuevo `tests/test_companion_split.py` (22 casos: detector, split con/sin número, no-falso-positivo con "no queremos separarnos", oferta al acompañante, elección de acompañante/minicurso, y detección femenina de grupo). 2 tests de `test_decision_tree.py` actualizados por el nuevo botón acompañante. Suite: **919 passed**, 15 skipped.
+
 0.19.3 - (2026-07-04)
 ---------------------
 * **Continuación de la verificación de las 8 conversaciones del owner (Fase 1)**: re-ejecutados los 8 escenarios contra la capa determinista actual (post-merge de `pre_gadea`) para confirmar que el merge preservó los fixes de `e70a8cb`. Los 8 se comportan correctamente: ninguno dispara escalación por keyword (fix de "persona" intacto) y la detección de principiante (1, 2, 5 → minicurso, `is_certified=False`) funciona.

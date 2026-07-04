@@ -14,6 +14,8 @@ The tree guides customers through:
 """
 
 import json
+import re
+import unicodedata
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
@@ -3690,6 +3692,76 @@ class DecisionTree:
         self.set_quick_replies(state, "mixed_quantity")
         return MESSAGES["mixed_add_qty"][lang]
 
+    def _reveals_non_certified_companion(self, message: str) -> bool:
+        """True if the qty answer reveals a companion who is NOT a certified diver
+        while the speaker is — e.g. 'yo buzo pero mi novia no lo es', 'ella no
+        bucea', 'uno sí y otro no', 'my girlfriend isn't certified'.
+
+        Deliberately requires the negation to attach to a certification/diving
+        concept (not just any bare 'no') so it does not misfire on phrases like
+        'no queremos separarnos' where the whole group is certified.
+        """
+        norm = "".join(
+            c for c in unicodedata.normalize("NFD", message.lower())
+            if unicodedata.category(c) != "Mn"
+        )
+        patterns = [
+            r"\bno\s+(?:es|esta|estan|son)?\s*(?:certificad|buz[oa])",
+            r"\bno\s+(?:sabe|saben)\s+bucear\b",
+            r"\bno\s+bucea[n]?\b",
+            r"\bno\s+tiene[n]?\s+(?:el\s+|la\s+)?(?:certificad|open\s*water|licencia|carne|carnet|titulo|titulacion)",
+            r"\bno\s+lo\s+(?:es|tiene|son)\b",           # "mi novia no lo es" / "no lo tiene"
+            r"\bsin\s+certifica(?:r|d)",                  # "otro sin certificar" / "sin certificado"
+            r"\bsolo\s+yo\b[^.]{0,25}(?:buce|buzo|certificad)",
+            r"\bun[oa]\s+(?:si\s+)?y\s+(?:el\s+|la\s+)?otr[oa]\s+no\b",
+            # EN
+            r"\bnot\s+(?:a\s+)?certified\b",
+            r"\bisn'?t\s+certified\b",
+            r"\b(?:doesn'?t|does not)\s+dive\b",
+            r"\bonly\s+i\b[^.]{0,20}(?:dive|certif)",
+            r"\bone\s+of\s+us\b[^.]{0,25}(?:isn'?t|is not|not\s+certif)",
+        ]
+        return any(re.search(p, norm) for p in patterns)
+
+    def _start_cert_companion_split(self, state: ConversationState, message: str) -> str:
+        """Speaker is certified but the qty answer reveals a non-certified
+        companion → split into a certified subgroup + a queued non-cert person,
+        who will be offered minicurso/snorkel/(open water)/companion afterwards."""
+        lang = state.language
+        parsed = self._parse_mixed_quantity(message)
+        total = parsed if (parsed and parsed >= 2) else (
+            state.detected_group_size if (state.detected_group_size or 0) >= 2 else 2
+        )
+        alloc = getattr(state, "detected_group_allocation", None) or {}
+        non_cert = alloc.get("minicourse") or alloc.get("snorkel") or 1
+        non_cert = max(1, min(non_cert, total - 1))
+        cert_qty = max(1, total - non_cert)
+
+        state.mixed_pending_qty_type = "cert"
+        state.mixed_pending_cert_total_qty = cert_qty
+        state.mixed_pending_cert_remaining_qty = cert_qty
+        state.mixed_pending_qty_value = cert_qty
+        state.mixed_pending_beginner_after_cert = non_cert
+        state.step = Step.MIXED_CERT_LAST_DIVE
+        self.set_quick_replies(state, "mixed_cert_last_dive")
+
+        if lang == "es":
+            intro = (
+                f"¡Perfecto, y qué bueno que vengan juntos! Entonces sois {total}: "
+                f"{cert_qty} con certificación y {non_cert} sin ella. Empezamos con "
+                "los buceadores certificados y enseguida vemos el plan ideal para "
+                "quien todavía no bucea. 🤿\n\n"
+            )
+        else:
+            intro = (
+                f"Perfect, and it's great you're coming together! So you're {total}: "
+                f"{cert_qty} certified and {non_cert} not. Let's start with the "
+                "certified divers, then we'll find the ideal plan for whoever doesn't "
+                "dive yet. 🤿\n\n"
+            )
+        msg_key = "mixed_cert_last_dive_group" if cert_qty > 1 else "mixed_cert_last_dive"
+        return intro + MESSAGES[msg_key][lang]
+
     def _handle_mixed_add_qty(self, state: ConversationState, message: str) -> str:
         lang = state.language
         msg = message.strip().lower()
@@ -3698,6 +3770,16 @@ class DecisionTree:
             state.mixed_pending_modify_idx = None
             self._clear_mixed_pending_add(state)
             return self._goto_mixed_cart_review(state) if state.mixed_cart else self._goto_mixed_entry(state)
+
+        # Certified speaker whose qty answer reveals a non-certified companion
+        # ("yo buzo pero mi novia no lo es") → split into cert subgroup + a
+        # queued non-cert person offered minicurso/snorkel/companion afterwards.
+        if (
+            (state.mixed_pending_qty_type or "cert") == "cert"
+            and state.mixed_pending_modify_idx is None
+            and self._reveals_non_certified_companion(message)
+        ):
+            return self._start_cert_companion_split(state, message)
 
         if message.strip() == "6+" and not state.mixed_pending_exact:
             state.mixed_pending_exact = True
@@ -3998,6 +4080,9 @@ class DecisionTree:
         return plan in MULTI_DAY_SERVICES or bool(service.get("includes_night_dive"))
 
     def _beginner_activity_quick_replies(self, lang: str, include_open_water: bool) -> list[dict]:
+        # Companion ("just come along, no activity") is always the last option,
+        # after Open Water when that is offered, so its value shifts 3->4.
+        companion_value = "4" if include_open_water else "3"
         if lang == "es":
             options = [
                 {"title": "🤿 Minicurso de buceo", "value": "1"},
@@ -4005,6 +4090,7 @@ class DecisionTree:
             ]
             if include_open_water:
                 options.append({"title": "🎓 Curso Open Water", "value": "3"})
+            options.append({"title": "👤 Solo acompañante", "value": companion_value})
             options.append({"title": "🔙 Volver", "value": "back"})
         else:
             options = [
@@ -4013,7 +4099,8 @@ class DecisionTree:
             ]
             if include_open_water:
                 options.append({"title": "🎓 Open Water course", "value": "3"})
-            options.append({"title": "🔙 Volver", "value": "back"})
+            options.append({"title": "👤 Just a companion", "value": companion_value})
+            options.append({"title": "🔙 Back", "value": "back"})
         return options
 
     def _maybe_start_pending_beginner(self, state: ConversationState) -> str | None:
@@ -4033,22 +4120,35 @@ class DecisionTree:
 
         if lang == "es":
             who = "la persona no certificada" if beginner_qty == 1 else f"las {beginner_qty} personas no certificadas"
-            intro = f"Listo, los buceadores certificados ya están en el carrito.\n\nPara {who}, hay varias opciones:\n"
+            quiere = "quiere" if beginner_qty == 1 else "quieren"
+            intro = (
+                f"¡Listo! Los buceadores certificados ya están en el carrito. 🤿\n\n"
+                f"¡Y buenísimo que vengan juntos! Aunque {who} no tenga certificación, "
+                f"igual {quiere} disfrutar del plan. Estas son las opciones:\n"
+            )
             body = (
-                "• 🤿 *Minicurso de buceo*: probar el buceo en una sesión introductoria con instructor, sin certificación.\n"
-                "• 🌊 *Snorkel*: disfrutar del arrecife desde la superficie, sin necesidad de bucear.\n"
+                "• 🤿 *Minicurso de buceo*: probar el buceo en una sesión introductoria con instructor, "
+                "sin necesidad de certificación. ¡Es la forma perfecta de iniciarse!\n"
+                "• 🌊 *Snorkel*: disfrutar del arrecife desde la superficie, sin bucear.\n"
             )
             if include_open_water:
                 body += (
                     "• 🎓 *Curso Open Water*: ya que se alojarán en las islas con el grupo certificado, "
                     "puede aprovechar y certificarse como buzo.\n"
                 )
+            body += "• 👤 *Solo acompañante*: venir con el grupo y disfrutar del paseo, sin actividad en el agua.\n"
             outro = "\n¿Qué prefiere?" if beginner_qty == 1 else "\n¿Qué prefieren?"
         else:
             who = "the non-certified person" if beginner_qty == 1 else f"the {beginner_qty} non-certified people"
-            intro = f"Done, the certified divers are in the cart.\n\nFor {who}, there are a few options:\n"
+            wants = "wants" if beginner_qty == 1 else "want"
+            intro = (
+                f"Done! The certified divers are in the cart. 🤿\n\n"
+                f"And it's great that you're coming together! Even though {who} isn't certified, "
+                f"they can still enjoy the plan. Here are the options:\n"
+            )
             body = (
-                "• 🤿 *Dive mini-course*: try diving in an introductory session with an instructor, no certification.\n"
+                "• 🤿 *Dive mini-course*: try diving in an introductory session with an instructor, "
+                "no certification needed. It's the perfect way to get started!\n"
                 "• 🌊 *Snorkel*: enjoy the reef from the surface, no diving needed.\n"
             )
             if include_open_water:
@@ -4056,6 +4156,7 @@ class DecisionTree:
                     "• 🎓 *Open Water course*: since they'll already be staying on the islands with the "
                     "certified group, they could get certified too.\n"
                 )
+            body += "• 👤 *Just a companion*: come along with the group and enjoy the trip, no in-water activity.\n"
             outro = "\nWhat would they prefer?"
         return intro + body + outro
 
@@ -4063,10 +4164,21 @@ class DecisionTree:
         lang = state.language
         msg = message.strip().lower()
         include_open_water = self._cert_subgroup_is_multi_day(state)
-        max_choice = 3 if include_open_water else 2
+        companion_choice = 4 if include_open_water else 3
+        max_choice = companion_choice
         if is_back(msg):
             return self._goto_mixed_cart_review(state)
         choice = self._parse_choice(message, max_choice)
+        # Free-text fallbacks: recognise the activity by name, not only by number.
+        if choice is None:
+            if any(w in msg for w in ("minicurso", "mini curso", "mini-course", "curso de buceo", "bautismo", "probar")):
+                choice = 1
+            elif any(w in msg for w in ("snorkel", "esnorkel", "snorkeling", "careteo")):
+                choice = 2
+            elif include_open_water and ("open water" in msg or "certificar" in msg):
+                choice = 3
+            elif any(w in msg for w in ("acompañante", "acompanante", "companion", "solo mirar", "no hace nada", "sin actividad", "nada", "solo viene", "no quiere")):
+                choice = companion_choice
         beginner_qty = state.mixed_pending_beginner_after_cert or 0
         if choice is None or beginner_qty <= 0:
             state.quick_replies = self._beginner_activity_quick_replies(lang, include_open_water)
@@ -4082,6 +4194,13 @@ class DecisionTree:
             state.mixed_pending_qty_type = "snorkel"
             state.mixed_pending_qty_plan = self._service_for_location("snorkeling", state)
             return self._goto_mixed_add_qty(state)
+        if choice == companion_choice:
+            # "Just come along" — add companion (no activity) line, no upsell push.
+            state.mixed_pending_qty_type = "companion"
+            state.mixed_pending_qty_plan = None
+            self._append_mixed_cart_item(state, "companion", None, beginner_qty)
+            self._clear_mixed_pending_add(state)
+            return self._goto_mixed_cart_review(state)
         # choice == 3: Open Water (only offered when include_open_water is True)
         return self._start_mixed_course_add(
             state,
