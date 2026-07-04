@@ -194,10 +194,19 @@ class ConversationState:
     # Low-confidence intent detection (0.2 < confidence < 0.30): awaiting a
     # yes/no confirmation from the user before applying it (Capa 3, typo plan).
     pending_intent_confirmation: object | None = None
+    # Free-form facts the customer volunteered in natural language that don't map
+    # to a structured field (budget, literal day count, child ages, experience
+    # level, preferences like "quieren ir juntos"). Written by the conversation
+    # agent's `remember` tool and injected into every RAG/answer context so the
+    # bot never re-asks or ignores what the customer already said. Persists for
+    # the whole conversation (NOT cleared with the cart).
+    remembered_facts: dict | None = None
 
     def __post_init__(self):
         if self.history is None:
             self.history = []
+        if self.remembered_facts is None:
+            self.remembered_facts = {}
 
 
 # Common Spanish/English words used to guess the language of ANY free-text

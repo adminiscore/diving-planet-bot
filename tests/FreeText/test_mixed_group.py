@@ -10,6 +10,7 @@ la pregunta, igual que haría un humano.
 import pytest
 from unittest.mock import AsyncMock
 
+from src.agents import orchestrator
 from src.agents.supervisor import route_message
 from src.flows.decision_tree import ConversationState, Step
 
@@ -20,6 +21,13 @@ def _no_llm(monkeypatch):
         "src.agents.supervisor.detect_language_llm",
         AsyncMock(return_value=None),
     )
+
+
+@pytest.fixture(autouse=True)
+def _agent_books(_agent_answers_by_default, agent_decides):
+    """A mixed-group booking request makes the agent pick a booking tool, which
+    reuses the deterministic mixed-flow entry (group split preserved)."""
+    agent_decides(orchestrator.TOOL_START_BOOKING, {"activity": "certified"})
 
 
 @pytest.mark.asyncio

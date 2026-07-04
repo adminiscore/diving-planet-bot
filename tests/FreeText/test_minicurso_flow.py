@@ -3,8 +3,15 @@ Test del flujo de minicurso con detección de intención.
 """
 
 import asyncio
+import pytest
+from src.agents import orchestrator
 from src.agents.supervisor import route_message
 from src.flows.decision_tree import ConversationState
+
+
+@pytest.fixture(autouse=True)
+def _agent_books(_agent_answers_by_default, agent_decides):
+    agent_decides(orchestrator.TOOL_START_BOOKING, {"activity": "beginner"})
 
 
 async def test_minicurso_flow():

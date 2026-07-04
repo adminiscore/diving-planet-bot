@@ -49,7 +49,11 @@ TOOL_SET_PROFILE = "set_profile"
 TOOL_NOTE_LOGISTICS = "note_logistics"
 TOOL_ESCALATE = "escalate"
 TOOL_ANSWER_QUESTION = "answer_question"
+TOOL_REMEMBER = "remember"
 
+# `remember` is a companion tool: the model may call it *alongside* a primary
+# action to persist facts the customer volunteered. It never counts as the
+# primary decision, so it is excluded from the "which action?" selection.
 ALL_TOOL_NAMES = {
     TOOL_SET_LOCATION,
     TOOL_START_BOOKING,
@@ -60,6 +64,7 @@ ALL_TOOL_NAMES = {
     TOOL_NOTE_LOGISTICS,
     TOOL_ESCALATE,
     TOOL_ANSWER_QUESTION,
+    TOOL_REMEMBER,
 }
 
 
@@ -242,6 +247,44 @@ TOOLS: list[dict] = [
             "parameters": {"type": "object", "properties": {}},
         },
     },
+    {
+        "type": "function",
+        "function": {
+            "name": TOOL_REMEMBER,
+            "description": (
+                "Persist any concrete facts the customer just volunteered so the bot "
+                "never re-asks or ignores them. Call this ALONGSIDE another tool (or "
+                "alongside answer_question) whenever the message contains group size, "
+                "ages, experience, budget, days, certification, activity, location, or "
+                "a preference/concern. Only include fields actually stated."
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "group_size": {"type": "integer", "description": "Total people, e.g. 'somos 5' -> 5"},
+                    "certified_count": {"type": "integer", "description": "How many are certified divers"},
+                    "beginner_count": {"type": "integer", "description": "How many are beginners / not certified"},
+                    "is_certified": {"type": "boolean", "description": "Whole group certified (true) or all beginners (false)"},
+                    "experience_level": {
+                        "type": "string",
+                        "enum": ["never_dived", "beginner", "certified", "instructor"],
+                        "description": "'nunca he buceado' -> never_dived",
+                    },
+                    "child_ages": {"type": "string", "description": "Ages of minors stated, e.g. '9, 14'"},
+                    "budget": {"type": "string", "description": "Budget stated verbatim, e.g. '<300 EUR', '1 millon COP'"},
+                    "days": {"type": "integer", "description": "Number of days available, e.g. '4 días' -> 4"},
+                    "activity": {
+                        "type": "string",
+                        "enum": ACTIVITY_VALUES + ["padi_course", "unspecified"],
+                        "description": "Activity the customer wants",
+                    },
+                    "location": {"type": "string", "enum": ["cartagena", "island"], "description": "Where they depart from / are"},
+                    "hotel": {"type": "string", "description": "Hotel name exactly as written"},
+                    "preference": {"type": "string", "description": "Any preference/concern, e.g. 'quieren ir juntos, no separarse'"},
+                },
+            },
+        },
+    },
 ]
 
 
@@ -253,6 +296,9 @@ class OrchestratorDecision:
     args: dict = field(default_factory=dict)
     # Raw text the model may have produced alongside / instead of a tool call.
     raw_text: str | None = None
+    # Facts extracted via the companion `remember` tool call, if any. The caller
+    # persists these to conversation state so the bot never re-asks them.
+    remembered: dict | None = None
 
     @property
     def is_answer(self) -> bool:
@@ -261,36 +307,50 @@ class OrchestratorDecision:
 
 def _system_prompt(lang: str, state_snapshot: str | None) -> str:
     rules_es = (
-        "Eres el orquestador de un bot de reservas de buceo (Diving Planet) en las "
-        "Islas del Rosario, Cartagena. El cliente está dentro del flujo de carrito de "
-        "reservas. Tu trabajo es decidir UNA acción estructurada (function call) que "
-        "modifique el árbol de decisión, o responder una pregunta informativa.\n\n"
-        "Reglas:\n"
-        "- Si el cliente quiere reservar, cambiar el carrito, cambiar el origen, "
-        "añadir o quitar actividades → USA una herramienta. NUNCA describas tú el "
-        "proceso de reserva ni inventes pasos.\n"
-        "- Si es una pregunta informativa (precios, qué incluye, horarios, políticas) "
-        "→ usa answer_question.\n"
-        "- Si es algo médico, disponibilidad en tiempo real, queja o pago → escalate.\n"
-        "- Nunca inventes precios, hoteles, enlaces ni disponibilidad.\n"
-        "- Conserva los nombres propios (hoteles, islas) tal cual los escribe el cliente.\n"
-        "- Elige exactamente una herramienta."
+        "Eres el cerebro de enrutamiento de un bot de buceo (Diving Planet, Islas del "
+        "Rosario, Cartagena). El cliente lleva la conversación; tu prioridad es ATENDER "
+        "lo que dice, no arrastrarlo a un menú. Puedes estar al inicio de la charla o a "
+        "mitad de una reserva (mira el estado). Eliges herramientas estructuradas que el "
+        "supervisor ejecuta; NO redactas tú la respuesta salvo que no haya herramienta.\n\n"
+        "En CADA mensaje:\n"
+        "1) Si el cliente da CUALQUIER dato (personas, edades, experiencia, presupuesto, "
+        "días, certificación, actividad, hotel, o una preferencia como 'queremos ir "
+        "juntos') → llama `remember` con esos datos, ADEMÁS de la herramienta principal.\n"
+        "2) Elige UNA herramienta principal:\n"
+        "   - Pregunta informativa (precios, qué incluye, edad mínima, si un niño puede "
+        "bucear, si operáis fuera de Cartagena, cómo es un curso, recomendación) → "
+        "`answer_question`. NUNCA fuerces una reserva ni pidas certificación para responder "
+        "una pregunta.\n"
+        "   - Intención CLARA de reservar/añadir/quitar/cambiar origen o carrito → la "
+        "herramienta de acción correspondiente (start_booking, add_to_cart, set_location, "
+        "cart_action, remove_item, set_profile). NUNCA describas tú los pasos de reserva.\n"
+        "   - Médico, disponibilidad en tiempo real, queja o problema de pago → `escalate`.\n\n"
+        "Reglas: nunca inventes precios, hoteles, enlaces ni disponibilidad. Conserva los "
+        "nombres propios tal cual. Ante la duda entre responder o reservar, RESPONDE "
+        "(`answer_question`). Puedes llamar `remember` + una herramienta principal a la vez."
     )
     rules_en = (
-        "You are the orchestrator of a scuba-diving booking bot (Diving Planet) in the "
-        "Rosario Islands, Cartagena. The customer is inside the booking cart flow. Your "
-        "job is to choose ONE structured action (function call) that changes the "
-        "decision tree, or to answer an informational question.\n\n"
-        "Rules:\n"
-        "- If the customer wants to book, change the cart, change the origin, add or "
-        "remove activities → USE a tool. NEVER describe the booking process yourself or "
-        "make up steps.\n"
-        "- If it is an informational question (prices, what's included, schedules, "
-        "policies) → use answer_question.\n"
-        "- If it is medical, real-time availability, a complaint or payment → escalate.\n"
-        "- Never invent prices, hotels, links or availability.\n"
-        "- Keep proper nouns (hotels, islands) exactly as the customer wrote them.\n"
-        "- Choose exactly one tool."
+        "You are the routing brain of a scuba bot (Diving Planet, Rosario Islands, "
+        "Cartagena). The customer leads the conversation; your priority is to ADDRESS "
+        "what they say, not drag them into a menu. You may be at the start of the chat or "
+        "mid-booking (check the state). You pick structured tools the supervisor executes; "
+        "you do NOT write the reply yourself unless no tool applies.\n\n"
+        "On EVERY message:\n"
+        "1) If the customer gives ANY fact (people, ages, experience, budget, days, "
+        "certification, activity, hotel, or a preference like 'we want to stay together') "
+        "→ call `remember` with it, IN ADDITION to the primary tool.\n"
+        "2) Pick ONE primary tool:\n"
+        "   - Informational question (prices, what's included, minimum age, whether a "
+        "child can dive, whether you operate outside Cartagena, how a course works, a "
+        "recommendation) → `answer_question`. NEVER force a booking or ask for "
+        "certification just to answer a question.\n"
+        "   - CLEAR intent to book/add/remove/change origin or cart → the matching action "
+        "tool (start_booking, add_to_cart, set_location, cart_action, remove_item, "
+        "set_profile). NEVER describe booking steps yourself.\n"
+        "   - Medical, real-time availability, complaint or payment problem → `escalate`.\n\n"
+        "Rules: never invent prices, hotels, links or availability. Keep proper nouns "
+        "as written. When unsure whether to answer or book, ANSWER (`answer_question`). "
+        "You may call `remember` + one primary tool together."
     )
     base = rules_es if lang == "es" else rules_en
     if state_snapshot:
@@ -350,19 +410,37 @@ async def orchestrate(
                 tool=TOOL_ANSWER_QUESTION, raw_text=(choice.content or None)
             )
 
-        call = tool_calls[0]
-        name = call.function.name
-        try:
-            args = json.loads(call.function.arguments or "{}")
-        except (json.JSONDecodeError, TypeError):
-            args = {}
+        # The model may return several tool calls (e.g. `remember` alongside a
+        # primary action). Pull `remember` out as companion data and take the
+        # first recognized non-remember tool as the primary decision.
+        remembered: dict | None = None
+        primary_name: str | None = None
+        primary_args: dict = {}
+        for call in tool_calls:
+            name = call.function.name
+            try:
+                args = json.loads(call.function.arguments or "{}")
+            except (json.JSONDecodeError, TypeError):
+                args = {}
+            if name == TOOL_REMEMBER:
+                remembered = {k: v for k, v in (args or {}).items() if v not in (None, "", [])}
+                continue
+            if primary_name is None and name in ALL_TOOL_NAMES:
+                primary_name, primary_args = name, args or {}
 
-        if name not in ALL_TOOL_NAMES:
-            logger.info(f"[ORCHESTRATOR] unknown tool {name!r} -> answer_question")
-            return OrchestratorDecision(tool=TOOL_ANSWER_QUESTION)
+        if primary_name is None:
+            primary_name = TOOL_ANSWER_QUESTION
 
-        logger.info(f"[ORCHESTRATOR] tool={name} args={args} msg={message[:40]!r}")
-        return OrchestratorDecision(tool=name, args=args or {})
+        logger.info(
+            f"[ORCHESTRATOR] tool={primary_name} args={primary_args} "
+            f"remembered={remembered} msg={message[:40]!r}"
+        )
+        return OrchestratorDecision(
+            tool=primary_name,
+            args=primary_args,
+            remembered=remembered,
+            raw_text=(choice.content or None),
+        )
     except Exception as exc:  # noqa: BLE001
         logger.warning(f"[ORCHESTRATOR] error: {exc} -> answer_question fallback")
         return OrchestratorDecision(tool=TOOL_ANSWER_QUESTION)

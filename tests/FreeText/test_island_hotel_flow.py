@@ -3,8 +3,15 @@ Test del flujo completo con detección de isla y pregunta de hotel.
 """
 
 import asyncio
+import pytest
+from src.agents import orchestrator
 from src.agents.supervisor import route_message
 from src.flows.decision_tree import ConversationState, Step
+
+
+@pytest.fixture(autouse=True)
+def _agent_books(_agent_answers_by_default, agent_decides):
+    agent_decides(orchestrator.TOOL_START_BOOKING, {"activity": "certified"})
 
 
 async def test_island_hotel_flow():

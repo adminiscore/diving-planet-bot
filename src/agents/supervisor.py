@@ -2485,6 +2485,31 @@ def _build_extra_context(state: ConversationState) -> str | None:
     elif state.language == "en":
         parts.append("The conversation is currently happening in English.")
 
+    # Datos que el cliente ya dio en lenguaje natural (presupuesto, días, edades,
+    # experiencia, preferencias). Inyectados para que el bot NUNCA los ignore ni
+    # los repregunte.
+    facts = state.remembered_facts or {}
+    if facts:
+        _fact_labels = {
+            "budget": ("Presupuesto mencionado", "Budget mentioned"),
+            "days": ("Días disponibles", "Days available"),
+            "child_ages": ("Edades de menores", "Ages of minors"),
+            "experience_level": ("Experiencia", "Experience"),
+            "preference": ("Preferencia/preocupación", "Preference/concern"),
+        }
+        idx = 0 if state.language == "es" else 1
+        lines = [
+            f"{_fact_labels.get(k, (k, k))[idx]}: {v}"
+            for k, v in facts.items() if v
+        ]
+        if lines:
+            header = (
+                "El cliente ya ha dicho lo siguiente (tenlo en cuenta, no lo repreguntes): "
+                if state.language == "es"
+                else "The customer already told us the following (use it, don't re-ask): "
+            )
+            parts.append(header + "; ".join(lines) + ".")
+
     # Ubicacion base
     if state.location == "cartagena":
         if state.language == "es":
@@ -2794,6 +2819,66 @@ def _finalize_tree_response(state: ConversationState, message: str, response: st
     return response
 
 
+# Map the `remember` tool's activity enum to the internal detected_activity naming.
+_REMEMBER_ACTIVITY_MAP = {
+    "certified": "certified_diving",
+    "beginner": "minicourse",
+    "snorkel": "snorkel",
+    "course": "padi_course",
+    "padi_course": "padi_course",
+}
+
+
+def _persist_remembered(state: ConversationState, remembered: dict | None) -> None:
+    """Write facts the customer volunteered onto state so the bot never re-asks
+    them. Hard slots go to the fields the tree consumes; soft facts (budget,
+    ages, days, experience, preferences) go to `remembered_facts` for context."""
+    if not remembered:
+        return
+    facts = state.remembered_facts if state.remembered_facts is not None else {}
+
+    gs = remembered.get("group_size")
+    if isinstance(gs, int) and gs > 0 and not state.detected_group_size:
+        state.detected_group_size = gs
+
+    isc = remembered.get("is_certified")
+    if isinstance(isc, bool):
+        if state.is_certified is None:
+            state.is_certified = isc
+        state.detected_is_certified = isc
+
+    cc = remembered.get("certified_count")
+    bc = remembered.get("beginner_count")
+    if (isinstance(cc, int) and cc > 0) or (isinstance(bc, int) and bc > 0):
+        alloc: dict = {}
+        if isinstance(cc, int) and cc > 0:
+            alloc["certified_diving"] = cc
+        if isinstance(bc, int) and bc > 0:
+            alloc["minicourse"] = bc
+        if alloc and not state.detected_group_allocation:
+            state.detected_group_allocation = alloc
+
+    activity = remembered.get("activity")
+    if activity and activity != "unspecified" and not state.detected_activity:
+        state.detected_activity = _REMEMBER_ACTIVITY_MAP.get(activity, state.detected_activity)
+
+    loc = remembered.get("location")
+    if loc in ("cartagena", "island"):
+        state.detected_location = loc
+        if not state.location:
+            state.location = loc
+
+    hotel = remembered.get("hotel")
+    if hotel:
+        state.hotel = str(hotel).strip()
+
+    for key in ("experience_level", "child_ages", "budget", "days", "preference"):
+        val = remembered.get(key)
+        if val not in (None, "", []):
+            facts[key] = str(val)
+    state.remembered_facts = facts
+
+
 async def _dispatch_orchestrator(state: ConversationState, message: str) -> str | None:
     """Fase 2 — tool-calling orchestrator for free text inside the cart flow.
 
@@ -2807,6 +2892,16 @@ async def _dispatch_orchestrator(state: ConversationState, message: str) -> str 
         history=state.history,
         lang=state.language,
     )
+    _persist_remembered(state, decision.remembered)
+    return await _apply_orchestrator_decision(state, message, decision)
+
+
+async def _apply_orchestrator_decision(
+    state: ConversationState, message: str, decision
+) -> str | None:
+    """Execute an orchestrator decision against the tree. Returns the rendered
+    response, or None for answer_question / profile-only updates (the caller then
+    produces the reply via RAG)."""
     tool = decision.tool
     args = decision.args or {}
 
@@ -2913,6 +3008,98 @@ async def _dispatch_orchestrator(state: ConversationState, message: str) -> str 
         return _finalize_tree_response(state, message, MESSAGES["escalate"][state.language])
 
     return None
+
+
+# Tools the conversation agent may use at ENTRY steps (no cart yet, so no
+# cart_action / remove_item). `remember` + answer_question are always included.
+_ENTRY_ACTIONS = {
+    orchestrator.TOOL_SET_LOCATION,
+    orchestrator.TOOL_START_BOOKING,
+    orchestrator.TOOL_ADD_TO_CART,
+    orchestrator.TOOL_SET_PROFILE,
+    orchestrator.TOOL_NOTE_LOGISTICS,
+    orchestrator.TOOL_ESCALATE,
+    orchestrator.TOOL_ANSWER_QUESTION,
+    orchestrator.TOOL_REMEMBER,
+}
+# Any of these means "the customer wants to proceed with a booking" -> reuse the
+# deterministic booking entry (which pre-fills group splits and skips re-asks).
+_ENTRY_BOOKING_TOOLS = {
+    orchestrator.TOOL_SET_LOCATION,
+    orchestrator.TOOL_START_BOOKING,
+    orchestrator.TOOL_ADD_TO_CART,
+}
+
+
+async def _dispatch_conversation_agent(state: ConversationState, message: str) -> str:
+    """Understanding-first entry handler for substantive free text at non-cart
+    steps. The LLM decides answer/book/escalate and remembers what the customer
+    said; questions are answered (RAG), bookings reuse the deterministic entry
+    pre-filled from the detected + remembered slots. Always returns a reply."""
+    # Fresh conversation: infer language from the first substantive message so the
+    # agent (and RAG) reply in the customer's language instead of the default.
+    if state.step in (Step.WELCOME, Step.LANGUAGE):
+        from src.flows.decision_tree import _detect_language_from_text
+        state.language = (
+            _detect_language_from_text(message)
+            or _infer_language(message, state.language)
+        )
+
+    # Cheap regex prior: seed hard slots (group splits, certification, activity,
+    # location) unconditionally so nothing is lost even if the LLM misses them.
+    intent = intent_detector.detect(message, state)
+    _apply_detected_intent(intent, state)
+
+    snapshot = _build_extra_context(state)
+    decision = await orchestrator.orchestrate(
+        message,
+        state_snapshot=snapshot,
+        history=state.history,
+        lang=state.language,
+        allowed_actions=_ENTRY_ACTIONS,
+    )
+    _persist_remembered(state, decision.remembered)
+
+    if decision.tool == orchestrator.TOOL_ESCALATE:
+        result = await _apply_orchestrator_decision(state, message, decision)
+        if result is not None:
+            return result
+
+    if decision.tool in _ENTRY_BOOKING_TOOLS:
+        # Sync any LLM-remembered facts into the intent so the deterministic
+        # router sees the merged truth (e.g. certification the regex missed).
+        if state.is_certified is not None:
+            intent.is_certified = state.is_certified
+        intent.group_size = state.detected_group_size or intent.group_size
+        intent.group_allocation = state.detected_group_allocation or intent.group_allocation
+        intent.activity = state.detected_activity or intent.activity
+        intent.location = state.detected_location or intent.location
+        logger.info(f"[SUPERVISOR] Conversation agent -> booking entry (tool={decision.tool})")
+        result = _route_detected_intent(intent, state, message)
+        if result is not None:
+            return result
+        # Couldn't route (e.g. no concrete activity) -> fall through to an answer.
+
+    # answer_question / profile-only / unrouted booking -> reply via RAG with the
+    # now-enriched context (remembered facts included).
+    if decision.tool in (orchestrator.TOOL_SET_PROFILE, orchestrator.TOOL_NOTE_LOGISTICS):
+        await _apply_orchestrator_decision(state, message, decision)  # mutate only
+    logger.info(f"[SUPERVISOR] Conversation agent -> RAG answer step={state.step.value}")
+    state.history.append({"role": "user", "content": message})
+    extra_context = _build_extra_context(state)
+    answer = await rag_answer(
+        message,
+        lang=state.language,
+        history=state.history,
+        extra_context=extra_context,
+        verify_grounding=False,
+    )
+    state.history.append({"role": "assistant", "content": answer})
+    # Conversation has started: leave the welcome/language step so a later bare
+    # digit isn't misread as a language pick. Buttons stay off (conversation-first).
+    if state.step in (Step.WELCOME, Step.LANGUAGE):
+        state.step = Step.MAIN_MENU
+    return answer
 
 
 def _answer_state_introspection(state: ConversationState, message: str) -> str | None:
@@ -3642,75 +3829,40 @@ async def route_message(state: ConversationState, message: str) -> str:
         state.history.append({"role": "assistant", "content": answer})
         return answer
 
-    # General recommendation/interest query ("que me recomiendas?", "qué servicios
-    # tienen?", "what do you offer?") — no specific activity keyword, so the
-    # IntentDetector would score ≤0.2 and fall through to a generic RAG text.
-    # We must NOT assume booking intent (pushing them straight into the cart is
-    # presumptuous when they may just want to browse). Instead we land them on the
-    # MAIN_MENU with a warm one-line catalog overview (immediate value for the
-    # info-seeker) and let THEM choose the path: ℹ️ Información vs 🤿 Reservar.
-    if (
-        _GENERAL_INTEREST_PATTERN.search(message)
-        and state.step not in _MIXED_FLOW_STEPS
-        and not state.mixed_cart
-    ):
-        state.step = Step.MAIN_MENU
-        decision_tree.set_quick_replies(state, "main_menu")
-        response_es = (
-            "¡Con gusto! 🌊 En *Diving Planet* tenemos buceo para certificados, "
-            "minicursos para principiantes, snorkel y cursos PADI, todo en las "
-            "Islas del Rosario.\n\n"
-            "¿Prefieres que te cuente más sobre las opciones, o ya tienes una idea "
-            "y empezamos a armar tu reserva?"
-        )
-        response_en = (
-            "Happy to help! 🌊 At *Diving Planet* we offer diving for certified "
-            "divers, mini-courses for beginners, snorkeling, and PADI courses, "
-            "all in the Rosario Islands.\n\n"
-            "Would you like to hear more about the options, or do you already have "
-            "an idea and we start building your booking?"
-        )
-        logger.info("[SUPERVISOR] General-interest query -> MAIN_MENU (info vs booking)")
-        state.history.append({"role": "user", "content": message})
-        response = response_es if state.language == "es" else response_en
-        state.history.append({"role": "assistant", "content": response})
-        return response
-
-    # Intent detection: detect user intent from free text and apply to state.
-    # NOT inside the cart-style mixed flow: there the tool-calling orchestrator
-    # (further down) owns free text. Running the detector here would hijack
-    # messages like "quita el snorkel" and wipe the cart (it pre-clears
-    # state.mixed_cart when it thinks it's a fresh mixed group).
+    # Understanding-first entry (Fase 1). For substantive free text at an entry
+    # step, the conversation agent ANSWERS the customer's actual message,
+    # remembers what they said, and enters a booking only when they clearly want
+    # to — instead of the old generic-catalog blurb and the eager keyword-based
+    # booking routing (which ignored questions and volunteered info). Navigation /
+    # keyword / language / escalation / availability commands are left to their
+    # dedicated handlers below.
     if (
         not msg_lower.isdigit()
         and len(message.strip()) > 3
+        and state.step in _INTENT_TRIGGER_STEPS
         and state.step not in _MIXED_FLOW_STEPS
+        and msg_lower not in MENU_KEYWORDS
+        and msg_lower not in BACK_KEYWORDS
+        and msg_lower != "back"
+        and msg_lower.strip("?!.,;:") not in GREETING_ONLY_KEYWORDS
+        and not _matches_escalation_keyword(msg_lower)
+        and not _AVAILABILITY_PATTERN.search(msg_lower)
+        and _detect_language_intent(message) is None
     ):
-        intent = intent_detector.detect(message, state)
-        
-        if intent.confidence >= 0.30:
-            result = _route_detected_intent(intent, state, message)
-            if result is not None:
-                return result
-
-        # Low-but-nonzero confidence with a concrete activity guess: confirm
-        # with the user instead of silently committing to a flow (Capa 3,
-        # typo-resilience plan). Without an activity there's nothing concrete
-        # to ask "did you mean X?" about, so those stay below the gate.
-        elif intent.confidence > 0.2 and intent.activity and _intent_would_route(intent, state, message):
-            state.pending_intent_confirmation = intent
-            activity_label = _activity_display_label(intent.activity, state.language)
-            if state.language == "es":
-                response = f"¿Te refieres a {activity_label}? (Sí / No)"
-            else:
-                response = f"Did you mean {activity_label}? (Yes / No)"
-            logger.info(
-                f"[INTENT] Low confidence ({intent.confidence:.2f}) activity={intent.activity} "
-                "-> asking for confirmation"
-            )
-            state.history.append({"role": "user", "content": message})
-            state.history.append({"role": "assistant", "content": response})
-            return response
+        # Typing the exact current menu option ("reservar", "información") acts as
+        # that button, so menu navigation keeps working. Rich free text won't
+        # match a button (word-overlap + question-word guards) and goes to the
+        # conversation agent.
+        if state.quick_replies:
+            matched_value = _match_quick_reply_text(state, message)
+            if matched_value == "back":
+                return _go_back_one_step(state)
+            if matched_value is not None:
+                response = decision_tree.process_message(state, matched_value)
+                _maybe_build_pending_note(state)
+                logger.info(f"[SUPERVISOR] Quick-reply text match value={matched_value} -> step={state.step.value}")
+                return response
+        return await _dispatch_conversation_agent(state, message)
 
     # Check for escalation keywords
     if _matches_escalation_keyword(msg_lower):
