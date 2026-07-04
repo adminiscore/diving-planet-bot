@@ -106,7 +106,7 @@ class IntentDetector:
             r'\bmini[\s\-]?curso\b',       # minicurso, mini curso, mini-curso
             r'\bbauti[sz]\w{0,3}\b',       # bautismo, bautizo, bautismos, bautizos
             r'\bprimera\s+vez\b',
-            r'\bnunca\s+(?:h[ae]\s+)?bucea\w*\b',  # nunca he/ha buceado, nunca buceado
+            r'\bnunca\s+(?:\w+\s+){0,3}buce\w*\b',  # nunca he/ha/hemos/han (hecho) bucea(do)/buceo
             r'\bnever\s+(?:tried|dived|done\s+it|been\s+diving)\b',
             r'\bno\s+experience\b',
             r'\bsin\s+experiencia\b',
@@ -226,7 +226,7 @@ class IntentDetector:
         not_certified_patterns = [
             r'\bno\s+(?:esta\s+|estoy\s+|estamos\s+|est[aá]n\s+)?cert\w*\b',
             r'\bsin\s+cert\w*\b',
-            r'\bnunca\s+he\s+buceado\b',
+            r'\bnunca\s+(?:\w+\s+){0,3}buce\w*\b',  # nunca he/ha/hemos/han (hecho) bucea(do)/buceo
             r'\bprimera\s+vez\b',
             r'\bnot\s+certified\b',
             r'\bnever\s+dived\b',

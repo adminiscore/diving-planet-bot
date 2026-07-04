@@ -337,7 +337,7 @@ BACK_STEP: dict[Step, tuple[Step, str]] = {
 # Keywords that indicate escalation to a human
 ESCALATION_KEYWORDS = {
     "humano", "human", "agente", "agent", "asesor", "advisor",
-    "persona", "person", "hablar con", "speak with", "talk to",
+    "hablar con", "speak with", "talk to",
 }
 
 # Phrases that indicate a customer complaining about a broken link/URL/form.
@@ -3440,10 +3440,19 @@ def _build_confirmation_message(intent, state: ConversationState) -> str | None:
                 activities_es.append(f"{qty} para minicurso")
                 activities_en.append(f"{qty} for minicourse")
         
+        together_note = ""
+        preference = (state.remembered_facts or {}).get("preference") or ""
+        if re.search(r"junt[oa]s|no separar|together|stay together|don'?t (want to )?split|don'?t separate", preference, re.IGNORECASE):
+            together_note = (
+                " Cada quien hace su actividad, pero van en la misma salida y el mismo día — no los separamos."
+                if lang == "es"
+                else " Each of you does your own activity, but you're on the same trip the same day — you won't be split up."
+            )
+
         if lang == "es":
-            return f"¡Bienvenidos! Veo que son {total_people} personas: {' y '.join(activities_es)}."
-        return f"Welcome! I see you are {total_people} people: {' and '.join(activities_en)}."
-    
+            return f"¡Bienvenidos! Veo que son {total_people} personas: {' y '.join(activities_es)}.{together_note}"
+        return f"Welcome! I see you are {total_people} people: {' and '.join(activities_en)}.{together_note}"
+
     # Buceo certificado (solo si NO es grupo mixto)
     if intent.activity == "certified_diving" and intent.is_certified:
         if intent.group_size and intent.group_size > 1:
