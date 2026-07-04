@@ -3,8 +3,26 @@ Test de detección de ubicación con texto libre.
 """
 
 import asyncio
+import pytest
+from src.agents import orchestrator
 from src.agents.supervisor import route_message
 from src.flows.decision_tree import ConversationState
+
+
+def _route(message):
+    """Deterministic stand-in for the agent's LLM decision: booking request ->
+    start_booking; a location statement -> set_location."""
+    m = message.lower()
+    if "cartagena" in m:
+        return orchestrator.TOOL_SET_LOCATION, {"origin": "cartagena"}
+    if "isla" in m:
+        return orchestrator.TOOL_SET_LOCATION, {"origin": "island"}
+    return orchestrator.TOOL_START_BOOKING, {"activity": "certified"}
+
+
+@pytest.fixture(autouse=True)
+def _agent(_agent_answers_by_default, agent_decides):
+    agent_decides(_route)
 
 
 async def test_location_free_text():

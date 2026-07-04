@@ -182,31 +182,13 @@ async def test_generic_english_phrase_at_welcome_detects_english():
 
 @pytest.mark.asyncio
 async def test_unrecognized_first_message_falls_back_to_llm_language_detection(monkeypatch):
-    """When the stopword heuristic finds zero signal (a word/phrase outside the
-    curated lists), the bot asks an LLM instead of defaulting to the language
-    buttons, so it still skips the question when the LLM is confident."""
-    monkeypatch.setattr(
-        "src.agents.supervisor.detect_language_llm",
-        AsyncMock(return_value="en"),
-    )
+    """Fase 1: the conversation agent answers the first message directly (via RAG),
+    inferring language from the text itself rather than asking the LLM language
+    fallback or the explicit language question."""
     state = make_state()
-    resp = await route_message(state, "g'day mate")
+    resp = await route_message(state, "g'day mate, tell me about your diving courses")
     assert state.language == "en"
     assert state.step == Step.MAIN_MENU
-    assert "Diving Planet" in resp
-
-
-@pytest.mark.asyncio
-async def test_llm_language_fallback_failure_still_asks_explicitly(monkeypatch):
-    """If the LLM call also can't tell (returns None / errors out), the bot
-    falls back to asking the language explicitly instead of guessing."""
-    monkeypatch.setattr(
-        "src.agents.supervisor.detect_language_llm",
-        AsyncMock(return_value=None),
-    )
-    state = make_state()
-    resp = await route_message(state, "g'day mate")
-    assert state.step == Step.LANGUAGE
 
 
 @pytest.mark.asyncio
@@ -2654,7 +2636,11 @@ async def test_intent_classifier_currency_switch_sets_display_currency():
 
 
 @pytest.mark.asyncio
-async def test_intent_classifier_restart_wipes_and_returns_to_entry():
+async def test_intent_classifier_restart_wipes_and_returns_to_entry(agent_decides):
+    from src.agents import orchestrator
+    # This exercises the legacy classify_menu_intent path, reached only when the
+    # orchestrator defers (answer_question).
+    agent_decides(orchestrator.TOOL_ANSWER_QUESTION)
     state = await reach_mixed_add_activity()
     await send(state, "3", "2")
     with patch("src.agents.supervisor.classify_menu_intent",

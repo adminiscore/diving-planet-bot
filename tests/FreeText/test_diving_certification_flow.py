@@ -3,8 +3,17 @@ Test del flujo mejorado de buceo con pregunta de certificación.
 """
 
 import asyncio
+import pytest
+from src.agents import orchestrator
 from src.agents.supervisor import route_message
 from src.flows.decision_tree import ConversationState, Step
+
+
+@pytest.fixture(autouse=True)
+def _agent_books(_agent_answers_by_default, agent_decides):
+    """These flows send a clear booking request in free text; the conversation
+    agent picks a booking tool, which reuses the deterministic entry routing."""
+    agent_decides(orchestrator.TOOL_START_BOOKING, {"activity": "certified"})
 
 
 async def test_diving_certification_flow():

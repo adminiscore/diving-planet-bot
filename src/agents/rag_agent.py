@@ -819,7 +819,12 @@ async def rag_answer(
     lang: str = "es",
     history: list[dict] | None = None,
     extra_context: str | None = None,
+    verify_grounding: bool = True,
 ) -> str:
+    """`verify_grounding=False` keeps the deterministic price/URL guards but skips
+    the LLM grounding-judge, which false-negatives on correct answers that combine
+    several KB chunks (e.g. a full course program). Used by the conversation agent
+    so it can answer multi-part questions naturally; RAG defaults stay strict."""
     """Retrieve context from the knowledge base and answer using the LLM.
 
     Comportamiento en orden de prioridad:
@@ -919,12 +924,13 @@ async def rag_answer(
             )
             return FALLBACK_ES if lang == "es" else FALLBACK_EN
 
-        grounded, reason = await _verify_grounding_with_retry(answer or "", grounding_context, lang=lang)
-        if not grounded:
-            logger.warning(
-                f"[RAG][GROUNDING] Rejecting answer query={query[:60]}... reason={reason}"
-            )
-            return FALLBACK_ES if lang == "es" else FALLBACK_EN
+        if verify_grounding:
+            grounded, reason = await _verify_grounding_with_retry(answer or "", grounding_context, lang=lang)
+            if not grounded:
+                logger.warning(
+                    f"[RAG][GROUNDING] Rejecting answer query={query[:60]}... reason={reason}"
+                )
+                return FALLBACK_ES if lang == "es" else FALLBACK_EN
         logger.info(
             f"[RAG] Query: {query[:60]}... | Docs: {len(docs) if docs else 0} | "
             f"Tokens: {response.usage.total_tokens} | Sources: {context_sources or []}"

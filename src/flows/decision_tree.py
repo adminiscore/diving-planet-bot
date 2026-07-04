@@ -194,10 +194,19 @@ class ConversationState:
     # Low-confidence intent detection (0.2 < confidence < 0.30): awaiting a
     # yes/no confirmation from the user before applying it (Capa 3, typo plan).
     pending_intent_confirmation: object | None = None
+    # Free-form facts the customer volunteered in natural language that don't map
+    # to a structured field (budget, literal day count, child ages, experience
+    # level, preferences like "quieren ir juntos"). Written by the conversation
+    # agent's `remember` tool and injected into every RAG/answer context so the
+    # bot never re-asks or ignores what the customer already said. Persists for
+    # the whole conversation (NOT cleared with the cart).
+    remembered_facts: dict | None = None
 
     def __post_init__(self):
         if self.history is None:
             self.history = []
+        if self.remembered_facts is None:
+            self.remembered_facts = {}
 
 
 # Common Spanish/English words used to guess the language of ANY free-text
@@ -2424,6 +2433,15 @@ class DecisionTree:
         state.mixed_entry_path = "booking"
         self._set_back_target(state, back_step, back_quick_replies_key)
         state.step = Step.MIXED_ENTRY
+        # If the conversation agent already learned the activity/group/location
+        # from free text before the customer clicked "Reservar", skip the
+        # generic intro copy and go straight to whatever is still missing
+        # (usually the location question) instead of re-asking from scratch.
+        has_prior_context = bool(
+            state.detected_activity or state.detected_group_size or state.remembered_facts
+        )
+        if has_prior_context:
+            return self._handle_mixed_entry(state, "1")
         self.set_quick_replies(state, "mixed_entry")
         return MESSAGES["mixed_entry"][state.language]
 
@@ -3278,6 +3296,24 @@ class DecisionTree:
                 return self._goto_mixed_add_qty(state)
             elif state.mixed_cart:
                 return self._goto_mixed_cart_review(state)
+            # No mixed allocation and cart still empty: if the conversation
+            # agent already learned a single homogeneous activity for the
+            # whole group (e.g. "nunca hemos buceado" -> minicourse), skip the
+            # generic "¿qué actividad quieres añadir?" menu and go straight to
+            # quantity/plan for that activity instead of re-asking.
+            if not allocation and not state.mixed_cart:
+                single_activity = {
+                    "minicourse": "beginner",
+                    "snorkel": "snorkel",
+                }.get(state.detected_activity)
+                if single_activity:
+                    state.mixed_pending_qty_type = single_activity
+                    return self._goto_mixed_add_qty(state)
+                if state.detected_activity == "certified_diving":
+                    state.mixed_pending_qty_type = "cert"
+                    state.step = Step.MIXED_ADD_CERT_PLAN
+                    self.set_quick_replies(state, "mixed_add_cert_plan")
+                    return MESSAGES["mixed_add_cert_plan"][lang]
             return self._goto_mixed_add_activity(state)
 
         # Detectar texto libre: Cartagena

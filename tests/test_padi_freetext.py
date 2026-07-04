@@ -15,6 +15,7 @@ Two routing paths:
 import pytest
 from unittest.mock import AsyncMock
 
+from src.agents import orchestrator
 from src.agents.intent_detector import DetectedIntent, IntentDetector
 from src.agents.supervisor import route_message
 from src.flows.decision_tree import ConversationState, Step
@@ -93,7 +94,15 @@ class TestIntentDetectorPadiActivity:
 
 class TestSupervisorPadiFreetextFlow:
     """After a free-text PADI message the bot must enter the course flow
-    and populate mixed_pending_qty_plan with the specific service_id."""
+    and populate mixed_pending_qty_plan with the specific service_id.
+
+    The conversation agent (Fase 1) now gates entry routing: a clear booking
+    intent makes it pick a booking tool, which reuses the deterministic
+    `_route_detected_intent` (IntentDetector still resolves the exact course)."""
+
+    @pytest.fixture(autouse=True)
+    def _agent_books(self, _agent_answers_by_default, agent_decides):
+        agent_decides(orchestrator.TOOL_START_BOOKING, {"activity": "course"})
 
     @pytest.mark.asyncio
     async def test_open_water_sets_plan_with_location(self):
@@ -158,6 +167,7 @@ class TestConfirmationFlow:
 
     # --- Step 1: bot emits the confirmation question ---
 
+    @pytest.mark.skip(reason="low-confidence '¿Te refieres a X?' trigger removed in Fase 1 — the conversation agent gates entry routing now")
     @pytest.mark.asyncio
     async def test_ambiguous_message_triggers_confirmation_question(self):
         state = make_state("es")
@@ -169,6 +179,7 @@ class TestConfirmationFlow:
         assert state.pending_intent_confirmation.activity == "padi_rescue"
         assert state.pending_intent_confirmation.service_id == "rescue"
 
+    @pytest.mark.skip(reason="low-confidence confirmation trigger removed in Fase 1")
     @pytest.mark.asyncio
     async def test_confirmation_question_is_not_final_routing(self):
         """The plan must NOT be set yet after the ambiguous message — only after 'sí'."""
@@ -181,6 +192,7 @@ class TestConfirmationFlow:
 
     # --- Step 2a: user says "sí" → plan is set ---
 
+    @pytest.mark.skip(reason="low-confidence confirmation trigger removed in Fase 1")
     @pytest.mark.asyncio
     async def test_si_after_confirmation_sets_plan_with_location(self):
         state = make_state("es")
@@ -191,6 +203,7 @@ class TestConfirmationFlow:
         assert state.mixed_pending_qty_plan == "rescue"
         assert state.selected_service == "rescue"
 
+    @pytest.mark.skip(reason="low-confidence confirmation trigger removed in Fase 1")
     @pytest.mark.asyncio
     async def test_si_after_confirmation_without_location_asks_location(self):
         """After confirming with 'sí', if location is unknown the bot must ask for it."""
@@ -220,6 +233,7 @@ class TestConfirmationFlow:
 
     # --- Step 2b: user says "no" → main menu, plan never set ---
 
+    @pytest.mark.skip(reason="low-confidence confirmation trigger removed in Fase 1")
     @pytest.mark.asyncio
     async def test_no_after_confirmation_goes_to_main_menu(self):
         state = make_state("es")

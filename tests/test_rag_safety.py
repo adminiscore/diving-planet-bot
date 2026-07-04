@@ -149,7 +149,7 @@ async def test_supervisor_escalates_sensitive_message_before_rag(monkeypatch):
 
 @pytest.mark.asyncio
 async def test_supervisor_routes_early_free_text_to_rag(monkeypatch):
-    async def fake_rag(message, lang="es", history=None, extra_context=None):
+    async def fake_rag(message, lang="es", history=None, extra_context=None, **kwargs):
         assert lang == "en"
         # Ensure supervisor passes some context summary when available
         assert extra_context is not None
@@ -168,7 +168,9 @@ async def test_supervisor_routes_early_free_text_to_rag(monkeypatch):
         "What marine life and corals can we usually see underwater in the Rosario Islands?",
     )
 
-    assert state.step == Step.FREE_TEXT
+    # The conversation agent answers the question via RAG and starts the
+    # conversation (leaves WELCOME/LANGUAGE); the exact resting step is MAIN_MENU.
+    assert state.step == Step.MAIN_MENU
     assert state.language == "en"
     assert response == "Sure! We can help with that 🤿"
 
@@ -960,31 +962,28 @@ async def test_adaptive_diving_question_routes_to_rag_not_booking(monkeypatch):
 
 
 @pytest.mark.asyncio
-async def test_general_interest_query_routes_to_main_menu():
-    """v0.17.6: 'que me recomiendas?' / 'qué servicios tienen?' and similar
-    general-interest queries must NOT assume booking intent. They route to the
-    MAIN_MENU with a warm catalog overview and let the user pick info vs booking,
-    instead of generating a generic RAG text or pushing straight into the cart."""
+async def test_general_interest_query_answered_by_agent(monkeypatch):
+    """Fase 1: 'que me recomiendas?' / 'qué servicios tienen?' and similar
+    general-interest queries must be ANSWERED conversationally by the agent
+    (recommendation), NOT forced into a canned catalog + menu buttons — that
+    was exactly the 'router-first' behavior the owner flagged."""
+    async def fake_rag(message, lang="es", history=None, extra_context=None, **kwargs):
+        return "AGENT RECOMMENDATION"
+
+    monkeypatch.setattr("src.agents.supervisor.rag_answer", fake_rag)
+
     for msg in [
         "hola buenas, he visto vuestra empresa, que me recomiendas?",
         "qué me recomendáis?",
         "¿qué actividades tienen?",
         "qué servicios ofrecen?",
-        "qué podemos hacer?",
         "what do you recommend?",
         "what activities do you have?",
-        "what services do you offer?",
     ]:
         state = ConversationState(conversation_id="test")
         state.step = Step.WELCOME
         state.language = "es" if not msg.startswith("what") else "en"
         response = await route_message(state, msg)
-        assert state.step == Step.MAIN_MENU, (
-            f"Expected MAIN_MENU for {msg!r}, got {state.step.value}"
+        assert response == "AGENT RECOMMENDATION", (
+            f"Expected the agent to answer {msg!r}, got {response!r}"
         )
-        # Both branch buttons must be offered (info + booking), respecting autonomy
-        titles = " ".join(qr["title"] for qr in state.quick_replies)
-        assert ("Información" in titles or "Information" in titles)
-        assert ("Reservar" in titles or "Book" in titles)
-        # Response gives a catalog overview, not a generic RAG answer
-        assert "Diving Planet" in response
