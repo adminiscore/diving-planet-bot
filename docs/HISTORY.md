@@ -1,6 +1,11 @@
 History
 =======
 
+0.19.11 - (2026-07-04)
+----------------------
+* **Auto-armado interactivo por edad (cola de no-certificados)** (`decision_tree.py`): cuando un grupo mixto tiene varios no-certificados y se conoce la edad de cada uno, el bot ahora los coloca *uno a uno* según su edad — auto-añade lo forzado (menores de 6 → acompañante, sin preguntar) y pregunta solo las elecciones reales, adaptando la oferta a cada edad (8-9 → Bubble Makers/snorkel; 10+ → minicurso/snorkel/acompañante). Nueva `mixed_pending_beginner_queue` + `_build_beginner_queue`/`_process_beginner_queue`/`_offer_queue_person`/`_handle_queue_person_choice`/`_add_beginner_activity_for_person`. Solo se activa cuando se conoce la edad de *cada* no-certificado (si no, cae a la oferta agrupada previa). Ej.: "2 buzos y 2 no, uno de 9 y otro de 14" → ofrece al de 9 sus opciones de niño, luego al de 14 las de adulto; "8 y 5" → el de 5 entra como acompañante automáticamente y solo pregunta por el de 8.
+* Tests: `test_companion_split.py` (+4: cola de 2 edades una a una, auto-acompañante <6, fallback cuando no se conocen todas las edades, back cancela la cola). Suite: ver cierre.
+
 0.19.10 - (2026-07-04)
 ----------------------
 * **Auditoría del auto-armado en composiciones generales** (no solo edad): ejercitado `_route_detected_intent` con "somos dos y queremos bucear", "somos 4 y snorkel", "vamos 6 certificados", splits mixtos, etc. La mayoría ya se auto-armaban bien (pre-rellenando cantidad, tipo y ubicación). Encontrados y corregidos 3 huecos reales de entendimiento:

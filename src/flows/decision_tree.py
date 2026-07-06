@@ -191,6 +191,7 @@ class ConversationState:
     detected_group_allocation: dict | None = None
     detected_ages: list = field(default_factory=list)   # person ages mentioned across the conversation
     mixed_beginner_child_age: int | None = None          # age of the single non-cert minor being offered activities
+    mixed_pending_beginner_queue: list = field(default_factory=list)  # per-person ages of non-cert people still to place (auto-build)
     detected_last_dive_over_2_years: bool | None = None
     detected_duration: str | None = None
     detected_location: str | None = None
@@ -2990,6 +2991,8 @@ class DecisionTree:
         state.mixed_pending_cert_remaining_qty = None
         state.mixed_pending_refresh_added_qty = None
         state.mixed_pending_beginner_after_cert = 0
+        state.mixed_beginner_child_age = None
+        state.mixed_pending_beginner_queue = []
         state.mixed_pending_modify_idx = None
         state.mixed_pending_modify_refresh = False
         state.mixed_pending_exact = False
@@ -4106,6 +4109,109 @@ class DecisionTree:
             options.append({"title": "🔙 Back", "value": "back"})
         return options
 
+    def _add_beginner_activity_for_person(self, state: ConversationState, option: str) -> None:
+        """Add one non-certified person's chosen/forced activity to the cart."""
+        if option == "companion":
+            self._append_mixed_cart_item(state, "companion", None, 1)
+        elif option == "snorkel":
+            self._append_mixed_cart_item(state, "snorkel", self._service_for_location("snorkeling", state), 1)
+        elif option == "bubble":
+            # 8-9 yo dive intro priced/handled as Bubble Makers (8-10 range).
+            state.kids_eight_to_ten_count = (state.kids_eight_to_ten_count or 0) + 1
+            self._append_mixed_cart_item(state, "beginner", None, 1)
+        else:  # minicourse (10+ adult mini-course)
+            self._append_mixed_cart_item(state, "beginner", None, 1)
+
+    def _build_beginner_queue(self, state: ConversationState, beginner_qty: int) -> list | None:
+        """Per-person queue of non-cert ages when we know each one's age.
+
+        Only fires when the count of known minor ages exactly matches the number
+        of non-certified people (so we're confident each age maps to a person);
+        otherwise returns None and the caller uses the single/grouped offer.
+        """
+        minor_ages = sorted(a for a in (state.detected_ages or []) if a < 18)
+        if beginner_qty >= 2 and len(minor_ages) == beginner_qty:
+            return minor_ages
+        return None
+
+    def _process_beginner_queue(self, state: ConversationState) -> str:
+        """Auto-add forced activities (e.g. <6 -> companion) and stop to ask a
+        choice for the next person who has more than one option."""
+        queue = state.mixed_pending_beginner_queue or []
+        while queue:
+            age = queue[0]
+            options = eligibility.beginner_options_for_age(age)
+            if len(options) == 1:                 # forced (companion for <6)
+                self._add_beginner_activity_for_person(state, options[0])
+                queue.pop(0)
+                continue
+            # This person needs a choice — offer it, keep them at the head.
+            state.mixed_pending_beginner_queue = queue
+            return self._offer_queue_person(state, age)
+        # Everyone placed.
+        state.mixed_pending_beginner_queue = []
+        state.mixed_pending_beginner_after_cert = 0
+        return self._goto_mixed_cart_review(state)
+
+    def _offer_queue_person(self, state: ConversationState, age: int) -> str:
+        """Show the age-appropriate offer for ONE person from the queue."""
+        lang = state.language
+        state.step = Step.MIXED_ASK_BEGINNER_ACTIVITY
+        remaining = len(state.mixed_pending_beginner_queue)
+        if age < eligibility.MIN_DIVE:
+            state.mixed_beginner_child_age = age
+            state.quick_replies = self._child_beginner_quick_replies(lang, age)
+            note = eligibility.age_eligibility_note(age, lang)
+            head = (f"Para la persona de *{age} años*:\n" if lang == "es"
+                    else f"For the *{age}-year-old*:\n")
+            return head + note + ("\n\n¿Qué prefiere?" if lang == "es" else "\n\nWhat would they prefer?")
+        # 10+ : general offer (minicurso / snorkel / companion) — fixed 3 options.
+        state.mixed_beginner_child_age = None
+        if lang == "es":
+            state.quick_replies = [
+                {"title": "🤿 Minicurso de buceo", "value": "1"},
+                {"title": "🌊 Snorkel", "value": "2"},
+                {"title": "👤 Solo acompañante", "value": "3"},
+                {"title": "🔙 Volver", "value": "back"},
+            ]
+            return (f"Para la persona de *{age} años* (sin certificación), puede elegir:\n"
+                    "• 🤿 Minicurso de buceo\n• 🌊 Snorkel\n• 👤 Solo acompañante\n\n¿Qué prefiere?")
+        state.quick_replies = [
+            {"title": "🤿 Dive mini-course", "value": "1"},
+            {"title": "🌊 Snorkel", "value": "2"},
+            {"title": "👤 Just a companion", "value": "3"},
+            {"title": "🔙 Back", "value": "back"},
+        ]
+        return (f"For the *{age}-year-old* (not certified), options:\n"
+                "• 🤿 Dive mini-course\n• 🌊 Snorkel\n• 👤 Just a companion\n\nWhat would they prefer?")
+
+    def _handle_queue_person_choice(self, state: ConversationState, message: str) -> str:
+        """Handle one queued non-cert person's choice, then continue the queue."""
+        msg = message.strip().lower()
+        if is_back(msg):
+            state.mixed_pending_beginner_queue = []
+            state.mixed_beginner_child_age = None
+            state.mixed_pending_beginner_after_cert = 0
+            return self._goto_mixed_cart_review(state)
+        age = state.mixed_pending_beginner_queue[0]
+        options = (self._child_beginner_options(age) if age < eligibility.MIN_DIVE
+                   else ["minicourse", "snorkel", "companion"])
+        choice = self._parse_choice(message, len(options))
+        action = options[choice - 1] if (choice and 1 <= choice <= len(options)) else None
+        if action is None:  # free-text fallback
+            if any(w in msg for w in ("bubble", "minicurso", "mini curso", "buceo")):
+                action = "bubble" if "bubble" in options else ("minicourse" if "minicourse" in options else None)
+            elif any(w in msg for w in ("snorkel", "esnorkel", "careteo")):
+                action = "snorkel" if "snorkel" in options else None
+            elif any(w in msg for w in ("acompañante", "acompanante", "companion", "nada", "solo mira", "no hace")):
+                action = "companion"
+        if action is None:
+            return self._offer_queue_person(state, age)
+        self._add_beginner_activity_for_person(state, action)
+        state.mixed_pending_beginner_queue.pop(0)
+        state.mixed_beginner_child_age = None
+        return self._process_beginner_queue(state)
+
     def _single_beginner_child_age(self, state: ConversationState) -> int | None:
         """Age of the non-certified person when it's a single known minor under
         the diving age (10). Returns None when there are several non-cert people
@@ -4207,6 +4313,19 @@ class DecisionTree:
             return None
         lang = state.language
 
+        # Auto-build: several non-certified people whose ages we all know -> place
+        # each one age-appropriately (auto-add the forced ones, ask the choices),
+        # one person at a time.
+        queue = self._build_beginner_queue(state, beginner_qty)
+        if queue is not None:
+            state.mixed_pending_beginner_queue = queue
+            intro = ("¡Listo! Los buceadores certificados ya están en el carrito. 🤿\n\n"
+                     "Ahora vemos el plan ideal para cada uno de los demás:\n\n"
+                     if lang == "es" else
+                     "Done! The certified divers are in the cart. 🤿\n\n"
+                     "Now let's sort out the ideal plan for each of the others:\n\n")
+            return intro + self._process_beginner_queue(state)
+
         # Age-aware offering: if the single non-certified person is a known minor
         # under the diving age (10), don't offer the adult mini-course — offer
         # only what their age allows (snorkel / Bubble Makers / companion).
@@ -4263,6 +4382,10 @@ class DecisionTree:
     def _handle_mixed_ask_beginner_activity(self, state: ConversationState, message: str) -> str:
         lang = state.language
         msg = message.strip().lower()
+
+        # Auto-build queue: placing several non-cert people one by one.
+        if state.mixed_pending_beginner_queue:
+            return self._handle_queue_person_choice(state, message)
 
         # Age-restricted branch: the non-certified person is a known minor <10,
         # so the offered options are snorkel / Bubble Makers / companion only.

@@ -211,3 +211,72 @@ def test_child_9_pick_bubble_makers_adds_beginner_line():
     assert st.step == Step.MIXED_CART_REVIEW
     assert any(it.get("type") == "beginner" for it in st.mixed_cart)
     assert st.kids_eight_to_ten_count == 1
+
+
+# --- Auto-build: several non-cert people of different ages, placed one by one -
+
+def _cert_state_with_beginners(ages, cert_qty=2, beg_qty=2) -> ConversationState:
+    st = ConversationState(conversation_id="queue")
+    st.language = "es"
+    st.step = Step.MIXED_CERT_LAST_DIVE
+    st.mixed_pending_qty_type = "cert"
+    st.mixed_pending_qty_plan = "2_dives_1_day"
+    st.location = "cartagena"
+    st.mixed_entry_path = "diving_snorkel"
+    st.detected_ages = ages
+    st.mixed_pending_cert_total_qty = cert_qty
+    st.mixed_pending_cert_remaining_qty = cert_qty
+    st.mixed_pending_qty_value = cert_qty
+    st.mixed_pending_beginner_after_cert = beg_qty
+    return st
+
+
+def _start_queue(st: ConversationState) -> str:
+    tree.process_message(st, "2")        # last dive <2y -> preview
+    return tree.process_message(st, "1")  # add cert -> begin auto-build queue
+
+
+def test_autobuild_two_ages_offered_one_by_one():
+    st = _cert_state_with_beginners([9, 14])
+    _start_queue(st)
+    # First: the 9-year-old (child offer, Bubble Makers available, no adult minicourse)
+    assert st.mixed_pending_beginner_queue == [9, 14]
+    titles = [b["title"].lower() for b in st.quick_replies]
+    assert any("bubble" in t for t in titles)
+    assert not any("minicurso" in t for t in titles)
+    tree.process_message(st, "1")        # 9 -> Bubble Makers
+    # Next: the 14-year-old (general offer, minicourse available)
+    assert st.mixed_pending_beginner_queue == [14]
+    titles = [b["title"].lower() for b in st.quick_replies]
+    assert any("minicurso" in t for t in titles)
+    tree.process_message(st, "1")        # 14 -> minicourse
+    assert st.mixed_pending_beginner_queue == []
+    assert st.step == Step.MIXED_CART_REVIEW
+
+
+def test_autobuild_under_six_auto_companion_no_question():
+    st = _cert_state_with_beginners([5, 8])
+    _start_queue(st)
+    # The 5-year-old is auto-added as companion; only the 8-year-old is asked.
+    assert st.mixed_pending_beginner_queue == [8]
+    assert any(it.get("type") == "companion" for it in st.mixed_cart)
+    tree.process_message(st, "2")        # 8 -> snorkel
+    assert st.step == Step.MIXED_CART_REVIEW
+    types = [it.get("type") for it in st.mixed_cart]
+    assert "companion" in types and "snorkel" in types
+
+
+def test_autobuild_only_fires_when_ages_match_count():
+    """If we don't know every non-cert person's age, fall back to the grouped
+    offer (no per-person queue)."""
+    st = _cert_state_with_beginners([9], beg_qty=2)   # 2 non-cert but only 1 age known
+    _start_queue(st)
+    assert st.mixed_pending_beginner_queue == []
+
+
+def test_autobuild_back_cancels_queue_to_cart():
+    st = _cert_state_with_beginners([6, 7])
+    _start_queue(st)
+    tree.process_message(st, "back")
+    assert st.step == Step.MIXED_CART_REVIEW
+    assert st.mixed_pending_beginner_queue == []
