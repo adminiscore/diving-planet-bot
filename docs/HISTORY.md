@@ -1,6 +1,13 @@
 History
 =======
 
+0.19.7 - (2026-07-04)
+---------------------
+* **Auditoría exhaustiva de casos enrevesados** (más allá de la edad): 10 flujos multi-paso del árbol (mixto cert+principiante+snorkel, modificar/quitar item, cambiar origen, back-spam, empezar de nuevo, companion-split, oferta por edad, cursos PADI, info profundo) + una batería de mensajes de escalación/adversariales/info. Resultado: **0 crashes, 0 estados colgados** en la capa determinista. Se encontró y corrigió 1 bug real.
+* **Fix: quejas / fraude / exigencia de reembolso no escalaban** (`escalation.py`): una queja tipo "esto es una estafa, quiero mi dinero", "me estafaron", "pésimo servicio", "los voy a demandar" (ES) o "this is a scam, i want my money back" (EN) se iba a RAG en vez de escalar a un humano. Ampliadas las keywords de `complaints_or_emergencies` con acusaciones de fraude y exigencias de reembolso, cuidando NO capturar preguntas neutrales de política ("¿cuál es su política de reembolso?" sigue sin escalar como queja).
+* Nota: las preguntas de clima ("¿estará bien el clima mañana?") se responden por RAG con tono tranquilizador (framing positivo) en vez de escalar — comportamiento deseado, no bug. Las de disponibilidad/pago en tiempo real siguen escalando por sus keywords específicas.
+* Tests: `test_rag_safety.py` (+2 parametrizados: quejas/fraude escalan, política-de-reembolso neutral no). Suite: ver cierre.
+
 0.19.6 - (2026-07-04)
 ---------------------
 * **Memoria de edad multi-turno** (`supervisor.py` + `ConversationState.detected_ages`): las edades detectadas se recuerdan a lo largo de la conversación. Un follow-up como "pero mi hijo puede bucear?" (sin repetir la edad) reutiliza el "9 años" dicho antes. Guarda: solo se reutiliza la edad recordada si el mensaje referencia a una persona ("mi hijo", "él/ella"); un "¿se puede bucear de noche?" genérico NO se responde con una edad vieja.

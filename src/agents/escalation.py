@@ -63,6 +63,16 @@ SENSITIVE_RULES = {
         "keywords": {
             "queja", "reclamo", "emergencia", "accidente", "problema grave", "complaint",
             "emergency", "accident", "serious problem",
+            # Fraud accusations & refund DEMANDS (not neutral "¿política de reembolso?").
+            "estafa", "estafador", "estafadores", "fraude", "fraudulento", "timo",
+            "me estafaron", "nos estafaron", "me timaron", "me engañaron", "nos engañaron",
+            "quiero mi dinero", "mi dinero de vuelta", "devuelvan mi dinero",
+            "devuélvanme", "devuelvanme", "quiero que me devuelvan",
+            "pésimo servicio", "pesimo servicio", "muy mal servicio", "terrible servicio",
+            "los voy a demandar", "voy a demandar", "demandarlos", "abogado",
+            "scam", "fraud", "scammed", "ripped off", "rip off", "ripoff",
+            "my money back", "want my money", "give me my money", "worst service",
+            "terrible service", "i'll sue", "i will sue", "lawyer",
         },
         "es": "Voy a transferirte inmediatamente con un miembro de nuestro staff para ayudarte con esta situación.\nWhatsApp: +57 320 231515",
         "en": "I'm immediately transferring you to a staff member to help with this situation.\nWhatsApp: +57 320 231515",

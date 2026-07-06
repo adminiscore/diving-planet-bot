@@ -59,6 +59,30 @@ def test_detect_weather_escalation_english():
     assert "updated information" in response
 
 
+@pytest.mark.parametrize("msg", [
+    "esto es una estafa, quiero mi dinero",
+    "me estafaron con la reserva",
+    "this is a scam, i want my money back",
+    "pésimo servicio, nadie contesta",
+    "los voy a demandar",
+])
+def test_complaints_and_fraud_escalate(msg):
+    result = detect_sensitive_escalation(msg, "es")
+    assert result is not None
+    assert result[0] == "complaints_or_emergencies"
+
+
+@pytest.mark.parametrize("msg", [
+    "cuál es su política de reembolso?",
+    "quiero un reembolso porque no pude ir",
+    "tienen algún descuento?",
+])
+def test_neutral_refund_policy_question_does_not_escalate_as_complaint(msg):
+    result = detect_sensitive_escalation(msg, "es")
+    # Either no escalation, or not a complaint (a neutral policy question).
+    assert result is None or result[0] != "complaints_or_emergencies"
+
+
 def test_build_retrieval_query_uses_recent_user_history():
     history = [
         {"role": "user", "content": "We are a family of 6. Three are certified divers and three want to snorkel."},
