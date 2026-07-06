@@ -80,3 +80,31 @@ jobs:
             tests/test_padi_freetext.py \
             tests/FreeText/test_mixed_group.py \
             -v --tb=short
+
+  deploy-pre:
+    name: Deploy to PRE
+    needs: test
+    if: github.ref == 'refs/heads/feature/pre_gadea' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Set up SSH
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "${{ secrets.PRE_VPS_SSH_KEY }}" > ~/.ssh/pre_vps
+          chmod 600 ~/.ssh/pre_vps
+          ssh-keyscan -H "${{ secrets.PRE_VPS_HOST }}" >> ~/.ssh/known_hosts
+
+      - name: Redeploy dp-pre-bot
+        run: |
+          ssh -i ~/.ssh/pre_vps root@${{ secrets.PRE_VPS_HOST }} '
+            set -euo pipefail
+            cd /opt/diving-planet-bot
+            git fetch origin
+            git checkout feature/pre_gadea
+            git reset --hard origin/feature/pre_gadea
+            docker compose -f docker-compose.vps.yml up -d --build dp-pre-bot
+            sleep 5
+            docker exec dp-pre-bot python -m scripts.load_embeddings --yes
+            docker exec dp-pre-bot python -c "import urllib.request; print(urllib.request.urlopen(\"http://localhost:8000/health\").read())"
+          '

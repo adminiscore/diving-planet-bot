@@ -1,5 +1,17 @@
 # Redeploy a PRE (staging VPS) — runbook
 
+> **Desde 2026-07-06 esto es automático.** Cada push a `feature/pre_gadea` que pase
+> el job `Lint + Tests` de CI dispara el job `deploy-pre` en
+> `.github/workflows/ci.yml`, que hace exactamente los pasos de este documento
+> por SSH (usa los secrets `PRE_VPS_HOST` / `PRE_VPS_SSH_KEY` del repo). El VPS
+> ahora es un `git clone` real en `/opt/diving-planet-bot` (antes se desplegaba
+> con `tar | ssh`), así que el `git fetch && git reset --hard` del job funciona
+> igual que en cualquier otro deploy basado en git.
+>
+> Usa el procedimiento manual de abajo (o `scripts/redeploy_pre.sh`) solo como
+> fallback si la Action falla o si necesitas desplegar algo que no está en
+> `feature/pre_gadea`.
+
 Actualiza el entorno **PRE** (`dp-pre-bot` en el VPS) con la rama `feature/pre_gadea`
 (pruebaGon mergeada, v0.19.13+): nuevo código + KB reindexada + `RAG_MIN_SCORE=0.50`.
 
@@ -15,8 +27,8 @@ y que `docker-compose.vps.yml` + `.env.pre` ya existen ahí. Sustituye la ruta s
 ## 0) Entrar al VPS y al repo
 
 ```bash
-ssh <usuario>@<ip-del-vps>
-cd ~/diving-planet-bot          # ruta del repo en el VPS
+ssh root@<ip-del-vps>
+cd /opt/diving-planet-bot          # ruta del repo en el VPS (git clone real)
 ```
 
 ## 1) Actualizar el código a feature/pre_gadea
