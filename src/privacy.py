@@ -1,6 +1,5 @@
 import re
 
-
 EMAIL_RE = re.compile(r"[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}", re.IGNORECASE)
 PHONE_RE = re.compile(r"\+?\d[\d\s().-]{6,}\d")
 URL_RE = re.compile(r"https?://\S+", re.IGNORECASE)

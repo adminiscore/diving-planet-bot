@@ -49,7 +49,7 @@ def _service_display_name(service_id: str, lang: str) -> str:
     return name or service_id
 
 
-def build_lead_summary(state: "ConversationState", escalation_reason: str = "") -> str:
+def build_lead_summary(state: ConversationState, escalation_reason: str = "") -> str:
     lines = ["🤿 *Lead Diving Planet*", "─────────────────────"]
 
     lang_label = "Español" if state.language == "es" else "English"

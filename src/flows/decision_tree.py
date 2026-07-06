@@ -20,9 +20,8 @@ from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
 
-from src.utils.fuzzy import is_back, is_affirmative, is_agree, is_none_selection, fuzzy_word_number
 from src.flows import eligibility
-
+from src.utils.fuzzy import fuzzy_word_number, is_affirmative, is_agree, is_back, is_none_selection
 
 # Separador interno: si una respuesta del bot contiene este token, el canal
 # (Chatwoot) la divide en mensajes independientes. Útil para mandar el itinerario
@@ -1551,18 +1550,6 @@ BUTTON_OPTIONS = {
         ],
         "en": [
             {"title": "🤿 Add activities", "value": "1"},
-            {"title": "🔙 Back", "value": "back"},
-        ],
-    },
-    "tours_location": {
-        "es": [
-            {"title": "🚤 Salgo desde Cartagena", "value": "1"},
-            {"title": "🏝️ Ya estoy en las islas", "value": "2"},
-            {"title": "🔙 Volver", "value": "back"},
-        ],
-        "en": [
-            {"title": "🚤 Departing from Cartagena", "value": "1"},
-            {"title": "🏝️ Already on the islands", "value": "2"},
             {"title": "🔙 Back", "value": "back"},
         ],
     },
@@ -3267,10 +3254,10 @@ class DecisionTree:
         choice = self._parse_choice(message, 2)
         lang = state.language
         msg = message.strip().lower()
-        
+
         if is_back(msg):
             return self._goto_mixed_entry(state)
-        
+
         def _after_location_set() -> str:
             """Lógica común tras fijar la ubicación: auto-añade snorkel/minicurso
             detectados y enruta según lo que queda pendiente."""
@@ -3333,7 +3320,7 @@ class DecisionTree:
         if choice == 2 or "isla" in msg or "rosario" in msg:
             state.location = "island"
             return _after_location_set()
-        
+
         self.set_quick_replies(state, "tours_location")
         return MESSAGES["not_understood"][lang]
 
@@ -3500,7 +3487,7 @@ class DecisionTree:
     def _goto_island_hotel_menu(self, state: ConversationState) -> str:
         """Ir al menú de hoteles según la isla detectada."""
         lang = state.language
-        
+
         # Mapeo de island_id a nombre de isla
         island_names = {
             "isla_grande": "Isla Grande",
@@ -3516,9 +3503,9 @@ class DecisionTree:
             "isla_pelicano": "Isla Pelicano",
             "isla_rosario": "Isla Rosario",
         }
-        
+
         island_name = island_names.get(state.island, state.island)
-        
+
         hotels_by_island: dict[str, list[str]] = {
             "Isla Grande": [
                 "San Pedro de Majagua",
@@ -3570,7 +3557,7 @@ class DecisionTree:
                 "Hotel San Tropel",
             ],
         }
-        
+
         island_hotels = hotels_by_island.get(island_name, [])
         if island_hotels:
             quick_replies: list[dict] = []
@@ -3579,10 +3566,10 @@ class DecisionTree:
             other_title = "Otro / No esta en la lista" if lang == "es" else "Other / Not listed"
             quick_replies.append({"title": other_title, "value": str(len(island_hotels) + 1)})
             quick_replies.append({"title": "🔙 Volver" if lang == "es" else "🔙 Back", "value": "back"})
-            
+
             state.step = Step.ISLAND_HOTEL_MENU
             state.quick_replies = quick_replies
-            
+
             if lang == "es":
                 return (
                     f"Perfecto, estás en *{island_name}*.\n\n"
@@ -3592,7 +3579,7 @@ class DecisionTree:
                 f"Great, you are on *{island_name}*.\n\n"
                 "Which hotel are you staying at? (Needed to coordinate pickup)"
             )
-        
+
         # Si no hay hoteles para esa isla, continuar sin hotel
         if lang == "es":
             return f"Perfecto, tomamos nota de que estás en *{island_name}*."
@@ -4157,7 +4144,6 @@ class DecisionTree:
         """Show the age-appropriate offer for ONE person from the queue."""
         lang = state.language
         state.step = Step.MIXED_ASK_BEGINNER_ACTIVITY
-        remaining = len(state.mixed_pending_beginner_queue)
         if age < eligibility.MIN_DIVE:
             state.mixed_beginner_child_age = age
             state.quick_replies = self._child_beginner_quick_replies(lang, age)
@@ -4359,7 +4345,6 @@ class DecisionTree:
             outro = "\n¿Qué prefiere?" if beginner_qty == 1 else "\n¿Qué prefieren?"
         else:
             who = "the non-certified person" if beginner_qty == 1 else f"the {beginner_qty} non-certified people"
-            wants = "wants" if beginner_qty == 1 else "want"
             intro = (
                 f"Done! The certified divers are in the cart. 🤿\n\n"
                 f"And it's great that you're coming together! Even though {who} isn't certified, "
@@ -5510,7 +5495,7 @@ class DecisionTree:
             "isla_pelicano": "Isla Pelicano",
             "isla_rosario": "Isla Rosario",
         }
-        
+
         island_name = island_names.get(state.island, state.island)
 
         hotels_by_island: dict[str, list[str]] = {
@@ -6673,7 +6658,6 @@ class DecisionTree:
 
         title = "🧾 *RESERVA DIVING PLANET*" if lang == "es" else "🧾 *DIVING PLANET BOOKING*"
         sep_bold = "━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-        sep_thin = "─────────────────────────"
 
         # ACTIVIDADES block — formato: "qty × label" en una línea, debajo "qty × $price p.p. = *$total*"
         section_title = "*ACTIVIDADES*" if lang == "es" else "*ACTIVITIES*"
@@ -6975,12 +6959,6 @@ class DecisionTree:
         flight_rule = service[f"flight_rule_{lang}"]
         contact_only = service.get("contact_only", False)
         accommodation_note = _accommodation_requirement_note(service_id, service, lang)
-
-        # Choose booking URL based on location
-        if state.location == "island" and service.get("booking_url_island"):
-            booking_url = service["booking_url_island"]
-        else:
-            booking_url = service["booking_url"]
 
         if lang == "es":
             # Datos base

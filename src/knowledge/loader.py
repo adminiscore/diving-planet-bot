@@ -19,7 +19,7 @@ def load_json(filename: str) -> dict:
     """Load a JSON file from the knowledge base directory."""
     filepath = DATA_DIR / filename
     try:
-        with open(filepath, "r", encoding="utf-8") as f:
+        with open(filepath, encoding="utf-8") as f:
             data = json.load(f)
             logger.info("knowledge_loaded", file=filename, items=len(data))
             return data

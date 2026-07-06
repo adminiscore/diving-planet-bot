@@ -1,6 +1,6 @@
 import re
 from dataclasses import dataclass, field
-from typing import Optional, Dict
+
 from openai import OpenAI
 
 from src.flows.decision_tree import ConversationState
@@ -8,31 +8,31 @@ from src.flows.decision_tree import ConversationState
 
 @dataclass
 class DetectedIntent:
-    language: Optional[str] = None
-    activity: Optional[str] = None
-    service_id: Optional[str] = None
-    is_certified: Optional[bool] = None
-    group_size: Optional[int] = None
-    group_allocation: Optional[Dict[str, int]] = None
-    last_dive_over_2_years: Optional[bool] = None
-    duration: Optional[str] = None
-    location: Optional[str] = None
-    island: Optional[str] = None
-    hotel: Optional[str] = None
+    language: str | None = None
+    activity: str | None = None
+    service_id: str | None = None
+    is_certified: bool | None = None
+    group_size: int | None = None
+    group_allocation: dict[str, int] | None = None
+    last_dive_over_2_years: bool | None = None
+    duration: str | None = None
+    location: str | None = None
+    island: str | None = None
+    hotel: str | None = None
     ages: list = field(default_factory=list)   # person ages mentioned in the message
     confidence: float = 0.0
     detected_fields: list = field(default_factory=list)
 
 
 class IntentDetector:
-    
-    def __init__(self, openai_client: Optional[OpenAI] = None):
+
+    def __init__(self, openai_client: OpenAI | None = None):
         self.openai_client = openai_client
-        
+
     def detect(self, message: str, state: ConversationState) -> DetectedIntent:
         intent = DetectedIntent()
         message_lower = message.lower().strip()
-        
+
         self._detect_language(message_lower, intent)
         self._detect_activity(message_lower, intent, state)
         self._detect_certification(message_lower, intent)
@@ -53,9 +53,9 @@ class IntentDetector:
             intent.detected_fields.append("activity")
 
         self._calculate_confidence(intent)
-        
+
         return intent
-    
+
     def _detect_language(self, message: str, intent: DetectedIntent) -> None:
         spanish_keywords = {
             'hola', 'quiero', 'buceo', 'snorkel', 'curso', 'minicurso',
@@ -77,14 +77,14 @@ class IntentDetector:
         words = set(re.findall(r"[a-zá-úñü]+", message.lower()))
         spanish_count = len(words & spanish_keywords)
         english_count = len(words & english_keywords)
-        
+
         if spanish_count > english_count and spanish_count > 0:
             intent.language = "es"
             intent.detected_fields.append("language")
         elif english_count > spanish_count and english_count > 0:
             intent.language = "en"
             intent.detected_fields.append("language")
-    
+
     def _detect_activity(self, message: str, intent: DetectedIntent, state: ConversationState) -> None:
         # "solo snorkel" / "no quiero bucear, solo snorkel" must resolve to snorkel,
         # not diving — the bare verb "bucear" would otherwise win the diving branch.
@@ -138,7 +138,7 @@ class IntentDetector:
             r'\be?snorqu\w{0,6}\b',        # snorquel, snorqueling, esnorquel, esnorqueling
             r'\bcarete[ao]\w{0,3}\b',      # careteo, caretear
         ]
-        
+
         padi_course_patterns = [
             r'\bcurso\s+padi\b',
             r'\bpadi\s+course\b',
@@ -149,7 +149,7 @@ class IntentDetector:
             r'\bcertificarme\b',
             r'\bget\s+certified\b',
         ]
-        
+
         specialty_patterns = [
             r'\bnitrox\b',
             r'\bbuoyancy\b',
@@ -159,7 +159,7 @@ class IntentDetector:
             r'\bidentificación\s+de\s+peces\b',
             r'\bmindful\s+diving\b',
         ]
-        
+
         if any(re.search(pattern, message) for pattern in minicourse_patterns):
             intent.activity = "minicourse"
             intent.service_id = "minicourse"
@@ -202,11 +202,11 @@ class IntentDetector:
             elif 'mindful' in message:
                 intent.service_id = "mindful_diving"
             intent.detected_fields.append("activity")
-    
+
     def _detect_certification(self, message: str, intent: DetectedIntent) -> None:
         if intent.is_certified is not None:
             return
-        
+
         certified_patterns = [
             r'\bcertificado\b',
             r'\bcertificados\b',
@@ -261,14 +261,14 @@ class IntentDetector:
             r'\bbeginner\b',
             r'\bprincipiante\b',
         ]
-        
+
         if any(re.search(pattern, message) for pattern in not_certified_patterns):
             intent.is_certified = False
             intent.detected_fields.append("is_certified")
         elif any(re.search(pattern, message) for pattern in certified_patterns):
             intent.is_certified = True
             intent.detected_fields.append("is_certified")
-    
+
     def _detect_group_info(self, message: str, intent: DetectedIntent) -> None:
         group_size_patterns = [
             (r'\bsomos\s+(\d+|dos|tres|cuatro|cinco|seis|siete|ocho)\b', {'dos': 2, 'tres': 3, 'cuatro': 4, 'cinco': 5, 'seis': 6, 'siete': 7, 'ocho': 8}),
@@ -283,7 +283,7 @@ class IntentDetector:
             # "familia de N" → N personas
             (r'\bfamilia\s+de\s+(\d+|dos|tres|cuatro|cinco|seis|siete|ocho)\b', {'dos': 2, 'tres': 3, 'cuatro': 4, 'cinco': 5, 'seis': 6, 'siete': 7, 'ocho': 8}),
         ]
-        
+
         for pattern, word_map in group_size_patterns:
             match = re.search(pattern, message)
             if match:
@@ -292,14 +292,14 @@ class IntentDetector:
                     intent.group_size = int(size_str)
                 elif size_str in word_map:
                     intent.group_size = word_map[size_str]
-                
+
                 if intent.group_size:
                     intent.detected_fields.append("group_size")
                     break
-        
+
         # ── Numeric split: "3 de buceo y 2 de snorkel", "5 snorkel y 2 buceo" ──
-        _ACTIVITY_KW = r'(buce\w*|buse\w*|snorkel|snorkeling|esnorkel|careteo|caretear|minicurso|mini\s?curso|bautismo|bautizo|diving|scuba|submarinismo)'
-        _NUM = r'(\d+|dos|tres|cuatro|cinco|seis|two|three|four|five|six)'
+        activity_kw = r'(buce\w*|buse\w*|snorkel|snorkeling|esnorkel|careteo|caretear|minicurso|mini\s?curso|bautismo|bautizo|diving|scuba|submarinismo)'
+        num_pat = r'(\d+|dos|tres|cuatro|cinco|seis|two|three|four|five|six)'
         _word_num_map: dict[str, int] = {
             'dos': 2, 'tres': 3, 'cuatro': 4, 'cinco': 5, 'seis': 6,
             'two': 2, 'three': 3, 'four': 4, 'five': 5, 'six': 6,
@@ -321,38 +321,38 @@ class IntentDetector:
         # También cubre "buceo 3 y snorkel 2" (número después del keyword)
         # y "3 for diving and 2 for snorkel" (inglés)
         # y "2 queremos hacer buceo y 1 snorkel" / "2 hacen snorkel y 3 buceo"
-        _SEP = r'\s+(?:y|and|,)\s+'
+        sep_pat = r'\s+(?:y|and|,)\s+'
         # Verb fillers: "hacen", "harán", "quieren hacer", "queremos hacer", "vamos a hacer", etc.
-        _VERB_FILLER = (
+        verb_filler = (
             r'(?:'
             r'(?:queremos?|quieren?|hacemos?|hacen?|hago|hace|haremos?|har[aá]n?)\s+(?:hacer\s+)?'
             r'|vamos?\s+a\s+(?:hacer\s+)?'
             r')?'
         )
         # Prefix: "N de", "N para", "N personas", "N hacen", or bare "N "
-        _QUANT_PREFIX = rf'{_NUM}\s+(?:de\s+|para\s+|for\s+|personas?\s+(?:de\s+|para\s+|for\s+)?|{_VERB_FILLER})'
+        quant_prefix = rf'{num_pat}\s+(?:de\s+|para\s+|for\s+|personas?\s+(?:de\s+|para\s+|for\s+)?|{verb_filler})'
         pat_numeric_fwd = (
-            rf'{_QUANT_PREFIX}{_ACTIVITY_KW}(?:\s+certificad[ao]s?)?'
-            rf'{_SEP}'
-            rf'{_QUANT_PREFIX}{_ACTIVITY_KW}(?:\s+certificad[ao]s?)?'
+            rf'{quant_prefix}{activity_kw}(?:\s+certificad[ao]s?)?'
+            rf'{sep_pat}'
+            rf'{quant_prefix}{activity_kw}(?:\s+certificad[ao]s?)?'
         )
         pat_numeric_rev = (
-            rf'{_ACTIVITY_KW}(?:\s+certificad[ao]s?)?\w*\s+{_NUM}'
-            rf'{_SEP}'
-            rf'{_ACTIVITY_KW}(?:\s+certificad[ao]s?)?\w*\s+{_NUM}'
+            rf'{activity_kw}(?:\s+certificad[ao]s?)?\w*\s+{num_pat}'
+            rf'{sep_pat}'
+            rf'{activity_kw}(?:\s+certificad[ao]s?)?\w*\s+{num_pat}'
         )
         # ── Pattern B (priority): cert/no-cert splits — BEFORE numeric split ──
         # "2 buceadores (1 certificado y otro no)" / "N cert y M principiante"
-        _WORD_NUM = r'(\d+|un[ao]?|dos|tres|cuatro|cinco|seis|one|two|three|four|five|six)'
+        word_num = r'(\d+|un[ao]?|dos|tres|cuatro|cinco|seis|one|two|three|four|five|six)'
         cert_split_patterns = [
             # "2 buceadores (1 certificado y otro/s no)" / "4 buceadores (2 cert y 2 no)"
-            rf'(\d+)\s+buceador[aes]*[^,\(]*[\(,]\s*{_WORD_NUM}\s+certificad[ao]s?\s+y\s+(?:{_WORD_NUM}\s+)?(?:el\s+)?otr[ao]s?\s+no',
+            rf'(\d+)\s+buceador[aes]*[^,\(]*[\(,]\s*{word_num}\s+certificad[ao]s?\s+y\s+(?:{word_num}\s+)?(?:el\s+)?otr[ao]s?\s+no',
             # "4 buceadores (2 certificados y 2 no)" — with explicit "2 no"
-            rf'(\d+)\s+buceador[aes]*[^,\(]*[\(,]\s*{_WORD_NUM}\s+certificad[ao]s?\s+y\s+{_WORD_NUM}\s+no\b',
+            rf'(\d+)\s+buceador[aes]*[^,\(]*[\(,]\s*{word_num}\s+certificad[ao]s?\s+y\s+{word_num}\s+no\b',
             # "N certificados y M no certificados/principiantes"
             r'(\d+)\s+certificad[ao]s?\s+y\s+(\d+)\s+(?:no\s+certificad[ao]s?|principiantes?|sin\s+certificar)',
             # "uno certificado y dos minicurso" (palabras)
-            rf'{_WORD_NUM}\s+certificad[ao]s?\s+y\s+{_WORD_NUM}\s+(?:minicurso|bautismo|no\s+certificad[ao]|principiante)',
+            rf'{word_num}\s+certificad[ao]s?\s+y\s+{word_num}\s+(?:minicurso|bautismo|no\s+certificad[ao]|principiante)',
             # "N buceo certificado y M minicurso/no certificado"
             r'(\d+)\s+(?:de\s+)?buceo\s+certificado\s+y\s+(\d+)\s+(?:minicurso|no\s+certificad[ao]|principiante|bautismo)',
             # "somos N, M certificados y el/los otro/s no"
@@ -360,14 +360,14 @@ class IntentDetector:
             # English: "N certified and M not certified/beginners"
             r'(\d+)\s+certified\s+and\s+(\d+)\s+(?:not\s+certified|beginners?|uncertified)',
             # "dos tenemos (el) open water y una no / sin certificar" / "2 con open water y 1 no"
-            rf'{_WORD_NUM}\s+(?:tenemos|tienen|tiene|tengo|con|somos)\s+'
+            rf'{word_num}\s+(?:tenemos|tienen|tiene|tengo|con|somos)\s+'
             rf'(?:el\s+|la\s+|los\s+|las\s+|nuestro\s+)?'
             rf'(?:open\s*water|advanced|rescue|divemaster|licencia|certificad[ao]s?|padi|ssi|cmas|naui)\b'
-            rf'[^,.;]*?\s+y\s+{_WORD_NUM}\s+(?:no\b|sin\s+certific|no\s+certific)',
+            rf'[^,.;]*?\s+y\s+{word_num}\s+(?:no\b|sin\s+certific|no\s+certific)',
             # English: "two have (their) open water and one doesn't/does not/not"
-            rf'{_WORD_NUM}\s+(?:have|with|are)\s+(?:their\s+|the\s+)?'
+            rf'{word_num}\s+(?:have|with|are)\s+(?:their\s+|the\s+)?'
             rf'(?:open\s*water|advanced|rescue|certified|padi|ssi)\b'
-            rf'[^,.;]*?\s+and\s+{_WORD_NUM}\s+(?:no|not|doesn\'?t|does\s+not|don\'?t|do\s+not)\b',
+            rf'[^,.;]*?\s+and\s+{word_num}\s+(?:no|not|doesn\'?t|does\s+not|don\'?t|do\s+not)\b',
         ]
         for pat_idx, pat in enumerate(cert_split_patterns):
             m_split = re.search(pat, message, re.IGNORECASE)
@@ -415,9 +415,9 @@ class IntentDetector:
         # resolves to a group_allocation and falls through to a generic answer.
         if not intent.group_allocation and intent.group_size:
             m_not_cert_only = re.search(
-                rf'{_WORD_NUM}\s+no\s+(?:esta[nb]?\s+|son\s+)?cert\w*\b'
+                rf'{word_num}\s+no\s+(?:esta[nb]?\s+|son\s+)?cert\w*\b'
                 rf'|\b(?:y\s+)?(?:el\s+|la\s+)?otr[ao]s?\s+no\s+(?:esta[nb]?\s+)?cert\w*\b'
-                rf'|{_WORD_NUM}\s+(?:is|are)\s+not\s+cert\w*\b',
+                rf'|{word_num}\s+(?:is|are)\s+not\s+cert\w*\b',
                 message, re.IGNORECASE,
             )
             if m_not_cert_only:
@@ -516,7 +516,7 @@ class IntentDetector:
                         intent.group_size = sum(allocation.values())
                     intent.detected_fields.append("group_allocation")
                     break
-    
+
     def _detect_ages(self, message: str, intent: DetectedIntent) -> None:
         """Extract person ages mentioned in the message ("mi hijo de 9 años",
         "uno tiene 14", "a 6 year old", "kids aged 8 and 10").
@@ -575,21 +575,21 @@ class IntentDetector:
             (r'\bmi\s+última\s+inmersión\s+fue\s+hace\s+(\d+)\s+(año|años|mes|meses)', 'es'),
             (r'\bmy\s+last\s+dive\s+was\s+(\d+)\s+(year|years|month|months)\s+ago', 'en'),
         ]
-        
+
         for pattern, lang in last_dive_patterns:
             match = re.search(pattern, message)
             if match:
                 number = int(match.group(1))
                 unit = match.group(2)
-                
+
                 if 'año' in unit or 'year' in unit:
                     intent.last_dive_over_2_years = number >= 2
                 elif 'mes' in unit or 'month' in unit:
                     intent.last_dive_over_2_years = number >= 24
-                
+
                 intent.detected_fields.append("last_dive_over_2_years")
                 break
-    
+
     def _detect_duration(self, message: str, intent: DetectedIntent) -> None:
         single_day_patterns = [
             r'\bun\s+día\b',
@@ -598,7 +598,7 @@ class IntentDetector:
             r'\bjust\s+today\b',
             r'\bun\s+solo\s+día\b',
         ]
-        
+
         multi_day_patterns = [
             r'\bvarios\s+días\b',
             r'\bmulti[- ]?day\b',
@@ -609,22 +609,22 @@ class IntentDetector:
             r'\bpaquete\b',
             r'\bpackage\b',
         ]
-        
+
         if any(re.search(pattern, message) for pattern in multi_day_patterns):
             intent.duration = "multi_day"
             intent.detected_fields.append("duration")
         elif any(re.search(pattern, message) for pattern in single_day_patterns):
             intent.duration = "single_day"
             intent.detected_fields.append("duration")
-    
+
     def _detect_location(self, message: str, intent: DetectedIntent) -> None:
         msg_lower = message.lower()
-        
+
         # Detectar Cartagena
         if 'cartagena' in msg_lower or 'ctg' in msg_lower:
             intent.location = "cartagena"
             intent.detected_fields.append("location")
-        
+
         # Mapeo de hoteles a islas
         hotel_to_island = {
             # Isla Grande
@@ -665,7 +665,7 @@ class IntentDetector:
             'rosario_ecohotel': 'isla_rosario',
             'san_tropel': 'isla_rosario',
         }
-        
+
         # Patrones de islas (con variantes)
         island_patterns = {
             'isla_grande': [r'\bisla\s+grande\b', r'\bgrande\b'],
@@ -681,7 +681,7 @@ class IntentDetector:
             'isla_pelicano': [r'\bisla\s+pelicano\b', r'\bisla\s+pelícano\b', r'\bpelicano\b', r'\bpelícano\b'],
             'isla_rosario': [r'\bisla\s+rosario\b', r'\bislas\s+del\s+rosario\b', r'\brosario\b'],
         }
-        
+
         # Detectar isla primero
         for island_id, patterns in island_patterns.items():
             if any(re.search(pattern, msg_lower) for pattern in patterns):
@@ -689,7 +689,7 @@ class IntentDetector:
                 intent.location = "island"
                 intent.detected_fields.extend(["island", "location"])
                 break
-        
+
         # Patrones de hoteles (con muchas más variantes)
         hotel_patterns = {
             # Isla Grande
@@ -819,7 +819,7 @@ class IntentDetector:
                 r'\btropel\b',
             ],
         }
-        
+
         # Detectar hotel
         for hotel_id, patterns in hotel_patterns.items():
             if any(re.search(pattern, msg_lower) for pattern in patterns):
@@ -832,7 +832,7 @@ class IntentDetector:
                     intent.location = "island"
                 intent.detected_fields.append("hotel")
                 break
-    
+
     def _calculate_confidence(self, intent: DetectedIntent) -> None:
         field_weights = {
             'language': 0.1,
@@ -846,6 +846,6 @@ class IntentDetector:
             'island': 0.1,
             'hotel': 0.1,
         }
-        
+
         total_confidence = sum(field_weights.get(field, 0.1) for field in intent.detected_fields)
         intent.confidence = min(total_confidence, 1.0)

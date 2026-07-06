@@ -54,6 +54,11 @@ target-version = "py311"
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "N", "W", "UP"]
+# E501 (line too long) is off project-wide: the bot's message copy is full of
+# long bilingual strings with URLs/phone numbers that don't benefit from wrapping.
+# UP042: Step(str, Enum) predates StrEnum support and is used pervasively;
+# not worth the behavior-change risk to swap it for a lint nitpick.
+ignore = ["E501", "UP042"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

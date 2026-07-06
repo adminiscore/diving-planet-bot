@@ -14,25 +14,27 @@ import logging
 import re
 import unicodedata
 
-from src.agents.escalation import detect_sensitive_escalation
-from src.agents.lead_summary import build_lead_summary
-from src.agents.intent_classifier import classify_menu_intent
 from src.agents import orchestrator
-from src.utils.fuzzy import is_affirmative, is_negative, word_ratio
+from src.agents.escalation import detect_sensitive_escalation
+from src.agents.intent_classifier import classify_menu_intent
 from src.agents.intent_detector import IntentDetector
 from src.agents.language_detector import detect_language_llm
-from src.flows.decision_tree import (
-    DecisionTree,
-    ConversationState,
-    Step,
-    SERVICES,
-    MESSAGES as _TREE_MESSAGES,
-    _detect_language_from_text,
-)
+from src.agents.lead_summary import build_lead_summary
 from src.agents.rag_agent import rag_answer
 from src.flows import eligibility
+from src.flows.decision_tree import (
+    MESSAGES as _TREE_MESSAGES,
+)
+from src.flows.decision_tree import (
+    SERVICES,
+    ConversationState,
+    DecisionTree,
+    Step,
+    _detect_language_from_text,
+)
 from src.knowledge.loader import load_policies
 from src.privacy import detect_pii, privacy_block_message
+from src.utils.fuzzy import is_affirmative, is_negative, word_ratio
 
 logger = logging.getLogger("uvicorn.error")
 
@@ -2439,7 +2441,6 @@ def _detect_broken_link_complaint(message: str, state_history: list[dict] | None
 def _is_substantive_free_text(message: str) -> bool:
     normalized = " ".join(message.strip().lower().split())
     normalized_clean = normalized.strip("?!.,;:")
-    words = normalized_clean.split()
     if not normalized_clean:
         return False
     if normalized_clean in LANGUAGE_SELECTION_KEYWORDS:
@@ -2554,7 +2555,7 @@ def _build_extra_context(state: ConversationState) -> str | None:
     # Actividad seleccionada
     if getattr(state, "selected_service", None):
         try:
-            from src.flows.decision_tree import SERVICES, MULTI_DAY_SERVICES
+            from src.flows.decision_tree import MULTI_DAY_SERVICES, SERVICES
 
             service_id = state.selected_service
             service = SERVICES.get(service_id)
@@ -3432,21 +3433,21 @@ def _apply_detected_intent(intent, state: ConversationState) -> None:
         state.detected_language = intent.language
         state.language = intent.language
         logger.info(f"[INTENT] Detected language: {intent.language}")
-    
+
     if intent.activity and not state.detected_activity:
         state.detected_activity = intent.activity
         state.detected_service_id = intent.service_id
         logger.info(f"[INTENT] Detected activity: {intent.activity} (service: {intent.service_id})")
-    
+
     if intent.is_certified is not None and state.detected_is_certified is None:
         state.detected_is_certified = intent.is_certified
         state.is_certified = intent.is_certified
         logger.info(f"[INTENT] Detected certification: {intent.is_certified}")
-    
+
     if intent.group_size and not state.detected_group_size:
         state.detected_group_size = intent.group_size
         logger.info(f"[INTENT] Detected group size: {intent.group_size}")
-    
+
     if intent.group_allocation and not state.detected_group_allocation:
         state.detected_group_allocation = intent.group_allocation
         logger.info(f"[INTENT] Detected group allocation: {intent.group_allocation}")
@@ -3461,21 +3462,21 @@ def _apply_detected_intent(intent, state: ConversationState) -> None:
         state.detected_last_dive_over_2_years = intent.last_dive_over_2_years
         state.last_dive_over_2_years = intent.last_dive_over_2_years
         logger.info(f"[INTENT] Detected last dive: {intent.last_dive_over_2_years}")
-    
+
     if intent.duration and not state.detected_duration:
         state.detected_duration = intent.duration
         logger.info(f"[INTENT] Detected duration: {intent.duration}")
-    
+
     if intent.location and not state.detected_location:
         state.detected_location = intent.location
         state.location = intent.location
         logger.info(f"[INTENT] Detected location: {intent.location}")
-    
+
     if intent.island and not state.detected_island:
         state.detected_island = intent.island
         state.island = intent.island
         logger.info(f"[INTENT] Detected island: {intent.island}")
-    
+
     if intent.hotel and not state.detected_hotel:
         state.detected_hotel = intent.hotel
         state.hotel = intent.hotel
@@ -3506,7 +3507,7 @@ def _continue_booking_quick_replies(state: ConversationState) -> list[dict]:
 
 def _build_confirmation_message(intent, state: ConversationState) -> str | None:
     lang = state.language
-    
+
     # PRIMERO: Verificar si es grupo mixto (tiene prioridad)
     if intent.group_allocation and len(intent.group_allocation) > 1:
         # Construir descripción de actividades
@@ -3524,7 +3525,7 @@ def _build_confirmation_message(intent, state: ConversationState) -> str | None:
             elif activity == "minicourse":
                 activities_es.append(f"{qty} para minicurso")
                 activities_en.append(f"{qty} for minicourse")
-        
+
         together_note = ""
         preference = (state.remembered_facts or {}).get("preference") or ""
         if re.search(r"junt[oa]s|no separar|together|stay together|don'?t (want to )?split|don'?t separate", preference, re.IGNORECASE):
@@ -3548,13 +3549,13 @@ def _build_confirmation_message(intent, state: ConversationState) -> str | None:
             if lang == "es":
                 return "¡Genial! Veo que eres buzo certificado. Para ofrecerte la mejor experiencia, necesito saber:"
             return "Great! I see you are a certified diver. To offer you the best experience, I need to know:"
-    
+
     # Minicurso
     if intent.activity == "minicourse":
         if lang == "es":
             return "¡Perfecto! El minicurso de buceo es ideal para principiantes. Déjame preparar la información..."
         return "Perfect! The diving minicourse is ideal for beginners. Let me prepare the information..."
-    
+
     # No mostrar mensaje de confirmación cuando va al carrito sin certificación clara
     return None
 
@@ -3707,7 +3708,7 @@ def _route_detected_intent(intent, state: ConversationState, message: str = "") 
             state.step = Step.MIXED_LOCATION
             decision_tree.set_quick_replies(state, "tours_location")
             from src.flows.decision_tree import MESSAGES
-            logger.info(f"[INTENT] Detected certified diving, asking location first")
+            logger.info("[INTENT] Detected certified diving, asking location first")
             if confirmation:
                 return confirmation + "\n\n" + MESSAGES["mixed_location"][state.language]
             return MESSAGES["mixed_location"][state.language]
@@ -3718,7 +3719,7 @@ def _route_detected_intent(intent, state: ConversationState, message: str = "") 
         state.step = Step.MIXED_ADD_CERT_PLAN
         decision_tree.set_quick_replies(state, "mixed_add_cert_plan")
         from src.flows.decision_tree import MESSAGES
-        logger.info(f"[INTENT] Going to cart with location, asking certified diving plan")
+        logger.info("[INTENT] Going to cart with location, asking certified diving plan")
         if confirmation:
             return confirmation + "\n\n" + MESSAGES["mixed_add_cert_plan"][state.language]
         return MESSAGES["mixed_add_cert_plan"][state.language]
@@ -3776,10 +3777,10 @@ def _route_detected_intent(intent, state: ConversationState, message: str = "") 
         if is_group:
             state.detected_group_size = intent.group_size or state.detected_group_size
             decision_tree.set_quick_replies(state, "mixed_ask_certification_group")
-            logger.info(f"[INTENT] Detected diving group, no cert, asking group certification")
+            logger.info("[INTENT] Detected diving group, no cert, asking group certification")
             return MESSAGES["mixed_ask_certification_group"][state.language]
         decision_tree.set_quick_replies(state, "mixed_ask_certification")
-        logger.info(f"[INTENT] Detected diving, no certification, asking certification")
+        logger.info("[INTENT] Detected diving, no certification, asking certification")
         return MESSAGES["mixed_ask_certification"][state.language]
 
     return None
@@ -3977,7 +3978,7 @@ async def route_message(state: ConversationState, message: str) -> str:
         state.pending_escalation_reason = "solicitó asesor"
         state.pending_note = build_lead_summary(state, escalation_reason="solicitó asesor")
         from src.flows.decision_tree import MESSAGES
-        logger.info(f"[SUPERVISOR] Escalation triggered by keyword")
+        logger.info("[SUPERVISOR] Escalation triggered by keyword")
         return MESSAGES["escalate"][state.language]
 
     # Customer reports a broken link/form/URL → escalate with high priority.
@@ -4039,7 +4040,7 @@ async def route_message(state: ConversationState, message: str) -> str:
         state.step = Step.MAIN_MENU
         decision_tree.set_quick_replies(state, "main_menu")
         from src.flows.decision_tree import MESSAGES
-        logger.info(f"[SUPERVISOR] Menu reset triggered by keyword")
+        logger.info("[SUPERVISOR] Menu reset triggered by keyword")
         return MESSAGES["main_menu"][state.language]
 
     # Step-back: "🔙 Volver" button (value="back") or back keyword
@@ -4078,7 +4079,7 @@ async def route_message(state: ConversationState, message: str) -> str:
         state.step = Step.WELCOME
         state.quick_replies = []
         response = decision_tree.process_message(state, message)
-        logger.info(f"[SUPERVISOR] Greeting restart -> step=WELCOME")
+        logger.info("[SUPERVISOR] Greeting restart -> step=WELCOME")
         return response
 
     # Explicit language-switch request ("in english", "spanish please",
@@ -4296,7 +4297,7 @@ async def route_message(state: ConversationState, message: str) -> str:
                 _maybe_build_pending_note(state)
                 logger.info(f"[SUPERVISOR] Intent={intent} -> step={state.step.value}")
                 return response
-            
+
             # intent == "RAG" → Para steps críticos que esperan respuestas específicas,
             # enviar al decision_tree en lugar de RAG (el handler detectará texto libre)
             if state.step in (
@@ -4401,7 +4402,7 @@ async def route_message(state: ConversationState, message: str) -> str:
         answer = await rag_answer(message, lang=state.language, history=state.history, extra_context=extra_context)
         answer = _maybe_offer_mixed_from_single(state, message, answer)
         state.history.append({"role": "assistant", "content": answer})
-        logger.info(f"[SUPERVISOR] RAG (post-summary)")
+        logger.info("[SUPERVISOR] RAG (post-summary)")
         return answer
 
     if state.step == Step.FREE_TEXT:
@@ -4455,7 +4456,7 @@ async def route_message(state: ConversationState, message: str) -> str:
         answer = await rag_answer(message, lang=state.language, history=state.history, extra_context=extra_context)
         answer = _maybe_offer_mixed_from_single(state, message, answer)
         state.history.append({"role": "assistant", "content": answer})
-        logger.info(f"[SUPERVISOR] RAG (post-menu)")
+        logger.info("[SUPERVISOR] RAG (post-menu)")
         return answer
 
     # Escalate step -> let them ask freely via RAG

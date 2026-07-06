@@ -7,7 +7,7 @@ and escalation events for the owner dashboard.
 
 from datetime import datetime
 
-from sqlalchemy import Column, String, Integer, Boolean, DateTime, Text, JSON
+from sqlalchemy import JSON, Boolean, Column, DateTime, Integer, String, Text
 from sqlalchemy.orm import DeclarativeBase
 
 
