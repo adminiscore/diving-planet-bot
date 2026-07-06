@@ -1,6 +1,15 @@
 History
 =======
 
+0.19.10 - (2026-07-04)
+----------------------
+* **Auditoría del auto-armado en composiciones generales** (no solo edad): ejercitado `_route_detected_intent` con "somos dos y queremos bucear", "somos 4 y snorkel", "vamos 6 certificados", splits mixtos, etc. La mayoría ya se auto-armaban bien (pre-rellenando cantidad, tipo y ubicación). Encontrados y corregidos 3 huecos reales de entendimiento:
+  - **"los dos buzos" / "somos buzos" (sin la palabra "certificados") no se detectaba como buceo** → caía a RAG. Ahora el plural "buzos" y "soy buzo/buza" implican buceo certificado (con guards: "no somos buzos" y "quiero ser buzo / hacernos buzos" = NO certificado, porque quieren llegar a serlo).
+  - **Split en forma verbal "3 bucean y 2 hacen snorkel"** no se extraía (el detector esperaba forma nominal "3 de buceo"). `_ACTIVITY_KW` ampliado a `buce\w*`/`buse\w*` → ahora da `{certified_diving:3, snorkel:2}`.
+  - **"dos con open water y uno sin certificar"** se detectaba como *curso* para 3 en vez de split → ahora `{certified_diving:2, minicourse:1}` (patrón de split extendido para aceptar "sin certificar" además de "no").
+* Verificado sin regresión: "quiero bucear" sigue preguntando certificación, "nunca hemos buceado" sigue siendo minicurso, "buzos certificados" sigue certificado.
+* Tests: `test_intent_robustness.py` (+11: bare buzos, quiero-ser-buzo, split verbal, open-water+sin-certificar, "somos dos y queremos bucear"). Suite: ver cierre.
+
 0.19.9 - (2026-07-04)
 ---------------------
 * **Auditoría de robustez del detector de intención** (typos agresivos, mensajes mixtos ES/EN, negaciones, multi-intención). Encontrados y corregidos 3 bugs reales de correctitud:

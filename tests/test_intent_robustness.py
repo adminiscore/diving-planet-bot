@@ -69,3 +69,48 @@ def test_mixed_language_group_and_cert():
     i = _d("hi, somos 3 personas certified divers")
     assert i.group_size == 3
     assert i.is_certified is True
+
+
+# --- Group composition / auto-build understanding ---------------------------
+
+@pytest.mark.parametrize("msg", [
+    "los dos buzos",
+    "somos buzos",
+    "reservar para mi pareja y yo, los dos buzos",
+    "vamos 3 buzos a las islas",
+    "soy buza",
+])
+def test_bare_buzos_means_certified_diving(msg):
+    i = _d(msg)
+    assert i.activity == "certified_diving"
+    assert i.is_certified is True
+
+
+@pytest.mark.parametrize("msg", [
+    "no somos buzos",
+    "quiero ser buzo",
+    "queremos hacernos buzos",
+])
+def test_wanting_to_become_or_not_being_a_diver_is_not_certified(msg):
+    assert _d(msg).is_certified is False
+
+
+def test_verb_form_activity_split():
+    """'3 bucean y 2 hacen snorkel' -> allocation, not all-diving."""
+    i = _d("somos 5, 3 bucean y 2 hacen snorkel")
+    assert i.group_allocation == {"certified_diving": 3, "snorkel": 2}
+    assert i.group_size == 5
+
+
+def test_open_water_and_sin_certificar_is_cert_split():
+    """'dos con open water y uno sin certificar' -> 2 certified + 1 beginner."""
+    i = _d("somos 3, dos con open water y uno sin certificar")
+    assert i.group_allocation == {"certified_diving": 2, "minicourse": 1}
+
+
+def test_somos_dos_queremos_bucear_asks_cert_not_lost():
+    """'somos dos y queremos bucear' -> diving intent for 2 (cert unknown)."""
+    i = _d("somos dos y queremos bucear")
+    assert i.activity == "certified_diving"
+    assert i.group_size == 2
+    assert i.is_certified is None

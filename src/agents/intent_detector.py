@@ -106,6 +106,8 @@ class IntentDetector:
             r'\bscuba\b(?!\s+(class|course|lesson))',
             r'\bbuzo\s+certificado\b',
             r'\bbuzos\s+certificados\b',
+            r'\bbuzos\b',                  # bare "buzos" (los dos buzos, 3 buzos) = divers
+            r'\bsoy\s+buz[oa]\b',
             r'\bcertified\s+diver',
             r'\bdos\s+inmersiones\b',
             r'\btwo\s+dives\b',
@@ -230,6 +232,9 @@ class IntentDetector:
             r'\bopen\s+water\s+divers?\b',
             r'\bopen\s+water\s+certified\b',
             r'\bsomos\s+(?:buzos?|divers?)\b',  # "somos buzos" implica cert
+            r'\bsoy\s+buz[oa]\b',               # "soy buzo/buza" = certified diver
+            r'\bbuzos\b',                        # bare plural "buzos" = certified divers (group)
+            r'\b(?:los|las|ambos|ambas)\s+(?:dos\s+)?buzos?\b',  # "los dos buzos"
             # Typo-tolerant fallback: matches "certficado", "certifcado",
             # "certificacion", "certified"... anything starting with "cert".
             # Checked LAST so the more specific not_certified_patterns below
@@ -239,6 +244,8 @@ class IntentDetector:
 
         not_certified_patterns = [
             r'\bno\s+(?:esta\s+|estoy\s+|estamos\s+|est[aá]n\s+|soy\s+|somos\s+|es\s+|son\s+|eres\s+|fui\s+)?cert\w*\b',
+            r'\bno\s+(?:soy|somos|son|es)\s+buz',   # "no somos buzos" = not certified
+            r'\b(?:ser|hacerme|hacernos|convertirme|convertirnos)\s+(?:en\s+)?buz',  # wants to BECOME a diver
             r'\bsin\s+cert\w*\b',
             # Reflexive "certificarme/certificarnos/certificarte/certificarse" =
             # wants to GET certified (Open Water course), so NOT yet certified.
@@ -291,7 +298,7 @@ class IntentDetector:
                     break
         
         # ── Numeric split: "3 de buceo y 2 de snorkel", "5 snorkel y 2 buceo" ──
-        _ACTIVITY_KW = r'(buceo|buseo|bucear|buceando|snorkel|snorkeling|esnorkel|careteo|caretear|minicurso|mini\s?curso|bautismo|bautizo|diving|scuba|submarinismo)'
+        _ACTIVITY_KW = r'(buce\w*|buse\w*|snorkel|snorkeling|esnorkel|careteo|caretear|minicurso|mini\s?curso|bautismo|bautizo|diving|scuba|submarinismo)'
         _NUM = r'(\d+|dos|tres|cuatro|cinco|seis|two|three|four|five|six)'
         _word_num_map: dict[str, int] = {
             'dos': 2, 'tres': 3, 'cuatro': 4, 'cinco': 5, 'seis': 6,
@@ -306,7 +313,7 @@ class IntentDetector:
                 return 'minicourse'
             if any(k in text for k in ('snorkel', 'esnorkel', 'careteo', 'snorkeling')):
                 return 'snorkel'
-            if any(k in text for k in ('buceo', 'buseo', 'bucear', 'dive', 'diving', 'certificado', 'certified', 'scuba', 'submarinismo')):
+            if any(k in text for k in ('buce', 'buse', 'dive', 'diving', 'certificado', 'certified', 'scuba', 'submarinismo')):
                 return 'certified_diving'
             return None
 
@@ -352,11 +359,11 @@ class IntentDetector:
             r'(\d+)\s+certificad[ao]s?\s+y\s+(?:el\s+)?otr[ao]s?\s+(?:\d+\s+)?(?:no|sin\s+certific)',
             # English: "N certified and M not certified/beginners"
             r'(\d+)\s+certified\s+and\s+(\d+)\s+(?:not\s+certified|beginners?|uncertified)',
-            # "dos tenemos (el) open water y una no" / "2 con open water y 1 no"
+            # "dos tenemos (el) open water y una no / sin certificar" / "2 con open water y 1 no"
             rf'{_WORD_NUM}\s+(?:tenemos|tienen|tiene|tengo|con|somos)\s+'
             rf'(?:el\s+|la\s+|los\s+|las\s+|nuestro\s+)?'
             rf'(?:open\s*water|advanced|rescue|divemaster|licencia|certificad[ao]s?|padi|ssi|cmas|naui)\b'
-            rf'[^,.;]*?\s+y\s+{_WORD_NUM}\s+no\b',
+            rf'[^,.;]*?\s+y\s+{_WORD_NUM}\s+(?:no\b|sin\s+certific|no\s+certific)',
             # English: "two have (their) open water and one doesn't/does not/not"
             rf'{_WORD_NUM}\s+(?:have|with|are)\s+(?:their\s+|the\s+)?'
             rf'(?:open\s*water|advanced|rescue|certified|padi|ssi)\b'
