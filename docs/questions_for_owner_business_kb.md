@@ -915,6 +915,72 @@ Necesitamos confirmar:
 
 ---
 
+### 43. Conversión de euros en el checkout real (¿DCC del gateway o del banco?) 🔴 NUEVO
+
+Al probar en vivo el checkout de `book.divingplanet.org` (curso Open Water,
+693.00 USD) con una tarjeta europea, el propio widget de pago mostró el botón
+final como **"Pagar 606.89 EUR"** con un tipo de cambio visible (0.876) en la
+pantalla de checkout — es decir, la conversión a euros la está haciendo el
+gateway de pago en el momento del checkout (Dynamic Currency Conversion),
+no "el banco o la tarjeta del cliente después", como dice hoy la FAQ del bot
+(`faqs.json`, id de la pregunta "¿Puedo pagar en euros?"): *"Tu banco o
+tarjeta hará la conversión de USD a euros automáticamente al momento del
+pago."*
+
+Esto puede no ser exacto: si el gateway ofrece DCC, el tipo de cambio que
+aplica es el suyo (normalmente peor que el de la red de la tarjeta/banco), y
+puede que el cliente tenga la opción de rechazar la conversión y pagar en USD
+directamente (dejando que su propio banco convierta, que suele salir más
+barato). No lo hemos confirmado todavía porque no llegamos a completar el
+pago real en la prueba.
+
+Necesitamos confirmar con el owner (o probando el flujo completo):
+- ¿El checkout de Roverd siempre ofrece DCC a tarjetas no-USD, o depende del país detectado?
+- ¿Existe una opción visible en esa pantalla para que el cliente elija pagar en USD en vez de en la moneda convertida?
+- ¿El owner es consciente de que el checkout hace esta conversión y con qué tipo de cambio (fijo, tiempo real, con margen)?
+
+**Impacto**: si se confirma que el cliente puede pagar en USD sin DCC, la
+FAQ actual induce a error (sugiere que no hay elección) y probablemente
+convenga decirle al cliente que busque la opción de pagar en USD para
+evitar el margen de conversión del gateway. No tocar `faqs.json` hasta
+confirmar esto con el owner — no inventar el comportamiento exacto del
+checkout.
+
+---
+
+### 44. Cómo y con qué frecuencia le paga Roverd a Diving Planet 🔴 NUEVO — bloqueante para el diseño de pagos del proyecto de sustitución
+
+Se confirmó (documentación oficial de Stripe, `stripe.com/global` y
+`docs.stripe.com/connect/cross-border-payouts`) que **Colombia no es país
+soportado por Stripe** ni para cuentas propias ni para cuentas conectadas de
+Connect, ni siquiera como receptor de los "cross-border payouts"/Global
+Payouts más recientes (en Latinoamérica solo Brasil y México tienen soporte
+completo). Diving Planet, como empresa colombiana, **no puede tener su
+propia cuenta Stripe**.
+
+Esto, combinado con la FAQ ya existente ("tu pago se registra de inmediato
+en ROVERD, pero el equipo concilia manualmente los pagos poco después"),
+sugiere fuertemente que **Roverd actúa como Merchant of Record**: el dinero
+del cliente entra a la cuenta de Roverd (o su procesador), y le liquida a
+Diving Planet por una vía separada — probablemente no en tiempo real, de ahí
+la necesidad de conciliar a mano en el Excel `RESERVAS 2026`.
+
+Necesitamos confirmar con el owner:
+- ¿Con qué frecuencia recibe Diving Planet el dinero de Roverd (diario, semanal, mensual)?
+- ¿Por qué método llega (transferencia SWIFT/wire, un agregador tipo Payoneer/Wise, un partner colombiano, depósito directo)?
+- ¿En qué moneda llega a su banco (USD o ya convertido a COP), y si hay alguna comisión o tasa de cambio aplicada en ese paso que hoy no esté cuantificada?
+- ¿El owner tiene visibilidad de cuánto se queda Roverd en total (el 10% de comisión + cualquier coste de conversión/liquidación oculto en ese payout)?
+
+**Impacto**: esta respuesta es la plantilla exacta a replicar (o mejorar) en
+el diseño de pagos del proyecto de sustitución de Roverd — si el modelo
+"Merchant of Record" es inevitable para Colombia (y probablemente para la
+mayoría de futuros tenants latinoamericanos fuera de Brasil/México), esta
+información nos dice qué tan buena o mala es la solución actual de Roverd
+en la práctica, y qué mejorar. Ver `docs/roverd-replacement-plan.md` §1 y
+§5 para el análisis técnico completo.
+
+---
+
 ## 3. Seguimiento ronda 1 (2026-06-21)
 
 ### Listas para implementar ya (✅ resuelto, sin ambigüedad bloqueante)

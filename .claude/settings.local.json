@@ -32,7 +32,9 @@
       "Bash(wsl -d Ubuntu -- bash -c 'source /home/plaza_/.bashrc 2>/dev/null; export PATH=\"/home/plaza_/anaconda3/bin:/home/plaza_/miniconda3/bin:__TRACKED_VAR__\"; cd '\\\\''/mnt/c/Users/plaza/Visual_projects/ISCORE/DIVING PLANET/diving-planet-bot'\\\\'' && python -m pytest tests/ -v --tb=short 2>&1')",
       "Bash(wsl -d Ubuntu -- bash -c \"cd '/mnt/c/Users/plaza/Visual_projects/ISCORE/DIVING PLANET/diving-planet-bot' && docker compose --profile chatwoot down\")",
       "Bash(wsl -d Ubuntu -- bash -c 'source /home/plaza_/.bashrc 2>/dev/null; export PATH=\"/home/plaza_/anaconda3/bin:/home/plaza_/miniconda3/bin:__TRACKED_VAR__\"; cd '\\\\''/mnt/c/Users/plaza/Visual_projects/ISCORE/DIVING PLANET/diving-planet-bot'\\\\'' && python -m pytest tests/ --tb=short -q 2>&1')",
-      "Bash(python -c \"import sys; print\\(sys.version\\)\")"
+      "Bash(python -c \"import sys; print\\(sys.version\\)\")",
+      "Bash(python -m pytest tests/test_conversations.py::test_welcome_shows_both_languages -q --durations=5)",
+      "Bash(python -m compileall -q src tests)"
     ]
   }
 }
