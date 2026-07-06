@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
-# Redeploy PRE (dp-pre-bot) with feature/pruebaGon + RAG_MIN_SCORE=0.50 + KB reindex.
+# Redeploy PRE (dp-pre-bot) with feature/pre_gadea + RAG_MIN_SCORE=0.50 + KB reindex.
 # Run from the repo root on the VPS:  bash scripts/redeploy_pre.sh
 # See docs/deploy-pre-redeploy.md for the manual step-by-step and rollback.
 set -euo pipefail
 
-BRANCH="${BRANCH:-feature/pruebaGon}"
+BRANCH="${BRANCH:-feature/pre_gadea}"
 COMPOSE="docker-compose.vps.yml"
 BOT="dp-pre-bot"
 DB="dp-pre-postgres"

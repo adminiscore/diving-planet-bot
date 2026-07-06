@@ -1,7 +1,7 @@
 # Redeploy a PRE (staging VPS) — runbook
 
-Actualiza el entorno **PRE** (`dp-pre-bot` en el VPS) con la rama `feature/pruebaGon`
-(v0.19.13+): nuevo código + KB reindexada + `RAG_MIN_SCORE=0.50`.
+Actualiza el entorno **PRE** (`dp-pre-bot` en el VPS) con la rama `feature/pre_gadea`
+(pruebaGon mergeada, v0.19.13+): nuevo código + KB reindexada + `RAG_MIN_SCORE=0.50`.
 
 > No hay migraciones de DB nuevas en estos cambios → **no** hace falta `alembic upgrade`.
 > Los campos nuevos de estado (edades, cola de auto-armado) viven en Redis y se
@@ -19,12 +19,12 @@ ssh <usuario>@<ip-del-vps>
 cd ~/diving-planet-bot          # ruta del repo en el VPS
 ```
 
-## 1) Actualizar el código a feature/pruebaGon
+## 1) Actualizar el código a feature/pre_gadea
 
 ```bash
 git fetch origin
-git checkout feature/pruebaGon      # si ya estás en ella, basta el pull de abajo
-git pull origin feature/pruebaGon
+git checkout feature/pre_gadea      # si ya estás en ella, basta el pull de abajo
+git pull origin feature/pre_gadea
 git log --oneline -1                # debe mostrar 'v0.19.13' o posterior
 ```
 
