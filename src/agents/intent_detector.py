@@ -86,6 +86,18 @@ class IntentDetector:
             intent.detected_fields.append("language")
     
     def _detect_activity(self, message: str, intent: DetectedIntent, state: ConversationState) -> None:
+        # "solo snorkel" / "no quiero bucear, solo snorkel" must resolve to snorkel,
+        # not diving — the bare verb "bucear" would otherwise win the diving branch.
+        if re.search(r'e?snork\w*', message) and (
+            re.search(r'\b(?:solo|solamente|s[oó]lo|only|just)\s+(?:quiero\s+|want\s+(?:to\s+)?|hacer\s+|do\s+)?e?snork', message)
+            or re.search(r'\bno\s+(?:quiero\s+)?buce\w*', message)
+            or re.search(r"\bdon'?t\s+want\s+to\s+dive\b", message)
+        ):
+            intent.activity = "snorkel"
+            intent.service_id = "snorkeling"
+            intent.detected_fields.append("activity")
+            return
+
         certified_diving_patterns = [
             r'\bbuce\w{0,5}\b(?!\s+(bautismo|principiante|primera\s+vez|minicurso))',  # buceo, bucear, bucereo, buceando
             r'\bbuse[ao]\w{0,2}\b',        # buseo (common u/c swap typo)
@@ -226,7 +238,7 @@ class IntentDetector:
         ]
 
         not_certified_patterns = [
-            r'\bno\s+(?:esta\s+|estoy\s+|estamos\s+|est[aá]n\s+)?cert\w*\b',
+            r'\bno\s+(?:esta\s+|estoy\s+|estamos\s+|est[aá]n\s+|soy\s+|somos\s+|es\s+|son\s+|eres\s+|fui\s+)?cert\w*\b',
             r'\bsin\s+cert\w*\b',
             # Reflexive "certificarme/certificarnos/certificarte/certificarse" =
             # wants to GET certified (Open Water course), so NOT yet certified.
@@ -536,9 +548,9 @@ class IntentDetector:
         #    "familia de N" / "grupo de N", which are group sizes).
         for m in re.finditer(r'\b(?:uno|una|otr[oa]|el\s+otro|la\s+otra)\s+de\s+(\d{1,2})\b', message):
             _add(m.group(1))
-        # 4) "aged 8 and 10", "edad 8 y 10".
+        # 4) "aged 8 and 10", "ages 8 and 10", "edad 8 y 10".
         for m in re.finditer(
-            r'\b(?:aged|edad(?:\s+de)?)\s+((?:\d{1,2}\s*(?:,|y|e|and|&)\s*)*\d{1,2})',
+            r'\b(?:aged|ages|edad(?:es)?(?:\s+de)?)\s+((?:\d{1,2}\s*(?:,|y|e|and|&)\s*)*\d{1,2})',
             message,
         ):
             _add(m.group(1))

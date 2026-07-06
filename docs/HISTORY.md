@@ -1,6 +1,15 @@
 History
 =======
 
+0.19.9 - (2026-07-04)
+---------------------
+* **Auditoría de robustez del detector de intención** (typos agresivos, mensajes mixtos ES/EN, negaciones, multi-intención). Encontrados y corregidos 3 bugs reales de correctitud:
+  - **"no soy certificado todavía" daba `is_certified=True`** (¡al revés!): el patrón de "no certificado" solo cubría "no está/estoy/estamos/están cert…", faltaban "no **soy/somos/es/son/eres** cert…". Corregido → `is_certified=False`.
+  - **"no quiero bucear, solo snorkel" se detectaba como buceo certificado**: el verbo suelto "bucear" ganaba la rama de buceo aunque estuviera negado. Nuevo guard al inicio de `_detect_activity`: "solo/solamente snorkel", "no quiero bucear … snorkel", "just/only snorkel", "don't want to dive" → resuelven a snorkel.
+  - **Edades en inglés "kids ages 8 and 10" se perdían**: el patrón cubría "aged/edad" pero no "ages" (plural). Añadido "ages"/"edades" → `[8,10]`.
+* Verificado que no hay regresión en los positivos ("somos 2 buzos certificados" → certificado; "nunca hemos buceado" → minicurso).
+* Tests: nuevo `tests/test_intent_robustness.py` (negaciones de certificación, only-snorkel, edades en inglés, mezcla ES/EN). Suite: ver cierre.
+
 0.19.8 - (2026-07-04)
 ---------------------
 * **Planificador de grupo (auto-armado) determinista** (`eligibility.plan_group` + `format_group_plan`): dada una composición (nº certificados, edades de los no-certificados, nº adultos sin certificar de edad desconocida), produce el plan por subgrupo — qué puede hacer cada uno y qué es automático (los certificados → salida de buceo; <6 → acompañante) vs una elección (8-9 → Bubble Makers/snorkel; 10+/adultos → minicurso/snorkel/acompañante). `PersonPlan.auto` marca la actividad forzada cuando solo hay una opción.
