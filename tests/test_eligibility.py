@@ -205,3 +205,82 @@ async def test_eligibility_question_without_age_does_not_fire():
     from src.agents.supervisor import _maybe_answer_age_eligibility
     s = _state()
     assert _maybe_answer_age_eligibility("hay edad mínima para bucear?", s) is None
+
+
+# ---------------------------------------------------------------------------
+# Group plan builder (auto-armado): who can do what, in one structured plan
+# ---------------------------------------------------------------------------
+
+def _total(plans):
+    return sum(p.qty for p in plans)
+
+
+def test_plan_group_certified_line_and_total():
+    plans = elig.plan_group(certified=2, noncert_ages=[9, 14])
+    assert _total(plans) == 4
+    cert = plans[0]
+    assert cert.who == "buzo certificado" and cert.qty == 2
+    assert cert.auto == elig.CERTIFIED_DIVING
+
+
+def test_plan_group_twins_merge_same_age():
+    plans = elig.plan_group(certified=0, noncert_ages=[9, 9])
+    assert len(plans) == 1
+    assert plans[0].qty == 2 and plans[0].who == "9 años"
+
+
+def test_plan_group_unknown_adults_not_merged_with_minor():
+    """A lone 12-year-old must NOT be merged with unknown-age adults even though
+    their option sets are identical."""
+    plans = elig.plan_group(certified=1, noncert_ages=[12], noncert_unknown=2)
+    assert _total(plans) == 4
+    twelve = next(p for p in plans if p.who == "12 años")
+    adults = next(p for p in plans if p.who == "sin certificar")
+    assert twelve.qty == 1 and adults.qty == 2
+
+
+def test_plan_group_under_six_is_companion_auto():
+    plans = elig.plan_group(certified=1, noncert_ages=[3])
+    three = next(p for p in plans if p.who == "3 años")
+    assert three.options == [elig.COMPANION]
+    assert three.auto == elig.COMPANION
+
+
+@pytest.mark.parametrize("age,expected_first_option", [
+    (5, elig.COMPANION),
+    (6, elig.SNORKEL),
+    (7, elig.SNORKEL),
+    (8, elig.BUBBLE_MAKERS),
+    (9, elig.BUBBLE_MAKERS),
+    (10, elig.MINICOURSE),
+    (14, elig.MINICOURSE),
+])
+def test_beginner_options_first_by_age(age, expected_first_option):
+    assert elig.beginner_options_for_age(age)[0] == expected_first_option
+
+
+def test_beginner_options_unknown_is_adult():
+    assert elig.beginner_options_for_age(None) == [elig.MINICOURSE, elig.SNORKEL, elig.COMPANION]
+
+
+def test_plan_group_preserves_headcount_complex():
+    # 1 cert + ages 5,7,8,12 + 2 unknown adults = 7 people
+    plans = elig.plan_group(certified=1, noncert_ages=[5, 7, 8, 12], noncert_unknown=2)
+    assert _total(plans) == 7
+
+
+def test_format_group_plan_is_readable_and_positive():
+    plans = elig.plan_group(certified=2, noncert_ages=[9, 14])
+    text = elig.format_group_plan(plans, "es")
+    assert "buzo certificado" in text
+    assert "9 años" in text and "14 años" in text
+    assert "Bubble Makers" in text        # the 9-year-old
+    assert "minicurso" in text            # the 14-year-old
+
+
+@pytest.mark.asyncio
+async def test_group_responder_uses_per_person_plan_for_multiple_ages():
+    st = _state()
+    resp = await route_message(st, "tengo un niño de 8 y otro de 12, qué pueden hacer?")
+    assert "8 años" in resp and "12 años" in resp
+    assert "Bubble Makers" in resp

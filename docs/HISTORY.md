@@ -1,6 +1,14 @@
 History
 =======
 
+0.19.8 - (2026-07-04)
+---------------------
+* **Planificador de grupo (auto-armado) determinista** (`eligibility.plan_group` + `format_group_plan`): dada una composición (nº certificados, edades de los no-certificados, nº adultos sin certificar de edad desconocida), produce el plan por subgrupo — qué puede hacer cada uno y qué es automático (los certificados → salida de buceo; <6 → acompañante) vs una elección (8-9 → Bubble Makers/snorkel; 10+/adultos → minicurso/snorkel/acompañante). `PersonPlan.auto` marca la actividad forzada cuando solo hay una opción.
+* **Probado exhaustivamente** con 10+ composiciones enrevesadas (2 buzos + niños de 9 y 14; familia con bebé de 3; gemelos de 9; mix de 7 personas con 4 edades + 2 adultos...). El harness reveló y se corrigieron **3 bugs de agrupación**: doble conteo en la etiqueta ("2× 2 sin certificar"), fusión errónea de un menor de 10+ con adultos de edad desconocida (daba "3× 12 años" con un solo niño de 12), y etiqueta torpe de gemelos. Ahora agrupa por edad exacta y separa los adultos de edad desconocida en su propia línea; el headcount total siempre cuadra.
+* **Integración en el respondedor de elegibilidad**: una pregunta de grupo con varias edades ("tengo un niño de 8 y otro de 12, qué pueden hacer?") ahora responde con el desglose limpio por persona (`format_group_plan`) en vez de volcar notas sueltas, incluyendo la línea de buzos certificados si se detecta el conteo.
+* Nota de alcance: el planificador es el *motor* determinista del auto-armado (probado y correcto). El cableado interactivo completo que pre-construye el carrito subgrupo a subgrupo dentro del flujo mixto (auto-añadir lo inequívoco y preguntar solo las elecciones) es el siguiente incremento; hoy el flujo ya cubre 1 acompañante/menor de punta a punta.
+* Tests: `test_eligibility.py` (+15: reglas de opciones por edad, plan_group con casos límite, formatter, respondedor de grupo). Suite: ver cierre.
+
 0.19.7 - (2026-07-04)
 ---------------------
 * **Auditoría exhaustiva de casos enrevesados** (más allá de la edad): 10 flujos multi-paso del árbol (mixto cert+principiante+snorkel, modificar/quitar item, cambiar origen, back-spam, empezar de nuevo, companion-split, oferta por edad, cursos PADI, info profundo) + una batería de mensajes de escalación/adversariales/info. Resultado: **0 crashes, 0 estados colgados** en la capa determinista. Se encontró y corrigió 1 bug real.

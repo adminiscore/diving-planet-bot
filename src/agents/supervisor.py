@@ -2845,9 +2845,21 @@ def _maybe_answer_age_eligibility(message: str, state: ConversationState) -> str
     if not ages:
         return None
     lang = state.language or "es"
-    # One clear note per distinct age (cap to keep the message readable).
-    notes = [eligibility.age_eligibility_note(a, lang) for a in ages[:3]]
-    body = "\n\n".join(notes)
+
+    if len(ages) >= 2:
+        # Several people -> a clear per-person plan (who can do what), using any
+        # detected certified count so the divers appear in the breakdown too.
+        alloc = intent.group_allocation or state.detected_group_allocation or {}
+        certified = int(alloc.get("certified_diving", 0) or 0)
+        plans = eligibility.plan_group(certified=certified, noncert_ages=ages)
+        header = ("¡Con gusto! Esto es lo que puede hacer cada quien: 🐠\n"
+                  if lang == "es" else
+                  "Happy to help! Here's what each person can do: 🐠\n")
+        body = header + eligibility.format_group_plan(plans, lang)
+    else:
+        # Single person -> the fuller, warmer eligibility note.
+        body = eligibility.age_eligibility_note(ages[0], lang)
+
     if lang == "es":
         outro = (
             "\n\n¿Quieres que te ayude a armar el plan para tu grupo? "

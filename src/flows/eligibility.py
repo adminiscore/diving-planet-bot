@@ -17,6 +17,8 @@ and services.json `min_age`):
 
 from __future__ import annotations
 
+from dataclasses import dataclass, field
+
 # --- Age thresholds ---------------------------------------------------------
 MIN_SNORKEL = 6
 BUBBLE_MAKERS_MIN = 8
@@ -73,6 +75,112 @@ def can_fun_dive(age: int, is_certified: bool | None) -> bool:
 
 def is_minor(age: int) -> bool:
     return age < 18
+
+
+def beginner_options_for_age(age: int | None) -> list[str]:
+    """Offer options (ordered) for a NON-certified person of this age.
+
+    `age is None` -> unknown age, assume an adult beginner (all beginner options).
+    Companion ("just come along") is always the last fallback. Bubble Makers is
+    only for 8-10; the adult mini-course only from 10.
+    """
+    if age is None:
+        return [MINICOURSE, SNORKEL, COMPANION]
+    if age < MIN_SNORKEL:                 # <6: nothing in water
+        return [COMPANION]
+    if age < BUBBLE_MAKERS_MIN:           # 6-7: snorkel only
+        return [SNORKEL, COMPANION]
+    if age < MIN_DIVE:                    # 8-9: Bubble Makers or snorkel
+        return [BUBBLE_MAKERS, SNORKEL, COMPANION]
+    return [MINICOURSE, SNORKEL, COMPANION]   # 10+
+
+
+@dataclass
+class PersonPlan:
+    """What one person (or homogeneous subgroup) can do."""
+    who: str                      # short label, e.g. "buzo certificado", "9 años"
+    qty: int = 1
+    options: list = field(default_factory=list)   # ordered activity keys
+    age: int | None = None
+
+    @property
+    def auto(self) -> str | None:
+        """The single forced activity when there is only one option, else None."""
+        return self.options[0] if len(self.options) == 1 else None
+
+
+def plan_group(certified: int = 0, noncert_ages: list[int] | None = None,
+               noncert_unknown: int = 0) -> list[PersonPlan]:
+    """Build a per-subgroup plan from a known composition.
+
+    - `certified`: how many hold an Open Water certification (fun dives).
+    - `noncert_ages`: ages of non-certified people whose age is known.
+    - `noncert_unknown`: non-certified people whose age is unknown (assume adults).
+
+    Certified people share one line; non-certified people are grouped by the
+    set of options their age allows (so two 9-year-olds share one entry).
+    """
+    noncert_ages = list(noncert_ages or [])
+    plans: list[PersonPlan] = []
+    if certified > 0:
+        plans.append(PersonPlan(who="buzo certificado", qty=certified,
+                                options=[CERTIFIED_DIVING]))
+
+    # Non-certified people with a KNOWN age: one line per distinct age (so two
+    # 9-year-olds merge into "9 años ×2", but a 12-year-old stays separate and
+    # is never confused with an unknown-age adult).
+    age_counts: dict[int, int] = {}
+    for age in noncert_ages:
+        age_counts[age] = age_counts.get(age, 0) + 1
+    for age in sorted(age_counts):
+        plans.append(PersonPlan(
+            who=f"{age} años", qty=age_counts[age],
+            options=beginner_options_for_age(age), age=age,
+        ))
+
+    # Non-certified people with UNKNOWN age (assume adults) get their own line.
+    if noncert_unknown > 0:
+        plans.append(PersonPlan(
+            who="sin certificar", qty=noncert_unknown,
+            options=beginner_options_for_age(None), age=None,
+        ))
+    return plans
+
+
+_ACTIVITY_LABELS = {
+    "es": {
+        CERTIFIED_DIVING: "buceo certificado (salida de buceo)",
+        MINICOURSE: "minicurso de buceo",
+        BUBBLE_MAKERS: "Bubble Makers (buceo para niños 8-10)",
+        SNORKEL: "snorkel",
+        OPEN_WATER: "curso Open Water",
+        COMPANION: "acompañante (sin actividad en el agua)",
+    },
+    "en": {
+        CERTIFIED_DIVING: "certified fun dive",
+        MINICOURSE: "dive mini-course",
+        BUBBLE_MAKERS: "Bubble Makers (kids diving 8-10)",
+        SNORKEL: "snorkeling",
+        OPEN_WATER: "Open Water course",
+        COMPANION: "companion (no in-water activity)",
+    },
+}
+
+
+def format_group_plan(plans: list[PersonPlan], lang: str = "es") -> str:
+    """A clear, positive per-person breakdown of what each can do."""
+    labels = _ACTIVITY_LABELS[lang if lang in _ACTIVITY_LABELS else "es"]
+    lines: list[str] = []
+    for p in plans:
+        opts = " / ".join(labels[o] for o in p.options)
+        qty_prefix = f"{p.qty}× " if p.qty > 1 else ""
+        if lang == "es":
+            verb = "→ " if p.auto else "→ puede elegir: "
+            lines.append(f"• {qty_prefix}*{p.who}* {verb}{opts}")
+        else:
+            verb = "→ " if p.auto else "→ can choose: "
+            lines.append(f"• {qty_prefix}*{p.who}* {verb}{opts}")
+    return "\n".join(lines)
 
 
 def age_eligibility_note(age: int, lang: str = "es") -> str:
