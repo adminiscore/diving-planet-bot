@@ -1,6 +1,12 @@
 History
 =======
 
+0.19.12 - (2026-07-04)
+----------------------
+* **Auditoría de precios COP/USD**: verificado (harness end-to-end del resumen mixto) que colombiano→COP primario (≈ USD) y no-colombiano→USD primario (≈ COP), sin descuento colombiano en ningún caso. Sin bug — la lógica de moneda es correcta.
+* **Auditoría de lead notes + mejora**: las notas de lead están bien formadas (carrito, certificación, colombiano, quejas). Añadido: `build_lead_summary` ahora muestra las *edades mencionadas* (`detected_ages`) destacando los menores ("👶 Edades mencionadas: 9, 30 (⚠️ menor(es): 9)"), para que el asesor vea la restricción de actividad por edad aunque el flujo de niños del carrito no se haya completado.
+* Tests: `test_eligibility.py` (+2: edades en el lead note / sin línea cuando no hay edades). Suite: ver cierre.
+
 0.19.11 - (2026-07-04)
 ----------------------
 * **Auto-armado interactivo por edad (cola de no-certificados)** (`decision_tree.py`): cuando un grupo mixto tiene varios no-certificados y se conoce la edad de cada uno, el bot ahora los coloca *uno a uno* según su edad — auto-añade lo forzado (menores de 6 → acompañante, sin preguntar) y pregunta solo las elecciones reales, adaptando la oferta a cada edad (8-9 → Bubble Makers/snorkel; 10+ → minicurso/snorkel/acompañante). Nueva `mixed_pending_beginner_queue` + `_build_beginner_queue`/`_process_beginner_queue`/`_offer_queue_person`/`_handle_queue_person_choice`/`_add_beginner_activity_for_person`. Solo se activa cuando se conoce la edad de *cada* no-certificado (si no, cae a la oferta agrupada previa). Ej.: "2 buzos y 2 no, uno de 9 y otro de 14" → ofrece al de 9 sus opciones de niño, luego al de 14 las de adulto; "8 y 5" → el de 5 entra como acompañante automáticamente y solo pregunta por el de 8.

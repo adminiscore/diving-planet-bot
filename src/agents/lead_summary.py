@@ -83,6 +83,16 @@ def build_lead_summary(state: "ConversationState", escalation_reason: str = "") 
     elif state.is_colombian is False:
         lines.append("🇨🇴 Colombiano/residente: No")
 
+    # Ages mentioned in free text — surface minors so the advisor knows the
+    # activity constraints (snorkel from 6, Bubble Makers 8-10, diving from 10).
+    ages = sorted({a for a in (getattr(state, "detected_ages", None) or []) if 1 <= a <= 99})
+    if ages:
+        line = "👶 Edades mencionadas: " + ", ".join(str(a) for a in ages)
+        minors = [a for a in ages if a < 18]
+        if minors:
+            line += f" (⚠️ menor(es): {', '.join(str(a) for a in minors)})"
+        lines.append(line)
+
     if state.last_dive_over_2_years is True:
         lines.append("⏱️ Último buceo: hace más de 2 años")
     elif state.last_dive_over_2_years is False:

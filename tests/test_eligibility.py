@@ -284,3 +284,26 @@ async def test_group_responder_uses_per_person_plan_for_multiple_ages():
     resp = await route_message(st, "tengo un niño de 8 y otro de 12, qué pueden hacer?")
     assert "8 años" in resp and "12 años" in resp
     assert "Bubble Makers" in resp
+
+
+# ---------------------------------------------------------------------------
+# Lead note surfaces mentioned ages (so the advisor sees minors)
+# ---------------------------------------------------------------------------
+
+def test_lead_note_surfaces_minor_ages():
+    from src.agents.lead_summary import build_lead_summary
+    st = ConversationState(conversation_id="ln")
+    st.language = "es"
+    st.detected_ages = [9, 30]
+    note = build_lead_summary(st, escalation_reason="prueba")
+    assert "Edades mencionadas" in note
+    assert "9" in note
+    assert "menor" in note.lower()   # the 9-year-old flagged
+
+
+def test_lead_note_no_ages_line_when_none():
+    from src.agents.lead_summary import build_lead_summary
+    st = ConversationState(conversation_id="ln2")
+    st.language = "es"
+    note = build_lead_summary(st, escalation_reason="prueba")
+    assert "Edades mencionadas" not in note
