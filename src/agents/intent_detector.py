@@ -332,14 +332,14 @@ class IntentDetector:
         # Prefix: "N de", "N para", "N personas", "N hacen", or bare "N "
         _QUANT_PREFIX = rf'{_NUM}\s+(?:de\s+|para\s+|for\s+|personas?\s+(?:de\s+|para\s+|for\s+)?|{_VERB_FILLER})'
         pat_numeric_fwd = (
-            rf'{_QUANT_PREFIX}{_ACTIVITY_KW}(?:\s+certificad[ao])?'
+            rf'{_QUANT_PREFIX}{_ACTIVITY_KW}(?:\s+certificad[ao]s?)?'
             rf'{_SEP}'
-            rf'{_QUANT_PREFIX}{_ACTIVITY_KW}(?:\s+certificad[ao])?'
+            rf'{_QUANT_PREFIX}{_ACTIVITY_KW}(?:\s+certificad[ao]s?)?'
         )
         pat_numeric_rev = (
-            rf'{_ACTIVITY_KW}(?:\s+certificad[ao])?\w*\s+{_NUM}'
+            rf'{_ACTIVITY_KW}(?:\s+certificad[ao]s?)?\w*\s+{_NUM}'
             rf'{_SEP}'
-            rf'{_ACTIVITY_KW}(?:\s+certificad[ao])?\w*\s+{_NUM}'
+            rf'{_ACTIVITY_KW}(?:\s+certificad[ao]s?)?\w*\s+{_NUM}'
         )
         # ── Pattern B (priority): cert/no-cert splits — BEFORE numeric split ──
         # "2 buceadores (1 certificado y otro no)" / "N cert y M principiante"

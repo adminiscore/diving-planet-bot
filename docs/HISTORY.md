@@ -1,6 +1,14 @@
 History
 =======
 
+0.19.13 - (2026-07-06)
+----------------------
+* **E2E real con el LLM** (OpenAI gpt-4o + Postgres/pgvector + KB reindexada a 779 docs): 11 escenarios multi-turno probados en vivo (flujo certificado completo a checkout, escalaciones, info, cancelación, buceo adaptado, inglés, memoria de edad multi-turno). La mayoría correcto; el framing positivo, la eliminación del descuento colombiano y el routing de reserva confirmados en vivo. Se encontraron y corrigieron 2 bugs reales:
+* **Fix: `RAG_MIN_SCORE` 0.72 → 0.50** (el gran hallazgo): el umbral de confianza del coseno estaba demasiado alto para `text-embedding-3-small`, donde coincidencias reales puntúan ~0.60-0.67. Causaba **fallbacks falsos** en preguntas de alto valor: "mi hijo tiene síndrome de Down, ¿puede bucear?" (info de DIVE TO HEAL a 0.60) y "soy colombiano, ¿cuánto el minicurso?" (precio COP a 0.67) caían al "no tengo información suficiente" pese a estar en la KB. Con 0.50 ambas responden correctamente (buceo adaptado + precio en COP). Corregido en `.env.example` y `.env.dev.example` (tracked); las guardas de grounding (montos/URLs) siguen protegiendo contra alucinaciones. Este era el "fallback intermitente" anotado en sesiones previas.
+* **Fix: split con "certificados" plural** (`intent_detector.py`): "3 buceamos certificados y 2 hacen snorkel" daba `group_allocation=None` (el adjetivo plural "certificados" entre el verbo y "y" rompía el patrón numérico, que solo aceptaba singular `certificad[ao]`). Ampliado a `certificad[ao]s?` → ahora `{certified_diving:3, snorkel:2}`.
+* **Follow-up documentado** (no crítico, degrada con gracia): un split de acompañante descrito en el paso de *ubicación* ("somos 2, yo buzo y mi novia no" cuando el bot pregunta el origen) no se auto-detecta — solo se detecta al responder la cantidad. El usuario puede continuar manualmente.
+* Tests: `test_intent_robustness.py` (+1: split plural). Suite: ver cierre.
+
 0.19.12 - (2026-07-04)
 ----------------------
 * **Auditoría de precios COP/USD**: verificado (harness end-to-end del resumen mixto) que colombiano→COP primario (≈ USD) y no-colombiano→USD primario (≈ COP), sin descuento colombiano en ningún caso. Sin bug — la lógica de moneda es correcta.

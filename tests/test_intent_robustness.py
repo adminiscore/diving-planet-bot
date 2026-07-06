@@ -114,3 +114,10 @@ def test_somos_dos_queremos_bucear_asks_cert_not_lost():
     assert i.activity == "certified_diving"
     assert i.group_size == 2
     assert i.is_certified is None
+
+
+def test_plural_certificados_in_verb_split():
+    """'3 buceamos certificados y 2 hacen snorkel' -> the plural 'certificados'
+    between the activity verb and 'y' must not break the numeric split."""
+    i = _d("somos 5, 3 buceamos certificados y 2 hacen snorkel")
+    assert i.group_allocation == {"certified_diving": 3, "snorkel": 2}
