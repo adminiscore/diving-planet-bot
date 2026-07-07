@@ -1,6 +1,14 @@
 History
 =======
 
+0.19.15 - (2026-07-07)
+----------------------
+* **Fix: "Reservar" tras hablar de Bubble Makers enganchaba como buzo certificado** (bug real reportado por el owner). Dos causas, ambas corregidas:
+  - `_apply_detected_intent` (`supervisor.py`): `detected_activity` era **write-once** — la primera actividad detectada se quedaba fija. Si un mensaje temprano decía "bucear" (→ certified_diving), un "mejor un minicurso" o una charla sobre Bubble Makers posterior NO la corregía, así que al pulsar "🤿 Reservar" el flujo usaba el valor viejo (certificado). Ahora la **última actividad concreta detectada gana** y refresca `is_certified` cuando la nueva actividad lo determina (minicurso/snorkel → no certificado).
+  - `intent_detector.py`: "bubble makers"/"bubblemaker" no se mapeaba a nada (`activity=None`) → añadido a los patrones de minicurso (Bubble Makers es un minicurso infantil); también "bautizo de buceo".
+* Verificado en vivo con el LLM real (Docker + Postgres + KB reindexada): "quiero saber más sobre bubble makers" → Reservar → flujo de minicurso/principiante (ya no certificado). Límite conocido: un cambio a Bubble Makers a mitad del flujo de reserva (tras contestar "¿estáis certificados?") no se recoge — el caso reportado (info → Reservar) sí queda cubierto.
+* **Batería de pruebas ampliada**: nueva Categoría 23 en `docs/test-battery-edge-cases.md` ("Reservar tras info / actividad pegajosa", T169-T176, total 176) + registro de sesión con la causa raíz. Tests: `test_intent_robustness.py` (bubble makers → minicurso, actividad latest-wins) y `test_companion_split.py` (routing de Reservar). Suite: **1029 passed**, 15 skipped.
+
 0.19.14 - (2026-07-07)
 ----------------------
 * **Batería exhaustiva de casos de prueba conversacionales** (`docs/test-battery-edge-cases.md`, 168 casos en 22 categorías): cambio de opinión/contradicciones, límites de edad exactos, discapacidad/DIVE TO HEAL, escalado médico frontera, precios/descuentos raros, servicios poco preguntados del catálogo, memoria de largo alcance, adversarial/prompt-injection (OWASP LLM Top 10), léxico (género gramatical, ortografía). Con checkboxes y registro de sesión para que el equipo continúe probando de forma independiente.

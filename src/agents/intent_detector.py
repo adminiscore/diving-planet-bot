@@ -120,6 +120,8 @@ class IntentDetector:
 
         minicourse_patterns = [
             r'\bmini[\s\-]?curso\b',       # minicurso, mini curso, mini-curso
+            r'\bbubble\s?makers?\b',       # Bubble Makers = kids intro dive (beginner, not certified)
+            r'\bbautizo\s+de\s+buceo\b',
             r'\bbauti[sz]\w{0,3}\b',       # bautismo, bautizo, bautismos, bautizos
             r'\bprimera\s+vez\b',
             r'\bnunca\s+(?:\w+\s+){0,3}buce\w*\b',  # nunca he/ha/hemos/han (hecho) bucea(do)/buceo

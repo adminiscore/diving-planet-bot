@@ -280,3 +280,30 @@ def test_autobuild_back_cancels_queue_to_cart():
     tree.process_message(st, "back")
     assert st.step == Step.MIXED_CART_REVIEW
     assert st.mixed_pending_beginner_queue == []
+
+
+# --- "Reservar" respects the detected activity (Bubble Makers bug) -----------
+
+def test_reservar_with_minicourse_context_routes_to_beginner():
+    """After talking about Bubble Makers / minicurso (detected_activity=minicourse),
+    clicking Reservar must enter the BEGINNER flow, not certified diving."""
+    st = ConversationState(conversation_id="r1")
+    st.language = "es"
+    st.step = Step.MAIN_MENU
+    st.detected_activity = "minicourse"
+    st.detected_is_certified = False
+    tree._enter_booking_cart(st)          # click "Reservar"
+    tree.process_message(st, "1")         # Cartagena
+    assert st.mixed_pending_qty_type == "beginner"
+    assert st.step != Step.MIXED_ADD_CERT_PLAN
+
+
+def test_reservar_with_certified_context_still_routes_to_cert():
+    st = ConversationState(conversation_id="r2")
+    st.language = "es"
+    st.step = Step.MAIN_MENU
+    st.detected_activity = "certified_diving"
+    st.detected_is_certified = True
+    tree._enter_booking_cart(st)
+    tree.process_message(st, "1")
+    assert st.step == Step.MIXED_ADD_CERT_PLAN

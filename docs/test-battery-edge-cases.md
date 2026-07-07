@@ -64,6 +64,8 @@ El cliente dice una cosa y unos turnos después cambia de idea. El bot debe **ac
 
 **Vigilar**: tras el cambio, ¿el resumen/carrito refleja el dato NUEVO? ¿El bot reconoce explícitamente el cambio ("ok, actualizo a 5 personas") o lo aplica en silencio sin confirmar (aceptable pero peor UX)? ¿En T015 no se queda pegado en un estado intermedio?
 
+> **↳ ARREGLADO en v0.19.15 (2026-07-07)**: el bug de "actividad pegajosa" (`detected_activity` era write-once) hacía que T009/T015 y el flujo Bubble Makers→Reservar rutearan al estado VIEJO. Ahora la última actividad concreta detectada gana (`_apply_detected_intent` en `supervisor.py`), y "bubble makers" se reconoce como minicurso. Ver Categoría 23 y el registro de sesión abajo.
+
 ---
 
 ## Categoría 3 — Contradicciones dentro del mismo mensaje
@@ -371,6 +373,23 @@ El español tiene concordancia de género (buzo/buza, certificado/certificada) y
 
 ---
 
+## Categoría 23 — "Reservar" tras conversación informativa (actividad pegajosa)
+
+Origen: bug real reportado (2026-07-07). El cliente pregunta por **Bubble Makers** (programa infantil), el bot responde bien, y al pulsar "🤿 Reservar" lo mete en el flujo de **buceo certificado** — ignorando de qué se estaba hablando. Causa: `detected_activity` era write-once (la PRIMERA actividad detectada se quedaba fija para siempre; un mensaje temprano con "bucear" la fijaba en certificado y nada la corregía) + "bubble makers" no se mapeaba a ninguna actividad. Ambos arreglados en v0.19.15. Esta categoría vigila que el clic de "Reservar" respete SIEMPRE el último contexto.
+
+- [ ] **T169**: "quiero saber más sobre bubble makers" → (respuesta) → clic "🤿 Reservar" → debe ir al flujo de **minicurso/principiante**, NUNCA a "buceo certificado".
+- [ ] **T170**: "cuéntame del minicurso" → "reservar" → flujo principiante (no certificado).
+- [ ] **T171**: "info del snorkel" → "reservar" → flujo de snorkel.
+- [ ] **T172**: "quiero bucear" → (luego cambia) "mejor un minicurso para mi hijo" → "reservar" → flujo principiante (respeta el ÚLTIMO, no el primer "bucear").
+- [ ] **T173**: "quiero el open water" → "reservar" → flujo de curso Open Water (no salida certificada).
+- [ ] **T174**: "¿qué es el bubble makers?" → "sí, quiero reservarlo para mi hija de 9" → principiante/Bubble Makers, con la edad tenida en cuenta.
+- [ ] **T175**: Preguntar por 2 actividades seguidas ("cuéntame del snorkel" … "y del minicurso") → "reservar" → debe usar la última mencionada o preguntar, nunca defaultear a certificado.
+- [ ] **T176**: Cliente que NO mencionó ninguna actividad ("hola, ¿qué precios tienen?") → "reservar" → debe preguntar qué actividad (menú), NO asumir certificado.
+
+**Vigilar**: el clic de "Reservar" nunca debe engancharte como buzo certificado por defecto. Si la actividad es ambigua, preguntar; si se habló de una actividad concreta (aunque sea principiante/infantil), respetarla.
+
+---
+
 ## Resumen de cobertura
 
 | Categoría | Nº tests |
@@ -397,7 +416,8 @@ El español tiene concordancia de género (buzo/buza, certificado/certificada) y
 | 20. Adversarial/red-teaming | 13 |
 | 21. Cantidades extremas | 8 |
 | 22. Léxico: género/concordancia/ortografía | 10 |
-| **Total** | **168** |
+| 23. "Reservar" tras info (actividad pegajosa) | 8 |
+| **Total** | **176** |
 
 ---
 
@@ -436,3 +456,19 @@ Investigación de causa raíz (sin resolver del todo):
 - `"hola, estoy en la isla, en el hotel cocoliso"` — el caso problemático (T113). Ver si sigue mencionando un acompañante inventado.
 - `"hola, estoy en la isla, en el hotel pao pao"` / `"ya llegué a san pedro de majagua"` — variantes del mismo patrón con otros hoteles, para ver si el bug es específico de Cocoliso o general.
 - T110/T111/T112 de arriba, para reconfirmar que siguen bien tras los cambios de prompt de esta sesión.
+
+### 2026-07-07 (cont.) — bug "Reservar tras Bubble Makers" (Gonzalo/Claude)
+
+**Bug reportado por el owner**: preguntó por Bubble Makers, el bot respondió bien, y al pulsar "🤿 Reservar" → "Para *buceo certificado*, ¿qué idea tienes?" — lo enganchó como buzo certificado ignorando el contexto. Reproducido con el LLM real (Docker+Postgres+KB reindexada).
+
+**Causa raíz (2 cosas)**:
+1. `detected_activity` era **write-once** en `_apply_detected_intent` (`supervisor.py`): la PRIMERA actividad detectada se quedaba fija. Si un mensaje temprano decía "bucear" (→ certified_diving), un "mejor un minicurso" posterior NO la actualizaba. Al pulsar Reservar, el flujo usaba el valor viejo (certificado).
+2. "bubble makers" no estaba en los patrones del `intent_detector` → devolvía `activity=None`, así que ni siquiera intentaba corregir la actividad pegajosa.
+
+**Arreglado (v0.19.15)**:
+1. `_apply_detected_intent`: la última actividad concreta detectada **gana** (reemplaza la anterior) + refresca `is_certified` cuando la nueva actividad lo determina (minicurso → no certificado).
+2. `intent_detector`: "bubble makers"/"bubblemaker" → `minicourse` (+ "bautizo de buceo").
+
+**Verificado en vivo**: "quiero saber más sobre bubble makers" → Reservar → "El minicurso de buceo es ideal para principiantes" → pregunta cantidad (flujo principiante), ya NO certificado. Tests deterministas en `tests/test_intent_robustness.py` (actividad latest-wins + bubble makers) y `tests/test_companion_split.py` (routing de Reservar). Suite: 1029 passed.
+
+**Límite conocido**: si el cliente YA está dentro del flujo de reserva (p.ej. contestó "¿estáis certificados?"), un cambio a Bubble Makers a mitad no se recoge (el mid-flow no pasa por `_apply_detected_intent`). El caso reportado (info → Reservar) sí queda cubierto. Categoría 23 T175/T176 vigilan el resto.

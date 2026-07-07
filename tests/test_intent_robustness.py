@@ -121,3 +121,47 @@ def test_plural_certificados_in_verb_split():
     between the activity verb and 'y' must not break the numeric split."""
     i = _d("somos 5, 3 buceamos certificados y 2 hacen snorkel")
     assert i.group_allocation == {"certified_diving": 3, "snorkel": 2}
+
+
+# --- Bubble Makers is a kids beginner activity (not certified diving) --------
+
+@pytest.mark.parametrize("msg", [
+    "quiero saber del bubble makers",
+    "bubble makers para mi hijo de 9",
+    "cuentame del bubblemaker",
+    "el bubble maker",
+])
+def test_bubble_makers_is_minicourse_not_certified(msg):
+    i = _d(msg)
+    assert i.activity == "minicourse"
+    assert i.is_certified is False
+
+
+# --- Latest concrete activity wins (customer changes their mind) -------------
+
+def _apply_seq(msgs):
+    from src.agents.supervisor import _apply_detected_intent
+    st = ConversationState(conversation_id="seq"); st.language = "es"
+    for m in msgs:
+        _apply_detected_intent(_d(m), st)
+    return st
+
+
+def test_activity_updates_when_customer_switches_to_minicourse():
+    """After 'quiero bucear' (certified) then 'mejor un minicurso', the stored
+    activity must follow the latest intent — else clicking Reservar routes a
+    beginner into the certified flow (the Bubble Makers bug)."""
+    st = _apply_seq(["quiero bucear", "mejor un minicurso para el niño"])
+    assert st.detected_activity == "minicourse"
+    assert st.detected_is_certified is False
+
+
+def test_activity_updates_bucear_then_bubble_makers():
+    st = _apply_seq(["quiero bucear", "cuentame del bubble makers"])
+    assert st.detected_activity == "minicourse"
+
+
+def test_activity_stays_certified_when_no_new_activity():
+    st = _apply_seq(["somos 2 buzos certificados", "y cuanto cuesta?"])
+    assert st.detected_activity == "certified_diving"
+    assert st.detected_is_certified is True

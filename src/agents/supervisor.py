@@ -3434,12 +3434,22 @@ def _apply_detected_intent(intent, state: ConversationState) -> None:
         state.language = intent.language
         logger.info(f"[INTENT] Detected language: {intent.language}")
 
-    if intent.activity and not state.detected_activity:
+    # Latest concrete activity wins: the customer may change their mind mid-chat
+    # ("quiero bucear" ... "mejor un minicurso para mi hijo"). Before, the FIRST
+    # activity stuck forever (write-once), so after talking about Bubble Makers /
+    # a minicurso, clicking "🤿 Reservar" still routed them into the CERTIFIED
+    # diving flow. Now a newly-detected activity replaces the stale one.
+    if intent.activity and intent.activity != state.detected_activity:
         state.detected_activity = intent.activity
         state.detected_service_id = intent.service_id
-        logger.info(f"[INTENT] Detected activity: {intent.activity} (service: {intent.service_id})")
-
-    if intent.is_certified is not None and state.detected_is_certified is None:
+        # A beginner activity (minicurso/snorkel) also carries a certification
+        # signal — refresh it so the (possibly stale) certified flag doesn't
+        # send a beginner request down the certified path.
+        if intent.is_certified is not None:
+            state.detected_is_certified = intent.is_certified
+            state.is_certified = intent.is_certified
+        logger.info(f"[INTENT] Activity updated to: {intent.activity} (service: {intent.service_id})")
+    elif intent.is_certified is not None and state.detected_is_certified is None:
         state.detected_is_certified = intent.is_certified
         state.is_certified = intent.is_certified
         logger.info(f"[INTENT] Detected certification: {intent.is_certified}")
