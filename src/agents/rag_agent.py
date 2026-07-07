@@ -235,32 +235,35 @@ def _format_fewshot_block(examples: list[dict], lang: str) -> str:
     Each example is summarised in <= FEWSHOT_MAX_CHARS chars to keep the prompt cheap.
     Framed as 'real situations the center has handled' so the model treats them as
     domain context, not as a template to imitate verbatim.
+
+    Deliberately does NOT quote the real customer's literal message: it's personal,
+    specific detail (a spouse, a named hotel, a family composition) that belongs to a
+    DIFFERENT, unrelated customer. Quoting it invited the model to blend those details
+    into its answer for the current customer (e.g. inventing "tu esposo" out of thin
+    air because a past customer's message happened to mention one). Only the topic
+    label and the advisor's response pattern are shown — that's what teaches tone and
+    coverage without leaking someone else's facts.
     """
     if not examples:
         return ""
 
     header = (
-        "Situaciones reales del centro (referencia, NO copies el formato literal):"
+        "Situaciones reales del centro (referencia de tono/cobertura, NO son datos del cliente actual):"
         if lang == "es"
-        else "Real situations the center has handled (reference, do NOT copy the literal format):"
+        else "Real situations the center has handled (tone/coverage reference, NOT facts about the current customer):"
     )
     lines = [header]
     for ex in examples:
         scenario = (ex.get("scenario") or "").strip()
-        first_customer_msg = ""
-        customer_msgs = ((ex.get("customer") or {}).get("messages") or [])
-        if customer_msgs:
-            first_customer_msg = str(customer_msgs[0]).strip()
         first_bot_action = ""
         bot_msgs = ((ex.get("diving_planet") or {}).get("messages") or [])
         if bot_msgs:
             first_bot_action = str(bot_msgs[0]).strip()
 
-        cust_q = f"\"{first_customer_msg[:80]}{'...' if len(first_customer_msg) > 80 else ''}\""
         action = first_bot_action[:120] + ("..." if len(first_bot_action) > 120 else "")
-        bullet = f"- {scenario[:60]} | Cliente: {cust_q} | Asesor cubrio: {action}"
+        bullet = f"- {scenario[:60]} | Asesor cubrio: {action}"
         if lang == "en":
-            bullet = f"- {scenario[:60]} | Customer: {cust_q} | Advisor covered: {action}"
+            bullet = f"- {scenario[:60]} | Advisor covered: {action}"
         # Hard cap per bullet
         if len(bullet) > FEWSHOT_MAX_CHARS:
             bullet = bullet[:FEWSHOT_MAX_CHARS - 3] + "..."
@@ -298,6 +301,7 @@ _SYSTEM_PROMPT_ES_BODY = """Tono y estilo — fundamental:
 - Mensajes cortos, directos y cálidos. Nunca sonar robótico, genérico ni corporativo. No caricaturices el acento ni escribas mal a propósito.
 
 Reglas estrictas — nunca las incumplas:
+- ⚠️ NUNCA inventes acompañantes: si el cliente NO mencionó explícitamente con quién viaja, NO asumas ni menciones "tu esposo/esposa/pareja/novio/novia/hijo/amigo" bajo ningún concepto — ni siquiera como suposición típica de "cliente de buceo casual". Un mensaje como "estoy en la isla, en el hotel X, quiero bucear" es de UNA persona hablando de SÍ MISMA; responde en singular ("tú puedes...") y jamás inventes un tercero. Esto aplica incluso si otros ejemplos o conversaciones que conoces mencionan parejas/esposos — cada cliente es un caso nuevo y aislado.
 - Responde SOLO con la información del contexto proporcionado.
 - Si la respuesta no está en el contexto o hay duda, dilo y ofrece: "Te paso con un asesor para que te ayude con gusto".
 - Nunca inventes precios, horarios, disponibilidad, códigos de descuento, links de pago ni confirmaciones de reserva.
@@ -335,6 +339,7 @@ Contacto asesor: WhatsApp +57 320 231515.
 Responde en español."""
 
 _SYSTEM_PROMPT_EN_BODY = """Strict rules — never break these:
+- ⚠️ NEVER invent companions: if the customer did NOT explicitly say who they're traveling with, do NOT assume or mention "your husband/wife/partner/boyfriend/girlfriend/child/friend" under any circumstance — not even as a "typical casual diver" guess. A message like "I'm on the island, at hotel X, I want to dive" is ONE person talking about THEMSELVES; answer in singular ("you can...") and never invent a third person. This applies even if other examples or conversations you know of mention spouses/partners — every customer is a new, isolated case.
 - Answer ONLY using the provided context.
 - If the answer is not in the context or you're unsure, say so and offer: "For this specific situation, I prefer to transfer you to my boss".
 - Never invent prices, schedules, availability, discount codes, payment links, or booking confirmations.

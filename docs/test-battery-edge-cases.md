@@ -406,4 +406,33 @@ El español tiene concordancia de género (buzo/buza, certificado/certificada) y
 _(añadir una entrada por sesión con fecha, quién probó, y hallazgos — para que el equipo no repita trabajo)_
 
 ### 2026-07-07 — sesión inicial (Claude)
-- Batería creada. Empezando a probar en vivo por Categoría 16 (extensión directa del bug ya confirmado), luego Categoría 6 (límites de edad).
+
+- Batería creada (168 casos). Empezado por Categoría 16 (extensión directa del bug de sobre-personalización ya confirmado y arreglado en sesión anterior).
+
+**T110, T111, T112 — probados en vivo, parecen correctos** (⚠️ checkbox dejado sin marcar a propósito — verificados una sola vez, antes de los cambios de prompt de más abajo; conviene re-confirmar antes de tacharlos de verdad):
+- T110: "hola" → "mi hijo tiene 9 años, queremos hacer buceo" → "¿cuál es la edad mínima para bucear en general?" → responde con los 3 umbrales (6/8-10/10+) sin abrir asumiendo el dato del hijo.
+- T111: "hola quiero bucear, mi presupuesto es de 300 dolares" → "¿cuál es el precio más económico que tienen?" → responde con el servicio más barato de forma factual, sin repetir el presupuesto.
+- T112: "hola, no estoy certificado, quiero bucear" → "¿qué necesito para certificarme en general?" → responde los requisitos completos del Open Water sin reabrir el tema de que no está certificado.
+
+**T113 — INTENTADO, NO RESUELTO. Dejar sin marcar. Bug real y distinto encontrado, requiere más investigación.**
+
+Al probar T113 ("hola, estoy en la isla, en el hotel cocoliso" — mensaje limpio, sin mencionar acompañante) el bot alucinó, de la nada, un acompañante inexistente: *"Tu esposo puede disfrutar de una experiencia de buceo..."*. Esto **no es el mismo bug** que el de "¡Buenísimo que sean 4!" (ese era sobre-personalizar un dato SÍ conocido); este es **inventar un dato que nunca existió**.
+
+Lo que se hizo (2 cambios reales, en `src/agents/rag_agent.py`, ya en el commit de esta sesión):
+1. `_format_fewshot_block` ya no cita el mensaje literal de un cliente real pasado (`conversations.json`) — solo el escenario/tema y la respuesta del asesor. Antes se filtraba texto personal de otro cliente (relación, hotel, familia) que el modelo podía mezclar con la respuesta del cliente actual. Es una mejora de higiene válida independientemente del bug T113.
+2. Regla explícita añadida en el prompt (ES+EN, en posición prominente): "nunca inventes acompañantes/relaciones que el cliente no haya mencionado".
+
+**Resultado tras los 2 cambios: la alucinación de "esposo" SIGUE ocurriendo con una frecuencia similar (~3-4 de cada 5 intentos) en pruebas en vivo repetidas.** No se confirmó una mejora medible.
+
+Investigación de causa raíz (sin resolver del todo):
+- Descartado que venga del ejemplo few-shot que sí menciona "esposo" en `conversations.json` (`whatsapp_import_57_314_6216683_part2`, topic `location_islands`) — se confirmó directamente que ese ejemplo específico NO se selecciona para esta query.
+- Descartado que el orquestador (`orchestrator.orchestrate`, llamada LLM separada que corre antes) esté llamando a `remember` con un dato inventado — se probó 6 veces y siempre devuelve `remembered=None` para este mensaje.
+- Se reconstruyó a mano el pipeline completo (contexto real recuperado del KB + `extra_context` real + historial real, replicando exactamente `_answer_with_llm`) y se probó en aislado contra la API de OpenAI directamente, a temperatura 0.3 (la real) y 0.0 — **0 alucinaciones en 12 intentos**, sin poder reproducir el fallo fuera del pipeline en vivo.
+- Conclusión: hay una diferencia real entre mi reconstrucción aislada y el flujo en vivo (vía Chatwoot/webhook) que no se identificó — puede que la orquestación en vivo tenga algo distinto (llamada del orquestador antes de RAG, threading exacto de mensajes, algo del round-trip de Chatwoot) que no se logró replicar en el script de prueba directa.
+
+**Qué falta para cerrar esto de verdad**: añadir logging temporal en `_dispatch_conversation_agent` (justo antes de la llamada a `rag_answer`) para capturar el prompt EXACTO que se manda a OpenAI en una corrida real que falle, y compararlo con la reconstrucción aislada para encontrar la diferencia real. No se pudo hacer en esta sesión por no tener acceso directo al stdout del proceso del bot (corre en WSL2, en una terminal aparte).
+
+**Ejemplos para que el equipo re-teste lo tocado en esta sesión** (probar 5-8 veces cada uno, porque el LLM no es determinista):
+- `"hola, estoy en la isla, en el hotel cocoliso"` — el caso problemático (T113). Ver si sigue mencionando un acompañante inventado.
+- `"hola, estoy en la isla, en el hotel pao pao"` / `"ya llegué a san pedro de majagua"` — variantes del mismo patrón con otros hoteles, para ver si el bug es específico de Cocoliso o general.
+- T110/T111/T112 de arriba, para reconfirmar que siguen bien tras los cambios de prompt de esta sesión.

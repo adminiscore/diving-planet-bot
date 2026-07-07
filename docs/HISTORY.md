@@ -1,6 +1,14 @@
 History
 =======
 
+0.19.14 - (2026-07-07)
+----------------------
+* **Batería exhaustiva de casos de prueba conversacionales** (`docs/test-battery-edge-cases.md`, 168 casos en 22 categorías): cambio de opinión/contradicciones, límites de edad exactos, discapacidad/DIVE TO HEAL, escalado médico frontera, precios/descuentos raros, servicios poco preguntados del catálogo, memoria de largo alcance, adversarial/prompt-injection (OWASP LLM Top 10), léxico (género gramatical, ortografía). Con checkboxes y registro de sesión para que el equipo continúe probando de forma independiente.
+* **Fix (higiene de datos)**: `_format_fewshot_block` (`rag_agent.py`) ya no cita el mensaje literal de un cliente real pasado en los ejemplos few-shot — solo el escenario/tema y la respuesta del asesor. Antes se filtraba texto personal de un cliente distinto (relación, hotel, familia) al prompt de cualquier cliente nuevo.
+* **Regla de prompt añadida** (ES+EN, `rag_agent.py`): prohibición explícita y prominente de inventar acompañantes/relaciones no mencionadas por el cliente actual.
+* **Bug real encontrado, NO resuelto**: el bot puede alucinar un acompañante inexistente ("tu esposo puede...") ante un primer mensaje limpio sin mencionar a nadie más (ej. "estoy en la isla, hotel Cocoliso"). Distinto del bug de sobre-personalización ya arreglado (aquél reusaba mal un dato SÍ conocido; este inventa un dato que nunca existió). Persiste tras los 2 cambios de arriba (~3-4/5 en pruebas repetidas). Causa raíz no aislada del todo: descartado el ejemplo few-shot específico y el orquestador; reconstrucción aislada del pipeline completo no reprodujo el fallo (0/12), señal de que algo del flujo en vivo (Chatwoot/webhook) difiere de la réplica directa. Requiere logging en vivo para cerrar. Ver sección T113 en `docs/test-battery-edge-cases.md`.
+* Suite: 1022 passed, 6 skipped (sin regresiones).
+
 0.19.13 - (2026-07-06)
 ----------------------
 * **E2E real con el LLM** (OpenAI gpt-4o + Postgres/pgvector + KB reindexada a 779 docs): 11 escenarios multi-turno probados en vivo (flujo certificado completo a checkout, escalaciones, info, cancelación, buceo adaptado, inglés, memoria de edad multi-turno). La mayoría correcto; el framing positivo, la eliminación del descuento colombiano y el routing de reserva confirmados en vivo. Se encontraron y corrigieron 2 bugs reales:
