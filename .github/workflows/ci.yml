@@ -104,6 +104,7 @@ jobs:
           ssh -i ~/.ssh/pre_vps root@${{ secrets.PRE_VPS_HOST }} '
             set -euo pipefail
             cd /opt/diving-planet-bot
+            git remote set-branches origin "*"
             git fetch origin
             git checkout ${{ github.ref_name }}
             git reset --hard origin/${{ github.ref_name }}
