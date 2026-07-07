@@ -63,6 +63,11 @@ class IntentDetector:
             'buzo', 'bautismo', 'precio', 'información', 'reservar',
             # common function words / verbs that disambiguate ES vs EN
             'estoy', 'recogen', 'puedo', 'gracias', 'cuánto', 'dónde', 'está',
+            # unambiguously-Spanish function words: keep a Spanish question with an
+            # English activity name ("¿qué es el Mindful Diving?") from being
+            # flagged as English just because it contains "diving".
+            'qué', 'que', 'es', 'el', 'la', 'los', 'las', 'del', 'para', 'con',
+            'cómo', 'como', 'cuál', 'cual', 'una', 'más', 'sí', 'tú', 'y', 'o',
         }
 
         english_keywords = {
@@ -120,6 +125,8 @@ class IntentDetector:
 
         minicourse_patterns = [
             r'\bmini[\s\-]?curso\b',       # minicurso, mini curso, mini-curso
+            r'\bbubble\s?makers?\b',       # Bubble Makers = kids intro dive (beginner, not certified)
+            r'\bbautizo\s+de\s+buceo\b',
             r'\bbauti[sz]\w{0,3}\b',       # bautismo, bautizo, bautismos, bautizos
             r'\bprimera\s+vez\b',
             r'\bnunca\s+(?:\w+\s+){0,3}buce\w*\b',  # nunca he/ha/hemos/han (hecho) bucea(do)/buceo
@@ -282,6 +289,7 @@ class IntentDetector:
             (r'\b(?:somos\s+)?(?:una?\s+)?(pareja)\b', {'pareja': 2}),
             # "familia de N" → N personas
             (r'\bfamilia\s+de\s+(\d+|dos|tres|cuatro|cinco|seis|siete|ocho)\b', {'dos': 2, 'tres': 3, 'cuatro': 4, 'cinco': 5, 'seis': 6, 'siete': 7, 'ocho': 8}),
+            (r'\bfamily\s+of\s+(\d+|two|three|four|five|six|seven|eight)\b', {'two': 2, 'three': 3, 'four': 4, 'five': 5, 'six': 6, 'seven': 7, 'eight': 8}),
         ]
 
         for pattern, word_map in group_size_patterns:
@@ -558,6 +566,13 @@ class IntentDetector:
         # 4) "aged 8 and 10", "ages 8 and 10", "edad 8 y 10".
         for m in re.finditer(
             r'\b(?:aged|ages|edad(?:es)?(?:\s+de)?)\s+((?:\d{1,2}\s*(?:,|y|e|and|&)\s*)*\d{1,2})',
+            message,
+        ):
+            _add(m.group(1))
+        # 5) English kid-noun + "are/is N and M": "our kids are 7 and 11".
+        for m in re.finditer(
+            r'\b(?:kids?|children|sons?|daughters?)\s+(?:are|is)\s+'
+            r'((?:\d{1,2}\s*(?:,|and|&)\s*)*\d{1,2})',
             message,
         ):
             _add(m.group(1))

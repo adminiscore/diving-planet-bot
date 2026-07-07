@@ -1,6 +1,55 @@
 History
 =======
 
+0.19.21 - (2026-07-07)
+----------------------
+* **Recomposición de grupo a mitad del flujo de reserva** (follow-up conocido resuelto): dentro del flujo mixto, añadir gente o replantear el total por texto libre ("y mi hijo de 12", "se suma mi hermano, ya seríamos 3", "también viene mi esposa") daba "no te entendí" porque el paso del árbol esperaba otra cosa (ubicación, plan…). Nuevo guard `_apply_group_recomposition` en `supervisor.py` (antes del orquestador): captura el cambio en `detected_group_size`/`detected_ages`, acusa recibo y mantiene el paso y los botones actuales. Conservador — no dispara con una respuesta normal de conteo ("somos 3"), una de ubicación ("y desde Cartagena"), ni en los pasos de cantidad. Verificado en vivo. `tests/test_group_recomposition.py` (18 tests).
+
+0.19.20 - (2026-07-07)
+----------------------
+* **Fix: extracción de grupo/edades en inglés incompleta** (barrido en vivo Cat 1/7). "we are a family of 4" no daba grupo=4 y "our kids are 7 and 11" no daba edades (el español "familia de N" sí funcionaba). Añadidos patrones EN en `intent_detector`: `family of N` (tamaño de grupo) y `kids/children are N and M` (edades). Verificado con el caso T003 completo. +tests.
+* Barrido Cat 1/7/19/21/22 en vivo: info-dump con split, typos pesados/sin-espacios/mayúsculas, lenguaje inclusivo/femenino, bebé/mascota/grupo-grande/futuro-lejano — todo correcto salvo el gap de inglés ya corregido. Suite: 1045+ passed.
+
+0.19.19 - (2026-07-07)
+----------------------
+* **Fix: discapacidad con términos coloquiales caía al fallback** (barrido en vivo Cat 8). "soy sordo" / "uso silla de ruedas" / "soy ciego" respondían "no tengo información" porque la KB de buceo adaptado usaba solo términos formales (auditiva/movilidad reducida/visual) → desajuste de vocabulario en el retrieval. Enriquecidos el FAQ y la policy de DIVE TO HEAL con sinónimos coloquiales + FAQ dedicado de silla de ruedas/movilidad reducida. Ahora los 3 responden con la info del programa. **Requiere reindex.**
+* **Fix: falso positivo "corazón de oro"** (Cat 9): "mi tía tiene un corazón de oro" escalaba como consulta médica por la keyword "corazón". Nueva exclusión de modismos en `escalation.py` (corazón de oro / de todo corazón / heart of gold…). Las condiciones médicas reales ("problema en el corazón") siguen escalando. Tests añadidos.
+* Barrido Cat 6 (límites de edad exactos) en vivo: **8/8 correctos** con el umbral exacto — el motor `eligibility.py` es sólido. Cat 10/11/15 correctas.
+
+0.19.18 - (2026-07-07)
+----------------------
+* **Fix: alucinación de PayPal** (hallada en barrido en vivo). "¿puedo pagar con PayPal?" → "¡Claro que sí!" (inventado — la KB solo lista tarjeta/efectivo/Llave/enlace de pago). Contraste: crypto y Bre-B sí se rechazaban bien. Añadido el negativo explícito al FAQ de medios de pago ("No aceptamos PayPal, criptomonedas ni pagos a plazos/cuotas") + reindex → ahora no confirma PayPal (deriva a asesor) y "¿pago en cuotas?" → "no aceptamos". **Requiere reindex** en PRE/PRO.
+* Barrido de categorías 4/5/13/17/18 en vivo: indeciso, memoria de presupuesto, crypto/Bre-B, "ya pagué" (escala) — todo correcto. Follow-ups conocidos (LLM↔árbol) anotados: recomponer el grupo a mitad del flujo de reserva por texto libre ("y mi hijo de 12" en el paso de ubicación) da "no te entendí"; grupo extremo (50) se acepta sin sugerir servicio privado.
+
+0.19.17 - (2026-07-07)
+----------------------
+* **Fix: alucinaciones de cifras en respuestas RAG** (halladas en el barrido en vivo). Dos casos reales corregidos + uno descartado:
+  - **T114** "¿máximo en tour privado?" inventaba "hasta 12 personas" (la KB solo dice "cotización personalizada según el grupo", sin capacidad máxima). Nueva regla de prompt (ES+EN): no inventar cifras de capacidad/número máximo de personas, duración ni cupos que no estén en el contexto; si no está, decir que el asesor lo confirma.
+  - **T097** "¿1 sola inmersión desde Cartagena?": el dato "no disponible desde Cartagena" existía en `pricing.json` pero no se recuperaba. Añadido FAQ dedicado ("¿Puedo hacer solo 1 inmersión desde Cartagena?") → ahora responde bien ("desde Cartagena el mínimo son 2 inmersiones; 1 sola solo estando en las islas"). Regla de prompt refuerza respetar lo marcado "no disponible". **Requiere reindex** (`load_embeddings`).
+  - **T101** "Divemaster dura 2 meses / bucea gratis": NO era alucinación — está grounded en el FAQ "¿Cómo funciona el curso Divemaster?".
+* Verificado en vivo con el LLM real tras el reindex (781 docs).
+
+0.19.16 - (2026-07-07)
+----------------------
+* **Fix: pregunta en español con término inglés respondía en INGLÉS** (hallado en barrido en vivo de la batería). "¿qué es el Mindful Diving?" se contestaba en inglés: el `_detect_language` del `intent_detector` marcaba idioma inglés porque "diving" es keyword EN y no había palabras-función españolas en su lista, y ese idioma sobreescribía el correcto vía `_apply_detected_intent`. Reforzadas las keywords españolas con palabras-función inequívocas (qué/que/es/el/la/para/con/cómo/cuál…). Verificado en vivo: ahora responde en español; sin regresión en mensajes 100% en inglés. Tests en `test_intent_robustness.py`.
+* **Barrido en vivo de 6 categorías de la batería** (3/12/14/16/20/22) con el LLM real: adversarial/red-teaming **excelente** (rechaza revelar el system prompt, niega descuentos falsos, no confirma pagos falsos), precios y léxico/typos correctos. Registrados en `docs/test-battery-edge-cases.md` 3 follow-ups de calidad RAG a verificar contra la KB (posibles alucinaciones: "máximo 12 en tour privado", "Divemaster dura 2 meses", "1 inmersión desde Cartagena").
+
+0.19.15 - (2026-07-07)
+----------------------
+* **Fix: "Reservar" tras hablar de Bubble Makers enganchaba como buzo certificado** (bug real reportado por el owner). Dos causas, ambas corregidas:
+  - `_apply_detected_intent` (`supervisor.py`): `detected_activity` era **write-once** — la primera actividad detectada se quedaba fija. Si un mensaje temprano decía "bucear" (→ certified_diving), un "mejor un minicurso" o una charla sobre Bubble Makers posterior NO la corregía, así que al pulsar "🤿 Reservar" el flujo usaba el valor viejo (certificado). Ahora la **última actividad concreta detectada gana** y refresca `is_certified` cuando la nueva actividad lo determina (minicurso/snorkel → no certificado).
+  - `intent_detector.py`: "bubble makers"/"bubblemaker" no se mapeaba a nada (`activity=None`) → añadido a los patrones de minicurso (Bubble Makers es un minicurso infantil); también "bautizo de buceo".
+* Verificado en vivo con el LLM real (Docker + Postgres + KB reindexada): "quiero saber más sobre bubble makers" → Reservar → flujo de minicurso/principiante (ya no certificado). Límite conocido: un cambio a Bubble Makers a mitad del flujo de reserva (tras contestar "¿estáis certificados?") no se recoge — el caso reportado (info → Reservar) sí queda cubierto.
+* **Batería de pruebas ampliada**: nueva Categoría 23 en `docs/test-battery-edge-cases.md` ("Reservar tras info / actividad pegajosa", T169-T176, total 176) + registro de sesión con la causa raíz. Tests: `test_intent_robustness.py` (bubble makers → minicurso, actividad latest-wins) y `test_companion_split.py` (routing de Reservar). Suite: **1029 passed**, 15 skipped.
+
+0.19.14 - (2026-07-07)
+----------------------
+* **Batería exhaustiva de casos de prueba conversacionales** (`docs/test-battery-edge-cases.md`, 168 casos en 22 categorías): cambio de opinión/contradicciones, límites de edad exactos, discapacidad/DIVE TO HEAL, escalado médico frontera, precios/descuentos raros, servicios poco preguntados del catálogo, memoria de largo alcance, adversarial/prompt-injection (OWASP LLM Top 10), léxico (género gramatical, ortografía). Con checkboxes y registro de sesión para que el equipo continúe probando de forma independiente.
+* **Fix (higiene de datos)**: `_format_fewshot_block` (`rag_agent.py`) ya no cita el mensaje literal de un cliente real pasado en los ejemplos few-shot — solo el escenario/tema y la respuesta del asesor. Antes se filtraba texto personal de un cliente distinto (relación, hotel, familia) al prompt de cualquier cliente nuevo.
+* **Regla de prompt añadida** (ES+EN, `rag_agent.py`): prohibición explícita y prominente de inventar acompañantes/relaciones no mencionadas por el cliente actual.
+* **Bug real encontrado, NO resuelto**: el bot puede alucinar un acompañante inexistente ("tu esposo puede...") ante un primer mensaje limpio sin mencionar a nadie más (ej. "estoy en la isla, hotel Cocoliso"). Distinto del bug de sobre-personalización ya arreglado (aquél reusaba mal un dato SÍ conocido; este inventa un dato que nunca existió). Persiste tras los 2 cambios de arriba (~3-4/5 en pruebas repetidas). Causa raíz no aislada del todo: descartado el ejemplo few-shot específico y el orquestador; reconstrucción aislada del pipeline completo no reprodujo el fallo (0/12), señal de que algo del flujo en vivo (Chatwoot/webhook) difiere de la réplica directa. Requiere logging en vivo para cerrar. Ver sección T113 en `docs/test-battery-edge-cases.md`.
+* Suite: 1022 passed, 6 skipped (sin regresiones).
+
 0.19.13 - (2026-07-06)
 ----------------------
 * **E2E real con el LLM** (OpenAI gpt-4o + Postgres/pgvector + KB reindexada a 779 docs): 11 escenarios multi-turno probados en vivo (flujo certificado completo a checkout, escalaciones, info, cancelación, buceo adaptado, inglés, memoria de edad multi-turno). La mayoría correcto; el framing positivo, la eliminación del descuento colombiano y el routing de reserva confirmados en vivo. Se encontraron y corrigieron 2 bugs reales:

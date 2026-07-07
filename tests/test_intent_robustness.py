@@ -121,3 +121,96 @@ def test_plural_certificados_in_verb_split():
     between the activity verb and 'y' must not break the numeric split."""
     i = _d("somos 5, 3 buceamos certificados y 2 hacen snorkel")
     assert i.group_allocation == {"certified_diving": 3, "snorkel": 2}
+
+
+# --- Bubble Makers is a kids beginner activity (not certified diving) --------
+
+@pytest.mark.parametrize("msg", [
+    "quiero saber del bubble makers",
+    "bubble makers para mi hijo de 9",
+    "cuentame del bubblemaker",
+    "el bubble maker",
+])
+def test_bubble_makers_is_minicourse_not_certified(msg):
+    i = _d(msg)
+    assert i.activity == "minicourse"
+    assert i.is_certified is False
+
+
+# --- Latest concrete activity wins (customer changes their mind) -------------
+
+def _apply_seq(msgs):
+    from src.agents.supervisor import _apply_detected_intent
+    st = ConversationState(conversation_id="seq"); st.language = "es"
+    for m in msgs:
+        _apply_detected_intent(_d(m), st)
+    return st
+
+
+def test_activity_updates_when_customer_switches_to_minicourse():
+    """After 'quiero bucear' (certified) then 'mejor un minicurso', the stored
+    activity must follow the latest intent — else clicking Reservar routes a
+    beginner into the certified flow (the Bubble Makers bug)."""
+    st = _apply_seq(["quiero bucear", "mejor un minicurso para el niño"])
+    assert st.detected_activity == "minicourse"
+    assert st.detected_is_certified is False
+
+
+def test_activity_updates_bucear_then_bubble_makers():
+    st = _apply_seq(["quiero bucear", "cuentame del bubble makers"])
+    assert st.detected_activity == "minicourse"
+
+
+def test_activity_stays_certified_when_no_new_activity():
+    st = _apply_seq(["somos 2 buzos certificados", "y cuanto cuesta?"])
+    assert st.detected_activity == "certified_diving"
+    assert st.detected_is_certified is True
+
+
+# --- Language: Spanish question with an English activity name ---------------
+
+@pytest.mark.parametrize("msg", [
+    "¿qué es el Mindful Diving?",
+    "que es el open water",
+    "¿cómo funciona el discover scuba?",
+])
+def test_spanish_question_with_english_term_stays_spanish(msg):
+    assert _d(msg).language == "es"
+
+
+@pytest.mark.parametrize("msg", [
+    "cuentame del fun dive",   # tie (del vs dive) -> None, must NOT flip to English
+    "el diving",
+])
+def test_ambiguous_spanish_never_flips_to_english(msg):
+    assert _d(msg).language != "en"
+
+
+@pytest.mark.parametrize("msg", [
+    "how much is diving",
+    "i want to dive",
+    "what is the mindful diving course",
+    "hello, how much is snorkeling",
+])
+def test_english_messages_still_english(msg):
+    assert _d(msg).language == "en"
+
+
+# --- English family / kids-age extraction -----------------------------------
+
+@pytest.mark.parametrize("msg,expected", [
+    ("we are a family of 4", 4),
+    ("a family of 5 wants to dive", 5),
+    ("family of three, all certified", 3),
+])
+def test_english_family_of_n_group_size(msg, expected):
+    assert _d(msg).group_size == expected
+
+
+@pytest.mark.parametrize("msg,expected", [
+    ("our kids are 7 and 11", [7, 11]),
+    ("the children are 6 and 9", [6, 9]),
+    ("we are a family of 4, kids are 7 and 11, staying at pao pao", [7, 11]),
+])
+def test_english_kids_are_ages(msg, expected):
+    assert _d(msg).ages == expected
