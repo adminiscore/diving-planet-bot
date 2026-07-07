@@ -512,3 +512,13 @@ Probadas ~20 conversaciones con el LLM real (Docker+Postgres+KB reindexada, `RAG
 **↳ ARREGLADO en v0.19.19 — Cat 9 T059 falso positivo "corazón de oro".** "mi tía tiene un corazón de oro" escalaba como médico (por la keyword "corazón"). Añadida exclusión de modismos (`_MEDICAL_IDIOM_EXCLUSIONS` en `escalation.py`): "corazón de oro", "de todo corazón", "heart of gold"… ya no escalan; "problema en el corazón" sigue escalando. Tests en `test_rag_safety.py`.
 
 **Requiere reindex** en PRE/PRO (cambios en `faqs.json` + `policies.json`).
+
+### 2026-07-07 (cont. 5) — barrido en vivo categorías 1/7/19/21/22 (Gonzalo/Claude)
+
+**Muy bien:** Cat 1 info-dump (T001 extrae el split 3 cert + 2 princ); Cat 19 typos pesados ("kiero buzear stoy en kartagena"), sin espacios ("holaquierohacer…"), mayúsculas/emoji — todos parseados; Cat 21 bebé de 2 (no ofrece buceo), mascota (no), 25 de boda (grupo grande), futuro lejano 2 años (escala); Cat 22 lenguaje inclusivo ("todes certificades, somos 4" → cert=True, grp=4) y femenino ("buzas certificadas").
+
+**↳ ARREGLADO en v0.19.20 — extracción en inglés incompleta.** "we are a family of 4" y "our kids are 7 and 11" no capturaban grupo/edades (el español "familia de N" sí). Añadidos patrones EN: `family of N` (grupo) y `kids/children are N and M` (edades). Verificado: T003 completo ("family of 4, kids are 7 and 11") → grp=4, ages=[7,11]. Tests en `test_intent_robustness.py`.
+
+**Gaps menores no arreglados (niche):**
+- T007 (3 actividades distintas en una frase: minicurso hija + snorkel yo + paquete-5 esposo) → el detector aplana a minicurso; el orquestador LLM lo maneja. Extremo por diseño.
+- T165 ("3 buceadoras y 2 buceadores") → no suma a 5 (split de mismo-tipo-ambos-lados). Frase muy inusual.

@@ -1,6 +1,11 @@
 History
 =======
 
+0.19.20 - (2026-07-07)
+----------------------
+* **Fix: extracción de grupo/edades en inglés incompleta** (barrido en vivo Cat 1/7). "we are a family of 4" no daba grupo=4 y "our kids are 7 and 11" no daba edades (el español "familia de N" sí funcionaba). Añadidos patrones EN en `intent_detector`: `family of N` (tamaño de grupo) y `kids/children are N and M` (edades). Verificado con el caso T003 completo. +tests.
+* Barrido Cat 1/7/19/21/22 en vivo: info-dump con split, typos pesados/sin-espacios/mayúsculas, lenguaje inclusivo/femenino, bebé/mascota/grupo-grande/futuro-lejano — todo correcto salvo el gap de inglés ya corregido. Suite: 1045+ passed.
+
 0.19.19 - (2026-07-07)
 ----------------------
 * **Fix: discapacidad con términos coloquiales caía al fallback** (barrido en vivo Cat 8). "soy sordo" / "uso silla de ruedas" / "soy ciego" respondían "no tengo información" porque la KB de buceo adaptado usaba solo términos formales (auditiva/movilidad reducida/visual) → desajuste de vocabulario en el retrieval. Enriquecidos el FAQ y la policy de DIVE TO HEAL con sinónimos coloquiales + FAQ dedicado de silla de ruedas/movilidad reducida. Ahora los 3 responden con la info del programa. **Requiere reindex.**

@@ -194,3 +194,23 @@ def test_ambiguous_spanish_never_flips_to_english(msg):
 ])
 def test_english_messages_still_english(msg):
     assert _d(msg).language == "en"
+
+
+# --- English family / kids-age extraction -----------------------------------
+
+@pytest.mark.parametrize("msg,expected", [
+    ("we are a family of 4", 4),
+    ("a family of 5 wants to dive", 5),
+    ("family of three, all certified", 3),
+])
+def test_english_family_of_n_group_size(msg, expected):
+    assert _d(msg).group_size == expected
+
+
+@pytest.mark.parametrize("msg,expected", [
+    ("our kids are 7 and 11", [7, 11]),
+    ("the children are 6 and 9", [6, 9]),
+    ("we are a family of 4, kids are 7 and 11, staying at pao pao", [7, 11]),
+])
+def test_english_kids_are_ages(msg, expected):
+    assert _d(msg).ages == expected
