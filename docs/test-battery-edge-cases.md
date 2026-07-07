@@ -377,14 +377,14 @@ El español tiene concordancia de género (buzo/buza, certificado/certificada) y
 
 Origen: bug real reportado (2026-07-07). El cliente pregunta por **Bubble Makers** (programa infantil), el bot responde bien, y al pulsar "🤿 Reservar" lo mete en el flujo de **buceo certificado** — ignorando de qué se estaba hablando. Causa: `detected_activity` era write-once (la PRIMERA actividad detectada se quedaba fija para siempre; un mensaje temprano con "bucear" la fijaba en certificado y nada la corregía) + "bubble makers" no se mapeaba a ninguna actividad. Ambos arreglados en v0.19.15. Esta categoría vigila que el clic de "Reservar" respete SIEMPRE el último contexto.
 
-- [ ] **T169**: "quiero saber más sobre bubble makers" → (respuesta) → clic "🤿 Reservar" → debe ir al flujo de **minicurso/principiante**, NUNCA a "buceo certificado".
-- [ ] **T170**: "cuéntame del minicurso" → "reservar" → flujo principiante (no certificado).
-- [ ] **T171**: "info del snorkel" → "reservar" → flujo de snorkel.
-- [ ] **T172**: "quiero bucear" → (luego cambia) "mejor un minicurso para mi hijo" → "reservar" → flujo principiante (respeta el ÚLTIMO, no el primer "bucear").
-- [ ] **T173**: "quiero el open water" → "reservar" → flujo de curso Open Water (no salida certificada).
-- [ ] **T174**: "¿qué es el bubble makers?" → "sí, quiero reservarlo para mi hija de 9" → principiante/Bubble Makers, con la edad tenida en cuenta.
-- [ ] **T175**: Preguntar por 2 actividades seguidas ("cuéntame del snorkel" … "y del minicurso") → "reservar" → debe usar la última mencionada o preguntar, nunca defaultear a certificado.
-- [ ] **T176**: Cliente que NO mencionó ninguna actividad ("hola, ¿qué precios tienen?") → "reservar" → debe preguntar qué actividad (menú), NO asumir certificado.
+- [x] **T169**: "quiero saber más sobre bubble makers" → (respuesta) → clic "🤿 Reservar" → debe ir al flujo de **minicurso/principiante**, NUNCA a "buceo certificado". — Verificado en vivo (v0.19.25): `detected_activity=minicourse`, `is_certified=False`, entra al flujo de minicurso (pregunta edades de niños/Bubble Makers).
+- [x] **T170**: "cuéntame del minicurso" → "reservar" → flujo principiante (no certificado). — Verificado en vivo: `da=minicourse`, pide cantidad del minicurso.
+- [x] **T171**: "info del snorkel" → "reservar" → flujo de snorkel. — Verificado en vivo: `da=snorkel`, flujo de snorkel.
+- [x] **T172**: "quiero bucear" → (luego cambia) "mejor un minicurso para mi hijo" → "reservar" → flujo principiante (respeta el ÚLTIMO, no el primer "bucear"). — Verificado en vivo: `da` pasa de `certified_diving` a `minicourse` (latest-wins), Reservar entra a minicurso.
+- [x] **T173**: "quiero el open water" → "reservar" → flujo de curso Open Water (no salida certificada). — Verificado en vivo: `da=padi_open_water`, muestra el curso Open Water.
+- [x] **T174**: "¿qué es el bubble makers?" → "sí, quiero reservarlo para mi hija de 9" → principiante/Bubble Makers, con la edad tenida en cuenta. — Verificado en vivo: reserva en lenguaje natural → `da=minicourse`, "El minicurso de buceo es ideal para principiantes".
+- [x] **T175**: Preguntar por 2 actividades seguidas ("cuéntame del snorkel" … "y del minicurso") → "reservar" → debe usar la última mencionada o preguntar, nunca defaultear a certificado. — Verificado en vivo: gana la última (`da=minicourse`), Reservar entra a minicurso.
+- [x] **T176**: Cliente que NO mencionó ninguna actividad ("hola, ¿qué precios tienen?") → "reservar" → debe preguntar qué actividad (menú), NO asumir certificado. — Verificado en vivo: `da=None`, Reservar va a la entrada neutral (MIXED_ENTRY, "Añadir actividades"), no asume certificado.
 
 **Vigilar**: el clic de "Reservar" nunca debe engancharte como buzo certificado por defecto. Si la actividad es ambigua, preguntar; si se habló de una actividad concreta (aunque sea principiante/infantil), respetarla.
 
@@ -555,3 +555,17 @@ Fix: `load_knowledge_base()` ya no indexa las citas literales del cliente — so
 **↳ ARREGLADO en v0.19.20 — extracción en inglés incompleta.** "we are a family of 4" y "our kids are 7 and 11" no capturaban grupo/edades (el español "familia de N" sí). Añadidos patrones EN: `family of N` (grupo) y `kids/children are N and M` (edades). Verificado: T003 completo ("family of 4, kids are 7 and 11") → grp=4, ages=[7,11]. Tests en `test_intent_robustness.py`.
 
 **Gaps arreglados en v0.19.24** (ver registro de sesión "cont. 8" más abajo): T007 (3 vías de group_allocation) y T165 (suma de sustantivos con género).
+
+### 2026-07-07 (cont. 9) — Categoría 23 completa (T169-T176) barrida en vivo + bug de horario de reserva (Álvaro/Claude)
+
+**Categoría 23 (actividad pegajosa al pulsar "Reservar") — los 8 casos PASAN.** Probados contra `route_message()` real con LLM (Postgres/pgvector local, 779 docs). El fix de v0.19.15 (latest-wins en `_apply_detected_intent` + "bubble makers"→minicourse) generaliza a todos los subcasos, no solo al reportado:
+- **T169** bubble makers → Reservar → `detected_activity=minicourse`, `is_certified=False`, flujo de minicurso (pregunta edades de niños/Bubble Makers), ya NO buceo certificado.
+- **T170/T171/T173** minicurso/snorkel/open water → Reservar → cada uno respeta su actividad (`minicourse`/`snorkel`/`padi_open_water`).
+- **T172** "quiero bucear" (→`certified_diving`) → "mejor un minicurso para mi hijo" (→`minicourse`) → Reservar entra a minicurso: el último gana.
+- **T174** reserva en lenguaje natural ("sí, quiero reservarlo para mi hija de 9") → minicurso.
+- **T175** dos actividades seguidas (snorkel, luego minicurso) → gana la última (minicurso).
+- **T176** sin actividad concreta ("¿qué precios tienen?") → Reservar va a la entrada neutral (MIXED_ENTRY, "Añadir actividades"), NO asume certificado.
+
+**↳ ARREGLADO en v0.19.25 — alucinación de "el corte de reserva ya pasó" (bug reportado en vivo en PRE).** Tras "¿cómo reservo?" (respuesta correcta: avisa el corte de las 4:30 PM del día anterior), el cliente escribía "quiero reservar para mañana" y el bot respondía como si el corte YA hubiera pasado ("😕 el sistema se cierra automáticamente..."), sin ninguna base — el pipeline de RAG no tenía NINGUNA noción de la hora/fecha actual (confirmado: `_build_extra_context`/`build_system_prompt` no inyectaban fecha/hora; "mañana" era solo un keyword de FAQ). Cae a `rag_answer()` puro (ninguna rama determinista lo captura). Fix: (1) `_build_extra_context` (`supervisor.py`) ahora inyecta la fecha/hora real en `America/Bogota` (`zoneinfo`, sin dependencia nueva) en cada llamada a RAG; (2) nueva regla de prompt (ES+EN, `rag_agent.py`) que exige comparar la hora actual contra el corte antes de afirmar que ya pasó, y prohíbe inventar urgencia/emojis de preocupación si esa comparación no es posible. Tests en `test_conversations.py` (fecha en el contexto) y `test_rag_safety.py` (regla en el prompt). Suite: 1081 passed.
+
+**Nota de infra (no batería)**: se añadió un botón "🔄 Nueva conversación" en `/chat` (`src/main.py`, llama a `$chatwoot.reset()`) para que el owner pueda resetear el widget sin incógnito, y `feature/pre_alvaro` ahora también auto-despliega a PRE (mismo entorno compartido que `pre_gadea`).
