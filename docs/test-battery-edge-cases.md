@@ -491,3 +491,13 @@ Probadas ~20 conversaciones con el LLM real (Docker+Postgres+KB reindexada, `RAG
 - **T113b (esposo inventado)**: esta vez NO alucinó con "hotel cocoliso" — pero es intermitente. Sigue sin cerrar; re-testear.
 
 **Requiere reindex de la KB** para servir el FAQ nuevo — hecho en dev local; **pendiente en PRE/PRO**.
+
+### 2026-07-07 (cont. 3) — barrido en vivo categorías 4/5/13/17/18 (Gonzalo/Claude)
+
+**Bien:** Cat 4 (indeciso) recomienda sin presionar y no entra en bucle con monosílabos; Cat 13 crypto/Bre-B rechazados honestamente, "ya pagué ¿confirmado?" → escala; Cat 17 recuerda el presupuesto y responde si el precio encaja; T018 ("mi hijo de 8 y mi hijo de 8") → lo trata como 2 niños de 8 (defendible).
+
+**↳ ARREGLADO en v0.19.18 — T091 alucinación de PayPal.** "¿puedo pagar con PayPal?" → antes: "¡Claro que sí, puedes pagar con PayPal!" (inventado — la KB solo lista tarjeta/efectivo/Llave/enlace). Añadido el negativo explícito al FAQ de medios de pago ("No aceptamos PayPal, criptomonedas ni pagos a plazos") + reindex. Ahora: no confirma PayPal (deriva a asesor); "¿pago en cuotas?" → "no aceptamos pagos a plazos" ✅.
+
+**Follow-ups conocidos (LLM↔árbol, no arreglados — más difíciles):**
+- **T029/T033 (grupo cambia a mitad del flujo de reserva)**: una vez dentro del árbol (p.ej. en el paso de UBICACIÓN), añadir gente por texto libre ("y mi hijo de 12") da "no te entendí" o se ignora, porque ese paso espera una ubicación, no una recomposición del grupo. El caso de composición dada de golpe en un mensaje sí funciona (Categoría 1). Recomponer a mitad del flujo requiere que los pasos del árbol acepten texto libre de recomposición — pendiente.
+- **T123 (50 personas)**: acepta la cantidad extrema sin avisar; un grupo tan grande debería sugerir servicio privado/asesor. Menor.

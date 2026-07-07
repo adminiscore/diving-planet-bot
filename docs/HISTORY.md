@@ -1,6 +1,11 @@
 History
 =======
 
+0.19.18 - (2026-07-07)
+----------------------
+* **Fix: alucinación de PayPal** (hallada en barrido en vivo). "¿puedo pagar con PayPal?" → "¡Claro que sí!" (inventado — la KB solo lista tarjeta/efectivo/Llave/enlace de pago). Contraste: crypto y Bre-B sí se rechazaban bien. Añadido el negativo explícito al FAQ de medios de pago ("No aceptamos PayPal, criptomonedas ni pagos a plazos/cuotas") + reindex → ahora no confirma PayPal (deriva a asesor) y "¿pago en cuotas?" → "no aceptamos". **Requiere reindex** en PRE/PRO.
+* Barrido de categorías 4/5/13/17/18 en vivo: indeciso, memoria de presupuesto, crypto/Bre-B, "ya pagué" (escala) — todo correcto. Follow-ups conocidos (LLM↔árbol) anotados: recomponer el grupo a mitad del flujo de reserva por texto libre ("y mi hijo de 12" en el paso de ubicación) da "no te entendí"; grupo extremo (50) se acepta sin sugerir servicio privado.
+
 0.19.17 - (2026-07-07)
 ----------------------
 * **Fix: alucinaciones de cifras en respuestas RAG** (halladas en el barrido en vivo). Dos casos reales corregidos + uno descartado:
