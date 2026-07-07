@@ -84,7 +84,11 @@ jobs:
   deploy-pre:
     name: Deploy to PRE
     needs: test
-    if: github.ref == 'refs/heads/feature/pre_gadea' && github.event_name == 'push'
+     # PRE is a single shared environment. Each person deploys via their own
+    # "pre_*" mirror branch (pushed intentionally, not on every routine commit
+    # to their integration branch); whichever pushes last "wins" (see
+    # docs/deploy-pre-redeploy.md).
+    if: (github.ref == 'refs/heads/feature/pre_gadea' || github.ref == 'refs/heads/feature/pre_alvaro') && github.event_name == 'push'
     runs-on: ubuntu-latest
 
     steps:
@@ -101,8 +105,8 @@ jobs:
             set -euo pipefail
             cd /opt/diving-planet-bot
             git fetch origin
-            git checkout feature/pre_gadea
-            git reset --hard origin/feature/pre_gadea
+            git checkout ${{ github.ref_name }}
+            git reset --hard origin/${{ github.ref_name }}
             docker compose -f docker-compose.vps.yml up -d --build dp-pre-bot
             sleep 5
             docker exec dp-pre-bot python -m scripts.load_embeddings --yes
