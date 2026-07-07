@@ -63,6 +63,11 @@ class IntentDetector:
             'buzo', 'bautismo', 'precio', 'información', 'reservar',
             # common function words / verbs that disambiguate ES vs EN
             'estoy', 'recogen', 'puedo', 'gracias', 'cuánto', 'dónde', 'está',
+            # unambiguously-Spanish function words: keep a Spanish question with an
+            # English activity name ("¿qué es el Mindful Diving?") from being
+            # flagged as English just because it contains "diving".
+            'qué', 'que', 'es', 'el', 'la', 'los', 'las', 'del', 'para', 'con',
+            'cómo', 'como', 'cuál', 'cual', 'una', 'más', 'sí', 'tú', 'y', 'o',
         }
 
         english_keywords = {

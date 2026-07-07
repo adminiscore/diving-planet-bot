@@ -1,6 +1,11 @@
 History
 =======
 
+0.19.16 - (2026-07-07)
+----------------------
+* **Fix: pregunta en español con término inglés respondía en INGLÉS** (hallado en barrido en vivo de la batería). "¿qué es el Mindful Diving?" se contestaba en inglés: el `_detect_language` del `intent_detector` marcaba idioma inglés porque "diving" es keyword EN y no había palabras-función españolas en su lista, y ese idioma sobreescribía el correcto vía `_apply_detected_intent`. Reforzadas las keywords españolas con palabras-función inequívocas (qué/que/es/el/la/para/con/cómo/cuál…). Verificado en vivo: ahora responde en español; sin regresión en mensajes 100% en inglés. Tests en `test_intent_robustness.py`.
+* **Barrido en vivo de 6 categorías de la batería** (3/12/14/16/20/22) con el LLM real: adversarial/red-teaming **excelente** (rechaza revelar el system prompt, niega descuentos falsos, no confirma pagos falsos), precios y léxico/typos correctos. Registrados en `docs/test-battery-edge-cases.md` 3 follow-ups de calidad RAG a verificar contra la KB (posibles alucinaciones: "máximo 12 en tour privado", "Divemaster dura 2 meses", "1 inmersión desde Cartagena").
+
 0.19.15 - (2026-07-07)
 ----------------------
 * **Fix: "Reservar" tras hablar de Bubble Makers enganchaba como buzo certificado** (bug real reportado por el owner). Dos causas, ambas corregidas:

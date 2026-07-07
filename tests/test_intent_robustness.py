@@ -165,3 +165,32 @@ def test_activity_stays_certified_when_no_new_activity():
     st = _apply_seq(["somos 2 buzos certificados", "y cuanto cuesta?"])
     assert st.detected_activity == "certified_diving"
     assert st.detected_is_certified is True
+
+
+# --- Language: Spanish question with an English activity name ---------------
+
+@pytest.mark.parametrize("msg", [
+    "¿qué es el Mindful Diving?",
+    "que es el open water",
+    "¿cómo funciona el discover scuba?",
+])
+def test_spanish_question_with_english_term_stays_spanish(msg):
+    assert _d(msg).language == "es"
+
+
+@pytest.mark.parametrize("msg", [
+    "cuentame del fun dive",   # tie (del vs dive) -> None, must NOT flip to English
+    "el diving",
+])
+def test_ambiguous_spanish_never_flips_to_english(msg):
+    assert _d(msg).language != "en"
+
+
+@pytest.mark.parametrize("msg", [
+    "how much is diving",
+    "i want to dive",
+    "what is the mindful diving course",
+    "hello, how much is snorkeling",
+])
+def test_english_messages_still_english(msg):
+    assert _d(msg).language == "en"
