@@ -1,6 +1,14 @@
 History
 =======
 
+0.19.17 - (2026-07-07)
+----------------------
+* **Fix: alucinaciones de cifras en respuestas RAG** (halladas en el barrido en vivo). Dos casos reales corregidos + uno descartado:
+  - **T114** "¿máximo en tour privado?" inventaba "hasta 12 personas" (la KB solo dice "cotización personalizada según el grupo", sin capacidad máxima). Nueva regla de prompt (ES+EN): no inventar cifras de capacidad/número máximo de personas, duración ni cupos que no estén en el contexto; si no está, decir que el asesor lo confirma.
+  - **T097** "¿1 sola inmersión desde Cartagena?": el dato "no disponible desde Cartagena" existía en `pricing.json` pero no se recuperaba. Añadido FAQ dedicado ("¿Puedo hacer solo 1 inmersión desde Cartagena?") → ahora responde bien ("desde Cartagena el mínimo son 2 inmersiones; 1 sola solo estando en las islas"). Regla de prompt refuerza respetar lo marcado "no disponible". **Requiere reindex** (`load_embeddings`).
+  - **T101** "Divemaster dura 2 meses / bucea gratis": NO era alucinación — está grounded en el FAQ "¿Cómo funciona el curso Divemaster?".
+* Verificado en vivo con el LLM real tras el reindex (781 docs).
+
 0.19.16 - (2026-07-07)
 ----------------------
 * **Fix: pregunta en español con término inglés respondía en INGLÉS** (hallado en barrido en vivo de la batería). "¿qué es el Mindful Diving?" se contestaba en inglés: el `_detect_language` del `intent_detector` marcaba idioma inglés porque "diving" es keyword EN y no había palabras-función españolas en su lista, y ese idioma sobreescribía el correcto vía `_apply_detected_intent`. Reforzadas las keywords españolas con palabras-función inequívocas (qué/que/es/el/la/para/con/cómo/cuál…). Verificado en vivo: ahora responde en español; sin regresión en mensajes 100% en inglés. Tests en `test_intent_robustness.py`.

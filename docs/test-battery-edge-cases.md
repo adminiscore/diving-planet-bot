@@ -484,8 +484,10 @@ Probadas ~20 conversaciones con el LLM real (Docker+Postgres+KB reindexada, `RAG
 
 **↳ ARREGLADO en v0.19.16 — T094 respondía en INGLÉS a pregunta en español.** "¿qué es el Mindful Diving?" → el detector de intención marcaba idioma inglés (porque "diving" es keyword EN y no había palabras-función ES en su lista), y sobreescribía el idioma correcto. Reforzadas las keywords españolas del `intent_detector` con palabras-función inequívocas (qué/es/el/para/con/cómo…). Verificado: ahora responde en español. Tests en `test_intent_robustness.py`.
 
-**Follow-ups de calidad RAG (posibles alucinaciones — verificar contra KB, NO arreglados aún):**
-- **T114**: "¿máximo en tour privado?" → respondió "hasta 12 personas". Verificar que ese número esté en la KB (política de servicio privado) y no sea inventado.
-- **T101**: "Divemaster, ¿cuánto dura?" → "aproximadamente 2 meses… buceas gratis". El Divemaster es `contact_only` sin duración fija en el JSON — verificar si "2 meses" está en alguna FAQ o es alucinación.
-- **T097**: "quiero solo 1 inmersión" → "Podemos organizar una inmersión… desde Cartagena". Contradice `pricing.json` (1 inmersión NO disponible desde Cartagena, solo por consulta). Revisar.
-- **T113b (esposo inventado)**: esta vez NO alucinó acompañante con "hotel cocoliso" — pero es intermitente (~3-4/5 según sesión anterior). Sigue sin cerrar; re-testear varias veces.
+**Follow-ups de calidad RAG — investigados y resueltos en v0.19.17 (2026-07-07):**
+- **↳ ARREGLADO T114**: "¿máximo en tour privado?" → antes inventaba "hasta 12 personas" (la KB solo dice "cotización personalizada según el grupo", sin capacidad). Regla de prompt (ES+EN) contra inventar cifras de capacidad/duración/cupos. Ahora: "el máximo varía según la embarcación… te lo confirma un asesor". ✅
+- **↳ NO ERA BUG T101**: "Divemaster, ¿cuánto dura?" → "aproximadamente 2 meses, buceas gratis" está **grounded** (el FAQ "¿Cómo funciona el curso Divemaster?" lo dice literal). Respuesta correcta. ✅
+- **↳ ARREGLADO T097**: "¿se puede hacer 1 sola inmersión desde Cartagena?" → el dato "no disponible desde Cartagena" existía en `pricing.json` pero no se recuperaba. Añadido FAQ dedicado → ahora: "desde Cartagena el mínimo son 2 inmersiones; 1 sola solo estando en las islas". La frase imperativa "quiero solo 1 inmersión" dispara reserva (no RAG) y el flujo solo ofrece planes de 2+. ✅
+- **T113b (esposo inventado)**: esta vez NO alucinó con "hotel cocoliso" — pero es intermitente. Sigue sin cerrar; re-testear.
+
+**Requiere reindex de la KB** para servir el FAQ nuevo — hecho en dev local; **pendiente en PRE/PRO**.
