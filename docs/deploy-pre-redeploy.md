@@ -26,6 +26,13 @@
 > Usa el procedimiento manual de abajo (o `scripts/redeploy_pre.sh BRANCH=<rama>`)
 > solo como fallback si la Action falla o si necesitas desplegar una rama distinta
 > a las dos anteriores.
+>
+> **Nota (2026-07-07)**: el repo del VPS se clonó originalmente con
+> `git clone -b feature/pre_gadea ...`, lo que por defecto crea un clon
+> "single-branch" — el `.git` solo rastrea esa rama y `git fetch` nunca ve ramas
+> nuevas (ej. `feature/pre_alvaro`) por más veces que se corra. El job y
+> `scripts/redeploy_pre.sh` ahora corren `git remote set-branches origin '*'`
+> antes de cada fetch para arreglarlo (idempotente, seguro repetir siempre).
 
 Actualiza el entorno **PRE** (`dp-pre-bot` en el VPS) con la rama `feature/pre_gadea`
 (pruebaGon mergeada, v0.19.13+): nuevo código + KB reindexada + `RAG_MIN_SCORE=0.50`.

@@ -2,8 +2,8 @@
 # Redeploy PRE (dp-pre-bot) with RAG_MIN_SCORE=0.50 + KB reindex.
 # Run from the repo root on the VPS:  bash scripts/redeploy_pre.sh
 # PRE is a single shared environment — both feature/pre_gadea and
-# feature/dev_alvaro auto-deploy here via CI, whichever pushes last wins.
-# Override the branch manually with:  BRANCH=feature/dev_alvaro bash scripts/redeploy_pre.sh
+# feature/pre_alvaro auto-deploy here via CI, whichever pushes last wins.
+# Override the branch manually with:  BRANCH=feature/pre_alvaro bash scripts/redeploy_pre.sh
 # See docs/deploy-pre-redeploy.md for the manual step-by-step and rollback.
 set -euo pipefail
 
@@ -14,6 +14,11 @@ DB="dp-pre-postgres"
 ENV_FILE=".env.pre"
 
 echo "==> 1/5 Updating code to $BRANCH"
+# The VPS repo was cloned with `git clone -b feature/pre_gadea`, which defaults
+# to a single-branch clone: the fetch refspec only tracks that one branch, so
+# any OTHER branch (e.g. feature/pre_alvaro) stays invisible no matter how many
+# times you `git fetch`. Widen it (idempotent, safe to repeat every run).
+git remote set-branches origin '*'
 git fetch origin
 git checkout "$BRANCH"
 git pull origin "$BRANCH"
