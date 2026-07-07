@@ -3802,3 +3802,36 @@ async def test_cancel_does_not_trigger_mid_booking_navigation():
     )
 
 
+
+
+# --- Bare affirmation after the bot offered advisor contact ------------------
+
+
+@pytest.mark.asyncio
+async def test_bare_si_after_advisor_offer_escalates():
+    """Real PRE bug (2026-07-07): bot offered "puedo pasarte el contacto de un
+    asesor... te gustaria?", customer replied "si", and the bot fell to the
+    generic RAG fallback instead of fulfilling its own offer."""
+    state = ConversationState(conversation_id="si-offer-1")
+    state.step = Step.MAIN_MENU
+    state.language = "es"
+    state.history = [
+        {"role": "user", "content": "quiero ser rescue diver"},
+        {"role": "assistant", "content": "Si quieres, puedo pasarte el contacto de un asesor. ¿Te gustaria eso?"},
+    ]
+    response = await route_message(state, "si")
+    assert state.step == Step.ESCALATE
+    assert "asesor" in response.lower()
+
+
+@pytest.mark.asyncio
+async def test_bare_si_without_offer_does_not_escalate():
+    state = ConversationState(conversation_id="si-offer-2")
+    state.step = Step.MAIN_MENU
+    state.language = "es"
+    state.history = [
+        {"role": "user", "content": "hola"},
+        {"role": "assistant", "content": "¡Hola! ¿En qué te ayudo?"},
+    ]
+    await route_message(state, "si")
+    assert state.step != Step.ESCALATE

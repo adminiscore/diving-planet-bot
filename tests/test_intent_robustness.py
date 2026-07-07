@@ -214,3 +214,30 @@ def test_english_family_of_n_group_size(msg, expected):
 ])
 def test_english_kids_are_ages(msg, expected):
     assert _d(msg).ages == expected
+
+
+# --- Ages written without the enye ("9 anos") --------------------------------
+
+@pytest.mark.parametrize("msg,expected", [
+    ("Somos gemelos de 9 años", [9]),
+    ("Somos gemelos de 9 anos", [9]),          # common no-tilde typo
+    ("mi hijo tiene 9 anos", [9]),
+    ("hijos de 5, 8, 11 y 15 anos", [5, 8, 11, 15]),
+])
+def test_ages_detected_without_tilde(msg, expected):
+    assert _d(msg).ages == expected
+
+
+def test_last_dive_years_not_an_age_without_tilde():
+    # "hace 5 anos" is a last-dive timeframe, not a person age.
+    intent = _d("soy open water desde hace 5 anos")
+    assert 5 not in (intent.ages or [])
+
+
+@pytest.mark.parametrize("msg,expected", [
+    ("y mi hijo, tiene 12", [12]),
+    ("mi hija tiene 9", [9]),
+    ("y mi otro hijo, tiene 7", [7]),
+])
+def test_kid_noun_tiene_age(msg, expected):
+    assert _d(msg).ages == expected

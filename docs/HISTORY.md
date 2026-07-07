@@ -1,6 +1,17 @@
 History
 =======
 
+0.19.26 - (2026-07-07)
+----------------------
+* **Batería: categorías 1/3/5/7 barridas con checkbox (22 tests marcados) + 7 fixes reales** (detalle completo en `docs/test-battery-edge-cases.md` registro "cont. 10"):
+  - **"si" tras oferta de asesor caía al fallback** (bug reportado por el owner en PRE con pantallazo): el bot ofrecía "¿te paso el contacto de un asesor?", el cliente decía "si" y el bot respondía "No tengo información suficiente". Nueva rama determinista en `route_message` (`supervisor.py`): afirmación corta + oferta de asesor en el último mensaje del bot → escala cumpliendo la oferta (restringida a MAIN_MENU/FREE_TEXT).
+  - **Cupo inventado**: "queremos bucear mañana" a veces respondía "¡tenemos disponibilidad!" copiando una situación histórica del KB — regla de prompt ES+EN contra confirmar cupo para fechas.
+  - **Edades sin respuesta**: mensajes que solo traen edades caían al fallback — `_build_extra_context` ahora inyecta las notas de `eligibility.age_eligibility_note()` por edad detectada como ground truth.
+  - **Detector de edades**: acepta "anos" sin ñ y "mi hijo, tiene 7" (nuevos patrones + tests).
+  - **Confirmación de grupo mixto**: ya no dice "son 2 personas" borrando a los menores — los nombra con sus edades.
+  - **Idioma**: reforzado "Responde SIEMPRE en español..." (una corrida aislada respondía en inglés ante términos EN como "open water").
+* Suite: 1091 passed, 6 skipped. Sin cambios de KB — no requiere reindex.
+
 0.19.25 - (2026-07-07)
 ----------------------
 * **Arreglada alucinación de "el corte de reserva ya pasó" (bug reportado en vivo en PRE)**: tras "¿cómo reservo?" (respuesta correcta: avisa el corte de las 4:30 PM del día anterior), el cliente escribía "quiero reservar para mañana" y el bot respondía como si el corte YA hubiera pasado ("😕 el sistema se cierra automáticamente..."), sin ninguna base real — el pipeline de RAG no tenía ninguna noción de la hora/fecha actual en ningún punto. Arreglado con dos cambios: (1) `_build_extra_context` (`supervisor.py`) ahora inyecta la fecha/hora real en `America/Bogota` (vía `zoneinfo`, sin dependencia nueva) en cada llamada a RAG; (2) nueva regla explícita en el system prompt (ES+EN, `rag_agent.py`) que exige comparar la hora actual contra el corte antes de afirmar que ya pasó, y prohíbe inventar urgencia si esa comparación no es posible. Tests nuevos en `test_conversations.py`/`test_rag_safety.py`.

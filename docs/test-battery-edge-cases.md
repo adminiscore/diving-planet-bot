@@ -37,12 +37,12 @@ de `src/agents/intent_detector.py`.
 
 El cliente da de entrada casi todos los datos de golpe. El bot debe extraerlos TODOS y no repreguntar ninguno.
 
-- [ ] **T001**: "Hola, somos 5, 3 certificados y 2 principiantes, presupuesto de unos 800 dólares, tenemos 3 días, salimos desde Cartagena, ¿qué me recomiendan?"
-- [ ] **T002**: "Buenas, quiero el open water, soy alérgico a los mariscos, viajo solo, llego el jueves y me voy el domingo"
-- [ ] **T003**: "Hi, we're a family of 4, kids are 7 and 11, we're staying at Pao Pao, want to dive tomorrow if possible"
-- [ ] **T004**: "Somos una pareja, ella tiene miedo al agua pero quiere intentarlo, yo soy rescue diver, presupuesto ajustado, ¿qué opciones baratas hay?"
-- [ ] **T005**: "Quiero hacer advanced, ya tengo el open water desde hace 3 años pero no he vuelto a bucear, estoy en Cocoliso, somos 2"
-- [ ] **T006**: "Buenas tardes, grupo de una empresa, 12 personas, mitad certificados mitad no, necesitamos factura, ¿se puede?"
+- [x] **T001**: "Hola, somos 5, 3 certificados y 2 principiantes, presupuesto de unos 800 dólares, tenemos 3 días, salimos desde Cartagena, ¿qué me recomiendan?" — Verificado (v0.19.25): usa los 5 datos (5 personas, split 3+2, 3 días, Cartagena) y recomienda el paquete de 7 inmersiones/3 días sin repreguntar nada.
+- [x] **T002**: "Buenas, quiero el open water, soy alérgico a los mariscos, viajo solo, llego el jueves y me voy el domingo" — Verificado: reconoce el curso, pide solo lo que falta (hotel), gestiona la alergia (avisar al reservar) y recuerda la teoría previa.
+- [x] **T003**: "Hi, we're a family of 4, kids are 7 and 11, we're staying at Pao Pao, want to dive tomorrow if possible" — Verificado: edades [7,11] persistidas, entra al flujo de reserva (los pasos de niños las usan); la variante informativa matiza la logística de Pao Pao sin autorizar a bucear al de 7.
+- [x] **T004**: "Somos una pareja, ella tiene miedo al agua pero quiere intentarlo, yo soy rescue diver, presupuesto ajustado, ¿qué opciones baratas hay?" — Verificado: Discover Scuba para ella (con instructor), reconoce el Rescue y el presupuesto ajustado.
+- [x] **T005**: "Quiero hacer advanced, ya tengo el open water desde hace 3 años pero no he vuelto a bucear, estoy en Cocoliso, somos 2" — Verificado: Advanced + refresh por inactividad + aprovecha que ya está en Cocoliso.
+- [x] **T006**: "Buenas tardes, grupo de una empresa, 12 personas, mitad certificados mitad no, necesitamos factura, ¿se puede?" — Verificado: deriva a asesor (correcto para grupo corporativo + facturación; mejorable el copy genérico del fallback).
 - [x] **T007**: "hola quiero reservar minicurso para mi hija de 9 y snorkel para mi que no se bucear y mi esposo quiere el paquete de 5 buceos porque es rescue diver desde cartagena para el sabado" — arreglado en v0.19.24 (3 vías de group_allocation), ver registro de sesión.
 
 **Vigilar**: ¿retiene TODOS los datos (grupo, certificación, edades, presupuesto, ubicación, fecha)? ¿responde con una recomendación coherente sin re-preguntar nada ya dado? ¿el T007 (extremo, 3 actividades + 3 personas en una frase) se procesa sin perder ningún miembro del grupo?
@@ -70,12 +70,12 @@ El cliente dice una cosa y unos turnos después cambia de idea. El bot debe **ac
 
 ## Categoría 3 — Contradicciones dentro del mismo mensaje
 
-- [ ] **T016**: "Somos certificados pero nunca hemos buceado" (contradicción directa)
-- [ ] **T017**: "Quiero el curso para principiantes, soy open water desde hace 5 años"
-- [ ] **T018**: "Somos 3 personas, mi hijo de 8 y mi hijo de 8" (mismo dato repetido — ¿lo cuenta como 2 niños de 8 o corrige a 1?)
-- [ ] **T019**: "No quiero bucear, quiero hacer el curso de buceo open water"
-- [ ] **T020**: "Salimos desde Cartagena, estamos hospedados en San Pedro de Majagua" (San Pedro está en las islas, no en Cartagena — contradicción de ubicación)
-- [ ] **T021**: "Somos 2 certificados, uno de nosotros nunca ha buceado"
+- [x] **T016**: "Somos certificados pero nunca hemos buceado" (contradicción directa) — Verificado en vivo (v0.19.25): elige un lado coherente (certificados inactivos → recomienda refresh), no mezcla.
+- [x] **T017**: "Quiero el curso para principiantes, soy open water desde hace 5 años" — Verificado: contenido coherente (minicurso/refresh o entra a reserva). Nota: 1 corrida aislada respondió en inglés (contexto recuperado EN); reforzado el "Responde SIEMPRE en español..." del prompt, 12/12 en español después.
+- [x] **T018**: "Somos 3 personas, mi hijo de 8 y mi hijo de 8" (mismo dato repetido) — Verificado: según corrida lo trata como 2 niños de 8 (defendible) o deriva a asesor (seguro); nunca combina sin sentido.
+- [x] **T019**: "No quiero bucear, quiero hacer el curso de buceo open water" — Verificado: elige el lado del curso (6/6 entra al flujo con pregunta de certificación), coherente.
+- [x] **T020**: "Salimos desde Cartagena, estamos hospedados en San Pedro de Majagua" — Verificado: elige el lado del hotel (base propia en Majagua, ofrece recogida), coherente; no marca la contradicción pero no mezcla.
+- [x] **T021**: "Somos 2 certificados, uno de nosotros nunca ha buceado" — Verificado: recomienda refresh/curso intro para el que no tiene experiencia, coherente.
 
 **Vigilar**: ¿el bot detecta la contradicción y pide aclaración, o elige un lado sin avisar? Cualquiera de las dos es defendible, pero **nunca debe combinar ambos datos contradictorios en una respuesta que no tenga sentido**.
 
@@ -97,11 +97,11 @@ El cliente dice una cosa y unos turnos después cambia de idea. El bot debe **ac
 
 ## Categoría 5 — El grupo cambia de composición a mitad de conversación
 
-- [ ] **T029**: Empieza con "somos 2" → a mitad, "ah se suma mi hermano, ya seríamos 3"
-- [ ] **T030**: "Los 3 somos certificados" → luego "bueno en realidad uno de los 3 no, se me olvidó decirte"
-- [ ] **T031**: Empieza pidiendo snorkel para el grupo → luego "en realidad 2 de nosotros quieren bucear también, ellos sí están certificados"
-- [ ] **T032**: "Somos 4, todos certificados" → "un momento, mi esposa canceló, ahora somos 3"
-- [ ] **T033**: Cliente que agrega personas una a una: "voy yo" → "y mi esposa" → "y mi hijo, tiene 12" → "y mi otro hijo, tiene 7" (construcción incremental del grupo)
+- [x] **T029**: Empieza con "somos 2" → "ah se suma mi hermano, ya seríamos 3" — Verificado (v0.19.25): acusa el cambio y responde para 3.
+- [x] **T030**: "Los 3 somos certificados" → "en realidad uno de los 3 no" — Verificado: ofrece OW/Discover Scuba para el no certificado sin perder el resto del grupo.
+- [x] **T031**: snorkel para 4 → "2 quieren bucear también, certificados" — Verificado: actualiza a 2 buceo + 2 snorkel, "todos viajan juntos".
+- [x] **T032**: "Somos 4, todos certificados" → "mi esposa canceló, ahora somos 3" — Verificado: acusa el nuevo total. ↳ Además destapó que el turno 1 a veces respondía "¡Claro, tenemos disponibilidad para bucear mañana!" (cupo inventado, copiado de una situación histórica del KB donde el asesor real dijo "tenemos cupos") — ARREGLADO en v0.19.25 con regla de prompt ES+EN ("nunca confirmes cupo para una fecha; lo de situaciones pasadas fue OTRO día"). 3/3 limpio después.
+- [x] **T033**: construcción incremental "voy yo" → "y mi esposa" → "y mi hijo, tiene 12" → "y mi otro hijo, tiene 7" — Verificado: conteo 1→2→3→4 con acuse ("¡Anotado! Ahora sois 4"), sin fantasmas. ↳ De paso ARREGLADO en v0.19.25: "mi hijo, tiene 7" (edad con "tiene N" sin la palabra "años") no se detectaba como edad y caía al fallback — nuevo patrón en `intent_detector.py` + tests.
 
 **Vigilar**: ¿el conteo final del carrito/resumen coincide exactamente con la última versión del grupo? ¿No hay "fantasmas" (personas contadas dos veces o restos de una versión anterior)?
 
@@ -129,11 +129,11 @@ Basado en los umbrales exactos de `src/flows/eligibility.py`: `MIN_SNORKEL=6, BU
 
 ## Categoría 7 — Grupos con edades mixtas y desconocidas
 
-- [ ] **T045**: "Somos una familia de 6: papá certificado, mamá no, y 4 hijos de 5, 8, 11 y 15 años" (4 edades distintas, cada una con una regla diferente)
-- [ ] **T046**: "Vamos con niños pero no sé bien sus edades, son pequeños" (edad desconocida — no debe asumir un número)
-- [ ] **T047**: "Somos gemelos de 9 años" (misma edad, dos personas — ¿el bot agrega x2 correctamente?)
-- [ ] **T048**: "Tenemos un bebé de 2 años, ¿lo dejamos en el hotel o hay algo para él?"
-- [ ] **T049**: "Mi grupo tiene edades entre 8 y 40 años, como 8 personas en total, no sé exactamente cuántos de cada edad"
+- [x] **T045**: "Somos una familia de 6: papá certificado, mamá no, y 4 hijos de 5, 8, 11 y 15 años" — ↳ ARREGLADO en v0.19.25 (2 fixes): (1) caía al fallback genérico cuando el agente elegía responder — `_build_extra_context` ahora inyecta las notas de `eligibility.age_eligibility_note()` por cada edad detectada como ground truth; (2) la variante de reserva decía "Veo que son 2 personas" borrando a los 4 niños — `_build_confirmation_message` ahora nombra a los que faltan ("...y 4 menores (5, 8, 11, 15 años) que ubicamos según su edad"). Verificado 3/3 y 4/4.
+- [x] **T046**: "Vamos con niños pero no sé bien sus edades, son pequeños" — Verificado: da las opciones por rango de edad (snorkel 6+, BM 8-10, minicurso 10+) sin asumir un número.
+- [x] **T047**: "Somos gemelos de 9 años" — ↳ ARREGLADO en v0.19.25: con la grafía sin ñ ("9 anos", typo común) la edad no se detectaba y caía al fallback; el patrón de edad ahora acepta `a[nñ]os` (sin capturar "hace N anos" como edad). Verificado 4/4: responde con las dos opciones exactas para 9 años (snorkel + Bubble Makers). Tests en `test_intent_robustness.py`.
+- [x] **T048**: "Tenemos un bebé de 2 años, ¿lo dejamos en el hotel o hay algo para él?" — Verificado: honesto (no hay actividades para bebés, sugiere hotel/asesor), no inventa guardería.
+- [x] **T049**: "Mi grupo tiene edades entre 8 y 40 años, como 8 personas en total, no sé exactamente cuántos de cada edad" — Verificado: deriva a asesor (seguro y aceptable para un caso tan vago; mejorable: podría preguntar rangos).
 
 **Vigilar**: cuando la edad es desconocida o vaga, ¿el bot pregunta específicamente en vez de asumir adulto por defecto sin avisar?
 
@@ -569,3 +569,20 @@ Fix: `load_knowledge_base()` ya no indexa las citas literales del cliente — so
 **↳ ARREGLADO en v0.19.25 — alucinación de "el corte de reserva ya pasó" (bug reportado en vivo en PRE).** Tras "¿cómo reservo?" (respuesta correcta: avisa el corte de las 4:30 PM del día anterior), el cliente escribía "quiero reservar para mañana" y el bot respondía como si el corte YA hubiera pasado ("😕 el sistema se cierra automáticamente..."), sin ninguna base — el pipeline de RAG no tenía NINGUNA noción de la hora/fecha actual (confirmado: `_build_extra_context`/`build_system_prompt` no inyectaban fecha/hora; "mañana" era solo un keyword de FAQ). Cae a `rag_answer()` puro (ninguna rama determinista lo captura). Fix: (1) `_build_extra_context` (`supervisor.py`) ahora inyecta la fecha/hora real en `America/Bogota` (`zoneinfo`, sin dependencia nueva) en cada llamada a RAG; (2) nueva regla de prompt (ES+EN, `rag_agent.py`) que exige comparar la hora actual contra el corte antes de afirmar que ya pasó, y prohíbe inventar urgencia/emojis de preocupación si esa comparación no es posible. Tests en `test_conversations.py` (fecha en el contexto) y `test_rag_safety.py` (regla en el prompt). Suite: 1081 passed.
 
 **Nota de infra (no batería)**: se añadió un botón "🔄 Nueva conversación" en `/chat` (`src/main.py`, llama a `$chatwoot.reset()`) para que el owner pueda resetear el widget sin incógnito, y `feature/pre_alvaro` ahora también auto-despliega a PRE (mismo entorno compartido que `pre_gadea`).
+
+### 2026-07-07 (cont. 10) — barrido con checkbox de categorías 1/3/5/7 + bug del "si" tras oferta de asesor (Álvaro/Claude)
+
+Probadas en vivo contra `route_message()` real (LLM + pgvector local, 779 docs) las 4 categorías que quedaban con huecos de primera prueba. **22 tests marcados `[x]`** (T001-T006, T016-T021, T029-T033, T045-T049). **6 fixes reales** encontrados y aplicados (v0.19.26):
+
+1. **Idioma intermitente con términos EN** (T017/T019): 1 corrida aislada respondió en inglés a una pregunta en español con "open water" (el LLM seguía el idioma de los chunks recuperados). Reforzada la línea final del prompt ES/EN ("Responde SIEMPRE en español aunque el contexto... contenga palabras en inglés"). 12/12 en español después.
+2. **Edades → fallback genérico** (T045/T047): un mensaje que solo trae edades no recuperaba nada útil del KB y caía a "No tengo información suficiente". `_build_extra_context` ahora inyecta `eligibility.age_eligibility_note()` por cada edad detectada como ground truth. 4/4 después (opciones exactas por edad).
+3. **"anos" sin ñ no se detectaba como edad** (T047): el patrón de edad ahora acepta `a[nñ]os` (sin capturar "hace N anos" como edad). Tests en `test_intent_robustness.py`.
+4. **"Veo que son 2 personas" borrando a los niños** (T045): con familia de 6 (2 asignados + 4 menores), `_build_confirmation_message` decía "son 2 personas". Ahora nombra a los que faltan ("...y 4 menores (5, 8, 11, 15 años) que ubicamos según su edad"). 3/3 después.
+5. **Cupo inventado para "mañana"** (T032): "somos 4, queremos bucear mañana" → a veces "¡Claro, tenemos disponibilidad!" (copiado de una situación histórica del KB donde el asesor real dijo "tenemos cupos"). Nueva regla de prompt ES+EN: nunca confirmar cupo para una fecha; lo de situaciones pasadas fue OTRO día. 3/3 limpio después.
+6. **Edad con "tiene N" sin "años"** (T033): "y mi hijo, tiene 7" no se detectaba → nuevo patrón kid-noun+tiene en `intent_detector.py` + tests.
+
+**↳ ARREGLADO en v0.19.26 — "si" tras oferta de asesor caía al fallback (bug reportado por el owner en PRE, con pantallazo).** El bot ofrecía "puedo pasarte el contacto de un asesor... ¿te gustaría?", el cliente respondía "si", y el bot contestaba "No tengo información suficiente..." (el "si" es demasiado corto para el agente conversacional → caía a RAG sin contexto). Nueva rama determinista en `route_message` (`supervisor.py`): afirmación corta ("si/dale/ok/vale/yes...") + último mensaje del bot con oferta de asesor (regex mención+verbo de oferta) → escala a asesor cumpliendo la oferta. Restringida a MAIN_MENU/FREE_TEXT para no pisar los sí/no del árbol. Verificado 5/5 + control negativo. Tests en `test_conversations.py`.
+
+Suite: **1091 passed, 6 skipped**. Sin cambios de KB — no requiere reindex. Los cambios se despliegan a PRE actualizando `feature/pre_alvaro`.
+
+**Qué queda para el equipo**: las categorías 4, 6, 8-22 ya fueron barridas en vivo en sesiones anteriores (ver registros cont. 2-5) pero sus checkboxes individuales siguen sin marcar por la regla de "solo tachar tras probar en vivo" — falta la pasada de reconfirmación formal (ir caso a caso, verificar y tachar). Recomendación de orden: Cat 6 (edades exactas, determinista y rápida), luego 8-9 (médico), luego el resto. El driver reutilizable está descrito en este registro: correr los mensajes contra `route_message()` con el LLM real y comprobar paso/actividad/respuesta.

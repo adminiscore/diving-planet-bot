@@ -85,6 +85,23 @@ _AVAILABILITY_PATTERN = re.compile(
     re.IGNORECASE,
 )
 
+# Afirmacion "a secas" ("si", "dale", "ok") — usada para cumplir una oferta que
+# el propio bot hizo en el turno anterior (p.ej. "¿te paso con un asesor?").
+_BARE_AFFIRMATION_RE = re.compile(
+    r"^\s*(s[ií]+|yes|yep|yeah|ok(?:ay)?|dale|claro(?:\s+que\s+s[ií])?|vale|"
+    r"por\s+favor|s[ií]\s+por\s+favor|de\s+una|perfecto|me\s+gustar[ií]a|sure|please)"
+    r"[\s!.,)]*$",
+    re.IGNORECASE,
+)
+# La oferta del bot que ese "si" acepta: mencion de asesor + verbo de oferta.
+_ADVISOR_OFFER_RE = re.compile(r"\b(asesor|advisor|mi jefe|my boss)\b", re.IGNORECASE)
+_OFFER_VERB_RE = re.compile(
+    r"(te paso|puedo pasarte|te conecto|puedo conectarte|te pongo en contacto|"
+    r"pasarte el contacto|te gustar[ií]a|quieres que|connect you|put you in touch|"
+    r"pass you the contact|would you like)",
+    re.IGNORECASE,
+)
+
 # General recommendation / interest queries that have no specific activity keyword.
 # "que me recomiendas?", "qué actividades tienen?", "qué ofrecéis?" → route to the
 # booking tree (MIXED_ENTRY) so the bot gathers experience/group info instead of
@@ -2812,6 +2829,24 @@ def _build_extra_context(state: ConversationState) -> str | None:
             else "The customer indicated they will be there for multiple days."
         )
 
+    # Edades concretas mencionadas -> ground truth de elegibilidad por edad.
+    # Sin esto, un mensaje que solo trae edades ("familia con hijos de 5, 8,
+    # 11 y 15") no recupera nada util del KB y cae al fallback generico,
+    # aunque el motor determinista de eligibility.py sepa exactamente que
+    # puede hacer cada uno.
+    mentioned_ages = sorted({a for a in (state.detected_ages or []) if 1 <= a <= 17})
+    if mentioned_ages:
+        notes = " ".join(
+            eligibility.age_eligibility_note(a, state.language or "es")
+            for a in mentioned_ages
+        )
+        header = (
+            "Edades de menores mencionadas y qué puede hacer cada uno (datos exactos, úsalos): "
+            if state.language == "es"
+            else "Ages of minors mentioned and what each can do (exact facts, use them): "
+        )
+        parts.append(header + notes)
+
     # Menores de edad ya contabilizados en el grupo
     kids_u8 = getattr(state, "kids_under_8_count", 0) or 0
     kids_8_10 = getattr(state, "kids_eight_to_ten_count", 0) or 0
@@ -3664,6 +3699,23 @@ def _build_confirmation_message(intent, state: ConversationState) -> str | None:
                 activities_es.append(f"{qty} para minicurso")
                 activities_en.append(f"{qty} for minicourse")
 
+        # Si el total real del grupo es mayor que lo asignado (tipico: "familia
+        # de 6, papa certificado, mama no, y 4 hijos de..."), NO digas "son 2
+        # personas" borrando a los demas — nombra a los que faltan (menores con
+        # edades detectadas, o "por definir").
+        group_total = intent.group_size or getattr(state, "detected_group_size", None) or 0
+        if group_total > total_people:
+            remaining = group_total - total_people
+            minor_ages = sorted(a for a in (state.detected_ages or []) if a < 18)
+            if minor_ages and len(minor_ages) == remaining:
+                ages_str = ", ".join(str(a) for a in minor_ages)
+                activities_es.append(f"{remaining} menores ({ages_str} años) que ubicamos según su edad")
+                activities_en.append(f"{remaining} minors (ages {ages_str}) we'll place by age")
+            else:
+                activities_es.append(f"{remaining} más por definir")
+                activities_en.append(f"{remaining} more to define")
+            total_people = group_total
+
         together_note = ""
         preference = (state.remembered_facts or {}).get("preference") or ""
         if re.search(r"junt[oa]s|no separar|together|stay together|don'?t (want to )?split|don'?t separate", preference, re.IGNORECASE):
@@ -4152,6 +4204,30 @@ async def route_message(state: ConversationState, message: str) -> str:
                 logger.info(f"[SUPERVISOR] Quick-reply text match value={matched_value} -> step={state.step.value}")
                 return response
         return await _dispatch_conversation_agent(state, message)
+
+    # Cliente acepta con un "si"/"dale"/"ok" una oferta que el propio bot hizo
+    # en el turno anterior de pasarle con un asesor ("¿te paso el contacto de
+    # un asesor?"). Sin esta rama, el "si" (demasiado corto para el agente
+    # conversacional) caia a RAG y respondia el fallback generico — bug real
+    # visto en PRE (2026-07-07). Restringido a pasos conversacionales para no
+    # pisar los "si/no" de preguntas del arbol.
+    if (
+        state.step in (Step.MAIN_MENU, Step.FREE_TEXT)
+        and _BARE_AFFIRMATION_RE.match(message.strip())
+    ):
+        last_bot = next(
+            (h.get("content", "") for h in reversed(state.history or []) if h.get("role") == "assistant"),
+            "",
+        )
+        if _ADVISOR_OFFER_RE.search(last_bot) and _OFFER_VERB_RE.search(last_bot):
+            reason = "aceptó la oferta del bot de hablar con un asesor"
+            state.step = Step.ESCALATE
+            state.quick_replies = []
+            state.pending_escalation_reason = reason
+            state.pending_note = build_lead_summary(state, escalation_reason=reason)
+            from src.flows.decision_tree import MESSAGES
+            logger.info("[SUPERVISOR] Bare affirmation accepted pending advisor offer -> escalate")
+            return MESSAGES["escalate"][state.language]
 
     # Check for escalation keywords
     if _matches_escalation_keyword(msg_lower):

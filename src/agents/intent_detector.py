@@ -559,7 +559,7 @@ class IntentDetector:
         #    lists: "9 años", "8 y 10 años", "6 and 12 years old", "14yo".
         #    Skip "hace N años" / "N years ago" (last-dive context, not an age).
         for m in re.finditer(
-            r'((?:\d{1,2}\s*(?:,|y|e|and|&)\s*)*\d{1,2})\s*(?:años?|year[s]?(?:\s*old)?|y(?:/|-)?o)\b',
+            r'((?:\d{1,2}\s*(?:,|y|e|and|&)\s*)*\d{1,2})\s*(?:a[nñ]os?|year[s]?(?:\s*old)?|y(?:/|-)?o)\b',
             message,
         ):
             preceding = message[max(0, m.start() - 8):m.start()]
@@ -571,6 +571,13 @@ class IntentDetector:
         for m in re.finditer(
             r'\b(?:niñ[oa]|nin[oa]|hij[oa]|niet[oa]|beb[eé]|kid|child|son|daughter|grandchild)s?\s+de\s+'
             r'((?:\d{1,2}\s*(?:,|y|e|and|&)\s*)*\d{1,2})',
+            message,
+        ):
+            _add(m.group(1))
+        # 2b) Kid-noun + "tiene N" without an age unit: "mi hijo, tiene 7",
+        #     "mi hija tiene 9". Common in incremental group building.
+        for m in re.finditer(
+            r'\b(?:niñ[oa]|nin[oa]|hij[oa]|niet[oa]|beb[eé])s?\b[^.;]{0,20}?\btiene\s+(\d{1,2})\b',
             message,
         ):
             _add(m.group(1))
