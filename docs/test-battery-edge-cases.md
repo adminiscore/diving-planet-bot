@@ -501,3 +501,14 @@ Probadas ~20 conversaciones con el LLM real (Docker+Postgres+KB reindexada, `RAG
 **Follow-ups conocidos (LLM↔árbol, no arreglados — más difíciles):**
 - **T029/T033 (grupo cambia a mitad del flujo de reserva)**: una vez dentro del árbol (p.ej. en el paso de UBICACIÓN), añadir gente por texto libre ("y mi hijo de 12") da "no te entendí" o se ignora, porque ese paso espera una ubicación, no una recomposición del grupo. El caso de composición dada de golpe en un mensaje sí funciona (Categoría 1). Recomponer a mitad del flujo requiere que los pasos del árbol acepten texto libre de recomposición — pendiente.
 - **T123 (50 personas)**: acepta la cantidad extrema sin avisar; un grupo tan grande debería sugerir servicio privado/asesor. Menor.
+
+### 2026-07-07 (cont. 4) — barrido en vivo categorías 6/8/9/10/11/15 (Gonzalo/Claude)
+
+**PERFECTO — Cat 6 (límites de edad exactos):** los 8 casos con el umbral EXACTO correcto (5→acompañante; 6→snorkel; 7→snorkel sin BM; 8→BM; 10→minicurso/OW; 11→sin Advanced; 9→BM no minicurso normal). El motor determinista `eligibility.py` es sólido.
+**Bien:** Cat 10 (clima → declina sin inventar), Cat 11 (quejas/abogado → escalan), Cat 15 T108 (Barú → "no recogemos desde Barú, sí desde Cartagena").
+
+**↳ ARREGLADO en v0.19.19 — Cat 8 discapacidad con términos coloquiales caía al fallback.** "soy sordo" / "uso silla de ruedas" / "soy ciego" → "no tengo información" (la KB usaba solo términos formales: auditiva/movilidad reducida/visual). Enriquecido el FAQ+policy de buceo adaptado con sinónimos coloquiales (sordos/ciegos/silla de ruedas) + FAQ dedicado de silla de ruedas/movilidad reducida + reindex. Ahora los 3 responden con la info de DIVE TO HEAL. ✅
+
+**↳ ARREGLADO en v0.19.19 — Cat 9 T059 falso positivo "corazón de oro".** "mi tía tiene un corazón de oro" escalaba como médico (por la keyword "corazón"). Añadida exclusión de modismos (`_MEDICAL_IDIOM_EXCLUSIONS` en `escalation.py`): "corazón de oro", "de todo corazón", "heart of gold"… ya no escalan; "problema en el corazón" sigue escalando. Tests en `test_rag_safety.py`.
+
+**Requiere reindex** en PRE/PRO (cambios en `faqs.json` + `policies.json`).

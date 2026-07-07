@@ -1011,3 +1011,22 @@ async def test_general_interest_query_answered_by_agent(monkeypatch):
         assert response == "AGENT RECOMMENDATION", (
             f"Expected the agent to answer {msg!r}, got {response!r}"
         )
+
+
+@pytest.mark.parametrize("msg", [
+    "mi tía tiene un corazón de oro, ¿puede acompañarnos?",
+    "los instructores tienen un corazón de oro",
+    "te lo digo de todo corazón",
+])
+def test_heart_idioms_do_not_trigger_medical_escalation(msg):
+    result = detect_sensitive_escalation(msg, "es")
+    assert result is None or result[0] != "medical_questions"
+
+
+@pytest.mark.parametrize("msg", [
+    "tengo un problema en el corazón",
+    "sufro del corazón, ¿puedo bucear?",
+])
+def test_real_heart_condition_still_escalates(msg):
+    result = detect_sensitive_escalation(msg, "es")
+    assert result is not None and result[0] == "medical_questions"

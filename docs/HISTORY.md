@@ -1,6 +1,12 @@
 History
 =======
 
+0.19.19 - (2026-07-07)
+----------------------
+* **Fix: discapacidad con términos coloquiales caía al fallback** (barrido en vivo Cat 8). "soy sordo" / "uso silla de ruedas" / "soy ciego" respondían "no tengo información" porque la KB de buceo adaptado usaba solo términos formales (auditiva/movilidad reducida/visual) → desajuste de vocabulario en el retrieval. Enriquecidos el FAQ y la policy de DIVE TO HEAL con sinónimos coloquiales + FAQ dedicado de silla de ruedas/movilidad reducida. Ahora los 3 responden con la info del programa. **Requiere reindex.**
+* **Fix: falso positivo "corazón de oro"** (Cat 9): "mi tía tiene un corazón de oro" escalaba como consulta médica por la keyword "corazón". Nueva exclusión de modismos en `escalation.py` (corazón de oro / de todo corazón / heart of gold…). Las condiciones médicas reales ("problema en el corazón") siguen escalando. Tests añadidos.
+* Barrido Cat 6 (límites de edad exactos) en vivo: **8/8 correctos** con el umbral exacto — el motor `eligibility.py` es sólido. Cat 10/11/15 correctas.
+
 0.19.18 - (2026-07-07)
 ----------------------
 * **Fix: alucinación de PayPal** (hallada en barrido en vivo). "¿puedo pagar con PayPal?" → "¡Claro que sí!" (inventado — la KB solo lista tarjeta/efectivo/Llave/enlace de pago). Contraste: crypto y Bre-B sí se rechazaban bien. Añadido el negativo explícito al FAQ de medios de pago ("No aceptamos PayPal, criptomonedas ni pagos a plazos/cuotas") + reindex → ahora no confirma PayPal (deriva a asesor) y "¿pago en cuotas?" → "no aceptamos". **Requiere reindex** en PRE/PRO.

@@ -80,10 +80,24 @@ SENSITIVE_RULES = {
 }
 
 
+# Idioms that contain a medical keyword but are NOT medical (avoid false-positive
+# escalation): "corazón de oro" (kind-hearted), "de todo corazón" (heartfelt)...
+_MEDICAL_IDIOM_EXCLUSIONS = (
+    "corazon de oro", "corazón de oro", "de todo corazon", "de todo corazón",
+    "con el corazon en la mano", "heart of gold",
+)
+
+
 def detect_sensitive_escalation(message: str, lang: str = "es") -> tuple[str, str] | None:
     msg_lower = message.strip().lower()
+    # Neutralize non-medical idioms so a word like "corazón" inside "corazón de
+    # oro" doesn't trigger a medical escalation.
+    scrubbed = msg_lower
+    for idiom in _MEDICAL_IDIOM_EXCLUSIONS:
+        scrubbed = scrubbed.replace(idiom, " ")
     for reason, rule in SENSITIVE_RULES.items():
-        if any(keyword in msg_lower for keyword in rule["keywords"]):
+        haystack = scrubbed if reason == "medical_questions" else msg_lower
+        if any(keyword in haystack for keyword in rule["keywords"]):
             return reason, rule["es"] if lang == "es" else rule["en"]
     return None
 
