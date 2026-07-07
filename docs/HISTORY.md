@@ -1,6 +1,13 @@
 History
 =======
 
+0.19.25 - (2026-07-07)
+----------------------
+* **Arreglada alucinación de "el corte de reserva ya pasó" (bug reportado en vivo en PRE)**: tras "¿cómo reservo?" (respuesta correcta: avisa el corte de las 4:30 PM del día anterior), el cliente escribía "quiero reservar para mañana" y el bot respondía como si el corte YA hubiera pasado ("😕 el sistema se cierra automáticamente..."), sin ninguna base real — el pipeline de RAG no tenía ninguna noción de la hora/fecha actual en ningún punto. Arreglado con dos cambios: (1) `_build_extra_context` (`supervisor.py`) ahora inyecta la fecha/hora real en `America/Bogota` (vía `zoneinfo`, sin dependencia nueva) en cada llamada a RAG; (2) nueva regla explícita en el system prompt (ES+EN, `rag_agent.py`) que exige comparar la hora actual contra el corte antes de afirmar que ya pasó, y prohíbe inventar urgencia si esa comparación no es posible. Tests nuevos en `test_conversations.py`/`test_rag_safety.py`.
+* **Botón "Nueva conversación" en `/chat`**: el widget de Chatwoot recordaba la conversación anterior vía localStorage del navegador, dificultando que el owner probara casos nuevos sin usar incógnito. Añadido un botón en la página de prueba (`src/main.py`) que llama a `window.$chatwoot.reset()` y recarga, para empezar una conversación nueva con un clic.
+* **PRE ahora también se despliega desde `feature/pre_alvaro`**: el job `deploy-pre` (`.github/workflows/ci.yml`) solo se disparaba con push a `feature/pre_gadea`. Ampliada la condición para incluir también `feature/pre_alvaro` (rama espejo de `dev_alvaro`, siguiendo el mismo patrón que ya usaba Gadea: la rama de integración normal no dispara despliegues, solo la rama `pre_*` cuando se actualiza a propósito), y parametrizado el script SSH para desplegar siempre la rama real que hizo push (`github.ref_name`) en vez de tener `feature/pre_gadea` hardcodeado (evita el bug de "dispara el job pero despliega el código equivocado"). PRE sigue siendo un único entorno compartido — decisión explícita del equipo de no montar infraestructura nueva; documentado en `docs/deploy-pre-redeploy.md` que quien despliega último "gana".
+* Suite: 1081 passed, 6 skipped. Sin cambios de KB — no requiere reindex.
+
 0.19.24 - (2026-07-07)
 ----------------------
 * **Cierre de los 5 gaps menores restantes de la batería de tests** (T007, T011, T013, T123, T165 en `docs/test-battery-edge-cases.md`):

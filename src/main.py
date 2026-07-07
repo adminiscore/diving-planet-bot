@@ -79,6 +79,18 @@ async def chat_widget():
       background: rgba(255,255,255,0.14);
       font-size: 14px;
     }}
+    .reset-btn {{
+      display: block;
+      margin-top: 20px;
+      padding: 10px 16px;
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,0.25);
+      background: rgba(255,255,255,0.12);
+      color: #fff;
+      font-size: 14px;
+      cursor: pointer;
+    }}
+    .reset-btn:hover {{ background: rgba(255,255,255,0.22); }}
   </style>
 </head>
 <body>
@@ -87,6 +99,9 @@ async def chat_widget():
     <p>Habla con nuestro asistente virtual para reservar actividades de buceo y snorkel.</p>
     <p>Haz clic en la burbuja de chat en la esquina inferior derecha.</p>
     <span class="pill">Diving Planet · Cartagena de Indias</span>
+    <button class="reset-btn" onclick="if(window.$chatwoot){{window.$chatwoot.reset();}} setTimeout(function(){{location.reload();}}, 300);">
+      🔄 Nueva conversación
+    </button>
   </main>
   <script>
     (function(d,t){{

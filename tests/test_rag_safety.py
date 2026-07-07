@@ -554,6 +554,19 @@ def test_system_prompt_has_no_duplicated_currency_section_en():
     assert prompt.count("Avoid mixing several currencies") == 1
 
 
+def test_system_prompt_has_booking_cutoff_time_guard_es():
+    """Regression: the bot must not assert a time cutoff 'already passed' without real time data."""
+    prompt = rag_agent.build_system_prompt("es")
+    assert "COMPARA la hora actual con ese corte" in prompt
+    assert "NO afirmes que el corte" in prompt
+
+
+def test_system_prompt_has_booking_cutoff_time_guard_en():
+    prompt = rag_agent.build_system_prompt("en")
+    assert "COMPARE the current time against that cutoff" in prompt
+    assert 'do NOT claim the cutoff "has already passed"' in prompt
+
+
 def test_brand_tone_injected_from_json_es(monkeypatch):
     """build_system_prompt must read brand_tone.json. Changes to the JSON must be reflected."""
     fake_tone = {

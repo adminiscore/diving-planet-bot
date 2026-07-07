@@ -1,16 +1,31 @@
 # Redeploy a PRE (staging VPS) — runbook
 
-> **Desde 2026-07-06 esto es automático.** Cada push a `feature/pre_gadea` que pase
-> el job `Lint + Tests` de CI dispara el job `deploy-pre` en
-> `.github/workflows/ci.yml`, que hace exactamente los pasos de este documento
-> por SSH (usa los secrets `PRE_VPS_HOST` / `PRE_VPS_SSH_KEY` del repo). El VPS
+> **Desde 2026-07-06 esto es automático.** Cada push a `feature/pre_gadea` **o a
+> `feature/pre_alvaro`** que pase el job `Lint + Tests` de CI dispara el job
+> `deploy-pre` en `.github/workflows/ci.yml`, que hace exactamente los pasos de
+> este documento por SSH (usa los secrets `PRE_VPS_HOST` / `PRE_VPS_SSH_KEY` del
+> repo), desplegando siempre la rama que hizo el push (`github.ref_name`). El VPS
 > ahora es un `git clone` real en `/opt/diving-planet-bot` (antes se desplegaba
 > con `tar | ssh`), así que el `git fetch && git reset --hard` del job funciona
 > igual que en cualquier otro deploy basado en git.
 >
-> Usa el procedimiento manual de abajo (o `scripts/redeploy_pre.sh`) solo como
-> fallback si la Action falla o si necesitas desplegar algo que no está en
-> `feature/pre_gadea`.
+> **`feature/pre_alvaro` y `feature/pre_gadea` son ramas "espejo" de disparo**:
+> cada quien trabaja normalmente en su rama de integración (`feature/dev_alvaro`,
+> `feature/dev_gadea`) y solo cuando quiere desplegar de verdad a PRE, actualiza
+> su rama `pre_*` (`git push origin dev_alvaro:pre_alvaro --force-with-lease`, o
+> mergea/rebasea) — así un commit rutinario en `dev_alvaro` NO dispara un rebuild +
+> reindex de KB en PRE cada vez.
+>
+> **PRE es UN solo entorno compartido** (un único `dp-pre-bot`/`dp-pre-postgres`).
+> No hay una copia por rama/persona — si Gadea y Álvaro suben código casi a la vez,
+> el push que llega después sobreescribe el código desplegado por el anterior (no
+> se pierde nada en git, solo cambia qué versión está sirviendo PRE en ese momento).
+> Si vas a probar algo específico en PRE, confirma con el resto del equipo que nadie
+> más va a desplegar encima mientras pruebas.
+>
+> Usa el procedimiento manual de abajo (o `scripts/redeploy_pre.sh BRANCH=<rama>`)
+> solo como fallback si la Action falla o si necesitas desplegar una rama distinta
+> a las dos anteriores.
 
 Actualiza el entorno **PRE** (`dp-pre-bot` en el VPS) con la rama `feature/pre_gadea`
 (pruebaGon mergeada, v0.19.13+): nuevo código + KB reindexada + `RAG_MIN_SCORE=0.50`.

@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
-# Redeploy PRE (dp-pre-bot) with feature/pre_gadea + RAG_MIN_SCORE=0.50 + KB reindex.
+# Redeploy PRE (dp-pre-bot) with RAG_MIN_SCORE=0.50 + KB reindex.
 # Run from the repo root on the VPS:  bash scripts/redeploy_pre.sh
+# PRE is a single shared environment — both feature/pre_gadea and
+# feature/dev_alvaro auto-deploy here via CI, whichever pushes last wins.
+# Override the branch manually with:  BRANCH=feature/dev_alvaro bash scripts/redeploy_pre.sh
 # See docs/deploy-pre-redeploy.md for the manual step-by-step and rollback.
 set -euo pipefail
 

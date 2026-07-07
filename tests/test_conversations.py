@@ -2209,6 +2209,25 @@ async def test_extra_context_includes_group_size_detected_from_free_text():
     assert "4 persona" in context
 
 
+def test_extra_context_includes_current_datetime():
+    """Regression: RAG had no real-time awareness, so it hallucinated that a
+    time-based cutoff ("cierra a las 4:30 PM del dia anterior") had already
+    passed regardless of the actual wall-clock time. The current date/time
+    (Colombia) must be injected so the LLM can reason about it instead of
+    guessing."""
+    from src.agents.supervisor import _build_extra_context
+
+    state = ConversationState(conversation_id="extra-context-datetime-es")
+    context = _build_extra_context(state)
+    assert "Fecha y hora actual:" in context
+    assert "hora de Cartagena/Colombia" in context
+
+    state_en = ConversationState(conversation_id="extra-context-datetime-en")
+    state_en.language = "en"
+    context_en = _build_extra_context(state_en)
+    assert "Current date and time:" in context_en
+
+
 @pytest.mark.asyncio
 async def test_extra_context_includes_kids_and_private_boat_flags():
     from src.agents.supervisor import _build_extra_context

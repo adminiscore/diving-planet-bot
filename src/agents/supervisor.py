@@ -13,6 +13,8 @@ keeping costs minimal.
 import logging
 import re
 import unicodedata
+from datetime import datetime
+from zoneinfo import ZoneInfo
 
 from src.agents import orchestrator
 from src.agents.escalation import detect_sensitive_escalation
@@ -2585,6 +2587,19 @@ def _build_extra_context(state: ConversationState) -> str | None:
     """
 
     parts: list[str] = []
+
+    # Fecha/hora real (Colombia) — sin esto el LLM no tiene forma de saber si
+    # un corte de horario ("cierra a las 4:30 PM del día anterior") ya pasó o
+    # no, y termina inventando urgencia/cierre que no puede verificar.
+    now = datetime.now(ZoneInfo("America/Bogota"))
+    if state.language == "es":
+        parts.append(
+            f"Fecha y hora actual: {now.strftime('%Y-%m-%d %H:%M')} (hora de Cartagena/Colombia)."
+        )
+    else:
+        parts.append(
+            f"Current date and time: {now.strftime('%Y-%m-%d %H:%M')} (Cartagena/Colombia time)."
+        )
 
     # Idioma actual de la conversación
     if state.language == "es":
