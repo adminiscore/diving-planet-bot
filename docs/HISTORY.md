@@ -1,6 +1,10 @@
 History
 =======
 
+0.19.21 - (2026-07-07)
+----------------------
+* **Recomposición de grupo a mitad del flujo de reserva** (follow-up conocido resuelto): dentro del flujo mixto, añadir gente o replantear el total por texto libre ("y mi hijo de 12", "se suma mi hermano, ya seríamos 3", "también viene mi esposa") daba "no te entendí" porque el paso del árbol esperaba otra cosa (ubicación, plan…). Nuevo guard `_apply_group_recomposition` en `supervisor.py` (antes del orquestador): captura el cambio en `detected_group_size`/`detected_ages`, acusa recibo y mantiene el paso y los botones actuales. Conservador — no dispara con una respuesta normal de conteo ("somos 3"), una de ubicación ("y desde Cartagena"), ni en los pasos de cantidad. Verificado en vivo. `tests/test_group_recomposition.py` (18 tests).
+
 0.19.20 - (2026-07-07)
 ----------------------
 * **Fix: extracción de grupo/edades en inglés incompleta** (barrido en vivo Cat 1/7). "we are a family of 4" no daba grupo=4 y "our kids are 7 and 11" no daba edades (el español "familia de N" sí funcionaba). Añadidos patrones EN en `intent_detector`: `family of N` (tamaño de grupo) y `kids/children are N and M` (edades). Verificado con el caso T003 completo. +tests.

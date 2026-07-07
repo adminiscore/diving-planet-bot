@@ -146,6 +146,84 @@ def _looks_like_info_question(message: str) -> bool:
         return False
     return bool(_INFO_QUESTION_STARTER_PATTERN.match(normalized))
 
+
+# Free-text that RECOMPOSES the group mid-flow: adding a person, or restating a
+# new total ("y mi hijo de 12", "se suma mi hermano", "ya seríamos 3", "también
+# viene mi esposa"). Deliberately requires an explicit change/addition cue + a
+# person noun (or "ya/ahora somos N") so a normal count answer ("somos 3") or a
+# location answer starting with "y" ("y desde Cartagena") does NOT trigger it.
+_PERSON_NOUN = (
+    r"(?:hij[oa]s?|niñ[oa]s?|nin[oa]s?|herman[oa]s?|espos[oa]s?|pareja|marido|mujer|"
+    r"amig[oa]s?|suegr[oa]|primo|prima|sobrin[oa]s?|acompañantes?|acompanantes?|"
+    r"persona|personas|cuñad[oa]|nietos?|nieta?s?|abuel[oa]s?|pap[aá]|mam[aá]|"
+    r"son|daughter|kids?|children|brother|sister|wife|husband|partner|friend)"
+)
+_GROUP_RECOMPOSE_RE = re.compile(
+    r"\bse\s+(?:suma|sumar[oa]n?|a[ñn]ade|agrega|une|unen|apunta|apuntan)\b"
+    r"|\b(?:ahora|ya)\s+(?:somos|ser[íi]amos|seremos|vamos)\s+(?:\d+|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|diez)\b"
+    rf"|\btambi[ée]n\s+vien[ea]n?\b"
+    rf"|\b(?:y|más|mas|adem[aá]s|tambi[ée]n)\s+(?:(?:mi|mis|otr[oa]s?|un|una|el|la|los|las|nuestr[oa]s?|pequeñ[oa]|mayor|menor)\s+){{1,2}}{_PERSON_NOUN}"
+    rf"|\b(?:se\s+nos\s+)?(?:suma|apunta|une)\s+(?:(?:mi|mis|otr[oa]|un|una)\s+){{1,2}}{_PERSON_NOUN}",
+    re.IGNORECASE,
+)
+
+
+def _apply_group_recomposition(message: str, state: ConversationState) -> str | None:
+    """If the message adds people / restates the group size mid-flow, capture the
+    change (new total and/or new ages) into state and return an acknowledgment
+    that keeps the current step's buttons — instead of the step handler answering
+    'no te entendí'. Returns None when the message is not a recomposition."""
+    if not _GROUP_RECOMPOSE_RE.search(_strip_accents(message)):
+        return None
+
+    intent = intent_detector.detect(message, state)
+    changed = False
+
+    # New explicit total ("ya seríamos 3", "ahora somos 4").
+    m_total = re.search(
+        r"\b(?:ahora|ya)\s+(?:somos|ser[íi]amos|seremos|vamos)\s+"
+        r"(\d+|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|diez)\b",
+        _strip_accents(message), re.IGNORECASE,
+    )
+    if m_total:
+        n = _GROUP_COUNT_WORDS.get(m_total.group(1), None)
+        if n is None and m_total.group(1).isdigit():
+            n = int(m_total.group(1))
+        if n and n != state.detected_group_size:
+            state.detected_group_size = n
+            changed = True
+    else:
+        # A person was added without a new total -> increment by 1 (assume the
+        # speaker was at least 1 if the group size wasn't known yet).
+        state.detected_group_size = (state.detected_group_size or 1) + 1
+        changed = True
+
+    # Merge any newly-mentioned ages.
+    if intent.ages:
+        merged = sorted(set((state.detected_ages or []) + list(intent.ages)))
+        if merged != (state.detected_ages or []):
+            state.detected_ages = merged
+            changed = True
+
+    if not changed:
+        return None
+
+    lang = state.language or "es"
+    bits = []
+    if state.detected_group_size:
+        bits.append(f"ahora sois {state.detected_group_size}" if lang == "es"
+                    else f"you're now {state.detected_group_size}")
+    if intent.ages:
+        edades = ", ".join(str(a) for a in sorted(intent.ages))
+        bits.append(f"anoto la(s) edad(es): {edades}" if lang == "es"
+                    else f"noting age(s): {edades}")
+    detail = "; ".join(bits)
+    logger.info(f"[SUPERVISOR] Group recomposition mid-flow -> {detail}")
+    if lang == "es":
+        return f"¡Anotado! {detail.capitalize()}. Sigamos: elige una de las opciones de abajo 👇"
+    return f"Got it! {detail.capitalize()}. Let's continue: pick one of the options below 👇"
+
+
 _GROUP_COUNT_WORDS = {
     "un": 1,
     "uno": 1,
@@ -4239,6 +4317,24 @@ async def route_message(state: ConversationState, message: str) -> str:
             state.quick_replies = _continue_booking_quick_replies(state)
             state.history.append({"role": "assistant", "content": answer})
             return answer
+
+        # Group recomposition mid-flow ("y mi hijo de 12", "ya seríamos 3") —
+        # capture the change and keep the current step's buttons instead of the
+        # step handler answering "no te entendí". Runs before the orchestrator so
+        # the added person/age isn't lost. Not applied at qty/count steps, where a
+        # bare number IS the expected answer (the explicit-cue regex already avoids
+        # plain "somos 3", but we double-guard the numeric-answer steps).
+        if (
+            state.step in _MIXED_FLOW_STEPS
+            and state.quick_replies
+            and state.step not in (Step.MIXED_ADD_QTY, Step.MIXED_FINAL_KIDS_QTY,
+                                   Step.MIXED_ASK_CERT_COUNT, Step.MIXED_CERT_REFRESH_QTY)
+        ):
+            recompose_ack = _apply_group_recomposition(message, state)
+            if recompose_ack is not None:
+                state.history.append({"role": "user", "content": message})
+                state.history.append({"role": "assistant", "content": recompose_ack})
+                return recompose_ack
 
         # Tool-calling orchestrator (Fase 2) — only inside the cart-style mixed flow.
         # Turns free text into structured tree actions ("estoy en las islas" ->
