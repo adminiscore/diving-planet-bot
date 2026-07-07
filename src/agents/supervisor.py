@@ -160,10 +160,13 @@ _PERSON_NOUN = (
 )
 _GROUP_RECOMPOSE_RE = re.compile(
     r"\bse\s+(?:suma|sumar[oa]n?|a[ñn]ade|agrega|une|unen|apunta|apuntan)\b"
-    r"|\b(?:ahora|ya)\s+(?:somos|ser[íi]amos|seremos|vamos)\s+(?:\d+|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|diez)\b"
+    r"|\b(?:ahora|ya|en realidad|realmente)\s+(?:somos|ser[íi]amos|seremos|vamos)\s+(?:\d+|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|diez)\b"
     rf"|\btambi[ée]n\s+vien[ea]n?\b"
     rf"|\b(?:y|más|mas|adem[aá]s|tambi[ée]n)\s+(?:(?:mi|mis|otr[oa]s?|un|una|el|la|los|las|nuestr[oa]s?|pequeñ[oa]|mayor|menor)\s+){{1,2}}{_PERSON_NOUN}"
-    rf"|\b(?:se\s+nos\s+)?(?:suma|apunta|une)\s+(?:(?:mi|mis|otr[oa]|un|una)\s+){{1,2}}{_PERSON_NOUN}",
+    rf"|\b(?:se\s+nos\s+)?(?:suma|apunta|une)\s+(?:(?:mi|mis|otr[oa]|un|una)\s+){{1,2}}{_PERSON_NOUN}"
+    # "se me olvidó (mencionar) mi cuñado" — customer remembers a companion they
+    # forgot to count, a natural way of restating the group mid-flow (T008).
+    rf"|\bse\s+me\s+(?:olvid[oó]|olvidaba)\b(?:\s+\w+){{0,3}}\s+(?:mi|mis|otr[oa]s?)\s+{_PERSON_NOUN}",
     re.IGNORECASE,
 )
 
@@ -181,7 +184,7 @@ def _apply_group_recomposition(message: str, state: ConversationState) -> str | 
 
     # New explicit total ("ya seríamos 3", "ahora somos 4").
     m_total = re.search(
-        r"\b(?:ahora|ya)\s+(?:somos|ser[íi]amos|seremos|vamos)\s+"
+        r"\b(?:ahora|ya|en realidad|realmente)\s+(?:somos|ser[íi]amos|seremos|vamos)\s+"
         r"(\d+|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|diez)\b",
         _strip_accents(message), re.IGNORECASE,
     )
@@ -496,6 +499,30 @@ def _detect_cancellation_request(msg_lower: str) -> bool:
 def _detect_reschedule_request(msg_lower: str) -> bool:
     normalized = _strip_accents(msg_lower)
     return any(phrase in normalized for phrase in RESCHEDULE_BOOKING_PHRASES)
+
+
+# A group where NOT everyone shares the same nationality (some Colombian/
+# resident, some foreign) — pricing/currency is set per-conversation
+# (state.is_colombian), so this is a real gap: not implemented as a feature
+# (T013 in docs/test-battery-edge-cases.md). Detect the contradiction
+# explicitly instead of letting it fall through to a generic RAG fallback.
+_MIXED_NATIONALITY_RE = re.compile(
+    r"\bmi\s+(?:amig[oa]|parej[ao]|espos[oa]|hij[oa]|herman[oa]|novi[oa])\s+es\s+extranjer[oa]\b"
+    r"|\bmi\s+(?:amig[oa]|parej[ao]|espos[oa]|hij[oa]|herman[oa]|novi[oa])\s+es\s+colombian[oa]\b"
+    r"|\b(?:unos?|algunos?)\s+(?:somos\s+|son\s+)?colombian[oa]s?\s+y\s+(?:otros?|l[oa]s?\s+demas)\s+extranjer[oa]s?\b"
+    r"|\bnacionalidad\s+mixta\b"
+    r"|\bparte\s+del\s+grupo\s+es\s+extranjer[oa]\b"
+    r"|\bsolo\s+yo\s+soy\s+(?:colombian[oa]|extranjer[oa])\b"
+    r"|\bmy\s+(?:friend|partner|husband|wife|brother|sister|boyfriend|girlfriend)\s+is\s+(?:a\s+)?foreign(?:er)?\b"
+    r"|\bmy\s+(?:friend|partner|husband|wife|brother|sister|boyfriend|girlfriend)\s+is\s+colombian\b"
+    r"|\bonly\s+i\s*(?:'m| am)\s+colombian\b"
+    r"|\bmixed\s+nationalit(?:y|ies)\b",
+    re.IGNORECASE,
+)
+
+
+def _detect_mixed_nationality_request(msg_lower: str) -> bool:
+    return bool(_MIXED_NATIONALITY_RE.search(_strip_accents(msg_lower)))
 
 
 def _booking_change_buttons(lang: str) -> list[dict]:
@@ -3007,12 +3034,15 @@ def _persist_remembered(state: ConversationState, remembered: dict | None) -> No
 
     cc = remembered.get("certified_count")
     bc = remembered.get("beginner_count")
-    if (isinstance(cc, int) and cc > 0) or (isinstance(bc, int) and bc > 0):
+    sc = remembered.get("snorkel_count")
+    if any(isinstance(v, int) and v > 0 for v in (cc, bc, sc)):
         alloc: dict = {}
         if isinstance(cc, int) and cc > 0:
             alloc["certified_diving"] = cc
         if isinstance(bc, int) and bc > 0:
             alloc["minicourse"] = bc
+        if isinstance(sc, int) and sc > 0:
+            alloc["snorkel"] = sc
         if alloc and not state.detected_group_allocation:
             state.detected_group_allocation = alloc
 
@@ -3026,7 +3056,12 @@ def _persist_remembered(state: ConversationState, remembered: dict | None) -> No
         if not state.location:
             state.location = loc
 
-    hotel = remembered.get("hotel")
+    # "island" is NOT a declared property of the `remember` tool schema (only
+    # "hotel" is) — but the model occasionally invents that key anyway for a
+    # hotel/place name mentioned alongside a location change (T011 in
+    # docs/test-battery-edge-cases.md). Accept it as a fallback so the value
+    # isn't silently dropped.
+    hotel = remembered.get("hotel") or remembered.get("island")
     if hotel:
         state.hotel = str(hotel).strip()
 
@@ -3623,9 +3658,14 @@ def _build_confirmation_message(intent, state: ConversationState) -> str | None:
                 else " Each of you does your own activity, but you're on the same trip the same day — you won't be split up."
             )
 
+        def _join_natural(items: list[str], conj: str) -> str:
+            if len(items) <= 1:
+                return "".join(items)
+            return f"{', '.join(items[:-1])} {conj} {items[-1]}"
+
         if lang == "es":
-            return f"¡Bienvenidos! Veo que son {total_people} personas: {' y '.join(activities_es)}.{together_note}"
-        return f"Welcome! I see you are {total_people} people: {' and '.join(activities_en)}.{together_note}"
+            return f"¡Bienvenidos! Veo que son {total_people} personas: {_join_natural(activities_es, 'y')}.{together_note}"
+        return f"Welcome! I see you are {total_people} people: {_join_natural(activities_en, 'and')}.{together_note}"
 
     # Buceo certificado (solo si NO es grupo mixto)
     if intent.activity == "certified_diving" and intent.is_certified:
@@ -3735,6 +3775,16 @@ def _route_detected_intent(intent, state: ConversationState, message: str = "") 
         # Pre-setar cantidades conocidas para saltarnos preguntas
         cert_qty = (intent.group_allocation or {}).get("certified_diving", 0)
         beginner_qty = (intent.group_allocation or {}).get("minicourse", 0)
+        snorkel_qty = (intent.group_allocation or {}).get("snorkel", 0)
+        # Snorkel doesn't need a qualifying question chain (unlike cert's
+        # last-dive/refresher or minicurso's kids-age questions) — add it to
+        # the cart directly so a 3-way split (cert + minicourse + snorkel,
+        # T007 in docs/test-battery-edge-cases.md) doesn't silently drop the
+        # snorkel person while the other two subgroups go through their flows.
+        if snorkel_qty > 0:
+            decision_tree._append_mixed_cart_item(
+                state, "snorkel", decision_tree._service_for_location("snorkeling", state), snorkel_qty
+            )
         if cert_qty > 0:
             state.mixed_pending_qty_type = "cert"
             state.mixed_pending_cert_total_qty = cert_qty
@@ -3768,7 +3818,7 @@ def _route_detected_intent(intent, state: ConversationState, message: str = "") 
 
         logger.info(
             f"[INTENT] Mixed group allocation={intent.group_allocation} "
-            f"cert_qty={cert_qty} -> step={state.step.value}"
+            f"cert_qty={cert_qty} snorkel_qty={snorkel_qty} -> step={state.step.value}"
         )
         if confirmation:
             return confirmation + "\n\n" + next_msg
@@ -3997,6 +4047,35 @@ async def route_message(state: ConversationState, message: str) -> str:
             )
         state.quick_replies = _booking_change_buttons(state.language)
         logger.info("[SUPERVISOR] Reschedule request detected -> policy info + escalate/home buttons")
+        state.history.append({"role": "user", "content": message})
+        state.history.append({"role": "assistant", "content": response})
+        return response
+
+    # Mixed-nationality group (some Colombian/resident, some foreign) — not
+    # implemented as a feature: pricing/currency is set once per conversation.
+    # Answer honestly instead of falling through to a generic RAG fallback
+    # (T013 in docs/test-battery-edge-cases.md).
+    if _detect_mixed_nationality_request(msg_lower):
+        if state.language == "es":
+            response = (
+                "¡Entendido! Cuando el grupo tiene nacionalidades mixtas, cada quien paga según su "
+                "nacionalidad: los colombianos/residentes en pesos (COP) y los extranjeros en dólares "
+                "(USD), al mismo precio equivalente — no hay descuento especial por ser colombiano. "
+                "Para coordinar el pago individual de cada persona del grupo, lo mejor es que un "
+                "asesor te ayude directamente.\n\n¿Quieres que te conecte con un asesor, o prefieres "
+                "volver al menú principal?"
+            )
+        else:
+            response = (
+                "Got it! When the group has mixed nationalities, each person pays according to their "
+                "own nationality: Colombians/residents in pesos (COP) and foreign visitors in dollars "
+                "(USD), at the same equivalent price — there's no special discount for being "
+                "Colombian. To coordinate each person's individual payment, it's best for an advisor "
+                "to help you directly.\n\nWould you like me to connect you with an advisor, or would "
+                "you rather go back to the main menu?"
+            )
+        state.quick_replies = _booking_change_buttons(state.language)
+        logger.info("[SUPERVISOR] Mixed-nationality group detected -> honest explanation + escalate/home buttons")
         state.history.append({"role": "user", "content": message})
         state.history.append({"role": "assistant", "content": response})
         return response

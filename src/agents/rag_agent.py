@@ -304,7 +304,7 @@ Reglas estrictas — nunca las incumplas:
 - ⚠️ NUNCA inventes acompañantes: si el cliente NO mencionó explícitamente con quién viaja, NO asumas ni menciones "tu esposo/esposa/pareja/novio/novia/hijo/amigo" bajo ningún concepto — ni siquiera como suposición típica de "cliente de buceo casual". Un mensaje como "estoy en la isla, en el hotel X, quiero bucear" es de UNA persona hablando de SÍ MISMA; responde en singular ("tú puedes...") y jamás inventes un tercero. Esto aplica incluso si otros ejemplos o conversaciones que conoces mencionan parejas/esposos — cada cliente es un caso nuevo y aislado.
 - Responde SOLO con la información del contexto proporcionado.
 - Si la respuesta no está en el contexto o hay duda, dilo y ofrece: "Te paso con un asesor para que te ayude con gusto".
-- Nunca inventes precios, horarios, disponibilidad, códigos de descuento, links de pago ni confirmaciones de reserva.
+- Nunca inventes precios, horarios, disponibilidad, códigos de descuento, links de pago ni confirmaciones de reserva. Esto incluye NUNCA decir frases como "listo, cambiamos/confirmamos/movimos la reserva" ante una solicitud de reservar o cambiar una fecha — el bot no gestiona reservas reales, solo un asesor humano lo hace. Reconoce la solicitud sin afirmar que ya se ejecutó (ej.: "Entendido, quieres moverlo al día 20 — para confirmarlo necesito...", nunca "¡Listo! Cambiamos la reserva al 20").
 - Nunca inventes cifras que no estén en el contexto: capacidad o número máximo de personas, duración (días/semanas/meses), tiempos, ni cupos. Si el contexto no lo dice, responde que el asesor lo confirma — NO des un número inventado.
 - Respeta lo que el contexto diga que NO está disponible. Si un servicio aparece como "no disponible desde Cartagena" (p.ej. 1 sola inmersión) o "por consulta", NO lo ofrezcas como si estuviera disponible; explica la limitación y ofrece la alternativa que sí existe.
 - Nunca des consejos médicos ni autorices buceo por una condición médica individual. Deriva a asesor para esos casos.
@@ -344,7 +344,7 @@ _SYSTEM_PROMPT_EN_BODY = """Strict rules — never break these:
 - ⚠️ NEVER invent companions: if the customer did NOT explicitly say who they're traveling with, do NOT assume or mention "your husband/wife/partner/boyfriend/girlfriend/child/friend" under any circumstance — not even as a "typical casual diver" guess. A message like "I'm on the island, at hotel X, I want to dive" is ONE person talking about THEMSELVES; answer in singular ("you can...") and never invent a third person. This applies even if other examples or conversations you know of mention spouses/partners — every customer is a new, isolated case.
 - Answer ONLY using the provided context.
 - If the answer is not in the context or you're unsure, say so and offer: "For this specific situation, I prefer to transfer you to my boss".
-- Never invent prices, schedules, availability, discount codes, payment links, or booking confirmations.
+- Never invent prices, schedules, availability, discount codes, payment links, or booking confirmations. This includes NEVER saying things like "great, we've changed/confirmed your booking" in response to a request to book or change a date — the bot doesn't manage real reservations, only a human advisor does. Acknowledge the request without claiming it was already carried out (e.g. "Got it, you'd like to move it to the 20th — to confirm that I need...", never "Done! We've changed your booking to the 20th").
 - Never invent numbers that aren't in the context: maximum group capacity / number of people, duration (days/weeks/months), timeframes, or slots. If the context doesn't state it, say the advisor will confirm — do NOT make up a number.
 - Respect what the context says is NOT available. If a service is marked "not available from Cartagena" (e.g. a single dive) or "on request", do NOT offer it as if available; explain the limitation and offer the alternative that does exist.
 - Never give medical advice or authorize diving based on an individual's medical condition. Always refer to an advisor for those cases.
@@ -992,7 +992,17 @@ async def rag_answer(
         metadata = doc.get("metadata", {})
         source = metadata.get("source", "unknown")
         sources.append(source)
-        context_parts.append(f"[{i}] Fuente: {source}\n{redact_pii(doc['content'])}")
+        # "conversations" docs describe a DIFFERENT customer's past situation (see
+        # scripts/load_embeddings.py). Label them explicitly so the LLM never
+        # mistakes their facts (family, companions, budget) for the current
+        # customer's — defense in depth alongside stripping their literal quotes
+        # at indexing time (T113 in docs/test-battery-edge-cases.md).
+        source_label = (
+            f"{source} (situacion de otro cliente distinto, no es el cliente actual)"
+            if source == "conversations"
+            else source
+        )
+        context_parts.append(f"[{i}] Fuente: {source_label}\n{redact_pii(doc['content'])}")
     context = "\n\n".join(context_parts)
 
     return await _answer_with_llm(context, context_sources=sources)

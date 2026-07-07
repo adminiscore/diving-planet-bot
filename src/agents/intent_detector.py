@@ -277,6 +277,20 @@ class IntentDetector:
             intent.detected_fields.append("is_certified")
 
     def _detect_group_info(self, message: str, intent: DetectedIntent) -> None:
+        # "3 buceadoras y 2 buceadores" / "2 buzas y 1 buzo" — gendered variants
+        # of the SAME noun (no certification/activity split implied). Must run
+        # BEFORE the generic "somos N" pattern below, which would otherwise
+        # match only the first number and stop (T165 in
+        # docs/test-battery-edge-cases.md: summed to 3 instead of 5).
+        _gendered_diver_noun = r'(?:buceador[ae]s?|buz[oa]s?|buseador[ae]s?)'
+        m_gendered_sum = re.search(
+            rf'\b(\d+)\s+{_gendered_diver_noun}\s+y\s+(\d+)\s+{_gendered_diver_noun}\b',
+            message, re.IGNORECASE,
+        )
+        if m_gendered_sum:
+            intent.group_size = int(m_gendered_sum.group(1)) + int(m_gendered_sum.group(2))
+            intent.detected_fields.append("group_size")
+
         group_size_patterns = [
             (r'\bsomos\s+(\d+|dos|tres|cuatro|cinco|seis|siete|ocho)\b', {'dos': 2, 'tres': 3, 'cuatro': 4, 'cinco': 5, 'seis': 6, 'siete': 7, 'ocho': 8}),
             (r'\bvenimos\s+(\d+|dos|tres|cuatro|cinco|seis|siete|ocho)\b', {'dos': 2, 'tres': 3, 'cuatro': 4, 'cinco': 5, 'seis': 6, 'siete': 7, 'ocho': 8}),
@@ -292,18 +306,19 @@ class IntentDetector:
             (r'\bfamily\s+of\s+(\d+|two|three|four|five|six|seven|eight)\b', {'two': 2, 'three': 3, 'four': 4, 'five': 5, 'six': 6, 'seven': 7, 'eight': 8}),
         ]
 
-        for pattern, word_map in group_size_patterns:
-            match = re.search(pattern, message)
-            if match:
-                size_str = match.group(1)
-                if size_str.isdigit():
-                    intent.group_size = int(size_str)
-                elif size_str in word_map:
-                    intent.group_size = word_map[size_str]
+        if not m_gendered_sum:
+            for pattern, word_map in group_size_patterns:
+                match = re.search(pattern, message)
+                if match:
+                    size_str = match.group(1)
+                    if size_str.isdigit():
+                        intent.group_size = int(size_str)
+                    elif size_str in word_map:
+                        intent.group_size = word_map[size_str]
 
-                if intent.group_size:
-                    intent.detected_fields.append("group_size")
-                    break
+                    if intent.group_size:
+                        intent.detected_fields.append("group_size")
+                        break
 
         # ── Numeric split: "3 de buceo y 2 de snorkel", "5 snorkel y 2 buceo" ──
         activity_kw = r'(buce\w*|buse\w*|snorkel|snorkeling|esnorkel|careteo|caretear|minicurso|mini\s?curso|bautismo|bautizo|diving|scuba|submarinismo)'

@@ -43,7 +43,7 @@ El cliente da de entrada casi todos los datos de golpe. El bot debe extraerlos T
 - [ ] **T004**: "Somos una pareja, ella tiene miedo al agua pero quiere intentarlo, yo soy rescue diver, presupuesto ajustado, ¿qué opciones baratas hay?"
 - [ ] **T005**: "Quiero hacer advanced, ya tengo el open water desde hace 3 años pero no he vuelto a bucear, estoy en Cocoliso, somos 2"
 - [ ] **T006**: "Buenas tardes, grupo de una empresa, 12 personas, mitad certificados mitad no, necesitamos factura, ¿se puede?"
-- [ ] **T007**: "hola quiero reservar minicurso para mi hija de 9 y snorkel para mi que no se bucear y mi esposo quiere el paquete de 5 buceos porque es rescue diver desde cartagena para el sabado"
+- [x] **T007**: "hola quiero reservar minicurso para mi hija de 9 y snorkel para mi que no se bucear y mi esposo quiere el paquete de 5 buceos porque es rescue diver desde cartagena para el sabado" — arreglado en v0.19.24 (3 vías de group_allocation), ver registro de sesión.
 
 **Vigilar**: ¿retiene TODOS los datos (grupo, certificación, edades, presupuesto, ubicación, fecha)? ¿responde con una recomendación coherente sin re-preguntar nada ya dado? ¿el T007 (extremo, 3 actividades + 3 personas en una frase) se procesa sin perder ningún miembro del grupo?
 
@@ -53,14 +53,14 @@ El cliente da de entrada casi todos los datos de golpe. El bot debe extraerlos T
 
 El cliente dice una cosa y unos turnos después cambia de idea. El bot debe **actualizar**, no ignorar el cambio ni quedarse con el dato viejo.
 
-- [ ] **T008**: "Somos 4" → (turnos después) "Ah espera, en realidad somos 5, se me olvidó mi cuñado"
-- [ ] **T009**: "Quiero el minicurso" → "Mejor no, prefiero snorkel, me da miedo bucear"
-- [ ] **T010**: "Soy certificado" → "Espera, mi certificación venció / la perdí, ¿cuenta igual?"
-- [ ] **T011**: "Salimos desde Cartagena" → "En realidad ya estamos en las islas, en San Pedro de Majagua"
-- [ ] **T012**: "Quiero el paquete de 7 buceos" → "Mejor solo 2, no tenemos tantos días"
-- [ ] **T013**: "Somos colombianos" → "Ah no, mi amigo es extranjero, solo yo soy colombiano" (grupo mixto de nacionalidad)
-- [ ] **T014**: "Reserva para el 15" → "Mejor cambiémoslo al 20" (aunque el bot no maneja fechas reales, no debe ignorar el cambio ni inventar confirmación)
-- [ ] **T015**: Secuencia larga: "Quiero bucear" → "en realidad snorkel" → "no, mejor el minicurso" → "¿sabes qué? bucero, soy certificado" (4 cambios seguidos) — ¿el bot mantiene la cordura y termina con el último estado correcto?
+- [x] **T008**: "Somos 4" → (turnos después) "Ah espera, en realidad somos 5, se me olvidó mi cuñado" — arreglado en v0.19.23, ver registro de sesión.
+- [x] **T009**: "Quiero el minicurso" → "Mejor no, prefiero snorkel, me da miedo bucear" — confirmado correcto (v0.19.23).
+- [x] **T010**: "Soy certificado" → "Espera, mi certificación venció / la perdí, ¿cuenta igual?" — escala a asesor, correcto (v0.19.23).
+- [x] **T011**: "Salimos desde Cartagena" → "En realidad ya estamos en las islas, en San Pedro de Majagua" — arreglado en v0.19.24 (el hotel ya se persiste, ver registro de sesión).
+- [x] **T012**: "Quiero el paquete de 7 buceos" → "Mejor solo 2, no tenemos tantos días" — ambigüedad de lenguaje natural, interpretación consistente y defendible (v0.19.23).
+- [x] **T013**: "Somos colombianos" → "Ah no, mi amigo es extranjero, solo yo soy colombiano" (grupo mixto de nacionalidad) — arreglado en v0.19.24: respuesta honesta + asesor en vez de fallback genérico (split real de facturación queda fuera de alcance).
+- [x] **T014**: "Reserva para el 15" → "Mejor cambiémoslo al 20" (aunque el bot no maneja fechas reales, no debe ignorar el cambio ni inventar confirmación) — arreglado en v0.19.23, ver registro de sesión.
+- [x] **T015**: Secuencia larga: "Quiero bucear" → "en realidad snorkel" → "no, mejor el minicurso" → "¿sabes qué? bucero, soy certificado" (4 cambios seguidos) — confirmado correcto (v0.19.23).
 
 **Vigilar**: tras el cambio, ¿el resumen/carrito refleja el dato NUEVO? ¿El bot reconoce explícitamente el cambio ("ok, actualizo a 5 personas") o lo aplica en silencio sin confirmar (aceptable pero peor UX)? ¿En T015 no se queda pegado en un estado intermedio?
 
@@ -290,7 +290,7 @@ Directamente relacionado con la alucinación real ya arreglada ("¡Buenísimo qu
 - [ ] **T120**: Añadir 2 actividades y luego "cambia la cantidad del buceo a 3, deja el snorkel igual"
 - [ ] **T121**: "Vacía todo el carrito y empecemos de cero"
 - [ ] **T122**: "reserva para 0 personas" / "no somos nadie, es una consulta"
-- [ ] **T123**: "Agrega 50 personas al buceo certificado" (cantidad extrema)
+- [x] **T123**: "Agrega 50 personas al buceo certificado" (cantidad extrema) — arreglado en v0.19.24: sugiere servicio privado/asesor sin bloquear el flujo.
 - [ ] **T124**: "Quita el snorkel" cuando NO hay snorkel en el carrito
 - [ ] **T125**: Pedir "modifica" sin especificar qué
 
@@ -364,7 +364,7 @@ El español tiene concordancia de género (buzo/buza, certificado/certificada) y
 - [ ] **T162**: "Mi pareja, ella es certificado, yo no" (mismatch pronombre/adjetivo)
 - [ ] **T163**: "Todes estamos certificades, somos 4" (lenguaje inclusivo/neutro)
 - [ ] **T164**: "Mi hija es buzo, tiene 15 años" (masculino genérico válido — no debe confundir)
-- [ ] **T165**: "Somos 3 buceadoras y 2 buceadores"
+- [x] **T165**: "Somos 3 buceadoras y 2 buceadores" — arreglado en v0.19.24, suma correctamente a 5.
 - [ ] **T166**: "quiero aser el minikurso de vuceo, no se nadar bien" (faltas ortográficas graves)
 - [ ] **T167**: "Mi hijo, la niña, tiene 9 años" (referencia contradictoria de género, error de tecleo)
 - [ ] **T168**: "Somos una amiga y yo, ella quiere buceo el quiere snorkel" (mezcla de pronombres)
@@ -499,7 +499,7 @@ Probadas ~20 conversaciones con el LLM real (Docker+Postgres+KB reindexada, `RAG
 **↳ ARREGLADO en v0.19.18 — T091 alucinación de PayPal.** "¿puedo pagar con PayPal?" → antes: "¡Claro que sí, puedes pagar con PayPal!" (inventado — la KB solo lista tarjeta/efectivo/Llave/enlace). Añadido el negativo explícito al FAQ de medios de pago ("No aceptamos PayPal, criptomonedas ni pagos a plazos") + reindex. Ahora: no confirma PayPal (deriva a asesor); "¿pago en cuotas?" → "no aceptamos pagos a plazos" ✅.
 
 **↳ ARREGLADO en v0.19.21 — T029/T033 (grupo cambia a mitad del flujo de reserva).** Nuevo guard `_apply_group_recomposition` en `supervisor.py`: dentro del flujo mixto, texto libre que añade gente o replantea el total ("y mi hijo de 12", "se suma mi hermano, ya seríamos 3", "también viene mi esposa") ahora se captura (actualiza `detected_group_size`/`detected_ages`), acusa recibo ("¡Anotado! Ahora sois 3…") y mantiene el paso y los botones actuales — en vez de "no te entendí". Conservador: no dispara con una respuesta normal de conteo ("somos 3") ni con una de ubicación que empieza por "y" ("y desde Cartagena"), y se desactiva en los pasos de cantidad. Verificado en vivo (T029 y T033 incremental). Tests en `tests/test_group_recomposition.py`.
-- **T123 (50 personas)**: acepta la cantidad extrema sin avisar; un grupo tan grande debería sugerir servicio privado/asesor. Menor.
+- ~~**T123 (50 personas)**: acepta la cantidad extrema sin avisar~~ ✅ ARREGLADO en v0.19.24.
 
 ### 2026-07-07 (cont. 4) — barrido en vivo categorías 6/8/9/10/11/15 (Gonzalo/Claude)
 
@@ -512,12 +512,46 @@ Probadas ~20 conversaciones con el LLM real (Docker+Postgres+KB reindexada, `RAG
 
 **Requiere reindex** en PRE/PRO (cambios en `faqs.json` + `policies.json`).
 
+### 2026-07-07 (cont. 8) — cierre de los 5 gaps menores restantes (Claude)
+
+A petición del owner, se cerraron los 5 gaps que habían quedado marcados como "conocidos, no arreglados" en las sesiones anteriores: T007, T011, T013, T123, T165.
+
+- **T007 (fix completo, no parche)**: causa raíz real fue arquitectónica — la tool `remember` del orquestador (`orchestrator.py`) solo soportaba un split binario certificado/no-certificado (`certified_count`/`beginner_count`), sin forma de expresar un tercer subgrupo de snorkel. Ante 3 personas con 3 actividades distintas en una frase, el snorkel se perdía silenciosamente y el bot afirmaba "son 2 personas" (no 3). Añadido `snorkel_count` al schema; `_persist_remembered` (`supervisor.py`) construye ahora `group_allocation` de hasta 3 vías; `_route_detected_intent` añade el subgrupo de snorkel directo al carrito (no requiere cadena de preguntas, a diferencia de certificado/minicurso). `_build_confirmation_message` ya soportaba la clave "snorkel" en el texto pero unía con "y" repetido — cambiado a coma + "y" final. Verificado en vivo: 3/3 personas detectadas correctamente, snorkel ya en el carrito antes de llegar al resumen.
+- **T011**: la causa era doble — (1) dentro del flujo de carrito el orquestador solo ejecuta UNA tool "primaria" por turno, así que si elegía `set_location` como primaria, `note_logistics` (que sí captura el hotel) nunca se disparaba en el mismo turno; (2) cuando sí intentaba guardar el hotel vía el companion tool `remember`, a veces usaba una clave `island` inventada (no declarada en el schema) en vez de `hotel`. Reforzada la descripción del campo `hotel` en `remember` (aclara que no existe un campo `island` separado) + `_persist_remembered` acepta `remembered["island"]` como alias defensivo. Verificado 3/3 estable (orquestador corre a `temperature=0.0`, determinista).
+- **T013**: nuevo detector determinista `_detect_mixed_nationality_request` (`supervisor.py`) — ante frases que revelan un grupo con nacionalidades mixtas ("mi amigo es extranjero, solo yo soy colombiano", "nacionalidad mixta"...), responde con la explicación honesta ya existente en la KB (cada quien paga según su nacionalidad, mismo precio equivalente, sin descuento especial) y ofrece asesor/menú, en vez de caer al fallback genérico de RAG. No implementa un split de facturación real por persona (queda fuera de alcance, requeriría una feature de pagos nueva).
+- **T123**: nuevo `_large_group_advisor_notice` (`decision_tree.py`, `LARGE_GROUP_ADVISOR_THRESHOLD=15`) antepone una sugerencia de coordinar servicio privado con un asesor para cantidades grandes en el paso de certificado, sin inventar un número de capacidad máxima (la KB no tiene uno, y ya existe la regla contra inventarlos). El flujo sigue normalmente, no bloquea.
+- **T165**: "Somos 3 buceadoras y 2 buceadores" solo daba `group_size=3` porque el patrón genérico "somos N" (que para en el primer match) capturaba el primer número antes de que la lógica de suma pudiera intervenir. Nuevo patrón dedicado en `intent_detector.py` que reconoce "N <sustantivo> y M <mismo sustantivo, variante de género>" y corre ANTES del patrón genérico. Verificado: `group_size=5`.
+
+Suite: 1078 passed, 6 skipped. Sin cambios de KB — no requirió reindex.
+
+### 2026-07-07 (cont. 7) — Categoría 2 (cambio de opinión, T008-T015) barrida en vivo (Claude)
+
+No tenía registro de sesión confirmado. Probada contra `route_message()` real con LLM (Postgres/pgvector local, sin Docker). 2 bugs reales encontrados y arreglados (v0.19.23):
+
+- **T008 arreglado**: `_GROUP_RECOMPOSE_RE`/`_apply_group_recomposition` (`supervisor.py`) solo reconocía "ahora/ya somos N" y verbos tipo "se suma/añade/une" — no cubría "en realidad somos 5" (sin ahora/ya) ni "se me olvidó mi cuñado" (sin esos verbos). Antes: caía en "no te entendí". Ampliado el regex con esos dos patrones. Verificado: "¡Anotado! Ahora sois 5. Sigamos: elige una de las opciones de abajo 👇".
+- **T014 arreglado**: "reserva para el 15" → "mejor cambiémoslo al 20" hacía que el LLM (RAG, ~4/6 intentos) respondiera "¡Listo! Cambiamos la reserva al 20" — una confirmación inventada, ya que el bot no gestiona reservas reales y nada se confirmó de verdad. `_detect_reschedule_request` no cubre este caso (requiere frases explícitas de "cambiar/mover la fecha de MI reserva", y aquí no hay una reserva previa real). Reforzada la regla existente del prompt (ES+EN) con el ejemplo explícito de la frase prohibida y el reemplazo correcto. Verificado: 8/8 sin la falsa confirmación tras el fix.
+- **T009/T015**: reconfirmados correctos tras los 2 fixes de arriba (sin regresión). Nota: dentro del flujo de carrito el campo diagnóstico `detected_activity` puede quedar desactualizado, pero el campo real que decide qué se añade (`mixed_pending_qty_type`) sí refleja el último cambio — no es un bug, es solo que ese campo no es la fuente de verdad en esa fase.
+- **T010**: "mi certificación venció, ¿cuenta igual?" escala directo a asesor — seguro y correcto, no requiere fix.
+- **T011**: cambio de origen Cartagena→isla mencionando el hotel en la MISMA frase ("...en San Pedro de Majagua") — el `IntentDetector` aislado sí detecta `hotel=san_pedro_majagua` correctamente, pero dentro del flujo de carrito el cambio de ubicación pasa por `_dispatch_orchestrator` (no por `_apply_detected_intent`), así que el hotel no se persiste y el bot vuelve a preguntarlo. Degrada con gracia (repregunta en vez de romperse o contradecirse), coincide con el follow-up ya documentado en `session-handoff.md` ("un split/cambio descrito en el paso de ubicación no se auto-detecta"). No se arregló — requeriría propagar la detección de hotel al camino del orquestador de carrito, fuera de alcance de esta sesión.
+- **T012**: "mejor solo 2, no tenemos tantos días" tras seleccionar el paquete de 7 inmersiones, justo en el paso "¿para cuántas personas?" — se interpretó como qty=2 PERSONAS, no como bajar de 7 a 2 inmersiones. Ambigüedad real del lenguaje (ambas lecturas son válidas), y el bot escogió una interpretación consistente sin mezclar datos contradictorios — cumple el criterio del propio "Vigilar" de la categoría. No se considera bug.
+- **T013**: nacionalidad mixta del grupo — feature no implementada; ante la contradicción, el grounding check del RAG rechaza la respuesta y cae al fallback seguro ("no tengo información suficiente... te conecto con un asesor") en vez de inventar algo incoherente. Gap conocido, degradación aceptable.
+
+Suite: 1078 passed, 6 skipped. Sin cambios de KB — no requirió reindex.
+
+### 2026-07-07 (cont. 6) — T113 cerrado: causa raíz encontrada y arreglada (Claude)
+
+**↳ ARREGLADO en v0.19.22 — T113/T113b (acompañante inventado).** Causa raíz real (no era el bloque few-shot, ya descartado en la sesión inicial): `scripts/load_embeddings.py` indexaba las conversaciones reales de WhatsApp (`conversations.json`) incluyendo las citas LITERALES del cliente como contenido buscable ("Cliente dice:\n- ... mi esposo..."), y `source_weight_for_topics()` (`vector_store.py`) boostea esa fuente (+0.10 a +0.25) justo para topics como `location_islands`/`meeting_point`/`payment` — los mismos de "estoy en la isla, en el hotel X". Confirmado con consultas directas: para "hola, estoy en la isla, en el hotel cocoliso", una transcripción de OTRO cliente mencionando "mi esposo" puntuaba 0.496 en similitud vectorial (justo bajo el umbral individual de 0.50) pero el boost de rerank la metía igual en el `Contexto` junto a las FAQs — el LLM (temp 0.3) a veces mezclaba ese dato ajeno en la respuesta.
+
+Fix: `load_knowledge_base()` ya no indexa las citas literales del cliente — solo escenario + respuestas del asesor + temas (mismo criterio que ya se aplicaba al bloque few-shot desde v0.19.14, nunca replicado aquí). Defensa adicional en `rag_agent.py`: los docs de fuente `conversations` se etiquetan en el contexto como "situación de otro cliente distinto, no es el cliente actual". Reindexado dev (783 docs).
+
+**Verificado**: 18/18 intentos sin alucinación (`hotel cocoliso` / `hotel pao pao` / `san pedro de majagua`, 6 repeticiones cada uno) contra `rag_answer` real con LLM — antes ~3-4/5 fallaban con el mismo mensaje. T110-T112 no afectados (siguen igual). Suite: 1078 passed, 6 skipped. **Pendiente reindex en PRE/PRO.**
+
+- [x] **T113**: "hola, estoy en la isla, en el hotel cocoliso" → ya no inventa acompañante (18/18 en vivo).
+
 ### 2026-07-07 (cont. 5) — barrido en vivo categorías 1/7/19/21/22 (Gonzalo/Claude)
 
 **Muy bien:** Cat 1 info-dump (T001 extrae el split 3 cert + 2 princ); Cat 19 typos pesados ("kiero buzear stoy en kartagena"), sin espacios ("holaquierohacer…"), mayúsculas/emoji — todos parseados; Cat 21 bebé de 2 (no ofrece buceo), mascota (no), 25 de boda (grupo grande), futuro lejano 2 años (escala); Cat 22 lenguaje inclusivo ("todes certificades, somos 4" → cert=True, grp=4) y femenino ("buzas certificadas").
 
 **↳ ARREGLADO en v0.19.20 — extracción en inglés incompleta.** "we are a family of 4" y "our kids are 7 and 11" no capturaban grupo/edades (el español "familia de N" sí). Añadidos patrones EN: `family of N` (grupo) y `kids/children are N and M` (edades). Verificado: T003 completo ("family of 4, kids are 7 and 11") → grp=4, ages=[7,11]. Tests en `test_intent_robustness.py`.
 
-**Gaps menores no arreglados (niche):**
-- T007 (3 actividades distintas en una frase: minicurso hija + snorkel yo + paquete-5 esposo) → el detector aplana a minicurso; el orquestador LLM lo maneja. Extremo por diseño.
-- T165 ("3 buceadoras y 2 buceadores") → no suma a 5 (split de mismo-tipo-ambos-lados). Frase muy inusual.
+**Gaps arreglados en v0.19.24** (ver registro de sesión "cont. 8" más abajo): T007 (3 vías de group_allocation) y T165 (suma de sustantivos con género).

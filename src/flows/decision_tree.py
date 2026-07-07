@@ -685,6 +685,14 @@ MULTI_DAY_SERVICES = {
     "9_dives_4_days_already_on_island",
 }
 
+# Above this many people in one line item, nudge toward a human-coordinated
+# private/group service instead of silently treating it like a normal small
+# group (T123 in docs/test-battery-edge-cases.md). Deliberately does NOT state
+# a maximum boat/group capacity (the KB has none — inventing one is forbidden,
+# see rag_agent.py's "never invent capacity numbers" rule); it only suggests
+# advisor coordination while continuing the flow normally.
+LARGE_GROUP_ADVISOR_THRESHOLD = 15
+
 REFRESHER_PRESERVE_SERVICES = {
     "2_dives_1_day",
     "2_dives_1_day_already_on_island",
@@ -3131,6 +3139,23 @@ class DecisionTree:
         if existing["qty"] <= 0:
             state.mixed_cart.remove(existing)
 
+    def _large_group_advisor_notice(self, n: int, lang: str) -> str:
+        """Soft nudge for very large single-line quantities (T123) — recommends
+        advisor-coordinated private service without inventing a max capacity."""
+        if n < LARGE_GROUP_ADVISOR_THRESHOLD:
+            return ""
+        if lang == "es":
+            return (
+                f"👥 Para un grupo de {n} personas te recomiendo coordinar un *servicio "
+                "privado* con un asesor — así te damos el mejor precio y logística para "
+                "todo el grupo. Seguimos armando tu reserva mientras tanto:\n\n"
+            )
+        return (
+            f"👥 For a group of {n} people I'd recommend coordinating a *private service* "
+            "with an advisor, so we can give the whole group the best price and logistics. "
+            "Meanwhile, let's keep building your booking:\n\n"
+        )
+
     def _parse_mixed_quantity(self, message: str) -> int | None:
         import re as _re
         msg = " ".join(message.strip().lower().split())
@@ -3839,7 +3864,7 @@ class DecisionTree:
             state.step = Step.MIXED_CERT_LAST_DIVE
             self.set_quick_replies(state, "mixed_cert_last_dive")
             msg_key = "mixed_cert_last_dive_group" if n > 1 else "mixed_cert_last_dive"
-            return MESSAGES[msg_key][lang]
+            return self._large_group_advisor_notice(n, lang) + MESSAGES[msg_key][lang]
 
         if item_type == "course":
             if state.mixed_pending_course_question == "open_water_time":

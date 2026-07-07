@@ -405,15 +405,26 @@ def load_knowledge_base() -> list[dict]:
         for i, conv in enumerate(data.get("conversation_examples", [])):
             lang = conv.get("lang", "es")
             scenario = conv.get("scenario", "")
-            customer_msgs = (conv.get("customer", {}) or {}).get("messages", [])
             dp_msgs = (conv.get("diving_planet", {}) or {}).get("messages", [])
             topics = normalize_conversation_topics(conv.get("extracted_topics", []))
 
+            # Deliberately do NOT include the real customer's literal messages
+            # (conv["customer"]["messages"]) in the indexed content. This source
+            # is boosted by source_weight_for_topics() for several topics
+            # (location_islands, meeting_point, payment...), so it regularly gets
+            # pulled into the RAG grounding context even when only loosely
+            # relevant. A raw WhatsApp quote from a DIFFERENT customer (family
+            # composition, spouse, budget) sitting in "Contexto" invites the LLM
+            # to blend those details into its answer for the CURRENT customer
+            # (root cause of a real hallucinated-companion bug, T113 in
+            # docs/test-battery-edge-cases.md). Only the scenario summary and the
+            # advisor's own (scripted, non-personal) responses are indexed —
+            # mirrors the same fix already applied to _format_fewshot_block in
+            # rag_agent.py.
             content = (
-                f"Conversación real (WhatsApp)\n"
+                f"Situacion real atendida (de OTRO cliente, no es el cliente actual)\n"
                 f"Escenario: {scenario}\n\n"
-                f"Cliente dice:\n- " + "\n- ".join(customer_msgs) + "\n\n"
-                f"Diving Planet responde:\n- " + "\n- ".join(dp_msgs)
+                f"Como respondio el asesor:\n- " + "\n- ".join(dp_msgs)
             )
             if topics:
                 content += "\n\nTemas: " + ", ".join(topics)

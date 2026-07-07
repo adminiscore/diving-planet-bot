@@ -255,15 +255,27 @@ TOOLS: list[dict] = [
                 "Persist any concrete facts the customer just volunteered so the bot "
                 "never re-asks or ignores them. Call this ALONGSIDE another tool (or "
                 "alongside answer_question) whenever the message contains group size, "
-                "ages, experience, budget, days, certification, activity, location, or "
-                "a preference/concern. Only include fields actually stated."
+                "ages, experience, budget, days, certification, activity, location, "
+                "hotel name, or a preference/concern. IMPORTANT: if the customer states "
+                "a hotel name in the SAME message as a location change (e.g. 'ya estamos "
+                "en las islas, en el hotel X'), you MUST call remember with that hotel "
+                "alongside set_location — do not drop it just because set_location is "
+                "the primary tool. Only include fields actually stated."
             ),
             "parameters": {
                 "type": "object",
                 "properties": {
                     "group_size": {"type": "integer", "description": "Total people, e.g. 'somos 5' -> 5"},
                     "certified_count": {"type": "integer", "description": "How many are certified divers"},
-                    "beginner_count": {"type": "integer", "description": "How many are beginners / not certified"},
+                    "beginner_count": {"type": "integer", "description": "How many want the beginner minicourse (their first dive, with an instructor)"},
+                    "snorkel_count": {
+                        "type": "integer",
+                        "description": (
+                            "How many want snorkeling ONLY — no diving at all (e.g. 'no se bucear', "
+                            "'me da miedo el buceo', 'ella prefiere snorkel'). Do NOT confuse with "
+                            "beginner_count: beginner_count is for people doing their first DIVE."
+                        ),
+                    },
                     "is_certified": {"type": "boolean", "description": "Whole group certified (true) or all beginners (false)"},
                     "experience_level": {
                         "type": "string",
@@ -279,7 +291,15 @@ TOOLS: list[dict] = [
                         "description": "Activity the customer wants",
                     },
                     "location": {"type": "string", "enum": ["cartagena", "island"], "description": "Where they depart from / are"},
-                    "hotel": {"type": "string", "description": "Hotel name exactly as written"},
+                    "hotel": {
+                        "type": "string",
+                        "description": (
+                            "Any named hotel/lodging/place on the islands the customer "
+                            "mentions (e.g. 'San Pedro de Majagua', 'Cocoliso', 'Pao Pao'), "
+                            "exactly as written. Use THIS field for it — there is no "
+                            "separate 'island' field, so do not invent one."
+                        ),
+                    },
                     "preference": {"type": "string", "description": "Any preference/concern, e.g. 'quieren ir juntos, no separarse'"},
                 },
             },
