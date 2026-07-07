@@ -62,6 +62,8 @@ def test_bubble_makers_window():
     (7, "snorkel"),
     (9, "Bubble Makers"),
     (14, "Open Water"),
+    (14, "Divemaster"),        # 12-17 -> Divemaster starts at 18
+    (17, "Divemaster"),
 ])
 def test_age_note_mentions_right_activity_es(age, must_include):
     note = elig.age_eligibility_note(age, "es")

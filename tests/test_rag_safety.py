@@ -567,6 +567,17 @@ def test_system_prompt_has_booking_cutoff_time_guard_en():
     assert 'do NOT claim the cutoff "has already passed"' in prompt
 
 
+def test_system_prompt_has_partial_equipment_discount_guard_es():
+    """Regression T081: partial gear (e.g. mask+fins only) must NOT get the own-equipment discount."""
+    prompt = rag_agent.build_system_prompt("es")
+    assert "equipo parcial" in prompt.lower()
+
+
+def test_system_prompt_has_partial_equipment_discount_guard_en():
+    prompt = rag_agent.build_system_prompt("en")
+    assert "partial gear" in prompt.lower()
+
+
 def test_brand_tone_injected_from_json_es(monkeypatch):
     """build_system_prompt must read brand_tone.json. Changes to the JSON must be reflected."""
     fake_tone = {
@@ -1041,5 +1052,23 @@ def test_heart_idioms_do_not_trigger_medical_escalation(msg):
     "sufro del corazón, ¿puedo bucear?",
 ])
 def test_real_heart_condition_still_escalates(msg):
+    result = detect_sensitive_escalation(msg, "es")
+    assert result is not None and result[0] == "medical_questions"
+
+
+@pytest.mark.parametrize("msg", [
+    "¿los instructores tienen buena presión para manejar grupos grandes?",
+    "hay que saber manejar la presión en este trabajo",
+])
+def test_pressure_idioms_do_not_trigger_medical_escalation(msg):
+    result = detect_sensitive_escalation(msg, "es")
+    assert result is None or result[0] != "medical_questions"
+
+
+@pytest.mark.parametrize("msg", [
+    "mi presión arterial es un poco alta, nada grave",
+    "tengo la presión alta",
+])
+def test_real_blood_pressure_still_escalates(msg):
     result = detect_sensitive_escalation(msg, "es")
     assert result is not None and result[0] == "medical_questions"

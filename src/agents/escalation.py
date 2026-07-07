@@ -85,6 +85,9 @@ SENSITIVE_RULES = {
 _MEDICAL_IDIOM_EXCLUSIONS = (
     "corazon de oro", "corazón de oro", "de todo corazon", "de todo corazón",
     "con el corazon en la mano", "heart of gold",
+    # "presión" used colloquially for composure/stress handling, not blood pressure.
+    "buena presion", "buena presión", "manejar la presion", "manejar la presión",
+    "manejar presion", "manejar presión", "under pressure", "good under pressure",
 )
 
 

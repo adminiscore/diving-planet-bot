@@ -1,6 +1,18 @@
 History
 =======
 
+0.19.27 - (2026-07-07)
+----------------------
+* **Batería de tests conversacionales: reconfirmación formal completa — las 176 casillas tachadas** (detalle completo en `docs/test-battery-edge-cases.md` registro "cont. 11"). Probadas en vivo una a una las categorías 4, 6, 8-22 (las únicas que quedaban sin checkbox individual) contra `route_message()` real con LLM + pgvector local. 5 fixes reales encontrados y aplicados:
+  - **Divemaster nunca se mencionaba en la nota de edad**: preguntas directas sobre el mínimo de 18 años para Divemaster quedaban sin responder de verdad. `age_eligibility_note()` (`eligibility.py`) ahora lo menciona para edades 12-17.
+  - **Falso positivo médico con "presión" coloquial**: "¿los instructores tienen buena presión para grupos grandes?" escalaba como pregunta médica. Añadida exclusión de modismos en `escalation.py` (igual que el fix de "corazón de oro" de v0.19.19); la presión arterial real sigue escalando.
+  - **Descuento de equipo propio confirmado con equipo PARCIAL** (determinista, 3/3): contradecía `discounts.json` (solo aplica con equipo completo). Regla explícita añadida al prompt (ES+EN).
+  - **Inmersión extra confirmada sin la limitación operativa real**: nueva FAQ dedicada que refleja que casi nunca hay tiempo dentro del horario de la lancha.
+  - Reindex de embeddings en dev (783→785 docs) para servir el FAQ nuevo.
+  - Nuevo script reutilizable `scripts/live_battery_driver.py` para correr conversaciones multi-turno contra el bot real desde una sola invocación.
+  - **2 riesgos de flakiness ya conocidos, reconfirmados pero no resueltos** (no son regresiones de esta sesión): el verificador de "grounding" sigue rechazando intermitentemente (~1/3) respuestas correctas, más visible en conversaciones largas; y la regla contra inventar capacidades de tour privado no se sigue siempre a temperatura 0.3. Ambos ya documentados como pendientes de investigación en `session-handoff.md`.
+* Suite: 1099 passed, 6 skipped. Reindex hecho en dev; pendiente en PRE/PRO (solo por el FAQ nuevo).
+
 0.19.26 - (2026-07-07)
 ----------------------
 * **Batería: categorías 1/3/5/7 barridas con checkbox (22 tests marcados) + 7 fixes reales** (detalle completo en `docs/test-battery-edge-cases.md` registro "cont. 10"):

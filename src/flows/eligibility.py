@@ -214,6 +214,8 @@ def age_eligibility_note(age: int, lang: str = "es") -> str:
         )
         if age < MIN_ADVANCED:
             base += f"Los cursos Advanced/Rescue son desde los {MIN_ADVANCED} años."
+        elif age < MIN_DIVEMASTER:
+            base += f"El Divemaster es a partir de los {MIN_DIVEMASTER} años."
         base += " Para las salidas como *buzo certificado* solo necesita tener la certificación Open Water."
         if is_minor(age):
             base += " (Los menores deben ir acompañados de un adulto responsable.)"
@@ -243,6 +245,8 @@ def age_eligibility_note(age: int, lang: str = "es") -> str:
     )
     if age < MIN_ADVANCED:
         base += f"Advanced/Rescue courses start at {MIN_ADVANCED}. "
+    elif age < MIN_DIVEMASTER:
+        base += f"Divemaster starts at {MIN_DIVEMASTER}. "
     base += "For *certified* fun dives they just need to hold an Open Water certification."
     if is_minor(age):
         base += " (Minors must be accompanied by a responsible adult.)"
