@@ -2688,6 +2688,32 @@ async def test_bare_certified_question_still_answered_not_hijacked(agent_decides
 
 
 @pytest.mark.asyncio
+async def test_pure_companion_mention_routes_to_upsell(agent_decides):
+    """#8: a free-text mention of a companion who only accompanies proactively
+    offers them the mini-course/snorkel upsell (after asking the origin)."""
+    from src.agents import orchestrator
+    agent_decides(orchestrator.TOOL_ANSWER_QUESTION)
+    state = make_state()
+    await route_message(state, "voy con mi novia que solo va a acompañar")
+    assert state.step == Step.MIXED_LOCATION
+    await route_message(state, "1")  # Cartagena → companion upsell
+    assert state.step == Step.MIXED_COMPANION_UPSELL
+    values = [b["value"] for b in state.quick_replies]
+    assert values[:3] == ["1", "2", "3"]
+
+
+@pytest.mark.asyncio
+async def test_companion_question_not_hijacked_to_upsell(agent_decides):
+    """A QUESTION about companions stays a RAG question, not the upsell flow."""
+    from src.agents import orchestrator
+    agent_decides(orchestrator.TOOL_ANSWER_QUESTION)
+    state = make_state()
+    await route_message(state, "¿el acompañante paga lo mismo?")
+    assert state.step != Step.MIXED_LOCATION
+    assert state.step != Step.MIXED_COMPANION_UPSELL
+
+
+@pytest.mark.asyncio
 async def test_intent_classifier_routes_natural_text_to_button():
     state = await reach_mixed_add_activity()
     with patch("src.agents.supervisor.classify_menu_intent",

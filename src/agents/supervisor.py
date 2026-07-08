@@ -3345,6 +3345,16 @@ async def _dispatch_conversation_agent(state: ConversationState, message: str) -
             logger.info("[SUPERVISOR] Bare certified-diver statement -> offering diving options")
             return result
 
+    # A companion mentioned in free text ("va mi novia que solo acompaña") — when
+    # nothing else would route (no diving intent for the speaker), proactively
+    # offer that companion the mini-course/snorkel upsell instead of a plain RAG
+    # reply. Reaching here means routing did NOT act (a booking tool whose intent
+    # had no concrete activity, or a plain answer_question); if the speaker DID
+    # have a diving intent, _route_detected_intent already returned above.
+    if not _intent_would_route(intent, state, message) and _mentions_pure_companion(message):
+        logger.info("[SUPERVISOR] Pure companion mention -> companion upsell")
+        return _enter_companion_upsell(state)
+
     # answer_question / profile-only / unrouted booking -> reply via RAG with the
     # now-enriched context (remembered facts included).
     if decision.tool in (orchestrator.TOOL_SET_PROFILE, orchestrator.TOOL_NOTE_LOGISTICS):
@@ -3832,6 +3842,58 @@ def _message_looks_like_question(message: str) -> bool:
     the same signal _is_substantive_free_text already uses for this.
     """
     return "?" in message
+
+
+# A companion who ONLY accompanies, mentioned in free text ("va mi novia que solo
+# acompaña", "voy con alguien que solo va a mirar"). We proactively offer that
+# companion the mini-course/snorkel upsell. Questions ("¿el acompañante paga?")
+# are excluded (they go to RAG).
+_PURE_COMPANION_RE = re.compile(
+    r"\bsolo\s+(?:me\s+|te\s+|nos\s+|lo\s+|la\s+)?acompan"
+    r"|\bsolo\s+(?:va|van|viene|vienen|ira|iran|quiere|quieren)\s+(?:a\s+)?acompan"
+    r"|\b(?:de|como)\s+acompan(?:ante|antes)?\b"
+    r"|\b(?:va|van|viene|vienen)\s+a\s+acompan"
+    r"|\bsolo\s+(?:a\s+)?(?:mirar|ver|acompan)"
+    r"|\bno\s+(?:va\s+a\s+|van\s+a\s+|quiere[n]?\s+)?buce\w*\s+ni\b"
+    r"|\bjust\s+(?:to\s+)?accompany|\bonly\s+(?:to\s+)?accompany|\bjust\s+accompanying\b"
+    r"|\bcome\s+along\b|\bjust\s+(?:to\s+)?watch\b|\bwon'?t\s+dive\b",
+    re.IGNORECASE,
+)
+
+
+def _mentions_pure_companion(message: str) -> bool:
+    if _message_looks_like_question(message):
+        return False
+    norm = "".join(
+        c for c in unicodedata.normalize("NFD", (message or "").lower())
+        if unicodedata.category(c) != "Mn"
+    )
+    return bool(_PURE_COMPANION_RE.search(norm))
+
+
+def _enter_companion_upsell(state: ConversationState) -> str:
+    """Set up the mixed cart flow and route to the companion mini-course/snorkel
+    upsell. Asks the origin first if unknown (needed for pricing); a pending flag
+    then routes back to the upsell once the location is set."""
+    from src.flows.decision_tree import MESSAGES
+    decision_tree._reset_mixed_state(state)
+    state.mixed_cart = []
+    state.mixed_entry_path = "booking"
+    if state.detected_location and not state.location:
+        state.location = state.detected_location
+    if state.step in (Step.WELCOME, Step.LANGUAGE):
+        state.step = Step.MAIN_MENU
+    if not state.location:
+        state.mixed_pending_companion_upsell = True
+        state.step = Step.MIXED_LOCATION
+        decision_tree.set_quick_replies(state, "tours_location")
+        intro = (
+            "¡Qué bueno que venga acompañante! Para armarlo bien, "
+            if state.language == "es"
+            else "Love that a companion is coming! To set it up right, "
+        )
+        return intro + MESSAGES["mixed_location"][state.language]
+    return decision_tree._goto_mixed_companion_upsell(state)
 
 
 def _intent_would_route(intent, state: ConversationState, message: str = "") -> bool:

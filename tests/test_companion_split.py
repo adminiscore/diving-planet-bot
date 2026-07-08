@@ -445,3 +445,31 @@ def test_companion_declined_is_added_as_paid_seat_in_summary():
     assert "compañante" in summary.lower() or "companion" in summary.lower()
     usd = int(round(COMPANION_PRICE["usd_online"]))
     assert str(usd) in summary
+
+
+# --- Proactive free-text companion mention -> upsell (owner feedback #8) ------
+
+@pytest.mark.parametrize("msg", [
+    "voy con mi novia que solo va a acompañar",
+    "tengo pensado ir con alguien que solo acompaña",
+    "va a venir mi hermano de acompañante",
+    "mi pareja solo me acompaña",
+    "viene mi amiga como acompañante",
+    "someone is coming just to accompany",
+    "my girlfriend will just watch",
+])
+def test_mentions_pure_companion_true(msg):
+    from src.agents.supervisor import _mentions_pure_companion
+    assert _mentions_pure_companion(msg) is True
+
+
+@pytest.mark.parametrize("msg", [
+    "¿el acompañante paga lo mismo?",   # question -> RAG, not the flow
+    "quiero bucear",                     # no companion
+    "somos 2 buzos certificados",        # no companion
+    "quiero reservar buceo certificado", # no companion
+    "voy con mi novia y los dos buceamos",  # companion but both dive (not pure)
+])
+def test_mentions_pure_companion_false(msg):
+    from src.agents.supervisor import _mentions_pure_companion
+    assert _mentions_pure_companion(msg) is False

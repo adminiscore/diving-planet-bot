@@ -154,6 +154,9 @@ class ConversationState:
     # When the group is "some certified, some not": how many non-certified people
     # still need a minicurso added AFTER the certified subgroup is committed.
     mixed_pending_beginner_after_cert: int = 0
+    # A companion was mentioned in free text: after location is set, show the
+    # mini-course/snorkel upsell for them instead of the generic activity menu.
+    mixed_pending_companion_upsell: bool = False
     mixed_pending_modify_idx: int | None = None  # cart index when editing an item
     mixed_pending_modify_refresh: bool = False   # cert qty just changed → re-ask refresher
     # Which 2-option cert sub-menu is currently showing, if any:
@@ -3458,6 +3461,12 @@ class DecisionTree:
             # cualquier actividad pendiente (cert, beginner, snorkel, course...).
             if state.location == "island" and not state.hotel:
                 return self._goto_island_hotel_menu_or_unknown(state)
+
+            # Un acompañante mencionado en texto libre: ofrecerle el upsell
+            # (minicurso/snorkel) ahora que ya sabemos la ubicación.
+            if state.mixed_pending_companion_upsell:
+                state.mixed_pending_companion_upsell = False
+                return self._goto_mixed_companion_upsell(state)
 
             # Ahora decidir el siguiente step
             if state.mixed_pending_qty_type == "cert":
