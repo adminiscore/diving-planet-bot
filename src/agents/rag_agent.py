@@ -924,47 +924,54 @@ async def rag_answer(
 
         messages.append({"role": "user", "content": user_content})
 
-        try:
-            client = AsyncOpenAI(api_key=settings.openai_api_key)
-            response = await client.chat.completions.create(
-                model=settings.openai_model,
-                messages=messages,
-                temperature=0.3,
-                max_tokens=500,
-            )
-        except Exception as exc:
-            logger.warning(f"[RAG][LLM] failed to answer query={query[:60]}... error={exc}")
-            return FALLBACK_ES if lang == "es" else FALLBACK_EN
-
-        answer = response.choices[0].message.content
         grounding_context = _build_grounding_context(context, extra_context=extra_context, history=history)
+        client = AsyncOpenAI(api_key=settings.openai_api_key)
+        fallback = FALLBACK_ES if lang == "es" else FALLBACK_EN
 
-        # Deterministic guard first: never let a price/percentage that is not in
-        # the context reach the customer (e.g. "$180" when the real price is "$178").
-        if not currency_amounts_grounded(answer or "", grounding_context):
-            logger.warning(
-                f"[RAG][GROUNDING] Rejecting answer with ungrounded amount query={query[:60]}..."
-            )
-            return FALLBACK_ES if lang == "es" else FALLBACK_EN
-
-        if not urls_grounded(answer or "", grounding_context):
-            logger.warning(
-                f"[RAG][GROUNDING] Rejecting answer with ungrounded URL query={query[:60]}..."
-            )
-            return FALLBACK_ES if lang == "es" else FALLBACK_EN
-
-        if verify_grounding:
-            grounded, reason = await _verify_grounding_with_retry(answer or "", grounding_context, lang=lang)
-            if not grounded:
-                logger.warning(
-                    f"[RAG][GROUNDING] Rejecting answer query={query[:60]}... reason={reason}"
+        # The answer is sampled at temperature 0.3, so it varies run to run. A
+        # one-off answer that embellishes a detail trips the grounding judge and,
+        # before, went straight to the "no info" fallback — the source of the
+        # intermittent (~1/3) false fallbacks. We now REGENERATE the answer once
+        # when any guard rejects: a fresh sample is usually grounded, turning a
+        # false fallback into a real answer. Only fall back if both tries fail.
+        last_reject = ""
+        for attempt in range(2):
+            try:
+                response = await client.chat.completions.create(
+                    model=settings.openai_model,
+                    messages=messages,
+                    temperature=0.3,
+                    max_tokens=500,
                 )
-                return FALLBACK_ES if lang == "es" else FALLBACK_EN
-        logger.info(
-            f"[RAG] Query: {query[:60]}... | Docs: {len(docs) if docs else 0} | "
-            f"Tokens: {response.usage.total_tokens} | Sources: {context_sources or []}"
+            except Exception as exc:
+                logger.warning(f"[RAG][LLM] failed to answer query={query[:60]}... error={exc}")
+                return fallback
+
+            answer = response.choices[0].message.content or ""
+
+            # Deterministic guards first: never let a price/%/URL not in the
+            # context reach the customer (e.g. "$180" when the real price is "$178").
+            if not currency_amounts_grounded(answer, grounding_context):
+                last_reject = "ungrounded_amount"
+            elif not urls_grounded(answer, grounding_context):
+                last_reject = "ungrounded_url"
+            elif not verify_grounding:
+                return answer
+            else:
+                grounded, reason = await _verify_grounding_with_retry(answer, grounding_context, lang=lang)
+                if grounded:
+                    logger.info(
+                        f"[RAG] Query: {query[:60]}... | Docs: {len(docs) if docs else 0} | "
+                        f"Tokens: {response.usage.total_tokens} | Sources: {context_sources or []}"
+                    )
+                    return answer
+                last_reject = reason
+            logger.info(f"[RAG][GROUNDING] attempt {attempt + 1} rejected ({last_reject}) query={query[:50]}...")
+
+        logger.warning(
+            f"[RAG][GROUNDING] Rejecting after 2 attempts query={query[:60]}... reason={last_reject}"
         )
-        return answer
+        return fallback
 
     # 1) Sin documentos del KB
     if not docs:

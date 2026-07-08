@@ -1,6 +1,12 @@
 History
 =======
 
+0.19.28 - (2026-07-08)
+----------------------
+* **Flakiness del verificador de "grounding" (~1/3 de falso-fallback) mitigada** — el primero de los 2 riesgos pendientes que arrastraba `session-handoff.md`. La respuesta se muestrea a `temperature=0.3`, así que varía de una llamada a otra; un muestreo puntual que adornaba un detalle disparaba el juez de grounding (o los guards deterministas de precios/URLs) y caía directo al fallback "no tengo esa info", pese a existir contexto válido. `_answer_with_llm` (`rag_agent.py`) ahora **regenera la respuesta una vez** ante cualquier rechazo de guard (2 intentos): un muestreo fresco suele quedar grounded, convirtiendo el falso-fallback en respuesta real. Solo cae al fallback si ambos intentos fallan. No afecta a los guards deterministas (precios/URLs siguen siendo innegociables) — solo se re-muestrea, no se relaja la verificación.
+* Se añade `tzdata` como dependencia explícita (necesaria para `zoneinfo` con `America/Bogota` en Windows, donde la base de zonas del SO no está disponible).
+* Suite: verde (misma cobertura que v0.19.27 + el path de grounding sigue cubierto por `tests/test_rag_safety.py`).
+
 0.19.27 - (2026-07-07)
 ----------------------
 * **Batería de tests conversacionales: reconfirmación formal completa — las 176 casillas tachadas** (detalle completo en `docs/test-battery-edge-cases.md` registro "cont. 11"). Probadas en vivo una a una las categorías 4, 6, 8-22 (las únicas que quedaban sin checkbox individual) contra `route_message()` real con LLM + pgvector local. 5 fixes reales encontrados y aplicados:
