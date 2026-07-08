@@ -3824,6 +3824,23 @@ def _intent_would_route(intent, state: ConversationState, message: str = "") -> 
     return False
 
 
+def _maybe_autoselect_cert_plan(intent, state: ConversationState) -> str | None:
+    """If the customer explicitly asked for the single-day 2-dive plan
+    ("2 inmersiones", "paquete de 2 buceos", "2-dive package"), pre-select it so
+    the flow skips the redundant "¿qué plan?" question — they already told us.
+    Only the 2-dive/1-day plan is auto-picked; multi-day packages keep their menu
+    because the overnight-stay requirement must be shown explicitly.
+
+    Returns the next message (already advanced to qty/last-dive) or None.
+    """
+    if getattr(intent, "cert_dives", None) != 2:
+        return None
+    state.mixed_pending_qty_type = "cert"
+    state.mixed_pending_qty_plan = decision_tree._service_for_location("2_dives_1_day", state)
+    logger.info("[INTENT] Explicit 2-dive plan -> skipping cert-plan question")
+    return decision_tree._goto_mixed_cert_last_dive_or_qty(state)
+
+
 def _route_detected_intent(intent, state: ConversationState, message: str = "") -> str | None:
     """Apply a detected intent to state and route to the matching flow step.
 
@@ -3874,9 +3891,13 @@ def _route_detected_intent(intent, state: ConversationState, message: str = "") 
             decision_tree.set_quick_replies(state, "tours_location")
             next_msg = MESSAGES["mixed_location"][state.language]
         elif cert_qty > 0:
-            state.step = Step.MIXED_ADD_CERT_PLAN
-            decision_tree.set_quick_replies(state, "mixed_add_cert_plan")
-            next_msg = MESSAGES["mixed_add_cert_plan"][state.language]
+            auto = _maybe_autoselect_cert_plan(intent, state)
+            if auto is not None:
+                next_msg = auto
+            else:
+                state.step = Step.MIXED_ADD_CERT_PLAN
+                decision_tree.set_quick_replies(state, "mixed_add_cert_plan")
+                next_msg = MESSAGES["mixed_add_cert_plan"][state.language]
         else:
             # Sólo snorkel/minicurso → entrar al carrito normalmente
             state.step = Step.MIXED_ENTRY
@@ -3921,9 +3942,14 @@ def _route_detected_intent(intent, state: ConversationState, message: str = "") 
         # Si tenemos ubicación, ir directo a preguntar plan de buceo certificado
         state.location = state.detected_location or state.location
         state.mixed_pending_qty_type = "cert"
+        from src.flows.decision_tree import MESSAGES
+        # Si el cliente ya pidió el plan de 2 inmersiones, saltar la pregunta.
+        auto = _maybe_autoselect_cert_plan(intent, state)
+        if auto is not None:
+            logger.info("[INTENT] Going to cart with location + explicit 2-dive plan")
+            return (confirmation + "\n\n" + auto) if confirmation else auto
         state.step = Step.MIXED_ADD_CERT_PLAN
         decision_tree.set_quick_replies(state, "mixed_add_cert_plan")
-        from src.flows.decision_tree import MESSAGES
         logger.info("[INTENT] Going to cart with location, asking certified diving plan")
         if confirmation:
             return confirmation + "\n\n" + MESSAGES["mixed_add_cert_plan"][state.language]
@@ -4505,6 +4531,18 @@ async def route_message(state: ConversationState, message: str) -> str:
                 state.history.append({"role": "user", "content": message})
                 state.history.append({"role": "assistant", "content": recompose_ack})
                 return recompose_ack
+
+        # At the cert-plan step, an explicit dive count ("el paquete de 2 buceos",
+        # "5 inmersiones") is unambiguous — resolve it deterministically before the
+        # LLM menu classifier, which otherwise maps "paquete de 2 buceos" to the
+        # "Paquete multi-día" button just because it contains the word "paquete".
+        if state.step == Step.MIXED_ADD_CERT_PLAN:
+            from src.agents.intent_detector import detect_cert_dive_count
+            if detect_cert_dive_count(message) is not None:
+                response = decision_tree.process_message(state, message)
+                _maybe_build_pending_note(state)
+                logger.info(f"[SUPERVISOR] Explicit dive count at cert-plan -> step={state.step.value}")
+                return response
 
         # Tool-calling orchestrator (Fase 2) — only inside the cart-style mixed flow.
         # Turns free text into structured tree actions ("estoy en las islas" ->

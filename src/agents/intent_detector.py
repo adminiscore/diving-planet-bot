@@ -20,8 +20,38 @@ class DetectedIntent:
     island: str | None = None
     hotel: str | None = None
     ages: list = field(default_factory=list)   # person ages mentioned in the message
+    cert_dives: int | None = None              # explicit dive-count requested for certified diving ("2 inmersiones", "paquete de 5 buceos")
     confidence: float = 0.0
     detected_fields: list = field(default_factory=list)
+
+
+# Explicit certified dive-count: "2 inmersiones", "paquete de 5 buceos",
+# "7 buceos en 3 dias", "2-dive package". The number must sit right before a
+# dive noun so "hace 2 años sin bucear" (a timeframe, not a count) never matches.
+_CERT_DIVE_COUNT_RE = re.compile(
+    r"\b(\d+|un[oa]?|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|"
+    r"one|two|three|four|five|six|seven|eight|nine)"
+    r"[\s\-]+(?:inmersi\w+|buceos?|dives?|immersions?)\b",
+    re.IGNORECASE,
+)
+_DIVE_WORD_TO_NUM = {
+    "uno": 1, "una": 1, "un": 1, "dos": 2, "tres": 3, "cuatro": 4, "cinco": 5,
+    "seis": 6, "siete": 7, "ocho": 8, "nueve": 9,
+    "one": 1, "two": 2, "three": 3, "four": 4, "five": 5,
+    "six": 6, "seven": 7, "eight": 8, "nine": 9,
+}
+
+
+def detect_cert_dive_count(message: str) -> int | None:
+    """Requested certified dive-count as a real package size (2/3/4/5/7/9), or None.
+    Shared by the intent detector and the cart's cert-plan step so a natural-language
+    "2 buceos" is understood in both places."""
+    match = _CERT_DIVE_COUNT_RE.search(message or "")
+    if not match:
+        return None
+    token = match.group(1).lower()
+    n = int(token) if token.isdigit() else _DIVE_WORD_TO_NUM.get(token)
+    return n if n in (2, 3, 4, 5, 7, 9) else None
 
 
 class IntentDetector:
@@ -35,6 +65,10 @@ class IntentDetector:
 
         self._detect_language(message_lower, intent)
         self._detect_activity(message_lower, intent, state)
+        # Explicit dive-count ("2 inmersiones", "paquete de 5 buceos"). Computed
+        # regardless of the detected activity because the certified flow is often
+        # entered via is_certified alone; only consumed at the cert entry point.
+        intent.cert_dives = self._detect_cert_dive_count(message_lower)
         self._detect_certification(message_lower, intent)
         self._detect_group_info(message_lower, intent)
         self._detect_ages(message_lower, intent)
@@ -210,6 +244,9 @@ class IntentDetector:
                 intent.service_id = "mindful_diving"
             intent.detected_fields.append("activity")
 
+    def _detect_cert_dive_count(self, message: str) -> int | None:
+        return detect_cert_dive_count(message)
+
     def _detect_certification(self, message: str, intent: DetectedIntent) -> None:
         if intent.is_certified is not None:
             return
@@ -319,6 +356,30 @@ class IntentDetector:
                     if intent.group_size:
                         intent.detected_fields.append("group_size")
                         break
+
+        # "para mí" / "solo yo" / "for me" / "just me" → 1 person, but ONLY when the
+        # message names no companion and no other headcount number. A wrong 1 would
+        # undercount the booking, so we stay conservative and let the flow ask when
+        # anything hints at more than one person.
+        if intent.group_size is None:
+            solo_self = re.search(
+                r'\b(?:para\s+m[ií]|s[oó]lo\s+yo|solo\s+yo|solamente\s+yo|just\s+me|only\s+me|for\s+me)\b',
+                message,
+            )
+            companion = re.search(
+                r'\b(?:y\s+mi\b|and\s+my\b|con\s+mi\b|junto\s+a|'
+                r'mi\s+(?:novi[oa]|espos[oa]|pareja|hij[oa]s?|amig[oa]s?|herman[oa]s?|mam[aá]|pap[aá]|familia)|'
+                r'my\s+(?:girlfriend|boyfriend|wife|husband|partner|kids?|son|daughter|friend|brother|sister|family|mom|dad))\b',
+                message,
+            )
+            other_num = re.search(
+                r'\b([2-9]|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|'
+                r'two|three|four|five|six|seven|eight|nine)\b',
+                message,
+            )
+            if solo_self and not companion and not other_num:
+                intent.group_size = 1
+                intent.detected_fields.append("group_size")
 
         # ── Numeric split: "3 de buceo y 2 de snorkel", "5 snorkel y 2 buceo" ──
         activity_kw = r'(buce\w*|buse\w*|snorkel|snorkeling|esnorkel|careteo|caretear|minicurso|mini\s?curso|bautismo|bautizo|diving|scuba|submarinismo)'

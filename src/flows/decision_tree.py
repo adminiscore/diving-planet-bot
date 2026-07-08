@@ -3671,6 +3671,16 @@ class DecisionTree:
         if is_back(msg):
             return self._goto_mixed_add_activity(state)
         choice = self._parse_choice(message, 2)
+        if choice is None:
+            # Understand a natural-language dive count typed here instead of 1/2
+            # ("2 buceos" → single-day plan; "5/7/9 buceos" → multi-day menu). Without
+            # this, "el paquete de 2 buceos" fell through and mis-routed to multi-day.
+            from src.agents.intent_detector import detect_cert_dive_count
+            dives = detect_cert_dive_count(msg)
+            if dives == 2:
+                choice = 1
+            elif dives in (3, 4, 5, 7, 9):
+                choice = 2
         if choice == 1:
             state.mixed_pending_qty_plan = self._service_for_location("2_dives_1_day", state)
             return self._goto_mixed_cert_last_dive_or_qty(state)

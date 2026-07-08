@@ -4,7 +4,7 @@ negations / multi-intent messages."""
 import pytest
 
 from src.agents.intent_detector import IntentDetector
-from src.flows.decision_tree import ConversationState
+from src.flows.decision_tree import ConversationState, Step
 
 
 det = IntentDetector()
@@ -135,6 +135,76 @@ def test_bubble_makers_is_minicourse_not_certified(msg):
     i = _d(msg)
     assert i.activity == "minicourse"
     assert i.is_certified is False
+
+
+# --- "para mí" / solo self → 1 person ---------------------------------------
+
+@pytest.mark.parametrize("msg", [
+    "Quiero el minicurso para mi, no se bucear, desde cartagena, soy colombiano",
+    "Quiero el curso open water para mi, extranjero",
+    "solo yo",
+    "just me, open water course",
+    "para mi, tengo 30 años",
+])
+def test_solo_self_means_one_person(msg):
+    assert _d(msg).group_size == 1
+
+
+@pytest.mark.parametrize("msg", [
+    "para mi y mi novia",
+    "para mi esposo y yo",
+    "quiero 2 inmersiones para mi",   # other number present -> stay conservative
+    "para mi familia",
+])
+def test_solo_self_not_triggered_with_companions_or_numbers(msg):
+    assert _d(msg).group_size is None
+
+
+# --- Explicit certified dive-count detection --------------------------------
+
+@pytest.mark.parametrize("msg,expected", [
+    ("quiero 2 inmersiones saliendo de cartagena", 2),
+    ("somos 2 buzos certificados, el paquete de 2 buceos", 2),
+    ("we are 2 certified divers, 2-dive package", 2),
+    ("dos inmersiones", 2),
+    ("estoy en cocoliso, soy certificado, quiero 2 buceos", 2),
+    ("paquete de 5 buceos", 5),
+    ("7 buceos en 3 dias", 7),
+    ("quiero 9 inmersiones", 9),
+])
+def test_cert_dive_count_detected(msg, expected):
+    assert _d(msg).cert_dives == expected
+
+
+@pytest.mark.parametrize("msg", [
+    "soy open water desde hace 2 años",       # timeframe, not a dive count
+    "mi ultima inmersion fue hace 2 años",    # ditto
+    "somos 2 y queremos bucear",              # 2 is group size; 'bucear' is a verb
+    "reservar para 4 personas",               # people, not dives
+])
+def test_cert_dive_count_no_false_positive(msg):
+    assert _d(msg).cert_dives is None
+
+
+def test_explicit_two_dives_skips_cert_plan_question():
+    """A certified request that already names the 2-dive plan must NOT re-ask
+    '¿qué plan?' — it should advance to the last-dive safety question."""
+    from src.agents.supervisor import _route_detected_intent
+    st = ConversationState(conversation_id="2dive"); st.language = "es"
+    intent = _d("somos 2 buzos certificados, quiero 2 inmersiones, desde cartagena")
+    _route_detected_intent(intent, st, "somos 2 buzos certificados, quiero 2 inmersiones, desde cartagena")
+    assert st.step != Step.MIXED_ADD_CERT_PLAN
+    assert st.step == Step.MIXED_CERT_LAST_DIVE
+
+
+def test_five_dives_still_shows_plan_menu():
+    """A multi-day count must NOT be auto-picked (the overnight requirement has
+    to be shown), so the plan menu is still presented."""
+    from src.agents.supervisor import _route_detected_intent
+    st = ConversationState(conversation_id="5dive"); st.language = "es"
+    intent = _d("somos 2 buzos certificados, paquete de 5 buceos, desde cartagena")
+    _route_detected_intent(intent, st, "somos 2 buzos certificados, paquete de 5 buceos, desde cartagena")
+    assert st.step == Step.MIXED_ADD_CERT_PLAN
 
 
 # --- Latest concrete activity wins (customer changes their mind) -------------
