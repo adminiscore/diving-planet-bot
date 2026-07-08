@@ -131,6 +131,24 @@ async def test_transcribe_audio_url_no_api_key_returns_none(monkeypatch):
     assert await audio.transcribe_audio_url("http://x/note.ogg") is None
 
 
+@pytest.mark.asyncio
+async def test_transcribe_audio_bytes_happy_path(monkeypatch):
+    """The /audio-test tool transcribes raw browser-recorded bytes directly."""
+    monkeypatch.setattr(audio.settings, "openai_api_key", "sk-test")
+    captured = _patch_openai(monkeypatch, text="quiero snorkel para dos")
+
+    text = await audio.transcribe_audio_bytes(b"FAKE_WEBM_BYTES", "audio.webm")
+
+    assert text == "quiero snorkel para dos"
+    assert captured["file"][0] == "audio.webm"
+
+
+@pytest.mark.asyncio
+async def test_transcribe_audio_bytes_empty_returns_none(monkeypatch):
+    monkeypatch.setattr(audio.settings, "openai_api_key", "sk-test")
+    assert await audio.transcribe_audio_bytes(b"", "audio.webm") is None
+
+
 # --------------------------------------------------------------------------- #
 # _resolve_voice_note (shared ingestion helper)
 # --------------------------------------------------------------------------- #

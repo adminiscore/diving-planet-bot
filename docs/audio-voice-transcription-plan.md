@@ -106,12 +106,29 @@ mismo helper compartido** (`_resolve_incoming_message`, ver Fase 1c).
 
 Desaconsejado por ahora (ver "Decisiones de diseño"). Documentado solo para cerrar el tema.
 
-## Pruebas manuales (cuando se valide en vivo)
+## Cómo probarlo AHORA (sin WhatsApp) — página `/audio-test`
 
-1. En dev, simular un `message_created` de Chatwoot con un `attachments` de audio real (un `.ogg`
-   corto subido a una URL accesible) y ver que el transcript entra al pipeline.
-2. Cuando WhatsApp esté conectado: mandar una nota de voz real y confirmar que el bot responde al
-   contenido, y que un audio ininteligible dispara el fallback.
+El widget web de Chatwoot no tiene botón de micrófono (grabar voz es nativo de WhatsApp). Para
+poder probar la función igualmente, se añadió una **herramienta de test** (v0.20.1):
+
+- **`GET /audio-test`** (p.ej. `https://pre.is-core.dev/audio-test`): página con un botón
+  "🎤 Mantén pulsado para grabar". Graba con el micro del navegador (MediaRecorder), envía el audio
+  y muestra en pantalla **qué transcribió el bot** y **qué respondería** (con sus botones). Mantiene
+  contexto entre grabaciones (memoria por conversación) y tiene "🔄 Nueva conversación".
+- **`POST /audio-test`**: recibe el blob de audio crudo en el body, lo transcribe con
+  `transcribe_audio_bytes` y lo pasa por el `route_message` real. Devuelve `{transcript, response, buttons}`.
+- **Deshabilitado en producción** (`app_env == "production"` → 404). Estado en memoria, aislado de
+  las conversaciones reales (NO usa Redis ni Chatwoot).
+
+Requisitos: micrófono permitido en el navegador y HTTPS (PRE ya es https). Esto valida lo valioso:
+que el audio real se transcribe bien y que el bot responde con sentido. Cuando WhatsApp esté
+conectado, el camino de producción (webhook → `_resolve_voice_note` → pipeline) ya está listo y
+probado por separado con los tests unitarios.
+
+## Pruebas manuales del camino de producción (cuando WhatsApp esté vivo)
+
+1. Mandar una nota de voz real por WhatsApp y confirmar que el bot responde al contenido.
+2. Mandar un audio ininteligible y confirmar que dispara el fallback ("no pude entender el audio…").
 
 ## Referencias de código
 

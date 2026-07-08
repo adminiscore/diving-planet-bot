@@ -66,35 +66,28 @@ def _filename_from_url(data_url: str) -> str:
     return name if "." in name else f"{name}.ogg"
 
 
-async def transcribe_audio_url(data_url: str, lang_hint: str | None = None) -> str | None:
-    """Download an audio file and transcribe it to text. Returns the transcript
+async def transcribe_audio_bytes(
+    audio_bytes: bytes,
+    filename: str = "audio.ogg",
+    lang_hint: str | None = None,
+) -> str | None:
+    """Transcribe raw audio bytes to text via OpenAI. Returns the transcript
     (stripped) or None on any failure — never raises.
+
+    Shared by `transcribe_audio_url` (Chatwoot voice notes) and the /audio-test
+    endpoint (browser mic recordings). The `filename` extension helps OpenAI
+    sniff the container format (ogg/webm/mp4/m4a/mp3/wav all supported).
     """
-    if not data_url:
-        return None
     if not settings.openai_api_key:
         logger.warning("[AUDIO] No OPENAI_API_KEY set; cannot transcribe audio.")
         return None
-
-    # 1) Download the audio bytes.
-    try:
-        async with httpx.AsyncClient() as client:
-            resp = await client.get(data_url, timeout=_DOWNLOAD_TIMEOUT)
-            resp.raise_for_status()
-            audio_bytes = resp.content
-    except httpx.HTTPError as exc:
-        logger.error(f"[AUDIO] Download failed url={data_url[:80]}: {exc}")
-        return None
-
     if not audio_bytes:
-        logger.warning(f"[AUDIO] Empty audio download url={data_url[:80]}")
+        logger.warning("[AUDIO] Empty audio bytes; nothing to transcribe.")
         return None
     if len(audio_bytes) > _MAX_AUDIO_BYTES:
         logger.warning(f"[AUDIO] Audio too large ({len(audio_bytes)} bytes); skipping.")
         return None
 
-    # 2) Transcribe via OpenAI (same SDK/key already used for RAG).
-    filename = _filename_from_url(data_url)
     kwargs: dict = {
         "model": settings.openai_transcription_model,
         "file": (filename, audio_bytes),
@@ -104,7 +97,7 @@ async def transcribe_audio_url(data_url: str, lang_hint: str | None = None) -> s
     try:
         client = AsyncOpenAI(api_key=settings.openai_api_key)
         result = await client.audio.transcriptions.create(**kwargs, timeout=_TRANSCRIBE_TIMEOUT)
-    except Exception as exc:  # noqa: BLE001 — never let transcription break the webhook
+    except Exception as exc:  # noqa: BLE001 — never let transcription break the caller
         logger.error(f"[AUDIO] Transcription failed: {exc}")
         return None
 
@@ -112,5 +105,24 @@ async def transcribe_audio_url(data_url: str, lang_hint: str | None = None) -> s
     if not text:
         logger.warning("[AUDIO] Transcription returned empty text.")
         return None
-    logger.info(f"[AUDIO] Transcribed voice note ({len(audio_bytes)} bytes) -> {text[:80]!r}")
+    logger.info(f"[AUDIO] Transcribed audio ({len(audio_bytes)} bytes) -> {text[:80]!r}")
     return text
+
+
+async def transcribe_audio_url(data_url: str, lang_hint: str | None = None) -> str | None:
+    """Download an audio file (e.g. a Chatwoot voice-note attachment) and
+    transcribe it. Returns the transcript or None on any failure — never raises.
+    """
+    if not data_url:
+        return None
+
+    try:
+        async with httpx.AsyncClient() as client:
+            resp = await client.get(data_url, timeout=_DOWNLOAD_TIMEOUT)
+            resp.raise_for_status()
+            audio_bytes = resp.content
+    except httpx.HTTPError as exc:
+        logger.error(f"[AUDIO] Download failed url={data_url[:80]}: {exc}")
+        return None
+
+    return await transcribe_audio_bytes(audio_bytes, _filename_from_url(data_url), lang_hint)

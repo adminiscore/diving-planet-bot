@@ -1,6 +1,11 @@
 History
 =======
 
+0.20.1 - (2026-07-08)
+---------------------
+* **Herramienta de prueba de audio `/audio-test`** (para poder probar la transcripción sin WhatsApp). El widget web de Chatwoot no tiene botón de micrófono, así que se añadió una página que graba con el micro del navegador (MediaRecorder), envía el audio al bot y muestra qué transcribió y qué respondería (con sus botones), manteniendo contexto entre grabaciones. `POST /audio-test` recibe el blob crudo, lo transcribe con el `route_message` real. **Deshabilitada en producción** (`app_env == "production"` → 404); estado en memoria aislado de conversaciones reales.
+* Refactor: `transcribe_audio_bytes(audio_bytes, filename, lang_hint)` extraído en `audio.py` y reutilizado por `transcribe_audio_url` (notas de voz de Chatwoot) y por la herramienta de test. Tests añadidos. Suite: 1250 passed, 15 skipped.
+
 0.20.0 - (2026-07-08)
 ---------------------
 * **Reconocimiento de audio (notas de voz del cliente) — Fase 1 (MVP)**. Antes, una nota de voz entraba con `content` vacío y el adjunto de audio se ignoraba por completo (el bot respondía con el fallback genérico). Ahora, cuando llega un mensaje `incoming` sin texto pero con un adjunto `file_type == "audio"`, se descarga y se transcribe con OpenAI (`gpt-4o-mini-transcribe`, mismo SDK/key que RAG), y el transcript entra al pipeline **como si el cliente lo hubiera escrito** — sin tocar nada aguas abajo (intención, orquestador, RAG, árbol, memoria, PII).
