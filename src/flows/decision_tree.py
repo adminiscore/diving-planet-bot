@@ -2269,8 +2269,8 @@ class DecisionTree:
             night_word = "noche" if nights == 1 else "noches"
             if dives == 3:
                 return (
-                    f"🏨 *Importante*: el plan de *3 inmersiones (1 día)* incluye una inmersión "
-                    f"nocturna, así que también requiere hospedarte esa noche en un hotel en las islas."
+                    "🏨 *Importante*: el plan de *3 inmersiones (1 día)* incluye una inmersión "
+                    "nocturna, así que también requiere hospedarte esa noche en un hotel en las islas."
                 )
             return (
                 f"🏨 *Importante*: el plan de *{dives} inmersiones ({days} días)* requiere hospedarte "
@@ -3855,7 +3855,7 @@ class DecisionTree:
             # 1/2 ("2 buceos" → single-day plan; "5/7/9 buceos" or "paquete de 3
             # dias" → multi-day menu). Without this, free text fell through and
             # mis-routed to whichever button its words happened to match.
-            from src.agents.intent_detector import detect_cert_dive_count, detect_cert_day_count
+            from src.agents.intent_detector import detect_cert_day_count, detect_cert_dive_count
             dives = detect_cert_dive_count(msg)
             if dives == 2:
                 choice = 1
