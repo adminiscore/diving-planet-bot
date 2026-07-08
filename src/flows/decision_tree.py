@@ -155,6 +155,11 @@ class ConversationState:
     mixed_pending_beginner_after_cert: int = 0
     mixed_pending_modify_idx: int | None = None  # cart index when editing an item
     mixed_pending_modify_refresh: bool = False   # cert qty just changed → re-ask refresher
+    # Which 2-option cert sub-menu is currently showing, if any:
+    # "4dive_island" (4-dive daytime vs night variant on the islands),
+    # "1day" (2 vs 3 dives, both are "1 day" plans),
+    # "2day" (4 vs 5 dives, both are "2 day" plans).
+    mixed_pending_cert_narrow_kind: str | None = None
     mixed_pending_exact: bool = False            # waiting for exact count after "6+"
     mixed_display_currency: str = "USD"          # "USD" | "COP"
     mixed_final_is_colombian: bool | None = None
@@ -196,6 +201,11 @@ class ConversationState:
     detected_location: str | None = None
     detected_island: str | None = None
     detected_hotel: str | None = None
+    # Explicit cert dive/day-count ("5 inmersiones" / "paquete de 3 dias") given
+    # before location was known — consumed once (see _pop_detected_cert_counts)
+    # so the plan isn't lost/re-asked.
+    detected_cert_dives: int | None = None
+    detected_cert_days: int | None = None
     # Low-confidence intent detection (0.2 < confidence < 0.30): awaiting a
     # yes/no confirmation from the user before applying it (Capa 3, typo plan).
     pending_intent_confirmation: object | None = None
@@ -1059,6 +1069,18 @@ MESSAGES = {
             "Which package would you like to add to the cart?"
         ),
     },
+    "mixed_add_cert_4dive_variant": {
+        "es": "🤿 Para las *4 inmersiones (2 días)*, ¿prefieres 🌞 *4 diurnas* o 🌙 *3 diurnas + 1 nocturna*?",
+        "en": "🤿 For the *4-dive (2-day)* plan, would you prefer 🌞 *4 daytime dives* or 🌙 *3 daytime + 1 night dive*?",
+    },
+    "mixed_add_cert_1day_variant": {
+        "es": "🤿 Para el plan de *1 día*, ¿prefieres 🤿 *2 inmersiones* o 🌙 *3 inmersiones (con nocturna)*?",
+        "en": "🤿 For the *1-day* plan, would you prefer 🤿 *2 dives* or 🌙 *3 dives (with a night dive)*?",
+    },
+    "mixed_add_cert_2day_variant": {
+        "es": "🤿 Para el plan de *2 días*, ¿prefieres 🤿 *4 inmersiones* o 🤿 *5 inmersiones*?",
+        "en": "🤿 For the *2-day* plan, would you prefer 🤿 *4 dives* or 🤿 *5 dives*?",
+    },
     "mixed_add_qty": {
         "es": "¿Para *cuántas personas*?",
         "en": "For *how many people*?",
@@ -1635,6 +1657,42 @@ BUTTON_OPTIONS = {
             {"title": "🔙 Back", "value": "back"},
         ],
     },
+    "mixed_add_cert_4dive_variant": {
+        "es": [
+            {"title": "🌞 4 diurnas", "value": "1"},
+            {"title": "🌙 3 diurnas + 1 nocturna", "value": "2"},
+            {"title": "🔙 Volver", "value": "back"},
+        ],
+        "en": [
+            {"title": "🌞 4 daytime dives", "value": "1"},
+            {"title": "🌙 3 daytime + 1 night dive", "value": "2"},
+            {"title": "🔙 Back", "value": "back"},
+        ],
+    },
+    "mixed_add_cert_1day_variant": {
+        "es": [
+            {"title": "🤿 2 inmersiones", "value": "1"},
+            {"title": "🌙 3 inmersiones (con nocturna)", "value": "2"},
+            {"title": "🔙 Volver", "value": "back"},
+        ],
+        "en": [
+            {"title": "🤿 2 dives", "value": "1"},
+            {"title": "🌙 3 dives (with a night dive)", "value": "2"},
+            {"title": "🔙 Back", "value": "back"},
+        ],
+    },
+    "mixed_add_cert_2day_variant": {
+        "es": [
+            {"title": "🤿 4 inmersiones", "value": "1"},
+            {"title": "🤿 5 inmersiones", "value": "2"},
+            {"title": "🔙 Volver", "value": "back"},
+        ],
+        "en": [
+            {"title": "🤿 4 dives", "value": "1"},
+            {"title": "🤿 5 dives", "value": "2"},
+            {"title": "🔙 Back", "value": "back"},
+        ],
+    },
     "mixed_quantity": {
         "es": [
             {"title": "1", "value": "1"},
@@ -2191,6 +2249,43 @@ class DecisionTree:
 
     def _current_mixed_cert_service_id(self, state: ConversationState) -> str:
         return state.mixed_pending_qty_plan or self._service_for_location("2_dives_1_day", state)
+
+    def _cert_dives_to_multiday_choice(self, dives: int, state: ConversationState) -> int | None:
+        """Multi-day menu button index for an explicit dive count, or None if the
+        count doesn't map to a single unambiguous plan. The only ambiguous case is
+        4 dives while already on the islands: two variants exist there (all-daytime
+        vs 3 daytime + 1 night dive), so that one must still go through the menu."""
+        if state.location == "island":
+            if dives == 4:
+                return None
+            return {3: 1, 5: 4, 7: 5, 9: 6}.get(dives)
+        return {3: 1, 4: 2, 5: 3, 7: 4, 9: 5}.get(dives)
+
+    @staticmethod
+    def _mixed_cert_lodging_note(dives: int, lang: str) -> str:
+        nights = {3: 1, 4: 1, 5: 1, 7: 2, 9: 3}[dives]
+        days = {3: 1, 4: 2, 5: 2, 7: 3, 9: 4}[dives]
+        if lang == "es":
+            night_word = "noche" if nights == 1 else "noches"
+            if dives == 3:
+                return (
+                    f"🏨 *Importante*: el plan de *3 inmersiones (1 día)* incluye una inmersión "
+                    f"nocturna, así que también requiere hospedarte esa noche en un hotel en las islas."
+                )
+            return (
+                f"🏨 *Importante*: el plan de *{dives} inmersiones ({days} días)* requiere hospedarte "
+                f"al menos *{nights} {night_word}* en un hotel en las islas entre jornadas."
+            )
+        night_word = "night" if nights == 1 else "nights"
+        if dives == 3:
+            return (
+                "🏨 *Important*: the *3-dive (1-day)* plan includes a night dive, so it also "
+                "requires staying that night at a hotel on the islands."
+            )
+        return (
+            f"🏨 *Important*: the *{dives}-dive ({days}-day)* plan requires staying at least "
+            f"*{nights} {night_word}* at a hotel on the islands between dive days."
+        )
 
     def process_message(self, state: ConversationState, message: str) -> str:
         """Process a user message and return the bot's response."""
@@ -2991,6 +3086,9 @@ class DecisionTree:
         state.mixed_pending_modify_idx = None
         state.mixed_pending_modify_refresh = False
         state.mixed_pending_exact = False
+        state.mixed_pending_cert_narrow_kind = None
+        state.detected_cert_dives = None
+        state.detected_cert_days = None
         state.mixed_display_currency = "USD"
         state.mixed_final_is_colombian = None
         state.mixed_final_has_kids_8_10 = None
@@ -3308,9 +3406,12 @@ class DecisionTree:
 
             # Ahora decidir el siguiente step
             if state.mixed_pending_qty_type == "cert":
-                state.step = Step.MIXED_ADD_CERT_PLAN
-                self.set_quick_replies(state, "mixed_add_cert_plan")
-                return MESSAGES["mixed_add_cert_plan"][lang]
+                # An explicit dive count given before we knew the location
+                # ("quiero hacer 4 inmersiones, soy certificado") shouldn't be
+                # forgotten now that we finally know it — resolve straight to
+                # the plan instead of re-asking the "2 dives vs multi-day" menu.
+                dives, days = self._pop_detected_cert_counts(state)
+                return self._resolve_or_ask_cert_plan(state, dives, days)
             elif state.mixed_pending_qty_type in ("beginner", "snorkel", "course", "companion"):
                 # Use _goto_mixed_add_qty so it auto-skips if qty is already known
                 return self._goto_mixed_add_qty(state)
@@ -3331,9 +3432,8 @@ class DecisionTree:
                     return self._goto_mixed_add_qty(state)
                 if state.detected_activity == "certified_diving":
                     state.mixed_pending_qty_type = "cert"
-                    state.step = Step.MIXED_ADD_CERT_PLAN
-                    self.set_quick_replies(state, "mixed_add_cert_plan")
-                    return MESSAGES["mixed_add_cert_plan"][lang]
+                    dives, days = self._pop_detected_cert_counts(state)
+                    return self._resolve_or_ask_cert_plan(state, dives, days)
             return self._goto_mixed_add_activity(state)
 
         # Detectar texto libre: Cartagena
@@ -3383,9 +3483,8 @@ class DecisionTree:
                 return self._goto_island_hotel_menu_or_unknown(state)
             if state.location:
                 if cert_type == "cert":
-                    state.step = Step.MIXED_ADD_CERT_PLAN
-                    self.set_quick_replies(state, "mixed_add_cert_plan")
-                    return MESSAGES["mixed_add_cert_plan"][lang]
+                    dives, days = self._pop_detected_cert_counts(state)
+                    return self._resolve_or_ask_cert_plan(state, dives, days)
                 # Use _goto_mixed_add_qty so it auto-skips if qty is already known
                 return self._goto_mixed_add_qty(state)
             state.step = Step.MIXED_LOCATION
@@ -3424,11 +3523,13 @@ class DecisionTree:
             if state.location == "island" and not state.hotel:
                 return self._goto_island_hotel_menu_or_unknown(state)
             if state.location:
-                state.step = Step.MIXED_ADD_CERT_PLAN
-                self.set_quick_replies(state, "mixed_add_cert_plan")
-                if lang == "es":
-                    return "Perfecto, empezamos con los buceadores certificados.\n\n" + MESSAGES["mixed_add_cert_plan"][lang]
-                return "Great, let's start with the certified divers.\n\n" + MESSAGES["mixed_add_cert_plan"][lang]
+                intro = (
+                    "Perfecto, empezamos con los buceadores certificados.\n\n"
+                    if lang == "es"
+                    else "Great, let's start with the certified divers.\n\n"
+                )
+                dives, days = self._pop_detected_cert_counts(state)
+                return intro + self._resolve_or_ask_cert_plan(state, dives, days)
             state.step = Step.MIXED_LOCATION
             self.set_quick_replies(state, "tours_location")
             return MESSAGES["mixed_location"][lang]
@@ -3487,9 +3588,8 @@ class DecisionTree:
         if state.location == "island" and not state.hotel:
             return intro + self._goto_island_hotel_menu_or_unknown(state)
         if state.location:
-            state.step = Step.MIXED_ADD_CERT_PLAN
-            self.set_quick_replies(state, "mixed_add_cert_plan")
-            return intro + MESSAGES["mixed_add_cert_plan"][lang]
+            dives, days = self._pop_detected_cert_counts(state)
+            return intro + self._resolve_or_ask_cert_plan(state, dives, days)
         state.step = Step.MIXED_LOCATION
         self.set_quick_replies(state, "tours_location")
         return intro + MESSAGES["mixed_location"][lang]
@@ -3624,9 +3724,8 @@ class DecisionTree:
         choice = self._parse_choice(message, 5)
         if choice == 1:
             state.mixed_pending_qty_type = "cert"
-            state.step = Step.MIXED_ADD_CERT_PLAN
-            self.set_quick_replies(state, "mixed_add_cert_plan")
-            return MESSAGES["mixed_add_cert_plan"][lang]
+            dives, days = self._pop_detected_cert_counts(state)
+            return self._resolve_or_ask_cert_plan(state, dives, days)
         if choice == 4:
             state.step = Step.COURSES_MENU
             self.set_quick_replies(state, "courses_menu")
@@ -3665,39 +3764,152 @@ class DecisionTree:
             return MESSAGES[msg_key][lang]
         return self._goto_mixed_add_qty(state)
 
-    def _handle_mixed_add_cert_plan(self, state: ConversationState, message: str) -> str:
+    def _pop_detected_cert_counts(self, state: ConversationState) -> tuple[int | None, int | None]:
+        """Consume (dives, days) detected before we knew enough to resolve the
+        plan (e.g. location wasn't known yet), so they're applied exactly once."""
+        dives = state.detected_cert_dives
+        days = state.detected_cert_days
+        state.detected_cert_dives = None
+        state.detected_cert_days = None
+        return dives, days
+
+    def _resolve_or_ask_cert_plan(
+        self,
+        state: ConversationState,
+        dives: int | None,
+        days: int | None = None,
+        *,
+        fallback_multiday_menu: bool = False,
+    ) -> str:
+        """Given an explicit dive count and/or day count (or neither), resolve
+        straight to the matching plan when it's unambiguous, otherwise ask
+        instead of guessing:
+        - dives == 2 -> the single-day 2-dive plan, no question needed.
+        - dives in (3,5,7,9), or 4 off-island -> exact multi-day plan is known;
+          show only the relevant lodging note and move to the next step.
+        - dives == 4 on-island -> two variants exist (all-daytime vs 3+1 night
+          dive); ask the short follow-up instead of the full menu.
+        - no dives but days == 3 or 4 -> maps to a single dive count (7 or 9
+          respectively), resolved the same way as an explicit dive count.
+        - no dives but days == 1 or 2 -> each maps to TWO plans (1 day = 2 or 3
+          dives; 2 days = 4 or 5 dives); ask the short 2-option follow-up.
+        - anything else (nothing recognized): if the customer already told us
+          they want a multi-day package (fallback_multiday_menu=True, e.g. they
+          clicked "multi-day" at the cert-plan question), show the full
+          3/5/7/9-dive menu. Otherwise we don't even know 2-dive vs multi-day
+          yet, so ask the generic "2 dives vs multi-day package" question.
+
+        Shared by the cert-plan step itself (natural-language count typed there)
+        and by every path that lands on the cert flow after learning the location/
+        hotel/certification split, so a count given earlier isn't forgotten.
+        """
         lang = state.language
+        if dives is None and days is not None:
+            if days == 3:
+                dives = 7
+            elif days == 4:
+                dives = 9
+            elif days == 1:
+                state.step = Step.MIXED_ADD_CERT_MULTI_DAY
+                state.mixed_pending_cert_narrow_kind = "1day"
+                self.set_quick_replies(state, "mixed_add_cert_1day_variant")
+                return MESSAGES["mixed_add_cert_1day_variant"][lang]
+            elif days == 2:
+                state.step = Step.MIXED_ADD_CERT_MULTI_DAY
+                state.mixed_pending_cert_narrow_kind = "2day"
+                self.set_quick_replies(state, "mixed_add_cert_2day_variant")
+                return MESSAGES["mixed_add_cert_2day_variant"][lang]
+
+        if dives == 2:
+            state.mixed_pending_qty_plan = self._service_for_location("2_dives_1_day", state)
+            return self._goto_mixed_cert_last_dive_or_qty(state)
+        if dives in (3, 4, 5, 7, 9):
+            multiday_choice = self._cert_dives_to_multiday_choice(dives, state)
+            if multiday_choice is not None:
+                service_map = self._mixed_cert_multi_day_service_map(state)
+                state.mixed_pending_qty_plan = service_map[multiday_choice]
+                note = self._mixed_cert_lodging_note(dives, lang)
+                return note + "\n\n" + self._goto_mixed_cert_last_dive_or_qty(state)
+            if dives == 4 and state.location == "island":
+                state.step = Step.MIXED_ADD_CERT_MULTI_DAY
+                state.mixed_pending_cert_narrow_kind = "4dive_island"
+                self.set_quick_replies(state, "mixed_add_cert_4dive_variant")
+                return MESSAGES["mixed_add_cert_4dive_variant"][lang]
+        if fallback_multiday_menu:
+            state.step = Step.MIXED_ADD_CERT_MULTI_DAY
+            self.set_quick_replies(state, "mixed_add_cert_multi_day")
+            return MESSAGES["mixed_add_cert_multi_day"][lang]
+        state.step = Step.MIXED_ADD_CERT_PLAN
+        self.set_quick_replies(state, "mixed_add_cert_plan")
+        return MESSAGES["mixed_add_cert_plan"][lang]
+
+    def _handle_mixed_add_cert_plan(self, state: ConversationState, message: str) -> str:
         msg = message.strip().lower()
         if is_back(msg):
             return self._goto_mixed_add_activity(state)
         choice = self._parse_choice(message, 2)
+        dives = None
+        days = None
         if choice is None:
-            # Understand a natural-language dive count typed here instead of 1/2
-            # ("2 buceos" → single-day plan; "5/7/9 buceos" → multi-day menu). Without
-            # this, "el paquete de 2 buceos" fell through and mis-routed to multi-day.
-            from src.agents.intent_detector import detect_cert_dive_count
+            # Understand a natural-language dive/day count typed here instead of
+            # 1/2 ("2 buceos" → single-day plan; "5/7/9 buceos" or "paquete de 3
+            # dias" → multi-day menu). Without this, free text fell through and
+            # mis-routed to whichever button its words happened to match.
+            from src.agents.intent_detector import detect_cert_dive_count, detect_cert_day_count
             dives = detect_cert_dive_count(msg)
             if dives == 2:
                 choice = 1
             elif dives in (3, 4, 5, 7, 9):
                 choice = 2
+            elif dives is None:
+                days = detect_cert_day_count(msg)
+                if days is not None:
+                    choice = 2
         if choice == 1:
-            state.mixed_pending_qty_plan = self._service_for_location("2_dives_1_day", state)
-            return self._goto_mixed_cert_last_dive_or_qty(state)
+            return self._resolve_or_ask_cert_plan(state, 2)
         if choice == 2:
-            state.step = Step.MIXED_ADD_CERT_MULTI_DAY
-            self.set_quick_replies(state, "mixed_add_cert_multi_day")
-            return MESSAGES["mixed_add_cert_multi_day"][lang]
+            return self._resolve_or_ask_cert_plan(state, dives, days, fallback_multiday_menu=True)
         self.set_quick_replies(state, "mixed_add_cert_plan")
-        return MESSAGES["not_understood"][lang]
+        return MESSAGES["not_understood"][state.language]
 
     def _handle_mixed_add_cert_multi_day(self, state: ConversationState, message: str) -> str:
         lang = state.language
         msg = message.strip().lower()
         if is_back(msg):
+            state.mixed_pending_cert_narrow_kind = None
             state.step = Step.MIXED_ADD_CERT_PLAN
             self.set_quick_replies(state, "mixed_add_cert_plan")
             return MESSAGES["mixed_add_cert_plan"][lang]
+
+        narrow_kind = state.mixed_pending_cert_narrow_kind
+        if narrow_kind == "4dive_island":
+            choice = self._parse_choice(message, 2)
+            if choice in (1, 2):
+                state.mixed_pending_cert_narrow_kind = None
+                service_map = self._mixed_cert_multi_day_service_map(state)
+                # Narrow menu 1/2 maps to the island 4-dive variants at indices 2/3
+                # (all-daytime vs 3 daytime + 1 night dive — see the service map above).
+                state.mixed_pending_qty_plan = service_map[1 + choice]
+                return self._goto_mixed_cert_last_dive_or_qty(state)
+            self.set_quick_replies(state, "mixed_add_cert_4dive_variant")
+            return MESSAGES["not_understood"][lang]
+        if narrow_kind == "1day":
+            choice = self._parse_choice(message, 2)
+            if choice in (1, 2):
+                state.mixed_pending_cert_narrow_kind = None
+                return self._resolve_or_ask_cert_plan(state, 2 if choice == 1 else 3)
+            self.set_quick_replies(state, "mixed_add_cert_1day_variant")
+            return MESSAGES["not_understood"][lang]
+        if narrow_kind == "2day":
+            choice = self._parse_choice(message, 2)
+            if choice in (1, 2):
+                state.mixed_pending_cert_narrow_kind = None
+                # Resolving via 4 may itself hit the island 4-dive sub-menu —
+                # that's fine, _resolve_or_ask_cert_plan handles that cascade.
+                return self._resolve_or_ask_cert_plan(state, 4 if choice == 1 else 5)
+            self.set_quick_replies(state, "mixed_add_cert_2day_variant")
+            return MESSAGES["not_understood"][lang]
+
         service_map = self._mixed_cert_multi_day_service_map(state)
         choice = self._parse_choice(message, len(service_map))
         if choice in service_map:
@@ -4658,6 +4870,19 @@ class DecisionTree:
 
     def _remap_cart_for_location(self, state: ConversationState) -> None:
         """Refresh cart item labels and plans after a location change.
+
+        KNOWN GAP (found 2026-07-08, not fixed — pre-existing, not specific to
+        the multi-day cert flow): this only rewrites items already appended to
+        `state.mixed_cart`. A PENDING plan (`state.mixed_pending_qty_plan`, set
+        while resolving cert-plan/qty/last-dive/refresher but not yet confirmed
+        into the cart) is never remapped. If the customer changes location
+        mid-flow (e.g. resolves "5 inmersiones, desde cartagena" then says "en
+        realidad estoy en las islas" before confirming add-to-cart), the item
+        that eventually gets added still carries the Cartagena service_id. Would
+        need `_resolve_or_ask_cert_plan`'s dives/days to be reapplied (or
+        `mixed_pending_qty_plan` remapped through ISLAND_SERVICE_MAP the same
+        way this function does) wherever location changes are handled
+        (`orchestrator_set_location`, `_handle_mixed_cart_location`).
 
         `cert` and `course` items carry a plan that may embed a location
         variant (e.g. `2_dives_1_day` ↔ `2_dives_1_day_already_on_island`,
@@ -5638,11 +5863,10 @@ class DecisionTree:
 
         # Si venimos del flujo de reserva (mixed flow), continuar con ese flujo
         if state.mixed_pending_qty_type:
-            # Certificado → ir a elegir plan
+            # Certificado → resolver el plan (o preguntar si es ambiguo/desconocido)
             if state.mixed_pending_qty_type == "cert":
-                state.step = Step.MIXED_ADD_CERT_PLAN
-                self.set_quick_replies(state, "mixed_add_cert_plan")
-                return MESSAGES["mixed_add_cert_plan"][lang]
+                dives, days = self._pop_detected_cert_counts(state)
+                return self._resolve_or_ask_cert_plan(state, dives, days)
             # Principiante, snorkel, etc. → ir a cantidad
             else:
                 state.step = Step.MIXED_ADD_QTY
