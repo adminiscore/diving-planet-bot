@@ -1,6 +1,21 @@
 History
 =======
 
+0.20.3 - (2026-07-08)
+---------------------
+* **Feedback del owner — 8 ajustes de UX/flujo** (probados en vivo + tests):
+  - **#1 "soy certificado" ahora ofrece las opciones de buceo** en vez de un mensaje vago ("¿tienes una fecha en mente?"). Override determinista en `supervisor.py`: cuando el agente conversacional subclasifica un statement de buzo certificado como pregunta, si el router determinista claramente ofrecería el flujo certificado y NO es literalmente una pregunta ("?"), entra al flujo (pide origen con botones). El guard de "?" mantiene las preguntas reales en RAG.
+  - **#2 "¿qué ofrecen para bucear?" da un overview curado** (dónde se bucea + opciones agrupadas por situación: principiante→minicurso, certificado→paquetes, cursos→PADI, + snorkel) vía respuesta canónica en `rag_agent.py`, en vez de que RAG eligiera un par de servicios al azar (minicurso + Nitrox). Detector con guard para no secuestrar preguntas de precio/inclusión/específicas.
+  - **#3 Quitada la pregunta proactiva de "lancha privada exclusiva"** — tras la nacionalidad va directo al resumen; si el cliente pregunta, RAG responde desde el KB.
+  - **#4 Resumen final con un único TOTAL** (sin "TOTAL ESTIMADO" aparte ni conversión "≈" de divisa) — la moneda ya se eligió y el precio es el mismo.
+  - **#5 La pregunta "¿eres colombiano?" aclara** que no hay cobro extra por el cambio de divisa; el precio es el mismo en COP o USD.
+  - **#6 No-colombianos: sin opción "pagar en persona"** (pagan 100% online) — botones de resumen dinámicos por nacionalidad.
+  - **#7 Colombianos: "pagar 100% online" o "50% online + 50% en persona"**; ambas escalan a asesor con el método elegido anotado.
+  - **#8 Upsell de acompañante + intro amable en preguntas genéricas**:
+    - Al elegir "acompañante" en el menú de actividades, nuevo paso `MIXED_COMPANION_UPSELL` que propone que pruebe el *minicurso* o el *snorkel* (botones: minicurso / snorkel / "no, solo acompañar"). Si acepta → se añade esa actividad; si no → se añade como acompañante a su **precio normal** (~$80 USD / 288k COP por lancha+almuerzo+parque; decisión del owner de mantener el precio, no ponerlo a 0).
+    - Para preguntas GENERALES/dudas de buceo, el prompt de RAG (ES+EN) ahora abre con una intro breve, cálida y entusiasta en positivo ("es una experiencia muy chula, te va a encantar…") antes del dato concreto, sin sonar a folleto.
+* Tests: nuevos casos para el overview de buceo, el ruteo de buzo-certificado, los botones de pago por nacionalidad y el upsell de acompañante (branches + combinado); actualizados los tests del checkout mixto al nuevo flujo (paso de lancha privada eliminado, SUBTOTAL→TOTAL). Suite verde.
+
 0.20.2 - (2026-07-08)
 ---------------------
 * **Paso "¿para cuántas personas?" (MIXED_ADD_QTY): dos bugs reales reportados (capturas)**, ambos de la misma familia — el parser de cantidad era mucho más pobre que el resto del bot:

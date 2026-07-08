@@ -377,3 +377,71 @@ def test_qty_step_self_plus_companion_proceeds():
     tree.process_message(st, "Voy yo y mi pareja me acompana")
     assert st.step == Step.MIXED_CERT_LAST_DIVE
     assert st.mixed_pending_cert_total_qty == 2
+
+
+# --- Companion upsell (owner feedback #8): offer the companion diving --------
+
+def _at_activity_menu(lang: str = "es") -> ConversationState:
+    st = ConversationState(conversation_id="upsell-test")
+    st.language = lang
+    st.location = "cartagena"
+    st.mixed_cart = []
+    st.step = Step.MIXED_ADD_ACTIVITY
+    return st
+
+
+def test_companion_choice_triggers_upsell():
+    """Picking 'companion' from the activity menu offers the mini-course/snorkel
+    upsell instead of adding a pure companion straight away."""
+    st = _at_activity_menu()
+    resp = tree._handle_mixed_add_activity(st, "5")
+    assert st.step == Step.MIXED_COMPANION_UPSELL
+    assert "minicurso" in resp.lower() or "buceo" in resp.lower()
+    values = [b["value"] for b in st.quick_replies]
+    assert values[:3] == ["1", "2", "3"]  # mini-course / snorkel / just accompany
+
+
+@pytest.mark.parametrize("pick,expected_type", [
+    ("1", "beginner"),   # yes -> mini-course
+    ("2", "snorkel"),    # yes -> snorkel
+    ("3", "companion"),  # no  -> pure companion
+])
+def test_companion_upsell_branches(pick, expected_type):
+    st = _at_activity_menu()
+    tree._handle_mixed_add_activity(st, "5")
+    tree._handle_mixed_companion_upsell(st, pick)
+    assert st.mixed_pending_qty_type == expected_type
+    assert st.step == Step.MIXED_ADD_QTY
+
+
+def test_companion_upsell_back_returns_to_activity_menu():
+    st = _at_activity_menu()
+    tree._handle_mixed_add_activity(st, "5")
+    tree._handle_mixed_companion_upsell(st, "back")
+    assert st.step == Step.MIXED_ADD_ACTIVITY
+
+
+def test_companion_upsell_not_understood_stays():
+    st = _at_activity_menu()
+    tree._handle_mixed_add_activity(st, "5")
+    tree._handle_mixed_companion_upsell(st, "bla bla")
+    assert st.step == Step.MIXED_COMPANION_UPSELL
+
+
+def test_companion_declined_is_added_as_paid_seat_in_summary():
+    """No -> the companion is added as a paid seat and appears in the final
+    tariff at its real price (kept, not zeroed)."""
+    from src.flows.decision_tree import COMPANION_PRICE
+    st = _at_activity_menu()
+    st.mixed_final_is_colombian = False
+    tree._handle_mixed_add_activity(st, "5")     # companion
+    tree._handle_mixed_companion_upsell(st, "3")  # just accompany
+    tree._handle_mixed_add_qty(st, "1")           # qty 1 -> preview
+    # confirm the preview add (option 1 = add to cart)
+    tree.process_message(st, "1")
+    assert any(it.get("type") == "companion" for it in st.mixed_cart)
+    summary = tree._format_mixed_final_summary(st)
+    # Companion line present with its non-zero price.
+    assert "compañante" in summary.lower() or "companion" in summary.lower()
+    usd = int(round(COMPANION_PRICE["usd_online"]))
+    assert str(usd) in summary

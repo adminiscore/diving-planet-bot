@@ -63,6 +63,7 @@ class Step(str, Enum):
     MIXED_ASK_CERT_COUNT = "mixed_ask_cert_count"
     MIXED_ASK_BEGINNER_ACTIVITY = "mixed_ask_beginner_activity"
     MIXED_ADD_ACTIVITY = "mixed_add_activity"
+    MIXED_COMPANION_UPSELL = "mixed_companion_upsell"
     MIXED_ADD_CERT_PLAN = "mixed_add_cert_plan"
     MIXED_ADD_CERT_MULTI_DAY = "mixed_add_cert_multi_day"
     MIXED_ADD_QTY = "mixed_add_qty"
@@ -1035,6 +1036,18 @@ MESSAGES = {
         "es": "¿Qué actividad quieres *añadir* al carrito?",
         "en": "Which activity would you like to *add* to the cart?",
     },
+    "mixed_companion_upsell": {
+        "es": (
+            "¡Qué bueno que venga acompañante! 🌊 Antes de anotarlo solo como acompañante… "
+            "¿no le picaría *probar el buceo*? El *minicurso* (sin experiencia previa, con instructor) "
+            "o el *snorkel* son una chulada y seguro lo disfruta un montón. ¿Qué dices?"
+        ),
+        "en": (
+            "Love that a companion is coming along! 🌊 Before we note them as just a companion… "
+            "how about they *try diving*? The *mini-course* (no experience needed, with an instructor) "
+            "or *snorkeling* are really cool and they'll surely love it. What do you think?"
+        ),
+    },
     "mixed_add_cert_plan": {
         "es": (
             "Para *buceo certificado*, ¿qué idea tienes?\n\n"
@@ -1632,6 +1645,20 @@ BUTTON_OPTIONS = {
             {"title": "🐠 Snorkeling", "value": "3"},
             {"title": "🤿 PADI course", "value": "4"},
             {"title": "👤 Companion (no activity)", "value": "5"},
+            {"title": "🔙 Back", "value": "back"},
+        ],
+    },
+    "mixed_companion_upsell": {
+        "es": [
+            {"title": "🆕 Sí, que pruebe el minicurso", "value": "1"},
+            {"title": "🐠 Sí, mejor snorkel", "value": "2"},
+            {"title": "👤 No, solo acompañar", "value": "3"},
+            {"title": "🔙 Volver", "value": "back"},
+        ],
+        "en": [
+            {"title": "🆕 Yes, try the mini-course", "value": "1"},
+            {"title": "🐠 Yes, snorkeling instead", "value": "2"},
+            {"title": "👤 No, just accompany", "value": "3"},
             {"title": "🔙 Back", "value": "back"},
         ],
     },
@@ -2342,6 +2369,7 @@ class DecisionTree:
             Step.MIXED_ASK_CERT_COUNT: self._handle_mixed_ask_cert_count,
             Step.MIXED_ASK_BEGINNER_ACTIVITY: self._handle_mixed_ask_beginner_activity,
             Step.MIXED_ADD_ACTIVITY: self._handle_mixed_add_activity,
+            Step.MIXED_COMPANION_UPSELL: self._handle_mixed_companion_upsell,
             Step.MIXED_ADD_CERT_PLAN: self._handle_mixed_add_cert_plan,
             Step.MIXED_ADD_CERT_MULTI_DAY: self._handle_mixed_add_cert_multi_day,
             Step.MIXED_ADD_QTY: self._handle_mixed_add_qty,
@@ -3759,15 +3787,46 @@ class DecisionTree:
             if lang == "es":
                 return "Perfecto, vamos a añadir un curso PADI al carrito.\n\n" + MESSAGES["courses_menu"][lang]
             return "Perfect, let's add a PADI course to the cart.\n\n" + MESSAGES["courses_menu"][lang]
-        if choice in (2, 3, 5):
+        if choice == 5:
+            # Before adding a pure companion, offer them the mini-course / snorkel
+            # upsell (a companion who tries diving is a happier customer + more value).
+            return self._goto_mixed_companion_upsell(state)
+        if choice in (2, 3):
             # Si entran via cert+ppt, snorkel (choice 3) no está disponible
             if choice == 3 and state.mixed_entry_path == "cert_beg":
                 self.set_quick_replies(state, "mixed_add_activity")
                 return MESSAGES["not_understood"][lang]
-            state.mixed_pending_qty_type = {2: "beginner", 3: "snorkel", 5: "companion"}[choice]
+            state.mixed_pending_qty_type = {2: "beginner", 3: "snorkel"}[choice]
             state.mixed_pending_qty_plan = None
             return self._goto_mixed_add_qty(state)
         self.set_quick_replies(state, "mixed_add_activity")
+        return MESSAGES["not_understood"][lang]
+
+    def _goto_mixed_companion_upsell(self, state: ConversationState) -> str:
+        lang = state.language
+        state.step = Step.MIXED_COMPANION_UPSELL
+        self.set_quick_replies(state, "mixed_companion_upsell")
+        return MESSAGES["mixed_companion_upsell"][lang]
+
+    def _handle_mixed_companion_upsell(self, state: ConversationState, message: str) -> str:
+        lang = state.language
+        msg = message.strip().lower()
+        if is_back(msg):
+            return self._goto_mixed_add_activity(state)
+        choice = self._parse_choice(message, 3)
+        if choice == 1:            # yes → mini-course for the companion
+            state.mixed_pending_qty_type = "beginner"
+            state.mixed_pending_qty_plan = None
+            return self._goto_mixed_add_qty(state)
+        if choice == 2:            # yes → snorkel for the companion
+            state.mixed_pending_qty_type = "snorkel"
+            state.mixed_pending_qty_plan = None
+            return self._goto_mixed_add_qty(state)
+        if choice == 3:            # no → add them as a pure companion (paid seat)
+            state.mixed_pending_qty_type = "companion"
+            state.mixed_pending_qty_plan = None
+            return self._goto_mixed_add_qty(state)
+        self.set_quick_replies(state, "mixed_companion_upsell")
         return MESSAGES["not_understood"][lang]
 
     def _refresher_info_msg(self, state: ConversationState) -> str:

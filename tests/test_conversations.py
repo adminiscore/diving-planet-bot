@@ -1926,9 +1926,13 @@ async def test_mixed_add_snorkel_skips_to_qty():
 
 
 @pytest.mark.asyncio
-async def test_mixed_add_companion_skips_to_qty():
+async def test_mixed_add_companion_offers_upsell_then_qty():
+    """#8: choosing 'companion' first offers the mini-course/snorkel upsell; only
+    after 'no, just accompany' does it add a pure companion and go to qty."""
     state = await reach_mixed_add_activity()
-    await route_message(state, "5")  # Acompañante
+    await route_message(state, "5")  # Acompañante → upsell
+    assert state.step == Step.MIXED_COMPANION_UPSELL
+    await route_message(state, "3")  # "No, solo acompañar"
     assert state.step == Step.MIXED_ADD_QTY
     assert state.mixed_pending_qty_type == "companion"
 
