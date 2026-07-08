@@ -1,6 +1,11 @@
 History
 =======
 
+0.19.29 - (2026-07-08)
+----------------------
+* **Riesgo #2 de flakiness mitigado — capacidad inventada del tour privado** (el segundo de los 2 pendientes de `session-handoff.md`). A temperatura 0.3 el modelo no siempre respetaba la regla de prompt contra inventar cifras de capacidad (bug T114: "¿máximo en tour privado?" → "hasta 12 personas", cuando el KB solo dice "cotización personalizada según el grupo"). Nuevo guard determinista `capacity_claims_grounded()` (`grounding_check.py`), análogo a los de precios/URLs: detecta afirmaciones de capacidad máxima de personas ("hasta N personas", "máximo N buzos", "capacidad para N", "up to N people", "N personas máximo") y las rechaza si ese número no aparece como claim de capacidad en el contexto. Los ecos del propio headcount del cliente ("para 4 personas", "somos 4 personas") no llevan palabra de límite y **no** se marcan. Barrido del KB completo: 0 falsos positivos en los FAQ de retrieval (el único claim real, "máximo 7 personas por instructor" en `conversations.json`, es auto-consistente si se recupera). Cableado en `_answer_with_llm` junto a los otros guards (con el retry de v0.19.28, un muestreo que invente capacidad se regenera antes de caer al fallback).
+* Tests: 13 casos nuevos en `test_rag_safety.py` (7 rechazos de invención + 5 no-capacity/grounded + 1 E2E de fallback). Suite: 1103 passed, 15 skipped.
+
 0.19.28 - (2026-07-08)
 ----------------------
 * **Flakiness del verificador de "grounding" (~1/3 de falso-fallback) mitigada** — el primero de los 2 riesgos pendientes que arrastraba `session-handoff.md`. La respuesta se muestrea a `temperature=0.3`, así que varía de una llamada a otra; un muestreo puntual que adornaba un detalle disparaba el juez de grounding (o los guards deterministas de precios/URLs) y caía directo al fallback "no tengo esa info", pese a existir contexto válido. `_answer_with_llm` (`rag_agent.py`) ahora **regenera la respuesta una vez** ante cualquier rechazo de guard (2 intentos): un muestreo fresco suele quedar grounded, convirtiendo el falso-fallback en respuesta real. Solo cae al fallback si ambos intentos fallan. No afecta a los guards deterministas (precios/URLs siguen siendo innegociables) — solo se re-muestrea, no se relaja la verificación.

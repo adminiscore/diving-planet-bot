@@ -63,6 +63,53 @@ def currency_amounts_grounded(answer: str, context: str) -> bool:
     return True
 
 
+# People nouns a capacity claim can attach to (ES + EN).
+_PEOPLE_NOUN = (
+    r"(?:personas?|buzos?|buceadoras?|buceadores?|pasajeros?|cupos?|plazas?|"
+    r"people|divers?|persons?|pax|guests?)"
+)
+
+# A capacity/limit trigger right before "<N> <people>", or a max word right after
+# it. These assert HOW MANY PEOPLE FIT — routinely hallucinated for the private
+# tour, whose real KB says only "cotizacion personalizada segun el grupo" (no
+# number). Plain echoes of the customer's own headcount ("para 4 personas",
+# "somos 4 personas") have no trigger word and are NOT matched.
+_CAP_BEFORE = (
+    r"(?:hasta|m[aá]x(?:imo)?|capacidad|cupo|aforo|l[ií]mite|cabe[n]?|admite[n]?|"
+    r"up\s+to|maximum|max|capacity|holds?|fits?|accommodates?)"
+)
+_CAP_AFTER = r"(?:m[aá]x(?:imo)?|maximum|max)"
+_CAPACITY_CLAIM = re.compile(
+    r"(?:" + _CAP_BEFORE + r")\s+(?:de\s+|para\s+|of\s+|up\s+to\s+)?(\d[\d.,]*)\s*" + _PEOPLE_NOUN
+    + r"|(\d[\d.,]*)\s*" + _PEOPLE_NOUN + r"\s+(?:como\s+)?" + _CAP_AFTER,
+    re.IGNORECASE,
+)
+
+
+def _capacity_claim_numbers(text: str) -> set[str]:
+    numbers: set[str] = set()
+    for match in _CAPACITY_CLAIM.finditer(text or ""):
+        raw = match.group(1) or match.group(2)
+        if raw:
+            numbers |= _number_variants(raw)
+    return numbers
+
+
+def capacity_claims_grounded(answer: str, context: str) -> bool:
+    """Reject answers that assert a maximum people-capacity number not present in
+    the context (e.g. "el tour privado admite hasta 12 personas" when the KB only
+    says "cotizacion segun el grupo"). Complements the LLM judge, which follows
+    the no-invented-capacity rule only intermittently at temperature 0.3. Plain
+    headcount echoes without a max/limit trigger are ignored.
+    """
+    if not answer:
+        return True
+    answer_caps = _capacity_claim_numbers(answer)
+    if not answer_caps:
+        return True
+    return answer_caps.issubset(_capacity_claim_numbers(context))
+
+
 # Explicit links the answer might emit (http(s):// or www.).
 _URL_PATTERN = re.compile(r"(?:https?://|www\.)\S+", re.IGNORECASE)
 

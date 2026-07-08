@@ -12,7 +12,12 @@ import re
 
 from openai import AsyncOpenAI
 
-from src.agents.grounding_check import currency_amounts_grounded, is_grounded, urls_grounded
+from src.agents.grounding_check import (
+    capacity_claims_grounded,
+    currency_amounts_grounded,
+    is_grounded,
+    urls_grounded,
+)
 from src.agents.query_rewriter import condense_query
 from src.config import settings
 from src.knowledge.loader import (
@@ -955,6 +960,8 @@ async def rag_answer(
                 last_reject = "ungrounded_amount"
             elif not urls_grounded(answer, grounding_context):
                 last_reject = "ungrounded_url"
+            elif not capacity_claims_grounded(answer, grounding_context):
+                last_reject = "ungrounded_capacity"
             elif not verify_grounding:
                 return answer
             else:

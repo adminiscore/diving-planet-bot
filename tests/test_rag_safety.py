@@ -476,6 +476,81 @@ async def test_rag_falls_back_when_answer_has_ungrounded_link(monkeypatch):
     assert "No tengo información suficiente" in response
 
 
+# --- Capacity guard: no invented "max N people" for the private tour ---------
+
+@pytest.mark.parametrize("answer", [
+    "El tour privado admite hasta 12 personas.",
+    "La lancha tiene capacidad para 10 personas.",
+    "Es un máximo de 8 buzos por salida.",
+    "Caben 15 personas en el bote.",
+    "The private tour holds up to 12 people.",
+    "Maximum of 8 divers per boat.",
+    "12 personas máximo por lancha.",
+])
+def test_capacity_guard_rejects_invented_max_people(answer):
+    context = "El tour privado tiene cotización personalizada según el grupo."
+    assert grounding_check.capacity_claims_grounded(answer, context) is False
+
+
+@pytest.mark.parametrize("answer,context", [
+    # Plain headcount echoes (no max/limit trigger) must pass.
+    ("El plan para 4 personas cuesta $178 c/u.", "Precio por persona: 178 USD."),
+    ("Ustedes son 5 personas, perfecto.", "Reserva de buceo certificado."),
+    # Non-people 'hasta' numbers must pass.
+    ("Bajas hasta 18 metros de profundidad.", "Buceo recreativo en el arrecife."),
+    ("El Bubble Makers llega hasta 2 metros.", "Piscina o aguas poco profundas."),
+    # A grounded capacity claim (number present in context as a capacity) passes.
+    ("Son máximo 7 personas por instructor.", "El ratio es de máximo 7 personas por instructor."),
+])
+def test_capacity_guard_accepts_grounded_or_non_capacity(answer, context):
+    assert grounding_check.capacity_claims_grounded(answer, context) is True
+
+
+@pytest.mark.asyncio
+async def test_rag_falls_back_when_answer_invents_private_tour_capacity(monkeypatch):
+    """The private-tour 'max N personas' hallucination (risk #2) must be caught
+    deterministically even if the LLM grounding verifier would approve it."""
+    async def fake_search(query, lang="es"):
+        return [{
+            "content": "El tour privado tiene cotización personalizada según el grupo.",
+            "metadata": {"source": "faqs"},
+            "score": 0.9,
+        }]
+
+    class CapMessage:
+        content = "El tour privado admite hasta 12 personas."
+
+    class CapChoice:
+        message = CapMessage()
+
+    class CapUsage:
+        total_tokens = 10
+
+    class CapResponse:
+        choices = [CapChoice()]
+        usage = CapUsage()
+
+    class CapCompletions:
+        async def create(self, **kwargs):
+            return CapResponse()
+
+    class CapChat:
+        completions = CapCompletions()
+
+    class CapOpenAI:
+        def __init__(self, api_key=None):
+            self.chat = CapChat()
+
+    monkeypatch.setattr(rag_agent, "search_knowledge_base", fake_search)
+    monkeypatch.setattr(rag_agent.settings, "rag_min_score", 0.72)
+    monkeypatch.setattr(rag_agent, "AsyncOpenAI", CapOpenAI)
+    monkeypatch.setattr(rag_agent, "is_grounded", grounded_ok)
+
+    response = await rag_agent.rag_answer("¿cuántas personas caben en el tour privado?", lang="es")
+
+    assert "No tengo información suficiente" in response
+
+
 @pytest.mark.asyncio
 async def test_rag_food_query_returns_canonical_kb_answer_without_search(monkeypatch):
     async def fail_search(*args, **kwargs):
