@@ -1158,8 +1158,16 @@ MESSAGES = {
         "en": "Where will you depart from? Prices will update according to your choice.",
     },
     "mixed_final_colombian": {
-        "es": "Para terminar, ¿eres *colombiano/a o residente en Colombia*? (para mostrarte el precio en pesos o en dólares)",
-        "en": "Last question: are you *Colombian / resident in Colombia*? (so we show you the price in COP or USD)",
+        "es": (
+            "Para terminar, ¿eres *colombiano/a o residente en Colombia*?\n"
+            "_Es solo para mostrarte el precio en tu moneda: el precio es el mismo, "
+            "no hay ningún cobro extra por el cambio de divisa — pesos (COP) o dólares (USD)._"
+        ),
+        "en": (
+            "Last question: are you *Colombian / resident in Colombia*?\n"
+            "_It's only to show the price in your currency: the price is the same, "
+            "there's no extra charge for the currency — COP or USD._"
+        ),
     },
     "mixed_final_kids": {
         "es": (
@@ -5206,9 +5214,10 @@ class DecisionTree:
         if state.is_colombian is not None and state.mixed_final_is_colombian is None:
             state.mixed_final_is_colombian = state.is_colombian
             state.mixed_display_currency = "COP" if state.is_colombian else "USD"
-            if not self._cart_has_boat_activities(state):
-                return self._goto_mixed_final_summary(state)
-            return self._goto_mixed_final_private(state)
+            # We no longer proactively ask about a private boat — it goes straight
+            # to the summary. If the client wants a private boat they can ask, and
+            # RAG answers from the KB.
+            return self._goto_mixed_final_summary(state)
         state.step = Step.MIXED_FINAL_COLOMBIAN
         self.set_quick_replies(state, "mixed_yes_no")
         return MESSAGES["mixed_final_colombian"][lang]
@@ -5225,9 +5234,8 @@ class DecisionTree:
         else:
             self.set_quick_replies(state, "mixed_yes_no")
             return MESSAGES["not_understood"][lang]
-        if not self._cart_has_boat_activities(state):
-            return self._goto_mixed_final_summary(state)
-        return self._goto_mixed_final_private(state)
+        # Private-boat question removed — go straight to the summary.
+        return self._goto_mixed_final_summary(state)
 
     def _pending_beginner_qty(self, state: ConversationState) -> int | None:
         """qty for the Minicurso item under consideration (in-cart or pending add).
@@ -5329,10 +5337,9 @@ class DecisionTree:
                 state,
                 self._service_for_location("minicourse", state),
             )
-        # Fallback (legacy paths that may still call this).
-        if not self._cart_has_boat_activities(state):
-            return self._goto_mixed_final_summary(state)
-        return self._goto_mixed_final_private(state)
+        # Fallback (legacy paths that may still call this). Private-boat question
+        # removed — always go straight to the summary.
+        return self._goto_mixed_final_summary(state)
 
     def _handle_mixed_final_kids(self, state: ConversationState, message: str) -> str:
         lang = state.language
@@ -5505,21 +5512,78 @@ class DecisionTree:
             return MESSAGES["not_understood"][lang]
         return self._goto_mixed_final_summary(state)
 
+    def _mixed_final_summary_buttons(self, state: ConversationState) -> list[dict]:
+        """Payment/action buttons for the final summary, by nationality.
+
+        - Non-Colombian: a single "book (pay online)" action — no in-person option,
+          they pay 100% online.
+        - Colombian: pay 100% online, OR 50% online + 50% in person.
+        """
+        lang = state.language
+        if state.mixed_final_is_colombian:
+            if lang == "es":
+                return [
+                    {"title": "💳 Pagar 100% online", "value": "pay_full"},
+                    {"title": "💵 50% online + 50% en persona", "value": "pay_split"},
+                    {"title": "🔄 Empezar de nuevo", "value": "2"},
+                ]
+            return [
+                {"title": "💳 Pay 100% online", "value": "pay_full"},
+                {"title": "💵 50% online + 50% in person", "value": "pay_split"},
+                {"title": "🔄 Start over", "value": "2"},
+            ]
+        if lang == "es":
+            return [
+                {"title": "🧑‍💼 Reservar (pago online)", "value": "1"},
+                {"title": "🔄 Empezar de nuevo", "value": "2"},
+            ]
+        return [
+            {"title": "🧑‍💼 Book (online payment)", "value": "1"},
+            {"title": "🔄 Start over", "value": "2"},
+        ]
+
     def _goto_mixed_final_summary(self, state: ConversationState) -> str:
         state.step = Step.MIXED_FINAL_SUMMARY
-        self.set_quick_replies(state, "mixed_final_summary_actions")
+        state.quick_replies = self._mixed_final_summary_buttons(state)
         return self._format_mixed_final_summary(state)
 
     def _handle_mixed_final_summary(self, state: ConversationState, message: str) -> str:
         lang = state.language
-        choice = self._parse_choice(message, 3)
-        if choice == 1:
-            # No-Colombian clients pay 100% online, so we can send the booking
-            # link(s) right away instead of waiting on an advisor. Colombian
-            # clients (split payment + discount coordination) and carts where
-            # no direct link is available (contact-only/referral items) still
-            # escalate as before.
-            if state.mixed_final_is_colombian is False and state.mixed_booking_links:
+        msg = message.strip().lower()
+
+        if msg in ("2", "restart", "empezar de nuevo", "start over"):
+            self._reset_mixed_state(state)
+            return self._goto_mixed_entry(state)
+
+        # Colombian: pay 100% online, or 50% online + 50% in person. Both are
+        # coordinated by an advisor (COP pricing + payment split), with the chosen
+        # method noted so they can send the right link / arrange the in-person half.
+        if state.mixed_final_is_colombian:
+            if msg == "pay_split":
+                method = "pago 50% online + 50% en persona"
+                pay_es = "Has elegido pagar *50% online y 50% en persona*."
+                pay_en = "You chose to pay *50% online and 50% in person*."
+            else:  # "pay_full" (or a stray "1")
+                method = "pago 100% online"
+                pay_es = "Has elegido pagar *el 100% online*."
+                pay_en = "You chose to pay *100% online*."
+            state.step = Step.ESCALATE
+            state.quick_replies = []
+            state.pending_escalation_reason = f"grupo mixto (colombiano) - {method}"
+            if lang == "es":
+                return (
+                    f"¡Perfecto! {pay_es} Te paso con un asesor para confirmar disponibilidad "
+                    "y el precio final en pesos, y coordinar el pago. Enseguida se pone en "
+                    "contacto contigo."
+                )
+            return (
+                f"Perfect! {pay_en} I'll connect you with an advisor to confirm availability "
+                "and the final price in COP, and to arrange payment. They'll be in touch shortly."
+            )
+
+        # Non-Colombian: book with 100% online payment → send booking link(s) directly.
+        if msg == "1":
+            if state.mixed_booking_links:
                 links_block = _format_booking_links_block(state.mixed_booking_links, lang)
                 state.step = Step.FREE_TEXT
                 state.quick_replies = []
@@ -5541,11 +5605,10 @@ class DecisionTree:
                     "If you need anything else, type *menu* to go back."
                 )
 
-            # Reservar → escalate. El asesor envía el link de reserva tras confirmar.
+            # No direct link available → escalate; advisor sends the booking link.
             state.step = Step.ESCALATE
             state.quick_replies = []
             state.pending_escalation_reason = "grupo mixto - cliente confirma carrito y quiere reservar"
-
             if lang == "es":
                 return (
                     "¡Perfecto! Te paso con un asesor para confirmar disponibilidad, "
@@ -5557,28 +5620,8 @@ class DecisionTree:
                 "number of people, and the final price. They will be in touch shortly "
                 "with the booking link."
             )
-        if choice == 2:
-            self._reset_mixed_state(state)
-            return self._goto_mixed_entry(state)
-        if choice == 3:
-            # Client wants to book but pay in person (no online payment at all) —
-            # always escalate, regardless of nationality; the advisor coordinates
-            # the in-person payment instead of sending a booking link.
-            state.step = Step.ESCALATE
-            state.quick_replies = []
-            state.pending_escalation_reason = "grupo mixto - quiere pagar en persona, no online"
-            if lang == "es":
-                return (
-                    "¡Perfecto! Te paso con un asesor para coordinar el pago presencial y confirmar "
-                    "disponibilidad, número exacto de personas y precio final. Enseguida se pone en "
-                    "contacto contigo."
-                )
-            return (
-                "Great! I'll connect you with an advisor to arrange in-person payment and confirm "
-                "availability, exact number of people, and the final price. They will be in touch "
-                "shortly."
-            )
-        self.set_quick_replies(state, "mixed_final_summary_actions")
+
+        state.quick_replies = self._mixed_final_summary_buttons(state)
         return MESSAGES["not_understood"][lang]
 
     def _handle_pricing_menu(self, state: ConversationState, message: str) -> str:
@@ -7034,13 +7077,6 @@ class DecisionTree:
             if booking_url:
                 booking_links.append((label, booking_url))
 
-        # Layout helpers
-        def primary_str(usd_val, cop_val):
-            return cop_val if primary == "COP" else usd_val
-
-        def secondary_str(usd_val, cop_val):
-            return usd_val if primary == "COP" else cop_val
-
         title = "🧾 *RESERVA DIVING PLANET*" if lang == "es" else "🧾 *DIVING PLANET BOOKING*"
         sep_bold = "━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
@@ -7077,12 +7113,15 @@ class DecisionTree:
                 kids_sub = None
             rows_text.append("")
 
-        subtotal_label = "*SUBTOTAL*" if lang == "es" else "*SUBTOTAL*"
+        # Single total in the client's chosen currency (no separate "estimated
+        # total" and no currency conversion — the currency was already picked and
+        # the price is the same in either one).
+        total_label = "*TOTAL*"
         if primary == "COP":
-            subtotal_str = fmt_cop(int(total_cop)) if total_cop else "consultar"
+            total_str = fmt_cop(int(total_cop)) if total_cop else "consultar"
         else:
-            subtotal_str = fmt_usd(total_usd) if total_usd else "consultar"
-        rows_text.append(f"{subtotal_label}: *{subtotal_str}*")
+            total_str = fmt_usd(total_usd) if total_usd else "consultar"
+        rows_text.append(f"{total_label}: *{total_str}*")
 
         # Includes line (Cartagena origin)
         includes = ""
@@ -7115,15 +7154,6 @@ class DecisionTree:
                 if lang == "es"
                 else "  🚤 Private boat requested — advisor confirms the final price at booking"
             )
-
-        # TOTAL
-        total_label = "*TOTAL ESTIMADO*" if lang == "es" else "*ESTIMATED TOTAL*"
-        if primary == "COP":
-            total_primary = fmt_cop(int(total_cop)) if total_cop else "consultar"
-            total_secondary = f"≈ {fmt_usd(total_usd)}" if total_usd else ""
-        else:
-            total_primary = fmt_usd(total_usd) if total_usd else "consultar"
-            total_secondary = f"≈ {fmt_cop(int(total_cop))}" if total_cop else ""
 
         # Avisos (only relevant ones)
         avisos_lines: list[str] = []
@@ -7236,11 +7266,6 @@ class DecisionTree:
             parts.append(sep_bold)
             parts.append("*EXTRAS / DESCUENTOS*" if lang == "es" else "*EXTRAS / DISCOUNTS*")
             parts.append("\n".join(extras_lines))
-        parts.append(sep_bold)
-        if total_secondary:
-            parts.append(f"*{total_label}*: *{total_primary}* {total_secondary}")
-        else:
-            parts.append(f"*{total_label}*: *{total_primary}*")
         if avisos_lines:
             parts.append(sep_bold)
             parts.append("🚨 *Avisos*:" if lang == "es" else "🚨 *Notices*:")

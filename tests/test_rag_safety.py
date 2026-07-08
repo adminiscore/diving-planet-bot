@@ -566,6 +566,50 @@ async def test_rag_food_query_returns_canonical_kb_answer_without_search(monkeyp
     assert "Frutas de temporada" not in response
 
 
+# --- #2: curated "what do you offer for diving?" overview -------------------
+
+@pytest.mark.parametrize("q", [
+    "¿qué ofrecen para bucear?",
+    "qué opciones hay para bucear",
+    "qué planes de buceo tienen",
+    "qué actividades de buceo hay",
+    "what do you offer for diving",
+    "what diving options do you have",
+])
+def test_diving_overview_canonical_fires(q):
+    lang = "es" if any(w in q for w in ("qué", "para", "buceo")) else "en"
+    ans = rag_agent._canonical_diving_overview_answer(q, lang)
+    assert ans is not None
+    # Structured, grouped by situation: beginner / certified / courses / snorkel.
+    assert "Minicurso" in ans or "Mini-Course" in ans or "Mini-course" in ans
+    assert "PADI" in ans
+    assert "snorkel" in ans.lower()
+
+
+@pytest.mark.parametrize("q", [
+    "¿cuánto cuesta el buceo?",       # price question
+    "qué incluye el buceo",           # inclusions
+    "quiero bucear",                  # booking intent, not an overview ask
+    "soy certificado",                # certification statement
+    "qué es el buceo",                # definition
+    "dónde bucean",                   # location
+])
+def test_diving_overview_not_triggered(q):
+    assert rag_agent._canonical_diving_overview_answer(q, "es") is None
+
+
+@pytest.mark.asyncio
+async def test_rag_diving_overview_served_without_search(monkeypatch):
+    async def fail_search(*args, **kwargs):
+        raise AssertionError("Overview must use the canonical answer before retrieval")
+
+    monkeypatch.setattr(rag_agent, "search_knowledge_base", fail_search)
+
+    response = await rag_agent.rag_answer("¿qué ofrecen para bucear?", lang="es")
+    assert "Islas del Rosario" in response
+    assert "Minicurso" in response
+
+
 def test_ambiguous_location_helper_detects_ultra_short_place_only_queries():
     assert rag_agent._is_ultra_short_ambiguous_location_query("Pao Pao") is True
     assert rag_agent._is_ultra_short_ambiguous_location_query("Cocoliso") is True

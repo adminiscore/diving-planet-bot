@@ -2386,8 +2386,8 @@ async def test_mixed_final_kids_skipped_when_no_beginner():
     state = await reach_mixed_add_activity()
     await send(state, "3", "2", "1")  # snorkel x2
     await route_message(state, "6")  # confirm cart (cart-action 6)
-    await route_message(state, "2")  # not colombian → no beginner → skip kids → private
-    assert state.step == Step.MIXED_FINAL_PRIVATE
+    await route_message(state, "2")  # not colombian → no beginner → skip kids → summary
+    assert state.step == Step.MIXED_FINAL_SUMMARY
     assert state.mixed_final_has_kids_8_10 is None
 
 
@@ -2406,8 +2406,8 @@ async def test_mixed_final_kids_not_asked_again_at_checkout():
     state = await reach_mixed_add_activity()
     await send(state, "2", "3", "3", "1")  # 3 beginners, kids ten_plus inline
     await route_message(state, "6")  # confirm cart (cart-action 6)
-    await route_message(state, "2")  # not colombian → straight to private (no kids step)
-    assert state.step == Step.MIXED_FINAL_PRIVATE
+    await route_message(state, "2")  # not colombian → straight to summary (no kids step)
+    assert state.step == Step.MIXED_FINAL_SUMMARY
 
 
 @pytest.mark.asyncio
@@ -2415,8 +2415,7 @@ async def test_mixed_full_path_lands_on_final_summary():
     state = await reach_mixed_add_activity()
     await send(state, "2", "3", "3", "1")  # 3 beginners, kids 10+ inline
     await route_message(state, "6")  # confirm (cart-action 6)
-    await route_message(state, "2")  # not colombian
-    await route_message(state, "2")  # no private
+    await route_message(state, "2")  # not colombian → summary
     assert state.step == Step.MIXED_FINAL_SUMMARY
 
 
@@ -2425,13 +2424,13 @@ async def test_mixed_final_summary_shows_restaurant_bill():
     state = await reach_mixed_add_activity()
     await send(state, "1", "1", "2", "2", "1")  # cert 2-dives x2, recent dive, preview add
     await send(state, "2", "3", "1", "1")  # add (cart-action 2) snorkel x1
-    await send(state, "6", "2", "2")  # confirm (cart-action 6), not colombian, no private
+    await send(state, "6", "2")  # confirm (cart-action 6), not colombian, no private
     assert state.step == Step.MIXED_FINAL_SUMMARY
     resp = state.mixed_last_summary or ""
     assert "RESERVA" in resp or "BOOKING" in resp
     assert "ACTIVIDADES" in resp or "ACTIVITIES" in resp
-    assert "SUBTOTAL" in resp
     assert "TOTAL" in resp
+    assert "ESTIMADO" not in resp and "ESTIMATED" not in resp  # #4: no "estimated total"
 
 
 @pytest.mark.asyncio
@@ -2439,7 +2438,7 @@ async def test_mixed_final_summary_avisos_only_when_relevant():
     """Small group (qty<6), no kids, no private → no Avisos block."""
     state = await reach_mixed_add_activity()
     await send(state, "3", "2", "1")  # snorkel x2
-    await send(state, "6", "2", "2")  # confirm (cart-action 6), not colombian, no private
+    await send(state, "6", "2")  # confirm (cart-action 6), not colombian, no private
     resp = state.mixed_last_summary or ""
     assert "Avisos" not in resp
 
@@ -2450,7 +2449,7 @@ async def test_mixed_final_summary_large_group_shows_aviso():
     await send(state, "3", "6+")
     await route_message(state, "8")  # 8 snorkelers
     await route_message(state, "1")  # preview add
-    await send(state, "6", "2", "2")  # confirm (cart-action 6), not colombian, no private
+    await send(state, "6", "2")  # confirm (cart-action 6), not colombian, no private
     resp = state.mixed_last_summary or ""
     assert "Avisos" in resp
     assert "Grupo grande" in resp or "Large group" in resp
@@ -2463,7 +2462,7 @@ async def test_mixed_final_summary_kids_yes_shows_aviso_and_stays_in_summary():
     # beginner, qty 3, kids 8-10 (choice 2), 2 kids in that range, preview add
     await send(state, "2", "3", "2", "2", "1")
     # confirm (cart-action 6), not colombian, no private
-    await send(state, "6", "2", "2")
+    await send(state, "6", "2")
     assert state.step == Step.MIXED_FINAL_SUMMARY
     assert state.mixed_final_has_kids_8_10 is True
     assert state.kids_age_group == "eight_to_ten"
@@ -2473,14 +2472,16 @@ async def test_mixed_final_summary_kids_yes_shows_aviso_and_stays_in_summary():
 
 
 @pytest.mark.asyncio
-async def test_mixed_final_summary_private_yes_shows_aviso():
+async def test_private_boat_question_no_longer_asked():
+    """#3: the proactive 'private boat?' question is removed — after nationality
+    the flow goes straight to the summary, and the summary has no private line."""
     state = await reach_mixed_add_activity()
     await send(state, "3", "2", "1")  # snorkel x2
-    await send(state, "6", "2", "1")  # confirm (cart-action 6), not colombian, YES private
+    await send(state, "6", "2")  # confirm, not colombian → summary directly
     assert state.step == Step.MIXED_FINAL_SUMMARY
-    assert state.mixed_final_wants_private is True
+    assert state.mixed_final_wants_private is None
     resp = state.mixed_last_summary or ""
-    assert "privada" in resp.lower() or "private" in resp.lower()
+    assert "lancha privada" not in resp.lower()
 
 
 @pytest.mark.asyncio
@@ -2489,7 +2490,7 @@ async def test_mixed_final_summary_colombian_shows_cop_primary():
     # beginner, qty 2, kids 10+ inline, preview add
     await send(state, "2", "2", "3", "1")
     # confirm (cart-action 6), COLOMBIAN, no private
-    await send(state, "6", "1", "2")
+    await send(state, "6", "1")
     resp = state.mixed_last_summary or ""
     assert "COP" in resp
     assert "descuento" in resp.lower() or "discount" in resp.lower()
@@ -2499,7 +2500,7 @@ async def test_mixed_final_summary_colombian_shows_cop_primary():
 async def test_mixed_final_summary_cartagena_shows_transport_note():
     state = await reach_mixed_add_activity(location="cartagena")
     await send(state, "3", "2", "1")  # snorkel x2
-    await send(state, "6", "2", "2")  # confirm (cart-action 6), not colombian, no private
+    await send(state, "6", "2")  # confirm (cart-action 6), not colombian, no private
     resp = state.mixed_last_summary or ""
     assert "transporte" in resp.lower() or "transport" in resp.lower()
 
@@ -2509,7 +2510,7 @@ async def test_mixed_final_summary_snorkel_waiver_only_when_snorkel():
     """Without snorkel the snorkel-specific note must NOT appear."""
     state = await reach_mixed_add_activity()
     await send(state, "1", "1", "2", "2", "1")  # cert 2-dives x2 (no snorkel in cart)
-    await send(state, "6", "2", "2")  # confirm (cart-action 6), not colombian, no private
+    await send(state, "6", "2")  # confirm (cart-action 6), not colombian, no private
     resp = state.mixed_last_summary or ""
     assert "formulario específico de snorkel" not in resp.lower()
 
@@ -2520,7 +2521,7 @@ async def test_mixed_final_summary_reservar_non_colombian_sends_links():
     link(s) directly instead of escalating to an advisor."""
     state = await reach_mixed_add_activity()
     await send(state, "3", "2", "1")  # snorkel x2
-    await send(state, "6", "2", "2")  # confirm (cart-action 6), not colombian, no private
+    await send(state, "6", "2")  # confirm (cart-action 6), not colombian, no private
     response = await route_message(state, "1")  # Reservar
     assert state.step == Step.FREE_TEXT
     assert state.pending_escalation_reason is None
@@ -2549,37 +2550,60 @@ async def test_mixed_final_summary_reservar_no_link_falls_back_to_escalation():
 
 
 @pytest.mark.asyncio
-async def test_mixed_final_summary_reservar_colombian_still_escalates():
-    """Colombian clients still go through an advisor (split payment + discount)."""
+async def test_mixed_final_summary_colombian_pay_full_escalates():
+    """#7: Colombian '100% online' escalates through an advisor (COP + payment),
+    with the chosen method noted."""
     state = await reach_mixed_add_activity()
     await send(state, "3", "2", "1")  # snorkel x2
-    await send(state, "6", "1", "2")  # confirm (cart-action 6), COLOMBIAN, no private
-    await route_message(state, "1")  # Reservar
+    await send(state, "6", "1")  # confirm, COLOMBIAN → summary
+    await route_message(state, "pay_full")
     assert state.step == Step.ESCALATE
+    assert "100% online" in (state.pending_escalation_reason or "")
     assert state.pending_note is not None
     assert "Lead Diving Planet" in state.pending_note
 
 
 @pytest.mark.asyncio
-async def test_mixed_final_summary_cash_payment_escalates_for_non_colombian():
-    """Non-Colombian clients who don't want to pay online get a dedicated
-    'pay in person' option that always escalates (no booking link sent)."""
+async def test_non_colombian_summary_has_no_pay_in_person_option():
+    """#6: non-Colombian clients pay 100% online — no 'pay in person' button."""
     state = await reach_mixed_add_activity()
     await send(state, "3", "2", "1")  # snorkel x2
-    await send(state, "6", "2", "2")  # confirm (cart-action 6), not colombian, no private
-    response = await route_message(state, "3")  # Pagar en persona
+    await send(state, "6", "2")  # confirm, not colombian → summary
+    titles = [b["title"].lower() for b in state.quick_replies]
+    assert not any(("persona" in t or "in person" in t) for t in titles)
+    values = [b.get("value") for b in state.quick_replies]
+    assert "1" in values  # single "book (online)" action
+    assert "cash" not in values and "3" not in values
+
+
+@pytest.mark.asyncio
+async def test_colombian_summary_offers_full_and_split_payment():
+    """#7: Colombian clients get 100%-online and 50/50 options (no plain cash)."""
+    state = await reach_mixed_add_activity()
+    await send(state, "3", "2", "1")  # snorkel x2
+    await send(state, "6", "1")  # confirm, COLOMBIAN → summary
+    values = [b.get("value") for b in state.quick_replies]
+    assert "pay_full" in values
+    assert "pay_split" in values
+
+
+@pytest.mark.asyncio
+async def test_colombian_pay_split_escalates_with_method_noted():
+    """#7: the 50/50 choice escalates with the split noted for the advisor."""
+    state = await reach_mixed_add_activity()
+    await send(state, "3", "2", "1")  # snorkel x2
+    await send(state, "6", "1")  # confirm, COLOMBIAN → summary
+    resp = await route_message(state, "pay_split")
     assert state.step == Step.ESCALATE
-    assert "presencial" in response.lower()
-    assert "divingplanet.org" not in response
-    assert state.pending_note is not None
-    assert state.pending_escalation_reason == "grupo mixto - quiere pagar en persona, no online"
+    assert "50%" in (state.pending_escalation_reason or "")
+    assert "50%" in resp
 
 
 @pytest.mark.asyncio
 async def test_mixed_final_summary_restart_wipes_state():
     state = await reach_mixed_add_activity()
     await send(state, "3", "2", "1")
-    await send(state, "6", "2", "2")  # confirm (cart-action 6), not colombian, no private
+    await send(state, "6", "2")  # confirm (cart-action 6), not colombian, no private
     await route_message(state, "2")  # Empezar de nuevo
     assert state.step == Step.MIXED_ENTRY
     assert state.mixed_cart == []
@@ -2591,7 +2615,7 @@ async def test_mixed_lead_note_includes_cart_items():
     await send(state, "1", "1", "2", "2", "1")  # cert 2-dives x2
     await send(state, "2", "2", "3", "3", "1")  # add (cart-action 2) beginner x3 (kids 10+ inline)
     # confirm (cart-action 6), not colombian, no private
-    await send(state, "6", "2", "2")
+    await send(state, "6", "2")
     await route_message(state, "1")  # Reservar
     note = state.pending_note or ""
     assert "Grupo mixto" in note
@@ -2611,7 +2635,7 @@ async def test_mixed_final_summary_non_colombian_stores_booking_links():
     # beginner, qty 2, kids 10+ inline, preview add
     await send(state, "2", "2", "3", "1")
     # confirm (cart-action 6), not colombian, no private
-    await send(state, "6", "2", "2")
+    await send(state, "6", "2")
     # En el nuevo flujo los links NO se incluyen en el summary; se guardan en estado y
     # se envían al pulsar "Reservar".
     resp = state.mixed_last_summary or ""
@@ -2625,7 +2649,7 @@ async def test_mixed_final_summary_non_colombian_stores_booking_links():
 async def test_mixed_final_summary_colombian_no_whatsapp_note_inline():
     state = await reach_mixed_add_activity()
     await send(state, "2", "2", "3", "1")  # 2 beginners, kids 10+ inline
-    await send(state, "6", "1", "2")  # confirm (cart-action 6), COLOMBIAN, no private
+    await send(state, "6", "1")  # confirm (cart-action 6), COLOMBIAN, no private
     resp = state.mixed_last_summary or ""
     # Quitamos la nota inline de WhatsApp; el descuento se coordina en escalación.
     assert "book.divingplanet.org" not in resp
@@ -2633,6 +2657,31 @@ async def test_mixed_final_summary_colombian_no_whatsapp_note_inline():
 
 
 # --- LLM intent classifier (mocked) ----------------------------------------
+
+@pytest.mark.asyncio
+async def test_bare_certified_statement_offers_diving_options(agent_decides):
+    """#1: 'soy certificado' must offer the diving options (enter the certified
+    flow), not a vague RAG reply — even when the conversation agent tags it as a
+    plain question rather than a booking."""
+    from src.agents import orchestrator
+    agent_decides(orchestrator.TOOL_ANSWER_QUESTION)
+    state = make_state()  # WELCOME (an intent-trigger step)
+    resp = await route_message(state, "soy certificado")
+    assert state.step == Step.MIXED_LOCATION      # entered cert flow (asks origin)
+    assert state.quick_replies                    # offers origin buttons
+    assert "certificad" in resp.lower()
+
+
+@pytest.mark.asyncio
+async def test_bare_certified_question_still_answered_not_hijacked(agent_decides):
+    """A certified diver ASKING something ('soy certificado, ¿tienen wifi?') must
+    NOT be force-routed into the booking flow — the '?' guard keeps it a question."""
+    from src.agents import orchestrator
+    agent_decides(orchestrator.TOOL_ANSWER_QUESTION)
+    state = make_state()
+    await route_message(state, "soy certificado, ¿qué precios manejan?")
+    assert state.step != Step.MIXED_LOCATION
+
 
 @pytest.mark.asyncio
 async def test_intent_classifier_routes_natural_text_to_button():
@@ -2825,9 +2874,9 @@ async def test_kids_question_skipped_for_cert_only_adult_cart():
     state = make_state()
     await _put_cert_in_cart(state, 2)
     await route_message(state, "6")  # checkout (cart-action 6)
-    await route_message(state, "2")  # No colombiano
+    await route_message(state, "2")  # No colombiano → summary (private question removed)
     assert state.step != Step.MIXED_FINAL_KIDS
-    assert state.step == Step.MIXED_FINAL_PRIVATE
+    assert state.step == Step.MIXED_FINAL_SUMMARY
 
 
 @pytest.mark.asyncio
@@ -2840,7 +2889,7 @@ async def test_kids_under_8_with_dive_cart_shows_warning():
     assert state.kids_count == 1
     await route_message(state, "1")              # preview confirm → cart_review
     # checkout (cart-action 6) → no colombian → no private → summary
-    await send(state, "6", "2", "2")
+    await send(state, "6", "2")
     summary = state.mixed_last_summary or ""
     assert "menores de 8" in summary.lower() or "under 8" in summary.lower()
     assert "no pueden bucear" in summary.lower() or "cannot dive" in summary.lower()
@@ -2854,7 +2903,7 @@ async def test_kids_ten_plus_adds_no_warning():
     assert state.kids_age_group == "ten_plus"
     assert state.mixed_final_has_kids_8_10 is False
     await route_message(state, "1")              # preview confirm
-    await send(state, "6", "2", "2")             # checkout (cart-action 6), not colombian, no private
+    await send(state, "6", "2")             # checkout (cart-action 6), not colombian, no private
     summary = state.mixed_last_summary or ""
     assert "menores de 8" not in summary.lower()
     assert "bubble makers" not in summary.lower()
@@ -2988,7 +3037,7 @@ async def test_final_summary_shows_bubble_makers_split_rows():
     await route_message(state, "2")              # 8-10
     await route_message(state, "2")              # 2 kids → preview
     await route_message(state, "1")              # preview confirm → cart_review
-    await send(state, "6", "2", "2")             # checkout (cart-action 6), not colombian, no private
+    await send(state, "6", "2")             # checkout (cart-action 6), not colombian, no private
     summary = state.mixed_last_summary or ""
     assert "Minicurso" in summary
     assert "Bubble Makers" in summary
@@ -3005,7 +3054,7 @@ async def test_kids_eight_to_ten_keeps_bubble_makers_warning():
     assert state.mixed_final_has_kids_8_10 is True
     await route_message(state, "2")              # 2 kids in 8-10 → preview
     await route_message(state, "1")              # preview confirm
-    await send(state, "6", "2", "2")             # checkout (cart-action 6), not colombian, no private
+    await send(state, "6", "2")             # checkout (cart-action 6), not colombian, no private
     summary = state.mixed_last_summary or ""
     assert "bubble makers" in summary.lower()
 
@@ -3052,7 +3101,7 @@ async def test_kids_mixed_summary_shows_three_split_rows():
     await route_message(state, "2")              # 2 menores de 8
     await route_message(state, "1")              # 1 entre 8-10 → preview
     await route_message(state, "1")              # preview confirm → cart_review
-    await send(state, "6", "2", "2")             # checkout (cart-action 6), not colombian, no private
+    await send(state, "6", "2")             # checkout (cart-action 6), not colombian, no private
     summary = state.mixed_last_summary or ""
     assert "Minicurso" in summary
     assert "Snorkel" in summary
@@ -3072,7 +3121,7 @@ async def test_kids_mixed_summary_shows_both_warnings():
     await route_message(state, "1")              # 1 menor de 8
     await route_message(state, "1")              # 1 entre 8-10 → preview
     await route_message(state, "1")              # preview confirm
-    await send(state, "6", "2", "2")             # checkout (cart-action 6), not colombian, no private
+    await send(state, "6", "2")             # checkout (cart-action 6), not colombian, no private
     summary = (state.mixed_last_summary or "").lower()
     assert "menores de 8" in summary
     assert "no pueden bucear" in summary
@@ -3088,7 +3137,7 @@ async def test_kids_mixed_lead_note_lists_two_lines():
     await route_message(state, "2")              # 2 menores de 8
     await route_message(state, "1")              # 1 entre 8-10 → preview
     await route_message(state, "1")              # preview confirm
-    await send(state, "6", "2", "2")             # checkout (cart-action 6), not colombian, no private
+    await send(state, "6", "2")             # checkout (cart-action 6), not colombian, no private
     note = build_lead_summary(state)
     assert "2 menores de 8" in note
     assert "1 niños 8-10" in note or "1 niño 8-10" in note
@@ -3106,7 +3155,7 @@ async def test_kids_mixed_both_zero_collapses_to_ten_plus():
     assert state.kids_eight_to_ten_count == 0
     assert state.kids_count is None
     await route_message(state, "1")              # preview confirm
-    await send(state, "6", "2", "2")             # checkout (cart-action 6), not colombian, no private
+    await send(state, "6", "2")             # checkout (cart-action 6), not colombian, no private
     summary = (state.mixed_last_summary or "").lower()
     assert "menores de 8" not in summary
     assert "bubble makers" not in summary

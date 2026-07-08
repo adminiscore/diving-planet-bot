@@ -3323,6 +3323,25 @@ async def _dispatch_conversation_agent(state: ConversationState, message: str) -
             return result
         # Couldn't route (e.g. no concrete activity) -> fall through to an answer.
 
+    # "Soy certificado" / "somos buzos certificados" and similar bare statements:
+    # the LLM often tags these as answer_question and RAG gives a vague "do you have
+    # a date in mind?" reply. When the deterministic router clearly WOULD offer the
+    # certified-diving options and the message isn't literally a question, prefer
+    # showing those options over a vague answer.
+    if (
+        decision.tool not in _ENTRY_BOOKING_TOOLS
+        and not _message_looks_like_question(message)
+        and _should_skip_to_certified_flow(intent, state)
+    ):
+        if state.is_certified is not None:
+            intent.is_certified = state.is_certified
+        intent.group_size = state.detected_group_size or intent.group_size
+        intent.location = state.detected_location or intent.location
+        result = _route_detected_intent(intent, state, message)
+        if result is not None:
+            logger.info("[SUPERVISOR] Bare certified-diver statement -> offering diving options")
+            return result
+
     # answer_question / profile-only / unrouted booking -> reply via RAG with the
     # now-enriched context (remembered facts included).
     if decision.tool in (orchestrator.TOOL_SET_PROFILE, orchestrator.TOOL_NOTE_LOGISTICS):

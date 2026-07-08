@@ -691,6 +691,66 @@ def _canonical_food_answer(query: str, lang: str) -> str | None:
     return _food_policy_answer(lang)
 
 
+# "What do you offer / what options / what plans for diving?" — an open overview
+# question. RAG used to answer it by picking a couple of arbitrary services (e.g.
+# minicourse + Nitrox specialty), which read as random. Instead we give one short,
+# structured overview grouped by the customer's situation. Requires BOTH an
+# "offer/options/what-can-I-do" phrase AND a diving word, so specific questions
+# ("what does the minicourse include?", "how much is diving?") don't match.
+_OVERVIEW_PHRASE = re.compile(
+    r"\b(?:qu[eé]\s+(?:ofrec\w*|tien\w+|hay|opciones|planes|actividades|tipos|servicios)|"
+    r"opciones|planes|alternativas|options|plans|alternatives|"
+    r"qu[eé]\s+puedo\s+hacer|qu[eé]\s+se\s+puede\s+hacer|"
+    r"what\s+(?:do\s+you\s+(?:offer|have|got)|options|can\s+i\s+do|kind\s+of)|"
+    r"which\s+(?:options|plans)|tell\s+me\s+about\s+(?:your\s+)?(?:diving|options))\b",
+    re.IGNORECASE,
+)
+_OVERVIEW_DIVING_WORD = re.compile(
+    r"\b(?:buce\w*|buse\w*|dive|diving|scuba|snorkel\w*|inmersi\w+)\b", re.IGNORECASE
+)
+# Guard: don't hijack price/inclusion/logistics questions that happen to match.
+_OVERVIEW_EXCLUDE = re.compile(
+    r"\b(?:precio|precios|cuesta|cu[aá]nto|vale|incluye|incluyen|"
+    r"price|cost|how\s+much|include|includes)\b",
+    re.IGNORECASE,
+)
+
+
+def _canonical_diving_overview_answer(query: str, lang: str) -> str | None:
+    if _OVERVIEW_EXCLUDE.search(query):
+        return None
+    if not (_OVERVIEW_PHRASE.search(query) and _OVERVIEW_DIVING_WORD.search(query)):
+        return None
+    if lang == "es":
+        return (
+            "🌊 *Buceamos en las Islas del Rosario* (Parque Nacional Corales del Rosario), "
+            "a 45–60 min en lancha desde Cartagena: aguas cálidas, arrecifes y mucha vida marina. "
+            "Te resumo las opciones:\n\n"
+            "🆕 *¿Nunca has buceado?* → el *Minicurso de buceo* (bautismo): teoría, práctica en "
+            "piscina y una inmersión en el mar con instructor. Desde los 10 años.\n\n"
+            "🤿 *¿Ya eres buzo certificado?* → *paquetes de inmersiones*: 2 buceos en 1 día, o "
+            "planes multi-día (4, 5, 7 o 9 buceos).\n\n"
+            "🎓 *¿Quieres sacarte el título?* → *cursos PADI*: Open Water (el básico), Advanced, "
+            "Rescue, Divemaster y especialidades.\n\n"
+            "🐠 Y si prefieres sin bucear, el *snorkel* es una chulada para ver el arrecife desde "
+            "la superficie.\n\n"
+            "¿Cuál te llama? Si quieres te armo la reserva. 😄"
+        )
+    return (
+        "🌊 *We dive in the Rosario Islands* (Corales del Rosario National Park), 45–60 min by boat "
+        "from Cartagena: warm water, reefs and lots of marine life. Here's a quick overview:\n\n"
+        "🆕 *Never dived before?* → the *Dive Mini-Course* (Discover Scuba): theory, pool practice "
+        "and one open-water dive with an instructor. From age 10.\n\n"
+        "🤿 *Already a certified diver?* → *dive packages*: 2 dives in 1 day, or multi-day plans "
+        "(4, 5, 7 or 9 dives).\n\n"
+        "🎓 *Want to get certified?* → *PADI courses*: Open Water (the basic one), Advanced, "
+        "Rescue, Divemaster and specialties.\n\n"
+        "🐠 And if you'd rather not dive, *snorkeling* is a lovely way to see the reef from the "
+        "surface.\n\n"
+        "Which one sounds good? I can put the booking together for you. 😄"
+    )
+
+
 def _coerce_metadata(value: object) -> dict:
     if isinstance(value, dict):
         return value
@@ -877,6 +937,11 @@ async def rag_answer(
     if canonical_food_answer:
         logger.info(f"[RAG] Using canonical food answer query={query[:60]}... lang={lang}")
         return canonical_food_answer
+
+    diving_overview = _canonical_diving_overview_answer(query, lang)
+    if diving_overview:
+        logger.info(f"[RAG] Using canonical diving-overview answer query={query[:60]}... lang={lang}")
+        return diving_overview
 
     condensed_query = await condense_query(query, history=history, lang=lang)
     ambiguous_location_clarification = _ambiguous_location_clarification(condensed_query, lang)
