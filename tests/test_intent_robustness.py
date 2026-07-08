@@ -314,3 +314,20 @@ def test_last_dive_years_not_an_age_without_tilde():
 ])
 def test_kid_noun_tiene_age(msg, expected):
     assert _d(msg).ages == expected
+
+
+# --- Mixed-group split with a count phrase inserted mid-sentence ------------
+# Regression: "somos 5, 3 buceamos certificados 5 inmersiones y 2 hacen
+# snorkel" used to produce NO group_allocation (the injected dive-count broke
+# the split-pattern's adjacency requirement), silently dropping the 2
+# snorkelers when it fell through to the certified-only path downstream.
+
+@pytest.mark.parametrize("msg,expected", [
+    ("somos 5, 3 buceamos certificados 5 inmersiones y 2 hacen snorkel", {"certified_diving": 3, "snorkel": 2}),
+    ("3 buceamos certificados y 2 hacen snorkel, queremos 5 inmersiones", {"certified_diving": 3, "snorkel": 2}),
+    ("somos 5, 3 bucean 2 dias y 2 hacen snorkel", {"certified_diving": 3, "snorkel": 2}),
+    ("we are 5, 3 diving 3 dives and 2 snorkel", {"certified_diving": 3, "snorkel": 2}),
+    ("3 de buceo certificado 7 inmersiones y 2 de snorkel", {"certified_diving": 3, "snorkel": 2}),
+])
+def test_group_split_survives_injected_count_phrase(msg, expected):
+    assert _d(msg).group_allocation == expected

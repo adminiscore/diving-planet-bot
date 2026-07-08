@@ -4868,21 +4868,34 @@ class DecisionTree:
         self.set_quick_replies(state, "tours_location")
         return MESSAGES["mixed_cart_location"][lang]
 
+    def _remap_plan_for_location(self, plan: str | None, state: ConversationState) -> str | None:
+        """Swap a single service_id to the equivalent for state.location, if one
+        exists in ISLAND_SERVICE_MAP. Returns the plan unchanged if there's no
+        location-specific variant (or it's already unset)."""
+        if not plan:
+            return plan
+        island_to_base = {island: base for base, island in ISLAND_SERVICE_MAP.items()}
+        if state.location == "island" and plan in ISLAND_SERVICE_MAP:
+            new_plan = ISLAND_SERVICE_MAP[plan]
+            if new_plan in SERVICES:
+                return new_plan
+        elif state.location == "cartagena" and plan in island_to_base:
+            new_plan = island_to_base[plan]
+            if new_plan in SERVICES:
+                return new_plan
+        return plan
+
     def _remap_cart_for_location(self, state: ConversationState) -> None:
         """Refresh cart item labels and plans after a location change.
 
-        KNOWN GAP (found 2026-07-08, not fixed — pre-existing, not specific to
-        the multi-day cert flow): this only rewrites items already appended to
-        `state.mixed_cart`. A PENDING plan (`state.mixed_pending_qty_plan`, set
-        while resolving cert-plan/qty/last-dive/refresher but not yet confirmed
-        into the cart) is never remapped. If the customer changes location
-        mid-flow (e.g. resolves "5 inmersiones, desde cartagena" then says "en
-        realidad estoy en las islas" before confirming add-to-cart), the item
-        that eventually gets added still carries the Cartagena service_id. Would
-        need `_resolve_or_ask_cert_plan`'s dives/days to be reapplied (or
-        `mixed_pending_qty_plan` remapped through ISLAND_SERVICE_MAP the same
-        way this function does) wherever location changes are handled
-        (`orchestrator_set_location`, `_handle_mixed_cart_location`).
+        Also remaps the PENDING plan (`state.mixed_pending_qty_plan`, set while
+        resolving cert-plan/qty/last-dive/refresher but not yet confirmed into
+        the cart) — fixed 2026-07-08. Previously, if the customer changed
+        location mid-flow (e.g. resolved "5 inmersiones, desde cartagena" then
+        said "en realidad estoy en las islas" before confirming add-to-cart),
+        the item that eventually got added still carried the Cartagena
+        service_id, since only `state.mixed_cart` (already-confirmed items)
+        was rewritten.
 
         `cert` and `course` items carry a plan that may embed a location
         variant (e.g. `2_dives_1_day` ↔ `2_dives_1_day_already_on_island`,
@@ -4892,21 +4905,21 @@ class DecisionTree:
         `_cart_service_id` dynamically and don't need plan rewriting; only
         their labels are refreshed.
         """
-        island_to_base = {island: base for base, island in ISLAND_SERVICE_MAP.items()}
         for item in state.mixed_cart:
             item_type = item.get("type")
             plan = item.get("plan")
             if item_type in {"cert", "course"} and plan:
-                if state.location == "island" and plan in ISLAND_SERVICE_MAP:
-                    new_plan = ISLAND_SERVICE_MAP[plan]
-                    if new_plan in SERVICES:
-                        item["plan"] = new_plan
-                elif state.location == "cartagena" and plan in island_to_base:
-                    new_plan = island_to_base[plan]
-                    if new_plan in SERVICES:
-                        item["plan"] = new_plan
+                item["plan"] = self._remap_plan_for_location(plan, state)
             # Refresh the label for the (possibly new) plan and language.
             item["label"] = self._cart_label_for(item_type, item.get("plan"), state.language)
+
+        # Pending plan (not yet added to the cart) — same swap, so an
+        # in-progress qty/last-dive/refresher resolution survives a mid-flow
+        # location change instead of silently keeping the old-location plan.
+        if state.mixed_pending_qty_plan:
+            state.mixed_pending_qty_plan = self._remap_plan_for_location(
+                state.mixed_pending_qty_plan, state
+            )
 
     def _handle_mixed_cart_location(self, state: ConversationState, message: str) -> str:
         lang = state.language
@@ -4966,7 +4979,10 @@ class DecisionTree:
         if origin == "island" and not state.hotel:
             state.mixed_pending_location_change = True
             return self._goto_island_hotel_menu_or_unknown(state)
-        if state.mixed_cart:
+        # Remap whenever there's a confirmed cart OR an in-progress pending
+        # plan (qty/last-dive/refresher resolution not yet added to cart) —
+        # a cart-only check would silently skip the pending-plan case.
+        if state.mixed_cart or state.mixed_pending_qty_plan:
             self._remap_cart_for_location(state)
         if lang == "es":
             loc_label = "Cartagena" if origin == "cartagena" else "Islas del Rosario"

@@ -342,19 +342,17 @@ class IntentDetector:
             intent.detected_fields.append("is_certified")
 
     def _detect_group_info(self, message: str, intent: DetectedIntent) -> None:
-        # KNOWN GAP (found 2026-07-08, not fixed): the verb-split patterns below
-        # (pat_numeric_fwd/rev, "N bucean y M hacen snorkel") require the
-        # activity keyword to sit right next to the split clause. Inserting an
-        # explicit dive/day count in between breaks the match — e.g. "somos 5,
-        # 3 buceamos certificados 5 inmersiones y 2 hacen snorkel" fails to
-        # produce a group_allocation at all (works fine if the count is stated
-        # in a separate clause instead: "...y 2 hacen snorkel, queremos 5
-        # inmersiones"). Downstream in supervisor.py's _should_skip_to_certified_flow,
-        # a failed split with activity=="certified_diving" silently treats the
-        # WHOLE group_size as certified divers (the 2 snorkelers get dropped,
-        # not even added to the cart) instead of erroring or asking to clarify.
-        # Not specific to the multi-day cert flow — a pre-existing fragility in
-        # this detector's regex adjacency requirements.
+        # Fixed 2026-07-08: the verb-split patterns below (pat_numeric_fwd/rev,
+        # "N bucean y M hacen snorkel") used to require the activity keyword to
+        # sit right next to the split clause. Inserting an explicit dive/day
+        # count in between broke the match — e.g. "somos 5, 3 buceamos
+        # certificados 5 inmersiones y 2 hacen snorkel" produced no
+        # group_allocation at all (falling through to supervisor.py's
+        # _should_skip_to_certified_flow, which then silently treated the
+        # WHOLE group as certified divers, dropping the 2 snorkelers). Now an
+        # optional trailing count phrase ("5 inmersiones", "2 dias", "3 dives")
+        # is allowed between the first activity clause and the "y/and" split —
+        # see `_split_infix` below.
         #
         # "3 buceadoras y 2 buceadores" / "2 buzas y 1 buzo" — gendered variants
         # of the SAME noun (no certification/activity split implied). Must run
@@ -448,6 +446,10 @@ class IntentDetector:
         # y "3 for diving and 2 for snorkel" (inglés)
         # y "2 queremos hacer buceo y 1 snorkel" / "2 hacen snorkel y 3 buceo"
         sep_pat = r'\s+(?:y|and|,)\s+'
+        # Optional count phrase that may sit between the first activity clause
+        # and the "y/and" split ("...certificados 5 inmersiones y 2 hacen
+        # snorkel", "...diving 3 dives and 2 snorkel").
+        _split_infix = r'(?:\s+\d+\s+(?:inmersi\w*|buceos?|d[ií]as?|dives?|days?))?'
         # Verb fillers: "hacen", "harán", "quieren hacer", "queremos hacer", "vamos a hacer", etc.
         verb_filler = (
             r'(?:'
@@ -459,11 +461,13 @@ class IntentDetector:
         quant_prefix = rf'{num_pat}\s+(?:de\s+|para\s+|for\s+|personas?\s+(?:de\s+|para\s+|for\s+)?|{verb_filler})'
         pat_numeric_fwd = (
             rf'{quant_prefix}{activity_kw}(?:\s+certificad[ao]s?)?'
+            rf'{_split_infix}'
             rf'{sep_pat}'
             rf'{quant_prefix}{activity_kw}(?:\s+certificad[ao]s?)?'
         )
         pat_numeric_rev = (
             rf'{activity_kw}(?:\s+certificad[ao]s?)?\w*\s+{num_pat}'
+            rf'{_split_infix}'
             rf'{sep_pat}'
             rf'{activity_kw}(?:\s+certificad[ao]s?)?\w*\s+{num_pat}'
         )

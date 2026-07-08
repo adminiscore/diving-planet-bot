@@ -1,6 +1,14 @@
 History
 =======
 
+0.19.31 - (2026-07-08)
+----------------------
+* **Cierre de los 2 gaps documentados por Gadea al final de la sesión del multi-día (v0.19.30)**:
+  - **Cambio de ubicación a mitad de flujo no remapeaba el plan pendiente**: si el cliente resolvía un plan para Cartagena ("5 inmersiones, desde cartagena") y luego decía "en realidad estoy en las islas" ANTES de confirmar al carrito, el item que terminaba añadiéndose seguía con el `service_id` de Cartagena — `_remap_cart_for_location` (`decision_tree.py`) solo reescribía items ya confirmados en `state.mixed_cart`. Arreglado: la misma función ahora también remapea `state.mixed_pending_qty_plan` a través de `ISLAND_SERVICE_MAP` (extraído a `_remap_plan_for_location`, reutilizado para ambos casos); además, `orchestrator_set_location` solo llamaba al remap cuando `state.mixed_cart` no estaba vacío — ampliada la condición para incluir también un plan pendiente (justo el caso del bug, con el carrito todavía vacío).
+  - **Detector de grupos mixtos frágil al orden de palabras**: "somos 5, 3 buceamos certificados 5 inmersiones y 2 hacen snorkel" no producía ningún `group_allocation` porque insertar el conteo de inmersiones entre la actividad y el "y" rompía la adyacencia que exigían `pat_numeric_fwd`/`pat_numeric_rev` (`intent_detector.py`) — el grupo completo se trataba como certificado, perdiendo silenciosamente a los 2 de snorkel. Arreglado con un infijo opcional (`_split_infix`) entre la primera cláusula y el separador, que reconoce un conteo de inmersiones/días intercalado ("5 inmersiones", "2 días", "3 dives") sin romper los casos que ya funcionaban.
+* Tests de regresión en `test_cert_multiday_matrix.py` (remapeo del plan pendiente) y `test_intent_robustness.py` (5 variantes del split con conteo intercalado, ES/EN).
+* Suite: 1234 passed, 15 skipped. Sin cambios de KB — no requiere reindex.
+
 0.19.30 - (2026-07-08)
 ----------------------
 * **Buceo certificado multi-día: bug real de enrutamiento + soporte de conteo por días**. Reportado por Gonzalo: "el paquete de 2 buceos" se enrutaba al botón "Paquete multi-día" solo por contener la palabra "paquete" — el matcher de texto libre por quick-reply (`_match_quick_reply_text`, `supervisor.py`) interceptaba el mensaje ANTES del corto-circuito determinista de conteo de inmersiones que Gonzalo ya había añadido. Corregido moviendo el corto-circuito antes del matcher.

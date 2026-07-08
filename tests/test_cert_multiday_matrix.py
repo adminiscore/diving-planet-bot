@@ -1107,3 +1107,36 @@ async def test_currency_switch_mid_narrow_menu_preserves_state():
 
     await route_message(state, "1")  # still resolvable afterwards
     assert state.mixed_pending_qty_plan == "2_dives_1_day"
+
+
+# ---------------------------------------------------------------------------
+# 22) Location change mid-flow, BEFORE the plan is confirmed to the cart, must
+#     remap the PENDING plan too — not just already-confirmed cart items.
+#
+# Regression found 2026-07-08 (documented as a known gap, now fixed):
+# `_remap_cart_for_location` only rewrote `state.mixed_cart` entries. If the
+# customer resolved a plan for Cartagena ("5 inmersiones, desde cartagena")
+# and then changed location BEFORE confirming to the cart ("en realidad
+# estoy en las islas"), the eventual cart item still carried the Cartagena
+# service_id. Fixed by also remapping `state.mixed_pending_qty_plan` through
+# ISLAND_SERVICE_MAP inside `_remap_cart_for_location`, and by widening
+# `orchestrator_set_location`'s remap guard (it previously only remapped when
+# `state.mixed_cart` was non-empty, which is exactly false in this scenario).
+# ---------------------------------------------------------------------------
+
+@pytest.mark.asyncio
+async def test_pending_plan_remapped_on_mid_flow_location_change(agent_decides):
+    state = ConversationState(conversation_id="pending-plan-remap")
+    await route_message(state, "quiero 5 inmersiones desde cartagena, somos 2 certificados")
+    assert state.step == Step.MIXED_CERT_LAST_DIVE
+    assert state.mixed_pending_qty_plan == "5_dives_2_days"
+    assert state.mixed_cart == []
+
+    decision = orchestrator.OrchestratorDecision(
+        tool=orchestrator.TOOL_SET_LOCATION, args={"origin": "island"}
+    )
+    agent_decides(decision.tool, decision.args)
+    state.hotel = "Cocoliso"  # avoid the hotel-menu detour, isolate the remap
+    await route_message(state, "en realidad ya estoy en las islas")
+
+    assert state.mixed_pending_qty_plan == "5_dives_2_days_already_on_island"
