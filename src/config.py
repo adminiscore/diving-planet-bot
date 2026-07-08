@@ -14,6 +14,10 @@ class Settings(BaseSettings):
     openai_api_key: str = ""
     openai_model: str = "gpt-4o"
     openai_embedding_model: str = "text-embedding-3-small"
+    # Model used to transcribe incoming customer voice notes (see
+    # src/channels/audio.py). gpt-4o-mini-transcribe is cheaper/better than
+    # whisper-1; switch to "whisper-1" if an older SDK is in play.
+    openai_transcription_model: str = "gpt-4o-mini-transcribe"
     rag_top_k: int = 8
     rag_min_score: float = 0.40
     # Minimum raw ts_rank_cd score for a BM25-only hit to count as "confident".

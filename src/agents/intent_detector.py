@@ -21,6 +21,7 @@ class DetectedIntent:
     hotel: str | None = None
     ages: list = field(default_factory=list)   # person ages mentioned in the message
     cert_dives: int | None = None              # explicit dive-count requested for certified diving ("2 inmersiones", "paquete de 5 buceos")
+    cert_days: int | None = None               # explicit day-count requested instead ("paquete de 3 dias")
     confidence: float = 0.0
     detected_fields: list = field(default_factory=list)
 
@@ -41,6 +42,17 @@ _DIVE_WORD_TO_NUM = {
     "six": 6, "seven": 7, "eight": 8, "nine": 9,
 }
 
+# Explicit day-count for a multi-day certified package: "paquete de 3 dias",
+# "3 dias de buceo", "3-day package". Unlike dive-count, a bare "3 dias" is too
+# generic to trust on its own (it also means "in 3 days" / "3 days ago"), so
+# this only matches next to a diving/package qualifier.
+_CERT_DAY_COUNT_RE = re.compile(
+    r"\b(?:paquete|plan)\s+de\s+(\d+|un[oa]?|dos|tres|cuatro)\s*d[ií]as?\b"
+    r"|\b(\d+|un[oa]?|dos|tres|cuatro)[\s\-]+d[ií]as?\s+(?:de\s+)?buce\w*\b"
+    r"|\b(\d+)[\s\-]?days?\s+(?:dive\s+)?package\b",
+    re.IGNORECASE,
+)
+
 
 def detect_cert_dive_count(message: str) -> int | None:
     """Requested certified dive-count as a real package size (2/3/4/5/7/9), or None.
@@ -52,6 +64,18 @@ def detect_cert_dive_count(message: str) -> int | None:
     token = match.group(1).lower()
     n = int(token) if token.isdigit() else _DIVE_WORD_TO_NUM.get(token)
     return n if n in (2, 3, 4, 5, 7, 9) else None
+
+
+def detect_cert_day_count(message: str) -> int | None:
+    """Requested certified package duration in days (1/2/3/4), inferred from
+    explicit day-count phrasing rather than a dive count. None if absent/
+    unrecognized. Shared by the intent detector and the cart's cert-plan step."""
+    match = _CERT_DAY_COUNT_RE.search(message or "")
+    if not match:
+        return None
+    token = next(g for g in match.groups() if g is not None).lower()
+    n = int(token) if token.isdigit() else _DIVE_WORD_TO_NUM.get(token)
+    return n if n in (1, 2, 3, 4) else None
 
 
 class IntentDetector:
@@ -69,6 +93,10 @@ class IntentDetector:
         # regardless of the detected activity because the certified flow is often
         # entered via is_certified alone; only consumed at the cert entry point.
         intent.cert_dives = self._detect_cert_dive_count(message_lower)
+        # Day-count phrasing ("paquete de 3 dias") as a fallback when no explicit
+        # dive-count was given — dive-count wins when both are somehow present.
+        if intent.cert_dives is None:
+            intent.cert_days = detect_cert_day_count(message_lower)
         self._detect_certification(message_lower, intent)
         self._detect_group_info(message_lower, intent)
         self._detect_ages(message_lower, intent)
@@ -314,6 +342,18 @@ class IntentDetector:
             intent.detected_fields.append("is_certified")
 
     def _detect_group_info(self, message: str, intent: DetectedIntent) -> None:
+        # Fixed 2026-07-08: the verb-split patterns below (pat_numeric_fwd/rev,
+        # "N bucean y M hacen snorkel") used to require the activity keyword to
+        # sit right next to the split clause. Inserting an explicit dive/day
+        # count in between broke the match — e.g. "somos 5, 3 buceamos
+        # certificados 5 inmersiones y 2 hacen snorkel" produced no
+        # group_allocation at all (falling through to supervisor.py's
+        # _should_skip_to_certified_flow, which then silently treated the
+        # WHOLE group as certified divers, dropping the 2 snorkelers). Now an
+        # optional trailing count phrase ("5 inmersiones", "2 dias", "3 dives")
+        # is allowed between the first activity clause and the "y/and" split —
+        # see `_split_infix` below.
+        #
         # "3 buceadoras y 2 buceadores" / "2 buzas y 1 buzo" — gendered variants
         # of the SAME noun (no certification/activity split implied). Must run
         # BEFORE the generic "somos N" pattern below, which would otherwise
@@ -406,6 +446,10 @@ class IntentDetector:
         # y "3 for diving and 2 for snorkel" (inglés)
         # y "2 queremos hacer buceo y 1 snorkel" / "2 hacen snorkel y 3 buceo"
         sep_pat = r'\s+(?:y|and|,)\s+'
+        # Optional count phrase that may sit between the first activity clause
+        # and the "y/and" split ("...certificados 5 inmersiones y 2 hacen
+        # snorkel", "...diving 3 dives and 2 snorkel").
+        _split_infix = r'(?:\s+\d+\s+(?:inmersi\w*|buceos?|d[ií]as?|dives?|days?))?'
         # Verb fillers: "hacen", "harán", "quieren hacer", "queremos hacer", "vamos a hacer", etc.
         verb_filler = (
             r'(?:'
@@ -417,11 +461,13 @@ class IntentDetector:
         quant_prefix = rf'{num_pat}\s+(?:de\s+|para\s+|for\s+|personas?\s+(?:de\s+|para\s+|for\s+)?|{verb_filler})'
         pat_numeric_fwd = (
             rf'{quant_prefix}{activity_kw}(?:\s+certificad[ao]s?)?'
+            rf'{_split_infix}'
             rf'{sep_pat}'
             rf'{quant_prefix}{activity_kw}(?:\s+certificad[ao]s?)?'
         )
         pat_numeric_rev = (
             rf'{activity_kw}(?:\s+certificad[ao]s?)?\w*\s+{num_pat}'
+            rf'{_split_infix}'
             rf'{sep_pat}'
             rf'{activity_kw}(?:\s+certificad[ao]s?)?\w*\s+{num_pat}'
         )

@@ -197,14 +197,17 @@ def test_explicit_two_dives_skips_cert_plan_question():
     assert st.step == Step.MIXED_CERT_LAST_DIVE
 
 
-def test_five_dives_still_shows_plan_menu():
-    """A multi-day count must NOT be auto-picked (the overnight requirement has
-    to be shown), so the plan menu is still presented."""
+def test_five_dives_resolves_exact_plan_with_lodging_note():
+    """An explicit, unambiguous multi-day count must NOT re-ask "which plan" —
+    the overnight requirement is still shown, but only as a short note for the
+    exact plan, and the flow advances (it doesn't loop back to the menu)."""
     from src.agents.supervisor import _route_detected_intent
     st = ConversationState(conversation_id="5dive"); st.language = "es"
     intent = _d("somos 2 buzos certificados, paquete de 5 buceos, desde cartagena")
-    _route_detected_intent(intent, st, "somos 2 buzos certificados, paquete de 5 buceos, desde cartagena")
-    assert st.step == Step.MIXED_ADD_CERT_PLAN
+    resp = _route_detected_intent(intent, st, "somos 2 buzos certificados, paquete de 5 buceos, desde cartagena")
+    assert st.step == Step.MIXED_CERT_LAST_DIVE
+    assert st.mixed_pending_qty_plan == "5_dives_2_days"
+    assert "noche" in resp.lower()
 
 
 # --- Latest concrete activity wins (customer changes their mind) -------------
@@ -311,3 +314,20 @@ def test_last_dive_years_not_an_age_without_tilde():
 ])
 def test_kid_noun_tiene_age(msg, expected):
     assert _d(msg).ages == expected
+
+
+# --- Mixed-group split with a count phrase inserted mid-sentence ------------
+# Regression: "somos 5, 3 buceamos certificados 5 inmersiones y 2 hacen
+# snorkel" used to produce NO group_allocation (the injected dive-count broke
+# the split-pattern's adjacency requirement), silently dropping the 2
+# snorkelers when it fell through to the certified-only path downstream.
+
+@pytest.mark.parametrize("msg,expected", [
+    ("somos 5, 3 buceamos certificados 5 inmersiones y 2 hacen snorkel", {"certified_diving": 3, "snorkel": 2}),
+    ("3 buceamos certificados y 2 hacen snorkel, queremos 5 inmersiones", {"certified_diving": 3, "snorkel": 2}),
+    ("somos 5, 3 bucean 2 dias y 2 hacen snorkel", {"certified_diving": 3, "snorkel": 2}),
+    ("we are 5, 3 diving 3 dives and 2 snorkel", {"certified_diving": 3, "snorkel": 2}),
+    ("3 de buceo certificado 7 inmersiones y 2 de snorkel", {"certified_diving": 3, "snorkel": 2}),
+])
+def test_group_split_survives_injected_count_phrase(msg, expected):
+    assert _d(msg).group_allocation == expected
