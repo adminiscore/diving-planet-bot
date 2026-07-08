@@ -17,6 +17,7 @@ from fastapi import APIRouter, HTTPException, Request
 from src import state_store
 from src.agents.escalation import escalate_to_human
 from src.agents.supervisor import route_message
+from src.channels.audio import AUDIO_FALLBACK, first_audio_attachment, transcribe_audio_url
 from src.config import settings
 from src.flows.decision_tree import MESSAGE_SPLIT, ConversationState
 
@@ -40,6 +41,40 @@ _conversation_locks: dict[str, asyncio.Lock] = {}
 
 def _lock_for(conversation_id: str) -> asyncio.Lock:
     return _conversation_locks.setdefault(conversation_id, asyncio.Lock())
+
+
+async def _resolve_voice_note(
+    conversation_id: str,
+    state: ConversationState,
+    message_dict: dict,
+    current_text: str | None,
+) -> str | None:
+    """Turn an incoming voice note into text so it can flow through the normal
+    pipeline as if the customer had typed it.
+
+    Shared by BOTH ingestion paths (webhook `handle_message` and the 1s poller),
+    so audio works no matter which one delivers the message.
+
+    Returns:
+    - the text to route (the original typed text, or the transcript of a voice
+      note), or
+    - None if it was a voice note we could NOT transcribe — in that case a
+      friendly fallback has already been sent to the customer, and the caller
+      must skip routing this turn.
+    """
+    if (current_text or "").strip():
+        return current_text  # normal typed text — untouched
+    audio = first_audio_attachment(message_dict)
+    if not (audio and audio.get("data_url")):
+        return current_text  # not a voice note (image/system/empty) — unchanged behavior
+    transcript = await transcribe_audio_url(audio["data_url"])
+    if transcript:
+        logger.info(f"[BOT] conv={conversation_id} voice note transcribed -> {transcript[:80]!r}")
+        return transcript
+    lang = state.language if state.language in AUDIO_FALLBACK else "es"
+    await send_chatwoot_message(conversation_id, AUDIO_FALLBACK[lang])
+    logger.info(f"[BOT] conv={conversation_id} voice note transcription failed; sent fallback")
+    return None
 
 
 def _is_plausible_typed_reply(content_lower: str) -> bool:
@@ -135,6 +170,13 @@ async def handle_message(payload: dict):
             if settings.chatwoot_owner_agent_id:
                 await assign_conversation_to_owner(conversation_id)
 
+        # Voice note: transcribe now that state (and its language) is loaded. On
+        # failure, a fallback was already sent — skip routing this turn.
+        message = await _resolve_voice_note(conversation_id, state, payload, message)
+        if message is None:
+            await state_store.save_state(conversation_id, state)
+            return
+
         # Route through supervisor (decision tree + RAG)
         response = await route_message(state, message)
 
@@ -208,6 +250,13 @@ async def poll_active_conversations_once():
                     if content_lower and content_lower in pending and not _is_plausible_typed_reply(content_lower):
                         pending.discard(content_lower)
                         logger.info(f"[BOT] Skipping button echo from poll: {content_lower[:60]}")
+                        continue
+
+                    # Voice note delivered via the poller (not the webhook):
+                    # transcribe it. On failure the fallback was already sent.
+                    content = await _resolve_voice_note(conversation_id, state, chatwoot_message, content)
+                    if content is None:
+                        routed = True
                         continue
 
                     logger.info(f"[BOT] Processing polled incoming conv={conversation_id} message_id={message_id}: {content[:100]}")

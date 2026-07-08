@@ -1,6 +1,16 @@
 History
 =======
 
+0.20.0 - (2026-07-08)
+---------------------
+* **Reconocimiento de audio (notas de voz del cliente) — Fase 1 (MVP)**. Antes, una nota de voz entraba con `content` vacío y el adjunto de audio se ignoraba por completo (el bot respondía con el fallback genérico). Ahora, cuando llega un mensaje `incoming` sin texto pero con un adjunto `file_type == "audio"`, se descarga y se transcribe con OpenAI (`gpt-4o-mini-transcribe`, mismo SDK/key que RAG), y el transcript entra al pipeline **como si el cliente lo hubiera escrito** — sin tocar nada aguas abajo (intención, orquestador, RAG, árbol, memoria, PII).
+  - Nuevo módulo aislado `src/channels/audio.py` (`first_audio_attachment`, `transcribe_audio_url` — nunca lanza, devuelve `None` ante cualquier fallo; `AUDIO_FALLBACK` es/en).
+  - Helper compartido `_resolve_voice_note` en `chatwoot.py`, usado por **las dos rutas de ingesta** (webhook `handle_message` y el poller de 1s) — punto clave para que el audio funcione por ambos caminos.
+  - **Fallback**: si la transcripción falla/viene vacía → mensaje amable pidiendo que lo escriban (en el idioma del cliente), nunca se rompe ni se traga el turno.
+  - Nuevo setting `openai_transcription_model` (`config.py`, default `gpt-4o-mini-transcribe`).
+  - Tests: `tests/test_audio_transcription.py` (14 casos, OpenAI + descarga httpx mockeados — cero coste en CI).
+* **NO desplegado a PRE todavía** (a diferencia de las versiones anteriores): el widget web actual no graba notas de voz — la función queda latente hasta que se conecte WhatsApp. Ver `docs/audio-voice-transcription-plan.md` para las fases 2-3 (eco de confirmación / nota privada, y por qué NO haremos TTS). Suite: 1248 passed, 15 skipped.
+
 0.19.31 - (2026-07-08)
 ----------------------
 * **Cierre de los 2 gaps documentados por Gadea al final de la sesión del multi-día (v0.19.30)**:
