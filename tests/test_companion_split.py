@@ -307,3 +307,73 @@ def test_reservar_with_certified_context_still_routes_to_cert():
     tree._enter_booking_cart(st)
     tree.process_message(st, "1")
     assert st.step == Step.MIXED_ADD_CERT_PLAN
+
+
+# --- Family A: natural-language "self + companion" counts at the qty step ---
+# Regression (screenshots 2026-07-08): "Voy yo y mi pareja me acompaña" and
+# similar phrasings returned None -> the bot answered "no te entendí" to a
+# perfectly clear 2-person answer.
+
+@pytest.mark.parametrize("msg", [
+    "Voy yo y mi pareja me acompana",
+    "voy yo y mi novia",
+    "yo y mi pareja",
+    "mi hijo y yo",
+    "vengo con mi amiga",
+    "me acompana mi esposo",
+    "mi esposa y yo",
+])
+def test_self_plus_companion_counts_as_two(msg):
+    assert tree._parse_mixed_quantity(msg) == 2
+
+
+@pytest.mark.parametrize("msg", ["mi plan", "con calma", "yo solo", "familia"])
+def test_self_plus_companion_does_not_overfire(msg):
+    # No companion noun / ambiguous -> must NOT be coerced to 2.
+    assert tree._parse_mixed_quantity(msg) != 2
+
+
+# --- Family B: dive count + another activity for part of the group ----------
+# Regression (screenshots 2026-07-08): "2 y uno que quiere hacer snorkel" took
+# only the 2 divers and silently dropped the snorkeler from the booking.
+
+@pytest.mark.parametrize("msg,expected", [
+    ("2 y uno que quiere hacer snorkel", (2, 1)),
+    ("somos 2 y uno hace snorkel", (1, 1)),        # "somos N" = total
+    ("somos 3 y 2 hacen snorkel", (1, 2)),
+    ("3 buceamos y 1 hace snorkel", (3, 1)),
+    ("yo buceo y mi novia snorkel", (1, 1)),
+    ("2 y mi hijo minicurso", (2, 1)),
+    ("4 y dos quieren snorkel", (4, 2)),
+    ("somos 5 y 2 minicurso", (3, 2)),
+])
+def test_detect_cert_qty_activity_split(msg, expected):
+    assert tree._detect_cert_qty_activity_split(msg) == expected
+
+
+@pytest.mark.parametrize("msg", [
+    "2", "somos 3", "5", "cuatro", "2 personas", "yo y mi pareja", "2 buceos",
+    "somos 4 certificados",
+])
+def test_detect_cert_qty_activity_split_no_false_positive(msg):
+    assert tree._detect_cert_qty_activity_split(msg) is None
+
+
+def test_qty_step_mixed_activity_does_not_drop_snorkeler():
+    """End-to-end at the qty step: 2 divers + 1 snorkeler must become a
+    cert subgroup of 2 with 1 non-cert person queued (offered snorkel/etc.),
+    never 2 alone with the snorkeler dropped."""
+    st = _cert_qty_state()
+    tree.process_message(st, "2 y uno que quiere hacer snorkel")
+    assert st.step == Step.MIXED_CERT_LAST_DIVE
+    assert st.mixed_pending_cert_total_qty == 2
+    assert st.mixed_pending_beginner_after_cert == 1
+
+
+def test_qty_step_self_plus_companion_proceeds():
+    """"yo y mi pareja" at the qty step counts as 2 and proceeds (no 'no te
+    entendí')."""
+    st = _cert_qty_state()
+    tree.process_message(st, "Voy yo y mi pareja me acompana")
+    assert st.step == Step.MIXED_CERT_LAST_DIVE
+    assert st.mixed_pending_cert_total_qty == 2

@@ -3295,6 +3295,25 @@ class DecisionTree:
             _n = fuzzy_word_number(token)
             if _n is not None:
                 return _n
+        # "Self + companion" phrasings with no explicit number → 2 people.
+        # e.g. "yo y mi pareja", "voy yo y mi novia", "vengo con mi amiga",
+        # "mi hijo y yo", "me acompaña mi esposo". Fixes the qty step answering
+        # "no te entendí" to a perfectly clear two-person answer. "familia" is
+        # excluded on purpose (its size is unknown — don't guess 2).
+        _norm = "".join(
+            c for c in unicodedata.normalize("NFD", msg) if unicodedata.category(c) != "Mn"
+        )
+        _comp = r"(?:pareja|novi[oa]|espos[oa]|amig[oa]|herman[oa]|hij[oa]|mama|papa|acompanante)"
+        _self_companion = [
+            rf"\byo\s+y\s+mi\s+{_comp}",
+            rf"\bmi\s+{_comp}\s+y\s+yo\b",
+            rf"\b(?:vengo|voy|vamos|venimos)\s+con\s+mi\s+{_comp}",
+            rf"\bcon\s+mi\s+{_comp}\b",
+            rf"\bme\s+acompana\s+mi\s+{_comp}",
+            rf"\bmi\s+{_comp}\s+me\s+acompana",
+        ]
+        if any(_re.search(p, _norm) for p in _self_companion):
+            return 2
         return None
 
     def _mixed_preview_state(self, state: ConversationState, service_id: str) -> ConversationState:
@@ -3963,19 +3982,102 @@ class DecisionTree:
         ]
         return any(re.search(p, norm) for p in patterns)
 
-    def _start_cert_companion_split(self, state: ConversationState, message: str) -> str:
+    def _detect_cert_qty_activity_split(self, message: str) -> tuple[int, int] | None:
+        """At the certified-dive qty step, detect answers that give the dive
+        count AND mention other people doing a NON-diving activity
+        (snorkel / minicurso), so those people aren't silently dropped.
+
+        Returns (dive_count, other_count), or None if no other activity is
+        mentioned. Examples (dive, other):
+          "2 y uno que quiere hacer snorkel"   -> (2, 1)
+          "somos 2 y uno hace snorkel"         -> (1, 1)   ("somos N" = total)
+          "somos 3 y 2 hacen snorkel"          -> (1, 2)
+          "3 buceamos y 1 hace snorkel"        -> (3, 1)
+          "yo buceo y mi novia snorkel"        -> (1, 1)
+          "2 y mi hijo minicurso"              -> (2, 1)
+        """
+        norm = "".join(
+            c for c in unicodedata.normalize("NFD", message.lower())
+            if unicodedata.category(c) != "Mn"
+        )
+        norm = " ".join(norm.split())
+        other_kw = r"snorkel|esnorkel|snorkeling|careteo|minicurso|mini curso|bautismo|bautizo"
+        if not re.search(rf"\b(?:{other_kw})\b", norm):
+            return None
+
+        _wn = {"uno": 1, "una": 1, "dos": 2, "tres": 3, "cuatro": 4, "cinco": 5,
+               "seis": 6, "siete": 7, "ocho": 8, "one": 1, "two": 2, "three": 3,
+               "four": 4, "five": 5, "six": 6}
+        num_re = r"\d+|uno|una|dos|tres|cuatro|cinco|seis|siete|ocho"
+
+        def _to_int(tok: str) -> int | None:
+            return int(tok) if tok.isdigit() else _wn.get(tok)
+
+        def _first_num(text: str) -> int | None:
+            m = re.search(num_re, text)
+            return _to_int(m.group()) if m else None
+
+        # Split into clauses on "y"/"e"/"and"/"," so a number stays bound to its
+        # own activity ("3 buceamos y 1 snorkel" -> ["3 buceamos", "1 snorkel"]),
+        # instead of the leading number greedily reaching the far keyword.
+        clauses = re.split(r"\s+y\s+|\s+e\s+|\s+and\s+|,\s*", norm)
+        other_clause = next((c for c in clauses if re.search(rf"\b(?:{other_kw})\b", c)), None)
+        if other_clause is None:
+            return None
+        other_count = _first_num(other_clause) or 1  # "uno que quiere snorkel" / "mi hijo snorkel" -> 1
+
+        # "somos/venimos/vamos N" (or English) states a TOTAL, not the dive count.
+        m_total = re.search(rf"\b(?:somos|venimos|vamos|we are|there are)\s+({num_re})\b", norm)
+        total = _to_int(m_total.group(1)) if m_total else None
+
+        if total is not None:
+            dive = total - other_count
+        else:
+            # Dive count = the number from the FIRST non-other clause; if none has
+            # one ("yo buceo y mi novia snorkel"), default to 1.
+            dive = None
+            for c in clauses:
+                if re.search(rf"\b(?:{other_kw})\b", c):
+                    continue
+                n = _first_num(c)
+                if n:
+                    dive = n
+                    break
+            if dive is None:
+                dive = 1
+
+        if not dive or dive < 1 or other_count < 1 or dive > 40 or other_count > 40:
+            return None
+        return (dive, other_count)
+
+    def _start_cert_companion_split(
+        self,
+        state: ConversationState,
+        message: str,
+        cert_qty: int | None = None,
+        non_cert_qty: int | None = None,
+    ) -> str:
         """Speaker is certified but the qty answer reveals a non-certified
         companion → split into a certified subgroup + a queued non-cert person,
-        who will be offered minicurso/snorkel/(open water)/companion afterwards."""
+        who will be offered minicurso/snorkel/(open water)/companion afterwards.
+
+        `cert_qty`/`non_cert_qty` may be passed explicitly (e.g. from
+        `_detect_cert_qty_activity_split`, which parses both counts); otherwise
+        they're inferred from the message / detected group."""
         lang = state.language
-        parsed = self._parse_mixed_quantity(message)
-        total = parsed if (parsed and parsed >= 2) else (
-            state.detected_group_size if (state.detected_group_size or 0) >= 2 else 2
-        )
-        alloc = getattr(state, "detected_group_allocation", None) or {}
-        non_cert = alloc.get("minicourse") or alloc.get("snorkel") or 1
-        non_cert = max(1, min(non_cert, total - 1))
-        cert_qty = max(1, total - non_cert)
+        if cert_qty is not None and non_cert_qty is not None:
+            cert_qty = max(1, cert_qty)
+            non_cert = max(1, non_cert_qty)
+            total = cert_qty + non_cert
+        else:
+            parsed = self._parse_mixed_quantity(message)
+            total = parsed if (parsed and parsed >= 2) else (
+                state.detected_group_size if (state.detected_group_size or 0) >= 2 else 2
+            )
+            alloc = getattr(state, "detected_group_allocation", None) or {}
+            non_cert = alloc.get("minicourse") or alloc.get("snorkel") or 1
+            non_cert = max(1, min(non_cert, total - 1))
+            cert_qty = max(1, total - non_cert)
 
         state.mixed_pending_qty_type = "cert"
         state.mixed_pending_cert_total_qty = cert_qty
@@ -4011,15 +4113,23 @@ class DecisionTree:
             self._clear_mixed_pending_add(state)
             return self._goto_mixed_cart_review(state) if state.mixed_cart else self._goto_mixed_entry(state)
 
-        # Certified speaker whose qty answer reveals a non-certified companion
-        # ("yo buzo pero mi novia no lo es") → split into cert subgroup + a
-        # queued non-cert person offered minicurso/snorkel/companion afterwards.
+        # Certified speaker whose qty answer reveals a non-certified companion.
+        # Two flavors, both must NOT drop the non-diving people:
+        #  (a) explicit other activity: "2 y uno que quiere hacer snorkel",
+        #      "somos 3 y 2 hacen snorkel" → parse both counts and split.
+        #  (b) a "not certified" phrasing: "yo buzo pero mi novia no lo es".
         if (
             (state.mixed_pending_qty_type or "cert") == "cert"
             and state.mixed_pending_modify_idx is None
-            and self._reveals_non_certified_companion(message)
         ):
-            return self._start_cert_companion_split(state, message)
+            split = self._detect_cert_qty_activity_split(message)
+            if split is not None:
+                dive_qty, other_qty = split
+                return self._start_cert_companion_split(
+                    state, message, cert_qty=dive_qty, non_cert_qty=other_qty
+                )
+            if self._reveals_non_certified_companion(message):
+                return self._start_cert_companion_split(state, message)
 
         if message.strip() == "6+" and not state.mixed_pending_exact:
             state.mixed_pending_exact = True

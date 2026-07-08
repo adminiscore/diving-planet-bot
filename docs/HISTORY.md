@@ -1,6 +1,14 @@
 History
 =======
 
+0.20.2 - (2026-07-08)
+---------------------
+* **Paso "¿para cuántas personas?" (MIXED_ADD_QTY): dos bugs reales reportados (capturas)**, ambos de la misma familia — el parser de cantidad era mucho más pobre que el resto del bot:
+  - **Familia A — conteo en lenguaje natural con acompañante**: "Voy yo y mi pareja me acompaña", "voy yo y mi novia", "vengo con mi amiga", "mi hijo y yo" devolvían "no te entendí". `_parse_mixed_quantity` ahora reconoce estas frases "yo + acompañante" como 2 personas (excluye "familia", cuyo tamaño es desconocido).
+  - **Familia B — conteo + otra actividad, perdía gente silenciosamente**: "2 y uno que quiere hacer snorkel" cogía solo los 2 buzos y **descartaba al de snorkel** del carrito. Nuevo detector `_detect_cert_qty_activity_split` (`decision_tree.py`) parsea ambos subgrupos por cláusulas ("N buceo y M snorkel/minicurso", con "somos N" tratado como TOTAL) y enruta al split existente de acompañante no certificado con los conteos correctos, así el de snorkel se ofrece después en vez de perderse. Verificado 8+ variantes ES + casos que NO deben dispararse.
+* Tests en `tests/test_companion_split.py`. Suite: 1279 passed, 15 skipped.
+* **Follow-up conocido (documentado, no arreglado)**: el mismo tipo de respuesta ("yo y mi pareja", "2 y uno snorkel") llegando por el paso *hermano* `MIXED_ASK_CERTIFICATION` (cuando el cliente entra por texto libre en vez de por el botón del plan) tiene un bug análogo — el guard de recomposición de grupo cuenta mal y el mixto se mal-rutea. Ver `session-handoff.md`.
+
 0.20.1 - (2026-07-08)
 ---------------------
 * **Herramienta de prueba de audio `/audio-test`** (para poder probar la transcripción sin WhatsApp). El widget web de Chatwoot no tiene botón de micrófono, así que se añadió una página que graba con el micro del navegador (MediaRecorder), envía el audio al bot y muestra qué transcribió y qué respondería (con sus botones), manteniendo contexto entre grabaciones. `POST /audio-test` recibe el blob crudo, lo transcribe con el `route_message` real. **Deshabilitada en producción** (`app_env == "production"` → 404); estado en memoria aislado de conversaciones reales.
