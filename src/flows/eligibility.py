@@ -210,13 +210,21 @@ def age_eligibility_note(age: int, lang: str = "es") -> str:
             )
         # 10+
         base = (
-            f"¡Con {age} años puede hacer *snorkel*, el *minicurso de buceo* y hasta el curso *Open Water*! 🎉 "
+            f"¡Con {age} años puede hacer *snorkel*, el *minicurso de buceo* y el curso *Open Water*! 🎉 "
         )
-        if age < MIN_ADVANCED:
-            base += f"Los cursos Advanced/Rescue son desde los {MIN_ADVANCED} años."
-        elif age < MIN_DIVEMASTER:
-            base += f"El Divemaster es a partir de los {MIN_DIVEMASTER} años."
-        base += " Para las salidas como *buzo certificado* solo necesita tener la certificación Open Water."
+        if age < MIN_ADVANCED:            # 10-11
+            base += (
+                f"Los cursos *Advanced* y *Rescue* son desde los {MIN_ADVANCED} años, "
+                f"y el *Divemaster* desde los {MIN_DIVEMASTER}. "
+            )
+        elif age < MIN_DIVEMASTER:        # 12-17
+            base += (
+                f"¡Y a esa edad ya puede hacer también los cursos *Advanced* y *Rescue* "
+                f"(desde los {MIN_ADVANCED} años)! El *Divemaster* es a partir de los {MIN_DIVEMASTER}. "
+            )
+        else:                             # 18+
+            base += "Y también todos los cursos PADI, incluido el *Divemaster*. "
+        base += "Para las salidas como *buzo certificado* solo necesita tener la certificación Open Water."
         if is_minor(age):
             base += " (Los menores deben ir acompañados de un adulto responsable.)"
         return base
@@ -241,12 +249,20 @@ def age_eligibility_note(age: int, lang: str = "es") -> str:
             f"The dive mini-course and courses start at {MIN_DIVE}."
         )
     base = (
-        f"At {age} they can do *snorkeling*, the *dive mini-course* and even the *Open Water* course! 🎉 "
+        f"At {age} they can do *snorkeling*, the *dive mini-course* and the *Open Water* course! 🎉 "
     )
-    if age < MIN_ADVANCED:
-        base += f"Advanced/Rescue courses start at {MIN_ADVANCED}. "
-    elif age < MIN_DIVEMASTER:
-        base += f"Divemaster starts at {MIN_DIVEMASTER}. "
+    if age < MIN_ADVANCED:              # 10-11
+        base += (
+            f"The *Advanced* and *Rescue* courses start at {MIN_ADVANCED}, "
+            f"and *Divemaster* at {MIN_DIVEMASTER}. "
+        )
+    elif age < MIN_DIVEMASTER:          # 12-17
+        base += (
+            f"And at that age they can also take the *Advanced* and *Rescue* courses "
+            f"(from {MIN_ADVANCED})! *Divemaster* starts at {MIN_DIVEMASTER}. "
+        )
+    else:                              # 18+
+        base += "And all PADI courses too, including *Divemaster*. "
     base += "For *certified* fun dives they just need to hold an Open Water certification."
     if is_minor(age):
         base += " (Minors must be accompanied by a responsible adult.)"

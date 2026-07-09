@@ -64,10 +64,26 @@ def test_bubble_makers_window():
     (14, "Open Water"),
     (14, "Divemaster"),        # 12-17 -> Divemaster starts at 18
     (17, "Divemaster"),
+    # 12-17 CAN do Advanced/Rescue (from 12) — the note must confirm it, not only
+    # jump to the Divemaster-at-18 limit (weird-battery finding AG4).
+    (12, "Advanced"),
+    (14, "Advanced"),
+    (17, "Rescue"),
+    (10, "Advanced"),          # 10-11: mentions Advanced/Rescue start at 12
 ])
 def test_age_note_mentions_right_activity_es(age, must_include):
     note = elig.age_eligibility_note(age, "es")
     assert must_include.lower() in note.lower()
+
+
+@pytest.mark.parametrize("age", [12, 14, 17])
+def test_age_note_12_to_17_confirms_advanced_available_now(age):
+    """A 12-17 year old asking about Advanced must be told it's available (from 12),
+    not implicitly denied by only mentioning the Divemaster-at-18 limit."""
+    for lang in ("es", "en"):
+        note = elig.age_eligibility_note(age, lang)
+        assert "Advanced" in note
+        assert "Rescue" in note
 
 
 # ---------------------------------------------------------------------------
