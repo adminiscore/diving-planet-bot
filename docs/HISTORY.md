@@ -1,6 +1,18 @@
 History
 =======
 
+0.20.6 - (2026-07-09)
+----------------------
+* **Estudio exhaustivo de robustez (5 baterías, ~90 casos raros/nuevos en vivo) + 8 bugs reales arreglados** (todos con tests):
+  - **Food-hijack**: un info-dump de reserva (grupo + presupuesto + "¿qué recomiendan?") que mencionaba una palabra de dieta recibía SOLO la respuesta canónica de comida → `_FOOD_HIJACK_GUARD` (`rag_agent.py`) hace que ceda a RAG ante señales de reserva amplia.
+  - **Nota de edad 12-17**: no confirmaba que Advanced/Rescue están disponibles (desde 12), saltaba directo al límite de Divemaster@18 → `age_eligibility_note` (`eligibility.py`) ahora lo confirma (ES+EN).
+  - **Menores <10 contados como certificados**: "familia de 5: papá y mamá certificados, 3 niños de 6/9/13" se leía como 5 certificados → `_split_out_uncertifiable_kids` (`intent_detector.py`) los saca (edad mín. OW=10; un 13-14yo sí puede ser cert, se queda).
+  - **Retención de info (nada perdido ni re-preguntado)**: (a) última inmersión dicha en el mensaje ("buceamos hace un mes / hace 6 meses / dived recently") ya no se re-pregunta — `_detect_last_dive` ampliado + `_skip_last_dive_if_known`; (b) "para 1 persona" (singular) y "N divers/certified/buzos" ahora cuentan como grupo; (c) nacionalidad ("colombianos / extranjeros / foreigners") se detecta de forma determinista (`_detect_nationality`) y se persiste, así el checkout no re-pregunta "¿eres colombiano?".
+  - **Cambio de moneda a mitad de flujo**: al pasar el resumen a USD, la nota de extras seguía diciendo "Precio en pesos (COP)" → ahora refleja `mixed_display_currency`.
+  - Confirmado robusto: adversarial (inyección de prompt, pedir nº de tarjeta), pagos raros, escalado médico, logística, integridad de carrito multi-ítem (cert+snorkel+minicurso+acompañante+kids), memoria/conversación larga, y paridad ES/EN.
+* **Auto-deploy a PRE para Gonzalo**: `feature/pre_pruebaGon` añadida al trigger `deploy-pre` en `.github/workflows/ci.yml` (rama espejo, mismo patrón que pre_gadea/pre_alvaro) + `scripts/deploy_pre_gon.sh` (deploy en un comando).
+* Suite: **1406 passed**, 15 skipped. Sin cambios de KB — no requiere reindex.
+
 0.20.5 - (2026-07-09)
 ----------------------
 * **Bug real reportado en vivo en PRE por Gonzalo (captura de Chatwoot): el bot se saltaba la pregunta de isla/hotel**. Cuando `location=="island"` se detectaba directo del PRIMER mensaje libre (isla nombrada, o el fallback genérico "vamos desde las islas" de v0.20.4) y el flujo entraba por `_should_skip_to_certified_flow` o por el camino de grupo mixto en `supervisor.py`, se resolvía el plan de buceo sin preguntar nunca isla ni hotel — el resumen final asumía silenciosamente "Islas del Rosario" con un horario de recogida inventado, aunque nunca se supo el hotel real. El camino equivalente vía la pregunta explícita `MIXED_LOCATION` (`_after_location_set`) ya encadenaba isla→hotel correctamente; a estos dos puntos les faltaba la misma comprobación (`if location=="island" and not hotel: preguntar isla/hotel primero`). Corregido reutilizando `_goto_island_hotel_menu_or_unknown` en ambos.
