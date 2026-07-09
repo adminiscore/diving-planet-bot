@@ -768,7 +768,7 @@ COMPANION_PRICE = _load_companion_price()
 MESSAGES = {
     "welcome": {
         "es": (
-            "¡Hola! Bienvenido a *Diving Planet*, el primer centro de buceo "
+            "¡Hola! Soy *Coral* 🪸, tu asistente de *Diving Planet*, el primer centro de buceo "
             "PADI 5 Estrellas de Colombia, con 30 años de experiencia en "
             "las Islas del Rosario, Cartagena.\n\n"
             "Selecciona tu idioma / Select your language:\n\n"
@@ -776,7 +776,7 @@ MESSAGES = {
             "🌐 English"
         ),
         "en": (
-            "Hello! Welcome to *Diving Planet*, Colombia's first "
+            "Hi! I'm *Coral* 🪸, your *Diving Planet* assistant — Colombia's first "
             "PADI 5 Star Dive Center, with 30 years of experience in "
             "the Rosario Islands, Cartagena.\n\n"
             "Select your language / Selecciona tu idioma:\n\n"
@@ -794,13 +794,13 @@ MESSAGES = {
     },
     "welcome_detected": {
         "es": (
-            "¡Hola! Bienvenido a *Diving Planet*, el primer centro de buceo "
+            "¡Hola! Soy *Coral* 🪸, tu asistente de *Diving Planet*, el primer centro de buceo "
             "PADI 5 Estrellas de Colombia, con 30 años de experiencia en "
             "las Islas del Rosario, Cartagena.\n\n"
             "¡Cuéntame! ¿Qué te gustaría hacer?"
         ),
         "en": (
-            "Hello! Welcome to *Diving Planet*, Colombia's first "
+            "Hi! I'm *Coral* 🪸, your *Diving Planet* assistant — Colombia's first "
             "PADI 5 Star Dive Center, with 30 years of experience in "
             "the Rosario Islands, Cartagena.\n\n"
             "What would you like to do?"
