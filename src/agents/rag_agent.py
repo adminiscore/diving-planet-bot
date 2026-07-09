@@ -771,6 +771,83 @@ def _canonical_diving_overview_answer(query: str, lang: str) -> str | None:
     )
 
 
+# A GENERIC price question ("¿cuánto cuesta?", "precios?", "how much?") with no
+# specific service named. RAG used to deflect with "no info" or a question back;
+# instead give a short price overview of the main services (pulled from SERVICES
+# so it stays current). A price question that DOES name a service ("cuánto cuesta
+# el minicurso") is left to RAG, which answers it well.
+_PRICE_QUESTION = re.compile(
+    r"\b(?:cu[aá]nto\s+(?:cuesta|cuestan|vale|valen|sale|salen|es|ser[ií]a)|"
+    r"cu[aá]nto|precios?|qu[eé]\s+precios?|tarifas?|how\s+much|prices?|cost)\b",
+    re.IGNORECASE,
+)
+_PRICE_SPECIFIC = re.compile(
+    r"\b(?:minicurso|mini\s?curso|snorkel\w*|open\s*water|advanced|rescue|"
+    r"divemaster|nitrox|especialidad|comida|almuerzo|acompa\w+|companion|"
+    r"noche|nocturn\w+|paquete|referido|referral|fish|peces|flotabilidad|buoyancy|"
+    r"naturalista|naturalist|vuelo|hotel)\b",
+    re.IGNORECASE,
+)
+
+
+def _fmt_price_usd(v) -> str:
+    try:
+        return f"${int(round(float(v)))}"
+    except (TypeError, ValueError):
+        return "consultar"
+
+
+def _fmt_price_cop(v) -> str:
+    try:
+        return f"{int(v):,}".replace(",", ".")
+    except (TypeError, ValueError):
+        return "consultar"
+
+
+def _canonical_price_overview_answer(query: str, lang: str) -> str | None:
+    if not _PRICE_QUESTION.search(query):
+        return None
+    if _PRICE_SPECIFIC.search(query):
+        return None  # names a specific service -> let RAG answer it precisely
+    # A price question that also carries a group/cert booking is not a plain
+    # "what are the prices?" — let the flow/RAG handle it.
+    if _FOOD_HIJACK_GUARD.search(query):
+        return None
+    try:
+        from src.flows.decision_tree import SERVICES
+    except Exception:
+        return None
+    svc = {k: SERVICES.get(k, {}) for k in ("2_dives_1_day", "minicourse", "snorkeling", "open_water")}
+
+    def line(usd, cop):
+        return f"{_fmt_price_usd(usd)} USD / {_fmt_price_cop(cop)} COP"
+
+    cert = svc["2_dives_1_day"]; mini = svc["minicourse"]; snk = svc["snorkeling"]; ow = svc["open_water"]
+    if lang == "es":
+        return (
+            "🌊 Te dejo los *precios de referencia saliendo desde Cartagena* "
+            "(incluyen lancha, almuerzo, equipo y entrada al parque), con el descuento por reservar online:\n\n"
+            f"🤿 *Buceo certificado* (2 inmersiones, 1 día): *{line(cert.get('price_usd'), cert.get('price_cop'))}* por persona.\n"
+            f"🆕 *Minicurso de buceo* (sin experiencia): *{line(mini.get('price_usd'), mini.get('price_cop'))}* por persona.\n"
+            f"🐠 *Snorkel*: *{line(snk.get('price_usd'), snk.get('price_cop'))}* por persona.\n"
+            f"🎓 *Curso Open Water* (certificación PADI): *{line(ow.get('price_usd'), ow.get('price_cop'))}*.\n\n"
+            "Los colombianos/residentes pagan en pesos (COP) y los internacionales en dólares (USD) — "
+            "mismo precio, sin cobro extra por la divisa. También hay paquetes multi-día (4/5/7/9 inmersiones) "
+            "y otros cursos. ¿Cuál te interesa? 😄"
+        )
+    return (
+        "🌊 Here are the *reference prices departing from Cartagena* "
+        "(they include the boat, lunch, gear and park entrance), with the online-booking discount:\n\n"
+        f"🤿 *Certified diving* (2 dives, 1 day): *{line(cert.get('price_usd'), cert.get('price_cop'))}* per person.\n"
+        f"🆕 *Dive mini-course* (no experience): *{line(mini.get('price_usd'), mini.get('price_cop'))}* per person.\n"
+        f"🐠 *Snorkeling*: *{line(snk.get('price_usd'), snk.get('price_cop'))}* per person.\n"
+        f"🎓 *Open Water course* (PADI certification): *{line(ow.get('price_usd'), ow.get('price_cop'))}*.\n\n"
+        "Colombians/residents pay in pesos (COP) and international guests in dollars (USD) — same price, "
+        "no extra charge for the currency. There are also multi-day packages (4/5/7/9 dives) and other "
+        "courses. Which one are you interested in? 😄"
+    )
+
+
 def _coerce_metadata(value: object) -> dict:
     if isinstance(value, dict):
         return value
@@ -962,6 +1039,11 @@ async def rag_answer(
     if diving_overview:
         logger.info(f"[RAG] Using canonical diving-overview answer query={query[:60]}... lang={lang}")
         return diving_overview
+
+    price_overview = _canonical_price_overview_answer(query, lang)
+    if price_overview:
+        logger.info(f"[RAG] Using canonical price-overview answer query={query[:60]}... lang={lang}")
+        return price_overview
 
     condensed_query = await condense_query(query, history=history, lang=lang)
     ambiguous_location_clarification = _ambiguous_location_clarification(condensed_query, lang)

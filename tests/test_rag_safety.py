@@ -634,6 +634,45 @@ async def test_rag_diving_overview_served_without_search(monkeypatch):
     assert "Minicurso" in response
 
 
+# --- #BUG1: a bare price question gets a price overview -----------------------
+
+@pytest.mark.parametrize("q", [
+    "cuánto cuesta",
+    "cuánto sería el precio",
+    "precios",
+    "qué precios manejan",
+    "cuánto vale",
+    "cuánto sale",
+])
+def test_price_overview_fires_for_bare_price_question(q):
+    ans = rag_agent._canonical_price_overview_answer(q, "es")
+    assert ans is not None
+    # Real prices from SERVICES, grouped by service.
+    assert "USD" in ans and "COP" in ans
+    assert "Buceo certificado" in ans and "Minicurso" in ans and "Snorkel" in ans
+
+
+@pytest.mark.parametrize("q", [
+    "cuánto cuesta el minicurso",   # names a specific service -> RAG
+    "precio del snorkel",
+    "cuánto el open water",
+    "cuánto cuesta un vuelo",        # off-topic
+    "cuánto cuesta el acompañante",
+])
+def test_price_overview_defers_for_specific_or_offtopic(q):
+    assert rag_agent._canonical_price_overview_answer(q, "es") is None
+
+
+@pytest.mark.asyncio
+async def test_rag_bare_price_served_without_search(monkeypatch):
+    async def fail_search(*args, **kwargs):
+        raise AssertionError("Bare price must use the canonical overview before retrieval")
+
+    monkeypatch.setattr(rag_agent, "search_knowledge_base", fail_search)
+    response = await rag_agent.rag_answer("cuánto cuesta", lang="es")
+    assert "USD" in response and "COP" in response
+
+
 def test_ambiguous_location_helper_detects_ultra_short_place_only_queries():
     assert rag_agent._is_ultra_short_ambiguous_location_query("Pao Pao") is True
     assert rag_agent._is_ultra_short_ambiguous_location_query("Cocoliso") is True

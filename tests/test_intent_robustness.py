@@ -261,6 +261,49 @@ def test_praying_the_rosary_english_does_not_trigger_island_location():
     assert _d("I pray the rosary every day").location is None
 
 
+# --- Holding a PADI certification level => certified diver -------------------
+
+@pytest.mark.parametrize("msg", [
+    "soy open water",
+    "tengo el open water",
+    "soy advanced",
+    "tengo el advanced",
+    "soy rescue diver",
+    "soy divemaster",
+    "i am open water",
+    "i have my advanced",
+    "tengo nitrox",
+    "soy aguas abiertas",
+    "estoy certificado en open water",
+    "hola soy open water y quiero hacer dos inmersiones",
+    "somos advanced y queremos 2 inmersiones",
+])
+def test_holding_padi_level_is_certified(msg):
+    assert _d(msg).is_certified is True
+
+
+@pytest.mark.parametrize("msg", [
+    "quiero el curso open water",
+    "quiero sacarme el advanced",
+    "quiero hacer el rescue",
+    "quiero certificarme",
+    "curso de open water",
+    "quiero el advanced",
+    "me interesa el divemaster",
+])
+def test_wanting_a_course_is_not_certified(msg):
+    # Wanting to TAKE a course != holding the certification.
+    assert _d(msg).is_certified is not True
+
+
+def test_holding_openwater_is_not_the_course_activity():
+    """"soy open water" is a certified diver wanting fun dives, not someone
+    taking the Open Water course."""
+    i = _d("soy open water")
+    assert i.is_certified is True
+    assert i.activity != "padi_open_water"
+
+
 # --- Group size from "N divers" / "N certified" ------------------------------
 
 @pytest.mark.parametrize("msg,expected", [

@@ -305,7 +305,9 @@ class IntentDetector:
             intent.activity = "snorkel"
             intent.service_id = "snorkeling"
             intent.detected_fields.append("activity")
-        elif any(re.search(pattern, message) for pattern in padi_course_patterns):
+        elif any(re.search(pattern, message) for pattern in padi_course_patterns) and not self._holds_padi_cert(message):
+            # Only a COURSE if they want to take it — "soy open water" (holds it)
+            # is a certified diver, handled via is_certified + the activity fallback.
             if 'open water' in message or 'open-water' in message:
                 intent.activity = "padi_open_water"
                 intent.service_id = "open_water"
@@ -337,6 +339,43 @@ class IntentDetector:
 
     def _detect_cert_dive_count(self, message: str) -> int | None:
         return detect_cert_dive_count(message)
+
+    # A named PADI certification level. Holding ANY of these means you're a
+    # certified diver (Open Water is the entry level; the rest are above it).
+    _CERT_LEVEL = (
+        r"(?:open[\s-]*water|advanced|rescue|dive\s*master|divemaster|"
+        r"aguas\s+abiertas|nitrox)"
+    )
+    # "I HAVE / I AM this cert" — status, not a course to take.
+    _HOLDS_CERT_RE = re.compile(
+        r"\b(?:soy|somos|estoy|estamos)\s+(?:un[ao]?\s+|buz[oa]s?\s+)?"
+        r"(?:certificad[oa]s?\s+(?:en|como)\s+)?" + _CERT_LEVEL + r"\b"
+        r"|\b(?:tengo|tenemos)\s+(?:el\s+|la\s+|mi\s+|un[ao]?\s+)?" + _CERT_LEVEL + r"\b"
+        r"|\bi(?:'?m|\s+am)\s+(?:an?\s+)?" + _CERT_LEVEL + r"\b"
+        r"|\bi\s+have\s+(?:my\s+|an?\s+)?" + _CERT_LEVEL + r"\b"
+        r"|\b" + _CERT_LEVEL + r"\s+(?:diver|certified)\b"
+        r"|\bbuz[oa]\s+avanzad[oa]\b",
+        re.IGNORECASE,
+    )
+    # "I WANT / I'm doing the <level> COURSE" — wants the certification, so NOT
+    # certified yet. Requires the want-verb to be followed by the cert level so
+    # "quiero 2 inmersiones" (wanting dives) never counts as wanting a course.
+    _WANTS_CERT_RE = re.compile(
+        r"\b(?:quiero|queremos|quisiera|me\s+gustar[ií]a|hacer(?:me)?|sacar(?:me)?|"
+        r"obtener|tomar)\s+(?:el\s+|la\s+|mi\s+|un\s+|hacer\s+|the\s+)*"
+        r"(?:curso\s+)?(?:padi\s+)?(?:de\s+)?" + _CERT_LEVEL
+        + r"|\bcurso\s+(?:de\s+)?(?:padi\s+)?" + _CERT_LEVEL
+        + r"|\bcertificar(?:me|nos)\b|\bget\s+certified\b"
+        + r"|\bwant\s+to\s+(?:do|take|get)\s+(?:the\s+)?(?:padi\s+)?" + _CERT_LEVEL,
+        re.IGNORECASE,
+    )
+
+    def _holds_padi_cert(self, message: str) -> bool:
+        """True if the message says the person HOLDS a PADI cert level (certified
+        diver), as opposed to wanting to take that course."""
+        if self._WANTS_CERT_RE.search(message):
+            return False
+        return bool(self._HOLDS_CERT_RE.search(message))
 
     def _detect_certification(self, message: str, intent: DetectedIntent) -> None:
         if intent.is_certified is not None:
@@ -400,7 +439,9 @@ class IntentDetector:
         if any(re.search(pattern, message) for pattern in not_certified_patterns):
             intent.is_certified = False
             intent.detected_fields.append("is_certified")
-        elif any(re.search(pattern, message) for pattern in certified_patterns):
+        elif any(re.search(pattern, message) for pattern in certified_patterns) or self._holds_padi_cert(message):
+            # Holding a PADI level (Open Water / Advanced / Rescue / Divemaster /
+            # Nitrox) means the person is a certified diver.
             intent.is_certified = True
             intent.detected_fields.append("is_certified")
 
