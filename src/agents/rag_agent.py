@@ -278,14 +278,14 @@ def _format_fewshot_block(examples: list[dict], lang: str) -> str:
 
 
 FALLBACK_ES = (
-    "No tengo información suficiente en mi base de conocimiento para responder eso con seguridad. "
-    "Te puedo conectar con un asesor de Diving Planet.\n"
+    "¡Con gusto te ayudo con eso! 🌊 Para ese tema en concreto, lo mejor es que te pase "
+    "con un asesor de Diving Planet, que te lo resuelve al momento.\n"
     "WhatsApp: +57 320 231515"
 )
 
 FALLBACK_EN = (
-    "I don't have enough information in my knowledge base to answer that safely. "
-    "I can connect you with a Diving Planet advisor.\n"
+    "Happy to help with that! 🌊 For this specific topic, the best thing is to connect you "
+    "with a Diving Planet advisor, who'll sort it out for you right away.\n"
     "WhatsApp: +57 320 231515"
 )
 

@@ -209,7 +209,7 @@ async def test_rag_low_confidence_returns_fallback_without_extra_context(monkeyp
 
     response = await rag_agent.rag_answer("Pregunta rara", lang="es")
 
-    assert "No tengo información suficiente" in response
+    assert "asesor de Diving Planet" in response
 
 
 @pytest.mark.asyncio
@@ -297,7 +297,7 @@ async def test_rag_fallback_when_only_weak_lexical_match(monkeypatch):
 
     response = await rag_agent.rag_answer("algo raro", lang="es")
 
-    assert "No tengo información suficiente" in response
+    assert "asesor de Diving Planet" in response
 
 
 @pytest.mark.asyncio
@@ -409,7 +409,7 @@ async def test_rag_falls_back_when_answer_has_ungrounded_price(monkeypatch):
 
     response = await rag_agent.rag_answer("precio del minicurso?", lang="es")
 
-    assert "No tengo información suficiente" in response
+    assert "asesor de Diving Planet" in response
 
 
 def test_url_guard_accepts_link_present_in_context():
@@ -473,7 +473,7 @@ async def test_rag_falls_back_when_answer_has_ungrounded_link(monkeypatch):
 
     response = await rag_agent.rag_answer("cómo reservo el minicurso?", lang="es")
 
-    assert "No tengo información suficiente" in response
+    assert "asesor de Diving Planet" in response
 
 
 # --- Capacity guard: no invented "max N people" for the private tour ---------
@@ -548,7 +548,7 @@ async def test_rag_falls_back_when_answer_invents_private_tour_capacity(monkeypa
 
     response = await rag_agent.rag_answer("¿cuántas personas caben en el tour privado?", lang="es")
 
-    assert "No tengo información suficiente" in response
+    assert "asesor de Diving Planet" in response
 
 
 @pytest.mark.asyncio
@@ -946,7 +946,7 @@ async def test_rag_returns_fallback_when_grounding_check_rejects(monkeypatch):
 
     response = await rag_agent.rag_answer("Puedo volar después de bucear?", lang="es")
 
-    assert "No tengo información suficiente" in response
+    assert "asesor de Diving Planet" in response
     assert "+57 320 231515" in response
 
 
