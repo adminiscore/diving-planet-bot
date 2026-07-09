@@ -1172,3 +1172,136 @@ async def test_pending_plan_remapped_on_mid_flow_location_change(agent_decides):
     await route_message(state, "en realidad ya estoy en las islas")
 
     assert state.mixed_pending_qty_plan == "5_dives_2_days_already_on_island"
+
+
+# ---------------------------------------------------------------------------
+# 23) Real bug reported live on PRE (screenshot from Gonzalo, 2026-07-09):
+#     when location=="island" is detected straight from the FIRST free-text
+#     message (named island, or the generic "vamos desde las islas" fallback)
+#     and the flow takes the fast "_should_skip_to_certified_flow" /
+#     mixed-group path, it went straight to resolving the cert plan WITHOUT
+#     ever asking which island/hotel — the final summary then silently
+#     assumed "Islas del Rosario" with a made-up pickup time. The equivalent
+#     path reached via the MIXED_LOCATION question (_after_location_set)
+#     already asked correctly; these two supervisor.py call sites didn't.
+# ---------------------------------------------------------------------------
+
+@pytest.mark.asyncio
+async def test_generic_island_from_first_message_asks_island_then_hotel():
+    """Exact scenario from the bug report: island known generically (no name
+    given), single certified-diving activity (not a mixed-group split)."""
+    state = ConversationState(conversation_id="bug-generic-island-single")
+    resp = await route_message(
+        state, _group_dive_message(5, 7, ", vamos desde las islas")
+    )
+    assert state.step == Step.ISLAND_MENU, resp
+    assert state.island is None
+    assert state.hotel is None
+    assert state.mixed_pending_cert_total_qty == 5, "group size must survive the detour"
+
+    await route_message(state, "Isla Rosario")
+    assert state.step == Step.ISLAND_HOTEL_MENU
+    assert state.island == "Isla Rosario"
+
+    resp = await route_message(state, "1")  # first hotel option
+    assert state.hotel is not None, resp
+    assert state.step == Step.MIXED_CERT_LAST_DIVE
+    assert state.mixed_pending_qty_plan == "7_dives_3_days_already_on_island"
+    assert state.mixed_pending_cert_total_qty == 5
+
+
+@pytest.mark.asyncio
+async def test_named_island_from_first_message_asks_hotel_only():
+    """A specific island named in the first message must skip straight to the
+    hotel question — not re-ask which island."""
+    state = ConversationState(conversation_id="bug-named-island-single")
+    resp = await route_message(
+        state, _group_dive_message(5, 7, ", en la isla rosario")
+    )
+    assert state.step == Step.ISLAND_HOTEL_MENU, resp
+    assert state.island == "isla_rosario"
+    assert state.hotel is None
+
+    resp = await route_message(state, "1")
+    assert state.hotel is not None, resp
+    assert state.step == Step.MIXED_CERT_LAST_DIVE
+    assert state.mixed_pending_qty_plan == "7_dives_3_days_already_on_island"
+
+
+@pytest.mark.asyncio
+async def test_generic_island_from_first_message_mixed_group_asks_hotel_first():
+    """Same bug, but via the OTHER supervisor.py code path: a mixed-group
+    split (cert + snorkel) with the island known generically. Both call
+    sites needed the fix, not just the single-activity one."""
+    state = ConversationState(conversation_id="bug-generic-island-mixed")
+    resp = await route_message(
+        state,
+        "somos 5, 3 bucean y 2 hacen snorkel, queremos 7 inmersiones, vamos desde las islas",
+    )
+    assert state.step == Step.ISLAND_MENU, resp
+    assert state.hotel is None
+
+    await route_message(state, "Isla Rosario")
+    resp = await route_message(state, "1")  # first hotel option
+    assert state.hotel is not None, resp
+    assert state.step == Step.MIXED_CERT_LAST_DIVE
+    assert state.mixed_pending_qty_plan == "7_dives_3_days_already_on_island"
+    assert state.mixed_pending_cert_total_qty == 3, "cert subgroup, not the whole group of 5"
+
+
+@pytest.mark.asyncio
+async def test_generic_island_from_first_message_ambiguous_count_still_asks_island_hotel():
+    """The exact reported message: an incomplete count ("el paquete de 7",
+    typo + no unit word) that never resolves a dive/day count. The bug was
+    that island/hotel got skipped regardless of whether the count resolved —
+    confirm the fix holds even when the plan itself stays unresolved and the
+    generic cert-plan question is asked afterward instead."""
+    state = ConversationState(conversation_id="bug-exact-report")
+    resp = await route_message(
+        state,
+        "Hola queremos bucear somos 5 certificados y queremos el pagiete de 7, vamos desde las islas",
+    )
+    assert state.step == Step.ISLAND_MENU, resp
+
+    await route_message(state, "Isla Rosario")
+    resp = await route_message(state, "1")
+    assert state.hotel is not None, resp
+    assert state.step == Step.MIXED_ADD_CERT_PLAN, resp
+    assert state.mixed_pending_cert_total_qty == 5
+    assert state.mixed_pending_qty_plan is None
+
+
+@pytest.mark.asyncio
+async def test_generic_island_from_first_message_asks_island_then_hotel_english():
+    """English equivalent of the bug-report scenario above."""
+    state = ConversationState(conversation_id="bug-generic-island-en")
+    resp = await route_message(
+        state,
+        "Hello we want to dive, we are 5 certified divers and we want 7 dives, "
+        "we are coming from the islands",
+    )
+    assert state.step == Step.ISLAND_MENU, resp
+    assert state.hotel is None
+    assert state.language == "en"
+    assert state.mixed_pending_cert_total_qty == 5
+
+    await route_message(state, "Isla Rosario")
+    assert state.step == Step.ISLAND_HOTEL_MENU
+
+    resp = await route_message(state, "1")
+    assert state.hotel is not None, resp
+    assert state.step == Step.MIXED_CERT_LAST_DIVE
+    assert state.mixed_pending_qty_plan == "7_dives_3_days_already_on_island"
+    assert "night" in resp.lower()
+
+
+@pytest.mark.asyncio
+async def test_named_island_from_first_message_asks_hotel_only_english():
+    state = ConversationState(conversation_id="bug-named-island-en")
+    resp = await route_message(
+        state,
+        "Hello we want to dive, we are 5 certified divers and we want 7 dives, from Isla Rosario",
+    )
+    assert state.step == Step.ISLAND_HOTEL_MENU, resp
+    assert state.island == "isla_rosario"
+    assert state.hotel is None

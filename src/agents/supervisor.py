@@ -3966,9 +3966,19 @@ def _route_detected_intent(intent, state: ConversationState, message: str = "") 
             decision_tree.set_quick_replies(state, "tours_location")
             next_msg = MESSAGES["mixed_location"][state.language]
         elif cert_qty > 0:
-            next_msg = decision_tree._resolve_or_ask_cert_plan(
-                state, getattr(intent, "cert_dives", None), getattr(intent, "cert_days", None)
-            )
+            # On the islands but we don't know the hotel yet (needed for
+            # pickup coordination): ask island/hotel BEFORE resolving the cert
+            # plan, same as _after_location_set does when location is
+            # answered via the MIXED_LOCATION step. Without this, a message
+            # like "vamos desde las islas" (location known straight from free
+            # text, never asked) skipped island/hotel entirely and the summary
+            # silently assumed "Islas del Rosario" with a made-up pickup time.
+            if state.location == "island" and not state.hotel:
+                next_msg = decision_tree._goto_island_hotel_menu_or_unknown(state)
+            else:
+                next_msg = decision_tree._resolve_or_ask_cert_plan(
+                    state, getattr(intent, "cert_dives", None), getattr(intent, "cert_days", None)
+                )
         else:
             # Sólo snorkel/minicurso → entrar al carrito normalmente
             state.step = Step.MIXED_ENTRY
@@ -4013,9 +4023,16 @@ def _route_detected_intent(intent, state: ConversationState, message: str = "") 
         # Si tenemos ubicación, resolver directo el plan de buceo certificado
         state.location = state.detected_location or state.location
         state.mixed_pending_qty_type = "cert"
-        next_msg = decision_tree._resolve_or_ask_cert_plan(
-            state, getattr(intent, "cert_dives", None), getattr(intent, "cert_days", None)
-        )
+        # On the islands but no hotel yet: ask island/hotel first (needed for
+        # pickup coordination) instead of resolving the plan blind — see the
+        # matching comment on the mixed-group branch above for the bug this
+        # prevents (a summary silently assuming "Islas del Rosario").
+        if state.location == "island" and not state.hotel:
+            next_msg = decision_tree._goto_island_hotel_menu_or_unknown(state)
+        else:
+            next_msg = decision_tree._resolve_or_ask_cert_plan(
+                state, getattr(intent, "cert_dives", None), getattr(intent, "cert_days", None)
+            )
         logger.info(f"[INTENT] Going to cart with location -> step={state.step.value}")
         return (confirmation + "\n\n" + next_msg) if confirmation else next_msg
 

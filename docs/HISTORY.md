@@ -1,6 +1,12 @@
 History
 =======
 
+0.20.5 - (2026-07-09)
+----------------------
+* **Bug real reportado en vivo en PRE por Gonzalo (captura de Chatwoot): el bot se saltaba la pregunta de isla/hotel**. Cuando `location=="island"` se detectaba directo del PRIMER mensaje libre (isla nombrada, o el fallback genérico "vamos desde las islas" de v0.20.4) y el flujo entraba por `_should_skip_to_certified_flow` o por el camino de grupo mixto en `supervisor.py`, se resolvía el plan de buceo sin preguntar nunca isla ni hotel — el resumen final asumía silenciosamente "Islas del Rosario" con un horario de recogida inventado, aunque nunca se supo el hotel real. El camino equivalente vía la pregunta explícita `MIXED_LOCATION` (`_after_location_set`) ya encadenaba isla→hotel correctamente; a estos dos puntos les faltaba la misma comprobación (`if location=="island" and not hotel: preguntar isla/hotel primero`). Corregido reutilizando `_goto_island_hotel_menu_or_unknown` en ambos.
+* Confirmado en ES y EN: cantidad del grupo, isla nombrada vs. genérica, camino de grupo mixto (cert+snorkel), y el caso exacto reportado (conteo incompleto tipo "el paquete de 7" sin unidad) — todos preservan la cadena isla→hotel→plan correctamente.
+* Suite: **1353 passed**, 6 skipped (mismos fallos preexistentes sin relación por falta de `OPENAI_API_KEY` en el entorno local).
+
 0.20.4 - (2026-07-09)
 ----------------------
 * **Bug real reportado en vivo en PRE por Gonzalo (captura de Chatwoot): "vamos desde las islas" no fijaba la ubicación**. `_detect_location` (`intent_detector.py`) solo reconocía islas/hoteles nombrados específicamente — una frase genérica como "vamos desde las islas" / "ya estoy en la isla" nunca fijaba `location`, así que el bot repreguntaba "¿desde dónde sales?" aunque el cliente ya lo hubiera respondido en el mismo mensaje. Arreglado con un patrón de respaldo (ES: "desde/en las islas"; EN: "from/on/at the island(s)") que solo se aplica si ninguna isla/hotel/Cartagena específica coincidió antes — deja la isla sin fijar para que `ISLAND_MENU` siga preguntando cuál, igual que si el cliente pulsara "🏝️ Ya estoy en las islas".
