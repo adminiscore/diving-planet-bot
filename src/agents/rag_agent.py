@@ -822,7 +822,10 @@ def _canonical_price_overview_answer(query: str, lang: str) -> str | None:
     def line(usd, cop):
         return f"{_fmt_price_usd(usd)} USD / {_fmt_price_cop(cop)} COP"
 
-    cert = svc["2_dives_1_day"]; mini = svc["minicourse"]; snk = svc["snorkeling"]; ow = svc["open_water"]
+    cert = svc["2_dives_1_day"]
+    mini = svc["minicourse"]
+    snk = svc["snorkeling"]
+    ow = svc["open_water"]
     if lang == "es":
         return (
             "🌊 Te dejo los *precios de referencia saliendo desde Cartagena* "
