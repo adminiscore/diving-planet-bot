@@ -3510,6 +3510,31 @@ class DecisionTree:
             state.location = "island"
             return _after_location_set()
 
+        # "no sé / recomiéndame / da igual / ¿cuál es mejor?" — the customer is
+        # deferring the choice. Recommend Cartagena (by far the most common origin:
+        # pickup, dive and return the same day) and proceed, instead of "no te
+        # entendí". They can still say they're on the islands to switch.
+        if re.search(
+            r"\bno\s+s[eé]\b|recomi[eé]nda|recomiendas|qu[eé]\s+recomiendas|da\s+igual|"
+            r"cu[aá]l\s+(?:es\s+)?mejor|el\s+que\s+(?:sea|quieras|recomiendes)|"
+            r"lo\s+que\s+(?:sea|recomiendes|digas|prefieras)|"
+            r"(?:t[uú]|usted)\s+(?:decide|dime|elige)|"
+            r"i\s+don'?t\s+know|whichever|you\s+(?:decide|recommend|choose)|"
+            r"what(?:'?s|\s+is)?\s+(?:do\s+you\s+recommend|better|best)",
+            msg,
+        ):
+            state.location = "cartagena"
+            note = (
+                "La mayoría sale *desde Cartagena* (te recogemos, buceas y vuelves el "
+                "mismo día), así que te recomiendo esa opción. Si en realidad ya estás "
+                "en las islas, dímelo y lo ajusto. 🌊\n\n"
+                if lang == "es"
+                else "Most guests depart *from Cartagena* (we pick you up, you dive and "
+                "return the same day), so that's what I'd recommend. If you're actually "
+                "already on the islands, just tell me and I'll adjust. 🌊\n\n"
+            )
+            return note + _after_location_set()
+
         self.set_quick_replies(state, "tours_location")
         return MESSAGES["not_understood"][lang]
 
