@@ -400,6 +400,153 @@ def test_cert_dive_count_no_false_positive(msg):
     assert _d(msg).cert_dives is None
 
 
+# --- Bare "paquete/pack/plan de N" with no unit word at all -----------------
+# Regression: found live on PRE (2026-07-09) — "queremos bucear el pack de 5"
+# never resolved a dive count (no "inmersiones"/"buceos" after the 5), so the
+# bot forgot the "5" the customer had just given and re-asked which plan.
+
+@pytest.mark.parametrize("msg,expected", [
+    ("el pack de 5", 5),
+    ("el paquete de 5", 5),
+    ("queremos bucear el pack de 7", 7),
+    ("el paquete de 9", 9),
+    ("the pack of 7", 7),
+    ("the package of five", 5),
+])
+def test_bare_package_number_resolves_unambiguous_dive_count(msg, expected):
+    """5/7/9 are never valid as a day-count (max day package is 4 days), so a
+    bare number with no unit word is still unambiguous."""
+    assert _d(msg).cert_dives == expected
+
+
+@pytest.mark.parametrize("msg", [
+    "el pack de 2",
+    "el pack de 3",
+    "el pack de 4",
+])
+def test_bare_package_number_stays_conservative_when_ambiguous(msg):
+    """2/3/4 are valid as EITHER a dive count or a day count (e.g. "el pack de
+    3" could mean 3 dives, or 3 days = 7 dives) — must NOT guess."""
+    i = _d(msg)
+    assert i.cert_dives is None
+    assert i.cert_days is None
+
+
+def test_bare_package_number_does_not_hijack_explicit_day_count():
+    """"paquete de 3 dias" must still resolve as a DAY count (3), not get
+    stolen by the new bare-dive fallback matching just "paquete de 3"."""
+    i = _d("el paquete de 3 dias")
+    assert i.cert_dives is None
+    assert i.cert_days == 3
+
+
+def test_pack_qualifier_recognized_for_day_count():
+    """"pack" was missing entirely from the day-count qualifier word list
+    (only "paquete"/"plan" were recognized) — found in the same audit."""
+    assert _d("el pack de 3 dias").cert_days == 3
+    assert _d("el pack de 2 dias").cert_days == 2
+
+
+@pytest.mark.asyncio
+async def test_bare_pack_de_5_full_flow_resolves_plan():
+    """Exact scenario reported live: group + cert + bare pack number in one
+    message, location given on the next turn — must resolve the exact plan
+    without re-asking "which idea"."""
+    from src.flows.decision_tree import ConversationState as _CS, Step as _Step
+    from src.agents.supervisor import route_message
+
+    state = _CS(conversation_id="pack-de-5-e2e")
+    await route_message(
+        state, "Hola somos una pareja de dos certificados, queremos bucear el pack de 5"
+    )
+    assert state.step == _Step.MIXED_LOCATION
+
+    resp = await route_message(state, "Salgo desde Cartagena")
+    assert state.step == _Step.MIXED_CERT_LAST_DIVE, resp
+    assert state.mixed_pending_qty_plan == "5_dives_2_days"
+    assert state.mixed_pending_cert_total_qty == 2
+
+
+# --- Exhaustive audit: bare "pack/paquete de N" for every N 1-10, digit and
+# word form, ES and EN (2026-07-09). Only 5/7/9 are unambiguous package sizes
+# (never valid as a day-count too) — everything else must stay None and let
+# the flow ask instead of guessing.
+
+_BARE_PACK_ES_WORDS = {
+    1: "uno", 2: "dos", 3: "tres", 4: "cuatro", 5: "cinco",
+    6: "seis", 7: "siete", 8: "ocho", 9: "nueve", 10: "diez",
+}
+_BARE_PACK_EN_WORDS = {
+    1: "one", 2: "two", 3: "three", 4: "four", 5: "five",
+    6: "six", 7: "seven", 8: "eight", 9: "nine", 10: "ten",
+}
+_UNAMBIGUOUS_BARE_PACK = {5, 7, 9}
+
+
+@pytest.mark.parametrize("n", range(1, 11))
+def test_bare_pack_es_digit_all_numbers(n):
+    expected = n if n in _UNAMBIGUOUS_BARE_PACK else None
+    assert _d(f"el pack de {n}").cert_dives == expected
+
+
+@pytest.mark.parametrize("n", range(1, 11))
+def test_bare_pack_es_word_all_numbers(n):
+    expected = n if n in _UNAMBIGUOUS_BARE_PACK else None
+    assert _d(f"el pack de {_BARE_PACK_ES_WORDS[n]}").cert_dives == expected
+
+
+@pytest.mark.parametrize("n", range(1, 11))
+def test_bare_pack_en_digit_all_numbers(n):
+    expected = n if n in _UNAMBIGUOUS_BARE_PACK else None
+    assert _d(f"the pack of {n}").cert_dives == expected
+
+
+@pytest.mark.parametrize("n", range(1, 11))
+def test_bare_pack_en_word_all_numbers(n):
+    expected = n if n in _UNAMBIGUOUS_BARE_PACK else None
+    assert _d(f"the pack of {_BARE_PACK_EN_WORDS[n]}").cert_dives == expected
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("n", range(1, 11))
+async def test_bare_pack_es_full_flow_all_numbers(n):
+    """End-to-end: for 5/7/9 the plan resolves without re-asking; for
+    everything else the flow safely falls back to the generic cert-plan
+    question (never silently books the wrong plan)."""
+    from src.flows.decision_tree import ConversationState as _CS, Step as _Step
+    from src.agents.supervisor import route_message
+
+    state = _CS(conversation_id=f"bare-pack-es-{n}")
+    resp = await route_message(
+        state, f"somos 2 certificados, queremos bucear el pack de {n}, desde cartagena"
+    )
+    if n in _UNAMBIGUOUS_BARE_PACK:
+        assert state.step == _Step.MIXED_CERT_LAST_DIVE, (n, resp)
+        assert state.mixed_pending_qty_plan == f"{n}_dives_{ {5: 2, 7: 3, 9: 4}[n] }_days"
+    else:
+        assert state.step == _Step.MIXED_ADD_CERT_PLAN, (n, resp)
+        assert state.mixed_pending_qty_plan is None
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("n", range(1, 11))
+async def test_bare_pack_en_full_flow_all_numbers(n):
+    from src.flows.decision_tree import ConversationState as _CS, Step as _Step
+    from src.agents.supervisor import route_message
+
+    state = _CS(conversation_id=f"bare-pack-en-{n}")
+    resp = await route_message(
+        state,
+        f"we are 2 certified divers, we want to dive the pack of {n}, from cartagena",
+    )
+    if n in _UNAMBIGUOUS_BARE_PACK:
+        assert state.step == _Step.MIXED_CERT_LAST_DIVE, (n, resp)
+        assert state.mixed_pending_qty_plan == f"{n}_dives_{ {5: 2, 7: 3, 9: 4}[n] }_days"
+    else:
+        assert state.step == _Step.MIXED_ADD_CERT_PLAN, (n, resp)
+        assert state.mixed_pending_qty_plan is None
+
+
 def test_explicit_two_dives_skips_cert_plan_question():
     """A certified request that already names the 2-dive plan must NOT re-ask
     '¿qué plan?' — it should advance to the last-dive safety question."""

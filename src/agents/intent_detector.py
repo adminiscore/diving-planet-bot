@@ -43,6 +43,23 @@ _DIVE_WORD_TO_NUM = {
     "six": 6, "seven": 7, "eight": 8, "nine": 9,
 }
 
+# Bare "paquete/pack/plan de N" with NO unit word at all ("el pack de 5") —
+# found live on PRE 2026-07-09: a customer who'd already said "queremos
+# bucear" and named a bare package number got asked "¿qué idea tienes?" again,
+# forgetting the 5 they'd just given. Only resolved as a DIVE count for
+# 5/7/9 — those numbers are never valid as a day-count (max day package is 4
+# days), so they're unambiguous even without "inmersiones"/"buceos". 2/3/4 are
+# deliberately excluded: those ARE valid as either a dive count or a day
+# count ("el pack de 3" could mean 3 dives or 3 days = 7 dives), so guessing
+# would risk booking the wrong plan — falls through to the normal "which
+# idea" question instead. Excludes a trailing "día(s)" so "paquete de 3 dias"
+# still resolves as a DAY count via _CERT_DAY_COUNT_RE, not hijacked here.
+_BARE_PACKAGE_DIVE_RE = re.compile(
+    r"\b(?:paquete|pack|plan)\s+de\s+(5|7|9|cinco|siete|nueve)\b(?!\s*d[ií]as?)"
+    r"|\b(?:package|pack|plan)\s+of\s+(5|7|9|five|seven|nine)\b(?!\s*days?)",
+    re.IGNORECASE,
+)
+
 # Explicit day-count for a multi-day certified package: "paquete de 3 dias",
 # "3 dias de buceo", "3-day package", EN "a two-day package"/"3 days diving".
 # Unlike dive-count, a bare "3 dias"/"3 days" is too generic to trust on its
@@ -50,8 +67,10 @@ _DIVE_WORD_TO_NUM = {
 # a diving/package qualifier. Word-form numbers cover both languages (ES "un"/
 # "dos"/"tres"/"cuatro", EN "one"/"two"/"three"/"four") so "a two-day package"
 # resolves the same as "2-day package" — found missing (ES-only) 2026-07-09.
+# "pack" added to the qualifier list 2026-07-09 (was missing entirely —
+# "el pack de 3 dias" didn't match "paquete"/"plan").
 _CERT_DAY_COUNT_RE = re.compile(
-    r"\b(?:paquete|plan)\s+de\s+(\d+|un[oa]?|dos|tres|cuatro)\s*d[ií]as?\b"
+    r"\b(?:paquete|pack|plan)\s+de\s+(\d+|un[oa]?|dos|tres|cuatro)\s*d[ií]as?\b"
     r"|\b(\d+|un[oa]?|dos|tres|cuatro)[\s\-]+d[ií]as?\s+(?:de\s+)?buce\w*\b"
     r"|\b(\d+|one|two|three|four)[\s\-]?days?\s+(?:of\s+)?(?:dive\s+|diving\s+)?package\b"
     r"|\b(\d+|one|two|three|four)[\s\-]?days?\s+(?:of\s+)?div(?:e|ing)\b",
@@ -63,12 +82,18 @@ def detect_cert_dive_count(message: str) -> int | None:
     """Requested certified dive-count as a real package size (2/3/4/5/7/9), or None.
     Shared by the intent detector and the cart's cert-plan step so a natural-language
     "2 buceos" is understood in both places."""
-    match = _CERT_DIVE_COUNT_RE.search(message or "")
-    if not match:
-        return None
-    token = match.group(1).lower()
-    n = int(token) if token.isdigit() else _DIVE_WORD_TO_NUM.get(token)
-    return n if n in (2, 3, 4, 5, 7, 9) else None
+    message = message or ""
+    match = _CERT_DIVE_COUNT_RE.search(message)
+    if match:
+        token = match.group(1).lower()
+        n = int(token) if token.isdigit() else _DIVE_WORD_TO_NUM.get(token)
+        return n if n in (2, 3, 4, 5, 7, 9) else None
+    match = _BARE_PACKAGE_DIVE_RE.search(message)
+    if match:
+        token = next(g for g in match.groups() if g is not None).lower()
+        n = int(token) if token.isdigit() else _DIVE_WORD_TO_NUM.get(token)
+        return n if n in (5, 7, 9) else None
+    return None
 
 
 def detect_cert_day_count(message: str) -> int | None:
