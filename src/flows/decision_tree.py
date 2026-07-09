@@ -7234,11 +7234,20 @@ class DecisionTree:
                 else f"  🧑‍🏫 Refresher included: {refresh_qty} person{'s' if refresh_qty > 1 else ''} — no extra cost"
             )
         if state.mixed_final_is_colombian:
-            extras_lines.append(
-                "  🌎 Precio en pesos colombianos (COP)"
-                if lang == "es"
-                else "  🌎 Price shown in Colombian pesos (COP)"
-            )
+            # Reflect the currency actually being shown — a Colombian who switched
+            # the display to USD must not see a stale "prices in COP" note.
+            if state.mixed_display_currency == "COP":
+                extras_lines.append(
+                    "  🌎 Precio en pesos colombianos (COP)"
+                    if lang == "es"
+                    else "  🌎 Price shown in Colombian pesos (COP)"
+                )
+            else:
+                extras_lines.append(
+                    "  🌎 Precio mostrado en dólares (USD)"
+                    if lang == "es"
+                    else "  🌎 Price shown in US dollars (USD)"
+                )
         if state.mixed_final_wants_private:
             extras_lines.append(
                 "  🚤 Lancha privada solicitada — el asesor confirmará el precio final al reservar"

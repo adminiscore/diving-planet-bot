@@ -261,6 +261,45 @@ def test_praying_the_rosary_english_does_not_trigger_island_location():
     assert _d("I pray the rosary every day").location is None
 
 
+# --- Group size from "N divers" / "N certified" ------------------------------
+
+@pytest.mark.parametrize("msg,expected", [
+    ("2 certified divers", 2),
+    ("3 divers from cartagena", 3),
+    ("somos 3 buzos", 3),
+    ("3 buceadores", 3),
+    ("4 certificados", 4),
+    ("2 certified divers, 2 dives, we dived last month", 2),
+])
+def test_group_size_from_divers_or_certified(msg, expected):
+    assert _d(msg).group_size == expected
+
+
+# --- Nationality captured from the message (COP vs USD, don't re-ask) ---------
+
+@pytest.mark.parametrize("msg,expected", [
+    ("somos colombianos", True),
+    ("soy colombiano", True),
+    ("i am colombian", True),
+    ("resident in colombia", True),
+    ("soy de colombia", True),
+    ("we are foreigners", False),
+    ("somos extranjeros", False),
+    ("no soy colombiano", False),
+    ("not colombian, from spain", False),
+])
+def test_nationality_detected(msg, expected):
+    assert _d(msg).is_colombian is expected
+
+
+@pytest.mark.parametrize("msg", [
+    "quiero bucear",
+    "las mejores islas de colombia",   # country name, not a nationality claim
+])
+def test_nationality_not_falsely_detected(msg):
+    assert _d(msg).is_colombian is None
+
+
 # --- Info retention: last-dive stated in the message --------------------------
 
 @pytest.mark.parametrize("msg,expected", [

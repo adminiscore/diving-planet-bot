@@ -22,6 +22,7 @@ class DetectedIntent:
     ages: list = field(default_factory=list)   # person ages mentioned in the message
     cert_dives: int | None = None              # explicit dive-count requested for certified diving ("2 inmersiones", "paquete de 5 buceos")
     cert_days: int | None = None               # explicit day-count requested instead ("paquete de 3 dias")
+    is_colombian: bool | None = None           # nationality stated in the message (COP vs USD)
     confidence: float = 0.0
     detected_fields: list = field(default_factory=list)
 
@@ -107,6 +108,7 @@ class IntentDetector:
         self._detect_last_dive(message_lower, intent)
         self._detect_duration(message_lower, intent)
         self._detect_location(message_lower, intent)
+        self._detect_nationality(message_lower, intent)
 
         # Certification ("certificado"/"no certificado") is a diving-only
         # concept in this business — if the message mentions it but never
@@ -411,7 +413,10 @@ class IntentDetector:
             (r'\bwe\s+are\s+(\d+|two|three|four|five|six|seven|eight)\b', {'two': 2, 'three': 3, 'four': 4, 'five': 5, 'six': 6, 'seven': 7, 'eight': 8}),
             (r'\b(\d+)\s+of\s+us\b', {}),
             (r'\bgroup\s+of\s+(\d+|two|three|four|five|six|seven|eight)\b', {'two': 2, 'three': 3, 'four': 4, 'five': 5, 'six': 6, 'seven': 7, 'eight': 8}),
-            (r'\b(\d+)\s+(personas?|people|person|friends|amig[oa]s|friend|compañer[oa]s|companer[oa]s|acompañantes|acompanantes)\b', {}),
+            (r'\b(\d+)\s+(personas?|people|person|friends|amig[oa]s|friend|compañer[oa]s|companer[oa]s|acompañantes|acompanantes|divers?|buzos?|buceador[ae]s?)\b', {}),
+            # "2 certified divers" / "3 certified" — a count directly before a
+            # certification word (EN+ES) is a group size.
+            (r'\b(\d+)\s+(?:certified|certificad[oa]s)\b', {}),
             # "una pareja" / "somos pareja" → 2 (capturing group required by loop)
             (r'\b(?:somos\s+)?(?:una?\s+)?(pareja)\b', {'pareja': 2}),
             # "familia de N" → N personas
@@ -816,6 +821,29 @@ class IntentDetector:
             else:                                                # mes(es) / month(s)
                 intent.last_dive_over_2_years = n >= 24
             intent.detected_fields.append("last_dive_over_2_years")
+
+    def _detect_nationality(self, message: str, intent: DetectedIntent) -> None:
+        """Capture nationality stated in the message (drives COP vs USD) so the
+        checkout doesn't re-ask "¿eres colombiano?" when they already said it.
+        Negation is checked first so "no soy colombiano" reads as NOT Colombian."""
+        if intent.is_colombian is not None:
+            return
+        if re.search(
+            r"\bextranjer[oa]s?\b|\bforeigners?\b|\bwe\s+are\s+foreign\b"
+            r"|\bno\s+(?:soy|somos)\s+colombian[oa]s?\b|\bnot\s+colombian\b",
+            message,
+        ):
+            intent.is_colombian = False
+            intent.detected_fields.append("is_colombian")
+            return
+        if re.search(
+            r"\bcolombian[oa]s?\b|\bcolombian\b"
+            r"|\b(?:soy|somos|vivo|vivimos|residente|resido)\b[^.]{0,20}\bcolombia\b"
+            r"|\bfrom\s+colombia\b|\bresident\s+in\s+colombia\b",
+            message,
+        ):
+            intent.is_colombian = True
+            intent.detected_fields.append("is_colombian")
 
     def _detect_duration(self, message: str, intent: DetectedIntent) -> None:
         single_day_patterns = [

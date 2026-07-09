@@ -3668,6 +3668,12 @@ def _apply_detected_intent(intent, state: ConversationState) -> None:
         state.last_dive_over_2_years = intent.last_dive_over_2_years
         logger.info(f"[INTENT] Detected last dive: {intent.last_dive_over_2_years}")
 
+    if getattr(intent, "is_colombian", None) is not None and state.is_colombian is None:
+        # Set only is_colombian; the checkout's _goto_mixed_final_colombian inherits
+        # it (and sets mixed_final_is_colombian + currency) so its skip stays intact.
+        state.is_colombian = intent.is_colombian
+        logger.info(f"[INTENT] Detected nationality is_colombian={intent.is_colombian}")
+
     if intent.duration and not state.detected_duration:
         state.detected_duration = intent.duration
         logger.info(f"[INTENT] Detected duration: {intent.duration}")
