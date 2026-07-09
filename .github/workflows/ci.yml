@@ -88,7 +88,7 @@ jobs:
     # "pre_*" mirror branch (pushed intentionally, not on every routine commit
     # to their integration branch); whichever pushes last "wins" (see
     # docs/deploy-pre-redeploy.md).
-    if: (github.ref == 'refs/heads/feature/pre_gadea' || github.ref == 'refs/heads/feature/pre_alvaro') && github.event_name == 'push'
+    if: (github.ref == 'refs/heads/feature/pre_gadea' || github.ref == 'refs/heads/feature/pre_alvaro' || github.ref == 'refs/heads/feature/pre_pruebaGon') && github.event_name == 'push'
     runs-on: ubuntu-latest
 
     steps:
