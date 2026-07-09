@@ -523,6 +523,38 @@ async def test_word_form_ambiguous_day_count_shows_narrow_menu():
     assert state.mixed_pending_cert_narrow_kind == "1day"
 
 
+@pytest.mark.asyncio
+async def test_word_form_dive_count_resolves_like_digit_english():
+    """Regression (found 2026-07-09 while auditing ES/EN parity): the
+    day-count regex only had Spanish word-numbers (un/dos/tres/cuatro) — EN
+    word-forms ("a two-day package") silently failed to match at all, while
+    the equivalent Spanish phrasing worked fine."""
+    state = ConversationState(conversation_id="word-dive-count-en")
+    resp = await route_message(state, "I am a certified diver, I want two dives, from cartagena")
+    assert state.step == Step.MIXED_ADD_QTY, resp
+    assert state.mixed_pending_qty_plan == "2_dives_1_day"
+
+
+@pytest.mark.asyncio
+async def test_word_form_day_count_resolves_like_digit_english():
+    state = ConversationState(conversation_id="word-day-count-en")
+    resp = await route_message(
+        state, "I am a certified diver, I want a three-day package, from cartagena"
+    )
+    assert state.step == Step.MIXED_ADD_QTY, resp
+    assert state.mixed_pending_qty_plan == "7_dives_3_days"
+
+
+@pytest.mark.asyncio
+async def test_word_form_ambiguous_day_count_shows_narrow_menu_english():
+    state = ConversationState(conversation_id="word-day-narrow-en")
+    resp = await route_message(
+        state, "I am a certified diver, I want a two-day package, from cartagena"
+    )
+    assert state.step == Step.MIXED_ADD_CERT_MULTI_DAY, resp
+    assert state.mixed_pending_cert_narrow_kind == "2day"
+
+
 # ---------------------------------------------------------------------------
 # 12) Day counts we don't sell as packages (0, 5, 6+ days) must NOT be guessed.
 # ---------------------------------------------------------------------------

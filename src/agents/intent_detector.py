@@ -43,13 +43,17 @@ _DIVE_WORD_TO_NUM = {
 }
 
 # Explicit day-count for a multi-day certified package: "paquete de 3 dias",
-# "3 dias de buceo", "3-day package". Unlike dive-count, a bare "3 dias" is too
-# generic to trust on its own (it also means "in 3 days" / "3 days ago"), so
-# this only matches next to a diving/package qualifier.
+# "3 dias de buceo", "3-day package", EN "a two-day package"/"3 days diving".
+# Unlike dive-count, a bare "3 dias"/"3 days" is too generic to trust on its
+# own (it also means "in 3 days" / "3 days ago"), so this only matches next to
+# a diving/package qualifier. Word-form numbers cover both languages (ES "un"/
+# "dos"/"tres"/"cuatro", EN "one"/"two"/"three"/"four") so "a two-day package"
+# resolves the same as "2-day package" — found missing (ES-only) 2026-07-09.
 _CERT_DAY_COUNT_RE = re.compile(
     r"\b(?:paquete|plan)\s+de\s+(\d+|un[oa]?|dos|tres|cuatro)\s*d[ií]as?\b"
     r"|\b(\d+|un[oa]?|dos|tres|cuatro)[\s\-]+d[ií]as?\s+(?:de\s+)?buce\w*\b"
-    r"|\b(\d+)[\s\-]?days?\s+(?:dive\s+)?package\b",
+    r"|\b(\d+|one|two|three|four)[\s\-]?days?\s+(?:of\s+)?(?:dive\s+|diving\s+)?package\b"
+    r"|\b(\d+|one|two|three|four)[\s\-]?days?\s+(?:of\s+)?div(?:e|ing)\b",
     re.IGNORECASE,
 )
 
@@ -764,8 +768,26 @@ class IntentDetector:
     def _detect_location(self, message: str, intent: DetectedIntent) -> None:
         msg_lower = message.lower()
 
-        # Detectar Cartagena
-        if 'cartagena' in msg_lower or 'ctg' in msg_lower:
+        # Detectar Cartagena — incluye apodos históricos reales de la ciudad,
+        # ES y EN ("la heroica"/"the heroic city": Simón Bolívar tras el Sitio
+        # de Morillo de 1815; "corralito de piedra": sus murallas coloniales;
+        # "ciudad redentora": otro título del propio Bolívar; "la ciudad
+        # amurallada"/"the walled city": el centro histórico amurallado, muy
+        # usado por locales y turistas hispanohablantes; "queen of the
+        # caribbean": apodo turístico en inglés).
+        # Encontrado 2026-07-09 que ninguno se reconocía — solo "cartagena"/"ctg".
+        if (
+            'cartagena' in msg_lower
+            or 'ctg' in msg_lower
+            or re.search(r'\bla\s+heroica\b', msg_lower)
+            or re.search(r'\bcorralito\s+de\s+piedra\b', msg_lower)
+            or re.search(r'\bciudad\s+redentora\b', msg_lower)
+            or re.search(r'\b(?:la\s+)?ciudad\s+amurallada\b', msg_lower)
+            or re.search(r'\bcentro\s+amurallado\b', msg_lower)
+            or re.search(r'\b(?:the\s+)?heroic\s+city\b', msg_lower)
+            or re.search(r'\b(?:the\s+)?walled\s+city\b', msg_lower)
+            or re.search(r'\bqueen\s+of\s+the\s+caribbean\b', msg_lower)
+        ):
             intent.location = "cartagena"
             intent.detected_fields.append("location")
 
@@ -823,7 +845,7 @@ class IntentDetector:
             'isla_gigi': [r'\bisla\s+gigi\b'],
             'isla_rosa': [r'\bisla\s+rosa\b'],
             'isla_pelicano': [r'\bisla\s+pelicano\b', r'\bisla\s+pelícano\b', r'\bpelicano\b', r'\bpelícano\b'],
-            'isla_rosario': [r'\bisla\s+rosario\b', r'\bislas\s+del\s+rosario\b', r'\brosario\b'],
+            'isla_rosario': [r'\bisla\s+rosario\b', r'\bislas\s+del\s+rosario\b'],
         }
 
         # Detectar isla primero
@@ -833,6 +855,16 @@ class IntentDetector:
                 intent.location = "island"
                 intent.detected_fields.extend(["island", "location"])
                 break
+
+        # Bare "rosario" also means the island (e.g. "corales del rosario"),
+        # but checked separately from the loop above and guarded against
+        # "rezar el rosario" — the Catholic prayer, a common phrase in
+        # Colombia. Pre-existing false positive (bare \brosario\b in the loop
+        # above matched it too) found 2026-07-09 while auditing nicknames.
+        if not intent.island and re.search(r'\brosario\b', msg_lower) and not re.search(r'\brezar\b', msg_lower):
+            intent.island = "isla_rosario"
+            intent.location = "island"
+            intent.detected_fields.extend(["island", "location"])
 
         # Patrones de hoteles (con muchas más variantes)
         hotel_patterns = {
@@ -976,6 +1008,30 @@ class IntentDetector:
                     intent.location = "island"
                 intent.detected_fields.append("hotel")
                 break
+
+        # Fallback: "vamos desde las islas" / "ya estoy en la isla" / "estamos
+        # en las islas" / EN "we are on the islands" / "from the islands" — no
+        # specific island/hotel named, but a real bug seen live on PRE
+        # (2026-07-09): with no generic pattern here, this message never set
+        # location, so the bot kept re-asking "¿desde dónde sales?" even
+        # though the customer had just answered it. Only checked when no
+        # island/hotel/Cartagena match already fired above; leaves `island`
+        # unset so the ISLAND_MENU step still asks which island (same as
+        # clicking "🏝️ Ya estoy en las islas").
+        # "los rosarios" / EN "the rosarios" — informal plural nickname for
+        # the whole archipelago (found via web search 2026-07-09). Deliberately
+        # NOT matching the singular "el rosario": in Colombia that phrase
+        # overwhelmingly means the Catholic prayer ("rezar el rosario"), not
+        # the islands — too risky to treat as a location signal. The plural
+        # (ES and EN) is unambiguous.
+        if not intent.location and (
+            re.search(r'\b(?:desde|en)\s+las?\s+islas?\b', msg_lower)
+            or re.search(r'\b(?:from|on|at)\s+the\s+islands?\b', msg_lower)
+            or re.search(r'\blos\s+rosarios\b', msg_lower)
+            or re.search(r'\bthe\s+rosarios\b', msg_lower)
+        ):
+            intent.location = "island"
+            intent.detected_fields.append("location")
 
     def _calculate_confidence(self, intent: DetectedIntent) -> None:
         field_weights = {

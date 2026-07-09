@@ -160,6 +160,107 @@ def test_solo_self_not_triggered_with_companions_or_numbers(msg):
     assert _d(msg).group_size is None
 
 
+# --- Generic "las islas" location (no specific island/hotel named) ---------
+
+@pytest.mark.parametrize("msg", [
+    "vamos desde las islas",
+    "ya estoy en las islas",
+    "estamos en la isla",
+    "salimos desde la isla",
+])
+def test_generic_islands_phrase_sets_island_location(msg):
+    """Regression (found live on PRE, 2026-07-09): a customer saying they're
+    on/from "las islas" without naming a specific island/hotel never set
+    intent.location — the bot kept re-asking '¿desde dónde sales?' even after
+    the customer had just answered it in the same message."""
+    assert _d(msg).location == "island"
+
+
+def test_screenshot_message_detects_island_location():
+    """Exact message from the PRE bug report."""
+    i = _d("Hola queremos bucear somos 5 certificados y queremos el paqiete de 7, vamos desde las islas")
+    assert i.location == "island"
+    assert i.activity == "certified_diving"
+    assert i.is_certified is True
+    assert i.group_size == 5
+
+
+@pytest.mark.parametrize("msg", [
+    "we are going from the islands",
+    "we are already on the islands",
+    "I am on the island",
+    "we come from the islands",
+    "leaving from the islands",
+])
+def test_generic_islands_phrase_sets_island_location_english(msg):
+    """Same gap as the Spanish regression above, confirmed to affect the
+    English phrasing too."""
+    assert _d(msg).location == "island"
+
+
+# --- Real-world nicknames for Cartagena / the islands (found via web search,
+# 2026-07-09) ------------------------------------------------------------
+
+@pytest.mark.parametrize("msg", [
+    "salimos de la heroica",
+    "estamos en el corralito de piedra",
+    "venimos de la ciudad redentora",
+    "cartagena de indias",
+    "salimos de la ciudad amurallada",
+    "estamos en el centro amurallado",
+])
+def test_cartagena_nicknames_set_cartagena_location(msg):
+    """"La Heroica" (title Simón Bolívar gave the city after the 1815 Siege of
+    Morillo), "Corralito de Piedra" (its colonial stone walls), "Ciudad
+    Redentora", and "Ciudad Amurallada" (its historic walled center — the
+    Spanish equivalent of "the Walled City") are real, commonly used
+    nicknames for Cartagena — none were recognized before."""
+    assert _d(msg).location == "cartagena"
+
+
+def test_los_rosarios_informal_plural_sets_island_location():
+    """"Los rosarios" is a common informal way to refer to the whole Rosario
+    Islands archipelago, distinct from a specific island."""
+    assert _d("vamos a los rosarios").location == "island"
+
+
+@pytest.mark.parametrize("msg", [
+    "rezar el rosario todos los dias",
+    "voy a la iglesia a rezar el rosario",
+])
+def test_praying_the_rosary_does_not_trigger_island_location(msg):
+    """Regression: bare "rosario" matching the island pre-dates this session
+    and already collided with "rezar el rosario" (the Catholic prayer, a
+    common phrase in Colombia) — found while auditing location nicknames."""
+    assert _d(msg).location is None
+
+
+@pytest.mark.parametrize("msg", [
+    "we leave from the walled city",
+    "we are in the heroic city",
+    "cartagena is the queen of the caribbean",
+])
+def test_cartagena_nicknames_english(msg):
+    """English equivalents of the Spanish nicknames above — "the Heroic
+    City"/"the Walled City"/"Queen of the Caribbean" are real, commonly used
+    English-language nicknames for Cartagena."""
+    assert _d(msg).location == "cartagena"
+
+
+@pytest.mark.parametrize("msg", [
+    "coming from the rosarios",
+    "we are at the rosarios",
+])
+def test_the_rosarios_english_sets_island_location(msg):
+    """English equivalent of "los rosarios" — confirmed in use by English-
+    language tour sites."""
+    assert _d(msg).location == "island"
+
+
+def test_praying_the_rosary_english_does_not_trigger_island_location():
+    assert _d("I pray the rosary every day").location is None
+
+
 # --- Explicit certified dive-count detection --------------------------------
 
 @pytest.mark.parametrize("msg,expected", [
