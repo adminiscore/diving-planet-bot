@@ -566,6 +566,30 @@ async def test_rag_food_query_returns_canonical_kb_answer_without_search(monkeyp
     assert "Frutas de temporada" not in response
 
 
+# --- Food canonical must not hijack broader booking queries ------------------
+
+@pytest.mark.parametrize("q", [
+    "¿qué comida incluye el tour?",
+    "el almuerzo es vegetariano?",
+    "hay opción vegana?",
+    "tengo alergia al marisco, pueden atenderme?",
+    "cuánto cuesta el almuerzo?",
+])
+def test_food_canonical_still_fires_for_plain_food_questions(q):
+    assert rag_agent._canonical_food_answer(q, "es") is not None
+
+
+@pytest.mark.parametrize("q", [
+    # A booking/recommendation query that merely mentions a dietary word must NOT
+    # be answered with only the food blurb (owner-found weird-battery bug D1).
+    "Hola, somos 8, 3 con open water y 2 advanced, presupuesto 2000, uno es vegetariano y otro celiaco, ¿qué nos recomiendan y cuánto sale?",
+    "we are 6 divers, one is vegan, which package do you recommend and how much",
+    "quiero reservar para 4 personas, uno tiene alergia, ¿qué me recomiendas?",
+])
+def test_food_canonical_defers_for_broader_booking_query(q):
+    assert rag_agent._canonical_food_answer(q, "es") is None
+
+
 # --- #2: curated "what do you offer for diving?" overview -------------------
 
 @pytest.mark.parametrize("q", [

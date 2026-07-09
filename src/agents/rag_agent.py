@@ -677,8 +677,26 @@ def _food_policy_answer(lang: str) -> str | None:
     return None
 
 
+# The food canonical answer must NOT hijack a broader booking/recommendation
+# query that merely mentions a dietary word (e.g. "somos 8, 3 open water... uno
+# vegetariano, ¿qué recomiendan y cuánto sale?"). When the message also carries
+# group-composition / cert-level / budget / recommendation / package signals,
+# food is incidental — let RAG answer the whole thing (it still covers the food).
+_FOOD_HIJACK_GUARD = re.compile(
+    r"\b(?:recomien\w+|recommend\w*|presupuesto|budget|"
+    r"\d+\s+personas?|somos\s+\d+|we\s+are\s+\d+|group\s+of\s+\d+|"
+    r"open\s+water|advanced|rescue|divemaster|"
+    r"paquete|package|reserv\w+|book)\b",
+    re.IGNORECASE,
+)
+
+
 def _canonical_food_answer(query: str, lang: str) -> str | None:
     if not FOOD_QUERY_PATTERN.search(query):
+        return None
+
+    # Food is incidental inside a bigger booking/recommendation query -> defer to RAG.
+    if _FOOD_HIJACK_GUARD.search(query):
         return None
 
     if DIETARY_QUERY_PATTERN.search(query):
