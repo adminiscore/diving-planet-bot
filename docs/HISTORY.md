@@ -1,6 +1,20 @@
 History
 =======
 
+0.20.5 - (2026-07-09)
+----------------------
+* **Bug real reportado en vivo en PRE por Gonzalo (captura de Chatwoot): el bot se saltaba la pregunta de isla/hotel**. Cuando `location=="island"` se detectaba directo del PRIMER mensaje libre (isla nombrada, o el fallback genérico "vamos desde las islas" de v0.20.4) y el flujo entraba por `_should_skip_to_certified_flow` o por el camino de grupo mixto en `supervisor.py`, se resolvía el plan de buceo sin preguntar nunca isla ni hotel — el resumen final asumía silenciosamente "Islas del Rosario" con un horario de recogida inventado, aunque nunca se supo el hotel real. El camino equivalente vía la pregunta explícita `MIXED_LOCATION` (`_after_location_set`) ya encadenaba isla→hotel correctamente; a estos dos puntos les faltaba la misma comprobación (`if location=="island" and not hotel: preguntar isla/hotel primero`). Corregido reutilizando `_goto_island_hotel_menu_or_unknown` en ambos.
+* Confirmado en ES y EN: cantidad del grupo, isla nombrada vs. genérica, camino de grupo mixto (cert+snorkel), y el caso exacto reportado (conteo incompleto tipo "el paquete de 7" sin unidad) — todos preservan la cadena isla→hotel→plan correctamente.
+* Suite: **1353 passed**, 6 skipped (mismos fallos preexistentes sin relación por falta de `OPENAI_API_KEY` en el entorno local).
+
+0.20.4 - (2026-07-09)
+----------------------
+* **Bug real reportado en vivo en PRE por Gonzalo (captura de Chatwoot): "vamos desde las islas" no fijaba la ubicación**. `_detect_location` (`intent_detector.py`) solo reconocía islas/hoteles nombrados específicamente — una frase genérica como "vamos desde las islas" / "ya estoy en la isla" nunca fijaba `location`, así que el bot repreguntaba "¿desde dónde sales?" aunque el cliente ya lo hubiera respondido en el mismo mensaje. Arreglado con un patrón de respaldo (ES: "desde/en las islas"; EN: "from/on/at the island(s)") que solo se aplica si ninguna isla/hotel/Cartagena específica coincidió antes — deja la isla sin fijar para que `ISLAND_MENU` siga preguntando cuál, igual que si el cliente pulsara "🏝️ Ya estoy en las islas".
+* **Auditoría de paridad ES/EN**: el conteo de días en palabras ("a two-day package") no funcionaba en inglés — el regex de conteo por días solo tenía números en palabra en español (`un/dos/tres/cuatro`), nunca se añadieron los equivalentes en inglés. Corregido.
+* **Apodos reales de Cartagena y las islas, investigados vía web y añadidos a la detección de ubicación** (ES + EN): Cartagena — "la heroica"/"the heroic city" (título de Simón Bolívar tras el Sitio de Morillo, 1815), "corralito de piedra", "ciudad redentora", "la ciudad amurallada"/"centro amurallado"/"the walled city", "queen of the caribbean". Islas del Rosario — "los rosarios"/"the rosarios" (nickname plural informal del archipiélago).
+* **Bug preexistente encontrado de paso (no introducido esta sesión) y corregido**: el patrón genérico `\brosario\b` para detectar Isla Rosario colisionaba con "rezar el rosario" (la oración católica, frase muy común en Colombia) — cualquier mención de rezar el rosario activaba erróneamente `location=island`. Separado del patrón bare con una guarda explícita.
+* Suite: **1347 passed**, 6 skipped (mismos fallos preexistentes sin relación por falta de `OPENAI_API_KEY` en el entorno local).
+
 0.20.3 - (2026-07-08)
 ---------------------
 * **Feedback del owner — 8 ajustes de UX/flujo** (probados en vivo + tests):
