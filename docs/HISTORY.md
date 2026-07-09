@@ -1,6 +1,13 @@
 History
 =======
 
+0.20.7 - (2026-07-09)
+----------------------
+* **Bug real reportado en vivo en PRE: "el pack de 5" se olvidaba y volvía a preguntar el plan**. El detector de conteo de inmersiones/días exigía siempre una palabra de unidad ("inmersiones"/"buceos"/"días") pegada al número — "el pack de 5" (sin decir "inmersiones") no se reconocía en absoluto. Arreglado con un nuevo patrón de respaldo para "paquete/pack/plan de N" sin unidad, que resuelve como inmersiones **solo** cuando N es inequívoco (5, 7, 9 — nunca son un conteo válido de días, cuyo máximo es 4). Para 2, 3, 4 (que sí podrían ser inmersiones O días) sigue sin adivinar, tal como debe ser. De paso: la palabra "pack" tampoco estaba reconocida como calificador para el conteo por días (solo "paquete"/"plan").
+* Auditados exhaustivamente los números 1-10, en dígito y en palabra, español e inglés (40 combinaciones) — comportamiento idéntico y correcto en todos los casos. Ver `tests/test_intent_robustness.py`.
+* **Bug real de RAG reportado en vivo en PRE: preguntar "¿cuánto cuestan 2 inmersiones?" devolvía el precio/descripción del paquete de 3 inmersiones** (con nocturna), y en un caso el bot llegó a decir que "no tenemos un paquete específico de dos inmersiones" (alucinación) pese a existir en el catálogo. Causa: no había ninguna FAQ curada para "2 inmersiones (1 día) desde Cartagena" — solo la variante "si ya estoy en las islas" — así que el RAG recuperaba el chunk del paquete de 3 inmersiones (cuya descripción contiene literalmente "2 inmersiones diurnas"). Añadida la FAQ que faltaba en `data/knowledge_base/faqs.json`, con el precio correcto y una nota explícita distinguiéndola del paquete de 3. **Pendiente de verificar en vivo en PRE tras el reindex** — no se pudo probar localmente (sin `OPENAI_API_KEY`/Postgres+pgvector local).
+* Suite: **1480 passed**, 6 skipped (mismos fallos preexistentes sin relación).
+
 0.20.6 - (2026-07-09)
 ----------------------
 * **Estudio exhaustivo de robustez (5 baterías, ~90 casos raros/nuevos en vivo) + 8 bugs reales arreglados** (todos con tests):
