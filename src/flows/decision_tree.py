@@ -768,7 +768,7 @@ COMPANION_PRICE = _load_companion_price()
 MESSAGES = {
     "welcome": {
         "es": (
-            "¡Hola! Soy *Coral* 🪸, tu asistente de *Diving Planet*, el primer centro de buceo "
+            "¡Hola! Soy *Coral* 🪸 y te doy la bienvenida a *Diving Planet*, el primer centro de buceo "
             "PADI 5 Estrellas de Colombia, con 30 años de experiencia en "
             "las Islas del Rosario, Cartagena.\n\n"
             "Selecciona tu idioma / Select your language:\n\n"
@@ -776,7 +776,7 @@ MESSAGES = {
             "🌐 English"
         ),
         "en": (
-            "Hi! I'm *Coral* 🪸, your *Diving Planet* assistant — Colombia's first "
+            "Hi! I'm *Coral* 🪸, welcome to *Diving Planet* — Colombia's first "
             "PADI 5 Star Dive Center, with 30 years of experience in "
             "the Rosario Islands, Cartagena.\n\n"
             "Select your language / Selecciona tu idioma:\n\n"
@@ -794,13 +794,13 @@ MESSAGES = {
     },
     "welcome_detected": {
         "es": (
-            "¡Hola! Soy *Coral* 🪸, tu asistente de *Diving Planet*, el primer centro de buceo "
+            "¡Hola! Soy *Coral* 🪸 y te doy la bienvenida a *Diving Planet*, el primer centro de buceo "
             "PADI 5 Estrellas de Colombia, con 30 años de experiencia en "
             "las Islas del Rosario, Cartagena.\n\n"
             "¡Cuéntame! ¿Qué te gustaría hacer?"
         ),
         "en": (
-            "Hi! I'm *Coral* 🪸, your *Diving Planet* assistant — Colombia's first "
+            "Hi! I'm *Coral* 🪸, welcome to *Diving Planet* — Colombia's first "
             "PADI 5 Star Dive Center, with 30 years of experience in "
             "the Rosario Islands, Cartagena.\n\n"
             "What would you like to do?"
@@ -1102,8 +1102,8 @@ MESSAGES = {
         "en": "For *how many people*?",
     },
     "mixed_add_preview": {
-        "es": "¿Quieres *añadir esta actividad al carrito* o ver primero el itinerario completo?",
-        "en": "Would you like to *add this activity to the cart* or view the full itinerary first?",
+        "es": "¿Te la *añado a tu reserva*? (al terminar te paso el enlace para reservarla)",
+        "en": "Shall I *add it to your booking*? (at the end I'll send you the link to book it)",
     },
     "mixed_cert_last_dive": {
         "es": (
@@ -1753,13 +1753,11 @@ BUTTON_OPTIONS = {
     },
     "mixed_preview_actions": {
         "es": [
-            {"title": "🛒 Añadir al carrito", "value": "1"},
-            {"title": "🗺️ Ver itinerario completo", "value": "itinerary"},
+            {"title": "✅ Sí, añadir a mi reserva", "value": "1"},
             {"title": "🔙 Volver", "value": "back"},
         ],
         "en": [
-            {"title": "🛒 Add to cart", "value": "1"},
-            {"title": "🗺️ View full itinerary", "value": "itinerary"},
+            {"title": "✅ Yes, add to my booking", "value": "1"},
             {"title": "🔙 Back", "value": "back"},
         ],
     },
@@ -5628,6 +5626,113 @@ class DecisionTree:
             return MESSAGES["not_understood"][lang]
         return self._goto_mixed_final_summary(state)
 
+    def _cart_booking_blocks(self, state: ConversationState) -> list[dict]:
+        """One block per bookable activity in the cart (kids split into their real
+        activity by age), each with price + booking URL — for the per-activity
+        summary + link that closes the flow."""
+        lang = state.language
+        blocks: list[dict] = []
+
+        def add(svc: dict, qty: int, label: str, url: str | None):
+            blocks.append({
+                "label": label, "qty": qty,
+                "usd": svc.get("price_usd"), "cop": svc.get("price_cop"), "url": url,
+            })
+
+        for item in state.mixed_cart:
+            qty = item.get("qty", 0)
+            it = item.get("type")
+            if it == "refresh" or qty <= 0:
+                continue
+            if it == "beginner":
+                beg = SERVICES.get(self._cart_service_id("beginner", None, state)) or {}
+                beg_name = beg.get(f"name_{lang}") or ("Minicurso de Buceo" if lang == "es" else "Dive Mini-Course")
+                beg_url = _resolve_service_booking_url(beg, state)
+                u8 = min(state.kids_under_8_count or 0, qty)
+                e10 = min(state.kids_eight_to_ten_count or 0, max(0, qty - u8))
+                if u8 > 0 or e10 > 0:
+                    adult = max(0, qty - u8 - e10)
+                    if adult > 0:
+                        add(beg, adult, beg_name, beg_url)
+                    if u8 > 0:
+                        snk = SERVICES.get(self._service_for_location("snorkeling", state)) or {}
+                        nm = (snk.get(f"name_{lang}") or "Snorkel") + (" [menores de 8]" if lang == "es" else " [under 8]")
+                        add(snk, u8, nm, _resolve_service_booking_url(snk, state))
+                    if e10 > 0:
+                        add(beg, e10, beg_name + " [Bubble Makers]", beg_url)
+                    continue
+                add(beg, qty, beg_name, beg_url)
+                continue
+            if it == "companion":
+                blocks.append({
+                    "label": self._cart_label_for(it, None, lang), "qty": qty,
+                    "usd": COMPANION_PRICE.get("usd_online"), "cop": COMPANION_PRICE.get("cop_online"), "url": None,
+                })
+                continue
+            svc_id = self._cart_service_id(it, item.get("plan"), state)
+            svc = SERVICES.get(svc_id) or {}
+            label = svc.get(f"name_{lang}") or item.get("label") or self._cart_label_for(it, item.get("plan"), lang)
+            url = None if _is_contact_only_service(svc_id) else _resolve_service_booking_url(svc, state)
+            add(svc, qty, label, url)
+        return blocks
+
+    def _format_activity_booking_messages(self, state: ConversationState) -> list[str]:
+        """One message per cart activity: summary + price + '👉 click here' + link.
+        Sent as separate WhatsApp messages (joined with MESSAGE_SPLIT upstream)."""
+        lang = state.language
+        primary = state.mixed_display_currency
+
+        def money(usd, cop, qty=1):
+            if primary == "COP":
+                return f"COP {int((cop or 0) * qty):,}".replace(",", ".") if cop else None
+            return f"${int(round(float(usd) * qty))} USD" if usd else None
+
+        includes = (
+            "✅ Incluye: transporte Cartagena-Islas-Cartagena, almuerzo, equipo y seguro."
+            if lang == "es"
+            else "✅ Includes: Cartagena-Islands transport, lunch, gear and insurance."
+        )
+        if state.location == "island":
+            includes = (
+                "✅ Incluye: equipo, seguro y acompañamiento de un profesional PADI (sin transporte desde Cartagena ni almuerzo)."
+                if lang == "es"
+                else "✅ Includes: gear, insurance and a PADI professional (no Cartagena transport or lunch)."
+            )
+        depart = (
+            ("📍 Salida desde Cartagena (Muelle de la Bodeguita, 8:00 a.m.)." if lang == "es"
+             else "📍 Departure from Cartagena (Muelle de la Bodeguita, 8:00 a.m.).")
+            if state.location != "island"
+            else ("📍 Recogida en tu hotel de las islas." if lang == "es" else "📍 Pickup at your island hotel.")
+        )
+        cta = ("👉 *Para más información y hacer tu reserva, haz clic aquí:*"
+               if lang == "es" else "👉 *For more information and to book, click here:*")
+        wa = ("👉 Para reservar esto, escríbenos por WhatsApp al +57 320 231515."
+              if lang == "es" else "👉 To book this, message us on WhatsApp at +57 320 231515.")
+
+        msgs: list[str] = []
+        for b in self._cart_booking_blocks(state):
+            qty = b["qty"]
+            lines = [f"🤿 *{b['label']}*"]
+            pp = money(b["usd"], b["cop"])
+            if pp:
+                if qty > 1:
+                    sub = money(b["usd"], b["cop"], qty)
+                    lines.append(
+                        f"💰 {qty} × {pp} p.p. = *{sub}* (reservando online)" if lang == "es"
+                        else f"💰 {qty} × {pp} p.p. = *{sub}* (online rate)"
+                    )
+                else:
+                    lines.append(
+                        f"💰 *{pp}* por persona (reservando online)" if lang == "es"
+                        else f"💰 *{pp}* per person (online rate)"
+                    )
+            lines.append(includes)
+            lines.append(depart)
+            lines.append("")
+            lines.extend([cta, b["url"]] if b["url"] else [wa])
+            msgs.append("\n".join(lines))
+        return msgs
+
     def _mixed_final_summary_buttons(self, state: ConversationState) -> list[dict]:
         """Payment/action buttons for the final summary, by nationality.
 
@@ -5659,9 +5764,32 @@ class DecisionTree:
         ]
 
     def _goto_mixed_final_summary(self, state: ConversationState) -> str:
-        state.step = Step.MIXED_FINAL_SUMMARY
-        state.quick_replies = self._mixed_final_summary_buttons(state)
-        return self._format_mixed_final_summary(state)
+        """Close the flow with ONE message per activity: summary + price + the
+        booking link for that activity's web page (no cart/itinerary/payment
+        buttons). Multiple activities → multiple separate messages."""
+        lang = state.language
+        msgs = self._format_activity_booking_messages(state)
+        state.quick_replies = []
+        state.pending_lead_note_reason = "grupo mixto - resumen por actividad + links de reserva enviados"
+        if not msgs:
+            state.step = Step.ESCALATE
+            state.pending_escalation_reason = "grupo mixto - cierre de reserva sin link directo"
+            return (
+                "¡Perfecto! Te paso con un asesor para cerrar los detalles de tu reserva. 🌊"
+                if lang == "es"
+                else "Perfect! I'll connect you with an advisor to finalize your booking. 🌊"
+            )
+        state.step = Step.FREE_TEXT
+        # Keep a plain-text copy for the lead note / extra_context.
+        state.mixed_last_summary = "\n\n———\n\n".join(msgs)
+        closing = (
+            "\n\n_El precio es el mismo en pesos (COP) o dólares (USD), sin cobro extra por la divisa._ "
+            "Si necesitas algo más o tienes cualquier duda, escríbeme. 🌊"
+            if lang == "es"
+            else "\n\n_The price is the same in COP or USD, with no extra charge for the currency._ "
+            "If you need anything else or have any questions, just ask. 🌊"
+        )
+        return MESSAGE_SPLIT.join(msgs) + closing
 
     def _handle_mixed_final_summary(self, state: ConversationState, message: str) -> str:
         lang = state.language

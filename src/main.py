@@ -182,7 +182,7 @@ _CHAT_PAGE = (
     """ + _EMBLEM + """
     <div class="eyebrow">Desde 1995 · 30 años bajo el mar</div>
     <h1>Diving Planet <span class="accent">Cartagena</span></h1>
-    <p class="tagline">Reserva buceo, cursos PADI y snorkel en las Islas del Rosario con <b>Coral</b> 🪸, nuestra asistente virtual. Pregúntale lo que quieras — te responde al instante. 🐠</p>
+    <p class="tagline">Reserva buceo, cursos PADI y snorkel en las Islas del Rosario con <b>Coral</b> 🪸. Pregúntale lo que quieras — te responde al instante. 🐠</p>
     <div class="chips">
       <span class="chip">⭐ <b>PADI</b> 5 Star</span>
       <span class="chip">🐠 Islas del Rosario</span>
