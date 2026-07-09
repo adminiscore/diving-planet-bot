@@ -261,6 +261,80 @@ def test_praying_the_rosary_english_does_not_trigger_island_location():
     assert _d("I pray the rosary every day").location is None
 
 
+# --- Info retention: last-dive stated in the message --------------------------
+
+@pytest.mark.parametrize("msg,expected", [
+    ("somos 2 buzos certificados, buceamos hace un mes", False),
+    ("buceamos hace 6 meses", False),
+    ("no hace mas de 2 anos que buceamos", False),
+    ("we dived recently", False),
+    ("dived last month", False),
+    ("llevo 5 anos sin bucear", True),
+    ("hace mas de 3 anos que no buceo", True),
+    ("mi ultima inmersion fue hace 3 anos", True),
+    ("buceamos hace 2 anos", True),
+    ("buceo hace 18 meses", False),
+])
+def test_last_dive_captured_from_message(msg, expected):
+    assert _d(msg).last_dive_over_2_years is expected
+
+
+@pytest.mark.parametrize("msg", [
+    "soy certificado",              # no last-dive info
+    "reserve hace un mes",          # not a diving context
+    "quiero bucear 2 dias",
+])
+def test_last_dive_not_falsely_detected(msg):
+    assert _d(msg).last_dive_over_2_years is None
+
+
+def test_recent_dive_skips_last_dive_question_end_to_end():
+    """A fully-specified cert booking that states a recent last dive must NOT be
+    re-asked the '¿más de 2 años?' question — it goes straight to the preview."""
+    from src.agents.supervisor import _route_detected_intent
+    st = ConversationState(conversation_id="ret"); st.language = "es"
+    msg = "somos 2 buzos certificados, 2 inmersiones, desde cartagena, buceamos hace un mes"
+    _route_detected_intent(_d(msg), st, msg)
+    assert st.step != Step.MIXED_CERT_LAST_DIVE
+    assert st.step == Step.MIXED_ADD_PREVIEW
+
+
+# --- Info retention: "N persona" singular counts as group size ---------------
+
+@pytest.mark.parametrize("msg,expected", [
+    ("quiero el minicurso para 1 persona", 1),
+    ("snorkel para 2 persona", 2),
+    ("just 1 person", 1),
+])
+def test_singular_persona_counts_as_group_size(msg, expected):
+    assert _d(msg).group_size == expected
+
+
+# --- Under-10 kids can't be certified (safe split) --------------------------
+
+def test_under_10_kids_split_out_of_certified_group():
+    """'familia de 5: papá y mamá certificados, 3 niños de 6, 9 y 13' — the 6- and
+    9-year-olds cannot hold a certification (OW min age 10), so they become
+    beginners; the 13yo (who CAN be certified) stays in the cert count."""
+    i = _d("familia de 5: papa y mama certificados, 3 ninos de 6, 9 y 13, desde cartagena")
+    assert i.group_allocation == {"certified_diving": 3, "minicourse": 2}
+
+
+def test_single_under_10_kid_split_from_certified_pair():
+    i = _d("somos 2 buzos certificados y mi hijo de 6")
+    assert i.group_allocation == {"certified_diving": 1, "minicourse": 1}
+
+
+@pytest.mark.parametrize("msg", [
+    "somos 3 buzos certificados",                       # no ages at all
+    "somos 4 certificados, dos adolescentes de 14 y 16",  # teens CAN be certified
+    "somos 3 certificados de 25, 30 y 35",              # adults
+    "soy buzo certificado, tengo 30 años",              # single adult
+])
+def test_no_kid_split_when_no_under_10_age(msg):
+    assert _d(msg).group_allocation is None
+
+
 # --- Explicit certified dive-count detection --------------------------------
 
 @pytest.mark.parametrize("msg,expected", [

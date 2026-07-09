@@ -118,9 +118,41 @@ class IntentDetector:
             intent.activity = "certified_diving"
             intent.detected_fields.append("activity")
 
+        self._split_out_uncertifiable_kids(intent)
+
         self._calculate_confidence(intent)
 
         return intent
+
+    # PADI Open Water (the entry certification) has a minimum age of 10, so a
+    # child under 10 can NEVER be a certified diver. This is a hard, unambiguous
+    # rule (no false positives) — unlike guessing whether a teenager is certified.
+    _MIN_CERTIFIED_AGE = 10
+
+    def _split_out_uncertifiable_kids(self, intent: "DetectedIntent") -> None:
+        """When a group is tagged certified but includes kids too young to hold a
+        certification (detected age < 10), split those kids out as non-certified
+        so the flow handles them by age (snorkel / Bubble Makers) instead of
+        counting them as certified divers.
+
+        E.g. "familia de 5: papá y mamá certificados, 3 niños de 6, 9 y 13" — the
+        6- and 9-year-olds cannot be certified, so it becomes 3 certified + 2
+        beginners (the flow then adapts each kid by age). Only the under-10 kids
+        are moved; a 13-year-old CAN be certified, so it's left in the cert count.
+        """
+        if intent.is_certified is not True:
+            return
+        if intent.group_allocation is not None:
+            return  # respect an explicit split already parsed
+        if not intent.group_size or not intent.ages:
+            return
+        young = [a for a in intent.ages if a < self._MIN_CERTIFIED_AGE]
+        if not young or intent.group_size <= len(young):
+            return
+        cert_qty = intent.group_size - len(young)
+        intent.group_allocation = {"certified_diving": cert_qty, "minicourse": len(young)}
+        if "group_allocation" not in intent.detected_fields:
+            intent.detected_fields.append("group_allocation")
 
     def _detect_language(self, message: str, intent: DetectedIntent) -> None:
         spanish_keywords = {
@@ -379,7 +411,7 @@ class IntentDetector:
             (r'\bwe\s+are\s+(\d+|two|three|four|five|six|seven|eight)\b', {'two': 2, 'three': 3, 'four': 4, 'five': 5, 'six': 6, 'seven': 7, 'eight': 8}),
             (r'\b(\d+)\s+of\s+us\b', {}),
             (r'\bgroup\s+of\s+(\d+|two|three|four|five|six|seven|eight)\b', {'two': 2, 'three': 3, 'four': 4, 'five': 5, 'six': 6, 'seven': 7, 'eight': 8}),
-            (r'\b(\d+)\s+(personas|people|friends|amig[oa]s|friend|compañer[oa]s|companer[oa]s|acompañantes|acompanantes)\b', {}),
+            (r'\b(\d+)\s+(personas?|people|person|friends|amig[oa]s|friend|compañer[oa]s|companer[oa]s|acompañantes|acompanantes)\b', {}),
             # "una pareja" / "somos pareja" → 2 (capturing group required by loop)
             (r'\b(?:somos\s+)?(?:una?\s+)?(pareja)\b', {'pareja': 2}),
             # "familia de N" → N personas
@@ -714,29 +746,76 @@ class IntentDetector:
             intent.ages = sorted(set(ages))
             intent.detected_fields.append("ages")
 
+    _LASTDIVE_NUM = {
+        "un": 1, "uno": 1, "una": 1, "unos": 2, "unas": 2, "dos": 2, "tres": 3,
+        "cuatro": 4, "cinco": 5, "seis": 6, "a": 1, "an": 1, "one": 1, "two": 2,
+        "three": 3, "four": 4, "five": 5, "six": 6, "couple": 2, "few": 3,
+    }
+
+    def _last_dive_num(self, token: str) -> int:
+        token = token.lower()
+        return int(token) if token.isdigit() else self._LASTDIVE_NUM.get(token, 1)
+
     def _detect_last_dive(self, message: str, intent: DetectedIntent) -> None:
-        last_dive_patterns = [
-            (r'\búltima\s+inmersión\s+(?:fue\s+)?hace\s+(\d+)\s+(año|años|mes|meses)', 'es'),
-            (r'\blast\s+dive\s+(?:was\s+)?(\d+)\s+(year|years|month|months)\s+ago', 'en'),
-            (r'\bhace\s+(\d+)\s+(año|años|mes|meses)\s+(?:que\s+)?(?:buceo|buceé|bucee)', 'es'),
-            (r'\bdived\s+(\d+)\s+(year|years|month|months)\s+ago', 'en'),
-            (r'\bmi\s+última\s+inmersión\s+fue\s+hace\s+(\d+)\s+(año|años|mes|meses)', 'es'),
-            (r'\bmy\s+last\s+dive\s+was\s+(\d+)\s+(year|years|month|months)\s+ago', 'en'),
-        ]
+        """Capture whether the last dive was over 2 years ago (drives the refresher
+        question). Only fires in a diving context so an unrelated "hace un mes"
+        doesn't set it; harmless anyway since it's only used in the certified flow.
+        """
+        if intent.last_dive_over_2_years is not None:
+            return
+        # Must be talking about diving for this to be a last-dive statement.
+        if not re.search(r"\b(buce\w*|inmersi\w+|dive\w*|dived|sin\s+bucear)\b", message):
+            return
 
-        for pattern, lang in last_dive_patterns:
-            match = re.search(pattern, message)
-            if match:
-                number = int(match.group(1))
-                unit = match.group(2)
+        num = r"(\d+|un[oa]?|unos|unas|dos|tres|cuatro|cinco|seis|a|an|one|two|three|four|five|six|couple|few)"
 
-                if 'año' in unit or 'year' in unit:
-                    intent.last_dive_over_2_years = number >= 2
-                elif 'mes' in unit or 'month' in unit:
-                    intent.last_dive_over_2_years = number >= 24
-
-                intent.detected_fields.append("last_dive_over_2_years")
-                break
+        # Explicitly recent -> NOT over 2 years.
+        if re.search(
+            r"\b(hace\s+poco|recientemente|el\s+mes\s+pasado|la\s+semana\s+pasada|"
+            r"este\s+(?:mes|ano|año)|recently|last\s+month|last\s+week|just\s+dived|"
+            r"a\s+few\s+months\s+ago|this\s+(?:month|year))\b",
+            message,
+        ):
+            intent.last_dive_over_2_years = False
+            intent.detected_fields.append("last_dive_over_2_years")
+            return
+        # "no hace más de N años" / "hace menos de N años" / "less than N years" -> NOT over.
+        if re.search(
+            r"\bno\s+(?:hace|llevo|llevamos|ha\s+pasado)\b.{0,20}\bm[aá]s\s+de\b"
+            r"|\bhace\s+menos\s+de\b|\bmenos\s+de\s+\d+\s+a[nñ]os"
+            r"|\bless\s+than\s+\d+\s+years?\b",
+            message,
+        ):
+            intent.last_dive_over_2_years = False
+            intent.detected_fields.append("last_dive_over_2_years")
+            return
+        # "más de N años" / "N años sin bucear" / "haven't dived in N years" -> over if N>=2.
+        m_over = (
+            re.search(rf"\bhace\s+m[aá]s\s+de\s+{num}\s+a[nñ]os", message)
+            or re.search(rf"\b{num}\s+a[nñ]os\s+sin\s+bucear", message)
+            or re.search(rf"\bllev\w+\s+{num}\s+a[nñ]os\s+sin\s+bucear", message)
+            or re.search(rf"\bhaven'?t\s+dived\s+(?:in\s+)?{num}\s+years?", message)
+            or re.search(rf"\bmore\s+than\s+{num}\s+years?\b", message)
+        )
+        if m_over:
+            intent.last_dive_over_2_years = self._last_dive_num(m_over.group(1)) >= 2
+            intent.detected_fields.append("last_dive_over_2_years")
+            return
+        # Generic "hace N año(s)/mes(es)" (digit or word), verb optional either side.
+        m2 = (
+            re.search(rf"\bhace\s+{num}\s+(a[nñ]os?|mes(?:es)?)", message)
+            or re.search(rf"\b[uú]ltima\s+inmersi[oó]n\s+(?:fue\s+)?hace\s+{num}\s+(a[nñ]os?|mes(?:es)?)", message)
+            or re.search(rf"\bdived\s+{num}\s+(years?|months?)\s+ago", message)
+            or re.search(rf"\blast\s+dive\s+(?:was\s+)?{num}\s+(years?|months?)\s+ago", message)
+        )
+        if m2:
+            n = self._last_dive_num(m2.group(1))
+            unit = m2.group(2)
+            if unit.startswith("a") or unit.startswith("y"):   # año(s) / year(s)
+                intent.last_dive_over_2_years = n >= 2
+            else:                                                # mes(es) / month(s)
+                intent.last_dive_over_2_years = n >= 24
+            intent.detected_fields.append("last_dive_over_2_years")
 
     def _detect_duration(self, message: str, intent: DetectedIntent) -> None:
         single_day_patterns = [

@@ -3851,13 +3851,36 @@ class DecisionTree:
         lang = state.language
         pre_qty = state.mixed_pending_cert_total_qty
         if pre_qty and pre_qty > 0:
-            # Cantidad ya conocida → ir directamente a última inmersión
             state.mixed_pending_qty_value = pre_qty
+            # If the customer already told us when they last dived ("buceamos hace
+            # un mes", "hace más de 3 años"), don't re-ask — apply it directly.
+            skipped = self._skip_last_dive_if_known(state)
+            if skipped is not None:
+                return skipped
+            # Cantidad ya conocida → ir directamente a última inmersión
             state.step = Step.MIXED_CERT_LAST_DIVE
             msg_key = "mixed_cert_last_dive_group" if pre_qty > 1 else "mixed_cert_last_dive"
             self.set_quick_replies(state, "mixed_cert_last_dive")
             return MESSAGES[msg_key][lang]
         return self._goto_mixed_add_qty(state)
+
+    def _skip_last_dive_if_known(self, state: ConversationState) -> str | None:
+        """If the last-dive answer is already known (from the initial message),
+        route as if the customer had answered the question, so it isn't re-asked:
+        over 2 years → offer the refresher; otherwise → straight to the preview.
+        Returns the next message, or None if we still need to ask."""
+        known = state.detected_last_dive_over_2_years
+        if known is None:
+            known = state.last_dive_over_2_years
+        if known is None:
+            return None
+        state.last_dive_over_2_years = known
+        if known is True:      # >2 years → refresher interest (same as answering "sí")
+            state.step = Step.MIXED_CERT_REFRESH_INTEREST
+            self.set_quick_replies(state, "refresher_interest")
+            return self._refresher_info_msg(state)
+        # <2 years → proceed straight to the preview (same as answering "no")
+        return self._prepare_mixed_add_preview(state, self._current_mixed_cert_service_id(state))
 
     def _pop_detected_cert_counts(self, state: ConversationState) -> tuple[int | None, int | None]:
         """Consume (dives, days) detected before we knew enough to resolve the
