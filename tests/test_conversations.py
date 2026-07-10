@@ -2258,7 +2258,7 @@ async def test_mixed_qty_appends_to_cart_and_goes_to_review():
     assert state.mixed_cart == []
     resp = await route_message(state, "3")  # ten_plus → preview
     assert state.step == Step.MIXED_ADD_PREVIEW
-    assert "añadir esta actividad al carrito" in resp.lower() or "add this activity to the cart" in resp.lower()
+    assert "añado a tu reserva" in resp.lower() or "add it to your booking" in resp.lower()
     resp = await route_message(state, "1")
     assert state.step == Step.MIXED_CART_REVIEW
     assert len(state.mixed_cart) == 1
@@ -2298,7 +2298,7 @@ async def test_mixed_cert_2dives_qty_appends_to_cart():
     assert state.step == Step.MIXED_CERT_LAST_DIVE
     resp = await route_message(state, "2")  # recent dive / no refresher needed
     assert state.step == Step.MIXED_ADD_PREVIEW
-    assert "añadir esta actividad al carrito" in resp.lower() or "itinerario completo" in resp.lower()
+    assert "añado a tu reserva" in resp.lower() or "add it to your booking" in resp.lower()
     await route_message(state, "1")  # add to cart
     assert state.step == Step.MIXED_CART_REVIEW
     assert state.mixed_cart[0]["type"] == "cert"
@@ -2390,8 +2390,8 @@ async def test_mixed_final_kids_skipped_when_no_beginner():
     state = await reach_mixed_add_activity()
     await send(state, "3", "2", "1")  # snorkel x2
     await route_message(state, "6")  # confirm cart (cart-action 6)
-    await route_message(state, "2")  # not colombian → no beginner → skip kids → summary
-    assert state.step == Step.MIXED_FINAL_SUMMARY
+    await route_message(state, "2")  # not colombian → per-activity summary + link
+    assert state.step == Step.FREE_TEXT
     assert state.mixed_final_has_kids_8_10 is None
 
 
@@ -2410,254 +2410,132 @@ async def test_mixed_final_kids_not_asked_again_at_checkout():
     state = await reach_mixed_add_activity()
     await send(state, "2", "3", "3", "1")  # 3 beginners, kids ten_plus inline
     await route_message(state, "6")  # confirm cart (cart-action 6)
-    await route_message(state, "2")  # not colombian → straight to summary (no kids step)
-    assert state.step == Step.MIXED_FINAL_SUMMARY
+    await route_message(state, "2")  # not colombian → per-activity summary + link
+    assert state.step == Step.FREE_TEXT
 
 
 @pytest.mark.asyncio
-async def test_mixed_full_path_lands_on_final_summary():
+async def test_mixed_full_path_lands_on_per_activity_link():
     state = await reach_mixed_add_activity()
     await send(state, "2", "3", "3", "1")  # 3 beginners, kids 10+ inline
     await route_message(state, "6")  # confirm (cart-action 6)
-    await route_message(state, "2")  # not colombian → summary
-    assert state.step == Step.MIXED_FINAL_SUMMARY
+    resp = await route_message(state, "2")  # not colombian → per-activity summary + link
+    assert state.step == Step.FREE_TEXT
+    assert "clic aquí" in resp.lower() or "click here" in resp.lower()
+    assert "divingplanet.org" in resp
 
 
 @pytest.mark.asyncio
-async def test_mixed_final_summary_shows_restaurant_bill():
+async def test_final_summary_is_per_activity_with_link_no_bill():
+    """New flow: the closing is one message per activity with its price + booking
+    link — no combined 'restaurant bill' / total / payment buttons."""
     state = await reach_mixed_add_activity()
     await send(state, "1", "1", "2", "2", "1")  # cert 2-dives x2, recent dive, preview add
     await send(state, "2", "3", "1", "1")  # add (cart-action 2) snorkel x1
-    await send(state, "6", "2")  # confirm (cart-action 6), not colombian, no private
-    assert state.step == Step.MIXED_FINAL_SUMMARY
-    resp = state.mixed_last_summary or ""
-    assert "RESERVA" in resp or "BOOKING" in resp
-    assert "ACTIVIDADES" in resp or "ACTIVITIES" in resp
-    assert "TOTAL" in resp
-    assert "ESTIMADO" not in resp and "ESTIMATED" not in resp  # #4: no "estimated total"
+    await send(state, "6", "2")  # confirm, not colombian
+    assert state.step == Step.FREE_TEXT
+    summary = state.mixed_last_summary or ""
+    assert "clic aquí" in summary.lower() or "click here" in summary.lower()
+    assert "divingplanet.org" in summary
+    assert "ESTIMADO" not in summary and "TOTAL ESTIMADO" not in summary
+    # both activities present in the per-activity messages
+    assert "inmersiones" in summary.lower() or "buceo" in summary.lower()
+    assert "snorkel" in summary.lower()
 
 
 @pytest.mark.asyncio
-async def test_mixed_final_summary_avisos_only_when_relevant():
-    """Small group (qty<6), no kids, no private → no Avisos block."""
+async def test_final_summary_no_payment_buttons():
+    """No cart/itinerary/payment buttons at the close — just the links."""
     state = await reach_mixed_add_activity()
     await send(state, "3", "2", "1")  # snorkel x2
-    await send(state, "6", "2")  # confirm (cart-action 6), not colombian, no private
-    resp = state.mixed_last_summary or ""
-    assert "Avisos" not in resp
+    await send(state, "6", "2")  # confirm, not colombian
+    assert state.step == Step.FREE_TEXT
+    assert state.quick_replies == []
 
 
 @pytest.mark.asyncio
-async def test_mixed_final_summary_large_group_shows_aviso():
+async def test_final_large_group_still_gives_link():
     state = await reach_mixed_add_activity()
     await send(state, "3", "6+")
     await route_message(state, "8")  # 8 snorkelers
     await route_message(state, "1")  # preview add
-    await send(state, "6", "2")  # confirm (cart-action 6), not colombian, no private
-    resp = state.mixed_last_summary or ""
-    assert "Avisos" in resp
-    assert "Grupo grande" in resp or "Large group" in resp
+    await send(state, "6", "2")  # confirm, not colombian
+    summary = state.mixed_last_summary or ""
+    assert "8 ×" in summary or "8 x" in summary.lower()
+    assert "divingplanet.org" in summary
 
 
 @pytest.mark.asyncio
-async def test_mixed_final_summary_kids_yes_shows_aviso_and_stays_in_summary():
-    """Kids 8-10 answered inline at minicurso add; summary shows Bubble Makers warning."""
+async def test_final_kids_8_10_labeled_bubble_makers():
+    """Kids 8-10 are split into their own activity message, labelled Bubble Makers."""
     state = await reach_mixed_add_activity()
-    # beginner, qty 3, kids 8-10 (choice 2), 2 kids in that range, preview add
-    await send(state, "2", "3", "2", "2", "1")
-    # confirm (cart-action 6), not colombian, no private
-    await send(state, "6", "2")
-    assert state.step == Step.MIXED_FINAL_SUMMARY
+    await send(state, "2", "3", "2", "2", "1")  # beginner qty3, kids 8-10 x2, preview add
+    await send(state, "6", "2")  # confirm, not colombian
+    assert state.step == Step.FREE_TEXT
     assert state.mixed_final_has_kids_8_10 is True
-    assert state.kids_age_group == "eight_to_ten"
-    assert state.kids_count == 2
-    resp = state.mixed_last_summary or ""
-    assert "Bubble Makers" in resp or "8-10" in resp
+    summary = state.mixed_last_summary or ""
+    assert "Bubble Makers" in summary
 
 
 @pytest.mark.asyncio
 async def test_private_boat_question_no_longer_asked():
     """#3: the proactive 'private boat?' question is removed — after nationality
-    the flow goes straight to the summary, and the summary has no private line."""
+    the flow closes with the per-activity links, no private line."""
     state = await reach_mixed_add_activity()
     await send(state, "3", "2", "1")  # snorkel x2
-    await send(state, "6", "2")  # confirm, not colombian → summary directly
-    assert state.step == Step.MIXED_FINAL_SUMMARY
+    await send(state, "6", "2")  # confirm, not colombian
+    assert state.step == Step.FREE_TEXT
     assert state.mixed_final_wants_private is None
-    resp = state.mixed_last_summary or ""
-    assert "lancha privada" not in resp.lower()
+    summary = state.mixed_last_summary or ""
+    assert "lancha privada" not in summary.lower()
 
 
 @pytest.mark.asyncio
-async def test_mixed_final_summary_colombian_shows_cop_primary():
+async def test_final_summary_colombian_shows_cop_and_link():
     state = await reach_mixed_add_activity()
-    # beginner, qty 2, kids 10+ inline, preview add
-    await send(state, "2", "2", "3", "1")
-    # confirm (cart-action 6), COLOMBIAN, no private
-    await send(state, "6", "1")
-    resp = state.mixed_last_summary or ""
-    assert "COP" in resp
-    assert "descuento" in resp.lower() or "discount" in resp.lower()
+    await send(state, "2", "2", "3", "1")  # 2 beginners, kids 10+ inline, preview add
+    await send(state, "6", "1")  # COLOMBIAN
+    summary = state.mixed_last_summary or ""
+    assert "COP" in summary
+    assert "divingplanet.org" in summary
 
 
 @pytest.mark.asyncio
-async def test_mixed_final_summary_cartagena_shows_transport_note():
+async def test_final_summary_cartagena_shows_includes_note():
     state = await reach_mixed_add_activity(location="cartagena")
     await send(state, "3", "2", "1")  # snorkel x2
-    await send(state, "6", "2")  # confirm (cart-action 6), not colombian, no private
-    resp = state.mixed_last_summary or ""
-    assert "transporte" in resp.lower() or "transport" in resp.lower()
+    await send(state, "6", "2")  # confirm, not colombian
+    summary = state.mixed_last_summary or ""
+    assert "transporte" in summary.lower() or "transport" in summary.lower()
 
 
 @pytest.mark.asyncio
-async def test_mixed_final_summary_snorkel_waiver_only_when_snorkel():
-    """Without snorkel the snorkel-specific note must NOT appear."""
-    state = await reach_mixed_add_activity()
-    await send(state, "1", "1", "2", "2", "1")  # cert 2-dives x2 (no snorkel in cart)
-    await send(state, "6", "2")  # confirm (cart-action 6), not colombian, no private
-    resp = state.mixed_last_summary or ""
-    assert "formulario específico de snorkel" not in resp.lower()
-
-
-@pytest.mark.asyncio
-async def test_mixed_final_summary_reservar_non_colombian_sends_links():
-    """Non-Colombian clients pay 100% online: Reservar sends the booking
-    link(s) directly instead of escalating to an advisor."""
-    state = await reach_mixed_add_activity()
-    await send(state, "3", "2", "1")  # snorkel x2
-    await send(state, "6", "2")  # confirm (cart-action 6), not colombian, no private
-    response = await route_message(state, "1")  # Reservar
-    assert state.step == Step.FREE_TEXT
-    assert state.pending_escalation_reason is None
-    assert "divingplanet.org" in response
-    assert state.pending_note is not None
-    assert "Lead Diving Planet" in state.pending_note
-
-
-@pytest.mark.asyncio
-async def test_mixed_final_summary_reservar_no_link_falls_back_to_escalation():
-    """When the cart has no direct link to give (contact-only item), Reservar
-    still escalates even for a non-Colombian client."""
-    from src.flows.decision_tree import DecisionTree
-
-    state = make_state()
-    state.mixed_cart = [
-        {"type": "course", "qty": 1, "plan": "divemaster", "label": "Divemaster"}
-    ]
-    DecisionTree()._format_mixed_final_summary(state)  # populates mixed_booking_links
-    state.step = Step.MIXED_FINAL_SUMMARY
-    state.mixed_final_is_colombian = False
-    assert not state.mixed_booking_links
-    await route_message(state, "1")  # Reservar
-    assert state.step == Step.ESCALATE
-    assert state.pending_note is not None
-
-
-@pytest.mark.asyncio
-async def test_mixed_final_summary_colombian_pay_full_escalates():
-    """#7: Colombian '100% online' escalates through an advisor (COP + payment),
-    with the chosen method noted."""
-    state = await reach_mixed_add_activity()
-    await send(state, "3", "2", "1")  # snorkel x2
-    await send(state, "6", "1")  # confirm, COLOMBIAN → summary
-    await route_message(state, "pay_full")
-    assert state.step == Step.ESCALATE
-    assert "100% online" in (state.pending_escalation_reason or "")
-    assert state.pending_note is not None
-    assert "Lead Diving Planet" in state.pending_note
-
-
-@pytest.mark.asyncio
-async def test_non_colombian_summary_has_no_pay_in_person_option():
-    """#6: non-Colombian clients pay 100% online — no 'pay in person' button."""
-    state = await reach_mixed_add_activity()
-    await send(state, "3", "2", "1")  # snorkel x2
-    await send(state, "6", "2")  # confirm, not colombian → summary
-    titles = [b["title"].lower() for b in state.quick_replies]
-    assert not any(("persona" in t or "in person" in t) for t in titles)
-    values = [b.get("value") for b in state.quick_replies]
-    assert "1" in values  # single "book (online)" action
-    assert "cash" not in values and "3" not in values
-
-
-@pytest.mark.asyncio
-async def test_colombian_summary_offers_full_and_split_payment():
-    """#7: Colombian clients get 100%-online and 50/50 options (no plain cash)."""
-    state = await reach_mixed_add_activity()
-    await send(state, "3", "2", "1")  # snorkel x2
-    await send(state, "6", "1")  # confirm, COLOMBIAN → summary
-    values = [b.get("value") for b in state.quick_replies]
-    assert "pay_full" in values
-    assert "pay_split" in values
-
-
-@pytest.mark.asyncio
-async def test_colombian_pay_split_escalates_with_method_noted():
-    """#7: the 50/50 choice escalates with the split noted for the advisor."""
-    state = await reach_mixed_add_activity()
-    await send(state, "3", "2", "1")  # snorkel x2
-    await send(state, "6", "1")  # confirm, COLOMBIAN → summary
-    resp = await route_message(state, "pay_split")
-    assert state.step == Step.ESCALATE
-    assert "50%" in (state.pending_escalation_reason or "")
-    assert "50%" in resp
-
-
-@pytest.mark.asyncio
-async def test_mixed_final_summary_restart_wipes_state():
-    state = await reach_mixed_add_activity()
-    await send(state, "3", "2", "1")
-    await send(state, "6", "2")  # confirm (cart-action 6), not colombian, no private
-    await route_message(state, "2")  # Empezar de nuevo
-    assert state.step == Step.MIXED_ENTRY
-    assert state.mixed_cart == []
-
-
-@pytest.mark.asyncio
-async def test_mixed_lead_note_includes_cart_items():
+async def test_final_summary_two_activities_are_separate_messages():
+    """Two activities → two separate messages (joined with MESSAGE_SPLIT)."""
+    from src.flows.decision_tree import MESSAGE_SPLIT
     state = await reach_mixed_add_activity()
     await send(state, "1", "1", "2", "2", "1")  # cert 2-dives x2
-    await send(state, "2", "2", "3", "3", "1")  # add (cart-action 2) beginner x3 (kids 10+ inline)
-    # confirm (cart-action 6), not colombian, no private
-    await send(state, "6", "2")
-    await route_message(state, "1")  # Reservar
+    await send(state, "2", "3", "1", "1")  # add snorkel x1
+    resp = await send(state, "6", "2")  # confirm, not colombian
+    final = resp[-1]
+    assert MESSAGE_SPLIT in final  # sent as two separate messages
+    assert final.count("divingplanet.org") >= 2
+
+
+@pytest.mark.asyncio
+async def test_final_summary_builds_lead_note_for_advisor():
+    state = await reach_mixed_add_activity()
+    await send(state, "1", "1", "2", "2", "1")  # cert 2-dives x2
+    await send(state, "2", "2", "3", "3", "1")  # add beginner x3 (kids 10+ inline)
+    await send(state, "6", "2")  # confirm, not colombian → per-activity links
     note = state.pending_note or ""
     assert "Grupo mixto" in note
     assert (
         "Buceo certificado" in note
-        or "Certified" in note
         or "2 inmersiones" in note
-        or "2 dives" in note
         or "buzos certificados" in note.lower()
     )
     assert "Minicurso" in note or "principiantes" in note.lower() or "beginner" in note.lower()
-
-
-@pytest.mark.asyncio
-async def test_mixed_final_summary_non_colombian_stores_booking_links():
-    state = await reach_mixed_add_activity()
-    # beginner, qty 2, kids 10+ inline, preview add
-    await send(state, "2", "2", "3", "1")
-    # confirm (cart-action 6), not colombian, no private
-    await send(state, "6", "2")
-    # En el nuevo flujo los links NO se incluyen en el summary; se guardan en estado y
-    # se envían al pulsar "Reservar".
-    resp = state.mixed_last_summary or ""
-    assert "book.divingplanet.org" not in resp
-    # Los links sí están guardados en state.mixed_booking_links
-    assert state.mixed_booking_links
-    assert any("divingplanet.org" in url for _, url in state.mixed_booking_links)
-
-
-@pytest.mark.asyncio
-async def test_mixed_final_summary_colombian_no_whatsapp_note_inline():
-    state = await reach_mixed_add_activity()
-    await send(state, "2", "2", "3", "1")  # 2 beginners, kids 10+ inline
-    await send(state, "6", "1")  # confirm (cart-action 6), COLOMBIAN, no private
-    resp = state.mixed_last_summary or ""
-    # Quitamos la nota inline de WhatsApp; el descuento se coordina en escalación.
-    assert "book.divingplanet.org" not in resp
-    assert "WhatsApp" not in resp
 
 
 # --- LLM intent classifier (mocked) ----------------------------------------
@@ -2931,7 +2809,7 @@ async def test_kids_question_skipped_for_cert_only_adult_cart():
     await route_message(state, "6")  # checkout (cart-action 6)
     await route_message(state, "2")  # No colombiano → summary (private question removed)
     assert state.step != Step.MIXED_FINAL_KIDS
-    assert state.step == Step.MIXED_FINAL_SUMMARY
+    assert state.step == Step.FREE_TEXT
 
 
 @pytest.mark.asyncio
@@ -3162,10 +3040,11 @@ async def test_kids_mixed_summary_shows_three_split_rows():
     assert "Snorkel" in summary
     assert "menores de 8" in summary.lower() or "[menores de 8]" in summary
     assert "Bubble Makers" in summary
-    # Adult portion = 2 (5 - 2 - 1) at minicurso, kids u8=2 at snorkel, e10=1 at minicurso
-    assert "2 × Minicurso de Buceo" in summary  # adult row
-    assert "2 × Tour de Snorkeling [menores de 8]" in summary
-    assert "1 × Minicurso de Buceo [Bubble Makers]" in summary
+    # Adult portion = 2 (5 - 2 - 1) at minicurso, kids u8=2 at snorkel, e10=1 at minicurso.
+    # New per-activity format: label on its own line, quantity on the price line.
+    assert "[menores de 8]*" in summary   # snorkel block for u8 (qty 2)
+    assert "[Bubble Makers]*" in summary  # bubble-makers block for e10 (qty 1)
+    assert "2 ×" in summary               # adult minicurso qty 2 (qty-1 blocks say "por persona")
 
 
 @pytest.mark.asyncio

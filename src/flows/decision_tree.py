@@ -5633,10 +5633,11 @@ class DecisionTree:
         lang = state.language
         blocks: list[dict] = []
 
-        def add(svc: dict, qty: int, label: str, url: str | None):
+        def add(svc: dict, qty: int, label: str, url: str | None, note: str | None = None):
             blocks.append({
                 "label": label, "qty": qty,
                 "usd": svc.get("price_usd"), "cop": svc.get("price_cop"), "url": url,
+                "note": note,
             })
 
         for item in state.mixed_cart:
@@ -5657,9 +5658,19 @@ class DecisionTree:
                     if u8 > 0:
                         snk = SERVICES.get(self._service_for_location("snorkeling", state)) or {}
                         nm = (snk.get(f"name_{lang}") or "Snorkel") + (" [menores de 8]" if lang == "es" else " [under 8]")
-                        add(snk, u8, nm, _resolve_service_booking_url(snk, state))
+                        u8_note = (
+                            "_Los menores de 8 no pueden bucear; hacen snorkel (desde 6 años)._"
+                            if lang == "es"
+                            else "_Under 8 cannot dive; they snorkel instead (from age 6)._"
+                        )
+                        add(snk, u8, nm, _resolve_service_booking_url(snk, state), u8_note)
                     if e10 > 0:
-                        add(beg, e10, beg_name + " [Bubble Makers]", beg_url)
+                        e10_note = (
+                            "_Programa Bubble Makers (8-10 años), con supervisor especializado._"
+                            if lang == "es"
+                            else "_Bubble Makers program (ages 8-10), with a specialized supervisor._"
+                        )
+                        add(beg, e10, beg_name + " [Bubble Makers]", beg_url, e10_note)
                     continue
                 add(beg, qty, beg_name, beg_url)
                 continue
@@ -5728,6 +5739,8 @@ class DecisionTree:
                     )
             lines.append(includes)
             lines.append(depart)
+            if b.get("note"):
+                lines.append(b["note"])
             lines.append("")
             lines.extend([cta, b["url"]] if b["url"] else [wa])
             msgs.append("\n".join(lines))
