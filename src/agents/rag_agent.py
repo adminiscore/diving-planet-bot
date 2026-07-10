@@ -16,6 +16,7 @@ from src.agents.grounding_check import (
     capacity_claims_grounded,
     currency_amounts_grounded,
     is_grounded,
+    requests_personal_data,
     urls_grounded,
 )
 from src.agents.query_rewriter import condense_query
@@ -327,6 +328,7 @@ Reglas estrictas — nunca las incumplas:
 - Nunca des consejos médicos ni autorices buceo por una condición médica individual. Deriva a asesor para esos casos.
 - EXCEPCIÓN: preguntas sobre el programa de buceo adaptado DIVE TO HEAL (personas con discapacidad, accesibilidad, síndrome de Down, autismo, movilidad reducida, discapacidad visual, auditiva, parálisis cerebral) SÍ puedes responderlas con la información factual del programa. Es información pública del centro, no consejo médico personal.
 - Nunca pidas ni repitas datos sensibles (IDs, cuentas, comprobantes de pago, números de tarjeta).
+- NUNCA gestiones la reserva recogiendo datos en el chat: no pidas nombres y apellidos, cédula/pasaporte, correo ni fechas "para confirmar la reserva". Tú NO tramitas reservas. El cierre correcto es SIEMPRE: enviar el link de reserva online del servicio (si está en el contexto) o pasar con un asesor humano — el asesor o el formulario oficial recogen los datos, nunca tú.
 - No escribas respuestas largas tipo folleto si el cliente hizo una pregunta concreta.
 - Cuando el cliente mencione *varias personas con intención de reservar* (ej: "yo X y mi pareja/él/ella Y", "somos 3 y unos quieren snorkel otros buceo"), NO asignes roles persona-actividad ("Para ti…/Para ella…") ni cites precios individuales por persona. Solo describe las actividades disponibles de forma *neutral* (1-2 frases breves) y deriva al asesor para que confirme la composición exacta del grupo y el precio total.
 
@@ -370,6 +372,7 @@ _SYSTEM_PROMPT_EN_BODY = """Strict rules — never break these:
 - Never give medical advice or authorize diving based on an individual's medical condition. Always refer to an advisor for those cases.
 - EXCEPTION: questions about the DIVE TO HEAL adaptive diving program (people with disabilities, accessibility, Down Syndrome, autism, reduced mobility, visual or hearing impairment, cerebral palsy) CAN be answered using the program's factual information. This is public information about the center, not personal medical advice.
 - Never request or repeat sensitive data (IDs, accounts, payment receipts, card numbers).
+- NEVER process a booking by collecting data in chat: do not ask for full names, ID/passport numbers, email or dates "to confirm the booking". You do NOT process bookings. The correct close is ALWAYS: send the service's online booking link (if present in the context) or hand off to a human advisor — the advisor or the official form collects the data, never you.
 - Do not write long brochure-style replies when the customer asked a concrete question.
 - When the customer mentions *multiple people with booking intent* (e.g. "I want X and my partner/he/she Y", "we are 3 and some want snorkel others diving"), do NOT assign person-activity roles ("For you…/For her…") nor quote individual per-person prices. Just describe the available activities *neutrally* (1-2 short sentences) and route to the human advisor so they confirm the exact group composition and total price. The bot's structured flow already builds the cart with quantities; your only job in this case is brief context + escalation.
 
@@ -1151,6 +1154,10 @@ async def rag_answer(
                 last_reject = "ungrounded_url"
             elif not capacity_claims_grounded(answer, grounding_context):
                 last_reject = "ungrounded_capacity"
+            elif requests_personal_data(answer):
+                # Never run a manual booking ritual in chat (names/ID/passport):
+                # bookings close with the online link or an advisor handoff.
+                last_reject = "requests_personal_data"
             elif not verify_grounding and not require_grounding:
                 return answer
             else:

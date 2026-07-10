@@ -1,6 +1,12 @@
 History
 =======
 
+0.20.9 - (2026-07-10)
+---------------------
+* **Bug reportado en vivo (captura): el bot gestionaba la reserva recogiendo datos personales en el chat** ("necesitaré que me confirmes: 1. Nombres y apellidos... 2. Número de identificación (cédula o pasaporte)... 3. Fecha..."). El LLM improvisaba el ritual manual del asesor humano pese a la regla de datos sensibles del prompt — y ningún guard determinista lo vigilaba. El cierre correcto de reserva es SIEMPRE el link de reserva online o derivar al asesor (el asesor/formulario oficial recogen los datos, nunca el bot).
+* Fix doble: (1) nuevo guard determinista `requests_personal_data` en `grounding_check.py` (verbo de petición + sustantivo de identidad en la misma cláusula, o el ritual en lista numerada) enganchado a la cadena de guards de `rag_answer` — regenera y si reincide cae al fallback; distingue RECOGER datos de DESCRIBIR el formulario o de "lleva tu cédula el día de la salida". (2) Regla explícita nueva en el prompt ES+EN ("NUNCA gestiones la reserva recogiendo datos en el chat..."). Verificado 3/3 en el escenario exacto de la captura (Advanced + hotel + fechas → "¿cómo reservamos?"): ahora deriva a asesor/WhatsApp sin pedir un solo dato. Tests en `test_rag_safety.py` (14 casos, incluida la forma literal del fallo).
+* Suite: 1536 passed, 6 skipped. Ruff limpio.
+
 0.20.8 - (2026-07-09)
 ---------------------
 * **Bug reportado en vivo (captura): tras enviar los links de reserva, una pregunta general ("¿qué animales se ven?") caía al fallback.** El cierre de reserva NO era la causa (deja el estado en `Step.FREE_TEXT` a propósito). La causa real: PRE corre `RAG_MIN_SCORE=0.50` y el FAQ correcto de vida marina puntúa **coseno 0.45** → se descartaba y el bot se quedaba sin contexto.

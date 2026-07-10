@@ -1315,3 +1315,55 @@ async def test_no_kb_docs_forces_grounding_even_when_caller_skips_it(monkeypatch
     assert judge_calls, "the grounding judge must run even with verify_grounding=False"
     assert answer == rag_agent.FALLBACK_ES
     assert "peces loro" not in answer
+
+
+# --- Personal-data collection guard ------------------------------------------
+# Regression (live PRE, 2026-07-09): closing an Advanced course conversation,
+# the bot improvised the human advisor's manual booking ritual — "necesitaré
+# que me confirmes: 1. Nombres y apellidos... 2. Número de identificación...".
+# Bookings must close with the online booking link or an advisor handoff; the
+# bot never collects identity data in chat.
+
+from src.agents.grounding_check import requests_personal_data
+
+
+@pytest.mark.parametrize("answer", [
+    # The exact live-PRE failure shape (numbered ritual).
+    ("Para eso, necesitaré que me confirmes lo siguiente:\n"
+     "1. **Nombres y apellidos** de ambos.\n"
+     "2. **Número de identificación** (puede ser cédula o pasaporte).\n"
+     "3. **Fecha en la que quieren hacer la reserva**."),
+    "Envíame tu nombre completo y tu cédula para confirmar la reserva.",
+    "Por favor confirma tu número de pasaporte y la fecha de nacimiento.",
+    "Me confirmas los nombres y apellidos de los buzos?",
+    "Please share your full names and passport numbers to book you in.",
+    "I will need your ID number and date of birth.",
+])
+def test_requests_personal_data_detects_collection(answer):
+    assert requests_personal_data(answer) is True
+
+
+@pytest.mark.parametrize("answer", [
+    # Describing the official form is fine — it's not collecting in chat.
+    "Antes de la salida deberás llenar el formulario de exoneración con tus datos.",
+    # Telling them the advisor/WhatsApp handles it is the CORRECT behavior.
+    "Escríbenos por WhatsApp al +57 320 231515 y un asesor confirmará tu reserva.",
+    "Para reservar, haz clic aquí: https://book.divingplanet.org/book/salidas-de-buceo/1",
+    # Innocent mentions of documents.
+    "Recuerda llevar tu cédula o pasaporte el día de la salida.",
+    "El día del curso preséntate con tu carné de certificación.",
+    # Generic questions with no identity data.
+    "¿Para cuántas personas sería la reserva?",
+    "",
+])
+def test_requests_personal_data_ignores_legitimate_mentions(answer):
+    assert requests_personal_data(answer) is False
+
+
+def test_system_prompt_forbids_booking_data_collection():
+    from src.agents.rag_agent import build_system_prompt
+
+    es = build_system_prompt("es")
+    en = build_system_prompt("en")
+    assert "recogiendo datos en el chat" in es
+    assert "collecting data in chat" in en

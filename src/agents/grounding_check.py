@@ -110,6 +110,56 @@ def capacity_claims_grounded(answer: str, context: str) -> bool:
     return answer_caps.issubset(_capacity_claim_numbers(context))
 
 
+# --------------------------------------------------------------------------- #
+# Personal-data collection guard
+#
+# The bot must NEVER run a manual booking process in chat ("send me full names,
+# ID/passport numbers and the date to book you in"). Bookings close with the
+# online booking link or a human-advisor handoff; the official form/advisor
+# collects personal data. The LLM occasionally improvises that advisor ritual
+# (seen live on PRE, 2026-07-09) despite the system-prompt rule, so this is a
+# deterministic backstop: reject answers that REQUEST identity data.
+#
+# Requesting = a request verb near an identity-data noun. Merely DESCRIBING a
+# form ("el formulario pide tus datos") or telling the customer to WhatsApp the
+# advisor with their info does not match.
+# --------------------------------------------------------------------------- #
+
+_PD_REQUEST_VERB = (
+    r"(?:necesit(?:o|are|aria)\s+que\s+me|me\s+(?:confirm[ae]s|env[ií][ae]s|compart[ae]s|indi(?:que|ca)s|di(?:ga|ce)s|pas[ae]s|facilit[ae]s)|"
+    r"envíame|enviame|compárteme|comparteme|indícame|indicame|pásame|pasame|"
+    r"por\s+favor\s+(?:envia|envía|comparte|indica|confirma)|"
+    r"(?:i\s+(?:will\s+)?need|please\s+(?:share|send|provide|confirm)|send\s+me|share\s+with\s+me|provide\s+(?:me\s+)?(?:with\s+)?your)"
+    r")"
+)
+_PD_IDENTITY_NOUN = (
+    r"(?:nombres?\s+(?:y\s+apellidos?|completos?)|apellidos?|"
+    r"n[uú]mero\s+de\s+(?:identificaci[oó]n|documento|c[eé]dula|pasaporte)|"
+    r"c[eé]dula|pasaporte|documento\s+de\s+identidad|"
+    r"fecha\s+de\s+nacimiento|"
+    r"full\s+names?|passport|id\s+number|identification\s+number|date\s+of\s+birth)"
+)
+# Request verb followed by an identity noun within a short window (same clause).
+_PD_REQUEST = re.compile(
+    _PD_REQUEST_VERB + r"[^.!?\n]{0,120}?" + _PD_IDENTITY_NOUN,
+    re.IGNORECASE,
+)
+# Numbered-list ritual: a line that is basically "1. Nombres y apellidos ..." /
+# "2. Numero de identificacion ..." (the live-PRE failure shape), regardless of
+# where the request verb sits.
+_PD_LIST_ITEM = re.compile(
+    r"(?:^|\n)\s*(?:\d+[.)]|[-*•])\s*\**\s*" + _PD_IDENTITY_NOUN,
+    re.IGNORECASE,
+)
+
+
+def requests_personal_data(answer: str) -> bool:
+    """True if the answer asks the customer to hand over identity data in chat."""
+    if not answer:
+        return False
+    return bool(_PD_REQUEST.search(answer) or _PD_LIST_ITEM.search(answer))
+
+
 # Explicit links the answer might emit (http(s):// or www.).
 _URL_PATTERN = re.compile(r"(?:https?://|www\.)\S+", re.IGNORECASE)
 
