@@ -424,10 +424,15 @@ def _referral_escalation_message(state: "ConversationState") -> str:
 
 
 def _resolve_service_booking_url(service: dict, state: "ConversationState") -> str | None:
-    """Pick the right booking link for the service's catalog entry given location."""
+    """Pick the right booking link for the service's catalog entry given location,
+    localized to the conversation language (the catalog stores ?language=es)."""
     if state.location == "island" and service.get("booking_url_island"):
-        return service["booking_url_island"]
-    return service.get("booking_url")
+        url = service["booking_url_island"]
+    else:
+        url = service.get("booking_url")
+    if url and state.language == "en":
+        url = url.replace("language=es", "language=en")
+    return url
 
 
 def _format_booking_links_block(links: list[tuple[str, str]], lang: str) -> str:

@@ -2523,6 +2523,18 @@ async def test_final_summary_two_activities_are_separate_messages():
 
 
 @pytest.mark.asyncio
+async def test_final_summary_booking_link_localized_to_english():
+    """English conversation → booking link uses ?language=en (catalog stores es)."""
+    from src.flows.decision_tree import DecisionTree
+    state = make_state(lang="en")
+    state.mixed_cart = [{"type": "cert", "qty": 1, "plan": "2_dives_1_day", "label": "Diving"}]
+    state.mixed_display_currency = "USD"
+    resp = DecisionTree()._goto_mixed_final_summary(state)
+    assert "language=en" in resp
+    assert "language=es" not in resp
+
+
+@pytest.mark.asyncio
 async def test_final_summary_builds_lead_note_for_advisor():
     state = await reach_mixed_add_activity()
     await send(state, "1", "1", "2", "2", "1")  # cert 2-dives x2
