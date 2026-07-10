@@ -64,18 +64,32 @@ git pull origin feature/pre_gadea
 git log --oneline -1                # debe mostrar 'v0.19.13' o posterior
 ```
 
-## 2) Poner RAG_MIN_SCORE=0.50 en .env.pre
+## 2) Poner RAG_MIN_SCORE=0.40 en .env.pre
 
-El `.env.pre` del VPS probablemente tiene `RAG_MIN_SCORE=0.72` (demasiado alto →
-causa fallbacks falsos). Bájalo a 0.50:
+**Actualizado 2026-07-09.** Antes este runbook decía `0.50`. Se midió y **0.50 era
+demasiado alto**: con `text-embedding-3-small`, una pregunta corta contra un FAQ
+largo produce cosenos de ~0.45-0.55 aunque la coincidencia sea perfecta, así que
+0.50 cae justo en medio de la distribución de los buenos aciertos y descarta
+respuestas correctas. Medido sobre 27 preguntas habituales: **7 (26%) perdían su
+contexto de KB a 0.50** y lo recuperan a 0.40 — entre ellas "¿qué animales se ven?",
+"¿qué debo llevar?", "where do we meet?", "how long is the course?".
+
+`0.40` es además el default del código (`src/config.py`) y el valor con el que se
+validó toda la batería de 176 casos — hasta ahora PRE corría una configuración más
+estricta que nada de lo testeado.
 
 ```bash
 # Si ya existe la línea, la reemplaza; si no, la añade.
 grep -q '^RAG_MIN_SCORE=' .env.pre \
-  && sed -i 's/^RAG_MIN_SCORE=.*/RAG_MIN_SCORE=0.50/' .env.pre \
-  || echo 'RAG_MIN_SCORE=0.50' >> .env.pre
-grep '^RAG_MIN_SCORE=' .env.pre     # verifica: RAG_MIN_SCORE=0.50
+  && sed -i 's/^RAG_MIN_SCORE=.*/RAG_MIN_SCORE=0.40/' .env.pre \
+  || echo 'RAG_MIN_SCORE=0.40' >> .env.pre
+grep '^RAG_MIN_SCORE=' .env.pre     # verifica: RAG_MIN_SCORE=0.40
 ```
+
+> **Riesgo de bajarlo**: entran documentos algo más marginales al contexto. Cubierto
+> por los guards deterministas (precios/URLs/capacidad) + el juez de grounding, que
+> desde v0.20.8 corre **también** en el camino del agente cuando no hay soporte de KB.
+> Verificado: precios idénticos a 0.40 y 0.50; ninguna respuesta se degradó.
 
 ## 3) Reconstruir y reiniciar SOLO el bot de PRE
 

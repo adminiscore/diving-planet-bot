@@ -1254,3 +1254,64 @@ def test_pressure_idioms_do_not_trigger_medical_escalation(msg):
 def test_real_blood_pressure_still_escalates(msg):
     result = detect_sensitive_escalation(msg, "es")
     assert result is not None and result[0] == "medical_questions"
+
+
+# --- Zero-KB-support must never be answered from world knowledge -------------
+# Regression (2026-07-09): when no retrieved doc passed the confidence gate,
+# rag_agent fell back to "answer from extra_context only". With
+# verify_grounding=False (the conversation-agent path) the grounding judge was
+# skipped, so the LLM happily answered a factual question from its own world
+# knowledge — e.g. inventing a list of fish species. The judge must be FORCED
+# on that escape hatch.
+
+@pytest.mark.asyncio
+async def test_no_kb_docs_forces_grounding_even_when_caller_skips_it(monkeypatch):
+    from src.agents import rag_agent
+
+    async def _no_docs(*args, **kwargs):
+        return []
+
+    judge_calls = []
+
+    async def _fake_judge(answer, grounding_context, lang="es"):
+        judge_calls.append(answer)
+        return False, "HALLUCINATED"
+
+    class _Msg:
+        content = "En las islas veras peces loro, tortugas y morenas."
+
+    class _Choice:
+        message = _Msg()
+
+    class _Usage:
+        total_tokens = 10
+
+    class _Resp:
+        choices = [_Choice()]
+        usage = _Usage()
+
+    class _Completions:
+        async def create(self, **kwargs):
+            return _Resp()
+
+    class _Chat:
+        completions = _Completions()
+
+    class _Client:
+        def __init__(self, api_key=None):
+            self.chat = _Chat()
+
+    monkeypatch.setattr(rag_agent, "search_knowledge_base", _no_docs)
+    monkeypatch.setattr(rag_agent, "_verify_grounding_with_retry", _fake_judge)
+    monkeypatch.setattr(rag_agent, "AsyncOpenAI", _Client)
+
+    answer = await rag_agent.rag_answer(
+        "que animales se ven?",
+        lang="es",
+        extra_context="Idioma: es. El cliente eligio buceo certificado.",
+        verify_grounding=False,   # conversation-agent path
+    )
+
+    assert judge_calls, "the grounding judge must run even with verify_grounding=False"
+    assert answer == rag_agent.FALLBACK_ES
+    assert "peces loro" not in answer

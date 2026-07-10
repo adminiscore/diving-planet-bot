@@ -1090,7 +1090,18 @@ async def rag_answer(
     docs = await search_knowledge_base(safe_query, lang=lang)
 
     # Helper to call the LLM with unstructured context (either KB docs o solo extra_context)
-    async def _answer_with_llm(context: str, context_sources: list[str] | None = None) -> str:
+    async def _answer_with_llm(
+        context: str,
+        context_sources: list[str] | None = None,
+        require_grounding: bool = False,
+    ) -> str:
+        """`require_grounding=True` forces the LLM grounding judge even when the
+        caller passed `verify_grounding=False`. Used by the "no confident KB
+        docs, answer from extra_context only" escape hatches below: there the
+        model has NO knowledge-base support, so without the judge it happily
+        answers a factual question from its own world knowledge (e.g. inventing
+        a list of fish species). The judge is the only thing standing between
+        that and the customer."""
         system_prompt = build_system_prompt(lang, query=condensed_query)
         messages = [{"role": "system", "content": system_prompt}]
 
@@ -1140,7 +1151,7 @@ async def rag_answer(
                 last_reject = "ungrounded_url"
             elif not capacity_claims_grounded(answer, grounding_context):
                 last_reject = "ungrounded_capacity"
-            elif not verify_grounding:
+            elif not verify_grounding and not require_grounding:
                 return answer
             else:
                 grounded, reason = await _verify_grounding_with_retry(answer, grounding_context, lang=lang)
@@ -1164,7 +1175,11 @@ async def rag_answer(
         if extra_context:
             # No hay nada util en el KB, pero si tenemos resumen de estado: dejamos que el LLM
             # razone SOLO con ese contexto en lugar de ir directo al fallback.
-            return await _answer_with_llm(extra_context, context_sources=["extra_context_only"])
+            # El juez de grounding es OBLIGATORIO aqui (require_grounding): sin
+            # soporte del KB, el modelo responderia de su conocimiento propio.
+            return await _answer_with_llm(
+                extra_context, context_sources=["extra_context_only"], require_grounding=True
+            )
         return FALLBACK_ES if lang == "es" else FALLBACK_EN
 
     # 2) Hay documentos pero ninguno con confianza suficiente
@@ -1178,8 +1193,11 @@ async def rag_answer(
         )
         if extra_context:
             # Igual que en el caso sin docs: ignoramos estos resultados de baja confianza
-            # y dejamos que el LLM trabaje solo con el contexto de estado.
-            return await _answer_with_llm(extra_context, context_sources=["extra_context_only"])
+            # y dejamos que el LLM trabaje solo con el contexto de estado, pero con
+            # el juez de grounding SIEMPRE activo (ver require_grounding arriba).
+            return await _answer_with_llm(
+                extra_context, context_sources=["extra_context_only"], require_grounding=True
+            )
         return FALLBACK_ES if lang == "es" else FALLBACK_EN
 
     # 3) Hay documentos suficientemente relevantes -> expandimos contexto padre y respondemos

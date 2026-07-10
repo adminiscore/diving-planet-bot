@@ -1,6 +1,14 @@
 History
 =======
 
+0.20.8 - (2026-07-09)
+---------------------
+* **Bug reportado en vivo (captura): tras enviar los links de reserva, una pregunta general ("¿qué animales se ven?") caía al fallback.** El cierre de reserva NO era la causa (deja el estado en `Step.FREE_TEXT` a propósito). La causa real: PRE corre `RAG_MIN_SCORE=0.50` y el FAQ correcto de vida marina puntúa **coseno 0.45** → se descartaba y el bot se quedaba sin contexto.
+* **🔴 Agujero de alucinación cerrado (lo más grave, estaba oculto).** Cuando ningún documento superaba el umbral, `rag_agent.py` tenía una salida de emergencia ("responde solo con el contexto de estado"). En el camino del agente conversacional (`verify_grounding=False`) el juez de grounding se saltaba, así que el LLM respondía **de su propio conocimiento del mundo** — p.ej. inventándose una lista de especies de peces. Es decir: *antes* del cierre el bot no "sabía", se lo estaba inventando; el fallback de después era el comportamiento honesto. Ahora esa vía fuerza `require_grounding=True` siempre. Test de regresión en `tests/test_rag_safety.py`.
+* **Umbral de RAG alineado a 0.40** (default del código) en `.env.example` / `.env.dev.example` y en el runbook `docs/deploy-pre-redeploy.md`. Medido sobre 27 preguntas habituales: **7 (26%) perdían contexto a 0.50** y lo recuperan a 0.40 ("¿qué animales se ven?", "¿qué debo llevar?", "¿cuánto dura el tour?", "where do we meet?", "how long is the course?", "do you have sharks?", "what animals will I see?"). Causa de fondo: con `text-embedding-3-small` una pregunta corta contra un FAQ largo da cosenos de ~0.45-0.55 aun con coincidencia perfecta, así que 0.50 corta aciertos legítimos. Verificado sin degradación: precios idénticos a 0.40 y 0.50. **Pendiente: aplicar `RAG_MIN_SCORE=0.40` en `.env.pre` del VPS** (no está en el repo).
+* KB: la pregunta del FAQ de vida marina admite ahora sinónimos naturales ("animales", "peces"). Nota honesta: **no mejora el coseno de forma significativa** (sigue ~0.45); el fix real es el umbral. **Requiere reindex.**
+* Suite: 1522 passed, 6 skipped. Ruff limpio.
+
 0.20.7 - (2026-07-09)
 ----------------------
 * **Bug real reportado en vivo en PRE: "el pack de 5" se olvidaba y volvía a preguntar el plan**. El detector de conteo de inmersiones/días exigía siempre una palabra de unidad ("inmersiones"/"buceos"/"días") pegada al número — "el pack de 5" (sin decir "inmersiones") no se reconocía en absoluto. Arreglado con un nuevo patrón de respaldo para "paquete/pack/plan de N" sin unidad, que resuelve como inmersiones **solo** cuando N es inequívoco (5, 7, 9 — nunca son un conteo válido de días, cuyo máximo es 4). Para 2, 3, 4 (que sí podrían ser inmersiones O días) sigue sin adivinar, tal como debe ser. De paso: la palabra "pack" tampoco estaba reconocida como calificador para el conteo por días (solo "paquete"/"plan").
