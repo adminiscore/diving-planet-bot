@@ -79,6 +79,11 @@ services:
       DATABASE_URL: postgresql://postgres:${PRE_POSTGRES_PASSWORD:-pre_changeme}@dp-pre-postgres:5432/diving_planet
       REDIS_URL: redis://:${PRE_REDIS_PASSWORD:-pre_changeme}@dp-pre-redis:6379/0
       APP_ENV: staging
+      # Calibrated retrieval threshold (see docs/rag-threshold-calibration.md).
+      # Pinned here (environment > env_file) so the stale RAG_MIN_SCORE=0.50
+      # hand-edited into the VPS's .env.pre can never override it, and the
+      # value stays versioned in the repo instead of on the server.
+      RAG_MIN_SCORE: "0.40"
     depends_on:
       dp-pre-postgres:
         condition: service_healthy
