@@ -5638,11 +5638,11 @@ class DecisionTree:
         lang = state.language
         blocks: list[dict] = []
 
-        def add(svc: dict, qty: int, label: str, url: str | None, note: str | None = None):
+        def add(svc: dict, qty: int, label: str, url: str | None, note: str | None = None, kind: str = "day"):
             blocks.append({
                 "label": label, "qty": qty,
                 "usd": svc.get("price_usd"), "cop": svc.get("price_cop"), "url": url,
-                "note": note,
+                "note": note, "kind": kind,
             })
 
         for item in state.mixed_cart:
@@ -5683,13 +5683,14 @@ class DecisionTree:
                 blocks.append({
                     "label": self._cart_label_for(it, None, lang), "qty": qty,
                     "usd": COMPANION_PRICE.get("usd_online"), "cop": COMPANION_PRICE.get("cop_online"), "url": None,
+                    "note": None, "kind": "day",
                 })
                 continue
             svc_id = self._cart_service_id(it, item.get("plan"), state)
             svc = SERVICES.get(svc_id) or {}
             label = svc.get(f"name_{lang}") or item.get("label") or self._cart_label_for(it, item.get("plan"), lang)
             url = None if _is_contact_only_service(svc_id) else _resolve_service_booking_url(svc, state)
-            add(svc, qty, label, url)
+            add(svc, qty, label, url, kind=("course" if it == "course" else "day"))
         return blocks
 
     def _format_activity_booking_messages(self, state: ConversationState) -> list[str]:
@@ -5699,9 +5700,11 @@ class DecisionTree:
         primary = state.mixed_display_currency
 
         def money(usd, cop, qty=1):
+            # Round the per-person price first, then multiply, so the arithmetic
+            # shown to the client always adds up (e.g. "2 × $126 = $252", never $251).
             if primary == "COP":
-                return f"COP {int((cop or 0) * qty):,}".replace(",", ".") if cop else None
-            return f"${int(round(float(usd) * qty))} USD" if usd else None
+                return f"COP {int(round(cop or 0)) * qty:,}".replace(",", ".") if cop else None
+            return f"${int(round(float(usd))) * qty} USD" if usd else None
 
         includes = (
             "✅ Incluye: transporte Cartagena-Islas-Cartagena, almuerzo, equipo y seguro."
@@ -5722,32 +5725,50 @@ class DecisionTree:
         )
         cta = ("👉 *Para más información y hacer tu reserva, haz clic aquí:*"
                if lang == "es" else "👉 *For more information and to book, click here:*")
+        info_cta = ("ℹ️ Más información aquí:" if lang == "es" else "ℹ️ More information here:")
         wa = ("👉 Para reservar esto, escríbenos por WhatsApp al +57 320 231515."
               if lang == "es" else "👉 To book this, message us on WhatsApp at +57 320 231515.")
 
         msgs: list[str] = []
         for b in self._cart_booking_blocks(state):
             qty = b["qty"]
+            url = b["url"]
+            # A direct booking checkout ("book.divingplanet.org") lets the client
+            # pay online; a plain divingplanet.org page is info-only → book via WhatsApp.
+            direct = bool(url) and "book.divingplanet.org" in url
+            online = (" (reservando online)" if lang == "es" else " (online rate)") if direct else ""
             lines = [f"🤿 *{b['label']}*"]
             pp = money(b["usd"], b["cop"])
             if pp:
                 if qty > 1:
                     sub = money(b["usd"], b["cop"], qty)
-                    lines.append(
-                        f"💰 {qty} × {pp} p.p. = *{sub}* (reservando online)" if lang == "es"
-                        else f"💰 {qty} × {pp} p.p. = *{sub}* (online rate)"
-                    )
+                    lines.append(f"💰 {qty} × {pp} p.p. = *{sub}*{online}")
                 else:
                     lines.append(
-                        f"💰 *{pp}* por persona (reservando online)" if lang == "es"
-                        else f"💰 *{pp}* per person (online rate)"
+                        f"💰 *{pp}* por persona{online}" if lang == "es"
+                        else f"💰 *{pp}* per person{online}"
                     )
-            lines.append(includes)
-            lines.append(depart)
+            if b.get("kind") == "course":
+                # Multi-day PADI courses aren't the standard 8 a.m. day-tour: dates,
+                # sessions and logistics are arranged with you, so skip the day-tour
+                # "includes / 8 a.m. departure" boilerplate.
+                lines.append(
+                    "📚 Curso PADI: las fechas, sesiones y detalles se coordinan contigo."
+                    if lang == "es"
+                    else "📚 PADI course: dates, sessions and details are arranged with you."
+                )
+            else:
+                lines.append(includes)
+                lines.append(depart)
             if b.get("note"):
                 lines.append(b["note"])
             lines.append("")
-            lines.extend([cta, b["url"]] if b["url"] else [wa])
+            if direct:
+                lines.extend([cta, url])
+            elif url:
+                lines.extend([info_cta, url, "", wa])
+            else:
+                lines.append(wa)
             msgs.append("\n".join(lines))
         return msgs
 

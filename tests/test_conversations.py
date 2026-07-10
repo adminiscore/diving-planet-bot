@@ -2535,6 +2535,51 @@ async def test_final_summary_booking_link_localized_to_english():
 
 
 @pytest.mark.asyncio
+async def test_final_summary_generic_link_uses_info_plus_whatsapp():
+    """A plan without a direct book.divingplanet.org checkout (info-only page)
+    must NOT promise 'book online' — it shows the info link + WhatsApp to book."""
+    from src.flows.decision_tree import DecisionTree
+    state = make_state()
+    state.mixed_cart = [{"type": "cert", "qty": 2, "plan": "3_dives_1_day", "label": "3 dives"}]
+    state.mixed_display_currency = "USD"
+    resp = DecisionTree()._goto_mixed_final_summary(state)
+    assert "divingplanet.org/tours" in resp          # generic info page
+    assert "book.divingplanet.org" not in resp        # no fake checkout link
+    assert "WhatsApp" in resp                          # booking channel offered
+    assert "reservando online" not in resp             # no false online-booking claim
+    assert "Más información" in resp
+
+
+@pytest.mark.asyncio
+async def test_final_summary_price_arithmetic_adds_up():
+    """qty × per-person must equal the shown subtotal (round p.p. first, then
+    multiply) — a fractional catalog price must not produce '2 × $126 = $251'."""
+    import re
+    from src.flows.decision_tree import DecisionTree
+    state = make_state()
+    state.mixed_cart = [{"type": "snorkel", "qty": 12, "label": "Snorkel"}]  # $125.57 p.p.
+    state.mixed_display_currency = "USD"
+    resp = DecisionTree()._goto_mixed_final_summary(state)
+    m = re.search(r"(\d+) × \$(\d+) USD p\.p\. = \*\$(\d+) USD\*", resp)
+    assert m, resp
+    qty, pp, sub = int(m.group(1)), int(m.group(2)), int(m.group(3))
+    assert pp * qty == sub  # shown arithmetic is internally consistent
+
+
+@pytest.mark.asyncio
+async def test_final_summary_direct_checkout_says_book_online():
+    """A plan with a direct book.divingplanet.org checkout keeps the online CTA."""
+    from src.flows.decision_tree import DecisionTree
+    state = make_state()
+    state.mixed_cart = [{"type": "cert", "qty": 1, "plan": "5_dives_2_days", "label": "5 dives"}]
+    state.mixed_display_currency = "USD"
+    resp = DecisionTree()._goto_mixed_final_summary(state)
+    assert "book.divingplanet.org" in resp
+    assert "reservando online" in resp
+    assert "haz clic aquí" in resp.lower()
+
+
+@pytest.mark.asyncio
 async def test_final_summary_builds_lead_note_for_advisor():
     state = await reach_mixed_add_activity()
     await send(state, "1", "1", "2", "2", "1")  # cert 2-dives x2
