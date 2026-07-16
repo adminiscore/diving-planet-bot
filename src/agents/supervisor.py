@@ -816,11 +816,28 @@ def _detect_companion_intent(message: str, state: ConversationState | None = Non
         "daughter",
         "sons",
         "daughters",
+        # EN family/relationship nouns — the ES side already covers these via
+        # "mi hermano/esposo/madre" in companion_patterns below, but there was
+        # no English equivalent at all.
+        "brother",
+        "brothers",
+        "sister",
+        "sisters",
+        "wife",
+        "husband",
+        "boyfriend",
+        "girlfriend",
+        "mom",
+        "mother",
+        "dad",
+        "father",
     }
 
     companion_patterns = (
         r"\bmi\s+(pareja|novi[oa]|espos[oa]|marido|mujer|madre|padre|mama|papa|chic[oa])\b",
         r"\bmi\s+(herman[oa]|hij[oa])\b",
+        r"\bmy\s+(partner|wife|husband|boyfriend|girlfriend|mom|mother|dad|father|"
+        r"brother|sister|son|daughter|kid|child)\b",
         r"\bmis\s+(hij[oa]s|herman[oa]s)\b",
         # "mis 2 hijos" / "mis dos hermanos" / "mis tres amigos" — número en medio.
         r"\bmis\s+(?:\d+|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|diez)\s+(hij[oa]s|herman[oa]s|amig[oa]s|companer[oa]s|acompanantes)\b",
@@ -922,15 +939,20 @@ def _detect_kids_mention(message: str) -> bool:
         "nino", "nina", "ninos", "ninas",
         "menor", "menores",
         "sobrino", "sobrina", "sobrinos", "sobrinas",
+        "nieto", "nieta", "nietos", "nietas",
+        "bebe", "bebes",
         "kid", "kids", "child", "children",
+        "grandchild", "grandchildren", "grandson", "granddaughter",
+        "baby", "babies",
     }
     if tokens & kids_keywords:
         return True
 
     kids_patterns = (
-        r"\bmi\s+(hij[oa]|sobrin[oa]|nin[oa])\b",
-        r"\bmis\s+(hij[oa]s|sobrin[oa]s|nin[oa]s)\b",
+        r"\bmi\s+(hij[oa]|sobrin[oa]|nin[oa]|niet[oa]|bebe)\b",
+        r"\bmis\s+(hij[oa]s|sobrin[oa]s|nin[oa]s|niet[oa]s)\b",
         r"\bmi\s+familia\s+con\s+(hij[oa]s|nin[oa]s|menores)\b",
+        r"\bmy\s+(grandchild|grandson|granddaughter|baby|kid|child)\b",
         r"\b(?:\d+|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|diez)\s+(hij[oa]s|nin[oa]s|sobrin[oa]s|menores)\b",
     )
     return any(re.search(pattern, normalized) for pattern in kids_patterns)
@@ -959,6 +981,12 @@ def _mentions_diving_intent(message: str) -> bool:
         "buceando",
         "bucea",
         "bucean",
+        # Noun form: "mi amigo es buzo" doesn't use any verb form of "bucear".
+        "buzo",
+        "buza",
+        "buzos",
+        "buzas",
+        "submarinismo",
         # Typos comunes
         "buseo",
         "buseando",
@@ -966,6 +994,8 @@ def _mentions_diving_intent(message: str) -> bool:
         "dive",
         "dives",
         "diving",
+        "diver",
+        "divers",
         "scuba",
     }
 
@@ -992,6 +1022,7 @@ def _mentions_snorkeling_intent(message: str) -> bool:
         "caretear",
         "caretea",
         "caretean",
+        "careteo",
     }
 
     return any(word in tokens for word in snorkeling_keywords)

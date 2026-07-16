@@ -104,7 +104,21 @@ class TestGroupDetection:
     def test_detect_group_size_english(self, detector, state):
         intent = detector.detect("we are 3 people", state)
         assert intent.group_size == 3
-    
+
+    def test_detect_group_size_somos_nueve(self, detector, state):
+        """Word-form numbers used to stop at 'ocho' (8) in this pattern while
+        digits ('9') already worked — real bug found 2026-07-16."""
+        intent = detector.detect("somos nueve, queremos bucear", state)
+        assert intent.group_size == 9
+
+    def test_detect_group_size_somos_diez(self, detector, state):
+        intent = detector.detect("somos diez, queremos bucear", state)
+        assert intent.group_size == 10
+
+    def test_detect_group_size_family_of_nine_english(self, detector, state):
+        intent = detector.detect("family of nine", state)
+        assert intent.group_size == 9
+
     def test_detect_mixed_group_yo_buceo_amigo_snorkel(self, detector, state):
         intent = detector.detect("yo quiero buceo y mi amigo snorkel", state)
         assert intent.group_allocation is not None
@@ -156,6 +170,40 @@ class TestDurationDetection:
     def test_detect_multi_day_number(self, detector, state):
         intent = detector.detect("estoy 3 días", state)
         assert intent.duration == "multi_day"
+
+    def test_detect_multi_day_without_accent_typo(self, detector, state):
+        """'dias'/'dia' without the accent (very common on phones) used to
+        silently fail to match — real bug found 2026-07-16."""
+        intent = detector.detect("estamos 5 dias en la isla, que podemos hacer?", state)
+        assert intent.duration == "multi_day"
+
+    def test_detect_varios_dias_without_accent_typo(self, detector, state):
+        intent = detector.detect("vamos varios dias a la isla", state)
+        assert intent.duration == "multi_day"
+
+    def test_detect_single_day_without_accent_typo(self, detector, state):
+        intent = detector.detect("estoy solo un dia", state)
+        assert intent.duration == "single_day"
+
+
+class TestNationalityDetection:
+
+    def test_colombian_by_city_medellin(self, detector, state):
+        """A common way to self-identify as Colombian is naming a Colombian
+        city instead of the country — real gap found 2026-07-16."""
+        intent = detector.detect("soy de Medellin, quiero bucear", state)
+        assert intent.is_colombian is True
+
+    def test_colombian_by_city_bogota(self, detector, state):
+        intent = detector.detect("somos de Bogota", state)
+        assert intent.is_colombian is True
+
+    def test_not_colombian_when_only_currently_in_cartagena(self, detector, state):
+        """'estoy en Cartagena' is current whereabouts, not an origin claim —
+        must NOT be misread as Colombian nationality (a foreign tourist could
+        say this)."""
+        intent = detector.detect("estoy en Cartagena, soy de España", state)
+        assert intent.is_colombian is not True
 
 
 class TestLocationDetection:

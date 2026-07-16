@@ -1,6 +1,21 @@
 History
 =======
 
+0.20.13 - (2026-07-16)
+----------------------
+* **Barrido proactivo de bugs del mismo patrón** (regex/listas de palabras incompletas, la misma forma que los bugs de "paquetes"/"buzo" de esta sesión): un agente de investigación rastreó `intent_detector.py`/`supervisor.py` buscando huecos similares; se verificaron y arreglaron 6 reales:
+  - `_mentions_diving_intent` no reconocía el sustantivo "buzo/buza/buzos/buzas" ni "diver(s)" (inglés), solo formas verbales — "mi amigo es buzo" no se detectaba como intención de bucear.
+  - `_mentions_snorkeling_intent` sin el sustantivo "careteo".
+  - `_detect_duration` exigía la tilde en "días" — "dias" (muy común sin tilde) no activaba multi-día.
+  - `_detect_companion_intent` no tenía NINGÚN patrón en inglés para familiares ("my brother/wife/sister..."), solo español ("mi hermano/esposo...").
+  - `_detect_kids_mention` sin "nieto/bebé" (ES) ni "grandchild/baby" (EN).
+  - Los patrones de tamaño de grupo en palabras topaban en "ocho" (8): "somos nueve/diez" no resolvía `group_size` (los dígitos sí funcionaban).
+  - Bonus: nueva detección de nacionalidad colombiana por ciudad ("soy de Medellín/Bogotá/...", cuidando que "estoy en Cartagena" —ubicación actual— nunca se confunda con origen).
+  - 22 tests de regresión nuevos.
+* **Precisión del atajo de overview de buceo, segunda vuelta**: tras el fix de "buzo" (v0.20.12), se detectó que la respuesta para un buzo certificado con acompañante repetía la pregunta de certificación ("¿ya eres buzo certificado?" justo después de reconocerlo en la intro) y duplicaba la mención al minicurso (una vez en el bloque genérico de "nunca has buceado", otra en la línea del acompañante). Arreglado: cuando ya se sabe que es certificado, el bloque pasa de pregunta a afirmación ("para ti: paquetes de inmersiones..."); y cuando además hay acompañante, se quita el bloque genérico de "nunca has buceado" (la línea del acompañante ya cubre lo mismo con más precisión). Sin acompañante, el bloque de principiante se mantiene (puede seguir aplicando a alguien no mencionado). 3 tests actualizados a las nuevas expectativas.
+* **Gaps identificados pero NO arreglados** (revisados y priorizados, quedan documentados para retomar): (1) si el cliente dice explícitamente que el acompañante SÍ bucea/es certificado, el bot igual añade la línea "¿tu acompañante no bucea?" — contradicción directa, el más barato de arreglar; (2) el detector de acompañante no distingue roles (quién bucea, quién acompaña) — "mi pareja es buzo, yo solo acompaño" sigue diciendo "tu acompañante no bucea" cuando es al revés; (3) "no bucea/n" no exige que haya una persona antes — falso positivo con frases como "el snorkel no bucea"; (4) este atajo en concreto no reconoce familiares ("hijo", "pareja") como acompañante, solo la palabra "acompañante"/"companion" — inconsistente con `_detect_companion_intent` (arreglado arriba) que sí los reconoce. (1) y (4) son baratos de arreglar; (2) y (3) requieren parsing real de composición de grupo, terreno del flujo guiado, no de este atajo informativo rápido.
+* Suite: **1579 passed**, 15 skipped (mismos fallos preexistentes sin relación por falta de `OPENAI_API_KEY`).
+
 0.20.12 - (2026-07-16)
 ----------------------
 * **Bug reportado en vivo: "soy buzo y voy con un acompañante, que servicios teneis?" salía de RAG con oferta de asesor no pedida**. Causa raíz: `_OVERVIEW_DIVING_WORD` (el atajo canónico de "qué ofrecen para bucear") solo reconocía formas verbales de bucear ("bucea*", "buse*", "dive", "diving"...), no el sustantivo "buzo/buza/buzos" ni "diver(s)" en inglés — al no disparar el atajo, la pregunta caía en RAG real, cuyo LLM respondió bien pero además ofreció espontáneamente pasar a un asesor (fricción innecesaria para algo que el atajo ya cubre). Arreglado añadiendo esas formas al regex.

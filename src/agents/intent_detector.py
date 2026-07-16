@@ -472,13 +472,21 @@ class IntentDetector:
             intent.group_size = int(m_gendered_sum.group(1)) + int(m_gendered_sum.group(2))
             intent.detected_fields.append("group_size")
 
+        # Word-form numbers used to stop at "ocho"/"eight" (8) in these
+        # patterns while every other number-word map in this file already
+        # goes to "diez"/"ten" — "somos nueve"/"somos diez" silently resolved
+        # to no group size at all (digits like "9"/"10" still worked).
+        _es_word_nums = {'dos': 2, 'tres': 3, 'cuatro': 4, 'cinco': 5, 'seis': 6, 'siete': 7, 'ocho': 8, 'nueve': 9, 'diez': 10}
+        _en_word_nums = {'two': 2, 'three': 3, 'four': 4, 'five': 5, 'six': 6, 'seven': 7, 'eight': 8, 'nine': 9, 'ten': 10}
+        _es_word_alt = r'dos|tres|cuatro|cinco|seis|siete|ocho|nueve|diez'
+        _en_word_alt = r'two|three|four|five|six|seven|eight|nine|ten'
         group_size_patterns = [
-            (r'\bsomos\s+(\d+|dos|tres|cuatro|cinco|seis|siete|ocho)\b', {'dos': 2, 'tres': 3, 'cuatro': 4, 'cinco': 5, 'seis': 6, 'siete': 7, 'ocho': 8}),
-            (r'\bvenimos\s+(\d+|dos|tres|cuatro|cinco|seis|siete|ocho)\b', {'dos': 2, 'tres': 3, 'cuatro': 4, 'cinco': 5, 'seis': 6, 'siete': 7, 'ocho': 8}),
-            (r'\bvamos\s+(\d+|dos|tres|cuatro|cinco|seis|siete|ocho)\b', {'dos': 2, 'tres': 3, 'cuatro': 4, 'cinco': 5, 'seis': 6, 'siete': 7, 'ocho': 8}),
-            (r'\bwe\s+are\s+(\d+|two|three|four|five|six|seven|eight)\b', {'two': 2, 'three': 3, 'four': 4, 'five': 5, 'six': 6, 'seven': 7, 'eight': 8}),
+            (rf'\bsomos\s+(\d+|{_es_word_alt})\b', _es_word_nums),
+            (rf'\bvenimos\s+(\d+|{_es_word_alt})\b', _es_word_nums),
+            (rf'\bvamos\s+(\d+|{_es_word_alt})\b', _es_word_nums),
+            (rf'\bwe\s+are\s+(\d+|{_en_word_alt})\b', _en_word_nums),
             (r'\b(\d+)\s+of\s+us\b', {}),
-            (r'\bgroup\s+of\s+(\d+|two|three|four|five|six|seven|eight)\b', {'two': 2, 'three': 3, 'four': 4, 'five': 5, 'six': 6, 'seven': 7, 'eight': 8}),
+            (rf'\bgroup\s+of\s+(\d+|{_en_word_alt})\b', _en_word_nums),
             (r'\b(\d+)\s+(personas?|people|person|friends|amig[oa]s|friend|compañer[oa]s|companer[oa]s|acompañantes|acompanantes|divers?|buzos?|buceador[ae]s?)\b', {}),
             # "2 certified divers" / "3 certified" — a count directly before a
             # certification word (EN+ES) is a group size.
@@ -486,8 +494,8 @@ class IntentDetector:
             # "una pareja" / "somos pareja" → 2 (capturing group required by loop)
             (r'\b(?:somos\s+)?(?:una?\s+)?(pareja)\b', {'pareja': 2}),
             # "familia de N" → N personas
-            (r'\bfamilia\s+de\s+(\d+|dos|tres|cuatro|cinco|seis|siete|ocho)\b', {'dos': 2, 'tres': 3, 'cuatro': 4, 'cinco': 5, 'seis': 6, 'siete': 7, 'ocho': 8}),
-            (r'\bfamily\s+of\s+(\d+|two|three|four|five|six|seven|eight)\b', {'two': 2, 'three': 3, 'four': 4, 'five': 5, 'six': 6, 'seven': 7, 'eight': 8}),
+            (rf'\bfamilia\s+de\s+(\d+|{_es_word_alt})\b', _es_word_nums),
+            (rf'\bfamily\s+of\s+(\d+|{_en_word_alt})\b', _en_word_nums),
         ]
 
         if not m_gendered_sum:
@@ -905,27 +913,37 @@ class IntentDetector:
         if re.search(
             r"\bcolombian[oa]s?\b|\bcolombian\b"
             r"|\b(?:soy|somos|vivo|vivimos|residente|resido)\b[^.]{0,20}\bcolombia\b"
-            r"|\bfrom\s+colombia\b|\bresident\s+in\s+colombia\b",
+            r"|\bfrom\s+colombia\b|\bresident\s+in\s+colombia\b"
+            # A common way to self-identify as Colombian is naming a Colombian
+            # city ("soy de Medellín") instead of the country. Requires the
+            # explicit "soy/somos DE" origin claim (not "estoy en", which
+            # would just mean their current location, e.g. a foreign tourist
+            # in Cartagena) so it never misreads current whereabouts as origin.
+            r"|\b(?:soy|somos)\s+de\s+(?:bogot[aá]|medell[ií]n|cali|cartagena|barranquilla|"
+            r"bucaramanga|pereira|manizales|c[uú]cuta|santa\s+marta|monter[ií]a|ibagu[eé]|"
+            r"villavicencio|neiva|pasto|armenia|popay[aá]n)\b",
             message,
         ):
             intent.is_colombian = True
             intent.detected_fields.append("is_colombian")
 
     def _detect_duration(self, message: str, intent: DetectedIntent) -> None:
+        # "d[ií]a(s)" tolerates the very common typed-without-accent "dias"/"dia"
+        # (phones/autocorrect often drop it) alongside the correct "días"/"día".
         single_day_patterns = [
-            r'\bun\s+día\b',
+            r'\bun\s+d[ií]a\b',
             r'\bone\s+day\b',
             r'\bsolo\s+hoy\b',
             r'\bjust\s+today\b',
-            r'\bun\s+solo\s+día\b',
+            r'\bun\s+solo\s+d[ií]a\b',
         ]
 
         multi_day_patterns = [
-            r'\bvarios\s+días\b',
+            r'\bvarios\s+d[ií]as\b',
             r'\bmulti[- ]?day\b',
-            r'\b\d+\s+días\b',
+            r'\b\d+\s+d[ií]as\b',
             r'\b\d+\s+days\b',
-            r'\bestoy\s+en\s+las\s+islas\s+\d+\s+días\b',
+            r'\bestoy\s+en\s+las\s+islas\s+\d+\s+d[ií]as\b',
             r'\bstaying\s+\d+\s+days\b',
             r'\bpaquete\b',
             r'\bpackage\b',

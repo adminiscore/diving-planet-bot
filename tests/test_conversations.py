@@ -3074,6 +3074,39 @@ async def test_detect_kids_mention_excludes_friends():
 
 
 @pytest.mark.asyncio
+async def test_detect_kids_mention_covers_grandchildren_and_baby():
+    """'nieto'/'bebé' and EN 'grandchild'/'baby' were missing — real gap found
+    2026-07-16 alongside several other narrow word-list bugs."""
+    from src.agents.supervisor import _detect_kids_mention
+    assert _detect_kids_mention("vengo con mis nietos de 8 y 10") is True
+    assert _detect_kids_mention("traigo a mi bebe") is True
+    assert _detect_kids_mention("coming with my grandson") is True
+    assert _detect_kids_mention("coming with my baby") is True
+
+
+@pytest.mark.asyncio
+async def test_detect_companion_intent_covers_english_family_words():
+    """The ES side already covered 'mi hermano/esposo/madre' via regex, but
+    there was no English equivalent at all ('my brother'/'my wife' etc.) —
+    real ES/EN asymmetry found 2026-07-16."""
+    from src.agents.supervisor import _detect_companion_intent
+    assert _detect_companion_intent("my brother is coming with me, what do you offer") is True
+    assert _detect_companion_intent("my wife is coming with me too") is True
+    assert _detect_companion_intent("mi hermano viene conmigo") is True
+
+
+@pytest.mark.asyncio
+async def test_mentions_diving_intent_covers_buzo_noun_and_diver():
+    """_mentions_diving_intent only matched verb forms of 'bucear', not the
+    noun 'buzo' or English 'diver' — same shape as the _OVERVIEW_DIVING_WORD
+    bug fixed earlier this session (v0.20.12), found here too on 2026-07-16."""
+    from src.agents.supervisor import _mentions_diving_intent, _mentions_snorkeling_intent
+    assert _mentions_diving_intent("yo hago snorkel y mi amigo es buzo") is True
+    assert _mentions_diving_intent("my friend is a certified diver") is True
+    assert _mentions_snorkeling_intent("quiero hacer careteo") is True
+
+
+@pytest.mark.asyncio
 async def test_kids_re_asked_when_modifying_beginner_item():
     """Modify a beginner cart item → kids question re-fires inline after the new qty."""
     state = make_state()

@@ -613,28 +613,43 @@ def test_diving_overview_canonical_fires(q):
     lang = "es" if any(w in q for w in ("qué", "para", "buceo", "buzo", "buza", "servicios", "que ")) else "en"
     ans = rag_agent._canonical_diving_overview_answer(q, lang)
     assert ans is not None
-    # Structured, grouped by situation: beginner / certified / courses / snorkel.
-    assert "Minicurso" in ans or "Mini-Course" in ans or "Mini-course" in ans
+    # Structured, grouped by situation: beginner/companion mini-course / certified / courses / snorkel.
+    # (the "minicurso" mention can live in the standalone beginner block OR in
+    # the companion line when the speaker is already certified + has a
+    # companion — the beginner block is dropped in that case, see below.)
+    assert "minicurso" in ans.lower() or "mini-course" in ans.lower()
     assert "PADI" in ans
     assert "snorkel" in ans.lower()
 
 
 # --- Precision follow-up (2026-07-16): the overview must not ignore what the --
-# client already told us. A self-identified certified diver gets the
-# certified-diver block first (not "have you ever dived?"), and a mention of a
-# companion gets an explicit line about what the companion can do — without
-# dropping any of the original coverage (the companion could still be a
-# total beginner, so that block stays, just reordered to the end).
+# client already told us, AND must not repeat itself. A self-identified
+# certified diver gets a statement ("para ti: paquetes...") instead of the
+# rhetorical "¿ya eres buzo certificado?" question (redundant once the intro
+# already acknowledged it). When there's ALSO a companion, the generic
+# beginner block is dropped since the companion line already covers the same
+# ground (minicurso/snorkel/accompany) more precisely — without a companion,
+# the beginner block stays (may still apply to someone else not mentioned).
 
-def test_diving_overview_leads_with_certified_block_when_already_certified():
+def test_diving_overview_certified_no_companion_uses_statement_and_keeps_beginner_block():
+    ans = rag_agent._canonical_diving_overview_answer("soy buzo, que servicios teneis?", "es")
+    assert ans is not None
+    assert "¿Ya eres buzo certificado?" not in ans
+    assert "Para ti" in ans
+    cert_idx = ans.index("Para ti")
+    beginner_idx = ans.index("¿Nunca has buceado?")
+    assert cert_idx < beginner_idx, "certified block must still come first"
+    assert "Qué bien que ya seas buzo certificado" in ans
+
+
+def test_diving_overview_certified_with_companion_drops_beginner_block():
     ans = rag_agent._canonical_diving_overview_answer(
         "hola quiero, soy buzo y con un acompañante, que servicios teneís?", "es"
     )
     assert ans is not None
-    cert_idx = ans.index("¿Ya eres buzo certificado?")
-    beginner_idx = ans.index("¿Nunca has buceado?")
-    assert cert_idx < beginner_idx, "certified block must come before the beginner block"
-    assert "Qué bien que ya seas buzo certificado" in ans
+    assert "¿Ya eres buzo certificado?" not in ans
+    assert "Para ti" in ans
+    assert "¿Nunca has buceado?" not in ans, "redundant with the companion line, must be dropped"
 
 
 def test_diving_overview_mentions_companion_options_in_spanish():
@@ -651,7 +666,20 @@ def test_diving_overview_mentions_companion_options_in_english():
     )
     assert ans is not None
     assert "your companion" in ans.lower()
-    assert ans.index("Already a certified diver?") < ans.index("Never dived before?")
+    assert "Already a certified diver?" not in ans
+    assert "For you" in ans
+    assert "Never dived before?" not in ans, "redundant with the companion line, must be dropped"
+
+
+def test_diving_overview_not_certified_with_companion_keeps_beginner_block():
+    """Without a certified-diver signal, the beginner block still applies to
+    the speaker themselves, so it must NOT be dropped just because a
+    companion was mentioned."""
+    ans = rag_agent._canonical_diving_overview_answer(
+        "quiero bucear, voy con un acompañante, que opciones hay?", "es"
+    )
+    assert ans is not None
+    assert "¿Nunca has buceado?" in ans
 
 
 @pytest.mark.parametrize("q", [

@@ -874,6 +874,16 @@ def _canonical_diving_overview_answer(query: str, lang: str) -> str | None:
     already_certified = _mentions_already_certified(query)
     has_companion, plural_companions = _detect_companion_mention(query)
 
+    # Once we already know the client is certified, re-asking "¿ya eres buzo
+    # certificado?" as a bullet heading is redundant with the intro that just
+    # acknowledged it — swap that block for a statement instead of a question.
+    # And when there's ALSO a companion, the generic "¿nunca has buceado?"
+    # block says the same thing as the companion line below (minicurso/
+    # snorkel/accompany), just aimed at a generic "you" instead of "your
+    # companion" — drop it to avoid saying it twice. Without a companion, it
+    # stays (it may still be useful for someone else not mentioned).
+    drop_beginner_block = already_certified and has_companion
+
     if lang == "es":
         intro = (
             "🌊 *Buceamos en las Islas del Rosario* (Parque Nacional Corales del Rosario), "
@@ -889,8 +899,12 @@ def _canonical_diving_overview_answer(query: str, lang: str) -> str | None:
                 "piscina y una inmersión en el mar con instructor. Desde los 10 años."
             ),
             "certified": (
-                "🤿 *¿Ya eres buzo certificado?* → *paquetes de inmersiones*: 2 buceos en 1 día, o "
-                "planes multi-día (4, 5, 7 o 9 buceos)."
+                "🤿 *Para ti*: *paquetes de inmersiones* — 2 buceos en 1 día, o planes multi-día "
+                "(4, 5, 7 o 9 buceos)."
+                if already_certified else (
+                    "🤿 *¿Ya eres buzo certificado?* → *paquetes de inmersiones*: 2 buceos en 1 día, o "
+                    "planes multi-día (4, 5, 7 o 9 buceos)."
+                )
             ),
             "course": (
                 "🎓 *¿Quieres sacarte el título?* → *cursos PADI*: Open Water (el básico), Advanced, "
@@ -901,9 +915,12 @@ def _canonical_diving_overview_answer(query: str, lang: str) -> str | None:
                 "la superficie."
             ),
         }
-        order = ("certified", "course", "snorkel", "beginner") if already_certified else (
-            "beginner", "certified", "course", "snorkel"
-        )
+        if already_certified:
+            order = ("certified", "course", "snorkel") if drop_beginner_block else (
+                "certified", "course", "snorkel", "beginner"
+            )
+        else:
+            order = ("beginner", "certified", "course", "snorkel")
         body = "\n\n".join(blocks[k] for k in order)
 
         if plural_companions:
@@ -937,8 +954,11 @@ def _canonical_diving_overview_answer(query: str, lang: str) -> str | None:
             "and one open-water dive with an instructor. From age 10."
         ),
         "certified": (
-            "🤿 *Already a certified diver?* → *dive packages*: 2 dives in 1 day, or multi-day plans "
-            "(4, 5, 7 or 9 dives)."
+            "🤿 *For you*: *dive packages* — 2 dives in 1 day, or multi-day plans (4, 5, 7 or 9 dives)."
+            if already_certified else (
+                "🤿 *Already a certified diver?* → *dive packages*: 2 dives in 1 day, or multi-day plans "
+                "(4, 5, 7 or 9 dives)."
+            )
         ),
         "course": (
             "🎓 *Want to get certified?* → *PADI courses*: Open Water (the basic one), Advanced, "
@@ -949,9 +969,12 @@ def _canonical_diving_overview_answer(query: str, lang: str) -> str | None:
             "surface."
         ),
     }
-    order = ("certified", "course", "snorkel", "beginner") if already_certified else (
-        "beginner", "certified", "course", "snorkel"
-    )
+    if already_certified:
+        order = ("certified", "course", "snorkel") if drop_beginner_block else (
+            "certified", "course", "snorkel", "beginner"
+        )
+    else:
+        order = ("beginner", "certified", "course", "snorkel")
     body = "\n\n".join(blocks_en[k] for k in order)
 
     if plural_companions:
