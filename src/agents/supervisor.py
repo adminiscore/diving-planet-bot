@@ -53,6 +53,7 @@ _ADAPTIVE_DIVING_PATTERN = re.compile(
     r"s[ií]ndrome\s+de\s+down|down\s+syndrome|autismo|autis(?:m|tic)|"
     r"par[aá]lisis\s+cerebral|cerebral\s+palsy|"
     r"movilidad\s+reducida|reduced\s+mobility|silla\s+de\s+ruedas|wheelchair|"
+    r"coj[oa]s?|cojera|limp(?:s|ing)?|"
     r"sord[ao]s?|deaf|cieg[ao]s?|invidente|blind|"
     r"discapacidad\s+(?:visual|auditiva|motora|f[ií]sica|intelectual)"
     r")\b",

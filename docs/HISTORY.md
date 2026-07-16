@@ -1,6 +1,12 @@
 History
 =======
 
+0.20.14 - (2026-07-16)
+----------------------
+* **Bug reportado en vivo (2 capturas): tras reconocer DIVE TO HEAL, una pregunta de precio vaga repetida caía en "No tengo información suficiente"**. Causa raíz: "cojo/coja/cojera" (sinónimo coloquial muy común en Latinoamérica para movilidad reducida/discapacidad) no estaba en `_ADAPTIVE_DIVING_PATTERN` (`supervisor.py`) — solo términos formales ("movilidad reducida", "silla de ruedas") disparaban el camino correcto a RAG con la excepción DIVE TO HEAL. Sin ese disparo determinista, la conversación entraba en un estado ambiguo que degradaba en la siguiente pregunta. Añadido `coj[oa]s?|cojera|limp(?:s|ing)?` al patrón (se dejó fuera el "lame" inglés a propósito — es ambiguo, también significa "aburrido/malo" coloquial, y crearía falsos positivos). Verificado 3/3 en la secuencia exacta de las capturas + 3 variantes adicionales (grupo, tercero, familiar) sin ningún fallback. Test de regresión en `test_rag_safety.py`.
+* **Copy de la pregunta de origen/islas actualizado** (pedido del owner): ahora "¿Quieres salir con nosotros desde Cartagena a las Islas del Rosario? O ¿ya estás/vas a estar en las islas?" en los dos puntos donde se pregunta (carrito mixto y flujo legado de detalle de servicio), ES+EN.
+* Suite: 1602 passed, 6 skipped. Ruff limpio.
+
 0.20.13 - (2026-07-16)
 ----------------------
 * **Barrido proactivo de bugs del mismo patrón** (regex/listas de palabras incompletas, la misma forma que los bugs de "paquetes"/"buzo" de esta sesión): un agente de investigación rastreó `intent_detector.py`/`supervisor.py` buscando huecos similares; se verificaron y arreglaron 6 reales:

@@ -1584,3 +1584,30 @@ def test_system_prompt_forbids_booking_data_collection():
     en = build_system_prompt("en")
     assert "recogiendo datos en el chat" in es
     assert "collecting data in chat" in en
+
+
+# --- Adaptive-diving colloquial synonym: "cojo/coja" -------------------------
+# Regression (live bug, 2026-07-16): "somos cojos y queremos bucear" did not
+# match _ADAPTIVE_DIVING_PATTERN (only formal terms like "movilidad reducida"
+# were covered), so it fell through to RAG's generic fallback instead of the
+# DIVE TO HEAL program info. "cojo/coja" is a very common Latin American
+# colloquialism for reduced mobility/disability.
+
+from src.agents.supervisor import _ADAPTIVE_DIVING_PATTERN
+
+
+@pytest.mark.parametrize("msg", [
+    "somos cojos y queremos bucear",
+    "soy coja, puedo bucear con ustedes?",
+    "mi hermano es cojo",
+    "tengo cojera en una pierna",
+    "I walk with a limp, can I still dive?",
+])
+def test_adaptive_diving_pattern_matches_cojo(msg):
+    assert _ADAPTIVE_DIVING_PATTERN.search(msg) is not None
+
+
+def test_adaptive_diving_pattern_does_not_match_unrelated_lame():
+    # "lame" (English slang for "uncool") must NOT trigger this — only added
+    # "cojo/cojera/limp" deliberately, not the ambiguous "lame".
+    assert _ADAPTIVE_DIVING_PATTERN.search("that's so lame, I don't want to go") is None

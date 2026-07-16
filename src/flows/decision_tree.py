@@ -1014,10 +1014,12 @@ MESSAGES = {
     },
     "mixed_location": {
         "es": (
-            "Antes de añadir actividades, dime desde dónde tomarán la salida."
+            "¿Quieres salir con nosotros desde Cartagena a las Islas del Rosario? "
+            "O ¿ya estás/vas a estar en las islas?"
         ),
         "en": (
-            "Before adding activities, tell me where you will depart from."
+            "Would you like to depart with us from Cartagena to the Rosario Islands? "
+            "Or are you already/going to be on the islands?"
         ),
     },
     "mixed_ask_certification": {
@@ -1288,10 +1290,12 @@ MESSAGES = {
     },
     "location": {
         "es": (
-            "Desde donde tomaras el tour?"
+            "¿Quieres salir con nosotros desde Cartagena a las Islas del Rosario? "
+            "O ¿ya estás/vas a estar en las islas?"
         ),
         "en": (
-            "Where will you depart from?"
+            "Would you like to depart with us from Cartagena to the Rosario Islands? "
+            "Or are you already/going to be on the islands?"
         ),
     },
     "colombian": {

@@ -1878,7 +1878,7 @@ async def test_mixed_entry_without_location_asks_departure_before_add_activity()
 
     resp = await route_message(state, "1")
     assert state.step == Step.MIXED_LOCATION
-    assert "desde dónde" in resp.lower() or "desde donde" in resp.lower()
+    assert "cartagena" in resp.lower() and "islas" in resp.lower()
     assert [item["value"] for item in state.quick_replies] == ["1", "2", "back"]
 
 
