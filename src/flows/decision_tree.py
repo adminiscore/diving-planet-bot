@@ -5006,13 +5006,39 @@ class DecisionTree:
                 kids_sub = None
         return "\n".join(lines)
 
+    def _format_cart_info_links(self, state: ConversationState, lang: str) -> str:
+        """Info links (web_url) for each distinct resolvable service in the
+        cart — NOT booking links, those still depend on nationality (50/50
+        payment vs. direct link) and are only sent after that question."""
+        seen: set[str] = set()
+        lines = []
+        for item in state.mixed_cart:
+            plan = item.get("plan")
+            if not plan or plan in seen:
+                continue
+            service = SERVICES.get(plan)
+            if not service:
+                continue
+            seen.add(plan)
+            label = item.get("label") or service.get(f"name_{lang}") or plan
+            lines.append(f"🔗 {label}: {service['web_url']}")
+        if not lines:
+            return ""
+        header = "👉 Más información:" if lang == "es" else "👉 More information:"
+        return header + "\n" + "\n".join(lines)
+
     def _goto_mixed_cart_review(self, state: ConversationState) -> str:
         lang = state.language
         state.step = Step.MIXED_CART_REVIEW
         self.set_quick_replies(state, "mixed_cart_actions")
         cart_lines = self._format_cart_lines(state, lang)
+        links_block = self._format_cart_info_links(state, lang)
         prompt = MESSAGES["mixed_cart_actions"][lang]
-        return f"{cart_lines}\n\n{prompt}"
+        parts = [cart_lines]
+        if links_block:
+            parts.append(links_block)
+        parts.append(prompt)
+        return "\n\n".join(parts)
 
     def _goto_mixed_entry(self, state: ConversationState) -> str:
         lang = state.language
@@ -5266,8 +5292,33 @@ class DecisionTree:
         )
         return ack + "\n\n" + self._goto_mixed_cart_review(state)
 
+    # Steps where the customer already answered the initial "which plan"
+    # question for the activity and is now mid-way through its sub-questions
+    # or at the final preview — i.e. NOT a fresh "add an activity" moment.
+    _MIXED_ACTIVITY_MID_FLOW_STEPS = {
+        Step.MIXED_ADD_QTY,
+        Step.MIXED_CERT_LAST_DIVE,
+        Step.MIXED_CERT_REFRESH_INTEREST,
+        Step.MIXED_CERT_REFRESH_QTY,
+        Step.MIXED_CERT_SPLIT_REVIEW,
+        Step.MIXED_ADD_PREVIEW,
+    }
+
     def orchestrator_start_activity(self, state: ConversationState, activity_type: str) -> str | None:
-        """Enter the add sub-flow for an activity, reusing _handle_mixed_add_activity."""
+        """Enter the add sub-flow for an activity, reusing _handle_mixed_add_activity.
+
+        Regression guard (found live 2026-07-09): a follow-up question asked
+        mid-flow ("vale y como reservo?" right after the final preview) was
+        misclassified by the LLM tool-router as "start a new cert booking",
+        and this unconditionally reset the flow back to the very first "which
+        plan?" question — discarding the already-resolved plan/qty/last-dive
+        answers. If we're already mid-way through resolving THIS SAME
+        activity (past its initial plan question), treat a repeat
+        start_activity as a no-op instead of restarting it, so the caller
+        falls through to RAG and actually answers the question.
+        """
+        if activity_type == state.mixed_pending_qty_type and state.step in self._MIXED_ACTIVITY_MID_FLOW_STEPS:
+            return None
         choice_map = {"cert": "1", "beginner": "2", "snorkel": "3", "course": "4", "companion": "5"}
         choice = choice_map.get(activity_type)
         if choice is None:
@@ -7859,14 +7910,20 @@ class DecisionTree:
 
             lines.append("")
 
-            # El link de reserva se envía cuando el cliente pulsa "Reservar"
-            # (no se incluye aquí para no mostrarlo antes de tiempo).
+            # El link de RESERVA (con el 10% online) se sigue enviando solo al
+            # confirmar, ya que depende de si el cliente es colombiano o no
+            # (pago 50/50 vs. link directo). El link INFORMATIVO (web_url) sí
+            # es seguro mostrarlo aquí siempre — mismo contenido para todos.
             if contact_only:
                 lines.append("🔗 Más información del programa:")
                 lines.append(service["web_url"])
                 lines.append("")
                 lines.append(_divemaster_itinerary_offer_prompt(lang))
             else:
+                lines.append(
+                    f"👉 Si quieres más información y reservar, puedes acceder directamente al link:\n{service['web_url']}"
+                )
+                lines.append("")
                 lines.append(final_prompt or "¿Qué te gustaría hacer?")
 
             summary = "\n".join(lines)
@@ -8022,12 +8079,16 @@ class DecisionTree:
             if extra_notes and not _is_padi_course_service(service_id):
                 summary += f"\nℹ️ {extra_notes}\n"
 
-            # Booking link sent on "Reservar" click, not in summary
+            # The BOOKING link (10% online) is still only sent on confirm, since
+            # it depends on whether the client is Colombian or not (50/50
+            # payment vs. direct link). The INFO link (web_url) is safe to
+            # always show here — same content for everyone.
             if contact_only:
                 summary += f"\n🔗 *Program info*:\n{service['web_url']}\n"
                 summary += "\n" + _divemaster_itinerary_offer_prompt(lang)
             else:
-                summary += "\n\n" + (final_prompt or "What would you like to do?")
+                summary += f"\n👉 For more information and to book, you can go directly to the link:\n{service['web_url']}\n"
+                summary += "\n" + (final_prompt or "What would you like to do?")
 
         return summary
 

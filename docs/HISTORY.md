@@ -1,6 +1,12 @@
 History
 =======
 
+0.20.10 - (2026-07-10)
+----------------------
+* **Link informativo del servicio en ambos resúmenes de la reserva mixta** (pedido por el owner): el resumen individual de cada actividad (antes de "¿Te la añado a tu reserva?") y el resumen del carrito (antes de "Confirmar carrito") ahora incluyen el link informativo (`web_url`) del servicio — "Si quieres más información y reservar, puedes acceder directamente al link". Deliberadamente se usa el link **informativo**, no el de **reserva** (`booking_url`, con 10% online): ese sigue esperando a la pregunta de nacionalidad, porque colombianos pagan 50/50 vía asesor y no deben ver un link de reserva directa que no les aplica. En el carrito, un link por cada actividad distinta (deduplicado por plan).
+* **Bug real reportado en vivo: una pregunta de seguimiento en la vista previa final reseteaba todo el flujo**. Tras el resumen de "2 inmersiones (1 día)", el cliente preguntó "Vale y como reservo?" — el orquestador LLM (Fase 2) lo clasificó mal como "empezar una reserva de buceo certificado" nueva, y `orchestrator_start_activity` reseteaba incondicionalmente de vuelta a la primera pregunta ("¿qué idea tienes?"), perdiendo el plan/cantidad/última-inmersión ya resueltos. Reproducido exactamente forzando esa decisión del orquestador en un test. Arreglado con una guarda: si el cliente ya está a mitad de resolver esa MISMA actividad (cantidad, última inmersión, refresher, split review, o vista previa final), un intento de "reiniciarla" ahora se ignora (`None`) y cae al clasificador legacy → RAG, que responde la pregunta real sin perder el progreso.
+* Suite: **1523 passed**, 15 skipped (mismos fallos preexistentes sin relación por falta de `OPENAI_API_KEY` en el entorno local).
+
 0.20.9 - (2026-07-10)
 ---------------------
 * **Bug reportado en vivo (captura): el bot gestionaba la reserva recogiendo datos personales en el chat** ("necesitaré que me confirmes: 1. Nombres y apellidos... 2. Número de identificación (cédula o pasaporte)... 3. Fecha..."). El LLM improvisaba el ritual manual del asesor humano pese a la regla de datos sensibles del prompt — y ningún guard determinista lo vigilaba. El cierre correcto de reserva es SIEMPRE el link de reserva online o derivar al asesor (el asesor/formulario oficial recogen los datos, nunca el bot).

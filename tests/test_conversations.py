@@ -1949,6 +1949,77 @@ async def test_mixed_certified_5_dives_goes_to_qty_and_keeps_exact_plan():
     assert "cuántas personas" in resp.lower() or "how many people" in resp.lower()
 
 
+# --- Info link in the per-activity preview and the cart review -------------
+# Requested by the owner: at both of these points the client doesn't need to
+# wait for the nationality question (which only affects the BOOKING link with
+# its 10% online discount) to get the informational page for the service —
+# that link is the same regardless of nationality.
+
+@pytest.mark.asyncio
+async def test_individual_preview_includes_info_link_not_booking_link():
+    state = await reach_mixed_add_activity()
+    await route_message(state, "1")  # cert
+    await route_message(state, "1")  # 2 dives / 1 day
+    await route_message(state, "1")  # qty 1
+    resp = await route_message(state, "no")  # recent dive, no refresher
+    assert state.step == Step.MIXED_ADD_PREVIEW
+    assert "https://divingplanet.org/tours-buceo-snorkel-cartagena/2-buceos-1-dia/" in resp
+    assert "book.divingplanet.org" not in resp, "booking link must stay deferred until after nationality"
+
+
+@pytest.mark.asyncio
+async def test_cart_review_includes_info_link_not_booking_link():
+    state = await reach_mixed_add_activity()
+    await route_message(state, "1")  # cert
+    await route_message(state, "1")  # 2 dives / 1 day
+    await route_message(state, "1")  # qty 1
+    await route_message(state, "no")  # recent dive, no refresher
+    resp = await route_message(state, "1")  # add to cart
+    assert state.step == Step.MIXED_CART_REVIEW
+    assert "https://divingplanet.org/tours-buceo-snorkel-cartagena/2-buceos-1-dia/" in resp
+    assert "book.divingplanet.org" not in resp
+
+
+@pytest.mark.asyncio
+async def test_cart_review_info_link_english():
+    state = await reach_mixed_add_activity(lang="en")
+    await route_message(state, "1")
+    await route_message(state, "1")
+    await route_message(state, "1")
+    await route_message(state, "no")
+    resp = await route_message(state, "1")
+    assert "more information" in resp.lower()
+    assert "https://divingplanet.org/tours-buceo-snorkel-cartagena/2-buceos-1-dia/" in resp
+
+
+@pytest.mark.asyncio
+async def test_followup_question_at_preview_does_not_reset_flow(agent_decides):
+    """Regression (found live 2026-07-09): a customer at the final preview
+    ("¿Te la añado a tu reserva?") asked a natural follow-up ("Vale y como
+    reservo?") that the LLM tool-router misclassified as start_booking for
+    the SAME activity already being previewed. This used to unconditionally
+    restart the cert sub-flow from its very first "which plan?" question,
+    discarding the already-resolved plan/qty/last-dive answers. Must now stay
+    at the preview and answer via RAG instead."""
+    from src.agents import orchestrator
+
+    state = await reach_mixed_add_activity()
+    await route_message(state, "1")  # cert
+    await route_message(state, "1")  # 2 dives / 1 day
+    await route_message(state, "1")  # qty 1
+    await route_message(state, "no")  # recent dive, no refresher
+    assert state.step == Step.MIXED_ADD_PREVIEW
+    plan_before = state.mixed_pending_qty_plan
+
+    agent_decides(orchestrator.TOOL_START_BOOKING, {"activity": "certified"})
+    with patch("src.agents.supervisor.rag_answer", new_callable=AsyncMock, return_value="CANNED_RAG_ANSWER"):
+        resp = await route_message(state, "Vale y como reservo?")
+
+    assert resp == "CANNED_RAG_ANSWER"
+    assert state.step == Step.MIXED_ADD_PREVIEW, "must not reset to the cert-plan question"
+    assert state.mixed_pending_qty_plan == plan_before
+
+
 @pytest.mark.asyncio
 async def test_mixed_certified_island_menu_shows_both_4_dive_variants():
     state = await reach_mixed_add_activity(location="island")
