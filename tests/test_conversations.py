@@ -1995,12 +1995,19 @@ async def test_cart_review_info_link_english():
 @pytest.mark.asyncio
 async def test_followup_question_at_preview_does_not_reset_flow(agent_decides):
     """Regression (found live 2026-07-09): a customer at the final preview
-    ("¿Te la añado a tu reserva?") asked a natural follow-up ("Vale y como
-    reservo?") that the LLM tool-router misclassified as start_booking for
-    the SAME activity already being previewed. This used to unconditionally
-    restart the cert sub-flow from its very first "which plan?" question,
-    discarding the already-resolved plan/qty/last-dive answers. Must now stay
-    at the preview and answer via RAG instead."""
+    ("¿Te la añado a tu reserva?") asked a natural follow-up that the LLM
+    tool-router misclassified as start_booking for the SAME activity already
+    being previewed. This used to unconditionally restart the cert sub-flow
+    from its very first "which plan?" question, discarding the
+    already-resolved plan/qty/last-dive answers. Must now stay at the preview
+    and answer via RAG instead.
+
+    Uses a group-discount question rather than the original "vale y como
+    reservo?" wording — that phrase is now intercepted earlier by the
+    deterministic "how do I book" shortcut (2026-07-16), which is covered by
+    its own dedicated tests below; this one isolates the orchestrator
+    reset-guard fix specifically.
+    """
     from src.agents import orchestrator
 
     state = await reach_mixed_add_activity()
@@ -2013,11 +2020,82 @@ async def test_followup_question_at_preview_does_not_reset_flow(agent_decides):
 
     agent_decides(orchestrator.TOOL_START_BOOKING, {"activity": "certified"})
     with patch("src.agents.supervisor.rag_answer", new_callable=AsyncMock, return_value="CANNED_RAG_ANSWER"):
-        resp = await route_message(state, "Vale y como reservo?")
+        resp = await route_message(state, "y hay descuento por grupo?")
 
     assert resp == "CANNED_RAG_ANSWER"
     assert state.step == Step.MIXED_ADD_PREVIEW, "must not reset to the cert-plan question"
     assert state.mixed_pending_qty_plan == plan_before
+
+
+# --- "Cómo reservo?" with a known activity -> direct info link, no RAG -----
+# Owner request (2026-07-16): reduce friction — when we already know exactly
+# which activity the client wants, a booking-process question should get the
+# activity's own info link directly, not the generic RAG answer (exoneration
+# form + manual 50% payment + advisor confirmation) and not a nudge toward
+# "confirmar carrito".
+
+@pytest.mark.asyncio
+async def test_how_to_book_at_preview_gives_direct_info_link():
+    state = await reach_mixed_add_activity()
+    await route_message(state, "1")  # cert
+    await route_message(state, "1")  # 2 dives / 1 day
+    await route_message(state, "1")  # qty 1
+    resp = await route_message(state, "no")  # recent dive, no refresher
+    assert state.step == Step.MIXED_ADD_PREVIEW
+
+    resp = await route_message(state, "Vale y como reservo?")
+    assert state.step == Step.MIXED_ADD_PREVIEW, "must not move to cart/confirm"
+    assert "https://divingplanet.org/tours-buceo-snorkel-cartagena/2-buceos-1-dia/" in resp
+    assert "exoneraci" not in resp.lower()
+    assert "50%" not in resp
+    assert "confirmar carrito" not in resp.lower()
+    assert "más concreto" in resp, "must invite the client to re-ask if they meant something else"
+
+
+@pytest.mark.asyncio
+async def test_how_to_book_at_cart_review_gives_direct_info_link():
+    state = await reach_mixed_add_activity()
+    await route_message(state, "1")
+    await route_message(state, "1")
+    await route_message(state, "1")
+    await route_message(state, "no")
+    await route_message(state, "1")  # add to cart
+    assert state.step == Step.MIXED_CART_REVIEW
+
+    resp = await route_message(state, "y como reservo?")
+    assert state.step == Step.MIXED_CART_REVIEW
+    assert "https://divingplanet.org/tours-buceo-snorkel-cartagena/2-buceos-1-dia/" in resp
+    assert "exoneraci" not in resp.lower()
+
+
+@pytest.mark.asyncio
+async def test_how_to_book_english():
+    state = await reach_mixed_add_activity(lang="en")
+    await route_message(state, "1")
+    await route_message(state, "1")
+    await route_message(state, "1")
+    await route_message(state, "no")
+    resp = await route_message(state, "ok how do i book this")
+    assert "https://divingplanet.org/tours-buceo-snorkel-cartagena/2-buceos-1-dia/" in resp
+    assert "any other questions" in resp.lower()
+    assert "more specific" in resp.lower()
+
+
+@pytest.mark.asyncio
+async def test_real_booking_request_still_reaches_normal_flow():
+    """"Si quiero reservar" is an action, not a process-question — must NOT be
+    hijacked by the how-to-book shortcut. It matches the preview's "add to
+    cart" quick-reply text instead, proceeding to the cart review as normal
+    (which already carries its own info link from the earlier fix)."""
+    state = await reach_mixed_add_activity()
+    await route_message(state, "1")
+    await route_message(state, "1")
+    await route_message(state, "1")
+    await route_message(state, "no")
+    assert state.step == Step.MIXED_ADD_PREVIEW
+    resp = await route_message(state, "si quiero reservar")
+    assert state.step == Step.MIXED_CART_REVIEW
+    assert "🛒" in resp
 
 
 @pytest.mark.asyncio

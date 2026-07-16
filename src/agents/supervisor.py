@@ -166,6 +166,98 @@ def _looks_like_info_question(message: str) -> bool:
     return bool(_INFO_QUESTION_STARTER_PATTERN.match(normalized))
 
 
+# "¿Cómo reservo?" / "how do I book?" — a question about the booking PROCESS
+# rather than about the service itself. Unlike _looks_like_info_question this
+# is NOT start-anchored: it must also catch "vale y como reservo" (a filler
+# word before the real question), which is exactly the phrasing that exposed
+# the gap this guards (owner report 2026-07-16).
+_BOOKING_PROCESS_QUESTION_RE = re.compile(
+    r"\bc[oó]mo\s+(?:hago\s+(?:para\s+)?|puedo\s+|es\s+(?:el\s+proceso\s+(?:de|para)\s+)?)?reserv[ao]r?\b"
+    r"|\bc[oó]mo\s+(?:se\s+)?hace\s+la\s+reserva\b"
+    r"|\bhow\s+do\s+i\s+(?:book|reserve)\b"
+    r"|\bhow\s+can\s+i\s+(?:book|reserve)\b"
+    r"|\bhow\s+to\s+book\b",
+    re.IGNORECASE,
+)
+
+
+def _is_booking_process_question(message: str) -> bool:
+    normalized = _strip_accents(message.strip().lower())
+    if not normalized:
+        return False
+    return bool(_BOOKING_PROCESS_QUESTION_RE.search(normalized))
+
+
+def _maybe_answer_how_to_book_with_known_activity(state: ConversationState, message: str) -> str | None:
+    """When the customer asks a booking-PROCESS question ("cómo reservo?") at
+    a point where we already know exactly which activity/activities they're
+    interested in, answer with that activity's own info page directly instead
+    of falling through to RAG (whose canned "cómo reservar" answer describes
+    the exoneration form + manual 50% payment + advisor confirmation — much
+    more friction than needed when we already have a specific service link to
+    give).
+
+    Deliberately uses each service's INFO link (web_url), not the BOOKING link
+    (booking_url, 10% online): that one still depends on nationality
+    (Colombians pay 50/50 via an advisor) which isn't known yet at these
+    points. Returns None (fall through to the normal chain) if the message
+    isn't this kind of question, or no specific activity is resolved yet.
+    """
+    if not _is_booking_process_question(message):
+        return None
+
+    lang = state.language
+    links: list[tuple[str, str]] = []
+
+    if state.step == Step.MIXED_ADD_PREVIEW and state.mixed_pending_preview_service_id:
+        service = SERVICES.get(state.mixed_pending_preview_service_id) or {}
+        url = service.get("web_url")
+        if url:
+            label = service.get(f"name_{lang}") or state.mixed_pending_preview_service_id
+            links.append((label, url))
+    elif state.step == Step.MIXED_CART_REVIEW and state.mixed_cart:
+        seen: set[str] = set()
+        for item in state.mixed_cart:
+            plan = item.get("plan")
+            if not plan or plan in seen:
+                continue
+            service = SERVICES.get(plan) or {}
+            url = service.get("web_url")
+            if not url:
+                continue
+            seen.add(plan)
+            label = item.get("label") or service.get(f"name_{lang}") or plan
+            links.append((label, url))
+
+    if not links:
+        return None
+
+    if lang == "es":
+        if len(links) == 1:
+            label, url = links[0]
+            body = f"Ahí tienes toda la información y puedes reservar tu *{label}* directamente:\n{url}"
+        else:
+            block = "\n".join(f"🔗 {label}: {url}" for label, url in links)
+            body = f"Ahí tienes toda la información y puedes reservar cada actividad directamente:\n{block}"
+        return (
+            f"{body}\n\n¿Tienes alguna otra duda? Aquí estoy para ayudarte. 🐠"
+            "\n\nSi tu pregunta era sobre algo más concreto que esto (cancelación, pago, "
+            "menores de edad...), cuéntamelo con más detalle y te confirmo con exactitud."
+        )
+
+    if len(links) == 1:
+        label, url = links[0]
+        body = f"There you'll find all the details, and you can book your *{label}* directly:\n{url}"
+    else:
+        block = "\n".join(f"🔗 {label}: {url}" for label, url in links)
+        body = f"There you'll find all the details, and you can book each activity directly:\n{block}"
+    return (
+        f"{body}\n\nAny other questions? I'm here to help. 🐠"
+        "\n\nIf your question was about something more specific than this (cancellation, "
+        "payment, minors...), tell me more and I'll confirm the exact details."
+    )
+
+
 # Free-text that RECOMPOSES the group mid-flow: adding a person, or restating a
 # new total ("y mi hijo de 12", "se suma mi hermano", "ya seríamos 3", "también
 # viene mi esposa"). Deliberately requires an explicit change/addition cue + a
@@ -3023,11 +3115,15 @@ def _maybe_answer_age_eligibility(message: str, state: ConversationState) -> str
         outro = (
             "\n\n¿Quieres que te ayude a armar el plan para tu grupo? "
             "Escribe *reservar* o cuéntame qué actividad les interesa. 🐠"
+            "\n\nSi además preguntabas por algo más concreto, cuéntamelo con más detalle "
+            "y te confirmo con exactitud."
         )
     else:
         outro = (
             "\n\nWant me to help put together the plan for your group? "
             "Type *book* or tell me which activity you're interested in. 🐠"
+            "\n\nIf you were also asking about something more specific, tell me more "
+            "and I'll confirm the exact details."
         )
     # Stay conversational: leave the welcome/language step so a later reply isn't
     # misread, but don't force menu buttons.
@@ -4595,6 +4691,23 @@ async def route_message(state: ConversationState, message: str) -> str:
         mixed_companion_response = _maybe_handle_companion_request_inside_mixed_flow(state, message)
         if mixed_companion_response is not None:
             return mixed_companion_response
+
+        # "¿Cómo reservo?" at a point where we already know exactly which
+        # activity the client wants (the final preview, or the cart review)
+        # — give them the activity's own info page directly instead of the
+        # generic RAG answer (which describes the exoneration form + manual
+        # 50% payment + advisor confirmation). Checked BEFORE the plain
+        # info-question shortcut below, since "cómo reservo" would otherwise
+        # match that shortcut's starter-word pattern and go to RAG too.
+        # Deliberately reduces friction (owner request 2026-07-16): the
+        # customer gets the website link as soon as we know what they want,
+        # without needing to go through "confirmar carrito" first.
+        how_to_book_response = _maybe_answer_how_to_book_with_known_activity(state, message)
+        if how_to_book_response is not None:
+            logger.info(f"[SUPERVISOR] How-to-book question with known activity -> direct info link, step={state.step.value}")
+            state.history.append({"role": "user", "content": message})
+            state.history.append({"role": "assistant", "content": how_to_book_response})
+            return how_to_book_response
 
         # Plain info questions ("incluye comida?", "qué incluye?") go straight to
         # RAG, BEFORE the tool-calling orchestrator gets a chance to misfire a

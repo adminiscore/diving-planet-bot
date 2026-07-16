@@ -658,6 +658,11 @@ def test_price_overview_fires_for_bare_price_question(q):
     "cuánto el open water",
     "cuánto cuesta un vuelo",        # off-topic
     "cuánto cuesta el acompañante",
+    "los paquetes multidía que precio tienen",  # BUG2: plural "paquetes" + multi-day
+    "qué precio tiene el multi-dia",
+    "cuánto cuesta el plan de varios días",
+    "cuánto cuesta el paquete de 5 buceos",
+    "what is the price for the multi-day package",  # EN equivalent
 ])
 def test_price_overview_defers_for_specific_or_offtopic(q):
     assert rag_agent._canonical_price_overview_answer(q, "es") is None
@@ -671,6 +676,59 @@ async def test_rag_bare_price_served_without_search(monkeypatch):
     monkeypatch.setattr(rag_agent, "search_knowledge_base", fail_search)
     response = await rag_agent.rag_answer("cuánto cuesta", lang="es")
     assert "USD" in response and "COP" in response
+
+
+# --- #BUG2: multi-day price question must reach real retrieval, not the ------
+# generic bare-price canonical overview (plural "paquetes" + missing multi-day
+# keywords previously made it slip past _PRICE_SPECIFIC).
+
+@pytest.mark.asyncio
+async def test_rag_multiday_price_question_uses_real_search(monkeypatch):
+    called = {"hit": False}
+
+    async def fake_search(*args, **kwargs):
+        called["hit"] = True
+        return []
+
+    monkeypatch.setattr(rag_agent, "search_knowledge_base", fake_search)
+    await rag_agent.rag_answer("Hola, los paquetes multidía que precio tienen?", lang="es")
+    assert called["hit"], "Multi-day price question must not be short-circuited by the generic overview"
+
+
+# --- Canonical-shortcut safety net: any phrasing not covered by the exclusion --
+# regexes still gets a generic (not wrong, but incomplete) answer. Every
+# canonical shortcut must invite the client to re-ask with more detail, so an
+# uncovered regional phrasing doesn't silently end the conversation.
+
+def test_price_overview_includes_safety_net_es():
+    ans = rag_agent._canonical_price_overview_answer("cuánto cuesta", "es")
+    assert ans is not None
+    assert "más concreto" in ans
+
+
+def test_price_overview_includes_safety_net_en():
+    ans = rag_agent._canonical_price_overview_answer("how much does it cost", "en")
+    assert ans is not None
+    assert "more specific" in ans
+
+
+def test_diving_overview_includes_safety_net_es():
+    ans = rag_agent._canonical_diving_overview_answer("¿qué ofrecen para bucear?", "es")
+    assert ans is not None
+    assert "más concreto" in ans
+
+
+def test_diving_overview_includes_safety_net_en():
+    ans = rag_agent._canonical_diving_overview_answer("what do you offer for diving?", "en")
+    assert ans is not None
+    assert "more specific" in ans
+
+
+def test_food_answer_includes_safety_net(monkeypatch):
+    monkeypatch.setattr(rag_agent, "_food_policy_answer", lambda lang: "Política de comida de referencia.")
+    ans = rag_agent._canonical_food_answer("¿qué incluye la comida?", "es")
+    assert ans is not None
+    assert "más concreto" in ans
 
 
 def test_ambiguous_location_helper_detects_ultra_short_place_only_queries():

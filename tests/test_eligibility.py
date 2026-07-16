@@ -166,6 +166,16 @@ async def test_teen_14_can_do_everything_positive():
 
 
 @pytest.mark.asyncio
+async def test_age_eligibility_answer_includes_safety_net():
+    """The deterministic eligibility responder covers only the age question;
+    if the message packed in something else (discount, cancellation...) not
+    addressed by this canned answer, the client must be invited to re-ask
+    with detail instead of assuming the answer was complete."""
+    resp = await route_message(_state(), "mi hijo tiene 9 años, puede bucear?")
+    assert "más concreto" in resp
+
+
+@pytest.mark.asyncio
 async def test_owner_scenario5_family_14_baptism_minimum_age():
     resp = await route_message(
         _state(),

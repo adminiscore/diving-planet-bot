@@ -702,6 +702,19 @@ _FOOD_HIJACK_GUARD = re.compile(
 )
 
 
+# Canonical shortcuts answer with a fixed/generic text instead of real retrieval.
+# When the regex that decides "this is generic, not a specific question" misses a
+# phrasing we didn't anticipate (regional slang, synonyms, typos), the shortcut
+# still fires and the client silently gets an answer that looks complete but may
+# not cover what they actually asked. This closing line is a safety net: it makes
+# the shortcut itself invite the client to re-ask with detail, so an uncovered
+# phrasing doesn't end the conversation with a wrong impression.
+_CANONICAL_SAFETY_NET = {
+    "es": "\n\nSi tu pregunta era sobre algo más concreto que esto, cuéntamelo con más detalle y te confirmo con exactitud. 🙂",
+    "en": "\n\nIf your question was about something more specific than this, tell me more and I'll confirm the exact details. 🙂",
+}
+
+
 def _canonical_food_answer(query: str, lang: str) -> str | None:
     if not FOOD_QUERY_PATTERN.search(query):
         return None
@@ -710,16 +723,20 @@ def _canonical_food_answer(query: str, lang: str) -> str | None:
     if _FOOD_HIJACK_GUARD.search(query):
         return None
 
+    answer = None
     if DIETARY_QUERY_PATTERN.search(query):
-        dietary_answer = _find_food_faq_answer(FOOD_FAQ_QUESTIONS["dietary"][lang], lang)
-        if dietary_answer:
-            return dietary_answer
+        answer = _find_food_faq_answer(FOOD_FAQ_QUESTIONS["dietary"][lang], lang)
 
-    meal_answer = _find_food_faq_answer(FOOD_FAQ_QUESTIONS["meal"][lang], lang)
-    if meal_answer:
-        return meal_answer
+    if not answer:
+        answer = _find_food_faq_answer(FOOD_FAQ_QUESTIONS["meal"][lang], lang)
 
-    return _food_policy_answer(lang)
+    if not answer:
+        answer = _food_policy_answer(lang)
+
+    if not answer:
+        return None
+
+    return answer + _CANONICAL_SAFETY_NET[lang]
 
 
 # "What do you offer / what options / what plans for diving?" — an open overview
@@ -766,7 +783,7 @@ def _canonical_diving_overview_answer(query: str, lang: str) -> str | None:
             "🐠 Y si prefieres sin bucear, el *snorkel* es una chulada para ver el arrecife desde "
             "la superficie.\n\n"
             "¿Cuál te llama? Si quieres te armo la reserva. 😄"
-        )
+        ) + _CANONICAL_SAFETY_NET["es"]
     return (
         "🌊 *We dive in the Rosario Islands* (Corales del Rosario National Park), 45–60 min by boat "
         "from Cartagena: warm water, reefs and lots of marine life. Here's a quick overview:\n\n"
@@ -779,7 +796,7 @@ def _canonical_diving_overview_answer(query: str, lang: str) -> str | None:
         "🐠 And if you'd rather not dive, *snorkeling* is a lovely way to see the reef from the "
         "surface.\n\n"
         "Which one sounds good? I can put the booking together for you. 😄"
-    )
+    ) + _CANONICAL_SAFETY_NET["en"]
 
 
 # A GENERIC price question ("¿cuánto cuesta?", "precios?", "how much?") with no
@@ -795,8 +812,17 @@ _PRICE_QUESTION = re.compile(
 _PRICE_SPECIFIC = re.compile(
     r"\b(?:minicurso|mini\s?curso|snorkel\w*|open\s*water|advanced|rescue|"
     r"divemaster|nitrox|especialidad|comida|almuerzo|acompa\w+|companion|"
-    r"noche|nocturn\w+|paquete|referido|referral|fish|peces|flotabilidad|buoyancy|"
-    r"naturalista|naturalist|vuelo|hotel)\b",
+    r"noche|nocturn\w+|paquetes?|referido|referral|fish|peces|flotabilidad|buoyancy|"
+    r"naturalista|naturalist|vuelo|hotel|"
+    # Multi-day pricing ("paquetes multidía", "varios días", "multi-day") is
+    # its own specific question — the canonical overview below only mentions
+    # it in passing without real prices, so it must fall through to RAG
+    # (which retrieves the actual per-package multi-day pricing FAQ). Found
+    # missing 2026-07-16: bare "paquete" (singular, no wildcard) never matched
+    # the plural "paquetes" either, so "los paquetes multidía" slipped past
+    # this exclusion entirely and got the generic single-day-only summary.
+    r"multi[\s\-]?d[ií]as?|varios\s+d[ií]as|\d\s*(?:d[ií]as|dives?|inmersi\w+)|"
+    r"multi[\s\-]?day)\b",
     re.IGNORECASE,
 )
 
@@ -848,7 +874,7 @@ def _canonical_price_overview_answer(query: str, lang: str) -> str | None:
             "Los colombianos/residentes pagan en pesos (COP) y los internacionales en dólares (USD) — "
             "mismo precio, sin cobro extra por la divisa. También hay paquetes multi-día (4/5/7/9 inmersiones) "
             "y otros cursos. ¿Cuál te interesa? 😄"
-        )
+        ) + _CANONICAL_SAFETY_NET["es"]
     return (
         "🌊 Here are the *reference prices departing from Cartagena* "
         "(they include the boat, lunch, gear and park entrance), with the online-booking discount:\n\n"
@@ -859,7 +885,7 @@ def _canonical_price_overview_answer(query: str, lang: str) -> str | None:
         "Colombians/residents pay in pesos (COP) and international guests in dollars (USD) — same price, "
         "no extra charge for the currency. There are also multi-day packages (4/5/7/9 dives) and other "
         "courses. Which one are you interested in? 😄"
-    )
+    ) + _CANONICAL_SAFETY_NET["en"]
 
 
 def _coerce_metadata(value: object) -> dict:
@@ -1046,23 +1072,23 @@ async def rag_answer(
 
     canonical_food_answer = _canonical_food_answer(query, lang)
     if canonical_food_answer:
-        logger.info(f"[RAG] Using canonical food answer query={query[:60]}... lang={lang}")
+        logger.info(f"[RAG][CANONICAL_SHORTCUT] shortcut=food query={query!r} lang={lang}")
         return canonical_food_answer
 
     diving_overview = _canonical_diving_overview_answer(query, lang)
     if diving_overview:
-        logger.info(f"[RAG] Using canonical diving-overview answer query={query[:60]}... lang={lang}")
+        logger.info(f"[RAG][CANONICAL_SHORTCUT] shortcut=diving_overview query={query!r} lang={lang}")
         return diving_overview
 
     price_overview = _canonical_price_overview_answer(query, lang)
     if price_overview:
-        logger.info(f"[RAG] Using canonical price-overview answer query={query[:60]}... lang={lang}")
+        logger.info(f"[RAG][CANONICAL_SHORTCUT] shortcut=price_overview query={query!r} lang={lang}")
         return price_overview
 
     condensed_query = await condense_query(query, history=history, lang=lang)
     ambiguous_location_clarification = _ambiguous_location_clarification(condensed_query, lang)
     if ambiguous_location_clarification:
-        logger.info(f"[RAG] Using ambiguous-location clarification query={query[:60]}... lang={lang}")
+        logger.info(f"[RAG][CANONICAL_SHORTCUT] shortcut=ambiguous_location query={query!r} lang={lang}")
         return ambiguous_location_clarification
 
     retrieval_query = build_retrieval_query(condensed_query, history)
