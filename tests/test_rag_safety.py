@@ -599,15 +599,146 @@ def test_food_canonical_defers_for_broader_booking_query(q):
     "qué actividades de buceo hay",
     "what do you offer for diving",
     "what diving options do you have",
+    # BUG3 (live PRE, 2026-07-16): "buzo" (noun, diver) was not recognized as a
+    # diving word — only "bucea*/buse*" verb forms were. A self-identified
+    # diver asking "que servicios teneis?" fell through to real RAG/LLM, which
+    # answered but then spontaneously offered to escalate to a human advisor
+    # for something the canonical overview already answers directly.
+    "hola quiero, soy buzo y voy con un acompañante, que servicios teneis?",
+    "soy buza certificada, que opciones hay?",
+    "somos buzos, que planes tienen?",
+    "i am a diver, what do you offer",
 ])
 def test_diving_overview_canonical_fires(q):
-    lang = "es" if any(w in q for w in ("qué", "para", "buceo")) else "en"
+    lang = "es" if any(w in q for w in ("qué", "para", "buceo", "buzo", "buza", "servicios", "que ")) else "en"
     ans = rag_agent._canonical_diving_overview_answer(q, lang)
     assert ans is not None
     # Structured, grouped by situation: beginner / certified / courses / snorkel.
     assert "Minicurso" in ans or "Mini-Course" in ans or "Mini-course" in ans
     assert "PADI" in ans
     assert "snorkel" in ans.lower()
+
+
+# --- Precision follow-up (2026-07-16): the overview must not ignore what the --
+# client already told us. A self-identified certified diver gets the
+# certified-diver block first (not "have you ever dived?"), and a mention of a
+# companion gets an explicit line about what the companion can do — without
+# dropping any of the original coverage (the companion could still be a
+# total beginner, so that block stays, just reordered to the end).
+
+def test_diving_overview_leads_with_certified_block_when_already_certified():
+    ans = rag_agent._canonical_diving_overview_answer(
+        "hola quiero, soy buzo y con un acompañante, que servicios teneís?", "es"
+    )
+    assert ans is not None
+    cert_idx = ans.index("¿Ya eres buzo certificado?")
+    beginner_idx = ans.index("¿Nunca has buceado?")
+    assert cert_idx < beginner_idx, "certified block must come before the beginner block"
+    assert "Qué bien que ya seas buzo certificado" in ans
+
+
+def test_diving_overview_mentions_companion_options_in_spanish():
+    ans = rag_agent._canonical_diving_overview_answer(
+        "hola quiero, soy buzo y con un acompañante, que servicios teneís?", "es"
+    )
+    assert ans is not None
+    assert "tu acompañante" in ans.lower()
+
+
+def test_diving_overview_mentions_companion_options_in_english():
+    ans = rag_agent._canonical_diving_overview_answer(
+        "i am a certified diver with a companion, what do you offer for diving", "en"
+    )
+    assert ans is not None
+    assert "your companion" in ans.lower()
+    assert ans.index("Already a certified diver?") < ans.index("Never dived before?")
+
+
+@pytest.mark.parametrize("q", [
+    "soy buzo y voy con mis acompañantes, que servicios teneis?",
+    "soy buzo y voy con 2 acompañantes, que servicios teneis?",
+    "soy buzo y voy con varios acompañantes, que servicios teneis?",
+])
+def test_diving_overview_pluralizes_companion_line_in_spanish(q):
+    ans = rag_agent._canonical_diving_overview_answer(q, "es")
+    assert ans is not None
+    assert "tus acompañantes no bucean" in ans.lower()
+    assert "tu acompañante no bucea" not in ans.lower()
+
+
+@pytest.mark.parametrize("q", [
+    "i am a certified diver with companions, what do you offer",
+    "i am a certified diver with 3 companions, what do you offer",
+])
+def test_diving_overview_pluralizes_companion_line_in_english(q):
+    ans = rag_agent._canonical_diving_overview_answer(q, "en")
+    assert ans is not None
+    assert "your companions don't dive" in ans.lower()
+
+
+def test_diving_overview_singular_companion_line_stays_singular():
+    ans = rag_agent._canonical_diving_overview_answer(
+        "soy buzo y voy con un acompañante, que servicios teneis?", "es"
+    )
+    assert ans is not None
+    assert "tu acompañante no bucea" in ans.lower()
+
+
+# --- Non-diver mentioned without the word "acompañante" -----------------------
+# ("somos buzos y uno acompaña", "tres bucean y dos no", "mi pareja no bucea").
+# Same companion line must still appear, with correct singular/plural.
+
+@pytest.mark.parametrize("q,expect_plural", [
+    ("somos buzos y uno acompaña, que servicios teneis?", False),
+    ("mi pareja no bucea, yo soy buzo, que servicios teneis?", False),
+    ("somos 5, tres bucean y dos no, que servicios teneis?", True),
+    ("somos buzos y el resto no bucea, que servicios teneis?", True),
+    ("somos buzos y los demás no bucean, que servicios teneis?", True),
+    ("somos buzos y otros no bucean, que servicios teneis?", True),
+])
+def test_diving_overview_detects_non_diver_without_companion_word_es(q, expect_plural):
+    ans = rag_agent._canonical_diving_overview_answer(q, "es")
+    assert ans is not None
+    if expect_plural:
+        assert "tus acompañantes no bucean" in ans.lower()
+    else:
+        assert "tu acompañante no bucea" in ans.lower()
+
+
+@pytest.mark.parametrize("q,expect_plural", [
+    ("we are certified divers and one doesn't dive, what do you offer", False),
+    ("my partner doesn't dive, i am a diver, what do you offer", False),
+    ("we are 5, three dive and two don't, what do you offer", True),
+    ("we are certified divers and the rest doesn't dive, what do you offer", True),
+])
+def test_diving_overview_detects_non_diver_without_companion_word_en(q, expect_plural):
+    ans = rag_agent._canonical_diving_overview_answer(q, "en")
+    assert ans is not None
+    if expect_plural:
+        assert "your companions don't dive" in ans.lower()
+    else:
+        assert "your companion doesn't dive" in ans.lower()
+
+
+def test_diving_overview_no_companion_line_without_any_non_diver_signal():
+    ans = rag_agent._canonical_diving_overview_answer("que servicios teneis para bucear?", "es")
+    assert ans is not None
+    assert "acompañante" not in ans.lower()
+    assert "tus acompañantes" not in ans.lower()
+
+
+def test_diving_overview_no_companion_line_when_not_mentioned():
+    ans = rag_agent._canonical_diving_overview_answer("¿qué ofrecen para bucear?", "es")
+    assert ans is not None
+    assert "acompañante" not in ans.lower()
+
+
+def test_diving_overview_default_order_when_not_certified():
+    ans = rag_agent._canonical_diving_overview_answer("¿qué ofrecen para bucear?", "es")
+    assert ans is not None
+    beginner_idx = ans.index("¿Nunca has buceado?")
+    cert_idx = ans.index("¿Ya eres buzo certificado?")
+    assert beginner_idx < cert_idx, "default order keeps the beginner block first"
 
 
 @pytest.mark.parametrize("q", [

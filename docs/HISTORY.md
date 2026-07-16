@@ -1,6 +1,12 @@
 History
 =======
 
+0.20.12 - (2026-07-16)
+----------------------
+* **Bug reportado en vivo: "soy buzo y voy con un acompañante, que servicios teneis?" salía de RAG con oferta de asesor no pedida**. Causa raíz: `_OVERVIEW_DIVING_WORD` (el atajo canónico de "qué ofrecen para bucear") solo reconocía formas verbales de bucear ("bucea*", "buse*", "dive", "diving"...), no el sustantivo "buzo/buza/buzos" ni "diver(s)" en inglés — al no disparar el atajo, la pregunta caía en RAG real, cuyo LLM respondió bien pero además ofreció espontáneamente pasar a un asesor (fricción innecesaria para algo que el atajo ya cubre). Arreglado añadiendo esas formas al regex.
+* **El mismo atajo se hizo sensible al contexto para no ignorar lo que el cliente ya dijo**: si el mensaje indica que ya es buzo certificado ("soy buzo", "tengo el open water", "i'm a certified diver"...), el bloque de "paquetes de inmersiones" pasa al frente y la intro lo reconoce, en vez de preguntarle primero "¿nunca has buceado?" — sin quitar ningún bloque (el acompañante podría ser principiante). Si el mensaje menciona a alguien que no bucea, se añade una línea explícita sobre las opciones del acompañante (minicurso/snorkel/solo acompañar), con singular/plural correcto ("tu acompañante"/"tus acompañantes"). Cubre muchas formas de decirlo sin usar la palabra "acompañante": "uno acompaña", "mi pareja no bucea", "tres bucean y dos no" (elíptico), "el resto/los demás no bucean" (colectivo, sesgado a plural), y sus equivalentes en inglés ("doesn't/don't dive", "the rest doesn't dive").
+* Suite: **1565 passed**, 15 skipped (mismos fallos preexistentes sin relación por falta de `OPENAI_API_KEY`). 22 tests de regresión nuevos en `test_rag_safety.py`.
+
 0.20.11 - (2026-07-16)
 ----------------------
 * **Bug reportado en vivo: "los paquetes multidía que precio tienen?" devolvía el resumen genérico de precios (2 buceos/minicurso/snorkel/Open Water) en vez de la info de multi-día**. Causa raíz: el atajo determinista `_canonical_price_overview_answer` (`rag_agent.py`) dispara ante cualquier pregunta de precio que NO nombre nada específico (regex de exclusión `_PRICE_SPECIFIC`); esa lista solo tenía `paquete` en singular (sin comodín, no matcheaba "paquet**es**") y ningún término de multi-día. Fix: `paquete` → `paquetes?` + nuevos términos (`multi-día`, `varios días`, `\d días/buceos/inmersiones`, `multi-day`), en ES+EN. Ahora estas preguntas llegan a retrieval real, que ya tiene la FAQ correcta de precios multi-día.

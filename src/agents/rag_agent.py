@@ -754,7 +754,8 @@ _OVERVIEW_PHRASE = re.compile(
     re.IGNORECASE,
 )
 _OVERVIEW_DIVING_WORD = re.compile(
-    r"\b(?:buce\w*|buse\w*|dive|diving|scuba|snorkel\w*|inmersi\w+)\b", re.IGNORECASE
+    r"\b(?:buce\w*|buse\w*|buz\w*|dive|dives|diver|divers|diving|scuba|snorkel\w*|inmersi\w+)\b",
+    re.IGNORECASE,
 )
 # Guard: don't hijack price/inclusion/logistics questions that happen to match.
 _OVERVIEW_EXCLUDE = re.compile(
@@ -763,40 +764,210 @@ _OVERVIEW_EXCLUDE = re.compile(
     re.IGNORECASE,
 )
 
+# The overview covers 4 audiences (never dived / certified / wants course /
+# snorkel-only) so it's safe by default, but a client who already tells us
+# "soy buzo"/"tengo el open water" doesn't need to be asked "¿nunca has
+# buceado?" first — it reads as if we ignored what they just said. When this
+# fires, the certified block moves to the front and the intro acknowledges it,
+# without dropping the other blocks (their companion could still be a
+# beginner, so full coverage stays).
+_ALREADY_CERTIFIED_RE = re.compile(
+    r"\b(?:soy|somos|estoy|estamos)\s+(?:ya\s+)?(?:un[oa]?\s+)?buz[oa]s?\b"
+    r"|\bya\s+(?:soy|somos)\s+(?:buz[oa]s?|certificad\w*)\b"
+    r"|\b(?:soy|somos|estoy|estamos)\s+certificad\w*\b"
+    r"|\btengo\s+(?:el\s+|la\s+|mi\s+)?(?:open\s*water|advanced|rescue|divemaster|licencia)\b"
+    r"|\bi(?:'?m|\s+am)\s+a\s+certified\s+diver\b|\bwe\s+are\s+certified\s+divers?\b"
+    r"|\bi\s+have\s+(?:my\s+)?open\s*water\b",
+    re.IGNORECASE,
+)
+# Excludes "wants to get certified" phrasings so they're never read as already
+# holding a cert (mirrors intent_detector._WANTS_CERT_RE at a lighter weight,
+# since this only needs to gate the overview's framing, not full state).
+_WANTS_CERT_EXCLUDE_RE = re.compile(
+    r"\bquiero\s+(?:ser|sacar(?:me)?|hacer(?:me)?|certificar(?:me)?)\b"
+    r"|\bme\s+gustar[ií]a\s+certificarme\b|\bwant\s+to\s+(?:get|become)\s+certified\b",
+    re.IGNORECASE,
+)
+
+# A client traveling with someone else who doesn't dive is asking, in part,
+# what THAT person can do — the overview used to ignore this entirely. Not
+# everyone says "acompañante": "soy buzo y uno acompaña", "somos 5, tres
+# bucean y dos no", "mi pareja no bucea" all describe the same situation
+# without ever using the noun, so several independent phrasings are checked.
+_MENTIONS_COMPANION_RE = re.compile(r"\bacompa\w+|\bcompanion\w*\b", re.IGNORECASE)
+# Explicit "doesn't/don't dive" — conjugation already encodes singular/plural
+# in Spanish ("no bucea" vs "no bucean"), so it doubles as the plural signal.
+_NON_DIVER_SINGULAR_RE = re.compile(
+    r"\bno\s+bucea\b|\bdoesn'?t\s+dive\b|\bnot\s+diving\b", re.IGNORECASE
+)
+_NON_DIVER_PLURAL_RE = re.compile(
+    r"\bno\s+bucean\b|\bdon'?t\s+dive\b|\bnon-?divers\b", re.IGNORECASE
+)
+# Elliptical split — the verb is omitted the second time ("tres bucean y dos
+# no", "y el resto no"; EN "three dive and two don't"), so anchor on
+# "y/and <quantifier> no/don't". Spanish drops the verb after "no"; English
+# keeps the negated auxiliary ("don't"/"doesn't"), so each needs its own regex.
+_NON_DIVER_ELLIPTICAL_ES_RE = re.compile(
+    r"\by\s+(?:\d+|uno|una|dos|tres|cuatro|cinco|seis|otro|otra|otros|otras|"
+    r"el\s+resto|los\s+dem[aá]s)\s+no\b",
+    re.IGNORECASE,
+)
+_NON_DIVER_ELLIPTICAL_EN_RE = re.compile(
+    r"\band\s+(?:\d+|one|two|three|four|five|another|others?|the\s+rest)\s+"
+    r"(?:don'?t|doesn'?t)\b",
+    re.IGNORECASE,
+)
+_NON_DIVER_ELLIPTICAL_PLURAL_WORDS = (
+    "dos", "tres", "cuatro", "cinco", "seis", "otros", "otras",
+    "el resto", "los dem", "two", "three", "four", "five", "rest", "others",
+)
+# Distinguishes "un acompañante" (one) from several, so the reply says "your
+# companion" vs "your companions" instead of always assuming just one.
+# Plural fires on the plain plural noun ("acompañantes"/"companions") or a
+# quantifier > 1 right before it ("2 acompañantes", "varios amigos que...").
+_COMPANION_PLURAL_QUANTIFIER_RE = re.compile(
+    r"\b(?:\d+|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|diez|varios|varias|"
+    r"algunos|algunas|unos|unas|several|multiple|two|three|four|five)\s+(?:acompa\w+|companions?)",
+    re.IGNORECASE,
+)
+
+
+def _mentions_already_certified(query: str) -> bool:
+    return bool(_ALREADY_CERTIFIED_RE.search(query)) and not _WANTS_CERT_EXCLUDE_RE.search(query)
+
+
+def _mentions_plural_companions(query: str) -> bool:
+    match = re.search(r"\bacompa\w+\b|\bcompanions?\b", query, re.IGNORECASE)
+    if match and match.group(0).lower().rstrip("?.,;:!").endswith("s"):
+        return True
+    return bool(_COMPANION_PLURAL_QUANTIFIER_RE.search(query))
+
+
+def _detect_companion_mention(query: str) -> tuple[bool, bool]:
+    """Returns (has_companion, is_plural) from any of the phrasings a client
+    might use to describe someone in the group who doesn't dive."""
+    if _MENTIONS_COMPANION_RE.search(query):
+        return True, _mentions_plural_companions(query)
+    if _NON_DIVER_PLURAL_RE.search(query):
+        return True, True
+    if _NON_DIVER_SINGULAR_RE.search(query):
+        # "el resto"/"los demás"/"the rest"/"the others" are collective nouns
+        # that take a grammatically singular verb ("el resto no bucea") even
+        # when they refer to several people — bias plural for these.
+        if re.search(r"\b(?:el\s+resto|los\s+dem[aá]s|the\s+rest|the\s+others?)\b", query, re.IGNORECASE):
+            return True, True
+        return True, False
+    elliptical = _NON_DIVER_ELLIPTICAL_ES_RE.search(query) or _NON_DIVER_ELLIPTICAL_EN_RE.search(query)
+    if elliptical:
+        matched = elliptical.group(0).lower()
+        is_plural = any(w in matched for w in _NON_DIVER_ELLIPTICAL_PLURAL_WORDS)
+        return True, is_plural
+    return False, False
+
 
 def _canonical_diving_overview_answer(query: str, lang: str) -> str | None:
     if _OVERVIEW_EXCLUDE.search(query):
         return None
     if not (_OVERVIEW_PHRASE.search(query) and _OVERVIEW_DIVING_WORD.search(query)):
         return None
+
+    already_certified = _mentions_already_certified(query)
+    has_companion, plural_companions = _detect_companion_mention(query)
+
     if lang == "es":
-        return (
+        intro = (
             "🌊 *Buceamos en las Islas del Rosario* (Parque Nacional Corales del Rosario), "
             "a 45–60 min en lancha desde Cartagena: aguas cálidas, arrecifes y mucha vida marina. "
-            "Te resumo las opciones:\n\n"
-            "🆕 *¿Nunca has buceado?* → el *Minicurso de buceo* (bautismo): teoría, práctica en "
-            "piscina y una inmersión en el mar con instructor. Desde los 10 años.\n\n"
-            "🤿 *¿Ya eres buzo certificado?* → *paquetes de inmersiones*: 2 buceos en 1 día, o "
-            "planes multi-día (4, 5, 7 o 9 buceos).\n\n"
-            "🎓 *¿Quieres sacarte el título?* → *cursos PADI*: Open Water (el básico), Advanced, "
-            "Rescue, Divemaster y especialidades.\n\n"
-            "🐠 Y si prefieres sin bucear, el *snorkel* es una chulada para ver el arrecife desde "
-            "la superficie.\n\n"
-            "¿Cuál te llama? Si quieres te armo la reserva. 😄"
-        ) + _CANONICAL_SAFETY_NET["es"]
-    return (
+        )
+        if already_certified:
+            intro = "¡Qué bien que ya seas buzo certificado! 🤿 " + intro
+        intro += "Te resumo las opciones:\n\n"
+
+        blocks = {
+            "beginner": (
+                "🆕 *¿Nunca has buceado?* → el *Minicurso de buceo* (bautismo): teoría, práctica en "
+                "piscina y una inmersión en el mar con instructor. Desde los 10 años."
+            ),
+            "certified": (
+                "🤿 *¿Ya eres buzo certificado?* → *paquetes de inmersiones*: 2 buceos en 1 día, o "
+                "planes multi-día (4, 5, 7 o 9 buceos)."
+            ),
+            "course": (
+                "🎓 *¿Quieres sacarte el título?* → *cursos PADI*: Open Water (el básico), Advanced, "
+                "Rescue, Divemaster y especialidades."
+            ),
+            "snorkel": (
+                "🐠 Y si prefieres sin bucear, el *snorkel* es una chulada para ver el arrecife desde "
+                "la superficie."
+            ),
+        }
+        order = ("certified", "course", "snorkel", "beginner") if already_certified else (
+            "beginner", "certified", "course", "snorkel"
+        )
+        body = "\n\n".join(blocks[k] for k in order)
+
+        if plural_companions:
+            companion_line = (
+                "\n\n👥 *¿Tus acompañantes no bucean?* También tienen opciones: pueden hacer el "
+                "*minicurso* si quieren probar, ir de *snorkel*, o simplemente acompañarte en "
+                "la lancha sin bucear."
+            )
+        elif has_companion:
+            companion_line = (
+                "\n\n👥 *¿Tu acompañante no bucea?* También tiene opciones: puede hacer el "
+                "*minicurso* si quiere probar, ir de *snorkel*, o simplemente acompañarte en "
+                "la lancha sin bucear."
+            )
+        else:
+            companion_line = ""
+        outro = "\n\n¿Cuál te llama? Si quieres te armo la reserva. 😄"
+        return intro + body + companion_line + outro + _CANONICAL_SAFETY_NET["es"]
+
+    intro = (
         "🌊 *We dive in the Rosario Islands* (Corales del Rosario National Park), 45–60 min by boat "
-        "from Cartagena: warm water, reefs and lots of marine life. Here's a quick overview:\n\n"
-        "🆕 *Never dived before?* → the *Dive Mini-Course* (Discover Scuba): theory, pool practice "
-        "and one open-water dive with an instructor. From age 10.\n\n"
-        "🤿 *Already a certified diver?* → *dive packages*: 2 dives in 1 day, or multi-day plans "
-        "(4, 5, 7 or 9 dives).\n\n"
-        "🎓 *Want to get certified?* → *PADI courses*: Open Water (the basic one), Advanced, "
-        "Rescue, Divemaster and specialties.\n\n"
-        "🐠 And if you'd rather not dive, *snorkeling* is a lovely way to see the reef from the "
-        "surface.\n\n"
-        "Which one sounds good? I can put the booking together for you. 😄"
-    ) + _CANONICAL_SAFETY_NET["en"]
+        "from Cartagena: warm water, reefs and lots of marine life. "
+    )
+    if already_certified:
+        intro = "Great to hear you're already a certified diver! 🤿 " + intro
+    intro += "Here's a quick overview:\n\n"
+
+    blocks_en = {
+        "beginner": (
+            "🆕 *Never dived before?* → the *Dive Mini-Course* (Discover Scuba): theory, pool practice "
+            "and one open-water dive with an instructor. From age 10."
+        ),
+        "certified": (
+            "🤿 *Already a certified diver?* → *dive packages*: 2 dives in 1 day, or multi-day plans "
+            "(4, 5, 7 or 9 dives)."
+        ),
+        "course": (
+            "🎓 *Want to get certified?* → *PADI courses*: Open Water (the basic one), Advanced, "
+            "Rescue, Divemaster and specialties."
+        ),
+        "snorkel": (
+            "🐠 And if you'd rather not dive, *snorkeling* is a lovely way to see the reef from the "
+            "surface."
+        ),
+    }
+    order = ("certified", "course", "snorkel", "beginner") if already_certified else (
+        "beginner", "certified", "course", "snorkel"
+    )
+    body = "\n\n".join(blocks_en[k] for k in order)
+
+    if plural_companions:
+        companion_line = (
+            "\n\n👥 *If your companions don't dive*, they've got options too: they can try the "
+            "*mini-course*, go snorkeling, or simply come along on the boat without diving."
+        )
+    elif has_companion:
+        companion_line = (
+            "\n\n👥 *If your companion doesn't dive*, they've got options too: they can try the "
+            "*mini-course*, go snorkeling, or simply come along on the boat without diving."
+        )
+    else:
+        companion_line = ""
+    outro = "\n\nWhich one sounds good? I can put the booking together for you. 😄"
+    return intro + body + companion_line + outro + _CANONICAL_SAFETY_NET["en"]
 
 
 # A GENERIC price question ("¿cuánto cuesta?", "precios?", "how much?") with no
