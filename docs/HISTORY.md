@@ -1,6 +1,13 @@
 History
 =======
 
+0.20.23 (Gadea) - (2026-07-17)
+----------------------
+* **Seguimiento del fix de descuento de grupo (v0.20.22): tras el reindex, retrieval encuentra el chunk correcto con el score más alto, pero seguía cayendo a asesor ~2/3 de las veces.** Investigado en vivo repitiendo la prueba 3 veces contra PRE real: 1/3 respondió bien, 2/3 cayeron al fallback. Diagnóstico confirmado: el LLM a veces calcula el precio final ya con el descuento aplicado (una cifra derivada que no aparece literal en el contexto) y el guard determinista de importes (`currency_amounts_grounded`) la rechaza correctamente como no fundamentada — coincide con el patrón de flakiness del verificador de grounding ya documentado en sesiones anteriores (~1/3 de rechazos intermitentes en respuestas correctas), aquí más frecuente porque la pregunta invita a hacer aritmética (10%+10%=20%, o precio por persona).
+* Fix: nueva regla explícita en el prompt del sistema (ES+EN) — al citar un descuento, dar SOLO el porcentaje y la condición tal cual están en el contexto, nunca calcular ni afirmar el precio final ya con el descuento aplicado. 2 tests nuevos en `test_rag_safety.py` verificando que la regla está presente en ambos idiomas.
+* Suite: **1651 passed**, 15 skipped (mismos fallos preexistentes sin relación por falta de `OPENAI_API_KEY`). `compileall` limpio.
+* **Pendiente**: confirmar en vivo tras el deploy que la tasa de fallback en esta pregunta baja significativamente (no se puede garantizar el 100% por la naturaleza probabilística del LLM, pero debería reducirse mucho al quitarle la tentación de calcular la cifra derivada).
+
 0.20.22 (Gadea) - (2026-07-17)
 ----------------------
 * **Prueba en vivo en PRE (contra el entorno real, vía `scripts/live_battery_driver.py` ejecutado por SSH en la VPS) del guion completo de memoria: éxito en 8 de 9 puntos.** Confirmados en vivo: entrada correcta al árbol guiado (v0.20.21), precio de buceo específico (v0.20.19/20.20), pregunta libre en el paso de "¿hace 2 años?" sin bloquearse (v0.20.18), y **el bot recordó "rodilla operada" y recomendó snorkel** al preguntársele por el padre 9 turnos después (Fase B/C del plan de memoria funcionando).

@@ -1000,6 +1000,22 @@ def test_system_prompt_has_partial_equipment_discount_guard_en():
     assert "partial gear" in prompt.lower()
 
 
+def test_system_prompt_forbids_calculating_final_discounted_price_es():
+    """Real bug (live PRE, 2026-07-17): asked '¿hay descuento por grupo?', the
+    LLM sometimes computed a final discounted $ figure not literally in the
+    context, which the deterministic currency guard correctly rejected as
+    ungrounded — falling to the advisor fallback ~2/3 of the time even though
+    the underlying discount policy was correct. The prompt must tell the model
+    to state only the percentage/condition and never do the arithmetic itself."""
+    prompt = rag_agent.build_system_prompt("es")
+    assert "nunca calcules" in prompt.lower() or "no calcules" in prompt.lower()
+
+
+def test_system_prompt_forbids_calculating_final_discounted_price_en():
+    prompt = rag_agent.build_system_prompt("en")
+    assert "never calculate" in prompt.lower()
+
+
 def test_brand_tone_injected_from_json_es(monkeypatch):
     """build_system_prompt must read brand_tone.json. Changes to the JSON must be reflected."""
     fake_tone = {
