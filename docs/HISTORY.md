@@ -1,6 +1,14 @@
 History
 =======
 
+0.20.20 (Gadea) - (2026-07-17)
+----------------------
+* **Bug real en vivo, tercera ronda: el mensaje inicial de reserva ("mi padre tiene la rodilla operada, evitar planes muy físicos") caía en el atajo canónico de overview de buceo en vez de entrar al árbol guiado**. Causa raíz: `_OVERVIEW_PHRASE` (`rag_agent.py`) tenía "planes"/"opciones"/"alternativas" como palabras SUELTAS que matcheaban en cualquier parte del mensaje — "evitar planes muy físicos" (actividades del padre, nada que ver con "qué planes turísticos tienen") disparaba el atajo igual que "bucear" en la misma frase.
+* Fix: las palabras sueltas ya no matchean en cualquier posición. Ahora solo cuentan si van precedidas de "qué" (`qué planes/opciones tienen`) o si son la totalidad del mensaje (consulta corta tipo "¿planes?"). Añadido de paso `what \w+ options do you have` para no perder cobertura en inglés ("what diving options do you have") al quitar el fallback suelto.
+* Tests: 3 nuevos en `test_rag_safety.py` (el caso real exacto + una variante + confirmación de que las consultas cortas legítimas siguen funcionando).
+* Suite: **1645 passed**, 15 skipped (mismos fallos preexistentes sin relación por falta de `OPENAI_API_KEY`). `compileall` limpio.
+* **Pendiente**: desplegar a PRE y repetir la prueba completa del escenario del padre desde cero — con este fix, el mensaje inicial debería entrar correctamente al árbol guiado (¿estáis certificados?) en vez de al atajo genérico.
+
 0.20.19 (Gadea) - (2026-07-17)
 ----------------------
 * **Bug real en vivo: pregunta específica de precio de buceo devolvía el resumen genérico de 4 servicios en ambas monedas**. "¿Qué precio tiene el buceo?" (mid-flow, grupo certificado eligiendo plan) cayó en `_canonical_price_overview_answer` porque "buceo"/"bucear"/"dive"/"diving" no estaban en la lista `_PRICE_SPECIFIC` que distingue pregunta específica de genérica — mismo patrón de bug que "paquetes"/"buzo" en versiones anteriores. Arreglado (`buce\w*|buse\w*|buz\w*|div(?:e|es|er|ers|ing)`, ES+EN). Ahora esta pregunta llega a RAG real, que puede responder de forma específica y concisa sobre buceo en vez del listado completo. 4 tests de regresión nuevos en `test_rag_safety.py`.

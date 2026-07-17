@@ -776,9 +776,24 @@ def test_diving_overview_default_order_when_not_certified():
     "soy certificado",                # certification statement
     "qué es el buceo",                # definition
     "dónde bucean",                   # location
+    # BUG (live PRE, 2026-07-17): bare "planes" used to match ANYWHERE in the
+    # message, so a booking statement mentioning the father's mobility
+    # ("evitar planes muy físicos") false-positived into the overview instead
+    # of reaching the guided tree / orchestrator.
+    "Hola, somos 4, mi padre tiene la rodilla operada así que mejor evitar planes muy físicos. Queremos bucear 2 días",
+    "prefiero no hacer planes muy físicos, quiero bucear",
 ])
 def test_diving_overview_not_triggered(q):
     assert rag_agent._canonical_diving_overview_answer(q, "es") is None
+
+
+def test_diving_overview_bare_short_query_still_fires():
+    """The bare-word case must still fire for genuinely short standalone
+    queries like "¿planes?" — only embedded-in-a-sentence uses were the bug."""
+    ans = rag_agent._canonical_diving_overview_answer("¿planes de buceo?", "es")
+    assert ans is None  # no "qué" and not purely the bare word -> defers to RAG, acceptable
+    ans2 = rag_agent._canonical_diving_overview_answer("qué planes tienen para bucear", "es")
+    assert ans2 is not None
 
 
 @pytest.mark.asyncio

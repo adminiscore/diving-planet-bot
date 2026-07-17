@@ -747,10 +747,20 @@ def _canonical_food_answer(query: str, lang: str) -> str | None:
 # ("what does the minicourse include?", "how much is diving?") don't match.
 _OVERVIEW_PHRASE = re.compile(
     r"\b(?:qu[eé]\s+(?:ofrec\w*|tien\w+|hay|opciones|planes|actividades|tipos|servicios)|"
-    r"opciones|planes|alternativas|options|plans|alternatives|"
     r"qu[eé]\s+puedo\s+hacer|qu[eé]\s+se\s+puede\s+hacer|"
-    r"what\s+(?:do\s+you\s+(?:offer|have|got)|options|can\s+i\s+do|kind\s+of)|"
+    r"what\s+(?:do\s+you\s+(?:offer|have|got)|options|can\s+i\s+do|kind\s+of|"
+    r"\w+\s+options\s+do\s+you\s+have)|"
     r"which\s+(?:options|plans)|tell\s+me\s+about\s+(?:your\s+)?(?:diving|options))\b",
+    re.IGNORECASE,
+)
+# Bare "planes"/"opciones"/"alternativas" (no "qué" in front) used to match
+# ANYWHERE in the message, so "mejor evitar planes muy físicos" (a booking
+# statement about the father's mobility, nothing to do with tour packages)
+# false-positived into the overview (found live 2026-07-17). These words only
+# unambiguously mean "what do you offer" when they're basically the WHOLE
+# message (a short standalone query like "¿planes?"), so this only fires then.
+_OVERVIEW_BARE_WORD_RE = re.compile(
+    r"^[\s¿?¡!.,]*(?:opciones|planes|alternativas|options|plans|alternatives)[\s¿?¡!.,]*$",
     re.IGNORECASE,
 )
 _OVERVIEW_DIVING_WORD = re.compile(
@@ -868,7 +878,8 @@ def _detect_companion_mention(query: str) -> tuple[bool, bool]:
 def _canonical_diving_overview_answer(query: str, lang: str) -> str | None:
     if _OVERVIEW_EXCLUDE.search(query):
         return None
-    if not (_OVERVIEW_PHRASE.search(query) and _OVERVIEW_DIVING_WORD.search(query)):
+    phrase_match = _OVERVIEW_PHRASE.search(query) or _OVERVIEW_BARE_WORD_RE.match(query.strip())
+    if not (phrase_match and _OVERVIEW_DIVING_WORD.search(query)):
         return None
 
     already_certified = _mentions_already_certified(query)
