@@ -220,6 +220,16 @@ class ConversationState:
     # bot never re-asks or ignores what the customer already said. Persists for
     # the whole conversation (NOT cleared with the cart).
     remembered_facts: dict | None = None
+    # Rolling summary of the conversation so far (Fase B, see
+    # docs/memory-context-improvement-plan.md): once `history` grows past the
+    # raw window every RAG/orchestrator call actually reads, details mentioned
+    # earlier would otherwise be silently unreachable even though they're
+    # still stored. `conversation_summary_through` is the index into
+    # `history` up to which the summary already accounts for, so updates are
+    # incremental (previous summary + only the new segment) instead of
+    # re-summarizing the whole conversation every time.
+    conversation_summary: str | None = None
+    conversation_summary_through: int = 0
 
     def __post_init__(self):
         if self.history is None:

@@ -16,7 +16,7 @@ import unicodedata
 from datetime import datetime
 from zoneinfo import ZoneInfo
 
-from src.agents import orchestrator
+from src.agents import conversation_summarizer, orchestrator
 from src.agents.escalation import detect_sensitive_escalation
 from src.agents.intent_classifier import classify_menu_intent
 from src.agents.intent_detector import IntentDetector
@@ -2750,6 +2750,16 @@ def _build_extra_context(state: ConversationState) -> str | None:
     elif state.language == "en":
         parts.append("The conversation is currently happening in English.")
 
+    # Resumen progresivo de la conversación (Fase B, ver
+    # docs/memory-context-improvement-plan.md): cubre detalles mencionados
+    # hace muchos turnos que ya salieron de la ventana cruda de mensajes
+    # recientes que usan rag_agent.py/orchestrator.py.
+    if state.conversation_summary:
+        if state.language == "es":
+            parts.append(f"Resumen de la conversación hasta ahora: {state.conversation_summary}")
+        else:
+            parts.append(f"Summary of the conversation so far: {state.conversation_summary}")
+
     # Datos que el cliente ya dio en lenguaje natural (presupuesto, días, edades,
     # experiencia, preferencias). Inyectados para que el bot NUNCA los ignore ni
     # los repregunte.
@@ -4232,6 +4242,17 @@ def _route_detected_intent(intent, state: ConversationState, message: str = "") 
 
 
 async def route_message(state: ConversationState, message: str) -> str:
+    """Public entry point. Delegates to the actual routing logic, then
+    updates the rolling conversation summary (Fase B, see
+    docs/memory-context-improvement-plan.md) once per turn — a thin wrapper
+    so the summary check runs regardless of which internal branch below
+    handled the message, without threading it through every early return."""
+    response = await _route_message_inner(state, message)
+    await conversation_summarizer.maybe_update_summary(state)
+    return response
+
+
+async def _route_message_inner(state: ConversationState, message: str) -> str:
     """
     Supervisor: decides how to handle each incoming message.
 

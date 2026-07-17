@@ -1,6 +1,13 @@
 History
 =======
 
+0.20.14 (Gadea) - (2026-07-17)
+----------------------
+* **Memoria/contexto — Fase B: resumen progresivo de la conversación** (ver plan completo en `docs/memory-context-improvement-plan.md`). Diagnóstico: hoy `state.history` se guarda completo en Redis pero ningún consumidor lee más de los últimos 12 mensajes (`rag_agent.py`, `orchestrator.py`) — detalles relevantes mencionados hace muchos turnos se vuelven inalcanzables aunque sigan guardados. Fix: nuevo módulo `src/agents/conversation_summarizer.py` con `maybe_update_summary(state)` — genera un resumen incremental (resumen anterior + solo el tramo nuevo, nunca desde cero) cada 12 mensajes nuevos, mismo patrón de llamada LLM que `condense_query` (con `try/except` que nunca rompe la respuesta si el resumen falla). Nuevos campos `conversation_summary`/`conversation_summary_through` en `ConversationState`, con compatibilidad hacia atrás verificada (estados ya guardados en Redis sin estos campos cargan con los defaults). Integrado envolviendo `route_message` (ahora un wrapper fino sobre `_route_message_inner`) para que se dispare una vez por turno sin importar qué rama interna atendió el mensaje; el resumen se inyecta en `_build_extra_context` junto a `remembered_facts`.
+* Tests escritos ANTES de la implementación (TDD), confirmados en rojo primero: `tests/test_conversation_summarizer.py` (6 tests).
+* Suite: **1585 passed**, 15 skipped (mismos fallos preexistentes sin relación por falta de `OPENAI_API_KEY`).
+* **Pendiente**: probar en vivo en PRE con el LLM real (aquí todo se validó con el resumen mockeado). Fases C (hechos abiertos) y A (ventana cruda más grande) del mismo plan, aún sin empezar.
+
 0.20.13 - (2026-07-16)
 ----------------------
 * **Barrido proactivo de bugs del mismo patrón** (regex/listas de palabras incompletas, la misma forma que los bugs de "paquetes"/"buzo" de esta sesión): un agente de investigación rastreó `intent_detector.py`/`supervisor.py` buscando huecos similares; se verificaron y arreglaron 6 reales:
