@@ -4057,3 +4057,58 @@ async def test_bare_si_without_offer_does_not_escalate():
     ]
     await route_message(state, "si")
     assert state.step != Step.ESCALATE
+
+
+# --- Real bug (live PRE, 2026-07-17): questions ignored at MIXED_CERT_LAST_DIVE /
+# MIXED_CERT_REFRESH_INTEREST ------------------------------------------------
+# supervisor.py forces ANY message back into the raw tree handler for a fixed
+# list of "critical steps", assuming the handler can parse free text. True for
+# MIXED_LOCATION/MIXED_ADD_QTY/MIXED_CERT_REFRESH_QTY (they have real free-text
+# parsing), but MIXED_CERT_LAST_DIVE and MIXED_CERT_REFRESH_INTEREST are pure
+# yes/no button steps with no fallback — any genuine question got silently
+# swallowed into "no entendí", blocking the conversation entirely (and, as a
+# side effect, never reaching RAG/_build_extra_context where Fase B's rolling
+# summary would apply).
+
+async def _reach_mixed_cert_last_dive(lang: str = "es") -> ConversationState:
+    state = ConversationState(conversation_id="last-dive-question-test")
+    state.language = lang
+    msg = (
+        "Hola, somos 2, certificados, queremos bucear desde Cartagena"
+        if lang == "es"
+        else "Hi, we are 2 certified divers, want to dive from Cartagena"
+    )
+    await route_message(state, msg)
+    for _ in range(6):
+        if state.step == Step.MIXED_CERT_LAST_DIVE:
+            break
+        await route_message(state, "1")
+    assert state.step == Step.MIXED_CERT_LAST_DIVE
+    return state
+
+
+@pytest.mark.asyncio
+async def test_question_at_last_dive_step_reaches_rag_not_stuck():
+    state = await _reach_mixed_cert_last_dive()
+    with patch("src.agents.supervisor.rag_answer", new_callable=AsyncMock, return_value="CANNED_RAG_ANSWER"):
+        resp = await route_message(state, "¿Hay descuento por grupo?")
+    assert resp == "CANNED_RAG_ANSWER"
+    assert state.step == Step.MIXED_CERT_LAST_DIVE, "must not lose the pending yes/no question"
+
+
+@pytest.mark.asyncio
+async def test_question_at_refresh_interest_step_reaches_rag_not_stuck():
+    state = await _reach_mixed_cert_last_dive()
+    await route_message(state, "1")  # "sí, más de 2 años" -> MIXED_CERT_REFRESH_INTEREST
+    assert state.step == Step.MIXED_CERT_REFRESH_INTEREST
+    with patch("src.agents.supervisor.rag_answer", new_callable=AsyncMock, return_value="CANNED_RAG_ANSWER"):
+        resp = await route_message(state, "¿Y si llueve ese día?")
+    assert resp == "CANNED_RAG_ANSWER"
+
+
+@pytest.mark.asyncio
+async def test_button_answer_at_last_dive_step_still_advances():
+    """The fix must not break the normal button-driven path."""
+    state = await _reach_mixed_cert_last_dive()
+    await route_message(state, "2")  # "no, menos de 2 años"
+    assert state.step != Step.MIXED_CERT_LAST_DIVE

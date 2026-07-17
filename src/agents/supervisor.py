@@ -36,7 +36,7 @@ from src.flows.decision_tree import (
 )
 from src.knowledge.loader import load_policies
 from src.privacy import detect_pii, privacy_block_message
-from src.utils.fuzzy import is_affirmative, is_negative, word_ratio
+from src.utils.fuzzy import is_affirmative, is_back, is_negative, word_ratio
 
 logger = logging.getLogger("uvicorn.error")
 
@@ -4930,18 +4930,42 @@ async def _route_message_inner(state: ConversationState, message: str) -> str:
                 return response
 
             # intent == "RAG" → Para steps críticos que esperan respuestas específicas,
-            # enviar al decision_tree en lugar de RAG (el handler detectará texto libre)
+            # enviar al decision_tree en lugar de RAG (el handler detectará texto libre).
+            # OJO: esto solo es correcto para pasos cuyo handler tiene parsing real de
+            # texto libre (MIXED_LOCATION: palabras clave de ubicación; MIXED_ADD_QTY /
+            # MIXED_CERT_REFRESH_QTY: cantidades) — ahí SIEMPRE se manda al árbol.
             if state.step in (
                 Step.MIXED_LOCATION,
                 Step.MIXED_ADD_QTY,
-                Step.MIXED_CERT_LAST_DIVE,
-                Step.MIXED_CERT_REFRESH_INTEREST,
                 Step.MIXED_CERT_REFRESH_QTY,
             ):
                 logger.info(f"[SUPERVISOR] Classifier returned RAG but step={state.step.value} expects specific input, sending to decision_tree")
                 response = decision_tree.process_message(state, message)
                 _maybe_build_pending_note(state)
                 return response
+
+            # MIXED_CERT_LAST_DIVE / MIXED_CERT_REFRESH_INTEREST son preguntas de
+            # sí/no puras: su handler NO tiene fallback de texto libre (solo
+            # entiende botón 1, botón 2, o "volver"). Antes se forzaban aquí
+            # igual que los pasos de arriba, asumiendo que el handler sabría
+            # interpretar texto libre — falso para estos 2, así que cualquier
+            # pregunta genuina ("¿hay descuento?") quedaba atrapada en un "no
+            # te entendí" en bucle, sin poder preguntar nada más (bug real en
+            # vivo, 2026-07-17). Fix: solo se manda al árbol si el mensaje
+            # realmente resuelve como respuesta al botón (1/2/volver); si no,
+            # cae al bloque de RAG de más abajo, igual que cualquier otro paso.
+            if state.step in (Step.MIXED_CERT_LAST_DIVE, Step.MIXED_CERT_REFRESH_INTEREST):
+                resolves_as_button_answer = (
+                    is_back(message.strip().lower())
+                    or DecisionTree._parse_choice(message, 2) is not None
+                )
+                if resolves_as_button_answer:
+                    logger.info(f"[SUPERVISOR] Classifier returned RAG but step={state.step.value} resolves as a button answer, sending to decision_tree")
+                    response = decision_tree.process_message(state, message)
+                    _maybe_build_pending_note(state)
+                    return response
+                logger.info(f"[SUPERVISOR] Genuine question at step={state.step.value}, falling through to RAG instead of blocking")
+                # fall through to the RAG block below
             # intent == "RAG" → fall through to RAG below
 
         deterministic_mixed_response = _maybe_handle_mixed_group_from_menu(state, message)
