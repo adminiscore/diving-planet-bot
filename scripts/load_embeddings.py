@@ -376,18 +376,23 @@ def load_knowledge_base() -> list[dict]:
                     },
                 })
 
-        # Discount policies
+        # Discount policies. NOTE: each entry's actual keys are "es"/"en" (a
+        # full descriptive sentence), NOT "description_es"/"description_en" —
+        # found 2026-07-17 that the wrong key names silently embedded a blank
+        # chunk (every description came back "") for years, so RAG had no real
+        # data to answer "hay descuento por grupo?" and fell back to an advisor
+        # instead of correctly saying it only applies to groups of 5+.
         disc = pricing_data.get("discount_policies", {})
         if disc:
             lines_es = [f"Políticas de descuento Diving Planet ({year})", ""]
             lines_en = [f"Diving Planet discount policies ({year})", ""]
             for disc_key, disc_entry in disc.items():
-                name_es = disc_entry.get("name_es", disc_key)
-                name_en = disc_entry.get("name_en", disc_key)
-                desc_es = disc_entry.get("description_es", "")
-                desc_en = disc_entry.get("description_en", "")
-                lines_es.append(f"- {name_es}: {desc_es}")
-                lines_en.append(f"- {name_en}: {desc_en}")
+                desc_es = disc_entry.get("es", "")
+                desc_en = disc_entry.get("en", "")
+                if desc_es:
+                    lines_es.append(f"- {desc_es}")
+                if desc_en:
+                    lines_en.append(f"- {desc_en}")
             documents.append({
                 "content": "\n".join(lines_es).strip(),
                 "metadata": {"source": "pricing", "section": "discount_policies", "lang": "es", "topics": ["discount", "discount_colombian", "pricing"]},

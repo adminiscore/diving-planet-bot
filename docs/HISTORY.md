@@ -1,6 +1,15 @@
 History
 =======
 
+0.20.22 (Gadea) - (2026-07-17)
+----------------------
+* **Prueba en vivo en PRE (contra el entorno real, vía `scripts/live_battery_driver.py` ejecutado por SSH en la VPS) del guion completo de memoria: éxito en 8 de 9 puntos.** Confirmados en vivo: entrada correcta al árbol guiado (v0.20.21), precio de buceo específico (v0.20.19/20.20), pregunta libre en el paso de "¿hace 2 años?" sin bloquearse (v0.20.18), y **el bot recordó "rodilla operada" y recomendó snorkel** al preguntársele por el padre 9 turnos después (Fase B/C del plan de memoria funcionando).
+* **Bug real encontrado en el único punto que falló: "¿Hay descuento por grupo?" caía al fallback de asesor**. Investigado a fondo: `scripts/load_embeddings.py` construye el chunk de políticas de descuento leyendo las claves `description_es`/`description_en`/`name_es`/`name_en` de `pricing.json`, pero el JSON real usa `es`/`en` directamente — así que **el chunk se indexaba con todas las descripciones en blanco** (solo "- group_discount: ", "- online_booking: ", etc., sin ningún texto), llevaba así aparentemente años. RAG no tenía ninguna información real de la que partir para responder, así que cualquier intento de dar un porcentaje se rechazaba como no fundamentado y caía al asesor — aunque el dato correcto (10% para grupos de 5+, este grupo era de 4 y no calificaba) sí estaba en el KB, solo que nunca llegó a indexarse de forma útil.
+* Fix: corregidas las claves leídas (`es`/`en`). Verificado que el chunk reconstruido ahora sí contiene el texto completo, incluido "10% de descuento para grupos de 5 personas o más". El pipeline de CI/CD ya reindexa automáticamente en cada deploy a PRE (`docker exec dp-pre-bot python -m scripts.load_embeddings --yes`), así que no hace falta ningún paso manual adicional.
+* Tests nuevos: `tests/test_load_embeddings.py` (3 tests) — guardan explícitamente contra que las líneas de descuento vuelvan a quedar en blanco.
+* Suite: **1649 passed**, 15 skipped (mismos fallos preexistentes sin relación por falta de `OPENAI_API_KEY`). `compileall` limpio.
+* **Pendiente**: confirmar en vivo tras el próximo deploy+reindex que "¿hay descuento por grupo?" ya da la respuesta correcta (aplica a partir de 5 personas) en vez de caer a asesor.
+
 0.20.21 (Gadea) - (2026-07-17)
 ----------------------
 * **Bug real en vivo, cuarta ronda: mensaje de reserva claro con certificación desconocida caía en RAG (recomendación + oferta de asesor) en vez de entrar al árbol guiado**. Con el fix de "planes" ya aplicado (v0.20.20), el mensaje inicial ("somos 4... queremos bucear 2 días") llegó al orquestador LLM, que esta vez lo clasificó como `answer_question` en vez de una acción de reserva — el bot improvisó una recomendación de RAG (con datos reales del KB) que terminaba ofreciendo pasar con un asesor, en vez de arrancar el flujo de reserva.
