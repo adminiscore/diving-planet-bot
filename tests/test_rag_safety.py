@@ -822,6 +822,14 @@ def test_price_overview_fires_for_bare_price_question(q):
     "cuánto cuesta el plan de varios días",
     "cuánto cuesta el paquete de 5 buceos",
     "what is the price for the multi-day package",  # EN equivalent
+    # BUG (live PRE, 2026-07-17): "el buceo" bare wasn't recognized as naming
+    # a specific service, so a client mid-flow choosing their certified-diving
+    # plan got the generic 4-service/both-currencies overview instead of a
+    # targeted answer about diving specifically.
+    "¿qué precio tiene el buceo?",
+    "cuánto cuesta bucear",
+    "what is the price of diving",
+    "how much for a dive",
 ])
 def test_price_overview_defers_for_specific_or_offtopic(q):
     assert rag_agent._canonical_price_overview_answer(q, "es") is None

@@ -301,6 +301,18 @@ TOOLS: list[dict] = [
                         ),
                     },
                     "preference": {"type": "string", "description": "Any preference/concern, e.g. 'quieren ir juntos, no separarse'"},
+                    "notes": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": (
+                            "Any OTHER relevant detail that doesn't fit the fields above: "
+                            "health/mobility notes, timing constraints, special occasions, "
+                            "concerns. Short phrase in the customer's own words, e.g. 'padre "
+                            "con rodilla operada, evitar planes fisicos', 'es el cumpleanos "
+                            "de mi madre'. Unlike the other fields, multiple notes accumulate "
+                            "over the conversation instead of replacing each other."
+                        ),
+                    },
                 },
             },
         },

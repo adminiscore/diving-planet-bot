@@ -2812,7 +2812,7 @@ def _build_extra_context(state: ConversationState) -> str | None:
         idx = 0 if state.language == "es" else 1
         lines = [
             f"{_fact_labels.get(k, (k, k))[idx]}: {v}"
-            for k, v in facts.items() if v
+            for k, v in facts.items() if v and k != "notes"
         ]
         if lines:
             header = (
@@ -2821,6 +2821,18 @@ def _build_extra_context(state: ConversationState) -> str | None:
                 else "The customer already told us the following (use it, don't re-ask): "
             )
             parts.append(header + "; ".join(lines) + ".")
+
+        # "notes" (Fase C) es una lista abierta, no un único valor — se
+        # renderiza aparte como viñetas en vez de aplanarla en la frase de
+        # arriba (que asume un valor por clave).
+        notes = facts.get("notes") or []
+        if notes:
+            header = (
+                "Otros detalles que el cliente ya mencionó (tenlos en cuenta, no los ignores):"
+                if state.language == "es"
+                else "Other details the customer already mentioned (keep these in mind, don't ignore them):"
+            )
+            parts.append(header + "\n" + "\n".join(f"- {n}" for n in notes) + "\n")
 
     # Ubicacion base
     if state.location == "cartagena":
@@ -3241,6 +3253,11 @@ _REMEMBER_ACTIVITY_MAP = {
 }
 
 
+# Cap on state.remembered_facts["notes"] (Fase C) — keeps the most recent
+# entries so the list doesn't grow unbounded over a very long conversation.
+_MAX_REMEMBERED_NOTES = 8
+
+
 def _persist_remembered(state: ConversationState, remembered: dict | None) -> None:
     """Write facts the customer volunteered onto state so the bot never re-asks
     them. Hard slots go to the fields the tree consumes; soft facts (budget,
@@ -3296,6 +3313,18 @@ def _persist_remembered(state: ConversationState, remembered: dict | None) -> No
         val = remembered.get(key)
         if val not in (None, "", []):
             facts[key] = str(val)
+
+    # "notes" (Fase C, docs/memory-context-improvement-plan.md): unlike the 5
+    # fixed keys above (which overwrite on every mention), free-form details
+    # that don't map to a category ACCUMULATE — losing one because a later,
+    # unrelated note replaced it is exactly the real bug that motivated this
+    # (live PRE 2026-07-17: "padre con rodilla operada" had nowhere to live).
+    new_notes = remembered.get("notes")
+    if new_notes:
+        existing_notes = facts.get("notes") or []
+        combined = existing_notes + [n for n in new_notes if n and n not in existing_notes]
+        facts["notes"] = combined[-_MAX_REMEMBERED_NOTES:]
+
     state.remembered_facts = facts
 
 

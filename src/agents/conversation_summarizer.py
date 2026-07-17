@@ -117,3 +117,4 @@ async def maybe_update_summary(state: ConversationState) -> None:
     if updated:
         state.conversation_summary = updated
         state.conversation_summary_through = len(history)
+        logger.info(f"[SUMMARY] updated through={state.conversation_summary_through} summary={updated[:200]!r}")

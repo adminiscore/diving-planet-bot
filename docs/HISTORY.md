@@ -1,6 +1,14 @@
 History
 =======
 
+0.20.19 (Gadea) - (2026-07-17)
+----------------------
+* **Bug real en vivo: pregunta específica de precio de buceo devolvía el resumen genérico de 4 servicios en ambas monedas**. "¿Qué precio tiene el buceo?" (mid-flow, grupo certificado eligiendo plan) cayó en `_canonical_price_overview_answer` porque "buceo"/"bucear"/"dive"/"diving" no estaban en la lista `_PRICE_SPECIFIC` que distingue pregunta específica de genérica — mismo patrón de bug que "paquetes"/"buzo" en versiones anteriores. Arreglado (`buce\w*|buse\w*|buz\w*|div(?:e|es|er|ers|ing)`, ES+EN). Ahora esta pregunta llega a RAG real, que puede responder de forma específica y concisa sobre buceo en vez del listado completo. 4 tests de regresión nuevos en `test_rag_safety.py`.
+* **Fase C del plan de memoria/contexto implementada** (`docs/memory-context-improvement-plan.md`), motivada por un caso real: en la misma conversación, "mi padre tiene la rodilla operada, evitar planes físicos" nunca se recordó — el bot cayó 2 veces en el fallback de "te paso con un asesor" al preguntársele por ello más tarde. Diagnóstico: la cantidad de mensajes NO era el problema (verificado que `decision_tree.process_message` guarda todo en el historial, botones incluidos, por lo que la Fase B ya tenía mensajes de sobra para disparar) — el detalle simplemente no encajaba en ninguna de las 5 categorías fijas de `remembered_facts` y no se guardó en ningún sitio. Fix: nueva propiedad `notes` (lista) en la tool `remember` del orquestador — a diferencia de las 5 claves fijas (que se sobrescriben), `notes` ACUMULA con deduplicación y tope de 8 entradas (las más recientes), renderizada como viñetas propias en `_build_extra_context`. TDD: `tests/test_remembered_notes.py` (6 tests), confirmados en rojo antes de implementar.
+* Añadido logging de éxito en `conversation_summarizer.py` (Fase B) — antes solo logueaba fallos, ahora también cuándo el resumen se actualiza y con qué contenido, para poder auditar en los logs de PRE si dispara correctamente.
+* Suite: **1642 passed**, 15 skipped (mismos fallos preexistentes sin relación por falta de `OPENAI_API_KEY`). `compileall` limpio.
+* **Pendiente**: desplegar a PRE y repetir la prueba en vivo del escenario del padre (detalle en turno 1 + relleno + pregunta de seguimiento) para confirmar que ahora sí se recuerda. Fase A (ventana cruda más grande) del plan, aún sin empezar.
+
 0.20.18 (Gadea) - (2026-07-17)
 ----------------------
 * **Bug real encontrado probando la Fase B en vivo en PRE: la conversación se bloqueaba por completo en 2 pasos concretos del carrito mixto**. Al preguntar "¿ha pasado más de 2 años desde tu última inmersión?" (`MIXED_CERT_LAST_DIVE`) o "¿te interesa un refresher?" (`MIXED_CERT_REFRESH_INTEREST`), cualquier pregunta genuina del cliente ("¿hay descuento por grupo?", "¿y si llueve?") devolvía "¡Uy! No te entendí bien 🙈" en bucle, sin escalar a RAG ni dejar seguir la conversación.

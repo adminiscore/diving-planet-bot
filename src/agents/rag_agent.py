@@ -1008,6 +1008,13 @@ _PRICE_SPECIFIC = re.compile(
     r"divemaster|nitrox|especialidad|comida|almuerzo|acompa\w+|companion|"
     r"noche|nocturn\w+|paquetes?|referido|referral|fish|peces|flotabilidad|buoyancy|"
     r"naturalista|naturalist|vuelo|hotel|"
+    # "el buceo"/"bucear"/"diving" bare is itself a specific service (certified
+    # diving), not a generic price question — found live 2026-07-17: "¿qué
+    # precio tiene el buceo?" fell into the 4-service generic overview (with
+    # both currencies) instead of a targeted answer, even mid-flow where the
+    # client had already told the bot they're a certified group choosing
+    # between the 2-dives-1-day and multi-day plans.
+    r"buce\w*|buse\w*|buz\w*|div(?:e|es|er|ers|ing)|"
     # Multi-day pricing ("paquetes multidía", "varios días", "multi-day") is
     # its own specific question — the canonical overview below only mentions
     # it in passing without real prices, so it must fall through to RAG
