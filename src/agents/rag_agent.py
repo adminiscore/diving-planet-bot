@@ -520,7 +520,7 @@ def build_retrieval_query(query: str, history: list[dict] | None = None) -> str:
 
     recent_user_messages = [
         msg["content"]
-        for msg in history[-6:]
+        for msg in history[-settings.history_retrieval_enrichment_window:]
         if msg.get("role") == "user" and msg.get("content") != query
     ]
     if not recent_user_messages:
@@ -1237,7 +1237,7 @@ def _build_grounding_context(
     if history:
         prior_bot_messages = [
             turn.get("content", "")
-            for turn in history[-12:]
+            for turn in history[-settings.history_window_size:]
             if turn.get("role") == "assistant" and turn.get("content")
         ]
         if prior_bot_messages:
@@ -1348,9 +1348,10 @@ async def rag_answer(
         system_prompt = build_system_prompt(lang, query=condensed_query)
         messages = [{"role": "system", "content": system_prompt}]
 
-        # Add conversation history (last 12 messages max, to keep a longer thread)
+        # Add conversation history (settings.history_window_size messages max,
+        # to keep a longer thread — see Fase A, docs/memory-context-improvement-plan.md)
         if history:
-            for msg in history[-12:]:
+            for msg in history[-settings.history_window_size:]:
                 messages.append({"role": msg["role"], "content": redact_pii(msg["content"])})
 
         user_content = f"Contexto:\n{context}"

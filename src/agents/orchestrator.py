@@ -417,7 +417,7 @@ async def orchestrate(
 
     tools = _allowed_tools(allowed_actions)
     messages: list[dict] = [{"role": "system", "content": _system_prompt(lang, state_snapshot)}]
-    for turn in (history or [])[-12:]:
+    for turn in (history or [])[-settings.history_window_size:]:
         role = turn.get("role")
         content = turn.get("content")
         if role in ("user", "assistant") and content:

@@ -19,7 +19,7 @@ from src.agents import orchestrator
 
 # Modules whose tests call orchestrator.orchestrate directly and must see the
 # real implementation.
-_ORCHESTRATOR_LIVE_MODULES = {"test_orchestrator"}
+_ORCHESTRATOR_LIVE_MODULES = {"test_orchestrator", "test_history_window"}
 
 # Heuristic stand-in for the LLM's decision so entry free-text tests are
 # deterministic/offline: a clear "I want to do/book an activity" statement (not a

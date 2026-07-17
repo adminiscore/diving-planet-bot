@@ -63,6 +63,20 @@ class Settings(BaseSettings):
     default_language: str = "es"
     supported_languages: str = "es,en"
 
+    # --- Conversation memory (Fase A, docs/memory-context-improvement-plan.md) ---
+    # How many raw state.history messages every RAG/orchestrator call reads
+    # (rag_agent.py's LLM answer + grounding context, orchestrator.py's
+    # decision). The rolling-summary trigger (conversation_summarizer.py)
+    # derives from this same setting so it stays in sync — no gap of messages
+    # that are neither in the raw window nor yet folded into the summary.
+    # A single settings field instead of the literal repeated in 3+ places, so
+    # tuning it later (cost/latency vs. how much detail gets lost) is one
+    # number to change, overridable via the HISTORY_WINDOW_SIZE env var.
+    history_window_size: int = 24
+    # Smaller window used only to enrich the retrieval QUERY with recent user
+    # turns (not the full LLM context) — kept separate and smaller on purpose.
+    history_retrieval_enrichment_window: int = 10
+
     @property
     def is_dev(self) -> bool:
         return self.app_env == "development"

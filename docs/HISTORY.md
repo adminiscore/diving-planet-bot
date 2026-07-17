@@ -1,6 +1,14 @@
 History
 =======
 
+0.20.24 (Gadea) - (2026-07-17)
+----------------------
+* **Memoria/contexto — Fase A: ventana cruda de historial configurable** (última de las 3 fases del plan `docs/memory-context-improvement-plan.md`, B y C ya desplegadas y verificadas en vivo). TDD: `tests/test_history_window.py` (5 tests), confirmados en rojo primero.
+* Nuevo `settings.history_window_size` (default **24**, antes `12` hardcodeado en 3 sitios) y `settings.history_retrieval_enrichment_window` (default **10**, antes `6`) en `src/config.py` — ambos overrideables por variable de entorno sin tocar código, pensado para ajuste fino post-producción. Sustituidos los literales en `rag_agent.py` (respuesta LLM, contexto de grounding, enriquecimiento de retrieval) y `orchestrator.py` (decisión del orquestador).
+* `conversation_summarizer._SUMMARY_TRIGGER_EVERY` (Fase B) ahora se deriva del mismo `settings.history_window_size` en vez de un `12` hardcodeado por separado — cierra la dependencia técnica entre las fases B y A señalada desde el diseño original del plan (evita que quede un rango de mensajes ni en la ventana cruda ni resumido todavía).
+* Suite: **1656 passed**, 15 skipped (mismos fallos preexistentes sin relación por falta de `OPENAI_API_KEY`). `compileall` limpio.
+* **Con esto, las 3 fases del plan de memoria/contexto (B, C, A) quedan completas e implementadas.** Pendiente solo confirmar en vivo en PRE que la ventana más grande no introduce problemas de coste/latencia notables (palanca de ajuste ya documentada en el plan si hiciera falta bajarla).
+
 0.20.23 (Gadea) - (2026-07-17)
 ----------------------
 * **Seguimiento del fix de descuento de grupo (v0.20.22): tras el reindex, retrieval encuentra el chunk correcto con el score más alto, pero seguía cayendo a asesor ~2/3 de las veces.** Investigado en vivo repitiendo la prueba 3 veces contra PRE real: 1/3 respondió bien, 2/3 cayeron al fallback. Diagnóstico confirmado: el LLM a veces calcula el precio final ya con el descuento aplicado (una cifra derivada que no aparece literal en el contexto) y el guard determinista de importes (`currency_amounts_grounded`) la rechaza correctamente como no fundamentada — coincide con el patrón de flakiness del verificador de grounding ya documentado en sesiones anteriores (~1/3 de rechazos intermitentes en respuestas correctas), aquí más frecuente porque la pregunta invita a hacer aritmética (10%+10%=20%, o precio por persona).

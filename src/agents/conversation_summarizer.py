@@ -20,11 +20,13 @@ from src.privacy import redact_pii
 logger = logging.getLogger("uvicorn.error")
 
 # How many NEW messages must accumulate since the last summary update before
-# generating another one. Kept in sync with the raw history window used by
-# rag_agent.py/orchestrator.py (see docs/memory-context-improvement-plan.md,
-# Fase A note) so there is never a gap of messages that are neither in the
-# raw window nor yet folded into the summary.
-_SUMMARY_TRIGGER_EVERY = 12
+# generating another one. Derived from settings.history_window_size (Fase A,
+# docs/memory-context-improvement-plan.md) so it stays in sync with the raw
+# history window used by rag_agent.py/orchestrator.py — there is never a gap
+# of messages that are neither in the raw window nor yet folded into the
+# summary. Snapshotted at import time (like settings.openai_model elsewhere);
+# tests override it directly via monkeypatch on this module attribute.
+_SUMMARY_TRIGGER_EVERY = settings.history_window_size
 
 _SUMMARY_SYSTEM_PROMPT_ES = (
     "Mantienes un resumen breve y factual de una conversación de reserva de "
