@@ -60,6 +60,42 @@ _ADAPTIVE_DIVING_PATTERN = re.compile(
     re.IGNORECASE,
 )
 
+# Price or booking follow-ups. Inside the DIVE TO HEAL context these must NOT
+# be answered with the generic Cartagena price list or the normal booking flow
+# — adaptive diving is coordinated (logistics + price) per case with an
+# advisor, so we route there coherently instead.
+_PRICE_OR_BOOKING_Q = re.compile(
+    r"\b(?:cu[aá]nto|precio|precios|cuesta|cuestan|vale|valen|sale|salen|tarifa|"
+    r"how\s+much|price|cost|"
+    r"reserv\w*|c[oó]mo\s+(?:reservo|reservamos|reservar|pago)|book|booking)\b",
+    re.IGNORECASE,
+)
+
+
+def _adaptive_diving_advisor_answer(lang: str) -> str:
+    """Coherent DIVE TO HEAL reply for price/booking questions: no generic
+    prices in chat — adaptive diving is coordinated per case with an advisor
+    (owner decision, 2026-07-17). Ends with an advisor offer that the bare-
+    affirmation handler recognizes, so a later "sí" escalates."""
+    if lang == "es":
+        return (
+            "En nuestro programa *DIVE TO HEAL* (buceo adaptado) el precio y la logística se "
+            "coordinan de forma personalizada según la actividad y las necesidades de cada "
+            "persona — por eso no es una tarifa fija de la web, la define un asesor evaluando "
+            "tu caso para que la experiencia sea segura y a tu medida. 🤿\n\n"
+            "¿Quieres que te pase con un asesor para darte todos los detalles? También puedes "
+            "escribirnos por WhatsApp al +57 320 231515. 😊"
+        )
+    return (
+        "In our *DIVE TO HEAL* program (adaptive diving), the price and logistics are "
+        "arranged individually based on the activity and each person's needs — so it isn't a "
+        "fixed website rate; an advisor sets it after evaluating your case, so the experience "
+        "is safe and tailored to you. 🤿\n\n"
+        "Would you like me to connect you with an advisor for all the details? You can also "
+        "message us on WhatsApp at +57 320 231515. 😊"
+    )
+
+
 # Generic "what days / when is there availability" questions. The real
 # calendar (exact date + headcount) only exists on the booking link, so we
 # never invent a date here — just reassure the client (tours run daily, there
@@ -4400,11 +4436,36 @@ async def route_message(state: ConversationState, message: str) -> str:
             state.history.append({"role": "assistant", "content": age_answer})
             return age_answer
 
-    # Adaptive diving / DIVE TO HEAL questions (disability, accessibility) must
-    # be ANSWERED with the program's factual info (RAG handles the exception),
-    # not hijacked by the booking IntentDetector into "¿eres certificado?".
-    if _ADAPTIVE_DIVING_PATTERN.search(message) and state.step not in _MIXED_FLOW_STEPS:
+    # Adaptive diving / DIVE TO HEAL. The topic is detected per-turn by keyword,
+    # but must be REMEMBERED: a follow-up like "¿cuánto cuesta?" carries no
+    # disability word, so without a persisted flag it fell through to the
+    # generic price handler (dumping Cartagena prices and losing the thread —
+    # the reported bug). So we (1) persist the context, and (2) route price/
+    # booking follow-ups within it to a coherent advisor answer (no generic
+    # prices), while non-price questions still get the program's factual info.
+    adaptive_now = bool(_ADAPTIVE_DIVING_PATTERN.search(message))
+    if adaptive_now and state.step not in _MIXED_FLOW_STEPS:
+        state.adaptive_diving_context = True
+
+    if (
+        state.step not in _MIXED_FLOW_STEPS
+        and state.adaptive_diving_context
+        and _PRICE_OR_BOOKING_Q.search(message)
+    ):
+        logger.info("[SUPERVISOR] DIVE TO HEAL price/booking -> advisor (no generic prices)")
+        # Advance out of WELCOME/LANGUAGE so a following "sí" is handled by the
+        # bare-affirmation-accepts-advisor branch (which gates on MAIN_MENU).
+        if state.step in (Step.WELCOME, Step.LANGUAGE):
+            state.step = Step.MAIN_MENU
+        answer = _adaptive_diving_advisor_answer(state.language)
+        state.history.append({"role": "user", "content": message})
+        state.history.append({"role": "assistant", "content": answer})
+        return answer
+
+    if adaptive_now and state.step not in _MIXED_FLOW_STEPS:
         logger.info("[SUPERVISOR] Adaptive-diving/DIVE TO HEAL question -> RAG")
+        if state.step in (Step.WELCOME, Step.LANGUAGE):
+            state.step = Step.MAIN_MENU
         state.history.append({"role": "user", "content": message})
         extra_context = _build_extra_context(state)
         answer = await rag_answer(message, lang=state.language, history=state.history, extra_context=extra_context)

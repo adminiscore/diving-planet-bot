@@ -221,6 +221,14 @@ class ConversationState:
     # the whole conversation (NOT cleared with the cart).
     remembered_facts: dict | None = None
 
+    # True once the conversation has entered the DIVE TO HEAL / adaptive-diving
+    # topic. Persisted so follow-up questions ("¿cuánto cuesta?", "¿cómo
+    # reservo?") that carry no disability keyword are still handled coherently
+    # within that context, instead of falling through to the generic price/
+    # booking handlers (which would dump generic Cartagena prices and lose the
+    # thread). Set in supervisor when _ADAPTIVE_DIVING_PATTERN fires.
+    adaptive_diving_context: bool = False
+
     def __post_init__(self):
         if self.history is None:
             self.history = []
@@ -1014,12 +1022,16 @@ MESSAGES = {
     },
     "mixed_location": {
         "es": (
-            "¿Quieres salir con nosotros desde Cartagena a las Islas del Rosario? "
-            "O ¿ya estás/vas a estar en las islas?"
+            "Genial 🤿 Para armarlo bien, dime desde dónde saldrías:\n\n"
+            "🚤 *Desde Cartagena* — nosotros te llevamos a las Islas del Rosario (ida y vuelta el mismo día).\n"
+            "🏝️ *Ya en las islas* — coordinamos la recogida en tu hotel.\n\n"
+            "Elige una opción 👇"
         ),
         "en": (
-            "Would you like to depart with us from Cartagena to the Rosario Islands? "
-            "Or are you already/going to be on the islands?"
+            "Great 🤿 To set it up right, tell me where you'd be departing from:\n\n"
+            "🚤 *From Cartagena* — we take you to the Rosario Islands (round trip, same day).\n"
+            "🏝️ *Already on the islands* — we arrange pickup at your hotel.\n\n"
+            "Pick an option 👇"
         ),
     },
     "mixed_ask_certification": {
@@ -1292,12 +1304,16 @@ MESSAGES = {
     },
     "location": {
         "es": (
-            "¿Quieres salir con nosotros desde Cartagena a las Islas del Rosario? "
-            "O ¿ya estás/vas a estar en las islas?"
+            "Genial 🤿 Para armarlo bien, dime desde dónde saldrías:\n\n"
+            "🚤 *Desde Cartagena* — nosotros te llevamos a las Islas del Rosario (ida y vuelta el mismo día).\n"
+            "🏝️ *Ya en las islas* — coordinamos la recogida en tu hotel.\n\n"
+            "Elige una opción 👇"
         ),
         "en": (
-            "Would you like to depart with us from Cartagena to the Rosario Islands? "
-            "Or are you already/going to be on the islands?"
+            "Great 🤿 To set it up right, tell me where you'd be departing from:\n\n"
+            "🚤 *From Cartagena* — we take you to the Rosario Islands (round trip, same day).\n"
+            "🏝️ *Already on the islands* — we arrange pickup at your hotel.\n\n"
+            "Pick an option 👇"
         ),
     },
     "colombian": {
