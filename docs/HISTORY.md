@@ -1,6 +1,15 @@
 History
 =======
 
+0.20.25 (Gadea) - (2026-07-17)
+----------------------
+* **Bug real en vivo, misma familia que v0.20.18 pero en 3 pasos más: `MIXED_LOCATION`, `MIXED_ADD_QTY`, `MIXED_CERT_REFRESH_QTY`**. El fix de v0.20.18 asumió que estos 3 pasos eran "seguros" de forzar siempre al árbol porque sus handlers "tienen parsing real de texto libre" — cierto, pero solo para SU propio dominio (palabras clave de ubicación; cantidades numéricas). Cualquier pregunta genuina fuera de ese dominio ("¿qué precio tiene el buceo?" en el paso de ubicación, "¿incluye el almuerzo?" en el paso de cantidad) caía igual en "no te entendí" en bucle.
+* Investigación más profunda reveló además un **segundo punto de intercepción, anterior al ya arreglado en v0.20.18**, específico para `MIXED_ADD_QTY`/`MIXED_CERT_REFRESH_QTY` — un atajo temprano en `route_message` que forzaba el mensaje al árbol incondicionalmente antes incluso de consultar al orquestador LLM. Sin arreglar ese punto, el fix del punto tardío nunca llegaba a ejecutarse para estos 2 pasos.
+* Fix: mismo patrón ya establecido (comprobar si el mensaje resuelve en el dominio propio del paso antes de forzarlo al árbol) aplicado en AMBOS puntos de intercepción, para los 3 pasos. `MIXED_LOCATION` comprueba palabras clave de ubicación + frases de "recomiéndame"; `MIXED_ADD_QTY`/`MIXED_CERT_REFRESH_QTY` comprueban `_parse_mixed_quantity`/split de certificados/"6+". Si no resuelve, cae a RAG normal.
+* Tests: 4 nuevos en `test_conversations.py` (pregunta genuina en `MIXED_LOCATION` y `MIXED_ADD_QTY` llega a RAG sin perder el paso pendiente; respuesta normal de ubicación/cantidad sigue avanzando el flujo). TDD: reproducido en rojo antes de arreglar.
+* Suite: **1660 passed**, 15 skipped (mismos fallos preexistentes sin relación por falta de `OPENAI_API_KEY`). `compileall` limpio. Verificado end-to-end con el escenario real reportado: las 5 preguntas que antes se bloqueaban ahora llegan todas a RAG.
+* **Lección para la próxima vez que aparezca este patrón**: cuando se blinde un paso del árbol contra el bloqueo de texto libre, revisar TODOS los puntos de `route_message` que puedan interceptar ese mismo `state.step` antes de dar el fix por completo — puede haber más de un atajo temprano compitiendo por el mismo paso.
+
 0.20.24 (Gadea) - (2026-07-17)
 ----------------------
 * **Memoria/contexto — Fase A: ventana cruda de historial configurable** (última de las 3 fases del plan `docs/memory-context-improvement-plan.md`, B y C ya desplegadas y verificadas en vivo). TDD: `tests/test_history_window.py` (5 tests), confirmados en rojo primero.

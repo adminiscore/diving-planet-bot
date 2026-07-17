@@ -203,6 +203,23 @@ def _looks_like_info_question(message: str) -> bool:
     return bool(_INFO_QUESTION_STARTER_PATTERN.match(normalized))
 
 
+# Mirrors the free-text branches inside DecisionTree._handle_mixed_location
+# (location keywords + "no sé/recomiéndame" deferral phrasings) — used from
+# route_message to decide whether a message at MIXED_LOCATION genuinely
+# resolves as a location answer before forcing it into the tree, instead of
+# assuming any text there is safe to force (real bug, live PRE 2026-07-17:
+# an unrelated question at this step fell to "no entendí" in a loop).
+_LOCATION_ANSWER_RE = re.compile(
+    r"\bcartagena\b|\bctg\b|\bisla\b|\brosario\b|"
+    r"\bno\s+s[eé]\b|recomi[eé]nda|recomiendas|qu[eé]\s+recomiendas|da\s+igual|"
+    r"cu[aá]l\s+(?:es\s+)?mejor|el\s+que\s+(?:sea|quieras|recomiendes)|"
+    r"lo\s+que\s+(?:sea|recomiendes|digas|prefieras)|"
+    r"(?:t[uú]|usted)\s+(?:decide|dime|elige)|"
+    r"i\s+don'?t\s+know|whichever|you\s+(?:decide|recommend|choose)|"
+    r"what(?:'?s|\s+is)?\s+(?:do\s+you\s+recommend|better|best)",
+    re.IGNORECASE,
+)
+
 # "¿Cómo reservo?" / "how do I book?" — a question about the booking PROCESS
 # rather than about the service itself. Unlike _looks_like_info_question this
 # is NOT start-anchored: it must also catch "vale y como reservo" (a filler
@@ -4795,10 +4812,25 @@ async def _route_message_inner(state: ConversationState, message: str) -> str:
         # Route free text directly to the tree handler so "somos cuatro personas"
         # reaches _handle_mixed_add_qty / _handle_mixed_cert_refresh_qty instead
         # of leaking to the LLM orchestrator which re-shows the plan selection.
+        # BUT only when the message actually resolves as a quantity answer in
+        # that handler's own domain — otherwise a genuine unrelated question
+        # ("¿incluye el almuerzo?") got forced in here unconditionally and fell
+        # to "no entendí" in a loop (real bug, live PRE 2026-07-17; this is an
+        # earlier interception point than the one fixed for the same pattern
+        # further down in this function, so it needs the same guard).
         if state.step in {Step.MIXED_ADD_QTY, Step.MIXED_CERT_REFRESH_QTY}:
-            response = decision_tree.process_message(state, message)
-            logger.info(f"[SUPERVISOR] Decision tree (qty-input free text) -> step={state.step.value}")
-            return response
+            qty_resolves_in_domain = (
+                is_back(msg_lower)
+                or message.strip() == "6+"
+                or decision_tree._parse_mixed_quantity(message) is not None
+                or decision_tree._detect_cert_qty_activity_split(message) is not None
+                or decision_tree._reveals_non_certified_companion(message)
+            )
+            if qty_resolves_in_domain:
+                response = decision_tree.process_message(state, message)
+                logger.info(f"[SUPERVISOR] Decision tree (qty-input free text) -> step={state.step.value}")
+                return response
+            logger.info(f"[SUPERVISOR] Genuine question at qty-input step={state.step.value}, not forcing to decision tree")
 
         if state.step in {
             Step.INFO_TOUR_DETAIL,
@@ -4978,37 +5010,48 @@ async def _route_message_inner(state: ConversationState, message: str) -> str:
                 return response
 
             # intent == "RAG" → Para steps críticos que esperan respuestas específicas,
-            # enviar al decision_tree en lugar de RAG (el handler detectará texto libre).
-            # OJO: esto solo es correcto para pasos cuyo handler tiene parsing real de
-            # texto libre (MIXED_LOCATION: palabras clave de ubicación; MIXED_ADD_QTY /
-            # MIXED_CERT_REFRESH_QTY: cantidades) — ahí SIEMPRE se manda al árbol.
+            # comprobar primero si el mensaje REALMENTE resuelve en el dominio de ese
+            # paso antes de forzarlo al árbol. Historial del bug (dos rondas, mismo
+            # patrón, vivo 2026-07-17): al principio se asumía que bastaba con que el
+            # handler "tuviera parsing real" para forzar SIEMPRE el mensaje ahí —
+            # cierto para MIXED_CERT_LAST_DIVE/MIXED_CERT_REFRESH_INTEREST (sí/no) tras
+            # la primera ronda, pero también resultó falso para MIXED_LOCATION (solo
+            # reconoce palabras clave de ubicación) y MIXED_ADD_QTY/MIXED_CERT_REFRESH_QTY
+            # (solo reconocen cantidades) — cualquier pregunta genuina fuera de ESE
+            # dominio concreto caía igual en "no te entendí" en bucle. Fix unificado:
+            # cada paso solo se fuerza al árbol si el mensaje resuelve como respuesta
+            # válida para ÉL; si no, cae al bloque de RAG de más abajo como cualquier
+            # otro paso, en vez de bloquear la conversación.
             if state.step in (
                 Step.MIXED_LOCATION,
                 Step.MIXED_ADD_QTY,
                 Step.MIXED_CERT_REFRESH_QTY,
+                Step.MIXED_CERT_LAST_DIVE,
+                Step.MIXED_CERT_REFRESH_INTEREST,
             ):
-                logger.info(f"[SUPERVISOR] Classifier returned RAG but step={state.step.value} expects specific input, sending to decision_tree")
-                response = decision_tree.process_message(state, message)
-                _maybe_build_pending_note(state)
-                return response
+                msg_lower_stripped = message.strip().lower()
+                if state.step == Step.MIXED_LOCATION:
+                    resolves_in_domain = (
+                        is_back(msg_lower_stripped)
+                        or DecisionTree._parse_choice(message, 2) is not None
+                        or bool(_LOCATION_ANSWER_RE.search(msg_lower_stripped))
+                    )
+                elif state.step in (Step.MIXED_ADD_QTY, Step.MIXED_CERT_REFRESH_QTY):
+                    resolves_in_domain = (
+                        is_back(msg_lower_stripped)
+                        or msg_lower_stripped == "6+"
+                        or decision_tree._parse_mixed_quantity(message) is not None
+                        or decision_tree._detect_cert_qty_activity_split(message) is not None
+                        or decision_tree._reveals_non_certified_companion(message)
+                    )
+                else:  # MIXED_CERT_LAST_DIVE / MIXED_CERT_REFRESH_INTEREST
+                    resolves_in_domain = (
+                        is_back(msg_lower_stripped)
+                        or DecisionTree._parse_choice(message, 2) is not None
+                    )
 
-            # MIXED_CERT_LAST_DIVE / MIXED_CERT_REFRESH_INTEREST son preguntas de
-            # sí/no puras: su handler NO tiene fallback de texto libre (solo
-            # entiende botón 1, botón 2, o "volver"). Antes se forzaban aquí
-            # igual que los pasos de arriba, asumiendo que el handler sabría
-            # interpretar texto libre — falso para estos 2, así que cualquier
-            # pregunta genuina ("¿hay descuento?") quedaba atrapada en un "no
-            # te entendí" en bucle, sin poder preguntar nada más (bug real en
-            # vivo, 2026-07-17). Fix: solo se manda al árbol si el mensaje
-            # realmente resuelve como respuesta al botón (1/2/volver); si no,
-            # cae al bloque de RAG de más abajo, igual que cualquier otro paso.
-            if state.step in (Step.MIXED_CERT_LAST_DIVE, Step.MIXED_CERT_REFRESH_INTEREST):
-                resolves_as_button_answer = (
-                    is_back(message.strip().lower())
-                    or DecisionTree._parse_choice(message, 2) is not None
-                )
-                if resolves_as_button_answer:
-                    logger.info(f"[SUPERVISOR] Classifier returned RAG but step={state.step.value} resolves as a button answer, sending to decision_tree")
+                if resolves_in_domain:
+                    logger.info(f"[SUPERVISOR] Classifier returned RAG but step={state.step.value} resolves in-domain, sending to decision_tree")
                     response = decision_tree.process_message(state, message)
                     _maybe_build_pending_note(state)
                     return response

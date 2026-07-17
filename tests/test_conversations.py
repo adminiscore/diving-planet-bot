@@ -4085,13 +4085,17 @@ async def test_bare_si_without_offer_does_not_escalate():
 # --- Real bug (live PRE, 2026-07-17): questions ignored at MIXED_CERT_LAST_DIVE /
 # MIXED_CERT_REFRESH_INTEREST ------------------------------------------------
 # supervisor.py forces ANY message back into the raw tree handler for a fixed
-# list of "critical steps", assuming the handler can parse free text. True for
-# MIXED_LOCATION/MIXED_ADD_QTY/MIXED_CERT_REFRESH_QTY (they have real free-text
-# parsing), but MIXED_CERT_LAST_DIVE and MIXED_CERT_REFRESH_INTEREST are pure
-# yes/no button steps with no fallback — any genuine question got silently
-# swallowed into "no entendí", blocking the conversation entirely (and, as a
-# side effect, never reaching RAG/_build_extra_context where Fase B's rolling
-# summary would apply).
+# list of "critical steps", assuming the handler can parse free text.
+# MIXED_CERT_LAST_DIVE and MIXED_CERT_REFRESH_INTEREST are pure yes/no button
+# steps with NO fallback at all — any genuine question got silently swallowed
+# into "no entendí", blocking the conversation entirely.
+#
+# CORRECTION (found later, same day, live PRE): MIXED_LOCATION/MIXED_ADD_QTY/
+# MIXED_CERT_REFRESH_QTY were assumed "safe" here because they DO have real
+# free-text parsing — but that parsing only covers THEIR OWN domain (location
+# keywords, quantities). Anything outside that domain (a genuine unrelated
+# question) still falls through to the same "no entendí" dead end inside
+# those handlers. See the second block of tests below.
 
 async def _reach_mixed_cert_last_dive(lang: str = "es") -> ConversationState:
     state = ConversationState(conversation_id="last-dive-question-test")
@@ -4135,3 +4139,62 @@ async def test_button_answer_at_last_dive_step_still_advances():
     state = await _reach_mixed_cert_last_dive()
     await route_message(state, "2")  # "no, menos de 2 años"
     assert state.step != Step.MIXED_CERT_LAST_DIVE
+
+
+# --- Real bug (live PRE, 2026-07-17, second occurrence): same dead end at ----
+# MIXED_LOCATION / MIXED_ADD_QTY / MIXED_CERT_REFRESH_QTY. These steps DO
+# parse their own domain (location keywords / quantities), but any genuine
+# off-topic question still fell to "no entendí" instead of RAG.
+
+@pytest.mark.asyncio
+async def test_question_at_location_step_reaches_rag_not_stuck():
+    state = ConversationState(conversation_id="location-question-test")
+    state.language = "es"
+    await route_message(state, "Hola, somos 2, queremos bucear")
+    await route_message(state, "Algunos si otros no")
+    await route_message(state, "1")
+    assert state.step == Step.MIXED_LOCATION
+    with patch("src.agents.supervisor.rag_answer", new_callable=AsyncMock, return_value="CANNED_RAG_ANSWER"):
+        resp = await route_message(state, "¿Qué precio tiene el buceo?")
+    assert resp == "CANNED_RAG_ANSWER"
+    assert state.step == Step.MIXED_LOCATION, "must not lose the pending location question"
+
+
+@pytest.mark.asyncio
+async def test_location_keyword_still_resolves_at_location_step():
+    """The fix must not break the normal free-text location path."""
+    state = ConversationState(conversation_id="location-keyword-test")
+    state.language = "es"
+    await route_message(state, "Hola, somos 2, queremos bucear")
+    await route_message(state, "Algunos si otros no")
+    await route_message(state, "1")
+    assert state.step == Step.MIXED_LOCATION
+    await route_message(state, "salimos desde Cartagena")
+    assert state.step != Step.MIXED_LOCATION
+
+
+@pytest.mark.asyncio
+async def test_question_at_add_qty_step_reaches_rag_not_stuck():
+    # Group size deliberately NOT stated up front, so the flow actually asks
+    # for it (MIXED_ADD_QTY) instead of auto-resolving from "somos N".
+    state = ConversationState(conversation_id="qty-question-test")
+    state.language = "es"
+    await route_message(state, "Hola, quiero bucear, soy certificado, salgo desde Cartagena")
+    await route_message(state, "2 inmersiones / 1 dia")
+    assert state.step == Step.MIXED_ADD_QTY
+    with patch("src.agents.supervisor.rag_answer", new_callable=AsyncMock, return_value="CANNED_RAG_ANSWER"):
+        resp = await route_message(state, "¿Incluye el almuerzo?")
+    assert resp == "CANNED_RAG_ANSWER"
+    assert state.step == Step.MIXED_ADD_QTY, "must not lose the pending quantity question"
+
+
+@pytest.mark.asyncio
+async def test_number_still_resolves_at_add_qty_step():
+    """The fix must not break the normal quantity-answer path."""
+    state = ConversationState(conversation_id="qty-number-test")
+    state.language = "es"
+    await route_message(state, "Hola, quiero bucear, soy certificado, salgo desde Cartagena")
+    await route_message(state, "2 inmersiones / 1 dia")
+    assert state.step == Step.MIXED_ADD_QTY
+    await route_message(state, "2")
+    assert state.step != Step.MIXED_ADD_QTY
