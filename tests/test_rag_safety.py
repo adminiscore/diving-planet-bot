@@ -1584,3 +1584,91 @@ def test_system_prompt_forbids_booking_data_collection():
     en = build_system_prompt("en")
     assert "recogiendo datos en el chat" in es
     assert "collecting data in chat" in en
+
+
+# --- Adaptive-diving colloquial synonym: "cojo/coja" -------------------------
+# Regression (live bug, 2026-07-16): "somos cojos y queremos bucear" did not
+# match _ADAPTIVE_DIVING_PATTERN (only formal terms like "movilidad reducida"
+# were covered), so it fell through to RAG's generic fallback instead of the
+# DIVE TO HEAL program info. "cojo/coja" is a very common Latin American
+# colloquialism for reduced mobility/disability.
+
+from src.agents.supervisor import _ADAPTIVE_DIVING_PATTERN
+
+
+@pytest.mark.parametrize("msg", [
+    "somos cojos y queremos bucear",
+    "soy coja, puedo bucear con ustedes?",
+    "mi hermano es cojo",
+    "tengo cojera en una pierna",
+    "I walk with a limp, can I still dive?",
+])
+def test_adaptive_diving_pattern_matches_cojo(msg):
+    assert _ADAPTIVE_DIVING_PATTERN.search(msg) is not None
+
+
+def test_adaptive_diving_pattern_does_not_match_unrelated_lame():
+    # "lame" (English slang for "uncool") must NOT trigger this — only added
+    # "cojo/cojera/limp" deliberately, not the ambiguous "lame".
+    assert _ADAPTIVE_DIVING_PATTERN.search("that's so lame, I don't want to go") is None
+
+
+# --- DIVE TO HEAL context persistence + price routing (2026-07-17) -----------
+# Live bug (4 screenshots): the adaptive-diving topic was detected per-turn by
+# keyword, so a follow-up "¿cuánto cuesta?" (no disability word) lost the
+# context and fell through to the generic price overview (dumping Cartagena
+# prices, no DIVE TO HEAL framing). Owner decision: adaptive diving is
+# coordinated per case with an advisor, no prices in chat.
+
+import pytest as _pytest
+from src.agents.supervisor import (
+    _PRICE_OR_BOOKING_Q,
+    _adaptive_diving_advisor_answer,
+    route_message,
+)
+from src.flows.decision_tree import ConversationState, Step
+
+
+@_pytest.mark.parametrize("msg", [
+    "cuanto seria de precio?", "precio?", "cuánto cuesta", "qué precio tiene",
+    "como reservo?", "quiero reservar", "how much is it?", "cost?", "how do I book?",
+])
+def test_price_or_booking_q_matches(msg):
+    assert _PRICE_OR_BOOKING_Q.search(msg) is not None
+
+
+@_pytest.mark.parametrize("msg", ["que animales se ven?", "hola", "los instructores hablan ingles?"])
+def test_price_or_booking_q_ignores_non_price(msg):
+    assert _PRICE_OR_BOOKING_Q.search(msg) is None
+
+
+@_pytest.mark.parametrize("lang", ["es", "en"])
+def test_adaptive_advisor_answer_has_no_prices_and_offers_advisor(lang):
+    ans = _adaptive_diving_advisor_answer(lang)
+    assert "$" not in ans and "COP" not in ans and "USD" not in ans
+    assert "231515" in ans
+    assert ("asesor" in ans.lower()) or ("advisor" in ans.lower())
+
+
+@_pytest.mark.asyncio
+async def test_dive_to_heal_price_followup_routes_to_advisor_not_generic(monkeypatch):
+    """With the adaptive context already set, a bare price question must return
+    the advisor answer deterministically (no LLM, no generic Cartagena price
+    dump)."""
+    # Guard: if rag_answer were reached, fail loudly — this path must NOT use it.
+    import src.agents.supervisor as sup
+
+    async def _boom(*a, **k):
+        raise AssertionError("rag_answer should not be called for DIVE TO HEAL price")
+
+    monkeypatch.setattr(sup, "rag_answer", _boom)
+
+    st = ConversationState(conversation_id="dth-price")
+    st.language = "es"
+    st.step = Step.MAIN_MENU
+    st.adaptive_diving_context = True
+
+    resp = await route_message(st, "cuanto seria de precio?")
+    assert "dive to heal" in resp.lower()
+    assert "$" not in resp  # never the generic price list
+    assert "231515" in resp

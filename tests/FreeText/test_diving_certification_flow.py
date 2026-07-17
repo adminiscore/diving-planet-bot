@@ -102,7 +102,7 @@ async def test_diving_certification_flow():
     # Verificar que pregunta ubicación (porque no la tenía)
     assert state2.step == Step.MIXED_LOCATION, f"Esperado MIXED_LOCATION, obtenido {state2.step}"
     assert state2.detected_is_certified == False, "Debería marcar como no certificado"
-    assert "ubicación" in resp4.lower() or "salida" in resp4.lower(), "Debería preguntar ubicación"
+    assert "cartagena" in resp4.lower() and "islas" in resp4.lower(), "Debería preguntar ubicación"
     print("\n✅ Pregunta ubicación para principiante")
     
     # Respuesta: Cartagena

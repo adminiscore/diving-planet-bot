@@ -473,3 +473,100 @@ def test_mentions_pure_companion_true(msg):
 def test_mentions_pure_companion_false(msg):
     from src.agents.supervisor import _mentions_pure_companion
     assert _mentions_pure_companion(msg) is False
+
+
+# --- Free-text acceptance of the recommendation (2026-07-17) -----------------
+# The upsell message was reframed from a neutral open question into a
+# minicurso-led recommendation ("le apunto el minicurso... ¿te parece?"), so
+# customers now reply with a bare "sí/vale/dale" much more than clicking the
+# exact button title. These regression tests cover that free-text path.
+
+@pytest.mark.parametrize("msg", ["vale", "si", "sí", "dale", "perfecto", "claro", "de una", "ok", "okay"])
+def test_companion_upsell_bare_affirmation_accepts_minicourse(msg):
+    st = _at_activity_menu()
+    tree._handle_mixed_add_activity(st, "5")
+    tree._handle_mixed_companion_upsell(st, msg)
+    assert st.mixed_pending_qty_type == "beginner"
+    assert st.step == Step.MIXED_ADD_QTY
+
+
+@pytest.mark.parametrize("msg", [
+    "mejor snorkel", "snorkel para ella", "quiero snorkel para ella", "esnorkel",
+])
+def test_companion_upsell_free_text_snorkel(msg):
+    st = _at_activity_menu()
+    tree._handle_mixed_add_activity(st, "5")
+    tree._handle_mixed_companion_upsell(st, msg)
+    assert st.mixed_pending_qty_type == "snorkel"
+
+
+@pytest.mark.parametrize("msg", [
+    "no", "no gracias", "no thanks", "no, solo que acompañe", "solo quiere acompañar",
+])
+def test_companion_upsell_free_text_decline(msg):
+    """A bare 'no' must decline the mini-course recommendation (pure companion),
+    NOT be misread as snorkel via _parse_choice's cross-menu 'No'->'2' title
+    match (regression: a different menu's exact button title collided here)."""
+    st = _at_activity_menu()
+    tree._handle_mixed_add_activity(st, "5")
+    tree._handle_mixed_companion_upsell(st, msg)
+    assert st.mixed_pending_qty_type == "companion"
+
+
+def test_companion_upsell_message_leads_with_minicourse_recommendation():
+    st = _at_activity_menu()
+    resp = tree._handle_mixed_add_activity(st, "5")
+    low = resp.lower()
+    assert "minicurso" in low
+    # Recommendation framing, not a neutral open question.
+    assert "recomiendo" in low or "te voy a apuntar" in low or "voy a apuntarle" in low
+
+
+# --- Context recap when returning to "add another activity" (2026-07-17) ----
+# Owner-reported: clicking "back"/"add another activity" from the cart review
+# sometimes lands on a bare "¿Qué actividad quieres añadir al carrito?" with no
+# acknowledgment of what's already known (cart items, origin) — the customer
+# reads this as the bot having forgotten everything. The underlying state was
+# never actually cleared (only the transient in-progress-item fields are), so
+# the fix is a short recap prepended to that message, not a data fix.
+
+def test_add_activity_recap_shows_cart_and_cartagena_origin():
+    st = ConversationState(conversation_id="recap-1")
+    st.language = "es"
+    st.location = "cartagena"
+    st.mixed_cart = [{"type": "beginner", "plan": None, "qty": 2, "label": "Minicurso de buceo"}]
+    resp = tree._goto_mixed_add_activity(st)
+    assert "minicurso" in resp.lower()
+    assert "cartagena" in resp.lower()
+    assert "qué actividad quieres" in resp.lower()
+
+
+def test_add_activity_recap_shows_island_and_hotel():
+    st = ConversationState(conversation_id="recap-2")
+    st.language = "es"
+    st.location = "island"
+    st.island = "Isla Grande"
+    st.hotel = "Cocoliso"
+    st.mixed_cart = []
+    resp = tree._goto_mixed_add_activity(st)
+    assert "isla grande" in resp.lower()
+    assert "cocoliso" in resp.lower()
+
+
+def test_add_activity_recap_empty_when_nothing_known_yet():
+    """A brand-new booking (no cart, no location) shows the plain question —
+    no empty-cart placeholder or blank recap noise."""
+    st = ConversationState(conversation_id="recap-3")
+    st.language = "es"
+    resp = tree._goto_mixed_add_activity(st)
+    assert resp == "¿Qué actividad quieres *añadir* al carrito?"
+
+
+def test_add_activity_recap_english():
+    st = ConversationState(conversation_id="recap-4")
+    st.language = "en"
+    st.location = "cartagena"
+    st.mixed_cart = [{"type": "snorkel", "plan": None, "qty": 3, "label": "Snorkeling"}]
+    resp = tree._goto_mixed_add_activity(st)
+    assert "snorkeling" in resp.lower()
+    assert "cartagena" in resp.lower()

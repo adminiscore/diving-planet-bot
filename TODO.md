@@ -101,6 +101,14 @@
 - [ ] Info sobre la comida
 - [x] Inyectar contexto de ubicación y alojamiento (`state.location`, `state.island`, `state.hotel`) en las llamadas al RAG para que pueda mencionar recogidas/logística específicas.
 
+## Pendientes — atajo de overview de buceo / acompañante (dejados por Gadea, v0.20.13, 2026-07-16)
+Documentados en `docs/HISTORY.md` v0.20.13 tras el barrido proactivo; priorizados por ella, quedan aquí para que el siguiente los retome:
+- [ ] **(barato)** Si el cliente dice explícitamente que el acompañante SÍ bucea/es certificado, el bot igual añade la línea "¿tu acompañante no bucea?" — contradicción directa.
+- [ ] **(barato)** El atajo de overview de buceo no reconoce familiares ("hijo", "pareja") como acompañante, solo la palabra literal "acompañante"/"companion" — inconsistente con `_detect_companion_intent` (que sí los reconoce tras el fix de v0.20.13).
+- [ ] **(caro, requiere parsing de roles)** El detector de acompañante no distingue quién bucea y quién acompaña — "mi pareja es buzo, yo solo acompaño" sigue diciendo "tu acompañante no bucea" cuando es al revés.
+- [ ] **(caro, requiere parsing de roles)** "no bucea/n" no exige que haya una persona antes — falso positivo con frases tipo "el snorkel no bucea".
+- [ ] **Decisión de equipo pendiente:** migrar `_canonical_price_overview_answer` de lista de exclusión (deny-list) a lista de permitidos (safe-list) — comparativa completa en `docs/canonical-shortcuts-safelist-decision.md`.
+
 ## Pendientes reales (árbol de opciones / intents usuarios)
 - [x] Reserva principal cart-first con carrito mixto (`MIXED_ENTRY`).
 - [x] Caso **grupo mixto** para reserva (certificados + principiantes + snorkel + acompañantes) dentro del mismo carrito.

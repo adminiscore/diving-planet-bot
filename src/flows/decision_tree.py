@@ -231,6 +231,14 @@ class ConversationState:
     conversation_summary: str | None = None
     conversation_summary_through: int = 0
 
+    # True once the conversation has entered the DIVE TO HEAL / adaptive-diving
+    # topic. Persisted so follow-up questions ("¿cuánto cuesta?", "¿cómo
+    # reservo?") that carry no disability keyword are still handled coherently
+    # within that context, instead of falling through to the generic price/
+    # booking handlers (which would dump generic Cartagena prices and lose the
+    # thread). Set in supervisor when _ADAPTIVE_DIVING_PATTERN fires.
+    adaptive_diving_context: bool = False
+
     def __post_init__(self):
         if self.history is None:
             self.history = []
@@ -1024,10 +1032,16 @@ MESSAGES = {
     },
     "mixed_location": {
         "es": (
-            "Antes de añadir actividades, dime desde dónde tomarán la salida."
+            "Genial 🤿 Para armarlo bien, dime desde dónde saldrías:\n\n"
+            "🚤 *Desde Cartagena* — nosotros te llevamos a las Islas del Rosario (ida y vuelta el mismo día).\n"
+            "🏝️ *Ya en las islas* — coordinamos la recogida en tu hotel.\n\n"
+            "Elige una opción 👇"
         ),
         "en": (
-            "Before adding activities, tell me where you will depart from."
+            "Great 🤿 To set it up right, tell me where you'd be departing from:\n\n"
+            "🚤 *From Cartagena* — we take you to the Rosario Islands (round trip, same day).\n"
+            "🏝️ *Already on the islands* — we arrange pickup at your hotel.\n\n"
+            "Pick an option 👇"
         ),
     },
     "mixed_ask_certification": {
@@ -1056,14 +1070,16 @@ MESSAGES = {
     },
     "mixed_companion_upsell": {
         "es": (
-            "¡Qué bueno que venga acompañante! 🌊 Antes de anotarlo solo como acompañante… "
-            "¿no le picaría *probar el buceo*? El *minicurso* (sin experiencia previa, con instructor) "
-            "o el *snorkel* son una chulada y seguro lo disfruta un montón. ¿Qué dices?"
+            "¡Qué bueno que venga acompañante! 🌊 Te recomiendo apuntarle el *minicurso de buceo* "
+            "(bautismo con instructor, sin experiencia previa) — es la opción más popular para quien "
+            "viene acompañando. Si prefiere *snorkel* o *solo acompañar* sin hacer actividad en el agua, "
+            "dímelo y lo ajusto. ¿Te parece?"
         ),
         "en": (
-            "Love that a companion is coming along! 🌊 Before we note them as just a companion… "
-            "how about they *try diving*? The *mini-course* (no experience needed, with an instructor) "
-            "or *snorkeling* are really cool and they'll surely love it. What do you think?"
+            "Love that a companion is coming along! 🌊 I'd recommend signing them up for the "
+            "*dive mini-course* (Discover Scuba with an instructor, no experience needed) — it's the "
+            "most popular pick for someone tagging along. If they'd rather *snorkel* or *just accompany* "
+            "without any water activity, let me know and I'll adjust it. Sound good?"
         ),
     },
     "mixed_add_cert_plan": {
@@ -1298,10 +1314,16 @@ MESSAGES = {
     },
     "location": {
         "es": (
-            "Desde donde tomaras el tour?"
+            "Genial 🤿 Para armarlo bien, dime desde dónde saldrías:\n\n"
+            "🚤 *Desde Cartagena* — nosotros te llevamos a las Islas del Rosario (ida y vuelta el mismo día).\n"
+            "🏝️ *Ya en las islas* — coordinamos la recogida en tu hotel.\n\n"
+            "Elige una opción 👇"
         ),
         "en": (
-            "Where will you depart from?"
+            "Great 🤿 To set it up right, tell me where you'd be departing from:\n\n"
+            "🚤 *From Cartagena* — we take you to the Rosario Islands (round trip, same day).\n"
+            "🏝️ *Already on the islands* — we arrange pickup at your hotel.\n\n"
+            "Pick an option 👇"
         ),
     },
     "colombian": {
@@ -1668,14 +1690,14 @@ BUTTON_OPTIONS = {
     },
     "mixed_companion_upsell": {
         "es": [
-            {"title": "🆕 Sí, que pruebe el minicurso", "value": "1"},
-            {"title": "🐠 Sí, mejor snorkel", "value": "2"},
+            {"title": "✅ Perfecto, minicurso", "value": "1"},
+            {"title": "🐠 Mejor snorkel", "value": "2"},
             {"title": "👤 No, solo acompañar", "value": "3"},
             {"title": "🔙 Volver", "value": "back"},
         ],
         "en": [
-            {"title": "🆕 Yes, try the mini-course", "value": "1"},
-            {"title": "🐠 Yes, snorkeling instead", "value": "2"},
+            {"title": "✅ Perfect, mini-course", "value": "1"},
+            {"title": "🐠 Snorkeling instead", "value": "2"},
             {"title": "👤 No, just accompany", "value": "3"},
             {"title": "🔙 Back", "value": "back"},
         ],
@@ -3812,11 +3834,40 @@ class DecisionTree:
             return f"Perfecto, tomamos nota de que estás en *{island_name}*."
         return f"Great, we've noted you are on *{island_name}*."
 
+    def _mixed_context_recap(self, state: ConversationState, lang: str) -> str:
+        """Short reminder of what's already known (cart items + origin), shown
+        before re-asking "what activity do you want to add?" — e.g. after
+        "Volver". The underlying state was never cleared here (only the
+        transient in-progress-item fields are, via `_clear_mixed_pending_add`),
+        but a bare "¿qué actividad quieres añadir?" with no recap reads to the
+        customer as if the bot forgot everything they'd already said. Returns
+        "" when there's nothing yet worth recapping (brand-new booking).
+        """
+        lines: list[str] = []
+        if state.mixed_cart:
+            lines.append(self._format_cart_lines(state, lang))
+        if state.location == "island" and state.island:
+            loc_line = (
+                f"📍 Ya sabemos que estás en *{state.island}*"
+                if lang == "es" else f"📍 We already know you're on *{state.island}*"
+            )
+            if state.hotel and state.hotel != "Otro / No esta en la lista":
+                loc_line += f", hotel *{state.hotel}*" if lang == "es" else f", at *{state.hotel}*"
+            lines.append(loc_line + ".")
+        elif state.location == "cartagena":
+            lines.append(
+                "📍 Ya sabemos que sales desde *Cartagena*."
+                if lang == "es" else "📍 We already know you're departing from *Cartagena*."
+            )
+        if not lines:
+            return ""
+        return "\n\n".join(lines) + "\n\n"
+
     def _goto_mixed_add_activity(self, state: ConversationState) -> str:
         lang = state.language
         state.step = Step.MIXED_ADD_ACTIVITY
         self.set_quick_replies(state, "mixed_add_activity")
-        return MESSAGES["mixed_add_activity"][lang]
+        return self._mixed_context_recap(state, lang) + MESSAGES["mixed_add_activity"][lang]
 
     def _handle_mixed_add_activity(self, state: ConversationState, message: str) -> str:
         lang = state.language
@@ -3860,7 +3911,39 @@ class DecisionTree:
         msg = message.strip().lower()
         if is_back(msg):
             return self._goto_mixed_add_activity(state)
-        choice = self._parse_choice(message, 3)
+        # A bare "no"/"no gracias" must decline the recommendation (choice 3),
+        # but _parse_choice matches it against a DIFFERENT menu's exact button
+        # title ("No" -> "2") since it scans every BUTTON_OPTIONS dict, not
+        # just this step's — which would wrongly read a bare "no" as snorkel
+        # (this step's own button 2). Handle it before the generic parse.
+        if re.fullmatch(r"no(\s+gracias|\s+thanks)?\.?", msg):
+            choice = 3
+        else:
+            choice = self._parse_choice(message, 3)
+        if choice is None:
+            # The message now leads with a recommendation ("le apunto el
+            # minicurso... ¿te parece?"), so a bare "sí/vale/dale" accepting
+            # it is a very likely reply — not just an exact button title.
+            normalized = "".join(
+                c for c in unicodedata.normalize("NFD", msg)
+                if unicodedata.category(c) != "Mn"
+            )
+            if re.search(r"\bsnorkel\w*|\besnorkel\w*|\bcaretea\w*\b", normalized):
+                choice = 2
+            elif re.search(
+                r"\bsolo\s+(?:\w+\s+){0,2}acompa\w+|\bno\s+quiere\s+bucear|\bsin\s+actividad\b|"
+                r"\bjust\s+accompany|\bno\s+diving\b",
+                normalized,
+            ):
+                choice = 3
+            elif re.search(
+                r"^(s[ií]|vale|dale|perfecto|claro|de\s+una|ok(?:ay)?|"
+                r"me\s+parece|est[aá]\s+bien|yes|sure|sounds\s+good)\b",
+                normalized,
+            ):
+                choice = 1  # accept the recommended default (minicurso)
+            elif re.search(r"^no\b", normalized):
+                choice = 3  # bare "no" declines the mini-course recommendation
         if choice == 1:            # yes → mini-course for the companion
             state.mixed_pending_qty_type = "beginner"
             state.mixed_pending_qty_plan = None
