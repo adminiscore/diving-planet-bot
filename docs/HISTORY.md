@@ -1,6 +1,15 @@
 History
 =======
 
+0.20.21 (Gadea) - (2026-07-17)
+----------------------
+* **Bug real en vivo, cuarta ronda: mensaje de reserva claro con certificación desconocida caía en RAG (recomendación + oferta de asesor) en vez de entrar al árbol guiado**. Con el fix de "planes" ya aplicado (v0.20.20), el mensaje inicial ("somos 4... queremos bucear 2 días") llegó al orquestador LLM, que esta vez lo clasificó como `answer_question` en vez de una acción de reserva — el bot improvisó una recomendación de RAG (con datos reales del KB) que terminaba ofreciendo pasar con un asesor, en vez de arrancar el flujo de reserva.
+* Causa raíz: ya existía un fallback determinista para el caso "el LLM dijo pregunta pero es claramente un buzo certificado" (`_should_skip_to_certified_flow`, requiere `is_certified is True`) — pero no había ningún fallback equivalente para el caso paralelo, mucho más común, de **certificación desconocida** (`_should_ask_certification`, cuando ni siquiera se ha dicho si están certificados). El detector determinista de intención SÍ identificaba correctamente `activity=certified_diving`, `group_size=4`, `duration=multi_day` — pero como el resultado del orquestador no era una tool de reserva, ese detective determinista nunca se consultaba como red de seguridad.
+* Fix: mismo patrón que el fallback existente, ahora también para `_should_ask_certification`. Si el orquestador no clasificó el mensaje como acción de reserva, el mensaje no es una pregunta (sin "?"), y el detector determinista ve una actividad de buceo con certificación desconocida, se entra igualmente al flujo guiado preguntando "¿estáis certificados?" en vez de caer a RAG.
+* Test de regresión: reproducido en rojo primero (confirmado que caía en RAG real), luego verificado en verde que entra correctamente a `MIXED_ASK_CERTIFICATION` con los botones de certificación.
+* Suite: **1646 passed**, 15 skipped (mismos fallos preexistentes sin relación por falta de `OPENAI_API_KEY`). `compileall` limpio.
+* **Nota de fondo**: esto expone una fragilidad estructural — el orquestador LLM no es 100% determinista, así que mensajes con intención de reserva clara pueden clasificarse distinto entre ejecuciones. La solución aplicada (redes de seguridad deterministas que no dependen de que el LLM acierte) es el patrón correcto, pero conviene revisar si hay más combinaciones de `_should_*` sin su fallback equivalente cuando el LLM falla.
+
 0.20.20 (Gadea) - (2026-07-17)
 ----------------------
 * **Bug real en vivo, tercera ronda: el mensaje inicial de reserva ("mi padre tiene la rodilla operada, evitar planes muy físicos") caía en el atajo canónico de overview de buceo en vez de entrar al árbol guiado**. Causa raíz: `_OVERVIEW_PHRASE` (`rag_agent.py`) tenía "planes"/"opciones"/"alternativas" como palabras SUELTAS que matcheaban en cualquier parte del mensaje — "evitar planes muy físicos" (actividades del padre, nada que ver con "qué planes turísticos tienen") disparaba el atajo igual que "bucear" en la misma frase.

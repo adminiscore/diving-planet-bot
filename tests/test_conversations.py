@@ -2797,6 +2797,29 @@ async def test_bare_certified_question_still_answered_not_hijacked(agent_decides
 
 
 @pytest.mark.asyncio
+async def test_booking_statement_with_unknown_certification_asks_certification(agent_decides):
+    """Real bug (live PRE, 2026-07-17): a clear booking statement with group
+    size + activity + duration, but WITHOUT stating certification ("queremos
+    bucear 2 días" — never says "somos certificados"), must still enter the
+    guided flow (ask certification) instead of falling to a RAG-generated
+    recommendation that ends by offering an advisor. The existing fallback
+    (_should_skip_to_certified_flow) only covers the case where certification
+    IS already known to be true — this is the parallel case where it's
+    unknown, which had no equivalent deterministic fallback."""
+    from src.agents import orchestrator
+    agent_decides(orchestrator.TOOL_ANSWER_QUESTION)
+    state = make_state()
+    resp = await route_message(
+        state,
+        "Hola, somos 4, mi padre tiene la rodilla operada así que mejor evitar "
+        "planes muy físicos. Queremos bucear 2 días",
+    )
+    assert state.step == Step.MIXED_ASK_CERTIFICATION
+    assert "certificad" in resp.lower()
+    assert "asesor" not in resp.lower()
+
+
+@pytest.mark.asyncio
 async def test_pure_companion_mention_routes_to_upsell(agent_decides):
     """#8: a free-text mention of a companion who only accompanies proactively
     offers them the mini-course/snorkel upsell (after asking the origin)."""

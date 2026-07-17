@@ -3548,6 +3548,25 @@ async def _dispatch_conversation_agent(state: ConversationState, message: str) -
             logger.info("[SUPERVISOR] Bare certified-diver statement -> offering diving options")
             return result
 
+    # Same fallback as above, for the parallel case where certification is
+    # UNKNOWN rather than already true: a clear booking statement (diving
+    # activity + not a question) whose certification status wasn't stated
+    # ("queremos bucear 2 días" never says "somos certificados"). Real bug
+    # (live PRE, 2026-07-17): the LLM classified this as answer_question and
+    # RAG improvised a personalized recommendation that ended by offering an
+    # advisor, instead of the guided flow asking "¿estáis certificados?".
+    if (
+        decision.tool not in _ENTRY_BOOKING_TOOLS
+        and not _message_looks_like_question(message)
+        and _should_ask_certification(intent, state)
+    ):
+        intent.group_size = state.detected_group_size or intent.group_size
+        intent.location = state.detected_location or intent.location
+        result = _route_detected_intent(intent, state, message)
+        if result is not None:
+            logger.info("[SUPERVISOR] Booking statement with unknown certification -> asking certification")
+            return result
+
     # A companion mentioned in free text ("va mi novia que solo acompaña") — when
     # nothing else would route (no diving intent for the speaker), proactively
     # offer that companion the mini-course/snorkel upsell instead of a plain RAG
