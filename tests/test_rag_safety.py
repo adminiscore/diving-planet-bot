@@ -209,7 +209,7 @@ async def test_rag_low_confidence_returns_fallback_without_extra_context(monkeyp
 
     response = await rag_agent.rag_answer("Pregunta rara", lang="es")
 
-    assert "asesor de Diving Planet" in response
+    assert "asesor" in response.lower()
 
 
 @pytest.mark.asyncio
@@ -297,7 +297,7 @@ async def test_rag_fallback_when_only_weak_lexical_match(monkeypatch):
 
     response = await rag_agent.rag_answer("algo raro", lang="es")
 
-    assert "asesor de Diving Planet" in response
+    assert "asesor" in response.lower()
 
 
 @pytest.mark.asyncio
@@ -409,7 +409,7 @@ async def test_rag_falls_back_when_answer_has_ungrounded_price(monkeypatch):
 
     response = await rag_agent.rag_answer("precio del minicurso?", lang="es")
 
-    assert "asesor de Diving Planet" in response
+    assert "asesor" in response.lower()
 
 
 def test_url_guard_accepts_link_present_in_context():
@@ -473,7 +473,7 @@ async def test_rag_falls_back_when_answer_has_ungrounded_link(monkeypatch):
 
     response = await rag_agent.rag_answer("cómo reservo el minicurso?", lang="es")
 
-    assert "asesor de Diving Planet" in response
+    assert "asesor" in response.lower()
 
 
 # --- Capacity guard: no invented "max N people" for the private tour ---------
@@ -548,7 +548,7 @@ async def test_rag_falls_back_when_answer_invents_private_tour_capacity(monkeypa
 
     response = await rag_agent.rag_answer("¿cuántas personas caben en el tour privado?", lang="es")
 
-    assert "asesor de Diving Planet" in response
+    assert "asesor" in response.lower()
 
 
 @pytest.mark.asyncio
@@ -1202,8 +1202,9 @@ async def test_rag_returns_fallback_when_grounding_check_rejects(monkeypatch):
 
     response = await rag_agent.rag_answer("Puedo volar después de bucear?", lang="es")
 
-    assert "asesor de Diving Planet" in response
-    assert "+57 320 231515" in response
+    assert "asesor" in response.lower()
+    # The advisor contact is handled internally now — the bot never hands out a number.
+    assert "231515" not in response
 
 
 @pytest.mark.asyncio
@@ -1685,7 +1686,7 @@ def test_price_or_booking_q_ignores_non_price(msg):
 def test_adaptive_advisor_answer_has_no_prices_and_offers_advisor(lang):
     ans = _adaptive_diving_advisor_answer(lang)
     assert "$" not in ans and "COP" not in ans and "USD" not in ans
-    assert "231515" in ans
+    assert "231515" not in ans  # advisor contact handled internally, no number
     assert ("asesor" in ans.lower()) or ("advisor" in ans.lower())
 
 
@@ -1710,4 +1711,121 @@ async def test_dive_to_heal_price_followup_routes_to_advisor_not_generic(monkeyp
     resp = await route_message(st, "cuanto seria de precio?")
     assert "dive to heal" in resp.lower()
     assert "$" not in resp  # never the generic price list
-    assert "231515" in resp
+    assert "231515" not in resp  # no phone number handed out
+    assert "asesor" in resp.lower()
+
+
+# --- No phone numbers to the customer (owner decision, 2026-07-20) ------------
+
+from src.agents.grounding_check import contains_phone_number
+
+
+@_pytest.mark.parametrize("s", [
+    "escríbenos al +57 320 231515",
+    "WhatsApp: +57 320 231515",
+    "llámanos al 3202315151",
+    "contacto 320 231515",
+    "+573202315151",
+])
+def test_contains_phone_number_detects_phones(s):
+    assert contains_phone_number(s) is True
+
+
+@_pytest.mark.parametrize("s", [
+    "El minicurso cuesta 288.000 pesos",
+    "2 inmersiones: 630.000 COP",
+    "$178 USD por persona",
+    "el curso es en 2026",
+    "nos vemos a las 4:30 PM",
+    "10% de descuento para grupos de 5",
+    "somos 4 personas",
+    "el plan de 2 inmersiones",
+])
+def test_contains_phone_number_ignores_prices_times_years(s):
+    assert contains_phone_number(s) is False
+
+
+def test_fallback_has_no_phone_number():
+    from src.agents.rag_agent import FALLBACK_ES, FALLBACK_EN
+    for fb in (FALLBACK_ES, FALLBACK_EN):
+        assert not contains_phone_number(fb)
+
+
+def test_system_prompt_forbids_phone_numbers():
+    from src.agents.rag_agent import build_system_prompt
+    es = build_system_prompt("es")
+    en = build_system_prompt("en")
+    assert "número de teléfono" in es and "WhatsApp" in es
+    assert "phone or WhatsApp number" in en
+    # The old hardcoded contact footer must be gone.
+    assert "Contacto asesor: WhatsApp" not in es
+
+
+# --- New-scenario memory reset (owner decision, 2026-07-20) -------------------
+
+from src.agents.supervisor import _is_new_scenario_restart, _reset_to_fresh_scenario
+
+
+def _state_with_memory():
+    st = ConversationState(conversation_id="mem")
+    st.language = "es"
+    st.is_certified = True
+    st.location = "cartagena"
+    st.detected_group_size = 3
+    st.remembered_facts = {"budget": "800", "notes": ["padre rodilla operada"]}
+    st.conversation_summary = "Grupo de 3 certificados desde Cartagena."
+    st.history = [{"role": "user", "content": "x"}] * 6
+    return st
+
+
+@_pytest.mark.parametrize("msg", [
+    "hola soy Sofia de chile, hice mi open water y quiero bucear",
+    "buenas, me llamo Juan y somos 4 para snorkel",
+    "hi, I am Mark and we want to dive",
+    "hola, somos 5 y queremos hacer el curso open water",
+])
+def test_new_scenario_restart_true(msg):
+    assert _is_new_scenario_restart(msg, _state_with_memory()) is True
+
+
+@_pytest.mark.parametrize("msg", [
+    "hola",
+    "hola que tal",
+    "hola, cuanto cuesta el buceo?",
+    "buenas, si quiero reservar",
+    "soy certificado",
+    "hola soy principiante y no se nadar",
+])
+def test_new_scenario_restart_false(msg):
+    assert _is_new_scenario_restart(msg, _state_with_memory()) is False
+
+
+def test_new_scenario_restart_needs_prior_memory():
+    fresh = ConversationState(conversation_id="fresh")
+    fresh.language = "es"
+    assert _is_new_scenario_restart("hola soy Sofia y quiero bucear", fresh) is False
+
+
+def test_reset_to_fresh_scenario_keeps_only_id_and_language():
+    st = _state_with_memory()
+    _reset_to_fresh_scenario(st)
+    assert st.conversation_id == "mem" and st.language == "es"
+    assert st.is_certified is None and not st.location
+    assert st.remembered_facts == {} and st.conversation_summary is None
+    assert st.history == [] and not st.mixed_cart
+
+
+# --- "Volver" at the final summary never abandons the cart (2026-07-20) -------
+
+def test_back_at_final_summary_returns_to_cart_review():
+    from src.flows.decision_tree import DecisionTree, Step
+    dt = DecisionTree()
+    st = ConversationState(conversation_id="back")
+    st.language = "es"
+    st.step = Step.MIXED_FINAL_SUMMARY
+    st.location = "cartagena"
+    st.mixed_cart = [{"type": "cert", "qty": 2, "plan": "2_dives_1_day",
+                      "label": "Buceo certificado", "usd": 178, "cop": 630000}]
+    dt.process_message(st, "volver")
+    assert st.step == Step.MIXED_CART_REVIEW
+    assert len(st.mixed_cart) == 1  # cart preserved, not abandoned to main menu

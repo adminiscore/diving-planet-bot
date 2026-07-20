@@ -5870,8 +5870,8 @@ class DecisionTree:
         cta = ("👉 *Para más información y hacer tu reserva, haz clic aquí:*"
                if lang == "es" else "👉 *For more information and to book, click here:*")
         info_cta = ("ℹ️ Más información aquí:" if lang == "es" else "ℹ️ More information here:")
-        wa = ("👉 Para reservar esto, escríbenos por WhatsApp al +57 320 231515."
-              if lang == "es" else "👉 To book this, message us on WhatsApp at +57 320 231515.")
+        wa = ("👉 Para reservar esto, dime y te paso con un asesor que coordina los detalles contigo."
+              if lang == "es" else "👉 To book this, let me know and I'll connect you with an advisor who arranges the details with you.")
 
         msgs: list[str] = []
         for b in self._cart_booking_blocks(state):
@@ -5977,6 +5977,12 @@ class DecisionTree:
     def _handle_mixed_final_summary(self, state: ConversationState, message: str) -> str:
         lang = state.language
         msg = message.strip().lower()
+
+        # "Volver"/"back" here returns to the cart review WITH the cart intact,
+        # never dead-ends to the main menu abandoning the reservation (this step
+        # was missing from BACK_STEP — fixed 2026-07-20).
+        if is_back(msg):
+            return self._goto_mixed_cart_review(state)
 
         if msg in ("2", "restart", "empezar de nuevo", "start over"):
             self._reset_mixed_state(state)
@@ -6119,7 +6125,7 @@ class DecisionTree:
                     "👥 *Grupos de 5+ personas*: 10% adicional, acumulable con el descuento online (20% total).\n"
                     "🤿 *Equipo propio completo*: 5% de descuento si traes tu propio equipo completo.\n\n"
                     "Los colombianos y residentes pagan en COP; los clientes internacionales en USD.\n"
-                    "Si tienes dudas con el precio, escríbenos por WhatsApp al +57 320 231515."
+                    "Si tienes dudas con el precio, dime y te ayudo."
                 )
         else:
             if choice == 1:
@@ -6165,7 +6171,7 @@ class DecisionTree:
                     "👥 *Groups of 5+ people*: extra 10%, stackable with the online discount (20% total).\n"
                     "🤿 *Full own equipment*: 5% off if you bring your complete gear.\n\n"
                     "Colombian/resident clients pay in COP; international clients pay in USD.\n"
-                    "For any pricing questions, message us on WhatsApp at +57 320 231515."
+                    "For any pricing questions, just ask and I'll help."
                 )
 
         self.set_quick_replies(state, "pricing_leaf")

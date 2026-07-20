@@ -160,6 +160,41 @@ def requests_personal_data(answer: str) -> bool:
     return bool(_PD_REQUEST.search(answer) or _PD_LIST_ITEM.search(answer))
 
 
+# --------------------------------------------------------------------------- #
+# Phone-number guard
+#
+# The bot must NEVER hand the customer a phone/WhatsApp number (owner decision,
+# 2026-07-20) — advisor contact is handled internally via the Chatwoot handoff,
+# not by giving the number. The number lives in many KB FAQs the LLM might
+# surface, so a system-prompt rule alone isn't watertight; this is the
+# deterministic backstop (same pattern as urls_grounded / requests_personal_data).
+#
+# Matches: +57 320 231515, 320 231515, 320231515, 3202315151, +573202315151,
+# and generic long digit runs that read as a phone (7+ digits, possibly grouped).
+# Deliberately does NOT match prices ("288.000", "$178"), years ("2026"),
+# quantities, times ("4:30"), or percentages.
+# --------------------------------------------------------------------------- #
+_PHONE_PATTERN = re.compile(
+    r"(?:\+?57[\s.\-]?)?(?:\(?3\d{2}\)?[\s.\-]?)\d{3}[\s.\-]?\d{4}"   # Colombian mobile 3xx xxx xxxx
+    r"|(?:\+?57[\s.\-]?)?3\d{2}[\s.\-]?\d{2}[\s.\-]?\d{4}"           # 3xx xx xxxx grouping (231515 style)
+    r"|\+\d[\d\s.\-]{7,}\d"                                           # any + international run
+    r"|\b\d{3}[\s.\-]\d{3}[\s.\-]?\d{3,4}\b",                          # generic grouped 3-3-3/4
+    re.IGNORECASE,
+)
+# "WhatsApp" / "escríbenos al" cue right before a shorter digit run also counts.
+_PHONE_CUE = re.compile(
+    r"(?:whats\s?app|wpp|tel[eé]fono|phone|ll[aá]ma\w*|escr[ií]benos\s+al)\D{0,12}\d[\d\s.\-]{5,}\d",
+    re.IGNORECASE,
+)
+
+
+def contains_phone_number(answer: str) -> bool:
+    """True if the answer emits a phone/WhatsApp number to the customer."""
+    if not answer:
+        return False
+    return bool(_PHONE_PATTERN.search(answer) or _PHONE_CUE.search(answer))
+
+
 # Explicit links the answer might emit (http(s):// or www.).
 _URL_PATTERN = re.compile(r"(?:https?://|www\.)\S+", re.IGNORECASE)
 

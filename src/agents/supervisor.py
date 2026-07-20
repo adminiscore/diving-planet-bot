@@ -83,16 +83,14 @@ def _adaptive_diving_advisor_answer(lang: str) -> str:
             "coordinan de forma personalizada según la actividad y las necesidades de cada "
             "persona — por eso no es una tarifa fija de la web, la define un asesor evaluando "
             "tu caso para que la experiencia sea segura y a tu medida. 🤿\n\n"
-            "¿Quieres que te pase con un asesor para darte todos los detalles? También puedes "
-            "escribirnos por WhatsApp al +57 320 231515. 😊"
+            "¿Quieres que te pase con un asesor para darte todos los detalles? 😊"
         )
     return (
         "In our *DIVE TO HEAL* program (adaptive diving), the price and logistics are "
         "arranged individually based on the activity and each person's needs — so it isn't a "
         "fixed website rate; an advisor sets it after evaluating your case, so the experience "
         "is safe and tailored to you. 🤿\n\n"
-        "Would you like me to connect you with an advisor for all the details? You can also "
-        "message us on WhatsApp at +57 320 231515. 😊"
+        "Would you like me to connect you with an advisor for all the details? 😊"
     )
 
 
@@ -577,6 +575,9 @@ BACK_STEP: dict[Step, tuple[Step, str]] = {
     Step.MIXED_FINAL_KIDS_U8: (Step.MIXED_FINAL_KIDS, "mixed_kids_age"),
     Step.MIXED_FINAL_KIDS_810: (Step.MIXED_FINAL_KIDS, "mixed_kids_age"),
     Step.MIXED_FINAL_PRIVATE: (Step.MIXED_FINAL_COLOMBIAN, "mixed_yes_no"),
+    # Final summary: "volver" returns to the cart review (cart intact), never
+    # dead-ends to MAIN_MENU losing the reservation.
+    Step.MIXED_FINAL_SUMMARY: (Step.MIXED_CART_REVIEW, "mixed_cart_actions"),
     # "Ask" steps reachable directly from free text (IntentDetector jumps),
     # not from a button click in an earlier MIXED_* screen. The handlers'
     # own is_back() logic (routed via the special-case list below) takes
@@ -739,6 +740,75 @@ GREETING_ONLY_KEYWORDS = {
     "hola", "hello", "hi", "buenas", "buenos dias", "buenos días",
     "buenas tardes", "buenas noches", "hey",
 }
+
+# --------------------------------------------------------------------------- #
+# New-scenario memory reset (owner decision, 2026-07-20)
+#
+# A brand-new Chatwoot conversation already starts with empty memory. But within
+# the SAME conversation, if the customer greets AND introduces a clearly new
+# scenario (a new person/booking) while old memory is still around, that stale
+# summary/facts/notes/slots would bleed into the new case. We reset ONLY in that
+# narrow situation. Conservative on purpose (favors false-negatives): a bare
+# "hola" mid-booking, or a greeting without a fresh self-introduction, does NOT
+# reset — the customer usually greets and keeps going on the same reservation.
+# --------------------------------------------------------------------------- #
+_GREETING_START_RE = re.compile(
+    r"^\s*[¡!]*\s*(?:hola|buenas|buenos\s+d[ií]as|buenas\s+tardes|buenas\s+noches|"
+    r"hey|hi|hello|hey\s+there)\b",
+    re.IGNORECASE,
+)
+# A fresh self-introduction — the strong signal that this is a new person/case.
+# Name detection is CASE-SENSITIVE on purpose: "soy Sofía" (a capitalized name)
+# is a new-person intro, but "soy certificado" (lowercase adjective) is a normal
+# mid-booking answer and must NOT trigger a reset.
+_NAME_INTRO_RE = re.compile(
+    r"\bsoy\s+[A-ZÁÉÍÓÚÑ][a-záéíóúñ]+"
+    r"|\bI'?m\s+[A-Z][a-z]+|\bI\s+am\s+[A-Z][a-z]+"
+)
+_INTRO_PHRASE_RE = re.compile(
+    r"\bme\s+llamo\b|\bmi\s+nombre\s+es\b|\bmy\s+name\s+is\b"
+    r"|\bsomos\s+\d|\bwe\s+are\s+\d",
+    re.IGNORECASE,
+)
+
+
+def _has_accumulated_memory(state: ConversationState) -> bool:
+    """True if the conversation already carries meaningful memory that would
+    bleed into a new scenario if not cleared."""
+    facts = state.remembered_facts or {}
+    return bool(
+        state.conversation_summary
+        or any(v for v in facts.values())
+        or state.is_certified is not None
+        or getattr(state, "location", None)
+        or getattr(state, "detected_group_size", None)
+        or getattr(state, "mixed_cart", None)
+        or len(state.history or []) >= 4
+    )
+
+
+def _is_new_scenario_restart(message: str, state: ConversationState) -> bool:
+    """True only when the message greets AND introduces a clearly new scenario
+    (self-introduction) while the conversation already holds accumulated memory.
+    Deliberately narrow to never wipe legitimate mid-booking context."""
+    if not (message and _GREETING_START_RE.match(message)):
+        return False
+    if not (_NAME_INTRO_RE.search(message) or _INTRO_PHRASE_RE.search(message)):
+        return False
+    # Needs some substance beyond "hola soy X" — a real new-scenario message.
+    if len(message.strip()) < 25:
+        return False
+    return _has_accumulated_memory(state)
+
+
+def _reset_to_fresh_scenario(state: ConversationState) -> None:
+    """Wipe ALL conversation memory (summary, facts/notes, history, cart, every
+    detected_* slot, adaptive context, step) while keeping only the stable
+    identity: conversation_id and the already-detected language. Future-proof —
+    resets to a fresh ConversationState's defaults, so new fields are covered
+    automatically."""
+    fresh = ConversationState(conversation_id=state.conversation_id, language=state.language)
+    state.__dict__.update(fresh.__dict__)
 
 ENGLISH_HINTS = {
     "we", "are", "family", "certified", "divers", "snorkel", "snorkeling",
@@ -4390,6 +4460,15 @@ async def _route_message_inner(state: ConversationState, message: str) -> str:
         # Anything else: drop the pending confirmation and let this message
         # fall through to normal routing below.
 
+    # New-scenario restart: greeting + fresh self-introduction while old memory
+    # is around → wipe it and reprocess this message as a fresh first turn, so
+    # the previous booking's summary/facts/notes/slots don't bleed in. Narrow by
+    # design (see _is_new_scenario_restart); a bare "hola" never triggers it.
+    if _is_new_scenario_restart(message, state):
+        logger.info("[SUPERVISOR] New-scenario restart -> wiping conversation memory")
+        _reset_to_fresh_scenario(state)
+        return await _route_message_inner(state, message)
+
     # Sticky detection: once the speaker mentions kids/children/family-with-kids,
     # we remember it for the rest of the conversation so the cart-mixto question
     # about age ranges fires even if the cart ends up cert-only.
@@ -4715,6 +4794,7 @@ async def _route_message_inner(state: ConversationState, message: str) -> str:
             Step.MIXED_ASK_CERTIFICATION,
             Step.MIXED_ASK_CERT_COUNT,
             Step.MIXED_ASK_BEGINNER_ACTIVITY,
+            Step.MIXED_FINAL_SUMMARY,
         ):
             return decision_tree.process_message(state, "back")
         return _go_back_one_step(state)
@@ -5071,11 +5151,13 @@ async def _route_message_inner(state: ConversationState, message: str) -> str:
         extra_context = _build_extra_context(state)
         answer = await rag_answer(message, lang=state.language, history=state.history, extra_context=extra_context)
         answer = _maybe_offer_mixed_from_single(state, message, answer)
-        # When the answer offers to hand off to an advisor (e.g. contact-only
-        # courses), show matching advisor/home buttons instead of the stale
-        # main-menu ones the conversation was carrying.
-        if _answer_offers_advisor(answer):
-            state.quick_replies = _booking_change_buttons(state.language)
+        # NOTE (2026-07-20, owner): we deliberately do NOT attach advisor/home
+        # buttons here anymore. A normal info/booking answer no longer offers an
+        # advisor by default (see rag_agent prompt rules), and when it does
+        # legitimately offer one, a plain "sí" already escalates via the
+        # bare-affirmation-accepts-advisor branch — no button needed. The two
+        # buttons are kept only in the genuine hard-escalation branches
+        # (cancellation / reschedule / mixed-nationality) above.
         state.history.append({"role": "assistant", "content": answer})
         return answer
 

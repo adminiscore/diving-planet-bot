@@ -2684,9 +2684,10 @@ async def test_final_summary_booking_link_localized_to_english():
 
 
 @pytest.mark.asyncio
-async def test_final_summary_generic_link_uses_info_plus_whatsapp():
+async def test_final_summary_generic_link_uses_info_plus_advisor():
     """A plan without a direct book.divingplanet.org checkout (info-only page)
-    must NOT promise 'book online' — it shows the info link + WhatsApp to book."""
+    must NOT promise 'book online' — it shows the info link + an advisor handoff
+    to book (no WhatsApp number handed out, owner decision 2026-07-20)."""
     from src.flows.decision_tree import DecisionTree
     state = make_state()
     state.mixed_cart = [{"type": "cert", "qty": 2, "plan": "3_dives_1_day", "label": "3 dives"}]
@@ -2694,7 +2695,8 @@ async def test_final_summary_generic_link_uses_info_plus_whatsapp():
     resp = DecisionTree()._goto_mixed_final_summary(state)
     assert "divingplanet.org/tours" in resp          # generic info page
     assert "book.divingplanet.org" not in resp        # no fake checkout link
-    assert "WhatsApp" in resp                          # booking channel offered
+    assert "asesor" in resp.lower()                    # advisor handoff to book
+    assert "231515" not in resp                        # never hand out the number
     assert "reservando online" not in resp             # no false online-booking claim
     assert "Más información" in resp
 
