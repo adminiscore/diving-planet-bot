@@ -4328,7 +4328,13 @@ class DecisionTree:
             r"\d+\s*(?:inmersi\w+|buceos?|dives?|d[ií]as?|days?)", msg
         )
         signal_word = re.search(
-            r"\bmulti[\s-]?d[ií]a|\bvarios\s+d[ií]as|\bpaquete|\bmulti[\s-]?day|\bpackage", msg
+            r"\bmulti[\s-]?d[ií]a|\bvarios\s+d[ií]as|\bpaquete|\bmulti[\s-]?day|\bpackage"
+            # Vague "more days" phrasings ("estaré más de un día", "algo para más
+            # días", "unos días", "more/several/a few days") — a certified diver
+            # asking for more days after the 2-dive recommendation.
+            r"|\bm[aá]s\s+d[ií]as|\bm[aá]s\s+de\s+un\s+d[ií]a|\bunos\s+d[ií]as"
+            r"|\bmore\s+days|\bseveral\s+days|\ba\s+few\s+days|\bmultiple\s+days",
+            msg,
         )
         if not (has_number_unit or signal_word):
             return None

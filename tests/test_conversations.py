@@ -4204,3 +4204,51 @@ async def test_number_still_resolves_at_add_qty_step():
     assert state.step == Step.MIXED_ADD_QTY
     await route_message(state, "2")
     assert state.step != Step.MIXED_ADD_QTY
+
+
+# ── Post-recommendation cert steps: multi-day switch & companion by text ──
+# After the 2-dive recommendation the flow lands deep (last-dive / preview),
+# past MIXED_ADD_QTY where these text handlers used to live. Regression from the
+# owner's live test (2026-07-21): a multi-day request fell to a RAG blurb while
+# the booking stayed 2-dive, and an added snorkel companion was dropped.
+
+@pytest.mark.asyncio
+async def test_multiday_switch_by_text_at_last_dive_step():
+    state = ConversationState(conversation_id="mday-switch-lastdive")
+    state.language = "es"
+    await route_message(state, "hola soy certificado, quiero bucear en Cartagena")
+    assert state.step == Step.MIXED_CERT_LAST_DIVE  # singular -> qty skipped
+    # Vague "more days" must switch the plan (show the multi-day menu), not answer
+    # with a generic RAG blurb while the plan silently stays on 2 dives.
+    await route_message(state, "estare mas de un dia, no teneis algo para mas dias?")
+    assert state.step == Step.MIXED_ADD_CERT_MULTI_DAY, state.step
+
+
+@pytest.mark.asyncio
+async def test_explicit_multiday_count_by_text_at_last_dive_switches_plan():
+    state = ConversationState(conversation_id="mday-count-lastdive")
+    state.language = "es"
+    await route_message(state, "hola soy certificado, quiero bucear en Cartagena")
+    assert state.mixed_pending_qty_plan == "2_dives_1_day"
+    await route_message(state, "mejor quiero 5 inmersiones")
+    assert state.mixed_pending_qty_plan == "5_dives_2_days", state.mixed_pending_qty_plan
+
+
+@pytest.mark.asyncio
+async def test_snorkel_companion_by_text_at_preview_is_not_dropped():
+    state = ConversationState(conversation_id="snorkel-preview")
+    state.language = "es"
+    await route_message(state, "hola soy certificado, quiero bucear en Cartagena")
+    await route_message(state, "No")  # last dive -> preview
+    assert state.step == Step.MIXED_ADD_PREVIEW
+    # Adding a snorkel companion must split into cert + snorkel, not just bump the
+    # headcount and drop the snorkel person.
+    await route_message(state, "tambien viene uno que quiere hacer snorkel")
+    assert state.mixed_pending_beginner_after_cert == 1
+    await route_message(state, "No")   # cert last dive again
+    await route_message(state, "1")    # add cert to cart -> ask beginner activity
+    assert state.step == Step.MIXED_ASK_BEGINNER_ACTIVITY
+    await route_message(state, "2")    # snorkel
+    await route_message(state, "1")    # confirm snorkel preview
+    types = sorted(it["type"] for it in state.mixed_cart)
+    assert types == ["cert", "snorkel"], state.mixed_cart

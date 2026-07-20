@@ -1,6 +1,6 @@
 # Estado del bot: bugs arreglados y pendientes
 
-> Documento vivo de estado. Última actualización: 2026-07-21 (v0.20.28).
+> Documento vivo de estado. Última actualización: 2026-07-21 (v0.20.29).
 > Consolidado a petición del owner. Para el detalle técnico de cada punto, ver
 > `docs/HISTORY.md` (versión indicada) y `docs/project-history/session-handoff.md`.
 
@@ -18,6 +18,7 @@
 | v0.20.26 | **No ofrecer asesor por defecto** (solo sensible/necesario/pedido) + **nunca dar el WhatsApp** (guard determinista); botones asesor/menú fuera de respuestas normales; "Volver" en el resumen final ya no abandona el carrito; **reset de memoria por escenario nuevo** (saludo + auto-presentación con memoria previa) |
 | v0.20.27 | **Certificado por texto libre → recomendar 2 inmersiones directo** (sin menú), acotado a la entrada libre y gateado por acompañante principiante (split y botón in-cart conservan menú); **snorkel a mitad de flujo ya no se ignora** (aterriza en ADD_QTY donde el split cert/actividad lo reconoce); **"Volver" fuera de todo el carrito** (`_CART_MENU_KEYS`) — cambios por lenguaje natural |
 | v0.20.28 | **Inferir "1 persona" de auto-presentación singular** ("soy certificada" → group_size=1, se salta la pregunta de cantidad); conservador ante acompañante/número/plural/colectivo |
+| v0.20.29 | **Switch multi-día por texto en cualquier paso cert** (antes caía a RAG y la reserva se quedaba en 2 inmersiones) + **acompañante snorkel a mitad de flujo ya no se pierde** (antes solo subía headcount; ahora hace split y acaba en el carrito) |
 
 ## 🟡 Pendientes abiertos (no bloqueantes)
 
@@ -29,7 +30,7 @@
 6. **Gaps del acompañante** (v0.20.13, ver `TODO.md`): roles quién bucea/acompaña; familiares en el atajo de overview; decisión deny-list vs safe-list del atajo de precios.
 7. **Hallazgos menores de baterías** (Gonzalo): nitrox "$10/tanque" (alucinación), "?" resetea a idioma, emoji/"..." → welcome en inglés.
 8. **Números de teléfono embebidos en la KB** — la regla de prompt + el guard determinista los bloquean en la salida, pero siguen en los JSON. Limpieza opcional del KB (requiere reindex) si se quiere quitarlos de raíz.
-9. **Switch multi-día vago por texto** (v0.20.27) — "quiero 5 inmersiones" (con conteo) cambia el plan correctamente en `MIXED_ADD_QTY`; pero "prefiero multi-día" *sin número* lo enruta el supervisor a RAG (que lista los paquetes) en vez de mostrar el menú multi-día — el cliente tiene que dar luego un conteo. Funcional pero en 2 pasos. Además, tras un split de snorkel el flujo está en `MIXED_CERT_LAST_DIVE` y el switch multi-día por texto aún no está cableado ahí (cae a RAG informativo). Cablear `_detect_multiday_switch` también en el paso de última inmersión si se quiere el switch en 1 paso.
+9. ~~**Switch multi-día vago por texto**~~ **RESUELTO en v0.20.29**: el interceptor del supervisor detecta el switch multi-día (incl. frases vagas "más días"/"multi-día") en `MIXED_ADD_QTY`/`MIXED_CERT_LAST_DIVE`/`MIXED_ADD_PREVIEW` y cambia el plan (o muestra el menú multi-día) antes de la vía RAG. Igual que el acompañante snorkel a mitad de flujo.
 10. **Extracción integral de información del mensaje (aspiración del owner, 2026-07-21)** — el detector determinista (`intent_detector.py`) extrae por regex campos sueltos (actividad, cert, grupo, ubicación, conteos, edades, nacionalidad…) y se ha ido ampliando caso a caso (último: group_size=1 singular en v0.20.28). El owner quiere que de CUALQUIER mensaje se extraiga bien TODA la info dada de una vez. Opciones a evaluar: (a) seguir ampliando regex por familias de casos (barato, incremental, frágil); (b) una pasada de extracción estructurada por LLM (JSON de slots) como red de seguridad cuando el regex deja huecos, reusando la infraestructura del orquestador. Decisión de diseño pendiente con el equipo — no empezada.
 
 ## 🔴 Bloqueado / dependencias externas

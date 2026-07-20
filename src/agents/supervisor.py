@@ -4991,6 +4991,53 @@ async def _route_message_inner(state: ConversationState, message: str) -> str:
         # real regression this prevents). Keeps state.step/cart untouched and
         # attaches "Continuar con la reserva" + "Inicio" so the client can
         # resume instead of having to retype it.
+        # Certified diver switching to a MULTI-DAY plan by text, at ANY post-
+        # recommendation cert step (quantity / last-dive / preview) — not just the
+        # quantity step. Without this, "¿no tenéis algo para más días?" fell to a RAG
+        # blurb (it reads as an info question) while the booking silently stayed on
+        # the 2-dive plan and the summary showed 2 dives. Runs before the info-question
+        # and recomposition checks so the plan actually switches.
+        if (
+            state.step in (Step.MIXED_ADD_QTY, Step.MIXED_CERT_LAST_DIVE, Step.MIXED_ADD_PREVIEW)
+            and (state.mixed_pending_qty_type or "cert") == "cert"
+            and getattr(state, "mixed_pending_modify_idx", None) is None
+        ):
+            switch = decision_tree._detect_multiday_switch(message)
+            if switch is not None:
+                logger.info(f"[SUPERVISOR] Multi-day switch by text at step={state.step.value} -> {switch}")
+                state.history.append({"role": "user", "content": message})
+                if switch == "menu":
+                    resp = decision_tree._resolve_or_ask_cert_plan(
+                        state, None, None, fallback_multiday_menu=True
+                    )
+                else:
+                    resp = decision_tree._resolve_or_ask_cert_plan(state, switch[0], switch[1])
+                state.history.append({"role": "assistant", "content": resp})
+                return resp
+
+        # Certified diver revealing a NON-cert companion (snorkel/minicurso) by text
+        # at a post-recommendation cert step (last-dive / preview). Route it to the
+        # companion split so the extra person becomes a real queued item — instead of
+        # the group-recomposition path below, which only bumped the headcount ("¡Ahora
+        # sois 2!") and silently dropped the snorkel person from the booking.
+        if (
+            state.step in (Step.MIXED_CERT_LAST_DIVE, Step.MIXED_ADD_PREVIEW)
+            and (state.mixed_pending_qty_type or "cert") == "cert"
+            and getattr(state, "mixed_pending_modify_idx", None) is None
+        ):
+            split = decision_tree._detect_cert_qty_activity_split(message)
+            if split is not None or decision_tree._reveals_non_certified_companion(message):
+                logger.info(f"[SUPERVISOR] Companion-with-activity by text at step={state.step.value}")
+                state.history.append({"role": "user", "content": message})
+                if split is not None:
+                    resp = decision_tree._start_cert_companion_split(
+                        state, message, cert_qty=split[0], non_cert_qty=split[1]
+                    )
+                else:
+                    resp = decision_tree._start_cert_companion_split(state, message)
+                state.history.append({"role": "assistant", "content": resp})
+                return resp
+
         if (
             state.step in _MIXED_FLOW_STEPS
             and state.quick_replies
