@@ -306,7 +306,11 @@ def test_reservar_with_certified_context_still_routes_to_cert():
     st.detected_is_certified = True
     tree._enter_booking_cart(st)
     tree.process_message(st, "1")
-    assert st.step == Step.MIXED_ADD_CERT_PLAN
+    # Routes to the CERTIFIED path (not beginner). A pure-certified context with
+    # no beginner companion now recommends the 2-dive plan and moves to quantity
+    # (owner decision 2026-07-20) instead of showing the plan menu.
+    assert st.mixed_pending_qty_type == "cert"
+    assert st.step == Step.MIXED_ADD_QTY
 
 
 # --- Family A: natural-language "self + companion" counts at the qty step ---

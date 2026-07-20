@@ -78,26 +78,14 @@ async def test_island_hotel_flow():
     print(f"  Step: {state.step}")
     print(f"  Hotel: {state.hotel}")
     
-    assert state.step == Step.MIXED_ADD_CERT_PLAN, f"Esperado MIXED_ADD_CERT_PLAN, obtenido {state.step}"
-    assert state.hotel == "Pao Pao Hotel", f"Esperado 'Pao Pao Hotel', obtenido {state.hotel}"
-    assert "2 inmersiones" in resp3 or "paquete" in resp3.lower(), "Debería mostrar opciones de plan"
-    print("\n✅ Guarda hotel y continúa con plan de buceo")
-    
-    # Paso 4: Usuario selecciona "2 inmersiones / 1 día"
-    msg4 = "1"
-    print(f"\n{'='*80}")
-    print(f"PASO 4: Seleccionar plan")
-    print(f"{'='*80}")
-    print(f"Usuario: {msg4} (2 inmersiones / 1 día)")
-    
-    resp4 = await route_message(state, msg4)
-    print(f"\nBot:\n{resp4}")
-    print(f"\nEstado:")
-    print(f"  Step: {state.step}")
-    
+    # Buzo certificado puro (sin acompañante principiante): al conocer el hotel se
+    # RECOMIENDA el plan de 2 inmersiones directamente y se pasa a cantidad
+    # (decisión del owner 2026-07-20), sin menú de planes intermedio.
     assert state.step == Step.MIXED_ADD_QTY, f"Esperado MIXED_ADD_QTY, obtenido {state.step}"
-    print("\n✅ Pregunta cantidad")
-    
+    assert state.hotel == "Pao Pao Hotel", f"Esperado 'Pao Pao Hotel', obtenido {state.hotel}"
+    assert "2 inmersiones" in resp3, "Debería recomendar el plan de 2 inmersiones"
+    print("\n✅ Guarda hotel y recomienda plan de 2 inmersiones → pregunta cantidad")
+
     # Paso 5: Usuario dice "2 personas"
     msg5 = "2"
     print(f"\n{'='*80}")

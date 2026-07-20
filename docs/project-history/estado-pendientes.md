@@ -1,6 +1,6 @@
 # Estado del bot: bugs arreglados y pendientes
 
-> Documento vivo de estado. Última actualización: 2026-07-20 (v0.20.26).
+> Documento vivo de estado. Última actualización: 2026-07-21 (v0.20.27).
 > Consolidado a petición del owner. Para el detalle técnico de cada punto, ver
 > `docs/HISTORY.md` (versión indicada) y `docs/project-history/session-handoff.md`.
 
@@ -16,6 +16,7 @@
 | v0.20.17-24 (Gadea) | **Memoria B/C/A**: resumen progresivo + notas abiertas + ventana configurable (24) |
 | v0.20.18-25 (Gadea) | Bloqueo de botones en pasos sí/no; precisión de precio de buceo; falso positivo "planes"; fallback de certificación desconocida; **chunk de descuentos indexado en blanco desde hace años**; cálculo de precios derivados; preguntas bloqueadas en MIXED_LOCATION/ADD_QTY |
 | v0.20.26 | **No ofrecer asesor por defecto** (solo sensible/necesario/pedido) + **nunca dar el WhatsApp** (guard determinista); botones asesor/menú fuera de respuestas normales; "Volver" en el resumen final ya no abandona el carrito; **reset de memoria por escenario nuevo** (saludo + auto-presentación con memoria previa) |
+| v0.20.27 | **Certificado por texto libre → recomendar 2 inmersiones directo** (sin menú), acotado a la entrada libre y gateado por acompañante principiante (split y botón in-cart conservan menú); **snorkel a mitad de flujo ya no se ignora** (aterriza en ADD_QTY donde el split cert/actividad lo reconoce); **"Volver" fuera de todo el carrito** (`_CART_MENU_KEYS`) — cambios por lenguaje natural |
 
 ## 🟡 Pendientes abiertos (no bloqueantes)
 
@@ -27,6 +28,7 @@
 6. **Gaps del acompañante** (v0.20.13, ver `TODO.md`): roles quién bucea/acompaña; familiares en el atajo de overview; decisión deny-list vs safe-list del atajo de precios.
 7. **Hallazgos menores de baterías** (Gonzalo): nitrox "$10/tanque" (alucinación), "?" resetea a idioma, emoji/"..." → welcome en inglés.
 8. **Números de teléfono embebidos en la KB** — la regla de prompt + el guard determinista los bloquean en la salida, pero siguen en los JSON. Limpieza opcional del KB (requiere reindex) si se quiere quitarlos de raíz.
+9. **Switch multi-día vago por texto** (v0.20.27) — "quiero 5 inmersiones" (con conteo) cambia el plan correctamente en `MIXED_ADD_QTY`; pero "prefiero multi-día" *sin número* lo enruta el supervisor a RAG (que lista los paquetes) en vez de mostrar el menú multi-día — el cliente tiene que dar luego un conteo. Funcional pero en 2 pasos. Además, tras un split de snorkel el flujo está en `MIXED_CERT_LAST_DIVE` y el switch multi-día por texto aún no está cableado ahí (cae a RAG informativo). Cablear `_detect_multiday_switch` también en el paso de última inmersión si se quiere el switch en 1 paso.
 
 ## 🔴 Bloqueado / dependencias externas
 

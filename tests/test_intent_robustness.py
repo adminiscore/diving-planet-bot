@@ -567,8 +567,11 @@ async def test_bare_pack_es_full_flow_all_numbers(n):
         assert state.step == _Step.MIXED_CERT_LAST_DIVE, (n, resp)
         assert state.mixed_pending_qty_plan == f"{n}_dives_{ {5: 2, 7: 3, 9: 4}[n] }_days"
     else:
-        assert state.step == _Step.MIXED_ADD_CERT_PLAN, (n, resp)
-        assert state.mixed_pending_qty_plan is None
+        # Non-5/7/9 "pack of N" isn't a real package: we recommend the 2-dive
+        # plan (owner decision 2026-07-20) instead of a menu. Group size (2) is
+        # known, so it advances to the last-dive safety question.
+        assert state.step == _Step.MIXED_CERT_LAST_DIVE, (n, resp)
+        assert state.mixed_pending_qty_plan == "2_dives_1_day"
 
 
 @pytest.mark.asyncio
@@ -586,8 +589,9 @@ async def test_bare_pack_en_full_flow_all_numbers(n):
         assert state.step == _Step.MIXED_CERT_LAST_DIVE, (n, resp)
         assert state.mixed_pending_qty_plan == f"{n}_dives_{ {5: 2, 7: 3, 9: 4}[n] }_days"
     else:
-        assert state.step == _Step.MIXED_ADD_CERT_PLAN, (n, resp)
-        assert state.mixed_pending_qty_plan is None
+        # See ES twin: non-5/7/9 now recommends the 2-dive plan.
+        assert state.step == _Step.MIXED_CERT_LAST_DIVE, (n, resp)
+        assert state.mixed_pending_qty_plan == "2_dives_1_day"
 
 
 def test_explicit_two_dives_skips_cert_plan_question():

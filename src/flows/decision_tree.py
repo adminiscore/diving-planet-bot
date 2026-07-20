@@ -2164,25 +2164,38 @@ class DecisionTree:
     No LLM calls — pure logic for Phase 1.
     """
 
+    # Booking-cart menus that must NOT show a "Volver" button (owner decision
+    # 2026-07-21): a certified diver who already said what they want shouldn't be
+    # sent back into menus — changes are handled by natural language, and typing
+    # "volver" still works (is_back). Info/navigation menus keep their Back.
+    _CART_MENU_KEYS = frozenset({
+        "mixed_entry", "mixed_ask_certification", "mixed_ask_certification_group",
+        "mixed_add_activity", "mixed_companion_upsell", "mixed_add_cert_plan",
+        "mixed_add_cert_multi_day", "mixed_add_cert_4dive_variant",
+        "mixed_add_cert_1day_variant", "mixed_add_cert_2day_variant",
+        "mixed_quantity", "mixed_preview_actions", "mixed_kids_age",
+        "courses_menu", "courses_open_water_origin", "courses_open_water_time",
+        "courses_advanced_menu", "courses_specialties_menu",
+    })
+
     def set_quick_replies(self, state: ConversationState, key: str):
         if key == "tours_certified" and state.location == "island":
-            state.quick_replies = self._island_certified_options(state.language)
-            return
-        if key == "info_tours_certified_menu" and state.location == "island":
-            state.quick_replies = self._info_island_certified_options(state.language)
-            return
-        if key == "mixed_add_cert_multi_day" and state.location == "island":
-            state.quick_replies = self._mixed_island_certified_multiday_options(state.language)
-            return
-        if key == "mixed_add_activity" and state.mixed_entry_path == "cert_beg":
+            options = self._island_certified_options(state.language)
+        elif key == "info_tours_certified_menu" and state.location == "island":
+            options = self._info_island_certified_options(state.language)
+        elif key == "mixed_add_cert_multi_day" and state.location == "island":
+            options = self._mixed_island_certified_multiday_options(state.language)
+        elif key == "mixed_add_activity" and state.mixed_entry_path == "cert_beg":
             # Filtramos snorkel cuando entran por la rama de certificados + principiantes.
             options = [
                 opt for opt in get_button_options(key, state.language)
                 if opt.get("value") != "3"
             ]
-            state.quick_replies = options
-            return
-        state.quick_replies = get_button_options(key, state.language)
+        else:
+            options = get_button_options(key, state.language)
+        if key in self._CART_MENU_KEYS:
+            options = [o for o in options if o.get("value") != "back"]
+        state.quick_replies = options
 
     @staticmethod
     def _info_island_certified_options(lang: str) -> list[dict]:
@@ -3510,7 +3523,7 @@ class DecisionTree:
                 # forgotten now that we finally know it — resolve straight to
                 # the plan instead of re-asking the "2 dives vs multi-day" menu.
                 dives, days = self._pop_detected_cert_counts(state)
-                return self._resolve_or_ask_cert_plan(state, dives, days)
+                return self._resolve_or_ask_cert_plan(state, dives, days, recommend_default=True)
             elif state.mixed_pending_qty_type in ("beginner", "snorkel", "course", "companion"):
                 # Use _goto_mixed_add_qty so it auto-skips if qty is already known
                 return self._goto_mixed_add_qty(state)
@@ -3532,7 +3545,7 @@ class DecisionTree:
                 if state.detected_activity == "certified_diving":
                     state.mixed_pending_qty_type = "cert"
                     dives, days = self._pop_detected_cert_counts(state)
-                    return self._resolve_or_ask_cert_plan(state, dives, days)
+                    return self._resolve_or_ask_cert_plan(state, dives, days, recommend_default=True)
             return self._goto_mixed_add_activity(state)
 
         # Detectar texto libre: Cartagena
@@ -4019,6 +4032,7 @@ class DecisionTree:
         days: int | None = None,
         *,
         fallback_multiday_menu: bool = False,
+        recommend_default: bool = False,
     ) -> str:
         """Given an explicit dive count and/or day count (or neither), resolve
         straight to the matching plan when it's unambiguous, otherwise ask
@@ -4078,6 +4092,37 @@ class DecisionTree:
             state.step = Step.MIXED_ADD_CERT_MULTI_DAY
             self.set_quick_replies(state, "mixed_add_cert_multi_day")
             return MESSAGES["mixed_add_cert_multi_day"][lang]
+        # NO dive count given at all (e.g. "soy certificada, quiero unas
+        # inmersiones"): only on the FREE-TEXT entry (recommend_default=True, set by
+        # supervisor._route_detected_intent when a certified diver's first message
+        # already says they want to dive) do we RECOMMEND the most popular plan
+        # (2 dives / 1 day) directly and move on, instead of a "2 dives vs multi-day"
+        # button menu (owner decision 2026-07-20 — a certified diver who already said
+        # what they want shouldn't be sent back into a menu). The customer can still
+        # switch to a multi-day package by text ("multi-día", "quiero 5 inmersiones"),
+        # handled at the quantity step. The button-driven/guided paths (add-activity,
+        # cert-count split, location, hotel menu) keep the plan menu so button cart
+        # builders reach multi-day/4-dive variants and the split flow can still offer
+        # the Open Water course to a beginner companion on a multi-day plan. That
+        # same split flow (a beginner companion pending after the cert subgroup) is
+        # ALWAYS routed to the menu, even on recommend_default paths, so the Open
+        # Water offer survives — hence the `not mixed_pending_beginner_after_cert`.
+        if (
+            dives is None
+            and days is None
+            and recommend_default
+            and not state.mixed_pending_beginner_after_cert
+        ):
+            state.mixed_pending_qty_plan = self._service_for_location("2_dives_1_day", state)
+            intro = (
+                "Te recomiendo nuestro plan más popular: *2 inmersiones en 1 día* "
+                "en las Islas del Rosario. "
+                "(Si prefieres un *paquete multi-día* de 3 o más inmersiones, dímelo.)\n\n"
+                if lang == "es" else
+                "I recommend our most popular plan: *2 dives in 1 day* in the Rosario "
+                "Islands. (If you'd rather a *multi-day package* of 3+ dives, just tell me.)\n\n"
+            )
+            return intro + self._goto_mixed_cert_last_dive_or_qty(state)
         state.step = Step.MIXED_ADD_CERT_PLAN
         self.set_quick_replies(state, "mixed_add_cert_plan")
         return MESSAGES["mixed_add_cert_plan"][lang]
@@ -4270,6 +4315,32 @@ class DecisionTree:
             return None
         return (dive, other_count)
 
+    def _detect_multiday_switch(self, message: str):
+        """After we recommend the 2-dive plan and land on the quantity step, the
+        customer may switch to a multi-day package by TEXT. Returns:
+          - (dives, days) to resolve a specific multi-day plan ("quiero 5 inmersiones"),
+          - "menu" to show the multi-day menu ("prefiero multi-día", "un paquete"),
+          - None if this isn't a multi-day switch.
+        Requires an explicit unit/multi-day signal so a bare quantity like "5"
+        (which means 5 PEOPLE at this step) is never mistaken for 5 dives."""
+        msg = message.strip().lower()
+        has_number_unit = re.search(
+            r"\d+\s*(?:inmersi\w+|buceos?|dives?|d[ií]as?|days?)", msg
+        )
+        signal_word = re.search(
+            r"\bmulti[\s-]?d[ií]a|\bvarios\s+d[ií]as|\bpaquete|\bmulti[\s-]?day|\bpackage", msg
+        )
+        if not (has_number_unit or signal_word):
+            return None
+        from src.agents.intent_detector import detect_cert_day_count, detect_cert_dive_count
+        dives = detect_cert_dive_count(msg)
+        days = detect_cert_day_count(msg) if dives is None else None
+        if (dives and dives >= 3) or (days and days >= 1):
+            return (dives, days)
+        if signal_word:
+            return "menu"
+        return None
+
     def _start_cert_companion_split(
         self,
         state: ConversationState,
@@ -4332,6 +4403,18 @@ class DecisionTree:
             state.mixed_pending_modify_idx = None
             self._clear_mixed_pending_add(state)
             return self._goto_mixed_cart_review(state) if state.mixed_cart else self._goto_mixed_entry(state)
+
+        # Certified diver switching to a MULTI-DAY package by text after we
+        # recommended the 2-dive plan ("prefiero multi-día", "quiero 5 inmersiones").
+        if (
+            (state.mixed_pending_qty_type or "cert") == "cert"
+            and state.mixed_pending_modify_idx is None
+        ):
+            switch = self._detect_multiday_switch(message)
+            if switch == "menu":
+                return self._resolve_or_ask_cert_plan(state, None, None, fallback_multiday_menu=True)
+            if isinstance(switch, tuple):
+                return self._resolve_or_ask_cert_plan(state, switch[0], switch[1])
 
         # Certified speaker whose qty answer reveals a non-certified companion.
         # Two flavors, both must NOT drop the non-diving people:
@@ -6468,7 +6551,7 @@ class DecisionTree:
             # Certificado → resolver el plan (o preguntar si es ambiguo/desconocido)
             if state.mixed_pending_qty_type == "cert":
                 dives, days = self._pop_detected_cert_counts(state)
-                return self._resolve_or_ask_cert_plan(state, dives, days)
+                return self._resolve_or_ask_cert_plan(state, dives, days, recommend_default=True)
             # Principiante, snorkel, etc. → ir a cantidad
             else:
                 state.step = Step.MIXED_ADD_QTY

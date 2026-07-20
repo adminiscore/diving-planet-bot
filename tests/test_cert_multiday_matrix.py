@@ -205,24 +205,27 @@ async def test_deferred_location_then_island_4dives_shows_narrow_menu():
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("dives", [1, 6, 8, 10])
-async def test_unsupported_dive_count_falls_back_to_question_cartagena(dives):
+async def test_unsupported_dive_count_recommends_two_dives_cartagena(dives):
+    """An unsupported dive count (1/6/8/10 aren't offered) no longer dead-ends
+    in a menu — it recommends the 2-dive plan and moves to quantity, offering
+    multi-day by text (owner decision 2026-07-20)."""
     state = ConversationState(conversation_id=f"unsupported-ctg-{dives}")
     resp = await route_message(state, _dive_message(dives, ", desde cartagena"))
-    assert state.step == Step.MIXED_ADD_CERT_PLAN, (dives, state.step, resp)
-    assert state.mixed_pending_qty_plan is None
+    assert state.step == Step.MIXED_ADD_QTY, (dives, state.step, resp)
+    assert "2 inmersiones" in resp and "multi-día" in resp
 
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("dives", [1, 6, 8, 10])
-async def test_unsupported_dive_count_falls_back_to_location_question(dives):
-    """Same, but with location unknown too — must ask location, never crash
-    or silently pick a plan we don't offer."""
+async def test_unsupported_dive_count_asks_location_then_recommends(dives):
+    """Same, but with location unknown too — must ask location first, never
+    crash, then recommend the 2-dive plan."""
     state = ConversationState(conversation_id=f"unsupported-deferred-{dives}")
     resp = await route_message(state, _dive_message(dives))
     assert state.step == Step.MIXED_LOCATION, (dives, resp)
     resp = await route_message(state, "cartagena")
-    assert state.step == Step.MIXED_ADD_CERT_PLAN, (dives, state.step, resp)
-    assert state.mixed_pending_qty_plan is None
+    assert state.step == Step.MIXED_ADD_QTY, (dives, state.step, resp)
+    assert "2 inmersiones" in resp
 
 
 # ---------------------------------------------------------------------------
@@ -561,11 +564,12 @@ async def test_word_form_ambiguous_day_count_shows_narrow_menu_english():
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("days", [0, 5, 6])
-async def test_unsupported_day_count_falls_back_to_question(days):
+async def test_unsupported_day_count_recommends_two_dives(days):
+    """An unsupported day count now recommends the 2-dive plan instead of a menu."""
     state = ConversationState(conversation_id=f"unsupported-days-{days}")
     resp = await route_message(state, _day_message(days, ", desde cartagena"))
-    assert state.step == Step.MIXED_ADD_CERT_PLAN, (days, state.step, resp)
-    assert state.mixed_pending_qty_plan is None
+    assert state.step == Step.MIXED_ADD_QTY, (days, state.step, resp)
+    assert "2 inmersiones" in resp
     assert state.mixed_pending_cert_narrow_kind is None
 
 
@@ -582,7 +586,6 @@ async def test_1day_narrow_menu_quick_replies_content():
     assert [(r["title"], r["value"]) for r in state.quick_replies] == [
         ("🤿 2 inmersiones", "1"),
         ("🌙 3 inmersiones (con nocturna)", "2"),
-        ("🔙 Volver", "back"),
     ]
 
 
@@ -593,7 +596,6 @@ async def test_2day_narrow_menu_quick_replies_content():
     assert [(r["title"], r["value"]) for r in state.quick_replies] == [
         ("🤿 4 inmersiones", "1"),
         ("🤿 5 inmersiones", "2"),
-        ("🔙 Volver", "back"),
     ]
 
 
@@ -605,7 +607,6 @@ async def test_4dive_island_narrow_menu_quick_replies_content():
     assert [(r["title"], r["value"]) for r in state.quick_replies] == [
         ("🌞 4 diurnas", "1"),
         ("🌙 3 diurnas + 1 nocturna", "2"),
-        ("🔙 Volver", "back"),
     ]
 
 
@@ -648,7 +649,6 @@ async def test_english_ambiguous_day_count_shows_narrow_menu_in_english():
     assert [(r["title"], r["value"]) for r in state.quick_replies] == [
         ("🤿 2 dives", "1"),
         ("🌙 3 dives (with a night dive)", "2"),
-        ("🔙 Back", "back"),
     ]
 
 
@@ -1266,9 +1266,14 @@ async def test_generic_island_from_first_message_ambiguous_count_still_asks_isla
     await route_message(state, "Isla Rosario")
     resp = await route_message(state, "1")
     assert state.hotel is not None, resp
-    assert state.step == Step.MIXED_ADD_CERT_PLAN, resp
+    # Core of the regression: island/hotel is asked BEFORE resolving the plan.
+    # Once the hotel is known, a pure-certified free-text request (no beginner
+    # companion) recommends the 2-dive plan (owner decision 2026-07-20) instead
+    # of dead-ending in the plan menu — the unresolved typo'd count is not guessed.
+    assert state.step == Step.MIXED_CERT_LAST_DIVE, resp
     assert state.mixed_pending_cert_total_qty == 5
-    assert state.mixed_pending_qty_plan is None
+    assert state.mixed_pending_qty_plan == "2_dives_1_day_already_on_island"
+    assert "2 inmersiones" in resp
 
 
 @pytest.mark.asyncio

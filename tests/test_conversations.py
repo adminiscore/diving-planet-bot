@@ -458,11 +458,15 @@ async def test_back_button_value_from_courses_specialties_menu_returns_to_course
 
 
 @pytest.mark.asyncio
-async def test_back_button_present_in_reservar_quick_replies():
+async def test_back_button_removed_from_reserva_cart_menu():
+    """Owner decision 2026-07-20: the "Volver" button is removed from the whole
+    booking-cart flow (cart menus), so changes are handled by natural language
+    instead of a back button that frequently mis-fired. The reservation entry is
+    a cart menu, so it no longer carries a Volver/Back button."""
     state = await reach_main_menu("es")
-    await route_message(state, "1")  # RESERVA_MENU
+    await route_message(state, "1")  # MIXED_ENTRY (booking cart)
     titles = [qr["title"] for qr in state.quick_replies]
-    assert any("Volver" in t or "Back" in t for t in titles)
+    assert not any("Volver" in t or "Back" in t for t in titles)
 
 
 @pytest.mark.asyncio
@@ -1896,17 +1900,17 @@ async def test_mixed_add_cert_goes_to_cert_plan():
 
 
 @pytest.mark.asyncio
-async def test_mixed_add_activity_uses_back_label_in_spanish():
+async def test_mixed_add_activity_has_no_back_button_spanish():
+    """Owner decision 2026-07-20: no Volver button anywhere in the booking cart.
+    mixed_add_activity is a cart menu, so it carries no 'back' quick reply."""
     state = await reach_mixed_add_activity()
-    assert state.quick_replies[-1]["title"] == "🔙 Volver"
-    assert state.quick_replies[-1]["value"] == "back"
+    assert not any(qr["value"] == "back" for qr in state.quick_replies)
 
 
 @pytest.mark.asyncio
-async def test_mixed_add_activity_uses_back_label_in_english():
+async def test_mixed_add_activity_has_no_back_button_english():
     state = await reach_mixed_add_activity("en")
-    assert state.quick_replies[-1]["title"] == "🔙 Back"
-    assert state.quick_replies[-1]["value"] == "back"
+    assert not any(qr["value"] == "back" for qr in state.quick_replies)
 
 
 @pytest.mark.asyncio
@@ -4181,8 +4185,9 @@ async def test_question_at_add_qty_step_reaches_rag_not_stuck():
     # for it (MIXED_ADD_QTY) instead of auto-resolving from "somos N".
     state = ConversationState(conversation_id="qty-question-test")
     state.language = "es"
+    # Pure-certified free-text entry recommends the 2-dive plan and lands directly
+    # on the quantity question (owner decision 2026-07-20), no plan menu in between.
     await route_message(state, "Hola, quiero bucear, soy certificado, salgo desde Cartagena")
-    await route_message(state, "2 inmersiones / 1 dia")
     assert state.step == Step.MIXED_ADD_QTY
     with patch("src.agents.supervisor.rag_answer", new_callable=AsyncMock, return_value="CANNED_RAG_ANSWER"):
         resp = await route_message(state, "¿Incluye el almuerzo?")
@@ -4196,7 +4201,6 @@ async def test_number_still_resolves_at_add_qty_step():
     state = ConversationState(conversation_id="qty-number-test")
     state.language = "es"
     await route_message(state, "Hola, quiero bucear, soy certificado, salgo desde Cartagena")
-    await route_message(state, "2 inmersiones / 1 dia")
     assert state.step == Step.MIXED_ADD_QTY
     await route_message(state, "2")
     assert state.step != Step.MIXED_ADD_QTY

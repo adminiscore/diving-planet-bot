@@ -4093,12 +4093,12 @@ def _build_confirmation_message(intent, state: ConversationState) -> str | None:
     if intent.activity == "certified_diving" and intent.is_certified:
         if intent.group_size and intent.group_size > 1:
             if lang == "es":
-                return f"¡Genial! Veo que son {intent.group_size} buzos certificados. Para ofrecerles la mejor experiencia, necesito saber:"
-            return f"Great! I see you are {intent.group_size} certified divers. To offer you the best experience, I need to know:"
+                return f"¡Genial! Veo que son {intent.group_size} buzos certificados. 🤿"
+            return f"Great! I see you are {intent.group_size} certified divers. 🤿"
         else:
             if lang == "es":
-                return "¡Genial! Veo que eres buzo certificado. Para ofrecerte la mejor experiencia, necesito saber:"
-            return "Great! I see you are a certified diver. To offer you the best experience, I need to know:"
+                return "¡Genial! Veo que eres buzo certificado. 🤿"
+            return "Great! I see you are a certified diver. 🤿"
 
     # Minicurso
     if intent.activity == "minicourse":
@@ -4292,7 +4292,8 @@ def _route_detected_intent(intent, state: ConversationState, message: str = "") 
                 next_msg = decision_tree._goto_island_hotel_menu_or_unknown(state)
             else:
                 next_msg = decision_tree._resolve_or_ask_cert_plan(
-                    state, getattr(intent, "cert_dives", None), getattr(intent, "cert_days", None)
+                    state, getattr(intent, "cert_dives", None), getattr(intent, "cert_days", None),
+                    recommend_default=True,
                 )
         else:
             # Sólo snorkel/minicurso → entrar al carrito normalmente
@@ -4346,7 +4347,8 @@ def _route_detected_intent(intent, state: ConversationState, message: str = "") 
             next_msg = decision_tree._goto_island_hotel_menu_or_unknown(state)
         else:
             next_msg = decision_tree._resolve_or_ask_cert_plan(
-                state, getattr(intent, "cert_dives", None), getattr(intent, "cert_days", None)
+                state, getattr(intent, "cert_dives", None), getattr(intent, "cert_days", None),
+                recommend_default=True,
             )
         logger.info(f"[INTENT] Going to cart with location -> step={state.step.value}")
         return (confirmation + "\n\n" + next_msg) if confirmation else next_msg
