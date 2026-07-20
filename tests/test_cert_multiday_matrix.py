@@ -58,12 +58,18 @@ ISLAND_SERVICE_UNAMBIGUOUS = {
 UNAMBIGUOUS_DIVE_COUNTS = [d for d in VALID_DIVE_COUNTS if d != 4]
 
 
+# Phrased in the PLURAL ("somos certificados") on purpose: these tests exercise
+# dive/day-COUNT resolution, not group size. A singular "soy certificado" would
+# now (v0.20.28) let the detector infer group_size=1 and skip the quantity step,
+# which is correct behaviour but orthogonal to what this matrix checks — the plural
+# keeps the group unknown so every parametrised count lands uniformly on the
+# quantity question. Group-size inference is covered in test_intent_detector.py.
 def _dive_message(dives: int, location_suffix: str = "") -> str:
-    return f"quiero bucear, soy certificado, {dives} inmersiones{location_suffix}"
+    return f"queremos bucear, somos certificados, {dives} inmersiones{location_suffix}"
 
 
 def _day_message(days: int, location_suffix: str = "") -> str:
-    return f"quiero bucear, soy certificado, un paquete de {days} dias{location_suffix}"
+    return f"queremos bucear, somos certificados, un paquete de {days} dias{location_suffix}"
 
 
 async def _finish_island_hotel_step_if_asked(state: ConversationState) -> None:

@@ -4187,7 +4187,7 @@ async def test_question_at_add_qty_step_reaches_rag_not_stuck():
     state.language = "es"
     # Pure-certified free-text entry recommends the 2-dive plan and lands directly
     # on the quantity question (owner decision 2026-07-20), no plan menu in between.
-    await route_message(state, "Hola, quiero bucear, soy certificado, salgo desde Cartagena")
+    await route_message(state, "Hola, queremos bucear, somos certificados, salimos desde Cartagena")
     assert state.step == Step.MIXED_ADD_QTY
     with patch("src.agents.supervisor.rag_answer", new_callable=AsyncMock, return_value="CANNED_RAG_ANSWER"):
         resp = await route_message(state, "¿Incluye el almuerzo?")
@@ -4200,7 +4200,7 @@ async def test_number_still_resolves_at_add_qty_step():
     """The fix must not break the normal quantity-answer path."""
     state = ConversationState(conversation_id="qty-number-test")
     state.language = "es"
-    await route_message(state, "Hola, quiero bucear, soy certificado, salgo desde Cartagena")
+    await route_message(state, "Hola, queremos bucear, somos certificados, salimos desde Cartagena")
     assert state.step == Step.MIXED_ADD_QTY
     await route_message(state, "2")
     assert state.step != Step.MIXED_ADD_QTY

@@ -355,3 +355,38 @@ class TestCertificationOnlyNotCertifiedCount:
         intent = detector.detect("hola estoy certficado", state)
         assert intent.activity == "certified_diving"
         assert intent.is_certified is True
+
+
+class TestSingularSelfInfersOnePerson:
+    """A singular first-person self-identification as a diver means 1 person, so
+    the flow shouldn't ask "¿cuántas personas?" (reported miss: "hola soy Sofia,
+    ya soy certificada, quiero unas inmersiones" was asking for a headcount)."""
+
+    @pytest.mark.parametrize(
+        "message",
+        [
+            "hola soy Sofia, ya soy certificada, quiero hacer unas inmersiones en Cartagena",
+            "soy certificado, quiero bucear en cartagena",
+            "quiero bucear, soy certificada",
+            "soy buzo open water",
+            "estoy certificado y quiero bucear",
+            "i am a certified diver, i want to dive in cartagena",
+        ],
+    )
+    def test_singular_certified_self_infers_one(self, detector, state, message):
+        assert detector.detect(message, state).group_size == 1
+
+    @pytest.mark.parametrize(
+        "message",
+        [
+            "soy certificado y quiero bucear con mi novia",   # companion
+            "soy certificado, quiero bucear con 3 amigos",    # explicit other count
+            "somos certificados, queremos bucear",            # plural
+            "quiero reservar para mi familia, soy certificado",  # collective
+            "soy certificado pero mi esposa no bucea",        # companion (spouse)
+        ],
+    )
+    def test_more_than_one_hint_stays_conservative(self, detector, state, message):
+        # Any "more than one" signal must NOT be collapsed to 1 (a wrong 1 would
+        # undercount the booking); the flow asks instead.
+        assert detector.detect(message, state).group_size != 1

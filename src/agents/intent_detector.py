@@ -512,14 +512,24 @@ class IntentDetector:
                         intent.detected_fields.append("group_size")
                         break
 
-        # "para mí" / "solo yo" / "for me" / "just me" → 1 person, but ONLY when the
-        # message names no companion and no other headcount number. A wrong 1 would
-        # undercount the booking, so we stay conservative and let the flow ask when
-        # anything hints at more than one person.
+        # Singular first-person self-reference → 1 person, but ONLY when the message
+        # names no companion, no other headcount number, and no plural/collective
+        # marker. A wrong 1 would undercount the booking, so every "more than one"
+        # hint keeps us conservative and lets the flow ask.
         if intent.group_size is None:
             solo_self = re.search(
                 r'\b(?:para\s+m[ií]|s[oó]lo\s+yo|solo\s+yo|solamente\s+yo|just\s+me|only\s+me|for\s+me)\b',
                 message,
+            )
+            # A SINGULAR declaration of being a diver ("soy Sofia, ya soy certificada",
+            # "soy buzo", "estoy certificado", "i am a certified diver") is a strong
+            # 1-person signal — it was the reported miss: the bot asked "¿cuántas
+            # personas?" to someone who clearly spoke for herself alone.
+            singular_diver = re.search(
+                r'\b(?:soy|estoy|i\s*am|i\'m)\s+(?:un[ao]?\s+|a\s+|buz[oa]s?\s+)?'
+                r'(?:buz[oa]|certificad[oa]|certified|open\s*water|advanced|rescue|'
+                r'divemaster|nitrox|diver)\b',
+                message, re.IGNORECASE,
             )
             companion = re.search(
                 r'\b(?:y\s+mi\b|and\s+my\b|con\s+mi\b|junto\s+a|'
@@ -532,7 +542,19 @@ class IntentDetector:
                 r'two|three|four|five|six|seven|eight|nine)\b',
                 message,
             )
-            if solo_self and not companion and not other_num:
+            # Any plural first-person or collective noun means "not just me".
+            plural_self = re.search(
+                r'\b(?:somos|estamos|queremos|venimos|vamos|seremos|iremos|'
+                r'nuestr[oa]s?|nos\s+gustar[ií]a|we\s+are|we\'re|we\s+want)\b',
+                message, re.IGNORECASE,
+            )
+            collective = re.search(
+                r'\b(?:familia|grupo|pareja|gente|personas?|amig[oa]s|compa[nñ]er\w*|'
+                r'todos|equipo|family|group|friends|couple|people)\b',
+                message, re.IGNORECASE,
+            )
+            if (solo_self or singular_diver) and not companion and not other_num \
+                    and not plural_self and not collective:
                 intent.group_size = 1
                 intent.detected_fields.append("group_size")
 
