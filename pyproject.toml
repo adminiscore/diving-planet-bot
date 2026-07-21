@@ -66,6 +66,9 @@ ignore = ["E501", "UP042"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 asyncio_mode = "auto"
+markers = [
+    "live: test exercises the real LLM/RAG pipeline (slow, non-deterministic); opts out of the offline RAG stub",
+]
 
 [tool.hatch.build.targets.wheel]
 packages = ["src"]
