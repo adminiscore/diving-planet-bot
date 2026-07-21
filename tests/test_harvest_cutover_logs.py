@@ -65,6 +65,23 @@ def test_summary_counts_by_field_and_domain():
     assert s["by_kind"] == {"cutover": 4, "shadow": 1}
 
 
+def test_summary_counts_logistics_domain_not_other():
+    """Real bug found live (2026-07-21): DOMAIN_FIELDS was missing the Fase 8
+    logistics domain (is_colombian/duration/last_dive_over_2_years), so those
+    fields fell into the generic "other" bucket in --summary instead of
+    "logistics" — found by running harvested candidates from a real batch of
+    live-PRE test conversations through this script."""
+    lines = [
+        "2026-07-21 11:00:00 [info] [EXTRACT][CUTOVER] applied={'last_dive_over_2_years': True} msg='havent dived in 4 years'",
+        "2026-07-21 11:01:00 [info] [EXTRACT][CUTOVER] applied={'is_colombian': True} msg='soy paisa'",
+        "2026-07-21 11:02:00 [info] [EXTRACT][CUTOVER] applied={'duration': 'multi_day'} msg='toda la semana'",
+    ]
+    records = parse_lines(lines)
+    s = summarize(records)
+    assert s["by_domain"].get("logistics") == 3
+    assert "other" not in s["by_domain"]
+
+
 def test_candidates_are_deduped_and_flagged_unvalidated():
     records = parse_lines(_CUTOVER_LINES)
     cands = to_candidates(records)

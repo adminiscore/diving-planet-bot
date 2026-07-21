@@ -2888,6 +2888,59 @@ async def test_booking_statement_with_unknown_certification_asks_certification(a
 
 
 @pytest.mark.asyncio
+async def test_mixed_group_split_statement_enters_guided_flow_not_rag(agent_decides):
+    """Real bug (live PRE, 2026-07-21): "somos 5 amigos, 3 certificados y 2 sin
+    certificar, queremos un paquete de varios dias" has a full group split
+    (regex resolves group_allocation={certified_diving: 3, minicourse: 2}) but
+    the orchestrator classified it as answer_question live, and NEITHER
+    _should_skip_to_certified_flow (needs is_certified is True) NOR
+    _should_ask_certification (needs is_certified is None) covers this case
+    (aggregate is_certified is False here) — so _should_enter_mixed_flow, which
+    already exists and is checked first inside _route_detected_intent, was
+    never reached at all. The message fell entirely to RAG, which hallucinated
+    a wrong policy ("the non-certified friends must do the Open Water course
+    first") instead of the correct, already-implemented deterministic offer
+    (minicourse always available; Open Water ALSO offered when the cert
+    subgroup stays multiple days — see decision_tree._maybe_start_pending_beginner)."""
+    from src.agents import orchestrator
+    agent_decides(orchestrator.TOOL_ANSWER_QUESTION)
+    state = make_state()
+    resp = await route_message(
+        state,
+        "somos 5 amigos, 3 certificados y 2 sin certificar, queremos un paquete de varios dias",
+    )
+    assert state.step != Step.MAIN_MENU, "must have entered the guided mixed-cart flow"
+    assert "open water" not in resp.lower(), "must not fall to RAG inventing a policy"
+
+
+def test_non_cert_companion_single_day_offers_minicourse_not_open_water():
+    """Business rule confirmed by the owner (2026-07-21): a non-certified
+    companion always gets the minicourse offer; Open Water is only ALSO
+    offered when the certified subgroup's plan requires staying multiple days
+    on the islands (they'd already be there). On a single-day plan, offering
+    Open Water doesn't make sense (no extra days to actually do the course)."""
+    from src.flows.decision_tree import DecisionTree
+    state = make_state()
+    state.mixed_pending_qty_plan = "2_dives_1_day"
+    state.mixed_pending_beginner_after_cert = 1
+    resp = DecisionTree()._maybe_start_pending_beginner(state)
+    assert resp is not None
+    assert "minicurso" in resp.lower()
+    assert "open water" not in resp.lower()
+
+
+def test_non_cert_companion_multi_day_offers_minicourse_and_open_water():
+    from src.flows.decision_tree import DecisionTree
+    state = make_state()
+    state.mixed_pending_qty_plan = "5_dives_2_days"
+    state.mixed_pending_beginner_after_cert = 1
+    resp = DecisionTree()._maybe_start_pending_beginner(state)
+    assert resp is not None
+    assert "minicurso" in resp.lower()
+    assert "open water" in resp.lower()
+
+
+@pytest.mark.asyncio
 async def test_pure_companion_mention_routes_to_upsell(agent_decides):
     """#8: a free-text mention of a companion who only accompanies proactively
     offers them the mini-course/snorkel upsell (after asking the origin)."""

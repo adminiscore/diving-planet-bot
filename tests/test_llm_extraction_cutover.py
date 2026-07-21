@@ -425,3 +425,45 @@ async def test_logistics_cutover_result_propagates_to_state():
 
     assert state.is_colombian is True
     assert state.detected_duration == "multi_day"
+
+
+@pytest.mark.asyncio
+async def test_cutover_log_line_does_not_truncate_the_message(caplog):
+    """Real bug found live (2026-07-21): the [EXTRACT][CUTOVER] log line cut the
+    message to 60 chars, so candidates harvested by scripts/harvest_cutover_logs.py
+    lost the end of the customer's actual message — the exact opposite of what
+    Fase 6 (bucle de datos reales) needs. Full messages must survive in the log."""
+    long_message = (
+        "hey never been underwater before, kinda nervous, wanna give it a try, "
+        "just me, is this a good idea for someone with no experience at all"
+    )
+    assert len(long_message) > 60
+    intent = DetectedIntent()
+    state = ConversationState(conversation_id="cutover-log-truncation-test")
+
+    with patch.object(supervisor.settings, "llm_extraction_cutover_certification", True), \
+         patch.object(supervisor, "fill_gaps", new=AsyncMock(return_value={
+             "is_certified": False, "activity": "minicourse",
+         })), \
+         caplog.at_level("INFO"):
+        await supervisor._maybe_apply_llm_extraction_cutover(long_message, intent, state)
+
+    assert long_message in caplog.text
+
+
+@pytest.mark.asyncio
+async def test_shadow_log_line_does_not_truncate_the_message(caplog):
+    long_message = (
+        "hey never been underwater before, kinda nervous, wanna give it a try, "
+        "just me, is this a good idea for someone with no experience at all"
+    )
+    assert len(long_message) > 60
+    intent = DetectedIntent()
+    state = ConversationState(conversation_id="shadow-log-truncation-test")
+
+    with patch.object(supervisor.settings, "llm_extraction_shadow_mode", True), \
+         patch.object(supervisor, "fill_gaps", new=AsyncMock(return_value={"is_certified": False})), \
+         caplog.at_level("INFO"):
+        await supervisor._maybe_log_llm_extraction_shadow(long_message, intent, state)
+
+    assert long_message in caplog.text

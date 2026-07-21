@@ -3659,6 +3659,21 @@ def _active_cutover_fields() -> set[str]:
     return active
 
 
+def _log_safe_message(message: str, limit: int = 500) -> str:
+    """Message text for [EXTRACT] log lines. Real bug found live (2026-07-21):
+    truncating to 60 chars (as this used to) silently cut off the end of real
+    customer messages, so candidates harvested by
+    scripts/harvest_cutover_logs.py for the eval-set (Fase 6, bucle de datos
+    reales) reproduced a DIFFERENT, truncated message — the opposite of what
+    that tool needs. 500 chars comfortably covers real chat messages; only
+    pathologically long ones get cut, and are marked with "…[truncated]" so
+    it's never silently ambiguous.
+    """
+    if len(message) <= limit:
+        return message
+    return message[:limit] + "…[truncated]"
+
+
 async def _maybe_apply_llm_extraction_cutover(
     message: str, regex_intent: DetectedIntent, state: ConversationState
 ) -> None:
@@ -3696,7 +3711,7 @@ async def _maybe_apply_llm_extraction_cutover(
             if field not in regex_intent.detected_fields:
                 regex_intent.detected_fields.append(field)
         if applied:
-            logger.info(f"[EXTRACT][CUTOVER] applied={applied} msg={message[:60]!r}")
+            logger.info(f"[EXTRACT][CUTOVER] applied={applied} msg={_log_safe_message(message)!r}")
     except Exception as exc:  # noqa: BLE001
         logger.warning(f"[EXTRACT][CUTOVER] failed, degrading to regex-only (ignored): {exc}")
 
@@ -3723,7 +3738,7 @@ async def _maybe_log_llm_extraction_shadow(
         # human to review later (or feed into docs/robustness/eval-set.json
         # as a new case if it looks like a real gap the regex should cover).
         logger.info(
-            f"[EXTRACT][SHADOW] msg={message[:60]!r} gaps_before={gaps_before} llm_patch={patch}"
+            f"[EXTRACT][SHADOW] msg={_log_safe_message(message)!r} gaps_before={gaps_before} llm_patch={patch}"
         )
     except Exception as exc:  # noqa: BLE001
         logger.warning(f"[EXTRACT][SHADOW] probe failed (ignored): {exc}")
@@ -3781,6 +3796,28 @@ async def _dispatch_conversation_agent(state: ConversationState, message: str) -
         if result is not None:
             return result
         # Couldn't route (e.g. no concrete activity) -> fall through to an answer.
+
+    # A full group split ("somos 5, 3 certificados y 2 sin certificar") the LLM
+    # tagged as answer_question: real bug (live PRE, 2026-07-21) — RAG then
+    # improvised a wrong policy ("the non-certified friends must do Open Water
+    # first") instead of the already-correct deterministic offer (minicourse
+    # always available, Open Water ALSO offered on a multi-day cert plan — see
+    # decision_tree._maybe_start_pending_beginner). Neither
+    # _should_skip_to_certified_flow (needs is_certified is True) nor
+    # _should_ask_certification (needs is_certified is None) covers this,
+    # since a mixed group's aggregate is_certified is False — so this needs its
+    # own fallback, checked first to match _route_detected_intent's own
+    # internal priority (mixed group before single-person certification).
+    if (
+        decision.tool not in _ENTRY_BOOKING_TOOLS
+        and not _message_looks_like_question(message)
+        and _should_enter_mixed_flow(intent, state)
+    ):
+        intent.location = state.detected_location or intent.location
+        result = _route_detected_intent(intent, state, message)
+        if result is not None:
+            logger.info("[SUPERVISOR] Mixed group split statement -> entering guided flow")
+            return result
 
     # "Soy certificado" / "somos buzos certificados" and similar bare statements:
     # the LLM often tags these as answer_question and RAG gives a vague "do you have

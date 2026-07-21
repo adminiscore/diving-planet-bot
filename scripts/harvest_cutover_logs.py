@@ -40,6 +40,7 @@ from datetime import date
 # Los dominios y sus campos, espejo de _*_CUTOVER_FIELDS en supervisor.py.
 DOMAIN_FIELDS = {
     "certification": {"is_certified", "activity"},
+    "logistics": {"is_colombian", "duration", "last_dive_over_2_years"},
     "group": {"group_size", "group_allocation", "ages"},
     "location": {"location", "island", "hotel"},
 }

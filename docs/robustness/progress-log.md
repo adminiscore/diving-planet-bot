@@ -600,3 +600,32 @@ PRE (acceso al VPS). Nada más pendiente.
 2. (Opcional) activar `llm_extraction_cutover_logistics=True` en PRE.
 3. Fase 7 (override) o el refactor de cutover-único-temprano (Parte 2 de Fase 8) cuando el
    tráfico real lo priorice.
+
+---
+
+## 2026-07-21 — Merge de Gonzalo + batería de 10 conversaciones para validar el H1/Fase 6 + 3 bugs reales encontrados y corregidos
+
+**Fase(s) tocada(s)**: merge de Fases 2-4/6/8 + T1 (trabajo de Gonzalo, `feature/pruebaGon`), más 3 fixes nuevos encontrados validando el bucle de datos.
+
+**Qué se hizo**:
+- **Merge**: `git merge --ff-only origin/feature/pruebaGon` — fast-forward limpio (nuestra rama era ancestro exacto de la suya, cero divergencia). Trae Fases 2-4, 6, 8, la revisión `review-2026-07-21.md`, y T1 (mock RAG). Suite tras el merge: **1768 passed, 0 fallos** (el mock de RAG eliminó los 8 fallos crónicos).
+- **Batería de 10 conversaciones reales (5 ES + 5 EN)** contra PRE vía SSH (con permiso explícito del usuario para usar la API key), buscando fallos y probando reservas normales, para intentar disparar el H1 (bucle de datos reales) y validar `scripts/harvest_cutover_logs.py` con tráfico generado.
+- **Hallazgo operativo importante**: las conversaciones corridas como `docker exec python3 script.py` (patrón de `live_battery_driver.py` usado toda la sesión) **NO llegan a `docker logs dp-pre-bot`** — ese log solo captura el proceso real del servidor (uvicorn), no procesos `exec` separados. Tuve que forzar `logging.basicConfig` en el script de prueba para generar líneas `[EXTRACT][CUTOVER]` reales y validar el parseo del harvest. Para que el harvest funcione con tráfico real de verdad, hace falta tráfico que pase por el servidor real (Chatwoot/webhook), no scripts sueltos.
+- **Bug real de negocio #1** (el más importante): "somos 5 amigos, 3 certificados y 2 sin certificar, queremos un paquete de varios días" caía a RAG, que inventó que los no certificados "deben hacer primero el curso Open Water" — falso. El usuario confirmó la regla correcta: minicurso SIEMPRE disponible; Open Water TAMBIÉN si el plan es de varios días (regla que YA estaba bien implementada en `decision_tree._maybe_start_pending_beginner`/`_cert_subgroup_is_multi_day`, solo que este mensaje nunca llegaba ahí). Causa raíz: `_should_enter_mixed_flow` no tenía el fallback determinista que sí tienen `_should_skip_to_certified_flow`/`_should_ask_certification` para cuando el orquestador clasifica el mensaje como `answer_question` — con `is_certified` agregado en `False` (grupo mixto: no todos certificados), ninguno de esos 2 fallbacks aplica (exigen `True` o `None`), así que el mixed flow nunca se alcanzaba. TDD: reproducido en rojo (`test_mixed_group_split_statement_enters_guided_flow_not_rag`), arreglado añadiendo el fallback que faltaba en `_dispatch_conversation_agent` (mismo patrón, mismo sitio, verificado primero por prioridad como ya hace `_route_detected_intent` internamente). 2 tests más (`test_non_cert_companion_single_day_offers_minicourse_not_open_water`/`..._multi_day_offers_minicourse_and_open_water`) fijan la regla de negocio directamente contra `_maybe_start_pending_beginner` (no tenía cobertura de test propia pese a ya estar bien implementada).
+- **Bug #2 (harvest)**: `DOMAIN_FIELDS` en `scripts/harvest_cutover_logs.py` no incluía el dominio `logistics` (Fase 8: `is_colombian`/`duration`/`last_dive_over_2_years`) — esos campos caían en el cajón `"other"` del `--summary`. TDD: `test_summary_counts_logistics_domain_not_other`, arreglado añadiendo la entrada que faltaba.
+- **Bug #3 (harvest)**: los logs `[EXTRACT][CUTOVER]`/`[EXTRACT][SHADOW]` truncaban el mensaje a 60 caracteres (`message[:60]!r}`) — los candidatos cosechados por el harvest perdían el final de mensajes reales, justo lo opuesto de lo que la Fase 6 necesita. Nuevo helper `_log_safe_message()` (límite 500, marca `…[truncated]` si aún se corta). TDD: `test_cutover_log_line_does_not_truncate_the_message`/`test_shadow_log_line_does_not_truncate_the_message` (con `caplog`).
+- Suite completa tras los 3 fixes: **1774 passed**, 15 skipped. `ruff`/`compileall` limpios en todos los archivos tocados.
+
+**Decisiones tomadas y por qué**:
+- El fallback de `_should_enter_mixed_flow` se colocó ANTES del de `_should_skip_to_certified_flow` en `_dispatch_conversation_agent`, reflejando el mismo orden de prioridad que `_route_detected_intent` ya usa internamente ("PRIMERO: verificar si es grupo mixto").
+- No se tocó `_maybe_start_pending_beginner`/`_cert_subgroup_is_multi_day` — la lógica de negocio ya era correcta, el problema era puramente de enrutamiento (el mensaje nunca llegaba a ese código).
+- El límite de truncado se subió a 500 (no se eliminó del todo) para seguir teniendo una cota ante mensajes patológicamente largos, con marcador explícito de truncado en vez de cortar en silencio.
+
+**Qué quedó a medias / bloqueadores**: el H1 (bucle de datos reales) sigue sin cerrarse del todo — el harvest ya está validado y sin bugs conocidos, pero todavía no se ha corrido contra tráfico 100% real de PRE (solo contra tráfico sintético generado a mano con logging forzado). Falta tráfico real vía Chatwoot para la validación definitiva.
+
+**Siguiente paso concreto para quien continúe**:
+1. Cuando haya tráfico real de clientes/pruebas por Chatwoot en PRE, correr
+   `ssh vps "docker logs dp-pre-bot 2>&1" | python -m scripts.harvest_cutover_logs --summary`
+   y luego sin `--summary` para generar candidatos reales — ahora sin los 2 bugs de arriba.
+2. Considerar si el hallazgo de "mensajes de prueba no llegan a docker logs" cambia cómo el equipo genera tráfico de prueba para la Fase 6 (quizás documentar en `docs/robustness/plan.md` o en el propio harvest script).
+3. Desplegar estos 3 fixes a PRE y verificar en vivo el escenario del grupo mixto (mismo mensaje que disparó el bug).
