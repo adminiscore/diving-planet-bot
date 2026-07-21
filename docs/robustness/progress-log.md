@@ -204,3 +204,67 @@ sección "Fase 1 — Dominio certificación"):
 3. Seguir ampliando el eval-set con cualquier caso nuevo que aparezca — validando
    SIEMPRE contra el pipeline real antes de fijar el "expected" (ver lección de
    proceso arriba).
+
+---
+
+## 2026-07-21 — Fase 1 implementada: cutover real del dominio certificación
+
+**Fase(s) tocada(s)**: Fase 1 (dominio certificación) — completa.
+
+**Qué se hizo**:
+- `settings.llm_extraction_cutover_certification` (`src/config.py`, default `False`).
+- `_maybe_apply_llm_extraction_cutover()` en `supervisor.py`: cuando el flag está
+  encendido y el regex dejó `is_certified`/`activity` sin resolver, llama a
+  `fill_gaps()` y aplica SOLO esos 2 campos al `intent` (cualquier otro campo del
+  patch se descarta — queda para su propia fase futura). Se engancha en
+  `_dispatch_conversation_agent` ANTES de `_apply_detected_intent(intent, state)`,
+  para que lo rellenado se propague a `state` por el camino ya existente, sin tocar
+  esa función.
+- 7 tests nuevos en `tests/test_llm_extraction_cutover.py`: flag apagado no llama al
+  LLM (con `AssertionError` forzado como prueba dura); flag encendido rellena solo
+  los 2 campos en scope aunque el patch traiga más; nunca sobreescribe lo que el
+  regex ya resolvió; no llama al LLM si lo único que falta es de otro dominio
+  (ej. `group_size`); fallo del LLM degrada a regex-only sin romper nada; el
+  resultado se propaga correctamente a `state` vía `_apply_detected_intent`.
+- Suite completa: **1738 passed** (1731 + 7 nuevos), mismos 8 fallos preexistentes.
+  `ruff`/`compileall` limpios.
+- **Verificación en vivo con LLM real** (local, `ENV_FILE=.env.dev`, flag activado a
+  mano para la prueba): mensaje `"never been underwater before, wanna give it a try,
+  solo"` — el regex no resuelve nada (`activity=None`, `is_certified=None`).
+  - **Flag apagado** (comportamiento de hoy en todos los entornos): cae a RAG
+    genérico, se queda en `main_menu`, sin `detected_activity`.
+  - **Flag encendido**: entra directo al flujo guiado de minicurso
+    (`step=mixed_location`, `detected_activity="minicourse"`,
+    `detected_is_certified=False`).
+  - Contraste real y medible, no solo teórico — la mejora que la Fase 1 debía demostrar.
+
+**Decisiones tomadas y por qué**:
+- El cutover se restringe explícitamente a `_CERTIFICATION_CUTOVER_FIELDS =
+  {"is_certified", "activity"}` — aunque `fill_gaps()` puede devolver más campos
+  (group_size, location...) si el regex también los dejó sin resolver, esos NO se
+  aplican todavía. Cada dominio se corta por separado, con su propio flag, siguiendo
+  el diseño de fases del plan — evita que activar la Fase 1 traiga de regalo un
+  cutover no probado de otro dominio.
+- El hook corre ANTES de `_apply_detected_intent`, no después — así el enriquecimiento
+  se integra por el camino normal (esa función ya sabe cómo escribir `intent.activity`/
+  `intent.is_certified` en `state`), sin necesidad de duplicar esa lógica ni tocar
+  `_apply_detected_intent` en absoluto.
+- Verificación en vivo hecha LOCALMENTE con `.env.dev` (no contra PRE) porque el flag
+  por defecto sigue en `False` en todos los entornos — no hay necesidad de tocar PRE
+  para esto; activar el flag ahí es una decisión de despliegue explícita y separada
+  (ver siguiente paso).
+
+**Qué quedó a medias / bloqueadores**: nada técnico. Lo único pendiente es una
+decisión de producto/timing: cuándo (si acaso) activar
+`llm_extraction_cutover_certification=True` en un entorno real. El código está listo,
+probado con TDD, y verificado en vivo con el LLM real.
+
+**Siguiente paso concreto para quien continúe**: dos caminos posibles, a decidir con
+el equipo (no es una decisión técnica):
+1. **Activar el flag en PRE** (o dev) y dejarlo corriendo un tiempo con tráfico real
+   antes de plantear producción — mismo patrón cauteloso ya usado para otras
+   features (`settings.history_window_size`, etc.).
+2. **Seguir con la Fase 2** (dominio grupo/cantidad/edades — `group_size`,
+   `group_allocation`, `ages`) sin esperar a activar la Fase 1 en producción, ya que
+   son dominios independientes y el flag de cada uno se activa por separado.
+Cualquiera de las dos es válida; ninguna bloquea a la otra.

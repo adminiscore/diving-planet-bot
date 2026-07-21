@@ -3623,6 +3623,47 @@ _ENTRY_BOOKING_TOOLS = {
 }
 
 
+_CERTIFICATION_CUTOVER_FIELDS = {"is_certified", "activity"}
+
+
+async def _maybe_apply_llm_extraction_cutover(
+    message: str, regex_intent: DetectedIntent, state: ConversationState
+) -> None:
+    """Fase 1 real cutover (docs/robustness/plan.md §4, dominio certificación).
+    Gated by `settings.llm_extraction_cutover_certification` (off by default
+    everywhere). When on, and the regex left `is_certified`/`activity`
+    unresolved, asks the LLM gap-filler and — unlike the Fase 0 shadow probe —
+    actually MUTATES `regex_intent` in place with whatever it found for those
+    two fields specifically (never any other field; those stay shadow-only
+    until their own domain's Fase N is cut over). Must run BEFORE
+    `_apply_detected_intent(intent, state)` so the filled values propagate to
+    conversation state normally through the existing path.
+
+    The regex is still the primary/fast path: this only fills a genuine gap,
+    never overrides a value the regex already resolved. Any error degrades
+    silently to "regex-only", exactly like today — this can never make a
+    reply worse than before Fase 1 existed.
+    """
+    if not settings.llm_extraction_cutover_certification:
+        return
+    try:
+        relevant_gaps = [
+            f for f in missing_fields(regex_intent) if f in _CERTIFICATION_CUTOVER_FIELDS
+        ]
+        if not relevant_gaps:
+            return
+        patch = await fill_gaps(message, regex_intent, history=state.history, lang=state.language)
+        applied = {k: v for k, v in patch.items() if k in _CERTIFICATION_CUTOVER_FIELDS}
+        for field, value in applied.items():
+            setattr(regex_intent, field, value)
+            if field not in regex_intent.detected_fields:
+                regex_intent.detected_fields.append(field)
+        if applied:
+            logger.info(f"[EXTRACT][CUTOVER] applied={applied} msg={message[:60]!r}")
+    except Exception as exc:  # noqa: BLE001
+        logger.warning(f"[EXTRACT][CUTOVER] failed, degrading to regex-only (ignored): {exc}")
+
+
 async def _maybe_log_llm_extraction_shadow(
     message: str, regex_intent: DetectedIntent, state: ConversationState
 ) -> None:
@@ -3668,6 +3709,9 @@ async def _dispatch_conversation_agent(state: ConversationState, message: str) -
     # Cheap regex prior: seed hard slots (group splits, certification, activity,
     # location) unconditionally so nothing is lost even if the LLM misses them.
     intent = intent_detector.detect(message, state)
+    # Fase 1 cutover (certification domain) runs BEFORE _apply_detected_intent so
+    # any gap it fills propagates to state through the normal path below.
+    await _maybe_apply_llm_extraction_cutover(message, intent, state)
     _apply_detected_intent(intent, state)
     await _maybe_log_llm_extraction_shadow(message, intent, state)
 

@@ -85,6 +85,14 @@ class Settings(BaseSettings):
     # used to gather Fase 0 agreement data. Not a per-field cutover switch (that
     # comes later, per-domain, once eval-set thresholds are met — see the plan).
     llm_extraction_shadow_mode: bool = False
+    # --- Robustness Fase 1 (docs/robustness/plan.md §4, dominio certificación) ---
+    # When True, the LLM extractor's result for `is_certified`/`activity` is
+    # actually APPLIED (not just logged) when the regex left them unresolved —
+    # the first real per-domain cutover. Eval-set agreement measured at 100%
+    # (docs/robustness/progress-log.md, 2026-07-21) before enabling this. Off
+    # by default everywhere; the regex stays the primary/fast path regardless —
+    # this only fills gaps, never overrides a regex-resolved value.
+    llm_extraction_cutover_certification: bool = False
 
     @property
     def is_dev(self) -> bool:

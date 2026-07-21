@@ -155,7 +155,7 @@ Checklist de estado — actualizar aquí Y en el bloque correspondiente de
 `progress-log.md` cuando cambie:
 
 - [✅] **Fase 0 — Fundaciones** (sin cambio de comportamiento) — completa, 100.0% de acuerdo con LLM real (tras corregir un caso mal etiquetado), ver `progress-log.md`
-- [ ] **Fase 1 — Dominio certificación** (primer vertical slice)
+- [✅] **Fase 1 — Dominio certificación** (primer vertical slice) — cutover implementado detrás de `settings.llm_extraction_cutover_certification` (default `False`), verificado en vivo con LLM real, ver `progress-log.md`
 - [ ] **Fase 2 — Dominio grupo/cantidad/edades**
 - [ ] **Fase 3 — Dominio ubicación/actividad/cambios de plan**
 - [ ] **Fase 4 — Integración con acciones de carrito (orchestrator)**
@@ -226,21 +226,39 @@ grandes.
 
 Pasos:
 
-1. Con los datos de la Fase 0 ya centrados en `is_certified`/`activity`, decidir el
-   **umbral de corte** (ej. ≥98% de acuerdo con el eval-set etiquetado a mano, cero
-   regresiones en `tests/test_intent_detector.py` y `tests/test_conversations.py`).
-2. Cambiar la regla de activación de "siempre en shadow" a "el LLM rellena
-   `is_certified`/`activity` SOLO si el regex los dejó en `None`" (según §3.3) — el
-   regex sigue siendo la fuente de verdad cuando ya resolvió algo.
-3. TDD: tests nuevos que mockeen la llamada LLM (igual que
-   `test_intent_classifier_rag_fallback_when_no_match` mockea `classify_menu_intent`) y
-   confirmen que un caso donde el regex falla (los 2 bugs de hoy, y cualquier otro que
-   salga del eval-set) ahora se resuelve vía LLM.
-4. Suite completa + `ruff`/`compileall` en verde.
-5. Desplegar a PRE, verificar en vivo con `scripts/live_battery_driver.py` (patrón ya
-   establecido esta sesión) usando el eval-set completo como batería de regresión, no
-   solo 1-2 conversaciones sueltas.
-6. `/closework`, documentar en `docs/HISTORY.md` + este plan + `progress-log.md`.
+1. ✅ **Umbral de corte cumplido**: 100.0% de acuerdo en el eval-set con LLM real
+   (Fase 0, `progress-log.md`) — por encima del ≥98% propuesto.
+2. ✅ **Cutover implementado**: `_maybe_apply_llm_extraction_cutover()` en
+   `supervisor.py`, gated por `settings.llm_extraction_cutover_certification`
+   (default `False`). Rellena SOLO `is_certified`/`activity` cuando el regex los deja
+   sin resolver — cualquier otro campo del patch LLM se descarta (queda para su
+   propia Fase N). Corre ANTES de `_apply_detected_intent(intent, state)` para que lo
+   rellenado se propague a `state` por el camino normal.
+3. ✅ **TDD**: `tests/test_llm_extraction_cutover.py` (7 tests) — flag apagado no
+   llama al LLM (verificado con `AssertionError` forzado, no solo observacional);
+   flag encendido rellena SOLO los 2 campos del dominio aunque el patch LLM traiga
+   más; nunca sobreescribe un campo ya resuelto por regex; no llama al LLM si lo
+   único que falta es de OTRO dominio; fallo del LLM degrada silenciosamente a
+   regex-only; el resultado se propaga correctamente a `state` vía
+   `_apply_detected_intent`.
+4. ✅ Suite completa (**1738 passed**, mismos 8 fallos preexistentes) + `ruff`/
+   `compileall` en verde.
+5. ✅ **Verificado en vivo con LLM real** (localmente, `ENV_FILE=.env.dev`, flag
+   activado manualmente): mensaje `"never been underwater before, wanna give it a
+   try, solo"` — el regex NO resuelve nada (`activity=None`, `is_certified=None`).
+   **Con el cutover apagado** (comportamiento de hoy): cae a una respuesta genérica
+   de RAG, se queda en `main_menu`, sin `detected_activity`. **Con el cutover
+   encendido**: entra directo al flujo guiado de minicurso
+   (`step=mixed_location`, `detected_activity=minicourse`,
+   `detected_is_certified=False`) — mejora real y medible, no solo teórica.
+6. ⬜ Pendiente (decisión de despliegue, no de código): activar
+   `llm_extraction_cutover_certification=True` en un entorno real (dev/PRE) cuando
+   el equipo decida — el código ya está listo y probado; el flag sigue en `False`
+   por defecto en todos los entornos hasta esa decisión explícita.
+
+**Fase 1 completa** (código + tests + verificación en vivo). Falta solo la decisión
+del equipo de cuándo encender el flag en un entorno real — eso es una decisión de
+producto/timing, no un bloqueador técnico.
 
 ### Fase 2 — Dominio grupo/cantidad/edades
 

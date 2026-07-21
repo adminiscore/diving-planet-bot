@@ -1,6 +1,14 @@
 History
 =======
 
+0.20.33 - (2026-07-21)
+----------------------
+* **Robustez Fase 1 (docs/robustness/plan.md): cutover real del dominio certificación**. Tras Fase 0 (100.0% de acuerdo LLM vs. eval-set), primer cutover real de la Opción 2.
+* `settings.llm_extraction_cutover_certification` (default `False`) + `_maybe_apply_llm_extraction_cutover()` en `supervisor.py`: cuando el flag está encendido y el regex deja `is_certified`/`activity` sin resolver, el LLM los rellena — SOLO esos 2 campos, nunca sobreescribe lo que el regex ya resolvió, cualquier otro campo del patch se descarta (queda para su propia fase futura).
+* Verificado en vivo con LLM real: mensaje sin ninguna palabra de buceo explícita ("never been underwater before, wanna give it a try, solo") — con el flag apagado (hoy) cae a una respuesta genérica de RAG; con el flag encendido entra directo al flujo guiado de minicurso.
+* Tests nuevos: `test_llm_extraction_cutover.py` (7). Suite: **1738 passed**, 15 skipped (mismos 8 fallos preexistentes). `ruff`/`compileall` limpios.
+* Flag apagado por defecto en todos los entornos — cero cambio de comportamiento hasta que el equipo decida activarlo. Detalle completo en `docs/robustness/progress-log.md`.
+
 0.20.32 - (2026-07-21)
 ----------------------
 * **Robustez Fase 0 (docs/robustness/plan.md): fundaciones para la extracción semántica por LLM, sin cambio de comportamiento**. Owner + Álvaro + Gonzalo decidieron empezar por la Opción 2 de `docs/robustness-strategy-options.md` — este es el primer trabajo de implementación.
