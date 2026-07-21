@@ -1,6 +1,8 @@
 # Opciones para mejorar la robustez conversacional del bot
 
-Estado: **propuesta para discutir con Álvaro y Gonzalo, no decidida**.
+Estado: **decidida (2026-07-21)** — owner + Álvaro + Gonzalo acordaron empezar por la
+**Opción 2**. Plan de implementación completo en `docs/robustness/` (empezar por
+`docs/robustness/README.md`).
 
 ## Contexto
 
