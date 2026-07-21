@@ -15,8 +15,14 @@
 - Cada caso tiene un checkbox. Márcalo cuando lo hayas probado — no hace falta que la respuesta
   sea perfecta, el objetivo aquí es generar tráfico variado, no validar el bot (para eso ya está
   `docs/test-battery-edge-cases.md`). Si ves algo claramente mal, anótalo debajo del caso.
-- Empezad una conversación nueva (o escribid "menu"/"inicio") entre bloques distintos para no
-  arrastrar contexto de un caso al siguiente.
+- **Una conversación NUEVA por cada caso de las categorías A, B, C, D y F** — cada uno prueba
+  detección "de entrada" (primer mensaje o vuelta al menú); si se mandan varios seguidos en el
+  mismo hilo, el estado de uno (grupo, ubicación...) contamina al siguiente.
+- **Categoría E es la excepción**: cada caso necesita 2 turnos en LA MISMA conversación — primero
+  una reserva normal, luego (ya a mitad de flujo) el mensaje de acompañante. No empezar en frío
+  para el segundo mensaje.
+- **Categoría G también es una sola conversación por caso**, de principio a fin (son reservas
+  completas, no mensajes sueltos).
 - Cuando haya un lote decente probado, alguien con acceso al VPS corre:
   ```
   ssh -i ~/.ssh/dp_pre_vps root@89.167.4.161 "docker logs dp-pre-bot 2>&1" | python -m scripts.harvest_cutover_logs --summary
