@@ -249,6 +249,44 @@ async def test_rag_uses_sources_when_confident(monkeypatch):
     assert response == "Respuesta basada en contexto"
 
 
+@pytest.mark.asyncio
+async def test_bare_followup_query_not_diluted_by_unrelated_history(monkeypatch):
+    """Real bug (live PRE, 2026-07-21): "y si llueve que pasa" retrieved the
+    correct weather FAQ alone (cosine 0.42, above threshold), but enriching it
+    with 2 unrelated prior turns (price, food) diluted the embedding and that
+    same FAQ dropped below threshold, losing to the food FAQs instead — the
+    customer got a generic "I don't have that" fallback for a question the KB
+    answers well. The bare query must be tried first and win if confident."""
+    calls = []
+
+    async def fake_search(query, lang="es"):
+        calls.append(query)
+        if "\n" in query:
+            # Enriched (multi-line) query: real doc gets diluted below threshold.
+            return [{"content": "FAQ de comida vegetariana", "metadata": {"source": "faqs"}, "score": 0.30}]
+        # Bare (single-line) query: the real doc is found confidently.
+        return [{"content": "Que pasa si hace mal tiempo? La seguridad es prioridad.", "metadata": {"source": "faqs"}, "score": 0.55}]
+
+    monkeypatch.setattr(rag_agent, "search_knowledge_base", fake_search)
+    monkeypatch.setattr(rag_agent.settings, "rag_min_score", 0.40)
+    monkeypatch.setattr(rag_agent, "AsyncOpenAI", DummyOpenAI)
+    monkeypatch.setattr(rag_agent, "is_grounded", grounded_ok)
+
+    history = [
+        {"role": "user", "content": "cuanto cuesta mas o menos?"},
+        {"role": "assistant", "content": "..."},
+        {"role": "user", "content": "hay comida vegetariana?"},
+        {"role": "assistant", "content": "..."},
+    ]
+    response = await rag_agent.rag_answer("y si llueve que pasa", lang="es", history=history)
+
+    assert response == "Respuesta basada en contexto"
+    # Only ONE search call: the bare-query confidence check doubles as the
+    # real retrieval when it's already confident — no wasted second call.
+    assert len(calls) == 1
+    assert "\n" not in calls[0]
+
+
 def test_is_confident_vector_branch_uses_cosine(monkeypatch):
     monkeypatch.setattr(rag_agent.settings, "rag_min_score", 0.40)
     monkeypatch.setattr(rag_agent.settings, "rag_min_bm25_rank", 0.05)

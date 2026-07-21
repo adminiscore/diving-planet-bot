@@ -500,6 +500,60 @@ _MIXED_FLOW_STEPS = {
     Step.MIXED_ASK_BEGINNER_ACTIVITY,
 }
 
+# Steps where a certified-diving sub-flow can plausibly be "in progress" — from
+# resolving location/certification through choosing/confirming the plan, all
+# the way to the final preview. Used to gate the multi-day-switch and
+# companion-split-by-text interceptors below. Broadened from 2-3 hardcoded
+# steps (real bug, live PRE 2026-07-21): a customer who stays asking free-text
+# questions (price, gear, cancellation) before ever resolving MIXED_LOCATION/
+# MIXED_ASK_CERTIFICATION can say "actually, 3 days instead" from THERE, not
+# just from the 2-3 steps the original fix covered — gating by "are we anywhere
+# in a certified-diving sub-flow" instead of by exact step name covers it.
+_CERT_FLOW_IN_PROGRESS_STEPS = {
+    Step.MIXED_LOCATION,
+    Step.MIXED_ASK_CERTIFICATION,
+    Step.MIXED_ASK_CERT_COUNT,
+    Step.MIXED_ADD_CERT_PLAN,
+    Step.MIXED_ADD_CERT_MULTI_DAY,
+    Step.MIXED_ADD_QTY,
+    Step.MIXED_CERT_LAST_DIVE,
+    Step.MIXED_CERT_REFRESH_INTEREST,
+    Step.MIXED_CERT_REFRESH_QTY,
+    Step.MIXED_CERT_SPLIT_REVIEW,
+    Step.MIXED_ADD_PREVIEW,
+}
+# Companion-split-by-text is not needed at MIXED_ADD_QTY: that step's own
+# handler (_handle_mixed_add_qty) already calls
+# _detect_cert_qty_activity_split/_reveals_non_certified_companion itself.
+# MIXED_ASK_CERTIFICATION/MIXED_ASK_CERT_COUNT are excluded too (real bug found
+# via test 2026-07-21): the whole point of those steps is that we don't yet
+# know if the SPEAKER is certified, so "también snorkel" there must not be
+# read as "a certified diver revealing a non-cert companion" — it silently
+# resolved certification as "yes" and skipped the still-pending question.
+_CERT_COMPANION_SPLIT_STEPS = _CERT_FLOW_IN_PROGRESS_STEPS - {
+    Step.MIXED_ADD_QTY,
+    Step.MIXED_ASK_CERTIFICATION,
+    Step.MIXED_ASK_CERT_COUNT,
+}
+
+
+def _is_certified_diving_booking_in_progress(state: ConversationState) -> bool:
+    """True when it's safe to assume the CURRENT sub-flow is certified diving.
+
+    MIXED_LOCATION/MIXED_ASK_CERTIFICATION/MIXED_ASK_CERT_COUNT are shared by
+    every activity (minicourse, snorkel, course...), not just certified diving
+    — so at those early steps `mixed_pending_qty_type` isn't set yet, and
+    defaulting permissively (like the later, activity-specific steps already
+    do) would misfire the multi-day-switch/companion-split interceptors for a
+    customer who's actually booking something else entirely. Once qty_type IS
+    set, trust it as before; before that, require the explicit
+    certified_diving activity signal instead of assuming.
+    """
+    qty_type = state.mixed_pending_qty_type
+    if qty_type is not None:
+        return qty_type == "cert"
+    return state.detected_activity == "certified_diving"
+
 # Keywords that send the user all the way back to the main menu.
 MENU_KEYWORDS = {
     "menu", "menú", "inicio", "start", "opciones", "options",
@@ -4998,9 +5052,15 @@ async def _route_message_inner(state: ConversationState, message: str) -> str:
         # the 2-dive plan and the summary showed 2 dives. Runs before the info-question
         # and recomposition checks so the plan actually switches.
         if (
-            state.step in (Step.MIXED_ADD_QTY, Step.MIXED_CERT_LAST_DIVE, Step.MIXED_ADD_PREVIEW)
-            and (state.mixed_pending_qty_type or "cert") == "cert"
+            state.step in _CERT_FLOW_IN_PROGRESS_STEPS
+            and _is_certified_diving_booking_in_progress(state)
             and getattr(state, "mixed_pending_modify_idx", None) is None
+            # Broadening the step set (2026-07-21) surfaced a real collision:
+            # "que incluye el paquete de buceo" contains "paquete" (the switch
+            # detector's signal word) but is clearly an INFO question, not a
+            # request to change plans — must defer to RAG like any other info
+            # question, not get hijacked into "here's the multi-day menu".
+            and not _looks_like_info_question(message)
         ):
             switch = decision_tree._detect_multiday_switch(message)
             if switch is not None:
@@ -5021,9 +5081,10 @@ async def _route_message_inner(state: ConversationState, message: str) -> str:
         # the group-recomposition path below, which only bumped the headcount ("¡Ahora
         # sois 2!") and silently dropped the snorkel person from the booking.
         if (
-            state.step in (Step.MIXED_CERT_LAST_DIVE, Step.MIXED_ADD_PREVIEW)
-            and (state.mixed_pending_qty_type or "cert") == "cert"
+            state.step in _CERT_COMPANION_SPLIT_STEPS
+            and _is_certified_diving_booking_in_progress(state)
             and getattr(state, "mixed_pending_modify_idx", None) is None
+            and not _looks_like_info_question(message)
         ):
             split = decision_tree._detect_cert_qty_activity_split(message)
             if split is not None or decision_tree._reveals_non_certified_companion(message):
@@ -5207,6 +5268,13 @@ async def _route_message_inner(state: ConversationState, message: str) -> str:
         # bare-affirmation-accepts-advisor branch — no button needed. The two
         # buttons are kept only in the genuine hard-escalation branches
         # (cancellation / reschedule / mixed-nationality) above.
+        # That decision is about ADVISOR buttons specifically, not this: a
+        # question answered while mid-way through the mixed cart must still
+        # offer a way back into the booking (real gap found live PRE
+        # 2026-07-21 — this was the most-used RAG fallback in that flow and the
+        # only one of ~8 rag_answer() sites silently dropping the customer).
+        if state.step in _MIXED_FLOW_STEPS:
+            state.quick_replies = _continue_booking_quick_replies(state)
         state.history.append({"role": "assistant", "content": answer})
         return answer
 

@@ -2802,6 +2802,68 @@ async def test_bare_certified_question_still_answered_not_hijacked(agent_decides
     assert state.step != Step.MIXED_LOCATION
 
 
+# --- Real bug (live PRE, 2026-07-21): pending certification question lost -----
+# when the orchestrator reads the NEXT message as a location answer instead.
+
+@pytest.mark.asyncio
+async def test_location_answer_does_not_swallow_pending_certification_question(agent_decides):
+    """"somos 4... queremos bucear" -> asks "¿estáis certificados?"
+    (MIXED_ASK_CERTIFICATION). The customer's next message ("desde cartagena")
+    doesn't answer certification at all, but the LLM orchestrator reads it as
+    TOOL_SET_LOCATION anyway. orchestrator_set_location must not silently jump
+    to the generic add-activity menu, discarding the still-unanswered
+    certification question — it must re-ask it."""
+    from src.agents import orchestrator
+    state = ConversationState(conversation_id="cert-loss-test")
+    state.language = "es"
+    await route_message(state, "somos 4 dos niños de 6 y 10 años, queremos bucear")
+    assert state.step == Step.MIXED_ASK_CERTIFICATION
+
+    agent_decides(orchestrator.TOOL_SET_LOCATION, {"origin": "cartagena"})
+    resp = await route_message(state, "desde cartagena")
+    assert state.step == Step.MIXED_ASK_CERTIFICATION, "must still be waiting for certification"
+    assert "certificad" in resp.lower()
+
+
+@pytest.mark.asyncio
+async def test_start_activity_does_not_swallow_pending_certification_question(agent_decides):
+    """Same pattern as above, via a different orchestrator tool: if the LLM
+    misreads a message as TOOL_START_BOOKING for an unrelated activity while
+    certification is still pending, it must not reset the flow into that
+    activity's own sub-flow — the certification question must be re-asked."""
+    from src.agents import orchestrator
+    state = ConversationState(conversation_id="cert-loss-start-activity-test")
+    state.language = "es"
+    await route_message(state, "somos 4 dos niños de 6 y 10 años, queremos bucear")
+    assert state.step == Step.MIXED_ASK_CERTIFICATION
+
+    agent_decides(orchestrator.TOOL_START_BOOKING, {"activity": "snorkel"})
+    with patch("src.agents.supervisor.rag_answer", new_callable=AsyncMock, return_value="CANNED_RAG_ANSWER"):
+        resp = await route_message(state, "también snorkel")
+    assert state.step == Step.MIXED_ASK_CERTIFICATION, "must still be waiting for certification"
+    assert "certificad" in resp.lower()
+
+
+@pytest.mark.asyncio
+async def test_remove_activity_does_not_swallow_pending_certification_question(agent_decides):
+    """Same pattern: a misclassified TOOL_REMOVE_ITEM must not silently jump to
+    the cart review while certification is still pending — the item is removed,
+    but the certification question is re-asked, not lost."""
+    from src.agents import orchestrator
+    from src.flows.decision_tree import DecisionTree
+    state = ConversationState(conversation_id="cert-loss-remove-activity-test")
+    state.language = "es"
+    state.mixed_cart = [{"type": "snorkel", "qty": 2, "label": "Snorkel"}]
+    state.step = Step.MIXED_ASK_CERTIFICATION
+    DecisionTree().set_quick_replies(state, "mixed_ask_certification")
+
+    agent_decides(orchestrator.TOOL_REMOVE_ITEM, {"activity": "snorkel"})
+    with patch("src.agents.supervisor.rag_answer", new_callable=AsyncMock, return_value="CANNED_RAG_ANSWER"):
+        resp = await route_message(state, "quita el snorkel")
+    assert state.step == Step.MIXED_ASK_CERTIFICATION, "must still be waiting for certification"
+    assert "certificad" in resp.lower()
+
+
 @pytest.mark.asyncio
 async def test_booking_statement_with_unknown_certification_asks_certification(agent_decides):
     """Real bug (live PRE, 2026-07-17): a clear booking statement with group
@@ -2895,6 +2957,28 @@ async def test_intent_classifier_rag_fallback_when_no_match():
                    new_callable=AsyncMock, return_value=RAG_MOCK):
             resp = await route_message(state, "qué tipos de tiburones se ven en las islas?")
     assert resp == RAG_MOCK
+
+
+@pytest.mark.asyncio
+async def test_intent_classifier_rag_fallback_keeps_continue_booking_nudge():
+    """#4 (live PRE, 2026-07-21): of ~8 rag_answer() call sites, most inside the
+    mixed-cart flow silently dropped the "Continuar con la reserva" nudge —
+    only the two explicit info-question interceptors attached it. This is the
+    most-used fallback (classify_menu_intent -> "RAG"), reached whenever a
+    mid-flow question doesn't match a narrower interceptor first; it must not
+    leave the customer without a way back into the booking they were mid-way
+    through. Deliberately no "?" in the message (that would instead hit the
+    earlier _looks_like_info_question interceptor, which already nudges) — this
+    targets the classify_menu_intent -> "RAG" fallback specifically."""
+    state = await reach_mixed_add_activity()
+    with patch("src.agents.supervisor.classify_menu_intent",
+               new_callable=AsyncMock, return_value="RAG"):
+        with patch("src.agents.supervisor.rag_answer",
+                   new_callable=AsyncMock, return_value=RAG_MOCK):
+            await route_message(state, "cuéntame que tiburones se ven por las islas")
+    values = {b["value"] for b in state.quick_replies}
+    assert "menu" in values  # "Inicio"
+    assert len(values) >= 2  # + "Continuar con la reserva" (resumes MIXED_ADD_ACTIVITY)
 
 
 # ===========================================================================
@@ -4252,3 +4336,43 @@ async def test_snorkel_companion_by_text_at_preview_is_not_dropped():
     await route_message(state, "1")    # confirm snorkel preview
     types = sorted(it["type"] for it in state.mixed_cart)
     assert types == ["cert", "snorkel"], state.mixed_cart
+
+
+# --- Real bug (live PRE, 2026-07-21, second occurrence): same gap at an -----
+# EVEN EARLIER step. A customer who keeps asking free-text questions (price,
+# gear, cancellation) before ever resolving MIXED_LOCATION stays there — the
+# multi-day-switch interceptor only covered 3 later steps, so an explicit
+# "actually, 3 days instead" said from MIXED_LOCATION fell through unhandled.
+
+@pytest.mark.asyncio
+async def test_multiday_switch_by_text_at_location_step(agent_decides):
+    from src.agents import orchestrator
+    agent_decides(orchestrator.TOOL_ANSWER_QUESTION)
+    state = ConversationState(conversation_id="mday-switch-location")
+    state.language = "en"
+    await route_message(state, "hii i wana dive im already certfied")
+    assert state.step == Step.MIXED_LOCATION
+    resp = await route_message(state, "actually i changed my mind i want to do it for 3 days instead")
+    assert state.step != Step.MIXED_LOCATION
+    assert "add" not in resp.lower() or "cart" not in resp.lower(), (
+        "must not answer with the generic 'which activity to add' non-sequitur"
+    )
+
+
+@pytest.mark.asyncio
+async def test_multiday_phrasing_at_location_step_does_not_misfire_for_other_activity(agent_decides):
+    """The broadened step set must NOT hijack a customer whose activity isn't
+    certified diving at all — MIXED_LOCATION is shared by every activity, and
+    mixed_pending_qty_type isn't set yet at that point, so the guard must fall
+    back to checking detected_activity instead of defaulting permissively."""
+    from src.agents import orchestrator
+    agent_decides(orchestrator.TOOL_ANSWER_QUESTION)
+    state = ConversationState(conversation_id="mday-no-misfire")
+    state.language = "es"
+    state.step = Step.MIXED_LOCATION
+    state.detected_activity = "snorkel"
+    state.mixed_pending_qty_type = None
+    with patch("src.agents.supervisor.rag_answer", new_callable=AsyncMock, return_value="CANNED_RAG_ANSWER"):
+        await route_message(state, "en realidad quiero quedarme varios dias")
+    # Must NOT have been silently rerouted into a cert multi-day plan resolution.
+    assert state.mixed_pending_qty_plan not in ("5_dives_2_days", "7_dives_3_days", "9_dives_4_days")

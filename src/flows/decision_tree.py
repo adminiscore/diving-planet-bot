@@ -4341,6 +4341,18 @@ class DecisionTree:
         from src.agents.intent_detector import detect_cert_day_count, detect_cert_dive_count
         dives = detect_cert_dive_count(msg)
         days = detect_cert_day_count(msg) if dives is None else None
+        # Bare "N days" without repeating "diving"/"package" ("I want to do it
+        # for 3 days instead", "quiero hacerlo por 3 días") — detect_cert_day_count
+        # requires that qualifier elsewhere in the codebase to avoid mistaking an
+        # unrelated trip-duration mention ("estaré 3 días en Cartagena") for a
+        # dive-plan switch. Safe to be looser HERE specifically: this function
+        # already gated on has_number_unit/signal_word, and the caller only
+        # invokes it once we're already confident this is a certified-diving
+        # sub-flow — so a bare day count in that context is unambiguous.
+        if dives is None and days is None and has_number_unit and re.search(r"(?:d[ií]as?|days?)\b", msg):
+            bare_days = re.search(r"\b(\d+)\s*(?:d[ií]as?|days?)\b", msg)
+            if bare_days:
+                days = int(bare_days.group(1))
         if (dives and dives >= 3) or (days and days >= 1):
             return (dives, days)
         if signal_word:
@@ -5409,6 +5421,13 @@ class DecisionTree:
     # These let the tool-calling orchestrator (src/agents/orchestrator.py) drive
     # the cart flow from free text, reusing the exact same handlers the buttons use.
 
+    # Steps where the customer was asked something and hasn't answered it yet —
+    # a message that resolves as an UNRELATED action (e.g. a location update)
+    # must not silently jump past these without re-asking. Currently only
+    # MIXED_ASK_CERTIFICATION is verified/tested; extend if a sibling case
+    # shows up (MIXED_ASK_CERT_COUNT, MIXED_ASK_BEGINNER_ACTIVITY).
+    _PENDING_QUESTION_STEPS = {Step.MIXED_ASK_CERTIFICATION}
+
     def orchestrator_set_location(self, state: ConversationState, origin: str) -> str | None:
         """Set the departure origin from free text, remap the cart, re-render.
 
@@ -5445,6 +5464,14 @@ class DecisionTree:
             )
         if state.mixed_cart:
             return ack + "\n\n" + self._goto_mixed_cart_review(state)
+        # A message answering something ELSE (here: location) while a question
+        # is still pending must not silently skip past it — found live 2026-07-21:
+        # "somos 4... queremos bucear" -> asks "¿estáis certificados?", customer
+        # replies "desde cartagena" (never answers certification), the orchestrator
+        # reads it as a location update, and this used to jump straight to the
+        # generic add-activity menu, losing the certification question for good.
+        if state.step in self._PENDING_QUESTION_STEPS:
+            return ack + "\n\n" + self._ask_certification_message(state)
         if state.step == Step.MIXED_ADD_ACTIVITY:
             return ack + "\n\n" + self._goto_mixed_add_activity(state)
         return ack + "\n\n" + self._goto_mixed_entry(state)
@@ -5472,6 +5499,11 @@ class DecisionTree:
             if lang == "es"
             else f"✅ Removed from cart: {qty} × {label}"
         )
+        # Same rule as orchestrator_set_location: a still-pending question
+        # (e.g. certification) must not be silently dropped just because the
+        # customer's message resolved to an unrelated cart action.
+        if state.step in self._PENDING_QUESTION_STEPS:
+            return ack + "\n\n" + self._ask_certification_message(state)
         return ack + "\n\n" + self._goto_mixed_cart_review(state)
 
     # Steps where the customer already answered the initial "which plan"
@@ -5501,6 +5533,12 @@ class DecisionTree:
         """
         if activity_type == state.mixed_pending_qty_type and state.step in self._MIXED_ACTIVITY_MID_FLOW_STEPS:
             return None
+        # Same rule as orchestrator_set_location/orchestrator_remove_activity:
+        # a still-pending question (certification hasn't been answered yet)
+        # must not be silently skipped by resetting into a different activity's
+        # add-flow — re-ask it instead.
+        if state.step in self._PENDING_QUESTION_STEPS:
+            return self._ask_certification_message(state)
         choice_map = {"cert": "1", "beginner": "2", "snorkel": "3", "course": "4", "companion": "5"}
         choice = choice_map.get(activity_type)
         if choice is None:

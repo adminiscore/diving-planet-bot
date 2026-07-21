@@ -393,6 +393,33 @@ def load_knowledge_base() -> list[dict]:
                     lines_es.append(f"- {desc_es}")
                 if desc_en:
                     lines_en.append(f"- {desc_en}")
+                # Precision follow-up (2026-07-21, live PRE): besides the combined
+                # overview below, index EACH policy on its OWN too. The combined
+                # chunk mixes all 5 policies into one block, diluting the semantic
+                # signal for a specific question — "can i bring my own gear"
+                # retrieved it at cosine 0.376 (below the 0.40 threshold) because
+                # it competed with the other 4 unrelated policies in that same
+                # chunk. A dedicated one-policy chunk retrieves cleanly instead.
+                if desc_es:
+                    documents.append({
+                        "content": desc_es,
+                        "metadata": {
+                            "source": "pricing",
+                            "section": f"discount_{disc_key}",
+                            "lang": "es",
+                            "topics": ["discount", "pricing"],
+                        },
+                    })
+                if desc_en:
+                    documents.append({
+                        "content": desc_en,
+                        "metadata": {
+                            "source": "pricing",
+                            "section": f"discount_{disc_key}",
+                            "lang": "en",
+                            "topics": ["discount", "pricing"],
+                        },
+                    })
             documents.append({
                 "content": "\n".join(lines_es).strip(),
                 "metadata": {"source": "pricing", "section": "discount_policies", "lang": "es", "topics": ["discount", "discount_colombian", "pricing"]},

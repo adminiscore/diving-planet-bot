@@ -1308,6 +1308,23 @@ async def rag_answer(
 
     retrieval_query = build_retrieval_query(condensed_query, history)
 
+    # If the query got enriched with prior turns (because it looked like a
+    # follow-up), try the BARE query alone first: a short, self-contained
+    # question that already retrieves confidently on its own must not be
+    # diluted by unrelated earlier turns. Found live 2026-07-21: "y si llueve
+    # que pasa" retrieved the correct weather FAQ alone at cosine 0.42 (above
+    # threshold), but enriched with the 2 previous unrelated turns (price,
+    # food) that same doc dropped to 0.377 (below threshold) and lost to the
+    # food FAQs instead — the customer got "no lo tengo a la mano" for a
+    # question the KB actually answers well.
+    bare_docs = None
+    bare_safe_query = None
+    if retrieval_query != condensed_query:
+        bare_safe_query = redact_pii(condensed_query)
+        bare_docs = await search_knowledge_base(bare_safe_query, lang=lang)
+        if any(_is_confident(d) for d in bare_docs):
+            retrieval_query = condensed_query
+
     # Lightly bias retrieval using known origin from extra_context (Cartagena vs already on the islands)
     if extra_context:
         lowered_ctx = extra_context.lower()
@@ -1330,8 +1347,13 @@ async def rag_answer(
 
     safe_query = redact_pii(retrieval_query)
 
-    # Retrieve relevant documents (parent expansion happens later, only if confident)
-    docs = await search_knowledge_base(safe_query, lang=lang)
+    # Retrieve relevant documents (parent expansion happens later, only if confident).
+    # Reuse the bare-query search above instead of repeating it when nothing
+    # (origin bias included) ended up changing the query further.
+    if bare_docs is not None and safe_query == bare_safe_query:
+        docs = bare_docs
+    else:
+        docs = await search_knowledge_base(safe_query, lang=lang)
 
     # Helper to call the LLM with unstructured context (either KB docs o solo extra_context)
     async def _answer_with_llm(
