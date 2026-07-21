@@ -1,6 +1,13 @@
 History
 =======
 
+0.20.40 - (2026-07-21)
+----------------------
+* **Soporte de inglés para el enriquecimiento de acompañante a mitad del carrito mixto** (hallazgo de la auditoría del patrón de fallback, sesión 2026-07-21): `_maybe_handle_companion_request_inside_mixed_flow` tenía un `if state.language != "es": return None` que descartaba por completo a clientes en inglés, aunque el detector que usa (`_detect_companion_intent`) ya reconoce inglés ("my partner", "my wife"...). Las plantillas de texto que construían la pregunta de certificación/actividad/reparto (`_build_mixed_from_single_cert_question`, `_build_mixed_from_single_cert_split_question`, `_build_mixed_from_single_activity_question`) estaban escritas solo en español — ahora soportan ambos idiomas, se quitó el `if` que descartaba inglés, y se traduce el "No te entendí del todo." repetido en varios puntos de `_handle_pending_companion_flow`.
+* **Bug adicional encontrado al escribir el test**: `_detect_companion_activity_intent`'s `same_activity_patterns` (detecta "mi pareja hace lo mismo" = mismo plan que el hablante) era 100% en español — "my partner will do the same" nunca se reconocía como "misma actividad". Añadidos los equivalentes en inglés.
+* Test nuevo: `test_mixed_flow_same_activity_companion_english` (espejo en inglés de `test_mixed_flow_same_activity_on_exact_certified_plan_preserves_exact_plan`, confirma la cadena completa: pregunta de certificación → última inmersión → oferta → carrito final). Suite: **1776 passed**, 15 skipped. `ruff`/`compileall` limpios.
+* **Nota**: se detectó (pero no se investigó, fuera del alcance de este fix) que la entrada de "acompañante" desde un servicio único (`_maybe_offer_mixed_from_single`, distinta función, usada en el paso `SUMMARY`) tiene un comportamiento diferente para el mismo tipo de frase en inglés — pendiente de revisión aparte si se prioriza.
+
 0.20.39 - (2026-07-21)
 ----------------------
 * **Auditoría del patrón de fallback repetido (pedida por el owner tras encontrar el mismo tipo de bug 3 veces en una sesión)**: `_intent_would_route()` enumera 4 condiciones bajo las que un mensaje debería entrar al flujo guiado (grupo mixto, buzo certificado, actividad específica —minicurso/snorkel/PADI—, certificación desconocida), pero `_dispatch_conversation_agent` solo tenía fallback explícito para 3 de ellas cuando el orquestador LLM clasifica el mensaje como `answer_question`. **Faltaba la de "actividad específica"**: "quiero hacer snorkel, somos 2" mal clasificado por el orquestador caía por completo a RAG en vez de entrar al carrito de snorkel. Confirmado con una prueba directa contra el pipeline real antes de escribir el test. Añadido el 4º fallback que faltaba, mismo orden de prioridad que `_intent_would_route`.

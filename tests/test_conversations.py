@@ -1805,6 +1805,48 @@ async def test_mixed_flow_same_activity_on_exact_certified_plan_preserves_exact_
     assert state.mixed_cart[0]["qty"] == 2
 
 
+@pytest.mark.asyncio
+async def test_mixed_flow_same_activity_companion_english():
+    """Real gap found live (2026-07-21): _maybe_handle_companion_request_inside_mixed_flow
+    used to bail out entirely for any non-Spanish language
+    (`if state.language != "es": return None`), even though the companion
+    detector it calls (_detect_companion_intent) already recognizes English
+    ("my partner", "my wife"...). English customers mentioning a companion
+    mid-flow got no enrichment at all — this is the English mirror of
+    test_mixed_flow_same_activity_on_exact_certified_plan_preserves_exact_plan,
+    confirming the whole chain now works end-to-end in English too."""
+    state = make_state("en")
+    state.step = Step.MIXED_CART_REVIEW
+    state.location = "island"
+    state.mixed_cart = [
+        {
+            "type": "cert",
+            "qty": 1,
+            "plan": "5_dives_2_days_already_on_island",
+            "label": "5 dives / 2 days",
+        }
+    ]
+
+    resp = await route_message(state, "my partner will do the same")
+
+    assert "certified diver" in resp.lower()
+    assert getattr(state, "mixed_from_single_cert_question_pending", False) is True
+
+    await route_message(state, "1")
+    resp = await route_message(state, "2")
+
+    assert getattr(state, "mixed_from_single_offer_pending", False) is True
+    assert "5-dive" in resp.lower()
+
+    await route_message(state, "1")
+
+    assert state.step == Step.MIXED_CART_REVIEW
+    assert len(state.mixed_cart) == 1
+    assert state.mixed_cart[0]["type"] == "cert"
+    assert state.mixed_cart[0]["plan"] == "5_dives_2_days_already_on_island"
+    assert state.mixed_cart[0]["qty"] == 2
+
+
 # ===========================================================================
 # Cart-style mixed-group flow tests
 # ===========================================================================
