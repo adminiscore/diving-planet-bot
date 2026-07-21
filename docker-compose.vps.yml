@@ -90,6 +90,11 @@ services:
       # by default (src/config.py). Revert by removing this line + redeploy —
       # no code rollback needed.
       LLM_EXTRACTION_CUTOVER_CERTIFICATION: "true"
+      # Robustness Fase 2 cutover (dominio grupo/cantidad/edades — group_size/
+      # group_allocation/ages). On in PRE only, same rationale as Fase 1: gather
+      # real traffic data before deciding on production. Off everywhere else by
+      # default (src/config.py). Revert = remove this line + redeploy.
+      LLM_EXTRACTION_CUTOVER_GROUP: "true"
     depends_on:
       dp-pre-postgres:
         condition: service_healthy
