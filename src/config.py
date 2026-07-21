@@ -77,6 +77,15 @@ class Settings(BaseSettings):
     # turns (not the full LLM context) — kept separate and smaller on purpose.
     history_retrieval_enrichment_window: int = 10
 
+    # --- Robustness Fase 0 (docs/robustness/plan.md) ---
+    # When True, every message also runs through the LLM gap-filler extractor
+    # (src/agents/llm_extractor.py) in SHADOW mode: the result is logged for
+    # comparison against the regex-based IntentDetector but never changes
+    # behavior. Off by default everywhere — turned on only in the environment(s)
+    # used to gather Fase 0 agreement data. Not a per-field cutover switch (that
+    # comes later, per-domain, once eval-set thresholds are met — see the plan).
+    llm_extraction_shadow_mode: bool = False
+
     @property
     def is_dev(self) -> bool:
         return self.app_env == "development"

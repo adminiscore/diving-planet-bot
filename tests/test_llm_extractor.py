@@ -1,0 +1,220 @@
+"""Tests for the Fase 0 gap-filler LLM extractor (docs/robustness/plan.md).
+
+Mirrors the fake-client pattern already used in test_orchestrator.py — no real
+OpenAI calls, full control over the tool-call response.
+"""
+
+import json
+
+import pytest
+
+from src.agents.intent_detector import DetectedIntent
+from src.agents.llm_extractor import (
+    compare_with_ground_truth,
+    fill_gaps,
+    missing_fields,
+)
+
+# ---------------------------------------------------------------------------
+# Fake OpenAI client (same shape as test_orchestrator.py's)
+# ---------------------------------------------------------------------------
+
+class _FakeFunction:
+    def __init__(self, name, arguments):
+        self.name = name
+        self.arguments = arguments
+
+
+class _FakeToolCall:
+    def __init__(self, name, arguments):
+        self.function = _FakeFunction(name, arguments)
+
+
+class _FakeMessage:
+    def __init__(self, tool_calls=None, content=None):
+        self.tool_calls = tool_calls
+        self.content = content
+
+
+class _FakeChoice:
+    def __init__(self, message):
+        self.message = message
+
+
+class _FakeResponse:
+    def __init__(self, message):
+        self.choices = [_FakeChoice(message)]
+
+
+def _make_client(message):
+    class _Completions:
+        async def create(self, **kwargs):
+            return _FakeResponse(message)
+
+    class _Chat:
+        completions = _Completions()
+
+    class _Client:
+        chat = _Chat()
+
+    return _Client()
+
+
+# ---------------------------------------------------------------------------
+# missing_fields()
+# ---------------------------------------------------------------------------
+
+def test_missing_fields_all_when_intent_empty():
+    intent = DetectedIntent()
+    missing = missing_fields(intent)
+    assert "activity" in missing
+    assert "is_certified" in missing
+    assert "group_size" in missing
+
+
+def test_missing_fields_excludes_already_resolved():
+    intent = DetectedIntent(activity="certified_diving", is_certified=True, group_size=2)
+    missing = missing_fields(intent)
+    assert "activity" not in missing
+    assert "is_certified" not in missing
+    assert "group_size" not in missing
+    assert "location" in missing
+
+
+def test_missing_fields_treats_false_as_resolved():
+    """is_certified=False is a real, resolved value — not "missing" just
+    because it's falsy. Must use `is None`, not truthiness, under the hood."""
+    intent = DetectedIntent(is_certified=False)
+    missing = missing_fields(intent)
+    assert "is_certified" not in missing
+
+
+# ---------------------------------------------------------------------------
+# fill_gaps()
+# ---------------------------------------------------------------------------
+
+@pytest.mark.asyncio
+async def test_fill_gaps_returns_patch_for_missing_fields():
+    intent = DetectedIntent(language="en")  # everything else missing
+    msg = _FakeMessage(tool_calls=[_FakeToolCall(
+        "extract_fields", json.dumps({"is_certified": False, "group_size": 1})
+    )])
+    patch = await fill_gaps(
+        "hi i wanna dive, im not certfied tho, just me", intent,
+        lang="en", client=_make_client(msg),
+    )
+    assert patch == {"is_certified": False, "group_size": 1}
+
+
+@pytest.mark.asyncio
+async def test_fill_gaps_never_overwrites_already_resolved_field():
+    """Even if the LLM (buggy or not) returns a field regex already resolved,
+    fill_gaps must strip it out of the patch — the regex result always wins."""
+    intent = DetectedIntent(is_certified=True)
+    msg = _FakeMessage(tool_calls=[_FakeToolCall(
+        "extract_fields", json.dumps({"is_certified": False, "group_size": 2})
+    )])
+    patch = await fill_gaps("somos 2", intent, client=_make_client(msg))
+    assert "is_certified" not in patch
+    assert patch == {"group_size": 2}
+
+
+@pytest.mark.asyncio
+async def test_fill_gaps_no_tool_call_returns_empty():
+    intent = DetectedIntent()
+    msg = _FakeMessage(tool_calls=None, content="just chatting")
+    patch = await fill_gaps("hola", intent, client=_make_client(msg))
+    assert patch == {}
+
+
+@pytest.mark.asyncio
+async def test_fill_gaps_bad_json_returns_empty():
+    intent = DetectedIntent()
+    msg = _FakeMessage(tool_calls=[_FakeToolCall("extract_fields", "not-json")])
+    patch = await fill_gaps("hola", intent, client=_make_client(msg))
+    assert patch == {}
+
+
+@pytest.mark.asyncio
+async def test_fill_gaps_exception_returns_empty():
+    class _BoomClient:
+        class chat:  # noqa: N801
+            class completions:  # noqa: N801
+                @staticmethod
+                async def create(**kwargs):
+                    raise RuntimeError("boom")
+
+    intent = DetectedIntent()
+    patch = await fill_gaps("hola", intent, client=_BoomClient())
+    assert patch == {}
+
+
+@pytest.mark.asyncio
+async def test_fill_gaps_empty_message_returns_empty_without_calling_llm():
+    intent = DetectedIntent()
+
+    class _ShouldNotBeCalled:
+        class chat:  # noqa: N801
+            class completions:  # noqa: N801
+                @staticmethod
+                async def create(**kwargs):
+                    raise AssertionError("must not call the LLM for an empty message")
+
+    patch = await fill_gaps("   ", intent, client=_ShouldNotBeCalled())
+    assert patch == {}
+
+
+@pytest.mark.asyncio
+async def test_fill_gaps_nothing_missing_returns_empty_without_calling_llm():
+    intent = DetectedIntent(
+        activity="certified_diving", is_certified=True, group_size=2,
+        group_allocation={"certified_diving": 2}, last_dive_over_2_years=False,
+        duration="single_day", location="cartagena", island="x", hotel="y",
+        ages=[30], cert_dives=2, cert_days=1, is_colombian=False,
+    )
+
+    class _ShouldNotBeCalled:
+        class chat:  # noqa: N801
+            class completions:  # noqa: N801
+                @staticmethod
+                async def create(**kwargs):
+                    raise AssertionError("must not call the LLM when nothing is missing")
+
+    patch = await fill_gaps("cualquier cosa", intent, client=_ShouldNotBeCalled())
+    assert patch == {}
+
+
+@pytest.mark.asyncio
+async def test_fill_gaps_drops_null_and_empty_values_from_patch():
+    intent = DetectedIntent()
+    msg = _FakeMessage(tool_calls=[_FakeToolCall(
+        "extract_fields",
+        json.dumps({"is_certified": None, "ages": [], "group_size": 3}),
+    )])
+    patch = await fill_gaps("somos 3", intent, client=_make_client(msg))
+    assert patch == {"group_size": 3}
+
+
+# ---------------------------------------------------------------------------
+# compare_with_ground_truth()
+# ---------------------------------------------------------------------------
+
+def test_compare_all_agree():
+    result = compare_with_ground_truth(
+        {"is_certified": False, "group_size": 1},
+        {"is_certified": False, "group_size": 1},
+    )
+    assert result == {"agree": ["is_certified", "group_size"], "disagree": {}, "missed": []}
+
+
+def test_compare_disagreement():
+    result = compare_with_ground_truth(
+        {"is_certified": True}, {"is_certified": False},
+    )
+    assert result["disagree"] == {"is_certified": (True, False)}
+    assert result["agree"] == []
+
+
+def test_compare_missed_field():
+    result = compare_with_ground_truth({}, {"group_size": 2})
+    assert result["missed"] == ["group_size"]

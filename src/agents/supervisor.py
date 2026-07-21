@@ -19,10 +19,12 @@ from zoneinfo import ZoneInfo
 from src.agents import conversation_summarizer, orchestrator
 from src.agents.escalation import detect_sensitive_escalation
 from src.agents.intent_classifier import classify_menu_intent
-from src.agents.intent_detector import IntentDetector
+from src.agents.intent_detector import DetectedIntent, IntentDetector
 from src.agents.language_detector import detect_language_llm
 from src.agents.lead_summary import build_lead_summary
+from src.agents.llm_extractor import fill_gaps, missing_fields
 from src.agents.rag_agent import rag_answer
+from src.config import settings
 from src.flows import eligibility
 from src.flows.decision_tree import (
     MESSAGES as _TREE_MESSAGES,
@@ -3621,6 +3623,34 @@ _ENTRY_BOOKING_TOOLS = {
 }
 
 
+async def _maybe_log_llm_extraction_shadow(
+    message: str, regex_intent: DetectedIntent, state: ConversationState
+) -> None:
+    """Fase 0 shadow-mode measurement (docs/robustness/plan.md §4). Gated by
+    `settings.llm_extraction_shadow_mode` (off by default everywhere) — when
+    on, runs the LLM gap-filler in parallel and logs what it WOULD have added,
+    purely for measuring agreement. Never mutates state, never affects the
+    reply. Any exception here is swallowed — this is a measurement probe, not
+    part of the response path, and must never be able to break a real turn.
+    """
+    if not settings.llm_extraction_shadow_mode:
+        return
+    try:
+        gaps_before = missing_fields(regex_intent)
+        if not gaps_before:
+            return
+        patch = await fill_gaps(message, regex_intent, history=state.history, lang=state.language)
+        # No live ground truth to compare against here — this just records
+        # what the LLM would have added on top of the regex result, for a
+        # human to review later (or feed into docs/robustness/eval-set.json
+        # as a new case if it looks like a real gap the regex should cover).
+        logger.info(
+            f"[EXTRACT][SHADOW] msg={message[:60]!r} gaps_before={gaps_before} llm_patch={patch}"
+        )
+    except Exception as exc:  # noqa: BLE001
+        logger.warning(f"[EXTRACT][SHADOW] probe failed (ignored): {exc}")
+
+
 async def _dispatch_conversation_agent(state: ConversationState, message: str) -> str:
     """Understanding-first entry handler for substantive free text at non-cart
     steps. The LLM decides answer/book/escalate and remembers what the customer
@@ -3639,6 +3669,7 @@ async def _dispatch_conversation_agent(state: ConversationState, message: str) -
     # location) unconditionally so nothing is lost even if the LLM misses them.
     intent = intent_detector.detect(message, state)
     _apply_detected_intent(intent, state)
+    await _maybe_log_llm_extraction_shadow(message, intent, state)
 
     snapshot = _build_extra_context(state)
     decision = await orchestrator.orchestrate(

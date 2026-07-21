@@ -1,6 +1,16 @@
 History
 =======
 
+0.20.32 - (2026-07-21)
+----------------------
+* **Robustez Fase 0 (docs/robustness/plan.md): fundaciones para la extracción semántica por LLM, sin cambio de comportamiento**. Owner + Álvaro + Gonzalo decidieron empezar por la Opción 2 de `docs/robustness-strategy-options.md` — este es el primer trabajo de implementación.
+* `docs/robustness/eval-set.json`: 50 casos etiquetados (42 semillas de `test_intent_detector.py` + 8 adversariales nuevos), incluidos los 2 bugs reales de v0.20.31 marcados con su fuente.
+* `src/agents/llm_extractor.py` (nuevo): `fill_gaps()` — capa de extracción LLM que rellena SOLO los campos que el regex existente (`intent_detector.py`) deja sin resolver, nunca los sobreescribe. Fallback a `{}` en cualquier error/timeout.
+* `settings.llm_extraction_shadow_mode` (default `False`, `src/config.py`) + hook en `supervisor.py` (`_dispatch_conversation_agent`): con el flag apagado (todos los entornos hoy), el LLM extractor NUNCA se llama — verificado con un test que fuerza un error si se le llama estando el flag en `False`.
+* `scripts/run_extraction_eval.py` (nuevo): corre el pipeline realista (regex + LLM en los huecos) contra el eval-set y reporta acuerdo por campo — necesita un `OPENAI_API_KEY` real para ejecutarse; baseline solo-regex (sin LLM) confirmado localmente en 94.0% de acuerdo.
+* Tests nuevos: `test_llm_extractor.py` (14), `test_llm_extraction_shadow_mode.py` (4). Suite: **1731 passed**, 15 skipped (mismos 8 fallos preexistentes). `ruff check`/`compileall` limpios.
+* Detalle completo y próximos pasos en `docs/robustness/progress-log.md`.
+
 0.20.31 - (2026-07-21)
 ----------------------
 * **Bug real en vivo: "not certfied" (typo) se leía como certificado**. `not_certified_patterns` exigía la ortografía exacta "certified" (`\bnot\s+certified\b`), mientras que `certified_patterns` tiene un catch-all tolerante a typos (`\bcert\w*\b`) que se comprueba después. "im not certfied tho" no matcheaba ni la negación ni el patrón positivo exacto, caía en el catch-all tolerante y resolvía `is_certified=True` — el bot le decía a un principiante "I see you are a certified diver". Fix: la negación en inglés ahora también tolera typos (`\bnot\s+cert\w*\b`).

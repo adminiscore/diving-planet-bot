@@ -1,0 +1,576 @@
+{
+  "cases": [
+    {
+      "id": "lang-es-basic",
+      "message": "Hola quiero bucear",
+      "lang": "es",
+      "expected": {
+        "activity": "certified_diving"
+      },
+      "source": "test_intent_detector.py (regex ground truth)",
+      "notes": ""
+    },
+    {
+      "id": "lang-en-basic",
+      "message": "Hello I want to dive",
+      "lang": "en",
+      "expected": {
+        "activity": "certified_diving"
+      },
+      "source": "test_intent_detector.py (regex ground truth)",
+      "notes": ""
+    },
+    {
+      "id": "activity-cert-basic",
+      "message": "quiero hacer buceo",
+      "lang": "es",
+      "expected": {
+        "activity": "certified_diving"
+      },
+      "source": "test_intent_detector.py (regex ground truth)",
+      "notes": ""
+    },
+    {
+      "id": "activity-minicourse",
+      "message": "quiero hacer un minicurso de buceo",
+      "lang": "es",
+      "expected": {
+        "activity": "minicourse",
+        "is_certified": false
+      },
+      "source": "test_intent_detector.py (regex ground truth)",
+      "notes": ""
+    },
+    {
+      "id": "activity-snorkel",
+      "message": "quiero hacer snorkel",
+      "lang": "es",
+      "expected": {
+        "activity": "snorkel"
+      },
+      "source": "test_intent_detector.py (regex ground truth)",
+      "notes": ""
+    },
+    {
+      "id": "activity-open-water",
+      "message": "quiero hacer el curso open water",
+      "lang": "es",
+      "expected": {
+        "activity": "padi_open_water"
+      },
+      "source": "test_intent_detector.py (regex ground truth)",
+      "notes": ""
+    },
+    {
+      "id": "activity-advanced-en",
+      "message": "I want to do the advanced course",
+      "lang": "en",
+      "expected": {
+        "activity": "padi_advanced"
+      },
+      "source": "test_intent_detector.py (regex ground truth)",
+      "notes": ""
+    },
+    {
+      "id": "activity-nitrox",
+      "message": "quiero hacer el curso de nitrox",
+      "lang": "es",
+      "expected": {
+        "activity": "padi_specialty"
+      },
+      "source": "test_intent_detector.py (regex ground truth)",
+      "notes": ""
+    },
+    {
+      "id": "cert-yes-es",
+      "message": "soy buzo certificado",
+      "lang": "es",
+      "expected": {
+        "activity": "certified_diving",
+        "is_certified": true,
+        "group_size": 1
+      },
+      "source": "test_intent_detector.py (regex ground truth)",
+      "notes": ""
+    },
+    {
+      "id": "cert-no-es",
+      "message": "no soy certificado, es mi primera vez",
+      "lang": "es",
+      "expected": {
+        "activity": "minicourse",
+        "is_certified": false,
+        "group_size": 1
+      },
+      "source": "test_intent_detector.py (regex ground truth)",
+      "notes": ""
+    },
+    {
+      "id": "cert-yes-en",
+      "message": "I am a certified diver",
+      "lang": "en",
+      "expected": {
+        "activity": "certified_diving",
+        "is_certified": true,
+        "group_size": 1
+      },
+      "source": "test_intent_detector.py (regex ground truth)",
+      "notes": ""
+    },
+    {
+      "id": "cert-minicourse-implies-no",
+      "message": "quiero hacer el minicurso",
+      "lang": "es",
+      "expected": {
+        "activity": "minicourse",
+        "is_certified": false
+      },
+      "source": "test_intent_detector.py (regex ground truth)",
+      "notes": ""
+    },
+    {
+      "id": "cert-typo-not-certfied-en",
+      "message": "hi i wanna dive, im not certfied tho, just me",
+      "lang": "en",
+      "expected": {
+        "activity": "certified_diving",
+        "is_certified": false,
+        "group_size": 1
+      },
+      "source": "live-PRE-2026-07-21 (bug real, arreglado en v0.20.31)",
+      "notes": "Typo 'certfied' sin negacion tolerante a typos hacia que cayera en el catch-all de certified_patterns -> is_certified=True. Ver docs/HISTORY.md v0.20.31."
+    },
+    {
+      "id": "cert-typo-vucea-bv-es",
+      "message": "vamos 2, mi novia y yo, ella no vucea solo yo",
+      "lang": "es",
+      "expected": {
+        "activity": "certified_diving",
+        "group_size": 2
+      },
+      "source": "live-PRE-2026-07-21 (bug real, arreglado en v0.20.31)",
+      "notes": "Typo b/v 'vucea'/'bucea' (confusion muy comun en hispanohablantes) no se reconocia como actividad de buceo en absoluto -> caia a RAG, rechazado como alucinacion, fallback de asesor. Ver docs/HISTORY.md v0.20.31."
+    },
+    {
+      "id": "cert-typo-certficado-es",
+      "message": "hola estoy certficado",
+      "lang": "es",
+      "expected": {
+        "activity": "certified_diving",
+        "is_certified": true
+      },
+      "source": "test_intent_detector.py (regex ground truth)",
+      "notes": ""
+    },
+    {
+      "id": "group-somos-dos",
+      "message": "somos dos personas",
+      "lang": "es",
+      "expected": {
+        "group_size": 2
+      },
+      "source": "test_intent_detector.py (regex ground truth)",
+      "notes": ""
+    },
+    {
+      "id": "group-venimos-tres",
+      "message": "venimos tres",
+      "lang": "es",
+      "expected": {
+        "group_size": 3
+      },
+      "source": "test_intent_detector.py (regex ground truth)",
+      "notes": ""
+    },
+    {
+      "id": "group-number-es",
+      "message": "somos 4 personas",
+      "lang": "es",
+      "expected": {
+        "group_size": 4
+      },
+      "source": "test_intent_detector.py (regex ground truth)",
+      "notes": ""
+    },
+    {
+      "id": "group-en",
+      "message": "we are 3 people",
+      "lang": "en",
+      "expected": {
+        "group_size": 3
+      },
+      "source": "test_intent_detector.py (regex ground truth)",
+      "notes": ""
+    },
+    {
+      "id": "group-somos-nueve",
+      "message": "somos nueve, queremos bucear",
+      "lang": "es",
+      "expected": {
+        "activity": "certified_diving",
+        "group_size": 9
+      },
+      "source": "test_intent_detector.py (regex ground truth)",
+      "notes": ""
+    },
+    {
+      "id": "group-family-of-nine-en",
+      "message": "family of nine",
+      "lang": "en",
+      "expected": {
+        "group_size": 9
+      },
+      "source": "test_intent_detector.py (regex ground truth)",
+      "notes": ""
+    },
+    {
+      "id": "mixed-yo-buceo-amigo-snorkel",
+      "message": "yo quiero buceo y mi amigo snorkel",
+      "lang": "es",
+      "expected": {
+        "activity": "certified_diving",
+        "group_size": 2,
+        "group_allocation": {
+          "certified_diving": 1,
+          "snorkel": 1
+        }
+      },
+      "source": "test_intent_detector.py (regex ground truth)",
+      "notes": ""
+    },
+    {
+      "id": "mixed-uno-buceo-otro-snorkel",
+      "message": "uno quiere buceo y el otro snorkel",
+      "lang": "es",
+      "expected": {
+        "activity": "certified_diving",
+        "group_size": 2,
+        "group_allocation": {
+          "certified_diving": 1,
+          "snorkel": 1
+        }
+      },
+      "source": "test_intent_detector.py (regex ground truth)",
+      "notes": ""
+    },
+    {
+      "id": "mixed-minicourse-snorkel",
+      "message": "yo haria el minicurso y mi novia snorkel",
+      "lang": "es",
+      "expected": {
+        "activity": "minicourse",
+        "is_certified": false
+      },
+      "source": "test_intent_detector.py (regex ground truth)",
+      "notes": ""
+    },
+    {
+      "id": "lastdive-6months",
+      "message": "mi ultima inmersion fue hace 6 meses",
+      "lang": "es",
+      "expected": {
+        "last_dive_over_2_years": false
+      },
+      "source": "test_intent_detector.py (regex ground truth)",
+      "notes": ""
+    },
+    {
+      "id": "lastdive-3years",
+      "message": "ultima inmersion fue hace 3 anos",
+      "lang": "es",
+      "expected": {
+        "last_dive_over_2_years": true
+      },
+      "source": "test_intent_detector.py (regex ground truth)",
+      "notes": ""
+    },
+    {
+      "id": "lastdive-en",
+      "message": "my last dive was 1 year ago",
+      "lang": "en",
+      "expected": {
+        "activity": "certified_diving",
+        "last_dive_over_2_years": false,
+        "ages": [
+          1
+        ]
+      },
+      "source": "test_intent_detector.py (regex ground truth)",
+      "notes": ""
+    },
+    {
+      "id": "duration-single-day",
+      "message": "estoy solo un dia",
+      "lang": "es",
+      "expected": {
+        "duration": "single_day"
+      },
+      "source": "test_intent_detector.py (regex ground truth)",
+      "notes": ""
+    },
+    {
+      "id": "duration-multi-day",
+      "message": "estoy varios dias en las islas",
+      "lang": "es",
+      "expected": {
+        "duration": "multi_day",
+        "location": "island"
+      },
+      "source": "test_intent_detector.py (regex ground truth)",
+      "notes": ""
+    },
+    {
+      "id": "duration-multi-day-typo",
+      "message": "estamos 5 dias en la isla, que podemos hacer?",
+      "lang": "es",
+      "expected": {
+        "duration": "multi_day",
+        "location": "island"
+      },
+      "source": "test_intent_detector.py (regex ground truth)",
+      "notes": ""
+    },
+    {
+      "id": "nationality-medellin",
+      "message": "soy de Medellin, quiero bucear",
+      "lang": "es",
+      "expected": {
+        "activity": "certified_diving",
+        "is_colombian": true
+      },
+      "source": "test_intent_detector.py (regex ground truth)",
+      "notes": ""
+    },
+    {
+      "id": "nationality-not-colombian",
+      "message": "estoy en Cartagena, soy de Espana",
+      "lang": "es",
+      "expected": {
+        "location": "cartagena"
+      },
+      "source": "test_intent_detector.py (regex ground truth)",
+      "notes": ""
+    },
+    {
+      "id": "location-cartagena",
+      "message": "estoy en Cartagena",
+      "lang": "es",
+      "expected": {
+        "location": "cartagena"
+      },
+      "source": "test_intent_detector.py (regex ground truth)",
+      "notes": ""
+    },
+    {
+      "id": "location-isla-grande",
+      "message": "estoy en Isla Grande",
+      "lang": "es",
+      "expected": {
+        "location": "island",
+        "island": "isla_grande"
+      },
+      "source": "test_intent_detector.py (regex ground truth)",
+      "notes": ""
+    },
+    {
+      "id": "hotel-pao-pao",
+      "message": "estoy en el hotel Pao Pao",
+      "lang": "es",
+      "expected": {
+        "location": "island",
+        "island": "isla_grande",
+        "hotel": "pao_pao"
+      },
+      "source": "test_intent_detector.py (regex ground truth)",
+      "notes": ""
+    },
+    {
+      "id": "complete-cert-group-es",
+      "message": "Hola somos dos personas que queremos hacer buceo y estamos certificados",
+      "lang": "es",
+      "expected": {
+        "activity": "certified_diving",
+        "is_certified": true,
+        "group_size": 2
+      },
+      "source": "test_intent_detector.py (regex ground truth)",
+      "notes": ""
+    },
+    {
+      "id": "complete-cert-single-en",
+      "message": "Hello I am a certified diver and want to dive",
+      "lang": "en",
+      "expected": {
+        "activity": "certified_diving",
+        "is_certified": true,
+        "group_size": 1
+      },
+      "source": "test_intent_detector.py (regex ground truth)",
+      "notes": ""
+    },
+    {
+      "id": "complete-minicourse-es",
+      "message": "Hola quiero hacer el minicurso de buceo, es mi primera vez",
+      "lang": "es",
+      "expected": {
+        "activity": "minicourse",
+        "is_certified": false
+      },
+      "source": "test_intent_detector.py (regex ground truth)",
+      "notes": ""
+    },
+    {
+      "id": "complete-mixed-group",
+      "message": "Somos dos, yo quiero buceo certificado y mi novia snorkel",
+      "lang": "es",
+      "expected": {
+        "activity": "certified_diving",
+        "is_certified": true,
+        "group_size": 2,
+        "group_allocation": {
+          "certified_diving": 1,
+          "snorkel": 1
+        }
+      },
+      "source": "test_intent_detector.py (regex ground truth)",
+      "notes": ""
+    },
+    {
+      "id": "split-open-water-one-not",
+      "message": "somos 3, 2 con open water y 1 no",
+      "lang": "es",
+      "expected": {
+        "activity": "padi_open_water",
+        "is_certified": true,
+        "group_size": 3,
+        "group_allocation": {
+          "certified_diving": 2,
+          "minicourse": 1
+        }
+      },
+      "source": "test_intent_detector.py (regex ground truth)",
+      "notes": ""
+    },
+    {
+      "id": "split-en-have-open-water",
+      "message": "we are three, two have open water and one does not",
+      "lang": "en",
+      "expected": {
+        "activity": "padi_open_water",
+        "group_size": 3,
+        "group_allocation": {
+          "certified_diving": 2,
+          "minicourse": 1
+        }
+      },
+      "source": "test_intent_detector.py (regex ground truth)",
+      "notes": ""
+    },
+    {
+      "id": "split-one-not-certified-es",
+      "message": "somos 3, uno no esta certificado",
+      "lang": "es",
+      "expected": {
+        "activity": "certified_diving",
+        "is_certified": false,
+        "group_size": 3,
+        "group_allocation": {
+          "certified_diving": 2,
+          "minicourse": 1
+        }
+      },
+      "source": "test_intent_detector.py (regex ground truth)",
+      "notes": ""
+    },
+    {
+      "id": "adv-en-negation-contraction",
+      "message": "hey we arent certified, first time diving, just the two of us",
+      "lang": "en",
+      "expected": {
+        "is_certified": false,
+        "activity": "certified_diving",
+        "group_size": 2
+      },
+      "source": "adversarial-nuevo (creado para eval-set inicial, 2026-07-21)",
+      "notes": "Contraccion 'aren't' sin apostrofe (arent) + negacion — variante no cubierta explicitamente por not_certified_patterns."
+    },
+    {
+      "id": "adv-es-double-negation",
+      "message": "no es que no estemos certificados, si lo estamos, los 2",
+      "lang": "es",
+      "expected": {
+        "is_certified": true,
+        "group_size": 2
+      },
+      "source": "adversarial-nuevo (creado para eval-set inicial, 2026-07-21)",
+      "notes": "Doble negacion (\"no es que no...\") que en realidad AFIRMA certificacion — caso dificil para regex simple de 'no...cert'."
+    },
+    {
+      "id": "adv-es-kid-snorkel-age",
+      "message": "mi hijo de 9 anos quiere hacer snorkel con nosotros",
+      "lang": "es",
+      "expected": {
+        "activity": "snorkel",
+        "ages": [
+          9
+        ]
+      },
+      "source": "adversarial-nuevo (creado para eval-set inicial, 2026-07-21)",
+      "notes": "Edad + actividad en la misma clausula, sujeto no es el hablante principal."
+    },
+    {
+      "id": "adv-es-holds-cert-course-name-only",
+      "message": "ya tengo el rescue diver, quiero seguir buceando",
+      "lang": "es",
+      "expected": {
+        "is_certified": true,
+        "activity": "certified_diving"
+      },
+      "source": "adversarial-nuevo (creado para eval-set inicial, 2026-07-21)",
+      "notes": "Certificacion implicita via nombre de curso PADI (Rescue Diver) sin decir la palabra 'certificado'."
+    },
+    {
+      "id": "adv-en-elliptical-no-dive-verb",
+      "message": "never been underwater before, wanna give it a try, solo",
+      "lang": "en",
+      "expected": {
+        "is_certified": false,
+        "group_size": 1
+      },
+      "source": "adversarial-nuevo (creado para eval-set inicial, 2026-07-21)",
+      "notes": "Sin verbo explicito de bucear/dive — la intencion de bucear es implicita por contexto (\"underwater\"), caso limite para regex de actividad."
+    },
+    {
+      "id": "adv-es-mixed-language-codeswitch",
+      "message": "hola, we are 2 people, ya estamos certificados los dos",
+      "lang": "es",
+      "expected": {
+        "is_certified": true,
+        "group_size": 2
+      },
+      "source": "adversarial-nuevo (creado para eval-set inicial, 2026-07-21)",
+      "notes": "Code-switching ES/EN dentro del mismo mensaje — el detector de idioma puede confundirse, pero los campos de negocio deben resolverse igual."
+    },
+    {
+      "id": "adv-es-location-typo-doubled-letter",
+      "message": "salimos desde cartagenaa mañana",
+      "lang": "es",
+      "expected": {
+        "location": "cartagena"
+      },
+      "source": "adversarial-nuevo (creado para eval-set inicial, 2026-07-21)",
+      "notes": "Typo de letra duplicada al final ('cartagenaa') — variante de typo distinta a las ya cubiertas (b/v, tildes, u/c)."
+    },
+    {
+      "id": "adv-en-slang-abbrev-group",
+      "message": "hiii wanna book for 5 ppl, all certified already",
+      "lang": "en",
+      "expected": {
+        "is_certified": true,
+        "group_size": 5
+      },
+      "source": "adversarial-nuevo (creado para eval-set inicial, 2026-07-21)",
+      "notes": "Abreviatura de chat ('ppl' = people) para el tamano de grupo — no cubierta por los patrones actuales de group_size en ingles."
+    }
+  ]
+}

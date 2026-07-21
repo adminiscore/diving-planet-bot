@@ -154,7 +154,7 @@ activación:
 Checklist de estado — actualizar aquí Y en el bloque correspondiente de
 `progress-log.md` cuando cambie:
 
-- [ ] **Fase 0 — Fundaciones** (sin cambio de comportamiento)
+- [🔄] **Fase 0 — Fundaciones** (sin cambio de comportamiento) — en progreso, ver `progress-log.md`
 - [ ] **Fase 1 — Dominio certificación** (primer vertical slice)
 - [ ] **Fase 2 — Dominio grupo/cantidad/edades**
 - [ ] **Fase 3 — Dominio ubicación/actividad/cambios de plan**
@@ -168,38 +168,55 @@ el comportamiento del bot en producción**. Es la fase de "medir antes de cortar
 
 Pasos:
 
-1. **Definir el schema de extracción** — reutilizar `DetectedIntent` tal cual existe
-   hoy (`src/agents/intent_detector.py`) como el contrato de salida. No inventar campos
-   nuevos en esta fase; si hiciera falta un campo que hoy no existe, se añade primero al
-   dataclass con su propio detector regex (como se ha hecho siempre) y LUEGO se
-   considera para extracción LLM.
-2. **Construir el eval-set inicial** (ver §5 para el formato). Semillas:
-   - Todos los casos de `tests/test_intent_detector.py` convertidos a pares
-     (mensaje, `DetectedIntent` esperado) — ya están escritos y son la mejor fuente de
-     "caso común bien entendido".
-   - Todos los bugs reales encontrados en sesiones live contra PRE, empezando por los
-     documentados en `docs/live-test-inconsistencies-plan.md` y `docs/HISTORY.md`
-     v0.20.31 (typos "certfied"/"vucea") — estos son precisamente los casos donde el
-     regex fallaba, así que son el material más valioso para medir si el LLM los
-     resuelve bien.
-   - Casos adversariales nuevos: más variantes de typos, mezclas de idioma, frases
-     elípticas, negaciones anidadas — generar con una batería similar a la corrida en
-     `scripts/live_battery_driver.py` esta sesión.
-3. **Construir `LLMExtractor.fill_gaps()`** (o el nombre que se decida) como función
-   aislada, con su propio test file (`tests/test_llm_extractor.py`), mockeable, sin
-   integrarla todavía en `supervisor.py`/`intent_detector.py`.
-4. **Shadow-mode harness**: enganchar `fill_gaps()` en paralelo a `IntentDetector.detect()`
-   dentro de `route_message` (detrás de un flag, p.ej. `settings.llm_extraction_shadow_mode`,
-   default `False` en todos los entornos salvo dev/PRE para medir), loguear ambos
-   resultados con un tag grepable (`[EXTRACT][SHADOW] field=X regex=Y llm=Z agree=bool`)
-   — sin que el resultado LLM decida nada todavía.
-5. **Correr en PRE unos días/sesiones** con tráfico real (o con la batería ampliada de
-   conversaciones simuladas) y medir tasa de acuerdo por campo. Guardar el análisis en
-   `progress-log.md`.
+1. ✅ **Definir el schema de extracción** — se reutiliza `DetectedIntent` tal cual
+   (`src/agents/intent_detector.py`) como contrato de salida; `EXTRACTABLE_FIELDS` en
+   `src/agents/llm_extractor.py` es el subconjunto de campos que el LLM puede rellenar
+   (excluye `language`, `service_id`, `confidence`, `detected_fields` — derivados/meta,
+   no extraídos directamente del mensaje).
+2. ✅ **Eval-set inicial construido**: `docs/robustness/eval-set.json`, 50 casos —
+   42 semillas derivadas de `tests/test_intent_detector.py` (regex como ground truth,
+   incluidos los 2 bugs reales de v0.20.31 marcados con su fuente) + 8 adversariales
+   nuevos (negación con contracción EN, doble negación ES, edad+actividad de un
+   tercero, certificación implícita por nombre de curso PADI, mensaje elíptico sin
+   verbo de bucear, code-switching ES/EN, typo de letra duplicada, abreviatura de chat
+   "ppl"). Formato exacto en §5.
+3. ✅ **`LLMExtractor.fill_gaps()` construido** en `src/agents/llm_extractor.py` —
+   función aislada, mockeable (mismo patrón de fake-client que
+   `tests/test_orchestrator.py`), con su propio test file
+   (`tests/test_llm_extractor.py`, 14 tests) validando: relleno correcto de huecos,
+   que NUNCA sobreescribe un campo que el regex ya resolvió (ni siquiera si el LLM
+   "opina" distinto), manejo de `is_certified=False`/`last_dive_over_2_years=False`/
+   `is_colombian=False` como valores resueltos (no "missing" solo por ser falsy — bug
+   real cazado por el propio test antes de escribir la implementación correcta), y
+   fallback a `{}` en cualquier error/timeout/JSON malformado. Aún NO integrada en
+   `supervisor.py`/`intent_detector.py` como fuente de verdad — solo shadow (paso 4).
+4. ✅ **Shadow-mode harness construido**: `settings.llm_extraction_shadow_mode`
+   (`src/config.py`, default `False`) + `_maybe_log_llm_extraction_shadow()` en
+   `supervisor.py`, enganchado justo después de `intent_detector.detect()` dentro de
+   `_dispatch_conversation_agent` (el entry-point principal de comprensión de texto
+   libre). Con el flag apagado (default en todos los entornos), NUNCA llama al LLM —
+   verificado con test dedicado (`tests/test_llm_extraction_shadow_mode.py`, 4 tests)
+   que usa un mock que lanza `AssertionError` si se le llama, para probar la propiedad
+   de seguridad de forma dura, no solo observacional. Loguea con el tag grepable
+   `[EXTRACT][SHADOW] msg=... gaps_before=[...] llm_patch={...}`. Cualquier excepción
+   en la sonda se traga (no puede romper un turno real).
+5. ⬜ **Pendiente — correr en PRE con tráfico real o la batería ampliada** y medir tasa
+   de acuerdo por campo. Herramienta ya lista: `scripts/run_extraction_eval.py` corre
+   el pipeline realista (regex → LLM rellena huecos) contra
+   `docs/robustness/eval-set.json` y reporta acuerdo/desacuerdo por campo — necesita un
+   entorno con `OPENAI_API_KEY` real (no se pudo correr en esta sesión, solo se validó
+   la mecánica del script con `fill_gaps` mockeado). Baseline solo-regex confirmado
+   localmente: **94/100 (94.0%) de acuerdo, 1 desacuerdo, 5 huecos** — los huecos caen,
+   como se esperaba, en los 8 casos adversariales nuevos (ese es exactamente lo que la
+   Fase 1 debe demostrar que el LLM sabe rellenar). Siguiente paso concreto: ejecutar
+   `ENV_FILE=.env.dev python -m scripts.run_extraction_eval` (o contra PRE por SSH) y
+   pegar el resultado real aquí / en `progress-log.md`.
 
-Criterio de salida de la Fase 0: eval-set con al menos ~40-60 casos reales (semillas +
-adversariales), harness de shadow-mode desplegado y logueando, primer análisis de
-acuerdo/desacuerdo por campo documentado.
+Criterio de salida de la Fase 0: eval-set con al menos ~40-60 casos reales (✅ 50,
+cumplido), harness de shadow-mode desplegado y logueando (✅ construido y testeado;
+falta desplegar con el flag en `True` en un entorno concreto para empezar a acumular
+datos reales), primer análisis de acuerdo/desacuerdo por campo con el LLM real
+documentado (⬜ pendiente — paso 5).
 
 ### Fase 1 — Dominio certificación (primer vertical slice)
 
