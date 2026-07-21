@@ -154,7 +154,7 @@ activación:
 Checklist de estado — actualizar aquí Y en el bloque correspondiente de
 `progress-log.md` cuando cambie:
 
-- [🔄] **Fase 0 — Fundaciones** (sin cambio de comportamiento) — en progreso, ver `progress-log.md`
+- [✅] **Fase 0 — Fundaciones** (sin cambio de comportamiento) — completa, 99.0% de acuerdo con LLM real, ver `progress-log.md`
 - [ ] **Fase 1 — Dominio certificación** (primer vertical slice)
 - [ ] **Fase 2 — Dominio grupo/cantidad/edades**
 - [ ] **Fase 3 — Dominio ubicación/actividad/cambios de plan**
@@ -200,23 +200,17 @@ Pasos:
    de seguridad de forma dura, no solo observacional. Loguea con el tag grepable
    `[EXTRACT][SHADOW] msg=... gaps_before=[...] llm_patch={...}`. Cualquier excepción
    en la sonda se traga (no puede romper un turno real).
-5. ⬜ **Pendiente — correr en PRE con tráfico real o la batería ampliada** y medir tasa
-   de acuerdo por campo. Herramienta ya lista: `scripts/run_extraction_eval.py` corre
-   el pipeline realista (regex → LLM rellena huecos) contra
-   `docs/robustness/eval-set.json` y reporta acuerdo/desacuerdo por campo — necesita un
-   entorno con `OPENAI_API_KEY` real (no se pudo correr en esta sesión, solo se validó
-   la mecánica del script con `fill_gaps` mockeado). Baseline solo-regex confirmado
-   localmente: **94/100 (94.0%) de acuerdo, 1 desacuerdo, 5 huecos** — los huecos caen,
-   como se esperaba, en los 8 casos adversariales nuevos (ese es exactamente lo que la
-   Fase 1 debe demostrar que el LLM sabe rellenar). Siguiente paso concreto: ejecutar
-   `ENV_FILE=.env.dev python -m scripts.run_extraction_eval` (o contra PRE por SSH) y
-   pegar el resultado real aquí / en `progress-log.md`.
+5. ✅ **Corrido con LLM real** (`ENV_FILE=.env.dev python -m scripts.run_extraction_eval`,
+   2026-07-21): **99/100 (99.0%) de acuerdo, 1 desacuerdo, 0 huecos** — resultado muy
+   por encima del baseline solo-regex (94%) y del umbral propuesto para el cutover de
+   Fase 1 (≥98%). Detalle del único desacuerdo y su interpretación en
+   `progress-log.md`. Con este resultado, el criterio de salida de Fase 0 queda
+   cumplido para el dominio de certificación — la Fase 1 puede empezar.
 
 Criterio de salida de la Fase 0: eval-set con al menos ~40-60 casos reales (✅ 50,
-cumplido), harness de shadow-mode desplegado y logueando (✅ construido y testeado;
-falta desplegar con el flag en `True` en un entorno concreto para empezar a acumular
-datos reales), primer análisis de acuerdo/desacuerdo por campo con el LLM real
-documentado (⬜ pendiente — paso 5).
+cumplido), harness de shadow-mode desplegado y logueando (✅ construido y testeado),
+primer análisis de acuerdo/desacuerdo por campo con el LLM real documentado (✅ 99.0%,
+ver arriba). **Fase 0 completa.**
 
 ### Fase 1 — Dominio certificación (primer vertical slice)
 

@@ -131,3 +131,68 @@ todavía en este bloque de trabajo — pendiente de decisión del usuario sobre 
 4. Si se añaden más casos al eval-set (recomendado: cualquier bug nuevo encontrado en
    vivo debe añadirse aquí ANTES de arreglarse, como regla general del plan), re-correr
    el script y actualizar el baseline documentado en `plan.md` §4 Fase 0 paso 5.
+
+---
+
+## 2026-07-21 — Fase 0 paso 5: eval-set corrido con LLM real, Fase 0 completa
+
+**Fase(s) tocada(s)**: Fase 0 (paso 5, el que quedaba pendiente).
+
+**Qué se hizo**: el usuario dio permiso explícito para usar una API key real. Se
+encontró una key real ya presente en `.env.dev` (local, no committeada) y se corrió:
+
+```
+ENV_FILE=.env.dev python -m scripts.run_extraction_eval
+```
+
+**Resultado real (LLM real, no mockeado)**: **99/100 (99.0%) de acuerdo, 1
+desacuerdo, 0 huecos** — sobre el baseline solo-regex de 94% (mockeado, sesión
+anterior). Los 8 casos adversariales que antes quedaban como "hueco" (regex solo)
+ahora los resuelve el LLM correctamente, salvo uno.
+
+**El único desacuerdo encontrado**:
+- Caso `adv-en-negation-contraction`: `"hey we arent certified, first time diving,
+  just the two of us"`.
+- Esperado: `activity="certified_diving"`. LLM devolvió: `activity="minicourse"`.
+- **Análisis**: no es necesariamente un error del LLM — es una ambigüedad real del
+  schema/convención existente. En el código actual (`intent_detector.py`, ver el
+  comentario junto a la línea `if intent.activity is None and intent.is_certified is
+  not None: intent.activity = "certified_diving"`), el valor `"certified_diving"` se
+  usa como la categoría GENÉRICA "quiere bucear" independientemente de si está
+  certificado o no — el campo `is_certified` es el que decide la sub-rama después. El
+  LLM, en cambio, interpretó semánticamente "primera vez, sin certificar, quiere
+  probar" como el producto específico "minicurso" — una lectura razonable en
+  lenguaje natural, pero que no coincide con la convención interna del código.
+- **Implicación para la Fase 1**: antes del cutover del campo `activity`, hay que
+  aclarar en el prompt/schema de `llm_extractor.py` que `"certified_diving"` es la
+  categoría genérica de intención de bucear (no implica certificación), y que
+  `"minicourse"` solo debe usarse cuando el cliente pide explícitamente el
+  minicurso/bautismo como PRODUCTO, no como inferencia de "es principiante". Esto es
+  exactamente el tipo de ajuste esperable en esta fase — encontrado con datos, no a
+  ciegas.
+- Este caso YA está en el eval-set (no hace falta añadirlo de nuevo) — sirve como
+  regresión permanente para confirmar el ajuste cuando se haga.
+
+**Decisiones tomadas y por qué**: con 99.0% de acuerdo (por encima del umbral ≥98%
+propuesto en el plan para el cutover), **la Fase 0 se da por completa**. La Fase 1
+(dominio certificación) puede empezar — sus criterios de entrada están cumplidos.
+
+**Qué quedó a medias / bloqueadores**: nada bloqueado. La corrección del prompt de
+`activity` (ver "implicación para la Fase 1" arriba) es el primer ítem a resolver
+DENTRO de la Fase 1, no un bloqueador de Fase 0.
+
+**Siguiente paso concreto para quien continúe**: empezar la Fase 1 (`plan.md` §4,
+sección "Fase 1 — Dominio certificación"):
+1. Primero, afinar el prompt/descripción del campo `activity` en
+   `src/agents/llm_extractor.py` para resolver la ambigüedad encontrada arriba
+   (`"certified_diving"` = intención genérica de bucear, no certificación), con TDD
+   (test dirigido a `adv-en-negation-contraction` u otro caso equivalente) antes de
+   tocar nada más.
+2. Re-correr `scripts/run_extraction_eval.py` para confirmar 100% (o al menos
+   mantenerse ≥98%) tras el ajuste.
+3. Cambiar la regla de activación de "solo shadow" a "el LLM rellena
+   `is_certified`/`activity` cuando el regex los deja en `None`, y el resultado SÍ se
+   aplica a `state`" (primer cutover real, aún con el regex como camino primario y
+   el LLM solo en huecos — ver plan.md §3.2).
+4. TDD + suite completa + verificación en vivo contra PRE (mismo patrón usado toda la
+   sesión) antes de dar la Fase 1 por cerrada.
