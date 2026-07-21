@@ -154,7 +154,7 @@ activación:
 Checklist de estado — actualizar aquí Y en el bloque correspondiente de
 `progress-log.md` cuando cambie:
 
-- [✅] **Fase 0 — Fundaciones** (sin cambio de comportamiento) — completa, 99.0% de acuerdo con LLM real, ver `progress-log.md`
+- [✅] **Fase 0 — Fundaciones** (sin cambio de comportamiento) — completa, 100.0% de acuerdo con LLM real (tras corregir un caso mal etiquetado), ver `progress-log.md`
 - [ ] **Fase 1 — Dominio certificación** (primer vertical slice)
 - [ ] **Fase 2 — Dominio grupo/cantidad/edades**
 - [ ] **Fase 3 — Dominio ubicación/actividad/cambios de plan**
@@ -201,15 +201,18 @@ Pasos:
    `[EXTRACT][SHADOW] msg=... gaps_before=[...] llm_patch={...}`. Cualquier excepción
    en la sonda se traga (no puede romper un turno real).
 5. ✅ **Corrido con LLM real** (`ENV_FILE=.env.dev python -m scripts.run_extraction_eval`,
-   2026-07-21): **99/100 (99.0%) de acuerdo, 1 desacuerdo, 0 huecos** — resultado muy
-   por encima del baseline solo-regex (94%) y del umbral propuesto para el cutover de
-   Fase 1 (≥98%). Detalle del único desacuerdo y su interpretación en
-   `progress-log.md`. Con este resultado, el criterio de salida de Fase 0 queda
+   2026-07-21): primera pasada dio 99/100 (99.0%), con 1 desacuerdo en un caso
+   adversarial. Al investigarlo (ver `progress-log.md`) resultó ser un **error de
+   autoría del eval-set** (un "expected" escrito a mano sin correr antes el detector
+   real), no un fallo del LLM ni una ambigüedad real de schema. Corregido el caso →
+   **100/100 (100.0%) de acuerdo, 0 desacuerdos, 0 huecos** en la segunda pasada.
+   Resultado muy por encima del baseline solo-regex (94%) y del umbral propuesto para
+   el cutover de Fase 1 (≥98%). Con esto, el criterio de salida de Fase 0 queda
    cumplido para el dominio de certificación — la Fase 1 puede empezar.
 
 Criterio de salida de la Fase 0: eval-set con al menos ~40-60 casos reales (✅ 50,
 cumplido), harness de shadow-mode desplegado y logueando (✅ construido y testeado),
-primer análisis de acuerdo/desacuerdo por campo con el LLM real documentado (✅ 99.0%,
+primer análisis de acuerdo/desacuerdo por campo con el LLM real documentado (✅ 100.0%,
 ver arriba). **Fase 0 completa.**
 
 ### Fase 1 — Dominio certificación (primer vertical slice)

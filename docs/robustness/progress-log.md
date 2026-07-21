@@ -145,54 +145,62 @@ encontró una key real ya presente en `.env.dev` (local, no committeada) y se co
 ENV_FILE=.env.dev python -m scripts.run_extraction_eval
 ```
 
-**Resultado real (LLM real, no mockeado)**: **99/100 (99.0%) de acuerdo, 1
-desacuerdo, 0 huecos** — sobre el baseline solo-regex de 94% (mockeado, sesión
-anterior). Los 8 casos adversariales que antes quedaban como "hueco" (regex solo)
-ahora los resuelve el LLM correctamente, salvo uno.
+**Resultado real (LLM real, no mockeado), primera pasada**: **99/100 (99.0%) de
+acuerdo, 1 desacuerdo, 0 huecos** — sobre el baseline solo-regex de 94% (mockeado,
+sesión anterior). Los 8 casos adversariales que antes quedaban como "hueco" (regex
+solo) los resolvió el LLM correctamente, salvo uno.
 
-**El único desacuerdo encontrado**:
+**El desacuerdo, investigado a fondo (el usuario cuestionó correctamente mi primer
+análisis, y tenía razón)**:
 - Caso `adv-en-negation-contraction`: `"hey we arent certified, first time diving,
-  just the two of us"`.
-- Esperado: `activity="certified_diving"`. LLM devolvió: `activity="minicourse"`.
-- **Análisis**: no es necesariamente un error del LLM — es una ambigüedad real del
-  schema/convención existente. En el código actual (`intent_detector.py`, ver el
-  comentario junto a la línea `if intent.activity is None and intent.is_certified is
-  not None: intent.activity = "certified_diving"`), el valor `"certified_diving"` se
-  usa como la categoría GENÉRICA "quiere bucear" independientemente de si está
-  certificado o no — el campo `is_certified` es el que decide la sub-rama después. El
-  LLM, en cambio, interpretó semánticamente "primera vez, sin certificar, quiere
-  probar" como el producto específico "minicurso" — una lectura razonable en
-  lenguaje natural, pero que no coincide con la convención interna del código.
-- **Implicación para la Fase 1**: antes del cutover del campo `activity`, hay que
-  aclarar en el prompt/schema de `llm_extractor.py` que `"certified_diving"` es la
-  categoría genérica de intención de bucear (no implica certificación), y que
-  `"minicourse"` solo debe usarse cuando el cliente pide explícitamente el
-  minicurso/bautismo como PRODUCTO, no como inferencia de "es principiante". Esto es
-  exactamente el tipo de ajuste esperable en esta fase — encontrado con datos, no a
-  ciegas.
-- Este caso YA está en el eval-set (no hace falta añadirlo de nuevo) — sirve como
-  regresión permanente para confirmar el ajuste cuando se haga.
+  just the two of us"`. Esperado (mal escrito por mí): `activity="certified_diving"`.
+  LLM devolvió: `activity="minicourse"`.
+- **Mi primer análisis fue incorrecto**: escribí que era "una ambigüedad real de
+  schema" (que `"certified_diving"` es la categoría genérica de "quiere bucear" en el
+  código, y el LLM habría sobre-interpretado). El usuario preguntó, con razón, por qué
+  eso estaría mal si el cliente literalmente dice que NO está certificado — debería
+  ofrecerle el minicurso. Al verificar contra el código real (no contra mi memoria del
+  código), confirmé que el usuario tenía razón y yo no:
+  - El regex actual, corrido en vivo contra ese mensaje exacto, YA da
+    `activity="minicourse"` — hay un patrón dedicado en `minicourse_patterns`
+    (`intent_detector.py`) que reconoce la frase "first time diving" explícitamente.
+    No es una laguna del regex, ya está cubierto.
+  - Además, comprobé el routing real: con `is_certified=False`, si `activity` fuera
+    `"certified_diving"` (lo que yo había puesto como "esperado"), **ni
+    `_should_ask_certification` (exige `is_certified is None`) ni
+    `_should_skip_to_certified_flow` (exige `is_certified is True`) se disparan** — el
+    mensaje NO entraría a ningún flujo guiado, caería a RAG. Con `"minicourse"` sí
+    entra directo al flujo de principiantes — el comportamiento correcto.
+  - Conclusión: mi "expected" en el eval-set estaba mal escrito a mano (lo razoné sin
+    correr antes el detector real). El LLM y el regex actual **coincidían y ambos
+    acertaban** — el eval-set era el que estaba equivocado, no el LLM.
+- **Corregido**: `docs/robustness/eval-set.json`, caso `adv-en-negation-contraction`,
+  `expected.activity` → `"minicourse"`, con nota explicando la corrección. Re-corrida
+  la evaluación: **100/100 (100.0%) de acuerdo, 0 desacuerdos, 0 huecos**.
 
-**Decisiones tomadas y por qué**: con 99.0% de acuerdo (por encima del umbral ≥98%
+**Lección de proceso (importante para cualquier sesión futura que edite el
+eval-set)**: un caso adversarial escrito a mano SIEMPRE debe validarse corriendo el
+pipeline real (`IntentDetector().detect(mensaje, state)` + los predicados de routing
+en `supervisor.py` si aplica) ANTES de fijar su "expected" — razonar "a ojo" qué
+debería pasar, sin verificarlo contra el código, reproduce exactamente el mismo tipo
+de error que este plan entero intenta evitar (asumir en vez de medir).
+
+**Decisiones tomadas y por qué**: con 100.0% de acuerdo (por encima del umbral ≥98%
 propuesto en el plan para el cutover), **la Fase 0 se da por completa**. La Fase 1
-(dominio certificación) puede empezar — sus criterios de entrada están cumplidos.
+(dominio certificación) puede empezar — sus criterios de entrada están cumplidos, sin
+ningún ajuste de prompt pendiente (el prompt actual ya funciona bien para este caso).
 
-**Qué quedó a medias / bloqueadores**: nada bloqueado. La corrección del prompt de
-`activity` (ver "implicación para la Fase 1" arriba) es el primer ítem a resolver
-DENTRO de la Fase 1, no un bloqueador de Fase 0.
+**Qué quedó a medias / bloqueadores**: nada. La Fase 0 está completa sin deuda
+pendiente.
 
 **Siguiente paso concreto para quien continúe**: empezar la Fase 1 (`plan.md` §4,
 sección "Fase 1 — Dominio certificación"):
-1. Primero, afinar el prompt/descripción del campo `activity` en
-   `src/agents/llm_extractor.py` para resolver la ambigüedad encontrada arriba
-   (`"certified_diving"` = intención genérica de bucear, no certificación), con TDD
-   (test dirigido a `adv-en-negation-contraction` u otro caso equivalente) antes de
-   tocar nada más.
-2. Re-correr `scripts/run_extraction_eval.py` para confirmar 100% (o al menos
-   mantenerse ≥98%) tras el ajuste.
-3. Cambiar la regla de activación de "solo shadow" a "el LLM rellena
+1. Cambiar la regla de activación de "solo shadow" a "el LLM rellena
    `is_certified`/`activity` cuando el regex los deja en `None`, y el resultado SÍ se
    aplica a `state`" (primer cutover real, aún con el regex como camino primario y
    el LLM solo en huecos — ver plan.md §3.2).
-4. TDD + suite completa + verificación en vivo contra PRE (mismo patrón usado toda la
+2. TDD + suite completa + verificación en vivo contra PRE (mismo patrón usado toda la
    sesión) antes de dar la Fase 1 por cerrada.
+3. Seguir ampliando el eval-set con cualquier caso nuevo que aparezca — validando
+   SIEMPRE contra el pipeline real antes de fijar el "expected" (ver lección de
+   proceso arriba).

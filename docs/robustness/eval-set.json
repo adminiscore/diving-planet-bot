@@ -488,11 +488,11 @@
       "lang": "en",
       "expected": {
         "is_certified": false,
-        "activity": "certified_diving",
+        "activity": "minicourse",
         "group_size": 2
       },
       "source": "adversarial-nuevo (creado para eval-set inicial, 2026-07-21)",
-      "notes": "Contraccion 'aren't' sin apostrofe (arent) + negacion — variante no cubierta explicitamente por not_certified_patterns."
+      "notes": "Corregido 2026-07-21: el 'expected' original ('certified_diving') estaba mal razonado a mano, sin correr el detector real antes de escribirlo. Verificado: el regex actual YA resuelve la frase 'first time diving' como activity='minicourse' (patron dedicado en intent_detector.py: minicourse_patterns incluye 'first time diving' explicitamente), y con is_certified=False, 'certified_diving' NO habria disparado ningun flujo guiado (_should_ask_certification exige is_certified is None; _should_skip_to_certified_flow exige is_certified is True; ninguna cubre False). El LLM acerto lo mismo que el regex; el eval-set era el que estaba mal, no el LLM. Leccion: validar SIEMPRE el 'expected' de un caso adversarial corriendo el pipeline real antes de escribirlo a mano."
     },
     {
       "id": "adv-es-double-negation",
