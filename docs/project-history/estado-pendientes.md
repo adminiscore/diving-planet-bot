@@ -71,10 +71,14 @@
 
 > **Nota (2026-07-22)**: el owner considera que el carrito de botones "no es tan buena
 > idea" y quiere un bot que INTERPRETE (como la entrada del principio). Estudio riguroso
-> en `docs/cart-vs-conversational-analysis.md` (recomendación: Opción B, conversacional-
-> first con el carrito como estado interno, reusando el extractor LLM + orquestador ya
-> existentes). **El owner anunció que propondrá un refactor importante del carrito y el
-> árbol y lo detallará** — no tocar los 5 bugs ni la arquitectura hasta tener ese detalle.
+> en `docs/cart-vs-conversational-analysis.md`. **Plan de implementación acordado y
+> detallado en `docs/conversational-refactor-plan.md`** (núcleo conversacional de
+> slot-filling, carrito como estado interno, quick-replies mínimos, OpenAI + structured
+> outputs, migración incremental por vertical detrás de flag). **Los 5 bugs de arriba se
+> resuelven POR DISEÑO en la Fase 1 de ese plan** (el slot-filling no repite/olvida/
+> re-pregunta por construcción); no arreglarlos por separado — se cierran con el refactor,
+> que lo implementará el equipo. El plan incluye persona/estilo, guardarraíles anti-
+> manipulación (OWASP) y re-engagement con timing como feature opcional.
 
 ## 🧪 Robustez / extracción por LLM (Gadea) — qué quedaba pendiente
 

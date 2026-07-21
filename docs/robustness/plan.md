@@ -472,6 +472,54 @@ cutover temprano en `_route_message_inner`** compartido por todos los paths — 
 del dispatch que merece su propio cuidado (y su propia medición de que no rompe el orden de
 short-circuits). Documentado con `NOTE` en ambas funciones. Trabajo futuro.
 
+### Fase 6 — Bucle de datos reales (NUEVA, prioridad alta — review H1/H8)
+
+**Objetivo:** cerrar el bucle de datos. Hoy el eval-set se alimenta de casos sintéticos/
+manuales; el hallazgo H1 de la revisión es que **no hay bucle de datos reales**, así que
+no sabemos con qué frecuencia dispara cada dominio ni qué casos reales fallan. Esta fase
+convierte el tráfico real de PRE en casos de eval-set curados, y añade observabilidad de
+disparos por dominio (H8). **Bloquea la Fase 5** (sin datos reales no se sabe qué regex
+está muerto y se puede retirar).
+
+**Estado:** `[~]` en curso. **Tooling ya construido** (2026-07-21):
+- `scripts/harvest_cutover_logs.py` — parsea los logs `[EXTRACT][CUTOVER]` / `[EXTRACT]
+  [SHADOW]` de PRE → candidatos deduplicados para el eval-set (modo default) + contador
+  por campo/dominio (`--summary`, cubre H8). 5 tests en `tests/test_harvest_cutover_logs.py`.
+- `docs/robustness/live-test-battery-fase6.md` — batería de 32 casos para generar tráfico.
+- Fix (v0.20.38): los logs truncaban el mensaje a 60 chars (`message[:60]`), justo lo que
+  la cosecha NO puede permitirse; nuevo `_log_safe_message()` (límite 500, marca
+  `…[truncated]`). Tests `test_*_log_line_does_not_truncate_the_message`.
+
+**Pendiente (los pasos que faltan por ejecutar):**
+
+1. **Asegurar que se generan logs `[EXTRACT]` en PRE con tráfico real.** Los cutover por
+   dominio ya se activaron en PRE "para pruebas reales" (Fases 1/2/3/8), así que las
+   líneas `[EXTRACT][CUTOVER]` deberían salir. Confirmar que el shadow/cutover está
+   emitiendo (H1 señalaba que el shadow-mode estaba apagado en todos los entornos).
+2. **Generar tráfico registrable.** Correr la batería de 32 casos
+   (`docs/robustness/live-test-battery-fase6.md`) contra PRE y/o dejar entrar tráfico real
+   de clientes. **Aviso apuntado en `progress-log.md`**: los mensajes de prueba a veces no
+   llegan a `docker logs` — verificar que el tráfico de prueba SÍ queda registrado antes de
+   cosechar (si no, la cosecha sale vacía).
+3. **Cosechar.** Por SSH a la VPS, correr `harvest_cutover_logs.py` sobre los logs de
+   `dp-pre-bot` → candidatos deduplicados; `--summary` para el contador por dominio (H8).
+4. **Curar.** Validar el `expected` de cada candidato contra el pipeline real ANTES de
+   fijarlo en `docs/robustness/eval-set.json` (no meter etiquetas sin verificar).
+5. **Re-medir.** Recalcular el % de acuerdo con el eval-set ampliado; si algún dominio cae
+   por debajo del umbral (≥98%), ajustar el extractor/prompt antes de más cutover.
+
+**Criterio de salida:** eval-set alimentado con casos reales curados + contador de
+disparos por dominio operativo. Con esto se desbloquea la Fase 5.
+
+### Fase 7 — Override selectivo por campo (NUEVA — review H6)
+
+**Objetivo:** hoy el LLM solo rellena huecos que el regex dejó vacíos (gap-filler). Hay
+casos donde el regex "resuelve" pero se equivoca (bug documentado `me plus 3 friends` →
+`group_size`). Esta fase introduce un **override medido por campo**: donde los datos
+(Fase 6) muestren que el LLM es más fiable que el regex para un campo concreto, dejar que
+el LLM lo pise aunque el regex haya resuelto. **Requiere los datos de la Fase 6** para
+decidir por campo con evidencia, no a ojo. Ver `review-2026-07-21.md` H6. Sin empezar.
+
 ### Fase 5 — Limpieza y consolidación
 
 Una vez todos los dominios migrados y estables en producción durante un periodo
