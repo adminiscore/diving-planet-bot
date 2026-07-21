@@ -231,6 +231,11 @@ class IntentDetector:
         certified_diving_patterns = [
             r'\bbuce\w{0,5}\b(?!\s+(bautismo|principiante|primera\s+vez|minicurso))',  # buceo, bucear, bucereo, buceando
             r'\bbuse[ao]\w{0,2}\b',        # buseo (common u/c swap typo)
+            # vuce* (common b/v swap typo — real bug live 2026-07-21: "ella no
+            # vucea" wasn't recognized as diving at all, fell through to RAG,
+            # which rejected it as a hallucination and gave the advisor
+            # fallback instead of entering the booking flow).
+            r'\bvuce\w{0,5}\b(?!\s+(bautismo|principiante|primera\s+vez|minicurso))',
             r'\bdive\b(?!\s+(baptism|beginner|first\s+time))',
             r'\bdiving\b(?!\s+(first|beginner|class|course|lesson|trip\s+first))',
             r'\bscuba\b(?!\s+(class|course|lesson))',
@@ -429,7 +434,11 @@ class IntentDetector:
             r'\bget\s+certified\b',
             r'\bnunca\s+(?:\w+\s+){0,3}buce\w*\b',  # nunca he/ha/hemos/han (hecho) bucea(do)/buceo
             r'\bprimera\s+vez\b',
-            r'\bnot\s+certified\b',
+            # Typo-tolerant (real bug live 2026-07-21: "not certfied" matched
+            # neither this pattern nor the exact positive "certified_patterns"
+            # entry, and fell through to that list's own typo-tolerant
+            # \bcert\w*\b catch-all, wrongly resolving to is_certified=True).
+            r'\bnot\s+cert\w*\b',
             r'\bnever\s+dived\b',
             r'\bfirst\s+time\b',
             r'\bbeginner\b',

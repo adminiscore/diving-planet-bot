@@ -85,6 +85,28 @@ class TestCertificationDetection:
         assert intent.is_certified is False
         assert intent.activity == "minicourse"
 
+    def test_english_not_certified_typo(self, detector, state):
+        """Real bug found live against PRE (2026-07-21): 'not_certified_patterns'
+        required exact "certified" spelling ('\\bnot\\s+certified\\b'), while
+        'certified_patterns' has a typo-tolerant catch-all ('\\bcert\\w*\\b')
+        checked afterwards. So "im not certfied tho" matched NEITHER negation
+        pattern NOR the exact positive one, fell through to the typo-tolerant
+        catch-all, and was wrongly read as is_certified=True — the bot told a
+        beginner "I see you are a certified diver"."""
+        intent = detector.detect("hi i wanna dive, im not certfied tho, just me", state)
+        assert intent.is_certified is False
+
+    def test_spanish_bv_typo_activity_detection(self, detector, state):
+        """Real bug found live against PRE (2026-07-21): "vucea" (b/v typo for
+        "bucea", a very common confusion for Spanish speakers since both letters
+        sound identical) was not recognized as a diving-activity word at all —
+        the message fell through to RAG entirely and got rejected as a
+        hallucination, landing on the generic advisor fallback instead of
+        entering the booking flow. Without the typo ("bucea"), the exact same
+        message correctly asks certification."""
+        intent = detector.detect("vamos 2, mi novia y yo, ella no vucea solo yo", state)
+        assert intent.activity == "certified_diving"
+
 
 class TestGroupDetection:
     

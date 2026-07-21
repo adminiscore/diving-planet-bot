@@ -1,6 +1,13 @@
 History
 =======
 
+0.20.31 - (2026-07-21)
+----------------------
+* **Bug real en vivo: "not certfied" (typo) se leía como certificado**. `not_certified_patterns` exigía la ortografía exacta "certified" (`\bnot\s+certified\b`), mientras que `certified_patterns` tiene un catch-all tolerante a typos (`\bcert\w*\b`) que se comprueba después. "im not certfied tho" no matcheaba ni la negación ni el patrón positivo exacto, caía en el catch-all tolerante y resolvía `is_certified=True` — el bot le decía a un principiante "I see you are a certified diver". Fix: la negación en inglés ahora también tolera typos (`\bnot\s+cert\w*\b`).
+* **Batería adicional de pruebas en vivo contra PRE (LLM real) tras encontrar el bug anterior**, cubriendo negación/typos en ambos idiomas, descuentos no existentes, cambio de moneda, switch multi-día, grupo con acompañante, edades de niños, y escalado sensible/cancelación. Encontrado un segundo bug real: **"vucea" (typo b/v de "bucea", confusión muy común entre hispanohablantes) no se reconocía como palabra de actividad de buceo en absoluto** — el mensaje caía por completo a RAG, se rechazaba como alucinación, y terminaba en el fallback genérico de asesor en vez de entrar al flujo de reserva. Sin el typo, el mismo mensaje entra correctamente a preguntar certificación. Fix: nuevo patrón `\bvuce\w{0,5}\b` en `_detect_activity`, mismo patrón ya usado para el typo u/c de "buseo".
+* El resto de la batería (10 conversaciones más) no encontró bugs nuevos: descuento de estudiante correctamente no alucinado, precio con typo correcto, cambio de moneda mid-flujo correcto, switch multi-día con typo correcto, grupo mixto con negación correcto, edades de niños correcto, embarazo/asma escalan correctamente, cancelación muestra política + botones correctos.
+* Tests nuevos: `test_english_not_certified_typo`, `test_spanish_bv_typo_activity_detection` (`test_intent_detector.py`). Suite: **1713 passed**, 15 skipped (mismos 8 fallos preexistentes sin relación). `ruff check src` limpio.
+
 0.20.30 - (2026-07-21)
 ----------------------
 * **4 inconsistencias reales encontradas simulando conversaciones en vivo contra PRE (LLM real, con typos, en ES/EN)**. Ver `docs/live-test-inconsistencies-plan.md` para el detalle completo de causas raíz y fixes.
