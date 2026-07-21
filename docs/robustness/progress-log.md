@@ -268,3 +268,33 @@ el equipo (no es una decisión técnica):
    `group_allocation`, `ages`) sin esperar a activar la Fase 1 en producción, ya que
    son dominios independientes y el flag de cada uno se activa por separado.
 Cualquiera de las dos es válida; ninguna bloquea a la otra.
+
+---
+
+## 2026-07-21 — Flag de Fase 1 activado en PRE (para ir probando)
+
+**Fase(s) tocada(s)**: Fase 1 (despliegue/activación, no código nuevo).
+
+**Qué se hizo**: el usuario pidió explícitamente activar el flag en PRE para
+empezar a probarlo con tráfico real. Se fijó `LLM_EXTRACTION_CUTOVER_CERTIFICATION:
+"true"` en `docker-compose.vps.yml` (sección `dp-pre-bot`, `environment:`) — mismo
+patrón ya usado para `RAG_MIN_SCORE` (pinned en el compose, no en `.env.pre` a mano
+en el VPS, así queda versionado en el repo). El deploy-pre de CI hace
+`docker compose up -d --build dp-pre-bot` en cada push a `feature/pre_gadea`, así que
+un push normal ya aplica el cambio — no hace falta tocar el VPS a mano.
+
+**Decisiones tomadas y por qué**: el flag queda encendido SOLO en PRE (`dp-pre-bot`),
+no en PRO (que ni siquiera está desplegado hoy — ver memoria de sesión) ni en ningún
+otro entorno. `src/config.py` sigue con el default `False`, así que cualquier otro
+entorno que se levante de cero sigue sin este comportamiento salvo que se pin explícito
+igual que aquí.
+
+**Qué quedó a medias / bloqueadores**: pendiente confirmar tras el deploy que PRE
+sigue sano (`/health`) y, con el tiempo, revisar los logs `[EXTRACT][CUTOVER]
+applied=...` en PRE para ver cuántas veces se dispara con tráfico real y si acierta.
+
+**Siguiente paso concreto para quien continúe**: revisar periódicamente los logs de
+`dp-pre-bot` buscando `[EXTRACT][CUTOVER]` para ver el patrón real de uso antes de
+decidir si se mantiene, se generaliza a otros dominios, o se apaga. Si algo va mal,
+revertir es solo quitar esta línea de `docker-compose.vps.yml` + push (sin rollback
+de código).
