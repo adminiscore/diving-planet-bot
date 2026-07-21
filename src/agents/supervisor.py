@@ -3629,6 +3629,7 @@ _ENTRY_BOOKING_TOOLS = {
 # group/quantity/ages. Future phases add their own entry here.
 _CERTIFICATION_CUTOVER_FIELDS = {"is_certified", "activity"}
 _GROUP_CUTOVER_FIELDS = {"group_size", "group_allocation", "ages"}
+_LOCATION_CUTOVER_FIELDS = {"location", "island", "hotel"}
 
 
 def _active_cutover_fields() -> set[str]:
@@ -3640,6 +3641,8 @@ def _active_cutover_fields() -> set[str]:
         active |= _CERTIFICATION_CUTOVER_FIELDS
     if settings.llm_extraction_cutover_group:
         active |= _GROUP_CUTOVER_FIELDS
+    if settings.llm_extraction_cutover_location:
+        active |= _LOCATION_CUTOVER_FIELDS
     return active
 
 
@@ -3671,7 +3674,10 @@ async def _maybe_apply_llm_extraction_cutover(
         if not relevant_gaps:
             return
         patch = await fill_gaps(message, regex_intent, history=state.history, lang=state.language)
-        applied = {k: v for k, v in patch.items() if k in active_fields}
+        # Apply ONLY fields that were an actual gap in an enabled domain — never a
+        # field the regex already resolved (fill_gaps guards this too, but the
+        # cutover enforces the "never overwrite regex" property itself as well).
+        applied = {k: v for k, v in patch.items() if k in relevant_gaps}
         for field, value in applied.items():
             setattr(regex_intent, field, value)
             if field not in regex_intent.detected_fields:

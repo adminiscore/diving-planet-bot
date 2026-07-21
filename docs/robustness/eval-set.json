@@ -678,6 +678,66 @@
       },
       "source": "adversarial-fase2-grupo (validado contra IntentDetector real, 2026-07-21)",
       "notes": "BUG REGEX real hallado en Fase 2: 'me plus 3 friends' = 4, pero el regex resuelve group_size=3 (cuenta '3 friends' e ignora 'me'). Como el regex YA resuelve el campo (mal), el gap-filler NO lo toca por diseno (nunca sobreescribe regex). Requiere fix de regex o una fase de override futura — documentado, no arreglable por el cutover de Fase 2."
+    },
+    {
+      "id": "loc-es-bocagrande",
+      "message": "salimos desde bocagrande",
+      "lang": "es",
+      "expected": {
+        "location": "cartagena"
+      },
+      "source": "adversarial-fase3-ubicacion (validado contra IntentDetector real, 2026-07-21)",
+      "notes": "Bocagrande es un barrio de Cartagena; el regex no lo mapea (deja location en hueco), el LLM lo infiere por conocimiento del mundo."
+    },
+    {
+      "id": "loc-es-getsemani",
+      "message": "estamos en getsemani",
+      "lang": "es",
+      "expected": {
+        "location": "cartagena"
+      },
+      "source": "adversarial-fase3-ubicacion (validado contra IntentDetector real, 2026-07-21)",
+      "notes": "Getsemani = barrio de Cartagena; hueco de regex."
+    },
+    {
+      "id": "loc-en-old-town",
+      "message": "staying in the old town this week",
+      "lang": "en",
+      "expected": {
+        "location": "cartagena"
+      },
+      "source": "adversarial-fase3-ubicacion (validado contra IntentDetector real, 2026-07-21)",
+      "notes": "'old town' = ciudad amurallada de Cartagena; hueco de regex."
+    },
+    {
+      "id": "loc-es-manga",
+      "message": "nos alojamos en manga",
+      "lang": "es",
+      "expected": {
+        "location": "cartagena"
+      },
+      "source": "adversarial-fase3-ubicacion (validado contra IntentDetector real, 2026-07-21)",
+      "notes": "Manga = barrio de Cartagena; hueco de regex."
+    },
+    {
+      "id": "loc-en-castillogrande",
+      "message": "we are in castillogrande",
+      "lang": "en",
+      "expected": {
+        "location": "cartagena"
+      },
+      "source": "adversarial-fase3-ubicacion (validado contra IntentDetector real, 2026-07-21)",
+      "notes": "Castillogrande = barrio de Cartagena; hueco de regex."
+    },
+    {
+      "id": "loc-es-baru-hotel",
+      "message": "estamos hospedados en el hotel Las Islas en Baru",
+      "lang": "es",
+      "expected": {
+        "location": "island"
+      },
+      "source": "adversarial-fase3-ubicacion (validado contra IntentDetector real, 2026-07-21)",
+      "notes": "Baru/Las Islas = zona insular; el regex no saca nada, el LLM infiere location=island. (island/hotel exactos no se evaluan por ser texto libre vs slugs canonicos del regex.)"
     }
   ]
 }

@@ -378,3 +378,75 @@ probado y verificado en vivo; el default sigue en `False`.
    casos donde el regex resuelve MAL (no solo deja hueco) — requiere cambiar el diseño de
    "nunca sobreescribir regex" a "sobreescribir cuando el eval-set demuestre, por campo,
    que el LLM es más fiable", que es una decisión explícita documentada (plan.md §3.2).
+
+---
+
+## 2026-07-21 — Flag de Fase 2 activado en PRE + Fase 3 implementada (dominio ubicación)
+
+**Fase(s) tocada(s)**: Fase 2 (activación en PRE) + Fase 3 (dominio ubicación) — completa.
+
+**Qué se hizo**:
+- **Fase 2 activada en PRE**: `LLM_EXTRACTION_CUTOVER_GROUP: "true"` en `dp-pre-bot`
+  (`docker-compose.vps.yml`), mismo patrón que el flag de certificación. Solo en PRE;
+  default sigue `False` en el resto. Desplegado vía `scripts/deploy_pre_gon.sh`
+  (`feature/pruebaGon` → mirror `feature/pre_pruebaGon` → CI deploy-pre).
+- **Fase 3 — cutover del dominio ubicación** (`location`/`island`/`hotel`):
+  - `settings.llm_extraction_cutover_location` (`src/config.py`, default `False`),
+    registrado en `_active_cutover_fields()` con `_LOCATION_CUTOVER_FIELDS = {"location",
+    "island", "hotel"}`.
+  - **Alcance**: solo los 3 campos de `DetectedIntent` de este dominio. Los interceptores
+    de cambio de plan/acompañante (`_apply_group_recomposition` y afines) NO se cortan —
+    son estado mid-flow, no extracción de campos; no encajan en el patrón gap-filler.
+    Documentado en `plan.md` §4 Fase 3 ("Alcance real") como sub-tarea futura.
+  - `location` (enum cartagena|island) es el campo de valor: dirige el routing logístico;
+    el LLM lo infiere de barrios/lugares que el regex no enumera. `island`/`hotel` solo
+    display/contexto (degradan con gracia), inofensivos como texto libre.
+  - Mejora de schema: descripción de `location` enriquecida con barrios de Cartagena y
+    zonas insulares.
+  - **Fix defensivo del cutover** (hallado por el TDD de esta fase): ahora aplica SOLO
+    campos que eran hueco real (`k in relevant_gaps`), no "cualquier campo de un dominio
+    activo". Refuerza "nunca sobreescribir regex" en la propia capa de cutover (antes solo
+    lo garantizaba `fill_gaps`). Beneficia a las 3 fases.
+  - Eval-set 58 → 64 casos (6 adversariales de ubicación, validados contra el regex real:
+    Bocagrande/Getsemaní/Manga/Castillogrande/Old Town → cartagena, hotel en Barú →
+    island). `island`/`hotel` exactos no se evalúan (texto libre vs slugs; el rigor está
+    en `location`).
+  - TDD: +5 tests (19 total en `test_llm_extraction_cutover.py`).
+
+**Resultado del eval con LLM real** (gpt-4o, `.env`): **127/128 = 99.2%, 0 huecos**.
+`location` **13/13 = 100%**. El único desacuerdo sigue siendo el bug de regex
+`me plus 3 friends` (Fase 2, group_size), ajeno a este dominio.
+
+**Verificación en vivo con LLM real** (local, `.env`, flag a mano):
+- `"salimos desde bocagrande"`: OFF → `location=None`; ON → `location=cartagena`.
+- `"staying in the old town this week"`: OFF → `None`; ON → `location=cartagena`.
+- `"estamos hospedados en el hotel Las Islas en Baru"`: OFF → `None`; ON →
+  `location=island, island=Barú, hotel=Las Islas`.
+
+**Suite completa**: **1757 passed, 15 skipped, 1 flaky**. El único fallo,
+`test_go_pro_itinerary_back_returns_to_go_pro_menu`, **pasa en aislado** (usa LLM real,
+~21s) — es no-determinismo del orquestador, no relacionado con este cambio (el cutover
+está `False` por defecto en toda la suite). `ruff`/`compileall` limpios.
+
+**Decisiones tomadas y por qué**:
+- Se dejó `island`/`hotel` como texto libre (no enum) porque su consumo aguas abajo es
+  display/contexto con fallback `.get(slug, raw)` — el routing por service va por
+  `state.location`, no por el slug de isla. Cortar `location` (enum) da todo el valor de
+  routing; forzar un enum de islas/hoteles sería más frágil por poco beneficio.
+- Los interceptores de cambio de plan se dejaron fuera a propósito (ver Alcance) en vez de
+  forzarlos al patrón gap-filler, que no les aplica — hacerlo mal reintroduciría el tipo
+  de fragilidad que este plan evita.
+
+**Qué quedó a medias / bloqueadores**: nada técnico. Pendiente solo la decisión de
+timing de activar `llm_extraction_cutover_location=True` en un entorno real.
+
+**Siguiente paso concreto para quien continúe**:
+1. (Opcional) Activar el flag de ubicación en PRE (`LLM_EXTRACTION_CUTOVER_LOCATION:
+   "true"` en `docker-compose.vps.yml`) igual que los de Fase 1/2.
+2. **Fase 4** — evaluar fusionar la extracción con el orquestador de acciones
+   (`orchestrator.py`) en una sola llamada, ahora que 3 dominios de `DetectedIntent` son
+   fiables vía LLM. Aquí también encajan los interceptores de cambio de plan que quedaron
+   fuera de la Fase 3.
+3. Fase de override futura para casos donde el regex resuelve MAL (`me plus 3 friends`),
+   cambiando el diseño de "nunca sobreescribir regex" a "override por campo medido con
+   datos" (plan.md §3.2).

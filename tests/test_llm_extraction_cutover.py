@@ -264,3 +264,89 @@ async def test_both_cutovers_on_applies_both_domains_in_one_call():
     assert intent.activity == "minicourse"
     assert intent.group_size == 2
     assert intent.ages == [7]
+
+
+# ---------------------------------------------------------------------------
+# Fase 3 — dominio ubicación (location/island/hotel). Gated by
+# settings.llm_extraction_cutover_location, independent kill switch. `location`
+# (cartagena|island) drives logistics routing; island/hotel are display/context.
+# ---------------------------------------------------------------------------
+
+@pytest.mark.asyncio
+async def test_location_cutover_off_by_default_does_not_call_llm():
+    intent = DetectedIntent()
+    state = ConversationState(conversation_id="loc-cutover-off-test")
+
+    with patch.object(supervisor, "fill_gaps", new=AsyncMock(side_effect=AssertionError("must not be called"))):
+        await supervisor._maybe_apply_llm_extraction_cutover("salimos desde bocagrande", intent, state)
+    assert intent.location is None
+    assert intent.island is None
+    assert intent.hotel is None
+
+
+@pytest.mark.asyncio
+async def test_location_cutover_on_fills_only_location_domain_fields():
+    """With ONLY the location flag on, even if the LLM patch also carries group/
+    certification fields, only location/island/hotel get applied."""
+    intent = DetectedIntent()
+    state = ConversationState(conversation_id="loc-cutover-on-test")
+
+    with patch.object(supervisor.settings, "llm_extraction_cutover_location", True), \
+         patch.object(supervisor, "fill_gaps", new=AsyncMock(return_value={
+             "location": "island", "island": "Barú", "hotel": "Las Islas",
+             "group_size": 4, "is_certified": True,
+         })) as mocked:
+        await supervisor._maybe_apply_llm_extraction_cutover(
+            "estamos en el hotel Las Islas en Barú, somos 4", intent, state
+        )
+
+    mocked.assert_awaited_once()
+    assert intent.location == "island"
+    assert intent.island == "Barú"
+    assert intent.hotel == "Las Islas"
+    assert intent.group_size is None  # out of scope: group flag is off
+    assert intent.is_certified is None
+    assert "location" in intent.detected_fields
+
+
+@pytest.mark.asyncio
+async def test_location_cutover_never_overrides_already_resolved_location():
+    intent = DetectedIntent(location="cartagena")
+    state = ConversationState(conversation_id="loc-cutover-resolved-test")
+
+    with patch.object(supervisor.settings, "llm_extraction_cutover_location", True), \
+         patch.object(supervisor, "fill_gaps", new=AsyncMock(return_value={"location": "island"})) as mocked:
+        await supervisor._maybe_apply_llm_extraction_cutover("estoy en cartagena", intent, state)
+
+    # island/hotel were still missing, so the LLM is consulted, but location
+    # (already resolved by regex) must never be overwritten.
+    mocked.assert_awaited_once()
+    assert intent.location == "cartagena"
+
+
+@pytest.mark.asyncio
+async def test_location_cutover_on_failure_degrades_to_regex_only():
+    intent = DetectedIntent()
+    state = ConversationState(conversation_id="loc-cutover-failure-test")
+
+    with patch.object(supervisor.settings, "llm_extraction_cutover_location", True), \
+         patch.object(supervisor, "fill_gaps", new=AsyncMock(side_effect=RuntimeError("boom"))):
+        await supervisor._maybe_apply_llm_extraction_cutover("estoy en algún sitio", intent, state)
+
+    assert intent.location is None
+
+
+@pytest.mark.asyncio
+async def test_location_cutover_result_propagates_to_state():
+    intent = DetectedIntent()
+    state = ConversationState(conversation_id="loc-cutover-propagation-test")
+
+    with patch.object(supervisor.settings, "llm_extraction_cutover_location", True), \
+         patch.object(supervisor, "fill_gaps", new=AsyncMock(return_value={
+             "location": "cartagena",
+         })):
+        await supervisor._maybe_apply_llm_extraction_cutover("salimos desde bocagrande", intent, state)
+    supervisor._apply_detected_intent(intent, state)
+
+    assert state.detected_location == "cartagena"
+    assert state.location == "cartagena"

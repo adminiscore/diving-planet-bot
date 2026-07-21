@@ -157,7 +157,7 @@ Checklist de estado — actualizar aquí Y en el bloque correspondiente de
 - [✅] **Fase 0 — Fundaciones** (sin cambio de comportamiento) — completa, 100.0% de acuerdo con LLM real (tras corregir un caso mal etiquetado), ver `progress-log.md`
 - [✅] **Fase 1 — Dominio certificación** (primer vertical slice) — cutover implementado detrás de `settings.llm_extraction_cutover_certification` (default `False`), verificado en vivo con LLM real, ver `progress-log.md`
 - [✅] **Fase 2 — Dominio grupo/cantidad/edades** (`group_size`/`group_allocation`/`ages`) — cutover implementado detrás de `settings.llm_extraction_cutover_group` (default `False`), eval-set ampliado a 58 casos con **99.2% de acuerdo con LLM real** (100% en el dominio de grupo excluyendo 1 bug de regex documentado), verificado en vivo, ver `progress-log.md`
-- [ ] **Fase 3 — Dominio ubicación/actividad/cambios de plan**
+- [✅] **Fase 3 — Dominio ubicación** (`location`/`island`/`hotel`) — cutover implementado detrás de `settings.llm_extraction_cutover_location` (default `False`), eval-set ampliado a 64 casos con **99.2% de acuerdo** y **`location` 13/13 = 100%**, verificado en vivo. Los interceptores de cambio de plan/acompañante quedan fuera (no son campos de `DetectedIntent`, ver nota en la sección). Ver `progress-log.md`
 - [ ] **Fase 4 — Integración con acciones de carrito (orchestrator)**
 - [ ] **Fase 5 — Limpieza y consolidación**
 
@@ -327,6 +327,61 @@ generalizamos en el Fix 3 de `docs/live-test-inconsistencies-plan.md` (los que c
 la regresión que el Fix 4 tuvo que cazar). Este es el dominio con más regex dispersa
 y más frágil — el más beneficiado por esta migración, pero también el que requiere más
 cuidado (más superficie de regresión).
+
+**Alcance real cortado en esta fase**: `location`/`island`/`hotel` (los campos de
+`DetectedIntent` de este dominio). Los **interceptores de cambio de plan/acompañante NO
+se cortan aquí**: no son campos de extracción de `DetectedIntent`, sino lógica de estado
+mid-flow en `supervisor.py` (`_apply_group_recomposition` y similares) que reacciona a un
+cambio durante el flujo. El patrón gap-filler (rellenar campos `None` de `DetectedIntent`)
+no les aplica directamente; generalizarlos vía LLM es una sub-tarea aparte (candidata a
+una Fase 3b o a la Fase 4 de integración con el orquestador), documentada aquí para que
+no se pierda.
+
+Pasos:
+
+1. ✅ **Cutover implementado**: `settings.llm_extraction_cutover_location` (`src/config.py`,
+   default `False`), registrado en `_active_cutover_fields()` con
+   `_LOCATION_CUTOVER_FIELDS = {"location", "island", "hotel"}`. `location` (enum
+   cartagena|island) es el campo de alto valor: dirige el enrutamiento logístico/precios y
+   el LLM lo infiere de barrios/lugares que el regex no enumera (Bocagrande/Getsemaní/
+   Manga/Castillogrande/Old Town → cartagena; Rosario/Barú → island). `island`/`hotel` se
+   consumen solo para display/contexto (`island_names.get(slug, raw)`, degradan con
+   gracia), así que rellenarlos con texto libre del LLM es inofensivo — no tocan el routing
+   por service, que va por `state.location`.
+2. ✅ **Mejora de schema**: la descripción de `location` en el `_TOOL` de
+   `llm_extractor.py` se enriqueció con los barrios de Cartagena y las zonas insulares
+   para guiar la inferencia; `island`/`hotel` con ejemplos.
+3. ✅ **Fix defensivo del cutover** (hallado por TDD de esta fase): el cutover aplicaba
+   cualquier campo del patch que estuviera en un dominio activo; ahora aplica SOLO los
+   campos que eran un hueco real (`k in relevant_gaps`), no solo "en un dominio activo".
+   `fill_gaps()` ya lo garantizaba, pero ahora el cutover refuerza él mismo la propiedad
+   "nunca sobreescribir lo que el regex resolvió" (defensa en profundidad). Este fix
+   beneficia a las 3 fases.
+4. ✅ **Eval-set ampliado** de 58 a 64 casos: 6 adversariales de ubicación, cada uno
+   validado contra el `IntentDetector` real (barrios de Cartagena en ES/EN + un hotel
+   insular en Barú). El eval de `island`/`hotel` exactos se omite deliberadamente (son
+   texto libre del LLM vs slugs canónicos del regex; el valor y el rigor está en
+   `location`, el enum que dirige el routing).
+5. ✅ **TDD**: `tests/test_llm_extraction_cutover.py` +5 tests (19 total) — flag apagado
+   no llama al LLM; encendido rellena solo location/island/hotel aunque el patch traiga
+   otros dominios; nunca sobreescribe `location` ya resuelto; degrada ante fallo; propaga
+   a `state`.
+6. ✅ **Eval con LLM real** (`python -m scripts.run_extraction_eval`, gpt-4o):
+   **127/128 = 99.2% de acuerdo, 0 huecos**. `location` **13/13 = 100%**. El único
+   desacuerdo global sigue siendo el bug de regex `me plus 3 friends` (Fase 2, group_size),
+   ajeno a este dominio.
+7. ✅ **Verificado en vivo con LLM real** (local, `.env`, flag a mano):
+   - `"salimos desde bocagrande"` — flag OFF → `location=None`; ON → `location=cartagena`.
+   - `"staying in the old town this week"` — OFF → `None`; ON → `location=cartagena`.
+   - `"estamos hospedados en el hotel Las Islas en Baru"` — OFF → `None`; ON →
+     `location=island, island=Barú, hotel=Las Islas` (entra a la logística insular).
+8. ⬜ Pendiente (decisión de despliegue, no de código): activar
+   `llm_extraction_cutover_location=True` en un entorno real cuando el equipo decida —
+   mismo patrón que Fases 1-2. Default en `False`.
+
+**Fase 3 completa** para el dominio de campos (location/island/hotel). Los interceptores
+de cambio de plan/acompañante quedan explícitamente fuera (ver "Alcance real" arriba) —
+son estado mid-flow, no extracción de campos, y se abordan en una fase posterior.
 
 ### Fase 4 — Integración con acciones de carrito (orchestrator)
 

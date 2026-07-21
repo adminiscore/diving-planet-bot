@@ -110,10 +110,18 @@ _TOOL = {
                 "location": {
                     "type": "string",
                     "enum": ["cartagena", "island"],
-                    "description": "Where the customer departs from.",
+                    "description": (
+                        "Where the customer is based / departs from. 'cartagena' "
+                        "if they're staying in Cartagena city or any of its "
+                        "neighborhoods (Bocagrande, Getsemaní, Centro/Old City, "
+                        "Manga, Castillogrande…). 'island' if they're staying on "
+                        "or coming from the Rosario Islands, Barú, or a specific "
+                        "island/island-hotel. Only set it when the message gives "
+                        "a real place signal."
+                    ),
                 },
-                "island": {"type": "string", "description": "Specific island name, if mentioned."},
-                "hotel": {"type": "string", "description": "Specific hotel name, if mentioned."},
+                "island": {"type": "string", "description": "Specific island name, if mentioned (e.g. Isla Grande, Barú, Isla del Sol)."},
+                "hotel": {"type": "string", "description": "Specific hotel/lodging name on the islands, if mentioned."},
                 "ages": {
                     "type": "array",
                     "items": {"type": "integer"},

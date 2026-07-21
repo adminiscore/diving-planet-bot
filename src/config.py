@@ -101,6 +101,17 @@ class Settings(BaseSettings):
     # #7). Off by default everywhere; the regex stays the primary/fast path —
     # this only fills gaps, never overrides a regex-resolved value.
     llm_extraction_cutover_group: bool = False
+    # --- Robustness Fase 3 (docs/robustness/plan.md §4, dominio ubicación) ---
+    # When True, the LLM extractor's result for `location`/`island`/`hotel` is
+    # actually APPLIED (not just logged) when the regex left them unresolved —
+    # the third per-domain cutover. `location` (cartagena|island) drives the
+    # logistics/pricing routing and is the high-value field here (the LLM infers
+    # it from neighborhoods/landmarks the regex can't enumerate, e.g.
+    # "bocagrande"→cartagena); `island`/`hotel` are display/context only and
+    # degrade gracefully. Independent kill switch (plan.md #7). Off by default
+    # everywhere; the regex stays the primary/fast path — gaps only, never
+    # overrides a regex-resolved value.
+    llm_extraction_cutover_location: bool = False
 
     @property
     def is_dev(self) -> bool:
