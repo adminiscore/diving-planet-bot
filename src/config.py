@@ -13,6 +13,17 @@ class Settings(BaseSettings):
     # --- OpenAI ---
     openai_api_key: str = ""
     openai_model: str = "gpt-4o"
+    # Model for the narrow, structured LLM gap-filler extractor
+    # (src/agents/llm_extractor.py, robustness Fases 1-3). Kept SEPARATE from
+    # openai_model (used by the action orchestrator): the extraction is a small
+    # forced-tool-call task where a cheaper/faster model suffices. Measured on
+    # docs/robustness/eval-set.json (64 cases): gpt-4o-mini = 98.4% vs gpt-4o =
+    # 99.2% — the only difference is 1 extra `missed` (it abstains on a hard
+    # implicit-count case rather than misfilling), so its failure mode is safe
+    # (degrades to "regex-only / ask", never to a wrong value). ~15-30x cheaper
+    # and faster per call. Revert to "gpt-4o" here if ever needed. See
+    # docs/robustness/progress-log.md (Fase 4).
+    extraction_model: str = "gpt-4o-mini"
     openai_embedding_model: str = "text-embedding-3-small"
     # Model used to transcribe incoming customer voice notes (see
     # src/channels/audio.py). gpt-4o-mini-transcribe is cheaper/better than

@@ -158,7 +158,7 @@ Checklist de estado — actualizar aquí Y en el bloque correspondiente de
 - [✅] **Fase 1 — Dominio certificación** (primer vertical slice) — cutover implementado detrás de `settings.llm_extraction_cutover_certification` (default `False`), verificado en vivo con LLM real, ver `progress-log.md`
 - [✅] **Fase 2 — Dominio grupo/cantidad/edades** (`group_size`/`group_allocation`/`ages`) — cutover implementado detrás de `settings.llm_extraction_cutover_group` (default `False`), eval-set ampliado a 58 casos con **99.2% de acuerdo con LLM real** (100% en el dominio de grupo excluyendo 1 bug de regex documentado), verificado en vivo, ver `progress-log.md`
 - [✅] **Fase 3 — Dominio ubicación** (`location`/`island`/`hotel`) — cutover implementado detrás de `settings.llm_extraction_cutover_location` (default `False`), eval-set ampliado a 64 casos con **99.2% de acuerdo** y **`location` 13/13 = 100%**, verificado en vivo. Los interceptores de cambio de plan/acompañante quedan fuera (no son campos de `DetectedIntent`, ver nota en la sección). Ver `progress-log.md`
-- [ ] **Fase 4 — Integración con acciones de carrito (orchestrator)**
+- [✅] **Fase 4 — Integración con acciones de carrito (orchestrator)** — evaluado con datos: **decisión de MANTENER separados** extractor y orquestador (fusionar acoplaría concerns, sometería la extracción validada al no-determinismo "auto" del orquestador, y la 2ª llamada solo ocurre en turnos con hueco). Mejora concreta entregada: el extractor pasa a un modelo más barato/rápido (`settings.extraction_model=gpt-4o-mini`), medido a 98.4% en el eval-set con modo de fallo seguro (abstención, no misfill). Ver `progress-log.md`
 - [ ] **Fase 5 — Limpieza y consolidación**
 
 ### Fase 0 — Fundaciones
@@ -388,8 +388,42 @@ son estado mid-flow, no extracción de campos, y se abordan en una fase posterio
 Evaluar si, una vez los campos de `DetectedIntent` son fiables vía LLM, tiene sentido
 fusionar esta extracción con el orquestador de acciones ya existente
 (`src/agents/orchestrator.py`) en una sola llamada (ahorro de latencia/coste) o
-mantenerlos separados (más simple de razonar, cada uno con su propio contrato). Decisión
-pendiente de tomar con datos de las fases 1-3.
+mantenerlos separados (más simple de razonar, cada uno con su propio contrato).
+
+**Decisión (tomada con datos de las fases 1-3): MANTENER SEPARADOS.** Razones:
+
+1. **Concerns distintos.** El extractor (`fill_gaps`) es una extracción estructurada con
+   `tool_choice` forzado a `extract_fields`, temperatura 0, prompt estrecho — determinista
+   y validada contra el eval-set. El orquestador (`orchestrate`) elige una *acción* con
+   `tool_choice="auto"` (puede declinar → `answer_question`), con otro prompt, otro set de
+   tools y no-determinismo conocido. Fusionarlos metería la extracción (cuidada, medida)
+   dentro del no-determinismo "auto" del orquestador — justo lo que este plan evita.
+2. **El valor ya fluye.** El orquestador YA recibe el estado enriquecido por la extracción
+   (cutover → `_apply_detected_intent` → `_build_extra_context` → snapshot). Fusionar no
+   añadiría capacidad, solo ahorraría una llamada.
+3. **El ahorro es pequeño en la práctica.** La 2ª llamada (extracción) solo ocurre cuando
+   un flag de cutover está encendido Y el regex dejó un hueco relevante — la minoría de
+   turnos. En el caso común (regex resuelve todo) no hay llamada extra.
+4. **Testabilidad y kill switch.** Separados, cada uno es una función pura mockeable con su
+   propio contrato y su propio flag; fusionados, se acopla la superficie de regresión de
+   ambos.
+
+**Mejora concreta entregada** (el objetivo de coste/latencia de esta fase, sin la
+fusión arriesgada): el extractor pasa a un modelo dedicado más barato y rápido,
+`settings.extraction_model` (default `gpt-4o-mini`), separado de `settings.openai_model`
+(gpt-4o, que sigue en el orquestador para su tarea más difícil de decidir acción).
+
+- Medido en `docs/robustness/eval-set.json` (64 casos): **gpt-4o-mini = 98.4%** vs
+  **gpt-4o = 99.2%**. La única diferencia es **1 `missed` de más** (se abstiene en un caso
+  de conteo implícito difícil en vez de rellenar mal) — 0 `disagree` de más. Modo de fallo
+  **seguro**: degrada a "regex-only / preguntar", nunca a un valor equivocado.
+- Sigue por encima del umbral ≥98% de los cutover, y es ~15-30x más barato por llamada.
+- Revertible con una línea (`extraction_model="gpt-4o"`).
+
+**Interceptores de cambio de plan/acompañante** (los que quedaron fuera de la Fase 3): se
+confirman como trabajo separado del patrón gap-filler — son estado mid-flow, no extracción
+de campos. Candidatos a una fase propia si el tráfico real (logs `[EXTRACT][CUTOVER]` en
+PRE) muestra que siguen siendo una fuente de fragilidad. No se abordan aquí.
 
 ### Fase 5 — Limpieza y consolidación
 

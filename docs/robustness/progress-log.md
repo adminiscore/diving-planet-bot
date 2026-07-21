@@ -450,3 +450,63 @@ timing de activar `llm_extraction_cutover_location=True` en un entorno real.
 3. Fase de override futura para casos donde el regex resuelve MAL (`me plus 3 friends`),
    cambiando el diseño de "nunca sobreescribir regex" a "override por campo medido con
    datos" (plan.md §3.2).
+
+---
+
+## 2026-07-21 — Fase 3 activada en PRE + Fase 4 (decisión arquitectónica + modelo del extractor)
+
+**Fase(s) tocada(s)**: Fase 3 (activación en PRE) + Fase 4 (decisión + mejora) — completa.
+
+**Qué se hizo**:
+- **Fase 3 activada en PRE**: `LLM_EXTRACTION_CUTOVER_LOCATION: "true"` en `dp-pre-bot`
+  (`docker-compose.vps.yml`), desplegado. Los 3 flags (certificación, grupo, ubicación)
+  quedan encendidos en PRE; default `False` en el resto.
+- **Fase 4 — evaluación fusionar-vs-separar, con datos**:
+  - **Decisión: mantener SEPARADOS** extractor (`fill_gaps`) y orquestador (`orchestrate`).
+    Razones (detalle en `plan.md` §4 Fase 4): son concerns distintos (extracción forzada y
+    determinista vs elección de acción con `tool_choice="auto"` no-determinista); el valor
+    de la extracción YA llega al orquestador vía el snapshot de estado; la 2ª llamada solo
+    ocurre en turnos con hueco (minoría), así que el ahorro de fusionar es pequeño; y
+    separados cada uno es mockeable, con su contrato y su kill switch. Fusionar acoplaría
+    ambas superficies de regresión y metería la extracción validada en el no-determinismo
+    del orquestador — justo lo que este plan evita.
+  - **Mejora concreta entregada** (el objetivo de coste/latencia de la fase, sin la fusión
+    arriesgada): `settings.extraction_model` (default `gpt-4o-mini`), separado de
+    `settings.openai_model` (gpt-4o, que sigue en el orquestador). El extractor es una
+    tarea estrecha de tool-call forzado donde un modelo más pequeño basta.
+  - **Medición** (eval-set, 64 casos, LLM real): **gpt-4o-mini = 98.4%** vs
+    **gpt-4o = 99.2%**. La única diferencia es **1 `missed` de más** (se abstiene en el
+    caso de conteo implícito `my daughter is 9 and my son is 12...` en vez de rellenar
+    mal), **0 `disagree` de más**. Modo de fallo **seguro**: degrada a "regex-only /
+    preguntar", nunca a un valor equivocado. Sigue ≥98% (umbral de cutover).
+  - **Latencia** (micro-benchmark local, 4 llamadas/modelo, mensaje con hueco):
+    gpt-4o avg **6254ms** (min 3484 / max 13864), gpt-4o-mini avg **4598ms**
+    (min 3954 / max 6192) — ~26% más rápido de media y ~55% menos latencia de cola, más
+    consistente. (Latencias absolutas altas por red local→OpenAI; el ratio se mantiene en
+    PRE.) Coste: ~15-30x más barato por llamada.
+  - TDD: `test_fill_gaps_uses_extraction_model_not_orchestrator_model` en
+    `tests/test_llm_extractor.py` (cliente que captura el kwarg `model` y verifica que es
+    `settings.extraction_model`).
+- **Interceptores de cambio de plan/acompañante**: confirmados como trabajo separado del
+  patrón gap-filler (estado mid-flow, no extracción de campos). No se abordan en Fase 4;
+  candidatos a fase propia si el tráfico real de PRE muestra que siguen dando fragilidad.
+
+**Decisiones tomadas y por qué**:
+- Se eligió `gpt-4o-mini` como default del extractor (no solo configurable) porque el dato
+  lo respalda: mismo conjunto de desacuerdos que gpt-4o (solo el bug de regex), y su única
+  regresión es una abstención segura. El coste/latencia bajan de forma notable. Revertible
+  con una línea si el tráfico real desmiente el eval.
+- No se implementó ningún prototipo de fusión: habría sido código de usar y tirar que
+  contradice la decisión tomada con datos. La Fase 4 del plan pedía *evaluar*, y la
+  evaluación concluyó en "separar" + una mejora medible.
+
+**Qué quedó a medias / bloqueadores**: nada. Fases 0-4 completas.
+
+**Siguiente paso concreto para quien continúe**:
+1. (Opcional) Activar los flags en PRE ya está hecho para los 3 dominios; falta solo la
+   decisión de producción (PRO no está desplegado hoy).
+2. **Fase 5 (limpieza/consolidación)**: cuando los 3 dominios lleven un periodo estable en
+   PRE con tráfico real (revisar logs `[EXTRACT][CUTOVER]`), eliminar el código regex ya
+   muerto que el LLM haya reemplazado de facto, y cerrar el plan.
+3. Fase de override futura (`me plus 3 friends` y casos donde el regex resuelve MAL) +
+   los interceptores de cambio de plan mid-flow, si el tráfico real lo justifica.

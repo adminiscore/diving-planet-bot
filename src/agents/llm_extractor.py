@@ -210,7 +210,7 @@ async def fill_gaps(
     try:
         client = client or AsyncOpenAI(api_key=settings.openai_api_key)
         response = await client.chat.completions.create(
-            model=settings.openai_model,
+            model=settings.extraction_model,
             messages=messages,
             tools=[_TOOL],
             tool_choice={"type": "function", "function": {"name": "extract_fields"}},

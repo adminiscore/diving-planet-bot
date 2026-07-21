@@ -107,6 +107,29 @@ async def test_fill_gaps_returns_patch_for_missing_fields():
 
 
 @pytest.mark.asyncio
+async def test_fill_gaps_uses_extraction_model_not_orchestrator_model():
+    """Fase 4: the gap-filler runs on settings.extraction_model (a cheaper/faster
+    model), kept separate from settings.openai_model used by the orchestrator."""
+    from src.config import settings
+
+    captured = {}
+
+    class _CapturingClient:
+        class chat:
+            class completions:
+                @staticmethod
+                async def create(**kwargs):
+                    captured.update(kwargs)
+                    return _FakeResponse(_FakeMessage(tool_calls=[_FakeToolCall(
+                        "extract_fields", json.dumps({"group_size": 2})
+                    )]))
+
+    intent = DetectedIntent(language="en")
+    await fill_gaps("just the two of us", intent, lang="en", client=_CapturingClient())
+    assert captured["model"] == settings.extraction_model
+
+
+@pytest.mark.asyncio
 async def test_fill_gaps_never_overwrites_already_resolved_field():
     """Even if the LLM (buggy or not) returns a field regex already resolved,
     fill_gaps must strip it out of the patch — the regex result always wins."""
