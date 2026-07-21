@@ -1,6 +1,13 @@
 History
 =======
 
+0.20.41 - (2026-07-21)
+----------------------
+* **Refactor estructural: elimina la clase de bug encontrada por la auditoría del fallback repetido**. `_dispatch_conversation_agent` mantenía 4 bloques separados, cada uno repitiendo a mano una de las condiciones de `_intent_would_route()` — exactamente la duplicación que dejó sin cubrir el caso de "actividad específica" (v0.20.39) hasta que una auditoría lo encontró. Los 4 bloques se colapsan en uno solo que llama directamente a `_route_detected_intent()` (el router canónico), sincronizando primero los campos que el orquestador/`remember` pudieran haber resuelto (`is_certified`, `group_size`, `group_allocation`, `activity`, `location` — antes cada bloque sincronizaba un subconjunto distinto e inconsistente). Con esto, ya no hay dos definiciones de "¿debería esto enrutar?" que puedan desincronizarse — solo una.
+* **Test de invariante nuevo** (`tests/test_dispatch_fallback_invariant.py`, 10 casos parametrizados): para cada forma de `DetectedIntent` que `_intent_would_route()` reconoce (grupo mixto, certificado conocido, certificación desconocida, y cada actividad específica — minicurso/snorkel/los 5 cursos PADI), confirma que un mensaje mal clasificado por el orquestador como `answer_question` sigue entrando al flujo guiado. Si en el futuro se añade un caso nuevo a `_intent_would_route()` sin que el router lo cubra de verdad, este test lo detecta solo — es la red de seguridad permanente para esta clase de bug.
+* Verificado en vivo con LLM real (local, `.env.dev`) los 2 escenarios clave (grupo mixto, actividad específica) — comportamiento idéntico al de antes del refactor.
+* Suite: **1786 passed**, 15 skipped. `ruff`/`compileall` limpios.
+
 0.20.40 - (2026-07-21)
 ----------------------
 * **Soporte de inglés para el enriquecimiento de acompañante a mitad del carrito mixto** (hallazgo de la auditoría del patrón de fallback, sesión 2026-07-21): `_maybe_handle_companion_request_inside_mixed_flow` tenía un `if state.language != "es": return None` que descartaba por completo a clientes en inglés, aunque el detector que usa (`_detect_companion_intent`) ya reconoce inglés ("my partner", "my wife"...). Las plantillas de texto que construían la pregunta de certificación/actividad/reparto (`_build_mixed_from_single_cert_question`, `_build_mixed_from_single_cert_split_question`, `_build_mixed_from_single_activity_question`) estaban escritas solo en español — ahora soportan ambos idiomas, se quitó el `if` que descartaba inglés, y se traduce el "No te entendí del todo." repetido en varios puntos de `_handle_pending_companion_flow`.

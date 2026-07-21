@@ -3877,85 +3877,43 @@ async def _dispatch_conversation_agent(state: ConversationState, message: str) -
             return result
         # Couldn't route (e.g. no concrete activity) -> fall through to an answer.
 
-    # A full group split ("somos 5, 3 certificados y 2 sin certificar") the LLM
-    # tagged as answer_question: real bug (live PRE, 2026-07-21) — RAG then
-    # improvised a wrong policy ("the non-certified friends must do Open Water
-    # first") instead of the already-correct deterministic offer (minicourse
-    # always available, Open Water ALSO offered on a multi-day cert plan — see
-    # decision_tree._maybe_start_pending_beginner). Neither
-    # _should_skip_to_certified_flow (needs is_certified is True) nor
-    # _should_ask_certification (needs is_certified is None) covers this,
-    # since a mixed group's aggregate is_certified is False — so this needs its
-    # own fallback, checked first to match _route_detected_intent's own
-    # internal priority (mixed group before single-person certification).
-    if (
-        decision.tool not in _ENTRY_BOOKING_TOOLS
-        and not _message_looks_like_question(message)
-        and _should_enter_mixed_flow(intent, state)
-    ):
-        intent.location = state.detected_location or intent.location
-        result = _route_detected_intent(intent, state, message)
-        if result is not None:
-            logger.info("[SUPERVISOR] Mixed group split statement -> entering guided flow")
-            return result
-
-    # "Soy certificado" / "somos buzos certificados" and similar bare statements:
-    # the LLM often tags these as answer_question and RAG gives a vague "do you have
-    # a date in mind?" reply. When the deterministic router clearly WOULD offer the
-    # certified-diving options and the message isn't literally a question, prefer
-    # showing those options over a vague answer.
-    if (
-        decision.tool not in _ENTRY_BOOKING_TOOLS
-        and not _message_looks_like_question(message)
-        and _should_skip_to_certified_flow(intent, state)
-    ):
+    # A message the orchestrator classified as something other than a clear
+    # booking-entry tool may still need routing into the guided flow (a bare
+    # "soy certificado", a full group split, "quiero hacer snorkel", a booking
+    # statement with unknown certification...). _route_detected_intent() is
+    # the single canonical decision for all of these, in priority order (mixed
+    # group first, then known-certified, then a specific activity, then
+    # unknown certification) — call it directly instead of keeping a
+    # hand-written mirror of its branch conditions as separate "should I even
+    # bother" gates first.
+    #
+    # That mirror used to be 4 separate blocks here, each repeating one of
+    # _route_detected_intent's own conditions. One of them (specific activity)
+    # silently fell out of sync until an audit caught it (2026-07-21, see
+    # docs/HISTORY.md v0.20.39) — a message whose data WAS extracted correctly
+    # by the regex still fell through to a wrong/generic RAG answer, just
+    # because nobody remembered to add its matching fallback block. Calling
+    # the real router directly makes that whole class of bug structurally
+    # impossible: there is only one definition of "should this route", not
+    # two hand-maintained copies that can drift apart.
+    #
+    # _route_detected_intent returns None when none of its branches match —
+    # calling it unconditionally here is safe (it just re-runs the already-
+    # idempotent _apply_detected_intent and falls through), so this never
+    # risks routing a message that genuinely shouldn't route.
+    if decision.tool not in _ENTRY_BOOKING_TOOLS and not _message_looks_like_question(message):
+        # Sync any LLM-remembered facts into the intent so the deterministic
+        # router sees the merged truth (e.g. certification/location/activity
+        # the regex missed but the orchestrator's `remember` tool caught).
         if state.is_certified is not None:
             intent.is_certified = state.is_certified
         intent.group_size = state.detected_group_size or intent.group_size
+        intent.group_allocation = state.detected_group_allocation or intent.group_allocation
+        intent.activity = state.detected_activity or intent.activity
         intent.location = state.detected_location or intent.location
         result = _route_detected_intent(intent, state, message)
         if result is not None:
-            logger.info("[SUPERVISOR] Bare certified-diver statement -> offering diving options")
-            return result
-
-    # A specific-activity statement (snorkel/minicourse/PADI course) the LLM
-    # tagged as answer_question. Audit finding (2026-07-21, same class of bug
-    # as the two fallbacks above): _intent_would_route() checks
-    # `intent.activity in ("minicourse", "snorkel", "padi_*")` as one of its 4
-    # branches, but until now NO fallback here covered it — "quiero hacer
-    # snorkel, somos 2" fell entirely to RAG instead of entering the guided
-    # booking flow for that activity. Mirrors _intent_would_route's own
-    # branch order (checked right after certified-diver, before unknown-cert).
-    if (
-        decision.tool not in _ENTRY_BOOKING_TOOLS
-        and not _message_looks_like_question(message)
-        and intent.activity in ("minicourse", "snorkel", "padi_open_water", "padi_advanced",
-                                 "padi_rescue", "padi_divemaster", "padi_specialty")
-    ):
-        intent.group_size = state.detected_group_size or intent.group_size
-        intent.location = state.detected_location or intent.location
-        result = _route_detected_intent(intent, state, message)
-        if result is not None:
-            logger.info(f"[SUPERVISOR] Specific-activity statement ({intent.activity}) -> entering guided flow")
-            return result
-
-    # Same fallback as above, for the parallel case where certification is
-    # UNKNOWN rather than already true: a clear booking statement (diving
-    # activity + not a question) whose certification status wasn't stated
-    # ("queremos bucear 2 días" never says "somos certificados"). Real bug
-    # (live PRE, 2026-07-17): the LLM classified this as answer_question and
-    # RAG improvised a personalized recommendation that ended by offering an
-    # advisor, instead of the guided flow asking "¿estáis certificados?".
-    if (
-        decision.tool not in _ENTRY_BOOKING_TOOLS
-        and not _message_looks_like_question(message)
-        and _should_ask_certification(intent, state)
-    ):
-        intent.group_size = state.detected_group_size or intent.group_size
-        intent.location = state.detected_location or intent.location
-        result = _route_detected_intent(intent, state, message)
-        if result is not None:
-            logger.info("[SUPERVISOR] Booking statement with unknown certification -> asking certification")
+            logger.info(f"[SUPERVISOR] Fallback routing (tool={decision.tool}) -> guided flow, step={state.step.value}")
             return result
 
     # A companion mentioned in free text ("va mi novia que solo acompaña") — when
