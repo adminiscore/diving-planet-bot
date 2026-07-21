@@ -1,14 +1,13 @@
 """Exhaustive conversation-level test dataset for the Diving Planet bot."""
 
 import os
-
-import pytest
 from unittest.mock import AsyncMock, patch
 
-from src.flows.decision_tree import ConversationState, Step, SERVICES
-from src.agents.supervisor import route_message
-from src.agents.lead_summary import build_lead_summary
+import pytest
 
+from src.agents.lead_summary import build_lead_summary
+from src.agents.supervisor import route_message
+from src.flows.decision_tree import SERVICES, ConversationState, Step
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -157,7 +156,7 @@ async def test_buenas_detects_spanish_and_skips_language_step():
     ambiguous: the bot should detect Spanish and skip the language question,
     same as "hola"."""
     state = make_state()
-    resp = await route_message(state, "buenas")
+    await route_message(state, "buenas")
     assert state.language == "es"
     assert state.step == Step.MAIN_MENU
 
@@ -167,7 +166,7 @@ async def test_generic_spanish_phrase_at_welcome_detects_spanish():
     """Any free text that reveals the language ("qué pasó", no greeting word
     at all) should skip the language question too, not just exact greetings."""
     state = make_state()
-    resp = await route_message(state, "que paso")
+    await route_message(state, "que paso")
     assert state.language == "es"
     assert state.step == Step.MAIN_MENU
 
@@ -175,7 +174,7 @@ async def test_generic_spanish_phrase_at_welcome_detects_spanish():
 @pytest.mark.asyncio
 async def test_generic_english_phrase_at_welcome_detects_english():
     state = make_state()
-    resp = await route_message(state, "welcome")
+    await route_message(state, "welcome")
     assert state.language == "en"
     assert state.step == Step.MAIN_MENU
 
@@ -186,7 +185,7 @@ async def test_unrecognized_first_message_falls_back_to_llm_language_detection(m
     inferring language from the text itself rather than asking the LLM language
     fallback or the explicit language question."""
     state = make_state()
-    resp = await route_message(state, "g'day mate, tell me about your diving courses")
+    await route_message(state, "g'day mate, tell me about your diving courses")
     assert state.language == "en"
     assert state.step == Step.MAIN_MENU
 
@@ -213,7 +212,7 @@ async def test_select_english_by_number():
 async def test_language_detection_english_text():
     state = make_state()
     await route_message(state, "zzz")
-    resp = await route_message(state, "english")
+    await route_message(state, "english")
     assert state.language == "en"
 
 
@@ -221,7 +220,7 @@ async def test_language_detection_english_text():
 async def test_language_detection_spanish_text():
     state = make_state()
     await route_message(state, "zzz")
-    resp = await route_message(state, "español")
+    await route_message(state, "español")
     assert state.language == "es"
 
 
@@ -229,7 +228,7 @@ async def test_language_detection_spanish_text():
 async def test_invalid_language_choice_shows_not_understood():
     state = make_state()
     await route_message(state, "zzz")
-    resp = await route_message(state, "9")
+    await route_message(state, "9")
     assert state.step == Step.LANGUAGE
 
 
@@ -272,9 +271,9 @@ async def test_back_from_free_text_certification_question_returns_to_mixed_entry
     MENU_STEPS/_MIXED_FLOW_STEPS) and reset all the way to MAIN_MENU instead
     of going one step back."""
     state = await reach_main_menu("es")
-    r1 = await route_message(state, "quiero bucear")
+    await route_message(state, "quiero bucear")
     assert state.step == Step.MIXED_ASK_CERTIFICATION
-    r2 = await route_message(state, "volver")
+    await route_message(state, "volver")
     assert state.step == Step.MIXED_ENTRY
 
 
@@ -378,7 +377,7 @@ async def test_mid_conversation_language_switch_en_to_es():
     state = await reach_main_menu("en")
     await route_message(state, "1")
     assert state.step == Step.MIXED_ENTRY
-    resp = await route_message(state, "me lo puedes decir en español?")
+    await route_message(state, "me lo puedes decir en español?")
     assert state.language == "es"
     assert state.step == Step.MAIN_MENU
 
@@ -620,7 +619,7 @@ async def test_go_pro_menu_shows_only_advanced_rescue_and_divemaster():
 async def test_fish_identification_specialty():
     state = await reach_courses_menu()
     responses = await send(state, "3", "2", "1")  # specialties > fish id > qty 1
-    resp = responses[-1]
+    responses[-1]
     assert "fish" in state.selected_service or "peces" in state.selected_service
     assert state.step in (Step.MIXED_ADD_PREVIEW, Step.ESCALATE)
 
@@ -629,7 +628,7 @@ async def test_fish_identification_specialty():
 async def test_nitrox_specialty():
     state = await reach_courses_menu()
     responses = await send(state, "3", "5", "1")  # specialties > nitrox > qty 1
-    resp = responses[-1]
+    responses[-1]
     assert "nitrox" in state.selected_service
     assert state.step in (Step.MIXED_ADD_PREVIEW, Step.ESCALATE)
 
@@ -649,7 +648,7 @@ async def test_referral_reactivate_escalates():
 @pytest.mark.asyncio
 async def test_specialties_menu_choice_3():
     state = await reach_courses_menu()
-    resp = await route_message(state, "3")  # especialidades
+    await route_message(state, "3")  # especialidades
     assert state.step == Step.COURSES_SPECIALTIES_MENU
 
 
@@ -722,7 +721,7 @@ async def test_pricing_menu_island_context_aware():
 @pytest.mark.asyncio
 async def test_pricing_menu_invalid_returns_to_pricing():
     state = await reach_pricing_menu()
-    resp = await route_message(state, "9")
+    await route_message(state, "9")
     assert state.step == Step.PRICING_MENU
 
 
@@ -788,7 +787,7 @@ async def test_logistics_meeting_point_without_location():
 @pytest.mark.asyncio
 async def test_logistics_accommodation_leads_to_island_menu():
     state = await reach_logistics_menu()
-    resp = await route_message(state, "2")
+    await route_message(state, "2")
     assert state.step == Step.ISLAND_MENU
 
 
@@ -844,7 +843,7 @@ async def test_island_selector_isla_grande_shows_hotels():
 async def test_island_selector_hotel_san_pedro():
     state = await reach_logistics_menu()
     await send(state, "2", "1")  # Isla Grande
-    resp = await route_message(state, "1")  # San Pedro de Majagua
+    await route_message(state, "1")  # San Pedro de Majagua
     assert state.hotel == "San Pedro de Majagua"
     assert state.step == Step.LOGISTICS_MENU
 
@@ -861,7 +860,7 @@ async def test_island_selector_cocoliso():
 async def test_island_selector_other_hotel():
     state = await reach_logistics_menu()
     await send(state, "2", "1")  # Isla Grande (10 hoteles)
-    resp = await route_message(state, "11")  # Otro
+    await route_message(state, "11")  # Otro
     assert state.hotel == "Otro / No esta en la lista"
     assert state.step == Step.LOGISTICS_MENU
 
@@ -870,7 +869,7 @@ async def test_island_selector_other_hotel():
 async def test_island_selector_isla_marina():
     state = await reach_logistics_menu()
     await send(state, "2")
-    resp = await route_message(state, "2")  # Isla Marina
+    await route_message(state, "2")  # Isla Marina
     assert state.island == "Isla Marina"
     assert state.step == Step.ISLAND_HOTEL_MENU
 
@@ -879,7 +878,7 @@ async def test_island_selector_isla_marina():
 async def test_island_selector_isla_del_pirata():
     state = await reach_logistics_menu()
     await send(state, "2")
-    resp = await route_message(state, "3")  # Isla del Pirata
+    await route_message(state, "3")  # Isla del Pirata
     assert state.island == "Isla del Pirata"
 
 
@@ -887,7 +886,7 @@ async def test_island_selector_isla_del_pirata():
 async def test_island_selector_isla_rosario():
     state = await reach_logistics_menu()
     await send(state, "2")
-    resp = await route_message(state, "12")  # Isla Rosario
+    await route_message(state, "12")  # Isla Rosario
     assert state.island == "Isla Rosario"
     assert state.step == Step.ISLAND_HOTEL_MENU
 
@@ -913,7 +912,7 @@ async def test_island_hotel_stored_in_state_for_rag_context():
 async def test_main_menu_advisor_keyword_escalates():
     """Tras quitar la opción de asesor del menú principal, la escalación funciona por keyword."""
     state = await reach_main_menu()
-    resp = await route_message(state, "quiero hablar con un asesor")
+    await route_message(state, "quiero hablar con un asesor")
     assert state.step == Step.ESCALATE
     assert state.pending_note is not None
 
@@ -923,7 +922,7 @@ async def test_keyword_asesor_mid_flow():
     state = make_state()
     state.location = "cartagena"
     state.step = Step.MIXED_ADD_ACTIVITY  # mid-flow in the cart
-    resp = await route_message(state, "asesor")
+    await route_message(state, "asesor")
     assert state.step == Step.ESCALATE
     assert state.pending_note is not None
 
@@ -931,21 +930,21 @@ async def test_keyword_asesor_mid_flow():
 @pytest.mark.asyncio
 async def test_keyword_humano():
     state = await reach_main_menu()
-    resp = await route_message(state, "humano")
+    await route_message(state, "humano")
     assert state.step == Step.ESCALATE
 
 
 @pytest.mark.asyncio
 async def test_keyword_agente():
     state = await reach_main_menu()
-    resp = await route_message(state, "agente")
+    await route_message(state, "agente")
     assert state.step == Step.ESCALATE
 
 
 @pytest.mark.asyncio
 async def test_keyword_advisor_english():
     state = await reach_main_menu("en")
-    resp = await route_message(state, "advisor")
+    await route_message(state, "advisor")
     assert state.step == Step.ESCALATE
 
 
@@ -954,7 +953,7 @@ async def test_keyword_menu_resets_from_deep_step():
     state = make_state()
     state.location = "cartagena"
     state.step = Step.MIXED_ADD_CERT_PLAN  # deep in the cart flow
-    resp = await route_message(state, "menu")
+    await route_message(state, "menu")
     assert state.step == Step.MAIN_MENU
 
 
@@ -982,7 +981,7 @@ async def test_escalation_note_includes_service_if_known():
     state.location = "cartagena"
     state.selected_service = "2_dives_1_day"
     state.step = Step.MIXED_ADD_ACTIVITY
-    resp = await route_message(state, "asesor")
+    await route_message(state, "asesor")
     assert state.pending_note is not None
     # Advisor note shows the friendly service name, not the raw id.
     assert "2_dives_1_day" not in state.pending_note
@@ -994,7 +993,7 @@ async def test_escalation_note_includes_service_if_known():
 async def test_escalation_note_includes_language():
     state = make_state()
     await send(state, "hello", "2")  # english
-    resp = await route_message(state, "advisor")
+    await route_message(state, "advisor")
     assert state.pending_note is not None
     assert "English" in state.pending_note
 
@@ -1015,56 +1014,56 @@ async def test_medical_asthma_escalates():
 @pytest.mark.asyncio
 async def test_medical_pregnancy_escalates():
     state = await reach_main_menu()
-    resp = await route_message(state, "estoy embarazada, es seguro bucear?")
+    await route_message(state, "estoy embarazada, es seguro bucear?")
     assert state.step == Step.ESCALATE
 
 
 @pytest.mark.asyncio
 async def test_medical_heart_english_escalates():
     state = await reach_main_menu("en")
-    resp = await route_message(state, "I have a heart condition, can I dive?")
+    await route_message(state, "I have a heart condition, can I dive?")
     assert state.step == Step.ESCALATE
 
 
 @pytest.mark.asyncio
 async def test_weather_tomorrow_escalates():
     state = await reach_main_menu()
-    resp = await route_message(state, "cómo está el clima mañana?")
+    await route_message(state, "cómo está el clima mañana?")
     assert state.step == Step.ESCALATE
 
 
 @pytest.mark.asyncio
 async def test_weather_english_escalates():
     state = await reach_main_menu("en")
-    resp = await route_message(state, "what's the weather tomorrow?")
+    await route_message(state, "what's the weather tomorrow?")
     assert state.step == Step.ESCALATE
 
 
 @pytest.mark.asyncio
 async def test_real_time_availability_escalates():
     state = await reach_main_menu()
-    resp = await route_message(state, "hay cupo mañana?")
+    await route_message(state, "hay cupo mañana?")
     assert state.step == Step.ESCALATE
 
 
 @pytest.mark.asyncio
 async def test_payment_error_escalates():
     state = await reach_main_menu()
-    resp = await route_message(state, "no puedo reservar, hay un error")
+    await route_message(state, "no puedo reservar, hay un error")
     assert state.step == Step.ESCALATE
 
 
 @pytest.mark.asyncio
 async def test_complaint_escalates():
     state = await reach_main_menu()
-    resp = await route_message(state, "tengo una queja")
+    await route_message(state, "tengo una queja")
     assert state.step == Step.ESCALATE
 
 
 @pytest.mark.asyncio
 async def test_emergency_escalates():
     state = await reach_main_menu()
-    resp = await route_message(state, "emergencia!")
+    await route_message(state, "emergencia!")
     assert state.step == Step.ESCALATE
 
 
@@ -1076,7 +1075,7 @@ async def test_emergency_escalates():
 async def test_pii_phone_blocked():
     state = await reach_main_menu()
     with patch("src.agents.supervisor.detect_pii", return_value=["phone"]):
-        resp = await route_message(state, "mi número es 3001234567")
+        await route_message(state, "mi número es 3001234567")
     assert state.step == Step.ESCALATE
 
 
@@ -1084,7 +1083,7 @@ async def test_pii_phone_blocked():
 async def test_pii_email_blocked():
     state = await reach_main_menu()
     with patch("src.agents.supervisor.detect_pii", return_value=["email"]):
-        resp = await route_message(state, "mi correo es test@example.com")
+        await route_message(state, "mi correo es test@example.com")
     assert state.step == Step.ESCALATE
 
 
@@ -1092,7 +1091,7 @@ async def test_pii_email_blocked():
 async def test_pii_id_blocked():
     state = await reach_main_menu()
     with patch("src.agents.supervisor.detect_pii", return_value=["id"]):
-        resp = await route_message(state, "mi cédula es 12345678")
+        await route_message(state, "mi cédula es 12345678")
     assert state.step == Step.ESCALATE
 
 
@@ -1101,7 +1100,7 @@ async def test_no_pii_no_block():
     state = await reach_main_menu()
     with patch("src.agents.supervisor.detect_pii", return_value=[]), \
          patch("src.agents.supervisor.rag_answer", new_callable=AsyncMock, return_value=RAG_MOCK):
-        resp = await route_message(state, "cuánto cuesta el minicurso?")
+        await route_message(state, "cuánto cuesta el minicurso?")
     assert state.step != Step.ESCALATE
 
 
@@ -1149,7 +1148,7 @@ async def test_free_text_in_welcome_step_not_sent_to_rag_if_too_short():
     state = make_state()
     await route_message(state, "zzz")  # no language signal -> stays at LANGUAGE step
     with patch("src.agents.supervisor.rag_answer", new_callable=AsyncMock, return_value=RAG_MOCK) as mock_rag:
-        resp = await route_message(state, "si")  # 1 palabra, sin "?" → tree, no RAG
+        await route_message(state, "si")  # 1 palabra, sin "?" → tree, no RAG
     mock_rag.assert_not_called()
 
 
@@ -1158,7 +1157,7 @@ async def test_post_summary_free_text_routes_to_rag():
     state = make_state()
     state.step = Step.SUMMARY
     state.selected_service = "2_dives_1_day"
-    with patch("src.agents.supervisor.rag_answer", new_callable=AsyncMock, return_value=RAG_MOCK) as mock_rag:
+    with patch("src.agents.supervisor.rag_answer", new_callable=AsyncMock, return_value=RAG_MOCK):
         resp = await route_message(state, "qué incluye el almuerzo exactamente?")
     assert resp == RAG_MOCK
 
@@ -1168,7 +1167,7 @@ async def test_post_escalate_free_text_routes_to_rag():
     state = await reach_main_menu()
     await route_message(state, "asesor")
     assert state.step == Step.ESCALATE
-    with patch("src.agents.supervisor.rag_answer", new_callable=AsyncMock, return_value=RAG_MOCK) as mock_rag:
+    with patch("src.agents.supervisor.rag_answer", new_callable=AsyncMock, return_value=RAG_MOCK):
         resp = await route_message(state, "cuánto tiempo tarda la respuesta?")
     assert resp == RAG_MOCK
 
@@ -1192,7 +1191,7 @@ async def test_en_open_water_from_island():
 @pytest.mark.asyncio
 async def test_en_advisor_keyword():
     state = await reach_main_menu("en")
-    resp = await route_message(state, "advisor")
+    await route_message(state, "advisor")
     assert state.step == Step.ESCALATE
     assert state.pending_note is not None
     assert "English" in state.pending_note
@@ -1298,7 +1297,7 @@ async def test_invalid_main_menu_option():
 async def test_invalid_island_menu_option():
     state = await reach_logistics_menu()
     await send(state, "2")
-    resp = await route_message(state, "99")
+    await route_message(state, "99")
     assert state.step == Step.ISLAND_MENU
 
 
@@ -1529,7 +1528,7 @@ async def test_summary_reservar_colombian_still_escalates():
     state.summary_mode = "itinerary_offer"
     state.selected_service = "2_dives_1_day"
     state.is_colombian = True
-    resp = await route_message(state, "reservar")
+    await route_message(state, "reservar")
     assert state.step == Step.ESCALATE
     assert state.pending_note is not None
 
@@ -1554,7 +1553,7 @@ async def test_post_summary_food_question_routes_to_rag():
     state = make_state()
     state.step = Step.SUMMARY
     state.selected_service = "2_dives_1_day"
-    with patch("src.agents.supervisor.rag_answer", new_callable=AsyncMock, return_value=RAG_MOCK) as mock_rag:
+    with patch("src.agents.supervisor.rag_answer", new_callable=AsyncMock, return_value=RAG_MOCK):
         resp = await route_message(state, "y qué hay para comer exactamente?")
     assert resp == RAG_MOCK
 
@@ -1564,7 +1563,7 @@ async def test_post_summary_photos_question_routes_to_rag():
     state = make_state()
     state.step = Step.SUMMARY
     state.selected_service = "2_dives_1_day"
-    with patch("src.agents.supervisor.rag_answer", new_callable=AsyncMock, return_value=RAG_MOCK) as mock_rag:
+    with patch("src.agents.supervisor.rag_answer", new_callable=AsyncMock, return_value=RAG_MOCK):
         resp = await route_message(state, "el instructor saca fotos?")
     assert resp == RAG_MOCK
 
@@ -1580,7 +1579,7 @@ async def test_post_summary_photos_question_routes_to_rag():
 async def test_down_syndrome_does_not_escalate():
     state = await reach_main_menu()
     with patch("src.agents.supervisor.rag_answer", new_callable=AsyncMock, return_value=RAG_MOCK):
-        resp = await route_message(state, "mi hijo tiene síndrome de Down, puede hacer el minicurso?")
+        await route_message(state, "mi hijo tiene síndrome de Down, puede hacer el minicurso?")
     assert state.step != Step.ESCALATE
 
 
@@ -1588,7 +1587,7 @@ async def test_down_syndrome_does_not_escalate():
 async def test_deaf_diver_does_not_escalate():
     state = await reach_main_menu()
     with patch("src.agents.supervisor.rag_answer", new_callable=AsyncMock, return_value=RAG_MOCK):
-        resp = await route_message(state, "soy sordo, puedo bucear con ustedes?")
+        await route_message(state, "soy sordo, puedo bucear con ustedes?")
     assert state.step != Step.ESCALATE
 
 
@@ -1596,7 +1595,7 @@ async def test_deaf_diver_does_not_escalate():
 async def test_reduced_mobility_does_not_escalate():
     state = await reach_main_menu()
     with patch("src.agents.supervisor.rag_answer", new_callable=AsyncMock, return_value=RAG_MOCK):
-        resp = await route_message(state, "tengo movilidad reducida, hacen buceo adaptado?")
+        await route_message(state, "tengo movilidad reducida, hacen buceo adaptado?")
     assert state.step != Step.ESCALATE
 
 
@@ -1604,7 +1603,7 @@ async def test_reduced_mobility_does_not_escalate():
 async def test_autism_does_not_escalate():
     state = await reach_main_menu()
     with patch("src.agents.supervisor.rag_answer", new_callable=AsyncMock, return_value=RAG_MOCK):
-        resp = await route_message(state, "mi hija tiene autismo, pueden atenderla?")
+        await route_message(state, "mi hija tiene autismo, pueden atenderla?")
     assert state.step != Step.ESCALATE
 
 
@@ -1612,7 +1611,7 @@ async def test_autism_does_not_escalate():
 async def test_visual_impairment_does_not_escalate():
     state = await reach_main_menu()
     with patch("src.agents.supervisor.rag_answer", new_callable=AsyncMock, return_value=RAG_MOCK):
-        resp = await route_message(state, "soy invidente, han trabajado con personas con discapacidad visual?")
+        await route_message(state, "soy invidente, han trabajado con personas con discapacidad visual?")
     assert state.step != Step.ESCALATE
 
 
@@ -1620,7 +1619,7 @@ async def test_visual_impairment_does_not_escalate():
 async def test_cerebral_palsy_does_not_escalate():
     state = await reach_main_menu()
     with patch("src.agents.supervisor.rag_answer", new_callable=AsyncMock, return_value=RAG_MOCK):
-        resp = await route_message(state, "tengo parálisis cerebral leve, es posible bucear?")
+        await route_message(state, "tengo parálisis cerebral leve, es posible bucear?")
     assert state.step != Step.ESCALATE
 
 
@@ -1693,7 +1692,7 @@ async def test_en_food_question_routes_to_rag():
 @pytest.mark.asyncio
 async def test_en_adaptive_diving_routes_to_rag():
     state = await reach_main_menu("en")
-    with patch("src.agents.supervisor.rag_answer", new_callable=AsyncMock, return_value=RAG_MOCK_EN) as mock_rag:
+    with patch("src.agents.supervisor.rag_answer", new_callable=AsyncMock, return_value=RAG_MOCK_EN):
         resp = await route_message(state, "my son has Down Syndrome, can he try diving?")
     assert state.step != Step.ESCALATE
     assert resp == RAG_MOCK_EN
@@ -2150,7 +2149,6 @@ async def test_mixed_certified_island_night_variant_is_added_to_cart_with_exact_
 async def test_preview_shows_group_total_price_when_qty_known_from_free_text():
     """"somos 4 ... snorkel" already reveals qty=4 -> the pre-add preview card
     should show 4 × unit = total, not just the per-person price."""
-    from src.flows.decision_tree import SERVICES
 
     state = ConversationState(conversation_id="preview-qty-test")
     await route_message(state, "hola")
@@ -2237,7 +2235,7 @@ async def test_urgent_availability_phrase_still_escalates():
     """"disponible mañana" / "hay cupo" are urgent real-time checks and must
     still escalate — the generic canned answer must not swallow them."""
     state = await reach_main_menu("es")
-    resp = await route_message(state, "tienen cupo disponible mañana?")
+    await route_message(state, "tienen cupo disponible mañana?")
     assert state.step == Step.ESCALATE
 
 
@@ -2249,7 +2247,7 @@ async def test_availability_question_home_button_returns_to_main_menu():
     await route_message(state, "1")  # Cartagena -> MIXED_ADD_PREVIEW
     await route_message(state, "y que dias hay disponibles?")
     home_value = state.quick_replies[1]["value"]
-    resp = await route_message(state, home_value)
+    await route_message(state, home_value)
     assert state.step == Step.MAIN_MENU
 
 
@@ -2710,6 +2708,7 @@ async def test_final_summary_price_arithmetic_adds_up():
     """qty × per-person must equal the shown subtotal (round p.p. first, then
     multiply) — a fractional catalog price must not produce '2 × $126 = $251'."""
     import re
+
     from src.flows.decision_tree import DecisionTree
     state = make_state()
     state.mixed_cart = [{"type": "snorkel", "qty": 12, "label": "Snorkel"}]  # $125.57 p.p.
@@ -3066,7 +3065,7 @@ async def test_broken_link_followup_after_bot_link_escalates():
         "role": "assistant",
         "content": "Aquí tienes: https://book.divingplanet.org/book/salidas-de-buceo/1?language=es",
     })
-    resp = await route_message(state, "no me funciona")
+    await route_message(state, "no me funciona")
     assert state.step == Step.ESCALATE
     assert "LINK ROTO" in (state.pending_escalation_reason or "")
 
@@ -3074,7 +3073,7 @@ async def test_broken_link_followup_after_bot_link_escalates():
 @pytest.mark.asyncio
 async def test_broken_link_complaint_with_formulario_word_escalates():
     state = make_state()
-    resp = await route_message(state, "el formulario de exoneración no abre")
+    await route_message(state, "el formulario de exoneración no abre")
     assert state.step == Step.ESCALATE
     assert "LINK ROTO" in (state.pending_escalation_reason or "")
 
@@ -3088,7 +3087,7 @@ async def test_unrelated_complaint_does_not_escalate_as_broken_link():
     """Unrelated 'no funciona' phrases (no link context, no recent URL) should not trigger."""
     state = make_state()
     # No URL in history, no link word in message
-    resp = await route_message(state, "mi tarjeta no funciona, ayuda")
+    await route_message(state, "mi tarjeta no funciona, ayuda")
     # We want this NOT to match broken-link; either RAG or other escalation
     assert "LINK ROTO" not in (state.pending_escalation_reason or "")
 
@@ -3643,7 +3642,7 @@ async def test_cart_change_location_cartagena_to_island_remaps_prices():
     assert state.hotel == "San Pedro de Majagua"
     assert "actualizado" in resp.lower() or "updated" in resp.lower()
     # Cart item's plan should have been remapped to the island variant.
-    from src.flows.decision_tree import DecisionTree, SERVICES
+    from src.flows.decision_tree import DecisionTree
     dt = DecisionTree()
     cert_item = next(it for it in state.mixed_cart if it["type"] == "cert")
     assert cert_item["plan"] == "2_dives_1_day_already_on_island"
@@ -3673,7 +3672,7 @@ async def test_orchestrator_set_location_to_island_asks_hotel_before_remapping()
 
     await route_message(state, "1")   # Isla Grande
     assert state.step == Step.ISLAND_HOTEL_MENU
-    resp = await route_message(state, "1")  # first hotel
+    await route_message(state, "1")  # first hotel
     assert state.step == Step.MIXED_CART_REVIEW
     assert state.hotel == "San Pedro de Majagua"
     cert_item = next(it for it in state.mixed_cart if it["type"] == "cert")
@@ -3763,8 +3762,8 @@ async def test_cart_change_location_course_plan_remaps_to_island_variant():
 async def test_intent_minicourse_skips_certification():
     """'Quiero hacer el minicurso' should detect beginner and skip cert question."""
     state = make_state()
-    resp = await route_message(state, "Hola quiero hacer el minicurso de buceo, es mi primera vez")
-    
+    await route_message(state, "Hola quiero hacer el minicurso de buceo, es mi primera vez")
+
     assert state.language == "es"
     assert state.detected_activity == "minicourse"
     assert state.detected_is_certified is False
@@ -3775,7 +3774,7 @@ async def test_intent_group_size_detected():
     """'Somos tres personas' should detect group size."""
     state = make_state()
     await route_message(state, "Hola somos tres personas que queremos hacer snorkel")
-    
+
     assert state.detected_group_size == 3
     assert state.detected_activity == "snorkel"
 
@@ -3785,7 +3784,7 @@ async def test_intent_location_detected():
     """'Estoy en Cartagena' should detect location."""
     state = make_state()
     await route_message(state, "Hola quiero bucear, estoy en Cartagena y soy certificado")
-    
+
     assert state.detected_location == "cartagena"
     assert state.location == "cartagena"
     assert state.detected_is_certified is True
@@ -3795,8 +3794,8 @@ async def test_intent_location_detected():
 async def test_intent_padi_course_detection():
     """'Quiero hacer el curso Open Water' should detect PADI course."""
     state = make_state()
-    resp = await route_message(state, "Hola quiero hacer el curso PADI Open Water")
-    
+    await route_message(state, "Hola quiero hacer el curso PADI Open Water")
+
     # Should detect Spanish and PADI course intent
     assert state.detected_activity == "padi_open_water"
     assert state.detected_service_id == "open_water"
@@ -3806,8 +3805,8 @@ async def test_intent_padi_course_detection():
 async def test_intent_specialty_detection():
     """'Quiero hacer el curso de nitrox' should detect specialty."""
     state = make_state()
-    resp = await route_message(state, "Hola quiero hacer el curso de nitrox")
-    
+    await route_message(state, "Hola quiero hacer el curso de nitrox")
+
     assert state.language == "es"
     assert state.detected_activity == "padi_specialty"
     assert state.detected_service_id == "nitrox"
@@ -3818,7 +3817,7 @@ async def test_intent_hotel_detection():
     """'Estoy en el hotel Pao Pao' should detect hotel."""
     state = make_state()
     await route_message(state, "Hola estoy en el hotel Pao Pao y quiero hacer snorkel")
-    
+
     assert state.detected_hotel == "pao_pao"
     assert state.hotel == "pao_pao"
 
@@ -3828,7 +3827,7 @@ async def test_intent_duration_multi_day():
     """'Estoy varios días' should detect multi-day."""
     state = make_state()
     await route_message(state, "Quiero bucear, estoy varios días en las islas")
-    
+
     assert state.detected_duration == "multi_day"
 
 
@@ -3836,13 +3835,13 @@ async def test_intent_duration_multi_day():
 async def test_intent_does_not_trigger_on_digit_input():
     """Intent detection should not run on digit inputs (menu selections)."""
     state = await reach_main_menu()
-    
+
     # Clear any previous detections
     state.detected_activity = None
-    
+
     # Send digit (menu choice)
     await route_message(state, "1")
-    
+
     # Should not have triggered intent detection
     assert state.detected_activity is None
 
@@ -3985,9 +3984,9 @@ async def test_refresher_attaches_to_correct_cert_when_cart_has_multiple_certs()
     dt = DecisionTree()
     cart_text = dt._format_cart_lines(state, "es")
     lines = cart_text.split("\n")
-    seven_idx = next((i for i, l in enumerate(lines) if "7 inmersiones" in l), -1)
-    two_idx = next((i for i, l in enumerate(lines) if "2 inmersiones" in l or "Salidas" in l), -1)
-    refresh_idx = next((i for i, l in enumerate(lines) if "refresher" in l), -1)
+    seven_idx = next((i for i, line in enumerate(lines) if "7 inmersiones" in line), -1)
+    two_idx = next((i for i, line in enumerate(lines) if "2 inmersiones" in line or "Salidas" in line), -1)
+    refresh_idx = next((i for i, line in enumerate(lines) if "refresher" in line), -1)
     assert refresh_idx != -1, "Refresh sub-bullet missing from cart"
     assert refresh_idx > two_idx, "Refresh sub-bullet must come after the 2-dive cert line"
     if seven_idx != -1 and two_idx != -1:
@@ -4066,7 +4065,7 @@ async def test_cancel_booking_explicit_es_shows_policy_and_buttons():
 async def test_cancel_booking_phrase_without_possessive_es():
     """'cancelar la reserva' (sin 'mi') también activa la detección."""
     state = make_state()
-    resp = await route_message(state, "cancelar la reserva")
+    await route_message(state, "cancelar la reserva")
     button_values = [b["value"] for b in state.quick_replies]
     assert "asesor" in button_values
 
@@ -4075,7 +4074,7 @@ async def test_cancel_booking_phrase_without_possessive_es():
 async def test_cancel_booking_quisiera_variant_es():
     """'quisiera cancelar mi reserva' también activa la detección."""
     state = make_state()
-    resp = await route_message(state, "quisiera cancelar mi reserva")
+    await route_message(state, "quisiera cancelar mi reserva")
     button_values = [b["value"] for b in state.quick_replies]
     assert "asesor" in button_values
 
@@ -4084,7 +4083,7 @@ async def test_cancel_booking_quisiera_variant_es():
 async def test_cancel_booking_anular_variant_es():
     """'anular mi reserva' debe activar el detector."""
     state = make_state()
-    resp = await route_message(state, "anular mi reserva")
+    await route_message(state, "anular mi reserva")
     button_values = [b["value"] for b in state.quick_replies]
     assert "asesor" in button_values
 
@@ -4093,7 +4092,7 @@ async def test_cancel_booking_anular_variant_es():
 async def test_cancel_booking_accent_insensitive_es():
     """Con tildes ('cancelar mi reservación') también debe detectarse."""
     state = make_state()
-    resp = await route_message(state, "necesito cancelar mi reservación")
+    await route_message(state, "necesito cancelar mi reservación")
     button_values = [b["value"] for b in state.quick_replies]
     assert "asesor" in button_values
 
@@ -4113,7 +4112,7 @@ async def test_cancel_booking_explicit_en_shows_policy_and_buttons():
 async def test_cancel_booking_how_do_i_cancel_en():
     """'how do i cancel my booking' also triggers detection (EN)."""
     state = make_state(lang="en")
-    resp = await route_message(state, "how do i cancel my booking")
+    await route_message(state, "how do i cancel my booking")
     button_values = [b["value"] for b in state.quick_replies]
     assert "asesor" in button_values
 
@@ -4123,7 +4122,7 @@ async def test_cancel_advisor_button_escalates():
     """After the cancel-info response, clicking 'asesor' escalates correctly."""
     state = make_state()
     await route_message(state, "quiero cancelar mi reserva")
-    resp = await route_message(state, "asesor")
+    await route_message(state, "asesor")
     assert state.step == Step.ESCALATE
 
 
@@ -4142,7 +4141,7 @@ async def test_reschedule_explicit_es_shows_policy_and_buttons():
 async def test_reschedule_quisiera_variant_es():
     """'quisiera cambiar la fecha' también activa la detección."""
     state = make_state()
-    resp = await route_message(state, "quisiera cambiar la fecha")
+    await route_message(state, "quisiera cambiar la fecha")
     button_values = [b["value"] for b in state.quick_replies]
     assert "asesor" in button_values
 
@@ -4151,7 +4150,7 @@ async def test_reschedule_quisiera_variant_es():
 async def test_reschedule_reprogramar_variant_es():
     """'reprogramar mi reserva' activa la detección."""
     state = make_state()
-    resp = await route_message(state, "reprogramar mi reserva")
+    await route_message(state, "reprogramar mi reserva")
     button_values = [b["value"] for b in state.quick_replies]
     assert "asesor" in button_values
 
@@ -4160,7 +4159,7 @@ async def test_reschedule_reprogramar_variant_es():
 async def test_reschedule_explicit_en_shows_policy_and_buttons():
     """'reschedule my booking' → reschedule policy text + advisor/home buttons (EN)."""
     state = make_state(lang="en")
-    resp = await route_message(state, "reschedule my booking")
+    await route_message(state, "reschedule my booking")
     button_values = [b["value"] for b in state.quick_replies]
     assert "asesor" in button_values
     assert "inicio" in button_values
@@ -4170,7 +4169,7 @@ async def test_reschedule_explicit_en_shows_policy_and_buttons():
 async def test_reschedule_i_would_like_to_reschedule_en():
     """'i'd like to reschedule' triggers detection (EN)."""
     state = make_state(lang="en")
-    resp = await route_message(state, "i'd like to reschedule my booking")
+    await route_message(state, "i'd like to reschedule my booking")
     button_values = [b["value"] for b in state.quick_replies]
     assert "asesor" in button_values
 
