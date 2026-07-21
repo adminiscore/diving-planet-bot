@@ -99,6 +99,11 @@ services:
       # On in PRE only, same rationale as Fases 1-2. Off elsewhere by default
       # (src/config.py). Revert = remove this line + redeploy.
       LLM_EXTRACTION_CUTOVER_LOCATION: "true"
+      # Robustness Fase 8 cutover (dominio nacionalidad/logística —
+      # is_colombian/duration/last_dive_over_2_years). On in PRE only, same
+      # rationale as Fases 1-3. Off elsewhere by default (src/config.py).
+      # Revert = remove this line + redeploy.
+      LLM_EXTRACTION_CUTOVER_LOGISTICS: "true"
     depends_on:
       dp-pre-postgres:
         condition: service_healthy
