@@ -510,3 +510,39 @@ timing de activar `llm_extraction_cutover_location=True` en un entorno real.
    muerto que el LLM haya reemplazado de facto, y cerrar el plan.
 3. Fase de override futura (`me plus 3 friends` y casos donde el regex resuelve MAL) +
    los interceptores de cambio de plan mid-flow, si el tráfico real lo justifica.
+
+---
+
+## 2026-07-21 — Revisión exhaustiva post-Fases 0-4
+
+**Fase(s) tocada(s)**: ninguna (revisión, sin cambio de comportamiento). Se paró en
+Fase 4 (los 4 flags en PRE recogiendo datos) por decisión del owner, y se pidió una
+revisión de todo para ver qué mejorar.
+
+**Qué se hizo**: revisión crítica del pipeline completo → `docs/robustness/review-2026-07-21.md`
+con 8 hallazgos priorizados (evidencia archivo/línea + acción propuesta). Se añadieron
+3 fases nuevas al checklist de `plan.md` (Fases 6-8) y 2 tareas transversales. Resumen:
+- **H1 (alto)**: no hay bucle de datos reales — shadow-mode apagado en todos los entornos,
+  los logs `[EXTRACT][CUTOVER]` de PRE no se revisan ni realimentan el eval-set. El
+  eval-set son 64 casos sintéticos. → Fase 6 (nueva, prioridad alta).
+- **H2 (alto)**: la suite es lenta (~5-7 min) y flaky porque `conftest.py` mockea
+  `orchestrate` pero NO `rag_answer` — los tests que van a `answer_question` llaman al RAG
+  real (no determinista). → Tarea transversal T1 (mockear RAG + marcador `live`).
+- **H3-H5 (medio)**: cobertura desigual del eval-set (hotel 1, is_colombian 1, island 2…);
+  cutover cableado en un solo entry-point (3 sitios llaman `detect`, solo 1 tiene cutover);
+  campos extraíbles sin dominio (`is_colombian`/`duration`/`last_dive`…). → Fase 8 + T2.
+- **H6-H8 (bajo/conocido)**: bug regex `me plus 3 friends` (→ Fase 7 override); interceptores
+  plan-change mid-flow; observabilidad solo log-line (→ contador en Fase 6).
+
+**Decisiones tomadas y por qué**: no se implementó ninguna de las mejoras en esta sesión —
+el owner pidió revisar y documentar, no ejecutar. Se dejaron como fases/tareas priorizadas
+para decidir. La Fase 5 (limpieza) se marca **bloqueada por la Fase 6**: sin datos reales no
+se sabe qué regex está de verdad muerto.
+
+**Qué quedó a medias / bloqueadores**: nada en curso. Los 4 flags siguen en PRE recogiendo
+datos (aunque sin bucle de revisión aún — ese es justo el H1).
+
+**Siguiente paso concreto para quien continúe**: leer `review-2026-07-21.md` y decidir
+prioridad. La recomendación es empezar por la **Fase 6** (bucle de datos) porque desbloquea
+la limpieza (Fase 5) y da fundamento real a las Fases 7-8; y la tarea **T1** (mockear RAG)
+porque hace la suite rápida y determinista, que beneficia a todo el desarrollo futuro.

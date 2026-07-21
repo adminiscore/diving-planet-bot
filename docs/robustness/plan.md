@@ -159,7 +159,15 @@ Checklist de estado — actualizar aquí Y en el bloque correspondiente de
 - [✅] **Fase 2 — Dominio grupo/cantidad/edades** (`group_size`/`group_allocation`/`ages`) — cutover implementado detrás de `settings.llm_extraction_cutover_group` (default `False`), eval-set ampliado a 58 casos con **99.2% de acuerdo con LLM real** (100% en el dominio de grupo excluyendo 1 bug de regex documentado), verificado en vivo, ver `progress-log.md`
 - [✅] **Fase 3 — Dominio ubicación** (`location`/`island`/`hotel`) — cutover implementado detrás de `settings.llm_extraction_cutover_location` (default `False`), eval-set ampliado a 64 casos con **99.2% de acuerdo** y **`location` 13/13 = 100%**, verificado en vivo. Los interceptores de cambio de plan/acompañante quedan fuera (no son campos de `DetectedIntent`, ver nota en la sección). Ver `progress-log.md`
 - [✅] **Fase 4 — Integración con acciones de carrito (orchestrator)** — evaluado con datos: **decisión de MANTENER separados** extractor y orquestador (fusionar acoplaría concerns, sometería la extracción validada al no-determinismo "auto" del orquestador, y la 2ª llamada solo ocurre en turnos con hueco). Mejora concreta entregada: el extractor pasa a un modelo más barato/rápido (`settings.extraction_model=gpt-4o-mini`), medido a 98.4% en el eval-set con modo de fallo seguro (abstención, no misfill). Ver `progress-log.md`
-- [ ] **Fase 5 — Limpieza y consolidación**
+- [ ] **Fase 5 — Limpieza y consolidación** (bloqueada por Fase 6: sin datos reales no se sabe qué regex está muerto)
+- [ ] **Fase 6 — Bucle de datos reales** (NUEVA, prioridad alta) — cosechar logs `[EXTRACT][CUTOVER]` de PRE / shadow-mode → realimentar el eval-set + contador por dominio. Ver `review-2026-07-21.md` H1/H8.
+- [ ] **Fase 7 — Override selectivo por campo** (NUEVA) — override medido por campo donde el LLM sea más fiable que el regex aunque el regex "resuelva" (bug `me plus 3 friends`). Ver `review-2026-07-21.md` H6.
+- [ ] **Fase 8 — Dominio nacionalidad/logística + cobertura de entry-points** (NUEVA) — cutover de `is_colombian`/`duration`/`last_dive_over_2_years` + cablear el cutover en `_apply_group_recomposition` y `_maybe_answer_age_eligibility`. Ver `review-2026-07-21.md` H4/H5.
+
+> **Revisión 2026-07-21** (`review-2026-07-21.md`): tras completar Fases 0-4, revisión
+> exhaustiva con 8 hallazgos priorizados. Los más importantes: no hay bucle de datos reales
+> (H1 → Fase 6) y la suite es lenta/flaky porque RAG no está mockeado (H2 → tarea transversal
+> T1). Las Fases 6-8 salen de esa revisión.
 
 ### Fase 0 — Fundaciones
 
