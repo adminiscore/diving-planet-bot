@@ -344,6 +344,12 @@ def _apply_group_recomposition(message: str, state: ConversationState) -> str | 
     if not _GROUP_RECOMPOSE_RE.search(_strip_accents(message)):
         return None
 
+    # NOTE (robustness review H4, deferred): the LLM cutover is NOT wired here.
+    # This is a pre-dispatch short-circuit — when it returns None the turn falls
+    # through to `_dispatch_conversation_agent`, which already runs the cutover,
+    # so calling it here too would mean two LLM calls per message. The right fix
+    # (a single cutover early in `_route_message_inner`, shared by all paths) is a
+    # dispatch refactor tracked as future work, not this narrow, regex-cued path.
     intent = intent_detector.detect(message, state)
     changed = False
 
@@ -3310,6 +3316,10 @@ def _maybe_answer_age_eligibility(message: str, state: ConversationState) -> str
     """
     if not _AGE_ELIGIBILITY_CUE.search(message):
         return None
+    # NOTE (robustness review H4, deferred): LLM cutover not wired here for the
+    # same reason as _apply_group_recomposition — this is a pre-dispatch
+    # short-circuit; wiring it would double the LLM call on fall-through. See that
+    # function's note.
     intent = intent_detector.detect(message, state)
     ages = sorted({a for a in (intent.ages or []) if 1 <= a <= 99})
     # Persist any age mentioned here so a later follow-up can reuse it (this
@@ -3630,6 +3640,7 @@ _ENTRY_BOOKING_TOOLS = {
 _CERTIFICATION_CUTOVER_FIELDS = {"is_certified", "activity"}
 _GROUP_CUTOVER_FIELDS = {"group_size", "group_allocation", "ages"}
 _LOCATION_CUTOVER_FIELDS = {"location", "island", "hotel"}
+_LOGISTICS_CUTOVER_FIELDS = {"is_colombian", "duration", "last_dive_over_2_years"}
 
 
 def _active_cutover_fields() -> set[str]:
@@ -3643,6 +3654,8 @@ def _active_cutover_fields() -> set[str]:
         active |= _GROUP_CUTOVER_FIELDS
     if settings.llm_extraction_cutover_location:
         active |= _LOCATION_CUTOVER_FIELDS
+    if settings.llm_extraction_cutover_logistics:
+        active |= _LOGISTICS_CUTOVER_FIELDS
     return active
 
 

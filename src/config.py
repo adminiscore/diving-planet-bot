@@ -123,6 +123,17 @@ class Settings(BaseSettings):
     # everywhere; the regex stays the primary/fast path — gaps only, never
     # overrides a regex-resolved value.
     llm_extraction_cutover_location: bool = False
+    # --- Robustness Fase 8 (docs/robustness/review-2026-07-21.md H5, dominio
+    # perfil/logística) ---
+    # When True, the LLM extractor's result for `is_colombian`/`duration`/
+    # `last_dive_over_2_years` is APPLIED when the regex left them unresolved.
+    # `is_colombian` drives currency + the Colombian discount; `duration`
+    # (single/multi day) and `last_dive_over_2_years` (refresher signal) tune the
+    # package recommendation. The LLM infers these from phrasings the regex can't
+    # enumerate ("soy paisa"→colombiano, "toda la semana"→multi_day, "hace como 4
+    # años que no buceo"→>2y). Independent kill switch (plan.md #7). Off by
+    # default everywhere; regex stays primary — gaps only, never overrides.
+    llm_extraction_cutover_logistics: bool = False
 
     @property
     def is_dev(self) -> bool:

@@ -162,7 +162,7 @@ Checklist de estado — actualizar aquí Y en el bloque correspondiente de
 - [ ] **Fase 5 — Limpieza y consolidación** (bloqueada por Fase 6: sin datos reales no se sabe qué regex está muerto)
 - [~] **Fase 6 — Bucle de datos reales** (NUEVA, prioridad alta) — **tooling construido**: `scripts/harvest_cutover_logs.py` parsea los logs `[EXTRACT][CUTOVER]`/`[EXTRACT][SHADOW]` de PRE → candidatos deduplicados para el eval-set (modo default) + contador por campo/dominio (`--summary`, H8), con 5 tests. **Pendiente**: correrlo contra los logs reales de `dp-pre-bot` y curar los candidatos (validar `expected` contra el pipeline real antes de fijarlo). Ver `review-2026-07-21.md` H1/H8.
 - [ ] **Fase 7 — Override selectivo por campo** (NUEVA) — override medido por campo donde el LLM sea más fiable que el regex aunque el regex "resuelva" (bug `me plus 3 friends`). Ver `review-2026-07-21.md` H6.
-- [ ] **Fase 8 — Dominio nacionalidad/logística + cobertura de entry-points** (NUEVA) — cutover de `is_colombian`/`duration`/`last_dive_over_2_years` + cablear el cutover en `_apply_group_recomposition` y `_maybe_answer_age_eligibility`. Ver `review-2026-07-21.md` H4/H5.
+- [✅] **Fase 8 — Dominio nacionalidad/logística** (`is_colombian`/`duration`/`last_dive_over_2_years`) — cutover detrás de `settings.llm_extraction_cutover_logistics` (default `False`), eval-set ampliado a 71 casos, **dominio al 100%** (is_colombian 4/4, duration 5/5, last_dive 5/5) con LLM real, verificado en vivo. **Parte 2 (cablear entry-points, H4) DEFERIDA con razón**: `_apply_group_recomposition`/`_maybe_answer_age_eligibility` son short-circuits pre-dispatch; cablear el cutover ahí duplicaría la llamada LLM en fall-through. El fix correcto (un cutover único temprano en `_route_message_inner`) es un refactor de dispatch, documentado en código y como trabajo futuro. Ver `review-2026-07-21.md` H4/H5.
 
 > **Revisión 2026-07-21** (`review-2026-07-21.md`): tras completar Fases 0-4, revisión
 > exhaustiva con 8 hallazgos priorizados. Los más importantes: no hay bucle de datos reales
@@ -432,6 +432,45 @@ fusión arriesgada): el extractor pasa a un modelo dedicado más barato y rápid
 confirman como trabajo separado del patrón gap-filler — son estado mid-flow, no extracción
 de campos. Candidatos a una fase propia si el tráfico real (logs `[EXTRACT][CUTOVER]` en
 PRE) muestra que siguen siendo una fuente de fragilidad. No se abordan aquí.
+
+### Fase 8 — Dominio nacionalidad/logística + cobertura de entry-points (NUEVA, review H4/H5)
+
+Los campos extraíbles que ningún dominio aplicaba: `is_colombian` (dirige moneda + el
+descuento colombiano), `duration` (single/multi día) y `last_dive_over_2_years` (señal de
+refresher). El LLM los infiere de frases que el regex no enumera.
+
+Pasos (Parte 1 — dominio):
+
+1. ✅ `settings.llm_extraction_cutover_logistics` (`src/config.py`, default `False`),
+   registrado en `_active_cutover_fields()` con `_LOGISTICS_CUTOVER_FIELDS =
+   {"is_colombian", "duration", "last_dive_over_2_years"}`.
+2. ✅ Eval-set 64 → 71 casos: 7 adversariales validados contra el regex real
+   ("soy paisa"→colombiano por slang, "vivo en España"→extranjero, "toda la semana"→
+   multi_day, "hace como 4 años que no buceo"→>2y). También sube la cobertura fina que la
+   review marcó como débil (H3) para estos 3 campos.
+3. ✅ TDD: `tests/test_llm_extraction_cutover.py` +4 tests (23 total) — incl. el guard de
+   "false es resuelto, no hueco" (`is_colombian=False`/`last_dive=False` no disparan LLM).
+4. ✅ Eval con LLM real (gpt-4o-mini): **dominio al 100%** — `is_colombian` 4/4, `duration`
+   5/5, `last_dive_over_2_years` 5/5. (Overall del eval-set: 133/136 = 97.8%; los 3
+   no-acuerdos son ajenos a este dominio: el bug de regex `me plus 3 friends` + 2
+   abstenciones seguras de gpt-4o-mini en casos límite de group_size/ages — `missed`, no
+   misfill. Ver nota de varianza en `progress-log.md`.)
+5. ✅ Verificado en vivo: `"soy paisa"` OFF→`is_colombian=None` / ON→`True`;
+   `"toda la semana en las islas"` ON→`duration=multi_day`; `"hace como 4 años que no
+   buceo"` ON→`last_dive_over_2_years=True`.
+6. ⬜ Pendiente (despliegue): activar `llm_extraction_cutover_logistics=True` en PRE cuando
+   se decida. Default `False`.
+
+Parte 2 — cobertura de entry-points (H4): **DEFERIDA con razón documentada**. El cutover
+solo está cableado en `_dispatch_conversation_agent`. Los otros 2 sitios que llaman
+`intent_detector.detect` — `_apply_group_recomposition` (cambios de grupo mid-flow) y
+`_maybe_answer_age_eligibility` (preguntas de edad) — son **short-circuits pre-dispatch**:
+cuando devuelven `None`, el turno cae a `_dispatch_conversation_agent`, que YA corre el
+cutover. Cablearlo también ahí significaría **dos llamadas LLM por mensaje** en el caso de
+fall-through (el común). El fix correcto no es cablearlo en cada sitio, sino **un único
+cutover temprano en `_route_message_inner`** compartido por todos los paths — un refactor
+del dispatch que merece su propio cuidado (y su propia medición de que no rompe el orden de
+short-circuits). Documentado con `NOTE` en ambas funciones. Trabajo futuro.
 
 ### Fase 5 — Limpieza y consolidación
 

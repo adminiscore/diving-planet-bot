@@ -546,3 +546,57 @@ datos (aunque sin bucle de revisión aún — ese es justo el H1).
 prioridad. La recomendación es empezar por la **Fase 6** (bucle de datos) porque desbloquea
 la limpieza (Fase 5) y da fundamento real a las Fases 7-8; y la tarea **T1** (mockear RAG)
 porque hace la suite rápida y determinista, que beneficia a todo el desarrollo futuro.
+
+---
+
+## 2026-07-21 — T1 (mock RAG), Fase 6 tooling, y Fase 8 (dominio logística)
+
+**Fase(s) tocada(s)**: T1 (transversal), Fase 6 (tooling), Fase 8 (dominio) — de la
+revisión `review-2026-07-21.md`.
+
+**Qué se hizo**:
+- **T1 (H2) — mock RAG por defecto**: `conftest.py` mockea `supervisor.rag_answer`
+  (autouse `_rag_answers_offline`), con exclusión `_RAG_LIVE_MODULES` (`test_rag_safety`,
+  que llama a `rag_agent` directo) y opt-out `@pytest.mark.live` (registrado en
+  `pyproject.toml`). **Medido: suite 319s → 153s (~2.1x), 0 fallos**, el flaky
+  `test_go_pro_itinerary_back` ahora es determinista. Cobertura del RAG real intacta.
+- **Fase 6 (H1/H8) — tooling del bucle de datos**: `scripts/harvest_cutover_logs.py` parsea
+  las líneas `[EXTRACT][CUTOVER]`/`[EXTRACT][SHADOW]` de PRE → candidatos deduplicados para
+  el eval-set (con el patch del LLM como `expected` de partida, marcado SIN VALIDAR) +
+  `--summary` (contador por campo/dominio, H8). Maneja dicts anidados y líneas truncadas.
+  5 tests. **Pendiente**: correrlo contra `docker logs dp-pre-bot` (necesita acceso a PRE)
+  y curar candidatos. Fase 6 marcada `[~]`.
+- **Fase 8 (H5) — dominio nacionalidad/logística**: `settings.llm_extraction_cutover_logistics`
+  (default `False`) + `_LOGISTICS_CUTOVER_FIELDS = {is_colombian, duration,
+  last_dive_over_2_years}` en `_active_cutover_fields()`. Eval-set 64→71 (7 adversariales).
+  TDD +4 (23 cutover tests). **Eval con LLM real: dominio al 100%** (is_colombian 4/4,
+  duration 5/5, last_dive 5/5). Verificado en vivo (soy paisa→colombiano, toda la
+  semana→multi_day, hace 4 años→>2y).
+  - **Parte 2 (H4, cablear entry-points) DEFERIDA**: `_apply_group_recomposition` y
+    `_maybe_answer_age_eligibility` son short-circuits pre-dispatch; cablear el cutover ahí
+    duplicaría la llamada LLM en fall-through. El fix correcto es un cutover único temprano
+    en `_route_message_inner` (refactor de dispatch), documentado con `NOTE` en ambas
+    funciones y como trabajo futuro.
+
+**Decisiones tomadas y por qué**:
+- **Varianza de gpt-4o-mini observada**: el overall del eval bajó a 97.8% (vs 99.2% con
+  gpt-4o / 98.4% mini en Fase 4). Los 3 no-acuerdos: el bug de regex `me plus 3 friends`
+  (1 disagree) + 2 `missed` de mini en casos límite de group_size/ages. Notable: `ages`
+  dio 4/5 aquí vs 5/5 en la corrida mini de Fase 4 sobre el MISMO caso → es **varianza
+  run-to-run de gpt-4o-mini** (temp 0 no es 100% determinista en casos límite). Es
+  consistente con la decisión de Fase 4: el modo de fallo de mini es **seguro** (abstención
+  → el bot pregunta, nunca rellena mal), y el ahorro coste/latencia lo justifica. Si el
+  equipo quiere máxima consistencia en casos límite, `extraction_model="gpt-4o"` es una
+  línea. El dominio nuevo (logística) no se ve afectado: 100%.
+- No se forzó la Parte 2 (cablear entry-points) para no introducir una regresión de doble
+  llamada — se documentó el porqué y el fix correcto.
+
+**Qué quedó a medias / bloqueadores**: Fase 6 necesita una corrida real contra los logs de
+PRE (acceso al VPS). Nada más pendiente.
+
+**Siguiente paso concreto para quien continúe**:
+1. Correr `scripts/harvest_cutover_logs.py` contra `docker logs dp-pre-bot` y curar
+   candidatos → primer crecimiento real del eval-set (cierra el H1).
+2. (Opcional) activar `llm_extraction_cutover_logistics=True` en PRE.
+3. Fase 7 (override) o el refactor de cutover-único-temprano (Parte 2 de Fase 8) cuando el
+   tráfico real lo priorice.

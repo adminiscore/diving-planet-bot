@@ -350,3 +350,78 @@ async def test_location_cutover_result_propagates_to_state():
 
     assert state.detected_location == "cartagena"
     assert state.location == "cartagena"
+
+
+# ---------------------------------------------------------------------------
+# Fase 8 — dominio perfil/logística (is_colombian/duration/last_dive_over_2_years).
+# Gated by settings.llm_extraction_cutover_logistics, independent kill switch.
+# is_colombian drives currency + Colombian discount.
+# ---------------------------------------------------------------------------
+
+@pytest.mark.asyncio
+async def test_logistics_cutover_off_by_default_does_not_call_llm():
+    intent = DetectedIntent()
+    state = ConversationState(conversation_id="logi-cutover-off-test")
+
+    with patch.object(supervisor, "fill_gaps", new=AsyncMock(side_effect=AssertionError("must not be called"))):
+        await supervisor._maybe_apply_llm_extraction_cutover("soy paisa", intent, state)
+    assert intent.is_colombian is None
+    assert intent.duration is None
+    assert intent.last_dive_over_2_years is None
+
+
+@pytest.mark.asyncio
+async def test_logistics_cutover_on_fills_only_logistics_fields():
+    """With ONLY the logistics flag on, other domains' fields in the patch are
+    ignored — only is_colombian/duration/last_dive_over_2_years get applied."""
+    intent = DetectedIntent()
+    state = ConversationState(conversation_id="logi-cutover-on-test")
+
+    with patch.object(supervisor.settings, "llm_extraction_cutover_logistics", True), \
+         patch.object(supervisor, "fill_gaps", new=AsyncMock(return_value={
+             "is_colombian": True, "duration": "multi_day", "last_dive_over_2_years": True,
+             "group_size": 3, "location": "cartagena",
+         })) as mocked:
+        await supervisor._maybe_apply_llm_extraction_cutover(
+            "soy paisa, toda la semana en las islas, hace 4 años que no buceo", intent, state
+        )
+
+    mocked.assert_awaited_once()
+    assert intent.is_colombian is True
+    assert intent.duration == "multi_day"
+    assert intent.last_dive_over_2_years is True
+    assert intent.group_size is None   # out of scope
+    assert intent.location is None
+    assert "is_colombian" in intent.detected_fields
+
+
+@pytest.mark.asyncio
+async def test_logistics_cutover_treats_false_as_resolved_not_a_gap():
+    """is_colombian=False / last_dive_over_2_years=False are RESOLVED values, not
+    gaps — the LLM must not be consulted to 'fill' them (regression guard for the
+    falsy-vs-missing bug that motivated the whole plan)."""
+    intent = DetectedIntent(is_colombian=False, duration="single_day", last_dive_over_2_years=False)
+    state = ConversationState(conversation_id="logi-cutover-false-test")
+
+    with patch.object(supervisor.settings, "llm_extraction_cutover_logistics", True), \
+         patch.object(supervisor, "fill_gaps", new=AsyncMock(side_effect=AssertionError("must not be called"))):
+        await supervisor._maybe_apply_llm_extraction_cutover("cualquier cosa", intent, state)
+
+    assert intent.is_colombian is False
+    assert intent.last_dive_over_2_years is False
+
+
+@pytest.mark.asyncio
+async def test_logistics_cutover_result_propagates_to_state():
+    intent = DetectedIntent()
+    state = ConversationState(conversation_id="logi-cutover-propagation-test")
+
+    with patch.object(supervisor.settings, "llm_extraction_cutover_logistics", True), \
+         patch.object(supervisor, "fill_gaps", new=AsyncMock(return_value={
+             "is_colombian": True, "duration": "multi_day",
+         })):
+        await supervisor._maybe_apply_llm_extraction_cutover("soy de barranquilla, toda la semana", intent, state)
+    supervisor._apply_detected_intent(intent, state)
+
+    assert state.is_colombian is True
+    assert state.detected_duration == "multi_day"

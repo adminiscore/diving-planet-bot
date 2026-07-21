@@ -738,6 +738,77 @@
       },
       "source": "adversarial-fase3-ubicacion (validado contra IntentDetector real, 2026-07-21)",
       "notes": "Baru/Las Islas = zona insular; el regex no saca nada, el LLM infiere location=island. (island/hotel exactos no se evaluan por ser texto libre vs slugs canonicos del regex.)"
+    },
+    {
+      "id": "prof-es-espana-foreigner",
+      "message": "vivo en espana pero estoy de visita",
+      "lang": "es",
+      "expected": {
+        "is_colombian": false
+      },
+      "source": "adversarial-fase8-perfil (validado contra IntentDetector real, 2026-07-21)",
+      "notes": "Extranjero (vive en Espana); el regex no lo resuelve, el LLM infiere is_colombian=False."
+    },
+    {
+      "id": "prof-en-from-states",
+      "message": "im from the states, wanna dive",
+      "lang": "en",
+      "expected": {
+        "is_colombian": false,
+        "activity": "certified_diving"
+      },
+      "source": "adversarial-fase8-perfil (validado contra IntentDetector real, 2026-07-21)",
+      "notes": "'from the states' = extranjero; hueco de is_colombian en regex."
+    },
+    {
+      "id": "prof-es-paisa-slang",
+      "message": "soy paisa",
+      "lang": "es",
+      "expected": {
+        "is_colombian": true
+      },
+      "source": "adversarial-fase8-perfil (validado contra IntentDetector real, 2026-07-21)",
+      "notes": "'paisa' = de Antioquia (Colombia); slang que el regex no mapea, conocimiento del mundo del LLM."
+    },
+    {
+      "id": "prof-es-toda-la-semana",
+      "message": "estaremos toda la semana en las islas",
+      "lang": "es",
+      "expected": {
+        "duration": "multi_day"
+      },
+      "source": "adversarial-fase8-perfil (validado contra IntentDetector real, 2026-07-21)",
+      "notes": "'toda la semana' = varios dias; hueco de duration en regex."
+    },
+    {
+      "id": "prof-en-just-the-day",
+      "message": "just here for the day",
+      "lang": "en",
+      "expected": {
+        "duration": "single_day"
+      },
+      "source": "adversarial-fase8-perfil (validado contra IntentDetector real, 2026-07-21)",
+      "notes": "'just for the day' = un dia; hueco de duration en regex."
+    },
+    {
+      "id": "prof-es-hace-4-anos",
+      "message": "hace como 4 anos que no buceo",
+      "lang": "es",
+      "expected": {
+        "last_dive_over_2_years": true
+      },
+      "source": "adversarial-fase8-perfil (validado contra IntentDetector real, 2026-07-21)",
+      "notes": "'hace como 4 anos que no buceo' > 2 anos; frase que el regex no capta."
+    },
+    {
+      "id": "prof-en-ages-ago",
+      "message": "my last dive was ages ago, like 5 years",
+      "lang": "en",
+      "expected": {
+        "last_dive_over_2_years": true
+      },
+      "source": "adversarial-fase8-perfil (validado contra IntentDetector real, 2026-07-21)",
+      "notes": "'ages ago, like 5 years' > 2 anos; hueco de last_dive en regex."
     }
   ]
 }
