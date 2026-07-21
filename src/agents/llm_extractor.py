@@ -79,7 +79,15 @@ _TOOL = {
                 },
                 "group_size": {
                     "type": "integer",
-                    "description": "Total number of people in the customer's party.",
+                    "description": (
+                        "Total number of people in the customer's party — count "
+                        "EVERYONE mentioned, including children, non-divers, and "
+                        "people referred to by relationship. Infer the count when "
+                        "the message enumerates individuals instead of giving a "
+                        "number: 'my wife and I' = 2, 'me plus 3 friends' = 4, "
+                        "'my daughter, my son and us two' = 4, 'four adults and a "
+                        "kid' = 5."
+                    ),
                 },
                 "group_allocation": {
                     "type": "object",

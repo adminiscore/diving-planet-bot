@@ -156,7 +156,7 @@ Checklist de estado — actualizar aquí Y en el bloque correspondiente de
 
 - [✅] **Fase 0 — Fundaciones** (sin cambio de comportamiento) — completa, 100.0% de acuerdo con LLM real (tras corregir un caso mal etiquetado), ver `progress-log.md`
 - [✅] **Fase 1 — Dominio certificación** (primer vertical slice) — cutover implementado detrás de `settings.llm_extraction_cutover_certification` (default `False`), verificado en vivo con LLM real, ver `progress-log.md`
-- [ ] **Fase 2 — Dominio grupo/cantidad/edades**
+- [✅] **Fase 2 — Dominio grupo/cantidad/edades** (`group_size`/`group_allocation`/`ages`) — cutover implementado detrás de `settings.llm_extraction_cutover_group` (default `False`), eval-set ampliado a 58 casos con **99.2% de acuerdo con LLM real** (100% en el dominio de grupo excluyendo 1 bug de regex documentado), verificado en vivo, ver `progress-log.md`
 - [ ] **Fase 3 — Dominio ubicación/actividad/cambios de plan**
 - [ ] **Fase 4 — Integración con acciones de carrito (orchestrator)**
 - [ ] **Fase 5 — Limpieza y consolidación**
@@ -265,6 +265,60 @@ producto/timing, no un bloqueador técnico.
 `group_size`, `group_allocation`, `ages`. Más complejo que certificación (hay lógica de
 split cert/no-cert, edades mínimas, etc. — ver `_split_out_uncertifiable_kids`). Mismo
 patrón de pasos que la Fase 1, adaptado.
+
+Pasos:
+
+1. ✅ **Eval-set ampliado**: `docs/robustness/eval-set.json` pasa de 50 a 58 casos — 8
+   adversariales nuevos del dominio de grupo, cada uno **validado contra el
+   `IntentDetector` real antes de fijar su `expected`** (la lección de proceso de la
+   Fase 0): "un par"/"the two of us" (group_size implícito), reparto mixto por rol
+   ("four certified divers and two snorkelers", "mi pareja y yo buceamos y mi suegra
+   snorkel"), conteo desde enumeración de personas, edad escrita en palabra ("ocho"),
+   y un **bug de regex real hallado en esta fase** (`me plus 3 friends` → el regex
+   resuelve `group_size=3`, debería ser 4).
+2. ✅ **Cutover implementado**: `settings.llm_extraction_cutover_group` (`src/config.py`,
+   default `False`). El cutover de `supervisor.py` se **generalizó a multi-dominio**:
+   `_active_cutover_fields()` une los campos de los dominios cuyo flag está encendido, y
+   `_maybe_apply_llm_extraction_cutover()` hace **una sola llamada LLM** que cubre todos
+   los dominios activos (control de coste/latencia, §3.3), aplicando solo los campos de
+   un dominio encendido. Retrocompatible con la Fase 1 (con el flag de grupo apagado, se
+   comporta exactamente igual que antes — los tests de certificación pasan sin cambios).
+   Campos del dominio: `_GROUP_CUTOVER_FIELDS = {"group_size", "group_allocation", "ages"}`.
+3. ✅ **TDD**: `tests/test_llm_extraction_cutover.py` (+7 tests, 14 en total) — flag de
+   grupo apagado no llama al LLM; encendido rellena SOLO los 3 campos de grupo aunque el
+   patch traiga campos de certificación; nunca sobreescribe lo ya resuelto por regex; no
+   llama al LLM si lo único que falta es de otro dominio; fallo degrada a regex-only;
+   propaga a `state`; y el caso de la generalización: **ambos flags encendidos → una sola
+   llamada** cubre certificación + grupo.
+4. ✅ **Mejora de schema**: la descripción de `group_size` en el `_TOOL` de
+   `llm_extractor.py` se afinó para contar enumeraciones de personas ("my wife and I" = 2,
+   "me plus 3 friends" = 4, "four adults and a kid" = 5). Subió el acuerdo de group_size
+   de 94% a 97% (el caso de enumeración implícita, antes `missed`, ahora acierta).
+5. ✅ **Eval con LLM real** (`python -m scripts.run_extraction_eval`, 2026-07-21, gpt-4o):
+   **121/122 = 99.2% de acuerdo, 1 desacuerdo, 0 huecos**. Por campo del dominio:
+   `group_allocation` 8/8 (100%), `ages` 5/5 (100%), `group_size` 31/32 (97%). El único
+   desacuerdo es el bug de regex `me plus 3 friends` — el regex resuelve `group_size=3`
+   (mal) y, **por diseño, el gap-filler nunca pisa un campo que el regex ya resolvió**,
+   así que este caso queda para un fix de regex o una fase de *override* futura, no lo
+   arregla el cutover de gap-fill. Excluyéndolo, el gap-filler está al **100%** en el
+   dominio de grupo, por encima del umbral ≥98%.
+6. ✅ **Verificado en vivo con LLM real** (local, `.env`, flag activado a mano):
+   - `"just the two of us wanna dive"` — regex no saca tamaño. Flag OFF →
+     `group_size=None`; flag ON → `group_size=2`.
+   - `"were a group of six, four certified divers and two snorkelers"` — regex saca
+     `group_size=6` pero no el reparto. Flag OFF → `group_allocation=None`; flag ON →
+     `group_allocation={certified_diving:4, snorkel:2}` (entra al flujo de grupo mixto).
+   - `"mi hijo de ocho quiere probar y yo buceo"` — flag OFF → `group_size=None, ages=[]`;
+     flag ON → `group_size=2, ages=[8]`.
+7. ⬜ Pendiente (decisión de despliegue, no de código): activar
+   `llm_extraction_cutover_group=True` en un entorno real cuando el equipo decida — mismo
+   patrón que la Fase 1 (el flag de cada dominio se activa por separado). El código ya
+   está listo, probado con TDD y verificado en vivo; el default sigue en `False`.
+
+**Fase 2 completa** (código + tests + eval + verificación en vivo). El bug de regex
+`me plus 3 friends` queda registrado en el eval-set como regresión permanente, pendiente
+de fix por regex u override (fuera del alcance del gap-filler por el principio de no
+sobreescribir lo que el regex ya resolvió).
 
 ### Fase 3 — Dominio ubicación/actividad/cambios de plan
 

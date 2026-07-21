@@ -129,3 +129,138 @@ async def test_cutover_result_propagates_to_state_via_apply_detected_intent():
     assert state.detected_activity == "minicourse"
     assert state.detected_is_certified is False
     assert state.is_certified is False
+
+
+# ---------------------------------------------------------------------------
+# Fase 2 — dominio grupo/cantidad/edades (group_size/group_allocation/ages).
+# Gated by settings.llm_extraction_cutover_group, independent kill switch from
+# the Fase 1 certification flag. Same properties to prove as Fase 1, plus the
+# generalization: with only the group flag on, certification fields are NOT
+# applied even if the LLM returns them, and vice-versa.
+# ---------------------------------------------------------------------------
+
+@pytest.mark.asyncio
+async def test_group_cutover_off_by_default_does_not_call_llm():
+    intent = DetectedIntent()
+    state = ConversationState(conversation_id="group-cutover-off-test")
+
+    with patch.object(supervisor, "fill_gaps", new=AsyncMock(side_effect=AssertionError("must not be called"))):
+        await supervisor._maybe_apply_llm_extraction_cutover("somos 3, dos bucean y uno snorkel", intent, state)
+    assert intent.group_size is None
+    assert intent.group_allocation is None
+    assert intent.ages == []
+
+
+@pytest.mark.asyncio
+async def test_group_cutover_on_fills_only_group_domain_fields():
+    """With ONLY the group flag on, even if the LLM patch also carries
+    certification fields, only group_size/group_allocation/ages get applied —
+    is_certified/activity stay for the (independent) Fase 1 flag."""
+    intent = DetectedIntent()
+    state = ConversationState(conversation_id="group-cutover-on-test")
+
+    with patch.object(supervisor.settings, "llm_extraction_cutover_group", True), \
+         patch.object(supervisor, "fill_gaps", new=AsyncMock(return_value={
+             "group_size": 3, "group_allocation": {"certified_diving": 2, "snorkel": 1},
+             "ages": [8, 34], "is_certified": True, "activity": "certified_diving",
+         })) as mocked:
+        await supervisor._maybe_apply_llm_extraction_cutover(
+            "somos 3, dos buceamos certificados y uno hace snorkel, uno tiene 8", intent, state
+        )
+
+    mocked.assert_awaited_once()
+    assert intent.group_size == 3
+    assert intent.group_allocation == {"certified_diving": 2, "snorkel": 1}
+    assert intent.ages == [8, 34]
+    assert intent.is_certified is None  # out of scope: certification flag is off
+    assert intent.activity is None
+    assert "group_size" in intent.detected_fields
+    assert "group_allocation" in intent.detected_fields
+    assert "ages" in intent.detected_fields
+
+
+@pytest.mark.asyncio
+async def test_group_cutover_never_overrides_already_resolved_group_size():
+    """Regex already resolved group_size — with the flag on, the LLM is never
+    consulted if that's the only group field and nothing else is missing."""
+    intent = DetectedIntent(group_size=2, group_allocation={"certified_diving": 2}, ages=[30, 32])
+    state = ConversationState(conversation_id="group-cutover-resolved-test")
+
+    with patch.object(supervisor.settings, "llm_extraction_cutover_group", True), \
+         patch.object(supervisor, "fill_gaps", new=AsyncMock(side_effect=AssertionError("must not be called"))):
+        await supervisor._maybe_apply_llm_extraction_cutover("somos 2", intent, state)
+
+    assert intent.group_size == 2
+    assert intent.group_allocation == {"certified_diving": 2}
+    assert intent.ages == [30, 32]
+
+
+@pytest.mark.asyncio
+async def test_group_cutover_skips_llm_when_only_out_of_scope_fields_missing():
+    """Only certification fields are missing; the group flag is on but the
+    certification flag is off — must not call the LLM just for a domain that
+    isn't cut over."""
+    intent = DetectedIntent(group_size=2, group_allocation={"certified_diving": 2}, ages=[30])
+    state = ConversationState(conversation_id="group-cutover-out-of-scope-test")
+
+    with patch.object(supervisor.settings, "llm_extraction_cutover_group", True), \
+         patch.object(supervisor, "fill_gaps", new=AsyncMock(side_effect=AssertionError("must not be called"))):
+        await supervisor._maybe_apply_llm_extraction_cutover("no estoy certificado", intent, state)
+
+    assert intent.is_certified is None
+
+
+@pytest.mark.asyncio
+async def test_group_cutover_on_failure_degrades_to_regex_only():
+    intent = DetectedIntent()
+    state = ConversationState(conversation_id="group-cutover-failure-test")
+
+    with patch.object(supervisor.settings, "llm_extraction_cutover_group", True), \
+         patch.object(supervisor, "fill_gaps", new=AsyncMock(side_effect=RuntimeError("boom"))):
+        await supervisor._maybe_apply_llm_extraction_cutover("somos un grupo", intent, state)
+
+    assert intent.group_size is None
+    assert intent.group_allocation is None
+    assert intent.ages == []
+
+
+@pytest.mark.asyncio
+async def test_group_cutover_result_propagates_to_state():
+    intent = DetectedIntent()
+    state = ConversationState(conversation_id="group-cutover-propagation-test")
+
+    with patch.object(supervisor.settings, "llm_extraction_cutover_group", True), \
+         patch.object(supervisor, "fill_gaps", new=AsyncMock(return_value={
+             "group_size": 4, "group_allocation": {"certified_diving": 2, "snorkel": 2}, "ages": [10, 12],
+         })):
+        await supervisor._maybe_apply_llm_extraction_cutover(
+            "vamos 4, 2 buceamos y 2 hacen snorkel, dos niños de 10 y 12", intent, state
+        )
+    supervisor._apply_detected_intent(intent, state)
+
+    assert state.detected_group_size == 4
+    assert state.detected_group_allocation == {"certified_diving": 2, "snorkel": 2}
+    assert state.detected_ages == [10, 12]
+
+
+@pytest.mark.asyncio
+async def test_both_cutovers_on_applies_both_domains_in_one_call():
+    """Generalization: with BOTH flags on, a single fill_gaps call fills fields
+    from both domains (certification + group) — no double LLM call."""
+    intent = DetectedIntent()
+    state = ConversationState(conversation_id="both-cutovers-test")
+
+    with patch.object(supervisor.settings, "llm_extraction_cutover_certification", True), \
+         patch.object(supervisor.settings, "llm_extraction_cutover_group", True), \
+         patch.object(supervisor, "fill_gaps", new=AsyncMock(return_value={
+             "is_certified": False, "activity": "minicourse", "group_size": 2, "ages": [7],
+         })) as mocked:
+        await supervisor._maybe_apply_llm_extraction_cutover(
+            "first time, my kid is 7, just the two of us", intent, state
+        )
+
+    mocked.assert_awaited_once()  # ONE call covers both domains
+    assert intent.is_certified is False
+    assert intent.activity == "minicourse"
+    assert intent.group_size == 2
+    assert intent.ages == [7]

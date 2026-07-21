@@ -93,6 +93,14 @@ class Settings(BaseSettings):
     # by default everywhere; the regex stays the primary/fast path regardless —
     # this only fills gaps, never overrides a regex-resolved value.
     llm_extraction_cutover_certification: bool = False
+    # --- Robustness Fase 2 (docs/robustness/plan.md §4, dominio grupo/cantidad/edades) ---
+    # When True, the LLM extractor's result for `group_size`/`group_allocation`/
+    # `ages` is actually APPLIED (not just logged) when the regex left them
+    # unresolved — the second per-domain cutover. Independent from the Fase 1
+    # certification flag: each domain has its own kill switch (plan.md principle
+    # #7). Off by default everywhere; the regex stays the primary/fast path —
+    # this only fills gaps, never overrides a regex-resolved value.
+    llm_extraction_cutover_group: bool = False
 
     @property
     def is_dev(self) -> bool:

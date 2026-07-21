@@ -571,6 +571,113 @@
       },
       "source": "adversarial-nuevo (creado para eval-set inicial, 2026-07-21)",
       "notes": "Abreviatura de chat ('ppl' = people) para el tamano de grupo — no cubierta por los patrones actuales de group_size en ingles."
+    },
+    {
+      "id": "grp-es-un-par",
+      "message": "somos un par y queremos bucear",
+      "lang": "es",
+      "expected": {
+        "activity": "certified_diving",
+        "group_size": 2
+      },
+      "source": "adversarial-fase2-grupo (validado contra IntentDetector real, 2026-07-21)",
+      "notes": "'un par' = 2 personas; el regex resuelve activity pero deja group_size sin resolver."
+    },
+    {
+      "id": "grp-en-two-of-us",
+      "message": "just the two of us wanna dive",
+      "lang": "en",
+      "expected": {
+        "activity": "certified_diving",
+        "group_size": 2
+      },
+      "source": "adversarial-fase2-grupo (validado contra IntentDetector real, 2026-07-21)",
+      "notes": "'the two of us' = 2; group_size hueco en regex."
+    },
+    {
+      "id": "grp-en-mixed-six",
+      "message": "were a group of six, four certified divers and two snorkelers",
+      "lang": "en",
+      "expected": {
+        "activity": "certified_diving",
+        "is_certified": true,
+        "group_size": 6,
+        "group_allocation": {
+          "certified_diving": 4,
+          "snorkel": 2
+        }
+      },
+      "source": "adversarial-fase2-grupo (validado contra IntentDetector real, 2026-07-21)",
+      "notes": "Reparto mixto explicito; regex resuelve group_size/is_certified pero deja group_allocation sin resolver."
+    },
+    {
+      "id": "grp-es-mixed-suegra",
+      "message": "vamos 3, mi pareja y yo buceamos y mi suegra hace snorkel",
+      "lang": "es",
+      "expected": {
+        "activity": "certified_diving",
+        "group_size": 3,
+        "group_allocation": {
+          "certified_diving": 2,
+          "snorkel": 1
+        }
+      },
+      "source": "adversarial-fase2-grupo (validado contra IntentDetector real, 2026-07-21)",
+      "notes": "Reparto por parentesco (pareja bucea, suegra snorkel); regex deja group_allocation hueco."
+    },
+    {
+      "id": "grp-en-implicit-count-ages",
+      "message": "my daughter is 9 and my son is 12, my wife and i dive",
+      "lang": "en",
+      "expected": {
+        "activity": "certified_diving",
+        "group_size": 4,
+        "ages": [
+          9,
+          12
+        ]
+      },
+      "source": "adversarial-fase2-grupo (validado contra IntentDetector real, 2026-07-21)",
+      "notes": "group_size implicito (2 hijos + esposa + yo = 4); regex saca ages pero no cuenta el grupo."
+    },
+    {
+      "id": "grp-es-count-adults-kid",
+      "message": "cuatro adultos y un nino de 7",
+      "lang": "es",
+      "expected": {
+        "group_size": 5,
+        "ages": [
+          7
+        ]
+      },
+      "source": "adversarial-fase2-grupo (validado contra IntentDetector real, 2026-07-21)",
+      "notes": "Conteo '4 adultos y 1 nino' = 5; sin verbo de bucear, activity queda genuinamente desconocida (no forzar)."
+    },
+    {
+      "id": "grp-es-spelled-age-mixed",
+      "message": "mi hijo de ocho quiere probar y yo buceo",
+      "lang": "es",
+      "expected": {
+        "activity": "certified_diving",
+        "group_size": 2,
+        "ages": [
+          8
+        ]
+      },
+      "source": "adversarial-fase2-grupo (validado contra IntentDetector real, 2026-07-21)",
+      "notes": "Edad escrita en palabra ('ocho') + grupo implicito de 2; regex saca activity pero no edad ni tamano."
+    },
+    {
+      "id": "grp-en-me-plus-friends-REGEXBUG",
+      "message": "me plus 3 friends, ppl wanna try diving first time",
+      "lang": "en",
+      "expected": {
+        "activity": "certified_diving",
+        "is_certified": false,
+        "group_size": 4
+      },
+      "source": "adversarial-fase2-grupo (validado contra IntentDetector real, 2026-07-21)",
+      "notes": "BUG REGEX real hallado en Fase 2: 'me plus 3 friends' = 4, pero el regex resuelve group_size=3 (cuenta '3 friends' e ignora 'me'). Como el regex YA resuelve el campo (mal), el gap-filler NO lo toca por diseno (nunca sobreescribe regex). Requiere fix de regex o una fase de override futura — documentado, no arreglable por el cutover de Fase 2."
     }
   ]
 }

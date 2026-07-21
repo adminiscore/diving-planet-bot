@@ -298,3 +298,83 @@ applied=...` en PRE para ver cuántas veces se dispara con tráfico real y si ac
 decidir si se mantiene, se generaliza a otros dominios, o se apaga. Si algo va mal,
 revertir es solo quitar esta línea de `docker-compose.vps.yml` + push (sin rollback
 de código).
+
+---
+
+## 2026-07-21 — Fase 2 implementada: cutover del dominio grupo/cantidad/edades
+
+**Fase(s) tocada(s)**: Fase 2 (dominio grupo/cantidad/edades) — completa.
+
+**Qué se hizo**:
+- `settings.llm_extraction_cutover_group` (`src/config.py`, default `False`) — kill
+  switch independiente del de certificación (plan.md principio #7).
+- **Generalización del cutover a multi-dominio** (`supervisor.py`): antes
+  `_maybe_apply_llm_extraction_cutover` tenía cableado el set de certificación; ahora hay
+  `_CERTIFICATION_CUTOVER_FIELDS` + `_GROUP_CUTOVER_FIELDS = {"group_size",
+  "group_allocation", "ages"}` y un helper `_active_cutover_fields()` que une los campos
+  de los dominios cuyo flag está encendido. La función hace **una sola llamada a
+  `fill_gaps()`** que cubre todos los dominios activos (§3.3, coste/latencia) y aplica
+  solo los campos en scope. Retrocompatible: con el flag de grupo apagado (default), su
+  comportamiento es idéntico al de la Fase 1 — los 7 tests de certificación pasan sin
+  tocarlos.
+- **Mejora de schema**: la descripción de `group_size` en `llm_extractor.py` se afinó
+  para contar enumeraciones de personas ("my wife and I" = 2, "me plus 3 friends" = 4,
+  "four adults and a kid" = 5). Subió el acuerdo de `group_size` de 94% a 97%.
+- **Eval-set ampliado** de 50 a 58 casos (`docs/robustness/eval-set.json`): 8
+  adversariales del dominio de grupo, cada uno validado contra el `IntentDetector` real
+  antes de fijar `expected` (lección de proceso de la Fase 0). Incluye un **bug de regex
+  real** hallado en esta fase: `me plus 3 friends` → regex resuelve `group_size=3`
+  (debería ser 4).
+- **TDD**: `tests/test_llm_extraction_cutover.py` +7 tests (14 total) — flag apagado no
+  llama al LLM; encendido rellena solo los 3 campos de grupo aunque el patch traiga
+  campos de certificación; nunca sobreescribe lo resuelto por regex; no llama al LLM si
+  solo falta otro dominio; degrada a regex-only ante fallo; propaga a `state`; y el caso
+  clave de la generalización: **ambos flags on → una sola llamada** cubre ambos dominios.
+- Suite completa: **1753 passed, 15 skipped** (1746 + 7 nuevos). `ruff`/`compileall`
+  limpios.
+
+**Resultado del eval con LLM real** (`python -m scripts.run_extraction_eval`, gpt-4o,
+`.env` local): **121/122 = 99.2% de acuerdo, 1 desacuerdo, 0 huecos**. Por campo del
+dominio: `group_allocation` 8/8 (100%), `ages` 5/5 (100%), `group_size` 31/32 (97%). El
+único desacuerdo es el bug de regex `me plus 3 friends` — el regex ya resolvió el campo
+(mal) y el gap-filler no lo pisa por diseño. **Excluyendo ese bug documentado, el
+gap-filler está al 100% en el dominio de grupo**, por encima del umbral ≥98%.
+
+**Verificación en vivo con LLM real** (local, `.env`, flag activado a mano):
+- `"just the two of us wanna dive"`: flag OFF → `group_size=None`; ON → `group_size=2`.
+- `"were a group of six, four certified divers and two snorkelers"`: OFF →
+  `group_allocation=None`; ON → `group_allocation={certified_diving:4, snorkel:2}`.
+- `"mi hijo de ocho quiere probar y yo buceo"`: OFF → `group_size=None, ages=[]`; ON →
+  `group_size=2, ages=[8]`.
+
+**Decisiones tomadas y por qué**:
+- Generalizar el cutover a multi-dominio (en vez de duplicar una función por dominio)
+  evita una segunda llamada LLM cuando dos dominios están encendidos a la vez, y mantiene
+  el kill switch por dominio (cada flag decide qué campos del único patch se aplican). Se
+  eligió mantener el nombre y la firma de `_maybe_apply_llm_extraction_cutover` para no
+  romper los tests de Fase 1 ni el call-site en `_dispatch_conversation_agent`.
+- El bug de regex `me plus 3 friends` NO se arregló en esta fase: el gap-filler no puede
+  (el regex ya resuelve el campo, mal, y el diseño prohíbe sobreescribir regex). Se dejó
+  en el eval-set como regresión permanente, con nota, para una futura fase de override o
+  un fix puntual de regex — arreglarlo ahora sería salirse del alcance de la Fase 2.
+- La mejora de la descripción de `group_size` se validó re-corriendo el eval completo
+  (no solo el caso afectado) para confirmar que no regresó ningún otro campo (subió
+  group_size, el resto quedó igual en 100%).
+
+**Qué quedó a medias / bloqueadores**: nada técnico. Como en la Fase 1, lo único
+pendiente es la decisión de producto/timing de cuándo activar
+`llm_extraction_cutover_group=True` en un entorno real (dev/PRE). El código está listo,
+probado y verificado en vivo; el default sigue en `False`.
+
+**Siguiente paso concreto para quien continúe**: dos caminos, ninguno bloquea al otro:
+1. **Activar el flag de grupo en PRE** (`docker-compose.vps.yml`, sección `dp-pre-bot`,
+   `LLM_EXTRACTION_CUTOVER_GROUP: "true"`) igual que se hizo con el de certificación, para
+   acumular datos de tráfico real antes de plantear producción.
+2. **Seguir con la Fase 3** (dominio ubicación/actividad/cambios de plan — `location`,
+   `island`, `hotel` y los interceptores de cambio de plan/acompañante). Es el dominio con
+   más regex dispersa y frágil, el más beneficiado pero también el de más superficie de
+   regresión — mismo patrón de pasos, con especial cuidado en el eval-set.
+3. Considerar, en una fase de override futura, atacar el bug `me plus 3 friends` y otros
+   casos donde el regex resuelve MAL (no solo deja hueco) — requiere cambiar el diseño de
+   "nunca sobreescribir regex" a "sobreescribir cuando el eval-set demuestre, por campo,
+   que el LLM es más fiable", que es una decisión explícita documentada (plan.md §3.2).

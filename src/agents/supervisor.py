@@ -3623,37 +3623,55 @@ _ENTRY_BOOKING_TOOLS = {
 }
 
 
+# Per-domain cutover field sets (docs/robustness/plan.md §4). Each domain has
+# its own kill-switch flag (plan.md principle #7); a field is only applied from
+# the LLM patch if its domain's flag is on. Fase 1 = certification, Fase 2 =
+# group/quantity/ages. Future phases add their own entry here.
 _CERTIFICATION_CUTOVER_FIELDS = {"is_certified", "activity"}
+_GROUP_CUTOVER_FIELDS = {"group_size", "group_allocation", "ages"}
+
+
+def _active_cutover_fields() -> set[str]:
+    """Union of the cutover field sets whose per-domain flag is currently on.
+    Empty when every domain flag is off (the default everywhere) — in that case
+    the cutover is a no-op and never calls the LLM."""
+    active: set[str] = set()
+    if settings.llm_extraction_cutover_certification:
+        active |= _CERTIFICATION_CUTOVER_FIELDS
+    if settings.llm_extraction_cutover_group:
+        active |= _GROUP_CUTOVER_FIELDS
+    return active
 
 
 async def _maybe_apply_llm_extraction_cutover(
     message: str, regex_intent: DetectedIntent, state: ConversationState
 ) -> None:
-    """Fase 1 real cutover (docs/robustness/plan.md §4, dominio certificación).
-    Gated by `settings.llm_extraction_cutover_certification` (off by default
-    everywhere). When on, and the regex left `is_certified`/`activity`
-    unresolved, asks the LLM gap-filler and — unlike the Fase 0 shadow probe —
-    actually MUTATES `regex_intent` in place with whatever it found for those
-    two fields specifically (never any other field; those stay shadow-only
-    until their own domain's Fase N is cut over). Must run BEFORE
-    `_apply_detected_intent(intent, state)` so the filled values propagate to
-    conversation state normally through the existing path.
+    """Per-domain real cutover (docs/robustness/plan.md §4). Gated by the
+    per-domain flags (`llm_extraction_cutover_certification` for Fase 1,
+    `llm_extraction_cutover_group` for Fase 2 — all off by default everywhere).
+    When at least one domain is on, and the regex left one of that domain's
+    fields unresolved, asks the LLM gap-filler ONCE and — unlike the Fase 0
+    shadow probe — actually MUTATES `regex_intent` in place, but ONLY for fields
+    belonging to an enabled domain (any other field the LLM returns is
+    discarded and stays shadow-only until its own domain's Fase N is cut over).
+    A single LLM call covers every enabled domain at once (plan.md §3.3, cost/
+    latency control). Must run BEFORE `_apply_detected_intent(intent, state)` so
+    the filled values propagate to conversation state normally.
 
     The regex is still the primary/fast path: this only fills a genuine gap,
     never overrides a value the regex already resolved. Any error degrades
-    silently to "regex-only", exactly like today — this can never make a
-    reply worse than before Fase 1 existed.
+    silently to "regex-only", exactly like today — this can never make a reply
+    worse than before the cutover existed.
     """
-    if not settings.llm_extraction_cutover_certification:
+    active_fields = _active_cutover_fields()
+    if not active_fields:
         return
     try:
-        relevant_gaps = [
-            f for f in missing_fields(regex_intent) if f in _CERTIFICATION_CUTOVER_FIELDS
-        ]
+        relevant_gaps = [f for f in missing_fields(regex_intent) if f in active_fields]
         if not relevant_gaps:
             return
         patch = await fill_gaps(message, regex_intent, history=state.history, lang=state.language)
-        applied = {k: v for k, v in patch.items() if k in _CERTIFICATION_CUTOVER_FIELDS}
+        applied = {k: v for k, v in patch.items() if k in active_fields}
         for field, value in applied.items():
             setattr(regex_intent, field, value)
             if field not in regex_intent.detected_fields:
