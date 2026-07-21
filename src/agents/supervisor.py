@@ -3838,6 +3838,27 @@ async def _dispatch_conversation_agent(state: ConversationState, message: str) -
             logger.info("[SUPERVISOR] Bare certified-diver statement -> offering diving options")
             return result
 
+    # A specific-activity statement (snorkel/minicourse/PADI course) the LLM
+    # tagged as answer_question. Audit finding (2026-07-21, same class of bug
+    # as the two fallbacks above): _intent_would_route() checks
+    # `intent.activity in ("minicourse", "snorkel", "padi_*")` as one of its 4
+    # branches, but until now NO fallback here covered it — "quiero hacer
+    # snorkel, somos 2" fell entirely to RAG instead of entering the guided
+    # booking flow for that activity. Mirrors _intent_would_route's own
+    # branch order (checked right after certified-diver, before unknown-cert).
+    if (
+        decision.tool not in _ENTRY_BOOKING_TOOLS
+        and not _message_looks_like_question(message)
+        and intent.activity in ("minicourse", "snorkel", "padi_open_water", "padi_advanced",
+                                 "padi_rescue", "padi_divemaster", "padi_specialty")
+    ):
+        intent.group_size = state.detected_group_size or intent.group_size
+        intent.location = state.detected_location or intent.location
+        result = _route_detected_intent(intent, state, message)
+        if result is not None:
+            logger.info(f"[SUPERVISOR] Specific-activity statement ({intent.activity}) -> entering guided flow")
+            return result
+
     # Same fallback as above, for the parallel case where certification is
     # UNKNOWN rather than already true: a clear booking statement (diving
     # activity + not a question) whose certification status wasn't stated

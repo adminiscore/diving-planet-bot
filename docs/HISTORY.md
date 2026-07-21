@@ -1,6 +1,12 @@
 History
 =======
 
+0.20.39 - (2026-07-21)
+----------------------
+* **Auditoría del patrón de fallback repetido (pedida por el owner tras encontrar el mismo tipo de bug 3 veces en una sesión)**: `_intent_would_route()` enumera 4 condiciones bajo las que un mensaje debería entrar al flujo guiado (grupo mixto, buzo certificado, actividad específica —minicurso/snorkel/PADI—, certificación desconocida), pero `_dispatch_conversation_agent` solo tenía fallback explícito para 3 de ellas cuando el orquestador LLM clasifica el mensaje como `answer_question`. **Faltaba la de "actividad específica"**: "quiero hacer snorkel, somos 2" mal clasificado por el orquestador caía por completo a RAG en vez de entrar al carrito de snorkel. Confirmado con una prueba directa contra el pipeline real antes de escribir el test. Añadido el 4º fallback que faltaba, mismo orden de prioridad que `_intent_would_route`.
+* Barrida el resto del archivo buscando el mismo patrón ("función que enumera N casos" vs. "fallback que solo cubre N-1") — no se encontraron más instancias sin cubrir.
+* Test nuevo: `test_specific_activity_statement_enters_guided_flow_not_rag`. Suite: **1775 passed**, 15 skipped. `ruff`/`compileall` limpios.
+
 0.20.38 - (2026-07-21)
 ----------------------
 * **Merge de la rama de Gonzalo (`feature/pruebaGon`, fast-forward limpio)**: completó las Fases 2-4 del plan de robustez (grupo/cantidad/edades, ubicación, decisión de mantener separados extractor/orquestador con `gpt-4o-mini`), una revisión crítica exhaustiva (`docs/robustness/review-2026-07-21.md`), la Fase 6 (tooling `scripts/harvest_cutover_logs.py`) y la Fase 8 (dominio nacionalidad/logística). También mockeó RAG por defecto en los tests (`tests/conftest.py`), bajando la suite de ~319s a ~153s y eliminando los 8 fallos crónicos por no-determinismo del RAG real que arrastrábamos toda la sesión.

@@ -2940,6 +2940,24 @@ def test_non_cert_companion_multi_day_offers_minicourse_and_open_water():
 
 
 @pytest.mark.asyncio
+async def test_specific_activity_statement_enters_guided_flow_not_rag(agent_decides):
+    """Audit finding (2026-07-21), same class of bug as the mixed-group and
+    certified-diver fallbacks: _intent_would_route() has 4 branches
+    (_should_enter_mixed_flow, _should_skip_to_certified_flow, a bare
+    "activity in (minicourse/snorkel/padi_*)" check, _should_ask_certification)
+    but _dispatch_conversation_agent only had fallback coverage for 3 of them —
+    the "specific activity" branch (snorkel/minicourse/PADI courses, regardless
+    of certification) had NO fallback at all. So "quiero hacer snorkel, somos 2"
+    misclassified by the orchestrator as answer_question fell entirely to RAG
+    instead of entering the guided snorkel booking flow."""
+    from src.agents import orchestrator
+    agent_decides(orchestrator.TOOL_ANSWER_QUESTION)
+    state = make_state()
+    await route_message(state, "quiero hacer snorkel, somos 2")
+    assert state.step != Step.MAIN_MENU, "must have entered the guided snorkel flow"
+
+
+@pytest.mark.asyncio
 async def test_pure_companion_mention_routes_to_upsell(agent_decides):
     """#8: a free-text mention of a companion who only accompanies proactively
     offers them the mini-course/snorkel upsell (after asking the origin)."""
