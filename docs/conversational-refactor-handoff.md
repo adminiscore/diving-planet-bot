@@ -387,3 +387,73 @@ confirmado + hallazgo `only_fields`).
   sesión, subido y desplegado en PRE.
 - Suite y eval-set: ver el commit de esta sesión para el conteo exacto tras añadir
   `hv-aowd-acronym`.
+
+---
+
+# Sesión 2026-07-22 (tarde-noche) — Red de precisión LLM: recordar + acompañante añadido
+
+> El owner reportó capturas reales de PRE con 3 fallos y dio una instrucción explícita:
+> **no seguir ampliando el regex frase a frase** para "acompañante añadido" — resolverlo
+> globalmente con el LLM, con precisión (nunca inventar un valor).
+
+## Los 3 fallos originales (capturas reales de PRE)
+
+1. "¿cuántas personas somos, me lo recuerdas?" → el bot decía "eso no lo tengo a la
+   mano" y ofrecía un asesor, para un dato que YA tenía en el estado.
+2. "mi acompañante quiere hacer buceo pero no es certificado" → repetía el resumen de
+   buceo certificado con un "Refresher añadido" fuera de lugar, en vez de añadir un
+   minicurso para el acompañante.
+3. "hay un amigo que quiere hacer snorkel" / "viene un acompañante" → no añadían nada;
+   caían al mismo mensaje genérico de asesor.
+
+## Causa raíz
+
+El mecanismo de "añadir acompañante" vivía en un regex (`_ADDED_PERSON_RE`) que solo
+reconoce posesivo exacto ("mi amigo", "mi novia"...) y exige que la actividad detectada
+sea DISTINTA de la principal. "hay un amigo" no tiene posesivo; "quiere hacer buceo
+pero no es certificado" detecta la MISMA actividad (`certified_diving`) que la
+principal, así que el patrón nunca disparaba. Un bug de fondo más serio: cuando SÍ
+detectaba una actividad distinta (p. ej. "hay un amigo que quiere hacer snorkel"),
+como no coincidía con `_ADDED_PERSON_RE`, `_apply_detected_intent` (latest-wins)
+**sobreescribía la actividad principal completa** con la del acompañante.
+
+## Solución (decidida con el owner vía AskUserQuestion, ambas opciones recomendadas)
+
+- **Detección de acompañante**: nueva herramienta LLM dedicada
+  (`detect_special_signals`, `llm_extractor.py`) — separada del gap-filler de slots
+  persistentes porque esto es un EVENTO de turno, no un campo de `DetectedIntent`.
+  Devuelve `companion_activity`/`companion_qty` cuando el mensaje introduce a alguien
+  ADICIONAL (aplicando ya la regla de negocio: no certificado + quiere bucear →
+  minicurso). Solo se invoca como red de última instancia cuando el turno no avanzó por
+  los caminos normales (`next_missing_slot` no cambió) — nunca en cada turno.
+- **Recordar un dato**: el mismo tool devuelve `recall_field` (qué campo se pide) SOLO
+  cuando el mensaje es una pregunta explícita ("?"). El VALOR de la respuesta viene
+  SIEMPRE del estado (`_recall_answer`), nunca del LLM — si el estado no tiene ese dato
+  resuelto de verdad, se abstiene (`None`) y el turno cae a RAG normal, nunca inventa.
+- **Bug de fondo corregido**: `_restore_main_diver_fields` — cuando se confirma que un
+  turno hablaba de un acompañante (por regex o por la señal LLM), se restauran
+  `activity`/`service_id`/`is_certified`/`last_dive_over_2_years`/`refresher_interested`
+  del buceador PRINCIPAL a como estaban antes de este turno, luego se aplica SOLO el
+  añadido. Aplicado en ambos caminos (el regex `_ADDED_PERSON_RE` ya existente y el
+  nuevo camino LLM) para no dejar el mismo bug en uno de los dos.
+- El "gate" de cuándo llamar a la señal es `next_missing_slot(state) != prev_pending`
+  (no un snapshot crudo de campos) — precisamente porque un campo corrompido por error
+  en este mismo turno no debe contar como "avance real".
+
+## Verificado en vivo con LLM real (los 3 mensajes EXACTOS de las capturas)
+
+- Recall: "cuantas personas somos me lo recuerda?" → "Me dijiste que sois *3* personas."
+- Acompañante no certificado: `detected_group_allocation = {'certified_diving': 1,
+  'minicourse': 1}`, `is_certified` del principal se mantiene `True` (no se corrompe).
+- Amigo snorkel: carrito final `[('cert', 1), ('snorkel', 1)]`.
+
+12 tests nuevos (6 `test_llm_extractor.py`, 6 `test_conversational_core.py`). Suite:
+**1867 passed**, 15 skipped. Ruff limpio en los archivos tocados.
+
+## Qué queda
+
+Nada bloqueante de esta pieza. Si el equipo encuentra más "eventos de turno" similares
+(no campos persistentes, sino cosas que pasan en un mensaje suelto), el patrón a seguir
+es el mismo: extender `_SIGNALS_TOOL`/`detect_special_signals`, nunca añadir un regex
+nuevo por frase. Sigue pendiente, sin cambios respecto a antes: Fase 5 (limpieza) y
+Fase 4 (retirar el árbol `MIXED_*`).

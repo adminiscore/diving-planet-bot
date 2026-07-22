@@ -25,11 +25,13 @@ def make_state(lang: str = "es") -> ConversationState:
 @pytest.fixture(autouse=True)
 def _core_on(monkeypatch):
     """Enciende el núcleo para todos los tests de este módulo y deja el
-    gap-filler en no-op por defecto (cada test lo re-mockea si necesita que
-    el LLM 'rellene' algo). settings es una instancia compartida, así que
-    parchearlo aquí lo ve también el hook del supervisor."""
+    gap-filler y el detector de señales (recordar/acompañante) en no-op por
+    defecto (cada test los re-mockea si necesita que el LLM 'decida' algo).
+    settings es una instancia compartida, así que parchearlo aquí lo ve
+    también el hook del supervisor."""
     monkeypatch.setattr(settings, "conversational_core", True)
     monkeypatch.setattr(core, "fill_gaps", AsyncMock(return_value={}))
+    monkeypatch.setattr(core, "detect_special_signals", AsyncMock(return_value={}))
 
 
 # ---------------------------------------------------------------------------
@@ -662,3 +664,102 @@ async def test_understand_still_fills_when_state_is_empty(monkeypatch):
     await core._understand(state, "never tried it before but would love to")
     assert state.detected_activity == "minicourse"
     assert state.detected_is_certified is False
+
+
+# ---------------------------------------------------------------------------
+# Red de precisión: detect_special_signals (recordar / acompañante) —
+# hallazgo en vivo 2026-07-22, decisión owner de NO ampliar más el regex.
+# ---------------------------------------------------------------------------
+
+@pytest.mark.asyncio
+async def test_recall_group_size_answers_from_state_not_rag():
+    """"¿cuántas personas somos, me lo recuerdas?" — el bot YA sabe la
+    cantidad; debe responder con el valor real del estado, sin pasar por RAG
+    ni ofrecer un asesor (hallazgo en vivo: antes decía "eso no lo tengo a
+    la mano")."""
+    state = make_state("es")
+    state.detected_group_size = 3
+    state.core_pending_slot = core.SLOT_NATIONALITY
+    with patch.object(core, "detect_special_signals", new=AsyncMock(return_value={"recall_field": "group_size"})), \
+         patch("src.agents.supervisor.rag_answer", new=AsyncMock(side_effect=AssertionError("no debe ir a RAG"))):
+        resp = await route_message(state, "cuantas personas somos, me lo recuerdas?")
+    assert "3" in resp
+    assert state.core_pending_slot == core.SLOT_NATIONALITY  # retoma el slot pendiente
+
+
+@pytest.mark.asyncio
+async def test_recall_unknown_field_falls_back_to_rag():
+    """Si el LLM señala un campo que el estado NO tiene resuelto de verdad,
+    _recall_answer devuelve None y el turno cae a RAG normal — nunca se
+    inventa un valor."""
+    state = make_state("es")
+    state.core_pending_slot = core.SLOT_LOCATION
+    with patch.object(core, "detect_special_signals", new=AsyncMock(return_value={"recall_field": "group_size"})), \
+         patch("src.agents.supervisor.rag_answer", new=AsyncMock(return_value="Respuesta RAG")):
+        resp = await route_message(state, "cuantos somos, recuerdame?")
+    assert "Respuesta RAG" in resp
+
+
+@pytest.mark.asyncio
+async def test_companion_signal_adds_minicourse_not_regex_match():
+    """"mi acompañante quiere hacer buceo pero no es certificado" — el regex
+    NO lo reconoce (misma actividad que la principal, sin persona-añadida
+    explícita); la señal LLM sí, y debe mapear a MINICURSO (no repetir el
+    resumen de buceo certificado con un refresher que no venía a cuento)."""
+    state = make_state("es")
+    state.detected_activity = "certified_diving"
+    state.is_certified = True
+    state.location = "cartagena"
+    state.detected_group_size = 1
+    state.last_dive_over_2_years = False
+    state.core_pending_slot = core.SLOT_NATIONALITY
+    with patch.object(core, "detect_special_signals",
+                       new=AsyncMock(return_value={"companion_activity": "minicourse", "companion_qty": 1})):
+        await route_message(state, "mi acompañante quiere hacer buceo pero no es certificado")
+    alloc = state.detected_group_allocation or {}
+    assert alloc.get("certified_diving") == 1
+    assert alloc.get("minicourse") == 1
+
+
+@pytest.mark.asyncio
+async def test_companion_signal_post_close_adds_snorkel_item():
+    """"hay un amigo que quiere hacer snorkel" tras el cierre — el regex no
+    lo reconoce ('hay un amigo' no matchea _ADDED_PERSON_RE con posesivo);
+    la señal LLM sí y el carrito debe quedar con AMBAS actividades."""
+    state = make_state("es")
+    await route_message(state, "soy buzo certificado, quiero bucear desde cartagena, voy solo")
+    await route_message(state, "no")
+    await route_message(state, "no soy colombiano")
+    assert state.mixed_cart[0]["type"] == "cert"
+
+    with patch.object(core, "detect_special_signals",
+                       new=AsyncMock(return_value={"companion_activity": "snorkel", "companion_qty": 1})):
+        resp = await route_message(state, "hay un amigo que quiere hacer snorkel")
+    types = {it["type"]: it["qty"] for it in state.mixed_cart}
+    assert types.get("cert") == 1, "el buceo original no puede perderse"
+    assert types.get("snorkel") == 1
+    assert "norkel" in resp
+
+
+@pytest.mark.asyncio
+async def test_no_signal_falls_through_to_generic_as_before():
+    """Regresión: si detect_special_signals no encuentra nada (mensaje
+    genuinamente ambiguo), el comportamiento sigue siendo el de antes — no se
+    inventa ni una señal ni una respuesta."""
+    state = make_state("es")
+    state.core_pending_slot = core.SLOT_NATIONALITY
+    with patch.object(core, "detect_special_signals", new=AsyncMock(return_value={})):
+        resp = await route_message(state, "gracias por la ayuda")
+    assert resp  # no crashea; sigue re-preguntando lo pendiente
+
+
+@pytest.mark.asyncio
+async def test_signal_detection_not_called_when_turn_already_advanced():
+    """No se gasta la llamada de señales si el turno YA avanzó por el camino
+    normal (regex/gap-fill) — solo es una red de precisión para el caso
+    estancado."""
+    state = make_state("es")
+    signals_mock = AsyncMock(return_value={})
+    with patch.object(core, "detect_special_signals", new=signals_mock):
+        await route_message(state, "quiero hacer snorkel, somos 2, desde cartagena")
+    signals_mock.assert_not_called()

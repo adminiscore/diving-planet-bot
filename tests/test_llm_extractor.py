@@ -11,6 +11,7 @@ import pytest
 from src.agents.intent_detector import DetectedIntent
 from src.agents.llm_extractor import (
     compare_with_ground_truth,
+    detect_special_signals,
     fill_gaps,
     missing_fields,
 )
@@ -282,3 +283,71 @@ def test_compare_disagreement():
 def test_compare_missed_field():
     result = compare_with_ground_truth({}, {"group_size": 2})
     assert result["missed"] == ["group_size"]
+
+
+# ---------------------------------------------------------------------------
+# detect_special_signals() — fallback de recordar/acompañante (núcleo)
+# ---------------------------------------------------------------------------
+
+@pytest.mark.asyncio
+async def test_detect_signals_recall_field():
+    msg = _FakeMessage(tool_calls=[_FakeToolCall(
+        "detect_signals", json.dumps({"recall_field": "group_size"})
+    )])
+    result = await detect_special_signals(
+        "cuantas personas somos, me lo recuerdas?", client=_make_client(msg)
+    )
+    assert result == {"recall_field": "group_size"}
+
+
+@pytest.mark.asyncio
+async def test_detect_signals_companion_activity_and_qty():
+    msg = _FakeMessage(tool_calls=[_FakeToolCall(
+        "detect_signals", json.dumps({"companion_activity": "minicourse", "companion_qty": 1})
+    )])
+    result = await detect_special_signals(
+        "mi acompañante quiere hacer buceo pero no es certificado", client=_make_client(msg)
+    )
+    assert result == {"companion_activity": "minicourse", "companion_qty": 1}
+
+
+@pytest.mark.asyncio
+async def test_detect_signals_no_signal_returns_empty():
+    msg = _FakeMessage(tool_calls=[_FakeToolCall("detect_signals", json.dumps({}))])
+    result = await detect_special_signals("hola, gracias por la ayuda", client=_make_client(msg))
+    assert result == {}
+
+
+@pytest.mark.asyncio
+async def test_detect_signals_empty_message_no_llm_call():
+    class _ShouldNotBeCalled:
+        class chat:  # noqa: N801
+            class completions:  # noqa: N801
+                @staticmethod
+                async def create(**kwargs):
+                    raise AssertionError("must not call the LLM for an empty message")
+
+    result = await detect_special_signals("   ", client=_ShouldNotBeCalled())
+    assert result == {}
+
+
+@pytest.mark.asyncio
+async def test_detect_signals_error_returns_empty():
+    class _BoomClient:
+        class chat:  # noqa: N801
+            class completions:  # noqa: N801
+                @staticmethod
+                async def create(**kwargs):
+                    raise RuntimeError("boom")
+
+    result = await detect_special_signals("algo raro", client=_BoomClient())
+    assert result == {}
+
+
+@pytest.mark.asyncio
+async def test_detect_signals_drops_null_values():
+    msg = _FakeMessage(tool_calls=[_FakeToolCall(
+        "detect_signals", json.dumps({"recall_field": None, "companion_activity": "snorkel"})
+    )])
+    result = await detect_special_signals("un amigo quiere snorkel", client=_make_client(msg))
+    assert result == {"companion_activity": "snorkel"}

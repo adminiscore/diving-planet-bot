@@ -1,6 +1,16 @@
 History
 =======
 
+0.20.52 - (2026-07-22)
+----------------------
+* **Red de precisión por LLM para "recordar un dato" y "acompañante añadido"** — decisión explícita del owner tras revisar capturas reales de PRE: nada de seguir ampliando el regex frase a frase para esto. 3 fallos reales corregidos:
+  * **"¿Cuántas personas somos, me lo recuerdas?"** ya no cae al escalado genérico de asesor — responde con el valor REAL del estado (nunca inventado: el LLM solo identifica QUÉ campo se pide, el código decide el valor y la frase).
+  * **"mi acompañante quiere hacer buceo pero no es certificado"** ahora añade un minicurso para el acompañante en vez de repetir el resumen de buceo certificado con un refresher fuera de lugar.
+  * **"hay un amigo que quiere hacer snorkel" / "viene un acompañante"** (frases sin el posesivo "mi" que el regex exigía) ahora añaden el subgrupo al carrito, tanto mid-flujo como tras el cierre.
+* Nueva herramienta LLM dedicada (`detect_special_signals`, `src/agents/llm_extractor.py`), separada del gap-filler de slots persistentes: detecta 2 señales de turno — `recall_field` (qué dato se pide recordar) y `companion_activity`/`companion_qty` (persona añadida). Solo se invoca como red de última instancia cuando el turno no avanzó por los caminos normales (regex + gap-fill), nunca en cada turno.
+* **Bug de fondo encontrado y corregido de paso**: un mensaje sobre un acompañante ("no es certificado" referido a ÉL) podía sobreescribir por error `is_certified`/`last_dive_over_2_years`/`activity` del buceador PRINCIPAL ya resuelto (mismo bug latente en el camino regex existente, antes invisible). Nuevo helper `_restore_main_diver_fields` aplicado en ambos caminos (regex y LLM).
+* 12 tests nuevos (6 del extractor, 6 del núcleo). Suite: **1867 passed**, 15 skipped. Verificado en vivo con LLM real contra los 3 mensajes exactos de las capturas de PRE.
+
 0.20.51 - (2026-07-22)
 ----------------------
 * **3 bugs de regex arreglados directamente** (los mismos que la Fase 6 documentó como candidatos a la Fase 7 de override por LLM) — se investigó primero si eran arreglables en el regex antes de introducir la complejidad de un override selectivo por campo, y los 3 lo eran:

@@ -304,3 +304,147 @@ def compare_with_ground_truth(patch: dict, expected: dict) -> dict:
         else:
             disagree[field] = (got, want)
     return {"agree": agree, "disagree": disagree, "missed": missed}
+
+
+# ---------------------------------------------------------------------------
+# Detección de señales de fallback (núcleo conversacional): "recordar un dato
+# ya dado" y "se añade un acompañante". Herramienta SEPARADA de fill_gaps a
+# propósito: estas no son campos persistentes de DetectedIntent (slots de la
+# reserva), son EVENTOS de un turno concreto — solo se invoca cuando el turno
+# no avanzó la reserva por los caminos normales (ver conversational_core.py,
+# hallazgo en vivo 2026-07-22: "hay un amigo que quiere hacer snorkel" y "mi
+# acompañante quiere hacer buceo pero no es certificado" no los reconocía
+# ningún regex, y quedaban cayendo al escalado genérico de asesor). Decisión
+# del owner: nada de listar más frases en regex — el LLM decide QUÉ pasó, el
+# CÓDIGO decide la respuesta con el valor real del estado (nunca un valor
+# inventado por el LLM), mismo reparto de responsabilidades que fill_gaps.
+_SIGNALS_TOOL = {
+    "type": "function",
+    "function": {
+        "name": "detect_signals",
+        "description": (
+            "The customer's message did NOT advance a scuba booking through "
+            "the normal deterministic slot-filling. Check ONLY whether it (1) "
+            "asks the bot to recall/remind something the customer ALREADY "
+            "said earlier in this conversation, or (2) introduces an "
+            "ADDITIONAL person joining the booking. Omit a field entirely if "
+            "it doesn't apply — never guess."
+        ),
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "recall_field": {
+                    "type": "string",
+                    "enum": ["group_size", "activity", "location", "is_certified", "is_colombian"],
+                    "description": (
+                        "Set ONLY if the customer is asking the bot to remind "
+                        "them of a detail THEY ALREADY GAVE earlier in this "
+                        "chat (e.g. 'how many people did I say?', '¿qué "
+                        "actividad había pedido?', 'remind me what I said'). "
+                        "Pick which field is being asked about. Do NOT set "
+                        "this for product/price/logistics questions — those "
+                        "are answered elsewhere."
+                    ),
+                },
+                "companion_activity": {
+                    "type": "string",
+                    "enum": ["certified_diving", "minicourse", "snorkel"],
+                    "description": (
+                        "Set ONLY if the message introduces an ADDITIONAL "
+                        "person joining the booking (a friend/partner/family "
+                        "member coming along) — NOT the speaker restating or "
+                        "changing their own plan. Use the activity that "
+                        "ADDED person wants, applying the same business rule "
+                        "as everywhere else: 'minicourse' if they are NOT "
+                        "certified and want to dive/try diving, "
+                        "'certified_diving' if they ARE already certified "
+                        "and want to dive, 'snorkel' if they want snorkel "
+                        "only."
+                    ),
+                },
+                "companion_qty": {
+                    "type": "integer",
+                    "description": (
+                        "How many additional people this describes. Default "
+                        "1 for a bare 'a friend'/'a companion' if the message "
+                        "doesn't give a number."
+                    ),
+                },
+            },
+        },
+    },
+}
+
+
+def _signals_system_prompt(lang: str) -> str:
+    if lang == "es":
+        return (
+            "Eres una capa de detección de señales para un bot de buceo. El "
+            "mensaje del cliente NO avanzó la reserva por los caminos "
+            "deterministas normales — tu única tarea es revisar si describe "
+            "(1) un pedido de recordar algo que el cliente YA dijo antes en "
+            "esta conversación, o (2) una persona ADICIONAL que se une a la "
+            "reserva (no el propio hablante). Llama a `detect_signals` "
+            "incluyendo SOLO los campos para los que el mensaje da señal "
+            "real y explícita. Omite cualquier campo ambiguo — nunca "
+            "lo adivines."
+        )
+    return (
+        "You are a signal-detection layer for a scuba diving bot. The "
+        "customer's message did NOT advance the booking through the normal "
+        "deterministic paths — your only job is to check whether it (1) "
+        "asks the bot to recall something the customer ALREADY said earlier "
+        "in this conversation, or (2) introduces an ADDITIONAL person "
+        "joining the booking (not the speaker themself). Call "
+        "`detect_signals` including ONLY the fields the message gives real, "
+        "explicit signal for. Omit anything ambiguous — never guess."
+    )
+
+
+async def detect_special_signals(
+    message: str,
+    *,
+    history: list[dict] | None = None,
+    lang: str = "es",
+    client: AsyncOpenAI | None = None,
+) -> dict:
+    """Fallback signal detector — only called by the conversational core when
+    the normal regex+gap-fill path did NOT advance the booking. Same safety
+    net as fill_gaps: never raises, returns {} on any error, malformed
+    response, or empty message."""
+    if not message or not message.strip():
+        return {}
+    messages: list[dict] = [{"role": "system", "content": _signals_system_prompt(lang)}]
+    for turn in (history or [])[-settings.history_retrieval_enrichment_window:]:
+        role = turn.get("role")
+        content = turn.get("content")
+        if role in ("user", "assistant") and content:
+            messages.append({"role": role, "content": content})
+    messages.append({"role": "user", "content": message})
+
+    try:
+        client = client or AsyncOpenAI(api_key=settings.openai_api_key)
+        response = await client.chat.completions.create(
+            model=settings.extraction_model,
+            messages=messages,
+            tools=[_SIGNALS_TOOL],
+            tool_choice={"type": "function", "function": {"name": "detect_signals"}},
+            temperature=0.0,
+            max_tokens=100,
+        )
+        choice = response.choices[0].message
+        tool_calls = getattr(choice, "tool_calls", None)
+        if not tool_calls:
+            return {}
+        args = json.loads(tool_calls[0].function.arguments or "{}")
+    except (json.JSONDecodeError, TypeError, AttributeError, IndexError) as exc:
+        logger.warning(f"[LLM_EXTRACTOR] signals malformed response: {exc}")
+        return {}
+    except Exception as exc:  # noqa: BLE001
+        logger.warning(f"[LLM_EXTRACTOR] signals error: {exc}")
+        return {}
+
+    result = {k: v for k, v in (args or {}).items() if v not in (None, "", [], {})}
+    if result:
+        logger.info(f"[CORE][SIGNALS] detected={result} msg={message[:80]!r}")
+    return result

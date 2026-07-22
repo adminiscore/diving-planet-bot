@@ -29,7 +29,7 @@ import logging
 import re
 
 from src.agents.intent_detector import IntentDetector
-from src.agents.llm_extractor import fill_gaps, missing_fields
+from src.agents.llm_extractor import detect_special_signals, fill_gaps, missing_fields
 from src.flows.decision_tree import ConversationState, DecisionTree, Step
 from src.utils.fuzzy import is_affirmative, is_negative
 
@@ -477,6 +477,9 @@ async def _understand(state: ConversationState, message: str):
 
     prev_activity = state.detected_activity
     prev_service_id = state.detected_service_id
+    prev_is_certified = state.is_certified
+    prev_last_dive = state.last_dive_over_2_years
+    prev_refresher = state.refresher_interested
 
     intent = _detector.detect(message, state)
     gaps = _relevant_gaps(state, intent, message)
@@ -516,12 +519,17 @@ async def _understand(state: ConversationState, message: str):
         state.detected_group_size = 1
         logger.info("[CORE] singular course booking -> group_size=1")
 
-    # AÑADIR vs CAMBIAR: si ya había actividad principal y este turno menciona
-    # OTRA junto a una persona añadida ("viene también uno que hace snorkel",
-    # "mi novia hace el minicurso"), es un AÑADIDO — la actividad principal no
-    # se pisa (se restaura del "latest wins" de _apply_detected_intent) y el
-    # subgrupo nuevo se acumula en el reparto. Un cambio de opinión sin persona
-    # añadida ("mejor snorkel") sigue siendo cambio (latest wins).
+    # AÑADIR vs CAMBIAR (fast-path regex): si ya había actividad principal y
+    # este turno menciona OTRA junto a una persona añadida ("viene también uno
+    # que hace snorkel", "mi novia hace el minicurso"), es un AÑADIDO — la
+    # actividad principal no se pisa (se restaura del "latest wins" de
+    # _apply_detected_intent) y el subgrupo nuevo se acumula en el reparto. Un
+    # cambio de opinión sin persona añadida ("mejor snorkel") sigue siendo
+    # cambio (latest wins). Cubre solo las frases de _ADDED_PERSON_RE — frases
+    # fuera de esa lista (o donde turn_act == prev_activity, p. ej. "mi
+    # acompañante quiere hacer buceo pero no es certificado") las resuelve la
+    # red de precisión LLM en maybe_handle_turn (detect_special_signals),
+    # nunca ampliando este regex frase a frase (decisión owner 2026-07-22).
     turn_act = intent.activity
     if (
         prev_activity
@@ -531,16 +539,100 @@ async def _understand(state: ConversationState, message: str):
         and prev_activity in _ACTIVITY_TO_CART_TYPE
         and _ADDED_PERSON_RE.search(message)
     ):
-        state.detected_activity = prev_activity
-        state.detected_service_id = prev_service_id
+        _restore_main_diver_fields(state, prev_activity, prev_service_id, prev_is_certified, prev_last_dive, prev_refresher)
         added_qty = (intent.group_allocation or {}).get(turn_act) or 1
-        alloc = dict(state.detected_group_allocation or {})
-        alloc.setdefault(prev_activity, state.detected_group_size or 1)
-        alloc[turn_act] = alloc.get(turn_act, 0) + added_qty
-        state.detected_group_allocation = alloc
-        state.detected_group_size = sum(alloc.values())
-        logger.info(f"[CORE] added activity {turn_act} x{added_qty} -> alloc={alloc}")
+        _merge_companion_activity(state, turn_act, added_qty)
     return intent
+
+
+def _restore_main_diver_fields(
+    state: ConversationState, activity, service_id, is_certified, last_dive, refresher,
+) -> None:
+    """Restaura el perfil del buceador PRINCIPAL a como estaba antes de este
+    turno — usado cuando ya se sabe que el mensaje hablaba de un ACOMPAÑANTE,
+    no del hablante (fast-path regex arriba y red de precisión LLM en
+    maybe_handle_turn). Bug real: "no es certificado"/"sin bucear hace X años"
+    referido al acompañante se aplicaba por 'latest wins' al buceador
+    principal ya resuelto (p. ej. is_certified=True → False de golpe)."""
+    state.detected_activity = activity
+    state.detected_service_id = service_id
+    state.is_certified = is_certified
+    state.last_dive_over_2_years = last_dive
+    state.refresher_interested = refresher
+
+
+def _merge_companion_activity(state: ConversationState, activity: str, qty: int) -> None:
+    """Añade `qty` personas a `activity` como subgrupo del reparto sin pisar
+    la actividad principal — helper compartido por el fast-path regex
+    (_ADDED_PERSON_RE, arriba) y por la red de precisión LLM
+    (detect_special_signals, maybe_handle_turn) para que ambos caminos dejen
+    el estado exactamente igual de consistente."""
+    alloc = dict(state.detected_group_allocation or {})
+    main_act = state.detected_activity
+    if main_act and main_act not in alloc:
+        alloc.setdefault(main_act, state.detected_group_size or 1)
+    alloc[activity] = alloc.get(activity, 0) + qty
+    state.detected_group_allocation = alloc
+    state.detected_group_size = sum(alloc.values())
+    logger.info(f"[CORE] merged companion activity {activity} x{qty} -> alloc={alloc}")
+
+
+_RECALL_LABELS_ES = {
+    "certified_diving": "buceo certificado", "minicourse": "minicurso",
+    "snorkel": "snorkel", "padi_open_water": "el curso Open Water",
+    "padi_advanced": "el curso Advanced", "padi_rescue": "el curso Rescue",
+    "padi_divemaster": "el curso Divemaster", "padi_specialty": "un curso PADI",
+}
+_RECALL_LABELS_EN = {
+    "certified_diving": "certified diving", "minicourse": "the mini-course",
+    "snorkel": "snorkel", "padi_open_water": "the Open Water course",
+    "padi_advanced": "the Advanced course", "padi_rescue": "the Rescue course",
+    "padi_divemaster": "the Divemaster course", "padi_specialty": "a PADI specialty",
+}
+
+
+def _recall_answer(state: ConversationState, field: str) -> str | None:
+    """Responde un pedido de "recuérdame qué dije" con el VALOR REAL del
+    estado (nunca lo que el LLM "cree" que dijiste — el LLM solo identificó
+    QUÉ campo se pide, ver detect_special_signals). Devuelve None si el
+    estado no tiene de verdad ese dato resuelto, para que el caller caiga a
+    RAG en vez de inventar algo — abstenerse es siempre mejor que un dato
+    falso (mismo principio que el resto del extractor)."""
+    lang = state.language
+    es = lang == "es"
+    if field == "group_size":
+        n = state.detected_group_size
+        if not n:
+            return None
+        if n == 1:
+            return "Me dijiste que vas *solo/a*." if es else "You told me it's just *you*."
+        return f"Me dijiste que sois *{n}* personas." if es else f"You told me you're a group of *{n}*."
+    if field == "activity":
+        act = _effective_activity(state)
+        if not act:
+            return None
+        label = (_RECALL_LABELS_ES if es else _RECALL_LABELS_EN).get(act, act)
+        return f"Me habías dicho: *{label}*." if es else f"You told me: *{label}*."
+    if field == "location":
+        loc = state.location
+        if not loc:
+            return None
+        if loc == "island":
+            return "Me dijiste que ya estás *en las islas*." if es else "You told me you're already *on the islands*."
+        return "Me dijiste que salís *desde Cartagena*." if es else "You told me you're departing *from Cartagena*."
+    if field == "is_certified":
+        if state.is_certified is None:
+            return None
+        if state.is_certified:
+            return "Me dijiste que *sí* estás certificado/a." if es else "You told me you *are* certified."
+        return "Me dijiste que *no* estás certificado/a." if es else "You told me you're *not* certified."
+    if field == "is_colombian":
+        if state.is_colombian is None:
+            return None
+        if state.is_colombian:
+            return "Me dijiste que *sí* eres colombiano/a o residente." if es else "You told me you *are* Colombian or a resident."
+        return "Me dijiste que *no* eres colombiano/a." if es else "You told me you're *not* Colombian."
+    return None
 
 
 def _looks_like_question(message: str) -> bool:
@@ -713,18 +805,41 @@ async def maybe_handle_turn(state: ConversationState, message: str) -> str | Non
     # explícito SÍ es siempre una pregunta real y va a RAG (así
     # test_question_mid_flow_answers_and_reasks_pending_slot sigue intacto).
     prev_pending = state.core_pending_slot
+    prev_cart_types = {it.get("type") for it in state.mixed_cart}
+    prev_main_activity = state.detected_activity
+    prev_main_service_id = state.detected_service_id
+    prev_main_is_certified = state.is_certified
+    prev_main_last_dive = state.last_dive_over_2_years
+    prev_main_refresher = state.refresher_interested
+    has_qmark = "?" in message
+
     resolved_short = False
-    if prev_pending and "?" not in message:
+    if prev_pending and not has_qmark:
         resolved_short = _apply_short_answer(state, message)
 
-    # PREGUNTA de info → RAG, y se retoma el slot pendiente sin perderlo.
-    if not resolved_short and _looks_like_question(message):
+    # "?" explícito → SIEMPRE una pregunta real. Antes de RAG, comprobar si es
+    # un pedido de RECORDAR un dato ya dado ("¿cuántas personas somos, me lo
+    # recuerdas?") — se responde con el valor REAL del estado, determinista,
+    # nunca con lo que el LLM "cree" que se dijo (hallazgo en vivo
+    # 2026-07-22: el bot no sabía recuperar sus propios datos y ofrecía
+    # escalar a un asesor para algo que ya tenía).
+    if not resolved_short and has_qmark:
+        signals = await detect_special_signals(message, history=state.history, lang=state.language)
+        recalled = None
+        if signals.get("recall_field"):
+            recalled = _recall_answer(state, signals["recall_field"])
+        if recalled:
+            response = recalled
+            if prev_pending:
+                response += "\n\n" + ask_slot(state, prev_pending, reasking=True)
+            response = greeting + response
+            state.history.append({"role": "assistant", "content": response})
+            return response
         answer = greeting + await _answer_question(state, message)
         state.history.append({"role": "assistant", "content": answer})
         return answer
 
     # COMPRENDER: extracción del resto del mensaje.
-    prev_cart_types = {it.get("type") for it in state.mixed_cart}
     if not (resolved_short and len(message.strip()) <= 12):
         await _understand(state, message)
 
@@ -747,6 +862,56 @@ async def maybe_handle_turn(state: ConversationState, message: str) -> str | Non
             supervisor._maybe_build_pending_note(state)
             state.history.append({"role": "assistant", "content": response})
             return response
+
+    # Red de precisión: si el turno NO avanzó nada por los caminos normales
+    # (regex + gap-fill), probar la detección de señales por LLM antes de caer
+    # al escalado genérico — cubre "hay un amigo que quiere hacer snorkel" o
+    # "mi acompañante quiere hacer buceo pero no es certificado", frases que
+    # ningún regex reconocía (decisión owner 2026-07-22: nunca ampliar el
+    # regex frase a frase para esto; el LLM decide QUÉ pasó, el estado decide
+    # el VALOR real). Solo se gasta esta llamada cuando de verdad hace falta.
+    # (Se mide por next_missing_slot, no por un snapshot crudo de campos: un
+    # campo del buceador PRINCIPAL pisado por error por este mismo turno —el
+    # bug que _restore_main_diver_fields corrige— no debe contar como
+    # "avance", o la red de precisión nunca llegaría a correr.)
+    advanced = resolved_short or next_missing_slot(state) != prev_pending
+    if not advanced:
+        signals = await detect_special_signals(message, history=state.history, lang=state.language)
+        activity = signals.get("companion_activity")
+        if activity:
+            qty = signals.get("companion_qty") or 1
+            # El turno hablaba de un ACOMPAÑANTE, no del hablante principal:
+            # restaurar lo que este mismo turno pudo haber pisado por error en
+            # el perfil del buceador principal antes de aplicar el añadido.
+            _restore_main_diver_fields(
+                state, prev_main_activity, prev_main_service_id,
+                prev_main_is_certified, prev_main_last_dive, prev_main_refresher,
+            )
+            _merge_companion_activity(state, activity, qty)
+            if prev_cart_types and _ACTIVITY_TO_CART_TYPE[activity] not in prev_cart_types:
+                state.mixed_cart.append(_cart_item(state, activity, qty))
+                response = _tree._goto_mixed_final_summary(state)
+                state.core_pending_slot = None
+                supervisor._maybe_build_pending_note(state)
+                state.history.append({"role": "assistant", "content": response})
+                return response
+            advanced = True
+        elif signals.get("recall_field"):
+            recalled = _recall_answer(state, signals["recall_field"])
+            if recalled:
+                response = recalled
+                if prev_pending:
+                    response += "\n\n" + ask_slot(state, prev_pending, reasking=True)
+                response = greeting + response
+                state.history.append({"role": "assistant", "content": response})
+                return response
+
+    # Última red antes del genérico: heurística blanda de pregunta de info
+    # (sin exigir "?", ya descartado arriba) — mismo camino RAG de siempre.
+    if not advanced and _looks_like_question(message):
+        answer = greeting + await _answer_question(state, message)
+        state.history.append({"role": "assistant", "content": answer})
+        return answer
 
     # RESOLVER + RESPONDER.
     nxt = next_missing_slot(state)
