@@ -577,3 +577,88 @@ async def test_flag_off_core_not_engaged(monkeypatch):
         await route_message(state, "hola quiero bucear, soy certificado")
     # (la aserción del mock es la prueba; el estado sigue el camino legacy)
     assert state.core_pending_slot is None
+
+
+# ---------------------------------------------------------------------------
+# Fix A del handoff (2026-07-22 tarde): el gap-fill del núcleo debe loguear en
+# el MISMO formato que el cutover ([EXTRACT][CUTOVER] applied={...} msg='...'),
+# con valores y mensaje completos — es lo que scripts/harvest_cutover_logs.py
+# parsea para el bucle de datos reales (Fase 6 de robustez, hoy bloqueada).
+# ---------------------------------------------------------------------------
+
+@pytest.mark.asyncio
+async def test_gap_fill_logs_in_harvester_format(monkeypatch, caplog):
+    import logging as _logging
+    from scripts.harvest_cutover_logs import parse_lines
+
+    state = make_state("es")
+    monkeypatch.setattr(core, "fill_gaps", AsyncMock(return_value={"activity": "snorkel"}))
+    with caplog.at_level(_logging.INFO, logger="uvicorn.error"):
+        await route_message(state, "me gustaría hacer alguna actividad en el mar mañana")
+
+    lines = [rec.getMessage() for rec in caplog.records]
+    records = parse_lines(lines)
+    assert records, f"el harvester no parseó ninguna línea de: {lines}"
+    assert records[0]["patch"] == {"activity": "snorkel"}
+    assert records[0]["message"] == "me gustaría hacer alguna actividad en el mar mañana"
+
+
+# ---------------------------------------------------------------------------
+# Fix B del handoff: no pedirle al LLM campos que el ESTADO ya conoce — los
+# huecos se calculan contra el estado, no solo contra el intent del mensaje
+# suelto. Sin huecos relevantes → ni siquiera se llama al LLM.
+# ---------------------------------------------------------------------------
+
+@pytest.mark.asyncio
+async def test_understand_skips_llm_when_state_knows_driving_fields(monkeypatch):
+    """Estado con todos los campos conductores conocidos (reserva lista salvo
+    charla) → un mensaje suelto NO dispara llamada al LLM."""
+    state = make_state("es")
+    state.detected_activity = "certified_diving"
+    state.is_certified = state.detected_is_certified = True
+    state.location = state.detected_location = "cartagena"
+    state.detected_group_size = 2
+    state.last_dive_over_2_years = state.detected_last_dive_over_2_years = False
+    state.is_colombian = False
+    monkeypatch.setattr(core, "fill_gaps",
+                        AsyncMock(side_effect=AssertionError("LLM must not be called")))
+    await core._understand(state, "genial entonces nos vemos pronto por allá")
+
+
+@pytest.mark.asyncio
+async def test_understand_requests_only_state_missing_fields(monkeypatch):
+    """Cuando SÍ hay huecos, la llamada pide SOLO los campos que el estado no
+    conoce (ej. real de los logs de PRE: 'Cartagena' disparaba una llamada que
+    rellenaba activity/is_certified/group_size — los tres ya conocidos)."""
+    captured = {}
+
+    async def _capturing_fill_gaps(message, intent, **kwargs):
+        captured.update(kwargs)
+        return {}
+
+    state = make_state("es")
+    state.detected_activity = "certified_diving"
+    state.is_certified = state.detected_is_certified = True
+    state.detected_group_size = 2
+    # location aún desconocida → único hueco conductor
+    monkeypatch.setattr(core, "fill_gaps", _capturing_fill_gaps)
+    await core._understand(state, "pues estamos por el centro histórico ahora mismo")
+
+    only = captured.get("only_fields")
+    assert only is not None
+    assert "location" in only
+    assert "activity" not in only
+    assert "is_certified" not in only
+    assert "group_size" not in only
+
+
+@pytest.mark.asyncio
+async def test_understand_still_fills_when_state_is_empty(monkeypatch):
+    """Primer mensaje (estado vacío): el gap-fill sigue funcionando igual."""
+    state = make_state("en")
+    monkeypatch.setattr(core, "fill_gaps", AsyncMock(return_value={
+        "activity": "minicourse", "is_certified": False,
+    }))
+    await core._understand(state, "never tried it before but would love to")
+    assert state.detected_activity == "minicourse"
+    assert state.detected_is_certified is False

@@ -408,10 +408,69 @@ _ADDED_PERSON_RE = re.compile(
 _ACTIVITY_TO_CART_TYPE = {"certified_diving": "cert", "minicourse": "beginner", "snorkel": "snorkel"}
 
 
+# Campos que CONDUCEN la reserva en el núcleo (alimentan next_missing_slot o el
+# gating de links/moneda). duration/cert_dives/cert_days quedan fuera del
+# gap-fill del núcleo a propósito: son afinadores espontáneos que el regex ya
+# captura cuando el cliente los dice claro (detect_cert_dive_count etc.) y no
+# bloquean ningún slot — pedirlos al LLM en cada turno era parte del gasto que
+# el Fix B elimina. (El cutover legacy del supervisor no cambia.)
+_DRIVING_FIELDS = {
+    "activity", "is_certified", "group_size", "group_allocation",
+    "location", "island", "hotel", "ages", "last_dive_over_2_years",
+    "is_colombian",
+}
+
+
+def _state_known_fields(state: ConversationState) -> set[str]:
+    """Campos extraíbles que la CONVERSACIÓN ya conoce (estado), con la misma
+    convención que missing_fields: False es un valor resuelto, None/[] no."""
+    candidates = {
+        "activity": state.detected_activity,
+        "is_certified": state.is_certified if state.is_certified is not None
+        else state.detected_is_certified,
+        "group_size": state.detected_group_size,
+        "group_allocation": state.detected_group_allocation,
+        "location": state.location or state.detected_location,
+        "island": state.island or state.detected_island,
+        "hotel": state.hotel or state.detected_hotel,
+        "ages": state.detected_ages,
+        "last_dive_over_2_years": state.last_dive_over_2_years
+        if state.last_dive_over_2_years is not None
+        else state.detected_last_dive_over_2_years,
+        "is_colombian": state.is_colombian,
+    }
+    return {f for f, v in candidates.items() if v not in (None, [], {})}
+
+
+def _relevant_gaps(state: ConversationState, intent, message: str) -> list[str]:
+    """(Fix B del handoff) Huecos que de verdad vale la pena pedirle al LLM:
+    los calcula contra el ESTADO (no solo contra el intent del mensaje suelto,
+    que casi siempre está vacío) y descarta los campos que no aplican al
+    contexto (island/hotel saliendo de Cartagena, edades sin menores
+    mencionados, seguridad sin buceo certificado en la reserva, reparto con la
+    cantidad ya sabida y sin señal de persona añadida)."""
+    known = _state_known_fields(state)
+    gaps = [f for f in missing_fields(intent) if f in _DRIVING_FIELDS and f not in known]
+    if (state.location or state.detected_location) == "cartagena":
+        gaps = [f for f in gaps if f not in ("island", "hotel")]
+    if not state.kids_mention_detected:
+        gaps = [f for f in gaps if f != "ages"]
+    if state.detected_activity and not _cart_will_include_cert(state):
+        gaps = [f for f in gaps if f != "last_dive_over_2_years"]
+    # El reparto por actividades solo importa si aún no sabemos cuántos son, o
+    # si este mensaje añade gente ("viene también uno que...") — que es cuando
+    # añadir-vs-cambiar lo consume. Con la cantidad sabida y sin esa señal,
+    # pedirlo cada turno era gasto puro (el regex ya saca los repartos claros).
+    if state.detected_group_size and not _ADDED_PERSON_RE.search(message):
+        gaps = [f for f in gaps if f != "group_allocation"]
+    return gaps
+
+
 async def _understand(state: ConversationState, message: str):
-    """Regex fast-path + gap-fill LLM sobre TODOS los campos que falten, y
-    volcado al estado por el camino ya probado (_apply_detected_intent).
-    Cualquier fallo del LLM degrada a regex-only (fill_gaps devuelve {}).
+    """Regex fast-path + gap-fill LLM sobre los campos que la CONVERSACIÓN aún
+    no conoce (Fix B: nunca se piden campos que el estado ya tiene), y volcado
+    al estado por el camino ya probado (_apply_detected_intent). Cualquier
+    fallo del LLM degrada a regex-only (fill_gaps devuelve {}).
     Devuelve el intent del TURNO (lo que dijo este mensaje concreto), que el
     caller usa para distinguir "añade actividad" de "cambia de actividad"."""
     from src.agents import supervisor  # lazy: evita import circular
@@ -420,15 +479,24 @@ async def _understand(state: ConversationState, message: str):
     prev_service_id = state.detected_service_id
 
     intent = _detector.detect(message, state)
-    gaps = missing_fields(intent)
+    gaps = _relevant_gaps(state, intent, message)
     if gaps and not _looks_like_question(message):
-        patch = await fill_gaps(message, intent, history=state.history, lang=state.language)
+        patch = await fill_gaps(
+            message, intent, history=state.history, lang=state.language, only_fields=gaps
+        )
         for field_name, value in patch.items():
             setattr(intent, field_name, value)
             if field_name not in intent.detected_fields:
                 intent.detected_fields.append(field_name)
         if patch:
-            logger.info(f"[CORE] gap-fill applied={list(patch.keys())}")
+            # (Fix A del handoff) Mismo tag y formato que el cutover legacy —
+            # es lo que scripts/harvest_cutover_logs.py parsea para el bucle de
+            # datos reales (Fase 6): valores incluidos y mensaje completo vía
+            # _log_safe_message (nunca message[:60], bug documentado).
+            logger.info(
+                f"[EXTRACT][CUTOVER] applied={patch} "
+                f"msg={supervisor._log_safe_message(message)!r}"
+            )
     supervisor._apply_detected_intent(intent, state)
 
     # "voy solo" → 1 persona. Nació para cursos PADI (Fase 3 causa A) y el owner

@@ -202,6 +202,39 @@ retira hasta que el núcleo lo cubre y se mide en PRE. Los `xfail` de Fase 3 deb
   3. **La nacionalidad se adapta a singular/plural** (salía siempre "¿sois
      colombianos?" a quien viajaba solo).
 
+## 2. ✅ RESUELTO (2026-07-22, Gonzalo): Fix A y Fix B implementados — Fase 6 desbloqueada
+
+Los dos fixes de abajo quedaron implementados con TDD (+7 tests: 4 en
+`test_conversational_core.py`, 2 en `test_llm_extractor.py`, y el test de
+integración que pasa las líneas de log del núcleo por el harvester real):
+
+- **Fix A hecho**: `_understand` ahora loguea `[EXTRACT][CUTOVER] applied={patch}
+  msg=...` (valores incluidos, mensaje completo vía `supervisor._log_safe_message`)
+  en lugar del viejo `[CORE] gap-fill applied=[nombres]`. El harvester funciona sin
+  tocarlo — el test de integración lo verifica parseando los logs reales del bucle.
+- **Fix B hecho, a nivel de diseño**: `_relevant_gaps(state, intent, message)`
+  calcula los huecos contra el ESTADO (no solo el intent del turno) y descarta
+  campos fuera de contexto: island/hotel saliendo de Cartagena, ages sin menores
+  mencionados, last_dive sin cert en la reserva, y group_allocation con la
+  cantidad ya sabida y sin señal de persona añadida (`_ADDED_PERSON_RE`, que es
+  cuando añadir-vs-cambiar lo consume). Sin huecos relevantes → NO se llama al
+  LLM. Además `fill_gaps` ganó `only_fields` (kwarg opcional, backwards-compatible:
+  el cutover legacy no cambia) para que el prompt solo pida esos campos.
+  `duration`/`cert_dives`/`cert_days` quedan fuera del gap-fill del núcleo a
+  propósito (afinadores espontáneos que el regex ya captura; no bloquean slots).
+- **Verificado en vivo con LLM real** (local, flag on): conversación de 4 turnos
+  con frases fuera del regex ("nos apetece explorar el fondo del mar", "barrio de
+  bocagrande", "nos sumergimos el mes pasado", "venimos de madrid") → reserva
+  cerrada (cert×2, $356) y el harvester sobre esos logs: **4 records, 4 candidatos
+  con valores** (`bocagrande→location=cartagena`, `mes pasado→last_dive=False`,
+  `madrid→is_colombian=False`…) y `--summary` clasificando por dominio. Antes: 0.
+
+Queda el paso operativo de la Fase 6: correr el harvest contra los logs REALES de
+`dp-pre-bot` tras acumular tráfico, curar candidatos (validando cada `expected`
+contra el pipeline real) y alimentar el eval-set.
+
+### Registro histórico — el hallazgo tal como se documentó
+
 ## 2. 🔴 HALLAZGO: la Fase 6 de robustez está BLOQUEADA por el núcleo
 
 Se corrió el harvest sobre los logs reales de PRE (11 conversaciones del owner):
@@ -268,10 +301,12 @@ es un bug** — pero es otro síntoma de que se está preguntando de más (Fix B
 
 ## 3. Próximos pasos, en orden
 
-1. **Fix A** (desbloquea la Fase 6). Pequeño y de bajo riesgo.
-2. **Fix B** (ahorro de tokens + menos misfills). Acotado, con cuidado en los tests.
+1. ✅ **Fix A** — hecho (2026-07-22, Gonzalo; ver §2 arriba).
+2. ✅ **Fix B** — hecho (2026-07-22, Gonzalo; ver §2 arriba).
 3. **Correr el harvest de verdad** → curar candidatos → eval-set con casos reales →
    **cierra la Fase 6** y **desbloquea la Fase 5** de robustez (limpieza de regex muerto).
+   El tooling está verificado end-to-end en local; falta tráfico real en PRE +
+   `ssh ... "docker logs dp-pre-bot 2>&1" | python -m scripts.harvest_cutover_logs`.
 4. **Fase 4 del refactor conversacional** — retirar los ~24 pasos `MIXED_*`,
    `set_quick_replies`/`_CART_MENU_KEYS`, `BACK_STEP`/`_go_back_one_step` y
    `classify_menu_intent`. **Precondición del plan**: medir antes en PRE con tráfico

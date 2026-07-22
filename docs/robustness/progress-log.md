@@ -674,3 +674,41 @@ que el bloque anterior: falta tráfico real vía Chatwoot.)
 hay un solo misfill, no hay debate. Y al añadir casos negativos nuevos, validar
 antes que el regex real deja esos campos en None (misma lección de proceso de
 siempre: medir, no asumir).
+
+---
+
+## 2026-07-22 — Fase 6 desbloqueada: el núcleo vuelve a alimentar el harvest (Fix A+B del handoff conversacional)
+
+**Fase(s) tocada(s)**: Fase 6 (bucle de datos reales) — tooling desbloqueado.
+
+**Qué se hizo**: los 2 fixes que dejó especificados el handoff conversacional
+(`docs/conversational-refactor-handoff.md` §"Sesión 2026-07-22 (tarde)"):
+- **Fix A**: `conversational_core._understand` ahora loguea `[EXTRACT][CUTOVER]
+  applied={patch} msg=...` (con valores y mensaje completo vía
+  `supervisor._log_safe_message`) en vez del viejo `[CORE] gap-fill
+  applied=[nombres]`. Con el núcleo encendido en PRE, el harvest volvía 0
+  candidatos porque el formato no coincidía; ahora `scripts/harvest_cutover_logs.py`
+  funciona sin tocarlo (test de integración que parsea los logs reales del bucle).
+- **Fix B**: `_relevant_gaps(state, intent, message)` calcula los huecos contra el
+  ESTADO de la conversación (no el intent del turno, casi siempre vacío) y filtra
+  campos fuera de contexto; `fill_gaps` ganó `only_fields` (opcional,
+  backwards-compatible — el cutover legacy no cambia). Sin huecos relevantes no se
+  llama al LLM. Menos tokens por turno y menos superficie de misfill.
+
+**Verificación en vivo** (LLM real, flag on, local): conversación de 4 turnos con
+frases fuera del regex → reserva cerrada correctamente, y el harvester sobre esos
+logs: **4 records, 4 candidatos con valores** (`bocagrande→location=cartagena`,
+`nos sumergimos el mes pasado→last_dive_over_2_years=False`,
+`venimos de madrid→is_colombian=False`) + `--summary` clasificando por dominio
+(certification/logistics/location). Antes de los fixes: 0 candidatos con los
+mismos mensajes.
+
+**Qué quedó a medias / bloqueadores**: el paso operativo de la Fase 6 — acumular
+tráfico real en PRE y correr
+`ssh ... "docker logs dp-pre-bot 2>&1" | python -m scripts.harvest_cutover_logs`,
+curar candidatos (validando cada `expected` contra el pipeline real) y alimentar
+el eval-set. La Fase 5 (limpieza) sigue detrás de eso.
+
+**Siguiente paso concreto para quien continúe**: desplegar a PRE (hecho en esta
+sesión), generar/esperar tráfico real, y correr el harvest. Con los primeros
+candidatos curados en el eval-set, la Fase 6 se cierra.
