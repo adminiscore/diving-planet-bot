@@ -41,7 +41,34 @@
       "PowerShell($env:PYTHONIOENCODING=\"utf-8\"; $env:ENV_FILE=\".env.dev\"; python -m scripts.load_embeddings --yes 2>&1 | Select-Object -Last 8)",
       "PowerShell($env:PYTHONIOENCODING=\"utf-8\"; $env:ENV_FILE=\".env.dev\"; python -m scripts.eval_rag_answers --lang all --output-json docs/project-history/rag-baseline-2026-07-01-v2.json 2>&1 | Select-Object -Last 8)",
       "PowerShell($env:PYTHONIOENCODING=\"utf-8\"; $env:ENV_FILE=\".env.dev\"; $env:PYTHONPATH=\"c:\\\\Users\\\\Usuario\\\\Documents\\\\WorkSpace\\\\diving-planet-bot\"; python \"C:\\\\Users\\\\Usuario\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\c--Users-Usuario-Documents-WorkSpace-diving-planet-bot\\\\ebae4407-7de0-4bbb-be96-283ce8ccc987\\\\scratchpad\\\\test_pickup.py\" 2>&1)",
-      "Bash(PYTHONIOENCODING=utf-8 ENV_FILE=.env.dev python -)"
+      "Bash(PYTHONIOENCODING=utf-8 ENV_FILE=.env.dev python -)",
+      "Bash(grep -niE \"fase\\\\s*[0-9]|phase\\\\s*[0-9]|^#{1,3}.*fase\" docs/robustness/plan.md)",
+      "Skill(claude-api)",
+      "Skill(claude-api:*)",
+      "Bash(timeout 200 python -m pytest tests/test_decision_tree.py tests/test_intent_detector.py tests/test_intent_robustness.py tests/test_cert_multiday_matrix.py tests/test_chatwoot_buttons.py -q -p no:cacheprovider)",
+      "Bash(timeout 90 python -m pytest tests/test_chatwoot_buttons.py -q -p no:cacheprovider)",
+      "Bash(echo \"---exit=$?---\")",
+      "Bash(python -m ruff check src/agents/conversational_core.py src/flows/decision_tree.py)",
+      "Bash(python -m compileall -q src/agents/conversational_core.py src/flows/decision_tree.py)",
+      "Bash(ENV_FILE=.env.dev python -c \"from src.config import settings as s; k=s.openai_api_key; print\\('present:', bool\\(k\\), '| len:', len\\(k\\), '| prefix_ok:', k[:3]=='sk-'\\)\")",
+      "Bash(ENV_FILE=.env python -c \"from src.config import settings as s; k=s.openai_api_key; print\\('present:',bool\\(k\\),'len:',len\\(k\\),'sk_prefix:',k[:3]=='sk-'\\)\")",
+      "Bash(timeout 150 python -c ' *)",
+      "Bash(timeout 200 python -c ' *)",
+      "Bash(python -m pytest tests/test_conversational_core.py -k \"capture_client_name or ack_\" -q -p no:cacheprovider --tb=short)",
+      "Bash(python -m pytest tests/test_conversational_core.py::test_recall_unknown_field_falls_back_to_rag -q -p no:cacheprovider)",
+      "Bash(python -m pytest tests/test_conversational_core.py -k \"capture_client_name or test_ack_\" -q -p no:cacheprovider)",
+      "Bash(timeout 120 python -c ' *)",
+      "Bash(python -m ruff check src/agents/conversational_core.py src/agents/llm_extractor.py)",
+      "Bash(python -m compileall -q src/agents/conversational_core.py src/agents/llm_extractor.py)",
+      "Bash(timeout 240 python -m pytest tests/test_conversational_core.py -q -p no:cacheprovider)",
+      "Bash(CONVERSATIONAL_CORE=true timeout 200 python -c ' *)",
+      "Bash(timeout 90 python -c ' *)",
+      "Bash(python -m ruff check src/agents/escalation.py)",
+      "Bash(python -m pytest tests/test_conversational_core.py -k \"mentions_person or capture_client_name or test_ack_\" -q -p no:cacheprovider)",
+      "Bash(cd \"c:/Users/plaza/Visual_projects/ISCORE/DIVING PLANET/diving-planet-bot\" && sed -n '/def _build_cart_from_slots/,/^def /p' src/agents/conversational_core.py | head -60)"
+    ],
+    "additionalDirectories": [
+      "c:\\Users\\plaza\\Visual_projects\\ISCORE\\DIVING PLANET\\diving-planet-bot\\src\\agents"
     ]
   }
 }

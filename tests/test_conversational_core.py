@@ -893,3 +893,18 @@ async def test_ack_empty_message_no_call():
 ])
 def test_mentions_person_discriminates_companion_from_change(msg, expected):
     assert core._mentions_person(msg) is expected
+
+
+def test_full_booking_recap_lists_all_activities_and_location():
+    st = ConversationState(conversation_id="recap"); st.language = "es"
+    st.client_name = "Rocio"
+    st.detected_group_allocation = {"certified_diving": 1, "snorkel": 1}
+    st.location = "cartagena"
+    r = core._full_booking_recap(st)
+    assert r and "buceo certificado" in r and "snorkel" in r
+    assert "Cartagena" in r and "Rocio" in r
+
+
+def test_full_booking_recap_none_when_nothing_resolved():
+    st = ConversationState(conversation_id="recap2"); st.language = "es"
+    assert core._full_booking_recap(st) is None

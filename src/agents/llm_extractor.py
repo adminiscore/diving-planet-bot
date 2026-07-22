@@ -338,18 +338,20 @@ _SIGNALS_TOOL = {
                 "recall_field": {
                     "type": "string",
                     "enum": [
-                        "group_size", "activity", "location", "is_certified",
-                        "is_colombian", "ages", "hotel", "last_dive_over_2_years",
-                        "refresher_interested",
+                        "booking_recap", "group_size", "activity", "location",
+                        "is_certified", "is_colombian", "ages", "hotel",
+                        "last_dive_over_2_years", "refresher_interested",
                     ],
                     "description": (
                         "Set ONLY if the customer is asking the bot to remind "
-                        "them of a detail THEY ALREADY GAVE earlier in this "
-                        "chat (e.g. 'how many people did I say?', '¿qué "
-                        "actividad había pedido?', 'remind me what I said'). "
-                        "Pick which field is being asked about. Do NOT set "
-                        "this for product/price/logistics questions — those "
-                        "are answered elsewhere."
+                        "them of something THEY ALREADY GAVE earlier in this "
+                        "chat. Use 'booking_recap' for a GENERAL recap request "
+                        "('¿qué te había pedido?', '¿qué llevamos?', 'what did "
+                        "I ask for?', 'remind me what I said') — the bot then "
+                        "recaps the WHOLE booking. Use a specific field only "
+                        "for a specific question ('¿cuántas personas dije?' → "
+                        "group_size). Do NOT set this for product/price/"
+                        "logistics questions — those are answered elsewhere."
                     ),
                 },
                 "companion_activity": {

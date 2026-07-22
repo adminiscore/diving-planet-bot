@@ -664,6 +664,40 @@ _RECALL_LABELS_EN = {
 }
 
 
+def _full_booking_recap(state: ConversationState) -> str | None:
+    """Recap COMPLETO y cálido de la reserva (todas las actividades/personas +
+    ubicación), del ESTADO (nunca inventado). Para la pregunta general "¿qué te
+    había pedido?" — reemplaza el recall de campo-suelto que salía seco y a veces
+    equivocado ("Me habías dicho: snorkel"). Estilo Monegros: recap estructurado.
+    Devuelve None si no hay nada resuelto (el caller cae a RAG)."""
+    es = state.language == "es"
+    labels = _RECALL_LABELS_ES if es else _RECALL_LABELS_EN
+    lines: list[str] = []
+    alloc = state.detected_group_allocation or {}
+    product_alloc = {k: v for k, v in alloc.items() if k in labels and v}
+    if product_alloc:
+        for act, qty in product_alloc.items():
+            lines.append(f"• *{qty}* para *{labels[act]}*" if es else f"• *{qty}* for *{labels[act]}*")
+    else:
+        act = _effective_activity(state)
+        if act:
+            n = state.detected_group_size or 1
+            lines.append(f"• *{n}* para *{labels.get(act, act)}*" if es else f"• *{n}* for *{labels.get(act, act)}*")
+    if not lines:
+        return None
+    loc = state.location or state.detected_location
+    if loc == "cartagena":
+        lines.append("📍 Salida *desde Cartagena*" if es else "📍 Departing *from Cartagena*")
+    elif loc == "island":
+        hotel = state.hotel or state.detected_hotel
+        suffix = f" (hotel {hotel})" if hotel else ""
+        lines.append((f"📍 Ya *en las islas*{suffix}") if es else (f"📍 Already *on the islands*{suffix}"))
+    name = f", {state.client_name}" if state.client_name else ""
+    header = (f"Claro{name}, esto es lo que llevamos hasta ahora: 🤿\n"
+              if es else f"Sure{name}, here's what we have so far: 🤿\n")
+    return header + "\n".join(lines)
+
+
 def _recall_answer(state: ConversationState, field: str) -> str | None:
     """Responde un pedido de "recuérdame qué dije" con el VALOR REAL del
     estado (nunca lo que el LLM "cree" que dijiste — el LLM solo identificó
@@ -673,6 +707,8 @@ def _recall_answer(state: ConversationState, field: str) -> str | None:
     falso (mismo principio que el resto del extractor)."""
     lang = state.language
     es = lang == "es"
+    if field == "booking_recap":
+        return _full_booking_recap(state)
     if field == "group_size":
         n = state.detected_group_size
         if not n:
