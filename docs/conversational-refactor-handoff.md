@@ -18,10 +18,9 @@
 Suite: **1826 passed, 0 xfail**. El árbol legacy sigue 100% intacto como fallback; el
 núcleo solo se activa con el flag.
 
-> **⚠️ Gonzalo: empieza por la sección final "Sesión 2026-07-22 (tarde)"** — el refactor
-> está validado end-to-end en PRE por el owner, pero salieron **2 arreglos pendientes
-> (Fix A y Fix B)** y un hallazgo que **bloquea la Fase 6 de robustez**. Están
-> especificados ahí con la localización exacta.
+> **⚠️ Empieza por la sección final "Sesión 2026-07-22 (noche)"** — Fix A y Fix B ya
+> están hechos y CONFIRMADOS contra tráfico real de PRE (no solo local). Queda un
+> hallazgo de proceso sobre `only_fields` y el eval-set, y las Fases 4/5/7 por delante.
 
 ## Cómo está montado (mapa rápido)
 
@@ -320,3 +319,71 @@ es un bug** — pero es otro síntoma de que se está preguntando de más (Fix B
   línea + redeploy, sin rollback de código.
 - Suite **1826 passed, 15 skipped, 0 xfail**. `ruff check src` y `compileall` limpios.
 - Sin trabajo a medias en el árbol: todo lo de esta sesión está commiteado.
+
+---
+
+# Sesión 2026-07-22 (noche) — Fase 6 confirmada en PRE real + 1 hallazgo de proceso
+
+> Continúa directamente de "Sesión 2026-07-22 (tarde)" arriba (Fix A/Fix B de Gonzalo,
+> ya mergeados en `feature/pre_gadea`). Esta sección es la verificación contra
+> **tráfico real** de PRE, no local.
+
+## 1. Fix A confirmado en producción
+
+Se tiró de `docker logs dp-pre-bot` (tráfico real del widget, tras el redeploy con los
+Fix A/B) y se corrió el harvest: **2 records, 2 candidatos con valores** — antes de Fix
+A esto daba 0 (ver sesión de la tarde). El fix funciona en producción, no solo en la
+verificación local que hizo Gonzalo.
+
+Nota: el container se reinició en el redeploy, así que el log solo tenía tráfico desde
+entonces (160 líneas) — para una cosecha más grande hace falta esperar a que se
+acumule más tráfico real y repetir el comando.
+
+## 2. Un candidato añadido al eval-set, otro descartado — y por qué
+
+- **`hv-aowd-acronym`** (83→84 casos): "hola soy rocio, quiero hacer buceo, tengo el
+  AOWD" → el regex deja `is_certified=None` (AOWD = Advanced Open Water Diver, un
+  acrónimo que no reconoce); `fill_gaps` sin historial da `is_certified=True` de forma
+  estable. Validado y fijado.
+- **Descartado**: "1 pero viene un amigo que quiere hacer buceo, no es certificado" →
+  en PRE se logueó `group_allocation={certified_diving:1, minicourse:1}`, pero al
+  reproducirlo con la llamada plana del eval-set (`fill_gaps(mensaje, intent)`, sin
+  `only_fields`) el resultado fue DISTINTO: `group_size=2`. **No es un bug** — es que
+  el candidato vino de una llamada con `only_fields` restringido por el Fix B de
+  Gonzalo (que usa el ESTADO de la conversación para acotar qué campos pedir, no solo
+  el mensaje suelto), y el eval-set/runner actual no simula ese contexto reducido.
+
+### 🟡 Hallazgo de proceso — el eval-set no conoce `only_fields`
+
+El Fix B (`_relevant_gaps` en `conversational_core.py`) hace que en producción el
+patch logueado dependa del ESTADO de la conversación, no solo del mensaje. Un
+candidato harvestado así **no siempre es reproducible** como caso de mensaje-suelto en
+el eval-set actual. Antes de fijar más candidatos de este tipo, hay dos opciones (sin
+decidir todavía):
+  (a) extender el runner del eval-set para poder simular un `only_fields`/estado previo
+      dado, o
+  (b) tratar esos casos como tests de integración del núcleo completo (con estado
+      previo), no como extracción de mensaje suelto.
+
+Detalle completo en `docs/robustness/progress-log.md` (bloque 2026-07-22, harvest
+confirmado + hallazgo `only_fields`).
+
+## 3. Próximos pasos (sin cambios de fondo respecto a la sesión de la tarde)
+
+1. Seguir acumulando tráfico real por el widget y repitiendo el harvest periódicamente
+   — el tooling ya funciona de punta a punta contra PRE real.
+2. Decidir (a) vs (b) del hallazgo de arriba antes de que se acumulen más candidatos
+   `only_fields`-dependientes.
+3. **Fase 7** (override selectivo por campo) — ya justificada con 3 bugs reales de
+   regex (ver sesión de la tarde: `ages` capturando años como edad, curso mal
+   clasificado para quien ya está certificado, "me plus 3 friends" → 3).
+4. **Fase 5** (limpieza de regex muerto) — detrás de la 6 y la 7.
+5. **Fase 4** del refactor conversacional (retirar el árbol `MIXED_*`) — el único punto
+   pendiente del plan de Álvaro; su precondición (medir en PRE) ya se está cumpliendo.
+
+## 4. Estado operativo
+
+- `feature/pre_gadea` en `7211f7d` (merge de `feature/pruebaGon`) + este bloque de
+  sesión, subido y desplegado en PRE.
+- Suite y eval-set: ver el commit de esta sesión para el conteo exacto tras añadir
+  `hv-aowd-acronym`.

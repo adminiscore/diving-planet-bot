@@ -957,6 +957,16 @@
       },
       "source": "harvested-battery-fase6 (bateria live-test-battery-fase6.md corrida con pipeline real 2026-07-22; expected validado contra IntentDetector + gap-fill reales)",
       "notes": "Ultima inmersion + señal singular ('sere yo solo'). Mismo hallazgo de regex ages=[3] que hv-d4."
+    },
+    {
+      "id": "hv-aowd-acronym",
+      "message": "hola soy rocio, quiero hacer buceo, tengo el AOWD",
+      "lang": "es",
+      "expected": {
+        "is_certified": true
+      },
+      "source": "harvested-from-PRE-logs-2026-07-22 (primer harvest sobre trafico REAL de PRE tras Fix A/2c8e195; confirma el fix en produccion, no solo en local)",
+      "notes": "AOWD (Advanced Open Water Diver) es un acronimo de certificacion que el regex no reconoce; el gap-filler lo resuelve correctamente. Validado: fill_gaps sin historial reproduce is_certified=True de forma estable."
     }
   ]
 }
