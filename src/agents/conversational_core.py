@@ -136,6 +136,27 @@ def next_missing_slot(state: ConversationState) -> str | None:
     return None
 
 
+# ─── Persona: saludo del primer turno (Coral, cálida, sin "asistente"/"bot") ───
+
+def _greeting(state: ConversationState) -> str:
+    """Presentación de Coral en el PRIMER turno de la conversación — cálida,
+    con el nombre de la empresa y tono cercano colombiano. Nunca se describe
+    como asistente/bot/IA (regla de persona, misma que rag_agent). Se antepone
+    a la primera respuesta del núcleo (pregunta de slot, RAG o cierre) y no se
+    repite en turnos posteriores."""
+    if state.language == "es":
+        return (
+            "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todos los días en "
+            "las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. "
+            "¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n\n"
+        )
+    return (
+        "Hi! 🪸 I'm *Coral* from *Diving Planet* — we dive every day in the Rosario "
+        "Islands, departing from Cartagena or right from the islands. So happy to have "
+        "you here! I'd love to help you put your plan together. 🌊\n\n"
+    )
+
+
 # ─── RESPONDER: redactor de slot (determinista, ES/EN, cierre a conversión) ───
 
 def ask_slot(state: ConversationState, slot: str, *, reasking: bool = False) -> str:
@@ -152,17 +173,29 @@ def ask_slot(state: ConversationState, slot: str, *, reasking: bool = False) -> 
 
     if slot == SLOT_ACTIVITY:
         return (
-            "¿Qué te gustaría hacer con nosotros? Tenemos buceo para certificados, "
-            "minicurso para probar el buceo por primera vez, snorkel y cursos PADI. 🌊"
+            "Cuéntame, ¿qué te gustaría vivir con nosotros? 🤿\n"
+            "• *Buceo* en las Islas del Rosario, si ya eres buzo certificado\n"
+            "• *Minicurso* para probar el buceo por primera vez (¡no necesitas experiencia!)\n"
+            "• *Snorkel* para disfrutar el arrecife desde la superficie, ideal en familia\n"
+            "• *Cursos PADI* completos, del Open Water en adelante\n"
+            "Dime qué te llama la atención y lo armamos juntos. 🌊"
             if lang == "es" else
-            "What would you like to do with us? We offer diving for certified divers, "
-            "a beginner mini-course to try diving, snorkeling and PADI courses. 🌊"
+            "Tell me, what would you like to experience with us? 🤿\n"
+            "• *Diving* in the Rosario Islands, if you're already certified\n"
+            "• A beginner *mini-course* to try diving for the first time (no experience needed!)\n"
+            "• *Snorkeling* to enjoy the reef from the surface, great for families\n"
+            "• Full *PADI courses*, from Open Water up\n"
+            "Tell me what catches your eye and we'll put it together. 🌊"
         )
     if slot == SLOT_CERTIFICATION:
         plural = (state.detected_group_size or 1) > 1
         if lang == "es":
-            return ("¿Sois buzos certificados?" if plural else "¿Eres buzo certificado?")
-        return "Are you certified divers?" if plural else "Are you a certified diver?"
+            q = "¿Sois buzos certificados?" if plural else "¿Eres buzo certificado?"
+            return (f"¡Genial! Para recomendarte el plan perfecto: {q} "
+                    "(Y si no, ¡tranquilo! El minicurso es ideal para empezar. 🤿)")
+        q = "Are you certified divers?" if plural else "Are you a certified diver?"
+        return (f"Great! So I can recommend the perfect plan: {q} "
+                "(And if not, no worries — the mini-course is the ideal way to start. 🤿)")
     if slot == SLOT_LOCATION:
         state.quick_replies = (
             [{"title": "🚤 Desde Cartagena", "value": "cartagena"},
@@ -216,7 +249,9 @@ def ask_slot(state: ConversationState, slot: str, *, reasking: bool = False) -> 
         )
     if slot == SLOT_QTY:
         return (
-            "¿Para cuántas personas sería?" if lang == "es" else "How many people would it be for?"
+            "¿Y para cuántas personas armamos el plan? Así te paso el precio exacto. 😊"
+            if lang == "es" else
+            "And how many people should I plan for? That way I can give you the exact price. 😊"
         )
     if slot == SLOT_AGES:
         return (
@@ -566,8 +601,10 @@ async def maybe_handle_turn(state: ConversationState, message: str) -> str | Non
     if msg_lower in supervisor.MENU_KEYWORDS or msg_lower in supervisor.BACK_KEYWORDS or msg_lower == "back":
         return None
 
-    # Primer mensaje: inferir idioma como hace la entrada legacy.
-    if state.step in (Step.WELCOME, Step.LANGUAGE):
+    # Primer mensaje: inferir idioma como hace la entrada legacy, y marcar que
+    # toca presentarse (Coral + Diving Planet, tono cercano — regla de persona).
+    first_turn = state.step in (Step.WELCOME, Step.LANGUAGE)
+    if first_turn:
         from src.flows.decision_tree import _detect_language_from_text
         state.language = (
             _detect_language_from_text(message)
@@ -575,6 +612,7 @@ async def maybe_handle_turn(state: ConversationState, message: str) -> str | Non
         )
         state.step = Step.FREE_TEXT
         state.quick_replies = []
+    greeting = _greeting(state) if first_turn else ""
 
     state.history.append({"role": "user", "content": message})
 
@@ -592,7 +630,7 @@ async def maybe_handle_turn(state: ConversationState, message: str) -> str | Non
 
     # PREGUNTA de info → RAG, y se retoma el slot pendiente sin perderlo.
     if not resolved_short and _looks_like_question(message):
-        answer = await _answer_question(state, message)
+        answer = greeting + await _answer_question(state, message)
         state.history.append({"role": "assistant", "content": answer})
         return answer
 
@@ -632,6 +670,7 @@ async def maybe_handle_turn(state: ConversationState, message: str) -> str | Non
     else:
         response = ask_slot(state, nxt, reasking=(nxt == prev_pending))
         state.step = Step.FREE_TEXT
+    response = greeting + response
     state.history.append({"role": "assistant", "content": response})
     return response
 

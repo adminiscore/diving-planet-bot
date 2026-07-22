@@ -166,6 +166,50 @@ async def test_full_flow_english():
 
 
 # ---------------------------------------------------------------------------
+# Persona: Coral se presenta en el primer turno (cálida, Diving Planet, sin
+# llamarse a sí misma "asistente"/"bot") y no repite el saludo después.
+# ---------------------------------------------------------------------------
+
+@pytest.mark.asyncio
+async def test_first_turn_greets_as_coral_diving_planet():
+    import re as _re
+    state = make_state("es")
+    resp = await route_message(state, "hola soy Sofia, ya soy certificada, quiero unas inmersiones desde cartagena")
+    assert "Coral" in resp
+    assert "Diving Planet" in resp
+    assert "asistente" not in resp.lower()
+    assert not _re.search(r"\bbot\b", resp.lower())
+    # El saludo NO sustituye a la pregunta del slot: sigue avanzando la reserva
+    assert state.core_pending_slot == core.SLOT_SAFETY
+
+
+@pytest.mark.asyncio
+async def test_first_turn_bare_greeting_presents_and_asks_activity():
+    state = make_state("es")
+    resp = await route_message(state, "hola")
+    assert "Coral" in resp
+    assert "Diving Planet" in resp
+    assert state.core_pending_slot == core.SLOT_ACTIVITY
+
+
+@pytest.mark.asyncio
+async def test_greeting_not_repeated_after_first_turn():
+    state = make_state("es")
+    await route_message(state, "hola soy Sofia, ya soy certificada, quiero unas inmersiones desde cartagena")
+    resp2 = await route_message(state, "no")
+    assert "Coral" not in resp2  # el saludo es solo del primer turno
+
+
+@pytest.mark.asyncio
+async def test_first_turn_greeting_english():
+    state = make_state("en")
+    resp = await route_message(state, "hi, we are 2 certified divers, from cartagena")
+    assert "Coral" in resp
+    assert "Diving Planet" in resp
+    assert "assistant" not in resp.lower()
+
+
+# ---------------------------------------------------------------------------
 # Carryover contextual (monosílabos / respuestas cortas)
 # ---------------------------------------------------------------------------
 
