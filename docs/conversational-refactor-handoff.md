@@ -12,10 +12,11 @@
 | **0 — Andamiaje** | ✅ COMPLETA, en PRE | `src/agents/conversational_core.py`, `settings.conversational_core` |
 | **1 — Buceo certificado** | ✅ COMPLETA, **flag ON en PRE**, verificado en vivo | `docker-compose.vps.yml` (`CONVERSATIONAL_CORE: "true"`) |
 | **2 — Snorkel/minicurso/acompañante** | ✅ COMPLETA (adelantada) | multi-actividad en el núcleo |
-| **3 — Cursos PADI + checkout completo** | 🔶 **PARCIAL** — 2 causas raíz sin cerrar (ver abajo) | 3 tests `xfail` en `tests/test_conversational_core.py` |
+| **3 — Cursos PADI + checkout completo** | ✅ **COMPLETA (2026-07-22)** — las 2 causas raíz cerradas, los 3 ex-`xfail` en verde, verificado en vivo | `tests/test_conversational_core.py` (30 tests) |
 | **4 — Retirada del árbol MIXED_*** | ⬜ Sin empezar (solo tras medir Fase 1-3 en PRE) | — |
 
-Suite: **1813 passed, 3 xfailed** (los 3 xfail son exactamente lo que falta de Fase 3).
+Suite: **1816 passed, 0 xfail** (los 3 xfail de Fase 3 pasaron a tests normales al
+cerrarse las 2 causas raíz — ver §"Fase 3 — CERRADA" abajo).
 El árbol legacy sigue 100% intacto como fallback; el núcleo solo se activa con el flag.
 
 ## Cómo está montado (mapa rápido)
@@ -55,7 +56,33 @@ prompt reforzado da **143/145 = 98.6% con CERO misfills**. Hay un comentario jun
 `_TOOL` en `llm_extractor.py` avisando de esto. Detalle en `docs/robustness/progress-log.md`
 (bloque 2026-07-22). **Si alguien reintenta strict, correr primero los casos `neg-*`.**
 
-## Fase 3 — QUÉ FALTA (esto es lo que hay que continuar)
+## Fase 3 — CERRADA (2026-07-22, Gonzalo)
+
+Las 2 causas raíz de abajo quedaron arregladas en `conversational_core.py` (los 3
+`xfail` pasaron a tests normales, todos en verde):
+
+- **(A) resuelta** — inferencia singular en contexto de CURSO, **scoped al núcleo**
+  (la opción 2 del propio handoff, elegida por menos invasiva: no toca el detector
+  compartido con el árbol legacy). `_COURSE_SOLO_RE` ("voy solo"/"just me"/"by
+  myself"…) + `_NOT_ALONE_RE` (guarda conservadora: cualquier señal de compañía/
+  plural/número gana y se sigue preguntando) en `_understand`: si la actividad es
+  `padi_*`, no hay cantidad, y hay señal singular limpia → `group_size=1`.
+- **(B) resuelta a nivel del bucle** (no solo para SLOT_AGES, como pedía el
+  handoff): en `maybe_handle_turn` el carryover del slot pendiente corre ANTES del
+  check de pregunta — si hay slot pendiente, el mensaje no lleva `"?"` explícito y
+  `_apply_short_answer` lo resuelve, NO va a RAG ("tienen 7 y 9 años" responde las
+  edades). Un `"?"` explícito sigue siendo SIEMPRE pregunta real → RAG + retoma del
+  slot (`test_question_mid_flow_answers_and_reasks_pending_slot` intacto).
+
+Verificado en vivo con LLM real (flag on, local): Open Water isla + "voy solo" →
+cierre con `open_water_already_on_island`; Divemaster solo → cierre contact-only
+vía asesor sin link directo; familia con niños "tienen 7 y 9 años" → split del
+checkout u8=1 (snorkel) / e10=1 (Bubble Makers).
+
+Lo que queda del refactor es solo la **Fase 4** (retirada del árbol) — no empezar
+hasta medir Fases 1-3 en PRE con tráfico real (ver abajo).
+
+### Registro histórico — lo que faltaba cuando se escribió este handoff
 
 Lo que **ya funciona** de Fase 3 (tests en verde):
 - `test_padi_course_flow_no_cert_no_safety_questions`: un curso PADI con cantidad explícita

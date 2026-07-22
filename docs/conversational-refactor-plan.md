@@ -307,13 +307,20 @@ midió en PRE. Coordinar con Gadea: su extractor LLM ES el motor de slots y su F
   Verificado en vivo contra PRE con LLM real: Sofía (3 turnos → link) y Rocío completa
   (6 turnos incl. snorkel post-cierre → carrito cert+snorkel). Queda **medir con
   tráfico real del equipo** por el widget.
-- **Fase 3 — Cursos PADI + checkout: 🔶 PARCIAL (2026-07-22)**. Funciona: curso con
-  cantidad explícita → checkout con link del curso (sin preguntar cert/seguridad); nota
-  de lead al cierre; código ya escrito para variante isla del curso y split de menores
-  por edad. **Faltan 2 causas raíz** (3 tests marcados `xfail`): (A) "voy solo" no fija
-  `group_size` en cursos; (B) una respuesta que "parece pregunta" ("tienen 7 y 9 años")
-  cae a RAG antes de resolver el slot pendiente. **Detalle operativo completo y pasos
-  para continuar en `docs/conversational-refactor-handoff.md`.**
+- **Fase 3 — Cursos PADI + checkout: ✅ COMPLETA (2026-07-22, cerrada por Gonzalo)**.
+  Primero funcionó el vertical base (curso con cantidad explícita → checkout con link,
+  sin preguntar cert/seguridad; nota de lead al cierre; variante isla y split de
+  menores ya escritos). Después se cerraron las **2 causas raíz** que quedaban (los 3
+  `xfail` pasaron a tests normales, 30/30 del módulo en verde):
+  (A) "voy solo" en cursos → `_COURSE_SOLO_RE`/`_NOT_ALONE_RE` en `_understand` fijan
+  `group_size=1` (scoped al núcleo — opción menos invasiva del handoff, sin tocar el
+  detector compartido; guarda conservadora: cualquier señal de compañía gana y se
+  pregunta). (B) el carryover del slot pendiente corre ANTES del check de pregunta en
+  `maybe_handle_turn` — arreglado a nivel del bucle para toda la clase de respuestas
+  con palabras-pregunta ("tienen 7 y 9 años" resuelve SLOT_AGES); un `"?"` explícito
+  sigue yendo a RAG con retoma del slot. Verificado en vivo con LLM real: Open Water
+  isla "voy solo" → `open_water_already_on_island`; Divemaster → contact-only vía
+  asesor; niños "tienen 7 y 9 años" → split u8=1 snorkel / e10=1 Bubble Makers.
 - **Fase 4 — Retirada del árbol**: sin empezar (solo tras medir Fases 1-3 en PRE).
 
 ## Riesgos y mitigaciones

@@ -61,6 +61,28 @@ _DAYS_TO_DIVES = {2: 5, 3: 7, 4: 9}
 _CARTAGENA_RE = re.compile(r"\b(cartagena|cartagen\w*|1)\b", re.IGNORECASE)
 _ISLAND_RE = re.compile(r"\b(isla\w*|island\w*|bar[uú]|rosario\w*|2)\b", re.IGNORECASE)
 
+# (Fase 3 causa A) Señal singular clara para reservas de CURSO — la inferencia
+# singular del detector compartido solo dispara en contexto de buceo/cert y no
+# conoce "voy solo". Scoped al núcleo a propósito (opción 2 del handoff): no
+# toca intent_detector, que comparte el árbol legacy.
+_COURSE_SOLO_RE = re.compile(
+    r"\b(?:voy|ir[eé]|vengo|viajo|estoy)\s+sol[oa]\b|\bs[oó]lo\s+yo\b|\byo\s+sol[oa]\b"
+    r"|\bpara\s+m[ií]\b|\bjust\s+me\b|\bonly\s+me\b|\bby\s+myself\b|\bon\s+my\s+own\b"
+    r"|\b(?:i'?m|i\s+am)\s+alone\b|\bgoing\s+alone\b",
+    re.IGNORECASE,
+)
+# Conservador: cualquier señal de compañía/plural/número gana y se sigue
+# preguntando la cantidad (mismo criterio que la inferencia del detector).
+_NOT_ALONE_RE = re.compile(
+    r"\b(?:somos|estamos|venimos|vamos|seremos|nosotr[oa]s|we\s+are|we're|we\s+want"
+    r"|con\s+mi\b|y\s+mi\b|and\s+my\b"
+    r"|mi\s+(?:novi[oa]|espos[oa]|pareja|hij[oa]s?|amig[oa]s?|herman[oa]s?|familia)"
+    r"|my\s+(?:girlfriend|boyfriend|wife|husband|partner|kids?|son|daughter|friend|family)"
+    r"|[2-9]|dos|tres|cuatro|cinco|seis|siete|ocho|nueve"
+    r"|two|three|four|five|six|seven|eight|nine)\b",
+    re.IGNORECASE,
+)
+
 
 def _effective_activity(state: ConversationState) -> str | None:
     """Producto real a reservar según los slots: un no-certificado que quiere
@@ -357,6 +379,19 @@ async def _understand(state: ConversationState, message: str):
             logger.info(f"[CORE] gap-fill applied={list(patch.keys())}")
     supervisor._apply_detected_intent(intent, state)
 
+    # (Fase 3 causa A) "quiero el curso X, voy solo" → 1 persona. Solo para
+    # cursos PADI (padi_*), solo si nada fijó cantidad, y solo con señal
+    # singular clara SIN ninguna señal de compañía — si hay duda, se pregunta.
+    if (
+        not state.detected_group_size
+        and not state.detected_group_allocation
+        and (state.detected_activity or "").startswith("padi_")
+        and _COURSE_SOLO_RE.search(message)
+        and not _NOT_ALONE_RE.search(message)
+    ):
+        state.detected_group_size = 1
+        logger.info("[CORE] singular course booking -> group_size=1")
+
     # AÑADIR vs CAMBIAR: si ya había actividad principal y este turno menciona
     # OTRA junto a una persona añadida ("viene también uno que hace snorkel",
     # "mi novia hace el minicurso"), es un AÑADIDO — la actividad principal no
@@ -543,16 +578,26 @@ async def maybe_handle_turn(state: ConversationState, message: str) -> str | Non
 
     state.history.append({"role": "user", "content": message})
 
+    # COMPRENDER (carryover PRIMERO): si hay un slot pendiente y este mensaje
+    # lo RESUELVE, el carryover gana aunque el mensaje "parezca pregunta" por
+    # sus palabras — "tienen 7 y 9 años" responde SLOT_AGES aunque "tienen"
+    # dispare _looks_like_info_question (Fase 3 causa B; clase general: la
+    # respuesta natural de varios slots contiene palabras-pregunta). Un "?"
+    # explícito SÍ es siempre una pregunta real y va a RAG (así
+    # test_question_mid_flow_answers_and_reasks_pending_slot sigue intacto).
+    prev_pending = state.core_pending_slot
+    resolved_short = False
+    if prev_pending and "?" not in message:
+        resolved_short = _apply_short_answer(state, message)
+
     # PREGUNTA de info → RAG, y se retoma el slot pendiente sin perderlo.
-    if _looks_like_question(message):
+    if not resolved_short and _looks_like_question(message):
         answer = await _answer_question(state, message)
         state.history.append({"role": "assistant", "content": answer})
         return answer
 
-    # COMPRENDER: carryover del slot pendiente + extracción del resto.
-    prev_pending = state.core_pending_slot
+    # COMPRENDER: extracción del resto del mensaje.
     prev_cart_types = {it.get("type") for it in state.mixed_cart}
-    resolved_short = _apply_short_answer(state, message)
     if not (resolved_short and len(message.strip()) <= 12):
         await _understand(state, message)
 

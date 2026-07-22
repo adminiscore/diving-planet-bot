@@ -358,14 +358,13 @@ async def test_padi_course_flow_no_cert_no_safety_questions():
     assert "Curso PADI" in resp
 
 
-# FASE 3 SIN TERMINAR (xfail) — 2 causas raíz, ver docs/conversational-refactor-handoff.md §"Fase 3":
-#   (A) "voy solo" NO fija group_size en contexto de CURSO (la inferencia
-#       singular de intent_detector solo dispara para buceo/cert), así que el
-#       flujo se queda en SLOT_QTY en vez de llegar al checkout.
-#   (B) un mensaje de respuesta que "parece pregunta" ("tienen 7 y 9 años")
-#       cae a RAG por _looks_like_question ANTES de resolver el slot pendiente
-#       (SLOT_AGES) — el carryover debe ganar cuando hay slot pendiente.
-@pytest.mark.xfail(reason="Fase 3 WIP: 'voy solo' no fija qty en cursos — ver handoff §Fase 3 (A)", strict=False)
+# FASE 3 — cerrada (2026-07-22): las 2 causas raíz del handoff quedaron
+# arregladas en conversational_core:
+#   (A) "voy solo" en contexto de CURSO → _COURSE_SOLO_RE/_NOT_ALONE_RE fijan
+#       group_size=1 en _understand (scoped al núcleo, no toca el detector).
+#   (B) el carryover del slot pendiente corre ANTES del check de pregunta en
+#       maybe_handle_turn — una respuesta que "parece pregunta" ("tienen 7 y 9
+#       años") resuelve el slot; un "?" explícito sigue yendo a RAG.
 @pytest.mark.asyncio
 async def test_padi_course_island_variant_resolved():
     state = make_state("es")
@@ -376,7 +375,6 @@ async def test_padi_course_island_variant_resolved():
     assert state.mixed_cart[0]["plan"] == "open_water_already_on_island"
 
 
-@pytest.mark.xfail(reason="Fase 3 WIP: 'voy solo' no fija qty en cursos — ver handoff §Fase 3 (A)", strict=False)
 @pytest.mark.asyncio
 async def test_divemaster_contact_only_no_direct_link():
     """Divemaster es contact-only: resumen sin link de reserva directa, con
@@ -389,7 +387,6 @@ async def test_divemaster_contact_only_no_direct_link():
     assert "asesor" in resp.lower()
 
 
-@pytest.mark.xfail(reason="Fase 3 WIP: respuesta 'tienen 7 y 9 años' cae a RAG antes de resolver SLOT_AGES — ver handoff §Fase 3 (B)", strict=False)
 @pytest.mark.asyncio
 async def test_kids_ages_split_cart_blocks():
     """Menores con edades explícitas: el checkout separa por edad — <8 va a
