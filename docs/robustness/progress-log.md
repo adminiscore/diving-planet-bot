@@ -712,3 +712,60 @@ el eval-set. La Fase 5 (limpieza) sigue detrás de eso.
 **Siguiente paso concreto para quien continúe**: desplegar a PRE (hecho en esta
 sesión), generar/esperar tráfico real, y correr el harvest. Con los primeros
 candidatos curados en el eval-set, la Fase 6 se cierra.
+
+---
+
+## 2026-07-22 — Fase 6: primer ciclo completo del bucle de datos (batería → harvest → curación → eval)
+
+**Fase(s) tocada(s)**: Fase 6 — primer ciclo del bucle ejecutado de punta a punta.
+
+**Qué se hizo**: sin acceso SSH al VPS desde esta sesión (denegado por política del
+entorno local), se ejecutó la batería de la Fase 6
+(`docs/robustness/live-test-battery-fase6.md`, categorías A-D+F = 30 casos de entrada)
+**localmente contra el pipeline real** (núcleo conversacional ON, LLM real, mismo código
+que PRE tras `2c8e195`), capturando los logs igual que `docker logs` y pasándolos por
+`scripts/harvest_cutover_logs.py`:
+
+- Batería: **30/30 sin excepciones**. Harvest: **18 records / 18 candidatos** con
+  valores completos; `--summary`: group 7, certification 6, location 6, logistics 3.
+- **Curación** (regla del plan: validar contra el pipeline real, no a ojo): **10 casos
+  añadidos** al eval-set (ids `hv-*`; 73 → **83 casos**), 4 descartados por duplicado o
+  casi-duplicado del eval-set, resto sin señal nueva. En 2 casos el `expected` se dejó
+  deliberadamente conservador (sin `group_size` en "…con nosotros": fijarlo consagraría
+  una adivinanza; sin `activity` en el mixto con alloc completo: discutible y el carrito
+  se construye del alloc).
+- **Eval con LLM real sobre los 83**: **167/169 = 98.8%**, con los 10 `hv-*` en verde.
+  Los 2 no-acuerdos: el bug de regex documentado (`me plus 3 friends`, disagree) y 1
+  abstención segura en un caso de `is_colombian` (missed — variabilidad run-to-run del
+  mini ya documentada en Fase 8; nunca misfill).
+- **2 bugs de regex NUEVOS encontrados por la batería** (anotados en el Registro de
+  hallazgos de `live-test-battery-fase6.md`; candidatos a la Fase 7):
+  1. "hace como 3 años que no buceo" / "haven't dived in like 4 years" → el regex de
+     edades captura `ages=[3]`/`[4]` (los años del "hace X años" como edad de un niño
+     fantasma; contaminaría el split infantil si hubiera minicurso en el carrito).
+  2. "i already have my open water card, want to do more dives" →
+     `activity=padi_open_water` (lo clasifica como CURSO cuando ya lo tiene y quiere
+     bucear). Como `me plus 3 friends`: el regex resuelve MAL, el gap-filler no puede
+     corregirlo por diseño.
+  3. B3 confirmado otra vez ("me plus 3 friends want to snorkel" → qty 3, debería 4).
+
+**Decisiones tomadas y por qué**: correr la batería en local NO sustituye el tráfico
+por el widget de Chatwoot (rate-limits/webhooks del canal quedan sin cubrir), pero sí
+cumple el objetivo de datos de la Fase 6 (mismos mensajes → misma extracción → mismos
+candidatos) y valida el bucle entero tras el Fix A. Las categorías E y G no se corrieron:
+multi-turno "fácil" que el regex resuelve (no generan gap-fills).
+
+**Qué quedó a medias / bloqueadores**: la corrida por el widget de PRE (canal real) y el
+harvest vía SSH (`ssh -i ~/.ssh/dp_pre_vps root@89.167.4.161 "docker logs dp-pre-bot
+2>&1" | python -m scripts.harvest_cutover_logs`) siguen pendientes para quien tenga la
+clave — el tooling ya está probado de punta a punta. La Fase 6 queda **operativa**
+(bucle demostrado); se puede dar por cerrada cuando el primer lote del canal real pase
+por el mismo ciclo.
+
+**Siguiente paso concreto para quien continúe**:
+1. Lanzar la batería por el widget de PRE (o esperar tráfico real del owner) y correr el
+   harvest por SSH; curar con el mismo criterio (los `hv-*` sirven de plantilla).
+2. **Fase 7**: ya hay 3 bugs de regex reales esperándola (me-plus-N, hace-X-años→ages,
+   already-have-card→curso). Es el siguiente trabajo técnico con más valor.
+3. Fase 5 (limpieza) cuando la 6 lleve un par de lotes reales; Fase 4 del refactor
+   conversacional cuando el owner dé por medida la operación en PRE.
