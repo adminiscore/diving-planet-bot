@@ -122,13 +122,19 @@ def next_missing_slot(state: ConversationState) -> str | None:
         return SLOT_HOTEL
     # Plan: no se pregunta — se recomienda el más popular (decisión owner
     # v0.20.27) y el cliente puede cambiarlo por texto en cualquier momento.
+    #
+    # CANTIDAD antes que SEGURIDAD (decisión owner 2026-07-22, se desvía del
+    # orden escrito en conversational-refactor-plan.md): preguntando primero
+    # cuántos son, la pregunta de los 2 años ya sabe si dirigirse en singular o
+    # en plural en vez de adivinar — en vivo se veía "¿tu última inmersión?" a
+    # un grupo cuyo tamaño aún no se había preguntado.
+    if not state.detected_group_size and not state.detected_group_allocation:
+        return SLOT_QTY
     if _cart_will_include_cert(state):
         if state.last_dive_over_2_years is None:
             return SLOT_SAFETY
         if state.last_dive_over_2_years and state.refresher_interested is None:
             return SLOT_REFRESHER
-    if not state.detected_group_size and not state.detected_group_allocation:
-        return SLOT_QTY
     if state.kids_mention_detected and not state.detected_ages:
         return SLOT_AGES
     if state.is_colombian is None:
@@ -267,14 +273,25 @@ def ask_slot(state: ConversationState, slot: str, *, reasking: bool = False) -> 
             if lang == "es" else
             [{"title": "🇨🇴 Yes", "value": "yes"}, {"title": "🌎 No", "value": "no"}]
         )
+        # Singular/plural como en certificación y seguridad — en vivo salía
+        # siempre en plural ("¿sois colombianos?") a quien viajaba solo.
+        plural = (state.detected_group_size or 1) > 1
+        if lang == "es":
+            pregunta = (
+                "¿sois colombianos o residentes en Colombia?" if plural
+                else "¿eres colombiano o residente en Colombia?"
+            )
+            return (
+                f"Última cosa para darte el precio y el link correctos: {pregunta} "
+                "(El precio es el mismo — solo cambia la moneda y la forma de pago.)"
+            )
+        pregunta_en = (
+            "are you Colombian or residents of Colombia?" if plural
+            else "are you Colombian or a resident of Colombia?"
+        )
         return (
-            "Última cosa para darte el precio y el link correctos: ¿sois colombianos "
-            "o residentes en Colombia? (El precio es el mismo — solo cambia la moneda "
-            "y la forma de pago.)"
-            if lang == "es" else
-            "One last thing so I can give you the right price and link: are you "
-            "Colombian or residents of Colombia? (The price is the same — only the "
-            "currency and payment method change.)"
+            f"One last thing so I can give you the right price and link: {pregunta_en} "
+            "(The price is the same — only the currency and payment method change.)"
         )
     raise ValueError(f"unknown slot {slot!r}")
 
@@ -414,13 +431,17 @@ async def _understand(state: ConversationState, message: str):
             logger.info(f"[CORE] gap-fill applied={list(patch.keys())}")
     supervisor._apply_detected_intent(intent, state)
 
-    # (Fase 3 causa A) "quiero el curso X, voy solo" → 1 persona. Solo para
-    # cursos PADI (padi_*), solo si nada fijó cantidad, y solo con señal
-    # singular clara SIN ninguna señal de compañía — si hay duda, se pregunta.
+    # "voy solo" → 1 persona. Nació para cursos PADI (Fase 3 causa A) y el owner
+    # decidió extenderlo a CUALQUIER actividad (2026-07-22): la señal explícita
+    # de ir solo significa lo mismo en buceo, snorkel o minicurso, y sería raro
+    # que el bot lo entendiera en un curso pero no en un buceo. Sigue exigiendo
+    # señal singular EXPLÍCITA ("voy solo"/"just me") y ninguna señal de
+    # compañía — una auto-presentación en singular sin más ("tengo el open
+    # water") NO basta, porque un jefe de grupo escribe igual: ahí se pregunta.
     if (
         not state.detected_group_size
         and not state.detected_group_allocation
-        and (state.detected_activity or "").startswith("padi_")
+        and state.detected_activity
         and _COURSE_SOLO_RE.search(message)
         and not _NOT_ALONE_RE.search(message)
     ):

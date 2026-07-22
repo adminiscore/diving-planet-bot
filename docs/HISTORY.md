@@ -1,6 +1,14 @@
 History
 =======
 
+0.20.46 - (2026-07-22)
+----------------------
+* **Ajustes del núcleo conversacional tras validar los 5 casos en PRE (decisiones del owner)**. Los 5 casos (curso PADI solo, curso en isla, Divemaster contact-only, familia con niños y mensaje vago) pasaron en vivo; de ahí salieron 3 ajustes:
+* **"voy solo" deduce 1 persona en CUALQUIER actividad**, no solo en cursos PADI (antes gateado a `padi_*`). La señal explícita significa lo mismo en buceo, snorkel o minicurso. Sigue exigiendo señal explícita + ninguna señal de compañía: una auto-presentación en singular sin más ("tengo el open water") NO basta — ahí se pregunta, porque un jefe de grupo escribe igual.
+* **La cantidad se pregunta ANTES que la seguridad** (`next_missing_slot`). Antes la pregunta de los 2 años adivinaba el singular sin saber el tamaño del grupo ("¿tu última inmersión?" a un grupo); ahora ya sabe a cuántos se dirige. **Nota**: se desvía del orden escrito en `docs/conversational-refactor-plan.md` (decisión explícita del owner, avisada al equipo).
+* **La pregunta de nacionalidad se adapta a singular/plural** como ya hacían certificación y seguridad — salía siempre en plural ("¿sois colombianos?") a quien viajaba solo.
+* Tests nuevos: orden cantidad→seguridad, redacción singular/plural de seguridad y nacionalidad, "voy solo" en buceo y snorkel, y el caso Rocío (sin señal explícita → sigue preguntando). Suite: **1826 passed**, 15 skipped. `ruff`/`compileall` limpios. Verificado en vivo con LLM real.
+
 0.20.43 - (2026-07-22)
 ----------------------
 * **Núcleo conversacional Fase 3 (cursos PADI + checkout) — PARCIAL, con handoff para continuar**. Funciona: un curso PADI con cantidad explícita va a checkout con el link del curso (sin preguntar cert/seguridad); la nota de lead se materializa al cierre; código ya escrito (y desplegado, aditivo/safe) para la variante isla del curso (`_service_for_location`) y el split de menores por edad (`_derive_kids_counts`). **Quedan 2 causas raíz sin cerrar** (3 tests marcados `@pytest.mark.xfail`, la suite sigue verde): (A) "voy solo" no fija `group_size` en contexto de curso → el flujo se queda pidiendo cantidad; (B) una respuesta que "parece pregunta" ("tienen 7 y 9 años") cae a RAG antes de resolver el slot pendiente (`SLOT_AGES`) por el orden del check en `maybe_handle_turn`.

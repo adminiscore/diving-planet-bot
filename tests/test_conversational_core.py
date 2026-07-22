@@ -62,15 +62,18 @@ def test_slot_order_island_needs_hotel():
     assert core.next_missing_slot(state) == core.SLOT_HOTEL
 
 
-def test_slot_order_cert_needs_safety_then_qty_then_nationality():
+def test_slot_order_cert_needs_qty_then_safety_then_nationality():
+    """Decisión owner (2026-07-22): la CANTIDAD va antes que la seguridad, para
+    que la pregunta de los 2 años ya sepa si hablar en singular o plural en vez
+    de adivinar (se veía "¿tu última inmersión?" a un grupo aún sin contar)."""
     state = make_state()
     state.detected_activity = "certified_diving"
     state.is_certified = True
     state.location = "cartagena"
-    assert core.next_missing_slot(state) == core.SLOT_SAFETY
-    state.last_dive_over_2_years = False
     assert core.next_missing_slot(state) == core.SLOT_QTY
     state.detected_group_size = 2
+    assert core.next_missing_slot(state) == core.SLOT_SAFETY
+    state.last_dive_over_2_years = False
     assert core.next_missing_slot(state) == core.SLOT_NATIONALITY
     state.is_colombian = False
     assert core.next_missing_slot(state) is None
@@ -81,10 +84,81 @@ def test_slot_order_safety_true_asks_refresher():
     state.detected_activity = "certified_diving"
     state.is_certified = True
     state.location = "cartagena"
+    state.detected_group_size = 2
     state.last_dive_over_2_years = True
     assert core.next_missing_slot(state) == core.SLOT_REFRESHER
     state.refresher_interested = True
-    assert core.next_missing_slot(state) == core.SLOT_QTY
+    assert core.next_missing_slot(state) == core.SLOT_NATIONALITY
+
+
+def test_safety_question_knows_group_size_because_qty_comes_first():
+    """Consecuencia práctica del reorden: al preguntar la seguridad ya se sabe
+    la cantidad, así que la frase sale en plural para un grupo y en singular
+    para una persona — sin adivinar."""
+    solo = make_state("es")
+    solo.detected_activity = "certified_diving"
+    solo.is_certified = True
+    solo.location = "cartagena"
+    solo.detected_group_size = 1
+    assert "tu última inmersión" in core.ask_slot(solo, core.SLOT_SAFETY)
+
+    grupo = make_state("es")
+    grupo.detected_activity = "certified_diving"
+    grupo.is_certified = True
+    grupo.location = "cartagena"
+    grupo.detected_group_size = 3
+    assert "del grupo" in core.ask_slot(grupo, core.SLOT_SAFETY)
+
+
+@pytest.mark.asyncio
+async def test_solo_signal_infers_one_person_for_diving_too():
+    """Decisión owner (2026-07-22): la señal explícita "voy solo" deduce 1
+    persona en CUALQUIER actividad, no solo en cursos PADI (antes solo padi_*).
+    Sin señal explícita se sigue preguntando (ver el test de abajo)."""
+    state = make_state("es")
+    await route_message(state, "soy buzo certificado y quiero bucear, voy solo, desde cartagena")
+    assert state.detected_group_size == 1
+    assert state.core_pending_slot == core.SLOT_SAFETY  # ya no pregunta cantidad
+
+
+@pytest.mark.asyncio
+async def test_solo_signal_infers_one_person_for_snorkel():
+    state = make_state("es")
+    await route_message(state, "quiero hacer snorkel, voy sola, desde cartagena")
+    assert state.detected_group_size == 1
+
+
+@pytest.mark.asyncio
+async def test_no_solo_signal_still_asks_quantity():
+    """El caso de Rocío: auto-presentación en singular SIN decir que va sola —
+    un jefe de grupo escribiría igual, así que se pregunta (no se asume)."""
+    state = make_state("es")
+    await route_message(state, "hola soy rocio, tengo el open water y quiero hacer buceo desde cartagena")
+    assert state.detected_group_size is None
+    assert state.core_pending_slot == core.SLOT_QTY
+
+
+@pytest.mark.asyncio
+async def test_company_signal_beats_solo_word():
+    """Guarda conservadora: si hay señal de compañía, aunque aparezca "solo",
+    se pregunta la cantidad."""
+    state = make_state("es")
+    await route_message(state, "quiero bucear, soy certificado, voy con mi novia, desde cartagena")
+    assert state.detected_group_size != 1 or state.core_pending_slot == core.SLOT_QTY
+
+
+def test_nationality_question_singular_for_one_person():
+    """Coral pregunta en singular a quien viaja solo (antes salía siempre en
+    plural: "¿sois colombianos?" a una sola persona)."""
+    solo = make_state("es")
+    solo.detected_group_size = 1
+    q = core.ask_slot(solo, core.SLOT_NATIONALITY)
+    assert "eres colombiano" in q
+    assert "sois" not in q
+
+    grupo = make_state("es")
+    grupo.detected_group_size = 3
+    assert "sois colombianos" in core.ask_slot(grupo, core.SLOT_NATIONALITY)
 
 
 def test_slot_order_beginner_skips_safety():
@@ -313,14 +387,18 @@ async def test_reask_does_not_repeat_plan_recommendation():
     state = make_state("es")
     await route_message(state, "hola soy rocio, tengo el open water y quiero hacer buceo")
     assert state.core_pending_slot == core.SLOT_LOCATION
-    r2 = await route_message(state, "desde cartagena")
-    assert state.core_pending_slot == core.SLOT_SAFETY
-    assert "recomiendo" in r2.lower()  # primera vez: sí recomienda
-    r3 = await route_message(state, "soy solo yo")  # no responde seguridad, aporta qty
+    await route_message(state, "desde cartagena")
+    # Orden nuevo (owner 2026-07-22): la cantidad va antes que la seguridad.
+    assert state.core_pending_slot == core.SLOT_QTY
+    r3 = await route_message(state, "soy solo yo")
     assert state.detected_group_size == 1
     assert state.core_pending_slot == core.SLOT_SAFETY
-    assert "recomiendo" not in r3.lower(), "la re-pregunta no debe repetir la recomendación"
-    assert "2 años" in r3 or "2 anos" in r3
+    assert "recomiendo" in r3.lower()  # primera vez que pregunta seguridad: sí recomienda
+    # Un mensaje que NO resuelve la seguridad → re-pregunta sin repetir el bloque
+    r4 = await route_message(state, "somos 3 en realidad")
+    assert state.core_pending_slot == core.SLOT_SAFETY
+    assert "recomiendo" not in r4.lower(), "la re-pregunta no debe repetir la recomendación"
+    assert "2 años" in r4 or "2 anos" in r4
 
 
 # ---------------------------------------------------------------------------

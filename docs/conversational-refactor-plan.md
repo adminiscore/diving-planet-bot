@@ -61,6 +61,13 @@ emitir el resumen con los **links correctos** y hacer el handoff.
 actividad → (si buceo) certificación → ubicación (+ hotel si isla) → plan/conteo →
 seguridad (2 años) → cantidad/reparto → (menores→edades) → nacionalidad → resumen+links.
 
+> **Cambio sobre este orden (owner, 2026-07-22, validado en PRE)**: la
+> **cantidad va ANTES que la seguridad**. Con el orden escrito arriba, la
+> pregunta de los 2 años tenía que adivinar si dirigirse en singular o plural
+> porque aún no sabía el tamaño del grupo (en vivo se veía "¿tu última
+> inmersión?" a un grupo sin contar). Implementado así en
+> `next_missing_slot`; el resto del orden se mantiene.
+
 **Quick-replies mínimos** (decisión owner): solo en ubicación (Cartagena/islas),
 seguridad (Sí/No) y confirmar. Todo lo demás por texto; el texto SIEMPRE se acepta.
 
