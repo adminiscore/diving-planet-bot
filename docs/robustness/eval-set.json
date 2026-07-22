@@ -836,6 +836,127 @@
       },
       "source": "adversarial-negativo (2026-07-22)",
       "notes": "Espejo EN del caso negativo: sin senal de lugar/estancia/nacionalidad, el extractor debe abstenerse en esos campos."
+    },
+    {
+      "id": "hv-a1-probar-voy-solo",
+      "message": "hola quiero probar el buceo, nunca lo he hecho, voy solo",
+      "lang": "es",
+      "expected": {
+        "activity": "certified_diving",
+        "is_certified": false,
+        "group_size": 1
+      },
+      "source": "harvested-battery-fase6 (bateria live-test-battery-fase6.md corrida con pipeline real 2026-07-22; expected validado contra IntentDetector + gap-fill reales)",
+      "notes": "Regex saca activity; LLM rellena is_certified=False ('nunca lo he hecho') y group_size=1 ('voy solo'). Con cert False el nucleo enruta a minicurso efectivo."
+    },
+    {
+      "id": "hv-a3-typos-combinados",
+      "message": "ola quiero vucear, ya soy sertificado, somos 2",
+      "lang": "es",
+      "expected": {
+        "activity": "certified_diving",
+        "is_certified": true,
+        "group_size": 2
+      },
+      "source": "harvested-battery-fase6 (bateria live-test-battery-fase6.md corrida con pipeline real 2026-07-22; expected validado contra IntentDetector + gap-fill reales)",
+      "notes": "Tres typos combinados (ola/vucear/sertificado) en una frase — el eval tenia los typos por separado; LLM rellena is_certified=True."
+    },
+    {
+      "id": "hv-b4-hijo-snorkel-es",
+      "message": "mi hijo de 8 años quiere hacer snorkel con nosotros",
+      "lang": "es",
+      "expected": {
+        "activity": "snorkel",
+        "ages": [
+          8
+        ]
+      },
+      "source": "harvested-battery-fase6 (bateria live-test-battery-fase6.md corrida con pipeline real 2026-07-22; expected validado contra IntentDetector + gap-fill reales)",
+      "notes": "Edad de un tercero, ES. group_size NO se fija a proposito: 'con nosotros' es ambiguo (2+?) y fijarlo seria consagrar una adivinanza."
+    },
+    {
+      "id": "hv-b5-daughter-minicourse-en",
+      "message": "my daughter is 9 and wants to try the mini-course",
+      "lang": "en",
+      "expected": {
+        "activity": "minicourse",
+        "ages": [
+          9
+        ]
+      },
+      "source": "harvested-battery-fase6 (bateria live-test-battery-fase6.md corrida con pipeline real 2026-07-22; expected validado contra IntentDetector + gap-fill reales)",
+      "notes": "Edad de un tercero, EN; regex saca la edad, LLM la actividad."
+    },
+    {
+      "id": "hv-b6-mixto-digitos-es",
+      "message": "somos 6, 4 certificados y 2 quieren snorkel",
+      "lang": "es",
+      "expected": {
+        "is_certified": true,
+        "group_size": 6,
+        "group_allocation": {
+          "certified_diving": 4,
+          "snorkel": 2
+        }
+      },
+      "source": "harvested-battery-fase6 (bateria live-test-battery-fase6.md corrida con pipeline real 2026-07-22; expected validado contra IntentDetector + gap-fill reales)",
+      "notes": "Reparto mixto con digitos en ES (el eval tenia la variante EN en palabras). activity principal no se fija: con alloc completo es discutible y el carrito se construye del alloc."
+    },
+    {
+      "id": "hv-c4-near-getsemani-en",
+      "message": "we're staying near Getsemaní",
+      "lang": "en",
+      "expected": {
+        "location": "cartagena"
+      },
+      "source": "harvested-battery-fase6 (bateria live-test-battery-fase6.md corrida con pipeline real 2026-07-22; expected validado contra IntentDetector + gap-fill reales)",
+      "notes": "Barrio de Cartagena con 'near', EN (el eval tenia getsemani solo en ES)."
+    },
+    {
+      "id": "hv-c5-manga-correferencia",
+      "message": "estamos en manga, salimos desde ahí",
+      "lang": "es",
+      "expected": {
+        "location": "cartagena"
+      },
+      "source": "harvested-battery-fase6 (bateria live-test-battery-fase6.md corrida con pipeline real 2026-07-22; expected validado contra IntentDetector + gap-fill reales)",
+      "notes": "Barrio + correferencia ('desde ahi' = manga)."
+    },
+    {
+      "id": "hv-d1-paisas-plural",
+      "message": "somos paisas, queremos bucear 2 días",
+      "lang": "es",
+      "expected": {
+        "activity": "certified_diving",
+        "is_colombian": true,
+        "duration": "multi_day"
+      },
+      "source": "harvested-battery-fase6 (bateria live-test-battery-fase6.md corrida con pipeline real 2026-07-22; expected validado contra IntentDetector + gap-fill reales)",
+      "notes": "Slang colombiano en plural ('paisas'; el eval tenia 'soy paisa' singular) + duration del regex."
+    },
+    {
+      "id": "hv-d4-havent-dived-4y-en",
+      "message": "i'm certified but haven't dived in like 4 years",
+      "lang": "en",
+      "expected": {
+        "activity": "certified_diving",
+        "is_certified": true,
+        "last_dive_over_2_years": true
+      },
+      "source": "harvested-battery-fase6 (bateria live-test-battery-fase6.md corrida con pipeline real 2026-07-22; expected validado contra IntentDetector + gap-fill reales)",
+      "notes": "Ultima inmersion indirecta EN. OJO hallazgo de regex: captura ages=[4] del 'in like 4 years' (bug latente, ver Registro de hallazgos de la bateria) — ages NO va en expected para no consagrarlo."
+    },
+    {
+      "id": "hv-d5-3-anos-yo-solo",
+      "message": "hace como 3 años que no buceo, seré yo solo",
+      "lang": "es",
+      "expected": {
+        "activity": "certified_diving",
+        "last_dive_over_2_years": true,
+        "group_size": 1
+      },
+      "source": "harvested-battery-fase6 (bateria live-test-battery-fase6.md corrida con pipeline real 2026-07-22; expected validado contra IntentDetector + gap-fill reales)",
+      "notes": "Ultima inmersion + señal singular ('sere yo solo'). Mismo hallazgo de regex ages=[3] que hv-d4."
     }
   ]
 }

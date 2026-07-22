@@ -112,3 +112,31 @@ Anotar aquí cualquier cosa rara encontrada al lanzar estos casos (bug nuevo, re
 o simplemente "todo bien") — antes de decidir si se añade al eval-set (ver la lección de proceso
 en `docs/robustness/progress-log.md`: validar SIEMPRE el "expected" contra el pipeline real antes
 de fijarlo, no a ojo).
+
+### 2026-07-22 — Corrida LOCAL de A-D+F (Gonzalo; 30 casos, pipeline real + LLM real)
+
+Sin acceso SSH al VPS desde esta sesión, se corrió la batería **localmente** contra el
+pipeline real (núcleo ON, mismo código que PRE tras `2c8e195`), capturando los logs igual
+que `docker logs` y pasándolos por el harvester — el objetivo de datos se cumple (mismos
+mensajes → misma extracción); lo que NO cubre es el canal Chatwoot en sí (rate-limits,
+webhooks), que sigue pendiente de la corrida por widget. Resultado: 30/30 sin excepciones,
+**18 records de gap-fill, 18 candidatos**, `--summary` por dominio
+(group 7 / certification 6 / location 6 / logistics 3). Curación: **10 añadidos** al
+eval-set (`hv-*`), 4 duplicados/casi-duplicados descartados, resto sin señal nueva.
+E y G no se corrieron (multi-turno "fácil" que el regex resuelve — no generan gap-fills).
+
+Hallazgos de bugs REALES de regex (no del LLM; candidatos a la Fase 7 de override/fix):
+
+- 🐛 **"hace como 3 años que no buceo" → `ages=[3]`** (ídem "haven't dived in like 4
+  years" → `ages=[4]`): el regex de edades captura los años de "hace X años" como si
+  fueran la edad de una persona. Latente: con un minicurso en el carrito, ese fantasma
+  contaminaría `kids_under_8_count` en el split del checkout. (D4/D5)
+- 🐛 **"i already have my open water card, want to do more dives" → `activity=padi_open_water`**:
+  el regex clasifica como CURSO a quien dice que YA lo tiene y quiere bucear (debería
+  ser `certified_diving`). Como `me plus 3 friends`: el regex resuelve MAL (no deja
+  hueco), así que el gap-filler no puede corregirlo por diseño. (A6)
+- 🔁 **B3 confirmado otra vez**: "me plus 3 friends want to snorkel" → regex `group_size=3`
+  (debería 4), ahora también en la variante snorkel.
+- ℹ️ Variabilidad del mini observada en C3: en esta corrida rellenó `hotel`/`island` pero
+  no `location` (el eval-set la ha dado bien otras veces). El flujo se recupera (pregunta
+  la ubicación), coherente con el modo de fallo "abstención segura".

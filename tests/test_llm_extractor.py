@@ -107,6 +107,47 @@ async def test_fill_gaps_returns_patch_for_missing_fields():
 
 
 @pytest.mark.asyncio
+async def test_fill_gaps_only_fields_restricts_request_and_patch():
+    """Fix B (conversational-refactor-handoff): `only_fields` restringe tanto lo
+    que se le pide al LLM (el prompt solo lista esos campos) como lo que se
+    acepta del patch — un campo devuelto fuera del subconjunto se descarta."""
+    captured = {}
+
+    class _CapturingClient:
+        class chat:
+            class completions:
+                @staticmethod
+                async def create(**kwargs):
+                    captured.update(kwargs)
+                    return _FakeResponse(_FakeMessage(tool_calls=[_FakeToolCall(
+                        "extract_fields",
+                        json.dumps({"location": "cartagena", "group_size": 2}),
+                    )]))
+
+    intent = DetectedIntent(language="es")  # everything missing
+    patch = await fill_gaps(
+        "estamos por el centro histórico", intent,
+        lang="es", client=_CapturingClient(), only_fields=["location"],
+    )
+    # Solo location aceptado; group_size (fuera del subconjunto) descartado.
+    assert patch == {"location": "cartagena"}
+    # Y el prompt solo pide ese campo (no los ~13 de siempre).
+    system = captured["messages"][0]["content"]
+    assert "location" in system
+    assert "group_size" not in system
+
+
+@pytest.mark.asyncio
+async def test_fill_gaps_only_fields_empty_intersection_skips_call():
+    intent = DetectedIntent(group_size=2)  # group_size resuelto por regex
+    patch = await fill_gaps(
+        "somos 2", intent,
+        client=None, only_fields=["group_size"],  # ya resuelto → nada que pedir
+    )
+    assert patch == {}
+
+
+@pytest.mark.asyncio
 async def test_fill_gaps_uses_extraction_model_not_orchestrator_model():
     """Fase 4: the gap-filler runs on settings.extraction_model (a cheaper/faster
     model), kept separate from settings.openai_model used by the orchestrator."""

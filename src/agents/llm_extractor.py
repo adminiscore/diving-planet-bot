@@ -205,6 +205,7 @@ async def fill_gaps(
     history: list[dict] | None = None,
     lang: str = "es",
     client: AsyncOpenAI | None = None,
+    only_fields: list[str] | None = None,
 ) -> dict:
     """Ask the LLM to fill ONLY the fields `regex_intent` left unresolved.
 
@@ -212,8 +213,16 @@ async def fill_gaps(
     real signal for. Never includes a field regex_intent already resolved,
     and never mutates regex_intent. On any error/timeout/malformed response,
     returns {} so the caller keeps the regex result untouched.
+
+    `only_fields` (optional) further restricts the request to that subset —
+    used by the conversational core (Fix B, conversational-refactor-handoff)
+    to avoid asking the LLM for fields the conversation STATE already knows
+    even though this turn's regex intent left them None. Fewer requested
+    fields = fewer tokens and less misfill surface.
     """
     missing = missing_fields(regex_intent)
+    if only_fields is not None:
+        missing = [f for f in missing if f in only_fields]
     if not missing or not message or not message.strip():
         return {}
 
