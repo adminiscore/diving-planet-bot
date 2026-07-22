@@ -1,6 +1,12 @@
 History
 =======
 
+0.20.50 - (2026-07-22)
+----------------------
+* **Fase 6 confirmada contra tráfico REAL de PRE (no solo local)**: tras el redeploy con los Fix A/B de Gonzalo, se corrió el harvest contra `docker logs dp-pre-bot` real y devolvió **2 candidatos con valores** (antes del fix: 0). Añadido `hv-aowd-acronym` al eval-set (83→84): el regex no reconoce el acrónimo "AOWD" (Advanced Open Water Diver), el gap-filler sí lo resuelve.
+* **Hallazgo de proceso**: un segundo candidato harvestado no se pudo fijar en el eval-set — venía de una llamada con `only_fields` (Fix B, acota los campos según el ESTADO de la conversación), y al reproducirlo con la llamada plana del eval-set (solo el mensaje) el resultado fue distinto. No es un bug: el eval-set actual no simula ese contexto reducido. Documentado en `docs/robustness/progress-log.md` con las 2 opciones para resolverlo antes de acumular más candidatos de este tipo.
+* Suite: **1832 passed**, 15 skipped. `ruff` limpio.
+
 0.20.47 - (2026-07-22)
 ----------------------
 * **Handoff actualizado para que el equipo continúe (`docs/conversational-refactor-handoff.md`, sección "Sesión 2026-07-22 (tarde)")**: qué se hizo tras el merge de Gonzalo, el incidente de despliegue por cuota de OpenAI, la validación de los 5 casos en PRE por el owner, y los 2 arreglos pendientes con su localización exacta.

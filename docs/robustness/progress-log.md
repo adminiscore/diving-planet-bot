@@ -772,6 +772,60 @@ por el mismo ciclo.
 
 ---
 
+## 2026-07-22 — Fase 6 confirmada en producción + hallazgo sobre `only_fields` en el harvest
+
+**Fase(s) tocada(s)**: Fase 6 (paso operativo: harvest contra tráfico REAL de PRE).
+
+**Qué se hizo**:
+- Tras el merge de los Fix A/B de Gonzalo (`2c8e195`) y el redeploy a PRE, se tiró de
+  `docker logs dp-pre-bot` (tráfico real por el widget, no sintético) y se corrió
+  `scripts/harvest_cutover_logs.py` contra esos logs. **Resultado: 2 records, 2
+  candidatos con valores** — el Fix A queda confirmado funcionando en PRODUCCIÓN, no
+  solo en la verificación local de Gonzalo. Antes del fix esto daba 0 (documentado en
+  el bloque anterior de este log).
+- Candidato 1 validado contra el pipeline real (regex solo → `is_certified=None`;
+  `fill_gaps` sin historial → `is_certified=True`, estable): "tengo el AOWD" (Advanced
+  Open Water Diver) es un acrónimo de certificación que el regex no reconoce. Añadido
+  al eval-set como `hv-aowd-acronym` (83→84).
+- Candidato 2 ("1 pero viene un amigo que quiere hacer buceo, no es certificado" →
+  `group_allocation={certified_diving:1, minicourse:1}`) se descartó de fijar en el
+  eval-set — ver hallazgo de proceso abajo.
+
+**Hallazgo de proceso — el harvest y el eval-set NO conocen `only_fields`**:
+El Fix B de Gonzalo (`_relevant_gaps` en `conversational_core.py`) llama a
+`fill_gaps(..., only_fields=[...])`, restringiendo qué campos se le piden al LLM según
+lo que el ESTADO de la conversación ya sabe (no solo el mensaje suelto). Esto es
+correcto y deseado (menos tokens, menos superficie de misfill) — pero significa que
+**el patch logueado en producción depende del contexto de la conversación, no solo del
+mensaje**. Al intentar reproducir el candidato 2 con la llamada "pelada" del eval-set
+(`fill_gaps(mensaje, intent)`, sin `only_fields` ni el estado real), el resultado fue
+DISTINTO: `group_size=2` en vez de `group_allocation={...}`. No es un misfill ni un bug
+— es que el eval-set actual no simula el contexto reducido que ve el núcleo en
+producción, así que un candidato harvestado con `only_fields` activo no siempre se
+puede fijar como caso de mensaje-suelto sin más.
+
+**Decisiones tomadas y por qué**: mejor un candidato descartado que un `expected`
+fijado que no se sostiene contra el pipeline real — misma regla del plan de siempre
+(medir, no asumir) aplicada también a los candidatos que sí llegan del harvest.
+
+**Qué quedó a medias / bloqueadores**: el candidato 2 queda documentado aquí pero SIN
+fijar en el eval-set. Si se quiere aprovechar, hace falta o (a) extender el eval-set
+runner para que sepa simular `only_fields` a partir de un estado dado, o (b) reformular
+el caso como un test de integración del núcleo completo (con estado previo), no como un
+caso de extracción de mensaje suelto.
+
+**Siguiente paso concreto para quien continúe**:
+1. Seguir acumulando tráfico real por el widget de PRE y repitiendo este harvest
+   periódicamente — ahora funciona de punta a punta.
+2. Decidir si vale la pena extender el eval-set/runner para casos con `only_fields`
+   (ver hallazgo de arriba) antes de que se acumulen más candidatos de ese tipo.
+3. La Fase 7 se atacó justo después (bloque siguiente): los 3 bugs de regex reales.
+4. Fase 5 (limpieza de regex muerto) sigue detrás de la 6 y la 7.
+5. Fase 4 del refactor conversacional (retirar el árbol `MIXED_*`) es el único punto
+   pendiente del plan de Álvaro — su precondición (medir en PRE) ya se está cumpliendo.
+
+---
+
 ## 2026-07-22 — Fase 7: arreglados 3 bugs de regex hallados por las baterías
 
 **Fase(s) tocada(s)**: Fase 7 (los casos donde el regex resuelve MAL, no solo deja hueco).
