@@ -835,6 +835,18 @@
       "notes": "Espejo EN del caso negativo: sin senal de lugar/estancia/nacionalidad, el extractor debe abstenerse en esos campos."
     },
     {
+      "id": "neg-es-vague-plural-companion-count",
+      "message": "Hola quiero hacer buceo y mis amigos snorkel",
+      "lang": "es",
+      "expected": {
+        "activity": "certified_diving",
+        "group_size": null,
+        "group_allocation": null
+      },
+      "source": "live-PRE-2026-07-22 (misfill real del extractor, LLM_EXTRACTION_CUTOVER_GROUP=true)",
+      "notes": "Caso NEGATIVO (null = debe abstenerse): 'mis amigos' es un plural sin numero (implica >1 pero no dice cuantos). El regex ya se abstiene correctamente (verificado contra IntentDetector real: group_size=None, group_allocation=None). El extractor LLM en PRE rellenaba group_allocation={snorkel: 3} sin preguntar, inventando un total del grupo. Fix: se ampliaron las descripciones de group_size/group_allocation en el tool schema para instruir abstencion explicita ante plural sin numero, siguiendo el mismo patron que neg-es-no-location-signal."
+    },
+    {
       "id": "hv-a1-probar-voy-solo",
       "message": "hola quiero probar el buceo, nunca lo he hecho, voy solo",
       "lang": "es",

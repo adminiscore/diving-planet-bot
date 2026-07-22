@@ -250,6 +250,13 @@ class ConversationState:
     # used when settings.conversational_core is on; None otherwise.
     core_pending_slot: str | None = None
 
+    # Actividad del acompañante detectada por la red de precisión LLM
+    # (detect_special_signals) cuando la cantidad quedó pendiente de preguntar
+    # (plural sin número, p. ej. "mis amigos" — nunca se debe adivinar cuántos
+    # son). Se consume en cuanto la respuesta llega (core_pending_slot ==
+    # SLOT_COMPANION_QTY) y se fusiona con `_merge_companion_activity`.
+    pending_companion_activity: str | None = None
+
     def __post_init__(self):
         if self.history is None:
             self.history = []

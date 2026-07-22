@@ -53,6 +53,7 @@ SLOT_REFRESHER = "refresher"      # solo si safety == True
 SLOT_QTY = "qty"
 SLOT_AGES = "ages"                # solo si hay menores mencionados sin edades
 SLOT_NATIONALITY = "nationality"  # cerca del checkout (moneda + gating de links)
+SLOT_COMPANION_QTY = "companion_qty"  # cuántos acompañantes cuando el plural es vago
 
 # Actividades "de producto" que el vertical actual del núcleo sabe cerrar.
 # course:* llega en Fase 3; mientras, un curso PADI detectado se atiende pero
@@ -302,6 +303,14 @@ def ask_slot(state: ConversationState, slot: str, *, reasking: bool = False) -> 
             if lang == "es" else
             "And how many people should I plan for? That way I can give you the exact price. 😊"
         )
+    if slot == SLOT_COMPANION_QTY:
+        act = state.pending_companion_activity
+        label = (_RECALL_LABELS_ES if lang == "es" else _RECALL_LABELS_EN).get(act, act or "")
+        return (
+            f"¿Cuántos serían para {label}? Así les cuento el plan exacto. 😊"
+            if lang == "es" else
+            f"How many people would that be for {label}? That way I can give you the exact plan. 😊"
+        )
     if slot == SLOT_AGES:
         return (
             "Me comentaste que van menores — ¿qué edades tienen? Así les preparo "
@@ -417,6 +426,14 @@ def _apply_short_answer(state: ConversationState, message: str) -> bool:
             state.detected_group_size = n
             return True
         return False
+    if slot == SLOT_COMPANION_QTY:
+        n = _tree._parse_mixed_quantity(message)
+        act = state.pending_companion_activity
+        if n is not None and n > 0 and act:
+            _merge_companion_activity(state, act, n)
+            state.pending_companion_activity = None
+            return True
+        return False
     if slot == SLOT_AGES:
         ages = [int(a) for a in re.findall(r"\b(\d{1,2})\b", message) if 0 < int(a) < 100]
         if ages:
@@ -463,6 +480,39 @@ _MENTIONS_PERSON_RE = re.compile(
 
 def _mentions_person(message: str) -> bool:
     return bool(_MENTIONS_PERSON_RE.search(message))
+
+
+# Compañero SINGULAR e inequívoco (un/una/mi/a + sustantivo en singular, o "a
+# friend"/"someone"): el número de personas es 1 sin ambigüedad, se puede
+# asumir con seguridad sin preguntar. Deliberadamente NO matchea plurales
+# ("mis amigos", "unos amigos", "friends") ni un número explícito (ese lo
+# extrae el LLM en `companion_qty`) — para esos dos casos hay que preguntar
+# cuántos son en vez de adivinar (hallazgo en vivo 2026-07-22: "mis amigos"
+# se inventaba un total sin preguntar). Ver SLOT_COMPANION_QTY.
+_SINGULAR_COMPANION_RE = re.compile(
+    r"\b(?:un|una|mi|a)\s+(?:amig[oa]|novi[oa]|espos[oa]|marido|mujer|pareja|"
+    r"compa[ñn]er[oa]|acompa[ñn]ante|herman[oa]|hij[oa]|padre|madre|pap[aá]|mam[aá]|"
+    r"prim[oa]|friend|partner|wife|husband|boyfriend|girlfriend|brother|sister|"
+    r"son|daughter|companion)\b|\bsomeone\b"
+    # "uno/una que..." / "one who/that..." — pronombre numeral, no un
+    # sustantivo de relación: "viene también uno que hace snorkel" es
+    # exactamente 1 persona, mismo patrón que ya usa _ADDED_PERSON_RE.
+    r"|\bun[oa]?\s+que\b|\bone\s+(?:who|that)\b",
+    re.IGNORECASE,
+)
+
+# Respaldo determinista: verificado en vivo (2026-07-22) que el LLM NO siempre
+# obedece la instrucción de abstenerse en `companion_qty` para un plural vago
+# — "también vienen mis amigos a hacer snorkel" devolvió companion_qty=1 pese
+# al prompt reforzado. No basta confiar en que el modelo se abstenga: si el
+# mensaje no contiene NINGÚN número explícito (dígito o palabra-número), se
+# descarta cualquier companion_qty que el LLM haya devuelto igualmente, antes
+# de decidir si preguntar o asumir 1 por singular inequívoco.
+_EXPLICIT_NUMBER_RE = re.compile(
+    r"\d+|\b(?:uno|una|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|diez|"
+    r"one|two|three|four|five|six|seven|eight|nine|ten)\b",
+    re.IGNORECASE,
+)
 
 
 _ACTIVITY_TO_CART_TYPE = {"certified_diving": "cert", "minicourse": "beginner", "snorkel": "snorkel"}
@@ -526,13 +576,21 @@ def _relevant_gaps(state: ConversationState, intent, message: str) -> list[str]:
     return gaps
 
 
-async def _understand(state: ConversationState, message: str):
+async def _understand(state: ConversationState, message: str) -> tuple:
     """Regex fast-path + gap-fill LLM sobre los campos que la CONVERSACIÓN aún
     no conoce (Fix B: nunca se piden campos que el estado ya tiene), y volcado
     al estado por el camino ya probado (_apply_detected_intent). Cualquier
     fallo del LLM degrada a regex-only (fill_gaps devuelve {}).
-    Devuelve el intent del TURNO (lo que dijo este mensaje concreto), que el
-    caller usa para distinguir "añade actividad" de "cambia de actividad"."""
+    Devuelve (intent, companion_merged_fastpath): el intent del TURNO (lo que
+    dijo este mensaje concreto, que el caller usa para distinguir "añade
+    actividad" de "cambia de actividad"), y un booleano que indica si el
+    fast-path regex de acompañante (más abajo) ya fusionó un acompañante en
+    este turno. Sin ese booleano, `advanced` (en maybe_handle_turn) no se
+    entera de que este fast-path avanzó la reserva cuando el siguiente slot
+    pendiente no cambia (p. ej. seguía faltando "nacionalidad" con o sin el
+    acompañante) — y la red de precisión LLM vuelve a ejecutarse para el
+    MISMO mensaje y duplica la cantidad (hallazgo en vivo 2026-07-22: "viene
+    también uno que hace snorkel" con LLM real daba snorkel:2, no snorkel:1)."""
     from src.agents import supervisor  # lazy: evita import circular
 
     prev_activity = state.detected_activity
@@ -547,6 +605,21 @@ async def _understand(state: ConversationState, message: str):
         patch = await fill_gaps(
             message, intent, history=state.history, lang=state.language, only_fields=gaps
         )
+        # Verificado en vivo (2026-07-23): con el historial REAL de la
+        # conversación por delante, fill_gaps puede alucinar un
+        # group_allocation/group_size completo para un mensaje de "se añade
+        # un acompañante" sin ningún número real ("también vienen mis parces
+        # a hacer snorkel" con 5 turnos previos devolvió {cert:1, snorkel:3}
+        # o {cert:1, snorkel:6} según la corrida — nada respaldado por el
+        # texto). `_apply_detected_intent` (más abajo) aplica estos campos
+        # SIN verificación alguna, antes de que el fast-path o la red de
+        # precisión LLM (que sí tienen el respaldo `_EXPLICIT_NUMBER_RE`)
+        # puedan intervenir. Se descartan aquí, en esta frase específica de
+        # "se añade alguien" sin número, para que esos mecanismos más seguros
+        # sean los que decidan (asumir 1 si es singular, o preguntar).
+        if _ADDED_PERSON_RE.search(message) and not _EXPLICIT_NUMBER_RE.search(message):
+            patch.pop("group_allocation", None)
+            patch.pop("group_size", None)
         for field_name, value in patch.items():
             setattr(intent, field_name, value)
             if field_name not in intent.detected_fields:
@@ -591,6 +664,7 @@ async def _understand(state: ConversationState, message: str):
     # red de precisión LLM en maybe_handle_turn (detect_special_signals),
     # nunca ampliando este regex frase a frase (decisión owner 2026-07-22).
     turn_act = intent.activity
+    companion_merged_fastpath = False
     if (
         prev_activity
         and turn_act
@@ -599,9 +673,32 @@ async def _understand(state: ConversationState, message: str):
         and prev_activity in _ACTIVITY_TO_CART_TYPE
         and _ADDED_PERSON_RE.search(message)
     ):
-        _restore_main_diver_fields(state, prev_activity, prev_service_id, prev_is_certified, prev_last_dive, prev_refresher)
-        added_qty = (intent.group_allocation or {}).get(turn_act) or 1
-        _merge_companion_activity(state, turn_act, added_qty)
+        explicit_qty = (intent.group_allocation or {}).get(turn_act)
+        # `intent.group_allocation` puede venir del gap-fill LLM (`fill_gaps`,
+        # llamado más arriba en este mismo `_understand()` vía `_relevant_gaps`),
+        # no solo del regex — y verificado en vivo (2026-07-23) que ese LLM
+        # puede alucinar un reparto completo con el historial real de la
+        # conversación por delante ("también vienen mis parces a hacer
+        # snorkel" con 5 turnos previos de contexto devolvió
+        # group_allocation={cert:1, snorkel:3} sin ningún "3" en el mensaje).
+        # Por eso el respaldo de número explícito se aplica SIEMPRE, tenga o
+        # no ya un valor `explicit_qty` — no solo cuando es None — antes de
+        # confiarlo. Si no hay número real en el mensaje ni es un compañero
+        # singular inequívoco ("mi novia"/"mi acompañante"), NO fusionar con
+        # una cifra inventada — dejar el estado sin tocar para que el bloque
+        # de la red de precisión más abajo (`detect_special_signals`)
+        # pregunte cuántos son.
+        if explicit_qty is not None and not _EXPLICIT_NUMBER_RE.search(message):
+            explicit_qty = None
+        if (
+            explicit_qty is None
+            and not _SINGULAR_COMPANION_RE.search(message)
+        ):
+            pass
+        else:
+            _restore_main_diver_fields(state, prev_activity, prev_service_id, prev_is_certified, prev_last_dive, prev_refresher)
+            _merge_companion_activity(state, turn_act, explicit_qty or 1)
+            companion_merged_fastpath = True
 
     # Normalizar group_size con el reparto: si el reparto suma MÁS personas que el
     # group_size conocido, el total manda. Bug en vivo (2026-07-22): "1 pero viene
@@ -615,7 +712,7 @@ async def _understand(state: ConversationState, message: str):
         if total > (state.detected_group_size or 0):
             state.detected_group_size = total
             logger.info(f"[CORE] group_size synced from allocation -> {total}")
-    return intent
+    return intent, companion_merged_fastpath
 
 
 def _restore_main_diver_fields(
@@ -1001,8 +1098,9 @@ async def maybe_handle_turn(
         return answer
 
     # COMPRENDER: extracción del resto del mensaje.
+    companion_merged_fastpath = False
     if not (resolved_short and len(message.strip()) <= 12):
-        await _understand(state, message)
+        _, companion_merged_fastpath = await _understand(state, message)
 
     # Añadido POST-cierre ("viene también uno que hace snorkel" cuando el
     # resumen ya se emitió): añadir el subgrupo nuevo al carrito existente y
@@ -1035,7 +1133,17 @@ async def maybe_handle_turn(
     # campo del buceador PRINCIPAL pisado por error por este mismo turno —el
     # bug que _restore_main_diver_fields corrige— no debe contar como
     # "avance", o la red de precisión nunca llegaría a correr.)
-    advanced = resolved_short or next_missing_slot(state) != prev_pending
+    # `companion_merged_fastpath` (hallazgo en vivo 2026-07-22): añadir un
+    # acompañante no siempre cambia next_missing_slot (p. ej. seguía faltando
+    # "nacionalidad" con o sin el acompañante) — sin este flag, la red de
+    # precisión LLM de abajo se ejecutaba OTRA VEZ para el mismo mensaje y
+    # duplicaba la cantidad (snorkel:1 fusionado por el fast-path + snorkel:1
+    # fusionado de nuevo por el LLM = snorkel:2).
+    advanced = (
+        resolved_short
+        or companion_merged_fastpath
+        or next_missing_slot(state) != prev_pending
+    )
 
     # Un acompañante / actividad DISTINTA a la principal que el fast-path por regex
     # NO cazó (`_ADDED_PERSON_RE` no matchea "hay un amigo que quiere snorkel",
@@ -1059,12 +1167,18 @@ async def maybe_handle_turn(
     if not advanced or companion_ambiguous:
         signals = await detect_special_signals(message, history=state.history, lang=state.language)
         activity = signals.get("companion_activity")
-        # Guard determinista contra el flip-flop del LLM con historial: solo se
-        # trata como ACOMPAÑANTE si el mensaje nombra a otra persona. El LLM decide
-        # la actividad; la presencia de persona decide que es un añadido, no un
+        # Guard contra el flip-flop del LLM con historial: solo se trata como
+        # ACOMPAÑANTE si el mensaje nombra a otra persona. El LLM decide la
+        # actividad; que nombre a una persona decide que es un añadido, no un
         # cambio de opinión ("mejor snorkel" nunca añade; "un amigo…" sí).
-        if activity and _mentions_person(message):
-            qty = signals.get("companion_qty") or 1
+        # La confianza en "nombra a otra persona" viene del propio LLM
+        # (`mentions_other_person`, hallazgo en vivo 2026-07-22: `_mentions_person`
+        # es una lista fija de palabras — amigo/novia/hermano/primo... — que NO
+        # reconoce jerga regional como "parce"/"cuate"/"pana"/"carnal"; con solo
+        # el regex, un acompañante bien detectado por el LLM se descartaba en
+        # silencio porque la palabra no estaba en la lista). El regex se
+        # mantiene como respaldo barato para cuando el LLM no marque el campo.
+        if activity and (signals.get("mentions_other_person") or _mentions_person(message)):
             # El turno hablaba de un ACOMPAÑANTE, no del hablante principal:
             # restaurar lo que este mismo turno pudo haber pisado por error en
             # el perfil del buceador principal antes de aplicar el añadido.
@@ -1072,6 +1186,32 @@ async def maybe_handle_turn(
                 state, prev_main_activity, prev_main_service_id,
                 prev_main_is_certified, prev_main_last_dive, prev_main_refresher,
             )
+            qty = signals.get("companion_qty")
+            if qty is not None and not _EXPLICIT_NUMBER_RE.search(message):
+                # Verificado en vivo (2026-07-22): el LLM devolvió qty=1 para
+                # "también vienen mis amigos a hacer snorkel" pese a que el
+                # prompt le pide abstenerse ante un plural vago — no basta con
+                # pedírselo, hay que comprobarlo. Si el mensaje no contiene
+                # NINGÚN número real, se descarta el qty del LLM sea cual sea.
+                qty = None
+            # "¿es exactamente 1?" también se confía primero al LLM
+            # (`companion_is_singular`, mismo criterio que `mentions_other_person`):
+            # el regex `_SINGULAR_COMPANION_RE` es una lista fija de palabras que
+            # no reconoce jerga regional ("mi parce"/"mi cuate" preguntaban
+            # cantidad en vez de asumir 1 sin necesidad). El LLM entiende
+            # cualquier variante; el regex se queda como respaldo barato.
+            if qty is None and not (
+                signals.get("companion_is_singular") or _SINGULAR_COMPANION_RE.search(message)
+            ):
+                # Plural vago ("mis amigos", "unos amigos", "friends" sin
+                # número) — en vez de asumir 1, se pregunta cuántos son
+                # (hallazgo en vivo: "mis amigos" generaba
+                # group_allocation={snorkel:3} sin preguntar).
+                state.pending_companion_activity = activity
+                response = greeting + ask_slot(state, SLOT_COMPANION_QTY)
+                state.history.append({"role": "assistant", "content": response})
+                return response
+            qty = qty or 1  # singular inequívoco ("un amigo"/"a friend") -> 1
             _merge_companion_activity(state, activity, qty)
             if prev_cart_types and _ACTIVITY_TO_CART_TYPE[activity] not in prev_cart_types:
                 state.mixed_cart.append(_cart_item(state, activity, qty))

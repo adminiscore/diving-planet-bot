@@ -93,19 +93,30 @@ _TOOL = {
                     "description": (
                         "Total number of people in the customer's party — count "
                         "EVERYONE mentioned, including children, non-divers, and "
-                        "people referred to by relationship. Infer the count when "
-                        "the message enumerates individuals instead of giving a "
-                        "number: 'my wife and I' = 2, 'me plus 3 friends' = 4, "
+                        "people referred to by relationship. Infer the count ONLY "
+                        "when the message enumerates a specific, countable number of "
+                        "individuals: 'my wife and I' = 2, 'me plus 3 friends' = 4, "
                         "'my daughter, my son and us two' = 4, 'four adults and a "
-                        "kid' = 5."
+                        "kid' = 5. Do NOT set this field when companions are "
+                        "mentioned as a vague, uncounted plural with no number given "
+                        "at all — e.g. 'my friends'/'mis amigos', 'some friends'/"
+                        "'unos amigos', 'my family' with no headcount. A vague plural "
+                        "implies more than one but NOT a specific total; guessing a "
+                        "number here is exactly the kind of invented value you must "
+                        "avoid — omit the field and let the bot ask how many."
                     ),
                 },
                 "group_allocation": {
                     "type": "object",
                     "description": (
-                        "Split of the group by activity when the message "
-                        "explicitly describes a mixed group, e.g. "
-                        '{"certified_diving": 2, "snorkel": 1}.'
+                        "Split of the group by activity, ONLY when each activity's "
+                        "headcount is explicitly countable, e.g. "
+                        '{"certified_diving": 2, "snorkel": 1}. If the message '
+                        "describes a mixed group but one side has no countable "
+                        "number — e.g. 'yo buceo y mis amigos snorkel' (an "
+                        "uncounted plural of companions) — omit this field "
+                        "entirely rather than guessing a headcount for that side; "
+                        "the bot will ask how many."
                     ),
                     "additionalProperties": {"type": "integer"},
                 },
@@ -375,12 +386,59 @@ _SIGNALS_TOOL = {
                         "If in doubt about whether a NEW person exists, omit it."
                     ),
                 },
+                "mentions_other_person": {
+                    "type": "boolean",
+                    "description": (
+                        "True if the message refers to someone OTHER than the "
+                        "speaker joining the booking, in ANY phrasing or "
+                        "regional slang for 'friend'/'buddy'/'companion' — "
+                        "standard Spanish (amigo, novia, hermano, primo, "
+                        "acompañante), regional Latin American slang (parce, "
+                        "parcero, pana, cuate, carnal, compa, pata, causa), "
+                        "English (friend, partner, someone), or any other way "
+                        "of naming another person. False for a plain change of "
+                        "mind by the SPEAKER with no other person involved "
+                        "('mejor snorkel', 'en realidad quiero snorkel'). This "
+                        "is a deliberately broad, language/region-agnostic "
+                        "signal — the deterministic caller-side keyword list "
+                        "cannot keep up with every regional term for 'friend', "
+                        "so trust your own understanding here rather than "
+                        "matching against a fixed vocabulary."
+                    ),
+                },
+                "companion_is_singular": {
+                    "type": "boolean",
+                    "description": (
+                        "True if the message describes EXACTLY ONE additional "
+                        "person, regardless of the exact word used for "
+                        "'friend'/'buddy' — standard Spanish (un amigo, mi "
+                        "novia, mi acompañante), regional slang (mi parce, mi "
+                        "cuate, mi pana, mi carnal, mi compa), or English (a "
+                        "friend, someone). False (or omit) when the message "
+                        "describes MORE than one person, an uncounted/vague "
+                        "plural ('mis amigos', 'unos amigos', 'friends' with "
+                        "no number), or when you're not sure it's exactly one. "
+                        "The calling code has no fixed word list covering "
+                        "every regional term for a single companion, so rely "
+                        "on your own judgment here rather than matching "
+                        "vocabulary — but if genuinely unsure, prefer False so "
+                        "the calling code asks the customer instead of "
+                        "guessing 1."
+                    ),
+                },
                 "companion_qty": {
                     "type": "integer",
                     "description": (
-                        "How many additional people this describes. Default "
-                        "1 for a bare 'a friend'/'a companion' if the message "
-                        "doesn't give a number."
+                        "How many additional people this describes — set ONLY "
+                        "when the message gives an explicit, countable number "
+                        "('2 amigos', 'tres primos', '2 y uno hace snorkel' -> "
+                        "1 for the snorkel side). Omit this field entirely for "
+                        "a single named companion ('a friend', 'mi novia' — the "
+                        "calling code assumes 1 on its own) AND for a vague, "
+                        "uncounted plural ('mis amigos', 'unos amigos', "
+                        "'friends' with no number) — do NOT guess a total for "
+                        "an uncounted plural, the calling code asks the "
+                        "customer how many instead."
                     ),
                 },
                 "refresher_interested": {
@@ -407,10 +465,25 @@ def _signals_system_prompt(lang: str) -> str:
             "deterministas normales — tu única tarea es revisar si describe "
             "(1) un pedido de recordar algo que el cliente YA dijo antes en "
             "esta conversación, o (2) una persona ADICIONAL que se une a la "
-            "reserva (no el propio hablante). Llama a `detect_signals` "
+            "reserva (no el propio hablante). Cuando detectes (2), decide "
+            "SIEMPRE estos CUATRO campos juntos, nunca solo alguno: "
+            "`companion_activity` (la actividad del acompañante), "
+            "`mentions_other_person=true`, `companion_is_singular` "
+            "(true si es exactamente 1 persona, false si son más o no estás "
+            "seguro), y `companion_qty` (el número EXACTO si el mensaje lo da "
+            "explícito, p. ej. 'se apuntan 3 amigos' -> companion_qty=3 — "
+            "ponlo SIEMPRE que el mensaje dé un número, no lo omitas solo "
+            "porque ya pusiste companion_is_singular=false). Los CUATRO son "
+            "la señal que el código usa para confiar en tu detección "
+            "— especialmente `companion_activity`, sin el cual el código "
+            "descarta todo el resto — así que no los omitas aunque el "
+            "vocabulario sea informal o regional (parce, cuate, pana, "
+            "carnal...); el código que te llama NO tiene una lista de "
+            "palabras que cubra todas las variantes regionales, así que "
+            "confía en tu propio criterio. Llama a `detect_signals` "
             "incluyendo SOLO los campos para los que el mensaje da señal "
-            "real y explícita. Omite cualquier campo ambiguo — nunca "
-            "lo adivines."
+            "real y explícita (recall_field y refresher_interested solo si "
+            "aplican). Omite cualquier campo ambiguo — nunca lo adivines."
         )
     return (
         "You are a signal-detection layer for a scuba diving bot. The "
@@ -418,9 +491,25 @@ def _signals_system_prompt(lang: str) -> str:
         "deterministic paths — your only job is to check whether it (1) "
         "asks the bot to recall something the customer ALREADY said earlier "
         "in this conversation, or (2) introduces an ADDITIONAL person "
-        "joining the booking (not the speaker themself). Call "
+        "joining the booking (not the speaker themself). When you detect "
+        "(2), ALWAYS decide these FOUR fields together, never just some of "
+        "them: `companion_activity` (the companion's activity), "
+        "`mentions_other_person=true`, `companion_is_singular` (true "
+        "if exactly one person, false if more or unsure), and "
+        "`companion_qty` (the EXACT number if the message gives one "
+        "explicitly, e.g. '3 friends are joining' -> companion_qty=3 — "
+        "always set it when the message gives a number, don't skip it just "
+        "because you already set companion_is_singular=false). All FOUR are "
+        "the fields the calling code trusts — especially "
+        "`companion_activity`, without which the code discards everything "
+        "else — "
+        "to confirm your detection, so don't omit them even for informal or "
+        "regional slang; the calling code has no fixed word list covering "
+        "every regional term, so rely on your own judgment. Call "
         "`detect_signals` including ONLY the fields the message gives real, "
-        "explicit signal for. Omit anything ambiguous — never guess."
+        "explicit signal for (recall_field, refresher_interested and "
+        "companion_qty only when they apply). Omit anything ambiguous — "
+        "never guess."
     )
 
 
