@@ -819,3 +819,59 @@ async def test_recall_refresher_field_not_yet_known_falls_back():
          patch("src.agents.supervisor.rag_answer", new=AsyncMock(return_value="Respuesta RAG")):
         resp = await route_message(state, "el refresher lo quería o no?")
     assert "Respuesta RAG" in resp
+
+
+# ── Nombre del cliente desde el mensaje + acuse cálido (2026-07-22) ───────────
+
+@pytest.mark.parametrize("msg,expected", [
+    ("hola soy rocio, quiero hacer buceo, tengo el AOWD", "Rocio"),
+    ("me llamo Ana y quiero snorkel", "Ana"),
+    ("mi nombre es Carlos", "Carlos"),
+    ("my name is John", "John"),
+    ("soy certificado", None),          # atributo, no nombre
+    ("soy colombiano", None),
+    ("soy buzo open water", None),
+    ("quiero bucear", None),
+])
+def test_capture_client_name(msg, expected):
+    st = ConversationState(conversation_id="name")
+    core._capture_client_name(st, msg)
+    assert st.client_name == expected
+
+
+def test_capture_client_name_first_wins():
+    st = ConversationState(conversation_id="name2")
+    core._capture_client_name(st, "soy Rocio")
+    core._capture_client_name(st, "en realidad soy Ana")
+    assert st.client_name == "Rocio"
+
+
+def _fake_openai(text):
+    from unittest.mock import MagicMock
+    client = MagicMock()
+    msg = MagicMock(); msg.content = text
+    choice = MagicMock(); choice.message = msg
+    resp = MagicMock(); resp.choices = [choice]
+    client.chat.completions.create = AsyncMock(return_value=resp)
+    return client
+
+
+@pytest.mark.asyncio
+async def test_ack_backstop_drops_price_link_or_question():
+    from src.agents.llm_extractor import compose_acknowledgement
+    # El redactor NUNCA debe colar precio, link ni pregunta (datos duros van aparte).
+    assert await compose_acknowledgement("añade snorkel", client=_fake_openai("¡Genial! Son $140.")) == ""
+    assert await compose_acknowledgement("x", client=_fake_openai("Mira https://book.divingplanet.org")) == ""
+    assert await compose_acknowledgement("x", client=_fake_openai("¿Cuántos sois?")) == ""
+
+
+@pytest.mark.asyncio
+async def test_ack_passes_a_warm_sentence():
+    from src.agents.llm_extractor import compose_acknowledgement
+    assert await compose_acknowledgement("desde cartagena", client=_fake_openai("¡Qué alegría, Rocío!")) == "¡Qué alegría, Rocío!"
+
+
+@pytest.mark.asyncio
+async def test_ack_empty_message_no_call():
+    from src.agents.llm_extractor import compose_acknowledgement
+    assert await compose_acknowledgement("") == ""

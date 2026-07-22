@@ -192,6 +192,11 @@ class ConversationState:
     mixed_pending_location_change: bool = False
     # Intent detection fields - información detectada automáticamente de texto libre
     detected_language: str | None = None
+    # Nombre del cliente para el trato cercano (persona Coral). Hoy solo se
+    # captura del propio mensaje ("soy Rocío" / "me llamo..."); el de WhatsApp
+    # (sender['name']) queda diferido hasta que el canal WhatsApp esté disponible
+    # (el widget web no lo da de forma fiable). Ver docs/conversational-refactor-plan.md.
+    client_name: str | None = None
     detected_activity: str | None = None
     detected_service_id: str | None = None
     detected_is_certified: bool | None = None

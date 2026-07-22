@@ -464,3 +464,67 @@ async def detect_special_signals(
     if result:
         logger.info(f"[CORE][SIGNALS] detected={result} msg={message[:80]!r}")
     return result
+
+
+# ─────────────────────── Redactor cálido "acuse" (Parte 2 del plan) ──────────
+# Genera UNA frase que reconoce lo que el cliente acaba de decir, con la persona
+# Coral y su nombre si lo hay. NO menciona precios/links/cifras ni hace la
+# pregunta: los datos DUROS y la pregunta van en la parte determinista que el
+# núcleo concatena después. Red de seguridad idéntica al resto: nunca lanza,
+# devuelve "" ante cualquier fallo (el bot sigue respondiendo con lo determinista).
+
+def _ack_system_prompt(lang: str, client_name: str | None) -> str:
+    name_es = f" El cliente se llama {client_name}; salúdalo/nómbralo con naturalidad de vez en cuando (no en cada mensaje)." if client_name else ""
+    name_en = f" The customer's name is {client_name}; address them by name naturally now and then (not every message)." if client_name else ""
+    if lang == "es":
+        return (
+            "Eres *Coral*, de Diving Planet (buceo en las Islas del Rosario, Cartagena). "
+            "Tono cálido, cercano y colombiano, con medida." + name_es + " "
+            "Tu ÚNICA tarea: escribir UNA sola frase corta que RECONOZCA con calidez lo que "
+            "el cliente acaba de decir (que se sienta escuchado y que la conversación fluye). "
+            "PROHIBIDO: mencionar precios, cifras de dinero, enlaces/URLs, o hacer una pregunta "
+            "(otra parte del sistema añade el dato y la pregunta). Si no hay nada natural que "
+            "reconocer, responde con una cadena vacía."
+        )
+    return (
+        "You are *Coral* from Diving Planet (diving in the Rosario Islands, Cartagena). "
+        "Warm, friendly, measured tone." + name_en + " "
+        "Your ONLY task: write ONE short sentence that warmly ACKNOWLEDGES what the customer "
+        "just said (so they feel heard and the chat flows). FORBIDDEN: mentioning prices, money "
+        "figures, links/URLs, or asking a question (another part of the system adds the data and "
+        "the question). If there's nothing natural to acknowledge, reply with an empty string."
+    )
+
+
+async def compose_acknowledgement(
+    message: str,
+    *,
+    state_summary: str = "",
+    client_name: str | None = None,
+    lang: str = "es",
+    client: AsyncOpenAI | None = None,
+) -> str:
+    """Devuelve una frase de acuse cálida (o "" si no procede/falla)."""
+    if not message or not message.strip():
+        return ""
+    user_content = message if not state_summary else f"{message}\n\n[contexto de la reserva: {state_summary}]"
+    try:
+        client = client or AsyncOpenAI(api_key=settings.openai_api_key)
+        response = await client.chat.completions.create(
+            model=settings.extraction_model,
+            messages=[
+                {"role": "system", "content": _ack_system_prompt(lang, client_name)},
+                {"role": "user", "content": user_content},
+            ],
+            temperature=0.4,
+            max_tokens=60,
+        )
+        text = (response.choices[0].message.content or "").strip().strip('"')
+    except Exception as exc:  # noqa: BLE001
+        logger.warning(f"[LLM_EXTRACTOR] ack error: {exc}")
+        return ""
+    # Backstop determinista: si el modelo se saltó las reglas (precio/link/pregunta),
+    # descartar el acuse — nunca dejar que invente datos duros.
+    if not text or "http" in text.lower() or "$" in text or "€" in text or "?" in text or "¿" in text:
+        return ""
+    return text

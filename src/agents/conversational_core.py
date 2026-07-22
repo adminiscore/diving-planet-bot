@@ -29,7 +29,12 @@ import logging
 import re
 
 from src.agents.intent_detector import IntentDetector
-from src.agents.llm_extractor import detect_special_signals, fill_gaps, missing_fields
+from src.agents.llm_extractor import (
+    compose_acknowledgement,
+    detect_special_signals,
+    fill_gaps,
+    missing_fields,
+)
 from src.flows.decision_tree import ConversationState, DecisionTree, Step
 from src.utils.fuzzy import is_affirmative, is_negative
 
@@ -144,20 +149,58 @@ def next_missing_slot(state: ConversationState) -> str | None:
 
 # ─── Persona: saludo del primer turno (Coral, cálida, sin "asistente"/"bot") ───
 
+# Captura del nombre del cliente DEL PROPIO MENSAJE ("hola soy Rocío", "me llamo
+# Ana"). Camino rápido determinista; el LLM de comprensión (Parte 1 del plan)
+# puede rellenarlo también. Conservador a propósito: tras "soy" siguen muchos
+# atributos que NO son nombres ("soy certificado", "soy colombiano", "soy buzo"),
+# así que se filtran con una stoplist. El nombre de WhatsApp (sender['name']) queda
+# diferido hasta que el canal exista. Se captura en minúscula (móvil) y se
+# Title-Casea. Primera captura gana (el nombre no cambia a mitad de conversación).
+_NAME_TRIGGER_RE = re.compile(
+    r"\b(?:me\s+llamo|mi\s+nombre\s+es|my\s+name\s+is|soy)\s+([a-záéíóúñ]{2,20})\b",
+    re.IGNORECASE,
+)
+_NAME_STOPWORDS = frozenset({
+    "certificado", "certificada", "certificados", "certificadas", "buzo", "buza",
+    "buzos", "buceador", "buceadora", "colombiano", "colombiana", "colombianos",
+    "extranjero", "extranjera", "principiante", "instructor", "instructora",
+    "turista", "estudiante", "nuevo", "nueva", "mayor", "menor", "de", "un", "una",
+    "open", "advanced", "rescue", "divemaster", "nitrox", "padi", "el", "la",
+    "certified", "diver", "tourist", "beginner", "colombian", "resident", "solo",
+    "sola", "el", "la", "yo",
+})
+
+
+def _capture_client_name(state: ConversationState, message: str) -> None:
+    if state.client_name:
+        return
+    m = _NAME_TRIGGER_RE.search(message)
+    if not m:
+        return
+    word = m.group(1)
+    if word.lower() in _NAME_STOPWORDS:
+        return
+    state.client_name = word[:1].upper() + word[1:].lower()
+    logger.info(f"[CORE] captured client name -> {state.client_name}")
+
+
 def _greeting(state: ConversationState) -> str:
     """Presentación de Coral en el PRIMER turno de la conversación — cálida,
     con el nombre de la empresa y tono cercano colombiano. Nunca se describe
     como asistente/bot/IA (regla de persona, misma que rag_agent). Se antepone
     a la primera respuesta del núcleo (pregunta de slot, RAG o cierre) y no se
     repite en turnos posteriores."""
+    name = state.client_name
     if state.language == "es":
+        saludo = f"¡Hola, {name}! 🪸" if name else "¡Hola! 🪸"
         return (
-            "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todos los días en "
+            f"{saludo} Soy *Coral*, de *Diving Planet* — buceamos todos los días en "
             "las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. "
             "¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n\n"
         )
+    saludo = f"Hi, {name}! 🪸" if name else "Hi! 🪸"
     return (
-        "Hi! 🪸 I'm *Coral* from *Diving Planet* — we dive every day in the Rosario "
+        f"{saludo} I'm *Coral* from *Diving Planet* — we dive every day in the Rosario "
         "Islands, departing from Cartagena or right from the islands. So happy to have "
         "you here! I'd love to help you put your plan together. 🌊\n\n"
     )
@@ -281,18 +324,12 @@ def ask_slot(state: ConversationState, slot: str, *, reasking: bool = False) -> 
                 "¿sois colombianos o residentes en Colombia?" if plural
                 else "¿eres colombiano o residente en Colombia?"
             )
-            return (
-                f"Última cosa para darte el precio y el link correctos: {pregunta} "
-                "(El precio es el mismo — solo cambia la moneda y la forma de pago.)"
-            )
+            return f"Última cosa para darte el precio y el link correctos: {pregunta}"
         pregunta_en = (
             "are you Colombian or residents of Colombia?" if plural
             else "are you Colombian or a resident of Colombia?"
         )
-        return (
-            f"One last thing so I can give you the right price and link: {pregunta_en} "
-            "(The price is the same — only the currency and payment method change.)"
-        )
+        return f"One last thing so I can give you the right price and link: {pregunta_en}"
     raise ValueError(f"unknown slot {slot!r}")
 
 
@@ -542,6 +579,19 @@ async def _understand(state: ConversationState, message: str):
         _restore_main_diver_fields(state, prev_activity, prev_service_id, prev_is_certified, prev_last_dive, prev_refresher)
         added_qty = (intent.group_allocation or {}).get(turn_act) or 1
         _merge_companion_activity(state, turn_act, added_qty)
+
+    # Normalizar group_size con el reparto: si el reparto suma MÁS personas que el
+    # group_size conocido, el total manda. Bug en vivo (2026-07-22): "1 pero viene
+    # un amigo que quiere bucear, no es certificado" dejaba alloc={cert:1,
+    # minicurso:1} pero group_size=1 (el "1" lo fijó `_apply_short_answer` y la
+    # extracción del acompañante llegó por otra vía que no lo re-sumaba) → el
+    # precio/qty saldría para 1 persona en vez de 2.
+    alloc = state.detected_group_allocation or {}
+    if alloc:
+        total = sum(v for v in alloc.values() if isinstance(v, int) and v > 0)
+        if total > (state.detected_group_size or 0):
+            state.detected_group_size = total
+            logger.info(f"[CORE] group_size synced from allocation -> {total}")
     return intent
 
 
@@ -792,6 +842,24 @@ def _colombian_summary_lines(state: ConversationState) -> str:
 
 # ─── El bucle por turno ───
 
+def _booking_context_summary(state: ConversationState) -> str:
+    """Resumen corto del estado de la reserva para dar contexto al redactor del
+    acuse (para que reconozca cosas concretas: "anoto a tu amigo para el
+    minicurso"). Nunca incluye precios ni links — solo estructura."""
+    parts: list[str] = []
+    if state.detected_activity:
+        parts.append(f"actividad principal: {state.detected_activity}")
+    alloc = state.detected_group_allocation or {}
+    if alloc:
+        parts.append("reparto: " + ", ".join(f"{k} x{v}" for k, v in alloc.items()))
+    elif state.detected_group_size:
+        parts.append(f"personas: {state.detected_group_size}")
+    loc = state.location or state.detected_location
+    if loc:
+        parts.append(f"ubicación: {loc}")
+    return "; ".join(parts)
+
+
 async def maybe_handle_turn(
     state: ConversationState, message: str, *, routing_signals: dict | None = None,
 ) -> str | None:
@@ -826,6 +894,7 @@ async def maybe_handle_turn(
         )
         state.step = Step.FREE_TEXT
         state.quick_replies = []
+    _capture_client_name(state, message)
     greeting = _greeting(state) if first_turn else ""
 
     state.history.append({"role": "user", "content": message})
@@ -964,7 +1033,23 @@ async def maybe_handle_turn(
     else:
         response = ask_slot(state, nxt, reasking=(nxt == prev_pending))
         state.step = Step.FREE_TEXT
-    response = greeting + response
+
+    # Envoltorio cálido (Parte 2 del plan): en los turnos posteriores al saludo,
+    # reconocer con calidez lo que el cliente acaba de decir ANTES de encadenar la
+    # pregunta/dato (el "responde-y-encadena" que se había perdido). Los datos DUROS
+    # (precio/links/plan/seguridad/resumen) ya están en `response` y NO pasan por el
+    # LLM; el acuse solo pone el envoltorio. Si falla o se salta las reglas -> "".
+    ack = ""
+    if not first_turn:
+        ack = await compose_acknowledgement(
+            message,
+            state_summary=_booking_context_summary(state),
+            client_name=state.client_name,
+            lang=state.language,
+        )
+        if ack:
+            ack = ack.rstrip() + "\n\n"
+    response = greeting + ack + response
     state.history.append({"role": "assistant", "content": response})
     return response
 
