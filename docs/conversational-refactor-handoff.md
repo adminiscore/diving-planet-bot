@@ -15,9 +15,13 @@
 | **3 — Cursos PADI + checkout completo** | ✅ **COMPLETA (2026-07-22)** — las 2 causas raíz cerradas, los 3 ex-`xfail` en verde, verificado en vivo | `tests/test_conversational_core.py` (30 tests) |
 | **4 — Retirada del árbol MIXED_*** | ⬜ Sin empezar (solo tras medir Fase 1-3 en PRE) | — |
 
-Suite: **1816 passed, 0 xfail** (los 3 xfail de Fase 3 pasaron a tests normales al
-cerrarse las 2 causas raíz — ver §"Fase 3 — CERRADA" abajo).
-El árbol legacy sigue 100% intacto como fallback; el núcleo solo se activa con el flag.
+Suite: **1826 passed, 0 xfail**. El árbol legacy sigue 100% intacto como fallback; el
+núcleo solo se activa con el flag.
+
+> **⚠️ Gonzalo: empieza por la sección final "Sesión 2026-07-22 (tarde)"** — el refactor
+> está validado end-to-end en PRE por el owner, pero salieron **2 arreglos pendientes
+> (Fix A y Fix B)** y un hallazgo que **bloquea la Fase 6 de robustez**. Están
+> especificados ahí con la localización exacta.
 
 ## Cómo está montado (mapa rápido)
 
@@ -38,8 +42,10 @@ El árbol legacy sigue 100% intacto como fallback; el núcleo solo se activa con
   4. RESPONDER: `ask_slot(state, slot, reasking=...)` (determinista ES/EN, quick-replies
      mínimos) o, si no falta nada, `_finalize(state)` (resumen + links del catálogo,
      gating colombiano) + `supervisor._maybe_build_pending_note`.
-- **Slots** y su orden: `SLOT_ACTIVITY → SLOT_CERTIFICATION → SLOT_LOCATION → SLOT_HOTEL
-  → SLOT_SAFETY → SLOT_REFRESHER → SLOT_QTY → SLOT_AGES → SLOT_NATIONALITY → (resumen)`.
+- **Slots** y su orden **actual** (ojo: la cantidad se movió delante de la seguridad el
+  2026-07-22 por decisión del owner — ver sección final): `SLOT_ACTIVITY →
+  SLOT_CERTIFICATION → SLOT_LOCATION → SLOT_HOTEL → SLOT_QTY → SLOT_SAFETY →
+  SLOT_REFRESHER → SLOT_AGES → SLOT_NATIONALITY → (resumen)`.
 - **Momentos deterministas** (nunca los toca el LLM): precios, links, resumen, pregunta
   de seguridad, confirmación, gating colombiano — reusan la maquinaria del árbol
   (`_cart_booking_blocks`, `_format_activity_booking_messages`, `_goto_mixed_final_summary`,
@@ -159,3 +165,123 @@ Es reversible con el flag hasta entonces.
 TDD estricto (rojo→verde), suite completa + `ruff check src` antes de cada deploy, nada se
 retira hasta que el núcleo lo cubre y se mide en PRE. Los `xfail` de Fase 3 deben pasar a
 `@pytest.mark.asyncio` normal (quitar el `xfail`) cuando se cierren las 2 causas.
+
+---
+
+# Sesión 2026-07-22 (tarde) — validación en PRE, 3 ajustes, y 2 arreglos PENDIENTES
+
+> **Gonzalo: esta es la parte viva del handoff.** Todo lo de arriba está hecho y
+> desplegado. Aquí está lo que pasó después del merge de tu rama, y lo que queda.
+
+## 1. Qué se hizo (todo commiteado y desplegado en PRE)
+
+- **Merge de tu rama** (`4c69889`) a `feature/pre_gadea`, fast-forward limpio. Suite
+  verde tras el merge (1820). Tus 3 commits entraron tal cual: el fix de historial
+  (regresión que había introducido el refactor de fallbacks de Gadea), el cierre de
+  la Fase 3, y la persona de Coral.
+- **Incidente de despliegue**: el primer deploy falló con `429 insufficient_quota`
+  (cuenta de OpenAI sin saldo) en el paso de reindexar la KB. **El código sí quedó
+  desplegado** (el `docker compose up --build` corre antes del reindex); solo faltó el
+  reindex, que era irrelevante porque ningún commit tocaba la KB. El owner recargó y
+  se relanzó el job → verde. **Lección**: si vuelve a pasar, comprobar primero si el
+  contenedor ya tiene el código nuevo antes de asumir que no se desplegó.
+- **El owner validó los 5 casos en PRE por el widget** — todos correctos: curso PADI
+  solo (deduce 1), curso en isla (variante `_already_on_island`, $596 vs $693),
+  Divemaster (contact-only, sin link), familia con niños (7→snorkel, 9→Bubble Makers,
+  4 personas sin perder a nadie) y mensaje vago (saludo de Coral + menú).
+- **3 ajustes decididos por el owner** a partir de esa validación (`fbc13ed`,
+  v0.20.46, ya en PRE):
+  1. **"voy solo" deduce 1 persona en CUALQUIER actividad**, no solo `padi_*` — se
+     quitó el gate de tu `_COURSE_SOLO_RE`. Sigue exigiendo señal explícita +
+     `_NOT_ALONE_RE`: "tengo el open water" a secas NO basta (un jefe de grupo escribe
+     igual) → ahí se pregunta.
+  2. **La cantidad se pregunta ANTES que la seguridad** en `next_missing_slot`. Antes
+     la pregunta de los 2 años adivinaba singular/plural sin saber el tamaño del grupo.
+     **Ojo**: esto se desvía del orden escrito en `conversational-refactor-plan.md` —
+     decisión explícita del owner, anotada también en el propio plan.
+  3. **La nacionalidad se adapta a singular/plural** (salía siempre "¿sois
+     colombianos?" a quien viajaba solo).
+
+## 2. 🔴 HALLAZGO: la Fase 6 de robustez está BLOQUEADA por el núcleo
+
+Se corrió el harvest sobre los logs reales de PRE (11 conversaciones del owner):
+**0 candidatos**. No es falta de tráfico — hay 21 turnos con extracción real.
+
+**Causa raíz**: `scripts/harvest_cutover_logs.py` parsea
+`[EXTRACT][CUTOVER] applied={campo: valor} msg='...'`, que emite
+`supervisor._maybe_apply_llm_extraction_cutover`. **Con el núcleo encendido ese código
+nunca se ejecuta**: el núcleo intercepta antes y hace su propia extracción en
+`conversational_core._understand`, que loguea otro formato:
+
+```
+[CORE] gap-fill applied=['activity', 'group_size']        <- solo nombres, sin valores ni mensaje
+[LLM_EXTRACTOR] filled gaps=[...] msg='...'               <- nombres + mensaje, pero sin valores
+```
+
+Sin los **valores** no se puede construir un caso de eval-set, así que la Fase 6 (y con
+ella la Fase 5 de limpieza, que depende de ella) sigue parada.
+
+### Fix A — que el núcleo loguee en el formato que el harvest ya entiende
+
+**Dónde**: `src/agents/conversational_core.py`, en `_understand`, la línea
+`logger.info(f"[CORE] gap-fill applied={list(patch.keys())}")`.
+
+**Qué**: emitir además (o en su lugar) el mismo tag y formato que el cutover:
+`[EXTRACT][CUTOVER] applied={patch} msg={supervisor._log_safe_message(message)!r}`.
+Es semánticamente correcto — el núcleo *está* aplicando valores del LLM al estado,
+igual que el cutover. Reutilizando el tag, **el harvest funciona sin tocarlo** y el
+contador por dominio (`--summary`) también.
+
+**Cuidado**: `_log_safe_message` (en `supervisor.py`) corta a 500 chars con marca
+explícita; usarlo, no `message[:60]` — ese truncado ya causó un bug documentado.
+
+**Verificación**: tras desplegarlo, generar tráfico por el widget y correr
+`ssh ... "docker logs dp-pre-bot 2>&1" | python -m scripts.harvest_cutover_logs --summary`.
+Debe devolver registros > 0. Luego sin `--summary` para sacar candidatos, y **validar
+cada `expected` contra el pipeline real antes de fijarlo** en el eval-set (regla del
+plan: medir, no asumir).
+
+### Fix B — no pedirle al LLM campos que ya sabemos (ahorra tokens y reduce misfills)
+
+**Dónde**: `src/agents/conversational_core.py`, en `_understand`:
+`gaps = missing_fields(intent)`.
+
+**Problema**: `missing_fields()` se calcula contra el **intent del mensaje suelto** (lo
+que el regex sacó de ESE mensaje), que casi siempre está casi vacío. Resultado: en cada
+turno se le piden al LLM ~13 campos, incluidos los que **el estado ya tiene**. Ejemplo
+real de los logs de PRE: el mensaje `"Cartagena"` disparó una llamada que rellenó
+`activity`, `is_certified` y `group_size` — los tres ya conocidos.
+
+**Impacto**: tokens desperdiciados en cada turno (relevante: la cuenta se quedó sin
+cuota este mismo día) y superficie de misfill innecesaria.
+
+**Qué hacer**: calcular los huecos contra el **estado** (lo que de verdad falta por
+saber), no solo contra el intent del mensaje. Si no falta nada relevante, no llamar al
+LLM. Cuidado de no romper el carryover ni la distinción añadir-vs-cambiar actividad.
+
+**Nota**: se investigó y **descartó** una sospecha relacionada — parecía que el
+extractor inventaba la respuesta de seguridad (`last_dive_over_2_years`) desde un
+mensaje sobre acompañantes. Probado en controlado con la seguridad SIN responder en el
+historial: **se abstiene correctamente**. Lo que se veía era re-derivación legítima
+desde el historial, y los guards de `_apply_detected_intent` impiden sobrescribir. **No
+es un bug** — pero es otro síntoma de que se está preguntando de más (Fix B).
+
+## 3. Próximos pasos, en orden
+
+1. **Fix A** (desbloquea la Fase 6). Pequeño y de bajo riesgo.
+2. **Fix B** (ahorro de tokens + menos misfills). Acotado, con cuidado en los tests.
+3. **Correr el harvest de verdad** → curar candidatos → eval-set con casos reales →
+   **cierra la Fase 6** y **desbloquea la Fase 5** de robustez (limpieza de regex muerto).
+4. **Fase 4 del refactor conversacional** — retirar los ~24 pasos `MIXED_*`,
+   `set_quick_replies`/`_CART_MENU_KEYS`, `BACK_STEP`/`_go_back_one_step` y
+   `classify_menu_intent`. **Precondición del plan**: medir antes en PRE con tráfico
+   real (los puntos 1-3 son justo esa medición). Es el trabajo más grande y delicado;
+   el flag lo mantiene reversible hasta que se retire el árbol.
+
+## 4. Estado operativo
+
+- `feature/pre_gadea` = `fbc13ed`, subido, **CI verde y desplegado en PRE**.
+- `CONVERSATIONAL_CORE: "true"` en PRE (`docker-compose.vps.yml`). Revertir = quitar la
+  línea + redeploy, sin rollback de código.
+- Suite **1826 passed, 15 skipped, 0 xfail**. `ruff check src` y `compileall` limpios.
+- Sin trabajo a medias en el árbol: todo lo de esta sesión está commiteado.

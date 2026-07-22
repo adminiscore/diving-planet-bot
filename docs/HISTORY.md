@@ -1,6 +1,13 @@
 History
 =======
 
+0.20.47 - (2026-07-22)
+----------------------
+* **Handoff actualizado para que el equipo continúe (`docs/conversational-refactor-handoff.md`, sección "Sesión 2026-07-22 (tarde)")**: qué se hizo tras el merge de Gonzalo, el incidente de despliegue por cuota de OpenAI, la validación de los 5 casos en PRE por el owner, y los 2 arreglos pendientes con su localización exacta.
+* **🔴 Hallazgo: la Fase 6 de robustez está bloqueada por el núcleo conversacional.** El harvest corrido sobre los logs reales de PRE devuelve **0 candidatos** pese a haber 21 turnos con extracción: `scripts/harvest_cutover_logs.py` parsea `[EXTRACT][CUTOVER] applied={campo: valor}`, que emite el camino legacy del cutover — pero con el núcleo encendido ese código nunca corre, y el núcleo loguea `[CORE] gap-fill applied=['nombres']` (sin valores ni mensaje), con lo que no se puede construir un caso de eval-set. **Fix A** especificado en el handoff.
+* **Hallazgo de eficiencia (Fix B)**: el gap-filler se llama casi en cada turno pidiendo los campos que faltan en el *mensaje suelto*, incluidos los que el estado ya conoce (ej. real: el mensaje `"Cartagena"` disparó una llamada que rellenó `activity`/`is_certified`/`group_size` ya conocidos). Tokens desperdiciados por turno y superficie de misfill innecesaria.
+* **Sospecha investigada y descartada**: parecía que el extractor inventaba la respuesta del gate de seguridad (`last_dive_over_2_years`) desde un mensaje sobre acompañantes; probado en controlado con la seguridad sin responder en el historial, **se abstiene correctamente** — era re-derivación legítima desde el historial y los guards impiden sobrescribir.
+
 0.20.46 - (2026-07-22)
 ----------------------
 * **Ajustes del núcleo conversacional tras validar los 5 casos en PRE (decisiones del owner)**. Los 5 casos (curso PADI solo, curso en isla, Divemaster contact-only, familia con niños y mensaje vago) pasaron en vivo; de ahí salieron 3 ajustes:
