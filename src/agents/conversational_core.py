@@ -442,6 +442,29 @@ _ADDED_PERSON_RE = re.compile(
     re.IGNORECASE,
 )
 
+# Señal LÉXICA amplia de que el mensaje menciona OTRA PERSONA (no el hablante).
+# Es el discriminador entre AÑADIR un acompañante y un CAMBIO de opinión: el LLM
+# decide la ACTIVIDAD, pero solo se trata como añadido si el mensaje nombra a una
+# persona. Robusto ante el flip-flop del LLM con historial: "mejor snorkel" (sin
+# persona) NUNCA añade; "hay un amigo que quiere snorkel" / "2 y uno hace snorkel"
+# (con persona) sí. Más amplio que `_ADDED_PERSON_RE` (que exigía "mi amigo"/"un
+# que" y perdía "hay un amigo que…").
+_MENTIONS_PERSON_RE = re.compile(
+    r"\b(amig[oa]s?|prim[oa]s?|parej\w*|novi[oa]s?|espos[oa]s?|marido|mujer|"
+    r"herman[oa]s?|hij[oa]s?|padre|madre|pap[aá]s?|mam[aá]s?|suegr[oa]s?|cu[ñn]ad[oa]s?|"
+    r"sobrin[oa]s?|niet[oa]s?|abuel[oa]s?|familia\w*|acompa[ñn]antes?|"
+    r"vien[ea]n?|se\s+(?:suma|apunta|une)n?|otra?\s+persona|"
+    r"friend|partner|wife|husband|brother|sister|son|daughter|mom|dad|mother|father|"
+    r"someone|is\s+coming|joins?)\b"
+    r"|\b(?:y|,|adem[aá]s|tambi[ée]n|más|mas)\s+(?:un[oa]?|otr[oa])\b",
+    re.IGNORECASE,
+)
+
+
+def _mentions_person(message: str) -> bool:
+    return bool(_MENTIONS_PERSON_RE.search(message))
+
+
 _ACTIVITY_TO_CART_TYPE = {"certified_diving": "cert", "minicourse": "beginner", "snorkel": "snorkel"}
 
 
@@ -942,8 +965,9 @@ async def maybe_handle_turn(
         return answer
 
     # COMPRENDER: extracción del resto del mensaje.
+    turn_intent = None
     if not (resolved_short and len(message.strip()) <= 12):
-        await _understand(state, message)
+        turn_intent = await _understand(state, message)
 
     # Añadido POST-cierre ("viene también uno que hace snorkel" cuando el
     # resumen ya se emitió): añadir el subgrupo nuevo al carrito existente y
@@ -977,10 +1001,30 @@ async def maybe_handle_turn(
     # bug que _restore_main_diver_fields corrige— no debe contar como
     # "avance", o la red de precisión nunca llegaría a correr.)
     advanced = resolved_short or next_missing_slot(state) != prev_pending
-    if not advanced:
+
+    # Un acompañante / actividad DISTINTA a la principal que el fast-path por regex
+    # NO cazó (`_ADDED_PERSON_RE` no matchea "hay un amigo que quiere snorkel",
+    # "2 y uno hace snorkel"…) se clasifica SIEMPRE por el LLM — añadir vs. cambiar —
+    # pase lo que pase con el resto de slots. Así estos añadidos no se pierden por
+    # haber "avanzado" otro dato en el mismo mensaje (bug en vivo 2026-07-22). El
+    # prompt de señales ya distingue el acompañante del cambio de opinión ("mejor
+    # snorkel" → None), así que ampliar el disparo aquí no crea falsos añadidos.
+    turn_activity = getattr(turn_intent, "activity", None)
+    companion_ambiguous = bool(
+        turn_activity in _ACTIVITY_TO_CART_TYPE
+        and prev_main_activity in _ACTIVITY_TO_CART_TYPE
+        and turn_activity != prev_main_activity
+        and not _ADDED_PERSON_RE.search(message)
+        and _mentions_person(message)
+    )
+    if not advanced or companion_ambiguous:
         signals = await detect_special_signals(message, history=state.history, lang=state.language)
         activity = signals.get("companion_activity")
-        if activity:
+        # Guard determinista contra el flip-flop del LLM con historial: solo se
+        # trata como ACOMPAÑANTE si el mensaje nombra a otra persona. El LLM decide
+        # la actividad; la presencia de persona decide que es un añadido, no un
+        # cambio de opinión ("mejor snorkel" nunca añade; "un amigo…" sí).
+        if activity and _mentions_person(message):
             qty = signals.get("companion_qty") or 1
             # El turno hablaba de un ACOMPAÑANTE, no del hablante principal:
             # restaurar lo que este mismo turno pudo haber pisado por error en

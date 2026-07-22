@@ -356,16 +356,21 @@ _SIGNALS_TOOL = {
                     "type": "string",
                     "enum": ["certified_diving", "minicourse", "snorkel"],
                     "description": (
-                        "Set ONLY if the message introduces an ADDITIONAL "
-                        "person joining the booking (a friend/partner/family "
-                        "member coming along) — NOT the speaker restating or "
-                        "changing their own plan. Use the activity that "
-                        "ADDED person wants, applying the same business rule "
-                        "as everywhere else: 'minicourse' if they are NOT "
-                        "certified and want to dive/try diving, "
-                        "'certified_diving' if they ARE already certified "
-                        "and want to dive, 'snorkel' if they want snorkel "
-                        "only."
+                        "Set ONLY if the message introduces an ADDITIONAL, "
+                        "SEPARATE person joining the booking (a friend/partner/"
+                        "family member coming along, e.g. 'hay un amigo que "
+                        "quiere hacer snorkel', 'viene mi primo a bucear', "
+                        "'2 y uno hace snorkel', 'también mi novia'). Tolerate "
+                        "typos and informal phrasing. Apply the business rule: "
+                        "'minicourse' if that added person is NOT certified and "
+                        "wants to dive/try diving, 'certified_diving' if they "
+                        "ARE already certified, 'snorkel' if snorkel only. "
+                        "CRITICAL — do NOT set this when the SPEAKER is simply "
+                        "changing/correcting their OWN plan with no new person "
+                        "('mejor snorkel', 'en realidad quiero snorkel', "
+                        "'cambio a snorkel', 'just snorkel then', 'mejor "
+                        "multi-día'): that is a change of mind, NOT a companion. "
+                        "If in doubt about whether a NEW person exists, omit it."
                     ),
                 },
                 "companion_qty": {

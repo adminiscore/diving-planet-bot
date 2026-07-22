@@ -875,3 +875,21 @@ async def test_ack_passes_a_warm_sentence():
 async def test_ack_empty_message_no_call():
     from src.agents.llm_extractor import compose_acknowledgement
     assert await compose_acknowledgement("") == ""
+
+
+@pytest.mark.parametrize("msg,expected", [
+    # Acompañante (persona nombrada) -> True
+    ("hay un amigo que quiere hacee snorkel", True),
+    ("2 y uno hace snorkel", True),
+    ("también viene mi primo a bucear", True),
+    ("viene mi novia", True),
+    ("y otra para snorkel", True),
+    # Cambio de opinión (sin persona) -> False (nunca añade acompañante)
+    ("mejor snorkel", False),
+    ("en realidad quiero snorkel", False),
+    ("mejor multi-día", False),
+    ("solo yo", False),
+    ("quiero bucear", False),
+])
+def test_mentions_person_discriminates_companion_from_change(msg, expected):
+    assert core._mentions_person(msg) is expected
