@@ -3874,7 +3874,10 @@ async def _dispatch_conversation_agent(state: ConversationState, message: str) -
         logger.info(f"[SUPERVISOR] Conversation agent -> booking entry (tool={decision.tool})")
         result = _route_detected_intent(intent, state, message)
         if result is not None:
-            return result
+            # Persist this turn like every other path (tool/RAG) — a turn routed
+            # into the guided flow is still a real turn and must be in history for
+            # the rolling summary / context / memory to see it.
+            return _finalize_tree_response(state, message, result)
         # Couldn't route (e.g. no concrete activity) -> fall through to an answer.
 
     # A message the orchestrator classified as something other than a clear
@@ -3914,7 +3917,7 @@ async def _dispatch_conversation_agent(state: ConversationState, message: str) -
         result = _route_detected_intent(intent, state, message)
         if result is not None:
             logger.info(f"[SUPERVISOR] Fallback routing (tool={decision.tool}) -> guided flow, step={state.step.value}")
-            return result
+            return _finalize_tree_response(state, message, result)
 
     # A companion mentioned in free text ("va mi novia que solo acompaña") — when
     # nothing else would route (no diving intent for the speaker), proactively
