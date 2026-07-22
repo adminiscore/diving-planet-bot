@@ -4901,6 +4901,19 @@ async def _route_message_inner(state: ConversationState, message: str) -> str:
         state.history.append({"role": "assistant", "content": answer})
         return answer
 
+    # Núcleo conversacional de slot-filling (docs/conversational-refactor-plan.md),
+    # detrás de settings.conversational_core (default off — comportamiento
+    # idéntico al actual mientras esté apagado). Corre DESPUÉS del gating de
+    # seguridad de arriba (PII, sensibles, cancelación, DIVE TO HEAL, edad) y
+    # sustituye a todo el enrutado por menús de abajo. Devuelve None solo para
+    # las clases que deben seguir en los handlers deterministas legacy
+    # (keywords de escalado / menú / volver), que están más abajo.
+    if settings.conversational_core:
+        from src.agents import conversational_core
+        core_response = await conversational_core.maybe_handle_turn(state, message)
+        if core_response is not None:
+            return core_response
+
     # Understanding-first entry (Fase 1). For substantive free text at an entry
     # step, the conversation agent ANSWERS the customer's actual message,
     # remembers what they said, and enters a booking only when they clearly want

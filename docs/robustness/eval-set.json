@@ -809,6 +809,33 @@
       },
       "source": "adversarial-fase8-perfil (validado contra IntentDetector real, 2026-07-21)",
       "notes": "'ages ago, like 5 years' > 2 anos; hueco de last_dive en regex."
+    },
+    {
+      "id": "neg-es-no-location-signal",
+      "message": "hola soy rocio, tengo el open water y quiero hacer buceo",
+      "lang": "es",
+      "expected": {
+        "activity": "certified_diving",
+        "is_certified": true,
+        "location": null,
+        "duration": null
+      },
+      "source": "live-local-2026-07-22 (misfill real del extractor)",
+      "notes": "Caso NEGATIVO (null = debe abstenerse): el mensaje no da NINGUNA senal de ubicacion ni de duracion, pero el extractor rellenaba location='cartagena' y duration='single_day' inventados desde la sede del negocio en el prompt. Encontrado en vivo probando el guion de Rocio con el nucleo conversacional. Verificado contra el pipeline real: el regex deja ambos campos en None."
+    },
+    {
+      "id": "neg-en-no-location-signal",
+      "message": "hey, we are two certified divers and want to book some dives",
+      "lang": "en",
+      "expected": {
+        "is_certified": true,
+        "group_size": 2,
+        "location": null,
+        "duration": null,
+        "is_colombian": null
+      },
+      "source": "adversarial-negativo (2026-07-22)",
+      "notes": "Espejo EN del caso negativo: sin senal de lugar/estancia/nacionalidad, el extractor debe abstenerse en esos campos."
     }
   ]
 }

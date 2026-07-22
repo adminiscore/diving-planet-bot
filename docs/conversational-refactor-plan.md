@@ -252,6 +252,60 @@ midió en PRE. Coordinar con Gadea: su extractor LLM ES el motor de slots y su F
    respeta el gating colombiano (sin link directo → asesor).
 5. Deploy a PRE por fase (flag), medir con conversaciones reales antes de la siguiente.
 
+## Registro de progreso
+
+- **Fase 0 — Andamiaje: ✅ COMPLETA (2026-07-22)**. Entregado:
+  - `settings.conversational_core` (`src/config.py`, default off — cero cambio de
+    comportamiento con el flag apagado, verificado por la suite completa).
+  - `src/agents/conversational_core.py`: el bucle comprender→resolver→responder;
+    `next_missing_slot()` (lógica pura, orden del plan); redactor de slot determinista
+    ES/EN con quick-replies mínimos (ubicación / sí-no de seguridad / refresher /
+    nacionalidad); carryover contextual de respuestas cortas contra
+    `state.core_pending_slot` (campo nuevo en `ConversationState`); preguntas de info
+    → RAG + retoma del slot pendiente; cierre con resumen determinista + links
+    (reusa `_cart_booking_blocks`/`_format_activity_booking_messages`/
+    `_goto_mixed_final_summary` — precios y URLs SIEMPRE del catálogo) y gating
+    colombiano (resumen COP sin link directo → asesor, escalado con lead note).
+  - Hook en `supervisor._route_message_inner` tras el gating de seguridad existente
+    (PII/sensibles/cancelación/DIVE TO HEAL/edad corren ANTES del núcleo); el núcleo
+    devuelve None para keywords de escalado/menú/volver, que siguen en los handlers
+    deterministas legacy.
+  - **Structured outputs strict: evaluado y DESCARTADO con datos** (la decisión que
+    el plan pedía "confirmar"). Se migró `llm_extractor._TOOL` a strict y se midió
+    contra el eval-set AMPLIADO CON CASOS NEGATIVOS (convención nueva: `expected`
+    con valor `null` = "el extractor DEBE abstenerse"; el comparador
+    `compare_with_ground_truth` ahora caza misfills). Resultado: **strict INDUCE
+    misfills** — obligar al modelo a emitir cada clave y decidir valor-vs-null hizo
+    que "quiero hacer buceo" sin lugar recibiera `location='cartagena'` inventada
+    desde la sede del negocio (reproducido con gpt-4o-mini Y gpt-4o). Con el schema
+    libre (omitir clave = abstenerse) ambos negativos se abstienen limpio. Se
+    revirtió a no-strict + prompt reforzado ("la sede del negocio NO es señal de la
+    ubicación del cliente"): **eval 143/145 = 98.6%, CERO misfills** (los 2
+    no-acuerdos: el bug regex documentado `me plus 3 friends` + 1 abstención
+    segura). El JSON malformado ocasional del modo libre ya degrada seguro a `{}`.
+  - `tests/test_conversational_core.py`: 25 tests ES+EN, todos offline (gap-filler
+    mockeado, RAG con el stub del conftest): orden de slots, guiones Sofía/Rocío
+    (incl. "no re-preguntar 2 años" — bugs 3-4 por construcción), carryover de
+    monosílabos, absorción multi-slot en una frase, pregunta de info mid-flujo,
+    gap-fill LLM como motor, gating colombiano, delegación a legacy (escalado/menú/
+    sensibles), y flag-off ⇒ núcleo no interviene. Suite completa: **1811 passed**.
+- **Fase 2 — Snorkel/minicurso/acompañante: ✅ COMPLETA (2026-07-22, adelantada)**.
+  Multi-actividad en el núcleo: (a) reparto explícito ("somos 5, 3 certificados y 2
+  snorkel") → carrito multi-ítem desde `detected_group_allocation`, con la pregunta
+  de seguridad aplicando al subgrupo cert; (b) acompañante añadido POR TEXTO, tanto
+  mid-flujo ("mi novia viene y hace el minicurso" → se acumula al reparto sin perder
+  el slot pendiente) como POST-cierre ("viene también uno que hace snorkel" → ítem
+  añadido al carrito y resumen re-emitido con ambos links — el buceo original nunca
+  se pierde). Distinción AÑADIR vs CAMBIAR: actividad nueva + mención de persona
+  añadida (regex ES/EN) = añadido; "mejor snorkel" sin persona = cambio (latest
+  wins). Fix de UX del guion Rocío en vivo: la re-pregunta de un slot no repite la
+  recomendación del plan (`ask_slot(reasking=True)`). Verificado end-to-end en vivo
+  con LLM real: Sofía (3 turnos → cierre con link) y Rocío completa (6 turnos, incl.
+  snorkel post-cierre → carrito cert+snorkel).
+- **Fase 1 — Buceo certificado (encender flag en PRE + medir)**: pendiente de
+  decisión de despliegue — el vertical ya funciona end-to-end en local.
+- **Fases 3-4**: sin empezar.
+
 ## Riesgos y mitigaciones
 
 - **Más peso en el LLM** (latencia/coste/extracción errónea) → structured outputs +

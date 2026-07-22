@@ -45,6 +45,17 @@ EXTRACTABLE_FIELDS = (
     "is_colombian",
 )
 
+# NOTA (decisión con datos, 2026-07-22): se evaluó migrar este schema a
+# strict function-calling (structured outputs: todas las claves required +
+# nullable + additionalProperties:false) como pedía el plan conversacional, y
+# se DESCARTÓ midiendo contra el eval-set con casos negativos: obligar al
+# modelo a emitir cada clave y decidir valor-vs-null INDUCE misfills en los
+# campos sin señal ("quiero hacer buceo" sin lugar → location='cartagena'
+# inventada desde la sede del negocio; pasó con gpt-4o-mini Y gpt-4o). Con el
+# schema libre (omitir clave = abstenerse), ambos casos negativos se abstienen
+# limpio. El JSON malformado ocasional del modo no-strict ya degrada seguro a
+# {} (regex-only) vía el try/except de fill_gaps. Ver
+# docs/robustness/eval-set.json casos neg-* y docs/robustness/progress-log.md.
 _TOOL = {
     "type": "function",
     "function": {
@@ -156,7 +167,10 @@ def _system_prompt(lang: str, missing_fields: list[str]) -> str:
             "`extract_fields` incluyendo SOLO los campos para los que el mensaje "
             "da señal real y explícita. Omite cualquier campo ambiguo o no "
             "mencionado — nunca lo adivines ni lo infieras de conocimiento "
-            "general, solo de lo que el mensaje dice."
+            "general, solo de lo que el mensaje dice. OJO: que el negocio opere "
+            "en Cartagena NO es señal de la ubicación del cliente — 'quiero "
+            "bucear' sin lugar deja location fuera; sin mención de días/estancia, "
+            "duration queda fuera. Abstenerse siempre es mejor que rellenar mal."
         )
     return (
         "You are a data-extraction layer for a scuba diving bot (Diving Planet, "
@@ -165,7 +179,11 @@ def _system_prompt(lang: str, missing_fields: list[str]) -> str:
         f"fields that were left unresolved: {fields_list}. Call `extract_fields` "
         "including ONLY the fields the message gives real, explicit signal for. "
         "Omit any field that's ambiguous or not mentioned — never guess or infer "
-        "from general knowledge, only from what the message says."
+        "from general knowledge, only from what the message says. NOTE: the "
+        "business operating in Cartagena is NOT a signal of the customer's "
+        "location — 'I want to dive' with no place leaves location out; no "
+        "mention of days/stay leaves duration out. Abstaining is always better "
+        "than a wrong fill."
     )
 
 
@@ -229,6 +247,13 @@ async def fill_gaps(
         logger.warning(f"[LLM_EXTRACTOR] error: {exc}")
         return {}
 
+    # Strict schema: group_allocation comes back with fixed keys where the
+    # unused activities are null — strip those so downstream sees only the
+    # real split (and an all-null object counts as "no signal").
+    ga = (args or {}).get("group_allocation")
+    if isinstance(ga, dict):
+        args["group_allocation"] = {k: v for k, v in ga.items() if v}
+
     # Belt and suspenders: only keep fields that were actually missing (never
     # let the LLM overwrite something regex already resolved) and that have a
     # real, non-empty value.
@@ -245,9 +270,22 @@ def compare_with_ground_truth(patch: dict, expected: dict) -> dict:
     """Shadow-mode / eval-set helper: compare an LLM patch against an expected
     dict (either hand-labeled eval-set data, or the regex result treated as
     ground truth). Returns {"agree": [...], "disagree": {field: (got, want)},
-    "missed": [...]} — fields expected had that the patch didn't produce."""
+    "missed": [...]} — fields expected had that the patch didn't produce.
+
+    An expected value of None means "the extractor MUST abstain on this field"
+    (the message gives no real signal): absence counts as agreement, and a
+    filled value counts as a disagreement — this is how the eval-set catches
+    MISFILLS, the dangerous failure mode (found live 2026-07-22: 'quiero hacer
+    buceo' with no place got location='cartagena' invented from the business's
+    own base city)."""
     agree, disagree, missed = [], {}, []
     for field, want in expected.items():
+        if want is None:
+            if field in patch:
+                disagree[field] = (patch[field], None)
+            else:
+                agree.append(field)
+            continue
         if field not in patch:
             missed.append(field)
             continue

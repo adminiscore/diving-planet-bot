@@ -239,6 +239,12 @@ class ConversationState:
     # thread). Set in supervisor when _ADAPTIVE_DIVING_PATTERN fires.
     adaptive_diving_context: bool = False
 
+    # Slot the conversational core (src/agents/conversational_core.py) asked for
+    # in its last turn, so a short answer ("sí", "no", "2", "cartagena") resolves
+    # against it (contextual slot carryover) instead of being unparseable. Only
+    # used when settings.conversational_core is on; None otherwise.
+    core_pending_slot: str | None = None
+
     def __post_init__(self):
         if self.history is None:
             self.history = []

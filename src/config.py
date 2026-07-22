@@ -135,6 +135,17 @@ class Settings(BaseSettings):
     # default everywhere; regex stays primary — gaps only, never overrides.
     llm_extraction_cutover_logistics: bool = False
 
+    # --- Núcleo conversacional (docs/conversational-refactor-plan.md) ---
+    # When True, free-text messages are driven by the slot-filling conversational
+    # core (src/agents/conversational_core.py: comprender → resolver → responder)
+    # instead of the button-menu MIXED_* state machine. The cart stays as the
+    # internal data model; the menus stop being the driver. Off by default
+    # everywhere — enabled per environment (PRE first) behind this flag, fully
+    # reversible without a code rollback (plan: migración incremental por
+    # vertical). The extractor cutover flags above keep their own kill switches;
+    # the core calls the gap-filler directly as its slot engine.
+    conversational_core: bool = False
+
     @property
     def is_dev(self) -> bool:
         return self.app_env == "development"

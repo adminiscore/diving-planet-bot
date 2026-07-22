@@ -629,3 +629,48 @@ PRE (acceso al VPS). Nada más pendiente.
    y luego sin `--summary` para generar candidatos reales — ahora sin los 2 bugs de arriba.
 2. Considerar si el hallazgo de "mensajes de prueba no llegan a docker logs" cambia cómo el equipo genera tráfico de prueba para la Fase 6 (quizás documentar en `docs/robustness/plan.md` o en el propio harvest script).
 3. Desplegar estos 3 fixes a PRE y verificar en vivo el escenario del grupo mixto (mismo mensaje que disparó el bug).
+
+---
+
+## 2026-07-22 — Strict schema evaluado y descartado con datos + el eval-set aprende a cazar misfills
+
+**Fase(s) tocada(s)**: extractor (transversal — lo usa tanto el cutover de robustez
+como el núcleo conversacional nuevo de `docs/conversational-refactor-plan.md`).
+
+**Qué se hizo**:
+- Ejecutando la Fase 0 del plan conversacional (que pedía "confirmar json_schema
+  strict"), se migró `_TOOL` a strict function-calling y, probando el guion de Rocío
+  en vivo con el núcleo nuevo, salió un **misfill real**: "hola soy rocio, tengo el
+  open water y quiero hacer buceo" (sin NINGUNA señal de lugar) recibió
+  `location='cartagena'` y `duration='single_day'` inventados — la sede del negocio
+  en el prompt contaminaba, y el modo strict (cada clave obligatoria, decidir
+  valor-vs-null) empujaba a rellenar. Reproducido con gpt-4o-mini Y gpt-4o.
+- **El eval no podía ver misfills**: `compare_with_ground_truth` solo comparaba los
+  campos presentes en `expected`. Convención nueva: `expected` con valor `null` =
+  "el extractor DEBE abstenerse" (ausencia = acuerdo; relleno = desacuerdo). 2 casos
+  negativos nuevos en el eval-set (73 total): el mensaje real de Rocío (ES) y un
+  espejo EN.
+- Medición A/B con los negativos: **strict = misfill en ambos casos y ambos
+  modelos; no-strict (omitir clave = abstenerse) = abstención limpia en ambos**. Se
+  revirtió a no-strict conservando el prompt reforzado ("que el negocio opere en
+  Cartagena NO es señal de la ubicación del cliente; abstenerse siempre es mejor
+  que rellenar mal").
+- **Eval final: 143/145 = 98.6%, CERO misfills** (los 2 no-acuerdos: el bug regex
+  documentado `me plus 3 friends` + 1 missed seguro de `is_colombian`). Umbral ≥98%
+  se mantiene.
+
+**Decisiones tomadas y por qué**: el modo de fallo peligroso del extractor es el
+misfill, no el JSON malformado (ese ya degrada seguro a `{}` → regex-only). Strict
+compra forma-siempre-válida al precio de inducir el fallo peligroso — mala compra,
+medida con datos, misma metodología que la decisión de Fase 4 (separar vs fusionar).
+Documentado también en un comentario junto a `_TOOL` para que nadie lo "re-mejore" a
+strict sin leer esto.
+
+**Qué quedó a medias / bloqueadores**: nada de esta pieza. (El H1/Fase 6 sigue igual
+que el bloque anterior: falta tráfico real vía Chatwoot.)
+
+**Siguiente paso concreto para quien continúe**: si algún día se reintenta strict
+(p. ej. por un modelo nuevo), correr PRIMERO el eval-set con los casos `neg-*` — si
+hay un solo misfill, no hay debate. Y al añadir casos negativos nuevos, validar
+antes que el regex real deja esos campos en None (misma lección de proceso de
+siempre: medir, no asumir).
