@@ -302,9 +302,19 @@ midió en PRE. Coordinar con Gadea: su extractor LLM ES el motor de slots y su F
   recomendación del plan (`ask_slot(reasking=True)`). Verificado end-to-end en vivo
   con LLM real: Sofía (3 turnos → cierre con link) y Rocío completa (6 turnos, incl.
   snorkel post-cierre → carrito cert+snorkel).
-- **Fase 1 — Buceo certificado (encender flag en PRE + medir)**: pendiente de
-  decisión de despliegue — el vertical ya funciona end-to-end en local.
-- **Fases 3-4**: sin empezar.
+- **Fase 1 — Buceo certificado: ✅ COMPLETA + FLAG ON EN PRE (2026-07-22)**.
+  `CONVERSATIONAL_CORE: "true"` en `docker-compose.vps.yml` (solo PRE, reversible).
+  Verificado en vivo contra PRE con LLM real: Sofía (3 turnos → link) y Rocío completa
+  (6 turnos incl. snorkel post-cierre → carrito cert+snorkel). Queda **medir con
+  tráfico real del equipo** por el widget.
+- **Fase 3 — Cursos PADI + checkout: 🔶 PARCIAL (2026-07-22)**. Funciona: curso con
+  cantidad explícita → checkout con link del curso (sin preguntar cert/seguridad); nota
+  de lead al cierre; código ya escrito para variante isla del curso y split de menores
+  por edad. **Faltan 2 causas raíz** (3 tests marcados `xfail`): (A) "voy solo" no fija
+  `group_size` en cursos; (B) una respuesta que "parece pregunta" ("tienen 7 y 9 años")
+  cae a RAG antes de resolver el slot pendiente. **Detalle operativo completo y pasos
+  para continuar en `docs/conversational-refactor-handoff.md`.**
+- **Fase 4 — Retirada del árbol**: sin empezar (solo tras medir Fases 1-3 en PRE).
 
 ## Riesgos y mitigaciones
 

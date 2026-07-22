@@ -336,6 +336,88 @@ async def test_companion_beginner_added_mid_flow():
 
 
 # ---------------------------------------------------------------------------
+# Fase 3 — cursos PADI + checkout completo (menores/edades, lead note)
+# ---------------------------------------------------------------------------
+
+@pytest.mark.asyncio
+async def test_padi_course_flow_no_cert_no_safety_questions():
+    """Un curso PADI no pregunta certificación ni seguridad (no aplican):
+    actividad → ubicación → cantidad → nacionalidad → resumen con el link
+    del curso."""
+    state = make_state("es")
+    await route_message(state, "quiero hacer el curso open water, somos 2")
+    assert state.core_pending_slot == core.SLOT_LOCATION
+    await route_message(state, "desde cartagena")
+    assert state.core_pending_slot == core.SLOT_NATIONALITY
+    resp = await route_message(state, "no somos colombianos")
+    assert state.mixed_cart[0]["type"] == "course"
+    assert state.mixed_cart[0]["plan"] == "open_water"
+    assert state.mixed_cart[0]["qty"] == 2
+    assert "divingplanet.org" in resp
+    # El boilerplate de curso, no el de tour de un día
+    assert "Curso PADI" in resp
+
+
+# FASE 3 SIN TERMINAR (xfail) — 2 causas raíz, ver docs/conversational-refactor-handoff.md §"Fase 3":
+#   (A) "voy solo" NO fija group_size en contexto de CURSO (la inferencia
+#       singular de intent_detector solo dispara para buceo/cert), así que el
+#       flujo se queda en SLOT_QTY en vez de llegar al checkout.
+#   (B) un mensaje de respuesta que "parece pregunta" ("tienen 7 y 9 años")
+#       cae a RAG por _looks_like_question ANTES de resolver el slot pendiente
+#       (SLOT_AGES) — el carryover debe ganar cuando hay slot pendiente.
+@pytest.mark.xfail(reason="Fase 3 WIP: 'voy solo' no fija qty en cursos — ver handoff §Fase 3 (A)", strict=False)
+@pytest.mark.asyncio
+async def test_padi_course_island_variant_resolved():
+    state = make_state("es")
+    await route_message(state, "quiero el curso open water, ya estoy en las islas, voy solo")
+    assert state.core_pending_slot == core.SLOT_HOTEL
+    await route_message(state, "hotel Cocoliso")
+    await route_message(state, "no soy colombiano")
+    assert state.mixed_cart[0]["plan"] == "open_water_already_on_island"
+
+
+@pytest.mark.xfail(reason="Fase 3 WIP: 'voy solo' no fija qty en cursos — ver handoff §Fase 3 (A)", strict=False)
+@pytest.mark.asyncio
+async def test_divemaster_contact_only_no_direct_link():
+    """Divemaster es contact-only: resumen sin link de reserva directa, con
+    el copy de asesor."""
+    state = make_state("es")
+    await route_message(state, "quiero el curso de divemaster, voy solo, desde cartagena")
+    resp = await route_message(state, "no soy colombiano")
+    assert state.mixed_cart[0]["plan"] == "divemaster"
+    assert "book.divingplanet.org" not in resp
+    assert "asesor" in resp.lower()
+
+
+@pytest.mark.xfail(reason="Fase 3 WIP: respuesta 'tienen 7 y 9 años' cae a RAG antes de resolver SLOT_AGES — ver handoff §Fase 3 (B)", strict=False)
+@pytest.mark.asyncio
+async def test_kids_ages_split_cart_blocks():
+    """Menores con edades explícitas: el checkout separa por edad — <8 va a
+    snorkel, 8-10 a Bubble Makers — reutilizando el split del catálogo."""
+    state = make_state("es")
+    await route_message(state, "queremos el minicurso mi esposa y yo con nuestros hijos, somos 4, desde cartagena")
+    assert state.kids_mention_detected
+    assert state.core_pending_slot == core.SLOT_AGES
+    await route_message(state, "tienen 7 y 9 años")
+    resp = await route_message(state, "no somos colombianos")
+    assert state.kids_under_8_count == 1
+    assert state.kids_eight_to_ten_count == 1
+    assert "Bubble Makers" in resp
+    assert "norkel" in resp  # el de 7 va a snorkel
+
+
+@pytest.mark.asyncio
+async def test_lead_note_built_at_close():
+    """El cierre no-colombiano deja la nota de lead construida (antes solo
+    quedaba el pending_lead_note_reason sin materializar)."""
+    state = make_state("es")
+    await route_message(state, "soy buzo certificado, quiero bucear desde cartagena, voy solo")
+    await route_message(state, "no")
+    await route_message(state, "no soy colombiano")
+    assert state.pending_note, "la nota de lead debe quedar construida al cierre"
+
+
+# ---------------------------------------------------------------------------
 # El núcleo delega en los handlers legacy lo que no le toca
 # ---------------------------------------------------------------------------
 

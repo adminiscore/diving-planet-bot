@@ -403,13 +403,31 @@ def _cart_item(state: ConversationState, activity: str, qty: int) -> dict:
     if activity == "snorkel":
         return {"type": "snorkel", "qty": qty, "plan": None,
                 "label": _tree._cart_label_for("snorkel", None, state.language)}
-    # Curso PADI u otra actividad con service id concreto (Fase 3 la refina).
+    # Curso PADI: resolver la variante por ubicación (open_water →
+    # open_water_already_on_island si está en las islas). Divemaster es
+    # contact-only y _cart_booking_blocks ya lo cierra vía asesor (sin link).
     plan = state.detected_service_id
+    if plan:
+        plan = _tree._service_for_location(plan, state)
     return {"type": "course", "qty": qty, "plan": plan,
             "label": _tree._cart_label_for("course", plan, state.language)}
 
 
+def _derive_kids_counts(state: ConversationState) -> None:
+    """Traducir edades explícitas a los contadores que el split por edad del
+    checkout ya entiende (<8 → snorkel desde los 6; 8-10 → Bubble Makers;
+    10+ cuenta normal) — misma regla de negocio que el árbol (eligibility)."""
+    ages = state.detected_ages or []
+    minors = [a for a in ages if a < 18]
+    if not minors:
+        return
+    state.kids_under_8_count = len([a for a in minors if a < 8])
+    state.kids_eight_to_ten_count = len([a for a in minors if 8 <= a <= 10])
+    state.detected_ages = ages
+
+
 def _build_cart_from_slots(state: ConversationState) -> None:
+    _derive_kids_counts(state)
     alloc = state.detected_group_allocation or {}
     product_alloc = {k: v for k, v in alloc.items() if k in _ACTIVITY_TO_CART_TYPE and v}
     if product_alloc:
@@ -554,6 +572,7 @@ async def maybe_handle_turn(state: ConversationState, message: str) -> str | Non
             logger.info(f"[CORE] post-close additions: {[i['type'] for i in new_items]}")
             response = _tree._goto_mixed_final_summary(state)
             state.core_pending_slot = None
+            supervisor._maybe_build_pending_note(state)
             state.history.append({"role": "assistant", "content": response})
             return response
 
@@ -561,6 +580,10 @@ async def maybe_handle_turn(state: ConversationState, message: str) -> str | Non
     nxt = next_missing_slot(state)
     if nxt is None:
         response = _finalize(state)
+        # Materializar la nota de lead (el cierre no-colombiano deja solo
+        # pending_lead_note_reason; en el camino legacy la construye
+        # _finalize_tree_response — aquí el equivalente).
+        supervisor._maybe_build_pending_note(state)
     else:
         response = ask_slot(state, nxt, reasking=(nxt == prev_pending))
         state.step = Step.FREE_TEXT

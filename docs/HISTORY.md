@@ -1,6 +1,12 @@
 History
 =======
 
+0.20.43 - (2026-07-22)
+----------------------
+* **Núcleo conversacional Fase 3 (cursos PADI + checkout) — PARCIAL, con handoff para continuar**. Funciona: un curso PADI con cantidad explícita va a checkout con el link del curso (sin preguntar cert/seguridad); la nota de lead se materializa al cierre; código ya escrito (y desplegado, aditivo/safe) para la variante isla del curso (`_service_for_location`) y el split de menores por edad (`_derive_kids_counts`). **Quedan 2 causas raíz sin cerrar** (3 tests marcados `@pytest.mark.xfail`, la suite sigue verde): (A) "voy solo" no fija `group_size` en contexto de curso → el flujo se queda pidiendo cantidad; (B) una respuesta que "parece pregunta" ("tienen 7 y 9 años") cae a RAG antes de resolver el slot pendiente (`SLOT_AGES`) por el orden del check en `maybe_handle_turn`.
+* **`docs/conversational-refactor-handoff.md`** (nuevo): estado exacto de las 4 fases, mapa del núcleo, la decisión ya tomada de descartar strict, y los pasos concretos (con la localización exacta de cada fix) para que el equipo cierre la Fase 3 y aborde la Fase 4.
+* Suite: **1813 passed**, 15 skipped, **3 xfailed** (= lo que falta de Fase 3). `ruff`/`compileall` limpios.
+
 0.20.42 - (2026-07-22)
 ----------------------
 * **Núcleo conversacional de slot-filling — Fases 0 y 2 del plan de Álvaro (`docs/conversational-refactor-plan.md`), detrás de `settings.conversational_core` (default off, cero cambio de comportamiento hasta activarlo)**. Nuevo `src/agents/conversational_core.py`: bucle comprender→resolver→responder por turno; `next_missing_slot()` (actividad → certificación → ubicación/hotel → seguridad → refresher → cantidad → edades → nacionalidad → resumen); carryover contextual de respuestas cortas ("sí"/"no"/"cartagena" responden al slot pendiente, campo nuevo `core_pending_slot`); preguntas de info → RAG + retoma del slot; cierre con resumen determinista + links del catálogo (reusa la maquinaria del árbol) y gating colombiano (resumen COP sin link directo → asesor). Hook en `supervisor._route_message_inner` tras el gating de seguridad; keywords de escalado/menú siguen en los handlers legacy.
