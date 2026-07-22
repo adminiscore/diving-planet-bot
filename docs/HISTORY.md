@@ -1,6 +1,13 @@
 History
 =======
 
+0.20.54 - (2026-07-22)
+----------------------
+* **Red de precisión LLM para los 3 gates de enrutado/seguridad — el hallazgo más grave de la sesión.** A petición del owner tras la auditoría de cobertura: los gates de escalado a humano, menú/volver y temas sensibles/emergencias eran listas cerradas de palabras exactas, SIN ningún respaldo LLM. Probado en vivo: **6 de 10 frases médicas realistas no se detectaban** — "estoy embarazadita" (diminutivo), "soy epiléptica" (femenino), "tengo una condición cardiaca" (femenino), "ataque de pánico", entre otras. Un cliente con una condición médica real podía entrar directo al flujo normal de reserva sin que nadie del equipo se enterase.
+* Nueva `detect_routing_signals` (`src/agents/escalation.py`): detecta, en cualquier variante regional, (1) si quiere hablar con un humano, (2) si quiere volver al menú/reiniciar, (3) si el mensaje es un tema sensible (médico/clima/tiempo real/queja-fraude-emergencia). **Sesgo deliberadamente opuesto al del extractor de reserva**: ahí abstenerse es más seguro que inventar; aquí escalar de más es más seguro que escalar de menos — el propio prompt se lo pide al modelo. Solo se llama cuando las listas de palabras clave no encontraron nada (sin coste extra en el caso común, salta directamente para clics de botón numéricos).
+* Conectado en los 3 puntos donde antes solo vivían las listas (`supervisor.py`): el gate de escalado sensible más temprano de todo el pipeline, el escalado por keyword de asesor, y el reseteo por keyword de menú — y pasado también al núcleo conversacional (`maybe_handle_turn`) para que aplique igual con el flag encendido o apagado.
+* 15 tests nuevos (9 unitarios del extractor, 6 de integración end-to-end con `route_message`). Suite: **1886 passed**, 15 skipped. Verificado en vivo con LLM real: las 6 frases médicas antes no detectadas ahora escalan correctamente; un mensaje neutro no dispara nada.
+
 0.20.53 - (2026-07-22)
 ----------------------
 * **Auditoría de cobertura LLM del núcleo conversacional** (a petición del owner: "hay reglas incompletas o inexistentes, hay que solucionarlo para todos los casos, no caso a caso"). Repasado `conversational_core.py` heurística por heurística; 2 hallazgos corregidos, 2 documentados para más adelante:

@@ -792,16 +792,27 @@ def _colombian_summary_lines(state: ConversationState) -> str:
 
 # ─── El bucle por turno ───
 
-async def maybe_handle_turn(state: ConversationState, message: str) -> str | None:
+async def maybe_handle_turn(
+    state: ConversationState, message: str, *, routing_signals: dict | None = None,
+) -> str | None:
     """Punto de entrada desde el supervisor (tras el gating de seguridad).
     Devuelve None solo para las clases de mensaje que deben seguir cayendo a
-    los handlers deterministas legacy (escalado por keyword, menú/volver)."""
+    los handlers deterministas legacy (escalado por keyword, menú/volver).
+
+    `routing_signals` (auditoría 2026-07-22): ya calculado UNA vez por
+    `supervisor._route_message_inner` (red de precisión LLM para escalado/
+    menú cuando las listas de palabras clave no reconocen la frase — nunca
+    se vuelve a llamar aquí, mismo resultado para todo el turno)."""
     from src.agents import supervisor  # lazy
 
+    routing_signals = routing_signals or {}
     msg_lower = message.strip().lower()
-    if supervisor._matches_escalation_keyword(msg_lower):
+    if supervisor._matches_escalation_keyword(msg_lower) or routing_signals.get("wants_human"):
         return None
-    if msg_lower in supervisor.MENU_KEYWORDS or msg_lower in supervisor.BACK_KEYWORDS or msg_lower == "back":
+    if (
+        msg_lower in supervisor.MENU_KEYWORDS or msg_lower in supervisor.BACK_KEYWORDS
+        or msg_lower == "back" or routing_signals.get("wants_menu_or_restart")
+    ):
         return None
 
     # Primer mensaje: inferir idioma como hace la entrada legacy, y marcar que

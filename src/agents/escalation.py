@@ -17,12 +17,17 @@ Actions:
 - Log escalation reason for analytics
 """
 
+import json
+import logging
+
 import httpx
 import structlog
+from openai import AsyncOpenAI
 
 from src.config import settings
 
 logger = structlog.get_logger()
+_llm_logger = logging.getLogger("uvicorn.error")
 
 SENSITIVE_RULES = {
     "medical_questions": {
@@ -103,6 +108,149 @@ def detect_sensitive_escalation(message: str, lang: str = "es") -> tuple[str, st
         if any(keyword in haystack for keyword in rule["keywords"]):
             return reason, rule["es"] if lang == "es" else rule["en"]
     return None
+
+
+def sensitive_response_for(category: str, lang: str = "es") -> tuple[str, str] | None:
+    """El mismo (reason, texto) que devolvería detect_sensitive_escalation para
+    esta categoría — usado por la red de precisión LLM (detect_routing_signals)
+    para que ambos caminos (keyword y LLM) den exactamente la misma respuesta."""
+    rule = SENSITIVE_RULES.get(category)
+    if not rule:
+        return None
+    return category, rule["es"] if lang == "es" else rule["en"]
+
+
+# ---------------------------------------------------------------------------
+# Red de precisión LLM (auditoría 2026-07-22): los 3 gates de arriba
+# (SENSITIVE_RULES, ESCALATION_KEYWORDS en supervisor.py, MENU_KEYWORDS/
+# BACK_KEYWORDS en supervisor.py) son listas cerradas de palabras exactas.
+# Probado en vivo: "estoy embarazadita", "soy epiléptica", "tengo una
+# condición cardiaca" (femenino), "ataque de pánico" — NINGUNA se detectaba,
+# pese a ser justo el tipo de caso médico que este gate existe para atrapar.
+# A diferencia del extractor de reserva (donde abstenerse es más seguro que
+# inventar), aquí el sesgo correcto es el CONTRARIO: mejor escalar de más que
+# de menos — no detectar una emergencia real cuesta mucho más que una
+# escalada de más. Nunca REEMPLAZA las listas (que siguen siendo el camino
+# gratis para los casos claros); es una red que solo se llama cuando esas
+# listas no encontraron nada.
+_ROUTING_TOOL = {
+    "type": "function",
+    "function": {
+        "name": "detect_routing_signals",
+        "description": (
+            "Classify a customer message for a scuba booking bot for 3 "
+            "safety/routing signals, in ANY regional Spanish or English "
+            "phrasing, slang, or diminutive form — not just the exact "
+            "clinical/formal wording. Bias: when genuinely unsure whether "
+            "wants_human or sensitive_topic applies, still set it true/set "
+            "it — missing a real request for a human, or a real medical/"
+            "emergency issue, is worse than a false positive."
+        ),
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "wants_human": {
+                    "type": "boolean",
+                    "description": (
+                        "True if the customer is asking, in any phrasing, "
+                        "to talk to a human/real person/agent instead of "
+                        "the bot."
+                    ),
+                },
+                "wants_menu_or_restart": {
+                    "type": "boolean",
+                    "description": (
+                        "True if the customer wants to go back to a "
+                        "previous step, see the menu of options, or start "
+                        "over."
+                    ),
+                },
+                "sensitive_topic": {
+                    "type": "string",
+                    "enum": [
+                        "medical_questions", "weather_conditions",
+                        "real_time_issues", "complaints_or_emergencies",
+                    ],
+                    "description": (
+                        "Set if the message raises a MEDICAL condition or "
+                        "concern (pregnancy, heart/cardiac/respiratory/"
+                        "psychiatric conditions, panic attacks, epilepsy, "
+                        "surgery, medication...), a WEATHER-dependent "
+                        "question, a REAL-TIME availability/payment "
+                        "problem, or a COMPLAINT/emergency/fraud "
+                        "accusation."
+                    ),
+                },
+            },
+        },
+    },
+}
+
+
+def _routing_system_prompt(lang: str) -> str:
+    if lang == "es":
+        return (
+            "Eres una capa de seguridad para un bot de buceo. Las listas de "
+            "palabras clave del bot no encontraron nada en este mensaje — tu "
+            "única tarea es revisar si, en CUALQUIER forma regional de "
+            "decirlo (México, Colombia, Chile, Argentina, España...), el "
+            "mensaje (1) pide hablar con una persona humana, (2) pide volver "
+            "al menú o reiniciar, o (3) menciona un tema médico, del clima, "
+            "de disponibilidad/pago en tiempo real, o una queja/emergencia/"
+            "estafa. Ante la duda en wants_human o sensitive_topic, "
+            "márcalo igual — perder un caso real es peor que una falsa "
+            "alarma. Llama a `detect_routing_signals`."
+        )
+    return (
+        "You are a safety layer for a scuba diving bot. The bot's keyword "
+        "lists found nothing in this message — your only job is to check "
+        "whether, in ANY regional way of phrasing it, the message (1) asks "
+        "to talk to a human, (2) asks to go back to the menu or restart, or "
+        "(3) raises a medical, weather, real-time availability/payment, or "
+        "complaint/emergency/fraud topic. When unsure about wants_human or "
+        "sensitive_topic, still flag it — missing a real case is worse than "
+        "a false alarm. Call `detect_routing_signals`."
+    )
+
+
+async def detect_routing_signals(
+    message: str, *, lang: str = "es", client: AsyncOpenAI | None = None,
+) -> dict:
+    """Red de precisión para los 3 gates de arriba — solo se llama cuando las
+    listas de palabras clave NO encontraron nada (ver supervisor.py). Nunca
+    lanza excepción: {} en cualquier error, respuesta rara, o mensaje vacío,
+    para que el caller siga con el comportamiento anterior (las listas)."""
+    if not message or not message.strip():
+        return {}
+    try:
+        client = client or AsyncOpenAI(api_key=settings.openai_api_key)
+        response = await client.chat.completions.create(
+            model=settings.extraction_model,
+            messages=[
+                {"role": "system", "content": _routing_system_prompt(lang)},
+                {"role": "user", "content": message},
+            ],
+            tools=[_ROUTING_TOOL],
+            tool_choice={"type": "function", "function": {"name": "detect_routing_signals"}},
+            temperature=0.0,
+            max_tokens=80,
+        )
+        choice = response.choices[0].message
+        tool_calls = getattr(choice, "tool_calls", None)
+        if not tool_calls:
+            return {}
+        args = json.loads(tool_calls[0].function.arguments or "{}")
+    except (json.JSONDecodeError, TypeError, AttributeError, IndexError) as exc:
+        _llm_logger.warning(f"[ESCALATION] routing signals malformed response: {exc}")
+        return {}
+    except Exception as exc:  # noqa: BLE001
+        _llm_logger.warning(f"[ESCALATION] routing signals error: {exc}")
+        return {}
+
+    result = {k: v for k, v in (args or {}).items() if v not in (None, "", [], {})}
+    if result:
+        _llm_logger.info(f"[ESCALATION][ROUTING_SIGNALS] detected={result} msg={message[:80]!r}")
+    return result
 
 
 async def escalate_to_human(

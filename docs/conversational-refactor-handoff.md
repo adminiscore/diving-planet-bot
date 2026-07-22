@@ -509,3 +509,66 @@ frases distintas del mismo concepto. El patrón correcto para nuevos huecos real
 sigue siendo el mismo: extender el campo/prompt existente donde aplica, o añadir una
 señal nueva a `detect_special_signals` cuando es un EVENTO de turno (no un slot
 persistente) — nunca una lista de frases regex nueva.
+
+---
+
+# Sesión 2026-07-22 (noche, cierre) — Red de precisión para escalado/menú/temas sensibles
+
+> El owner, al ver la auditoría de cobertura del núcleo, preguntó por el resto del
+> sistema: "¿y los otros miles de casos detrás?". Se auditaron los 3 gates de
+> ENRUTADO (no de extracción de datos) que corren antes/fuera del núcleo — el
+> hallazgo fue el más grave de toda la sesión.
+
+## Hallazgo
+
+`ESCALATION_KEYWORDS` (9 palabras), `MENU_KEYWORDS`/`BACK_KEYWORDS`, y
+`SENSITIVE_RULES` (médico/clima/tiempo-real/queja) son listas cerradas SIN ningún
+respaldo LLM — a diferencia de todo lo demás en `conversational_core.py`, que ya
+tiene red desde antes de hoy. Probado con 10 frases realistas: **6 de 10 casos
+médicos no se detectaban** ("estoy embarazadita", "soy epiléptica", "cardiaca"
+femenino, "ataque de pánico", "ansiedad severa", "esto es un robo").
+
+## Decisión de diseño clave: el sesgo es el CONTRARIO al del extractor de reserva
+
+En `fill_gaps`/`detect_special_signals` (extracción de datos), abstenerse es más
+seguro que inventar. Aquí es al revés: **escalar de más es más seguro que escalar
+de menos** — el coste de no detectar una emergencia real es mucho mayor que el de
+una escalada de más. El prompt de `detect_routing_signals` se lo pide explícitamente
+al modelo.
+
+## Implementación
+
+- `src/agents/escalation.py`: nueva `detect_routing_signals(message, lang, client)`
+  — mismo patrón defensivo que el resto (nunca lanza, `{}` en cualquier error),
+  detecta `wants_human`/`wants_menu_or_restart`/`sensitive_topic` (enum de las 4
+  categorías de `SENSITIVE_RULES`). `sensitive_response_for(categoria, lang)` — el
+  mismo texto que devolvería el camino de keywords, para que la respuesta sea
+  IDÉNTICA venga de donde venga la detección.
+- `supervisor.py`: se calcula UNA vez (`routing_signals`) en `_route_message_inner`,
+  justo después del primer chequeo de `detect_sensitive_escalation` por keyword —
+  salta a `{}` sin llamar al LLM si el mensaje es puramente numérico (clic de botón).
+  Conectado en 4 sitios: el escalado sensible temprano, la condición de exclusión
+  del "understanding-first entry", el escalado por keyword de asesor, y el reseteo
+  de menú por keyword.
+- `conversational_core.maybe_handle_turn` recibe `routing_signals` como kwarg
+  opcional (default `{}`) desde el único call site en `supervisor.py` — su propio
+  chequeo de escalado/menú al principio ahora también mira la señal LLM.
+
+## Verificado en vivo con LLM real
+
+Las 6 frases médicas antes no detectadas ahora dan `sensitive_topic=medical_questions`
+correctamente; "quisiera que me atendiera una persona real" da `wants_human=True`;
+"mejor empecemos de cero" da `wants_menu_or_restart=True`; un mensaje neutro
+("hola quiero hacer buceo mañana") no dispara nada. Confirmado también end-to-end
+con `route_message` real: el estado pasa a `Step.ESCALATE` con la respuesta correcta.
+
+15 tests nuevos (`test_escalation_routing_signals.py` unitario,
+`test_routing_signals_integration.py` end-to-end con ambos flags de
+`conversational_core`). Suite: 1886 passed. ruff limpio.
+
+## Coste — transparencia con el equipo
+
+Esta red se llama en casi cada mensaje no-numérico (ya que la mayoría de mensajes
+no matchean ninguna lista de palabras clave) — una llamada LLM barata
+(`extraction_model`, ~80 tokens de salida) añadida al turno. Decisión explícita del
+owner: preferible a perder un caso médico/de emergencia real por un ahorro de coste.

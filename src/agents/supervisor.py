@@ -17,7 +17,7 @@ from datetime import datetime
 from zoneinfo import ZoneInfo
 
 from src.agents import conversation_summarizer, orchestrator
-from src.agents.escalation import detect_sensitive_escalation
+from src.agents.escalation import detect_routing_signals, detect_sensitive_escalation, sensitive_response_for
 from src.agents.intent_classifier import classify_menu_intent
 from src.agents.intent_detector import DetectedIntent, IntentDetector
 from src.agents.language_detector import detect_language_llm
@@ -4784,6 +4784,30 @@ async def _route_message_inner(state: ConversationState, message: str) -> str:
         logger.info(f"[SUPERVISOR] Sensitive escalation triggered (early) reason={reason}")
         return response
 
+    # Red de precisión (auditoría 2026-07-22): ESCALATION_KEYWORDS/
+    # MENU_KEYWORDS/BACK_KEYWORDS/SENSITIVE_RULES son listas cerradas de
+    # palabras exactas — probado en vivo que NO reconocen variantes
+    # regionales reales ("estoy embarazadita", "soy epiléptica", "tengo una
+    # condición cardiaca" en femenino, "ataque de pánico"). Se llama SOLO
+    # cuando la lista rápida de arriba no encontró nada (sin coste extra en
+    # el caso común), y el resultado se reutiliza en todo el resto de esta
+    # función y en el núcleo conversacional (maybe_handle_turn). A diferencia
+    # del extractor de reserva, aquí el sesgo es escalar de más que de menos
+    # — el propio prompt se lo pide al LLM.
+    # Gasto cero para clics de botón puramente numéricos (nunca pueden
+    # expresar un tema sensible/escalado/menú en ningún idioma).
+    routing_signals = {} if msg_lower.isdigit() else await detect_routing_signals(message, lang=state.language)
+    if routing_signals.get("sensitive_topic"):
+        found = sensitive_response_for(routing_signals["sensitive_topic"], state.language)
+        if found:
+            reason, response = found
+            state.step = Step.ESCALATE
+            state.quick_replies = []
+            state.pending_escalation_reason = reason
+            state.pending_note = build_lead_summary(state, escalation_reason=reason)
+            logger.info(f"[SUPERVISOR] Sensitive escalation triggered (LLM signal, early) reason={reason}")
+            return response
+
     # Booking cancellation/reschedule requests: inform the policy text from
     # the KB and let the customer choose between talking to an advisor or
     # going back to the main menu, instead of the bot deciding on its own.
@@ -4913,7 +4937,9 @@ async def _route_message_inner(state: ConversationState, message: str) -> str:
     # (keywords de escalado / menú / volver), que están más abajo.
     if settings.conversational_core:
         from src.agents import conversational_core
-        core_response = await conversational_core.maybe_handle_turn(state, message)
+        core_response = await conversational_core.maybe_handle_turn(
+            state, message, routing_signals=routing_signals
+        )
         if core_response is not None:
             return core_response
 
@@ -4932,8 +4958,10 @@ async def _route_message_inner(state: ConversationState, message: str) -> str:
         and msg_lower not in MENU_KEYWORDS
         and msg_lower not in BACK_KEYWORDS
         and msg_lower != "back"
+        and not routing_signals.get("wants_menu_or_restart")
         and msg_lower.strip("?!.,;:") not in GREETING_ONLY_KEYWORDS
         and not _matches_escalation_keyword(msg_lower)
+        and not routing_signals.get("wants_human")
         and not _AVAILABILITY_PATTERN.search(msg_lower)
         and _detect_language_intent(message) is None
     ):
@@ -4976,14 +5004,14 @@ async def _route_message_inner(state: ConversationState, message: str) -> str:
             logger.info("[SUPERVISOR] Bare affirmation accepted pending advisor offer -> escalate")
             return MESSAGES["escalate"][state.language]
 
-    # Check for escalation keywords
-    if _matches_escalation_keyword(msg_lower):
+    # Check for escalation keywords (+ red de precisión LLM, auditoría 2026-07-22)
+    if _matches_escalation_keyword(msg_lower) or routing_signals.get("wants_human"):
         state.step = Step.ESCALATE
         state.quick_replies = []
         state.pending_escalation_reason = "solicitó asesor"
         state.pending_note = build_lead_summary(state, escalation_reason="solicitó asesor")
         from src.flows.decision_tree import MESSAGES
-        logger.info("[SUPERVISOR] Escalation triggered by keyword")
+        logger.info("[SUPERVISOR] Escalation triggered by keyword or LLM signal")
         return MESSAGES["escalate"][state.language]
 
     # Customer reports a broken link/form/URL → escalate with high priority.
@@ -5040,12 +5068,12 @@ async def _route_message_inner(state: ConversationState, message: str) -> str:
         logger.info(f"[SUPERVISOR] Availability/dates question -> canned answer, step kept={state.step.value}")
         return answer
 
-    # Check for menu reset keywords
-    if msg_lower in MENU_KEYWORDS:
+    # Check for menu reset keywords (+ red de precisión LLM, auditoría 2026-07-22)
+    if msg_lower in MENU_KEYWORDS or routing_signals.get("wants_menu_or_restart"):
         state.step = Step.MAIN_MENU
         decision_tree.set_quick_replies(state, "main_menu")
         from src.flows.decision_tree import MESSAGES
-        logger.info("[SUPERVISOR] Menu reset triggered by keyword")
+        logger.info("[SUPERVISOR] Menu reset triggered by keyword or LLM signal")
         return MESSAGES["main_menu"][state.language]
 
     # Step-back: "🔙 Volver" button (value="back") or back keyword
