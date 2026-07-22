@@ -1,6 +1,15 @@
 History
 =======
 
+0.20.51 - (2026-07-22)
+----------------------
+* **3 bugs de regex arreglados directamente** (los mismos que la Fase 6 documentó como candidatos a la Fase 7 de override por LLM) — se investigó primero si eran arreglables en el regex antes de introducir la complejidad de un override selectivo por campo, y los 3 lo eran:
+  * `"me plus 3 friends"` → daba `group_size=3`, ahora `4` (el hablante no se contaba). Nuevo patrón `_detect_group_info` para "me plus N X" / "N X plus me", con guarda para no chocar con los patrones genéricos existentes.
+  * `"hace como 3 años que no buceo"` → colaba un niño fantasma de 3 años en `ages` y dejaba `last_dive_over_2_years` sin resolver. La guarda que descarta "hace N años" como edad miraba una ventana fija de 8 caracteres; con "como" de por medio, "hace" quedaba fuera. Cambiado a lookback por palabras (2 palabras, no caracteres) — más preciso y no over-amplía a palabras no relacionadas de la misma frase. Mismo fix aplicado a la detección de `last_dive_over_2_years` (mismo patrón de bug).
+  * `"i already have my open water card"` → se clasificaba como querer TOMAR el curso Open Water en vez de reconocer que ya lo tiene. `_HOLDS_CERT_RE` exigía "i have" pegado; ahora admite "i already have".
+* 6 tests de regresión nuevos en `tests/test_intent_detector.py` (incluye variantes ES/EN). Suite: **1838 passed**, 15 skipped. Verificado en vivo con LLM real contra los 3 mensajes originales de la batería de la Fase 6.
+* **La Fase 7 (override selectivo por campo) queda sin justificación pendiente** por ahora — los 3 casos que la motivaban se resolvieron en el regex. Si aparecen nuevos casos donde el regex "resuelve mal" y no es arreglable directamente, ahí sí se retoma la Fase 7 con evidencia.
+
 0.20.50 - (2026-07-22)
 ----------------------
 * **Fase 6 confirmada contra tráfico REAL de PRE (no solo local)**: tras el redeploy con los Fix A/B de Gonzalo, se corrió el harvest contra `docker logs dp-pre-bot` real y devolvió **2 candidatos con valores** (antes del fix: 0). Añadido `hv-aowd-acronym` al eval-set (83→84): el regex no reconoce el acrónimo "AOWD" (Advanced Open Water Diver), el gap-filler sí lo resuelve.

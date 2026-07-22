@@ -64,6 +64,20 @@ class TestActivityDetection:
         assert intent.activity == "padi_specialty"
         assert intent.service_id == "nitrox"
 
+    def test_already_have_cert_not_classified_as_wanting_the_course(self, detector, state):
+        """Bug real hallado en la batería de la Fase 6 (docs/robustness/
+        live-test-battery-fase6.md A6): '_HOLDS_CERT_RE' exigía "i have"
+        pegado; "i ALREADY have" con la palabra de por medio rompía el match
+        y el mensaje se clasificaba como querer TOMAR el curso Open Water
+        (padi_open_water) en vez de reconocer que ya lo tiene."""
+        intent = detector.detect("i already have my open water card, want to do more dives", state)
+        assert intent.activity != "padi_open_water"
+        assert intent.activity == "certified_diving"
+
+    def test_ya_tengo_el_open_water_es(self, detector, state):
+        intent = detector.detect("ya tengo el open water, quiero seguir buceando", state)
+        assert intent.activity == "certified_diving"
+
 
 class TestCertificationDetection:
     
@@ -141,6 +155,18 @@ class TestGroupDetection:
         intent = detector.detect("family of nine", state)
         assert intent.group_size == 9
 
+    def test_detect_group_size_me_plus_n_friends(self, detector, state):
+        """Fase 7 candidato / bug real hallado en la batería de la Fase 6
+        (docs/robustness/live-test-battery-fase6.md B3): 'me plus 3 friends'
+        son 4 personas (el hablante + 3), no 3 — el patrón genérico de conteo
+        capturaba solo el número pegado a 'friends' sin sumar al hablante."""
+        intent = detector.detect("me plus 3 friends, ppl wanna try diving first time", state)
+        assert intent.group_size == 4
+
+    def test_detect_group_size_n_plus_me(self, detector, state):
+        intent = detector.detect("3 friends plus me want to dive", state)
+        assert intent.group_size == 4
+
     def test_detect_mixed_group_yo_buceo_amigo_snorkel(self, detector, state):
         intent = detector.detect("yo quiero buceo y mi amigo snorkel", state)
         assert intent.group_allocation is not None
@@ -176,6 +202,21 @@ class TestLastDiveDetection:
     def test_detect_last_dive_english(self, detector, state):
         intent = detector.detect("my last dive was 1 year ago", state)
         assert intent.last_dive_over_2_years is False
+
+    def test_hace_como_n_anos_does_not_leak_into_ages(self, detector, state):
+        """Bug real hallado en la batería de la Fase 6 (docs/robustness/
+        live-test-battery-fase6.md D5): 'hace como 3 años que no buceo' —
+        la guarda que descarta 'hace N años' como edad solo miraba 8
+        caracteres atrás, y 'como' entre 'hace' y el número empujaba 'hace'
+        fuera de esa ventana, colando un niño fantasma de 3 años que
+        contaminaría kids_under_8_count en el checkout."""
+        intent = detector.detect("hace como 3 años que no buceo, seré yo solo", state)
+        assert intent.ages == []
+        assert intent.last_dive_over_2_years is True
+
+    def test_hace_ya_n_anos_does_not_leak_into_ages_english(self, detector, state):
+        intent = detector.detect("it's been like 4 years since i last dived", state)
+        assert intent.ages == []
 
 
 class TestDurationDetection:

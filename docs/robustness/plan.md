@@ -514,11 +514,19 @@ disparos por dominio operativo. Con esto se desbloquea la Fase 5.
 ### Fase 7 — Override selectivo por campo (NUEVA — review H6)
 
 **Objetivo:** hoy el LLM solo rellena huecos que el regex dejó vacíos (gap-filler). Hay
-casos donde el regex "resuelve" pero se equivoca (bug documentado `me plus 3 friends` →
-`group_size`). Esta fase introduce un **override medido por campo**: donde los datos
-(Fase 6) muestren que el LLM es más fiable que el regex para un campo concreto, dejar que
-el LLM lo pise aunque el regex haya resuelto. **Requiere los datos de la Fase 6** para
-decidir por campo con evidencia, no a ojo. Ver `review-2026-07-21.md` H6. Sin empezar.
+casos donde el regex "resuelve" pero se equivoca. Esta fase introduce un **override
+medido por campo**: donde los datos (Fase 6) muestren que el LLM es más fiable que el
+regex para un campo concreto, dejar que el LLM lo pise aunque el regex haya resuelto.
+**Requiere los datos de la Fase 6** para decidir por campo con evidencia, no a ojo. Ver
+`review-2026-07-21.md` H6.
+
+**Actualización 2026-07-22**: los 3 bugs que motivaban esta fase (`me plus 3 friends` →
+`group_size`; `hace como N años` → `ages` fantasma; "i already have my open water" →
+clasificado como querer tomar el curso) se **arreglaron directamente en el regex**
+(v0.20.51) — eran bugs de adyacencia/enumeración puntuales, no casos donde el LLM sea
+sistemáticamente más fiable. **La Fase 7 queda sin justificación pendiente por ahora.**
+Retomar solo si aparece un caso nuevo donde el regex se equivoque de forma no
+arreglable en el propio patrón (con evidencia de la Fase 6, no a ojo).
 
 ### Fase 5 — Limpieza y consolidación
 

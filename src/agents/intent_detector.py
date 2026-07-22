@@ -357,7 +357,10 @@ class IntentDetector:
         r"(?:certificad[oa]s?\s+(?:en|como)\s+)?" + _CERT_LEVEL + r"\b"
         r"|\b(?:tengo|tenemos)\s+(?:el\s+|la\s+|mi\s+|un[ao]?\s+)?" + _CERT_LEVEL + r"\b"
         r"|\bi(?:'?m|\s+am)\s+(?:an?\s+)?" + _CERT_LEVEL + r"\b"
-        r"|\bi\s+have\s+(?:my\s+|an?\s+)?" + _CERT_LEVEL + r"\b"
+        # "i already have my open water" — bug real hallado en la batería de
+        # la Fase 6 (A6): exigía "i have" pegado; "already" de por medio
+        # rompía el match y se clasificaba como querer TOMAR el curso.
+        r"|\bi\s+(?:already\s+)?have\s+(?:my\s+|an?\s+)?" + _CERT_LEVEL + r"\b"
         r"|\b" + _CERT_LEVEL + r"\s+(?:diver|certified)\b"
         r"|\bbuz[oa]\s+avanzad[oa]\b",
         re.IGNORECASE,
@@ -481,6 +484,17 @@ class IntentDetector:
             intent.group_size = int(m_gendered_sum.group(1)) + int(m_gendered_sum.group(2))
             intent.detected_fields.append("group_size")
 
+        # "me plus N friends" / "N friends plus me" — the speaker is not part
+        # of the counted N, so the true group size is N+1. Bug real hallado en
+        # la batería de la Fase 6 (B3): el patrón genérico de abajo capturaba
+        # solo "3" de "me plus 3 friends" y perdía al hablante (3 en vez de 4).
+        # Must run BEFORE the generic numeric patterns below, which would
+        # otherwise match the bare "3 friends" first and stop the loop.
+        m_plus_me = re.search(r'\bme\s+plus\s+(\d+)\b', message) or re.search(r'\b(\d+)\s+\w+\s+plus\s+me\b', message)
+        if m_plus_me:
+            intent.group_size = int(m_plus_me.group(1)) + 1
+            intent.detected_fields.append("group_size")
+
         # Word-form numbers used to stop at "ocho"/"eight" (8) in these
         # patterns while every other number-word map in this file already
         # goes to "diez"/"ten" — "somos nueve"/"somos diez" silently resolved
@@ -507,7 +521,7 @@ class IntentDetector:
             (rf'\bfamily\s+of\s+(\d+|{_en_word_alt})\b', _en_word_nums),
         ]
 
-        if not m_gendered_sum:
+        if not m_gendered_sum and not m_plus_me:
             for pattern, word_map in group_size_patterns:
                 match = re.search(pattern, message)
                 if match:
@@ -815,8 +829,16 @@ class IntentDetector:
             r'((?:\d{1,2}\s*(?:,|y|e|and|&)\s*)*\d{1,2})\s*(?:a[nñ]os?|year[s]?(?:\s*old)?|y(?:/|-)?o)\b',
             message,
         ):
-            preceding = message[max(0, m.start() - 8):m.start()]
-            if re.search(r'\b(hace|ultimo|ultima|last)\b', preceding):
+            # Word-based lookback (not char-based): survives ONE filler word
+            # between the cue and the number ("hace COMO 3 años", "it's been
+            # LIKE 4 years") without over-widening into unrelated earlier
+            # words in the sentence. A fixed 8-char window used to let "hace"
+            # slip out entirely when a filler word sat in between — real bug
+            # hallado en la batería de la Fase 6 (D5): leaked a phantom
+            # child's age from a last-dive-ago phrase, which would contaminate
+            # kids_under_8_count in the checkout.
+            words_before = message[:m.start()].split()[-2:]
+            if any(w in ("hace", "ultimo", "ultima", "last", "been") for w in words_before):
                 continue
             _add(m.group(1))
         # 2) Kid-noun context without the word "años", incl. coordinated ages:
@@ -911,9 +933,12 @@ class IntentDetector:
             intent.last_dive_over_2_years = self._last_dive_num(m_over.group(1)) >= 2
             intent.detected_fields.append("last_dive_over_2_years")
             return
-        # Generic "hace N año(s)/mes(es)" (digit or word), verb optional either side.
+        # Generic "hace N año(s)/mes(es)" (digit or word), verb optional either
+        # side. Allows one filler word ("hace COMO 3 años") — bug real hallado
+        # en la batería de la Fase 6 (D5): "hace como 3 años" fell through this
+        # entirely (no adjacency), leaving last_dive_over_2_years unresolved.
         m2 = (
-            re.search(rf"\bhace\s+{num}\s+(a[nñ]os?|mes(?:es)?)", message)
+            re.search(rf"\bhace\s+(?:como\s+)?{num}\s+(a[nñ]os?|mes(?:es)?)", message)
             or re.search(rf"\b[uú]ltima\s+inmersi[oó]n\s+(?:fue\s+)?hace\s+{num}\s+(a[nñ]os?|mes(?:es)?)", message)
             or re.search(rf"\bdived\s+{num}\s+(years?|months?)\s+ago", message)
             or re.search(rf"\blast\s+dive\s+(?:was\s+)?{num}\s+(years?|months?)\s+ago", message)

@@ -826,3 +826,52 @@ caso de extracción de mensaje suelto.
 4. Fase 5 (limpieza de regex muerto) sigue detrás de la 6 y la 7.
 5. Fase 4 del refactor conversacional (retirar el árbol `MIXED_*`) es el único punto
    pendiente del plan de Álvaro — su precondición (medir en PRE) ya se está cumpliendo.
+
+---
+
+## 2026-07-22 (noche) — Decisión sobre el hallazgo `only_fields` + 3 bugs de regex arreglados
+
+**Fase(s) tocada(s)**: Fase 6 (decisión de proceso pendiente) + Fase 7 (candidatos cerrados).
+
+**Decisión sobre `only_fields` y el eval-set**: se opta por la **opción (b)** del
+hallazgo del bloque anterior — los candidatos harvestados que dependen de `only_fields`
+(es decir, cuyo patch real en producción depende del ESTADO de la conversación, no solo
+del mensaje suelto) **no se fuerzan** al formato mensaje-suelto del eval-set. Se tratan
+en su lugar como tests de integración del núcleo completo con estado previo — patrón ya
+establecido en `tests/test_conversational_core.py` (los tests multi-turno de Sofía/
+Rocío ya construyen un `ConversationState` con historia real). Razón: extender el
+runner del eval-set para simular `only_fields`/estado parcial añadiría complejidad a
+una herramienta pensada para extracción de mensaje-suelto; el patrón de integración ya
+existe y es más honesto con lo que realmente se está probando.
+
+**3 bugs de regex arreglados** (los mismos 3 que motivaban la Fase 7, ver
+`live-test-battery-fase6.md` y `plan.md` §Fase 7): se investigó primero si eran
+arreglables en el propio patrón antes de complicar con un override por LLM, y los 3
+lo eran — bugs de adyacencia/enumeración puntuales, no casos de fiabilidad sistemática
+del LLM sobre el regex:
+- `"me plus 3 friends"` → `group_size=3` (perdía al hablante) → ahora `4`.
+- `"hace como 3 años que no buceo"` → `ages=[3]` (niño fantasma) + `last_dive_over_2_years`
+  sin resolver → guarda de 8 caracteres cambiada a lookback por palabras (2 palabras).
+- `"i already have my open water card"` → clasificado como querer tomar el curso →
+  `_HOLDS_CERT_RE` ahora admite "i already have".
+
+6 tests de regresión en `tests/test_intent_detector.py`. Suite: 1838 passed. Verificado
+en vivo con LLM real (flag off, árbol legacy) contra los 3 mensajes originales de la
+batería.
+
+**Decisiones tomadas y por qué**: la Fase 7 (override por LLM) es más cara y más
+arriesgada (introduce no-determinismo donde antes había un bug determinista) que
+arreglar el regex cuando el bug es puntual — misma disciplina de "medir antes de
+complicar" del resto del plan.
+
+**Qué quedó a medias / bloqueadores**: ninguno de esta pieza. La Fase 7 queda sin
+justificación pendiente (ver `plan.md`); se retoma solo si aparece un caso nuevo no
+arreglable en el regex.
+
+**Siguiente paso concreto para quien continúe**:
+1. Si se harvestan más candidatos `only_fields`-dependientes, escribirlos como tests de
+   `test_conversational_core.py` (estado previo real), no como entradas del eval-set.
+2. Fase 5 (limpieza de regex muerto) sigue detrás de la 6 — no hay más bloqueadores
+   conocidos para empezarla cuando el equipo decida el periodo de estabilidad.
+3. Fase 4 del refactor conversacional (retirar el árbol `MIXED_*`) es el único punto
+   pendiente del plan de Álvaro.

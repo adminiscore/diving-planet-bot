@@ -140,3 +140,21 @@ Hallazgos de bugs REALES de regex (no del LLM; candidatos a la Fase 7 de overrid
 - ℹ️ Variabilidad del mini observada en C3: en esta corrida rellenó `hotel`/`island` pero
   no `location` (el eval-set la ha dado bien otras veces). El flujo se recupera (pregunta
   la ubicación), coherente con el modo de fallo "abstención segura".
+
+### 2026-07-22 (noche) — Los 3 hallazgos de arriba, RESUELTOS en el regex (v0.20.51)
+
+Se investigó primero si eran arreglables directamente en el patrón (más simple y
+barato que un override por LLM, Fase 7) antes de decidir, y los 3 lo eran — bugs de
+adyacencia puntuales, no casos donde el LLM sea sistemáticamente más fiable:
+
+- ✅ **"hace como 3 años que no buceo"** → la guarda de `ages` usaba una ventana fija
+  de 8 caracteres para descartar "hace N años"; "como" de por medio la rompía.
+  Cambiado a lookback por palabras (2 palabras). Mismo bug afectaba a
+  `last_dive_over_2_years` (mismo patrón, arreglado igual).
+- ✅ **"i already have my open water card"** → `_HOLDS_CERT_RE` exigía "i have"
+  pegado; ahora admite "i already have".
+- ✅ **"me plus 3 friends"** → nuevo patrón dedicado que suma +1 al hablante.
+
+6 tests de regresión en `tests/test_intent_detector.py`. Verificado en vivo con LLM
+real contra los 3 mensajes originales. Suite: 1838 passed. Detalle en
+`docs/robustness/plan.md` (Fase 7, actualización) y `docs/HISTORY.md` v0.20.51.
