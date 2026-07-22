@@ -357,7 +357,11 @@ class IntentDetector:
         r"(?:certificad[oa]s?\s+(?:en|como)\s+)?" + _CERT_LEVEL + r"\b"
         r"|\b(?:tengo|tenemos)\s+(?:el\s+|la\s+|mi\s+|un[ao]?\s+)?" + _CERT_LEVEL + r"\b"
         r"|\bi(?:'?m|\s+am)\s+(?:an?\s+)?" + _CERT_LEVEL + r"\b"
-        r"|\bi\s+have\s+(?:my\s+|an?\s+)?" + _CERT_LEVEL + r"\b"
+        # "i already have my open water card" — the adverb between "i/we" and
+        # "have" used to break the match, so the message was classified as
+        # WANTING the Open Water course instead of holding it (real bug from
+        # the Fase 6 battery — Fase 7, docs/robustness/plan.md).
+        r"|\b(?:i|we)\s+(?:already\s+|now\s+|both\s+)?(?:have|got)\s+(?:got\s+)?(?:my\s+|our\s+|an?\s+|the\s+)?" + _CERT_LEVEL + r"\b"
         r"|\b" + _CERT_LEVEL + r"\s+(?:diver|certified)\b"
         r"|\bbuz[oa]\s+avanzad[oa]\b",
         re.IGNORECASE,
@@ -489,6 +493,28 @@ class IntentDetector:
         _en_word_nums = {'two': 2, 'three': 3, 'four': 4, 'five': 5, 'six': 6, 'seven': 7, 'eight': 8, 'nine': 9, 'ten': 10}
         _es_word_alt = r'dos|tres|cuatro|cinco|seis|siete|ocho|nueve|diez'
         _en_word_alt = r'two|three|four|five|six|seven|eight|nine|ten'
+
+        # "me plus 3 friends" / "3 amigos y yo" / "vienen 3 amigos conmigo" /
+        # "voy con 2 amigos": a COMPANION-noun count where the speaker is
+        # explicitly additional — the real total is N+1. Real regex bug caught
+        # twice by live batteries ("me plus 3 friends" resolved to 3; Fase 7,
+        # docs/robustness/plan.md). Must run BEFORE the generic "N friends"
+        # pattern below, which matches first and undercounts.
+        _companion_noun = r'(?:friends?|amig[oa]s|compañer[oa]s|companer[oa]s|colegas?|buddies)'
+        if not m_gendered_sum and intent.group_size is None:
+            m_plus_speaker = re.search(
+                rf'\b(?:me|yo)\s*(?:\+|plus|y|and|más|mas)\s+(\d+|{_es_word_alt}|{_en_word_alt})\s+{_companion_noun}\b'
+                rf'|\b(\d+|{_es_word_alt}|{_en_word_alt})\s+{_companion_noun}\s+(?:y\s+yo|and\s+(?:me|i)\b|conmigo|plus\s+me|with\s+me)'
+                rf'|\b(?:voy|vengo|viajo|going)\s+(?:con|with)\s+(\d+|{_es_word_alt}|{_en_word_alt})\s+{_companion_noun}\b',
+                message, re.IGNORECASE,
+            )
+            if m_plus_speaker:
+                raw = next(g for g in m_plus_speaker.groups() if g)
+                n = int(raw) if raw.isdigit() else {**_es_word_nums, **_en_word_nums}.get(raw.lower())
+                if n:
+                    intent.group_size = n + 1
+                    intent.detected_fields.append("group_size")
+
         group_size_patterns = [
             (rf'\bsomos\s+(\d+|{_es_word_alt})\b', _es_word_nums),
             (rf'\bvenimos\s+(\d+|{_es_word_alt})\b', _es_word_nums),
@@ -507,7 +533,7 @@ class IntentDetector:
             (rf'\bfamily\s+of\s+(\d+|{_en_word_alt})\b', _en_word_nums),
         ]
 
-        if not m_gendered_sum:
+        if not m_gendered_sum and intent.group_size is None:
             for pattern, word_map in group_size_patterns:
                 match = re.search(pattern, message)
                 if match:
@@ -815,8 +841,15 @@ class IntentDetector:
             r'((?:\d{1,2}\s*(?:,|y|e|and|&)\s*)*\d{1,2})\s*(?:a[nñ]os?|year[s]?(?:\s*old)?|y(?:/|-)?o)\b',
             message,
         ):
-            preceding = message[max(0, m.start() - 8):m.start()]
-            if re.search(r'\b(hace|ultimo|ultima|last)\b', preceding):
+            # Timeframes are NOT ages: "hace (como) 3 años", "llevo 4 años sin
+            # bucear", "in like 4 years", "5 years ago". The old 8-char window
+            # cut "hace" out of "hace como 3 años" (real bug: the years since
+            # the last dive became a phantom kid's age and would poison the
+            # checkout's kids split — Fase 7, docs/robustness/plan.md).
+            preceding = message[max(0, m.start() - 20):m.start()]
+            if re.search(r'\b(hace|ultimo|ultima|last|desde|llevo|llevamos|in|for|like|since)\b', preceding):
+                continue
+            if re.match(r'\s*(?:ago|sin\s+bucear|que\s+no\s+buce)', message[m.end():]):
                 continue
             _add(m.group(1))
         # 2) Kid-noun context without the word "años", incl. coordinated ages:

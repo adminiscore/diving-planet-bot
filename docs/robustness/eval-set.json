@@ -290,13 +290,10 @@
       "lang": "en",
       "expected": {
         "activity": "certified_diving",
-        "last_dive_over_2_years": false,
-        "ages": [
-          1
-        ]
+        "last_dive_over_2_years": false
       },
       "source": "test_intent_detector.py (regex ground truth)",
-      "notes": ""
+      "notes": "CORREGIDO 2026-07-22 (Fase 7): el 'ages:[1]' original venia del regex viejo, que capturaba el '1 year' del marco temporal como si fuera una edad. Arreglado el bug (hace/last/ago no son edades), el expected correcto NO lleva ages."
     },
     {
       "id": "duration-single-day",
