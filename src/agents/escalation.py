@@ -141,10 +141,13 @@ _ROUTING_TOOL = {
             "Classify a customer message for a scuba booking bot for 3 "
             "safety/routing signals, in ANY regional Spanish or English "
             "phrasing, slang, or diminutive form — not just the exact "
-            "clinical/formal wording. Bias: when genuinely unsure whether "
-            "wants_human or sensitive_topic applies, still set it true/set "
-            "it — missing a real request for a human, or a real medical/"
-            "emergency issue, is worse than a false positive."
+            "clinical/formal wording. Bias applies ONLY to sensitive_topic: "
+            "when genuinely unsure whether a MEDICAL/weather/real-time/"
+            "complaint issue applies, still set it — missing a real medical/"
+            "emergency issue is worse than a false positive. wants_human and "
+            "wants_menu_or_restart are the OPPOSITE: be STRICT, only set them "
+            "on an explicit request (see their descriptions) — a normal "
+            "booking message must never be misread as one."
         ),
         "parameters": {
             "type": "object",
@@ -152,9 +155,15 @@ _ROUTING_TOOL = {
                 "wants_human": {
                     "type": "boolean",
                     "description": (
-                        "True if the customer is asking, in any phrasing, "
-                        "to talk to a human/real person/agent instead of "
-                        "the bot."
+                        "True ONLY if the customer EXPLICITLY asks to talk to "
+                        "a human / real person / agent / advisor instead of the "
+                        "bot ('quiero hablar con alguien', 'pásame con un "
+                        "asesor', 'can I talk to a real person'). A message that "
+                        "merely describes their booking — companions, group, "
+                        "activities, plan, or a normal question ('tengo un amigo "
+                        "que quiere bucear', 'somos 3', 'y uno hace snorkel') — "
+                        "is NOT a request for a human. When unsure, leave it "
+                        "false; another layer handles the booking."
                     ),
                 },
                 "wants_menu_or_restart": {
@@ -197,9 +206,12 @@ def _routing_system_prompt(lang: str) -> str:
             "mensaje (1) pide hablar con una persona humana, (2) pide volver "
             "al menú o reiniciar, o (3) menciona un tema médico, del clima, "
             "de disponibilidad/pago en tiempo real, o una queja/emergencia/"
-            "estafa. Ante la duda en wants_human o sensitive_topic, "
-            "márcalo igual — perder un caso real es peor que una falsa "
-            "alarma. Llama a `detect_routing_signals`."
+            "estafa. IMPORTANTE: el sesgo de 'ante la duda, márcalo' vale SOLO "
+            "para sensitive_topic (médico/emergencia — mejor escalar de más). "
+            "wants_human es lo contrario: márcalo SOLO si el cliente pide "
+            "explícitamente hablar con una persona/asesor; un mensaje normal de "
+            "reserva (acompañantes, grupo, actividades) NUNCA es wants_human. "
+            "Llama a `detect_routing_signals`."
         )
     return (
         "You are a safety layer for a scuba diving bot. The bot's keyword "
@@ -207,9 +219,12 @@ def _routing_system_prompt(lang: str) -> str:
         "whether, in ANY regional way of phrasing it, the message (1) asks "
         "to talk to a human, (2) asks to go back to the menu or restart, or "
         "(3) raises a medical, weather, real-time availability/payment, or "
-        "complaint/emergency/fraud topic. When unsure about wants_human or "
-        "sensitive_topic, still flag it — missing a real case is worse than "
-        "a false alarm. Call `detect_routing_signals`."
+        "complaint/emergency/fraud topic. IMPORTANT: the 'when unsure, flag "
+        "it' bias applies ONLY to sensitive_topic (medical/emergency — better "
+        "to over-escalate). wants_human is the opposite: flag it ONLY on an "
+        "explicit request to talk to a human/agent; a normal booking message "
+        "(companions, group, activities) is NEVER wants_human. Call "
+        "`detect_routing_signals`."
     )
 
 

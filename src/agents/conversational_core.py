@@ -965,9 +965,8 @@ async def maybe_handle_turn(
         return answer
 
     # COMPRENDER: extracción del resto del mensaje.
-    turn_intent = None
     if not (resolved_short and len(message.strip()) <= 12):
-        turn_intent = await _understand(state, message)
+        await _understand(state, message)
 
     # Añadido POST-cierre ("viene también uno que hace snorkel" cuando el
     # resumen ya se emitió): añadir el subgrupo nuevo al carrito existente y
@@ -1009,13 +1008,17 @@ async def maybe_handle_turn(
     # haber "avanzado" otro dato en el mismo mensaje (bug en vivo 2026-07-22). El
     # prompt de señales ya distingue el acompañante del cambio de opinión ("mejor
     # snorkel" → None), así que ampliar el disparo aquí no crea falsos añadidos.
-    turn_activity = getattr(turn_intent, "activity", None)
+    # Un mensaje que menciona a OTRA persona (por `_mentions_person`) en una reserva
+    # ya iniciada se clasifica SIEMPRE por el LLM (añadir acompañante vs. nada),
+    # aunque el acompañante quiera la MISMA actividad (p. ej. "1 pero tengo un amigo
+    # que quiere hacer buceo") y aunque otro slot haya avanzado en el mismo mensaje.
+    # El fast-path por regex (`_ADDED_PERSON_RE`) ya cubrió sus frases; aquí van las
+    # que se le escapan. El guard de persona + el prompt (que excluye el cambio de
+    # opinión) evitan falsos añadidos.
     companion_ambiguous = bool(
-        turn_activity in _ACTIVITY_TO_CART_TYPE
-        and prev_main_activity in _ACTIVITY_TO_CART_TYPE
-        and turn_activity != prev_main_activity
-        and not _ADDED_PERSON_RE.search(message)
+        prev_main_activity in _ACTIVITY_TO_CART_TYPE
         and _mentions_person(message)
+        and not _ADDED_PERSON_RE.search(message)
     )
     if not advanced or companion_ambiguous:
         signals = await detect_special_signals(message, history=state.history, lang=state.language)
