@@ -37,7 +37,7 @@ Buscamos frases donde el regex se quede corto y el LLM tenga que rellenar `is_ce
 
 - [ ] **A1** (ES): "hola quiero probar el buceo, nunca lo he hecho, voy solo"
 - [ ] **A2** (EN): "hey never been underwater before, kinda nervous, wanna give it a try"
-- [ ] **A3** (ES, typo): "ola quiero vucear, ya soy sertificado, somos 2"
+- [ ] **A3** (ES, typo): "ola quiero vucear, ya soy sertificado, somos 2" (Los dos certificados ?)
 - [ ] **A4** (EN, typo): "hi i wanna dive, im not certfied tho, just me"
 - [ ] **A5** (ES, indirecto): "tengo el rescue diver, quiero seguir buceando por ahí"
 - [ ] **A6** (EN, indirecto): "i already have my open water card, want to do more dives"
