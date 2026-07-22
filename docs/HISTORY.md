@@ -1,6 +1,15 @@
 History
 =======
 
+0.20.53 - (2026-07-22)
+----------------------
+* **Auditoría de cobertura LLM del núcleo conversacional** (a petición del owner: "hay reglas incompletas o inexistentes, hay que solucionarlo para todos los casos, no caso a caso"). Repasado `conversational_core.py` heurística por heurística; 2 hallazgos corregidos, 2 documentados para más adelante:
+  * **`refresher_interested` no tenía NINGÚN respaldo LLM** (el único slot booleano de la reserva sin red) — una frase que `is_affirmative`/`is_negative` no reconocieran ("sí, no estaría mal") dejaba al bot **re-preguntando lo mismo indefinidamente**, el único riesgo real de bucle infinito de los 4 hallazgos. Ahora `detect_special_signals` también reconoce esta respuesta con frases naturales.
+  * **`recall_field` ampliado de 5 a 9 campos** (edades, hotel, última inmersión, refresher) — antes esas preguntas de "recuérdame" caían al RAG genérico aunque el bot sí tuviera el dato.
+  * **"Voy solo" — verificado que YA generaliza a variación regional, no era un hueco real.** El regex `_COURSE_SOLO_RE` es solo el atajo gratis para las frases más comunes; cuando falla, el mismo campo `group_size` del gap-filler (ya en producción) resuelve correctamente mexicanismos ("ando solo"), chilenismos/argentinismos ("voy yo nomás", "ando yo no más") y registro formal ("vengo sin compañía") — probado contra el pipeline real, no solo en aislado. La guarda anti-misfire (no inferir 1 de una auto-presentación singular sin señal explícita, caso Rocío) sigue intacta. Fijado con 5 casos nuevos en el eval-set (84→89) para que quede protegido si alguien toca el prompt más adelante.
+  * Documentado sin tocar (fallo seguro, no urgente): el detector de "¿esto es una pregunta?" puede fallar en ambos sentidos y necesitaría medirse con más tráfico real (Fase 6) antes de decidir si vale la pena un LLM en cada turno.
+* 4 tests nuevos + 5 casos de eval-set regionales. Suite: **1871 passed**, 15 skipped. Verificado en vivo con LLM real: una respuesta de refresher no reconocida por el parser simple ya avanza a nacionalidad en vez de quedarse en bucle; "voy solo" en sus variantes regionales resuelve `group_size=1` en el bucle completo del núcleo.
+
 0.20.52 - (2026-07-22)
 ----------------------
 * **Red de precisión por LLM para "recordar un dato" y "acompañante añadido"** — decisión explícita del owner tras revisar capturas reales de PRE: nada de seguir ampliando el regex frase a frase para esto. 3 fallos reales corregidos:

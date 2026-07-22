@@ -632,6 +632,28 @@ def _recall_answer(state: ConversationState, field: str) -> str | None:
         if state.is_colombian:
             return "Me dijiste que *sí* eres colombiano/a o residente." if es else "You told me you *are* Colombian or a resident."
         return "Me dijiste que *no* eres colombiano/a." if es else "You told me you're *not* Colombian."
+    if field == "ages":
+        ages = state.detected_ages or []
+        if not ages:
+            return None
+        ages_str = ", ".join(str(a) for a in ages)
+        return f"Me dijiste que las edades eran: *{ages_str}*." if es else f"You told me the ages were: *{ages_str}*."
+    if field == "hotel":
+        if not state.hotel:
+            return None
+        return f"Me dijiste que estás en el *{state.hotel}*." if es else f"You told me you're staying at *{state.hotel}*."
+    if field == "last_dive_over_2_years":
+        if state.last_dive_over_2_years is None:
+            return None
+        if state.last_dive_over_2_years:
+            return "Me dijiste que *sí*, hace más de 2 años." if es else "You told me it *has* been more than 2 years."
+        return "Me dijiste que *no*, hace menos de 2 años." if es else "You told me it has *not* been more than 2 years."
+    if field == "refresher_interested":
+        if state.refresher_interested is None:
+            return None
+        if state.refresher_interested:
+            return "Me dijiste que *sí* querías el refresher." if es else "You told me you *did* want the refresher."
+        return "Me dijiste que *no* querías el refresher." if es else "You told me you did *not* want the refresher."
     return None
 
 
@@ -895,6 +917,13 @@ async def maybe_handle_turn(state: ConversationState, message: str) -> str | Non
                 supervisor._maybe_build_pending_note(state)
                 state.history.append({"role": "assistant", "content": response})
                 return response
+            advanced = True
+        elif signals.get("refresher_interested") is not None:
+            # Auditoría 2026-07-22: refresher_interested no tenía NINGÚN
+            # respaldo LLM — una frase que is_affirmative/is_negative no
+            # reconocieran ("sí, no estaría mal") dejaba al bot re-preguntando
+            # lo mismo sin fin, único slot booleano de la reserva sin red.
+            state.refresher_interested = signals["refresher_interested"]
             advanced = True
         elif signals.get("recall_field"):
             recalled = _recall_answer(state, signals["recall_field"])

@@ -964,6 +964,66 @@
       },
       "source": "harvested-from-PRE-logs-2026-07-22 (primer harvest sobre trafico REAL de PRE tras Fix A/2c8e195; confirma el fix en produccion, no solo en local)",
       "notes": "AOWD (Advanced Open Water Diver) es un acronimo de certificacion que el regex no reconoce; el gap-filler lo resuelve correctamente. Validado: fill_gaps sin historial reproduce is_certified=True de forma estable."
+    },
+    {
+      "id": "hv-solo-mx-ando-solo",
+      "message": "quiero bucear, ando solo, desde cartagena",
+      "lang": "es",
+      "expected": {
+        "activity": "certified_diving",
+        "group_size": 1,
+        "location": "cartagena"
+      },
+      "source": "audit-2026-07-22 (owner: variación regional de \"voy solo\" no cubierta por regex)",
+      "notes": "Mexicanismo. Verificado contra el pipeline real: regex deja group_size=None, fill_gaps resuelve 1."
+    },
+    {
+      "id": "hv-solo-cl-ar-yo-nomas",
+      "message": "quiero bucear, voy yo nomás, desde cartagena",
+      "lang": "es",
+      "expected": {
+        "activity": "certified_diving",
+        "group_size": 1,
+        "location": "cartagena"
+      },
+      "source": "audit-2026-07-22 (owner: variación regional de \"voy solo\" no cubierta por regex)",
+      "notes": "Chilenismo/argentinismo. Verificado contra el pipeline real."
+    },
+    {
+      "id": "hv-solo-cl-ando-yo-no-mas",
+      "message": "quiero bucear, ando yo no más, desde cartagena",
+      "lang": "es",
+      "expected": {
+        "activity": "certified_diving",
+        "group_size": 1,
+        "location": "cartagena"
+      },
+      "source": "audit-2026-07-22 (owner: variación regional de \"voy solo\" no cubierta por regex)",
+      "notes": "Variante chilena. Verificado contra el pipeline real."
+    },
+    {
+      "id": "hv-solo-sin-compania",
+      "message": "quiero bucear, vengo sin compañía, desde cartagena",
+      "lang": "es",
+      "expected": {
+        "activity": "certified_diving",
+        "group_size": 1,
+        "location": "cartagena"
+      },
+      "source": "audit-2026-07-22 (owner: variación regional de \"voy solo\" no cubierta por regex)",
+      "notes": "Registro formal. Verificado contra el pipeline real."
+    },
+    {
+      "id": "neg-rocio-no-solo-signal-guard",
+      "message": "hola soy rocio, tengo el open water y quiero hacer buceo",
+      "lang": "es",
+      "expected": {
+        "activity": "certified_diving",
+        "is_certified": true,
+        "group_size": null
+      },
+      "source": "audit-2026-07-22 (guarda: auto-presentación singular SIN señal explícita de ir solo)",
+      "notes": "Guarda anti-misfire: NO debe inferir group_size=1 solo por hablar en primera persona singular — un jefe de grupo escribiría igual. Debe abstenerse y preguntar."
     }
   ]
 }

@@ -763,3 +763,59 @@ async def test_signal_detection_not_called_when_turn_already_advanced():
     with patch.object(core, "detect_special_signals", new=signals_mock):
         await route_message(state, "quiero hacer snorkel, somos 2, desde cartagena")
     signals_mock.assert_not_called()
+
+
+# ---------------------------------------------------------------------------
+# Auditoría 2026-07-22: refresher_interested sin respaldo LLM (riesgo de
+# bucle) + recall_field ampliado (edades/hotel/seguridad/refresher).
+# ---------------------------------------------------------------------------
+
+@pytest.mark.asyncio
+async def test_refresher_unusual_phrasing_resolved_by_signal_not_stuck_forever():
+    """"sí, no estaría mal" no matchea is_affirmative — sin respaldo LLM el
+    bot se quedaría preguntando el refresher para siempre. Con la señal
+    ampliada, se resuelve y avanza."""
+    state = make_state("es")
+    state.detected_activity = "certified_diving"
+    state.is_certified = True
+    state.location = "cartagena"
+    state.detected_group_size = 1
+    state.last_dive_over_2_years = True
+    state.core_pending_slot = core.SLOT_REFRESHER
+    with patch.object(core, "detect_special_signals",
+                       new=AsyncMock(return_value={"refresher_interested": True})):
+        await route_message(state, "sí, no estaría mal")
+    assert state.refresher_interested is True
+    assert state.core_pending_slot != core.SLOT_REFRESHER
+
+
+@pytest.mark.asyncio
+async def test_recall_ages_answers_from_state():
+    state = make_state("es")
+    state.detected_ages = [7, 9]
+    state.core_pending_slot = core.SLOT_NATIONALITY
+    with patch.object(core, "detect_special_signals", new=AsyncMock(return_value={"recall_field": "ages"})):
+        resp = await route_message(state, "que edades te dije que tenian los niños?")
+    assert "7" in resp and "9" in resp
+
+
+@pytest.mark.asyncio
+async def test_recall_hotel_answers_from_state():
+    state = make_state("es")
+    state.location = "island"
+    state.hotel = "Hotel Coco Liso"
+    state.core_pending_slot = core.SLOT_NATIONALITY
+    with patch.object(core, "detect_special_signals", new=AsyncMock(return_value={"recall_field": "hotel"})):
+        resp = await route_message(state, "en que hotel dije que estaba?")
+    assert "Coco Liso" in resp
+
+
+@pytest.mark.asyncio
+async def test_recall_refresher_field_not_yet_known_falls_back():
+    """Si el LLM pide recordar el refresher pero el estado no lo tiene
+    resuelto de verdad, no se inventa — cae a RAG."""
+    state = make_state("es")
+    with patch.object(core, "detect_special_signals", new=AsyncMock(return_value={"recall_field": "refresher_interested"})), \
+         patch("src.agents.supervisor.rag_answer", new=AsyncMock(return_value="Respuesta RAG")):
+        resp = await route_message(state, "el refresher lo quería o no?")
+    assert "Respuesta RAG" in resp

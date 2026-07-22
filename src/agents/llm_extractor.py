@@ -326,16 +326,22 @@ _SIGNALS_TOOL = {
             "The customer's message did NOT advance a scuba booking through "
             "the normal deterministic slot-filling. Check ONLY whether it (1) "
             "asks the bot to recall/remind something the customer ALREADY "
-            "said earlier in this conversation, or (2) introduces an "
-            "ADDITIONAL person joining the booking. Omit a field entirely if "
-            "it doesn't apply — never guess."
+            "said earlier in this conversation, (2) introduces an "
+            "ADDITIONAL person joining the booking, or (3) answers the "
+            "refresher yes/no question with phrasing a simple parser "
+            "wouldn't catch. Omit a field entirely if it doesn't apply — "
+            "never guess."
         ),
         "parameters": {
             "type": "object",
             "properties": {
                 "recall_field": {
                     "type": "string",
-                    "enum": ["group_size", "activity", "location", "is_certified", "is_colombian"],
+                    "enum": [
+                        "group_size", "activity", "location", "is_certified",
+                        "is_colombian", "ages", "hotel", "last_dive_over_2_years",
+                        "refresher_interested",
+                    ],
                     "description": (
                         "Set ONLY if the customer is asking the bot to remind "
                         "them of a detail THEY ALREADY GAVE earlier in this "
@@ -368,6 +374,16 @@ _SIGNALS_TOOL = {
                         "How many additional people this describes. Default "
                         "1 for a bare 'a friend'/'a companion' if the message "
                         "doesn't give a number."
+                    ),
+                },
+                "refresher_interested": {
+                    "type": "boolean",
+                    "description": (
+                        "Set ONLY when the message answers whether the "
+                        "customer wants the in-water refresher session, using "
+                        "phrasing the simple yes/no parser wouldn't catch "
+                        "(e.g. 'sí, no estaría mal', 'mejor no, gracias', "
+                        "'claro que sí'). True if they want it, false if not."
                     ),
                 },
             },

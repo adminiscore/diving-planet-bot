@@ -457,3 +457,55 @@ Nada bloqueante de esta pieza. Si el equipo encuentra más "eventos de turno" si
 es el mismo: extender `_SIGNALS_TOOL`/`detect_special_signals`, nunca añadir un regex
 nuevo por frase. Sigue pendiente, sin cambios respecto a antes: Fase 5 (limpieza) y
 Fase 4 (retirar el árbol `MIXED_*`).
+
+---
+
+# Sesión 2026-07-22 (cierre) — Auditoría de cobertura LLM del núcleo
+
+> El owner pidió una auditoría explícita: "hay cosas incompletas porque el regex es
+> malo o no existe — queremos solucionarlo para TODOS los casos, no caso a caso".
+
+## Metodología
+
+Repaso heurística por heurística de `conversational_core.py`, clasificando cada una
+como (a) ya con respaldo LLM, (b) determinista y correctamente así (precios/links —
+NUNCA deben llevar LLM), o (c) heurística de lenguaje libre sin ningún respaldo.
+
+## Hallazgos y qué se hizo
+
+1. **`refresher_interested` sin NINGÚN respaldo LLM — el único con riesgo real de
+   bucle infinito.** Corregido: `detect_special_signals` ahora también reconoce esta
+   respuesta con frases naturales que `is_affirmative`/`is_negative` no cubren.
+2. **`recall_field` cubría solo 5 de 9 campos posibles.** Ampliado a edades, hotel,
+   última inmersión y el propio refresher.
+3. **"Voy solo" — verificado que YA generaliza, no era un hueco real.** El punto que
+   motivó la auditoría: el owner señaló correctamente que una lista de frases nunca
+   cubre cómo dice "voy solo" cada país de habla hispana (México "ando solo", Chile/
+   Argentina "voy yo nomás"/"ando yo no más"...). Comprobado contra el pipeline REAL
+   (no en aislado): el campo `group_size` del gap-filler YA generaliza correctamente
+   estas variantes regionales — el regex `_COURSE_SOLO_RE` es solo el atajo gratis
+   para los casos más comunes, y cuando falla, el LLM (que ya corre para `group_size`
+   en cualquier caso) resuelve bien. La guarda anti-misfire (no inferir 1 de una
+   auto-presentación singular sin señal explícita — caso Rocío) se mantiene intacta.
+   Fijado con 5 casos nuevos en el eval-set en vez de tocar código que ya funcionaba.
+4. **Documentado sin tocar**: el detector de "¿esto es una pregunta?"
+   (`_looks_like_info_question`) puede fallar en ambos sentidos (falso positivo ya
+   visto: "hay un amigo..."). Añadirle LLM costaría una llamada en cada turno sin
+   distinguir aún si el problema es frecuente — candidato a medir con más tráfico real
+   de la Fase 6 antes de decidir si compensa.
+
+## Estado
+
+4 tests nuevos + 5 casos de eval-set (84→89). Suite: 1871 passed. Verificado en vivo
+con LLM real: el refresher con frase no reconocida avanza en vez de bucle; "voy solo"
+regional resuelve group_size=1 en el bucle completo.
+
+## Lección de proceso para quien continúe esta línea
+
+Antes de "arreglar" un hueco de cobertura percibido, **medir contra el pipeline real
+primero** (como con el punto 3) — el gap-filler ya cubre más de lo que parece a simple
+vista porque el mismo campo (`group_size`, `location`, etc.) se reutiliza para muchas
+frases distintas del mismo concepto. El patrón correcto para nuevos huecos reales
+sigue siendo el mismo: extender el campo/prompt existente donde aplica, o añadir una
+señal nueva a `detect_special_signals` cuando es un EVENTO de turno (no un slot
+persistente) — nunca una lista de frases regex nueva.
