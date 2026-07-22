@@ -739,3 +739,60 @@ def test_kid_noun_tiene_age(msg, expected):
 ])
 def test_group_split_survives_injected_count_phrase(msg, expected):
     assert _d(msg).group_allocation == expected
+
+
+# --- Fase 7: 3 bugs reales de regex hallados por las baterías (2026-07-21/22)
+# Decisión documentada en docs/robustness/plan.md §Fase 7: estos casos eran
+# patrones concretos y deterministas → se arregla el REGEX (no un override LLM
+# no-determinista). El eval-set los tenía registrados como regresión permanente.
+
+@pytest.mark.parametrize("msg,expected", [
+    # el hablante es ADICIONAL al conteo de acompañantes
+    ("me plus 3 friends, ppl wanna try diving first time", 4),
+    ("me plus 3 friends want to snorkel", 4),
+    ("vienen 3 amigos conmigo, queremos bucear", 4),
+    ("3 amigos y yo queremos hacer snorkel", 4),
+    ("voy con 2 amigos a bucear", 3),
+    # controles: los totales explícitos NO se incrementan
+    ("somos 4, mi novia y yo buceamos", 4),
+    ("we are 3 people", 3),
+    ("4 friends want to dive", 4),
+])
+def test_speaker_additional_to_companion_count(msg, expected):
+    assert _d(msg).group_size == expected
+
+
+@pytest.mark.parametrize("msg", [
+    "hace como 3 años que no buceo, seré yo solo",
+    "i'm certified but haven't dived in like 4 years",
+    "i dived 5 years ago in thailand",
+    "llevo 4 años sin bucear",
+])
+def test_timeframe_years_are_not_ages(msg):
+    """'hace X años'/'in like X years'/'X years ago' son marcos temporales de
+    la última inmersión, no edades de personas — capturarlos como edad metía
+    un niño fantasma en el split del checkout."""
+    assert _d(msg).ages == []
+
+
+@pytest.mark.parametrize("msg,expected", [
+    ("mi hijo de 8 años quiere snorkel", [8]),
+    ("kids aged 8 and 10", [8, 10]),
+    ("my kids are 6 and 12 years old", [6, 12]),
+])
+def test_real_ages_still_detected(msg, expected):
+    assert _d(msg).ages == expected
+
+
+def test_already_have_card_is_certified_not_course():
+    """'i already have my open water card, want to do more dives' clasificaba
+    como CURSO Open Water a quien ya lo tiene y quiere bucear."""
+    it = _d("i already have my open water card, want to do more dives")
+    assert it.is_certified is True
+    assert it.activity == "certified_diving"
+
+
+def test_we_already_have_advanced_is_certified():
+    it = _d("we already have the advanced, want to dive tomorrow")
+    assert it.is_certified is True
+    assert it.activity != "padi_advanced"

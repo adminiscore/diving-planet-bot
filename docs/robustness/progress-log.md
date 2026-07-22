@@ -819,17 +819,21 @@ caso de extracción de mensaje suelto.
    periódicamente — ahora funciona de punta a punta.
 2. Decidir si vale la pena extender el eval-set/runner para casos con `only_fields`
    (ver hallazgo de arriba) antes de que se acumulen más candidatos de ese tipo.
-3. Fase 7 (override selectivo por campo) ya tiene 3 bugs reales documentados que la
-   justifican (bloque anterior de este log, Gonzalo): `ages` capturando "hace X años"
-   como edad, `activity=padi_open_water` para alguien que YA tiene el Open Water, y
-   "me plus 3 friends" → 3 en vez de 4.
+3. La Fase 7 se atacó justo después (bloque siguiente): los 3 bugs de regex reales.
 4. Fase 5 (limpieza de regex muerto) sigue detrás de la 6 y la 7.
 5. Fase 4 del refactor conversacional (retirar el árbol `MIXED_*`) es el único punto
    pendiente del plan de Álvaro — su precondición (medir en PRE) ya se está cumpliendo.
 
 ---
 
-## 2026-07-22 (noche) — Decisión sobre el hallazgo `only_fields` + 3 bugs de regex arreglados
+> Nota de merge: los dos bloques siguientes (Gadea y Gonzalo) documentan un trabajo
+> paralelo e independiente sobre LOS MISMOS 3 bugs de regex — cada uno los encontró y
+> arregló sin saber del otro. El código final que quedó en el repo es la versión de
+> Gonzalo (más completa: cubre más frases, "we" además de "i", y corrige de paso un
+> `expected` mal etiquetado del eval-set que el bloque de Gadea no detectó). Se dejan
+> ambos bloques por transparencia del proceso, no como doble trabajo pendiente.
+
+## 2026-07-22 (noche) — Decisión sobre el hallazgo `only_fields` + 3 bugs de regex arreglados (Gadea, superseded por el bloque de Gonzalo abajo)
 
 **Fase(s) tocada(s)**: Fase 6 (decisión de proceso pendiente) + Fase 7 (candidatos cerrados).
 
@@ -875,3 +879,54 @@ arreglable en el regex.
    conocidos para empezarla cuando el equipo decida el periodo de estabilidad.
 3. Fase 4 del refactor conversacional (retirar el árbol `MIXED_*`) es el único punto
    pendiente del plan de Álvaro.
+
+---
+
+## 2026-07-22 — Fase 7: arreglados 3 bugs de regex hallados por las baterías (Gonzalo — versión que quedó en el código)
+
+**Fase(s) tocada(s)**: Fase 7 (los casos donde el regex resuelve MAL, no solo deja hueco).
+
+**Qué se hizo**: las baterías de Fase 6 dejaron 3 bugs reales del regex documentados en
+`live-test-battery-fase6.md`. La Fase 7 estaba planteada como "override selectivo por
+campo vía LLM", pero los 3 eran **patrones concretos y deterministas** → se decidió, con
+ese dato, **arreglar el REGEX** en vez de meter un override LLM (que habría cambiado
+"bugs reproducibles" por "intermitentes", justo lo que el plan evita, §1). TDD estricto,
++11 tests en `tests/test_intent_robustness.py`:
+
+1. **`me plus N friends` / `N amigos y yo` / `voy con N amigos`** → el hablante es
+   ADICIONAL al conteo de acompañantes: `group_size = N+1`. Nuevo patrón `me/yo +N
+   companion-noun` (y variantes) que corre ANTES del genérico "N friends" (que matcheaba
+   primero y daba N). Con guardas: un total explícito ("somos 4") no se incrementa.
+2. **`hace X años` / `in like X years` / `X years ago` / `llevo X años sin bucear`** ya
+   NO se capturan como edad. La ventana de 8 chars antes del número cortaba el "hace" de
+   "hace como 3 años"; ampliada a 20 chars + más palabras-guarda (desde/llevo/in/for/
+   like/since) + guarda por lo que sigue (ago/sin bucear). Los años de la última
+   inmersión se colaban como edad de un niño fantasma que habría contaminado el split
+   infantil del checkout.
+3. **`i already have my open water card`** → certificado, no curso. El adverbio entre
+   "i/we" y "have" rompía `_HOLDS_CERT_RE`, así que se clasificaba como QUERER el curso
+   Open Water en vez de TENERLO. Nueva alternativa que admite already/now/both + have/got.
+
+También se **corrigió un `expected` mal etiquetado del eval-set**: `lastdive-en`
+("my last dive was 1 year ago") tenía `ages:[1]` — el mismo age fantasma del bug #2,
+heredado del "regex ground truth" viejo. Quitado (la lección de proceso al revés: el
+eval-set también hay que corregirlo cuando enshrina un bug).
+
+**Resultado**: suite completa **1849 passed, 15 skipped, 0 fallos** (código compartido con
+el árbol legacy — sin regresiones). Eval-set (83 casos): **group_size 100%, 0 disagree**
+(el `me plus 3 friends` que era el único disagree histórico ahora acierta). Los missed que
+quedan son abstenciones seguras del mini (is_colombian de "im from the states", y la edad
+en palabra "ocho" que resuelve el LLM), nunca misfills.
+
+**Decisiones tomadas y por qué**: regex-fix en vez de LLM-override para estos 3 porque son
+deterministas y el regex es el camino primario del plan; un override LLM se reserva para un
+caso futuro donde el LLM demuestre (con eval) ser más fiable que un regex que NO se puede
+arreglar limpio. El bug #2 se arregló ensanchando la guarda existente, no añadiendo una
+regla nueva frágil.
+
+**Qué quedó a medias / bloqueadores**: nada de la Fase 7. Quedan Fase 5 (limpieza, tras un
+par de lotes reales de la Fase 6) y Fase 4 del refactor conversacional (retirada del árbol,
+cuando el owner dé por medida la operación en PRE).
+
+**Siguiente paso concreto para quien continúe**: Fase 5 o Fase 4 según prioridad del
+equipo; ambas requieren primero acumular tráfico real en PRE (Fase 6 por el canal Chatwoot).
