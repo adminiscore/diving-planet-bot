@@ -142,15 +142,16 @@ _ROUTING_TOOL = {
     "function": {
         "name": "detect_routing_signals",
         "description": (
-            "Classify a customer message for a scuba booking bot for 7 "
+            "Classify a customer message for a scuba booking bot for 8 "
             "safety/routing signals, in ANY regional Spanish or English "
             "phrasing, slang, or diminutive form — not just the exact "
             "clinical/formal wording. Bias applies to sensitive_topic, "
-            "adaptive_diving_topic AND broken_link_complaint: when genuinely "
-            "unsure whether a MEDICAL/weather/real-time/complaint issue, a "
-            "DISABILITY/accessibility topic, or a BROKEN link/page/payment "
-            "applies, still set it — missing a real one is worse than a false "
-            "positive. wants_human, wants_menu_or_restart, "
+            "adaptive_diving_topic, broken_link_complaint AND "
+            "availability_question: when genuinely unsure whether a MEDICAL/"
+            "weather/real-time/complaint issue, a DISABILITY/accessibility "
+            "topic, a BROKEN link/page/payment, or an AVAILABILITY/spots "
+            "question applies, still set it — missing a real one is worse "
+            "than a false positive. wants_human, wants_menu_or_restart, "
             "booking_change_topic and asks_for_contact_number are the "
             "OPPOSITE: be STRICT, only set them on an explicit request (see "
             "their descriptions) — a normal booking message must never be "
@@ -218,6 +219,23 @@ _ROUTING_TOOL = {
                         "itself. This routes to the DIVE TO HEAL adaptive-"
                         "diving program, NOT a medical escalation — never "
                         "also set `sensitive_topic` for the same message."
+                    ),
+                },
+                "availability_question": {
+                    "type": "boolean",
+                    "description": (
+                        "True if the customer asks whether there is SPACE / "
+                        "SPOTS / AVAILABILITY / cupo / lugar for a specific "
+                        "day or date, in any phrasing ('¿hay cupo para "
+                        "mañana?', '¿tienen disponibilidad el sábado?', "
+                        "'¿queda espacio el domingo?', '¿puedo ir el 20?', "
+                        "'do you have availability this weekend?', 'any spots "
+                        "left for Saturday?'). The bot CANNOT see the live "
+                        "calendar, so these must be routed — bias toward "
+                        "catching (better to route than to invent a 'yes, we "
+                        "have space'). Do NOT set it for a general question "
+                        "about the schedule/what days you operate that "
+                        "doesn't ask to confirm a specific slot."
                     ),
                 },
                 "broken_link_complaint": {
@@ -308,10 +326,11 @@ def _routing_system_prompt(lang: str) -> str:
             "PREGUNTA por la política de cancelación NO es booking_change_topic. "
             "(6) si pide un número de teléfono/WhatsApp/correo o una vía de "
             "contacto FUERA de este chat → asks_for_contact_number (también "
-            "estricto), o (7) reporta que un LINK/página/pago/botón NO "
-            "funciona (roto, en blanco, da error) → broken_link_complaint "
-            "(mismo sesgo de 'ante la duda, márcalo'). Llama a "
-            "`detect_routing_signals`."
+            "estricto), (7) reporta que un LINK/página/pago/botón NO "
+            "funciona (roto, en blanco, da error) → broken_link_complaint, o "
+            "(8) pregunta si hay cupo/espacio/disponibilidad para un día "
+            "concreto → availability_question (ambos con el sesgo de 'ante la "
+            "duda, márcalo'). Llama a `detect_routing_signals`."
         )
     return (
         "You are a safety layer for a scuba diving bot. The bot's keyword "
@@ -333,10 +352,12 @@ def _routing_system_prompt(lang: str) -> str:
         "(companions, group, activities) is NEVER wants_human, and a "
         "QUESTION about the cancellation policy is NOT booking_change_topic. "
         "(6) if they ask for a phone/WhatsApp/email or a contact channel "
-        "OUTSIDE this chat → asks_for_contact_number (also strict), or (7) "
+        "OUTSIDE this chat → asks_for_contact_number (also strict), (7) "
         "report that a LINK/page/payment/button is NOT working (broken, "
-        "blank, error) → broken_link_complaint (same 'when unsure, flag it' "
-        "bias). Call `detect_routing_signals`."
+        "blank, error) → broken_link_complaint, or (8) ask whether there is "
+        "space/spots/availability for a specific day → availability_question "
+        "(both with the 'when unsure, flag it' bias). Call "
+        "`detect_routing_signals`."
     )
 
 

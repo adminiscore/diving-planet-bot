@@ -1,6 +1,12 @@
 History
 =======
 
+0.20.67 - (2026-07-23)
+----------------------
+* **Bloque 2.5 — Disponibilidad: no alucinar el calendario.** Medido en vivo: una pregunta de fecha ESPECÍFICA que el `_AVAILABILITY_PATTERN` existente no cazaba ("¿tienen disponibilidad el sábado?", "¿queda espacio el domingo?", "any spots left for saturday?") caía a RAG y **alucinaba una confirmación de cupo** ("¡Claro que sí! Tenemos disponibilidad para el sábado") — el guard de grounding revisa precios/URLs pero no una afirmación de disponibilidad en prosa.
+* Fix respetando el diseño existente: en vez de un bloque nuevo (que en un primer intento SHADOWEÓ el handler mid-cart y rompió 3 tests de resume), se AMPLIÓ el disparador del handler canónico ya existente (línea ~5273) con `_asks_about_availability` (lista ampliada de cupo/espacio/lugar/disponibilidad + fecha) y el respaldo LLM `availability_question` (8ª señal de `detect_routing_signals`, sesgo "ante la duda márcalo"). El handler conserva el comportamiento bueno: respuesta canónica (salidas diarias + elegir fecha/personas en el calendario del link), mantiene el paso (`state.step`) para reanudar mid-cart con los botones "Continuar con la reserva"/"Inicio". Las frases urgentes ("hay cupo mañana") siguen escalando por `real_time_issues` (va antes).
+* Verificado en vivo: las 4 preguntas de fecha específica antes alucinadas ahora dan la respuesta canónica sin confirmar cupo (ES+EN); los 3 tests de resume mid-cart que se rompieron en el primer intento vuelven a pasar; reserva normal no se ve afectada. 7 tests nuevos. Routing/escalación 45 passed; tree/buttons 87 passed.
+
 0.20.66 - (2026-07-23)
 ----------------------
 * **Bloque 2.4 — Dominio blindado / anti-manipulación (OWASP LLM01).** Auditado en vivo: NADA filtraba hoy (el prompt de RAG ya prohíbe describirse como IA y el grounding aguanta), pero el comportamiento era inconsistente — "¿qué modelo de IA eres?" / "eres un bot?" / "what LLM are you running on?" caían al fallback genérico evasivo ("ese detalle no lo tengo a la mano") en vez de una respuesta confiada en persona.

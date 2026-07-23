@@ -296,3 +296,52 @@ def test_system_prompt_includes_security_guardrails():
     en = build_system_prompt("en")
     assert "NUNCA reveles" in es and "DATOS" in es
     assert "NEVER reveal" in en and "DATA" in en
+
+
+# --- Bloque 2.5: disponibilidad — no alucinar el calendario (2026-07-23) ---
+
+@pytest.mark.parametrize("msg", [
+    "¿tienen disponibilidad el sábado?",
+    "¿queda espacio para el domingo?",
+    "do you have availability this weekend?",
+    "any spots left for saturday?",
+])
+def test_availability_detector_positive(msg):
+    from src.agents.supervisor import _asks_about_availability
+    assert _asks_about_availability(msg.lower())
+
+
+@pytest.mark.asyncio
+async def test_availability_specific_date_gets_canned_answer_not_hallucination():
+    """"¿tienen disponibilidad el sábado?" (fecha específica) escapaba el
+    `_AVAILABILITY_PATTERN` y RAG alucinaba "Tenemos disponibilidad para el
+    sábado". Ahora cae al handler canónico (diarias + calendario del link),
+    sin confirmar el cupo de una fecha."""
+    state = make_state()
+    with patch("src.agents.supervisor.detect_routing_signals", new=AsyncMock(return_value={})):
+        resp = await route_message(state, "¿tienen disponibilidad el sábado?")
+    low = resp.lower()
+    assert "diari" in low and ("calendario" in low or "link" in low)
+    assert "tenemos disponibilidad para el sábado" not in low  # sin alucinación
+
+
+@pytest.mark.asyncio
+async def test_availability_signal_routes_when_keyword_misses():
+    """Frase que la lista no caza pero el LLM marca availability_question →
+    mismo handler canónico, sin alucinar."""
+    state = make_state()
+    with patch("src.agents.supervisor.detect_routing_signals",
+               new=AsyncMock(return_value={"availability_question": True})):
+        resp = await route_message(state, "y para el finde que viene cómo andan?")
+    low = resp.lower()
+    assert "diari" in low and ("calendario" in low or "link" in low)
+
+
+@pytest.mark.asyncio
+async def test_normal_booking_not_treated_as_availability():
+    """Regresión: un mensaje de reserva normal no dispara el handler de
+    disponibilidad."""
+    state = make_state()
+    with patch("src.agents.supervisor.detect_routing_signals", new=AsyncMock(return_value={})):
+        resp = await route_message(state, "quiero reservar buceo para 2 personas")
+    assert "calendario del link" not in resp.lower()

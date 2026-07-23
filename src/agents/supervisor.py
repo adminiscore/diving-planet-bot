@@ -809,6 +809,29 @@ def _ai_identity_deflection(lang: str) -> str:
     )
 
 
+# Disponibilidad (Bloque 2.5): el cliente pregunta si hay cupo/espacio para un
+# día concreto. El bot NO ve el calendario real — medido en vivo que hoy
+# ALUCINA ("¡Claro que sí! Tenemos disponibilidad para el sábado") porque el
+# guard de grounding revisa precios/URLs pero no una afirmación de
+# disponibilidad en prosa. Respuesta canónica honesta: operamos a diario (verdad
+# general), el cupo exacto para esa fecha lo confirma el equipo, y se mantiene el
+# impulso hacia la reserva. Respaldo LLM `availability_question` para lo que la
+# lista no cace.
+_AVAILABILITY_RE = re.compile(
+    r"\b(?:hay\s+(?:cupo|lugar|espacio|disponibilidad|plaza|sitio)|"
+    r"queda\s+(?:cupo|lugar|espacio|plaza|sitio)|quedan\s+(?:cupos|lugares|plazas|puestos)|"
+    r"tienen?\s+(?:cupo|lugar|espacio|disponibilidad)|"
+    r"est[aá]\s+disponible|hay\s+disponib|con\s+cupo|"
+    r"availability|any\s+spots?|spots?\s+left|space\s+(?:for|left|available)|"
+    r"do\s+you\s+have\s+(?:room|space|availability)|is\s+there\s+(?:room|space))\b",
+    re.IGNORECASE,
+)
+
+
+def _asks_about_availability(msg_lower: str) -> bool:
+    return bool(_AVAILABILITY_RE.search(_strip_accents(msg_lower)))
+
+
 def _contact_number_deflection(lang: str) -> str:
     """Deflexión honesta para una petición de número/contacto directo: límite +
     lo que SÍ se puede + redirección a la reserva (no escala, no inventa)."""
@@ -5247,7 +5270,19 @@ async def _route_message_inner(state: ConversationState, message: str) -> str:
     # "disponible mañana" / "hay cupo" still escalate instead of getting this
     # canned answer. Keeps state.step untouched so "Continuar con la reserva"
     # resumes exactly where the client was.
-    if _AVAILABILITY_PATTERN.search(msg_lower) and state.step not in (Step.WELCOME, Step.LANGUAGE):
+    #
+    # Bloque 2.5 (2026-07-23): ampliado el disparador. El `_AVAILABILITY_PATTERN`
+    # solo cazaba "qué días hay disponibles" y no las preguntas de fecha ESPECÍFICA
+    # ("¿tienen disponibilidad el sábado?", "¿queda espacio el domingo?", "any spots
+    # left saturday?") — medido en vivo que esas caían a RAG y ALUCINABAN una
+    # confirmación de cupo ("¡Claro que sí! Tenemos disponibilidad para el sábado").
+    # Añadidos `_asks_about_availability` (lista ampliada) y el respaldo LLM
+    # `availability_question`, ambos al MISMO handler (conserva el resume mid-cart).
+    if (
+        _AVAILABILITY_PATTERN.search(msg_lower)
+        or _asks_about_availability(msg_lower)
+        or routing_signals.get("availability_question")
+    ) and state.step not in (Step.WELCOME, Step.LANGUAGE):
         answer = (
             "¡Buena noticia! 📅 Las salidas son diarias y siempre hay disponibilidad. "
             "Vas a poder elegir el día exacto y el número de personas directamente en el "
