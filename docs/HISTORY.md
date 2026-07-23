@@ -1,6 +1,12 @@
 History
 =======
 
+0.20.65 - (2026-07-23)
+----------------------
+* **Bloque 2.3 — Link roto con respaldo LLM + backstop de contexto técnico.** El gate de link roto (`_detect_broken_link_complaint`) exigía frase-de-queja de una lista cerrada + token de link (o URL en el turno previo). **Medido en vivo: 10 de 10 quejas realistas se escapaban** ("el link no me deja pagar", "me sale página en blanco al reservar", "le doy al botón y no pasa nada", "the payment page crashes", "your booking link is dead").
+* Nueva señal `broken_link_complaint` en `detect_routing_signals` (misma llamada, sin coste extra, sesgo "ante la duda márcalo" como sensibles) + respuesta compartida `_broken_link_escalation_response`. **Backstop determinista**: el sesgo de escalar-ante-la-duda sobre-disparaba en una queja de ACTIVIDAD sin medio técnico ("no me funciona el buceo nocturno" → falso positivo pese al ejemplo negativo en el prompt); se exige contexto técnico (`_has_link_tech_context`: token link/página/botón/pago/web ampliado, o URL en el turno previo del bot) para confiar en la señal. Lección repetida del proyecto: donde el prompt no basta, verificación determinista.
+* Verificado en vivo: las 6 quejas antes escapadas ahora escalan (ES+EN); "no me funciona el buceo nocturno" ya NO escala; "no me funciona" tras un mensaje del bot con URL sí escala (vía historial). 3 tests nuevos. Routing/broken-link: 27 + 31 passed, sin regresión.
+
 0.20.64 - (2026-07-23)
 ----------------------
 * **Bloque 2.2 — Deflexión de peticiones de número/contacto directo.** El bot nunca da un número de teléfono/WhatsApp (decisión owner; el guard `contains_phone_number` ya lo impide en las respuestas de RAG), pero una PETICIÓN del cliente caía inconsistente: medido en vivo, "¿me pasas un número para llamar?" ESCALABA a asesor, mientras "dame tu whatsapp" caía al fallback genérico evasivo ("ese detalle no lo tengo a la mano").

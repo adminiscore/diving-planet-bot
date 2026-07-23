@@ -206,3 +206,45 @@ async def test_normal_message_does_not_deflect_as_contact_request():
     with patch("src.agents.supervisor.detect_routing_signals", new=AsyncMock(return_value={})):
         resp = await route_message(state, "quiero reservar buceo para 2 personas")
     assert "🔒" not in resp
+
+
+# --- Bloque 2.3: link roto por señal LLM + backstop de contexto técnico ---
+
+@pytest.mark.asyncio
+async def test_broken_link_signal_escalates_with_tech_context():
+    """"le doy al botón y no pasa nada" no matchea la lista keyword (queja sin
+    token exacto) pero SÍ nombra un medio técnico ("botón") — la señal LLM +
+    el backstop lo escalan como link roto."""
+    state = make_state()
+    with patch("src.agents.supervisor.detect_routing_signals",
+               new=AsyncMock(return_value={"broken_link_complaint": True})):
+        resp = await route_message(state, "le doy al botón y no pasa nada")
+    assert state.step == Step.ESCALATE
+    assert "enlace" in resp.lower() or "link" in resp.lower()
+
+
+@pytest.mark.asyncio
+async def test_broken_link_signal_ignored_without_tech_context():
+    """Backstop determinista: aunque el LLM marque broken_link_complaint=True,
+    si el mensaje NO nombra ningún medio técnico ni hay URL previa (p. ej. "no
+    me funciona el buceo nocturno" — queja de ACTIVIDAD), NO se escala como
+    link roto (el sesgo escalar-ante-la-duda del LLM sobre-disparaba)."""
+    state = make_state()
+    with patch("src.agents.supervisor.detect_routing_signals",
+               new=AsyncMock(return_value={"broken_link_complaint": True})), \
+         patch("src.agents.supervisor.rag_answer", new=AsyncMock(return_value="El buceo nocturno...")):
+        resp = await route_message(state, "no me funciona el buceo nocturno")
+    assert state.step != Step.ESCALATE
+    assert resp
+
+
+@pytest.mark.asyncio
+async def test_broken_link_signal_escalates_when_bot_sent_url():
+    """"no me funciona" solo (sin token) pero justo tras un mensaje del bot con
+    URL → el backstop lo reconoce por el historial y escala."""
+    state = make_state()
+    state.history = [{"role": "assistant", "content": "aquí tienes tu link: https://book.divingplanet.org/x"}]
+    with patch("src.agents.supervisor.detect_routing_signals",
+               new=AsyncMock(return_value={"broken_link_complaint": True})):
+        resp = await route_message(state, "no me funciona")
+    assert state.step == Step.ESCALATE

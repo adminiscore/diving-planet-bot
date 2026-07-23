@@ -678,6 +678,10 @@ BROKEN_LINK_TARGET_TOKENS = {
     "link", "links", "enlace", "enlaces", "url", "urls",
     "form", "formulario", "formularios", "form jotform", "jotform",
     "página", "pagina", "page", "site", "sitio",
+    # ampliado (Bloque 2.3): la queja de link roto casi siempre nombra el
+    # medio que falla — botón/pago/web/checkout — no solo "link"/"página".
+    "botón", "boton", "button", "pago", "pagar", "payment", "checkout",
+    "web", "reserva online", "booking page", "booking link",
 }
 
 # Phrases that indicate the customer wants to cancel an existing booking
@@ -3008,6 +3012,47 @@ def _detect_broken_link_complaint(message: str, state_history: list[dict] | None
     return False
 
 
+def _has_link_tech_context(message: str, state_history: list[dict] | None = None) -> bool:
+    """True si el mensaje nombra un medio técnico (link/página/botón/pago/web...)
+    o el bot acaba de enviar una URL. Backstop determinista para el respaldo LLM
+    de link roto: sin este contexto, "no me funciona el buceo nocturno" (una
+    queja de ACTIVIDAD, no de link) disparaba un falso positivo pese al ejemplo
+    negativo en el prompt (el sesgo de escalar-ante-la-duda sobre-dispara)."""
+    msg_lower = " ".join(message.strip().lower().split())
+    if any(re.search(r"\b" + re.escape(tok) + r"\b", msg_lower) for tok in BROKEN_LINK_TARGET_TOKENS):
+        return True
+    if state_history:
+        for entry in reversed(state_history):
+            if entry.get("role") == "assistant":
+                content = (entry.get("content") or "").lower()
+                return "http://" in content or "https://" in content
+    return False
+
+
+def _broken_link_escalation_response(state: ConversationState, message: str) -> str:
+    """Respuesta única para una queja de link/página/pago roto: avisa al equipo
+    + escala a un asesor que confirma el paso o reenvía el link correcto.
+    Compartida entre el fast-path por keyword y el respaldo LLM
+    (`broken_link_complaint`), para no duplicar el copy ni el efecto de estado."""
+    reason = "🚨 LINK ROTO reportado por el cliente — revisar URLs"
+    state.step = Step.ESCALATE
+    state.quick_replies = []
+    state.pending_escalation_reason = reason
+    state.pending_note = build_lead_summary(state, escalation_reason=reason)
+    logger.warning(f"[SUPERVISOR] Broken-link complaint detected msg={message[:80]!r}")
+    if state.language == "es":
+        return (
+            "Lamento que el enlace no te haya funcionado. Aviso al equipo para revisarlo y te paso "
+            "con un asesor para confirmar el siguiente paso o enviarte el link correcto.\n\n"
+            "Enseguida se pone en contacto contigo. ¡Gracias!"
+        )
+    return (
+        "Sorry the link didn't work. I'll let the team know to check it and connect you with a "
+        "advisor who can confirm the next step or share the correct link.\n\n"
+        "They will get in touch with you shortly. Thanks!"
+    )
+
+
 def _is_substantive_free_text(message: str) -> bool:
     normalized = " ".join(message.strip().lower().split())
     normalized_clean = normalized.strip("?!.,;:")
@@ -4827,23 +4872,7 @@ async def _route_message_inner(state: ConversationState, message: str) -> str:
     # being handed to human staff. Broken-link runs before sensitive on purpose
     # (see the note at the original sensitive block below).
     if _detect_broken_link_complaint(message, state.history):
-        reason = "🚨 LINK ROTO reportado por el cliente — revisar URLs"
-        state.step = Step.ESCALATE
-        state.quick_replies = []
-        state.pending_escalation_reason = reason
-        state.pending_note = build_lead_summary(state, escalation_reason=reason)
-        logger.warning(f"[SUPERVISOR] Broken-link complaint detected (early) msg={message[:80]!r}")
-        if state.language == "es":
-            return (
-                "Lamento que el enlace no te haya funcionado. Aviso al equipo para revisarlo y te paso "
-                "con un asesor para confirmar el siguiente paso o enviarte el link correcto.\n\n"
-                "Enseguida se pone en contacto contigo. ¡Gracias!"
-            )
-        return (
-            "Sorry the link didn't work. I'll let the team know to check it and connect you with a "
-            "advisor who can confirm the next step or share the correct link.\n\n"
-            "They will get in touch with you shortly. Thanks!"
-        )
+        return _broken_link_escalation_response(state, message)
 
     # Red de precisión (auditoría 2026-07-22/23): ESCALATION_KEYWORDS/
     # MENU_KEYWORDS/BACK_KEYWORDS/SENSITIVE_RULES/_ADAPTIVE_DIVING_PATTERN son
@@ -4861,6 +4890,17 @@ async def _route_message_inner(state: ConversationState, message: str) -> str:
     # del extractor de reserva, el sesgo aquí es escalar/enrutar de más que
     # de menos — el propio prompt se lo pide al LLM.
     routing_signals = {} if msg_lower.isdigit() else await detect_routing_signals(message, lang=state.language)
+
+    # Respaldo LLM del gate de LINK ROTO (Bloque 2.3): el detector por keyword
+    # de arriba exige frase-de-queja + token de link (o URL en el turno previo)
+    # — medido en vivo que 10 de 10 quejas realistas se escapaban ("el link no
+    # me deja pagar", "me sale página en blanco", "le doy al botón y no pasa
+    # nada", "the payment page crashes"). La señal `broken_link_complaint`
+    # (misma llamada de routing, sin coste extra) las recupera. Se coloca justo
+    # tras calcular las señales y antes del bloque sensible, manteniendo la
+    # prioridad "safety first" del gate por keyword de más arriba.
+    if routing_signals.get("broken_link_complaint") and _has_link_tech_context(message, state.history):
+        return _broken_link_escalation_response(state, message)
 
     sensitive_escalation_early = (
         None if routing_signals.get("adaptive_diving_topic")

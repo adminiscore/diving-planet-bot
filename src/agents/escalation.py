@@ -142,18 +142,19 @@ _ROUTING_TOOL = {
     "function": {
         "name": "detect_routing_signals",
         "description": (
-            "Classify a customer message for a scuba booking bot for 6 "
+            "Classify a customer message for a scuba booking bot for 7 "
             "safety/routing signals, in ANY regional Spanish or English "
             "phrasing, slang, or diminutive form — not just the exact "
-            "clinical/formal wording. Bias applies to sensitive_topic AND "
-            "adaptive_diving_topic: when genuinely unsure whether a MEDICAL/"
-            "weather/real-time/complaint issue or a DISABILITY/accessibility "
-            "topic applies, still set it — missing a real medical emergency "
-            "or a real accessibility need is worse than a false positive. "
-            "wants_human, wants_menu_or_restart, booking_change_topic and "
-            "asks_for_contact_number are the OPPOSITE: be STRICT, only set "
-            "them on an explicit request (see their descriptions) — a normal "
-            "booking message must never be misread as one."
+            "clinical/formal wording. Bias applies to sensitive_topic, "
+            "adaptive_diving_topic AND broken_link_complaint: when genuinely "
+            "unsure whether a MEDICAL/weather/real-time/complaint issue, a "
+            "DISABILITY/accessibility topic, or a BROKEN link/page/payment "
+            "applies, still set it — missing a real one is worse than a false "
+            "positive. wants_human, wants_menu_or_restart, "
+            "booking_change_topic and asks_for_contact_number are the "
+            "OPPOSITE: be STRICT, only set them on an explicit request (see "
+            "their descriptions) — a normal booking message must never be "
+            "misread as one."
         ),
         "parameters": {
             "type": "object",
@@ -217,6 +218,23 @@ _ROUTING_TOOL = {
                         "itself. This routes to the DIVE TO HEAL adaptive-"
                         "diving program, NOT a medical escalation — never "
                         "also set `sensitive_topic` for the same message."
+                    ),
+                },
+                "broken_link_complaint": {
+                    "type": "boolean",
+                    "description": (
+                        "True if the customer reports that a LINK, booking "
+                        "page, payment page, button or form the bot/team sent "
+                        "is BROKEN or not working — won't open, won't load, "
+                        "blank page, crashes, throws an error, dead link, "
+                        "button does nothing, goes nowhere, in any phrasing "
+                        "('el link no me deja pagar', 'me sale página en "
+                        "blanco', 'le doy al botón y no pasa nada', 'the "
+                        "payment page crashes', 'your booking link is dead'). "
+                        "This is a technical failure to FIX, not a general "
+                        "question — do NOT set it for 'no me funciona el buceo "
+                        "nocturno?' (that's a normal question about an "
+                        "activity, not a broken link)."
                     ),
                 },
                 "asks_for_contact_number": {
@@ -290,7 +308,10 @@ def _routing_system_prompt(lang: str) -> str:
             "PREGUNTA por la política de cancelación NO es booking_change_topic. "
             "(6) si pide un número de teléfono/WhatsApp/correo o una vía de "
             "contacto FUERA de este chat → asks_for_contact_number (también "
-            "estricto). Llama a `detect_routing_signals`."
+            "estricto), o (7) reporta que un LINK/página/pago/botón NO "
+            "funciona (roto, en blanco, da error) → broken_link_complaint "
+            "(mismo sesgo de 'ante la duda, márcalo'). Llama a "
+            "`detect_routing_signals`."
         )
     return (
         "You are a safety layer for a scuba diving bot. The bot's keyword "
@@ -312,8 +333,10 @@ def _routing_system_prompt(lang: str) -> str:
         "(companions, group, activities) is NEVER wants_human, and a "
         "QUESTION about the cancellation policy is NOT booking_change_topic. "
         "(6) if they ask for a phone/WhatsApp/email or a contact channel "
-        "OUTSIDE this chat → asks_for_contact_number (also strict). Call "
-        "`detect_routing_signals`."
+        "OUTSIDE this chat → asks_for_contact_number (also strict), or (7) "
+        "report that a LINK/page/payment/button is NOT working (broken, "
+        "blank, error) → broken_link_complaint (same 'when unsure, flag it' "
+        "bias). Call `detect_routing_signals`."
     )
 
 
