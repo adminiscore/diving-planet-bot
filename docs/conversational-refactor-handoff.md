@@ -717,3 +717,84 @@ Tests: 4 nuevos, verificados contra el comportamiento real (varios intentos ante
 descartados por usar mocks que no reflejaban lo que el LLM/regex reales producen para
 esos mensajes — lección de proceso: verificar el mock contra el pipeline real antes de
 fijar la aserción, no asumir). Suite: 1935 passed. ruff limpio.
+
+---
+
+# Multi-ítem, cierre final (v0.20.60, 2026-07-23): pérdida silenciosa por ABSTENCIÓN correcta
+
+Con el mecanismo de v0.20.59 desplegado, el owner pidió cerrar el tema auditando
+`group_size` de UNA sola actividad (dígito/letra/plural vago/bilingüe) igual que se
+hizo para 3+. Ese campo salió robusto sin cambios — pero durante la re-verificación en
+vivo de "1 o más actividades" apareció un hallazgo más profundo que todo lo anterior.
+
+## El hallazgo: todas las guardas previas reaccionan a un valor MAL puesto, ninguna a una clave AUSENTE
+
+Las guardas de v0.20.59 (`_consume_number` sobre `group_allocation`/`companion_qty`/
+`other_companions`) descartan una entrada cuando el LLM SÍ la incluye pero sin
+respaldo numérico real. Pero cuando el LLM se ABSTIENE correctamente (no incluye la
+actividad en absoluto, tal y como se le pide ante un plural sin número propio), no hay
+ninguna entrada que descartar — y ninguna guarda existente nota que el TEXTO mencionaba
+esa actividad. Reproducido en vivo con un spy sobre `fill_gaps`:
+
+```
+"tres bucean, mis amigos hacen snorkel, y dos hacen el minicurso"
+→ fill_gaps devuelve {'group_size': 5, 'group_allocation': {'certified_diving': 3, 'minicourse': 2}}
+```
+
+"snorkel" no aparece en NINGÚN sitio del patch — comportamiento correcto del modelo
+(instrucción de abstenerse cumplida), pero el bot pasaba directo a pedir ubicación sin
+preguntar nunca por el snorkel mencionado. Silencioso, sin ningún log de advertencia.
+
+## Fix: red de última instancia por palabra clave, después de todo lo demás
+
+`_mentioned_product_activities(message)` (regex laxa por producto: `buce/dive/scuba`,
+`minicurso/minicourse`, `snorkel`) se compara contra lo que quedó registrado en
+`state.detected_group_allocation` + la actividad principal efectiva, DESPUÉS de que
+corran regex, gap-fill Y la señal de acompañante (`detect_special_signals`) — nunca
+antes. Cualquier actividad mencionada y no contabilizada en ningún sitio se encola
+(`pending_companion_queue`) y se pregunta. Acotado a mensajes que mencionan a otra
+persona (`_mentions_person`) para no disparar en cada mención suelta del hablante
+principal.
+
+**Por qué va DESPUÉS y no antes**: la primera versión del fix lo colocaba justo tras
+`_understand()`, antes del bloque de `detect_special_signals` — y rompió 2 tests
+existentes: el chequeo laxo por palabra clave ganaba la carrera y preguntaba por la
+actividad "equivocada" (la primera que encontraba en el texto) en vez de dejar que el
+mecanismo preciso (que sabe distinguir cantidades confirmadas de no confirmadas)
+resolviera primero. Lección: una red de última instancia debe ir literalmente al
+FINAL, nunca competir con un mecanismo más preciso que ya existe para el mismo caso.
+
+## Dos bugs adicionales encontrados durante la re-verificación en vivo (mismo código, no relacionados con el fix de arriba)
+
+1. **Restatement de la actividad principal encolado como si fuera un acompañante
+   nuevo**: en un turno MID-FLOW (reserva ya establecida) de "añadir acompañante
+   singular" ("viene también un amigo que quiere hacer snorkel"), `fill_gaps` puede
+   alucinar un `group_allocation` COMPLETO sin ningún número real en el texto
+   (`{certified_diving: 1, snorkel: 1}`) — ninguna de las dos cantidades tiene
+   respaldo, así que la guarda de v0.20.59 las descarta ambas. Sin fix, encolaba
+   TAMBIÉN la actividad principal ya confirmada (`certified_diving`), y el bot
+   preguntaba sin sentido "¿Cuántos serían para buceo certificado?" — una actividad
+   que ni siquiera es un acompañante, ya está resuelta desde antes. Arreglado
+   excluyendo `prev_activity` (la actividad principal ANTES de este turno) de la cola;
+   solo aplica en turnos mid-flow (`prev_activity` es `None` en el mensaje de
+   apertura, donde la actividad principal SÍ puede ser un sub-grupo legítimo por
+   confirmar).
+2. **Cola con entrada obsoleta tras resolución por otra vía**: en el mismo mensaje, el
+   fast-path regex (`_ADDED_PERSON_RE` + `_SINGULAR_COMPANION_RE`, compañero singular
+   inequívoco "un amigo") resuelve `snorkel` correctamente con qty=1 SIN necesidad de
+   preguntar — pero la entrada "snorkel" ya había quedado encolada por la guarda del
+   punto 1 antes de que el fast-path corriera, y el bot repreguntaba una cantidad que
+   ya estaba fijada sin ambigüedad. Arreglado: cuando el fast-path fusiona con éxito,
+   se elimina esa actividad de `pending_companion_queue` si estaba ahí.
+
+## Verificación
+
+Los tres hallazgos verificados en vivo con LLM real (trazas con spy sobre `fill_gaps`/
+`detect_special_signals`), no solo con mocks. 2 tests nuevos añadidos a la suite
+existente de multi-ítem. Suite completa: 1937 passed, 15 skipped. ruff limpio (mismos
+findings preexistentes de antes de esta sesión, no relacionados con estos cambios).
+
+Con esto, el owner considera cerrado el tema "multi-ítem / other_companions" completo
+(fiabilidad de cantidad + puente pregunta→acción + pérdida silenciosa por abstención).
+Siguiente en la lista de prioridad acordada: Cancelación, Deflexión, Link roto (a
+confirmar con el owner antes de arrancar, no asumir el orden).

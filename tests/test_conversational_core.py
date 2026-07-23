@@ -1224,3 +1224,78 @@ async def test_other_companions_post_close_asks_before_adding_unconfirmed_item()
     assert types2.get("snorkel") == 2
     assert types2.get("beginner") == 1
     assert "norkel" in resp2
+
+
+@pytest.mark.asyncio
+async def test_correctly_abstained_activity_is_not_silently_lost():
+    """Hallazgo en vivo 2026-07-23: "tres bucean, mis amigos hacen snorkel, y
+    dos hacen el minicurso" hace que fill_gaps se ABSTENGA correctamente de
+    "snorkel" (no incluye la clave en absoluto, tal y como se le pide ante un
+    plural sin número propio) — pero eso significaba que la mención se perdía
+    en silencio, sin preguntar nunca. La red debe detectar que el texto
+    menciona "snorkel" y no aparece en ningún sitio del estado, y preguntar."""
+    state = make_state("es")
+    state.detected_activity = "certified_diving"
+    state.is_certified = True
+    state.core_pending_slot = core.SLOT_LOCATION
+
+    with patch.object(core, "fill_gaps", new=AsyncMock(return_value={
+        "group_size": 5,
+        "group_allocation": {"certified_diving": 3, "minicourse": 2},
+    })):
+        resp = await route_message(
+            state, "tres bucean, mis amigos hacen snorkel, y dos hacen el minicurso"
+        )
+
+    assert state.detected_group_allocation.get("certified_diving") == 3
+    assert state.detected_group_allocation.get("minicourse") == 2
+    assert "snorkel" not in state.detected_group_allocation, (
+        "snorkel no debe aparecer con una cantidad inventada"
+    )
+    assert state.core_pending_slot == core.SLOT_COMPANION_QTY
+    assert state.pending_companion_activity == "snorkel"
+    assert "norkel" in resp.lower()
+
+    # Al responder con el número real, snorkel se registra sin inventar nada.
+    with patch.object(core, "fill_gaps", new=AsyncMock(return_value={})), \
+         patch.object(core, "detect_special_signals", new=AsyncMock(return_value={})):
+        await route_message(state, "somos 2 para snorkel")
+    assert state.detected_group_allocation.get("snorkel") == 2
+    assert not state.pending_companion_queue
+
+
+@pytest.mark.asyncio
+async def test_hallucinated_main_activity_restatement_is_not_queued_as_companion():
+    """Hallazgo en vivo 2026-07-23 (regresión detectada al verificar el fix
+    anterior): en un turno MID-FLOW de "añadir acompañante singular"
+    ("viene también un amigo que quiere hacer snorkel", tras una reserva de
+    buceo certificado ya cerrada), fill_gaps puede alucinar un
+    group_allocation COMPLETO sin ningún número real en el texto
+    ({certified_diving:1, snorkel:1}) — ninguna de las dos cantidades tiene
+    respaldo, así que ambas se descartan. Sin el fix, la actividad PRINCIPAL
+    ya confirmada (certified_diving) se encolaba igual que si fuera un
+    acompañante nuevo, y el bot preguntaba "¿Cuántos serían para buceo
+    certificado?" — sin sentido, además de pisar la resolución correcta del
+    fast-path regex (compañero singular inequívoco "un amigo" -> snorkel:1
+    sin preguntar)."""
+    state = make_state("es")
+    await route_message(state, "soy buzo certificado, quiero bucear desde cartagena, voy solo")
+    await route_message(state, "no")
+    await route_message(state, "no soy colombiano")
+    assert state.mixed_cart[0]["type"] == "cert"
+
+    with patch.object(core, "fill_gaps", new=AsyncMock(return_value={
+        "group_allocation": {"certified_diving": 1, "snorkel": 1},
+    })):
+        resp = await route_message(state, "viene también un amigo que quiere hacer snorkel")
+
+    assert "certificado" not in resp.lower(), (
+        "no debe re-preguntar por la actividad principal ya confirmada"
+    )
+    types = {it["type"]: it["qty"] for it in state.mixed_cart}
+    assert types.get("cert") == 1
+    assert types.get("snorkel") == 1, (
+        "el compañero singular inequívoco se resuelve sin preguntar (qty=1)"
+    )
+    assert state.core_pending_slot != core.SLOT_COMPANION_QTY
+    assert not state.pending_companion_queue

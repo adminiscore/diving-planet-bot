@@ -621,6 +621,26 @@ def _consume_number(counts: Counter, n) -> bool:
 
 _ACTIVITY_TO_CART_TYPE = {"certified_diving": "cert", "minicourse": "beginner", "snorkel": "snorkel"}
 
+# Auditoría multi-ítem 2026-07-23 (segundo hallazgo, más profundo que el
+# primero): cuando el LLM se ABSTIENE correctamente ante un plural vago (no
+# incluye la actividad en group_allocation/other_companions en absoluto, tal
+# y como se le pide), esa actividad puede desaparecer SIN QUE NADA LO NOTE —
+# "tres bucean, mis amigos hacen snorkel, y dos hacen el minicurso" hizo que
+# el propio fill_gaps omitiera "snorkel" del todo (comportamiento correcto
+# del modelo), y sin este chequeo la mención se perdía en silencio, sin
+# preguntar. Deliberadamente laxo (palabra clave, no clasificación fina): un
+# falso positivo aquí cuesta una pregunta de más, nunca una reserva
+# equivocada — mismo principio de "mejor preguntar" de todo este bloque.
+_PRODUCT_MENTION_RE = {
+    "certified_diving": re.compile(r"\bbuce\w*|\bvuce\w*|\bbuse[ao]\w*|\bdive\b|\bdiving\b|\bscuba\b", re.IGNORECASE),
+    "minicourse": re.compile(r"\bmini[\s-]?curso\b|\bmini[\s-]?course\b", re.IGNORECASE),
+    "snorkel": re.compile(r"\be?snork\w*|\be?snorqu\w*", re.IGNORECASE),
+}
+
+
+def _mentioned_product_activities(message: str) -> set:
+    return {act for act, pat in _PRODUCT_MENTION_RE.items() if pat.search(message)}
+
 
 # Campos que CONDUCEN la reserva en el núcleo (alimentan next_missing_slot o el
 # gating de links/moneda). duration/cert_dives/cert_days quedan fuera del
@@ -746,7 +766,26 @@ async def _understand(state: ConversationState, message: str) -> tuple:
                 # que el resto del núcleo): cada actividad sin respaldo
                 # numérico real se encola para preguntarla, en vez de
                 # perderse o de facturar una cantidad inventada.
+                #
+                # Excepción (bug en vivo 2026-07-23): en un turno MID-FLOW de
+                # "añadir acompañante" (ya había `prev_activity` establecido
+                # antes de este mensaje), fill_gaps puede RESTATEAR la
+                # actividad principal dentro del mismo group_allocation
+                # alucinado ("viene también un amigo que quiere hacer
+                # snorkel" → {certified_diving:1, snorkel:1}, sin ningún
+                # número real en el texto para ninguna de las dos). Si esa
+                # restatement se descarta por falta de respaldo, encolarla iba
+                # a preguntar por la actividad PRINCIPAL ya confirmada
+                # ("¿Cuántos serían para buceo certificado?") en vez de por el
+                # acompañante real — sin sentido, y pisa la pregunta correcta
+                # que el fast-path regex de más abajo (`_ADDED_PERSON_RE` +
+                # `_SINGULAR_COMPANION_RE`) ya sabe resolver sin preguntar. No
+                # aplica al mensaje de apertura (`prev_activity` es None ahí),
+                # donde la actividad principal SÍ puede ser un sub-grupo
+                # legítimo por confirmar.
                 for act in dropped:
+                    if act == prev_activity:
+                        continue
                     if act not in state.pending_companion_queue:
                         state.pending_companion_queue.append(act)
                 if cleaned:
@@ -838,6 +877,13 @@ async def _understand(state: ConversationState, message: str) -> tuple:
             _restore_main_diver_fields(state, prev_activity, prev_service_id, prev_is_certified, prev_last_dive, prev_refresher)
             _merge_companion_activity(state, turn_act, explicit_qty or 1)
             companion_merged_fastpath = True
+            # `turn_act` puede haber quedado encolado arriba (guard del
+            # alloc_patch alucinado, sin respaldo numérico) antes de que este
+            # fast-path lo resolviera de verdad por otra vía (compañero
+            # singular inequívoco) — sin este descarte, se preguntaba una
+            # cantidad que ya se acababa de fijar sin ambigüedad.
+            if turn_act in state.pending_companion_queue:
+                state.pending_companion_queue.remove(turn_act)
 
     # Normalizar group_size con el reparto: si el reparto suma MÁS personas que el
     # group_size conocido, el total manda. Bug en vivo (2026-07-22): "1 pero viene
@@ -1502,6 +1548,42 @@ async def maybe_handle_turn(
                 response = greeting + response
                 state.history.append({"role": "assistant", "content": response})
                 return response
+
+    # Multi-ítem, segundo hallazgo (más profundo que el primero, auditoría
+    # 2026-07-23): cuando el LLM se ABSTIENE correctamente ante un plural
+    # vago (no incluye la actividad en group_allocation/other_companions en
+    # absoluto, tal y como se le pide), esa actividad puede desaparecer SIN
+    # QUE NADA LO NOTE — el guard de arriba solo reacciona cuando el LLM SÍ
+    # incluye un valor sin respaldo; si directamente omite la clave, no hay
+    # nada que descartar. "tres bucean, mis amigos hacen snorkel, y dos hacen
+    # el minicurso" hizo que fill_gaps omitiera "snorkel" del todo
+    # (comportamiento correcto del modelo) y la mención se perdía en
+    # silencio. Se compara qué actividades MENCIONA el texto (palabra clave,
+    # independiente de lo que el LLM haya estructurado) contra lo que quedó
+    # registrado en cualquier sitio (tras TODO el procesamiento de arriba,
+    # regex + gap-fill + señales) — si algo se mencionó y no aparece en
+    # ningún sitio, se pregunta. Va DESPUÉS del bloque de señales (no antes)
+    # para dejar que el mecanismo preciso (companion_qty/other_companions,
+    # que sabe distinguir "quién ya quedó confirmado") resuelva primero; esto
+    # es solo la red de última instancia para lo que ni siquiera llegó a
+    # entrar en la estructura del LLM. Acotado a mensajes que mencionan a
+    # otra persona (`_mentions_person`) para no disparar en cada mención
+    # suelta.
+    mentioned = _mentioned_product_activities(message)
+    if mentioned and _mentions_person(message) and not state.pending_companion_queue:
+        accounted = set((state.detected_group_allocation or {}).keys())
+        main_act = _effective_activity(state)
+        if main_act:
+            accounted.add(main_act)
+        missing_mentions = [act for act in mentioned if act not in accounted]
+        if missing_mentions:
+            for act in missing_mentions:
+                if act not in state.pending_companion_queue:
+                    state.pending_companion_queue.append(act)
+            state.pending_companion_activity = state.pending_companion_queue.pop(0)
+            response = greeting + ask_slot(state, SLOT_COMPANION_QTY)
+            state.history.append({"role": "assistant", "content": response})
+            return response
 
     # Red anti-BUCLE de slot (Fase C, 2026-07-23): si el turno NO avanzó y el
     # slot pendiente es booleano/escalar, el cliente pudo haber respondido de
