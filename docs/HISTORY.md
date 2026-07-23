@@ -1,6 +1,12 @@
 History
 =======
 
+0.20.57 - (2026-07-23)
+----------------------
+* **Recall rico validado end-to-end** (Prioridad 2 punto 1 del handoff de Álvaro): `_full_booking_recap` ya existía pero nunca se había probado a través de `maybe_handle_turn`. Verificado en vivo con LLM real: 7 frases regionales de recap ("qué llevamos hasta ahora", "recapitulemos", mexicanismos/argentinismos/paisa), recap en frío sin romper, grupo mixto listando todas las actividades, y consistencia tras añadir un acompañante post-cierre. 4 tests nuevos, todos en verde.
+* **Hallazgo y cierre en el mismo día**: una pregunta de recomendación pura ("¿qué me recomiendas?") podía confundirse con un pedido de recordar un dato, con un historial de conversación concreto (5/5 reproducible). Reforzado el prompt de `detect_special_signals` con un ejemplo negativo explícito — verificado que el caso límite ya se abstiene correctamente sin romper la clasificación de los casos de recap legítimos.
+* Suite: **1928 passed**, 15 skipped. ruff limpio.
+
 0.20.56 - (2026-07-23)
 ----------------------
 * **Fase B — cierre de los gaps de acompañante que quedaban abiertos + un bug NUEVO encontrado en vivo por el owner** (`bd27755`). El owner probó en PRE "si, tengo el AOWD, además tengo 3 amigos que quieren hacer alguna actividad" → facturaba **3** buzos certificados ($534) en vez de **4** (ella + 3 amigos), y no preguntaba la actividad de los amigos. Tres causas encadenadas:

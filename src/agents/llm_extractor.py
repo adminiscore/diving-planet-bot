@@ -362,7 +362,14 @@ _SIGNALS_TOOL = {
                         "recaps the WHOLE booking. Use a specific field only "
                         "for a specific question ('¿cuántas personas dije?' → "
                         "group_size). Do NOT set this for product/price/"
-                        "logistics questions — those are answered elsewhere."
+                        "logistics questions — those are answered elsewhere. "
+                        "IMPORTANT distinction: a forward-looking RECOMMENDATION "
+                        "question ('¿qué me recomiendas?', '¿cuál es mejor, "
+                        "snorkel o buceo?', 'what do you suggest for us?') is "
+                        "NOT a recall — it asks for NEW advice, not to repeat "
+                        "past info. Leave this field unset for those; only set "
+                        "it when the message is unambiguously asking to repeat "
+                        "something already said."
                     ),
                 },
                 "companion_activity": {

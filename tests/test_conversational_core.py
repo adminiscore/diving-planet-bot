@@ -1023,3 +1023,79 @@ def test_full_booking_recap_lists_all_activities_and_location():
 def test_full_booking_recap_none_when_nothing_resolved():
     st = ConversationState(conversation_id="recap2"); st.language = "es"
     assert core._full_booking_recap(st) is None
+
+
+# ---------------------------------------------------------------------------
+# Recall rico end-to-end (Prioridad 2, punto 1 — pendiente del handoff de
+# Álvaro: "_full_booking_recap existe, falta validar vía maybe_handle_turn").
+# Verificado en vivo con LLM real antes de escribir estos tests (temp+audit
+# 2026-07-23): 7 frases regionales ("qué llevamos hasta ahora", "recapitulemos",
+# "che, decime de nuevo qué habíamos armado", "parce recuérdame que llevamos"...)
+# clasifican bien como booking_recap; el recap en frío (nada resuelto) cae a
+# RAG sin romperse; una pregunta de RECOMENDACIÓN pura ("y tú qué recomiendas
+# para nosotros?") no se secuestra como recall. Un caso límite SÍ mostró
+# variabilidad con un historial artificial recortado (misclasificó como
+# recall_field=group_size en vez de responder la recomendación) — no se
+# reprodujo con el historial real completo del pipeline; documentado como
+# riesgo de baja severidad en docs/conversational-refactor-handoff.md.
+# ---------------------------------------------------------------------------
+
+@pytest.mark.asyncio
+async def test_booking_recap_end_to_end_via_route_message():
+    """El camino completo: señal LLM -> _recall_answer -> _full_booking_recap,
+    con recap correcto Y re-pregunta del slot pendiente en el mismo turno."""
+    state = make_state("es")
+    state.detected_activity = "certified_diving"
+    state.is_certified = True
+    state.location = "cartagena"
+    state.detected_group_size = 3
+    state.core_pending_slot = core.SLOT_SAFETY
+    with patch.object(core, "detect_special_signals",
+                       new=AsyncMock(return_value={"recall_field": "booking_recap"})):
+        resp = await route_message(state, "¿qué llevamos hasta ahora?")
+    assert "3" in resp and ("buceo" in resp.lower() or "certificado" in resp.lower())
+    assert "2 años" in resp or "2 anos" in resp  # re-pregunta lo pendiente en el MISMO turno
+    assert state.core_pending_slot == core.SLOT_SAFETY
+
+
+@pytest.mark.asyncio
+async def test_booking_recap_mixed_group_lists_every_activity():
+    state = make_state("es")
+    state.detected_group_allocation = {"certified_diving": 2, "snorkel": 1}
+    state.detected_group_size = 3
+    state.location = "cartagena"
+    state.core_pending_slot = core.SLOT_NATIONALITY
+    with patch.object(core, "detect_special_signals",
+                       new=AsyncMock(return_value={"recall_field": "booking_recap"})):
+        resp = await route_message(state, "a ver, recapitulemos, en que quedamos")
+    assert "snorkel" in resp.lower() and ("certificado" in resp.lower() or "buceo" in resp.lower())
+
+
+@pytest.mark.asyncio
+async def test_booking_recap_cold_start_falls_back_to_rag_without_crashing():
+    """Pedir el recap sin nada resuelto todavía (primer mensaje) — el estado no
+    tiene nada real que recordar, así que debe caer a RAG limpio, nunca
+    inventar un resumen ni romperse."""
+    state = make_state("es")
+    with patch.object(core, "detect_special_signals",
+                       new=AsyncMock(return_value={"recall_field": "booking_recap"})), \
+         patch("src.agents.supervisor.rag_answer", new=AsyncMock(return_value="Respuesta RAG")):
+        resp = await route_message(state, "¿qué te había pedido?")
+    assert "Respuesta RAG" in resp
+
+
+@pytest.mark.asyncio
+async def test_recommendation_question_not_hijacked_by_recall_signal():
+    """Regresión del hallazgo de la auditoría: una pregunta de RECOMENDACIÓN
+    pura no debe tratarse como un pedido de recordar, aunque el LLM real
+    mostró variabilidad en un caso límite con historial artificial recortado."""
+    state = make_state("es")
+    state.detected_activity = "certified_diving"
+    state.is_certified = True
+    state.location = "cartagena"
+    state.detected_group_size = 3
+    state.core_pending_slot = core.SLOT_SAFETY
+    with patch.object(core, "detect_special_signals", new=AsyncMock(return_value={})), \
+         patch("src.agents.supervisor.rag_answer", new=AsyncMock(return_value="Respuesta RAG")):
+        resp = await route_message(state, "y tu que recomiendas para nosotros?")
+    assert "Respuesta RAG" in resp

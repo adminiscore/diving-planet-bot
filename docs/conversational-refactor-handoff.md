@@ -572,3 +572,79 @@ Esta red se llama en casi cada mensaje no-numérico (ya que la mayoría de mensa
 no matchean ninguna lista de palabras clave) — una llamada LLM barata
 (`extraction_model`, ~80 tokens de salida) añadida al turno. Decisión explícita del
 owner: preferible a perder un caso médico/de emergencia real por un ahorro de coste.
+
+---
+
+# Sesión 2026-07-23 — Recall rico end-to-end: validado + 1 hallazgo de baja severidad
+
+> Continúa el punto 1 de Prioridad 2 del handoff de Álvaro ("recall rico end-to-end
+> — `_full_booking_recap` existe, falta validar vía `maybe_handle_turn`"). Mismo
+> método de auditoría: probar contra el LLM real, documentar todo lo que sea un
+> posible error antes de darlo por bueno.
+
+## Validado en vivo con LLM real
+
+- **7 frases regionales** piden el recap general y se clasifican bien como
+  `booking_recap`: "¿qué te había pedido?", "¿qué llevamos hasta ahora?", "a ver,
+  recapitulemos, en que quedamos", "me puedes recordar todo lo que hemos hablado?",
+  "oye disculpa, que era lo que tenia reservado?" (MX), "che, decime de nuevo que
+  habiamos armado" (AR), "parce recuerdame que llevamos" (CO/paisa).
+- **Recap en frío** (nada resuelto todavía, primer mensaje) → `_full_booking_recap`
+  devuelve `None` correctamente y el turno cae a RAG sin romperse.
+- **Pregunta de recomendación pura** ("y tú qué recomiendas para nosotros?") con el
+  historial REAL del pipeline → NO se secuestra como recall, se responde bien.
+- El recap **re-pregunta el slot pendiente en el mismo turno** (ya lo hacía el
+  código, confirmado): pides el recap a mitad de flujo y el bot te lo da + sigue
+  preguntando lo que faltaba, en un solo mensaje.
+- Grupo mixto (`{"certified_diving": 2, "snorkel": 1}`) lista todas las
+  actividades correctamente, no solo la principal.
+- Consistencia post-cierre: un acompañante añadido DESPUÉS del resumen final
+  actualiza `detected_group_allocation` (vía `_merge_companion_activity`), que es
+  la misma fuente que lee `_full_booking_recap` — no hay desincronización entre
+  lo que muestra el carrito y lo que muestra el recap.
+
+## 🟡 Hallazgo — ambigüedad recall-vs-recomendación (baja severidad, no reproducida en el pipeline real)
+
+Con un historial ARTIFICIAL recortado a mano (2 turnos manuales, no el formato
+real que genera el propio núcleo), "¿qué me recomiendas para mi grupo?" se
+clasificó *consistentemente* (5/5 intentos) como `recall_field: group_size` en
+vez de tratarse como pregunta de recomendación — habría respondido "me dijiste
+que sois 3" en lugar de recomendar un plan.
+
+**Con el historial REAL del pipeline** (turnos tal y como los genera el propio
+núcleo, con el formato/markdown exacto de sus respuestas) el MISMO mensaJE
+clasificó bien como `booking_recap` — que es benigno incluso si no es la
+clasificación "ideal", porque igual re-pregunta lo pendiente después. No se ha
+conseguido reproducir el caso peligroso (`group_size`) con el pipeline real.
+
+**Por qué se anota igual**: la clasificación de un LLM no es 100% estable ante
+variaciones de contexto/historial — que no se haya reproducido HOY no significa
+que no pueda pasar con una conversación real distinta. Es un riesgo de baja
+severidad (el peor caso observado sigue siendo una respuesta parcial, nunca un
+precio/link inventado) pero vale la pena una mejora barata: añadir al prompt de
+`detect_special_signals` un ejemplo negativo explícito distinguiendo "qué
+recomiendas/cuál es mejor" (NO es recall) de "qué llevamos/qué habíamos dicho"
+(SÍ es recall) — igual que se hizo con otros prompts de este proyecto cuando
+apareció una ambigüedad medida.
+
+## Tests nuevos
+
+4 tests en `tests/test_conversational_core.py` (antes solo había 2 tests
+aislados de `_full_booking_recap()`, nunca probado vía `maybe_handle_turn`):
+recap end-to-end con re-pregunta, grupo mixto, recap en frío sin romper, y
+pregunta de recomendación no secuestrada. Suite: 1928 passed, 15 skipped.
+
+## ✅ Hallazgo cerrado el mismo día
+
+Se reforzó el prompt de `detect_special_signals` (`recall_field`) con el ejemplo
+negativo de arriba, distinguiendo explícitamente "recomiéndame"/"cuál es mejor"
+(NO es recall) de "qué llevamos"/"qué habías dicho" (SÍ es recall). Verificado:
+el caso límite artificial que fallaba 5/5 ahora se abstiene 5/5, y los 7 casos
+de recap legítimo (incluidas las variantes regionales) siguen clasificando bien.
+Suite completa: 1928 passed.
+
+## Siguiente paso concreto
+
+Seguir con el resto de Prioridad 2 del handoff de Álvaro: multi-ítem
+(`other_companions`, hoy inerte por <95% de fiabilidad), deflexión, dominio
+blindado/anti-manipulación.
