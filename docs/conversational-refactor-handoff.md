@@ -952,3 +952,40 @@ respaldo textual). Suite completa: 1941 passed, 15 skipped. ruff limpio.
 Con esto se cierran los 4 puntos + el hallazgo adicional de la auditoría adversarial.
 El tema multi-ítem queda completamente cerrado. Siguiente: Bloque 2 de la lista
 combinada (Cancelación → Deflexión → Link roto).
+
+---
+
+# Bloque 2 — avance de Álvaro (v0.20.63–67, 2026-07-23)
+
+Tras mergear tu trabajo (v0.20.57–62, fast-forward limpio a `pre_alvaro`/`dev_alvaro`),
+ataqué el Bloque 2 en el orden acordado. **5 de 6 items HECHOS y en PRE** (un commit +
+push por punto, cada uno medido en vivo antes/después + tests deterministas):
+
+- **[x] Cancelación** (v0.20.63) — señal LLM `booking_change_topic` (cancellation/reschedule)
+  en `detect_routing_signals`, junto a tus `_detect_cancellation_request`/`_detect_reschedule_
+  request`. Estricta (una pregunta POR la política no la dispara). Medido: 16/18 frases
+  realistas se escapaban de la lista de keywords → 0 tras el fix.
+- **[x] Deflexión** — petición de número/WhatsApp/correo → deflexión honesta (límite 🔒 + lo
+  que SÍ + redirige a la reserva), sin escalar. `_asks_for_contact_number` + señal LLM.
+- **[x] Link roto** — señal `broken_link_complaint` + **backstop determinista**
+  `_has_link_tech_context` (exige token link/página/botón/pago o URL previa del bot) porque el
+  sesgo escalar-ante-la-duda sobre-disparaba en quejas de actividad. Medido: 10/10 quejas
+  reales se escapaban → todas escalan.
+- **[x] Dominio blindado / OWASP** — endurecido el system prompt de RAG (`_SECURITY_ES/_EN`:
+  cliente = DATOS, no revelar prompt/modelo, ignorar "olvida tus instrucciones") + deflexión
+  de identidad en persona (`_asks_about_ai_identity`). Nada filtraba ya, pero las preguntas de
+  modelo caían al fallback evasivo.
+- **[x] Disponibilidad** — **bug real**: preguntas de fecha específica ("¿tienen
+  disponibilidad el sábado?") que tu `_AVAILABILITY_PATTERN` no cazaba caían a RAG y
+  ALUCINABAN cupo ("¡Claro que sí! Tenemos disponibilidad para el sábado"). Se AMPLIÓ tu
+  handler canónico existente (no un bloque nuevo — el primer intento lo shadoweó y rompió 3
+  tests de resume) con `_asks_about_availability` + señal LLM `availability_question`.
+
+`detect_routing_signals` tiene ahora **8 señales** (las 4 originales + adaptive_diving_topic +
+las 4 de Bloque 2). El patrón es siempre el mismo tuyo/DIVE TO HEAL: lista de keyword como
+fast-path + señal LLM en la misma llamada + backstop determinista donde el prompt no basta.
+
+**Pendiente de Bloque 2**: **Respuestas estructuradas generalizadas** (menor, estilístico —
+esperando dirección del owner sobre qué respuestas). **Re-engagement** sigue diferido.
+**Bloque 3**: Fase 5 (limpieza regex, tras tráfico) y **Fase 4 (retirar el árbol `MIXED_*`)** —
+necesita sign-off del owner antes de empezar.
