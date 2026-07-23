@@ -1,6 +1,12 @@
 History
 =======
 
+0.20.64 - (2026-07-23)
+----------------------
+* **Bloque 2.2 — Deflexión de peticiones de número/contacto directo.** El bot nunca da un número de teléfono/WhatsApp (decisión owner; el guard `contains_phone_number` ya lo impide en las respuestas de RAG), pero una PETICIÓN del cliente caía inconsistente: medido en vivo, "¿me pasas un número para llamar?" ESCALABA a asesor, mientras "dame tu whatsapp" caía al fallback genérico evasivo ("ese detalle no lo tengo a la mano").
+* Deflexión honesta y consistente: fijar el límite 🔒 + dar lo que SÍ se puede (armar la reserva en el chat / el equipo contacta) + redirigir a la reserva, **sin escalar**. Detector de keyword `_asks_for_contact_number` (ES+EN, teléfono/WhatsApp/correo/vía de contacto) + respaldo LLM `asks_for_contact_number` en la misma llamada `detect_routing_signals` (estricto, no lo dispara un mensaje normal ni "hablar con un asesor" — eso sigue siendo wants_human). Colocado ANTES del escalado genérico para ser consistente.
+* Verificado en vivo: 5 variantes de petición de contacto (ES+EN, incl. "¿cómo los contacto?", "tienen algún correo?") ahora deflexionan igual; reserva normal, pregunta de precio y "quiero hablar con un asesor" NO se ven afectadas. 3 tests de integración nuevos. Suites RAG-safety/PII/routing/tree: verdes, sin regresión.
+
 0.20.63 - (2026-07-23)
 ----------------------
 * **Bloque 2.1 — Cancelación/reprogramación con respaldo LLM** (primer punto de la lista combinada tras cerrar el multi-ítem). El gate de cancelación/cambio de fecha era una lista cerrada de frases casi exactas (`CANCEL_BOOKING_PHRASES`/`RESCHEDULE_BOOKING_PHRASES` + `_detect_cancellation_request`/`_detect_reschedule_request`). **Medido en vivo: 16 de 18 frases realistas se escapaban** — indirectas ("ya no voy a poder ir", "me surgió un imprevisto y no puedo asistir"), jerga/typos ("porfa cancelame la reservacion"), y equivalentes en inglés ("i can't make it anymore", "take me off the booking").

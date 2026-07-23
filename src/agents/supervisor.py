@@ -736,6 +736,56 @@ def _detect_reschedule_request(msg_lower: str) -> bool:
     return any(phrase in normalized for phrase in RESCHEDULE_BOOKING_PHRASES)
 
 
+# Deflexión (Bloque 2.2): el cliente pide un número de teléfono/WhatsApp o una
+# vía de contacto directa. El bot NUNCA da un número (decisión owner; el guard
+# de grounding `contains_phone_number` ya lo impide en las respuestas de RAG) —
+# pero hoy esa petición cae inconsistente: a veces escala a asesor, a veces al
+# fallback genérico ("ese detalle no lo tengo a la mano", evasivo). En su lugar,
+# una DEFLEXIÓN honesta y consistente: fijar el límite 🔒 + dar lo que SÍ se
+# puede (reservar en el chat / el equipo contacta) + redirigir a la reserva.
+# Sin escalar. Frases sin acento (se normalizan). Respaldo LLM
+# `asks_for_contact_number` en detect_routing_signals para lo que la lista no cace.
+CONTACT_NUMBER_REQUEST_PHRASES = {
+    # ES
+    "numero de telefono", "numero telefonico", "tu telefono", "su telefono",
+    "un telefono", "el telefono", "telefono de contacto", "numero de contacto",
+    "numero de whatsapp", "tu whatsapp", "su whatsapp", "el whatsapp", "un whatsapp",
+    "por whatsapp", "linea de atencion", "linea de contacto", "numero para llamar",
+    "un numero para", "me das un numero", "me das tu numero", "dame tu numero",
+    "dame un numero", "como los contacto", "como los llamo", "como te llamo",
+    "como los puedo llamar", "para llamarlos", "para llamarte", "los puedo llamar",
+    "puedo llamarlos", "un correo", "su correo", "tu correo", "email de contacto",
+    # EN
+    "phone number", "whatsapp number", "your whatsapp", "a number to call",
+    "number to call you", "to call you", "call you", "contact number",
+    "how do i contact you", "how can i reach you", "how do i reach you",
+    "your email", "contact email", "an email to",
+}
+
+
+def _asks_for_contact_number(msg_lower: str) -> bool:
+    normalized = _strip_accents(msg_lower)
+    return any(phrase in normalized for phrase in CONTACT_NUMBER_REQUEST_PHRASES)
+
+
+def _contact_number_deflection(lang: str) -> str:
+    """Deflexión honesta para una petición de número/contacto directo: límite +
+    lo que SÍ se puede + redirección a la reserva (no escala, no inventa)."""
+    if lang == "es":
+        return (
+            "Por aquí no manejo un número de teléfono ni WhatsApp 🔒, pero puedo "
+            "ayudarte con todo desde este chat: te armo la reserva ahora mismo y, "
+            "si lo prefieres, un asesor del equipo te contacta directamente. "
+            "¿Seguimos con tu reserva? 🌊"
+        )
+    return (
+        "I don't hand out a phone or WhatsApp number here 🔒, but I can help you "
+        "with everything right in this chat: I'll put your booking together now, "
+        "and if you prefer, an advisor from the team can reach out to you "
+        "directly. Shall we continue with your booking? 🌊"
+    )
+
+
 # A group where NOT everyone shares the same nationality (some Colombian/
 # resident, some foreign) — pricing/currency is set per-conversation
 # (state.is_colombian), so this is a real gap: not implemented as a feature
@@ -4882,6 +4932,21 @@ async def _route_message_inner(state: ConversationState, message: str) -> str:
             )
         state.quick_replies = _booking_change_buttons(state.language)
         logger.info("[SUPERVISOR] Reschedule request detected -> policy info + escalate/home buttons")
+        state.history.append({"role": "user", "content": message})
+        state.history.append({"role": "assistant", "content": response})
+        return response
+
+    # Deflexión (Bloque 2.2): petición de número/WhatsApp/correo o vía de
+    # contacto directa. El bot no da un número (política); en vez de escalar o
+    # dar el fallback evasivo, deflexión honesta: límite 🔒 + lo que SÍ puede +
+    # redirige a la reserva. Keyword fast-path + respaldo LLM (misma llamada de
+    # routing de arriba, sin coste extra), estricto. Se coloca ANTES del escalado
+    # genérico para ser consistente (hoy a veces escalaba, a veces caía a RAG).
+    if _asks_for_contact_number(msg_lower) or routing_signals.get("asks_for_contact_number"):
+        response = _contact_number_deflection(state.language)
+        state.step = Step.FREE_TEXT
+        state.quick_replies = []
+        logger.info("[SUPERVISOR] Contact-number request -> deflection (limit + redirect, no escalation)")
         state.history.append({"role": "user", "content": message})
         state.history.append({"role": "assistant", "content": response})
         return response

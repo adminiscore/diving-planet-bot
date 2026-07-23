@@ -142,7 +142,7 @@ _ROUTING_TOOL = {
     "function": {
         "name": "detect_routing_signals",
         "description": (
-            "Classify a customer message for a scuba booking bot for 5 "
+            "Classify a customer message for a scuba booking bot for 6 "
             "safety/routing signals, in ANY regional Spanish or English "
             "phrasing, slang, or diminutive form — not just the exact "
             "clinical/formal wording. Bias applies to sensitive_topic AND "
@@ -150,10 +150,10 @@ _ROUTING_TOOL = {
             "weather/real-time/complaint issue or a DISABILITY/accessibility "
             "topic applies, still set it — missing a real medical emergency "
             "or a real accessibility need is worse than a false positive. "
-            "wants_human, wants_menu_or_restart and booking_change_topic are "
-            "the OPPOSITE: be STRICT, only set them on an explicit request "
-            "(see their descriptions) — a normal booking message must never "
-            "be misread as one."
+            "wants_human, wants_menu_or_restart, booking_change_topic and "
+            "asks_for_contact_number are the OPPOSITE: be STRICT, only set "
+            "them on an explicit request (see their descriptions) — a normal "
+            "booking message must never be misread as one."
         ),
         "parameters": {
             "type": "object",
@@ -219,6 +219,21 @@ _ROUTING_TOOL = {
                         "also set `sensitive_topic` for the same message."
                     ),
                 },
+                "asks_for_contact_number": {
+                    "type": "boolean",
+                    "description": (
+                        "True ONLY if the customer is asking for a direct "
+                        "contact channel to reach the business OUTSIDE this "
+                        "chat — a phone number, WhatsApp number, a line to "
+                        "call, or an email — in any phrasing ('¿me pasas un "
+                        "número?', 'tienen WhatsApp?', '¿cómo los contacto?', "
+                        "'a number to call you', 'how can I reach you'). Do "
+                        "NOT set it for a normal booking message, for asking "
+                        "to talk to a human IN this chat (that is "
+                        "wants_human), or for giving THEIR own number. When "
+                        "unsure, leave it false."
+                    ),
+                },
                 "booking_change_topic": {
                     "type": "string",
                     "enum": ["cancellation", "reschedule"],
@@ -273,7 +288,9 @@ def _routing_system_prompt(lang: str) -> str:
             "cliente lo pide explícitamente; un mensaje normal de reserva "
             "(acompañantes, grupo, actividades) NUNCA es wants_human, y una "
             "PREGUNTA por la política de cancelación NO es booking_change_topic. "
-            "Llama a `detect_routing_signals`."
+            "(6) si pide un número de teléfono/WhatsApp/correo o una vía de "
+            "contacto FUERA de este chat → asks_for_contact_number (también "
+            "estricto). Llama a `detect_routing_signals`."
         )
     return (
         "You are a safety layer for a scuba diving bot. The bot's keyword "
@@ -294,7 +311,9 @@ def _routing_system_prompt(lang: str) -> str:
         "flag them ONLY on an explicit request; a normal booking message "
         "(companions, group, activities) is NEVER wants_human, and a "
         "QUESTION about the cancellation policy is NOT booking_change_topic. "
-        "Call `detect_routing_signals`."
+        "(6) if they ask for a phone/WhatsApp/email or a contact channel "
+        "OUTSIDE this chat → asks_for_contact_number (also strict). Call "
+        "`detect_routing_signals`."
     )
 
 

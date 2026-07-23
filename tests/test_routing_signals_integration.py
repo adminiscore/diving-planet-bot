@@ -170,3 +170,39 @@ async def test_cancellation_policy_question_does_not_trigger_change_flow():
         resp = await route_message(state, "cual es la politica de cancelacion?")
     assert state.step != Step.ESCALATE
     assert resp
+
+
+# --- Bloque 2.2: deflexión de petición de número/contacto (2026-07-23) ---
+# El bot nunca da un número; una petición debe DEFLEXIONAR (límite 🔒 + lo que
+# SÍ + redirige), NO escalar ni caer al fallback evasivo.
+
+@pytest.mark.asyncio
+async def test_contact_number_request_deflects_by_keyword():
+    """"dame tu whatsapp" (keyword) → deflexión con límite + redirección, sin
+    escalar."""
+    state = make_state()
+    with patch("src.agents.supervisor.detect_routing_signals", new=AsyncMock(return_value={})):
+        resp = await route_message(state, "dame tu whatsapp porfa")
+    assert "🔒" in resp
+    assert state.step != Step.ESCALATE
+
+
+@pytest.mark.asyncio
+async def test_contact_number_request_deflects_by_llm_signal_when_keyword_misses():
+    """Una frase indirecta que la lista no caza pero el LLM marca
+    asks_for_contact_number → misma deflexión."""
+    state = make_state()
+    with patch("src.agents.supervisor.detect_routing_signals",
+               new=AsyncMock(return_value={"asks_for_contact_number": True})):
+        resp = await route_message(state, "y si necesito hablar por fuera del chat?")
+    assert "🔒" in resp
+    assert state.step != Step.ESCALATE
+
+
+@pytest.mark.asyncio
+async def test_normal_message_does_not_deflect_as_contact_request():
+    """Regresión: un mensaje normal de reserva no dispara la deflexión."""
+    state = make_state()
+    with patch("src.agents.supervisor.detect_routing_signals", new=AsyncMock(return_value={})):
+        resp = await route_message(state, "quiero reservar buceo para 2 personas")
+    assert "🔒" not in resp
