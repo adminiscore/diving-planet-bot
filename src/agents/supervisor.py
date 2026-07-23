@@ -4839,7 +4839,14 @@ async def _route_message_inner(state: ConversationState, message: str) -> str:
     # Booking cancellation/reschedule requests: inform the policy text from
     # the KB and let the customer choose between talking to an advisor or
     # going back to the main menu, instead of the bot deciding on its own.
-    if _detect_cancellation_request(msg_lower):
+    # La lista de keywords (`_detect_cancellation_request`) solo caza frases
+    # casi exactas — medido en vivo (2026-07-23) que 16 de 18 frases realistas
+    # de cancelación/reprogramación (indirectas, jerga, typos, ES+EN) se
+    # escapaban. Respaldo LLM `booking_change_topic` en la MISMA llamada
+    # `detect_routing_signals` de arriba (sin coste extra), estricto como
+    # wants_human (una pregunta por la política NO lo dispara). Mismo patrón
+    # que DIVE TO HEAL (v0.20.58).
+    if _detect_cancellation_request(msg_lower) or routing_signals.get("booking_change_topic") == "cancellation":
         policy_text = (load_policies().get("policies", {}).get("cancellation") or {}).get(
             state.language, ""
         )
@@ -4859,7 +4866,7 @@ async def _route_message_inner(state: ConversationState, message: str) -> str:
         state.history.append({"role": "assistant", "content": response})
         return response
 
-    if _detect_reschedule_request(msg_lower):
+    if _detect_reschedule_request(msg_lower) or routing_signals.get("booking_change_topic") == "reschedule":
         policy_text = (load_policies().get("policies", {}).get("reschedule") or {}).get(
             state.language, ""
         )

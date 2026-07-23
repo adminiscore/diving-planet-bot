@@ -1,6 +1,12 @@
 History
 =======
 
+0.20.63 - (2026-07-23)
+----------------------
+* **Bloque 2.1 — Cancelación/reprogramación con respaldo LLM** (primer punto de la lista combinada tras cerrar el multi-ítem). El gate de cancelación/cambio de fecha era una lista cerrada de frases casi exactas (`CANCEL_BOOKING_PHRASES`/`RESCHEDULE_BOOKING_PHRASES` + `_detect_cancellation_request`/`_detect_reschedule_request`). **Medido en vivo: 16 de 18 frases realistas se escapaban** — indirectas ("ya no voy a poder ir", "me surgió un imprevisto y no puedo asistir"), jerga/typos ("porfa cancelame la reservacion"), y equivalentes en inglés ("i can't make it anymore", "take me off the booking").
+* Fix idéntico al patrón DIVE TO HEAL (v0.20.58): nueva señal `booking_change_topic` (enum `cancellation`/`reschedule`) en la MISMA llamada `detect_routing_signals` (sin coste extra), consumida en `supervisor.py` junto a los detectores de keyword (`_detect_cancellation_request(...) or routing_signals.get("booking_change_topic") == "cancellation"`, y equivalente para reschedule). **Estricta como `wants_human`** (no el sesgo "ante la duda escala"): una PREGUNTA por la política de cancelación, la palabra suelta "cancelar"/"volver" de navegación del árbol, o una reserva aún creándose NO la disparan.
+* Verificado en vivo con LLM real: las 12 frases que se escapaban ahora se detectan bien (cancelación y reprogramación, ES+EN), y los 5 negativos (preguntas de política, reserva normal, navegación de menú) no disparan el flujo. 3 tests de integración nuevos. Suite de cancelación/escalado/routing: 123 passed, 2 skipped, sin regresión.
+
 0.20.62 - (2026-07-23)
 ----------------------
 * **Cierre del último hallazgo documentado de la auditoría multi-ítem: actividad de acompañante adivinada sin respaldo textual.** "mi amigo no está certificado" da un ATRIBUTO del acompañante (certificación) pero ninguna actividad ni intención declarada ("quiere bucear"/"quiere snorkel") — dos extractores distintos (`fill_gaps` y `detect_special_signals`) adivinaban actividades DISTINTAS para la MISMA frase ambigua (snorkel vs. minicurso).

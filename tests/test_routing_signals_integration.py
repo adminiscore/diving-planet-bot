@@ -128,3 +128,45 @@ async def test_adaptive_diving_signal_persists_for_price_followup():
         resp2 = await route_message(state, "¿cuánto cuesta?")
     assert "DIVE TO HEAL" in resp2
     assert "asesor" in resp2.lower()
+
+
+# --- Bloque 2.1: cancelación/reprogramación por señal LLM (2026-07-23) ---
+# La lista de keywords (_detect_cancellation_request/_detect_reschedule_request)
+# solo caza frases casi exactas; medido en vivo que 16/18 frases realistas se
+# escapaban. La señal booking_change_topic las recupera, misma llamada.
+
+@pytest.mark.asyncio
+async def test_cancellation_signal_routes_to_policy_when_keyword_list_misses():
+    """"ya no voy a poder ir al buceo" no matchea CANCEL_BOOKING_PHRASES (frase
+    indirecta) — la señal LLM debe dar la info de política + botones asesor/menú."""
+    state = make_state()
+    with patch("src.agents.supervisor.detect_routing_signals",
+               new=AsyncMock(return_value={"booking_change_topic": "cancellation"})):
+        resp = await route_message(state, "ya no voy a poder ir al buceo")
+    assert resp
+    assert state.quick_replies  # botones asesor/menú presentes
+
+
+@pytest.mark.asyncio
+async def test_reschedule_signal_routes_to_policy_when_keyword_list_misses():
+    """"se puede correr la fecha?" no matchea RESCHEDULE_BOOKING_PHRASES — la
+    señal LLM lo enruta a la política de reprogramación."""
+    state = make_state()
+    with patch("src.agents.supervisor.detect_routing_signals",
+               new=AsyncMock(return_value={"booking_change_topic": "reschedule"})):
+        resp = await route_message(state, "se puede correr la fecha?")
+    assert resp
+    assert state.quick_replies
+
+
+@pytest.mark.asyncio
+async def test_cancellation_policy_question_does_not_trigger_change_flow():
+    """Regresión/estrictez: preguntar POR la política ("false"/omitido en la
+    señal) NO debe disparar el flujo de cambio de reserva."""
+    state = make_state()
+    with patch("src.agents.supervisor.detect_routing_signals",
+               new=AsyncMock(return_value={"booking_change_topic": False})), \
+         patch("src.agents.supervisor.rag_answer", new=AsyncMock(return_value="La política de cancelación es...")):
+        resp = await route_message(state, "cual es la politica de cancelacion?")
+    assert state.step != Step.ESCALATE
+    assert resp

@@ -142,7 +142,7 @@ _ROUTING_TOOL = {
     "function": {
         "name": "detect_routing_signals",
         "description": (
-            "Classify a customer message for a scuba booking bot for 4 "
+            "Classify a customer message for a scuba booking bot for 5 "
             "safety/routing signals, in ANY regional Spanish or English "
             "phrasing, slang, or diminutive form — not just the exact "
             "clinical/formal wording. Bias applies to sensitive_topic AND "
@@ -150,10 +150,10 @@ _ROUTING_TOOL = {
             "weather/real-time/complaint issue or a DISABILITY/accessibility "
             "topic applies, still set it — missing a real medical emergency "
             "or a real accessibility need is worse than a false positive. "
-            "wants_human and wants_menu_or_restart are the OPPOSITE: be "
-            "STRICT, only set them on an explicit request (see their "
-            "descriptions) — a normal booking message must never be misread "
-            "as one."
+            "wants_human, wants_menu_or_restart and booking_change_topic are "
+            "the OPPOSITE: be STRICT, only set them on an explicit request "
+            "(see their descriptions) — a normal booking message must never "
+            "be misread as one."
         ),
         "parameters": {
             "type": "object",
@@ -219,6 +219,31 @@ _ROUTING_TOOL = {
                         "also set `sensitive_topic` for the same message."
                     ),
                 },
+                "booking_change_topic": {
+                    "type": "string",
+                    "enum": ["cancellation", "reschedule"],
+                    "description": (
+                        "Set ONLY when the customer clearly wants to CANCEL "
+                        "or CHANGE THE DATE of an EXISTING booking of theirs, "
+                        "in any regional phrasing, slang, typo, or indirect "
+                        "wording — 'cancellation' for cancelling/backing out/"
+                        "not being able to come ('ya no puedo ir', 'me surgió "
+                        "un imprevisto y no puedo asistir', 'quiero echar para "
+                        "atrás la reserva', 'dar de baja', 'bórrame del buceo', "
+                        "\"i can't make it anymore\", 'take me off the "
+                        "booking'); 'reschedule' for moving it to another day "
+                        "('mover mi reserva', 'pasar el buceo para otro día', "
+                        "'correr la fecha', 'posponerlo', 'push it to "
+                        "another day'). STRICT: do NOT set it for a general "
+                        "question ABOUT the cancellation/refund policy "
+                        "('¿cuál es la política de cancelación?', 'si cancelo "
+                        "me devuelven?'), nor for the bare word 'cancelar'/"
+                        "'cancel'/'atrás'/'volver' used to navigate the menu "
+                        "(that is menu/back, not a booking change), nor for a "
+                        "booking still being CREATED right now. When unsure, "
+                        "leave it unset."
+                    ),
+                },
             },
         },
     },
@@ -239,12 +264,16 @@ def _routing_system_prompt(lang: str) -> str:
             "(amputación, prótesis, silla de ruedas, ceguera/sordera, "
             "párkinson, parálisis, síndrome de Down, autismo...) en relación "
             "al buceo — esto va a `adaptive_diving_topic`, NUNCA junto con "
-            "sensitive_topic. IMPORTANTE: el sesgo de 'ante la duda, márcalo' "
+            "sensitive_topic, o (5) quiere CANCELAR o CAMBIAR LA FECHA de una "
+            "reserva que YA tiene (booking_change_topic) — 'cancellation' o "
+            "'reschedule'. IMPORTANTE: el sesgo de 'ante la duda, márcalo' "
             "vale para sensitive_topic Y adaptive_diving_topic (mejor "
-            "escalar/enrutar de más). wants_human y wants_menu_or_restart son "
-            "lo contrario: márcalos SOLO si el cliente lo pide explícitamente; "
-            "un mensaje normal de reserva (acompañantes, grupo, actividades) "
-            "NUNCA es wants_human. Llama a `detect_routing_signals`."
+            "escalar/enrutar de más). wants_human, wants_menu_or_restart y "
+            "booking_change_topic son lo contrario: márcalos SOLO si el "
+            "cliente lo pide explícitamente; un mensaje normal de reserva "
+            "(acompañantes, grupo, actividades) NUNCA es wants_human, y una "
+            "PREGUNTA por la política de cancelación NO es booking_change_topic. "
+            "Llama a `detect_routing_signals`."
         )
     return (
         "You are a safety layer for a scuba diving bot. The bot's keyword "
@@ -256,12 +285,16 @@ def _routing_system_prompt(lang: str) -> str:
         "accessibility topic (amputation, prosthetic, wheelchair, blindness/"
         "deafness, Parkinson's, paralysis, Down syndrome, autism...) in "
         "relation to diving — that goes in `adaptive_diving_topic`, NEVER "
-        "together with sensitive_topic. IMPORTANT: the 'when unsure, flag "
+        "together with sensitive_topic, or (5) wants to CANCEL or CHANGE THE "
+        "DATE of a booking they ALREADY have (booking_change_topic — "
+        "'cancellation' or 'reschedule'). IMPORTANT: the 'when unsure, flag "
         "it' bias applies to BOTH sensitive_topic and adaptive_diving_topic "
-        "(better to over-escalate/over-route). wants_human and "
-        "wants_menu_or_restart are the opposite: flag them ONLY on an "
-        "explicit request; a normal booking message (companions, group, "
-        "activities) is NEVER wants_human. Call `detect_routing_signals`."
+        "(better to over-escalate/over-route). wants_human, "
+        "wants_menu_or_restart and booking_change_topic are the opposite: "
+        "flag them ONLY on an explicit request; a normal booking message "
+        "(companions, group, activities) is NEVER wants_human, and a "
+        "QUESTION about the cancellation policy is NOT booking_change_topic. "
+        "Call `detect_routing_signals`."
     )
 
 
