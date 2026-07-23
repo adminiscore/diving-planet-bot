@@ -902,3 +902,53 @@ real induce o no la alucinación). Suite completa: 1939 passed, 15 skipped. ruff
 
 Con esto se cierran los 4 puntos que el owner pidió repasar antes de seguir con la
 lista combinada (Cancelación, Deflexión, Link roto...).
+
+---
+
+# Multi-ítem, último hallazgo cerrado (v0.20.62, 2026-07-23): actividad de acompañante sin respaldo textual
+
+El owner pidió arreglar el hallazgo documentado-pero-no-arreglado de la pasada
+anterior antes de pasar al Bloque 2: "mi amigo no está certificado" da un ATRIBUTO
+(certificación) sin actividad ni intención declarada, y `fill_gaps`/
+`detect_special_signals` adivinaban actividades DISTINTAS (snorkel vs. minicurso)
+para la MISMA frase ambigua.
+
+## Reforzar el prompt otra vez no funcionó
+
+Igual que la cuantificación de plurales vagos (v0.20.59), reforzar ambos schemas para
+que se abstuvieran de adivinar una actividad sin intención declarada **no cambió el
+comportamiento**: medido 3/3 antes Y después del refuerzo, siempre "minicourse" para
+"mi amigo no está certificado". Confirma el patrón ya documentado: hay una clase de
+ambigüedad (aquí: "¿qué actividad implícita tiene esta persona?") que el modelo
+resuelve con un prior fuerte pase lo que diga el prompt — la solución es verificación
+determinista, no más instrucciones.
+
+## Fix: `_activity_has_textual_backing` + nuevo slot `SLOT_COMPANION_ACTIVITY`
+
+Nuevo helper que valida la actividad adivinada contra el TEXTO real: la propia palabra
+del producto, O — regla de negocio, no alucinación — "quiere bucear"/"wants to dive"
+cuenta como respaldo para `minicourse` (la traducción "no certificado + quiere
+bucear -> minicurso" es intencional, no una invención). Si ninguna de las dos aparece
+en el texto, la adivinanza se descarta y se pregunta con un slot nuevo:
+
+> "¿Qué le gustaría hacer a tu acompañante — probar el buceo con el minicurso, o
+> prefiere snorkel?"
+
+Aplicado en los DOS sitios donde antes se adivinaba sin red: el guard de
+`group_allocation` de `fill_gaps` (dentro de `_understand()`, con la misma excepción ya
+existente para la actividad principal ya conocida) y `companion_activity` de
+`detect_special_signals` (con un nuevo `elif` que pregunta cuando hay persona
+mencionada pero ninguna actividad sobrevive la validación). Al responder, encadena
+automáticamente con `SLOT_COMPANION_QTY` (mismo patrón que el resto del bloque
+multi-ítem: una pregunta a la vez, nunca las dos a la vez).
+
+## Verificación
+
+Verificado en vivo con LLM real, ES+EN: la ambigüedad ya no se adivina, se pregunta;
+"quiere probar el buceo"/"wants to dive" se traduce correctamente a minicurso al
+responder; "snorkel" se resuelve directo. 3 tests nuevos (2 unitarios + el helper de
+respaldo textual). Suite completa: 1941 passed, 15 skipped. ruff limpio.
+
+Con esto se cierran los 4 puntos + el hallazgo adicional de la auditoría adversarial.
+El tema multi-ítem queda completamente cerrado. Siguiente: Bloque 2 de la lista
+combinada (Cancelación → Deflexión → Link roto).

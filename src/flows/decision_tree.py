@@ -265,6 +265,15 @@ class ConversationState:
     # extendido a "3 o más actividades, algunas con plural vago".
     pending_companion_queue: list = field(default_factory=list)
 
+    # Auditoría 2026-07-23: un acompañante mencionado solo por un ATRIBUTO
+    # ("mi amigo no está certificado") sin actividad ni intención declarada
+    # ("quiere bucear"/"quiere snorkel") no da pie a adivinar snorkel o
+    # minicurso — dos extractores distintos adivinaban cosas distintas para
+    # la MISMA frase ambigua. Marca que hay que preguntar qué actividad
+    # quiere ese acompañante (SLOT_COMPANION_ACTIVITY) antes de poder
+    # preguntar la cantidad.
+    needs_companion_activity: bool = False
+
     def __post_init__(self):
         if self.history is None:
             self.history = []

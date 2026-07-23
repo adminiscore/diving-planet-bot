@@ -56,6 +56,11 @@ SLOT_QTY = "qty"
 SLOT_AGES = "ages"                # solo si hay menores mencionados sin edades
 SLOT_NATIONALITY = "nationality"  # cerca del checkout (moneda + gating de links)
 SLOT_COMPANION_QTY = "companion_qty"  # cuántos acompañantes cuando el plural es vago
+# Auditoría 2026-07-23: un acompañante mencionado solo por un atributo (p. ej.
+# "no está certificado") sin actividad ni intención declarada no permite
+# adivinar snorkel/minicurso — se pregunta primero QUÉ quiere hacer, antes de
+# poder preguntar la cantidad (SLOT_COMPANION_QTY).
+SLOT_COMPANION_ACTIVITY = "companion_activity_choice"
 
 # Slots booleanos/escalares que el resolutor LLM anti-bucle (Fase C) sabe
 # resolver cuando el parser canónico (is_affirmative/is_negative/número) falla
@@ -328,6 +333,14 @@ def ask_slot(state: ConversationState, slot: str, *, reasking: bool = False) -> 
             if lang == "es" else
             f"How many people would that be for {label}? That way I can give you the exact plan. 😊"
         )
+    if slot == SLOT_COMPANION_ACTIVITY:
+        return (
+            "¿Qué le gustaría hacer a tu acompañante — probar el buceo con el "
+            "*minicurso*, o prefiere *snorkel*?"
+            if lang == "es" else
+            "What would your companion like to do — try diving with the "
+            "*mini-course*, or would they rather go *snorkeling*?"
+        )
     if slot == SLOT_AGES:
         return (
             "Me comentaste que van menores — ¿qué edades tienen? Así les preparo "
@@ -474,6 +487,25 @@ def _apply_short_answer(state: ConversationState, message: str) -> bool:
         if n is not None and n > 0 and act:
             _merge_companion_activity(state, act, n)
             state.pending_companion_activity = None
+            return True
+        return False
+    if slot == SLOT_COMPANION_ACTIVITY:
+        # Respuesta a "¿qué le gustaría hacer a tu acompañante?" — solo
+        # snorkel/minicurso son opciones válidas aquí (ya se sabe que no
+        # está certificado; certified_diving no tendría sentido en sí
+        # mismo). "quiere bucear"/"wants to dive" se traduce a minicurso
+        # (regla de negocio, mismo criterio que `_activity_has_textual_
+        # backing`). Si la respuesta no deja claro UNA sola opción, se
+        # abstiene (nunca se adivina cuál).
+        mentioned = set(_mentioned_product_activities(message))
+        candidates = set()
+        if "snorkel" in mentioned:
+            candidates.add("snorkel")
+        if "minicourse" in mentioned or "certified_diving" in mentioned:
+            candidates.add("minicourse")
+        if len(candidates) == 1:
+            state.pending_companion_activity = next(iter(candidates))
+            state.needs_companion_activity = False
             return True
         return False
     if slot == SLOT_AGES:
@@ -666,6 +698,23 @@ def _mentioned_product_activities(message: str) -> list:
     return [act for act, pat in _PRODUCT_MENTION_RE.items() if pat.search(message)]
 
 
+def _activity_has_textual_backing(activity: str, message: str) -> bool:
+    """¿Tiene `activity` algún respaldo real en el texto? No basta con
+    buscar la palabra exacta: la regla de negocio traduce "no certificado +
+    quiere bucear" -> minicurso, así que un mensaje que dice "buceo" sin
+    decir "minicurso" SÍ respalda `minicourse` (auditoría 2026-07-23). Lo
+    que NO respalda nada es un mensaje que solo da un ATRIBUTO del
+    acompañante ("mi amigo no está certificado") sin mencionar ninguna
+    actividad ni intención — ahí `_mentioned_product_activities` devuelve
+    vacío y esta función correctamente dice False para cualquier `activity`."""
+    mentioned = set(_mentioned_product_activities(message))
+    if activity in mentioned:
+        return True
+    if activity == "minicourse" and "certified_diving" in mentioned:
+        return True
+    return False
+
+
 # Campos que CONDUCEN la reserva en el núcleo (alimentan next_missing_slot o el
 # gating de links/moneda). duration/cert_dives/cert_days quedan fuera del
 # gap-fill del núcleo a propósito: son afinadores espontáneos que el regex ya
@@ -776,6 +825,27 @@ async def _understand(state: ConversationState, message: str) -> tuple:
         # el reparto entero, para no perder las que sí son correctas.
         alloc_patch = patch.get("group_allocation")
         if isinstance(alloc_patch, dict) and alloc_patch:
+            # Auditoría 2026-07-23 (segunda pasada, más allá de la cantidad):
+            # una actividad sin NINGÚN respaldo textual (ni siquiera la
+            # palabra del producto aparece en el mensaje) es un problema de
+            # ACTIVIDAD, no de cantidad — "mi amigo no está certificado" (sin
+            # decir bucear/snorkel/minicurso) hacía que fill_gaps adivinara
+            # snorkel o minicurso indistintamente para la MISMA frase
+            # ambigua (otro extractor, detect_special_signals, adivinaba lo
+            # contrario). Reforzar el prompt para que se abstenga NO
+            # funcionó (medido 3/3 sigue adivinando) — verificación
+            # determinista igual que el resto de este bloque. No aplica a la
+            # actividad PRINCIPAL ya conocida (`prev_activity`), que puede
+            # restatearse sin repetir la palabra en este turno.
+            activity_unbacked = [
+                act for act in alloc_patch
+                if act != prev_activity and not _activity_has_textual_backing(act, message)
+            ]
+            if activity_unbacked:
+                for act in activity_unbacked:
+                    alloc_patch.pop(act, None)
+                if _mentions_person(message):
+                    state.needs_companion_activity = True
             # Counter con consumo, no un set de presencia (auditoría
             # 2026-07-23): un mismo número no puede "avalar" dos actividades
             # distintas solo porque aparece una vez en el texto para otra.
@@ -1298,6 +1368,16 @@ async def maybe_handle_turn(
         state.history.append({"role": "assistant", "content": response})
         return response
 
+    # Encadenar SLOT_COMPANION_ACTIVITY -> SLOT_COMPANION_QTY (auditoría
+    # 2026-07-23): una vez se sabe QUÉ quiere hacer el acompañante ("mi
+    # amigo no está certificado" -> se preguntó y respondió "snorkel"),
+    # sigue faltando CUÁNTOS son — se encadena la pregunta de cantidad ya
+    # mismo, mismo patrón que la cola de sub-grupos.
+    if resolved_short and prev_pending == SLOT_COMPANION_ACTIVITY and state.pending_companion_activity:
+        response = greeting + ask_slot(state, SLOT_COMPANION_QTY)
+        state.history.append({"role": "assistant", "content": response})
+        return response
+
     # "?" explícito → SIEMPRE una pregunta real. Antes de RAG, comprobar si es
     # un pedido de RECORDAR un dato ya dado ("¿cuántas personas somos, me lo
     # recuerdas?") — se responde con el valor REAL del estado, determinista,
@@ -1334,6 +1414,16 @@ async def maybe_handle_turn(
     if state.pending_companion_queue and not state.pending_companion_activity:
         state.pending_companion_activity = state.pending_companion_queue.pop(0)
         response = greeting + ask_slot(state, SLOT_COMPANION_QTY)
+        state.history.append({"role": "assistant", "content": response})
+        return response
+
+    # Auditoría 2026-07-23: `_understand()` detectó un acompañante mencionado
+    # solo por un ATRIBUTO ("mi amigo no está certificado"), sin actividad ni
+    # intención declarada — no hay caso válido para adivinar snorkel o
+    # minicurso, se pregunta qué le gustaría hacer.
+    if state.needs_companion_activity:
+        state.needs_companion_activity = False
+        response = greeting + ask_slot(state, SLOT_COMPANION_ACTIVITY)
         state.history.append({"role": "assistant", "content": response})
         return response
 
@@ -1434,6 +1524,16 @@ async def maybe_handle_turn(
     if not advanced or companion_ambiguous:
         signals = await detect_special_signals(message, history=state.history, lang=state.language)
         activity = signals.get("companion_activity")
+        # Verificación determinista (auditoría 2026-07-23): reforzar el
+        # prompt para que no adivine una actividad sin respaldo textual NO
+        # funcionó (medido 3/3 sigue adivinando "minicourse" para "mi amigo
+        # no está certificado", sin ninguna actividad mencionada) — misma
+        # lección que la cuantificación de plurales vagos: hace falta
+        # verificación determinista, no más prompt. Si el mensaje no
+        # menciona NINGÚN producto por palabra clave, la actividad que
+        # devuelve el LLM no tiene respaldo textual — se descarta.
+        if activity and not _activity_has_textual_backing(activity, message):
+            activity = None
         # Guard contra el flip-flop del LLM con historial: solo se trata como
         # ACOMPAÑANTE si el mensaje nombra a otra persona. El LLM decide la
         # actividad; que nombre a una persona decide que es un añadido, no un
@@ -1556,6 +1656,21 @@ async def maybe_handle_turn(
                     state.history.append({"role": "assistant", "content": response})
                     return response
             advanced = True
+        elif signals.get("mentions_other_person") or _mentions_person(message):
+            # Auditoría 2026-07-23: hay un acompañante (persona mencionada)
+            # pero ninguna actividad con respaldo textual real — "mi amigo
+            # no está certificado" dice un ATRIBUTO, no una actividad ni
+            # intención ("quiere bucear"/"quiere snorkel"). Dos extractores
+            # distintos (fill_gaps y esta misma señal) adivinaban cosas
+            # DISTINTAS para la misma frase ambigua (snorkel vs. minicurso).
+            # En vez de adivinar cuál, se pregunta qué le gustaría hacer.
+            _restore_main_diver_fields(
+                state, prev_main_activity, prev_main_service_id,
+                prev_main_is_certified, prev_main_last_dive, prev_main_refresher,
+            )
+            response = greeting + ask_slot(state, SLOT_COMPANION_ACTIVITY)
+            state.history.append({"role": "assistant", "content": response})
+            return response
         elif signals.get("refresher_interested") is not None:
             # Auditoría 2026-07-22: refresher_interested no tenía NINGÚN
             # respaldo LLM — una frase que is_affirmative/is_negative no

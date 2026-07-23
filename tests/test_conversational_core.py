@@ -1346,3 +1346,48 @@ async def test_companion_qty_answer_mentioning_different_activity_not_misapplied
     assert state.core_pending_slot == core.SLOT_COMPANION_QTY
     assert state.pending_companion_activity is not None
     assert "snorkel" in resp.lower() or "buce" in resp.lower() or "div" in resp.lower()
+
+
+@pytest.mark.asyncio
+async def test_companion_attribute_without_activity_asks_instead_of_guessing():
+    """Hallazgo en vivo 2026-07-23: "mi amigo no está certificado" da un
+    ATRIBUTO del acompañante (certificación) pero ninguna actividad ni
+    intención declarada. Dos extractores distintos (fill_gaps y
+    detect_special_signals) adivinaban actividades DISTINTAS para la MISMA
+    frase ambigua (snorkel vs. minicurso) — reforzar el prompt para que se
+    abstuviera no funcionó (medido 3/3 sigue adivinando). Fix determinista:
+    se pregunta qué le gustaría hacer al acompañante en vez de adivinar."""
+    state = make_state("es")
+    state.detected_activity = "certified_diving"
+    state.is_certified = True
+    state.core_pending_slot = core.SLOT_LOCATION
+    with patch.object(core, "fill_gaps", new=AsyncMock(return_value={})), \
+         patch.object(core, "detect_special_signals", new=AsyncMock(return_value={
+             "companion_activity": "minicourse", "mentions_other_person": True,
+             "companion_is_singular": False,
+         })):
+        resp = await route_message(state, "mi amigo no esta certificado")
+    assert state.core_pending_slot == core.SLOT_COMPANION_ACTIVITY
+    assert not (state.detected_group_allocation or {}).get("minicourse"), (
+        "no se debe adivinar minicurso sin que el texto lo respalde"
+    )
+    assert not (state.detected_group_allocation or {}).get("snorkel")
+    assert "?" in resp
+
+    with patch.object(core, "fill_gaps", new=AsyncMock(return_value={})), \
+         patch.object(core, "detect_special_signals", new=AsyncMock(return_value={})):
+        resp2 = await route_message(state, "snorkel")
+    assert state.core_pending_slot == core.SLOT_COMPANION_QTY
+    assert state.pending_companion_activity == "snorkel"
+    assert "snorkel" in resp2.lower()
+
+
+def test_activity_has_textual_backing_translates_diving_intent_to_minicourse():
+    """La regla de negocio "no certificado + quiere bucear -> minicurso" debe
+    seguir contando como respaldo textual válido para `minicourse` (no es
+    una alucinación, es una traducción de negocio) — pero un mensaje que NO
+    menciona ninguna actividad no respalda nada."""
+    assert core._activity_has_textual_backing("minicourse", "quiere hacer buceo")
+    assert core._activity_has_textual_backing("snorkel", "quiere hacer snorkel")
+    assert not core._activity_has_textual_backing("minicourse", "mi amigo no esta certificado")
+    assert not core._activity_has_textual_backing("snorkel", "mi amigo no esta certificado")

@@ -1,6 +1,15 @@
 History
 =======
 
+0.20.62 - (2026-07-23)
+----------------------
+* **Cierre del último hallazgo documentado de la auditoría multi-ítem: actividad de acompañante adivinada sin respaldo textual.** "mi amigo no está certificado" da un ATRIBUTO del acompañante (certificación) pero ninguna actividad ni intención declarada ("quiere bucear"/"quiere snorkel") — dos extractores distintos (`fill_gaps` y `detect_special_signals`) adivinaban actividades DISTINTAS para la MISMA frase ambigua (snorkel vs. minicurso).
+* Reforzar el prompt de ambos extractores para que se abstuvieran no funcionó — medido 3/3 sigue adivinando "minicourse" tras el refuerzo, misma lección que la cuantificación de plurales vagos: hace falta verificación determinista, no más prompt.
+* Fix: nuevo helper `_activity_has_textual_backing(activity, message)` — valida que la actividad adivinada tenga respaldo real en el texto (la propia palabra, o "quiere bucear"/"wants to dive" para minicurso, regla de negocio de traducción, no alucinación). Si no hay respaldo, se descarta la adivinanza y se pregunta con un nuevo slot, `SLOT_COMPANION_ACTIVITY`: "¿Qué le gustaría hacer a tu acompañante — probar el buceo con el minicurso, o prefiere snorkel?" — encadena automáticamente con `SLOT_COMPANION_QTY` una vez resuelto.
+* Aplicado en los dos extractores (`fill_gaps`'s `group_allocation` dentro de `_understand()`, y `detect_special_signals`'s `companion_activity`), con la misma excepción para la actividad PRINCIPAL ya conocida (no necesita repetir la palabra en el mismo turno).
+* Verificado en vivo con LLM real en ES+EN: la actividad ambigua ya no se adivina, se pregunta; "quiere probar el buceo"/"wants to dive" se traduce correctamente a minicurso al responder.
+* 3 tests nuevos. Suite: **1941 passed**, 15 skipped. ruff limpio (mismos findings preexistentes, no relacionados).
+
 0.20.61 - (2026-07-23)
 ----------------------
 * **Auditoría adversarial de multi-ítem en inglés + alucinación de acompañante — 4 bugs reales encontrados y arreglados, verificados en vivo.** Pedido del owner: revisar dígito/letra/plural vago en ES+EN, en las tres fases (apertura/durante/post-cierre), más una batería adversarial buscando falsos positivos de acompañante y re-verificación de los booleanos del acompañante frente al principal.
