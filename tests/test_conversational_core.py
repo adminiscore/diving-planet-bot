@@ -32,6 +32,7 @@ def _core_on(monkeypatch):
     monkeypatch.setattr(settings, "conversational_core", True)
     monkeypatch.setattr(core, "fill_gaps", AsyncMock(return_value={}))
     monkeypatch.setattr(core, "detect_special_signals", AsyncMock(return_value={}))
+    monkeypatch.setattr(core, "resolve_slot_answer", AsyncMock(return_value={}))
 
 
 # ---------------------------------------------------------------------------
@@ -778,6 +779,93 @@ async def test_no_signal_falls_through_to_generic_as_before():
     with patch.object(core, "detect_special_signals", new=AsyncMock(return_value={})):
         resp = await route_message(state, "gracias por la ayuda")
     assert resp  # no crashea; sigue re-preguntando lo pendiente
+
+
+# ---------------------------------------------------------------------------
+# Fase C (2026-07-23): red anti-BUCLE de slot. Los slots booleanos/escalares
+# no debían quedarse re-preguntando para siempre ante una respuesta válida
+# pero no-canónica ("uf, hace muchísimo" / "vivo en bogotá" / "un par"). El
+# resolutor LLM (resolve_slot_answer) interpreta la respuesta y desatasca.
+# ---------------------------------------------------------------------------
+
+@pytest.mark.asyncio
+async def test_safety_non_canonical_answer_resolved_by_slot_resolver(monkeypatch):
+    """"uf, hace muchísimo" no es is_affirmative/is_negative — sin la red se
+    re-preguntaría la seguridad para siempre. El resolutor lo interpreta como
+    'sí, >2 años' y el flujo avanza."""
+    monkeypatch.setattr(core, "resolve_slot_answer", AsyncMock(return_value={"value": True}))
+    state = make_state("es")
+    state.detected_activity = "certified_diving"
+    state.is_certified = True
+    state.location = "cartagena"
+    state.detected_group_size = 1
+    state.core_pending_slot = core.SLOT_SAFETY
+    await route_message(state, "uf, hace muchísimo")
+    assert state.last_dive_over_2_years is True
+    assert state.core_pending_slot != core.SLOT_SAFETY
+
+
+@pytest.mark.asyncio
+async def test_nationality_resident_answer_resolved_by_slot_resolver(monkeypatch):
+    """"vivo en bogotá" implica residente en Colombia — sin la red quedaba en
+    bucle (no lo cazaba is_affirmative). El resolutor lo resuelve a True."""
+    monkeypatch.setattr(core, "resolve_slot_answer", AsyncMock(return_value={"value": True}))
+    state = make_state("es")
+    state.detected_activity = "certified_diving"
+    state.is_certified = True
+    state.location = "cartagena"
+    state.detected_group_size = 1
+    state.last_dive_over_2_years = False
+    state.core_pending_slot = core.SLOT_NATIONALITY
+    await route_message(state, "vivo en bogotá")
+    assert state.is_colombian is True
+
+
+@pytest.mark.asyncio
+async def test_qty_un_par_resolved_by_slot_resolver(monkeypatch):
+    """"un par" = 2, que _parse_mixed_quantity no reconoce. El resolutor lo
+    resuelve y el flujo no se queda pidiendo cantidad."""
+    monkeypatch.setattr(core, "resolve_slot_answer", AsyncMock(return_value={"value": 2}))
+    state = make_state("es")
+    state.detected_activity = "certified_diving"
+    state.is_certified = True
+    state.location = "cartagena"
+    state.last_dive_over_2_years = False
+    state.core_pending_slot = core.SLOT_QTY
+    await route_message(state, "un par")
+    assert state.detected_group_size == 2
+
+
+@pytest.mark.asyncio
+async def test_slot_resolver_abstains_no_infinite_state_change(monkeypatch):
+    """Si el resolutor se abstiene ({}), el slot NO cambia y se re-pregunta —
+    igual que antes, nunca peor (no se inventa un valor)."""
+    resolver = AsyncMock(return_value={})
+    monkeypatch.setattr(core, "resolve_slot_answer", resolver)
+    state = make_state("es")
+    state.detected_activity = "certified_diving"
+    state.is_certified = True
+    state.location = "cartagena"
+    state.detected_group_size = 1
+    state.core_pending_slot = core.SLOT_SAFETY
+    await route_message(state, "bla bla bla")
+    resolver.assert_awaited()  # se intentó
+    assert state.last_dive_over_2_years is None  # pero no se inventó nada
+    assert state.core_pending_slot == core.SLOT_SAFETY
+
+
+@pytest.mark.asyncio
+async def test_hotel_dont_know_stored_as_marker_not_verbatim():
+    """"no sé todavía" al preguntar el hotel NO se guarda como nombre de hotel;
+    se guarda un marcador claro y el flujo avanza (no bucle, no basura)."""
+    state = make_state("es")
+    state.detected_activity = "certified_diving"
+    state.is_certified = True
+    state.location = "island"
+    state.core_pending_slot = core.SLOT_HOTEL
+    await route_message(state, "no sé todavía")
+    assert state.hotel == "por confirmar"
+    assert state.core_pending_slot != core.SLOT_HOTEL
 
 
 @pytest.mark.asyncio

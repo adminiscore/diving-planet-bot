@@ -34,6 +34,7 @@ from src.agents.llm_extractor import (
     detect_special_signals,
     fill_gaps,
     missing_fields,
+    resolve_slot_answer,
 )
 from src.flows.decision_tree import ConversationState, DecisionTree, Step
 from src.utils.fuzzy import is_affirmative, is_negative
@@ -55,6 +56,14 @@ SLOT_AGES = "ages"                # solo si hay menores mencionados sin edades
 SLOT_NATIONALITY = "nationality"  # cerca del checkout (moneda + gating de links)
 SLOT_COMPANION_QTY = "companion_qty"  # cuántos acompañantes cuando el plural es vago
 
+# Slots booleanos/escalares que el resolutor LLM anti-bucle (Fase C) sabe
+# resolver cuando el parser canónico (is_affirmative/is_negative/número) falla
+# ante una respuesta válida pero no-canónica. Los nombres coinciden con las
+# claves de `_SLOT_RESOLVER_SPEC` en llm_extractor.py.
+_LLM_RESOLVABLE_SLOTS = frozenset({
+    SLOT_CERTIFICATION, SLOT_SAFETY, SLOT_REFRESHER, SLOT_QTY, SLOT_NATIONALITY,
+})
+
 # Actividades "de producto" que el vertical actual del núcleo sabe cerrar.
 # course:* llega en Fase 3; mientras, un curso PADI detectado se atiende pero
 # el cierre lo hace el resumen genérico (plan del servicio detectado).
@@ -66,6 +75,13 @@ _DAYS_TO_DIVES = {2: 5, 3: 7, 4: 9}
 
 _CARTAGENA_RE = re.compile(r"\b(cartagena|cartagen\w*|1)\b", re.IGNORECASE)
 _ISLAND_RE = re.compile(r"\b(isla\w*|island\w*|bar[uú]|rosario\w*|2)\b", re.IGNORECASE)
+# Respuesta de DUDA al preguntar el hotel (no un nombre real de hotel). Fase C.
+_HOTEL_UNKNOWN_RE = re.compile(
+    r"\b(no\s+s[eé]|ni\s+idea|no\s+lo\s+s[eé]|a[uú]n\s+no|todav[ií]a\s+no|"
+    r"sin\s+definir|no\s+estoy\s+segur\w*|no\s+tengo|"
+    r"not\s+sure|no\s+idea|dunno|don'?t\s+know|not\s+yet|undecided|tbd)\b",
+    re.IGNORECASE,
+)
 
 # (Fase 3 causa A) Señal singular clara para reservas de CURSO — la inferencia
 # singular del detector compartido solo dispara en contexto de buceo/cert y no
@@ -398,6 +414,19 @@ def _apply_short_answer(state: ConversationState, message: str) -> bool:
             return True
         return False
     if slot == SLOT_HOTEL:
+        # Guarda de mis-parse (Fase C, 2026-07-23): el hotel acepta texto libre
+        # (cualquier nombre ≥3 chars), pero una DUDA/negativa ("no sé todavía",
+        # "aún no lo sé", "not sure yet") se guardaba TAL CUAL como nombre del
+        # hotel. En vez de eso, se guarda un marcador claro y se avanza (el
+        # hotel/recogida lo coordina el asesor); así el lead refleja "sin
+        # definir" en vez de una frase de duda como si fuera un hotel real, y
+        # el flujo no se queda pidiendo hotel para siempre.
+        if _HOTEL_UNKNOWN_RE.search(msg):
+            marker = "por confirmar" if state.language == "es" else "to be confirmed"
+            state.hotel = state.detected_hotel = marker
+            if not state.island:
+                state.island = marker
+            return True
         if len(msg) >= 3 and "?" not in message:
             state.hotel = state.detected_hotel = message.strip()
             if not state.island:
@@ -448,6 +477,30 @@ def _apply_short_answer(state: ConversationState, message: str) -> bool:
             state.is_colombian = False
             return True
         return False
+    return False
+
+
+def _apply_resolved_slot_value(state: ConversationState, slot: str, value) -> bool:
+    """Aplica al estado el valor que el resolutor LLM anti-bucle (Fase C)
+    interpretó para un slot booleano/escalar cuyo parser canónico falló.
+    Devuelve True si se aplicó algo utilizable. Mismos campos que
+    `_apply_short_answer`, sin duplicar su lógica de parseo (aquí el valor ya
+    viene tipado del LLM)."""
+    if slot == SLOT_CERTIFICATION and isinstance(value, bool):
+        state.is_certified = state.detected_is_certified = value
+        return True
+    if slot == SLOT_SAFETY and isinstance(value, bool):
+        state.last_dive_over_2_years = state.detected_last_dive_over_2_years = value
+        return True
+    if slot == SLOT_REFRESHER and isinstance(value, bool):
+        state.refresher_interested = value
+        return True
+    if slot == SLOT_NATIONALITY and isinstance(value, bool):
+        state.is_colombian = value
+        return True
+    if slot == SLOT_QTY and isinstance(value, int) and value > 0:
+        state.detected_group_size = value
+        return True
     return False
 
 
@@ -1298,6 +1351,25 @@ async def maybe_handle_turn(
                 response = greeting + response
                 state.history.append({"role": "assistant", "content": response})
                 return response
+
+    # Red anti-BUCLE de slot (Fase C, 2026-07-23): si el turno NO avanzó y el
+    # slot pendiente es booleano/escalar, el cliente pudo haber respondido de
+    # forma válida pero no-canónica que el parser de `_apply_short_answer` no
+    # reconoció ("uf, hace muchísimo" para seguridad, "vivo en bogotá" para
+    # nacionalidad, "un par" para cantidad). Sin esto, el núcleo re-pregunta el
+    # MISMO slot para siempre. El LLM interpreta la respuesta EN EL CONTEXTO de
+    # la pregunta concreta; si se abstiene, se cae al re-preguntar de siempre
+    # (nunca peor que hoy). No se dispara si el mensaje parece una pregunta de
+    # info (eso va a RAG, abajo) ni si ya hay un acompañante pendiente.
+    if (
+        not advanced
+        and prev_pending in _LLM_RESOLVABLE_SLOTS
+        and not _looks_like_question(message)
+        and not state.pending_companion_activity
+    ):
+        resolved = await resolve_slot_answer(prev_pending, message, lang=state.language)
+        if "value" in resolved and _apply_resolved_slot_value(state, prev_pending, resolved["value"]):
+            advanced = True
 
     # Última red antes del genérico: heurística blanda de pregunta de info
     # (sin exigir "?", ya descartado arriba) — mismo camino RAG de siempre.

@@ -631,6 +631,153 @@ async def detect_special_signals(
     return result
 
 
+# ──────────────── Resolutor genérico de respuesta de slot (Fase C) ────────────
+# Red anti-bucle: cuando el parser canónico de un slot booleano/escalar
+# (is_affirmative/is_negative/número) NO reconoce una respuesta válida pero
+# no-canónica, el núcleo re-pregunta el MISMO slot para siempre (hallazgo Fase
+# C 2026-07-23, en vivo: SLOT_SAFETY "uf, hace muchísimo" / SLOT_NATIONALITY
+# "vivo en bogotá" / SLOT_QTY "un par" se quedaban en bucle). Gadea ya había
+# cerrado este patrón SOLO para refresher_interested; esto lo generaliza a
+# todos los slots de la misma forma. El LLM interpreta la respuesta EN EL
+# CONTEXTO de la pregunta concreta que se hizo; devuelve un valor tipado o se
+# abstiene. Misma red de seguridad que el resto: nunca lanza, {} ante cualquier
+# fallo (el bot cae al re-preguntar de siempre, nunca peor que hoy).
+
+# Qué pregunta representa cada slot (para anclar la interpretación del LLM) y
+# qué tipo de valor devolver. Claves = nombres de slot de conversational_core.
+_SLOT_RESOLVER_SPEC = {
+    "safety": {
+        "question_es": "¿Han pasado más de 2 años desde tu última inmersión?",
+        "question_en": "Has it been more than 2 years since your last dive?",
+        "type": "boolean",
+        "value_meaning": (
+            "true if it HAS been more than 2 years (or the customer implies a "
+            "very long time / doesn't remember / 'ages ago'); false if it has "
+            "been 2 years or less (recent, 'last month', 'this year', or 'none "
+            "of us has been that long')."
+        ),
+    },
+    "nationality": {
+        "question_es": "¿Eres colombiano o residente en Colombia?",
+        "question_en": "Are you Colombian or a resident of Colombia?",
+        "type": "boolean",
+        "value_meaning": (
+            "true if the customer is Colombian OR lives/resides in Colombia "
+            "(e.g. 'vivo en bogotá', 'soy de medellín', 'residente aquí'); "
+            "false if they are a foreigner / tourist / live abroad (e.g. 'soy "
+            "de españa', 'somos de argentina', 'extranjero', 'just visiting')."
+        ),
+    },
+    "qty": {
+        "question_es": "¿Para cuántas personas armamos el plan?",
+        "question_en": "How many people should I plan for?",
+        "type": "integer",
+        "value_meaning": (
+            "the TOTAL number of people, counting the speaker — 'solo yo'/'just "
+            "me' = 1, 'un par'/'a couple' = 2, 'unos tres'/'about three' = 3, "
+            "'mi pareja y yo'/'my partner and I' = 2. Only set it when the "
+            "answer implies a concrete count; omit if genuinely unknown."
+        ),
+    },
+    "certification": {
+        "question_es": "¿Eres buzo certificado?",
+        "question_en": "Are you a certified diver?",
+        "type": "boolean",
+        "value_meaning": (
+            "true if the customer is a certified diver (has any diving "
+            "certification — Open Water, Advanced, PADI, SSI, etc., or says "
+            "yes); false if they are NOT certified (beginner, never dived, "
+            "'no', 'quiero probar')."
+        ),
+    },
+    "refresher": {
+        "question_es": "¿Quieres hacer el refresher (repaso en el agua)?",
+        "question_en": "Would you like to do the refresher (in-water refresh)?",
+        "type": "boolean",
+        "value_meaning": "true if they want the refresher, false if not.",
+    },
+}
+
+
+def _slot_resolver_prompt(slot: str, lang: str) -> str:
+    spec = _SLOT_RESOLVER_SPEC[slot]
+    q = spec["question_es"] if lang == "es" else spec["question_en"]
+    return (
+        "You are a single-slot answer interpreter for a scuba diving booking "
+        f"bot. The bot asked the customer exactly this question: \"{q}\". "
+        "Interpret the customer's reply as an answer to THAT question, in any "
+        "regional Spanish or English phrasing, slang, typos, or indirect "
+        f"wording. The value means: {spec['value_meaning']} "
+        "Call `resolve_slot` with the `value` field ONLY if the reply really "
+        "answers the question; if the reply is off-topic, a counter-question, "
+        "or genuinely doesn't answer it, omit `value` entirely (do NOT guess)."
+    )
+
+
+def _slot_resolver_tool(slot: str) -> dict:
+    spec = _SLOT_RESOLVER_SPEC[slot]
+    return {
+        "type": "function",
+        "function": {
+            "name": "resolve_slot",
+            "description": "Report the interpreted answer to the single question the bot just asked.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "value": {
+                        "type": spec["type"],
+                        "description": "The interpreted answer. Omit if the reply doesn't actually answer the question.",
+                    },
+                },
+            },
+        },
+    }
+
+
+async def resolve_slot_answer(
+    slot: str,
+    message: str,
+    *,
+    lang: str = "es",
+    client: AsyncOpenAI | None = None,
+) -> dict:
+    """Interpreta `message` como respuesta al slot booleano/escalar `slot`
+    cuando el parser canónico ya falló. Devuelve {"value": <bool|int>} o {} si
+    no aplica / cualquier fallo. Nunca lanza. Ver `_SLOT_RESOLVER_SPEC`."""
+    if slot not in _SLOT_RESOLVER_SPEC or not message or not message.strip():
+        return {}
+    try:
+        client = client or AsyncOpenAI(api_key=settings.openai_api_key)
+        response = await client.chat.completions.create(
+            model=settings.extraction_model,
+            messages=[
+                {"role": "system", "content": _slot_resolver_prompt(slot, lang)},
+                {"role": "user", "content": message},
+            ],
+            tools=[_slot_resolver_tool(slot)],
+            tool_choice={"type": "function", "function": {"name": "resolve_slot"}},
+            temperature=0.0,
+            max_tokens=40,
+        )
+        tool_calls = getattr(response.choices[0].message, "tool_calls", None)
+        if not tool_calls:
+            return {}
+        args = json.loads(tool_calls[0].function.arguments or "{}")
+    except (json.JSONDecodeError, TypeError, AttributeError, IndexError) as exc:
+        logger.warning(f"[LLM_EXTRACTOR] slot-resolver malformed response ({slot}): {exc}")
+        return {}
+    except OpenAIError as exc:
+        logger.error(f"[LLM_EXTRACTOR] slot-resolver API/network error ({slot}, answer may loop): {exc}")
+        return {}
+    except Exception as exc:  # noqa: BLE001
+        logger.warning(f"[LLM_EXTRACTOR] slot-resolver error ({slot}): {exc}")
+        return {}
+    if "value" not in args or args["value"] in (None, ""):
+        return {}
+    logger.info(f"[CORE][SLOT-RESOLVER] slot={slot} value={args['value']!r} msg={message[:60]!r}")
+    return {"value": args["value"]}
+
+
 # ─────────────────────── Redactor cálido "acuse" (Parte 2 del plan) ──────────
 # Genera UNA frase que reconoce lo que el cliente acaba de decir, con la persona
 # Coral y su nombre si lo hay. NO menciona precios/links/cifras ni hace la

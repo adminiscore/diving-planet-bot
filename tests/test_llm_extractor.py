@@ -14,6 +14,7 @@ from src.agents.llm_extractor import (
     detect_special_signals,
     fill_gaps,
     missing_fields,
+    resolve_slot_answer,
 )
 
 # ---------------------------------------------------------------------------
@@ -351,3 +352,67 @@ async def test_detect_signals_drops_null_values():
     )])
     result = await detect_special_signals("un amigo quiere snorkel", client=_make_client(msg))
     assert result == {"companion_activity": "snorkel"}
+
+
+# ---------------------------------------------------------------------------
+# resolve_slot_answer() — red anti-bucle de slot booleano/escalar (Fase C)
+# ---------------------------------------------------------------------------
+
+@pytest.mark.asyncio
+async def test_resolve_slot_boolean_value():
+    msg = _FakeMessage(tool_calls=[_FakeToolCall("resolve_slot", json.dumps({"value": True}))])
+    result = await resolve_slot_answer("safety", "uf, hace muchísimo", client=_make_client(msg))
+    assert result == {"value": True}
+
+
+@pytest.mark.asyncio
+async def test_resolve_slot_integer_value():
+    msg = _FakeMessage(tool_calls=[_FakeToolCall("resolve_slot", json.dumps({"value": 2}))])
+    result = await resolve_slot_answer("qty", "un par", client=_make_client(msg))
+    assert result == {"value": 2}
+
+
+@pytest.mark.asyncio
+async def test_resolve_slot_abstains_when_no_value():
+    msg = _FakeMessage(tool_calls=[_FakeToolCall("resolve_slot", json.dumps({}))])
+    result = await resolve_slot_answer("nationality", "cuánto cuesta?", client=_make_client(msg))
+    assert result == {}
+
+
+@pytest.mark.asyncio
+async def test_resolve_slot_unknown_slot_no_llm_call():
+    class _ShouldNotBeCalled:
+        class chat:  # noqa: N801
+            class completions:  # noqa: N801
+                @staticmethod
+                async def create(**kwargs):
+                    raise AssertionError("must not call the LLM for an unsupported slot")
+
+    result = await resolve_slot_answer("location", "cartagena", client=_ShouldNotBeCalled())
+    assert result == {}
+
+
+@pytest.mark.asyncio
+async def test_resolve_slot_empty_message_no_llm_call():
+    class _ShouldNotBeCalled:
+        class chat:  # noqa: N801
+            class completions:  # noqa: N801
+                @staticmethod
+                async def create(**kwargs):
+                    raise AssertionError("must not call the LLM for an empty message")
+
+    result = await resolve_slot_answer("safety", "   ", client=_ShouldNotBeCalled())
+    assert result == {}
+
+
+@pytest.mark.asyncio
+async def test_resolve_slot_error_returns_empty():
+    class _BoomClient:
+        class chat:  # noqa: N801
+            class completions:  # noqa: N801
+                @staticmethod
+                async def create(**kwargs):
+                    raise RuntimeError("boom")
+
+    result = await resolve_slot_answer("safety", "hace años", client=_BoomClient())
+    assert result == {}
