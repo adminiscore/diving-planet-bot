@@ -1299,3 +1299,50 @@ async def test_hallucinated_main_activity_restatement_is_not_queued_as_companion
     )
     assert state.core_pending_slot != core.SLOT_COMPANION_QTY
     assert not state.pending_companion_queue
+
+
+def test_mentions_person_recognizes_english_plurals():
+    """Hallazgo en vivo 2026-07-23 (matriz EN de multi-ítem): la lista de
+    `_MENTIONS_PERSON_RE` en inglés no tenía plurales ("friend" sin "s?"),
+    mientras que TODA la lista en español sí los tiene ("amig[oa]s?") — "my
+    friends do snorkel" no disparaba NINGÚN mecanismo de acompañante en
+    inglés (ni el chequeo de mención perdida, ni el gate original
+    `companion_ambiguous`, ni el fast-path), un hueco real de idioma."""
+    assert core._mentions_person("my friends do snorkel")
+    assert core._mentions_person("2 brothers and my sisters are coming")
+    assert core._mentions_person("some folks want to join")
+    assert not core._mentions_person("I want to do snorkel")
+
+
+@pytest.mark.asyncio
+async def test_companion_qty_answer_mentioning_different_activity_not_misapplied():
+    """Hallazgo en vivo 2026-07-23: si se pregunta "¿cuántos para snorkel?"
+    y la respuesta menciona OTRA actividad producto distinta ("we are 3 for
+    diving"), ese número NO es una respuesta válida para snorkel — aplicarlo
+    a ciegas mezclaría el "3" de buceo con snorkel (bug en vivo: snorkel
+    acababa con qty=3 cuando el cliente hablaba de buceo). Además, la
+    pregunta de snorkel (aún sin responder) no debe perderse: el turno
+    después debe seguir preguntando por snorkel, no saltar a otro slot."""
+    state = make_state("en")
+    with patch.object(core, "fill_gaps", new=AsyncMock(return_value={
+        "group_allocation": {"certified_diving": 1, "snorkel": 1},
+    })):
+        await route_message(state, "my friends dive and other friends do snorkel too")
+    assert state.core_pending_slot == core.SLOT_COMPANION_QTY
+    pending_before = state.pending_companion_activity
+    assert pending_before in ("certified_diving", "snorkel")
+    snorkel_before = (state.detected_group_allocation or {}).get("snorkel")
+
+    with patch.object(core, "fill_gaps", new=AsyncMock(return_value={
+        "group_allocation": {"certified_diving": 3},
+    })):
+        resp = await route_message(state, "we are 3 for diving")
+
+    assert (state.detected_group_allocation or {}).get("snorkel") == snorkel_before, (
+        "el número de buceo no puede colarse como cantidad de snorkel"
+    )
+    # La pregunta original (la que sea que quedó pendiente) sigue viva, no
+    # se pierde silenciosamente por caer al slot genérico siguiente.
+    assert state.core_pending_slot == core.SLOT_COMPANION_QTY
+    assert state.pending_companion_activity is not None
+    assert "snorkel" in resp.lower() or "buce" in resp.lower() or "div" in resp.lower()

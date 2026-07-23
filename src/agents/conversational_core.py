@@ -457,8 +457,20 @@ def _apply_short_answer(state: ConversationState, message: str) -> bool:
             return True
         return False
     if slot == SLOT_COMPANION_QTY:
-        n = _tree._parse_mixed_quantity(message)
         act = state.pending_companion_activity
+        # Auditoría 2026-07-23 (matriz EN de multi-ítem): si la respuesta a
+        # "¿cuántos para snorkel?" menciona OTRA actividad producto distinta
+        # a la preguntada ("we are 3 for diving" respondiendo a la pregunta
+        # de snorkel), el número no es una respuesta válida para ESTA
+        # pregunta — aplicarlo a ciegas mezclaría el "3" de buceo con
+        # snorkel (bug en vivo: acabó facturando snorkel:3 cuando el cliente
+        # decía 3 para BUCEO). Si el mensaje menciona un producto que NO es
+        # el preguntado (y no menciona el preguntado), no se resuelve aquí —
+        # se abstiene para que el mensaje se re-entienda desde cero.
+        mentioned = _mentioned_product_activities(message)
+        if mentioned and act not in mentioned:
+            return False
+        n = _tree._parse_mixed_quantity(message)
         if n is not None and n > 0 and act:
             _merge_companion_activity(state, act, n)
             state.pending_companion_activity = None
@@ -525,9 +537,18 @@ _MENTIONS_PERSON_RE = re.compile(
     r"herman[oa]s?|hij[oa]s?|padre|madre|pap[aá]s?|mam[aá]s?|suegr[oa]s?|cu[ñn]ad[oa]s?|"
     r"sobrin[oa]s?|niet[oa]s?|abuel[oa]s?|familia\w*|acompa[ñn]antes?|"
     r"vien[ea]n?|se\s+(?:suma|apunta|une)n?|otra?\s+persona|"
-    r"friend|partner|wife|husband|brother|sister|son|daughter|mom|dad|mother|father|"
-    r"someone|is\s+coming|joins?)\b"
-    r"|\b(?:y|,|adem[aá]s|tambi[ée]n|más|mas)\s+(?:un[oa]?|otr[oa])\b",
+    # Auditoría 2026-07-23 (matriz EN de multi-ítem): la lista en inglés no
+    # tenía plurales ("friend" sin "s?") mientras que TODA la lista en
+    # español sí ("amig[oa]s?") — "my friends do snorkel" no disparaba
+    # NINGÚN mecanismo de acompañante (ni el nuevo chequeo de mención
+    # perdida, ni el `companion_ambiguous` original, ni el fast-path), un
+    # hueco real de idioma, no solo del fix de hoy. Añadido "s?"/"es?" a cada
+    # sustantivo en inglés, más "others"/"folks"/"people" (equivalentes de
+    # "otra?\s+persona").
+    r"friends?|partners?|wife|wives|husbands?|brothers?|sisters?|sons?|"
+    r"daughters?|moms?|dads?|mothers?|fathers?|others?|folks?|people|"
+    r"someone|is\s+coming|are\s+coming|joins?)\b"
+    r"|\b(?:y|,|adem[aá]s|tambi[ée]n|más|mas|and)\s+(?:un[oa]?|otr[oa]|another|one)\b",
     re.IGNORECASE,
 )
 
@@ -638,8 +659,11 @@ _PRODUCT_MENTION_RE = {
 }
 
 
-def _mentioned_product_activities(message: str) -> set:
-    return {act for act, pat in _PRODUCT_MENTION_RE.items() if pat.search(message)}
+def _mentioned_product_activities(message: str) -> list:
+    """Lista (no set) para que el orden en que se pregunta por cada
+    sub-grupo sea determinista (el orden de un `set` de strings depende del
+    hash aleatorizado por proceso, no es reproducible entre corridas)."""
+    return [act for act, pat in _PRODUCT_MENTION_RE.items() if pat.search(message)]
 
 
 # Campos que CONDUCEN la reserva en el núcleo (alimentan next_missing_slot o el
@@ -1612,16 +1636,36 @@ async def maybe_handle_turn(
         return answer
 
     # RESOLVER + RESPONDER.
-    nxt = next_missing_slot(state)
-    if nxt is None:
-        response = _finalize(state)
-        # Materializar la nota de lead (el cierre no-colombiano deja solo
-        # pending_lead_note_reason; en el camino legacy la construye
-        # _finalize_tree_response — aquí el equivalente).
-        supervisor._maybe_build_pending_note(state)
-    else:
-        response = ask_slot(state, nxt, reasking=(nxt == prev_pending))
+    #
+    # Bug en vivo 2026-07-23 (matriz EN de multi-ítem): si este turno NO
+    # resolvió la pregunta de cantidad de un acompañante pendiente (p. ej.
+    # el mensaje mencionaba OTRA actividad distinta a la preguntada — guarda
+    # nueva en `_apply_short_answer`/SLOT_COMPANION_QTY — y cayó de largo
+    # hasta aquí), `next_missing_slot()` NO conoce en absoluto
+    # `pending_companion_activity`/`pending_companion_queue`: sin este
+    # chequeo, `core_pending_slot` se sobreescribía con el siguiente slot
+    # "normal" (ubicación, seguridad...) dejando la pregunta de acompañante
+    # huérfana — el estado seguía "pensando" que faltaba responderla pero
+    # nada volvía a preguntarla nunca. Se prioriza sobre next_missing_slot
+    # igual que el resto de comprobaciones de este bloque multi-ítem.
+    if state.pending_companion_activity:
+        response = ask_slot(state, SLOT_COMPANION_QTY, reasking=True)
         state.step = Step.FREE_TEXT
+    elif state.pending_companion_queue:
+        state.pending_companion_activity = state.pending_companion_queue.pop(0)
+        response = ask_slot(state, SLOT_COMPANION_QTY)
+        state.step = Step.FREE_TEXT
+    else:
+        nxt = next_missing_slot(state)
+        if nxt is None:
+            response = _finalize(state)
+            # Materializar la nota de lead (el cierre no-colombiano deja solo
+            # pending_lead_note_reason; en el camino legacy la construye
+            # _finalize_tree_response — aquí el equivalente).
+            supervisor._maybe_build_pending_note(state)
+        else:
+            response = ask_slot(state, nxt, reasking=(nxt == prev_pending))
+            state.step = Step.FREE_TEXT
 
     # Envoltorio cálido (Parte 2 del plan): en los turnos posteriores al saludo,
     # reconocer con calidez lo que el cliente acaba de decir ANTES de encadenar la

@@ -798,3 +798,107 @@ Con esto, el owner considera cerrado el tema "multi-ítem / other_companions" co
 (fiabilidad de cantidad + puente pregunta→acción + pérdida silenciosa por abstención).
 Siguiente en la lista de prioridad acordada: Cancelación, Deflexión, Link roto (a
 confirmar con el owner antes de arrancar, no asumir el orden).
+
+---
+
+# Multi-ítem, auditoría adversarial final (v0.20.61, 2026-07-23): inglés + alucinación de acompañante
+
+Antes de pasar al siguiente tema, el owner pidió una pasada explícitamente adversarial:
+la misma matriz dígito/letra/plural vago pero en INGLÉS, el post-cierre con el mismo
+rigor que apertura/durante, una batería buscando ALUCINACIONES de acompañante (el LLM
+inventa que hay alguien cuando no lo hay), y re-verificar que los booleanos del
+acompañante (`is_certified`, `last_dive_over_2_years`, `refresher_interested`) no pisan
+al buceador principal bajo los fixes de hoy.
+
+## 1. Bug de idioma real: `_mentions_person` no tenía plurales en inglés
+
+Toda la lista de sustantivos en español lleva "s?" (`amig[oa]s?`) — la lista en inglés
+NO ("friend" sin "s"). Reproducido: "3 dive, my friends do snorkel, and 2 do the
+minicourse" no disparaba absolutamente NINGÚN mecanismo de acompañante en inglés — ni
+la red nueva de mención perdida (v0.20.60), ni el `companion_ambiguous` original, ni el
+fast-path de compañero singular. No era un bug del fix de ayer, era un hueco de
+cobertura de idioma que llevaba ahí desde que se escribió `_MENTIONS_PERSON_RE`. Fix:
+plurales en cada sustantivo inglés + "others/folks/people" (equivalente de "otra
+persona"). Verificado en vivo: la misma frase en inglés ahora pregunta correctamente
+por snorkel, igual que su equivalente en español.
+
+## 2. Cantidad mal atribuida cuando la respuesta menciona OTRA actividad
+
+Al preguntar "how many for snorkel?", una respuesta como "we are 3 for diving"
+(mencionando una actividad DISTINTA a la preguntada) se aplicaba a ciegas — el "3" de
+buceo acababa como snorkel:3. Nueva guarda en `_apply_short_answer`/`SLOT_COMPANION_QTY`:
+si el mensaje menciona un producto que NO es el que se preguntó (y no menciona el que
+sí se preguntó), se abstiene en vez de mezclar.
+
+## 3. Esa guarda, sola, exponía un bug estructural preexistente MÁS GRAVE
+
+Al abstenerse (punto 2), el mensaje cae al flujo genérico de fin de turno — y ese
+flujo hacía `core_pending_slot = next_missing_slot(state)` SIN comprobar si
+`pending_companion_activity`/`pending_companion_queue` seguían con una pregunta sin
+responder. La pregunta de acompañante quedaba huérfana: el estado seguía "pensando"
+que faltaba responderla, pero nada volvía a preguntarla — el bot avanzaba a ubicación/
+seguridad como si nada faltara. Esto no es nuevo del punto 2: siempre existió, pero
+antes `_apply_short_answer` casi siempre devolvía True para cualquier número en la
+respuesta (sin verificar que fuera del producto correcto), así que rara vez se llegaba
+a este camino. Fix: en el fallback final de `maybe_handle_turn`, si hay un acompañante
+pendiente (activo o en cola), se prioriza sobre `next_missing_slot()`.
+
+**Límite conocido, documentado, no bloqueante**: si el cliente responde FUERA de orden
+(contesta un sub-grupo que aún no se le preguntó, antes que el que sí se le preguntó),
+el mecanismo ya no corrompe datos ni pierde nada — pero puede generar una repregunta en
+vez de reordenar inteligentemente la cola. Verificado que responder EN el orden en que
+el bot pregunta (el caso normal) funciona perfecto en ES+EN, dígito/letra/plural vago,
+apertura/durante/post-cierre.
+
+## 4. Alucinación de acompañante — confirmada 3/3, arreglada con refuerzo de prompt
+
+"my family always talks about diving here" (mención incidental en post-cierre, nadie se
+añade) hacía que `detect_special_signals` devolviera `mentions_other_person=True,
+companion_activity=certified_diving` — reproducible 3/3. El bot preguntaba "¿cuántos
+para buceo certificado?" sin que nadie se hubiera unido.
+
+A diferencia de CUANTIFICAR un plural vago (medido en v0.20.59, el refuerzo de prompt
+NO funcionó ahí), esto es un problema de CLASIFICACIÓN cualitativa: ¿se está añadiendo
+a alguien a ESTA reserva, o solo se le menciona en la conversación? El refuerzo de
+prompt SÍ funcionó aquí — mismo patrón que "recall vs. recomendación" (v0.20.57), otro
+caso de clasificación cualitativa donde reforzar con un ejemplo negativo explícito
+resolvió el problema. Añadido a `companion_activity` y `mentions_other_person`: "no
+alguien se une a ESTA reserva" ≠ "se menciona que alguien existe". Medido antes/después:
+
+- Antes: 3/3 alucinaba (`my family always talks about diving here`).
+- Después: 0/10 falsos positivos en una batería de 5 frases negativas x 2 repeticiones
+  (ES+EN: "my sister has done this before", "mis amigos siempre hablan de este
+  sitio", "I saw a family doing snorkel on the beach yesterday"...).
+- Detección genuina intacta: 4/4 en 2 casos positivos ("my friend also wants to do
+  snorkel", "mi hermana también quiere hacer snorkel").
+
+## 5. Booleanos del acompañante vs. principal — re-verificados, sin cambios
+
+"mi amigo no está certificado y quiere hacer el minicurso": `is_certified=True` del
+buceador principal se mantiene intacto, `_restore_main_diver_fields` sigue protegiendo
+correctamente bajo los fixes de hoy.
+
+## Hallazgo adicional, documentado, NO arreglado (fuera de alcance de esta pasada)
+
+Cuando el mensaje NO especifica qué actividad quiere el acompañante no certificado
+("mi amigo no está certificado", sin decir qué quiere hacer), `fill_gaps` (extractor de
+apertura) y `detect_special_signals` (señal de acompañante, mid-flow) pueden adivinar
+actividades DISTINTAS para la MISMA situación ambigua — en una prueba, uno adivinó
+"snorkel" y el otro "minicourse" para variantes casi idénticas del mismo mensaje.
+Ninguno de los dos pregunta; ambos asumen. No es un cruce de booleanos ni una pérdida
+de datos — es una ambigüedad de ACTIVIDAD sin resolver. Posible fix futuro: cuando la
+única información sobre el acompañante es "no certificado" sin actividad explícita, no
+adivinar ninguna de las dos — preguntar qué quiere hacer. Anotado para si aparece en
+tráfico real; no bloqueante hoy.
+
+## Verificación y tests
+
+2 tests nuevos (regex de plurales en inglés + guarda de cantidad mal atribuida con
+verificación de que la pregunta huérfana no se pierde). Los hallazgos de alucinación
+(punto 4) y de ambigüedad de actividad (hallazgo final) son puramente de
+comportamiento del LLM/prompt, verificados en vivo con múltiples repeticiones, no con
+tests mockeados (mockear `detect_special_signals` no probaría nada sobre si el PROMPT
+real induce o no la alucinación). Suite completa: 1939 passed, 15 skipped. ruff limpio.
+
+Con esto se cierran los 4 puntos que el owner pidió repasar antes de seguir con la
+lista combinada (Cancelación, Deflexión, Link roto...).
