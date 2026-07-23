@@ -495,17 +495,23 @@ class IntentDetector:
         _en_word_alt = r'two|three|four|five|six|seven|eight|nine|ten'
 
         # "me plus 3 friends" / "3 amigos y yo" / "vienen 3 amigos conmigo" /
-        # "voy con 2 amigos": a COMPANION-noun count where the speaker is
-        # explicitly additional — the real total is N+1. Real regex bug caught
-        # twice by live batteries ("me plus 3 friends" resolved to 3; Fase 7,
-        # docs/robustness/plan.md). Must run BEFORE the generic "N friends"
-        # pattern below, which matches first and undercounts.
+        # "voy con 2 amigos" / "tengo 3 amigos" / "I have 3 friends": a
+        # COMPANION-noun count where the speaker is explicitly additional —
+        # the real total is N+1. Real regex bug caught three times by live
+        # batteries/PRE ("me plus 3 friends" resolved to 3, Fase 7,
+        # docs/robustness/plan.md; "tengo 3 amigos que quieren hacer alguna
+        # actividad" resolved to 3 instead of 4, live-PRE 2026-07-23 — "tengo
+        # N amigos" declares POSSESSION of N companions, same shape as "voy
+        # con N amigos", not a literal "we are N" headcount). Must run BEFORE
+        # the generic "N friends" pattern below, which matches first and
+        # undercounts.
         _companion_noun = r'(?:friends?|amig[oa]s|compañer[oa]s|companer[oa]s|colegas?|buddies)'
         if not m_gendered_sum and intent.group_size is None:
             m_plus_speaker = re.search(
                 rf'\b(?:me|yo)\s*(?:\+|plus|y|and|más|mas)\s+(\d+|{_es_word_alt}|{_en_word_alt})\s+{_companion_noun}\b'
                 rf'|\b(\d+|{_es_word_alt}|{_en_word_alt})\s+{_companion_noun}\s+(?:y\s+yo|and\s+(?:me|i)\b|conmigo|plus\s+me|with\s+me)'
-                rf'|\b(?:voy|vengo|viajo|going)\s+(?:con|with)\s+(\d+|{_es_word_alt}|{_en_word_alt})\s+{_companion_noun}\b',
+                rf'|\b(?:voy|vengo|viajo|going)\s+(?:con|with)\s+(\d+|{_es_word_alt}|{_en_word_alt})\s+{_companion_noun}\b'
+                rf'|\b(?:tengo|i\s+have)\s+(\d+|{_es_word_alt}|{_en_word_alt})\s+{_companion_noun}\b',
                 message, re.IGNORECASE,
             )
             if m_plus_speaker:

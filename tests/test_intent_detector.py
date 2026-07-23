@@ -167,6 +167,18 @@ class TestGroupDetection:
         intent = detector.detect("3 friends plus me want to dive", state)
         assert intent.group_size == 4
 
+    def test_detect_group_size_tengo_n_amigos(self, detector, state):
+        """Bug en vivo PRE (2026-07-23, Rocío): 'tengo 3 amigos que quieren
+        hacer alguna actividad' facturaba 3 personas en vez de 4 (ella + 3).
+        'tengo N amigos' declara POSESIÓN de N acompañantes, misma forma que
+        'voy con N amigos', no un 'somos N' literal — el total es N+1."""
+        intent = detector.detect("tengo 3 amigos que quieren hacer alguna actividad", state)
+        assert intent.group_size == 4
+
+    def test_detect_group_size_i_have_n_friends(self, detector, state):
+        intent = detector.detect("I have 3 friends who want to dive", state)
+        assert intent.group_size == 4
+
     def test_detect_mixed_group_yo_buceo_amigo_snorkel(self, detector, state):
         intent = detector.detect("yo quiero buceo y mi amigo snorkel", state)
         assert intent.group_allocation is not None

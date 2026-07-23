@@ -3786,6 +3786,23 @@ async def _maybe_apply_llm_extraction_cutover(
         if not relevant_gaps:
             return
         patch = await fill_gaps(message, regex_intent, history=state.history, lang=state.language)
+        # Auditoría Fase B (2026-07-23): este cutover es el equivalente, en el
+        # flujo LEGACY (árbol de botones, sin `conversational_core`), de la
+        # Capa 5 del núcleo conversacional — y le faltaba el mismo saneamiento
+        # que Gadea añadió allí (commit d3ecdba): con el historial real de la
+        # conversación por delante, `fill_gaps` puede alucinar un
+        # group_allocation/group_size completo para un mensaje de "se añade un
+        # acompañante" sin ningún número real (p. ej. "también vienen mis
+        # amigos a hacer snorkel" → {snorkel: 3} inventado). `LLM_EXTRACTION_
+        # CUTOVER_GROUP` está en `"true"` en `docker-compose.vps.yml` (PRE), así
+        # que este camino SÍ se ejecuta en producción, no es solo teórico.
+        # Mismos regexes que `conversational_core._understand()` (import
+        # perezoso: evita el ciclo módulo-a-módulo, mismo patrón ya usado en
+        # este fichero para `conversational_core.maybe_handle_turn`).
+        from src.agents.conversational_core import _ADDED_PERSON_RE, _EXPLICIT_NUMBER_RE
+        if _ADDED_PERSON_RE.search(message) and not _EXPLICIT_NUMBER_RE.search(message):
+            patch.pop("group_allocation", None)
+            patch.pop("group_size", None)
         # Apply ONLY fields that were an actual gap in an enabled domain — never a
         # field the regex already resolved (fill_gaps guards this too, but the
         # cutover enforces the "never overwrite regex" property itself as well).

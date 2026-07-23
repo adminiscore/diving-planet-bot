@@ -742,6 +742,33 @@ async def test_companion_signal_post_close_adds_snorkel_item():
 
 
 @pytest.mark.asyncio
+async def test_tengo_n_amigos_counts_once_not_double(monkeypatch):
+    """Bug en vivo PRE (2026-07-23, Rocío): 'tengo el AOWD, además tengo 3
+    amigos...' — la extracción base (regex, ya arreglado) resuelve group_size=4
+    (ella + 3). El gate de acompañante NO debe volver a disparar la red de
+    precisión LLM para el MISMO mensaje y sumar 3 otra vez (4+3=7). Se mockea
+    detect_special_signals como si el LLM SÍ devolviera un acompañante: aun
+    así, `group_composition_resolved_by_base_extraction` debe evitar el doble
+    conteo, así que la señal ni se consume."""
+    signals_mock = AsyncMock(return_value={
+        "companion_activity": "certified_diving", "companion_qty": 3,
+        "mentions_other_person": True,
+    })
+    monkeypatch.setattr(core, "detect_special_signals", signals_mock)
+    state = make_state("es")
+    # Falta la ubicación (el número "3" NO se consume como respuesta de ese
+    # slot). La extracción base resuelve group_size=4 (regex 'tengo N amigos'),
+    # lo que cuenta como avance aunque la ubicación siga pendiente — así la red
+    # de precisión LLM no re-cuenta los 3 acompañantes encima (4+3=7).
+    state.detected_activity = "certified_diving"
+    state.is_certified = True
+    state.core_pending_slot = core.SLOT_LOCATION
+    await route_message(state, "tengo 3 amigos que quieren hacer alguna actividad")
+    assert state.detected_group_size == 4, "ella + 3 amigos = 4, nunca 7"
+    signals_mock.assert_not_called()
+
+
+@pytest.mark.asyncio
 async def test_no_signal_falls_through_to_generic_as_before():
     """Regresión: si detect_special_signals no encuentra nada (mensaje
     genuinamente ambiguo), el comportamiento sigue siendo el de antes — no se

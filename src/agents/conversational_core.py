@@ -501,6 +501,22 @@ _SINGULAR_COMPANION_RE = re.compile(
     re.IGNORECASE,
 )
 
+# Respaldo determinista para la asimetría señalada en la auditoría de Fase B
+# (2026-07-23): `companion_qty` se descarta si el mensaje no trae un número
+# real (`_EXPLICIT_NUMBER_RE`), pero `companion_is_singular` no tenía ninguna
+# segunda verificación — si el LLM dice singular=True para un plural con
+# jerga rarísima, nada lo contradice. Sustantivo de compañero en PLURAL
+# inequívoco (termina en "s": "amigos", "parceros", "friends"...) — si
+# aparece, no se confía en `companion_is_singular=True` del LLM aunque lo
+# devuelva, y se pasa a preguntar cuántos son en vez de asumir 1.
+_PLURAL_COMPANION_RE = re.compile(
+    r"\b(?:amig[oa]s|novi[oa]s|espos[oa]s|parejas|compa[ñn]er[oa]s|acompa[ñn]antes|"
+    r"herman[oa]s|hij[oa]s|prim[oa]s|padres|mam[aá]s|pap[aá]s|"
+    r"parceros?|parceras?|cuates|panas|carnales|compas|patas|causas|"
+    r"friends|buddies|companions|partners)\b",
+    re.IGNORECASE,
+)
+
 # Respaldo determinista: verificado en vivo (2026-07-22) que el LLM NO siempre
 # obedece la instrucción de abstenerse en `companion_qty` para un plural vago
 # — "también vienen mis amigos a hacer snorkel" devolvió companion_qty=1 pese
@@ -1069,6 +1085,8 @@ async def maybe_handle_turn(
     prev_main_is_certified = state.is_certified
     prev_main_last_dive = state.last_dive_over_2_years
     prev_main_refresher = state.refresher_interested
+    prev_group_size = state.detected_group_size
+    prev_group_allocation = dict(state.detected_group_allocation or {})
     has_qmark = "?" in message
 
     resolved_short = False
@@ -1101,6 +1119,20 @@ async def maybe_handle_turn(
     companion_merged_fastpath = False
     if not (resolved_short and len(message.strip()) <= 12):
         _, companion_merged_fastpath = await _understand(state, message)
+
+    # ¿La extracción base (regex + gap-fill, dentro de `_understand()`) ya
+    # cambió el tamaño/reparto del grupo este turno? Bug en vivo (2026-07-23,
+    # Rocío): "tengo 3 amigos que quieren hacer alguna actividad" — el fix del
+    # regex de intent_detector.py ya suma correctamente +1 (group_size 1→4).
+    # Sin esta guarda, `companion_ambiguous` (más abajo) volvía a disparar la
+    # red de precisión LLM para el MISMO mensaje, que fusionaba 3 acompañantes
+    # OTRA VEZ encima del grupo ya correcto → 4+3=7. La extracción base y la
+    # red de precisión leen la MISMA evidencia textual; si la base ya absorbió
+    # el cambio de tamaño de grupo, no hay que re-contarlo.
+    group_composition_resolved_by_base_extraction = (
+        state.detected_group_size != prev_group_size
+        or (state.detected_group_allocation or {}) != prev_group_allocation
+    )
 
     # Añadido POST-cierre ("viene también uno que hace snorkel" cuando el
     # resumen ya se emitió): añadir el subgrupo nuevo al carrito existente y
@@ -1139,9 +1171,16 @@ async def maybe_handle_turn(
     # precisión LLM de abajo se ejecutaba OTRA VEZ para el mismo mensaje y
     # duplicaba la cantidad (snorkel:1 fusionado por el fast-path + snorkel:1
     # fusionado de nuevo por el LLM = snorkel:2).
+    # `group_composition_resolved_by_base_extraction` (hallazgo en vivo
+    # 2026-07-23, Rocío): si la extracción base ya absorbió el tamaño/reparto
+    # del grupo este turno pero SIN cambiar next_missing_slot (p. ej. seguía
+    # faltando la ubicación), la red de precisión volvía a contar los mismos
+    # acompañantes encima (4 de la base + 3 de la señal = 7). Que la base haya
+    # resuelto la composición del grupo cuenta como avance por sí mismo.
     advanced = (
         resolved_short
         or companion_merged_fastpath
+        or group_composition_resolved_by_base_extraction
         or next_missing_slot(state) != prev_pending
     )
 
@@ -1156,13 +1195,24 @@ async def maybe_handle_turn(
     # ya iniciada se clasifica SIEMPRE por el LLM (añadir acompañante vs. nada),
     # aunque el acompañante quiera la MISMA actividad (p. ej. "1 pero tengo un amigo
     # que quiere hacer buceo") y aunque otro slot haya avanzado en el mismo mensaje.
-    # El fast-path por regex (`_ADDED_PERSON_RE`) ya cubrió sus frases; aquí van las
-    # que se le escapan. El guard de persona + el prompt (que excluye el cambio de
-    # opinión) evitan falsos añadidos.
+    #
+    # El guard usaba `not _ADDED_PERSON_RE.search(message)` para decidir si el
+    # fast-path "ya cubrió" el mensaje — pero ese regex solo marca que el mensaje
+    # TIENE un disparador léxico de persona ("además", "también"...), no que el
+    # fast-path realmente fusionó algo: ese fast-path (en `_understand()`) exige
+    # ADEMÁS una actividad explícita en el mismo turno (`turn_act`). Bug en vivo
+    # (2026-07-23, Rocío): "tengo el AOWD, además tengo 3 amigos que quieren hacer
+    # ALGUNA actividad" — "además" matchea `_ADDED_PERSON_RE`, pero sin actividad
+    # explícita el fast-path no hace nada; con el guard viejo, la red de precisión
+    # tampoco corría, y los 3 acompañantes se perdían en silencio. La señal correcta
+    # de "¿ya lo fusionó el fast-path?" es `companion_merged_fastpath` (el flag que
+    # `_understand()` ya devuelve para esto mismo), no una re-lectura del regex
+    # disparador.
     companion_ambiguous = bool(
         prev_main_activity in _ACTIVITY_TO_CART_TYPE
         and _mentions_person(message)
-        and not _ADDED_PERSON_RE.search(message)
+        and not companion_merged_fastpath
+        and not group_composition_resolved_by_base_extraction
     )
     if not advanced or companion_ambiguous:
         signals = await detect_special_signals(message, history=state.history, lang=state.language)
@@ -1200,9 +1250,20 @@ async def maybe_handle_turn(
             # no reconoce jerga regional ("mi parce"/"mi cuate" preguntaban
             # cantidad en vez de asumir 1 sin necesidad). El LLM entiende
             # cualquier variante; el regex se queda como respaldo barato.
-            if qty is None and not (
-                signals.get("companion_is_singular") or _SINGULAR_COMPANION_RE.search(message)
-            ):
+            #
+            # Asimetría cerrada (auditoría Fase B, 2026-07-23): `companion_qty`
+            # ya se descartaba si no había número real en el texto, pero
+            # `companion_is_singular=True` del LLM no tenía ninguna segunda
+            # verificación — un plural con jerga rarísima podía colarse como
+            # "1 solo" sin que nada lo contradijera. `_PLURAL_COMPANION_RE`
+            # (sustantivo de compañero en plural inequívoco: "amigos",
+            # "parceros"...) invalida esa confianza igual que
+            # `_EXPLICIT_NUMBER_RE` invalida `companion_qty`.
+            singular_confirmed = _SINGULAR_COMPANION_RE.search(message) or (
+                signals.get("companion_is_singular")
+                and not _PLURAL_COMPANION_RE.search(message)
+            )
+            if qty is None and not singular_confirmed:
                 # Plural vago ("mis amigos", "unos amigos", "friends" sin
                 # número) — en vez de asumir 1, se pregunta cuántos son
                 # (hallazgo en vivo: "mis amigos" generaba

@@ -18,7 +18,7 @@ from __future__ import annotations
 import json
 import logging
 
-from openai import AsyncOpenAI
+from openai import AsyncOpenAI, OpenAIError
 
 from src.agents.intent_detector import DetectedIntent
 from src.config import settings
@@ -429,16 +429,26 @@ _SIGNALS_TOOL = {
                 "companion_qty": {
                     "type": "integer",
                     "description": (
-                        "How many additional people this describes — set ONLY "
-                        "when the message gives an explicit, countable number "
-                        "('2 amigos', 'tres primos', '2 y uno hace snorkel' -> "
-                        "1 for the snorkel side). Omit this field entirely for "
-                        "a single named companion ('a friend', 'mi novia' — the "
-                        "calling code assumes 1 on its own) AND for a vague, "
-                        "uncounted plural ('mis amigos', 'unos amigos', "
-                        "'friends' with no number) — do NOT guess a total for "
-                        "an uncounted plural, the calling code asks the "
-                        "customer how many instead."
+                        "How many people want SPECIFICALLY the activity in "
+                        "`companion_activity` — set ONLY when the message "
+                        "gives an explicit, countable number for THAT "
+                        "activity ('2 amigos' [same activity for both] -> 2, "
+                        "'2 y uno hace snorkel' -> companion_qty=2 for the "
+                        "diving side, with the snorkel side going in "
+                        "`other_companions` instead, NOT added here). If "
+                        "OTHER sub-groups exist (see `other_companions` "
+                        "below), this number is ONLY for the first/main "
+                        "sub-group, never the combined total across all "
+                        "sub-groups — e.g. 'mi amigo bucea y mi otro amigo "
+                        "hace snorkel' is ONE diver (companion_qty=1) and "
+                        "ONE snorkeler (in other_companions), NOT "
+                        "companion_qty=2. Omit this field entirely for a "
+                        "single named companion ('a friend', 'mi novia' — "
+                        "the calling code assumes 1 on its own) AND for a "
+                        "vague, uncounted plural ('mis amigos', 'unos "
+                        "amigos', 'friends' with no number) — do NOT guess a "
+                        "total for an uncounted plural, the calling code "
+                        "asks the customer how many instead."
                     ),
                 },
                 "refresher_interested": {
@@ -450,6 +460,40 @@ _SIGNALS_TOOL = {
                         "(e.g. 'sí, no estaría mal', 'mejor no, gracias', "
                         "'claro que sí'). True if they want it, false if not."
                     ),
+                },
+                "other_companions": {
+                    "type": "array",
+                    "description": (
+                        "Use ONLY when the message describes TWO OR MORE "
+                        "DISTINCT companion sub-groups with DIFFERENT "
+                        "activities (e.g. 'mi amigo bucea y mi otra amiga hace "
+                        "snorkel' = one diver + one snorkeler; 'dos amigos "
+                        "bucean y uno hace snorkel' = two divers + one "
+                        "snorkeler). Put the FIRST/main sub-group in "
+                        "companion_activity/companion_qty/"
+                        "companion_is_singular as always, and list every "
+                        "OTHER sub-group here, one item per distinct "
+                        "activity. Each item MUST include an explicit, "
+                        "countable qty for that sub-group (a single named "
+                        "companion like 'mi otro amigo' counts as qty=1) — "
+                        "if a sub-group's count is a vague/uncounted plural "
+                        "with no number, omit that item entirely rather than "
+                        "guessing (the calling code cannot yet ask a "
+                        "follow-up quantity question per sub-group). Leave "
+                        "this array empty/omitted when there's only one "
+                        "companion sub-group."
+                    ),
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "activity": {
+                                "type": "string",
+                                "enum": ["certified_diving", "minicourse", "snorkel"],
+                            },
+                            "qty": {"type": "integer"},
+                        },
+                        "required": ["activity", "qty"],
+                    },
                 },
             },
         },
@@ -480,10 +524,17 @@ def _signals_system_prompt(lang: str) -> str:
             "vocabulario sea informal o regional (parce, cuate, pana, "
             "carnal...); el código que te llama NO tiene una lista de "
             "palabras que cubra todas las variantes regionales, así que "
-            "confía en tu propio criterio. Llama a `detect_signals` "
-            "incluyendo SOLO los campos para los que el mensaje da señal "
-            "real y explícita (recall_field y refresher_interested solo si "
-            "aplican). Omite cualquier campo ambiguo — nunca lo adivines."
+            "confía en tu propio criterio. Si el mensaje describe DOS O MÁS "
+            "acompañantes con actividades DISTINTAS ('mi parce bucea y mi "
+            "cuate hace snorkel'), pon el PRIMER grupo en "
+            "companion_activity/companion_qty/companion_is_singular como "
+            "siempre, y cada grupo ADICIONAL en `other_companions` (cada uno "
+            "con su actividad y su cantidad exacta — omite un grupo si su "
+            "cantidad no es un número real, nunca la adivines). Llama a "
+            "`detect_signals` incluyendo SOLO los campos para los que el "
+            "mensaje da señal real y explícita (recall_field, "
+            "refresher_interested y other_companions solo si aplican). "
+            "Omite cualquier campo ambiguo — nunca lo adivines."
         )
     return (
         "You are a signal-detection layer for a scuba diving bot. The "
@@ -505,11 +556,17 @@ def _signals_system_prompt(lang: str) -> str:
         "else — "
         "to confirm your detection, so don't omit them even for informal or "
         "regional slang; the calling code has no fixed word list covering "
-        "every regional term, so rely on your own judgment. Call "
-        "`detect_signals` including ONLY the fields the message gives real, "
-        "explicit signal for (recall_field, refresher_interested and "
-        "companion_qty only when they apply). Omit anything ambiguous — "
-        "never guess."
+        "every regional term, so rely on your own judgment. If the message "
+        "describes TWO OR MORE companion sub-groups with DIFFERENT "
+        "activities ('my friend dives and my other buddy snorkels'), put "
+        "the FIRST sub-group in companion_activity/companion_qty/"
+        "companion_is_singular as always, and every ADDITIONAL sub-group in "
+        "`other_companions` (each with its activity and its exact qty — "
+        "omit a sub-group if its count isn't a real number, never guess "
+        "it). Call `detect_signals` including ONLY the fields the message "
+        "gives real, explicit signal for (recall_field, "
+        "refresher_interested and other_companions only when they apply). "
+        "Omit anything ambiguous — never guess."
     )
 
 
@@ -551,6 +608,18 @@ async def detect_special_signals(
         args = json.loads(tool_calls[0].function.arguments or "{}")
     except (json.JSONDecodeError, TypeError, AttributeError, IndexError) as exc:
         logger.warning(f"[LLM_EXTRACTOR] signals malformed response: {exc}")
+        return {}
+    except OpenAIError as exc:
+        # Auditoría Fase B (2026-07-23): un timeout/error de red aquí degrada
+        # a {} igual que una respuesta malformada, pero el efecto es distinto
+        # — un acompañante mencionado por el cliente se pierde sin que nadie
+        # se entere. Separado del warning genérico de abajo y a nivel ERROR
+        # para que sea monitoreable/alertable (un pico de esto es una señal
+        # real de degradación, no ruido de parseo). No se reintenta ni se
+        # cambia el contrato ({} en cualquier fallo) — mismo patrón que
+        # `fill_gaps`/`compose_acknowledgement`; cambiarlo es un rediseño de
+        # resiliencia más amplio, no específico de acompañantes.
+        logger.error(f"[LLM_EXTRACTOR] signals API/network error (companion info may be lost silently this turn): {exc}")
         return {}
     except Exception as exc:  # noqa: BLE001
         logger.warning(f"[LLM_EXTRACTOR] signals error: {exc}")
