@@ -1,6 +1,13 @@
 History
 =======
 
+0.20.58 - (2026-07-23)
+----------------------
+* **DIVE TO HEAL / discapacidad: cerrado el gate pendiente de mayor impacto de la lista.** `_ADAPTIVE_DIVING_PATTERN` era una lista cerrada sin respaldo LLM — probado en vivo: 6 de 12 frases de discapacidad realistas no se detectaban ("soy sordomuda", "perdí una pierna en un accidente", "soy no vidente", "tengo una lesión medular", "uso prótesis", "tengo párkinson"). Un cliente con una necesidad de accesibilidad real entraba al flujo normal de reserva en vez del programa DIVE TO HEAL coordinado por un asesor.
+* Nueva señal `adaptive_diving_topic` en la MISMA llamada `detect_routing_signals` que ya cubre escalado/menú/temas sensibles (sin coste extra). Mismo sesgo que temas sensibles: mejor enrutar de más que de menos.
+* **Colisión de categorías encontrada y arreglada de paso**: "accidente" es palabra clave de emergencia (`SENSITIVE_RULES`) pero también aparece en backstories de discapacidad ("perdí una pierna en un **accidente**"), disparando un escalado médico urgente en vez del contexto DIVE TO HEAL. Reordenado: la señal LLM se calcula ANTES del chequeo de palabras clave de emergencia, y si detecta que es un tema de discapacidad, suprime ese disparo — verificado que una emergencia real ("tuve un accidente, necesito ayuda urgente") sigue escalando sin cambios.
+* 3 tests nuevos (1 unitario, 2 de integración end-to-end). Suite: **1931 passed**, 15 skipped. Verificado en vivo con LLM real: los 6 casos antes no detectados ahora se enrutan al contexto DIVE TO HEAL correctamente.
+
 0.20.57 - (2026-07-23)
 ----------------------
 * **Recall rico validado end-to-end** (Prioridad 2 punto 1 del handoff de Álvaro): `_full_booking_recap` ya existía pero nunca se había probado a través de `maybe_handle_turn`. Verificado en vivo con LLM real: 7 frases regionales de recap ("qué llevamos hasta ahora", "recapitulemos", mexicanismos/argentinismos/paisa), recap en frío sin romper, grupo mixto listando todas las actividades, y consistencia tras añadir un acompañante post-cierre. 4 tests nuevos, todos en verde.

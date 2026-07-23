@@ -4795,7 +4795,27 @@ async def _route_message_inner(state: ConversationState, message: str) -> str:
             "They will get in touch with you shortly. Thanks!"
         )
 
-    sensitive_escalation_early = detect_sensitive_escalation(message, state.language)
+    # Red de precisión (auditoría 2026-07-22/23): ESCALATION_KEYWORDS/
+    # MENU_KEYWORDS/BACK_KEYWORDS/SENSITIVE_RULES/_ADAPTIVE_DIVING_PATTERN son
+    # listas cerradas de palabras exactas — probado en vivo que NO reconocen
+    # variantes regionales reales ("estoy embarazadita", "soy epiléptica",
+    # "tengo una condición cardiaca" en femenino, "ataque de pánico", "perdí
+    # una pierna", "uso prótesis"). Calculado ANTES del chequeo de keywords
+    # (no después, como en la versión anterior) porque hace falta para
+    # resolver una colisión real entre categorías: "accidente" es palabra
+    # clave de SENSITIVE_RULES (queja/emergencia) pero también aparece en
+    # backstories de discapacidad ("perdí una pierna en un accidente") que
+    # deben ir a DIVE TO HEAL, no a un escalado médico genérico de urgencia.
+    # Gasto cero para clics de botón puramente numéricos (nunca pueden
+    # expresar un tema sensible/escalado/menú en ningún idioma). A diferencia
+    # del extractor de reserva, el sesgo aquí es escalar/enrutar de más que
+    # de menos — el propio prompt se lo pide al LLM.
+    routing_signals = {} if msg_lower.isdigit() else await detect_routing_signals(message, lang=state.language)
+
+    sensitive_escalation_early = (
+        None if routing_signals.get("adaptive_diving_topic")
+        else detect_sensitive_escalation(message, state.language)
+    )
     if sensitive_escalation_early:
         reason, response = sensitive_escalation_early
         state.step = Step.ESCALATE
@@ -4805,19 +4825,6 @@ async def _route_message_inner(state: ConversationState, message: str) -> str:
         logger.info(f"[SUPERVISOR] Sensitive escalation triggered (early) reason={reason}")
         return response
 
-    # Red de precisión (auditoría 2026-07-22): ESCALATION_KEYWORDS/
-    # MENU_KEYWORDS/BACK_KEYWORDS/SENSITIVE_RULES son listas cerradas de
-    # palabras exactas — probado en vivo que NO reconocen variantes
-    # regionales reales ("estoy embarazadita", "soy epiléptica", "tengo una
-    # condición cardiaca" en femenino, "ataque de pánico"). Se llama SOLO
-    # cuando la lista rápida de arriba no encontró nada (sin coste extra en
-    # el caso común), y el resultado se reutiliza en todo el resto de esta
-    # función y en el núcleo conversacional (maybe_handle_turn). A diferencia
-    # del extractor de reserva, aquí el sesgo es escalar de más que de menos
-    # — el propio prompt se lo pide al LLM.
-    # Gasto cero para clics de botón puramente numéricos (nunca pueden
-    # expresar un tema sensible/escalado/menú en ningún idioma).
-    routing_signals = {} if msg_lower.isdigit() else await detect_routing_signals(message, lang=state.language)
     if routing_signals.get("sensitive_topic"):
         found = sensitive_response_for(routing_signals["sensitive_topic"], state.language)
         if found:
@@ -4920,7 +4927,12 @@ async def _route_message_inner(state: ConversationState, message: str) -> str:
     # the reported bug). So we (1) persist the context, and (2) route price/
     # booking follow-ups within it to a coherent advisor answer (no generic
     # prices), while non-price questions still get the program's factual info.
-    adaptive_now = bool(_ADAPTIVE_DIVING_PATTERN.search(message))
+    # + red de precisión LLM (auditoría 2026-07-23): _ADAPTIVE_DIVING_PATTERN es
+    # una lista cerrada que no reconoce amputación, prótesis, párkinson, lesión
+    # medular, sordomuda, "no vidente"... routing_signals ya se calculó arriba
+    # (mismo turno, sin llamada extra) y trae adaptive_diving_topic cuando la
+    # lista de palabras no encontró nada.
+    adaptive_now = bool(_ADAPTIVE_DIVING_PATTERN.search(message)) or bool(routing_signals.get("adaptive_diving_topic"))
     if adaptive_now and state.step not in _MIXED_FLOW_STEPS:
         state.adaptive_diving_context = True
 

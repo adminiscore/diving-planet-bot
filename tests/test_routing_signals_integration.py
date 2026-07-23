@@ -95,3 +95,36 @@ async def test_sensitive_signal_escalates_with_conversational_core_on(monkeypatc
         resp = await route_message(state, "esto es un robo, quiero mi dinero")
     assert state.step == Step.ESCALATE
     assert resp
+
+
+@pytest.mark.asyncio
+async def test_adaptive_diving_signal_routes_to_dive_to_heal_when_keyword_list_misses():
+    """"perdi una pierna en un accidente, puedo bucear igual?" no matchea
+    _ADAPTIVE_DIVING_PATTERN (no menciona "discapacidad" ni ninguna palabra de
+    la lista) — la señal LLM debe enrutarlo igual al contexto DIVE TO HEAL,
+    NO a un escalado médico genérico."""
+    state = make_state()
+    with patch("src.agents.supervisor.detect_routing_signals",
+               new=AsyncMock(return_value={"adaptive_diving_topic": True})), \
+         patch("src.agents.supervisor.rag_answer", new=AsyncMock(return_value="Respuesta RAG adaptativa")):
+        resp = await route_message(state, "perdi una pierna en un accidente, puedo bucear igual?")
+    assert state.adaptive_diving_context is True
+    assert state.step != Step.ESCALATE  # no es un escalado médico genérico
+    assert "Respuesta RAG adaptativa" in resp
+
+
+@pytest.mark.asyncio
+async def test_adaptive_diving_signal_persists_for_price_followup():
+    """Tras detectar el tema por señal LLM, una pregunta de precio en el mismo
+    contexto debe dar la respuesta coherente de asesor (no precios genéricos)."""
+    state = make_state()
+    with patch("src.agents.supervisor.detect_routing_signals",
+               new=AsyncMock(return_value={"adaptive_diving_topic": True})), \
+         patch("src.agents.supervisor.rag_answer", new=AsyncMock(return_value="Respuesta RAG adaptativa")):
+        await route_message(state, "uso protesis en la pierna, hay problema para bucear?")
+    assert state.adaptive_diving_context is True
+
+    with patch("src.agents.supervisor.detect_routing_signals", new=AsyncMock(return_value={})):
+        resp2 = await route_message(state, "¿cuánto cuesta?")
+    assert "DIVE TO HEAL" in resp2
+    assert "asesor" in resp2.lower()

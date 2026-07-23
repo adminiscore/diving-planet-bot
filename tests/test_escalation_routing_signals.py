@@ -137,3 +137,16 @@ async def test_detect_routing_signals_bad_json_returns_empty():
     msg = _FakeMessage(tool_calls=[_FakeToolCall("detect_routing_signals", "not-json")])
     result = await detect_routing_signals("hola", client=_make_client(msg))
     assert result == {}
+
+
+@pytest.mark.asyncio
+async def test_detect_routing_signals_adaptive_diving_topic():
+    """DIVE TO HEAL / discapacidad: mismo audit method — _ADAPTIVE_DIVING_PATTERN
+    es una lista cerrada que no reconoce amputación, prótesis, párkinson,
+    lesión medular, sordomuda, "no vidente"... nueva señal en la MISMA llamada
+    (sin coste extra) que ya cubre escalado/menú/sensibles."""
+    msg = _FakeMessage(tool_calls=[_FakeToolCall(
+        "detect_routing_signals", json.dumps({"adaptive_diving_topic": True})
+    )])
+    result = await detect_routing_signals("perdi una pierna en un accidente, puedo bucear igual?", client=_make_client(msg))
+    assert result == {"adaptive_diving_topic": True}

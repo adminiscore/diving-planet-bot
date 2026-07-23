@@ -121,33 +121,39 @@ def sensitive_response_for(category: str, lang: str = "es") -> tuple[str, str] |
 
 
 # ---------------------------------------------------------------------------
-# Red de precisión LLM (auditoría 2026-07-22): los 3 gates de arriba
+# Red de precisión LLM (auditoría 2026-07-22): los gates de arriba
 # (SENSITIVE_RULES, ESCALATION_KEYWORDS en supervisor.py, MENU_KEYWORDS/
-# BACK_KEYWORDS en supervisor.py) son listas cerradas de palabras exactas.
-# Probado en vivo: "estoy embarazadita", "soy epiléptica", "tengo una
-# condición cardiaca" (femenino), "ataque de pánico" — NINGUNA se detectaba,
-# pese a ser justo el tipo de caso médico que este gate existe para atrapar.
+# BACK_KEYWORDS en supervisor.py, _ADAPTIVE_DIVING_PATTERN en supervisor.py)
+# son listas cerradas de palabras exactas. Probado en vivo: "estoy
+# embarazadita", "soy epiléptica", "tengo una condición cardiaca" (femenino),
+# "ataque de pánico" (médico) y "perdí una pierna", "uso prótesis", "tengo
+# párkinson", "lesión medular", "soy sordomuda", "no vidente" (discapacidad/
+# DIVE TO HEAL, auditoría 2026-07-23) — NINGUNA se detectaba, pese a ser
+# justo el tipo de caso que estos gates existen para atrapar.
 # A diferencia del extractor de reserva (donde abstenerse es más seguro que
-# inventar), aquí el sesgo correcto es el CONTRARIO: mejor escalar de más que
-# de menos — no detectar una emergencia real cuesta mucho más que una
-# escalada de más. Nunca REEMPLAZA las listas (que siguen siendo el camino
-# gratis para los casos claros); es una red que solo se llama cuando esas
-# listas no encontraron nada.
+# inventar), aquí el sesgo correcto es el CONTRARIO para sensitive_topic y
+# adaptive_diving_topic: mejor escalar/enrutar de más que de menos — no
+# detectar una emergencia real o una necesidad de accesibilidad cuesta mucho
+# más que un falso positivo. Nunca REEMPLAZA las listas (que siguen siendo el
+# camino gratis para los casos claros); es una red que solo se llama cuando
+# esas listas no encontraron nada.
 _ROUTING_TOOL = {
     "type": "function",
     "function": {
         "name": "detect_routing_signals",
         "description": (
-            "Classify a customer message for a scuba booking bot for 3 "
+            "Classify a customer message for a scuba booking bot for 4 "
             "safety/routing signals, in ANY regional Spanish or English "
             "phrasing, slang, or diminutive form — not just the exact "
-            "clinical/formal wording. Bias applies ONLY to sensitive_topic: "
-            "when genuinely unsure whether a MEDICAL/weather/real-time/"
-            "complaint issue applies, still set it — missing a real medical/"
-            "emergency issue is worse than a false positive. wants_human and "
-            "wants_menu_or_restart are the OPPOSITE: be STRICT, only set them "
-            "on an explicit request (see their descriptions) — a normal "
-            "booking message must never be misread as one."
+            "clinical/formal wording. Bias applies to sensitive_topic AND "
+            "adaptive_diving_topic: when genuinely unsure whether a MEDICAL/"
+            "weather/real-time/complaint issue or a DISABILITY/accessibility "
+            "topic applies, still set it — missing a real medical emergency "
+            "or a real accessibility need is worse than a false positive. "
+            "wants_human and wants_menu_or_restart are the OPPOSITE: be "
+            "STRICT, only set them on an explicit request (see their "
+            "descriptions) — a normal booking message must never be misread "
+            "as one."
         ),
         "parameters": {
             "type": "object",
@@ -187,7 +193,30 @@ _ROUTING_TOOL = {
                         "surgery, medication...), a WEATHER-dependent "
                         "question, a REAL-TIME availability/payment "
                         "problem, or a COMPLAINT/emergency/fraud "
-                        "accusation."
+                        "accusation. Do NOT use 'medical_questions' for a "
+                        "DISABILITY or accessibility topic (amputation, "
+                        "prosthetic limb, wheelchair, blindness/deafness, "
+                        "paralysis, reduced mobility, Down syndrome, "
+                        "autism...) — those go in `adaptive_diving_topic` "
+                        "instead, never both."
+                    ),
+                },
+                "adaptive_diving_topic": {
+                    "type": "boolean",
+                    "description": (
+                        "True if the message raises a DISABILITY or "
+                        "accessibility topic in the context of diving — "
+                        "amputation, missing limb, prosthetic/prótesis, "
+                        "wheelchair, paralysis (parálisis, lesión medular), "
+                        "blindness/low vision ('no vidente', invidente, "
+                        "ciego), deafness ('sordomuda', sordo), Down "
+                        "syndrome, autism, Parkinson's, cerebral palsy, "
+                        "reduced mobility, or asking whether someone with a "
+                        "disability can dive — in ANY regional phrasing, "
+                        "even if it doesn't use the word 'discapacidad' "
+                        "itself. This routes to the DIVE TO HEAL adaptive-"
+                        "diving program, NOT a medical escalation — never "
+                        "also set `sensitive_topic` for the same message."
                     ),
                 },
             },
@@ -204,27 +233,35 @@ def _routing_system_prompt(lang: str) -> str:
             "única tarea es revisar si, en CUALQUIER forma regional de "
             "decirlo (México, Colombia, Chile, Argentina, España...), el "
             "mensaje (1) pide hablar con una persona humana, (2) pide volver "
-            "al menú o reiniciar, o (3) menciona un tema médico, del clima, "
+            "al menú o reiniciar, (3) menciona un tema médico, del clima, "
             "de disponibilidad/pago en tiempo real, o una queja/emergencia/"
-            "estafa. IMPORTANTE: el sesgo de 'ante la duda, márcalo' vale SOLO "
-            "para sensitive_topic (médico/emergencia — mejor escalar de más). "
-            "wants_human es lo contrario: márcalo SOLO si el cliente pide "
-            "explícitamente hablar con una persona/asesor; un mensaje normal de "
-            "reserva (acompañantes, grupo, actividades) NUNCA es wants_human. "
-            "Llama a `detect_routing_signals`."
+            "estafa, o (4) menciona una discapacidad o tema de accesibilidad "
+            "(amputación, prótesis, silla de ruedas, ceguera/sordera, "
+            "párkinson, parálisis, síndrome de Down, autismo...) en relación "
+            "al buceo — esto va a `adaptive_diving_topic`, NUNCA junto con "
+            "sensitive_topic. IMPORTANTE: el sesgo de 'ante la duda, márcalo' "
+            "vale para sensitive_topic Y adaptive_diving_topic (mejor "
+            "escalar/enrutar de más). wants_human y wants_menu_or_restart son "
+            "lo contrario: márcalos SOLO si el cliente lo pide explícitamente; "
+            "un mensaje normal de reserva (acompañantes, grupo, actividades) "
+            "NUNCA es wants_human. Llama a `detect_routing_signals`."
         )
     return (
         "You are a safety layer for a scuba diving bot. The bot's keyword "
         "lists found nothing in this message — your only job is to check "
         "whether, in ANY regional way of phrasing it, the message (1) asks "
-        "to talk to a human, (2) asks to go back to the menu or restart, or "
+        "to talk to a human, (2) asks to go back to the menu or restart, "
         "(3) raises a medical, weather, real-time availability/payment, or "
-        "complaint/emergency/fraud topic. IMPORTANT: the 'when unsure, flag "
-        "it' bias applies ONLY to sensitive_topic (medical/emergency — better "
-        "to over-escalate). wants_human is the opposite: flag it ONLY on an "
-        "explicit request to talk to a human/agent; a normal booking message "
-        "(companions, group, activities) is NEVER wants_human. Call "
-        "`detect_routing_signals`."
+        "complaint/emergency/fraud topic, or (4) raises a disability or "
+        "accessibility topic (amputation, prosthetic, wheelchair, blindness/"
+        "deafness, Parkinson's, paralysis, Down syndrome, autism...) in "
+        "relation to diving — that goes in `adaptive_diving_topic`, NEVER "
+        "together with sensitive_topic. IMPORTANT: the 'when unsure, flag "
+        "it' bias applies to BOTH sensitive_topic and adaptive_diving_topic "
+        "(better to over-escalate/over-route). wants_human and "
+        "wants_menu_or_restart are the opposite: flag them ONLY on an "
+        "explicit request; a normal booking message (companions, group, "
+        "activities) is NEVER wants_human. Call `detect_routing_signals`."
     )
 
 
