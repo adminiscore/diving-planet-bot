@@ -6110,12 +6110,19 @@ class DecisionTree:
         state.step = Step.FREE_TEXT
         # Keep a plain-text copy for the lead note / extra_context.
         state.mixed_last_summary = "\n\n———\n\n".join(msgs)
+        # Cierre profesional tras los links (pedido del owner 2026-07-23): en vez
+        # de una despedida pasiva, una PREGUNTA cálida que invita a seguir —
+        # añadir otra actividad, resolver dudas o ajustar la reserva. Con varias
+        # actividades es un único cierre al final de todos los mensajes (no uno
+        # por actividad). Sin precios/links aquí: van en los `msgs` de arriba.
         closing = (
-            "\n\n_El precio es el mismo en pesos (COP) o dólares (USD), sin cobro extra por la divisa._ "
-            "Si necesitas algo más o tienes cualquier duda, escríbeme. 🌊"
+            "\n\n_El precio es el mismo en pesos (COP) o dólares (USD), sin cobro extra por la divisa._"
+            "\n\n¿Te ayudo con algo más? Puedo *añadir otra actividad*, resolver dudas o "
+            "ajustar la reserva. 🤿"
             if lang == "es"
-            else "\n\n_The price is the same in COP or USD, with no extra charge for the currency._ "
-            "If you need anything else or have any questions, just ask. 🌊"
+            else "\n\n_The price is the same in COP or USD, with no extra charge for the currency._"
+            "\n\nIs there anything else I can help you with? I can *add another activity*, "
+            "answer questions, or adjust your booking. 🤿"
         )
         return MESSAGE_SPLIT.join(msgs) + closing
 
