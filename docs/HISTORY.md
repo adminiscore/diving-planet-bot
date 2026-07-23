@@ -1,6 +1,12 @@
 History
 =======
 
+0.20.68 - (2026-07-23)
+----------------------
+* **Fix de regresión propia (Bloque 2): las señales LLM de routing pisaban los interceptores del carrito.** Una corrida completa de `test_conversations.py` (con LLM real) destapó que 2 tests que pasaban en el baseline (v0.20.62) fallaban tras Bloque 2: `test_multiday_switch_by_text_at_location_step` y `..._at_last_dive_step`. Causa raíz verificada con un worktree en el baseline (pasaban 3/3 allí, fallaban 3/3 en la rama nueva): (1) el LLM clasificaba "i want to do it for 3 days instead" como `booking_change_topic='reschedule'` (Bloque 2.1) y (2) "no teneis algo para mas dias?" como `availability_question=True` (Bloque 2.5) — ambos son CAMBIOS DE PLAN mientras se construye la reserva, no una reprogramación/disponibilidad de una reserva existente, y pisaban el interceptor multi-día por texto.
+* Fix: nuevo guard `_in_active_cart_building(state)` (paso `mixed_*`). Las señales LLM `booking_change_topic` y `availability_question`/`_asks_about_availability` NO se aplican mientras se construye la reserva (ahí mandan los interceptores del carrito). Las listas de keyword explícitas (`_detect_cancellation_request`, `_AVAILABILITY_PATTERN` original) siguen SIEMPRE activas — el `_AVAILABILITY_PATTERN` no confunde multi-día con disponibilidad y los tests de resume mid-cart dependen de él. Fuera del carrito (free-text) las señales sí actúan, así que la alucinación de cupo de fecha específica (v0.20.67) sigue cerrada.
+* Verificado: los 2 multiday vuelven a pasar; disponibilidad free-text sigue sin alucinar; routing/escalación 45, multiday/availability/cancelación 25 passed. Las otras 9 fallas de la corrida completa se confirmaron PRE-EXISTENTES (fallan igual en el baseline: tests flaky que pegan al LLM real — back-navigation, food-allergy→médico, restart, refresh).
+
 0.20.67 - (2026-07-23)
 ----------------------
 * **Bloque 2.5 — Disponibilidad: no alucinar el calendario.** Medido en vivo: una pregunta de fecha ESPECÍFICA que el `_AVAILABILITY_PATTERN` existente no cazaba ("¿tienen disponibilidad el sábado?", "¿queda espacio el domingo?", "any spots left for saturday?") caía a RAG y **alucinaba una confirmación de cupo** ("¡Claro que sí! Tenemos disponibilidad para el sábado") — el guard de grounding revisa precios/URLs pero no una afirmación de disponibilidad en prosa.

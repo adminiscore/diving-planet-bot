@@ -740,6 +740,20 @@ def _detect_reschedule_request(msg_lower: str) -> bool:
     return any(phrase in normalized for phrase in RESCHEDULE_BOOKING_PHRASES)
 
 
+def _in_active_cart_building(state: ConversationState) -> bool:
+    """True cuando la conversación está CONSTRUYENDO una reserva (pasos MIXED_*).
+    Ahí un mensaje de "cambio" ("mejor 3 días", "cámbialo a snorkel") es una
+    EDICIÓN del plan en curso, que manejan los interceptores del carrito
+    (multi-día por texto, split de acompañante...), NO una cancelación/
+    reprogramación de una reserva YA existente. Se usa para NO dejar que la
+    señal LLM `booking_change_topic` (que se equivoca aquí: clasifica "do it
+    for 3 days instead" como 'reschedule') pise esos interceptores. La lista de
+    keyword de cancelación/reprogramación (explícita, "cancelar mi reserva") sí
+    sigue activa siempre. Regresión encontrada por test 2026-07-23:
+    test_multiday_switch_by_text_at_location_step."""
+    return state.step.value.startswith("mixed")
+
+
 # Deflexión (Bloque 2.2): el cliente pide un número de teléfono/WhatsApp o una
 # vía de contacto directa. El bot NUNCA da un número (decisión owner; el guard
 # de grounding `contains_phone_number` ya lo impide en las respuestas de RAG) —
@@ -4996,7 +5010,10 @@ async def _route_message_inner(state: ConversationState, message: str) -> str:
     # `detect_routing_signals` de arriba (sin coste extra), estricto como
     # wants_human (una pregunta por la política NO lo dispara). Mismo patrón
     # que DIVE TO HEAL (v0.20.58).
-    if _detect_cancellation_request(msg_lower) or routing_signals.get("booking_change_topic") == "cancellation":
+    if _detect_cancellation_request(msg_lower) or (
+        routing_signals.get("booking_change_topic") == "cancellation"
+        and not _in_active_cart_building(state)
+    ):
         policy_text = (load_policies().get("policies", {}).get("cancellation") or {}).get(
             state.language, ""
         )
@@ -5016,7 +5033,10 @@ async def _route_message_inner(state: ConversationState, message: str) -> str:
         state.history.append({"role": "assistant", "content": response})
         return response
 
-    if _detect_reschedule_request(msg_lower) or routing_signals.get("booking_change_topic") == "reschedule":
+    if _detect_reschedule_request(msg_lower) or (
+        routing_signals.get("booking_change_topic") == "reschedule"
+        and not _in_active_cart_building(state)
+    ):
         policy_text = (load_policies().get("policies", {}).get("reschedule") or {}).get(
             state.language, ""
         )
@@ -5278,10 +5298,21 @@ async def _route_message_inner(state: ConversationState, message: str) -> str:
     # confirmación de cupo ("¡Claro que sí! Tenemos disponibilidad para el sábado").
     # Añadidos `_asks_about_availability` (lista ampliada) y el respaldo LLM
     # `availability_question`, ambos al MISMO handler (conserva el resume mid-cart).
+    # `_AVAILABILITY_PATTERN` (el original) va SIEMPRE — no confunde una pregunta
+    # de plan multi-día con disponibilidad y los tests de resume mid-cart
+    # dependen de él. Las adiciones de Bloque 2.5 (`_asks_about_availability` +
+    # señal LLM `availability_question`) NO se aplican mientras se construye la
+    # reserva: ahí "no teneis algo para mas dias?" es una pregunta de PLAN que el
+    # interceptor multi-día debe manejar, y la señal LLM la marcaba como
+    # disponibilidad, pisándolo (regresión: test_multiday_switch_by_text_at_
+    # last_dive_step). Fuera del carrito (free-text) sí, para cerrar la
+    # alucinación de cupo de fecha específica.
     if (
         _AVAILABILITY_PATTERN.search(msg_lower)
-        or _asks_about_availability(msg_lower)
-        or routing_signals.get("availability_question")
+        or (
+            (_asks_about_availability(msg_lower) or routing_signals.get("availability_question"))
+            and not _in_active_cart_building(state)
+        )
     ) and state.step not in (Step.WELCOME, Step.LANGUAGE):
         answer = (
             "¡Buena noticia! 📅 Las salidas son diarias y siempre hay disponibilidad. "
