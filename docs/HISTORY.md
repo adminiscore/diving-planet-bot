@@ -1,6 +1,14 @@
 History
 =======
 
+0.20.59 - (2026-07-23)
+----------------------
+* **Multi-ítem (`other_companions`) conectado con red de precisión, no con más prompt.** Medido con matriz de 9 casos x 4 repeticiones (con y sin refuerzo de prompt): el LLM **nunca** se abstiene de forma fiable ante un plural vago ("mis amigos") en sub-grupos adicionales — insistir en el prompt no lo arregla, solo cambia el número que inventa. Solución: en vez de confiar en que el LLM cuente lo incontable, se verifica cada cantidad contra los números reales del texto (dígito o escrito) y, si no hay respaldo, se pregunta en vez de asumir — mismo patrón `pending_companion_activity` que ya existía para el primer acompañante, extendido con una cola (`pending_companion_queue`) para 3+ sub-grupos.
+* **Bug encontrado durante la verificación**: la comprobación inicial ("¿aparece este número en algún sitio del texto?") permitía que un mismo número validara por error DOS sub-grupos distintos ("2 bucean, mis amigos hacen snorkel" validaba un snorkel=2 inventado solo porque el "2" de "2 bucean" ya estaba en el texto, aunque ya estaba gastado). Corregido con un contador que se consume: cada número solo puede avalar un sub-grupo.
+* **Segundo hallazgo**: el propio extractor principal (`fill_gaps`, no solo la señal de acompañante) tiene la misma debilidad en su campo `group_allocation` — corría antes y sin ninguna verificación. Extendida la misma guarda ahí también, por actividad individual (no se tira el reparto entero si una sola entrada no tiene respaldo).
+* Verificado en vivo con LLM real: "2 bucean, mis amigos hacen snorkel, y uno hace el minicurso" ahora pregunta solo por el snorkel ambiguo y, al responder, el carrito queda con las 3 actividades completas — antes se perdía o se facturaba una cantidad inventada en silencio.
+* 4 tests nuevos (más precisos que los descartados por mocks poco realistas durante el desarrollo). Suite: **1935 passed**, 15 skipped. ruff limpio.
+
 0.20.58 - (2026-07-23)
 ----------------------
 * **DIVE TO HEAL / discapacidad: cerrado el gate pendiente de mayor impacto de la lista.** `_ADAPTIVE_DIVING_PATTERN` era una lista cerrada sin respaldo LLM — probado en vivo: 6 de 12 frases de discapacidad realistas no se detectaban ("soy sordomuda", "perdí una pierna en un accidente", "soy no vidente", "tengo una lesión medular", "uso prótesis", "tengo párkinson"). Un cliente con una necesidad de accesibilidad real entraba al flujo normal de reserva en vez del programa DIVE TO HEAL coordinado por un asesor.

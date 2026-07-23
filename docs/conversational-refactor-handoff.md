@@ -648,3 +648,72 @@ Suite completa: 1928 passed.
 Seguir con el resto de Prioridad 2 del handoff de Álvaro: multi-ítem
 (`other_companions`, hoy inerte por <95% de fiabilidad), deflexión, dominio
 blindado/anti-manipulación.
+
+---
+
+# Sesión 2026-07-23 (continuación) — Multi-ítem: `other_companions` conectado con red, no con más prompt
+
+> Prioridad 2 punto 2 del handoff de Álvaro: "hacer fiable `other_companions` (hoy
+> inerte)". El owner pidió tener en cuenta explícitamente: plurales vagos, más de un
+> acompañante, 3+ actividades, mezcla de números escritos/dígitos.
+
+## Medición previa (matriz 9 casos x 4 repeticiones, con y sin refuerzo de prompt)
+
+Reforzar el prompt con ejemplos negativos explícitos (mismo truco que funcionó para
+"la sede del negocio no es la ubicación del cliente") **NO funcionó aquí** — el LLM
+sigue sin abstenerse ante un plural vago en `other_companions`, solo cambia QUÉ número
+inventa (2 antes del refuerzo, 1 después). Conclusión: cuantificar un plural es una
+clase de problema distinta a decidir sí/no sobre un hecho — insistir en el prompt tiene
+rendimientos decrecientes aquí.
+
+## Solución: verificación determinista, no más prompt
+
+En vez de pedirle al LLM que cuente lo incontable, se verifica cada cantidad que
+propone contra los números REALES del texto (`_message_numbers`, dígito o escrito,
+ES/EN) — si no hay respaldo, se pregunta (mismo patrón que ya existía para el primer
+acompañante, `pending_companion_activity`, ahora con una cola `pending_companion_queue`
+para 3+ sub-grupos, uno a la vez).
+
+## Dos bugs reales encontrados y arreglados durante la verificación
+
+1. **Un número podía avalar DOS sub-grupos a la vez**: la comprobación inicial
+   ("¿aparece este número en algún sitio del mensaje?") es un chequeo de presencia, no
+   de consumo — "2 bucean, mis amigos hacen snorkel" validaba por error un snorkel=2
+   inventado solo porque el "2" de "2 bucean" ya aparecía en el texto, aunque ya estaba
+   gastado por el sub-grupo principal. Arreglado con un `Counter` que se consume
+   (`_consume_number`): cada número del texto solo puede avalar UN sub-grupo.
+2. **El extractor PRINCIPAL (`fill_gaps`) tiene la misma debilidad**, no solo la señal
+   de acompañante (`detect_special_signals`). `fill_gaps`'s propio campo
+   `group_allocation` corre ANTES (dentro de `_understand()`) y no tenía ninguna
+   verificación — "2 bucean, mis amigos hacen snorkel, y uno hace el minicurso" (un
+   mensaje de APERTURA describiendo el grupo mixto de una vez, no un acompañante
+   añadido a mitad de flujo) pasa por este camino, no por el de la señal. Extendida la
+   MISMA guarda ahí, por actividad individual (una entrada sin respaldo se descarta y
+   se encola para preguntar; las demás, con respaldo real, no se pierden).
+
+## Dos mecanismos distintos, según el momento del mensaje
+
+- **Acompañante añadido a una reserva YA establecida** ("mi amigo bucea y mis amigos
+  hacen snorkel" cuando ya se sabe que el hablante bucea) → pasa por
+  `detect_special_signals` (`companion_activity`/`other_companions`), que exige una
+  actividad principal ya fijada (`prev_main_activity`) para activarse.
+- **Mensaje de apertura describiendo el grupo mixto de una vez** ("2 bucean, mis amigos
+  hacen snorkel, y uno hace el minicurso" como primer mensaje) → pasa por el extractor
+  principal (`fill_gaps`'s `group_allocation`), verificado con la misma guarda.
+
+Ambos casos, verificados en vivo con LLM real: preguntan solo por el sub-grupo
+ambiguo, sin perder los demás, y el carrito final queda completo al responder.
+
+## Qué queda (menor, no bloqueante)
+
+Se descubrió (y se dejó documentado, no arreglado) un caso límite más: cuando el
+"acompañante" comparte la MISMA actividad que el hablante principal Y el mensaje
+re-establece un número ya conocido (en vez de sumar gente nueva), `_merge_companion_activity`
+puede sumar de más. No se ha visto en los casos reales probados (surge solo en un
+test artificial con precondiciones que no ocurren en el flujo real), pero queda anotado
+por si aparece en tráfico real.
+
+Tests: 4 nuevos, verificados contra el comportamiento real (varios intentos anteriores
+descartados por usar mocks que no reflejaban lo que el LLM/regex reales producen para
+esos mensajes — lección de proceso: verificar el mock contra el pipeline real antes de
+fijar la aserción, no asumir). Suite: 1935 passed. ruff limpio.

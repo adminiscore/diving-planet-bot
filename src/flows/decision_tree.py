@@ -257,6 +257,14 @@ class ConversationState:
     # SLOT_COMPANION_QTY) y se fusiona con `_merge_companion_activity`.
     pending_companion_activity: str | None = None
 
+    # Cola de sub-grupos ADICIONALES (más de un acompañante con actividades
+    # distintas en el mismo mensaje, `other_companions` del LLM) cuya cantidad
+    # también quedó ambigua (plural vago sin número) — se preguntan uno a uno,
+    # igual que `pending_companion_activity` pero para el 2º/3º/... grupo.
+    # Auditoría 2026-07-23: mismo hallazgo que motivó pending_companion_activity,
+    # extendido a "3 o más actividades, algunas con plural vago".
+    pending_companion_queue: list = field(default_factory=list)
+
     def __post_init__(self):
         if self.history is None:
             self.history = []

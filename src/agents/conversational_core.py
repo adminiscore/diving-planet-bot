@@ -27,6 +27,7 @@ from __future__ import annotations
 
 import logging
 import re
+from collections import Counter
 
 from src.agents.intent_detector import IntentDetector
 from src.agents.llm_extractor import (
@@ -583,6 +584,40 @@ _EXPLICIT_NUMBER_RE = re.compile(
     re.IGNORECASE,
 )
 
+_WORD_TO_NUM = {
+    "uno": 1, "una": 1, "one": 1, "dos": 2, "two": 2, "tres": 3, "three": 3,
+    "cuatro": 4, "four": 4, "cinco": 5, "five": 5, "seis": 6, "six": 6,
+    "siete": 7, "seven": 7, "ocho": 8, "eight": 8, "nueve": 9, "nine": 9,
+    "diez": 10, "ten": 10,
+}
+
+
+def _message_numbers(message: str) -> Counter:
+    """MULTIconjunto (Counter, no set) de números que aparecen de verdad en el
+    mensaje. Auditoría 2026-07-23 (multi-ítem, `other_companions`): probado en
+    vivo con matriz de 9 casos x 4 repeticiones que el LLM NO se abstiene de
+    forma fiable ante un plural vago ni con el prompt reforzado — sigue
+    inventando una cantidad para "mis amigos". Verificación determinista pura:
+    si la cantidad que dice el LLM para un sub-grupo no tiene un número real
+    detrás en el texto, no es de fiar. Debe ser Counter (con consumo, una
+    ocurrencia por sub-grupo validado) y no un set de presencia: con un set,
+    "2 bucean, mis amigos hacen snorkel" validaba por error un snorkel=2
+    inventado solo porque el "2" de "2 bucean" YA aparecía en el texto —
+    aunque ese "2" ya estaba gastado por el sub-grupo principal."""
+    counts = Counter()
+    for m in _EXPLICIT_NUMBER_RE.finditer(message):
+        tok = m.group(0).lower()
+        counts[int(tok) if tok.isdigit() else _WORD_TO_NUM[tok]] += 1
+    return counts
+
+
+def _consume_number(counts: Counter, n) -> bool:
+    """True y descuenta una ocurrencia si `n` sigue disponible en `counts`."""
+    if n is not None and counts.get(n, 0) > 0:
+        counts[n] -= 1
+        return True
+    return False
+
 
 _ACTIVITY_TO_CART_TYPE = {"certified_diving": "cert", "minicourse": "beginner", "snorkel": "snorkel"}
 
@@ -683,10 +718,45 @@ async def _understand(state: ConversationState, message: str) -> tuple:
         # texto). `_apply_detected_intent` (más abajo) aplica estos campos
         # SIN verificación alguna, antes de que el fast-path o la red de
         # precisión LLM (que sí tienen el respaldo `_EXPLICIT_NUMBER_RE`)
-        # puedan intervenir. Se descartan aquí, en esta frase específica de
-        # "se añade alguien" sin número, para que esos mecanismos más seguros
-        # sean los que decidan (asumir 1 si es singular, o preguntar).
-        if _ADDED_PERSON_RE.search(message) and not _EXPLICIT_NUMBER_RE.search(message):
+        # puedan intervenir.
+        #
+        # Ampliado (auditoría multi-ítem 2026-07-23): la guarda original solo
+        # se activaba si `_ADDED_PERSON_RE` (lista cerrada: "mi amigo", nunca
+        # "mis amigos" plural) coincidía con el mensaje ENTERO, y entonces
+        # tiraba TODO group_allocation. "2 bucean, mis amigos hacen snorkel, y
+        # uno hace el minicurso" no matchea esa lista (posesivo plural), así
+        # que el guard viejo no se disparaba y snorkel colaba una cantidad
+        # inventada sin más. Ahora se valida CADA actividad del reparto por
+        # separado contra `_message_numbers` (¿su cantidad tiene un número
+        # real en el texto?) — se descarta solo la entrada sin respaldo, no
+        # el reparto entero, para no perder las que sí son correctas.
+        alloc_patch = patch.get("group_allocation")
+        if isinstance(alloc_patch, dict) and alloc_patch:
+            # Counter con consumo, no un set de presencia (auditoría
+            # 2026-07-23): un mismo número no puede "avalar" dos actividades
+            # distintas solo porque aparece una vez en el texto para otra.
+            msg_nums = _message_numbers(message)
+            cleaned = {
+                act: qty for act, qty in alloc_patch.items()
+                if _consume_number(msg_nums, qty)
+            }
+            dropped = [act for act in alloc_patch if act not in cleaned]
+            if dropped:
+                # No se descarta en silencio — se pregunta (mismo principio
+                # que el resto del núcleo): cada actividad sin respaldo
+                # numérico real se encola para preguntarla, en vez de
+                # perderse o de facturar una cantidad inventada.
+                for act in dropped:
+                    if act not in state.pending_companion_queue:
+                        state.pending_companion_queue.append(act)
+                if cleaned:
+                    patch["group_allocation"] = cleaned
+                else:
+                    patch.pop("group_allocation", None)
+                # El total (group_size) ya no es de fiar si el reparto que lo
+                # sustenta tenía una entrada inventada.
+                patch.pop("group_size", None)
+        elif _ADDED_PERSON_RE.search(message) and not _EXPLICIT_NUMBER_RE.search(message):
             patch.pop("group_allocation", None)
             patch.pop("group_size", None)
         for field_name, value in patch.items():
@@ -1146,6 +1216,18 @@ async def maybe_handle_turn(
     if prev_pending and not has_qmark:
         resolved_short = _apply_short_answer(state, message)
 
+    # Encadenar la cola de sub-grupos adicionales (multi-ítem, auditoría
+    # 2026-07-23): si se acaba de resolver la cantidad de UN sub-grupo
+    # ambiguo y quedan más en `pending_companion_queue`, preguntar por el
+    # siguiente ya mismo — el flujo normal (next_missing_slot) no conoce esta
+    # cola, así que hay que interceptarlo aquí antes de que seguir de largo
+    # pierda la pregunta pendiente.
+    if resolved_short and prev_pending == SLOT_COMPANION_QTY and state.pending_companion_queue:
+        state.pending_companion_activity = state.pending_companion_queue.pop(0)
+        response = greeting + ask_slot(state, SLOT_COMPANION_QTY)
+        state.history.append({"role": "assistant", "content": response})
+        return response
+
     # "?" explícito → SIEMPRE una pregunta real. Antes de RAG, comprobar si es
     # un pedido de RECORDAR un dato ya dado ("¿cuántas personas somos, me lo
     # recuerdas?") — se responde con el valor REAL del estado, determinista,
@@ -1172,6 +1254,18 @@ async def maybe_handle_turn(
     companion_merged_fastpath = False
     if not (resolved_short and len(message.strip()) <= 12):
         _, companion_merged_fastpath = await _understand(state, message)
+
+    # Multi-ítem (auditoría 2026-07-23): si _understand() encoló alguna
+    # actividad del reparto sin respaldo numérico real (fill_gaps inventando
+    # una cantidad para un plural vago dentro de group_allocation — hallazgo
+    # nuevo, mismo principio que la cola de other_companions más abajo),
+    # preguntar por ella ya mismo en vez de seguir de largo. Nunca se pierde
+    # en silencio ni se factura una cantidad inventada.
+    if state.pending_companion_queue and not state.pending_companion_activity:
+        state.pending_companion_activity = state.pending_companion_queue.pop(0)
+        response = greeting + ask_slot(state, SLOT_COMPANION_QTY)
+        state.history.append({"role": "assistant", "content": response})
+        return response
 
     # ¿La extracción base (regex + gap-fill, dentro de `_understand()`) ya
     # cambió el tamaño/reparto del grupo este turno? Bug en vivo (2026-07-23,
@@ -1289,13 +1383,22 @@ async def maybe_handle_turn(
                 state, prev_main_activity, prev_main_service_id,
                 prev_main_is_certified, prev_main_last_dive, prev_main_refresher,
             )
+            # Counter compartido con consumo (auditoría multi-ítem 2026-07-23):
+            # el sub-grupo PRINCIPAL consume su número antes que
+            # `other_companions` más abajo, para que un mismo número del texto
+            # no pueda avalar dos sub-grupos distintos a la vez (bug medido en
+            # vivo: "2 bucean, mis amigos hacen snorkel" validaba por error un
+            # snorkel=2 inventado solo porque el "2" de "2 bucean" ya estaba en
+            # el texto — aunque ya estaba gastado por el principal).
+            msg_numbers = _message_numbers(message)
             qty = signals.get("companion_qty")
-            if qty is not None and not _EXPLICIT_NUMBER_RE.search(message):
+            if qty is not None and not _consume_number(msg_numbers, qty):
                 # Verificado en vivo (2026-07-22): el LLM devolvió qty=1 para
                 # "también vienen mis amigos a hacer snorkel" pese a que el
                 # prompt le pide abstenerse ante un plural vago — no basta con
-                # pedírselo, hay que comprobarlo. Si el mensaje no contiene
-                # NINGÚN número real, se descarta el qty del LLM sea cual sea.
+                # pedírselo, hay que comprobarlo. Si el número que dice no
+                # tiene respaldo real (o ya lo consumió otro sub-grupo), se
+                # descarta el qty del LLM sea cual sea.
                 qty = None
             # "¿es exactamente 1?" también se confía primero al LLM
             # (`companion_is_singular`, mismo criterio que `mentions_other_person`):
@@ -1316,24 +1419,72 @@ async def maybe_handle_turn(
                 signals.get("companion_is_singular")
                 and not _PLURAL_COMPANION_RE.search(message)
             )
-            if qty is None and not singular_confirmed:
+            main_ambiguous = qty is None and not singular_confirmed
+            if not main_ambiguous:
+                qty = qty or 1  # singular inequívoco ("un amigo"/"a friend") -> 1
+
+            # Multi-ítem (auditoría 2026-07-23): 3+ actividades en un mensaje
+            # ("2 bucean, mis amigos hacen snorkel y uno hace el minicurso").
+            # Medido con matriz de 9 casos x 4 repeticiones, con Y sin refuerzo
+            # de prompt: el LLM NUNCA se abstiene de forma fiable ante un
+            # plural vago en `other_companions` — sigue inventando una
+            # cantidad. Se procesa ANTES de decidir qué preguntar (si el
+            # principal TAMBIÉN es ambiguo) para no perder sub-grupos
+            # adicionales por cortar el turno demasiado pronto. Reutiliza
+            # `msg_numbers` YA CONSUMIDO por el principal (mismo Counter, no
+            # uno nuevo) — así el mismo número del texto no puede avalar dos
+            # sub-grupos distintos.
+            for item in (signals.get("other_companions") or []):
+                other_act = item.get("activity")
+                other_qty = item.get("qty")
+                if other_act not in _ACTIVITY_TO_CART_TYPE or other_act == activity:
+                    continue
+                if other_qty is not None and _consume_number(msg_numbers, other_qty):
+                    _merge_companion_activity(state, other_act, other_qty)
+                else:
+                    # Cantidad no respaldada por ningún número real del
+                    # mensaje — se pregunta en vez de asumir, en cuanto se
+                    # resuelvan el principal y el resto de la cola.
+                    if other_act not in state.pending_companion_queue:
+                        state.pending_companion_queue.append(other_act)
+
+            if main_ambiguous:
                 # Plural vago ("mis amigos", "unos amigos", "friends" sin
-                # número) — en vez de asumir 1, se pregunta cuántos son
-                # (hallazgo en vivo: "mis amigos" generaba
-                # group_allocation={snorkel:3} sin preguntar).
-                state.pending_companion_activity = activity
+                # número) en el sub-grupo PRINCIPAL — en vez de asumir 1, se
+                # pregunta cuántos son (hallazgo en vivo: "mis amigos"
+                # generaba group_allocation={snorkel:3} sin preguntar). Va
+                # primero en la cola; lo adicional (ya encolado arriba) se
+                # preguntará después, uno a la vez.
+                if activity not in state.pending_companion_queue:
+                    state.pending_companion_queue.insert(0, activity)
+            else:
+                _merge_companion_activity(state, activity, qty)
+
+            if state.pending_companion_queue:
+                state.pending_companion_activity = state.pending_companion_queue.pop(0)
                 response = greeting + ask_slot(state, SLOT_COMPANION_QTY)
                 state.history.append({"role": "assistant", "content": response})
                 return response
-            qty = qty or 1  # singular inequívoco ("un amigo"/"a friend") -> 1
-            _merge_companion_activity(state, activity, qty)
-            if prev_cart_types and _ACTIVITY_TO_CART_TYPE[activity] not in prev_cart_types:
-                state.mixed_cart.append(_cart_item(state, activity, qty))
-                response = _tree._goto_mixed_final_summary(state)
-                state.core_pending_slot = None
-                supervisor._maybe_build_pending_note(state)
-                state.history.append({"role": "assistant", "content": response})
-                return response
+
+            # Post-cierre: puede haber MÁS de una actividad nueva a la vez
+            # (el sub-grupo principal Y uno o más de other_companions), así
+            # que se añaden todas las que falten en el carrito, no solo la
+            # principal (mismo patrón que el chequeo genérico de arriba).
+            if prev_cart_types:
+                alloc_now = state.detected_group_allocation or {}
+                new_items = [
+                    _cart_item(state, act2, qty2)
+                    for act2, qty2 in alloc_now.items()
+                    if act2 in _ACTIVITY_TO_CART_TYPE and qty2
+                    and _ACTIVITY_TO_CART_TYPE[act2] not in prev_cart_types
+                ]
+                if new_items:
+                    state.mixed_cart.extend(new_items)
+                    response = _tree._goto_mixed_final_summary(state)
+                    state.core_pending_slot = None
+                    supervisor._maybe_build_pending_note(state)
+                    state.history.append({"role": "assistant", "content": response})
+                    return response
             advanced = True
         elif signals.get("refresher_interested") is not None:
             # Auditoría 2026-07-22: refresher_interested no tenía NINGÚN

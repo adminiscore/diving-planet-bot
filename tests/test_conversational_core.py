@@ -1099,3 +1099,128 @@ async def test_recommendation_question_not_hijacked_by_recall_signal():
          patch("src.agents.supervisor.rag_answer", new=AsyncMock(return_value="Respuesta RAG")):
         resp = await route_message(state, "y tu que recomiendas para nosotros?")
     assert "Respuesta RAG" in resp
+
+
+# ---------------------------------------------------------------------------
+# Multi-ítem: other_companions con cola de preguntas (auditoría 2026-07-23).
+# Medido con matriz de 9 casos x 4 repeticiones que el LLM NUNCA se abstiene
+# de forma fiable ante un plural vago en other_companions (con y sin refuerzo
+# de prompt) — mismo criterio determinista de _EXPLICIT_NUMBER_RE ya usado
+# para el sub-grupo principal, extendido a cada item adicional: si su
+# cantidad no tiene un número real en el texto, se pregunta, nunca se asume.
+# ---------------------------------------------------------------------------
+
+@pytest.mark.asyncio
+async def test_three_activities_all_explicit_merge_without_asking():
+    """"somos 2 que bucean y 3 que hacen snorkel" — los 2 números son reales
+    (caso A de la matriz medida, 100% fiable en vivo) — se fusionan sin
+    preguntar nada. fill_gaps mockeado a {} para aislar el camino de la señal
+    (detect_special_signals), sin interferencia del extractor principal."""
+    state = make_state("es")
+    state.detected_activity = "certified_diving"
+    state.is_certified = True
+    state.location = "cartagena"
+    state.detected_group_size = 2
+    state.last_dive_over_2_years = False
+    state.core_pending_slot = core.SLOT_NATIONALITY
+    with patch.object(core, "fill_gaps", new=AsyncMock(return_value={})), \
+         patch.object(core, "detect_special_signals", new=AsyncMock(return_value={
+        "companion_activity": "snorkel", "companion_qty": 3,
+        "mentions_other_person": True,
+    })):
+        resp = await route_message(state, "somos 2 que bucean y 3 que hacen snorkel")
+    alloc = state.detected_group_allocation
+    assert alloc.get("certified_diving") == 2
+    assert alloc.get("snorkel") == 3
+    assert state.core_pending_slot == core.SLOT_NATIONALITY  # no se quedó preguntando cantidad
+    assert resp
+
+
+@pytest.mark.asyncio
+async def test_vague_plural_in_other_companions_asks_instead_of_guessing():
+    """Verificado en vivo (auditoría 2026-07-23, caso D de la matriz), mensaje
+    de apertura describiendo el grupo mixto de una vez: "2 bucean, mis amigos
+    hacen snorkel, y uno hace el minicurso". El sub-grupo de snorkel es un
+    plural vago sin número real — aunque fill_gaps (el extractor principal,
+    NO la señal de acompañante) invente snorkel=2, el guard de
+    group_allocation debe descartar esa entrada concreta y preguntar, sin
+    perder las otras dos (respaldadas por "2" y "uno" reales)."""
+    state = make_state("es")
+    with patch.object(core, "fill_gaps", new=AsyncMock(return_value={
+        "group_allocation": {"certified_diving": 2, "minicourse": 1, "snorkel": 2},
+        "group_size": 5, "is_certified": True,
+    })), \
+         patch.object(core, "detect_special_signals", new=AsyncMock(return_value={})):
+        resp = await route_message(state, "2 bucean, mis amigos hacen snorkel, y uno hace el minicurso")
+    assert state.core_pending_slot == core.SLOT_COMPANION_QTY
+    assert state.pending_companion_activity == "snorkel"
+    assert "snorkel" in resp.lower()
+    # El principal (respaldado por "2") y el minicurso (respaldado por "uno")
+    # SÍ se fusionaron; solo snorkel (sin número real propio) queda pendiente.
+    alloc = state.detected_group_allocation or {}
+    assert alloc.get("certified_diving") == 2
+    assert alloc.get("minicourse") == 1
+    assert "snorkel" not in alloc
+
+
+@pytest.mark.asyncio
+async def test_vague_plural_in_other_companions_then_answer_completes_booking():
+    """Continuación del test anterior: al responder la cantidad preguntada,
+    se fusiona y el carrito final queda con las 3 actividades, ninguna
+    perdida ni inventada."""
+    state = make_state("es")
+    with patch.object(core, "fill_gaps", new=AsyncMock(return_value={
+        "group_allocation": {"certified_diving": 2, "minicourse": 1, "snorkel": 2},
+        "group_size": 5, "is_certified": True,
+    })), \
+         patch.object(core, "detect_special_signals", new=AsyncMock(return_value={})):
+        await route_message(state, "2 bucean, mis amigos hacen snorkel, y uno hace el minicurso")
+    assert state.core_pending_slot == core.SLOT_COMPANION_QTY
+
+    with patch.object(core, "fill_gaps", new=AsyncMock(return_value={})), \
+         patch.object(core, "detect_special_signals", new=AsyncMock(return_value={})):
+        await route_message(state, "4")
+    alloc = state.detected_group_allocation
+    assert alloc.get("certified_diving") == 2
+    assert alloc.get("minicourse") == 1
+    assert alloc.get("snorkel") == 4
+    assert state.core_pending_slot != core.SLOT_COMPANION_QTY  # avanzó, no se quedó preguntando
+
+
+@pytest.mark.asyncio
+async def test_other_companions_post_close_asks_before_adding_unconfirmed_item():
+    """Tras el cierre, un mensaje con un sub-grupo nuevo confirmado (snorkel,
+    con número real) y otro sin respaldo (minicurso, "otro" no es un número)
+    — el confirmado se registra pero el carrito NO se toca todavía: primero
+    se pregunta el que falta, nunca se factura una cantidad inventada."""
+    state = make_state("es")
+    await route_message(state, "soy buzo certificado, quiero bucear desde cartagena, voy solo")
+    await route_message(state, "no")
+    await route_message(state, "no soy colombiano")
+    assert state.mixed_cart[0]["type"] == "cert"
+
+    with patch.object(core, "fill_gaps", new=AsyncMock(return_value={})), \
+         patch.object(core, "detect_special_signals", new=AsyncMock(return_value={
+        "companion_activity": "snorkel", "companion_qty": 2,
+        "mentions_other_person": True,
+        "other_companions": [{"activity": "minicourse", "qty": 1}],  # "otro" no es un número real
+    })):
+        resp = await route_message(state, "2 amigos hacen snorkel y otro el minicurso")
+    # El carrito original nunca se pierde; el nuevo ítem sin confirmar (minicurso)
+    # no se añade todavía — se pregunta primero.
+    types = {it["type"]: it["qty"] for it in state.mixed_cart}
+    assert types.get("cert") == 1, "el buceo original no puede perderse"
+    assert "beginner" not in types, "no se factura una cantidad inventada"
+    assert state.core_pending_slot == core.SLOT_COMPANION_QTY
+    assert state.pending_companion_activity == "minicourse"
+    assert "minicurso" in resp.lower() or "minicourse" in resp.lower()
+
+    # Al responder, el carrito se cierra con AMBAS actividades nuevas.
+    with patch.object(core, "fill_gaps", new=AsyncMock(return_value={})), \
+         patch.object(core, "detect_special_signals", new=AsyncMock(return_value={})):
+        resp2 = await route_message(state, "1")
+    types2 = {it["type"]: it["qty"] for it in state.mixed_cart}
+    assert types2.get("cert") == 1
+    assert types2.get("snorkel") == 2
+    assert types2.get("beginner") == 1
+    assert "norkel" in resp2
