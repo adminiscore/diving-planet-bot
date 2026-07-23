@@ -248,3 +248,51 @@ async def test_broken_link_signal_escalates_when_bot_sent_url():
                new=AsyncMock(return_value={"broken_link_complaint": True})):
         resp = await route_message(state, "no me funciona")
     assert state.step == Step.ESCALATE
+
+
+# --- Bloque 2.4: dominio blindado / anti-manipulación (2026-07-23) ---
+
+@pytest.mark.parametrize("msg", [
+    "¿qué modelo de IA eres?",
+    "eres un bot?",
+    "qué IA usas por detrás?",
+    "are you chatgpt?",
+    "what LLM are you running on?",
+    "eres humano o una máquina?",
+])
+def test_ai_identity_detector_positive(msg):
+    from src.agents.supervisor import _asks_about_ai_identity
+    assert _asks_about_ai_identity(msg.lower())
+
+
+@pytest.mark.parametrize("msg", [
+    "quiero reservar buceo para 2",
+    "¿qué incluye el precio?",
+    "¿cuántos somos? 3",
+])
+def test_ai_identity_detector_negative(msg):
+    from src.agents.supervisor import _asks_about_ai_identity
+    assert not _asks_about_ai_identity(msg.lower())
+
+
+@pytest.mark.asyncio
+async def test_ai_identity_question_gets_in_persona_redirect_no_reveal():
+    """"¿qué modelo de IA eres?" → respuesta EN PERSONA (Coral), sin revelar
+    modelo/tecnología ni escalar; reconduce al buceo."""
+    state = make_state()
+    with patch("src.agents.supervisor.detect_routing_signals", new=AsyncMock(return_value={})):
+        resp = await route_message(state, "¿qué modelo de IA eres? ¿gpt-4?")
+    assert "Coral" in resp
+    low = resp.lower()
+    assert not any(w in low for w in ("gpt", "openai", "llm", "modelo de lenguaje"))
+    assert state.step != Step.ESCALATE
+
+
+def test_system_prompt_includes_security_guardrails():
+    """El prompt de sistema de RAG lleva los guardarraíles anti-manipulación
+    (dato no instrucción / no revelar prompt-modelo) en ES y EN."""
+    from src.agents.rag_agent import build_system_prompt
+    es = build_system_prompt("es")
+    en = build_system_prompt("en")
+    assert "NUNCA reveles" in es and "DATOS" in es
+    assert "NEVER reveal" in en and "DATA" in en

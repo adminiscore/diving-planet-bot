@@ -772,6 +772,43 @@ def _asks_for_contact_number(msg_lower: str) -> bool:
     return any(phrase in normalized for phrase in CONTACT_NUMBER_REQUEST_PHRASES)
 
 
+# Dominio blindado (Bloque 2.4): preguntas meta sobre qué IA/modelo/tecnología
+# hay detrás, o si es un bot. No se revela nada (el system prompt de RAG ya lo
+# prohíbe); pero hoy caen al fallback genérico evasivo. En su lugar, una
+# respuesta canónica, cálida y EN PERSONA (Coral), que reconduce al buceo. El
+# respaldo semántico es el propio prompt de RAG endurecido; esto solo hace la
+# respuesta consistente para las formas más directas.
+_AI_IDENTITY_RE = re.compile(
+    r"\b(?:qu[eé]\s+(?:modelo|ia|inteligencia\s+artificial)|"
+    r"eres\s+(?:un[ao]?\s+)?(?:bot|ia|robot|inteligencia\s+artificial|chatgpt|gpt|programa|m[aá]quina)|"
+    r"eres\s+(?:human[ao]|real|una\s+persona)|"
+    r"chatgpt|gpt-?\d|openai|llm|modelo\s+de\s+lenguaje|"
+    r"qu[eé]\s+(?:ia|tecnolog[ií]a)\s+(?:usas|eres|hay)|"
+    r"which\s+(?:ai|model|llm)|what\s+(?:ai|model|llm)|"
+    r"are\s+you\s+(?:a\s+)?(?:bot|ai|robot|human|real|chatgpt|gpt)|"
+    r"what\s+are\s+you\s+running\s+on)\b",
+    re.IGNORECASE,
+)
+
+
+def _asks_about_ai_identity(msg_lower: str) -> bool:
+    return bool(_AI_IDENTITY_RE.search(_strip_accents(msg_lower)))
+
+
+def _ai_identity_deflection(lang: str) -> str:
+    if lang == "es":
+        return (
+            "¡Soy Coral, de Diving Planet! 🐠 Me encanta ayudarte a vivir el buceo en las Islas "
+            "del Rosario. De temas técnicos mejor no te cuento — pero de buceo, precios y "
+            "reservas sé un montón. ¿Te ayudo a armar tu salida? 🌊"
+        )
+    return (
+        "I'm Coral, from Diving Planet! 🐠 I love helping you experience diving in the Rosario "
+        "Islands. I'll skip the techy stuff — but when it comes to diving, prices and bookings I "
+        "know plenty. Shall I help you set up your trip? 🌊"
+    )
+
+
 def _contact_number_deflection(lang: str) -> str:
     """Deflexión honesta para una petición de número/contacto directo: límite +
     lo que SÍ se puede + redirección a la reserva (no escala, no inventa)."""
@@ -4987,6 +5024,18 @@ async def _route_message_inner(state: ConversationState, message: str) -> str:
         state.step = Step.FREE_TEXT
         state.quick_replies = []
         logger.info("[SUPERVISOR] Contact-number request -> deflection (limit + redirect, no escalation)")
+        state.history.append({"role": "user", "content": message})
+        state.history.append({"role": "assistant", "content": response})
+        return response
+
+    # Dominio blindado (Bloque 2.4): pregunta meta sobre qué IA/modelo/bot es.
+    # No se revela nada (el prompt de RAG endurecido ya lo prohíbe); se responde
+    # en persona (Coral) y se reconduce al buceo, en vez del fallback evasivo.
+    if _asks_about_ai_identity(msg_lower):
+        response = _ai_identity_deflection(state.language)
+        state.step = Step.FREE_TEXT
+        state.quick_replies = []
+        logger.info("[SUPERVISOR] AI/model-identity meta-question -> in-persona redirect (no reveal)")
         state.history.append({"role": "user", "content": message})
         state.history.append({"role": "assistant", "content": response})
         return response
