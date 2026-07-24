@@ -1,6 +1,18 @@
 History
 =======
 
+0.20.70 - (2026-07-24)
+----------------------
+* **Auditoría de fragilidad del núcleo: 6 slots/decisiones regex-only sin red que "no seguían el hilo" (re-preguntaban en bucle) reforzados con el patrón determinista→LLM del proyecto.** Revisión sistemática del camino activo en PRE (`conversational_core`) buscando funciones regex-only donde un input fuera de patrón rompía el flujo.
+* **#1 Ubicación** (`SLOT_LOCATION`): era regex puro (`_CARTAGENA_RE`/`_ISLAND_RE`) sin la red Fase C. Una deferral ("no sé/da igual/recomiéndame") o una salida real fuera de patrón ("desde Bocagrande", "el hotel Las Américas") re-preguntaba en bucle. Ahora: deferral determinista → Cartagena (como el árbol legacy) + resolutor LLM (`_SLOT_RESOLVER_SPEC` con `enum` cartagena/island) para lo no-canónico. Verificado en vivo 5/5 (barrios de Cartagena → cartagena, playa blanca → island, basura → se abstiene).
+* **#2 Cantidad de acompañante** (`SLOT_COMPANION_QTY`): asimetría con `SLOT_QTY` (que sí tenía red) — "un par"/"los dos" como cantidad de acompañante loopeaba. Bloque dedicado con resolutor LLM (el bloque genérico Fase C lo excluye porque `next_missing_slot` no rastrea los slots de acompañante → `advanced` es espuriamente True; se gatea por `not resolved_short`). Verificado en vivo 4/4.
+* **#3 Edades** (`SLOT_AGES`): solo leía dígitos; "cinco y siete años" no se capturaba. Añadido parseo determinista de edades en palabra (mapa 2-19, ES+EN; se excluye 1 para no confundir el artículo "una").
+* **#4 Sinónimos de producto** (`_PRODUCT_MENTION_RE`): el detector de productos del núcleo no conocía "bautizo"/"discover scuba"/"careteo" (el `intent_detector` sí) — y como es el ancla dura (2+ ofertas) de la deliberación, un fallo aquí neutralizaba hasta la señal LLM `comparing_options`. Alineado con el vocabulario del `intent_detector`.
+* **#5 Actividad de acompañante** (`SLOT_COMPANION_ACTIVITY`): regex-only, sin red. Resolutor LLM (enum snorkel/minicourse) + bloque dedicado; y un hallazgo en vivo colateral — una deferral que el LLM no fija ya no cae al resumen PERDIENDO al acompañante, sino que re-pregunta. Verificado en vivo 3/3.
+* **#6 Aperturas de pregunta de info** (`_looks_like_info_question`): estaba anclado al inicio con lista corta; "cuéntame del precio", "me gustaría saber qué incluye" no se enrutaban a RAG. Ampliado conservadoramente con aperturas inequívocas de búsqueda de info (cuéntame/dime/explícame/me gustaría saber/tell me/i'd like to know), sin capturar acciones de carrito ("puedo añadir", "quiero reservar").
+* **Limitación menor anotada** (no arreglada): una respuesta a la actividad del acompañante que empieza por "que" ("que se anime a bucear") la confunde `_looks_like_info_question` con "qué" (pregunta) y salta el resolutor — caso raro (los canónicos "que haga snorkel" se resuelven antes por keyword). El gate de age-eligibility del supervisor (`_maybe_answer_age_eligibility`) sigue con el cutover LLM deferido (H4, decisión previa documentada).
+* Suite completa 2027 passed, 15 skipped; `ruff` limpio; `compileall` OK. 40+ tests nuevos (matrices de variantes por punto). Cada punto con ruta LLM verificado end-to-end con LLM real.
+
 0.20.69 - (2026-07-24)
 ----------------------
 * **Recomendaciones / deliberación entre actividades (núcleo conversacional).** Fallo reportado en vivo: "mi pareja duda entre buceo y minicurso" (sin "?") se tomaba como una reserva de AMBAS actividades (preguntaba cantidad de cada una) en vez de explicar la diferencia; además, tras cada recomendación/comparación se pegaba el menú entero de 4 bullets aunque la respuesta ya cerrara con su propia pregunta. Raíz: el routing pregunta-vs-extracción dependía solo del "?"; sin él, la extracción ganaba. Se resuelve en 3 capas.

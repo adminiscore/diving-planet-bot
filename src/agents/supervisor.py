@@ -189,7 +189,13 @@ _INFO_QUESTION_STARTER_PATTERN = re.compile(
     r"^("
     r"qu[ée]|cu[áa]nto|cu[áa]ndo|c[óo]mo|d[óo]nde|cu[áa]l|"
     r"inclu[yi]e|tiene|tienen|hay|puedo\s+saber|"
-    r"what|how|when|where|which|does|is\s+there|are\s+there|do\s+you|can\s+i\s+know"
+    # Aperturas de BÚSQUEDA de info sin palabra-pregunta ni "?" (2026-07-24):
+    # "cuéntame del precio", "me gustaría saber qué incluye", "dime cómo es".
+    # Inequívocamente informativas (no acciones de carrito tipo "puedo añadir").
+    r"cu[ée]ntame|d[ií]me|expl[ií]came|me\s+gustar[ií]a\s+saber|"
+    r"quiero\s+saber|quisiera\s+saber|necesito\s+saber|"
+    r"what|how|when|where|which|does|is\s+there|are\s+there|do\s+you|can\s+i\s+know|"
+    r"tell\s+me|i'?d\s+like\s+to\s+know|i\s+want\s+to\s+know"
     r")\b"
 )
 

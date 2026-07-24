@@ -68,7 +68,13 @@ SLOT_COMPANION_ACTIVITY = "companion_activity_choice"
 # claves de `_SLOT_RESOLVER_SPEC` en llm_extractor.py.
 _LLM_RESOLVABLE_SLOTS = frozenset({
     SLOT_CERTIFICATION, SLOT_SAFETY, SLOT_REFRESHER, SLOT_QTY, SLOT_NATIONALITY,
+    SLOT_LOCATION,
 })
+# SLOT_COMPANION_QTY y SLOT_COMPANION_ACTIVITY NO van aquí: `next_missing_slot`
+# no los rastrea, así que con la reserva principal ya resuelta `advanced` es
+# espuriamente True y el bloque genérico Fase C (gate `not advanced`) los
+# saltaría. Tienen bloques dedicados en maybe_handle_turn (gate `not
+# resolved_short`).
 
 # Actividades "de producto" que el vertical actual del núcleo sabe cerrar.
 # course:* llega en Fase 3; mientras, un curso PADI detectado se atiende pero
@@ -86,6 +92,20 @@ _HOTEL_UNKNOWN_RE = re.compile(
     r"\b(no\s+s[eé]|ni\s+idea|no\s+lo\s+s[eé]|a[uú]n\s+no|todav[ií]a\s+no|"
     r"sin\s+definir|no\s+estoy\s+segur\w*|no\s+tengo|"
     r"not\s+sure|no\s+idea|dunno|don'?t\s+know|not\s+yet|undecided|tbd)\b",
+    re.IGNORECASE,
+)
+# Deferral en el paso de UBICACIÓN: "no sé / da igual / recomiéndame / tú
+# decides" — el cliente delega la elección. En vez de re-preguntar en bucle
+# (regex de ubicación fallaba), se recomienda Cartagena (la salida más común,
+# como el árbol legacy). "No estoy seguro" se deja FUERA a propósito: eso lo
+# interpreta el resolutor LLM (puede ser Cartagena o abstenerse).
+_LOCATION_DEFER_RE = re.compile(
+    r"\bno\s+s[eé]\b|\bda\s+igual\b|\bme\s+da\s+igual\b|\bcualquiera\b|\bt[uú]\s+decides?\b"
+    r"|\bel\s+que\s+(?:sea|quieras|recomiendes|prefieras|digas)\b"
+    r"|\blo\s+que\s+(?:sea|recomiendes|prefieras|digas|quieras)\b"
+    r"|\brecomi[eé]nd\w*\b|\bqu[eé]\s+(?:me\s+)?recomiendas\b"
+    r"|\bwhatever\b|\byou\s+(?:decide|recommend|choose)\b|\bup\s+to\s+you\b|\beither\b"
+    r"|\bi\s+don'?t\s+know\b|\bno\s+idea\b",
     re.IGNORECASE,
 )
 
@@ -411,6 +431,29 @@ def _resolve_cert_plan(state: ConversationState) -> str | None:
     return _tree._service_for_location(base, state)
 
 
+# Edades en PALABRA (2026-07-24): el slot de edades solo leía dígitos, así que
+# "cinco y siete años" no se capturaba y re-preguntaba. Mapa 2-19 (edades de
+# menores relevantes para buceo/snorkel); se excluye 1 a propósito ("una niña"
+# es artículo, no edad, y nadie de 1 año bucea) para no crear falsos positivos.
+_AGE_WORDS = {
+    "dos": 2, "tres": 3, "cuatro": 4, "cinco": 5, "seis": 6, "siete": 7,
+    "ocho": 8, "nueve": 9, "diez": 10, "once": 11, "doce": 12, "trece": 13,
+    "catorce": 14, "quince": 15, "dieciseis": 16, "dieciséis": 16,
+    "diecisiete": 17, "dieciocho": 18, "diecinueve": 19,
+    "two": 2, "three": 3, "four": 4, "five": 5, "six": 6, "seven": 7,
+    "eight": 8, "nine": 9, "ten": 10, "eleven": 11, "twelve": 12,
+    "thirteen": 13, "fourteen": 14, "fifteen": 15, "sixteen": 16,
+    "seventeen": 17, "eighteen": 18, "nineteen": 19,
+}
+
+
+def _word_ages(message: str) -> list[int]:
+    """Edades escritas en palabra, en orden de aparición ("cinco y siete" ->
+    [5, 7]). Vacío si no hay ninguna."""
+    return [_AGE_WORDS[t] for t in re.findall(r"[a-záéíóúñ]+", message.lower())
+            if t in _AGE_WORDS]
+
+
 # ─── COMPRENDER ───
 
 def _apply_short_answer(state: ConversationState, message: str) -> bool:
@@ -435,6 +478,11 @@ def _apply_short_answer(state: ConversationState, message: str) -> bool:
             state.location = state.detected_location = "island"
             return True
         if _CARTAGENA_RE.search(msg):
+            state.location = state.detected_location = "cartagena"
+            return True
+        # Deferral ("no sé/da igual/recomiéndame") → Cartagena (salida más
+        # común). Sin esto, el regex fallaba y se re-preguntaba en bucle.
+        if _LOCATION_DEFER_RE.search(msg):
             state.location = state.detected_location = "cartagena"
             return True
         return False
@@ -521,6 +569,8 @@ def _apply_short_answer(state: ConversationState, message: str) -> bool:
         return False
     if slot == SLOT_AGES:
         ages = [int(a) for a in re.findall(r"\b(\d{1,2})\b", message) if 0 < int(a) < 100]
+        if not ages:  # sin dígitos, probar edades en palabra ("cinco y siete")
+            ages = _word_ages(message)
         if ages:
             state.detected_ages = sorted(set((state.detected_ages or []) + ages))
             return True
@@ -556,6 +606,13 @@ def _apply_resolved_slot_value(state: ConversationState, slot: str, value) -> bo
         return True
     if slot == SLOT_QTY and isinstance(value, int) and value > 0:
         state.detected_group_size = value
+        return True
+    if slot == SLOT_LOCATION and value in ("cartagena", "island"):
+        state.location = state.detected_location = value
+        return True
+    if slot == SLOT_COMPANION_ACTIVITY and value in ("snorkel", "minicourse"):
+        state.pending_companion_activity = value
+        state.needs_companion_activity = False
         return True
     return False
 
@@ -695,10 +752,18 @@ _ACTIVITY_TO_CART_TYPE = {"certified_diving": "cert", "minicourse": "beginner", 
 # preguntar. Deliberadamente laxo (palabra clave, no clasificación fina): un
 # falso positivo aquí cuesta una pregunta de más, nunca una reserva
 # equivocada — mismo principio de "mejor preguntar" de todo este bloque.
+# Sinónimos de negocio alineados con `intent_detector` (2026-07-24): el
+# minicurso se vende como "bautizo"/"bautismo"/"discover scuba"/"try dive", y el
+# snorkel como "careteo"/"caretear" (regional caribeño). Sin ellos, la
+# deliberación y las redes multi-ítem del núcleo no reconocían estas palabras
+# (el intent_detector sí las conocía — era un hueco solo del núcleo).
 _PRODUCT_MENTION_RE = {
     "certified_diving": re.compile(r"\bbuce\w*|\bvuce\w*|\bbuse[ao]\w*|\bdive\b|\bdiving\b|\bscuba\b", re.IGNORECASE),
-    "minicourse": re.compile(r"\bmini[\s-]?curso\b|\bmini[\s-]?course\b", re.IGNORECASE),
-    "snorkel": re.compile(r"\be?snork\w*|\be?snorqu\w*", re.IGNORECASE),
+    "minicourse": re.compile(
+        r"\bmini[\s-]?curso\b|\bmini[\s-]?course\b|\bbauti[sz]\w*\b"
+        r"|\bdiscover\s*scuba\b|\btry\s+(?:dive|diving|scuba)\b",
+        re.IGNORECASE),
+    "snorkel": re.compile(r"\be?snork\w*|\be?snorqu\w*|\bcarete[ao]\w*\b", re.IGNORECASE),
 }
 
 
@@ -1942,6 +2007,49 @@ async def maybe_handle_turn(
             state.history.append({"role": "assistant", "content": response})
             return response
 
+    # Red anti-BUCLE para SLOT_COMPANION_QTY (2026-07-24): el bloque Fase C de
+    # abajo se EXCLUYE a propósito cuando hay `pending_companion_activity`, así
+    # que una cantidad de acompañante no-canónica ("un par", "los dos", "just
+    # the two of them") no tenía red y re-preguntaba en bucle — asimetría con
+    # SLOT_QTY, que sí la tiene. Mismo resolutor LLM, con el mismo guard que
+    # `_apply_short_answer`/SLOT_COMPANION_QTY: si el mensaje menciona OTRO
+    # producto distinto al preguntado, no se resuelve aquí (el número podría
+    # ser de esa otra actividad, no del acompañante preguntado).
+    # (Se gatea por `not resolved_short`, no por `not advanced`: la cantidad de
+    # acompañante NO la rastrea `next_missing_slot`, así que con la reserva
+    # principal ya completa `advanced` es espuriamente True — el guard correcto
+    # es "el parser canónico no lo resolvió y el acompañante sigue pendiente".)
+    if (
+        not resolved_short
+        and prev_pending == SLOT_COMPANION_QTY
+        and state.pending_companion_activity
+        and not _looks_like_question(message)
+    ):
+        act = state.pending_companion_activity
+        mentioned = _mentioned_product_activities(message)
+        if not (mentioned and act not in mentioned):
+            resolved = await resolve_slot_answer("companion_qty", message, lang=state.language)
+            val = resolved.get("value")
+            if isinstance(val, int) and val > 0:
+                _merge_companion_activity(state, act, val)
+                state.pending_companion_activity = None
+                advanced = True
+
+    # Red anti-BUCLE para SLOT_COMPANION_ACTIVITY (2026-07-24): "¿minicurso o
+    # snorkel para tu acompañante?" respondido de forma no-canónica ("que se
+    # quede arriba viendo peces", "que se anime a bajar") lo resuelve el LLM
+    # (enum snorkel/minicourse). Bloque dedicado por el mismo motivo que
+    # companion_qty (next_missing_slot no lo rastrea → `advanced` no vale).
+    if (
+        not resolved_short
+        and prev_pending == SLOT_COMPANION_ACTIVITY
+        and not state.pending_companion_activity
+        and not _looks_like_question(message)
+    ):
+        resolved = await resolve_slot_answer(SLOT_COMPANION_ACTIVITY, message, lang=state.language)
+        if _apply_resolved_slot_value(state, SLOT_COMPANION_ACTIVITY, resolved.get("value")):
+            advanced = True
+
     # Red anti-BUCLE de slot (Fase C, 2026-07-23): si el turno NO avanzó y el
     # slot pendiente es booleano/escalar, el cliente pudo haber respondido de
     # forma válida pero no-canónica que el parser de `_apply_short_answer` no
@@ -1987,6 +2095,14 @@ async def maybe_handle_turn(
     elif state.pending_companion_queue:
         state.pending_companion_activity = state.pending_companion_queue.pop(0)
         response = ask_slot(state, SLOT_COMPANION_QTY)
+        state.step = Step.FREE_TEXT
+    elif prev_pending == SLOT_COMPANION_ACTIVITY and not resolved_short:
+        # La actividad del acompañante seguía pendiente y este turno no la
+        # resolvió (deferral "lo que sea mejor" que el LLM no fija): re-preguntar
+        # en vez de caer al resumen y PERDER al acompañante (hallazgo en vivo
+        # 2026-07-24). `next_missing_slot` no rastrea este slot, de ahí el guard
+        # explícito antes de dejar que sobrescriba `core_pending_slot`.
+        response = ask_slot(state, SLOT_COMPANION_ACTIVITY, reasking=True)
         state.step = Step.FREE_TEXT
     else:
         nxt = next_missing_slot(state)

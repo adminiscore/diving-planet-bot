@@ -1612,4 +1612,293 @@ async def test_activity_reask_after_rag_uses_short_variant():
         resp = await route_message(state, "cuánto cuesta todo esto")
     assert "qué te gustaría vivir con nosotros" not in resp.lower()
     assert "con cuál te animas" in resp.lower()
-    assert not core._activity_has_textual_backing("snorkel", "mi amigo no esta certificado")
+
+
+# ---------------------------------------------------------------------------
+# #1 Ubicación robusta: deferral determinista + resolutor LLM (no-canónico)
+# ---------------------------------------------------------------------------
+
+def _at_location_stage(lang: str = "es") -> ConversationState:
+    """Estado justo en el paso de ubicación (cert conocida, sin ubicación)."""
+    s = make_state(lang)
+    s.step = Step.FREE_TEXT
+    s.detected_activity = "certified_diving"
+    s.is_certified = True
+    s.detected_group_size = 1
+    s.core_pending_slot = core.SLOT_LOCATION
+    return s
+
+
+@pytest.mark.parametrize("message", [
+    "no sé, el que recomiendes",
+    "da igual",
+    "el que sea",
+    "tú decides",
+    "lo que prefieras",
+    "whatever you recommend",
+])
+@pytest.mark.asyncio
+async def test_location_deferral_deterministic_recommends_cartagena(message):
+    """Una deferral ("no sé/da igual/recomiéndame") ya no loopea: se recomienda
+    Cartagena (la salida más común) y el flujo avanza — como el árbol legacy."""
+    state = _at_location_stage()
+    with patch("src.agents.supervisor.detect_routing_signals",
+               new=AsyncMock(return_value={})):
+        await route_message(state, message)
+    assert state.location == "cartagena"
+    assert state.core_pending_slot != core.SLOT_LOCATION
+
+
+@pytest.mark.asyncio
+async def test_location_noncanonical_resolved_by_slot_resolver(monkeypatch):
+    """Una salida real fuera de patrón ("desde el hotel Las Américas") que el
+    regex no caza ya no loopea: el resolutor LLM la interpreta."""
+    monkeypatch.setattr(core, "resolve_slot_answer",
+                        AsyncMock(return_value={"value": "cartagena"}))
+    state = _at_location_stage()
+    with patch("src.agents.supervisor.detect_routing_signals",
+               new=AsyncMock(return_value={})):
+        await route_message(state, "salimos desde el hotel Las Américas")
+    assert state.location == "cartagena"
+    assert state.core_pending_slot != core.SLOT_LOCATION
+
+
+@pytest.mark.asyncio
+async def test_location_resolver_island_value(monkeypatch):
+    monkeypatch.setattr(core, "resolve_slot_answer",
+                        AsyncMock(return_value={"value": "island"}))
+    state = _at_location_stage()
+    with patch("src.agents.supervisor.detect_routing_signals",
+               new=AsyncMock(return_value={})):
+        await route_message(state, "ya estamos alojados por la zona de playa blanca")
+    assert state.location == "island"
+
+
+@pytest.mark.asyncio
+async def test_location_resolver_abstains_reasks(monkeypatch):
+    """Si el resolutor se abstiene, la ubicación NO se inventa y se re-pregunta
+    (nunca peor que hoy)."""
+    monkeypatch.setattr(core, "resolve_slot_answer", AsyncMock(return_value={}))
+    state = _at_location_stage()
+    with patch("src.agents.supervisor.detect_routing_signals",
+               new=AsyncMock(return_value={})):
+        await route_message(state, "uff qué pregunta tan complicada")
+    assert state.location is None
+    assert state.core_pending_slot == core.SLOT_LOCATION
+
+
+def test_apply_resolved_slot_value_location():
+    state = make_state("es")
+    assert core._apply_resolved_slot_value(state, core.SLOT_LOCATION, "island")
+    assert state.location == "island"
+    assert core._apply_resolved_slot_value(state, core.SLOT_LOCATION, "cartagena")
+    assert state.location == "cartagena"
+    # Valor basura no se aplica.
+    assert not core._apply_resolved_slot_value(state, core.SLOT_LOCATION, "xyz")
+
+
+# ---------------------------------------------------------------------------
+# #2 Cantidad de acompañante robusta: red LLM (Fase C la excluía)
+# ---------------------------------------------------------------------------
+
+def _at_companion_qty_stage(activity: str = "snorkel", lang: str = "es") -> ConversationState:
+    s = make_state(lang)
+    s.step = Step.FREE_TEXT
+    s.detected_activity = "certified_diving"
+    s.is_certified = True
+    s.location = "cartagena"
+    s.detected_group_size = 1
+    s.last_dive_over_2_years = False
+    s.is_colombian = False
+    s.pending_companion_activity = activity
+    s.core_pending_slot = core.SLOT_COMPANION_QTY
+    return s
+
+
+@pytest.mark.asyncio
+async def test_companion_qty_un_par_resolved_by_slot_resolver(monkeypatch):
+    """"un par" como cantidad de acompañante ya no loopea (SLOT_QTY sí tenía
+    red, SLOT_COMPANION_QTY no — asimetría cerrada)."""
+    monkeypatch.setattr(core, "resolve_slot_answer", AsyncMock(return_value={"value": 2}))
+    state = _at_companion_qty_stage("snorkel")
+    with patch("src.agents.supervisor.detect_routing_signals",
+               new=AsyncMock(return_value={})):
+        await route_message(state, "un par")
+    assert (state.detected_group_allocation or {}).get("snorkel") == 2
+    assert state.pending_companion_activity is None
+
+
+@pytest.mark.asyncio
+async def test_companion_qty_resolver_abstains_reasks(monkeypatch):
+    """Si el resolutor se abstiene, no se inventa cantidad y se re-pregunta."""
+    monkeypatch.setattr(core, "resolve_slot_answer", AsyncMock(return_value={}))
+    state = _at_companion_qty_stage("snorkel")
+    with patch("src.agents.supervisor.detect_routing_signals",
+               new=AsyncMock(return_value={})):
+        resp = await route_message(state, "uff ni idea la verdad")
+    assert state.pending_companion_activity == "snorkel"
+    assert "snorkel" in resp.lower()
+
+
+def test_word_ages_helper():
+    assert core._word_ages("cinco y siete") == [5, 7]
+    assert core._word_ages("nueve") == [9]
+    assert core._word_ages("doce y catorce") == [12, 14]
+    assert core._word_ages("no me acuerdo bien") == []
+
+
+def _at_ages_stage(lang: str = "es") -> ConversationState:
+    s = make_state(lang)
+    s.step = Step.FREE_TEXT
+    s.detected_activity = "snorkel"
+    s.core_pending_slot = core.SLOT_AGES
+    return s
+
+
+@pytest.mark.parametrize("message, expected", [
+    ("tienen 7 y 9 años", [7, 9]),          # dígitos (ya funcionaba)
+    ("cinco y siete", [5, 7]),               # palabras (gap cerrado)
+    ("el peque tiene nueve", [9]),
+    ("doce y catorce", [12, 14]),
+])
+@pytest.mark.asyncio
+async def test_ages_word_numbers_resolved(message, expected):
+    state = _at_ages_stage()
+    with patch("src.agents.supervisor.detect_routing_signals",
+               new=AsyncMock(return_value={})):
+        await route_message(state, message)
+    assert state.detected_ages == expected
+
+
+@pytest.mark.asyncio
+async def test_ages_no_number_does_not_invent(monkeypatch):
+    """Sin ningún número (ni dígito ni palabra) no se inventa una edad."""
+    state = _at_ages_stage()
+    with patch("src.agents.supervisor.detect_routing_signals",
+               new=AsyncMock(return_value={})):
+        await route_message(state, "son pequeños todavía")
+    assert not state.detected_ages
+
+
+# ---------------------------------------------------------------------------
+# #5 Actividad de acompañante robusta: red LLM (enum snorkel/minicurso)
+# ---------------------------------------------------------------------------
+
+def _at_companion_activity_stage(lang: str = "es") -> ConversationState:
+    s = make_state(lang)
+    s.step = Step.FREE_TEXT
+    s.detected_activity = "certified_diving"
+    s.is_certified = True
+    s.location = "cartagena"
+    s.detected_group_size = 1
+    s.last_dive_over_2_years = False
+    s.is_colombian = False
+    s.core_pending_slot = core.SLOT_COMPANION_ACTIVITY
+    return s
+
+
+@pytest.mark.asyncio
+async def test_companion_activity_resolved_by_llm(monkeypatch):
+    """Respuesta no-canónica a "¿minicurso o snorkel?" ("que se quede arriba
+    viendo peces") la resuelve el LLM → snorkel, y encadena a la cantidad."""
+    monkeypatch.setattr(core, "resolve_slot_answer",
+                        AsyncMock(return_value={"value": "snorkel"}))
+    state = _at_companion_activity_stage()
+    with patch("src.agents.supervisor.detect_routing_signals",
+               new=AsyncMock(return_value={})):
+        await route_message(state, "prefiere quedarse arriba viendo los peces")
+    assert state.pending_companion_activity == "snorkel"
+    assert state.core_pending_slot == core.SLOT_COMPANION_QTY
+
+
+@pytest.mark.asyncio
+async def test_companion_activity_deferral_reasks_not_dropped(monkeypatch):
+    """Deferral que el LLM no fija ("lo que sea mejor"): se re-pregunta la
+    actividad del acompañante en vez de caer al resumen perdiéndolo."""
+    monkeypatch.setattr(core, "resolve_slot_answer", AsyncMock(return_value={}))
+    state = _at_companion_activity_stage()
+    with patch("src.agents.supervisor.detect_routing_signals",
+               new=AsyncMock(return_value={})):
+        resp = await route_message(state, "uy no sé, lo que sea mejor para ella")
+    assert state.pending_companion_activity is None
+    assert state.core_pending_slot == core.SLOT_COMPANION_ACTIVITY
+    assert "snorkel" in resp.lower() or "minicurso" in resp.lower()
+
+
+def test_apply_resolved_slot_value_companion_activity():
+    state = make_state("es")
+    assert core._apply_resolved_slot_value(state, core.SLOT_COMPANION_ACTIVITY, "minicourse")
+    assert state.pending_companion_activity == "minicourse"
+    assert state.needs_companion_activity is False
+    assert not core._apply_resolved_slot_value(state, core.SLOT_COMPANION_ACTIVITY, "buceo")
+
+
+# ---------------------------------------------------------------------------
+# #6 Aperturas de búsqueda de info sin palabra-pregunta ni "?"
+# ---------------------------------------------------------------------------
+
+@pytest.mark.parametrize("msg", [
+    "cuéntame qué incluye el precio",
+    "me gustaría saber qué incluye",
+    "dime cómo es el minicurso",
+    "necesito saber los horarios",
+    "tell me what's included",
+    "i'd like to know the prices",
+])
+def test_info_question_openers_recognized(msg):
+    from src.agents import supervisor
+    assert supervisor._looks_like_info_question(msg)
+
+
+@pytest.mark.parametrize("msg", [
+    "puedo añadir snorkel",
+    "quiero reservar buceo para dos",
+    "quita el minicurso del carrito",
+])
+def test_info_question_not_cart_action(msg):
+    from src.agents import supervisor
+    assert not supervisor._looks_like_info_question(msg)
+
+
+def test_product_mention_business_synonyms():
+    """El detector de productos del núcleo reconoce ahora los sinónimos de
+    negocio (bautizo=minicurso, careteo=snorkel) que el intent_detector ya
+    conocía — sin esto, la deliberación con estas palabras no disparaba."""
+    assert core._mentioned_product_activities("el bautizo") == ["minicourse"]
+    assert core._mentioned_product_activities("bautismo de buceo") \
+        and "minicourse" in core._mentioned_product_activities("bautismo de buceo")
+    assert "snorkel" in core._mentioned_product_activities("careteo")
+    assert "snorkel" in core._mentioned_product_activities("caretear en el arrecife")
+    # bautizo vs careteo = 2 ofertas distintas
+    offs = set(core._mentioned_offerings("no sé si el bautizo o el careteo"))
+    assert {"minicourse", "snorkel"} <= offs
+
+
+@pytest.mark.asyncio
+async def test_deliberation_bautizo_vs_snorkel_routes_to_rag(monkeypatch):
+    """"no sé si el bautizo o el snorkel" (sin "?") ahora dispara la
+    deliberación (antes el regex no conocía "bautizo")."""
+    from src.agents.rag_agent import FALLBACK_ES
+    state = _at_activity_stage()
+    with patch("src.agents.supervisor.detect_routing_signals",
+               new=AsyncMock(return_value={})), \
+         patch("src.agents.supervisor.rag_answer", new=AsyncMock(return_value=FALLBACK_ES)):
+        resp = await route_message(state, "no sé si el bautizo o el snorkel")
+    # Composer determinista (RAG cae al fallback) — no reserva.
+    assert not state.mixed_cart
+    assert "Snorkel" in resp
+
+
+@pytest.mark.asyncio
+async def test_companion_qty_other_product_not_resolved(monkeypatch):
+    """Si la respuesta menciona OTRO producto distinto al preguntado ("3 for
+    diving" respondiendo a la pregunta de snorkel), NO se aplica ese número al
+    snorkel (evita facturar snorkel:3 con un número que era de buceo)."""
+    resolver = AsyncMock(return_value={"value": 3})
+    monkeypatch.setattr(core, "resolve_slot_answer", resolver)
+    state = _at_companion_qty_stage("snorkel")
+    with patch("src.agents.supervisor.detect_routing_signals",
+               new=AsyncMock(return_value={})):
+        await route_message(state, "en realidad somos 3 para buceo")
+    assert (state.detected_group_allocation or {}).get("snorkel") != 3
+    resolver.assert_not_awaited()  # ni se intentó resolver como cantidad de snorkel

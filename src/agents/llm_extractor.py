@@ -757,6 +757,47 @@ _SLOT_RESOLVER_SPEC = {
         "type": "boolean",
         "value_meaning": "true if they want the refresher, false if not.",
     },
+    "companion_activity_choice": {
+        "question_es": "¿Qué le gustaría hacer a tu acompañante — el minicurso de buceo o snorkel?",
+        "question_en": "What would your companion like to do — the beginner mini-course or snorkeling?",
+        "type": "string",
+        "enum": ["snorkel", "minicourse"],
+        "value_meaning": (
+            "'minicourse' if the companion wants to TRY diving / go underwater "
+            "with an instructor (bautizo, discover scuba, 'probar el buceo', "
+            "'bajar con tanque', 'que se anime a bucear'); 'snorkel' if they "
+            "want to stay at the surface with mask and fins (snorkel, careteo, "
+            "'ver los peces desde arriba', 'solo nadar'). Omit if the reply "
+            "doesn't clearly choose one (e.g. 'lo que sea mejor', 'no sé')."
+        ),
+    },
+    "companion_qty": {
+        "question_es": "¿Cuántas personas serían para esa actividad?",
+        "question_en": "How many people would that be for that activity?",
+        "type": "integer",
+        "value_meaning": (
+            "the number of people for THIS activity sub-group — 'un par'/'a "
+            "couple'/'los dos'/'both of them' = 2, 'solo uno'/'just one' = 1, "
+            "'un trío' = 3, 'unos tres'/'about three' = 3. Only set it when the "
+            "answer implies a concrete count; omit if genuinely unclear."
+        ),
+    },
+    "location": {
+        "question_es": "¿Desde dónde saldrías — desde Cartagena o ya estás en las islas?",
+        "question_en": "Where would you depart from — from Cartagena or are you already on the islands?",
+        "type": "string",
+        "enum": ["cartagena", "island"],
+        "value_meaning": (
+            "'cartagena' if the customer departs FROM Cartagena / the mainland "
+            "/ a Cartagena hotel, neighborhood or landmark (Bocagrande, "
+            "Getsemaní, Centro, Manga, the old city...), or delegates the "
+            "choice / asks for a recommendation (Cartagena is the default and "
+            "most common departure); 'island' if they are ALREADY staying on "
+            "the islands (Barú, Isla Grande, Islas del Rosario, Playa Blanca, "
+            "an island hotel or eco-hostel). Omit only if the reply is truly "
+            "unrelated to where they are coming from."
+        ),
+    },
 }
 
 
@@ -777,6 +818,12 @@ def _slot_resolver_prompt(slot: str, lang: str) -> str:
 
 def _slot_resolver_tool(slot: str) -> dict:
     spec = _SLOT_RESOLVER_SPEC[slot]
+    value_schema = {
+        "type": spec["type"],
+        "description": "The interpreted answer. Omit if the reply doesn't actually answer the question.",
+    }
+    if "enum" in spec:
+        value_schema["enum"] = spec["enum"]
     return {
         "type": "function",
         "function": {
@@ -784,12 +831,7 @@ def _slot_resolver_tool(slot: str) -> dict:
             "description": "Report the interpreted answer to the single question the bot just asked.",
             "parameters": {
                 "type": "object",
-                "properties": {
-                    "value": {
-                        "type": spec["type"],
-                        "description": "The interpreted answer. Omit if the reply doesn't actually answer the question.",
-                    },
-                },
+                "properties": {"value": value_schema},
             },
         },
     }
