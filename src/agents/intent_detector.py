@@ -108,6 +108,28 @@ def detect_cert_day_count(message: str) -> int | None:
     return n if n in (1, 2, 3, 4) else None
 
 
+# Edades en PALABRA (2026-07-24, opción A del análisis del gate age-eligibility).
+# Mapa 2-19 (edades de menores relevantes para buceo/snorkel); 1 se excluye a
+# propósito ("una niña" es artículo, no edad, y nadie de 1 año bucea). Canónico
+# aquí (módulo de más bajo nivel); `conversational_core` lo importa para su
+# propio parseo de SLOT_AGES, sin duplicar. Cierre DETERMINISTA — nunca adivina
+# una edad (a diferencia del cutover LLM que H4 difirió: en una decisión de
+# seguridad, adivinar "es adolescente"->15 es peor que no responder).
+AGE_WORDS = {
+    "dos": 2, "tres": 3, "cuatro": 4, "cinco": 5, "seis": 6, "siete": 7,
+    "ocho": 8, "nueve": 9, "diez": 10, "once": 11, "doce": 12, "trece": 13,
+    "catorce": 14, "quince": 15, "dieciseis": 16, "dieciséis": 16,
+    "diecisiete": 17, "dieciocho": 18, "diecinueve": 19,
+    "two": 2, "three": 3, "four": 4, "five": 5, "six": 6, "seven": 7,
+    "eight": 8, "nine": 9, "ten": 10, "eleven": 11, "twelve": 12,
+    "thirteen": 13, "fourteen": 14, "fifteen": 15, "sixteen": 16,
+    "seventeen": 17, "eighteen": 18, "nineteen": 19,
+}
+# Alternación ordenada por longitud desc (así "dieciseis" gana a "diez" en el
+# motor regex antes de que un prefijo corte el match).
+_AGE_WORD_ALT = "|".join(sorted(map(re.escape, AGE_WORDS), key=len, reverse=True))
+
+
 class IntentDetector:
 
     def __init__(self, openai_client: OpenAI | None = None):
@@ -890,6 +912,42 @@ class IntentDetector:
             message,
         ):
             _add(m.group(1))
+
+        def _add_words(group: str) -> None:
+            for w in re.findall(_AGE_WORD_ALT, group, re.IGNORECASE):
+                ages.append(AGE_WORDS[w.lower()])
+
+        # 6) Edades en PALABRA (opción A): "nueve años", "cinco y siete años",
+        #    "mi hija de nueve", "kids aged eight and eleven". Mismas guardas de
+        #    plazo que el patrón 1 ("llevo nueve años sin bucear" NO es edad).
+        for m in re.finditer(
+            rf'\b((?:(?:{_AGE_WORD_ALT})\s*(?:,|y|e|and|&)\s*)*(?:{_AGE_WORD_ALT}))'
+            r'\s*(?:a[nñ]os?|year[s]?(?:\s*old)?)\b',
+            message, re.IGNORECASE,
+        ):
+            preceding = message[max(0, m.start() - 20):m.start()]
+            if re.search(r'\b(hace|ultimo|ultima|last|desde|llevo|llevamos|in|for|like|since)\b',
+                         preceding, re.IGNORECASE):
+                continue
+            if re.match(r'\s*(?:ago|sin\s+bucear|que\s+no\s+buce)', message[m.end():], re.IGNORECASE):
+                continue
+            _add_words(m.group(1))
+        # 6b) kid-noun / "aged" + word-number sin la palabra "años":
+        #     "mi hija de nueve", "un niño de doce", "aged eight and eleven".
+        for m in re.finditer(
+            r'\b(?:niñ[oa]|nin[oa]|hij[oa]|niet[oa]|beb[eé]|kid|child|son|daughter|grandchild'
+            r'|aged?|ages|edad(?:es)?)s?\s+(?:de\s+)?'
+            rf'((?:(?:{_AGE_WORD_ALT})\s*(?:,|y|e|and|&)\s*)*(?:{_AGE_WORD_ALT}))\b',
+            message, re.IGNORECASE,
+        ):
+            _add_words(m.group(1))
+        # 6c) kid-noun + "tiene N" en palabra: "mi hijo tiene ocho" (equivalente
+        #     al patrón 2b de dígitos).
+        for m in re.finditer(
+            rf'\b(?:niñ[oa]|nin[oa]|hij[oa]|niet[oa]|beb[eé])s?\b[^.;]{{0,20}}?\btiene\s+({_AGE_WORD_ALT})\b',
+            message, re.IGNORECASE,
+        ):
+            _add_words(m.group(1))
 
         if ages:
             intent.ages = sorted(set(ages))

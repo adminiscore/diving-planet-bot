@@ -1,6 +1,13 @@
 History
 =======
 
+0.20.72 - (2026-07-24)
+----------------------
+* **Edades en palabra en el gate de elegibilidad (opción A del análisis de H4).** `intent_detector._detect_ages` era digit-only, así que "mi hija de **nueve** años, ¿puede bucear?" no detectaba edad y `_maybe_answer_age_eligibility` caía a RAG genérico en vez de la nota de elegibilidad específica por edad (decisión de SEGURIDAD: edades mínimas de cada actividad).
+* Fix DETERMINISTA (patrones 6/6b/6c en `_detect_ages` con el mapa `AGE_WORDS` 2-19 ES+EN), con las MISMAS guardas de plazo que los patrones de dígito ("llevo nueve años sin bucear" sigue siendo un plazo, no una edad). Verificado en vivo: "nueve años" → nota específica (snorkel desde 6, Bubble Makers 8-10); "cinco y siete años" → plan por persona. `AGE_WORDS` ahora es canónico en `intent_detector` y lo reusa `conversational_core._word_ages` (sin duplicar).
+* **Por qué A y no el cutover LLM (opción C, sigue diferida — anotado para el futuro):** C obligaría a hacer async `_maybe_answer_age_eligibility` + un resolutor de edades tipo array, y DUPLICARÍA la llamada LLM en el fall-through (la razón original de H4). Además, en una decisión de seguridad, dejar que el LLM ADIVINE una edad vaga ("es adolescente"→15) es peor que no responder — y si se le pide extraer solo edades explícitas, no aporta cobertura sobre A. Revisar C solo si el tráfico real de PRE muestra preguntas de elegibilidad con edad en fraseo que el word-map no capture (data-driven, Fase 6). Detalle del análisis en `session-handoff.md`.
+* Suite 2043 passed, 15 skipped; ruff limpio. Tests nuevos en `test_intent_detector.py` (edades en palabra + guarda de plazo).
+
 0.20.71 - (2026-07-24)
 ----------------------
 * **Fix del edge "que"/"qué" anotado en v0.20.70.** `_looks_like_info_question` quita los acentos antes de matchear (correcto: la gente escribe "que incluye" sin tilde y debe contar como pregunta), pero eso borra la única diferencia entre la interrogativa "qué" y la conjunción/relativo "que" — así "que se anime a bucear" (exhortativo) se leía como pregunta y saltaba el resolutor de la actividad del acompañante.

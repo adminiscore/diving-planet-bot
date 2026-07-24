@@ -230,6 +230,24 @@ class TestLastDiveDetection:
         intent = detector.detect("it's been like 4 years since i last dived", state)
         assert intent.ages == []
 
+    # Edades en PALABRA (2026-07-24): _detect_ages era digit-only; "mi hija de
+    # nueve años" no se capturaba y el gate de elegibilidad caía a RAG genérico.
+    @pytest.mark.parametrize("message, expected", [
+        ("mi hija de nueve años, ¿puede bucear?", [9]),
+        ("tienen cinco y siete años", [5, 7]),
+        ("un niño de doce", [12]),
+        ("mi hijo tiene ocho", [8]),
+        ("kids aged eight and eleven", [8, 11]),
+        ("¿a partir de qué edad?", []),          # sin edad concreta
+    ])
+    def test_word_ages_detected(self, detector, state, message, expected):
+        assert detector.detect(message, state).ages == expected
+
+    def test_word_age_timeframe_not_leaked(self, detector, state):
+        """"llevo nueve años sin bucear" es un plazo, NO una edad."""
+        intent = detector.detect("llevo nueve años sin bucear, voy solo", state)
+        assert intent.ages == []
+
 
 class TestDurationDetection:
     

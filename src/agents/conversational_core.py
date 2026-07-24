@@ -29,7 +29,7 @@ import logging
 import re
 from collections import Counter
 
-from src.agents.intent_detector import IntentDetector
+from src.agents.intent_detector import AGE_WORDS, IntentDetector
 from src.agents.llm_extractor import (
     compose_acknowledgement,
     detect_special_signals,
@@ -431,27 +431,12 @@ def _resolve_cert_plan(state: ConversationState) -> str | None:
     return _tree._service_for_location(base, state)
 
 
-# Edades en PALABRA (2026-07-24): el slot de edades solo leía dígitos, así que
-# "cinco y siete años" no se capturaba y re-preguntaba. Mapa 2-19 (edades de
-# menores relevantes para buceo/snorkel); se excluye 1 a propósito ("una niña"
-# es artículo, no edad, y nadie de 1 año bucea) para no crear falsos positivos.
-_AGE_WORDS = {
-    "dos": 2, "tres": 3, "cuatro": 4, "cinco": 5, "seis": 6, "siete": 7,
-    "ocho": 8, "nueve": 9, "diez": 10, "once": 11, "doce": 12, "trece": 13,
-    "catorce": 14, "quince": 15, "dieciseis": 16, "dieciséis": 16,
-    "diecisiete": 17, "dieciocho": 18, "diecinueve": 19,
-    "two": 2, "three": 3, "four": 4, "five": 5, "six": 6, "seven": 7,
-    "eight": 8, "nine": 9, "ten": 10, "eleven": 11, "twelve": 12,
-    "thirteen": 13, "fourteen": 14, "fifteen": 15, "sixteen": 16,
-    "seventeen": 17, "eighteen": 18, "nineteen": 19,
-}
-
-
 def _word_ages(message: str) -> list[int]:
     """Edades escritas en palabra, en orden de aparición ("cinco y siete" ->
-    [5, 7]). Vacío si no hay ninguna."""
-    return [_AGE_WORDS[t] for t in re.findall(r"[a-záéíóúñ]+", message.lower())
-            if t in _AGE_WORDS]
+    [5, 7]). Vacío si no hay ninguna. Reusa el mapa canónico `AGE_WORDS` de
+    intent_detector (mismo vocabulario que el gate de elegibilidad)."""
+    return [AGE_WORDS[t] for t in re.findall(r"[a-záéíóúñ]+", message.lower())
+            if t in AGE_WORDS]
 
 
 # ─── COMPRENDER ───
