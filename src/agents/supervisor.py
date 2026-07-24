@@ -185,9 +185,15 @@ _GENERAL_INTEREST_PATTERN = re.compile(
 # silently adding 4 bogus companions to the cart. Routing obvious questions
 # straight to RAG, before the orchestrator ever sees them, removes that
 # failure mode entirely instead of trying to prompt-engineer it away.
+# El acento se quita antes de matchear (más abajo), así que "qué" y "que" son
+# indistinguibles aquí. El lookahead evita el falso positivo del "que"
+# CONJUNCIÓN/exhortativo ("que se anime", "que él venga", "que uno haga") —
+# seguido de pronombre átono/sujeto NUNCA es interrogativo, mientras que "que
+# incluye"/"que precio" sí. (Los marcadores están ya sin acento: "él"->"el".)
+_QUE_CONJUNCION = r"(?!\s+(?:se|el|ella|ellos|ellas|uno|una|unos|unas)\b)"
 _INFO_QUESTION_STARTER_PATTERN = re.compile(
     r"^("
-    r"qu[ée]|cu[áa]nto|cu[áa]ndo|c[óo]mo|d[óo]nde|cu[áa]l|"
+    r"qu[ée]" + _QUE_CONJUNCION + r"|cu[áa]nto|cu[áa]ndo|c[óo]mo|d[óo]nde|cu[áa]l|"
     r"inclu[yi]e|tiene|tienen|hay|puedo\s+saber|"
     # Aperturas de BÚSQUEDA de info sin palabra-pregunta ni "?" (2026-07-24):
     # "cuéntame del precio", "me gustaría saber qué incluye", "dime cómo es".

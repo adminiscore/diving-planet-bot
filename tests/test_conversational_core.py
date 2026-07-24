@@ -1860,6 +1860,43 @@ def test_info_question_not_cart_action(msg):
     assert not supervisor._looks_like_info_question(msg)
 
 
+@pytest.mark.parametrize("msg", [
+    "que se anime a bucear",          # exhortativo, NO pregunta
+    "que él venga también",
+    "que uno haga snorkel",
+    "que ella pruebe el minicurso",
+])
+def test_que_conjuncion_not_a_question(msg):
+    """"que" conjunción/exhortativo (seguido de pronombre átono/sujeto) NO es
+    una pregunta, aunque tras quitar el acento sea indistinguible de "qué"."""
+    from src.agents import supervisor
+    assert not supervisor._looks_like_info_question(msg)
+
+
+@pytest.mark.parametrize("msg", [
+    "que incluye el precio",          # pregunta real sin tilde (muy común)
+    "qué actividades hay",
+    "que me recomiendas",             # "me" NO se excluye (sigue siendo pregunta)
+    "qué precio tiene",
+])
+def test_que_interrogativo_still_question(msg):
+    from src.agents import supervisor
+    assert supervisor._looks_like_info_question(msg)
+
+
+@pytest.mark.asyncio
+async def test_companion_activity_que_se_anime_resolves(monkeypatch):
+    """La respuesta "que se anime a bajar con el instructor" (empieza por "que")
+    ya no se confunde con pregunta: llega al resolutor → minicurso."""
+    monkeypatch.setattr(core, "resolve_slot_answer",
+                        AsyncMock(return_value={"value": "minicourse"}))
+    state = _at_companion_activity_stage()
+    with patch("src.agents.supervisor.detect_routing_signals",
+               new=AsyncMock(return_value={})):
+        await route_message(state, "que se anime a bajar con el instructor")
+    assert state.pending_companion_activity == "minicourse"
+
+
 def test_product_mention_business_synonyms():
     """El detector de productos del núcleo reconoce ahora los sinónimos de
     negocio (bautizo=minicurso, careteo=snorkel) que el intent_detector ya

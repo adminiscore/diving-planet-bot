@@ -1,6 +1,11 @@
 History
 =======
 
+0.20.71 - (2026-07-24)
+----------------------
+* **Fix del edge "que"/"qué" anotado en v0.20.70.** `_looks_like_info_question` quita los acentos antes de matchear (correcto: la gente escribe "que incluye" sin tilde y debe contar como pregunta), pero eso borra la única diferencia entre la interrogativa "qué" y la conjunción/relativo "que" — así "que se anime a bucear" (exhortativo) se leía como pregunta y saltaba el resolutor de la actividad del acompañante.
+* Distinción lingüística: un "que" seguido de pronombre átono/sujeto ("que **se** anime", "que **él** venga", "que **uno** haga") NUNCA es interrogativo, mientras que "que incluye"/"que precio" sí. Negative lookahead (`_QUE_CONJUNCION`, marcadores se/el/ella/ellos/ellas/uno/una/unos/unas) — sin romper "que incluye" (pregunta sin tilde) ni "que me recomiendas" ("me" NO se excluye a propósito). Verificado en vivo: "que se anime a bajar con el instructor" → minicurso. Suite 2036 passed, ruff limpio.
+
 0.20.70 - (2026-07-24)
 ----------------------
 * **Auditoría de fragilidad del núcleo: 6 slots/decisiones regex-only sin red que "no seguían el hilo" (re-preguntaban en bucle) reforzados con el patrón determinista→LLM del proyecto.** Revisión sistemática del camino activo en PRE (`conversational_core`) buscando funciones regex-only donde un input fuera de patrón rompía el flujo.
