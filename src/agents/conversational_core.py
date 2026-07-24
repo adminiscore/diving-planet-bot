@@ -244,6 +244,17 @@ def ask_slot(state: ConversationState, slot: str, *, reasking: bool = False) -> 
     state.quick_replies = []
 
     if slot == SLOT_ACTIVITY:
+        # `reasking=True`: se re-ancla la actividad tras una respuesta de info
+        # (RAG). Repetir el bloque entero de 4 bullets que ya se mostró al
+        # abrir es ruido — una línea que reofrece las opciones basta (fallo en
+        # vivo 2026-07-24: el menú completo se pegaba tras cada recomendación).
+        if reasking:
+            return (
+                "¿Con cuál te animas — *buceo*, *minicurso*, *snorkel* o un *curso PADI*? 🌊"
+                if lang == "es" else
+                "Which one are you leaning toward — *diving*, a *mini-course*, "
+                "*snorkeling* or a *PADI course*? 🌊"
+            )
         return (
             "Cuéntame, ¿qué te gustaría vivir con nosotros? 🤿\n"
             "• *Buceo* en las Islas del Rosario, si ya eres buzo certificado\n"
@@ -713,6 +724,182 @@ def _activity_has_textual_backing(activity: str, message: str) -> bool:
     if activity == "minicourse" and "certified_diving" in mentioned:
         return True
     return False
+
+
+# B2 (2026-07-24): deliberación entre actividades. El cliente que SOPESA dos
+# opciones sin decidirse ("mi pareja duda entre buceo y minicurso", "no sé si
+# snorkel o el minicurso") no está reservando ambas — quiere que le expliquen.
+# Antes solo se salvaba si el mensaje traía "?"; sin él, la extracción tomaba
+# las dos actividades como selección. Backstop determinista de frases de duda,
+# que se combina con la señal LLM `comparing_options` (respaldo bidireccional:
+# el patrón cubre lo obvio aunque el LLM falle; el LLM cubre el fraseo que el
+# patrón no enumera).
+_DELIBERATION_RE = re.compile(
+    r"\bno\s+s[eé]\s+(?:si|cu[aá]l|qu[eé]|entre)\b"
+    r"|\bno\s+estoy\s+segur\w+\s+(?:de\s+)?si\b"
+    r"|\bno\s+me\s+decido\b"
+    r"|\bdud\w+\s+(?:entre|si)\b"
+    r"|\b(?:saber|decid\w+)\s+(?:si|cu[aá]l|qu[eé]|entre)\b"
+    r"|\bmejor\s+\w.+\bo\b"
+    r"|\bqu[eé]\s+diferencia\b|\bdiferencia\s+entre\b"
+    r"|\bcu[aá]l\s+(?:me\s+)?(?:conviene|recomiend\w+|elijo|escojo|es\s+mejor)\b"
+    r"|\bqu[eé]\s+me\s+recomiendas\s+entre\b"
+    r"|\bnot\s+sure\s+(?:if|whether)\b|\btorn\s+between\b|\bdecid\w+\s+between\b"
+    r"|\bwhat'?s\s+the\s+difference\b|\bdifference\s+between\b"
+    r"|\bshould\s+i\s+.+\bor\b"
+    r"|\bwhich\s+(?:one\s+)?(?:is\s+better|do\s+you\s+recommend|should\s+i)\b",
+    re.IGNORECASE,
+)
+# Selección/compromiso claro con la(s) actividad(es): anula el camino que
+# depende SOLO de la señal LLM (por si sobre-dispara comparing en un "quiero A
+# y B"). NO anula el patrón de duda determinista. "quiero SABER/CONOCER" es una
+# PREGUNTA, no un compromiso — se excluye con lookahead para que "quiero saber
+# si buceo o snorkel" cuente como duda y vaya a RAG.
+_COMMITMENT_RE = re.compile(
+    r"\b(?:quiero|queremos|quisiera)(?!\s+(?:saber|conocer))\b"
+    r"|\b(?:reserv\w+|me\s+quedo\s+con|nos\s+quedamos\s+con|elijo|elegimos"
+    r"|book|i'?ll\s+take|we'?ll\s+take)\b",
+    re.IGNORECASE,
+)
+
+
+def _looks_like_deliberation(message: str) -> bool:
+    return bool(_DELIBERATION_RE.search(message))
+
+
+# Cursos PADI por NOMBRE como opciones distintas de deliberación (gap
+# 2026-07-24): `_mentioned_product_activities` no distingue cursos (todos serían
+# "padi_course"), así que "no sé si open water o advanced" (sin "?") no
+# disparaba el ancla de 2+ opciones. Cada nombre de curso cuenta como una opción
+# propia. Conservador: solo nombres inequívocos de curso, no la palabra "curso"
+# suelta (evita casar dentro de "minicurso").
+_COURSE_MENTION_RE = {
+    "open_water": re.compile(r"\bopen\s*water\b|\bowd\b", re.IGNORECASE),
+    "advanced": re.compile(r"\badvanced\b|\baowd\b|\bavanzad\w*\b", re.IGNORECASE),
+    "rescue": re.compile(r"\brescue\b|\brescate\b", re.IGNORECASE),
+    "divemaster": re.compile(r"\bdive\s*master\b|\bdivemaster\b", re.IGNORECASE),
+    "nitrox": re.compile(r"\bnitrox\b|\benriched\s+air\b", re.IGNORECASE),
+}
+
+_DELIB_LABELS_ES = {"certified_diving": "buceo certificado", "minicourse": "minicurso de buceo",
+                    "snorkel": "snorkel", "padi_course": "curso PADI",
+                    "open_water": "curso Open Water", "advanced": "curso Advanced Open Water",
+                    "rescue": "curso Rescue Diver", "divemaster": "curso Divemaster",
+                    "nitrox": "especialidad Nitrox"}
+_DELIB_LABELS_EN = {"certified_diving": "certified diving", "minicourse": "beginner mini-course",
+                    "snorkel": "snorkeling", "padi_course": "PADI course",
+                    "open_water": "Open Water course", "advanced": "Advanced Open Water course",
+                    "rescue": "Rescue Diver course", "divemaster": "Divemaster course",
+                    "nitrox": "Nitrox specialty"}
+
+
+def _mentioned_courses(message: str) -> list:
+    return [c for c, pat in _COURSE_MENTION_RE.items() if pat.search(message)]
+
+
+def _mentioned_offerings(message: str) -> list:
+    """Ofertas distintas mencionadas: actividades de producto + cursos PADI por
+    nombre. Base del ancla de deliberación (2+ ofertas distintas). Dedup
+    conservando el orden (determinista)."""
+    seen: list[str] = []
+    for o in _mentioned_product_activities(message) + _mentioned_courses(message):
+        if o not in seen:
+            seen.append(o)
+    return seen
+
+
+def _comparison_query(offerings: list[str], lang: str) -> str:
+    """Query EXPLÍCITA de comparación para RAG a partir de las ofertas que se
+    sopesan (actividades o cursos). El mensaje crudo de deliberación ("mi pareja
+    duda entre buceo y minicurso") es una query pobre — recupera mal y el juez
+    de grounding la rechaza (hallazgo en vivo 2026-07-24); una pregunta clara de
+    diferencia recupera igual de bien que cuando el cliente la formula con "?"."""
+    labels = _DELIB_LABELS_ES if lang == "es" else _DELIB_LABELS_EN
+    names = [labels.get(o, o) for o in offerings] or ([labels["snorkel"]])
+    joined = (" y ".join(names) if lang == "es" else " and ".join(names))
+    return (f"¿Qué diferencia hay entre {joined}? ¿Cuál me recomiendas?"
+            if lang == "es" else
+            f"What's the difference between {joined}? Which one do you recommend?")
+
+
+# Composer determinista de comparación (2026-07-24): cuando RAG no tiene en el
+# KB un chunk que compare ESE par (medido en vivo: "buceo vs snorkel" cae al
+# fallback de asesor 4/4, consistente — no flaky), se arma la comparación desde
+# el catálogo SERVICES. Los HECHOS (precio, certificación, nombre) salen del
+# catálogo — nunca se inventan; solo el descriptor de tono es copy curado, igual
+# que el menú de actividades. Nunca cae al asesor.
+_OFFERING_TO_SERVICE = {
+    "certified_diving": "2_dives_1_day", "minicourse": "minicourse",
+    "snorkel": "snorkeling", "padi_course": "open_water",
+    "open_water": "open_water", "advanced": "advanced", "rescue": "rescue",
+    "divemaster": "divemaster", "nitrox": "nitrox_specialty",
+}
+_OFFERING_BLURB_ES = {
+    "certified_diving": "Inmersiones guiadas para buzos ya certificados; explorás el arrecife a profundidad.",
+    "minicourse": "Tu primera vez bajo el agua con instructor: entrenamiento en piscina y una inmersión real. Sin experiencia previa.",
+    "snorkel": "Disfrutas el arrecife desde la superficie, con máscara y aletas. Ideal en familia.",
+    "padi_course": "Curso de certificación inicial: te habilita a bucear de forma autónoma hasta 18 m.",
+    "open_water": "Curso de certificación inicial: te habilita a bucear de forma autónoma hasta 18 m.",
+    "advanced": "Para buzos ya certificados que quieren profundizar y sumar especialidades.",
+    "rescue": "Curso enfocado en seguridad y rescate; el paso previo a Divemaster.",
+    "divemaster": "El primer nivel profesional PADI.",
+    "nitrox": "Especialidad de aire enriquecido para inmersiones más largas.",
+}
+_OFFERING_BLURB_EN = {
+    "certified_diving": "Guided dives for already-certified divers; explore the reef at depth.",
+    "minicourse": "Your first time underwater with an instructor: pool training and a real dive. No experience needed.",
+    "snorkel": "Enjoy the reef from the surface, with mask and fins. Great for families.",
+    "padi_course": "Entry certification course: qualifies you to dive independently down to 18 m.",
+    "open_water": "Entry certification course: qualifies you to dive independently down to 18 m.",
+    "advanced": "For already-certified divers who want to go deeper and add specialties.",
+    "rescue": "Safety- and rescue-focused course; the step before Divemaster.",
+    "divemaster": "The first professional PADI level.",
+    "nitrox": "Enriched-air specialty for longer dives.",
+}
+
+
+def _compose_comparison(offerings: list[str], lang: str) -> str:
+    """Comparación lado-a-lado desde el catálogo, sin depender de RAG. Precio y
+    requisito de certificación salen de SERVICES (nunca inventados)."""
+    from src.flows.decision_tree import SERVICES
+    blurbs = _OFFERING_BLURB_ES if lang == "es" else _OFFERING_BLURB_EN
+    labels = _DELIB_LABELS_ES if lang == "es" else _DELIB_LABELS_EN
+    rows = []
+    for o in offerings:
+        svc = SERVICES.get(_OFFERING_TO_SERVICE.get(o, ""), {})
+        name = (svc.get("name_es") if lang == "es" else svc.get("name_en")) or labels.get(o, o)
+        if lang == "es":
+            cert_line = "Requiere certificación previa" if svc.get("requires_cert") else "Sin certificación previa"
+        else:
+            cert_line = "Requires prior certification" if svc.get("requires_cert") else "No certification needed"
+        row = f"🤿 *{name}*\n• {cert_line}\n• {blurbs.get(o, '')}"
+        price = svc.get("price_usd")
+        if price:
+            row += (f"\n• Desde U${int(round(price))} por persona"
+                    if lang == "es" else f"\n• From U${int(round(price))} per person")
+        rows.append(row)
+    if lang == "es":
+        return ("¡Con gusto te explico la diferencia! 🌊\n\n" + "\n\n".join(rows)
+                + "\n\n¿Con cuál te animas? Y lo armamos juntos. 🐠")
+    return ("Happy to explain the difference! 🌊\n\n" + "\n\n".join(rows)
+            + "\n\nWhich one are you leaning toward? Let's put it together. 🐠")
+
+
+def _is_deliberation_between_options(message: str, routing_signals: dict) -> bool:
+    """True si el mensaje sopesa 2+ ofertas (actividades o cursos) sin decidirse
+    — va a RAG en vez de a extracción. Ancla determinista fuerte: exige 2+
+    OFERTAS distintas nombradas en el texto (una sola nunca es deliberación, es
+    selección/pregunta), y entonces confía en el patrón de duda o en la señal
+    LLM `comparing_options`. El respaldo por texto (2+ ofertas) hace que un
+    falso positivo del LLM no pueda suprimir una selección real de una sola
+    actividad."""
+    if len(_mentioned_offerings(message)) < 2:
+        return False
+    if _looks_like_deliberation(message):
+        return True
+    obj = routing_signals.get("comparing_options")
+    llm_comparing = bool(obj.get("comparing")) if isinstance(obj, dict) else False
+    return llm_comparing and not _COMMITMENT_RE.search(message)
 
 
 # Campos que CONDUCEN la reserva en el núcleo (alimentan next_missing_slot o el
@@ -1400,6 +1587,37 @@ async def maybe_handle_turn(
         state.history.append({"role": "assistant", "content": answer})
         return answer
 
+    # DELIBERACIÓN entre actividades (B2, 2026-07-24): un mensaje que sopesa
+    # 2+ actividades sin decidirse ("mi pareja duda entre buceo y minicurso",
+    # sin "?") NO es una selección de ambas — va a RAG (explicar la diferencia)
+    # ANTES de que la extracción las tome como reserva. Va tras el carryover
+    # (una respuesta de slot legítima ya ganó arriba) y tras el gate de "?"
+    # (esas ya fueron a RAG). El ancla determinista de 2+ productos evita
+    # secuestrar dudas de slot (ubicación/hotel) y selecciones de una sola
+    # actividad. `who`/`options` de la señal solo se registran (v1): RAG ve el
+    # mensaje entero y explica; la forma rica deja el camino de upgrade abierto.
+    if not resolved_short and _is_deliberation_between_options(message, routing_signals):
+        offerings = _mentioned_offerings(message)
+        obj = routing_signals.get("comparing_options") or {}
+        logger.info(
+            f"[CORE] deliberation -> RAG offerings={offerings} "
+            f"who={obj.get('who') if isinstance(obj, dict) else None}"
+        )
+        query = _comparison_query(offerings, state.language)
+        rag = await _answer_question(state, message, rag_query=query)
+        # Fallback determinista: si el KB no tiene ese par (RAG devuelve su
+        # respuesta de "no lo tengo a la mano"), comparar desde el catálogo en
+        # vez de ofrecer un asesor (hallazgo en vivo 2026-07-24, consistente).
+        from src.agents.rag_agent import FALLBACK_EN, FALLBACK_ES
+        if FALLBACK_ES in rag or FALLBACK_EN in rag:
+            rag = _compose_comparison(offerings, state.language)
+            state.core_pending_slot = SLOT_ACTIVITY
+            state.quick_replies = []
+            logger.info(f"[CORE] deliberation RAG fallback -> catalog compare offerings={offerings}")
+        answer = greeting + rag
+        state.history.append({"role": "assistant", "content": answer})
+        return answer
+
     # COMPRENDER: extracción del resto del mensaje.
     companion_merged_fastpath = False
     if not (resolved_short and len(message.strip()) <= 12):
@@ -1802,18 +2020,45 @@ async def maybe_handle_turn(
     return response
 
 
-async def _answer_question(state: ConversationState, message: str) -> str:
+async def _answer_question(
+    state: ConversationState, message: str, *, rag_query: str | None = None,
+) -> str:
     # Vía supervisor.rag_answer (no rag_agent directamente): es la referencia
     # que mockean los tests y cualquier interceptor futuro — mismo camino que
-    # el resto de respuestas de info del bot.
+    # el resto de respuestas de info del bot. `rag_query` (opcional): consulta
+    # reescrita para RAG cuando el mensaje crudo recupera mal (deliberación);
+    # el historial sigue teniendo el mensaje real del cliente.
     from src.agents import supervisor  # lazy
 
     extra_context = supervisor._build_extra_context(state)
     answer = await supervisor.rag_answer(
-        message, lang=state.language, history=state.history, extra_context=extra_context
+        rag_query or message, lang=state.language, history=state.history,
+        extra_context=extra_context,
     )
     pending = state.core_pending_slot or next_missing_slot(state)
-    if pending is not None:
-        follow_up = ask_slot(state, pending)
+    # No re-anclar el slot si la propia respuesta RAG ya cierra con una
+    # pregunta (una recomendación/comparación termina invitando a elegir): el
+    # re-prompt sería redundante — dos preguntas seguidas y, si el pendiente
+    # es la actividad, el menú entero pegado a una respuesta que ya lo cubría
+    # (fallo en vivo 2026-07-24). El re-ancla usa la variante corta.
+    if pending is not None and not _answer_already_asks(answer):
+        follow_up = ask_slot(state, pending, reasking=True)
         return f"{answer}\n\n{follow_up}"
+    # Aun sin re-preguntar, dejar fijado el slot pendiente para el próximo turno
+    # (el carryover lo retoma) y limpiar los quick-replies del turno anterior:
+    # la respuesta ya cierra con su propia pregunta, botones stale confundirían.
+    state.core_pending_slot = pending
+    state.quick_replies = []
     return answer
+
+
+def _answer_already_asks(answer: str) -> bool:
+    """¿La respuesta ya termina invitando a responder (cierra con una
+    pregunta)? Mira la última línea no vacía — así una recomendación que
+    acaba en "¿te inclinas por alguna?" no recibe encima el re-prompt del
+    slot. Barato y seguro: un falso negativo solo re-adjunta la variante
+    corta, nunca vuelve al bloque entero."""
+    for line in reversed(answer.strip().splitlines()):
+        if line.strip():
+            return "?" in line or "¿" in line
+    return False

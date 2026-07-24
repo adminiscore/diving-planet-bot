@@ -1390,4 +1390,226 @@ def test_activity_has_textual_backing_translates_diving_intent_to_minicourse():
     assert core._activity_has_textual_backing("minicourse", "quiere hacer buceo")
     assert core._activity_has_textual_backing("snorkel", "quiere hacer snorkel")
     assert not core._activity_has_textual_backing("minicourse", "mi amigo no esta certificado")
+
+
+# ---------------------------------------------------------------------------
+# B2: deliberación entre actividades ("duda entre X y Y") → RAG, no reserva
+# ---------------------------------------------------------------------------
+
+def _at_activity_stage(lang: str = "es") -> ConversationState:
+    """Estado justo tras el saludo: se preguntó la actividad, nada elegido."""
+    state = make_state(lang)
+    state.step = Step.FREE_TEXT
+    state.core_pending_slot = core.SLOT_ACTIVITY
+    return state
+
+
+@pytest.mark.asyncio
+async def test_comparing_options_object_routes_to_rag_not_cart():
+    """El fallo en vivo: "mi pareja duda entre buceo y minicurso" (sin "?")
+    se tomaba como reserva de AMBAS actividades. Con la señal objeto
+    comparing_options debe ir a RAG (explicar) y NO construir carrito ni
+    encolar cantidades de acompañante."""
+    state = _at_activity_stage()
+    obj = {"comparing_options": {
+        "comparing": True,
+        "options": ["certified_diving", "minicourse"],
+        "who": "companion",
+    }}
+    with patch("src.agents.supervisor.detect_routing_signals",
+               new=AsyncMock(return_value=obj)), \
+         patch("src.agents.supervisor.rag_answer",
+               new=AsyncMock(return_value="RAG_DIFERENCIA")) as rag:
+        resp = await route_message(state, "vale y mi pareja duda entre buceo y minicurso")
+    rag.assert_awaited_once()
+    assert "RAG_DIFERENCIA" in resp
+    assert not state.mixed_cart
+    assert not state.pending_companion_queue
+    assert state.detected_activity is None
+
+
+@pytest.mark.asyncio
+async def test_deliberation_backstop_without_llm_signal_routes_to_rag():
+    """Aunque la señal LLM no marque nada ({}), el backstop determinista de
+    frases de duda ("no sé si … o …") debe enrutar a RAG igual — sin depender
+    del "?" (que es lo único que hoy lo salva)."""
+    state = _at_activity_stage()
+    with patch("src.agents.supervisor.detect_routing_signals",
+               new=AsyncMock(return_value={})), \
+         patch("src.agents.supervisor.rag_answer",
+               new=AsyncMock(return_value="RAG_DIFERENCIA")) as rag:
+        resp = await route_message(state, "no sé si hacer snorkel o el minicurso")
+    rag.assert_awaited_once()
+    assert "RAG_DIFERENCIA" in resp
+    assert not state.mixed_cart
+    assert state.detected_activity is None
+
+
+@pytest.mark.asyncio
+async def test_single_activity_selection_not_treated_as_comparing():
+    """Guard contra falso positivo: una selección clara de UNA sola actividad
+    ("quiero el minicurso") NO es deliberación aunque la señal LLM se equivoque
+    y diga comparing=True — se necesita mencionar 2+ productos en el texto."""
+    state = _at_activity_stage()
+    obj = {"comparing_options": {"comparing": True, "options": ["minicourse"],
+                                 "who": "self"}}
+    with patch("src.agents.supervisor.detect_routing_signals",
+               new=AsyncMock(return_value=obj)), \
+         patch("src.agents.supervisor.rag_answer",
+               new=AsyncMock(side_effect=AssertionError("no debe ir a RAG"))):
+        await route_message(state, "quiero el minicurso")
+    assert state.detected_activity == "minicourse"
+
+
+def test_deliberation_backstop_patterns():
+    assert core._looks_like_deliberation("mi pareja duda entre buceo y minicurso")
+    assert core._looks_like_deliberation("no sé si snorkel o el minicurso")
+    assert core._looks_like_deliberation("qué diferencia hay entre snorkel y buceo")
+    assert core._looks_like_deliberation("not sure whether to snorkel or dive")
+    # Una selección o pregunta normal NO es deliberación.
+    assert not core._looks_like_deliberation("quiero el minicurso")
+    assert not core._looks_like_deliberation("cuánto cuesta el snorkel")
+
+
+# ---------------------------------------------------------------------------
+# B2 exhaustivo: matriz de variantes del predicado de deliberación
+# ---------------------------------------------------------------------------
+
+@pytest.mark.parametrize("message, signals, expected", [
+    # actividad vs actividad
+    ("mi pareja duda entre buceo y minicurso", {}, True),
+    ("no sé si hacer snorkel o el minicurso", {}, True),
+    # 3+ actividades
+    ("no sé si buceo, snorkel o minicurso", {}, True),
+    # curso vs curso (gap cerrado: el detector de productos no los distinguía)
+    ("no sé si el open water o el advanced", {}, True),
+    ("dudo entre open water y rescue", {}, True),
+    # actividad vs curso
+    ("dudo entre el minicurso o el curso open water", {}, True),
+    # "quiero saber si X o Y" es PREGUNTA pese al "quiero"
+    ("quiero saber si buceo o snorkel", {}, True),
+    ("no me decido entre buceo y snorkel", {}, True),
+    # inglés
+    ("not sure whether to snorkel or dive", {}, True),
+    ("should i do the open water or the advanced", {}, True),
+    # señal LLM sin patrón determinista, 2 ofertas, sin compromiso
+    ("mi pareja se lo está pensando, buceo y snorkel",
+     {"comparing_options": {"comparing": True}}, True),
+    # --- NO deliberación ---
+    # una sola actividad (aunque el LLM se equivoque y diga comparing)
+    ("quiero el minicurso", {"comparing_options": {"comparing": True}}, False),
+    # selección real doble (sin duda, sin señal LLM)
+    ("quiero buceo y snorkel para los dos", {}, False),
+    # selección real doble + LLM sobre-dispara → commitment lo anula
+    ("quiero buceo y snorkel", {"comparing_options": {"comparing": True}}, False),
+    # duda de SLOT (ubicación) — no hay 2 ofertas de producto, no se toca
+    ("no sé si cartagena o las islas", {}, False),
+])
+def test_is_deliberation_between_options_matrix(message, signals, expected):
+    assert core._is_deliberation_between_options(message, signals) is expected
+
+
+def test_mentioned_offerings_includes_courses_and_dedupes():
+    assert core._mentioned_offerings("open water o advanced") == ["open_water", "advanced"]
+    assert core._mentioned_offerings("snorkel o buceo") == ["certified_diving", "snorkel"] \
+        or set(core._mentioned_offerings("snorkel o buceo")) == {"certified_diving", "snorkel"}
+    assert core._mentioned_offerings("no sé si cartagena o islas") == []
+
+
+@pytest.mark.asyncio
+async def test_course_vs_course_deliberation_routes_to_rag_without_qmark():
+    """Gap cerrado: duda entre DOS cursos concretos sin "?" ya no cae a
+    extracción — va a RAG con una query de comparación explícita."""
+    state = _at_activity_stage()
+    captured = {}
+
+    async def _fake_rag(query, **kwargs):
+        captured["query"] = query
+        return "RAG_CURSOS"
+
+    with patch("src.agents.supervisor.detect_routing_signals",
+               new=AsyncMock(return_value={})), \
+         patch("src.agents.supervisor.rag_answer", new=_fake_rag):
+        resp = await route_message(state, "no sé si el open water o el advanced")
+    assert "RAG_CURSOS" in resp
+    assert not state.mixed_cart
+    # La query reescrita nombra ambos cursos (recupera bien en RAG).
+    assert "Open Water" in captured["query"] and "Advanced" in captured["query"]
+
+
+# ---------------------------------------------------------------------------
+# Composer determinista de comparación (fallback cuando el KB no tiene el par)
+# ---------------------------------------------------------------------------
+
+def test_compose_comparison_uses_catalog_facts():
+    out = core._compose_comparison(["certified_diving", "snorkel"], "es")
+    # Nombres del catálogo + requisito de cert + precio (nunca inventado).
+    assert "Snorkel" in out
+    assert "Sin certificación previa" in out and "Requiere certificación previa" in out
+    assert "U$" in out
+    # Cierra invitando a elegir, NO ofreciendo asesor.
+    assert "asesor" not in out.lower()
+    assert "con cuál te animas" in out.lower()
+
+
+@pytest.mark.asyncio
+async def test_deliberation_falls_back_to_catalog_when_rag_has_no_pair():
+    """Par que el KB no compara ("buceo vs snorkel"): RAG devuelve su fallback
+    de asesor → se sustituye por la comparación del catálogo, sin asesor."""
+    from src.agents.rag_agent import FALLBACK_ES
+    state = _at_activity_stage()
+    with patch("src.agents.supervisor.detect_routing_signals",
+               new=AsyncMock(return_value={})), \
+         patch("src.agents.supervisor.rag_answer", new=AsyncMock(return_value=FALLBACK_ES)):
+        resp = await route_message(state, "no sé si buceo o snorkel")
+    assert "no lo tengo a la mano" not in resp  # ya no cae al asesor
+    assert "Snorkel" in resp and "U$" in resp
+    assert not state.mixed_cart
+
+
+@pytest.mark.asyncio
+async def test_deliberation_keeps_rag_answer_when_kb_has_the_pair():
+    """Si RAG SÍ responde (KB tiene el par, p.ej. open water vs advanced), se
+    conserva su respuesta rica — el composer solo actúa como fallback."""
+    state = _at_activity_stage()
+    with patch("src.agents.supervisor.detect_routing_signals",
+               new=AsyncMock(return_value={})), \
+         patch("src.agents.supervisor.rag_answer",
+               new=AsyncMock(return_value="RAG_RICA: open water vs advanced. ¿Cuál prefieres?")):
+        resp = await route_message(state, "no sé si el open water o el advanced")
+    assert "RAG_RICA" in resp
+
+
+# ---------------------------------------------------------------------------
+# A2: no duplicar el menú tras una respuesta que ya termina en pregunta
+# ---------------------------------------------------------------------------
+
+@pytest.mark.asyncio
+async def test_rag_answer_that_already_asks_does_not_reappend_activity_menu():
+    """Fallo estético: tras recomendar/comparar, RAG ya cierra con su propia
+    pregunta y encima se pegaba el menú entero de 4 bullets. Si la respuesta
+    ya termina en pregunta, no se re-adjunta nada."""
+    state = _at_activity_stage()
+    with patch("src.agents.supervisor.detect_routing_signals",
+               new=AsyncMock(return_value={})), \
+         patch("src.agents.supervisor.rag_answer",
+               new=AsyncMock(return_value="Aquí la diferencia. ¿Te inclinas por alguna?")):
+        resp = await route_message(state, "qué diferencia hay entre snorkel y minicurso")
+    assert "¿Te inclinas por alguna?" in resp
+    assert "qué te gustaría vivir con nosotros" not in resp.lower()
+
+
+@pytest.mark.asyncio
+async def test_activity_reask_after_rag_uses_short_variant():
+    """Cuando la respuesta RAG NO termina en pregunta, se re-ancla la
+    actividad — pero con la variante corta de una línea, no el bloque de 4
+    bullets."""
+    state = _at_activity_stage()
+    with patch("src.agents.supervisor.detect_routing_signals",
+               new=AsyncMock(return_value={})), \
+         patch("src.agents.supervisor.rag_answer",
+               new=AsyncMock(return_value="Salimos todos los días desde Cartagena.")):
+        resp = await route_message(state, "cuánto cuesta todo esto")
+    assert "qué te gustaría vivir con nosotros" not in resp.lower()
+    assert "con cuál te animas" in resp.lower()
     assert not core._activity_has_textual_backing("snorkel", "mi amigo no esta certificado")

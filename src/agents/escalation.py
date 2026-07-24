@@ -142,7 +142,7 @@ _ROUTING_TOOL = {
     "function": {
         "name": "detect_routing_signals",
         "description": (
-            "Classify a customer message for a scuba booking bot for 8 "
+            "Classify a customer message for a scuba booking bot for 9 "
             "safety/routing signals, in ANY regional Spanish or English "
             "phrasing, slang, or diminutive form — not just the exact "
             "clinical/formal wording. Bias applies to sensitive_topic, "
@@ -270,6 +270,63 @@ _ROUTING_TOOL = {
                         "unsure, leave it false."
                     ),
                 },
+                "comparing_options": {
+                    "type": "object",
+                    "properties": {
+                        "comparing": {
+                            "type": "boolean",
+                            "description": (
+                                "True ONLY if the customer is WEIGHING two or "
+                                "more of our activities WITHOUT having decided "
+                                "— undecided, comparing, or asking which to "
+                                "pick ('no sé si buceo o minicurso', 'mi pareja "
+                                "duda entre snorkel y buceo', 'cuál me "
+                                "conviene', 'torn between diving and "
+                                "snorkeling'). It is NOT comparing when they "
+                                "clearly SELECT one ('quiero el minicurso') or "
+                                "clearly want BOTH as a real booking ('quiero "
+                                "buceo y snorkel para los dos'). Needs 2+ "
+                                "distinct activities in play; a single activity "
+                                "is never 'comparing'."
+                            ),
+                        },
+                        "options": {
+                            "type": "array",
+                            "items": {
+                                "type": "string",
+                                "enum": [
+                                    "certified_diving", "minicourse",
+                                    "snorkel", "padi_course",
+                                ],
+                            },
+                            "description": (
+                                "The activities being weighed, only if "
+                                "comparing is true. Use certified_diving for "
+                                "scuba diving as a certified diver, minicourse "
+                                "for the first-time discover-scuba, snorkel, or "
+                                "padi_course for a full PADI certification "
+                                "course."
+                            ),
+                        },
+                        "who": {
+                            "type": "string",
+                            "enum": ["self", "companion", "unspecified"],
+                            "description": (
+                                "Who is undecided: 'self' (the person "
+                                "writing), 'companion' (a partner/friend/"
+                                "relative they mention), or 'unspecified'."
+                            ),
+                        },
+                    },
+                    "description": (
+                        "Set when the customer is DELIBERATING between two or "
+                        "more of our activities instead of selecting or "
+                        "booking — they want help deciding / an explanation of "
+                        "the difference, not a booking. Leave unset for a plain "
+                        "selection, a real multi-activity booking, or a "
+                        "single-activity message."
+                    ),
+                },
                 "booking_change_topic": {
                     "type": "string",
                     "enum": ["cancellation", "reschedule"],
@@ -327,10 +384,13 @@ def _routing_system_prompt(lang: str) -> str:
             "(6) si pide un número de teléfono/WhatsApp/correo o una vía de "
             "contacto FUERA de este chat → asks_for_contact_number (también "
             "estricto), (7) reporta que un LINK/página/pago/botón NO "
-            "funciona (roto, en blanco, da error) → broken_link_complaint, o "
+            "funciona (roto, en blanco, da error) → broken_link_complaint, "
             "(8) pregunta si hay cupo/espacio/disponibilidad para un día "
             "concreto → availability_question (ambos con el sesgo de 'ante la "
-            "duda, márcalo'). Llama a `detect_routing_signals`."
+            "duda, márcalo'), o (9) está DUDANDO entre 2+ de nuestras "
+            "actividades sin decidirse (comparando, indeciso, pidiendo cuál "
+            "elegir) → comparing_options; NO lo marques si elige una sola o "
+            "quiere varias como reserva real. Llama a `detect_routing_signals`."
         )
     return (
         "You are a safety layer for a scuba diving bot. The bot's keyword "
@@ -354,9 +414,12 @@ def _routing_system_prompt(lang: str) -> str:
         "(6) if they ask for a phone/WhatsApp/email or a contact channel "
         "OUTSIDE this chat → asks_for_contact_number (also strict), (7) "
         "report that a LINK/page/payment/button is NOT working (broken, "
-        "blank, error) → broken_link_complaint, or (8) ask whether there is "
+        "blank, error) → broken_link_complaint, (8) ask whether there is "
         "space/spots/availability for a specific day → availability_question "
-        "(both with the 'when unsure, flag it' bias). Call "
+        "(both with the 'when unsure, flag it' bias), or (9) are DELIBERATING "
+        "between 2+ of our activities without deciding (comparing, undecided, "
+        "asking which to pick) → comparing_options; do NOT flag it for a "
+        "single selection or a real multi-activity booking. Call "
         "`detect_routing_signals`."
     )
 
@@ -381,7 +444,7 @@ async def detect_routing_signals(
             tools=[_ROUTING_TOOL],
             tool_choice={"type": "function", "function": {"name": "detect_routing_signals"}},
             temperature=0.0,
-            max_tokens=80,
+            max_tokens=140,
         )
         choice = response.choices[0].message
         tool_calls = getattr(choice, "tool_calls", None)
