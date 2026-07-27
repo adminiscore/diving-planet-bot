@@ -83,12 +83,26 @@ núcleo. Verificar que su cierre transitivo NO incluye ningún `_handle_mixed_*`
   `src/flows/catalog.py` (`SERVICES`, `MULTI_DAY_SERVICES`, `MESSAGES`,
   `MESSAGE_SPLIT`) y `src/flows/state.py` (`ConversationState`, `Step`), con
   re-export temporal desde `decision_tree.py` para no romper imports de golpe.
-- Extraer los **5 helpers** del núcleo a `src/flows/cart_render.py` como
-  funciones (o una clase fina) que dependan solo del catálogo/estado. Confirmar
-  que su cierre transitivo no toca los handlers `MIXED_*`.
-- El núcleo pasa a importar de esos módulos y **deja de instanciar
-  `DecisionTree`**.
+- Extraer a `src/flows/cart_render.py` los símbolos que el núcleo usa (ver
+  cierre verificado abajo) y hacer que el núcleo importe de ahí y **deje de
+  instanciar `DecisionTree`**. Opción de mínimo diff: dejar métodos finos en
+  `DecisionTree` que deleguen a las funciones nuevas (el legacy sigue vivo hasta
+  P2).
 - *Sin cambio de lógica; refactor de imports; suite verde.*
+
+**Cierre transitivo VERIFICADO por AST (2026-07-24)** — superficie EXACTA que el
+núcleo alcanza de la maquinaria de `DecisionTree`, y objetivo de la extracción:
+- **7 métodos**: `_cart_booking_blocks`, `_cart_label_for`, `_cart_service_id`,
+  `_format_activity_booking_messages`, `_goto_mixed_final_summary`,
+  `_parse_mixed_quantity`, `_service_for_location`.
+- **2 funciones módulo-nivel**: `_is_contact_only_service`,
+  `_resolve_service_booking_url`.
+- **Resultado de seguridad**: el cierre **NO** incluye ningún handler
+  `_handle_mixed_*` y **NO** referencia ningún `Step.MIXED_*` → la extracción es
+  un corte limpio; borrar los 35 handlers y los 27 pasos en P2 no rompe el
+  render del núcleo. (Datos usados por estos helpers: `SERVICES`, `MESSAGES`,
+  `COMPANION_PRICE`, `MESSAGE_SPLIT`, `ISLAND_SERVICE_MAP` y `Step.FREE_TEXT`/
+  `ESCALATE` — todo de la base compartida que se conserva.)
 
 ### P2 — Borrar la maquinaria muerta
 - Eliminar los **35 handlers** `_handle_mixed*`, los **27 pasos** `Step.MIXED_*`
