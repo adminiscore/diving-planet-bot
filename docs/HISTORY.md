@@ -1,6 +1,12 @@
 History
 =======
 
+0.20.73 - (2026-07-24)
+----------------------
+* **Fase 4 · P1 (seam) — el núcleo conversacional se desacopla de `DecisionTree`.** Sin cambio de comportamiento. Nuevo `src/flows/cart_render.py`: fachada con las 5 funciones de render/parseo que el núcleo llamaba vía `_tree._x(...)` (`service_for_location`, `parse_quantity`, `cart_label_for`, `goto_final_summary`, `cart_booking_blocks`). El núcleo importa de ahí y ya NO instancia `DecisionTree`.
+* Preparado por el análisis AST de v0.20.72–4d0c58e: el cierre transitivo del núcleo son 9 símbolos sin ningún handler `_handle_mixed_*` → cuando en P1b se muevan los CUERPOS a `cart_render.py` (hoy la fachada delega en una instancia perezosa de `DecisionTree`, import lazy para evitar ciclo), el árbol legacy quedará listo para borrarse en P2. Ver `docs/legacy-tree-retirement-plan.md`.
+* Verificado: suite 2052 passed, ruff limpio, y smoke determinista del render (etiquetas + bloques con link real + resumen final con precio USD). Reversible con `git revert`.
+
 0.20.72 - (2026-07-24)
 ----------------------
 * **Edades en palabra en el gate de elegibilidad (opción A del análisis de H4).** `intent_detector._detect_ages` era digit-only, así que "mi hija de **nueve** años, ¿puede bucear?" no detectaba edad y `_maybe_answer_age_eligibility` caía a RAG genérico en vez de la nota de elegibilidad específica por edad (decisión de SEGURIDAD: edades mínimas de cada actividad).

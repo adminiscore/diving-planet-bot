@@ -37,13 +37,13 @@ from src.agents.llm_extractor import (
     missing_fields,
     resolve_slot_answer,
 )
-from src.flows.decision_tree import ConversationState, DecisionTree, Step
+from src.flows import cart_render
+from src.flows.decision_tree import ConversationState, Step
 from src.utils.fuzzy import is_affirmative, is_negative
 
 logger = logging.getLogger("uvicorn.error")
 
 _detector = IntentDetector()
-_tree = DecisionTree()
 
 # ─── Slots (orden del plan) ───
 SLOT_ACTIVITY = "activity"
@@ -410,7 +410,7 @@ def _recommended_plan_intro(state: ConversationState) -> str:
     más popular y puede cambiarlo por texto."""
     lang = state.language
     plan_id = _resolve_cert_plan(state)
-    if plan_id and plan_id != _tree._service_for_location("2_dives_1_day", state):
+    if plan_id and plan_id != cart_render.service_for_location("2_dives_1_day", state):
         return ""  # eligió un plan explícito: no hay que "recomendar" nada
     if lang == "es":
         return ("Te recomiendo nuestro plan más popular: *2 inmersiones en 1 día* en las "
@@ -428,7 +428,7 @@ def _resolve_cert_plan(state: ConversationState) -> str | None:
     if dives is None and state.detected_cert_days in _DAYS_TO_DIVES:
         dives = _DAYS_TO_DIVES[state.detected_cert_days]
     base = _DIVES_TO_BASE_PLAN.get(dives or 2, "2_dives_1_day")
-    return _tree._service_for_location(base, state)
+    return cart_render.service_for_location(base, state)
 
 
 def _word_ages(message: str) -> list[int]:
@@ -508,7 +508,7 @@ def _apply_short_answer(state: ConversationState, message: str) -> bool:
             return True
         return False
     if slot == SLOT_QTY:
-        n = _tree._parse_mixed_quantity(message)
+        n = cart_render.parse_quantity(message)
         if n is not None and n > 0:
             state.detected_group_size = n
             return True
@@ -527,7 +527,7 @@ def _apply_short_answer(state: ConversationState, message: str) -> bool:
         mentioned = _mentioned_product_activities(message)
         if mentioned and act not in mentioned:
             return False
-        n = _tree._parse_mixed_quantity(message)
+        n = cart_render.parse_quantity(message)
         if n is not None and n > 0 and act:
             _merge_companion_activity(state, act, n)
             state.pending_companion_activity = None
@@ -1391,21 +1391,21 @@ def _cart_item(state: ConversationState, activity: str, qty: int) -> dict:
     if activity == "certified_diving":
         plan = _resolve_cert_plan(state)
         return {"type": "cert", "qty": qty, "plan": plan,
-                "label": _tree._cart_label_for("cert", plan, state.language)}
+                "label": cart_render.cart_label_for("cert", plan, state.language)}
     if activity == "minicourse":
         return {"type": "beginner", "qty": qty, "plan": None,
-                "label": _tree._cart_label_for("beginner", None, state.language)}
+                "label": cart_render.cart_label_for("beginner", None, state.language)}
     if activity == "snorkel":
         return {"type": "snorkel", "qty": qty, "plan": None,
-                "label": _tree._cart_label_for("snorkel", None, state.language)}
+                "label": cart_render.cart_label_for("snorkel", None, state.language)}
     # Curso PADI: resolver la variante por ubicación (open_water →
     # open_water_already_on_island si está en las islas). Divemaster es
     # contact-only y _cart_booking_blocks ya lo cierra vía asesor (sin link).
     plan = state.detected_service_id
     if plan:
-        plan = _tree._service_for_location(plan, state)
+        plan = cart_render.service_for_location(plan, state)
     return {"type": "course", "qty": qty, "plan": plan,
-            "label": _tree._cart_label_for("course", plan, state.language)}
+            "label": cart_render.cart_label_for("course", plan, state.language)}
 
 
 def _derive_kids_counts(state: ConversationState) -> None:
@@ -1486,7 +1486,7 @@ def _finalize(state: ConversationState) -> str:
             "and arrange payment — they'll be in touch shortly. 🌊"
         )
 
-    response = _tree._goto_mixed_final_summary(state)
+    response = cart_render.goto_final_summary(state)
     return refresher_note + response
 
 
@@ -1495,7 +1495,7 @@ def _colombian_summary_lines(state: ConversationState) -> str:
     precio en COP del catálogo, sin URLs de reserva directa."""
     lang = state.language
     lines: list[str] = []
-    for b in _tree._cart_booking_blocks(state):
+    for b in cart_render.cart_booking_blocks(state):
         qty = b["qty"]
         lines.append(f"🤿 *{b['label']}*")
         cop = b.get("cop")
@@ -1723,7 +1723,7 @@ async def maybe_handle_turn(
         if new_items:
             state.mixed_cart.extend(new_items)
             logger.info(f"[CORE] post-close additions: {[i['type'] for i in new_items]}")
-            response = _tree._goto_mixed_final_summary(state)
+            response = cart_render.goto_final_summary(state)
             state.core_pending_slot = None
             supervisor._maybe_build_pending_note(state)
             state.history.append({"role": "assistant", "content": response})
@@ -1918,7 +1918,7 @@ async def maybe_handle_turn(
                 ]
                 if new_items:
                     state.mixed_cart.extend(new_items)
-                    response = _tree._goto_mixed_final_summary(state)
+                    response = cart_render.goto_final_summary(state)
                     state.core_pending_slot = None
                     supervisor._maybe_build_pending_note(state)
                     state.history.append({"role": "assistant", "content": response})
