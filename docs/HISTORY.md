@@ -1,6 +1,12 @@
 History
 =======
 
+0.20.74 - (2026-07-24)
+----------------------
+* **Bug VIVO en PRE: el núcleo alucinaba disponibilidad de calendario.** Destapado al preparar la Fase 4: el handler canónico de disponibilidad (Bloque 2.5 de Álvaro, "salidas diarias, elige la fecha en el link") está en el supervisor **DESPUÉS** del hook del núcleo (`if settings.conversational_core`), así que en PRE (core-on) NO se aplicaba. Verificado en vivo: "¿tienen disponibilidad el sábado?" → **"¡Claro que sí, tenemos disponibilidad para el sábado!"** (confirmando un cupo que el bot no puede conocer). Intermitente según fraseo ("cupo mañana" caía por casualidad en el gate de tiempo-real, que sí está antes del hook).
+* Fix: portado el gate al núcleo (`conversational_core.maybe_handle_turn`, antes del carryover/RAG). `_AVAILABILITY_PATTERN` (narrow, seguro) aplica siempre; la señal amplia (`_asks_about_availability`/`availability_question`) solo si NO hay actividad elegida (con reserva en curso, "¿algo para más días?" es una pregunta de PLAN, no de cupo — mismo criterio que el guard `_in_active_cart_building` del legacy, que en el núcleo se traduce a `detected_activity is None`). El handler del supervisor se conserva para el camino legacy (flag off). Verificado en vivo: "sábado" ahora da el canned seguro; regresión multi-día cubierta por test.
+* Suite 2054 passed, ruff limpio. 2 tests nuevos. **Nota**: este hallazgo (gates del supervisor DESPUÉS del hook) es parte del trabajo de Fase 4 — hay que auditar si algún otro gate post-hook (p. ej. el segundo chequeo de link roto) también falta en el núcleo antes de core-only. Ver `docs/legacy-tree-retirement-plan.md`.
+
 0.20.73 - (2026-07-24)
 ----------------------
 * **Fase 4 · P1 (seam) — el núcleo conversacional se desacopla de `DecisionTree`.** Sin cambio de comportamiento. Nuevo `src/flows/cart_render.py`: fachada con las 5 funciones de render/parseo que el núcleo llamaba vía `_tree._x(...)` (`service_for_location`, `parse_quantity`, `cart_label_for`, `goto_final_summary`, `cart_booking_blocks`). El núcleo importa de ahí y ya NO instancia `DecisionTree`.

@@ -1740,6 +1740,39 @@ async def test_companion_qty_resolver_abstains_reasks(monkeypatch):
     assert "snorkel" in resp.lower()
 
 
+@pytest.mark.asyncio
+async def test_availability_question_canned_answer_not_hallucination():
+    """Bug vivo en PRE (2026-07-24): "¿tienen disponibilidad el sábado?" con el
+    núcleo on alucinaba "Claro que sí, tenemos disponibilidad". El gate del
+    Bloque 2.5 estaba tras el hook; portado al núcleo. Va a RAG NUNCA."""
+    state = make_state("es")
+    with patch("src.agents.supervisor.detect_routing_signals",
+               new=AsyncMock(return_value={"availability_question": True})), \
+         patch("src.agents.supervisor.rag_answer",
+               new=AsyncMock(side_effect=AssertionError("no debe ir a RAG: alucinaría cupo"))):
+        resp = await route_message(state, "y para el finde que viene cómo andan")
+    assert "diaria" in resp.lower()
+    assert "calendario" in resp.lower() or "link" in resp.lower()
+
+
+@pytest.mark.asyncio
+async def test_availability_signal_ignored_mid_booking():
+    """Con una actividad ya elegida, la señal amplia de disponibilidad NO
+    secuestra: "¿algo para más días?" es una pregunta de PLAN, no de cupo
+    (evita la regresión multi-día que Álvaro documentó)."""
+    state = make_state("es")
+    state.step = Step.FREE_TEXT
+    state.detected_activity = "certified_diving"
+    state.is_certified = True
+    state.core_pending_slot = core.SLOT_LOCATION
+    with patch("src.agents.supervisor.detect_routing_signals",
+               new=AsyncMock(return_value={"availability_question": True})), \
+         patch("src.agents.supervisor.rag_answer", new=AsyncMock(return_value="RAG")):
+        resp = await route_message(state, "no tenéis algo para más días")
+    # No devuelve el canned de disponibilidad (sigue el flujo normal).
+    assert "siempre hay disponibilidad" not in resp.lower()
+
+
 def test_word_ages_helper():
     assert core._word_ages("cinco y siete") == [5, 7]
     assert core._word_ages("nueve") == [9]
