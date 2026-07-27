@@ -36,6 +36,32 @@ código muerto en el camino real de PRE.
 Corolario: la retirada NO puede cambiar el comportamiento observable de PRE si
 solo se toca código inalcanzable. La verificación es la suite + pruebas en vivo.
 
+### ⚠️ ACTUALIZACIÓN CRÍTICA (2026-07-24) — el flujo legacy NO está muerto para tests/dev
+
+Al arrancar P2 se destapó un hecho que **cambia el orden de las fases**: el flag
+`conversational_core` está **OFF por defecto** (dev + la mayoría de tests), así
+que el flujo `MIXED_*` es la ruta **activa y fuertemente probada** fuera de PRE.
+Lo ejercitan **~15 archivos de test** (flag off):
+
+- **Todo `tests/FreeText/`**: `test_cart_flow`, `test_diving_certification_flow`,
+  `test_island_hotel_flow`, `test_mixed_group`, `test_100_conversations`.
+- `test_conversations`, `test_companion_split`, `test_cert_multiday_matrix`,
+  `test_padi_freetext`, `test_dispatch_fallback_invariant`, `test_eligibility`,
+  `test_intent_robustness`, `test_orchestrator`, `test_remembered_notes`…
+
+**Consecuencia**: los 35 handlers son inalcanzables **en PRE** (flag on) pero son
+la ruta que **la suite valida** (flag off). Borrarlos rompe cientos de tests. Por
+tanto **P2 no es "borrar código muerto", es DESMANTELAR un sistema paralelo que
+sigue siendo la ruta probada + la de dev**.
+
+**El orden correcto queda invertido**: primero **P4** (core-only en todas partes:
+flip del default + quitar el flag + migrar/retirar toda la suite del flujo
+legacy), y SOLO ENTONCES **P2** (borrar handlers/routing). Quitar el flag elimina
+el kill-switch → requiere que el núcleo esté "probado en PRE" (umbral a decidir
+por el equipo). Slice ya hecho en rama `feature/fase4-p2` (sin mergear): retirado
+`test_decision_tree.py` — los unit tests del árbol — + `test_cart_render.py` fija
+la cobertura de los helpers conservados.
+
 ## 3. Inventario / dimensión
 
 | Elemento | Cantidad | Dónde |
@@ -77,6 +103,12 @@ transitivo) de los 35 handlers muertos ANTES de borrar, o se rompe el render del
 núcleo. Verificar que su cierre transitivo NO incluye ningún `_handle_mixed_*`.
 
 ## 5. Plan fasado (reversible, suite verde en cada paso)
+
+> **Orden corregido tras el hallazgo del §2** (el flujo legacy es la ruta probada
+> con el flag off): **P1 (hecho, seam) → P4 (core-only + retirar flag + migrar la
+> suite legacy) → P2 (borrar handlers/routing) → P3 (limpieza final)**. La borrada
+> de producción (P2) es lo ÚLTIMO, no lo siguiente. P1b (mover cuerpos) es
+> opcional (no desbloquea nada).
 
 ### P1 — Aislar la base compartida (habilitador)
 - Mover el **catálogo + mensajes + estado** a módulos limpios, p. ej.
