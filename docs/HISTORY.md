@@ -1,6 +1,13 @@
 History
 =======
 
+0.21.0 - (2026-07-28)
+----------------------
+* **Fase 4 COMPLETA — retirado el árbol de decisión legacy `MIXED_*` y el flag `conversational_core`** (rama `feature/fase4-p2`, sin mergear a `pre_gadea` aún). Sin cambio de comportamiento en PRE: el núcleo conversacional ya era el único camino activo; esto borra el sistema paralelo muerto que quedaba detrás.
+* Retirados: el orquestador LLM legacy (`orchestrator.py`) y su cadena (`_dispatch_conversation_agent`/`_apply_orchestrator_decision`), `intent_classifier.py`, la resolución de confirmación de baja confianza (`_route_detected_intent`), el clúster de construcción-de-carrito guiado (39 métodos), los 26 pasos `Step.MIXED_*` del enum, y el flag/gate `settings.conversational_core` (el núcleo es ahora incondicional; el fallback determinista de escalado/menú/volver se conserva).
+* `supervisor.py` 5908→~2247 líneas, `decision_tree.py` 8384→~2490. Lo único que sobrevive de `DecisionTree` para el núcleo son los 9 helpers de render vía la fachada `cart_render` (P1b: moverlos físicamente). Método: borrados por AST/reachability con la suite completa (flag-agnóstica) como red tras cada paso.
+* Suite 1391 passed / 9 skipped, render (`test_cart_render`) 5/5, `compileall` OK. Cabos sueltos anotados en `session-handoff.md`: merge a `pre_gadea` (revisión de los 3 devs), P1b, y decidir sobre `language_detector.py` (feature huérfana tras el paso 5).
+
 0.20.74 - (2026-07-24)
 ----------------------
 * **Bug VIVO en PRE: el núcleo alucinaba disponibilidad de calendario.** Destapado al preparar la Fase 4: el handler canónico de disponibilidad (Bloque 2.5 de Álvaro, "salidas diarias, elige la fecha en el link") está en el supervisor **DESPUÉS** del hook del núcleo (`if settings.conversational_core`), así que en PRE (core-on) NO se aplicaba. Verificado en vivo: "¿tienen disponibilidad el sábado?" → **"¡Claro que sí, tenemos disponibilidad para el sábado!"** (confirmando un cupo que el bot no puede conocer). Intermitente según fraseo ("cupo mañana" caía por casualidad en el gate de tiempo-real, que sí está antes del hook).
