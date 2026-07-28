@@ -949,6 +949,17 @@ def _is_deliberation_between_options(message: str, routing_signals: dict) -> boo
         return False
     if _looks_like_deliberation(message):
         return True
+    # Anti-falso-positivo del LLM: un mensaje que ASIGNA actividades a sub-grupos
+    # con cantidades ("2 bucean, mis amigos hacen snorkel, y uno hace el
+    # minicurso") es una RESERVA de grupo mixto, no una deliberación entre
+    # opciones — el LLM `comparing_options` lo confunde porque enumera 3
+    # actividades. Discriminador determinista: 2+ ofertas distintas (ya
+    # comprobado) + al menos un número explícito. NO anula la duda EXPLÍCITA
+    # (`_looks_like_deliberation`, comprobada arriba: "somos 2, no sé si buceo o
+    # snorkel" sigue siendo deliberación pese al número). Sin esto, el gate de
+    # deliberación corre ANTES de la extracción y el reparto se pierde a RAG.
+    if _EXPLICIT_NUMBER_RE.search(message):
+        return False
     obj = routing_signals.get("comparing_options")
     llm_comparing = bool(obj.get("comparing")) if isinstance(obj, dict) else False
     return llm_comparing and not _COMMITMENT_RE.search(message)
