@@ -1,14 +1,23 @@
 # Fase 4 — Retirada del árbol legacy `MIXED_*` (plan para revisión del equipo)
 
-**Estado:** EN EJECUCIÓN en la rama `feature/fase4-p2` (sin mergear a `pre_gadea`).
-Redactado 2026-07-24; en curso 2026-07-28 (Gadea + Gonzalo + Claude). Ver el registro
-de ejecución justo debajo.
+**Estado:** ✅ **COMPLETA** (borrado de código) en la rama `feature/fase4-p2` (SIN mergear
+a `pre_gadea` — pendiente revisión de los 3 devs). Redactado 2026-07-24; ejecutada
+2026-07-28 (Gadea + Gonzalo + Claude).
 
-**Progreso del corte MAYOR (2026-07-28, Gonzalo)**: pasos **1 (menú/back = mensaje
-normal) y 2 (borrar handlers muertos del supervisor) HECHOS**, verificados (suite 1408
-passed con la receta local, `process_message` sin callers vivos) y pusheados
-(`feature/fase4-p2` @ `4d9f249`). **Siguiente: paso 3** — el borrado de ~6.000 líneas de
-`decision_tree.py`. Guía accionable en la sección "🔜 Cómo retomar" más abajo.
+**Cierre (2026-07-28) — pasos 3-5 HECHOS:** todo el árbol `MIXED_*` está fuera y el flag
+`conversational_core` retirado (el núcleo es el único camino de enrutado). Commits:
+paso 3 (`b9494f3`, árbol de `decision_tree`) → 4a (`308488d`, orquestador) → 4b
+(`bdb42f4`+`977176b`+`859c788`+`1761dec`: confirmación legacy, guards/constantes, clúster
+de carrito muerto, enum `Step.MIXED_*`) → 5 (`b53a8f8`, flag). `supervisor.py` 5908→~2247,
+`decision_tree.py` 8384→~2490; borrados `orchestrator.py`+`intent_classifier.py`.
+**Suite 1391 passed / 9 skipped, render 5/5, ruff sin regresiones.**
+
+**Cabos sueltos (revisión de equipo):** (1) merge `fase4-p2`→`pre_gadea`; (2) P1b (mover
+los 9 helpers de render a `cart_render.py`); (3) `src/agents/language_detector.py`
+(`detect_language_llm`) quedó sin importadores — feature real, decidir re-cablear o borrar;
+(4) NO tocar `_maybe_apply_llm_extraction_cutover`/`_maybe_log_llm_extraction_shadow`
+(tesados, gated por `LLM_EXTRACTION_CUTOVER_*`, subsistema aparte). El registro histórico
+de la ejecución sigue debajo.
 
 ## Estado de ejecución (2026-07-28) — rama `feature/fase4-p2`
 
