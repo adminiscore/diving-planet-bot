@@ -1,8 +1,14 @@
 # Fase 4 — Retirada del árbol legacy `MIXED_*` (plan para revisión del equipo)
 
 **Estado:** EN EJECUCIÓN en la rama `feature/fase4-p2` (sin mergear a `pre_gadea`).
-Redactado 2026-07-24, en curso 2026-07-28 (Gadea + Claude). Ver el registro de
-ejecución justo debajo.
+Redactado 2026-07-24; en curso 2026-07-28 (Gadea + Gonzalo + Claude). Ver el registro
+de ejecución justo debajo.
+
+**Progreso del corte MAYOR (2026-07-28, Gonzalo)**: pasos **1 (menú/back = mensaje
+normal) y 2 (borrar handlers muertos del supervisor) HECHOS**, verificados (suite 1408
+passed con la receta local, `process_message` sin callers vivos) y pusheados
+(`feature/fase4-p2` @ `4d9f249`). **Siguiente: paso 3** — el borrado de ~6.000 líneas de
+`decision_tree.py`. Guía accionable en la sección "🔜 Cómo retomar" más abajo.
 
 ## Estado de ejecución (2026-07-28) — rama `feature/fase4-p2`
 
@@ -52,6 +58,57 @@ colgarse). Baseline verde con esta receta: **1408 passed, 15 skipped** (tras pas
 5. Quitar el flag `conversational_core` + gate en supervisor + `test_flag_off_core_not_engaged` + fixtures que parchean `detect_language_llm` + `CONVERSATIONAL_CORE` en `docker-compose.vps.yml`.
 
 **Ya HECHO (2026-07-28, además de lo de arriba):** las 4 funciones dead-con-test-unitario (`_answer_offers_advisor`, `_detect_companion_intent`, `_mentions_diving_intent`, `_mentions_snorkeling_intent`) borradas + sus tests. supervisor.py: 5908 → **3257 líneas**.
+
+---
+
+## 🔜 Cómo retomar — guía accionable para el PASO 3 (el corte grande)
+
+> Estado al 2026-07-28 (Gonzalo): pasos 1 y 2 HECHOS, verificados y pusheados en
+> `feature/fase4-p2` (último commit `4d9f249`). Suite verde 1408 passed con la receta de
+> arriba. `decision_tree.py` sigue en **8.384 líneas** (el paso 3 borra ~6.000).
+> `process_message` **ya no tiene ningún caller vivo** (verificado: solo lo referencia un
+> comentario en `supervisor.py` + 1 test en `test_rag_safety.py`).
+
+**Arranque de sesión** (igual que el handoff original):
+```
+git checkout feature/fase4-p2 && git pull
+git merge origin/feature/pre_gadea        # sincronizar por si hay fixes nuevos
+OPENAI_API_KEY="" python -m pytest -q -p no:cacheprovider --ignore=tests/test_audio_transcription.py   # baseline
+```
+
+**Paso 3 — sub-pasos sugeridos (commit + suite verde tras cada uno):**
+1. **Preparar el análisis**: script AST que, partiendo de los símbolos VIVOS (los 9 de
+   `cart_render` + `SERVICES`/`MESSAGES`/`Step`/`ConversationState`/`MESSAGE_SPLIT`/
+   `COMPANION_PRICE`/`ISLAND_SERVICE_MAP`/`MULTI_DAY_SERVICES`/`_detect_language_from_text`/
+   `set_quick_replies` si sigue vivo), calcule su **cierre transitivo** dentro de
+   `decision_tree.py`. Todo lo que NO esté en ese cierre y sea `_handle_*` / `process_message`
+   / la tabla de dispatch es borrable. (El plan §4 ya confirmó por AST que el cierre de los 9
+   NO incluye ningún `_handle_mixed_*` ni referencia `Step.MIXED_*` → corte limpio.)
+2. **Borrar `process_message` + la tabla de dispatch** y arreglar su único test
+   (`tests/test_rag_safety.py` — reescribir contra el núcleo o retirar si prueba flujo legacy).
+   Correr suite.
+3. **Borrar los ~70 handlers `_handle_*`** (menús info/cursos/precios/logística/islas +
+   carrito mixto) que quedan huérfanos. Hacerlo en tandas por bloque, corriendo la suite +
+   **smoke del render** (`OPENAI_API_KEY="" pytest tests/test_cart_render.py -q`) tras cada
+   tanda para garantizar que el resumen de reserva de PRE sigue intacto.
+4. **Limpiar lo que quede huérfano en `supervisor.py`**: `_go_back_one_step`, `BACK_STEP`,
+   `GREETING_ONLY_KEYWORDS`, y `MENU_KEYWORDS`/`BACK_KEYWORDS` si ya nadie los usa (el núcleo
+   dejó de referenciarlos en el paso 1). `ruff check src` + limpiar imports **a mano** (NO
+   `ruff --fix`, rompió 144 tests — ver lección abajo).
+
+**Paso 4** — `orchestrator` (el núcleo no lo usa) + los 27 pasos `Step.MIXED_*` del enum
+`Step` (+ cualquier miembro legacy que quede huérfano). Suite + smoke.
+
+**Paso 5 (DECISIÓN DE EQUIPO, no técnica)** — quitar el flag `conversational_core` + su gate
+en `supervisor.py` + `test_flag_off_core_not_engaged` + `CONVERSATIONAL_CORE` en
+`docker-compose.vps.yml`. Esto **elimina el kill-switch** (ya no se puede volver al árbol sin
+rollback de código) → hacerlo SOLO cuando el equipo dé el núcleo por "probado en PRE"
+(umbral abierto, §8). Hasta entonces, dejar el flag.
+
+**Gate de merge**: `feature/fase4-p2` → `feature/pre_gadea` SOLO cuando pasos 3-4 estén
+completos y verdes (suite core-on + smoke del render + prueba en vivo del guion completo en
+PRE) **y revisado por los tres** (Gonzalo/Gadea/Álvaro). Ver §7 (reversibilidad) y §9
+(checklist de verificación).
 
 ### ¿Cómo funciona PRE hoy? (qué de `decision_tree.py` está VIVO vs MUERTO)
 
