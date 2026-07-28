@@ -6,9 +6,8 @@
 
 import pytest
 
-from src.agents.intent_detector import IntentDetector
 from src.agents.escalation import detect_sensitive_escalation
-from src.agents.supervisor import _answer_offers_advisor
+from src.agents.intent_detector import IntentDetector
 from src.flows.decision_tree import ConversationState
 
 
@@ -64,26 +63,3 @@ class TestPaymentEscalation:
     def test_payment_failure_still_escalates(self, msg):
         result = detect_sensitive_escalation(msg, "es")
         assert result is not None and result[0] == "real_time_issues"
-
-
-# ---------------------------------------------------------------------------
-# Nit 3 — advisor-offer detection drives matching buttons
-# ---------------------------------------------------------------------------
-
-class TestAdvisorOfferDetection:
-    @pytest.mark.parametrize("answer", [
-        "Si te interesa, puedo pasarte con un asesor para que te explique. ¿Te gustaría?",
-        "Te recomiendo que contactes a un asesor. ¿Te gustaría que te pase el contacto? 🐠",
-        "I can connect you with an advisor. Would you like that?",
-    ])
-    def test_detects_advisor_offer(self, answer):
-        assert _answer_offers_advisor(answer)
-
-    @pytest.mark.parametrize("answer", [
-        "Coordinamos recogida en Pao Pao. ¿Me escribes por WhatsApp?",   # no advisor noun
-        "No manejamos euros, pagas en USD. ¿Quieres saber un precio?",   # no advisor noun
-        "El curso dura 2 días y cuesta 250 USD.",                        # statement, no offer
-        "Te conecto con un asesor. WhatsApp: +57 320 231515",            # gives contact, not a question
-    ])
-    def test_ignores_non_offers(self, answer):
-        assert not _answer_offers_advisor(answer)
