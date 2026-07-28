@@ -550,7 +550,7 @@ def _contact_number_deflection(lang: str) -> str:
 # A group where NOT everyone shares the same nationality (some Colombian/
 # resident, some foreign) — pricing/currency is set per-conversation
 # (state.is_colombian), so this is a real gap: not implemented as a feature
-# (T013 in docs/test-battery-edge-cases.md). Detect the contradiction
+# (T013 in docs/archive/test-battery-edge-cases.md). Detect the contradiction
 # explicitly instead of letting it fall through to a generic RAG fallback.
 _MIXED_NATIONALITY_RE = re.compile(
     r"\bmi\s+(?:amig[oa]|parej[ao]|espos[oa]|hij[oa]|herman[oa]|novi[oa])\s+es\s+extranjer[oa]\b"
@@ -1998,7 +1998,7 @@ async def _route_message_inner(state: ConversationState, message: str) -> str:
     # Mixed-nationality group (some Colombian/resident, some foreign) — not
     # implemented as a feature: pricing/currency is set once per conversation.
     # Answer honestly instead of falling through to a generic RAG fallback
-    # (T013 in docs/test-battery-edge-cases.md).
+    # (T013 in docs/archive/test-battery-edge-cases.md).
     if _detect_mixed_nationality_request(msg_lower):
         if state.language == "es":
             response = (
@@ -2075,7 +2075,7 @@ async def _route_message_inner(state: ConversationState, message: str) -> str:
         state.history.append({"role": "assistant", "content": answer})
         return answer
 
-    # Núcleo conversacional de slot-filling (docs/conversational-refactor-plan.md).
+    # Núcleo conversacional de slot-filling (docs/archive/conversational-refactor-plan.md).
     # Es el único camino de enrutado desde Fase 4. Corre DESPUÉS del gating de
     # seguridad de arriba (PII, sensibles, cancelación, DIVE TO HEAL, edad).
     # Devuelve None solo para las clases que deben seguir en los handlers

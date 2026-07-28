@@ -635,7 +635,7 @@ PRE (acceso al VPS). Nada más pendiente.
 ## 2026-07-22 — Strict schema evaluado y descartado con datos + el eval-set aprende a cazar misfills
 
 **Fase(s) tocada(s)**: extractor (transversal — lo usa tanto el cutover de robustez
-como el núcleo conversacional nuevo de `docs/conversational-refactor-plan.md`).
+como el núcleo conversacional nuevo de `docs/archive/conversational-refactor-plan.md`).
 
 **Qué se hizo**:
 - Ejecutando la Fase 0 del plan conversacional (que pedía "confirmar json_schema
@@ -682,7 +682,7 @@ siempre: medir, no asumir).
 **Fase(s) tocada(s)**: Fase 6 (bucle de datos reales) — tooling desbloqueado.
 
 **Qué se hizo**: los 2 fixes que dejó especificados el handoff conversacional
-(`docs/conversational-refactor-handoff.md` §"Sesión 2026-07-22 (tarde)"):
+(`docs/archive/conversational-refactor-handoff.md` §"Sesión 2026-07-22 (tarde)"):
 - **Fix A**: `conversational_core._understand` ahora loguea `[EXTRACT][CUTOVER]
   applied={patch} msg=...` (con valores y mensaje completo vía
   `supervisor._log_safe_message`) en vez del viejo `[CORE] gap-fill

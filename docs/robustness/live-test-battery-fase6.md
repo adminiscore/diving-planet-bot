@@ -14,7 +14,7 @@
   `docs/project-history/session-handoff.md`).
 - Cada caso tiene un checkbox. Márcalo cuando lo hayas probado — no hace falta que la respuesta
   sea perfecta, el objetivo aquí es generar tráfico variado, no validar el bot (para eso ya está
-  `docs/test-battery-edge-cases.md`). Si ves algo claramente mal, anótalo debajo del caso.
+  `docs/archive/test-battery-edge-cases.md`). Si ves algo claramente mal, anótalo debajo del caso.
 - **Una conversación NUEVA por cada caso de las categorías A, B, C, D y F** — cada uno prueba
   detección "de entrada" (primer mensaje o vuelta al menú); si se mandan varios seguidos en el
   mismo hilo, el estado de uno (grupo, ubicación...) contamina al siguiente.

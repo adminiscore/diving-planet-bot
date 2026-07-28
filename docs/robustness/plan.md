@@ -57,7 +57,7 @@ regex deja vacíos**, no un reemplazo de golpe. Razones:
 5. **Eval set explícito antes de cualquier cutover.** Ningún campo pasa a usar LLM como
    fuente de verdad sin que su exactitud esté medida contra un dataset etiquetado (ver
    §5) — mismo rigor que se usó para calibrar `RAG_MIN_SCORE` en
-   `docs/rag-threshold-calibration.md`.
+   `docs/archive/rag-threshold-calibration.md`.
 6. **TDD + verificación en vivo sigue siendo obligatorio**, sin excepciones, para cada
    cambio de comportamiento — es la disciplina que ya usa todo el repo (ver
    `docs/project-history/session-handoff.md`).
@@ -539,7 +539,7 @@ regex ya muerto, actualizar toda la documentación, y cerrar este plan como comp
 ## 5. Formato del eval-set
 
 Seguir el mismo patrón ya usado en `docs/rag-eval-set.json` (usado para calibrar
-`RAG_MIN_SCORE`, ver `docs/rag-threshold-calibration.md`) — un JSON versionable en el
+`RAG_MIN_SCORE`, ver `docs/archive/rag-threshold-calibration.md`) — un JSON versionable en el
 repo, no una hoja de cálculo externa (`docs/project-history/estado-pendientes.md` ya
 señala que el Google Sheet es solo para el checklist de lanzamiento, no para esto).
 
@@ -596,4 +596,4 @@ acuerdo) y por cualquier fase de cutover posterior (medir regresiones).
 - `docs/project-history/estado-pendientes.md` (punto #10) — la propuesta original de Álvaro.
 - `docs/live-test-inconsistencies-plan.md` — los 4 fixes de la sesión que motivó esta decisión.
 - `docs/HISTORY.md` v0.20.30-31 — los bugs concretos que ilustran el problema.
-- `docs/rag-threshold-calibration.md` — precedente de metodología (eval-set + umbral medido con datos) ya usado en este repo para otra decisión de calibración.
+- `docs/archive/rag-threshold-calibration.md` — precedente de metodología (eval-set + umbral medido con datos) ya usado en este repo para otra decisión de calibración.

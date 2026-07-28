@@ -497,7 +497,7 @@ class IntentDetector:
         # of the SAME noun (no certification/activity split implied). Must run
         # BEFORE the generic "somos N" pattern below, which would otherwise
         # match only the first number and stop (T165 in
-        # docs/test-battery-edge-cases.md: summed to 3 instead of 5).
+        # docs/archive/test-battery-edge-cases.md: summed to 3 instead of 5).
         _gendered_diver_noun = r'(?:buceador[ae]s?|buz[oa]s?|buseador[ae]s?)'
         m_gendered_sum = re.search(
             rf'\b(\d+)\s+{_gendered_diver_noun}\s+y\s+(\d+)\s+{_gendered_diver_noun}\b',

@@ -1525,7 +1525,7 @@ async def rag_answer(
         # scripts/load_embeddings.py). Label them explicitly so the LLM never
         # mistakes their facts (family, companions, budget) for the current
         # customer's — defense in depth alongside stripping their literal quotes
-        # at indexing time (T113 in docs/test-battery-edge-cases.md).
+        # at indexing time (T113 in docs/archive/test-battery-edge-cases.md).
         source_label = (
             f"{source} (situacion de otro cliente distinto, no es el cliente actual)"
             if source == "conversations"

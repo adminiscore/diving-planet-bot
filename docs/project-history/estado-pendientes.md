@@ -41,7 +41,7 @@
 > resumen 2 inmersiones → "viene también uno que hace snorkel" → añadir snorkel.
 > **No arreglados a propósito**: el owner va a proponer un refactor importante del
 > carrito/árbol antes de tocarlos (ver nota al final). Análisis de fondo en
-> `docs/cart-vs-conversational-analysis.md`.
+> `docs/archive/cart-vs-conversational-analysis.md`.
 
 1. **"¡Genial!" duplicado.** Tras "hola soy rocio, tengo el open water y quiero hacer
    buceo", el bot responde "¡Genial! Veo que eres buzo certificado. 🤿" e
@@ -71,8 +71,8 @@
 
 > **Nota (2026-07-22)**: el owner considera que el carrito de botones "no es tan buena
 > idea" y quiere un bot que INTERPRETE (como la entrada del principio). Estudio riguroso
-> en `docs/cart-vs-conversational-analysis.md`. **Plan de implementación acordado y
-> detallado en `docs/conversational-refactor-plan.md`** (núcleo conversacional de
+> en `docs/archive/cart-vs-conversational-analysis.md`. **Plan de implementación acordado y
+> detallado en `docs/archive/conversational-refactor-plan.md`** (núcleo conversacional de
 > slot-filling, carrito como estado interno, quick-replies mínimos, OpenAI + structured
 > outputs, migración incremental por vertical detrás de flag). **Los 5 bugs de arriba se
 > resuelven POR DISEÑO en la Fase 1 de ese plan** (el slot-filling no repite/olvida/

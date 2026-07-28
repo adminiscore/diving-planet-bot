@@ -163,7 +163,7 @@ class ConversationState:
     # Nombre del cliente para el trato cercano (persona Coral). Hoy solo se
     # captura del propio mensaje ("soy Rocío" / "me llamo..."); el de WhatsApp
     # (sender['name']) queda diferido hasta que el canal WhatsApp esté disponible
-    # (el widget web no lo da de forma fiable). Ver docs/conversational-refactor-plan.md.
+    # (el widget web no lo da de forma fiable). Ver docs/archive/conversational-refactor-plan.md.
     client_name: str | None = None
     detected_activity: str | None = None
     detected_service_id: str | None = None
@@ -575,7 +575,7 @@ MULTI_DAY_SERVICES = {
 
 # Above this many people in one line item, nudge toward a human-coordinated
 # private/group service instead of silently treating it like a normal small
-# group (T123 in docs/test-battery-edge-cases.md). Deliberately does NOT state
+# group (T123 in docs/archive/test-battery-edge-cases.md). Deliberately does NOT state
 # a maximum boat/group capacity (the KB has none — inventing one is forbidden,
 # see rag_agent.py's "never invent capacity numbers" rule); it only suggests
 # advisor coordination while continuing the flow normally.

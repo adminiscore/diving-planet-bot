@@ -4,7 +4,7 @@ When a customer sends an audio (voice note), Chatwoot delivers it as an
 attachment with `file_type == "audio"` and a downloadable `data_url`, while the
 message `content` is empty. This module downloads that audio and transcribes it
 to text via OpenAI, so the transcript can be fed into the existing pipeline
-exactly as if the customer had typed it (see docs/audio-voice-transcription-plan.md).
+exactly as if the customer had typed it (see docs/archive/audio-voice-transcription-plan.md).
 
 Design notes:
 - Never raises: any failure (network, API, empty result) returns None so the

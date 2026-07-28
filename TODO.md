@@ -107,7 +107,7 @@ Documentados en `docs/HISTORY.md` v0.20.13 tras el barrido proactivo; priorizado
 - [ ] **(barato)** El atajo de overview de buceo no reconoce familiares ("hijo", "pareja") como acompañante, solo la palabra literal "acompañante"/"companion" — inconsistente con `_detect_companion_intent` (que sí los reconoce tras el fix de v0.20.13).
 - [ ] **(caro, requiere parsing de roles)** El detector de acompañante no distingue quién bucea y quién acompaña — "mi pareja es buzo, yo solo acompaño" sigue diciendo "tu acompañante no bucea" cuando es al revés.
 - [ ] **(caro, requiere parsing de roles)** "no bucea/n" no exige que haya una persona antes — falso positivo con frases tipo "el snorkel no bucea".
-- [ ] **Decisión de equipo pendiente:** migrar `_canonical_price_overview_answer` de lista de exclusión (deny-list) a lista de permitidos (safe-list) — comparativa completa en `docs/canonical-shortcuts-safelist-decision.md`.
+- [ ] **Decisión de equipo pendiente:** migrar `_canonical_price_overview_answer` de lista de exclusión (deny-list) a lista de permitidos (safe-list) — comparativa completa en `docs/archive/canonical-shortcuts-safelist-decision.md`.
 
 ## Pendientes reales (árbol de opciones / intents usuarios)
 - [x] Reserva principal cart-first con carrito mixto (`MIXED_ENTRY`).
@@ -131,7 +131,7 @@ Documentados en `docs/HISTORY.md` v0.20.13 tras el barrido proactivo; priorizado
 
 #### 🔴 Matriz hotel→recogida del owner (Dudas_V2.docx, 2026-07-02) — EN INVESTIGACIÓN
 
-El owner entregó por fin la matriz definitiva de recogida por hotel (resuelve la pregunta #19 de `docs/questions_for_owner_business_kb.md`). Clasifica ~40 hoteles en 5 categorías:
+El owner entregó por fin la matriz definitiva de recogida por hotel (resuelve la pregunta #19 de `docs/archive/questions_for_owner_business_kb.md`). Clasifica ~40 hoteles en 5 categorías:
 
 - **Base (recogida directo en el hotel):** Cocoliso Island Resort, San Pedro de Majagua.
 - **Muelle propio (lancha llega directo):** Isla del Pirata, Isla única, Casa Rosario, Rosario de mar, Centro Ubuntu, Coralina Island, IslaBela, Isla del Sol, Isla Lizamar, Isla Tijereto, Fragata Island House, Rosario Ecohotel, Secreto, Luxury Beach Club, El Hamaquero Hostal EcoNativo, Coral Sand, Cocotera beach, Mangata, Mulata, Orika de mar, Bora Bora, Los erizos.

@@ -1039,7 +1039,7 @@ Para mantener el scope acotado, dejamos fuera (anotar para post-demo):
 ## 9. Referencias rápidas
 
 - Plan original (más conciso, sin instrucciones paso a paso): `C:\Users\plaza\.claude\plans\gleaming-sniffing-snail.md` (local al autor).
-- Estado de las preguntas para el owner que deberían enriquecer la KB: `docs/questions_for_owner_business_kb.md` (42 preguntas pendientes).
+- Estado de las preguntas para el owner que deberían enriquecer la KB: `docs/archive/questions_for_owner_business_kb.md` (42 preguntas pendientes).
 - Documentación de `brand_tone.json` (formato esperado): leer el JSON directamente, está autoexplicativo.
 - Documentación de `conversations.json` (formato esperado): cada ejemplo necesita `id`, `lang`, `scenario`, `customer.messages`, `diving_planet.messages`, `extracted_topics`.
 

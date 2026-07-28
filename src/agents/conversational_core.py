@@ -1,4 +1,4 @@
-"""Núcleo conversacional de slot-filling (docs/conversational-refactor-plan.md).
+"""Núcleo conversacional de slot-filling (docs/archive/conversational-refactor-plan.md).
 
 Un único bucle por turno — COMPRENDER → RESOLVER → RESPONDER — es el único camino
 de enrutado de texto libre desde Fase 4 (sustituyó a la máquina de pasos MIXED_*,
