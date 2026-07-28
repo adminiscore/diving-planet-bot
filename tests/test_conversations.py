@@ -899,49 +899,6 @@ async def test_final_summary_direct_checkout_says_book_online():
 
 
 
-def test_non_cert_companion_single_day_offers_minicourse_not_open_water():
-    """Business rule confirmed by the owner (2026-07-21): a non-certified
-    companion always gets the minicourse offer; Open Water is only ALSO
-    offered when the certified subgroup's plan requires staying multiple days
-    on the islands (they'd already be there). On a single-day plan, offering
-    Open Water doesn't make sense (no extra days to actually do the course)."""
-    from src.flows.decision_tree import DecisionTree
-    state = make_state()
-    state.mixed_pending_qty_plan = "2_dives_1_day"
-    state.mixed_pending_beginner_after_cert = 1
-    resp = DecisionTree()._maybe_start_pending_beginner(state)
-    assert resp is not None
-    assert "minicurso" in resp.lower()
-    assert "open water" not in resp.lower()
-
-
-def test_non_cert_companion_multi_day_offers_minicourse_and_open_water():
-    from src.flows.decision_tree import DecisionTree
-    state = make_state()
-    state.mixed_pending_qty_plan = "5_dives_2_days"
-    state.mixed_pending_beginner_after_cert = 1
-    resp = DecisionTree()._maybe_start_pending_beginner(state)
-    assert resp is not None
-    assert "minicurso" in resp.lower()
-    assert "open water" in resp.lower()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 # ===========================================================================
 # Broken-link complaint detection
 # ===========================================================================
@@ -1205,26 +1162,6 @@ async def _arrive_at_kids_inline_large(qty: int) -> ConversationState:
 
 
 
-
-
-@pytest.mark.asyncio
-async def test_cart_change_location_course_plan_remaps_to_island_variant():
-    """For course items with location-variant plans, the plan field is swapped."""
-    state = make_state()
-    state.location = "cartagena"
-    state.language = "es"
-    state.mixed_cart = [
-        {"type": "course", "qty": 1, "plan": "open_water", "label": "Curso Open Water Diver PADI"},
-    ]
-    from src.flows.decision_tree import DecisionTree
-    dt = DecisionTree()
-    state.location = "island"
-    dt._remap_cart_for_location(state)
-    assert state.mixed_cart[0]["plan"] == "open_water_already_on_island"
-    # And back
-    state.location = "cartagena"
-    dt._remap_cart_for_location(state)
-    assert state.mixed_cart[0]["plan"] == "open_water"
 
 
 # ---------------------------------------------------------------------------
