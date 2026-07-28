@@ -1,7 +1,30 @@
 # Fase 4 — Retirada del árbol legacy `MIXED_*` (plan para revisión del equipo)
 
-**Estado:** propuesta, sin código todavía. Redactado 2026-07-24 (Gadea + Claude).
-Revisar con Álvaro y Gonzalo antes de empezar el refactor.
+**Estado:** EN EJECUCIÓN en la rama `feature/fase4-p2` (sin mergear a `pre_gadea`).
+Redactado 2026-07-24, en curso 2026-07-28 (Gadea + Claude). Ver el registro de
+ejecución justo debajo.
+
+## Estado de ejecución (2026-07-28) — rama `feature/fase4-p2`
+
+Orden real seguido: **P1 (seam) → P4 (core-only) → P2 (borrar código)**.
+
+**HECHO y verificado (suite 1444 passed, idéntica flag-off/on; ruff `check src` limpio):**
+- **P1 seam** (v0.20.73): `src/flows/cart_render.py` desacopla el núcleo de `DecisionTree`. Cierre AST de 9 símbolos sin handlers `MIXED_*`.
+- **Fix vivo de disponibilidad** (v0.20.74): gate del Bloque 2.5 estaba tras el hook → el núcleo alucinaba cupo; portado al núcleo.
+- **Auditoría de los 302 fallos core-on**: TODOS legacy (aserciones de paso, idioma-botón, orquestador/MIXED, notes), NINGÚN gap real del núcleo.
+- **Migración de tests (~11k líneas)**: `test_conversations` 330→66 (quirúrgico, los 66 pasan en ambos flags), `test_intent_robustness` −3 bare_pack, `test_padi_freetext` −clase Supervisor, `test_rag_safety` −2, y retirados enteros `test_decision_tree`, `test_companion_split`, `test_cert_multiday_matrix`, `test_orchestrator`, `test_dispatch_fallback_invariant`, `test_remembered_notes`, y los de flujo en `tests/FreeText/`. Conservados los de `IntentDetector`.
+- **Flag flippeado a `True` por defecto** (`config.py`) — core-only en dev/tests.
+- **Borrado de código del supervisor**: `_route_message_inner` −~566 líneas (bloque understanding-first + cola MENU_STEPS/SUMMARY/MIXED/fallback) + **48 funciones helper huérfanas** eliminadas en cascada. `supervisor.py`: **5908 → 3493 líneas**.
+
+**PENDIENTE:**
+1. 4 funciones dead-en-src pero con test unitario (`_answer_offers_advisor`, `_detect_companion_intent`, `_mentions_diving_intent`, `_mentions_snorkeling_intent`) → borrar función + su test.
+2. Los **35 handlers `_handle_mixed*`** en `decision_tree.py` — pero `process_message` (que los despacha por `state.step`) sigue VIVO (lo usa el handler de menú). Separar el dispatch `MIXED_*` muerto de `process_message` vivo. Ligado a la **decisión de diseño: ¿qué hacen "menú"/"back" en un núcleo puro sin botones?**
+3. Módulo `orchestrator` (el núcleo no lo usa) + 27 pasos `Step.MIXED_*`.
+4. Quitar el flag `conversational_core` + el gate en el supervisor + `test_flag_off_core_not_engaged` + limpiar fixtures que parchean `detect_language_llm` (conservado con `# noqa`) + `CONVERSATIONAL_CORE` en `docker-compose.vps.yml`.
+
+**Lección operativa**: `ruff --fix` quita imports que solo se usan vía monkeypatch en tests (`detect_language_llm`) → rompió 144 tests; los imports huérfanos se limpian a mano.
+
+**Aviso previo (original):** revisar con Álvaro y Gonzalo antes de mergear a `pre_gadea` y antes de quitar el kill-switch (P4 final).
 
 > Regla de oro de esta sesión: **borrar solo lo que el núcleo NUNCA alcanza**;
 > conservar (a) lo que el núcleo llama, (b) lo compartido (catálogo/estado),
