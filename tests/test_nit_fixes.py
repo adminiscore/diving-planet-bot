@@ -10,7 +10,6 @@ from src.agents.escalation import detect_sensitive_escalation
 from src.agents.intent_detector import IntentDetector
 from src.flows.decision_tree import ConversationState
 
-
 # ---------------------------------------------------------------------------
 # Nit 1 — language detection by whole word, not substring
 # ---------------------------------------------------------------------------
