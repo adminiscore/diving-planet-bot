@@ -330,227 +330,15 @@ _GROUP_COUNT_WORDS = {
     "seis": 6,
 }
 
-# Steps where the user is actively navigating the decision tree menu
-MENU_STEPS = {
-    Step.WELCOME,
-    Step.LANGUAGE,
-    Step.MAIN_MENU,
-    Step.RESERVA_MENU,
-    Step.INFO_MENU,
-    Step.INFO_ACTIVITY_LOCATION,
-    Step.INFO_ACTIVITIES_MENU,
-    Step.INFO_TOURS_MENU,
-    Step.INFO_PACKAGES_MENU,
-    Step.INFO_COURSES_MENU,
-    Step.INFO_SPECIALTIES_MENU,
-    Step.INFO_TOUR_DETAIL,
-    Step.INFO_PACKAGE_DETAIL,
-    Step.INFO_COURSE_DETAIL,
-    Step.INFO_SPECIALTY_DETAIL,
-    Step.INFO_TOURS_CERTIFIED_MENU,
-    Step.INFO_COURSES_ADVANCED_MENU,
-    Step.INFO_MIXED_ACTIVITY_MENU,
-    Step.INFO_MIXED_CERT_BEG_MENU,
-    Step.INFO_CERTIFIED_4_DIVES_VARIANT,
-    # Flujo antiguo eliminado
-    Step.COURSES_MENU,
-    Step.COURSES_OPEN_WATER_ORIGIN,
-    Step.COURSES_OPEN_WATER_TIME,
-    Step.COURSES_ADVANCED_MENU,
-    Step.COURSES_SPECIALTIES_MENU,
-    Step.PRICING_COLOMBIAN,
-    Step.MIXED_ENTRY,
-    Step.MIXED_LOCATION,
-    Step.MIXED_ADD_ACTIVITY,
-    Step.MIXED_COMPANION_UPSELL,
-    Step.MIXED_ADD_CERT_PLAN,
-    Step.MIXED_ADD_CERT_MULTI_DAY,
-    Step.MIXED_ADD_QTY,
-    Step.MIXED_CERT_LAST_DIVE,
-    Step.MIXED_CERT_REFRESH_INTEREST,
-    Step.MIXED_CERT_REFRESH_QTY,
-    Step.MIXED_CERT_SPLIT_REVIEW,
-    Step.MIXED_ADD_PREVIEW,
-    Step.MIXED_CART_REVIEW,
-    Step.MIXED_CART_MODIFY_PICK,
-    Step.MIXED_CART_REMOVE_PICK,
-    Step.MIXED_CART_LOCATION,
-    Step.MIXED_FINAL_COLOMBIAN,
-    Step.MIXED_FINAL_KIDS,
-    Step.MIXED_FINAL_PRIVATE,
-    Step.MIXED_FINAL_SUMMARY,
-    Step.MIXED_ASK_CERTIFICATION,
-    Step.MIXED_ASK_CERT_COUNT,
-    Step.MIXED_ASK_BEGINNER_ACTIVITY,
-    Step.PRICING_MENU,
-    Step.PRICING_CARTAGENA,
-    Step.PRICING_ISLANDS,
-    Step.PRICING_PACKAGES,
-    Step.PRICING_DISCOUNTS,
-    Step.BOOKING_MENU,
-    Step.LOGISTICS_MENU,
-    Step.LOGISTICS_MEETING,
-    Step.LOGISTICS_INCLUDES,
-    Step.LOGISTICS_WHAT_TO_BRING,
-    Step.ISLAND_MENU,
-    Step.ISLAND_HOTEL_MENU,
-    Step.SERVICE_DETAIL,
-    Step.LOCATION,
-    Step.COLOMBIAN,
-}
-
-# Steps that route through the LLM intent classifier when free text doesn't match a button.
-_MIXED_FLOW_STEPS = {
-    Step.MIXED_ENTRY,
-    Step.MIXED_LOCATION,
-    Step.MIXED_ADD_ACTIVITY,
-    Step.MIXED_COMPANION_UPSELL,
-    Step.MIXED_ADD_CERT_PLAN,
-    Step.MIXED_ADD_CERT_MULTI_DAY,
-    Step.MIXED_ADD_QTY,
-    Step.MIXED_CERT_LAST_DIVE,
-    Step.MIXED_CERT_REFRESH_INTEREST,
-    Step.MIXED_CERT_REFRESH_QTY,
-    Step.MIXED_CERT_SPLIT_REVIEW,
-    Step.MIXED_ADD_PREVIEW,
-    Step.MIXED_CART_REVIEW,
-    Step.MIXED_CART_MODIFY_PICK,
-    Step.MIXED_CART_REMOVE_PICK,
-    Step.MIXED_CART_LOCATION,
-    Step.MIXED_FINAL_COLOMBIAN,
-    Step.MIXED_FINAL_KIDS,
-    Step.MIXED_FINAL_KIDS_QTY,
-    Step.MIXED_FINAL_KIDS_U8,
-    Step.MIXED_FINAL_KIDS_810,
-    Step.MIXED_FINAL_PRIVATE,
-    Step.MIXED_FINAL_SUMMARY,
-    Step.MIXED_ASK_CERTIFICATION,
-    Step.MIXED_ASK_CERT_COUNT,
-    Step.MIXED_ASK_BEGINNER_ACTIVITY,
-}
-
-# Steps where a certified-diving sub-flow can plausibly be "in progress" — from
-# resolving location/certification through choosing/confirming the plan, all
-# the way to the final preview. Used to gate the multi-day-switch and
-# companion-split-by-text interceptors below. Broadened from 2-3 hardcoded
-# steps (real bug, live PRE 2026-07-21): a customer who stays asking free-text
-# questions (price, gear, cancellation) before ever resolving MIXED_LOCATION/
-# MIXED_ASK_CERTIFICATION can say "actually, 3 days instead" from THERE, not
-# just from the 2-3 steps the original fix covered — gating by "are we anywhere
-# in a certified-diving sub-flow" instead of by exact step name covers it.
-_CERT_FLOW_IN_PROGRESS_STEPS = {
-    Step.MIXED_LOCATION,
-    Step.MIXED_ASK_CERTIFICATION,
-    Step.MIXED_ASK_CERT_COUNT,
-    Step.MIXED_ADD_CERT_PLAN,
-    Step.MIXED_ADD_CERT_MULTI_DAY,
-    Step.MIXED_ADD_QTY,
-    Step.MIXED_CERT_LAST_DIVE,
-    Step.MIXED_CERT_REFRESH_INTEREST,
-    Step.MIXED_CERT_REFRESH_QTY,
-    Step.MIXED_CERT_SPLIT_REVIEW,
-    Step.MIXED_ADD_PREVIEW,
-}
-# (Constante del flujo legacy MIXED — vestigial con el núcleo on; se limpia en el
-# paso 5 junto con _MIXED_FLOW_STEPS y los guards `state.step not in ...`.)
-# Companion-split-by-text no hacía falta en MIXED_ADD_QTY: ese paso ya resolvía
-# el split de acompañante por su cuenta. MIXED_ASK_CERTIFICATION/
-# MIXED_ASK_CERT_COUNT se excluían (bug real 2026-07-21): el punto de esos pasos
-# es que aún no se sabe si el HABLANTE está certificado, así que "también snorkel"
-# ahí no debe leerse como "un buzo certificado revelando un acompañante no-cert".
-_CERT_COMPANION_SPLIT_STEPS = _CERT_FLOW_IN_PROGRESS_STEPS - {
-    Step.MIXED_ADD_QTY,
-    Step.MIXED_ASK_CERTIFICATION,
-    Step.MIXED_ASK_CERT_COUNT,
-}
-
-
 
 # Keywords that send the user all the way back to the main menu.
 MENU_KEYWORDS = {
     "menu", "menú", "inicio", "start", "opciones", "options",
 }
 
-# Keywords that take the user one step UP in the decision tree (see BACK_STEP).
+# Keywords that take the user one step UP in the decision tree.
 BACK_KEYWORDS = {
     "volver", "back", "atras", "atrás", "regresar",
-}
-
-# For each step inside the Reservar branch, the (previous_step, quick_reply_key)
-# to use when the user clicks "🔙 Volver" or types a back keyword. Steps that
-# are not listed fall back to MAIN_MENU.
-BACK_STEP: dict[Step, tuple[Step, str]] = {
-    Step.RESERVA_MENU: (Step.MAIN_MENU, "main_menu"),
-    Step.INFO_MENU: (Step.MAIN_MENU, "main_menu"),
-    Step.PRICING_COLOMBIAN: (Step.INFO_MENU, "info_menu"),
-    Step.PRICING_MENU: (Step.INFO_MENU, "info_menu"),
-    Step.PRICING_CARTAGENA: (Step.PRICING_MENU, "pricing_menu"),
-    Step.PRICING_ISLANDS: (Step.PRICING_MENU, "pricing_menu"),
-    Step.PRICING_PACKAGES: (Step.PRICING_MENU, "pricing_menu"),
-    Step.PRICING_DISCOUNTS: (Step.PRICING_MENU, "pricing_menu"),
-    Step.BOOKING_MENU: (Step.INFO_MENU, "info_menu"),
-    Step.LOGISTICS_MENU: (Step.INFO_MENU, "info_menu"),
-    Step.LOGISTICS_MEETING: (Step.LOGISTICS_MENU, "logistics_menu"),
-    Step.LOGISTICS_INCLUDES: (Step.LOGISTICS_MENU, "logistics_menu"),
-    Step.LOGISTICS_WHAT_TO_BRING: (Step.LOGISTICS_MENU, "logistics_menu"),
-    Step.ISLAND_MENU: (Step.LOGISTICS_MENU, "logistics_menu"),
-    Step.ISLAND_HOTEL_MENU: (Step.ISLAND_MENU, "island_menu"),
-    Step.INFO_ACTIVITY_LOCATION: (Step.INFO_MENU, "info_menu"),
-    Step.INFO_ACTIVITIES_MENU: (Step.INFO_ACTIVITY_LOCATION, "info_activity_location"),
-    Step.INFO_TOURS_MENU: (Step.INFO_ACTIVITIES_MENU, "info_activities_menu"),
-    Step.INFO_PACKAGES_MENU: (Step.INFO_TOURS_MENU, "info_tours_menu"),
-    Step.INFO_COURSES_MENU: (Step.INFO_ACTIVITIES_MENU, "info_activities_menu"),
-    Step.INFO_SPECIALTIES_MENU: (Step.INFO_COURSES_MENU, "info_courses_menu"),
-    Step.INFO_TOUR_DETAIL: (Step.INFO_TOURS_MENU, "info_tours_menu"),
-    Step.INFO_PACKAGE_DETAIL: (Step.INFO_PACKAGES_MENU, "info_packages_menu"),
-    Step.INFO_COURSE_DETAIL: (Step.INFO_COURSES_MENU, "info_courses_menu"),
-    Step.INFO_SPECIALTY_DETAIL: (Step.INFO_SPECIALTIES_MENU, "info_specialties_menu"),
-    Step.INFO_TOURS_CERTIFIED_MENU: (Step.INFO_PACKAGES_MENU, "info_packages_menu"),
-    Step.INFO_COURSES_ADVANCED_MENU: (Step.INFO_COURSES_MENU, "info_courses_menu"),
-    Step.INFO_MIXED_ACTIVITY_MENU: (Step.INFO_TOURS_MENU, "info_tours_menu"),
-    Step.INFO_MIXED_CERT_BEG_MENU: (Step.INFO_PACKAGES_MENU, "info_packages_menu"),
-    Step.INFO_CERTIFIED_4_DIVES_VARIANT: (Step.INFO_TOURS_CERTIFIED_MENU, "info_tours_certified_menu"),
-    # Flujo antiguo eliminado - ahora todo va por el carrito (MIXED_*)
-    Step.COURSES_MENU: (Step.MIXED_ADD_ACTIVITY, "mixed_add_activity"),
-    Step.COURSES_OPEN_WATER_ORIGIN: (Step.COURSES_MENU, "courses_menu"),
-    Step.COURSES_OPEN_WATER_TIME: (Step.MIXED_ADD_QTY, "mixed_quantity"),
-    Step.COURSES_ADVANCED_MENU: (Step.COURSES_MENU, "courses_menu"),
-    Step.COURSES_SPECIALTIES_MENU: (Step.COURSES_MENU, "courses_menu"),
-    # Cart-style mixed flow: most steps loop back to the cart review for "back".
-    # MIXED_ENTRY goes back to main menu. Final-question steps are intentionally
-    # not back-navigable individually — restart via "empezar de nuevo" if needed.
-    Step.MIXED_ENTRY: (Step.MAIN_MENU, "main_menu"),
-    Step.MIXED_LOCATION: (Step.MIXED_ENTRY, "mixed_entry"),
-    Step.MIXED_ADD_ACTIVITY: (Step.MIXED_CART_REVIEW, "mixed_cart_actions"),
-    Step.MIXED_COMPANION_UPSELL: (Step.MIXED_ADD_ACTIVITY, "mixed_add_activity"),
-    Step.MIXED_ADD_CERT_PLAN: (Step.MIXED_ADD_ACTIVITY, "mixed_add_activity"),
-    Step.MIXED_ADD_CERT_MULTI_DAY: (Step.MIXED_ADD_CERT_PLAN, "mixed_add_cert_plan"),
-    Step.MIXED_ADD_QTY: (Step.MIXED_CART_REVIEW, "mixed_cart_actions"),
-    Step.MIXED_CERT_LAST_DIVE: (Step.MIXED_ADD_QTY, "mixed_quantity"),
-    Step.MIXED_CERT_REFRESH_INTEREST: (Step.MIXED_CERT_LAST_DIVE, "certified_last_dive"),
-    Step.MIXED_CERT_REFRESH_QTY: (Step.MIXED_CERT_REFRESH_INTEREST, "refresher_interest"),
-    Step.MIXED_CERT_SPLIT_REVIEW: (Step.MIXED_CART_REVIEW, "mixed_cart_actions"),
-    Step.MIXED_ADD_PREVIEW: (Step.MIXED_ADD_ACTIVITY, "mixed_add_activity"),
-    Step.MIXED_CART_REVIEW: (Step.MAIN_MENU, "main_menu"),
-    Step.MIXED_CART_MODIFY_PICK: (Step.MIXED_CART_REVIEW, "mixed_cart_actions"),
-    Step.MIXED_CART_REMOVE_PICK: (Step.MIXED_CART_REVIEW, "mixed_cart_actions"),
-    Step.MIXED_CART_LOCATION: (Step.MIXED_CART_REVIEW, "mixed_cart_actions"),
-    Step.MIXED_FINAL_COLOMBIAN: (Step.MIXED_CART_REVIEW, "mixed_cart_actions"),
-    Step.MIXED_FINAL_KIDS: (Step.MIXED_FINAL_COLOMBIAN, "mixed_yes_no"),
-    Step.MIXED_FINAL_KIDS_QTY: (Step.MIXED_FINAL_KIDS, "mixed_kids_age"),
-    Step.MIXED_FINAL_KIDS_U8: (Step.MIXED_FINAL_KIDS, "mixed_kids_age"),
-    Step.MIXED_FINAL_KIDS_810: (Step.MIXED_FINAL_KIDS, "mixed_kids_age"),
-    Step.MIXED_FINAL_PRIVATE: (Step.MIXED_FINAL_COLOMBIAN, "mixed_yes_no"),
-    # Final summary: "volver" returns to the cart review (cart intact), never
-    # dead-ends to MAIN_MENU losing the reservation.
-    Step.MIXED_FINAL_SUMMARY: (Step.MIXED_CART_REVIEW, "mixed_cart_actions"),
-    # "Ask" steps reachable directly from free text (IntentDetector jumps),
-    # not from a button click in an earlier MIXED_* screen. The handlers'
-    # own is_back() logic (routed via the special-case list below) takes
-    # precedence; these are just the defensive fallback.
-    Step.MIXED_ASK_CERTIFICATION: (Step.MIXED_ENTRY, "mixed_entry"),
-    Step.MIXED_ASK_CERT_COUNT: (Step.MIXED_ASK_CERTIFICATION, "mixed_ask_certification"),
-    Step.MIXED_ASK_BEGINNER_ACTIVITY: (Step.MIXED_CART_REVIEW, "mixed_cart_actions"),
 }
 
 # Keywords that indicate escalation to a human
@@ -1994,7 +1782,6 @@ _INTENT_TRIGGER_STEPS = {
     Step.RESERVA_MENU,
     Step.INFO_MENU,
     Step.BOOKING_MENU,
-    Step.MIXED_ENTRY,
 }
 
 
@@ -2246,13 +2033,12 @@ async def _route_message_inner(state: ConversationState, message: str) -> str:
     # mínima?", "una persona de 14 puede?"). Answer deterministically from the
     # single source of truth (eligibility.py) so age limitations are always
     # correct and framed positively — no hallucination, no need for RAG.
-    if state.step not in _MIXED_FLOW_STEPS:
-        age_answer = _maybe_answer_age_eligibility(message, state)
-        if age_answer is not None:
-            logger.info("[SUPERVISOR] Age-eligibility question answered deterministically")
-            state.history.append({"role": "user", "content": message})
-            state.history.append({"role": "assistant", "content": age_answer})
-            return age_answer
+    age_answer = _maybe_answer_age_eligibility(message, state)
+    if age_answer is not None:
+        logger.info("[SUPERVISOR] Age-eligibility question answered deterministically")
+        state.history.append({"role": "user", "content": message})
+        state.history.append({"role": "assistant", "content": age_answer})
+        return age_answer
 
     # Adaptive diving / DIVE TO HEAL. The topic is detected per-turn by keyword,
     # but must be REMEMBERED: a follow-up like "¿cuánto cuesta?" carries no
@@ -2267,12 +2053,11 @@ async def _route_message_inner(state: ConversationState, message: str) -> str:
     # (mismo turno, sin llamada extra) y trae adaptive_diving_topic cuando la
     # lista de palabras no encontró nada.
     adaptive_now = bool(_ADAPTIVE_DIVING_PATTERN.search(message)) or bool(routing_signals.get("adaptive_diving_topic"))
-    if adaptive_now and state.step not in _MIXED_FLOW_STEPS:
+    if adaptive_now:
         state.adaptive_diving_context = True
 
     if (
-        state.step not in _MIXED_FLOW_STEPS
-        and state.adaptive_diving_context
+        state.adaptive_diving_context
         and _PRICE_OR_BOOKING_Q.search(message)
     ):
         logger.info("[SUPERVISOR] DIVE TO HEAL price/booking -> advisor (no generic prices)")
@@ -2285,7 +2070,7 @@ async def _route_message_inner(state: ConversationState, message: str) -> str:
         state.history.append({"role": "assistant", "content": answer})
         return answer
 
-    if adaptive_now and state.step not in _MIXED_FLOW_STEPS:
+    if adaptive_now:
         logger.info("[SUPERVISOR] Adaptive-diving/DIVE TO HEAL question -> RAG")
         if state.step in (Step.WELCOME, Step.LANGUAGE):
             state.step = Step.MAIN_MENU
