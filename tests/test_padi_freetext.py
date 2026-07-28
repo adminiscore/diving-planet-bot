@@ -150,16 +150,6 @@ class TestConfirmationFlow:
         assert state.mixed_pending_qty_plan == "rescue"
         assert state.selected_service == "rescue"
 
-    @pytest.mark.skip(reason="low-confidence confirmation trigger removed in Fase 1")
-    @pytest.mark.asyncio
-    async def test_si_after_confirmation_without_location_asks_location(self):
-        """After confirming with 'sí', if location is unknown the bot must ask for it."""
-        state = make_state("es")
-        await route_message(state, _AMBIGUOUS_RESCUE_ES)   # triggers confirmation
-        await route_message(state, "sí")
-        assert state.step == Step.MIXED_LOCATION
-        assert state.mixed_pending_qty_plan == "rescue"
-
     @pytest.mark.skip(reason="Fase 4: resolución de confirmación retirada con la entrada MIXED legacy; el trigger ya se quitó en Fase 1")
     @pytest.mark.asyncio
     async def test_yes_en_after_confirmation_sets_plan(self):

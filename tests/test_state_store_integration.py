@@ -40,12 +40,12 @@ async def _clean_redis():
 
 
 async def test_save_and_load_state_roundtrip():
-    state = ConversationState(conversation_id="int-1", step=Step.MIXED_CART_REVIEW)
+    state = ConversationState(conversation_id="int-1", step=Step.FREE_TEXT)
     await state_store.save_state("int-1", state)
 
     loaded = await state_store.load_state("int-1")
     assert loaded is not None
-    assert loaded.step == Step.MIXED_CART_REVIEW
+    assert loaded.step == Step.FREE_TEXT
     assert loaded.conversation_id == "int-1"
 
 

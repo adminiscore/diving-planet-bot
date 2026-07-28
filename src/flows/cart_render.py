@@ -1,12 +1,11 @@
 """Fachada de render del carrito para el núcleo conversacional (Fase 4, P1).
 
-El núcleo importa de aquí en vez de instanciar `DecisionTree` directamente — así
-queda DESACOPLADO de la máquina de estados legacy `MIXED_*`. El cuerpo real de
-estos helpers sigue por ahora en `decision_tree.py`; su cierre transitivo está
-verificado por AST (9 símbolos, sin ningún handler `_handle_mixed_*` ni
-referencia a `Step.MIXED_*` — ver `docs/legacy-tree-retirement-plan.md`) y se
-moverá FÍSICAMENTE a este módulo en el paso siguiente (P1b), ya con este seam en
-su sitio y la suite verde de testigo, tras extraer catálogo/estado.
+El núcleo importa de aquí en vez de instanciar `DecisionTree` directamente. La
+máquina de estados legacy `MIXED_*` (handlers + pasos del enum) se retiró entera
+en Fase 4; estos helpers de render son lo único que sobrevive de `DecisionTree`,
+y su cuerpo sigue por ahora en `decision_tree.py`. Se moverá FÍSICAMENTE a este
+módulo en el paso siguiente (P1b), ya con este seam en su sitio y la suite verde
+de testigo, tras extraer catálogo/estado.
 
 Import lazy de `DecisionTree` (dentro de `_tree()`) para no crear un ciclo de
 imports: `decision_tree.py` importa mucho y otros módulos lo importan a él.

@@ -23,9 +23,9 @@ def test_roundtrip_default_state():
 
 
 def test_roundtrip_non_default_step_and_back_step_override():
-    state = make_state(step=Step.MIXED_CART_REVIEW, back_step_override=Step.PRICING_MENU)
+    state = make_state(step=Step.FREE_TEXT, back_step_override=Step.PRICING_MENU)
     result = roundtrip(state)
-    assert result.step == Step.MIXED_CART_REVIEW
+    assert result.step == Step.FREE_TEXT
     assert result.back_step_override == Step.PRICING_MENU
 
 

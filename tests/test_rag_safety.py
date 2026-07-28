@@ -1456,7 +1456,6 @@ async def test_adaptive_diving_question_routes_to_rag_not_booking(monkeypatch):
         state.step = Step.MAIN_MENU
         state.language = "es"
         response = await route_message(state, msg)
-        assert state.step != Step.MIXED_ASK_CERTIFICATION
         assert response == "INFO DIVE TO HEAL"
 
 

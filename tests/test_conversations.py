@@ -48,36 +48,6 @@ async def reach_main_menu(lang: str = "es") -> ConversationState:
     return state
 
 
-async def reach_booking_cart(lang: str = "es", location: str = "cartagena") -> ConversationState:
-    state = await reach_main_menu(lang)
-    await route_message(state, "1")
-    assert state.step == Step.MIXED_ENTRY
-    await route_message(state, "1")
-    location_choice = "1" if location == "cartagena" else "2"
-    await route_message(state, location_choice)
-    if location == "island":
-        # Unknown hotel yet -> asks island, then hotel, before the activity menu.
-        assert state.step == Step.ISLAND_MENU
-        await route_message(state, "1")  # Isla Grande
-        assert state.step == Step.ISLAND_HOTEL_MENU
-        await route_message(state, "1")  # first hotel in the list
-    assert state.step == Step.MIXED_ADD_ACTIVITY
-    return state
-
-
-
-
-async def reach_courses_menu(lang: str = "es", location: str = "cartagena") -> ConversationState:
-    state = await reach_booking_cart(lang, location)
-    await route_message(state, "4")
-    assert state.step == Step.COURSES_MENU
-    return state
-
-
-
-
-
-
 async def reach_pricing_menu(lang: str = "es") -> ConversationState:
     state = await reach_main_menu(lang)
     await send(state, "2", "2", "2")
@@ -333,7 +303,7 @@ async def test_back_keyword_handled_as_normal_message_by_core():
 async def test_keyword_asesor_mid_flow():
     state = make_state()
     state.location = "cartagena"
-    state.step = Step.MIXED_ADD_ACTIVITY  # mid-flow in the cart
+    state.step = Step.FREE_TEXT  # mid-conversation (núcleo), no menú
     await route_message(state, "asesor")
     assert state.step == Step.ESCALATE
     assert state.pending_note is not None
@@ -358,7 +328,7 @@ async def test_escalation_note_includes_service_if_known():
     state = make_state()
     state.location = "cartagena"
     state.selected_service = "2_dives_1_day"
-    state.step = Step.MIXED_ADD_ACTIVITY
+    state.step = Step.FREE_TEXT
     await route_message(state, "asesor")
     assert state.pending_note is not None
     # Advisor note shows the friendly service name, not the raw id.
@@ -637,24 +607,6 @@ async def test_lead_summary_truncates_long_messages():
 # ===========================================================================
 # Cart-style mixed-group flow tests
 # ===========================================================================
-
-async def reach_mixed_entry(lang: str = "es", location: str | None = "cartagena") -> ConversationState:
-    """Reach MIXED_ENTRY from the unified booking entry."""
-    state = await reach_main_menu(lang)
-    await route_message(state, "1")
-    assert state.step == Step.MIXED_ENTRY
-    if location is not None:
-        state.location = location
-    return state
-
-
-async def reach_mixed_add_activity(lang: str = "es", location: str = "cartagena") -> ConversationState:
-    """Reach MIXED_ADD_ACTIVITY by advancing past the entry intro."""
-    state = await reach_mixed_entry(lang, location)
-    await route_message(state, "1")  # ¡Vamos a empezar!
-    assert state.step == Step.MIXED_ADD_ACTIVITY
-    return state
-
 
 # --- Free-text cert split: no double-add of the minicourse -----------------
 
@@ -970,80 +922,6 @@ async def test_broken_link_lead_note_has_priority_marker():
 # Kids age question (MIXED_FINAL_KIDS) — 3 ranges, smart trigger
 # ---------------------------------------------------------------------------
 
-async def _put_cert_in_cart(state: ConversationState, qty: int = 2) -> None:
-    """Helper: enter mixed flow with a single cert × qty item, no refresher."""
-    state.step = Step.MIXED_ADD_QTY
-    state.mixed_pending_qty_type = "cert"
-    state.mixed_pending_qty_plan = "2_dives_1_day"
-    state.location = "cartagena"
-    state.mixed_entry_path = "diving_snorkel"
-    await route_message(state, str(qty))   # qty → cert_last_dive
-    await route_message(state, "2")        # < 2 years
-    await route_message(state, "1")        # add to cart → cart_review
-
-
-async def _put_snorkel_in_cart(state: ConversationState, qty: int = 3) -> None:
-    state.step = Step.MIXED_ADD_QTY
-    state.mixed_pending_qty_type = "snorkel"
-    state.location = "cartagena"
-    state.mixed_entry_path = "diving_snorkel"
-    await route_message(state, str(qty))   # qty → preview
-    await route_message(state, "1")        # add to cart → cart_review
-
-
-async def _put_beginner_in_cart(state: ConversationState, qty: int = 2, kids_choice: str = "3") -> None:
-    """Helper: enter mixed flow with a single beginner × qty item.
-
-    Inline kids question fires after qty; defaults to "3" (all 10+) so callers
-    that don't care about kids context get a clean cart. Tests that DO care
-    can pass kids_choice (and answer the count/U8/810 sub-questions themselves
-    via subsequent route_message calls).
-    """
-    state.step = Step.MIXED_ADD_QTY
-    state.mixed_pending_qty_type = "beginner"
-    state.location = "cartagena"
-    state.mixed_entry_path = "diving_snorkel"
-    await route_message(state, str(qty))       # qty → kids question
-    await route_message(state, kids_choice)    # kids range (default "3" = ten_plus → preview)
-    await route_message(state, "1")            # add to cart → cart_review
-
-
-async def _arrive_at_kids_inline(qty: int = 2) -> ConversationState:
-    """Helper: reach MIXED_FINAL_KIDS step inline (after picking beginner + qty)."""
-    state = await reach_mixed_add_activity()
-    await route_message(state, "2")          # pick beginner
-    await route_message(state, str(qty))     # qty → MIXED_FINAL_KIDS
-    return state
-
-
-
-
-@pytest.mark.asyncio
-async def test_kids_question_not_asked_for_snorkel_only_cart():
-    """Snorkel-only cart never goes through the kids inline flow."""
-    state = make_state()
-    await _put_snorkel_in_cart(state, 3)
-    # Cart has only snorkel — never hit MIXED_FINAL_KIDS at any point.
-    await route_message(state, "6")  # checkout (cart-action 6)
-    await route_message(state, "2")  # No colombiano
-    assert state.step != Step.MIXED_FINAL_KIDS
-
-
-@pytest.mark.asyncio
-async def test_kids_question_skipped_for_cert_only_adult_cart():
-    """Cert-only cart never triggers kids question (inline only fires on beginner add)."""
-    state = make_state()
-    await _put_cert_in_cart(state, 2)
-    await route_message(state, "6")  # checkout (cart-action 6)
-    await route_message(state, "2")  # No colombiano → summary (private question removed)
-    assert state.step != Step.MIXED_FINAL_KIDS
-    assert state.step == Step.FREE_TEXT
-
-
-
-
-
-
 @pytest.mark.asyncio
 async def test_kids_mention_persists_across_turns():
     """Once kids_mention_detected, stays True for the rest of conversation."""
@@ -1124,25 +1002,6 @@ async def test_detect_kids_mention_covers_grandchildren_and_baby():
 # ────────────────────────────────────────────────────────────────────────
 # Large-group kids quantity ("6+" → escribir número exacto)
 # ────────────────────────────────────────────────────────────────────────
-
-
-async def _arrive_at_kids_inline_large(qty: int) -> ConversationState:
-    """Helper: reach MIXED_FINAL_KIDS with a beginner of qty > 6 (uses 6+ exact path)."""
-    state = await reach_mixed_add_activity()
-    await route_message(state, "2")              # pick beginner
-    await route_message(state, "6+")             # 6 or more → ask exact
-    await route_message(state, str(qty))         # exact qty → kids step
-    return state
-
-
-
-
-
-
-
-
-
-
 
 
 # ────────────────────────────────────────────────────────────────────────
@@ -1442,29 +1301,6 @@ async def test_bare_si_without_offer_does_not_escalate():
 # keywords, quantities). Anything outside that domain (a genuine unrelated
 # question) still falls through to the same "no entendí" dead end inside
 # those handlers. See the second block of tests below.
-
-async def _reach_mixed_cert_last_dive(lang: str = "es") -> ConversationState:
-    state = ConversationState(conversation_id="last-dive-question-test")
-    state.language = lang
-    msg = (
-        "Hola, somos 2, certificados, queremos bucear desde Cartagena"
-        if lang == "es"
-        else "Hi, we are 2 certified divers, want to dive from Cartagena"
-    )
-    await route_message(state, msg)
-    for _ in range(6):
-        if state.step == Step.MIXED_CERT_LAST_DIVE:
-            break
-        await route_message(state, "1")
-    assert state.step == Step.MIXED_CERT_LAST_DIVE
-    return state
-
-
-
-
-
-
-
 
 # --- Real bug (live PRE, 2026-07-17, second occurrence): same dead end at ----
 # MIXED_LOCATION / MIXED_ADD_QTY / MIXED_CERT_REFRESH_QTY. These steps DO
