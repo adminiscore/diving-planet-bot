@@ -31,7 +31,12 @@ Orden real seguido: **P1 (seam) → P4 (core-only) → P2 (borrar código)**.
    navegación por paso `MIXED_*` (`menu_resets_from_deep_step`, `volver_goes_back_one_step`).
    Suite verde (1410 passed, receta `OPENAI_API_KEY="" --ignore=test_audio_transcription`).
    → Con esto los handlers menú-reset/back del supervisor quedan MUERTOS (paso 2).
-2. **Supervisor**: borrar los handlers menú-reset/back/greeting-restart (ahora muertos) + los 2 bloques con `process_message`.
+2. ✅ **HECHO (2026-07-28, Gonzalo)** — **Supervisor**: borrados los handlers
+   menú-reset / back / greeting-restart de `_route_message_inner` (con el núcleo on eran
+   código muerto — 0 tests rotos). Con ellos se van los DOS únicos callers vivos de
+   `decision_tree.process_message` (verificado: ya no se llama desde `supervisor.py`) →
+   habilita el paso 3. Quedan huérfanos pero inofensivos `_go_back_one_step` / `BACK_STEP`
+   / `GREETING_ONLY_KEYWORDS` (se limpian en el paso 3). Suite 1408 passed, ruff limpio.
 3. **decision_tree.py**: borrar `process_message` + TODOS los handlers `_handle_*` legacy (~6000 líneas) con el eliminador iterativo de código muerto, PROTEGIENDO la base compartida (SERVICES/State/Step/MESSAGES/MESSAGE_SPLIT), los 9 símbolos que usa `cart_render` (`_service_for_location`, `_cart_label_for`, `_cart_service_id`, `_parse_mixed_quantity`, `_cart_booking_blocks`, `_format_activity_booking_messages`, `_goto_mixed_final_summary`, `_is_contact_only_service`, `_resolve_service_booking_url`), y `set_quick_replies` (si queda vivo). Verificar suite + smoke del render tras cada paso.
 4. Módulo `orchestrator` + 27 pasos `Step.MIXED_*` (+ el resto del enum legacy si queda huérfano).
 5. Quitar el flag `conversational_core` + gate en supervisor + `test_flag_off_core_not_engaged` + fixtures que parchean `detect_language_llm` + `CONVERSATIONAL_CORE` en `docker-compose.vps.yml`.

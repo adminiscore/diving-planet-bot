@@ -3175,54 +3175,12 @@ async def _route_message_inner(state: ConversationState, message: str) -> str:
         logger.info(f"[SUPERVISOR] Availability/dates question -> canned answer, step kept={state.step.value}")
         return answer
 
-    # Check for menu reset keywords (+ red de precisión LLM, auditoría 2026-07-22)
-    if msg_lower in MENU_KEYWORDS or routing_signals.get("wants_menu_or_restart"):
-        state.step = Step.MAIN_MENU
-        decision_tree.set_quick_replies(state, "main_menu")
-        from src.flows.decision_tree import MESSAGES
-        logger.info("[SUPERVISOR] Menu reset triggered by keyword or LLM signal")
-        return MESSAGES["main_menu"][state.language]
-
-    # Step-back: "🔙 Volver" button (value="back") or back keyword
-    if msg_lower == "back" or msg_lower in BACK_KEYWORDS:
-        logger.info(f"[SUPERVISOR] Back navigation from step={state.step.value}")
-        # Cart-flow steps that manage their own back/cancel inline (handlers
-        # return _goto_mixed_cart_review which renders cart_lines + prompt;
-        # _go_back_one_step would only return the prompt without the cart).
-        if state.step in (
-            Step.MIXED_LOCATION,
-            Step.MIXED_ADD_ACTIVITY,
-            Step.MIXED_COMPANION_UPSELL,
-            Step.MIXED_ADD_CERT_PLAN,
-            Step.MIXED_ADD_CERT_MULTI_DAY,
-            Step.MIXED_ADD_QTY,
-            Step.MIXED_CERT_LAST_DIVE,
-            Step.MIXED_CERT_REFRESH_INTEREST,
-            Step.MIXED_CERT_REFRESH_QTY,
-            Step.MIXED_CERT_SPLIT_REVIEW,
-            Step.MIXED_ADD_PREVIEW,
-            Step.MIXED_CART_MODIFY_PICK,
-            Step.MIXED_CART_REMOVE_PICK,
-            Step.MIXED_CART_LOCATION,
-            Step.MIXED_FINAL_KIDS_U8,
-            Step.MIXED_FINAL_KIDS_810,
-            Step.MIXED_ASK_CERTIFICATION,
-            Step.MIXED_ASK_CERT_COUNT,
-            Step.MIXED_ASK_BEGINNER_ACTIVITY,
-            Step.MIXED_FINAL_SUMMARY,
-        ):
-            return decision_tree.process_message(state, "back")
-        return _go_back_one_step(state)
-
-    # Greeting at any step (except the very first WELCOME) → restart welcome / language selection.
-    # We include LANGUAGE here so that a bare "hola" / "hi" at the language step re-shows the
-    # welcome screen instead of auto-selecting Spanish (which felt unexpected to users).
-    if msg_lower.strip("?!.,;:") in GREETING_ONLY_KEYWORDS and state.step != Step.WELCOME:
-        state.step = Step.WELCOME
-        state.quick_replies = []
-        response = decision_tree.process_message(state, message)
-        logger.info("[SUPERVISOR] Greeting restart -> step=WELCOME")
-        return response
+    # (Fase 4 P2·paso2, 2026-07-28) Retirados los handlers menú-reset / back /
+    # greeting-restart: con el núcleo on (paso 1) "menú"/"volver"/"back"/"hola"
+    # son mensaje normal que el núcleo maneja, así que estos bloques eran código
+    # muerto — y con ellos se van los DOS únicos callers vivos de
+    # `decision_tree.process_message`, lo que habilita borrar el árbol (paso 3).
+    # El escalado, la disponibilidad, el idioma y el gating de seguridad siguen.
 
     # Explicit language-switch request ("in english", "spanish please",
     # "me lo puedes decir en español?", etc.) at any step.
