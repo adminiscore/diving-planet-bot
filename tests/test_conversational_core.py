@@ -1956,3 +1956,46 @@ async def test_companion_qty_other_product_not_resolved(monkeypatch):
         await route_message(state, "en realidad somos 3 para buceo")
     assert (state.detected_group_allocation or {}).get("snorkel") != 3
     resolver.assert_not_awaited()  # ni se intentó resolver como cantidad de snorkel
+
+
+# ---------------------------------------------------------------------------
+# Fallback LLM de idioma en el welcome (re-cableado en Fase 4 tras retirar el
+# flujo legacy que lo usaba). Solo se consulta si la heurística de stopwords
+# (_detect_language_from_text) no detecta nada; su resultado gana a _infer_language.
+# ---------------------------------------------------------------------------
+
+@pytest.mark.asyncio
+async def test_welcome_language_uses_llm_fallback_when_heuristic_misses(monkeypatch):
+    """Si la heurística de stopwords devuelve None en el primer turno, el núcleo
+    consulta detect_language_llm y usa su idioma (aquí 'en')."""
+    monkeypatch.setattr("src.flows.decision_tree._detect_language_from_text", lambda m: None)
+
+    async def _llm_says_en(message):
+        return "en"
+
+    monkeypatch.setattr("src.agents.language_detector.detect_language_llm", _llm_says_en)
+    state = make_state("es")
+    state.step = Step.WELCOME
+    with patch("src.agents.supervisor.detect_routing_signals", new=AsyncMock(return_value={})):
+        await route_message(state, "info pls")
+    assert state.language == "en"
+
+
+@pytest.mark.asyncio
+async def test_welcome_language_llm_not_called_when_heuristic_hits(monkeypatch):
+    """Si la heurística ya detecta idioma, el fallback LLM NO se llama (short-circuit)."""
+    called = False
+
+    async def _llm(message):
+        nonlocal called
+        called = True
+        return "en"
+
+    monkeypatch.setattr("src.agents.language_detector.detect_language_llm", _llm)
+    monkeypatch.setattr("src.flows.decision_tree._detect_language_from_text", lambda m: "es")
+    state = make_state("en")
+    state.step = Step.WELCOME
+    with patch("src.agents.supervisor.detect_routing_signals", new=AsyncMock(return_value={})):
+        await route_message(state, "hola quiero bucear")
+    assert state.language == "es"
+    assert called is False

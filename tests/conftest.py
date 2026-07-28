@@ -41,3 +41,16 @@ def _rag_answers_offline(request, monkeypatch):
     monkeypatch.setattr(supervisor, "rag_answer", _stub_rag)
 
 
+@pytest.fixture(autouse=True)
+def _no_llm_language_fallback(monkeypatch):
+    """Default the welcome-step LLM language fallback (conversational_core →
+    language_detector.detect_language_llm) to "no detection", so tests stay
+    deterministic and never hit the network regardless of a local OPENAI_API_KEY.
+    A test that exercises the fallback overrides this with its own patch."""
+
+    async def _no_detect(message):
+        return None
+
+    monkeypatch.setattr("src.agents.language_detector.detect_language_llm", _no_detect)
+
+

@@ -1560,9 +1560,15 @@ async def maybe_handle_turn(
     # toca presentarse (Coral + Diving Planet, tono cercano — regla de persona).
     first_turn = state.step in (Step.WELCOME, Step.LANGUAGE)
     if first_turn:
+        from src.agents.language_detector import detect_language_llm
         from src.flows.decision_tree import _detect_language_from_text
+        # Cadena: heurística de stopwords → fallback LLM (solo si la heurística no
+        # detecta nada; evita preguntar "Español/English" ante un mensaje que
+        # revela el idioma con palabras fuera de la lista curada) → heurística de
+        # hints. El `or` corta: el LLM solo se llama si la primera devuelve None.
         state.language = (
             _detect_language_from_text(message)
+            or await detect_language_llm(message)
             or supervisor._infer_language(message, state.language)
         )
         state.step = Step.FREE_TEXT
