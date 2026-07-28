@@ -23,9 +23,9 @@ Plantilla para cada bloque nuevo:
 **Fase(s) tocada(s)**: ninguna (planificación, previa a la Fase 0).
 
 **Qué se hizo**: tras una sesión de live-testing contra PRE que encontró 6
-inconsistencias reales en total (4 documentadas en `docs/live-test-inconsistencies-plan.md`,
+inconsistencias reales en total (4 documentadas en `docs/archive/live-test-inconsistencies-plan.md`,
 2 más de typos documentadas en `docs/HISTORY.md` v0.20.31), se escribió
-`docs/robustness-strategy-options.md` con 4 opciones estratégicas para el equipo. El
+`docs/archive/robustness-strategy-options.md` con 4 opciones estratégicas para el equipo. El
 owner + Álvaro + Gonzalo decidieron empezar por la Opción 2 (extracción semántica vía
 LLM). Se creó esta carpeta (`docs/robustness/`) con el plan completo (`plan.md`), este
 registro de progreso, y el índice (`README.md`).

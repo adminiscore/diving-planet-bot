@@ -268,7 +268,7 @@ History
 
 0.20.32 - (2026-07-21)
 ----------------------
-* **Robustez Fase 0 (docs/robustness/plan.md): fundaciones para la extracción semántica por LLM, sin cambio de comportamiento**. Owner + Álvaro + Gonzalo decidieron empezar por la Opción 2 de `docs/robustness-strategy-options.md` — este es el primer trabajo de implementación.
+* **Robustez Fase 0 (docs/robustness/plan.md): fundaciones para la extracción semántica por LLM, sin cambio de comportamiento**. Owner + Álvaro + Gonzalo decidieron empezar por la Opción 2 de `docs/archive/robustness-strategy-options.md` — este es el primer trabajo de implementación.
 * `docs/robustness/eval-set.json`: 50 casos etiquetados (42 semillas de `test_intent_detector.py` + 8 adversariales nuevos), incluidos los 2 bugs reales de v0.20.31 marcados con su fuente.
 * `src/agents/llm_extractor.py` (nuevo): `fill_gaps()` — capa de extracción LLM que rellena SOLO los campos que el regex existente (`intent_detector.py`) deja sin resolver, nunca los sobreescribe. Fallback a `{}` en cualquier error/timeout.
 * `settings.llm_extraction_shadow_mode` (default `False`, `src/config.py`) + hook en `supervisor.py` (`_dispatch_conversation_agent`): con el flag apagado (todos los entornos hoy), el LLM extractor NUNCA se llama — verificado con un test que fuerza un error si se le llama estando el flag en `False`.
@@ -285,7 +285,7 @@ History
 
 0.20.30 - (2026-07-21)
 ----------------------
-* **4 inconsistencias reales encontradas simulando conversaciones en vivo contra PRE (LLM real, con typos, en ES/EN)**. Ver `docs/live-test-inconsistencies-plan.md` para el detalle completo de causas raíz y fixes.
+* **4 inconsistencias reales encontradas simulando conversaciones en vivo contra PRE (LLM real, con typos, en ES/EN)**. Ver `docs/archive/live-test-inconsistencies-plan.md` para el detalle completo de causas raíz y fixes.
 * **Fix 1 — pregunta de certificación ya no se pierde**: si el orquestador LLM interpreta el siguiente mensaje como otra cosa (ubicación, quitar del carrito, empezar otra actividad) mientras `MIXED_ASK_CERTIFICATION` seguía sin responder, `orchestrator_set_location`/`orchestrator_remove_activity`/`orchestrator_start_activity` ahora re-preguntan la certificación en vez de saltar silenciosamente al menú o a otro sub-flujo.
 * **Fix 2 — dos causas distintas de retrieval impreciso**: (a) `rag_answer()` ya no diluye una pregunta de seguimiento corta con turnos previos no relacionados si la corta sola ya resuelve con confianza; (b) cada política de descuento (equipo propio, grupo, etc.) se indexa también como chunk individual, no solo mezclada en el chunk combinado.
 * **Fix 3 — cambio de plan/acompañante por texto libre generalizado por contexto, no por paso exacto**: los interceptores de switch multi-día y acompañante-en-texto-libre pasan de vigilar 2-3 pasos concretos a cualquier paso donde una reserva de buceo certificado esté en curso (`_is_certified_diving_booking_in_progress`).

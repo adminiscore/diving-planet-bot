@@ -4,7 +4,7 @@
 
 ## Qué es esto
 
-Plan de implementación de la **Opción 2** de `docs/robustness-strategy-options.md`
+Plan de implementación de la **Opción 2** de `docs/archive/robustness-strategy-options.md`
 (decidida por el owner + Álvaro + Gonzalo el 2026-07-21): sustituir progresivamente la
 extracción de información del mensaje (certificación, grupo, ubicación, cambios de
 plan…) — hoy repartida en decenas de regex especializadas en `intent_detector.py`/

@@ -1,0 +1,72 @@
+# Reorganización de `decision_tree.py` + decisiones pendientes post-Fase 4
+
+Estado: **PENDIENTE** (opcional/cosmético). Creado 2026-07-28 tras cerrar Fase 4
+(retirada del árbol de decisión legacy `MIXED_*`). Ninguna de estas tareas cambia
+comportamiento; son de organización/deuda. Hacer en PR(s) aparte, DESPUÉS del merge
+de Fase 4 a `pre_gadea` (ya hecho).
+
+---
+
+## 1. Renombrar/partir `decision_tree.py` (el archivo ya no es un árbol)
+
+Tras Fase 4, `src/flows/decision_tree.py` (~2.140 líneas) ya **no es un árbol de
+decisión** — el nombre quedó mentiroso. Es un cajón de sastre con 4 responsabilidades
+mezcladas:
+
+| Bloque | Qué es | Aprox. |
+|---|---|---|
+| Catálogo/datos | `SERVICES`, `ISLAND_SERVICE_MAP`, `MULTI_DAY_SERVICES`, `COMPANION_PRICE` (cargados de JSON) + loaders (`_load_services`…) + formateadores (`_format_price`, `_format_duration`, `_detect_language_from_text`…) | ~290–630 |
+| Estado/tipos | enum `Step`, dataclass `ConversationState`, `ButtonOption` | ~27–290 |
+| Strings de UI | el dict gigante `MESSAGES` | ~637–2000 (~1.360 líneas) |
+| Vestigio | la clase `DecisionTree`, ya minúscula (`set_quick_replies` + 3 métodos de opciones-isla; solo la usa el supervisor) | ~2007–fin |
+
+**Propuesta:** partir en módulos honestos, p. ej.:
+- `src/flows/catalog.py` → SERVICES + mapas + loaders + formateadores.
+- `src/flows/state.py` → `Step`, `ConversationState`, `ButtonOption`.
+- `src/flows/messages.py` → el dict `MESSAGES`.
+- convertir el vestigio `DecisionTree` (set_quick_replies + isla) en funciones de módulo.
+- `decision_tree.py` desaparece (o queda como shim de re-export temporal).
+
+**Coste/riesgo:** cero cambio de comportamiento, pero toca los **~10 módulos** que
+importan de `decision_tree` (`supervisor`, `conversational_core`, `cart_render`,
+`rag_agent`, `intent_detector`, `state_store`, `chatwoot`, `main`, `lead_summary`,
+`conversation_summarizer`) — hay que reapuntar cada `from src.flows.decision_tree
+import X`. Churn mecánico grande → por eso va en PR aparte. La suite completa
+(1393 passed) + `compileall` son la red.
+
+**Nota:** `cart_render.py` ya importa catálogo/estado de `decision_tree` (seam P1b
+cerrado); si se hace la extracción, `cart_render` pasaría a importar de
+`catalog.py`/`state.py` directamente.
+
+---
+
+## 2. Decisión pendiente — Fase C del plan de memoria ("notes" abiertas)
+
+Al revisar `docs/memory-context-improvement-plan.md` (2026-07-28) se detectó que la
+**Fase C ("notes" = hechos abiertos que no encajan en las 5 categorías fijas, p. ej.
+"padre con rodilla operada, evitar planes físicos")** quedó **INACTIVA** tras Fase 4:
+
+- Su **escritor** (`_persist_remembered`, que acumulaba `remembered_facts["notes"]`
+  desde la tool `remember` del `orchestrator`) lo llamaba `_dispatch_conversation_agent`
+  — la vía del orquestador, **runtime-dead bajo el núcleo** — y se **borró en Fase 4**.
+- El **núcleo nunca tuvo escritor propio** de "notes".
+- Solo sobreviven **vestigios**: el render en `supervisor.py` (~1107-1114, lee un
+  `facts["notes"]` siempre vacío), un comentario obsoleto (~`supervisor.py:1539`) y
+  probablemente la constante `_MAX_REMEMBERED_NOTES`.
+
+Es el mismo patrón que `language_detector` (feature que quedó desconectada al retirar
+el legacy). **Fases B (resumen progresivo) y A (ventana) siguen VIVAS y funcionando.**
+
+### Decisión a tomar (owner)
+- **(a) Re-cablear Fase C al núcleo**: que el núcleo capture "notes" abiertas
+  (equivalente a lo que hacía la tool `remember`) y las persista en
+  `remembered_facts["notes"]`, alimentando el render que ya existe. Similar al
+  re-cableo de `detect_language_llm`.
+- **(b) Dar Fase C por cubierta con Fase B** (el resumen progresivo ya captura los
+  matices relevantes de conversaciones largas) y **limpiar los vestigios** (render de
+  notes + comentario + constante `_MAX_REMEMBERED_NOTES`).
+
+### Disparador de archivado
+**Una vez tomada la decisión E IMPLEMENTADA (opción a o b), mover
+`docs/memory-context-improvement-plan.md` a `docs/archive/`** — hasta entonces se
+queda en `docs/` como recordatorio de este cabo suelto.

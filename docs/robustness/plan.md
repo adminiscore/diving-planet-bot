@@ -4,7 +4,7 @@ Estado global: **no empezada**. Ver `progress-log.md` para el estado exacto y
 sesión-a-sesión.
 
 Decidido por: owner + Álvaro + Gonzalo, 2026-07-21, tras leer
-`docs/robustness-strategy-options.md`. Objetivo textual del owner: "ser competitivos y
+`docs/archive/robustness-strategy-options.md`. Objetivo textual del owner: "ser competitivos y
 sólidos, el cliente no puede encontrar tantos bugs".
 
 Este documento es la guía persistente del proyecto. Está pensado para sobrevivir a
@@ -16,7 +16,7 @@ para el siguiente. Lee `README.md` primero si no lo has hecho.
 
 ## 1. Por qué esto y no otra cosa
 
-Contexto completo en `docs/robustness-strategy-options.md`. Resumen de la causa raíz:
+Contexto completo en `docs/archive/robustness-strategy-options.md`. Resumen de la causa raíz:
 `intent_detector.py`/`supervisor.py`/`decision_tree.py` extraen información del mensaje
 (¿está certificado? ¿cuántos son? ¿desde dónde? ¿cambió de plan?) mediante **regex
 especializadas, una familia por caso**. Cada bug real encontrado en vivo (y llevamos
@@ -331,7 +331,7 @@ sobreescribir lo que el regex ya resolvió).
 ### Fase 3 — Dominio ubicación/actividad/cambios de plan
 
 `location`, `island`, `hotel`, y los interceptores de cambio de plan/acompañante que
-generalizamos en el Fix 3 de `docs/live-test-inconsistencies-plan.md` (los que causaron
+generalizamos en el Fix 3 de `docs/archive/live-test-inconsistencies-plan.md` (los que causaron
 la regresión que el Fix 4 tuvo que cazar). Este es el dominio con más regex dispersa
 y más frágil — el más beneficiado por esta migración, pero también el que requiere más
 cuidado (más superficie de regresión).
@@ -592,8 +592,8 @@ acuerdo) y por cualquier fase de cutover posterior (medir regresiones).
 
 ## 7. Referencias
 
-- `docs/robustness-strategy-options.md` — las 4 opciones evaluadas, esta es la Opción 2.
+- `docs/archive/robustness-strategy-options.md` — las 4 opciones evaluadas, esta es la Opción 2.
 - `docs/project-history/estado-pendientes.md` (punto #10) — la propuesta original de Álvaro.
-- `docs/live-test-inconsistencies-plan.md` — los 4 fixes de la sesión que motivó esta decisión.
+- `docs/archive/live-test-inconsistencies-plan.md` — los 4 fixes de la sesión que motivó esta decisión.
 - `docs/HISTORY.md` v0.20.30-31 — los bugs concretos que ilustran el problema.
 - `docs/archive/rag-threshold-calibration.md` — precedente de metodología (eval-set + umbral medido con datos) ya usado en este repo para otra decisión de calibración.
