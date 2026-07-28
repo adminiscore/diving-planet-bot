@@ -144,7 +144,7 @@ class Settings(BaseSettings):
     # reversible without a code rollback (plan: migración incremental por
     # vertical). The extractor cutover flags above keep their own kill switches;
     # the core calls the gap-filler directly as its slot engine.
-    conversational_core: bool = False
+    conversational_core: bool = True
 
     @property
     def is_dev(self) -> bool:
