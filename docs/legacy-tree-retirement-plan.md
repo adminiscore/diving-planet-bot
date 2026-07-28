@@ -29,6 +29,22 @@ Orden real seguido: **P1 (seam) → P4 (core-only) → P2 (borrar código)**.
 
 **Ya HECHO (2026-07-28, además de lo de arriba):** las 4 funciones dead-con-test-unitario (`_answer_offers_advisor`, `_detect_companion_intent`, `_mentions_diving_intent`, `_mentions_snorkeling_intent`) borradas + sus tests. supervisor.py: 5908 → **3257 líneas**.
 
+### ¿Cómo funciona PRE hoy? (qué de `decision_tree.py` está VIVO vs MUERTO)
+
+PRE conduce **todas** las conversaciones con el **núcleo** (`conversational_core.py`), no con el árbol. El árbol de botones está apagado en la práctica: el núcleo solo pone `state.step` en `FREE_TEXT`/`ESCALATE`, nunca en un paso legacy, y los 70 handlers `_handle_*` se despachan **por `state.step`** → nunca se ejecutan.
+
+Pero `decision_tree.py` (**8.384 líneas**) es un archivo MIXTO. Reparto:
+
+| VIVO (~2.400 líneas, lo usa PRE vía el núcleo — CONSERVAR) | MUERTO (~6.000 líneas, con el núcleo on — BORRAR) |
+|---|---|
+| `SERVICES` (catálogo: precios/servicios/links) | Los **70 handlers `_handle_*`** (menús info/cursos/precios/logística/islas + carrito mixto) |
+| `MESSAGES` (~565 líneas de copy bilingüe), `MESSAGE_SPLIT`, `COMPANION_PRICE`, `ISLAND_SERVICE_MAP` | `process_message` (el dispatcher del árbol) + la tabla de dispatch |
+| `ConversationState`, `Step` (modelo de estado, usado por toda la app) | Los pasos `Step.*` legacy que queden huérfanos |
+| **Los 9 helpers de render** que el núcleo llama vía `cart_render` (resumen de reserva, links, cantidad, plan por ubicación) | El módulo `orchestrator` (el núcleo no lo usa) |
+| `_detect_language_from_text`, `set_quick_replies` | |
+
+En una frase: **PRE ya funciona 100% con el núcleo; del árbol solo quedan vivos los DATOS (catálogo/copy), el modelo de estado y ~9 funciones que renderizan el resumen de reserva.** Fase 4 borra la maquinaria de navegación por menús, que no conduce nada desde que el núcleo está encendido en PRE.
+
 **Lección operativa**: `ruff --fix` quita imports que solo se usan vía monkeypatch en tests (`detect_language_llm`) → rompió 144 tests; los imports huérfanos se limpian a mano.
 
 **Aviso previo (original):** revisar con Álvaro y Gonzalo antes de mergear a `pre_gadea` y antes de quitar el kill-switch (P4 final).
