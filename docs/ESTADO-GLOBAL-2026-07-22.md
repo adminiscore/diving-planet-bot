@@ -1,8 +1,49 @@
-# Estado global del proyecto — 2026-07-22
+# Estado global del proyecto — 2026-07-22 (actualizado 2026-07-28)
 
 > Mapa único de dónde está todo y qué queda, tras la sesión de Gonzalo del 22-07.
 > Para el detalle por fase ver `docs/robustness/` (plan/progress-log/review) y
 > `docs/conversational-refactor-*`. Este documento es el resumen ejecutable.
+
+## ⛔ ACTUALIZACIÓN 2026-07-28 — Fase 4 EN EJECUCIÓN en `feature/fase4-p2` (NO mergear)
+
+**Ahora mismo NO se mergea nada.** La rama **`feature/fase4-p2` es WIP** — el corte
+grande (borrar el árbol legacy `MIXED_*` + los ~6.000 líneas de handlers muertos de
+`decision_tree.py`) está **a medias**. Mergearla ahora dejaría PRE con el árbol muerto
+pero el código de menú/back a medio quitar → **inconsistente**. (Nota de Gadea, foto del
+28-07; transcrita aquí para que no se pierda.)
+
+**Gonzalo trabaja EN `feature/fase4-p2`** (no crea rama nueva):
+1. `git checkout feature/fase4-p2 && git pull`
+2. **Sincroniza primero**: `git merge origin/feature/pre_gadea` (por si Gonzalo o Álvaro
+   habéis pusheado fixes — así arrancó Gadea la sesión, sin conflictos).
+3. Sigue la lista **"PENDIENTE (el corte MAYOR)"** de `docs/legacy-tree-retirement-plan.md`
+   (esa lista vive en `feature/fase4-p2`).
+
+**El merge de verdad** (`feature/fase4-p2` → `feature/pre_gadea`) se hace **solo cuando la
+Fase 4 esté completa y verde**: suite flag-on + smoke del render (`test_cart_render`) +
+prueba en vivo del guion completo en PRE. Y **revisado por los tres** (Gonzalo/Gadea/Álvaro).
+
+**Avisos clave** (también en `legacy-tree-retirement-plan.md` §4 y en el handoff):
+- **PROTEGER** en `decision_tree.py`: la base compartida (`SERVICES` / `ConversationState`
+  / `Step` / `MESSAGES` / `MESSAGE_SPLIT`) **+ los 9 símbolos que usa `cart_render`**
+  (`_service_for_location`, `_cart_label_for`, `_cart_service_id`, `_parse_mixed_quantity`,
+  `_cart_booking_blocks`, `_format_activity_booking_messages`, `_goto_mixed_final_summary`,
+  `_is_contact_only_service`, `_resolve_service_booking_url`) — son los que renderizan cada
+  reserva de PRE. Su cierre transitivo NO toca ningún `_handle_mixed_*` (verificado por AST).
+- **Red de seguridad**: correr la suite en core-on tras **cada** borrado + smoke del render.
+- **NO usar `ruff --fix` para imports**: quita los que solo se parchean en tests
+  (`detect_language_llm`) — rompió 144 tests. Limpiar los imports huérfanos **a mano**.
+
+**Antes de tocar Fase 4, LEE**: `docs/project-history/session-handoff.md`,
+`docs/conversational-refactor-handoff.md` y `docs/legacy-tree-retirement-plan.md`
+(los tres están en `feature/fase4-p2`, con el estado de ejecución al día).
+
+> Estado de `feature/fase4-p2` al 28-07 (del propio plan): P1 (seam `cart_render.py`) +
+> P4 (core-only, flag a `True` por defecto, ~2.400 líneas de supervisor borradas) HECHO y
+> verde (suite 1444, idéntica flag-off/on). Hallazgo: el árbol legacy ENTERO está muerto con
+> el núcleo on (no solo `MIXED_*`), ~6.000 líneas de `decision_tree.py` deletables. Falta el
+> corte mayor (P2/P3): borrar `process_message` + los 70 handlers `_handle_*` + quitar el flag.
+> **Todo committeado en la rama, sincronizable — no mergear hasta completar y revisar entre los tres.**
 
 ## Dos líneas de trabajo en paralelo (encajan entre sí)
 
@@ -43,7 +84,7 @@ abstención segura del mini). Los 4 flags de cutover + el core están ON solo en
 | 3 — Cursos PADI + checkout | ✅ (2 causas raíz cerradas, ex-`xfail` en verde) |
 | Persona de Coral | ✅ saludo cálido colombiano en el 1er turno, sin "asistente/bot" |
 | Fix A/B del handoff | ✅ harvest desbloqueado + gap-fill contra el estado |
-| 4 — Retirada del árbol `MIXED_*` | ⬜ el trabajo grande; ver precondición abajo |
+| 4 — Retirada del árbol `MIXED_*` | 🔨 **EN EJECUCIÓN en `feature/fase4-p2` (NO mergear, WIP)** — P1+P4 hechos y verdes; falta el corte mayor (P2/P3). Ver la sección "⛔ ACTUALIZACIÓN 2026-07-28" arriba + `docs/legacy-tree-retirement-plan.md` |
 
 ## Qué queda pendiente (ordenado por lo que desbloquea)
 
@@ -64,11 +105,14 @@ abstención segura del mini). Los 4 flags de cutover + el core están ON solo en
 3. **Fase 5 robustez — limpieza**: retirar el regex que el LLM haya reemplazado de facto,
    una vez la Fase 6 lleve un par de lotes reales sin sorpresas. Bloqueada por (1).
 
-4. **Fase 4 refactor — retirar el árbol `MIXED_*`**: el trabajo más grande y delicado
-   (~24 pasos de menú, `set_quick_replies`, `BACK_STEP`, `classify_menu_intent`).
-   **Precondición del plan**: medir Fases 1-3 del núcleo en PRE con tráfico real — que es
-   justo (1). Reversible con el flag hasta que se retire. No empezar hasta que el owner dé
-   por medida la operación.
+4. **Fase 4 refactor — retirar el árbol `MIXED_*`** → **YA EN EJECUCIÓN en
+   `feature/fase4-p2`** (arrancada 24-07, en curso 28-07 por Gadea). P1 (seam
+   `cart_render.py`) + P4 (core-only, flag a `True` por defecto, ~2.400 líneas de
+   supervisor borradas) HECHO y verde. Falta el corte mayor (P2/P3): borrar
+   `process_message` + los ~70 handlers `_handle_*` legacy (~6.000 líneas) + quitar el
+   flag. **Reglas y avisos: ver la sección "⛔ ACTUALIZACIÓN 2026-07-28" al principio de
+   este documento** y `docs/legacy-tree-retirement-plan.md` (en `feature/fase4-p2`). **NO
+   mergear `feature/fase4-p2` hasta completar + verde + revisión de los tres.**
 
 ## Salud del repo (checks de esta sesión)
 - Rama de trabajo: `feature/pruebaGon`, sincronizada con `origin`.
