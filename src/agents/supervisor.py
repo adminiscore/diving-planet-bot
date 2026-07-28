@@ -1143,22 +1143,6 @@ def _append_mixed_cart_item(state: ConversationState, item_type: str, plan: str 
 
 
 
-def _go_back_one_step(state: ConversationState) -> str:
-    """Move state one step up in the decision tree and return the previous prompt.
-
-    Falls back to MAIN_MENU when the current step has no mapping in BACK_STEP.
-    """
-    from src.flows.decision_tree import MESSAGES
-
-    dynamic_target = decision_tree.resolve_back_target(state)
-    if dynamic_target is not None:
-        target_step, qr_key = dynamic_target
-        state.summary_mode = None
-    else:
-        target_step, qr_key = BACK_STEP.get(state.step, (Step.MAIN_MENU, "main_menu"))
-    state.step = target_step
-    decision_tree.set_quick_replies(state, qr_key)
-    return MESSAGES[qr_key][state.language]
 
 
 def _matches_escalation_keyword(msg_lower: str) -> bool:
