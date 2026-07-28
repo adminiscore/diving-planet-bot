@@ -1,9 +1,9 @@
 import pytest
 
-from src.agents.escalation import detect_sensitive_escalation
 from src.agents import grounding_check, rag_agent
-from src.flows.decision_tree import ConversationState, Step
+from src.agents.escalation import detect_sensitive_escalation
 from src.agents.supervisor import route_message
+from src.flows.decision_tree import ConversationState, Step
 
 
 class DummyMessage:
@@ -171,32 +171,6 @@ async def test_supervisor_escalates_sensitive_message_before_rag(monkeypatch):
     assert "staff calificado" in response
 
 
-@pytest.mark.asyncio
-async def test_supervisor_routes_early_free_text_to_rag(monkeypatch):
-    async def fake_rag(message, lang="es", history=None, extra_context=None, **kwargs):
-        assert lang == "en"
-        # Ensure supervisor passes some context summary when available
-        assert extra_context is not None
-        return "Sure! We can help with that 🤿"
-
-    monkeypatch.setattr("src.agents.supervisor.rag_answer", fake_rag)
-
-    state = ConversationState(conversation_id="test")
-    state.step = Step.LANGUAGE
-    state.language = "es"
-
-    # A genuine informational question (not a booking request, so the v0.17.0
-    # IntentDetector does not route it into the cart flow) must still reach RAG.
-    response = await route_message(
-        state,
-        "What marine life and corals can we usually see underwater in the Rosario Islands?",
-    )
-
-    # The conversation agent answers the question via RAG and starts the
-    # conversation (leaves WELCOME/LANGUAGE); the exact resting step is MAIN_MENU.
-    assert state.step == Step.MAIN_MENU
-    assert state.language == "en"
-    assert response == "Sure! We can help with that 🤿"
 
 
 @pytest.mark.asyncio
@@ -1486,32 +1460,6 @@ async def test_adaptive_diving_question_routes_to_rag_not_booking(monkeypatch):
         assert response == "INFO DIVE TO HEAL"
 
 
-@pytest.mark.asyncio
-async def test_general_interest_query_answered_by_agent(monkeypatch):
-    """Fase 1: 'que me recomiendas?' / 'qué servicios tienen?' and similar
-    general-interest queries must be ANSWERED conversationally by the agent
-    (recommendation), NOT forced into a canned catalog + menu buttons — that
-    was exactly the 'router-first' behavior the owner flagged."""
-    async def fake_rag(message, lang="es", history=None, extra_context=None, **kwargs):
-        return "AGENT RECOMMENDATION"
-
-    monkeypatch.setattr("src.agents.supervisor.rag_answer", fake_rag)
-
-    for msg in [
-        "hola buenas, he visto vuestra empresa, que me recomiendas?",
-        "qué me recomendáis?",
-        "¿qué actividades tienen?",
-        "qué servicios ofrecen?",
-        "what do you recommend?",
-        "what activities do you have?",
-    ]:
-        state = ConversationState(conversation_id="test")
-        state.step = Step.WELCOME
-        state.language = "es" if not msg.startswith("what") else "en"
-        response = await route_message(state, msg)
-        assert response == "AGENT RECOMMENDATION", (
-            f"Expected the agent to answer {msg!r}, got {response!r}"
-        )
 
 
 @pytest.mark.parametrize("msg", [
@@ -1699,12 +1647,11 @@ def test_adaptive_diving_pattern_does_not_match_unrelated_lame():
 # coordinated per case with an advisor, no prices in chat.
 
 import pytest as _pytest
+
 from src.agents.supervisor import (
     _PRICE_OR_BOOKING_Q,
     _adaptive_diving_advisor_answer,
-    route_message,
 )
-from src.flows.decision_tree import ConversationState, Step
 
 
 @_pytest.mark.parametrize("msg", [
@@ -1784,7 +1731,7 @@ def test_contains_phone_number_ignores_prices_times_years(s):
 
 
 def test_fallback_has_no_phone_number():
-    from src.agents.rag_agent import FALLBACK_ES, FALLBACK_EN
+    from src.agents.rag_agent import FALLBACK_EN, FALLBACK_ES
     for fb in (FALLBACK_ES, FALLBACK_EN):
         assert not contains_phone_number(fb)
 

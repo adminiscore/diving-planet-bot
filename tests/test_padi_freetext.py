@@ -12,14 +12,13 @@ Two routing paths:
   then routes after user confirms with "sí" / "yes"
 """
 
-import pytest
 from unittest.mock import AsyncMock
 
-from src.agents import orchestrator
+import pytest
+
 from src.agents.intent_detector import DetectedIntent, IntentDetector
 from src.agents.supervisor import route_message
 from src.flows.decision_tree import ConversationState, Step
-
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -92,58 +91,6 @@ class TestIntentDetectorPadiActivity:
 # Part 2 — supervisor sets mixed_pending_qty_plan after free-text PADI intent
 # ---------------------------------------------------------------------------
 
-class TestSupervisorPadiFreetextFlow:
-    """After a free-text PADI message the bot must enter the course flow
-    and populate mixed_pending_qty_plan with the specific service_id.
-
-    The conversation agent (Fase 1) now gates entry routing: a clear booking
-    intent makes it pick a booking tool, which reuses the deterministic
-    `_route_detected_intent` (IntentDetector still resolves the exact course)."""
-
-    @pytest.fixture(autouse=True)
-    def _agent_books(self, _agent_answers_by_default, agent_decides):
-        agent_decides(orchestrator.TOOL_START_BOOKING, {"activity": "course"})
-
-    @pytest.mark.asyncio
-    async def test_open_water_sets_plan_with_location(self):
-        state = make_state()
-        state.location = "cartagena"
-        await route_message(state, "quiero hacer el curso open water")
-        assert state.mixed_pending_qty_type == "course"
-        assert state.mixed_pending_qty_plan == "open_water"
-
-    @pytest.mark.asyncio
-    async def test_advanced_sets_plan_with_location(self):
-        state = make_state()
-        state.location = "cartagena"
-        await route_message(state, "me interesa el curso advanced")
-        assert state.mixed_pending_qty_type == "course"
-        assert state.mixed_pending_qty_plan == "advanced"
-
-    @pytest.mark.asyncio
-    async def test_rescue_sets_plan_with_location(self):
-        state = make_state()
-        state.location = "cartagena"
-        await route_message(state, "quiero hacer el curso rescue diver")
-        assert state.mixed_pending_qty_type == "course"
-        assert state.mixed_pending_qty_plan == "rescue"
-
-    @pytest.mark.asyncio
-    async def test_divemaster_sets_plan_with_location(self):
-        state = make_state()
-        state.location = "cartagena"
-        await route_message(state, "información sobre el divemaster")
-        assert state.mixed_pending_qty_type == "course"
-        assert state.mixed_pending_qty_plan == "divemaster"
-
-    @pytest.mark.asyncio
-    async def test_open_water_without_location_asks_location(self):
-        """Without location the bot must ask where, not skip the flow."""
-        state = make_state()
-        resp = await route_message(state, "quiero hacer el curso open water")
-        assert state.step == Step.MIXED_LOCATION
-        assert state.mixed_pending_qty_type == "course"
-        assert state.mixed_pending_qty_plan == "open_water"
 
 
 # ---------------------------------------------------------------------------

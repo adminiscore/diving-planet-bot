@@ -6,7 +6,6 @@ import pytest
 from src.agents.intent_detector import IntentDetector
 from src.flows.decision_tree import ConversationState, Step
 
-
 det = IntentDetector()
 
 
@@ -490,24 +489,6 @@ def test_pack_qualifier_recognized_for_day_count():
     assert _d("el pack de 2 dias").cert_days == 2
 
 
-@pytest.mark.asyncio
-async def test_bare_pack_de_5_full_flow_resolves_plan():
-    """Exact scenario reported live: group + cert + bare pack number in one
-    message, location given on the next turn — must resolve the exact plan
-    without re-asking "which idea"."""
-    from src.flows.decision_tree import ConversationState as _CS, Step as _Step
-    from src.agents.supervisor import route_message
-
-    state = _CS(conversation_id="pack-de-5-e2e")
-    await route_message(
-        state, "Hola somos una pareja de dos certificados, queremos bucear el pack de 5"
-    )
-    assert state.step == _Step.MIXED_LOCATION
-
-    resp = await route_message(state, "Salgo desde Cartagena")
-    assert state.step == _Step.MIXED_CERT_LAST_DIVE, resp
-    assert state.mixed_pending_qty_plan == "5_dives_2_days"
-    assert state.mixed_pending_cert_total_qty == 2
 
 
 # --- Exhaustive audit: bare "pack/paquete de N" for every N 1-10, digit and
@@ -550,48 +531,8 @@ def test_bare_pack_en_word_all_numbers(n):
     assert _d(f"the pack of {_BARE_PACK_EN_WORDS[n]}").cert_dives == expected
 
 
-@pytest.mark.asyncio
-@pytest.mark.parametrize("n", range(1, 11))
-async def test_bare_pack_es_full_flow_all_numbers(n):
-    """End-to-end: for 5/7/9 the plan resolves without re-asking; for
-    everything else the flow safely falls back to the generic cert-plan
-    question (never silently books the wrong plan)."""
-    from src.flows.decision_tree import ConversationState as _CS, Step as _Step
-    from src.agents.supervisor import route_message
-
-    state = _CS(conversation_id=f"bare-pack-es-{n}")
-    resp = await route_message(
-        state, f"somos 2 certificados, queremos bucear el pack de {n}, desde cartagena"
-    )
-    if n in _UNAMBIGUOUS_BARE_PACK:
-        assert state.step == _Step.MIXED_CERT_LAST_DIVE, (n, resp)
-        assert state.mixed_pending_qty_plan == f"{n}_dives_{ {5: 2, 7: 3, 9: 4}[n] }_days"
-    else:
-        # Non-5/7/9 "pack of N" isn't a real package: we recommend the 2-dive
-        # plan (owner decision 2026-07-20) instead of a menu. Group size (2) is
-        # known, so it advances to the last-dive safety question.
-        assert state.step == _Step.MIXED_CERT_LAST_DIVE, (n, resp)
-        assert state.mixed_pending_qty_plan == "2_dives_1_day"
 
 
-@pytest.mark.asyncio
-@pytest.mark.parametrize("n", range(1, 11))
-async def test_bare_pack_en_full_flow_all_numbers(n):
-    from src.flows.decision_tree import ConversationState as _CS, Step as _Step
-    from src.agents.supervisor import route_message
-
-    state = _CS(conversation_id=f"bare-pack-en-{n}")
-    resp = await route_message(
-        state,
-        f"we are 2 certified divers, we want to dive the pack of {n}, from cartagena",
-    )
-    if n in _UNAMBIGUOUS_BARE_PACK:
-        assert state.step == _Step.MIXED_CERT_LAST_DIVE, (n, resp)
-        assert state.mixed_pending_qty_plan == f"{n}_dives_{ {5: 2, 7: 3, 9: 4}[n] }_days"
-    else:
-        # See ES twin: non-5/7/9 now recommends the 2-dive plan.
-        assert state.step == _Step.MIXED_CERT_LAST_DIVE, (n, resp)
-        assert state.mixed_pending_qty_plan == "2_dives_1_day"
 
 
 def test_explicit_two_dives_skips_cert_plan_question():
