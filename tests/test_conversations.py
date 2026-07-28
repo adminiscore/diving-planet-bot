@@ -19,18 +19,6 @@ def make_state(lang: str = "es") -> ConversationState:
     return s
 
 
-@pytest.fixture(autouse=True)
-def _no_llm_language_fallback(monkeypatch):
-    """Default the welcome-step LLM language fallback to "no detection" so
-    existing tests stay deterministic and don't hit the network regardless of
-    whether a real OPENAI_API_KEY is configured locally. Tests that exercise
-    the LLM fallback path explicitly override this mock."""
-    monkeypatch.setattr(
-        "src.agents.supervisor.detect_language_llm",
-        AsyncMock(return_value=None),
-    )
-
-
 async def send(state: ConversationState, *messages: str) -> list[str]:
     responses = []
     for msg in messages:

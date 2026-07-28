@@ -2,7 +2,6 @@
 supervisor responder that informs what each person can/can't do."""
 
 import pytest
-from unittest.mock import AsyncMock
 
 from src.flows import eligibility as elig
 from src.agents.intent_detector import IntentDetector
@@ -11,14 +10,6 @@ from src.agents.supervisor import route_message
 
 
 detector = IntentDetector()
-
-
-@pytest.fixture(autouse=True)
-def _no_llm_language_fallback(monkeypatch):
-    monkeypatch.setattr(
-        "src.agents.supervisor.detect_language_llm",
-        AsyncMock(return_value=None),
-    )
 
 
 def _detect(msg: str):

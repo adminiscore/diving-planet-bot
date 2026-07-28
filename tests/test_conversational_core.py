@@ -1,9 +1,8 @@
 """Tests del núcleo conversacional de slot-filling (docs/conversational-refactor-plan.md).
 
 Todo offline: el gap-filler LLM se mockea (patch de conversational_core.fill_gaps)
-y RAG usa el stub del conftest (supervisor.rag_answer). El flag
-settings.conversational_core se enciende por test — con el flag apagado (default)
-el resto de la suite prueba que el comportamiento legacy queda intacto.
+y RAG usa el stub del conftest (supervisor.rag_answer). El núcleo es el único
+camino de enrutado desde Fase 4.
 """
 
 from unittest.mock import AsyncMock, patch
@@ -12,7 +11,6 @@ import pytest
 
 from src.agents import conversational_core as core
 from src.agents.supervisor import route_message
-from src.config import settings
 from src.flows.decision_tree import ConversationState, Step
 
 
@@ -24,12 +22,9 @@ def make_state(lang: str = "es") -> ConversationState:
 
 @pytest.fixture(autouse=True)
 def _core_on(monkeypatch):
-    """Enciende el núcleo para todos los tests de este módulo y deja el
-    gap-filler y el detector de señales (recordar/acompañante) en no-op por
-    defecto (cada test los re-mockea si necesita que el LLM 'decida' algo).
-    settings es una instancia compartida, así que parchearlo aquí lo ve
-    también el hook del supervisor."""
-    monkeypatch.setattr(settings, "conversational_core", True)
+    """Deja el gap-filler y el detector de señales (recordar/acompañante) en
+    no-op por defecto para todos los tests de este módulo (cada test los
+    re-mockea si necesita que el LLM 'decida' algo)."""
     monkeypatch.setattr(core, "fill_gaps", AsyncMock(return_value={}))
     monkeypatch.setattr(core, "detect_special_signals", AsyncMock(return_value={}))
     monkeypatch.setattr(core, "resolve_slot_answer", AsyncMock(return_value={}))
@@ -569,21 +564,6 @@ async def test_sensitive_medical_still_escalates_before_core():
     state.step = Step.MAIN_MENU
     await route_message(state, "estoy embarazada, ¿puedo bucear?")
     assert state.step == Step.ESCALATE
-
-
-# ---------------------------------------------------------------------------
-# Flag apagado → el núcleo no interviene (comportamiento legacy intacto)
-# ---------------------------------------------------------------------------
-
-@pytest.mark.asyncio
-async def test_flag_off_core_not_engaged(monkeypatch):
-    monkeypatch.setattr(settings, "conversational_core", False)
-    state = make_state("es")
-    with patch.object(core, "maybe_handle_turn",
-                      new=AsyncMock(side_effect=AssertionError("core must not run"))):
-        await route_message(state, "hola quiero bucear, soy certificado")
-    # (la aserción del mock es la prueba; el estado sigue el camino legacy)
-    assert state.core_pending_slot is None
 
 
 # ---------------------------------------------------------------------------

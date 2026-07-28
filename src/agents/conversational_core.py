@@ -1,7 +1,8 @@
 """Núcleo conversacional de slot-filling (docs/conversational-refactor-plan.md).
 
-Un único bucle por turno — COMPRENDER → RESOLVER → RESPONDER — sustituye a la
-máquina de pasos MIXED_* cuando `settings.conversational_core` está encendido:
+Un único bucle por turno — COMPRENDER → RESOLVER → RESPONDER — es el único camino
+de enrutado de texto libre desde Fase 4 (sustituyó a la máquina de pasos MIXED_*,
+ya retirada):
 
 1. COMPRENDER: resolver primero la respuesta corta contra el slot pendiente
    (contextual slot carryover: "sí"/"no"/"2"/"cartagena" responden a lo que se

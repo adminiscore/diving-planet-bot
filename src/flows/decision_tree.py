@@ -217,8 +217,8 @@ class ConversationState:
 
     # Slot the conversational core (src/agents/conversational_core.py) asked for
     # in its last turn, so a short answer ("sí", "no", "2", "cartagena") resolves
-    # against it (contextual slot carryover) instead of being unparseable. Only
-    # used when settings.conversational_core is on; None otherwise.
+    # against it (contextual slot carryover) instead of being unparseable.
+    # None when there is no pending slot.
     core_pending_slot: str | None = None
 
     # Actividad del acompañante detectada por la red de precisión LLM

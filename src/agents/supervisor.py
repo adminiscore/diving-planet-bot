@@ -23,11 +23,6 @@ from src.agents.escalation import (
     sensitive_response_for,
 )
 from src.agents.intent_detector import DetectedIntent, IntentDetector
-
-# detect_language_llm: ya no lo llama el supervisor (camino legacy retirado en
-# Fase 4), pero varios tests aún lo parchean como stub aquí — se conserva hasta
-# limpiar esos fixtures.
-from src.agents.language_detector import detect_language_llm  # noqa: F401
 from src.agents.lead_summary import build_lead_summary
 from src.agents.llm_extractor import fill_gaps, missing_fields
 from src.agents.rag_agent import rag_answer
@@ -1615,9 +1610,9 @@ async def _maybe_apply_llm_extraction_cutover(
         if not relevant_gaps:
             return
         patch = await fill_gaps(message, regex_intent, history=state.history, lang=state.language)
-        # Auditoría Fase B (2026-07-23): este cutover es el equivalente, en el
-        # flujo LEGACY (árbol de botones, sin `conversational_core`), de la
-        # Capa 5 del núcleo conversacional — y le faltaba el mismo saneamiento
+        # Auditoría Fase B (2026-07-23): este cutover de extracción (gated por
+        # LLM_EXTRACTION_CUTOVER_*) es el equivalente de la Capa 5 del núcleo
+        # conversacional — y le faltaba el mismo saneamiento
         # que Gadea añadió allí (commit d3ecdba): con el historial real de la
         # conversación por delante, `fill_gaps` puede alucinar un
         # group_allocation/group_size completo para un mensaje de "se añade un
@@ -2080,20 +2075,17 @@ async def _route_message_inner(state: ConversationState, message: str) -> str:
         state.history.append({"role": "assistant", "content": answer})
         return answer
 
-    # Núcleo conversacional de slot-filling (docs/conversational-refactor-plan.md),
-    # detrás de settings.conversational_core (default off — comportamiento
-    # idéntico al actual mientras esté apagado). Corre DESPUÉS del gating de
-    # seguridad de arriba (PII, sensibles, cancelación, DIVE TO HEAL, edad) y
-    # sustituye a todo el enrutado por menús de abajo. Devuelve None solo para
-    # las clases que deben seguir en los handlers deterministas legacy
-    # (keywords de escalado / menú / volver), que están más abajo.
-    if settings.conversational_core:
-        from src.agents import conversational_core
-        core_response = await conversational_core.maybe_handle_turn(
-            state, message, routing_signals=routing_signals
-        )
-        if core_response is not None:
-            return core_response
+    # Núcleo conversacional de slot-filling (docs/conversational-refactor-plan.md).
+    # Es el único camino de enrutado desde Fase 4. Corre DESPUÉS del gating de
+    # seguridad de arriba (PII, sensibles, cancelación, DIVE TO HEAL, edad).
+    # Devuelve None solo para las clases que deben seguir en los handlers
+    # deterministas de abajo (keywords de escalado / menú / volver).
+    from src.agents import conversational_core
+    core_response = await conversational_core.maybe_handle_turn(
+        state, message, routing_signals=routing_signals
+    )
+    if core_response is not None:
+        return core_response
 
     # Cliente acepta con un "si"/"dale"/"ok" una oferta que el propio bot hizo
     # en el turno anterior de pasarle con un asesor ("¿te paso el contacto de

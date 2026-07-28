@@ -12,7 +12,6 @@ Two routing paths:
   then routes after user confirms with "sí" / "yes"
 """
 
-from unittest.mock import AsyncMock
 
 import pytest
 
@@ -34,14 +33,6 @@ def make_state(lang: str = "es") -> ConversationState:
     s = ConversationState(conversation_id="test-padi")
     s.language = lang
     return s
-
-
-@pytest.fixture(autouse=True)
-def _no_llm(monkeypatch):
-    monkeypatch.setattr(
-        "src.agents.supervisor.detect_language_llm",
-        AsyncMock(return_value=None),
-    )
 
 
 # ---------------------------------------------------------------------------
