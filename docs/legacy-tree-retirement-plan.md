@@ -20,6 +20,16 @@ Orden real seguido: **P1 (seam) → P4 (core-only) → P2 (borrar código)**.
 
 **DECISIÓN DE DISEÑO (owner Gadea, 2026-07-28): "menú"/"volver" = MENSAJE NORMAL.** Se quita el manejo especial del núcleo (deja de devolver None para menú/back en `conversational_core.py:1552-1556`) → el núcleo los trata como texto conversacional → los handlers de menú-reset/back del supervisor mueren → y con ellos el último caller vivo de `process_message`.
 
+**Receta para correr la suite en local (2026-07-28, Gonzalo)**: con el flag core-on por
+defecto, dos tests **se cuelgan por RED** en local (no en CI): `test_audio_transcription`
+(descarga un audio antes de mirar la key) y cualquier test que dispare `fill_gaps`/LLM real
+sin mock. Para una baseline rápida y determinista:
+```
+OPENAI_API_KEY="" python -m pytest -q -p no:cacheprovider --ignore=tests/test_audio_transcription.py
+```
+(`OPENAI_API_KEY=""` hace que `fill_gaps` falle rápido → `{}` → degradación segura, sin
+colgarse). Baseline verde con esta receta: **1408 passed, 15 skipped** (tras pasos 1-2).
+
 **PENDIENTE (siguiente lote — el corte MAYOR, hacer fresco):**
 1. ✅ **HECHO (2026-07-28, Gonzalo)** — **Núcleo**: quitado el bloque de None-return
    de menú/back en `conversational_core.maybe_handle_turn`. "menú"/"volver"/"back" y la
