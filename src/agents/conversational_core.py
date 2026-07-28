@@ -1571,6 +1571,33 @@ async def maybe_handle_turn(
 
     state.history.append({"role": "user", "content": message})
 
+    # Disponibilidad: NO alucinar el calendario (Bloque 2.5, portado al núcleo
+    # 2026-07-24). Bug vivo en PRE: el gate del supervisor está DESPUÉS del hook
+    # del núcleo, así que con core-on "¿tienen disponibilidad el sábado?" caía a
+    # RAG y respondía "Claro que sí, tenemos disponibilidad para el sábado" —
+    # confirmando un cupo que no puede conocer. `_AVAILABILITY_PATTERN` (narrow,
+    # seguro) aplica siempre; la señal amplia (`_asks_about_availability` /
+    # `availability_question`) solo si NO hay una reserva en curso (con actividad
+    # elegida, "¿algo para más días?" es una pregunta de PLAN, no de cupo — mismo
+    # criterio que el guard `_in_active_cart_building` del supervisor legacy).
+    if supervisor._AVAILABILITY_PATTERN.search(msg_lower) or (
+        (supervisor._asks_about_availability(msg_lower)
+         or routing_signals.get("availability_question"))
+        and state.detected_activity is None
+    ):
+        avail = (
+            "¡Buena noticia! 📅 Las salidas son diarias y siempre hay disponibilidad. "
+            "Vas a poder elegir el día exacto y el número de personas directamente en el "
+            "calendario del link de reserva. 😊"
+            if state.language == "es" else
+            "Good news! 📅 Departures run daily and there's always availability. "
+            "You'll be able to pick the exact date and number of people right in the "
+            "booking link's calendar. 😊"
+        )
+        response = greeting + avail
+        state.history.append({"role": "assistant", "content": response})
+        return response
+
     # COMPRENDER (carryover PRIMERO): si hay un slot pendiente y este mensaje
     # lo RESUELVE, el carryover gana aunque el mensaje "parezca pregunta" por
     # sus palabras — "tienen 7 y 9 años" responde SLOT_AGES aunque "tienen"
