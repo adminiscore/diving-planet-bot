@@ -14,7 +14,6 @@ The tree guides customers through:
 """
 
 import json
-import re
 import unicodedata
 from dataclasses import dataclass, field
 from enum import Enum
@@ -2174,20 +2173,6 @@ class DecisionTree:
         return [ButtonOption(title=option["title"], value=option["value"]).as_chatwoot_item() for option in options]
 
 
-    def resolve_back_target(self, state: ConversationState) -> tuple[Step, str] | None:
-        if state.step in {
-            Step.SUMMARY,
-            Step.INFO_TOUR_DETAIL,
-            Step.INFO_PACKAGE_DETAIL,
-            Step.INFO_COURSE_DETAIL,
-            Step.INFO_SPECIALTY_DETAIL,
-        } and state.back_step_override and state.back_quick_replies_key:
-            return state.back_step_override, state.back_quick_replies_key
-        return None
-
-
-
-
     def _service_for_location(self, service_id: str, state: ConversationState) -> str:
         if state.location == "island":
             return ISLAND_SERVICE_MAP.get(service_id, service_id)
@@ -2438,56 +2423,6 @@ class DecisionTree:
     # ───────────────────── Cart-style mixed group flow ─────────────────────
 
 
-    @staticmethod
-    def _cart_includes(state: ConversationState, item_type: str) -> bool:
-        return any(it.get("type") == item_type for it in state.mixed_cart)
-
-
-
-    def _reset_mixed_state(self, state: ConversationState) -> None:
-        """Wipe all cart-flow state — used by 'empezar de nuevo' and after escalation."""
-        state.mixed_cart = []
-        state.mixed_pending_qty_type = None
-        state.mixed_pending_qty_plan = None
-        state.mixed_pending_qty_value = None
-        state.mixed_pending_course_question = None
-        state.mixed_pending_preview_service_id = None
-        state.mixed_pending_cert_total_qty = None
-        state.mixed_pending_cert_remaining_qty = None
-        state.mixed_pending_refresh_added_qty = None
-        state.mixed_pending_beginner_after_cert = 0
-        state.mixed_beginner_child_age = None
-        state.mixed_pending_beginner_queue = []
-        state.mixed_pending_modify_idx = None
-        state.mixed_pending_modify_refresh = False
-        state.mixed_pending_exact = False
-        state.mixed_pending_cert_narrow_kind = None
-        state.detected_cert_dives = None
-        state.detected_cert_days = None
-        state.mixed_display_currency = "USD"
-        state.mixed_final_is_colombian = None
-        state.mixed_final_has_kids_8_10 = None
-        state.mixed_final_wants_private = None
-        # kids_mention_detected NO se resetea — es un atributo del speaker que
-        # debe persistir entre flujos. Solo se limpia el age_group respondido.
-        state.kids_age_group = None
-        state.kids_count = None
-        state.kids_under_8_count = 0
-        state.kids_eight_to_ten_count = 0
-        state.mixed_last_summary = None
-        state.mixed_booking_links = []
-
-    def _clear_mixed_pending_add(self, state: ConversationState) -> None:
-        state.mixed_pending_qty_type = None
-        state.mixed_pending_qty_plan = None
-        state.mixed_pending_qty_value = None
-        state.mixed_pending_course_question = None
-        state.mixed_pending_preview_service_id = None
-        state.mixed_pending_cert_total_qty = None
-        state.mixed_pending_cert_remaining_qty = None
-        state.mixed_pending_refresh_added_qty = None
-        state.mixed_pending_exact = False
-
     def _cart_label_for(self, item_type: str, plan: str | None, lang: str) -> str:
         """Human-readable label for a cart item."""
         if item_type == "cert":
@@ -2645,23 +2580,6 @@ class DecisionTree:
 
 
 
-    def _ask_certification_message(self, state: ConversationState) -> str:
-        """Devuelve mensaje + quick replies de certificación adaptados a singular/plural/grupo."""
-        lang = state.language
-        state.step = Step.MIXED_ASK_CERTIFICATION
-        group_qty = (state.mixed_pending_cert_total_qty or 0) + sum(
-            it["qty"] for it in state.mixed_cart if it.get("type") == "cert"
-        )
-        is_group = group_qty > 1 or (state.detected_group_size or 0) > 1
-        if is_group:
-            self.set_quick_replies(state, "mixed_ask_certification_group")
-            return MESSAGES["mixed_ask_certification_group"][lang]
-        self.set_quick_replies(state, "mixed_ask_certification")
-        return MESSAGES["mixed_ask_certification"][lang]
-
-
-
-
     def _goto_island_hotel_menu_or_unknown(self, state: ConversationState) -> str:
         """Ask for hotel to coordinate pickup when the client is on the islands.
 
@@ -2777,49 +2695,6 @@ class DecisionTree:
         if lang == "es":
             return f"Perfecto, tomamos nota de que estás en *{island_name}*."
         return f"Great, we've noted you are on *{island_name}*."
-
-    def _mixed_context_recap(self, state: ConversationState, lang: str) -> str:
-        """Short reminder of what's already known (cart items + origin), shown
-        before re-asking "what activity do you want to add?" — e.g. after
-        "Volver". The underlying state was never cleared here (only the
-        transient in-progress-item fields are, via `_clear_mixed_pending_add`),
-        but a bare "¿qué actividad quieres añadir?" with no recap reads to the
-        customer as if the bot forgot everything they'd already said. Returns
-        "" when there's nothing yet worth recapping (brand-new booking).
-        """
-        lines: list[str] = []
-        if state.mixed_cart:
-            lines.append(self._format_cart_lines(state, lang))
-        if state.location == "island" and state.island:
-            loc_line = (
-                f"📍 Ya sabemos que estás en *{state.island}*"
-                if lang == "es" else f"📍 We already know you're on *{state.island}*"
-            )
-            if state.hotel and state.hotel != "Otro / No esta en la lista":
-                loc_line += f", hotel *{state.hotel}*" if lang == "es" else f", at *{state.hotel}*"
-            lines.append(loc_line + ".")
-        elif state.location == "cartagena":
-            lines.append(
-                "📍 Ya sabemos que sales desde *Cartagena*."
-                if lang == "es" else "📍 We already know you're departing from *Cartagena*."
-            )
-        if not lines:
-            return ""
-        return "\n\n".join(lines) + "\n\n"
-
-    def _goto_mixed_add_activity(self, state: ConversationState) -> str:
-        lang = state.language
-        state.step = Step.MIXED_ADD_ACTIVITY
-        self.set_quick_replies(state, "mixed_add_activity")
-        return self._mixed_context_recap(state, lang) + MESSAGES["mixed_add_activity"][lang]
-
-
-    def _goto_mixed_companion_upsell(self, state: ConversationState) -> str:
-        lang = state.language
-        state.step = Step.MIXED_COMPANION_UPSELL
-        self.set_quick_replies(state, "mixed_companion_upsell")
-        return MESSAGES["mixed_companion_upsell"][lang]
-
 
     def _refresher_info_msg(self, state: ConversationState) -> str:
         """Devuelve el mensaje de refresher en singular o plural según el grupo."""
@@ -2991,114 +2866,6 @@ class DecisionTree:
         state.mixed_pending_exact = False
         self.set_quick_replies(state, "mixed_quantity")
         return MESSAGES["mixed_add_qty"][lang]
-
-    def _reveals_non_certified_companion(self, message: str) -> bool:
-        """True if the qty answer reveals a companion who is NOT a certified diver
-        while the speaker is — e.g. 'yo buzo pero mi novia no lo es', 'ella no
-        bucea', 'uno sí y otro no', 'my girlfriend isn't certified'.
-
-        Deliberately requires the negation to attach to a certification/diving
-        concept (not just any bare 'no') so it does not misfire on phrases like
-        'no queremos separarnos' where the whole group is certified.
-        """
-        norm = "".join(
-            c for c in unicodedata.normalize("NFD", message.lower())
-            if unicodedata.category(c) != "Mn"
-        )
-        patterns = [
-            r"\bno\s+(?:es|esta|estan|son)?\s*(?:certificad|buz[oa])",
-            r"\bno\s+(?:sabe|saben)\s+bucear\b",
-            r"\bno\s+bucea[n]?\b",
-            r"\bno\s+tiene[n]?\s+(?:el\s+|la\s+)?(?:certificad|open\s*water|licencia|carne|carnet|titulo|titulacion)",
-            r"\bno\s+lo\s+(?:es|tiene|son)\b",           # "mi novia no lo es" / "no lo tiene"
-            r"\bsin\s+certifica(?:r|d)",                  # "otro sin certificar" / "sin certificado"
-            r"\bsolo\s+yo\b[^.]{0,25}(?:buce|buzo|certificad)",
-            r"\bun[oa]\s+(?:si\s+)?y\s+(?:el\s+|la\s+)?otr[oa]\s+no\b",
-            # EN
-            r"\bnot\s+(?:a\s+)?certified\b",
-            r"\bisn'?t\s+certified\b",
-            r"\b(?:doesn'?t|does not)\s+dive\b",
-            r"\bonly\s+i\b[^.]{0,20}(?:dive|certif)",
-            r"\bone\s+of\s+us\b[^.]{0,25}(?:isn'?t|is not|not\s+certif)",
-        ]
-        return any(re.search(p, norm) for p in patterns)
-
-    def _detect_cert_qty_activity_split(self, message: str) -> tuple[int, int] | None:
-        """At the certified-dive qty step, detect answers that give the dive
-        count AND mention other people doing a NON-diving activity
-        (snorkel / minicurso), so those people aren't silently dropped.
-
-        Returns (dive_count, other_count), or None if no other activity is
-        mentioned. Examples (dive, other):
-          "2 y uno que quiere hacer snorkel"   -> (2, 1)
-          "somos 2 y uno hace snorkel"         -> (1, 1)   ("somos N" = total)
-          "somos 3 y 2 hacen snorkel"          -> (1, 2)
-          "3 buceamos y 1 hace snorkel"        -> (3, 1)
-          "yo buceo y mi novia snorkel"        -> (1, 1)
-          "2 y mi hijo minicurso"              -> (2, 1)
-        """
-        norm = "".join(
-            c for c in unicodedata.normalize("NFD", message.lower())
-            if unicodedata.category(c) != "Mn"
-        )
-        norm = " ".join(norm.split())
-        other_kw = r"snorkel|esnorkel|snorkeling|careteo|minicurso|mini curso|bautismo|bautizo"
-        if not re.search(rf"\b(?:{other_kw})\b", norm):
-            return None
-
-        _wn = {"uno": 1, "una": 1, "dos": 2, "tres": 3, "cuatro": 4, "cinco": 5,
-               "seis": 6, "siete": 7, "ocho": 8, "one": 1, "two": 2, "three": 3,
-               "four": 4, "five": 5, "six": 6}
-        num_re = r"\d+|uno|una|dos|tres|cuatro|cinco|seis|siete|ocho"
-
-        def _to_int(tok: str) -> int | None:
-            return int(tok) if tok.isdigit() else _wn.get(tok)
-
-        def _first_num(text: str) -> int | None:
-            m = re.search(num_re, text)
-            return _to_int(m.group()) if m else None
-
-        # Split into clauses on "y"/"e"/"and"/"," so a number stays bound to its
-        # own activity ("3 buceamos y 1 snorkel" -> ["3 buceamos", "1 snorkel"]),
-        # instead of the leading number greedily reaching the far keyword.
-        clauses = re.split(r"\s+y\s+|\s+e\s+|\s+and\s+|,\s*", norm)
-        other_clause = next((c for c in clauses if re.search(rf"\b(?:{other_kw})\b", c)), None)
-        if other_clause is None:
-            return None
-        other_count = _first_num(other_clause) or 1  # "uno que quiere snorkel" / "mi hijo snorkel" -> 1
-
-        # "somos/venimos/vamos N" (or English) states a TOTAL, not the dive count.
-        m_total = re.search(rf"\b(?:somos|venimos|vamos|we are|there are)\s+({num_re})\b", norm)
-        total = _to_int(m_total.group(1)) if m_total else None
-
-        if total is not None:
-            dive = total - other_count
-        else:
-            # Dive count = the number from the FIRST non-other clause; if none has
-            # one ("yo buceo y mi novia snorkel"), default to 1.
-            dive = None
-            for c in clauses:
-                if re.search(rf"\b(?:{other_kw})\b", c):
-                    continue
-                n = _first_num(c)
-                if n:
-                    dive = n
-                    break
-            if dive is None:
-                dive = 1
-
-        if not dive or dive < 1 or other_count < 1 or dive > 40 or other_count > 40:
-            return None
-        return (dive, other_count)
-
-
-
-
-
-
-
-
-
 
     def _cert_subgroup_is_multi_day(self, state: ConversationState) -> bool:
         """True if the certified subgroup's plan requires an island overnight
@@ -3451,16 +3218,6 @@ class DecisionTree:
         parts.append(prompt)
         return "\n\n".join(parts)
 
-    def _goto_mixed_entry(self, state: ConversationState) -> str:
-        lang = state.language
-        state.step = Step.MIXED_ENTRY
-        self.set_quick_replies(state, "mixed_entry")
-        msg_key = "mixed_entry_cert_beg" if state.mixed_entry_path == "cert_beg" else "mixed_entry"
-        return MESSAGES[msg_key][lang]
-
-
-
-
     # ─── Cambiar origen desde el carrito ───
 
 
@@ -3518,179 +3275,7 @@ class DecisionTree:
             )
 
 
-    # ───────── Orchestrator (Fase 2) public helpers ─────────
-    # These let the tool-calling orchestrator (src/agents/orchestrator.py) drive
-    # the cart flow from free text, reusing the exact same handlers the buttons use.
-
-    # Steps where the customer was asked something and hasn't answered it yet —
-    # a message that resolves as an UNRELATED action (e.g. a location update)
-    # must not silently jump past these without re-asking. Currently only
-    # MIXED_ASK_CERTIFICATION is verified/tested; extend if a sibling case
-    # shows up (MIXED_ASK_CERT_COUNT, MIXED_ASK_BEGINNER_ACTIVITY).
-    _PENDING_QUESTION_STEPS = {Step.MIXED_ASK_CERTIFICATION}
-
-    def orchestrator_set_location(self, state: ConversationState, origin: str) -> str | None:
-        """Set the departure origin from free text, remap the cart, re-render.
-
-        Returns the rendered response, or None if `origin` is invalid.
-        """
-        if origin not in ("cartagena", "island"):
-            return None
-        lang = state.language
-        changed = state.location != origin
-        state.location = origin
-        # Switching to "island" without a known hotel: ask for it (needed for
-        # pickup) before remapping prices and showing the cart again.
-        if origin == "island" and not state.hotel:
-            state.mixed_pending_location_change = True
-            return self._goto_island_hotel_menu_or_unknown(state)
-        # Remap whenever there's a confirmed cart OR an in-progress pending
-        # plan (qty/last-dive/refresher resolution not yet added to cart) —
-        # a cart-only check would silently skip the pending-plan case.
-        if state.mixed_cart or state.mixed_pending_qty_plan:
-            self._remap_cart_for_location(state)
-        if lang == "es":
-            loc_label = "Cartagena" if origin == "cartagena" else "Islas del Rosario"
-            ack = (
-                f"📍 Origen actualizado a *{loc_label}*. Precios y servicios ajustados."
-                if changed
-                else "📍 Ya estabas con ese origen, sin cambios."
-            )
-        else:
-            loc_label = "Cartagena" if origin == "cartagena" else "Rosario Islands"
-            ack = (
-                f"📍 Origin updated to *{loc_label}*. Prices and services adjusted."
-                if changed
-                else "📍 Already set to that origin, no changes."
-            )
-        if state.mixed_cart:
-            return ack + "\n\n" + self._goto_mixed_cart_review(state)
-        # A message answering something ELSE (here: location) while a question
-        # is still pending must not silently skip past it — found live 2026-07-21:
-        # "somos 4... queremos bucear" -> asks "¿estáis certificados?", customer
-        # replies "desde cartagena" (never answers certification), the orchestrator
-        # reads it as a location update, and this used to jump straight to the
-        # generic add-activity menu, losing the certification question for good.
-        if state.step in self._PENDING_QUESTION_STEPS:
-            return ack + "\n\n" + self._ask_certification_message(state)
-        if state.step == Step.MIXED_ADD_ACTIVITY:
-            return ack + "\n\n" + self._goto_mixed_add_activity(state)
-        return ack + "\n\n" + self._goto_mixed_entry(state)
-
-    def orchestrator_remove_activity(self, state: ConversationState, activity_type: str) -> str | None:
-        """Remove every cart item of `activity_type` directly (no pick menu).
-
-        Returns the rendered response, or None if nothing matched.
-        """
-        items = [it for it in state.mixed_cart if it.get("type") == activity_type]
-        if not items:
-            return None
-        label = items[0].get("label") or activity_type
-        qty = sum(it.get("qty", 0) for it in items)
-        state.mixed_cart = [it for it in state.mixed_cart if it.get("type") != activity_type]
-        # Refresher is meaningless without the certified line it sits under.
-        if activity_type == "cert":
-            state.mixed_cart = [it for it in state.mixed_cart if it.get("type") != "refresh"]
-        # Removing a beginner line changes kids-context — re-ask next checkout.
-        if activity_type == "beginner":
-            self._invalidate_kids_answer(state)
-        lang = state.language
-        ack = (
-            f"✅ Quitado del carrito: {qty} × {label}"
-            if lang == "es"
-            else f"✅ Removed from cart: {qty} × {label}"
-        )
-        # Same rule as orchestrator_set_location: a still-pending question
-        # (e.g. certification) must not be silently dropped just because the
-        # customer's message resolved to an unrelated cart action.
-        if state.step in self._PENDING_QUESTION_STEPS:
-            return ack + "\n\n" + self._ask_certification_message(state)
-        return ack + "\n\n" + self._goto_mixed_cart_review(state)
-
-    # Steps where the customer already answered the initial "which plan"
-    # question for the activity and is now mid-way through its sub-questions
-    # or at the final preview — i.e. NOT a fresh "add an activity" moment.
-    _MIXED_ACTIVITY_MID_FLOW_STEPS = {
-        Step.MIXED_ADD_QTY,
-        Step.MIXED_CERT_LAST_DIVE,
-        Step.MIXED_CERT_REFRESH_INTEREST,
-        Step.MIXED_CERT_REFRESH_QTY,
-        Step.MIXED_CERT_SPLIT_REVIEW,
-        Step.MIXED_ADD_PREVIEW,
-    }
-
-    def orchestrator_start_activity(self, state: ConversationState, activity_type: str) -> str | None:
-        """Enter the add sub-flow for an activity, reusing _handle_mixed_add_activity.
-
-        Regression guard (found live 2026-07-09): a follow-up question asked
-        mid-flow ("vale y como reservo?" right after the final preview) was
-        misclassified by the LLM tool-router as "start a new cert booking",
-        and this unconditionally reset the flow back to the very first "which
-        plan?" question — discarding the already-resolved plan/qty/last-dive
-        answers. If we're already mid-way through resolving THIS SAME
-        activity (past its initial plan question), treat a repeat
-        start_activity as a no-op instead of restarting it, so the caller
-        falls through to RAG and actually answers the question.
-        """
-        if activity_type == state.mixed_pending_qty_type and state.step in self._MIXED_ACTIVITY_MID_FLOW_STEPS:
-            return None
-        # Same rule as orchestrator_set_location/orchestrator_remove_activity:
-        # a still-pending question (certification hasn't been answered yet)
-        # must not be silently skipped by resetting into a different activity's
-        # add-flow — re-ask it instead.
-        if state.step in self._PENDING_QUESTION_STEPS:
-            return self._ask_certification_message(state)
-        choice_map = {"cert": "1", "beginner": "2", "snorkel": "3", "course": "4", "companion": "5"}
-        choice = choice_map.get(activity_type)
-        if choice is None:
-            return None
-        self._goto_mixed_add_activity(state)
-        return self._handle_mixed_add_activity(state, choice)
-
-    def orchestrator_add_to_cart(self, state: ConversationState, activity_type: str, qty: int) -> str | None:
-        """Add `qty` of a simple activity (beginner/snorkel/companion) to the cart.
-
-        For cert/course the plan must be chosen first, so we just start the
-        sub-flow and let the existing prompts collect the remaining detail.
-        """
-        resp = self.orchestrator_start_activity(state, activity_type)
-        if resp is None:
-            return None
-        if state.step == Step.MIXED_ADD_QTY and isinstance(qty, int) and qty > 0:
-            return self._handle_mixed_add_qty(state, str(qty))
-        return resp
-
     # ─── Final-question handlers ───
-
-    def _invalidate_kids_answer(self, state: ConversationState) -> None:
-        """Forget the previous kids answer (range + counts) so the question is re-asked.
-
-        Invoked whenever the cart mutates in a way that may change the kids-age
-        context (add/modify/remove a beginner line). The next checkout will
-        re-ask via _needs_kids_question if the trigger condition still applies.
-        """
-        state.kids_age_group = None
-        state.kids_count = None
-        state.kids_under_8_count = 0
-        state.kids_eight_to_ten_count = 0
-        state.mixed_final_has_kids_8_10 = None
-
-    def _needs_kids_question(self, state: ConversationState) -> bool:
-        """Decide if we should ask about kids ages at the end of the cart-mixto.
-
-        Trigger only when there's a real signal of minors in the booking:
-        (a) cart contains minicurso (beginner) — ages matter for Bubble Makers, or
-        (b) the speaker explicitly mentioned kids/family in free text.
-        Snorkel-only and cert-only adult carts are not bothered with the question;
-        the speaker can still surface "voy con mis hijos" any time and the detector
-        catches it.
-        """
-        if state.kids_age_group is not None:
-            return False  # ya respondida
-        if self._cart_includes(state, "beginner"):
-            return True
-        return bool(getattr(state, "kids_mention_detected", False))
-
 
     def _goto_mixed_final_colombian(self, state: ConversationState) -> str:
         lang = state.language

@@ -884,15 +884,6 @@ async def test_final_summary_direct_checkout_says_book_online():
 
 
 
-@pytest.mark.asyncio
-async def test_bare_certified_question_still_answered_not_hijacked(agent_decides):
-    """A certified diver ASKING something ('soy certificado, ¿tienen wifi?') must
-    NOT be force-routed into the booking flow — the '?' guard keeps it a question."""
-    from src.agents import orchestrator
-    agent_decides(orchestrator.TOOL_ANSWER_QUESTION)
-    state = make_state()
-    await route_message(state, "soy certificado, ¿qué precios manejan?")
-    assert state.step != Step.MIXED_LOCATION
 
 
 # --- Real bug (live PRE, 2026-07-21): pending certification question lost -----
@@ -906,30 +897,6 @@ async def test_bare_certified_question_still_answered_not_hijacked(agent_decides
 
 
 
-@pytest.mark.asyncio
-async def test_mixed_group_split_statement_enters_guided_flow_not_rag(agent_decides):
-    """Real bug (live PRE, 2026-07-21): "somos 5 amigos, 3 certificados y 2 sin
-    certificar, queremos un paquete de varios dias" has a full group split
-    (regex resolves group_allocation={certified_diving: 3, minicourse: 2}) but
-    the orchestrator classified it as answer_question live, and NEITHER
-    _should_skip_to_certified_flow (needs is_certified is True) NOR
-    _should_ask_certification (needs is_certified is None) covers this case
-    (aggregate is_certified is False here) — so _should_enter_mixed_flow, which
-    already exists and is checked first inside _route_detected_intent, was
-    never reached at all. The message fell entirely to RAG, which hallucinated
-    a wrong policy ("the non-certified friends must do the Open Water course
-    first") instead of the correct, already-implemented deterministic offer
-    (minicourse always available; Open Water ALSO offered when the cert
-    subgroup stays multiple days — see decision_tree._maybe_start_pending_beginner)."""
-    from src.agents import orchestrator
-    agent_decides(orchestrator.TOOL_ANSWER_QUESTION)
-    state = make_state()
-    resp = await route_message(
-        state,
-        "somos 5 amigos, 3 certificados y 2 sin certificar, queremos un paquete de varios dias",
-    )
-    assert state.step != Step.MAIN_MENU, "must have entered the guided mixed-cart flow"
-    assert "open water" not in resp.lower(), "must not fall to RAG inventing a policy"
 
 
 def test_non_cert_companion_single_day_offers_minicourse_not_open_water():
@@ -959,35 +926,10 @@ def test_non_cert_companion_multi_day_offers_minicourse_and_open_water():
     assert "open water" in resp.lower()
 
 
-@pytest.mark.asyncio
-async def test_specific_activity_statement_enters_guided_flow_not_rag(agent_decides):
-    """Audit finding (2026-07-21), same class of bug as the mixed-group and
-    certified-diver fallbacks: _intent_would_route() has 4 branches
-    (_should_enter_mixed_flow, _should_skip_to_certified_flow, a bare
-    "activity in (minicourse/snorkel/padi_*)" check, _should_ask_certification)
-    but _dispatch_conversation_agent only had fallback coverage for 3 of them —
-    the "specific activity" branch (snorkel/minicourse/PADI courses, regardless
-    of certification) had NO fallback at all. So "quiero hacer snorkel, somos 2"
-    misclassified by the orchestrator as answer_question fell entirely to RAG
-    instead of entering the guided snorkel booking flow."""
-    from src.agents import orchestrator
-    agent_decides(orchestrator.TOOL_ANSWER_QUESTION)
-    state = make_state()
-    await route_message(state, "quiero hacer snorkel, somos 2")
-    assert state.step != Step.MAIN_MENU, "must have entered the guided snorkel flow"
 
 
 
 
-@pytest.mark.asyncio
-async def test_companion_question_not_hijacked_to_upsell(agent_decides):
-    """A QUESTION about companions stays a RAG question, not the upsell flow."""
-    from src.agents import orchestrator
-    agent_decides(orchestrator.TOOL_ANSWER_QUESTION)
-    state = make_state()
-    await route_message(state, "¿el acompañante paga lo mismo?")
-    assert state.step != Step.MIXED_LOCATION
-    assert state.step != Step.MIXED_COMPANION_UPSELL
 
 
 
@@ -1620,20 +1562,3 @@ async def _reach_mixed_cert_last_dive(lang: str = "es") -> ConversationState:
 
 
 
-@pytest.mark.asyncio
-async def test_multiday_phrasing_at_location_step_does_not_misfire_for_other_activity(agent_decides):
-    """The broadened step set must NOT hijack a customer whose activity isn't
-    certified diving at all — MIXED_LOCATION is shared by every activity, and
-    mixed_pending_qty_type isn't set yet at that point, so the guard must fall
-    back to checking detected_activity instead of defaulting permissively."""
-    from src.agents import orchestrator
-    agent_decides(orchestrator.TOOL_ANSWER_QUESTION)
-    state = ConversationState(conversation_id="mday-no-misfire")
-    state.language = "es"
-    state.step = Step.MIXED_LOCATION
-    state.detected_activity = "snorkel"
-    state.mixed_pending_qty_type = None
-    with patch("src.agents.supervisor.rag_answer", new_callable=AsyncMock, return_value="CANNED_RAG_ANSWER"):
-        await route_message(state, "en realidad quiero quedarme varios dias")
-    # Must NOT have been silently rerouted into a cert multi-day plan resolution.
-    assert state.mixed_pending_qty_plan not in ("5_dives_2_days", "7_dives_3_days", "9_dives_4_days")

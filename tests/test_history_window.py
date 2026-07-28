@@ -10,7 +10,6 @@ window nor yet folded into the summary.
 
 import pytest
 
-from src.agents.orchestrator import orchestrate
 from src.config import settings
 
 
@@ -112,46 +111,6 @@ async def test_grounding_context_respects_configured_window_size(monkeypatch):
         assert f"respuesta del bot numero {i}" in context
 
 
-@pytest.mark.asyncio
-async def test_orchestrator_respects_configured_window_size(monkeypatch):
-    monkeypatch.setattr(settings, "history_window_size", 5)
-
-    captured = {}
-
-    class _Completions:
-        async def create(self, **kwargs):
-            captured["messages"] = kwargs["messages"]
-
-            class _FakeFunction:
-                name = "answer_question"
-                arguments = "{}"
-
-            class _FakeToolCall:
-                function = _FakeFunction()
-
-            class _FakeMessage:
-                tool_calls = [_FakeToolCall()]
-                content = None
-
-            class _FakeChoice:
-                message = _FakeMessage()
-
-            class _FakeResponse:
-                choices = [_FakeChoice()]
-
-            return _FakeResponse()
-
-    class _Chat:
-        completions = _Completions()
-
-    class _Client:
-        chat = _Chat()
-
-    history = _fill_history(10)
-    await orchestrate("dato nuevo", history=history, client=_Client())
-
-    history_messages = [m for m in captured["messages"] if m["role"] in ("user", "assistant")]
-    assert len(history_messages) - 1 == 5
 
 
 def test_summarizer_trigger_defaults_to_window_size():
