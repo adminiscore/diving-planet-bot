@@ -1,16 +1,41 @@
 # Reorganización de `decision_tree.py` + decisiones pendientes post-Fase 4
 
-Estado: **PENDIENTE** (opcional/cosmético). Creado 2026-07-28 tras cerrar Fase 4
+Estado: **§1 HECHO (2026-07-28) · §2 HECHO**. Creado 2026-07-28 tras cerrar Fase 4
 (retirada del árbol de decisión legacy `MIXED_*`). Ninguna de estas tareas cambia
-comportamiento; son de organización/deuda. Hacer en PR(s) aparte, DESPUÉS del merge
-de Fase 4 a `pre_gadea` (ya hecho).
+comportamiento; son de organización/deuda.
 
 ---
 
-## 1. Renombrar/partir `decision_tree.py` (el archivo ya no es un árbol)
+## 1. ✅ HECHO (2026-07-28, Gonzalo+Claude) — `decision_tree.py` partido en módulos honestos
 
-Tras Fase 4, `src/flows/decision_tree.py` (~2.140 líneas) ya **no es un árbol de
-decisión** — el nombre quedó mentiroso. Es un cajón de sastre con 4 responsabilidades
+**El "cajón de sastre" de ~2.140 líneas se partió en 3 módulos + shim de compatibilidad.**
+Cero cambio de comportamiento (suite **1396 passed**, ruff limpio, identidad de objetos
+verificada). Reparto final:
+
+- **`src/flows/state.py`** (~240 líneas) → `Step`, `ConversationState`, `ButtonOption`,
+  `MESSAGE_SPLIT`. Módulo hoja (solo stdlib).
+- **`src/flows/catalog.py`** (~390 líneas) → `SERVICES` + `ISLAND_SERVICE_MAP` +
+  `SERVICE_TO_CART_TYPE` + `MULTI_DAY_SERVICES` + `COMPANION_PRICE` + umbrales +
+  formateadores (`_format_price`/`_format_duration`/`_extra_notes`…) + heurística de
+  idioma por stopwords. Módulo hoja (solo stdlib).
+- **`src/flows/messages.py`** (~1.520 líneas) → el dict `MESSAGES`, `BUTTON_OPTIONS`,
+  `get_button_options` y la clase `DecisionTree`. Depende solo de `state`.
+- **`src/flows/decision_tree.py`** queda como **shim de re-export** (con `__all__`) que
+  re-exporta los ~28 símbolos públicos. Así los **~40 importadores** (7 en `src/`, resto
+  tests/scripts) y los **monkeypatches de la suite** (`src.flows.decision_tree.X`) siguen
+  funcionando **sin tocar una sola línea** — se evita la churn frágil de reapuntar 40
+  sitios por cero beneficio de comportamiento. Código nuevo debe importar de los módulos
+  concretos.
+
+Grafo de dependencias sin ciclos: `state` (hoja) ← `messages`; `catalog` (hoja);
+`decision_tree` (shim) → los tres. **Pendiente opcional futuro** (aún menos prioritario):
+reapuntar los importadores a los módulos concretos y borrar el shim; y convertir el
+vestigio `DecisionTree` en funciones de módulo. No urge.
+
+<details><summary>Estado original (histórico) — el cajón de sastre pre-split</summary>
+
+Tras Fase 4, `src/flows/decision_tree.py` (~2.140 líneas) ya **no era un árbol de
+decisión** — el nombre quedó mentiroso. Era un cajón de sastre con 4 responsabilidades
 mezcladas:
 
 | Bloque | Qué es | Aprox. |
@@ -37,6 +62,8 @@ import X`. Churn mecánico grande → por eso va en PR aparte. La suite completa
 **Nota:** `cart_render.py` ya importa catálogo/estado de `decision_tree` (seam P1b
 cerrado); si se hace la extracción, `cart_render` pasaría a importar de
 `catalog.py`/`state.py` directamente.
+
+</details>
 
 ---
 
