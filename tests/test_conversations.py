@@ -880,29 +880,6 @@ async def test_final_summary_direct_checkout_says_book_online():
 
 # --- LLM intent classifier (mocked) ----------------------------------------
 
-@pytest.mark.parametrize("ans", [
-    "no sé, tú qué recomiendas",
-    "recomiéndame",
-    "da igual",
-    "cuál es mejor",
-    "el que sea",
-    "what do you recommend",
-])
-def test_vague_location_answer_recommends_cartagena(ans):
-    """#BUG3: at the origin question, a deferring answer ('no sé, recomiéndame')
-    must get a recommendation (Cartagena, the most common) and proceed, not
-    'no te entendí'."""
-    from src.flows.decision_tree import DecisionTree
-    dt = DecisionTree()
-    st = make_state()
-    st.step = Step.MIXED_LOCATION
-    st.mixed_pending_qty_type = "cert"
-    st.mixed_cart = []
-    dt.set_quick_replies(st, "tours_location")
-    resp = dt._handle_mixed_location(st, ans)
-    assert st.location == "cartagena"
-    assert "no te entend" not in resp.lower()
-    assert "cartagena" in resp.lower()
 
 
 

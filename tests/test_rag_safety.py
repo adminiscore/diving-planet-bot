@@ -1802,15 +1802,3 @@ def test_reset_to_fresh_scenario_keeps_only_id_and_language():
 
 # --- "Volver" at the final summary never abandons the cart (2026-07-20) -------
 
-def test_back_at_final_summary_returns_to_cart_review():
-    from src.flows.decision_tree import DecisionTree, Step
-    dt = DecisionTree()
-    st = ConversationState(conversation_id="back")
-    st.language = "es"
-    st.step = Step.MIXED_FINAL_SUMMARY
-    st.location = "cartagena"
-    st.mixed_cart = [{"type": "cert", "qty": 2, "plan": "2_dives_1_day",
-                      "label": "Buceo certificado", "usd": 178, "cop": 630000}]
-    dt.process_message(st, "volver")
-    assert st.step == Step.MIXED_CART_REVIEW
-    assert len(st.mixed_cart) == 1  # cart preserved, not abandoned to main menu

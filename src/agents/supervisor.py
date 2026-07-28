@@ -217,23 +217,6 @@ def _looks_like_info_question(message: str) -> bool:
     return bool(_INFO_QUESTION_STARTER_PATTERN.match(normalized))
 
 
-# Mirrors the free-text branches inside DecisionTree._handle_mixed_location
-# (location keywords + "no sé/recomiéndame" deferral phrasings) — used from
-# route_message to decide whether a message at MIXED_LOCATION genuinely
-# resolves as a location answer before forcing it into the tree, instead of
-# assuming any text there is safe to force (real bug, live PRE 2026-07-17:
-# an unrelated question at this step fell to "no entendí" in a loop).
-_LOCATION_ANSWER_RE = re.compile(
-    r"\bcartagena\b|\bctg\b|\bisla\b|\brosario\b|"
-    r"\bno\s+s[eé]\b|recomi[eé]nda|recomiendas|qu[eé]\s+recomiendas|da\s+igual|"
-    r"cu[aá]l\s+(?:es\s+)?mejor|el\s+que\s+(?:sea|quieras|recomiendes)|"
-    r"lo\s+que\s+(?:sea|recomiendes|digas|prefieras)|"
-    r"(?:t[uú]|usted)\s+(?:decide|dime|elige)|"
-    r"i\s+don'?t\s+know|whichever|you\s+(?:decide|recommend|choose)|"
-    r"what(?:'?s|\s+is)?\s+(?:do\s+you\s+recommend|better|best)",
-    re.IGNORECASE,
-)
-
 # "¿Cómo reservo?" / "how do I book?" — a question about the booking PROCESS
 # rather than about the service itself. Unlike _looks_like_info_question this
 # is NOT start-anchored: it must also catch "vale y como reservo" (a filler
@@ -471,14 +454,13 @@ _CERT_FLOW_IN_PROGRESS_STEPS = {
     Step.MIXED_CERT_SPLIT_REVIEW,
     Step.MIXED_ADD_PREVIEW,
 }
-# Companion-split-by-text is not needed at MIXED_ADD_QTY: that step's own
-# handler (_handle_mixed_add_qty) already calls
-# _detect_cert_qty_activity_split/_reveals_non_certified_companion itself.
-# MIXED_ASK_CERTIFICATION/MIXED_ASK_CERT_COUNT are excluded too (real bug found
-# via test 2026-07-21): the whole point of those steps is that we don't yet
-# know if the SPEAKER is certified, so "también snorkel" there must not be
-# read as "a certified diver revealing a non-cert companion" — it silently
-# resolved certification as "yes" and skipped the still-pending question.
+# (Constante del flujo legacy MIXED — vestigial con el núcleo on; se limpia en el
+# paso 5 junto con _MIXED_FLOW_STEPS y los guards `state.step not in ...`.)
+# Companion-split-by-text no hacía falta en MIXED_ADD_QTY: ese paso ya resolvía
+# el split de acompañante por su cuenta. MIXED_ASK_CERTIFICATION/
+# MIXED_ASK_CERT_COUNT se excluían (bug real 2026-07-21): el punto de esos pasos
+# es que aún no se sabe si el HABLANTE está certificado, así que "también snorkel"
+# ahí no debe leerse como "un buzo certificado revelando un acompañante no-cert".
 _CERT_COMPANION_SPLIT_STEPS = _CERT_FLOW_IN_PROGRESS_STEPS - {
     Step.MIXED_ADD_QTY,
     Step.MIXED_ASK_CERTIFICATION,
