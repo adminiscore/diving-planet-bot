@@ -40,9 +40,33 @@ cerrado); si se hace la extracción, `cart_render` pasaría a importar de
 
 ---
 
-## 2. Decisión pendiente — Fase C del plan de memoria ("notes" abiertas)
+## 2. ✅ RESUELTO (2026-07-28, Gonzalo+Claude) — Fase C re-cableada al núcleo con LLM
 
-Al revisar `docs/memory-context-improvement-plan.md` (2026-07-28) se detectó que la
+**Decisión del owner: opción (a) — re-cablear con LLM.** Implementado:
+- **`src/agents/notes_extractor.py`** (`extract_notes`): tool-call forzado (temp 0,
+  `settings.extraction_model`) que extrae "hechos abiertos" que un asesor querría
+  recordar (lesión/médico, accesibilidad, restricciones alimentarias, ocasiones
+  especiales, restricciones de agenda/presupuesto) y NO son slots de reserva. Dedup vs
+  las ya conocidas; en cualquier error/timeout → `[]` (nunca rompe el turno). 8 tests.
+- **Escritor en el núcleo** (`conversational_core._maybe_capture_notes`, llamado tras
+  añadir el mensaje del usuario en `maybe_handle_turn`): persiste en
+  `state.remembered_facts["notes"]` con dedup + cap `_MAX_REMEMBERED_NOTES`; gate barato
+  que salta mensajes triviales (`<3` palabras / numéricos). 4 tests de integración.
+- Alimenta el render que ya existía en `supervisor._build_extra_context` (contexto del
+  LLM) + la nota de lead del asesor.
+- **Verificado en vivo (LLM real)**: "es nuestra luna de miel…" → notes=`['luna de
+  miel', 'quieren algo especial de snorkel']`, en contexto; reserva sin hecho abierto →
+  sin notes (0 falsos positivos).
+- **División de labores** (hallazgo al verificar): lo **médico/adaptativo** lo intercepta
+  antes la **red de precisión LLM de enrutado** (→ DIVE-TO-HEAL, vía dedicada al asesor),
+  así que no llega al núcleo; la captura de notes cubre el espacio COMPLEMENTARIO (hechos
+  abiertos no-sensibles). Ambos informan al asesor.
+- Suite **1396 passed**, ruff limpio. `docs/archive/memory-context-improvement-plan.md` archivado
+  (disparador de abajo cumplido).
+
+### Registro de la decisión (histórico)
+
+Al revisar `docs/archive/memory-context-improvement-plan.md` (2026-07-28) se detectó que la
 **Fase C ("notes" = hechos abiertos que no encajan en las 5 categorías fijas, p. ej.
 "padre con rodilla operada, evitar planes físicos")** quedó **INACTIVA** tras Fase 4:
 
@@ -68,5 +92,5 @@ el legacy). **Fases B (resumen progresivo) y A (ventana) siguen VIVAS y funciona
 
 ### Disparador de archivado
 **Una vez tomada la decisión E IMPLEMENTADA (opción a o b), mover
-`docs/memory-context-improvement-plan.md` a `docs/archive/`** — hasta entonces se
+`docs/archive/memory-context-improvement-plan.md` a `docs/archive/`** — hasta entonces se
 queda en `docs/` como recordatorio de este cabo suelto.

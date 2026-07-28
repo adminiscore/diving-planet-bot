@@ -1,3 +1,8 @@
+> **ARCHIVADO 2026-07-28.** Fase A (ventana) y Fase B (resumen progresivo): VIVAS.
+> Fase C (notes = hechos abiertos): **RE-CABLEADA al núcleo con LLM** — ver
+> `docs/future/decision-tree-reorg.md` §2 y `src/agents/notes_extractor.py`. Este doc
+> queda como registro histórico; no hay nada pendiente aquí.
+
 # Plan de mejora de memoria/contexto (B + C + A)
 
 Estado: **B, C y A implementadas y verificadas en vivo en PRE (2026-07-17).** Este documento es la referencia técnica de las 3 fases acordadas, implementadas en orden **B → C → A**. Ver también los bugs reales encontrados y arreglados durante las pruebas en vivo (bloqueo de botones, precisión de precio de buceo, falso positivo de "planes", fallback de certificación desconocida, indexación en blanco del descuento de grupo, cálculo de precios derivados) documentados en `docs/HISTORY.md` v0.20.18 a v0.20.24.

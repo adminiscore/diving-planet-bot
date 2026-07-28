@@ -1067,7 +1067,7 @@ def _build_extra_context(state: ConversationState) -> str | None:
         parts.append("The conversation is currently happening in English.")
 
     # Resumen progresivo de la conversación (Fase B, ver
-    # docs/memory-context-improvement-plan.md): cubre detalles mencionados
+    # docs/archive/memory-context-improvement-plan.md): cubre detalles mencionados
     # hace muchos turnos que ya salieron de la ventana cruda de mensajes
     # recientes que usan rag_agent.py/orchestrator.py.
     if state.conversation_summary:
@@ -1808,7 +1808,7 @@ _PURE_COMPANION_RE = re.compile(
 async def route_message(state: ConversationState, message: str) -> str:
     """Public entry point. Delegates to the actual routing logic, then
     updates the rolling conversation summary (Fase B, see
-    docs/memory-context-improvement-plan.md) once per turn — a thin wrapper
+    docs/archive/memory-context-improvement-plan.md) once per turn — a thin wrapper
     so the summary check runs regardless of which internal branch below
     handled the message, without threading it through every early return."""
     response = await _route_message_inner(state, message)

@@ -74,7 +74,7 @@ class Settings(BaseSettings):
     default_language: str = "es"
     supported_languages: str = "es,en"
 
-    # --- Conversation memory (Fase A, docs/memory-context-improvement-plan.md) ---
+    # --- Conversation memory (Fase A, docs/archive/memory-context-improvement-plan.md) ---
     # How many raw state.history messages every RAG/orchestrator call reads
     # (rag_agent.py's LLM answer + grounding context, orchestrator.py's
     # decision). The rolling-summary trigger (conversation_summarizer.py)

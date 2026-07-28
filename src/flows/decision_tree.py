@@ -194,7 +194,7 @@ class ConversationState:
     # the whole conversation (NOT cleared with the cart).
     remembered_facts: dict | None = None
     # Rolling summary of the conversation so far (Fase B, see
-    # docs/memory-context-improvement-plan.md): once `history` grows past the
+    # docs/archive/memory-context-improvement-plan.md): once `history` grows past the
     # raw window every RAG/orchestrator call actually reads, details mentioned
     # earlier would otherwise be silently unreachable even though they're
     # still stored. `conversation_summary_through` is the index into

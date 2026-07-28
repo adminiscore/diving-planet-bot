@@ -1,4 +1,4 @@
-"""Rolling conversation summary — Fase B of docs/memory-context-improvement-plan.md.
+"""Rolling conversation summary — Fase B of docs/archive/memory-context-improvement-plan.md.
 
 Every RAG/orchestrator call only ever reads the last N messages of
 `state.history` (see rag_agent.py / orchestrator.py). Once a conversation
@@ -21,7 +21,7 @@ logger = logging.getLogger("uvicorn.error")
 
 # How many NEW messages must accumulate since the last summary update before
 # generating another one. Derived from settings.history_window_size (Fase A,
-# docs/memory-context-improvement-plan.md) so it stays in sync with the raw
+# docs/archive/memory-context-improvement-plan.md) so it stays in sync with the raw
 # history window used by rag_agent.py/orchestrator.py — there is never a gap
 # of messages that are neither in the raw window nor yet folded into the
 # summary. Snapshotted at import time (like settings.openai_model elsewhere);

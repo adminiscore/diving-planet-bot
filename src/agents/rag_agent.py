@@ -1409,7 +1409,7 @@ async def rag_answer(
         messages = [{"role": "system", "content": system_prompt}]
 
         # Add conversation history (settings.history_window_size messages max,
-        # to keep a longer thread — see Fase A, docs/memory-context-improvement-plan.md)
+        # to keep a longer thread — see Fase A, docs/archive/memory-context-improvement-plan.md)
         if history:
             for msg in history[-settings.history_window_size:]:
                 messages.append({"role": msg["role"], "content": redact_pii(msg["content"])})

@@ -534,7 +534,7 @@ Una vez todos los dominios migrados y estables en producción durante un periodo
 razonable (a decidir con el equipo, ej. 2-4 semanas sin incidentes): eliminar el código
 regex ya muerto, actualizar toda la documentación, y cerrar este plan como completado
 (mover a `docs/project-history/` como referencia histórica, igual que se hizo con
-`docs/memory-context-improvement-plan.md`).
+`docs/archive/memory-context-improvement-plan.md`).
 
 ## 5. Formato del eval-set
 

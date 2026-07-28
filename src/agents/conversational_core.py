@@ -38,6 +38,7 @@ from src.agents.llm_extractor import (
     missing_fields,
     resolve_slot_answer,
 )
+from src.agents.notes_extractor import extract_notes
 from src.flows import cart_render
 from src.flows.decision_tree import ConversationState, Step
 from src.utils.fuzzy import is_affirmative, is_negative
@@ -1011,6 +1012,37 @@ def _relevant_gaps(state: ConversationState, intent, message: str) -> list[str]:
     return gaps
 
 
+async def _maybe_capture_notes(state: ConversationState, message: str) -> None:
+    """(Fase C, re-cableado 2026-07-28 — decisión owner: con LLM) Captura hechos
+    abiertos que un asesor querría recordar (lesión/médico, accesibilidad,
+    ocasión especial, restricciones) y los persiste en
+    `state.remembered_facts["notes"]` → alimenta `_build_extra_context` (contexto
+    del LLM) y la nota de lead del asesor, que ya renderizan esa lista.
+
+    Gate barato: se salta mensajes triviales (numéricos / <3 palabras) para no
+    gastar una llamada en "sí"/"2"/"cartagena". Cualquier fallo se traga — nunca
+    puede romper el turno (mismo principio que el resto del núcleo)."""
+    from src.agents import supervisor  # lazy
+
+    stripped = message.strip()
+    if stripped.isdigit() or len(stripped.split()) < 3:
+        return
+    try:
+        facts = state.remembered_facts if state.remembered_facts is not None else {}
+        existing = list(facts.get("notes") or [])
+        new_notes = await extract_notes(
+            message, history=state.history, existing_notes=existing, lang=state.language
+        )
+        if not new_notes:
+            return
+        notes = existing + [n for n in new_notes if n not in existing]
+        facts["notes"] = notes[-supervisor._MAX_REMEMBERED_NOTES:]
+        state.remembered_facts = facts
+        logger.info(f"[CORE] notes captured -> {new_notes}")
+    except Exception as exc:  # noqa: BLE001
+        logger.warning(f"[CORE] notes capture failed (ignored): {exc}")
+
+
 async def _understand(state: ConversationState, message: str) -> tuple:
     """Regex fast-path + gap-fill LLM sobre los campos que la CONVERSACIÓN aún
     no conoce (Fix B: nunca se piden campos que el estado ya tiene), y volcado
@@ -1577,6 +1609,13 @@ async def maybe_handle_turn(
     greeting = _greeting(state) if first_turn else ""
 
     state.history.append({"role": "user", "content": message})
+
+    # (Fase C) Capturar hechos abiertos que un asesor querría recordar
+    # (lesión/médico, accesibilidad, ocasión especial, restricciones) →
+    # remembered_facts["notes"]. Corre en cualquier mensaje sustantivo, sin
+    # afectar el enrutado del turno (solo escribe estado); un mensaje puede
+    # traer una nota junto a una pregunta, una respuesta de slot o una reserva.
+    await _maybe_capture_notes(state, message)
 
     # Disponibilidad: NO alucinar el calendario (Bloque 2.5, portado al núcleo
     # 2026-07-24). Bug vivo en PRE: el gate del supervisor está DESPUÉS del hook

@@ -28,6 +28,7 @@ def _core_on(monkeypatch):
     monkeypatch.setattr(core, "fill_gaps", AsyncMock(return_value={}))
     monkeypatch.setattr(core, "detect_special_signals", AsyncMock(return_value={}))
     monkeypatch.setattr(core, "resolve_slot_answer", AsyncMock(return_value={}))
+    monkeypatch.setattr(core, "extract_notes", AsyncMock(return_value=[]))  # Fase C: no-op por defecto
 
 
 # ---------------------------------------------------------------------------
@@ -1999,3 +2000,63 @@ async def test_welcome_language_llm_not_called_when_heuristic_hits(monkeypatch):
         await route_message(state, "hola quiero bucear")
     assert state.language == "es"
     assert called is False
+
+
+# ---------------------------------------------------------------------------
+# Fase C — memoria de "notes" (hechos abiertos) re-cableada al núcleo
+# (docs/future/decision-tree-reorg.md §2; decisión owner 2026-07-28: con LLM)
+# ---------------------------------------------------------------------------
+
+@pytest.mark.asyncio
+async def test_fase_c_notes_captured_and_rendered(monkeypatch):
+    """Un hecho abierto no-médico ("es nuestra luna de miel") se captura,
+    persiste en remembered_facts["notes"] y aparece en el contexto que ve el
+    LLM (_build_extra_context). (Lo médico lo intercepta antes el enrutado
+    sensible/DIVE-TO-HEAL — vía dedicada al asesor — así que el ejemplo del
+    núcleo es un hecho abierto que sí le llega.)"""
+    from src.agents.supervisor import _build_extra_context
+
+    monkeypatch.setattr(core, "extract_notes",
+                        AsyncMock(return_value=["es su luna de miel"]))
+    state = make_state("es")
+    await route_message(state, "hola, es nuestra luna de miel y queremos bucear desde cartagena")
+    assert state.remembered_facts.get("notes") == ["es su luna de miel"]
+    ctx = _build_extra_context(state)
+    assert "luna de miel" in ctx.lower()
+
+
+@pytest.mark.asyncio
+async def test_fase_c_notes_dedup_and_cap(monkeypatch):
+    """No se duplican notas ya conocidas y se respeta el cap _MAX_REMEMBERED_NOTES."""
+    from src.agents import supervisor
+
+    state = make_state("es")
+    state.remembered_facts = {"notes": ["es nuestro aniversario"]}
+    # el mensaje repite la conocida + trae una nueva
+    monkeypatch.setattr(core, "extract_notes",
+                        AsyncMock(return_value=["es nuestro aniversario", "viajan con un bebé"]))
+    await route_message(state, "somos pareja, es nuestro aniversario y viajamos con un bebé")
+    notes = state.remembered_facts["notes"]
+    assert notes.count("es nuestro aniversario") == 1
+    assert "viajan con un bebé" in notes
+    assert len(notes) <= supervisor._MAX_REMEMBERED_NOTES
+
+
+@pytest.mark.asyncio
+async def test_fase_c_gate_skips_trivial_message(monkeypatch):
+    """Mensaje trivial (<3 palabras) NO dispara la llamada de captura (coste)."""
+    monkeypatch.setattr(core, "extract_notes",
+                        AsyncMock(side_effect=AssertionError("no debe llamarse en mensaje trivial")))
+    state = make_state("es")
+    state.core_pending_slot = core.SLOT_NATIONALITY
+    await route_message(state, "no")  # 1 palabra → gate lo salta
+
+
+@pytest.mark.asyncio
+async def test_fase_c_capture_failure_never_breaks_turn(monkeypatch):
+    """Un fallo del extractor de notas se traga: el turno responde igual."""
+    monkeypatch.setattr(core, "extract_notes",
+                        AsyncMock(side_effect=RuntimeError("boom")))
+    state = make_state("es")
+    resp = await route_message(state, "quiero bucear, somos 2, desde cartagena, viajamos con mi suegra")
+    assert resp  # respondió pese al fallo de la captura
