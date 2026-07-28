@@ -200,12 +200,13 @@ async def test_language_detection_spanish_text():
 
 
 @pytest.mark.asyncio
-async def test_back_keyword_outside_reservar_branch_falls_back_to_main_menu():
-    """When back keyword is used at a step with no BACK_STEP mapping, fall back to MAIN_MENU."""
+async def test_back_keyword_handled_as_normal_message_by_core():
+    """Fase 4 (decisión owner 2026-07-28): "volver" ya NO resetea a MAIN_MENU —
+    el núcleo lo trata como mensaje normal (menú/volver = conversación)."""
     state = make_state()
     state.step = Step.FREE_TEXT
     await route_message(state, "volver")
-    assert state.step == Step.MAIN_MENU
+    assert state.step != Step.MAIN_MENU
 
 
 # ===========================================================================
@@ -344,25 +345,12 @@ async def test_keyword_asesor_mid_flow():
 
 
 
-@pytest.mark.asyncio
-async def test_keyword_menu_resets_from_deep_step():
-    state = make_state()
-    state.location = "cartagena"
-    state.step = Step.MIXED_ADD_CERT_PLAN  # deep in the cart flow
-    await route_message(state, "menu")
-    assert state.step == Step.MAIN_MENU
-
-
-@pytest.mark.asyncio
-async def test_keyword_volver_goes_back_one_step():
-    """'volver' from a deep cart step must go ONE step up, not to MAIN_MENU."""
-    state = make_state()
-    state.location = "cartagena"
-    state.step = Step.MIXED_ADD_CERT_PLAN
-    await route_message(state, "volver")
-    assert state.step == Step.MIXED_ADD_ACTIVITY
-
-
+# (Fase 4, 2026-07-28) Retirados `test_keyword_menu_resets_from_deep_step` y
+# `test_keyword_volver_goes_back_one_step`: probaban la navegación menú/volver
+# por los pasos `MIXED_*` del árbol legacy (reset a MAIN_MENU / back-one-step),
+# que se elimina en esta fase. Con el núcleo, menú/volver son mensaje normal —
+# ver `test_back_keyword_handled_as_normal_message_by_core` arriba y el del
+# núcleo `test_menu_keyword_handled_as_normal_message_by_core`.
 
 
 @pytest.mark.asyncio

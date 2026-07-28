@@ -50,15 +50,16 @@ async def test_wants_human_signal_escalates_when_keyword_list_misses():
 
 
 @pytest.mark.asyncio
-async def test_wants_menu_signal_resets_when_keyword_list_misses():
-    """"mejor empecemos de cero" no está en MENU_KEYWORDS pero pide lo mismo
-    que "menu"/"inicio"."""
+async def test_wants_menu_signal_no_longer_resets_menu_is_normal_message():
+    """Fase 4 (decisión owner 2026-07-28): la señal `wants_menu_or_restart` ya
+    NO fuerza un reset a MAIN_MENU — "menú"/"empecemos de cero" son mensaje
+    normal que el núcleo reconduce a la reserva."""
     state = make_state()
-    state.step = Step.MIXED_LOCATION
+    state.step = Step.FREE_TEXT
     with patch("src.agents.supervisor.detect_routing_signals",
                new=AsyncMock(return_value={"wants_menu_or_restart": True})):
         await route_message(state, "mejor empecemos de cero")
-    assert state.step == Step.MAIN_MENU
+    assert state.step != Step.MAIN_MENU
 
 
 @pytest.mark.asyncio

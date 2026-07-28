@@ -1549,11 +1549,11 @@ async def maybe_handle_turn(
     msg_lower = message.strip().lower()
     if supervisor._matches_escalation_keyword(msg_lower) or routing_signals.get("wants_human"):
         return None
-    if (
-        msg_lower in supervisor.MENU_KEYWORDS or msg_lower in supervisor.BACK_KEYWORDS
-        or msg_lower == "back" or routing_signals.get("wants_menu_or_restart")
-    ):
-        return None
+    # (Fase 4, decisión owner 2026-07-28) "menú"/"volver"/"back" = MENSAJE NORMAL:
+    # el núcleo los trata como texto conversacional (re-orienta a la reserva) en
+    # vez de resetear a un menú de botones que ya no existe. Con esto muere el
+    # último caller vivo del árbol legacy (los handlers menú-reset/back del
+    # supervisor). Antes esto devolvía None → caía a esos handlers.
 
     # Primer mensaje: inferir idioma como hace la entrada legacy, y marcar que
     # toca presentarse (Coral + Diving Planet, tono cercano — regla de persona).

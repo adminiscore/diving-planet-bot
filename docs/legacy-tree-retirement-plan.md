@@ -21,7 +21,16 @@ Orden real seguido: **P1 (seam) → P4 (core-only) → P2 (borrar código)**.
 **DECISIÓN DE DISEÑO (owner Gadea, 2026-07-28): "menú"/"volver" = MENSAJE NORMAL.** Se quita el manejo especial del núcleo (deja de devolver None para menú/back en `conversational_core.py:1552-1556`) → el núcleo los trata como texto conversacional → los handlers de menú-reset/back del supervisor mueren → y con ellos el último caller vivo de `process_message`.
 
 **PENDIENTE (siguiente lote — el corte MAYOR, hacer fresco):**
-1. **Núcleo**: quitar el bloque de None-return de menú/back (`conversational_core.py:1552-1556`). Impacta ~7 archivos de test que asertan reset de menú (test_conversational_core, test_routing_signals_integration, test_conversations, etc.) — ajustar/retirar.
+1. ✅ **HECHO (2026-07-28, Gonzalo)** — **Núcleo**: quitado el bloque de None-return
+   de menú/back en `conversational_core.maybe_handle_turn`. "menú"/"volver"/"back" y la
+   señal `wants_menu_or_restart` son ahora MENSAJE NORMAL (el núcleo los reconduce, sin
+   reset a MAIN_MENU). 5 tests ajustados: reescritos los 3 que valen como regresión de la
+   nueva conducta (`test_menu_keyword_handled_as_normal_message_by_core`,
+   `test_back_keyword_handled_as_normal_message_by_core`,
+   `test_wants_menu_signal_no_longer_resets_menu_is_normal_message`) y retirados los 2 de
+   navegación por paso `MIXED_*` (`menu_resets_from_deep_step`, `volver_goes_back_one_step`).
+   Suite verde (1410 passed, receta `OPENAI_API_KEY="" --ignore=test_audio_transcription`).
+   → Con esto los handlers menú-reset/back del supervisor quedan MUERTOS (paso 2).
 2. **Supervisor**: borrar los handlers menú-reset/back/greeting-restart (ahora muertos) + los 2 bloques con `process_message`.
 3. **decision_tree.py**: borrar `process_message` + TODOS los handlers `_handle_*` legacy (~6000 líneas) con el eliminador iterativo de código muerto, PROTEGIENDO la base compartida (SERVICES/State/Step/MESSAGES/MESSAGE_SPLIT), los 9 símbolos que usa `cart_render` (`_service_for_location`, `_cart_label_for`, `_cart_service_id`, `_parse_mixed_quantity`, `_cart_booking_blocks`, `_format_activity_booking_messages`, `_goto_mixed_final_summary`, `_is_contact_only_service`, `_resolve_service_booking_url`), y `set_quick_replies` (si queda vivo). Verificar suite + smoke del render tras cada paso.
 4. Módulo `orchestrator` + 27 pasos `Step.MIXED_*` (+ el resto del enum legacy si queda huérfano).

@@ -552,11 +552,15 @@ async def test_escalation_keyword_still_escalates():
 
 
 @pytest.mark.asyncio
-async def test_menu_keyword_falls_through_to_legacy_reset():
+async def test_menu_keyword_handled_as_normal_message_by_core():
+    """Fase 4 (decisión owner 2026-07-28): "menú"/"volver" ya NO resetean a un
+    menú de botones — el núcleo los trata como mensaje normal (reconduce a la
+    reserva). No hay reset a MAIN_MENU y el núcleo responde algo."""
     state = make_state("es")
     state.step = Step.FREE_TEXT
-    await route_message(state, "menu")
-    assert state.step == Step.MAIN_MENU
+    resp = await route_message(state, "menu")
+    assert state.step != Step.MAIN_MENU
+    assert resp
 
 
 @pytest.mark.asyncio
