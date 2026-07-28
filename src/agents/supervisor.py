@@ -27,7 +27,7 @@ from src.agents.lead_summary import build_lead_summary
 from src.agents.llm_extractor import fill_gaps, missing_fields
 from src.agents.rag_agent import rag_answer
 from src.config import settings
-from src.flows import eligibility
+from src.flows import cart_render, eligibility
 from src.flows.decision_tree import (
     ConversationState,
     DecisionTree,
@@ -871,7 +871,7 @@ def _append_mixed_cart_item(state: ConversationState, item_type: str, plan: str 
         "type": item_type,
         "qty": qty,
         "plan": plan,
-        "label": decision_tree._cart_label_for(item_type, plan, lang),
+        "label": cart_render.cart_label_for(item_type, plan, lang),
     })
 
 
@@ -1382,7 +1382,7 @@ def _build_extra_context(state: ConversationState) -> str | None:
 
             seen_service_ids: set[str] = set()
             for item in cart:
-                cart_service_id = decision_tree._cart_service_id(
+                cart_service_id = cart_render.cart_service_id(
                     item.get("type"), item.get("plan"), state
                 )
                 if not cart_service_id or cart_service_id in seen_service_ids:

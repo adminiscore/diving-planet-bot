@@ -759,11 +759,11 @@ def test_extra_context_includes_current_datetime():
 @pytest.mark.asyncio
 async def test_final_summary_booking_link_localized_to_english():
     """English conversation → booking link uses ?language=en (catalog stores es)."""
-    from src.flows.decision_tree import DecisionTree
+    from src.flows import cart_render
     state = make_state(lang="en")
     state.mixed_cart = [{"type": "cert", "qty": 1, "plan": "2_dives_1_day", "label": "Diving"}]
     state.mixed_display_currency = "USD"
-    resp = DecisionTree()._goto_mixed_final_summary(state)
+    resp = cart_render.goto_final_summary(state)
     assert "language=en" in resp
     assert "language=es" not in resp
 
@@ -773,11 +773,11 @@ async def test_final_summary_generic_link_uses_info_plus_advisor():
     """A plan without a direct book.divingplanet.org checkout (info-only page)
     must NOT promise 'book online' — it shows the info link + an advisor handoff
     to book (no WhatsApp number handed out, owner decision 2026-07-20)."""
-    from src.flows.decision_tree import DecisionTree
+    from src.flows import cart_render
     state = make_state()
     state.mixed_cart = [{"type": "cert", "qty": 2, "plan": "3_dives_1_day", "label": "3 dives"}]
     state.mixed_display_currency = "USD"
-    resp = DecisionTree()._goto_mixed_final_summary(state)
+    resp = cart_render.goto_final_summary(state)
     assert "divingplanet.org/tours" in resp          # generic info page
     assert "book.divingplanet.org" not in resp        # no fake checkout link
     assert "asesor" in resp.lower()                    # advisor handoff to book
@@ -792,11 +792,11 @@ async def test_final_summary_price_arithmetic_adds_up():
     multiply) — a fractional catalog price must not produce '2 × $126 = $251'."""
     import re
 
-    from src.flows.decision_tree import DecisionTree
+    from src.flows import cart_render
     state = make_state()
     state.mixed_cart = [{"type": "snorkel", "qty": 12, "label": "Snorkel"}]  # $125.57 p.p.
     state.mixed_display_currency = "USD"
-    resp = DecisionTree()._goto_mixed_final_summary(state)
+    resp = cart_render.goto_final_summary(state)
     m = re.search(r"(\d+) × \$(\d+) USD p\.p\. = \*\$(\d+) USD\*", resp)
     assert m, resp
     qty, pp, sub = int(m.group(1)), int(m.group(2)), int(m.group(3))
@@ -806,11 +806,11 @@ async def test_final_summary_price_arithmetic_adds_up():
 @pytest.mark.asyncio
 async def test_final_summary_direct_checkout_says_book_online():
     """A plan with a direct book.divingplanet.org checkout keeps the online CTA."""
-    from src.flows.decision_tree import DecisionTree
+    from src.flows import cart_render
     state = make_state()
     state.mixed_cart = [{"type": "cert", "qty": 1, "plan": "5_dives_2_days", "label": "5 dives"}]
     state.mixed_display_currency = "USD"
-    resp = DecisionTree()._goto_mixed_final_summary(state)
+    resp = cart_render.goto_final_summary(state)
     assert "book.divingplanet.org" in resp
     assert "reservando online" in resp
     assert "haz clic aquí" in resp.lower()

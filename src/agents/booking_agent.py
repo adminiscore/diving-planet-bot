@@ -6,7 +6,7 @@ to the Roverd booking system (book.divingplanet.org) with
 pre-filled parameters when possible.
 
 Current status: booking-link resolution is already handled inline by
-`decision_tree._resolve_service_booking_url` (picks the Cartagena vs.
+`cart_render._resolve_service_booking_url` (picks the Cartagena vs.
 island link per service) and the checkout handlers, which either send the
 link directly (international clients) or escalate to an advisor. This module
 is a placeholder for a future, centralized Roverd deep-link generator that
