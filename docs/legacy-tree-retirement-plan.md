@@ -16,11 +16,18 @@ Orden real seguido: **P1 (seam) → P4 (core-only) → P2 (borrar código)**.
 - **Flag flippeado a `True` por defecto** (`config.py`) — core-only en dev/tests.
 - **Borrado de código del supervisor**: `_route_message_inner` −~566 líneas (bloque understanding-first + cola MENU_STEPS/SUMMARY/MIXED/fallback) + **48 funciones helper huérfanas** eliminadas en cascada. `supervisor.py`: **5908 → 3493 líneas**.
 
-**PENDIENTE:**
-1. 4 funciones dead-en-src pero con test unitario (`_answer_offers_advisor`, `_detect_companion_intent`, `_mentions_diving_intent`, `_mentions_snorkeling_intent`) → borrar función + su test.
-2. Los **35 handlers `_handle_mixed*`** en `decision_tree.py` — pero `process_message` (que los despacha por `state.step`) sigue VIVO (lo usa el handler de menú). Separar el dispatch `MIXED_*` muerto de `process_message` vivo. Ligado a la **decisión de diseño: ¿qué hacen "menú"/"back" en un núcleo puro sin botones?**
-3. Módulo `orchestrator` (el núcleo no lo usa) + 27 pasos `Step.MIXED_*`.
-4. Quitar el flag `conversational_core` + el gate en el supervisor + `test_flag_off_core_not_engaged` + limpiar fixtures que parchean `detect_language_llm` (conservado con `# noqa`) + `CONVERSATIONAL_CORE` en `docker-compose.vps.yml`.
+**HALLAZGO 2026-07-28 (importante): NO es solo `MIXED_*` — el ÁRBOL LEGACY ENTERO está muerto.** `process_message` (que despacha TODA la tabla de pasos: INFO/COURSES/PRICING/BOOKING/LOGISTICS/ISLAND/MIXED) solo se llama desde 2 bloques MUERTOS de `_route_message_inner` (un "back" que chequea pasos `MIXED_*` que nunca ocurren, y el "restart por saludo" que el núcleo ya maneja). Así que **~6000 líneas de handlers `_handle_*` en `decision_tree.py` son deletables**, no solo los 35 MIXED.
+
+**DECISIÓN DE DISEÑO (owner Gadea, 2026-07-28): "menú"/"volver" = MENSAJE NORMAL.** Se quita el manejo especial del núcleo (deja de devolver None para menú/back en `conversational_core.py:1552-1556`) → el núcleo los trata como texto conversacional → los handlers de menú-reset/back del supervisor mueren → y con ellos el último caller vivo de `process_message`.
+
+**PENDIENTE (siguiente lote — el corte MAYOR, hacer fresco):**
+1. **Núcleo**: quitar el bloque de None-return de menú/back (`conversational_core.py:1552-1556`). Impacta ~7 archivos de test que asertan reset de menú (test_conversational_core, test_routing_signals_integration, test_conversations, etc.) — ajustar/retirar.
+2. **Supervisor**: borrar los handlers menú-reset/back/greeting-restart (ahora muertos) + los 2 bloques con `process_message`.
+3. **decision_tree.py**: borrar `process_message` + TODOS los handlers `_handle_*` legacy (~6000 líneas) con el eliminador iterativo de código muerto, PROTEGIENDO la base compartida (SERVICES/State/Step/MESSAGES/MESSAGE_SPLIT), los 9 símbolos que usa `cart_render` (`_service_for_location`, `_cart_label_for`, `_cart_service_id`, `_parse_mixed_quantity`, `_cart_booking_blocks`, `_format_activity_booking_messages`, `_goto_mixed_final_summary`, `_is_contact_only_service`, `_resolve_service_booking_url`), y `set_quick_replies` (si queda vivo). Verificar suite + smoke del render tras cada paso.
+4. Módulo `orchestrator` + 27 pasos `Step.MIXED_*` (+ el resto del enum legacy si queda huérfano).
+5. Quitar el flag `conversational_core` + gate en supervisor + `test_flag_off_core_not_engaged` + fixtures que parchean `detect_language_llm` + `CONVERSATIONAL_CORE` en `docker-compose.vps.yml`.
+
+**Ya HECHO (2026-07-28, además de lo de arriba):** las 4 funciones dead-con-test-unitario (`_answer_offers_advisor`, `_detect_companion_intent`, `_mentions_diving_intent`, `_mentions_snorkeling_intent`) borradas + sus tests. supervisor.py: 5908 → **3257 líneas**.
 
 **Lección operativa**: `ruff --fix` quita imports que solo se usan vía monkeypatch en tests (`detect_language_llm`) → rompió 144 tests; los imports huérfanos se limpian a mano.
 
