@@ -4,7 +4,7 @@ negations / multi-intent messages."""
 import pytest
 
 from src.agents.intent_detector import IntentDetector
-from src.flows.decision_tree import ConversationState, Step
+from src.flows.decision_tree import ConversationState
 
 det = IntentDetector()
 
@@ -369,17 +369,6 @@ def test_last_dive_not_falsely_detected(msg):
     assert _d(msg).last_dive_over_2_years is None
 
 
-def test_recent_dive_skips_last_dive_question_end_to_end():
-    """A fully-specified cert booking that states a recent last dive must NOT be
-    re-asked the '¿más de 2 años?' question — it goes straight to the preview."""
-    from src.agents.supervisor import _route_detected_intent
-    st = ConversationState(conversation_id="ret"); st.language = "es"
-    msg = "somos 2 buzos certificados, 2 inmersiones, desde cartagena, buceamos hace un mes"
-    _route_detected_intent(_d(msg), st, msg)
-    assert st.step != Step.MIXED_CERT_LAST_DIVE
-    assert st.step == Step.MIXED_ADD_PREVIEW
-
-
 # --- Info retention: "N persona" singular counts as group size ---------------
 
 @pytest.mark.parametrize("msg,expected", [
@@ -533,30 +522,6 @@ def test_bare_pack_en_word_all_numbers(n):
 
 
 
-
-
-def test_explicit_two_dives_skips_cert_plan_question():
-    """A certified request that already names the 2-dive plan must NOT re-ask
-    '¿qué plan?' — it should advance to the last-dive safety question."""
-    from src.agents.supervisor import _route_detected_intent
-    st = ConversationState(conversation_id="2dive"); st.language = "es"
-    intent = _d("somos 2 buzos certificados, quiero 2 inmersiones, desde cartagena")
-    _route_detected_intent(intent, st, "somos 2 buzos certificados, quiero 2 inmersiones, desde cartagena")
-    assert st.step != Step.MIXED_ADD_CERT_PLAN
-    assert st.step == Step.MIXED_CERT_LAST_DIVE
-
-
-def test_five_dives_resolves_exact_plan_with_lodging_note():
-    """An explicit, unambiguous multi-day count must NOT re-ask "which plan" —
-    the overnight requirement is still shown, but only as a short note for the
-    exact plan, and the flow advances (it doesn't loop back to the menu)."""
-    from src.agents.supervisor import _route_detected_intent
-    st = ConversationState(conversation_id="5dive"); st.language = "es"
-    intent = _d("somos 2 buzos certificados, paquete de 5 buceos, desde cartagena")
-    resp = _route_detected_intent(intent, st, "somos 2 buzos certificados, paquete de 5 buceos, desde cartagena")
-    assert st.step == Step.MIXED_CERT_LAST_DIVE
-    assert st.mixed_pending_qty_plan == "5_dives_2_days"
-    assert "noche" in resp.lower()
 
 
 # --- Latest concrete activity wins (customer changes their mind) -------------

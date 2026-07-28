@@ -160,6 +160,7 @@ class TestConfirmationFlow:
         assert state.step == Step.MIXED_LOCATION
         assert state.mixed_pending_qty_plan == "rescue"
 
+    @pytest.mark.skip(reason="Fase 4: resolución de confirmación retirada con la entrada MIXED legacy; el trigger ya se quitó en Fase 1")
     @pytest.mark.asyncio
     async def test_yes_en_after_confirmation_sets_plan(self):
         """English 'yes' also resolves the confirmation."""
@@ -199,6 +200,7 @@ class TestConfirmationFlow:
 
     # --- Step 2c: other courses through the same confirmation path ---
 
+    @pytest.mark.skip(reason="Fase 4: resolución de confirmación retirada con la entrada MIXED legacy; el trigger ya se quitó en Fase 1")
     @pytest.mark.asyncio
     async def test_advanced_via_confirmation(self):
         """advanced with low-confidence message → confirm → plan set."""
@@ -215,6 +217,7 @@ class TestConfirmationFlow:
         assert state.mixed_pending_qty_plan == "advanced"
         assert state.selected_service == "advanced"
 
+    @pytest.mark.skip(reason="Fase 4: resolución de confirmación retirada con la entrada MIXED legacy; el trigger ya se quitó en Fase 1")
     @pytest.mark.asyncio
     async def test_divemaster_via_confirmation(self):
         state = make_state("es")
@@ -230,6 +233,7 @@ class TestConfirmationFlow:
         assert state.mixed_pending_qty_plan == "divemaster"
         assert state.selected_service == "divemaster"
 
+    @pytest.mark.skip(reason="Fase 4: resolución de confirmación retirada con la entrada MIXED legacy; el trigger ya se quitó en Fase 1")
     @pytest.mark.asyncio
     async def test_open_water_via_confirmation(self):
         state = make_state("es")

@@ -2817,9 +2817,9 @@ class DecisionTree:
             self.set_quick_replies(state, "mixed_add_cert_multi_day")
             return MESSAGES["mixed_add_cert_multi_day"][lang]
         # NO dive count given at all (e.g. "soy certificada, quiero unas
-        # inmersiones"): only on the FREE-TEXT entry (recommend_default=True, set by
-        # supervisor._route_detected_intent when a certified diver's first message
-        # already says they want to dive) do we RECOMMEND the most popular plan
+        # inmersiones"): only on the FREE-TEXT entry (recommend_default=True, set
+        # when a certified diver's first message already says they want to dive)
+        # do we RECOMMEND the most popular plan
         # (2 dives / 1 day) directly and move on, instead of a "2 dives vs multi-day"
         # button menu (owner decision 2026-07-20 — a certified diver who already said
         # what they want shouldn't be sent back into a menu). The customer can still
