@@ -14,7 +14,7 @@ import logging
 from openai import AsyncOpenAI
 
 from src.config import settings
-from src.flows.decision_tree import ConversationState
+from src.flows.state import ConversationState
 from src.privacy import redact_pii
 
 logger = logging.getLogger("uvicorn.error")

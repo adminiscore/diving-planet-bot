@@ -11,7 +11,7 @@ import pytest
 
 from src.agents import conversational_core as core
 from src.agents.supervisor import route_message
-from src.flows.decision_tree import ConversationState, Step
+from src.flows.state import ConversationState, Step
 
 
 def make_state(lang: str = "es") -> ConversationState:
@@ -1976,7 +1976,7 @@ async def test_companion_qty_other_product_not_resolved(monkeypatch):
 async def test_welcome_language_uses_llm_fallback_when_heuristic_misses(monkeypatch):
     """Si la heurística de stopwords devuelve None en el primer turno, el núcleo
     consulta detect_language_llm y usa su idioma (aquí 'en')."""
-    monkeypatch.setattr("src.flows.decision_tree._detect_language_from_text", lambda m: None)
+    monkeypatch.setattr("src.flows.catalog._detect_language_from_text", lambda m: None)
 
     async def _llm_says_en(message):
         return "en"
@@ -2000,7 +2000,7 @@ async def test_welcome_language_llm_not_called_when_heuristic_hits(monkeypatch):
         return "en"
 
     monkeypatch.setattr("src.agents.language_detector.detect_language_llm", _llm)
-    monkeypatch.setattr("src.flows.decision_tree._detect_language_from_text", lambda m: "es")
+    monkeypatch.setattr("src.flows.catalog._detect_language_from_text", lambda m: "es")
     state = make_state("en")
     state.step = Step.WELCOME
     with patch("src.agents.supervisor.detect_routing_signals", new=AsyncMock(return_value={})):

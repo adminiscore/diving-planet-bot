@@ -19,7 +19,7 @@ from src.agents.escalation import escalate_to_human
 from src.agents.supervisor import route_message
 from src.channels.audio import AUDIO_FALLBACK, first_audio_attachment, transcribe_audio_url
 from src.config import settings
-from src.flows.decision_tree import MESSAGE_SPLIT, ConversationState
+from src.flows.state import MESSAGE_SPLIT, ConversationState
 
 logger = logging.getLogger("uvicorn.error")
 

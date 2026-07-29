@@ -346,7 +346,7 @@ async def test_finalize_chatwoot_delivery_splits_message_on_sentinel(monkeypatch
     """MESSAGE_SPLIT sentinel must produce two separate send_chatwoot_message calls.
     Quick replies are attached only to the last part.
     """
-    from src.flows.decision_tree import MESSAGE_SPLIT, ConversationState
+    from src.flows.state import MESSAGE_SPLIT, ConversationState
     from src.channels.chatwoot import finalize_chatwoot_delivery
 
     sent = []
@@ -370,7 +370,7 @@ async def test_finalize_chatwoot_delivery_splits_message_on_sentinel(monkeypatch
 @pytest.mark.asyncio
 async def test_finalize_chatwoot_delivery_single_message_without_sentinel(monkeypatch):
     """Without MESSAGE_SPLIT, a single send_chatwoot_message call is made with quick_replies."""
-    from src.flows.decision_tree import ConversationState
+    from src.flows.state import ConversationState
     from src.channels.chatwoot import finalize_chatwoot_delivery
 
     sent = []

@@ -9,7 +9,7 @@ import pytest
 
 from src import state_store
 from src.config import settings
-from src.flows.decision_tree import ConversationState, Step
+from src.flows.state import ConversationState, Step
 
 
 def _redis_available() -> bool:

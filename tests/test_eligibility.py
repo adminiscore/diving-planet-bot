@@ -5,7 +5,7 @@ import pytest
 
 from src.flows import eligibility as elig
 from src.agents.intent_detector import IntentDetector
-from src.flows.decision_tree import ConversationState, Step
+from src.flows.state import ConversationState, Step
 from src.agents.supervisor import route_message
 
 

@@ -16,7 +16,7 @@ import redis.asyncio as redis
 
 from src.agents.intent_detector import DetectedIntent
 from src.config import settings
-from src.flows.decision_tree import ConversationState, Step
+from src.flows.state import ConversationState, Step
 
 _redis_client: redis.Redis | None = None
 

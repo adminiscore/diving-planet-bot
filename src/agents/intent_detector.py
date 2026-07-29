@@ -3,7 +3,7 @@ from dataclasses import dataclass, field
 
 from openai import OpenAI
 
-from src.flows.decision_tree import ConversationState
+from src.flows.state import ConversationState
 
 
 @dataclass

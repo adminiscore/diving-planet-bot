@@ -6,7 +6,7 @@ Ejecutar: python test_intent_manual.py
 import asyncio
 from src.agents.intent_detector import IntentDetector
 from src.agents.supervisor import route_message
-from src.flows.decision_tree import ConversationState
+from src.flows.state import ConversationState
 
 
 def print_separator():

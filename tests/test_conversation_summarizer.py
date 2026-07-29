@@ -7,7 +7,7 @@ and the ConversationState fields it needs are implemented.
 import pytest
 from unittest.mock import AsyncMock, patch
 
-from src.flows.decision_tree import ConversationState
+from src.flows.state import ConversationState
 
 
 def make_state(lang: str = "es") -> ConversationState:

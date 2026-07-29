@@ -40,7 +40,7 @@ from src.agents.llm_extractor import (
 )
 from src.agents.notes_extractor import extract_notes
 from src.flows import cart_render
-from src.flows.decision_tree import ConversationState, Step
+from src.flows.state import ConversationState, Step
 from src.utils.fuzzy import is_affirmative, is_negative
 
 logger = logging.getLogger("uvicorn.error")
@@ -913,7 +913,7 @@ _OFFERING_BLURB_EN = {
 def _compose_comparison(offerings: list[str], lang: str) -> str:
     """Comparación lado-a-lado desde el catálogo, sin depender de RAG. Precio y
     requisito de certificación salen de SERVICES (nunca inventados)."""
-    from src.flows.decision_tree import SERVICES
+    from src.flows.catalog import SERVICES
     blurbs = _OFFERING_BLURB_ES if lang == "es" else _OFFERING_BLURB_EN
     labels = _DELIB_LABELS_ES if lang == "es" else _DELIB_LABELS_EN
     rows = []
@@ -1604,7 +1604,7 @@ async def maybe_handle_turn(
     first_turn = state.step in (Step.WELCOME, Step.LANGUAGE)
     if first_turn:
         from src.agents.language_detector import detect_language_llm
-        from src.flows.decision_tree import _detect_language_from_text
+        from src.flows.catalog import _detect_language_from_text
         # Cadena: heurística de stopwords → fallback LLM (solo si la heurística no
         # detecta nada; evita preguntar "Español/English" ante un mensaje que
         # revela el idioma con palabras fuera de la lista curada) → heurística de

@@ -1,7 +1,7 @@
 """
 LLM fallback for language detection at the welcome step.
 
-The stopword heuristic in `src.flows.decision_tree._detect_language_from_text`
+The stopword heuristic in `src.flows.catalog._detect_language_from_text`
 catches the vast majority of first messages instantly and for free (greetings,
 common words). This module is only called when that heuristic finds no
 signal at all, so we still avoid asking "Español/English" for a message that

@@ -7,7 +7,7 @@ cobertura del código CONSERVADO: catálogo/precios/links deterministas.
 """
 
 from src.flows import cart_render
-from src.flows.decision_tree import ConversationState
+from src.flows.state import ConversationState
 
 
 def _state(lang="es", location="cartagena", is_colombian=False):

@@ -9,7 +9,7 @@ from src.channels.audio import AUDIO_FALLBACK, transcribe_audio_bytes
 from src.channels.chatwoot import poll_chatwoot_interactions
 from src.channels.chatwoot import router as chatwoot_router
 from src.config import settings
-from src.flows.decision_tree import MESSAGE_SPLIT, ConversationState
+from src.flows.state import MESSAGE_SPLIT, ConversationState
 
 logger = structlog.get_logger()
 

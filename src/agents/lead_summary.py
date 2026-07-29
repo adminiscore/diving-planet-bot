@@ -11,7 +11,7 @@ import re
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from src.flows.decision_tree import ConversationState
+    from src.flows.state import ConversationState
 
 # Pure button-choice inputs we don't want to echo back to the advisor as
 # "client messages": menu numbers ("1", "2", "6+"), and navigation tokens.
@@ -41,7 +41,7 @@ def _service_display_name(service_id: str, lang: str) -> str:
     Falls back to the raw id only if the catalog has no name for it.
     """
     try:
-        from src.flows.decision_tree import SERVICES
+        from src.flows.catalog import SERVICES
     except Exception:
         return service_id
     service = SERVICES.get(service_id) or {}

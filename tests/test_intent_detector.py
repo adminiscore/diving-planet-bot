@@ -1,6 +1,6 @@
 import pytest
 from src.agents.intent_detector import IntentDetector, DetectedIntent
-from src.flows.decision_tree import ConversationState
+from src.flows.state import ConversationState
 
 
 @pytest.fixture

@@ -1103,7 +1103,7 @@ def _canonical_price_overview_answer(query: str, lang: str) -> str | None:
     if _FOOD_HIJACK_GUARD.search(query):
         return None
     try:
-        from src.flows.decision_tree import SERVICES
+        from src.flows.catalog import SERVICES
     except Exception:
         return None
     svc = {k: SERVICES.get(k, {}) for k in ("2_dives_1_day", "minicourse", "snorkeling", "open_water")}

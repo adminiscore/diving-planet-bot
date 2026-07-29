@@ -4,7 +4,7 @@ negations / multi-intent messages."""
 import pytest
 
 from src.agents.intent_detector import IntentDetector
-from src.flows.decision_tree import ConversationState
+from src.flows.state import ConversationState
 
 det = IntentDetector()
 

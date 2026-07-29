@@ -7,7 +7,7 @@ Import `send`/`new_state` from a REPL, or edit the __main__ block below.
 import asyncio
 import sys
 
-from src.flows.decision_tree import ConversationState
+from src.flows.state import ConversationState
 from src.agents.supervisor import route_message
 
 

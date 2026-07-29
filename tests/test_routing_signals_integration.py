@@ -12,7 +12,7 @@ from unittest.mock import AsyncMock, patch
 import pytest
 
 from src.agents.supervisor import route_message
-from src.flows.decision_tree import ConversationState, Step
+from src.flows.state import ConversationState, Step
 
 
 def make_state(lang: str = "es", step: Step = Step.FREE_TEXT) -> ConversationState:

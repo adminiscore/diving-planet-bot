@@ -21,7 +21,7 @@ from pathlib import Path
 
 from src.agents.intent_detector import IntentDetector
 from src.agents.llm_extractor import EXTRACTABLE_FIELDS, compare_with_ground_truth, fill_gaps
-from src.flows.decision_tree import ConversationState
+from src.flows.state import ConversationState
 
 EVAL_SET_PATH = Path(__file__).resolve().parent.parent / "docs" / "robustness" / "eval-set.json"
 

@@ -5,7 +5,7 @@ free text inside the booking flow must be captured (not answered with
 import pytest
 
 from src.agents.supervisor import _apply_group_recomposition, _GROUP_RECOMPOSE_RE, _strip_accents
-from src.flows.decision_tree import ConversationState
+from src.flows.state import ConversationState
 
 
 def _state(size=2, ages=None):

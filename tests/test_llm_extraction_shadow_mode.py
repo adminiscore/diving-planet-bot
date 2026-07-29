@@ -10,7 +10,7 @@ import pytest
 
 from src.agents import supervisor
 from src.agents.intent_detector import DetectedIntent
-from src.flows.decision_tree import ConversationState
+from src.flows.state import ConversationState
 
 
 @pytest.mark.asyncio

@@ -21,7 +21,7 @@ import pytest
 
 from src.agents.intent_detector import IntentDetector
 from src.agents.supervisor import _matches_escalation_keyword
-from src.flows.decision_tree import ConversationState
+from src.flows.state import ConversationState
 
 
 detector = IntentDetector()

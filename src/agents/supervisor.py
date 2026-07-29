@@ -28,11 +28,8 @@ from src.agents.llm_extractor import fill_gaps, missing_fields
 from src.agents.rag_agent import rag_answer
 from src.config import settings
 from src.flows import cart_render, eligibility
-from src.flows.decision_tree import (
-    ConversationState,
-    DecisionTree,
-    Step,
-)
+from src.flows.messages import DecisionTree
+from src.flows.state import ConversationState, Step
 from src.knowledge.loader import load_policies
 from src.privacy import detect_pii, privacy_block_message
 
@@ -1156,7 +1153,7 @@ def _build_extra_context(state: ConversationState) -> str | None:
     # Actividad seleccionada
     if getattr(state, "selected_service", None):
         try:
-            from src.flows.decision_tree import MULTI_DAY_SERVICES, SERVICES
+            from src.flows.catalog import MULTI_DAY_SERVICES, SERVICES
 
             service_id = state.selected_service
             service = SERVICES.get(service_id)
@@ -1217,7 +1214,7 @@ def _build_extra_context(state: ConversationState) -> str | None:
     )
     if active_service_id:
         try:
-            from src.flows.decision_tree import SERVICES
+            from src.flows.catalog import SERVICES
 
             active_service = SERVICES.get(active_service_id)
             if active_service:
@@ -1378,7 +1375,7 @@ def _build_extra_context(state: ConversationState) -> str | None:
         # en el carrito — mismo motivo que para la previsualizacion: evita que
         # la respuesta dependa de que la busqueda vectorial acierte el chunk.
         try:
-            from src.flows.decision_tree import SERVICES
+            from src.flows.catalog import SERVICES
 
             seen_service_ids: set[str] = set()
             for item in cart:
@@ -2104,7 +2101,7 @@ async def _route_message_inner(state: ConversationState, message: str) -> str:
             state.quick_replies = []
             state.pending_escalation_reason = reason
             state.pending_note = build_lead_summary(state, escalation_reason=reason)
-            from src.flows.decision_tree import MESSAGES
+            from src.flows.messages import MESSAGES
             logger.info("[SUPERVISOR] Bare affirmation accepted pending advisor offer -> escalate")
             return MESSAGES["escalate"][state.language]
 
@@ -2114,7 +2111,7 @@ async def _route_message_inner(state: ConversationState, message: str) -> str:
         state.quick_replies = []
         state.pending_escalation_reason = "solicitó asesor"
         state.pending_note = build_lead_summary(state, escalation_reason="solicitó asesor")
-        from src.flows.decision_tree import MESSAGES
+        from src.flows.messages import MESSAGES
         logger.info("[SUPERVISOR] Escalation triggered by keyword or LLM signal")
         return MESSAGES["escalate"][state.language]
 
@@ -2206,7 +2203,7 @@ async def _route_message_inner(state: ConversationState, message: str) -> str:
     # "me lo puedes decir en español?", etc.) at any step.
     language_intent = _detect_language_intent(message)
     if language_intent is not None:
-        from src.flows.decision_tree import MESSAGES
+        from src.flows.messages import MESSAGES
         if state.step in (Step.WELCOME, Step.LANGUAGE):
             # Treat as language selection; advance to MAIN_MENU.
             state.language = language_intent
@@ -2231,5 +2228,5 @@ async def _route_message_inner(state: ConversationState, message: str) -> str:
     # núcleo (return en el hook), o los handlers de escalado/menú/back. Este
     # fallback defensivo no debería alcanzarse.
     logger.warning(f"[SUPERVISOR] fallthrough inesperado step={state.step.value}")
-    from src.flows.decision_tree import MESSAGES
+    from src.flows.messages import MESSAGES
     return MESSAGES["main_menu"][state.language]

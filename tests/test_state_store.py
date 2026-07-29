@@ -1,7 +1,7 @@
 """Pure serialize/deserialize round-trip tests for state_store — no Redis needed."""
 
 from src.agents.intent_detector import DetectedIntent
-from src.flows.decision_tree import ConversationState, Step
+from src.flows.state import ConversationState, Step
 from src.state_store import deserialize_state, serialize_state
 
 

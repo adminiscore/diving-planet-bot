@@ -3,7 +3,7 @@ import pytest
 from src.agents import grounding_check, rag_agent
 from src.agents.escalation import detect_sensitive_escalation
 from src.agents.supervisor import route_message
-from src.flows.decision_tree import ConversationState, Step
+from src.flows.state import ConversationState, Step
 
 
 class DummyMessage:

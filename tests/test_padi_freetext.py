@@ -17,7 +17,7 @@ import pytest
 
 from src.agents.intent_detector import DetectedIntent, IntentDetector
 from src.agents.supervisor import route_message
-from src.flows.decision_tree import ConversationState, Step
+from src.flows.state import ConversationState, Step
 
 # ---------------------------------------------------------------------------
 # Helpers

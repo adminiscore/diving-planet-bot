@@ -4,24 +4,17 @@ El núcleo importa las funciones públicas de aquí (`service_for_location`,
 `parse_quantity`, `cart_label_for`, `goto_final_summary`, `cart_booking_blocks`).
 La lógica real —movida FÍSICAMENTE desde `DecisionTree` en Fase 4 P1b— vive ahora
 en este módulo como funciones puras (stateless), no como métodos de la máquina de
-estados legacy (ya retirada). Solo se importa de `decision_tree` el catálogo/estado
-compartido (SERVICES/MESSAGE_SPLIT/COMPANION_PRICE/ISLAND_SERVICE_MAP/
-ConversationState/Step); esa extracción a módulos propios de catálogo/estado queda
-como paso futuro opcional.
+estados legacy (ya retirada). Solo importa el catálogo/estado compartido de
+`catalog.py`/`state.py` (SERVICES/MESSAGE_SPLIT/COMPANION_PRICE/
+ISLAND_SERVICE_MAP/ConversationState/Step).
 """
 
 from __future__ import annotations
 
 import unicodedata
 
-from src.flows.decision_tree import (
-    COMPANION_PRICE,
-    ISLAND_SERVICE_MAP,
-    MESSAGE_SPLIT,
-    SERVICES,
-    ConversationState,
-    Step,
-)
+from src.flows.catalog import COMPANION_PRICE, ISLAND_SERVICE_MAP, SERVICES
+from src.flows.state import MESSAGE_SPLIT, ConversationState, Step
 from src.utils.fuzzy import fuzzy_word_number
 
 # ─────────────────────── API pública (la usa el núcleo) ───────────────────────
