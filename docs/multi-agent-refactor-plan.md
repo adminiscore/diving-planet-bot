@@ -483,12 +483,29 @@ se paralelizan entre sí).
       y loguea `[ROUTE_SHADOW] match|MISMATCH` comparando su ruta con la que la cascada marcó
       (ContextVar `_cascade_route_taken` + `_mark_route` en cada gate; sin doble llamada LLM;
       inerte en operación normal; se retira con la cascada en 5.2). Verificado en vivo: 6/6
-      match en mensajes de las 5 rutas. 7 tests. **Pendiente de medición sobre tráfico real de
-      PRE** (encender `agent_arch_shadow` en PRE y leer los MISMATCH — es una observación de
-      runtime, no de esta sesión).
+      match en mensajes de las 5 rutas. 7 tests.
+- [x] **1.5.audit · Auditoría §4.bis vía la suite — HECHA** (2026-07-29). PRE no tiene tráfico
+      real (solo el equipo probando), así que la auditoría del shadow se hizo sobre la suite
+      COMPLETA (el conjunto más diverso y adversario disponible) en vez de esperar tráfico
+      orgánico. **Resultado: 223 match / 14 MISMATCH = 94.1% de coincidencia** sobre casos
+      deliberadamente difíciles (typos, jerga, edge cases). Los 14 caen en 2 patrones limpios:
+      - **A · Elegibilidad por edad (11/14): router `booking`, cascada `info`.** "mi hijo de 9
+        puede bucear?", "una persona de 14 años puede?", "bebé de 2 años"… La cascada las
+        resuelve con el gate determinista `_maybe_answer_age_eligibility` (→ INFO); el router
+        no lo predice porque es un gate "decide-haciendo" (ejecuta detección de intención +
+        muta estado), no un predicado puro. **Hueco real y arreglable del router** — le falta
+        una rama edad→INFO (cue `_AGE_ELIGIBILITY_CUE` + presencia de edad). A cerrar antes de
+        Fase 2.4 (nodo info) o al construirlo.
+      - **B · Disponibilidad (3/14): router `changes`, cascada `booking`.** "¿tienen
+        disponibilidad el sábado?", "no tenéis algo para más días"… Divergencia ESTRUCTURAL
+        conocida: la cascada comprueba disponibilidad DESPUÉS del núcleo (que las agarra
+        primero → booking), el router la pone antes del default. Aquí el router es
+        discutiblemente MÁS correcto — candidato a "bug de orden de la cascada" a decidir en
+        el cutover (Fase 5.2): ¿es correcto que el núcleo intercepte una pregunta de
+        disponibilidad fresca? Documentado, sin cambio por ahora.
 - **DoD cumplido:** un turno real atraviesa el grafo con flag on y responde igual que la
-  cascada (suite verde en los 3 modos); el shadow mide la coincidencia de rutas. **La cascada
-  sigue viva.**
+  cascada (suite verde en los 3 modos); el shadow mide la coincidencia de rutas (94.1% sobre
+  la suite adversaria; los 14 mismatches auditados y clasificados). **La cascada sigue viva.**
 
 ### Fase 2 — Los nodos-agente con contrato · *paralelizable entre los 3*
 - [ ] **2.0 · Contrato de nodo + orquestador.** Fijar la firma de nodo (State→update),
