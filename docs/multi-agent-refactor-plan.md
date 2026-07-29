@@ -6,7 +6,9 @@
 > alguien retoma tras un merge, **el estado de los checkboxes aquí es la única verdad**.
 > Acompaña (no sustituye) a `docs/project-history/session-handoff.md`.
 
-**Estado global:** `Fase 0 — en curso` (0.1/0.2a/0.2b/0.3/0.4/0.5 hechos; siguiente 0.6). Creado 2026-07-29.
+**Estado global:** `Fase 0 — completa` (0.1 a 0.6 hechos; 0.6 pendiente de revisión humana
+del equipo, no de trabajo). Siguiente: **Fase 1** (grafo esqueleto + router), tras la
+revisión de `docs/agent-arch-design.md` por Álvaro/Gonzalo. Creado 2026-07-29.
 **Base de código:** rama `feature/pre_alvaro` (Fase 4 completa + Bloque 2 + reorg §1/§2).
 **Motor de orquestación elegido:** **LangGraph** (con LangChain de forma selectiva) — ver §2.
 
@@ -431,12 +433,17 @@ se paralelizan entre sí).
       no invoca el grafo con el flag off, no cambia la respuesta con el flag on, un fallo del
       grafo no rompe el turno — principio #10). Suite 1425 passed / 9 skipped / 0 failed, ruff
       + compileall limpios.
-- [ ] **0.6 · Spike de diseño LangGraph** ("investigar qué necesitamos y cómo", pedido del
-      owner). Documento corto (`docs/agent-arch-design.md`) que fija, con la doc oficial: el
-      patrón de State + reducers, cómo se hace el router con `add_conditional_edges`, los
-      handoffs con `Command(goto=)`, el subgrafo del booking, el checkpointer candidato, y cómo
-      se mockea un nodo en tests. Es el "cómo" técnico que desbloquea las Fases 1-2 sin
-      improvisar. Revisado por los 3.
+- [x] **0.6 · Spike de diseño LangGraph — ESCRITO, pendiente de revisión de los 3.**
+      `docs/agent-arch-design.md`: patrón de State + reducers, router con
+      `add_conditional_edges`, handoffs con `Command(goto=)`, subgrafo del booking,
+      checkpointer candidato (+ nota de seguridad real encontrada — SQLi→RCE en
+      checkpointers de LangGraph, ver doc), y cómo mockear un nodo en tests. **No
+      redactado de memoria**: cada ejemplo de código se verificó ejecutando contra el
+      `langgraph==1.2.9` real instalado (no la versión 0.x que el plan asumía
+      originalmente — investigado el salto y confirmado **sin breaking changes** para
+      lo que usamos aquí). Marcado `[x]` porque el documento está completo y lo que
+      queda es la revisión humana del equipo, no trabajo pendiente de esta sesión —
+      **Álvaro/Gonzalo: revisarlo antes de arrancar Fase 1.**
 - **DoD:** estado limpio + shim fuera + LangSmith midiendo baseline + LangGraph instalado y
   PoC verde + flag + spike de diseño acordado. **Nadie cambió comportamiento.**
 
@@ -560,6 +567,24 @@ se paralelizan entre sí).
 ## 8. Registro de ejecución
 *(Una línea por paso cerrado: fecha · dev · qué · commit. El más reciente arriba.)*
 
+- **2026-07-29 · Gadea · Fase 0.6** (`<pendiente>`) — spike de diseño escrito:
+  `docs/agent-arch-design.md`. Cubre los 6 puntos del plan (State+reducers, router
+  con `add_conditional_edges`, handoffs `Command(goto=)`, subgrafo booking,
+  checkpointer candidato, mock de nodos en tests). **Nada de memoria**: cada patrón
+  de código (router+conditional-edges, Command handoff) se verificó ejecutando
+  scripts ad-hoc contra el `langgraph==1.2.9` real instalado; `StateGraph.add_node`/
+  `add_conditional_edges`/`compile` inspeccionados por firma. Confirmado por
+  búsqueda web (fuentes citadas en el doc): **LangGraph 1.0 no tiene breaking
+  changes** relevantes para este plan (solo deprecia el *prebuilt* `create_react_
+  agent`, que no usamos). **Hallazgo de seguridad real** para anotar de cara a la
+  Fase 4.2: vulnerabilidad SQLi→RCE en checkpointers de LangGraph
+  (`langgraph-checkpoint-sqlite<3.0.1`/`langgraph<1.0.10`/`langgraph-checkpoint-
+  redis<1.0.2`, dispara solo si se expone `get_state_history` con filtro sin
+  sanitizar sobre SQLite/Redis) — ya estamos a salvo (`langgraph 1.2.9`), documentado
+  para cuando se decida el checkpointer. Recomendación del spike: mantener
+  `state_store.py` (mapeando `BotState`) en vez de adoptar un checkpointer nuevo,
+  salvo que el equipo quiera time-travel/replay. **Fase 0 completa** — pendiente la
+  revisión humana del documento por Álvaro/Gonzalo antes de arrancar Fase 1.
 - **2026-07-29 · Gadea · Fase 0.5** (`559450d`) — LangGraph instalado de verdad: las deps
   ya estaban en el entorno, resueltas a **1.x** (`langgraph 1.2.9`, `langchain 1.3.14`,
   `langchain-openai 1.4.1`, `langchain-community 0.4.2`, `langsmith 0.10.10` — salto mayor
