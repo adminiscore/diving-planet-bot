@@ -335,9 +335,9 @@ se paralelizan entre sí).
       `fill_gaps` pero no `detect_routing_signals`, así que dependía de que el routing LLM real
       no disparara `availability_question` con el "mañana" del mensaje. Arreglado mockeando el
       routing en el test (test fix, no cambia producto). Verde inequívoco confirmado (3/3).
-- [ ] **0.2 · LIMPIEZA del estado (`ConversationState` + `Step`).** Borrar por reachability los
-      campos `mixed_*` y valores `Step.*` muertos tras Fase 4. **Análisis de reachability hecho
-      (2026-07-29):**
+- [x] **0.2 · LIMPIEZA del estado (`ConversationState` + `Step`) — HECHO, partido en 0.2a+0.2b.**
+      Borrar por reachability los campos `mixed_*` y valores `Step.*` muertos tras Fase 4.
+      **Análisis de reachability hecho (2026-07-29):**
       - **`mixed_*`: 13 campos MUERTOS** (0 refs en src y tests) → borrado directo seguro:
         `mixed_pending_course_question`, `_cert_total_qty`, `_cert_remaining_qty`,
         `_refresh_added_qty`, `_beginner_after_cert`, `_companion_upsell`, `_modify_idx`,
