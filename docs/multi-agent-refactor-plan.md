@@ -511,8 +511,17 @@ se paralelizan entre sí).
 - [ ] **2.0 · Contrato de nodo + orquestador.** Fijar la firma de nodo (State→update),
       `Command`/handoffs, y el manejo del resultado (reply/quick_replies/escalate). Secuencial,
       va primero.
-- [ ] **2.1 · Nodo `deflection`** (contacto · identidad IA · off-topic/OWASP). El más aislado.
-      *(dev: —)*
+- [x] **2.1 · Nodo `deflection` — HECHO** (`src/agents/deflection_agent.py`). Primer corte
+      strangler real: la ruta `ROUTE_DEFLECT` deja de delegar en toda la cascada y ejecuta solo
+      la lógica de deflexión (contacto vía `_asks_for_contact_number`/señal → límite 🔒 +
+      redirige; identidad IA vía `_asks_about_ai_identity` → en persona, sin revelar), en el
+      mismo orden que la cascada. Fallback a la cascada si se alcanza sin match (resiliencia
+      #10). Cableado en `graph.py` (`_REAL_NODES`); detectores/copys importados de `supervisor`
+      (migrarán a módulo propio en Fase 3). **8 tests nuevos** (aislado + equivalencia flag
+      on/off en 4 mensajes) + 43 verdes en orquestación/grafo/router/shadow. Ruff limpio.
+      *(dev: Álvaro)* NOTA: cubre lo que el router manda hoy a DEFLECT (contacto + identidad).
+      El off-topic/dominio-blindado genérico sigue vía el system prompt endurecido de RAG; si se
+      quiere una ruta DEFLECT para off-topic explícito, es un refinamiento del router aparte.
 - [ ] **2.2 · Nodo `escalation`** (PII · médico · quejas · DIVE TO HEAL · humano vía
       `interrupt`). Envuelve `escalation.py` + `SENSITIVE_RULES`. *(dev: —)*
 - [ ] **2.3 · Nodo `changes`** (cancelar · reprogramar · disponibilidad) — 3 gates → 1 nodo.
@@ -613,6 +622,12 @@ se paralelizan entre sí).
 
 ## 8. Registro de ejecución
 *(Una línea por paso cerrado: fecha · dev · qué · commit. El más reciente arriba.)*
+
+- **2026-07-30 · Álvaro · Fase 2.1** — Nodo `deflection` real (primer corte strangler): la ruta
+  DEFLECT ejecuta solo la lógica de deflexión (contacto + identidad IA), no toda la cascada.
+  `src/agents/deflection_agent.py` + wire en `graph.py` (`_REAL_NODES`). 8 tests nuevos
+  (aislado + equivalencia flag on/off); 43 verdes en orquestación/grafo/router/shadow; ruff
+  limpio. Equivalencia probada (grafo == cascada para mensajes de deflexión).
 
 - **2026-07-30 · Álvaro · Revisión de asentamiento (sign-off Fase 0+1)** — Merge del trabajo
   de Gadea (fast-forward a `f04ffde`). Revisión de cabos sueltos: **ninguno**. Ruff limpio;

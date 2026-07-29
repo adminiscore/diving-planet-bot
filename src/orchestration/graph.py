@@ -24,10 +24,18 @@ import logging
 
 from langgraph.graph import END, START, StateGraph
 
+from src.agents.deflection_agent import deflection_node
 from src.orchestration.router import classify_route
-from src.orchestration.state import ALL_ROUTES, BotState
+from src.orchestration.state import ALL_ROUTES, ROUTE_DEFLECT, BotState
 
 logger = logging.getLogger("uvicorn.error")
+
+# Nodos-agente REALES (Fase 2). Cada ruta que ya tiene su nodo propio se registra
+# aquí; el resto siguen como wrappers que delegan en la cascada
+# (`_make_legacy_delegate_node`) hasta que se conviertan, una a una, en Fase 2.
+_REAL_NODES = {
+    ROUTE_DEFLECT: deflection_node,
+}
 
 
 async def _router_node(state: BotState) -> dict:
@@ -79,7 +87,8 @@ def _build_graph():
     builder = StateGraph(BotState)
     builder.add_node("router", _router_node)
     for route in ALL_ROUTES:
-        builder.add_node(route, _make_legacy_delegate_node(route))
+        node = _REAL_NODES.get(route) or _make_legacy_delegate_node(route)
+        builder.add_node(route, node)
     builder.add_edge(START, "router")
     builder.add_conditional_edges(
         "router", _route_decision, {route: route for route in ALL_ROUTES}
