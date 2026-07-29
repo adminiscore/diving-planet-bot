@@ -8,10 +8,15 @@ license = { text = "MIT" }
 
 dependencies = [
     # --- Core LLM & Agents ---
-    "langgraph>=0.4.0",
-    "langchain>=0.3.0",
-    "langchain-openai>=0.3.0",
-    "langchain-community>=0.3.0",
+    # Fijadas (Fase 0.5, docs/multi-agent-refactor-plan.md, principio #11:
+    # "Reproducibilidad... versiones de LangGraph/LangChain pineadas, no
+    # auto-update"). Antes declaradas con >= (0.3/0.4) pero resueltas a 1.x
+    # en la práctica — pineado a lo ya instalado y probado (PoC 0.5 verde),
+    # no una versión nueva sin verificar.
+    "langgraph==1.2.9",
+    "langchain==1.3.14",
+    "langchain-openai==1.4.1",
+    "langchain-community==0.4.2",
 
     # --- API ---
     "fastapi>=0.115.0",
@@ -32,7 +37,7 @@ dependencies = [
     "redis>=5.0.0",
 
     # --- Observability ---
-    "langsmith>=0.3.0",
+    "langsmith==0.10.10",  # fijada junto a langgraph/langchain (ver nota arriba)
 
     # --- Utilities ---
     "python-dotenv>=1.0.0",

@@ -40,6 +40,13 @@ class Settings(BaseSettings):
     langsmith_project: str = "diving-planet-bot"
     langchain_tracing_v2: bool = True
 
+    # --- Refactor multiagente sobre LangGraph (Fase 0.5, docs/multi-agent-
+    # refactor-plan.md) --- strangler-fig kill switch: off en todos lados hasta
+    # que el grafo real (Fase 1+) esté probado en PRE. Con el flag apagado el
+    # módulo `src/orchestration` ni se importa — cero riesgo/overhead para el
+    # camino actual (cascada del supervisor).
+    agent_arch: bool = False
+
     # --- Supabase ---
     supabase_url: str = ""
     supabase_anon_key: str = ""

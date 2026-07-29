@@ -1798,12 +1798,26 @@ _PURE_COMPANION_RE = re.compile(
 )
 
 
+async def _run_agent_arch_poc(state: ConversationState, message: str) -> None:
+    """Fase 0.5 (docs/multi-agent-refactor-plan.md): side-channel de-risk del
+    grafo LangGraph trivial — no toca la respuesta real. Si algo falla, se
+    loguea y el turno sigue exactamente igual (principio #10, sin fugas)."""
+    try:
+        from src.orchestration.poc_graph import run_poc_graph
+        result = await run_poc_graph(message)
+        logger.info(f"[AGENT_ARCH POC] conv={state.conversation_id} graph_reply={result!r}")
+    except Exception:
+        logger.exception("[AGENT_ARCH POC] graph run failed (non-fatal, real response unaffected)")
+
+
 async def route_message(state: ConversationState, message: str) -> str:
     """Public entry point. Delegates to the actual routing logic, then
     updates the rolling conversation summary (Fase B, see
     docs/archive/memory-context-improvement-plan.md) once per turn — a thin wrapper
     so the summary check runs regardless of which internal branch below
     handled the message, without threading it through every early return."""
+    if settings.agent_arch:
+        await _run_agent_arch_poc(state, message)
     response = await _route_message_inner(state, message)
     await conversation_summarizer.maybe_update_summary(state)
     return response
