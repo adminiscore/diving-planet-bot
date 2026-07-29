@@ -1,0 +1,529 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Diving Planet Bot — Arquitectura actual y camino a multiagente</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root{
+    --bg:#eef3f6; --surface:#ffffff; --surface-2:#f6fafb;
+    --ink:#0e1c26; --muted:#546672; --faint:#7c8d99; --line:#d8e2e8;
+    --teal:#0f9b9b; --blue:#1f6fb2; --coral:#dd5b40; --amber:#c1861a; --green:#2f9e6b;
+    --teal-soft:#e2f4f4; --coral-soft:#fbe8e3; --amber-soft:#f7ecd6; --green-soft:#e0f1e8; --blue-soft:#e3eef8;
+    --shadow:0 1px 2px rgba(14,28,38,.06),0 8px 24px rgba(14,28,38,.06);
+    --sans:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --mono:ui-monospace,"SF Mono","Cascadia Code",Consolas,"Liberation Mono",monospace;
+    --maxw:1080px;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{
+      --bg:#0a141b; --surface:#11222d; --surface-2:#0e1d26;
+      --ink:#e7eff3; --muted:#9cb0bc; --faint:#71879a; --line:#23404f;
+      --teal:#2fc6c6; --blue:#4d9fe0; --coral:#ef7a5f; --amber:#e0a53a; --green:#48b884;
+      --teal-soft:#123037; --coral-soft:#39211c; --amber-soft:#352a15; --green-soft:#13342a; --blue-soft:#132635;
+      --shadow:0 1px 2px rgba(0,0,0,.3),0 10px 30px rgba(0,0,0,.35);
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#0a141b; --surface:#11222d; --surface-2:#0e1d26;
+    --ink:#e7eff3; --muted:#9cb0bc; --faint:#71879a; --line:#23404f;
+    --teal:#2fc6c6; --blue:#4d9fe0; --coral:#ef7a5f; --amber:#e0a53a; --green:#48b884;
+    --teal-soft:#123037; --coral-soft:#39211c; --amber-soft:#352a15; --green-soft:#13342a; --blue-soft:#132635;
+    --shadow:0 1px 2px rgba(0,0,0,.3),0 10px 30px rgba(0,0,0,.35);
+  }
+  :root[data-theme="light"]{
+    --bg:#eef3f6; --surface:#ffffff; --surface-2:#f6fafb;
+    --ink:#0e1c26; --muted:#546672; --faint:#7c8d99; --line:#d8e2e8;
+    --teal:#0f9b9b; --blue:#1f6fb2; --coral:#dd5b40; --amber:#c1861a; --green:#2f9e6b;
+    --teal-soft:#e2f4f4; --coral-soft:#fbe8e3; --amber-soft:#f7ecd6; --green-soft:#e0f1e8; --blue-soft:#e3eef8;
+    --shadow:0 1px 2px rgba(14,28,38,.06),0 8px 24px rgba(14,28,38,.06);
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);
+    font-size:16px;line-height:1.62;-webkit-font-smoothing:antialiased;}
+  .wrap{max-width:var(--maxw);margin:0 auto;padding:0 24px}
+  .mono{font-family:var(--mono)}
+  code{font-family:var(--mono);font-size:.86em;background:var(--surface-2);border:1px solid var(--line);
+    border-radius:5px;padding:.06em .38em;color:var(--ink)}
+
+  /* header */
+  header.top{border-top:4px solid var(--teal);background:
+    linear-gradient(180deg,var(--surface) 0%,var(--bg) 100%);border-bottom:1px solid var(--line)}
+  .eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;
+    color:var(--teal);font-weight:600}
+  header.top .wrap{padding-top:44px;padding-bottom:40px}
+  h1{font-size:clamp(28px,4.4vw,44px);line-height:1.08;margin:.35em 0 .3em;letter-spacing:-.02em;
+    text-wrap:balance;font-weight:760}
+  .lede{font-size:clamp(17px,2.1vw,20px);color:var(--muted);max-width:64ch;margin:0;text-wrap:pretty}
+  .meta{display:flex;flex-wrap:wrap;gap:8px 18px;margin-top:22px;font-family:var(--mono);font-size:12.5px;color:var(--faint)}
+  .meta b{color:var(--ink);font-weight:600}
+
+  section{padding:46px 0 8px}
+  .sec-head{display:flex;align-items:baseline;gap:14px;margin-bottom:8px}
+  .sec-num{font-family:var(--mono);font-size:13px;color:var(--teal);font-weight:700;
+    border:1px solid var(--teal);border-radius:6px;padding:2px 8px;flex:none}
+  h2{font-size:clamp(22px,3vw,30px);margin:.1em 0 .1em;letter-spacing:-.015em;font-weight:720;text-wrap:balance}
+  h3{font-size:18px;margin:1.6em 0 .5em;letter-spacing:-.01em;font-weight:680}
+  .sub{color:var(--muted);max-width:70ch;margin:.2em 0 1.2em}
+  p{max-width:72ch}
+
+  .rule{height:1px;background:var(--line);border:0;margin:8px 0 0}
+
+  /* cards */
+  .grid{display:grid;gap:16px}
+  .g2{grid-template-columns:repeat(2,1fr)} .g3{grid-template-columns:repeat(3,1fr)}
+  @media(max-width:760px){.g2,.g3{grid-template-columns:1fr}}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:18px 20px;box-shadow:var(--shadow)}
+  .card h4{margin:.1em 0 .4em;font-size:15.5px;font-weight:680;display:flex;align-items:center;gap:9px}
+  .card p{font-size:14.5px;color:var(--muted);margin:.2em 0}
+  .card.accent{border-left:3px solid var(--teal)}
+  .dot{width:9px;height:9px;border-radius:50%;flex:none;display:inline-block}
+
+  /* chips */
+  .chip{display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:11.5px;font-weight:600;
+    padding:3px 9px;border-radius:999px;border:1px solid var(--line);white-space:nowrap;letter-spacing:.02em}
+  .chip .dot{width:7px;height:7px}
+  .c-done{background:var(--green-soft);color:var(--green);border-color:transparent}
+  .c-wip{background:var(--amber-soft);color:var(--amber);border-color:transparent}
+  .c-todo{background:var(--blue-soft);color:var(--blue);border-color:transparent}
+  .c-risk{background:var(--coral-soft);color:var(--coral);border-color:transparent}
+  .bg-done{background:var(--green)} .bg-wip{background:var(--amber)} .bg-todo{background:var(--blue)}
+  .bg-risk{background:var(--coral)} .bg-teal{background:var(--teal)}
+
+  /* tables */
+  .tbl-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);margin:14px 0}
+  table{border-collapse:collapse;width:100%;min-width:560px;background:var(--surface)}
+  th,td{text-align:left;padding:11px 15px;border-bottom:1px solid var(--line);vertical-align:top;font-size:14px}
+  th{font-family:var(--mono);font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--faint);
+    font-weight:600;background:var(--surface-2)}
+  tr:last-child td{border-bottom:0}
+  td.mono,th.mono{font-family:var(--mono);font-size:12.5px}
+  .arrow{color:var(--teal);font-weight:700}
+
+  /* blueprint / diagram panels — deliberately one look in both themes */
+  .blueprint{background:#f3f8fa;border:1px solid #cfe0e6;border-radius:14px;padding:20px 18px 8px;margin:16px 0;
+    background-image:radial-gradient(#dceaf0 1px,transparent 1px);background-size:22px 22px;overflow-x:auto}
+  .blueprint .bp-label{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;
+    color:#3d7f86;font-weight:600;margin:0 0 6px 2px}
+  .mermaid{display:flex;justify-content:center;min-width:520px}
+  .mermaid svg{max-width:100%;height:auto}
+
+  /* flow list (gate cascade) */
+  ol.flow{list-style:none;counter-reset:g;margin:14px 0;padding:0;display:grid;gap:7px}
+  ol.flow li{counter-increment:g;display:grid;grid-template-columns:30px 1fr;gap:12px;align-items:start;
+    background:var(--surface);border:1px solid var(--line);border-radius:9px;padding:9px 13px;font-size:14px}
+  ol.flow li::before{content:counter(g,decimal-leading-zero);font-family:var(--mono);font-size:11.5px;
+    color:var(--teal);font-weight:700;padding-top:2px}
+  ol.flow b{font-weight:640}
+  ol.flow .k{font-family:var(--mono);font-size:12px;color:var(--muted)}
+
+  .callout{border-radius:12px;padding:16px 20px;margin:16px 0;border:1px solid var(--line);background:var(--surface-2)}
+  .callout.warn{border-left:3px solid var(--coral);background:var(--coral-soft)}
+  .callout.good{border-left:3px solid var(--green);background:var(--green-soft)}
+  .callout.think{border-left:3px solid var(--blue);background:var(--blue-soft)}
+  .callout p{margin:.3em 0;font-size:14.5px;color:var(--ink)}
+  .callout .lbl{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;font-weight:700}
+  .callout.warn .lbl{color:var(--coral)} .callout.good .lbl{color:var(--green)} .callout.think .lbl{color:var(--blue)}
+
+  ul.tick{list-style:none;padding:0;margin:.6em 0;display:grid;gap:8px}
+  ul.tick li{padding-left:26px;position:relative;font-size:14.5px;color:var(--ink)}
+  ul.tick li::before{content:"";position:absolute;left:2px;top:.55em;width:10px;height:10px;border-radius:3px;background:var(--teal)}
+  ul.tick.keep li::before{background:var(--green)} ul.tick.change li::before{background:var(--amber)}
+  ul.tick.risk li::before{background:var(--coral)}
+
+  /* phase timeline */
+  .phase{display:grid;grid-template-columns:auto 1fr;gap:18px}
+  .phase .rail{position:relative;width:2px;background:var(--line);margin-left:15px}
+  .phrow{display:grid;grid-template-columns:34px 1fr;gap:14px;padding:0 0 20px;position:relative}
+  .phrow .pin{width:34px;height:34px;border-radius:9px;display:grid;place-items:center;font-family:var(--mono);
+    font-weight:700;font-size:13px;color:#fff;flex:none;box-shadow:var(--shadow)}
+  .phrow .body{padding-top:3px}
+  .phrow .body h4{margin:.1em 0 .25em;font-size:16px}
+  .phrow .body p{font-size:14px;color:var(--muted);margin:.15em 0}
+
+  footer{margin-top:40px;border-top:1px solid var(--line);background:var(--surface)}
+  footer .wrap{padding:26px 24px;color:var(--faint);font-size:13px;font-family:var(--mono)}
+  a{color:var(--teal)}
+  ::selection{background:var(--teal);color:#fff}
+  /* fallback si el motor de diagramas no carga (sin internet): mostrar el código legible */
+  .mermaid{white-space:pre-wrap;font-family:var(--mono);font-size:12px;color:#3d7f86}
+  .mermaid[data-processed="true"]{white-space:normal}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap">
+    <div class="eyebrow">Diving Planet Bot · Revisión de arquitectura</div>
+    <h1>Del bot que tenemos a un sistema multiagente controlado</h1>
+    <p class="lede">Qué es hoy nuestro bot pieza por pieza, por qué el patrón que te describió tu amigo de IBM es exactamente hacia donde apunta, y un camino concreto y por fases para llegar ahí sin romper lo que ya funciona.</p>
+    <div class="meta">
+      <span><b>Estado base:</b> Fase 4 completa (árbol legacy fuera)</span>
+      <span><b>supervisor.py</b> 5908 → 2238 líneas</span>
+      <span><b>decision_tree.py</b> 8384 → shim</span>
+      <span><b>Suite</b> ~1.400 verde (núcleo único)</span>
+    </div>
+  </div>
+</header>
+
+<!-- ============ 0. VEREDICTO ============ -->
+<section id="tldr">
+  <div class="wrap">
+    <div class="sec-head"><span class="sec-num">00</span><h2>El veredicto en 30 segundos</h2></div>
+    <hr class="rule">
+    <div class="grid g2" style="margin-top:22px">
+      <div class="card accent">
+        <h4><span class="dot bg-teal"></span>Qué tenemos hoy</h4>
+        <p>Un <b>supervisor</b> que es una <b>cascada de ~14 filtros escritos a mano</b>, seguido de un <b>núcleo de reserva monolítico</b> (2.249 líneas) y <b>~9 redes de LLM sueltas</b> que se solapan. Es <b>muy sólido en los hechos</b> — nunca inventa precio, link, cupo ni confirma una reserva falsa — pero la <b>complejidad acumulada es el riesgo nº 1</b>.</p>
+      </div>
+      <div class="card accent">
+        <h4><span class="dot bg-blue"></span>Lo que describe tu amigo (IBM)</h4>
+        <p><b>Identificación → orquestador → prompt especializado → orquestador → prompt…</b>, alternando. Probaron un <b>prompt único</b> y se liaba al meter varios casos de uso; la solución fue <b>un prompt dedicado por caso</b> con orquestadores que enrutan entre ellos. Es el patrón <b>router + agentes especializados</b> (multiagente jerárquico).</p>
+      </div>
+      <div class="card">
+        <h4><span class="dot bg-green"></span>El reconocimiento</h4>
+        <p>Ya tenemos <b>la semilla</b> de ese patrón: el supervisor <i>es</i> un router y las piezas (reserva, RAG, escalado) <i>son</i> sub-agentes embrionarios. Lo que falta son <b>fronteras limpias, contratos y un orquestador explícito</b>. El salto es de <b>“cascada monolítica” → “router + agentes con contrato”</b>.</p>
+      </div>
+      <div class="card">
+        <h4><span class="dot bg-coral"></span>La prioridad</h4>
+        <p>Un producto <b>sólido, sin fugas, entendible y mantenible</b> por encima de todo. Eso justifica la refactorización: hoy <b>cada bug se arregla añadiendo otro interceptor</b> — más superficie donde dos redes chocan (lo vimos: <code>comparing_options</code> confundiendo un reparto, <code>booking_change</code> pisando interceptores).</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 1. ESQUELETO ACTUAL ============ -->
+<section id="hoy">
+  <div class="wrap">
+    <div class="sec-head"><span class="sec-num">01</span><h2>El esqueleto actual, pieza por pieza</h2></div>
+    <p class="sub">Así viaja hoy un mensaje del cliente, desde que entra por WhatsApp/web hasta la respuesta. Un solo camino (tras Fase 4 ya no hay árbol legacy ni flag): todo pasa por el núcleo conversacional.</p>
+
+    <div class="blueprint">
+      <p class="bp-label">Recorrido de un mensaje — runtime real</p>
+      <pre class="mermaid">
+%%{init:{'theme':'base','themeVariables':{'fontFamily':'ui-monospace,monospace','fontSize':'13px','primaryColor':'#ffffff','primaryTextColor':'#0e1c26','primaryBorderColor':'#0f9b9b','lineColor':'#5f7d86','clusterBkg':'#eaf4f6','clusterBorder':'#bcd7de'}}}%%
+flowchart TD
+  U([Cliente · Chatwoot<br/>WhatsApp / web]) --> CH[channels/chatwoot.py<br/>webhook]
+  CH --> SUP{{supervisor.route_message<br/>_route_message_inner}}
+  subgraph G[Cascada de gates · determinista + 1 llamada LLM de routing]
+    direction TB
+    SUP --> G1[Restart / memoria · PII]
+    G1 --> RS[[detect_routing_signals<br/>1 LLM · 9 señales]]
+    RS --> G2[Seguridad: médico · quejas ·<br/>link roto · DIVE TO HEAL]
+    G2 --> G3[Cambios: cancelar · reprogramar]
+    G3 --> G4[Deflexión: contacto · identidad IA ·<br/>disponibilidad]
+  end
+  G4 -->|no interceptado| CORE{{conversational_core<br/>maybe_handle_turn}}
+  subgraph C[Núcleo conversacional · slot-filling]
+    direction TB
+    CORE --> D1[COMPRENDER<br/>carryover + '?' + deliberación]
+    D1 --> D2[EXTRAER · intent_detector regex<br/>+ fill_gaps LLM + redes de precisión]
+    D2 --> D3[RESOLVER · next_missing_slot<br/>actividad→cert→lugar→…→nacionalidad]
+    D3 --> D4[RESPONDER · preguntar slot<br/>o cerrar]
+  end
+  D4 -->|reserva lista| CART[[cart_render<br/>resumen + links · DETERMINISTA]]
+  D2 -.pregunta info.-> RAG[[rag_agent + grounding<br/>KB · nunca inventa]]
+  G2 -.-> ESC([Escalado a asesor<br/>Chatwoot handoff])
+  D4 --> ACK[compose_acknowledgement<br/>+ extract_notes · LLM]
+
+  classDef det fill:#e0f1e8,stroke:#2f9e6b,color:#123;
+  classDef llm fill:#e3eef8,stroke:#1f6fb2,color:#123;
+  classDef core fill:#e2f4f4,stroke:#0f9b9b,color:#123;
+  classDef esc fill:#fbe8e3,stroke:#dd5b40,color:#123;
+  class CART,G1 det; class RS,RAG,ACK llm; class SUP,CORE core; class ESC esc;
+      </pre>
+    </div>
+
+    <h3>La cascada del supervisor — 14 filtros en orden</h3>
+    <p class="sub">Cada filtro es un <code>if</code> que puede responder y cortar. La <b>única llamada LLM</b> del supervisor (<code>detect_routing_signals</code>) devuelve 9 señales de una vez; el resto son listas de palabras + backstops deterministas.</p>
+    <ol class="flow">
+      <li><span><b>Restart de escenario nuevo</b> <span class="k">· borra memoria si el cliente “empieza de cero”</span></span></li>
+      <li><span><b>Detección pegajosa de menores</b> <span class="k">· recuerda “van niños” para el gate de edades</span></span></li>
+      <li><span><b>PII</b> <span class="k">· datos sensibles → bloqueo de privacidad</span></span></li>
+      <li><span><b>Link roto (keyword)</b> <span class="k">· “no me funciona el link” → escalado</span></span></li>
+      <li><span><b>detect_routing_signals</b> <span class="k">· 1 LLM → 9 señales (ver abajo)</span></span></li>
+      <li><span><b>Link roto (señal LLM + contexto técnico)</b></span></li>
+      <li><span><b>Tema sensible temprano</b> <span class="k">· médico/clima/queja (keyword, salvo discapacidad)</span></span></li>
+      <li><span><b>Tema sensible (señal LLM)</b></span></li>
+      <li><span><b>Cancelación</b> <span class="k">· keyword o señal, si no está construyendo carrito → política</span></span></li>
+      <li><span><b>Reprogramación</b> <span class="k">· ídem → política</span></span></li>
+      <li><span><b>Deflexión de contacto</b> <span class="k">· “dame tu WhatsApp” → límite + redirige</span></span></li>
+      <li><span><b>Deflexión de identidad IA</b> <span class="k">· “¿qué modelo eres?” → en persona, sin revelar</span></span></li>
+      <li><span><b>Nacionalidad mixta · Disponibilidad · DIVE TO HEAL</b> <span class="k">· respuestas canónicas / RAG</span></span></li>
+      <li><span><b>→ Núcleo conversacional</b> <span class="k">· si nada interceptó, entra la reserva</span></span></li>
+    </ol>
+
+    <h3>El mapa de módulos</h3>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Capa</th><th class="mono">Módulo</th><th>Rol</th><th style="text-align:right">Líneas</th></tr></thead>
+        <tbody>
+          <tr><td rowspan="4" style="color:var(--teal);font-weight:600">Cerebro</td><td class="mono">agents/supervisor.py</td><td>Router: la cascada de gates + fall-throughs</td><td class="mono" style="text-align:right">2.238</td></tr>
+          <tr><td class="mono">agents/conversational_core.py</td><td>Reserva: bucle slot-filling (el monolito)</td><td class="mono" style="text-align:right">2.249</td></tr>
+          <tr><td class="mono">agents/rag_agent.py</td><td>Preguntas de info sobre KB + grounding</td><td class="mono" style="text-align:right">1.537</td></tr>
+          <tr><td class="mono">agents/escalation.py</td><td>Señales de routing (9) + reglas sensibles</td><td class="mono" style="text-align:right">505</td></tr>
+          <tr><td rowspan="4" style="color:var(--blue);font-weight:600">Redes LLM</td><td class="mono">agents/llm_extractor.py</td><td>fill_gaps · detect_special_signals · resolve_slot · ack</td><td class="mono" style="text-align:right">945</td></tr>
+          <tr><td class="mono">agents/intent_detector.py</td><td>Extracción por regex (primer paso, sin LLM)</td><td class="mono" style="text-align:right">1.373</td></tr>
+          <tr><td class="mono">agents/notes_extractor.py</td><td>“Hechos abiertos” del cliente (Fase C)</td><td class="mono" style="text-align:right">164</td></tr>
+          <tr><td class="mono">agents/{query_rewriter,conversation_summarizer,language_detector,grounding_check}</td><td>RAG query · resumen · idioma · verificación</td><td class="mono" style="text-align:right">~550</td></tr>
+          <tr><td rowspan="3" style="color:var(--green);font-weight:600">Datos / determinista</td><td class="mono">flows/catalog.py · state.py · messages.py</td><td>SERVICES · Step/ConversationState · textos (reorg §1)</td><td class="mono" style="text-align:right">~2.150</td></tr>
+          <tr><td class="mono">flows/cart_render.py · eligibility.py</td><td>Resumen + links + precios · elegibilidad edades</td><td class="mono" style="text-align:right">631</td></tr>
+          <tr><td class="mono">knowledge/vector_store.py · state_store.py · db/</td><td>Embeddings/RAG · Redis · Postgres</td><td class="mono" style="text-align:right">~530</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Las ~9 llamadas de LLM que se disparan por turno</h3>
+    <p class="sub">Este es el punto que Gadea marcó: cada red es independiente y no está coordinada. En un turno complejo se encadenan muchas — coste y latencia que hoy <b>no medimos</b>.</p>
+    <div class="grid g3">
+      <div class="card"><h4><span class="dot bg-blue"></span>Routing</h4><p><code>detect_routing_signals</code> — 9 señales, casi siempre.</p></div>
+      <div class="card"><h4><span class="dot bg-blue"></span>Extracción</h4><p><code>fill_gaps</code> · <code>detect_special_signals</code> · <code>resolve_slot_answer</code>.</p></div>
+      <div class="card"><h4><span class="dot bg-blue"></span>Redacción</h4><p><code>compose_acknowledgement</code> · <code>extract_notes</code>.</p></div>
+      <div class="card"><h4><span class="dot bg-blue"></span>Idioma</h4><p><code>detect_language_llm</code> (primer turno).</p></div>
+      <div class="card"><h4><span class="dot bg-blue"></span>RAG</h4><p><code>condense_query</code> → respuesta → <code>is_grounded</code> (verificación).</p></div>
+      <div class="card"><h4><span class="dot bg-blue"></span>Memoria</h4><p><code>maybe_update_summary</code> del hilo.</p></div>
+    </div>
+
+    <div class="callout warn">
+      <span class="lbl">El problema honesto — el diagnóstico de Gadea</span>
+      <p>El patrón de fondo es <b>correcto</b> (determinista primero, LLM como red, backstop donde el LLM sobre-dispara) y los <b>hechos nunca se alucinan</b>. Pero: <code>supervisor</code> + <code>núcleo</code> crecieron de forma orgánica; <b>cada bug se arregló añadiendo otro interceptor/guard/red</b>, y ahora <b>cada capa nueva es más difícil de razonar y más superficie donde dos redes chocan</b>. No es que “falle” — es que la <b>complejidad</b> es el riesgo, y es exactamente lo que un diseño de agentes limpio resolvería.</p>
+    </div>
+
+    <h3>Dónde estamos en las fases</h3>
+    <div class="grid g2">
+      <div class="card"><h4>Robustez conversacional</h4><p><span class="chip c-done"><span class="dot bg-done"></span>hecho</span> Acompañantes, multi-ítem, deliberación, respuestas no-canónicas por slot — casi todo con red LLM + backstop.</p></div>
+      <div class="card"><h4>Fase 4 · retirar árbol legacy</h4><p><span class="chip c-done"><span class="dot bg-done"></span>hecho</span> Árbol <code>MIXED_*</code>, flag y orquestador legacy fuera. Núcleo = camino único.</p></div>
+      <div class="card"><h4>Reorg de <code>decision_tree.py</code></h4><p><span class="chip c-done"><span class="dot bg-done"></span>§1 y §2</span> Partido en <code>catalog</code>/<code>state</code>/<code>messages</code> + shim. Falta renombrar/quitar shim.</p></div>
+      <div class="card"><h4>Bloque 2 · gates con respaldo LLM</h4><p><span class="chip c-done"><span class="dot bg-done"></span>hecho</span> Cancelación, deflexión, link roto, dominio blindado, disponibilidad.</p></div>
+      <div class="card"><h4>Enrutado por embeddings + multiagente</h4><p><span class="chip c-wip"><span class="dot bg-wip"></span>siguiente</span> El tema de este documento — sin empezar.</p></div>
+      <div class="card"><h4>Bucle de datos reales + optimización BBDD</h4><p><span class="chip c-todo"><span class="dot bg-todo"></span>pendiente</span> Dejar que el tráfico real de PRE dicte qué reforzar.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 2. EL PATRON ============ -->
+<section id="patron">
+  <div class="wrap">
+    <div class="sec-head"><span class="sec-num">02</span><h2>El patrón que describe tu amigo — y sí, lo reconozco</h2></div>
+    <p class="sub">Traducido de lo que te contó: en el chatbot de IBM para Naturgy, un turno no es “un prompt gigante que lo hace todo”, sino una <b>alternancia controlada</b>.</p>
+
+    <div class="blueprint">
+      <p class="bp-label">El patrón IBM · prompt ⇄ orquestador, especializado por caso de uso</p>
+      <pre class="mermaid">
+%%{init:{'theme':'base','themeVariables':{'fontFamily':'ui-monospace,monospace','fontSize':'13px','primaryColor':'#ffffff','primaryTextColor':'#0e1c26','primaryBorderColor':'#1f6fb2','lineColor':'#5f7d86'}}}%%
+flowchart LR
+  M([Mensaje]) --> ID[LLM · identificación<br/>del cliente/intención]
+  ID --> O1{Orquestador 1<br/>por tipo de cliente}
+  O1 -->|sin deuda| P1[Prompt A<br/>caso: facturas]
+  O1 -->|con deuda| P2[Prompt B<br/>caso: pagos]
+  P1 --> O2{Orquestador 2<br/>por caso de uso}
+  O2 --> P3[Prompt<br/>consultar factura]
+  O2 --> P4[Prompt<br/>descargar factura]
+  P3 --> R([Respuesta])
+  classDef llm fill:#e3eef8,stroke:#1f6fb2,color:#123;
+  classDef orq fill:#f7ecd6,stroke:#c1861a,color:#123;
+  class ID,P1,P2,P3,P4 llm; class O1,O2 orq;
+      </pre>
+    </div>
+
+    <div class="grid g2">
+      <div class="card">
+        <h4>La clave que te dijo textualmente</h4>
+        <p>“Probamos a tener un <b>prompt unificado</b>, pero en cuanto empezamos a meter varios casos de uso, <b>se liaba</b>. Era mucho mejor tener orquestadores… puedes tener <b>prompts muy específicos</b> que hagan que funcione mucho mejor, porque si no <b>cruza casos de uso</b>.”</p>
+      </div>
+      <div class="card">
+        <h4>El nombre técnico</h4>
+        <p>Es el patrón <b>router + sub-agentes especializados</b> (a veces “supervisor” o “orquestador-trabajadores”). Cada agente tiene un <b>prompt corto y enfocado a UN caso</b>; un <b>orquestador</b> (árbol determinista o LLM-router) decide a cuál ir. Es el estándar de producción para bots con muchos casos de uso.</p>
+      </div>
+    </div>
+
+    <div class="callout think">
+      <span class="lbl">Por qué funciona (y por qué lo notamos ya)</span>
+      <p>Un prompt que solo ve <b>un caso de uso</b> tiene instrucciones cortas, precisas y testeables — no puede “cruzarse”. Nosotros ya sufrimos el problema contrario: nuestras redes ven <b>todo el mensaje a la vez</b> y se pisan (<code>comparing_options</code> leyó un reparto de grupo como “duda entre opciones”; <code>booking_change</code> leyó “mejor 3 días” como reprogramar). <b>Fronteras de agente = esos choques desaparecen por diseño.</b></p>
+    </div>
+
+    <div class="callout good">
+      <span class="lbl">La buena noticia</span>
+      <p>No partimos de cero. <b>Ya tenemos las piezas</b>: un router (el supervisor), agentes embrionarios (reserva, RAG, escalado, deflexión), una capa determinista blindada (catálogo/precios/links), grounding, y ~1.400 tests como red. El trabajo <b>no es reescribir</b>, es <b>reorganizar con fronteras y contratos</b> lo que ya funciona.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 3. ARQUITECTURA OBJETIVO ============ -->
+<section id="objetivo">
+  <div class="wrap">
+    <div class="sec-head"><span class="sec-num">03</span><h2>La arquitectura objetivo, adaptada a lo nuestro</h2></div>
+    <p class="sub">La misma metodología de IBM, pero sobre nuestro dominio (buceo) y conservando todo lo determinista que ya blindamos. Un router de intención decide el caso de uso; un orquestador despacha a un agente especializado; una capa determinista transversal garantiza que los hechos nunca se inventan.</p>
+
+    <div class="blueprint">
+      <p class="bp-label">Objetivo · router → orquestador → agentes especializados</p>
+      <pre class="mermaid">
+%%{init:{'theme':'base','themeVariables':{'fontFamily':'ui-monospace,monospace','fontSize':'12.5px','primaryColor':'#ffffff','primaryTextColor':'#0e1c26','primaryBorderColor':'#0f9b9b','lineColor':'#5f7d86','clusterBkg':'#eef6f7','clusterBorder':'#bcd7de'}}}%%
+flowchart TD
+  M([Mensaje]) --> CTX[[Contexto compartido<br/>estado · memoria · idioma]]
+  CTX --> SAFE{Guardia de seguridad<br/>PII · médico · quejas}
+  SAFE -->|riesgo| ESC([Escalado])
+  SAFE -->|ok| ROUTER{{Router de intención<br/>1 clasificador · caso de uso}}
+  ROUTER --> A1
+  ROUTER --> A2
+  ROUTER --> A3
+  ROUTER --> A4
+  subgraph AG[Agentes especializados · prompt enfocado + guards deterministas]
+    direction LR
+    A1[Agente Reserva<br/>slot-fill + multi-ítem]
+    A2[Agente Info/RAG<br/>Q&amp;A con grounding]
+    A3[Agente Cambios<br/>cancelar · reprog · disponib.]
+    A4[Agente Deflexión<br/>contacto · identidad · off-topic]
+  end
+  A1 --> DET[[Capa determinista<br/>catálogo · precios · links · grounding]]
+  A2 --> DET
+  A3 --> DET
+  A1 -.multi-ítem.-> ORQ{Sub-orquestador<br/>reserva de varias cosas}
+  DET --> OUT([Respuesta])
+  classDef router fill:#f7ecd6,stroke:#c1861a,color:#123;
+  classDef agent fill:#e3eef8,stroke:#1f6fb2,color:#123;
+  classDef det fill:#e0f1e8,stroke:#2f9e6b,color:#123;
+  classDef core fill:#e2f4f4,stroke:#0f9b9b,color:#123;
+  class ROUTER,ORQ router; class A1,A2,A3,A4 agent; class DET,CTX det; class SAFE core; class ESC agent;
+      </pre>
+    </div>
+
+    <h3>Qué se convierte en qué</h3>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Hoy</th><th></th><th>Objetivo</th><th>Qué cambia</th></tr></thead>
+        <tbody>
+          <tr><td class="mono">supervisor · cascada de 14 <code>if</code></td><td class="arrow">→</td><td><b>Router de intención</b> explícito</td><td>Un clasificador con rutas nombradas, no una pila de interceptores.</td></tr>
+          <tr><td class="mono">conversational_core (2.249 líneas)</td><td class="arrow">→</td><td><b>Agente Reserva</b> + sub-orquestador</td><td>Se parte: routing fuera, extracción/slots como servicio, multi-ítem como sub-flujo.</td></tr>
+          <tr><td class="mono">rag_agent + grounding</td><td class="arrow">→</td><td><b>Agente Info/RAG</b></td><td>Casi tal cual; ya es un agente limpio con contrato (pregunta→respuesta grounded).</td></tr>
+          <tr><td class="mono">cancelación · reprog · disponibilidad</td><td class="arrow">→</td><td><b>Agente Cambios</b></td><td>Hoy son 3 gates sueltos en el supervisor; se unifican en un agente de “post-reserva”.</td></tr>
+          <tr><td class="mono">deflexión contacto · identidad · off-topic</td><td class="arrow">→</td><td><b>Agente Deflexión</b></td><td>Un solo agente de “fuera de dominio / límites”, hoy disperso en 3 gates.</td></tr>
+          <tr><td class="mono">9 señales + 6 redes LLM sueltas</td><td class="arrow">→</td><td><b>1 router + prompts por agente</b></td><td>Menos llamadas, cada una enfocada; desaparecen los choques entre redes.</td></tr>
+          <tr><td class="mono">catalog · cart_render · grounding</td><td class="arrow">→</td><td><b>Capa determinista</b> (igual)</td><td><b>No se toca.</b> Es la joya: los hechos siempre deterministas.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout good">
+      <span class="lbl">El principio que NO cambia</span>
+      <p>La regla de oro que ya aplicamos se mantiene y se refuerza: <b>los hechos (precio, link, cupo, elegibilidad, confirmación) son siempre deterministas del catálogo</b>; el LLM interpreta y redacta, nunca fija un dato. Y donde el LLM sobre-dispara, hay <b>backstop determinista</b>. Multiagente no significa “más LLM suelto” — significa <b>cada LLM más pequeño, más controlado y con un contrato claro</b>.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 4. COMO LLEGAR ============ -->
+<section id="camino">
+  <div class="wrap">
+    <div class="sec-head"><span class="sec-num">04</span><h2>Cómo llegar — un camino por fases</h2></div>
+    <p class="sub">Nada de un “big bang”. Cada fase deja el bot funcionando y verde, y reduce complejidad de forma medible. La suite de ~1.400 tests es la red que garantiza que no cambiamos el comportamiento mientras reorganizamos.</p>
+
+    <div class="phase">
+      <div class="rail"></div>
+      <div>
+        <div class="phrow"><div class="pin bg-teal">0</div><div class="body">
+          <h4>Cimientos + observabilidad</h4>
+          <p>Cerrar la reorg (renombrar/quitar el shim de <code>decision_tree</code>) e <b>instrumentar</b>: medir por turno cuántas llamadas LLM, latencia y coste. Hoy volamos a ciegas en eso — es el dato que decide qué agrupar. Congelar el comportamiento actual con la suite.</p>
+        </div></div>
+        <div class="phrow"><div class="pin bg-blue">1</div><div class="body">
+          <h4>Formalizar el ROUTER</h4>
+          <p>Convertir la cascada de 14 <code>if</code> en un <b>clasificador de intención explícito</b> con rutas nombradas (seguridad · reserva · info · cambios · deflexión). Determinista primero (lo que ya funciona por keyword), LLM-router de respaldo. <b>Mismo comportamiento, estructura legible.</b></p>
+        </div></div>
+        <div class="phrow"><div class="pin bg-blue">2</div><div class="body">
+          <h4>Extraer AGENTES con contrato</h4>
+          <p>Cada caso de uso = un módulo agente con <b>entrada (contexto), lógica/prompt enfocado y salida tipada</b>. Empezar por los aislados y de bajo riesgo (<b>Deflexión, Cambios, Escalado</b>) y dejar <b>Reserva</b> (el grande) para el final, ya con el patrón rodado.</p>
+        </div></div>
+        <div class="phrow"><div class="pin bg-blue">3</div><div class="body">
+          <h4>Consolidar las REDES LLM</h4>
+          <p>Colapsar las ~9 redes sueltas en <b>llamadas por-agente enfocadas</b>. Cada agente hace las suyas, sobre su caso — <b>menos llamadas y sin colisiones</b> entre redes que hoy ven el mensaje entero. Aquí es donde bajan latencia y coste.</p>
+        </div></div>
+        <div class="phrow"><div class="pin bg-blue">4</div><div class="body">
+          <h4>Contexto/memoria compartidos + grounding único</h4>
+          <p>Un <b>objeto de contexto</b> que todos los agentes leen y escriben (estado de reserva, memoria, idioma, hechos abiertos) y <b>una sola capa de grounding/hechos</b>. Elimina el estado disperso y las “notas” que quedaron a medio cablear.</p>
+        </div></div>
+        <div class="phrow"><div class="pin bg-green">5</div><div class="body">
+          <h4>Test por agente + bucle de datos reales</h4>
+          <p>Cada agente probado <b>en aislamiento</b> (su contrato), no solo end-to-end. Y activar el <b>bucle de tráfico real de PRE</b>: que los datos digan qué reforzar, en vez de inventar edge-cases a mano. Es más valioso que seguir puliendo casos imaginados.</p>
+        </div></div>
+      </div>
+    </div>
+
+    <div class="callout think">
+      <span class="lbl">Decisión clave — ¿framework o a mano?</span>
+      <p>Existe la tentación de meter un framework de agentes (LangGraph y similares). <b>Recomendación: no todavía.</b> Ya tenemos mucho determinista que funciona; un orquestador/máquina-de-estados <b>propio, ligero y tipado</b> nos da el patrón sin atarnos a una dependencia pesada ni a su curva de aprendizaje. Si más adelante los casos de uso se multiplican, se reevalúa — pero la arquitectura (router → agentes → contrato) es la misma con o sin framework.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 5. QUE CAMBIA ============ -->
+<section id="balance">
+  <div class="wrap">
+    <div class="sec-head"><span class="sec-num">05</span><h2>Qué se mantiene, qué cambia, qué vigilar</h2></div>
+    <div class="grid g3" style="margin-top:20px">
+      <div class="card" style="border-top:3px solid var(--green)">
+        <h4><span class="dot bg-done"></span>Se mantiene (la joya)</h4>
+        <ul class="tick keep">
+          <li>Catálogo determinista: precios, links, <code>cart_render</code>.</li>
+          <li>Grounding — nunca inventar un hecho.</li>
+          <li>Disciplina “LLM + backstop determinista”.</li>
+          <li>La suite de tests como red de seguridad.</li>
+          <li>El extractor regex de primer paso.</li>
+        </ul>
+      </div>
+      <div class="card" style="border-top:3px solid var(--amber)">
+        <h4><span class="dot bg-wip"></span>Cambia</h4>
+        <ul class="tick change">
+          <li>Supervisor-cascada → <b>router explícito</b>.</li>
+          <li>Núcleo monolito → <b>agentes con contrato</b>.</li>
+          <li>9 redes sueltas → <b>llamadas por-agente</b>.</li>
+          <li>Estado disperso → <b>contexto compartido</b>.</li>
+          <li>Interceptores ad-hoc → <b>rutas nombradas</b>.</li>
+        </ul>
+      </div>
+      <div class="card" style="border-top:3px solid var(--coral)">
+        <h4><span class="dot bg-risk"></span>Qué vigilar</h4>
+        <ul class="tick risk">
+          <li>Es un refactor grande: <b>coordinar 3 devs</b>, fase a fase.</li>
+          <li><b>No romper</b> el comportamiento probado (suite verde tras cada paso).</li>
+          <li><b>No sobre-ingenierizar</b>: sin framework pesado si no hace falta.</li>
+          <li>Medir <b>latencia/coste</b> antes y después, no de oído.</li>
+          <li>El KB de RAG tiene huecos de contenido (auditar aparte).</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="callout good" style="margin-top:26px">
+      <span class="lbl">En una frase</span>
+      <p>Ya construimos, sin nombrarlo, la <b>semilla</b> del mismo patrón que IBM usa en producción. El siguiente salto no es más robustez a mano — es <b>reorganizar lo que tenemos en router + agentes con contrato</b>, conservando intacta la capa determinista que hace que el bot nunca mienta. El resultado: un producto <b>entendible, controlable, mantenible</b> y con sitio para crecer en casos de uso sin volver a liarse.</p>
+    </div>
+
+    <h3>Lo inmediato (esta semana)</h3>
+    <ul class="tick">
+      <li><b>Alinear</b> a los tres sobre esta dirección y este documento como base.</li>
+      <li><b>Fase 0</b>: cerrar la reorg pendiente + instrumentar el conteo de llamadas LLM/latencia por turno.</li>
+      <li><b>Investigar</b> en profundidad el patrón (referencias de orquestación de agentes) y escribir el <b>plan de la Fase 1</b> (el router) con el detalle que ya usamos en los planes anteriores.</li>
+    </ul>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">Diving Planet Bot · revisión de arquitectura · base para la fase “enrutado + multiagente”. Estado del código: rama <span style="color:var(--teal)">feature/pre_alvaro</span> (Fase 4 + Bloque 2 + reorg §1/§2, merge local pendiente de push).</div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10.9.3/dist/mermaid.min.js"></script>
+<script>
+  (function () {
+    function boot() {
+      if (!window.mermaid) return;
+      try {
+        window.mermaid.initialize({ startOnLoad: false, securityLevel: 'loose', theme: 'base' });
+        window.mermaid.run({ querySelector: '.mermaid' });
+      } catch (e) { /* si falla, queda el código del diagrama visible como fallback */ }
+    }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
+    else boot();
+  })();
+</script>
+</body>
+</html>
+
