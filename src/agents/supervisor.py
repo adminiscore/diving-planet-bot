@@ -587,6 +587,41 @@ def _booking_change_buttons(lang: str) -> list[dict]:
     ]
 
 
+def _booking_change_response(state: ConversationState, message: str, kind: str) -> str:
+    """Copy + efecto de estado compartido para cancelación/reprogramación (Bloque
+    2.1): texto de política de la KB + oferta asesor/menú + botones + historial.
+    `kind` ∈ {"cancellation", "reschedule"}. Extraído (Fase 2.3) para que el nodo
+    `changes` del grafo y la cascada usen una única fuente de copy/estado — sin
+    duplicar los strings (garantiza la equivalencia por construcción)."""
+    policy_text = (load_policies().get("policies", {}).get(kind) or {}).get(state.language, "")
+    if kind == "cancellation":
+        if state.language == "es":
+            response = (
+                f"{policy_text}\n\n¿Quieres que te conecte con un asesor para gestionar la "
+                "cancelación, o prefieres volver al menú principal?"
+            )
+        else:
+            response = (
+                f"{policy_text}\n\nWould you like me to connect you with an advisor to handle the "
+                "cancellation, or would you rather go back to the main menu?"
+            )
+    else:  # reschedule
+        if state.language == "es":
+            response = (
+                f"{policy_text}\n\n¿Quieres que te conecte con un asesor para gestionar el cambio "
+                "de fecha, o prefieres volver al menú principal?"
+            )
+        else:
+            response = (
+                f"{policy_text}\n\nWould you like me to connect you with an advisor to handle the "
+                "date change, or would you rather go back to the main menu?"
+            )
+    state.quick_replies = _booking_change_buttons(state.language)
+    state.history.append({"role": "user", "content": message})
+    state.history.append({"role": "assistant", "content": response})
+    return response
+
+
 # Verbs the LLM uses when offering to hand the user off ("te paso con un asesor",
 # "contactes a un asesor", "connect you with an advisor"...). The exact phrasing
 # varies run to run, so we anchor on advisor-noun + offer-verb + a question
@@ -2000,48 +2035,16 @@ async def _route_message_inner(
         and not _in_active_cart_building(state)
     ):
         _mark_route(ROUTE_CHANGE)
-        policy_text = (load_policies().get("policies", {}).get("cancellation") or {}).get(
-            state.language, ""
-        )
-        if state.language == "es":
-            response = (
-                f"{policy_text}\n\n¿Quieres que te conecte con un asesor para gestionar la "
-                "cancelación, o prefieres volver al menú principal?"
-            )
-        else:
-            response = (
-                f"{policy_text}\n\nWould you like me to connect you with an advisor to handle the "
-                "cancellation, or would you rather go back to the main menu?"
-            )
-        state.quick_replies = _booking_change_buttons(state.language)
         logger.info("[SUPERVISOR] Cancellation request detected -> policy info + escalate/home buttons")
-        state.history.append({"role": "user", "content": message})
-        state.history.append({"role": "assistant", "content": response})
-        return response
+        return _booking_change_response(state, message, "cancellation")
 
     if _detect_reschedule_request(msg_lower) or (
         routing_signals.get("booking_change_topic") == "reschedule"
         and not _in_active_cart_building(state)
     ):
         _mark_route(ROUTE_CHANGE)
-        policy_text = (load_policies().get("policies", {}).get("reschedule") or {}).get(
-            state.language, ""
-        )
-        if state.language == "es":
-            response = (
-                f"{policy_text}\n\n¿Quieres que te conecte con un asesor para gestionar el cambio "
-                "de fecha, o prefieres volver al menú principal?"
-            )
-        else:
-            response = (
-                f"{policy_text}\n\nWould you like me to connect you with an advisor to handle the "
-                "date change, or would you rather go back to the main menu?"
-            )
-        state.quick_replies = _booking_change_buttons(state.language)
         logger.info("[SUPERVISOR] Reschedule request detected -> policy info + escalate/home buttons")
-        state.history.append({"role": "user", "content": message})
-        state.history.append({"role": "assistant", "content": response})
-        return response
+        return _booking_change_response(state, message, "reschedule")
 
     # Deflexión (Bloque 2.2): petición de número/WhatsApp/correo o vía de
     # contacto directa. El bot no da un número (política); en vez de escalar o

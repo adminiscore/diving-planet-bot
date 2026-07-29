@@ -24,10 +24,17 @@ import logging
 
 from langgraph.graph import END, START, StateGraph
 
+from src.agents.changes_agent import changes_node
 from src.agents.deflection_agent import deflection_node
 from src.agents.escalation_agent import escalation_node
 from src.orchestration.router import classify_route
-from src.orchestration.state import ALL_ROUTES, ROUTE_DEFLECT, ROUTE_SAFETY, BotState
+from src.orchestration.state import (
+    ALL_ROUTES,
+    ROUTE_CHANGE,
+    ROUTE_DEFLECT,
+    ROUTE_SAFETY,
+    BotState,
+)
 
 logger = logging.getLogger("uvicorn.error")
 
@@ -37,6 +44,7 @@ logger = logging.getLogger("uvicorn.error")
 _REAL_NODES = {
     ROUTE_DEFLECT: deflection_node,
     ROUTE_SAFETY: escalation_node,
+    ROUTE_CHANGE: changes_node,
 }
 
 

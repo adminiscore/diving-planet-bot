@@ -534,11 +534,19 @@ se paralelizan entre sí).
       Respaldado por el audit del shadow (§1.5): **0 mismatches en SAFETY**. **11 tests nuevos**
       (5 aislados por gate + delegación + equivalencia flag on/off en 5 mensajes) + 116 verdes
       en la regresión ancha. Ruff limpio. *(dev: Álvaro)*
-- [ ] **2.3 · Nodo `changes`** (cancelar · reprogramar · disponibilidad) — 3 gates → 1 nodo.
-      *(dev: —)* ⚠️ **Audit §1.5 patrón B:** la cascada hoy deja que el núcleo intercepte
-      preguntas de disponibilidad frescas ANTES del gate de disponibilidad (router→changes,
-      cascada→booking, 3/14 mismatches). Al montar este nodo, decidir si la disponibilidad
-      debe ganar al booking (el router ya lo hace) — o dejarlo para el cutover (Fase 5.2).
+- [x] **2.3 · Nodo `changes` — HECHO** (`src/agents/changes_agent.py`). Tercer corte strangler:
+      la ruta `ROUTE_CHANGE` ejecuta directamente los 2 gates **pre-núcleo** (cancelación y
+      reprogramación, por keyword o por señal LLM `booking_change_topic` fuera de carrito) →
+      política de la KB + botones asesor/menú. Copy/estado vía `supervisor._booking_change_
+      response`, **helper extraído** (refactor mecánico, preservador de comportamiento) para que
+      cascada y nodo compartan una sola fuente de strings (equivalencia por construcción, sin
+      duplicar). La **disponibilidad** (gate post-núcleo, ⚠️ **patrón B** del audit §1.5:
+      router→changes, cascada→booking, 3/14) NO se reproduce: reproducirla sin correr el núcleo
+      cambiaría la conducta → se **delega en la cascada** (equivalencia garantizada). **Decisión
+      diferida al cutover (Fase 5.2):** si la disponibilidad fresca debe ganar al núcleo. **7
+      tests nuevos** (3 gates aislados + delegación + equivalencia flag on/off en 3 mensajes) +
+      123 verdes en la regresión ancha + 13 de cancel/reschedule/disponibilidad en conversations
+      (cascada tocada por la extracción). Ruff limpio. *(dev: Álvaro)*
 - [ ] **2.4 · Nodo `info`** (RAG + grounding) — envuelve `rag_agent`; la RAG queda en Python
       plano dentro del nodo. *(dev: —)* ⚠️ **Audit §1.5 patrón A:** el nodo info debe cubrir
       TAMBIÉN la elegibilidad por edad determinista (`_maybe_answer_age_eligibility`, hoy
@@ -633,6 +641,12 @@ se paralelizan entre sí).
 ## 8. Registro de ejecución
 *(Una línea por paso cerrado: fecha · dev · qué · commit. El más reciente arriba.)*
 
+- **2026-07-30 · Álvaro · Fase 2.3** — Nodo `changes` real (tercer corte strangler): la ruta
+  CHANGE ejecuta directamente cancelación + reprogramación (pre-núcleo) vía el helper compartido
+  `_booking_change_response` (extraído de la cascada, refactor preservador); la disponibilidad
+  (post-núcleo, patrón B) delega en la cascada. `src/agents/changes_agent.py` + helper en
+  `supervisor.py` + wire en `graph.py`. 7 tests nuevos; 123 verdes en la regresión ancha + 13 de
+  conversations; ruff limpio. Decisión de disponibilidad vs núcleo diferida al cutover (5.2).
 - **2026-07-30 · Álvaro · Fase 2.2** — Nodo `escalation` real (segundo corte strangler): la ruta
   SAFETY ejecuta directamente los 6 gates pre-núcleo (PII, link roto kw+señal, sensible
   kw+señal, DIVE TO HEAL precio→asesor); los gates post-núcleo (wants_human/keyword) delegan en
