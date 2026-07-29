@@ -6,7 +6,7 @@
 > alguien retoma tras un merge, **el estado de los checkboxes aquí es la única verdad**.
 > Acompaña (no sustituye) a `docs/project-history/session-handoff.md`.
 
-**Estado global:** `Fase 0 — sin empezar`. Creado 2026-07-29.
+**Estado global:** `Fase 0 — en curso` (0.1/0.2a/0.2b hechos; siguiente 0.3). Creado 2026-07-29.
 **Base de código:** rama `feature/pre_alvaro` (Fase 4 completa + Bloque 2 + reorg §1/§2).
 **Motor de orquestación elegido:** **LangGraph** (con LangChain de forma selectiva) — ver §2.
 
@@ -355,27 +355,21 @@ se paralelizan entre sí).
       - Suite verde tras cada borrado (AST no líneas).
 - [x] **0.2a · Campos `mixed_*` muertos — HECHO** (`5d7c890`). 13 campos borrados de
       `ConversationState` (75→62 campos). Suite completa idéntica al baseline (1412 passed).
-- [ ] **0.2b · Poda del menú legacy — SCOPEADO Y LISTO (reachability completa 2026-07-29).**
-      Son **dos operaciones independientes** (los strings `"info_menu"` de `messages.py` NO
-      dependen del enum `Step.INFO_MENU` — se pueden hacer por separado):
-      - **0.2b-i · Enum `Step` (state.py).** Borrar los ~33 valores con 0 refs `Step.X`
-        (INFO_*, COURSES_*, PRICING_*, LOGISTICS_*, ISLAND_*, SERVICE_DETAIL, LOCATION,
-        COLOMBIAN, SUMMARY, INFO_MIXED_*, INFO_CERTIFIED_4_DIVES_VARIANT). **Conservar:**
-        WELCOME, LANGUAGE, MAIN_MENU, ESCALATE, FREE_TEXT. **Coordinar:** RESERVA_MENU/
-        INFO_MENU/BOOKING_MENU están en `supervisor._INTENT_TRIGGER_STEPS` (:1773) → quitarlos
-        del set (el bot nunca entra en esos steps post-Fase-4) al borrarlos del enum. **Tests:**
-        borrar/actualizar los que referencian steps muertos — `PRICING_MENU` (3), `LOGISTICS_MENU`
-        (1), `BOOKING_MENU` (1): son tests del menú legacy retirado → revisar y borrar.
-      - **0.2b-ii · Datos de `messages.py` (~1.500 líneas → ~150).** Reachability: en código
-        vivo **solo se usan** `MESSAGES["escalate"]`, `MESSAGES["main_menu"]`,
-        `set_quick_replies(state, "main_menu")`. **Conservar:** las 2 claves de `MESSAGES`, la
-        entrada `main_menu` de `BUTTON_OPTIONS`, `get_button_options`, `DecisionTree.
-        set_quick_replies`. **Borrar:** las otras ~58 claves de `MESSAGES`, el resto de
-        `BUTTON_OPTIONS`, y los 3 métodos de isla de `DecisionTree`
-        (`_info_island_certified_options`, `_island_certified_options`,
-        `_mixed_island_certified_multiday_options` — 0 refs). Reconstruir `messages.py` minimal
-        + suite verde. **Delicado por volumen → paso con foco propio, no al final de una sesión
-        larga.**
+- [x] **0.2b · Poda del menú legacy — HECHO** (0.2b-i `b8f8d43`, 0.2b-ii `fbeff5c`).
+      - **0.2b-i · Enum `Step` (state.py) — HECHO.** 43→5 valores (quedan WELCOME/LANGUAGE/
+        MAIN_MENU/ESCALATE/FREE_TEXT). Quitados RESERVA_MENU/INFO_MENU/BOOKING_MENU de
+        `supervisor._INTENT_TRIGGER_STEPS`. Tests: `test_state_store` actualizado
+        (PRICING_MENU→MAIN_MENU), borrados 3 helpers muertos de `test_conversations`
+        (`reach_pricing_menu`/`reach_booking_menu`/`reach_logistics_menu`, 0 llamadas).
+      - **0.2b-ii · Datos de `messages.py` — HECHO.** 1517→80 líneas. `MESSAGES` 60→2 claves
+        (escalate/main_menu), `BUTTON_OPTIONS` 40→1 clave (main_menu). Borrados los 3 métodos
+        de isla de `DecisionTree` (`_info_island_certified_options`/`_island_certified_options`/
+        `_mixed_island_certified_multiday_options`, 0 refs) + las 3 ramas de `set_quick_replies`
+        que solo ellos alimentaban (sus condiciones nunca ocurrían — el único caller real
+        siempre pasa `key="main_menu"`); `set_quick_replies` queda en un solo camino.
+      - Suite tras cada sub-paso: **1421 passed / 9 skipped / 0 failed** (mismo total 1430 que
+        el baseline 1412/18 — la diferencia de skips es de entorno, sin `OPENAI_API_KEY` local,
+        no del cambio). ruff + compileall limpios en ambos.
 - [ ] **0.3 · LIMPIEZA de dependencias y muertos.** Cerrar el shim `decision_tree` (reapuntar
       importadores a `catalog`/`state`/`messages` y borrar shim + vestigio `DecisionTree`).
       Auditar imports/funciones huérfanas (a mano, sin `ruff --fix`).
@@ -516,6 +510,15 @@ se paralelizan entre sí).
 ## 8. Registro de ejecución
 *(Una línea por paso cerrado: fecha · dev · qué · commit. El más reciente arriba.)*
 
+- **2026-07-29 · Gadea · Fase 0.2b-ii** — `messages.py` podado 1517→80 líneas.
+  `MESSAGES` 60→2 claves (escalate/main_menu), `BUTTON_OPTIONS` 40→1 clave (main_menu),
+  borrados los 3 métodos de isla muertos de `DecisionTree` + las 3 ramas de
+  `set_quick_replies` que solo ellos alimentaban (condiciones nunca alcanzables — el único
+  caller real, `supervisor.py:2214/2221`, siempre pasa `key="main_menu"`); también la rama
+  `mixed_add_activity`/`mixed_entry_path` (su key ya no existe en `BUTTON_OPTIONS`, quedaba
+  en no-op). `set_quick_replies` queda en un solo camino. Suite 1421 passed / 9 skipped /
+  0 failed (idéntica a 0.2b-i). ruff + compileall limpios. Commit `fbeff5c`. **Fase 0.2b
+  CERRADA.** Siguiente: **0.3** (cerrar shim `decision_tree` + imports huérfanos).
 - **2026-07-29 · Gadea · Fase 0.2b-i** — enum `Step` podado 43→5 valores
   (quedan WELCOME/LANGUAGE/MAIN_MENU/ESCALATE/FREE_TEXT); quitados RESERVA_MENU/
   INFO_MENU/BOOKING_MENU de `supervisor._INTENT_TRIGGER_STEPS`; actualizado
