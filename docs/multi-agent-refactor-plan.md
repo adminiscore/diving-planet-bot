@@ -162,6 +162,22 @@ cómo se mitigan:
   **nodos-agente son aislables** → se reparten entre los 3. El State, el router y el esqueleto
   del grafo son la parte secuencial que va primero.
 
+### Protocolo de trabajo — pasos pequeños con paradas (cómo lo llevamos)
+Este refactor se hace en **pasos pequeños con parada y reporte** entre cada uno, no en tandas
+grandes silenciosas. Es lo que mantiene el control y evita romper nada:
+1. **Un paso a la vez.** Cada checkbox de una fase es una unidad. No se encadenan varios pasos
+   grandes sin verificar.
+2. **Suite verde tras cada paso** (los flags que apliquen). Si toca borrar código, la suite
+   corre tras **cada** borrado, no al final del lote.
+3. **Parada + reporte al cerrar un paso**: qué se hizo, resultado de la suite, commit, y qué
+   viene. Antes de un paso **grande o arriesgado** (p. ej. borrar ~1.000 líneas, cortar el
+   legacy), se para y se confirma con el owner/equipo — no se ejecuta a ciegas.
+4. **Registro de ejecución** (§8) actualizado en cada cierre: fecha · dev · qué · commit. Es
+   la memoria del refactor entre sesiones y devs.
+5. **Commits pequeños y limpios**, un propósito por commit, con la suite verde. Nada de
+   `ruff --fix` en imports. Si un fichero se voltea a CRLF, normalizar a LF y `--amend` (el
+   repo no tiene `.gitattributes`; ver `session-handoff.md`).
+
 ### Estrategia de tests (transversal — no es solo la Fase 5)
 La suite es la red de seguridad de TODO el refactor, así que su evolución se planifica desde
 el principio, no al final:

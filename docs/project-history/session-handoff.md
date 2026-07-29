@@ -11,6 +11,50 @@ Read this file before changing code in the Diving Planet Bot. For a quick versio
 
 ## Current branch and workflow
 
+- **2026-07-29 (rama `feature/agent-arch`) — ⇨ ARRANCA EL REFACTOR A MULTIAGENTE (LangGraph). GADEA: EMPIEZA AQUÍ.**
+  - **Fuente de verdad:** `docs/multi-agent-refactor-plan.md` — el **plan maestro** del refactor.
+    Léelo entero antes de tocar nada. Tiene: la valoración de LangGraph/LangChain, los principios
+    rectores, el **protocolo de trabajo (pasos pequeños con paradas)**, la arquitectura objetivo,
+    la **taxonomía completa de rutas** (para no perder ninguna casuística), las 6 fases con
+    checkbox + DoD, y el **Registro de ejecución** (§8) que se actualiza en cada cierre.
+    Referencia visual: `arquitectura-diving-planet-bot.html` (raíz del repo).
+  - **Objetivo:** migrar la cascada monolítica del supervisor + el núcleo de reserva + las ~9
+    redes LLM sueltas a un **grafo LangGraph** (router → nodos-agente con prompt por caso de uso,
+    patrón IBM), conservando intacta la capa determinista (precios/links/grounding). LangGraph
+    para orquestar, **LangChain con moderación** (la RAG/grounding no se meten en LangChain).
+    Las deps `langgraph`/`langchain*`/`langsmith` **ya están en `pyproject.toml`** (0 imports hoy)
+    y **LangSmith ya está configurado** en `config.py`.
+  - **Base de la rama:** parte del trabajo de Gonzalo de `fase4-p2` (Fase 4 completa) + el fix de
+    deliberación (`1cd6593`). `feature/agent-arch` es una **rama de integración nueva,
+    independiente de `pre_alvaro`/PRE** — trabajar aquí NO despliega nada. (El push del merge de
+    `fase4-p2` a `pre_alvaro`/PRE sigue siendo decisión aparte del owner.)
+  - **Hecho en esta sesión (Fase 0):**
+    - **0.1 · Baseline congelado** (`dda7f65`): **1412 passed / 18 skipped / 0 failed** (suite
+      completa con LLM real, ~7 min). Es el **invariante** — verde tras cada paso. Arreglado un
+      test infra-aislado (`test_gap_fill_logs_in_harvester_format`, mockeado `detect_routing_signals`).
+    - **0.2a · Campos `mixed_*` muertos** (`359570f`): 13 campos borrados de `ConversationState`
+      (75→62), reachability 0 refs, suite idéntica al baseline.
+    - **0.2b · SCOPEADO Y LISTO** (`3ef2af5`): reachability completa hecha; en el plan (§5 Fase
+      0.2b) están las **listas exactas conservar/borrar**. No ejecutado aún (borrado grande,
+      ~1500 líneas de `messages.py` + enum `Step` + tests legacy — paso con foco propio).
+  - **⇨ SIGUIENTE PASO (Gadea): Fase 0.2b.** Ejecutar con las listas exactas del plan:
+    - **0.2b-i (enum `Step`, `state.py`):** borrar los ~33 valores muertos (INFO_*/COURSES_*/
+      PRICING_*/LOGISTICS_*/ISLAND_*/SERVICE_DETAIL/LOCATION/COLOMBIAN/SUMMARY/…); conservar
+      WELCOME/LANGUAGE/MAIN_MENU/ESCALATE/FREE_TEXT; quitar RESERVA_MENU/INFO_MENU/BOOKING_MENU
+      de `supervisor._INTENT_TRIGGER_STEPS`; borrar/actualizar tests legacy (PRICING_MENU/
+      LOGISTICS_MENU/BOOKING_MENU). Suite verde tras el borrado.
+    - **0.2b-ii (`messages.py`, ~1500→~150 líneas):** conservar solo `MESSAGES["escalate"]`,
+      `MESSAGES["main_menu"]`, `BUTTON_OPTIONS["main_menu"]`, `get_button_options`,
+      `DecisionTree.set_quick_replies`; borrar el resto de `MESSAGES`/`BUTTON_OPTIONS` + los 3
+      métodos de isla muertos. Suite verde.
+    - Luego **0.3** (cerrar shim `decision_tree` + imports huérfanos), **0.4** (encender LangSmith
+      + baseline de métricas por turno), **0.5** (instalar LangGraph + PoC 2 nodos + flag
+      `agent_arch` + lockfile), **0.6** (spike de diseño `docs/agent-arch-design.md`).
+  - **Cómo trabajamos (protocolo, en el plan §3):** paso pequeño → suite verde → commit limpio
+    (un propósito; nada de `ruff --fix` imports; si un fichero se voltea a CRLF, normalizar a LF
+    y `--amend`) → **parada + reporte** (qué, resultado, commit, qué viene) → actualizar el
+    **Registro de ejecución** del plan. Antes de un paso grande/arriesgado, **confirmar** con el
+    equipo, no ejecutar a ciegas.
 - **2026-07-28 (rama `feature/fase4-p2`, SIN mergear a pre_gadea) — FASE 4 COMPLETA: pasos 3-5 hechos, todo el árbol legacy `MIXED_*` fuera + flag retirado**. Detalle en `docs/archive/legacy-tree-retirement-plan.md`. Cierre de los pasos 4-5 (6 commits nuevos sobre el paso 3 de Gonzalo):
   - **Paso 4a (`308488d`) — orquestador legacy retirado**: trazado `_dispatch_conversation_agent`→`_apply_orchestrator_decision`→módulo `orchestrator` como runtime-dead (solo lo mantenían vivo tests, ya retirados). Borrados + cascada + `src/agents/intent_classifier.py` (0 refs) + los 4 métodos `orchestrator_*` de `decision_tree` (referenciaban `_handle_mixed_*` ya inexistentes).
   - **Paso 4b — código legacy `MIXED_*` (4 commits)**: `bdb42f4` resolución de confirmación (`_route_detected_intent`, único escritor de pasos MIXED en runtime — muerto porque nada setea `pending_intent_confirmation` desde que Fase 1 quitó el trigger); `977176b` guards siempre-True + constantes de pasos huérfanas (`MENU_STEPS`, `_MIXED_FLOW_STEPS`, `BACK_STEP`…); `859c788` clúster de construcción-de-carrito muerto (39 métodos por reachability desde raíces vivas, protegiendo los 9 símbolos de `cart_render`); `1761dec` los 26 valores `Step.MIXED_*` del enum + limpieza de andamiaje de test en 5 archivos.
