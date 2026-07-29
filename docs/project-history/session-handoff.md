@@ -11,6 +11,17 @@ Read this file before changing code in the Diving Planet Bot. For a quick versio
 
 ## Current branch and workflow
 
+- **2026-07-30 (rama `feature/agent-arch`) — FASE 2 EN CURSO: 4/5 nodos-agente reales. GADEA SIGUE CON 2.5.**
+  - Hechos y pusheados (cortes strangler, equivalencia flag on/off por nodo): **2.1 deflection**
+    (`6a70d7f`), **2.2 escalation** (`7e9ff05`), **2.3 changes** (`36b7da2`, extrajo el helper
+    compartido `_booking_change_response`), **2.4 info** (`20c4a69`, cerró el patrón A del audit
+    añadiendo la rama edad→INFO al router). Cada nodo en `src/agents/<ruta>_agent.py`, cableado
+    en `src/orchestration/graph.py` (`_REAL_NODES`), con `tests/test_<ruta>_agent.py`.
+  - **SIGUIENTE: 2.5 (nodo `booking` = el núcleo) y 2.6 (despacho a nodos reales).** El patrón
+    exacto a replicar (PRE-núcleo reproduce / POST-núcleo delega, resiliencia, tests de
+    equivalencia, cierre CRLF+commit) está en el **🤝 HANDOFF** dentro de `docs/multi-agent-
+    refactor-plan.md` §5 Fase 2 — **léelo antes de empezar 2.5**. La cascada (flag off) sigue
+    intacta; todo lo no-cortado aún delega en ella.
 - **2026-07-29 (rama `feature/agent-arch`) — ⇨ ARRANCA EL REFACTOR A MULTIAGENTE (LangGraph). GADEA: EMPIEZA AQUÍ.**
   - **Fuente de verdad:** `docs/multi-agent-refactor-plan.md` — el **plan maestro** del refactor.
     Léelo entero antes de tocar nada. Tiene: la valoración de LangGraph/LangChain, los principios

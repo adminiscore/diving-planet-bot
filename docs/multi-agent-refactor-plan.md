@@ -6,11 +6,12 @@
 > alguien retoma tras un merge, **el estado de los checkboxes aquí es la única verdad**.
 > Acompaña (no sustituye) a `docs/project-history/session-handoff.md`.
 
-**Estado global:** `Fase 0 completa · Fase 1 completa`. Grafo LangGraph esqueleto (router +
-5 nodos-wrapper) cableado detrás de `agent_arch`, con equivalencia probada (suite verde en
-default/grafo/shadow) y shadow de rutas para medir en PRE. La cascada sigue viva. Siguiente:
-**Fase 2** (los nodos-agente reales, paralelizable entre los 3) — pendiente de revisión del
-equipo (spike 0.6 + Fase 1) antes de arrancar. Creado 2026-07-29.
+**Estado global:** `Fase 0 completa · Fase 1 completa · Fase 2 en curso (4/5 nodos reales)`.
+Grafo LangGraph detrás de `agent_arch`; **deflection/escalation/info/changes ya son nodos
+REALES** (cortes strangler 2.1–2.4, equivalencia flag on/off probada por nodo), el resto siguen
+como wrappers que delegan. La cascada sigue viva. **Siguiente: 2.5 (nodo `booking` = el núcleo)
+y 2.6 (despacho a nodos reales), lo continúa Gadea** — ver el 🤝 HANDOFF en §5 Fase 2 para el
+patrón exacto a replicar. Creado 2026-07-29; actualizado 2026-07-30.
 **Base de código:** rama `feature/pre_alvaro` (Fase 4 completa + Bloque 2 + reorg §1/§2).
 **Motor de orquestación elegido:** **LangGraph** (con LangChain de forma selectiva) — ver §2.
 
@@ -562,9 +563,61 @@ se paralelizan entre sí).
       limpio. *(dev: Álvaro)* La cascada (flag off) queda intacta — el predicado nuevo solo lo
       usa el router.
 - [ ] **2.5 · Nodo `booking`** (el núcleo) — como **subgrafo** LangGraph (el slot-fill loop +
-      multi-ítem). El más grande, el último. *(dev: —)*
+      multi-ítem). El más grande, el último. *(dev: Gadea)* — ver 🤝 HANDOFF abajo.
 - [ ] **2.6 · El grafo despacha a nodos reales** (flag on). Suite verde tras cada uno, on/off.
 - **DoD:** con `agent_arch` on, cada ruta va a **su** nodo; conducta idéntica; off = legacy.
+
+#### 🤝 HANDOFF (2026-07-30, Álvaro → Gadea) — patrón de nodo Fase 2 y siguiente paso (2.5)
+
+**Estado:** 4 de 5 nodos reales hechos y pusheados a `origin/feature/agent-arch` (commits
+`6a70d7f` deflection, `7e9ff05` escalation, `36b7da2` changes, `20c4a69` info). Base verde,
+reproducible. **Siguiente: 2.5 (nodo `booking`), luego 2.6.** Sigue este patrón exacto:
+
+**El patrón "corte strangler" (replicado idéntico en 2.1–2.4):**
+1. **Un fichero por nodo** en `src/agents/<ruta>_agent.py`, función `async def <ruta>_node(state:
+   BotState) -> dict`. Devuelve `{"reply": ...}`. Muta `conv_state` **por referencia** (igual
+   que la cascada: `step`, `history`, `quick_replies`, flags). Imports de `supervisor`
+   **perezosos** dentro de la función (rompe el ciclo; migran a módulo propio en Fase 3).
+2. **Clasifica cada gate de la ruta por su posición respecto al núcleo** (`maybe_handle_turn`):
+   - **PRE-núcleo** (predicado puro, antes de `maybe_handle_turn` en la cascada) → **reprodúcelo
+     directamente** en el nodo, en el MISMO orden y con el MISMO efecto de estado que la cascada.
+     Reusa los helpers existentes de `supervisor` para el copy; si el copy está inline y lo
+     necesitan los dos, **extráelo a un helper compartido** (refactor mecánico preservador — ver
+     `_booking_change_response` en 2.3). Nunca dupliques strings.
+   - **POST-núcleo** (el gate está DESPUÉS de `maybe_handle_turn`) → **NO lo reproduzcas**:
+     `return {"reply": await _route_message_inner(conv, message, routing_signals=signals)}`.
+     Correrlo sin el núcleo cambiaría el orden. Delegar preserva la equivalencia exacta.
+3. **Fallback de resiliencia (#10):** el caso por defecto SIEMPRE delega en la cascada, nunca
+   dropea el turno.
+4. **Wire** en `src/orchestration/graph.py`: añade `ROUTE_X: <ruta>_node` a `_REAL_NODES`.
+5. **Tests** en `tests/test_<ruta>_agent.py`: (a) nodo aislado por gate, (b) equivalencia
+   `agent_arch` off==on parametrizada, con `detect_routing_signals` mockeado a `{}` para hacer
+   los detectores deterministas. Para respuestas no-deterministas (RAG/LLM), mockea el binding
+   compartido (`supervisor.rag_answer`) a un valor fijo — así la igualdad prueba el enrutado, no
+   la (no-)determinación del LLM (ver `test_info_agent.py`).
+6. **Cierre:** compileall + `ruff check` + regresión ancha (orquestación/router/shadow/agentes +
+   los tests de conversations del área tocada) + **normaliza CRLF→LF** de los ficheros nuevos
+   (`git diff -w` para ver el cambio real; ver memoria "Repo line endings"). Commit con
+   `git commit -F -` + heredoc (NO `@'...'@`: la Bash tool es Git Bash, no PowerShell) +
+   `Co-Authored-By`. Push a `feature/agent-arch`. Marca el checkbox `[x]` + entrada en el
+   Registro de ejecución. **Para y avisa al owner** tras cada nodo (protocolo de pasos pequeños).
+
+**Nota 2.5 (`booking`, el núcleo) — es el salto grande:**
+- El "gate" de booking en la cascada ES `maybe_handle_turn` (líneas ~2165-2172, marca
+  `ROUTE_BOOKING`) + los handlers post-núcleo que hoy delegan (idioma, bare-affirmation, y todo
+  lo que cae al default). El nodo booking es el que envuelve el núcleo de verdad.
+- **Recomendación pragmática:** el primer corte de 2.5 puede ser un nodo que llame directamente
+  a `conversational_core.maybe_handle_turn(conv, message, routing_signals=signals)` y, si
+  devuelve `None` (clases que la cascada resuelve DESPUÉS: idioma/escalado-keyword/etc.),
+  **delegue en `_route_message_inner`** — mismo patrón PRE/POST. Eso da la equivalencia y "mueve"
+  la ruta a su nodo sin partir aún el monolito.
+- **Partir el núcleo en el subgrafo LangGraph** (routing interno → extracción → slot-fill →
+  cierre determinista) es **Fase 3.3**, no 2.5. No lo adelantes: 2.5 solo necesita el nodo
+  envolvente equivalente. Así 2.6 (despacho a nodos reales, flag on, suite verde on/off) queda
+  listo con los 5 nodos.
+- **Ojo divergencias documentadas (audit §1.5) que se resuelven en el cutover (Fase 5.2), NO en
+  2.5:** disponibilidad fresca (patrón B, hoy la intercepta el núcleo→booking) y la afirmación
+  que acepta oferta de asesor. En 2.5 se preservan delegando; no cambies su conducta todavía.
 
 ### Fase 3 — Consolidar las redes LLM y los prompts por nodo · *la sustancia (patrón IBM)*
 - [ ] **3.1 · Reubicar las redes.** Cada red LLM global → su nodo: `fill_gaps`/
