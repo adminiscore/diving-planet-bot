@@ -10,6 +10,7 @@ The routing logic is deterministic (no LLM call for routing),
 keeping costs minimal.
 """
 
+import contextvars
 import logging
 import re
 import unicodedata
@@ -31,6 +32,13 @@ from src.flows import cart_render, eligibility
 from src.flows.messages import set_quick_replies
 from src.flows.state import ConversationState, Step
 from src.knowledge.loader import load_policies
+from src.orchestration.state import (
+    ROUTE_BOOKING,
+    ROUTE_CHANGE,
+    ROUTE_DEFLECT,
+    ROUTE_INFO,
+    ROUTE_SAFETY,
+)
 from src.privacy import detect_pii, privacy_block_message
 
 logger = logging.getLogger("uvicorn.error")
@@ -1798,6 +1806,49 @@ _PURE_COMPANION_RE = re.compile(
 )
 
 
+# ── Shadow del router (Fase 1.5, docs/multi-agent-refactor-plan.md) ──
+# La cascada anota, vía este ContextVar, la ruta que realmente tomó en cada
+# gate (`_mark_route`), para poder compararla con la predicción del router
+# (`orchestration.router.classify_route`) SIN re-ejecutar nada. ContextVar y no
+# atributo de estado a propósito: no ensucia `ConversationState` ni la
+# persistencia, y cada turno (task async) tiene el suyo. Solo se lee cuando
+# `settings.agent_arch_shadow` está on; los `_mark_route(...)` son asignaciones
+# baratas e inertes en operación normal. Todo esto (marks + shadow) se retira
+# junto con la cascada en la Fase 5.2.
+_cascade_route_taken: contextvars.ContextVar[str | None] = contextvars.ContextVar(
+    "cascade_route_taken", default=None
+)
+
+
+def _mark_route(route: str) -> None:
+    """La cascada registra la ruta del gate que disparó (para el shadow 1.5)."""
+    _cascade_route_taken.set(route)
+
+
+async def _run_route_shadow(state: ConversationState, message: str) -> str:
+    """Camino flag-off CON shadow: calcula las señales UNA vez, predice la ruta
+    con el router sobre el estado PRE-cascada, corre la cascada (reutilizando
+    esas señales, sin doble llamada LLM) y loguea si la predicción coincide con
+    la ruta que la cascada realmente tomó. Devuelve la respuesta de la cascada
+    (intacta — el shadow no cambia comportamiento)."""
+    from src.orchestration.router import classify_route
+
+    signals = {} if message.strip().lower().isdigit() else await detect_routing_signals(
+        message, lang=state.language
+    )
+    predicted = classify_route(state, message, signals)   # estado PRE-cascada
+    _cascade_route_taken.set(None)
+    response = await _route_message_inner(state, message, routing_signals=signals)
+    actual = _cascade_route_taken.get()
+    if predicted == actual:
+        logger.info(f"[ROUTE_SHADOW] match route={predicted} msg={message[:60]!r}")
+    else:
+        logger.warning(
+            f"[ROUTE_SHADOW] MISMATCH predicted={predicted} cascade={actual} msg={message[:60]!r}"
+        )
+    return response
+
+
 async def route_message(state: ConversationState, message: str) -> str:
     """Public entry point. Delegates to the actual routing logic, then
     updates the rolling conversation summary (Fase B, see
@@ -1810,11 +1861,15 @@ async def route_message(state: ConversationState, message: str) -> str:
     (`orchestration.graph` — router + nodos-wrapper que delegan en la cascada);
     OFF, la cascada directa de siempre. En Fase 1 ambos caminos producen la
     MISMA respuesta (los nodos delegan en `_route_message_inner`); el grafo solo
-    añade el enrutado + observabilidad por encima.
+    añade el enrutado + observabilidad por encima. Con `agent_arch` off pero
+    `agent_arch_shadow` on, corre además el router en sombra (1.5) para medir la
+    coincidencia de rutas sobre tráfico real.
     """
     if settings.agent_arch:
         from src.orchestration.graph import run_turn_via_graph
         response = await run_turn_via_graph(state, message)
+    elif settings.agent_arch_shadow:
+        response = await _run_route_shadow(state, message)
     else:
         response = await _route_message_inner(state, message)
     await conversation_summarizer.maybe_update_summary(state)
@@ -1858,6 +1913,7 @@ async def _route_message_inner(
 
     pii_hits = detect_pii(message)
     if pii_hits:
+        _mark_route(ROUTE_SAFETY)
         state.step = Step.ESCALATE
         state.pending_escalation_reason = "datos sensibles detectados"
         logger.warning(f"[SUPERVISOR][PRIVACY] PII detected hits={pii_hits} step={state.step.value}")
@@ -1870,6 +1926,7 @@ async def _route_message_inner(
     # being handed to human staff. Broken-link runs before sensitive on purpose
     # (see the note at the original sensitive block below).
     if _detect_broken_link_complaint(message, state.history):
+        _mark_route(ROUTE_SAFETY)
         return _broken_link_escalation_response(state, message)
 
     # Red de precisión (auditoría 2026-07-22/23): ESCALATION_KEYWORDS/
@@ -1899,6 +1956,7 @@ async def _route_message_inner(
     # tras calcular las señales y antes del bloque sensible, manteniendo la
     # prioridad "safety first" del gate por keyword de más arriba.
     if routing_signals.get("broken_link_complaint") and _has_link_tech_context(message, state.history):
+        _mark_route(ROUTE_SAFETY)
         return _broken_link_escalation_response(state, message)
 
     sensitive_escalation_early = (
@@ -1906,6 +1964,7 @@ async def _route_message_inner(
         else detect_sensitive_escalation(message, state.language)
     )
     if sensitive_escalation_early:
+        _mark_route(ROUTE_SAFETY)
         reason, response = sensitive_escalation_early
         state.step = Step.ESCALATE
         state.quick_replies = []
@@ -1917,6 +1976,7 @@ async def _route_message_inner(
     if routing_signals.get("sensitive_topic"):
         found = sensitive_response_for(routing_signals["sensitive_topic"], state.language)
         if found:
+            _mark_route(ROUTE_SAFETY)
             reason, response = found
             state.step = Step.ESCALATE
             state.quick_replies = []
@@ -1939,6 +1999,7 @@ async def _route_message_inner(
         routing_signals.get("booking_change_topic") == "cancellation"
         and not _in_active_cart_building(state)
     ):
+        _mark_route(ROUTE_CHANGE)
         policy_text = (load_policies().get("policies", {}).get("cancellation") or {}).get(
             state.language, ""
         )
@@ -1962,6 +2023,7 @@ async def _route_message_inner(
         routing_signals.get("booking_change_topic") == "reschedule"
         and not _in_active_cart_building(state)
     ):
+        _mark_route(ROUTE_CHANGE)
         policy_text = (load_policies().get("policies", {}).get("reschedule") or {}).get(
             state.language, ""
         )
@@ -1988,6 +2050,7 @@ async def _route_message_inner(
     # routing de arriba, sin coste extra), estricto. Se coloca ANTES del escalado
     # genérico para ser consistente (hoy a veces escalaba, a veces caía a RAG).
     if _asks_for_contact_number(msg_lower) or routing_signals.get("asks_for_contact_number"):
+        _mark_route(ROUTE_DEFLECT)
         response = _contact_number_deflection(state.language)
         state.step = Step.FREE_TEXT
         state.quick_replies = []
@@ -2000,6 +2063,7 @@ async def _route_message_inner(
     # No se revela nada (el prompt de RAG endurecido ya lo prohíbe); se responde
     # en persona (Coral) y se reconduce al buceo, en vez del fallback evasivo.
     if _asks_about_ai_identity(msg_lower):
+        _mark_route(ROUTE_DEFLECT)
         response = _ai_identity_deflection(state.language)
         state.step = Step.FREE_TEXT
         state.quick_replies = []
@@ -2013,6 +2077,7 @@ async def _route_message_inner(
     # Answer honestly instead of falling through to a generic RAG fallback
     # (T013 in docs/archive/test-battery-edge-cases.md).
     if _detect_mixed_nationality_request(msg_lower):
+        _mark_route(ROUTE_BOOKING)
         if state.language == "es":
             response = (
                 "¡Entendido! Cuando el grupo tiene nacionalidades mixtas, cada quien paga según su "
@@ -2043,6 +2108,7 @@ async def _route_message_inner(
     # correct and framed positively — no hallucination, no need for RAG.
     age_answer = _maybe_answer_age_eligibility(message, state)
     if age_answer is not None:
+        _mark_route(ROUTE_INFO)
         logger.info("[SUPERVISOR] Age-eligibility question answered deterministically")
         state.history.append({"role": "user", "content": message})
         state.history.append({"role": "assistant", "content": age_answer})
@@ -2068,6 +2134,7 @@ async def _route_message_inner(
         state.adaptive_diving_context
         and _PRICE_OR_BOOKING_Q.search(message)
     ):
+        _mark_route(ROUTE_SAFETY)
         logger.info("[SUPERVISOR] DIVE TO HEAL price/booking -> advisor (no generic prices)")
         # Advance out of WELCOME/LANGUAGE so a following "sí" is handled by the
         # bare-affirmation-accepts-advisor branch (which gates on MAIN_MENU).
@@ -2079,6 +2146,7 @@ async def _route_message_inner(
         return answer
 
     if adaptive_now:
+        _mark_route(ROUTE_INFO)
         logger.info("[SUPERVISOR] Adaptive-diving/DIVE TO HEAL question -> RAG")
         if state.step in (Step.WELCOME, Step.LANGUAGE):
             state.step = Step.MAIN_MENU
@@ -2098,6 +2166,9 @@ async def _route_message_inner(
         state, message, routing_signals=routing_signals
     )
     if core_response is not None:
+        # El núcleo mezcla reserva (slot-fill) e info (RAG interno); ambas mapean
+        # a BOOKING en el router de Fase 1 (la frontera se separa en Fase 3.3).
+        _mark_route(ROUTE_BOOKING)
         return core_response
 
     # Cliente acepta con un "si"/"dale"/"ok" una oferta que el propio bot hizo
@@ -2115,6 +2186,7 @@ async def _route_message_inner(
             "",
         )
         if _ADVISOR_OFFER_RE.search(last_bot) and _OFFER_VERB_RE.search(last_bot):
+            _mark_route(ROUTE_SAFETY)
             reason = "aceptó la oferta del bot de hablar con un asesor"
             state.step = Step.ESCALATE
             state.quick_replies = []
@@ -2126,6 +2198,7 @@ async def _route_message_inner(
 
     # Check for escalation keywords (+ red de precisión LLM, auditoría 2026-07-22)
     if _matches_escalation_keyword(msg_lower) or routing_signals.get("wants_human"):
+        _mark_route(ROUTE_SAFETY)
         state.step = Step.ESCALATE
         state.quick_replies = []
         state.pending_escalation_reason = "solicitó asesor"
@@ -2138,6 +2211,7 @@ async def _route_message_inner(
     # Must run BEFORE sensitive_escalation because phrases like "reserva no funciona"
     # otherwise match the generic real_time_issues rule.
     if _detect_broken_link_complaint(message, state.history):
+        _mark_route(ROUTE_SAFETY)
         reason = "🚨 LINK ROTO reportado por el cliente — revisar URLs"
         state.step = Step.ESCALATE
         state.quick_replies = []
@@ -2158,6 +2232,7 @@ async def _route_message_inner(
 
     sensitive_escalation = detect_sensitive_escalation(message, state.language)
     if sensitive_escalation:
+        _mark_route(ROUTE_SAFETY)
         reason, response = sensitive_escalation
         state.step = Step.ESCALATE
         state.quick_replies = []
@@ -2197,6 +2272,7 @@ async def _route_message_inner(
             and not _in_active_cart_building(state)
         )
     ) and state.step not in (Step.WELCOME, Step.LANGUAGE):
+        _mark_route(ROUTE_CHANGE)
         answer = (
             "¡Buena noticia! 📅 Las salidas son diarias y siempre hay disponibilidad. "
             "Vas a poder elegir el día exacto y el número de personas directamente en el "
@@ -2222,6 +2298,8 @@ async def _route_message_inner(
     # "me lo puedes decir en español?", etc.) at any step.
     language_intent = _detect_language_intent(message)
     if language_intent is not None:
+        # Idioma/saludo → entrada de reserva (taxonomía §4.bis: greeting → booking).
+        _mark_route(ROUTE_BOOKING)
         from src.flows.messages import MESSAGES
         if state.step in (Step.WELCOME, Step.LANGUAGE):
             # Treat as language selection; advance to MAIN_MENU.
@@ -2246,6 +2324,7 @@ async def _route_message_inner(
     # Núcleo = único camino (Fase 4): todo mensaje se resuelve arriba — el
     # núcleo (return en el hook), o los handlers de escalado/menú/back. Este
     # fallback defensivo no debería alcanzarse.
+    _mark_route(ROUTE_BOOKING)
     logger.warning(f"[SUPERVISOR] fallthrough inesperado step={state.step.value}")
     from src.flows.messages import MESSAGES
     return MESSAGES["main_menu"][state.language]

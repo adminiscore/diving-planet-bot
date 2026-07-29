@@ -46,6 +46,12 @@ class Settings(BaseSettings):
     # módulo `src/orchestration` ni se importa — cero riesgo/overhead para el
     # camino actual (cascada del supervisor).
     agent_arch: bool = False
+    # Shadow del router (Fase 1.5): con la cascada VIVA (agent_arch off), corre
+    # ADEMÁS el router del grafo y loguea si su ruta coincide con la que la
+    # cascada realmente tomó — para medir la equivalencia sobre tráfico real de
+    # PRE antes del corte. Reutiliza las señales del turno (sin doble llamada
+    # LLM). Default off: cero coste salvo que se encienda para medir.
+    agent_arch_shadow: bool = False
 
     # --- Supabase ---
     supabase_url: str = ""
