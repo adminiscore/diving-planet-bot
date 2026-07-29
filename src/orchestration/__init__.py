@@ -1,6 +1,11 @@
 """Grafo LangGraph del refactor multiagente (docs/multi-agent-refactor-plan.md).
 
-Vacío por ahora — Fase 0.5 solo trae un PoC de-risk (`poc_graph.py`) detrás de
-`settings.agent_arch`. El grafo real (`BotState`, `router`, nodos-agente) se
-construye en las Fases 1-2.
+- `state.py`  → `BotState` (contrato de estado del grafo).
+- `router.py` → `classify_route` (clasifica cada mensaje en una de las 5 rutas).
+- `graph.py`  → `StateGraph`: router + nodos-agente, compilado detrás de
+  `settings.agent_arch`.
+
+En la Fase 1 los nodos de ruta son wrappers finos que delegan en la cascada
+actual (`supervisor._route_message_inner`); en Fases 2-3 se sustituyen por su
+lógica real, una ruta a la vez (strangler-fig).
 """

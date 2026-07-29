@@ -1798,32 +1798,32 @@ _PURE_COMPANION_RE = re.compile(
 )
 
 
-async def _run_agent_arch_poc(state: ConversationState, message: str) -> None:
-    """Fase 0.5 (docs/multi-agent-refactor-plan.md): side-channel de-risk del
-    grafo LangGraph trivial — no toca la respuesta real. Si algo falla, se
-    loguea y el turno sigue exactamente igual (principio #10, sin fugas)."""
-    try:
-        from src.orchestration.poc_graph import run_poc_graph
-        result = await run_poc_graph(message)
-        logger.info(f"[AGENT_ARCH POC] conv={state.conversation_id} graph_reply={result!r}")
-    except Exception:
-        logger.exception("[AGENT_ARCH POC] graph run failed (non-fatal, real response unaffected)")
-
-
 async def route_message(state: ConversationState, message: str) -> str:
     """Public entry point. Delegates to the actual routing logic, then
     updates the rolling conversation summary (Fase B, see
     docs/archive/memory-context-improvement-plan.md) once per turn — a thin wrapper
     so the summary check runs regardless of which internal branch below
-    handled the message, without threading it through every early return."""
+    handled the message, without threading it through every early return.
+
+    Strangler-fig (Fase 1.4, docs/multi-agent-refactor-plan.md): con
+    `settings.agent_arch` ON el turno pasa por el grafo LangGraph
+    (`orchestration.graph` — router + nodos-wrapper que delegan en la cascada);
+    OFF, la cascada directa de siempre. En Fase 1 ambos caminos producen la
+    MISMA respuesta (los nodos delegan en `_route_message_inner`); el grafo solo
+    añade el enrutado + observabilidad por encima.
+    """
     if settings.agent_arch:
-        await _run_agent_arch_poc(state, message)
-    response = await _route_message_inner(state, message)
+        from src.orchestration.graph import run_turn_via_graph
+        response = await run_turn_via_graph(state, message)
+    else:
+        response = await _route_message_inner(state, message)
     await conversation_summarizer.maybe_update_summary(state)
     return response
 
 
-async def _route_message_inner(state: ConversationState, message: str) -> str:
+async def _route_message_inner(
+    state: ConversationState, message: str, routing_signals: dict | None = None
+) -> str:
     """
     Supervisor: decides how to handle each incoming message.
 
@@ -1833,6 +1833,11 @@ async def _route_message_inner(state: ConversationState, message: str) -> str:
     3. If user sends an escalation keyword -> escalate
     4. If user is in SUMMARY/ESCALATE/FREE_TEXT step -> RAG agent
     5. If user sends free text while in a menu step -> RAG agent
+
+    `routing_signals`: si viene dado (grafo LangGraph, Fase 1 — el nodo router
+    ya calculó `detect_routing_signals` una vez por turno), se reutiliza en vez
+    de recomputar la llamada LLM. None (todos los callers legacy) = se calcula
+    internamente igual que siempre (comportamiento idéntico).
     """
     msg_lower = message.strip().lower()
 
@@ -1882,7 +1887,8 @@ async def _route_message_inner(state: ConversationState, message: str) -> str:
     # expresar un tema sensible/escalado/menú en ningún idioma). A diferencia
     # del extractor de reserva, el sesgo aquí es escalar/enrutar de más que
     # de menos — el propio prompt se lo pide al LLM.
-    routing_signals = {} if msg_lower.isdigit() else await detect_routing_signals(message, lang=state.language)
+    if routing_signals is None:
+        routing_signals = {} if msg_lower.isdigit() else await detect_routing_signals(message, lang=state.language)
 
     # Respaldo LLM del gate de LINK ROTO (Bloque 2.3): el detector por keyword
     # de arriba exige frase-de-queja + token de link (o URL en el turno previo)
