@@ -337,6 +337,29 @@ se paralelizan entre sí).
         referenciados en `_INTENT_TRIGGER_STEPS` (supervisor). Sub-tarea acoplada más grande
         de lo previsto — hacerla en un paso cuidado propio (0.2b), no mezclada con los campos.
       - Suite verde tras cada borrado (AST no líneas).
+- [x] **0.2a · Campos `mixed_*` muertos — HECHO** (`5d7c890`). 13 campos borrados de
+      `ConversationState` (75→62 campos). Suite completa idéntica al baseline (1412 passed).
+- [ ] **0.2b · Poda del menú legacy — SCOPEADO Y LISTO (reachability completa 2026-07-29).**
+      Son **dos operaciones independientes** (los strings `"info_menu"` de `messages.py` NO
+      dependen del enum `Step.INFO_MENU` — se pueden hacer por separado):
+      - **0.2b-i · Enum `Step` (state.py).** Borrar los ~33 valores con 0 refs `Step.X`
+        (INFO_*, COURSES_*, PRICING_*, LOGISTICS_*, ISLAND_*, SERVICE_DETAIL, LOCATION,
+        COLOMBIAN, SUMMARY, INFO_MIXED_*, INFO_CERTIFIED_4_DIVES_VARIANT). **Conservar:**
+        WELCOME, LANGUAGE, MAIN_MENU, ESCALATE, FREE_TEXT. **Coordinar:** RESERVA_MENU/
+        INFO_MENU/BOOKING_MENU están en `supervisor._INTENT_TRIGGER_STEPS` (:1773) → quitarlos
+        del set (el bot nunca entra en esos steps post-Fase-4) al borrarlos del enum. **Tests:**
+        borrar/actualizar los que referencian steps muertos — `PRICING_MENU` (3), `LOGISTICS_MENU`
+        (1), `BOOKING_MENU` (1): son tests del menú legacy retirado → revisar y borrar.
+      - **0.2b-ii · Datos de `messages.py` (~1.500 líneas → ~150).** Reachability: en código
+        vivo **solo se usan** `MESSAGES["escalate"]`, `MESSAGES["main_menu"]`,
+        `set_quick_replies(state, "main_menu")`. **Conservar:** las 2 claves de `MESSAGES`, la
+        entrada `main_menu` de `BUTTON_OPTIONS`, `get_button_options`, `DecisionTree.
+        set_quick_replies`. **Borrar:** las otras ~58 claves de `MESSAGES`, el resto de
+        `BUTTON_OPTIONS`, y los 3 métodos de isla de `DecisionTree`
+        (`_info_island_certified_options`, `_island_certified_options`,
+        `_mixed_island_certified_multiday_options` — 0 refs). Reconstruir `messages.py` minimal
+        + suite verde. **Delicado por volumen → paso con foco propio, no al final de una sesión
+        larga.**
 - [ ] **0.3 · LIMPIEZA de dependencias y muertos.** Cerrar el shim `decision_tree` (reapuntar
       importadores a `catalog`/`state`/`messages` y borrar shim + vestigio `DecisionTree`).
       Auditar imports/funciones huérfanas (a mano, sin `ruff --fix`).
@@ -477,6 +500,10 @@ se paralelizan entre sí).
 ## 8. Registro de ejecución
 *(Una línea por paso cerrado: fecha · dev · qué · commit. El más reciente arriba.)*
 
+- **2026-07-29 · Álvaro · Fase 0.2a** — 13 campos `mixed_*` muertos borrados de
+  `ConversationState` (75→62), suite idéntica al baseline (1412). Reachability completa de
+  0.2b hecha y scopeada (Step enum + poda de `messages.py`, listas exactas en §5 Fase 0.2b).
+  Commit `5d7c890`.
 - **2026-07-29 · Álvaro · Fase 0.1** — Baseline congelado en `feature/agent-arch`:
   **1412 passed / 18 skipped / 0 failed**. Arreglado el único fallo (`test_gap_fill_logs_in_
   harvester_format`, test infra-aislado — mockeado `detect_routing_signals`). Rama creada +
