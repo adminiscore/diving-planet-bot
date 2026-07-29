@@ -68,17 +68,18 @@ jobs:
             tests/test_fuzzy.py \
             tests/test_intent_detector.py \
             tests/test_intent_typo_tolerance.py \
-            tests/test_decision_tree.py \
             tests/test_retrieval_rerank.py \
             tests/test_pricing_consistency.py \
             tests/test_rag_safety.py \
             tests/test_chatwoot_buttons.py \
             tests/test_state_store.py \
             tests/test_state_store_integration.py \
-            tests/test_orchestrator.py \
             tests/test_nit_fixes.py \
             tests/test_padi_freetext.py \
-            tests/FreeText/test_mixed_group.py \
+            tests/test_orchestration_state.py \
+            tests/test_orchestration_router.py \
+            tests/test_agent_arch_graph.py \
+            tests/test_route_shadow.py \
             -v --tb=short
 
   deploy-pre:
