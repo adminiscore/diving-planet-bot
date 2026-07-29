@@ -567,7 +567,7 @@ se paralelizan entre sí).
 ## 8. Registro de ejecución
 *(Una línea por paso cerrado: fecha · dev · qué · commit. El más reciente arriba.)*
 
-- **2026-07-29 · Gadea · Fase 0.6** (`<pendiente>`) — spike de diseño escrito:
+- **2026-07-29 · Gadea · Fase 0.6** (`a747bb4`) — spike de diseño escrito:
   `docs/agent-arch-design.md`. Cubre los 6 puntos del plan (State+reducers, router
   con `add_conditional_edges`, handoffs `Command(goto=)`, subgrafo booking,
   checkpointer candidato, mock de nodos en tests). **Nada de memoria**: cada patrón
