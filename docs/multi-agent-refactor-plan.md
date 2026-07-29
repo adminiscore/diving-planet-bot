@@ -6,7 +6,7 @@
 > alguien retoma tras un merge, **el estado de los checkboxes aquí es la única verdad**.
 > Acompaña (no sustituye) a `docs/project-history/session-handoff.md`.
 
-**Estado global:** `Fase 0 — en curso` (0.1/0.2a/0.2b/0.3/0.4 hechos; siguiente 0.5). Creado 2026-07-29.
+**Estado global:** `Fase 0 — en curso` (0.1/0.2a/0.2b/0.3/0.4/0.5 hechos; siguiente 0.6). Creado 2026-07-29.
 **Base de código:** rama `feature/pre_alvaro` (Fase 4 completa + Bloque 2 + reorg §1/§2).
 **Motor de orquestación elegido:** **LangGraph** (con LangChain de forma selectiva) — ver §2.
 
@@ -415,11 +415,22 @@ se paralelizan entre sí).
       ("reducir llamadas LLM/turno" §5 Fase 3.4) — el objetivo ahí es bajar de 3.00
       llamadas/turno una vez las redes se consoliden por nodo. Repetir esta medición
       con LangSmith real en cuanto haya API key, y comparar contra esta baseline local.
-- [ ] **0.5 · Instalar de verdad LangGraph + PoC de-risk.** `uv/pip install` de las deps ya
-      declaradas; un **grafo trivial de 2 nodos** corriendo dentro de la app (un turno real lo
-      atraviesa detrás del flag off) para validar versión/integración/Chatwoot. Flag
-      `settings.agent_arch` (default `False`). Fijar versiones en `pyproject` + lockfile
-      committeado (reproducibilidad).
+- [x] **0.5 · Instalar de verdad LangGraph + PoC de-risk — HECHO** (`559450d`). Las deps ya
+      estaban instaladas en el entorno (resueltas a 1.x: `langgraph 1.2.9`, `langchain 1.3.14`,
+      `langchain-openai 1.4.1`, `langchain-community 0.4.2`, `langsmith 0.10.10` — un salto
+      mayor de versión respecto a los `>=0.3/0.4` declarados). Pineadas a exacto en
+      `pyproject.toml` (`pip check` sin conflictos) + `requirements-lock.txt` (snapshot
+      completo vía `pip freeze`; el proyecto usa pip, no uv/poetry — informativo, Docker/CI
+      siguen instalando por `pyproject.toml`). **PoC**: `src/orchestration/poc_graph.py`,
+      grafo trivial de 2 nodos (uppercase → reply), sin checkpointer, cableado en
+      `supervisor.route_message` detrás de `settings.agent_arch` (default `False`) como
+      side-channel puro (nunca cambia la respuesta). **Validado en vivo** (LLM/Postgres/Redis
+      reales, `ENV_FILE=.env.dev`): con el flag on, el log `[AGENT_ARCH POC]` sale ANTES del
+      cascade real y la respuesta es idéntica a flag off para el mismo mensaje; con el flag
+      off (default), `src.orchestration` ni se importa. 4 tests nuevos (flag off por defecto,
+      no invoca el grafo con el flag off, no cambia la respuesta con el flag on, un fallo del
+      grafo no rompe el turno — principio #10). Suite 1425 passed / 9 skipped / 0 failed, ruff
+      + compileall limpios.
 - [ ] **0.6 · Spike de diseño LangGraph** ("investigar qué necesitamos y cómo", pedido del
       owner). Documento corto (`docs/agent-arch-design.md`) que fija, con la doc oficial: el
       patrón de State + reducers, cómo se hace el router con `add_conditional_edges`, los
@@ -549,6 +560,21 @@ se paralelizan entre sí).
 ## 8. Registro de ejecución
 *(Una línea por paso cerrado: fecha · dev · qué · commit. El más reciente arriba.)*
 
+- **2026-07-29 · Gadea · Fase 0.5** (`559450d`) — LangGraph instalado de verdad: las deps
+  ya estaban en el entorno, resueltas a **1.x** (`langgraph 1.2.9`, `langchain 1.3.14`,
+  `langchain-openai 1.4.1`, `langchain-community 0.4.2`, `langsmith 0.10.10` — salto mayor
+  vs. los `>=0.3/0.4` declarados). Pineadas a exacto en `pyproject.toml` (sin conflictos,
+  `pip check` limpio) + `requirements-lock.txt` (snapshot completo, `pip freeze` — el
+  proyecto usa pip, no uv/poetry). **PoC**: `src/orchestration/poc_graph.py`, grafo de 2
+  nodos (uppercase → reply), sin checkpointer, cableado en `supervisor.route_message`
+  detrás de `settings.agent_arch` (default `False`) como side-channel puro. Validado en
+  vivo (LLM/Postgres/Redis reales): con el flag on la respuesta es idéntica a con el flag
+  off para el mismo mensaje; el log del PoC sale antes del cascade real. 4 tests nuevos
+  (default off, no-invoca-si-off, no-cambia-respuesta-si-on, resiliente a fallo del grafo).
+  Suite 1425 passed / 9 skipped / 0 failed, ruff + compileall limpios. **Nota para el
+  equipo**: el salto 0.x→1.x de LangGraph/LangChain es grande — revisar release notes antes
+  de construir el grafo real en Fase 1 (algunas APIs de 0.x-gen pueden haber cambiado).
+  Siguiente: **0.6** (spike de diseño `docs/agent-arch-design.md`).
 - **2026-07-29 · Gadea · Fase 0.4** (`2071643`) — LangSmith activado (env vars
   `LANGSMITH_*` propagadas desde `Settings`, no-op sin API key — no hay una en este
   entorno dev) + baseline local de métricas LLM/turno vía
