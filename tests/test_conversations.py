@@ -36,27 +36,6 @@ async def reach_main_menu(lang: str = "es") -> ConversationState:
     return state
 
 
-async def reach_pricing_menu(lang: str = "es") -> ConversationState:
-    state = await reach_main_menu(lang)
-    await send(state, "2", "2", "2")
-    assert state.step == Step.PRICING_MENU
-    return state
-
-
-async def reach_booking_menu(lang: str = "es") -> ConversationState:
-    state = await reach_main_menu(lang)
-    await send(state, "2", "3")
-    assert state.step == Step.BOOKING_MENU
-    return state
-
-
-async def reach_logistics_menu(lang: str = "es") -> ConversationState:
-    state = await reach_main_menu(lang)
-    await send(state, "2", "4")
-    assert state.step == Step.LOGISTICS_MENU
-    return state
-
-
 RAG_MOCK = "respuesta_rag_simulada"
 RAG_MOCK_EN = "rag_answer_simulated"
 

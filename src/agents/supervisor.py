@@ -1774,9 +1774,6 @@ _INTENT_TRIGGER_STEPS = {
     Step.WELCOME,
     Step.LANGUAGE,
     Step.MAIN_MENU,
-    Step.RESERVA_MENU,
-    Step.INFO_MENU,
-    Step.BOOKING_MENU,
 }
 
 
