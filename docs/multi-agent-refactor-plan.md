@@ -522,8 +522,18 @@ se paralelizan entre sí).
       *(dev: Álvaro)* NOTA: cubre lo que el router manda hoy a DEFLECT (contacto + identidad).
       El off-topic/dominio-blindado genérico sigue vía el system prompt endurecido de RAG; si se
       quiere una ruta DEFLECT para off-topic explícito, es un refinamiento del router aparte.
-- [ ] **2.2 · Nodo `escalation`** (PII · médico · quejas · DIVE TO HEAL · humano vía
-      `interrupt`). Envuelve `escalation.py` + `SENSITIVE_RULES`. *(dev: —)*
+- [x] **2.2 · Nodo `escalation` — HECHO** (`src/agents/escalation_agent.py`). Segundo corte
+      strangler: la ruta `ROUTE_SAFETY` ejecuta directamente los 6 gates SAFETY **pre-núcleo**
+      (PII → bloqueo privacidad; link roto por keyword y por señal LLM+contexto; sensible por
+      keyword y por señal; DIVE TO HEAL precio/reserva → asesor), en el mismo orden que la
+      cascada, con idéntico efecto de estado (step/pending_escalation_reason/pending_note/
+      adaptive_diving_context). Los gates SAFETY **post-núcleo** (wants_human / keyword de
+      escalado / afirmación que acepta la oferta de asesor) NO se reproducen: están tras
+      `maybe_handle_turn` en la cascada, así que reproducirlos sin correr el núcleo cambiaría el
+      orden → se **delega en la cascada** (equivalencia garantizada, no-op de comportamiento).
+      Respaldado por el audit del shadow (§1.5): **0 mismatches en SAFETY**. **11 tests nuevos**
+      (5 aislados por gate + delegación + equivalencia flag on/off en 5 mensajes) + 116 verdes
+      en la regresión ancha. Ruff limpio. *(dev: Álvaro)*
 - [ ] **2.3 · Nodo `changes`** (cancelar · reprogramar · disponibilidad) — 3 gates → 1 nodo.
       *(dev: —)* ⚠️ **Audit §1.5 patrón B:** la cascada hoy deja que el núcleo intercepte
       preguntas de disponibilidad frescas ANTES del gate de disponibilidad (router→changes,
@@ -623,6 +633,12 @@ se paralelizan entre sí).
 ## 8. Registro de ejecución
 *(Una línea por paso cerrado: fecha · dev · qué · commit. El más reciente arriba.)*
 
+- **2026-07-30 · Álvaro · Fase 2.2** — Nodo `escalation` real (segundo corte strangler): la ruta
+  SAFETY ejecuta directamente los 6 gates pre-núcleo (PII, link roto kw+señal, sensible
+  kw+señal, DIVE TO HEAL precio→asesor); los gates post-núcleo (wants_human/keyword) delegan en
+  la cascada para preservar el orden respecto al núcleo. `src/agents/escalation_agent.py` +
+  wire en `graph.py`. 11 tests nuevos; 116 verdes en la regresión ancha; ruff limpio. Audit del
+  shadow: 0 mismatches en SAFETY.
 - **2026-07-30 · Álvaro · Fase 2.1** — Nodo `deflection` real (primer corte strangler): la ruta
   DEFLECT ejecuta solo la lógica de deflexión (contacto + identidad IA), no toda la cascada.
   `src/agents/deflection_agent.py` + wire en `graph.py` (`_REAL_NODES`). 8 tests nuevos
