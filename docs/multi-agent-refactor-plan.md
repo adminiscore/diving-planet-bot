@@ -614,6 +614,20 @@ se paralelizan entre sí).
 ## 8. Registro de ejecución
 *(Una línea por paso cerrado: fecha · dev · qué · commit. El más reciente arriba.)*
 
+- **2026-07-30 · Álvaro · Revisión de asentamiento (sign-off Fase 0+1)** — Merge del trabajo
+  de Gadea (fast-forward a `f04ffde`). Revisión de cabos sueltos: **ninguno**. Ruff limpio;
+  deps pineadas + `requirements-lock.txt` presente; LangGraph 1.x verificado sin breaking
+  changes (spike); docs (plan/registro/handoff) consistentes; orquestación limpia (340 líneas,
+  estructura strangler correcta). Ítems abiertos = diferidos y documentados (edad→INFO en 2.4,
+  disponibilidad en 5.2, checkpointer/safety-prenodo en 4.x). Suite completa en mi máquina:
+  **1449 passed / 18 skipped / 1 flaky** → el flaky (`test_route_shadow::test_shadow_does_not_
+  change_reply`) era otro test infra-aislado (comparaba dos respuestas a "hola" que dependen
+  del LLM del núcleo sin mockear); arreglado mockeando los LLM del núcleo → determinista 5/5.
+  (Los 18 skips vs 9 de Gadea son env-dependientes, no fallos.) **Fase 1 revisada y aprobada —
+  despejado el arranque de Fase 2.** Contrato de nodo 2.0 = **ya fijado por el spike** (`async def
+  node(state: BotState) -> dict | Command`; handoffs `Command(goto=)`; reply en `state["reply"]`;
+  conv_state por referencia) — no requiere código nuevo, solo seguirlo.
+
 - **2026-07-29 · Gadea · Fase 1 COMPLETA** (`db69308` 1.1 · `2c6d042` 1.2 · `e6d8de2` 1.3+1.4
   · `c2ed174` 1.5). Grafo LangGraph esqueleto: `BotState` (transporta el `ConversationState`
   vivo durante el strangler), router `classify_route` (enrutado intencional §4.bis, reúsa los
