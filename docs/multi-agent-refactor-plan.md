@@ -6,7 +6,7 @@
 > alguien retoma tras un merge, **el estado de los checkboxes aquí es la única verdad**.
 > Acompaña (no sustituye) a `docs/project-history/session-handoff.md`.
 
-**Estado global:** `Fase 0 — en curso` (0.1/0.2a/0.2b hechos; siguiente 0.3). Creado 2026-07-29.
+**Estado global:** `Fase 0 — en curso` (0.1/0.2a/0.2b/0.3 hechos; siguiente 0.4). Creado 2026-07-29.
 **Base de código:** rama `feature/pre_alvaro` (Fase 4 completa + Bloque 2 + reorg §1/§2).
 **Motor de orquestación elegido:** **LangGraph** (con LangChain de forma selectiva) — ver §2.
 
@@ -370,9 +370,14 @@ se paralelizan entre sí).
       - Suite tras cada sub-paso: **1421 passed / 9 skipped / 0 failed** (mismo total 1430 que
         el baseline 1412/18 — la diferencia de skips es de entorno, sin `OPENAI_API_KEY` local,
         no del cambio). ruff + compileall limpios en ambos.
-- [ ] **0.3 · LIMPIEZA de dependencias y muertos.** Cerrar el shim `decision_tree` (reapuntar
-      importadores a `catalog`/`state`/`messages` y borrar shim + vestigio `DecisionTree`).
-      Auditar imports/funciones huérfanas (a mano, sin `ruff --fix`).
+- [x] **0.3 · LIMPIEZA de dependencias y muertos — HECHO** (`24c7c77`, `10175ca`). Shim
+      `decision_tree` cerrado: los ~34 importadores (7 en `src/`, resto tests/scripts)
+      reapuntados a `catalog`/`state`/`messages` (incluidos 2 monkeypatch targets en
+      `test_conversational_core.py`), `src/flows/decision_tree.py` borrado, y el vestigio
+      `DecisionTree` (solo `set_quick_replies` + `_CART_MENU_KEYS`, sin estado propio)
+      convertido en función de módulo. Auditoría de imports huérfanos hecha por diff
+      (`git stash` antes/después): ruff da los mismos 170 errores en los mismos archivos
+      — deuda preexistente ajena, cero regresiones; no se usó `ruff --fix`.
 - [ ] **0.4 · Encender LangSmith + baseline de métricas.** Activar tracing (ya configurado) y
       medir sobre un guion representativo: **nº de llamadas LLM, latencia, tokens/coste por
       turno**. Tabla en el Registro — es el número que dirige la Fase 3.
@@ -510,6 +515,21 @@ se paralelizan entre sí).
 ## 8. Registro de ejecución
 *(Una línea por paso cerrado: fecha · dev · qué · commit. El más reciente arriba.)*
 
+- **2026-07-29 · Gadea · Fase 0.3** — shim `decision_tree` cerrado. **0.3a** (`24c7c77`):
+  ~34 importadores (7 en `src/`, resto tests/scripts) reapuntados a `catalog`/`state`/
+  `messages` (incluidos 2 imports inline afectados por monkeypatch en
+  `conversational_core.py` + sus 2 targets en `test_conversational_core.py`,
+  redirigidos a `src.flows.catalog`); `src/flows/decision_tree.py` borrado (0
+  importadores restantes). **0.3b** (`10175ca`): vestigio `DecisionTree` (sin estado
+  propio, solo `set_quick_replies` + `_CART_MENU_KEYS`) convertido en función de
+  módulo `set_quick_replies(state, key)` en `messages.py`; `supervisor.py` pierde el
+  singleton `decision_tree = DecisionTree()`. Auditoría de imports huérfanos por diff
+  (`git stash` antes/después de 0.3a): ruff da los mismos 170 errores en los mismos
+  archivos — deuda preexistente ajena (E402/F841/I001 en scripts/tests no tocados),
+  cero regresiones; no se usó `ruff --fix`. Suite 1421 passed / 9 skipped / 0 failed
+  en cada sub-paso. También actualizado `docs/future/decision-tree-reorg.md` (el
+  pendiente opcional de §1 queda cerrado). **Fase 0.3 CERRADA.** Siguiente: **0.4**
+  (encender LangSmith + baseline de métricas).
 - **2026-07-29 · Gadea · Fase 0.2b-ii** — `messages.py` podado 1517→80 líneas.
   `MESSAGES` 60→2 claves (escalate/main_menu), `BUTTON_OPTIONS` 40→1 clave (main_menu),
   borrados los 3 métodos de isla muertos de `DecisionTree` + las 3 ramas de

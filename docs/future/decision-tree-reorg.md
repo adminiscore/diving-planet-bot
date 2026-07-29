@@ -1,8 +1,9 @@
 # Reorganización de `decision_tree.py` + decisiones pendientes post-Fase 4
 
-Estado: **§1 HECHO (2026-07-28) · §2 HECHO**. Creado 2026-07-28 tras cerrar Fase 4
-(retirada del árbol de decisión legacy `MIXED_*`). Ninguna de estas tareas cambia
-comportamiento; son de organización/deuda.
+Estado: **§1 HECHO (2026-07-28) · §2 HECHO · pendiente opcional de §1 HECHO
+(2026-07-29, Fase 0.3 del refactor multiagente)**. Creado 2026-07-28 tras cerrar
+Fase 4 (retirada del árbol de decisión legacy `MIXED_*`). Ninguna de estas tareas
+cambia comportamiento; son de organización/deuda.
 
 ---
 
@@ -28,9 +29,20 @@ verificada). Reparto final:
   concretos.
 
 Grafo de dependencias sin ciclos: `state` (hoja) ← `messages`; `catalog` (hoja);
-`decision_tree` (shim) → los tres. **Pendiente opcional futuro** (aún menos prioritario):
-reapuntar los importadores a los módulos concretos y borrar el shim; y convertir el
-vestigio `DecisionTree` en funciones de módulo. No urge.
+`decision_tree` (shim) → los tres.
+
+**✅ HECHO (2026-07-29, Gadea, Fase 0.3 de `docs/multi-agent-refactor-plan.md`)** —
+el pendiente opcional se ejecutó como parte del arranque del refactor multiagente:
+los ~34 importadores (7 en `src/`, resto tests/scripts) se reapuntaron a
+`catalog`/`state`/`messages` (incluidos 2 monkeypatch targets en
+`test_conversational_core.py` que dependían del import inline en
+`conversational_core.py`), `src/flows/decision_tree.py` se borró, y el vestigio
+`DecisionTree` (solo tenía `set_quick_replies` + `_CART_MENU_KEYS`, sin estado
+propio) se convirtió en función de módulo `set_quick_replies(state, key)` +
+constante `_CART_MENU_KEYS`, ambas en `messages.py`. Suite 1421 passed / 9
+skipped / 0 failed en cada sub-paso; ruff sin regresiones (mismos 170 errores
+preexistentes ajenos, verificado por diff con `git stash`). Commits `24c7c77`
+(reapuntado + borrado del shim) y `10175ca` (conversión de `DecisionTree`).
 
 <details><summary>Estado original (histórico) — el cajón de sastre pre-split</summary>
 
