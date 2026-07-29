@@ -516,9 +516,17 @@ se paralelizan entre sí).
 - [ ] **2.2 · Nodo `escalation`** (PII · médico · quejas · DIVE TO HEAL · humano vía
       `interrupt`). Envuelve `escalation.py` + `SENSITIVE_RULES`. *(dev: —)*
 - [ ] **2.3 · Nodo `changes`** (cancelar · reprogramar · disponibilidad) — 3 gates → 1 nodo.
-      *(dev: —)*
+      *(dev: —)* ⚠️ **Audit §1.5 patrón B:** la cascada hoy deja que el núcleo intercepte
+      preguntas de disponibilidad frescas ANTES del gate de disponibilidad (router→changes,
+      cascada→booking, 3/14 mismatches). Al montar este nodo, decidir si la disponibilidad
+      debe ganar al booking (el router ya lo hace) — o dejarlo para el cutover (Fase 5.2).
 - [ ] **2.4 · Nodo `info`** (RAG + grounding) — envuelve `rag_agent`; la RAG queda en Python
-      plano dentro del nodo. *(dev: —)*
+      plano dentro del nodo. *(dev: —)* ⚠️ **Audit §1.5 patrón A:** el nodo info debe cubrir
+      TAMBIÉN la elegibilidad por edad determinista (`_maybe_answer_age_eligibility`, hoy
+      marcada INFO por la cascada). **Antes de 2.6** (despacho a nodos reales) hay que añadir
+      la rama edad→INFO a `classify_route` (`_AGE_ELIGIBILITY_CUE` + presencia de edad); si no,
+      las 11/14 preguntas de edad del audit irían al nodo booking en vez del info. En Fase 1 no
+      importa (el nodo delega en la cascada), pero al volverse real el routing sí manda.
 - [ ] **2.5 · Nodo `booking`** (el núcleo) — como **subgrafo** LangGraph (el slot-fill loop +
       multi-ítem). El más grande, el último. *(dev: —)*
 - [ ] **2.6 · El grafo despacha a nodos reales** (flag on). Suite verde tras cada uno, on/off.
