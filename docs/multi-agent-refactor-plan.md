@@ -6,9 +6,11 @@
 > alguien retoma tras un merge, **el estado de los checkboxes aquí es la única verdad**.
 > Acompaña (no sustituye) a `docs/project-history/session-handoff.md`.
 
-**Estado global:** `Fase 0 — completa` (0.1 a 0.6 hechos; 0.6 pendiente de revisión humana
-del equipo, no de trabajo). Siguiente: **Fase 1** (grafo esqueleto + router), tras la
-revisión de `docs/agent-arch-design.md` por Álvaro/Gonzalo. Creado 2026-07-29.
+**Estado global:** `Fase 0 completa · Fase 1 completa`. Grafo LangGraph esqueleto (router +
+5 nodos-wrapper) cableado detrás de `agent_arch`, con equivalencia probada (suite verde en
+default/grafo/shadow) y shadow de rutas para medir en PRE. La cascada sigue viva. Siguiente:
+**Fase 2** (los nodos-agente reales, paralelizable entre los 3) — pendiente de revisión del
+equipo (spike 0.6 + Fase 1) antes de arrancar. Creado 2026-07-29.
 **Base de código:** rama `feature/pre_alvaro` (Fase 4 completa + Bloque 2 + reorg §1/§2).
 **Motor de orquestación elegido:** **LangGraph** (con LangChain de forma selectiva) — ver §2.
 
@@ -447,26 +449,46 @@ se paralelizan entre sí).
 - **DoD:** estado limpio + shim fuera + LangSmith midiendo baseline + LangGraph instalado y
   PoC verde + flag + spike de diseño acordado. **Nadie cambió comportamiento.**
 
-### Fase 1 — El grafo esqueleto + el Router · *misma conducta, estructura de grafo*
-- [ ] **1.1 · `BotState`.** Definir el State schema (TypedDict + reducers) mapeando desde el
-      `ConversationState` saneado. `serialize`/`deserialize` ⇄ Redis conservados.
-- [ ] **1.2 · Nodo `router`.** Clasificador **determinista-primero** (reusa keyword lists +
-      detectores actuales: `_detect_cancellation_request`, `_asks_for_contact_number`,
-      `_AVAILABILITY_PATTERN`, `detect_sensitive_escalation`, `_ADAPTIVE_DIVING_PATTERN`…) +
-      `detect_routing_signals` (LLM) de respaldo → fija `state["route"]` (SAFETY/BOOKING/INFO/
-      CHANGE/DEFLECT). Hereda los backstops (`_in_active_cart_building`, `_has_link_tech_context`,
-      reparto-vs-deliberación).
-- [ ] **1.3 · `graph.py` esqueleto.** `StateGraph(BotState)` con: `START → safety → router →
-      add_conditional_edges → (nodos, inicialmente wrappers finos que llaman a los handlers
-      ACTUALES) → save → END`. `compile(checkpointer=…)`.
-- [ ] **1.4 · Cablear detrás del flag (strangler).** `agent_arch` off → cascada actual intacta.
-      On → `graph.ainvoke(state)`. Los nodos aún delegan en la lógica actual (no agentes
-      todavía) — valida el **grafo y el router** sin tocar los agentes.
-- [ ] **1.5 · Shadow + equivalencia.** Con flag off, correr también el router y **loggear
-      discrepancias** de ruta vs la cascada, sobre la suite y tráfico PRE (≥99% coincidencia;
-      las discrepancias reales = bugs de la cascada a documentar). Suite verde on **y** off.
-- **DoD:** un turno real atraviesa el grafo con flag on y responde igual que la cascada;
-  discrepancias auditadas. **La cascada sigue viva.**
+### Fase 1 — El grafo esqueleto + el Router · *misma conducta, estructura de grafo* · **HECHA**
+- [x] **1.1 · `BotState` — HECHO** (`db69308`). `src/orchestration/state.py`: TypedDict
+      (`total=False`) que durante el strangler **transporta** el `ConversationState` vivo
+      (`conv_state`) + los campos de grafo (`message`/`route`/`signals`/`reply`). Los nodos
+      delegan en los handlers actuales (que mutan `conv_state`), así que no se reescriben
+      firmas — el `BotState` "rico" del §4 (booking/memory + `messages` con reducer) llega en
+      Fase 4.1. Persistencia intacta: `BotState` es por-turno, nunca se serializa; solo
+      `conv_state` se persiste (`state_store` ⇄ Redis sin cambios). Constantes `ROUTE_*` = las
+      5 rutas §4.bis. 3 tests.
+- [x] **1.2 · Router — HECHO** (`2c6d042`). `src/orchestration/router.py`: `classify_route(
+      conv_state, message, signals)` read-only, reúsa los detectores reales del supervisor +
+      señales LLM (pasadas, sin recomputar) + backstops. **Enrutado intencional** (taxonomía
+      §4.bis), no réplica exacta de la cascada — la frontera BOOKING/INFO vive dentro del
+      núcleo (todo lo que cae ahí → BOOKING; se separa en Fase 3.3). Import perezoso de
+      supervisor (rompe el ciclo futuro). 22 tests (cada rama + prioridad safety-first).
+- [x] **1.3+1.4 · Grafo esqueleto + cableado tras el flag — HECHO** (`e6d8de2`).
+      `src/orchestration/graph.py`: `StateGraph(BotState)` con `START → router →
+      add_conditional_edges → {5 nodos de ruta} → END`. Los 5 nodos son wrappers finos que
+      delegan en `_route_message_inner` (reutilizando las señales del router — una sola llamada
+      LLM/turno; `_route_message_inner` acepta `routing_signals` opcional). Compilado
+      lazy-singleton. Cableado en `route_message` tras `settings.agent_arch` (off = cascada
+      intacta; on = grafo). El `conv_state` viaja por referencia; las mutaciones in-place se
+      propagan al objeto del caller (verificado contra LangGraph). Retirado el PoC de 0.5.
+      (Sin `safety` como pre-nodo ni `checkpointer` todavía: safety es una ruta que el router
+      elige — coincide con la taxonomía §4.bis que manda PII/sensible/link/humano a
+      `escalation`; el checkpointer es decisión de Fase 4.2. Ambos anotados como refinamientos,
+      no bloquean el DoD.) 6 tests de equivalencia.
+- [x] **1.5 · Shadow + equivalencia — HECHO** (`c2ed174`). **Equivalencia**: la suite COMPLETA
+      pasa idéntica en las 3 configuraciones — default, `AGENT_ARCH=true` (grafo) y
+      `AGENT_ARCH_SHADOW=true` (shadow): **1459 passed / 9 skipped / 0 failed**. **Shadow**:
+      nuevo flag `agent_arch_shadow` (default off) — con la cascada viva corre además el router
+      y loguea `[ROUTE_SHADOW] match|MISMATCH` comparando su ruta con la que la cascada marcó
+      (ContextVar `_cascade_route_taken` + `_mark_route` en cada gate; sin doble llamada LLM;
+      inerte en operación normal; se retira con la cascada en 5.2). Verificado en vivo: 6/6
+      match en mensajes de las 5 rutas. 7 tests. **Pendiente de medición sobre tráfico real de
+      PRE** (encender `agent_arch_shadow` en PRE y leer los MISMATCH — es una observación de
+      runtime, no de esta sesión).
+- **DoD cumplido:** un turno real atraviesa el grafo con flag on y responde igual que la
+  cascada (suite verde en los 3 modos); el shadow mide la coincidencia de rutas. **La cascada
+  sigue viva.**
 
 ### Fase 2 — Los nodos-agente con contrato · *paralelizable entre los 3*
 - [ ] **2.0 · Contrato de nodo + orquestador.** Fijar la firma de nodo (State→update),
@@ -567,6 +589,20 @@ se paralelizan entre sí).
 ## 8. Registro de ejecución
 *(Una línea por paso cerrado: fecha · dev · qué · commit. El más reciente arriba.)*
 
+- **2026-07-29 · Gadea · Fase 1 COMPLETA** (`db69308` 1.1 · `2c6d042` 1.2 · `e6d8de2` 1.3+1.4
+  · `c2ed174` 1.5). Grafo LangGraph esqueleto: `BotState` (transporta el `ConversationState`
+  vivo durante el strangler), router `classify_route` (enrutado intencional §4.bis, reúsa los
+  detectores reales), `graph.py` (`StateGraph`: router → conditional edges → 5 nodos-wrapper
+  que delegan en `_route_message_inner`), cableado en `route_message` tras `settings.agent_arch`
+  (off=cascada, on=grafo), y shadow del router (`agent_arch_shadow`, ContextVar `_mark_route`
+  en cada gate → `[ROUTE_SHADOW] match|MISMATCH`). Refactor: `_route_message_inner` acepta
+  `routing_signals` opcional (una sola llamada LLM/turno). Retirado el PoC de 0.5. **Prueba de
+  equivalencia**: suite COMPLETA verde en las 3 configuraciones (default / `AGENT_ARCH=true` /
+  `AGENT_ARCH_SHADOW=true`) — **1459 passed / 9 skipped / 0 failed**. 38 tests nuevos. Verificado
+  en vivo (LLM real): respuesta idéntica on/off, shadow 6/6 match. **Pendientes anotados**: (a)
+  medir el shadow sobre tráfico real de PRE (encender `agent_arch_shadow` allí); (b) refinamientos
+  diferidos que NO bloquean el DoD — `safety` como pre-nodo explícito y el `checkpointer` (Fase
+  4.2). **Siguiente: Fase 2** (nodos-agente reales), pendiente de revisión del equipo.
 - **2026-07-29 · Gadea · Fase 0.6** (`a747bb4`) — spike de diseño escrito:
   `docs/agent-arch-design.md`. Cubre los 6 puntos del plan (State+reducers, router
   con `add_conditional_edges`, handoffs `Command(goto=)`, subgrafo booking,
