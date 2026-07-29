@@ -6,7 +6,7 @@
 > alguien retoma tras un merge, **el estado de los checkboxes aquí es la única verdad**.
 > Acompaña (no sustituye) a `docs/project-history/session-handoff.md`.
 
-**Estado global:** `Fase 0 — en curso` (0.1/0.2a/0.2b/0.3 hechos; siguiente 0.4). Creado 2026-07-29.
+**Estado global:** `Fase 0 — en curso` (0.1/0.2a/0.2b/0.3/0.4 hechos; siguiente 0.5). Creado 2026-07-29.
 **Base de código:** rama `feature/pre_alvaro` (Fase 4 completa + Bloque 2 + reorg §1/§2).
 **Motor de orquestación elegido:** **LangGraph** (con LangChain de forma selectiva) — ver §2.
 
@@ -378,9 +378,43 @@ se paralelizan entre sí).
       convertido en función de módulo. Auditoría de imports huérfanos hecha por diff
       (`git stash` antes/después): ruff da los mismos 170 errores en los mismos archivos
       — deuda preexistente ajena, cero regresiones; no se usó `ruff --fix`.
-- [ ] **0.4 · Encender LangSmith + baseline de métricas.** Activar tracing (ya configurado) y
-      medir sobre un guion representativo: **nº de llamadas LLM, latencia, tokens/coste por
-      turno**. Tabla en el Registro — es el número que dirige la Fase 3.
+- [x] **0.4 · Encender LangSmith + baseline de métricas — HECHO** (`2071643`).
+      **Activación:** `_activate_langsmith_tracing` en `config.py` propaga
+      `langsmith_api_key`/`langsmith_project`/`langchain_tracing_v2` a las env vars
+      `LANGSMITH_*` que el SDK realmente lee (pydantic-settings solo las carga al objeto
+      `Settings`, nunca toca `os.environ` — por eso estaban "configuradas" pero 0 imports
+      de langsmith/langchain en `src/` seguían sin activarse). No-op sin API key: **este
+      entorno dev no tiene `LANGSMITH_API_KEY`**, así que sigue inerte hasta que se añada
+      una — listo para cuando exista, sin más cambios de código.
+      **Baseline (sin LangSmith, medido en local — `scripts/measure_llm_baseline.py`):**
+      parchea `AsyncCompletions.create`/`AsyncEmbeddings.create` a nivel de clase (cubre
+      las ~10 instanciaciones de `AsyncOpenAI` en `src/` sin tocar ningún archivo de
+      producción) y corre un guion representativo de 5 turnos (reserva de buceo
+      certificado con acompañante) contra el bot real (`ENV_FILE=.env.dev`, LLM/Postgres/
+      Redis reales, sin mocks):
+
+      | Turno | Mensaje | Llamadas LLM |
+      |---|---|---|
+      | 1 | "hola" | 2 |
+      | 2 | "quiero bucear, ya soy certificada open water, somos 2 personas" | 4 |
+      | 3 | "salimos desde cartagena" | 4 |
+      | 4 | "cuanto cuesta" | 2 |
+      | 5 | "perfecto, reservamos" | 3 |
+
+      | Métrica | Total | Por turno |
+      |---|---|---|
+      | Llamadas LLM | 15 | 3.00 |
+      | Latencia | 23.71 s | 4.74 s |
+      | Latencia media/llamada | — | 1.58 s |
+      | Tokens prompt | 23 554 | 4 711 |
+      | Tokens completion | 455 | 91 |
+      | Coste estimado | $0.0038 | $0.0008 |
+
+      Las 15 llamadas fueron todas `gpt-4o-mini` (routing/extracción/RAG del núcleo;
+      ninguna tocó `gpt-4o` en este guion). Es el **número que dirige la Fase 3**
+      ("reducir llamadas LLM/turno" §5 Fase 3.4) — el objetivo ahí es bajar de 3.00
+      llamadas/turno una vez las redes se consoliden por nodo. Repetir esta medición
+      con LangSmith real en cuanto haya API key, y comparar contra esta baseline local.
 - [ ] **0.5 · Instalar de verdad LangGraph + PoC de-risk.** `uv/pip install` de las deps ya
       declaradas; un **grafo trivial de 2 nodos** corriendo dentro de la app (un turno real lo
       atraviesa detrás del flag off) para validar versión/integración/Chatwoot. Flag
@@ -515,6 +549,18 @@ se paralelizan entre sí).
 ## 8. Registro de ejecución
 *(Una línea por paso cerrado: fecha · dev · qué · commit. El más reciente arriba.)*
 
+- **2026-07-29 · Gadea · Fase 0.4** (`2071643`) — LangSmith activado (env vars
+  `LANGSMITH_*` propagadas desde `Settings`, no-op sin API key — no hay una en este
+  entorno dev) + baseline local de métricas LLM/turno vía
+  `scripts/measure_llm_baseline.py` (parchea `AsyncCompletions.create`/
+  `AsyncEmbeddings.create` a nivel de clase, sin tocar producción). Guion de 5 turnos
+  contra el bot real: **15 llamadas LLM / 3.00 por turno · 23.71s / 4.74s por turno ·
+  23 554 tokens prompt + 455 completion · $0.0038 estimado**, todas `gpt-4o-mini`.
+  Tabla completa en §5 Fase 0.4. Es el número que dirige la Fase 3 (bajar
+  llamadas/turno al consolidar redes por nodo). Suite 1421 passed / 9 skipped /
+  0 failed, ruff limpio. **Pendiente real**: repetir con LangSmith cuando haya
+  `LANGSMITH_API_KEY`, para comparar trazas reales contra esta baseline local.
+  Siguiente: **0.5** (instalar LangGraph + PoC de 2 nodos + flag `agent_arch`).
 - **2026-07-29 · Gadea · Fase 0.3** — shim `decision_tree` cerrado. **0.3a** (`24c7c77`):
   ~34 importadores (7 en `src/`, resto tests/scripts) reapuntados a `catalog`/`state`/
   `messages` (incluidos 2 imports inline afectados por monkeypatch en
