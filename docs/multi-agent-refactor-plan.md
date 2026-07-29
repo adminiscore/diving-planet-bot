@@ -547,13 +547,20 @@ se paralelizan entre sí).
       tests nuevos** (3 gates aislados + delegación + equivalencia flag on/off en 3 mensajes) +
       123 verdes en la regresión ancha + 13 de cancel/reschedule/disponibilidad en conversations
       (cascada tocada por la extracción). Ruff limpio. *(dev: Álvaro)*
-- [ ] **2.4 · Nodo `info`** (RAG + grounding) — envuelve `rag_agent`; la RAG queda en Python
-      plano dentro del nodo. *(dev: —)* ⚠️ **Audit §1.5 patrón A:** el nodo info debe cubrir
-      TAMBIÉN la elegibilidad por edad determinista (`_maybe_answer_age_eligibility`, hoy
-      marcada INFO por la cascada). **Antes de 2.6** (despacho a nodos reales) hay que añadir
-      la rama edad→INFO a `classify_route` (`_AGE_ELIGIBILITY_CUE` + presencia de edad); si no,
-      las 11/14 preguntas de edad del audit irían al nodo booking en vez del info. En Fase 1 no
-      importa (el nodo delega en la cascada), pero al volverse real el routing sí manda.
+- [x] **2.4 · Nodo `info` — HECHO** (`src/agents/info_agent.py`). Cuarto corte strangler: la
+      ruta `ROUTE_INFO` ejecuta directamente los 2 gates **pre-núcleo** — (1) elegibilidad por
+      edad determinista (`_maybe_answer_age_eligibility`, respuesta desde `eligibility.py`, sin
+      RAG) y (2) DIVE TO HEAL no-precio → `rag_answer` (RAG con grounding, en Python plano
+      dentro del nodo). Fallback a la cascada si ningún gate dispara (resiliencia #10).
+      **⚠️ Patrón A del audit §1.5 CERRADO:** añadida la rama edad→INFO a `classify_route` vía
+      el predicado PURO `_looks_like_age_eligibility_question` (cue `_AGE_ELIGIBILITY_CUE` +
+      número de edad presente, o edad recordada + referencia a persona), ubicado entre mixta y
+      DIVE TO HEAL igual que en la cascada. Sobre-disparar es seguro (el nodo delega si el gate
+      real devuelve None); quedarse corto solo mantiene el comportamiento actual sin regresión.
+      **8 tests nuevos** (router edad→INFO + no-overfire + nodo aislado + equivalencia edad y
+      DIVE TO HEAL) + 198 verdes en la regresión ancha (incl. router/shadow/eligibility). Ruff
+      limpio. *(dev: Álvaro)* La cascada (flag off) queda intacta — el predicado nuevo solo lo
+      usa el router.
 - [ ] **2.5 · Nodo `booking`** (el núcleo) — como **subgrafo** LangGraph (el slot-fill loop +
       multi-ítem). El más grande, el último. *(dev: —)*
 - [ ] **2.6 · El grafo despacha a nodos reales** (flag on). Suite verde tras cada uno, on/off.
@@ -641,6 +648,12 @@ se paralelizan entre sí).
 ## 8. Registro de ejecución
 *(Una línea por paso cerrado: fecha · dev · qué · commit. El más reciente arriba.)*
 
+- **2026-07-30 · Álvaro · Fase 2.4** — Nodo `info` real (cuarto corte strangler): la ruta INFO
+  ejecuta edad determinista (`_maybe_answer_age_eligibility`) + DIVE TO HEAL no-precio (RAG en
+  Python plano). **Cerrado el patrón A del audit §1.5**: rama edad→INFO en `classify_route` vía
+  el predicado puro `_looks_like_age_eligibility_question`. `src/agents/info_agent.py` +
+  predicado en `supervisor.py` + rama en `router.py` + wire en `graph.py`. 8 tests nuevos; 198
+  verdes en la regresión ancha (incl. router/shadow/eligibility); ruff limpio. Cascada intacta.
 - **2026-07-30 · Álvaro · Fase 2.3** — Nodo `changes` real (tercer corte strangler): la ruta
   CHANGE ejecuta directamente cancelación + reprogramación (pre-núcleo) vía el helper compartido
   `_booking_change_response` (extraído de la cascada, refactor preservador); la disponibilidad

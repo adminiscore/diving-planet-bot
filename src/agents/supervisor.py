@@ -1476,6 +1476,32 @@ _AGE_ELIGIBILITY_CUE = re.compile(
 )
 
 
+_AGE_NUMBER_HINT = re.compile(r"\b\d{1,2}\b")
+_AGE_PERSON_REF = re.compile(
+    r"\b(mi\s+\w+|hij[oa]s?|niñ[oa]s?|nin[oa]s?|él|ella|ellos|ellas|"
+    r"my\s+\w+|son|daughter|kids?|child(?:ren)?|he|she|they)\b",
+    re.IGNORECASE,
+)
+
+
+def _looks_like_age_eligibility_question(message: str, state: ConversationState) -> bool:
+    """Predicado PURO (read-only) para el router (Fase 2.4, cierre del hueco
+    "patrón A" del audit §1.5): aproxima cuándo disparará
+    `_maybe_answer_age_eligibility` SIN correr el intent detector ni mutar estado.
+
+    Cue de elegibilidad + o bien un número de 1-2 dígitos plausible como edad, o
+    bien una edad ya recordada (`state.detected_ages`) junto a una referencia a
+    persona (caso multi-turno). El nodo `info` reproduce la lógica exacta y delega
+    en la cascada si no dispara, así que sobre-disparar aquí es seguro (se
+    autocorrige); quedarse corto solo mantiene el comportamiento actual (→ booking)
+    para ese mensaje concreto, sin regresión."""
+    if not _AGE_ELIGIBILITY_CUE.search(message):
+        return False
+    if _AGE_NUMBER_HINT.search(message):
+        return True
+    return bool(state.detected_ages) and bool(_AGE_PERSON_REF.search(message))
+
+
 def _maybe_answer_age_eligibility(message: str, state: ConversationState) -> str | None:
     """Deterministic answer to an age-eligibility question.
 

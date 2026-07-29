@@ -27,11 +27,13 @@ from langgraph.graph import END, START, StateGraph
 from src.agents.changes_agent import changes_node
 from src.agents.deflection_agent import deflection_node
 from src.agents.escalation_agent import escalation_node
+from src.agents.info_agent import info_node
 from src.orchestration.router import classify_route
 from src.orchestration.state import (
     ALL_ROUTES,
     ROUTE_CHANGE,
     ROUTE_DEFLECT,
+    ROUTE_INFO,
     ROUTE_SAFETY,
     BotState,
 )
@@ -45,6 +47,7 @@ _REAL_NODES = {
     ROUTE_DEFLECT: deflection_node,
     ROUTE_SAFETY: escalation_node,
     ROUTE_CHANGE: changes_node,
+    ROUTE_INFO: info_node,
 }
 
 
