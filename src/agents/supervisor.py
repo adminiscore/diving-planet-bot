@@ -28,14 +28,13 @@ from src.agents.llm_extractor import fill_gaps, missing_fields
 from src.agents.rag_agent import rag_answer
 from src.config import settings
 from src.flows import cart_render, eligibility
-from src.flows.messages import DecisionTree
+from src.flows.messages import set_quick_replies
 from src.flows.state import ConversationState, Step
 from src.knowledge.loader import load_policies
 from src.privacy import detect_pii, privacy_block_message
 
 logger = logging.getLogger("uvicorn.error")
 
-decision_tree = DecisionTree()
 intent_detector = IntentDetector()
 
 # Adaptive diving / DIVE TO HEAL: disability & accessibility questions that must
@@ -2208,14 +2207,14 @@ async def _route_message_inner(state: ConversationState, message: str) -> str:
             # Treat as language selection; advance to MAIN_MENU.
             state.language = language_intent
             state.step = Step.MAIN_MENU
-            decision_tree.set_quick_replies(state, "main_menu")
+            set_quick_replies(state, "main_menu")
             logger.info(f"[SUPERVISOR] Language intent at start -> lang={language_intent}")
             return MESSAGES["main_menu"][language_intent]
         if state.language != language_intent:
             # Mid-conversation switch: acknowledge in new language and re-show main menu.
             state.language = language_intent
             state.step = Step.MAIN_MENU
-            decision_tree.set_quick_replies(state, "main_menu")
+            set_quick_replies(state, "main_menu")
             ack = (
                 "¡Listo! Sigamos en español. "
                 if language_intent == "es"
