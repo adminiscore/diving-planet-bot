@@ -105,25 +105,7 @@ class ConversationState:
     mixed_pending_qty_type: str | None = None    # which type is being added/edited
     mixed_pending_qty_plan: str | None = None    # holds cert plan while qty is collected
     mixed_pending_qty_value: int | None = None
-    mixed_pending_course_question: str | None = None
     mixed_pending_preview_service_id: str | None = None
-    mixed_pending_cert_total_qty: int | None = None
-    mixed_pending_cert_remaining_qty: int | None = None
-    mixed_pending_refresh_added_qty: int | None = None
-    # When the group is "some certified, some not": how many non-certified people
-    # still need a minicurso added AFTER the certified subgroup is committed.
-    mixed_pending_beginner_after_cert: int = 0
-    # A companion was mentioned in free text: after location is set, show the
-    # mini-course/snorkel upsell for them instead of the generic activity menu.
-    mixed_pending_companion_upsell: bool = False
-    mixed_pending_modify_idx: int | None = None  # cart index when editing an item
-    mixed_pending_modify_refresh: bool = False   # cert qty just changed → re-ask refresher
-    # Which 2-option cert sub-menu is currently showing, if any:
-    # "4dive_island" (4-dive daytime vs night variant on the islands),
-    # "1day" (2 vs 3 dives, both are "1 day" plans),
-    # "2day" (4 vs 5 dives, both are "2 day" plans).
-    mixed_pending_cert_narrow_kind: str | None = None
-    mixed_pending_exact: bool = False            # waiting for exact count after "6+"
     mixed_display_currency: str = "USD"          # "USD" | "COP"
     mixed_final_is_colombian: bool | None = None
     mixed_final_has_kids_8_10: bool | None = None
@@ -143,12 +125,6 @@ class ConversationState:
     # Lista de (label, booking_url) para enviar al cliente cuando pulse "Reservar"
     # en el resumen final del flujo mixto.
     mixed_booking_links: list[tuple[str, str]] = field(default_factory=list)
-    # True while the client is being asked for hotel/island after changing the
-    # cart's origin to "island" mid-flow (Step.MIXED_CART_LOCATION or the
-    # orchestrator's set_location). Tells _handle_island_hotel_menu to remap
-    # the existing cart prices and return to the cart review afterward,
-    # instead of resuming an add-activity flow that was never pending.
-    mixed_pending_location_change: bool = False
     # Intent detection fields - información detectada automáticamente de texto libre
     detected_language: str | None = None
     # Nombre del cliente para el trato cercano (persona Coral). Hoy solo se
@@ -162,8 +138,6 @@ class ConversationState:
     detected_group_size: int | None = None
     detected_group_allocation: dict | None = None
     detected_ages: list = field(default_factory=list)   # person ages mentioned across the conversation
-    mixed_beginner_child_age: int | None = None          # age of the single non-cert minor being offered activities
-    mixed_pending_beginner_queue: list = field(default_factory=list)  # per-person ages of non-cert people still to place (auto-build)
     detected_last_dive_over_2_years: bool | None = None
     detected_duration: str | None = None
     detected_location: str | None = None

@@ -320,9 +320,23 @@ se paralelizan entre sí).
       no disparara `availability_question` con el "mañana" del mensaje. Arreglado mockeando el
       routing en el test (test fix, no cambia producto). Verde inequívoco confirmado (3/3).
 - [ ] **0.2 · LIMPIEZA del estado (`ConversationState` + `Step`).** Borrar por reachability los
-      ~30 campos `mixed_*` y ~35 valores `Step.*` (INFO_*/COURSES_*/PRICING_*/LOGISTICS_*)
-      muertos tras Fase 4 (suite verde tras cada borrado, AST no líneas). El estado limpio es
-      la base del `BotState`.
+      campos `mixed_*` y valores `Step.*` muertos tras Fase 4. **Análisis de reachability hecho
+      (2026-07-29):**
+      - **`mixed_*`: 13 campos MUERTOS** (0 refs en src y tests) → borrado directo seguro:
+        `mixed_pending_course_question`, `_cert_total_qty`, `_cert_remaining_qty`,
+        `_refresh_added_qty`, `_beginner_after_cert`, `_companion_upsell`, `_modify_idx`,
+        `_modify_refresh`, `_cert_narrow_kind`, `_exact`, `_location_change`,
+        `mixed_beginner_child_age`, `mixed_pending_beginner_queue`. (El resto siguen vivos;
+        algunos son write-only candidatos a revisar al construir el nodo booking.)
+      - **`Step.*`: ~33 valores sin refs `Step.X`** PERO **acoplados a `messages.py`**: se
+        referencian por su **valor string** (p. ej. `'info_menu'`, `'pricing_menu'`,
+        `'courses_menu'`) como claves del dict `MESSAGES` / botones del menú legacy que la
+        reorg §1 reubicó a `messages.py` **sin podar** (~1.000 líneas de datos de menú muertos).
+        → La limpieza del enum es en realidad **podar el menú legacy entero de `messages.py`**
+        (MESSAGES + BUTTON_OPTIONS + métodos de menú de `DecisionTree`) + los 5 steps
+        referenciados en `_INTENT_TRIGGER_STEPS` (supervisor). Sub-tarea acoplada más grande
+        de lo previsto — hacerla en un paso cuidado propio (0.2b), no mezclada con los campos.
+      - Suite verde tras cada borrado (AST no líneas).
 - [ ] **0.3 · LIMPIEZA de dependencias y muertos.** Cerrar el shim `decision_tree` (reapuntar
       importadores a `catalog`/`state`/`messages` y borrar shim + vestigio `DecisionTree`).
       Auditar imports/funciones huérfanas (a mano, sin `ruff --fix`).
