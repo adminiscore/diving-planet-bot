@@ -516,6 +516,16 @@ se paralelizan entre sí).
 ## 8. Registro de ejecución
 *(Una línea por paso cerrado: fecha · dev · qué · commit. El más reciente arriba.)*
 
+- **2026-07-29 · Gadea · Fase 0.2b-i** — enum `Step` podado 43→5 valores
+  (quedan WELCOME/LANGUAGE/MAIN_MENU/ESCALATE/FREE_TEXT); quitados RESERVA_MENU/
+  INFO_MENU/BOOKING_MENU de `supervisor._INTENT_TRIGGER_STEPS`; actualizado
+  `test_state_store` (PRICING_MENU→MAIN_MENU) y borrados 3 helpers muertos de
+  `test_conversations` (`reach_pricing_menu`/`reach_booking_menu`/
+  `reach_logistics_menu`, 0 llamadas). Suite 1421 passed / 9 skipped / 0 failed
+  (mismo total 1430 que baseline; diferencia de skips es de entorno, no del
+  cambio). ruff limpio. Commit `b8f8d43`. **Siguiente: 0.2b-ii** (poda de
+  `messages.py`, ~1500→~150 líneas) — paso grande, pendiente de confirmar
+  antes de ejecutar (protocolo §3).
 - **2026-07-29 · Álvaro · Fase 0.2a** — 13 campos `mixed_*` muertos borrados de
   `ConversationState` (75→62), suite idéntica al baseline (1412). Reachability completa de
   0.2b hecha y scopeada (Step enum + poda de `messages.py`, listas exactas en §5 Fase 0.2b).
