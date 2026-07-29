@@ -144,4 +144,22 @@ class Settings(BaseSettings):
         return [lang.strip() for lang in self.supported_languages.split(",")]
 
 
+def _activate_langsmith_tracing(s: Settings) -> None:
+    """Propaga la config de LangSmith al entorno del proceso.
+
+    pydantic-settings lee `.env` hacia los campos de `Settings` pero nunca toca
+    `os.environ` — el SDK de langsmith/langchain solo mira variables de entorno
+    reales (`LANGSMITH_*`/`LANGCHAIN_*`), así que sin este paso los campos de
+    abajo eran solo decorativos (0 imports de langsmith/langchain en `src/`
+    hasta Fase 0.4 del refactor multiagente). No-op sin API key: mantiene el
+    dev sin cuenta LangSmith exactamente igual que hoy (sin overhead ni error).
+    """
+    if not s.langchain_tracing_v2 or not s.langsmith_api_key:
+        return
+    os.environ.setdefault("LANGSMITH_TRACING_V2", "true")
+    os.environ.setdefault("LANGSMITH_API_KEY", s.langsmith_api_key)
+    os.environ.setdefault("LANGSMITH_PROJECT", s.langsmith_project)
+
+
 settings = Settings()
+_activate_langsmith_tracing(settings)
