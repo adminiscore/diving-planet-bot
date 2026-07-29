@@ -313,9 +313,12 @@ Cada fase deja el bot **funcionando y verde**. Orden estricto (salvo los nodos d
 se paralelizan entre sí).
 
 ### Fase 0 — Cimientos, limpieza y observabilidad · *no cambia comportamiento* · **bloqueante**
-- [ ] **0.1 · Congelar el baseline.** Suite completa verde documentada (passed/skipped
-      exactos). Resolver/marcar los flaky que dependen del LLM real sin mock
-      (`test_gap_fill_logs_in_harvester_format` y afines) para que "verde" sea inequívoco.
+- [x] **0.1 · Congelar el baseline.** ✅ **Baseline: `1412 passed · 18 skipped · 0 failed`**
+      (rama `feature/agent-arch`, suite completa con LLM real, ~7 min). El único fallo previo
+      (`test_gap_fill_logs_in_harvester_format`) era un test **infra-aislado**: mockeaba
+      `fill_gaps` pero no `detect_routing_signals`, así que dependía de que el routing LLM real
+      no disparara `availability_question` con el "mañana" del mensaje. Arreglado mockeando el
+      routing en el test (test fix, no cambia producto). Verde inequívoco confirmado (3/3).
 - [ ] **0.2 · LIMPIEZA del estado (`ConversationState` + `Step`).** Borrar por reachability los
       ~30 campos `mixed_*` y ~35 valores `Step.*` (INFO_*/COURSES_*/PRICING_*/LOGISTICS_*)
       muertos tras Fase 4 (suite verde tras cada borrado, AST no líneas). El estado limpio es
@@ -460,7 +463,10 @@ se paralelizan entre sí).
 ## 8. Registro de ejecución
 *(Una línea por paso cerrado: fecha · dev · qué · commit. El más reciente arriba.)*
 
-- *(vacío — el refactor no ha empezado)*
+- **2026-07-29 · Álvaro · Fase 0.1** — Baseline congelado en `feature/agent-arch`:
+  **1412 passed / 18 skipped / 0 failed**. Arreglado el único fallo (`test_gap_fill_logs_in_
+  harvester_format`, test infra-aislado — mockeado `detect_routing_signals`). Rama creada +
+  plan maestro committeado (`a56fa60`).
 
 ---
 

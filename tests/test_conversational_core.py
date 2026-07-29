@@ -581,6 +581,13 @@ async def test_gap_fill_logs_in_harvester_format(monkeypatch, caplog):
 
     state = make_state("es")
     monkeypatch.setattr(core, "fill_gaps", AsyncMock(return_value={"activity": "snorkel"}))
+    # Aislar el test a su propósito (formato de log del harvester): mockear el
+    # routing LLM a {} — sin esto, `detect_routing_signals` (real, no mockeado)
+    # devolvía `availability_question=True` para el "mañana" del mensaje y el
+    # gate de disponibilidad interceptaba ANTES de que corriera el gap-fill, así
+    # que no se logueaba nada (test intermitente/roto). No cambia comportamiento
+    # de producto — solo fija la dependencia externa que el test no aislaba.
+    monkeypatch.setattr("src.agents.supervisor.detect_routing_signals", AsyncMock(return_value={}))
     with caplog.at_level(_logging.INFO, logger="uvicorn.error"):
         await route_message(state, "me gustaría hacer alguna actividad en el mar mañana")
 
