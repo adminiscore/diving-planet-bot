@@ -1630,28 +1630,24 @@ async def _setup_phase(
     return greeting, first_turn
 
 
-async def _body_phase(
-    state: ConversationState, message: str, routing_signals: dict,
-    greeting: str, first_turn: bool,
-) -> str:
-    """Fase 3.3b — cuerpo del turno de booking, extraído de `maybe_handle_turn`:
-    disponibilidad → carryover → pregunta/recall → deliberación → extracción →
-    slot-fill → cierre determinista. Recibe `greeting`/`first_turn` de
-    `_setup_phase` (que ya mutó idioma/historial/notas). Segundo nodo del
-    subgrafo del booking (§3.3); lo llama también la cascada."""
+async def _availability_phase(
+    state: ConversationState, message: str, routing_signals: dict, greeting: str,
+) -> str | None:
+    """Fase 3.3c — gate de disponibilidad, extraído de `_body_phase`. NO alucina
+    el calendario (Bloque 2.5, portado al núcleo 2026-07-24): "¿tienen
+    disponibilidad el sábado?" recibe la respuesta canónica (salidas diarias +
+    el calendario está en el link) en vez de que RAG confirme un cupo que no
+    conoce. `_AVAILABILITY_PATTERN` (narrow) aplica siempre; la señal amplia
+    solo si NO hay reserva en curso (`detected_activity is None`: "¿algo para
+    más días?" con actividad elegida es una pregunta de PLAN, no de cupo).
+    Devuelve la respuesta o None para continuar al cuerpo.
+
+    ⚠️ Patrón B del audit §1.5: hoy la disponibilidad la resuelve el núcleo
+    (booking) y no el nodo `changes`; aislarla en su propia fase/nodo facilita
+    reubicarla en el cutover (Fase 5.2)."""
     from src.agents import supervisor  # lazy
 
     msg_lower = message.strip().lower()
-
-    # Disponibilidad: NO alucinar el calendario (Bloque 2.5, portado al núcleo
-    # 2026-07-24). Bug vivo en PRE: el gate del supervisor está DESPUÉS del hook
-    # del núcleo, así que con core-on "¿tienen disponibilidad el sábado?" caía a
-    # RAG y respondía "Claro que sí, tenemos disponibilidad para el sábado" —
-    # confirmando un cupo que no puede conocer. `_AVAILABILITY_PATTERN` (narrow,
-    # seguro) aplica siempre; la señal amplia (`_asks_about_availability` /
-    # `availability_question`) solo si NO hay una reserva en curso (con actividad
-    # elegida, "¿algo para más días?" es una pregunta de PLAN, no de cupo — mismo
-    # criterio que el guard `_in_active_cart_building` del supervisor legacy).
     if supervisor._AVAILABILITY_PATTERN.search(msg_lower) or (
         (supervisor._asks_about_availability(msg_lower)
          or routing_signals.get("availability_question"))
@@ -1669,6 +1665,19 @@ async def _body_phase(
         response = greeting + avail
         state.history.append({"role": "assistant", "content": response})
         return response
+    return None
+
+
+async def _body_phase(
+    state: ConversationState, message: str, routing_signals: dict,
+    greeting: str, first_turn: bool,
+) -> str:
+    """Fase 3.3c — cuerpo del turno de booking (carryover → pregunta/recall →
+    deliberación → extracción → slot-fill → cierre determinista), extraído de
+    `maybe_handle_turn`. La disponibilidad se peeló a `_availability_phase`
+    (nodo propio del subgrafo). Recibe `greeting`/`first_turn` de `_setup_phase`.
+    Lo llama también la cascada."""
+    from src.agents import supervisor  # lazy
 
     # COMPRENDER (carryover PRIMERO): si hay un slot pendiente y este mensaje
     # lo RESUELVE, el carryover gana aunque el mensaje "parezca pregunta" por
@@ -2230,15 +2239,18 @@ async def maybe_handle_turn(
     `routing_signals` (auditoría 2026-07-22): ya calculado UNA vez por
     `supervisor._route_message_inner` (nunca se recalcula aquí).
 
-    (Fase 3.3b) Orquesta las dos fases extraídas: `_setup_phase` → `_body_phase`.
-    El subgrafo del booking (flag on) llama a las MISMAS dos funciones como
-    nodos, así que cascada y grafo comparten la fuente de verdad — equivalencia
-    por construcción."""
+    (Fase 3.3b/c) Orquesta las fases extraídas: `_setup_phase` →
+    `_availability_phase` → `_body_phase`. El subgrafo del booking (flag on)
+    llama a las MISMAS funciones como nodos, así que cascada y grafo comparten
+    la fuente de verdad — equivalencia por construcción."""
     routing_signals = routing_signals or {}
     setup = await _setup_phase(state, message, routing_signals)
     if setup is None:
         return None
     greeting, first_turn = setup
+    avail = await _availability_phase(state, message, routing_signals, greeting)
+    if avail is not None:
+        return avail
     return await _body_phase(state, message, routing_signals, greeting, first_turn)
 
 

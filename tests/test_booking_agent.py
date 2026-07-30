@@ -44,13 +44,23 @@ def _core_llm_offline(monkeypatch):
 
 # ── subgrafo (Fase 3.3, andamiaje) ──
 
-def test_booking_subgraph_compiles_with_setup_and_body_nodes():
+def test_booking_subgraph_compiles_with_internal_nodes():
     from src.agents.booking_agent import _get_booking_subgraph
 
     sub = _get_booking_subgraph()
     nodes = sub.get_graph().nodes
-    # 3.3b: el núcleo partido en setup + body (nodos internos del subgrafo)
-    assert "setup" in nodes and "body" in nodes
+    # 3.3b/c: el núcleo partido en setup + availability + body (nodos internos)
+    assert {"setup", "availability", "body"} <= set(nodes)
+
+
+@pytest.mark.asyncio
+async def test_availability_question_resolved_by_its_node(monkeypatch):
+    """Una pregunta de disponibilidad la resuelve el nodo `availability`
+    (respuesta canónica anti-alucinación), sin llegar al body/extracción."""
+    monkeypatch.setattr("src.agents.supervisor.detect_routing_signals", AsyncMock(return_value={}))
+    monkeypatch.setattr(settings, "agent_arch", True)
+    reply = (await route_message(make_state(), "¿qué días hay disponibles?"))
+    assert "disponibilidad" in reply.lower() or "availability" in reply.lower()
 
 
 # ── nodo en aislamiento ──
