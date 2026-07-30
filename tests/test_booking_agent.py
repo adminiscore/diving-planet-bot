@@ -42,6 +42,16 @@ def _core_llm_offline(monkeypatch):
     monkeypatch.setattr(core, "compose_acknowledgement", AsyncMock(return_value=""))
 
 
+# ── subgrafo (Fase 3.3, andamiaje) ──
+
+def test_booking_subgraph_compiles_with_core_node():
+    from src.agents.booking_agent import _get_booking_subgraph
+
+    sub = _get_booking_subgraph()
+    # el subgrafo compilado incluye el nodo `core` (contenedor del strangler 3.3)
+    assert "core" in sub.get_graph().nodes
+
+
 # ── nodo en aislamiento ──
 
 @pytest.mark.asyncio

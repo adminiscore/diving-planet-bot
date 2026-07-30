@@ -1,60 +1,55 @@
-"""Nodo-agente `booking` (Fase 2.5) — el quinto y último nodo REAL del grafo.
+"""Nodo-agente `booking` (Fase 2.5) + subgrafo del núcleo (Fase 3.3, en curso).
 
-Ver `docs/multi-agent-refactor-plan.md` §5 Fase 2.5 + el 🤝 HANDOFF, y §4.bis.
+Ver `docs/multi-agent-refactor-plan.md` §5 Fase 2.5/3.3, §4 (subgrafo booking)
+y `docs/agent-arch-design.md` §4.
 
 ## Qué maneja
 
 La ruta `ROUTE_BOOKING`: el tráfico central del bot (reserva slot-fill,
 multi-ítem/acompañantes, y las preguntas de info que el núcleo resuelve por
-RAG interno). En la cascada, este "gate" ES el núcleo conversacional
-(`conversational_core.maybe_handle_turn`) — el router manda a BOOKING todo lo
-que las rutas periféricas (SAFETY/CHANGE/DEFLECT/INFO) no capturaron.
+RAG interno). El "gate" de booking en la cascada ES el núcleo conversacional
+(`conversational_core.maybe_handle_turn`).
 
-## El corte (patrón PRE/POST del handoff)
+## Subgrafo (strangler de Fase 3.3)
 
-- **PRE-núcleo = el núcleo mismo:** se reproduce directamente llamando a
-  `maybe_handle_turn(conv, message, routing_signals=signals)`. Muta `conv` por
-  referencia (step/history/quick_replies/slots) igual que en la cascada, y
-  reutiliza las señales que ya calculó el router (sin doble llamada LLM).
-- **POST-núcleo = delegar:** si el núcleo devuelve `None`, la cascada sigue a
-  sus handlers deterministas de después (escalado por keyword, idioma, etc.).
-  Reproducirlos aquí sin el orden de la cascada cambiaría la conducta → se
-  **delega en `_route_message_inner`** (equivalencia exacta, resiliencia #10).
+El plan (§3.3) parte el núcleo monolítico (~2.249 líneas) en nodos internos de
+responsabilidad única: **routing interno → extracción → slot-fill → cierre
+determinista**. Ese corte se hace de forma incremental sobre un **subgrafo
+LangGraph** que vive aquí, igual que el esqueleto de la Fase 1 fue el
+contenedor del grafo principal.
 
-## Por qué el `None` es seguro y raro aquí
+**Estado actual del corte:** *andamiaje*. El subgrafo tiene UN nodo (`core`)
+que envuelve `maybe_handle_turn` — equivalente por construcción, cero cambio de
+conducta. Los siguientes pasos de 3.3 extraen fases del núcleo a nodos propios
+del subgrafo, una a una, con equivalencia probada en cada corte. Hasta
+entonces, el núcleo sigue resolviendo el turno completo dentro de `core`.
 
-`maybe_handle_turn` devuelve `None` en un ÚNICO punto (su primera línea):
-`_matches_escalation_keyword(msg) or wants_human` — y **antes de mutar nada**.
-Esa condición es exactamente la que el router manda a SAFETY, no a BOOKING, así
-que para un mensaje enrutado a BOOKING el núcleo nunca devuelve `None`: la rama
-de delegación es una red de seguridad que no debería dispararse. Y si lo
-hiciera, el `None` es sin efectos secundarios (retorno temprano pre-mutación),
-así que la re-ejecución vía `_route_message_inner` es segura (no duplica el
-mensaje en el historial).
+## PRE/POST-núcleo (patrón del handoff de Fase 2)
 
-## Partir el núcleo NO es 2.5
-
-Convertir el núcleo en un subgrafo LangGraph (routing interno → extracción →
-slot-fill → cierre determinista) es **Fase 3.3**. Aquí 2.5 solo necesita el
-nodo envolvente equivalente para completar el despacho a los 5 nodos (2.6).
-
-## Divergencias del audit §1.5 — NO tocar aquí
-
-Disponibilidad fresca (patrón B, hoy la intercepta el núcleo → booking) y la
-afirmación que acepta la oferta de asesor se **preservan** delegando; su
-resolución es decisión del cutover (Fase 5.2), no de 2.5.
+- **PRE-núcleo:** `core` llama a `maybe_handle_turn(conv, message,
+  routing_signals=signals)`, reutilizando las señales del router (sin doble
+  llamada LLM) y mutando `conv` por referencia (step/history/slots) igual que
+  la cascada.
+- **POST-núcleo (resiliencia #10):** si el núcleo devuelve `None`, `core`
+  delega en `_route_message_inner`. Ese `None` solo ocurre para
+  escalado-keyword/`wants_human` (que el router manda a SAFETY, no a BOOKING) y
+  es pre-mutación → aquí no se dispara y sería seguro si lo hiciera.
 """
 
 from __future__ import annotations
 
 import logging
 
+from langgraph.graph import END, START, StateGraph
+
 from src.orchestration.state import BotState
 
 logger = logging.getLogger("uvicorn.error")
 
 
-async def booking_node(state: BotState) -> dict:
+async def _core_node(state: BotState) -> dict:
+    """Nodo único del subgrafo (por ahora): envuelve el núcleo completo. Los
+    cortes de 3.3 irán extrayendo fases de aquí a nodos hermanos."""
     from src.agents import conversational_core
     from src.agents.supervisor import _route_message_inner
 
@@ -62,16 +57,42 @@ async def booking_node(state: BotState) -> dict:
     message = state["message"]
     signals = state.get("signals") or {}
 
-    # PRE-núcleo: el núcleo ES el gate de booking. Reproducirlo = llamarlo.
     core_response = await conversational_core.maybe_handle_turn(
         conv, message, routing_signals=signals
     )
     if core_response is not None:
-        logger.info("[NODE:booking] núcleo resolvió el turno")
+        logger.info("[NODE:booking/core] núcleo resolvió el turno")
         return {"reply": core_response}
 
-    # POST-núcleo (resiliencia #10): el núcleo declinó — clases que la cascada
-    # resuelve DESPUÉS (escalado-keyword/idioma/…), que el router ya manda a
-    # SAFETY, así que esto casi nunca ocurre. Delegar preserva la equivalencia.
-    logger.info("[NODE:booking] núcleo devolvió None -> delego en la cascada")
+    logger.info("[NODE:booking/core] núcleo devolvió None -> delego en la cascada")
     return {"reply": await _route_message_inner(conv, message, routing_signals=signals)}
+
+
+def _build_booking_subgraph():
+    """Subgrafo del booking. Hoy `START → core → END`; los cortes de 3.3 añaden
+    nodos (routing interno / extracción / slot-fill / cierre) y edges entre
+    ellos, sin tocar el grafo padre ni la firma de `booking_node`."""
+    builder = StateGraph(BotState)
+    builder.add_node("core", _core_node)
+    builder.add_edge(START, "core")
+    builder.add_edge("core", END)
+    return builder.compile()
+
+
+_BOOKING_SUBGRAPH = None
+
+
+def _get_booking_subgraph():
+    """Subgrafo compilado (lazy singleton — no se compila a import)."""
+    global _BOOKING_SUBGRAPH
+    if _BOOKING_SUBGRAPH is None:
+        _BOOKING_SUBGRAPH = _build_booking_subgraph()
+    return _BOOKING_SUBGRAPH
+
+
+async def booking_node(state: BotState) -> dict:
+    """Entrada de la ruta BOOKING en el grafo principal: invoca el subgrafo del
+    núcleo. `conv_state` viaja por referencia, así que las mutaciones in-place
+    del núcleo se propagan al objeto del caller igual que antes."""
+    result = await _get_booking_subgraph().ainvoke(state)
+    return {"reply": result["reply"]}
