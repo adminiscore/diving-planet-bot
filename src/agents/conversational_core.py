@@ -1576,28 +1576,28 @@ def _booking_context_summary(state: ConversationState) -> str:
     return "; ".join(parts)
 
 
-async def maybe_handle_turn(
-    state: ConversationState, message: str, *, routing_signals: dict | None = None,
-) -> str | None:
-    """Punto de entrada desde el supervisor (tras el gating de seguridad).
-    Devuelve None solo para las clases de mensaje que deben seguir cayendo a
-    los handlers deterministas legacy (escalado por keyword, menú/volver).
+async def _setup_phase(
+    state: ConversationState, message: str, routing_signals: dict,
+) -> tuple[str, bool] | None:
+    """Fase 3.3b — setup del turno de booking, extraído de `maybe_handle_turn`.
 
-    `routing_signals` (auditoría 2026-07-22): ya calculado UNA vez por
-    `supervisor._route_message_inner` (red de precisión LLM para escalado/
-    menú cuando las listas de palabras clave no reconocen la frase — nunca
-    se vuelve a llamar aquí, mismo resultado para todo el turno)."""
+    Hace lo que TODO el resto del turno da por hecho, y por eso va primero: (1)
+    descarta el escalado por keyword/`wants_human` (→ None, lo resuelve la
+    cascada); (2) en el primer turno infiere el idioma y arma el saludo; (3)
+    captura el nombre; (4) **añade el mensaje del usuario al historial** (las
+    notas y el RAG lo leen ya con el mensaje dentro); (5) captura notas.
+    Devuelve `(greeting, first_turn)`, o `None` para escalado-keyword. Es el
+    primer nodo del subgrafo del booking (§3.3) y también lo llama la cascada
+    vía `maybe_handle_turn` — misma fuente de verdad, equivalencia por
+    construcción."""
     from src.agents import supervisor  # lazy
 
-    routing_signals = routing_signals or {}
     msg_lower = message.strip().lower()
     if supervisor._matches_escalation_keyword(msg_lower) or routing_signals.get("wants_human"):
         return None
     # (Fase 4, decisión owner 2026-07-28) "menú"/"volver"/"back" = MENSAJE NORMAL:
     # el núcleo los trata como texto conversacional (re-orienta a la reserva) en
-    # vez de resetear a un menú de botones que ya no existe. Con esto muere el
-    # último caller vivo del árbol legacy (los handlers menú-reset/back del
-    # supervisor). Antes esto devolvía None → caía a esos handlers.
+    # vez de resetear a un menú de botones que ya no existe.
 
     # Primer mensaje: inferir idioma como hace la entrada legacy, y marcar que
     # toca presentarse (Coral + Diving Planet, tono cercano — regla de persona).
@@ -1627,6 +1627,21 @@ async def maybe_handle_turn(
     # afectar el enrutado del turno (solo escribe estado); un mensaje puede
     # traer una nota junto a una pregunta, una respuesta de slot o una reserva.
     await _maybe_capture_notes(state, message)
+    return greeting, first_turn
+
+
+async def _body_phase(
+    state: ConversationState, message: str, routing_signals: dict,
+    greeting: str, first_turn: bool,
+) -> str:
+    """Fase 3.3b — cuerpo del turno de booking, extraído de `maybe_handle_turn`:
+    disponibilidad → carryover → pregunta/recall → deliberación → extracción →
+    slot-fill → cierre determinista. Recibe `greeting`/`first_turn` de
+    `_setup_phase` (que ya mutó idioma/historial/notas). Segundo nodo del
+    subgrafo del booking (§3.3); lo llama también la cascada."""
+    from src.agents import supervisor  # lazy
+
+    msg_lower = message.strip().lower()
 
     # Disponibilidad: NO alucinar el calendario (Bloque 2.5, portado al núcleo
     # 2026-07-24). Bug vivo en PRE: el gate del supervisor está DESPUÉS del hook
@@ -2203,6 +2218,28 @@ async def maybe_handle_turn(
     response = greeting + ack + response
     state.history.append({"role": "assistant", "content": response})
     return response
+
+
+async def maybe_handle_turn(
+    state: ConversationState, message: str, *, routing_signals: dict | None = None,
+) -> str | None:
+    """Punto de entrada desde el supervisor (tras el gating de seguridad).
+    Devuelve None solo para las clases de mensaje que deben seguir cayendo a
+    los handlers deterministas legacy (escalado por keyword, menú/volver).
+
+    `routing_signals` (auditoría 2026-07-22): ya calculado UNA vez por
+    `supervisor._route_message_inner` (nunca se recalcula aquí).
+
+    (Fase 3.3b) Orquesta las dos fases extraídas: `_setup_phase` → `_body_phase`.
+    El subgrafo del booking (flag on) llama a las MISMAS dos funciones como
+    nodos, así que cascada y grafo comparten la fuente de verdad — equivalencia
+    por construcción."""
+    routing_signals = routing_signals or {}
+    setup = await _setup_phase(state, message, routing_signals)
+    if setup is None:
+        return None
+    greeting, first_turn = setup
+    return await _body_phase(state, message, routing_signals, greeting, first_turn)
 
 
 async def _answer_question(

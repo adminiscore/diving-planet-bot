@@ -18,22 +18,23 @@ determinista**. Ese corte se hace de forma incremental sobre un **subgrafo
 LangGraph** que vive aquí, igual que el esqueleto de la Fase 1 fue el
 contenedor del grafo principal.
 
-**Estado actual del corte:** *andamiaje*. El subgrafo tiene UN nodo (`core`)
-que envuelve `maybe_handle_turn` — equivalente por construcción, cero cambio de
-conducta. Los siguientes pasos de 3.3 extraen fases del núcleo a nodos propios
-del subgrafo, una a una, con equivalencia probada en cada corte. Hasta
-entonces, el núcleo sigue resolviendo el turno completo dentro de `core`.
+**Estado actual del corte (3.3b):** 2 nodos internos reales. `setup` (idioma/
+saludo/nombre/append-historial/notas) → `body` (disponibilidad → carryover →
+pregunta/recall → deliberación → extracción → slot-fill → cierre). Ambos son
+las funciones `conversational_core._setup_phase`/`_body_phase` extraídas del
+monolito — y las llama TAMBIÉN la cascada (vía `maybe_handle_turn`), así que
+cascada y subgrafo comparten la fuente de verdad → equivalencia por
+construcción. Los siguientes cortes de 3.3 parten el `body` (extracción /
+slot-fill / cierre) en más nodos.
 
 ## PRE/POST-núcleo (patrón del handoff de Fase 2)
 
-- **PRE-núcleo:** `core` llama a `maybe_handle_turn(conv, message,
-  routing_signals=signals)`, reutilizando las señales del router (sin doble
-  llamada LLM) y mutando `conv` por referencia (step/history/slots) igual que
-  la cascada.
-- **POST-núcleo (resiliencia #10):** si el núcleo devuelve `None`, `core`
-  delega en `_route_message_inner`. Ese `None` solo ocurre para
-  escalado-keyword/`wants_human` (que el router manda a SAFETY, no a BOOKING) y
-  es pre-mutación → aquí no se dispara y sería seguro si lo hiciera.
+- **PRE-núcleo:** los nodos llaman a las fases del núcleo con las señales del
+  router (sin doble llamada LLM) y mutan `conv` por referencia (step/history/
+  slots) igual que la cascada.
+- **POST-núcleo (resiliencia #10):** si `_setup_phase` devuelve `None`
+  (escalado-keyword/`wants_human` — que el router manda a SAFETY, no a BOOKING,
+  así que aquí no ocurre), el nodo `setup` delega en `_route_message_inner`.
 """
 
 from __future__ import annotations
@@ -47,35 +48,60 @@ from src.orchestration.state import BotState
 logger = logging.getLogger("uvicorn.error")
 
 
-async def _core_node(state: BotState) -> dict:
-    """Nodo único del subgrafo (por ahora): envuelve el núcleo completo. Los
-    cortes de 3.3 irán extrayendo fases de aquí a nodos hermanos."""
-    from src.agents import conversational_core
+class _BookingSubState(BotState, total=False):
+    """Estado del subgrafo del booking = BotState + los locales que `setup` pasa
+    a `body` (antes eran variables de cierre dentro de `maybe_handle_turn`)."""
+
+    greeting: str
+    first_turn: bool
+
+
+async def _setup_node(state: _BookingSubState) -> dict:
+    """Primer nodo interno: setup del turno. Si el núcleo declinaría
+    (escalado-keyword), delega en la cascada (resiliencia #10) — no ocurre para
+    tráfico BOOKING. Si no, pasa `greeting`/`first_turn` al nodo `body`."""
+    from src.agents.conversational_core import _setup_phase
     from src.agents.supervisor import _route_message_inner
 
     conv = state["conv_state"]
     message = state["message"]
     signals = state.get("signals") or {}
 
-    core_response = await conversational_core.maybe_handle_turn(
-        conv, message, routing_signals=signals
-    )
-    if core_response is not None:
-        logger.info("[NODE:booking/core] núcleo resolvió el turno")
-        return {"reply": core_response}
+    result = await _setup_phase(conv, message, signals)
+    if result is None:
+        logger.info("[NODE:booking/setup] núcleo declinaría -> delego en la cascada")
+        return {"reply": await _route_message_inner(conv, message, routing_signals=signals)}
+    greeting, first_turn = result
+    return {"greeting": greeting, "first_turn": first_turn}
 
-    logger.info("[NODE:booking/core] núcleo devolvió None -> delego en la cascada")
-    return {"reply": await _route_message_inner(conv, message, routing_signals=signals)}
+
+async def _body_node(state: _BookingSubState) -> dict:
+    """Segundo nodo interno: cuerpo del turno (disponibilidad → … → cierre)."""
+    from src.agents.conversational_core import _body_phase
+
+    conv = state["conv_state"]
+    message = state["message"]
+    signals = state.get("signals") or {}
+    reply = await _body_phase(conv, message, signals, state["greeting"], state["first_turn"])
+    return {"reply": reply}
+
+
+def _after_setup(state: _BookingSubState) -> str:
+    """Si `setup` ya resolvió el turno (delegó por escalado), termina; si no,
+    sigue al `body`."""
+    return "end" if state.get("reply") is not None else "body"
 
 
 def _build_booking_subgraph():
-    """Subgrafo del booking. Hoy `START → core → END`; los cortes de 3.3 añaden
-    nodos (routing interno / extracción / slot-fill / cierre) y edges entre
-    ellos, sin tocar el grafo padre ni la firma de `booking_node`."""
-    builder = StateGraph(BotState)
-    builder.add_node("core", _core_node)
-    builder.add_edge(START, "core")
-    builder.add_edge("core", END)
+    """Subgrafo del booking (§3.3): `START → setup → (delega?END : body) → END`.
+    Los cortes siguientes parten el `body` en más nodos, sin tocar el grafo
+    padre ni la firma de `booking_node`."""
+    builder = StateGraph(_BookingSubState)
+    builder.add_node("setup", _setup_node)
+    builder.add_node("body", _body_node)
+    builder.add_edge(START, "setup")
+    builder.add_conditional_edges("setup", _after_setup, {"body": "body", "end": END})
+    builder.add_edge("body", END)
     return builder.compile()
 
 

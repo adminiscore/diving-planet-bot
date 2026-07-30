@@ -44,12 +44,13 @@ def _core_llm_offline(monkeypatch):
 
 # ── subgrafo (Fase 3.3, andamiaje) ──
 
-def test_booking_subgraph_compiles_with_core_node():
+def test_booking_subgraph_compiles_with_setup_and_body_nodes():
     from src.agents.booking_agent import _get_booking_subgraph
 
     sub = _get_booking_subgraph()
-    # el subgrafo compilado incluye el nodo `core` (contenedor del strangler 3.3)
-    assert "core" in sub.get_graph().nodes
+    nodes = sub.get_graph().nodes
+    # 3.3b: el núcleo partido en setup + body (nodos internos del subgrafo)
+    assert "setup" in nodes and "body" in nodes
 
 
 # ── nodo en aislamiento ──
