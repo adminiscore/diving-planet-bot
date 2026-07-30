@@ -650,6 +650,20 @@ reproducible. **Siguiente: 2.5 (nodo `booking`), luego 2.6.** Sigue este patrón
 - [ ] **3.3 · Partir el subgrafo `booking`** en nodos de responsabilidad única: routing interno
       (deliberación/recall/pregunta-vs-reserva) → extracción → slot-fill (`next_missing_slot`)
       → cierre determinista (`cart_render`). Elimina el monolito de 2.249 líneas.
+      - **3.3a · Andamiaje del subgrafo — HECHO** (`47c72cf`, Gadea). La ruta BOOKING invoca un
+        subgrafo LangGraph (`booking_agent._build_booking_subgraph`) con UN nodo `core` que
+        envuelve `maybe_handle_turn` — el contenedor del strangler, equivalente por construcción.
+        Suite verde ambos flags (1491). Firma de `booking_node` preservada.
+      - **⚠️ Hallazgo del mapeo (para el reparto del corte):** las fases de `maybe_handle_turn`
+        NO son cleanly separables por el orden de efectos secundarios. El **setup** (detección de
+        idioma en primer turno + `greeting` + captura de nombre + **append del mensaje del
+        usuario al historial** + captura de notas) DEBE ir primero: la disponibilidad, el
+        carryover, la deliberación y la extracción dependen todas de él (leen `greeting`, y las
+        notas/RAG leen el historial YA con el mensaje). Además comparten locales (`greeting`,
+        `resolved_short`, snapshots `prev_*`). ⇒ **El primer nodo interno real es `setup`**; el
+        resto (`body`) se extrae después, pasando `greeting`/`resolved_short` por el estado del
+        subgrafo. No se puede empezar por disponibilidad/notas/cierre sin el setup delante. El
+        `body` (~570 líneas) es el corte grande — hacerlo en pasos con equivalencia por cada uno.
 - [ ] **3.4 · Reducir llamadas LLM/turno.** Medir en **LangSmith** vs baseline de Fase 0.
       Documentar antes/después.
 - **DoD:** llamadas LLM/turno ↓ vs baseline; cero colisiones; prompts por nodo testeados.
