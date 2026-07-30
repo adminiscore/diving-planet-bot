@@ -313,6 +313,47 @@ mismo `monkeypatch`/`unittest.mock.patch` de siempre.
 
 ---
 
+## 7. Mapa de redes LLM → nodo (Fase 3.1)
+
+`docs/multi-agent-refactor-plan.md` §5 Fase 3.1 pide "cada red LLM global → su
+nodo" y "eliminar solapamientos (una red ya no ve 'todo el mensaje' fuera de su
+caso)". **Hallazgo (2026-07-30):** el corte del núcleo (Fase 3.3) YA dejó cada
+red llamándose desde su nodo dueño — el objetivo *funcional* de 3.1 está
+conseguido como efecto del subgrafo. Mapa auditado de dónde vive cada red y
+desde qué nodo se invoca:
+
+| Red LLM | Módulo (definición) | Nodo que la invoca | Notas |
+|---|---|---|---|
+| `detect_routing_signals` | `escalation.py` | **router** (`orchestration/graph._router_node`) | 1 llamada/turno; sus 9 señales las consumen varios nodos (compartida por eficiencia, no duplicada) |
+| `fill_gaps` · `missing_fields` | `llm_extractor.py` | **booking** (`_extraction_phase` vía `_understand`) | ⚠️ también en `supervisor._maybe_apply_llm_extraction_cutover` (subsistema legacy gated por `LLM_EXTRACTION_CUTOVER_*`, off por defecto — **NO tocar**, ver session-handoff) |
+| `detect_special_signals` | `llm_extractor.py` | **booking** (`_routing_phase` recall + `_extraction_phase`) | scoped a booking |
+| `resolve_slot_answer` | `llm_extractor.py` | **booking** (`_extraction_phase` anti-bucle de slot) | scoped a booking |
+| `compose_acknowledgement` | `llm_extractor.py` | **booking** (`_slotfill_close_phase`) | scoped a booking |
+| `extract_notes` | `notes_extractor.py` | **booking/memoria** (`_setup_phase` vía `_maybe_capture_notes`) | memoria; Fase 4.3 la unifica |
+| `detect_language_llm` | `language_detector.py` | **booking** (`_setup_phase`, solo primer turno) | scoped a setup |
+| `condense_query` | `query_rewriter.py` | **info** (RAG) | scoped a info |
+| `is_grounded` / RAG | `rag_agent.py` | **info** | capa determinista de grounding (§4 del plan) |
+| `maybe_update_summary` | `conversation_summarizer.py` | cross-cutting (`route_message`, post-turno) | memoria; Fase 4.3 |
+
+**Solapamientos auditados:** ninguna red de un nodo se llama desde OTRO nodo
+salvo (a) `detect_routing_signals`, compartida a propósito (1 llamada, señales
+consumidas por nodo — no es un solapamiento problemático sino la fuente única de
+señales del turno), y (b) `fill_gaps` en el cutover legacy (subsistema aparte,
+flagged, off por defecto — no es el camino vivo). Los solapamientos que motivaron
+el refactor (§0: `comparing_options` leído como reparto, `booking_change_topic`
+pisando el multi-día) están **estructuralmente contenidos**: el router computa las
+señales una vez y `classify_route` decide la ruta; la lógica de cada caso vive en
+su nodo/fase.
+
+**Pendiente de 3.1 (reubicación FÍSICA, diferida como churn de bajo valor):**
+mover las definiciones a `src/agents/_nets/` (estructura objetivo del §4 del
+plan) reapuntando los imports de `conversational_core`/`supervisor`/tests. Es
+mecánico pero toca ~4 módulos + mocks de la suite; se hace deliberadamente (no
+como cierre de sesión) y su valor es organizativo, no de comportamiento — la
+propiedad red→nodo ya está lograda y documentada aquí.
+
+---
+
 ## Anexos
 
 - **Arquitectura objetivo completa**: §4 de `docs/multi-agent-refactor-plan.md`

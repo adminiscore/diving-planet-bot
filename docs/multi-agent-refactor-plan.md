@@ -640,10 +640,20 @@ reproducible. **Siguiente: 2.5 (nodo `booking`), luego 2.6.** Sigue este patrón
   que acepta oferta de asesor. En 2.5 se preservan delegando; no cambies su conducta todavía.
 
 ### Fase 3 — Consolidar las redes LLM y los prompts por nodo · *la sustancia (patrón IBM)*
-- [ ] **3.1 · Reubicar las redes.** Cada red LLM global → su nodo: `fill_gaps`/
-      `detect_special_signals`/`resolve_slot_answer` → booking; `comparing_options` →
-      router/info; `booking_change_topic` → changes/router; `extract_notes` → memoria.
-      **Eliminar solapamientos** (una red ya no ve "todo el mensaje" fuera de su caso).
+- [x] **3.1 · Reubicar las redes — HECHO (funcional; reubicación física diferida)** (docs,
+      Gadea). **Hallazgo:** el corte del núcleo (3.3) YA dejó cada red llamándose desde su nodo
+      dueño — el objetivo funcional de 3.1 está conseguido. Auditado y documentado el **mapa
+      red→nodo** en `docs/agent-arch-design.md` §7: `fill_gaps`/`detect_special_signals`/
+      `resolve_slot_answer`/`compose_acknowledgement` → booking (extraction/routing/slotfill);
+      `detect_routing_signals` → router (1 llamada/turno, señales consumidas por nodo);
+      `extract_notes`/`detect_language_llm` → setup de booking; `condense_query`/RAG → info;
+      `maybe_update_summary` → cross-cutting. **Solapamientos auditados:** ninguno problemático
+      — los que motivaron el refactor (§0) están estructuralmente contenidos (router computa
+      señales una vez → `classify_route`; cada caso en su nodo). Únicos cross-node: `detect_
+      routing_signals` (compartida a propósito) y `fill_gaps` en el cutover legacy (subsistema
+      flagged off, NO tocar). **Diferido:** mover las definiciones a `src/agents/_nets/`
+      (reapuntar imports de core/supervisor/tests) — churn mecánico de valor solo organizativo,
+      a hacer deliberadamente, no como cierre de sesión.
 - [ ] **3.2 · Prompts específicos por caso de uso.** Cada nodo con 1 (o pocos) prompt(s)
       cortos y enfocados — no un prompt que lo abarca todo. Conservar los afinados actuales,
       reubicados y recortados a su dominio.
@@ -772,7 +782,16 @@ reproducible. **Siguiente: 2.5 (nodo `booking`), luego 2.6.** Sigue este patrón
 ## 8. Registro de ejecución
 *(Una línea por paso cerrado: fecha · dev · qué · commit. El más reciente arriba.)*
 
-- **2026-07-30 · Gadea · Fase 3.3a/b/c/d — corte del núcleo (subgrafo booking, en curso).**
+- **2026-07-30 · Gadea · Fase 3.1 — mapa red→nodo (reubicación funcional; física diferida).**
+  Auditado que tras el corte del núcleo (3.3) cada red LLM ya se llama desde su nodo dueño
+  (objetivo funcional de 3.1 conseguido). Documentado el mapa completo + auditoría de
+  solapamientos en `docs/agent-arch-design.md` §7: ninguno problemático (los del §0 están
+  estructuralmente contenidos por el router+classify_route). Únicos cross-node a propósito:
+  `detect_routing_signals` (compartida, 1 llamada/turno) y `fill_gaps` en el cutover legacy
+  flagged (NO tocar). La reubicación FÍSICA a `src/agents/_nets/` queda diferida como churn de
+  valor solo organizativo (reapunta imports de core/supervisor/tests). Solo docs, cero cambio
+  de código/comportamiento. Suite intacta (1492). Siguiente: **3.2** (prompts) / **3.4** (medir).
+- **2026-07-30 · Gadea · Fase 3.3a/b/c/d/e — corte del núcleo (subgrafo booking) COMPLETO.**
   Corte del monolito del núcleo (~2.249 líneas) en un subgrafo LangGraph, con strangler y
   equivalencia por construcción (cascada y subgrafo llaman a las MISMAS funciones extraídas).
   **3.3a** (`47c72cf`): andamiaje — la ruta BOOKING invoca un subgrafo que envuelve el núcleo
