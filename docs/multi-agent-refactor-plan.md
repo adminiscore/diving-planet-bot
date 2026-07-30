@@ -6,12 +6,13 @@
 > alguien retoma tras un merge, **el estado de los checkboxes aquí es la única verdad**.
 > Acompaña (no sustituye) a `docs/project-history/session-handoff.md`.
 
-**Estado global:** `Fase 0 completa · Fase 1 completa · Fase 2 en curso (4/5 nodos reales)`.
-Grafo LangGraph detrás de `agent_arch`; **deflection/escalation/info/changes ya son nodos
-REALES** (cortes strangler 2.1–2.4, equivalencia flag on/off probada por nodo), el resto siguen
-como wrappers que delegan. La cascada sigue viva. **Siguiente: 2.5 (nodo `booking` = el núcleo)
-y 2.6 (despacho a nodos reales), lo continúa Gadea** — ver el 🤝 HANDOFF en §5 Fase 2 para el
-patrón exacto a replicar. Creado 2026-07-29; actualizado 2026-07-30.
+**Estado global:** `Fase 0 completa · Fase 1 completa · Fase 2 COMPLETA (5/5 nodos reales)`.
+Grafo LangGraph detrás de `agent_arch`; **los 5 nodos son REALES** (deflection/escalation/
+changes/info/booking, cortes strangler 2.1–2.5) y el grafo (flag on) despacha cada ruta a su
+nodo sin delegar en la cascada. Equivalencia probada: suite verde en los 3 modos (default/
+grafo/shadow), 1490 passed. La cascada (flag off) sigue viva. **Siguiente: Fase 3** (consolidar
+las redes LLM + prompts por nodo + partir el subgrafo del booking) — pendiente de decidir el
+reparto entre los 3. Creado 2026-07-29; actualizado 2026-07-30.
 **Base de código:** rama `feature/pre_alvaro` (Fase 4 completa + Bloque 2 + reorg §1/§2).
 **Motor de orquestación elegido:** **LangGraph** (con LangChain de forma selectiva) — ver §2.
 
@@ -508,7 +509,7 @@ se paralelizan entre sí).
   cascada (suite verde en los 3 modos); el shadow mide la coincidencia de rutas (94.1% sobre
   la suite adversaria; los 14 mismatches auditados y clasificados). **La cascada sigue viva.**
 
-### Fase 2 — Los nodos-agente con contrato · *paralelizable entre los 3*
+### Fase 2 — Los nodos-agente con contrato · *paralelizable entre los 3* · **COMPLETA**
 - [ ] **2.0 · Contrato de nodo + orquestador.** Fijar la firma de nodo (State→update),
       `Command`/handoffs, y el manejo del resultado (reply/quick_replies/escalate). Secuencial,
       va primero.
@@ -562,10 +563,29 @@ se paralelizan entre sí).
       DIVE TO HEAL) + 198 verdes en la regresión ancha (incl. router/shadow/eligibility). Ruff
       limpio. *(dev: Álvaro)* La cascada (flag off) queda intacta — el predicado nuevo solo lo
       usa el router.
-- [ ] **2.5 · Nodo `booking`** (el núcleo) — como **subgrafo** LangGraph (el slot-fill loop +
-      multi-ítem). El más grande, el último. *(dev: Gadea)* — ver 🤝 HANDOFF abajo.
-- [ ] **2.6 · El grafo despacha a nodos reales** (flag on). Suite verde tras cada uno, on/off.
-- **DoD:** con `agent_arch` on, cada ruta va a **su** nodo; conducta idéntica; off = legacy.
+- [x] **2.5 · Nodo `booking` — HECHO** (`a617151`, `src/agents/booking_agent.py`). Quinto y
+      último corte strangler: la ruta `ROUTE_BOOKING` ejecuta su nodo real, que **envuelve el
+      núcleo** (el "gate" de booking ES `maybe_handle_turn`). PRE-núcleo: llama a
+      `maybe_handle_turn(conv, message, routing_signals=signals)` reutilizando las señales del
+      router (sin doble llamada LLM), muta `conv` por referencia. POST-núcleo (resiliencia #10):
+      si el núcleo devuelve `None`, delega en `_route_message_inner` — verificado que ese `None`
+      solo ocurre para escalado-keyword/`wants_human` (que el router manda a SAFETY, no a
+      BOOKING) y es pre-mutación, así que aquí no se dispara y sería seguro si lo hiciera.
+      **Partir el núcleo en subgrafo es Fase 3.3, NO 2.5** (el nodo envolvente basta).
+      **Fix pre-router** (destapado por el corte): la cascada, en la cabecera de
+      `_route_message_inner` antes de cualquier gate, ejecuta 2 side-effects — restart de
+      escenario nuevo (§4.bis "antes del router") + detección sticky de niños. Como los nodos
+      reales ya no delegan toda la cascada, se perdían con el flag on (bug:
+      `kids_mention_detected` no se activaba) → reproducidos en el nodo `router` para las 5
+      rutas. **6 tests nuevos.** *(dev: Gadea)*
+- [x] **2.6 · El grafo despacha a nodos reales — HECHO** (con 2.5). Los 5 nodos de `_REAL_NODES`
+      son reales (deflection/escalation/changes/info/booking); el grafo (flag on) ya no delega
+      en la cascada por defecto (`_make_legacy_delegate_node` queda solo como red de resiliencia
+      por si se añade una ruta sin nodo). **Suite COMPLETA verde en los 3 modos** (default /
+      `AGENT_ARCH=true` / `AGENT_ARCH_SHADOW=true`): **1490 passed / 18 skipped / 0 failed**.
+      Verificado en vivo (LLM real): respuesta idéntica flag on vs off.
+- **DoD cumplido:** con `agent_arch` on, cada ruta va a **su** nodo; conducta idéntica (suite
+  verde on/off + smoke en vivo); off = cascada legacy intacta. **Fase 2 completa.**
 
 #### 🤝 HANDOFF (2026-07-30, Álvaro → Gadea) — patrón de nodo Fase 2 y siguiente paso (2.5)
 
@@ -701,6 +721,17 @@ reproducible. **Siguiente: 2.5 (nodo `booking`), luego 2.6.** Sigue este patrón
 ## 8. Registro de ejecución
 *(Una línea por paso cerrado: fecha · dev · qué · commit. El más reciente arriba.)*
 
+- **2026-07-30 · Gadea · Fase 2.5+2.6 — FASE 2 COMPLETA** (`a617151`). Nodo `booking` real
+  (quinto y último corte strangler): la ruta BOOKING ejecuta su nodo, que **envuelve el núcleo**
+  (`maybe_handle_turn`, reutilizando las señales del router; delega en la cascada si el núcleo
+  devuelve None — resiliencia #10, caso que no ocurre para tráfico BOOKING). `src/agents/
+  booking_agent.py` + wire en `graph.py` (`_REAL_NODES`, ahora 5/5 nodos reales → 2.6). **Fix
+  pre-router**: los side-effects de la cabecera de la cascada (restart de escenario nuevo +
+  detección sticky de niños) se perdían con el flag on al dejar de delegar toda la cascada
+  (bug: `kids_mention_detected`); reproducidos en el nodo `router` para las 5 rutas. Partir el
+  núcleo en subgrafo es Fase 3.3, no aquí. 6 tests nuevos. **Equivalencia**: suite verde en los
+  3 modos (default/grafo/shadow) — **1490 passed / 18 skipped / 0 failed**; smoke en vivo (LLM
+  real) idéntico flag on vs off. ruff + compileall limpios. **Siguiente: Fase 3.**
 - **2026-07-30 · Álvaro · Fase 2.4** — Nodo `info` real (cuarto corte strangler): la ruta INFO
   ejecuta edad determinista (`_maybe_answer_age_eligibility`) + DIVE TO HEAL no-precio (RAG en
   Python plano). **Cerrado el patrón A del audit §1.5**: rama edad→INFO en `classify_route` vía
