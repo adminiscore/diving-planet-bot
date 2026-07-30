@@ -679,10 +679,19 @@ reproducible. **Siguiente: 2.5 (nodo `booking`), luego 2.6.** Sigue este patrón
         `resolved_short` del resto. Aislarla facilita reubicar el patrón B del audit §1.5
         (disponibilidad → `changes`) en el cutover, sin tocar conducta ahora. Suite verde 3
         modos (1492), +2 tests.
-      - **Siguiente (3.3d+):** partir el `body` restante en `extracción` → `slot-fill` →
-        `cierre`. Estas SÍ comparten `resolved_short` + snapshots `prev_*` → hay que pasarlos
-        por el estado del subgrafo (mismo patrón que `greeting`/`first_turn`). Es el resto del
-        corte grande, en pasos con equivalencia por cada uno.
+      - **3.3d · Partir el `body` en `routing` + `extract_close` — HECHO** (`5e7420b`, Gadea).
+        El subgrafo pasa a 4 nodos: `START → setup → availability → routing → extract_close →
+        END`. `_body_phase` partido en `_routing_phase` (snapshots `prev_*` + `resolved_short`
+        + carryover/pregunta/deliberación; early-return o devuelve el `carry`) +
+        `_extract_close_phase` (extracción → slot-fill → cierre; recibe el `carry`,
+        byte-idéntico salvo el unpack). Los 10 valores compartidos (`prev_*`/`resolved_short`)
+        van por `_BookingSubState.carry`. El corte más intrincado, pero seguro por la fuente de
+        verdad compartida (un fallo rompería también la cascada). Suite verde 3 modos (1492) +
+        smoke en vivo (flujo de reserva multi-turno por los 4 nodos).
+      - **Siguiente (3.3e+):** el `extract_close` (~460 líneas) es el último candidato a partir
+        (extracción / slot-fill / cierre) — más entrelazado aún; opcional según valor/riesgo.
+        Con setup/availability/routing/extract_close el monolito ya está partido en fases de
+        responsabilidad única; el resto es refinamiento.
 - [ ] **3.4 · Reducir llamadas LLM/turno.** Medir en **LangSmith** vs baseline de Fase 0.
       Documentar antes/después.
 - **DoD:** llamadas LLM/turno ↓ vs baseline; cero colisiones; prompts por nodo testeados.
@@ -754,20 +763,22 @@ reproducible. **Siguiente: 2.5 (nodo `booking`), luego 2.6.** Sigue este patrón
 ## 8. Registro de ejecución
 *(Una línea por paso cerrado: fecha · dev · qué · commit. El más reciente arriba.)*
 
-- **2026-07-30 · Gadea · Fase 3.3a/b/c — corte del núcleo (subgrafo booking, en curso).**
-  Arrancado el corte del monolito del núcleo (~2.249 líneas) en un subgrafo LangGraph, con
-  strangler y equivalencia por construcción (cascada y subgrafo llaman a las MISMAS funciones
-  extraídas). **3.3a** (`47c72cf`): andamiaje — la ruta BOOKING invoca un subgrafo que envuelve
-  el núcleo (1 nodo `core`). **3.3b** (`4c53d5c`): `maybe_handle_turn` descompuesto en
-  `_setup_phase` + `_body_phase` → subgrafo de 2 nodos (`setup`/`body`); equivalencia verificada
-  por 3 vías (suite 3 modos, smoke en vivo donde las diferencias flag on/off son solo
-  no-determinismo del LLM confirmado por off-vs-off, y el diff no toca la lógica del body).
-  **3.3c** (`c6765d4`): disponibilidad peelada a `_availability_phase` → subgrafo de 3 nodos
-  (`setup → availability → body`); corte de bajo riesgo (autocontenido, solo `greeting`).
-  Suite verde en los 3 modos tras cada paso (1491→1492). **NOTA patrón B (audit §1.5):** la
-  disponibilidad se AISLÓ en su nodo pero SIGUE en booking con la misma conducta — no se movió
-  a `changes`; eso es decisión del cutover (Fase 5.2). **Siguiente: 3.3d** (partir el `body`
-  restante en extracción/slot-fill/cierre; comparten `prev_*`/`resolved_short`).
+- **2026-07-30 · Gadea · Fase 3.3a/b/c/d — corte del núcleo (subgrafo booking, en curso).**
+  Corte del monolito del núcleo (~2.249 líneas) en un subgrafo LangGraph, con strangler y
+  equivalencia por construcción (cascada y subgrafo llaman a las MISMAS funciones extraídas).
+  **3.3a** (`47c72cf`): andamiaje — la ruta BOOKING invoca un subgrafo que envuelve el núcleo
+  (1 nodo `core`). **3.3b** (`4c53d5c`): `maybe_handle_turn` descompuesto en `_setup_phase` +
+  `_body_phase` → subgrafo de 2 nodos; equivalencia verificada por 3 vías (suite 3 modos, smoke
+  en vivo donde las diferencias flag on/off son solo no-determinismo del LLM confirmado por
+  off-vs-off, y el diff no toca la lógica del body). **3.3c** (`c6765d4`): disponibilidad
+  peelada a `_availability_phase` → 3 nodos (bajo riesgo, autocontenido). **3.3d** (`5e7420b`):
+  `_body_phase` partido en `_routing_phase` (routing interno; reply o `carry`) +
+  `_extract_close_phase` (extracción/slot-fill/cierre; recibe el `carry` con los 10 `prev_*`/
+  `resolved_short`) → **subgrafo de 4 nodos** (`setup → availability → routing → extract_close`).
+  Suite verde en los 3 modos tras cada paso (1491→1492) + smoke en vivo por los 4 nodos. **NOTA
+  patrón B (audit §1.5):** la disponibilidad se AISLÓ en su nodo pero SIGUE en booking con la
+  misma conducta — no se movió a `changes`; eso es decisión del cutover (Fase 5.2).
+  **Siguiente: 3.3e (opcional)** — partir `extract_close` (~460 líneas), o pasar a 3.1/3.2/3.4.
 - **2026-07-30 · Gadea · Fase 2.5+2.6 — FASE 2 COMPLETA** (`a617151`). Nodo `booking` real
   (quinto y último corte strangler): la ruta BOOKING ejecuta su nodo, que **envuelve el núcleo**
   (`maybe_handle_turn`, reutilizando las señales del router; delega en la cascada si el núcleo
