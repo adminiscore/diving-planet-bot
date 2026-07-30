@@ -754,6 +754,20 @@ reproducible. **Siguiente: 2.5 (nodo `booking`), luego 2.6.** Sigue este patrón
 ## 8. Registro de ejecución
 *(Una línea por paso cerrado: fecha · dev · qué · commit. El más reciente arriba.)*
 
+- **2026-07-30 · Gadea · Fase 3.3a/b/c — corte del núcleo (subgrafo booking, en curso).**
+  Arrancado el corte del monolito del núcleo (~2.249 líneas) en un subgrafo LangGraph, con
+  strangler y equivalencia por construcción (cascada y subgrafo llaman a las MISMAS funciones
+  extraídas). **3.3a** (`47c72cf`): andamiaje — la ruta BOOKING invoca un subgrafo que envuelve
+  el núcleo (1 nodo `core`). **3.3b** (`4c53d5c`): `maybe_handle_turn` descompuesto en
+  `_setup_phase` + `_body_phase` → subgrafo de 2 nodos (`setup`/`body`); equivalencia verificada
+  por 3 vías (suite 3 modos, smoke en vivo donde las diferencias flag on/off son solo
+  no-determinismo del LLM confirmado por off-vs-off, y el diff no toca la lógica del body).
+  **3.3c** (`c6765d4`): disponibilidad peelada a `_availability_phase` → subgrafo de 3 nodos
+  (`setup → availability → body`); corte de bajo riesgo (autocontenido, solo `greeting`).
+  Suite verde en los 3 modos tras cada paso (1491→1492). **NOTA patrón B (audit §1.5):** la
+  disponibilidad se AISLÓ en su nodo pero SIGUE en booking con la misma conducta — no se movió
+  a `changes`; eso es decisión del cutover (Fase 5.2). **Siguiente: 3.3d** (partir el `body`
+  restante en extracción/slot-fill/cierre; comparten `prev_*`/`resolved_short`).
 - **2026-07-30 · Gadea · Fase 2.5+2.6 — FASE 2 COMPLETA** (`a617151`). Nodo `booking` real
   (quinto y último corte strangler): la ruta BOOKING ejecuta su nodo, que **envuelve el núcleo**
   (`maybe_handle_turn`, reutilizando las señales del router; delega en la cascada si el núcleo

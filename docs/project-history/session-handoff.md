@@ -11,6 +11,16 @@ Read this file before changing code in the Diving Planet Bot. For a quick versio
 
 ## Current branch and workflow
 
+- **2026-07-30 (rama `feature/agent-arch`) — FASE 2 COMPLETA · FASE 3 EN CURSO (corte del núcleo).**
+  Fase 2 cerrada: los **5 nodos-agente son reales** (deflection/escalation/changes/info por Álvaro
+  2.1-2.4; **booking por Gadea 2.5+2.6**, `a617151`) y el grafo despacha cada ruta a su nodo.
+  **Fase 3.3 en curso (Gadea):** corte del monolito del núcleo (~2.249 líneas) en un **subgrafo
+  LangGraph** dentro de `src/agents/booking_agent.py`, con strangler y equivalencia por
+  construcción (cascada y subgrafo llaman a las MISMAS funciones extraídas de
+  `conversational_core`). Hecho: `setup → availability → body` (3.3a `47c72cf`, 3.3b `4c53d5c`,
+  3.3c `c6765d4`). **SIGUIENTE: 3.3d** (partir el `body` en extracción/slot-fill/cierre). Detalle
+  y patrón en `docs/multi-agent-refactor-plan.md` §5 Fase 3.3 + §8. La cascada (flag off) sigue
+  intacta; equivalencia verde en los 3 modos (default/grafo/shadow).
 - **2026-07-30 (rama `feature/agent-arch`) — FASE 2 EN CURSO: 4/5 nodos-agente reales. GADEA SIGUE CON 2.5.**
   - Hechos y pusheados (cortes strangler, equivalencia flag on/off por nodo): **2.1 deflection**
     (`6a70d7f`), **2.2 escalation** (`7e9ff05`), **2.3 changes** (`36b7da2`, extrajo el helper
