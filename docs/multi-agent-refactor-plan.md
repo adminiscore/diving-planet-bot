@@ -688,10 +688,19 @@ reproducible. **Siguiente: 2.5 (nodo `booking`), luego 2.6.** Sigue este patrón
         van por `_BookingSubState.carry`. El corte más intrincado, pero seguro por la fuente de
         verdad compartida (un fallo rompería también la cascada). Suite verde 3 modos (1492) +
         smoke en vivo (flujo de reserva multi-turno por los 4 nodos).
-      - **Siguiente (3.3e+):** el `extract_close` (~460 líneas) es el último candidato a partir
-        (extracción / slot-fill / cierre) — más entrelazado aún; opcional según valor/riesgo.
-        Con setup/availability/routing/extract_close el monolito ya está partido en fases de
-        responsabilidad única; el resto es refinamiento.
+      - **3.3e · Partir `extract_close` en `extraction` + `slotfill_close` — HECHO** (`41368dc`,
+        Gadea). `_extract_close_phase` partido en `_extraction_phase` (understand + multi-ítem +
+        redes de precisión + anti-bucle; early-return o None) + `_slotfill_close_phase` (RESOLVER
+        + RESPONDER: elige/pregunta el slot que falta o cierra + acuse). Costura limpia
+        (`slotfill_close` solo necesita `prev_pending`/`resolved_short` del carry + `greeting`/
+        `first_turn`). **Subgrafo de 5 nodos:** `setup → availability → routing → extraction →
+        slotfill_close`. `maybe_handle_turn` queda como orquestador plano de las 5 fases. Suite
+        verde 3 modos (1492) + smoke en vivo de 5 turnos.
+      - **✅ 3.3 en la práctica COMPLETA:** el monolito del núcleo (~2.249 líneas) queda partido
+        en **5 fases de responsabilidad única** (setup/availability/routing/extraction/
+        slotfill_close), todas compartidas por cascada y subgrafo (equivalencia por
+        construcción). Partir más (p. ej. slot-fill vs. cierre) es refinamiento de valor
+        marginal decreciente; queda a criterio del equipo.
 - [ ] **3.4 · Reducir llamadas LLM/turno.** Medir en **LangSmith** vs baseline de Fase 0.
       Documentar antes/después.
 - **DoD:** llamadas LLM/turno ↓ vs baseline; cero colisiones; prompts por nodo testeados.
@@ -772,13 +781,16 @@ reproducible. **Siguiente: 2.5 (nodo `booking`), luego 2.6.** Sigue este patrón
   en vivo donde las diferencias flag on/off son solo no-determinismo del LLM confirmado por
   off-vs-off, y el diff no toca la lógica del body). **3.3c** (`c6765d4`): disponibilidad
   peelada a `_availability_phase` → 3 nodos (bajo riesgo, autocontenido). **3.3d** (`5e7420b`):
-  `_body_phase` partido en `_routing_phase` (routing interno; reply o `carry`) +
-  `_extract_close_phase` (extracción/slot-fill/cierre; recibe el `carry` con los 10 `prev_*`/
-  `resolved_short`) → **subgrafo de 4 nodos** (`setup → availability → routing → extract_close`).
-  Suite verde en los 3 modos tras cada paso (1491→1492) + smoke en vivo por los 4 nodos. **NOTA
+  `_body_phase` partido en `_routing_phase` + `_extract_close_phase` (carry de 10 `prev_*`/
+  `resolved_short`). **3.3e** (`41368dc`): `_extract_close_phase` partido en `_extraction_phase`
+  (understand + multi-ítem + redes de precisión + anti-bucle) + `_slotfill_close_phase` (RESOLVER
+  + RESPONDER). **✅ Núcleo partido en 5 fases de responsabilidad única:** subgrafo `setup →
+  availability → routing → extraction → slotfill_close`, todas compartidas por cascada y subgrafo.
+  Suite verde en los 3 modos tras cada paso (1491→1492) + smoke en vivo por los 5 nodos. **NOTA
   patrón B (audit §1.5):** la disponibilidad se AISLÓ en su nodo pero SIGUE en booking con la
   misma conducta — no se movió a `changes`; eso es decisión del cutover (Fase 5.2).
-  **Siguiente: 3.3e (opcional)** — partir `extract_close` (~460 líneas), o pasar a 3.1/3.2/3.4.
+  **3.3 en la práctica completa.** Siguiente: **3.1** (reubicar redes a nodos) / **3.2** (prompts
+  a `src/prompts/`) / **3.4** (medir llamadas LLM/turno vs baseline de Fase 0).
 - **2026-07-30 · Gadea · Fase 2.5+2.6 — FASE 2 COMPLETA** (`a617151`). Nodo `booking` real
   (quinto y último corte strangler): la ruta BOOKING ejecuta su nodo, que **envuelve el núcleo**
   (`maybe_handle_turn`, reutilizando las señales del router; delega en la cascada si el núcleo

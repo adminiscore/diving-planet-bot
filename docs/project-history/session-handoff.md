@@ -17,12 +17,14 @@ Read this file before changing code in the Diving Planet Bot. For a quick versio
   **Fase 3.3 en curso (Gadea):** corte del monolito del núcleo (~2.249 líneas) en un **subgrafo
   LangGraph** dentro de `src/agents/booking_agent.py`, con strangler y equivalencia por
   construcción (cascada y subgrafo llaman a las MISMAS funciones extraídas de
-  `conversational_core`). Subgrafo de **4 nodos**: `setup → availability → routing →
-  extract_close` (3.3a `47c72cf`, 3.3b `4c53d5c`, 3.3c `c6765d4`, 3.3d `5e7420b`). El monolito
-  ya está partido en fases de responsabilidad única. **SIGUIENTE (opcional): 3.3e** (partir
-  `extract_close` ~460 líneas) o pasar a 3.1 (reubicar redes)/3.2 (prompts)/3.4 (medir). Detalle
-  y patrón en `docs/multi-agent-refactor-plan.md` §5 Fase 3.3 + §8. La cascada (flag off) sigue
-  intacta; equivalencia verde en los 3 modos (default/grafo/shadow), 1492 passed.
+  `conversational_core`). Subgrafo de **5 nodos**: `setup → availability → routing → extraction
+  → slotfill_close` (3.3a `47c72cf`, 3.3b `4c53d5c`, 3.3c `c6765d4`, 3.3d `5e7420b`, 3.3e
+  `41368dc`). **El monolito del núcleo (~2.249 líneas) queda partido en 5 fases de
+  responsabilidad única**, todas compartidas por cascada y subgrafo → equivalencia por
+  construcción. **3.3 en la práctica completa. SIGUIENTE:** 3.1 (reubicar redes LLM a nodos) /
+  3.2 (prompts a `src/prompts/`) / 3.4 (medir llamadas LLM/turno vs baseline). Detalle y patrón
+  en `docs/multi-agent-refactor-plan.md` §5 Fase 3.3 + §8. La cascada (flag off) sigue intacta;
+  equivalencia verde en los 3 modos (default/grafo/shadow), 1492 passed.
 - **2026-07-30 (rama `feature/agent-arch`) — FASE 2 EN CURSO: 4/5 nodos-agente reales. GADEA SIGUE CON 2.5.**
   - Hechos y pusheados (cortes strangler, equivalencia flag on/off por nodo): **2.1 deflection**
     (`6a70d7f`), **2.2 escalation** (`7e9ff05`), **2.3 changes** (`36b7da2`, extrajo el helper
