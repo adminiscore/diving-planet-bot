@@ -4,36 +4,9 @@ from openai import AsyncOpenAI
 
 from src.config import settings
 from src.privacy import redact_pii
+from src.prompts.info import QUERY_REWRITE_EN, QUERY_REWRITE_ES
 
 logger = logging.getLogger("uvicorn.error")
-
-_REWRITE_PROMPT_ES = (
-    "Eres un reescritor de consultas. Dada una conversacion entre un cliente "
-    "y un asesor, reescribe el ULTIMO mensaje del cliente como una consulta "
-    "independiente y completa que pueda entenderse sin el contexto previo. "
-    "El ultimo mensaje del cliente puede ser una PREGUNTA o una RESPUESTA corta "
-    "a lo que pregunto el asesor (por ejemplo, decir en que hotel se hospeda). "
-    "En ese caso, combina la intencion previa del cliente con su respuesta para "
-    "formar la consulta completa. Ejemplo: si el asesor pregunto por recogida y "
-    "el cliente responde 'en el hotel Pao Pao', reescribe como '¿Me recogen en "
-    "el hotel Pao Pao?'. Conserva nombres propios (hoteles, islas) tal cual. "
-    "Si el mensaje ya es autosuficiente, devuelvelo sin cambios. "
-    "Responde SOLO con la consulta reescrita, sin prefijos ni explicaciones."
-)
-
-_REWRITE_PROMPT_EN = (
-    "You are a query rewriter. Given a conversation between a customer and an "
-    "advisor, rewrite the customer's LAST message as a standalone, self-contained "
-    "query that can be understood without prior context. The customer's last "
-    "message may be a QUESTION or a short ANSWER to what the advisor asked (for "
-    "example, naming the hotel where they are staying). In that case, combine the "
-    "customer's earlier intent with their answer to form the complete query. "
-    "Example: if the advisor asked about pickup and the customer replies 'at the "
-    "Pao Pao hotel', rewrite as 'Do you pick me up at the Pao Pao hotel?'. Keep "
-    "proper names (hotels, islands) exactly. If the message is already "
-    "self-contained, return it unchanged. Respond ONLY with the rewritten query, "
-    "no prefixes or explanations."
-)
 
 
 def _should_condense(query: str, history: list[dict] | None) -> bool:
@@ -68,7 +41,7 @@ async def condense_query(
     if not _should_condense(query, history):
         return query
 
-    system = _REWRITE_PROMPT_ES if lang == "es" else _REWRITE_PROMPT_EN
+    system = QUERY_REWRITE_ES if lang == "es" else QUERY_REWRITE_EN
     history_block = _format_history_for_prompt(history or [], lang=lang)
     safe_query = redact_pii(query)
 

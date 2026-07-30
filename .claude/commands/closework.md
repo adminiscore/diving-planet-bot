@@ -40,8 +40,26 @@ If the branch is behind or diverged, stop and ask the user how to reconcile befo
 5. Run standard validation when code changed:
 
 ```powershell
-python -m pytest tests/test_chatwoot_buttons.py tests/test_decision_tree.py tests/test_rag_safety.py
+python -m pytest tests/test_chatwoot_buttons.py tests/test_conversational_core.py tests/test_rag_safety.py
+python -m ruff check src
 python -m compileall src tests
+```
+
+While the `agent_arch` flag exists (multi-agent refactor, see
+`docs/multi-agent-refactor-plan.md`), a change in the routing/agent path must be green in the
+**3 modes** — that equivalence is the refactor's safety net:
+
+```powershell
+python -m pytest -q
+$env:AGENT_ARCH="true"; python -m pytest -q; $env:AGENT_ARCH=$null
+$env:AGENT_ARCH_SHADOW="true"; python -m pytest -q; $env:AGENT_ARCH_SHADOW=$null
+```
+
+If you moved a prompt, also prove it did not change:
+
+```powershell
+python scripts/snapshot_prompts.py -o before.json   # before the change
+python scripts/snapshot_prompts.py --compare before.json
 ```
 
 If retrieval/vector-store changed, also run:

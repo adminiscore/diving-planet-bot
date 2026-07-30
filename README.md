@@ -5,22 +5,33 @@ AI-powered customer service chatbot for **Diving Planet Cartagena** — Colombia
 ## Architecture
 
 ```
-Customer (WhatsApp / Web) → Chatwoot → FastAPI Webhook → Decision Tree (Phase 1)
-                                                        → LangGraph Agents (Phase 2)
-                                                        → Owner Dashboard
+Customer (WhatsApp / Web) → Chatwoot → FastAPI webhook → router (intent)
+                                                       → agent node: booking · info
+                                                         changes · deflection · safety
+                                                       → deterministic layer (facts)
+                                                       → reply + Chatwoot handoff
 ```
 
-**Phase 1** — Predefined decision tree (no LLM, zero cost)
-- Language selection (ES/EN)
-- Guided flow: Tours → Experience level → Service → Location → Booking link
-- Escalation to human via Chatwoot
+The bot is **conversational**, not a button menu: it understands free text (Spanish and
+English, with typos, slang and regional phrasing), fills the booking slots it still needs,
+and closes with the real booking link. Each use case is handled by its own agent node with
+its own focused prompt (`src/prompts/`), on a shared state.
 
+- **Router** — one LLM call per turn produces the routing signals; the node is chosen from
+  those signals plus deterministic detectors.
+- **booking** — slot-filling subgraph (setup → availability → routing → extraction →
+  slot-fill/close), multi-activity carts and companions included.
+- **info** — RAG over the knowledge base (pgvector + BM25) with a grounding check.
+- **changes** — cancellations, date changes and availability questions.
+- **deflection** — contact-details requests, AI-identity questions, off-topic.
+- **safety** — PII, medical topics, complaints, broken links, "I want a human" → Chatwoot
+  handoff so the team gets notified.
+- **Deterministic layer** (`src/flows/`) — prices, links, eligibility and the cart. **Facts
+  never come from the LLM**: that is what stops it inventing a price, a slot or a booking.
 
-**Phase 2** — LangGraph multi-agent system
-- Supervisor agent (GPT-4o-mini) for free-text queries
-- RAG agent for knowledge base (pgvector)
-- Booking agent for Roverd integration
-- Escalation agent with Chatwoot handoff
+The guided decision tree of the first version was retired (see `docs/HISTORY.md` 0.21.0);
+the migration of the remaining legacy cascade onto the LangGraph graph is tracked in
+`docs/multi-agent-refactor-plan.md`.
 
 ## Tech Stack
 
@@ -143,30 +154,54 @@ curl https://api.divingplanet.org/health
 
 ```
 src/
-├── main.py              # FastAPI entry point
-├── config.py            # Environment config (pydantic-settings)
-├── flows/
-│   └── decision_tree.py # Phase 1: predefined guided flow
-├── agents/
-│   ├── supervisor.py    # Phase 2: LangGraph orchestrator
-│   ├── rag_agent.py     # Phase 2: knowledge base retrieval
-│   ├── booking_agent.py # Phase 2: Roverd booking integration
-│   └── escalation.py    # Human handoff via Chatwoot
+├── main.py                  # FastAPI entry point
+├── config.py                # Environment config (pydantic-settings) + feature flags
+├── state_store.py           # Conversation state <-> Redis
+├── orchestration/           # The LangGraph graph (router -> agent nodes)
+│   ├── state.py             #   BotState (shared contract)
+│   ├── router.py            #   intent router: which node handles this turn
+│   └── graph.py             #   StateGraph: nodes + conditional edges
+├── agents/                  # One node per use case (+ the LLM nets they call)
+│   ├── booking_agent.py     #   booking: slot-filling subgraph (5 phases)
+│   ├── info_agent.py        #   info: eligibility + RAG answers
+│   ├── changes_agent.py     #   changes: cancel / reschedule / availability
+│   ├── deflection_agent.py  #   deflection: contact requests, AI-identity, off-topic
+│   ├── escalation_agent.py  #   safety: PII, medical, complaints, human handoff
+│   ├── conversational_core.py #  the booking phases (shared by graph and cascade)
+│   ├── supervisor.py        #   legacy cascade — still live behind `agent_arch` off
+│   ├── rag_agent.py         #   knowledge base retrieval + answer composition
+│   ├── grounding_check.py   #   answer must be grounded in retrieved context
+│   ├── intent_detector.py   #   deterministic (regex) extraction, first pass
+│   └── llm_extractor.py     #   LLM nets: gap-fill, turn signals, slot resolver
+├── prompts/                 # Prompts as a first-class artifact, one module per node
+│   ├── router.py            #   routing signals (prompt + tool schema)
+│   ├── booking.py           #   language, extraction, signals, slot resolver, ack
+│   ├── info.py              #   query rewrite, Coral persona + rules, grounding
+│   └── memory.py            #   open facts (notes), rolling summary
+├── flows/                   # DETERMINISTIC layer — prices, links, eligibility
+│   ├── catalog.py           #   service catalog (the single source of prices/links)
+│   ├── cart_render.py       #   cart rendering + final summary
+│   ├── eligibility.py       #   age / certification rules
+│   ├── state.py             #   ConversationState + Step
+│   └── messages.py          #   canned copy + quick replies
 ├── channels/
-│   └── chatwoot.py      # Chatwoot webhook handler
+│   ├── chatwoot.py          # Chatwoot webhook handler
+│   └── audio.py             # voice-note transcription
 ├── knowledge/
-│   └── loader.py        # Knowledge base loader
+│   ├── loader.py            # Knowledge base loader
+│   └── vector_store.py      # pgvector + BM25 hybrid retrieval
 └── db/
-    └── models.py        # SQLAlchemy models
+    └── models.py            # SQLAlchemy models
 
 data/knowledge_base/
 ├── services.json        # Service catalog
 ├── faqs.json            # Frequently asked questions
 └── policies.json        # Business policies
-
-tests/
-└── test_decision_tree.py
 ```
+
+The bot is mid-refactor to this multi-agent graph; `docs/multi-agent-refactor-plan.md`
+is the source of truth for what is done and what is next. Facts (prices, links,
+availability) are **never** produced by an LLM — they come from `src/flows/`.
 
 ## License
 

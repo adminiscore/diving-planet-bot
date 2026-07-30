@@ -15,14 +15,9 @@ import logging
 from openai import AsyncOpenAI
 
 from src.config import settings
+from src.prompts.booking import LANGUAGE_DETECT_PROMPT
 
 logger = logging.getLogger("uvicorn.error")
-
-_PROMPT = (
-    'Detect whether this message is written in Spanish or English. '
-    'Reply with ONLY "es" or "en", nothing else.\n\n'
-    'Message: "{message}"'
-)
 
 
 async def detect_language_llm(message: str) -> str | None:
@@ -34,7 +29,7 @@ async def detect_language_llm(message: str) -> str | None:
         client = AsyncOpenAI(api_key=settings.openai_api_key)
         response = await client.chat.completions.create(
             model=settings.openai_model,
-            messages=[{"role": "user", "content": _PROMPT.format(message=message)}],
+            messages=[{"role": "user", "content": LANGUAGE_DETECT_PROMPT.format(message=message)}],
             temperature=0.0,
             max_tokens=5,
         )

@@ -6,13 +6,17 @@
 > alguien retoma tras un merge, **el estado de los checkboxes aquí es la única verdad**.
 > Acompaña (no sustituye) a `docs/project-history/session-handoff.md`.
 
-**Estado global:** `Fase 0 completa · Fase 1 completa · Fase 2 COMPLETA (5/5 nodos reales)`.
-Grafo LangGraph detrás de `agent_arch`; **los 5 nodos son REALES** (deflection/escalation/
-changes/info/booking, cortes strangler 2.1–2.5) y el grafo (flag on) despacha cada ruta a su
-nodo sin delegar en la cascada. Equivalencia probada: suite verde en los 3 modos (default/
-grafo/shadow), 1490 passed. La cascada (flag off) sigue viva. **Siguiente: Fase 3** (consolidar
-las redes LLM + prompts por nodo + partir el subgrafo del booking) — pendiente de decidir el
-reparto entre los 3. Creado 2026-07-29; actualizado 2026-07-30.
+**Estado global:** `Fase 0 completa · Fase 1 completa · Fase 2 completa · Fase 3: 3.1/3.2/3.3
+hechas, queda 3.4`. Grafo LangGraph detrás de `agent_arch`; **los 5 nodos son REALES**
+(deflection/escalation/changes/info/booking, cortes strangler 2.1–2.5) y el grafo (flag on)
+despacha cada ruta a su nodo sin delegar en la cascada. El nodo `booking` es ya un **subgrafo de
+5 fases** (`setup → availability → routing → extraction → slotfill_close`, 3.3) y **los prompts
+viven en `src/prompts/`, un módulo por nodo** (3.2). Equivalencia probada tras cada paso: suite
+verde en los 3 modos (default/grafo/shadow) — **1492 passed / 18 skipped** medidos en el cierre
+de 3.3; la pasada de 3.2 (con sus 27 tests nuevos) estaba en vuelo al commitear, ver §8. La
+cascada (flag off) sigue viva. **Siguiente: 3.4** (medir llamadas LLM/turno vs baseline — hoy bloqueado por
+entorno, ver el paso) y luego **Fase 4** (estado/memoria/persistencia unificados). Creado
+2026-07-29; actualizado 2026-07-30.
 **Base de código:** rama `feature/pre_alvaro` (Fase 4 completa + Bloque 2 + reorg §1/§2).
 **Motor de orquestación elegido:** **LangGraph** (con LangChain de forma selectiva) — ver §2.
 
@@ -284,9 +288,13 @@ src/
     deflection_agent.py     contacto/identidad/off-topic (hoy en supervisor)
     escalation_agent.py     PII/médico/quejas/DIVE TO HEAL/humano (era escalation)
     _nets/                  redes LLM reubicadas por agente (era llm_extractor global)
-  prompts/                ← PROMPTS como artefacto de primera clase (patrón IBM)
-    router.py               prompt de clasificación de intención
-    booking.py · info.py …  1 prompt corto y enfocado por caso de uso, versionado y legible
+  prompts/                ← PROMPTS como artefacto de primera clase (patrón IBM) — HECHO (3.2)
+    __init__.py             índice: tabla prompt→nodo + reglas del paquete
+    router.py               señales de enrutado (prompt + tool schema)
+    booking.py              idioma · extracción · señales de turno · resolutor de slot · acuse
+    info.py                 reescritura de query · persona/seguridad/reglas RAG · grounding
+    memory.py               notes (hechos abiertos) · resumen rodante
+                            (hoja del grafo de imports: NO importa nada de src/)
   flows/                  ← capa determinista — Python plano, NO se toca
     catalog.py · state.py · messages.py · cart_render.py · eligibility.py
   channels/ · knowledge/ · state_store.py …  (infra)
@@ -510,9 +518,11 @@ se paralelizan entre sí).
   la suite adversaria; los 14 mismatches auditados y clasificados). **La cascada sigue viva.**
 
 ### Fase 2 — Los nodos-agente con contrato · *paralelizable entre los 3* · **COMPLETA**
-- [ ] **2.0 · Contrato de nodo + orquestador.** Fijar la firma de nodo (State→update),
-      `Command`/handoffs, y el manejo del resultado (reply/quick_replies/escalate). Secuencial,
-      va primero.
+- [x] **2.0 · Contrato de nodo + orquestador — HECHO** (sin código propio: lo fijó el spike de
+      0.6, ver la entrada de revisión de asentamiento en §8). Firma
+      `async def node(state: BotState) -> dict | Command`; handoffs con `Command(goto=)`; la
+      respuesta va en `state["reply"]`; el `conv_state` viaja por referencia. Los 5 nodos de
+      2.1-2.5 lo siguen; el checkbox quedó sin marcar por despiste al cerrar la fase.
 - [x] **2.1 · Nodo `deflection` — HECHO** (`src/agents/deflection_agent.py`). Primer corte
       strangler real: la ruta `ROUTE_DEFLECT` deja de delegar en toda la cascada y ejecuta solo
       la lógica de deflexión (contacto vía `_asks_for_contact_number`/señal → límite 🔒 +
@@ -654,12 +664,54 @@ reproducible. **Siguiente: 2.5 (nodo `booking`), luego 2.6.** Sigue este patrón
       flagged off, NO tocar). **Diferido:** mover las definiciones a `src/agents/_nets/`
       (reapuntar imports de core/supervisor/tests) — churn mecánico de valor solo organizativo,
       a hacer deliberadamente, no como cierre de sesión.
-- [ ] **3.2 · Prompts específicos por caso de uso.** Cada nodo con 1 (o pocos) prompt(s)
-      cortos y enfocados — no un prompt que lo abarca todo. Conservar los afinados actuales,
-      reubicados y recortados a su dominio.
-- [ ] **3.3 · Partir el subgrafo `booking`** en nodos de responsabilidad única: routing interno
+- [x] **3.2 · Prompts específicos por caso de uso — HECHO** (Gonzalo). Nuevo paquete
+      **`src/prompts/`** (§4 del plan): un módulo por nodo dueño — `router.py`, `booking.py`,
+      `info.py`, `memory.py` — más un `__init__.py` que es el índice (tabla prompt→nodo +
+      las reglas del paquete). Movidos **25 símbolos** desde 8 módulos de `src/agents/` = los
+      **11 prompts** del bot (unos como constante por idioma, otros como builder que interpola
+      argumentos) + los 4 tool-schemas estáticos + la factoría `slot_resolver_tool` + el
+      `SLOT_RESOLVER_SPEC`.
+      - **Hallazgo (por qué NO se "recortó" nada):** el enunciado original de 3.2 asumía un
+        prompt gigante que lo abarcaba todo. **No lo hay**: cada red ya tenía SU prompt corto
+        y enfocado a un caso de uso; lo que faltaba era que vivieran *enterrados* dentro de
+        módulos de lógica de 900-1300 líneas, imposibles de revisar de un golpe. 3.2 es por
+        tanto **reubicar y hacer revisable**, no reescribir. Recortar texto = cambio de
+        conducta (principio #1) y no había nada multi-caso que recortar: el único prompt que
+        cubre varios casos es el del router (9 señales) y es **compartido a propósito**
+        (§7 de `agent-arch-design.md`, 1 llamada/turno).
+      - **El tool schema cuenta como prompt** y se movió con él: las descripciones de campo son
+        instrucción real para el modelo — varias se afinaron midiendo en vivo (p. ej. el caso
+        negativo del plural vago en `group_size`, v0.20.55; la nota de por qué se descartó
+        strict function-calling). Ahora prompt + schema se leen juntos, que es como se revisan.
+      - **`src/prompts/` es una HOJA del grafo de imports** (no importa nada de `src/`): así un
+        prompt se lee/diffea sin arrastrar el runtime y ningún módulo de `src/agents/` puede
+        crear un ciclo al importar el suyo.
+      - **Equivalencia probada byte a byte**: nuevo `scripts/snapshot_prompts.py` renderiza los
+        **61 prompts** (todas las variantes de idioma y de argumentos: campos que faltan, los 8
+        slots del resolutor, con/sin nombre de cliente, con/sin notas previas, + el prompt RAG
+        ENSAMBLADO) con su SHA-256 → snapshot antes/después con **diff vacío**. Sirve además
+        como visor de la superficie de prompt entera y como red para cualquier movimiento futuro.
+      - **Tests nuevos** (`tests/test_prompts_surface.py`, 27): la propiedad de hoja (AST, sin
+        imports de `src`), la **identidad** de cada red con el objeto de su módulo de prompts
+        (si alguien vuelve a inlinear una copia, falla en vez de desincronizarse en silencio),
+        y que el snapshot **renderiza todos** los símbolos públicos — cobertura *derivada* de lo
+        que `_collect()` toca de verdad, no una lista paralela.
+      - **Métricas**: `llm_extractor.py` 898→302, `escalation.py` 479→180, `notes_extractor.py`
+        148→84, `rag_agent.py` 1336→1210, `query_rewriter.py` 92→67, `conversation_summarizer.py`
+        104→81, `grounding_check.py` 229→218, `language_detector.py` 38→34 (−1148 líneas en
+        total; +1282 en `src/prompts/`, con los docstrings de índice y las cabeceras por red).
+      - Verificado al commitear: snapshot **byte a byte idéntico**, los 27 tests nuevos y los
+        subconjuntos afectados en verde, ruff + compileall limpios, y la **baseline completa
+        (1492 passed / 18 skipped) medida en esta máquina ANTES de tocar nada**. La pasada
+        completa en los **3 modos** quedó lanzada y en vuelo al hacer el commit (en esta máquina
+        son ~40 min por modo, no los ~7 del handoff de Gadea) — el resultado se registra en §8
+        en cuanto termina; si algo saliera rojo, se arregla encima, no se reescribe este paso.
+- [x] **3.3 · Partir el subgrafo `booking`** en nodos de responsabilidad única: routing interno
       (deliberación/recall/pregunta-vs-reserva) → extracción → slot-fill (`next_missing_slot`)
       → cierre determinista (`cart_render`). Elimina el monolito de 2.249 líneas.
+      *(Marcado `[x]` al cerrar 3.2: los 5 sub-pasos 3.3a-e están hechos y el propio texto de
+      abajo lo declara completo en la práctica — el checkbox se había quedado sin marcar, y aquí
+      es la única fuente de verdad. Partir más es refinamiento opcional, no pendiente.)*
       - **3.3a · Andamiaje del subgrafo — HECHO** (`47c72cf`, Gadea). La ruta BOOKING invoca un
         subgrafo LangGraph (`booking_agent._build_booking_subgraph`) con UN nodo `core` que
         envuelve `maybe_handle_turn` — el contenedor del strangler, equivalente por construcción.
@@ -713,6 +765,25 @@ reproducible. **Siguiente: 2.5 (nodo `booking`), luego 2.6.** Sigue este patrón
         marginal decreciente; queda a criterio del equipo.
 - [ ] **3.4 · Reducir llamadas LLM/turno.** Medir en **LangSmith** vs baseline de Fase 0.
       Documentar antes/después.
+      - **Estado (2026-07-30, Gonzalo): PENDIENTE, y hasta ahora no hay nada que medir.** Los
+        tres pasos cerrados de Fase 3 (3.1 funcional, 3.2, 3.3) son **estructurales y
+        preservadores de conducta**: mismos prompts (byte a byte, probado) y mismos puntos de
+        llamada ⇒ las llamadas/turno siguen siendo las **3.00** de la baseline por construcción.
+        Bajar de ahí requiere un cambio deliberado de comportamiento (fusionar redes, o no
+        invocar una red cuando el nodo ya sabe que no aplica), que es trabajo propio de 3.4 y
+        **necesita decisión** — no un efecto colateral de mover ficheros.
+      - **Bloqueo de entorno para volver a medir**: `scripts/measure_llm_baseline.py` corre el
+        bot real, así que necesita **Postgres arriba** (la RAG del turno "cuanto cuesta" hace
+        retrieval); en la máquina de Gonzalo hoy Docker Desktop devuelve 500 y los puertos
+        5432/6379 no responden, así que una corrida ahora daría un número **no comparable** con
+        la baseline (camino RAG degradado) — mejor no publicarlo. Y sigue sin haber
+        `LANGSMITH_API_KEY` en ningún entorno dev, que era la vía preferida del plan.
+      - **Para retomarlo**: levantar Postgres+Redis dev, correr
+        `python -m scripts.measure_llm_baseline` y comparar contra la tabla de §5 Fase 0.4. Lo
+        primero a mirar con ese dato delante es **qué red concreta pone cada llamada en los
+        turnos baratos** (el saludo ya cuesta 2 llamadas y el cierre 3, sin extracción de
+        slots por medio): ahí es donde una llamada evitable se nota más, no en el turno de
+        extracción, que es el que sí tiene que trabajar.
 - **DoD:** llamadas LLM/turno ↓ vs baseline; cero colisiones; prompts por nodo testeados.
 
 ### Fase 4 — Estado, memoria y persistencia unificados
@@ -782,6 +853,36 @@ reproducible. **Siguiente: 2.5 (nodo `booking`), luego 2.6.** Sigue este patrón
 ## 8. Registro de ejecución
 *(Una línea por paso cerrado: fecha · dev · qué · commit. El más reciente arriba.)*
 
+- **2026-07-30 · Gonzalo · Fase 3.2 — prompts a `src/prompts/`, un módulo por nodo.** Sincronizada
+  la rama (`feature/agent-arch` traída a `feature/fase4-p2`, fast-forward de 48 commits) y
+  cerrado el siguiente paso del plan. Nuevo paquete `src/prompts/` (`router.py` · `booking.py` ·
+  `info.py` · `memory.py` + índice en `__init__.py`) con **25 símbolos** movidos desde 8 módulos
+  de `src/agents/`: los **11 prompts** del bot (constantes por idioma o builders), los 4
+  tool-schemas estáticos, la factoría `slot_resolver_tool` y el `SLOT_RESOLVER_SPEC`. **Hallazgo:** no existía el "prompt gigante que lo abarca todo" que el
+  enunciado de 3.2 asumía — cada red ya tenía su prompt enfocado; lo que faltaba era sacarlos de
+  módulos de lógica de 900-1300 líneas para poder revisarlos. Así que 3.2 fue **reubicar sin
+  tocar texto** (recortar sería cambio de conducta, principio #1), incluyendo los tool-schemas
+  porque sus descripciones de campo son prompt de verdad (varias afinadas midiendo en vivo).
+  `src/prompts/` es una **hoja** del grafo de imports: no importa nada de `src/`, así que ningún
+  agente puede crear un ciclo al importar el suyo.
+  **Equivalencia byte a byte probada, no asumida**: nuevo `scripts/snapshot_prompts.py` renderiza
+  los **61 prompts** (todas las variantes de idioma/argumentos + el prompt RAG ensamblado) con
+  SHA-256 → snapshot antes vs. después con **diff vacío**; el corte se hizo con un script mecánico
+  por rangos de AST (no reescribiendo texto a mano). Verificado además: **baseline completa medida
+  en esta máquina antes de tocar nada (1492 passed / 18 skipped)**, los 27 tests nuevos y los
+  subconjuntos afectados en verde, ruff + compileall limpios; la pasada completa en los **3 modos**
+  (default/`AGENT_ARCH`/`AGENT_ARCH_SHADOW`) quedó **en vuelo al commitear** — esperado 1519
+  passed / 18 skipped (1492 + 27), **a confirmar aquí cuando termine**. **27 tests nuevos**
+  (`tests/test_prompts_surface.py`): propiedad de hoja por AST, identidad red↔módulo de prompts
+  (una copia inlineada falla en vez de desincronizarse en silencio), y cobertura del snapshot
+  *derivada* de lo que renderiza de verdad. Métricas: −1148 líneas en los 8 módulos de agentes
+  (`llm_extractor` 898→302, `escalation` 479→180, `notes_extractor` 148→84, `rag_agent`
+  1336→1210, …), +1282 en `src/prompts/`. Marcado también **2.0** (el contrato de nodo lo había
+  fijado el spike 0.6; el checkbox estaba sin marcar por despiste).
+  **Siguiente: 3.4** — anotado en el paso: hasta ahora no hay nada que medir (3.1/3.2/3.3 son
+  estructurales y preservan conducta ⇒ siguen siendo 3.00 llamadas/turno por construcción) y
+  volver a medir está **bloqueado por entorno** (Docker Desktop en 500 → sin Postgres, y sigue
+  sin haber `LANGSMITH_API_KEY`).
 - **2026-07-30 · Gadea · Fase 3.1 — mapa red→nodo (reubicación funcional; física diferida).**
   Auditado que tras el corte del núcleo (3.3) cada red LLM ya se llama desde su nodo dueño
   (objetivo funcional de 3.1 conseguido). Documentado el mapa completo + auditoría de

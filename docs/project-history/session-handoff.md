@@ -11,6 +11,65 @@ Read this file before changing code in the Diving Planet Bot. For a quick versio
 
 ## Current branch and workflow
 
+- **2026-07-30 (Gonzalo, rama `feature/fase4-p2` = `feature/agent-arch` + 1 commit) — FASE 3.2
+  HECHA: los prompts son ya un artefacto propio en `src/prompts/`. Queda 3.4 (bloqueado por
+  entorno) y luego Fase 4.**
+  - **Sincronización primero**: `feature/agent-arch` traída a `feature/fase4-p2` por fast-forward
+    (48 commits de Gadea/Álvaro: Fases 0, 1, 2 completas y 3.1/3.3). Sin conflictos. Ojo: la rama
+    de integración del refactor es **`feature/agent-arch`** — trabajar aquí NO despliega nada.
+  - **Qué se hizo (3.2)**: nuevo paquete `src/prompts/` con un módulo por nodo dueño (`router.py`,
+    `booking.py`, `info.py`, `memory.py`) + `__init__.py` como índice (tabla prompt→nodo y reglas).
+    Movidos 25 símbolos desde 8 módulos de `src/agents/`: los **11 prompts** del bot (unos como
+    constante por idioma, otros como builder), los 4 tool-schemas estáticos, la factoría
+    `slot_resolver_tool` y el `SLOT_RESOLVER_SPEC`. −1148 líneas en los agentes (`llm_extractor`
+    898→302, `escalation` 479→180, `notes_extractor` 148→84, `rag_agent` 1336→1210…).
+  - **Decisión de fondo (leer antes de tocar un prompt)**: 3.2 pedía prompts "cortos, enfocados y
+    **recortados** a su dominio". Al auditarlos, **el prompt gigante que lo abarca todo NO
+    existía** — cada red ya tenía el suyo enfocado; el problema era que vivían enterrados en
+    módulos de lógica de 900-1300 líneas. Así que 3.2 se hizo como **reubicación sin tocar una
+    coma**: recortar texto es cambio de conducta (principio #1) y aquí no había nada multi-caso
+    que recortar (el único prompt multi-señal es el del router, compartido a propósito). Si en el
+    futuro alguien quiere recortar de verdad, es un cambio de comportamiento con su medición, no
+    un refactor.
+  - **Los tool-schemas se movieron con su prompt**: sus descripciones de campo son instrucción
+    real (varias afinadas midiendo en vivo, p. ej. el plural vago de `group_size` en v0.20.55, y
+    la nota de por qué se descartó strict function-calling). Prompt + schema se revisan juntos.
+  - **`src/prompts/` es una HOJA del grafo de imports** (no importa nada de `src/`) — a propósito:
+    un prompt se lee/diffea sin arrastrar el runtime y ningún agente puede crear un ciclo al
+    importar el suyo. Hay un test que lo fija por AST.
+  - **🔧 Herramienta nueva reutilizable — `scripts/snapshot_prompts.py`**: renderiza los **61
+    prompts** (todas las variantes de idioma y de argumentos: campos que faltan, los 8 slots del
+    resolutor, con/sin nombre, con/sin notas previas, + el prompt RAG **ensamblado**) con su
+    SHA-256, y `--compare` exige diff vacío contra un snapshot previo. **Úsalo siempre que muevas
+    un prompt** (`-o antes.json` → refactor → `--compare antes.json`) y para leer la superficie de
+    prompt entera de un golpe. En esta sesión dio **diff vacío**: equivalencia byte a byte probada,
+    no asumida (el corte se hizo con un script mecánico por rangos de AST, no reescribiendo texto).
+  - **Tests nuevos** (`tests/test_prompts_surface.py`, 27): hoja sin imports de `src`, **identidad**
+    de cada red con el objeto de su módulo de prompts (si alguien vuelve a inlinear una copia,
+    falla en vez de desincronizarse en silencio) y cobertura del snapshot **derivada** de lo que
+    renderiza de verdad (un prompt nuevo sin snapshot rompe el test).
+  - **Validación**: snapshot de prompts **byte a byte idéntico**, los 27 tests nuevos y los
+    subconjuntos afectados en verde, ruff + compileall limpios, y la **baseline completa medida en
+    esta misma máquina antes de tocar nada: 1492 passed / 18 skipped**. La pasada completa en los
+    **3 modos** (default / `AGENT_ARCH=true` / `AGENT_ARCH_SHADOW=true`) quedó **en vuelo al
+    commitear** (esperado 1519 = 1492 + 27); el resultado se registra en `multi-agent-refactor-plan.md`
+    §8 al terminar. **Nota de entorno**: en esta máquina la suite completa tarda **~40 min por
+    modo** (no los ~7 min del handoff de Gadea) — contarlo al planificar; y Docker Desktop está
+    devolviendo 500 (sin Postgres/Redis), aunque la suite no los necesita.
+  - **▶ SIGUIENTE (3.4 · medir llamadas LLM/turno) — y por qué no se hizo ya**: los tres pasos
+    cerrados de Fase 3 son estructurales y preservan conducta (mismos prompts byte a byte, mismos
+    puntos de llamada) ⇒ **siguen siendo las 3.00 llamadas/turno de la baseline por
+    construcción; no hay nada que medir todavía**. Bajar de ahí es un cambio deliberado (fusionar
+    redes o no invocar una que el nodo ya sabe que no aplica), que es el trabajo de 3.4. Y volver a
+    medir está **bloqueado por entorno**: `scripts/measure_llm_baseline.py` corre el bot real y
+    necesita Postgres arriba (la RAG del turno de precio hace retrieval), así que medir sin él
+    daría un número no comparable; y sigue sin haber `LANGSMITH_API_KEY` en dev. Con Postgres
+    levantado son 5 minutos: `python -m scripts.measure_llm_baseline` y comparar contra la tabla
+    del plan (§5 Fase 0.4).
+  - **HISTORY.md no se tocó, a propósito**: todo el refactor multiagente (48 commits, Fases 0-3) se
+    viene registrando en `docs/multi-agent-refactor-plan.md` §8 + este handoff, y es cero cambio
+    de conducta para el cliente. La entrada de versión en `HISTORY.md` corresponde cuando el
+    refactor aterrice de verdad (Fase 5.2, corte del legacy).
 - **2026-07-30 (rama `feature/agent-arch`) — FASE 2 COMPLETA · FASE 3 EN CURSO (corte del núcleo).**
   Fase 2 cerrada: los **5 nodos-agente son reales** (deflection/escalation/changes/info por Álvaro
   2.1-2.4; **booking por Gadea 2.5+2.6**, `a617151`) y el grafo despacha cada ruta a su nodo.

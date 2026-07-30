@@ -27,76 +27,9 @@ import logging
 from openai import AsyncOpenAI
 
 from src.config import settings
+from src.prompts.memory import NOTES_TOOL, notes_system_prompt
 
 logger = logging.getLogger("uvicorn.error")
-
-_TOOL = {
-    "type": "function",
-    "function": {
-        "name": "capture_notes",
-        "description": (
-            "Capture durable, open facts about the customer that a scuba diving "
-            "advisor would want to remember, that do NOT fit the structured "
-            "booking fields (activity, group size, location, dates, "
-            "certification, nationality). Examples worth capturing: medical "
-            "conditions or injuries ('father has an operated knee'), "
-            "accessibility needs, dietary restrictions, special occasions "
-            "(anniversary, honeymoon, birthday), and hard constraints (very "
-            "tight schedule, limited budget). Return an EMPTY list if the "
-            "message has none — never invent, never restate the booking slots, "
-            "and never capture plain questions or greetings."
-        ),
-        "parameters": {
-            "type": "object",
-            "properties": {
-                "notes": {
-                    "type": "array",
-                    "items": {"type": "string"},
-                    "description": (
-                        "Short, self-contained note phrases (max ~12 words each) "
-                        "in the customer's language. Empty if nothing relevant."
-                    ),
-                }
-            },
-            "required": ["notes"],
-        },
-    },
-}
-
-
-def _system_prompt(lang: str, existing_notes: list[str]) -> str:
-    already = ""
-    if existing_notes:
-        joined = "; ".join(existing_notes)
-        already = (
-            f" Ya tienes anotado (NO lo repitas): {joined}."
-            if lang == "es"
-            else f" Already noted (do NOT repeat): {joined}."
-        )
-    if lang == "es":
-        return (
-            "Eres una capa de memoria para un bot de buceo (Diving Planet, "
-            "Cartagena/Islas del Rosario). Tu única tarea es capturar 'hechos "
-            "abiertos' que un asesor querría recordar y que NO son datos de "
-            "reserva (actividad, cuántos son, dónde, certificación, fechas): "
-            "lesiones/condiciones médicas, accesibilidad, restricciones "
-            "alimentarias, ocasiones especiales (aniversario, luna de miel, "
-            "cumpleaños) o restricciones duras (agenda/presupuesto). Llama a "
-            "`capture_notes` con SOLO lo que el mensaje diga de verdad; lista "
-            "vacía si no hay nada. Nunca inventes ni repitas los datos de "
-            "reserva." + already
-        )
-    return (
-        "You are a memory layer for a scuba diving bot (Diving Planet, "
-        "Cartagena/Rosario Islands). Your only job is to capture 'open facts' an "
-        "advisor would want to remember that are NOT booking data (activity, "
-        "group size, location, certification, dates): injuries/medical "
-        "conditions, accessibility, dietary restrictions, special occasions "
-        "(anniversary, honeymoon, birthday) or hard constraints "
-        "(schedule/budget). Call `capture_notes` with ONLY what the message "
-        "actually states; empty list if none. Never invent or restate the "
-        "booking data." + already
-    )
 
 
 async def extract_notes(
@@ -115,7 +48,7 @@ async def extract_notes(
     existing = existing_notes or []
     existing_lower = {n.strip().lower() for n in existing}
 
-    messages: list[dict] = [{"role": "system", "content": _system_prompt(lang, existing)}]
+    messages: list[dict] = [{"role": "system", "content": notes_system_prompt(lang, existing)}]
     for turn in (history or [])[-settings.history_retrieval_enrichment_window:]:
         role = turn.get("role")
         content = turn.get("content")
@@ -128,7 +61,7 @@ async def extract_notes(
         response = await client.chat.completions.create(
             model=settings.extraction_model,
             messages=messages,
-            tools=[_TOOL],
+            tools=[NOTES_TOOL],
             tool_choice={"type": "function", "function": {"name": "capture_notes"}},
             temperature=0.0,
             max_tokens=200,

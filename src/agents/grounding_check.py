@@ -5,6 +5,7 @@ from openai import AsyncOpenAI
 
 from src.config import settings
 from src.privacy import redact_pii
+from src.prompts.info import GROUNDING_VERIFY_EN, GROUNDING_VERIFY_ES
 
 logger = logging.getLogger("uvicorn.error")
 
@@ -219,30 +220,11 @@ def urls_grounded(answer: str, context: str) -> bool:
     return True
 
 
-_VERIFY_PROMPT_ES = """Verifica si la RESPUESTA esta totalmente basada en el CONTEXTO proporcionado.
-
-Reglas:
-- \"GROUNDED\" si cada afirmacion factual de la respuesta aparece literalmente o se infiere directamente del contexto.
-- \"HALLUCINATED\" si la respuesta incluye cualquier dato factual que no este en el contexto.
-- Frases de cortesia, ofrecimientos genericos y reformulaciones del contexto son aceptables.
-
-Responde con UNA palabra: GROUNDED o HALLUCINATED."""
-
-_VERIFY_PROMPT_EN = """Verify whether the RESPONSE is fully based on the provided CONTEXT.
-
-Rules:
-- \"GROUNDED\" if every factual claim in the response appears literally or is directly inferable from the context.
-- \"HALLUCINATED\" if the response includes any factual data not present in the context.
-- Politeness, generic offers and rewordings of the context are acceptable.
-
-Reply with ONE word: GROUNDED or HALLUCINATED."""
-
-
 async def is_grounded(answer: str, context: str, lang: str = "es") -> tuple[bool, str]:
     if not answer.strip() or not context.strip():
         return False, "empty_answer_or_context"
 
-    system = _VERIFY_PROMPT_ES if lang == "es" else _VERIFY_PROMPT_EN
+    system = GROUNDING_VERIFY_ES if lang == "es" else GROUNDING_VERIFY_EN
     if lang == "es":
         user_content = (
             f"CONTEXTO:\n{redact_pii(context)}\n\n"

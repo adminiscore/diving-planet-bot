@@ -322,6 +322,13 @@ red llamándose desde su nodo dueño — el objetivo *funcional* de 3.1 está
 conseguido como efecto del subgrafo. Mapa auditado de dónde vive cada red y
 desde qué nodo se invoca:
 
+> **Al día tras la Fase 3.2 (2026-07-30):** la columna "Módulo (definición)" se refiere a dónde
+> vive la **función que llama al LLM**. Su **prompt** ya no está ahí: los prompts (y los
+> tool-schemas) viven ahora en `src/prompts/<nodo>.py`, un módulo por nodo dueño — exactamente el
+> reparto de esta tabla. Ver `src/prompts/__init__.py` (índice) y `scripts/snapshot_prompts.py`
+> (renderiza los 61 prompts con SHA-256; es la red de seguridad de cualquier movimiento futuro).
+> Lo que sigue diferido de 3.1 es mover las **funciones** a `src/agents/_nets/`, no los prompts.
+
 | Red LLM | Módulo (definición) | Nodo que la invoca | Notas |
 |---|---|---|---|
 | `detect_routing_signals` | `escalation.py` | **router** (`orchestration/graph._router_node`) | 1 llamada/turno; sus 9 señales las consumen varios nodos (compartida por eficiencia, no duplicada) |
@@ -345,12 +352,19 @@ pisando el multi-día) están **estructuralmente contenidos**: el router computa
 señales una vez y `classify_route` decide la ruta; la lógica de cada caso vive en
 su nodo/fase.
 
-**Pendiente de 3.1 (reubicación FÍSICA, diferida como churn de bajo valor):**
-mover las definiciones a `src/agents/_nets/` (estructura objetivo del §4 del
-plan) reapuntando los imports de `conversational_core`/`supervisor`/tests. Es
-mecánico pero toca ~4 módulos + mocks de la suite; se hace deliberadamente (no
-como cierre de sesión) y su valor es organizativo, no de comportamiento — la
-propiedad red→nodo ya está lograda y documentada aquí.
+**Pendiente de 3.1 (reubicación FÍSICA de las FUNCIONES, diferida como churn de
+bajo valor):** mover las definiciones a `src/agents/_nets/` (estructura objetivo
+del §4 del plan) reapuntando los imports de
+`conversational_core`/`supervisor`/tests. Es mecánico pero toca ~4 módulos + los
+mocks de la suite (la suite parchea estas funciones por su binding, así que cada
+movimiento arrastra un re-apunte de mocks); se hace deliberadamente y su valor es
+organizativo, no de comportamiento — la propiedad red→nodo ya está lograda y
+documentada aquí.
+
+**Ojo con la diferencia:** los **prompts** sí se movieron ya (Fase 3.2 →
+`src/prompts/`) y fue barato precisamente porque **ningún test los parchea**: son
+texto, no puntos de inyección. Las **funciones** son lo contrario, y de ahí que su
+mudanza siga diferida.
 
 ---
 

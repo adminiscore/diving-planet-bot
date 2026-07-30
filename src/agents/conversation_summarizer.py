@@ -16,6 +16,7 @@ from openai import AsyncOpenAI
 from src.config import settings
 from src.flows.state import ConversationState
 from src.privacy import redact_pii
+from src.prompts.memory import SUMMARY_SYSTEM_EN, SUMMARY_SYSTEM_ES
 
 logger = logging.getLogger("uvicorn.error")
 
@@ -27,32 +28,6 @@ logger = logging.getLogger("uvicorn.error")
 # summary. Snapshotted at import time (like settings.openai_model elsewhere);
 # tests override it directly via monkeypatch on this module attribute.
 _SUMMARY_TRIGGER_EVERY = settings.history_window_size
-
-_SUMMARY_SYSTEM_PROMPT_ES = (
-    "Mantienes un resumen breve y factual de una conversación de reserva de "
-    "buceo/snorkel entre un cliente y un asistente. Se te da el resumen "
-    "anterior (puede estar vacío) y el tramo nuevo de conversación. Actualiza "
-    "el resumen incorporando lo nuevo relevante, sin perder los detalles "
-    "importantes del resumen anterior. Prioriza: composición del grupo, "
-    "certificación, ubicación/hotel, preferencias o restricciones "
-    "(salud, movilidad, horarios, presupuesto), decisiones ya tomadas y dudas "
-    "ya resueltas. No inventes nada que no se haya dicho. Sé conciso (máximo "
-    "unas 150 palabras). Responde SOLO con el resumen actualizado, sin "
-    "prefijos ni explicaciones."
-)
-
-_SUMMARY_SYSTEM_PROMPT_EN = (
-    "You maintain a short, factual summary of a diving/snorkeling booking "
-    "conversation between a customer and an assistant. You're given the "
-    "previous summary (may be empty) and the new conversation segment. "
-    "Update the summary incorporating relevant new information, without "
-    "losing important details from the previous summary. Prioritize: group "
-    "composition, certification, location/hotel, preferences or "
-    "constraints (health, mobility, timing, budget), decisions already "
-    "made, and questions already resolved. Don't invent anything that "
-    "wasn't said. Be concise (about 150 words max). Respond ONLY with the "
-    "updated summary, no prefixes or explanations."
-)
 
 
 def _format_turns(turns: list[dict], lang: str) -> str:
@@ -69,7 +44,7 @@ def _format_turns(turns: list[dict], lang: str) -> str:
 
 
 async def _generate_summary(existing_summary: str | None, new_turns_text: str, lang: str) -> str:
-    system = _SUMMARY_SYSTEM_PROMPT_ES if lang == "es" else _SUMMARY_SYSTEM_PROMPT_EN
+    system = SUMMARY_SYSTEM_ES if lang == "es" else SUMMARY_SYSTEM_EN
     previous_label = "Resumen anterior" if lang == "es" else "Previous summary"
     segment_label = "Tramo nuevo de la conversación" if lang == "es" else "New conversation segment"
     user_content = (
