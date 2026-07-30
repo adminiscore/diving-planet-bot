@@ -24,6 +24,7 @@ import logging
 
 from langgraph.graph import END, START, StateGraph
 
+from src.agents.booking_agent import booking_node
 from src.agents.changes_agent import changes_node
 from src.agents.deflection_agent import deflection_node
 from src.agents.escalation_agent import escalation_node
@@ -31,6 +32,7 @@ from src.agents.info_agent import info_node
 from src.orchestration.router import classify_route
 from src.orchestration.state import (
     ALL_ROUTES,
+    ROUTE_BOOKING,
     ROUTE_CHANGE,
     ROUTE_DEFLECT,
     ROUTE_INFO,
@@ -40,14 +42,15 @@ from src.orchestration.state import (
 
 logger = logging.getLogger("uvicorn.error")
 
-# Nodos-agente REALES (Fase 2). Cada ruta que ya tiene su nodo propio se registra
-# aquí; el resto siguen como wrappers que delegan en la cascada
-# (`_make_legacy_delegate_node`) hasta que se conviertan, una a una, en Fase 2.
+# Nodos-agente REALES (Fase 2). Con 2.5 los 5 nodos son reales — ya no queda
+# ningún wrapper delegando en la cascada por defecto (`_make_legacy_delegate_node`
+# permanece solo como red de resiliencia si se añadiera una ruta nueva sin nodo).
 _REAL_NODES = {
     ROUTE_DEFLECT: deflection_node,
     ROUTE_SAFETY: escalation_node,
     ROUTE_CHANGE: changes_node,
     ROUTE_INFO: info_node,
+    ROUTE_BOOKING: booking_node,
 }
 
 
@@ -62,11 +65,35 @@ async def _router_node(state: BotState) -> dict:
     `escalation`) a propósito: es el mismo binding que usa la cascada y que los
     tests parchean (`src.agents.supervisor.detect_routing_signals`), así un
     solo mock cubre los dos caminos (grafo y cascada) — la prueba de
-    equivalencia (suite verde on/off) depende de ello."""
-    from src.agents.supervisor import detect_routing_signals
+    equivalencia (suite verde on/off) depende de ello.
+
+    **Side-effects pre-router** (§4.bis: el restart de escenario nuevo se
+    ejecuta "antes del router"): la cascada, en la cabecera de
+    `_route_message_inner` y ANTES de cualquier gate, (1) reinicia la memoria si
+    el mensaje es un escenario nuevo y (2) marca la detección sticky de niños.
+    Como los nodos-agente reales (Fase 2) llaman a sus handlers/al núcleo
+    directamente (ya no delegan toda la cascada), estos side-effects se
+    reproducen aquí para que los reciban las 5 rutas — si no, se perderían
+    (bug real: `kids_mention_detected` no se activaba con el flag on)."""
+    from src.agents.supervisor import (
+        _detect_kids_mention,
+        _is_new_scenario_restart,
+        _reset_to_fresh_scenario,
+        detect_routing_signals,
+    )
 
     conv = state["conv_state"]
     message = state["message"]
+
+    # Pre-router: restart de escenario nuevo (limpia memoria) → se clasifica
+    # sobre el estado fresco, equivalente al reset+recursión de la cascada.
+    if _is_new_scenario_restart(message, conv):
+        logger.info("[GRAPH] restart de escenario nuevo -> limpio memoria")
+        _reset_to_fresh_scenario(conv)
+    # Pre-router: detección sticky de niños (persiste el resto de la conversación).
+    if not getattr(conv, "kids_mention_detected", False) and _detect_kids_mention(message):
+        conv.kids_mention_detected = True
+
     msg_lower = message.strip().lower()
     signals = {} if msg_lower.isdigit() else await detect_routing_signals(message, lang=conv.language)
     route = classify_route(conv, message, signals)
