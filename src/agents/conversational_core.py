@@ -1668,16 +1668,17 @@ async def _availability_phase(
     return None
 
 
-async def _body_phase(
-    state: ConversationState, message: str, routing_signals: dict,
-    greeting: str, first_turn: bool,
-) -> str:
-    """Fase 3.3c — cuerpo del turno de booking (carryover → pregunta/recall →
-    deliberación → extracción → slot-fill → cierre determinista), extraído de
-    `maybe_handle_turn`. La disponibilidad se peeló a `_availability_phase`
-    (nodo propio del subgrafo). Recibe `greeting`/`first_turn` de `_setup_phase`.
-    Lo llama también la cascada."""
-    from src.agents import supervisor  # lazy
+async def _routing_phase(
+    state: ConversationState, message: str, routing_signals: dict, greeting: str,
+) -> str | dict:
+    """Fase 3.3d — routing interno del turno de booking (carryover → pregunta/
+    recall → deliberación), extraído de `_body_phase`. Toma los snapshots
+    `prev_*` (ANTES de que `_apply_short_answer` mute el estado) + `resolved_
+    short`, y ejecuta los gates de early-return. Si un gate resuelve el turno
+    devuelve la RESPUESTA (str); si no, devuelve el `carry` (dict con los
+    `prev_*`/`resolved_short`) para `_extract_close_phase`. Lo llama la cascada
+    (vía `maybe_handle_turn`) y el nodo `routing` del subgrafo — misma fuente de
+    verdad, equivalencia por construcción."""
 
     # COMPRENDER (carryover PRIMERO): si hay un slot pendiente y este mensaje
     # lo RESUELVE, el carryover gana aunque el mensaje "parezca pregunta" por
@@ -1775,6 +1776,44 @@ async def _body_phase(
         answer = greeting + rag
         state.history.append({"role": "assistant", "content": answer})
         return answer
+
+    # Ningún gate de routing resolvió el turno → pasar a extracción con el carry
+    # (los snapshots `prev_*` tomados ANTES de `_apply_short_answer` + `resolved_
+    # short`, que la extracción usa para detectar qué cambió este turno).
+    return {
+        "resolved_short": resolved_short,
+        "prev_pending": prev_pending,
+        "prev_cart_types": prev_cart_types,
+        "prev_main_activity": prev_main_activity,
+        "prev_main_service_id": prev_main_service_id,
+        "prev_main_is_certified": prev_main_is_certified,
+        "prev_main_last_dive": prev_main_last_dive,
+        "prev_main_refresher": prev_main_refresher,
+        "prev_group_size": prev_group_size,
+        "prev_group_allocation": prev_group_allocation,
+    }
+
+
+async def _extract_close_phase(
+    state: ConversationState, message: str, routing_signals: dict,
+    greeting: str, first_turn: bool, carry: dict,
+) -> str:
+    """Fase 3.3d — extracción → slot-fill → cierre determinista, extraído de
+    `_body_phase`. Recibe el `carry` (snapshots `prev_*` + `resolved_short`) de
+    `_routing_phase`. Lo llama la cascada (vía `maybe_handle_turn`) y el nodo
+    `extract_close` del subgrafo — misma fuente de verdad."""
+    from src.agents import supervisor  # lazy
+
+    resolved_short = carry["resolved_short"]
+    prev_pending = carry["prev_pending"]
+    prev_cart_types = carry["prev_cart_types"]
+    prev_main_activity = carry["prev_main_activity"]
+    prev_main_service_id = carry["prev_main_service_id"]
+    prev_main_is_certified = carry["prev_main_is_certified"]
+    prev_main_last_dive = carry["prev_main_last_dive"]
+    prev_main_refresher = carry["prev_main_refresher"]
+    prev_group_size = carry["prev_group_size"]
+    prev_group_allocation = carry["prev_group_allocation"]
 
     # COMPRENDER: extracción del resto del mensaje.
     companion_merged_fastpath = False
@@ -2239,10 +2278,11 @@ async def maybe_handle_turn(
     `routing_signals` (auditoría 2026-07-22): ya calculado UNA vez por
     `supervisor._route_message_inner` (nunca se recalcula aquí).
 
-    (Fase 3.3b/c) Orquesta las fases extraídas: `_setup_phase` →
-    `_availability_phase` → `_body_phase`. El subgrafo del booking (flag on)
-    llama a las MISMAS funciones como nodos, así que cascada y grafo comparten
-    la fuente de verdad — equivalencia por construcción."""
+    (Fase 3.3b/c/d) Orquesta las fases extraídas: `_setup_phase` →
+    `_availability_phase` → `_routing_phase` → `_extract_close_phase`. El
+    subgrafo del booking (flag on) llama a las MISMAS funciones como nodos, así
+    que cascada y grafo comparten la fuente de verdad — equivalencia por
+    construcción."""
     routing_signals = routing_signals or {}
     setup = await _setup_phase(state, message, routing_signals)
     if setup is None:
@@ -2251,7 +2291,12 @@ async def maybe_handle_turn(
     avail = await _availability_phase(state, message, routing_signals, greeting)
     if avail is not None:
         return avail
-    return await _body_phase(state, message, routing_signals, greeting, first_turn)
+    routing = await _routing_phase(state, message, routing_signals, greeting)
+    if isinstance(routing, str):
+        return routing
+    return await _extract_close_phase(
+        state, message, routing_signals, greeting, first_turn, routing
+    )
 
 
 async def _answer_question(

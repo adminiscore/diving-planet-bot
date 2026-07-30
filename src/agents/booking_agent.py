@@ -18,15 +18,17 @@ determinista**. Ese corte se hace de forma incremental sobre un **subgrafo
 LangGraph** que vive aquí, igual que el esqueleto de la Fase 1 fue el
 contenedor del grafo principal.
 
-**Estado actual del corte (3.3c):** 3 nodos internos reales. `setup` (idioma/
-saludo/nombre/append-historial/notas) → `availability` (gate de disponibilidad
-anti-alucinación) → `body` (carryover → pregunta/recall → deliberación →
-extracción → slot-fill → cierre). Los tres son funciones
-`conversational_core._setup_phase`/`_availability_phase`/`_body_phase`
-extraídas del monolito — y las llama TAMBIÉN la cascada (vía
-`maybe_handle_turn`), así que cascada y subgrafo comparten la fuente de verdad
-→ equivalencia por construcción. Los siguientes cortes de 3.3 parten el `body`
-(extracción / slot-fill / cierre) en más nodos.
+**Estado actual del corte (3.3d):** 4 nodos internos reales. `setup` (idioma/
+saludo/nombre/append-historial/notas) → `availability` (gate anti-alucinación)
+→ `routing` (carryover → pregunta/recall → deliberación; early-return o pasa el
+`carry`) → `extract_close` (extracción → slot-fill → cierre). Los cuatro son
+funciones `conversational_core._setup_phase`/`_availability_phase`/
+`_routing_phase`/`_extract_close_phase` extraídas del monolito — y las llama
+TAMBIÉN la cascada (vía `maybe_handle_turn`), así que cascada y subgrafo
+comparten la fuente de verdad → equivalencia por construcción. `routing` pasa a
+`extract_close` los snapshots `prev_*`/`resolved_short` vía `carry` (estado del
+subgrafo). El `extract_close` (~460 líneas) es el candidato a partirse más
+(extracción / slot-fill / cierre) en cortes posteriores.
 
 ## PRE/POST-núcleo (patrón del handoff de Fase 2)
 
@@ -50,11 +52,14 @@ logger = logging.getLogger("uvicorn.error")
 
 
 class _BookingSubState(BotState, total=False):
-    """Estado del subgrafo del booking = BotState + los locales que `setup` pasa
-    a `body` (antes eran variables de cierre dentro de `maybe_handle_turn`)."""
+    """Estado del subgrafo del booking = BotState + los locales que un nodo pasa
+    al siguiente (antes eran variables de cierre dentro de `maybe_handle_turn`):
+    `greeting`/`first_turn` (de `setup`) y `carry` (snapshots `prev_*` +
+    `resolved_short`, de `routing` a `extract_close`)."""
 
     greeting: str
     first_turn: bool
+    carry: dict
 
 
 async def _setup_node(state: _BookingSubState) -> dict:
@@ -88,14 +93,29 @@ async def _availability_node(state: _BookingSubState) -> dict:
     return {"reply": avail} if avail is not None else {}
 
 
-async def _body_node(state: _BookingSubState) -> dict:
-    """Tercer nodo interno: cuerpo del turno (carryover → … → cierre)."""
-    from src.agents.conversational_core import _body_phase
+async def _routing_node(state: _BookingSubState) -> dict:
+    """Tercer nodo interno: routing interno (carryover → pregunta/recall →
+    deliberación). Si un gate resuelve el turno → `reply`; si no → `carry`
+    (prev_*/resolved_short) para `extract_close`."""
+    from src.agents.conversational_core import _routing_phase
 
     conv = state["conv_state"]
     message = state["message"]
     signals = state.get("signals") or {}
-    reply = await _body_phase(conv, message, signals, state["greeting"], state["first_turn"])
+    result = await _routing_phase(conv, message, signals, state["greeting"])
+    return {"reply": result} if isinstance(result, str) else {"carry": result}
+
+
+async def _extract_close_node(state: _BookingSubState) -> dict:
+    """Cuarto nodo interno: extracción → slot-fill → cierre determinista."""
+    from src.agents.conversational_core import _extract_close_phase
+
+    conv = state["conv_state"]
+    message = state["message"]
+    signals = state.get("signals") or {}
+    reply = await _extract_close_phase(
+        conv, message, signals, state["greeting"], state["first_turn"], state["carry"]
+    )
     return {"reply": reply}
 
 
@@ -106,23 +126,30 @@ def _after_setup(state: _BookingSubState) -> str:
 
 
 def _after_availability(state: _BookingSubState) -> str:
-    """Si la disponibilidad resolvió el turno, termina; si no, sigue al `body`."""
-    return "end" if state.get("reply") is not None else "body"
+    """Si la disponibilidad resolvió el turno, termina; si no, sigue a `routing`."""
+    return "end" if state.get("reply") is not None else "routing"
+
+
+def _after_routing(state: _BookingSubState) -> str:
+    """Si un gate de routing resolvió el turno, termina; si no, sigue a
+    `extract_close` (con el `carry` que `routing` dejó en el estado)."""
+    return "end" if state.get("reply") is not None else "extract_close"
 
 
 def _build_booking_subgraph():
-    """Subgrafo del booking (§3.3): `START → setup → availability → body → END`,
-    con salida temprana a END en cuanto un nodo resuelve el turno. Los cortes
-    siguientes parten el `body` en más nodos, sin tocar el grafo padre ni la
-    firma de `booking_node`."""
+    """Subgrafo del booking (§3.3): `START → setup → availability → routing →
+    extract_close → END`, con salida temprana a END en cuanto un nodo resuelve
+    el turno. Sin tocar el grafo padre ni la firma de `booking_node`."""
     builder = StateGraph(_BookingSubState)
     builder.add_node("setup", _setup_node)
     builder.add_node("availability", _availability_node)
-    builder.add_node("body", _body_node)
+    builder.add_node("routing", _routing_node)
+    builder.add_node("extract_close", _extract_close_node)
     builder.add_edge(START, "setup")
     builder.add_conditional_edges("setup", _after_setup, {"availability": "availability", "end": END})
-    builder.add_conditional_edges("availability", _after_availability, {"body": "body", "end": END})
-    builder.add_edge("body", END)
+    builder.add_conditional_edges("availability", _after_availability, {"routing": "routing", "end": END})
+    builder.add_conditional_edges("routing", _after_routing, {"extract_close": "extract_close", "end": END})
+    builder.add_edge("extract_close", END)
     return builder.compile()
 
 

@@ -49,8 +49,8 @@ def test_booking_subgraph_compiles_with_internal_nodes():
 
     sub = _get_booking_subgraph()
     nodes = sub.get_graph().nodes
-    # 3.3b/c: el núcleo partido en setup + availability + body (nodos internos)
-    assert {"setup", "availability", "body"} <= set(nodes)
+    # 3.3b/c/d: el núcleo partido en setup + availability + routing + extract_close
+    assert {"setup", "availability", "routing", "extract_close"} <= set(nodes)
 
 
 @pytest.mark.asyncio
