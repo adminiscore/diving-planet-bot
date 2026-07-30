@@ -1794,14 +1794,16 @@ async def _routing_phase(
     }
 
 
-async def _extract_close_phase(
+async def _extraction_phase(
     state: ConversationState, message: str, routing_signals: dict,
-    greeting: str, first_turn: bool, carry: dict,
-) -> str:
-    """Fase 3.3d — extracción → slot-fill → cierre determinista, extraído de
-    `_body_phase`. Recibe el `carry` (snapshots `prev_*` + `resolved_short`) de
-    `_routing_phase`. Lo llama la cascada (vía `maybe_handle_turn`) y el nodo
-    `extract_close` del subgrafo — misma fuente de verdad."""
+    greeting: str, carry: dict,
+) -> str | None:
+    """Fase 3.3e — extracción del mensaje (understand + multi-ítem + redes de
+    precisión LLM + anti-bucle de slot), extraído de `_extract_close_phase`.
+    Muta el estado con lo extraído; si un gate resuelve el turno devuelve la
+    respuesta (str), si no devuelve None para pasar a `_slotfill_close_phase`.
+    Recibe el `carry` de `_routing_phase`. Lo llama la cascada (vía
+    `maybe_handle_turn`) y el nodo `extraction` del subgrafo."""
     from src.agents import supervisor  # lazy
 
     resolved_short = carry["resolved_short"]
@@ -2208,6 +2210,24 @@ async def _extract_close_phase(
         state.history.append({"role": "assistant", "content": answer})
         return answer
 
+    # Ningún gate de extracción resolvió el turno → pasar a slot-fill + cierre.
+    return None
+
+
+async def _slotfill_close_phase(
+    state: ConversationState, message: str, greeting: str, first_turn: bool, carry: dict,
+) -> str:
+    """Fase 3.3e — RESOLVER + RESPONDER: elige el siguiente slot que falta
+    (`next_missing_slot`) y lo pregunta (`ask_slot`), o cierra la reserva
+    (`_finalize` + nota de lead), y envuelve la respuesta con el acuse cálido
+    (`compose_acknowledgement`). Extraído de `_extract_close_phase`; corre cuando
+    la extracción no resolvió el turno. Lo llama la cascada (vía
+    `maybe_handle_turn`) y el nodo `slotfill_close` del subgrafo."""
+    from src.agents import supervisor  # lazy
+
+    resolved_short = carry["resolved_short"]
+    prev_pending = carry["prev_pending"]
+
     # RESOLVER + RESPONDER.
     #
     # Bug en vivo 2026-07-23 (matriz EN de multi-ítem): si este turno NO
@@ -2278,11 +2298,11 @@ async def maybe_handle_turn(
     `routing_signals` (auditoría 2026-07-22): ya calculado UNA vez por
     `supervisor._route_message_inner` (nunca se recalcula aquí).
 
-    (Fase 3.3b/c/d) Orquesta las fases extraídas: `_setup_phase` →
-    `_availability_phase` → `_routing_phase` → `_extract_close_phase`. El
-    subgrafo del booking (flag on) llama a las MISMAS funciones como nodos, así
-    que cascada y grafo comparten la fuente de verdad — equivalencia por
-    construcción."""
+    (Fase 3.3b/c/d/e) Orquesta las fases extraídas: `_setup_phase` →
+    `_availability_phase` → `_routing_phase` → `_extraction_phase` →
+    `_slotfill_close_phase`. El subgrafo del booking (flag on) llama a las MISMAS
+    funciones como nodos, así que cascada y grafo comparten la fuente de verdad —
+    equivalencia por construcción."""
     routing_signals = routing_signals or {}
     setup = await _setup_phase(state, message, routing_signals)
     if setup is None:
@@ -2294,9 +2314,11 @@ async def maybe_handle_turn(
     routing = await _routing_phase(state, message, routing_signals, greeting)
     if isinstance(routing, str):
         return routing
-    return await _extract_close_phase(
-        state, message, routing_signals, greeting, first_turn, routing
-    )
+    carry = routing
+    extraction = await _extraction_phase(state, message, routing_signals, greeting, carry)
+    if extraction is not None:
+        return extraction
+    return await _slotfill_close_phase(state, message, greeting, first_turn, carry)
 
 
 async def _answer_question(

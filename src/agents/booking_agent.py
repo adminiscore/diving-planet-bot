@@ -18,17 +18,18 @@ determinista**. Ese corte se hace de forma incremental sobre un **subgrafo
 LangGraph** que vive aquí, igual que el esqueleto de la Fase 1 fue el
 contenedor del grafo principal.
 
-**Estado actual del corte (3.3d):** 4 nodos internos reales. `setup` (idioma/
+**Estado actual del corte (3.3e):** 5 nodos internos reales. `setup` (idioma/
 saludo/nombre/append-historial/notas) → `availability` (gate anti-alucinación)
-→ `routing` (carryover → pregunta/recall → deliberación; early-return o pasa el
-`carry`) → `extract_close` (extracción → slot-fill → cierre). Los cuatro son
-funciones `conversational_core._setup_phase`/`_availability_phase`/
-`_routing_phase`/`_extract_close_phase` extraídas del monolito — y las llama
-TAMBIÉN la cascada (vía `maybe_handle_turn`), así que cascada y subgrafo
-comparten la fuente de verdad → equivalencia por construcción. `routing` pasa a
-`extract_close` los snapshots `prev_*`/`resolved_short` vía `carry` (estado del
-subgrafo). El `extract_close` (~460 líneas) es el candidato a partirse más
-(extracción / slot-fill / cierre) en cortes posteriores.
+→ `routing` (carryover → pregunta/recall → deliberación) → `extraction`
+(understand + multi-ítem + redes de precisión + anti-bucle de slot) →
+`slotfill_close` (RESOLVER + RESPONDER: elige/pregunta el slot que falta o
+cierra la reserva + acuse). Los cinco son funciones `_setup_phase`/
+`_availability_phase`/`_routing_phase`/`_extraction_phase`/`_slotfill_close_
+phase` de `conversational_core`, extraídas del monolito — y las llama TAMBIÉN
+la cascada (vía `maybe_handle_turn`), así que cascada y subgrafo comparten la
+fuente de verdad → equivalencia por construcción. `routing` pasa a los nodos de
+abajo los snapshots `prev_*`/`resolved_short` vía `carry` (estado del subgrafo).
+El monolito del núcleo queda partido en 5 fases de responsabilidad única.
 
 ## PRE/POST-núcleo (patrón del handoff de Fase 2)
 
@@ -106,15 +107,28 @@ async def _routing_node(state: _BookingSubState) -> dict:
     return {"reply": result} if isinstance(result, str) else {"carry": result}
 
 
-async def _extract_close_node(state: _BookingSubState) -> dict:
-    """Cuarto nodo interno: extracción → slot-fill → cierre determinista."""
-    from src.agents.conversational_core import _extract_close_phase
+async def _extraction_node(state: _BookingSubState) -> dict:
+    """Cuarto nodo interno: extracción del mensaje (understand + multi-ítem +
+    redes de precisión + anti-bucle). Si un gate resuelve el turno → `reply`; si
+    no → sigue a `slotfill_close` (el estado ya quedó mutado con lo extraído)."""
+    from src.agents.conversational_core import _extraction_phase
 
     conv = state["conv_state"]
     message = state["message"]
     signals = state.get("signals") or {}
-    reply = await _extract_close_phase(
-        conv, message, signals, state["greeting"], state["first_turn"], state["carry"]
+    reply = await _extraction_phase(conv, message, signals, state["greeting"], state["carry"])
+    return {"reply": reply} if reply is not None else {}
+
+
+async def _slotfill_close_node(state: _BookingSubState) -> dict:
+    """Quinto nodo interno: RESOLVER + RESPONDER (elige/pregunta el slot que
+    falta, o cierra la reserva, + acuse cálido)."""
+    from src.agents.conversational_core import _slotfill_close_phase
+
+    conv = state["conv_state"]
+    message = state["message"]
+    reply = await _slotfill_close_phase(
+        conv, message, state["greeting"], state["first_turn"], state["carry"]
     )
     return {"reply": reply}
 
@@ -132,24 +146,33 @@ def _after_availability(state: _BookingSubState) -> str:
 
 def _after_routing(state: _BookingSubState) -> str:
     """Si un gate de routing resolvió el turno, termina; si no, sigue a
-    `extract_close` (con el `carry` que `routing` dejó en el estado)."""
-    return "end" if state.get("reply") is not None else "extract_close"
+    `extraction` (con el `carry` que `routing` dejó en el estado)."""
+    return "end" if state.get("reply") is not None else "extraction"
+
+
+def _after_extraction(state: _BookingSubState) -> str:
+    """Si un gate de extracción resolvió el turno, termina; si no, sigue a
+    `slotfill_close`."""
+    return "end" if state.get("reply") is not None else "slotfill_close"
 
 
 def _build_booking_subgraph():
     """Subgrafo del booking (§3.3): `START → setup → availability → routing →
-    extract_close → END`, con salida temprana a END en cuanto un nodo resuelve
-    el turno. Sin tocar el grafo padre ni la firma de `booking_node`."""
+    extraction → slotfill_close → END`, con salida temprana a END en cuanto un
+    nodo resuelve el turno. Sin tocar el grafo padre ni la firma de
+    `booking_node`."""
     builder = StateGraph(_BookingSubState)
     builder.add_node("setup", _setup_node)
     builder.add_node("availability", _availability_node)
     builder.add_node("routing", _routing_node)
-    builder.add_node("extract_close", _extract_close_node)
+    builder.add_node("extraction", _extraction_node)
+    builder.add_node("slotfill_close", _slotfill_close_node)
     builder.add_edge(START, "setup")
     builder.add_conditional_edges("setup", _after_setup, {"availability": "availability", "end": END})
     builder.add_conditional_edges("availability", _after_availability, {"routing": "routing", "end": END})
-    builder.add_conditional_edges("routing", _after_routing, {"extract_close": "extract_close", "end": END})
-    builder.add_edge("extract_close", END)
+    builder.add_conditional_edges("routing", _after_routing, {"extraction": "extraction", "end": END})
+    builder.add_conditional_edges("extraction", _after_extraction, {"slotfill_close": "slotfill_close", "end": END})
+    builder.add_edge("slotfill_close", END)
     return builder.compile()
 
 
