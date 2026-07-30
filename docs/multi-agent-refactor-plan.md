@@ -659,11 +659,21 @@ reproducible. **Siguiente: 2.5 (nodo `booking`), luego 2.6.** Sigue este patrón
         idioma en primer turno + `greeting` + captura de nombre + **append del mensaje del
         usuario al historial** + captura de notas) DEBE ir primero: la disponibilidad, el
         carryover, la deliberación y la extracción dependen todas de él (leen `greeting`, y las
-        notas/RAG leen el historial YA con el mensaje). Además comparten locales (`greeting`,
-        `resolved_short`, snapshots `prev_*`). ⇒ **El primer nodo interno real es `setup`**; el
-        resto (`body`) se extrae después, pasando `greeting`/`resolved_short` por el estado del
-        subgrafo. No se puede empezar por disponibilidad/notas/cierre sin el setup delante. El
-        `body` (~570 líneas) es el corte grande — hacerlo en pasos con equivalencia por cada uno.
+        notas/RAG leen el historial YA con el mensaje). ⇒ **El primer nodo interno real es
+        `setup`**; el `body` se extrae detrás, pasando `greeting`/`first_turn` por el estado del
+        subgrafo.
+      - **3.3b · Partir el núcleo en `setup` + `body` — HECHO** (`4c53d5c`, Gadea). El subgrafo
+        pasa a `START → setup → (delega?END : body) → END`. `maybe_handle_turn` descompuesto en
+        `_setup_phase` (→ `(greeting, first_turn)` o `None`) + `_body_phase` (disponibilidad →
+        carryover → pregunta/recall → deliberación → extracción → slot-fill → cierre), llamados
+        TANTO por la cascada (flag off) COMO por los nodos del subgrafo (flag on) — misma fuente
+        de verdad. El `body` quedó byte-idéntico (diff `-w` solo toca firmas/docstrings/
+        orquestador). **Equivalencia verificada por 3 vías**: suite verde en los 3 modos (1491),
+        smoke en vivo (las diferencias flag on/off son solo no-determinismo del LLM — flag-off
+        vs flag-off da el mismo patrón), y el diff no toca la lógica del body.
+      - **Siguiente (3.3c+):** partir el `body` en `extracción` → `slot-fill` → `cierre`
+        (comparten `greeting`/`resolved_short`/snapshots `prev_*` → pasarlos por el estado del
+        subgrafo). Es el resto del corte grande, en pasos con equivalencia por cada uno.
 - [ ] **3.4 · Reducir llamadas LLM/turno.** Medir en **LangSmith** vs baseline de Fase 0.
       Documentar antes/después.
 - **DoD:** llamadas LLM/turno ↓ vs baseline; cero colisiones; prompts por nodo testeados.
