@@ -671,9 +671,18 @@ reproducible. **Siguiente: 2.5 (nodo `booking`), luego 2.6.** Sigue este patrón
         orquestador). **Equivalencia verificada por 3 vías**: suite verde en los 3 modos (1491),
         smoke en vivo (las diferencias flag on/off son solo no-determinismo del LLM — flag-off
         vs flag-off da el mismo patrón), y el diff no toca la lógica del body.
-      - **Siguiente (3.3c+):** partir el `body` en `extracción` → `slot-fill` → `cierre`
-        (comparten `greeting`/`resolved_short`/snapshots `prev_*` → pasarlos por el estado del
-        subgrafo). Es el resto del corte grande, en pasos con equivalencia por cada uno.
+      - **3.3c · Peelar la disponibilidad a su nodo — HECHO** (`c6765d4`, Gadea). El subgrafo
+        pasa a 3 nodos: `START → setup → availability → body → END`. `_availability_phase`
+        (gate anti-alucinación de calendario) extraído de `_body_phase` como función compartida
+        (la llaman cascada y subgrafo). Corte limpio de bajo riesgo: la disponibilidad es
+        autocontenida (solo `greeting`, ya en el estado), sin los locales `prev_*`/
+        `resolved_short` del resto. Aislarla facilita reubicar el patrón B del audit §1.5
+        (disponibilidad → `changes`) en el cutover, sin tocar conducta ahora. Suite verde 3
+        modos (1492), +2 tests.
+      - **Siguiente (3.3d+):** partir el `body` restante en `extracción` → `slot-fill` →
+        `cierre`. Estas SÍ comparten `resolved_short` + snapshots `prev_*` → hay que pasarlos
+        por el estado del subgrafo (mismo patrón que `greeting`/`first_turn`). Es el resto del
+        corte grande, en pasos con equivalencia por cada uno.
 - [ ] **3.4 · Reducir llamadas LLM/turno.** Medir en **LangSmith** vs baseline de Fase 0.
       Documentar antes/después.
 - **DoD:** llamadas LLM/turno ↓ vs baseline; cero colisiones; prompts por nodo testeados.
