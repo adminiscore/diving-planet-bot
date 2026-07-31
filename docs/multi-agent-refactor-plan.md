@@ -6,8 +6,11 @@
 > alguien retoma tras un merge, **el estado de los checkboxes aquí es la única verdad**.
 > Acompaña (no sustituye) a `docs/project-history/session-handoff.md`.
 
-**Estado global:** `Fase 0/1/2 completas · Fase 3 completa (3.1/3.2/3.3/3.4)`. Siguiente: **Fase 4
-(estado/memoria/persistencia)**, pendiente del OK del owner para arrancar. Grafo LangGraph detrás de `agent_arch`; **los 5 nodos son REALES**
+**Estado global:** `Fase 0/1/2/3/4 completas`. Siguiente: **Fase 5** (test-harness por nodo +
+CORTE del legacy `agent_arch` + limpieza de código muerto + bucle de datos reales), pendiente del
+OK del owner. Nota: Fase 4 se cerró como **confirmar+documentar** (reencuadre aprobado) — el
+estado ya estaba consolidado en `ConversationState`, el grounding centralizado en `rag_answer`, y
+la memoria Fase C cableada en el State; sin big-bang. Grafo LangGraph detrás de `agent_arch`; **los 5 nodos son REALES**
 (deflection/escalation/changes/info/booking, cortes strangler 2.1–2.5) y el grafo (flag on)
 despacha cada ruta a su nodo sin delegar en la cascada. El nodo `booking` es ya un **subgrafo de
 5 fases** (`setup → availability → routing → extraction → slotfill_close`, 3.3) y **los prompts
@@ -833,10 +836,28 @@ reproducible. **Siguiente: 2.5 (nodo `booking`), luego 2.6.** Sigue este patrón
       migración + la superficie SQLi→RCE de los checkpointers (spike §5); revisable si se
       necesita replay explícito, fijando `langgraph-checkpoint-redis>=1.0.2` y sin exponer
       `get_state_history` a filtros del cliente. *(dev: Álvaro)*
-- [ ] **4.3 · Grounding único + memoria/notes.** Unificar `grounding_check` + reglas
-      anti-alucinación en una capa que todos los nodos atraviesan; cablear la Fase C de memoria
-      (hechos abiertos) en el State; archivar `memory-context-improvement-plan.md`.
-- **DoD:** estado consolidado, persistencia decidida, una capa de grounding, memoria coherente.
+- [x] **4.3 · Grounding único + memoria/notes — HECHO (confirmado + documentado; ya satisfecho
+      por la arquitectura).** Audit con evidencia:
+      - **Grounding YA unificado:** un solo módulo (`src/agents/grounding_check.py`:
+        `is_grounded`/`urls_grounded`/`currency_amounts_grounded`/`capacity_claims_grounded`) y un
+        **único chokepoint de texto factual**: `supervisor.rag_answer`. TODOS los emisores de
+        respuesta factual pasan por ahí — el nodo `info` (`info_agent`), el núcleo
+        (`_answer_question` → `supervisor.rag_answer`) y el DIVE TO HEAL de la cascada. **No hay
+        camino factual que salte el grounding.** Cubierto por ~50 aserciones en
+        `test_rag_safety.py`. **Decisión:** NO se construye un "middleware" que atraviesen
+        deflection/escalation/changes — usan copy determinista/enlatado (no alucinan); sería
+        andamiaje inútil. `compose_acknowledgement` (ack de persona) queda fuera a propósito: no
+        asevera hechos de la KB (precios/cupo/URLs), solo reconoce lo dicho + CTA.
+      - **Memoria Fase C YA cableada en el State canónico:** `remembered_facts["notes"]` vive en
+        `ConversationState`, se captura con `_maybe_capture_notes` (→ `extract_notes`) y alimenta
+        `_build_extra_context` (contexto RAG). **Decisión:** se captura en la ruta booking (donde
+        aparecen los hechos sustantivos de reserva), NO cross-route — hacerlo global añadiría una
+        llamada `extract_notes` a cada turno de safety/deflection/changes/info, deshaciendo la
+        reducción de 3.4 por poca ganancia. `docs/archive/memory-context-improvement-plan.md` **ya
+        archivado**. *(dev: Álvaro)*
+- **DoD cumplido:** estado consolidado (ConversationState canónico), persistencia decidida
+  (`state_store.py`), una capa de grounding (centralizada en `rag_answer`+`grounding_check`),
+  memoria coherente (Fase C en el State). **Fase 4 completa.**
 
 ### Fase 5 — Test por nodo, corte del legacy y bucle de datos reales
 - [ ] **5.1 · Test-harness por nodo.** Cada nodo probado en aislamiento (State in → update
@@ -894,6 +915,13 @@ reproducible. **Siguiente: 2.5 (nodo `booking`), luego 2.6.** Sigue este patrón
 ## 8. Registro de ejecución
 *(Una línea por paso cerrado: fecha · dev · qué · commit. El más reciente arriba.)*
 
+- **2026-07-31 · Álvaro · Fase 4.3 — grounding único + memoria Fase C (confirmado, ya satisfecho).**
+  Audit con evidencia: grounding centralizado en `grounding_check.py` + único chokepoint factual
+  `supervisor.rag_answer` (info/núcleo/DIVE TO HEAL pasan por ahí; ~50 aserciones en
+  `test_rag_safety.py`); memoria Fase C (`remembered_facts`/notes) ya en el State canónico y
+  alimentando el contexto RAG; doc ya archivado. Decisiones deliberadas: no middleware de
+  grounding para nodos de copy determinista; notes se captura en booking, no cross-route (evita
+  añadir `extract_notes` a cada turno y deshacer 3.4). **Fase 4 COMPLETA.** Siguiente: Fase 5.
 - **2026-07-31 · Álvaro · Fase 4.1+4.2 — reencuadre aprobado (estado ya consolidado).** Audit:
   `ConversationState` (dataclass ~60 campos) ya es el State único que todos los nodos comparten
   por referencia; cero estado de conversación disperso. **4.1**: confirmar+documentar como State
