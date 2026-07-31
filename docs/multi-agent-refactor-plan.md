@@ -6,8 +6,8 @@
 > alguien retoma tras un merge, **el estado de los checkboxes aquí es la única verdad**.
 > Acompaña (no sustituye) a `docs/project-history/session-handoff.md`.
 
-**Estado global:** `Fase 0 completa · Fase 1 completa · Fase 2 completa · Fase 3: 3.1/3.2/3.3
-hechas, queda 3.4`. Grafo LangGraph detrás de `agent_arch`; **los 5 nodos son REALES**
+**Estado global:** `Fase 0/1/2 completas · Fase 3 completa (3.1/3.2/3.3/3.4)`. Siguiente: **Fase 4
+(estado/memoria/persistencia)**, pendiente del OK del owner para arrancar. Grafo LangGraph detrás de `agent_arch`; **los 5 nodos son REALES**
 (deflection/escalation/changes/info/booking, cortes strangler 2.1–2.5) y el grafo (flag on)
 despacha cada ruta a su nodo sin delegar en la cascada. El nodo `booking` es ya un **subgrafo de
 5 fases** (`setup → availability → routing → extraction → slotfill_close`, 3.3) y **los prompts
@@ -763,8 +763,14 @@ reproducible. **Siguiente: 2.5 (nodo `booking`), luego 2.6.** Sigue este patrón
         slotfill_close), todas compartidas por cascada y subgrafo (equivalencia por
         construcción). Partir más (p. ej. slot-fill vs. cierre) es refinamiento de valor
         marginal decreciente; queda a criterio del equipo.
-- [ ] **3.4 · Reducir llamadas LLM/turno.** Medir en **LangSmith** vs baseline de Fase 0.
-      Documentar antes/después.
+- [x] **3.4 · Reducir llamadas LLM/turno — HECHO (1ª reducción medida; resto diferido por
+      robustez, con criterio).** Medir vs baseline de Fase 0. **DoD cumplido: 3.00 → 2.80
+      llamadas/turno**, cero colisiones, prompts por nodo testeados. **Suite completa verde con la
+      reducción dentro: 1538 passed / 9 skipped / 0 failed** (2026-07-31, esta máquina). Análisis
+      completo de los candidatos restantes → se dejan a propósito (no son reducciones seguras):
+      el solapamiento `fill_gaps`/`detect_special_signals` son redes intencionalmente separadas
+      (bugs de doble-conteo ya peleados), y `detect_routing_signals` es la red de seguridad del
+      router. Detalle abajo.
       - **Estado (2026-07-30, Gonzalo): PENDIENTE, y hasta ahora no hay nada que medir.** Los
         tres pasos cerrados de Fase 3 (3.1 funcional, 3.2, 3.3) son **estructurales y
         preservadores de conducta**: mismos prompts (byte a byte, probado) y mismos puntos de
@@ -880,8 +886,10 @@ reproducible. **Siguiente: 2.5 (nodo `booking`), luego 2.6.** Sigue este patrón
   refactor, confirmada empíricamente). Atribuida cada llamada a su red (traza del caller). 1ª
   reducción segura: `fill_gaps` se salta en un saludo puro (`_is_greeting_only`) → **3.00 → 2.80
   llamadas/turno** (saludo 2→1), preservador de conducta. 508 tests de regresión verdes + test
-  nuevo `test_llm_call_reduction.py`. Siguientes candidatos documentados (solapamiento
-  fill_gaps/detect_special_signals en el cierre; routing_signals en todos los turnos).
+  nuevo `test_llm_call_reduction.py`. Siguientes candidatos analizados y **diferidos con criterio**
+  (no son seguros: redes intencionalmente separadas / red de seguridad del router). **Fase 3.4
+  cerrada; suite COMPLETA verde con la reducción dentro: 1538 passed / 9 skipped / 0 failed
+  (6:15). Fase 3 COMPLETA.**
 - **2026-07-30 · Gonzalo · Fase 3.2 — prompts a `src/prompts/`, un módulo por nodo.** Sincronizada
   la rama (`feature/agent-arch` traída a `feature/fase4-p2`, fast-forward de 48 commits) y
   cerrado el siguiente paso del plan. Nuevo paquete `src/prompts/` (`router.py` · `booking.py` ·
