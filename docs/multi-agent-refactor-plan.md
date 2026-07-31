@@ -877,8 +877,15 @@ reproducible. **Siguiente: 2.5 (nodo `booking`), luego 2.6.** Sigue este patrón
 >    push a `pre_alvaro`. **Hasta que esto esté validado en PRE, NO se ejecuta 5.2 (corte del
 >    legacy es irreversible).**
 
-- [ ] **5.1 · Test-harness por nodo.** Cada nodo probado en aislamiento (State in → update
-      out, LLM mockeado) + el grafo compilado (integración). Reorganizar la suite por nodo.
+- [x] **5.1 · Test-harness por nodo — HECHO.** Cada nodo real tiene su fichero de test en
+      aislamiento (State in → update out, LLM/fases mockeadas): `test_deflection_agent` (5),
+      `test_escalation_agent` (7), `test_changes_agent` (5), `test_info_agent` (8),
+      `test_booking_agent` (6). El **grafo compilado** (integración) en `test_agent_arch_graph`
+      (6) + router (20) + estado (3) + shadow (3). **Cerrado el hueco fino** con
+      `test_booking_subgraph_nodes.py` (7): los 5 nodos internos del subgrafo booking
+      (`setup/availability/routing/extraction/slotfill_close`) probados en aislamiento con las
+      fases del núcleo mockeadas + las funciones de edge `_after_*`. La "reorganización por nodo"
+      queda satisfecha por la convención `test_<nodo>_agent.py`. *(dev: Álvaro)*
 - [ ] **5.2 · CORTE del legacy.** Con el flag probado en PRE: **quitar `agent_arch`** y borrar
       la cascada vieja del supervisor, las redes globales muertas y lo que quede de
       `ConversationState`/`Step` legacy (reachability, suite tras cada borrado). `supervisor.py`
