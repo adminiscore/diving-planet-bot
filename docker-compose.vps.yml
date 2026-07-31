@@ -104,6 +104,14 @@ services:
       # rationale as Fases 1-3. Off elsewhere by default (src/config.py).
       # Revert = remove this line + redeploy.
       LLM_EXTRACTION_CUTOVER_LOGISTICS: "true"
+      # Refactor multi-agente (docs/multi-agent-refactor-plan.md) — validación en
+      # PRE antes del corte del legacy (Fase 5.2). STAGE A (ahora): SHADOW — la
+      # cascada sigue sirviendo (sin cambio de conducta) y además el router corre
+      # en sombra y loguea [ROUTE_SHADOW] match/mismatch sobre tráfico real. Cero
+      # riesgo. STAGE B (tras validar el shadow): cambiar esta línea por
+      # AGENT_ARCH: "true" para que el GRAFO sirva de verdad. On en PRE only; off
+      # elsewhere por defecto (src/config.py). Revert = quitar la línea + redeploy.
+      AGENT_ARCH_SHADOW: "true"
     depends_on:
       dp-pre-postgres:
         condition: service_healthy
