@@ -815,11 +815,24 @@ reproducible. **Siguiente: 2.5 (nodo `booking`), luego 2.6.** Sigue este patrón
   colisiones; prompts por nodo testeados.
 
 ### Fase 4 — Estado, memoria y persistencia unificados
-- [ ] **4.1 · `BotState` único.** Todos los nodos leen/escriben el mismo State; se elimina el
-      estado disperso restante.
-- [ ] **4.2 · Persistencia.** Decidir: **checkpointer de LangGraph** (Redis/Postgres, thread_id
-      = conversation_id, trae time-travel/replay) **vs** mantener `state_store.py`. Registrar
-      la decisión + migración.
+> **Reencuadre aprobado por el owner (2026-07-31).** El audit de Fase 4 mostró que **el estado
+> ya está consolidado**: `ConversationState` (dataclass ~60 campos tipados) es el State único que
+> todos los nodos comparten por referencia; no hay estado de conversación disperso (solo cachés
+> inmutables de config/KB + un ContextVar de diagnóstico por turno). Por eso 4.1/4.2 se cierran
+> como **confirmar+documentar** (no big-bang), y el trabajo sustantivo de la fase es 4.3.
+- [x] **4.1 · State canónico único — HECHO (reencuadrado, sin big-bang).** Confirmado y
+      documentado que `ConversationState` es el State único y canónico (todos los nodos lo mutan
+      por referencia vía `conv_state` en `BotState`). **NO** se re-tipa a un `BotState` plano: sería
+      un big-bang contra el strangler (#2) y el reducer `add_messages` no aporta en topología
+      lineal (sin fan-out). Audit: cero estado disperso que eliminar. Docstring de
+      `src/orchestration/state.py` actualizado con la decisión. *(dev: Álvaro)*
+- [x] **4.2 · Persistencia — DECIDIDO: mantener `state_store.py` sin cambios.** Sigue
+      persistiendo el `ConversationState` canónico (JSON ⇄ Redis, por `conversation_id` + TTL).
+      Como no hay migración a `BotState` tipado, la serialización no cambia (cero migración). Se
+      descarta el checkpointer de LangGraph por ahora: no usamos time-travel/replay y añadiría
+      migración + la superficie SQLi→RCE de los checkpointers (spike §5); revisable si se
+      necesita replay explícito, fijando `langgraph-checkpoint-redis>=1.0.2` y sin exponer
+      `get_state_history` a filtros del cliente. *(dev: Álvaro)*
 - [ ] **4.3 · Grounding único + memoria/notes.** Unificar `grounding_check` + reglas
       anti-alucinación en una capa que todos los nodos atraviesan; cablear la Fase C de memoria
       (hechos abiertos) en el State; archivar `memory-context-improvement-plan.md`.
@@ -881,6 +894,14 @@ reproducible. **Siguiente: 2.5 (nodo `booking`), luego 2.6.** Sigue este patrón
 ## 8. Registro de ejecución
 *(Una línea por paso cerrado: fecha · dev · qué · commit. El más reciente arriba.)*
 
+- **2026-07-31 · Álvaro · Fase 4.1+4.2 — reencuadre aprobado (estado ya consolidado).** Audit:
+  `ConversationState` (dataclass ~60 campos) ya es el State único que todos los nodos comparten
+  por referencia; cero estado de conversación disperso. **4.1**: confirmar+documentar como State
+  canónico (NO re-tipar a BotState plano — big-bang contra strangler, reducer inútil en topología
+  lineal). **4.2**: mantener `state_store.py` sin cambios (persiste el `ConversationState`
+  canónico; checkpointer de LangGraph descartado por ahora — sin replay, evita migración + la
+  superficie SQLi→RCE). Docstring de `state.py` + plan actualizados. Siguiente: **4.3** (grounding
+  único + memoria/notes), la parte sustantiva de la fase.
 - **2026-07-31 · Álvaro · Fase 3.4 — medición desbloqueada + 1ª reducción de llamadas/turno.**
   Con Postgres+Redis arriba: el grafo mide **3.00 llamadas/turno = baseline** (paridad tras el
   refactor, confirmada empíricamente). Atribuida cada llamada a su red (traza del caller). 1ª

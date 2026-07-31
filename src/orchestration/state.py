@@ -19,19 +19,28 @@ vivo (`conv_state`) + los campos de orquestación del grafo (`message`,
 `route`, `signals`, `reply`). Los nodos-wrapper leen/mutan `conv_state`
 llamando a la lógica de hoy; el grafo solo añade el enrutado por encima.
 
-**Migración futura (Fases 3-4):** a medida que cada nodo se vuelve "real"
-(deja de delegar en la cascada y hace su trabajo dentro del nodo), sus datos
-migran de `conv_state` a campos propios de `BotState`, hasta que en la Fase
-4.1 ("BotState único") `conv_state` desaparece y quedan los campos tipados +
-el `messages` con reducer del §4. Ese es también el punto donde se decide la
-persistencia (Fase 4.2: checkpointer de LangGraph vs. mantener
-`state_store.py`).
+**Decisión de Fase 4.1 (2026-07-31, reencuadre aprobado por el owner):** el
+"BotState rico con campos tipados + reducer `messages`" del §4 **NO se
+materializa** — `ConversationState` (dataclass de ~60 campos tipados en
+`src/flows/state.py`) YA es el State único y canónico: todos los nodos lo
+comparten por referencia vía `conv_state`, y el audit de Fase 4 no encontró
+estado de conversación disperso (los únicos globals son cachés inmutables de
+config/KB y un ContextVar de diagnóstico por turno, no estado). Re-tipar ese
+dataclass a un `BotState` plano sería un big-bang contra el principio strangler
+(#2), y el reducer `add_messages` no aporta en una topología **lineal** (grafo
+router→nodo→END y subgrafo booking lineal, sin fan-out). Así que `conv_state`
+**se queda** como el portador del State canónico; `BotState` sigue siendo el
+transporte por turno (message/route/signals/reply + conv_state).
 
-**Persistencia hoy (Fase 1):** `BotState` es un envoltorio **por turno**, en
-vuelo — NUNCA se serializa. Solo `conv_state` se persiste, exactamente igual
-que hoy (`src/state_store.py` ⇄ Redis, sin cambios). Por eso "serialize/
-deserialize ⇄ Redis conservados" (§5 Fase 1.1) se cumple de forma trivial: el
-grafo no toca la persistencia.
+**Persistencia — decisión de Fase 4.2 (2026-07-31): mantener `state_store.py`
+sin cambios.** `BotState` es un envoltorio **por turno**, en vuelo — NUNCA se
+serializa. Solo `conv_state` (el `ConversationState` canónico) se persiste
+(`src/state_store.py` ⇄ Redis, JSON por `conversation_id` + TTL). Como no se
+migra a `BotState` tipado, la serialización sigue siendo `ConversationState ⇄
+JSON` **sin ninguna migración**. Se descarta el checkpointer de LangGraph por
+ahora (no usamos time-travel/replay; añadiría migración + la superficie SQLi→RCE
+de los checkpointers — ver `docs/agent-arch-design.md` §5); revisable si en el
+futuro se necesita replay explícito.
 
 ## Reducers
 
