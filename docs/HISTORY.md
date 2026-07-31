@@ -1,6 +1,15 @@
 History
 =======
 
+0.22.0 - (2026-07-31)
+----------------------
+* **Refactor a arquitectura multi-agente sobre LangGraph — Fases 0–4 completas + 5.1** (rama `feature/agent-arch`; ver `docs/multi-agent-refactor-plan.md`). El bot pasa de la cascada monolítica del supervisor a un grafo **router → 5 nodos-agente reales** (deflection · escalation · changes · info · booking), con el `booking` como **subgrafo de 5 fases** (setup → availability → routing → extraction → slotfill_close). Detrás del flag `agent_arch` (off = cascada legacy, sigue viva).
+* Migración **strangler-fig**, un corte a la vez, con **equivalencia probada** (suite verde flag on/off) en cada paso: cada nodo reproduce sus gates pre-núcleo y delega los post-núcleo. Cero cambio de comportamiento.
+* Router determinista-primero + señales LLM (1 llamada/turno). Cerrado el hueco "edad→INFO" del router (patrón A del audit). Prompts reubicados a `src/prompts/` (un módulo por nodo, idénticos byte a byte).
+* **Rendimiento:** medido en 3.00 llamadas LLM/turno (= baseline, sin regresión) y reducido a **2.80** saltando `fill_gaps` en saludos puros.
+* Estado consolidado en `ConversationState` (canónico), persistencia en `state_store.py` (checkpointer de LangGraph descartado por ahora), grounding centralizado en `rag_answer`, memoria Fase C cableada en el State. Test-harness por nodo completo.
+* **Suite: 1538 passed / 9 skipped / 0 failed** (+ tests por nodo). **Desplegado a PRE** (flag on) en `feature/pre_alvaro` — **bloqueado por infra**: `dp-pre-postgres` unhealthy en el VPS (pendiente Gadea, ver `session-handoff.md`). El **corte del legacy (5.2) NO se ha hecho** — espera la validación del grafo en PRE.
+
 0.21.0 - (2026-07-28)
 ----------------------
 * **Fase 4 COMPLETA — retirado el árbol de decisión legacy `MIXED_*` y el flag `conversational_core`** (rama `feature/fase4-p2`, sin mergear a `pre_gadea` aún). Sin cambio de comportamiento en PRE: el núcleo conversacional ya era el único camino activo; esto borra el sistema paralelo muerto que quedaba detrás.
