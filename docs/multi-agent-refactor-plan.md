@@ -6,9 +6,10 @@
 > alguien retoma tras un merge, **el estado de los checkboxes aquí es la única verdad**.
 > Acompaña (no sustituye) a `docs/project-history/session-handoff.md`.
 
-**Estado global:** `Fase 0/1/2/3/4 completas`. Siguiente: **Fase 5** (test-harness por nodo +
-CORTE del legacy `agent_arch` + limpieza de código muerto + bucle de datos reales), pendiente del
-OK del owner. Nota: Fase 4 se cerró como **confirmar+documentar** (reencuadre aprobado) — el
+**Estado global:** `Fase 0/1/2/3/4 completas · Fase 5 en curso`. **Grafo desplegado a PRE (Stage B,
+`AGENT_ARCH=true`) en `feature/pre_alvaro`, pero BLOQUEADO por infra: `dp-pre-postgres` unhealthy en
+el VPS** — pendiente de Gadea (ver el bloque ⛔ en §5 Fase 5). El corte del legacy (5.2) NO se hace
+hasta validar el grafo en PRE. Mientras, se avanza 5.1 (test-harness por nodo, no depende de PRE). Nota: Fase 4 se cerró como **confirmar+documentar** (reencuadre aprobado) — el
 estado ya estaba consolidado en `ConversationState`, el grounding centralizado en `rag_answer`, y
 la memoria Fase C cableada en el State; sin big-bang. Grafo LangGraph detrás de `agent_arch`; **los 5 nodos son REALES**
 (deflection/escalation/changes/info/booking, cortes strangler 2.1–2.5) y el grafo (flag on)
@@ -860,6 +861,22 @@ reproducible. **Siguiente: 2.5 (nodo `booking`), luego 2.6.** Sigue este patrón
   memoria coherente (Fase C en el State). **Fase 4 completa.**
 
 ### Fase 5 — Test por nodo, corte del legacy y bucle de datos reales
+
+> **⛔ PENDIENTE — BLOQUEA 5.2 · Gadea (gestiona la VPS), 2026-07-31.** El despliegue del grafo a
+> PRE (Stage B, `AGENT_ARCH=true`, ya en `feature/pre_alvaro` @ `d09eda8`) **no llegó a arrancar**:
+> el job `deploy-pre` de la Action falla porque **`dp-pre-postgres` está *unhealthy*** (`pg_isready`
+> no pasa, persistente en 2 corridas; Redis sí sano). **No es el refactor** (imagen construida OK,
+> `AGENT_ARCH` es solo env var; PRO intacto) — es infra del VPS. PRE está caído hasta arreglarlo.
+> **Pasos para Gadea (con acceso al VPS):**
+> 1. `docker logs dp-pre-postgres --tail 30` (por qué unhealthy) + `df -h` (¿disco lleno? típico
+>    con pgvector). 2. Arreglo probable: `docker restart dp-pre-postgres` y, si es disco, liberar
+>    espacio. 3. Levantar el bot: `docker compose -f docker-compose.vps.yml up -d dp-pre-bot`
+>    (o re-run de la Action). 4. **Validar el grafo en vivo** (5 mensajes, uno por ruta:
+>    saludo/reserva→booking, edad→info, embarazo→escalation/safety, cancelar→changes, pedir
+>    número→deflection). Rollback si algo va mal = quitar la línea `AGENT_ARCH` de `dp-pre-bot` +
+>    push a `pre_alvaro`. **Hasta que esto esté validado en PRE, NO se ejecuta 5.2 (corte del
+>    legacy es irreversible).**
+
 - [ ] **5.1 · Test-harness por nodo.** Cada nodo probado en aislamiento (State in → update
       out, LLM mockeado) + el grafo compilado (integración). Reorganizar la suite por nodo.
 - [ ] **5.2 · CORTE del legacy.** Con el flag probado en PRE: **quitar `agent_arch`** y borrar
@@ -915,6 +932,12 @@ reproducible. **Siguiente: 2.5 (nodo `booking`), luego 2.6.** Sigue este patrón
 ## 8. Registro de ejecución
 *(Una línea por paso cerrado: fecha · dev · qué · commit. El más reciente arriba.)*
 
+- **2026-07-31 · Álvaro · Deploy PRE (Stage A+B) — BLOQUEADO por infra, pendiente Gadea.**
+  Añadido `AGENT_ARCH_SHADOW`→`AGENT_ARCH: "true"` a `dp-pre-bot` (PRE-only, PRO intacto) y
+  llevado a `feature/pre_alvaro` (dispara la Action de auto-deploy). La Action falla en
+  `deploy-pre`: **`dp-pre-postgres` unhealthy** (`pg_isready`, persistente; Redis sano) — infra del
+  VPS, no el refactor (imagen OK, `AGENT_ARCH` solo env var). Anotado como paso pendiente para
+  Gadea (gestiona la VPS) en §5 Fase 5. 5.2 no se ejecuta hasta validar el grafo en PRE.
 - **2026-07-31 · Álvaro · Fase 4.3 — grounding único + memoria Fase C (confirmado, ya satisfecho).**
   Audit con evidencia: grounding centralizado en `grounding_check.py` + único chokepoint factual
   `supervisor.rag_answer` (info/núcleo/DIVE TO HEAL pasan por ahí; ~50 aserciones en
