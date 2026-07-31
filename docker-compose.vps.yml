@@ -105,13 +105,14 @@ services:
       # Revert = remove this line + redeploy.
       LLM_EXTRACTION_CUTOVER_LOGISTICS: "true"
       # Refactor multi-agente (docs/multi-agent-refactor-plan.md) — validación en
-      # PRE antes del corte del legacy (Fase 5.2). STAGE A (ahora): SHADOW — la
-      # cascada sigue sirviendo (sin cambio de conducta) y además el router corre
-      # en sombra y loguea [ROUTE_SHADOW] match/mismatch sobre tráfico real. Cero
-      # riesgo. STAGE B (tras validar el shadow): cambiar esta línea por
-      # AGENT_ARCH: "true" para que el GRAFO sirva de verdad. On en PRE only; off
-      # elsewhere por defecto (src/config.py). Revert = quitar la línea + redeploy.
-      AGENT_ARCH_SHADOW: "true"
+      # PRE antes del corte del legacy (Fase 5.2). STAGE B (ahora): el GRAFO sirve
+      # de verdad (agent_arch on) — router → 5 nodos reales + subgrafo booking. La
+      # cascada queda inactiva pero presente. Equivalencia probada en la suite
+      # (1538 verde) + medición (3.00→2.80 llamadas/turno). El Stage A (deploy con
+      # el código del refactor) arrancó healthy. On en PRE only; PRO intacto.
+      # ROLLBACK instantáneo = quitar esta línea + redeploy (vuelve a la cascada,
+      # sin cambio de código).
+      AGENT_ARCH: "true"
     depends_on:
       dp-pre-postgres:
         condition: service_healthy
