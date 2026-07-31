@@ -1079,7 +1079,11 @@ async def _understand(state: ConversationState, message: str) -> tuple:
 
     intent = _detector.detect(message, state)
     gaps = _relevant_gaps(state, intent, message)
-    if gaps and not _looks_like_question(message):
+    # Fase 3.4 (reducir llamadas/turno): un saludo puro no tiene slots que
+    # extraer → se salta `fill_gaps` (misma rama que "pregunta" o "sin gaps": no
+    # se aplica patch). Ahorra 1 llamada LLM en el saludo, el turno más común,
+    # sin cambiar conducta (fill_gaps devolvía `{}` para un saludo).
+    if gaps and not _looks_like_question(message) and not _is_greeting_only(message):
         patch = await fill_gaps(
             message, intent, history=state.history, lang=state.language, only_fields=gaps
         )
@@ -1426,6 +1430,19 @@ def _recall_answer(state: ConversationState, field: str) -> str | None:
 def _looks_like_question(message: str) -> bool:
     from src.agents import supervisor  # lazy
     return supervisor._looks_like_info_question(message) or "?" in message
+
+
+def _is_greeting_only(message: str) -> bool:
+    """True si el mensaje es SOLO un saludo ("hola", "buenas", "hi"...) sin
+    contenido de reserva. Se normaliza (minúsculas, espacios colapsados, sin
+    signos) y se compara contra `supervisor.GREETING_ONLY_KEYWORDS`.
+
+    Fase 3.4: un saludo puro no tiene slots que extraer, así que la llamada LLM
+    de `fill_gaps` es evitable — devolvía `{}` de todas formas. "hola quiero
+    bucear" NO es saludo puro (tiene contenido) y sí llama a `fill_gaps`."""
+    from src.agents import supervisor  # lazy
+    norm = re.sub(r"\s+", " ", message.strip().lower()).strip(" ¡!¿?.,")
+    return norm in supervisor.GREETING_ONLY_KEYWORDS
 
 
 # ─── Cierre: carrito desde slots + resumen determinista con links ───

@@ -784,7 +784,29 @@ reproducible. **Siguiente: 2.5 (nodo `booking`), luego 2.6.** Sigue este patrón
         turnos baratos** (el saludo ya cuesta 2 llamadas y el cierre 3, sin extracción de
         slots por medio): ahí es donde una llamada evitable se nota más, no en el turno de
         extracción, que es el que sí tiene que trabajar.
-- **DoD:** llamadas LLM/turno ↓ vs baseline; cero colisiones; prompts por nodo testeados.
+      - **✅ AVANCE (2026-07-31, Álvaro) — infra desbloqueada + paridad + 1ª reducción medida.**
+        Con Postgres+Redis arriba: **el grafo (flag on) mide 3.00 llamadas/turno, IDÉNTICO a la
+        baseline de la cascada** → confirmado que el refactor 2.x/3.x NO añadió ni quitó llamadas
+        (preservador por construcción). **Atribución por turno** (guion de §5 Fase 0.4, trazando
+        el caller de cada `chat.completions.create`):
+        - T1 `hola` (saludo): `detect_routing_signals` + **`fill_gaps`**
+        - T2/T3 (extracción/ubicación): `detect_routing_signals` + `extract_notes` + `fill_gaps`
+          + `compose_acknowledgement`
+        - T4 `cuanto cuesta`: `detect_routing_signals` + `detect_special_signals`
+        - T5 `perfecto, reservamos` (cierre): `detect_routing_signals` + **`fill_gaps`** +
+          `detect_special_signals`
+        - **Reducción landed:** `fill_gaps` se salta en un **saludo puro** (`_is_greeting_only`
+          contra `GREETING_ONLY_KEYWORDS`) — no hay slots que extraer, devolvía `{}` →
+          preservador de conducta. Medido: **saludo 2→1 llamada, total 15→14, 3.00 → 2.80
+          llamadas/turno**. 508 tests de regresión (core/intent/booking/grafo) verdes + test
+          nuevo `test_llm_call_reduction.py` que fija el comportamiento.
+        - **Siguientes candidatos (identificados, sin hacer):** (a) el **solapamiento
+          `fill_gaps` + `detect_special_signals`** en el turno de cierre (T5) — dos redes de
+          extracción sobre el mismo mensaje sin reparto nuevo (el 3.1-audit ya lo marcó); (b)
+          `detect_routing_signals` corre en los 5 turnos: ver si un pre-check determinista puede
+          evitarlo en turnos sin señal posible (más delicado, es la red de seguridad del router).
+- **DoD:** llamadas LLM/turno ↓ vs baseline (**2.80 < 3.00 ✓, más headroom identificado**); cero
+  colisiones; prompts por nodo testeados.
 
 ### Fase 4 — Estado, memoria y persistencia unificados
 - [ ] **4.1 · `BotState` único.** Todos los nodos leen/escriben el mismo State; se elimina el
@@ -853,6 +875,13 @@ reproducible. **Siguiente: 2.5 (nodo `booking`), luego 2.6.** Sigue este patrón
 ## 8. Registro de ejecución
 *(Una línea por paso cerrado: fecha · dev · qué · commit. El más reciente arriba.)*
 
+- **2026-07-31 · Álvaro · Fase 3.4 — medición desbloqueada + 1ª reducción de llamadas/turno.**
+  Con Postgres+Redis arriba: el grafo mide **3.00 llamadas/turno = baseline** (paridad tras el
+  refactor, confirmada empíricamente). Atribuida cada llamada a su red (traza del caller). 1ª
+  reducción segura: `fill_gaps` se salta en un saludo puro (`_is_greeting_only`) → **3.00 → 2.80
+  llamadas/turno** (saludo 2→1), preservador de conducta. 508 tests de regresión verdes + test
+  nuevo `test_llm_call_reduction.py`. Siguientes candidatos documentados (solapamiento
+  fill_gaps/detect_special_signals en el cierre; routing_signals en todos los turnos).
 - **2026-07-30 · Gonzalo · Fase 3.2 — prompts a `src/prompts/`, un módulo por nodo.** Sincronizada
   la rama (`feature/agent-arch` traída a `feature/fase4-p2`, fast-forward de 48 commits) y
   cerrado el siguiente paso del plan. Nuevo paquete `src/prompts/` (`router.py` · `booking.py` ·
