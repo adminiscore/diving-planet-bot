@@ -120,17 +120,28 @@ jobs:
               echo "=== dp-pre-postgres NO healthy -> diagnostico ==="
               df -h / || true
               free -h || true
-              docker logs dp-pre-postgres --tail 40 2>&1 || true
-              echo "=== recuperacion: prune imagenes colgantes + restart postgres ==="
-              docker image prune -f || true
+              docker system df || true
+              echo "--- postgres logs (tail 50) ---"
+              docker logs dp-pre-postgres --tail 50 2>&1 || true
+              echo "=== recuperacion: liberar disco (SEGURO — no toca contenedores en marcha, imagenes en uso ni volumenes/datos; PRO intacto) ==="
+              docker builder prune -af || true
+              docker image prune -af || true
+              echo "--- disco tras limpieza ---"
+              df -h / || true
+              docker system df || true
+              echo "=== restart dp-pre-postgres ==="
               docker restart dp-pre-postgres || true
-              for i in $(seq 1 18); do
+              for i in $(seq 1 24); do
                 h=$(docker inspect --format "{{if .State.Health}}{{.State.Health.Status}}{{end}}" dp-pre-postgres 2>/dev/null || echo "")
                 echo "  wait $i: health=$h"
                 if [ "$h" = "healthy" ]; then break; fi
                 sleep 5
               done
               echo "postgres health tras recuperacion = $h"
+              if [ "$h" != "healthy" ]; then
+                echo "!!! postgres sigue unhealthy tras liberar disco + restart. Ultimos logs:"
+                docker logs dp-pre-postgres --tail 60 2>&1 || true
+              fi
             fi
             docker compose -f docker-compose.vps.yml up -d --build dp-pre-bot
             sleep 5
