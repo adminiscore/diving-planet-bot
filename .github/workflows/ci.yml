@@ -79,7 +79,13 @@ jobs:
             tests/test_orchestration_state.py \
             tests/test_orchestration_router.py \
             tests/test_agent_arch_graph.py \
-            tests/test_route_shadow.py \
+            tests/test_deflection_agent.py \
+            tests/test_escalation_agent.py \
+            tests/test_changes_agent.py \
+            tests/test_info_agent.py \
+            tests/test_booking_agent.py \
+            tests/test_booking_subgraph_nodes.py \
+            tests/test_llm_call_reduction.py \
             -v --tb=short
 
   deploy-pre:
