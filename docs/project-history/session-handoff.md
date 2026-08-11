@@ -11,6 +11,50 @@ Read this file before changing code in the Diving Planet Bot. For a quick versio
 
 ## Current branch and workflow
 
+### 🧭 GADEA — CONTEXTO COMPLETO PARA CONTINUAR (2026-08-11, cierre de Álvaro)
+
+**Resumen en una frase:** el refactor multi-agente está **funcionalmente completo y en
+producción-PRE con observabilidad total (LangSmith)**; estamos en un **reposo de medición de
+varios días (SOAK)** antes del corte final del legacy — **no hay código bloqueante ahora**.
+
+**Hay DOS planes vivos que ahora CONFLUYEN en el mismo reposo de PRE:**
+1. **`docs/multi-agent-refactor-plan.md`** (refactor LangGraph) — Fases **0-4 ✅**, Fase **5** en
+   curso: 5.1 ✅, 5.2 paso 1/3 ✅ (shadow retirado), 5.3 observabilidad ✅, **⏳ SOAK**.
+2. **`docs/robustness/plan.md`** (extracción LLM) — Fases **0-4, 7, 8 ✅**; **Fase 6** (bucle de
+   datos reales) 🔄 con el tooling `scripts/harvest_cutover_logs.py` ya construido; **Fase 5**
+   (limpieza de regex muerto) ⬜ bloqueada por la 6.
+   El plan lo dice explícito: **el bucle de datos del refactor (5.3) ES la Fase 6 de robustez** →
+   el mismo tráfico real de PRE alimenta a los dos.
+
+**Qué está desplegado:** grafo (`AGENT_ARCH=true`) en `dp-pre-bot`, validado en vivo (5 rutas),
+LangSmith trazando (proyecto `diving-planet-bot`: grafo LangGraph + cada llamada LLM vía
+`trace_openai` en `src/llm_client.py`). **PRO intacto (cascada).** Rollback = apagar `AGENT_ARCH`.
+
+**AL REANUDAR (cuando haya ~1 semana / ~50-100 conversaciones reales):**
+1. **Comparar en LangSmith** vs baseline de Fase 0.4 (llamadas/turno ≤3.00 —hoy 2.80—, latencia,
+   coste, cero errores/mismatches nuevos). Si "igual o mejor" → seguir.
+2. **Robustez Fase 6:** correr `python -m scripts.harvest_cutover_logs` contra los logs reales de
+   `dp-pre-bot` → curar el eval-set. Con eso desbloquear **robustez Fase 5** (limpieza regex muerto).
+3. **Corte del legacy (refactor 5.2), en orden** (ver §5 del refactor plan + el 🔎 PREP de
+   reachability): migrar los gates POST-núcleo que los nodos aún delegan en `_route_message_inner`
+   (escalation→wants_human, changes→disponibilidad, fallbacks) → renombrar `_route_message_inner`
+   (handler compartido) → **promover a PRO** (rollout escalonado shadow→live, decisión del owner) →
+   **quitar el flag `agent_arch`** (punto de no retorno) + borrar los gates pre-núcleo muertos.
+
+**Infra / deploy — aprendizajes de esta sesión:**
+- **La GitHub Action ES la vía de acceso al VPS** (secrets `PRE_VPS_SSH_KEY`/`HOST`): se opera/
+  repara PRE editando el workflow, sin SSH propio. El job `deploy-pre` ya lleva **auto-recuperación
+  de `dp-pre-postgres`** (si unhealthy: libera disco de caché de build + restart) — el disco lleno
+  fue lo que tumbó PRE, ya resuelto.
+- **Trigger del deploy:** solo push a ramas `pre_*`. Empujar a `pre_alvaro` **PRIMERO** (SHA nuevo)
+  para evitar la dedup de runs de GitHub por SHA.
+- **`LANGSMITH_API_KEY`** está como GitHub secret; el job la inyecta en `.env.pre`. Bug ya
+  arreglado: la var de activación es `LANGSMITH_TRACING` (no `..._V2`).
+- **Ramas:** `feature/agent-arch` (dev, docs al día) y `feature/pre_alvaro` (deploy PRE). PRO sin
+  tocar.
+
+---
+
 - **2026-08-11 — ⏳ REFACTOR MULTIAGENTE EN SOAK (Fase 5.3-bis). NO hay código pendiente ahora.**
   El grafo (`AGENT_ARCH=true`) sirve en PRE, validado en vivo, con **LangSmith trazando** (proyecto
   `diving-planet-bot`: grafo + por-llamada vía `trace_openai` en `src/llm_client.py`). Retirado el
