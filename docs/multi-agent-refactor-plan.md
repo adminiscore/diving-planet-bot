@@ -6,10 +6,12 @@
 > alguien retoma tras un merge, **el estado de los checkboxes aquí es la única verdad**.
 > Acompaña (no sustituye) a `docs/project-history/session-handoff.md`.
 
-**Estado global:** `Fase 0/1/2/3/4 completas · Fase 5 en curso`. **Grafo desplegado a PRE (Stage B,
-`AGENT_ARCH=true`) en `feature/pre_alvaro`, pero BLOQUEADO por infra: `dp-pre-postgres` unhealthy en
-el VPS** — pendiente de Gadea (ver el bloque ⛔ en §5 Fase 5). El corte del legacy (5.2) NO se hace
-hasta validar el grafo en PRE. Mientras, se avanza 5.1 (test-harness por nodo, no depende de PRE). Nota: Fase 4 se cerró como **confirmar+documentar** (reencuadre aprobado) — el
+**Estado global:** `Fase 0/1/2/3/4 completas · Fase 5 en curso (5.1 hecha)`. ✅ **Grafo DESPLEGADO a
+PRE y VERDE** (Stage B, `AGENT_ARCH=true`, `feature/pre_alvaro` @`b47401f`, Action #309) — el bloqueo
+de infra (`dp-pre-postgres` unhealthy) se **auto-resolvió desde la propia Action** (bloque de
+liberación de disco + restart de postgres en `deploy-pre`, sin acceso manual al VPS). Pendiente:
+**validación funcional del grafo en PRE** (5 mensajes, uno por ruta) → luego 5.2 (corte del legacy,
+ver el prep de reachability en §5). Nota: Fase 4 se cerró como **confirmar+documentar** (reencuadre aprobado) — el
 estado ya estaba consolidado en `ConversationState`, el grounding centralizado en `rag_answer`, y
 la memoria Fase C cableada en el State; sin big-bang. Grafo LangGraph detrás de `agent_arch`; **los 5 nodos son REALES**
 (deflection/escalation/changes/info/booking, cortes strangler 2.1–2.5) y el grafo (flag on)
@@ -862,20 +864,16 @@ reproducible. **Siguiente: 2.5 (nodo `booking`), luego 2.6.** Sigue este patrón
 
 ### Fase 5 — Test por nodo, corte del legacy y bucle de datos reales
 
-> **⛔ PENDIENTE — BLOQUEA 5.2 · Gadea (gestiona la VPS), 2026-07-31.** El despliegue del grafo a
-> PRE (Stage B, `AGENT_ARCH=true`, ya en `feature/pre_alvaro` @ `d09eda8`) **no llegó a arrancar**:
-> el job `deploy-pre` de la Action falla porque **`dp-pre-postgres` está *unhealthy*** (`pg_isready`
-> no pasa, persistente en 2 corridas; Redis sí sano). **No es el refactor** (imagen construida OK,
-> `AGENT_ARCH` es solo env var; PRO intacto) — es infra del VPS. PRE está caído hasta arreglarlo.
-> **Pasos para Gadea (con acceso al VPS):**
-> 1. `docker logs dp-pre-postgres --tail 30` (por qué unhealthy) + `df -h` (¿disco lleno? típico
->    con pgvector). 2. Arreglo probable: `docker restart dp-pre-postgres` y, si es disco, liberar
->    espacio. 3. Levantar el bot: `docker compose -f docker-compose.vps.yml up -d dp-pre-bot`
->    (o re-run de la Action). 4. **Validar el grafo en vivo** (5 mensajes, uno por ruta:
->    saludo/reserva→booking, edad→info, embarazo→escalation/safety, cancelar→changes, pedir
->    número→deflection). Rollback si algo va mal = quitar la línea `AGENT_ARCH` de `dp-pre-bot` +
->    push a `pre_alvaro`. **Hasta que esto esté validado en PRE, NO se ejecuta 5.2 (corte del
->    legacy es irreversible).**
+> **✅ RESUELTO (2026-08-11) — el bloqueo de infra se auto-arregló desde la Action.** El deploy a
+> PRE fallaba porque `dp-pre-postgres` estaba *unhealthy* (`pg_isready`, persistente; Redis sano) —
+> infra del VPS, no el refactor. **Sin acceso SSH manual**, se resolvió metiendo en el job
+> `deploy-pre` un bloque que, solo si postgres no está healthy, **libera disco** (`docker builder
+> prune -af` + `docker image prune -af` — la causa era caché de build de Docker) y **reinicia
+> postgres** esperando a *healthy*. Corrida #309 (`b47401f`) verde en 4m 2s: PRE arranca con el
+> grafo. **Aprendizaje:** la Action ES nuestra vía de acceso al VPS (secrets `PRE_VPS_SSH_KEY`/
+> `HOST`), no hace falta SSH propio para operar/reparar PRE. Queda: **validación funcional del
+> grafo** (5 mensajes, uno por ruta) antes de 5.2. Rollback = quitar `AGENT_ARCH` de `dp-pre-bot` +
+> push a `pre_alvaro`. **5.2 (corte irreversible) solo tras validar PRE.**
 
 - [x] **5.1 · Test-harness por nodo — HECHO.** Cada nodo real tiene su fichero de test en
       aislamiento (State in → update out, LLM/fases mockeadas): `test_deflection_agent` (5),

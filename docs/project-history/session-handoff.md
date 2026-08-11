@@ -11,14 +11,14 @@ Read this file before changing code in the Diving Planet Bot. For a quick versio
 
 ## Current branch and workflow
 
-- **2026-07-31 — ⛔ PENDIENTE GADEA (VPS): `dp-pre-postgres` unhealthy bloquea el deploy de PRE.**
-  El grafo del refactor (Stage B, `AGENT_ARCH=true`) está en `feature/pre_alvaro` (@`d09eda8`) y la
-  Action de auto-deploy dispara, pero `deploy-pre` falla porque **`dp-pre-postgres` no pasa
-  `pg_isready`** (persistente; Redis sano). NO es el refactor (imagen OK, `AGENT_ARCH` es env var;
-  PRO intacto) — es infra del VPS. Arreglo: `docker logs dp-pre-postgres --tail 30` + `df -h`;
-  `docker restart dp-pre-postgres`; `docker compose -f docker-compose.vps.yml up -d dp-pre-bot`.
-  Luego validar 5 mensajes (una ruta cada uno). Detalle completo en el bloque ⛔ de
-  `docs/multi-agent-refactor-plan.md` §5 Fase 5. **Hasta validar PRE, no se ejecuta 5.2.**
+- **2026-08-11 — ✅ PRE DESPLEGADO Y VERDE con el grafo** (`AGENT_ARCH=true`, `feature/pre_alvaro`
+  @`b47401f`, Action #309). El bloqueo de infra (`dp-pre-postgres` unhealthy por **disco lleno de
+  caché de build de Docker**) se **auto-resolvió desde la propia Action** — se añadió al job
+  `deploy-pre` un bloque que libera disco (`docker builder/image prune -af`) + reinicia postgres si
+  no está healthy. **Aprendizaje clave: la Action ES la vía de acceso al VPS** (secrets
+  `PRE_VPS_SSH_KEY`/`HOST`); se puede operar/reparar PRE sin SSH propio, editando el workflow.
+  Pendiente: **validación funcional del grafo en PRE** (5 mensajes, uno por ruta) → luego 5.2.
+  Rollback = quitar `AGENT_ARCH` de `dp-pre-bot` + push a `pre_alvaro`.
 
 
 - **2026-07-30 (Gonzalo, rama `feature/fase4-p2` = `feature/agent-arch` + 1 commit) — FASE 3.2
