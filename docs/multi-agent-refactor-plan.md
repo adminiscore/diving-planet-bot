@@ -6,12 +6,12 @@
 > alguien retoma tras un merge, **el estado de los checkboxes aquí es la única verdad**.
 > Acompaña (no sustituye) a `docs/project-history/session-handoff.md`.
 
-**Estado global:** `Fase 0/1/2/3/4 completas · Fase 5 en curso (5.1 hecha)`. ✅ **Grafo DESPLEGADO a
-PRE y VERDE** (Stage B, `AGENT_ARCH=true`, `feature/pre_alvaro` @`b47401f`, Action #309) — el bloqueo
-de infra (`dp-pre-postgres` unhealthy) se **auto-resolvió desde la propia Action** (bloque de
-liberación de disco + restart de postgres en `deploy-pre`, sin acceso manual al VPS). Pendiente:
-**validación funcional del grafo en PRE** (5 mensajes, uno por ruta) → luego 5.2 (corte del legacy,
-ver el prep de reachability en §5). Nota: Fase 4 se cerró como **confirmar+documentar** (reencuadre aprobado) — el
+**Estado global:** `Fase 0/1/2/3/4 completas · Fase 5 en curso (5.1 hecha · 5.2 paso 1 · 5.3
+midiendo)`. ✅ **Grafo en PRE, validado en vivo, con LangSmith trazando** (`AGENT_ARCH=true`,
+`feature/pre_alvaro`). El **periodo de medición del rollout está ABIERTO** (trazas reales →
+`diving-planet-bot`). Retirado el subsistema shadow (5.2 paso 1). **El corte del flag (resto de
+5.2) espera a que la medición dé "igual o mejor" vs baseline de Fase 0.4 durante el periodo
+acordado** — tal como manda el plan (§ Rollout). Rollback = apagar el flag `agent_arch`. Nota: Fase 4 se cerró como **confirmar+documentar** (reencuadre aprobado) — el
 estado ya estaba consolidado en `ConversationState`, el grounding centralizado en `rag_answer`, y
 la memoria Fase C cableada en el State; sin big-bang. Grafo LangGraph detrás de `agent_arch`; **los 5 nodos son REALES**
 (deflection/escalation/changes/info/booking, cortes strangler 2.1–2.5) y el grafo (flag on)
@@ -916,9 +916,15 @@ reproducible. **Siguiente: 2.5 (nodo `booking`), luego 2.6.** Sigue este patrón
           quitar `agent_arch` de `route_message` (grafo incondicional) y borrar lo que quede
           muerto de (A) + el shadow. Suite (por nodo + e2e) como red tras cada borrado. Decidir
           disponibilidad-fresh (patrón B) aquí (¿el núcleo la intercepta o gana el gate?).
-- [ ] **5.3 · Bucle de datos reales (Fase 6 robustez) con LangSmith.** Harvest de trazas de PRE
-      → **datasets/evals de LangSmith** → dirigir refuerzos con datos reales, no edge-cases
-      inventados.
+- [~] **5.3 · Bucle de datos reales con LangSmith — EN CURSO (periodo de medición ABIERTO).**
+      LangSmith trazando PRE en vivo (proyecto `diving-planet-bot`, commit `cd5a23a`). Cableado:
+      key como GitHub secret → inyectada en `.env.pre` por el job `deploy-pre`; **fix de un bug
+      real** en `config._activate_langsmith_tracing` (fijaba `LANGSMITH_TRACING_V2`, var
+      inexistente → tracing nunca encendía; ahora `LANGSMITH_TRACING`/`LANGCHAIN_TRACING_V2`).
+      **Traza el grafo LangGraph** (nodos + latencia/turno). Pendientes del bucle: (a) opcional,
+      `wrap_openai` para el detalle por-llamada (tokens/coste) dentro de LangSmith; (b) harvest de
+      trazas → datasets/evals para dirigir refuerzos con datos reales; (c) comparar trazas/
+      latencia/coste vs baseline de Fase 0.4 durante el periodo acordado → gatea el corte (5.2).
 - **DoD:** legacy fuera, grafo limpio, suite por nodo + e2e verde, evals de PRE fluyendo.
   **Refactor completo.**
 
@@ -965,6 +971,13 @@ reproducible. **Siguiente: 2.5 (nodo `booking`), luego 2.6.** Sigue este patrón
 ## 8. Registro de ejecución
 *(Una línea por paso cerrado: fecha · dev · qué · commit. El más reciente arriba.)*
 
+- **2026-08-11 · Álvaro · Fase 5.3 — periodo de medición ABIERTO (LangSmith trazando PRE).**
+  Key como GitHub secret + inyección en `.env.pre` (job `deploy-pre`). Fix de bug real:
+  `config` fijaba `LANGSMITH_TRACING_V2` (var inexistente) → tracing nunca encendía; corregido a
+  `LANGSMITH_TRACING`/`LANGCHAIN_TRACING_V2` (`cd5a23a`). Trazas del grafo confirmadas en vivo
+  (proyecto `diving-planet-bot`). También arreglado el gate del CI (`test_route_shadow.py`
+  borrado seguía hardcodeado → bloqueaba el deploy; reforzado con los tests de nodos). **Periodo
+  de medición en marcha; el corte del flag (5.2) espera a "igual o mejor" vs baseline.**
 - **2026-08-11 · Álvaro · Fase 5.2 paso 1 — subsistema shadow retirado** (`2491be5`). Grafo
   validado (suite + PRE en vivo) → el shadow del router (Fase 1.5) ya no hace falta. Borrado
   completo (−183 líneas): 21 `_mark_route(...)` no-op + ContextVar + `_run_route_shadow` + la rama
