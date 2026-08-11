@@ -29,6 +29,7 @@ from src.knowledge.loader import (
     load_policies,
 )
 from src.knowledge.vector_store import detect_query_topics, get_pool, search_knowledge_base
+from src.llm_client import trace_openai
 from src.privacy import detect_pii, privacy_block_message, redact_pii
 from src.prompts.info import (
     RAG_BODY_EN,
@@ -1280,7 +1281,7 @@ async def rag_answer(
         messages.append({"role": "user", "content": user_content})
 
         grounding_context = _build_grounding_context(context, extra_context=extra_context, history=history)
-        client = AsyncOpenAI(api_key=settings.openai_api_key)
+        client = trace_openai(AsyncOpenAI(api_key=settings.openai_api_key))
         fallback = FALLBACK_ES if lang == "es" else FALLBACK_EN
 
         # The answer is sampled at temperature 0.3, so it varies run to run. A

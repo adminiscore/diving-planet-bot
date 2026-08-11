@@ -3,6 +3,7 @@ import logging
 from openai import AsyncOpenAI
 
 from src.config import settings
+from src.llm_client import trace_openai
 from src.privacy import redact_pii
 from src.prompts.info import QUERY_REWRITE_EN, QUERY_REWRITE_ES
 
@@ -57,7 +58,7 @@ async def condense_query(
         )
 
     try:
-        client = AsyncOpenAI(api_key=settings.openai_api_key)
+        client = trace_openai(AsyncOpenAI(api_key=settings.openai_api_key))
         response = await client.chat.completions.create(
             model=settings.openai_model,
             messages=[

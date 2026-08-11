@@ -4,6 +4,7 @@ import re
 from openai import AsyncOpenAI
 
 from src.config import settings
+from src.llm_client import trace_openai
 from src.privacy import redact_pii
 from src.prompts.info import GROUNDING_VERIFY_EN, GROUNDING_VERIFY_ES
 
@@ -237,7 +238,7 @@ async def is_grounded(answer: str, context: str, lang: str = "es") -> tuple[bool
         )
 
     try:
-        client = AsyncOpenAI(api_key=settings.openai_api_key)
+        client = trace_openai(AsyncOpenAI(api_key=settings.openai_api_key))
         response = await client.chat.completions.create(
             model=settings.openai_model,
             messages=[

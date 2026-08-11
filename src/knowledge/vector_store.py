@@ -14,6 +14,7 @@ import asyncpg
 from openai import AsyncOpenAI
 
 from src.config import settings
+from src.llm_client import trace_openai
 
 logger = logging.getLogger("uvicorn.error")
 
@@ -207,7 +208,7 @@ def _apply_topic_and_source_boost(results: list[dict], query_topics: list[str]) 
 
 async def _vector_search(query: str, lang: str = "es", k: int = 8) -> list[dict]:
     try:
-        client = AsyncOpenAI(api_key=settings.openai_api_key)
+        client = trace_openai(AsyncOpenAI(api_key=settings.openai_api_key))
         resp = await client.embeddings.create(
             model=settings.openai_embedding_model,
             input=query,

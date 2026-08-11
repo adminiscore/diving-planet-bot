@@ -15,6 +15,7 @@ import logging
 from openai import AsyncOpenAI
 
 from src.config import settings
+from src.llm_client import trace_openai
 from src.prompts.booking import LANGUAGE_DETECT_PROMPT
 
 logger = logging.getLogger("uvicorn.error")
@@ -26,7 +27,7 @@ async def detect_language_llm(message: str) -> str | None:
         return None
 
     try:
-        client = AsyncOpenAI(api_key=settings.openai_api_key)
+        client = trace_openai(AsyncOpenAI(api_key=settings.openai_api_key))
         response = await client.chat.completions.create(
             model=settings.openai_model,
             messages=[{"role": "user", "content": LANGUAGE_DETECT_PROMPT.format(message=message)}],

@@ -25,6 +25,7 @@ import structlog
 from openai import AsyncOpenAI
 
 from src.config import settings
+from src.llm_client import trace_openai
 from src.prompts.router import ROUTING_TOOL, routing_system_prompt
 
 logger = structlog.get_logger()
@@ -131,7 +132,7 @@ async def detect_routing_signals(
     if not message or not message.strip():
         return {}
     try:
-        client = client or AsyncOpenAI(api_key=settings.openai_api_key)
+        client = client or trace_openai(AsyncOpenAI(api_key=settings.openai_api_key))
         response = await client.chat.completions.create(
             model=settings.extraction_model,
             messages=[

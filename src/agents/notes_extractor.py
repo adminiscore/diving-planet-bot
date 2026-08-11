@@ -27,6 +27,7 @@ import logging
 from openai import AsyncOpenAI
 
 from src.config import settings
+from src.llm_client import trace_openai
 from src.prompts.memory import NOTES_TOOL, notes_system_prompt
 
 logger = logging.getLogger("uvicorn.error")
@@ -57,7 +58,7 @@ async def extract_notes(
     messages.append({"role": "user", "content": message})
 
     try:
-        client = client or AsyncOpenAI(api_key=settings.openai_api_key)
+        client = client or trace_openai(AsyncOpenAI(api_key=settings.openai_api_key))
         response = await client.chat.completions.create(
             model=settings.extraction_model,
             messages=messages,

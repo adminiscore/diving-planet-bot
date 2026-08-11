@@ -15,6 +15,7 @@ from openai import AsyncOpenAI
 
 from src.config import settings
 from src.flows.state import ConversationState
+from src.llm_client import trace_openai
 from src.privacy import redact_pii
 from src.prompts.memory import SUMMARY_SYSTEM_EN, SUMMARY_SYSTEM_ES
 
@@ -52,7 +53,7 @@ async def _generate_summary(existing_summary: str | None, new_turns_text: str, l
         f"{segment_label}:\n{new_turns_text}"
     )
 
-    client = AsyncOpenAI(api_key=settings.openai_api_key)
+    client = trace_openai(AsyncOpenAI(api_key=settings.openai_api_key))
     response = await client.chat.completions.create(
         model=settings.openai_model,
         messages=[

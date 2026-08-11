@@ -21,6 +21,7 @@ import httpx
 from openai import AsyncOpenAI
 
 from src.config import settings
+from src.llm_client import trace_openai
 
 logger = logging.getLogger("uvicorn.error")
 
@@ -95,7 +96,7 @@ async def transcribe_audio_bytes(
     if lang_hint:
         kwargs["language"] = lang_hint  # ISO-639-1; optional, model auto-detects otherwise
     try:
-        client = AsyncOpenAI(api_key=settings.openai_api_key)
+        client = trace_openai(AsyncOpenAI(api_key=settings.openai_api_key))
         result = await client.audio.transcriptions.create(**kwargs, timeout=_TRANSCRIBE_TIMEOUT)
     except Exception as exc:  # noqa: BLE001 — never let transcription break the caller
         logger.error(f"[AUDIO] Transcription failed: {exc}")

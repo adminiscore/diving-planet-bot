@@ -22,6 +22,7 @@ from openai import AsyncOpenAI, OpenAIError
 
 from src.agents.intent_detector import DetectedIntent
 from src.config import settings
+from src.llm_client import trace_openai
 from src.prompts.booking import (
     EXTRACTION_TOOL,
     SIGNALS_TOOL,
@@ -104,7 +105,7 @@ async def fill_gaps(
     messages.append({"role": "user", "content": message})
 
     try:
-        client = client or AsyncOpenAI(api_key=settings.openai_api_key)
+        client = client or trace_openai(AsyncOpenAI(api_key=settings.openai_api_key))
         response = await client.chat.completions.create(
             model=settings.extraction_model,
             messages=messages,
@@ -197,7 +198,7 @@ async def detect_special_signals(
     messages.append({"role": "user", "content": message})
 
     try:
-        client = client or AsyncOpenAI(api_key=settings.openai_api_key)
+        client = client or trace_openai(AsyncOpenAI(api_key=settings.openai_api_key))
         response = await client.chat.completions.create(
             model=settings.extraction_model,
             messages=messages,
@@ -263,7 +264,7 @@ async def resolve_slot_answer(
     if slot not in SLOT_RESOLVER_SPEC or not message or not message.strip():
         return {}
     try:
-        client = client or AsyncOpenAI(api_key=settings.openai_api_key)
+        client = client or trace_openai(AsyncOpenAI(api_key=settings.openai_api_key))
         response = await client.chat.completions.create(
             model=settings.extraction_model,
             messages=[
@@ -315,7 +316,7 @@ async def compose_acknowledgement(
         return ""
     user_content = message if not state_summary else f"{message}\n\n[contexto de la reserva: {state_summary}]"
     try:
-        client = client or AsyncOpenAI(api_key=settings.openai_api_key)
+        client = client or trace_openai(AsyncOpenAI(api_key=settings.openai_api_key))
         response = await client.chat.completions.create(
             model=settings.extraction_model,
             messages=[
