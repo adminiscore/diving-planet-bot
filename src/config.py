@@ -163,9 +163,20 @@ def _activate_langsmith_tracing(s: Settings) -> None:
     """
     if not s.langchain_tracing_v2 or not s.langsmith_api_key:
         return
-    os.environ.setdefault("LANGSMITH_TRACING_V2", "true")
-    os.environ.setdefault("LANGSMITH_API_KEY", s.langsmith_api_key)
-    os.environ.setdefault("LANGSMITH_PROJECT", s.langsmith_project)
+    # Nombres canónicos que leen langsmith/langchain. La var de ACTIVACIÓN es
+    # `LANGSMITH_TRACING` (nueva) o `LANGCHAIN_TRACING_V2` (legacy) — NO
+    # `LANGSMITH_TRACING_V2`, que no existe (bug: el tracing nunca se encendía).
+    # Se fijan ambos prefijos (LANGSMITH_* y LANGCHAIN_*) por compatibilidad de
+    # versiones del SDK.
+    for k, v in (
+        ("LANGSMITH_TRACING", "true"),
+        ("LANGCHAIN_TRACING_V2", "true"),
+        ("LANGSMITH_API_KEY", s.langsmith_api_key),
+        ("LANGCHAIN_API_KEY", s.langsmith_api_key),
+        ("LANGSMITH_PROJECT", s.langsmith_project),
+        ("LANGCHAIN_PROJECT", s.langsmith_project),
+    ):
+        os.environ.setdefault(k, v)
 
 
 settings = Settings()
