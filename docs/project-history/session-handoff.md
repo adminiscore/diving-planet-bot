@@ -11,6 +11,18 @@ Read this file before changing code in the Diving Planet Bot. For a quick versio
 
 ## Current branch and workflow
 
+- **2026-08-11 — ⏳ REFACTOR MULTIAGENTE EN SOAK (Fase 5.3-bis). NO hay código pendiente ahora.**
+  El grafo (`AGENT_ARCH=true`) sirve en PRE, validado en vivo, con **LangSmith trazando** (proyecto
+  `diving-planet-bot`: grafo + por-llamada vía `trace_openai` en `src/llm_client.py`). Retirado el
+  subsistema shadow (5.2 paso 1). **Estamos en un reposo de varios días** acumulando tráfico real.
+  - **Resume:** cuando haya ~1 semana / ~50-100 conversaciones trazadas, comparar en LangSmith vs
+    baseline de Fase 0.4 (llamadas/turno ≤3.00, latencia, coste, sin errores/mismatches nuevos). Si
+    "igual o mejor" → ejecutar el corte del legacy en el orden documentado en
+    `docs/multi-agent-refactor-plan.md` §5 (migrar gates POST-núcleo delegados → renombrar handler
+    → promover a PRO → quitar el flag `agent_arch`). **Rollback hasta el corte = apagar el flag.**
+  - Ramas en sync: `feature/agent-arch` == `feature/pre_alvaro` (deploy PRE). PRO intacto (cascada).
+
+
 - **2026-08-11 — ✅ PRE DESPLEGADO Y VERDE con el grafo** (`AGENT_ARCH=true`, `feature/pre_alvaro`
   @`b47401f`, Action #309). El bloqueo de infra (`dp-pre-postgres` unhealthy por **disco lleno de
   caché de build de Docker**) se **auto-resolvió desde la propia Action** — se añadió al job

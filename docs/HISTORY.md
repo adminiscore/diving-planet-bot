@@ -8,7 +8,9 @@ History
 * Router determinista-primero + señales LLM (1 llamada/turno). Cerrado el hueco "edad→INFO" del router (patrón A del audit). Prompts reubicados a `src/prompts/` (un módulo por nodo, idénticos byte a byte).
 * **Rendimiento:** medido en 3.00 llamadas LLM/turno (= baseline, sin regresión) y reducido a **2.80** saltando `fill_gaps` en saludos puros.
 * Estado consolidado en `ConversationState` (canónico), persistencia en `state_store.py` (checkpointer de LangGraph descartado por ahora), grounding centralizado en `rag_answer`, memoria Fase C cableada en el State. Test-harness por nodo completo.
-* **Suite: 1538 passed / 9 skipped / 0 failed** (+ tests por nodo). **Desplegado a PRE** (flag on) en `feature/pre_alvaro` — **bloqueado por infra**: `dp-pre-postgres` unhealthy en el VPS (pendiente Gadea, ver `session-handoff.md`). El **corte del legacy (5.2) NO se ha hecho** — espera la validación del grafo en PRE.
+* **Suite: 1538 passed / 9 skipped** (+ tests por nodo). **En producción-PRE**: el grafo (`AGENT_ARCH=true`) sirve y está **validado en vivo** (5 rutas); el bloqueo de infra del VPS (`dp-pre-postgres` unhealthy por disco de caché de build) se **auto-resolvió desde la propia Action** (prune + restart).
+* **Observabilidad (Fase 5.3):** LangSmith trazando PRE (proyecto `diving-planet-bot`): grafo + cada llamada LLM (`trace_openai`). Retirado el subsistema shadow (5.2 paso 1, −183 líneas).
+* **⏳ En SOAK (multi-día):** acumulando tráfico real antes del corte del legacy (quitar el flag + promover a PRO), que espera a "igual o mejor" vs baseline. Rollback hasta entonces = apagar el flag. Detalle en `docs/multi-agent-refactor-plan.md` §5 + `session-handoff.md`.
 
 0.21.0 - (2026-07-28)
 ----------------------

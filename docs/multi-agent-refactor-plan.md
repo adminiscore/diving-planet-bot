@@ -9,9 +9,10 @@
 **Estado global:** `Fase 0/1/2/3/4 completas · Fase 5 en curso (5.1 hecha · 5.2 paso 1 · 5.3
 midiendo)`. ✅ **Grafo en PRE, validado en vivo, con LangSmith trazando** (`AGENT_ARCH=true`,
 `feature/pre_alvaro`). El **periodo de medición del rollout está ABIERTO** (trazas reales →
-`diving-planet-bot`). Retirado el subsistema shadow (5.2 paso 1). **El corte del flag (resto de
-5.2) espera a que la medición dé "igual o mejor" vs baseline de Fase 0.4 durante el periodo
-acordado** — tal como manda el plan (§ Rollout). Rollback = apagar el flag `agent_arch`. Nota: Fase 4 se cerró como **confirmar+documentar** (reencuadre aprobado) — el
+`diving-planet-bot`). Retirado el subsistema shadow (5.2 paso 1) + LangSmith trazando grafo **y por-llamada**
+(`trace_openai`). **⏳ AHORA EN SOAK** (Fase 5.3-bis, ver §5): reposo multi-día para acumular
+tráfico real; el corte del flag (resto de 5.2) espera a que la medición dé "igual o mejor" vs
+baseline de Fase 0.4. Rollback hasta el corte = apagar `agent_arch`. Nota: Fase 4 se cerró como **confirmar+documentar** (reencuadre aprobado) — el
 estado ya estaba consolidado en `ConversationState`, el grounding centralizado en `rag_answer`, y
 la memoria Fase C cableada en el State; sin big-bang. Grafo LangGraph detrás de `agent_arch`; **los 5 nodos son REALES**
 (deflection/escalation/changes/info/booking, cortes strangler 2.1–2.5) y el grafo (flag on)
@@ -921,10 +922,26 @@ reproducible. **Siguiente: 2.5 (nodo `booking`), luego 2.6.** Sigue este patrón
       key como GitHub secret → inyectada en `.env.pre` por el job `deploy-pre`; **fix de un bug
       real** en `config._activate_langsmith_tracing` (fijaba `LANGSMITH_TRACING_V2`, var
       inexistente → tracing nunca encendía; ahora `LANGSMITH_TRACING`/`LANGCHAIN_TRACING_V2`).
-      **Traza el grafo LangGraph** (nodos + latencia/turno). Pendientes del bucle: (a) opcional,
-      `wrap_openai` para el detalle por-llamada (tokens/coste) dentro de LangSmith; (b) harvest de
+      **Traza el grafo LangGraph** (nodos + latencia/turno) **+ cada llamada LLM** (tokens/coste;
+      `trace_openai` en `src/llm_client.py`, `e34c981`). Pendientes del bucle: (b) harvest de
       trazas → datasets/evals para dirigir refuerzos con datos reales; (c) comparar trazas/
       latencia/coste vs baseline de Fase 0.4 durante el periodo acordado → gatea el corte (5.2).
+
+> ### ⏳ Fase 5.3-bis · PERIODO DE MEDICIÓN (SOAK) — PARADO, esperando tráfico real (multi-día)
+> **Estado (2026-08-11):** el grafo sirve en PRE con observabilidad completa en LangSmith
+> (proyecto `diving-planet-bot`: trazas de grafo + por-llamada). **No hay código que hacer aquí**
+> — es un reposo de varios días para acumular tráfico real del equipo/PRE.
+> **Criterio de reanudación (cuándo pasar al corte):** cuando haya un volumen razonable de
+> conversaciones reales trazadas (orientativo: **≥ ~1 semana o ~50-100 conversaciones**) y la
+> comparación en LangSmith vs la **baseline de Fase 0.4** (llamadas/turno ≤ 3.00, hoy 2.80;
+> latencia; coste; sin errores/mismatches nuevos) sea **"igual o mejor"**.
+> **Qué hacer al reanudar (el corte, en orden — ver el 🔎 PREP de reachability arriba):**
+> 1. Migrar los gates POST-núcleo delegados (grupo B) a sus nodos, o extraer un "tail handler"
+>    compartido; suite verde por paso. 2. Renombrar `_route_message_inner` (paso 2). 3. Promover
+> a PRO (rollout escalonado shadow→live) — decisión del owner. 4. Quitar el flag `agent_arch`
+> (paso 3, punto de no retorno) + borrar los gates pre-núcleo muertos (grupo A). **Rollback hasta
+> el corte = apagar `agent_arch`.**
+
 - **DoD:** legacy fuera, grafo limpio, suite por nodo + e2e verde, evals de PRE fluyendo.
   **Refactor completo.**
 
@@ -971,6 +988,13 @@ reproducible. **Siguiente: 2.5 (nodo `booking`), luego 2.6.** Sigue este patrón
 ## 8. Registro de ejecución
 *(Una línea por paso cerrado: fecha · dev · qué · commit. El más reciente arriba.)*
 
+- **2026-08-11 · Álvaro · Fase 5.3 — `trace_openai` (detalle por-llamada) + SOAK abierto** (`e34c981`).
+  `src/llm_client.py`: `trace_openai(client)` envuelve los 13 clientes OpenAI (9 módulos) con
+  `wrap_openai` solo si el tracing está activo (no-op en dev/CI/tests → preserva los mocks de
+  `AsyncOpenAI`). Ahora LangSmith tiene grafo + tokens/latencia/coste por llamada. Suite 1537
+  passed (+1 flaky `test_intent_hotel_detection`, pasa al re-correr, ajeno al cambio). **Entrada
+  en Fase 5.3-bis (SOAK, multi-día): parado esperando tráfico real; criterio de reanudación y
+  orden del corte documentados en §5.**
 - **2026-08-11 · Álvaro · Fase 5.3 — periodo de medición ABIERTO (LangSmith trazando PRE).**
   Key como GitHub secret + inyección en `.env.pre` (job `deploy-pre`). Fix de bug real:
   `config` fijaba `LANGSMITH_TRACING_V2` (var inexistente) → tracing nunca encendía; corregido a
