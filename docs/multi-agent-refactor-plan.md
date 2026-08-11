@@ -890,6 +890,21 @@ reproducible. **Siguiente: 2.5 (nodo `booking`), luego 2.6.** Sigue este patrón
       la cascada vieja del supervisor, las redes globales muertas y lo que quede de
       `ConversationState`/`Step` legacy (reachability, suite tras cada borrado). `supervisor.py`
       queda mínimo o desaparece a favor de `orchestration/`.
+      - **🔎 PREP — mapa de reachability (2026-08-11, Álvaro, análisis sin borrar nada):** el corte
+        NO es un borrado directo — **`_route_message_inner` sigue VIVA**: los 5 nodos reales
+        delegan en ella. Se parte en dos:
+        - **(A) Gates PRE-núcleo ya reproducidos en nodos** (PII/link/sensible/DIVE-TO-HEAL,
+          cancel/reschedule, contacto/identidad, edad, disponibilidad-narrow) → **mueren** al
+          cortar (los nodos los ejecutan directamente). Borrables por reachability.
+        - **(B) Gates POST-núcleo + fallbacks que los nodos AÚN delegan** → **NO borrables hasta
+          migrarlos**: `escalation`→wants_human/keyword de escalado; `changes`→disponibilidad
+          (patrón B); `booking/setup`→fallback si el núcleo declina; `deflection`/`info`→fallback
+          de resiliencia; + los handlers post-núcleo de la cascada (idioma, bare-affirmation).
+        - **Plan de corte:** primero **migrar (B) a sus nodos** (o conservar un "tail handler"
+          compartido extraído de la cascada, sin el flag), con equivalencia por paso; DESPUÉS
+          quitar `agent_arch` de `route_message` (grafo incondicional) y borrar lo que quede
+          muerto de (A) + el shadow. Suite (por nodo + e2e) como red tras cada borrado. Decidir
+          disponibilidad-fresh (patrón B) aquí (¿el núcleo la intercepta o gana el gate?).
 - [ ] **5.3 · Bucle de datos reales (Fase 6 robustez) con LangSmith.** Harvest de trazas de PRE
       → **datasets/evals de LangSmith** → dirigir refuerzos con datos reales, no edge-cases
       inventados.
