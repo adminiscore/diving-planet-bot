@@ -143,6 +143,13 @@ jobs:
                 docker logs dp-pre-postgres --tail 60 2>&1 || true
               fi
             fi
+            # LangSmith (Fase 5.3 / periodo de medicion del rollout, plan §5): inyecta
+            # la API key desde el secret de GitHub en .env.pre (PRE only) para que el
+            # bot trace a LangSmith. config._activate_langsmith_tracing la lee y enciende
+            # el tracing. Se borra cualquier linea previa y se re-escribe (idempotente).
+            # Si el secret esta vacio, config no enciende el tracing (no-op).
+            sed -i "/^LANGSMITH_API_KEY=/d" .env.pre 2>/dev/null || true
+            echo "LANGSMITH_API_KEY=${{ secrets.LANGSMITH_API_KEY }}" >> .env.pre
             docker compose -f docker-compose.vps.yml up -d --build dp-pre-bot
             sleep 5
             docker exec dp-pre-bot python -m scripts.load_embeddings --yes
