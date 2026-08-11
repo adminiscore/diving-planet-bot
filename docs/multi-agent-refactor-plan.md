@@ -884,10 +884,23 @@ reproducible. **Siguiente: 2.5 (nodo `booking`), luego 2.6.** Sigue este patrón
       (`setup/availability/routing/extraction/slotfill_close`) probados en aislamiento con las
       fases del núcleo mockeadas + las funciones de edge `_after_*`. La "reorganización por nodo"
       queda satisfecha por la convención `test_<nodo>_agent.py`. *(dev: Álvaro)*
-- [ ] **5.2 · CORTE del legacy.** Con el flag probado en PRE: **quitar `agent_arch`** y borrar
-      la cascada vieja del supervisor, las redes globales muertas y lo que quede de
-      `ConversationState`/`Step` legacy (reachability, suite tras cada borrado). `supervisor.py`
-      queda mínimo o desaparece a favor de `orchestration/`.
+- [~] **5.2 · CORTE del legacy — EN CURSO (incremental, suite verde tras cada paso).** Con el flag
+      probado en PRE. **Hallazgo del prep:** la cascada NO se borra entera — `_route_message_inner`
+      **se queda** como handler compartido al que los nodos delegan (núcleo + tail post-núcleo:
+      wants_human, idioma, disponibilidad); reproducir esos gates en los nodos SIN el núcleo
+      perdería efectos de estado. Lo que muere: el flag + shadow + gates pre-núcleo ya reproducidos.
+      - [x] **Paso 1 — subsistema shadow retirado** (`2491be5`). El shadow (Fase 1.5) ya cumplió
+        (grafo validado en suite + PRE en vivo). Borrado: 21 `_mark_route(...)` no-op, el ContextVar
+        `_cascade_route_taken`, `_mark_route`, `_run_route_shadow`, la rama `elif agent_arch_shadow`
+        de `route_message`, `import contextvars`, el import `ROUTE_*` sin uso (supervisor.py) y el
+        campo `agent_arch_shadow` (config.py) + `test_route_shadow.py`. −183 líneas. Sin tocar el
+        rollback (flag + cascada siguen). Comportamiento intacto (marks no-op): ruff limpio, 129
+        verdes en orquestación/agentes/equivalencia; suite completa en verificación.
+      - [ ] **Paso 2 — renombrar `_route_message_inner`** → nombre que refleje que es el handler
+        compartido (no "cascada legacy"), y documentar su rol post-corte.
+      - [ ] **Paso 3 — quitar el flag `agent_arch`** de `route_message` (grafo incondicional) una
+        vez el grafo tenga confianza en PRO. Borrar los gates pre-núcleo de la cascada que queden
+        muertos (reachability + suite tras cada borrado).
       - **🔎 PREP — mapa de reachability (2026-08-11, Álvaro, análisis sin borrar nada):** el corte
         NO es un borrado directo — **`_route_message_inner` sigue VIVA**: los 5 nodos reales
         delegan en ella. Se parte en dos:
@@ -952,6 +965,17 @@ reproducible. **Siguiente: 2.5 (nodo `booking`), luego 2.6.** Sigue este patrón
 ## 8. Registro de ejecución
 *(Una línea por paso cerrado: fecha · dev · qué · commit. El más reciente arriba.)*
 
+- **2026-08-11 · Álvaro · Fase 5.2 paso 1 — subsistema shadow retirado** (`2491be5`). Grafo
+  validado (suite + PRE en vivo) → el shadow del router (Fase 1.5) ya no hace falta. Borrado
+  completo (−183 líneas): 21 `_mark_route(...)` no-op + ContextVar + `_run_route_shadow` + la rama
+  `elif` de `route_message` + config `agent_arch_shadow` + `test_route_shadow.py`. Sin tocar el
+  rollback (flag `agent_arch` + cascada siguen). Ruff limpio, 129 verdes en orquestación/agentes/
+  equivalencia. Pasos 2-3 de 5.2 documentados; el flag se quita cuando el grafo tenga confianza en PRO.
+- **2026-08-11 · Álvaro · Deploy PRE — RESUELTO y validado en vivo.** El grafo sirve en PRE
+  (`AGENT_ARCH=true`); el bloqueo de `dp-pre-postgres` (disco lleno de caché de build) se
+  auto-resolvió desde la propia Action (prune de disco + restart de postgres, sin SSH manual).
+  Validado con 5 mensajes en vivo (una ruta cada uno). Aprendizaje: la Action es la vía de acceso
+  al VPS.
 - **2026-07-31 · Álvaro · Deploy PRE (Stage A+B) — BLOQUEADO por infra, pendiente Gadea.**
   Añadido `AGENT_ARCH_SHADOW`→`AGENT_ARCH: "true"` a `dp-pre-bot` (PRE-only, PRO intacto) y
   llevado a `feature/pre_alvaro` (dispara la Action de auto-deploy). La Action falla en
