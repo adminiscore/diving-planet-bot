@@ -707,6 +707,71 @@ respuesta determinista (`_canonical_price_package_answer`) para los 4 paquetes m
 `_canonical_price_named_services_answer` (Grupo 5) para los 4 servicios base. Verificado en vivo:
 ambos casos ahora dan el precio real y exacto del catálogo. 6 tests nuevos.
 
+---
+
+## Lote 5 (15 conversaciones LARGAS, 8-15 turnos, 2026-08-26) — correcciones/interrupciones/vuelta atrás
+
+Con la superficie corta ya bastante cubierta (rendimientos decrecientes en el lote 3), este lote
+cambió de enfoque: conversaciones largas y realistas con correcciones, interrupciones a mitad de
+flujo, cambios de tema y vuelta a la reserva, preguntas después del cierre — la clase de bug de
+"deriva de estado en conversaciones largas" que los lotes cortos no llegaban a estresar.
+
+**Resultado**: reveló el hallazgo más grave de toda la batería hasta ahora — una alucinación de
+ubicación que podía dar un precio incorrecto al cliente. También confirmó que varios fixes previos
+(hallazgo D, hallazgo J, el guard `_in_active_cart_building`) siguen funcionando bien dentro de
+conversaciones largas y realistas, no solo en los casos cortos que los encontraron. Quedan varios
+hallazgos más documentados para una futura pasada (ver abajo).
+
+### M. ✅ ARREGLADO (crítico) — cambio de actividad a mitad de flujo alucinaba una ubicación falsa
+
+`long-back-and-forth-activity-change` (conv 474): "quiero bucear certificado" → "voy solo" →
+"mejor pensándolo bien quiero el minicurso" (sin mencionar ubicación en ningún momento) → el bot
+saltaba directo a preguntar NACIONALIDAD, saltándose la pregunta de ubicación por completo. El
+turno siguiente ("desde cartagena", una respuesta genuina) se malinterpretaba como respuesta de
+NACIONALIDAD, y el bot terminaba dando un precio en COP (tarifa colombiana) sin que el cliente
+hubiera confirmado su nacionalidad. **Es el hallazgo más grave de toda la batería**: no es una
+pregunta perdida o repetida, es un precio potencialmente incorrecto mostrado con confianza.
+
+**Causa raíz**: la "red anti-bucle" genérica de `conversational_core.py` — que existe para resolver
+respuestas no-canónicas a un slot pendiente vía LLM (`resolve_slot_answer`) cuando el turno no
+avanzó por ningún otro camino — se disparaba para el slot `location` porque cambiar de actividad NO
+modifica `next_missing_slot` (location seguía siendo el slot pendiente antes y después). Sin ningún
+respaldo textual, el LLM alucinaba con confianza `"cartagena"` como respuesta a "location" para un
+mensaje que solo habla de cambiar de actividad — reproducido de forma determinista en local.
+
+Fix: se descarta el valor resuelto por el LLM para `location` específicamente cuando ESE MISMO
+turno cambió la actividad principal detectada — señal concreta y acotada al hallazgo (un mensaje
+que habla de actividad no dice nada de ubicación), sin exigir respaldo textual literal
+("cartagena"/"isla"), porque hay respuestas legítimas e indirectas ("ya estamos alojados por la
+zona de playa blanca") que el LLM interpreta bien sin nombrar la ubicación tal cual — probado con
+un test ya existente que verificaba justo ese caso, para no romperlo. Verificado en vivo: ahora
+vuelve a preguntar ubicación en vez de inventarla. 1 test nuevo.
+
+### Otros hallazgos del lote 5 (documentados, pendientes de una futura pasada)
+
+- **Info de acompañante dada temprano (drip-fed) se pierde**: "el quiere hacer snorkel" (turno 4)
+  se olvida y el bot vuelve a preguntar "¿qué le gustaría hacer tu acompañante?" 3 turnos después
+  (conv 477) — la extracción de actividad del acompañante solo parece capturarse reactivamente
+  cuando el núcleo llega a ese slot, no de forma proactiva desde texto libre anterior.
+- **Contradicción sobre el costo del refresher**: el flujo de reserva dice "sin coste adicional"
+  (confirmado en varias conversaciones), pero la pregunta directa "¿el refresher tiene costo
+  adicional?" responde "sí, puede tener costo, escríbenos por WhatsApp" (conv 480) — dos respuestas
+  incompatibles a la misma pregunta según el camino.
+- **Pregunta de acompañante se dispara sin motivo aparente**: familia con niños ya resuelta (2
+  niños haciendo snorkel, ya confirmado en turnos anteriores) y aun así el bot pregunta "¿qué le
+  gustaría hacer tu acompañante?" de la nada tras confirmar nacionalidad (conv 484).
+- **Pregunta informativa real recibe un no-respuesta**: "primero dime qué incluye el tour" recibe
+  un acuse genérico ("¡genial que estés planeando esta aventura!") en vez de la info real de qué
+  incluye (conv 471).
+- **Nacionalidad mixta no se distingue**: "dos de nosotros somos colombianos pero uno es
+  extranjero" se trata como si el grupo entero fuera extranjero, sin usar el detector
+  `_detect_mixed_nationality_request` ya existente en el código para este caso (conv 478).
+- **Respuestas a un slot que ya no es el pendiente parecen perderse en el turno, pero se aplican
+  en silencio**: "no soy colombiano"/"somos colombianos" dichos mientras el acompañante es el tema
+  activo no se reconocen en ESE turno (el bot repite la pregunta del acompañante), pero el dato
+  parece aplicarse igual — el precio final sale correcto más adelante (visto en conv 471). Menor
+  prioridad: es un rough edge de UX (falta de acuse), no pérdida de datos confirmada.
+
 ### Observaciones que quedan sin arreglar (deliberado)
 
 - **Corrección DESPUÉS de una acción downstream (precio mostrado/link enviado) no se aplica**:

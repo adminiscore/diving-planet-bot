@@ -1,6 +1,14 @@
 History
 =======
 
+0.21.12 - (2026-08-26)
+----------------------
+* **Arreglado el hallazgo más grave de la batería sintética contra PRE hasta ahora (lote 5, 15 conversaciones LARGAS de 8-15 turnos): cambio de actividad a mitad de flujo alucinaba una ubicación falsa, que podía llevar a un precio incorrecto.**
+* "quiero bucear certificado" → "voy solo" → "mejor pensándolo bien quiero el minicurso" (sin mencionar ubicación) hacía que el bot se saltara la pregunta de ubicación y, en el turno siguiente, malinterpretara "desde cartagena" como respuesta de NACIONALIDAD — terminando en un precio en COP sin que el cliente hubiera confirmado ser colombiano.
+* Causa: la red anti-bucle genérica (resuelve respuestas no-canónicas vía LLM cuando el turno no avanza) se disparaba para `location` porque cambiar de actividad no modifica qué slot falta — sin ningún respaldo, el LLM alucinaba "cartagena" con confianza para un mensaje que solo habla de actividad. Fix: se descarta el valor del LLM para `location` cuando ese mismo turno cambió la actividad principal, sin romper el caso legítimo de respuestas indirectas de ubicación ya cubierto por un test existente.
+* Verificado en vivo con LLM real. 1 test nuevo. Suite: **1440 passed**, 18 skipped. ruff limpio.
+* El lote 5 (conversaciones largas con correcciones/interrupciones) documentó 5 hallazgos más sin arreglar esta pasada: info de acompañante dada temprano que se olvida, contradicción sobre el costo del refresher según el camino, pregunta de acompañante disparada sin motivo, pregunta informativa real sin respuesta de contenido, y nacionalidad mixta del grupo no distinguida.
+
 0.21.11 - (2026-08-26)
 ----------------------
 * **Arregladas 3 de las 5 observaciones menores documentadas en el lote 4 de la batería sintética contra PRE.**

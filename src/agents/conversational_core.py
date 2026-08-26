@@ -2267,7 +2267,32 @@ async def maybe_handle_turn(
         and not state.pending_companion_activity
     ):
         resolved = await resolve_slot_answer(prev_pending, message, lang=state.language)
-        if "value" in resolved and _apply_resolved_slot_value(state, prev_pending, resolved["value"]):
+        resolved_value = resolved.get("value")
+        # Verificación determinista para SLOT_LOCATION (hallazgo en vivo,
+        # batería sintética contra PRE, 2026-08-26): un mensaje que cambia
+        # de ACTIVIDAD a mitad de flujo ("mejor pensándolo bien quiero el
+        # minicurso", sin mencionar ubicación en absoluto) no avanza
+        # `next_missing_slot` (sigue faltando location), así que esta red
+        # anti-bucle se disparaba y le preguntaba al LLM "¿qué respondió
+        # para location?" — sin ningún respaldo real, el LLM alucinaba
+        # "cartagena" con confianza (medido en vivo, reproducible). El
+        # resultado: la reserva avanzaba con una ubicación que el cliente
+        # nunca dio, saltándose la pregunta real y arriesgando un precio/
+        # link incorrecto. Se descarta el valor SOLO cuando ESTE MISMO
+        # turno cambió la actividad principal (`prev_main_activity` vs
+        # `state.detected_activity`, ya calculados arriba) — la señal
+        # concreta del hallazgo: un mensaje que habla de actividad no dice
+        # nada de ubicación. No se exige respaldo textual literal
+        # ("cartagena"/"isla") porque hay respuestas legítimas e
+        # indirectas ("ya estamos alojados por la zona de playa blanca")
+        # que el LLM sí interpreta bien sin nombrar la ubicación tal cual.
+        if (
+            prev_pending == SLOT_LOCATION
+            and resolved_value in ("cartagena", "island")
+            and prev_main_activity != state.detected_activity
+        ):
+            resolved_value = None
+        if resolved_value is not None and _apply_resolved_slot_value(state, prev_pending, resolved_value):
             advanced = True
 
     # Última red antes del genérico: heurística blanda de pregunta de info

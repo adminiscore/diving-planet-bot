@@ -1773,6 +1773,33 @@ async def test_location_resolver_abstains_reasks(monkeypatch):
 
 
 @pytest.mark.asyncio
+async def test_location_resolver_ignored_when_message_switches_activity(monkeypatch):
+    """Hallazgo en vivo (batería sintética contra PRE, 2026-08-26, lote 5,
+    conversación larga con cambio de actividad a mitad de flujo): "mejor
+    pensándolo bien quiero el minicurso" (sin mencionar ubicación en
+    absoluto) no avanza `next_missing_slot` (sigue faltando location), así
+    que la red anti-bucle le preguntaba al LLM "¿qué respondió para
+    location?" — el LLM alucinaba "cartagena" con confianza pese a que el
+    mensaje no dice nada de ubicación. La reserva avanzaba con una
+    ubicación que el cliente nunca dio. Fix: se descarta el valor resuelto
+    cuando ESTE MISMO turno cambió la actividad principal — la ubicación
+    debe seguir pendiente y volver a preguntarse."""
+    monkeypatch.setattr(core, "resolve_slot_answer",
+                        AsyncMock(return_value={"value": "cartagena"}))
+    state = _at_location_stage()
+    state.detected_activity = "certified_diving"
+    with patch("src.agents.supervisor.detect_routing_signals",
+               new=AsyncMock(return_value={})):
+        await route_message(state, "mejor pensandolo bien quiero el minicurso")
+    assert state.location is None, (
+        "un cambio de actividad no debe hacer que se invente una ubicación "
+        "que el cliente nunca dio"
+    )
+    assert state.core_pending_slot == core.SLOT_LOCATION
+    assert state.detected_activity == "minicourse"
+
+
+@pytest.mark.asyncio
 @pytest.mark.parametrize("message", ["somos 2", "we are 2", "somos dos"])
 async def test_location_not_misread_from_unrelated_quantity_reply(message, monkeypatch):
     """Hallazgo en vivo 2026-08-26 (batería sintética contra PRE, 4/4 repros):
