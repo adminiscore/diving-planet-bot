@@ -410,6 +410,38 @@ RESCHEDULE_BOOKING_PHRASES = {
     "postpone my booking", "postpone my reservation",
 }
 
+# Phrases that indicate the customer wants to change the HEADCOUNT of an
+# existing booking (add/remove people) — distinct from stating group size
+# while a booking is still being built (that's normal booking info, handled
+# by the cart interceptors, never this list). Hallazgo G (batería sintética
+# contra PRE, 2026-08-26): "ya tengo una reserva hecha, quiero agregar una
+# persona más" caía al menú genérico de bienvenida, sin ningún reconocimiento
+# — asimetría con cancelación/reprogramación, que sí se reconocían.
+MODIFY_BOOKING_PHRASES = {
+    # ES
+    "agregar una persona a mi reserva", "agregar una persona mas a mi reserva",
+    "anadir una persona a mi reserva", "anadir una persona mas a mi reserva",
+    "sumar una persona a mi reserva", "sumar a alguien a mi reserva",
+    "quitar una persona de mi reserva", "quitar a alguien de mi reserva",
+    "eliminar una persona de mi reserva", "restar una persona de mi reserva",
+    "cambiar el numero de personas de mi reserva",
+    "cambiar la cantidad de personas de mi reserva",
+    "modificar el numero de personas de mi reserva",
+    "ya tengo una reserva y quiero agregar", "ya tengo una reserva y quiero anadir",
+    "ya reserve y quiero agregar", "ya reserve y quiero anadir",
+    "ya hice mi reserva y quiero agregar",
+    "reserva hecha, quiero agregar", "reserva hecha y quiero agregar",
+    "reserva hecha, quiero anadir", "reserva hecha y quiero anadir",
+    "reserva hecha, quiero sumar",
+    # EN
+    "add a person to my booking", "add a person to my reservation",
+    "add someone to my booking", "add someone to my reservation",
+    "remove a person from my booking", "remove someone from my booking",
+    "change the number of people on my booking",
+    "change the headcount on my booking",
+    "i already booked and want to add", "i already have a booking and want to add",
+}
+
 
 def _detect_cancellation_request(msg_lower: str) -> bool:
     # Accent-insensitive so "cancelar mi reservación" also matches the
@@ -421,6 +453,11 @@ def _detect_cancellation_request(msg_lower: str) -> bool:
 def _detect_reschedule_request(msg_lower: str) -> bool:
     normalized = _strip_accents(msg_lower)
     return any(phrase in normalized for phrase in RESCHEDULE_BOOKING_PHRASES)
+
+
+def _detect_modify_booking_request(msg_lower: str) -> bool:
+    normalized = _strip_accents(msg_lower)
+    return any(phrase in normalized for phrase in MODIFY_BOOKING_PHRASES)
 
 
 def _in_active_cart_building(state: ConversationState) -> bool:
@@ -1926,10 +1963,16 @@ async def _route_message_inner(state: ConversationState, message: str) -> str:
         routing_signals.get("booking_change_topic") == "cancellation"
         and not _in_active_cart_building(state)
     ):
+        # `state.language` (Group 4, mismo hallazgo): en el mensaje de
+        # APERTURA todavía no se detectó idioma — un "hi, I need to cancel
+        # my booking" caía en la respuesta en español pese a ser el primer
+        # mensaje en inglés. Mismo patrón que la deflexión de contacto/
+        # identidad IA más abajo.
+        effective_lang = state.language if state.detected_language else _infer_language(message, state.language)
         policy_text = (load_policies().get("policies", {}).get("cancellation") or {}).get(
-            state.language, ""
+            effective_lang, ""
         )
-        if state.language == "es":
+        if effective_lang == "es":
             response = (
                 f"{policy_text}\n\n¿Quieres que te conecte con un asesor para gestionar la "
                 "cancelación, o prefieres volver al menú principal?"
@@ -1939,7 +1982,7 @@ async def _route_message_inner(state: ConversationState, message: str) -> str:
                 f"{policy_text}\n\nWould you like me to connect you with an advisor to handle the "
                 "cancellation, or would you rather go back to the main menu?"
             )
-        state.quick_replies = _booking_change_buttons(state.language)
+        state.quick_replies = _booking_change_buttons(effective_lang)
         logger.info("[SUPERVISOR] Cancellation request detected -> policy info + escalate/home buttons")
         state.history.append({"role": "user", "content": message})
         state.history.append({"role": "assistant", "content": response})
@@ -1949,10 +1992,11 @@ async def _route_message_inner(state: ConversationState, message: str) -> str:
         routing_signals.get("booking_change_topic") == "reschedule"
         and not _in_active_cart_building(state)
     ):
+        effective_lang = state.language if state.detected_language else _infer_language(message, state.language)
         policy_text = (load_policies().get("policies", {}).get("reschedule") or {}).get(
-            state.language, ""
+            effective_lang, ""
         )
-        if state.language == "es":
+        if effective_lang == "es":
             response = (
                 f"{policy_text}\n\n¿Quieres que te conecte con un asesor para gestionar el cambio "
                 "de fecha, o prefieres volver al menú principal?"
@@ -1962,8 +2006,39 @@ async def _route_message_inner(state: ConversationState, message: str) -> str:
                 f"{policy_text}\n\nWould you like me to connect you with an advisor to handle the "
                 "date change, or would you rather go back to the main menu?"
             )
-        state.quick_replies = _booking_change_buttons(state.language)
+        state.quick_replies = _booking_change_buttons(effective_lang)
         logger.info("[SUPERVISOR] Reschedule request detected -> policy info + escalate/home buttons")
+        state.history.append({"role": "user", "content": message})
+        state.history.append({"role": "assistant", "content": response})
+        return response
+
+    # Hallazgo G (batería sintética contra PRE, 2026-08-26): "ya tengo una
+    # reserva hecha, quiero agregar una persona más" caía al menú genérico de
+    # bienvenida, sin ningún reconocimiento — asimetría con cancelación/
+    # reprogramación (arriba), que sí se reconocían. Mismo patrón exacto:
+    # lista de keyword + respaldo LLM `booking_change_topic == "modify_headcount"`,
+    # guardado por `_in_active_cart_building` para no pisar la mención normal
+    # de tamaño de grupo mientras una reserva se está CONSTRUYENDO todavía.
+    if _detect_modify_booking_request(msg_lower) or (
+        routing_signals.get("booking_change_topic") == "modify_headcount"
+        and not _in_active_cart_building(state)
+    ):
+        effective_lang = state.language if state.detected_language else _infer_language(message, state.language)
+        policy_text = (load_policies().get("policies", {}).get("modify_booking") or {}).get(
+            effective_lang, ""
+        )
+        if effective_lang == "es":
+            response = (
+                f"{policy_text}\n\n¿Quieres que te conecte con un asesor para gestionar el cambio "
+                "en el número de personas, o prefieres volver al menú principal?"
+            )
+        else:
+            response = (
+                f"{policy_text}\n\nWould you like me to connect you with an advisor to handle the "
+                "headcount change, or would you rather go back to the main menu?"
+            )
+        state.quick_replies = _booking_change_buttons(effective_lang)
+        logger.info("[SUPERVISOR] Modify-headcount request detected -> policy info + escalate/home buttons")
         state.history.append({"role": "user", "content": message})
         state.history.append({"role": "assistant", "content": response})
         return response

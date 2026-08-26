@@ -459,10 +459,9 @@ comparación con competencia, modificar/cancelar reserva existente, injection v�
 falso, mensajes vacíos/repetidos/spam, jerga/typos, grupo con estados de buceo mixtos).
 
 **Resultado**: 46/50 casos limpios (25 "normales" cerraron sin fricción o dieron la info
-correcta; 21 adversariales resistieron o se manejaron razonablemente). 2 bugs nuevos confirmados
-y arreglados en esta misma pasada; 1 gap de alcance documentado (no es un bug, es una capacidad
-que no existe todavía); 1 caso ya conocido (typo capturado como nombre, mismo patrón whack-a-mole
-del Grupo 8, sin fix nuevo — ver nota abajo).
+correcta; 21 adversariales resistieron o se manejaron razonablemente). 2 bugs nuevos + 1 gap de
+alcance (capacidad nueva) arreglados/implementados; 1 caso ya conocido (typo capturado como
+nombre, mismo patrón whack-a-mole del Grupo 8, sin fix nuevo — ver nota abajo).
 
 ### E. ✅ ARREGLADO — pregunta genérica de métodos de pago escalaba como incidencia en tiempo real
 
@@ -514,18 +513,35 @@ pregunta. El orden inverso (la cláusula de >2 años aparece primero) y el caso 
 (`test_two_last_dive_clauses_take_the_conservative_one`, 3 variantes). Suite completa (1419
 tests) sigue en verde.
 
-### G. 🟡 Gap de alcance (NO es un bug) — no se puede añadir una persona a una reserva ya existente
+### G. ✅ IMPLEMENTADO — nueva capacidad: añadir/quitar una persona de una reserva ya existente
 
 `adv-modify-existing-add-person` (conv 351): "ya tengo una reserva hecha, quiero agregar una
-persona más" cae al menú genérico de bienvenida, como si fuera un cliente nuevo — en cambio
+persona más" caía al menú genérico de bienvenida, como si fuera un cliente nuevo — en cambio
 `adv-modify-existing-change-date` (conv 352, mismo tipo de petición pero para CAMBIAR FECHA) sí se
-reconoce y ofrece conectar con un asesor. Revisado el código: `booking_change_topic` (el campo que
-detecta modificaciones de una reserva ya existente) solo tiene dos valores posibles,
-`"cancellation"` y `"reschedule"` — no existe una tercera categoría para "añadir/quitar persona" o
-"modificar el número de personas". No es una clasificación equivocada, es una capacidad que
-todavía no existe. Pendiente de decisión de producto: si vale la pena añadir una tercera categoría
-(p. ej. `"modify_headcount"`) que escale a un asesor con el mismo patrón que cancelación/cambio de
-fecha — no se implementó en esta pasada por ser una ampliación de alcance, no una corrección.
+reconocía y ofrecía conectar con un asesor. `booking_change_topic` (el campo que detecta
+modificaciones de una reserva ya existente) solo tenía dos valores posibles, `"cancellation"` y
+`"reschedule"` — no era una clasificación equivocada, era una capacidad que no existía todavía.
+
+**Implementado** (mismo patrón exacto que cancelación/reprogramación): tercer valor
+`"modify_headcount"` en el enum de `booking_change_topic` (con ejemplos ES/EN en la descripción
+del campo para el LLM), lista de frases determinista `MODIFY_BOOKING_PHRASES` (incluye la frase
+real de la batería), nueva entrada de política `modify_booking` en `policies.json` (ES/EN, mismo
+estilo que `reschedule`), y un tercer bloque en `_route_message_inner` que da la info de política +
+botones asesor/menú, guardado por `_in_active_cart_building` igual que los otros dos (para no
+confundir "decir el tamaño del grupo mientras se construye una reserva nueva" con "modificar una
+reserva que ya existe").
+
+**Hallazgo colateral arreglado de paso**: al verificar en vivo el fix con un mensaje de apertura en
+inglés, la respuesta salió en ESPAÑOL — mismo bug de idioma del Grupo 4 (`state.language` en vez de
+`state.detected_language`/inferencia), pero nunca aplicado a los bloques de cancelación/
+reprogramación/modificación (solo se había aplicado a la deflexión de contacto/identidad IA).
+Confirmado que también afectaba a cancelación (probado con "hi, I need to cancel my booking..." →
+salía en español pese a ser el primer mensaje). Arreglado en los TRES bloques a la vez con el mismo
+patrón `effective_lang = state.language if state.detected_language else _infer_language(...)`.
+
+Verificado en vivo con LLM real: ES y EN correctos para modify_headcount, un mensaje normal de
+tamaño de grupo mid-flow no se ve afectado. 4 tests nuevos. Suite completa (1423 tests) sigue en
+verde.
 
 ### Nota — typo capturado como nombre (mismo patrón del Grupo 8, sin fix nuevo)
 

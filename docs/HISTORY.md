@@ -1,6 +1,13 @@
 History
 =======
 
+0.21.9 - (2026-08-26)
+----------------------
+* **Implementado el hallazgo G del lote 3 de la batería sintética contra PRE: nueva capacidad para añadir/quitar personas de una reserva ya existente.** "ya tengo una reserva hecha, quiero agregar una persona más" caía al menú genérico de bienvenida — a diferencia de "cambiar la fecha" (mismo tipo de petición pero para reprogramar), que sí se reconocía. No era un bug, era una capacidad que no existía: `booking_change_topic` solo tenía `"cancellation"`/`"reschedule"`.
+* Fix: tercer valor `"modify_headcount"` (mismo patrón exacto que los otros dos — lista de frases determinista + respaldo LLM + política dedicada en `policies.json` + botones asesor/menú), guardado por `_in_active_cart_building` para no confundirlo con decir el tamaño del grupo mientras se construye una reserva nueva.
+* **Hallazgo colateral arreglado de paso**: al verificar en vivo el fix con un mensaje de apertura en inglés, la respuesta salió en español — mismo bug de idioma del Grupo 4 (0.21.4), pero nunca aplicado a los bloques de cancelación/reprogramación/modificación (solo a la deflexión de contacto/identidad IA). Confirmado que también afectaba a cancelación, ya desplegada. Arreglado en los tres bloques a la vez.
+* Verificado en vivo con LLM real (ES+EN). 4 tests nuevos. Suite: **1423 passed**, 18 skipped. ruff limpio.
+
 0.21.8 - (2026-08-26)
 ----------------------
 * **Arreglados 2 hallazgos nuevos del lote 3 (50 conversaciones) de la batería sintética contra PRE — mitad "normales" hasta cierre, mitad adversariales sobre temas nuevos (pago, modificar reserva, injection, mensajes vacíos/repetidos, grupo con estados de buceo mixtos).**
