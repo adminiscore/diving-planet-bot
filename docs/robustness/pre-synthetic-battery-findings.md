@@ -82,15 +82,37 @@ con saludo en **inglés** ("Hi! I'm *Coral*...") seguido, en el MISMO mensaje, d
 cantidad en **español** ("¿Cuántos serían para minicurso?"). El saludo y la pregunta de slot
 parecen decidir el idioma por caminos distintos.
 
-### D. 🔴 Posible regresión del fix de actividad de acompañante (v0.20.62) en mensaje de APERTURA
+### D. ✅ ARREGLADO — mención de acompañante sin certificar en el mismo mensaje de APERTURA
 
-`uncertified-no-activity` (conv 157): "hola quiero bucear, voy con mi amigo pero el no esta
-certificado" (todo en un solo mensaje de apertura) → el bot pregunta "¿Cuántos serían para
-buceo certificado?" en vez de preguntar QUÉ quiere hacer el acompañante (`SLOT_COMPANION_
-ACTIVITY`, el fix de v0.20.62). Ese fix se verificó en vivo para el caso MID-FLOW (actividad ya
-establecida, acompañante mencionado en un turno posterior) — este caso combina ambos hechos en
-el PRIMER mensaje, y `_activity_has_textual_backing`/el guard de `fill_gaps` puede no estar
-cubriendo esta variante de apertura.
+`uncertified-no-activity` (conv 157, re-verificado en conv 265 y 276 del re-run 2026-08-26):
+"hola quiero bucear, voy con mi amigo pero el no esta certificado" (todo en un solo mensaje de
+apertura) → el bot preguntaba "¿Cuántos serían para buceo certificado?" en vez de reconocer al
+acompañante sin certificar. Quedó documentado como posible regresión pero nunca se agrupó ni se
+arregló junto a los Grupos 1-8 — el re-run completo de los 65 tests tras cerrar esos 8 grupos lo
+encontró TODAVÍA roto (2026-08-26).
+
+**Causa raíz** (dos capas, ambas necesarias):
+1. `companion_ambiguous` (guard que decide si correr `detect_special_signals` aunque el turno ya
+   "avanzó" por otro camino) solo miraba `prev_main_activity` — la actividad ANTES de este turno.
+   En un mensaje de apertura, `prev_main_activity` es `None` aunque `_understand()` ya haya
+   resuelto la actividad principal ESTE MISMO turno (por primera persona, "quiero bucear"), así
+   que el guard nunca se disparaba y la mención del acompañante se perdía sin más. Fix: el guard
+   también acepta `state.detected_activity` (post-turno).
+2. Una vez el guard se abrió, `_restore_main_diver_fields` (que protege el perfil del buceador
+   PRINCIPAL de que un atributo del acompañante lo pise por "latest wins") restauraba
+   `detected_activity`/`detected_service_id` al valor de ANTES del turno — que en la apertura es
+   `None` — borrando la actividad que el propio mensaje acababa de establecer legítimamente en
+   primera persona. Fix: solo restaurar `detected_activity`/`detected_service_id` cuando había
+   algo previo que proteger (`activity is not None`); `is_certified`/`last_dive_over_2_years`/
+   `refresher_interested` (los campos realmente propensos a que el atributo del acompañante se
+   filtre al principal) se siguen restaurando siempre, igual que antes.
+
+Verificado en vivo local (LLM real): la conversación ahora reconoce ambos sub-grupos
+(`certified_diving:1` + `minicourse:1`, tamaño de grupo 2) y sigue el flujo normal (ubicación →
+seguridad → nacionalidad) sin perder ni la actividad principal ni al acompañante. 1 test nuevo
+(`test_companion_attribute_in_opening_message_keeps_main_activity`); suite completa (1418 tests)
+sigue en verde, incluidos los tests de los Grupos 1-8 (sin regresión en el caso MID-FLOW, que
+seguía funcionando y sigue funcionando).
 
 ---
 
@@ -399,3 +421,29 @@ parametrize existente). Nombres reales siguen capturándose sin cambios.
   turno.
 - **Cambio de opinión de actividad** ("mejor prefiero el minicurso") → respetado.
 - **Emoji-only y mensaje de una palabra** ("buceo") → sin crash, respuesta razonable.
+
+---
+
+## Re-run completo (65 conversaciones, 2026-08-26, tras cerrar Grupos 1-8)
+
+Con los 8 grupos + hallazgos A-D ya desplegados en PRE, se relanzaron los 65 tests originales
+(conv 254-318) contra el bot en vivo para confirmar que los fixes aguantan bajo el MISMO set
+adversarial que los encontró, y que ningún caso limpio se rompió.
+
+**Resultado**: 7/8 grupos + hallazgos A-C confirmados arreglados en la repetición en vivo, sin
+ninguna regresión detectada en los ~50 casos limpios. El hallazgo D seguía roto (nunca se había
+agrupado con los 8 Grupos ni recibido un fix dedicado) — diagnosticado y arreglado en esta misma
+pasada de verificación (ver arriba). Tras el fix de D, todos los hallazgos documentados en este
+informe están arreglados y verificados.
+
+Confirmaciones puntuales relevantes de la repetición:
+- Grupo 1 (ubicación mal leída de "somos 2"): confirmado en conv 254 y 256, con dos frases
+  distintas ("somos 2" / "somos 2 entonces"), sin regresión en los 3 casos limpios de la misma
+  familia (conv 269-271).
+- Grupo 4 (idioma): confirmado en conv 262 (deflexión de WhatsApp en inglés desde el primer
+  mensaje), conv 266 (sin mezcla ES/EN) y conv 272 (cambio de idioma explícito mid-flow).
+- Grupo 5 (precios): confirmado en conv 303-305, incluida la comparación de 2 servicios.
+- Un caso nuevo observado sin clasificar como bug (conv 315): un acompañante certificado
+  mencionado DESPUÉS de que ya se envió el link de reserva no actualiza el conteo de personas ni
+  el precio en el resumen — posible mejora futura, no bloqueante (el link de reserva permite
+  ajustar el número final de personas).

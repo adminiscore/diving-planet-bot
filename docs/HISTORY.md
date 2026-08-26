@@ -1,6 +1,13 @@
 History
 =======
 
+0.21.7 - (2026-08-26)
+----------------------
+* **Arreglado el hallazgo D de la batería sintética contra PRE: mención de acompañante sin certificar perdida en el mensaje de APERTURA.** "hola quiero bucear, voy con mi amigo pero el no esta certificado" en un solo mensaje preguntaba "¿Cuántos serían para buceo certificado?" en vez de reconocer al acompañante — quedó documentado desde el lote 1 pero nunca se agrupó ni arregló junto a los Grupos 1-8; el re-run completo de los 65 tests (tras cerrar esos 8 grupos) lo encontró todavía roto.
+* Dos causas: (1) el guard `companion_ambiguous` (decide si vale la pena correr la red de precisión LLM aunque el turno ya "avanzara" por otro camino) solo miraba la actividad principal de ANTES del turno, que en la apertura es `None` aunque `_understand()` ya la haya resuelto ese mismo turno — el guard nunca se disparaba. (2) Una vez abierto el guard, `_restore_main_diver_fields` (protege el perfil del buceador principal de que un atributo del acompañante lo pise) restauraba la actividad principal al valor de ANTES del turno — `None` en la apertura — borrando la actividad recién y legítimamente establecida en primera persona.
+* Fix: el guard también acepta la actividad principal post-turno; `_restore_main_diver_fields` solo restaura actividad/servicio cuando había algo previo que proteger (los campos booleanos propensos a filtración del acompañante — certificación, última inmersión, refresher — se siguen restaurando siempre). Verificado en vivo con LLM real: reconoce ambos sub-grupos (buceo certificado + minicurso) y sigue el flujo normal sin perder ninguno. 1 test nuevo. Suite: **1418 passed**, 18 skipped.
+* Con este fix, los 8 grupos + los 4 hallazgos de la batería sintética contra PRE quedan todos arreglados y re-verificados en vivo tras un re-run completo de los 65 tests originales.
+
 0.21.6 - (2026-08-26)
 ----------------------
 * **Cerrados los últimos 3 grupos de la batería sintética contra PRE — los 8 grupos + 4 hallazgos del lote 1 quedan todos resueltos o investigados.**

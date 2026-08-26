@@ -1304,9 +1304,19 @@ def _restore_main_diver_fields(
     no del hablante (fast-path regex arriba y red de precisión LLM en
     maybe_handle_turn). Bug real: "no es certificado"/"sin bucear hace X años"
     referido al acompañante se aplicaba por 'latest wins' al buceador
-    principal ya resuelto (p. ej. is_certified=True → False de golpe)."""
-    state.detected_activity = activity
-    state.detected_service_id = service_id
+    principal ya resuelto (p. ej. is_certified=True → False de golpe).
+
+    `activity`/`service_id` solo se restauran si HABÍA algo que proteger
+    (`activity` no es None): si el mensaje de APERTURA establece la
+    actividad principal en primera persona ("quiero bucear") en el MISMO
+    turno que menciona a un acompañante ("...voy con mi amigo pero el no
+    esta certificado"), no hay ninguna actividad previa que restaurar —
+    pisarla con None borraba la actividad recién y correctamente detectada
+    del hablante, dejando la reserva sin actividad principal (hallazgo D,
+    batería sintética 2026-08-26)."""
+    if activity is not None:
+        state.detected_activity = activity
+        state.detected_service_id = service_id
     state.is_certified = is_certified
     state.last_dive_over_2_years = last_dive
     state.refresher_interested = refresher
@@ -1920,8 +1930,20 @@ async def maybe_handle_turn(
     # de "¿ya lo fusionó el fast-path?" es `companion_merged_fastpath` (el flag que
     # `_understand()` ya devuelve para esto mismo), no una re-lectura del regex
     # disparador.
+    # `prev_main_activity` (actividad ANTES de este turno) no basta cuando la
+    # actividad principal y la mención del acompañante llegan en el MISMO
+    # mensaje de apertura ("hola quiero bucear, voy con mi amigo pero el no
+    # esta certificado"): ahí `prev_main_activity` sigue en None (nada se
+    # había establecido todavía) aunque `_understand()` YA resolvió la
+    # actividad principal este mismo turno, así que este bloque nunca se
+    # disparaba y la mención del acompañante se perdía en silencio (hallazgo
+    # D, batería sintética 2026-08-26 — `_activity_has_textual_backing`/el
+    # fix de v0.20.62 solo se había verificado en vivo para el caso
+    # MID-FLOW). Se comprueba también `state.detected_activity` (post-turno)
+    # para cubrir ambos casos sin ampliar el disparo a mensajes que no
+    # mencionan actividad alguna.
     companion_ambiguous = bool(
-        prev_main_activity in _ACTIVITY_TO_CART_TYPE
+        (prev_main_activity in _ACTIVITY_TO_CART_TYPE or state.detected_activity in _ACTIVITY_TO_CART_TYPE)
         and _mentions_person(message)
         and not companion_merged_fastpath
         and not group_composition_resolved_by_base_extraction

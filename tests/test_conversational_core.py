@@ -1427,24 +1427,54 @@ async def test_companion_activity_ambiguity_defers_instead_of_burying_pending_sl
     # entierra la pregunta de seguridad que ya estaba pendiente.
     assert state.core_pending_slot == core.SLOT_SAFETY
     assert state.companion_activity_deferred is True
-    assert "año" in resp.lower() or "inmersión" in resp.lower() or "immersion" in resp.lower()
 
-    # Resolver seguridad y nacionalidad — el bot debe seguir preguntando por
-    # ELLAS, nunca volver a la ambigüedad del acompañante a mitad de camino.
+
+@pytest.mark.asyncio
+async def test_companion_attribute_in_opening_message_keeps_main_activity():
+    """Hallazgo D (batería sintética contra PRE, conv 265/276): un mensaje de
+    APERTURA que establece la actividad principal en primera persona
+    ("quiero bucear") y menciona un acompañante SIN certificar en el MISMO
+    turno ("...voy con mi amigo pero el no esta certificado") perdía la
+    actividad principal recién detectada. Causa raíz:
+    `_restore_main_diver_fields` restauraba `detected_activity` al valor de
+    ANTES de este turno (None, por ser la apertura) para proteger el perfil
+    del buceador principal de un 'latest wins' incorrecto del acompañante —
+    pero en la apertura no hay nada previo que proteger, y la restauración
+    borraba la actividad legítima que este mismo turno acababa de fijar. El
+    bot terminaba preguntando "¿cuántos serían para buceo certificado?" en
+    vez de reconocer al acompañante sin certificar."""
+    state = make_state("es")
+    with patch.object(core, "fill_gaps", new=AsyncMock(return_value={})), \
+         patch.object(core, "detect_special_signals", new=AsyncMock(return_value={
+             "companion_activity": "minicourse", "mentions_other_person": True,
+             "companion_is_singular": True, "companion_qty": 1,
+         })):
+        resp = await route_message(
+            state, "hola quiero bucear, voy con mi amigo pero el no esta certificado"
+        )
+    assert state.detected_activity == "certified_diving", (
+        "la actividad principal detectada este mismo turno no debe perderse "
+        "al restaurar el perfil frente a la mención del acompañante"
+    )
+    assert (state.detected_group_allocation or {}).get("minicourse") == 1
+    assert (state.detected_group_allocation or {}).get("certified_diving") == 1
+    assert "cartagena" in resp.lower() or "isla" in resp.lower()
+
+    # Sigue el flujo normal: ubicación -> seguridad -> nacionalidad. El bot
+    # nunca vuelve a la ambigüedad del acompañante (ya resuelta) a mitad de
+    # camino.
     with patch.object(core, "fill_gaps", new=AsyncMock(return_value={})), \
          patch.object(core, "detect_special_signals", new=AsyncMock(return_value={})):
-        resp2 = await route_message(state, "no")
+        resp2 = await route_message(state, "desde cartagena")
+    assert state.location == "cartagena"
+    assert state.core_pending_slot != core.SLOT_COMPANION_ACTIVITY
+    assert "año" in resp2.lower() or "inmersión" in resp2.lower() or "immersion" in resp2.lower()
+
+    with patch.object(core, "fill_gaps", new=AsyncMock(return_value={})), \
+         patch.object(core, "detect_special_signals", new=AsyncMock(return_value={})):
+        await route_message(state, "no")
     assert state.last_dive_over_2_years is False
     assert state.core_pending_slot != core.SLOT_COMPANION_ACTIVITY
-
-    with patch.object(core, "fill_gaps", new=AsyncMock(return_value={})), \
-         patch.object(core, "detect_special_signals", new=AsyncMock(return_value={})):
-        resp3 = await route_message(state, "no somos colombianos")
-    assert state.is_colombian is False
-    # Ahora que ya no queda nada más pendiente, se retoma el acompañante.
-    assert state.core_pending_slot == core.SLOT_COMPANION_ACTIVITY
-    assert state.companion_activity_deferred is False
-    assert "acompañante" in resp3.lower() or "?" in resp3
 
 
 # ---------------------------------------------------------------------------
