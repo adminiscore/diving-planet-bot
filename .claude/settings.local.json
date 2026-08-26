@@ -36,5 +36,14 @@
       "Bash(python -m pytest tests/test_conversations.py::test_welcome_shows_both_languages -q --durations=5)",
       "Bash(python -m compileall -q src tests)"
     ]
-  }
+  },
+  "autoMode": {
+  "allow": [
+    "$defaults",
+    "Bash(git commit *)",
+    "Bash(git push *)",
+    "Edit(.github/workflows/*)",
+    "Write(.github/workflows/*)"
+  ]
+}
 }
