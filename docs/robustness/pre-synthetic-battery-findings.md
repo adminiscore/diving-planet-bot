@@ -747,25 +747,80 @@ zona de playa blanca") que el LLM interpreta bien sin nombrar la ubicación tal 
 un test ya existente que verificaba justo ese caso, para no romperlo. Verificado en vivo: ahora
 vuelve a preguntar ubicación en vez de inventarla. 1 test nuevo.
 
-### Otros hallazgos del lote 5 (documentados, pendientes de una futura pasada)
+### Seguimiento de los otros hallazgos del lote 5 (2026-08-26, misma tarde)
 
-- **Info de acompañante dada temprano (drip-fed) se pierde**: "el quiere hacer snorkel" (turno 4)
-  se olvida y el bot vuelve a preguntar "¿qué le gustaría hacer tu acompañante?" 3 turnos después
-  (conv 477) — la extracción de actividad del acompañante solo parece capturarse reactivamente
-  cuando el núcleo llega a ese slot, no de forma proactiva desde texto libre anterior.
-- **Contradicción sobre el costo del refresher**: el flujo de reserva dice "sin coste adicional"
-  (confirmado en varias conversaciones), pero la pregunta directa "¿el refresher tiene costo
-  adicional?" responde "sí, puede tener costo, escríbenos por WhatsApp" (conv 480) — dos respuestas
-  incompatibles a la misma pregunta según el camino.
-- **Pregunta de acompañante se dispara sin motivo aparente**: familia con niños ya resuelta (2
-  niños haciendo snorkel, ya confirmado en turnos anteriores) y aun así el bot pregunta "¿qué le
-  gustaría hacer tu acompañante?" de la nada tras confirmar nacionalidad (conv 484).
+El usuario pidió seguir con los 5 hallazgos restantes del lote 5. 4 de los 5 se arreglaron; 1 queda
+documentado y deliberadamente sin tocar (arquitectónicamente más profundo, comparte causa con la
+observación ya diferida del lote 3/4 sobre correcciones post-acción).
+
+### N. ✅ ARREGLADO — contradicción sobre el costo del refresher
+
+El flujo de reserva decía "sin coste adicional" (confirmado en varias conversaciones), pero la
+pregunta directa "¿el refresher tiene costo adicional?" respondía "sí, puede tener costo,
+escríbenos por WhatsApp" (conv 480) — dos respuestas incompatibles a la misma pregunta según el
+camino. La política de `policies.json` (`refresh_requirement`) es ambigua sobre el costo y el RAG
+rellenaba el hueco adivinando que sí tiene costo. Fix: nueva respuesta determinista
+(`_canonical_refresher_cost_answer`) con la verdad ya conocida (gratis) — tuvo que colocarse ANTES
+del overview genérico de precios en la cadena de atajos (la variante en inglés, "does the refresher
+cost extra?", colisionaba con `_PRICE_QUESTION` por contener la palabra "cost" y el overview
+genérico se adelantaba siempre; la variante en español solo funcionaba porque "costo" no matchea
+`\bcost\b` por un accidente de frontera de palabra). Verificado en vivo ES+EN. 4 tests nuevos.
+
+### O. ✅ ARREGLADO — pregunta de acompañante se disparaba sin motivo con familias/niños
+
+Familia con niños ya resuelta (2 niños haciendo snorkel, ya confirmado en turnos anteriores) y aun
+así el bot preguntaba "¿qué le gustaría hacer tu acompañante?" de la nada tras confirmar
+nacionalidad (conv 484). **Causa raíz**: "los niños tienen 7 y 10" (solo edades, sin acompañante
+nuevo) disparaba `mentions_other_person` (la señal LLM, más liberal que el regex determinista
+`_mentions_person` — SÍ reconoce "niños") dentro de la rama que difiere una pregunta de
+acompañante para el final. Pero no había ningún acompañante sin resolver: la familia entera ya
+tenía una única actividad (snorkel) resuelta, y los niños los cubre `kids_mention_detected`/
+`SLOT_AGES`, un mecanismo aparte pensado exactamente para ellos. Fix: cuando ya hay contexto de
+niños Y el regex determinista (que no reconoce "niño") no ve a NADIE más en el mensaje, no se
+confía solo en la señal LLM más amplia — sin desactivar el caso genuino (acompañante adulto
+mencionado aparte). Verificado en vivo: la reserva cierra limpia con los 4 (2 adultos + 2 niños)
+sin la pregunta espuria. 1 test nuevo.
+
+### P. ✅ ARREGLADO — nacionalidad mixta no se distinguía
+
+"dos de nosotros somos colombianos pero uno es extranjero" se trataba como si el grupo entero
+fuera extranjero — el detector `_detect_mixed_nationality_request` ya existente en el código no
+cubría esta cantidad-explícita-+-"pero" (solo el patrón "unos/algunos... y otros"). Fix: extendido
+el regex para cubrir ambos órdenes (colombiano-primero / extranjero-primero) con cantidad
+explícita. Verificado en vivo: ahora reconoce la nacionalidad mixta y explica el pago diferenciado
+por persona en vez de asumir un solo tipo de precio para todos. 1 test nuevo.
+
+### Q. ✅ ARREGLADO — pregunta de confianza sobre el link de pago escalaba como link roto
+
+"¿el link de pago es seguro?" (una pregunta de confianza, nada reportado como fallando) a veces
+escalaba como si el cliente estuviera reportando un link ROTO ("lamento que no te haya funcionado")
+— confusa y no pedida, dado que el cliente no dijo que nada fallara. El detector determinista por
+keyword correctamente NO matchea esta frase; el problema es la señal LLM `broken_link_complaint`,
+inherentemente no-determinista, que a veces la confundía con una queja real dada la superposición
+léxica ("link de pago"). Fix: reforzada la descripción del campo para el LLM, distinguiendo
+explícitamente una pregunta de confianza/seguridad de un reporte de fallo — verificado en vivo 3/3
+correcto tras el fix (sin garantía de determinismo absoluto, como cualquier clasificación LLM, pero
+medido mucho más fiable). Sin test nuevo (cambio de prompt puro, mismo patrón que otros fixes de
+prompt de esta batería — no hay parte determinista que testear).
+
+### Hallazgo que queda sin arreglar (deliberado)
+
+- **Info de acompañante dada temprano (drip-fed) se pierde o se cuenta dos veces**: "el quiere
+  hacer snorkel" (turno 4) a veces se olvida (el bot re-pregunta 3 turnos después) y en otra
+  repetición del mismo caso el reparto terminó con 3 personas en vez de 2 (`certified_diving: 2,
+  snorkel: 1` para una conversación de solo 2 personas) — reproducido de forma consistente en
+  local. **Causa raíz identificada pero no arreglada**: `_merge_companion_activity` (usado tanto
+  por el fast-path regex como por la red de precisión LLM) AÑADE la nueva actividad del
+  acompañante sin nunca REDUCIR la actividad principal cuando el acompañante se mueve de una a
+  otra ("mi amigo" contado inicialmente como buceo certificado junto al hablante, luego movido a
+  snorkel sin restar del conteo de buceo certificado). Arreglar esto con seguridad requiere revisar
+  cómo interactúan el fast-path regex, la red de precisión LLM y el guard `_activity_has_textual_
+  backing` — los tres puntos que ya se tocaron varias veces hoy — sin romper ninguno de los fixes
+  ya verificados de esta misma área (hallazgo D, Grupo 2, Grupo 3). Se prefiere documentar con la
+  causa raíz clara antes que un parche apresurado en una zona tan sensible.
 - **Pregunta informativa real recibe un no-respuesta**: "primero dime qué incluye el tour" recibe
   un acuse genérico ("¡genial que estés planeando esta aventura!") en vez de la info real de qué
-  incluye (conv 471).
-- **Nacionalidad mixta no se distingue**: "dos de nosotros somos colombianos pero uno es
-  extranjero" se trata como si el grupo entero fuera extranjero, sin usar el detector
-  `_detect_mixed_nationality_request` ya existente en el código para este caso (conv 478).
+  incluye (conv 471) — no investigado a fondo esta pasada.
 - **Respuestas a un slot que ya no es el pendiente parecen perderse en el turno, pero se aplican
   en silencio**: "no soy colombiano"/"somos colombianos" dichos mientras el acompañante es el tema
   activo no se reconocen en ESE turno (el bot repite la pregunta del acompañante), pero el dato

@@ -1430,6 +1430,34 @@ async def test_companion_activity_ambiguity_defers_instead_of_burying_pending_sl
 
 
 @pytest.mark.asyncio
+async def test_kids_only_mention_does_not_trigger_spurious_companion_activity():
+    """Hallazgo en vivo (batería sintética contra PRE, 2026-08-26, lote 5,
+    conversación larga con familia): "los niños tienen 7 y 10" (solo edades,
+    sin ningún acompañante nuevo) disparaba la ambigüedad de acompañante vía
+    la señal LLM `mentions_other_person` (más liberal que el regex
+    determinista `_mentions_person`, que no reconoce "niño") — el bot
+    terminaba preguntando "¿qué le gustaría hacer tu acompañante?" al
+    cerrar, sin que existiera ningún acompañante sin resolver: la familia
+    entera ya tenía una única actividad (snorkel) y los niños los cubre
+    `kids_mention_detected`/`SLOT_AGES`, un mecanismo aparte. Con contexto
+    de niños ya activo y sin que el regex determinista vea a NADIE más, no
+    se confía solo en la señal LLM."""
+    state = make_state("es")
+    state.detected_activity = "snorkel"
+    state.location = "cartagena"
+    state.kids_mention_detected = True
+    state.core_pending_slot = None
+
+    with patch.object(core, "fill_gaps", new=AsyncMock(return_value={})), \
+         patch.object(core, "detect_special_signals", new=AsyncMock(return_value={
+             "mentions_other_person": True,
+         })):
+        await route_message(state, "los niños tienen 7 y 10")
+    assert state.companion_activity_deferred is False
+    assert state.core_pending_slot != core.SLOT_COMPANION_ACTIVITY
+
+
+@pytest.mark.asyncio
 async def test_companion_attribute_in_opening_message_keeps_main_activity():
     """Hallazgo D (batería sintética contra PRE, conv 265/276): un mensaje de
     APERTURA que establece la actividad principal en primera persona

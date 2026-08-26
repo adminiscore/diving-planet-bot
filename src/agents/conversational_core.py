@@ -2113,6 +2113,22 @@ async def maybe_handle_turn(
         elif (
             (signals.get("mentions_other_person") or _mentions_person(message))
             and prev_pending != SLOT_COMPANION_ACTIVITY
+            # Hallazgo en vivo (batería sintética contra PRE, 2026-08-26,
+            # lote 5, conversación larga con familia): "los niños tienen 7 y
+            # 10" (solo edades, sin acompañante nuevo) hacía que
+            # `mentions_other_person` (LLM, más liberal que el regex — SÍ
+            # reconoce "niños") disparara esta rama, difiriendo una pregunta
+            # de acompañante que se retomaba al final SIN NINGÚN motivo: la
+            # familia entera (adultos + niños) ya tenía una única actividad
+            # resuelta (`state.detected_activity`, p. ej. snorkel para
+            # todos) — no hay ningún acompañante con actividad distinta que
+            # resolver, los niños los cubre `kids_mention_detected`/
+            # `SLOT_AGES`, un mecanismo aparte. Si ya estamos en contexto de
+            # niños Y el regex determinista (que NO reconoce "niño") no ve
+            # a nadie más, no se confía solo en la señal LLM más amplia —
+            # evita el falso positivo sin desactivar el caso genuino
+            # (acompañante adulto mencionado aparte, "niño"+"mi amigo").
+            and not (state.kids_mention_detected and not _mentions_person(message))
         ):
             # Auditoría 2026-07-23: hay un acompañante (persona mencionada)
             # pero ninguna actividad con respaldo textual real — "mi amigo

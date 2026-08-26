@@ -1,6 +1,16 @@
 History
 =======
 
+0.21.13 - (2026-08-26)
+----------------------
+* **Arregladas 4 de las 5 observaciones restantes del lote 5 de la batería sintética contra PRE.**
+* **Hallazgo N**: contradicción sobre el costo del refresher — el flujo decía "sin coste adicional" pero la pregunta directa respondía "puede tener costo, escríbenos por WhatsApp". Fix: respuesta determinista con la verdad ya conocida, colocada antes del overview genérico de precios (la variante en inglés colisionaba con `_PRICE_QUESTION` por contener "cost").
+* **Hallazgo O**: pregunta de acompañante disparada sin motivo con familias/niños ya resueltas — "los niños tienen 7 y 10" activaba `mentions_other_person` (señal LLM) sin que hubiera ningún acompañante sin resolver. Fix: no confiar solo en la señal LLM cuando ya hay contexto de niños y el regex determinista no ve a nadie más.
+* **Hallazgo P**: nacionalidad mixta del grupo ("dos somos colombianos pero uno es extranjero") no se distinguía — el detector ya existente solo cubría "unos... y otros". Fix: extendido el regex para cantidad explícita + "pero", ambos órdenes.
+* **Hallazgo Q**: preguntas de confianza sobre el link de pago ("¿es seguro?") a veces escalaban como link roto — reforzada la descripción del campo LLM para distinguir confianza de fallo reportado.
+* Verificado en vivo con LLM real los 4 hallazgos. 6 tests nuevos. Suite: **1446 passed**, 18 skipped. ruff limpio.
+* Queda 1 hallazgo sin arreglar (causa raíz identificada, documentada): info de acompañante drip-fed que a veces se pierde y a veces se cuenta dos veces (`_merge_companion_activity` nunca resta de la actividad principal cuando el acompañante se mueve a otra) — zona ya muy tocada hoy (hallazgo D, Grupo 2, Grupo 3), se prefiere documentar antes que un parche apresurado.
+
 0.21.12 - (2026-08-26)
 ----------------------
 * **Arreglado el hallazgo más grave de la batería sintética contra PRE hasta ahora (lote 5, 15 conversaciones LARGAS de 8-15 turnos): cambio de actividad a mitad de flujo alucinaba una ubicación falsa, que podía llevar a un precio incorrecto.**

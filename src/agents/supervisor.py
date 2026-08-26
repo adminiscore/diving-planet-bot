@@ -659,6 +659,14 @@ _MIXED_NATIONALITY_RE = re.compile(
     r"|\bnacionalidad\s+mixta\b"
     r"|\bparte\s+del\s+grupo\s+es\s+extranjer[oa]\b"
     r"|\bsolo\s+yo\s+soy\s+(?:colombian[oa]|extranjer[oa])\b"
+    # "dos de nosotros somos colombianos pero uno es extranjero" (hallazgo en
+    # vivo, batería sintética contra PRE, 2026-08-26, lote 5) — cantidad
+    # explícita + "pero"/"y" en vez del "unos/algunos... y otros" ya cubierto
+    # arriba. Cubre ambos órdenes (colombiano-primero / extranjero-primero).
+    r"|\b(?:\d+|dos|tres|cuatro|cinco)\s+(?:de\s+(?:nosotros|el\s+grupo)\s+)?somos\s+colombian[oa]s?\s+"
+    r"(?:pero|y)\s+(?:\d+|el\s+resto|otr[oa]s?|un[oa])\s*(?:es|son|somos)?\s*extranjer[oa]s?\b"
+    r"|\b(?:\d+|dos|tres|cuatro|cinco)\s+(?:de\s+(?:nosotros|el\s+grupo)\s+)?somos\s+extranjer[oa]s?\s+"
+    r"(?:pero|y)\s+(?:\d+|el\s+resto|otr[oa]s?|un[oa])\s*(?:es|son|somos)?\s*colombian[oa]s?\b"
     r"|\bmy\s+(?:friend|partner|husband|wife|brother|sister|boyfriend|girlfriend)\s+is\s+(?:a\s+)?foreign(?:er)?\b"
     r"|\bmy\s+(?:friend|partner|husband|wife|brother|sister|boyfriend|girlfriend)\s+is\s+colombian\b"
     r"|\bonly\s+i\s*(?:'m| am)\s+colombian\b"

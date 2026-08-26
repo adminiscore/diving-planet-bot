@@ -268,7 +268,13 @@ _ROUTING_TOOL = {
                         "This is a technical failure to FIX, not a general "
                         "question — do NOT set it for 'no me funciona el buceo "
                         "nocturno?' (that's a normal question about an "
-                        "activity, not a broken link)."
+                        "activity, not a broken link). Do NOT set it for a "
+                        "TRUST/security question about the link ('¿el link de "
+                        "pago es seguro?', 'is the payment link safe?', 'is "
+                        "this legit?') — nothing is reported as failing there, "
+                        "the customer is only asking whether it's safe to "
+                        "click, which is a normal reassurance question, not a "
+                        "complaint."
                     ),
                 },
                 "asks_for_contact_number": {

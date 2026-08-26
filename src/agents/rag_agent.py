@@ -1305,6 +1305,40 @@ def _canonical_price_package_answer(query: str, lang: str) -> str | None:
     return f"{body}\n\n{disclaimer} {outro}" + safety
 
 
+# Hallazgo (batería sintética contra PRE, 2026-08-26, lote 5 — conversaciones
+# largas): "¿el refresher tiene costo adicional?" respondía "sí, puede tener
+# costo, escríbenos por WhatsApp para confirmar" — CONTRADICE la respuesta
+# determinista que el propio núcleo conversacional da cuando ofrece el
+# refresher dentro del flujo de reserva ("sin coste adicional", ver
+# `conversational_core.py` SLOT_REFRESHER). La política de `policies.json`
+# (`refresh_requirement`) es ambigua sobre el costo y no lo aclara — el RAG
+# rellenaba el hueco adivinando que sí tiene costo, dos respuestas
+# incompatibles a la misma pregunta según el camino. Se responde con la
+# verdad ya conocida (gratis) en vez de dejar que el RAG adivine.
+_REFRESHER_COST_QUESTION_RE = re.compile(
+    r"\brefresher\b.{0,30}\b(?:costo|coste|cuesta|precio|adicional|gratis|cost|"
+    r"price|free|extra)\b"
+    r"|\b(?:costo|coste|cuesta|precio|cost|price)\b.{0,30}\brefresher\b",
+    re.IGNORECASE,
+)
+
+
+def _canonical_refresher_cost_answer(query: str, lang: str) -> str | None:
+    if not _REFRESHER_COST_QUESTION_RE.search(query):
+        return None
+    if lang == "es":
+        return (
+            "🌊 El *refresher* (repaso corto en el agua antes de la inmersión) "
+            "**no tiene costo adicional** — está incluido si te hace falta, sin "
+            "cobro extra. ¿Te ayudo a armar la reserva? 😊"
+        ) + _CANONICAL_SAFETY_NET["es"]
+    return (
+        "🌊 The *refresher* (a short in-water review before the dive) is "
+        "**at no extra cost** — it's included if you need it, no additional "
+        "charge. Want me to help you put the booking together? 😊"
+    ) + _CANONICAL_SAFETY_NET["en"]
+
+
 def _coerce_metadata(value: object) -> dict:
     if isinstance(value, dict):
         return value
@@ -1496,6 +1530,20 @@ async def rag_answer(
     if diving_overview:
         logger.info(f"[RAG][CANONICAL_SHORTCUT] shortcut=diving_overview query={query!r} lang={lang}")
         return diving_overview
+
+    # `_canonical_refresher_cost_answer` va ANTES que `_canonical_price_
+    # overview_answer` (hallazgo en vivo, batería sintética contra PRE,
+    # 2026-08-26): "does the refresher cost extra?" matchea `_PRICE_QUESTION`
+    # (contiene "cost") y "refresher" no está en `_PRICE_SPECIFIC`, así que
+    # el overview genérico se adelantaba y ganaba SIEMPRE para la variante en
+    # inglés — la versión en español ("¿tiene costo adicional?") solo
+    # funcionaba porque "costo" no matchea `\bcost\b` por casualidad de
+    # frontera de palabra. La pregunta específica del refresher debe ganar
+    # siempre que aplique, sin depender de ese accidente de regex.
+    refresher_cost = _canonical_refresher_cost_answer(query, lang)
+    if refresher_cost:
+        logger.info(f"[RAG][CANONICAL_SHORTCUT] shortcut=refresher_cost query={query!r} lang={lang}")
+        return refresher_cost
 
     price_overview = _canonical_price_overview_answer(query, lang)
     if price_overview:

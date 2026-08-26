@@ -359,6 +359,29 @@ async def test_group_size_not_overwritten_without_correction_cue():
     assert state.detected_group_size == 3
 
 
+@pytest.mark.asyncio
+async def test_mixed_nationality_with_explicit_count_and_pero():
+    """Hallazgo en vivo (batería sintética contra PRE, 2026-08-26, lote 5,
+    conversación larga): "bueno dos de nosotros somos colombianos pero uno
+    es extranjero" no matchea `_MIXED_NATIONALITY_RE` (la lista original
+    solo cubría "unos/algunos... y otros", no una cantidad explícita +
+    "pero") — el grupo se trataba como si fuera enteramente extranjero, sin
+    reconocer la nacionalidad mixta. Extendido el regex para cubrir cantidad
+    explícita + "pero"/"y", en ambos órdenes (colombiano-primero /
+    extranjero-primero)."""
+    from src.agents.supervisor import _detect_mixed_nationality_request
+    assert _detect_mixed_nationality_request(
+        "bueno dos de nosotros somos colombianos pero uno es extranjero")
+    assert _detect_mixed_nationality_request(
+        "tres somos extranjeros y uno es colombiano")
+
+    state = make_state()
+    with patch("src.agents.supervisor.detect_routing_signals", new=AsyncMock(return_value={})):
+        resp = await route_message(
+            state, "bueno dos de nosotros somos colombianos pero uno es extranjero")
+    assert "nacionalidades mixtas" in resp.lower()
+
+
 # --- Bloque 2.2: deflexión de petición de número/contacto (2026-07-23) ---
 # El bot nunca da un número; una petición debe DEFLEXIONAR (límite 🔒 + lo que
 # SÍ + redirige), NO escalar ni caer al fallback evasivo.
