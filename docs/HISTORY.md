@@ -1,6 +1,15 @@
 History
 =======
 
+0.21.11 - (2026-08-26)
+----------------------
+* **Arregladas 3 de las 5 observaciones menores documentadas en el lote 4 de la batería sintética contra PRE.**
+* **Hallazgo J**: "en realidad revisamos y somos 4" no actualizaba el tamaño de grupo (write-once deliberado en `detected_group_size`, y el único mecanismo pensado para corregirlo quedó como código muerto tras el refactor de Fase 4). Fix: cue de corrección explícita nuevo (`_GROUP_SIZE_CORRECTION_CUE_RE`) conectado en `_apply_detected_intent`, tolerante a relleno de texto.
+* **Hallazgo K**: alergia alimentaria y alcohol escalaban como `medical_questions` pese a tener respuesta ya conocida en el catálogo (`food_policy`/`no_alcohol_policy`). Fix: dos regex deterministas que responden la política real antes de cualquier gate de seguridad, acotadas para no interceptar una alergia genuina sin contexto de comida.
+* **Hallazgo L** (más grave de lo documentado inicialmente): "how much is the 9 dive package?" no daba "info inconsistente" — daba **precios INVENTADOS** ($544.5/$605 USD, el real es $602/$668) con total confianza. Fix: nueva respuesta determinista para los 4 paquetes multi-día reales (4/5/7/9 inmersiones), mismo patrón que el fix de precios del Grupo 5.
+* Verificado en vivo con LLM real los 3 hallazgos. 11 tests nuevos. Suite: **1439 passed**, 18 skipped. ruff limpio.
+* Quedan 2 observaciones sin arreglar (deliberado, documentado en el informe): corrección de nacionalidad/acompañante DESPUÉS de mostrar el precio (mejora futura de mayor alcance), y el typo capturado como nombre (whack-a-mole ya aceptado del Grupo 8).
+
 0.21.10 - (2026-08-26)
 ----------------------
 * **Arreglados 2 hallazgos del lote 4 (52 conversaciones) de la batería sintética contra PRE — paquetes multi-día, cursos specialty, políticas poco probadas (comida, alcohol, seguro, fotos) y adversariales nuevos (JSON de rol falso, idiomas no soportados, ruido de entrada).**

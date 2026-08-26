@@ -1248,6 +1248,63 @@ def _canonical_price_named_services_answer(query: str, lang: str) -> str | None:
     return f"{body}\n\n{disclaimer} {outro}" + safety
 
 
+# Hallazgo (batería sintética contra PRE, 2026-08-26, lote 4): preguntas de
+# precio de paquete multi-día tenían resultado inconsistente — "how much is
+# the 9 dive package?" (EN) RAG respondió con NÚMEROS INVENTADOS ($544.5/
+# $605 USD, ninguno de los dos coincide con el precio real del catálogo,
+# $602/$668), mientras que "cuánto cuesta el paquete de 5 inmersiones?" (ES)
+# cayó al fallback "no lo tengo a la mano" — dos fallos distintos (uno peor
+# que el otro: una alucinación confiada es más grave que abstenerse) para el
+# mismo tipo de pregunta, sobre datos que SÍ están en `SERVICES` con precio
+# exacto (igual que `_canonical_price_named_services_answer` para los 4
+# servicios base). Se responde determinista para los 4 paquetes multi-día
+# reales (4/5/7/9 inmersiones) en vez de arriesgar otra alucinación.
+_PRICE_PACKAGE_PATTERNS: list[tuple[str, re.Pattern]] = [
+    ("4_dives_2_days", re.compile(r"\b4\s*(?:d[ií]as?|dives?|inmersi\w+|buceos?)\b|\bpaquete\s+de\s+4\b|\b4[\s-]dive\s+package\b", re.IGNORECASE)),
+    ("5_dives_2_days", re.compile(r"\b5\s*(?:d[ií]as?|dives?|inmersi\w+|buceos?)\b|\bpaquete\s+de\s+5\b|\b5[\s-]dive\s+package\b", re.IGNORECASE)),
+    ("7_dives_3_days", re.compile(r"\b7\s*(?:d[ií]as?|dives?|inmersi\w+|buceos?)\b|\bpaquete\s+de\s+7\b|\b7[\s-]dive\s+package\b", re.IGNORECASE)),
+    ("9_dives_4_days", re.compile(r"\b9\s*(?:d[ií]as?|dives?|inmersi\w+|buceos?)\b|\bpaquete\s+de\s+9\b|\b9[\s-]dive\s+package\b", re.IGNORECASE)),
+]
+
+
+def _canonical_price_package_answer(query: str, lang: str) -> str | None:
+    """Precio del paquete multi-día nombrado explícitamente por su número de
+    inmersiones (4/5/7/9) — solo cuando la pregunta nombra EXACTAMENTE uno
+    de ellos sin ambigüedad; 2+ o ninguno se deja a RAG."""
+    if not _PRICE_QUESTION.search(query):
+        return None
+    matched = [key for key, pat in _PRICE_PACKAGE_PATTERNS if pat.search(query)]
+    if len(matched) != 1:
+        return None
+    try:
+        from src.flows.decision_tree import SERVICES
+    except Exception:
+        return None
+    svc = SERVICES.get(matched[0], {})
+    usd, cop = svc.get("price_usd"), svc.get("price_cop")
+    if usd is None and cop is None:
+        return None
+    name = svc.get("name_es") if lang == "es" else svc.get("name_en")
+    if not name:
+        return None
+    price_line = f"{_fmt_price_usd(usd)} USD / {_fmt_price_cop(cop)} COP"
+    disclaimer = (
+        "Los colombianos/residentes pagan en pesos (COP) y los internacionales en dólares (USD) "
+        "— mismo precio, sin cobro extra por la divisa."
+        if lang == "es" else
+        "Colombians/residents pay in pesos (COP) and international guests in dollars (USD) — "
+        "same price, no extra charge for the currency."
+    )
+    safety = _CANONICAL_SAFETY_NET["es" if lang == "es" else "en"]
+    if lang == "es":
+        body = f"🌊 *{name}*: *{price_line}* por persona (con el descuento por reservar online)."
+        outro = "¿Te ayudo a armar la reserva? 😊"
+    else:
+        body = f"🌊 *{name}*: *{price_line}* per person (with the online-booking discount)."
+        outro = "Want me to help you put the booking together? 😊"
+    return f"{body}\n\n{disclaimer} {outro}" + safety
+
+
 def _coerce_metadata(value: object) -> dict:
     if isinstance(value, dict):
         return value
@@ -1449,6 +1506,11 @@ async def rag_answer(
     if price_named_services:
         logger.info(f"[RAG][CANONICAL_SHORTCUT] shortcut=price_named_services query={query!r} lang={lang}")
         return price_named_services
+
+    price_package = _canonical_price_package_answer(query, lang)
+    if price_package:
+        logger.info(f"[RAG][CANONICAL_SHORTCUT] shortcut=price_package query={query!r} lang={lang}")
+        return price_package
 
     condensed_query = await condense_query(query, history=history, lang=lang)
     ambiguous_location_clarification = _ambiguous_location_clarification(condensed_query, lang)

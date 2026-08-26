@@ -35,6 +35,49 @@ async def test_sensitive_medical_signal_escalates_when_keyword_list_misses():
 
 
 @pytest.mark.asyncio
+async def test_alcohol_before_diving_question_answers_policy_not_medical_escalation():
+    """Hallazgo en vivo (batería sintética contra PRE, 2026-08-26, lote 4):
+    "puedo tomarme una cerveza antes de bucear?" escalaba como
+    `medical_questions` — es una política plana y conocida
+    (`no_alcohol_policy`), no un tema médico a evaluar. Debe responderse
+    directo, sin pasar por ningún gate de seguridad ni llamar al LLM de
+    routing_signals."""
+    state = make_state()
+    with patch("src.agents.supervisor.detect_routing_signals",
+               new=AsyncMock(side_effect=AssertionError("no debería llamarse"))):
+        resp = await route_message(state, "puedo tomarme una cerveza antes de bucear?")
+    assert state.step != Step.ESCALATE
+    assert "alcohol" in resp.lower()
+
+
+@pytest.mark.asyncio
+async def test_food_allergy_question_answers_policy_not_medical_escalation():
+    """Mismo hallazgo, alérgeno alimentario: "soy alérgico a los mariscos,
+    es un problema?" escalaba como `medical_questions` pese a que
+    `food_policy` ya cubre alergias alimentarias del tour (avisar antes,
+    arroz con vegetales de reemplazo)."""
+    state = make_state()
+    with patch("src.agents.supervisor.detect_routing_signals",
+               new=AsyncMock(side_effect=AssertionError("no debería llamarse"))):
+        resp = await route_message(state, "soy alergico a los mariscos, es un problema?")
+    assert state.step != Step.ESCALATE
+    assert "alergia" in resp.lower() or "tour" in resp.lower() or "almuerzo" in resp.lower()
+
+
+@pytest.mark.asyncio
+async def test_generic_allergy_without_food_context_still_escalates_medical():
+    """Regresión/estrictez: una alergia SIN alérgeno alimentario del
+    catálogo (no marisco/gluten/nueces/maní/lactosa) sigue yendo al
+    escalado médico normal — el fix está acotado a la pregunta de política
+    de comida del tour, no a cualquier mención de alergia."""
+    state = make_state()
+    with patch("src.agents.supervisor.detect_routing_signals",
+               new=AsyncMock(return_value={"sensitive_topic": "medical_questions"})):
+        await route_message(state, "tengo alergias muy severas, es peligroso para mi bucear?")
+    assert state.step == Step.ESCALATE
+
+
+@pytest.mark.asyncio
 async def test_wants_human_signal_escalates_when_keyword_list_misses():
     """"quisiera que me atendiera una persona real" no matchea
     ESCALATION_KEYWORDS (humano/agente/asesor/"hablar con") pero la
@@ -276,6 +319,44 @@ async def test_group_recount_mid_new_booking_does_not_trigger_modify_headcount()
         resp = await route_message(state, "en realidad revisamos y somos 4")
     assert "numero de personas de una reserva ya hecha" not in resp.lower()
     assert "number of people on a booking you already made" not in resp.lower()
+
+
+@pytest.mark.asyncio
+async def test_group_size_correction_with_filler_words_is_applied():
+    """Observación menor del lote 4 (2026-08-26, conv 429), arreglada:
+    "en realidad revisamos y somos 4" no actualizaba `detected_group_size`
+    (se quedaba en 5) — `detected_group_size` tiene semántica write-once
+    deliberada (`_apply_detected_intent`), y el único mecanismo pensado
+    para corregirlo (`_GROUP_RECOMPOSE_RE`/`_apply_group_recomposition`)
+    quedó como código MUERTO tras el refactor de Fase 4 (nunca se llama
+    desde ningún sitio), además de exigir "en realidad" pegado
+    directamente a "somos" sin relleno. Fix: cue de corrección explícita
+    más tolerante (`_GROUP_SIZE_CORRECTION_CUE_RE`) conectado directamente
+    en `_apply_detected_intent`, que sí es parte del pipeline activo."""
+    state = make_state()
+    with patch("src.agents.supervisor.detect_routing_signals", new=AsyncMock(return_value={})):
+        await route_message(state, "somos 5 para buceo")
+    assert state.detected_group_size == 5
+
+    with patch("src.agents.supervisor.detect_routing_signals", new=AsyncMock(return_value={})):
+        await route_message(state, "en realidad revisamos y somos 4")
+    assert state.detected_group_size == 4
+
+
+@pytest.mark.asyncio
+async def test_group_size_not_overwritten_without_correction_cue():
+    """Regresión/estrictez: un número suelto SIN cue de corrección
+    explícita ("tengo 25 años y mi amigo también quiere ir") nunca debe
+    sobreescribir `detected_group_size` — el fix está acotado al cue
+    léxico, no a cualquier número nuevo en el mensaje."""
+    state = make_state()
+    with patch("src.agents.supervisor.detect_routing_signals", new=AsyncMock(return_value={})):
+        await route_message(state, "somos 3 para snorkel")
+    assert state.detected_group_size == 3
+
+    with patch("src.agents.supervisor.detect_routing_signals", new=AsyncMock(return_value={})):
+        await route_message(state, "tengo 25 anos y mi amigo tambien quiere ir")
+    assert state.detected_group_size == 3
 
 
 # --- Bloque 2.2: deflexión de petición de número/contacto (2026-07-23) ---

@@ -662,27 +662,58 @@ el canned genérico sin cambios. 2 tests nuevos.
 - **Queja de instructor** → escala correctamente como queja/emergencia.
 - **Pedir hablar con el gerente/dueño** → escala como solicitud de humano.
 
-### Observaciones menores (no arregladas esta pasada, prioridad baja)
+### Observaciones menores — seguimiento (2026-08-26, misma tarde)
 
-- **Corrección de grupo con relleno no se aplica**: "en realidad revisamos y somos 4" (con "revisamos
-  y" entre "en realidad" y el número) no actualiza el tamaño de grupo — el bot recuerda el valor
-  VIEJO (5) en vez de aceptar la corrección. Contrasta con "en realidad somos 3, se me olvidó uno"
-  (sin relleno), que sí funciona (verificado en el lote 2). Fraseo específico, no una clase nueva de
-  bug.
-- **Corrección de nacionalidad DESPUÉS de mostrar el precio no se aplica**: "espera, en realidad no
-  somos colombianos" tras ya haberse mostrado el precio en COP no cambia a precio en USD — repite la
-  misma respuesta. Mismo patrón que el caso ya documentado del lote 3 (acompañante añadido después
-  del link de reserva): correcciones DESPUÉS de una acción downstream (precio mostrado/link enviado)
-  no se aplican consistentemente. Mejora futura, no bloqueante.
-- **Inconsistencia de retrieval en paquetes multi-día**: "¿cuánto cuesta el paquete de 9
-  inmersiones?" (EN) se respondió con detalle completo; "¿cuánto cuesta el paquete de 5
-  inmersiones?" (ES) y la pregunta de descuento de grupo para 12 personas cayeron al fallback
-  genérico "no lo tengo a la mano". Calidad de RAG/retrieval, no un bug de lógica.
-- **Alergia alimentaria escalada como tema médico**: "soy alérgico a los mariscos, ¿es un
-  problema?" escaló como `medical_questions`, mientras que la pregunta de vegetarianismo (con el
-  mismo trasfondo de política de comida) sí se respondió directamente desde el catálogo. Y "¿puedo
-  tomar una cerveza antes de bucear?" (política plana y sin ambigüedad, `no_alcohol_policy`) también
-  escaló como médico en vez de responderse directo. Posible ampliación futura del catálogo de
-  respuestas deterministas de política (mismo patrón que precios/Grupo 5), no arreglado esta pasada.
-- **Typo capturado como nombre** (mismo patrón whack-a-mole del Grupo 8): "soy vegetariano" saludó
-  como "¡Hola, Vegetariano!".
+El usuario pidió resolver las observaciones menores documentadas arriba. 3 de las 5 se arreglaron;
+2 quedan documentadas y deliberadamente sin tocar.
+
+### J. ✅ ARREGLADO — corrección de grupo con relleno de texto no se aplicaba
+
+"en realidad revisamos y somos 4" (con "revisamos y" entre "en realidad" y el número) no actualizaba
+el tamaño de grupo — el bot recordaba el valor VIEJO (5). **Causa raíz doble**: (1)
+`detected_group_size` tiene semántica write-once deliberada en `_apply_detected_intent` (para que un
+número suelto en otro contexto no lo sobreescriba por accidente); (2) el único mecanismo pensado para
+permitir una corrección explícita (`_GROUP_RECOMPOSE_RE`/`_apply_group_recomposition`) quedó como
+código MUERTO tras el refactor de Fase 4 — nunca se llama desde ningún sitio del núcleo actual —
+además de exigir "en realidad" pegado directamente a "somos", sin tolerar relleno.
+
+Fix: nuevo cue de corrección explícita (`_GROUP_SIZE_CORRECTION_CUE_RE` — "en realidad", "perdón",
+"me equivoqué", "corrijo", "actually", "sorry"...) conectado directamente en `_apply_detected_intent`
+(que sí es parte del pipeline activo), tolerante a relleno intermedio. Un número sin ese cue léxico
+sigue sin sobreescribir el dato ya fijado. Verificado en vivo: la corrección ahora se aplica y el bot
+da una respuesta natural en vez de la confusa "me dijiste que sois 5". 2 tests nuevos.
+
+### K. ✅ ARREGLADO — alergia alimentaria y alcohol escalaban como tema médico
+
+"soy alérgico a los mariscos, ¿es un problema?" y "¿puedo tomarme una cerveza antes de bucear?"
+escalaban como `medical_questions` pese a tener respuesta ya conocida y sin ambigüedad en el
+catálogo (`food_policy`, `no_alcohol_policy`) — comparado con la pregunta de vegetarianismo (mismo
+trasfondo), que sí se respondía directo. Fix: dos regex deterministas nuevas
+(`_ALCOHOL_BEFORE_DIVING_RE`, `_ALLERGY_WORD_RE` + `_FOOD_ALLERGEN_RE`) que responden con la política
+real ANTES de cualquier gate de seguridad — acotadas a alcohol+buceo y alergia+alérgeno alimentario
+conocido del catálogo (marisco/gluten/nueces/maní/lactosa), para no interceptar una alergia genuina
+sin contexto de comida ("tengo alergias severas, es peligroso bucear?"), que sigue escalando normal.
+3 tests nuevos.
+
+### L. ✅ ARREGLADO — precio de paquetes multi-día: inconsistente y en un caso una ALUCINACIÓN
+
+Reexaminado con más cuidado: no era solo "inconsistencia de retrieval" como se documentó
+inicialmente — "how much is the 9 dive package?" (EN) no dio información real, dio **números
+INVENTADOS** ($544.5 USD online / $605 normal, ninguno de los dos coincide con el precio real
+$602/$668) con total confianza, mientras que la misma pregunta para el paquete de 5 (ES) cayó al
+fallback "no lo tengo a la mano". Una alucinación confiada es más grave que abstenerse. Fix: nueva
+respuesta determinista (`_canonical_price_package_answer`) para los 4 paquetes multi-día reales
+(4/5/7/9 inmersiones) leídos directamente de `SERVICES` — mismo patrón que
+`_canonical_price_named_services_answer` (Grupo 5) para los 4 servicios base. Verificado en vivo:
+ambos casos ahora dan el precio real y exacto del catálogo. 6 tests nuevos.
+
+### Observaciones que quedan sin arreglar (deliberado)
+
+- **Corrección DESPUÉS de una acción downstream (precio mostrado/link enviado) no se aplica**:
+  "espera, en realidad no somos colombianos" tras ya haberse mostrado el precio en COP no cambia a
+  USD; mismo patrón que el acompañante añadido después del link de reserva (lote 3). Estructuralmente
+  distinto a los fixes de arriba (J/K/L son guards/regex; esto requeriría re-disparar toda la
+  generación del resumen final/precio tras una corrección) — mejora futura de mayor alcance, no
+  arreglada esta pasada para no arriesgar una regresión en el flujo de checkout.
+- **Typo capturado como nombre** (mismo patrón whack-a-mole del Grupo 8, decisión ya documentada de
+  no perseguir cada caso nuevo): "soy vegetariano" saludó como "¡Hola, Vegetariano!".

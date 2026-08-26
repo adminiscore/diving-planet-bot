@@ -1207,7 +1207,7 @@ async def _understand(state: ConversationState, message: str) -> tuple:
                 f"[EXTRACT][CUTOVER] applied={patch} "
                 f"msg={supervisor._log_safe_message(message)!r}"
             )
-    supervisor._apply_detected_intent(intent, state)
+    supervisor._apply_detected_intent(intent, state, message)
 
     # "voy solo" → 1 persona. Nació para cursos PADI (Fase 3 causa A) y el owner
     # decidió extenderlo a CUALQUIER actividad (2026-07-22): la señal explícita
