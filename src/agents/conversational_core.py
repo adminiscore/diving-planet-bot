@@ -86,8 +86,8 @@ _DIVES_TO_BASE_PLAN = {2: "2_dives_1_day", 3: "3_dives_1_day", 4: "4_dives_2_day
                        5: "5_dives_2_days", 7: "7_dives_3_days", 9: "9_dives_4_days"}
 _DAYS_TO_DIVES = {2: 5, 3: 7, 4: 9}
 
-_CARTAGENA_RE = re.compile(r"\b(cartagena|cartagen\w*|1)\b", re.IGNORECASE)
-_ISLAND_RE = re.compile(r"\b(isla\w*|island\w*|bar[uú]|rosario\w*|2)\b", re.IGNORECASE)
+_CARTAGENA_RE = re.compile(r"\b(cartagena|cartagen\w*)\b", re.IGNORECASE)
+_ISLAND_RE = re.compile(r"\b(isla\w*|island\w*|bar[uú]|rosario\w*)\b", re.IGNORECASE)
 # Respuesta de DUDA al preguntar el hotel (no un nombre real de hotel). Fase C.
 _HOTEL_UNKNOWN_RE = re.compile(
     r"\b(no\s+s[eé]|ni\s+idea|no\s+lo\s+s[eé]|a[uú]n\s+no|todav[ií]a\s+no|"
@@ -459,11 +459,21 @@ def _apply_short_answer(state: ConversationState, message: str) -> bool:
             return True
         return False
     if slot == SLOT_LOCATION:
-        # "isla"/"island" primero: "islas del rosario" también matchea números no.
-        if _ISLAND_RE.search(msg) and not _CARTAGENA_RE.search(msg.replace("1", "")):
+        # Auditoría 2026-08-26 (batería sintética contra PRE): `_ISLAND_RE`/
+        # `_CARTAGENA_RE` tenían "2"/"1" como alternativas del regex —
+        # matchean CUALQUIER mensaje que contenga ese dígito en cualquier
+        # parte ("somos 2" respondiendo a la pregunta de CANTIDAD, no de
+        # ubicación, resolvía la ubicación a "island" sin que nadie lo
+        # dijera, y "cartagena" dicho DESPUÉS se malinterpretaba como
+        # nombre de hotel). Bug reproducido 4/4 veces en la batería. El
+        # atajo "1"/"2" (mismo patrón que is_certified/nationality/safety)
+        # solo tiene sentido si es la respuesta COMPLETA, no una cifra
+        # suelta dentro de otra frase — de ahí la igualdad exacta en vez de
+        # una alternativa dentro del regex de substring.
+        if msg == "2" or (_ISLAND_RE.search(msg) and not _CARTAGENA_RE.search(msg)):
             state.location = state.detected_location = "island"
             return True
-        if _CARTAGENA_RE.search(msg):
+        if msg == "1" or _CARTAGENA_RE.search(msg):
             state.location = state.detected_location = "cartagena"
             return True
         # Deferral ("no sé/da igual/recomiéndame") → Cartagena (salida más

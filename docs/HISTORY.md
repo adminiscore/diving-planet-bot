@@ -1,6 +1,12 @@
 History
 =======
 
+0.21.2 - (2026-08-26)
+----------------------
+* **Arreglado el Grupo 1 de la batería sintética contra PRE: la ubicación se malinterpretaba cuando la respuesta a "¿desde dónde saldrías?" era una CANTIDAD en vez de un lugar.** Causa raíz: `_ISLAND_RE`/`_CARTAGENA_RE` tenían "2"/"1" como alternativas SUELTAS dentro del propio regex (resto de una convención de menú numerado antigua) — con límites de palabra, esto matchea el dígito en CUALQUIER parte del mensaje, no solo como respuesta completa. "somos 2" (respondiendo la cantidad, no la ubicación) fijaba `location="island"` sin que nadie lo dijera, y "cartagena" dicho después se leía como nombre de hotel en vez de la respuesta de ubicación real. Reproducido 4/4 veces (ES, EN, dígito) en la batería.
+* Fix: se quitaron los dígitos sueltos de los regex de substring; el atajo numérico (mismo patrón que `is_certified`/`nationality`/`safety`) se mantiene pero como igualdad EXACTA del mensaje completo, no como alternativa que puede matchear en medio de cualquier frase. Verificado en local con LLM real (ES/EN, dígito/letra). 1 test nuevo. Suite: **1404 passed**, 18 skipped. ruff limpio. Ver `docs/robustness/pre-synthetic-battery-findings.md` (Grupo 1) para el detalle.
+* Quedan 6 grupos de hallazgos por resolver.
+
 0.21.1 - (2026-08-26)
 ----------------------
 * **Batería sintética contra PRE (Claude como cliente) — arrancada y primer hallazgo grave arreglado.** Con el SOAK del refactor multi-agente en curso (sin tráfico real todavía de los 3 devs), se montó un driver que genera conversaciones sintéticas contra el `dp-pre-bot` REAL desplegado en PRE (LLM real, KB real) vía la API autenticada de Chatwoot sobre un inbox dedicado tipo `Api` ("Synthetic Test"), separado del inbox real de clientes. 65 conversaciones adversariales generadas (typos, jerga regional, inyección de prompts, ES/EN, casos límite). Ver `docs/robustness/pre-synthetic-battery-findings.md` para el detalle completo, agrupado por causa probable.

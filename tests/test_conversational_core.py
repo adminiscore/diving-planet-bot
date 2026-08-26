@@ -1724,6 +1724,29 @@ async def test_location_resolver_abstains_reasks(monkeypatch):
     assert state.core_pending_slot == core.SLOT_LOCATION
 
 
+@pytest.mark.asyncio
+@pytest.mark.parametrize("message", ["somos 2", "we are 2", "somos dos"])
+async def test_location_not_misread_from_unrelated_quantity_reply(message, monkeypatch):
+    """Hallazgo en vivo 2026-08-26 (batería sintética contra PRE, 4/4 repros):
+    `_ISLAND_RE`/`_CARTAGENA_RE` tenían "2"/"1" como alternativas SUELTAS del
+    regex — cualquier mensaje que contuviera ese dígito EN CUALQUIER PARTE
+    ("somos 2" respondiendo a la pregunta de ubicación con una cantidad, no
+    con una ubicación) resolvía `location="island"` sin que nadie lo hubiera
+    dicho, saltándose la pregunta real — y una "cartagena" posterior se
+    malinterpretaba como nombre de HOTEL en vez de la respuesta de ubicación
+    pendiente. "somos dos" (letra) tenía el fallo opuesto: no descarrilaba
+    pero tampoco avanzaba, repitiendo la misma pregunta sin registrar nada.
+    Ninguna variante debe fijar `location` a partir de una cantidad."""
+    lang = "en" if message.startswith("we") else "es"
+    state = _at_location_stage(lang)
+    with patch("src.agents.supervisor.detect_routing_signals",
+               new=AsyncMock(return_value={})):
+        resp = await route_message(state, message)
+    assert state.location is None, "una cantidad no debe resolver la ubicación"
+    assert state.core_pending_slot == core.SLOT_LOCATION
+    assert ("desde" in resp.lower() or "where" in resp.lower())
+
+
 def test_apply_resolved_slot_value_location():
     state = make_state("es")
     assert core._apply_resolved_slot_value(state, core.SLOT_LOCATION, "island")

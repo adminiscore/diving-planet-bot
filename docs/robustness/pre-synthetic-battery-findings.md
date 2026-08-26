@@ -34,7 +34,7 @@ para el dashboard/widget" ya no es del todo exacto con este hallazgo.)
 
 ## Hallazgos (lote 1, 15 conversaciones, 2026-08-26)
 
-### A. 🔴 [MÁS GRAVE, reproducido 2/2] "somos N" como respuesta a la pregunta de ubicación descarrila location/hotel
+### A. ✅ ARREGLADO (ver Grupo 1) [reproducido 2/2] "somos N" como respuesta a la pregunta de ubicación descarrila location/hotel
 
 Reproducido en dos conversaciones independientes (`group-size-loss-repro` conv 146,
 `slang-parce` conv 148). Tras la pregunta de apertura "¿Desde dónde saldrías? (Cartagena /
@@ -116,7 +116,7 @@ cubriendo esta variante de apertura.
 > causa probable común para poder resolverlos de uno en uno. Orden = prioridad sugerida
 > (severidad × frecuencia reproducida).
 
-### Grupo 1 — 🔴 [MISMA CAUSA que el hallazgo A] Ubicación se salta/malinterpreta cuando la respuesta es una cantidad, en vez de repreguntar
+### Grupo 1 — ✅ ARREGLADO [MISMA CAUSA que el hallazgo A] Ubicación se salta/malinterpreta cuando la respuesta es una cantidad, en vez de repreguntar
 
 Confirma y amplía el hallazgo A: reproducido también en inglés (`loc-confusion-en`, conv 161,
 "we are 2" → salta a preguntar hotel/isla igual que en español). Variante con número en LETRA
@@ -134,6 +134,28 @@ flujo salta directo a la ambigüedad del acompañante sin volver a por ella.
 Confirmado limpio cuando el orden es el correcto (`loc-confusion-correct-order`, conv 163:
 ubicación primero, cantidad después → funciona perfecto). **La causa parece ser el orden: una
 cantidad dada ANTES de que se resuelva ubicación confunde al resolutor.**
+
+**Causa raíz encontrada (trazado local)**: no era el orden ni el resolutor LLM — era mucho más
+simple y determinista. `_ISLAND_RE`/`_CARTAGENA_RE` (los regex que interpretan la respuesta de
+ubicación) tenían **"2" y "1" como alternativas SUELTAS dentro del propio regex**
+(`r"\b(isla\w*|island\w*|bar[uú]|rosario\w*|2)\b"`), un resto de una convención de menú
+numerado antigua. Con límites de palabra (`\b...\b`), esto matchea el dígito en CUALQUIER
+parte del mensaje, no solo cuando es la respuesta completa — "somos 2" (respondiendo la
+CANTIDAD, no la ubicación) activaba el mismo camino que si el cliente hubiera dicho "2" para
+elegir "ya estoy en las islas", fijando `location="island"` sin que nadie lo hubiera dicho.
+Explica también por qué "cartagena", dicho DESPUÉS, se leía como nombre de HOTEL en vez de
+como la respuesta de ubicación real: el flujo ya "creía" tener la ubicación resuelta y había
+avanzado a preguntar por el hotel. La variante en LETRA ("somos dos") no contiene el dígito
+"2" literal, así que no disparaba el mismo camino — de ahí el fallo distinto (repetía la
+pregunta en vez de descarrilar).
+
+**Fix**: se quitaron "1"/"2" de los regex de substring; el atajo numérico (mismo patrón que
+`is_certified`/`nationality`/`safety`, que ya usan `msg == "1"`/`msg == "2"`) se mantiene pero
+como IGUALDAD EXACTA del mensaje completo, no como alternativa dentro de un regex que puede
+matchear en medio de cualquier frase. Verificado en local con LLM real (ES, EN, dígito y
+letra): las 3 variantes ahora re-preguntan correctamente la ubicación sin descarrilar ni
+malinterpretar la respuesta siguiente. 1 test nuevo (parametrizado, 3 casos). Suite: **1404
+passed**, 18 skipped. ruff limpio.
 
 ### Grupo 2 — ✅ ARREGLADO [EL MÁS GRAVE] El flujo de "cantidad de acompañante" puede saltarse preguntas obligatorias (seguridad, nacionalidad) y quedarse en BUCLE
 
