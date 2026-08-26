@@ -931,6 +931,10 @@ async def test_recall_refresher_field_not_yet_known_falls_back():
     ("soy colombiano", None),
     ("soy buzo open water", None),
     ("quiero bucear", None),
+    # Hallazgo en vivo 2026-08-26 (batería sintética contra PRE, Grupo 8):
+    # "del" (contracción de "de"+"el") no estaba en las stopwords, así que
+    # se capturaba como nombre -> saludo "¡Hola, Del!".
+    ("soy del equipo de pruebas del sistema", None),
 ])
 def test_capture_client_name(msg, expected):
     st = ConversationState(conversation_id="name")

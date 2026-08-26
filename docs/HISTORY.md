@@ -1,6 +1,14 @@
 History
 =======
 
+0.21.6 - (2026-08-26)
+----------------------
+* **Cerrados los últimos 3 grupos de la batería sintética contra PRE — los 8 grupos + 4 hallazgos del lote 1 quedan todos resueltos o investigados.**
+* **Grupo 8 (menor, arreglado)**: "soy del equipo de pruebas del sistema" se saludaba como "¡Hola, Del!" — `_NAME_STOPWORDS` excluía "de"/"un"/"una"/"el"/"la" pero no "del" (contracción, palabra distinta para el regex). Añadida "del" + un puñado de palabras funcionales cortas del mismo riesgo.
+* **Grupo 6 (investigado, NO es bug)**: "hay cupo para mañana?" escala a un asesor mientras "disponibilidad el 15 de septiembre?" responde con el mensaje genérico — confirmado que es una distinción de negocio intencional y documentada en `SENSITIVE_RULES["real_time_issues"]` (urgencia real vs. pregunta general de horario), no una inconsistencia.
+* **Grupo 7 (arreglado, efecto colateral del Grupo 5)**: un mensaje largo con grupo/fechas/precio/descuento mezclados caía al mensaje genérico de disponibilidad por la misma confusión "cuánto"/"cuándo" del Grupo 5 — con ese fix ya desplegado, el mismo mensaje progresa el flujo de reserva normalmente (reconoce actividad, captura el grupo, pregunta certificación).
+* 1 test nuevo (Grupo 8). Suite: **1417 passed**, 18 skipped. ruff limpio.
+
 0.21.5 - (2026-08-26)
 ----------------------
 * **Arreglado el Grupo 5 de la batería sintética contra PRE: RAG de precios inconsistente.** Dos causas: (1) la señal LLM `availability_question` confundía "cuánto" con "cuándo", enrutando preguntas de precio puras al atajo genérico de disponibilidad (medido 3/3, arreglado con refuerzo de prompt, 0/4 falsos positivos después sin romper detección genuina). (2) Una pregunta de precio "en frío" (sin contexto de reserva previo) que nombra un servicio del catálogo fallaba el grounding del RAG y caía al fallback "no lo tengo a la mano" — pese a que el precio SÍ está disponible en el mismo catálogo `SERVICES` que ya usa la vista general de precios.

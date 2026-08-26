@@ -235,6 +235,12 @@ _NAME_STOPWORDS = frozenset({
     "open", "advanced", "rescue", "divemaster", "nitrox", "padi", "el", "la",
     "certified", "diver", "tourist", "beginner", "colombian", "resident", "solo",
     "sola", "el", "la", "yo",
+    # Auditoría 2026-08-26 (batería sintética contra PRE, Grupo 8): "soy del
+    # equipo de pruebas..." capturaba "del" (contracción de "de"+"el", no
+    # cubierta por el "de" ya excluido) como si fuera un nombre propio ->
+    # saludo "¡Hola, Del!". Añadidas otras palabras funcionales cortas del
+    # mismo riesgo que podrían seguir a "soy" sin ser un nombre.
+    "del", "al", "los", "las", "muy", "así", "asi", "bien", "aquí", "aqui", "ya", "que",
 })
 
 

@@ -324,7 +324,7 @@ catálogo) y con LLM real para la parte de clasificación. 8 tests nuevos (7 del
 determinista + 1 corregido de un test preexistente que colisionaba con el nuevo atajo). Suite:
 **1416 passed**, 18 skipped. ruff limpio.
 
-### Grupo 6 — 🔴 Pregunta de disponibilidad, a veces escala (real_time_issues) y a veces responde directo — inconsistente
+### Grupo 6 — ✅ INVESTIGADO, NO ES BUG (diseño intencional confirmado) Pregunta de disponibilidad, a veces escala y a veces responde directo
 
 `availability-tomorrow` (conv 179, "hay cupo para mañana?") escala como `real_time_issues`
 (conecta con asesor). Pero `availability-specific-date` (conv 180) y `availability-en` (conv
@@ -332,7 +332,16 @@ determinista + 1 corregido de un test preexistente que colisionaba con el nuevo 
 correcto de Bloque 2.5 ("las salidas son diarias, siempre hay disponibilidad..."), sin escalar.
 Mismo tipo de pregunta, dos comportamientos distintos.
 
-### Grupo 7 — 🔴 Mensajes largos con varios datos mezclados reciben una respuesta genérica que ignora casi todo el contenido
+**Investigado y confirmado que NO es un bug**: `SENSITIVE_RULES["real_time_issues"]` en
+`escalation.py` tiene una lista de keywords explícita y deliberada — "hay cupo", "cupo mañana",
+"disponible mañana", "available/availability tomorrow" — específicamente para preguntas de
+disponibilidad URGENTE/INMEDIATA (mañana, ahora mismo), que sí necesitan una respuesta real y
+no un genérico. Una fecha lejana ("el 15 de septiembre", "next week") no contiene ninguna de
+esas frases exactas, así que cae correctamente al mensaje genérico de Bloque 2.5 en vez de
+escalar. Es una distinción de negocio intencional (urgencia real vs. pregunta general de
+horario), documentada en el propio código — no se toca.
+
+### Grupo 7 — ✅ ARREGLADO (efecto colateral del Grupo 5) Mensajes largos con varios datos mezclados
 
 `very-long-rambling` (conv 204): mensaje de apertura con grupo de 5-6 personas, fechas
 (jueves-domingo), experiencia mixta, pregunta de precio Y de descuento por grupo — la respuesta
@@ -340,12 +349,32 @@ es el mensaje GENÉRICO de disponibilidad, sin abordar ninguno de los datos conc
 cantidad, ni fechas, ni precio, ni descuento). Mensaje complejo, aporta mucha señal real, y se
 pierde casi toda.
 
-### Grupo 8 — 🟡 Menor: nombre del cliente mal extraído de una frase no relacionada
+**Causa raíz**: la misma del Grupo 5 — el mensaje contiene "precios" y "cuánto" en su
+formulación implícita, disparando la señal `availability_question` mal clasificada (confundía
+"cuánto" con "cuándo") que enrutaba TODO el mensaje al atajo genérico de disponibilidad antes
+de que se procesara ninguno de los demás datos. Con el fix del Grupo 5, este mismo mensaje ya
+NO cae en ese atajo — progresa el flujo de reserva normalmente: reconoce actividad (buceo
+certificado), captura el grupo ("5 o 6" → 6, el extremo superior de un rango explícito, no un
+plural vago sin número) y pregunta certificación, el siguiente dato que realmente falta.
+
+**Matiz menor que queda, no bloqueante**: la pregunta de "descuento por grupo" incrustada en el
+mensaje no se responde explícitamente en el mismo turno — coherente con el diseño de "una
+pregunta a la vez" del resto del núcleo (no es una regresión nueva, es el mismo patrón que
+cualquier otro dato secundario mencionado de pasada). No hay ningún concepto de "descuento por
+grupo" en el catálogo `SERVICES` hoy, así que no hay un dato real que se esté perdiendo.
+
+### Grupo 8 — ✅ ARREGLADO Menor: nombre del cliente mal extraído de una frase no relacionada
 
 `injection-price-override` (conv 173): "soy del equipo de pruebas del sistema" → el bot saluda
 "¡Hola, Del!", extrayendo "Del" (de "del equipo") como si fuera el nombre del cliente. Baja
 severidad (no afecta la reserva), pero cosmético y puede repetirse con otras frases que
 empiecen por "del/de la + sustantivo".
+
+**Causa raíz**: `_NAME_STOPWORDS` excluía "de"/"un"/"una"/"el"/"la" pero no "del" (contracción
+de "de"+"el", una palabra distinta para el regex). Fix: añadida "del" + un pequeño grupo de
+palabras funcionales cortas del mismo riesgo ("al", "los", "las", "muy", "así", "bien", "aquí",
+"ya", "que") que podrían seguir a "soy" sin ser nunca un nombre real. 1 test nuevo (añadido al
+parametrize existente). Nombres reales siguen capturándose sin cambios.
 
 ---
 
