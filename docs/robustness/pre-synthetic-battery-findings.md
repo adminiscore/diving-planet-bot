@@ -281,7 +281,7 @@ para un idioma no soportado, no se cuenta como bug.)
 Verificado en vivo con LLM real los tres casos. 4 tests nuevos (2 unitarios de los regex + 1 de
 apertura + 1 de cambio explícito de idioma). Suite: **1408 passed**, 18 skipped. ruff limpio.
 
-### Grupo 5 — 🔴 RAG de precios inconsistente: a veces responde bien, a veces dice que no tiene el dato o responde otra cosa
+### Grupo 5 — ✅ ARREGLADO RAG de precios inconsistente: a veces responde bien, a veces dice que no tiene el dato o responde otra cosa
 
 Tres variantes del mismo problema:
 - `price-usd` (conv 195): "cuánto cuesta el buceo certificado en dólares?" (primer mensaje,
@@ -296,6 +296,33 @@ Tres variantes del mismo problema:
 Patrón: la respuesta correcta depende de si ya hay contexto de reserva establecido en el
 estado, no solo del contenido de la pregunta — sugiere que la búsqueda RAG construye la query
 usando el estado de la conversación de forma que degrada en frío.
+
+**Dos causas raíz distintas**:
+
+1. **`price-cop` (fuera de tema)**: la señal LLM `availability_question` (Bloque 2.5) marcaba
+   `True` para "cuánto es el snorkel en pesos colombianos?" — confundía "cuánto" (how much) con
+   "cuándo" (when), enrutando una pregunta de PRECIO al atajo genérico de disponibilidad.
+   Medido 3/3. Fix: refuerzo de prompt explícito distinguiendo ambas palabras — medido 0/4
+   falsos positivos tras el fix, sin romper la detección genuina de disponibilidad (3/3 sigue
+   bien).
+2. **`price-usd`/`price-comparison` (RAG sin grounding)**: con la retrieval en frío (sin
+   contexto de reserva previo en el estado), el pipeline RAG no lograba recuperar/fundamentar
+   el chunk de precio correcto — el verificador de grounding rechazaba la respuesta
+   (`ungrounded_amount`/`HALLUCINATED`) y caía al fallback genérico. El comentario original del
+   código asumía "una pregunta que nombra un servicio, RAG la responde bien" — medido en vivo
+   que es **falso** para el caso en frío. En vez de depender de una retrieval que se ha medido
+   poco fiable para un lookup tan concreto y bien definido, se añadió una respuesta
+   DETERMINISTA nueva (`_canonical_price_named_services_answer`) que usa el mismo catálogo
+   `SERVICES` ya confiable de la vista general de precios — solo cuando la pregunta nombra 1 o
+   2 de los 4 servicios del catálogo (buceo certificado/minicurso/snorkel/open water) sin
+   ambigüedad; cualquier otra cosa (comida, hotel, buceo nocturno, paquetes multi-día, cursos
+   specialty sin precio fijo...) sigue yendo a RAG como antes, sin arriesgar una respuesta
+   inventada para lo que no está en el catálogo.
+
+Verificado en local (sin necesidad de LLM para la parte determinista — es solo lookup de
+catálogo) y con LLM real para la parte de clasificación. 8 tests nuevos (7 del lookup
+determinista + 1 corregido de un test preexistente que colisionaba con el nuevo atajo). Suite:
+**1416 passed**, 18 skipped. ruff limpio.
 
 ### Grupo 6 — 🔴 Pregunta de disponibilidad, a veces escala (real_time_issues) y a veces responde directo — inconsistente
 

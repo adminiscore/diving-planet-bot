@@ -1,6 +1,12 @@
 History
 =======
 
+0.21.5 - (2026-08-26)
+----------------------
+* **Arreglado el Grupo 5 de la batería sintética contra PRE: RAG de precios inconsistente.** Dos causas: (1) la señal LLM `availability_question` confundía "cuánto" con "cuándo", enrutando preguntas de precio puras al atajo genérico de disponibilidad (medido 3/3, arreglado con refuerzo de prompt, 0/4 falsos positivos después sin romper detección genuina). (2) Una pregunta de precio "en frío" (sin contexto de reserva previo) que nombra un servicio del catálogo fallaba el grounding del RAG y caía al fallback "no lo tengo a la mano" — pese a que el precio SÍ está disponible en el mismo catálogo `SERVICES` que ya usa la vista general de precios.
+* Fix: nueva respuesta DETERMINISTA (`_canonical_price_named_services_answer`) para 1-2 servicios del catálogo nombrados sin ambigüedad (buceo certificado/minicurso/snorkel/open water), incluyendo comparaciones ("¿qué es más barato?"). Todo lo demás (comida, hotel, buceo nocturno, paquetes multi-día, specialty...) sigue yendo a RAG sin cambios, para no arriesgar una respuesta inventada fuera del catálogo conocido.
+* 8 tests nuevos. Suite: **1416 passed**, 18 skipped. ruff limpio.
+
 0.21.4 - (2026-08-26)
 ----------------------
 * **Arreglado el Grupo 4 de la batería sintética contra PRE: tres causas distintas de inconsistencia de idioma.** (1) La detección de apertura solo fijaba `state.language`, nunca `state.detected_language` — así que `_apply_detected_intent` (que corre en cada turno) sobreescribía el idioma con su propia clasificación por-mensaje mientras ese campo siguiera vacío: un mensaje de apertura con palabras mezcladas salía con el saludo en un idioma y la pregunta de slot, segundos después, en otro. (2) Fuera del primer turno nada volvía a mirar el idioma — una petición explícita de cambio ("can we continue in english") se ignoraba por completo. (3) El prompt del acuse cálido (`compose_acknowledgement`) nunca decía en qué idioma responder — el modelo imitaba el idioma del ÚLTIMO mensaje del cliente en vez del idioma acordado de la conversación.
