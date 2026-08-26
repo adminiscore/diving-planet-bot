@@ -1723,11 +1723,25 @@ async def maybe_handle_turn(
     # solo por un ATRIBUTO ("mi amigo no está certificado"), sin actividad ni
     # intención declarada — no hay caso válido para adivinar snorkel o
     # minicurso, se pregunta qué le gustaría hacer.
+    #
+    # Auditoría 2026-08-26 (batería sintética contra PRE): interrumpir
+    # SIEMPRE aquí, sin mirar si ya había una pregunta obligatoria pendiente
+    # (seguridad, nacionalidad...), la enterraba sin preguntarla nunca —
+    # "soy buzo certificado... ¿han pasado más de 2 años?" seguido de "somos
+    # 2" saltaba directo a la pregunta del acompañante, sin que la de
+    # seguridad se llegara a responder jamás. Mismo criterio que el bloque
+    # `companion_activity_deferred` de más abajo: solo se interrumpe YA
+    # MISMO si no había nada más pendiente; si lo había, se difiere (se dejar
+    # caer sin `return`, para que el resto del turno siga su curso normal —
+    # `next_missing_slot` volverá a preguntar por lo que de verdad tocaba) y
+    # se marca para retomar el acompañante en cuanto ese hueco se cierre.
     if state.needs_companion_activity:
         state.needs_companion_activity = False
-        response = greeting + ask_slot(state, SLOT_COMPANION_ACTIVITY)
-        state.history.append({"role": "assistant", "content": response})
-        return response
+        if next_missing_slot(state) is None:
+            response = greeting + ask_slot(state, SLOT_COMPANION_ACTIVITY)
+            state.history.append({"role": "assistant", "content": response})
+            return response
+        state.companion_activity_deferred = True
 
     # ¿La extracción base (regex + gap-fill, dentro de `_understand()`) ya
     # cambió el tamaño/reparto del grupo este turno? Bug en vivo (2026-07-23,
@@ -1958,7 +1972,10 @@ async def maybe_handle_turn(
                     state.history.append({"role": "assistant", "content": response})
                     return response
             advanced = True
-        elif signals.get("mentions_other_person") or _mentions_person(message):
+        elif (
+            (signals.get("mentions_other_person") or _mentions_person(message))
+            and prev_pending != SLOT_COMPANION_ACTIVITY
+        ):
             # Auditoría 2026-07-23: hay un acompañante (persona mencionada)
             # pero ninguna actividad con respaldo textual real — "mi amigo
             # no está certificado" dice un ATRIBUTO, no una actividad ni
@@ -1966,13 +1983,40 @@ async def maybe_handle_turn(
             # distintos (fill_gaps y esta misma señal) adivinaban cosas
             # DISTINTAS para la misma frase ambigua (snorkel vs. minicurso).
             # En vez de adivinar cuál, se pregunta qué le gustaría hacer.
+            #
+            # Bug en vivo (auditoría 2026-08-26, batería sintética contra
+            # PRE): sin `prev_pending != SLOT_COMPANION_ACTIVITY`, esto
+            # entraba en BUCLE — detect_special_signals RE-DERIVA la señal
+            # de "hay un acompañante" desde el HISTORIAL entero cada vez que
+            # se le llama, así que una respuesta vacía de contenido como
+            # "no" (que en realidad respondía a SEGURIDAD, una pregunta
+            # pendiente ANTERIOR que quedó enterrada) seguía devolviendo
+            # `mentions_other_person=True` turno tras turno, re-preguntando
+            # la MISMA pregunta sin parar y sin dejar que se llegara a
+            # preguntar seguridad/nacionalidad nunca. Si ya es la pregunta
+            # pendiente y no se resolvió (si se hubiera resuelto,
+            # `_apply_short_answer` ya habría devuelto antes de llegar
+            # aquí), no se repregunta por esta vía — se deja que el flujo
+            # normal decida el siguiente slot.
+            #
+            # Además (mismo hallazgo 2026-08-26): interrumpir aquí SIEMPRE,
+            # sin mirar si ya había una pregunta obligatoria pendiente
+            # (seguridad, nacionalidad...) de ANTES de que se detectara este
+            # acompañante, la enterraba sin preguntarla nunca. Solo se
+            # interrumpe ya mismo si no queda nada más por delante; si lo
+            # hay, se difiere con `companion_activity_deferred` (se retoma
+            # justo antes de cerrar) y se deja que el turno siga su curso
+            # normal.
             _restore_main_diver_fields(
                 state, prev_main_activity, prev_main_service_id,
                 prev_main_is_certified, prev_main_last_dive, prev_main_refresher,
             )
-            response = greeting + ask_slot(state, SLOT_COMPANION_ACTIVITY)
-            state.history.append({"role": "assistant", "content": response})
-            return response
+            if next_missing_slot(state) is None:
+                response = greeting + ask_slot(state, SLOT_COMPANION_ACTIVITY)
+                state.history.append({"role": "assistant", "content": response})
+                return response
+            state.companion_activity_deferred = True
+            advanced = True
         elif signals.get("refresher_interested") is not None:
             # Auditoría 2026-07-22: refresher_interested no tenía NINGÚN
             # respaldo LLM — una frase que is_affirmative/is_negative no
@@ -2121,16 +2165,48 @@ async def maybe_handle_turn(
         # en vez de caer al resumen y PERDER al acompañante (hallazgo en vivo
         # 2026-07-24). `next_missing_slot` no rastrea este slot, de ahí el guard
         # explícito antes de dejar que sobrescriba `core_pending_slot`.
-        response = ask_slot(state, SLOT_COMPANION_ACTIVITY, reasking=True)
-        state.step = Step.FREE_TEXT
+        #
+        # Auditoría 2026-08-26 (batería sintética contra PRE): re-preguntar
+        # INCONDICIONALMENTE aquí entraba en BUCLE — seguía repitiendo la
+        # MISMA pregunta para siempre, incluso cuando había otras preguntas
+        # obligatorias (seguridad, nacionalidad) todavía sin responder por
+        # detrás, enterradas sin posibilidad de llegar a plantearse nunca.
+        # Ahora se distingue: si el resto de la reserva YA está completa,
+        # repreguntar aquí mismo (si no, se pierde el acompañante al
+        # cerrar); si todavía falta algo más, se deja avanzar a por ello
+        # primero y se marca `companion_activity_deferred` (NO
+        # `needs_companion_activity` — ese otro flag es para la detección
+        # FRESCA del turno actual, se consume de inmediato justo tras
+        # `_understand()`, y usarlo aquí también haría que ese chequeo
+        # temprano interceptara el turno SIGUIENTE antes de procesar la
+        # respuesta a la pregunta realmente pendiente) para retomar el
+        # acompañante justo antes de cerrar (ver el chequeo equivalente en
+        # el `if nxt is None` de abajo) — nunca se pierde, pero tampoco
+        # bloquea el resto de la reserva.
+        nxt_now = next_missing_slot(state)
+        if nxt_now is None:
+            response = ask_slot(state, SLOT_COMPANION_ACTIVITY, reasking=True)
+            state.step = Step.FREE_TEXT
+        else:
+            state.companion_activity_deferred = True
+            response = ask_slot(state, nxt_now, reasking=(nxt_now == prev_pending))
+            state.step = Step.FREE_TEXT
     else:
         nxt = next_missing_slot(state)
         if nxt is None:
-            response = _finalize(state)
-            # Materializar la nota de lead (el cierre no-colombiano deja solo
-            # pending_lead_note_reason; en el camino legacy la construye
-            # _finalize_tree_response — aquí el equivalente).
-            supervisor._maybe_build_pending_note(state)
+            if state.companion_activity_deferred:
+                # Ya se cerró el hueco que interrumpió la pregunta del
+                # acompañante (seguridad/nacionalidad/etc.) — se retoma
+                # ahora, antes de cerrar, en vez de darla por perdida.
+                state.companion_activity_deferred = False
+                response = ask_slot(state, SLOT_COMPANION_ACTIVITY, reasking=True)
+                state.step = Step.FREE_TEXT
+            else:
+                response = _finalize(state)
+                # Materializar la nota de lead (el cierre no-colombiano deja solo
+                # pending_lead_note_reason; en el camino legacy la construye
+                # _finalize_tree_response — aquí el equivalente).
+                supervisor._maybe_build_pending_note(state)
         else:
             response = ask_slot(state, nxt, reasking=(nxt == prev_pending))
             state.step = Step.FREE_TEXT

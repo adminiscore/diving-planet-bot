@@ -1344,7 +1344,11 @@ async def test_companion_attribute_without_activity_asks_instead_of_guessing():
     state = make_state("es")
     state.detected_activity = "certified_diving"
     state.is_certified = True
-    state.core_pending_slot = core.SLOT_LOCATION
+    state.location = "cartagena"
+    state.detected_group_size = 1
+    state.last_dive_over_2_years = False
+    state.is_colombian = False
+    state.core_pending_slot = None
     with patch.object(core, "fill_gaps", new=AsyncMock(return_value={})), \
          patch.object(core, "detect_special_signals", new=AsyncMock(return_value={
              "companion_activity": "minicourse", "mentions_other_person": True,
@@ -1374,6 +1378,55 @@ def test_activity_has_textual_backing_translates_diving_intent_to_minicourse():
     assert core._activity_has_textual_backing("minicourse", "quiere hacer buceo")
     assert core._activity_has_textual_backing("snorkel", "quiere hacer snorkel")
     assert not core._activity_has_textual_backing("minicourse", "mi amigo no esta certificado")
+
+
+@pytest.mark.asyncio
+async def test_companion_activity_ambiguity_defers_instead_of_burying_pending_slot():
+    """Hallazgo en vivo 2026-08-26 (batería sintética contra PRE, conv 190 y
+    210): cuando la ambigüedad de actividad del acompañante aparecía MIENTRAS
+    todavía había una pregunta obligatoria pendiente (seguridad, en este
+    caso), el bot la enterraba para siempre — interrumpía con "¿qué le
+    gustaría hacer a tu acompañante?" y nunca volvía a preguntar por la
+    seguridad, quedándose incluso en BUCLE repitiendo la pregunta del
+    acompañante ante cualquier respuesta corta ("no", "no somos
+    colombianos") que en realidad respondía a otra cosa. Ahora se difiere: se
+    sigue preguntando lo que tocaba (seguridad), y el acompañante se retoma
+    justo antes de cerrar, sin perderse ni bloquear nada por el medio."""
+    state = make_state("es")
+    state.detected_activity = "certified_diving"
+    state.is_certified = True
+    state.location = "cartagena"
+    state.detected_group_size = 1
+    state.core_pending_slot = core.SLOT_SAFETY
+
+    with patch.object(core, "fill_gaps", new=AsyncMock(return_value={})), \
+         patch.object(core, "detect_special_signals", new=AsyncMock(return_value={
+             "companion_activity": "minicourse", "mentions_other_person": True,
+             "companion_is_singular": False, "companion_qty": 2,
+         })):
+        resp = await route_message(state, "mis amigos tambien vienen")
+    # La ambigüedad del acompañante NO se pierde (se difiere), pero tampoco
+    # entierra la pregunta de seguridad que ya estaba pendiente.
+    assert state.core_pending_slot == core.SLOT_SAFETY
+    assert state.companion_activity_deferred is True
+    assert "año" in resp.lower() or "inmersión" in resp.lower() or "immersion" in resp.lower()
+
+    # Resolver seguridad y nacionalidad — el bot debe seguir preguntando por
+    # ELLAS, nunca volver a la ambigüedad del acompañante a mitad de camino.
+    with patch.object(core, "fill_gaps", new=AsyncMock(return_value={})), \
+         patch.object(core, "detect_special_signals", new=AsyncMock(return_value={})):
+        resp2 = await route_message(state, "no")
+    assert state.last_dive_over_2_years is False
+    assert state.core_pending_slot != core.SLOT_COMPANION_ACTIVITY
+
+    with patch.object(core, "fill_gaps", new=AsyncMock(return_value={})), \
+         patch.object(core, "detect_special_signals", new=AsyncMock(return_value={})):
+        resp3 = await route_message(state, "no somos colombianos")
+    assert state.is_colombian is False
+    # Ahora que ya no queda nada más pendiente, se retoma el acompañante.
+    assert state.core_pending_slot == core.SLOT_COMPANION_ACTIVITY
+    assert state.companion_activity_deferred is False
+    assert "acompañante" in resp3.lower() or "?" in resp3
 
 
 # ---------------------------------------------------------------------------

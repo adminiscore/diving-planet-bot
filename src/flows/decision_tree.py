@@ -242,6 +242,17 @@ class ConversationState:
     # preguntar la cantidad.
     needs_companion_activity: bool = False
 
+    # Auditoría 2026-08-26 (batería sintética contra PRE): distinto de
+    # `needs_companion_activity` (detección FRESCA de este mismo turno,
+    # consumida de inmediato) — este marca que la pregunta de actividad del
+    # acompañante quedó DIFERIDA porque había algo más urgente por delante
+    # (seguridad, nacionalidad...), para retomarla justo antes de cerrar la
+    # reserva sin bloquear el resto del flujo mientras tanto. Usar el mismo
+    # flag para ambos casos causaba que el chequeo temprano (justo tras
+    # `_understand()`) interceptara el turno SIGUIENTE antes de procesar la
+    # respuesta a la pregunta realmente pendiente.
+    companion_activity_deferred: bool = False
+
     def __post_init__(self):
         if self.history is None:
             self.history = []
