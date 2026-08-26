@@ -1,6 +1,14 @@
 History
 =======
 
+0.21.10 - (2026-08-26)
+----------------------
+* **Arreglados 2 hallazgos del lote 4 (52 conversaciones) de la batería sintética contra PRE — paquetes multi-día, cursos specialty, políticas poco probadas (comida, alcohol, seguro, fotos) y adversariales nuevos (JSON de rol falso, idiomas no soportados, ruido de entrada).**
+* **Hallazgo H (regresión propia, arreglada)**: corregir el tamaño del grupo a mitad de una reserva NUEVA ("somos 5 para buceo" → "en realidad revisamos y somos 4") disparaba por error el flujo `modify_headcount` recién añadido (0.21.9), como si "somos 4" hablara de una reserva ya hecha. Causa: `_in_active_cart_building` (el guard pensado exactamente para evitar esto) comprobaba un `state.step` "mixed_*" que el núcleo conversacional actual nunca usa — código muerto desde el refactor de Fase 4, sus propios tests de regresión ya no existen. Afectaba potencialmente a los 4 usos del guard (cancelación, reprogramación, modify_headcount, disponibilidad Bloque 2.5), solo se hizo evidente ahora porque corregir el grupo es mucho más común que cancelar/cambiar fecha mid-flow. Fix: el guard ahora usa las señales reales del núcleo (`detected_activity`/`core_pending_slot`/`mixed_cart`).
+* **Hallazgo I (arreglado)**: "¿abren el 25 de diciembre?" respondía "siempre hay disponibilidad" — directamente FALSO, `policies.json` documenta que ese día (y el 1 de enero) están cerrados. Fix: nuevo regex determinista que reconoce esos 2 días (ES+EN) y devuelve la política real en vez del canned genérico, en las dos copias del bloque de disponibilidad (núcleo + supervisor).
+* Verificado en vivo con LLM real. 3 tests nuevos. Suite: **1428 passed**, 18 skipped. ruff limpio.
+* Observaciones menores documentadas sin arreglar (prioridad baja): corrección de grupo con relleno de texto no se aplica, corrección de nacionalidad post-precio no se aplica, inconsistencia de retrieval en paquetes multi-día, alergia alimentaria/alcohol escalados como tema médico en vez de responderse desde el catálogo, typo capturado como nombre (mismo patrón whack-a-mole del Grupo 8).
+
 0.21.9 - (2026-08-26)
 ----------------------
 * **Implementado el hallazgo G del lote 3 de la batería sintética contra PRE: nueva capacidad para añadir/quitar personas de una reserva ya existente.** "ya tengo una reserva hecha, quiero agregar una persona más" caía al menú genérico de bienvenida — a diferencia de "cambiar la fecha" (mismo tipo de petición pero para reprogramar), que sí se reconocía. No era un bug, era una capacidad que no existía: `booking_change_topic` solo tenía `"cancellation"`/`"reschedule"`.

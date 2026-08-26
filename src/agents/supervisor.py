@@ -118,6 +118,21 @@ _AVAILABILITY_PATTERN = re.compile(
     re.IGNORECASE,
 )
 
+# Los ÚNICOS 2 días cerrados del año (`policies.json["closed_days"]`): 25 de
+# diciembre y 1 de enero, en cualquier forma de nombrarlos (fecha exacta,
+# festividad, o "hoy/mañana" no aplica aquí — solo la fecha/festividad
+# explícita, que es lo único que se puede resolver sin saber la fecha real
+# de "hoy"). Usado para NO darle al cliente el canned de disponibilidad
+# genérico ("siempre hay disponibilidad") en esos dos días concretos, que
+# sería una respuesta falsa.
+_CLOSED_DATE_RE = re.compile(
+    r"\b(25\s+de\s+diciembre|diciembre\s+25|december\s+25th?|dec\s+25th?|"
+    r"navidad|christmas\s+day|"
+    r"1\s+de\s+enero|enero\s+1|january\s+1st?|jan\s+1st?|"
+    r"a[ñn]o\s+nuevo|new\s+year'?s?(?:\s+day)?)\b",
+    re.IGNORECASE,
+)
+
 # Afirmacion "a secas" ("si", "dale", "ok") — usada para cumplir una oferta que
 # el propio bot hizo en el turno anterior (p.ej. "¿te paso con un asesor?").
 _BARE_AFFIRMATION_RE = re.compile(
@@ -461,17 +476,41 @@ def _detect_modify_booking_request(msg_lower: str) -> bool:
 
 
 def _in_active_cart_building(state: ConversationState) -> bool:
-    """True cuando la conversación está CONSTRUYENDO una reserva (pasos MIXED_*).
-    Ahí un mensaje de "cambio" ("mejor 3 días", "cámbialo a snorkel") es una
-    EDICIÓN del plan en curso, que manejan los interceptores del carrito
-    (multi-día por texto, split de acompañante...), NO una cancelación/
-    reprogramación de una reserva YA existente. Se usa para NO dejar que la
-    señal LLM `booking_change_topic` (que se equivoca aquí: clasifica "do it
-    for 3 days instead" como 'reschedule') pise esos interceptores. La lista de
-    keyword de cancelación/reprogramación (explícita, "cancelar mi reserva") sí
-    sigue activa siempre. Regresión encontrada por test 2026-07-23:
-    test_multiday_switch_by_text_at_location_step."""
-    return state.step.value.startswith("mixed")
+    """True cuando la conversación está CONSTRUYENDO una reserva NUEVA ahora
+    mismo. Ahí un mensaje de "cambio" ("mejor 3 días", "cámbialo a snorkel",
+    "en realidad somos 4") es una EDICIÓN del plan en curso, que maneja el
+    núcleo conversacional (multi-día por texto, corrección de grupo,
+    split de acompañante...), NO una cancelación/reprogramación/modificación
+    de una reserva YA existente. Se usa para NO dejar que la señal LLM
+    `booking_change_topic` (que se equivoca aquí: clasifica "do it for 3
+    days instead" como 'reschedule', o "en realidad somos 4" como
+    'modify_headcount') pise esos interceptores. La lista de keyword de
+    cancelación/reprogramación/modificación (explícita, "cancelar mi
+    reserva") sí sigue activa siempre, sin este guard.
+
+    `state.step.value.startswith("mixed")` (el chequeo original) es de la
+    arquitectura del árbol guiado PRE-Fase 4 — el núcleo conversacional
+    actual (`conversational_core.py`) nunca pone `state.step` en un valor
+    "mixed_*" (solo `FREE_TEXT`/`ESCALATE`), así que esa condición llevaba
+    tiempo siendo código muerto (sus propios tests de regresión,
+    `test_multiday_switch_by_text_at_location_step` y
+    `test_multiday_switch_by_text_at_last_dive_step`, ya no existen — se
+    perdieron en el refactor). Hallazgo en vivo (batería sintética contra
+    PRE, 2026-08-26, conv 429): sin un chequeo real, "somos 5 para buceo" →
+    "en realidad revisamos y somos 4" (corrección de grupo DENTRO de una
+    reserva que se está armando, ninguna reserva existe todavía) disparaba
+    el flujo `modify_headcount` recién añadido, como si "somos 4" hablara
+    de una reserva YA hecha. Fix: además del chequeo legacy (por si algún
+    step MIXED_* vuelve a usarse), se considera "construyendo activamente"
+    en cuanto el núcleo YA tiene una actividad detectada, un slot pendiente,
+    o algo en el carrito — cualquiera de esas tres señales significa que
+    la reserva en curso es nueva, no una ya existente."""
+    return bool(
+        state.step.value.startswith("mixed")
+        or state.detected_activity
+        or state.core_pending_slot
+        or state.mixed_cart
+    )
 
 
 # Deflexión (Bloque 2.2): el cliente pide un número de teléfono/WhatsApp o una
@@ -2281,7 +2320,21 @@ async def _route_message_inner(state: ConversationState, message: str) -> str:
             (_asks_about_availability(msg_lower) or routing_signals.get("availability_question"))
             and not _in_active_cart_building(state)
         )
+        or _CLOSED_DATE_RE.search(msg_lower)
     ) and state.step not in (Step.WELCOME, Step.LANGUAGE):
+        # Hallazgo (batería sintética contra PRE, 2026-08-26, conv 395):
+        # "¿abren el 25 de diciembre?" caía en esta misma respuesta genérica
+        # ("las salidas son diarias, siempre hay disponibilidad") — FALSA
+        # para esos dos días concretos: `policies.json["closed_days"]` dice
+        # explícitamente "Solo cerramos el 25 de diciembre y el 1 de enero".
+        # Se comprueba ANTES del canned genérico para no darle al cliente
+        # información incorrecta sobre un día que sí está cerrado.
+        if _CLOSED_DATE_RE.search(msg_lower):
+            policy_text = (load_policies().get("policies", {}).get("closed_days") or {}).get(
+                state.language, ""
+            )
+            logger.info("[SUPERVISOR] Closed-date question detected -> real closed_days policy, not canned availability")
+            return policy_text
         answer = (
             "¡Buena noticia! 📅 Las salidas son diarias y siempre hay disponibilidad. "
             "Vas a poder elegir el día exacto y el número de personas directamente en el "

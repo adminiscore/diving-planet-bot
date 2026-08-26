@@ -1686,11 +1686,38 @@ async def maybe_handle_turn(
     # `availability_question`) solo si NO hay una reserva en curso (con actividad
     # elegida, "¿algo para más días?" es una pregunta de PLAN, no de cupo — mismo
     # criterio que el guard `_in_active_cart_building` del supervisor legacy).
-    if supervisor._AVAILABILITY_PATTERN.search(msg_lower) or (
-        (supervisor._asks_about_availability(msg_lower)
-         or routing_signals.get("availability_question"))
-        and state.detected_activity is None
+    # Hallazgo (batería sintética contra PRE, 2026-08-26, conv 395): "¿abren
+    # el 25 de diciembre?" NO matchea `_AVAILABILITY_PATTERN` ni
+    # `_asks_about_availability` (ninguno de los dos reconoce "abren"/"open
+    # on"), así que sin la señal LLM `availability_question` (que no
+    # siempre se calcula, p.ej. si el keyword-gate de arriba ya encontró
+    # otra cosa) el mensaje caía derecho a RAG. `_CLOSED_DATE_RE` sola basta
+    # para entrar aquí — no depende de que el mensaje además "suene" a
+    # pregunta de disponibilidad genérica.
+    if (
+        supervisor._AVAILABILITY_PATTERN.search(msg_lower)
+        or (
+            (supervisor._asks_about_availability(msg_lower)
+             or routing_signals.get("availability_question"))
+            and state.detected_activity is None
+        )
+        or supervisor._CLOSED_DATE_RE.search(msg_lower)
     ):
+        # Hallazgo (batería sintética contra PRE, 2026-08-26, conv 395):
+        # "¿abren el 25 de diciembre?" caía en el canned genérico de abajo
+        # ("siempre hay disponibilidad") — FALSO para esos dos días
+        # concretos (`policies.json["closed_days"]`: solo cerrado 25 dic y
+        # 1 ene). Este bloque del núcleo es el que realmente responde la
+        # mayoría de mensajes de apertura (se ejecuta ANTES que la copia
+        # del supervisor); el mismo guard se aplicó ahí también.
+        if supervisor._CLOSED_DATE_RE.search(msg_lower):
+            from src.knowledge.loader import load_policies
+            policy_text = (load_policies().get("policies", {}).get("closed_days") or {}).get(
+                state.language, ""
+            )
+            response = greeting + policy_text
+            state.history.append({"role": "assistant", "content": response})
+            return response
         avail = (
             "¡Buena noticia! 📅 Las salidas son diarias y siempre hay disponibilidad. "
             "Vas a poder elegir el día exacto y el número de personas directamente en el "

@@ -254,6 +254,30 @@ async def test_normal_group_size_mid_flow_does_not_trigger_modify_headcount():
     assert resp
 
 
+@pytest.mark.asyncio
+async def test_group_recount_mid_new_booking_does_not_trigger_modify_headcount():
+    """Hallazgo en vivo (batería sintética contra PRE, 2026-08-26, conv
+    429): "somos 5 para buceo" -> "en realidad revisamos y somos 4"
+    (corrección DENTRO de una reserva que se está armando, ninguna reserva
+    existe todavía) disparaba el flujo `modify_headcount` recién añadido —
+    `_in_active_cart_building` era código muerto (comprobaba un
+    `state.step` "mixed_*" que el núcleo actual nunca usa), así que el
+    guard nunca protegía nada. Con `state.detected_activity` ya fijado por
+    el primer mensaje, el guard ahora sí suprime la señal LLM (aunque
+    ella, imperfecta, siga marcando `modify_headcount` para la
+    corrección)."""
+    state = make_state()
+    with patch("src.agents.supervisor.detect_routing_signals", new=AsyncMock(return_value={})):
+        await route_message(state, "somos 5 para buceo")
+    assert state.detected_activity == "certified_diving"
+
+    with patch("src.agents.supervisor.detect_routing_signals",
+               new=AsyncMock(return_value={"booking_change_topic": "modify_headcount"})):
+        resp = await route_message(state, "en realidad revisamos y somos 4")
+    assert "numero de personas de una reserva ya hecha" not in resp.lower()
+    assert "number of people on a booking you already made" not in resp.lower()
+
+
 # --- Bloque 2.2: deflexión de petición de número/contacto (2026-07-23) ---
 # El bot nunca da un número; una petición debe DEFLEXIONAR (límite 🔒 + lo que
 # SÍ + redirige), NO escalar ni caer al fallback evasivo.
@@ -445,3 +469,30 @@ async def test_normal_booking_not_treated_as_availability():
     with patch("src.agents.supervisor.detect_routing_signals", new=AsyncMock(return_value={})):
         resp = await route_message(state, "quiero reservar buceo para 2 personas")
     assert "calendario del link" not in resp.lower()
+
+
+@pytest.mark.asyncio
+async def test_closed_date_question_gets_real_policy_not_canned_availability():
+    """Hallazgo en vivo (batería sintética contra PRE, 2026-08-26, conv
+    395): "¿abren el 25 de diciembre?" caía en el canned genérico de
+    disponibilidad ("las salidas son diarias, siempre hay disponibilidad")
+    — FALSO para esos dos días concretos (`policies.json["closed_days"]`:
+    solo cerrado el 25 de diciembre y el 1 de enero). Debe devolver la
+    política real, no el mensaje genérico que contradice el hecho
+    documentado."""
+    state = make_state()
+    with patch("src.agents.supervisor.detect_routing_signals", new=AsyncMock(return_value={})):
+        resp = await route_message(state, "abren el 25 de diciembre?")
+    low = resp.lower()
+    assert "cerramos" in low or "25 de diciembre" in low
+    assert "siempre hay disponibilidad" not in low
+
+
+@pytest.mark.asyncio
+async def test_closed_date_question_english_gets_real_policy():
+    state = make_state("en")
+    with patch("src.agents.supervisor.detect_routing_signals", new=AsyncMock(return_value={})):
+        resp = await route_message(state, "are you open on new year's day?")
+    low = resp.lower()
+    assert "december 25" in low or "january 1" in low
+    assert "always availability" not in low
