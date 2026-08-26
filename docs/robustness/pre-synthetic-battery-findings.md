@@ -531,17 +531,25 @@ botones asesor/menú, guardado por `_in_active_cart_building` igual que los otro
 confundir "decir el tamaño del grupo mientras se construye una reserva nueva" con "modificar una
 reserva que ya existe").
 
-**Hallazgo colateral arreglado de paso**: al verificar en vivo el fix con un mensaje de apertura en
-inglés, la respuesta salió en ESPAÑOL — mismo bug de idioma del Grupo 4 (`state.language` en vez de
-`state.detected_language`/inferencia), pero nunca aplicado a los bloques de cancelación/
-reprogramación/modificación (solo se había aplicado a la deflexión de contacto/identidad IA).
-Confirmado que también afectaba a cancelación (probado con "hi, I need to cancel my booking..." →
-salía en español pese a ser el primer mensaje). Arreglado en los TRES bloques a la vez con el mismo
-patrón `effective_lang = state.language if state.detected_language else _infer_language(...)`.
+**Hallazgo colateral arreglado de paso (2 capas)**: al verificar en vivo el fix con un mensaje de
+apertura en inglés, la respuesta salió en ESPAÑOL — mismo bug de idioma del Grupo 4
+(`state.language` en vez de `state.detected_language`/inferencia), pero nunca aplicado a los
+bloques de cancelación/reprogramación/modificación (solo se había aplicado a la deflexión de
+contacto/identidad IA). Aplicado el patrón `effective_lang = state.language if
+state.detected_language else _infer_language(...)` a los TRES bloques.
 
-Verificado en vivo con LLM real: ES y EN correctos para modify_headcount, un mensaje normal de
-tamaño de grupo mid-flow no se ve afectado. 4 tests nuevos. Suite completa (1423 tests) sigue en
-verde.
+Pero el primer intento de verificación en vivo con "hi, I need to cancel my booking, something
+came up" SEGUÍA saliendo en español — causa más profunda: `_infer_language` comparaba pistas de
+idioma con padding de espacios LITERAL (`f" {hint} "` dentro de `f" {message} "`), y "booking,"
+(coma pegada sin espacio) nunca coincidía con " booking ", así que ninguna pista de inglés se
+contaba y el mensaje caía al fallback en español. Fix: `\b` (límite de palabra real, ciego a la
+puntuación adyacente) en vez del padding literal — bug preexistente y compartido por TODOS los
+usos de `_infer_language` en el archivo (contacto/identidad IA incluidos), no solo los tres bloques
+nuevos de esta pasada.
+
+Verificado en vivo con LLM real: ES y EN correctos para modify_headcount y para cancelación con
+puntuación pegada al hint word. 6 tests nuevos (incluye un test directo de `_infer_language`).
+Suite completa (1425 tests) sigue en verde.
 
 ### Nota — typo capturado como nombre (mismo patrón del Grupo 8, sin fix nuevo)
 

@@ -212,6 +212,34 @@ async def test_modify_headcount_response_matches_opening_message_language():
     assert "advisor" in resp.lower() or "headcount" in resp.lower()
 
 
+def test_infer_language_ignores_punctuation_adjacent_to_hint_word():
+    """Hallazgo en vivo (2026-08-26, al verificar el fix de idioma del
+    bloque de cancelación): "hi, I need to cancel my booking, something
+    came up" seguía devolviendo la política en ESPAÑOL — `_infer_language`
+    comparaba con padding de espacios literal (`f" {hint} "`), y "booking,"
+    (coma pegada, sin espacio) nunca matcheaba " booking ". Con `\\b`
+    (límite de palabra real, ciego a la puntuación adyacente) sí se
+    detecta el inglés."""
+    from src.agents.supervisor import _infer_language
+    assert _infer_language("hi, I need to cancel my booking, something came up") == "en"
+    assert _infer_language("can you give me your whatsapp number?") == "en"
+    assert _infer_language("hola, quiero cancelar mi reserva.") == "es"
+    # Sin ninguna pista de ningún idioma, se mantiene el fallback pasado.
+    assert _infer_language("asdf qwer", fallback="es") == "es"
+
+
+@pytest.mark.asyncio
+async def test_cancellation_response_matches_opening_message_language_with_punctuation():
+    """Mismo caso que arriba pero end-to-end vía route_message: el mensaje
+    de apertura en inglés con puntuación pegada al hint word debe seguir
+    dando la política de cancelación en inglés, no en español."""
+    state = make_state()
+    with patch("src.agents.supervisor.detect_routing_signals", new=AsyncMock(return_value={})):
+        resp = await route_message(state, "hi, I need to cancel my booking, something came up")
+    assert "cancellation policy" in resp.lower() or "advisor" in resp.lower()
+    assert "asesor" not in resp.lower()
+
+
 @pytest.mark.asyncio
 async def test_normal_group_size_mid_flow_does_not_trigger_modify_headcount():
     """Regresión/estrictez: una respuesta normal de tamaño de grupo, sin

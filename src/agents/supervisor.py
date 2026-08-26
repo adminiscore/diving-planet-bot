@@ -1054,9 +1054,20 @@ def _broken_link_escalation_response(state: ConversationState, message: str) -> 
 
 
 def _infer_language(message: str, fallback: str = "es") -> str:
-    normalized = f" {message.strip().lower()} "
-    english_matches = sum(1 for hint in ENGLISH_HINTS if f" {hint} " in normalized)
-    spanish_matches = sum(1 for hint in SPANISH_HINTS if f" {hint} " in normalized)
+    # Verificado en vivo (2026-08-26, al validar el fix de idioma en el
+    # bloque de cancelación): el padding literal `f" {hint} "` fallaba con
+    # puntuación pegada al hint — "cancel my booking, something came up"
+    # tiene "booking," (coma sin espacio), así que " booking " nunca
+    # matcheaba y el mensaje entero se clasificaba como español por
+    # defecto. `\b` (límite de palabra real, ciego a la puntuación
+    # adyacente) es el criterio correcto.
+    normalized = message.strip().lower()
+    english_matches = sum(
+        1 for hint in ENGLISH_HINTS if re.search(rf"\b{re.escape(hint)}\b", normalized)
+    )
+    spanish_matches = sum(
+        1 for hint in SPANISH_HINTS if re.search(rf"\b{re.escape(hint)}\b", normalized)
+    )
     if english_matches > spanish_matches:
         return "en"
     if spanish_matches > english_matches:
