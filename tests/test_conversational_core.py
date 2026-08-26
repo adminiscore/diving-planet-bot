@@ -2089,3 +2089,52 @@ async def test_welcome_language_llm_not_called_when_heuristic_hits(monkeypatch):
         await route_message(state, "hola quiero bucear")
     assert state.language == "es"
     assert called is False
+
+
+@pytest.mark.asyncio
+async def test_first_turn_language_detection_sticks_across_same_turn():
+    """Hallazgo en vivo 2026-08-26 (batería sintética contra PRE, Grupo 4): la
+    detección de apertura (heurística → LLM → hints) solo fijaba
+    `state.language`, nunca `state.detected_language` — y
+    `_apply_detected_intent` (que corre en CADA turno dentro de
+    `_understand()`) sobreescribe `state.language` con su propia
+    clasificación por-mensaje mientras `state.detected_language` siga
+    vacío. Un mensaje de apertura con palabras mezcladas ("hi quiero
+    snorkel and minicourse para mi hermano") hacía que el saludo saliera en
+    inglés pero la pregunta de slot, SEGUNDOS DESPUÉS EN EL MISMO TURNO,
+    saliera en español."""
+    state = make_state("es")
+    state.step = Step.WELCOME
+    with patch("src.agents.supervisor.detect_routing_signals", new=AsyncMock(return_value={})):
+        await route_message(state, "hi quiero snorkel and minicourse para mi hermano")
+    assert state.language == "en"
+    assert state.detected_language == "en"
+
+
+def test_language_switch_regex_detects_explicit_requests_only():
+    """Peticiones explícitas de cambiar de idioma a mitad de conversación —
+    antes se ignoraban por completo (ningún mecanismo las miraba fuera del
+    primer turno). Deliberadamente estricto: no debe disparar con menciones
+    incidentales de "english"/"español" que no son una petición real."""
+    assert core._SWITCH_TO_EN_RE.search("actually can we continue in english")
+    assert core._SWITCH_TO_EN_RE.search("can we talk in english please")
+    assert core._SWITCH_TO_ES_RE.search("podemos hablar en español mejor")
+    assert core._SWITCH_TO_ES_RE.search("cambiamos a español?")
+    assert not core._SWITCH_TO_EN_RE.search("voy solo")
+    assert not core._SWITCH_TO_ES_RE.search("what's the price in USD?")
+
+
+@pytest.mark.asyncio
+async def test_explicit_language_switch_mid_conversation_is_honored():
+    """El mismo hallazgo, de punta a punta: pedir explícitamente cambiar de
+    idioma a mitad de conversación debe surtir efecto YA MISMO, en la
+    respuesta de ese mismo turno."""
+    state = make_state("es")
+    state.step = Step.WELCOME
+    with patch("src.agents.supervisor.detect_routing_signals", new=AsyncMock(return_value={})):
+        await route_message(state, "hola quiero bucear certificado")
+    assert state.language == "es"
+    with patch("src.agents.supervisor.detect_routing_signals", new=AsyncMock(return_value={})):
+        resp = await route_message(state, "actually can we continue in english")
+    assert state.language == "en"
+    assert "?" in resp and ("Where" in resp or "where" in resp)

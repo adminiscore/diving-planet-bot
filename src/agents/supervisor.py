@@ -1974,8 +1974,19 @@ async def _route_message_inner(state: ConversationState, message: str) -> str:
     # redirige a la reserva. Keyword fast-path + respaldo LLM (misma llamada de
     # routing de arriba, sin coste extra), estricto. Se coloca ANTES del escalado
     # genérico para ser consistente (hoy a veces escalaba, a veces caía a RAG).
+    #
+    # Auditoría 2026-08-26 (batería sintética contra PRE, Grupo 4/hallazgo B):
+    # este bloque (y el de dominio blindado, justo debajo) corren ANTES de que
+    # `maybe_handle_turn` haga su detección de idioma de apertura — en el
+    # PRIMER mensaje, `state.language` sigue en su valor por defecto ("es"),
+    # así que "can you give me your whatsapp number" (inglés) recibía la
+    # deflexión en español. `_infer_language` es una heurística barata (sin
+    # LLM) — se usa aquí solo como mejor estimación local para ESTA
+    # respuesta puntual, sin tocar `state.language` de forma permanente (esa
+    # detección más completa sigue siendo la de `maybe_handle_turn`).
     if _asks_for_contact_number(msg_lower) or routing_signals.get("asks_for_contact_number"):
-        response = _contact_number_deflection(state.language)
+        effective_lang = state.language if state.detected_language else _infer_language(message, state.language)
+        response = _contact_number_deflection(effective_lang)
         state.step = Step.FREE_TEXT
         state.quick_replies = []
         logger.info("[SUPERVISOR] Contact-number request -> deflection (limit + redirect, no escalation)")
@@ -1987,7 +1998,8 @@ async def _route_message_inner(state: ConversationState, message: str) -> str:
     # No se revela nada (el prompt de RAG endurecido ya lo prohíbe); se responde
     # en persona (Coral) y se reconduce al buceo, en vez del fallback evasivo.
     if _asks_about_ai_identity(msg_lower):
-        response = _ai_identity_deflection(state.language)
+        effective_lang = state.language if state.detected_language else _infer_language(message, state.language)
+        response = _ai_identity_deflection(effective_lang)
         state.step = Step.FREE_TEXT
         state.quick_replies = []
         logger.info("[SUPERVISOR] AI/model-identity meta-question -> in-persona redirect (no reveal)")

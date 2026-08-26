@@ -1,6 +1,12 @@
 History
 =======
 
+0.21.4 - (2026-08-26)
+----------------------
+* **Arreglado el Grupo 4 de la batería sintética contra PRE: tres causas distintas de inconsistencia de idioma.** (1) La detección de apertura solo fijaba `state.language`, nunca `state.detected_language` — así que `_apply_detected_intent` (que corre en cada turno) sobreescribía el idioma con su propia clasificación por-mensaje mientras ese campo siguiera vacío: un mensaje de apertura con palabras mezcladas salía con el saludo en un idioma y la pregunta de slot, segundos después, en otro. (2) Fuera del primer turno nada volvía a mirar el idioma — una petición explícita de cambio ("can we continue in english") se ignoraba por completo. (3) El prompt del acuse cálido (`compose_acknowledgement`) nunca decía en qué idioma responder — el modelo imitaba el idioma del ÚLTIMO mensaje del cliente en vez del idioma acordado de la conversación.
+* Fix: (1) fijar `detected_language` también en la detección de apertura; (2) detector determinista nuevo (`_SWITCH_TO_EN_RE`/`_SWITCH_TO_ES_RE`) para peticiones explícitas de cambio; (3) refuerzo de prompt explícito en el acuse (medido 4/4 correcto tras el fix). De paso, arreglada también la deflexión de contacto/dominio blindado en `supervisor.py`, que usaba `state.language` antes de que se detectara en el primer mensaje.
+* Verificado en vivo con LLM real los cuatro casos. 5 tests nuevos. Suite: **1409 passed**, 18 skipped. ruff limpio.
+
 0.21.3 - (2026-08-26)
 ----------------------
 * **Arreglado el Grupo 3 de la batería sintética contra PRE: se preguntaba "¿minicurso o snorkel?" a un acompañante YA certificado.** `detect_special_signals` ya devolvía `companion_activity="certified_diving"` correctamente (medido 3/3), pero el guard determinista propio (`_activity_has_textual_backing`) solo reconocía respaldo textual vía palabra de producto o "quiere bucear"→minicurso — una declaración de certificación ("es certificado también") no encajaba en ninguno, descartando una señal CORRECTA del LLM.

@@ -206,6 +206,24 @@ async def test_normal_message_does_not_deflect_as_contact_request():
     assert "🔒" not in resp
 
 
+@pytest.mark.asyncio
+async def test_contact_deflection_in_english_when_language_not_yet_detected():
+    """Hallazgo en vivo 2026-08-26 (batería sintética contra PRE, Grupo 4/
+    hallazgo B): esta deflexión corre ANTES de que `maybe_handle_turn` haga
+    su detección de idioma de apertura — en el primer mensaje,
+    `state.language` seguía en su valor por defecto ("es"), así que "can you
+    give me your whatsapp number" (inglés) recibía la deflexión en español.
+    `state.detected_language` (None en el primer mensaje real) es la señal
+    de si ya se detectó idioma; sin ella, se infiere del mensaje actual."""
+    state = make_state(lang="es")
+    state.detected_language = None
+    with patch("src.agents.supervisor.detect_routing_signals", new=AsyncMock(return_value={})):
+        resp = await route_message(state, "can you give me your whatsapp number")
+    assert "🔒" in resp
+    assert "phone" in resp.lower() or "whatsapp" in resp.lower()
+    assert "número" not in resp.lower(), "no debe responder en español a un mensaje en inglés"
+
+
 # --- Bloque 2.3: link roto por señal LLM + backstop de contexto técnico ---
 
 @pytest.mark.asyncio

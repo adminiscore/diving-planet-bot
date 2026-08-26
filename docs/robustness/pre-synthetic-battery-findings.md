@@ -60,7 +60,7 @@ Repro (conv 146):
 El dato final de grupo (2×Snorkel) SÍ queda correcto pese a la repregunta — no es pérdida de
 cantidad, es la ubicación/hotel lo que queda mal y una pregunta redundante de cantidad de paso.
 
-### B. 🔴 Inconsistencia de idioma en la deflexión de contacto (EN → respuesta en ES)
+### B. ✅ ARREGLADO (ver Grupo 4, causa #3) Inconsistencia de idioma en la deflexión de contacto (EN → respuesta en ES)
 
 `contact-whatsapp-en` (conv 154): mensaje de apertura en inglés ("can you give me your
 whatsapp number") recibe la respuesta de deflexión de Bloque 2.2 **en español** ("Por aquí no
@@ -68,7 +68,14 @@ manejo un número de teléfono..."), sin ningún saludo previo en inglés que s�
 primeros mensajes en inglés (comparar con conv 158). Sugiere que el path de deflexión no
 respeta/no detecta bien `state.language` en el primer turno para esta frase concreta.
 
-### C. 🔴 Mezcla de idioma dentro de una misma respuesta
+**Causa raíz**: la deflexión (y la de dominio blindado, mismo patrón) corre en `supervisor.py`
+ANTES de que `maybe_handle_turn` haga su detección de idioma de apertura — en el primer
+mensaje, `state.language` sigue en su valor por defecto ("es"). Fix: usar
+`state.detected_language` (None en el primer mensaje real) como señal de "¿ya se detectó
+idioma?"; si no, inferirlo del mensaje actual con la heurística barata `_infer_language` solo
+para ESA respuesta puntual (sin tocar `state.language` de forma permanente). 1 test nuevo.
+
+### C. ✅ ARREGLADO (ver Grupo 4, causa #1) Mezcla de idioma dentro de una misma respuesta
 
 `mixed-en-es` (conv 158): "hi quiero snorkel and minicourse para mi hermano" → el bot responde
 con saludo en **inglés** ("Hi! I'm *Coral*...") seguido, en el MISMO mensaje, de la pregunta de
@@ -235,7 +242,7 @@ LLM real: el acompañante certificado se añade directamente al carrito (`certif
 sin preguntar nada, con el resumen re-emitido correctamente. 2 tests nuevos. Suite: **1405
 passed**, 18 skipped. ruff limpio.
 
-### Grupo 4 — 🔴 Inconsistencia de idioma (confirma y amplía B/C del lote 1)
+### Grupo 4 — ✅ ARREGLADO Inconsistencia de idioma (confirma y amplía B/C del lote 1)
 
 Reproducido 3 veces más: saludo en un idioma + pregunta de slot en el otro, en el MISMO
 mensaje (`lang-spanglish-heavy` conv 167: saludo EN + pregunta ES; `lang-en-question-midflow`
@@ -245,6 +252,34 @@ english" recibe respuesta en español y sigue en español el resto del turno).
 
 (Nota: mensaje en portugués, conv 166, cae a español por defecto — comportamiento razonable
 para un idioma no soportado, no se cuenta como bug.)
+
+**Tres causas raíz distintas, tres fixes**:
+
+1. **Mezcla dentro de un mismo mensaje de apertura** ("hi quiero snorkel and minicourse para
+   mi hermano"): la detección de apertura (heurística → LLM → hints, la más fiable) solo fijaba
+   `state.language`, nunca `state.detected_language` — y `_apply_detected_intent` (que corre en
+   CADA turno vía `_understand()`) sobreescribe `state.language` con su propia clasificación
+   más simple, por-mensaje, MIENTRAS `state.detected_language` siga vacío. El saludo salía ya
+   en el idioma correcto, pero segundos después, en el MISMO turno, la pregunta de slot se
+   reclasificaba distinto. Fix: fijar `state.detected_language` también en la detección de
+   apertura, cerrando esa ventana.
+
+2. **Petición explícita de cambio de idioma ignorada**: fuera del primer turno, nada volvía a
+   mirar el idioma (a propósito, para no reclasificar cada mensaje) — así que una petición
+   real como "can we continue in english" no tenía ningún mecanismo que la detectara. Fix:
+   detector determinista nuevo (`_SWITCH_TO_EN_RE`/`_SWITCH_TO_ES_RE`, lista pequeña de
+   patrones explícitos, sin LLM) que actualiza `state.language` de inmediato, efectivo en la
+   respuesta de ese mismo turno.
+
+3. **Acuse en el idioma equivocado** ("voy solo" en medio de una conversación ya establecida
+   en inglés recibía un acuse en español): el prompt del acuse (`compose_acknowledgement`)
+   nunca decía explícitamente en qué idioma responder — el modelo imitaba el idioma del
+   MENSAJE del cliente en vez del idioma acordado de la conversación. Fix: refuerzo de prompt
+   explícito ("responde SIEMPRE en {idioma}, sea cual sea el idioma del mensaje del cliente").
+   Medido: 4/4 correcto en inglés tras el refuerzo (antes fallaba de forma consistente).
+
+Verificado en vivo con LLM real los tres casos. 4 tests nuevos (2 unitarios de los regex + 1 de
+apertura + 1 de cambio explícito de idioma). Suite: **1408 passed**, 18 skipped. ruff limpio.
 
 ### Grupo 5 — 🔴 RAG de precios inconsistente: a veces responde bien, a veces dice que no tiene el dato o responde otra cosa
 

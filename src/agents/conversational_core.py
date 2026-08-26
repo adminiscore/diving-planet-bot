@@ -88,6 +88,29 @@ _DAYS_TO_DIVES = {2: 5, 3: 7, 4: 9}
 
 _CARTAGENA_RE = re.compile(r"\b(cartagena|cartagen\w*)\b", re.IGNORECASE)
 _ISLAND_RE = re.compile(r"\b(isla\w*|island\w*|bar[uú]|rosario\w*)\b", re.IGNORECASE)
+
+# Auditoría 2026-08-26 (batería sintética contra PRE, Grupo 4): una petición
+# EXPLÍCITA de cambiar de idioma a mitad de conversación ("actually can we
+# continue in english") se ignoraba por completo — no había ningún mecanismo
+# que la detectara (la reclasificación por-mensaje del intent_detector solo
+# corre en el PRIMER turno, antes de que `detected_language` quede fijado;
+# después, nada vuelve a mirar el idioma). Lista deliberadamente pequeña y
+# determinista (no LLM) — son peticiones explícitas, no ambiguas, no hace
+# falta red de precisión para esto.
+_SWITCH_TO_EN_RE = re.compile(
+    r"\b(?:can\s+we|could\s+we|let'?s|switch\s+to|in\s+)?\s*"
+    r"(?:continue|talk|speak|chat)?\s*in\s+english\b|"
+    r"\bswitch\s+to\s+english\b|\bspeak\s+english\b|\ben\s+ingl[ée]s\b|"
+    r"\bhabl(?:ar|amos|emos)\s+en\s+ingl[ée]s\b",
+    re.IGNORECASE,
+)
+_SWITCH_TO_ES_RE = re.compile(
+    r"\b(?:podemos|puedes|seguimos|continuamos)?\s*"
+    r"(?:hablar|seguir|continuar)?\s*en\s+español\b|"
+    r"\bcambia(?:r|mos)?\s+a\s+español\b|\bhabl(?:ar|amos|emos)\s+en\s+español\b|"
+    r"\bswitch\s+to\s+spanish\b|\bin\s+spanish\b|\bspeak\s+spanish\b",
+    re.IGNORECASE,
+)
 # Respuesta de DUDA al preguntar el hotel (no un nombre real de hotel). Fase C.
 _HOTEL_UNKNOWN_RE = re.compile(
     r"\b(no\s+s[eé]|ni\s+idea|no\s+lo\s+s[eé]|a[uú]n\s+no|todav[ií]a\s+no|"
@@ -1606,8 +1629,33 @@ async def maybe_handle_turn(
             or await detect_language_llm(message)
             or supervisor._infer_language(message, state.language)
         )
+        # Auditoría 2026-08-26 (batería sintética contra PRE, Grupo 4): esta
+        # detección de apertura (heurística → LLM → hints, la más fiable)
+        # solo fijaba `state.language`, nunca `state.detected_language` — y
+        # `_apply_detected_intent` (que corre en CADA turno vía
+        # `_understand()`) sobreescribe `state.language` con su propia
+        # clasificación más simple, por-mensaje, mientras
+        # `state.detected_language` siga vacío. Resultado: en el PRIMER
+        # turno, el saludo se renderizaba ya en el idioma correcto (inglés
+        # para "hi quiero snorkel...") pero segundos después, dentro del
+        # mismo turno, la pregunta de slot salía en español — la
+        # clasificación por-mensaje del intent_detector (más simple, sin
+        # LLM) decidía distinto para un mensaje con palabras mezcladas.
+        # Fijar `detected_language` aquí también evita ese pisado sobre la
+        # detección ya resuelta y más fiable.
+        state.detected_language = state.language
         state.step = Step.FREE_TEXT
         state.quick_replies = []
+    elif _SWITCH_TO_EN_RE.search(message) and state.language != "en":
+        # Petición EXPLÍCITA de cambiar de idioma a mitad de conversación
+        # (auditoría 2026-08-26) — fuera del primer turno nada más vuelve a
+        # mirar el idioma (a propósito, para no reclasificar cada mensaje),
+        # así que sin este chequeo dedicado la petición se ignoraba del
+        # todo. `elif` porque en el primer turno la detección de arriba ya
+        # decide bien ("hi, can we talk in english" ya sale en inglés).
+        state.language = state.detected_language = "en"
+    elif _SWITCH_TO_ES_RE.search(message) and state.language != "es":
+        state.language = state.detected_language = "es"
     _capture_client_name(state, message)
     greeting = _greeting(state) if first_turn else ""
 
