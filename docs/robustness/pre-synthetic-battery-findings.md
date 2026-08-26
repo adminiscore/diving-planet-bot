@@ -207,7 +207,7 @@ correcto. 2 tests nuevos (unitario + regresión de flujo completo). Pendiente: v
 contra PRE una vez desplegado (el hallazgo se reprodujo de nuevo en PRE el 2026-08-26 antes del
 deploy — es el comportamiento esperado, el fix vive solo en local todavía).
 
-### Grupo 3 — 🔴 `SLOT_COMPANION_ACTIVITY` (v0.20.62) se dispara aunque el acompañante SÍ tenga certificación clara
+### Grupo 3 — ✅ ARREGLADO `SLOT_COMPANION_ACTIVITY` (v0.20.62) se dispara aunque el acompañante SÍ tenga certificación clara
 
 `bool-companion-cert-midflow` (conv 207): tras un buceo certificado ya cerrado, "ah también
 viene mi amigo, el es certificado también" — el bot pregunta "¿Qué le gustaría hacer tu
@@ -216,6 +216,24 @@ debería tratarse como un acompañante más de buceo certificado (o como mucho p
 CANTIDAD, nunca la actividad con opciones de minicurso/snorkel — esas opciones son solo para
 acompañantes NO certificados, por regla de negocio). El guard de v0.20.62 parece no excluir
 correctamente el caso "certificación SÍ declarada explícitamente".
+
+**Causa raíz**: `detect_special_signals` ya devolvía `companion_activity: "certified_diving"`
+correctamente (medido 3/3) — el problema era el guard determinista propio,
+`_activity_has_textual_backing`, que solo reconocía respaldo textual vía la palabra del
+producto (buceo/snorkel/minicurso) o "quiere bucear" → minicurso. Una declaración de
+certificación ("es certificado también") no encajaba en ninguno de los dos casos, así que se
+descartaba una señal CORRECTA del LLM por falta de respaldo, cayendo a preguntar
+`SLOT_COMPANION_ACTIVITY` sin sentido (ninguna de sus dos opciones — minicurso/snorkel — aplica
+a alguien ya certificado).
+
+**Fix**: `_activity_has_textual_backing` ahora reconoce una declaración de certificación
+afirmativa ("es/está certificado", "certified") como respaldo válido para `certified_diving`
+— declarar la certificación ES la intención (nadie dice "ya soy certificado" para pedir un
+minicurso). La negación explícita ("no está certificado"/"is not certified") se excluye
+deliberadamente, preservando el caso genuino que si necesita preguntar. Verificado en vivo con
+LLM real: el acompañante certificado se añade directamente al carrito (`certified_diving: 2`)
+sin preguntar nada, con el resumen re-emitido correctamente. 2 tests nuevos. Suite: **1405
+passed**, 18 skipped. ruff limpio.
 
 ### Grupo 4 — 🔴 Inconsistencia de idioma (confirma y amplía B/C del lote 1)
 

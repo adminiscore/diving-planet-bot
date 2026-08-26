@@ -1380,6 +1380,20 @@ def test_activity_has_textual_backing_translates_diving_intent_to_minicourse():
     assert not core._activity_has_textual_backing("minicourse", "mi amigo no esta certificado")
 
 
+def test_activity_has_textual_backing_certification_claim_backs_certified_diving():
+    """Hallazgo en vivo 2026-08-26 (batería sintética contra PRE, Grupo 3):
+    "mi amigo... él es certificado también" debe respaldar `certified_diving`
+    igual que "quiere bucear" — declarar la certificación ES la intención,
+    nadie dice "ya soy certificado" para pedir un minicurso. Sin este
+    respaldo, se descartaba una señal del LLM que SÍ era correcta (medido
+    3/3), preguntando "¿minicurso o snorkel?" a un acompañante ya
+    certificado. La negación explícita sigue sin respaldar nada."""
+    assert core._activity_has_textual_backing("certified_diving", "el es certificado tambien")
+    assert core._activity_has_textual_backing("certified_diving", "he is certified too")
+    assert not core._activity_has_textual_backing("certified_diving", "mi amigo no esta certificado")
+    assert not core._activity_has_textual_backing("certified_diving", "my friend is not certified")
+
+
 @pytest.mark.asyncio
 async def test_companion_activity_ambiguity_defers_instead_of_burying_pending_slot():
     """Hallazgo en vivo 2026-08-26 (batería sintética contra PRE, conv 190 y

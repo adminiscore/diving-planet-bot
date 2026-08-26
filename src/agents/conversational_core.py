@@ -770,6 +770,25 @@ def _mentioned_product_activities(message: str) -> list:
     return [act for act, pat in _PRODUCT_MENTION_RE.items() if pat.search(message)]
 
 
+# Auditoría 2026-08-26 (batería sintética contra PRE, Grupo 3): "mi amigo...
+# él es certificado también" respalda `certified_diving` igual que "quiere
+# bucear" — declarar la certificación del acompañante ES la intención (nadie
+# dice "ya soy certificado" para pedir un minicurso). Sin este respaldo, el
+# guard determinista descartaba una señal del LLM que SÍ era correcta
+# (medido 3/3, `detect_special_signals` devolvía `certified_diving` bien),
+# preguntando "¿minicurso o snorkel?" a un acompañante YA certificado —
+# ninguna de las dos opciones tiene sentido en ese caso. Negado explícito
+# ("no está certificado") NO cuenta como respaldo — ese es el caso genuino
+# de `SLOT_COMPANION_ACTIVITY` que el hallazgo original (Grupo 3 §D) sí
+# necesita preguntar.
+_CERTIFICATION_CLAIM_RE = re.compile(r"certificad[oa]s?|certified", re.IGNORECASE)
+_CERTIFICATION_NEGATED_RE = re.compile(
+    r"no\s+(?:es[ts]\w*\s+)?certificad[oa]s?|not\s+certified|isn['’]?t\s+certified|"
+    r"no\s+certified",
+    re.IGNORECASE,
+)
+
+
 def _activity_has_textual_backing(activity: str, message: str) -> bool:
     """¿Tiene `activity` algún respaldo real en el texto? No basta con
     buscar la palabra exacta: la regla de negocio traduce "no certificado +
@@ -783,6 +802,12 @@ def _activity_has_textual_backing(activity: str, message: str) -> bool:
     if activity in mentioned:
         return True
     if activity == "minicourse" and "certified_diving" in mentioned:
+        return True
+    if (
+        activity == "certified_diving"
+        and _CERTIFICATION_CLAIM_RE.search(message)
+        and not _CERTIFICATION_NEGATED_RE.search(message)
+    ):
         return True
     return False
 

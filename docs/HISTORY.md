@@ -1,6 +1,11 @@
 History
 =======
 
+0.21.3 - (2026-08-26)
+----------------------
+* **Arreglado el Grupo 3 de la batería sintética contra PRE: se preguntaba "¿minicurso o snorkel?" a un acompañante YA certificado.** `detect_special_signals` ya devolvía `companion_activity="certified_diving"` correctamente (medido 3/3), pero el guard determinista propio (`_activity_has_textual_backing`) solo reconocía respaldo textual vía palabra de producto o "quiere bucear"→minicurso — una declaración de certificación ("es certificado también") no encajaba en ninguno, descartando una señal CORRECTA del LLM.
+* Fix: `_activity_has_textual_backing` reconoce ahora una declaración de certificación afirmativa como respaldo válido para `certified_diving` (la negación explícita sigue sin respaldar nada, preservando el caso genuino de pregunta). Verificado en vivo: el acompañante se añade directo al carrito sin preguntar. 2 tests nuevos. Suite: **1405 passed**, 18 skipped. ruff limpio.
+
 0.21.2 - (2026-08-26)
 ----------------------
 * **Arreglado el Grupo 1 de la batería sintética contra PRE: la ubicación se malinterpretaba cuando la respuesta a "¿desde dónde saldrías?" era una CANTIDAD en vez de un lugar.** Causa raíz: `_ISLAND_RE`/`_CARTAGENA_RE` tenían "2"/"1" como alternativas SUELTAS dentro del propio regex (resto de una convención de menú numerado antigua) — con límites de palabra, esto matchea el dígito en CUALQUIER parte del mensaje, no solo como respuesta completa. "somos 2" (respondiendo la cantidad, no la ubicación) fijaba `location="island"` sin que nadie lo dijera, y "cartagena" dicho después se leía como nombre de hotel en vez de la respuesta de ubicación real. Reproducido 4/4 veces (ES, EN, dígito) en la batería.
