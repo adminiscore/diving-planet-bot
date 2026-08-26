@@ -1,6 +1,14 @@
 History
 =======
 
+0.21.8 - (2026-08-26)
+----------------------
+* **Arreglados 2 hallazgos nuevos del lote 3 (50 conversaciones) de la batería sintética contra PRE — mitad "normales" hasta cierre, mitad adversariales sobre temas nuevos (pago, modificar reserva, injection, mensajes vacíos/repetidos, grupo con estados de buceo mixtos).**
+* **Hallazgo E (arreglado)**: "¿qué métodos de pago aceptan?" escalaba como si fuera un problema real de pago activo ("Esta consulta depende de disponibilidad o soporte en tiempo real"), pese a que el bot SÍ tiene la info (una pregunta más específica de pago la respondía bien). Causa: la descripción del campo `sensitive_topic`/`real_time_issues` en el prompt del LLM de enrutado no distinguía un problema ACTIVO de una pregunta informativa neutra sobre métodos — reforzada con ejemplos explícitos de ambos casos. Verificado en vivo: 4/4 preguntas de pago ya no escalan, el problema real de pago sigue escalando igual.
+* **Hallazgo F (arreglado)**: un mensaje con DOS cláusulas de "última inmersión" ("yo bucee hace 1 mes pero mi amigo no bucea hace 8 años") se quedaba con la del hablante y perdía la del acompañante — nunca se ofrecía el refresher al grupo pese a que la propia pregunta del bot pide el dato de "alguno del grupo". Causa: `_detect_last_dive` usaba `re.search` (solo la primera coincidencia) en vez de evaluar TODAS las cláusulas del mensaje. Fix: `re.finditer` + criterio más conservador (`any()`) — si cualquier cláusula indica >2 años, el resultado es `True`. 1 test nuevo (3 variantes).
+* **Hallazgo G (documentado, no es bug)**: no existe todavía una categoría para "añadir una persona a una reserva ya existente" (solo cancelación/cambio de fecha) — gap de alcance para una futura decisión de producto, no una corrección.
+* Suite: **1419 passed**, 18 skipped. ruff limpio.
+
 0.21.7 - (2026-08-26)
 ----------------------
 * **Arreglado el hallazgo D de la batería sintética contra PRE: mención de acompañante sin certificar perdida en el mensaje de APERTURA.** "hola quiero bucear, voy con mi amigo pero el no esta certificado" en un solo mensaje preguntaba "¿Cuántos serían para buceo certificado?" en vez de reconocer al acompañante — quedó documentado desde el lote 1 pero nunca se agrupó ni arregló junto a los Grupos 1-8; el re-run completo de los 65 tests (tras cerrar esos 8 grupos) lo encontró todavía roto.
