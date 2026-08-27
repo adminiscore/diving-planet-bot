@@ -485,3 +485,28 @@ async def test_group_size_not_overwritten_without_correction_cue():
     with patch("src.agents.supervisor.detect_routing_signals", new=AsyncMock(return_value={})):
         await route_message(state, "tengo 25 anos y mi amigo tambien quiere ir")
     assert state.detected_group_size == 3
+
+
+def test_mixed_nationality_regex_covers_explicit_count_and_pero():
+    """Hallazgo en vivo (batería sintética contra PRE, 2026-08-26, lote 5,
+    conversación larga): "bueno dos de nosotros somos colombianos pero uno
+    es extranjero" no matchea `_MIXED_NATIONALITY_RE` (la lista original
+    solo cubría "unos/algunos... y otros", no una cantidad explícita +
+    "pero") — el grupo se trataba como si fuera enteramente extranjero, sin
+    reconocer la nacionalidad mixta. Extendido el regex para cubrir cantidad
+    explícita + "pero"/"y", en ambos órdenes (colombiano-primero /
+    extranjero-primero).
+
+    Solo se prueba el detector, no `route_message` end-to-end: en agent-arch
+    la explicación de nacionalidad mixta todavía vive únicamente en la
+    cascada legacy (`_route_message_inner`) — el router clasifica el
+    mensaje como ROUTE_BOOKING (ver `orchestration/router.py`, docstring
+    "candidato claro a discrepancia de shadow"), pero el subgrafo de
+    booking (Fase 3.3, en curso) todavía no reproduce esta respuesta
+    determinista. Eso es un gap arquitectónico ya documentado por Álvaro,
+    no algo a resolver como parte de este port."""
+    from src.agents.supervisor import _detect_mixed_nationality_request
+    assert _detect_mixed_nationality_request(
+        "bueno dos de nosotros somos colombianos pero uno es extranjero")
+    assert _detect_mixed_nationality_request(
+        "tres somos extranjeros y uno es colombiano")
