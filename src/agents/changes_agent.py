@@ -53,6 +53,7 @@ async def changes_node(state: BotState) -> dict:
     from src.agents.supervisor import (
         _booking_change_response,
         _detect_cancellation_request,
+        _detect_modify_booking_request,
         _detect_reschedule_request,
         _in_active_cart_building,
         _route_message_inner,
@@ -79,7 +80,16 @@ async def changes_node(state: BotState) -> dict:
         logger.info("[NODE:changes] reprogramación -> política + botones asesor/menú")
         return {"reply": _booking_change_response(conv, message, "reschedule")}
 
-    # 3 · Disponibilidad (post-núcleo, patrón B) + defensa "sin fugas": delegar en
+    # 3 · Modificar headcount de una reserva existente (pre-núcleo, hallazgo G,
+    #     portado de pre_gadea v0.21.13 — mismo patrón que cancelación/reprogramación).
+    if _detect_modify_booking_request(msg_lower) or (
+        signals.get("booking_change_topic") == "modify_headcount"
+        and not _in_active_cart_building(conv)
+    ):
+        logger.info("[NODE:changes] modificar headcount -> política + botones asesor/menú")
+        return {"reply": _booking_change_response(conv, message, "modify_headcount")}
+
+    # 4 · Disponibilidad (post-núcleo, patrón B) + defensa "sin fugas": delegar en
     #     la cascada preserva el orden exacto respecto al núcleo (que puede
     #     interceptar la pregunta de disponibilidad fresca → booking).
     logger.info("[NODE:changes] disponibilidad (post-núcleo) / sin match -> delego en la cascada")

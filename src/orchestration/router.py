@@ -107,6 +107,11 @@ def classify_route(conv_state: ConversationState, message: str, signals: dict) -
         and not sup._in_active_cart_building(conv_state)
     ):
         return ROUTE_CHANGE
+    if sup._detect_modify_booking_request(msg_lower) or (
+        signals.get("booking_change_topic") == "modify_headcount"
+        and not sup._in_active_cart_building(conv_state)
+    ):
+        return ROUTE_CHANGE
 
     # ── DEFLECT (contacto / identidad IA) ──
     if sup._asks_for_contact_number(msg_lower) or signals.get("asks_for_contact_number"):

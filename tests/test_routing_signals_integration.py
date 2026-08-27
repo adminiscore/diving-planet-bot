@@ -213,6 +213,62 @@ async def test_cancellation_policy_question_does_not_trigger_change_flow():
     assert resp
 
 
+@pytest.mark.asyncio
+async def test_modify_headcount_signal_routes_to_policy_when_keyword_list_misses():
+    """Hallazgo G (batería sintética contra PRE, 2026-08-26): "ya tengo una
+    reserva hecha, quiero agregar una persona más" caía al menú genérico de
+    bienvenida — asimetría con cancelación/reprogramación, que sí se
+    reconocían. La señal LLM `booking_change_topic == "modify_headcount"`
+    debe dar la info de política + botones asesor/menú, igual que las otras
+    dos categorías."""
+    state = make_state()
+    with patch("src.agents.supervisor.detect_routing_signals",
+               new=AsyncMock(return_value={"booking_change_topic": "modify_headcount"})):
+        resp = await route_message(state, "quiero cambiar el numero de personas de mi reserva ya hecha")
+    assert resp
+    assert state.quick_replies
+
+
+@pytest.mark.asyncio
+async def test_modify_headcount_keyword_list_catches_explicit_phrase():
+    """"ya tengo una reserva hecha, quiero agregar una persona mas" matchea
+    MODIFY_BOOKING_PHRASES directamente (sin depender de la señal LLM)."""
+    state = make_state()
+    with patch("src.agents.supervisor.detect_routing_signals", new=AsyncMock(return_value={})):
+        resp = await route_message(state, "ya tengo una reserva hecha, quiero agregar una persona mas")
+    assert resp
+    assert state.quick_replies
+
+
+@pytest.mark.asyncio
+async def test_modify_headcount_response_matches_opening_message_language():
+    """Mismo hallazgo que el Grupo 4 (idioma en el mensaje de apertura),
+    encontrado de nuevo al verificar en vivo el fix de modify_headcount: en
+    el primer mensaje `state.detected_language` todavía es None — la
+    respuesta debe seguir el idioma del mensaje (inglés aquí), no el
+    default en español, igual que ya se corrigió para cancelación y
+    reprogramación."""
+    state = make_state()
+    with patch("src.agents.supervisor.detect_routing_signals",
+               new=AsyncMock(return_value={"booking_change_topic": "modify_headcount"})):
+        resp = await route_message(state, "I already have a booking, can I add one more person")
+    assert "advisor" in resp.lower() or "headcount" in resp.lower()
+
+
+@pytest.mark.asyncio
+async def test_normal_group_size_mid_flow_does_not_trigger_modify_headcount():
+    """Regresión/estrictez: una respuesta normal de tamaño de grupo, sin
+    ninguna frase de MODIFY_BOOKING_PHRASES y sin que la señal LLM marque
+    `booking_change_topic` (el caso real durante la construcción de una
+    reserva, donde la señal no tiene motivo para dispararse), sigue su
+    camino normal en vez de caer al flujo de modify_headcount."""
+    state = make_state()
+    with patch("src.agents.supervisor.detect_routing_signals", new=AsyncMock(return_value={})):
+        resp = await route_message(state, "somos 2")
+    assert state.step != Step.ESCALATE
+    assert resp
+
+
 # --- Bloque 2.2: deflexión de petición de número/contacto (2026-07-23) ---
 # El bot nunca da un número; una petición debe DEFLEXIONAR (límite 🔒 + lo que
 # SÍ + redirige), NO escalar ni caer al fallback evasivo.
