@@ -1108,6 +1108,98 @@ def _canonical_price_named_services_answer(query: str, lang: str) -> str | None:
     return f"{body}\n\n{disclaimer} {outro}" + safety
 
 
+# Hallazgo (batería sintética contra PRE, 2026-08-26, lote 4, portado de
+# pre_gadea v0.21.9): preguntas de precio de paquete multi-día tenían
+# resultado inconsistente — "how much is the 9 dive package?" (EN) RAG
+# respondió con NÚMEROS INVENTADOS ($544.5/$605 USD, ninguno de los dos
+# coincide con el precio real del catálogo, $602/$668), mientras que
+# "cuánto cuesta el paquete de 5 inmersiones?" (ES) cayó al fallback "no lo
+# tengo a la mano" — dos fallos distintos (uno peor que el otro: una
+# alucinación confiada es más grave que abstenerse) para el mismo tipo de
+# pregunta, sobre datos que SÍ están en `SERVICES` con precio exacto (igual
+# que `_canonical_price_named_services_answer` para los 4 servicios base).
+# Se responde determinista para los 4 paquetes multi-día reales (4/5/7/9
+# inmersiones) en vez de arriesgar otra alucinación.
+_PRICE_PACKAGE_PATTERNS: list[tuple[str, re.Pattern]] = [
+    ("4_dives_2_days", re.compile(r"\b4\s*(?:d[ií]as?|dives?|inmersi\w+|buceos?)\b|\bpaquete\s+de\s+4\b|\b4[\s-]dive\s+package\b", re.IGNORECASE)),
+    ("5_dives_2_days", re.compile(r"\b5\s*(?:d[ií]as?|dives?|inmersi\w+|buceos?)\b|\bpaquete\s+de\s+5\b|\b5[\s-]dive\s+package\b", re.IGNORECASE)),
+    ("7_dives_3_days", re.compile(r"\b7\s*(?:d[ií]as?|dives?|inmersi\w+|buceos?)\b|\bpaquete\s+de\s+7\b|\b7[\s-]dive\s+package\b", re.IGNORECASE)),
+    ("9_dives_4_days", re.compile(r"\b9\s*(?:d[ií]as?|dives?|inmersi\w+|buceos?)\b|\bpaquete\s+de\s+9\b|\b9[\s-]dive\s+package\b", re.IGNORECASE)),
+]
+
+
+def _canonical_price_package_answer(query: str, lang: str) -> str | None:
+    """Precio del paquete multi-día nombrado explícitamente por su número de
+    inmersiones (4/5/7/9) — solo cuando la pregunta nombra EXACTAMENTE uno
+    de ellos sin ambigüedad; 2+ o ninguno se deja a RAG."""
+    if not _PRICE_QUESTION.search(query):
+        return None
+    matched = [key for key, pat in _PRICE_PACKAGE_PATTERNS if pat.search(query)]
+    if len(matched) != 1:
+        return None
+    try:
+        from src.flows.catalog import SERVICES
+    except Exception:
+        return None
+    svc = SERVICES.get(matched[0], {})
+    usd, cop = svc.get("price_usd"), svc.get("price_cop")
+    if usd is None and cop is None:
+        return None
+    name = svc.get("name_es") if lang == "es" else svc.get("name_en")
+    if not name:
+        return None
+    price_line = f"{_fmt_price_usd(usd)} USD / {_fmt_price_cop(cop)} COP"
+    disclaimer = (
+        "Los colombianos/residentes pagan en pesos (COP) y los internacionales en dólares (USD) "
+        "— mismo precio, sin cobro extra por la divisa."
+        if lang == "es" else
+        "Colombians/residents pay in pesos (COP) and international guests in dollars (USD) — "
+        "same price, no extra charge for the currency."
+    )
+    safety = _CANONICAL_SAFETY_NET["es" if lang == "es" else "en"]
+    if lang == "es":
+        body = f"🌊 *{name}*: *{price_line}* por persona (con el descuento por reservar online)."
+        outro = "¿Te ayudo a armar la reserva? 😊"
+    else:
+        body = f"🌊 *{name}*: *{price_line}* per person (with the online-booking discount)."
+        outro = "Want me to help you put the booking together? 😊"
+    return f"{body}\n\n{disclaimer} {outro}" + safety
+
+
+# Hallazgo (batería sintética contra PRE, 2026-08-26, lote 5 — conversaciones
+# largas, portado de pre_gadea v0.21.14): "¿el refresher tiene costo
+# adicional?" respondía "sí, puede tener costo, escríbenos por WhatsApp para
+# confirmar" — CONTRADICE la respuesta determinista que el propio núcleo
+# conversacional da cuando ofrece el refresher dentro del flujo de reserva
+# ("sin coste adicional"). La política de `policies.json`
+# (`refresh_requirement`) es ambigua sobre el costo y no lo aclara — el RAG
+# rellenaba el hueco adivinando que sí tiene costo, dos respuestas
+# incompatibles a la misma pregunta según el camino. Se responde con la
+# verdad ya conocida (gratis) en vez de dejar que el RAG adivine.
+_REFRESHER_COST_QUESTION_RE = re.compile(
+    r"\brefresher\b.{0,30}\b(?:costo|coste|cuesta|precio|adicional|gratis|cost|"
+    r"price|free|extra)\b"
+    r"|\b(?:costo|coste|cuesta|precio|cost|price)\b.{0,30}\brefresher\b",
+    re.IGNORECASE,
+)
+
+
+def _canonical_refresher_cost_answer(query: str, lang: str) -> str | None:
+    if not _REFRESHER_COST_QUESTION_RE.search(query):
+        return None
+    if lang == "es":
+        return (
+            "🌊 El *refresher* (repaso corto en el agua antes de la inmersión) "
+            "**no tiene costo adicional** — está incluido si te hace falta, sin "
+            "cobro extra. ¿Te ayudo a armar la reserva? 😊"
+        ) + _CANONICAL_SAFETY_NET["es"]
+    return (
+        "🌊 The *refresher* (a short in-water review before the dive) is "
+        "**at no extra cost** — it's included if you need it, no additional "
+        "charge. Want me to help you put the booking together? 😊"
+    ) + _CANONICAL_SAFETY_NET["en"]
+
+
 def _coerce_metadata(value: object) -> dict:
     if isinstance(value, dict):
         return value
@@ -1300,6 +1392,20 @@ async def rag_answer(
         logger.info(f"[RAG][CANONICAL_SHORTCUT] shortcut=diving_overview query={query!r} lang={lang}")
         return diving_overview
 
+    # `_canonical_refresher_cost_answer` va ANTES que `_canonical_price_
+    # overview_answer` (hallazgo en vivo, batería sintética contra PRE,
+    # 2026-08-26): "does the refresher cost extra?" matchea `_PRICE_QUESTION`
+    # (contiene "cost") y "refresher" no está en `_PRICE_SPECIFIC`, así que
+    # el overview genérico se adelantaba y ganaba SIEMPRE para la variante en
+    # inglés — la versión en español ("¿tiene costo adicional?") solo
+    # funcionaba porque "costo" no matchea `\bcost\b` por casualidad de
+    # frontera de palabra. La pregunta específica del refresher debe ganar
+    # siempre que aplique, sin depender de ese accidente de regex.
+    refresher_cost = _canonical_refresher_cost_answer(query, lang)
+    if refresher_cost:
+        logger.info(f"[RAG][CANONICAL_SHORTCUT] shortcut=refresher_cost query={query!r} lang={lang}")
+        return refresher_cost
+
     price_overview = _canonical_price_overview_answer(query, lang)
     if price_overview:
         logger.info(f"[RAG][CANONICAL_SHORTCUT] shortcut=price_overview query={query!r} lang={lang}")
@@ -1309,6 +1415,11 @@ async def rag_answer(
     if price_named_services:
         logger.info(f"[RAG][CANONICAL_SHORTCUT] shortcut=price_named_services query={query!r} lang={lang}")
         return price_named_services
+
+    price_package = _canonical_price_package_answer(query, lang)
+    if price_package:
+        logger.info(f"[RAG][CANONICAL_SHORTCUT] shortcut=price_package query={query!r} lang={lang}")
+        return price_package
 
     condensed_query = await condense_query(query, history=history, lang=lang)
     ambiguous_location_clarification = _ambiguous_location_clarification(condensed_query, lang)

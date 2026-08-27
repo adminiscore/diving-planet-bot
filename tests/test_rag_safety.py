@@ -479,6 +479,87 @@ class TestCanonicalPriceNamedServices:
             "quiero hacer snorkel manana", "es") is None
 
 
+class TestCanonicalPricePackage:
+    """Hallazgo en vivo 2026-08-26 (batería sintética contra PRE, lote 4):
+    preguntas de precio de paquete multi-día tenían resultado inconsistente
+    y en un caso PELIGROSO — "how much is the 9 dive package?" (EN) RAG
+    respondió con números INVENTADOS ($544.5/$605, ninguno coincide con el
+    precio real $602/$668), mientras que la misma pregunta en español para
+    el paquete de 5 cayó al fallback "no lo tengo a la mano". Respuesta
+    determinista para los 4 paquetes reales (4/5/7/9 inmersiones), mismo
+    patrón que `_canonical_price_named_services_answer`."""
+
+    def test_package_5_dives_es(self):
+        r = rag_agent._canonical_price_package_answer(
+            "cuanto cuesta el paquete de 5 inmersiones?", "es")
+        assert r and "392" in r and "1.429.000" in r
+
+    def test_package_9_dives_en(self):
+        r = rag_agent._canonical_price_package_answer(
+            "how much is the 9 dive package?", "en")
+        assert r and "602" in r and "2.170.000" in r
+        # los números alucinados en vivo NUNCA deben aparecer
+        assert "544" not in r and "605" not in r
+
+    def test_package_4_and_7_dives(self):
+        r4 = rag_agent._canonical_price_package_answer(
+            "cuanto cuesta el paquete de 4 buceos?", "es")
+        assert r4 and "316" in r4
+        r7 = rag_agent._canonical_price_package_answer(
+            "cuanto cuesta el paquete de 7 buceos?", "es")
+        assert r7 and "503" in r7
+
+    def test_non_package_price_question_defers(self):
+        """Precio de un servicio base (no paquete) sigue sin tocar — lo
+        cubre `_canonical_price_named_services_answer`, no este."""
+        assert rag_agent._canonical_price_package_answer(
+            "cuanto cuesta el buceo certificado?", "es") is None
+
+    def test_ambiguous_package_mention_defers(self):
+        """Mención genérica de "paquete" sin número de inmersiones concreto
+        no debe adivinar cuál — se deja a RAG/overview."""
+        assert rag_agent._canonical_price_package_answer(
+            "cuanto cuesta el paquete multidia?", "es") is None
+
+    def test_non_price_question_returns_none(self):
+        assert rag_agent._canonical_price_package_answer(
+            "el paquete de 5 buceos requiere alojamiento?", "es") is None
+
+
+class TestCanonicalRefresherCost:
+    """Hallazgo en vivo 2026-08-26 (batería sintética contra PRE, lote 5,
+    conversaciones largas): "¿el refresher tiene costo adicional?" respondía
+    "sí, puede tener costo, escríbenos por WhatsApp" — CONTRADICE la
+    respuesta determinista que el propio núcleo da al ofrecer el refresher
+    dentro del flujo de reserva ("sin coste adicional"). Respuesta
+    determinista con la verdad ya conocida (gratis) en vez de dejar que el
+    RAG adivine desde una política ambigua."""
+
+    def test_spanish_question(self):
+        r = rag_agent._canonical_refresher_cost_answer(
+            "el refresher tiene costo adicional?", "es")
+        assert r and "no tiene costo adicional" in r.lower()
+
+    def test_english_question(self):
+        r = rag_agent._canonical_refresher_cost_answer(
+            "does the refresher cost extra?", "en")
+        assert r and "no extra cost" in r.lower()
+
+    def test_unrelated_price_question_returns_none(self):
+        assert rag_agent._canonical_refresher_cost_answer(
+            "cuanto cuesta el buceo certificado?", "es") is None
+
+    @pytest.mark.asyncio
+    async def test_refresher_question_wins_over_generic_overview(self):
+        """La pregunta específica del refresher debe ganar sobre el
+        overview genérico de precios incluso cuando la frase contiene una
+        palabra que el overview también reconocería ("cost") — el fix se
+        aplicó reordenando los checks para que este vaya primero."""
+        resp = await rag_agent.rag_answer("does the refresher cost extra?", lang="en", history=[])
+        assert "no extra cost" in resp.lower()
+        assert "reference prices" not in resp.lower()
+
+
 def test_url_guard_accepts_link_present_in_context():
     assert grounding_check.urls_grounded(
         "Reserva aquí: https://divingplanet.org/reservar",
