@@ -1,0 +1,42 @@
+name: VPS Disk Cleanup (one-off)
+
+# Herramienta puntual, aislada del pipeline de deploy: libera espacio en el
+# VPS borrando build cache e imágenes Docker sin usar (dangling), que se
+# acumulan en cada `docker compose ... --build` de cada push a una rama
+# pre_*. NUNCA toca contenedores en marcha ni volúmenes de datos (nada de
+# `-volumes`, nada de parar/borrar contenedores) -- solo caché de build e
+# imágenes huérfanas, exactamente lo que ya se documentó como la causa de
+# que el disco se llenara antes (ver docs/project-history/session-handoff.md).
+# Se dispara a mano (workflow_dispatch), nunca en push.
+
+on:
+  workflow_dispatch:
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up SSH
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "${{ secrets.PRE_VPS_SSH_KEY }}" > ~/.ssh/pre_vps
+          chmod 600 ~/.ssh/pre_vps
+          ssh-keyscan -H "${{ secrets.PRE_VPS_HOST }}" >> ~/.ssh/known_hosts
+
+      - name: Diagnose and clean (build cache + dangling images only)
+        run: |
+          ssh -i ~/.ssh/pre_vps root@${{ secrets.PRE_VPS_HOST }} bash -s <<'REMOTE'
+          set -euo pipefail
+          echo "=== disco ANTES ==="
+          df -h /
+          echo "=== docker system df ANTES ==="
+          docker system df
+          echo "=== limpiando build cache (docker builder prune) ==="
+          docker builder prune -af
+          echo "=== limpiando imagenes sin usar (docker image prune) ==="
+          docker image prune -af
+          echo "=== disco DESPUES ==="
+          df -h /
+          echo "=== docker system df DESPUES ==="
+          docker system df
+          REMOTE

@@ -1,0 +1,38 @@
+name: Chatwoot Admin Token (one-off)
+
+# Herramienta puntual, aislada del pipeline de deploy: imprime el access
+# token de la API de Chatwoot para admin.iscore@gmail.com (cuenta creada por
+# consola, sin SMTP configurado en el VPS -> el flujo de "olvidé mi
+# contraseña" nunca envía email). Solo lectura, no muta nada en la base de
+# datos. Se dispara a mano (workflow_dispatch), nunca en push.
+
+on:
+  workflow_dispatch:
+
+jobs:
+  print-token:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up SSH
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "${{ secrets.PRE_VPS_SSH_KEY }}" > ~/.ssh/pre_vps
+          chmod 600 ~/.ssh/pre_vps
+          ssh-keyscan -H "${{ secrets.PRE_VPS_HOST }}" >> ~/.ssh/known_hosts
+
+      - name: Print Chatwoot admin access token (read-only)
+        run: |
+          ssh -i ~/.ssh/pre_vps root@${{ secrets.PRE_VPS_HOST }} bash -s <<'REMOTE'
+          set -euo pipefail
+          docker exec -i dp-chatwoot bundle exec rails runner - <<'RUBY'
+          u = User.find_by(email: "admin.iscore@gmail.com")
+          if u
+            au = u.account_users.first
+            puts "ACCOUNT_ID=#{au&.account_id}"
+            puts "INBOX_IDS=#{u.account_users.first&.account&.inboxes&.pluck(:id, :name)}"
+            puts "TOKEN=#{u.access_token&.token}"
+          else
+            puts "USER_NOT_FOUND"
+          end
+          RUBY
+          REMOTE
