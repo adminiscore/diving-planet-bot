@@ -230,6 +230,34 @@ class TestLastDiveDetection:
         intent = detector.detect("it's been like 4 years since i last dived", state)
         assert intent.ages == []
 
+    def test_two_last_dive_clauses_take_the_conservative_one(self, detector, state):
+        """Hallazgo en vivo (batería sintética contra PRE, 2026-08-26): "yo
+        bucee hace 1 mes pero mi amigo no bucea hace 8 años" tiene DOS
+        cláusulas "hace N periodo" en el mismo mensaje — `re.search` solo
+        capturaba la PRIMERA (la del hablante, reciente) e ignoraba en
+        silencio la del acompañante (>2 años), perdiendo la necesidad real
+        de ofrecer refresher al grupo. La propia pregunta del bot es "¿ha
+        pasado más de 2 años desde la última inmersión de ALGUNO del
+        grupo?" — el criterio correcto es el más conservador: si CUALQUIER
+        cláusula indica >2 años/24 meses, el valor final debe ser True."""
+        intent = detector.detect(
+            "yo bucee hace 1 mes pero mi amigo no bucea hace 8 años", state
+        )
+        assert intent.last_dive_over_2_years is True
+
+        # El orden inverso (la cláusula de >2 años aparece PRIMERO) ya
+        # funcionaba antes del fix y debe seguir funcionando.
+        intent2 = detector.detect(
+            "mi amigo no bucea hace 8 años pero yo bucee hace 1 mes", state
+        )
+        assert intent2.last_dive_over_2_years is True
+
+        # Sin ninguna cláusula >2 años, el resultado sigue siendo False.
+        intent3 = detector.detect(
+            "yo bucee hace 1 mes y mi amigo hace 3 meses", state
+        )
+        assert intent3.last_dive_over_2_years is False
+
     # Edades en PALABRA (2026-07-24): _detect_ages era digit-only; "mi hija de
     # nueve años" no se capturaba y el gate de elegibilidad caía a RAG genérico.
     @pytest.mark.parametrize("message, expected", [

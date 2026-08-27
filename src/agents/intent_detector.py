@@ -1012,19 +1012,34 @@ class IntentDetector:
         # side. Allows one filler word ("hace COMO 3 años") — real bug found in
         # the Fase 6 battery (D5): "hace como 3 años" fell through this
         # entirely (no adjacency), leaving last_dive_over_2_years unresolved.
-        m2 = (
-            re.search(rf"\bhace\s+(?:como\s+)?{num}\s+(a[nñ]os?|mes(?:es)?)", message)
-            or re.search(rf"\b[uú]ltima\s+inmersi[oó]n\s+(?:fue\s+)?hace\s+{num}\s+(a[nñ]os?|mes(?:es)?)", message)
-            or re.search(rf"\bdived\s+{num}\s+(years?|months?)\s+ago", message)
-            or re.search(rf"\blast\s+dive\s+(?:was\s+)?{num}\s+(years?|months?)\s+ago", message)
-        )
-        if m2:
-            n = self._last_dive_num(m2.group(1))
-            unit = m2.group(2)
-            if unit.startswith("a") or unit.startswith("y"):   # año(s) / year(s)
-                intent.last_dive_over_2_years = n >= 2
-            else:                                                # mes(es) / month(s)
-                intent.last_dive_over_2_years = n >= 24
+        #
+        # `re.search` solo devolvía la PRIMERA coincidencia del mensaje — con
+        # dos cláusulas de este tipo en el mismo mensaje ("yo bucee hace 1
+        # mes pero mi amigo no bucea hace 8 años"), se quedaba con la del
+        # hablante (reciente) e ignoraba en silencio la del acompañante
+        # (>2 años), aunque la propia pregunta del bot es "¿ha pasado más de
+        # 2 años desde la última inmersión de ALGUNO del grupo?" — el criterio
+        # correcto es el más conservador: si CUALQUIER cláusula del mensaje
+        # indica >2 años/24 meses, el grupo entero necesita la oferta de
+        # refresher (batería sintética contra PRE, 2026-08-26, portado de
+        # pre_gadea v0.21.12).
+        m2_patterns = [
+            rf"\bhace\s+(?:como\s+)?{num}\s+(a[nñ]os?|mes(?:es)?)",
+            rf"\b[uú]ltima\s+inmersi[oó]n\s+(?:fue\s+)?hace\s+{num}\s+(a[nñ]os?|mes(?:es)?)",
+            rf"\bdived\s+{num}\s+(years?|months?)\s+ago",
+            rf"\blast\s+dive\s+(?:was\s+)?{num}\s+(years?|months?)\s+ago",
+        ]
+        m2_values = []
+        for pattern in m2_patterns:
+            for match in re.finditer(pattern, message):
+                n = self._last_dive_num(match.group(1))
+                unit = match.group(2)
+                if unit.startswith("a") or unit.startswith("y"):   # año(s) / year(s)
+                    m2_values.append(n >= 2)
+                else:                                                # mes(es) / month(s)
+                    m2_values.append(n >= 24)
+        if m2_values:
+            intent.last_dive_over_2_years = any(m2_values)
             intent.detected_fields.append("last_dive_over_2_years")
 
     def _detect_nationality(self, message: str, intent: DetectedIntent) -> None:
