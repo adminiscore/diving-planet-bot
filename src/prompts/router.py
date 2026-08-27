@@ -133,7 +133,15 @@ ROUTING_TOOL = {
                         "catching (better to route than to invent a 'yes, we "
                         "have space'). Do NOT set it for a general question "
                         "about the schedule/what days you operate that "
-                        "doesn't ask to confirm a specific slot."
+                        "doesn't ask to confirm a specific slot. CRITICAL — "
+                        "do NOT confuse this with a PRICE question: 'cuánto "
+                        "es el snorkel en pesos colombianos?' / 'cuánto "
+                        "cuesta el buceo?' / 'how much is snorkeling?' ask "
+                        "for a COST, not a date/slot — 'cuánto' ('how much') "
+                        "is not 'cuándo' ('when'); leave this field unset "
+                        "for those, even though both start with 'cuánto'/"
+                        "'how much'. Only set it when a DATE or TIME slot is "
+                        "actually being asked about."
                     ),
                 },
                 "broken_link_complaint": {

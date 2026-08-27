@@ -382,16 +382,19 @@ def test_currency_guard_rejects_percentage_not_in_context():
 @pytest.mark.asyncio
 async def test_rag_falls_back_when_answer_has_ungrounded_price(monkeypatch):
     """The deterministic currency guard must reject an invented price even if the
-    LLM grounding verifier would have approved it."""
+    LLM grounding verifier would have approved it. Uses "curso advanced" (not
+    one of the 4 catalog services with a deterministic price shortcut —
+    audit 2026-08-26, Group 5 — so this still exercises the RAG/grounding
+    path under test instead of short-circuiting before it)."""
     async def fake_search(query, lang="es"):
         return [{
-            "content": "El minicurso para principiantes en Cartagena.",
+            "content": "El curso advanced para buzos certificados en Cartagena.",
             "metadata": {"source": "services"},
             "score": 0.9,
         }]
 
     class PriceMessage:
-        content = "El minicurso cuesta $999 USD."
+        content = "El curso advanced cuesta $999 USD."
 
     class PriceChoice:
         message = PriceMessage()
@@ -419,9 +422,61 @@ async def test_rag_falls_back_when_answer_has_ungrounded_price(monkeypatch):
     monkeypatch.setattr(rag_agent, "AsyncOpenAI", PriceOpenAI)
     monkeypatch.setattr(rag_agent, "is_grounded", grounded_ok)
 
-    response = await rag_agent.rag_answer("precio del minicurso?", lang="es")
+    response = await rag_agent.rag_answer("precio del curso advanced?", lang="es")
 
     assert "asesor" in response.lower()
+
+
+class TestCanonicalPriceNamedServices:
+    """Hallazgo en vivo 2026-08-26 (batería sintética contra PRE, Grupo 5):
+    una pregunta de precio "en frío" (sin contexto de reserva) que nombra un
+    servicio del catálogo fallaba el grounding del RAG (`ungrounded_amount`/
+    `HALLUCINATED`) y caía a "no lo tengo a la mano" — pese a que el precio
+    SÍ está disponible en el mismo catálogo `SERVICES` que ya alimenta la
+    vista general de precios. Respuesta determinista para 1-2 servicios
+    nombrados sin ambigüedad; 3+ o ninguno se deja a RAG/overview."""
+
+    def test_single_known_service_es(self):
+        r = rag_agent._canonical_price_named_services_answer(
+            "cuanto cuesta el buceo certificado en dolares?", "es")
+        assert r and "178" in r and "630.000" in r
+
+    def test_single_known_service_snorkel(self):
+        r = rag_agent._canonical_price_named_services_answer(
+            "cuanto es el snorkel en pesos colombianos?", "es")
+        assert r and "126" in r and "448.000" in r
+
+    def test_two_services_comparison(self):
+        r = rag_agent._canonical_price_named_services_answer(
+            "que es mas barato, snorkel o minicurso?", "es")
+        assert r and "126" in r and "183" in r
+
+    def test_english(self):
+        r = rag_agent._canonical_price_named_services_answer(
+            "how much is diving?", "en")
+        assert r and "178" in r
+
+    def test_non_catalog_service_defers_to_rag(self):
+        """El buceo nocturno, comida, hoteles, multi-día, etc. NO están en el
+        catálogo de 4 servicios — deben seguir yendo a RAG, no inventarse."""
+        for q in (
+            "cuanto cuesta el buceo nocturno?",
+            "cuanto cuesta el paquete multidia?",
+            "cuanto cuesta la comida?",
+            "cuanto cuesta el curso advanced?",
+        ):
+            assert rag_agent._canonical_price_named_services_answer(q, "es") is None
+
+    def test_three_or_more_services_defers(self):
+        """Ambigüedad genuina (3+ servicios nombrados) se deja a RAG/overview,
+        no se adivina cuál importa más."""
+        r = rag_agent._canonical_price_named_services_answer(
+            "cuanto cuesta el buceo, el snorkel y el minicurso?", "es")
+        assert r is None
+
+    def test_non_price_question_returns_none(self):
+        assert rag_agent._canonical_price_named_services_answer(
+            "quiero hacer snorkel manana", "es") is None
 
 
 def test_url_guard_accepts_link_present_in_context():

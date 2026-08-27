@@ -909,7 +909,14 @@ def _canonical_diving_overview_answer(query: str, lang: str) -> str | None:
 # el minicurso") is left to RAG, which answers it well.
 _PRICE_QUESTION = re.compile(
     r"\b(?:cu[aá]nto\s+(?:cuesta|cuestan|vale|valen|sale|salen|es|ser[ií]a)|"
-    r"cu[aá]nto|precios?|qu[eé]\s+precios?|tarifas?|how\s+much|prices?|cost)\b",
+    r"cu[aá]nto|precios?|qu[eé]\s+precios?|tarifas?|how\s+much|prices?|cost|"
+    # Auditoría 2026-08-26 (Grupo 5, portado de pre_gadea v0.21.5): "¿qué es
+    # más barato, X o Y?" es una pregunta de precio tan real como "¿cuánto
+    # cuesta?" pero no usa ninguna de esas palabras — sin esto,
+    # `_canonical_price_named_services_answer` nunca llegaba a evaluarse
+    # para una comparación de precio.
+    r"m[aá]s\s+barato|m[aá]s\s+econ[oó]mico|menos\s+caro|cheaper|less\s+expensive|"
+    r"which\s+is\s+cheaper)\b",
     re.IGNORECASE,
 )
 _PRICE_SPECIFIC = re.compile(
@@ -996,6 +1003,109 @@ def _canonical_price_overview_answer(query: str, lang: str) -> str | None:
         "no extra charge for the currency. There are also multi-day packages (4/5/7/9 dives) and other "
         "courses. Which one are you interested in? 😄"
     ) + _CANONICAL_SAFETY_NET["en"]
+
+
+# Auditoría 2026-08-26 (batería sintética contra PRE, Grupo 5, portado de
+# pre_gadea v0.21.5): el comentario de `_PRICE_QUESTION` decía "una pregunta
+# que SÍ nombra un servicio se deja a RAG, que la responde bien" — medido en
+# vivo que es FALSO para una pregunta de precio "en frío" (sin contexto de
+# reserva ya establecido): "cuánto cuesta el buceo certificado en dólares?"
+# y "cuánto es el snorkel en pesos colombianos?" fallaban el grounding del
+# RAG (`ungrounded_amount`/`HALLUCINATED`) y caían al fallback genérico "no
+# lo tengo a la mano" — pese a que el precio SÍ está disponible en el mismo
+# catálogo `SERVICES` que ya alimenta `_canonical_price_overview_answer`. En
+# vez de depender de una retrieval que se ha medido poco fiable para este
+# caso muy concreto y bien definido, se responde con el mismo dato
+# determinista — pero solo cuando la pregunta nombra EXACTAMENTE uno de los
+# 4 servicios del catálogo (buceo certificado/minicurso/snorkel/open water)
+# sin ambigüedad; cualquier otra cosa (comida, hotel, buceo nocturno,
+# paquetes multi-día, curso specialty...) NO está en este catálogo y sigue
+# yendo a RAG como antes.
+_PRICE_SINGLE_SERVICE_PATTERNS: list[tuple[str, re.Pattern]] = [
+    ("certified_diving", re.compile(r"\bbuce\w*|\bbuse\w*|\bbuz\w*|\bdiv(?:e|es|er|ers|ing)\b", re.IGNORECASE)),
+    ("minicourse", re.compile(r"\bminicurso\b|\bmini[\s-]?curso\b|\bmini[\s-]?course\b", re.IGNORECASE)),
+    ("snorkeling", re.compile(r"\bsnorkel\w*\b", re.IGNORECASE)),
+    ("open_water", re.compile(r"\bopen\s*water\b", re.IGNORECASE)),
+]
+# Cualquiera de estas señales significa que la pregunta NO es un simple
+# lookup de precio de catálogo (multi-día, comida, acompañante, curso
+# specialty sin precio fijo en `SERVICES`...) — se excluye explícitamente
+# para no responder con el precio de UN día cuando preguntan por otra cosa.
+_PRICE_NON_CATALOG_RE = re.compile(
+    r"\b(?:advanced|rescue|divemaster|nitrox|especialidad|specialty|comida|almuerzo|"
+    r"acompa\w+|companion|noche|nocturn\w+|paquetes?|referido|referral|fish|peces|"
+    r"flotabilidad|buoyancy|naturalista|naturalist|vuelo|hotel|"
+    r"multi[\s\-]?d[ií]as?|varios\s+d[ií]as|\d\s*(?:d[ií]as|dives?|inmersi\w+)|multi[\s\-]?day)\b",
+    re.IGNORECASE,
+)
+
+
+_PRICE_CATALOG_LABELS_ES = {
+    "certified_diving": "Buceo certificado (2 inmersiones, 1 día)",
+    "minicourse": "Minicurso de buceo",
+    "snorkeling": "Snorkel",
+    "open_water": "Curso Open Water (certificación PADI)",
+}
+_PRICE_CATALOG_LABELS_EN = {
+    "certified_diving": "Certified diving (2 dives, 1 day)",
+    "minicourse": "Dive mini-course",
+    "snorkeling": "Snorkeling",
+    "open_water": "Open Water course (PADI certification)",
+}
+
+
+def _canonical_price_named_services_answer(query: str, lang: str) -> str | None:
+    """Precio (o comparación de 1-2 precios) para servicios NOMBRADOS
+    explícitamente del catálogo. 2 servicios cubre "¿qué es más barato,
+    snorkel o minicurso?" (conv 197, mismo hallazgo): RAG acertaba el
+    primero pero fallaba el segundo con "no tengo el precio exacto" pese a
+    que SÍ está disponible — 3+ servicios o ninguno se deja a RAG/overview
+    (ambiguo o genérico, respectivamente)."""
+    if not _PRICE_QUESTION.search(query) or _PRICE_NON_CATALOG_RE.search(query):
+        return None
+    matched = [key for key, pat in _PRICE_SINGLE_SERVICE_PATTERNS if pat.search(query)]
+    if not matched or len(matched) > 2:
+        return None
+    try:
+        from src.flows.catalog import SERVICES
+    except Exception:
+        return None
+    labels = _PRICE_CATALOG_LABELS_ES if lang == "es" else _PRICE_CATALOG_LABELS_EN
+    lines = []
+    for key in matched:
+        lookup_key = "2_dives_1_day" if key == "certified_diving" else key
+        svc = SERVICES.get(lookup_key, {})
+        usd, cop = svc.get("price_usd"), svc.get("price_cop")
+        if usd is None and cop is None:
+            return None  # un servicio nombrado sin precio en catálogo -> no arriesgar, dejar a RAG
+        price_line = f"{_fmt_price_usd(usd)} USD / {_fmt_price_cop(cop)} COP"
+        lines.append((labels[key], price_line))
+
+    disclaimer = (
+        "Los colombianos/residentes pagan en pesos (COP) y los internacionales en dólares (USD) "
+        "— mismo precio, sin cobro extra por la divisa."
+        if lang == "es" else
+        "Colombians/residents pay in pesos (COP) and international guests in dollars (USD) — "
+        "same price, no extra charge for the currency."
+    )
+    if len(lines) == 1:
+        label, price_line = lines[0]
+        if lang == "es":
+            body = f"🌊 *{label}*: *{price_line}* por persona (con el descuento por reservar online)."
+            outro = "¿Te ayudo a armar la reserva? 😊"
+        else:
+            body = f"🌊 *{label}*: *{price_line}* per person (with the online-booking discount)."
+            outro = "Want me to help you put the booking together? 😊"
+    else:
+        bullets = "\n".join(f"• *{label}*: {price_line} " + ("por persona." if lang == "es" else "per person.") for label, price_line in lines)
+        if lang == "es":
+            body = f"🌊 Aquí tienes los precios para comparar:\n\n{bullets}"
+            outro = "¿Cuál te gustaría reservar? 😊"
+        else:
+            body = f"🌊 Here are the prices to compare:\n\n{bullets}"
+            outro = "Which one would you like to book? 😊"
+    safety = _CANONICAL_SAFETY_NET["es" if lang == "es" else "en"]
+    return f"{body}\n\n{disclaimer} {outro}" + safety
 
 
 def _coerce_metadata(value: object) -> dict:
@@ -1194,6 +1304,11 @@ async def rag_answer(
     if price_overview:
         logger.info(f"[RAG][CANONICAL_SHORTCUT] shortcut=price_overview query={query!r} lang={lang}")
         return price_overview
+
+    price_named_services = _canonical_price_named_services_answer(query, lang)
+    if price_named_services:
+        logger.info(f"[RAG][CANONICAL_SHORTCUT] shortcut=price_named_services query={query!r} lang={lang}")
+        return price_named_services
 
     condensed_query = await condense_query(query, history=history, lang=lang)
     ambiguous_location_clarification = _ambiguous_location_clarification(condensed_query, lang)
