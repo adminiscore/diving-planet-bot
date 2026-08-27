@@ -129,6 +129,31 @@ _CLOSED_DATE_RE = re.compile(
     re.IGNORECASE,
 )
 
+# Hallazgo (batería sintética contra PRE, 2026-08-26, lote 4, portado de
+# pre_gadea v0.21.11): pregunta directa de si se puede tomar alcohol antes
+# de bucear — respuesta plana ya conocida
+# (`policies.json["no_alcohol_policy"]`), no un tema médico a evaluar caso
+# por caso.
+_ALCOHOL_BEFORE_DIVING_RE = re.compile(
+    r"\b(?:alcohol|cerveza|tragos?|copas?|vino|licor|beer|alcoholic)\b.{0,25}"
+    r"\b(?:bucear|buceo|buzos?|dive|diving)\b"
+    r"|\b(?:bucear|buceo|buzos?|dive|diving)\b.{0,25}"
+    r"\b(?:alcohol|cerveza|tragos?|copas?|vino|licor|beer|alcoholic)\b",
+    re.IGNORECASE,
+)
+
+# Palabra de alergia + alérgeno alimentario conocido del catálogo (marisco/
+# gluten/nueces/maní/lactosa) -> pregunta de política de comida del tour, ya
+# respondida en `policies.json["food_policy"]`. Deliberadamente acotado: una
+# alergia sin alérgeno alimentario explícito ("tengo alergias severas, es
+# peligroso bucear?") sigue yendo al escalado médico normal.
+_ALLERGY_WORD_RE = re.compile(r"\b(?:al[eé]rgic[oa]s?|alergias?|allergic|allergy|allergies)\b", re.IGNORECASE)
+_FOOD_ALLERGEN_RE = re.compile(
+    r"\b(?:mariscos?|gluten|nueces|man[ií]|cacahuates?|lactosa|"
+    r"shellfish|nuts?|peanuts?|dairy|gluten[- ]free)\b",
+    re.IGNORECASE,
+)
+
 # Afirmacion "a secas" ("si", "dale", "ok") — usada para cumplir una oferta que
 # el propio bot hizo en el turno anterior (p.ej. "¿te paso con un asesor?").
 _BARE_AFFIRMATION_RE = re.compile(
@@ -1774,7 +1799,25 @@ async def _maybe_log_llm_extraction_shadow(
         logger.warning(f"[EXTRACT][SHADOW] probe failed (ignored): {exc}")
 
 
-def _apply_detected_intent(intent, state: ConversationState) -> None:
+# Cue de CORRECCIÓN explícita de un dato ya fijado ("en realidad revisamos y
+# somos 4", "perdón, en realidad somos 3", "me equivoqué, somos 2",
+# "actually we're 4"/"sorry, we're actually 3") — a diferencia de
+# `_GROUP_RECOMPOSE_RE` (código legacy nunca conectado al núcleo actual),
+# esta NO exige que "en realidad" preceda INMEDIATAMENTE a "somos": tolera
+# relleno intermedio ("revisamos y", "lo pensamos y", "checamos y") —
+# hallazgo en vivo (batería sintética contra PRE, 2026-08-26, lote 4,
+# portado de pre_gadea v0.21.11) de que el fraseo real de una corrección
+# casi nunca es tan limpio. Deliberadamente estrecho (exige el cue léxico
+# explícito) para no convertir `detected_group_size` en escribible en
+# cualquier mensaje — un número suelto sin este cue nunca lo sobreescribe.
+_GROUP_SIZE_CORRECTION_CUE_RE = re.compile(
+    r"\b(?:en\s+realidad|realmente|perd[oó]n|me\s+equivoqu[eé]|corrijo|"
+    r"en\s+verdad|actually|sorry|my\s+mistake|i\s+made\s+a\s+mistake)\b",
+    re.IGNORECASE,
+)
+
+
+def _apply_detected_intent(intent, state: ConversationState, message: str | None = None) -> None:
     if intent.language and not state.detected_language:
         state.detected_language = intent.language
         state.language = intent.language
@@ -1803,6 +1846,16 @@ def _apply_detected_intent(intent, state: ConversationState) -> None:
     if intent.group_size and not state.detected_group_size:
         state.detected_group_size = intent.group_size
         logger.info(f"[INTENT] Detected group size: {intent.group_size}")
+    elif (
+        intent.group_size
+        and intent.group_size != state.detected_group_size
+        and message
+        and _GROUP_SIZE_CORRECTION_CUE_RE.search(message)
+    ):
+        logger.info(
+            f"[INTENT] Group size CORRECTED: {state.detected_group_size} -> {intent.group_size}"
+        )
+        state.detected_group_size = intent.group_size
 
     if intent.group_allocation and not state.detected_group_allocation:
         state.detected_group_allocation = intent.group_allocation
@@ -1971,6 +2024,35 @@ async def _route_message_inner(
         state.pending_escalation_reason = "datos sensibles detectados"
         logger.warning(f"[SUPERVISOR][PRIVACY] PII detected hits={pii_hits} step={state.step.value}")
         return privacy_block_message(state.language)
+
+    # Hallazgo (batería sintética contra PRE, 2026-08-26, lote 4, portado de
+    # pre_gadea v0.21.11): "¿puedo tomarme una cerveza antes de bucear?" y
+    # "soy alérgico a los mariscos, es un problema?" escalaban como
+    # `medical_questions` — el LLM de sensitive_topic los interpreta como un
+    # tema médico/de sustancias, pero son preguntas de POLÍTICA plana con
+    # respuesta ya conocida en el catálogo (`no_alcohol_policy`,
+    # `food_policy`: veganos/vegetarianos/celíacos reciben arroz con
+    # vegetales, cualquier alergia alimentaria se avisa antes del tour).
+    # Escalar es peor que responder: le hace perder tiempo al cliente por
+    # algo que el bot ya sabe con certeza. Se comprueba ANTES de cualquier
+    # gate de seguridad (misma prioridad que el link roto) para no dejar
+    # que ninguno de los dos se adelante. Acotado a mención EXPLÍCITA de un
+    # alérgeno alimentario conocido del catálogo (marisco/gluten/nueces/
+    # maní/lactosa) — una alergia sin ese contexto ("tengo alergias
+    # severas, es peligroso bucear?") sigue yendo al escalado médico
+    # normal, sin tocar.
+    if _ALCOHOL_BEFORE_DIVING_RE.search(msg_lower):
+        policy_text = (load_policies().get("policies", {}).get("no_alcohol_policy") or {}).get(
+            state.language, ""
+        )
+        logger.info("[SUPERVISOR] Alcohol-before-diving question -> real no_alcohol_policy, not medical escalation")
+        return policy_text
+    if _ALLERGY_WORD_RE.search(msg_lower) and _FOOD_ALLERGEN_RE.search(msg_lower):
+        policy_text = (load_policies().get("policies", {}).get("food_policy") or {}).get(
+            state.language, ""
+        )
+        logger.info("[SUPERVISOR] Food-allergy question -> real food_policy, not medical escalation")
+        return policy_text
 
     # SAFETY FIRST: broken-link complaints and sensitive topics (medical,
     # weather, complaints) must escalate BEFORE the intent detector runs.

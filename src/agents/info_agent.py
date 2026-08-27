@@ -47,15 +47,36 @@ logger = logging.getLogger("uvicorn.error")
 async def info_node(state: BotState) -> dict:
     from src.agents.supervisor import (
         _ADAPTIVE_DIVING_PATTERN,
+        _ALCOHOL_BEFORE_DIVING_RE,
+        _ALLERGY_WORD_RE,
+        _FOOD_ALLERGEN_RE,
         _build_extra_context,
         _maybe_answer_age_eligibility,
         _route_message_inner,
+        load_policies,
         rag_answer,
     )
 
     conv = state["conv_state"]
     message = state["message"]
     signals = state.get("signals") or {}
+    msg_lower = message.strip().lower()
+
+    # 0 · Alcohol/alergia alimentaria (portado de pre_gadea v0.21.11): política
+    #     plana conocida, respuesta determinista sin RAG ni escalado médico.
+    #     El router ya distinguió estos casos del resto de ROUTE_INFO.
+    if _ALCOHOL_BEFORE_DIVING_RE.search(msg_lower):
+        policy_text = (load_policies().get("policies", {}).get("no_alcohol_policy") or {}).get(conv.language, "")
+        logger.info("[NODE:info] Alcohol-before-diving question -> real no_alcohol_policy, not medical escalation")
+        conv.history.append({"role": "user", "content": message})
+        conv.history.append({"role": "assistant", "content": policy_text})
+        return {"reply": policy_text}
+    if _ALLERGY_WORD_RE.search(msg_lower) and _FOOD_ALLERGEN_RE.search(msg_lower):
+        policy_text = (load_policies().get("policies", {}).get("food_policy") or {}).get(conv.language, "")
+        logger.info("[NODE:info] Food-allergy question -> real food_policy, not medical escalation")
+        conv.history.append({"role": "user", "content": message})
+        conv.history.append({"role": "assistant", "content": policy_text})
+        return {"reply": policy_text}
 
     # 1 · Elegibilidad por edad (pre-núcleo, determinista desde eligibility.py).
     age_answer = _maybe_answer_age_eligibility(message, conv)

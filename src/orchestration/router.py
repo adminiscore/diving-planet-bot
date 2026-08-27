@@ -72,6 +72,18 @@ def classify_route(conv_state: ConversationState, message: str, signals: dict) -
     # ── SAFETY (safety-first, como la cascada) ──
     if sup.detect_pii(message):
         return ROUTE_SAFETY
+
+    # Hallazgo (batería sintética contra PRE, 2026-08-26, lote 4, portado de
+    # pre_gadea v0.21.11): alcohol antes de bucear / alergia alimentaria
+    # explícita son política plana conocida, no un tema médico a escalar —
+    # misma prioridad que la cascada (ANTES de cualquier gate de seguridad,
+    # justo después de PII). Sin esto el router clasifica estos mensajes
+    # como ROUTE_SAFETY vía `detect_sensitive_escalation` más abajo.
+    if sup._ALCOHOL_BEFORE_DIVING_RE.search(msg_lower):
+        return ROUTE_INFO
+    if sup._ALLERGY_WORD_RE.search(msg_lower) and sup._FOOD_ALLERGEN_RE.search(msg_lower):
+        return ROUTE_INFO
+
     if sup._detect_broken_link_complaint(message, history):
         return ROUTE_SAFETY
     if signals.get("broken_link_complaint") and sup._has_link_tech_context(message, history):
