@@ -87,8 +87,31 @@ _DIVES_TO_BASE_PLAN = {2: "2_dives_1_day", 3: "3_dives_1_day", 4: "4_dives_2_day
                        5: "5_dives_2_days", 7: "7_dives_3_days", 9: "9_dives_4_days"}
 _DAYS_TO_DIVES = {2: 5, 3: 7, 4: 9}
 
-_CARTAGENA_RE = re.compile(r"\b(cartagena|cartagen\w*|1)\b", re.IGNORECASE)
-_ISLAND_RE = re.compile(r"\b(isla\w*|island\w*|bar[uú]|rosario\w*|2)\b", re.IGNORECASE)
+_CARTAGENA_RE = re.compile(r"\b(cartagena|cartagen\w*)\b", re.IGNORECASE)
+_ISLAND_RE = re.compile(r"\b(isla\w*|island\w*|bar[uú]|rosario\w*)\b", re.IGNORECASE)
+
+# Auditoría 2026-08-26 (batería sintética contra PRE, Grupo 4, portado de
+# pre_gadea v0.21.4): una petición EXPLÍCITA de cambiar de idioma a mitad de
+# conversación ("actually can we continue in english") se ignoraba por
+# completo — no había ningún mecanismo que la detectara (la reclasificación
+# por-mensaje del intent_detector solo corre en el PRIMER turno, antes de
+# que `detected_language` quede fijado; después, nada vuelve a mirar el
+# idioma). Lista deliberadamente pequeña y determinista (no LLM) — son
+# peticiones explícitas, no ambiguas, no hace falta red de precisión.
+_SWITCH_TO_EN_RE = re.compile(
+    r"\b(?:can\s+we|could\s+we|let'?s|switch\s+to|in\s+)?\s*"
+    r"(?:continue|talk|speak|chat)?\s*in\s+english\b|"
+    r"\bswitch\s+to\s+english\b|\bspeak\s+english\b|\ben\s+ingl[ée]s\b|"
+    r"\bhabl(?:ar|amos|emos)\s+en\s+ingl[ée]s\b",
+    re.IGNORECASE,
+)
+_SWITCH_TO_ES_RE = re.compile(
+    r"\b(?:podemos|puedes|seguimos|continuamos)?\s*"
+    r"(?:hablar|seguir|continuar)?\s*en\s+español\b|"
+    r"\bcambia(?:r|mos)?\s+a\s+español\b|\bhabl(?:ar|amos|emos)\s+en\s+español\b|"
+    r"\bswitch\s+to\s+spanish\b|\bin\s+spanish\b|\bspeak\s+spanish\b",
+    re.IGNORECASE,
+)
 # Respuesta de DUDA al preguntar el hotel (no un nombre real de hotel). Fase C.
 _HOTEL_UNKNOWN_RE = re.compile(
     r"\b(no\s+s[eé]|ni\s+idea|no\s+lo\s+s[eé]|a[uú]n\s+no|todav[ií]a\s+no|"
@@ -213,6 +236,13 @@ _NAME_STOPWORDS = frozenset({
     "open", "advanced", "rescue", "divemaster", "nitrox", "padi", "el", "la",
     "certified", "diver", "tourist", "beginner", "colombian", "resident", "solo",
     "sola", "el", "la", "yo",
+    # Auditoría 2026-08-26 (batería sintética contra PRE, Grupo 8, portado
+    # de pre_gadea v0.21.6): "soy del equipo de pruebas..." capturaba "del"
+    # (contracción de "de"+"el", no cubierta por el "de" ya excluido) como
+    # si fuera un nombre propio -> saludo "¡Hola, Del!". Añadidas otras
+    # palabras funcionales cortas del mismo riesgo que podrían seguir a
+    # "soy" sin ser un nombre.
+    "del", "al", "los", "las", "muy", "así", "asi", "bien", "aquí", "aqui", "ya", "que",
 })
 
 
@@ -460,11 +490,18 @@ def _apply_short_answer(state: ConversationState, message: str) -> bool:
             return True
         return False
     if slot == SLOT_LOCATION:
-        # "isla"/"island" primero: "islas del rosario" también matchea números no.
-        if _ISLAND_RE.search(msg) and not _CARTAGENA_RE.search(msg.replace("1", "")):
+        # Auditoría 2026-08-26 (batería sintética contra PRE, portado de
+        # pre_gadea v0.21.2): `_ISLAND_RE`/`_CARTAGENA_RE` tenían "2"/"1"
+        # como alternativas del regex — matchean CUALQUIER mensaje que
+        # contenga ese dígito en cualquier parte ("somos 2" respondiendo a
+        # la pregunta de CANTIDAD, no de ubicación, resolvía la ubicación a
+        # "island" sin que nadie lo dijera). El atajo "1"/"2" (mismo patrón
+        # que is_certified/nationality/safety) solo tiene sentido si es la
+        # respuesta COMPLETA, no una cifra suelta dentro de otra frase.
+        if msg == "2" or (_ISLAND_RE.search(msg) and not _CARTAGENA_RE.search(msg)):
             state.location = state.detected_location = "island"
             return True
-        if _CARTAGENA_RE.search(msg):
+        if msg == "1" or _CARTAGENA_RE.search(msg):
             state.location = state.detected_location = "cartagena"
             return True
         # Deferral ("no sé/da igual/recomiéndame") → Cartagena (salida más
@@ -761,6 +798,25 @@ def _mentioned_product_activities(message: str) -> list:
     return [act for act, pat in _PRODUCT_MENTION_RE.items() if pat.search(message)]
 
 
+# Auditoría 2026-08-26 (batería sintética contra PRE, Grupo 3, portado de
+# pre_gadea v0.21.3): "mi amigo... él es certificado también" respalda
+# `certified_diving` igual que "quiere bucear" — declarar la certificación
+# del acompañante ES la intención (nadie dice "ya soy certificado" para
+# pedir un minicurso). Sin este respaldo, el guard determinista descartaba
+# una señal del LLM que SÍ era correcta (medido 3/3, `detect_special_
+# signals` devolvía `certified_diving` bien), preguntando "¿minicurso o
+# snorkel?" a un acompañante YA certificado — ninguna de las dos opciones
+# tiene sentido en ese caso. Negado explícito ("no está certificado") NO
+# cuenta como respaldo — ese es el caso genuino de `SLOT_COMPANION_ACTIVITY`
+# que sí necesita preguntar.
+_CERTIFICATION_CLAIM_RE = re.compile(r"certificad[oa]s?|certified", re.IGNORECASE)
+_CERTIFICATION_NEGATED_RE = re.compile(
+    r"no\s+(?:es[ts]\w*\s+)?certificad[oa]s?|not\s+certified|isn['’]?t\s+certified|"
+    r"no\s+certified",
+    re.IGNORECASE,
+)
+
+
 def _activity_has_textual_backing(activity: str, message: str) -> bool:
     """¿Tiene `activity` algún respaldo real en el texto? No basta con
     buscar la palabra exacta: la regla de negocio traduce "no certificado +
@@ -774,6 +830,12 @@ def _activity_has_textual_backing(activity: str, message: str) -> bool:
     if activity in mentioned:
         return True
     if activity == "minicourse" and "certified_diving" in mentioned:
+        return True
+    if (
+        activity == "certified_diving"
+        and _CERTIFICATION_CLAIM_RE.search(message)
+        and not _CERTIFICATION_NEGATED_RE.search(message)
+    ):
         return True
     return False
 
@@ -1287,9 +1349,19 @@ def _restore_main_diver_fields(
     no del hablante (fast-path regex arriba y red de precisión LLM en
     maybe_handle_turn). Bug real: "no es certificado"/"sin bucear hace X años"
     referido al acompañante se aplicaba por 'latest wins' al buceador
-    principal ya resuelto (p. ej. is_certified=True → False de golpe)."""
-    state.detected_activity = activity
-    state.detected_service_id = service_id
+    principal ya resuelto (p. ej. is_certified=True → False de golpe).
+
+    `activity`/`service_id` solo se restauran si HABÍA algo que proteger
+    (`activity` no es None): si el mensaje de APERTURA establece la
+    actividad principal en primera persona ("quiero bucear") en el MISMO
+    turno que menciona a un acompañante ("...voy con mi amigo pero el no
+    esta certificado"), no hay ninguna actividad previa que restaurar —
+    pisarla con None borraba la actividad recién y correctamente detectada
+    del hablante, dejando la reserva sin actividad principal (hallazgo D,
+    batería sintética 2026-08-26)."""
+    if activity is not None:
+        state.detected_activity = activity
+        state.detected_service_id = service_id
     state.is_certified = is_certified
     state.last_dive_over_2_years = last_dive
     state.refresher_interested = refresher
@@ -1631,8 +1703,33 @@ async def _setup_phase(
             or await detect_language_llm(message)
             or supervisor._infer_language(message, state.language)
         )
+        # Auditoría 2026-08-26 (batería sintética contra PRE, Grupo 4,
+        # portado de pre_gadea v0.21.4): esta detección de apertura
+        # (heurística → LLM → hints, la más fiable) solo fijaba
+        # `state.language`, nunca `state.detected_language` —
+        # `_apply_detected_intent` (que corre en CADA turno vía
+        # `_understand()`) sobreescribe `state.language` con su propia
+        # clasificación más simple, por-mensaje, mientras
+        # `state.detected_language` siga vacío. Resultado: en el PRIMER
+        # turno, el saludo se renderizaba ya en el idioma correcto pero
+        # segundos después, dentro del mismo turno, la pregunta de slot
+        # salía en otro idioma — la clasificación por-mensaje del
+        # intent_detector decidía distinto para un mensaje con palabras
+        # mezcladas. Fijar `detected_language` aquí también evita ese
+        # pisado sobre la detección ya resuelta y más fiable.
+        state.detected_language = state.language
         state.step = Step.FREE_TEXT
         state.quick_replies = []
+    elif _SWITCH_TO_EN_RE.search(message) and state.language != "en":
+        # Petición EXPLÍCITA de cambiar de idioma a mitad de conversación
+        # (auditoría 2026-08-26) — fuera del primer turno nada más vuelve a
+        # mirar el idioma (a propósito, para no reclasificar cada mensaje),
+        # así que sin este chequeo dedicado la petición se ignoraba del
+        # todo. `elif` porque en el primer turno la detección de arriba ya
+        # decide bien.
+        state.language = state.detected_language = "en"
+    elif _SWITCH_TO_ES_RE.search(message) and state.language != "es":
+        state.language = state.detected_language = "es"
     _capture_client_name(state, message)
     greeting = _greeting(state) if first_turn else ""
 
@@ -1665,11 +1762,36 @@ async def _availability_phase(
     from src.agents import supervisor  # lazy
 
     msg_lower = message.strip().lower()
-    if supervisor._AVAILABILITY_PATTERN.search(msg_lower) or (
-        (supervisor._asks_about_availability(msg_lower)
-         or routing_signals.get("availability_question"))
-        and state.detected_activity is None
+    # Hallazgo (batería sintética contra PRE, 2026-08-26, conv 395, portado
+    # de pre_gadea v0.21.10): "¿abren el 25 de diciembre?" NO matchea
+    # `_AVAILABILITY_PATTERN` ni `_asks_about_availability` (ninguno de los
+    # dos reconoce "abren"/"open on"), así que sin la señal LLM
+    # `availability_question` el mensaje caía derecho a RAG.
+    # `_CLOSED_DATE_RE` sola basta para entrar aquí.
+    if (
+        supervisor._AVAILABILITY_PATTERN.search(msg_lower)
+        or (
+            (supervisor._asks_about_availability(msg_lower)
+             or routing_signals.get("availability_question"))
+            and state.detected_activity is None
+        )
+        or supervisor._CLOSED_DATE_RE.search(msg_lower)
     ):
+        # Hallazgo (batería sintética contra PRE, 2026-08-26, conv 395):
+        # "¿abren el 25 de diciembre?" caía en el canned genérico de abajo
+        # ("siempre hay disponibilidad") — FALSO para esos dos días
+        # concretos (`policies.json["closed_days"]`: solo cerrado 25 dic y
+        # 1 ene). Esta fase es la que realmente responde la mayoría de
+        # mensajes de apertura (se ejecuta ANTES que la copia del
+        # supervisor); el mismo guard se aplicó ahí también.
+        if supervisor._CLOSED_DATE_RE.search(msg_lower):
+            from src.knowledge.loader import load_policies
+            policy_text = (load_policies().get("policies", {}).get("closed_days") or {}).get(
+                state.language, ""
+            )
+            response = greeting + policy_text
+            state.history.append({"role": "assistant", "content": response})
+            return response
         avail = (
             "¡Buena noticia! 📅 Las salidas son diarias y siempre hay disponibilidad. "
             "Vas a poder elegir el día exacto y el número de personas directamente en el "
@@ -1855,11 +1977,27 @@ async def _extraction_phase(
     # solo por un ATRIBUTO ("mi amigo no está certificado"), sin actividad ni
     # intención declarada — no hay caso válido para adivinar snorkel o
     # minicurso, se pregunta qué le gustaría hacer.
+    #
+    # Auditoría 2026-08-26 (batería sintética contra PRE, portado de
+    # pre_gadea v0.21.1): interrumpir SIEMPRE aquí, sin mirar si ya había
+    # una pregunta obligatoria pendiente (seguridad, nacionalidad...), la
+    # enterraba sin preguntarla nunca — "soy buzo certificado... ¿han
+    # pasado más de 2 años?" seguido de "somos 2" saltaba directo a la
+    # pregunta del acompañante, sin que la de seguridad se llegara a
+    # responder jamás. Mismo criterio que el bloque
+    # `companion_activity_deferred` de más abajo: solo se interrumpe YA
+    # MISMO si no había nada más pendiente; si lo había, se difiere (se
+    # deja caer sin `return`, para que el resto del turno siga su curso
+    # normal — `next_missing_slot` volverá a preguntar por lo que de
+    # verdad tocaba) y se marca para retomar el acompañante en cuanto ese
+    # hueco se cierre.
     if state.needs_companion_activity:
         state.needs_companion_activity = False
-        response = greeting + ask_slot(state, SLOT_COMPANION_ACTIVITY)
-        state.history.append({"role": "assistant", "content": response})
-        return response
+        if next_missing_slot(state) is None:
+            response = greeting + ask_slot(state, SLOT_COMPANION_ACTIVITY)
+            state.history.append({"role": "assistant", "content": response})
+            return response
+        state.companion_activity_deferred = True
 
     # ¿La extracción base (regex + gap-fill, dentro de `_understand()`) ya
     # cambió el tamaño/reparto del grupo este turno? Bug en vivo (2026-07-23,
@@ -1949,8 +2087,18 @@ async def _extraction_phase(
     # de "¿ya lo fusionó el fast-path?" es `companion_merged_fastpath` (el flag que
     # `_understand()` ya devuelve para esto mismo), no una re-lectura del regex
     # disparador.
+    # `prev_main_activity` (actividad ANTES de este turno) no basta cuando la
+    # actividad principal y la mención del acompañante llegan en el MISMO
+    # mensaje de apertura ("hola quiero bucear, voy con mi amigo pero el no
+    # esta certificado"): ahí `prev_main_activity` sigue en None (nada se
+    # había establecido todavía) aunque `_understand()` YA resolvió la
+    # actividad principal este mismo turno, así que este bloque nunca se
+    # disparaba y la mención del acompañante se perdía en silencio (hallazgo
+    # D, batería sintética 2026-08-26, portado de pre_gadea). Se comprueba
+    # también `state.detected_activity` (post-turno) para cubrir ambos casos
+    # sin ampliar el disparo a mensajes que no mencionan actividad alguna.
     companion_ambiguous = bool(
-        prev_main_activity in _ACTIVITY_TO_CART_TYPE
+        (prev_main_activity in _ACTIVITY_TO_CART_TYPE or state.detected_activity in _ACTIVITY_TO_CART_TYPE)
         and _mentions_person(message)
         and not companion_merged_fastpath
         and not group_composition_resolved_by_base_extraction
@@ -2090,7 +2238,19 @@ async def _extraction_phase(
                     state.history.append({"role": "assistant", "content": response})
                     return response
             advanced = True
-        elif signals.get("mentions_other_person") or _mentions_person(message):
+        elif (
+            (signals.get("mentions_other_person") or _mentions_person(message))
+            and prev_pending != SLOT_COMPANION_ACTIVITY
+            # Hallazgo en vivo (batería sintética contra PRE, 2026-08-26,
+            # lote 5, portado de pre_gadea): "los niños tienen 7 y 10" (solo
+            # edades, sin acompañante nuevo) hacía que `mentions_other_person`
+            # (LLM, más liberal que el regex — SÍ reconoce "niños") disparara
+            # esta rama, difiriendo una pregunta de acompañante que se
+            # retomaba al final SIN NINGÚN motivo. Si ya estamos en contexto
+            # de niños Y el regex determinista (que NO reconoce "niño") no ve
+            # a nadie más, no se confía solo en la señal LLM más amplia.
+            and not (state.kids_mention_detected and not _mentions_person(message))
+        ):
             # Auditoría 2026-07-23: hay un acompañante (persona mencionada)
             # pero ninguna actividad con respaldo textual real — "mi amigo
             # no está certificado" dice un ATRIBUTO, no una actividad ni
@@ -2098,13 +2258,30 @@ async def _extraction_phase(
             # distintos (fill_gaps y esta misma señal) adivinaban cosas
             # DISTINTAS para la misma frase ambigua (snorkel vs. minicurso).
             # En vez de adivinar cuál, se pregunta qué le gustaría hacer.
+            #
+            # Bug en vivo (auditoría 2026-08-26, batería sintética contra
+            # PRE, portado de pre_gadea v0.21.1): sin `prev_pending !=
+            # SLOT_COMPANION_ACTIVITY`, esto entraba en BUCLE —
+            # detect_special_signals RE-DERIVA la señal de "hay un
+            # acompañante" desde el HISTORIAL entero cada vez que se le
+            # llama, así que una respuesta vacía de contenido como "no"
+            # (que en realidad respondía a SEGURIDAD, una pregunta
+            # pendiente ANTERIOR que quedó enterrada) seguía devolviendo
+            # `mentions_other_person=True` turno tras turno, re-preguntando
+            # la MISMA pregunta sin parar. Además, interrumpir aquí SIEMPRE
+            # sin mirar si ya había una pregunta obligatoria pendiente la
+            # enterraba sin preguntarla nunca — se difiere con
+            # `companion_activity_deferred` si hace falta.
             _restore_main_diver_fields(
                 state, prev_main_activity, prev_main_service_id,
                 prev_main_is_certified, prev_main_last_dive, prev_main_refresher,
             )
-            response = greeting + ask_slot(state, SLOT_COMPANION_ACTIVITY)
-            state.history.append({"role": "assistant", "content": response})
-            return response
+            if next_missing_slot(state) is None:
+                response = greeting + ask_slot(state, SLOT_COMPANION_ACTIVITY)
+                state.history.append({"role": "assistant", "content": response})
+                return response
+            state.companion_activity_deferred = True
+            advanced = True
         elif signals.get("refresher_interested") is not None:
             # Auditoría 2026-07-22: refresher_interested no tenía NINGÚN
             # respaldo LLM — una frase que is_affirmative/is_negative no
@@ -2217,7 +2394,33 @@ async def _extraction_phase(
         and not state.pending_companion_activity
     ):
         resolved = await resolve_slot_answer(prev_pending, message, lang=state.language)
-        if "value" in resolved and _apply_resolved_slot_value(state, prev_pending, resolved["value"]):
+        resolved_value = resolved.get("value")
+        # Verificación determinista para SLOT_LOCATION (hallazgo en vivo,
+        # batería sintética contra PRE, 2026-08-26, portado de pre_gadea —
+        # el hallazgo más grave de la batería): un mensaje que cambia de
+        # ACTIVIDAD a mitad de flujo ("mejor pensándolo bien quiero el
+        # minicurso", sin mencionar ubicación en absoluto) no avanza
+        # `next_missing_slot` (sigue faltando location), así que esta red
+        # anti-bucle se disparaba y le preguntaba al LLM "¿qué respondió
+        # para location?" — sin ningún respaldo real, el LLM alucinaba
+        # "cartagena" con confianza (medido en vivo, reproducible). El
+        # resultado: la reserva avanzaba con una ubicación que el cliente
+        # nunca dio, saltándose la pregunta real y arriesgando un precio/
+        # link incorrecto. Se descarta el valor SOLO cuando ESTE MISMO
+        # turno cambió la actividad principal (`prev_main_activity` vs
+        # `state.detected_activity`, ya calculados arriba) — la señal
+        # concreta del hallazgo: un mensaje que habla de actividad no dice
+        # nada de ubicación. No se exige respaldo textual literal
+        # ("cartagena"/"isla") porque hay respuestas legítimas e
+        # indirectas ("ya estamos alojados por la zona de playa blanca")
+        # que el LLM sí interpreta bien sin nombrar la ubicación tal cual.
+        if (
+            prev_pending == SLOT_LOCATION
+            and resolved_value in ("cartagena", "island")
+            and prev_main_activity != state.detected_activity
+        ):
+            resolved_value = None
+        if resolved_value is not None and _apply_resolved_slot_value(state, prev_pending, resolved_value):
             advanced = True
 
     # Última red antes del genérico: heurística blanda de pregunta de info
@@ -2271,16 +2474,46 @@ async def _slotfill_close_phase(
         # en vez de caer al resumen y PERDER al acompañante (hallazgo en vivo
         # 2026-07-24). `next_missing_slot` no rastrea este slot, de ahí el guard
         # explícito antes de dejar que sobrescriba `core_pending_slot`.
-        response = ask_slot(state, SLOT_COMPANION_ACTIVITY, reasking=True)
-        state.step = Step.FREE_TEXT
+        #
+        # Auditoría 2026-08-26 (batería sintética contra PRE, portado de
+        # pre_gadea v0.21.1): re-preguntar INCONDICIONALMENTE aquí entraba
+        # en BUCLE — seguía repitiendo la MISMA pregunta para siempre,
+        # incluso cuando había otras preguntas obligatorias (seguridad,
+        # nacionalidad) todavía sin responder por detrás, enterradas sin
+        # posibilidad de llegar a plantearse nunca. Ahora se distingue: si
+        # el resto de la reserva YA está completa, repreguntar aquí mismo
+        # (si no, se pierde el acompañante al cerrar); si todavía falta
+        # algo más, se deja avanzar a por ello primero y se marca
+        # `companion_activity_deferred` (NO `needs_companion_activity` —
+        # ese otro flag es para la detección FRESCA del turno actual, se
+        # consume de inmediato justo tras `_understand()`, y usarlo aquí
+        # también haría que ese chequeo temprano interceptara el turno
+        # SIGUIENTE antes de procesar la respuesta a la pregunta realmente
+        # pendiente) para retomar el acompañante justo antes de cerrar.
+        nxt_now = next_missing_slot(state)
+        if nxt_now is None:
+            response = ask_slot(state, SLOT_COMPANION_ACTIVITY, reasking=True)
+            state.step = Step.FREE_TEXT
+        else:
+            state.companion_activity_deferred = True
+            response = ask_slot(state, nxt_now, reasking=(nxt_now == prev_pending))
+            state.step = Step.FREE_TEXT
     else:
         nxt = next_missing_slot(state)
         if nxt is None:
-            response = _finalize(state)
-            # Materializar la nota de lead (el cierre no-colombiano deja solo
-            # pending_lead_note_reason; en el camino legacy la construye
-            # _finalize_tree_response — aquí el equivalente).
-            supervisor._maybe_build_pending_note(state)
+            if state.companion_activity_deferred:
+                # Ya se cerró el hueco que interrumpió la pregunta del
+                # acompañante (seguridad/nacionalidad/etc.) — se retoma
+                # ahora, antes de cerrar, en vez de darla por perdida.
+                state.companion_activity_deferred = False
+                response = ask_slot(state, SLOT_COMPANION_ACTIVITY, reasking=True)
+                state.step = Step.FREE_TEXT
+            else:
+                response = _finalize(state)
+                # Materializar la nota de lead (el cierre no-colombiano deja solo
+                # pending_lead_note_reason; en el camino legacy la construye
+                # _finalize_tree_response — aquí el equivalente).
+                supervisor._maybe_build_pending_note(state)
         else:
             response = ask_slot(state, nxt, reasking=(nxt == prev_pending))
             state.step = Step.FREE_TEXT

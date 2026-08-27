@@ -54,6 +54,7 @@ async def deflection_node(state: BotState) -> dict:
         _asks_about_ai_identity,
         _asks_for_contact_number,
         _contact_number_deflection,
+        _infer_language,
         _route_message_inner,
     )
 
@@ -62,11 +63,19 @@ async def deflection_node(state: BotState) -> dict:
     signals = state.get("signals") or {}
     msg_lower = message.strip().lower()
 
+    # Auditoría 2026-08-26 (batería sintética contra PRE, Grupo 4/hallazgo B,
+    # portado de pre_gadea): en el mensaje de apertura `conv.detected_language`
+    # todavía no está fijado — usar `conv.language` directo daba la deflexión
+    # en español para un primer mensaje en inglés. Mismo fix que la cascada
+    # de `supervisor.py` (este nodo llama a las mismas funciones por su
+    # cuenta, duplicado — no pasa por esa cascada).
+    effective_lang = conv.language if conv.detected_language else _infer_language(message, conv.language)
+
     if _asks_for_contact_number(msg_lower) or signals.get("asks_for_contact_number"):
-        response = _contact_number_deflection(conv.language)
+        response = _contact_number_deflection(effective_lang)
         logger.info("[NODE:deflection] contact-number request -> límite + redirige (sin escalar)")
     elif _asks_about_ai_identity(msg_lower):
-        response = _ai_identity_deflection(conv.language)
+        response = _ai_identity_deflection(effective_lang)
         logger.info("[NODE:deflection] AI/model-identity -> en persona, sin revelar")
     else:
         # Defensa "sin fugas": el router mandó aquí pero ninguna condición

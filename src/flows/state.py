@@ -167,6 +167,15 @@ class ConversationState:
     # preguntar la cantidad.
     needs_companion_activity: bool = False
 
+    # Portado de pre_gadea v0.21.1 (batería sintética contra PRE): distinto
+    # de `needs_companion_activity` (detección FRESCA del turno actual, se
+    # consume de inmediato tras `_understand()`). Este se marca cuando la
+    # ambigüedad de acompañante aparece mientras TODAVÍA hay una pregunta
+    # obligatoria pendiente (seguridad, nacionalidad...) — se difiere hasta
+    # que ese hueco se cierre, y se retoma justo antes de cerrar la reserva,
+    # en vez de enterrarla o entrar en bucle re-preguntándola.
+    companion_activity_deferred: bool = False
+
     def __post_init__(self):
         if self.history is None:
             self.history = []

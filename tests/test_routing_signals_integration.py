@@ -206,6 +206,40 @@ async def test_normal_message_does_not_deflect_as_contact_request():
     assert "🔒" not in resp
 
 
+@pytest.mark.asyncio
+async def test_contact_deflection_in_english_when_language_not_yet_detected():
+    """Hallazgo en vivo 2026-08-26 (batería sintética contra PRE, Grupo 4/
+    hallazgo B): esta deflexión corre ANTES de que `maybe_handle_turn` haga
+    su detección de idioma de apertura — en el primer mensaje,
+    `state.language` seguía en su valor por defecto ("es"), así que "can you
+    give me your whatsapp number" (inglés) recibía la deflexión en español.
+    `state.detected_language` (None en el primer mensaje real) es la señal
+    de si ya se detectó idioma; sin ella, se infiere del mensaje actual."""
+    state = make_state(lang="es")
+    state.detected_language = None
+    with patch("src.agents.supervisor.detect_routing_signals", new=AsyncMock(return_value={})):
+        resp = await route_message(state, "can you give me your whatsapp number")
+    assert "🔒" in resp
+    assert "phone" in resp.lower() or "whatsapp" in resp.lower()
+    assert "número" not in resp.lower(), "no debe responder en español a un mensaje en inglés"
+
+
+def test_infer_language_ignores_punctuation_adjacent_to_hint_word():
+    """Hallazgo en vivo (2026-08-26, al verificar el fix de idioma del
+    bloque de cancelación, portado de pre_gadea): "hi, I need to cancel my
+    booking, something came up" seguía devolviendo la política en ESPAÑOL —
+    `_infer_language` comparaba con padding de espacios literal
+    (`f" {hint} "`), y "booking," (coma pegada, sin espacio) nunca
+    matcheaba " booking ". Con `\\b` (límite de palabra real, ciego a la
+    puntuación adyacente) sí se detecta el inglés."""
+    from src.agents.supervisor import _infer_language
+    assert _infer_language("hi, I need to cancel my booking, something came up") == "en"
+    assert _infer_language("can you give me your whatsapp number?") == "en"
+    assert _infer_language("hola, quiero cancelar mi reserva.") == "es"
+    # Sin ninguna pista de ningún idioma, se mantiene el fallback pasado.
+    assert _infer_language("asdf qwer", fallback="es") == "es"
+
+
 # --- Bloque 2.3: link roto por señal LLM + backstop de contexto técnico ---
 
 @pytest.mark.asyncio
@@ -343,3 +377,30 @@ async def test_normal_booking_not_treated_as_availability():
     with patch("src.agents.supervisor.detect_routing_signals", new=AsyncMock(return_value={})):
         resp = await route_message(state, "quiero reservar buceo para 2 personas")
     assert "calendario del link" not in resp.lower()
+
+
+@pytest.mark.asyncio
+async def test_closed_date_question_gets_real_policy_not_canned_availability():
+    """Hallazgo en vivo (batería sintética contra PRE, 2026-08-26, conv
+    395): "¿abren el 25 de diciembre?" caía en el canned genérico de
+    disponibilidad ("las salidas son diarias, siempre hay disponibilidad")
+    — FALSO para esos dos días concretos (`policies.json["closed_days"]`:
+    solo cerrado el 25 de diciembre y el 1 de enero). Debe devolver la
+    política real, no el mensaje genérico que contradice el hecho
+    documentado."""
+    state = make_state()
+    with patch("src.agents.supervisor.detect_routing_signals", new=AsyncMock(return_value={})):
+        resp = await route_message(state, "abren el 25 de diciembre?")
+    low = resp.lower()
+    assert "cerramos" in low or "25 de diciembre" in low
+    assert "siempre hay disponibilidad" not in low
+
+
+@pytest.mark.asyncio
+async def test_closed_date_question_english_gets_real_policy():
+    state = make_state("en")
+    with patch("src.agents.supervisor.detect_routing_signals", new=AsyncMock(return_value={})):
+        resp = await route_message(state, "are you open on new year's day?")
+    low = resp.lower()
+    assert "december 25" in low or "january 1" in low
+    assert "always availability" not in low

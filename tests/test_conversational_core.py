@@ -939,6 +939,10 @@ async def test_recall_refresher_field_not_yet_known_falls_back():
     ("soy colombiano", None),
     ("soy buzo open water", None),
     ("quiero bucear", None),
+    # Hallazgo en vivo 2026-08-26 (batería sintética contra PRE, Grupo 8):
+    # "del" (contracción de "de"+"el") no estaba en las stopwords, así que
+    # se capturaba como nombre -> saludo "¡Hola, Del!".
+    ("soy del equipo de pruebas del sistema", None),
 ])
 def test_capture_client_name(msg, expected):
     st = ConversationState(conversation_id="name")
@@ -1352,7 +1356,11 @@ async def test_companion_attribute_without_activity_asks_instead_of_guessing():
     state = make_state("es")
     state.detected_activity = "certified_diving"
     state.is_certified = True
-    state.core_pending_slot = core.SLOT_LOCATION
+    state.location = "cartagena"
+    state.detected_group_size = 1
+    state.last_dive_over_2_years = False
+    state.is_colombian = False
+    state.core_pending_slot = None
     with patch.object(core, "fill_gaps", new=AsyncMock(return_value={})), \
          patch.object(core, "detect_special_signals", new=AsyncMock(return_value={
              "companion_activity": "minicourse", "mentions_other_person": True,
@@ -1382,6 +1390,145 @@ def test_activity_has_textual_backing_translates_diving_intent_to_minicourse():
     assert core._activity_has_textual_backing("minicourse", "quiere hacer buceo")
     assert core._activity_has_textual_backing("snorkel", "quiere hacer snorkel")
     assert not core._activity_has_textual_backing("minicourse", "mi amigo no esta certificado")
+
+
+def test_activity_has_textual_backing_certification_claim_backs_certified_diving():
+    """Hallazgo en vivo 2026-08-26 (batería sintética contra PRE, Grupo 3):
+    "mi amigo... él es certificado también" debe respaldar `certified_diving`
+    igual que "quiere bucear" — declarar la certificación ES la intención,
+    nadie dice "ya soy certificado" para pedir un minicurso. Sin este
+    respaldo, se descartaba una señal del LLM que SÍ era correcta (medido
+    3/3), preguntando "¿minicurso o snorkel?" a un acompañante ya
+    certificado. La negación explícita sigue sin respaldar nada."""
+    assert core._activity_has_textual_backing("certified_diving", "el es certificado tambien")
+    assert core._activity_has_textual_backing("certified_diving", "he is certified too")
+    assert not core._activity_has_textual_backing("certified_diving", "mi amigo no esta certificado")
+    assert not core._activity_has_textual_backing("certified_diving", "my friend is not certified")
+
+
+@pytest.mark.asyncio
+async def test_companion_activity_ambiguity_defers_instead_of_burying_pending_slot():
+    """Hallazgo en vivo 2026-08-26 (batería sintética contra PRE, conv 190 y
+    210): cuando la ambigüedad de actividad del acompañante aparecía MIENTRAS
+    todavía había una pregunta obligatoria pendiente (seguridad, en este
+    caso), el bot la enterraba para siempre — interrumpía con "¿qué le
+    gustaría hacer a tu acompañante?" y nunca volvía a preguntar por la
+    seguridad, quedándose incluso en BUCLE repitiendo la pregunta del
+    acompañante ante cualquier respuesta corta ("no", "no somos
+    colombianos") que en realidad respondía a otra cosa. Ahora se difiere: se
+    sigue preguntando lo que tocaba (seguridad), y el acompañante se retoma
+    justo antes de cerrar, sin perderse ni bloquear nada por el medio."""
+    state = make_state("es")
+    state.detected_activity = "certified_diving"
+    state.is_certified = True
+    state.location = "cartagena"
+    state.detected_group_size = 1
+    state.core_pending_slot = core.SLOT_SAFETY
+
+    with patch.object(core, "fill_gaps", new=AsyncMock(return_value={})), \
+         patch.object(core, "detect_special_signals", new=AsyncMock(return_value={
+             "companion_activity": "minicourse", "mentions_other_person": True,
+             "companion_is_singular": False, "companion_qty": 2,
+         })):
+        resp = await route_message(state, "mis amigos tambien vienen")
+    # La ambigüedad del acompañante NO se pierde (se difiere), pero tampoco
+    # entierra la pregunta de seguridad que ya estaba pendiente.
+    assert state.core_pending_slot == core.SLOT_SAFETY
+    assert state.companion_activity_deferred is True
+    assert "año" in resp.lower() or "inmersión" in resp.lower() or "immersion" in resp.lower()
+
+    # Resolver seguridad y nacionalidad — el bot debe seguir preguntando por
+    # ELLAS, nunca volver a la ambigüedad del acompañante a mitad de camino.
+    with patch.object(core, "fill_gaps", new=AsyncMock(return_value={})), \
+         patch.object(core, "detect_special_signals", new=AsyncMock(return_value={})):
+        resp2 = await route_message(state, "no")
+    assert state.last_dive_over_2_years is False
+    assert state.core_pending_slot != core.SLOT_COMPANION_ACTIVITY
+
+    with patch.object(core, "fill_gaps", new=AsyncMock(return_value={})), \
+         patch.object(core, "detect_special_signals", new=AsyncMock(return_value={})):
+        resp3 = await route_message(state, "no somos colombianos")
+    assert state.is_colombian is False
+    # Ahora que ya no queda nada más pendiente, se retoma el acompañante.
+    assert state.core_pending_slot == core.SLOT_COMPANION_ACTIVITY
+    assert state.companion_activity_deferred is False
+    assert "acompañante" in resp3.lower() or "?" in resp3
+
+
+@pytest.mark.asyncio
+async def test_kids_only_mention_does_not_trigger_spurious_companion_activity():
+    """Hallazgo en vivo (batería sintética contra PRE, 2026-08-26, lote 5,
+    conversación larga con familia): "los niños tienen 7 y 10" (solo edades,
+    sin ningún acompañante nuevo) disparaba la ambigüedad de acompañante vía
+    la señal LLM `mentions_other_person` (más liberal que el regex
+    determinista `_mentions_person`, que no reconoce "niño") — el bot
+    terminaba preguntando "¿qué le gustaría hacer tu acompañante?" al
+    cerrar, sin que existiera ningún acompañante sin resolver: la familia
+    entera ya tenía una única actividad (snorkel) y los niños los cubre
+    `kids_mention_detected`/`SLOT_AGES`, un mecanismo aparte. Con contexto
+    de niños ya activo y sin que el regex determinista vea a NADIE más, no
+    se confía solo en la señal LLM."""
+    state = make_state("es")
+    state.detected_activity = "snorkel"
+    state.location = "cartagena"
+    state.kids_mention_detected = True
+    state.core_pending_slot = None
+
+    with patch.object(core, "fill_gaps", new=AsyncMock(return_value={})), \
+         patch.object(core, "detect_special_signals", new=AsyncMock(return_value={
+             "mentions_other_person": True,
+         })):
+        await route_message(state, "los niños tienen 7 y 10")
+    assert state.companion_activity_deferred is False
+    assert state.core_pending_slot != core.SLOT_COMPANION_ACTIVITY
+
+
+@pytest.mark.asyncio
+async def test_companion_attribute_in_opening_message_keeps_main_activity():
+    """Hallazgo D (batería sintética contra PRE, conv 265/276): un mensaje de
+    APERTURA que establece la actividad principal en primera persona
+    ("quiero bucear") y menciona un acompañante SIN certificar en el MISMO
+    turno ("...voy con mi amigo pero el no esta certificado") perdía la
+    actividad principal recién detectada. Causa raíz:
+    `_restore_main_diver_fields` restauraba `detected_activity` al valor de
+    ANTES de este turno (None, por ser la apertura) para proteger el perfil
+    del buceador principal de un 'latest wins' incorrecto del acompañante —
+    pero en la apertura no hay nada previo que proteger, y la restauración
+    borraba la actividad legítima que este mismo turno acababa de fijar. El
+    bot terminaba preguntando "¿cuántos serían para buceo certificado?" en
+    vez de reconocer al acompañante sin certificar."""
+    state = make_state("es")
+    with patch.object(core, "fill_gaps", new=AsyncMock(return_value={})), \
+         patch.object(core, "detect_special_signals", new=AsyncMock(return_value={
+             "companion_activity": "minicourse", "mentions_other_person": True,
+             "companion_is_singular": True, "companion_qty": 1,
+         })):
+        resp = await route_message(
+            state, "hola quiero bucear, voy con mi amigo pero el no esta certificado"
+        )
+    assert state.detected_activity == "certified_diving", (
+        "la actividad principal detectada este mismo turno no debe perderse "
+        "al restaurar el perfil frente a la mención del acompañante"
+    )
+    assert (state.detected_group_allocation or {}).get("minicourse") == 1
+    assert (state.detected_group_allocation or {}).get("certified_diving") == 1
+    assert "cartagena" in resp.lower() or "isla" in resp.lower()
+
+    # Sigue el flujo normal: ubicación -> seguridad -> nacionalidad. El bot
+    # nunca vuelve a la ambigüedad del acompañante (ya resuelta) a mitad de
+    # camino.
+    with patch.object(core, "fill_gaps", new=AsyncMock(return_value={})), \
+         patch.object(core, "detect_special_signals", new=AsyncMock(return_value={})):
+        resp2 = await route_message(state, "desde cartagena")
+    assert state.location == "cartagena"
+    assert state.core_pending_slot != core.SLOT_COMPANION_ACTIVITY
+    assert "año" in resp2.lower() or "inmersión" in resp2.lower() or "immersion" in resp2.lower()
+
+    with patch.object(core, "fill_gaps", new=AsyncMock(return_value={})), \
+         patch.object(core, "detect_special_signals", new=AsyncMock(return_value={})):
+        await route_message(state, "no")
+    assert state.last_dive_over_2_years is False
+    assert state.core_pending_slot != core.SLOT_COMPANION_ACTIVITY
 
 
 # ---------------------------------------------------------------------------
@@ -1677,6 +1824,33 @@ async def test_location_resolver_abstains_reasks(monkeypatch):
         await route_message(state, "uff qué pregunta tan complicada")
     assert state.location is None
     assert state.core_pending_slot == core.SLOT_LOCATION
+
+
+@pytest.mark.asyncio
+async def test_location_resolver_ignored_when_message_switches_activity(monkeypatch):
+    """Hallazgo en vivo (batería sintética contra PRE, 2026-08-26, lote 5,
+    conversación larga con cambio de actividad a mitad de flujo): "mejor
+    pensándolo bien quiero el minicurso" (sin mencionar ubicación en
+    absoluto) no avanza `next_missing_slot` (sigue faltando location), así
+    que la red anti-bucle le preguntaba al LLM "¿qué respondió para
+    location?" — el LLM alucinaba "cartagena" con confianza pese a que el
+    mensaje no dice nada de ubicación. La reserva avanzaba con una
+    ubicación que el cliente nunca dio. Fix: se descarta el valor resuelto
+    cuando ESTE MISMO turno cambió la actividad principal — la ubicación
+    debe seguir pendiente y volver a preguntarse."""
+    monkeypatch.setattr(core, "resolve_slot_answer",
+                        AsyncMock(return_value={"value": "cartagena"}))
+    state = _at_location_stage()
+    state.detected_activity = "certified_diving"
+    with patch("src.agents.supervisor.detect_routing_signals",
+               new=AsyncMock(return_value={})):
+        await route_message(state, "mejor pensandolo bien quiero el minicurso")
+    assert state.location is None, (
+        "un cambio de actividad no debe hacer que se invente una ubicación "
+        "que el cliente nunca dio"
+    )
+    assert state.core_pending_slot == core.SLOT_LOCATION
+    assert state.detected_activity == "minicourse"
 
 
 def test_apply_resolved_slot_value_location():
@@ -2067,3 +2241,52 @@ async def test_fase_c_capture_failure_never_breaks_turn(monkeypatch):
     state = make_state("es")
     resp = await route_message(state, "quiero bucear, somos 2, desde cartagena, viajamos con mi suegra")
     assert resp  # respondió pese al fallo de la captura
+
+
+@pytest.mark.asyncio
+async def test_first_turn_language_detection_sticks_across_same_turn():
+    """Hallazgo en vivo 2026-08-26 (batería sintética contra PRE, Grupo 4): la
+    detección de apertura (heurística → LLM → hints) solo fijaba
+    `state.language`, nunca `state.detected_language` — y
+    `_apply_detected_intent` (que corre en CADA turno dentro de
+    `_understand()`) sobreescribe `state.language` con su propia
+    clasificación por-mensaje mientras `state.detected_language` siga
+    vacío. Un mensaje de apertura con palabras mezcladas ("hi quiero
+    snorkel and minicourse para mi hermano") hacía que el saludo saliera en
+    inglés pero la pregunta de slot, SEGUNDOS DESPUÉS EN EL MISMO TURNO,
+    saliera en español."""
+    state = make_state("es")
+    state.step = Step.WELCOME
+    with patch("src.agents.supervisor.detect_routing_signals", new=AsyncMock(return_value={})):
+        await route_message(state, "hi quiero snorkel and minicourse para mi hermano")
+    assert state.language == "en"
+    assert state.detected_language == "en"
+
+
+def test_language_switch_regex_detects_explicit_requests_only():
+    """Peticiones explícitas de cambiar de idioma a mitad de conversación —
+    antes se ignoraban por completo (ningún mecanismo las miraba fuera del
+    primer turno). Deliberadamente estricto: no debe disparar con menciones
+    incidentales de "english"/"español" que no son una petición real."""
+    assert core._SWITCH_TO_EN_RE.search("actually can we continue in english")
+    assert core._SWITCH_TO_EN_RE.search("can we talk in english please")
+    assert core._SWITCH_TO_ES_RE.search("podemos hablar en español mejor")
+    assert core._SWITCH_TO_ES_RE.search("cambiamos a español?")
+    assert not core._SWITCH_TO_EN_RE.search("voy solo")
+    assert not core._SWITCH_TO_ES_RE.search("what's the price in USD?")
+
+
+@pytest.mark.asyncio
+async def test_explicit_language_switch_mid_conversation_is_honored():
+    """El mismo hallazgo, de punta a punta: pedir explícitamente cambiar de
+    idioma a mitad de conversación debe surtir efecto YA MISMO, en la
+    respuesta de ese mismo turno."""
+    state = make_state("es")
+    state.step = Step.WELCOME
+    with patch("src.agents.supervisor.detect_routing_signals", new=AsyncMock(return_value={})):
+        await route_message(state, "hola quiero bucear certificado")
+    assert state.language == "es"
+    with patch("src.agents.supervisor.detect_routing_signals", new=AsyncMock(return_value={})):
+        resp = await route_message(state, "actually can we continue in english")
+    assert state.language == "en"
+    assert "?" in resp and ("Where" in resp or "where" in resp)
