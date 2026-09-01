@@ -947,10 +947,17 @@ reproducible. **Siguiente: 2.5 (nodo `booking`), luego 2.6.** Sigue este patrón
           por esta cola: la intercepta `conversational_core._availability_phase` (el núcleo mismo,
           portado el mismo día que el resto de hallazgos de la batería sintética) — confirmado con
           tests directos en `tests/test_changes_agent.py`. Los 4 ítems restantes (link-roto dup,
-          sensible dup, cambio de idioma, fallback) **no tienen confirmación de alcanzabilidad
-          real** — no se han borrado (sería prematuro sin datos de producción/reachability
-          propiamente dicho), pero son candidatos fuertes a quedar muertos cuando se haga el
-          análisis real en el Paso 3.
+          sensible dup, cambio de idioma, fallback) están **confirmados como código muerto por
+          análisis de flujo de control (2026-09-01, Gadea), no solo "sin evidencia de uso"**: el
+          chequeo de escalado-keyword/`wants_human` (línea justo después de la rama
+          afirmación-breve) usa EXACTAMENTE la misma condición (`_matches_escalation_keyword
+          (msg_lower) or routing_signals.get("wants_human")`) que hizo que `_setup_phase`
+          devolviera `None` para llegar hasta aquí — ni `msg_lower` ni `routing_signals` se
+          reasignan entre ambos puntos. Así que **siempre que el núcleo declina, ese chequeo
+          también matchea** (y escala ahí, o antes en la rama de afirmación-breve) — nunca se
+          llega a link-roto/sensible/disponibilidad-dup/idioma/fallback. No se han borrado
+          todavía (es trabajo del Paso 3 real), pero la pregunta "¿son alcanzables?" ya tiene
+          respuesta definitiva: no.
         - **Checklist ejecutable para el Paso 3 real (gateado por PRE llegando a confianza
           suficiente — ver criterio revisado arriba — NO ejecutar sin esa confirmación):**
           1. Confirmar que las 6 pruebas `*_equivalent_graph_vs_cascade` (una por nodo) ya no son
@@ -959,14 +966,20 @@ reproducible. **Siguiente: 2.5 (nodo `booking`), luego 2.6.** Sigue este patrón
           2. Borrar la rama OFF-flag de `route_message` (`src/agents/supervisor.py`, 2 líneas).
           3. Reachability + suite completa (3 modos) para borrar los gates PRE-núcleo del grupo
              (A) que queden muertos por duplicación con los nodos.
-          4. Reachability + suite completa sobre los 4 ítems no confirmados del grupo (B)
-             (link-roto/sensible duplicados, cambio de idioma, fallback) — probablemente muertos,
-             confirmar antes de borrar.
+          4. Borrar los 4 ítems del grupo (B) confirmados como código muerto (ver el hallazgo de
+             flujo de control arriba — link-roto/sensible duplicados, cambio de idioma, fallback),
+             con la suite completa (3 modos) como red.
           5. Quitar el campo `agent_arch` de `config.py` y sus referencias.
-        - **Nota aparte (no bloquea nada de lo anterior):** `booking_agent.py` no reproduce la
+        - **Nota aparte, YA RESUELTA (2026-09-01, Gadea):** `booking_agent.py` no reproducía la
           explicación de nacionalidad mixta que sí da la cascada (gap pre-existente, ya
-          documentado en `orchestration/router.py` como "candidato a discrepancia de shadow") —
-          relacionado con el grupo (A) pero es un hueco de cobertura, no parte de este corte.
+          documentado en `orchestration/router.py` como "candidato a discrepancia de shadow").
+          Arreglado: `_mixed_nationality_response` extraída a `supervisor.py` y llamada desde
+          `booking_node` antes del subgrafo (mismo patrón que `deflection_node`/`info_node`),
+          verificado con test end-to-end y en vivo contra PRE (redeploy `feature/pre_alvaro`).
+          Auditados también el resto de los checks pre-núcleo de la cascada (PII, link roto,
+          sensible, DIVE TO HEAL, cancelación/reprogramación/modify-headcount, contacto/identidad,
+          edad, alcohol/alergia, reinicio-de-escenario, mención-de-niños) — todos confirmados
+          reproducidos en algún nodo del grafo, sin más huecos de este tipo encontrados.
 - [~] **5.3 · Bucle de datos reales con LangSmith — EN CURSO (periodo de medición ABIERTO).**
       LangSmith trazando PRE en vivo (proyecto `diving-planet-bot`, commit `cd5a23a`). Cableado:
       key como GitHub secret → inyectada en `.env.pre` por el job `deploy-pre`; **fix de un bug
