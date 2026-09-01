@@ -97,6 +97,17 @@ def test_adaptive_diving_price_routes_to_safety_advisor():
     assert classify_route(st, "cuanto cuesta?", {}) == ROUTE_SAFETY
 
 
+def test_adaptive_diving_generic_followup_persists_to_info():
+    """Hallazgo en vivo (batería de frontera contra PRE, 2026-09-01): un
+    seguimiento genérico SIN palabra de discapacidad ("¿qué incluye el
+    programa?") dentro de contexto DIVE TO HEAL persistido debe seguir yendo
+    a INFO (info factual del programa), no al default BOOKING — el chequeo
+    usaba `adaptive_now` (solo la señal de este turno) en vez del contexto
+    persistido."""
+    st = make_state(adaptive_diving_context=True)
+    assert classify_route(st, "que incluye el programa", {}) == ROUTE_INFO
+
+
 # ── BOOKING (default + sub-casos) ──
 
 def test_plain_booking_routes_to_booking():

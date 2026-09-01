@@ -171,6 +171,28 @@ async def test_adaptive_diving_signal_persists_for_price_followup():
     assert "asesor" in resp2.lower()
 
 
+@pytest.mark.asyncio
+async def test_adaptive_diving_context_persists_for_generic_followup_not_just_price():
+    """Hallazgo en vivo (batería de frontera contra PRE, 2026-09-01): un
+    seguimiento genérico SIN palabra de discapacidad ni señal LLM propia
+    ("¿qué incluye el programa?") perdía el contexto DIVE TO HEAL y caía al
+    núcleo normal (menú genérico de actividades) — el chequeo de RAG-info
+    usaba `adaptive_now` (solo la señal de ESTE turno) en vez del flag
+    persistido `state.adaptive_diving_context`, a diferencia del chequeo de
+    precio (arriba) que sí lo hacía bien."""
+    state = make_state()
+    with patch("src.agents.supervisor.detect_routing_signals",
+               new=AsyncMock(return_value={"adaptive_diving_topic": True})), \
+         patch("src.agents.supervisor.rag_answer", new=AsyncMock(return_value="Respuesta RAG adaptativa")):
+        await route_message(state, "uso protesis en la pierna, hay problema para bucear?")
+    assert state.adaptive_diving_context is True
+
+    with patch("src.agents.supervisor.detect_routing_signals", new=AsyncMock(return_value={})), \
+         patch("src.agents.supervisor.rag_answer", new=AsyncMock(return_value="Respuesta RAG adaptativa")):
+        resp2 = await route_message(state, "que incluye el programa")
+    assert resp2 == "Respuesta RAG adaptativa"
+
+
 # --- Bloque 2.1: cancelación/reprogramación por señal LLM (2026-07-23) ---
 # La lista de keywords (_detect_cancellation_request/_detect_reschedule_request)
 # solo caza frases casi exactas; medido en vivo que 16/18 frases realistas se

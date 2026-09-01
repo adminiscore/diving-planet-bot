@@ -72,6 +72,24 @@ async def test_node_dive_to_heal_nonprice_uses_rag(monkeypatch):
 
 
 @pytest.mark.asyncio
+async def test_node_dive_to_heal_context_persists_for_generic_followup(monkeypatch):
+    """Hallazgo en vivo (batería de frontera contra PRE, 2026-09-01): un
+    seguimiento genérico dentro de DIVE TO HEAL SIN palabra de discapacidad
+    en ESE mensaje ("¿qué incluye el programa?") perdía el contexto — el
+    chequeo usaba `adaptive_now` (solo la señal de este turno) en vez del
+    flag persistido `conv.adaptive_diving_context`, y caía al menú genérico
+    de actividades en vez de seguir dando info factual del programa
+    adaptado."""
+    monkeypatch.setattr("src.agents.supervisor.rag_answer", AsyncMock(return_value="RAG-INFO"))
+    conv = make_state()
+    conv.adaptive_diving_context = True  # persistido de un turno anterior
+    result = await info_node(
+        {"conv_state": conv, "message": "que incluye el programa", "signals": {}}
+    )
+    assert result["reply"] == "RAG-INFO"
+
+
+@pytest.mark.asyncio
 async def test_node_fallback_delegates_without_dropping_turn(monkeypatch):
     """Si el router aproximó INFO pero ningún gate dispara, delega en la cascada."""
     monkeypatch.setattr(

@@ -93,6 +93,12 @@ async def info_node(state: BotState) -> dict:
     adaptive_now = bool(_ADAPTIVE_DIVING_PATTERN.search(message)) or bool(signals.get("adaptive_diving_topic"))
     if adaptive_now:
         conv.adaptive_diving_context = True
+    # Hallazgo en vivo (batería de frontera contra PRE, 2026-09-01): usar solo
+    # `adaptive_now` aquí (en vez del flag persistido) perdía el contexto en
+    # un seguimiento genérico sin palabra de discapacidad en ESE mensaje — el
+    # router ya solo manda aquí cuando `adaptive_context` (persistido o de
+    # este turno) es true, así que el nodo debe reproducir el mismo criterio.
+    if conv.adaptive_diving_context:
         if conv.step in (Step.WELCOME, Step.LANGUAGE):
             conv.step = Step.MAIN_MENU
         conv.history.append({"role": "user", "content": message})

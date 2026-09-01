@@ -147,7 +147,14 @@ def classify_route(conv_state: ConversationState, message: str, signals: dict) -
     adaptive_context = conv_state.adaptive_diving_context or adaptive_now
     if adaptive_context and sup._PRICE_OR_BOOKING_Q.search(message):
         return ROUTE_SAFETY  # precio/reserva dentro de DIVE TO HEAL → asesor
-    if adaptive_now:
+    if adaptive_context:
+        # Hallazgo en vivo (batería de frontera contra PRE, 2026-09-01):
+        # este chequeo usaba `adaptive_now` (solo la señal de ESTE turno) en
+        # vez de `adaptive_context` (persistido o de este turno) — un
+        # seguimiento genérico ("¿qué incluye el programa?", "¿cuántas
+        # inmersiones son?") sin palabra de discapacidad ni señal LLM propia
+        # perdía el contexto DIVE TO HEAL y caía al default ROUTE_BOOKING
+        # (menú genérico de actividades), rompiendo la conversación a mitad.
         return ROUTE_INFO    # resto de DIVE TO HEAL → RAG (info factual del programa)
 
     # ── CHANGE (disponibilidad) ──

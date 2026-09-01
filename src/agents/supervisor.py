@@ -2363,7 +2363,13 @@ async def _shared_turn_handler(
         state.history.append({"role": "assistant", "content": answer})
         return answer
 
-    if adaptive_now:
+    if state.adaptive_diving_context:
+        # Hallazgo en vivo (batería de frontera contra PRE, 2026-09-01): igual
+        # que arriba, este chequeo usaba `adaptive_now` (solo la señal de ESTE
+        # turno) en vez del flag persistido — un seguimiento genérico dentro
+        # de DIVE TO HEAL sin palabra de discapacidad en ESE mensaje concreto
+        # caía al núcleo normal (menú genérico de actividades) en vez de
+        # seguir dando info factual del programa adaptado.
         logger.info("[SUPERVISOR] Adaptive-diving/DIVE TO HEAL question -> RAG")
         if state.step in (Step.WELCOME, Step.LANGUAGE):
             state.step = Step.MAIN_MENU
