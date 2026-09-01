@@ -1269,6 +1269,7 @@ async def _understand(state: ConversationState, message: str) -> tuple:
         and not _NOT_ALONE_RE.search(message)
     ):
         state.detected_group_size = 1
+        state.solo_traveler_confirmed = True
         logger.info("[CORE] singular course booking -> group_size=1")
 
     # AÑADIR vs CAMBIAR (fast-path regex): si ya había actividad principal y
@@ -2250,6 +2251,21 @@ async def _extraction_phase(
             # de niños Y el regex determinista (que NO reconoce "niño") no ve
             # a nadie más, no se confía solo en la señal LLM más amplia.
             and not (state.kids_mention_detected and not _mentions_person(message))
+            # Hallazgo en vivo (batería de grupos mixtos contra PRE,
+            # 2026-09-01, lote 8): un cliente que dijo explícitamente "solo
+            # yo" recibía, turnos después (incluso tras cerrar la reserva),
+            # "¿qué le gustaría hacer a tu acompañante?" — `mentions_other_
+            # person` (LLM) se re-deriva del HISTORIAL ENTERO en cada turno
+            # (ver auditoría 2026-07-23 más abajo) y puede volver a disparar
+            # sin que el turno actual mencione a nadie nuevo. `solo_traveler_
+            # confirmed` se fija SOLO desde el match estricto y con guardas
+            # de `_COURSE_SOLO_RE`/`intent_detector` (nunca desde un
+            # `detected_group_size == 1` genérico, que también puede darse
+            # legítimo mientras se negocia un acompañante aparte — ver
+            # test_companion_attribute_without_activity_asks_instead_of_
+            # guessing, que YA fija group_size=1 para el buzo principal
+            # confirmado mientras el acompañante se resuelve por su cuenta).
+            and not state.solo_traveler_confirmed
         ):
             # Auditoría 2026-07-23: hay un acompañante (persona mencionada)
             # pero ninguna actividad con respaldo textual real — "mi amigo

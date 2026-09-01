@@ -1958,6 +1958,9 @@ def _apply_detected_intent(intent, state: ConversationState, message: str | None
         )
         state.detected_group_size = intent.group_size
 
+    if getattr(intent, "solo_confirmed", False):
+        state.solo_traveler_confirmed = True
+
     if intent.group_allocation and not state.detected_group_allocation:
         state.detected_group_allocation = intent.group_allocation
         logger.info(f"[INTENT] Detected group allocation: {intent.group_allocation}")

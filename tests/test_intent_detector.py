@@ -233,6 +233,27 @@ class TestGroupDetection:
         intent = detector.detect("puedo pagar la mitad ahora y la mitad despues?", state)
         assert intent.group_allocation is None
 
+    def test_detect_mixed_group_three_activities(self, detector, state):
+        """Hallazgo en vivo (batería de grupos mixtos contra PRE, 2026-09-01,
+        lote 8): "somos 6: 2 bucean certificados, 2 hacen minicurso y 2
+        snorkel" solo capturaba 2 de las 3 actividades (el patrón de reparto
+        exigía exactamente un par de cláusulas) — el resumen final terminaba
+        sin la línea de buceo certificado, y `group_size` se recalculaba
+        como 4 en vez de 6 (solo sumaba las 2 actividades capturadas)."""
+        intent = detector.detect(
+            "somos 6: 2 bucean certificados, 2 hacen minicurso y 2 snorkel", state)
+        assert intent.group_size == 6
+        assert intent.group_allocation == {
+            "certified_diving": 2, "minicourse": 2, "snorkel": 2,
+        }
+
+    def test_detect_mixed_group_two_activities_still_uses_pattern_a(self, detector, state):
+        """Regresión: un reparto de 2 actividades (el caso ya cubierto por el
+        Patrón A) debe seguir funcionando igual tras añadir el patrón de 3+."""
+        intent = detector.detect("2 de buceo y 3 de snorkel", state)
+        assert intent.group_size == 5
+        assert intent.group_allocation == {"certified_diving": 2, "snorkel": 3}
+
 
 class TestLastDiveDetection:
     

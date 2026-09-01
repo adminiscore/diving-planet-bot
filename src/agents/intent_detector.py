@@ -23,6 +23,12 @@ class DetectedIntent:
     cert_dives: int | None = None              # explicit dive-count requested for certified diving ("2 inmersiones", "paquete de 5 buceos")
     cert_days: int | None = None               # explicit day-count requested instead ("paquete de 3 dias")
     is_colombian: bool | None = None           # nationality stated in the message (COP vs USD)
+    # True ONLY from the narrow, strictly-guarded "solo yo"/"just me"/singular
+    # self-identification match below (never from a plain numeric "1" answer
+    # or a companion-quantity chain resolving to 1) — see hallazgo en vivo,
+    # batería de grupos mixtos contra PRE, 2026-09-01, lote 8, en
+    # conversational_core.py donde se consume.
+    solo_confirmed: bool = False
     confidence: float = 0.0
     detected_fields: list = field(default_factory=list)
 
@@ -619,6 +625,7 @@ class IntentDetector:
             if (solo_self or singular_diver) and not companion and not other_num \
                     and not plural_self and not collective:
                 intent.group_size = 1
+                intent.solo_confirmed = True
                 intent.detected_fields.append("group_size")
 
         # ── Numeric split: "3 de buceo y 2 de snorkel", "5 snorkel y 2 buceo" ──
@@ -757,6 +764,30 @@ class IntentDetector:
                     cert_n = intent.group_size - beg_n
                     intent.group_allocation = {'certified_diving': cert_n, 'minicourse': beg_n}
                     intent.detected_fields.append("group_allocation")
+
+        # ── Pattern E (3+ actividades): "2 bucean certificados, 2 minicurso y
+        # 2 snorkel" (portado 2026-09-01, hallazgo en vivo lote 8 — batería de
+        # grupos mixtos contra PRE): el Patrón A de abajo solo captura UN PAR
+        # de cláusulas (regex de "N X y N Y"), así que un mensaje con 3+
+        # actividades perdía la primera cláusula en silencio — el resumen
+        # final terminaba sin la línea de buceo certificado, y `group_size`
+        # se recalculaba como la suma de solo 2 de las 3 actividades (4 en
+        # vez de 6). Recorre TODAS las cláusulas "N ACTIVIDAD" del mensaje con
+        # `finditer` (generalización de la misma gramática que Pattern A) en
+        # vez de un par fijo; solo se activa con 3+ actividades DISTINTAS
+        # para no tocar el camino ya probado de 2 actividades (Pattern A/B/C
+        # más abajo).
+        if not intent.group_allocation:
+            clause_pat = rf'{quant_prefix}{activity_kw}(?:\s+certificad[ao]s?)?'
+            allocation: dict[str, int] = {}
+            for m in re.finditer(clause_pat, message, re.IGNORECASE):
+                act = _activity_key(m.group(2).lower())
+                if act:
+                    allocation[act] = allocation.get(act, 0) + _parse_num(m.group(1))
+            if len(allocation) >= 3:
+                intent.group_allocation = allocation
+                intent.group_size = sum(allocation.values())
+                intent.detected_fields.append("group_allocation")
 
         # ── Pattern A: "3 de buceo y 2 de snorkel" / "buceo 3 y snorkel 2" ──
         if not intent.group_allocation:

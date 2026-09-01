@@ -1484,6 +1484,78 @@ async def test_kids_only_mention_does_not_trigger_spurious_companion_activity():
 
 
 @pytest.mark.asyncio
+async def test_solo_traveler_confirmed_via_solo_regex_sets_persistent_flag():
+    """"solo yo" (con actividad ya conocida, sin cantidad ni reparto) debe
+    fijar group_size=1 Y el flag persistente `solo_traveler_confirmed`."""
+    state = make_state("es")
+    state.detected_activity = "certified_diving"
+    state.core_pending_slot = None
+
+    with patch.object(core, "fill_gaps", new=AsyncMock(return_value={})), \
+         patch.object(core, "detect_special_signals", new=AsyncMock(return_value={})):
+        await route_message(state, "solo yo")
+    assert state.detected_group_size == 1
+    assert state.solo_traveler_confirmed is True
+
+
+@pytest.mark.asyncio
+async def test_solo_traveler_never_asked_about_companion_again():
+    """Hallazgo en vivo (batería de grupos mixtos contra PRE, 2026-09-01,
+    lote 8): un cliente que dijo explícitamente "solo yo" recibía, turnos
+    después (incluso tras cerrar la reserva), "¿qué le gustaría hacer a tu
+    acompañante?" — `mentions_other_person` (señal LLM) se re-deriva del
+    HISTORIAL ENTERO en cada turno y puede volver a disparar sin que el
+    turno actual mencione a nadie nuevo. Una vez confirmado que viaja solo
+    (flag persistente, no solo `detected_group_size == 1` — que también
+    puede darse legítimo con un acompañante en negociación aparte),
+    ninguna señal posterior (ni siquiera una falsamente positiva) debe
+    volver a preguntar por un acompañante."""
+    state = make_state("es")
+    state.detected_activity = "certified_diving"
+    state.detected_group_size = 1
+    state.solo_traveler_confirmed = True
+    state.location = "cartagena"
+    state.is_colombian = False
+    state.last_dive_over_2_years = False
+    state.core_pending_slot = None
+
+    with patch.object(core, "fill_gaps", new=AsyncMock(return_value={})), \
+         patch.object(core, "detect_special_signals", new=AsyncMock(return_value={
+             "mentions_other_person": True,
+         })):
+        await route_message(state, "listo, como pago")
+    assert state.companion_activity_deferred is False
+    assert state.core_pending_slot != core.SLOT_COMPANION_ACTIVITY
+
+
+@pytest.mark.asyncio
+async def test_group_size_one_without_solo_flag_still_allows_companion_question():
+    """Regresión: `detected_group_size == 1` por sí solo (sin el flag
+    `solo_traveler_confirmed`) NO debe bloquear la pregunta de acompañante —
+    es exactamente el escenario ya cubierto por
+    test_companion_attribute_without_activity_asks_instead_of_guessing,
+    donde el buzo principal está confirmado (group_size=1) mientras un
+    acompañante se resuelve por su cuenta vía SLOT_COMPANION_ACTIVITY."""
+    state = make_state("es")
+    state.detected_activity = "certified_diving"
+    state.is_certified = True
+    state.location = "cartagena"
+    state.detected_group_size = 1
+    state.last_dive_over_2_years = False
+    state.is_colombian = False
+    state.core_pending_slot = None
+    assert state.solo_traveler_confirmed is False
+
+    with patch.object(core, "fill_gaps", new=AsyncMock(return_value={})), \
+         patch.object(core, "detect_special_signals", new=AsyncMock(return_value={
+             "mentions_other_person": True,
+         })):
+        resp = await route_message(state, "mi amigo tambien quiere venir")
+    assert state.core_pending_slot == core.SLOT_COMPANION_ACTIVITY
+    assert "?" in resp
+
+
+@pytest.mark.asyncio
 async def test_companion_attribute_in_opening_message_keeps_main_activity():
     """Hallazgo D (batería sintética contra PRE, conv 265/276): un mensaje de
     APERTURA que establece la actividad principal en primera persona

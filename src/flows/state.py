@@ -70,6 +70,17 @@ class ConversationState:
     mixed_final_is_colombian: bool | None = None
     mixed_final_has_kids_8_10: bool | None = None
     mixed_final_wants_private: bool | None = None
+    # Hallazgo en vivo (batería de grupos mixtos contra PRE, 2026-09-01, lote
+    # 8): un cliente que dijo explícitamente "solo yo" recibía, turnos
+    # después (incluso tras cerrar la reserva), "¿qué le gustaría hacer a tu
+    # acompañante?" — la señal LLM `mentions_other_person` se re-deriva del
+    # HISTORIAL ENTERO en cada turno y puede volver a disparar sin que el
+    # turno actual mencione a nadie. Se fija SOLO desde el match estricto y
+    # con guardas de `intent_detector._detect_group_size` (nunca desde un
+    # `detected_group_size == 1` genérico, que también puede darse legítimo
+    # mientras se negocia un acompañante aparte — ver
+    # test_companion_attribute_without_activity_asks_instead_of_guessing).
+    solo_traveler_confirmed: bool = False
     # Kids age question — disparada en el cart-mixto si hay actividad para niños
     # o si el cliente mencionó hijos/familia en texto libre.
     kids_mention_detected: bool = False
