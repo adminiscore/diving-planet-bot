@@ -157,6 +157,21 @@ jobs:
             sed -i "/^LANGSMITH_API_KEY=/d" .env.pre 2>/dev/null || true
             echo "LANGSMITH_API_KEY=${{ secrets.LANGSMITH_API_KEY }}" >> .env.pre
             docker compose -f docker-compose.vps.yml up -d --build dp-pre-bot
+            # --- Limpieza de disco POST-build (2026-09-01) ---
+            # Antes solo se limpiaba de forma REACTIVA (arriba, solo si postgres ya
+            # estaba unhealthy) -- para entonces el disco ya se habia llenado y
+            # Chatwoot (servicio aparte, mismo disco) se caia con 500 en todo sin
+            # que nadie lo notara hasta la siguiente vez que se probaba en vivo.
+            # Cada "docker compose ... --build" deja cache/capas huerfanas del build
+            # anterior; se libera aqui SIEMPRE, tras cada deploy, en vez de esperar a
+            # que algo se rompa. Mismos comandos ya probados seguros (no tocan
+            # contenedores en marcha, imagenes en uso ni volumenes/datos; PRO intacto).
+            echo "=== disco tras el build ==="
+            df -h / || true
+            docker builder prune -af || true
+            docker image prune -af || true
+            echo "=== disco tras limpieza post-build ==="
+            df -h / || true
             sleep 5
             docker exec dp-pre-bot python -m scripts.load_embeddings --yes
             docker exec dp-pre-bot python -c "import urllib.request; print(urllib.request.urlopen(\"http://localhost:8000/health\").read())"
