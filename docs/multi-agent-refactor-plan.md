@@ -908,38 +908,58 @@ reproducible. **Siguiente: 2.5 (nodo `booking`), luego 2.6.** Sigue este patrón
         histórico de lo que era cierto en su momento, no se reescribe el pasado.
       - [ ] **Paso 3 — quitar el flag `agent_arch`** de `route_message` (grafo incondicional) una
         vez el grafo tenga confianza en PRO. Borrar los gates pre-núcleo de la cascada que queden
-        muertos (reachability + suite tras cada borrado).
+        muertos (reachability + suite tras cada borrado). **Gateado por PRO existiendo (no existe
+        todavía) + decisión del owner — "punto de no retorno" (rollback hasta aquí = apagar el
+        flag). No ejecutado; ver el prep de abajo para lo que SÍ se preparó sin tocar el flag.**
       - **🔎 PREP — mapa de reachability (2026-08-11, Álvaro, análisis sin borrar nada):** el corte
-        NO es un borrado directo — **`_route_message_inner` sigue VIVA**: los 5 nodos reales
+        NO es un borrado directo — **`_shared_turn_handler` sigue VIVA**: los 5 nodos reales
         delegan en ella. Se parte en dos:
         - **(A) Gates PRE-núcleo ya reproducidos en nodos** (PII/link/sensible/DIVE-TO-HEAL,
-          cancel/reschedule, contacto/identidad, edad, disponibilidad-narrow) → **mueren** al
-          cortar (los nodos los ejecutan directamente). Borrables por reachability.
-        - **(B) Gates POST-núcleo + fallbacks que los nodos AÚN delegan** → **NO borrables hasta
-          migrarlos**: `escalation`→wants_human/keyword de escalado; `changes`→disponibilidad
-          (patrón B); `booking/setup`→fallback si el núcleo declina; `deflection`/`info`→fallback
-          de resiliencia; + los handlers post-núcleo de la cascada (idioma, bare-affirmation).
-        - **Plan de corte:** primero **migrar (B) a sus nodos** (o conservar un "tail handler"
-          compartido extraído de la cascada, sin el flag), con equivalencia por paso; DESPUÉS
-          quitar `agent_arch` de `route_message` (grafo incondicional) y borrar lo que quede
-          muerto de (A) + el shadow. Suite (por nodo + e2e) como red tras cada borrado. Decidir
-          disponibilidad-fresh (patrón B) aquí (¿el núcleo la intercepta o gana el gate?).
-        - **⚠️ Hallazgo al intentar arrancar (B) (2026-08-27, Gadea, análisis sin tocar código):**
-          el grupo (B) es más grande de lo que sugiere el resumen por nodo — es TODA la cola de
-          `_shared_turn_handler` tras la llamada a `maybe_handle_turn` (~170 líneas, líneas
-          ~2373-2542 hoy): afirmación-breve-acepta-asesor, escalado por keyword/`wants_human`,
-          link-roto (duplicado del gate pre-núcleo), sensible (duplicado), disponibilidad/días
-          cerrados, cambio de idioma explícito, y el fallback "no debería llegar aquí". **No es un
-          mover-código mecánico**: los 7 gates solo se evalúan HOY cuando `maybe_handle_turn`
-          devuelve `None` — dependen del resultado del núcleo, que vive dentro del subgrafo
-          `booking`. El router (Fase 1) decide la ruta ANTES de ejecutar nada, así que no puede
-          saber de antemano "esto va a caer en el gate X post-núcleo" sin correr el núcleo
-          primero — migrar esto de verdad exige decidir CÓMO representarlo (¿el nodo `escalation`
-          pasa a ejecutar también el núcleo? ¿nueva ruta del router?), una decisión de diseño de
-          arquitectura, no una tarea mecánica. Aparcado sin tocar código para una sesión dedicada
-          (plan-mode, con Álvaro si es posible) en vez de improvisarlo — el riesgo de romper la
-          equivalencia justo antes del punto de no retorno (Paso 3) es demasiado alto para
-          resolverlo sobre la marcha.
+          cancel/reschedule/modify-headcount, contacto/identidad, edad, disponibilidad-narrow) →
+          **mueren** al cortar (los nodos los ejecutan directamente). Borrables por reachability.
+        - **(B) Gates POST-núcleo + fallbacks que los nodos AÚN delegan** → dependen del resultado
+          de `maybe_handle_turn` (solo devuelve `None` para escalado-keyword/`wants_human` —
+          idéntico en `pre_gadea`, no es propio del grafo).
+        - **Decisión de diseño tomada (2026-08-27, Gadea, plan-mode, ver commit del mismo día):**
+          **NO se redistribuye (B) físicamente en 5 archivos** — se mantiene `_shared_turn_handler`
+          como "tail handler" compartido permanente (la alternativa que este mismo plan ya
+          contemplaba), llamado directamente por los nodos (no vía el flag). Mismo patrón que las
+          fases compartidas de `booking_agent.py` (`_setup_phase` etc.): funciones compartidas
+          extraídas, no "propiedad" de un solo archivo. Menor riesgo de equivalencia que dispersar
+          ~170 líneas interdependientes en 5 sitios distintos.
+        - **Hallazgo al auditar el alcance real de (B) (2026-08-27, Gadea):** es más estrecho de
+          lo que sugería el resumen por nodo. `maybe_handle_turn` (idéntico en ambas ramas) SOLO
+          devuelve `None` por escalado-keyword/`wants_human` — así que de los 7 ítems de la cola
+          (afirmación-breve-acepta-asesor, escalado-keyword/`wants_human`, link-roto duplicado,
+          sensible duplicado, disponibilidad/días-cerrados duplicado, cambio de idioma explícito,
+          fallback), **solo los 2 primeros se alcanzan en la práctica** (verificado con tests
+          directos, sin mockear la delegación — `tests/test_escalation_agent.py`). La
+          "afirmación-breve-acepta-asesor" en concreto solo dispara cuando la señal LLM
+          `wants_human` (que ve el historial completo) clasifica un "sí" contextual como
+          aceptación — no cualquier "sí" aislado. La disponibilidad/días-cerrados NO se alcanza
+          por esta cola: la intercepta `conversational_core._availability_phase` (el núcleo mismo,
+          portado el mismo día que el resto de hallazgos de la batería sintética) — confirmado con
+          tests directos en `tests/test_changes_agent.py`. Los 4 ítems restantes (link-roto dup,
+          sensible dup, cambio de idioma, fallback) **no tienen confirmación de alcanzabilidad
+          real** — no se han borrado (sería prematuro sin datos de producción/reachability
+          propiamente dicho), pero son candidatos fuertes a quedar muertos cuando se haga el
+          análisis real en el Paso 3.
+        - **Checklist ejecutable para el Paso 3 real (gateado por owner + PRO — NO ejecutar sin
+          esa decisión):**
+          1. Confirmar que las 6 pruebas `*_equivalent_graph_vs_cascade` (una por nodo) ya no son
+             la única red sobre el comportamiento del grupo B — con los tests directos añadidos
+             hoy, no lo son; se pueden simplificar/borrar sin perder cobertura real.
+          2. Borrar la rama OFF-flag de `route_message` (`src/agents/supervisor.py`, 2 líneas).
+          3. Reachability + suite completa (3 modos) para borrar los gates PRE-núcleo del grupo
+             (A) que queden muertos por duplicación con los nodos.
+          4. Reachability + suite completa sobre los 4 ítems no confirmados del grupo (B)
+             (link-roto/sensible duplicados, cambio de idioma, fallback) — probablemente muertos,
+             confirmar antes de borrar.
+          5. Quitar el campo `agent_arch` de `config.py` y sus referencias.
+        - **Nota aparte (no bloquea nada de lo anterior):** `booking_agent.py` no reproduce la
+          explicación de nacionalidad mixta que sí da la cascada (gap pre-existente, ya
+          documentado en `orchestration/router.py` como "candidato a discrepancia de shadow") —
+          relacionado con el grupo (A) pero es un hueco de cobertura, no parte de este corte.
 - [~] **5.3 · Bucle de datos reales con LangSmith — EN CURSO (periodo de medición ABIERTO).**
       LangSmith trazando PRE en vivo (proyecto `diving-planet-bot`, commit `cd5a23a`). Cableado:
       key como GitHub secret → inyectada en `.env.pre` por el job `deploy-pre`; **fix de un bug

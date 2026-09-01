@@ -103,6 +103,60 @@ async def test_node_wants_human_delegates_to_cascade(monkeypatch):
     assert result["reply"] == "respuesta de la cascada"
 
 
+# ── grupo B (post-núcleo): comportamiento final directo, SIN mockear
+# `_shared_turn_handler` (Fase 5.2, prep del corte — ver docs/multi-agent-
+# refactor-plan.md §5). A diferencia del test de arriba (que solo verifica que
+# el nodo DELEGA), estos verifican que la delegación produce el resultado
+# correcto por sí sola — cobertura que hoy solo existe indirectamente vía los
+# tests de `_shared_turn_handler` en test_routing_signals_integration.py y los
+# `*_equivalent_graph_vs_cascade` (que dejarán de existir cuando se quite el
+# flag `agent_arch`).
+
+@pytest.mark.asyncio
+async def test_node_wants_human_signal_escalates_directly():
+    """wants_human/keyword de escalado: el nodo delega en `_shared_turn_handler`
+    (gate post-núcleo, corre el núcleo primero) y el resultado final debe
+    escalar, sin necesidad de mockear la delegación."""
+    conv = make_state()
+    result = await escalation_node(
+        {"conv_state": conv, "message": "quiero hablar con una persona", "signals": {"wants_human": True}}
+    )
+    assert result["reply"]
+    assert conv.step == Step.ESCALATE
+    assert conv.pending_escalation_reason == "solicitó asesor"
+
+
+@pytest.mark.asyncio
+async def test_node_bare_affirmation_accepts_pending_advisor_offer():
+    """"sí" tras una oferta del propio bot de pasar con un asesor debe escalar
+    con el motivo específico "aceptó la oferta..." (bug real visto en PRE
+    2026-07-07: un "sí" demasiado corto para el agente conversacional caía a
+    RAG y daba el fallback genérico). Gate post-núcleo, sin cobertura a nivel
+    de nodo hasta ahora.
+
+    Solo alcanzable cuando `maybe_handle_turn` declina (`_setup_phase`
+    devuelve `None`) — y la ÚNICA condición para eso es escalado-keyword/
+    `wants_human` (confirmado leyendo `_setup_phase`, idéntico en pre_gadea).
+    En producción esto se cumple porque la señal LLM `wants_human` ve el
+    historial completo: un "sí" justo después de que el bot ofreciera un
+    asesor se clasifica en contexto como aceptación, no un "sí" aislado sin
+    esa oferta previa (el propio regex `_ADVISOR_OFFER_RE`/`_OFFER_VERB_RE`
+    exige la oferta en el turno anterior, así que el escalado sigue siendo
+    específico a este caso, no cualquier "sí" con wants_human)."""
+    conv = make_state()
+    conv.step = Step.FREE_TEXT
+    conv.history = [
+        {"role": "user", "content": "tengo una duda sobre el pago"},
+        {"role": "assistant", "content": "¿quieres que te pase con un asesor para resolver eso?"},
+    ]
+    result = await escalation_node(
+        {"conv_state": conv, "message": "sí", "signals": {"wants_human": True}}
+    )
+    assert result["reply"]
+    assert conv.step == Step.ESCALATE
+    assert conv.pending_escalation_reason == "aceptó la oferta del bot de hablar con un asesor"
+
+
 # ── equivalencia flag on/off (el corte strangler no cambia la respuesta) ──
 
 @pytest.mark.asyncio

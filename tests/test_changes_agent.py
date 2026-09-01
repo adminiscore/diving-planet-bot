@@ -77,6 +77,42 @@ async def test_node_availability_delegates_to_cascade(monkeypatch):
     assert result["reply"] == "respuesta de la cascada"
 
 
+# ── grupo B (post-núcleo): comportamiento final directo, SIN mockear
+# `_shared_turn_handler` (Fase 5.2, prep del corte — ver docs/multi-agent-
+# refactor-plan.md §5). La disponibilidad/días cerrados los intercepta hoy
+# `conversational_core._availability_phase` (portado el mismo día que el
+# resto de hallazgos de la batería sintética) — la delegación del nodo llega
+# ahí a través del núcleo, no de la copia duplicada en la cola de
+# `_shared_turn_handler` (que en la práctica queda como red de resiliencia,
+# no como el camino real). Cobertura que hoy solo existe indirectamente vía
+# los tests de `_shared_turn_handler`/núcleo en otros archivos y los
+# `*_equivalent_graph_vs_cascade` (que dejarán de existir cuando se quite el
+# flag `agent_arch`).
+
+@pytest.mark.asyncio
+async def test_node_availability_question_gives_canned_answer_directly():
+    conv = make_state()
+    result = await changes_node(
+        {"conv_state": conv, "message": "¿tienen disponibilidad el sábado?", "signals": {}}
+    )
+    assert "disponibilidad" in result["reply"].lower()
+    assert "siempre hay disponibilidad" in result["reply"].lower()
+
+
+@pytest.mark.asyncio
+async def test_node_closed_date_question_gives_real_policy_directly():
+    """Hallazgo (batería sintética contra PRE, 2026-08-26, portado hoy):
+    "¿abren el 25 de diciembre?" no debe dar el canned genérico de
+    disponibilidad ("las salidas son diarias, siempre hay disponibilidad")
+    — ese día está cerrado según `policies.json["closed_days"]`."""
+    conv = make_state()
+    result = await changes_node(
+        {"conv_state": conv, "message": "¿abren el 25 de diciembre?", "signals": {}}
+    )
+    assert "siempre hay disponibilidad" not in result["reply"].lower()
+    assert "25 de diciembre" in result["reply"] or "cerramos" in result["reply"].lower()
+
+
 # ── equivalencia flag on/off (el corte strangler no cambia la respuesta) ──
 
 @pytest.mark.asyncio
