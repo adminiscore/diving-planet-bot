@@ -1088,7 +1088,18 @@ class IntentDetector:
             return
         if re.search(
             r"\bextranjer[oa]s?\b|\bforeigners?\b|\bwe\s+are\s+foreign\b"
-            r"|\bno\s+(?:soy|somos)\s+colombian[oa]s?\b|\bnot\s+colombian\b",
+            r"|\bno\s+(?:soy|somos)\s+colombian[oa]s?\b|\bnot\s+colombian\b"
+            # Hallazgo en vivo (batería de grupos mixtos contra PRE, 2026-09-01,
+            # lote 8): "ninguno colombiano"/"ninguno es colombiano"/"nadie es
+            # colombiano" (respuesta de GRUPO a "¿sois colombianos?") no
+            # matcheaba esta negación (exigía "no soy/somos" literal) — caía al
+            # segundo regex de abajo, que solo busca la palabra "colombiano" en
+            # cualquier parte del mensaje, y marcaba is_colombian=True: justo lo
+            # contrario de la intención. El resumen final terminaba diciendo
+            # "como sois colombianos, el pago es en pesos" a un grupo que
+            # explícitamente dijo que NINGUNO lo era.
+            r"|\bning[uú]n[oa]?\b[^.]{0,30}\bcolombian[oa]s?\b"
+            r"|\bnadie\b[^.]{0,30}\bcolombian[oa]s?\b",
             message,
         ):
             intent.is_colombian = False

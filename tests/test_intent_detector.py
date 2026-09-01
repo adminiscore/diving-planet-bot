@@ -361,6 +361,25 @@ class TestNationalityDetection:
         intent = detector.detect("estoy en Cartagena, soy de España", state)
         assert intent.is_colombian is not True
 
+    @pytest.mark.parametrize("message", [
+        "ninguno colombiano",
+        "ninguno es colombiano",
+        "ninguno de nosotros es colombiano",
+        "nadie es colombiano",
+    ])
+    def test_group_negation_ninguno_nadie_reads_as_not_colombian(self, detector, state, message):
+        """Hallazgo en vivo (batería de grupos mixtos contra PRE, 2026-09-01,
+        lote 8): "ninguno colombiano" (respuesta de GRUPO a "¿sois
+        colombianos?") no matcheaba la negación (exigía "no soy/somos"
+        literal) y caía al regex afirmativo (que solo busca la palabra
+        "colombiano" en cualquier parte) — is_colombian quedaba en True,
+        justo lo contrario de la intención. El resumen final terminaba
+        diciendo "como sois colombianos, el pago es en pesos" a un grupo
+        que explícitamente dijo que NINGUNO lo era — riesgo real de
+        confusión de pago."""
+        intent = detector.detect(message, state)
+        assert intent.is_colombian is False
+
 
 class TestLocationDetection:
     
