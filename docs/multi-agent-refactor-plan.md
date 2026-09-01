@@ -906,11 +906,18 @@ reproducible. **Siguiente: 2.5 (nodo `booking`), luego 2.6.** Sigue este patrón
         función en `supervisor.py` para el detalle. `docs/archive/*` y las entradas fechadas de
         este documento (§8, handoffs) se dejan con el nombre viejo a propósito: son registro
         histórico de lo que era cierto en su momento, no se reescribe el pasado.
-      - [ ] **Paso 3 — quitar el flag `agent_arch`** de `route_message` (grafo incondicional) una
-        vez el grafo tenga confianza en PRO. Borrar los gates pre-núcleo de la cascada que queden
-        muertos (reachability + suite tras cada borrado). **Gateado por PRO existiendo (no existe
-        todavía) + decisión del owner — "punto de no retorno" (rollback hasta aquí = apagar el
-        flag). No ejecutado; ver el prep de abajo para lo que SÍ se preparó sin tocar el flag.**
+      - [ ] **Paso 3 — quitar el flag `agent_arch`** de `route_message` (grafo incondicional).
+        Borrar los gates pre-núcleo de la cascada que queden muertos (reachability + suite tras
+        cada borrado). **"Punto de no retorno" (rollback hasta aquí = apagar el flag). No
+        ejecutado; ver el prep de abajo para lo que SÍ se preparó sin tocar el flag.**
+        - **⚠️ Criterio revisado (2026-08-27, Gadea + Álvaro, decisión conjunta — sustituye "3.
+          Promover a PRO" de §5.3-bis abajo):** PRO no tiene fecha, no existe todavía como entorno.
+          **No se espera a PRO** — el criterio de corte pasa a ser **PRE validado a fondo** (SOAK +
+          batería sintética + tráfico real acumulado, sin gate intermedio de PRO) hasta llegar a
+          confianza suficiente (orientativo: ~90%, a definir con más precisión según vaya
+          avanzando la validación), y entonces se entrega directamente al cliente. El resto de la
+          Fase 5.3-bis (criterio de reanudación, comparación contra baseline Fase 0.4) se mantiene
+          igual — solo cambia que no hay un tercer entorno intermedio entre PRE y el cliente.
       - **🔎 PREP — mapa de reachability (2026-08-11, Álvaro, análisis sin borrar nada):** el corte
         NO es un borrado directo — **`_shared_turn_handler` sigue VIVA**: los 5 nodos reales
         delegan en ella. Se parte en dos:
@@ -944,8 +951,8 @@ reproducible. **Siguiente: 2.5 (nodo `booking`), luego 2.6.** Sigue este patrón
           real** — no se han borrado (sería prematuro sin datos de producción/reachability
           propiamente dicho), pero son candidatos fuertes a quedar muertos cuando se haga el
           análisis real en el Paso 3.
-        - **Checklist ejecutable para el Paso 3 real (gateado por owner + PRO — NO ejecutar sin
-          esa decisión):**
+        - **Checklist ejecutable para el Paso 3 real (gateado por PRE llegando a confianza
+          suficiente — ver criterio revisado arriba — NO ejecutar sin esa confirmación):**
           1. Confirmar que las 6 pruebas `*_equivalent_graph_vs_cascade` (una por nodo) ya no son
              la única red sobre el comportamiento del grupo B — con los tests directos añadidos
              hoy, no lo son; se pueden simplificar/borrar sin perder cobertura real.
@@ -974,17 +981,25 @@ reproducible. **Siguiente: 2.5 (nodo `booking`), luego 2.6.** Sigue este patrón
 > **Estado (2026-08-11):** el grafo sirve en PRE con observabilidad completa en LangSmith
 > (proyecto `diving-planet-bot`: trazas de grafo + por-llamada). **No hay código que hacer aquí**
 > — es un reposo de varios días para acumular tráfico real del equipo/PRE.
-> **Criterio de reanudación (cuándo pasar al corte):** cuando haya un volumen razonable de
-> conversaciones reales trazadas (orientativo: **≥ ~1 semana o ~50-100 conversaciones**) y la
-> comparación en LangSmith vs la **baseline de Fase 0.4** (llamadas/turno ≤ 3.00, hoy 2.80;
-> latencia; coste; sin errores/mismatches nuevos) sea **"igual o mejor"**.
+> **Criterio de reanudación (cuándo pasar al corte) — REVISADO 2026-08-27 (Gadea + Álvaro,
+> decisión conjunta):** PRO no tiene fecha, no existe todavía — **no se espera a un tercer
+> entorno**. Sustituye el criterio original: cuando haya un volumen razonable de conversaciones
+> (real y/o batería sintética dirigida) trazadas en PRE (orientativo: **≥ ~1 semana o ~50-100
+> conversaciones** — ya superado hoy con 232+50, ver Fase 5.3) y la comparación en LangSmith vs
+> la **baseline de Fase 0.4** (llamadas/turno ≤ 3.00, hoy 2.80; latencia; coste; sin
+> errores/mismatches nuevos) sea **"igual o mejor"**, **Y** además la confianza general en PRE
+> llegue a un nivel alto (orientativo ~90%, a precisar) antes de entregar al cliente — sin gate
+> intermedio de PRO.
 > **Qué hacer al reanudar (el corte, en orden — ver el 🔎 PREP de reachability arriba):**
-> 1. Migrar los gates POST-núcleo delegados (grupo B) a sus nodos, o extraer un "tail handler"
->    compartido; suite verde por paso. 2. ~~Renombrar `_route_message_inner` (paso 2)~~ **HECHO
->    2026-08-27** → `_shared_turn_handler`. 3. Promover
-> a PRO (rollout escalonado shadow→live) — decisión del owner. 4. Quitar el flag `agent_arch`
-> (paso 3, punto de no retorno) + borrar los gates pre-núcleo muertos (grupo A). **Rollback hasta
-> el corte = apagar `agent_arch`.**
+> 1. ~~Migrar los gates POST-núcleo delegados (grupo B) a sus nodos~~ **HECHO 2026-08-27**:
+>    decisión tomada de mantener `_shared_turn_handler` como tail handler compartido (no
+>    redistribuir físicamente), con tests directos de cobertura — ver el 🔎 PREP arriba.
+> 2. ~~Renombrar `_route_message_inner` (paso 2)~~ **HECHO 2026-08-27** → `_shared_turn_handler`.
+> 3. ~~Promover a PRO (rollout escalonado shadow→live)~~ **YA NO APLICA** (criterio revisado
+>    arriba — PRE es el entorno de validación final, sin PRO intermedio).
+> 4. Quitar el flag `agent_arch` (paso 3, punto de no retorno) + borrar los gates pre-núcleo
+>    muertos (grupo A) + confirmar alcanzabilidad de los 4 ítems no confirmados del grupo B antes
+>    de tocarlos. **Rollback hasta el corte = apagar `agent_arch`.**
 
 - **DoD:** legacy fuera, grafo limpio, suite por nodo + e2e verde, evals de PRE fluyendo.
   **Refactor completo.**
