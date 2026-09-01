@@ -1069,6 +1069,15 @@ reproducible. **Siguiente: 2.5 (nodo `booking`), luego 2.6.** Sigue este patrón
   un fix a ciegas (p. ej. un chequeo de "sanity" del texto) sin poder verificarlo en vivo es
   arriesgado. Queda anotado para si se repite — si vuelve a aparecer, revisar si `is_grounded`
   necesita un chequeo adicional de coherencia/longitud mínima, no solo grounding factual.
+- **⚠️ Relevancia del RAG dentro de DIVE TO HEAL para preguntas genéricas (2026-09-01, Gadea,
+  lote 7):** distinto del bug de enrutado (ya arreglado arriba). `rag_answer` busca el KB con el
+  texto literal del mensaje ("cuántas inmersiones son") — si encuentra un doc confiable (p. ej.
+  una FAQ genérica de paquetes), ese doc gana SIEMPRE; `extra_context` (que lleva la situación
+  DIVE TO HEAL) solo se usa cuando el KB no encuentra nada (`if not docs: ... extra_context`).
+  Resultado: una pregunta de seguimiento genérica en contexto DIVE TO HEAL puede recibir una
+  respuesta sobre paquetes normales, sin mencionar el programa adaptado. **No arreglado**:
+  requiere ajustar la prioridad KB-vs-contexto-conversacional con iteración en vivo (LLM real)
+  para no arriesgar romper casos donde esa prioridad SÍ es la correcta — no es un fix a ciegas.
 
 ---
 
