@@ -2153,7 +2153,20 @@ async def _extraction_phase(
         and not companion_merged_fastpath
         and not group_composition_resolved_by_base_extraction
     )
-    if not advanced or companion_ambiguous:
+    # Circuit-breaker (portado 2026-09-01, hallazgo en vivo, batería de
+    # grupos mixtos contra PRE, lote 8, confirmado con trazas de LangSmith):
+    # `detect_special_signals` RE-DERIVA `mentions_other_person`/
+    # `companion_activity`/`other_companions` del HISTORIAL ENTERO en cada
+    # llamada — con un reparto ya completo ("2 certificados, 2 minicurso, 2
+    # snorkel" para un grupo de 6), un turno tan inocuo como "ninguno
+    # colombiano" (respondiendo nacionalidad, sin mencionar a nadie) hizo que
+    # el LLM redescubriera la conversación de grupo y devolviera
+    # `mentions_other_person=true` + una re-descripción de todo el reparto
+    # como "acompañantes" — pisando `detected_group_allocation`, ya
+    # correcto, con una versión parcial. Si el grupo ya está completamente
+    # explicado, no hay ninguna ambigüedad de acompañante que esta llamada
+    # pueda resolver — se salta entera (ahorra una llamada LLM de paso).
+    if (not advanced or companion_ambiguous) and not _group_allocation_fully_resolved(state):
         signals = await detect_special_signals(message, history=state.history, lang=state.language)
         activity = signals.get("companion_activity")
         # Verificación determinista (auditoría 2026-07-23): reforzar el

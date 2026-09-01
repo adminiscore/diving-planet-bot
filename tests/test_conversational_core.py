@@ -1604,6 +1604,48 @@ def test_group_allocation_fully_resolved_helper():
 
 
 @pytest.mark.asyncio
+async def test_detect_special_signals_skipped_when_group_already_fully_resolved(monkeypatch):
+    """Causa raíz real (confirmada con trazas de LangSmith, batería de grupos
+    mixtos contra PRE, 2026-09-01, lote 8): `detect_special_signals` re-deriva
+    `mentions_other_person`/`companion_activity`/`other_companions` del
+    HISTORIAL ENTERO en cada llamada — con un reparto ya completo ("2
+    certificados, 2 minicurso, 2 snorkel" para un grupo de 6), un turno tan
+    inocuo como "ninguno colombiano" (respondiendo nacionalidad) hizo que el
+    LLM redescubriera la conversación de grupo y devolviera un payload real
+    observado en producción, re-describiendo el reparto ya correcto como
+    "acompañantes" — pisando `detected_group_allocation` con una versión
+    parcial. Si el grupo ya está completamente explicado, la llamada se
+    salta entera: se verifica aquí que ni siquiera se invoca."""
+    state = make_state("es")
+    state.detected_activity = "minicourse"
+    state.detected_group_size = 6
+    state.detected_group_allocation = {
+        "certified_diving": 2, "minicourse": 2, "snorkel": 2,
+    }
+    state.location = "cartagena"
+    state.core_pending_slot = core.SLOT_SAFETY
+    state.last_dive_over_2_years = False  # ya resuelto, next_missing_slot -> is_colombian
+
+    # Payload REAL observado en vivo (LangSmith, turno "ninguno colombiano")
+    # — si esto se llegara a aplicar, rompería detected_group_allocation.
+    poison_signals = AsyncMock(return_value={
+        "companion_activity": "certified_diving", "mentions_other_person": True,
+        "companion_is_singular": False, "companion_qty": 2,
+        "other_companions": [
+            {"activity": "minicourse", "qty": 2}, {"activity": "snorkel", "qty": 2},
+        ],
+    })
+    with patch.object(core, "fill_gaps", new=AsyncMock(return_value={"is_colombian": False})), \
+         patch.object(core, "detect_special_signals", new=poison_signals):
+        await route_message(state, "ninguno colombiano")
+    poison_signals.assert_not_called()
+    assert state.detected_group_allocation == {
+        "certified_diving": 2, "minicourse": 2, "snorkel": 2,
+    }
+    assert state.core_pending_slot != core.SLOT_COMPANION_ACTIVITY
+
+
+@pytest.mark.asyncio
 async def test_companion_attribute_in_opening_message_keeps_main_activity():
     """Hallazgo D (batería sintética contra PRE, conv 265/276): un mensaje de
     APERTURA que establece la actividad principal en primera persona
