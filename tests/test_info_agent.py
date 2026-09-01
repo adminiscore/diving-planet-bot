@@ -75,7 +75,7 @@ async def test_node_dive_to_heal_nonprice_uses_rag(monkeypatch):
 async def test_node_fallback_delegates_without_dropping_turn(monkeypatch):
     """Si el router aproximó INFO pero ningún gate dispara, delega en la cascada."""
     monkeypatch.setattr(
-        "src.agents.supervisor._route_message_inner",
+        "src.agents.supervisor._shared_turn_handler",
         AsyncMock(return_value="respuesta de la cascada"),
     )
     conv = make_state()

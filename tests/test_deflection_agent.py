@@ -63,7 +63,7 @@ async def test_node_fallback_delegates_without_dropping_turn(monkeypatch):
     """Resiliencia (#10): si el nodo se alcanza sin match, delega en la cascada
     en vez de dropear el turno."""
     monkeypatch.setattr(
-        "src.agents.supervisor._route_message_inner",
+        "src.agents.supervisor._shared_turn_handler",
         AsyncMock(return_value="respuesta de la cascada"),
     )
     conv = make_state()

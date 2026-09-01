@@ -7,7 +7,7 @@ Estructura:
     START → router → [conditional edges por route] → {5 nodos de ruta} → END
 
 En la Fase 1 los 5 nodos de ruta son **wrappers finos idénticos**: todos
-delegan en `supervisor._route_message_inner` (la cascada actual). El grafo NO
+delegan en `supervisor._shared_turn_handler` (la cascada actual). El grafo NO
 cambia comportamiento — solo añade el enrutado por encima y valida la fontanería
 (que LangGraph corre en la app, que el router clasifica, que un turno real
 produce la misma respuesta que la cascada). En Fases 2-3 el cuerpo de cada nodo
@@ -69,7 +69,7 @@ async def _router_node(state: BotState) -> dict:
 
     **Side-effects pre-router** (§4.bis: el restart de escenario nuevo se
     ejecuta "antes del router"): la cascada, en la cabecera de
-    `_route_message_inner` y ANTES de cualquier gate, (1) reinicia la memoria si
+    `_shared_turn_handler` y ANTES de cualquier gate, (1) reinicia la memoria si
     el mensaje es un escenario nuevo y (2) marca la detección sticky de niños.
     Como los nodos-agente reales (Fase 2) llaman a sus handlers/al núcleo
     directamente (ya no delegan toda la cascada), estos side-effects se
@@ -108,9 +108,9 @@ def _make_legacy_delegate_node(route_name: str):
     uno de forma independiente."""
 
     async def _node(state: BotState) -> dict:
-        from src.agents.supervisor import _route_message_inner
+        from src.agents.supervisor import _shared_turn_handler
 
-        reply = await _route_message_inner(
+        reply = await _shared_turn_handler(
             state["conv_state"], state["message"], routing_signals=state.get("signals")
         )
         return {"reply": reply}
@@ -154,6 +154,6 @@ async def run_turn_via_graph(conv_state, message: str) -> str:
     """Punto de entrada del grafo para `supervisor.route_message` (Fase 1.4).
     Devuelve la respuesta; el `conv_state` queda mutado in-place por el nodo
     de ruta (que delega en la cascada), igual que si se hubiera llamado a
-    `_route_message_inner` directamente."""
+    `_shared_turn_handler` directamente."""
     result = await get_compiled_graph().ainvoke({"conv_state": conv_state, "message": message})
     return result["reply"]

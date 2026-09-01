@@ -39,7 +39,7 @@ async def test_setup_node_passes_greeting_and_first_turn(monkeypatch):
 async def test_setup_node_delegates_when_core_declines(monkeypatch):
     monkeypatch.setattr(core, "_setup_phase", AsyncMock(return_value=None))
     monkeypatch.setattr(
-        "src.agents.supervisor._route_message_inner", AsyncMock(return_value="CASCADA")
+        "src.agents.supervisor._shared_turn_handler", AsyncMock(return_value="CASCADA")
     )
     out = await ba._setup_node(make_bot_state())
     assert out == {"reply": "CASCADA"}

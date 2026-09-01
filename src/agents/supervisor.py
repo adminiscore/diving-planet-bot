@@ -2036,36 +2036,61 @@ async def route_message(state: ConversationState, message: str) -> str:
 
     Strangler-fig (Fase 1.4, docs/multi-agent-refactor-plan.md): con
     `settings.agent_arch` ON el turno pasa por el grafo LangGraph
-    (`orchestration.graph` — router → 5 nodos-agente reales + subgrafo booking);
-    OFF, la cascada directa (`_route_message_inner`), que los nodos reales
-    conservan como handler compartido de fallback + tail post-núcleo. El flag es
-    la red de rollback hasta que el grafo tenga confianza en producción.
+    (`orchestration.graph` — router → 5 nodos-agente reales + subgrafo booking),
+    y ESOS MISMOS nodos delegan en `_shared_turn_handler` para el núcleo +
+    tail post-núcleo + fallback de resiliencia (ver su docstring — Fase 5.2
+    paso 2, ya no es "cascada legacy", es el handler compartido). Con el
+    flag OFF, `_shared_turn_handler` es el único camino, llamado aquí
+    directamente. El flag es la red de rollback hasta que el grafo tenga
+    confianza en producción.
     """
     if settings.agent_arch:
         from src.orchestration.graph import run_turn_via_graph
         response = await run_turn_via_graph(state, message)
     else:
-        response = await _route_message_inner(state, message)
+        response = await _shared_turn_handler(state, message)
     await conversation_summarizer.maybe_update_summary(state)
     return response
 
 
-async def _route_message_inner(
+async def _shared_turn_handler(
     state: ConversationState, message: str, routing_signals: dict | None = None
 ) -> str:
     """
-    Supervisor: decides how to handle each incoming message.
+    Handler de turno COMPARTIDO — renombrado (Fase 5.2 paso 2,
+    docs/multi-agent-refactor-plan.md §5) desde `_route_message_inner` porque
+    ese nombre sugería "cascada legacy a punto de borrarse" y ya no es
+    correcto: con `settings.agent_arch` ON, esta función NO es un camino
+    muerto en paralelo al grafo — es la pieza que los 5 nodos-agente reales
+    (`deflection`/`escalation`/`changes`/`info`/`booking`) siguen usando por
+    dos motivos, documentados en el 🔎 PREP de reachability del plan:
 
-    Routing rules (no LLM call):
-    1. If user is in a menu step AND sends a number -> decision tree
-    2. If user sends a menu/back keyword -> reset to main menu
-    3. If user sends an escalation keyword -> escalate
-    4. If user is in SUMMARY/ESCALATE/FREE_TEXT step -> RAG agent
-    5. If user sends free text while in a menu step -> RAG agent
+    1. **Núcleo + tail post-núcleo**: `booking/setup` delega aquí el núcleo
+       conversacional completo (slot-fill, multi-ítem, cierre) y el tail que
+       viene después (idioma, bare-affirmation). Ningún nodo reproduce el
+       núcleo por su cuenta — sería duplicar ~2200 líneas.
+    2. **Fallback de resiliencia (principio #10, "sin fugas")**: cuando un
+       nodo no matchea ningún gate pre-núcleo que sí reproduce directamente,
+       delega aquí en vez de dropear el turno — esta función SIEMPRE
+       responde algo.
 
-    `routing_signals`: si viene dado (grafo LangGraph, Fase 1 — el nodo router
-    ya calculó `detect_routing_signals` una vez por turno), se reutiliza en vez
-    de recomputar la llamada LLM. None (todos los callers legacy) = se calcula
+    Con el flag OFF (rollback), es además el único camino: la cascada
+    completa que `route_message` llama directamente.
+
+    Borrarla del todo requeriría antes migrar el grupo (B) de gates
+    post-núcleo a nodos propios (5.2 paso 3, aún no hecho) — hasta entonces
+    sigue siendo la fuente de verdad compartida, no un vestigio.
+
+    Reglas de enrutado sin LLM (documentado, no cambia con el grafo):
+    1. Si el usuario está en un paso de menú Y manda un número -> decision tree
+    2. Si manda una keyword de menú/volver -> reset al menú principal
+    3. Si manda una keyword de escalado -> escalar
+    4. Si está en paso SUMMARY/ESCALATE/FREE_TEXT -> agente RAG
+    5. Si manda texto libre en un paso de menú -> agente RAG
+
+    `routing_signals`: si viene dado (grafo LangGraph — el router ya calculó
+    `detect_routing_signals` una vez por turno), se reutiliza en vez de
+    recomputar la llamada LLM. None (flag OFF, único caller) = se calcula
     internamente igual que siempre (comportamiento idéntico).
     """
     msg_lower = message.strip().lower()
@@ -2077,7 +2102,7 @@ async def _route_message_inner(
     if _is_new_scenario_restart(message, state):
         logger.info("[SUPERVISOR] New-scenario restart -> wiping conversation memory")
         _reset_to_fresh_scenario(state)
-        return await _route_message_inner(state, message)
+        return await _shared_turn_handler(state, message)
 
     # Sticky detection: once the speaker mentions kids/children/family-with-kids,
     # we remember it for the rest of the conversation so the cart-mixto question

@@ -14,7 +14,7 @@ en vivo (`_in_active_cart_building`, `_has_link_tech_context`).
 
 ## Filosofía: enrutado *intencional*, no réplica exacta de la cascada
 
-La cascada actual (`supervisor._route_message_inner`) **decide-haciendo**:
+La cascada actual (`supervisor._shared_turn_handler`) **decide-haciendo**:
 mezcla la decisión de ruta con la acción, y algunos gates (disponibilidad,
 keyword de escalado) se comprueban DESPUÉS del núcleo — que es una caja negra
 que "devuelve None para caer al siguiente gate". Eso hace **imposible**

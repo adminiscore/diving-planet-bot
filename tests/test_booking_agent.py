@@ -83,7 +83,7 @@ async def test_node_delegates_when_core_returns_none(monkeypatch):
 
     monkeypatch.setattr(core, "maybe_handle_turn", AsyncMock(return_value=None))
     monkeypatch.setattr(
-        "src.agents.supervisor._route_message_inner",
+        "src.agents.supervisor._shared_turn_handler",
         AsyncMock(return_value="respuesta de la cascada"),
     )
     conv = make_state()

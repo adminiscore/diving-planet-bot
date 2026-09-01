@@ -4,7 +4,7 @@ reconocen la frase — "estoy embarazadita", "quisiera hablar con una persona
 real", "mejor empecemos de cero" no están en ninguna lista exacta.
 
 Offline: detect_routing_signals se mockea (nunca llama al LLM real). La red se
-calcula una vez en _route_message_inner y se pasa al núcleo conversacional.
+calcula una vez en _shared_turn_handler y se pasa al núcleo conversacional.
 """
 
 from unittest.mock import AsyncMock, patch
@@ -127,7 +127,7 @@ async def test_digit_only_message_skips_llm_call_entirely():
 @pytest.mark.asyncio
 async def test_sensitive_signal_escalates_with_conversational_core_on():
     """La red aplica con el núcleo conversacional activo — se calcula UNA vez
-    en _route_message_inner y se pasa a maybe_handle_turn, nunca se pierde por
+    en _shared_turn_handler y se pasa a maybe_handle_turn, nunca se pierde por
     el camino."""
     state = make_state()
     with patch("src.agents.supervisor.detect_routing_signals",
@@ -555,7 +555,7 @@ def test_mixed_nationality_regex_covers_explicit_count_and_pero():
 
     Solo se prueba el detector, no `route_message` end-to-end: en agent-arch
     la explicación de nacionalidad mixta todavía vive únicamente en la
-    cascada legacy (`_route_message_inner`) — el router clasifica el
+    cascada legacy (`_shared_turn_handler`) — el router clasifica el
     mensaje como ROUTE_BOOKING (ver `orchestration/router.py`, docstring
     "candidato claro a discrepancia de shadow"), pero el subgrafo de
     booking (Fase 3.3, en curso) todavía no reproduce esta respuesta

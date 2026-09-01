@@ -6,6 +6,6 @@
   `settings.agent_arch`.
 
 En la Fase 1 los nodos de ruta son wrappers finos que delegan en la cascada
-actual (`supervisor._route_message_inner`); en Fases 2-3 se sustituyen por su
+actual (`supervisor._shared_turn_handler`); en Fases 2-3 se sustituyen por su
 lógica real, una ruta a la vez (strangler-fig).
 """

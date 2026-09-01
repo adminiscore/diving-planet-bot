@@ -2546,7 +2546,7 @@ async def maybe_handle_turn(
     los handlers deterministas legacy (escalado por keyword, menú/volver).
 
     `routing_signals` (auditoría 2026-07-22): ya calculado UNA vez por
-    `supervisor._route_message_inner` (nunca se recalcula aquí).
+    `supervisor._shared_turn_handler` (nunca se recalcula aquí).
 
     (Fase 3.3b/c/d/e) Orquesta las fases extraídas: `_setup_phase` →
     `_availability_phase` → `_routing_phase` → `_extraction_phase` →

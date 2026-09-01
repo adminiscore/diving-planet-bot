@@ -52,7 +52,7 @@ async def info_node(state: BotState) -> dict:
         _FOOD_ALLERGEN_RE,
         _build_extra_context,
         _maybe_answer_age_eligibility,
-        _route_message_inner,
+        _shared_turn_handler,
         load_policies,
         rag_answer,
     )
@@ -108,4 +108,4 @@ async def info_node(state: BotState) -> dict:
     #     (p. ej. `_looks_like_age_eligibility_question` sobre-disparó) -> delegar
     #     en la cascada, que siempre responde.
     logger.info("[NODE:info] sin match (aproximación del router) -> delego en la cascada")
-    return {"reply": await _route_message_inner(conv, message, routing_signals=signals)}
+    return {"reply": await _shared_turn_handler(conv, message, routing_signals=signals)}

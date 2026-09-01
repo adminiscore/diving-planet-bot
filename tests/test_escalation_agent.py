@@ -93,7 +93,7 @@ async def test_node_wants_human_delegates_to_cascade(monkeypatch):
     """Gate SAFETY post-núcleo (wants_human/keyword): el nodo NO lo reproduce
     (cambiaría el orden respecto al núcleo) → delega en la cascada."""
     monkeypatch.setattr(
-        "src.agents.supervisor._route_message_inner",
+        "src.agents.supervisor._shared_turn_handler",
         AsyncMock(return_value="respuesta de la cascada"),
     )
     conv = make_state()

@@ -38,7 +38,7 @@ El monolito del núcleo queda partido en 5 fases de responsabilidad única.
   slots) igual que la cascada.
 - **POST-núcleo (resiliencia #10):** si `_setup_phase` devuelve `None`
   (escalado-keyword/`wants_human` — que el router manda a SAFETY, no a BOOKING,
-  así que aquí no ocurre), el nodo `setup` delega en `_route_message_inner`.
+  así que aquí no ocurre), el nodo `setup` delega en `_shared_turn_handler`.
 """
 
 from __future__ import annotations
@@ -68,7 +68,7 @@ async def _setup_node(state: _BookingSubState) -> dict:
     (escalado-keyword), delega en la cascada (resiliencia #10) — no ocurre para
     tráfico BOOKING. Si no, pasa `greeting`/`first_turn` al nodo `body`."""
     from src.agents.conversational_core import _setup_phase
-    from src.agents.supervisor import _route_message_inner
+    from src.agents.supervisor import _shared_turn_handler
 
     conv = state["conv_state"]
     message = state["message"]
@@ -77,7 +77,7 @@ async def _setup_node(state: _BookingSubState) -> dict:
     result = await _setup_phase(conv, message, signals)
     if result is None:
         logger.info("[NODE:booking/setup] núcleo declinaría -> delego en la cascada")
-        return {"reply": await _route_message_inner(conv, message, routing_signals=signals)}
+        return {"reply": await _shared_turn_handler(conv, message, routing_signals=signals)}
     greeting, first_turn = result
     return {"greeting": greeting, "first_turn": first_turn}
 

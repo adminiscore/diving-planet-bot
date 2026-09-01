@@ -6,7 +6,7 @@ Ver `docs/multi-agent-refactor-plan.md` §5 Fase 2.1 y §4.bis (taxonomía).
 
 La ruta `ROUTE_DEFLECT` (lo que `router.classify_route` clasifica como
 deflexión): dos casos, en el MISMO orden que la cascada actual
-(`supervisor._route_message_inner`) para preservar comportamiento:
+(`supervisor._shared_turn_handler`) para preservar comportamiento:
 
 1. **Petición de contacto** (`_asks_for_contact_number` o la señal LLM
    `asks_for_contact_number`): el bot no da número de teléfono/WhatsApp/correo
@@ -19,7 +19,7 @@ deflexión): dos casos, en el MISMO orden que la cascada actual
 ## Primer corte strangler (Fase 2.1)
 
 En la Fase 1 los 5 nodos eran wrappers idénticos que delegaban en TODA la
-cascada (`_route_message_inner`). Este nodo es el primero que **deja de
+cascada (`_shared_turn_handler`). Este nodo es el primero que **deja de
 delegar**: ejecuta solo la lógica de deflexión, no toda la cascada. La
 equivalencia se preserva porque, cuando el router manda a `ROUTE_DEFLECT`, ya
 ha descartado antes PII/sensible/link/cancelación/reprogramación (devolvería
@@ -55,7 +55,7 @@ async def deflection_node(state: BotState) -> dict:
         _asks_for_contact_number,
         _contact_number_deflection,
         _infer_language,
-        _route_message_inner,
+        _shared_turn_handler,
     )
 
     conv = state["conv_state"]
@@ -82,7 +82,7 @@ async def deflection_node(state: BotState) -> dict:
         # matchea (no debería ocurrir). No dropear el turno → delegar en la
         # cascada, que siempre responde.
         logger.warning("[NODE:deflection] alcanzado sin match — fallback a la cascada")
-        response = await _route_message_inner(conv, message, routing_signals=signals)
+        response = await _shared_turn_handler(conv, message, routing_signals=signals)
         return {"reply": response}
 
     # Mismo efecto de estado que los handlers de deflexión de la cascada.

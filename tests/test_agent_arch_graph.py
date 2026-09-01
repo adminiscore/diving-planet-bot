@@ -81,7 +81,7 @@ async def test_graph_reuses_router_signals_no_double_llm_call(monkeypatch, _sign
     await route_message(make_state(), "quiero información de los tours")
 
     # El nodo router calcula las señales UNA sola vez; el nodo de ruta las pasa
-    # a _route_message_inner, que NO recomputa (sin doble llamada LLM/turno).
+    # a _shared_turn_handler, que NO recomputa (sin doble llamada LLM/turno).
     assert sup_mock.await_count == 1
 
 

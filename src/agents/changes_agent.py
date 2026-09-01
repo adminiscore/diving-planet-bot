@@ -56,7 +56,7 @@ async def changes_node(state: BotState) -> dict:
         _detect_modify_booking_request,
         _detect_reschedule_request,
         _in_active_cart_building,
-        _route_message_inner,
+        _shared_turn_handler,
     )
 
     conv = state["conv_state"]
@@ -93,4 +93,4 @@ async def changes_node(state: BotState) -> dict:
     #     la cascada preserva el orden exacto respecto al núcleo (que puede
     #     interceptar la pregunta de disponibilidad fresca → booking).
     logger.info("[NODE:changes] disponibilidad (post-núcleo) / sin match -> delego en la cascada")
-    return {"reply": await _route_message_inner(conv, message, routing_signals=signals)}
+    return {"reply": await _shared_turn_handler(conv, message, routing_signals=signals)}

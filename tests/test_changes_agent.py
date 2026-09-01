@@ -67,7 +67,7 @@ async def test_node_availability_delegates_to_cascade(monkeypatch):
     """Disponibilidad es un gate POST-núcleo (patrón B): el nodo NO lo reproduce
     → delega en la cascada (que corre el núcleo primero)."""
     monkeypatch.setattr(
-        "src.agents.supervisor._route_message_inner",
+        "src.agents.supervisor._shared_turn_handler",
         AsyncMock(return_value="respuesta de la cascada"),
     )
     conv = make_state()

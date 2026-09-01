@@ -73,7 +73,7 @@ async def escalation_node(state: BotState) -> dict:
         _broken_link_escalation_response,
         _detect_broken_link_complaint,
         _has_link_tech_context,
-        _route_message_inner,
+        _shared_turn_handler,
         build_lead_summary,
         detect_pii,
         detect_sensitive_escalation,
@@ -149,4 +149,4 @@ async def escalation_node(state: BotState) -> dict:
     #     que acepta la oferta de asesor) + defensa "sin fugas": delegar en la
     #     cascada preserva el orden exacto (corre el núcleo y luego el gate).
     logger.info("[NODE:escalation] gate post-núcleo / sin match -> delego en la cascada")
-    return {"reply": await _route_message_inner(conv, message, routing_signals=signals)}
+    return {"reply": await _shared_turn_handler(conv, message, routing_signals=signals)}

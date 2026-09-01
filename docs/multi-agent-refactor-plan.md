@@ -886,8 +886,8 @@ reproducible. **Siguiente: 2.5 (nodo `booking`), luego 2.6.** Sigue este patrón
       fases del núcleo mockeadas + las funciones de edge `_after_*`. La "reorganización por nodo"
       queda satisfecha por la convención `test_<nodo>_agent.py`. *(dev: Álvaro)*
 - [~] **5.2 · CORTE del legacy — EN CURSO (incremental, suite verde tras cada paso).** Con el flag
-      probado en PRE. **Hallazgo del prep:** la cascada NO se borra entera — `_route_message_inner`
-      **se queda** como handler compartido al que los nodos delegan (núcleo + tail post-núcleo:
+      probado en PRE. **Hallazgo del prep:** la cascada NO se borra entera — `_shared_turn_handler`
+      (renombrada, ver Paso 2) **se queda** como handler compartido al que los nodos delegan (núcleo + tail post-núcleo:
       wants_human, idioma, disponibilidad); reproducir esos gates en los nodos SIN el núcleo
       perdería efectos de estado. Lo que muere: el flag + shadow + gates pre-núcleo ya reproducidos.
       - [x] **Paso 1 — subsistema shadow retirado** (`2491be5`). El shadow (Fase 1.5) ya cumplió
@@ -897,8 +897,15 @@ reproducible. **Siguiente: 2.5 (nodo `booking`), luego 2.6.** Sigue este patrón
         campo `agent_arch_shadow` (config.py) + `test_route_shadow.py`. −183 líneas. Sin tocar el
         rollback (flag + cascada siguen). Comportamiento intacto (marks no-op): ruff limpio, 129
         verdes en orquestación/agentes/equivalencia; suite completa en verificación.
-      - [ ] **Paso 2 — renombrar `_route_message_inner`** → nombre que refleje que es el handler
-        compartido (no "cascada legacy"), y documentar su rol post-corte.
+      - [x] **Paso 2 — renombrar `_route_message_inner` → `_shared_turn_handler`** (2026-08-27,
+        Gadea, tras verificar el SOAK de cierre en LangSmith — 579 turnos/232 conversaciones,
+        0 errores). Renombrado en `supervisor.py` + los 5 nodos-agente + `orchestration/{graph,
+        router,state,__init__}.py` + tests (19 archivos), con la suite (por nodo + e2e, flag on/
+        off/shadow) verde tras el cambio. Docstring reescrito documentando su rol dual post-corte
+        (núcleo+tail compartido cuando el grafo está ON, único camino cuando está OFF) — ver la
+        función en `supervisor.py` para el detalle. `docs/archive/*` y las entradas fechadas de
+        este documento (§8, handoffs) se dejan con el nombre viejo a propósito: son registro
+        histórico de lo que era cierto en su momento, no se reescribe el pasado.
       - [ ] **Paso 3 — quitar el flag `agent_arch`** de `route_message` (grafo incondicional) una
         vez el grafo tenga confianza en PRO. Borrar los gates pre-núcleo de la cascada que queden
         muertos (reachability + suite tras cada borrado).
@@ -937,7 +944,8 @@ reproducible. **Siguiente: 2.5 (nodo `booking`), luego 2.6.** Sigue este patrón
 > latencia; coste; sin errores/mismatches nuevos) sea **"igual o mejor"**.
 > **Qué hacer al reanudar (el corte, en orden — ver el 🔎 PREP de reachability arriba):**
 > 1. Migrar los gates POST-núcleo delegados (grupo B) a sus nodos, o extraer un "tail handler"
->    compartido; suite verde por paso. 2. Renombrar `_route_message_inner` (paso 2). 3. Promover
+>    compartido; suite verde por paso. 2. ~~Renombrar `_route_message_inner` (paso 2)~~ **HECHO
+>    2026-08-27** → `_shared_turn_handler`. 3. Promover
 > a PRO (rollout escalonado shadow→live) — decisión del owner. 4. Quitar el flag `agent_arch`
 > (paso 3, punto de no retorno) + borrar los gates pre-núcleo muertos (grupo A). **Rollback hasta
 > el corte = apagar `agent_arch`.**

@@ -10,7 +10,7 @@ desglosado en campos tipados (`booking`/`memory`/`signals`/...) y un
 `messages` con reducer `add_messages`. Pero llegar ahí de golpe rompería el
 principio #2 (strangler-fig): en las Fases 1-2 los nodos del grafo son
 **wrappers finos que delegan en los handlers ACTUALES**
-(`_route_message_inner` y compañía), y esos handlers reciben y mutan un
+(`_shared_turn_handler` y compañía), y esos handlers reciben y mutan un
 `ConversationState`. Reescribir su firma a un `BotState` plano de golpe sería
 un big-bang, justo lo que el plan prohíbe.
 
