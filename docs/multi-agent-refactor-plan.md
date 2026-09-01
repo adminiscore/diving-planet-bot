@@ -1054,6 +1054,21 @@ reproducible. **Siguiente: 2.5 (nodo `booking`), luego 2.6.** Sigue este patrón
 - **Latencia/coste** → medidos en LangSmith (Fase 0 baseline → Fase 3), no de oído.
 - **Churn de versiones de LangGraph/LangChain** → fijar versiones en `pyproject`; actualizar
   deliberadamente, no en automático.
+- **⚠️ Respuesta RAG corrupta, sin reproducir (2026-09-01, Gadea, lote 7 de frontera contra
+  PRE):** una conversación en contexto DIVE TO HEAL (`dive-to-heal-persist-across-many-turns`,
+  turno 3, "cuantas inmersiones son") devolvió literalmente `{" "}` como respuesta — texto
+  corrupto, no una respuesta real. Investigado: no es un bug de código (sin ningún `json.dumps`/
+  f-string sospechoso en `rag_agent.py`/`conversational_core.py` que pudiera producir ese
+  string) — parece ser el propio LLM generando texto sin sentido para esa consulta puntual, que
+  pasó el juez de grounding (`is_grounded`, obligatorio en la ruta `extra_context_only` de
+  `_answer_with_llm`) porque no contiene precios/URLs/datos personales que los guards
+  deterministas revisan, y el juez de grounding tampoco valida coherencia general del texto. No
+  reproducido en ninguna otra de las ~250 conversaciones sintéticas de hoy — parece un caso
+  aislado, no sistemático. **Sin fix propuesto todavía**: no hay forma de reproducirlo
+  localmente (bloqueado por falta de créditos LLM en `.env.dev` en el momento de investigarlo) y
+  un fix a ciegas (p. ej. un chequeo de "sanity" del texto) sin poder verificarlo en vivo es
+  arriesgado. Queda anotado para si se repite — si vuelve a aparecer, revisar si `is_grounded`
+  necesita un chequeo adicional de coherencia/longitud mínima, no solo grounding factual.
 
 ---
 
