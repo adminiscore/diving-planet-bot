@@ -198,6 +198,41 @@ class TestGroupDetection:
         assert intent.activity == "minicourse"
         assert intent.is_certified is False
 
+    def test_detect_mixed_group_mitad_x_mitad_y(self, detector, state):
+        """Hallazgo en vivo (batería de grupos mixtos contra PRE, 2026-09-01,
+        lote 8): "somos 10 de una empresa, mitad buceo certificado y mitad
+        snorkel" no matcheaba NINGÚN patrón de reparto (todos exigían
+        cantidades explícitas por actividad) — la conversación se quedaba
+        atascada repitiendo "¿cuántos serían para buceo certificado?" sin
+        importar qué respondiera el cliente después, porque nunca iba a dar
+        un número exacto (ya lo dijo con "mitad"). El impar (si lo hay) se
+        lo lleva la PRIMERA actividad mencionada."""
+        intent = detector.detect(
+            "somos 10 de una empresa, mitad buceo certificado y mitad snorkel", state)
+        assert intent.group_size == 10
+        assert intent.group_allocation == {"certified_diving": 5, "snorkel": 5}
+
+    def test_detect_mixed_group_mitad_odd_total_rounds_to_first_activity(self, detector, state):
+        intent = detector.detect("somos 9, mitad certificado y mitad minicurso", state)
+        assert intent.group_size == 9
+        assert intent.group_allocation == {"certified_diving": 5, "minicourse": 4}
+
+    def test_detect_mixed_group_mitad_comma_separated(self, detector, state):
+        intent = detector.detect("somos 7, mitad snorkel, la otra mitad buceo", state)
+        assert intent.group_size == 7
+        assert intent.group_allocation == {"snorkel": 4, "certified_diving": 3}
+
+    def test_detect_mixed_group_half_x_half_y_english(self, detector, state):
+        intent = detector.detect("we are 6, half diving and half snorkel", state)
+        assert intent.group_size == 6
+        assert intent.group_allocation == {"certified_diving": 3, "snorkel": 3}
+
+    def test_mitad_without_activity_context_does_not_false_positive(self, detector, state):
+        """"mitad" fuera de contexto de reparto de actividades (pago, tiempo)
+        no debe disparar ningún group_allocation espurio."""
+        intent = detector.detect("puedo pagar la mitad ahora y la mitad despues?", state)
+        assert intent.group_allocation is None
+
 
 class TestLastDiveDetection:
     

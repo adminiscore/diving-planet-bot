@@ -804,6 +804,44 @@ class IntentDetector:
                 intent.group_size = total
                 intent.detected_fields.append("group_allocation")
 
+        # Pattern D: "mitad buceo certificado y mitad snorkel" (portado
+        # 2026-09-01, hallazgo en vivo lote 8 — bateria de grupos mixtos
+        # contra PRE): "somos 10 de una empresa, mitad buceo certificado y
+        # mitad snorkel" no matcheaba NINGUN patron de reparto (todos exigen
+        # cantidades EXPLICITAS por actividad) — el grupo se quedaba sin
+        # `group_allocation`, y como la pregunta "¿cuantos serian para buceo
+        # certificado?" no tiene ninguna respuesta que el usuario pueda dar
+        # para resolverla (ya lo dijo con "mitad", no va a repetir un numero
+        # exacto), la conversacion se quedaba atascada repitiendo la misma
+        # pregunta sin importar lo que respondiera despues. Requiere
+        # `group_size` ya conocido (de "somos N" en el mismo mensaje o de un
+        # turno anterior) para calcular las mitades; el resto impar (si lo
+        # hay) se lo lleva la PRIMERA actividad mencionada.
+        if not intent.group_allocation:
+            m_half = re.search(
+                r'\bmitad\s+(?:de\s+)?(\w+(?:\s+\w+){0,2}?)[,\s]+(?:y\s+)?(?:la\s+otra\s+)?mitad\s+(?:de\s+)?(\w+(?:\s+\w+){0,2})'
+                r'|\bhalf\s+(\w+(?:\s+\w+){0,2}?)[,\s]+(?:and\s+)?half\s+(\w+(?:\s+\w+){0,2})',
+                message, re.IGNORECASE,
+            )
+            total = intent.group_size
+            if m_half is None:
+                m_half_total = None
+            else:
+                m_half_total = re.search(r'\bsomos\s+(\d+)\b|\b(\d+)\s+(?:de\s+una\s+empresa|personas?)\b', message, re.IGNORECASE)
+            if m_half and (total or m_half_total):
+                if not total and m_half_total:
+                    total = int(next(g for g in m_half_total.groups() if g))
+                g = m_half.groups()
+                act1_raw, act2_raw = (g[0], g[1]) if g[0] else (g[2], g[3])
+                act1 = _activity_key(act1_raw.lower()) if act1_raw else None
+                act2 = _activity_key(act2_raw.lower()) if act2_raw else None
+                if act1 and act2 and act1 != act2 and total:
+                    n1 = -(-total // 2)  # ceil: la primera actividad se lleva el impar
+                    n2 = total - n1
+                    intent.group_allocation = {act1: n1, act2: n2}
+                    intent.group_size = total
+                    intent.detected_fields.append("group_allocation")
+
         mixed_group_patterns = [
             # "yo quiero buceo certificado y mi novia snorkel" - captura hasta 3 palabras
             (r'\byo\s+(?:quiero|hago|haría|haré)\s+(?:el\s+)?(\w+(?:\s+\w+){0,2}?)\s+y\s+(?:mi\s+)?(?:novia|novio|amigo|amiga|pareja|compañero|compañera|él|ella)\s+(?:quiere|hace|haría|hará)?\s*(?:el\s+)?(\w+(?:\s+\w+){0,2})', 'es'),
