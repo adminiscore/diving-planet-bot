@@ -551,18 +551,28 @@ def test_mixed_nationality_regex_covers_explicit_count_and_pero():
     "pero") — el grupo se trataba como si fuera enteramente extranjero, sin
     reconocer la nacionalidad mixta. Extendido el regex para cubrir cantidad
     explícita + "pero"/"y", en ambos órdenes (colombiano-primero /
-    extranjero-primero).
-
-    Solo se prueba el detector, no `route_message` end-to-end: en agent-arch
-    la explicación de nacionalidad mixta todavía vive únicamente en la
-    cascada legacy (`_shared_turn_handler`) — el router clasifica el
-    mensaje como ROUTE_BOOKING (ver `orchestration/router.py`, docstring
-    "candidato claro a discrepancia de shadow"), pero el subgrafo de
-    booking (Fase 3.3, en curso) todavía no reproduce esta respuesta
-    determinista. Eso es un gap arquitectónico ya documentado por Álvaro,
-    no algo a resolver como parte de este port."""
+    extranjero-primero)."""
     from src.agents.supervisor import _detect_mixed_nationality_request
     assert _detect_mixed_nationality_request(
         "bueno dos de nosotros somos colombianos pero uno es extranjero")
     assert _detect_mixed_nationality_request(
         "tres somos extranjeros y uno es colombiano")
+
+
+@pytest.mark.asyncio
+async def test_mixed_nationality_gets_advisor_explanation_end_to_end():
+    """Gap encontrado y cerrado 2026-08-27: en agent-arch la explicación de
+    nacionalidad mixta vivía solo en la cascada (`_shared_turn_handler`) —
+    el router ya clasificaba estos mensajes como ROUTE_BOOKING, pero el
+    subgrafo de `booking` nunca reproducía la respuesta, así que caían al
+    slot-fill normal sin decir nada del pago por nacionalidad. Ahora
+    `booking_node` reproduce la misma explicación (`_mixed_nationality_
+    response`, compartida con la cascada) con un chequeo puntual antes del
+    subgrafo — verificado end-to-end vía `route_message` (funciona igual con
+    el flag on u off)."""
+    state = make_state()
+    with patch("src.agents.supervisor.detect_routing_signals", new=AsyncMock(return_value={})):
+        resp = await route_message(
+            state, "bueno dos de nosotros somos colombianos pero uno es extranjero")
+    assert "nacionalidades mixtas" in resp.lower()
+    assert state.quick_replies

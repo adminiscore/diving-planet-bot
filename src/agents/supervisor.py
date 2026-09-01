@@ -687,6 +687,40 @@ def _booking_change_buttons(lang: str) -> list[dict]:
     ]
 
 
+def _mixed_nationality_response(state: ConversationState, message: str) -> str:
+    """Copy + efecto de estado para grupos con nacionalidades mixtas (portado a
+    `booking_agent.py`, 2026-08-27 — gap encontrado al verificar hallazgo P en
+    vivo contra PRE: el router ya clasificaba estos mensajes como ROUTE_BOOKING,
+    pero el subgrafo de booking nunca reproducía esta explicación, así que en
+    el grafo caían al slot-fill normal sin decir nada del pago individual por
+    nacionalidad). Extraído de `_shared_turn_handler` para que la cascada y el
+    nodo `booking` usen una única fuente de copy/estado, mismo patrón que
+    `_booking_change_response`."""
+    if state.language == "es":
+        response = (
+            "¡Entendido! Cuando el grupo tiene nacionalidades mixtas, cada quien paga según su "
+            "nacionalidad: los colombianos/residentes en pesos (COP) y los extranjeros en dólares "
+            "(USD), al mismo precio equivalente — no hay descuento especial por ser colombiano. "
+            "Para coordinar el pago individual de cada persona del grupo, lo mejor es que un "
+            "asesor te ayude directamente.\n\n¿Quieres que te conecte con un asesor, o prefieres "
+            "volver al menú principal?"
+        )
+    else:
+        response = (
+            "Got it! When the group has mixed nationalities, each person pays according to their "
+            "own nationality: Colombians/residents in pesos (COP) and foreign visitors in dollars "
+            "(USD), at the same equivalent price — there's no special discount for being "
+            "Colombian. To coordinate each person's individual payment, it's best for an advisor "
+            "to help you directly.\n\nWould you like me to connect you with an advisor, or would "
+            "you rather go back to the main menu?"
+        )
+    state.quick_replies = _booking_change_buttons(state.language)
+    logger.info("[SUPERVISOR] Mixed-nationality group detected -> honest explanation + escalate/home buttons")
+    state.history.append({"role": "user", "content": message})
+    state.history.append({"role": "assistant", "content": response})
+    return response
+
+
 def _booking_change_response(state: ConversationState, message: str, kind: str) -> str:
     """Copy + efecto de estado compartido para cancelación/reprogramación/
     modificación de headcount (Bloque 2.1 + hallazgo G): texto de política de la
@@ -2286,29 +2320,7 @@ async def _shared_turn_handler(
     # Answer honestly instead of falling through to a generic RAG fallback
     # (T013 in docs/archive/test-battery-edge-cases.md).
     if _detect_mixed_nationality_request(msg_lower):
-        if state.language == "es":
-            response = (
-                "¡Entendido! Cuando el grupo tiene nacionalidades mixtas, cada quien paga según su "
-                "nacionalidad: los colombianos/residentes en pesos (COP) y los extranjeros en dólares "
-                "(USD), al mismo precio equivalente — no hay descuento especial por ser colombiano. "
-                "Para coordinar el pago individual de cada persona del grupo, lo mejor es que un "
-                "asesor te ayude directamente.\n\n¿Quieres que te conecte con un asesor, o prefieres "
-                "volver al menú principal?"
-            )
-        else:
-            response = (
-                "Got it! When the group has mixed nationalities, each person pays according to their "
-                "own nationality: Colombians/residents in pesos (COP) and foreign visitors in dollars "
-                "(USD), at the same equivalent price — there's no special discount for being "
-                "Colombian. To coordinate each person's individual payment, it's best for an advisor "
-                "to help you directly.\n\nWould you like me to connect you with an advisor, or would "
-                "you rather go back to the main menu?"
-            )
-        state.quick_replies = _booking_change_buttons(state.language)
-        logger.info("[SUPERVISOR] Mixed-nationality group detected -> honest explanation + escalate/home buttons")
-        state.history.append({"role": "user", "content": message})
-        state.history.append({"role": "assistant", "content": response})
-        return response
+        return _mixed_nationality_response(state, message)
 
     # Age-eligibility question ("mi hijo de 9 años puede bucear?", "hay edad
     # mínima?", "una persona de 14 puede?"). Answer deterministically from the

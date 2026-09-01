@@ -191,5 +191,20 @@ async def booking_node(state: BotState) -> dict:
     """Entrada de la ruta BOOKING en el grafo principal: invoca el subgrafo del
     núcleo. `conv_state` viaja por referencia, así que las mutaciones in-place
     del núcleo se propagan al objeto del caller igual que antes."""
+    from src.agents.supervisor import _detect_mixed_nationality_request, _mixed_nationality_response
+
+    conv = state["conv_state"]
+    message = state["message"]
+
+    # Nacionalidad mixta (portado 2026-08-27 — gap encontrado en vivo contra
+    # PRE tras el hallazgo P): el router ya manda estos mensajes aquí
+    # (`orchestration/router.py`, sub-caso de BOOKING), pero el subgrafo NO
+    # reproducía la explicación — caían al slot-fill normal sin decir nada
+    # del pago individual por nacionalidad. Chequeo puntual ANTES del
+    # subgrafo, mismo patrón que `deflection_node`/`info_node`.
+    if _detect_mixed_nationality_request(message.strip().lower()):
+        logger.info("[NODE:booking] nacionalidad mixta -> explicación honesta + botones asesor/menú")
+        return {"reply": _mixed_nationality_response(conv, message)}
+
     result = await _get_booking_subgraph().ainvoke(state)
     return {"reply": result["reply"]}

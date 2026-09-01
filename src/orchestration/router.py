@@ -121,8 +121,10 @@ def classify_route(conv_state: ConversationState, message: str, signals: dict) -
 
     # ── BOOKING (sub-caso: nacionalidad mixta) ──
     # La taxonomía §4.bis lo clasifica como reserva; la cascada lo responde con
-    # una explicación + botones de asesor. Candidato claro a discrepancia de
-    # shadow (comportamiento advisor vs. ruta booking) — a documentar en 1.5.
+    # una explicación + botones de asesor. `booking_node` (booking_agent.py)
+    # reproduce esa misma explicación con un chequeo puntual ANTES del
+    # subgrafo (portado 2026-08-27 — antes era un gap real: el router mandaba
+    # aquí pero el subgrafo caía al slot-fill normal sin decir nada).
     if sup._detect_mixed_nationality_request(msg_lower):
         return ROUTE_BOOKING
 
