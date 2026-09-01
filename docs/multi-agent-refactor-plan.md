@@ -924,6 +924,22 @@ reproducible. **Siguiente: 2.5 (nodo `booking`), luego 2.6.** Sigue este patrón
           quitar `agent_arch` de `route_message` (grafo incondicional) y borrar lo que quede
           muerto de (A) + el shadow. Suite (por nodo + e2e) como red tras cada borrado. Decidir
           disponibilidad-fresh (patrón B) aquí (¿el núcleo la intercepta o gana el gate?).
+        - **⚠️ Hallazgo al intentar arrancar (B) (2026-08-27, Gadea, análisis sin tocar código):**
+          el grupo (B) es más grande de lo que sugiere el resumen por nodo — es TODA la cola de
+          `_shared_turn_handler` tras la llamada a `maybe_handle_turn` (~170 líneas, líneas
+          ~2373-2542 hoy): afirmación-breve-acepta-asesor, escalado por keyword/`wants_human`,
+          link-roto (duplicado del gate pre-núcleo), sensible (duplicado), disponibilidad/días
+          cerrados, cambio de idioma explícito, y el fallback "no debería llegar aquí". **No es un
+          mover-código mecánico**: los 7 gates solo se evalúan HOY cuando `maybe_handle_turn`
+          devuelve `None` — dependen del resultado del núcleo, que vive dentro del subgrafo
+          `booking`. El router (Fase 1) decide la ruta ANTES de ejecutar nada, así que no puede
+          saber de antemano "esto va a caer en el gate X post-núcleo" sin correr el núcleo
+          primero — migrar esto de verdad exige decidir CÓMO representarlo (¿el nodo `escalation`
+          pasa a ejecutar también el núcleo? ¿nueva ruta del router?), una decisión de diseño de
+          arquitectura, no una tarea mecánica. Aparcado sin tocar código para una sesión dedicada
+          (plan-mode, con Álvaro si es posible) en vez de improvisarlo — el riesgo de romper la
+          equivalencia justo antes del punto de no retorno (Paso 3) es demasiado alto para
+          resolverlo sobre la marcha.
 - [~] **5.3 · Bucle de datos reales con LangSmith — EN CURSO (periodo de medición ABIERTO).**
       LangSmith trazando PRE en vivo (proyecto `diving-planet-bot`, commit `cd5a23a`). Cableado:
       key como GitHub secret → inyectada en `.env.pre` por el job `deploy-pre`; **fix de un bug
