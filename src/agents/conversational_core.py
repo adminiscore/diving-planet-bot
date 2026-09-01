@@ -177,6 +177,27 @@ def _cart_will_include_cert(state: ConversationState) -> bool:
     return _effective_activity(state) == "certified_diving"
 
 
+def _group_allocation_fully_resolved(state: ConversationState) -> bool:
+    """True si `detected_group_allocation` ya explica a TODO el grupo (su suma
+    cubre `detected_group_size`) — circuit-breaker (portado 2026-09-01,
+    hallazgo en vivo, batería de grupos mixtos contra PRE, lote 8): con un
+    reparto ya completo (p. ej. "2 certificados, 2 minicurso, 2 snorkel"
+    para un grupo de 6), el mecanismo de acompañante-ambiguo seguía
+    disparándose por alguna vía (no aislada con certeza total ni siquiera
+    con trazas de LangSmith — la lógica determinista involucrada no deja
+    rastro de LLM que inspeccionar), preguntando "¿qué le gustaría hacer a
+    tu acompañante?" pese a que no queda NADIE sin actividad asignada. Si el
+    reparto ya cubre a todo el grupo, no hay ningún acompañante posible que
+    preguntar — sea cual sea la vía que intente disparar esa pregunta."""
+    alloc = state.detected_group_allocation
+    if not alloc:
+        return False
+    size = state.detected_group_size
+    if not size:
+        return False
+    return sum(alloc.values()) >= size
+
+
 def next_missing_slot(state: ConversationState) -> str | None:
     """El ÚNICO slot obligatorio que falta, o None si la reserva está lista
     para el resumen + links. Lógica pura: no muta el estado."""
@@ -1254,6 +1275,20 @@ async def _understand(state: ConversationState, message: str) -> tuple:
             )
     supervisor._apply_detected_intent(intent, state, message)
 
+    # Circuit-breaker (portado 2026-09-01, hallazgo en vivo, batería de
+    # grupos mixtos contra PRE, lote 8): si el reparto del grupo YA cubre a
+    # todo el mundo (p. ej. "2 certificados, 2 minicurso, 2 snorkel" para un
+    # grupo de 6, ya aplicado arriba vía `_apply_detected_intent`), no puede
+    # quedar ningún acompañante sin actividad — se auto-limpia cualquier
+    # bandera de "pregunta de acompañante pendiente" que hubiera quedado
+    # marcada por la razón que sea, en vez de dejar que dispare más
+    # adelante en el turno pese a no tener ya ningún sentido.
+    if _group_allocation_fully_resolved(state):
+        state.needs_companion_activity = False
+        state.companion_activity_deferred = False
+        state.pending_companion_activity = None
+        state.pending_companion_queue = []
+
     # "voy solo" → 1 persona. Nació para cursos PADI (Fase 3 causa A) y el owner
     # decidió extenderlo a CUALQUIER actividad (2026-07-22): la señal explícita
     # de ir solo significa lo mismo en buceo, snorkel o minicurso, y sería raro
@@ -1962,6 +1997,20 @@ async def _extraction_phase(
     if not (resolved_short and len(message.strip()) <= 12):
         _, companion_merged_fastpath = await _understand(state, message)
 
+    # Circuit-breaker (portado 2026-09-01, hallazgo en vivo, batería de
+    # grupos mixtos contra PRE, lote 8): este chequeo es el punto REAL que
+    # consume `pending_companion_queue` para preguntar por un acompañante —
+    # y corre SIEMPRE, incluso en el turno de arriba donde `_understand()`
+    # se salta por ser respuesta corta ya resuelta (`resolved_short and
+    # len(message) <= 12`, p. ej. "no"/"cartagena"). Si el reparto del grupo
+    # YA cubre a todo el mundo, no puede quedar ningún acompañante sin
+    # actividad — limpiar la cola aquí, justo antes de que se consuma.
+    if _group_allocation_fully_resolved(state):
+        state.needs_companion_activity = False
+        state.companion_activity_deferred = False
+        state.pending_companion_activity = None
+        state.pending_companion_queue = []
+
     # Multi-ítem (auditoría 2026-07-23): si _understand() encoló alguna
     # actividad del reparto sin respaldo numérico real (fill_gaps inventando
     # una cantidad para un plural vago dentro de group_allocation — hallazgo
@@ -2463,6 +2512,22 @@ async def _slotfill_close_phase(
 
     resolved_short = carry["resolved_short"]
     prev_pending = carry["prev_pending"]
+
+    # Circuit-breaker (portado 2026-09-01, hallazgo en vivo, batería de
+    # grupos mixtos contra PRE, lote 8): repetido aquí (además de en
+    # `_understand()`, `next_missing_slot`) porque un turno resuelto por
+    # respuesta corta (`resolved_short=True`, p. ej. "no" a la pregunta de
+    # seguridad) puede saltarse la extracción completa y llegar aquí sin
+    # pasar por ese chequeo — este es el punto que de verdad CONSUME
+    # `pending_companion_queue`/`pending_companion_activity`
+    # (líneas de abajo), así que es donde tiene que estar la última barrera
+    # antes de preguntar por un acompañante que ya no existe (el reparto ya
+    # cubre a todo el grupo).
+    if _group_allocation_fully_resolved(state):
+        state.needs_companion_activity = False
+        state.companion_activity_deferred = False
+        state.pending_companion_activity = None
+        state.pending_companion_queue = []
 
     # RESOLVER + RESPONDER.
     #

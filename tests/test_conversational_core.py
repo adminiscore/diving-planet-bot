@@ -1556,6 +1556,54 @@ async def test_group_size_one_without_solo_flag_still_allows_companion_question(
 
 
 @pytest.mark.asyncio
+async def test_fully_resolved_group_allocation_self_heals_stale_companion_flags():
+    """Hallazgo en vivo (batería de grupos mixtos contra PRE, 2026-09-01,
+    lote 8): con un reparto ya completo ("2 certificados, 2 minicurso, 2
+    snorkel" para un grupo de 6), la conversación seguía cayendo en "¿qué le
+    gustaría hacer a tu acompañante?" — no se aisló con certeza el disparador
+    exacto (ni siquiera con trazas de LangSmith), así que el fix es un
+    circuit-breaker: se fuerzan aquí las banderas corruptas exactamente como
+    se observaron en producción (`pending_companion_queue` con una entrada
+    "sobrante" pese a que el reparto ya la cubre) y se verifica que
+    `_group_allocation_fully_resolved` las auto-limpia en el siguiente
+    turno, sin importar cuál fue la causa original."""
+    state = make_state("es")
+    state.detected_activity = "minicourse"
+    state.detected_group_size = 6
+    state.detected_group_allocation = {
+        "certified_diving": 2, "minicourse": 2, "snorkel": 2,
+    }
+    state.location = "cartagena"
+    state.is_colombian = False
+    state.last_dive_over_2_years = None
+    state.core_pending_slot = core.SLOT_SAFETY
+    # Banderas corruptas, exactamente como se observaron en vivo.
+    state.companion_activity_deferred = True
+    state.pending_companion_queue = ["snorkel"]
+
+    with patch.object(core, "fill_gaps", new=AsyncMock(return_value={})), \
+         patch.object(core, "detect_special_signals", new=AsyncMock(return_value={})):
+        resp = await route_message(state, "no")
+    assert state.last_dive_over_2_years is False
+    assert state.companion_activity_deferred is False
+    assert state.pending_companion_queue == []
+    assert state.core_pending_slot != core.SLOT_COMPANION_ACTIVITY
+    assert "acompañante" not in resp.lower()
+
+
+def test_group_allocation_fully_resolved_helper():
+    state = make_state("es")
+    assert core._group_allocation_fully_resolved(state) is False  # sin reparto
+
+    state.detected_group_allocation = {"certified_diving": 2}
+    state.detected_group_size = 4
+    assert core._group_allocation_fully_resolved(state) is False  # incompleto (2 < 4)
+
+    state.detected_group_allocation = {"certified_diving": 2, "snorkel": 2}
+    assert core._group_allocation_fully_resolved(state) is True  # completo (2+2 == 4)
+
+
+@pytest.mark.asyncio
 async def test_companion_attribute_in_opening_message_keeps_main_activity():
     """Hallazgo D (batería sintética contra PRE, conv 265/276): un mensaje de
     APERTURA que establece la actividad principal en primera persona
