@@ -17,6 +17,14 @@ Requiere LANGSMITH_API_KEY en .env.dev (o pasala por variable de entorno).
 OJO -- lecciones aprendidas (documentadas tambien en el plan):
 - El tool `detect_special_signals` (Python) se registra en las trazas como
   `detect_signals`, no con su nombre real.
+- El driver de repro contra PRE (`pre_driver.py`) debe recoger TODOS los
+  mensajes salientes de cada turno, no solo el primero: el nucleo parte la
+  respuesta multi-item en varios mensajes de Chatwoot (separador
+  `<<<SPLIT>>>`). Una version del driver que devolvia solo el primero hizo
+  creer que "el resumen final de un grupo mixto pierde actividades" -- un bug
+  que NO existia (el bot habia enviado las tres). Antes de dar por real
+  cualquier "falta X en la respuesta" de un caso multi-item, volcar la
+  conversacion entera con `get_messages(conv_id)`.
 - Los snapshots de `conv_state` en el nodo "LangGraph chain" (el mas externo)
   NO son fiables para comparar antes/despues -- conv_state es un objeto
   mutable compartido por referencia, y la serializacion de LangSmith parece

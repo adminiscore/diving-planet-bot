@@ -1038,10 +1038,11 @@ reproducible. **Siguiente: 2.5 (nodo `booking`), luego 2.6.** Sigue este patrón
 
 ---
 
-## 6.bis Problema ABIERTO: el reparto de grupos mixtos se corrompe a mitad de conversación (2026-09-01)
+## 6.bis Reparto de grupos mixtos: extractores LLM que "contestan de más" (2026-09-01) — CERRADO
 
-**Estado: parcialmente arreglado, NO cerrado.** Sesión dedicada pendiente para terminarlo — este
-apartado es el punto de partida para esa sesión.
+**Estado: CERRADO.** Las tres causas raíz están identificadas, arregladas, cubiertas por tests y
+verificadas en vivo contra PRE. Este apartado se conserva completo porque el *método* (y las
+trampas) sirven para la próxima investigación de esta familia.
 
 ### Síntoma original
 
@@ -1051,134 +1052,151 @@ cerrar ya la reserva), preguntando "¿Qué le gustaría hacer a tu acompañante 
 el *minicurso*, o prefiere *snorkel*?" — una pregunta sin sentido, porque el reparto YA estaba
 completo desde el turno 1. Encontrado en el lote 8 (batería de grupos mixtos contra PRE).
 
-### Repro exacto (útil para la sesión nueva)
+### Repro exacto
 
 ```
 python pre_driver.py "repro-tag" "somos 6: 2 bucean certificados, 2 hacen minicurso y 2 snorkel" "cartagena" "ninguno colombiano" "no"
 ```
-(`pre_driver.py` vive en el scratchpad de la sesión anterior — recrear con el patrón de
-`docs/robustness/pre-synthetic-battery-findings.md` si ya no existe; usa la Application API de
-Chatwoot contra el inbox "Synthetic Test", ver ese doc para el token/inbox.)
+(`pre_driver.py` vive en el scratchpad de sesión; usa la Application API de Chatwoot contra el
+inbox "Synthetic Test" — ver `docs/robustness/pre-synthetic-battery-findings.md` para el
+token/inbox. **No se sube a `scripts/` porque lleva el token embebido.**)
 
-### Investigación: cómo se encontró la causa raíz con LangSmith
+**Repro en LOCAL con LLM real** (2026-09-01, sesión de cierre — mucho más rápido y barato que
+tirar contra PRE, y permite instrumentar): un driver de ~30 líneas que importa
+`supervisor.route_message`, carga `.env.dev` a `os.environ`, fuerza `AGENT_ARCH=true` y envuelve
+`conversational_core.fill_gaps`/`detect_special_signals`/`resolve_slot_answer` con un wrapper que
+imprime argumentos y valor devuelto. No hace falta ni Chatwoot ni base de datos. **Esta es la vía
+recomendada** para el próximo bug de esta familia; LangSmith solo cuando no haya créditos locales.
 
-Sin acceso a LLM en local (sin créditos en `.env.dev` durante parte de la sesión), la única forma
-de ver qué devolvían las llamadas LLM reales fue tirar de las trazas de LangSmith de la
-conversación reproducida en PRE (proyecto `diving-planet-bot-pre`). Script ya escrito y
-guardado — **`scripts/inspect_langsmith_trace.py`**:
+### Investigación: trazas de LangSmith
+
+Sin acceso a LLM en local (sin créditos en `.env.dev` durante parte de la sesión anterior), la
+única forma de ver qué devolvían las llamadas LLM reales fue tirar de las trazas de LangSmith
+(proyecto `diving-planet-bot-pre`), con **`scripts/inspect_langsmith_trace.py`**:
 
 ```bash
 python scripts/inspect_langsmith_trace.py <conversation_id> [minutos_atras=15]
 ```
 
-Lanza la conversación de repro contra PRE (con `pre_driver.py` o el que exista), apunta el
-`conversation_id` que imprime, y pásaselo al script — imprime, turno por turno, cada tool-call LLM
-real (`extract_fields`/`detect_signals`/`detect_routing_signals` con sus argumentos) y las
-respuestas/carry de los nodos de fase. Dos lecciones ya incorporadas al script (y documentadas en
-su docstring): el tool `detect_special_signals` se registra en las trazas como `detect_signals`
-(no con su nombre real de Python), y los snapshots de `conv_state` del nodo "LangGraph chain" más
-externo NO son fiables para comparar antes/después (objeto mutable compartido por referencia,
-serialización tardía) — el script ya evita esa trampa usando los outputs de los nodos de fase.
+Tres lecciones ya incorporadas al docstring del script: (1) `detect_special_signals` se registra en
+las trazas como `detect_signals`; (2) los snapshots de `conv_state` del nodo "LangGraph chain" más
+externo NO son fiables (objeto mutable compartido por referencia, serialización tardía) — usar los
+outputs de los nodos de fase; (3) **el driver de repro debe leer TODOS los salientes de cada turno**
+(ver causa raíz #2 abajo).
 
-### Causa raíz #1 (encontrada y arreglada)
+### Causa raíz #1 — `detect_special_signals` re-derivando el reparto (arreglada)
 
 `detect_special_signals` (tool `detect_signals`) **re-deriva sus señales del HISTORIAL ENTERO en
-cada llamada**, no solo del mensaje del turno actual (comportamiento documentado ya en varios
-comentarios del código, p. ej. junto a `companion_activity_deferred`). En la traza real del turno
-"ninguno colombiano" (que solo responde nacionalidad, sin mencionar a nadie), esta llamada
-devolvió:
+cada llamada**, no solo del mensaje del turno actual. En la traza real del turno "ninguno
+colombiano" (que solo responde nacionalidad, sin mencionar a nadie), devolvió:
 ```json
 {"companion_activity":"certified_diving","mentions_other_person":true,"companion_is_singular":false,
  "companion_qty":2,"other_companions":[{"activity":"minicourse","qty":2},{"activity":"snorkel","qty":2}]}
 ```
-El LLM, mirando el historial completo (que describe un grupo de 6 con 3 sub-actividades),
-"redescubre" la conversación y re-describe TODO el reparto como si fuera "buzo principal +
-acompañantes" — un encaje forzado, porque el esquema de esta tool no tiene forma limpia de
-representar "reparto N-way sin buzo principal". Esto pisaba `detected_group_allocation` (ya
-correcto desde el turno 1) con una versión parcial/reinterpretada.
+El LLM, mirando el historial completo, "redescubre" la conversación y re-describe TODO el reparto
+como "buzo principal + acompañantes" — un encaje forzado, porque el esquema de esta tool no tiene
+forma limpia de representar "reparto N-way sin buzo principal". Pisaba `detected_group_allocation`
+(ya correcto desde el turno 1) con una versión parcial.
 
-**Fix aplicado** (`src/agents/conversational_core.py`, función `_group_allocation_fully_resolved`
-+ 3 puntos de uso — ver commits `8ff6e7a` circuit-breaker inicial y `92dd8cc` el fix real): cuando
-`detected_group_allocation` ya cubre a todo `detected_group_size`, la llamada a
-`detect_special_signals` se salta ENTERA (no solo se limpia el resultado después). Verificado con
-test (`test_detect_special_signals_skipped_when_group_already_fully_resolved`, reproduce el
-payload exacto de arriba) y en vivo contra PRE: **la pregunta fantasma de acompañante ya NO
-aparece** (confirmado dos veces, conversaciones 766 y 767).
+**Fix** (`_group_allocation_fully_resolved` en `src/agents/conversational_core.py` + 3 puntos de
+uso — commits `8ff6e7a` y `92dd8cc`): con el reparto ya cubriendo a todo `detected_group_size`, la
+llamada se salta ENTERA. Verificado con test y en vivo (conversaciones 766 y 767).
 
-### Causa raíz #2 (NO encontrada — el problema real que queda abierto)
+### Causa raíz #2 — FALSA ALARMA: "el resumen final pierde actividades"
 
-Con el fix de arriba desplegado, la MISMA conversación de repro reveló un problema DISTINTO,
-probablemente relacionado (misma familia de bugs de reparto de grupo, otra manifestación):
+La sesión anterior anotó como cabo suelto que el resumen de cierre mostraba solo buceo certificado
+(2 pax, $356), sin rastro de minicurso ni snorkel. **No era un bug del bot: era el driver de
+repro.** `pre_driver.wait_for_reply()` devolvía SOLO el primer mensaje saliente, y el núcleo parte
+la respuesta multi-ítem en varios mensajes de Chatwoot (separador `<<<SPLIT>>>`).
 
-- El turno 3 ("ninguno colombiano") pasa DIRECTAMENTE a cerrar la reserva (da el resumen +
-  link), **sin preguntar la de seguridad** ("¿ha pasado más de 2 años...?") que el turno 2 SÍ
-  había preguntado y que "ninguno colombiano" no responde en absoluto — `last_dive_over_2_years`
-  debería seguir siendo `None`, y `next_missing_slot` debería seguir devolviendo `SLOT_SAFETY`.
-- El resumen final que da solo incluye **buceo certificado (2 personas, $356)** — sin ningún
-  rastro de minicurso ni snorkel, pese a que el reparto original los incluía.
+El volcado completo de la conversación 769 (`get_messages`) muestra los tres bloques enviados
+—ids 10877/10878/10879 y 10882/10883/10884: cert $356 + minicurso $366 + snorkel $252— y el repro
+local confirma `mixed_cart=[('cert',2),('beginner',2),('snorkel',2)]`.
+**`_build_cart_from_slots`/`_finalize` no tienen ningún bug.** El driver está arreglado y la trampa
+documentada en el docstring de `scripts/inspect_langsmith_trace.py`.
 
-Esto implica que, en algún punto ENTRE el turno 2 y el turno 3, algo hace que se salte
-`SLOT_SAFETY` y que el resumen final pierda actividades — **confirmado con
-`scripts/inspect_langsmith_trace.py` (ver más abajo) sobre la conversación 767**:
+### Causa raíz #3 — extractores LLM contestando por el cliente (arreglada)
 
+El bug real que quedaba, y de la misma familia que la #1: **un extractor LLM de formato libre que
+ve el historial como diálogo, encuentra una pregunta del bot sin responder, y la contesta él.**
+Reproducido de forma determinista en local, por DOS vías distintas:
+
+**Vía A — `fill_gaps`.** Con `core_pending_slot == SLOT_SAFETY` (el bot acababa de preguntar "¿ha
+pasado más de 2 años desde la última inmersión?"), el mensaje "ninguno colombiano" —que solo
+responde nacionalidad y no menciona el buceo en absoluto— producía:
 ```json
-// tool-call real de extract_fields (fill_gaps) en el turno "ninguno colombiano":
-{"activity":"minicourse","group_size":6,
+{"activity":"minicourse","is_certified":true,"group_size":6,
  "group_allocation":{"certified_diving":2,"minicourse":2,"snorkel":2},
- "last_dive_over_2_years":false,   // <-- ALUCINADO, el mensaje NO dice nada de esto
+ "last_dive_over_2_years":false,          // <-- ALUCINADO
  "location":"cartagena","is_colombian":false}
 ```
+Como `state.last_dive_over_2_years` estaba en `None`, el valor inventado se aplicaba (patrón "solo
+si el campo está vacío" de `_apply_detected_intent`), `next_missing_slot` daba `SLOT_SAFETY` por
+resuelto y la reserva se cerraba **sin haber preguntado nunca algo que es de seguridad**.
 
-**`extract_fields`/`fill_gaps` (la MISMA familia de bug que la causa raíz #1) alucina
-`last_dive_over_2_years:false` para un mensaje que solo dice "ninguno colombiano"** — no hay
-ninguna palabra en el mensaje sobre buceo/tiempo. El LLM, mirando el historial completo (donde el
-bot SÍ preguntó "¿ha pasado más de 2 años...?" en el turno anterior), rellena de más y "contesta"
-esa pregunta con un valor inventado, aunque el usuario nunca la respondió. Como
-`state.last_dive_over_2_years` estaba en `None`, este valor alucinado SÍ se aplica (mismo patrón
-"solo si el campo actual está vacío" que el resto de `_apply_detected_intent`), marcando
-`SLOT_SAFETY` como resuelto sin que el cliente lo haya respondido — de ahí que `next_missing_slot`
-salte directo a cerrar. Nótese que `group_allocation` en ESTE tool-call sigue siendo el correcto
-de 3 actividades — **la pista de `carry.prev_group_allocation` en el turno siguiente (turno 4)
-también muestra el reparto completo de 3 actividades**, así que la pérdida de minicurso/snorkel en
-el RESUMEN mostrado al cliente no se explica todavía por esto — sigue siendo un cabo suelto: o
-`_build_cart_from_slots`/`_finalize` tienen su propio bug al construir `state.mixed_cart` la
-PRIMERA vez que se llama (y no se reconstruye en llamadas posteriores, `if not state.mixed_cart`),
-o hay una tercera vía de corrupción aún sin identificar entre el `extract_fields` de arriba y el
-render final. **Siguiente paso obligatorio para la sesión nueva:** repetir la traza con
-`scripts/inspect_langsmith_trace.py` incluyendo también los outputs completos de
-`slotfill_close`/`_build_cart_from_slots` (no solo `reply`), o añadir logging temporal a
-`_finalize`/`_build_cart_from_slots` y volver a reproducir, para ver el valor EXACTO de
-`state.detected_group_allocation` y `state.mixed_cart` en el instante en que se construye el
-resumen que sale mal.
+**Vía B — el resolutor de slot anti-bucle (Fase C).** Al verificar el fix de la vía A en vivo, el
+repro seguía fallando de forma intermitente: `resolve_slot_answer("safety", "ninguno colombiano")`
+devolvía `{"value": False}` — 2 de 3 corridas con LLM real. Mismo fallo, otro extractor.
 
-**Guardas ya rotas o insuficientes que también hay que revisar:**
-- El mismo patrón de "aplicar solo si el campo está vacío" que protege `group_allocation`
-  (`if intent.group_allocation and not state.detected_group_allocation:` en
-  `_apply_detected_intent`, `src/agents/supervisor.py`) **no existe para
-  `last_dive_over_2_years`** — revisar si debería, o si el problema real es que `fill_gaps` no
-  debería alucinar el campo desde el principio (reforzar el prompt de `extract_fields`, aunque el
-  propio código ya documenta en varios sitios que "reforzar el prompt no funcionó" para problemas
-  similares — puede hacer falta el mismo patrón de verificación determinista que ya se usa para
-  `group_allocation`/`companion_qty`: descartar un valor sin respaldo textual real en el mensaje).
+**Fix — dos guardas genéricas** (no un parche por síntoma), en `conversational_core.py`:
 
-### Puntos de partida para la sesión nueva
+- **(a) El slot booleano pendiente nunca se le pide a `fill_gaps`** (`_BOOL_SLOT_FIELD`, aplicado
+  en `_relevant_gaps`). `SLOT_SAFETY`/`SLOT_CERTIFICATION`/`SLOT_NATIONALITY` ya tienen dos
+  resolutores anclados al mensaje del turno — `_apply_short_answer` (determinista, corre ANTES de
+  `_understand`) y el resolutor anti-bucle para fraseos no canónicos. `fill_gaps` era un tercer
+  camino redundante y el único que mira el historial. Solo booleanos: en location/hotel/activity
+  la respuesta ES texto libre y `fill_gaps` sí es el extractor correcto.
+- **(b) Respaldo textual determinista para los booleanos** (`_boolean_has_textual_backing`,
+  aplicado al patch de `fill_gaps` en `_understand`, junto al saneamiento de `group_allocation`
+  que ya existía). Si el mensaje no toca el TEMA del campo, el valor viene del historial, no del
+  cliente. Los léxicos se reutilizan de los detectores regex (`LAST_DIVE_TOPIC_RE`,
+  `CERTIFICATION_TOPIC_RE`, `NATIONALITY_TOPIC_RE`, ahora a nivel de módulo en
+  `intent_detector.py`): un solo vocabulario por campo, no dos listas que se desincronizan.
+- **(b-bis) Para la vía B el gate de tema NO vale**, y esto importa: esa red existe precisamente
+  para las respuestas válidas pero no canónicas, y la legítima de este mismo slot ("uf, hace
+  muchísimo") tampoco menciona el buceo. Lo que distingue "uf, hace muchísimo" de "ninguno
+  colombiano" no es el vocabulario, sino que el segundo **ya respondió a OTRO slot en este mismo
+  turno** → `_turn_answered_a_different_slot`, que generaliza la verificación determinista que ese
+  bloque ya aplicaba solo a `SLOT_LOCATION`.
 
-- Commits de esta sesión relacionados: `8ff6e7a` (circuit-breaker inicial, insuficiente por sí
-  solo), `92dd8cc` (bloqueo real de `detect_special_signals`) — ambos en `feature/agent-arch` y
-  desplegados en PRE (`feature/pre_alvaro`).
-- Función clave: `_group_allocation_fully_resolved` en `src/agents/conversational_core.py` — el
-  criterio ("suma del reparto >= group_size") puede necesitar revisarse si la causa raíz #2 hace
-  que el reparto se reduzca en vez de desaparecer del todo.
-- Tests relacionados en `tests/test_conversational_core.py`: buscar
-  `fully_resolved`/`solo_traveler`/`detect_special_signals_skipped`.
-- El worktree de trabajo de hoy: `agent-arch-hardening` (rama), puede que ya no exista como
-  worktree local activo en la sesión nueva — recrear con
-  `git worktree add -b <rama-nueva> <path> origin/feature/agent-arch`.
-- Recomendación: si la causa raíz #2 también resulta ser `detect_special_signals`/`extract_fields`
-  re-derivando desde el historial completo, plantear una solución más estructural que ir
-  parcheando síntoma a síntoma — p. ej., una vez `detected_group_allocation` está completo,
-  **dejar de llamar a CUALQUIER extractor LLM que pueda tocar campos de reparto/actividad**, no
-  solo `detect_special_signals`.
+Reforzar el prompt está descartado por medición previa para toda esta familia (documentado en
+`_message_numbers`; `extraction_system_prompt` ya pide explícitamente abstenerse). La verificación
+determinista sobre el texto del turno es el patrón que sí funciona.
+
+**Verificación**: suite completa verde en las 3 configuraciones (default / `AGENT_ARCH=true` /
+`AGENT_ARCH_SHADOW=true`) — **1603 passed / 18 skipped / 0 failed**, 8 tests nuevos sobre un
+baseline de 1595. En vivo contra PRE y en local con LLM real: el turno "ninguno colombiano"
+**re-pregunta la de seguridad** en vez de cerrar, el reparto de 3 actividades sobrevive intacto, y
+"uf, hace muchísimo" / "hace 3 años que no buceo" / "no" siguen resolviendo el slot como antes.
+
+### Regla de diseño que sale de aquí
+
+> Un extractor LLM de formato libre no puede responder por el cliente. Si el valor que devuelve
+> para un campo no tiene respaldo en el TEXTO del turno —o el turno ya respondió a otro slot—, se
+> descarta y se pregunta. Preguntar de más es el fallo seguro; dar un slot por respondido sin que
+> el cliente lo respondiera, no.
+
+Las tres causas raíz son la misma: el historial entra en el prompt como diálogo, y el modelo lo
+completa. Antes de añadir un extractor LLM nuevo que toque campos de reparto/actividad/seguridad,
+comprobar qué pasa cuando el bot acaba de preguntar algo que el mensaje no responde.
+
+### Deuda anotada (no se toca aquí)
+
+- **Cutover de extracción muerto**: `_maybe_apply_llm_extraction_cutover` y
+  `_maybe_log_llm_extraction_shadow` (`src/agents/supervisor.py`) **no tienen ningún call-site en
+  `src/`** — solo los llaman sus tests (`test_llm_extraction_cutover.py`,
+  `test_llm_extraction_shadow_mode.py`). Los cuatro `LLM_EXTRACTION_CUTOVER_*: "true"` de
+  `docker-compose.vps.yml` son inertes en PRE. Borrarlos va con el corte de Fase 5.2, que ya entra
+  en esa zona — no se mezcla con un fix de bug. **Ojo si alguien los reconecta: llaman a
+  `fill_gaps` SIN `only_fields`**, así que ampliarían la superficie de alucinación en vez de
+  reducirla, y no llevan las guardas (a)/(b) de arriba.
+- **Acuse de recibo poco afortunado**: en el repro local, `compose_acknowledgement` compuso
+  "Entiendo que prefieres no incluir a colombianos en tu grupo" para "ninguno colombiano".
+  Cosmético, ajeno a este bug, sin arreglar.
+- **Eval-set sin historial**: `docs/robustness/eval-set.json` + `scripts/run_extraction_eval.py` no
+  pasan historial al extractor, así que esta familia de misfill (dirigida por el historial) no es
+  representable ahí hoy. Añadir un campo `history` a los casos sería lo que convertiría estas
+  guardas en un número medible.
 
 ---
 
@@ -1227,6 +1245,22 @@ resumen que sale mal.
 
 ## 8. Registro de ejecución
 *(Una línea por paso cerrado: fecha · dev · qué · commit. El más reciente arriba.)*
+
+- **2026-09-01 · Gadea · §6.bis CERRADO — extractores LLM que "contestan de más"**.
+  Cerradas las dos causas raíz que quedaban abiertas del bug de reparto de grupos mixtos. La
+  "pérdida de actividades en el resumen final" resultó ser **falsa alarma del driver de repro**
+  (`pre_driver.wait_for_reply` leía solo el primer saliente; el núcleo parte la respuesta
+  multi-ítem en varios mensajes de Chatwoot) — `_build_cart_from_slots`/`_finalize` estaban bien;
+  driver arreglado y trampa documentada en `scripts/inspect_langsmith_trace.py`. El bug real:
+  `fill_gaps` **y** el resolutor de slot anti-bucle contestaban ellos mismos el slot de SEGURIDAD
+  ("¿más de 2 años?") en un turno que solo respondía nacionalidad, cerrando la reserva sin
+  preguntarlo nunca. Arreglado con dos guardas genéricas (`_BOOL_SLOT_FIELD` en `_relevant_gaps`,
+  `_boolean_has_textual_backing` + `_turn_answered_a_different_slot`), reutilizando los léxicos de
+  los detectores regex (`LAST_DIVE_TOPIC_RE`/`CERTIFICATION_TOPIC_RE`/`NATIONALITY_TOPIC_RE`, ahora
+  a nivel de módulo). **1603 passed / 18 skipped / 0 failed** en las 3 configuraciones (default /
+  `AGENT_ARCH=true` / `AGENT_ARCH_SHADOW=true`), 8 tests nuevos sobre baseline 1595; verificado en
+  local con LLM real y en vivo contra PRE. Anotada como deuda de Fase 5.2 el cutover de extracción
+  muerto (`_maybe_apply_llm_extraction_cutover`, sin call-site, con 4 flags inertes en PRE).
 
 - **2026-08-11 · Álvaro · Fase 5.3 — `trace_openai` (detalle por-llamada) + SOAK abierto** (`e34c981`).
   `src/llm_client.py`: `trace_openai(client)` envuelve los 13 clientes OpenAI (9 módulos) con

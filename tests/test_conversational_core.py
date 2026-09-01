@@ -2452,3 +2452,180 @@ async def test_explicit_language_switch_mid_conversation_is_honored():
         resp = await route_message(state, "actually can we continue in english")
     assert state.language == "en"
     assert "?" in resp and ("Where" in resp or "where" in resp)
+
+
+# ── §6.bis: extractores LLM que "contestan de más" ────────────────────────────
+# Cierre del problema ABIERTO de docs/multi-agent-refactor-plan.md §6.bis
+# (2026-09-01). La causa raíz #1 (detect_special_signals re-derivando el reparto
+# del historial) se arregló arriba; estos tests cubren la causa raíz #2, la misma
+# familia por otras dos vías: `fill_gaps` y el resolutor de slot anti-bucle
+# contestando ELLOS una pregunta que el mensaje del cliente no responde.
+
+def test_relevant_gaps_never_asks_the_pending_boolean_slot():
+    """GUARDA (a): el slot booleano que el bot acaba de preguntar no se le pide
+    nunca a `fill_gaps` — ya lo resuelven `_apply_short_answer` (determinista) y
+    el resolutor anti-bucle, ambos anclados al mensaje del turno."""
+    state = make_state("es")
+    state.detected_activity = "certified_diving"
+    state.is_certified = True
+    state.detected_group_size = 2
+    state.location = state.detected_location = "cartagena"
+
+    intent = core._detector.detect("ninguno colombiano", state)
+
+    state.core_pending_slot = None
+    assert "last_dive_over_2_years" in core._relevant_gaps(state, intent, "ninguno colombiano")
+
+    state.core_pending_slot = core.SLOT_SAFETY
+    assert "last_dive_over_2_years" not in core._relevant_gaps(state, intent, "ninguno colombiano")
+
+
+def test_relevant_gaps_still_asks_free_text_slots_while_pending():
+    """El corte es SOLO para los booleanos: en location/hotel/activity la
+    respuesta ES texto libre y `fill_gaps` sigue siendo el extractor correcto
+    ("salimos desde bocagrande")."""
+    state = make_state("es")
+    state.detected_activity = "certified_diving"
+    state.detected_group_size = 2
+    state.core_pending_slot = core.SLOT_LOCATION
+
+    intent = core._detector.detect("salimos desde bocagrande", state)
+    assert "location" in core._relevant_gaps(state, intent, "salimos desde bocagrande")
+
+
+def test_boolean_textual_backing_gate():
+    """GUARDA (b): el gate de tema por campo. Laxo a propósito — un falso
+    positivo cuesta dejar pasar un valor que el regex tampoco habría resuelto;
+    un falso negativo, una pregunta de más."""
+    backing = core._boolean_has_textual_backing
+    # El repro exacto de §6.bis: el mensaje no menciona el buceo en absoluto.
+    assert backing("last_dive_over_2_years", "ninguno colombiano") is False
+    assert backing("last_dive_over_2_years", "hace 3 años que no buceo") is True
+    assert backing("is_certified", "cartagena") is False
+    assert backing("is_certified", "tenemos open water") is True
+    assert backing("is_colombian", "hace 3 años que no buceo") is False
+    assert backing("is_colombian", "ninguno colombiano") is True
+    assert backing("is_colombian", "somos de medellín") is True
+    # Un campo que no es booleano de esta familia pasa siempre.
+    assert backing("location", "lo que sea") is True
+
+
+@pytest.mark.asyncio
+async def test_fill_gaps_hallucinated_safety_answer_is_dropped():
+    """Repro EXACTO de §6.bis causa raíz #3, vía A (conversación 769 de PRE + repro
+    determinista en local con LLM real): con `SLOT_SAFETY` pendiente, el mensaje
+    "ninguno colombiano" —que solo responde nacionalidad— hacía que `fill_gaps`
+    devolviera `{"last_dive_over_2_years": false}`. El LLM ve el historial como
+    diálogo, ve la pregunta del bot sin responder, y la contesta él. La reserva
+    se cerraba sin haber preguntado nunca algo que es de SEGURIDAD.
+
+    Con las guardas puestas el valor se descarta, el slot sigue pendiente y el
+    bot RE-PREGUNTA."""
+    state = make_state("es")
+    state.detected_activity = "certified_diving"
+    state.is_certified = True
+    state.detected_group_size = 6
+    state.detected_group_allocation = {
+        "certified_diving": 2, "minicourse": 2, "snorkel": 2,
+    }
+    state.location = state.detected_location = "cartagena"
+    state.core_pending_slot = core.SLOT_SAFETY
+
+    # Payload REAL de la traza de LangSmith (turno "ninguno colombiano").
+    poison = AsyncMock(return_value={
+        "activity": "minicourse", "is_certified": True, "group_size": 6,
+        "group_allocation": {"certified_diving": 2, "minicourse": 2, "snorkel": 2},
+        "last_dive_over_2_years": False,
+        "location": "cartagena", "is_colombian": False,
+    })
+    with patch.object(core, "fill_gaps", new=poison), \
+         patch.object(core, "resolve_slot_answer", new=AsyncMock(return_value={})):
+        resp = await route_message(state, "ninguno colombiano")
+
+    assert state.last_dive_over_2_years is None
+    assert core.next_missing_slot(state) == core.SLOT_SAFETY
+    assert "2 años" in resp or "2 years" in resp
+    # El reparto original sobrevive intacto.
+    assert state.detected_group_allocation == {
+        "certified_diving": 2, "minicourse": 2, "snorkel": 2,
+    }
+
+
+@pytest.mark.asyncio
+async def test_slot_resolver_discarded_when_turn_answered_another_slot():
+    """Segunda vía de la MISMA familia, encontrada al verificar el fix anterior
+    en vivo: la red anti-bucle de Fase C llamaba a
+    `resolve_slot_answer("safety", "ninguno colombiano")` y el LLM devolvía
+    `{"value": False}` (reproducido 2 de 3 corridas con LLM real). Como este
+    turno resolvió la NACIONALIDAD, el mensaje hablaba de ese slot, no del de
+    seguridad — se descarta."""
+    state = make_state("es")
+    state.detected_activity = "certified_diving"
+    state.is_certified = True
+    state.detected_group_size = 2
+    state.location = state.detected_location = "cartagena"
+    state.core_pending_slot = core.SLOT_SAFETY
+
+    with patch.object(core, "fill_gaps", new=AsyncMock(return_value={})), \
+         patch.object(core, "resolve_slot_answer", new=AsyncMock(return_value={"value": False})):
+        resp = await route_message(state, "ninguno colombiano")
+
+    assert state.is_colombian is False          # eso SÍ lo respondió el mensaje
+    assert state.last_dive_over_2_years is None  # esto no
+    assert core.next_missing_slot(state) == core.SLOT_SAFETY
+    assert "2 años" in resp or "2 years" in resp
+
+
+@pytest.mark.asyncio
+async def test_slot_resolver_still_reads_non_canonical_answer_to_pending_slot():
+    """Contrapeso obligatorio: la red anti-bucle existe para las respuestas
+    válidas pero NO canónicas, y la legítima de este slot ("uf, hace muchísimo")
+    tampoco menciona el buceo — por eso la guarda de esta vía NO es el gate de
+    tema, sino "¿este turno respondió a otro slot?". Aquí no respondió a
+    ninguno, así que el valor se aplica igual que siempre."""
+    state = make_state("es")
+    state.detected_activity = "certified_diving"
+    state.is_certified = True
+    state.detected_group_size = 2
+    state.location = state.detected_location = "cartagena"
+    state.core_pending_slot = core.SLOT_SAFETY
+
+    with patch.object(core, "fill_gaps", new=AsyncMock(return_value={})), \
+         patch.object(core, "resolve_slot_answer", new=AsyncMock(return_value={"value": True})):
+        await route_message(state, "uf, hace muchisimo")
+
+    assert state.last_dive_over_2_years is True
+
+
+@pytest.mark.asyncio
+async def test_regex_last_dive_still_wins_over_the_backing_gate():
+    """Sin regresión en la vía legítima: cuando el cliente SÍ habla del tema, el
+    detector determinista resuelve el campo y las guardas no lo estorban."""
+    state = make_state("es")
+    state.detected_activity = "certified_diving"
+    state.is_certified = True
+    state.detected_group_size = 2
+    state.location = state.detected_location = "cartagena"
+    state.core_pending_slot = core.SLOT_SAFETY
+
+    with patch.object(core, "fill_gaps", new=AsyncMock(return_value={})):
+        await route_message(state, "hace 3 años que no buceo")
+
+    assert state.last_dive_over_2_years is True
+
+
+@pytest.mark.asyncio
+async def test_canonical_short_answer_to_safety_slot_still_resolves():
+    """Y la respuesta canónica sigue siendo cosa de `_apply_short_answer`, que
+    corre antes que cualquier extractor LLM."""
+    state = make_state("es")
+    state.detected_activity = "certified_diving"
+    state.is_certified = True
+    state.detected_group_size = 2
+    state.location = state.detected_location = "cartagena"
+    state.core_pending_slot = core.SLOT_SAFETY
+
+    with patch.object(core, "fill_gaps", new=AsyncMock(return_value={})):
+        await route_message(state, "no")
+
+    assert state.last_dive_over_2_years is False

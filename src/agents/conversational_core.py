@@ -30,7 +30,13 @@ import logging
 import re
 from collections import Counter
 
-from src.agents.intent_detector import AGE_WORDS, IntentDetector
+from src.agents.intent_detector import (
+    AGE_WORDS,
+    CERTIFICATION_TOPIC_RE,
+    LAST_DIVE_TOPIC_RE,
+    NATIONALITY_TOPIC_RE,
+    IntentDetector,
+)
 from src.agents.llm_extractor import (
     compose_acknowledgement,
     detect_special_signals,
@@ -1061,6 +1067,132 @@ _DRIVING_FIELDS = {
 }
 
 
+# Slots de SÍ/NO y el campo que resuelve cada uno. Hallazgo en vivo
+# (2026-09-01, cierre del problema abierto §6.bis del plan multi-agente,
+# conversación 769 de PRE + repro determinista en local con LLM real): con
+# `core_pending_slot == SLOT_SAFETY` (el bot acababa de preguntar "¿ha pasado
+# más de 2 años desde la última inmersión?"), el mensaje "ninguno colombiano"
+# —que solo responde NACIONALIDAD y no menciona el buceo en absoluto— hacía
+# que `fill_gaps` devolviera `{"last_dive_over_2_years": false}`. El LLM ve el
+# historial como turnos de diálogo reales, ve la pregunta del bot sin
+# responder, y la contesta ÉL. Como el campo estaba en None, el valor
+# inventado se aplicaba, `next_missing_slot` daba el slot de seguridad por
+# resuelto y la reserva se cerraba SIN haber preguntado nunca al cliente algo
+# que es de seguridad, no de logística.
+#
+# La regla estructural (no un parche por síntoma, misma familia que el bloqueo
+# de `detect_special_signals` de `_group_allocation_fully_resolved`): un
+# extractor LLM de formato libre NO puede responder por el cliente. Estos
+# campos ya tienen DOS resolutores anclados al mensaje del turno —
+# `_apply_short_answer` (determinista, corre ANTES de `_understand`) y el
+# resolutor LLM anti-bucle de Fase C (`_apply_resolved_slot_value`, para
+# fraseos no canónicos)— así que `fill_gaps` es un tercer camino redundante y
+# el único que mira el historial. Si ninguno de los dos resolutores buenos
+# entiende la respuesta, el slot sigue pendiente y se RE-PREGUNTA, que es el
+# fallo seguro.
+#
+# Solo booleanos a propósito: para location/hotel/activity la respuesta ES
+# texto libre y `fill_gaps` sí es el extractor correcto ("salimos desde
+# bocagrande"). SLOT_REFRESHER no entra porque `refresher_interested` no es un
+# campo extraíble de `DetectedIntent` — nunca llega por esta vía.
+_BOOL_SLOT_FIELD = {
+    SLOT_SAFETY: "last_dive_over_2_years",
+    SLOT_CERTIFICATION: "is_certified",
+    SLOT_NATIONALITY: "is_colombian",
+}
+
+# Gate de TEMA por campo booleano — ver `_boolean_has_textual_backing`. Los
+# regexes viven en `intent_detector` (a nivel de módulo) porque son los mismos
+# que usan sus detectores deterministas: un solo vocabulario por campo, no dos
+# listas que se desincronizan.
+_BOOL_FIELD_TOPIC_RE = {
+    "last_dive_over_2_years": LAST_DIVE_TOPIC_RE,
+    "is_certified": CERTIFICATION_TOPIC_RE,
+    "is_colombian": NATIONALITY_TOPIC_RE,
+}
+
+
+# Campo de estado que resuelve cada slot que la red anti-bucle de Fase C sabe
+# interpretar (`_LLM_RESOLVABLE_SLOTS`) — usado por
+# `_turn_answered_a_different_slot`.
+_SLOT_STATE_FIELD = {
+    SLOT_CERTIFICATION: "is_certified",
+    SLOT_SAFETY: "last_dive_over_2_years",
+    SLOT_NATIONALITY: "is_colombian",
+    SLOT_REFRESHER: "refresher_interested",
+    SLOT_QTY: "detected_group_size",
+    SLOT_LOCATION: "location",
+}
+
+
+def _turn_answered_a_different_slot(state: ConversationState, pending: str, carry: dict) -> bool:
+    """¿Este turno resolvió el campo de OTRO slot, distinto del pendiente?
+
+    Segunda mitad de la GUARDA (b) — el mismo hallazgo del 2026-09-01, por la
+    otra vía. Con la guarda de `fill_gaps` puesta, el repro de §6.bis seguía
+    fallando de forma intermitente por la red anti-BUCLE de slot (Fase C, más
+    abajo): con `SLOT_SAFETY` pendiente, `resolve_slot_answer("safety",
+    "ninguno colombiano")` devolvía `{"value": False}` — otra vez un extractor
+    LLM contestando por el cliente una pregunta que el mensaje no responde.
+
+    Aquí NO sirve el gate de tema de `_boolean_has_textual_backing`: esta red
+    existe precisamente para las respuestas válidas pero no-canónicas, y la
+    legítima de este mismo slot ("uf, hace muchísimo") tampoco menciona el
+    buceo. Lo que distingue "uf, hace muchísimo" de "ninguno colombiano" no es
+    el vocabulario: es que el segundo YA respondió a OTRO slot en este mismo
+    turno. Un mensaje que acaba de contestar la nacionalidad no está
+    contestando además, en silencio, la de seguridad.
+
+    Misma forma que la verificación determinista que este bloque ya aplica a
+    SLOT_LOCATION ("si este turno cambió la actividad, el mensaje no hablaba de
+    ubicación"), generalizada a todos los slots en vez de a un par concreto.
+    """
+    for slot, field in _SLOT_STATE_FIELD.items():
+        if slot == pending:
+            continue
+        prev = carry.get(_SLOT_PREV_KEY[slot])
+        if prev is None and getattr(state, field, None) is not None:
+            return True
+    return False
+
+
+# Clave del carry con el snapshot pre-turno de cada campo de `_SLOT_STATE_FIELD`.
+_SLOT_PREV_KEY = {
+    SLOT_CERTIFICATION: "prev_main_is_certified",
+    SLOT_SAFETY: "prev_main_last_dive",
+    SLOT_NATIONALITY: "prev_is_colombian",
+    SLOT_REFRESHER: "prev_main_refresher",
+    SLOT_QTY: "prev_group_size",
+    SLOT_LOCATION: "prev_location",
+}
+
+
+def _boolean_has_textual_backing(field: str, message: str) -> bool:
+    """GUARDA (b): ¿el mensaje habla siquiera del TEMA de este campo booleano?
+
+    Complementa a `_BOOL_SLOT_FIELD` (guarda (a), que solo cubre el slot que
+    está pendiente AHORA) con el caso simétrico: el LLM alucinando un booleano
+    que no es el slot pendiente, arrastrado por el historial (p. ej.
+    rellenando `is_certified` en un turno que solo daba la ubicación).
+
+    Misma verificación determinista que ya se aplica al reparto de grupo en
+    `_understand` (`_activity_has_textual_backing`/`_message_numbers`): si el
+    valor que dice el LLM no tiene respaldo en el TEXTO del turno, no es de
+    fiar. Reforzar el prompt no funciona para esta familia de fallo — está
+    medido y documentado en `_message_numbers`, y `extraction_system_prompt`
+    ya pide explícitamente abstenerse.
+
+    Un campo sin gate definido pasa siempre (no es un booleano de esta
+    familia). Falso positivo = dejar pasar un valor que el regex tampoco
+    habría resuelto; falso negativo = una pregunta de más. Nunca una reserva
+    equivocada — mismo principio que el resto del bloque.
+    """
+    topic_re = _BOOL_FIELD_TOPIC_RE.get(field)
+    if topic_re is None:
+        return True
+    return bool(topic_re.search(message or ""))
+
+
 def _state_known_fields(state: ConversationState) -> set[str]:
     """Campos extraíbles que la CONVERSACIÓN ya conoce (estado), con la misma
     convención que missing_fields: False es un valor resuelto, None/[] no."""
@@ -1103,6 +1235,13 @@ def _relevant_gaps(state: ConversationState, intent, message: str) -> list[str]:
     # pedirlo cada turno era gasto puro (el regex ya saca los repartos claros).
     if state.detected_group_size and not _ADDED_PERSON_RE.search(message):
         gaps = [f for f in gaps if f != "group_allocation"]
+    # GUARDA (a) — el slot booleano que el bot ACABA de preguntar no se le pide
+    # nunca a `fill_gaps`. Ver `_BOOL_SLOT_FIELD`: esos campos ya tienen dos
+    # resolutores anclados al mensaje del turno, y `fill_gaps` es el único de
+    # los tres que puede "contestar" mirando el historial.
+    pending_field = _BOOL_SLOT_FIELD.get(state.core_pending_slot)
+    if pending_field:
+        gaps = [f for f in gaps if f != pending_field]
     return gaps
 
 
@@ -1260,6 +1399,23 @@ async def _understand(state: ConversationState, message: str) -> tuple:
         elif _ADDED_PERSON_RE.search(message) and not _EXPLICIT_NUMBER_RE.search(message):
             patch.pop("group_allocation", None)
             patch.pop("group_size", None)
+        # GUARDA (b) — respaldo textual de los booleanos (ver
+        # `_boolean_has_textual_backing`). Extiende a los sí/no la MISMA
+        # verificación determinista que el bloque de arriba ya aplica al
+        # reparto: si el mensaje no toca el tema del campo, el valor viene del
+        # historial, no del cliente. Se descarta y el slot sigue pendiente →
+        # se pregunta.
+        unbacked_bools = [
+            f for f in patch
+            if f in _BOOL_FIELD_TOPIC_RE and not _boolean_has_textual_backing(f, message)
+        ]
+        for field_name in unbacked_bools:
+            patch.pop(field_name, None)
+        if unbacked_bools:
+            logger.info(
+                f"[CORE] gap-fill booleans dropped (sin respaldo textual): "
+                f"{unbacked_bools} msg={supervisor._log_safe_message(message)!r}"
+            )
         for field_name, value in patch.items():
             setattr(intent, field_name, value)
             if field_name not in intent.detected_fields:
@@ -1871,6 +2027,10 @@ async def _routing_phase(
     prev_main_refresher = state.refresher_interested
     prev_group_size = state.detected_group_size
     prev_group_allocation = dict(state.detected_group_allocation or {})
+    # Snapshots de los OTROS campos que un slot puede resolver — los consume
+    # `_turn_answered_a_different_slot` (red anti-bucle de Fase C, ver alli).
+    prev_is_colombian = state.is_colombian
+    prev_location = state.location or state.detected_location
     has_qmark = "?" in message
 
     resolved_short = False
@@ -1966,6 +2126,8 @@ async def _routing_phase(
         "prev_main_refresher": prev_main_refresher,
         "prev_group_size": prev_group_size,
         "prev_group_allocation": prev_group_allocation,
+        "prev_is_colombian": prev_is_colombian,
+        "prev_location": prev_location,
     }
 
 
@@ -2497,6 +2659,20 @@ async def _extraction_phase(
             and resolved_value in ("cartagena", "island")
             and prev_main_activity != state.detected_activity
         ):
+            resolved_value = None
+        # Misma verificación, generalizada a cualquier slot (hallazgo en vivo
+        # 2026-09-01, cierre de §6.bis): si este turno resolvió el campo de
+        # OTRO slot, el mensaje hablaba de ESE, no del pendiente — y lo que
+        # este resolutor devuelva para el pendiente viene del historial, no
+        # del cliente. Ver `_turn_answered_a_different_slot` para por qué aquí
+        # no vale el gate de tema de `_boolean_has_textual_backing`.
+        if resolved_value is not None and _turn_answered_a_different_slot(
+            state, prev_pending, carry
+        ):
+            logger.info(
+                f"[CORE] slot resolver descartado para {prev_pending!r} "
+                f"(el turno respondio a otro slot) msg={supervisor._log_safe_message(message)!r}"
+            )
             resolved_value = None
         if resolved_value is not None and _apply_resolved_slot_value(state, prev_pending, resolved_value):
             advanced = True
