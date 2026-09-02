@@ -162,7 +162,16 @@ ROUTING_TOOL = {
                         "is not 'cuándo' ('when'); leave this field unset "
                         "for those, even though both start with 'cuánto'/"
                         "'how much'. Only set it when a DATE or TIME slot is "
-                        "actually being asked about."
+                        "actually being asked about. Merely MENTIONING a "
+                        "near-term day ('mañana', 'amanhã', 'demain', "
+                        "'tomorrow', 'tonight') is NOT enough by itself — a "
+                        "message that mentions tomorrow while really asking "
+                        "something else (a price in any language: 'quero "
+                        "mergulhar amanhã, quanto custa?'; a flight/safety "
+                        "question: 'tengo un vuelo mañana, puedo bucear "
+                        "hoy?') must leave this field unset and let that "
+                        "other topic be answered — do not let the day-word "
+                        "alone flip it to true."
                     ),
                 },
                 "broken_link_complaint": {

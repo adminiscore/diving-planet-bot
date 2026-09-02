@@ -199,6 +199,47 @@ def _alcohol_and_food_policy_answer(msg_lower: str, lang: str) -> str | None:
         return None
     return "\n\n".join(parts)
 
+
+# Hallazgo en vivo (lote 11, bateria de cobertura tematica, 2026-09-02):
+# "somos una empresa y queremos llevar 20 empleados a bucear como evento
+# corporativo, es posible?" hacia que RAG generara una respuesta ("necesito
+# saber en que hotel se hospedan...") SIN retrieval real -- el juez de
+# grounding la rechazo como HALLUCINATED las 2 veces, y el turno se quedaba
+# inventando en vez de usar la politica real (`policies.json
+# ["private_services"]`: sin precio fijo, se cotiza por WhatsApp). Ademas esa
+# politica en crudo NO se puede dar tal cual: lleva el numero de WhatsApp
+# +57 320 231515, y la politica ya establecida (owner, 2026-07-20) es que el
+# bot NUNCA da el numero de telefono/WhatsApp -- el contacto va siempre por
+# el handoff interno de Chatwoot. Mismo patron que `_alcohol_and_food_
+# policy_answer`: respuesta determinista, sin pasar por RAG/retrieval, pero
+# aqui ademas REDACTADA (no el texto crudo de policies.json) para no filtrar
+# el numero, con la misma frase que ya usa `_contact_number_deflection`.
+_PRIVATE_GROUP_EVENT_RE = re.compile(
+    r"evento\s+corporativo|grupo\s+cerrado|servicio\s+privado|"
+    r"team[\s-]?building|"
+    r"private\s+(?:event|group|service|charter)|corporate\s+event|"
+    r"\b(?:empresa|compa[ñn][ií]a|company)\b.{0,30}\b(?:emplead[oa]s?|"
+    r"evento|employees?|event)\b",
+    re.IGNORECASE,
+)
+
+
+def _private_group_event_answer(lang: str) -> str:
+    if lang == "es":
+        return (
+            "¡Con gusto! 🌊 Para grupos privados o eventos corporativos coordinamos todo a "
+            "medida (instructor disponible, fecha, actividades) — no tiene un precio fijo, "
+            "depende del tamaño del grupo y la fecha. Te paso con un asesor del equipo para "
+            "armar la cotización."
+        )
+    return (
+        "Happy to help! 🌊 For private groups or corporate events we coordinate everything "
+        "custom (available instructor, date, activities) — there's no fixed price, it depends "
+        "on group size and date. I'll connect you with an advisor from the team to put "
+        "together a quote."
+    )
+
+
 # Afirmacion "a secas" ("si", "dale", "ok") — usada para cumplir una oferta que
 # el propio bot hizo en el turno anterior (p.ej. "¿te paso con un asesor?").
 _BARE_AFFIRMATION_RE = re.compile(
@@ -2287,6 +2328,14 @@ async def _shared_turn_handler(
             f"food={bool(_ALLERGY_WORD_RE.search(msg_lower) and _FOOD_ALLERGEN_RE.search(msg_lower))})"
         )
         return combined_policy_text
+
+    # Hallazgo en vivo (lote 11, 2026-09-02): evento corporativo/grupo
+    # privado — respuesta determinista redactada, sin pasar por RAG (que
+    # alucinaba) ni filtrar el numero de WhatsApp de la politica cruda. Ver
+    # _private_group_event_answer.
+    if _PRIVATE_GROUP_EVENT_RE.search(msg_lower):
+        logger.info("[SUPERVISOR] Private/corporate group event -> real deterministic answer")
+        return _private_group_event_answer(state.language)
 
     # SAFETY FIRST: broken-link complaints and sensitive topics (medical,
     # weather, complaints) must escalate BEFORE the intent detector runs.

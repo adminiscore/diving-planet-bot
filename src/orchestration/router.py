@@ -84,6 +84,14 @@ def classify_route(conv_state: ConversationState, message: str, signals: dict) -
     if sup._ALLERGY_WORD_RE.search(msg_lower) and sup._FOOD_ALLERGEN_RE.search(msg_lower):
         return ROUTE_INFO
 
+    # Hallazgo en vivo (lote 11, bateria de cobertura tematica, 2026-09-02):
+    # "evento corporativo"/"grupo privado" es politica plana conocida
+    # (policies.json["private_services"]) que RAG alucinaba (juez de
+    # grounding la rechazaba las 2 veces) en vez de retomarla -- misma
+    # prioridad que alcohol/alergia.
+    if sup._PRIVATE_GROUP_EVENT_RE.search(msg_lower):
+        return ROUTE_INFO
+
     if sup._detect_broken_link_complaint(message, history):
         return ROUTE_SAFETY
     if signals.get("broken_link_complaint") and sup._has_link_tech_context(message, history):

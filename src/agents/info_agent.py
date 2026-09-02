@@ -48,8 +48,10 @@ async def info_node(state: BotState) -> dict:
     from src.agents.supervisor import (
         _ADAPTIVE_DIVING_PATTERN,
         _alcohol_and_food_policy_answer,
+        _PRIVATE_GROUP_EVENT_RE,
         _build_extra_context,
         _maybe_answer_age_eligibility,
+        _private_group_event_answer,
         _shared_turn_handler,
         rag_answer,
     )
@@ -71,6 +73,17 @@ async def info_node(state: BotState) -> dict:
         conv.history.append({"role": "user", "content": message})
         conv.history.append({"role": "assistant", "content": combined_policy_text})
         return {"reply": combined_policy_text}
+
+    # 0.bis · Evento corporativo/grupo privado (hallazgo en vivo, lote 11,
+    #     2026-09-02): política plana conocida que RAG alucinaba en vez de
+    #     retomar; respuesta determinista, redactada para no filtrar el
+    #     número de WhatsApp de la política cruda.
+    if _PRIVATE_GROUP_EVENT_RE.search(msg_lower):
+        answer = _private_group_event_answer(conv.language)
+        logger.info("[NODE:info] Private/corporate group event -> real deterministic answer")
+        conv.history.append({"role": "user", "content": message})
+        conv.history.append({"role": "assistant", "content": answer})
+        return {"reply": answer}
 
     # 1 · Elegibilidad por edad (pre-núcleo, determinista desde eligibility.py).
     age_answer = _maybe_answer_age_eligibility(message, conv)

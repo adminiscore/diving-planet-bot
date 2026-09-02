@@ -99,6 +99,30 @@ async def test_alcohol_and_food_allergy_combined_in_one_message_both_answered():
 
 
 @pytest.mark.asyncio
+async def test_corporate_event_gets_real_answer_not_hallucinated_rag():
+    """Hallazgo en vivo (bateria de cobertura tematica, lote 11, 2026-09-02):
+    "somos una empresa y queremos llevar 20 empleados a bucear como evento
+    corporativo, es posible?" hacia que RAG generara una respuesta sin
+    retrieval real ("necesito saber en que hotel se hospedan...") -- el
+    juez de grounding la rechazaba como HALLUCINATED las 2 veces. La
+    politica real (policies.json["private_services"]) existe pero no se
+    puede dar en crudo (lleva el numero de WhatsApp, y el bot nunca debe
+    darlo -- owner, 2026-07-20). Debe responder con la version redactada,
+    sin escalar como tema medico/sensible ni caer al fallback generico."""
+    state = make_state()
+    with patch("src.agents.supervisor.detect_routing_signals", new=AsyncMock(return_value={})):
+        resp = await route_message(
+            state,
+            "hola, somos una empresa y queremos llevar 20 empleados a bucear "
+            "como evento corporativo, es posible?",
+        )
+    assert state.step != Step.ESCALATE
+    assert "asesor" in resp.lower() or "advisor" in resp.lower()
+    assert "320 231515" not in resp
+    assert "no lo tengo a la mano" not in resp.lower()
+
+
+@pytest.mark.asyncio
 async def test_wants_human_signal_escalates_when_keyword_list_misses():
     """"quisiera que me atendiera una persona real" no matchea
     ESCALATION_KEYWORDS (humano/agente/asesor/"hablar con") pero la
