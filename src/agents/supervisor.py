@@ -54,6 +54,16 @@ _ADAPTIVE_DIVING_PATTERN = re.compile(
     re.IGNORECASE,
 )
 
+# Cliente aclarando explicitamente que, dentro de una conversacion DIVE TO
+# HEAL, la pregunta actual es sobre el programa NORMAL/no adaptado -- ver
+# _build_extra_context, hallazgo en vivo 2026-09-02 (lote 9).
+_DIVE_TO_HEAL_OVERRIDE_RE = re.compile(
+    r"programa\s+(?:normal|regular|est[aá]ndar)|"
+    r"sin\s+adaptar|no\s+adaptad[oa]|buceo\s+normal|"
+    r"regular\s+program|standard\s+program|non[- ]adaptive|without\s+adapt",
+    re.IGNORECASE,
+)
+
 # Price or booking follow-ups. Inside the DIVE TO HEAL context these must NOT
 # be answered with the generic Cartagena price list or the normal booking flow
 # — adaptive diving is coordinated (logistics + price) per case with an
@@ -134,10 +144,18 @@ _CLOSED_DATE_RE = re.compile(
 # de bucear — respuesta plana ya conocida
 # (`policies.json["no_alcohol_policy"]`), no un tema médico a evaluar caso
 # por caso.
+# Ventana ampliada 25->60 (hallazgo en vivo, lote 9, 2026-09-02): "queremos
+# bucear manana, anoche tomamos algo de alcohol y uno de nosotros es
+# alergico a los mariscos" tiene un hueco real de 32 caracteres entre
+# "bucear" y "alcohol" (una clausula intermedia normal en español), por
+# encima del limite anterior -> el aviso de alcohol se perdia por completo
+# cuando llegaba junto con otro tema (alergia) en el mismo mensaje. 60 sigue
+# acotado (no hace match a traves de parrafos largos no relacionados) pero
+# cubre clausulas intermedias tipicas.
 _ALCOHOL_BEFORE_DIVING_RE = re.compile(
-    r"\b(?:alcohol|cerveza|tragos?|copas?|vino|licor|beer|alcoholic)\b.{0,25}"
+    r"\b(?:alcohol|cerveza|tragos?|copas?|vino|licor|beer|alcoholic)\b.{0,60}"
     r"\b(?:bucear|buceo|buzos?|dive|diving)\b"
-    r"|\b(?:bucear|buceo|buzos?|dive|diving)\b.{0,25}"
+    r"|\b(?:bucear|buceo|buzos?|dive|diving)\b.{0,60}"
     r"\b(?:alcohol|cerveza|tragos?|copas?|vino|licor|beer|alcoholic)\b",
     re.IGNORECASE,
 )
@@ -153,6 +171,33 @@ _FOOD_ALLERGEN_RE = re.compile(
     r"shellfish|nuts?|peanuts?|dairy|gluten[- ]free)\b",
     re.IGNORECASE,
 )
+
+
+def _alcohol_and_food_policy_answer(msg_lower: str, lang: str) -> str | None:
+    """Politica de alcohol y/o de alimentacion segun lo que mencione el mensaje.
+
+    Hallazgo en vivo (lote 9, 2026-09-02): antes eran dos `if` independientes
+    con `return` inmediato en cuanto matcheaba el primero -- un mensaje que
+    mencionaba AMBOS temas a la vez ("tomamos alcohol anoche y uno de
+    nosotros es alergico a los mariscos") solo recibia la politica de
+    alcohol (el primer `if`), y la de alergia se perdia por completo. Ahora
+    se comprueban los dos y se concatenan si aplican ambos -- ninguno pisa
+    al otro. Usado tanto por el nodo `info` como por `_shared_turn_handler`
+    (cascada) para que se comporten igual.
+    """
+    policies = load_policies().get("policies", {})
+    parts: list[str] = []
+    if _ALCOHOL_BEFORE_DIVING_RE.search(msg_lower):
+        text = (policies.get("no_alcohol_policy") or {}).get(lang, "")
+        if text:
+            parts.append(text)
+    if _ALLERGY_WORD_RE.search(msg_lower) and _FOOD_ALLERGEN_RE.search(msg_lower):
+        text = (policies.get("food_policy") or {}).get(lang, "")
+        if text:
+            parts.append(text)
+    if not parts:
+        return None
+    return "\n\n".join(parts)
 
 # Afirmacion "a secas" ("si", "dale", "ok") — usada para cumplir una oferta que
 # el propio bot hizo en el turno anterior (p.ej. "¿te paso con un asesor?").
@@ -1284,7 +1329,28 @@ def _build_extra_context(state: ConversationState) -> str | None:
     # ganando el doc mas confiable, pero ahora el LLM sabe que debe interpretar
     # preguntas de seguimiento ambiguas dentro de DIVE TO HEAL en vez de tomar
     # al pie de la letra un dato de un paquete estandar no adaptado.
-    if getattr(state, "adaptive_diving_context", False):
+    # Hallazgo en vivo (2026-09-02, lote 9): confiar en que el LLM detecte el
+    # override "en realidad quiero el programa normal" DENTRO del propio
+    # parrafo de instruccion (la ultima frase de arriba) no funciono de forma
+    # fiable -- verificado en vivo contra PRE (conversacion 782/792): la
+    # aclaracion explicita seguia cayendo al fallback "no lo tengo a la mano"
+    # en vez de responder con la info generica del paquete, y en la traza de
+    # LangSmith la respuesta SI se generaba con datos de paquete pero el juez
+    # de grounding la rechazaba (HALLUCINATED) las 2 veces -- probablemente
+    # porque el propio texto de la nota DIVE TO HEAL seguia presente y sesgaba
+    # la generacion hacia mezclar ambos contextos. Fix determinista (mismo
+    # patron que las guardas de §6.bis: verificar el TEXTO del turno, no
+    # confiar en que el LLM se autocorrija): si el ultimo mensaje del cliente
+    # trae la aclaracion explicita, la nota NO se añade en absoluto para este
+    # turno -- RAG responde con el KB normal, sin el sesgo de la nota. Esto no
+    # toca el flag persistido `adaptive_diving_context` (sigue en pie por si
+    # el cliente vuelve a preguntar por DIVE TO HEAL despues).
+    last_user_message = next(
+        (h.get("content", "") for h in reversed(state.history or []) if h.get("role") == "user"), ""
+    )
+    dive_to_heal_override = bool(_DIVE_TO_HEAL_OVERRIDE_RE.search(last_user_message))
+
+    if getattr(state, "adaptive_diving_context", False) and not dive_to_heal_override:
         if state.language == "es":
             parts.append(
                 "La conversacion esta dentro del programa DIVE TO HEAL (buceo adaptado para "
@@ -2213,18 +2279,14 @@ async def _shared_turn_handler(
     # maní/lactosa) — una alergia sin ese contexto ("tengo alergias
     # severas, es peligroso bucear?") sigue yendo al escalado médico
     # normal, sin tocar.
-    if _ALCOHOL_BEFORE_DIVING_RE.search(msg_lower):
-        policy_text = (load_policies().get("policies", {}).get("no_alcohol_policy") or {}).get(
-            state.language, ""
+    combined_policy_text = _alcohol_and_food_policy_answer(msg_lower, state.language)
+    if combined_policy_text is not None:
+        logger.info(
+            "[SUPERVISOR] Alcohol/food-allergy question -> real policy text, not medical escalation "
+            f"(alcohol={bool(_ALCOHOL_BEFORE_DIVING_RE.search(msg_lower))} "
+            f"food={bool(_ALLERGY_WORD_RE.search(msg_lower) and _FOOD_ALLERGEN_RE.search(msg_lower))})"
         )
-        logger.info("[SUPERVISOR] Alcohol-before-diving question -> real no_alcohol_policy, not medical escalation")
-        return policy_text
-    if _ALLERGY_WORD_RE.search(msg_lower) and _FOOD_ALLERGEN_RE.search(msg_lower):
-        policy_text = (load_policies().get("policies", {}).get("food_policy") or {}).get(
-            state.language, ""
-        )
-        logger.info("[SUPERVISOR] Food-allergy question -> real food_policy, not medical escalation")
-        return policy_text
+        return combined_policy_text
 
     # SAFETY FIRST: broken-link complaints and sensitive topics (medical,
     # weather, complaints) must escalate BEFORE the intent detector runs.

@@ -78,6 +78,27 @@ async def test_generic_allergy_without_food_context_still_escalates_medical():
 
 
 @pytest.mark.asyncio
+async def test_alcohol_and_food_allergy_combined_in_one_message_both_answered():
+    """Hallazgo en vivo (bateria sintetica contra PRE, lote 9, 2026-09-02):
+    "queremos bucear manana, anoche tomamos algo de alcohol y uno de
+    nosotros es alergico a los mariscos" menciona AMBOS temas en un mismo
+    mensaje. Antes eran dos `if` independientes con `return` inmediato: el
+    de alcohol (que ademas fallaba por la ventana de proximidad de 25 chars,
+    ya ampliada a 60) se comia la respuesta entera y la politica de
+    alergia/comida se perdia por completo. Ahora deben aparecer las dos."""
+    state = make_state()
+    with patch("src.agents.supervisor.detect_routing_signals", new=AsyncMock(return_value={})):
+        resp = await route_message(
+            state,
+            "queremos bucear manana, anoche tomamos algo de alcohol y uno de "
+            "nosotros es alergico a los mariscos",
+        )
+    assert state.step != Step.ESCALATE
+    assert "alcohol" in resp.lower()
+    assert "alergia" in resp.lower() or "tour" in resp.lower() or "almuerzo" in resp.lower()
+
+
+@pytest.mark.asyncio
 async def test_wants_human_signal_escalates_when_keyword_list_misses():
     """"quisiera que me atendiera una persona real" no matchea
     ESCALATION_KEYWORDS (humano/agente/asesor/"hablar con") pero la

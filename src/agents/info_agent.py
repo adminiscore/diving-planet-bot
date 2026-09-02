@@ -47,13 +47,10 @@ logger = logging.getLogger("uvicorn.error")
 async def info_node(state: BotState) -> dict:
     from src.agents.supervisor import (
         _ADAPTIVE_DIVING_PATTERN,
-        _ALCOHOL_BEFORE_DIVING_RE,
-        _ALLERGY_WORD_RE,
-        _FOOD_ALLERGEN_RE,
+        _alcohol_and_food_policy_answer,
         _build_extra_context,
         _maybe_answer_age_eligibility,
         _shared_turn_handler,
-        load_policies,
         rag_answer,
     )
 
@@ -64,19 +61,16 @@ async def info_node(state: BotState) -> dict:
 
     # 0 · Alcohol/alergia alimentaria (portado de pre_gadea v0.21.11): política
     #     plana conocida, respuesta determinista sin RAG ni escalado médico.
-    #     El router ya distinguió estos casos del resto de ROUTE_INFO.
-    if _ALCOHOL_BEFORE_DIVING_RE.search(msg_lower):
-        policy_text = (load_policies().get("policies", {}).get("no_alcohol_policy") or {}).get(conv.language, "")
-        logger.info("[NODE:info] Alcohol-before-diving question -> real no_alcohol_policy, not medical escalation")
+    #     El router ya distinguió estos casos del resto de ROUTE_INFO. Ambos
+    #     temas se combinan si el mensaje menciona los dos a la vez (hallazgo
+    #     en vivo, lote 9, 2026-09-02 — antes el primero que matcheaba
+    #     pisaba al otro con un return inmediato).
+    combined_policy_text = _alcohol_and_food_policy_answer(msg_lower, conv.language)
+    if combined_policy_text is not None:
+        logger.info("[NODE:info] Alcohol/food-allergy question -> real policy text, not medical escalation")
         conv.history.append({"role": "user", "content": message})
-        conv.history.append({"role": "assistant", "content": policy_text})
-        return {"reply": policy_text}
-    if _ALLERGY_WORD_RE.search(msg_lower) and _FOOD_ALLERGEN_RE.search(msg_lower):
-        policy_text = (load_policies().get("policies", {}).get("food_policy") or {}).get(conv.language, "")
-        logger.info("[NODE:info] Food-allergy question -> real food_policy, not medical escalation")
-        conv.history.append({"role": "user", "content": message})
-        conv.history.append({"role": "assistant", "content": policy_text})
-        return {"reply": policy_text}
+        conv.history.append({"role": "assistant", "content": combined_policy_text})
+        return {"reply": combined_policy_text}
 
     # 1 · Elegibilidad por edad (pre-núcleo, determinista desde eligibility.py).
     age_answer = _maybe_answer_age_eligibility(message, conv)

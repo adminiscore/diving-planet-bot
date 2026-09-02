@@ -1263,6 +1263,7 @@ comprobar qué pasa cuando el bot acaba de preguntar algo que el mensaje no resp
 
 ### Lote 9 (12 conversaciones, 2026-09-02) — áreas frescas: escalado, cambio de idioma,
 ### override DIVE TO HEAL, cambio de tamaño de grupo, reservas existentes, menores, alcohol+alergia
+### — CERRADO (4/4 hallazgos corregidos)
 
 Zonas no cubiertas por lotes 1-8: escalado a humano (keyword y explícito), cambio de idioma a
 mitad de flujo, el override explícito "en realidad quiero el programa normal" de DIVE TO HEAL
@@ -1293,59 +1294,81 @@ en un mismo mensaje, 3+ nacionalidades mezcladas, precio en una moneda no soport
   `test_policy_texts_never_mention_the_bot_in_third_person` en `tests/test_rag_safety.py` —
   escanea TODOS los textos de `policies.json` por "el bot"/"the bot" en tercera persona, no solo
   el caso puntual.
-- **📝 Anotado, sin arreglar — alcohol se pierde cuando viene junto con alergia en el mismo
-  mensaje.** En el mismo repro (conversación 788), la parte de alcohol del mensaje ("anoche
-  tomamos algo de alcohol") no generó ninguna respuesta: `_ALCOHOL_BEFORE_DIVING_RE`
-  (`supervisor.py`) exige que la palabra de alcohol esté a ≤25 caracteres de
-  "bucear/buceo/buzos/dive/diving", y en este mensaje la distancia real es mayor (~39
-  caracteres, porque "bucear" aparece al principio de la frase y "alcohol" después de "manana,
-  anoche tomamos algo de"). Los dos gates (`_ALCOHOL_BEFORE_DIVING_RE` primero,
-  `_ALLERGY_WORD_RE`+`_FOOD_ALLERGEN_RE` después) son `if` independientes con `return` inmediato,
-  no hay combinación de ambos temas en una sola respuesta. No arreglado: ampliar la ventana de
-  proximidad a ciegas arriesga falsos positivos en mensajes no relacionados; requiere iteración
-  con casos reales antes de tocar el regex.
-- **📝 Anotado, sin arreglar — el override "programa normal, sin adaptar" de DIVE TO HEAL no
-  responde con la info genérica esperada.** Verificando el fix de arriba en vivo (conversación
-  782): tras confirmar que el contexto DIVE TO HEAL sí se preserva ("cuántas inmersiones son?" →
-  respuesta correcta sobre el programa adaptado), la aclaración explícita del cliente ("en
-  realidad quiero saber del programa normal, sin adaptar, cuantas inmersiones incluye ese?") —
-  justo el caso que la nueva instrucción del prompt dice que debe usar la info genérica del
-  paquete — cayó al fallback "Ese detalle en concreto no lo tengo a la mano" en vez de responder
-  "2 inmersiones en 1 día". Hipótesis sin confirmar: la recuperación del KB para esa pregunta
-  (fraseada con el pronombre "ese" refiriéndose al programa normal) no encuentra un doc con
-  confianza suficiente, y sin docs el flujo cae al escape hatch de `extra_context`-only — donde
-  la propia nota DIVE TO HEAL (que sigue en `extra_context` porque el flag no se limpia) puede
-  estar pesando más que la instrucción de override. Necesita el mismo tipo de iteración con LLM
-  real que costó cerrar el hallazgo de arriba — no es un fix a ciegas.
-- **📝 Anotado, sin arreglar — patrón de "re-pregunta redundante tras responder una pregunta de
-  info mezclada con la respuesta a un slot pendiente".** Visto en 2 conversaciones distintas
-  (781 cambio de idioma, 790 precio en euros): cuando un mensaje dispara una respuesta RAG/
-  precio Y ADEMÁS el propio mensaje ya respondía (explícita o implícitamente) una pregunta
-  pendiente del núcleo, el mensaje final concatena la respuesta RAG + la línea de red de
-  seguridad ("Si tu pregunta era sobre algo más concreto...") + un repeat de la pregunta
-  pendiente, **sin reconocer que el mensaje ya la respondió**. Ejemplo: "how much for 2 people,
-  certified diving?" contesta el precio correctamente pero vuelve a preguntar "Are you a
-  certified diver?" pese a que el mismo mensaje dice "certified diving". No es alucinación ni
-  dato incorrecto — es redundante/algo confuso, prioridad menor que los dos de arriba. No
-  arreglado: para confirmar la causa exacta (¿el regex del núcleo no reconoce "certified diving"
-  dentro de una pregunta de precio como respuesta al gate de certificación?) hace falta trazar el
-  turno con LangSmith o repro local con LLM real.
+- **⚠️🟡 CORREGIDO — alcohol se perdía cuando venía junto con alergia en el mismo mensaje.** En
+  el mismo repro (conversación 788), la parte de alcohol del mensaje ("anoche tomamos algo de
+  alcohol") no generaba ninguna respuesta: `_ALCOHOL_BEFORE_DIVING_RE` (`supervisor.py`) exigía
+  que la palabra de alcohol estuviera a ≤25 caracteres de "bucear/buceo/buzos/dive/diving", y en
+  este mensaje la distancia real es de 32 caracteres ("bucear" al principio, "alcohol" tras
+  "manana, anoche tomamos algo de"). Además, los dos gates (`_ALCOHOL_BEFORE_DIVING_RE` primero,
+  `_ALLERGY_WORD_RE`+`_FOOD_ALLERGEN_RE` después) eran `if` independientes con `return`
+  inmediato — el primero que matcheaba se comía la respuesta entera, sin combinar ambos temas.
+  **Fix**: ventana ampliada 25→60 (cubre cláusulas intermedias típicas en español sin volverse
+  irrestricta) + nueva función `_alcohol_and_food_policy_answer` (`supervisor.py`) que comprueba
+  los dos temas y CONCATENA las dos políticas si aplican ambos, en vez de que el primero pise al
+  segundo — usada tanto por `info_agent.py` como por `_shared_turn_handler` (cascada) para que se
+  comporten igual. Test: `test_alcohol_and_food_allergy_combined_in_one_message_both_answered`
+  en `tests/test_routing_signals_integration.py`.
+- **⚠️🟡 CORREGIDO — el override "programa normal, sin adaptar" de DIVE TO HEAL no respondía con
+  la info genérica esperada.** Verificando el fix de arriba en vivo (conversación 782/792): tras
+  confirmar que el contexto DIVE TO HEAL sí se preserva ("cuántas inmersiones son?" → respuesta
+  correcta), la aclaración explícita del cliente ("en realidad quiero saber del programa normal,
+  sin adaptar...") caía al fallback en vez de responder con la info genérica del paquete. Traza de
+  LangSmith: la respuesta SÍ se generaba (con datos de paquete) pero el juez de grounding la
+  rechazaba como `HALLUCINATED` las 2 veces — la nota DIVE TO HEAL seguía presente en
+  `extra_context` y sesgaba la generación pese a la excepción escrita en el propio párrafo de
+  instrucción ("salvo que el cliente aclare..."), confirmando que confiar en que el LLM se
+  autocorrija DENTRO de un párrafo largo no es fiable. **Fix determinista** (mismo principio que
+  las guardas de §6.bis): nuevo regex `_DIVE_TO_HEAL_OVERRIDE_RE` (`supervisor.py`) que detecta la
+  aclaración explícita en el ÚLTIMO mensaje del cliente; si matchea, la nota DIVE TO HEAL NO se
+  añade en absoluto para ese turno (el flag persistido `adaptive_diving_context` no se toca, por
+  si el cliente vuelve a preguntar por DIVE TO HEAL después). Test:
+  `test_extra_context_omits_dive_to_heal_note_on_explicit_override` en
+  `tests/test_conversational_core.py`.
+- **⚠️🟡 CORREGIDO — re-pregunta redundante tras responder una pregunta de info mezclada con la
+  respuesta a un slot pendiente.** Visto en 2 conversaciones (781 cambio de idioma, 790 precio en
+  euros): "how much for 2 people, certified diving?" contestaba el precio correctamente pero
+  volvía a preguntar "Are you a certified diver?" pese a que el mismo mensaje ya lo decía. Traza
+  de LangSmith: `detect_special_signals` devolvía `mentions_other_person=true,
+  companion_activity=certified_diving, companion_qty=2` — interpretaba "2 people" como un
+  ACOMPAÑANTE con actividad propia (la MISMA que la del grupo), no como el tamaño total del grupo
+  respondiendo la pregunta pendiente de certificación. El regex determinista de respaldo
+  (`_mentions_person`) tenía el MISMO fallo: "people" está en su lista de palabras sin excepción
+  para un conteo total ("for N people"). Con un acompañante fantasma creado, la certificación del
+  hablante principal quedaba sin resolver y el núcleo la re-preguntaba, pegada a la respuesta de
+  precio. **Fix determinista** (mismo principio de §6.bis: verificar el TEXTO del turno, no
+  confiar solo en el LLM): nuevo `_BARE_HEADCOUNT_RE` que enmascara patrones "for/para N
+  people/personas" antes de evaluar `_mentions_person`, y en el punto de uso, si el LLM dice
+  `mentions_other_person=true` pero el regex (ya sin el conteo enmascarado) NO lo confirma Y el
+  mensaje matchea el patrón de conteo puro, no se confía en la señal del LLM tampoco. Si además
+  del conteo hay una mención real de otra persona, sigue funcionando como antes (el conteo se
+  enmascara, no toda la frase). Tests: casos nuevos en
+  `test_mentions_person_discriminates_companion_from_change` +
+  `test_bare_headcount_in_price_question_does_not_spawn_phantom_companion` en
+  `tests/test_conversational_core.py`.
 
 ---
 
 ## 8. Registro de ejecución
 *(Una línea por paso cerrado: fecha · dev · qué · commit. El más reciente arriba.)*
 
-- **2026-09-02 · Gadea (Claude) · Lote 9 (12 conversaciones contra PRE) — 1 bug corregido, 3
-  anotados sin arreglar.** Corregido: `policies.json["food_policy"]` filtraba al cliente una nota
-  interna de autoría ("El bot no debe preguntar proactivamente por alergias.") porque el shortcut
-  determinista de `info_agent.py` devuelve ese texto verbatim sin pasar por el LLM — fix de dato
-  (no de código) + guarda de regresión genérica sobre todo `policies.json`. Anotados para la
-  próxima sesión: alcohol se pierde cuando llega junto con alergia en el mismo mensaje (ventana
-  de proximidad del regex, 25 chars, no cubre la frase real); el override "programa normal, sin
-  adaptar" de DIVE TO HEAL no usa la info genérica esperada (necesita iteración con LLM real);
-  re-pregunta redundante cuando un mensaje mezcla una pregunta de info con la respuesta a un slot
-  pendiente. Ver §7, bloque "Lote 9" para el detalle completo de cada uno.
+- **2026-09-02 · Gadea (Claude) · Lote 9 CERRADO — 4/4 hallazgos corregidos.** Tras el fix inicial
+  de la fuga de `food_policy`, se corrigieron también los 3 hallazgos que habían quedado anotados
+  sin arreglar: (1) alcohol perdido cuando llega junto con alergia en el mismo mensaje — ventana
+  de proximidad ampliada 25→60 + nueva `_alcohol_and_food_policy_answer` que combina ambas
+  políticas en vez de que la primera pise la segunda; (2) el override "programa normal, sin
+  adaptar" de DIVE TO HEAL no usaba la info genérica esperada — traza de LangSmith confirmó que el
+  LLM SÍ generaba la respuesta pero el juez de grounding la rechazaba (`HALLUCINATED`) porque la
+  nota DIVE TO HEAL seguía presente en `extra_context`; fix determinista con
+  `_DIVE_TO_HEAL_OVERRIDE_RE` que omite la nota en el turno donde el cliente aclara explícitamente;
+  (3) re-pregunta redundante de certificación tras una pregunta de precio ("how much for 2 people,
+  certified diving?") — traza de LangSmith mostró que tanto el LLM (`detect_special_signals`) como
+  el regex de respaldo (`_mentions_person`) interpretaban "2 people" como un acompañante fantasma
+  con la misma actividad del grupo; fix con `_BARE_HEADCOUNT_RE` que enmascara conteos totales
+  ("for N people") antes de evaluar la mención de otra persona, y distrust del LLM cuando el
+  regex (ya sin el conteo) no lo confirma. Los 3 siguen el mismo principio de diseño de §6.bis:
+  verificación determinista del texto del turno por encima de una señal LLM de formato libre.
+  Suite completa verde en las 3 configuraciones: 1619 passed / 18 skipped (+6 sobre el baseline).
+  Ver §7, bloque "Lote 9" para el detalle completo de cada uno.
 - **2026-09-02 · Gadea (Claude) · §7 CERRADO — DIVE TO HEAL pierde su contexto en seguimientos
   genéricos** (`179ac27`). Causa raíz real: `_build_extra_context` nunca mencionaba
   `adaptive_diving_context`, no una carrera perdida contra un doc del KB como suponía la entrada

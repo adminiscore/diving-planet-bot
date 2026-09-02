@@ -703,9 +703,30 @@ _MENTIONS_PERSON_RE = re.compile(
     re.IGNORECASE,
 )
 
+# Conteo total dentro de una pregunta de precio/info ("how much for 2
+# people?", "cuanto cuesta para 2 personas?") -- hallazgo en vivo (lote 9,
+# bateria sintetica contra PRE, 2026-09-02): "how much for 2 people,
+# certified diving?" disparaba `_MENTIONS_PERSON_RE` solo por la palabra
+# "people", y el propio `detect_special_signals` (LLM) tambien devolvia
+# `mentions_other_person=true` -- ninguno de los dos tenia respaldo real de
+# un ACOMPAÑANTE con actividad distinta, era el tamaño total del grupo
+# preguntando precio. Resultado: se trataba "certified diving" como la
+# actividad de un acompañante fantasma en vez de la del grupo completo, el
+# estado de certificacion del hablante principal quedaba sin resolver, y el
+# turno terminaba con la respuesta de precio + una re-pregunta redundante de
+# "¿eres buzo certificado?" pese a que el propio mensaje ya lo decia.
+_BARE_HEADCOUNT_RE = re.compile(
+    r"\b(?:for|para)\s+\d+\s+(?:people|personas?|folks?|persons?)\b",
+    re.IGNORECASE,
+)
+
 
 def _mentions_person(message: str) -> bool:
-    return bool(_MENTIONS_PERSON_RE.search(message))
+    # Se enmascara el conteo total ("for 2 people") antes de evaluar: si
+    # "people"/"personas" no aparece en NINGUN otro sitio del mensaje, no es
+    # una mencion real de otra persona (ver _BARE_HEADCOUNT_RE arriba).
+    masked = _BARE_HEADCOUNT_RE.sub("", message)
+    return bool(_MENTIONS_PERSON_RE.search(masked))
 
 
 # Compañero SINGULAR e inequívoco (un/una/mi/a + sustantivo en singular, o "a
@@ -2352,7 +2373,26 @@ async def _extraction_phase(
         # el regex, un acompañante bien detectado por el LLM se descartaba en
         # silencio porque la palabra no estaba en la lista). El regex se
         # mantiene como respaldo barato para cuando el LLM no marque el campo.
-        if activity and (signals.get("mentions_other_person") or _mentions_person(message)):
+        #
+        # Excepcion (hallazgo en vivo, lote 9, 2026-09-02): cuando el UNICO
+        # rastro de "otra persona" en el mensaje es un conteo total tipo "for
+        # 2 people"/"para 2 personas" (ver _BARE_HEADCOUNT_RE), ni siquiera se
+        # confia en que el propio LLM lo haya visto bien -- ya devolvio un
+        # falso positivo igual que el regex en este caso real ("how much for
+        # 2 people, certified diving?" -> companion fantasma con la MISMA
+        # actividad que el grupo, dejando sin resolver la certificacion del
+        # hablante principal y generando una re-pregunta redundante). Mismo
+        # principio que 6.bis: verificacion determinista del TEXTO por encima
+        # de la señal del LLM cuando hay evidencia real de que se equivoca.
+        llm_mentions_other_person = bool(signals.get("mentions_other_person"))
+        regex_mentions_other_person = _mentions_person(message)
+        if (
+            llm_mentions_other_person
+            and not regex_mentions_other_person
+            and _BARE_HEADCOUNT_RE.search(message)
+        ):
+            llm_mentions_other_person = False
+        if activity and (llm_mentions_other_person or regex_mentions_other_person):
             # El turno hablaba de un ACOMPAÑANTE, no del hablante principal:
             # restaurar lo que este mismo turno pudo haber pisado por error en
             # el perfil del buceador principal antes de aplicar el añadido.

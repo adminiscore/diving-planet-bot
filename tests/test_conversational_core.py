@@ -1014,6 +1014,14 @@ def test_ack_prompt_warns_against_reinterpreting_fact_as_preference():
     ("mejor multi-día", False),
     ("solo yo", False),
     ("quiero bucear", False),
+    # Conteo total dentro de una pregunta de precio -> False (hallazgo en
+    # vivo, lote 9, 2026-09-02: "how much for 2 people, certified diving?"
+    # se trataba como acompañante solo por la palabra "people").
+    ("how much for 2 people, certified diving?", False),
+    ("cuanto cuesta para 2 personas?", False),
+    # Pero si además de un conteo hay una mención real de otra persona, sigue
+    # contando como acompañante (el conteo se enmascara, no toda la frase).
+    ("how much for 2 people, my friend wants snorkel", True),
 ])
 def test_mentions_person_discriminates_companion_from_change(msg, expected):
     assert core._mentions_person(msg) is expected
@@ -1493,6 +1501,32 @@ async def test_kids_only_mention_does_not_trigger_spurious_companion_activity():
          })):
         await route_message(state, "los niños tienen 7 y 10")
     assert state.companion_activity_deferred is False
+    assert state.core_pending_slot != core.SLOT_COMPANION_ACTIVITY
+
+
+@pytest.mark.asyncio
+async def test_bare_headcount_in_price_question_does_not_spawn_phantom_companion():
+    """Hallazgo en vivo (bateria sintetica contra PRE, lote 9, 2026-09-02):
+    "how much for 2 people, certified diving?" -- solo un conteo total
+    dentro de una pregunta de precio -- disparaba `mentions_other_person`
+    (tanto el LLM como el regex, via la palabra "people") y creaba un
+    acompañante fantasma con la MISMA actividad que el grupo, dejando sin
+    resolver la certificacion del hablante principal y generando una
+    re-pregunta redundante ("Are you a certified diver?") pegada a la
+    respuesta de precio. Ni el LLM ni el regex tienen respaldo real de una
+    persona distinta aqui -- no debe generarse ninguna ambigüedad de
+    acompañante."""
+    state = make_state("en")
+    state.core_pending_slot = None
+
+    with patch.object(core, "fill_gaps", new=AsyncMock(return_value={})), \
+         patch.object(core, "detect_special_signals", new=AsyncMock(return_value={
+             "companion_activity": "certified_diving", "mentions_other_person": True,
+             "companion_is_singular": False, "companion_qty": 2,
+         })):
+        await route_message(state, "how much for 2 people, certified diving?")
+    assert state.companion_activity_deferred is False
+    assert state.pending_companion_activity is None
     assert state.core_pending_slot != core.SLOT_COMPANION_ACTIVITY
 
 
@@ -2410,6 +2444,40 @@ def test_extra_context_omits_dive_to_heal_note_when_not_in_that_context():
     state.adaptive_diving_context = False
     ctx = _build_extra_context(state)
     assert ctx is None or "dive to heal" not in ctx.lower()
+
+
+def test_extra_context_omits_dive_to_heal_note_on_explicit_override():
+    """Hallazgo en vivo (lote 9, 2026-09-02): la excepcion "salvo que el
+    cliente aclare que pregunta por el programa normal" del propio parrafo
+    de instruccion no funciono de forma fiable -- verificado en vivo contra
+    PRE (conversaciones 782/792): la aclaracion explicita seguia cayendo al
+    fallback en vez de responder con la info generica del paquete, y en la
+    traza de LangSmith la respuesta se generaba pero el juez de grounding la
+    rechazaba (HALLUCINATED) las 2 veces, probablemente porque la propia nota
+    DIVE TO HEAL seguia presente y sesgaba la generacion. Fix determinista:
+    si el ultimo mensaje del cliente trae el override explicito, la nota NO
+    se añade en absoluto para ese turno (el flag persistido no se toca)."""
+    from src.agents.supervisor import _build_extra_context
+
+    state = make_state("es")
+    state.adaptive_diving_context = True
+    state.history = [
+        {"role": "user", "content": "hola, quiero info del programa dive to heal"},
+        {"role": "assistant", "content": "..."},
+        {"role": "user", "content": "en realidad quiero saber del programa normal, sin adaptar, cuantas inmersiones incluye ese?"},
+    ]
+    ctx = _build_extra_context(state)
+    assert ctx is None or "dive to heal" not in ctx.lower()
+    # El flag persistido sigue en pie -- solo se omite la nota para ESTE turno.
+    assert state.adaptive_diving_context is True
+
+    state_en = make_state("en")
+    state_en.adaptive_diving_context = True
+    state_en.history = [
+        {"role": "user", "content": "actually I want to know about the regular program, non-adaptive"},
+    ]
+    ctx_en = _build_extra_context(state_en)
+    assert ctx_en is None or "dive to heal" not in ctx_en.lower()
 
 
 @pytest.mark.asyncio
