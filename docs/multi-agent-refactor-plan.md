@@ -1353,7 +1353,10 @@ en un mismo mensaje, 3+ nacionalidades mezcladas, precio en una moneda no soport
     textualmente `certified_diving` (misma función `_activity_has_textual_backing` que ya usa el
     resto del núcleo), se fija `is_certified=True` antes de decidir si re-preguntar — sin correr
     extracción completa fuera de su fase normal. Test:
-    `test_price_question_naming_certified_diving_does_not_reask_certification`.
+    `test_price_question_naming_certified_diving_does_not_reask_certification`. **Verificado en
+    vivo contra PRE** (conversación 796) repitiendo el repro exacto tras el redeploy: ya no
+    re-pregunta la certificación — el flujo avanza correctamente a la siguiente pregunta
+    (ubicación).
   - **Lección**: la traza de LangSmith mostró un candidato plausible (causa #1) que resultó real
     pero irrelevante para ESTE síntoma — sin la verificación en vivo tras desplegar el primer fix,
     se habría dado el hallazgo por cerrado incorrectamente. Confirmar siempre contra el repro
@@ -1364,6 +1367,13 @@ en un mismo mensaje, 3+ nacionalidades mezcladas, precio en una moneda no soport
 ## 8. Registro de ejecución
 *(Una línea por paso cerrado: fecha · dev · qué · commit. El más reciente arriba.)*
 
+- **2026-09-02 · Gadea (Claude) · re-pregunta redundante — causa raíz corregida (2ª iteración).**
+  El fix del "companion fantasma" (entrada anterior) no cambió el repro al verificarlo en vivo: la
+  causa real es que un mensaje con "?" nunca pasa por extracción ese turno (`_routing_phase`
+  responde con RAG y retorna antes). Fix en `_answer_question`: si el mensaje respalda
+  textualmente `certified_diving`, fija `is_certified=True` antes de decidir si re-preguntar.
+  Verificado en vivo contra PRE (conversación 796): ya no re-pregunta. Suite verde en las 3
+  configuraciones: 1620 passed / 18 skipped.
 - **2026-09-02 · Gadea (Claude) · Lote 9 CERRADO — 4/4 hallazgos corregidos.** Tras el fix inicial
   de la fuga de `food_policy`, se corrigieron también los 3 hallazgos que habían quedado anotados
   sin arreglar: (1) alcohol perdido cuando llega junto con alergia en el mismo mensaje — ventana
