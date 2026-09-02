@@ -1439,11 +1439,102 @@ unidad, hijos, certificación, refresher) a mitad del camino.
   `test_routing_tool_excludes_weather_policy_questions_from_escalation` en
   `tests/test_rag_safety.py`.
 
+### Lote 11 (21 conversaciones, 11 temas, 2026-09-02) — cobertura vertical y horizontal de los
+### huecos identificados tras revisar lotes 1-10
+
+Tras compilar qué temas tocó cada lote anterior (1-10), se identificaron 11 temas nunca
+probados: especialidades PADI (Advanced/Rescue/Divemaster/Nitrox), vuelo después de bucear,
+qué cubre el seguro, certificación de otro organismo (SSI/NAUI), descuento/negociación, reserva
+para persona ausente, cambio de idioma más de una vez, grupo grande/evento corporativo, menor
+certificándose, tono grosero/agresivo, tercer idioma no soportado (portugués/francés). Cada uno
+con 1-2 conversaciones, algunas sueltas y otras embebidas en un flujo de reserva.
+
+- ✅ **8 de 11 temas sin problema**: Rescue/Divemaster/Nitrox (respuestas detalladas y
+  correctas), descuento de grupo (10%+10% online), descuento en efectivo (explica bien que no
+  hay), reserva para persona ausente (guía correctamente, sin necesidad de manejo especial),
+  cambio de idioma más de una vez ES→EN→ES (cambia correctamente las dos veces), menor
+  certificándose / edad mínima general (respuestas grounded, verificadas contra
+  `eligibility.py`/`faqs.json` — los "12 años Advanced/Rescue, 18 Divemaster" que a primera
+  vista parecían inventados SÍ están documentados como regla de negocio real, no alucinación),
+  tono grosero/impaciente (el bot mantiene la compostura, y "van a contestar o que" escala
+  correctamente a asesor).
+- **⚠️🔴 CORREGIDO — `availability_question` secuestraba preguntas de seguridad y de precio en
+  otro idioma solo por mencionar un día cercano.** "tengo un vuelo mañana en la noche, puedo
+  bucear hoy sin problema?" (conversaciones 810/811) recibía la respuesta genérica "¡Buena
+  noticia! Las salidas son diarias y siempre hay disponibilidad..." — **ignorando por completo**
+  la pregunta real de seguridad, pese a que `policies.json["flight_after_diving"]` tiene la
+  respuesta exacta ("esperar al menos 18 horas después de bucear antes de volar"). El MISMO
+  patrón rompía preguntas de precio en otros idiomas: "Oi, quero mergulhar amanhã, quanto
+  custa?" (portugués, conversación 826) y "Bonjour... combien ça coûte?" (francés, conversación
+  827) recibían la misma respuesta genérica de disponibilidad en vez de contestar el precio.
+  Causa: `sensitive_topic`/`availability_question` (LLM vía `ROUTING_TOOL`) ya tenía una
+  exclusión para no confundir "cuánto" con "cuándo", pero no cubría el caso de un mensaje que
+  simplemente MENCIONA un día cercano ("mañana"/"amanhã"/"demain") de pasada mientras pregunta
+  otra cosa. **Fix**: instrucción explícita añadida al schema — mencionar un día cercano no
+  basta por sí solo, solo se marca el campo cuando de verdad se pregunta por confirmar un cupo/
+  fecha. **Verificado en vivo contra PRE**: la pregunta del vuelo (conversación 828) ahora
+  recibe la política real de 18 horas; la pregunta en portugués (conversación 830) ahora recibe
+  precios reales en vez de la respuesta de disponibilidad.
+- **⚠️🔴 CORREGIDO — "evento corporativo" hacía que RAG alucinara en vez de usar la política
+  real.** "somos una empresa y queremos llevar 20 empleados a bucear como evento corporativo, es
+  posible?" (conversación 821) generaba una respuesta plausible pero SIN retrieval real ("necesito
+  saber en qué hotel se hospedan...") — el juez de grounding la rechazó como `HALLUCINATED` las 2
+  veces (visto en la traza de LangSmith). La política real existe
+  (`policies.json["private_services"]`: sin precio fijo, se cotiza a medida) pero **no se puede
+  dar en crudo**: el texto de la política incluye el número de WhatsApp +57 320 231515, y la
+  política ya establecida (decisión owner, 2026-07-20) es que el bot NUNCA da el número de
+  teléfono/WhatsApp — el contacto va siempre por el handoff interno de Chatwoot. **Fix**: nuevo
+  shortcut determinista (`_PRIVATE_GROUP_EVENT_RE` + `_private_group_event_answer`,
+  `supervisor.py`), mismo patrón que `_alcohol_and_food_policy_answer` — respuesta REDACTADA (no
+  el texto crudo del KB) que confirma que es posible y ofrece conectar con un asesor para la
+  cotización, sin filtrar el número. Enrutado a `ROUTE_INFO` igual que alcohol/alergia. **Verificado
+  en vivo contra PRE** (conversación 829): responde con la versión redactada, sin escalar como
+  tema médico ni caer al fallback genérico. Tests:
+  `test_corporate_event_gets_real_answer_not_hallucinated_rag` en
+  `tests/test_routing_signals_integration.py`.
+- **📝 Anotado, sin arreglar (hueco de contenido del KB, no bug de código) — certificación de
+  otro organismo (SSI/NAUI).** Ambas preguntas ("tengo certificación SSI, me sirve?", "mi
+  certificación es NAUI, es válida?") caen al fallback genérico "no lo tengo a la mano" — el KB
+  no tiene ninguna FAQ/policy sobre reconocimiento de certificaciones de otras agencias además de
+  PADI. No es un bug de retrieval — no hay contenido que retrievar. Requiere que el negocio
+  aporte la política real (¿aceptan SSI/NAUI? ¿con qué condiciones?) antes de poder añadir
+  contenido al KB.
+- **📝 Anotado, sin arreglar (hueco de contenido del KB) — detalle de qué cubre el seguro.**
+  "¿que cubre el seguro que incluye la reserva?" obtiene una respuesta vaga pero técnicamente
+  grounded ("cubre la actividad de buceo o snorkel") — el juez de grounding la marcó GROUNDED
+  porque no contradice nada, pero el KB solo documenta el FORMULARIO de seguro
+  (`insurance_form_requirement`), no el detalle de cobertura (¿gastos médicos? ¿evacuación?
+  ¿equipo?). No es un bug de código — sin contenido real de cobertura en el KB, no hay nada más
+  específico que RAG pueda fundamentar. Mismo tipo de hueco que SSI/NAUI arriba.
+- **📝 Anotado, sin arreglar (prioridad menor) — precio del curso Advanced no se da directo.**
+  "cuánto cuesta y qué incluye" tras pedir el curso Advanced Open Water recibe el overview
+  genérico de precios (4 servicios base) en vez del precio específico del Advanced ($616 USD,
+  SÍ existe en `services.json`). No es una respuesta incorrecta (los precios mostrados son
+  reales), solo menos específica de lo ideal. Menor prioridad — no arreglado.
+- **📝 Anotado, sin arreglar (diseño aceptable, no claramente un bug) — pregunta de seguro+lesión
+  escala como tema médico.** "si me lastimo buceando, el seguro cubre gastos médicos?" escala
+  directo a asesor. Dado que es una pregunta de responsabilidad/cobertura médica sin una
+  respuesta clara en el KB, escalar a un humano es un default razonable — no se tocó.
+
 ---
 
 ## 8. Registro de ejecución
 *(Una línea por paso cerrado: fecha · dev · qué · commit. El más reciente arriba.)*
 
+- **2026-09-02 · Gadea (Claude) · Lote 11 (21 conversaciones, 11 temas nunca probados) — 2
+  bugs corregidos y verificados en vivo, 3 huecos de contenido del KB anotados sin arreglar,
+  8/11 temas sin problema.** Compilado primero un mapa de qué tocó cada lote anterior (1-10)
+  para encontrar huecos reales, luego batería vertical/horizontal por tema. Corregidos: (1)
+  `availability_question` secuestraba preguntas de seguridad ("vuelo mañana, puedo bucear hoy?")
+  y de precio en otro idioma (portugués/francés) solo por mencionar un día cercano, dando la
+  respuesta genérica de disponibilidad en vez de la política real o el precio — fix en el schema
+  de `ROUTING_TOOL`; (2) "evento corporativo" hacía que RAG alucinara (`HALLUCINATED` 2/2 en la
+  traza) en vez de usar la política real, que además no se puede dar en crudo (lleva el número
+  de WhatsApp, prohibido por política del owner) — nuevo shortcut determinista con respuesta
+  redactada. Huecos de contenido anotados (no bugs de código, requieren info del negocio):
+  certificación SSI/NAUI sin cobertura en el KB, detalle de qué cubre el seguro, precio
+  específico del curso Advanced. Suite completa verde en las 3 configuraciones: 1625 passed / 18
+  skipped. Ver §7, bloque "Lote 11" para el detalle completo.
 - **2026-09-02 · Gadea (Claude) · "¿qué pasa si llueve?" ya no escala — hallazgo menor del lote
   10 cerrado.** `sensitive_topic: weather_conditions` (clasificación LLM vía `ROUTING_TOOL`) no
   distinguía pronóstico en tiempo real de pregunta de política/hipotética sobre mal clima — fix
