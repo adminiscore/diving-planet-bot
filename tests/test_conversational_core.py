@@ -1042,6 +1042,33 @@ def test_full_booking_recap_none_when_nothing_resolved():
     assert core._full_booking_recap(st) is None
 
 
+@pytest.mark.asyncio
+async def test_price_question_naming_certified_diving_does_not_reask_certification():
+    """Hallazgo en vivo (bateria sintetica contra PRE, lote 9, 2026-09-02):
+    "how much for 2 people, certified diving?" respondia el precio
+    correctamente pero volvia a preguntar "Are you a certified diver?" pegado
+    a la respuesta -- pese a que el propio mensaje ya nombra el producto
+    certified_diving. Causa raiz real: un mensaje con "?" nunca pasa por
+    `_understand()`/extraccion ese turno (`_routing_phase` responde con RAG
+    directamente ANTES de extraccion), asi que `state.is_certified` seguia
+    en None y `next_missing_slot` lo pedia de nuevo. Fix: `_answer_question`
+    ahora reconoce que el propio mensaje respalda certified_diving
+    textualmente y fija `is_certified=True` antes de decidir si re-preguntar."""
+    state = make_state("en")
+    state.detected_activity = "certified_diving"
+    state.is_certified = None
+    state.location = "cartagena"
+    state.detected_group_size = 2
+    state.core_pending_slot = None
+
+    with patch.object(core, "detect_special_signals", new=AsyncMock(return_value={})), \
+         patch("src.agents.supervisor.rag_answer", new=AsyncMock(return_value="Certified diving: $178 USD per person.")):
+        resp = await route_message(state, "how much for 2 people, certified diving?")
+
+    assert state.is_certified is True
+    assert "certified diver" not in resp.lower()
+
+
 # ---------------------------------------------------------------------------
 # Recall rico end-to-end (Prioridad 2, punto 1 — pendiente del handoff de
 # Álvaro: "_full_booking_recap existe, falta validar vía maybe_handle_turn").

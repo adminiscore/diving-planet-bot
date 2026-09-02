@@ -1324,27 +1324,40 @@ en un mismo mensaje, 3+ nacionalidades mezcladas, precio en una moneda no soport
   si el cliente vuelve a preguntar por DIVE TO HEAL después). Test:
   `test_extra_context_omits_dive_to_heal_note_on_explicit_override` en
   `tests/test_conversational_core.py`.
-- **⚠️🟡 CORREGIDO — re-pregunta redundante tras responder una pregunta de info mezclada con la
-  respuesta a un slot pendiente.** Visto en 2 conversaciones (781 cambio de idioma, 790 precio en
-  euros): "how much for 2 people, certified diving?" contestaba el precio correctamente pero
-  volvía a preguntar "Are you a certified diver?" pese a que el mismo mensaje ya lo decía. Traza
-  de LangSmith: `detect_special_signals` devolvía `mentions_other_person=true,
-  companion_activity=certified_diving, companion_qty=2` — interpretaba "2 people" como un
-  ACOMPAÑANTE con actividad propia (la MISMA que la del grupo), no como el tamaño total del grupo
-  respondiendo la pregunta pendiente de certificación. El regex determinista de respaldo
-  (`_mentions_person`) tenía el MISMO fallo: "people" está en su lista de palabras sin excepción
-  para un conteo total ("for N people"). Con un acompañante fantasma creado, la certificación del
-  hablante principal quedaba sin resolver y el núcleo la re-preguntaba, pegada a la respuesta de
-  precio. **Fix determinista** (mismo principio de §6.bis: verificar el TEXTO del turno, no
-  confiar solo en el LLM): nuevo `_BARE_HEADCOUNT_RE` que enmascara patrones "for/para N
-  people/personas" antes de evaluar `_mentions_person`, y en el punto de uso, si el LLM dice
-  `mentions_other_person=true` pero el regex (ya sin el conteo enmascarado) NO lo confirma Y el
-  mensaje matchea el patrón de conteo puro, no se confía en la señal del LLM tampoco. Si además
-  del conteo hay una mención real de otra persona, sigue funcionando como antes (el conteo se
-  enmascara, no toda la frase). Tests: casos nuevos en
-  `test_mentions_person_discriminates_companion_from_change` +
-  `test_bare_headcount_in_price_question_does_not_spawn_phantom_companion` en
-  `tests/test_conversational_core.py`.
+- **⚠️🟡 CORREGIDO (2 causas, no 1) — re-pregunta redundante tras responder una pregunta de info
+  mezclada con la respuesta a un slot pendiente.** Visto en 2 conversaciones (781 cambio de
+  idioma, 790 precio en euros): "how much for 2 people, certified diving?" contestaba el precio
+  correctamente pero volvía a preguntar "Are you a certified diver?" pese a que el mismo mensaje
+  ya lo decía.
+  - **Causa #1 (real pero NO la causante de este bug — descubierto al verificar en vivo tras el
+    primer fix, que no cambió el repro): `detect_special_signals` + `_mentions_person`
+    interpretaban "2 people" como un ACOMPAÑANTE fantasma** con la misma actividad que el grupo
+    (`mentions_other_person=true, companion_activity=certified_diving, companion_qty=2` en la
+    traza de LangSmith) — "people" está en la lista de palabras de `_mentions_person` sin
+    excepción para un conteo total. Es un bug real (podía crear ambigüedad de acompañante
+    espuria en OTROS flujos sin "?"), pero **no es lo que causaba este síntoma concreto**: la
+    rama de código donde vive esa detección (`_understand`, dentro de `_extraction_phase`) NI
+    SIQUIERA SE EJECUTA para un mensaje con "?" (ver `_routing_phase`: el gate de "?" explícito
+    responde con RAG y retorna ANTES de llegar a extracción). Fix igualmente aplicado (bug real,
+    solo que en el flujo equivocado): `_BARE_HEADCOUNT_RE` enmascara "for/para N people/personas"
+    antes de evaluar `_mentions_person`, y en el punto de uso, si el LLM dice
+    `mentions_other_person=true` pero el regex (sin el conteo) no lo confirma Y el mensaje
+    matchea el patrón de conteo puro, tampoco se confía en el LLM. Tests: casos nuevos en
+    `test_mentions_person_discriminates_companion_from_change` +
+    `test_bare_headcount_in_price_question_does_not_spawn_phantom_companion`.
+  - **Causa #2 (la real, encontrada al reproducir en vivo DESPUÉS del primer fix y ver que el
+    síntoma seguía idéntico): un mensaje con "?" nunca pasa por extracción ese turno**, así que
+    `state.is_certified` seguía en `None` pese a que el mensaje nombra "certified diving", y
+    `next_missing_slot` lo volvía a pedir. **Fix** en `_answer_question`
+    (`conversational_core.py`): si el slot pendiente es certificación y el propio mensaje respalda
+    textualmente `certified_diving` (misma función `_activity_has_textual_backing` que ya usa el
+    resto del núcleo), se fija `is_certified=True` antes de decidir si re-preguntar — sin correr
+    extracción completa fuera de su fase normal. Test:
+    `test_price_question_naming_certified_diving_does_not_reask_certification`.
+  - **Lección**: la traza de LangSmith mostró un candidato plausible (causa #1) que resultó real
+    pero irrelevante para ESTE síntoma — sin la verificación en vivo tras desplegar el primer fix,
+    se habría dado el hallazgo por cerrado incorrectamente. Confirmar siempre contra el repro
+    exacto después de cada fix, no solo contra la hipótesis de la traza.
 
 ---
 

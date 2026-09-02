@@ -2897,6 +2897,25 @@ async def _answer_question(
         extra_context=extra_context,
     )
     pending = state.core_pending_slot or next_missing_slot(state)
+    # Hallazgo en vivo (lote 9, bateria sintetica contra PRE, 2026-09-02): un
+    # mensaje con "?" nunca pasa por `_understand()`/extraccion este turno
+    # (ver `_routing_phase`, gate de "?" explicito ANTES de RAG) -- asi que
+    # "how much for 2 people, certified diving?" respondia el precio
+    # correctamente pero volvia a preguntar "Are you a certified diver?"
+    # pese a que el propio mensaje ya nombra el producto certified_diving
+    # (lo que YA confirma certificacion por la misma regla de negocio de
+    # `_activity_has_textual_backing`/`_CERTIFICATION_CLAIM_RE`). En vez de
+    # correr extraccion completa aqui (fuera de alcance, mas riesgo), se
+    # resuelve el caso puntual: si el slot pendiente es certificacion y el
+    # propio mensaje ya la respalda textualmente, se fija y se recalcula el
+    # pendiente antes de decidir si re-preguntar.
+    if (
+        pending == SLOT_CERTIFICATION
+        and state.is_certified is None
+        and _activity_has_textual_backing("certified_diving", message)
+    ):
+        state.is_certified = True
+        pending = next_missing_slot(state)
     # No re-anclar el slot si la propia respuesta RAG ya cierra con una
     # pregunta (una recomendación/comparación termina invitando a elegir): el
     # re-prompt sería redundante — dos preguntas seguidas y, si el pendiente
