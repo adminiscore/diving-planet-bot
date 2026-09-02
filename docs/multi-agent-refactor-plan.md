@@ -1362,11 +1362,69 @@ en un mismo mensaje, 3+ nacionalidades mezcladas, precio en una moneda no soport
     se habría dado el hallazgo por cerrado incorrectamente. Confirmar siempre contra el repro
     exacto después de cada fix, no solo contra la hipótesis de la traza.
 
+### Lote 10 (6 conversaciones LARGAS hasta el cierre de reserva, 8-12 turnos c/u, 2026-09-02)
+
+A diferencia de los lotes anteriores (turnos sueltos por área), este lote valida el flujo
+COMPLETO end-to-end: que el bot llegue a un resumen final + link de pago coherente pese a que
+el cliente meta preguntas de duda típicas (clima, qué llevar, fotos, cancelación, precio en otra
+unidad, hijos, certificación, refresher) a mitad del camino.
+
+- ✅ **5 de 6 conversaciones cierran limpio** con resumen + link de pago, sin perder el hilo de
+  lo ya resuelto ni repetir preguntas ya contestadas (solo/certificado, familia con niños,
+  minicurso en isla, refresher, grupo mixto con cancelación).
+- **⚠️🔴 CORREGIDO — bucle infinito que impedía cerrar la reserva (conversación 800, "paquete de
+  5 inmersiones").** El flujo se quedaba re-preguntando "¿ha pasado más de 2 años desde la
+  última inmersión?" turno tras turno sin avanzar nunca, incluso tras responderla y tras pedir
+  explícitamente "hagamos la reserva". Traza de LangSmith: el turno "no hace mas de 2 años que
+  buceamos" — una respuesta de SEGURIDAD que no menciona a NADIE más — disparó
+  `mentions_other_person=true` + `companion_activity=certified_diving` (la MISMA actividad que
+  ya tenía el grupo) en `detect_special_signals`, dejando `detected_group_allocation` corrupto
+  con un compañero fantasma (`{'certified_diving': 1, 'padi_open_water': 2}` para un grupo de 2).
+  Con ese reparto corrupto, la certificación/seguridad del grupo principal nunca terminaba de
+  resolverse del todo — la reserva jamás llegaba al resumen final. Misma familia que el fix del
+  lote 9 (`_BARE_HEADCOUNT_RE`), pero un patrón de misfire distinto: aquí no hay ningún conteo,
+  el LLM simplemente inventó un acompañante de la nada. **Fix**: generalización del guard —
+  cuando el mensaje responde claramente a OTRO tema de slot booleano (seguridad/certificación/
+  nacionalidad, los regex de `_BOOL_FIELD_TOPIC_RE`) sin ningún respaldo textual de persona, Y la
+  actividad que el LLM atribuye al "acompañante" es la MISMA que ya tiene el grupo (no una
+  elección distinta — la señal real de un acompañante genuino), no se confía en el LLM tampoco.
+  La condición de "misma actividad" es deliberada: preserva el caso de jerga regional que motivó
+  confiar en el LLM en primer lugar ("mi parce no está certificado" → `companion_activity`
+  DISTINTA de la del grupo, sigue confiando en el LLM). Tests:
+  `test_safety_answer_without_person_mention_does_not_spawn_phantom_companion` +
+  `test_slang_companion_with_different_activity_still_trusts_llm` en
+  `tests/test_conversational_core.py`.
+- **📝 Anotado, sin arreglar — inconsistencia entre "¿qué pasa si llueve?" y "política de
+  cancelación por mal clima".** Dos preguntas semánticamente equivalentes reciben trato distinto:
+  "¿cuál es la política de cancelación si el clima está malo?" (conversación 802) obtiene una
+  respuesta real y detallada (reprogramación o reembolso 100%); "¿qué pasa si llueve ese día?"
+  (conversación 798) escala con el texto genérico "Las condiciones del tiempo pueden cambiar
+  rápidamente. Te conecto con el equipo" — el mismo texto que se usa para una pregunta de
+  pronóstico en tiempo real ("¿qué tiempo hace estos días, hay buena visibilidad?", conversación
+  797, donde SÍ tiene sentido escalar porque el bot no puede saber el pronóstico real). Prioridad
+  menor (no bloquea nada, solo da una respuesta más pobre de lo necesario en un caso); no
+  arreglado — requiere revisar cómo se distingue "pregunta de política" de "pregunta de
+  pronóstico en tiempo real" en el detector de señales, sin arriesgar romper el caso donde
+  escalar SÍ es correcto.
+
 ---
 
 ## 8. Registro de ejecución
 *(Una línea por paso cerrado: fecha · dev · qué · commit. El más reciente arriba.)*
 
+- **2026-09-02 · Gadea (Claude) · Lote 10 (6 conversaciones LARGAS hasta el cierre de reserva) —
+  bucle infinito corregido, 1 hallazgo menor anotado.** 5/6 conversaciones cerraban limpio; la
+  6ª ("paquete de 5 inmersiones") se quedaba en un bucle infinito re-preguntando la pregunta de
+  seguridad sin cerrar nunca la reserva — causa raíz: `detect_special_signals` inventaba un
+  compañero fantasma con la MISMA actividad del grupo a partir de una respuesta de seguridad sin
+  ninguna mención de persona ("no hace mas de 2 años que buceamos"), corrompiendo
+  `detected_group_allocation`. Fix: guard generalizado (mismo patrón que el lote 9) que distrust
+  la señal LLM cuando el mensaje responde a otro tema booleano sin respaldo textual de persona Y
+  la actividad "del acompañante" coincide con la del grupo — preserva el caso de jerga regional
+  ("mi parce no está certificado") donde la actividad SÍ difiere. Suite verde en las 3
+  configuraciones: 1622 passed / 18 skipped. Anotado sin arreglar: inconsistencia entre "¿qué
+  pasa si llueve?" (escala genérico) y "política de cancelación por clima" (respuesta real) para
+  preguntas semánticamente equivalentes — prioridad menor.
 - **2026-09-02 · Gadea (Claude) · re-pregunta redundante — causa raíz corregida (2ª iteración).**
   El fix del "companion fantasma" (entrada anterior) no cambió el repro al verificarlo en vivo: la
   causa real es que un mensaje con "?" nunca pasa por extracción ese turno (`_routing_phase`

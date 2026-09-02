@@ -2392,6 +2392,37 @@ async def _extraction_phase(
             and _BARE_HEADCOUNT_RE.search(message)
         ):
             llm_mentions_other_person = False
+        # Segunda variante del mismo fallo (hallazgo en vivo, lote 10, batería
+        # de conversaciones LARGAS hasta el cierre de reserva, 2026-09-02):
+        # "no hace mas de 2 años que buceamos" -- una respuesta de SEGURIDAD
+        # que no menciona a NADIE mas -- disparo mentions_other_person=true +
+        # companion_activity=certified_diving (la MISMA actividad que ya
+        # tenia el grupo) en `detect_special_signals`. El group_allocation
+        # quedo corrupto (contaba un companero fantasma), la certificacion/
+        # seguridad del grupo principal nunca se resolvio del todo, y la
+        # reserva se quedo en un BUCLE INFINITO re-preguntando "¿ha pasado
+        # mas de 2 años...?" sin cerrar nunca. Mismo patron que el de arriba,
+        # generalizado: si el mensaje claramente responde a OTRO tema de
+        # slot booleano (seguridad/certificacion/nacionalidad -- los mismos
+        # regex de `_BOOL_FIELD_TOPIC_RE`) sin ningun respaldo textual de
+        # persona, Y la actividad que el LLM atribuye al "acompañante" es la
+        # MISMA que ya tiene el grupo (no una eleccion distinta, la señal
+        # real de un acompañante genuino), no se confia en el LLM tampoco.
+        # La condicion de "misma actividad" es la que preserva el caso de
+        # jerga regional que motivo confiar en el LLM en primer lugar ("mi
+        # parce no esta certificado" -> companion_activity=minicourse, DISTINTA
+        # de certified_diving -- ese caso sigue confiando en el LLM).
+        if (
+            llm_mentions_other_person
+            and not regex_mentions_other_person
+            and activity == state.detected_activity
+            and (
+                LAST_DIVE_TOPIC_RE.search(message)
+                or CERTIFICATION_TOPIC_RE.search(message)
+                or NATIONALITY_TOPIC_RE.search(message)
+            )
+        ):
+            llm_mentions_other_person = False
         if activity and (llm_mentions_other_person or regex_mentions_other_person):
             # El turno hablaba de un ACOMPAÑANTE, no del hablante principal:
             # restaurar lo que este mismo turno pudo haber pisado por error en

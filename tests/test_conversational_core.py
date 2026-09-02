@@ -1558,6 +1558,71 @@ async def test_bare_headcount_in_price_question_does_not_spawn_phantom_companion
 
 
 @pytest.mark.asyncio
+async def test_safety_answer_without_person_mention_does_not_spawn_phantom_companion():
+    """Hallazgo en vivo (bateria sintetica contra PRE, lote 10, conversacion
+    LARGA hasta el cierre de reserva, 2026-09-02): "no hace mas de 2 años
+    que buceamos" -- una respuesta de SEGURIDAD que no menciona a NADIE mas
+    -- disparaba `mentions_other_person=true` + `companion_activity=
+    certified_diving` (la MISMA actividad que ya tenia el grupo) en
+    `detect_special_signals`. Resultado real observado: `detected_group_
+    allocation` quedaba corrupto con un companero fantasma, la certificacion
+    del grupo principal nunca terminaba de resolverse, y la reserva se
+    quedaba en un BUCLE INFINITO re-preguntando "¿ha pasado mas de 2 años
+    desde la ultima inmersion?" sin cerrar nunca (conversacion 800 del lote,
+    "paquete de 5 inmersiones"). Ni el LLM ni el regex tienen respaldo
+    textual de una persona distinta aqui -- no debe generarse ningun
+    acompañante."""
+    state = make_state("es")
+    state.detected_activity = "certified_diving"
+    state.is_certified = True
+    state.location = "cartagena"
+    state.detected_group_size = 2
+    state.core_pending_slot = None
+
+    with patch.object(core, "fill_gaps", new=AsyncMock(return_value={})), \
+         patch.object(core, "detect_special_signals", new=AsyncMock(return_value={
+             "companion_activity": "certified_diving", "mentions_other_person": True,
+             "companion_is_singular": True, "companion_qty": 1,
+         })):
+        await route_message(state, "no hace mas de 2 años que buceamos")
+    assert state.last_dive_over_2_years is False
+    assert state.companion_activity_deferred is False
+    assert state.pending_companion_activity is None
+    assert state.core_pending_slot != core.SLOT_COMPANION_ACTIVITY
+    # El reparto de grupo NO debe llevar un companero fantasma.
+    assert not (state.detected_group_allocation or {}).get("padi_open_water")
+
+
+@pytest.mark.asyncio
+async def test_slang_companion_with_different_activity_still_trusts_llm():
+    """Regresion/estrictez del fix anterior: la condicion de "misma
+    actividad" es justo lo que preserva el caso de jerga regional que
+    motivo confiar en el LLM en primer lugar (hallazgo en vivo 2026-07-22,
+    `_mentions_person` no reconoce "parce"/"cuate"/"pana"/"carnal"). Aqui el
+    mensaje SI matchea `CERTIFICATION_TOPIC_RE` (menciona "certificado") y
+    NO tiene respaldo textual de persona segun el regex -- pero el LLM
+    atribuye al companero una actividad DISTINTA (minicourse) de la del
+    grupo (certified_diving), la señal real de un acompañante genuino con
+    necesidades propias -- este caso NO debe suprimirse."""
+    state = make_state("es")
+    state.detected_activity = "certified_diving"
+    state.is_certified = True
+    state.location = "cartagena"
+    state.detected_group_size = 2
+    state.last_dive_over_2_years = False
+    state.is_colombian = False
+    state.core_pending_slot = None
+
+    with patch.object(core, "fill_gaps", new=AsyncMock(return_value={})), \
+         patch.object(core, "detect_special_signals", new=AsyncMock(return_value={
+             "companion_activity": "minicourse", "mentions_other_person": True,
+             "companion_is_singular": True,
+         })):
+        await route_message(state, "mi parce no esta certificado")
+    assert state.core_pending_slot == core.SLOT_COMPANION_ACTIVITY
+
+
+@pytest.mark.asyncio
 async def test_solo_traveler_confirmed_via_solo_regex_sets_persistent_flag():
     """"solo yo" (con actividad ya conocida, sin cantidad ni reparto) debe
     fijar group_size=1 Y el flag persistente `solo_traveler_confirmed`."""
