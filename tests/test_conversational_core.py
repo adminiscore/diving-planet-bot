@@ -1594,6 +1594,39 @@ async def test_safety_answer_without_person_mention_does_not_spawn_phantom_compa
 
 
 @pytest.mark.asyncio
+async def test_closing_affirmation_without_person_mention_does_not_reopen_with_phantom_companion():
+    """Hallazgo en vivo (lote 10, 2026-09-02): verificando en vivo contra PRE
+    el fix del bucle infinito de arriba, el MISMO patron reaparecio en un
+    mensaje que no toca ningun tema booleano: "perfecto, hagamos la
+    reserva" (afirmacion de cierre lisa y llana, sin mencionar a nadie) -- en
+    una conversacion que YA habia cerrado con resumen + link -- volvio a
+    disparar mentions_other_person=true + companion_activity=certified_diving
+    (misma actividad del grupo) y REABRIO la reserva con "¿Que le gustaria
+    hacer a tu acompañante -- minicurso o snorkel?" en vez de simplemente
+    confirmar el cierre. El primer fix (acotado a los 3 temas booleanos) no
+    cubria este caso -- se generalizo sin el requisito de tema."""
+    state = make_state("es")
+    state.detected_activity = "certified_diving"
+    state.is_certified = True
+    state.location = "cartagena"
+    state.detected_group_size = 2
+    state.last_dive_over_2_years = False
+    state.is_colombian = False
+    state.core_pending_slot = None
+
+    with patch.object(core, "fill_gaps", new=AsyncMock(return_value={})), \
+         patch.object(core, "detect_special_signals", new=AsyncMock(return_value={
+             "companion_activity": "certified_diving", "mentions_other_person": True,
+             "companion_is_singular": False, "companion_qty": 2,
+         })):
+        resp = await route_message(state, "perfecto, hagamos la reserva")
+    assert state.companion_activity_deferred is False
+    assert state.pending_companion_activity is None
+    assert state.core_pending_slot != core.SLOT_COMPANION_ACTIVITY
+    assert "acompañante" not in resp.lower()
+
+
+@pytest.mark.asyncio
 async def test_slang_companion_with_different_activity_still_trusts_llm():
     """Regresion/estrictez del fix anterior: la condicion de "misma
     actividad" es justo lo que preserva el caso de jerga regional que

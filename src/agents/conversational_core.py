@@ -194,7 +194,15 @@ def _group_allocation_fully_resolved(state: ConversationState) -> bool:
     rastro de LLM que inspeccionar), preguntando "¿qué le gustaría hacer a
     tu acompañante?" pese a que no queda NADIE sin actividad asignada. Si el
     reparto ya cubre a todo el grupo, no hay ningún acompañante posible que
-    preguntar — sea cual sea la vía que intente disparar esa pregunta."""
+    preguntar — sea cual sea la vía que intente disparar esa pregunta.
+
+    NO ampliar esto a "la reserva ya está lista para cerrar" (intentado y
+    revertido, lote 10, 2026-09-02): un grupo homogéneo sin reparto puede
+    seguir recibiendo un acompañante NUEVO legítimo después de cerrar todos
+    los slots core ("mi amigo también quiere venir") — `next_missing_slot`
+    en `None` no implica que ya no pueda aparecer nadie más. Ver el fix real
+    del hallazgo de cierre en `_understand()` (guard de "misma actividad").
+    """
     alloc = state.detected_group_allocation
     if not alloc:
         return False
@@ -2352,6 +2360,15 @@ async def _extraction_phase(
     if (not advanced or companion_ambiguous) and not _group_allocation_fully_resolved(state):
         signals = await detect_special_signals(message, history=state.history, lang=state.language)
         activity = signals.get("companion_activity")
+        # Guardado ANTES del descarte por falta de respaldo textual de abajo
+        # (hallazgo en vivo, lote 10, 2026-09-02): el guard de "misma
+        # actividad que el grupo" más abajo necesita lo que el LLM DIJO, no
+        # si ese valor tenía o no respaldo textual -- un mensaje como
+        # "perfecto, hagamos la reserva" no respalda NINGUNA actividad
+        # (`activity` se pone a None por el chequeo de abajo), pero eso no
+        # significa que ya no exista la señal fantasma que hay que descartar
+        # -- solo cambia por qué rama de código la deja pasar.
+        raw_companion_activity = activity
         # Verificación determinista (auditoría 2026-07-23): reforzar el
         # prompt para que no adivine una actividad sin respaldo textual NO
         # funcionó (medido 3/3 sigue adivinando "minicourse" para "mi amigo
@@ -2392,35 +2409,42 @@ async def _extraction_phase(
             and _BARE_HEADCOUNT_RE.search(message)
         ):
             llm_mentions_other_person = False
-        # Segunda variante del mismo fallo (hallazgo en vivo, lote 10, batería
-        # de conversaciones LARGAS hasta el cierre de reserva, 2026-09-02):
-        # "no hace mas de 2 años que buceamos" -- una respuesta de SEGURIDAD
-        # que no menciona a NADIE mas -- disparo mentions_other_person=true +
-        # companion_activity=certified_diving (la MISMA actividad que ya
-        # tenia el grupo) en `detect_special_signals`. El group_allocation
-        # quedo corrupto (contaba un companero fantasma), la certificacion/
-        # seguridad del grupo principal nunca se resolvio del todo, y la
-        # reserva se quedo en un BUCLE INFINITO re-preguntando "¿ha pasado
-        # mas de 2 años...?" sin cerrar nunca. Mismo patron que el de arriba,
-        # generalizado: si el mensaje claramente responde a OTRO tema de
-        # slot booleano (seguridad/certificacion/nacionalidad -- los mismos
-        # regex de `_BOOL_FIELD_TOPIC_RE`) sin ningun respaldo textual de
-        # persona, Y la actividad que el LLM atribuye al "acompañante" es la
-        # MISMA que ya tiene el grupo (no una eleccion distinta, la señal
-        # real de un acompañante genuino), no se confia en el LLM tampoco.
-        # La condicion de "misma actividad" es la que preserva el caso de
-        # jerga regional que motivo confiar en el LLM en primer lugar ("mi
-        # parce no esta certificado" -> companion_activity=minicourse, DISTINTA
-        # de certified_diving -- ese caso sigue confiando en el LLM).
+        # Segunda variante del mismo fallo, generalizada (hallazgo en vivo,
+        # lote 10, batería de conversaciones LARGAS hasta el cierre de
+        # reserva, 2026-09-02): "no hace mas de 2 años que buceamos" (una
+        # respuesta de SEGURIDAD sin mencionar a nadie) disparó
+        # mentions_other_person=true + companion_activity=certified_diving
+        # (la MISMA actividad que ya tenía el grupo), corrompiendo
+        # group_allocation con un compañero fantasma y dejando la reserva en
+        # un BUCLE INFINITO. Un primer fix acotó esto a los 3 temas
+        # booleanos (`_BOOL_FIELD_TOPIC_RE`) pero el MISMO fallo reapareció
+        # en un mensaje que no toca ninguno de esos temas: "perfecto,
+        # hagamos la reserva" (afirmación de cierre lisa y llana) volvió a
+        # disparar el mismo companion_activity=certified_diving fantasma —
+        # verificado en vivo tras desplegar el primer fix. Generalizado sin
+        # el requisito de tema: si el LLM dice que hay un acompañante pero
+        # el regex determinista NO ve a NADIE (`_mentions_person` false) Y la
+        # actividad que le atribuye es la MISMA que ya tiene el grupo (no una
+        # elección distinta — la señal real de un acompañante genuino), no
+        # se confía en el LLM. Sigue sin tocar el caso de jerga regional que
+        # motivó confiar en el LLM en primer lugar ("mi parce no está
+        # certificado" -> companion_activity=minicourse, DISTINTA de
+        # certified_diving), porque los disparadores léxicos reales
+        # ("viene", "también", "y otro"...) ya hacen que `_mentions_person`
+        # sea True para cualquier mención genuina de acompañante, aun en
+        # jerga — lo único que queda sin respaldo textual y con la MISMA
+        # actividad es, en la práctica, el LLM alucinando de la nada.
+        #
+        # Usa `raw_companion_activity` (lo que el LLM dijo) y NO `activity`
+        # (ya puesta a None arriba si el mensaje no respalda textualmente
+        # NINGUNA actividad -- exactamente el caso de "perfecto, hagamos la
+        # reserva", que no menciona nada de buceo): con `activity` ya en
+        # None, `None == state.detected_activity` siempre da False y este
+        # guard nunca se disparaba para el caso que motivó el fix.
         if (
             llm_mentions_other_person
             and not regex_mentions_other_person
-            and activity == state.detected_activity
-            and (
-                LAST_DIVE_TOPIC_RE.search(message)
-                or CERTIFICATION_TOPIC_RE.search(message)
-                or NATIONALITY_TOPIC_RE.search(message)
-            )
+            and raw_companion_activity == state.detected_activity
         ):
             llm_mentions_other_person = False
         if activity and (llm_mentions_other_person or regex_mentions_other_person):
@@ -2535,7 +2559,13 @@ async def _extraction_phase(
                     return response
             advanced = True
         elif (
-            (signals.get("mentions_other_person") or _mentions_person(message))
+            # Reusa las variables ya corregidas arriba (no `signals.get(
+            # "mentions_other_person")` en crudo) -- mismo hallazgo en vivo
+            # del lote 10, 2026-09-02: esta rama comparte el mismo fallo del
+            # `if` de arriba (compañero fantasma sin respaldo textual, misma
+            # actividad que el grupo) y con la lectura cruda seguía
+            # disparando aunque `activity` fuera falsy más arriba.
+            (llm_mentions_other_person or regex_mentions_other_person)
             and prev_pending != SLOT_COMPANION_ACTIVITY
             # Hallazgo en vivo (batería sintética contra PRE, 2026-08-26,
             # lote 5, portado de pre_gadea): "los niños tienen 7 y 10" (solo

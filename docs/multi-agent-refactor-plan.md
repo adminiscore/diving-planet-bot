@@ -1394,6 +1394,28 @@ unidad, hijos, certificación, refresher) a mitad del camino.
   `test_safety_answer_without_person_mention_does_not_spawn_phantom_companion` +
   `test_slang_companion_with_different_activity_still_trusts_llm` en
   `tests/test_conversational_core.py`.
+  - **Segunda iteración (mismo día, verificando en vivo tras el fix de arriba):** el primer fix
+    acotaba la excepción a mensajes que tocan uno de los 3 temas booleanos
+    (`_BOOL_FIELD_TOPIC_RE`). Repitiendo el repro exacto contra PRE tras desplegarlo, la reserva
+    ya NO se quedaba en bucle — pero al confirmar el cierre ("perfecto, hagamos la reserva",
+    turno posterior al resumen + link ya entregados) el MISMO patrón reapareció:
+    `companion_activity=certified_diving` (otra vez la misma actividad del grupo) sin mencionar a
+    nadie, y la reserva ya cerrada se REABRIÓ con "¿Qué le gustaría hacer a tu acompañante —
+    minicurso o snorkel?" en vez de simplemente confirmar. Causa: "hagamos la reserva" no toca
+    ninguno de los 3 temas booleanos, así que el primer fix no lo cubría. **Fix generalizado**:
+    se quitó el requisito de tema — ahora basta con que el LLM diga que hay un acompañante sin
+    ningún respaldo textual (`_mentions_person` false) Y que la actividad que le atribuye
+    coincida con la del grupo, sea cual sea el tema del mensaje. Detalle técnico importante: el
+    guard debía compararse contra lo que el LLM DIJO (`raw_companion_activity`, capturado antes
+    del descarte por falta de respaldo textual), no contra la variable `activity` ya puesta a
+    `None` por ese descarte — con `activity=None`, la comparación "misma actividad" nunca se
+    cumplía y el guard no disparaba para mensajes (como este) que no respaldan textualmente
+    ninguna actividad en absoluto. También se corrigió una segunda rama de código
+    (`elif` de acompañante diferido) que leía la señal del LLM sin corregir, en crudo,
+    bypaseando el guard incluso cuando `activity` ya estaba en `None`. La conversación 803
+    (repro en vivo contra PRE que reveló este segundo caso) fue ANTERIOR a este fix — pendiente
+    de reverificar en vivo tras el redeploy. Test:
+    `test_closing_affirmation_without_person_mention_does_not_reopen_with_phantom_companion`.
 - **📝 Anotado, sin arreglar — inconsistencia entre "¿qué pasa si llueve?" y "política de
   cancelación por mal clima".** Dos preguntas semánticamente equivalentes reciben trato distinto:
   "¿cuál es la política de cancelación si el clima está malo?" (conversación 802) obtiene una
