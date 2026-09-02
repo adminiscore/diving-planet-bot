@@ -2381,6 +2381,37 @@ async def test_fase_c_notes_captured_and_rendered(monkeypatch):
     assert "luna de miel" in ctx.lower()
 
 
+def test_extra_context_flags_dive_to_heal_for_generic_followups():
+    """Hallazgo en vivo (2026-09-01, Gadea, lote 7, docs/multi-agent-refactor-plan.md
+    §7): `rag_answer` prioriza siempre el doc del KB con confianza suficiente, incluso
+    si es una FAQ generica de paquetes, dejando `extra_context` sin usar cuando SI hay
+    doc. El fix no cambia esa prioridad; en su lugar, `_build_extra_context` ahora avisa
+    explicitamente al LLM de que la conversacion esta en DIVE TO HEAL, para que una
+    pregunta generica de seguimiento ("cuantas inmersiones son") no se responda como si
+    fuera del paquete estandar no adaptado."""
+    from src.agents.supervisor import _build_extra_context
+
+    state = make_state("es")
+    state.adaptive_diving_context = True
+    ctx = _build_extra_context(state)
+    assert "dive to heal" in ctx.lower()
+    assert "paquete" in ctx.lower()
+
+    state_en = make_state("en")
+    state_en.adaptive_diving_context = True
+    ctx_en = _build_extra_context(state_en)
+    assert "dive to heal" in ctx_en.lower()
+
+
+def test_extra_context_omits_dive_to_heal_note_when_not_in_that_context():
+    from src.agents.supervisor import _build_extra_context
+
+    state = make_state("es")
+    state.adaptive_diving_context = False
+    ctx = _build_extra_context(state)
+    assert ctx is None or "dive to heal" not in ctx.lower()
+
+
 @pytest.mark.asyncio
 async def test_fase_c_notes_dedup_and_cap(monkeypatch):
     """No se duplican notas ya conocidas y se respeta el cap _MAX_REMEMBERED_NOTES."""

@@ -1271,6 +1271,49 @@ def _build_extra_context(state: ConversationState) -> str | None:
     elif state.language == "en":
         parts.append("The conversation is currently happening in English.")
 
+    # DIVE TO HEAL (buceo adaptado) — hallazgo en vivo (2026-09-01, Gadea, lote 7,
+    # docs/multi-agent-refactor-plan.md §7): `rag_answer` busca el KB con el texto
+    # literal del mensaje, y si encuentra un doc generico confiable (p.ej. "que
+    # incluye el tour" -> paquete estandar de 2 inmersiones), ese doc ganaba
+    # SIEMPRE aunque la conversacion estuviera en contexto DIVE TO HEAL, porque
+    # `extra_context` no decia nada sobre ese contexto (solo se usaba para el
+    # escape hatch "sin docs confiables") y el propio extra_context tampoco
+    # llevaba esta senal. Sin ella, un seguimiento generico ("cuantas
+    # inmersiones son") respondia con datos de un paquete normal sin mencionar
+    # el programa adaptado. Esto no cambia la prioridad KB-vs-contexto: sigue
+    # ganando el doc mas confiable, pero ahora el LLM sabe que debe interpretar
+    # preguntas de seguimiento ambiguas dentro de DIVE TO HEAL en vez de tomar
+    # al pie de la letra un dato de un paquete estandar no adaptado.
+    if getattr(state, "adaptive_diving_context", False):
+        if state.language == "es":
+            parts.append(
+                "La conversacion esta dentro del programa DIVE TO HEAL (buceo adaptado para "
+                "personas con discapacidad). Si el cliente hace una pregunta generica de "
+                "seguimiento (numero de inmersiones, duracion, itinerario, que incluye, etc.) "
+                "sin pedir explicitamente el programa normal/no adaptado, interpreta esa "
+                "pregunta DENTRO de DIVE TO HEAL: esos detalles logisticos se coordinan caso a "
+                "caso con el equipo segun la condicion de la persona, no son un numero fijo de "
+                "un paquete estandar. NO respondas con datos de un paquete generico (p.ej. "
+                "\"incluye 2 inmersiones\") como si aplicaran automaticamente al buceo adaptado; "
+                "en su lugar, explica que esos detalles se ajustan con el equipo segun el caso. "
+                "Si el cliente aclara que ahora pregunta por el programa normal (no adaptado), "
+                "si puedes usar la informacion generica del paquete."
+            )
+        else:
+            parts.append(
+                "This conversation is happening within the DIVE TO HEAL program (adaptive "
+                "diving for people with disabilities). If the customer asks a generic "
+                "follow-up question (number of dives, duration, itinerary, what's included, "
+                "etc.) without explicitly asking about the regular/non-adaptive program, "
+                "interpret that question WITHIN DIVE TO HEAL: those logistics are coordinated "
+                "case by case with the team based on the person's condition, not a fixed number "
+                "from a standard package. Do NOT answer with generic package data (e.g. "
+                "\"includes 2 dives\") as if it automatically applied to adaptive diving; "
+                "instead, explain that those details are worked out with the team per case. "
+                "If the customer clarifies they're now asking about the regular (non-adaptive) "
+                "program, you can use the generic package information."
+            )
+
     # Resumen progresivo de la conversación (Fase B, ver
     # docs/archive/memory-context-improvement-plan.md): cubre detalles mencionados
     # hace muchos turnos que ya salieron de la ventana cruda de mensajes
