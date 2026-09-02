@@ -988,6 +988,34 @@ async def test_ack_empty_message_no_call():
     assert await compose_acknowledgement("") == ""
 
 
+def test_booking_context_summary_includes_just_answered_boolean_slot():
+    """Hallazgo en vivo (conversación real 831, 2026-09-02): un "no" a secas
+    respondiendo seguridad o nacionalidad le daba a compose_acknowledgement
+    el mensaje crudo + un resumen que NUNCA incluía esos campos booleanos
+    (solo actividad/personas/ubicación) -- sin nada concreto que reconocer,
+    el redactor repetía datos viejos ajenos a la respuesta real
+    ("Entendido, eres una persona y estarás en Cartagena." tras un "no" de
+    seguridad Y otra vez, idéntico, tras un "no" de nacionalidad). El
+    resumen ahora antepone la respuesta fresca cuando se le indica qué slot
+    se acaba de responder."""
+    st = ConversationState(conversation_id="ack-ctx")
+    st.detected_group_size = 1
+    st.location = "cartagena"
+    st.last_dive_over_2_years = False
+
+    summary = core._booking_context_summary(st, just_answered_slot=core.SLOT_SAFETY)
+    assert "NO ha pasado más de 2 años" in summary
+
+    st.is_colombian = False
+    summary2 = core._booking_context_summary(st, just_answered_slot=core.SLOT_NATIONALITY)
+    assert "NO es colombiano" in summary2
+
+    # Sin slot indicado, sigue funcionando como antes (sin el prefijo nuevo).
+    summary3 = core._booking_context_summary(st)
+    assert "personas: 1" in summary3
+    assert "acaba de responder" not in summary3
+
+
 def test_ack_prompt_warns_against_reinterpreting_fact_as_preference():
     # Hallazgo en vivo, bateria contra PRE 2026-09-01: "ninguno colombiano"
     # (un hecho de nacionalidad) genero un acuse tipo "entiendo que prefieres
@@ -2603,6 +2631,75 @@ def test_extra_context_omits_dive_to_heal_note_on_explicit_override():
     ]
     ctx_en = _build_extra_context(state_en)
     assert ctx_en is None or "dive to heal" not in ctx_en.lower()
+
+
+def test_extra_context_warns_against_uncertified_companion_diving_certified():
+    """Hallazgo en vivo (conversación real 831, 2026-09-02): con la nota
+    "novia no es buzo certificado" ya en el contexto, el LLM igual confirmó
+    que ella podría "bucear junto con él" al día siguiente del minicurso —
+    contradice policies.json["packages_certification_requirement"] (los
+    paquetes de 5/7/9 buceos son EXCLUSIVOS para certificados). El juez de
+    grounding no lo atrapó (GROUNDED a la primera, no contradice ninguna
+    FUENTE recuperada, solo la lógica de negocio real). Tener el hecho en
+    las notas no bastaba -- hace falta la regla explícita."""
+    from src.agents.supervisor import _build_extra_context
+
+    state = make_state("es")
+    state.remembered_facts = {"notes": ["novia no es buzo certificado"]}
+    ctx = _build_extra_context(state)
+    assert ctx is not None
+    assert "minicurso" in ctx.lower() and "NO puede sumarse" in ctx
+
+    state_en = make_state("en")
+    state_en.remembered_facts = {"notes": ["girlfriend is not certified"]}
+    ctx_en = _build_extra_context(state_en)
+    assert ctx_en is not None
+    assert "CANNOT join" in ctx_en
+
+    # Sin ninguna nota de "no certificado", la regla no se añade (ruido
+    # innecesario en conversaciones sin ningún acompañante sin certificar).
+    state_clean = make_state("es")
+    state_clean.remembered_facts = {"notes": ["quiere hacer snorkel"]}
+    ctx_clean = _build_extra_context(state_clean)
+    assert ctx_clean is None or "minicurso de buceo es UNA experiencia" not in ctx_clean
+
+
+def test_maybe_apply_confirmed_package_reads_dive_count_from_bots_own_message():
+    """Hallazgo en vivo (conversación real 831, 2026-09-02): "Vale pues
+    quiero este paquete... Que podria hacer esos dos dias?" -- el bot acaba
+    de describir el paquete de 5 inmersiones/2 días, el cliente lo confirma
+    deícticamente ("este paquete", sin repetir el número) pero el mensaje
+    trae un "?" pegado al final, así que nunca pasaba por extracción y
+    detected_cert_dives se quedaba en el valor del paquete de 1 día
+    anterior. El resumen final decía "ya en tu carrito" sobre el paquete
+    VIEJO. Fix: lee el número directamente del último mensaje del propio
+    bot (determinista, no adivina)."""
+    state = make_state("es")
+    state.detected_cert_dives = None
+    state.mixed_cart = [{"type": "cert", "qty": 1, "plan": "2_dives_1_day", "label": "x"}]
+    state.history = [
+        {"role": "assistant", "content": (
+            "Aquí te cuento sobre el paquete de 2 días: 🤿 Paquete de 5 inmersiones "
+            "en 2 días (incluye buceo nocturno): ..."
+        )},
+    ]
+    core._maybe_apply_confirmed_package(
+        state, "Vale pues quiero este paquete. Que podria hacer esos dos dias?"
+    )
+    assert state.detected_cert_dives == 5
+    assert state.mixed_cart == []
+
+
+def test_maybe_apply_confirmed_package_noop_without_deictic_confirmation():
+    """No debe disparar sobre cualquier mensaje que mencione un paquete —
+    solo la confirmación deíctica explícita ("quiero este/ese paquete")."""
+    state = make_state("es")
+    state.detected_cert_dives = None
+    state.history = [
+        {"role": "assistant", "content": "Paquete de 5 inmersiones en 2 días: ..."},
+    ]
+    core._maybe_apply_confirmed_package(state, "¿cuánto cuesta el paquete de 5 inmersiones?")
+    assert state.detected_cert_dives is None
 
 
 @pytest.mark.asyncio

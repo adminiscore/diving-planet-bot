@@ -93,6 +93,49 @@ _DIVES_TO_BASE_PLAN = {2: "2_dives_1_day", 3: "3_dives_1_day", 4: "4_dives_2_day
                        5: "5_dives_2_days", 7: "7_dives_3_days", 9: "9_dives_4_days"}
 _DAYS_TO_DIVES = {2: 5, 3: 7, 4: 9}
 
+# Cliente confirma un paquete multi-día deícticamente ("quiero este paquete",
+# sin repetir el número) justo después de que el bot lo describió -- hallazgo
+# en vivo (conversación real 831, 2026-09-02): el mensaje de confirmación casi
+# siempre trae un "?" pegado ("...que podria hacer esos dos dias?"), así que
+# nunca pasaba por `_understand()`/extracción (el gate de "?" manda directo a
+# RAG, ver más abajo) y el carrito se quedaba con el paquete de 1 día ANTERIOR
+# — el resumen final decía "ya en tu carrito" sobre el paquete VIEJO, no el
+# que el cliente acababa de confirmar. Ver `_maybe_apply_confirmed_package`.
+_CONFIRMS_DESCRIBED_PACKAGE_RE = re.compile(
+    r"quiero\s+(?:este|ese|el)\s+paquete|quiero\s+ir\s+con\s+(?:este|ese|el)\s+plan|"
+    r"i\s+want\s+(?:this|that|the)\s+package|(?:l['e]|voy\s+con)\s+(?:este|ese)\s+paquete",
+    re.IGNORECASE,
+)
+_PACKAGE_DIVE_COUNT_IN_TEXT_RE = re.compile(
+    r"\bpaquete\s+de\s+(4|5|7|9)\b|\b(4|5|7|9)\s*(?:inmersiones|buceos|dives?)\b",
+    re.IGNORECASE,
+)
+
+
+def _maybe_apply_confirmed_package(state: ConversationState, message: str) -> None:
+    """Si el cliente confirma deícticamente el paquete multi-día que el bot
+    ACABA de describir ("quiero este paquete"), fija `detected_cert_dives` al
+    número real (leído del último mensaje del propio bot, no adivinado) y
+    limpia `mixed_cart` para que se reconstruya con el paquete correcto la
+    próxima vez que se cierre/resuma la reserva -- en vez de quedarse
+    pegado al paquete de 1 día que se había armado antes de esta conversación
+    sobre alternativas. Determinista: solo actúa si el bot mismo nombró un
+    número de inmersiones concreto en su último mensaje."""
+    if not _CONFIRMS_DESCRIBED_PACKAGE_RE.search(message):
+        return
+    last_bot_msg = next(
+        (h.get("content", "") for h in reversed(state.history or []) if h.get("role") == "assistant"),
+        "",
+    )
+    m = _PACKAGE_DIVE_COUNT_IN_TEXT_RE.search(last_bot_msg)
+    if not m:
+        return
+    dives = int(m.group(1) or m.group(2))
+    if dives not in _DIVES_TO_BASE_PLAN or dives == state.detected_cert_dives:
+        return
+    state.detected_cert_dives = dives
+    state.mixed_cart = []
+
 _CARTAGENA_RE = re.compile(r"\b(cartagena|cartagen\w*)\b", re.IGNORECASE)
 _ISLAND_RE = re.compile(r"\b(isla\w*|island\w*|bar[uú]|rosario\w*)\b", re.IGNORECASE)
 
@@ -1868,11 +1911,53 @@ def _colombian_summary_lines(state: ConversationState) -> str:
 
 # ─── El bucle por turno ───
 
-def _booking_context_summary(state: ConversationState) -> str:
+# Frase legible por slot booleano para `_booking_context_summary`'s
+# `just_answered` — ver hallazgo en vivo debajo.
+_JUST_ANSWERED_PHRASE = {
+    SLOT_SAFETY: lambda s: (
+        "acaba de responder que SÍ ha pasado más de 2 años desde la última inmersión"
+        if s.last_dive_over_2_years else
+        "acaba de responder que NO ha pasado más de 2 años desde la última inmersión"
+    ),
+    SLOT_CERTIFICATION: lambda s: (
+        "acaba de confirmar que SÍ está certificado" if s.is_certified else
+        "acaba de responder que NO está certificado"
+    ),
+    SLOT_NATIONALITY: lambda s: (
+        "acaba de responder que SÍ es colombiano/residente" if s.is_colombian else
+        "acaba de responder que NO es colombiano/residente"
+    ),
+    SLOT_REFRESHER: lambda s: (
+        "acaba de responder que SÍ quiere el refresher" if s.refresher_interested else
+        "acaba de responder que NO quiere el refresher"
+    ),
+}
+
+
+def _booking_context_summary(state: ConversationState, *, just_answered_slot: str | None = None) -> str:
     """Resumen corto del estado de la reserva para dar contexto al redactor del
     acuse (para que reconozca cosas concretas: "anoto a tu amigo para el
-    minicurso"). Nunca incluye precios ni links — solo estructura."""
+    minicurso"). Nunca incluye precios ni links — solo estructura.
+
+    Hallazgo en vivo (conversación real 831, 2026-09-02): una respuesta corta
+    y SIN contenido propio ("no", a secas, respondiendo seguridad o
+    nacionalidad) le daba a `compose_acknowledgement` el mensaje crudo "no"
+    más este resumen -- que hasta ahora NUNCA incluía los campos booleanos
+    (seguridad/certificación/nacionalidad/refresher), solo actividad/personas/
+    ubicación. Sin nada concreto que reconocer en el mensaje, el redactor
+    recurría a repetir esos datos VIEJOS y ajenos a lo que se acababa de
+    responder ("Entendido, eres una persona y estarás en Cartagena." — dicho
+    IDÉNTICO tras "no" a seguridad y otra vez tras "no" a nacionalidad, sin
+    relación con ninguna de las dos). `just_answered_slot` (el `prev_pending`
+    del turno) antepone la respuesta REAL y fresca al resumen, para que el
+    redactor tenga algo concreto y correcto que reconocer incluso ante un "no"
+    sin contexto propio.
+    """
     parts: list[str] = []
+    if just_answered_slot:
+        phrase_fn = _JUST_ANSWERED_PHRASE.get(just_answered_slot)
+        if phrase_fn:
+            parts.append(phrase_fn(state))
     if state.detected_activity:
         parts.append(f"actividad principal: {state.detected_activity}")
     alloc = state.detected_group_allocation or {}
@@ -2039,6 +2124,13 @@ async def _routing_phase(
     `prev_*`/`resolved_short`) para `_extract_close_phase`. Lo llama la cascada
     (vía `maybe_handle_turn`) y el nodo `routing` del subgrafo — misma fuente de
     verdad, equivalencia por construcción."""
+
+    # Confirmación deíctica de un paquete multi-día ("quiero este paquete")
+    # ANTES de tomar snapshots/decidir la ruta del turno -- corre pase lo que
+    # pase con el "?" (ver `_maybe_apply_confirmed_package`), para que un
+    # mensaje como "...que podria hacer esos dos dias?" no deje el carrito
+    # pegado al paquete de 1 día que se armó antes de esta conversación.
+    _maybe_apply_confirmed_package(state, message)
 
     # COMPRENDER (carryover PRIMERO): si hay un slot pendiente y este mensaje
     # lo RESUELVE, el carryover gana aunque el mensaje "parezca pregunta" por
@@ -2898,7 +2990,7 @@ async def _slotfill_close_phase(
     if not first_turn:
         ack = await compose_acknowledgement(
             message,
-            state_summary=_booking_context_summary(state),
+            state_summary=_booking_context_summary(state, just_answered_slot=prev_pending),
             client_name=state.client_name,
             lang=state.language,
         )

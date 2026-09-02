@@ -64,6 +64,16 @@ _DIVE_TO_HEAL_OVERRIDE_RE = re.compile(
     re.IGNORECASE,
 )
 
+# Nota de Fase C ("X no es buzo certificado"/"no está certificado") sobre un
+# acompañante -- dispara el recordatorio de que un minicurso no certifica a
+# nadie, ver _build_extra_context, hallazgo en vivo 2026-09-02 (conv. real 831).
+_UNCERTIFIED_COMPANION_NOTE_RE = re.compile(
+    r"no\s+(?:es|est[aá])\s+(?:buzo\s+)?certificad[oa]|"
+    r"sin\s+certificar|no\s+tiene\s+certificaci[oó]n|"
+    r"not\s+certified|isn'?t\s+certified|no\s+certification",
+    re.IGNORECASE,
+)
+
 # Price or booking follow-ups. Inside the DIVE TO HEAL context these must NOT
 # be answered with the generic Cartagena price list or the normal booking flow
 # — adaptive diving is coordinated (logistics + price) per case with an
@@ -1467,6 +1477,53 @@ def _build_extra_context(state: ConversationState) -> str | None:
                 else "Other details the customer already mentioned (keep these in mind, don't ignore them):"
             )
             parts.append(header + "\n" + "\n".join(f"- {n}" for n in notes) + "\n")
+
+            # Hallazgo en vivo (conversación real 831, 2026-09-02): con una
+            # nota tipo "novia no es buzo certificado" ya en el contexto, el
+            # LLM igual confirmó que ella podría "bucear junto con él" al día
+            # siguiente del minicurso — contradice
+            # policies.json["packages_certification_requirement"] ("los
+            # paquetes de 5/7/9 buceos son EXCLUSIVAMENTE para certificados").
+            # El juez de grounding no lo atrapó (GROUNDED a la primera): no
+            # contradice ninguna FUENTE recuperada, solo la lógica de negocio
+            # real. Tener el HECHO en las notas no bastaba — hace falta la
+            # REGLA explícita, mismo principio que el fix de DIVE TO HEAL de
+            # arriba (verificación/instrucción determinista, no confiar en
+            # que el LLM infiera la regla de negocio él solo).
+            if _UNCERTIFIED_COMPANION_NOTE_RE.search(" ".join(notes)):
+                if state.language == "es":
+                    parts.append(
+                        "IMPORTANTE — regla de negocio real (no la inventes ni la relajes): un "
+                        "minicurso de buceo es UNA experiencia de iniciación de 1 día, NO una "
+                        "certificación. Los paquetes de 5, 7 y 9 inmersiones (y cualquier 'buceo "
+                        "certificado') son EXCLUSIVOS para buzos certificados (mínimo Open "
+                        "Water). Si el grupo tiene a alguien que hizo (o hará) el minicurso pero "
+                        "NO está certificado, esa persona NO puede sumarse a inmersiones de "
+                        "buceo certificado ese mismo viaje ni al día siguiente — necesitaría "
+                        "completar un curso de certificación real (Open Water) primero. Nunca "
+                        "confirmes ni des a entender que podrán 'bucear juntos' en el tramo "
+                        "certificado del plan; si preguntan por eso, acláralo con esta regla. "
+                        "Además, el minicurso es una reserva SEPARADA del paquete de buceo "
+                        "certificado (cada uno con su propio link) — no digas que uno 'incluye' "
+                        "al otro; si das los links de ambos, preséntalos como dos reservas "
+                        "distintas, no una anidada dentro de la otra."
+                    )
+                else:
+                    parts.append(
+                        "IMPORTANT — real business rule (don't invent or soften it): a dive "
+                        "mini-course is a 1-day introductory experience, NOT a certification. "
+                        "The 5, 7, and 9-dive packages (and any 'certified diving') are "
+                        "EXCLUSIVE to certified divers (minimum Open Water). If the group has "
+                        "someone who did (or will do) the mini-course but is NOT certified, "
+                        "that person CANNOT join certified-diving dives on that same trip or the "
+                        "next day — they'd need to complete a real certification course (Open "
+                        "Water) first. Never confirm or imply they'll be able to 'dive together' "
+                        "on the certified leg of the plan; if asked, clarify with this rule. "
+                        "Also, the mini-course is a SEPARATE booking from the certified-diving "
+                        "package (each with its own link) — don't say one 'includes' the other; "
+                        "if you give both links, present them as two distinct bookings, not one "
+                        "nested inside the other."
+                    )
 
     # Ubicacion base
     if state.location == "cartagena":
