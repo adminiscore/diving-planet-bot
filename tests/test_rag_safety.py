@@ -1965,6 +1965,33 @@ def test_system_prompt_forbids_phone_numbers():
     assert "Contacto asesor: WhatsApp" not in es
 
 
+# --- KB policy texts must never leak internal bot-authoring notes -------------
+#
+# Hallazgo en vivo 2026-09-02 (lote 9 de bateria sintetica contra PRE):
+# "food_policy" en data/knowledge_base/policies.json llevaba, pegada al final
+# del texto CUSTOMER-FACING, la nota "El bot no debe preguntar proactivamente
+# por alergias." -- una instruccion para quien escribe el prompt del bot, no
+# informacion para el cliente. El shortcut deterministico de info_agent.py
+# (`_ALLERGY_WORD_RE` + `_FOOD_ALLERGEN_RE`) devuelve este texto VERBATIM sin
+# pasar por el LLM, asi que la nota interna llegaba tal cual al cliente.
+# Guarda generica: ningun texto de policies.json debe mencionar "el bot"/
+# "the bot" en tercera persona -- si aparece, es casi siempre una nota de
+# autoria colada en el campo equivocado.
+
+def test_policy_texts_never_mention_the_bot_in_third_person():
+    import json
+    from pathlib import Path
+    path = Path(__file__).resolve().parent.parent / "data" / "knowledge_base" / "policies.json"
+    data = json.loads(path.read_text(encoding="utf-8-sig"))
+    for key, policy in data.get("policies", {}).items():
+        for lang, text in policy.items():
+            if not isinstance(text, str):
+                continue
+            lowered = text.lower()
+            assert "el bot" not in lowered, f"{key}.{lang} menciona 'el bot': {text!r}"
+            assert "the bot" not in lowered, f"{key}.{lang} menciona 'the bot': {text!r}"
+
+
 # --- New-scenario memory reset (owner decision, 2026-07-20) -------------------
 
 from src.agents.supervisor import _is_new_scenario_restart, _reset_to_fresh_scenario

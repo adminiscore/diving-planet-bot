@@ -1261,11 +1261,91 @@ comprobar qué pasa cuando el bot acaba de preguntar algo que el mensaje no resp
   `test_extra_context_omits_dive_to_heal_note_when_not_in_that_context` en
   `tests/test_conversational_core.py`.
 
+### Lote 9 (12 conversaciones, 2026-09-02) — áreas frescas: escalado, cambio de idioma,
+### override DIVE TO HEAL, cambio de tamaño de grupo, reservas existentes, menores, alcohol+alergia
+
+Zonas no cubiertas por lotes 1-8: escalado a humano (keyword y explícito), cambio de idioma a
+mitad de flujo, el override explícito "en realidad quiero el programa normal" de DIVE TO HEAL
+(justo el fix de arriba), cambio de tamaño de grupo a mitad de negociación, cancelación/
+reprogramación de una reserva ya existente, mención de un menor de edad, combo alcohol+alergia
+en un mismo mensaje, 3+ nacionalidades mezcladas, precio en una moneda no soportada (euros).
+
+- ✅ **Escalado humano (keyword y explícito) — sin problema.** Ambas variantes escalan
+  correctamente ("Te paso con un asesor..." / "Voy a transferirte inmediatamente...").
+- ✅ **Cambio de tamaño de grupo a mitad de negociación — sin problema.** "en realidad ahora
+  somos 6, se sumaron 2 mas" se procesa bien, el conteo se actualiza y el flujo continúa.
+- ✅ **Cancelación/reprogramación de reserva existente — sin problema** (dentro del alcance:
+  no hay lookup de reserva real, así que ofrece asesor/menú, comportamiento esperado).
+- **⚠️🔴 CORREGIDO — fuga de nota interna de autoría en `policies.json["food_policy"]`.**
+  El shortcut determinista de `info_agent.py` (`_ALLERGY_WORD_RE` + `_FOOD_ALLERGEN_RE`, portado
+  de `pre_gadea`) devuelve el texto de `food_policy` **verbatim, sin pasar por el LLM** — y ese
+  texto llevaba pegada al final la frase "El bot no debe preguntar proactivamente por alergias."
+  ("The bot should not proactively ask about allergies." en EN) — una nota para quien escribe el
+  prompt, no información para el cliente. Repro real (conversación 788): "queremos bucear manana,
+  anoche tomamos algo de alcohol y uno de nosotros es alergico a los mariscos" devolvió el párrafo
+  de política de comida completo terminando literalmente en esa frase. **Fix**: nota eliminada de
+  ambos idiomas en `data/knowledge_base/policies.json` (dato, no código — el comportamiento que
+  describía ya está implementado: el shortcut solo dispara si el CLIENTE menciona una alergia,
+  nunca pregunta proactivamente). `policies.json` también se indexa al vector store
+  (`scripts/load_embeddings.py`), y el reindex ya es automático en cada deploy a PRE
+  (`docker exec dp-pre-bot python -m scripts.load_embeddings --yes` en `ci.yml`), así que no hace
+  falta paso manual. Guarda de regresión genérica añadida:
+  `test_policy_texts_never_mention_the_bot_in_third_person` en `tests/test_rag_safety.py` —
+  escanea TODOS los textos de `policies.json` por "el bot"/"the bot" en tercera persona, no solo
+  el caso puntual.
+- **📝 Anotado, sin arreglar — alcohol se pierde cuando viene junto con alergia en el mismo
+  mensaje.** En el mismo repro (conversación 788), la parte de alcohol del mensaje ("anoche
+  tomamos algo de alcohol") no generó ninguna respuesta: `_ALCOHOL_BEFORE_DIVING_RE`
+  (`supervisor.py`) exige que la palabra de alcohol esté a ≤25 caracteres de
+  "bucear/buceo/buzos/dive/diving", y en este mensaje la distancia real es mayor (~39
+  caracteres, porque "bucear" aparece al principio de la frase y "alcohol" después de "manana,
+  anoche tomamos algo de"). Los dos gates (`_ALCOHOL_BEFORE_DIVING_RE` primero,
+  `_ALLERGY_WORD_RE`+`_FOOD_ALLERGEN_RE` después) son `if` independientes con `return` inmediato,
+  no hay combinación de ambos temas en una sola respuesta. No arreglado: ampliar la ventana de
+  proximidad a ciegas arriesga falsos positivos en mensajes no relacionados; requiere iteración
+  con casos reales antes de tocar el regex.
+- **📝 Anotado, sin arreglar — el override "programa normal, sin adaptar" de DIVE TO HEAL no
+  responde con la info genérica esperada.** Verificando el fix de arriba en vivo (conversación
+  782): tras confirmar que el contexto DIVE TO HEAL sí se preserva ("cuántas inmersiones son?" →
+  respuesta correcta sobre el programa adaptado), la aclaración explícita del cliente ("en
+  realidad quiero saber del programa normal, sin adaptar, cuantas inmersiones incluye ese?") —
+  justo el caso que la nueva instrucción del prompt dice que debe usar la info genérica del
+  paquete — cayó al fallback "Ese detalle en concreto no lo tengo a la mano" en vez de responder
+  "2 inmersiones en 1 día". Hipótesis sin confirmar: la recuperación del KB para esa pregunta
+  (fraseada con el pronombre "ese" refiriéndose al programa normal) no encuentra un doc con
+  confianza suficiente, y sin docs el flujo cae al escape hatch de `extra_context`-only — donde
+  la propia nota DIVE TO HEAL (que sigue en `extra_context` porque el flag no se limpia) puede
+  estar pesando más que la instrucción de override. Necesita el mismo tipo de iteración con LLM
+  real que costó cerrar el hallazgo de arriba — no es un fix a ciegas.
+- **📝 Anotado, sin arreglar — patrón de "re-pregunta redundante tras responder una pregunta de
+  info mezclada con la respuesta a un slot pendiente".** Visto en 2 conversaciones distintas
+  (781 cambio de idioma, 790 precio en euros): cuando un mensaje dispara una respuesta RAG/
+  precio Y ADEMÁS el propio mensaje ya respondía (explícita o implícitamente) una pregunta
+  pendiente del núcleo, el mensaje final concatena la respuesta RAG + la línea de red de
+  seguridad ("Si tu pregunta era sobre algo más concreto...") + un repeat de la pregunta
+  pendiente, **sin reconocer que el mensaje ya la respondió**. Ejemplo: "how much for 2 people,
+  certified diving?" contesta el precio correctamente pero vuelve a preguntar "Are you a
+  certified diver?" pese a que el mismo mensaje dice "certified diving". No es alucinación ni
+  dato incorrecto — es redundante/algo confuso, prioridad menor que los dos de arriba. No
+  arreglado: para confirmar la causa exacta (¿el regex del núcleo no reconoce "certified diving"
+  dentro de una pregunta de precio como respuesta al gate de certificación?) hace falta trazar el
+  turno con LangSmith o repro local con LLM real.
+
 ---
 
 ## 8. Registro de ejecución
 *(Una línea por paso cerrado: fecha · dev · qué · commit. El más reciente arriba.)*
 
+- **2026-09-02 · Gadea (Claude) · Lote 9 (12 conversaciones contra PRE) — 1 bug corregido, 3
+  anotados sin arreglar.** Corregido: `policies.json["food_policy"]` filtraba al cliente una nota
+  interna de autoría ("El bot no debe preguntar proactivamente por alergias.") porque el shortcut
+  determinista de `info_agent.py` devuelve ese texto verbatim sin pasar por el LLM — fix de dato
+  (no de código) + guarda de regresión genérica sobre todo `policies.json`. Anotados para la
+  próxima sesión: alcohol se pierde cuando llega junto con alergia en el mismo mensaje (ventana
+  de proximidad del regex, 25 chars, no cubre la frase real); el override "programa normal, sin
+  adaptar" de DIVE TO HEAL no usa la info genérica esperada (necesita iteración con LLM real);
+  re-pregunta redundante cuando un mensaje mezcla una pregunta de info con la respuesta a un slot
+  pendiente. Ver §7, bloque "Lote 9" para el detalle completo de cada uno.
 - **2026-09-02 · Gadea (Claude) · §7 CERRADO — DIVE TO HEAL pierde su contexto en seguimientos
   genéricos** (`179ac27`). Causa raíz real: `_build_extra_context` nunca mencionaba
   `adaptive_diving_context`, no una carrera perdida contra un doc del KB como suponía la entrada
