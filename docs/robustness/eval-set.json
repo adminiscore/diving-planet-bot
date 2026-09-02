@@ -1036,6 +1036,49 @@
       },
       "source": "audit-2026-07-22 (guarda: auto-presentación singular SIN señal explícita de ir solo)",
       "notes": "Guarda anti-misfire: NO debe inferir group_size=1 solo por hablar en primera persona singular — un jefe de grupo escribiría igual. Debe abstenerse y preguntar."
+    },
+    {
+      "id": "hist-nationality-answer-must-not-fill-pending-safety",
+      "message": "ninguno colombiano",
+      "lang": "es",
+      "history": [
+        {"role": "assistant", "content": "¿ha pasado más de 2 años desde tu última inmersión?"}
+      ],
+      "expected": {
+        "is_colombian": false,
+        "last_dive_over_2_years": null
+      },
+      "source": "docs/multi-agent-refactor-plan.md §6.bis, causa raíz #3 vía A (hallazgo en vivo, PRE, 2026-09-01)",
+      "notes": "Guarda anti-misfire: el mensaje solo responde nacionalidad. Con el historial mostrando una pregunta de seguridad pendiente sin responder, fill_gaps NO debe alucinar last_dive_over_2_years leyendo el historial como diálogo — debe abstenerse y dejar que el bot vuelva a preguntar."
+    },
+    {
+      "id": "hist-nationality-answer-must-not-fill-pending-certification",
+      "message": "ninguno colombiano",
+      "lang": "es",
+      "history": [
+        {"role": "assistant", "content": "¿tienes alguna certificación de buceo?"}
+      ],
+      "expected": {
+        "is_colombian": false,
+        "is_certified": null
+      },
+      "source": "docs/multi-agent-refactor-plan.md §6.bis, misma familia que causa raíz #3 (variante certificación)",
+      "notes": "Mismo patrón que hist-nationality-answer-must-not-fill-pending-safety pero con SLOT_CERTIFICATION pendiente en vez de SLOT_SAFETY."
+    },
+    {
+      "id": "hist-followup-must-not-rederive-resolved-group-allocation",
+      "message": "desde cartagena",
+      "lang": "es",
+      "history": [
+        {"role": "user", "content": "somos 6: 2 bucean certificados, 2 hacen minicurso y 2 snorkel"},
+        {"role": "assistant", "content": "perfecto, ¿desde dónde nos escribís?"}
+      ],
+      "expected": {
+        "location": "cartagena",
+        "group_allocation": null
+      },
+      "source": "docs/multi-agent-refactor-plan.md §6.bis, causa raíz #1 (detect_special_signals) — mismo patrón aplicado a fill_gaps",
+      "notes": "El reparto de grupo ya quedó completo en el turno anterior (2+2+2=6). El mensaje actual solo responde ubicación; fill_gaps NO debe re-derivar/pisar group_allocation mirando el historial — debe abstenerse en ese campo."
     }
   ]
 }

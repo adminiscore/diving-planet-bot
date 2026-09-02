@@ -1190,13 +1190,19 @@ comprobar qué pasa cuando el bot acaba de preguntar algo que el mensaje no resp
   en esa zona — no se mezcla con un fix de bug. **Ojo si alguien los reconecta: llaman a
   `fill_gaps` SIN `only_fields`**, así que ampliarían la superficie de alucinación en vez de
   reducirla, y no llevan las guardas (a)/(b) de arriba.
-- **Acuse de recibo poco afortunado**: en el repro local, `compose_acknowledgement` compuso
-  "Entiendo que prefieres no incluir a colombianos en tu grupo" para "ninguno colombiano".
-  Cosmético, ajeno a este bug, sin arreglar.
-- **Eval-set sin historial**: `docs/robustness/eval-set.json` + `scripts/run_extraction_eval.py` no
-  pasan historial al extractor, así que esta familia de misfill (dirigida por el historial) no es
-  representable ahí hoy. Añadir un campo `history` a los casos sería lo que convertiría estas
-  guardas en un número medible.
+- ~~**Acuse de recibo poco afortunado**~~ — **ARREGLADO 2026-09-02**: `acknowledgement_system_prompt`
+  (`src/prompts/booking.py`) ahora instruye explícitamente a no reinterpretar un HECHO (nacionalidad,
+  cantidad de personas, ubicación...) como una PREFERENCIA, con el ejemplo real como negativo.
+  Test: `test_ack_prompt_warns_against_reinterpreting_fact_as_preference` en
+  `tests/test_conversational_core.py`. Cosmético, cambio de prompt puro — no requiere redeploy de
+  comportamiento de negocio, solo de texto.
+- ~~**Eval-set sin historial**~~ — **ARREGLADO 2026-09-02**: `fill_gaps` ya aceptaba `history` como
+  kwarg; `scripts/run_extraction_eval.py` ahora lo pasa (`case.get("history")`), y
+  `docs/robustness/eval-set.json` gana un campo opcional `history` por caso. Se añadieron 3 casos
+  representativos de la familia "contesta de más" (`hist-nationality-answer-must-not-fill-pending-safety`,
+  `-pending-certification`, `hist-followup-must-not-rederive-resolved-group-allocation`), cada uno
+  con `expected: null` en el campo que NO debe rellenarse — así una regresión futura de las guardas
+  (a)/(b)/(b-bis) de causa raíz #3 se vuelve un número medible en el runner, no solo un test unitario.
 
 ---
 
@@ -1216,21 +1222,19 @@ comprobar qué pasa cuando el bot acaba de preguntar algo que el mensaje no resp
 - **Latencia/coste** → medidos en LangSmith (Fase 0 baseline → Fase 3), no de oído.
 - **Churn de versiones de LangGraph/LangChain** → fijar versiones en `pyproject`; actualizar
   deliberadamente, no en automático.
-- **⚠️ Respuesta RAG corrupta, sin reproducir (2026-09-01, Gadea, lote 7 de frontera contra
-  PRE):** una conversación en contexto DIVE TO HEAL (`dive-to-heal-persist-across-many-turns`,
-  turno 3, "cuantas inmersiones son") devolvió literalmente `{" "}` como respuesta — texto
-  corrupto, no una respuesta real. Investigado: no es un bug de código (sin ningún `json.dumps`/
-  f-string sospechoso en `rag_agent.py`/`conversational_core.py` que pudiera producir ese
-  string) — parece ser el propio LLM generando texto sin sentido para esa consulta puntual, que
-  pasó el juez de grounding (`is_grounded`, obligatorio en la ruta `extra_context_only` de
-  `_answer_with_llm`) porque no contiene precios/URLs/datos personales que los guards
-  deterministas revisan, y el juez de grounding tampoco valida coherencia general del texto. No
-  reproducido en ninguna otra de las ~250 conversaciones sintéticas de hoy — parece un caso
-  aislado, no sistemático. **Sin fix propuesto todavía**: no hay forma de reproducirlo
-  localmente (bloqueado por falta de créditos LLM en `.env.dev` en el momento de investigarlo) y
-  un fix a ciegas (p. ej. un chequeo de "sanity" del texto) sin poder verificarlo en vivo es
-  arriesgado. Queda anotado para si se repite — si vuelve a aparecer, revisar si `is_grounded`
-  necesita un chequeo adicional de coherencia/longitud mínima, no solo grounding factual.
+- ~~**⚠️ Respuesta RAG corrupta, sin reproducir**~~ — **ARREGLADO 2026-09-02**: una conversación en
+  contexto DIVE TO HEAL (`dive-to-heal-persist-across-many-turns`, turno 3, "cuantas inmersiones
+  son", 2026-09-01 lote 7) había devuelto literalmente `{" "}` como respuesta — texto corrupto,
+  no una respuesta real. Nunca se reprodujo en vivo, así que no se pudo verificar un fix contra
+  el caso exacto; en su lugar se añadió una guarda determinista general (mismo patrón que
+  `currency_amounts_grounded`/`urls_grounded`): `is_coherent_text` (`src/agents/grounding_check.py`)
+  rechaza una respuesta vacía o con menos de 2 caracteres alfabéticos — cubre `{" "}` y cualquier
+  salida igual de degenerada — como PRIMER guard en `_answer_with_llm` (`src/agents/rag_agent.py`),
+  antes de precio/URL/etc., para que el mecanismo de regenerar-una-vez ya existente (muestra a
+  temperatura 0.3) produzca una respuesta real en el reintento en vez de dejar pasar la corrupta.
+  Deliberadamente laxa (umbral de 2 letras) para no rechazar respuestas cortas legítimas ("Sí",
+  "No"). Tests: `TestCoherentTextGuard` + `test_rag_regenerates_when_answer_is_garbled` en
+  `tests/test_rag_safety.py`.
 - **⚠️ Relevancia del RAG dentro de DIVE TO HEAL para preguntas genéricas (2026-09-01, Gadea,
   lote 7):** distinto del bug de enrutado (ya arreglado arriba). `rag_answer` busca el KB con el
   texto literal del mensaje ("cuántas inmersiones son") — si encuentra un doc confiable (p. ej.
@@ -1246,6 +1250,11 @@ comprobar qué pasa cuando el bot acaba de preguntar algo que el mensaje no resp
 ## 8. Registro de ejecución
 *(Una línea por paso cerrado: fecha · dev · qué · commit. El más reciente arriba.)*
 
+- **2026-09-02 · Gadea · 3 pendientes de §6.bis/§7 cerrados**: guarda `is_coherent_text` para la
+  respuesta RAG corrupta (`{" "}`, sin reproducir); campo `history` en `eval-set.json` +
+  `run_extraction_eval.py` (3 casos nuevos que miden la familia "contesta de más"); prompt de
+  `compose_acknowledgement` ya no reinterpreta un hecho como preferencia ("ninguno colombiano").
+  Suite completa verde en las 3 configuraciones tras cada uno.
 - **2026-09-01 · Gadea · §6.bis CERRADO — extractores LLM que "contestan de más"**.
   Cerradas las dos causas raíz que quedaban abiertas del bug de reparto de grupos mixtos. La
   "pérdida de actividades en el resumen final" resultó ser **falsa alarma del driver de repro**

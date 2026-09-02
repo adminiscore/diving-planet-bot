@@ -379,6 +379,90 @@ def test_currency_guard_rejects_percentage_not_in_context():
     ) is False
 
 
+class TestCoherentTextGuard:
+    """Hallazgo en vivo 2026-09-01 (lote 7 de frontera contra PRE, DIVE TO HEAL
+    turno 3, 'cuantas inmersiones son'): la respuesta fue literalmente `{" "}`
+    -- texto corrupto, no una respuesta real. Ningun guard existente lo pilla
+    porque no lleva precio/URL/dato personal/telefono, y el juez de grounding
+    solo valida factualidad, no coherencia. Ver
+    docs/multi-agent-refactor-plan.md §7 (riesgo anotado sin fix, ahora
+    cerrado)."""
+
+    def test_rejects_the_exact_garbled_output_found_live(self):
+        assert grounding_check.is_coherent_text('{" "}') is False
+
+    def test_rejects_empty_or_whitespace(self):
+        assert grounding_check.is_coherent_text("") is False
+        assert grounding_check.is_coherent_text("   ") is False
+
+    def test_rejects_punctuation_only(self):
+        assert grounding_check.is_coherent_text("... !? {}[]") is False
+
+    def test_accepts_a_short_real_answer(self):
+        assert grounding_check.is_coherent_text("Si") is True
+        assert grounding_check.is_coherent_text("No, no incluye.") is True
+
+    def test_accepts_normal_prose(self):
+        assert grounding_check.is_coherent_text(
+            "El paquete incluye 5 inmersiones guiadas en Cartagena."
+        ) is True
+
+
+@pytest.mark.asyncio
+async def test_rag_regenerates_when_answer_is_garbled(monkeypatch):
+    """The coherent-prose guard rejects a garbled first sample and the
+    existing regenerate-once mechanism (§ answer sampled at temperature 0.3)
+    produces a real answer on the retry, instead of the customer ever seeing
+    the corrupted text."""
+    async def fake_search(query, lang="es"):
+        return [{
+            "content": "El paquete de 5 inmersiones incluye equipo completo.",
+            "metadata": {"source": "services"},
+            "score": 0.9,
+        }]
+
+    call_count = {"n": 0}
+
+    class GarbledThenOkMessage:
+        def __init__(self, content):
+            self.content = content
+
+    class GarbledThenOkChoice:
+        def __init__(self, content):
+            self.message = GarbledThenOkMessage(content)
+
+    class GarbledThenOkUsage:
+        total_tokens = 10
+
+    class GarbledThenOkResponse:
+        def __init__(self, content):
+            self.choices = [GarbledThenOkChoice(content)]
+            self.usage = GarbledThenOkUsage()
+
+    class GarbledThenOkCompletions:
+        async def create(self, **kwargs):
+            call_count["n"] += 1
+            content = '{" "}' if call_count["n"] == 1 else "Incluye 5 inmersiones guiadas y equipo completo."
+            return GarbledThenOkResponse(content)
+
+    class GarbledThenOkChat:
+        completions = GarbledThenOkCompletions()
+
+    class GarbledThenOkOpenAI:
+        def __init__(self, api_key=None):
+            self.chat = GarbledThenOkChat()
+
+    monkeypatch.setattr(rag_agent, "search_knowledge_base", fake_search)
+    monkeypatch.setattr(rag_agent.settings, "rag_min_score", 0.72)
+    monkeypatch.setattr(rag_agent, "AsyncOpenAI", GarbledThenOkOpenAI)
+    monkeypatch.setattr(rag_agent, "is_grounded", grounded_ok)
+
+    response = await rag_agent.rag_answer("cuantas inmersiones son?", lang="es")
+
+    assert response == "Incluye 5 inmersiones guiadas y equipo completo."
+    assert call_count["n"] == 2
+
+
 @pytest.mark.asyncio
 async def test_rag_falls_back_when_answer_has_ungrounded_price(monkeypatch):
     """The deterministic currency guard must reject an invented price even if the

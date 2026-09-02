@@ -16,6 +16,7 @@ from src.agents.grounding_check import (
     capacity_claims_grounded,
     contains_phone_number,
     currency_amounts_grounded,
+    is_coherent_text,
     is_grounded,
     requests_personal_data,
     urls_grounded,
@@ -1533,7 +1534,12 @@ async def rag_answer(
 
             # Deterministic guards first: never let a price/%/URL not in the
             # context reach the customer (e.g. "$180" when the real price is "$178").
-            if not currency_amounts_grounded(answer, grounding_context):
+            # Coherent-prose check comes first -- garbled output (e.g. the literal
+            # `{" "}`, found live 2026-09-01 lote 7) has no price/URL/personal-data
+            # to trip the other guards on, so it needs its own catch.
+            if not is_coherent_text(answer):
+                last_reject = "garbled_output"
+            elif not currency_amounts_grounded(answer, grounding_context):
                 last_reject = "ungrounded_amount"
             elif not urls_grounded(answer, grounding_context):
                 last_reject = "ungrounded_url"

@@ -988,6 +988,19 @@ async def test_ack_empty_message_no_call():
     assert await compose_acknowledgement("") == ""
 
 
+def test_ack_prompt_warns_against_reinterpreting_fact_as_preference():
+    # Hallazgo en vivo, bateria contra PRE 2026-09-01: "ninguno colombiano"
+    # (un hecho de nacionalidad) genero un acuse tipo "entiendo que prefieres
+    # no incluir a colombianos" (sonaba a una preferencia/eleccion excluyente
+    # que el cliente nunca expreso). El prompt debe instruir explicitamente
+    # a no convertir hechos objetivos en preferencias.
+    from src.prompts.booking import acknowledgement_system_prompt
+    es = acknowledgement_system_prompt("es", None)
+    en = acknowledgement_system_prompt("en", None)
+    assert "no reinterpretes un HECHO" in es
+    assert "don't reinterpret a FACT" in en
+
+
 @pytest.mark.parametrize("msg,expected", [
     # Acompañante (persona nombrada) -> True
     ("hay un amigo que quiere hacee snorkel", True),

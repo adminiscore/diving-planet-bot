@@ -6,6 +6,13 @@ docs/robustness/eval-set.json, and reports per-field agreement with the
 hand-labeled `expected` values. This is the tool used to decide, per domain,
 whether the Fase 1+ cutover criteria (plan.md §4) are met.
 
+Cases may carry an optional `history` field (list of {"role", "content"}
+turns) that is passed straight through to `fill_gaps`. This is what makes the
+"extractor contesta de más" misfill family (fill_gaps re-deriving an answer
+from a pending bot question in the history instead of abstaining — see
+docs/multi-agent-refactor-plan.md §6.bis) measurable here: without history,
+every case looks like a cold-start turn and that failure mode can't occur.
+
 Needs a real OpenAI API key (uses settings.openai_api_key) — run against an
 environment that has one, e.g.:
 
@@ -46,7 +53,9 @@ async def run() -> None:
         state = ConversationState(conversation_id=f"eval-{case['id']}")
         regex_intent = detector.detect(case["message"], state)
         resolved = _regex_resolved(regex_intent)
-        patch = await fill_gaps(case["message"], regex_intent, lang=case.get("lang", "es"))
+        patch = await fill_gaps(
+            case["message"], regex_intent, history=case.get("history"), lang=case.get("lang", "es"),
+        )
         combined = {**resolved, **patch}
 
         result = compare_with_ground_truth(combined, case["expected"])

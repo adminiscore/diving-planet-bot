@@ -155,6 +155,29 @@ _PD_LIST_ITEM = re.compile(
 )
 
 
+# --------------------------------------------------------------------------- #
+# Coherent-prose guard
+#
+# Found live 2026-09-01 (lote 7 de frontera contra PRE, DIVE TO HEAL turno 3,
+# "cuantas inmersiones son"): the LLM answered with the literal string `{" "}`
+# -- garbled non-prose, not a real answer. It slipped through every other
+# guard because it has no price/URL/personal-data/phone content to catch on,
+# and the grounding judge (is_grounded) only checks factual grounding, not
+# whether the text is coherent language at all. Deliberately loose: only
+# meant to catch obviously-broken output (empty, or effectively no letters),
+# never to second-guess a short-but-real answer like "Si" / "No".
+# --------------------------------------------------------------------------- #
+_MIN_ALPHA_CHARS = 2
+
+
+def is_coherent_text(answer: str) -> bool:
+    """False if `answer` is empty or has too few letters to be real prose."""
+    if not answer or not answer.strip():
+        return False
+    letters = sum(1 for ch in answer if ch.isalpha())
+    return letters >= _MIN_ALPHA_CHARS
+
+
 def requests_personal_data(answer: str) -> bool:
     """True if the answer asks the customer to hand over identity data in chat."""
     if not answer:
