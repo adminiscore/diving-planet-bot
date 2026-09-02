@@ -1003,6 +1003,23 @@ reproducible. **Siguiente: 2.5 (nodo `booking`), luego 2.6.** Sigue este patrón
 > errores/mismatches nuevos) sea **"igual o mejor"**, **Y** además la confianza general en PRE
 > llegue a un nivel alto (orientativo ~90%, a precisar) antes de entregar al cliente — sin gate
 > intermedio de PRO.
+> **Medición 2026-09-02 (Gadea) — primera vez que se re-mide el punto (c) desde el 2.80 del
+> 27-ago:** `AGENT_ARCH=true python -m scripts.measure_llm_baseline` (mismo guion de 5 turnos de
+> siempre, sin tocar) da **3.20 llamadas/turno** (16 llamadas totales, reproducible en 2
+> corridas idénticas) — por encima del `≤ 3.00` literal. Investigado con trazas de caller (no
+> LangSmith, instrumentación local): el aumento es ÍNTEGRO en el turno de cierre (T5, antes 3
+> llamadas, ahora 5) y se explica por completo por dos mecanismos añadidos DESPUÉS del 27-ago,
+> ya documentados en este plan, no por ninguna llamada duplicada o desperdiciada:
+> `resolve_slot_answer` (el resolutor anti-bucle de Fase C, §6.bis, 2026-09-01 — necesario para
+> que un "no" no-canónico a la pregunta de seguridad no se pierda) y `compose_acknowledgement`
+> (redactor del acuse de recibo). **No es una regresión de código** — es el coste real de las
+> correcciones de corrección que se hicieron desde la última medición. Late-latencia/coste
+> siguen bajos en términos absolutos (~$0.001/turno). **Decisión pendiente del owner**: aceptar
+> `3.20` como el nuevo número de referencia (documentando por qué subió), o revisar si alguno de
+> los dos mecanismos puede evitarse en el turno de cierre sin perder la corrección que aportan —
+> no se ha tocado el código para bajarlo unilateralmente, es una decisión de trade-off, no un bug.
+> Sigue pendiente el punto (b) de Fase 5.3 (harvest de trazas LangSmith → datasets/evals) y una
+> comparación de latencia real vía LangSmith (esta medición fue local, no por LangSmith).
 > **Qué hacer al reanudar (el corte, en orden — ver el 🔎 PREP de reachability arriba):**
 > 1. ~~Migrar los gates POST-núcleo delegados (grupo B) a sus nodos~~ **HECHO 2026-08-27**:
 >    decisión tomada de mantener `_shared_turn_handler` como tail handler compartido (no
@@ -1521,6 +1538,13 @@ con 1-2 conversaciones, algunas sueltas y otras embebidas en un flujo de reserva
 ## 8. Registro de ejecución
 *(Una línea por paso cerrado: fecha · dev · qué · commit. El más reciente arriba.)*
 
+- **2026-09-02 · Gadea (Claude) · Fase 5.3 punto (c) re-medido — 2.80 → 3.20 llamadas/turno,
+  explicado.** Primera re-medición desde el 27-ago (`scripts/measure_llm_baseline`, mismo guion,
+  reproducible en 2 corridas idénticas). El aumento (+2 llamadas) es íntegro en el turno de
+  cierre y se explica por completo por `resolve_slot_answer` (Fase C anti-bucle, §6.bis,
+  2026-09-01) y `compose_acknowledgement` — ambos añadidos DESPUÉS de la última medición, no una
+  regresión ni una llamada duplicada. Detalle y decisión pendiente del owner en la Fase 5.3-bis
+  (bloque "Medición 2026-09-02").
 - **2026-09-02 · Gadea (Claude) · Lote 11 (21 conversaciones, 11 temas nunca probados) — 2
   bugs corregidos y verificados en vivo, 3 huecos de contenido del KB anotados sin arreglar,
   8/11 temas sin problema.** Compilado primero un mapa de qué tocó cada lote anterior (1-10)
