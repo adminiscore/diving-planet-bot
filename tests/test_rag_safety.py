@@ -59,6 +59,26 @@ def test_detect_weather_escalation_english():
     assert "updated information" in response
 
 
+def test_routing_tool_excludes_weather_policy_questions_from_escalation():
+    """Hallazgo en vivo (bateria sintetica contra PRE, lote 10, 2026-09-02):
+    "¿que pasa si llueve ese dia?" escalaba con el texto generico de
+    weather_conditions ("Te conecto con el equipo"), mientras que "¿cual es
+    la politica de cancelacion si el clima esta malo?" (misma intencion del
+    cliente) SI obtenia la respuesta real del KB (reprogramacion o reembolso
+    100%, ver faqs.json: "Que pasa si se cancela por mal clima?"). La
+    clasificacion sensitive_topic=weather_conditions viene del LLM
+    (detect_routing_signals/ROUTING_TOOL), que no distinguia una pregunta de
+    PRONOSTICO en tiempo real de una pregunta de POLITICA/hipotetica sobre
+    mal clima -- ambas "mencionan el clima". Fix: instruccion explicita en
+    el schema para dejar sensitive_topic sin fijar ante una pregunta de
+    politica/hipotetica, dejando que caiga a RAG (que ya tiene contenido
+    real y fundamentado para esa pregunta exacta)."""
+    from src.prompts.router import ROUTING_TOOL
+    schema_text = str(ROUTING_TOOL)
+    assert "qué pasa si llueve" in schema_text
+    assert "not a request for today's/tomorrow's real forecast" in schema_text
+
+
 @pytest.mark.parametrize("msg", [
     "esto es una estafa, quiero mi dinero",
     "me estafaron con la reserva",
