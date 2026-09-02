@@ -1543,6 +1543,17 @@ con 1-2 conversaciones, algunas sueltas y otras embebidas en un flujo de reserva
 ## 8. Registro de ejecución
 *(Una línea por paso cerrado: fecha · dev · qué · commit. El más reciente arriba.)*
 
+- **2026-09-02 · Gadea (Claude) · Repetición de intermitencia — 12/12 conversaciones
+  consistentes, 0 fallos.** Tras el análisis de "qué falta para el ~90%", se identificó que
+  todos los fixes de hoy se habían verificado en vivo con UNA sola corrida — insuficiente para
+  bugs que dependen de la variabilidad del LLM (juez de grounding, clasificación de señales).
+  Se repitieron 3 veces cada uno los 4 fixes más sensibles a esa variabilidad (los que dependen
+  de que una señal LLM NO se dispare mal): vuelo-tras-bucear (política real de 18h), override
+  DIVE TO HEAL (info genérica en vez de fallback), clima-vs-política de cancelación (respuesta
+  real sin escalar), y el bucle infinito de compañero fantasma (cierre limpio con resumen+link,
+  confirmación final sin reabrir). **Las 12 conversaciones dieron el resultado correcto las 12
+  veces** — ninguno de los fixes mostró intermitencia. Sube la confianza de "funcionó una vez"
+  a "funciona de forma consistente" para estos 4 hallazgos.
 - **2026-09-02 · Gadea (Claude) · Fase 5.3 punto (c) re-medido — 2.80 → 3.20 llamadas/turno,
   explicado.** Primera re-medición desde el 27-ago (`scripts/measure_llm_baseline`, mismo guion,
   reproducible en 2 corridas idénticas). El aumento (+2 llamadas) es íntegro en el turno de
