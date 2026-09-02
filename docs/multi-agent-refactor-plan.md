@@ -1412,9 +1412,10 @@ unidad, hijos, certificación, refresher) a mitad del camino.
     cumplía y el guard no disparaba para mensajes (como este) que no respaldan textualmente
     ninguna actividad en absoluto. También se corrigió una segunda rama de código
     (`elif` de acompañante diferido) que leía la señal del LLM sin corregir, en crudo,
-    bypaseando el guard incluso cuando `activity` ya estaba en `None`. La conversación 803
-    (repro en vivo contra PRE que reveló este segundo caso) fue ANTERIOR a este fix — pendiente
-    de reverificar en vivo tras el redeploy. Test:
+    bypaseando el guard incluso cuando `activity` ya estaba en `None`. **Verificado en vivo
+    contra PRE** (conversación 804, repro completo de las 6 conversaciones): tras el resumen +
+    link, "perfecto, hagamos la reserva" ahora re-confirma el mismo resumen en vez de reabrir con
+    una pregunta de acompañante. Test:
     `test_closing_affirmation_without_person_mention_does_not_reopen_with_phantom_companion`.
 - **📝 Anotado, sin arreglar — inconsistencia entre "¿qué pasa si llueve?" y "política de
   cancelación por mal clima".** Dos preguntas semánticamente equivalentes reciben trato distinto:
@@ -1434,6 +1435,15 @@ unidad, hijos, certificación, refresher) a mitad del camino.
 ## 8. Registro de ejecución
 *(Una línea por paso cerrado: fecha · dev · qué · commit. El más reciente arriba.)*
 
+- **2026-09-02 · Gadea (Claude) · companion fantasma — 2ª iteración, verificada en vivo.**
+  Reproduciendo en vivo contra PRE el fix del bucle infinito (entrada siguiente), el mismo turno
+  de confirmación de cierre ("perfecto, hagamos la reserva") volvió a disparar un compañero
+  fantasma, esta vez reabriendo una reserva YA cerrada. El primer fix solo cubría mensajes que
+  tocan uno de 3 temas booleanos; generalizado sin ese requisito + corregido un bug real de
+  variable (comparar contra `raw_companion_activity`, no contra `activity` ya puesta a `None`) +
+  una segunda rama de código que leía la señal del LLM sin corregir. Verificado en vivo contra
+  PRE (conversación 804) repitiendo el repro completo: cierra bien y la confirmación ya no
+  reabre. Suite verde en las 3 configuraciones: 1623 passed / 18 skipped.
 - **2026-09-02 · Gadea (Claude) · Lote 10 (6 conversaciones LARGAS hasta el cierre de reserva) —
   bucle infinito corregido, 1 hallazgo menor anotado.** 5/6 conversaciones cerraban limpio; la
   6ª ("paquete de 5 inmersiones") se quedaba en un bucle infinito re-preguntando la pregunta de
