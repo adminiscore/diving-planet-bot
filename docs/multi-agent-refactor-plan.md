@@ -1538,11 +1538,78 @@ con 1-2 conversaciones, algunas sueltas y otras embebidas en un flujo de reserva
   directo a asesor. Dado que es una pregunta de responsabilidad/cobertura médica sin una
   respuesta clara en el KB, escalar a un humano es un default razonable — no se tocó.
 
+### Conversación real de un cliente (conversación 831, 2026-09-02) — 3 hallazgos, los 3 corregidos
+
+Primera vez que un hallazgo de esta sesión viene de una conversación real (no sintética): un
+cliente certificado quiso el paquete de 5 inmersiones/2 días y preguntó si su novia (sin
+certificar) podía hacer el minicurso el día 1 y "bucear juntos" el día 2. Analizada a fondo con
+la traza completa de LangSmith (9 turnos).
+
+- **⚠️🔴 CORREGIDO (grave) — alucinación de certificación.** El bot confirmó: *"el minicurso
+  incluye... así que estará lista para unirse a ti en el buceo al día siguiente"* — **falso**,
+  contradice `policies.json["packages_certification_requirement"]` ("los paquetes de 5, 7 y 9
+  buceos son EXCLUSIVAMENTE para buzos certificados"). El juez de grounding no lo atrapó
+  (`GROUNDED` a la primera): no contradecía ninguna FUENTE recuperada, solo la lógica de negocio
+  real — y tener el hecho ("novia no es buzo certificado") en las notas de Fase C no bastaba para
+  que el LLM infiriera la regla correctamente. **Fix**: nueva instrucción explícita en
+  `_build_extra_context` (`_UNCERTIFIED_COMPANION_NOTE_RE`), disparada cuando las notas mencionan
+  a alguien sin certificar, explicando que un minicurso NO certifica y esa persona no puede
+  sumarse al tramo de buceo certificado. Mismo principio que el fix de DIVE TO HEAL: la REGLA
+  explícita, no el hecho aislado, es lo que corrige el razonamiento del LLM.
+- **⚠️🟡 CORREGIDO — el resumen final listaba el paquete VIEJO como "ya en tu carrito".** Tras
+  confirmar "quiero este paquete" (refiriéndose al de 2 días que el bot acababa de describir), el
+  cliente seguía preguntando cosas con "?" varios turnos más — y como el gate de "?" en
+  `_routing_phase` manda el turno directo a RAG sin pasar por extracción,
+  `state.detected_cert_dives` nunca se actualizaba: 3 turnos después, el resumen final decía "ya
+  en tu carrito" sobre el paquete de **1 día**, el que se había armado ANTES de esta conversación
+  sobre alternativas — mismo patrón arquitectónico que el fix de certificación del lote 9/10 (el
+  "?" bypass se traga contenido real de slot-filling), aquí aplicado a la selección de paquete
+  multi-día en vez de a un slot booleano. **Fix**: nueva `_maybe_apply_confirmed_package`,
+  determinista, que detecta la confirmación deíctica ("quiero este/ese paquete") y lee el número
+  de inmersiones directamente del ÚLTIMO MENSAJE DEL PROPIO BOT (no adivina, no llama al LLM) —
+  corre ANTES del gate de "?", así que aplica pase lo que pase con la ruta del turno. Se extendió
+  también la regla del hallazgo anterior para no describir el minicurso como "incluido en" el
+  paquete certificado cuando son reservas separadas con links distintos.
+- **⚠️🟢 CORREGIDO (cosmético) — acuse de recibo genérico y repetido.** Un "no" a secas
+  respondiendo la pregunta de seguridad recibió *"Entendido, eres una persona y estarás en
+  Cartagena."* — y el MISMO texto, idéntico, volvió a aparecer tras un "no" a nacionalidad dos
+  turnos después. Causa: `_booking_context_summary` (el contexto que recibe
+  `compose_acknowledgement`) nunca incluía los campos booleanos (seguridad/certificación/
+  nacionalidad/refresher) — solo actividad/personas/ubicación. Con un "no" sin contenido propio y
+  un resumen que no menciona lo que se acaba de responder, el redactor recurría a repetir esos
+  datos viejos. **Fix**: nuevo parámetro `just_answered_slot` (el `prev_pending` del turno) que
+  antepone la respuesta fresca y correcta al resumen.
+- **Verificado en vivo contra PRE** (conversación 844) repitiendo la conversación real completa,
+  turno a turno: los "no" ahora se reconocen específicamente; la pregunta de "bucear juntos" el
+  día 2 ahora se corrige explícitamente citando la regla real; el resumen final de links muestra
+  exactamente 2 reservas (paquete 2 días + minicurso), sin el paquete viejo ni la redundancia de
+  "incluido en".
+
+Tests: `test_extra_context_warns_against_uncertified_companion_diving_certified`,
+`test_maybe_apply_confirmed_package_reads_dive_count_from_bots_own_message` +
+`_noop_without_deictic_confirmation`,
+`test_booking_context_summary_includes_just_answered_boolean_slot`. Suite completa verde en las
+3 configuraciones: 1629 passed / 18 skipped.
+
 ---
 
 ## 8. Registro de ejecución
 *(Una línea por paso cerrado: fecha · dev · qué · commit. El más reciente arriba.)*
 
+- **2026-09-02 · Gadea (Claude) · Primer hallazgo de un cliente REAL (conversación 831) — 3
+  bugs corregidos y verificados en vivo.** El usuario compartió una conversación real (no
+  sintética) donde el bot confirmó que la novia sin certificar de un cliente podría "bucear
+  junto con él" el día 2 de un paquete de 5 inmersiones — contradice
+  `packages_certification_requirement`. Analizada con LangSmith turno a turno. Corregidos: (1)
+  la alucinación de certificación (regla explícita en `_build_extra_context`, no solo el hecho
+  en las notas); (2) el resumen final listaba el paquete de 1 día VIEJO como "ya en tu carrito"
+  — causa raíz: el gate de "?" en `_routing_phase` volvía a tragarse contenido real (la
+  confirmación del paquete de 2 días), mismo patrón arquitectónico que el fix de certificación
+  de ayer; fix con `_maybe_apply_confirmed_package`, determinista, lee el número de inmersiones
+  del propio último mensaje del bot; (3) acuse de recibo genérico y repetido ante un "no" a
+  secas — `_booking_context_summary` ahora antepone la respuesta booleana recién dada. Los 3
+  verificados en vivo repitiendo la conversación real completa (conversación 844). Suite verde
+  en las 3 configuraciones: 1629 passed / 18 skipped.
 - **2026-09-02 · Gadea (Claude) · Repetición de intermitencia — 12/12 conversaciones
   consistentes, 0 fallos.** Tras el análisis de "qué falta para el ~90%", se identificó que
   todos los fixes de hoy se habían verificado en vivo con UNA sola corrida — insuficiente para
