@@ -1020,6 +1020,11 @@ reproducible. **Siguiente: 2.5 (nodo `booking`), luego 2.6.** Sigue este patrón
 > no se ha tocado el código para bajarlo unilateralmente, es una decisión de trade-off, no un bug.
 > Sigue pendiente el punto (b) de Fase 5.3 (harvest de trazas LangSmith → datasets/evals) y una
 > comparación de latencia real vía LangSmith (esta medición fue local, no por LangSmith).
+> Dato secundario de LangSmith (mismo día, últimas 6h, 153 turnos reales trazados en PRE):
+> promedio **3.68 llamadas/turno** — más alto todavía, pero esa ventana incluye toda la batería
+> intensiva de hoy (lotes 9/10/11 + verificaciones en vivo, deliberadamente cargados de
+> escenarios de grupo/seguridad/acompañante), no tráfico normal — no se toma como referencia,
+> solo como contexto de que el número real de campo no está por debajo de la medición local.
 > **Qué hacer al reanudar (el corte, en orden — ver el 🔎 PREP de reachability arriba):**
 > 1. ~~Migrar los gates POST-núcleo delegados (grupo B) a sus nodos~~ **HECHO 2026-08-27**:
 >    decisión tomada de mantener `_shared_turn_handler` como tail handler compartido (no
