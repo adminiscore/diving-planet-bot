@@ -1417,24 +1417,40 @@ unidad, hijos, certificación, refresher) a mitad del camino.
     link, "perfecto, hagamos la reserva" ahora re-confirma el mismo resumen en vez de reabrir con
     una pregunta de acompañante. Test:
     `test_closing_affirmation_without_person_mention_does_not_reopen_with_phantom_companion`.
-- **📝 Anotado, sin arreglar — inconsistencia entre "¿qué pasa si llueve?" y "política de
-  cancelación por mal clima".** Dos preguntas semánticamente equivalentes reciben trato distinto:
-  "¿cuál es la política de cancelación si el clima está malo?" (conversación 802) obtiene una
-  respuesta real y detallada (reprogramación o reembolso 100%); "¿qué pasa si llueve ese día?"
-  (conversación 798) escala con el texto genérico "Las condiciones del tiempo pueden cambiar
-  rápidamente. Te conecto con el equipo" — el mismo texto que se usa para una pregunta de
-  pronóstico en tiempo real ("¿qué tiempo hace estos días, hay buena visibilidad?", conversación
-  797, donde SÍ tiene sentido escalar porque el bot no puede saber el pronóstico real). Prioridad
-  menor (no bloquea nada, solo da una respuesta más pobre de lo necesario en un caso); no
-  arreglado — requiere revisar cómo se distingue "pregunta de política" de "pregunta de
-  pronóstico en tiempo real" en el detector de señales, sin arriesgar romper el caso donde
-  escalar SÍ es correcto.
+- ~~**📝 Inconsistencia entre "¿qué pasa si llueve?" y "política de cancelación por mal
+  clima"**~~ — **ARREGLADO 2026-09-02.** Dos preguntas semánticamente equivalentes recibían
+  trato distinto: "¿cuál es la política de cancelación si el clima está malo?" (conversación 802)
+  obtenía una respuesta real y detallada (reprogramación o reembolso 100%, `faqs.json` ya tiene
+  esta pregunta casi literal: "¿Qué pasa si se cancela por mal clima? ¿Hay reembolso?"); "¿qué
+  pasa si llueve ese día?" (conversación 798) escalaba con el texto genérico "Las condiciones del
+  tiempo pueden cambiar rápidamente. Te conecto con el equipo" — el mismo texto que se usa para
+  una pregunta de pronóstico en tiempo real ("¿qué tiempo hace estos días, hay buena
+  visibilidad?", conversación 797, donde SÍ tiene sentido escalar). Causa: `sensitive_topic:
+  weather_conditions` se clasifica vía LLM (`detect_routing_signals`/`ROUTING_TOOL`), cuyo schema
+  solo decía "a WEATHER-dependent question" sin distinguir pronóstico de política/hipotético —
+  las palabras clave deterministas (`escalation.py`) ya estaban acotadas a formas día-específicas
+  ("clima mañana", "tiempo hoy"), pero el LLM (más liberal) no respetaba esa misma distinción.
+  **Fix**: instrucción explícita en el schema de `ROUTING_TOOL` (`src/prompts/router.py`) para
+  dejar `sensitive_topic` sin fijar ante una pregunta de política/hipotética sobre mal clima,
+  dejando que caiga a RAG (que ya tiene contenido real y fundamentado para esa pregunta exacta).
+  **Verificado en vivo contra PRE** (conversación 805) repitiendo el repro exacto: "¿qué pasa si
+  llueve ese día?" ya no escala — responde con información real sobre operar bajo lluvia y
+  reprogramar solo si hay riesgo de seguridad. Test:
+  `test_routing_tool_excludes_weather_policy_questions_from_escalation` en
+  `tests/test_rag_safety.py`.
 
 ---
 
 ## 8. Registro de ejecución
 *(Una línea por paso cerrado: fecha · dev · qué · commit. El más reciente arriba.)*
 
+- **2026-09-02 · Gadea (Claude) · "¿qué pasa si llueve?" ya no escala — hallazgo menor del lote
+  10 cerrado.** `sensitive_topic: weather_conditions` (clasificación LLM vía `ROUTING_TOOL`) no
+  distinguía pronóstico en tiempo real de pregunta de política/hipotética sobre mal clima — fix
+  con instrucción explícita en el schema para dejar el campo sin fijar en el segundo caso,
+  dejando que caiga a RAG (que ya tiene la FAQ real: "¿Qué pasa si se cancela por mal clima?").
+  Verificado en vivo contra PRE (conversación 805). Suite verde en las 3 configuraciones: 1624
+  passed / 18 skipped.
 - **2026-09-02 · Gadea (Claude) · companion fantasma — 2ª iteración, verificada en vivo.**
   Reproduciendo en vivo contra PRE el fix del bucle infinito (entrada siguiente), el mismo turno
   de confirmación de cierre ("perfecto, hagamos la reserva") volvió a disparar un compañero
