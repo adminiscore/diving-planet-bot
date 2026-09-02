@@ -47,8 +47,8 @@ logger = logging.getLogger("uvicorn.error")
 async def info_node(state: BotState) -> dict:
     from src.agents.supervisor import (
         _ADAPTIVE_DIVING_PATTERN,
-        _alcohol_and_food_policy_answer,
         _PRIVATE_GROUP_EVENT_RE,
+        _alcohol_and_food_policy_answer,
         _build_extra_context,
         _maybe_answer_age_eligibility,
         _private_group_event_answer,
