@@ -1235,20 +1235,45 @@ comprobar qué pasa cuando el bot acaba de preguntar algo que el mensaje no resp
   Deliberadamente laxa (umbral de 2 letras) para no rechazar respuestas cortas legítimas ("Sí",
   "No"). Tests: `TestCoherentTextGuard` + `test_rag_regenerates_when_answer_is_garbled` en
   `tests/test_rag_safety.py`.
-- **⚠️ Relevancia del RAG dentro de DIVE TO HEAL para preguntas genéricas (2026-09-01, Gadea,
-  lote 7):** distinto del bug de enrutado (ya arreglado arriba). `rag_answer` busca el KB con el
-  texto literal del mensaje ("cuántas inmersiones son") — si encuentra un doc confiable (p. ej.
-  una FAQ genérica de paquetes), ese doc gana SIEMPRE; `extra_context` (que lleva la situación
-  DIVE TO HEAL) solo se usa cuando el KB no encuentra nada (`if not docs: ... extra_context`).
-  Resultado: una pregunta de seguimiento genérica en contexto DIVE TO HEAL puede recibir una
-  respuesta sobre paquetes normales, sin mencionar el programa adaptado. **No arreglado**:
-  requiere ajustar la prioridad KB-vs-contexto-conversacional con iteración en vivo (LLM real)
-  para no arriesgar romper casos donde esa prioridad SÍ es la correcta — no es un fix a ciegas.
+- ~~**⚠️ Relevancia del RAG dentro de DIVE TO HEAL para preguntas genéricas**~~ — **ARREGLADO
+  2026-09-02** (2026-09-01, Gadea, lote 7). Causa raíz real, distinta de lo que apuntaba la
+  entrada original: `_build_extra_context` (`src/agents/supervisor.py`) **nunca mencionaba**
+  `adaptive_diving_context` en el texto que arma para el LLM — el contexto DIVE TO HEAL no se
+  perdía por perder una carrera contra un doc del KB (esa hipótesis original no se pudo
+  reproducir así), sino porque `extra_context` no llevaba ninguna señal de que la conversación
+  estuviera en ese programa. Reproducido en vivo contra PRE (turno 1 dispara DIVE TO HEAL,
+  turno 2 "cuántas inmersiones son" caía al fallback genérico "no lo tengo a la mano" en vez de
+  responder sobre el programa adaptado) y localmente con LLM real (A/B de `rag_answer` con y sin
+  la nota: sin ella, la respuesta se rechazaba por el juez de grounding — `HALLUCINATED` — y caía
+  al fallback; con ella, respuesta correcta y bien fundamentada).
+  **Fix**: `_build_extra_context` ahora añade una nota explícita cuando
+  `state.adaptive_diving_context` es `True`, indicando que preguntas de seguimiento genéricas
+  (número de inmersiones, duración, itinerario, qué incluye...) deben interpretarse DENTRO de
+  DIVE TO HEAL — esos detalles se coordinan caso a caso con el equipo, no son el dato fijo de un
+  paquete estándar — salvo que el cliente pida explícitamente el programa normal. Deliberadamente
+  NO se tocó la prioridad KB-vs-contexto-conversacional (el doc más confiable sigue ganando la
+  recuperación): el fix mejora la instrucción que el LLM ya recibía junto al contexto recuperado,
+  sin arriesgar romper los casos donde el KB debe ganar. Verificado en vivo contra PRE tras
+  redeploy a `feature/pre_alvaro` (commit `179ac27`): antes del fix, fallback genérico; después,
+  "en el programa DIVE TO HEAL, la cantidad de inmersiones se ajusta según las necesidades... se
+  coordinan caso a caso con nuestro equipo". Tests:
+  `test_extra_context_flags_dive_to_heal_for_generic_followups` y
+  `test_extra_context_omits_dive_to_heal_note_when_not_in_that_context` en
+  `tests/test_conversational_core.py`.
 
 ---
 
 ## 8. Registro de ejecución
 *(Una línea por paso cerrado: fecha · dev · qué · commit. El más reciente arriba.)*
+
+- **2026-09-02 · Gadea (Claude) · §7 CERRADO — DIVE TO HEAL pierde su contexto en seguimientos
+  genéricos** (`179ac27`). Causa raíz real: `_build_extra_context` nunca mencionaba
+  `adaptive_diving_context`, no una carrera perdida contra un doc del KB como suponía la entrada
+  original (esa hipótesis no se pudo reproducir). Fix: nota explícita en `extra_context` cuando
+  el flag está activo. Verificado con LLM real en local (A/B de `rag_answer`) y en vivo contra
+  PRE tras redeploy a `feature/pre_alvaro`: antes, fallback genérico ante "cuántas inmersiones
+  son"; después, respuesta correcta dentro del programa adaptado. Suite completa verde en las 3
+  configuraciones (1612 passed / 18 skipped), 2 tests nuevos sobre baseline 1610.
 
 - **2026-09-02 · Gadea · 3 pendientes de §6.bis/§7 cerrados**: guarda `is_coherent_text` para la
   respuesta RAG corrupta (`{" "}`, sin reproducir); campo `history` en `eval-set.json` +
