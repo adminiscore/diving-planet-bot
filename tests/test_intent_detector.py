@@ -1,5 +1,10 @@
 import pytest
-from src.agents.intent_detector import IntentDetector, DetectedIntent, matched_activity_categories
+from src.agents.intent_detector import (
+    IntentDetector,
+    DetectedIntent,
+    NATIONALITY_TOPIC_RE,
+    matched_activity_categories,
+)
 from src.flows.state import ConversationState
 
 
@@ -615,3 +620,31 @@ class TestMatchedActivityCategories:
         cats = matched_activity_categories("QUIERO EL OPEN WATER, NUNCA HE BUCEADO")
         assert "padi_course" in cats
         assert len(cats) >= 2
+
+
+class TestNationalityTopicRe:
+    """Hallazgo en vivo (conversación real 'purple-sun-590', 2026-09-03): la
+    lista de ciudades colombianas de NATIONALITY_TOPIC_RE matcheaba SUELTA
+    (sin exigir 'soy/vivo de'), a diferencia de _detect_nationality (que sí
+    lo exige). "Desde Cartagena" (respuesta de LOGÍSTICA, no de
+    nacionalidad) contaba como "el mensaje habla de nacionalidad" -- la
+    guarda de respaldo textual (_boolean_has_textual_backing) dejaba pasar
+    un is_colombian=True alucinado por fill_gaps sin que el cliente hubiera
+    dicho nada sobre su nacionalidad."""
+
+    @pytest.mark.parametrize(
+        "message",
+        ["Desde Cartagena", "desde cartagena", "estoy en Cartagena", "No", "hola"],
+    )
+    def test_bare_city_or_unrelated_message_does_not_match(self, message):
+        assert NATIONALITY_TOPIC_RE.search(message) is None
+
+    @pytest.mark.parametrize(
+        "message",
+        [
+            "vivo en Cartagena", "soy de Medellín", "somos de Bogotá",
+            "resido en Cali", "soy colombiano", "somos extranjeros",
+        ],
+    )
+    def test_real_nationality_statement_still_matches(self, message):
+        assert NATIONALITY_TOPIC_RE.search(message) is not None

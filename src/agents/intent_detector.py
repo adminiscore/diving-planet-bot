@@ -121,11 +121,26 @@ CERTIFICATION_TOPIC_RE = re.compile(
 # Contexto de nacionalidad/residencia — vocabulario de `_detect_nationality`
 # (incluida su lista de ciudades colombianas, que es la otra forma real en que
 # un cliente se auto-identifica: "soy de Medellín").
+#
+# Hallazgo en vivo (conversación real "purple-sun-590", 2026-09-03): la
+# lista de ciudades colombianas matcheaba SUELTA (sin exigir "soy/vivo
+# de"), a diferencia de `_detect_nationality` (más abajo), que sí exige ese
+# prefijo con este mismo comentario explícito: "not 'estoy en', which would
+# just mean their current location". Con la version suelta, "Desde
+# Cartagena" (respuesta al punto de encuentro/logística, SLOT_LOCATION, sin
+# relación con nacionalidad) contaba como "el mensaje habla de
+# nacionalidad" — la guarda de respaldo textual (`_boolean_has_textual_
+# backing`, conversational_core.py) dejaba pasar un `is_colombian=True`
+# alucinado por fill_gaps sin que el cliente hubiera dicho nada sobre su
+# nacionalidad. Ahora exige el mismo prefijo "soy/somos/vivo/vivimos/
+# resido/residimos" que ya usa el detector real — dos regex separados,
+# una sola regla.
 NATIONALITY_TOPIC_RE = re.compile(
     r"\bcolombi\w*|\bextranjer[oa]s?\b|\bforeign\w*|\bnacional\w*"
     r"|\bresiden\w*|\bresido\b|\bvivo\b|\bvivimos\b|\bpasaporte\b|\bc[eé]dula\b"
     r"|\bturista\w*|\btourists?\b"
-    r"|\b(?:bogot[aá]|medell[ií]n|cali|cartagena|barranquilla|bucaramanga|"
+    r"|\b(?:soy|somos|vivo|vivimos|resido|residimos)\s+(?:de\s+|en\s+)?"
+    r"(?:bogot[aá]|medell[ií]n|cali|cartagena|barranquilla|bucaramanga|"
     r"pereira|manizales|c[uú]cuta|santa\s+marta|monter[ií]a|ibagu[eé]|"
     r"villavicencio|neiva|pasto|armenia|popay[aá]n)\b",
     re.IGNORECASE,
