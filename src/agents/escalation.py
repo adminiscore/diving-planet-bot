@@ -19,6 +19,7 @@ Actions:
 
 import json
 import logging
+import re
 
 import httpx
 import structlog
@@ -98,6 +99,22 @@ _MEDICAL_IDIOM_EXCLUSIONS = (
 )
 
 
+def _matches_any_keyword(haystack: str, keywords) -> bool:
+    """Hallazgo en vivo (bateria "natural/deictica", lote 12, 2026-09-02,
+    conversacion 845): el chequeo anterior era `keyword in haystack`, un
+    substring SIN limites de palabra -- la keyword "timo" (de "estafa") de
+    `complaints_or_emergencies` hacia match dentro de "ulTIMO dia" ("¿podria
+    hacer lo mismo... ese ultimo dia...?"), escalando una pregunta de
+    logistica normal a "voy a transferirte con staff" como si fuera una
+    denuncia de fraude. Mismo riesgo confirmado para "presion" (dentro de
+    "impresion/expresion/depresion") y "cirugia" (dentro de "microcirugia").
+    Fix: limites de palabra reales (`\\b`), igual que el resto de regex
+    deterministas del repo -- "timo" ya NO matchea dentro de "ultimo" (no
+    hay limite de palabra entre "l" y "t", ambos caracteres de palabra),
+    pero SI matchea "el timo fue grande" (con espacios/limites alrededor)."""
+    return any(re.search(rf"\b{re.escape(kw)}\b", haystack) for kw in keywords)
+
+
 def detect_sensitive_escalation(message: str, lang: str = "es") -> tuple[str, str] | None:
     msg_lower = message.strip().lower()
     # Neutralize non-medical idioms so a word like "corazón" inside "corazón de
@@ -107,7 +124,7 @@ def detect_sensitive_escalation(message: str, lang: str = "es") -> tuple[str, st
         scrubbed = scrubbed.replace(idiom, " ")
     for reason, rule in SENSITIVE_RULES.items():
         haystack = scrubbed if reason == "medical_questions" else msg_lower
-        if any(keyword in haystack for keyword in rule["keywords"]):
+        if _matches_any_keyword(haystack, rule["keywords"]):
             return reason, rule["es"] if lang == "es" else rule["en"]
     return None
 

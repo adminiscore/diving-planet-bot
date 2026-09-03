@@ -64,13 +64,39 @@ _DIVE_TO_HEAL_OVERRIDE_RE = re.compile(
     re.IGNORECASE,
 )
 
-# Nota de Fase C ("X no es buzo certificado"/"no está certificado") sobre un
-# acompañante -- dispara el recordatorio de que un minicurso no certifica a
-# nadie, ver _build_extra_context, hallazgo en vivo 2026-09-02 (conv. real 831).
+# Nota de Fase C ("X no es buzo certificado"/"no está certificado"/"nunca ha
+# buceado") sobre un acompañante -- dispara el recordatorio de que un
+# minicurso no certifica a nadie, ver _build_extra_context, hallazgo en vivo
+# 2026-09-02 (conv. real 831). "Nunca ha buceado" añadido tras el lote 12
+# (bateria "natural/deictica", conv. 852): la nota real capturada para un
+# tercer perfil del grupo ("mi primo nunca ha buceado") no matcheaba el
+# regex original (solo cubria "no es/está certificado"), y el LLM conflado
+# a esa persona con el buzo certificado del grupo ("tú y tu primo se unen a
+# ella en las inmersiones").
 _UNCERTIFIED_COMPANION_NOTE_RE = re.compile(
     r"no\s+(?:es|est[aá])\s+(?:buzo\s+)?certificad[oa]|"
     r"sin\s+certificar|no\s+tiene\s+certificaci[oó]n|"
+    r"nunca\s+ha\s+bucead|nunca\s+bucead|never\s+(?:been\s+)?div(?:ed|ing)|"
     r"not\s+certified|isn'?t\s+certified|no\s+certification",
+    re.IGNORECASE,
+)
+
+# Nota de Fase C sobre un acompañante que SÍ está certificado pero lleva
+# tiempo sin bucear ("se certificó hace 8 años y no ha vuelto a bucear") --
+# hallazgo en vivo (lote 12, 2026-09-02, conv. real 856): sin esta regla, el
+# LLM confundió "inactivo hace tiempo" con "nunca certificado" y le dijo al
+# cliente que su amigo (SÍ certificado) "no podrá unirse... necesita estar
+# certificado" y debía hacer un minicurso -- ademas `capture_notes` capturó
+# esa conclusión errónea como una nota nueva ("amigo no tiene certificación
+# de buceo"), reforzando el error en turnos siguientes. Alguien certificado
+# e inactivo necesita el REFRESHER (ya cubierto en el flujo normal si han
+# pasado más de 2 años), NO un minicurso -- son productos distintos con
+# elegibilidad distinta.
+_INACTIVE_BUT_CERTIFIED_COMPANION_RE = re.compile(
+    r"certificad[oa]\w*.{0,40}(?:no\s+ha\s+(?:vuelto\s+a\s+)?bucead|"
+    r"hace\s+\d+\s*a[ñn]os?\s+que\s+no\s+bucea|no\s+bucea\s+desde|"
+    r"tanto\s+tiempo\s+sin\s+bucear)|"
+    r"certified.{0,40}(?:hasn'?t\s+(?:been\s+)?div(?:ed|ing)|in\s+\d+\s+years)",
     re.IGNORECASE,
 )
 
@@ -1523,6 +1549,41 @@ def _build_extra_context(state: ConversationState) -> str | None:
                         "package (each with its own link) — don't say one 'includes' the other; "
                         "if you give both links, present them as two distinct bookings, not one "
                         "nested inside the other."
+                    )
+
+            # Hallazgo en vivo (lote 12, 2026-09-02, conv. real 856): sin esta
+            # regla, "mi amigo se certifico hace 8 años y no ha vuelto a
+            # bucear" hizo que el LLM confundiera "inactivo hace tiempo" con
+            # "nunca certificado" -- le dijo al cliente que su amigo (SÍ
+            # certificado) "no podrá unirse... necesita estar certificado" y
+            # debía hacer un minicurso. `capture_notes` incluso capturó esa
+            # conclusión errónea como una nota NUEVA ("amigo no tiene
+            # certificación de buceo"), reforzando el error en turnos
+            # siguientes -- un bucle de auto-refuerzo de la alucinación.
+            if _INACTIVE_BUT_CERTIFIED_COMPANION_RE.search(" ".join(notes)):
+                if state.language == "es":
+                    parts.append(
+                        "IMPORTANTE — regla de negocio real: alguien que SÍ está certificado "
+                        "pero lleva tiempo sin bucear SIGUE SIENDO un buzo certificado — puede "
+                        "sumarse normalmente al buceo certificado del grupo. Si han pasado más "
+                        "de 2 años desde su última inmersión, puede necesitar el *refresher* "
+                        "(repaso corto en el agua, sin coste adicional, YA incluido en el flujo "
+                        "normal de reserva) — eso es TODO lo que necesita. Nunca digas que "
+                        "'necesita estar certificado', que 'no puede unirse', ni le ofrezcas el "
+                        "minicurso — el minicurso es solo para quien NUNCA se ha certificado, "
+                        "una persona distinta a esta."
+                    )
+                else:
+                    parts.append(
+                        "IMPORTANT — real business rule: someone who IS certified but hasn't "
+                        "dived in a while is STILL a certified diver — they can join the "
+                        "group's certified diving normally. If it's been over 2 years since "
+                        "their last dive, they may need the *refresher* (a short in-water "
+                        "review, no extra cost, ALREADY part of the normal booking flow) — "
+                        "that's all they need. Never say they 'need to be certified', that "
+                        "they 'can't join', or offer them the mini-course — the mini-course is "
+                        "only for someone who has NEVER been certified, a different person from "
+                        "this one."
                     )
 
     # Ubicacion base

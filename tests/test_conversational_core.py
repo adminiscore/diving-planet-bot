@@ -2664,6 +2664,55 @@ def test_extra_context_warns_against_uncertified_companion_diving_certified():
     assert ctx_clean is None or "minicurso de buceo es UNA experiencia" not in ctx_clean
 
 
+def test_extra_context_never_dived_note_also_triggers_uncertified_rule():
+    """Hallazgo en vivo (lote 12, 2026-09-02, conv. real 852): "mi primo
+    nunca ha buceado" (tercer perfil en un grupo de 3) no matcheaba el
+    regex original de "no certificado" (solo cubría "no es/está
+    certificado") -- el LLM confundió al primo con el buzo certificado del
+    grupo ("tú y tu primo se unen a ella en las inmersiones"). "Nunca ha
+    buceado" debe disparar la misma regla."""
+    from src.agents.supervisor import _build_extra_context
+
+    state = make_state("es")
+    state.remembered_facts = {"notes": ["primo nunca ha buceado"]}
+    ctx = _build_extra_context(state)
+    assert ctx is not None
+    assert "NO puede sumarse" in ctx
+
+
+def test_extra_context_warns_that_inactive_certified_companion_needs_refresher_not_minicourse():
+    """Hallazgo en vivo (lote 12, 2026-09-02, conv. real 856): "mi amigo se
+    certifico hace 8 años y no ha vuelto a bucear" (SÍ certificado, solo
+    inactivo) hizo que el LLM le dijera al cliente "tu amigo no podrá
+    unirse... necesita estar certificado" y le ofreciera el minicurso --
+    confundiendo "inactivo hace tiempo" con "nunca certificado". Peor aún,
+    `capture_notes` capturó esa conclusión errónea como una nota NUEVA
+    ("amigo no tiene certificación de buceo"), reforzando el error. Alguien
+    certificado e inactivo necesita el refresher, no el minicurso -- son
+    productos con elegibilidad distinta."""
+    from src.agents.supervisor import _build_extra_context
+
+    state = make_state("es")
+    state.remembered_facts = {"notes": ["amigo certificado hace 8 años no ha buceado"]}
+    ctx = _build_extra_context(state)
+    assert ctx is not None
+    assert "SIGUE SIENDO un buzo certificado" in ctx
+    assert "refresher" in ctx.lower()
+
+    state_en = make_state("en")
+    state_en.remembered_facts = {"notes": ["friend got certified 8 years ago, hasn't dived since"]}
+    ctx_en = _build_extra_context(state_en)
+    assert ctx_en is not None
+    assert "STILL a certified diver" in ctx_en
+
+    # No debe dispararse para alguien genuinamente sin certificar (ese es el
+    # caso de la regla anterior, no esta).
+    state_clean = make_state("es")
+    state_clean.remembered_facts = {"notes": ["novia no es buzo certificado"]}
+    ctx_clean = _build_extra_context(state_clean)
+    assert "SIGUE SIENDO un buzo certificado" not in (ctx_clean or "")
+
+
 def test_maybe_apply_confirmed_package_reads_dive_count_from_bots_own_message():
     """Hallazgo en vivo (conversación real 831, 2026-09-02): "Vale pues
     quiero este paquete... Que podria hacer esos dos dias?" -- el bot acaba
