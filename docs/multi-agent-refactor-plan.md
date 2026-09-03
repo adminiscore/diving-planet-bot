@@ -1616,7 +1616,7 @@ combinaciones de certificación/edad/nacionalidad/reprogramación con este estil
   `_matches_any_keyword` con `\bkeyword\b` real (`escalation.py`), mismo patrón que el resto de
   regex deterministas del repo. **Verificado en vivo contra PRE** (conversación 857): la misma
   pregunta ya no escala, y de paso aplica correctamente la regla de certificación.
-- **⚠️🟡 CORREGIDO (parcialmente — ver debajo) — certificado-pero-inactivo confundido con
+- **✅ CORREGIDO DEL TODO (ver §8 arriba para el cierre completo) — certificado-pero-inactivo confundido con
   nunca-certificado.** "mi amigo se certificó hace 8 años y no ha vuelto a bucear" (SÍ
   certificado, solo inactivo) hizo que el LLM dijera "tu amigo no podrá unirse... necesita estar
   certificado" y ofreciera el minicurso — confundiendo "inactivo hace tiempo" con "nunca
@@ -1700,6 +1700,30 @@ afecta al repositorio ni a otros checkouts salvo por esta colisión de nombres.
 
 ## 8. Registro de ejecución
 *(Una línea por paso cerrado: fecha · dev · qué · commit. El más reciente arriba.)*
+
+- **2026-09-03 · Gadea (Claude) · Caso "certificado-pero-inactivo" — de ~67% a 10/10 en vivo,
+  vía modelo scoped en vez de más guardas.** Tras el guard determinista + 2 fixes de regex/scope
+  de hoy (commits anteriores), la tasa en vivo seguía ~65-75% (10/15 en 3 tandas de 5). Investigado
+  por SSH a PRE (autorizado por el usuario, solo lectura primero): `docker logs` confirmó que el
+  guard nuevo NUNCA fue el que rechazaba — todo el trabajo lo hacía el juez de grounding
+  preexistente, y ese juez (con `gpt-4o-mini`) seguía aceptando como GROUNDED una respuesta que
+  contradecía la regla ~1/3 de las veces, pese a que `_build_extra_context`/el guard, probados
+  DENTRO del propio contenedor de producción con el estado real reconstruido, funcionan
+  correctamente el 100% de las veces. Conclusión: techo de fiabilidad del modelo, no bug de
+  código. Investigadas alternativas (coste/latencia, no solo OpenAI): con el consumo real medido
+  en logs (~6.380 tokens/llamada), subir de gpt-4o-mini a gpt-4.1-mini cuesta ~$0.0017 extra por
+  respuesta — irrelevante en términos absolutos. gpt-5-mini descartado para esta llamada sin
+  cambios de código adicionales (no soporta `temperature`, usa `reasoning_effort`). Proveedores
+  externos (Claude Haiku 4.5, Gemini 2.5 Flash) exigirían tocar SDK en ~10 archivos que
+  instancian `AsyncOpenAI` directamente — descartado por ahora, sin beneficio claramente mayor.
+  **Fix**: nuevo setting `rag_answer_model` (`config.py`), scoped SOLO a la llamada de generación
+  de respuesta RAG (mismo patrón que `extraction_model`, vacío = usa `openai_model`, cero cambio
+  de comportamiento por defecto). Activado en PRE (`RAG_ANSWER_MODEL=gpt-4.1-mini` en `.env.pre`,
+  contenedor recreado con `docker compose up -d` — `docker restart` NO recoge cambios de
+  `.env.pre`, hallazgo de tooling). **Verificado en vivo, 10 repeticiones del repro exacto tras
+  el cambio: 10/10 correctas** (conversaciones 886-895), frente al ~65-75% con gpt-4o-mini.
+  Test: `test_rag_answer_model_setting_overrides_openai_model`. El resto del bot (extracción,
+  notas, señales de enrutado) sigue en gpt-4o-mini, sin cambios.
 
 - **2026-09-03 · Gadea (Claude) · 2 hallazgos menores del lote 12 corregidos y verificados en
   vivo (nacionalidad mixta + mismo precio).** Nacionalidad mixta: `_MIXED_NATIONALITY_RE`
