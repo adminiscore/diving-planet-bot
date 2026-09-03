@@ -1762,6 +1762,31 @@ asesor".
 ## 8. Registro de ejecución
 *(Una línea por paso cerrado: fecha · dev · qué · commit. El más reciente arriba.)*
 
+- **2026-09-03 · Gadea (Claude) · Fase 10 (inventario regex 🔴🟡🟢) — pasos 1, 2, 3, 5, 6 cerrados
+  y verificados; paso 4 (el más grande/riesgoso) en pausa de checkpoint.** Tras el hallazgo
+  "purple-sun-590" (Fase 9), un agente Explore inventarió toda la lógica regex de
+  detección/clasificación en `intent_detector.py`/`conversational_core.py`/`supervisor.py`/
+  `escalation.py`, clasificada 🔴🟡🟢 por el mismo patrón de riesgo (vocabularios duplicados sin
+  sincronizar + genéricos sin exclusión de cualificadores de experiencia). Cerrado hoy: (1)
+  `_activity_key()` (helper de `_detect_group_info`) reusa `matched_activity_categories()` en vez
+  de su propio vocabulario por substring — **verificado en vivo** (conversación 910: "somos 4,
+  mitad certificado y mitad nunca ha buceado" → `group_allocation={'certified_diving':2,
+  'minicourse':2}` correcto); (2) `_AGE_PERSON_REF` deduplicado (copia literal inline borrada);
+  (3) `certification_claim()` nueva, fuente única para "¿el mensaje crudo afirma/niega
+  certificación?", reusada por `_detect_certification` y `conversational_core.
+  _activity_has_textual_backing` (`_CERTIFICATION_CLAIM_RE`/`_CERTIFICATION_NEGATED_RE`
+  borrados) — `supervisor._CERTIFIED_MENTION_RE`/`_UNCERTIFIED_COMPANION_NOTE_RE` se dejan
+  aparte a propósito (dominio distinto: notas parafraseadas, no mensaje crudo); (5) test de
+  regresión que fija la prioridad `escalation.py` antes que `supervisor._AVAILABILITY_PATTERN`
+  (antes solo un comentario); (6) `tests/test_supervisor.py` nuevo (34 tests, no existía ningún
+  test dedicado para ~15 detectores del archivo). Suite completa (3 modos, 1726 passed/18
+  skipped) + compileall + ruff en verde en cada paso. Pendiente: paso 4 (unificar el vocabulario
+  compartido de "¿el mensaje menciona a otra persona?", repartido en 8 regex/listas en 3
+  archivos) — el propio plan lo marcó como el de mayor riesgo/tamaño, con metodología incremental
+  (una estructura migrada a la vez, suite completa tras cada una) y sin promesa de completar las
+  8 en una sola pasada si la suite revela un caso real dependiente de una diferencia de
+  vocabulario entre listas.
+
 - **2026-09-03 · Gadea (Claude) · Conversación real "purple-sun-590" — curso Open Water sin
   precio/link, 2 causas raíz encadenadas, ambas cerradas.** (1) Fase 9: veto LLM de `activity`
   para mensajes ambiguos (`_maybe_veto_activity_via_llm`), midiendo antes/después con el arnés
