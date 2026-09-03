@@ -1014,11 +1014,12 @@ reproducible. **Siguiente: 2.5 (nodo `booking`), luego 2.6.** Sigue este patrón
 > que un "no" no-canónico a la pregunta de seguridad no se pierda) y `compose_acknowledgement`
 > (redactor del acuse de recibo). **No es una regresión de código** — es el coste real de las
 > correcciones de corrección que se hicieron desde la última medición. Late-latencia/coste
-> siguen bajos en términos absolutos (~$0.001/turno). **Decisión pendiente del owner**: aceptar
-> `3.20` como el nuevo número de referencia (documentando por qué subió), o revisar si alguno de
-> los dos mecanismos puede evitarse en el turno de cierre sin perder la corrección que aportan —
-> no se ha tocado el código para bajarlo unilateralmente, es una decisión de trade-off, no un bug.
-> Sigue pendiente el punto (b) de Fase 5.3 (harvest de trazas LangSmith → datasets/evals) y una
+> siguen bajos en términos absolutos (~$0.001/turno). **Decisión del owner (2026-09-03, Gadea):
+> ACEPTADO `3.20` como el nuevo número de referencia** (sustituye el `≤ 3.00` de Fase 0.4), con
+> la justificación de arriba documentada como razón del cambio — no se toca el código para
+> bajarlo, ambos mecanismos se quedan por la corrección que aportan. Con esto, el punto (c) del
+> criterio de reanudación queda resuelto ("igual o mejor" vs. el número de referencia ya
+> aceptado, no el original). Sigue pendiente el punto (b) de Fase 5.3 (harvest de trazas LangSmith → datasets/evals) y una
 > comparación de latencia real vía LangSmith (esta medición fue local, no por LangSmith).
 > Dato secundario de LangSmith (mismo día, últimas 6h, 153 turnos reales trazados en PRE):
 > promedio **3.68 llamadas/turno** — más alto todavía, pero esa ventana incluye toda la batería
