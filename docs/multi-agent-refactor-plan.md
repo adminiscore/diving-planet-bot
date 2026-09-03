@@ -1654,16 +1654,37 @@ combinaciones de certificación/edad/nacionalidad/reprogramación con este estil
   pese a que la composición era explícita desde el mensaje 1 — mismo patrón visto con "yo y otros
   2 ya certificados, mi hermano nunca ha buceado". Problema de extracción más profundo (mensajes
   de apertura con 3+ perfiles), no arreglado hoy.
-- **📝 Anotado, sin arreglar (prioridad menor) — RAG no reutiliza un hecho ya dicho en el mismo
-  turno anterior.** "cuánto cuesta el paquete de 7 inmersiones?" → respuesta correcta que incluye
-  "mismo precio, sin cobro extra por la divisa"; el siguiente turno, "lo mismo pero para mi amigo
-  que es colombiano, cambia algo?", cae al fallback genérico pese a que la respuesta ya estaba en
-  el turno anterior. No arreglado — menor prioridad.
-- **📝 Anotado, sin arreglar (cosmético) — "Como sois colombianos" cuando solo 1 de 3 lo es.** El
-  resumen de precio para un grupo con nacionalidad mixta dice "Como sois colombianos/residentes,
-  el pago es en pesos" — técnicamente aplica el gating correcto (algún colombiano en el grupo
-  necesita coordinación con asesor), pero la frase en plural implica que TODOS son colombianos.
-  Cosmético, no arreglado.
+- **✅ CORREGIDO — RAG no reutilizaba un hecho ya dicho en el turno anterior (alucinaba precio
+  nuevo).** "cuánto cuesta el paquete de 7 inmersiones?" → respuesta correcta que incluye "mismo
+  precio, sin cobro extra por la divisa"; el siguiente turno, "lo mismo pero para mi amigo que es
+  colombiano, cambia algo?", caía al fallback genérico o (peor, en re-generaciones) inventaba un
+  precio nuevo, en vez de reusar el hecho ya establecido en el turno anterior. **Fix**: atajo
+  determinista `_same_price_different_nationality_answer` (+
+  `_SAME_PRICE_DIFFERENT_NATIONALITY_RE`) — política fija de negocio (mismo precio, solo cambia
+  la moneda), no depende del paquete ni de RAG. Cableado en los 3 puntos habituales:
+  `router.classify_route`, `info_agent.info_node`, `supervisor._shared_turn_handler`. Test:
+  `test_same_price_different_nationality_gets_real_answer_not_hallucinated_price`.
+  **Verificado en vivo contra PRE** (conversación 864): "¡No cambia nada en el precio! ... solo
+  cambia la moneda..." — respuesta correcta y estable, sin precio inventado.
+- **✅ CORREGIDO (cosmético) — nacionalidad mixta no reconocía "uno de nosotros es colombiano y
+  los otros [N] no".** `_MIXED_NATIONALITY_RE` no cubría esta fraseología natural (con un número
+  entre "otros" y "no", p. ej. "los otros DOS no"), así que el bot seguía el flujo normal de
+  slot-fill en vez de dar la explicación de pago per-nacionalidad. **Fix**: ampliado el regex con
+  `(?:\s+\w+)?` antes de `\s+no\b` para admitir el conteo intermedio, más el equivalente
+  extranjero-primero y en inglés. Test:
+  `test_mixed_nationality_regex_covers_uno_y_los_otros_phrasing`. **Verificado en vivo contra
+  PRE** (conversación 865): la explicación de pago per-nacionalidad aparece correctamente y el
+  turno siguiente ("¿y eso como cambiaría el pago entre nosotros?") la retoma con coherencia.
+- **📝 Anotado, decisión de NO arreglar (prioridad menor) — extracción fragmentada para mensajes
+  de apertura con 3 perfiles de certificación distintos** (ver hallazgo arriba). Causa raíz: la
+  guarda `_message_numbers`/`_consume_number` (`conversational_core.py`) exige que cada cantidad
+  extraída esté respaldada por un dígito/palabra-número LITERAL en el mensaje — frases como "yo y
+  otros 2" (cuenta implícita por aritmética) o "mi hermano" (singular implícito, sin número
+  explícito) nunca lo satisfacen, así que la extracción correcta se descarta y el bot re-pregunta.
+  Guarda deliberadamente estricta y documentada así en el código ("un falso positivo aquí cuesta
+  una pregunta de más, nunca una reserva equivocada"). Decisión (discutida con el usuario,
+  2026-09-03): no tocarla — el coste del bug es bajo (una pregunta de más, nunca una reserva
+  incorrecta) y relajarla arriesga que el LLM invente cantidades sin respaldo textual real.
 
 Suite completa verde en las 3 configuraciones tras cada fix: 1629 → 1632 passed / 18 skipped.
 Ruff limpio en cada paso.
@@ -1679,6 +1700,22 @@ afecta al repositorio ni a otros checkouts salvo por esta colisión de nombres.
 
 ## 8. Registro de ejecución
 *(Una línea por paso cerrado: fecha · dev · qué · commit. El más reciente arriba.)*
+
+- **2026-09-03 · Gadea (Claude) · 2 hallazgos menores del lote 12 corregidos y verificados en
+  vivo (nacionalidad mixta + mismo precio).** Nacionalidad mixta: `_MIXED_NATIONALITY_RE`
+  ampliado para cubrir "uno de nosotros es colombiano y los otros dos no" (y variantes) —
+  verificado en conversación 865. Mismo precio distinta nacionalidad: nuevo atajo determinista
+  `_same_price_different_nationality_answer` que evita que RAG alucine un precio nuevo al
+  re-generar la respuesta en vez de reusar el hecho ya establecido — verificado en conversación
+  864. Suite completa (3 modos, 1634 passed/18 skipped) + compileall + ruff en verde antes de
+  desplegar. El 3er hallazgo menor (extracción fragmentada de 3 perfiles en un mensaje de
+  apertura) se dejó **sin arreglar, por decisión deliberada**: la guarda responsable
+  (`_message_numbers`/`_consume_number`) es intencionalmente estricta y de bajo riesgo/beneficio
+  tocar (ver hallazgo arriba). Evaluada (no implementada) una guarda determinista POST-respuesta
+  para empujar el caso "certificado-pero-inactivo" (2/3 en vivo) hacia el 100%, siguiendo el
+  patrón de `currency_amounts_grounded`: viable sin plumbing nuevo porque el texto de la regla ya
+  lleva una frase-marcador fija ("SIGUE SIENDO un buzo certificado") detectable directamente en
+  `grounding_context` dentro de `_answer_with_llm` — pendiente de decisión del usuario.
 
 - **2026-09-03 · Gadea (Claude) · Lote 12 (estilo "natural/deíctico") — 1 bug 100% corregido, 1
   mejorado pero con límite de fiabilidad del LLM conocido.** 8/12 conversaciones sin problema.
