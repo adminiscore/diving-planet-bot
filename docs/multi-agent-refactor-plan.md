@@ -1739,13 +1739,23 @@ asesor".
 - **Verificado en vivo contra PRE, repro completo (2 corridas)**: precio real ($693 USD /
   2.450.000 COP), link de reserva directa (`book.divingplanet.org`) y aclaración de moneda
   correctos en ambas — el bug original queda cerrado.
-- **📝 Hallazgo nuevo, sin arreglar (menor, no bloqueante)**: en una de las 2 corridas de
-  verificación, tras responder "No" a la pregunta de nacionalidad, el texto de resumen dijo
-  "Como sois colombianos/residentes, el pago es en pesos (COP)" — contradice la respuesta real
-  del cliente. La OTRA corrida (misma secuencia exacta) mostró el texto correcto (USD, sin
-  mención de "colombianos"). Parece variación puntual del LLM en la redacción del resumen (el
-  precio/link fueron correctos y consistentes en ambas corridas) — no investigado a fondo hoy,
-  anotado para una futura revisión.
+- **✅ CORREGIDO — contradicción de nacionalidad ("colombianos" tras un "No").** Investigado a
+  fondo (no era variación del LLM en el texto — el bloque "Como sois colombianos..." es
+  determinista, gateado por `if state.is_colombian:`). Traza real de LangSmith: en el turno
+  "Desde Cartagena" (respuesta de LOGÍSTICA a "¿desde dónde saldrías?", `SLOT_LOCATION`),
+  `fill_gaps` alucinó `is_colombian: true` a partir SOLO del nombre de la ciudad de salida —
+  tan grave que la pregunta de nacionalidad ni siquiera llegaba a hacerse. Causa raíz:
+  `NATIONALITY_TOPIC_RE` (la guarda de respaldo textual que debía bloquear esa alucinación)
+  matcheaba nombres de ciudad colombiana SUELTOS, a diferencia de `_detect_nationality` (el
+  extractor real, mismo archivo), que ya exige el prefijo "soy/somos DE `<ciudad>`" — con un
+  comentario explícito advirtiendo justo este caso ("not 'estoy en', which would just mean
+  their current location"). Mismo patrón que las otras 2 causas raíz de hoy: un regex se
+  blindó, el otro no, sin sincronizar. **Fix**: `NATIONALITY_TOPIC_RE` exige ahora el mismo
+  prefijo soy/somos/vivo/vivimos/resido/residimos. Tests:
+  `test_bare_city_or_unrelated_message_does_not_match`,
+  `test_real_nationality_statement_still_matches`. **Verificado en vivo contra PRE, 5
+  repeticiones del repro completo (conversaciones 905-909)**: 5/5 preguntan la nacionalidad
+  correctamente, responden con USD/link directo tras "No", sin ninguna contradicción.
 
 ---
 
