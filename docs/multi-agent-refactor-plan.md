@@ -1762,6 +1762,24 @@ asesor".
 ## 8. Registro de ejecución
 *(Una línea por paso cerrado: fecha · dev · qué · commit. El más reciente arriba.)*
 
+- **2026-09-03 · Gadea (Claude) · Fase 10 — paso 4 cerrado y verificado en vivo: vocabulario
+  compartido de "menciona a otra persona".** El último foco 🔴 del inventario: 6 estructuras
+  reales con vocabulario de sustantivos de parentesco duplicado y desincronizado (5 en
+  `conversational_core.py` + `intent_detector._companion_noun`; `supervisor._PERSON_NOUN`
+  confirmado código MUERTO, migrado igual por consistencia). No se fusionó la lógica de
+  detección (siguen siendo estructuras distintas a propósito) — se unificó el VOCABULARIO en 3
+  fragmentos compartidos nuevos (`_PERSON_NOUN_MENTION/_SINGULAR/_PLURAL_ES/EN`,
+  `intent_detector.py`), migrados uno a la vez con la suite completa corrida después de cada uno
+  (metodología incremental del plan) — las 6 migraron limpio, sin ningún caso real dependiente de
+  una diferencia de vocabulario. `_PURE_COMPANION_RE` (supervisor.py) se excluyó del inventario
+  original al revisarlo de cerca: no tiene vocabulario de sustantivos, no es una duplicación real.
+  Gaps reales cerrados: boyfriend/girlfriend/kids en 2 listas, compañero/primo en otra, familia
+  extendida en plural en otra, hermanos/primos en el conteo "voy con N X" de `intent_detector.py`
+  (antes resolvía `group_size=None`). **Verificado en vivo contra PRE** (conversación 911: "voy
+  con 2 hermanos, queremos bucear" → `group_size=3`, el bot ya no pregunta "¿cuántos son?").
+  Suite completa (3 modos, 1735 passed/18 skipped) + compileall + ruff en verde. Con esto se
+  cierran los 3 focos 🔴 y los 3 🟡 restantes del inventario de hoy.
+
 - **2026-09-03 · Gadea (Claude) · Fase 10 (inventario regex 🔴🟡🟢) — pasos 1, 2, 3, 5, 6 cerrados
   y verificados; paso 4 (el más grande/riesgoso) en pausa de checkpoint.** Tras el hallazgo
   "purple-sun-590" (Fase 9), un agente Explore inventarió toda la lógica regex de
