@@ -2280,6 +2280,13 @@ async def _maybe_veto_activity_via_llm(
     silencio, igual que el resto de la cadena de extraccion -- esto nunca
     puede dejar la respuesta peor que antes de que el veto existiera.
     """
+    # TEMP DEBUG (2026-09-03, quitar tras diagnosticar por que 0/5 corridas en
+    # vivo dispararon el veto pese a que la llamada aislada es 5/5 fiable):
+    logger.info(
+        f"[EXTRACT][ACTIVITY_VETO][DEBUG] enter regex_activity={regex_intent.activity!r} "
+        f"shadow={settings.llm_activity_veto_shadow_mode} cutover={settings.llm_activity_veto_cutover} "
+        f"categories={matched_activity_categories(message)!r} msg={_log_safe_message(message)!r}"
+    )
     if not (settings.llm_activity_veto_shadow_mode or settings.llm_activity_veto_cutover):
         return
     if not regex_intent.activity:
