@@ -223,6 +223,43 @@ async def test_rag_low_confidence_uses_extra_context_when_available(monkeypatch)
 
 
 @pytest.mark.asyncio
+async def test_rag_answer_model_setting_overrides_openai_model(monkeypatch):
+    """`rag_answer_model` (scoped to just this call, see config.py) must win
+    over `openai_model` when set, and fall back to `openai_model` when empty
+    (default) -- zero behavior change until explicitly configured."""
+    used_models = []
+
+    class ModelCapturingCompletions:
+        async def create(self, **kwargs):
+            used_models.append(kwargs.get("model"))
+            return DummyResponse()
+
+    class ModelCapturingChat:
+        completions = ModelCapturingCompletions()
+
+    class ModelCapturingOpenAI:
+        def __init__(self, api_key=None):
+            self.chat = ModelCapturingChat()
+
+    async def fake_search(query, lang="es"):
+        return [{"content": "doc", "metadata": {"source": "faqs"}, "score": 0.91}]
+
+    monkeypatch.setattr(rag_agent, "search_knowledge_base", fake_search)
+    monkeypatch.setattr(rag_agent.settings, "rag_min_score", 0.72)
+    monkeypatch.setattr(rag_agent, "AsyncOpenAI", ModelCapturingOpenAI)
+    monkeypatch.setattr(rag_agent, "is_grounded", grounded_ok)
+    monkeypatch.setattr(rag_agent.settings, "openai_model", "gpt-4o-mini")
+
+    monkeypatch.setattr(rag_agent.settings, "rag_answer_model", "")
+    await rag_agent.rag_answer("Pregunta", lang="es")
+    assert used_models[-1] == "gpt-4o-mini"
+
+    monkeypatch.setattr(rag_agent.settings, "rag_answer_model", "gpt-4.1-mini")
+    await rag_agent.rag_answer("Pregunta", lang="es")
+    assert used_models[-1] == "gpt-4.1-mini"
+
+
+@pytest.mark.asyncio
 async def test_rag_uses_sources_when_confident(monkeypatch):
     async def fake_search(query, lang="es"):
         return [

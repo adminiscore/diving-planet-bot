@@ -24,6 +24,21 @@ class Settings(BaseSettings):
     # and faster per call. Revert to "gpt-4o" here if ever needed. See
     # docs/robustness/progress-log.md (Fase 4).
     extraction_model: str = "gpt-4o-mini"
+    # Model for the RAG answer-generation call only (rag_agent.py
+    # `_answer_with_llm`). Kept SEPARATE from `openai_model` (used broadly
+    # across the bot) so we can trial a stronger model for JUST this call --
+    # scoped blast radius, same pattern as `extraction_model` above. Empty
+    # string (default) means "use `openai_model`", i.e. zero behavior change
+    # until explicitly set. Hallazgo en vivo (2026-09-03): gpt-4o-mini
+    # ignora la regla de "certificado-pero-inactivo" (ver
+    # docs/multi-agent-refactor-plan.md §7) pese a tenerla correctamente
+    # inyectada en el contexto, en ~1/3 de las repeticiones -- un techo real
+    # de fiabilidad del modelo, no un bug de codigo. gpt-5-mini/o-series NO
+    # sirven aqui sin cambios de codigo adicionales (no soportan
+    # `temperature`, usan `reasoning_effort`); cualquier modelo puesto aqui
+    # debe seguir aceptando `temperature`/`max_tokens` como hoy (gpt-4.1-mini,
+    # gpt-4o, etc.).
+    rag_answer_model: str = ""
     openai_embedding_model: str = "text-embedding-3-small"
     # Model used to transcribe incoming customer voice notes (see
     # src/channels/audio.py). gpt-4o-mini-transcribe is cheaper/better than

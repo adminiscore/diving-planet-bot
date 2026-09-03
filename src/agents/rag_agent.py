@@ -1522,7 +1522,7 @@ async def rag_answer(
         for attempt in range(2):
             try:
                 response = await client.chat.completions.create(
-                    model=settings.openai_model,
+                    model=settings.rag_answer_model or settings.openai_model,
                     messages=messages,
                     temperature=0.3,
                     max_tokens=500,
