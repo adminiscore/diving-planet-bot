@@ -16,6 +16,7 @@ from src.agents.grounding_check import (
     capacity_claims_grounded,
     contains_phone_number,
     currency_amounts_grounded,
+    inactive_certified_companion_not_contradicted,
     is_coherent_text,
     is_grounded,
     requests_personal_data,
@@ -1545,6 +1546,12 @@ async def rag_answer(
                 last_reject = "ungrounded_url"
             elif not capacity_claims_grounded(answer, grounding_context):
                 last_reject = "ungrounded_capacity"
+            elif not inactive_certified_companion_not_contradicted(answer, grounding_context):
+                # Hallazgo en vivo (lote 12, 2026-09-02/03): con la regla de
+                # negocio correctamente inyectada en el contexto, el LLM la
+                # contradice de todos modos ~1/3 de las veces. Regenerar;
+                # una segunda muestra normalmente respeta la regla.
+                last_reject = "contradicts_inactive_certified_rule"
             elif requests_personal_data(answer):
                 # Never run a manual booking ritual in chat (names/ID/passport):
                 # bookings close with the online link or an advisor handoff.

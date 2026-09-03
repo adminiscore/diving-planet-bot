@@ -399,6 +399,37 @@ def test_currency_guard_rejects_percentage_not_in_context():
     ) is False
 
 
+def test_inactive_certified_guard_passes_when_rule_not_active():
+    assert grounding_check.inactive_certified_companion_not_contradicted(
+        "Tu amigo no podrá unirse, necesita estar certificado.",
+        "Contexto sin ninguna regla de negocio relacionada.",
+    ) is True
+
+
+def test_inactive_certified_guard_rejects_contradiction_es():
+    assert grounding_check.inactive_certified_companion_not_contradicted(
+        "Tu amigo no podrá unirse, necesita estar certificado primero.",
+        "IMPORTANTE — regla de negocio real: alguien que SÍ está certificado "
+        "pero lleva tiempo sin bucear SIGUE SIENDO un buzo certificado.",
+    ) is False
+
+
+def test_inactive_certified_guard_rejects_contradiction_en():
+    assert grounding_check.inactive_certified_companion_not_contradicted(
+        "Your friend can't join, they need to be certified first.",
+        "IMPORTANT — real business rule: someone who IS certified but hasn't "
+        "dived in a while is STILL a certified diver.",
+    ) is False
+
+
+def test_inactive_certified_guard_accepts_correct_answer():
+    assert grounding_check.inactive_certified_companion_not_contradicted(
+        "Tu amigo sigue siendo un buzo certificado, solo necesitaría el refresher.",
+        "IMPORTANTE — regla de negocio real: alguien que SÍ está certificado "
+        "pero lleva tiempo sin bucear SIGUE SIENDO un buzo certificado.",
+    ) is True
+
+
 class TestCoherentTextGuard:
     """Hallazgo en vivo 2026-09-01 (lote 7 de frontera contra PRE, DIVE TO HEAL
     turno 3, 'cuantas inmersiones son'): la respuesta fue literalmente `{" "}`

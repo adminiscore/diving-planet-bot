@@ -112,6 +112,42 @@ def capacity_claims_grounded(answer: str, context: str) -> bool:
     return answer_caps.issubset(_capacity_claim_numbers(context))
 
 
+# The marker phrase supervisor._build_extra_context injects into
+# `grounding_context` ONLY when `_mentions_inactive_but_certified_companion`
+# detected this exact business case this turn (see supervisor.py). Gating on
+# it means this guard can only ever fire on the turns where the rule is
+# actually active -- zero blast radius on any other RAG answer.
+_INACTIVE_CERTIFIED_RULE_MARKER = re.compile(
+    r"SIGUE SIENDO un buzo certificado|STILL a certified diver"
+)
+
+# Hallazgo en vivo (lote 12, 2026-09-02/03): pese a tener la regla de negocio
+# correcta en el contexto, el LLM (temperatura 0.3) a veces la contradice de
+# todos modos -- 1/3 en reverificaciones repetidas. Estas frases son las
+# formas concretas observadas de esa contradiccion.
+_CONTRADICTS_INACTIVE_CERTIFIED_RULE = re.compile(
+    r"no\s+podr[aá].{0,30}unirse|necesita(?:r[ií]a)?\s+estar\s+certificad|"
+    r"necesitar[ií]a.{0,20}minicurso|deber[ií]a\s+hacer.{0,20}minicurso|"
+    r"can'?t\s+join|cannot\s+join|needs?\s+to\s+be\s+certified|"
+    r"would\s+need.{0,20}mini-?course",
+    re.IGNORECASE,
+)
+
+
+def inactive_certified_companion_not_contradicted(answer: str, context: str) -> bool:
+    """Reject an answer that contradicts the "inactive-but-certified companion"
+    business rule (they're still certified, just need the refresher) when that
+    rule was actually injected into `context` this turn. Complements the LLM
+    judge, which follows this rule only intermittently at temperature 0.3 even
+    with the correct rule in front of it (confirmed live, lote 12).
+    """
+    if not answer or not context:
+        return True
+    if not _INACTIVE_CERTIFIED_RULE_MARKER.search(context):
+        return True  # rule wasn't active this turn -- nothing to check
+    return not _CONTRADICTS_INACTIVE_CERTIFIED_RULE.search(answer)
+
+
 # --------------------------------------------------------------------------- #
 # Personal-data collection guard
 #
