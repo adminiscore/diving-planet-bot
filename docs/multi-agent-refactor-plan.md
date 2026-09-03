@@ -1591,11 +1591,107 @@ Tests: `test_extra_context_warns_against_uncertified_companion_diving_certified`
 `test_booking_context_summary_includes_just_answered_boolean_slot`. Suite completa verde en las
 3 configuraciones: 1629 passed / 18 skipped.
 
+### Lote 12 (12 conversaciones, estilo "natural/deíctico", 2026-09-02) — inspirado en la
+### conversación real 831
+
+Tras cerrar los 3 hallazgos de la conversación real, el usuario preguntó si podíamos diseñar
+lotes sintéticos más parecidos a ESE estilo — cliente que usa referencias deícticas ("ese último
+día", "lo mismo", "juntos") y combina 2+ hechos ya establecidos implícitamente, en vez de
+declarar cada dato explícito ("no soy colombiano"). Diseñadas 12 conversaciones cubriendo
+combinaciones de certificación/edad/nacionalidad/reprogramación con este estilo.
+
+- ✅ **8/12 sin problema**: menor certificado el año pasado + paquete multi-día (info correcta),
+  DIVE TO HEAL con pregunta deíctica sobre extenderlo a un familiar sin discapacidad (fallback
+  honesto, sin alucinar), política de cancelación + "perderíamos el dinero" (respuesta real y
+  correcta), sobrina menor añadida a mitad de flujo (opciones de edad correctas), curso Open
+  Water a medio terminar + pregunta deíctica sobre sumarse al grupo certificado (**correctamente
+  rechazado**, sin alucinar), familia con edades mixtas (edades correctas por actividad), refresher
+  + pregunta deíctica de "mismo nivel" (no responde la pregunta directamente pero no alucina).
+- **⚠️🔴 CORREGIDO — escalación falsa por *substring* sin límites de palabra.** "¿y él podría
+  hacer lo mismo que nosotros ese **último** día...?" escalaba con "Voy a transferirte
+  inmediatamente con un miembro de nuestro staff" — la keyword `"timo"` (de "estafa", categoría
+  `complaints_or_emergencies`) hacía match dentro de "ul**TIMO**dia" vía un simple `keyword in
+  haystack` **sin límites de palabra**. Riesgo confirmado también para `"presion"` (dentro de
+  "impresión/expresión/depresión") y `"cirugia"` (dentro de "microcirugía"). **Fix**:
+  `_matches_any_keyword` con `\bkeyword\b` real (`escalation.py`), mismo patrón que el resto de
+  regex deterministas del repo. **Verificado en vivo contra PRE** (conversación 857): la misma
+  pregunta ya no escala, y de paso aplica correctamente la regla de certificación.
+- **⚠️🟡 CORREGIDO (parcialmente — ver debajo) — certificado-pero-inactivo confundido con
+  nunca-certificado.** "mi amigo se certificó hace 8 años y no ha vuelto a bucear" (SÍ
+  certificado, solo inactivo) hizo que el LLM dijera "tu amigo no podrá unirse... necesita estar
+  certificado" y ofreciera el minicurso — confundiendo "inactivo hace tiempo" con "nunca
+  certificado". Peor: `capture_notes` capturó esa conclusión errónea como una nota NUEVA ("amigo
+  no tiene certificación de buceo"), reforzando el error en turnos siguientes — un bucle de
+  auto-refuerzo de la alucinación. **Fix** (2 iteraciones, la 1ª no sobrevivió la reverificación
+  en vivo): nueva regla de negocio en `_build_extra_context`
+  (`_mentions_inactive_but_certified_companion`) explicando que alguien certificado e inactivo
+  sigue certificado y solo necesita el refresher. La 1ª versión exigía "certificado" y la frase
+  de inactividad en la MISMA nota de `capture_notes` (no determinista) — al reverificar en vivo,
+  `capture_notes` parafraseó el mismo mensaje sin mencionar "certificado" en absoluto, y el guard
+  no disparó. **Fix real**: buscar en notas + los MENSAJES CRUDOS del cliente (que sí conservan
+  el hecho completo), separado en dos regex de co-ocurrencia sin exigir proximidad. De paso se
+  encontró que `_CERTIFIED_MENTION_RE` solo cubría la forma adjetivo ("certificado/a"), no la
+  forma verbo ("se certificó") — ampliado al lexema `certific\w*`. También se amplió
+  `_UNCERTIFIED_COMPANION_NOTE_RE` (regla de la conversación 831) para cubrir "nunca ha buceado"
+  — una nota real de otra conversación del lote ("primo nunca ha buceado") no la disparaba.
+  **Verificado en vivo contra PRE, 3 repeticiones del repro exacto**: 2/3 correctas (dice que sí
+  puede unirse, ofrece el refresher), 1/3 sigue mostrando el error. **Investigado**: se confirmó
+  determinísticamente que la regla de negocio SÍ se inyecta correctamente en `extra_context` el
+  100% de las veces (simulación directa del estado exacto de la corrida fallida) — el fallo NO es
+  un bug de código, es que el LLM (temperatura 0.3), pese a tener la regla correcta delante,
+  a veces la ignora igual. **Limitación de fiabilidad del LLM, no arreglada del todo** — mejora
+  real (de 0/2 antes del fix a 2/3 después) pero no garantizada al 100%. **Candidato para una
+  guarda determinista POST-respuesta** (mismo patrón que `currency_amounts_grounded`/
+  `capacity_claims_grounded` en `grounding_check.py`: rechazar y regenerar si la respuesta
+  contradice la regla), no implementada hoy por alcance/riesgo — requeriría pasar una señal
+  estructurada desde `_build_extra_context` hasta la cadena de guardas de `_answer_with_llm`.
+  Tests: `test_extra_context_never_dived_note_also_triggers_uncertified_rule`,
+  `test_extra_context_warns_that_inactive_certified_companion_needs_refresher_not_minicourse`,
+  `test_extra_context_inactive_certified_rule_survives_incomplete_note_paraphrase`.
+- **📝 Anotado, sin arreglar (prioridad menor) — extracción fragmentada para mensajes de apertura
+  con 3 perfiles de certificación distintos.** "somos 3: yo certificado, mi hermana hizo un
+  minicurso hace un año, y mi primo nunca ha buceado" necesitó 3 turnos de re-preguntar cantidades
+  pese a que la composición era explícita desde el mensaje 1 — mismo patrón visto con "yo y otros
+  2 ya certificados, mi hermano nunca ha buceado". Problema de extracción más profundo (mensajes
+  de apertura con 3+ perfiles), no arreglado hoy.
+- **📝 Anotado, sin arreglar (prioridad menor) — RAG no reutiliza un hecho ya dicho en el mismo
+  turno anterior.** "cuánto cuesta el paquete de 7 inmersiones?" → respuesta correcta que incluye
+  "mismo precio, sin cobro extra por la divisa"; el siguiente turno, "lo mismo pero para mi amigo
+  que es colombiano, cambia algo?", cae al fallback genérico pese a que la respuesta ya estaba en
+  el turno anterior. No arreglado — menor prioridad.
+- **📝 Anotado, sin arreglar (cosmético) — "Como sois colombianos" cuando solo 1 de 3 lo es.** El
+  resumen de precio para un grupo con nacionalidad mixta dice "Como sois colombianos/residentes,
+  el pago es en pesos" — técnicamente aplica el gating correcto (algún colombiano en el grupo
+  necesita coordinación con asesor), pero la frase en plural implica que TODOS son colombianos.
+  Cosmético, no arreglado.
+
+Suite completa verde en las 3 configuraciones tras cada fix: 1629 → 1632 passed / 18 skipped.
+Ruff limpio en cada paso.
+
+**Nota de entorno (no del repositorio)**: durante la investigación se detectó un archivo `.pth`
+de instalación editable en el Python global (`site-packages`) que apuntaba al checkout del repo
+principal (rama `feature/pre_gadea`, una base de código distinta) — causaba colisiones de import
+(`src.flows` resolvía al repo equivocado, rompiendo TODA la suite) al correr pytest desde este
+worktree. Deshabilitado localmente (renombrado a `.disabled`); no es un archivo versionado, no
+afecta al repositorio ni a otros checkouts salvo por esta colisión de nombres.
+
 ---
 
 ## 8. Registro de ejecución
 *(Una línea por paso cerrado: fecha · dev · qué · commit. El más reciente arriba.)*
 
+- **2026-09-03 · Gadea (Claude) · Lote 12 (estilo "natural/deíctico") — 1 bug 100% corregido, 1
+  mejorado pero con límite de fiabilidad del LLM conocido.** 8/12 conversaciones sin problema.
+  Corregido al 100%: escalación falsa por *substring* sin límites de palabra (`"timo"` dentro de
+  "úl**timo**" disparaba "voy a transferirte con staff") — fix con `\bkeyword\b` real en
+  `escalation.py`, verificado en vivo. Mejorado pero no garantizado: certificado-pero-inactivo
+  confundido con nunca-certificado — 2 iteraciones de fix (la 1ª no sobrevivió la reverificación
+  en vivo porque dependía de que `capture_notes`, no determinista, preservara 2 hechos en la
+  misma nota; la 2ª busca en notas + mensajes crudos del cliente) llevó de 0/2 a 2/3 en
+  repeticiones en vivo — confirmado determinísticamente que la regla de negocio SÍ se inyecta
+  correctamente el 100% de las veces, pero el LLM a veces la ignora igual. Candidato anotado
+  para una guarda determinista post-respuesta (no implementada hoy). Suite verde en las 3
+  configuraciones tras cada fix: 1629→1632 passed / 18 skipped.
 - **2026-09-02 · Gadea (Claude) · Primer hallazgo de un cliente REAL (conversación 831) — 3
   bugs corregidos y verificados en vivo.** El usuario compartió una conversación real (no
   sintética) donde el bot confirmó que la novia sin certificar de un cliente podría "bucear
