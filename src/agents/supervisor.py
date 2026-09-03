@@ -92,13 +92,40 @@ _UNCERTIFIED_COMPANION_NOTE_RE = re.compile(
 # e inactivo necesita el REFRESHER (ya cubierto en el flujo normal si han
 # pasado más de 2 años), NO un minicurso -- son productos distintos con
 # elegibilidad distinta.
-_INACTIVE_BUT_CERTIFIED_COMPANION_RE = re.compile(
-    r"certificad[oa]\w*.{0,40}(?:no\s+ha\s+(?:vuelto\s+a\s+)?bucead|"
-    r"hace\s+\d+\s*a[ñn]os?\s+que\s+no\s+bucea|no\s+bucea\s+desde|"
-    r"tanto\s+tiempo\s+sin\s+bucear)|"
-    r"certified.{0,40}(?:hasn'?t\s+(?:been\s+)?div(?:ed|ing)|in\s+\d+\s+years)",
+# Hallazgo en vivo, 2ª iteración (2026-09-02, reverificando en vivo el fix de
+# arriba tras desplegarlo, mismo repro de la conv. 856): la primera version
+# exigia "certificado" y la frase de inactividad EN LA MISMA nota, a <=40
+# caracteres -- pero `capture_notes` (LLM, no determinista) parafraseo el
+# mismo mensaje de forma distinta en la repeticion en vivo ("amigo no ha
+# buceado en 8 años", SIN mencionar "certificado" en absoluto), y el guard
+# no disparo -- la alucinacion volvio a pasar en vivo. Separado en dos
+# regex de co-ocurrencia (no exigen proximidad ni la misma nota) para no
+# depender de que el extractor de notas preserve ambos hechos juntos.
+_INACTIVE_MENTION_RE = re.compile(
+    r"no\s+ha\s+(?:vuelto\s+a\s+)?bucead|hace\s+\d+\s*a[ñn]os?\s+que\s+no\s+bucea|"
+    r"no\s+bucea\s+desde|tanto\s+tiempo\s+sin\s+bucear|"
+    r"hasn'?t\s+(?:been\s+)?div(?:ed|ing)",
     re.IGNORECASE,
 )
+# Lexema completo "certific*" (no solo "certificad[oa]"): "se certificó hace
+# 8 años" (verbo, tiempo pasado) no matcheaba la version anterior -- solo
+# cubria la forma adjetivo/participio ("es/está certificado"), no la forma
+# verbo ("se certificó"/"certificarse"). Encontrado verificando en vivo esta
+# misma correccion (ver docstring de _mentions_inactive_but_certified_companion).
+_CERTIFIED_MENTION_RE = re.compile(r"certific\w*|certified", re.IGNORECASE)
+
+
+def _mentions_inactive_but_certified_companion(text: str) -> bool:
+    """True si el texto (notas + mensajes del cliente) menciona a alguien
+    certificado en algun punto Y menciona inactividad prolongada en algun
+    punto -- sin exigir que ambos esten en la MISMA frase (ver el hallazgo
+    de arriba). No dispara si el texto tambien dice explicitamente que la
+    persona NO esta certificada (esa es la regla anterior, distinta)."""
+    return bool(
+        _INACTIVE_MENTION_RE.search(text)
+        and _CERTIFIED_MENTION_RE.search(text)
+        and not _UNCERTIFIED_COMPANION_NOTE_RE.search(text)
+    )
 
 # Price or booking follow-ups. Inside the DIVE TO HEAL context these must NOT
 # be answered with the generic Cartagena price list or the normal booking flow
@@ -1504,6 +1531,17 @@ def _build_extra_context(state: ConversationState) -> str | None:
             )
             parts.append(header + "\n" + "\n".join(f"- {n}" for n in notes) + "\n")
 
+            # Hallazgo en vivo, 2ª iteración (2026-09-02): las notas de Fase C
+            # (`capture_notes`) son un resumen LLM, no determinista -- pueden
+            # perder un hecho que SÍ estaba en el mensaje crudo del cliente
+            # (ver `_mentions_inactive_but_certified_companion` más abajo).
+            # Por eso las dos guardas de esta sección buscan en notas + los
+            # mensajes reales del cliente, no solo en las notas.
+            user_messages_text = " ".join(
+                h.get("content", "") for h in (state.history or []) if h.get("role") == "user"
+            )
+            companion_search_text = " ".join(notes) + " " + user_messages_text
+
             # Hallazgo en vivo (conversación real 831, 2026-09-02): con una
             # nota tipo "novia no es buzo certificado" ya en el contexto, el
             # LLM igual confirmó que ella podría "bucear junto con él" al día
@@ -1516,7 +1554,7 @@ def _build_extra_context(state: ConversationState) -> str | None:
             # REGLA explícita, mismo principio que el fix de DIVE TO HEAL de
             # arriba (verificación/instrucción determinista, no confiar en
             # que el LLM infiera la regla de negocio él solo).
-            if _UNCERTIFIED_COMPANION_NOTE_RE.search(" ".join(notes)):
+            if _UNCERTIFIED_COMPANION_NOTE_RE.search(companion_search_text):
                 if state.language == "es":
                     parts.append(
                         "IMPORTANTE — regla de negocio real (no la inventes ni la relajes): un "
@@ -1560,7 +1598,7 @@ def _build_extra_context(state: ConversationState) -> str | None:
             # conclusión errónea como una nota NUEVA ("amigo no tiene
             # certificación de buceo"), reforzando el error en turnos
             # siguientes -- un bucle de auto-refuerzo de la alucinación.
-            if _INACTIVE_BUT_CERTIFIED_COMPANION_RE.search(" ".join(notes)):
+            if _mentions_inactive_but_certified_companion(companion_search_text):
                 if state.language == "es":
                     parts.append(
                         "IMPORTANTE — regla de negocio real: alguien que SÍ está certificado "

@@ -2713,6 +2713,33 @@ def test_extra_context_warns_that_inactive_certified_companion_needs_refresher_n
     assert "SIGUE SIENDO un buzo certificado" not in (ctx_clean or "")
 
 
+def test_extra_context_inactive_certified_rule_survives_incomplete_note_paraphrase():
+    """Hallazgo en vivo, 2ª iteración (2026-09-02): verificando en vivo el fix
+    de arriba tras desplegarlo, el MISMO repro (conv. 858) seguía fallando --
+    `capture_notes` parafraseó el mensaje de forma distinta esta vez
+    ("amigo no ha buceado en 8 años", SIN la palabra "certificado" en
+    absoluto), y el guard original (que exigía ambos hechos en la MISMA
+    nota) no disparó. Fix: buscar en notas + los mensajes CRUDOS del
+    cliente (que sí conservan el hecho completo), y separar "menciona
+    certificación" de "menciona inactividad" sin exigir proximidad. También
+    se corrigió que "se certificó" (verbo) no matcheaba el regex de
+    certificación (solo cubría "certificado/a", forma adjetivo)."""
+    from src.agents.supervisor import _build_extra_context
+
+    state = make_state("es")
+    # La nota SOLA (como la parafraseó capture_notes esta vez) no basta.
+    state.remembered_facts = {"notes": ["amigo no ha buceado en 8 años"]}
+    state.history = [
+        {"role": "user", "content": (
+            "hola somos 2, yo bucee hace 1 mes, mi amigo se certifico hace 8 "
+            "años y no ha vuelto a bucear"
+        )},
+    ]
+    ctx = _build_extra_context(state)
+    assert ctx is not None
+    assert "SIGUE SIENDO un buzo certificado" in ctx
+
+
 def test_maybe_apply_confirmed_package_reads_dive_count_from_bots_own_message():
     """Hallazgo en vivo (conversación real 831, 2026-09-02): "Vale pues
     quiero este paquete... Que podria hacer esos dos dias?" -- el bot acaba
