@@ -2740,6 +2740,32 @@ def test_extra_context_inactive_certified_rule_survives_incomplete_note_paraphra
     assert "SIGUE SIENDO un buzo certificado" in ctx
 
 
+def test_extra_context_inactive_certified_rule_matches_infinitive_bucear_form():
+    """Hallazgo en vivo, 3ª iteración (2026-09-03): reverificando el fix
+    anterior con 5 repeticiones, 1/5 seguía fallando. Causa raíz real:
+    `_INACTIVE_MENTION_RE` exigía el lexema "bucead" (buceado/buceando), que
+    NO cubre el infinitivo "bucear" -- la forma gramaticalmente correcta tras
+    "a" ("no ha vuelto A bucear", no "no ha vuelto a buceado"). El test
+    anterior (arriba) pasaba solo porque la NOTA de `capture_notes` en ese
+    caso sí conservaba "buceado"; aquí no hay nota en absoluto (capture_notes
+    puede fallar en persistir el hecho) y el ÚNICO rastro es el mensaje
+    crudo del cliente con la forma infinitiva -- el caso real que fallaba en
+    vivo."""
+    from src.agents.supervisor import _build_extra_context
+
+    state = make_state("es")
+    state.remembered_facts = {"notes": []}
+    state.history = [
+        {"role": "user", "content": (
+            "hola somos 2, yo bucee hace 1 mes, mi amigo se certifico hace 8 "
+            "años y no ha vuelto a bucear"
+        )},
+    ]
+    ctx = _build_extra_context(state)
+    assert ctx is not None
+    assert "SIGUE SIENDO un buzo certificado" in ctx
+
+
 def test_maybe_apply_confirmed_package_reads_dive_count_from_bots_own_message():
     """Hallazgo en vivo (conversación real 831, 2026-09-02): "Vale pues
     quiero este paquete... Que podria hacer esos dos dias?" -- el bot acaba

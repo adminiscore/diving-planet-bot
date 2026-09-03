@@ -102,7 +102,13 @@ _UNCERTIFIED_COMPANION_NOTE_RE = re.compile(
 # regex de co-ocurrencia (no exigen proximidad ni la misma nota) para no
 # depender de que el extractor de notas preserve ambos hechos juntos.
 _INACTIVE_MENTION_RE = re.compile(
-    r"no\s+ha\s+(?:vuelto\s+a\s+)?bucead|hace\s+\d+\s*a[ñn]os?\s+que\s+no\s+bucea|"
+    # "bucea\w*" cubre buceado/buceando Y el infinitivo "bucear" (la forma
+    # gramaticalmente correcta tras "a": "no ha vuelto A bucear") -- el
+    # lexema "bucead" original solo cubria las dos primeras formas y no
+    # disparaba nunca para la frase exacta del repro del lote 12 (hallazgo
+    # en vivo, 2026-09-03: la regla de negocio nunca se inyectaba con esta
+    # frase, asi que la nueva guarda post-respuesta tampoco podia activarse).
+    r"no\s+ha\s+(?:vuelto\s+a\s+)?bucea\w*|hace\s+\d+\s*a[ñn]os?\s+que\s+no\s+bucea|"
     r"no\s+bucea\s+desde|tanto\s+tiempo\s+sin\s+bucear|"
     r"hasn'?t\s+(?:been\s+)?div(?:ed|ing)",
     re.IGNORECASE,
@@ -1584,98 +1590,104 @@ def _build_extra_context(state: ConversationState) -> str | None:
             )
             parts.append(header + "\n" + "\n".join(f"- {n}" for n in notes) + "\n")
 
-            # Hallazgo en vivo, 2ª iteración (2026-09-02): las notas de Fase C
-            # (`capture_notes`) son un resumen LLM, no determinista -- pueden
-            # perder un hecho que SÍ estaba en el mensaje crudo del cliente
-            # (ver `_mentions_inactive_but_certified_companion` más abajo).
-            # Por eso las dos guardas de esta sección buscan en notas + los
-            # mensajes reales del cliente, no solo en las notas.
-            user_messages_text = " ".join(
-                h.get("content", "") for h in (state.history or []) if h.get("role") == "user"
+    # Hallazgo en vivo, 2ª iteración (2026-09-02): las notas de Fase C
+    # (`capture_notes`) son un resumen LLM, no determinista -- pueden perder
+    # un hecho que SÍ estaba en el mensaje crudo del cliente, o directamente
+    # no producir NINGUNA nota ese turno (ver
+    # `_mentions_inactive_but_certified_companion` más abajo). Por eso las
+    # dos guardas de esta sección buscan en notas + los mensajes reales del
+    # cliente -- y viven FUERA de `if facts:`/`if notes:` (hallazgo en vivo,
+    # 3ª iteración, 2026-09-03: cuando `remembered_facts` es None/vacío o
+    # `capture_notes` no genera ninguna nota, este bloque quedaba anidado
+    # dentro de esos `if` y nunca se evaluaba, aunque el hecho completo
+    # siguiera en `state.history`).
+    companion_notes = (state.remembered_facts or {}).get("notes") or []
+    user_messages_text = " ".join(
+        h.get("content", "") for h in (state.history or []) if h.get("role") == "user"
+    )
+    companion_search_text = " ".join(companion_notes) + " " + user_messages_text
+
+    # Hallazgo en vivo (conversación real 831, 2026-09-02): con una
+    # nota tipo "novia no es buzo certificado" ya en el contexto, el
+    # LLM igual confirmó que ella podría "bucear junto con él" al día
+    # siguiente del minicurso — contradice
+    # policies.json["packages_certification_requirement"] ("los
+    # paquetes de 5/7/9 buceos son EXCLUSIVAMENTE para certificados").
+    # El juez de grounding no lo atrapó (GROUNDED a la primera): no
+    # contradice ninguna FUENTE recuperada, solo la lógica de negocio
+    # real. Tener el HECHO en las notas no bastaba — hace falta la
+    # REGLA explícita, mismo principio que el fix de DIVE TO HEAL de
+    # arriba (verificación/instrucción determinista, no confiar en
+    # que el LLM infiera la regla de negocio él solo).
+    if _UNCERTIFIED_COMPANION_NOTE_RE.search(companion_search_text):
+        if state.language == "es":
+            parts.append(
+                "IMPORTANTE — regla de negocio real (no la inventes ni la relajes): un "
+                "minicurso de buceo es UNA experiencia de iniciación de 1 día, NO una "
+                "certificación. Los paquetes de 5, 7 y 9 inmersiones (y cualquier 'buceo "
+                "certificado') son EXCLUSIVOS para buzos certificados (mínimo Open "
+                "Water). Si el grupo tiene a alguien que hizo (o hará) el minicurso pero "
+                "NO está certificado, esa persona NO puede sumarse a inmersiones de "
+                "buceo certificado ese mismo viaje ni al día siguiente — necesitaría "
+                "completar un curso de certificación real (Open Water) primero. Nunca "
+                "confirmes ni des a entender que podrán 'bucear juntos' en el tramo "
+                "certificado del plan; si preguntan por eso, acláralo con esta regla. "
+                "Además, el minicurso es una reserva SEPARADA del paquete de buceo "
+                "certificado (cada uno con su propio link) — no digas que uno 'incluye' "
+                "al otro; si das los links de ambos, preséntalos como dos reservas "
+                "distintas, no una anidada dentro de la otra."
             )
-            companion_search_text = " ".join(notes) + " " + user_messages_text
+        else:
+            parts.append(
+                "IMPORTANT — real business rule (don't invent or soften it): a dive "
+                "mini-course is a 1-day introductory experience, NOT a certification. "
+                "The 5, 7, and 9-dive packages (and any 'certified diving') are "
+                "EXCLUSIVE to certified divers (minimum Open Water). If the group has "
+                "someone who did (or will do) the mini-course but is NOT certified, "
+                "that person CANNOT join certified-diving dives on that same trip or the "
+                "next day — they'd need to complete a real certification course (Open "
+                "Water) first. Never confirm or imply they'll be able to 'dive together' "
+                "on the certified leg of the plan; if asked, clarify with this rule. "
+                "Also, the mini-course is a SEPARATE booking from the certified-diving "
+                "package (each with its own link) — don't say one 'includes' the other; "
+                "if you give both links, present them as two distinct bookings, not one "
+                "nested inside the other."
+            )
 
-            # Hallazgo en vivo (conversación real 831, 2026-09-02): con una
-            # nota tipo "novia no es buzo certificado" ya en el contexto, el
-            # LLM igual confirmó que ella podría "bucear junto con él" al día
-            # siguiente del minicurso — contradice
-            # policies.json["packages_certification_requirement"] ("los
-            # paquetes de 5/7/9 buceos son EXCLUSIVAMENTE para certificados").
-            # El juez de grounding no lo atrapó (GROUNDED a la primera): no
-            # contradice ninguna FUENTE recuperada, solo la lógica de negocio
-            # real. Tener el HECHO en las notas no bastaba — hace falta la
-            # REGLA explícita, mismo principio que el fix de DIVE TO HEAL de
-            # arriba (verificación/instrucción determinista, no confiar en
-            # que el LLM infiera la regla de negocio él solo).
-            if _UNCERTIFIED_COMPANION_NOTE_RE.search(companion_search_text):
-                if state.language == "es":
-                    parts.append(
-                        "IMPORTANTE — regla de negocio real (no la inventes ni la relajes): un "
-                        "minicurso de buceo es UNA experiencia de iniciación de 1 día, NO una "
-                        "certificación. Los paquetes de 5, 7 y 9 inmersiones (y cualquier 'buceo "
-                        "certificado') son EXCLUSIVOS para buzos certificados (mínimo Open "
-                        "Water). Si el grupo tiene a alguien que hizo (o hará) el minicurso pero "
-                        "NO está certificado, esa persona NO puede sumarse a inmersiones de "
-                        "buceo certificado ese mismo viaje ni al día siguiente — necesitaría "
-                        "completar un curso de certificación real (Open Water) primero. Nunca "
-                        "confirmes ni des a entender que podrán 'bucear juntos' en el tramo "
-                        "certificado del plan; si preguntan por eso, acláralo con esta regla. "
-                        "Además, el minicurso es una reserva SEPARADA del paquete de buceo "
-                        "certificado (cada uno con su propio link) — no digas que uno 'incluye' "
-                        "al otro; si das los links de ambos, preséntalos como dos reservas "
-                        "distintas, no una anidada dentro de la otra."
-                    )
-                else:
-                    parts.append(
-                        "IMPORTANT — real business rule (don't invent or soften it): a dive "
-                        "mini-course is a 1-day introductory experience, NOT a certification. "
-                        "The 5, 7, and 9-dive packages (and any 'certified diving') are "
-                        "EXCLUSIVE to certified divers (minimum Open Water). If the group has "
-                        "someone who did (or will do) the mini-course but is NOT certified, "
-                        "that person CANNOT join certified-diving dives on that same trip or the "
-                        "next day — they'd need to complete a real certification course (Open "
-                        "Water) first. Never confirm or imply they'll be able to 'dive together' "
-                        "on the certified leg of the plan; if asked, clarify with this rule. "
-                        "Also, the mini-course is a SEPARATE booking from the certified-diving "
-                        "package (each with its own link) — don't say one 'includes' the other; "
-                        "if you give both links, present them as two distinct bookings, not one "
-                        "nested inside the other."
-                    )
-
-            # Hallazgo en vivo (lote 12, 2026-09-02, conv. real 856): sin esta
-            # regla, "mi amigo se certifico hace 8 años y no ha vuelto a
-            # bucear" hizo que el LLM confundiera "inactivo hace tiempo" con
-            # "nunca certificado" -- le dijo al cliente que su amigo (SÍ
-            # certificado) "no podrá unirse... necesita estar certificado" y
-            # debía hacer un minicurso. `capture_notes` incluso capturó esa
-            # conclusión errónea como una nota NUEVA ("amigo no tiene
-            # certificación de buceo"), reforzando el error en turnos
-            # siguientes -- un bucle de auto-refuerzo de la alucinación.
-            if _mentions_inactive_but_certified_companion(companion_search_text):
-                if state.language == "es":
-                    parts.append(
-                        "IMPORTANTE — regla de negocio real: alguien que SÍ está certificado "
-                        "pero lleva tiempo sin bucear SIGUE SIENDO un buzo certificado — puede "
-                        "sumarse normalmente al buceo certificado del grupo. Si han pasado más "
-                        "de 2 años desde su última inmersión, puede necesitar el *refresher* "
-                        "(repaso corto en el agua, sin coste adicional, YA incluido en el flujo "
-                        "normal de reserva) — eso es TODO lo que necesita. Nunca digas que "
-                        "'necesita estar certificado', que 'no puede unirse', ni le ofrezcas el "
-                        "minicurso — el minicurso es solo para quien NUNCA se ha certificado, "
-                        "una persona distinta a esta."
-                    )
-                else:
-                    parts.append(
-                        "IMPORTANT — real business rule: someone who IS certified but hasn't "
-                        "dived in a while is STILL a certified diver — they can join the "
-                        "group's certified diving normally. If it's been over 2 years since "
-                        "their last dive, they may need the *refresher* (a short in-water "
-                        "review, no extra cost, ALREADY part of the normal booking flow) — "
-                        "that's all they need. Never say they 'need to be certified', that "
-                        "they 'can't join', or offer them the mini-course — the mini-course is "
-                        "only for someone who has NEVER been certified, a different person from "
-                        "this one."
-                    )
+    # Hallazgo en vivo (lote 12, 2026-09-02, conv. real 856): sin esta
+    # regla, "mi amigo se certifico hace 8 años y no ha vuelto a
+    # bucear" hizo que el LLM confundiera "inactivo hace tiempo" con
+    # "nunca certificado" -- le dijo al cliente que su amigo (SÍ
+    # certificado) "no podrá unirse... necesita estar certificado" y
+    # debía hacer un minicurso. `capture_notes` incluso capturó esa
+    # conclusión errónea como una nota NUEVA ("amigo no tiene
+    # certificación de buceo"), reforzando el error en turnos
+    # siguientes -- un bucle de auto-refuerzo de la alucinación.
+    if _mentions_inactive_but_certified_companion(companion_search_text):
+        if state.language == "es":
+            parts.append(
+                "IMPORTANTE — regla de negocio real: alguien que SÍ está certificado "
+                "pero lleva tiempo sin bucear SIGUE SIENDO un buzo certificado — puede "
+                "sumarse normalmente al buceo certificado del grupo. Si han pasado más "
+                "de 2 años desde su última inmersión, puede necesitar el *refresher* "
+                "(repaso corto en el agua, sin coste adicional, YA incluido en el flujo "
+                "normal de reserva) — eso es TODO lo que necesita. Nunca digas que "
+                "'necesita estar certificado', que 'no puede unirse', ni le ofrezcas el "
+                "minicurso — el minicurso es solo para quien NUNCA se ha certificado, "
+                "una persona distinta a esta."
+            )
+        else:
+            parts.append(
+                "IMPORTANT — real business rule: someone who IS certified but hasn't "
+                "dived in a while is STILL a certified diver — they can join the "
+                "group's certified diving normally. If it's been over 2 years since "
+                "their last dive, they may need the *refresher* (a short in-water "
+                "review, no extra cost, ALREADY part of the normal booking flow) — "
+                "that's all they need. Never say they 'need to be certified', that "
+                "they 'can't join', or offer them the mini-course — the mini-course is "
+                "only for someone who has NEVER been certified, a different person from "
+                "this one."
+            )
 
     # Ubicacion base
     if state.location == "cartagena":
