@@ -15,6 +15,7 @@ from src.agents.llm_extractor import (
     fill_gaps,
     missing_fields,
     resolve_slot_answer,
+    verify_activity,
 )
 
 # ---------------------------------------------------------------------------
@@ -416,3 +417,118 @@ async def test_resolve_slot_error_returns_empty():
 
     result = await resolve_slot_answer("safety", "hace años", client=_BoomClient())
     assert result == {}
+
+
+# ---------------------------------------------------------------------------
+# verify_activity() -- hallazgo en vivo (conversacion real "purple-sun-590",
+# 2026-09-03): a diferencia de fill_gaps (rellena huecos), esta funcion puede
+# CORREGIR un `activity` que el regex ya resolvio, solo se llama cuando el
+# mensaje es ambiguo (ver supervisor._maybe_veto_activity_via_llm).
+# ---------------------------------------------------------------------------
+
+@pytest.mark.asyncio
+async def test_verify_activity_returns_llm_value_when_it_disagrees():
+    msg = _FakeMessage(tool_calls=[_FakeToolCall(
+        "extract_fields", json.dumps({"activity": "padi_open_water"})
+    )])
+    result = await verify_activity(
+        "Me gustaria sacarme el open water, pero nunca he buceado",
+        "minicourse",
+        lang="es", client=_make_client(msg),
+    )
+    assert result == "padi_open_water"
+
+
+@pytest.mark.asyncio
+async def test_verify_activity_returns_none_when_it_agrees():
+    """El LLM coincide con el regex -- nada que vetar, no se aplica ningun
+    cambio (aunque el flag de cutover estuviera activo)."""
+    msg = _FakeMessage(tool_calls=[_FakeToolCall(
+        "extract_fields", json.dumps({"activity": "minicourse"})
+    )])
+    result = await verify_activity(
+        "quiero hacer un minicurso, nunca he buceado",
+        "minicourse",
+        lang="es", client=_make_client(msg),
+    )
+    assert result is None
+
+
+@pytest.mark.asyncio
+async def test_verify_activity_returns_none_when_llm_abstains():
+    msg = _FakeMessage(tool_calls=[_FakeToolCall("extract_fields", json.dumps({}))])
+    result = await verify_activity(
+        "hola, que tal", "minicourse", lang="es", client=_make_client(msg),
+    )
+    assert result is None
+
+
+@pytest.mark.asyncio
+async def test_verify_activity_empty_message_returns_none_without_calling_llm():
+    class _ShouldNotBeCalled:
+        class chat:  # noqa: N801
+            class completions:  # noqa: N801
+                @staticmethod
+                async def create(**kwargs):
+                    raise AssertionError("must not call the LLM for an empty message")
+
+    result = await verify_activity("   ", "minicourse", client=_ShouldNotBeCalled())
+    assert result is None
+
+
+@pytest.mark.asyncio
+async def test_verify_activity_no_tool_call_returns_none():
+    msg = _FakeMessage(tool_calls=None)
+    result = await verify_activity(
+        "algo raro", "minicourse", lang="es", client=_make_client(msg),
+    )
+    assert result is None
+
+
+@pytest.mark.asyncio
+async def test_verify_activity_bad_json_returns_none():
+    msg = _FakeMessage(tool_calls=[_FakeToolCall("extract_fields", "not json")])
+    result = await verify_activity(
+        "algo raro", "minicourse", lang="es", client=_make_client(msg),
+    )
+    assert result is None
+
+
+@pytest.mark.asyncio
+async def test_verify_activity_exception_returns_none():
+    class _BoomClient:
+        class chat:  # noqa: N801
+            class completions:  # noqa: N801
+                @staticmethod
+                async def create(**kwargs):
+                    raise RuntimeError("boom")
+
+    result = await verify_activity(
+        "algo raro", "minicourse", lang="es", client=_BoomClient(),
+    )
+    assert result is None
+
+
+@pytest.mark.asyncio
+async def test_verify_activity_uses_extraction_model_not_orchestrator_model():
+    captured = {}
+
+    class _Completions:
+        async def create(self, **kwargs):
+            captured["model"] = kwargs.get("model")
+            return _FakeResponse(_FakeMessage(tool_calls=[_FakeToolCall(
+                "extract_fields", json.dumps({"activity": "padi_open_water"})
+            )]))
+
+    class _Chat:
+        completions = _Completions()
+
+    class _Client:
+        chat = _Chat()
+
+    from src.config import settings
+    await verify_activity(
+        "quiero el open water, nunca he buceado", "minicourse",
+        lang="es", client=_Client(),
+    )
+    assert captured["model"] == settings.extraction_model

@@ -1079,6 +1079,87 @@
       },
       "source": "docs/multi-agent-refactor-plan.md §6.bis, causa raíz #1 (detect_special_signals) — mismo patrón aplicado a fill_gaps",
       "notes": "El reparto de grupo ya quedó completo en el turno anterior (2+2+2=6). El mensaje actual solo responde ubicación; fill_gaps NO debe re-derivar/pisar group_allocation mirando el historial — debe abstenerse en ese campo."
+    },
+    {
+      "id": "ambig-open-water-never-dived-real-bug",
+      "message": "Me gustaria sacarme el open water, pero nunca he buceado",
+      "lang": "es",
+      "category": "ambiguous_compound",
+      "expected": {"activity": "padi_open_water"},
+      "source": "conversacion real 'purple-sun-590', 2026-09-03 — hallazgo en vivo",
+      "notes": "Mensaje compuesto real: pide explicitamente el curso Open Water, pero 'nunca he buceado' dispara minicourse_patterns ANTES de que se compruebe padi_course_patterns (cadena if/elif de intent_detector.py) -- gana minicurso, no lo que el cliente pidio. Causa raiz del bug real: sin precio/link/itinerario del curso Open Water en toda la conversacion."
+    },
+    {
+      "id": "ambig-open-water-never-dived-en",
+      "message": "I want to get my open water, I have never been diving before",
+      "lang": "en",
+      "category": "ambiguous_compound",
+      "expected": {"activity": "padi_open_water"},
+      "source": "variante en ingles del hallazgo en vivo 'purple-sun-590'",
+      "notes": "Misma colision que la version en espanol: 'never been diving' dispara minicourse_patterns antes de llegar a padi_course_patterns."
+    },
+    {
+      "id": "ambig-certificarme-open-water-nunca-practicado",
+      "message": "Quiero certificarme en open water, nunca he practicado buceo",
+      "lang": "es",
+      "category": "ambiguous_compound",
+      "expected": {"activity": "padi_open_water"},
+      "source": "variante del hallazgo en vivo 'purple-sun-590'",
+      "notes": "Otra frase compuesta plausible con la misma colision minicurso-vs-open-water."
+    },
+    {
+      "id": "ambig-curso-padi-generico-no-se-bucear",
+      "message": "Me interesa el curso PADI, no se bucear",
+      "lang": "es",
+      "category": "ambiguous_compound",
+      "expected": {"activity": "padi_course"},
+      "source": "variante del hallazgo en vivo 'purple-sun-590' (sin nivel especifico nombrado)",
+      "notes": "Sin nivel PADI especifico, 'padi_course' generico es la respuesta correcta (el propio flujo pregunta luego por el nivel) -- hoy resuelve a minicurso, perdiendo que el cliente pidio explicitamente un CURSO PADI."
+    },
+    {
+      "id": "ambig-open-water-aunque-no-certificado",
+      "message": "Quiero el open water aunque no soy buzo certificado",
+      "lang": "es",
+      "category": "ambiguous_compound",
+      "expected": {"activity": "padi_open_water"},
+      "source": "variante del hallazgo en vivo 'purple-sun-590'",
+      "notes": "Colision distinta: aqui gana certified_diving_patterns (buzo/certificado) en vez de minicourse_patterns, antes de llegar a padi_course_patterns -- mismo bug, otra categoria implicada."
+    },
+    {
+      "id": "ambig-open-water-first-time-en",
+      "message": "I would like the open water course, first time diving for me",
+      "lang": "en",
+      "category": "ambiguous_compound",
+      "expected": {"activity": "padi_open_water"},
+      "source": "variante en ingles del hallazgo en vivo 'purple-sun-590'",
+      "notes": "Misma colision minicurso-vs-open-water en ingles, orden de clausulas distinto."
+    },
+    {
+      "id": "ambig-open-water-no-he-buceado-nunca-orden-invertido",
+      "message": "Quiero sacarme el open water, no he buceado nunca",
+      "lang": "es",
+      "category": "ambiguous_compound",
+      "expected": {"activity": "padi_open_water"},
+      "source": "variante del hallazgo en vivo 'purple-sun-590' (orden de la clausula invertido)",
+      "notes": "Con 'no he buceado nunca' (orden invertido respecto al mensaje real), la colision cambia de categoria (certified_diving_patterns en vez de minicourse_patterns) pero el resultado final es igual de incorrecto."
+    },
+    {
+      "id": "ambig-advanced-sin-experiencia-ya-correcto",
+      "message": "Quisiera hacer el curso advanced, aunque no tengo experiencia",
+      "lang": "es",
+      "category": "ambiguous_compound",
+      "expected": {"activity": "padi_advanced"},
+      "source": "control -- variante que HOY ya resuelve bien, para detectar regresiones del fix",
+      "notes": "'no tengo experiencia' no dispara minicourse_patterns (solo 'sin experiencia'/'primera vez' literales) -- ya funciona hoy; el fix de verificacion LLM no debe romperlo."
+    },
+    {
+      "id": "ambig-rescue-primerizo-ya-correcto",
+      "message": "Quiero sacar el rescue, soy primerizo en esto",
+      "lang": "es",
+      "category": "ambiguous_compound",
+      "expected": {"activity": "padi_rescue"},
+      "source": "control -- variante que HOY ya resuelve bien, para detectar regresiones del fix",
+      "notes": "'primerizo' no dispara minicourse_patterns -- ya funciona hoy; el fix de verificacion LLM no debe romperlo."
     }
   ]
 }

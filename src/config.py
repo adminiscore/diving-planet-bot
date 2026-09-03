@@ -156,6 +156,19 @@ class Settings(BaseSettings):
     # años que no buceo"→>2y). Independent kill switch (plan.md #7). Off by
     # default everywhere; regex stays primary — gaps only, never overrides.
     llm_extraction_cutover_logistics: bool = False
+    # --- Robustness Fase 9 (docs/multi-agent-refactor-plan.md, hallazgo en vivo
+    # conversacion real "purple-sun-590", 2026-09-03) ---
+    # A diferencia de los 4 dominios de arriba (que solo rellenan huecos), este
+    # veto puede CORREGIR un `activity` que el regex SI resolvio -- solo cuando
+    # `intent_detector.matched_activity_categories(message)` marca el mensaje
+    # como ambiguo (2+ categorias disparadas a la vez). Ej.: "quiero el open
+    # water, nunca he buceado" dispara minicourse Y padi_course; el regex gana
+    # por ORDEN de comprobacion (if/elif), no por lo que el cliente pidio de
+    # verdad -- y el cutover de certificacion de arriba no lo salva porque
+    # 'nunca rellena un campo ya resuelto' es su regla explicita. Dos fases,
+    # mismo patron shadow->cutover que los 4 dominios de arriba:
+    llm_activity_veto_shadow_mode: bool = False  # mide sin aplicar (loguea discrepancias)
+    llm_activity_veto_cutover: bool = False      # aplica de verdad (corrige activity/service_id)
 
     @property
     def is_dev(self) -> bool:

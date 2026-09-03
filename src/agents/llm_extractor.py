@@ -28,6 +28,7 @@ from src.prompts.booking import (
     SIGNALS_TOOL,
     SLOT_RESOLVER_SPEC,
     acknowledgement_system_prompt,
+    activity_verification_system_prompt,
     extraction_system_prompt,
     signals_system_prompt,
     slot_resolver_prompt,
@@ -143,6 +144,65 @@ async def fill_gaps(
     if patch:
         logger.info(f"[LLM_EXTRACTOR] filled gaps={list(patch.keys())} msg={message[:60]!r}")
     return patch
+
+
+async def verify_activity(
+    message: str,
+    regex_activity: str | None,
+    *,
+    history: list[dict] | None = None,
+    lang: str = "es",
+    client: AsyncOpenAI | None = None,
+) -> str | None:
+    """Solo se llama cuando `intent_detector.matched_activity_categories(message)`
+    dispara 2+ categorias -- el regex resolvio `activity`, pero el mensaje
+    mezcla senales de varias categorias y el resultado pudo depender del
+    ORDEN de comprobacion, no de lo que el cliente pidio de verdad (hallazgo
+    en vivo, conversacion real "purple-sun-590", 2026-09-03).
+
+    A diferencia de `fill_gaps` (que solo rellena huecos y nunca toca un
+    campo ya resuelto), esta funcion pregunta al LLM de forma independiente
+    y devuelve su respuesta SOLO si DISCREPA del regex -- None si coincide
+    (nada que vetar) o si la llamada falla (degrada a regex, mismo patron
+    defensivo que `fill_gaps`: esto nunca puede dejar la respuesta peor que
+    antes de que este veto existiera).
+    """
+    if not message or not message.strip():
+        return None
+    messages: list[dict] = [{"role": "system", "content": activity_verification_system_prompt(lang)}]
+    for turn in (history or [])[-settings.history_retrieval_enrichment_window:]:
+        role = turn.get("role")
+        content = turn.get("content")
+        if role in ("user", "assistant") and content:
+            messages.append({"role": role, "content": content})
+    messages.append({"role": "user", "content": message})
+
+    try:
+        client = client or trace_openai(AsyncOpenAI(api_key=settings.openai_api_key))
+        response = await client.chat.completions.create(
+            model=settings.extraction_model,
+            messages=messages,
+            tools=[EXTRACTION_TOOL],
+            tool_choice={"type": "function", "function": {"name": "extract_fields"}},
+            temperature=0.0,
+            max_tokens=100,
+        )
+        choice = response.choices[0].message
+        tool_calls = getattr(choice, "tool_calls", None)
+        if not tool_calls:
+            return None
+        args = json.loads(tool_calls[0].function.arguments or "{}")
+    except (json.JSONDecodeError, TypeError, AttributeError, IndexError) as exc:
+        logger.warning(f"[LLM_EXTRACTOR][ACTIVITY_VETO] malformed response: {exc}")
+        return None
+    except Exception as exc:  # noqa: BLE001
+        logger.warning(f"[LLM_EXTRACTOR][ACTIVITY_VETO] error: {exc}")
+        return None
+
+    llm_activity = (args or {}).get("activity")
+    if not llm_activity or llm_activity == regex_activity:
+        return None
+    return llm_activity
 
 
 def compare_with_ground_truth(patch: dict, expected: dict) -> dict:

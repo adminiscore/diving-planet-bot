@@ -198,6 +198,56 @@ def extraction_system_prompt(lang: str, missing_fields: list[str]) -> str:
     )
 
 
+# ── Verificacion de `activity` en mensajes ambiguos · `llm_extractor.verify_activity` ──
+#
+# Distinta de `extraction_system_prompt` a proposito: esa asume que el campo
+# quedo SIN resolver; aqui el regex SI resolvio `activity`, pero el mensaje
+# dispara 2+ categorias de patrones a la vez (ver
+# `intent_detector.matched_activity_categories`) -- candidato real a que el
+# regex haya ganado por ORDEN de comprobacion, no porque sea lo que el
+# cliente pidio (hallazgo en vivo, conversacion real "purple-sun-590",
+# 2026-09-03: "quiero el open water, nunca he buceado" resolvia a minicurso).
+# Reusa el mismo EXTRACTION_TOOL (el campo `activity` ya tiene el enum
+# completo, incl. `padi_open_water` etc.) — no hace falta un tool nuevo.
+
+def activity_verification_system_prompt(lang: str) -> str:
+    if lang == "es":
+        return (
+            "Eres una capa de VERIFICACIÓN para un bot de buceo (Diving Planet, "
+            "Cartagena/Islas del Rosario). Un detector determinista ya asignó una "
+            "actividad a este mensaje, pero el mensaje combina varias señales a "
+            "la vez y el detector pudo haberse equivocado. Lee el mensaje entero "
+            "con cuidado y decide tú, de forma independiente, qué actividad pidió "
+            "el cliente — llama a `extract_fields` con SOLO el campo `activity`. "
+            "Regla clave: si el cliente nombra explícitamente un curso PADI "
+            "concreto (Open Water, Advanced, Rescue, Divemaster) o dice que "
+            "quiere 'certificarse', ESO es lo que pidió, incluso si el mismo "
+            "mensaje también dice que nunca ha buceado, que es su primera vez, o "
+            "que no tiene experiencia — esas frases describen su NIVEL actual, "
+            "no cambian el PRODUCTO que está pidiendo. Solo usa 'minicourse' "
+            "cuando el mensaje NO nombra ningún curso PADI concreto y solo habla "
+            "de probar el buceo sin certificarse. Si de verdad no hay señal "
+            "clara, omite el campo — abstenerse es mejor que adivinar."
+        )
+    return (
+        "You are a VERIFICATION layer for a scuba diving bot (Diving Planet, "
+        "Cartagena/Rosario Islands). A deterministic detector already assigned "
+        "an activity to this message, but the message combines several signals "
+        "at once and the detector may have gotten it wrong. Read the whole "
+        "message carefully and decide independently what activity the customer "
+        "actually asked for — call `extract_fields` with ONLY the `activity` "
+        "field. Key rule: if the customer explicitly names a specific PADI "
+        "course (Open Water, Advanced, Rescue, Divemaster) or says they want to "
+        "'get certified', THAT is what they asked for, even if the same message "
+        "also says they've never dived, it's their first time, or they have no "
+        "experience — those phrases describe their CURRENT level, they don't "
+        "change the PRODUCT being requested. Only use 'minicourse' when the "
+        "message does NOT name a specific PADI course and only talks about "
+        "trying diving without certifying. If there's truly no clear signal, "
+        "omit the field — abstaining is better than guessing."
+    )
+
+
 # ── Señales de turno: recall y acompañante · `llm_extractor.detect_special_signals` ────
 
 # ---------------------------------------------------------------------------

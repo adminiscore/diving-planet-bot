@@ -26,8 +26,13 @@ import asyncio
 import json
 from pathlib import Path
 
-from src.agents.intent_detector import IntentDetector
-from src.agents.llm_extractor import EXTRACTABLE_FIELDS, compare_with_ground_truth, fill_gaps
+from src.agents.intent_detector import IntentDetector, matched_activity_categories
+from src.agents.llm_extractor import (
+    EXTRACTABLE_FIELDS,
+    compare_with_ground_truth,
+    fill_gaps,
+    verify_activity,
+)
 from src.flows.state import ConversationState
 
 EVAL_SET_PATH = Path(__file__).resolve().parent.parent / "docs" / "robustness" / "eval-set.json"
@@ -57,6 +62,21 @@ async def run() -> None:
             case["message"], regex_intent, history=case.get("history"), lang=case.get("lang", "es"),
         )
         combined = {**resolved, **patch}
+
+        # Activity veto (docs/multi-agent-refactor-plan.md, hallazgo en vivo
+        # "purple-sun-590", 2026-09-03): solo se dispara si el mensaje es
+        # ambiguo (2+ categorias de patrones), y solo cuando hay una `activity`
+        # resuelta que verificar. Se aplica siempre aqui (no gateado por
+        # settings) para medir el efecto REAL de la Opcion B sobre el eval-set
+        # completo, independientemente de si el flag de cutover esta on/off
+        # en el entorno donde se corre este script.
+        if resolved.get("activity") and len(matched_activity_categories(case["message"])) >= 2:
+            llm_activity = await verify_activity(
+                case["message"], resolved["activity"],
+                history=case.get("history"), lang=case.get("lang", "es"),
+            )
+            if llm_activity:
+                combined["activity"] = llm_activity
 
         result = compare_with_ground_truth(combined, case["expected"])
         total_agree += len(result["agree"])

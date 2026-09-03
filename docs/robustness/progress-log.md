@@ -930,3 +930,68 @@ cuando el owner dé por medida la operación en PRE).
 
 **Siguiente paso concreto para quien continúe**: Fase 5 o Fase 4 según prioridad del
 equipo; ambas requieren primero acumular tráfico real en PRE (Fase 6 por el canal Chatwoot).
+
+## 2026-09-03 — Fase 9: veto LLM de `activity` para mensajes ambiguos (Gadea, agent-arch)
+
+**Origen**: conversación real ("purple-sun-590") pidió explícitamente "sacarme el open
+water" pero en el mismo mensaje añadió "nunca he buceado" — `_detect_activity`
+(`intent_detector.py`) resuelve por cadena `if/elif` (primera categoría que matchea
+gana) y `minicourse_patterns` se comprueba ANTES que `padi_course_patterns`, así que ganó
+minicurso. Resultado real: el curso Open Water — con precio ($693/2.450.000 COP) y link de
+reserva directa ya en el catálogo — nunca mostró precio ni link en toda la conversación.
+
+**Por qué el cutover por dominio existente no lo salvó — corrección a una explicación previa
+que le di al usuario en el chat**: dije que el cutover de certificación (activo en PRE,
+`activity` en su dominio) "corrió pero no aplicó por su regla de nunca sobreescribir".
+Investigando para implementar el fix, se confirmó algo más grave: `_maybe_apply_llm_
+extraction_cutover`/`_maybe_log_llm_extraction_shadow` (`supervisor.py`) son **código
+muerto** — solo los llaman sus propios tests, NUNCA el flujo real de turno
+(`conversational_core._understand`, el único call site vivo de `IntentDetector.detect()`
++ `fill_gaps` para el flujo de reserva). Los 4 flags `LLM_EXTRACTION_CUTOVER_*` en `true`
+en `docker-compose.vps.yml` son inertes en producción — no es que el mecanismo corriera y
+se abstuviera, es que nunca se ejecuta en absoluto (ya documentado antes como hallazgo
+separado — "Cutover de extracción muerto" — pero no lo até a este caso hasta ahora).
+
+**Fix implementado** (Opción B, decidida con el usuario tras descartar explícitamente un
+parche puntual de reordenar regex): nueva función pura `matched_activity_categories()`
+(`intent_detector.py`, reusa las 5 listas de patrones de actividad elevadas a constantes
+de módulo, sin cambiar contenido/orden) detecta cuándo un mensaje dispara 2+ categorías a
+la vez (ambigüedad real, barata de calcular). Nueva `verify_activity()`
+(`llm_extractor.py`, reusa `EXTRACTION_TOOL`/`settings.extraction_model`) pregunta al LLM
+de forma independiente SOLO en esos casos, y devuelve su respuesta solo si discrepa. Nueva
+`supervisor._maybe_veto_activity_via_llm()` — a diferencia del cutover muerto de arriba,
+esta SÍ puede corregir un `activity` ya resuelto por el regex, gateada por 2 flags nuevos
+(`llm_activity_veto_shadow_mode`/`llm_activity_veto_cutover`, ambos off por defecto), y
+está cableada en el ÚNICO call site real y vivo (`conversational_core._understand`, antes
+de `_apply_detected_intent`) — no en el bloque muerto.
+
+**Medición real, antes/después, mismo arnés existente** (`scripts/run_extraction_eval.py`
++ `docs/robustness/eval-set.json`, 9 casos nuevos etiquetados `ambiguous_compound`,
+incluido el mensaje real del bug + 2 casos de control que ya funcionaban):
+- **Antes**: `activity` 55/62 agree (89%), 7/9 casos ambiguos nuevos fallan. Overall
+  192/202 (95.0%).
+- **Después**: `activity` 59/62 agree (95%), 8/9 casos ambiguos nuevos correctos. Overall
+  196/202 (97.0%). El único caso ambiguo que sigue en desacuerdo
+  (`ambig-curso-padi-generico-no-se-bucear`, "Me interesa el curso PADI, no se bucear"):
+  el LLM eligió `padi_open_water` en vez del genérico `padi_course` que esperaba el
+  eval-set — una respuesta razonable (Open Water es el curso PADI de entrada por
+  defecto), no un misfill peligroso, documentado con honestidad en vez de forzar el
+  `expected` para que "cuadre".
+- Ningún caso previamente correcto (fuera de `ambiguous_compound`) cambió — 0 regresiones.
+
+Suite completa (3 modos) + compileall + ruff en verde tras el fix (incluido un ajuste a
+`scripts/snapshot_prompts.py`, que exige registrar cada prompt nuevo).
+
+**Nota para el registro**: si en producción (medible vía el log `[EXTRACT][ACTIVITY_VETO]`)
+el ratio de discrepancia/error en mensajes ambiguos sigue siendo significativo tras esto,
+la siguiente escalación (anotada, no implementada) es sustituir las 13 cadenas `if/elif`
+de `intent_detector.py` por detección multi-señal con prioridad explícita y documentada
+(Opción C, descartada por ahora por ser un refactor mayor).
+
+**Qué quedó a medias / bloqueadores**: decisión de activar `llm_activity_veto_cutover` en
+PRE (vs. correr shadow-mode primero) pendiente — se deja como decisión conjunta con el
+usuario tras la verificación en vivo del repro real.
+
+**Siguiente paso concreto**: verificar en vivo contra PRE el repro exacto (curso Open
+Water + "nunca he buceado" + pregunta de itinerario) con el flag de cutover activo antes
+de decidir el rollout.

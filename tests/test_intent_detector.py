@@ -1,5 +1,5 @@
 import pytest
-from src.agents.intent_detector import IntentDetector, DetectedIntent
+from src.agents.intent_detector import IntentDetector, DetectedIntent, matched_activity_categories
 from src.flows.state import ConversationState
 
 
@@ -586,3 +586,32 @@ class TestSingularSelfInfersOnePerson:
         # Any "more than one" signal must NOT be collapsed to 1 (a wrong 1 would
         # undercount the booking); the flow asks instead.
         assert detector.detect(message, state).group_size != 1
+
+
+class TestMatchedActivityCategories:
+    """Hallazgo en vivo (conversacion real 'purple-sun-590', 2026-09-03): el
+    regex de _detect_activity resuelve por la primera categoria que matchea
+    (orden de codigo), no por lo que el cliente pidio. matched_activity_
+    categories() es la senal barata (0/1/2+ categorias) que activa la
+    verificacion LLM (supervisor._maybe_veto_activity_via_llm) solo cuando
+    hace falta."""
+
+    def test_real_bug_message_matches_multiple_categories(self):
+        # El mensaje real que causo el bug: pide open water pero "nunca he
+        # buceado" tambien dispara minicourse (y certified_diving via "buce*").
+        cats = matched_activity_categories(
+            "Me gustaria sacarme el open water, pero nunca he buceado"
+        )
+        assert "padi_course" in cats
+        assert len(cats) >= 2
+
+    def test_unambiguous_message_matches_single_category(self):
+        assert matched_activity_categories("quiero hacer snorkel") == {"snorkel"}
+
+    def test_unrelated_message_matches_no_category(self):
+        assert matched_activity_categories("hola, cual es el horario") == set()
+
+    def test_case_insensitive(self):
+        cats = matched_activity_categories("QUIERO EL OPEN WATER, NUNCA HE BUCEADO")
+        assert "padi_course" in cats
+        assert len(cats) >= 2

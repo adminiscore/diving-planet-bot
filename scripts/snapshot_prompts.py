@@ -99,6 +99,13 @@ def _collect() -> dict[str, str]:
             )
     add_json("booking/extraction.tool", booking.EXTRACTION_TOOL)
 
+    # ── booking · veto de actividad en mensajes ambiguos (verify_activity) ────
+    for lang in LANGS:
+        add(
+            f"booking/activity_verification.system.{lang}",
+            booking.activity_verification_system_prompt(lang),
+        )
+
     # ── booking · señales especiales (detect_special_signals) ─────────────────
     for lang in LANGS:
         add(f"booking/special_signals.system.{lang}", booking.signals_system_prompt(lang))

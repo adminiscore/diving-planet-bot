@@ -22,9 +22,9 @@ from src.agents.escalation import (
     detect_sensitive_escalation,
     sensitive_response_for,
 )
-from src.agents.intent_detector import DetectedIntent, IntentDetector
+from src.agents.intent_detector import DetectedIntent, IntentDetector, matched_activity_categories
 from src.agents.lead_summary import build_lead_summary
-from src.agents.llm_extractor import fill_gaps, missing_fields
+from src.agents.llm_extractor import fill_gaps, missing_fields, verify_activity
 from src.agents.rag_agent import rag_answer
 from src.config import settings
 from src.flows import cart_render, eligibility
@@ -2241,6 +2241,68 @@ async def _maybe_apply_llm_extraction_cutover(
             logger.info(f"[EXTRACT][CUTOVER] applied={applied} msg={_log_safe_message(message)!r}")
     except Exception as exc:  # noqa: BLE001
         logger.warning(f"[EXTRACT][CUTOVER] failed, degrading to regex-only (ignored): {exc}")
+
+
+# Mapeo activity(enum del LLM) -> service_id del catalogo, mismo mapeo que
+# _detect_activity aplica inline para su rama padi_course_patterns. padi_course/
+# padi_specialty se quedan sin service_id (igual que el regex): sin nivel
+# concreto nombrado no hay un unico item de catalogo que elegir.
+_ACTIVITY_TO_SERVICE_ID = {
+    "certified_diving": "2_dives_1_day",
+    "minicourse": "minicourse",
+    "snorkel": "snorkeling",
+    "padi_open_water": "open_water",
+    "padi_advanced": "advanced",
+    "padi_rescue": "rescue",
+    "padi_divemaster": "divemaster",
+}
+
+
+async def _maybe_veto_activity_via_llm(
+    message: str, regex_intent: DetectedIntent, state: ConversationState
+) -> None:
+    """Hallazgo en vivo (conversacion real "purple-sun-590", 2026-09-03,
+    docs/multi-agent-refactor-plan.md): a diferencia de `_maybe_apply_llm_
+    extraction_cutover` (arriba, que SOLO rellena huecos y nunca toca un
+    campo que el regex ya resolvio), esta funcion puede CORREGIR `activity`
+    -- pero solo cuando `matched_activity_categories(message)` marca el
+    mensaje como ambiguo (2+ categorias de patrones disparadas a la vez, p.
+    ej. "quiero el open water, nunca he buceado" dispara minicourse Y
+    padi_course). Un mensaje NO ambiguo (0 o 1 categoria) nunca llega a
+    llamar al LLM -- coste/latencia solo donde hay riesgo real de colision.
+
+    Gateado por 2 flags independientes (mismo patron shadow->cutover que los
+    4 dominios de arriba): `llm_activity_veto_shadow_mode` mide sin aplicar
+    (solo loguea la discrepancia), `llm_activity_veto_cutover` aplica de
+    verdad (corrige `activity` + el `service_id` correspondiente). Ambos
+    off por defecto en todas partes -- sin ellos, esta funcion es un no-op
+    inmediato, cero coste. Cualquier fallo degrada a "regex-only" en
+    silencio, igual que el resto de la cadena de extraccion -- esto nunca
+    puede dejar la respuesta peor que antes de que el veto existiera.
+    """
+    if not (settings.llm_activity_veto_shadow_mode or settings.llm_activity_veto_cutover):
+        return
+    if not regex_intent.activity:
+        return  # sin actividad resuelta no hay nada que vetar (eso ya lo cubre el cutover de huecos)
+    if len(matched_activity_categories(message)) < 2:
+        return  # mensaje no ambiguo -- el regex no tuvo que elegir entre categorias, se confia en el
+    try:
+        llm_activity = await verify_activity(
+            message, regex_intent.activity, history=state.history, lang=state.language,
+        )
+        if not llm_activity:
+            return  # el LLM coincide con el regex (o no pudo decidir) -- nada que vetar
+        logger.info(
+            f"[EXTRACT][ACTIVITY_VETO] regex={regex_intent.activity!r} llm={llm_activity!r} "
+            f"applied={settings.llm_activity_veto_cutover} msg={_log_safe_message(message)!r}"
+        )
+        if settings.llm_activity_veto_cutover:
+            regex_intent.activity = llm_activity
+            regex_intent.service_id = _ACTIVITY_TO_SERVICE_ID.get(llm_activity)
+            if "activity" not in regex_intent.detected_fields:
+                regex_intent.detected_fields.append("activity")
+    except Exception as exc:  # noqa: BLE001
+        logger.warning(f"[EXTRACT][ACTIVITY_VETO] failed, degrading to regex-only (ignored): {exc}")
 
 
 async def _maybe_log_llm_extraction_shadow(

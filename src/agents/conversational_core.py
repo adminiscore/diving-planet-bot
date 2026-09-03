@@ -1372,6 +1372,15 @@ async def _understand(state: ConversationState, message: str) -> tuple:
     prev_refresher = state.refresher_interested
 
     intent = _detector.detect(message, state)
+    # Hallazgo en vivo (conversacion real "purple-sun-590", 2026-09-03): el
+    # regex resuelve `activity` por la primera categoria que matchea (orden
+    # de codigo), no por lo que el cliente realmente pidio -- un mensaje
+    # ambiguo (2+ categorias a la vez, p. ej. "quiero el open water, nunca
+    # he buceado") puede resolver mal sin que ningun mecanismo existente lo
+    # corrija (`fill_gaps`/el cutover por dominio solo rellenan huecos,
+    # nunca tocan un campo que el regex ya resolvio). Gateado por flags,
+    # off por defecto -- ver `supervisor._maybe_veto_activity_via_llm`.
+    await supervisor._maybe_veto_activity_via_llm(message, intent, state)
     gaps = _relevant_gaps(state, intent, message)
     # Fase 3.4 (reducir llamadas/turno): un saludo puro no tiene slots que
     # extraer → se salta `fill_gaps` (misma rama que "pregunta" o "sin gaps": no

@@ -184,6 +184,111 @@ AGE_WORDS = {
 _AGE_WORD_ALT = "|".join(sorted(map(re.escape, AGE_WORDS), key=len, reverse=True))
 
 
+# Listas de patrones por categoria de actividad — elevadas de variables locales
+# de `_detect_activity` a constantes de modulo (2026-09-03, hallazgo en vivo
+# conversacion real "purple-sun-590", docs/multi-agent-refactor-plan.md) para
+# que `matched_activity_categories()` pueda reusarlas SIN duplicar ningun
+# regex ni cambiar su contenido/orden. `_detect_activity` sigue resolviendo
+# con la misma cadena if/elif de siempre (primera categoria que matchea
+# gana) -- esto no toca esa logica, solo la hace visible desde fuera para
+# detectar cuando un mensaje dispara 2+ categorias a la vez (ambiguedad
+# real, candidata a veto LLM en supervisor.py).
+_CERTIFIED_DIVING_PATTERNS = [
+    r'\bbuce\w{0,5}\b(?!\s+(bautismo|principiante|primera\s+vez|minicurso))',  # buceo, bucear, bucereo, buceando
+    r'\bbuse[ao]\w{0,2}\b',        # buseo (common u/c swap typo)
+    # vuce* (common b/v swap typo — real bug live 2026-07-21: "ella no
+    # vucea" wasn't recognized as diving at all, fell through to RAG,
+    # which rejected it as a hallucination and gave the advisor
+    # fallback instead of entering the booking flow).
+    r'\bvuce\w{0,5}\b(?!\s+(bautismo|principiante|primera\s+vez|minicurso))',
+    r'\bdive\b(?!\s+(baptism|beginner|first\s+time))',
+    r'\bdiving\b(?!\s+(first|beginner|class|course|lesson|trip\s+first))',
+    r'\bscuba\b(?!\s+(class|course|lesson))',
+    r'\bbuzo\s+certificado\b',
+    r'\bbuzos\s+certificados\b',
+    r'\bbuzos\b',                  # bare "buzos" (los dos buzos, 3 buzos) = divers
+    r'\bsoy\s+buz[oa]\b',
+    r'\bcertified\s+diver',
+    r'\bdos\s+inmersiones\b',
+    r'\btwo\s+dives\b',
+    r'\bfun\s+dive',
+    r'\bwant\s+(?:to\s+)?(?:go\s+)?diving\b',
+    r'\binterested\s+in\s+diving\b',
+    r'\bdiving\s+trip\b',
+    r'\bsubmarinismo\b',           # synonym
+]
+
+_MINICOURSE_PATTERNS = [
+    r'\bmini[\s\-]?curso\b',       # minicurso, mini curso, mini-curso
+    r'\bbubble\s?makers?\b',       # Bubble Makers = kids intro dive (beginner, not certified)
+    r'\bbautizo\s+de\s+buceo\b',
+    r'\bbauti[sz]\w{0,3}\b',       # bautismo, bautizo, bautismos, bautizos
+    r'\bprimera\s+vez\b',
+    r'\bnunca\s+(?:\w+\s+){0,3}buce\w*\b',  # nunca he/ha/hemos/han (hecho) bucea(do)/buceo
+    r'\bnever\s+(?:tried|dived|done\s+it|been\s+diving)\b',
+    r'\bno\s+experience\b',
+    r'\bsin\s+experiencia\b',
+    r'\bdiscover\s+scuba\b',
+    r'\bbeginner\s+dive\b',
+    r'\bfirst\s+time\s+diving\b',
+    r'\btry\s+dive',
+    r'\bno\s+s[eé]\s+bucear\b',   # "no sé bucear"
+]
+
+_SNORKEL_PATTERNS = [
+    r'\be?snork\w{1,6}\b',         # snorkel, snorkeling, snorkle, esnorkel, esnorkeling
+    r'\be?snorqu\w{0,6}\b',        # snorquel, snorqueling, esnorquel, esnorqueling
+    r'\bcarete[ao]\w{0,3}\b',      # careteo, caretear
+]
+
+_PADI_COURSE_PATTERNS = [
+    r'\bcurso\s+padi\b',
+    r'\bpadi\s+course\b',
+    r'\bopen\s+water\b',
+    r'\badvanced\b',
+    r'\brescue\b',
+    r'\bdivemaster\b',
+    r'\bcertificarme\b',
+    r'\bget\s+certified\b',
+]
+
+_SPECIALTY_PATTERNS = [
+    r'\bnitrox\b',
+    r'\bbuoyancy\b',
+    r'\bflotabilidad\b',
+    r'\bnaturalista\b',
+    r'\bfish\s+identification\b',
+    r'\bidentificación\s+de\s+peces\b',
+    r'\bmindful\s+diving\b',
+]
+
+_ACTIVITY_CATEGORY_PATTERNS: dict[str, list[str]] = {
+    "certified_diving": _CERTIFIED_DIVING_PATTERNS,
+    "minicourse": _MINICOURSE_PATTERNS,
+    "snorkel": _SNORKEL_PATTERNS,
+    "padi_course": _PADI_COURSE_PATTERNS,
+    "specialty": _SPECIALTY_PATTERNS,
+}
+
+
+def matched_activity_categories(message: str) -> set[str]:
+    """Categorias de actividad ({certified_diving, minicourse, snorkel,
+    padi_course, specialty}) cuyos patrones matchean este mensaje — 0, 1 o
+    varias. Funcion pura, sin llamadas ni estado; reusa EXACTAMENTE los
+    mismos patrones que `_detect_activity` (nunca los duplica). 2+
+    categorias a la vez es la senal barata de "mensaje ambiguo" que dispara
+    la verificacion LLM en `supervisor._maybe_veto_activity_via_llm` — sin
+    esto, un mensaje como "quiero el open water, nunca he buceado" (dispara
+    minicourse Y padi_course) se resuelve solo por el ORDEN de la cadena
+    if/elif, no por lo que el cliente realmente pidio (hallazgo en vivo,
+    conversacion real "purple-sun-590", 2026-09-03)."""
+    message_lower = message.lower()
+    return {
+        category for category, patterns in _ACTIVITY_CATEGORY_PATTERNS.items()
+        if any(re.search(pattern, message_lower) for pattern in patterns)
+    }
+
+
 class IntentDetector:
 
     def __init__(self, openai_client: OpenAI | None = None):
@@ -304,89 +409,20 @@ class IntentDetector:
             intent.detected_fields.append("activity")
             return
 
-        certified_diving_patterns = [
-            r'\bbuce\w{0,5}\b(?!\s+(bautismo|principiante|primera\s+vez|minicurso))',  # buceo, bucear, bucereo, buceando
-            r'\bbuse[ao]\w{0,2}\b',        # buseo (common u/c swap typo)
-            # vuce* (common b/v swap typo — real bug live 2026-07-21: "ella no
-            # vucea" wasn't recognized as diving at all, fell through to RAG,
-            # which rejected it as a hallucination and gave the advisor
-            # fallback instead of entering the booking flow).
-            r'\bvuce\w{0,5}\b(?!\s+(bautismo|principiante|primera\s+vez|minicurso))',
-            r'\bdive\b(?!\s+(baptism|beginner|first\s+time))',
-            r'\bdiving\b(?!\s+(first|beginner|class|course|lesson|trip\s+first))',
-            r'\bscuba\b(?!\s+(class|course|lesson))',
-            r'\bbuzo\s+certificado\b',
-            r'\bbuzos\s+certificados\b',
-            r'\bbuzos\b',                  # bare "buzos" (los dos buzos, 3 buzos) = divers
-            r'\bsoy\s+buz[oa]\b',
-            r'\bcertified\s+diver',
-            r'\bdos\s+inmersiones\b',
-            r'\btwo\s+dives\b',
-            r'\bfun\s+dive',
-            r'\bwant\s+(?:to\s+)?(?:go\s+)?diving\b',
-            r'\binterested\s+in\s+diving\b',
-            r'\bdiving\s+trip\b',
-            r'\bsubmarinismo\b',           # synonym
-        ]
-
-        minicourse_patterns = [
-            r'\bmini[\s\-]?curso\b',       # minicurso, mini curso, mini-curso
-            r'\bbubble\s?makers?\b',       # Bubble Makers = kids intro dive (beginner, not certified)
-            r'\bbautizo\s+de\s+buceo\b',
-            r'\bbauti[sz]\w{0,3}\b',       # bautismo, bautizo, bautismos, bautizos
-            r'\bprimera\s+vez\b',
-            r'\bnunca\s+(?:\w+\s+){0,3}buce\w*\b',  # nunca he/ha/hemos/han (hecho) bucea(do)/buceo
-            r'\bnever\s+(?:tried|dived|done\s+it|been\s+diving)\b',
-            r'\bno\s+experience\b',
-            r'\bsin\s+experiencia\b',
-            r'\bdiscover\s+scuba\b',
-            r'\bbeginner\s+dive\b',
-            r'\bfirst\s+time\s+diving\b',
-            r'\btry\s+dive',
-            r'\bno\s+s[eé]\s+bucear\b',   # "no sé bucear"
-        ]
-
-        snorkel_patterns = [
-            r'\be?snork\w{1,6}\b',         # snorkel, snorkeling, snorkle, esnorkel, esnorkeling
-            r'\be?snorqu\w{0,6}\b',        # snorquel, snorqueling, esnorquel, esnorqueling
-            r'\bcarete[ao]\w{0,3}\b',      # careteo, caretear
-        ]
-
-        padi_course_patterns = [
-            r'\bcurso\s+padi\b',
-            r'\bpadi\s+course\b',
-            r'\bopen\s+water\b',
-            r'\badvanced\b',
-            r'\brescue\b',
-            r'\bdivemaster\b',
-            r'\bcertificarme\b',
-            r'\bget\s+certified\b',
-        ]
-
-        specialty_patterns = [
-            r'\bnitrox\b',
-            r'\bbuoyancy\b',
-            r'\bflotabilidad\b',
-            r'\bnaturalista\b',
-            r'\bfish\s+identification\b',
-            r'\bidentificación\s+de\s+peces\b',
-            r'\bmindful\s+diving\b',
-        ]
-
-        if any(re.search(pattern, message) for pattern in minicourse_patterns):
+        if any(re.search(pattern, message) for pattern in _MINICOURSE_PATTERNS):
             intent.activity = "minicourse"
             intent.service_id = "minicourse"
             intent.is_certified = False
             intent.detected_fields.extend(["activity", "is_certified"])
-        elif any(re.search(pattern, message) for pattern in certified_diving_patterns):
+        elif any(re.search(pattern, message) for pattern in _CERTIFIED_DIVING_PATTERNS):
             intent.activity = "certified_diving"
             intent.service_id = "2_dives_1_day"
             intent.detected_fields.append("activity")
-        elif any(re.search(pattern, message) for pattern in snorkel_patterns):
+        elif any(re.search(pattern, message) for pattern in _SNORKEL_PATTERNS):
             intent.activity = "snorkel"
             intent.service_id = "snorkeling"
             intent.detected_fields.append("activity")
-        elif any(re.search(pattern, message) for pattern in padi_course_patterns) and not self._holds_padi_cert(message):
+        elif any(re.search(pattern, message) for pattern in _PADI_COURSE_PATTERNS) and not self._holds_padi_cert(message):
             # Only a COURSE if they want to take it — "soy open water" (holds it)
             # is a certified diver, handled via is_certified + the activity fallback.
             if 'open water' in message or 'open-water' in message:
@@ -404,7 +440,7 @@ class IntentDetector:
             else:
                 intent.activity = "padi_course"
             intent.detected_fields.append("activity")
-        elif any(re.search(pattern, message) for pattern in specialty_patterns):
+        elif any(re.search(pattern, message) for pattern in _SPECIALTY_PATTERNS):
             intent.activity = "padi_specialty"
             if 'nitrox' in message:
                 intent.service_id = "nitrox"
