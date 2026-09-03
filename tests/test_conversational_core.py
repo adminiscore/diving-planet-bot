@@ -1386,6 +1386,51 @@ def test_mentions_person_recognizes_english_plurals():
     assert not core._mentions_person("I want to do snorkel")
 
 
+class TestPersonNounSharedVocabulary:
+    """Inventario regex 2026-09-03: las 5 estructuras de "menciona a otra
+    persona" de este archivo (_NOT_ALONE_RE, _ADDED_PERSON_RE,
+    _MENTIONS_PERSON_RE, _SINGULAR_COMPANION_RE, _PLURAL_COMPANION_RE)
+    mantenían cada una su propio vocabulario de sustantivos de parentesco a
+    mano, sin sincronizar -- "boyfriend"/"girlfriend" faltaban en
+    _MENTIONS_PERSON_RE pese a estar en otras 2. Ahora las 5 reusan la misma
+    fuente compartida (intent_detector._PERSON_NOUN_MENTION/SINGULAR/PLURAL_
+    ES/EN). Estos tests prueban los gaps reales que se cerraron."""
+
+    def test_mentions_person_re_boyfriend_girlfriend_gap_closed(self):
+        assert core._MENTIONS_PERSON_RE.search("my boyfriend is coming too")
+        assert core._MENTIONS_PERSON_RE.search("mi novia también viene")
+
+    def test_added_person_re_companero_primo_gap_closed(self):
+        """_ADDED_PERSON_RE no tenía "compañero"/"acompañante"/"primo" (ES)
+        ni "companion"/"cousin"/"kid" (EN) pese a que otras listas del mismo
+        concepto sí los tenían."""
+        assert core._ADDED_PERSON_RE.search("también viene mi compañero")
+        assert core._ADDED_PERSON_RE.search("also my companion is joining")
+
+    def test_not_alone_re_boyfriend_kids_gap_closed(self):
+        assert core._NOT_ALONE_RE.search("voy con mi boyfriend")
+        assert core._NOT_ALONE_RE.search("coming with my kids")
+
+    def test_plural_companion_re_extended_family_gap_closed(self):
+        """_PLURAL_COMPANION_RE no tenía suegros/cuñados/sobrinos/nietos/
+        abuelos en plural, pese a que _MENTIONS_PERSON_RE (mismo concepto)
+        sí los tenía."""
+        assert core._PLURAL_COMPANION_RE.search("vienen mis suegros")
+        assert core._PLURAL_COMPANION_RE.search("mis sobrinos también")
+
+    def test_plural_companion_re_regional_slang_still_works(self):
+        """La jerga regional (parcero/pana/carnal/compa/pata/causa) NO es
+        parte del vocabulario compartido a propósito -- debe seguir
+        funcionando, migrada o no."""
+        assert core._PLURAL_COMPANION_RE.search("vienen mis parceros")
+
+    def test_singular_companion_re_unaffected(self):
+        """Ya era la lista más completa de las 3 con determinante singular
+        -- confirma que la migración no la redujo."""
+        assert core._SINGULAR_COMPANION_RE.search("con un compañero")
+        assert core._SINGULAR_COMPANION_RE.search("with a companion")
+
+
 @pytest.mark.asyncio
 async def test_companion_qty_answer_mentioning_different_activity_not_misapplied():
     """Hallazgo en vivo 2026-07-23: si se pregunta "¿cuántos para snorkel?"

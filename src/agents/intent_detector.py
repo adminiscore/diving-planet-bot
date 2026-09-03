@@ -389,6 +389,61 @@ def certification_claim(text: str) -> bool | None:
     return None
 
 
+# Vocabulario compartido de sustantivos de parentesco/compañía -- inventario
+# regex 2026-09-03: antes había 8 listas independientes (5 en
+# conversational_core.py, 2 en supervisor.py, 1 aquí) para "¿el mensaje
+# menciona a otra persona?", mantenidas a mano por separado. Evidencia real
+# de desincronización: un fix de plurales en inglés ("kids") se añadió a UNA
+# de las 8 (auditoría 2026-07-23) sin confirmación de que se propagara a las
+# demás -- y de hecho "boyfriend"/"girlfriend" faltaban en la lista EN más
+# completa (`_MENTIONS_PERSON_RE`) pese a estar en otras 2.
+#
+# Tres fragmentos (no una sola lista mágica) porque cada estructura exige una
+# FORMA gramatical distinta y el inglés tiene plurales irregulares (wife ->
+# wives) que no se pueden derivar solo con un sufijo "s?":
+# - `_PERSON_NOUN_MENTION_ES/EN`: forma libre con plural opcional ("s?"/
+#   "es?" ya incorporado) -- para "¿el mensaje menciona ESTE tipo de
+#   persona en general?" (_MENTIONS_PERSON_RE).
+# - `_PERSON_NOUN_SINGULAR_ES/EN`: forma singular pelada, sin sufijo -- para
+#   patrones que exigen un determinante singular antes ("mi hijo", "un
+#   amigo") y de ahí infieren "exactamente 1 persona"
+#   (_ADDED_PERSON_RE, _NOT_ALONE_RE, _SINGULAR_COMPANION_RE).
+# - `_PERSON_NOUN_PLURAL_ES/EN`: forma plural obligatoria -- para patrones
+#   que exigen plural explícito para NO asumir "1 persona"
+#   (_PLURAL_COMPANION_RE).
+# Añadir un sustantivo nuevo significa tocar 1-3 fragmentos aquí, no 8
+# patrones repartidos en 3 archivos.
+_PERSON_NOUN_MENTION_ES = (
+    r"amig[oa]s?|prim[oa]s?|parej\w*|novi[oa]s?|espos[oa]s?|marido|mujer|"
+    r"herman[oa]s?|hij[oa]s?|padre|madre|pap[aá]s?|mam[aá]s?|suegr[oa]s?|"
+    r"cu[ñn]ad[oa]s?|sobrin[oa]s?|niet[oa]s?|abuel[oa]s?|familia\w*|"
+    r"acompa[ñn]antes?|compa[ñn]er[oa]s?"
+)
+_PERSON_NOUN_MENTION_EN = (
+    r"friends?|partners?|wife|wives|husbands?|boyfriends?|girlfriends?|"
+    r"brothers?|sisters?|sons?|daughters?|moms?|dads?|mothers?|fathers?|"
+    r"cousins?|companions?|kids?|child(?:ren)?"
+)
+_PERSON_NOUN_SINGULAR_ES = (
+    r"amig[oa]|novi[oa]|espos[oa]|marido|mujer|pareja|compa[ñn]er[oa]|"
+    r"acompa[ñn]ante|herman[oa]|hij[oa]|padre|madre|pap[aá]|mam[aá]|prim[oa]|"
+    r"suegr[oa]|cu[ñn]ad[oa]|sobrin[oa]|niet[oa]|abuel[oa]"
+)
+_PERSON_NOUN_SINGULAR_EN = (
+    r"friend|partner|wife|husband|boyfriend|girlfriend|brother|sister|son|"
+    r"daughter|companion|cousin|kid|child"
+)
+_PERSON_NOUN_PLURAL_ES = (
+    r"amig[oa]s|novi[oa]s|espos[oa]s|parejas|compa[ñn]er[oa]s|"
+    r"acompa[ñn]antes|herman[oa]s|hij[oa]s|prim[oa]s|padres|mam[aá]s|"
+    r"pap[aá]s|suegr[oa]s|cu[ñn]ad[oa]s|sobrin[oa]s|niet[oa]s|abuel[oa]s"
+)
+_PERSON_NOUN_PLURAL_EN = (
+    r"friends|buddies|companions|partners|wives|brothers|sisters|sons|"
+    r"daughters|cousins|kids|children"
+)
+
+
 class IntentDetector:
 
     def __init__(self, openai_client: OpenAI | None = None):
@@ -659,7 +714,14 @@ class IntentDetector:
         # con N amigos", not a literal "we are N" headcount). Must run BEFORE
         # the generic "N friends" pattern below, which matches first and
         # undercounts.
-        _companion_noun = r'(?:friends?|amig[oa]s|compañer[oa]s|companer[oa]s|colegas?|buddies)'
+        # Inventario regex 2026-09-03: sustantivos de parentesco/compañía
+        # ahora vienen de _PERSON_NOUN_PLURAL_ES/EN (constantes de módulo de
+        # este mismo archivo) -- cierra el mismo gap real que las demás
+        # (suegros/cuñados/sobrinos/etc y brothers/sisters/sons/daughters en
+        # plural, que esta lista no tenía). "colegas?" se queda local (no es
+        # un sustantivo de parentesco); "friends?" admite singular por si
+        # cuenta N=1 ("me + 1 friend"), fuera del fragmento plural estricto.
+        _companion_noun = r'(?:friends?|' + _PERSON_NOUN_PLURAL_ES + r'|colegas?|' + _PERSON_NOUN_PLURAL_EN + r')'
         if not m_gendered_sum and intent.group_size is None:
             m_plus_speaker = re.search(
                 rf'\b(?:me|yo)\s*(?:\+|plus|y|and|más|mas)\s+(\d+|{_es_word_alt}|{_en_word_alt})\s+{_companion_noun}\b'

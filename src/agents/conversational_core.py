@@ -31,6 +31,12 @@ import re
 from collections import Counter
 
 from src.agents.intent_detector import (
+    _PERSON_NOUN_MENTION_EN,
+    _PERSON_NOUN_MENTION_ES,
+    _PERSON_NOUN_PLURAL_EN,
+    _PERSON_NOUN_PLURAL_ES,
+    _PERSON_NOUN_SINGULAR_EN,
+    _PERSON_NOUN_SINGULAR_ES,
     AGE_WORDS,
     CERTIFICATION_TOPIC_RE,
     LAST_DIVE_TOPIC_RE,
@@ -197,11 +203,17 @@ _COURSE_SOLO_RE = re.compile(
 )
 # Conservador: cualquier señal de compañía/plural/número gana y se sigue
 # preguntando la cantidad (mismo criterio que la inferencia del detector).
+# Inventario regex 2026-09-03: sustantivo tras "mi"/"my" ahora viene de la
+# fuente compartida (`_PERSON_NOUN_MENTION_ES/EN`, ya con plural opcional
+# incorporado -- el original ya toleraba "mi hijos"/"mi amigos" sueltos, así
+# que la forma "mención" es la compatible; no la "singular" estricta).
+# Cierra el mismo gap real de "compañero"/"acompañante"/"boyfriend"/"kids"
+# que las demás.
 _NOT_ALONE_RE = re.compile(
     r"\b(?:somos|estamos|venimos|vamos|seremos|nosotr[oa]s|we\s+are|we're|we\s+want"
     r"|con\s+mi\b|y\s+mi\b|and\s+my\b"
-    r"|mi\s+(?:novi[oa]|espos[oa]|pareja|hij[oa]s?|amig[oa]s?|herman[oa]s?|familia)"
-    r"|my\s+(?:girlfriend|boyfriend|wife|husband|partner|kids?|son|daughter|friend|family)"
+    r"|mi\s+(?:" + _PERSON_NOUN_MENTION_ES + r")"
+    r"|my\s+(?:" + _PERSON_NOUN_MENTION_EN + r")"
     r"|[2-9]|dos|tres|cuatro|cinco|seis|siete|ocho|nueve"
     r"|two|three|four|five|six|seven|eight|nine)\b",
     re.IGNORECASE,
@@ -721,10 +733,15 @@ def _apply_resolved_slot_value(state: ConversationState, slot: str, value) -> bo
     return False
 
 
+# Inventario regex 2026-09-03: el sustantivo singular tras "mi"/"my" ahora
+# viene de `_PERSON_NOUN_SINGULAR_ES/EN` (fuente compartida, intent_detector.py)
+# -- cierra un gap real: esta lista no tenía "compañero"/"acompañante"/
+# "primo" (ES) ni "companion"/"cousin"/"kid"/"child" (EN) pese a que otras
+# listas del mismo concepto sí los tenían.
 _ADDED_PERSON_RE = re.compile(
     r"\b(tambi[eé]n|adem[aá]s|viene|acompa[ñn]a|se\s+(?:suma|apunta)|uno?\s+que|otra?\s+que"
-    r"|mi\s+(?:novi[oa]|espos[oa]|marido|mujer|pareja|amig[oa]|herman[oa]|hij[oa]|padre|madre|pap[aá]|mam[aá])"
-    r"|my\s+(?:partner|wife|husband|boyfriend|girlfriend|friend|brother|sister|son|daughter|mom|mother|dad|father)"
+    r"|mi\s+(?:" + _PERSON_NOUN_SINGULAR_ES + r")"
+    r"|my\s+(?:" + _PERSON_NOUN_SINGULAR_EN + r")"
     r"|also|joining|is\s+coming|comes?\s+along)\b",
     re.IGNORECASE,
 )
@@ -736,22 +753,27 @@ _ADDED_PERSON_RE = re.compile(
 # persona) NUNCA añade; "hay un amigo que quiere snorkel" / "2 y uno hace snorkel"
 # (con persona) sí. Más amplio que `_ADDED_PERSON_RE` (que exigía "mi amigo"/"un
 # que" y perdía "hay un amigo que…").
+#
+# Inventario regex 2026-09-03: el sustantivo de parentesco ahora viene de
+# `_PERSON_NOUN_MENTION_ES/EN` (intent_detector.py, fuente compartida con
+# _ADDED_PERSON_RE/_SINGULAR_COMPANION_RE/_PLURAL_COMPANION_RE/_NOT_ALONE_RE
+# más abajo) en vez de una copia local -- cierra el gap real que motivó este
+# fix (ver comentario histórico abajo): "boyfriend"/"girlfriend" faltaban en
+# ESTA lista pese a estar en otras 2 del mismo archivo. Las palabras que NO
+# son sustantivos de parentesco ("vienen", "se suma", "otra persona",
+# "others/folks/people/someone/is coming/joins") se quedan aparte, tal cual
+# — son cues verbales propias de ESTE patrón, no vocabulario compartido.
 _MENTIONS_PERSON_RE = re.compile(
-    r"\b(amig[oa]s?|prim[oa]s?|parej\w*|novi[oa]s?|espos[oa]s?|marido|mujer|"
-    r"herman[oa]s?|hij[oa]s?|padre|madre|pap[aá]s?|mam[aá]s?|suegr[oa]s?|cu[ñn]ad[oa]s?|"
-    r"sobrin[oa]s?|niet[oa]s?|abuel[oa]s?|familia\w*|acompa[ñn]antes?|"
+    r"\b(" + _PERSON_NOUN_MENTION_ES + r"|"
     r"vien[ea]n?|se\s+(?:suma|apunta|une)n?|otra?\s+persona|"
     # Auditoría 2026-07-23 (matriz EN de multi-ítem): la lista en inglés no
     # tenía plurales ("friend" sin "s?") mientras que TODA la lista en
     # español sí ("amig[oa]s?") — "my friends do snorkel" no disparaba
     # NINGÚN mecanismo de acompañante (ni el nuevo chequeo de mención
     # perdida, ni el `companion_ambiguous` original, ni el fast-path), un
-    # hueco real de idioma, no solo del fix de hoy. Añadido "s?"/"es?" a cada
-    # sustantivo en inglés, más "others"/"folks"/"people" (equivalentes de
-    # "otra?\s+persona").
-    r"friends?|partners?|wife|wives|husbands?|brothers?|sisters?|sons?|"
-    r"daughters?|moms?|dads?|mothers?|fathers?|others?|folks?|people|"
-    r"someone|is\s+coming|are\s+coming|joins?)\b"
+    # hueco real de idioma, no solo del fix de hoy.
+    + _PERSON_NOUN_MENTION_EN + r"|"
+    r"others?|folks?|people|someone|is\s+coming|are\s+coming|joins?)\b"
     r"|\b(?:y|,|adem[aá]s|tambi[ée]n|más|mas|and)\s+(?:un[oa]?|otr[oa]|another|one)\b",
     re.IGNORECASE,
 )
@@ -790,10 +812,11 @@ def _mentions_person(message: str) -> bool:
 # cuántos son en vez de adivinar (hallazgo en vivo 2026-07-22: "mis amigos"
 # se inventaba un total sin preguntar). Ver SLOT_COMPANION_QTY.
 _SINGULAR_COMPANION_RE = re.compile(
-    r"\b(?:un|una|mi|a)\s+(?:amig[oa]|novi[oa]|espos[oa]|marido|mujer|pareja|"
-    r"compa[ñn]er[oa]|acompa[ñn]ante|herman[oa]|hij[oa]|padre|madre|pap[aá]|mam[aá]|"
-    r"prim[oa]|friend|partner|wife|husband|boyfriend|girlfriend|brother|sister|"
-    r"son|daughter|companion)\b|\bsomeone\b"
+    # Inventario regex 2026-09-03: sustantivo singular ahora viene de la
+    # fuente compartida (`_PERSON_NOUN_SINGULAR_ES/EN`, intent_detector.py) —
+    # esta lista ya tenía "compañero"/"acompañante"/"companion" (era la más
+    # completa de las 3 con determinante singular), sin cambio de cobertura.
+    r"\b(?:un|una|mi|a)\s+(?:" + _PERSON_NOUN_SINGULAR_ES + r"|" + _PERSON_NOUN_SINGULAR_EN + r")\b|\bsomeone\b"
     # "uno/una que..." / "one who/that..." — pronombre numeral, no un
     # sustantivo de relación: "viene también uno que hace snorkel" es
     # exactamente 1 persona, mismo patrón que ya usa _ADDED_PERSON_RE.
@@ -809,11 +832,17 @@ _SINGULAR_COMPANION_RE = re.compile(
 # inequívoco (termina en "s": "amigos", "parceros", "friends"...) — si
 # aparece, no se confía en `companion_is_singular=True` del LLM aunque lo
 # devuelva, y se pasa a preguntar cuántos son en vez de asumir 1.
+# Inventario regex 2026-09-03: sustantivos plurales de parentesco ahora
+# vienen de la fuente compartida (`_PERSON_NOUN_PLURAL_ES/EN`,
+# intent_detector.py) -- cierra un gap real (suegros/cuñados/sobrinos/
+# nietos/abuelos y brothers/sisters/sons/daughters/cousins/kids en plural
+# faltaban aquí pese a estar en otras listas del mismo concepto). La jerga
+# regional (parcero/pana/carnal/compa/pata/causa) NO es parte del
+# vocabulario compartido a propósito -- se queda local a este patrón.
 _PLURAL_COMPANION_RE = re.compile(
-    r"\b(?:amig[oa]s|novi[oa]s|espos[oa]s|parejas|compa[ñn]er[oa]s|acompa[ñn]antes|"
-    r"herman[oa]s|hij[oa]s|prim[oa]s|padres|mam[aá]s|pap[aá]s|"
+    r"\b(?:" + _PERSON_NOUN_PLURAL_ES + r"|"
     r"parceros?|parceras?|cuates|panas|carnales|compas|patas|causas|"
-    r"friends|buddies|companions|partners)\b",
+    + _PERSON_NOUN_PLURAL_EN + r")\b",
     re.IGNORECASE,
 )
 

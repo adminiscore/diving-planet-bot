@@ -692,3 +692,23 @@ class TestCertificationClaim:
         """'not certfied' (typo real, bug live 2026-07-21) debe leer False,
         no True por el catch-all generico \\bcert\\w*\\b."""
         assert certification_claim("not certfied") is False
+
+
+class TestCompanionNounSharedVocabulary:
+    """Inventario regex 2026-09-03: _detect_group_info usaba su propio
+    vocabulario local (_companion_noun) para 'me + N companions', sin las
+    mismas familias que otras listas del mismo concepto. Ahora reusa
+    _PERSON_NOUN_PLURAL_ES/EN -- cierra un gap real (hermanos/primos en
+    plural no contaban, "voy con 2 hermanos" resolvia group_size=None)."""
+
+    def test_voy_con_hermanos_gap_closed(self, detector, state):
+        intent = detector.detect("voy con 2 hermanos, queremos bucear", state)
+        assert intent.group_size == 3
+
+    def test_tengo_primos_gap_closed(self, detector, state):
+        intent = detector.detect("tengo 3 primos que quieren bucear", state)
+        assert intent.group_size == 4
+
+    def test_me_plus_friends_still_works(self, detector, state):
+        intent = detector.detect("me plus 3 friends, we want to dive", state)
+        assert intent.group_size == 4

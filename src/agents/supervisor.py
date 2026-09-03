@@ -22,7 +22,13 @@ from src.agents.escalation import (
     detect_sensitive_escalation,
     sensitive_response_for,
 )
-from src.agents.intent_detector import DetectedIntent, IntentDetector, matched_activity_categories
+from src.agents.intent_detector import (
+    _PERSON_NOUN_MENTION_EN,
+    _PERSON_NOUN_MENTION_ES,
+    DetectedIntent,
+    IntentDetector,
+    matched_activity_categories,
+)
 from src.agents.lead_summary import build_lead_summary
 from src.agents.llm_extractor import fill_gaps, missing_fields, verify_activity
 from src.agents.rag_agent import rag_answer
@@ -475,11 +481,18 @@ _BOOKING_PROCESS_QUESTION_RE = re.compile(
 # viene mi esposa"). Deliberately requires an explicit change/addition cue + a
 # person noun (or "ya/ahora somos N") so a normal count answer ("somos 3") or a
 # location answer starting with "y" ("y desde Cartagena") does NOT trigger it.
+#
+# Inventario regex 2026-09-03: `_apply_group_recomposition` (más abajo, único
+# consumidor de este regex) es código MUERTO -- solo lo llaman sus propios
+# tests (tests/test_group_recomposition.py), nunca el flujo real de turno.
+# Se migra igual a la fuente compartida (`_PERSON_NOUN_MENTION_ES/EN`,
+# intent_detector.py) por consistencia y para que, si algún día se conecta,
+# no arrastre un vocabulario ya desincronizado -- "niño"/"persona" se quedan
+# como extras locales (no son sustantivos de parentesco compartidos con las
+# demás listas).
 _PERSON_NOUN = (
-    r"(?:hij[oa]s?|niñ[oa]s?|nin[oa]s?|herman[oa]s?|espos[oa]s?|pareja|marido|mujer|"
-    r"amig[oa]s?|suegr[oa]|primo|prima|sobrin[oa]s?|acompañantes?|acompanantes?|"
-    r"persona|personas|cuñad[oa]|nietos?|nieta?s?|abuel[oa]s?|pap[aá]|mam[aá]|"
-    r"son|daughter|kids?|children|brother|sister|wife|husband|partner|friend)"
+    r"(?:" + _PERSON_NOUN_MENTION_ES + r"|niñ[oa]s?|nin[oa]s?|persona|personas|"
+    + _PERSON_NOUN_MENTION_EN + r")"
 )
 _GROUP_RECOMPOSE_RE = re.compile(
     r"\bse\s+(?:suma|sumar[oa]n?|a[ñn]ade|agrega|une|unen|apunta|apuntan)\b"
