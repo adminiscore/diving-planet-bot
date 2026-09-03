@@ -73,6 +73,15 @@ _DIVE_TO_HEAL_OVERRIDE_RE = re.compile(
 # regex original (solo cubria "no es/está certificado"), y el LLM conflado
 # a esa persona con el buzo certificado del grupo ("tú y tu primo se unen a
 # ella en las inmersiones").
+# Decisión deliberada (inventario regex, 2026-09-03): NO se unifica con
+# `intent_detector.certification_claim()` aunque ambas respondan "¿el texto
+# dice que alguien esta/no esta certificado?" — este regex opera sobre NOTAS
+# parafraseadas por LLM (`capture_notes`), no sobre el mensaje crudo del
+# cliente. Ese dominio es genuinamente distinto (frases no controladas por
+# nosotros, variables de corrida en corrida) y ya se endureció HOY mismo con
+# 2 iteraciones de depuración en vivo real (caso "certificado-pero-inactivo",
+# ver docs/robustness/progress-log.md Fase 9). Fusionarlo con el vocabulario
+# de mensajes crudos arriesgaría romper ese ajuste fino sin necesidad real.
 _UNCERTIFIED_COMPANION_NOTE_RE = re.compile(
     r"no\s+(?:es|est[aá])\s+(?:buzo\s+)?certificad[oa]|"
     r"sin\s+certificar|no\s+tiene\s+certificaci[oó]n|"
@@ -2062,11 +2071,7 @@ def _maybe_answer_age_eligibility(message: str, state: ConversationState) -> str
     # ("pero mi hijo puede bucear?" after "mi hijo tiene 9 años"), reuse the
     # remembered age. Guarded by a person reference so a bare "¿puede bucear?"
     # is not answered with a stale age.
-    if not ages and re.search(
-        r"\b(mi\s+\w+|hij[oa]s?|niñ[oa]s?|nin[oa]s?|él|ella|ellos|ellas|"
-        r"my\s+\w+|son|daughter|kids?|child(?:ren)?|he|she|they)\b",
-        message, re.IGNORECASE,
-    ):
+    if not ages and _AGE_PERSON_REF.search(message):
         ages = sorted({a for a in (state.detected_ages or []) if 1 <= a <= 99})
     if not ages:
         return None

@@ -304,6 +304,91 @@ def matched_activity_categories(message: str) -> set[str]:
     }
 
 
+# Vocabulario de "¿el mensaje afirma/niega certificacion?" -- elevado de
+# variables locales de `_detect_certification` a constantes de modulo
+# (2026-09-03, inventario regex tras el hallazgo "purple-sun-590") para que
+# `certification_claim()` sea la fuente unica que reusa `conversational_core.
+# _activity_has_textual_backing` en vez de su propio par de regex
+# (`_CERTIFICATION_CLAIM_RE`/`_CERTIFICATION_NEGATED_RE`, sin la prioridad de
+# negacion ni la mayoria del vocabulario de aqui). No incluye la logica de
+# "sostiene un nivel PADI" (`_HOLDS_CERT_RE`/`_WANTS_CERT_RE`, metodos de
+# IntentDetector) -- eso es un chequeo aparte, con su propio caller.
+_CERTIFIED_PATTERNS = [
+    r'\bcertificado\b',
+    r'\bcertificados\b',
+    r'\bcertified\b',
+    r'\bcertificaci[oó]n\b',
+    r'\bestamos\s+certificados\b',
+    r'\bsomos\s+certificados\b',
+    r'\btengo\s+licencia\b',
+    r'\btenemos\s+licencia\b',
+    r'\bhave\s+(?:a\s+)?(?:license|licence|card|certification)\b',
+    r'\b(?:padi|ssi|cmas|naui|bsac)\s+(?:certified|card|license|licence|certification|open\s+water|advanced)\b',
+    r'\blicencia\s+(?:padi|ssi|cmas|naui|bsac)\b',
+    r'\b(?:padi|ssi|cmas|naui|bsac)\s+licencia\b',
+    r'\bpadi\s+(certified|card|license)\b',
+    r'\bssi\s+(certified|card|license)\b',
+    r'\bbuzo\s+certificado\b',
+    r'\bbuzos\s+certificados\b',
+    r'\bwith\s+(?:open\s+water|advanced|rescue|divemaster|padi|ssi|cmas)\s+certification\b',
+    r'\b(?:\d+\s+)?dives?\s+(?:each|of\s+experience)\b',
+    # "buzos con open water" / "tenemos open water" / "open water divers"
+    r'\bcon\s+open\s+water\b',
+    r'\btenemos\s+open\s+water\b',
+    r'\bopen\s+water\s+divers?\b',
+    r'\bopen\s+water\s+certified\b',
+    r'\bsomos\s+(?:buzos?|divers?)\b',  # "somos buzos" implica cert
+    r'\bsoy\s+buz[oa]\b',               # "soy buzo/buza" = certified diver
+    r'\bbuzos\b',                        # bare plural "buzos" = certified divers (group)
+    r'\b(?:los|las|ambos|ambas)\s+(?:dos\s+)?buzos?\b',  # "los dos buzos"
+    # Typo-tolerant fallback: matches "certficado", "certifcado",
+    # "certificacion", "certified"... anything starting with "cert".
+    # Checked LAST so the more specific _NOT_CERTIFIED_PATTERNS below
+    # (which also start with "cert") always get first chance.
+    r'\bcert\w*\b',
+]
+
+_NOT_CERTIFIED_PATTERNS = [
+    r'\bno\s+(?:esta\s+|estoy\s+|estamos\s+|est[aá]n\s+|soy\s+|somos\s+|es\s+|son\s+|eres\s+|fui\s+)?cert\w*\b',
+    r'\bno\s+(?:soy|somos|son|es)\s+buz',   # "no somos buzos" = not certified
+    r'\b(?:ser|hacerme|hacernos|convertirme|convertirnos)\s+(?:en\s+)?buz',  # wants to BECOME a diver
+    r'\bsin\s+cert\w*\b',
+    # Reflexive "certificarme/certificarnos/certificarte/certificarse" =
+    # wants to GET certified (Open Water course), so NOT yet certified.
+    # Must be listed here (checked before the generic \bcert\w*\b catch-all).
+    r'\bcertificar(?:me|nos|te|se)\b',
+    r'\bquiero\s+(?:sacar|obtener|hacer)\s+(?:el\s+|la\s+|mi\s+)?(?:open\s+water|certificaci|licencia)\w*\b',
+    r'\bget\s+certified\b',
+    r'\bnunca\s+(?:\w+\s+){0,3}buce\w*\b',  # nunca he/ha/hemos/han (hecho) bucea(do)/buceo
+    r'\bprimera\s+vez\b',
+    # Typo-tolerant (real bug live 2026-07-21: "not certfied" matched
+    # neither this pattern nor the exact positive certified pattern, and
+    # fell through to that list's own typo-tolerant \bcert\w*\b catch-all,
+    # wrongly resolving to is_certified=True).
+    r'\bnot\s+cert\w*\b',
+    r'\bnever\s+dived\b',
+    r'\bfirst\s+time\b',
+    r'\bbeginner\b',
+    r'\bprincipiante\b',
+]
+
+
+def certification_claim(text: str) -> bool | None:
+    """True si el texto AFIRMA certificacion, False si la NIEGA, None si no
+    hay señal. Negacion primero (misma prioridad que `_detect_certification`,
+    que reusa esta funcion internamente). Funcion pura, sin estado ni
+    llamadas -- fuente unica para "¿este texto dice que alguien esta/no esta
+    certificado?" en mensajes CRUDOS del cliente (no en notas parafraseadas
+    por LLM -- ver `supervisor._CERTIFIED_MENTION_RE`/`_UNCERTIFIED_
+    COMPANION_NOTE_RE`, que operan sobre ese dominio distinto a proposito y
+    NO reusan esta funcion)."""
+    if any(re.search(pattern, text) for pattern in _NOT_CERTIFIED_PATTERNS):
+        return False
+    if any(re.search(pattern, text) for pattern in _CERTIFIED_PATTERNS):
+        return True
+    return None
+
+
 class IntentDetector:
 
     def __init__(self, openai_client: OpenAI | None = None):
@@ -517,69 +602,11 @@ class IntentDetector:
         if intent.is_certified is not None:
             return
 
-        certified_patterns = [
-            r'\bcertificado\b',
-            r'\bcertificados\b',
-            r'\bcertified\b',
-            r'\bcertificaci[oó]n\b',
-            r'\bestamos\s+certificados\b',
-            r'\bsomos\s+certificados\b',
-            r'\btengo\s+licencia\b',
-            r'\btenemos\s+licencia\b',
-            r'\bhave\s+(?:a\s+)?(?:license|licence|card|certification)\b',
-            r'\b(?:padi|ssi|cmas|naui|bsac)\s+(?:certified|card|license|licence|certification|open\s+water|advanced)\b',
-            r'\blicencia\s+(?:padi|ssi|cmas|naui|bsac)\b',
-            r'\b(?:padi|ssi|cmas|naui|bsac)\s+licencia\b',
-            r'\bpadi\s+(certified|card|license)\b',
-            r'\bssi\s+(certified|card|license)\b',
-            r'\bbuzo\s+certificado\b',
-            r'\bbuzos\s+certificados\b',
-            r'\bwith\s+(?:open\s+water|advanced|rescue|divemaster|padi|ssi|cmas)\s+certification\b',
-            r'\b(?:\d+\s+)?dives?\s+(?:each|of\s+experience)\b',
-            # "buzos con open water" / "tenemos open water" / "open water divers"
-            r'\bcon\s+open\s+water\b',
-            r'\btenemos\s+open\s+water\b',
-            r'\bopen\s+water\s+divers?\b',
-            r'\bopen\s+water\s+certified\b',
-            r'\bsomos\s+(?:buzos?|divers?)\b',  # "somos buzos" implica cert
-            r'\bsoy\s+buz[oa]\b',               # "soy buzo/buza" = certified diver
-            r'\bbuzos\b',                        # bare plural "buzos" = certified divers (group)
-            r'\b(?:los|las|ambos|ambas)\s+(?:dos\s+)?buzos?\b',  # "los dos buzos"
-            # Typo-tolerant fallback: matches "certficado", "certifcado",
-            # "certificacion", "certified"... anything starting with "cert".
-            # Checked LAST so the more specific not_certified_patterns below
-            # (which also start with "cert") always get first chance.
-            r'\bcert\w*\b',
-        ]
-
-        not_certified_patterns = [
-            r'\bno\s+(?:esta\s+|estoy\s+|estamos\s+|est[aá]n\s+|soy\s+|somos\s+|es\s+|son\s+|eres\s+|fui\s+)?cert\w*\b',
-            r'\bno\s+(?:soy|somos|son|es)\s+buz',   # "no somos buzos" = not certified
-            r'\b(?:ser|hacerme|hacernos|convertirme|convertirnos)\s+(?:en\s+)?buz',  # wants to BECOME a diver
-            r'\bsin\s+cert\w*\b',
-            # Reflexive "certificarme/certificarnos/certificarte/certificarse" =
-            # wants to GET certified (Open Water course), so NOT yet certified.
-            # Must be listed here (checked before the generic \bcert\w*\b catch-all).
-            r'\bcertificar(?:me|nos|te|se)\b',
-            r'\bquiero\s+(?:sacar|obtener|hacer)\s+(?:el\s+|la\s+|mi\s+)?(?:open\s+water|certificaci|licencia)\w*\b',
-            r'\bget\s+certified\b',
-            r'\bnunca\s+(?:\w+\s+){0,3}buce\w*\b',  # nunca he/ha/hemos/han (hecho) bucea(do)/buceo
-            r'\bprimera\s+vez\b',
-            # Typo-tolerant (real bug live 2026-07-21: "not certfied" matched
-            # neither this pattern nor the exact positive "certified_patterns"
-            # entry, and fell through to that list's own typo-tolerant
-            # \bcert\w*\b catch-all, wrongly resolving to is_certified=True).
-            r'\bnot\s+cert\w*\b',
-            r'\bnever\s+dived\b',
-            r'\bfirst\s+time\b',
-            r'\bbeginner\b',
-            r'\bprincipiante\b',
-        ]
-
-        if any(re.search(pattern, message) for pattern in not_certified_patterns):
+        claim = certification_claim(message)
+        if claim is False:
             intent.is_certified = False
             intent.detected_fields.append("is_certified")
-        elif any(re.search(pattern, message) for pattern in certified_patterns) or self._holds_padi_cert(message):
+        elif claim is True or self._holds_padi_cert(message):
             # Holding a PADI level (Open Water / Advanced / Rescue / Divemaster /
             # Nitrox) means the person is a certified diver.
             intent.is_certified = True
@@ -739,12 +766,29 @@ class IntentDetector:
             return int(s) if s.isdigit() else _word_num_map.get(s, 1)
 
         def _activity_key(text: str) -> str | None:
-            if any(k in text for k in ('minicurso', 'mini curso', 'bautismo', 'bautizo', 'discover', 'principiante')):
-                return 'minicourse'
-            if any(k in text for k in ('snorkel', 'esnorkel', 'careteo', 'snorkeling')):
-                return 'snorkel'
-            if any(k in text for k in ('buce', 'buse', 'dive', 'diving', 'certificado', 'certified', 'scuba', 'submarinismo')):
-                return 'certified_diving'
+            # Hallazgo en vivo, batería regex 2026-09-03: reusa
+            # matched_activity_categories() (fuente única, ya blindada contra
+            # "nunca he buceado"/"primera vez" etc.) en vez de un vocabulario
+            # propio por substring (`in text`, sin ni siquiera límites de
+            # palabra) sin esas exclusiones -- "2 nunca han buceado" ya no se
+            # clasifica como certified_diving solo por contener "buce".
+            # Misma prioridad minicourse > snorkel > certified_diving que este
+            # helper ya tenía.
+            cats = matched_activity_categories(text)
+            if "minicourse" in cats:
+                return "minicourse"
+            if "snorkel" in cats:
+                return "snorkel"
+            if "certified_diving" in cats:
+                return "certified_diving"
+            # "mitad certificado y mitad minicurso": el fragmento "certificado"
+            # solo no dispara ninguna categoria de matched_activity_categories
+            # (esa palabra sola es un ESTADO de certificacion, no un nombre de
+            # actividad) pero en este contexto de reparto de grupo si implica
+            # buceo certificado. Fallback acotado, no un vocabulario generico
+            # nuevo -- solo la palabra exacta, con limites de palabra.
+            if re.search(r'\bcertificad[oa]s?\b|\bcertified\b', text, re.IGNORECASE):
+                return "certified_diving"
             return None
 
         # Pattern A: "3 de buceo y 2 de snorkel" / "3 buceos y 2 snorkel"

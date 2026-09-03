@@ -55,6 +55,18 @@ def test_escalation_keyword_routes_to_safety():
     assert classify_route(make_state(), "quiero hablar con un asesor", {}) == ROUTE_SAFETY
 
 
+def test_real_time_availability_urgency_routes_to_safety_not_change():
+    """Inventario regex 2026-09-03: escalation.SENSITIVE_RULES['real_time_
+    issues'] ('disponible mañana'/'hay cupo'...) debe ganarle a
+    supervisor._AVAILABILITY_PATTERN (disponibilidad GENÉRICA, ROUTE_CHANGE)
+    -- documentado en un comentario de supervisor.py y correcto hoy por el
+    ORDEN de las lineas en classify_route (detect_sensitive_escalation antes
+    que _AVAILABILITY_PATTERN), pero sin ningún test que lo fije. Contraste
+    directo con test_availability_routes_to_change de abajo (disponibilidad
+    genérica, sin urgencia -- esa SÍ va a ROUTE_CHANGE)."""
+    assert classify_route(make_state(), "¿hay cupo disponible mañana?", {}) == ROUTE_SAFETY
+
+
 # ── CHANGE ──
 
 def test_cancellation_routes_to_change():

@@ -36,6 +36,7 @@ from src.agents.intent_detector import (
     LAST_DIVE_TOPIC_RE,
     NATIONALITY_TOPIC_RE,
     IntentDetector,
+    certification_claim,
     matched_activity_categories,
 )
 from src.agents.llm_extractor import (
@@ -942,14 +943,6 @@ def _mentioned_product_activities(message: str) -> list:
 # tiene sentido en ese caso. Negado explícito ("no está certificado") NO
 # cuenta como respaldo — ese es el caso genuino de `SLOT_COMPANION_ACTIVITY`
 # que sí necesita preguntar.
-_CERTIFICATION_CLAIM_RE = re.compile(r"certificad[oa]s?|certified", re.IGNORECASE)
-_CERTIFICATION_NEGATED_RE = re.compile(
-    r"no\s+(?:es[ts]\w*\s+)?certificad[oa]s?|not\s+certified|isn['’]?t\s+certified|"
-    r"no\s+certified",
-    re.IGNORECASE,
-)
-
-
 def _activity_has_textual_backing(activity: str, message: str) -> bool:
     """¿Tiene `activity` algún respaldo real en el texto? No basta con
     buscar la palabra exacta: la regla de negocio traduce "no certificado +
@@ -964,11 +957,7 @@ def _activity_has_textual_backing(activity: str, message: str) -> bool:
         return True
     if activity == "minicourse" and "certified_diving" in mentioned:
         return True
-    if (
-        activity == "certified_diving"
-        and _CERTIFICATION_CLAIM_RE.search(message)
-        and not _CERTIFICATION_NEGATED_RE.search(message)
-    ):
+    if activity == "certified_diving" and certification_claim(message) is True:
         return True
     return False
 
@@ -3102,7 +3091,7 @@ async def _answer_question(
     # correctamente pero volvia a preguntar "Are you a certified diver?"
     # pese a que el propio mensaje ya nombra el producto certified_diving
     # (lo que YA confirma certificacion por la misma regla de negocio de
-    # `_activity_has_textual_backing`/`_CERTIFICATION_CLAIM_RE`). En vez de
+    # `_activity_has_textual_backing`/`certification_claim`). En vez de
     # correr extraccion completa aqui (fuera de alcance, mas riesgo), se
     # resuelve el caso puntual: si el slot pendiente es certificacion y el
     # propio mensaje ya la respalda textualmente, se fija y se recalcula el

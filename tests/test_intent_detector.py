@@ -3,6 +3,7 @@ from src.agents.intent_detector import (
     IntentDetector,
     DetectedIntent,
     NATIONALITY_TOPIC_RE,
+    certification_claim,
     matched_activity_categories,
 )
 from src.flows.state import ConversationState
@@ -221,6 +222,17 @@ class TestGroupDetection:
         intent = detector.detect("somos 9, mitad certificado y mitad minicurso", state)
         assert intent.group_size == 9
         assert intent.group_allocation == {"certified_diving": 5, "minicourse": 4}
+
+    def test_detect_mixed_group_mitad_certificado_mitad_nunca_ha_buceado(self, detector, state):
+        """Hallazgo del inventario regex (2026-09-03): _activity_key() (helper
+        interno de _detect_group_info) tenia su PROPIO vocabulario de "esto es
+        buceo certificado" por substring (`in text`), sin la exclusion de
+        cualificadores de experiencia que ya tenia _CERTIFIED_DIVING_PATTERNS
+        -- "nunca ha buceado" clasificaba mal como certified_diving solo por
+        contener "buce". Ahora reusa matched_activity_categories()."""
+        intent = detector.detect("somos 4, mitad certificado y mitad nunca ha buceado", state)
+        assert intent.group_size == 4
+        assert intent.group_allocation == {"certified_diving": 2, "minicourse": 2}
 
     def test_detect_mixed_group_mitad_comma_separated(self, detector, state):
         intent = detector.detect("somos 7, mitad snorkel, la otra mitad buceo", state)
@@ -648,3 +660,35 @@ class TestNationalityTopicRe:
     )
     def test_real_nationality_statement_still_matches(self, message):
         assert NATIONALITY_TOPIC_RE.search(message) is not None
+
+
+class TestCertificationClaim:
+    """Inventario regex 2026-09-03: certification_claim() es la fuente unica
+    que _detect_certification usa internamente y que conversational_core.
+    _activity_has_textual_backing reusa en vez de mantener su propio par de
+    regex (_CERTIFICATION_CLAIM_RE/_CERTIFICATION_NEGATED_RE, ya borrados)."""
+
+    @pytest.mark.parametrize(
+        "message",
+        ["soy certificado", "somos buzos certificados", "tengo licencia PADI", "certified diver"],
+    )
+    def test_affirms_certification(self, message):
+        assert certification_claim(message) is True
+
+    @pytest.mark.parametrize(
+        "message",
+        [
+            "no estoy certificado", "no soy buzo", "sin certificar",
+            "nunca he buceado", "primera vez", "quiero certificarme",
+        ],
+    )
+    def test_denies_certification(self, message):
+        assert certification_claim(message) is False
+
+    def test_no_signal_returns_none(self):
+        assert certification_claim("hola, cuál es el horario") is None
+
+    def test_negation_wins_over_generic_cert_catchall(self):
+        """'not certfied' (typo real, bug live 2026-07-21) debe leer False,
+        no True por el catch-all generico \\bcert\\w*\\b."""
+        assert certification_claim("not certfied") is False
