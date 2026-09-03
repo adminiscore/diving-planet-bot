@@ -303,6 +303,46 @@ def _private_group_event_answer(lang: str) -> str:
     )
 
 
+# Hallazgo en vivo (lote 12, bateria "natural/deictica", 2026-09-02, conv.
+# real 853): "cuanto cuesta el paquete de 7 inmersiones?" (turno 1) ya
+# responde con el precio real Y la politica "mismo precio para todos,
+# sin cobro extra por la divisa" -- pero "lo mismo pero para mi amigo que
+# es colombiano, cambia algo?" (turno 2, referencia deictica a lo que el
+# bot ACABA de decir) hacia que RAG intentara re-generar el numero desde
+# cero, y ambos intentos ALUCINARON un precio EQUIVOCADO ($630.000 COP,
+# el precio de OTRO paquete distinto) -- el juez de grounding los rechazo
+# correctamente las 2 veces (asi que no llego al cliente el numero
+# incorrecto), pero el turno cayo al fallback generico en vez de
+# responder. La pregunta real ("¿cambia el precio por nacionalidad?")
+# SIEMPRE tiene la misma respuesta fija (politica de negocio, no depende
+# del paquete): no cambia, solo la moneda. Respuesta determinista, sin
+# necesidad de recalcular ningun numero -- evita el riesgo de alucinacion
+# por completo en vez de confiar en que el juez de grounding la atrape.
+_SAME_PRICE_DIFFERENT_NATIONALITY_RE = re.compile(
+    r"(?:lo\s+mismo|el\s+mismo\s+precio|mismo\s+precio).{0,40}"
+    r"(?:colombian[oa]|extranjer[oa]|residente)|"
+    r"(?:colombian[oa]|extranjer[oa]).{0,40}(?:cambia|diferente|distinto)|"
+    r"same\s+(?:price|thing).{0,40}(?:colombian|foreign)",
+    re.IGNORECASE,
+)
+
+
+def _same_price_different_nationality_answer(lang: str) -> str:
+    if lang == "es":
+        return (
+            "¡No cambia nada en el precio! 🌊 El valor es el mismo para todos — solo cambia la "
+            "moneda en la que se paga: colombianos/residentes pagan en pesos (COP) y "
+            "extranjeros en dólares (USD), al mismo precio equivalente, sin cobro extra ni "
+            "descuento por nacionalidad. ¿Te ayudo a armar la reserva? 😊"
+        )
+    return (
+        "The price doesn't change at all! 🌊 It's the same for everyone — only the currency "
+        "changes: Colombians/residents pay in pesos (COP) and foreign visitors in dollars "
+        "(USD), at the same equivalent price, no extra charge and no discount for "
+        "nationality. Want me to help you put the booking together? 😊"
+    )
+
+
 # Afirmacion "a secas" ("si", "dale", "ok") — usada para cumplir una oferta que
 # el propio bot hizo en el turno anterior (p.ej. "¿te paso con un asesor?").
 _BARE_AFFIRMATION_RE = re.compile(
@@ -815,7 +855,20 @@ _MIXED_NATIONALITY_RE = re.compile(
     r"|\bmy\s+(?:friend|partner|husband|wife|brother|sister|boyfriend|girlfriend)\s+is\s+(?:a\s+)?foreign(?:er)?\b"
     r"|\bmy\s+(?:friend|partner|husband|wife|brother|sister|boyfriend|girlfriend)\s+is\s+colombian\b"
     r"|\bonly\s+i\s*(?:'m| am)\s+colombian\b"
-    r"|\bmixed\s+nationalit(?:y|ies)\b",
+    r"|\bmixed\s+nationalit(?:y|ies)\b"
+    # "uno de nosotros es colombiano y los otros/demás no" — hallazgo en vivo
+    # (lote 12, bateria "natural/deictica", 2026-09-02, conv. real 849): "uno
+    # de nosotros es colombiano y los otros dos no" no matcheaba ningun
+    # patron existente (no usa "unos/algunos", ni repite "extranjero", ni
+    # da una cantidad explicita con "pero/y"). Sin esto, el grupo caia al
+    # `_finalize()` generico, que dice "Como SOIS colombianos/residentes"
+    # (plural, implica que TODOS lo son) para un grupo donde solo 1 de 3 lo
+    # es -- en vez de la explicacion real de pago mixto por persona.
+    r"|\buno\s+(?:de\s+nosotros\s+)?es\s+colombian[oa]\s+y\s+(?:l[oa]s?\s+)?(?:otro|dem[aá]s)s?"
+    r"(?:\s+\w+)?\s+no\b"
+    r"|\buno\s+(?:de\s+nosotros\s+)?es\s+extranjer[oa]\s+y\s+(?:l[oa]s?\s+)?(?:otro|dem[aá]s)s?"
+    r"(?:\s+\w+)?\s+(?:s[ií]|no)\b"
+    r"|\bone\s+of\s+us\s+is\s+colombian\s+and\s+the\s+(?:other|rest)s?\s+(?:aren'?t|are\s+not|isn'?t)\b",
     re.IGNORECASE,
 )
 
@@ -2492,6 +2545,15 @@ async def _shared_turn_handler(
     if _PRIVATE_GROUP_EVENT_RE.search(msg_lower):
         logger.info("[SUPERVISOR] Private/corporate group event -> real deterministic answer")
         return _private_group_event_answer(state.language)
+
+    # Hallazgo en vivo (lote 12, 2026-09-02): "¿cambia el precio si es
+    # colombiano?" — respuesta determinista fija (politica de negocio, no
+    # depende del paquete), sin pasar por RAG (que alucinaba un precio
+    # equivocado al intentar re-generar el numero). Ver
+    # _same_price_different_nationality_answer.
+    if _SAME_PRICE_DIFFERENT_NATIONALITY_RE.search(msg_lower):
+        logger.info("[SUPERVISOR] Same price, different nationality question -> real deterministic answer")
+        return _same_price_different_nationality_answer(state.language)
 
     # SAFETY FIRST: broken-link complaints and sensitive topics (medical,
     # weather, complaints) must escalate BEFORE the intent detector runs.

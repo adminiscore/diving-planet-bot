@@ -123,6 +123,29 @@ async def test_corporate_event_gets_real_answer_not_hallucinated_rag():
 
 
 @pytest.mark.asyncio
+async def test_same_price_different_nationality_gets_real_answer_not_hallucinated_price():
+    """Hallazgo en vivo (bateria "natural/deictica", lote 12, 2026-09-02,
+    conv. real 853): "cuanto cuesta el paquete de 7 inmersiones?" respondia
+    bien (precio real $503 USD / $1.813.000 COP); el siguiente turno, "lo
+    mismo pero para mi amigo que es colombiano, cambia algo?", hacia que
+    RAG intentara re-generar el numero desde cero -- AMBOS intentos
+    alucinaron un precio EQUIVOCADO ($630.000 COP, el precio de OTRO
+    paquete distinto). El juez de grounding los rechazo correctamente las
+    2 veces, pero el turno caia al fallback generico en vez de responder
+    la pregunta real (que SIEMPRE tiene la misma respuesta fija: no
+    cambia, solo la moneda). Debe responder con la politica real, sin
+    inventar ningun numero ni caer al fallback."""
+    state = make_state()
+    with patch("src.agents.supervisor.detect_routing_signals", new=AsyncMock(return_value={})):
+        resp = await route_message(
+            state, "vale y lo mismo pero para mi amigo que es colombiano, cambia algo?")
+    assert state.step != Step.ESCALATE
+    assert "no cambia" in resp.lower()
+    assert "no lo tengo a la mano" not in resp.lower()
+    assert "630" not in resp
+
+
+@pytest.mark.asyncio
 async def test_wants_human_signal_escalates_when_keyword_list_misses():
     """"quisiera que me atendiera una persona real" no matchea
     ESCALATION_KEYWORDS (humano/agente/asesor/"hablar con") pero la
@@ -624,6 +647,23 @@ def test_mixed_nationality_regex_covers_explicit_count_and_pero():
         "bueno dos de nosotros somos colombianos pero uno es extranjero")
     assert _detect_mixed_nationality_request(
         "tres somos extranjeros y uno es colombiano")
+
+
+def test_mixed_nationality_regex_covers_uno_y_los_otros_phrasing():
+    """Hallazgo en vivo (lote 12, bateria "natural/deictica", 2026-09-02,
+    conv. real 849): "uno de nosotros es colombiano y los otros dos no" no
+    matcheaba ningun patron existente (no usa "unos/algunos", no repite
+    "extranjero", no da una cantidad explicita con "pero/y" antes del
+    verbo). Sin esto, el grupo caia al `_finalize()` generico ("Como SOIS
+    colombianos/residentes", plural, implicando que TODOS lo son) en vez
+    de la explicacion real de pago mixto por persona."""
+    from src.agents.supervisor import _detect_mixed_nationality_request
+    assert _detect_mixed_nationality_request(
+        "uno de nosotros es colombiano y los otros dos no")
+    assert _detect_mixed_nationality_request(
+        "uno de nosotros es colombiano y los otros no")
+    assert _detect_mixed_nationality_request(
+        "one of us is colombian and the others are not")
 
 
 @pytest.mark.asyncio

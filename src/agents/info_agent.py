@@ -48,10 +48,12 @@ async def info_node(state: BotState) -> dict:
     from src.agents.supervisor import (
         _ADAPTIVE_DIVING_PATTERN,
         _PRIVATE_GROUP_EVENT_RE,
+        _SAME_PRICE_DIFFERENT_NATIONALITY_RE,
         _alcohol_and_food_policy_answer,
         _build_extra_context,
         _maybe_answer_age_eligibility,
         _private_group_event_answer,
+        _same_price_different_nationality_answer,
         _shared_turn_handler,
         rag_answer,
     )
@@ -81,6 +83,17 @@ async def info_node(state: BotState) -> dict:
     if _PRIVATE_GROUP_EVENT_RE.search(msg_lower):
         answer = _private_group_event_answer(conv.language)
         logger.info("[NODE:info] Private/corporate group event -> real deterministic answer")
+        conv.history.append({"role": "user", "content": message})
+        conv.history.append({"role": "assistant", "content": answer})
+        return {"reply": answer}
+
+    # 0.ter · "¿cambia el precio si es colombiano?" (hallazgo en vivo, lote
+    #     12, 2026-09-02): respuesta determinista fija (politica de negocio,
+    #     no depende del paquete), sin pasar por RAG (que alucinaba un
+    #     precio equivocado al re-generar el numero desde cero).
+    if _SAME_PRICE_DIFFERENT_NATIONALITY_RE.search(msg_lower):
+        answer = _same_price_different_nationality_answer(conv.language)
+        logger.info("[NODE:info] Same price, different nationality question -> real deterministic answer")
         conv.history.append({"role": "user", "content": message})
         conv.history.append({"role": "assistant", "content": answer})
         return {"reply": answer}

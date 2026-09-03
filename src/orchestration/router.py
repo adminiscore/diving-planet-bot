@@ -92,6 +92,14 @@ def classify_route(conv_state: ConversationState, message: str, signals: dict) -
     if sup._PRIVATE_GROUP_EVENT_RE.search(msg_lower):
         return ROUTE_INFO
 
+    # Hallazgo en vivo (lote 12, bateria "natural/deictica", 2026-09-02):
+    # "lo mismo pero para mi amigo que es colombiano, cambia algo?" hacia
+    # que RAG alucinara un precio equivocado al re-generar el numero desde
+    # cero -- la respuesta real (politica fija: no cambia, solo la moneda)
+    # no depende del paquete, misma prioridad que alcohol/alergia/evento.
+    if sup._SAME_PRICE_DIFFERENT_NATIONALITY_RE.search(msg_lower):
+        return ROUTE_INFO
+
     if sup._detect_broken_link_complaint(message, history):
         return ROUTE_SAFETY
     if signals.get("broken_link_complaint") and sup._has_link_tech_context(message, history):
