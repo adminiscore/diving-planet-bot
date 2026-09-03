@@ -36,6 +36,7 @@ from src.agents.intent_detector import (
     LAST_DIVE_TOPIC_RE,
     NATIONALITY_TOPIC_RE,
     IntentDetector,
+    matched_activity_categories,
 )
 from src.agents.llm_extractor import (
     compose_acknowledgement,
@@ -880,21 +881,54 @@ _ACTIVITY_TO_CART_TYPE = {"certified_diving": "cert", "minicourse": "beginner", 
 # snorkel como "careteo"/"caretear" (regional caribeño). Sin ellos, la
 # deliberación y las redes multi-ítem del núcleo no reconocían estas palabras
 # (el intent_detector sí las conocía — era un hueco solo del núcleo).
-_PRODUCT_MENTION_RE = {
-    "certified_diving": re.compile(r"\bbuce\w*|\bvuce\w*|\bbuse[ao]\w*|\bdive\b|\bdiving\b|\bscuba\b", re.IGNORECASE),
-    "minicourse": re.compile(
-        r"\bmini[\s-]?curso\b|\bmini[\s-]?course\b|\bbauti[sz]\w*\b"
-        r"|\bdiscover\s*scuba\b|\btry\s+(?:dive|diving|scuba)\b",
-        re.IGNORECASE),
-    "snorkel": re.compile(r"\be?snork\w*|\be?snorqu\w*|\bcarete[ao]\w*\b", re.IGNORECASE),
-}
+# Marca fuerte de buceo certificado -- a diferencia del patron generico
+# "buce*"/"dive"/"scuba" (que tambien matchea dentro de un cualificador de
+# experiencia como "nunca he buceado"), estas frases solo tienen sentido si
+# el cliente de verdad pide/tiene buceo certificado.
+_STRONG_CERTIFIED_DIVING_RE = re.compile(
+    r"\bbuzo\s+certificado\b|\bbuzos\s+certificados\b|\bsoy\s+buz[oa]\b|"
+    r"\bcertified\s+diver\b|\bdos\s+inmersiones\b|\btwo\s+dives\b|"
+    r"\bpaquete\s+de\s+\d+\s+buceos?\b|\b\d+\s+dives?\b",
+    re.IGNORECASE,
+)
+# Nombre real del minicurso -- a diferencia de un cualificador de
+# experiencia ("nunca he buceado", "primera vez"), que tambien dispara la
+# categoria "minicourse" de matched_activity_categories() pero no nombra el
+# producto en si.
+_EXPLICIT_MINICOURSE_NAME_RE = re.compile(
+    r"\bmini[\s\-]?curso\b|\bmini[\s\-]?course\b|\bbauti[sz]\w{0,3}\b|"
+    r"\bbubble\s?makers?\b|\bdiscover\s+scuba\b",
+    re.IGNORECASE,
+)
 
 
 def _mentioned_product_activities(message: str) -> list:
-    """Lista (no set) para que el orden en que se pregunta por cada
-    sub-grupo sea determinista (el orden de un `set` de strings depende del
-    hash aleatorizado por proceso, no es reproducible entre corridas)."""
-    return [act for act, pat in _PRODUCT_MENTION_RE.items() if pat.search(message)]
+    """Lista (no set, orden fijo) de actividades de producto mencionadas
+    (certified_diving/minicourse/snorkel). Reusa `matched_activity_
+    categories()` (intent_detector.py) como fuente unica -- antes esta
+    funcion mantenia su PROPIO diccionario de regex (`_PRODUCT_MENTION_RE`),
+    duplicado y sin las mismas protecciones que el detector de actividad
+    principal, lo que permitio que "nunca he buceado" (un cualificador de
+    experiencia, no una peticion de producto) contara como "mencion de
+    buceo certificado" via el patron generico "buce*" (hallazgo en vivo,
+    conversacion real "purple-sun-590", 2026-09-03).
+
+    Cuando el mensaje YA nombra un curso PADI explicito (`_mentioned_courses`
+    no vacio, la senal mas fuerte de lo que el cliente pidio), una mencion
+    de certified_diving/minicourse que SOLO viene de un patron generico o de
+    un cualificador de experiencia (sin su propio respaldo especifico) no
+    cuenta como oferta aparte -- es contexto sobre el nivel del cliente, no
+    un segundo producto en competencia. Sin curso nombrado, el
+    comportamiento es igual que antes (todas las categorias detectadas
+    cuentan)."""
+    cats = matched_activity_categories(message)
+    acts = [a for a in ("certified_diving", "minicourse", "snorkel") if a in cats]
+    if _mentioned_courses(message):
+        if "certified_diving" in acts and not _STRONG_CERTIFIED_DIVING_RE.search(message):
+            acts.remove("certified_diving")
+        if "minicourse" in acts and not _EXPLICIT_MINICOURSE_NAME_RE.search(message):
+            acts.remove("minicourse")
+    return acts
 
 
 # Auditoría 2026-08-26 (batería sintética contra PRE, Grupo 3, portado de
@@ -969,7 +1003,9 @@ _DELIBERATION_RE = re.compile(
 # PREGUNTA, no un compromiso — se excluye con lookahead para que "quiero saber
 # si buceo o snorkel" cuente como duda y vaya a RAG.
 _COMMITMENT_RE = re.compile(
-    r"\b(?:quiero|queremos|quisiera)(?!\s+(?:saber|conocer))\b"
+    # "me gustaría" (2026-09-03, hallazgo en vivo "purple-sun-590"): mismo
+    # verbo de compromiso que "quiero", fraseo real de cliente que faltaba.
+    r"\b(?:quiero|queremos|quisiera|me\s+gustar[ií]a)(?!\s+(?:saber|conocer))\b"
     r"|\b(?:reserv\w+|me\s+quedo\s+con|nos\s+quedamos\s+con|elijo|elegimos"
     r"|book|i'?ll\s+take|we'?ll\s+take)\b",
     re.IGNORECASE,

@@ -2017,6 +2017,67 @@ def test_mentioned_offerings_includes_courses_and_dedupes():
     assert core._mentioned_offerings("no sé si cartagena o islas") == []
 
 
+# ---------------------------------------------------------------------------
+# Hallazgo en vivo (conversación real "purple-sun-590", 2026-09-03): "Me
+# gustaría sacarme el open water, pero nunca he buceado" disparaba
+# _is_deliberation_between_options via _PRODUCT_MENTION_RE (diccionario de
+# regex propio y sin protecciones, separado del de intent_detector.py) --
+# "nunca he buceado" (cualificador de experiencia, no una petición de
+# producto) contaba como "mencionó buceo certificado" vía el patrón
+# genérico "buce*". El mensaje se enrutaba a RAG/comparación, saltándose
+# por completo la extracción de reserva (activity/service_id nunca se
+# tocaban) — la causa real de por qué el curso Open Water no mostraba
+# precio ni link en la conversación real.
+# ---------------------------------------------------------------------------
+
+def test_mentioned_product_activities_drops_generic_backing_when_course_named():
+    """Con un curso PADI nombrado explícitamente, una mención de
+    certified_diving/minicourse que SOLO viene de un patrón genérico o de un
+    cualificador de experiencia (sin su propio respaldo específico) no
+    cuenta como oferta aparte."""
+    msg = "Me gustaría sacarme el open water, pero nunca he buceado"
+    assert core._mentioned_product_activities(msg) == []
+    assert core._mentioned_courses(msg) == ["open_water"]
+    assert core._mentioned_offerings(msg) == ["open_water"]
+
+
+def test_mentioned_product_activities_keeps_explicit_minicourse_name_even_with_course():
+    """'dudo entre el minicurso o el curso open water' SIGUE siendo
+    deliberación real -- 'minicurso' es el NOMBRE explícito del producto,
+    no un cualificador de experiencia genérico."""
+    msg = "dudo entre el minicurso o el curso open water"
+    assert "minicourse" in core._mentioned_product_activities(msg)
+    assert set(core._mentioned_offerings(msg)) == {"minicourse", "open_water"}
+
+
+def test_mentioned_product_activities_keeps_strong_certified_diving_signal():
+    """Una marca fuerte de buceo certificado ('buzo certificado', 'dos
+    inmersiones'...) SÍ cuenta como oferta aparte, incluso con un curso
+    nombrado al lado -- no es el patrón genérico ambiguo."""
+    msg = "no sé si el open water o el paquete de 2 buceos, ya soy buzo certificado"
+    assert "certified_diving" in core._mentioned_product_activities(msg)
+
+
+def test_is_deliberation_between_options_real_bug_message_is_false():
+    msg = "Me gustaría sacarme el open water, pero nunca he buceado"
+    signals = {"comparing_options": {"comparing": True, "options": ["padi_course", "minicourse"], "who": "self"}}
+    assert core._is_deliberation_between_options(msg, signals) is False
+
+
+@pytest.mark.parametrize(
+    "message",
+    [
+        "Me gustaría sacarme el open water, pero nunca he buceado",
+        "Quiero certificarme en open water, nunca he practicado buceo",
+        "Me gustaría hacer el curso advanced, no tengo experiencia",
+    ],
+)
+def test_commitment_re_recognizes_me_gustaria(message):
+    """'me gustaría' es el mismo verbo de compromiso que 'quiero' -- debe
+    anular el camino de deliberación basado solo en la señal LLM."""
+    assert core._COMMITMENT_RE.search(message) is not None
+
+
 @pytest.mark.asyncio
 async def test_course_vs_course_deliberation_routes_to_rag_without_qmark():
     """Gap cerrado: duda entre DOS cursos concretos sin "?" ya no cae a
