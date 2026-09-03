@@ -1697,10 +1697,76 @@ principal (rama `feature/pre_gadea`, una base de código distinta) — causaba c
 worktree. Deshabilitado localmente (renombrado a `.disabled`); no es un archivo versionado, no
 afecta al repositorio ni a otros checkouts salvo por esta colisión de nombres.
 
+### Conversación real de un cliente ("purple-sun-590", 2026-09-03) — curso Open Water sin
+### precio/link, 2 causas raíz encadenadas, ambas corregidas
+
+Conversación real: cliente pide "sacarme el open water, pero nunca he buceado" → elige Cartagena
+→ 1 persona → responde "No" a nacionalidad → el bot nunca muestra precio ni link de reserva del
+curso (que SÍ existen en el catálogo: $693 USD/$2.450.000 COP, link `book.divingplanet.org`
+directo), y cuando el cliente pregunta "¿me cuentas el itinerario?" (tras que el bot se ofreciera
+a contarlo), el bot ignora la pregunta y repite el mismo bloque genérico de "te paso con un
+asesor".
+
+- **Causa raíz #1 (regex de actividad, arreglada, ver Fase 9 en §8)**: `_detect_activity`
+  (`intent_detector.py`) resuelve por cadena `if/elif` — "nunca he buceado" dispara
+  `minicourse_patterns` ANTES de llegar a `padi_course_patterns`, ganando minicurso en vez de
+  Open Water. El sistema de cutover LLM por dominio (activo en PRE, `activity` en su dominio)
+  no lo salva porque — hallazgo adicional durante la investigación — **es código muerto**:
+  `_maybe_apply_llm_extraction_cutover`/`_maybe_log_llm_extraction_shadow` (`supervisor.py`)
+  solo los llaman sus propios tests, nunca el flujo real de turno. **Fix**: nuevo veto LLM
+  (`_maybe_veto_activity_via_llm`) que SÍ puede corregir `activity` cuando el mensaje dispara 2+
+  categorías a la vez — ver detalle completo en `docs/robustness/progress-log.md` (Fase 9).
+- **Causa raíz #2 (gate de deliberación, la que de verdad bloqueaba el repro, arreglada)**:
+  verificando el fix #1 en vivo, el veto NUNCA se disparaba para el turno real — investigado con
+  un log de diagnóstico temporal (desplegado y revertido tras el diagnóstico): el turno crítico
+  ni siquiera llegaba a `_understand()`. Lo interceptaba antes `_is_deliberation_between_options`
+  (`conversational_core.py`), que usaba su PROPIO diccionario de regex
+  (`_PRODUCT_MENTION_RE`, separado y sin las protecciones del detector de actividad principal) —
+  "nunca he buceado" contaba como "mencionó buceo certificado" vía el patrón genérico `buce*`,
+  dando 2 ofertas detectadas (open_water + certified_diving) y disparando el gate a
+  RAG/comparación, saltándose por completo la extracción de reserva. **Decisión con el
+  usuario**: no parchear solo esta colisión (Opción A, descartada explícitamente) — ir por la
+  solución general (Opción B+C): `_mentioned_product_activities` ahora reusa
+  `matched_activity_categories()` (fuente única con `intent_detector.py`, en vez de un
+  diccionario duplicado sin sincronizar) y descarta menciones de producto que SOLO vienen de un
+  patrón genérico/cualificador de experiencia cuando el mensaje ya nombra un curso PADI
+  explícito; `_COMMITMENT_RE` gana "me gustaría" (defensa adicional contra la señal LLM
+  `comparing_options`, que también se equivocó en este caso real). 0 regresiones en la matriz
+  existente de deliberación (22/22 preservados). Tests:
+  `test_mentioned_product_activities_drops_generic_backing_when_course_named`,
+  `test_is_deliberation_between_options_real_bug_message_is_false`,
+  `test_commitment_re_recognizes_me_gustaria`.
+- **Verificado en vivo contra PRE, repro completo (2 corridas)**: precio real ($693 USD /
+  2.450.000 COP), link de reserva directa (`book.divingplanet.org`) y aclaración de moneda
+  correctos en ambas — el bug original queda cerrado.
+- **📝 Hallazgo nuevo, sin arreglar (menor, no bloqueante)**: en una de las 2 corridas de
+  verificación, tras responder "No" a la pregunta de nacionalidad, el texto de resumen dijo
+  "Como sois colombianos/residentes, el pago es en pesos (COP)" — contradice la respuesta real
+  del cliente. La OTRA corrida (misma secuencia exacta) mostró el texto correcto (USD, sin
+  mención de "colombianos"). Parece variación puntual del LLM en la redacción del resumen (el
+  precio/link fueron correctos y consistentes en ambas corridas) — no investigado a fondo hoy,
+  anotado para una futura revisión.
+
 ---
 
 ## 8. Registro de ejecución
 *(Una línea por paso cerrado: fecha · dev · qué · commit. El más reciente arriba.)*
+
+- **2026-09-03 · Gadea (Claude) · Conversación real "purple-sun-590" — curso Open Water sin
+  precio/link, 2 causas raíz encadenadas, ambas cerradas.** (1) Fase 9: veto LLM de `activity`
+  para mensajes ambiguos (`_maybe_veto_activity_via_llm`), midiendo antes/después con el arnés
+  existente (`activity` 89%→95%, overall 95.0%→97.0%, 0 regresiones) — de camino se descubrió
+  que el cutover LLM por dominio existente es código muerto (nunca lo llama el flujo real, solo
+  sus tests), corrigiendo una explicación previa dada en el chat. (2) Verificando el fix en vivo
+  se encontró la causa real que bloqueaba el repro: `_is_deliberation_between_options`
+  interceptaba el turno ANTES de `_understand()`, vía un diccionario de regex duplicado
+  (`_PRODUCT_MENTION_RE`) sin las protecciones del detector principal. Decidido con el usuario
+  NO parchear solo esa colisión — unificada la detección de ofertas a una sola fuente
+  (`matched_activity_categories`) + endurecido el gate (`_COMMITMENT_RE` + "me gustaría"). 0
+  regresiones (22/22 tests de deliberación preservados). **Verificado en vivo contra PRE, 2
+  corridas del repro completo**: precio ($693 USD/2.450.000 COP) y link de reserva directa
+  correctos en ambas. Hallazgo nuevo anotado sin arreglar: contradicción de nacionalidad
+  intermitente en el texto de resumen (1/2 corridas), no bloqueante. Detalle completo en §7.
 
 - **2026-09-03 · Gadea (Claude) · Caso "certificado-pero-inactivo" — de ~67% a 10/10 en vivo,
   vía modelo scoped en vez de más guardas.** Tras el guard determinista + 2 fixes de regex/scope
