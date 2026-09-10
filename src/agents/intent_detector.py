@@ -367,6 +367,12 @@ _NOT_CERTIFIED_PATTERNS = [
     r'\bquiero\s+(?:sacar|obtener|hacer)\s+(?:el\s+|la\s+|mi\s+)?(?:open\s+water|certificaci|licencia)\w*\b',
     r'\bget\s+certified\b',
     r'\bnunca\s+(?:\w+\s+){0,3}buce\w*\b',  # nunca he/ha/hemos/han (hecho) bucea(do)/buceo
+    # "nunca me he certificado" (hallazgo en vivo, bateria sintetica shadow-
+    # mode is_certified, 2026-09-10): mismo hueco que el patron de arriba
+    # pero para "certificado" en vez de "buce*" -- sin esto, caia al catch-all
+    # generico \bcertificado\b de _CERTIFIED_PATTERNS y resolvia True cuando
+    # el cliente dice justo lo contrario.
+    r'\bnunca\s+(?:\w+\s+){0,3}certific\w*\b',
     r'\bprimera\s+vez\b',
     # Typo-tolerant (real bug live 2026-07-21: "not certfied" matched
     # neither this pattern nor the exact positive certified pattern, and

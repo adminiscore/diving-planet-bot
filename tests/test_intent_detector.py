@@ -680,6 +680,13 @@ class TestCertificationClaim:
         [
             "no estoy certificado", "no soy buzo", "sin certificar",
             "nunca he buceado", "primera vez", "quiero certificarme",
+            # Hallazgo en vivo (bateria sintetica shadow-mode is_certified,
+            # 2026-09-10): sin un patron dedicado para "nunca ... certificado"
+            # (distinto de "nunca ... buce*", ya cubierto arriba), esto caia
+            # al catch-all generico \bcertificado\b y resolvia True -- justo
+            # lo contrario de lo que dice el cliente.
+            "hola nunca me he certificado pero quiero probar",
+            "nunca me he certificado",
         ],
     )
     def test_denies_certification(self, message):
