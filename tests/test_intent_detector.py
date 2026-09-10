@@ -271,6 +271,34 @@ class TestGroupDetection:
         assert intent.group_size == 5
         assert intent.group_allocation == {"certified_diving": 2, "snorkel": 3}
 
+    @pytest.mark.parametrize("message,expected_size", [
+        ("vamos 4: 2 certificados, 1 minicurso y 1 snorkel", 4),
+        ("somos 4, 2 certificados, 1 minicurso y 1 snorkel", 4),
+        ("somos 5: 3 certificados, 1 minicurso y 1 snorkel", 5),
+    ])
+    def test_incomplete_allocation_never_shrinks_explicit_group_size(
+        self, detector, state, message, expected_size
+    ):
+        """Hallazgo en vivo (batería sintética de repartos, 2026-09-10):
+        "N certificados" (sin verbo, a diferencia de "N bucean certificados")
+        no matchea `activity_kw`, así que el Patrón E de 3+ actividades no se
+        activa, cae al Patrón A, captura solo 2 de las 3 cláusulas, y la suma
+        (2) sobreescribía el total explícito del cliente — una reserva de 5
+        personas se convertía en una de 2, con impacto directo en el precio
+        (mismo patrón de fallo que la §6.bis). El reparto puede quedar
+        incompleto, pero el TOTAL declarado por el cliente nunca se reduce en
+        silencio."""
+        intent = detector.detect(message, state)
+        assert intent.group_size == expected_size
+
+    def test_allocation_may_still_grow_group_size_when_sum_is_larger(self, detector, state):
+        """La guarda es unidireccional a propósito: un reparto SÍ puede
+        ampliar el total cuando la suma real es mayor que lo que un patrón
+        genérico había fijado (aquí "2 de buceo" fijaría 2; el total real
+        es 5)."""
+        intent = detector.detect("2 de buceo y 3 de snorkel", state)
+        assert intent.group_size == 5
+
     def test_pareja_alone_still_resolves_two(self, detector, state):
         """El patrón 'pareja' -> 2 sigue funcionando para las afirmaciones
         reales de "somos pareja"/"una pareja"/"con mi pareja" (sin más gente

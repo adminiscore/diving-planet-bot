@@ -1003,6 +1003,31 @@ class IntentDetector:
                     intent.group_allocation = {'certified_diving': cert_n, 'minicourse': beg_n}
                     intent.detected_fields.append("group_allocation")
 
+        def _set_group_size_from_allocation(allocation: dict[str, int]) -> None:
+            """Fija `group_size` a la suma del reparto, pero NUNCA a la baja
+            si el cliente ya declaró un total explícito.
+
+            Hallazgo en vivo (batería sintética de repartos, 2026-09-10):
+            "somos 5: 3 certificados, 1 minicurso y 1 snorkel" resolvía
+            `group_size=2`. Causa: "3 certificados" no matchea `activity_kw`
+            (le falta el verbo, a diferencia de "3 bucean certificados"), así
+            que el Patrón E de 3+ actividades no se activa, cae al Patrón A,
+            captura solo las 2 cláusulas que sí ve, y la suma (2) sobreescribe
+            el "somos 5" explícito. Una reserva de 5 personas se convertía en
+            una de 2 — el mismo patrón de fallo que la §6.bis (perder gente de
+            un grupo mixto), y con impacto directo en el precio.
+
+            La guarda es estructural, no una lista de fraseos: un reparto
+            incompleto puede AMPLIAR el total (p. ej. "2 certificados y 3
+            snorkel", donde el patrón genérico de group_size había fijado 2 y
+            la suma real es 5), pero nunca reducirlo por debajo de lo que el
+            cliente contó. Si el reparto suma menos que el total declarado,
+            el total manda y el hueco se resuelve preguntando.
+            """
+            total = sum(allocation.values())
+            if intent.group_size is None or total > intent.group_size:
+                intent.group_size = total
+
         # ── Pattern E (3+ actividades): "2 bucean certificados, 2 minicurso y
         # 2 snorkel" (portado 2026-09-01, hallazgo en vivo lote 8 — batería de
         # grupos mixtos contra PRE): el Patrón A de abajo solo captura UN PAR
@@ -1024,7 +1049,7 @@ class IntentDetector:
                     allocation[act] = allocation.get(act, 0) + _parse_num(m.group(1))
             if len(allocation) >= 3:
                 intent.group_allocation = allocation
-                intent.group_size = sum(allocation.values())
+                _set_group_size_from_allocation(allocation)
                 intent.detected_fields.append("group_allocation")
 
         # ── Pattern A: "3 de buceo y 2 de snorkel" / "buceo 3 y snorkel 2" ──
@@ -1041,7 +1066,7 @@ class IntentDetector:
                     allocation[act1] = allocation.get(act1, 0) + qty1
                     allocation[act2] = allocation.get(act2, 0) + qty2
                     intent.group_allocation = allocation
-                    intent.group_size = sum(allocation.values())
+                    _set_group_size_from_allocation(allocation)
                     intent.detected_fields.append("group_allocation")
             elif m_num_r:
                 act1 = _activity_key(m_num_r.group(1).lower())
@@ -1053,7 +1078,7 @@ class IntentDetector:
                     allocation[act1] = allocation.get(act1, 0) + qty1
                     allocation[act2] = allocation.get(act2, 0) + qty2
                     intent.group_allocation = allocation
-                    intent.group_size = sum(allocation.values())
+                    _set_group_size_from_allocation(allocation)
                     intent.detected_fields.append("group_allocation")
 
         # Pattern C: "somos N personas, M de buceo y el resto snorkel/minicurso"
@@ -1150,7 +1175,7 @@ class IntentDetector:
                 if allocation:
                     intent.group_allocation = allocation
                     if not intent.group_size:
-                        intent.group_size = sum(allocation.values())
+                        _set_group_size_from_allocation(allocation)
                     intent.detected_fields.append("group_allocation")
                     break
 
