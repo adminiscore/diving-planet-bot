@@ -1286,7 +1286,31 @@ funciona: un turno con 4 campos elegibles produce UNA sola entrada de log
 (`[LLM_EXTRACTOR][FIELDS_VETO]`) donde antes habría producido 4. Suite completa (3 modos, 1765
 passed/18 skipped).
 
-**Pendiente para cuando se reponga la cuota**: re-medir latencia real del camino agrupado y
-volver a correr el eval-set completo para confirmar que agrupar no degrada el acuerdo por campo
-(el prompt ahora pide varios campos a la vez, y eso podría cambiar cómo responde el modelo —
-hay que medirlo, no asumirlo). Solo después, retomar `group_allocation`.
+**Verificación dirigida con LLM real** (mismo día, en cuanto la ventana deslizante repuso ~110
+peticiones; 54 gastadas, con tope duro en el script para no dejar al usuario sin margen):
+
+- **Caso multi-campo, el que valida el rediseño** ("somos 4 certificados, estamos en bocagrande
+  y queremos el open water aunque nunca hemos buceado" → 4 campos elegibles en UNA llamada):
+  ```
+  [ACTIVITY_VETO]     regex='minicourse' llm='padi_open_water' applied=True   ← cutover: aplicado
+  [IS_CERTIFIED_VETO] regex=False        llm=True              applied=False  ← shadow: NO aplicado
+  estado final: activity='padi_open_water' is_certified=False location='cartagena' group_size=4
+  ```
+  La semántica mixta shadow/cutover dentro de una misma petición, confirmada con modelo real y
+  no solo con mocks. `location` y `group_size` no generaron discrepancia (el LLM coincidió con
+  el regex): cero falsos positivos.
+- Los dos bugs reales del día siguen corregidos tras el rediseño: conv913
+  (`certified_diving`→`padi_open_water`) y group_size (`2`→`4`).
+- Controles limpios: "quiero hacer snorkel" no disparó ninguna discrepancia; "somos pareja" se
+  quedó en 2.
+- Un 429 puntual a mitad de la tanda degradó en silencio, como debe.
+
+Nota sobre la reposición de cuota: NO es suave sino a ráfagas — durante la propia tanda se pasó
+de 110 disponibles a 0 (el 429 de arriba) y de vuelta a 97, porque el contador es una ventana
+deslizante de 24h y la capacidad vuelve según van cumpliendo 24h las peticiones del día
+anterior, que se hicieron en picos.
+
+**Pendiente para cuando haya cuota holgada** (~250 peticiones): volver a correr el eval-set
+completo para confirmar que agrupar no degrada el acuerdo por campo (el prompt ahora pide varios
+campos a la vez y eso podría cambiar cómo responde el modelo — hay que medirlo, no asumirlo), y
+re-medir la latencia real del camino agrupado. Solo después, retomar `group_allocation`.
