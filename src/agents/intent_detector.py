@@ -348,6 +348,15 @@ _CERTIFIED_PATTERNS = [
     r'\bsoy\s+buz[oa]\b',               # "soy buzo/buza" = certified diver
     r'\bbuzos\b',                        # bare plural "buzos" = certified divers (group)
     r'\b(?:los|las|ambos|ambas)\s+(?:dos\s+)?buzos?\b',  # "los dos buzos"
+    # "título de buceo" / "estoy titulad[oa]" (hallazgo en vivo, bateria
+    # sintetica shadow-mode, 2026-09-10): sinonimo real de "certificado" que
+    # ningun patron cubria -- "tengo el título de buceo"/"estoy titulada en
+    # buceo" quedaban sin ninguna senal (is_certified=None), y el bot
+    # volvia a preguntar algo que el cliente ya habia respondido.
+    r'\bt[ií]tulo\s+de\s+buceo\b',
+    r'\btengo\s+(?:el\s+)?t[ií]tulo\b',
+    r'\btitulad[oa]s?\s+en\s+buceo\b',
+    r'\bestoy\s+titulad[oa]\b',
     # Typo-tolerant fallback: matches "certficado", "certifcado",
     # "certificacion", "certified"... anything starting with "cert".
     # Checked LAST so the more specific _NOT_CERTIFIED_PATTERNS below

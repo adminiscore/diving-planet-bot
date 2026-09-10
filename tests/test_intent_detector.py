@@ -670,7 +670,14 @@ class TestCertificationClaim:
 
     @pytest.mark.parametrize(
         "message",
-        ["soy certificado", "somos buzos certificados", "tengo licencia PADI", "certified diver"],
+        [
+            "soy certificado", "somos buzos certificados", "tengo licencia PADI", "certified diver",
+            # Hallazgo en vivo (bateria sintetica shadow-mode, 2026-09-10):
+            # "titulo"/"titulad[oa]" es sinonimo real de "certificado" que
+            # ningun patron cubria -- el bot volvia a preguntar algo que el
+            # cliente ya habia respondido.
+            "tengo el titulo de buceo", "estoy titulada en buceo", "estoy titulado en buceo",
+        ],
     )
     def test_affirms_certification(self, message):
         assert certification_claim(message) is True
