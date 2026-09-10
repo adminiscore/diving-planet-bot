@@ -2359,6 +2359,16 @@ _VETO_FIELD_SPECS = {
         shadow_flag="llm_location_veto_shadow_mode",
         cutover_flag="llm_location_veto_cutover",
     ),
+    # Hallazgo en vivo (bateria sintetica, 2026-09-10): "mi pareja y nuestros
+    # dos hijos" resuelve group_size=2 (subcuenta) via el patron `pareja`->2
+    # -- el regex CONTESTA CON CONFIANZA y se equivoca, a diferencia de un
+    # hueco (None) que ya cubriria fill_gaps. Un intento de arreglarlo por
+    # regex rompio un caso real validado por el owner (ver comentario en
+    # config.py); se deja en manos de este mecanismo en su lugar.
+    "group_size": _VetoSpec(
+        shadow_flag="llm_group_size_veto_shadow_mode",
+        cutover_flag="llm_group_size_veto_cutover",
+    ),
 }
 
 

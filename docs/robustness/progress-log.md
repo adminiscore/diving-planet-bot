@@ -1107,3 +1107,46 @@ mismo patrón de "el LLM llamado sin discriminar introduce su propio sesgo" que 
 regresión de `activity` — cada campo puede necesitar su propio `should_verify` más estricto que
 "resuelto este turno" antes de activarse en cutover, no asumir que el trigger genérico es
 automáticamente seguro solo porque `activity` lo demostró inseguro.
+
+### Extensión a `group_size` (mismo día, 2026-09-10) — 3 rondas de batería sintética + un caso real
+
+Tras cerrar la regresión de `activity`, se activó `llm_activity_veto_cutover` de verdad en PRE
+(ya corrige el bug real en producción) y se dejaron `is_certified`/`location` en shadow-mode.
+Se corrieron 3 rondas de batería sintética (16, 17 y 16 mensajes respectivamente, vía
+`scripts/live_battery_driver.py` dentro del contenedor desplegado) para cazar más gaps antes de
+que un cliente real los sufriera. Hallazgos:
+
+- **Corregidos y desplegados**: "nunca me he certificado" resolvía `is_certified=True` (mismo
+  patrón que "nunca...buce\*" pero para "certificado", nunca cubierto); "tengo el título de
+  buceo"/"estoy titulada" no daban ninguna señal (`título`/`titulad[oa]` no reconocidos como
+  sinónimo de certificación).
+- **Investigado y descartado (no era bug)**: "estuve certificado pero se me venció" resuelve
+  `is_certified=True` por regex; el LLM en shadow-mode discrepó con `False` — pero el regex
+  tenía razón (el negocio ya modela "certificado pero necesita refresher" via
+  `last_dive_over_2_years`, no como "no certificado"). Buena señal de que el shadow-mode está
+  haciendo su trabajo: mostrar discrepancias para juzgar, no para aplicar ciegamente.
+- **Bug real de `group_size`, con impacto de precio directo**: "vengo con mi pareja y nuestros
+  dos hijos" resuelve `group_size=2` (el patrón `pareja`→2 gana y nunca suma a los hijos) — el
+  regex CONTESTA CON CONFIANZA y se equivoca (a diferencia de un hueco `None`, que ya cubriría
+  `fill_gaps`; su regla es nunca tocar un campo ya resuelto). Un intento de arreglarlo por regex
+  (excluir "mi/tu/su pareja" vía lookbehind negativa) **rompió un caso real validado por el
+  owner** (`test_owner_conversations_fase1.py::test_scenario3a_couple_group_size_two`, donde
+  "con mi pareja" SÍ debe valer 2 sola, sin más gente mencionada) — revertido de inmediato al
+  fallar la suite completa.
+- **Duración/nacionalidad**: "toda la semana"/gentilicios regionales ("rolo", "catracho") no se
+  resuelven por regex — huecos ya conocidos (el primero documentado en el eval-set desde antes;
+  cubierto por `fill_gaps`, que sí lo resuelve bien de forma aislada, solo que en el turno de
+  prueba concreto la conversación aún no había llegado a ese punto del flujo). No son bugs
+  nuevos.
+
+**Decisión con el usuario**: en vez de seguir parcheando regex uno a uno para el caso de
+`group_size` (lista interminable, filosofía explícitamente rechazada), extender el mecanismo de
+veto por-campo ya construido a `group_size` — mismo patrón exacto que `is_certified`/
+`is_colombian`/`location` (trigger genérico "resuelto este turno", sin `should_verify` propio,
+2 flags nuevos `llm_group_size_veto_shadow_mode`/`_cutover`, ambos `False` por defecto). Prompt
+de verificación nuevo en `field_verification_system_prompt` (ES+EN) explicando específicamente
+el patrón de fallo real (acompañante mencionado + más gente después). Caso real añadido al
+eval-set (`group-size-companion-plus-more-people`). Tests dedicados
+(`tests/test_group_size_veto.py`) que reproducen el bug real y verifican shadow-mode/cutover/
+degradación ante fallo. Suite completa (3 modos, 1756 passed/18 skipped) + compileall + ruff en
+verde.

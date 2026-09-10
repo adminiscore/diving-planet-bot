@@ -1230,6 +1230,16 @@
       },
       "source": "caso sintetico -- generalizacion del veto por-campo, 2026-09-10",
       "notes": "Nombre de hotel/isla especifico sin la palabra isla/rosario explicita en un patron generico."
+    },
+    {
+      "id": "group-size-companion-plus-more-people",
+      "message": "vengo con mi pareja y nuestros dos hijos",
+      "lang": "es",
+      "expected": {
+        "group_size": 4
+      },
+      "source": "hallazgo en vivo, bateria sintetica shadow-mode, 2026-09-10",
+      "notes": "El regex resuelve group_size=2 via el patron pareja->2, subcontando a los hijos. Motivador de la extension del veto por-campo a group_size (fix por regex descartado, rompia un caso real del owner)."
     }
   ]
 }

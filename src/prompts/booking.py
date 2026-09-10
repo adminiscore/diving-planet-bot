@@ -287,6 +287,26 @@ def field_verification_system_prompt(field: str, lang: str) -> str:
             "cuando el mensaje da una señal real de lugar — abstenerse es "
             "mejor que adivinar."
         ),
+        "group_size": (
+            "Eres una capa de VERIFICACIÓN para un bot de buceo (Diving Planet, "
+            "Cartagena/Islas del Rosario), donde el tamaño del grupo cambia el "
+            "precio total. Un detector determinista ya decidió cuántas personas "
+            "hay en el grupo, pero pudo haberse equivocado — sobre todo cuando "
+            "el mensaje menciona a un acompañante (p. ej. 'mi pareja', 'mi "
+            "esposa') Y ADEMÁS a más gente después (p. ej. 'y nuestros dos "
+            "hijos', 'y mi suegro'): el detector puede haberse quedado solo con "
+            "el acompañante y no haber sumado al resto. Lee el mensaje entero "
+            "con cuidado y cuenta tú, de forma independiente, a TODAS las "
+            "personas mencionadas (incluyendo niños, no-buzos, y gente "
+            "mencionada por relación) — llama a `extract_fields` con SOLO el "
+            "campo `group_size`. Solo responde cuando el mensaje enumera un "
+            "número concreto y contable de personas ('mi pareja y yo' = 2, "
+            "'mi pareja y nuestros dos hijos' = 4, 'cuatro adultos y un niño' "
+            "= 5). NO inventes un número cuando los acompañantes se mencionan "
+            "como un plural vago sin cifra ('mis amigos', 'mi familia' sin "
+            "decir cuántos) — omite el campo y deja que el bot pregunte "
+            "cuántos son. Abstenerse es mejor que adivinar."
+        ),
     }
     blocks_en = {
         "activity": (
@@ -351,6 +371,26 @@ def field_verification_system_prompt(field: str, lang: str) -> str:
             "Cartagena is NOT a signal of the customer's location. Only answer "
             "when the message gives a real place signal — abstaining is "
             "better than guessing."
+        ),
+        "group_size": (
+            "You are a VERIFICATION layer for a scuba diving bot (Diving "
+            "Planet, Cartagena/Rosario Islands), where the group size changes "
+            "the total price. A deterministic detector already decided how "
+            "many people are in the party, but it may have gotten it wrong — "
+            "especially when the message mentions ONE companion (e.g. 'my "
+            "partner', 'my wife') AND THEN more people afterward (e.g. 'and "
+            "our two kids', 'and my father-in-law'): the detector may have "
+            "stopped at the companion and never added the rest. Read the "
+            "whole message carefully and independently count EVERYONE "
+            "mentioned (including children, non-divers, and people referred "
+            "to by relationship) — call `extract_fields` with ONLY the "
+            "`group_size` field. Only answer when the message enumerates a "
+            "specific, countable number of people ('my partner and I' = 2, "
+            "'my partner and our two kids' = 4, 'four adults and a kid' = 5). "
+            "Do NOT invent a number when companions are mentioned as a vague, "
+            "uncounted plural with no number given ('my friends', 'my family' "
+            "with no headcount) — omit the field and let the bot ask how "
+            "many. Abstaining is better than guessing."
         ),
     }
     blocks = blocks_es if lang == "es" else blocks_en

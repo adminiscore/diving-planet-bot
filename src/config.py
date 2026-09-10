@@ -184,6 +184,21 @@ class Settings(BaseSettings):
     llm_nationality_veto_cutover: bool = False
     llm_location_veto_shadow_mode: bool = False
     llm_location_veto_cutover: bool = False
+    # --- Extension a group_size (docs/multi-agent-refactor-plan.md, hallazgo
+    # en vivo bateria sintetica, 2026-09-10) ---
+    # A diferencia de los 3 de arriba (huecos genericos, sin bug en vivo que
+    # los motive), este SI tiene un caso real detectado: "mi pareja y
+    # nuestros dos hijos" resuelve group_size=2 (el patron `pareja`->2 gana
+    # y nunca suma a los hijos) -- el regex CONTESTA CON CONFIANZA y se
+    # equivoca, exactamente el patron de fallo que este mecanismo existe
+    # para cazar (fill_gaps no ayuda aqui: su regla es nunca tocar un campo
+    # ya resuelto). Un intento de arreglarlo por regex (excluir "mi/tu/su
+    # pareja") rompio un caso real validado por el owner
+    # (test_owner_conversations_fase1.py::test_scenario3a_couple_group_size_two,
+    # donde "con mi pareja" SI debe valer 2) -- revertido. Se deja en manos
+    # de este mecanismo en su lugar. Off por defecto en todas partes.
+    llm_group_size_veto_shadow_mode: bool = False
+    llm_group_size_veto_cutover: bool = False
 
     @property
     def is_dev(self) -> bool:

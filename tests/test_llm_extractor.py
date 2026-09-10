@@ -593,3 +593,18 @@ async def test_verify_field_discards_value_outside_declared_enum():
         lang="es", client=_make_client(msg),
     )
     assert result is None
+
+
+@pytest.mark.asyncio
+async def test_verify_field_group_size_returns_llm_value_when_it_disagrees():
+    """Hallazgo en vivo (bateria sintetica, 2026-09-10): "mi pareja y
+    nuestros dos hijos" resuelve group_size=2 (subcuenta) via el regex --
+    el LLM debe poder corregirlo a 4."""
+    msg = _FakeMessage(tool_calls=[_FakeToolCall(
+        "extract_fields", json.dumps({"group_size": 4})
+    )])
+    result = await verify_field(
+        "group_size", "vengo con mi pareja y nuestros dos hijos", 2,
+        lang="es", client=_make_client(msg),
+    )
+    assert result == 4
