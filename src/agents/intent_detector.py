@@ -265,6 +265,13 @@ _PADI_COURSE_PATTERNS = [
     r'\bdivemaster\b',
     r'\bcertificarme\b',
     r'\bget\s+certified\b',
+    # "primer nivel"/"primer curso" (de buceo) -- gap real, hallazgo en vivo
+    # (conversacion real 913, 2026-09-10): sin este patron, el mensaje solo
+    # matcheaba el generico `_CERTIFIED_DIVING_PATTERNS` via "buceo", asi que
+    # "quiero sacarme el primer nivel de buceo" resolvia mal a
+    # certified_diving en vez de padi_open_water.
+    r'\bprimer\s+(?:nivel|curso)\s*(?:de\s+buceo)?\b',
+    r'\bfirst\s+(?:level|course)\s*(?:of\s+diving)?\b',
 ]
 
 _SPECIALTY_PATTERNS = [

@@ -27,6 +27,7 @@ from src.agents.intent_detector import (
     _PERSON_NOUN_MENTION_ES,
     DetectedIntent,
     IntentDetector,
+    matched_activity_categories,
 )
 from src.agents.lead_summary import build_lead_summary
 from src.agents.llm_extractor import fill_gaps, missing_fields, verify_field
@@ -2284,13 +2285,35 @@ def _apply_activity_veto(regex_intent: DetectedIntent, llm_activity: str) -> Non
     regex_intent.service_id = _ACTIVITY_TO_SERVICE_ID.get(llm_activity)
 
 
-class _VetoSpec:
-    __slots__ = ("shadow_flag", "cutover_flag", "apply")
+def _activity_should_verify(message: str, regex_intent: DetectedIntent) -> bool:
+    """Trigger de `activity`: SOLO cuando el mensaje dispara 2+ categorias a
+    la vez (mismo criterio que el `_maybe_veto_activity_via_llm` original de
+    Fase 9). Medido en vivo con el eval-set (2026-09-10, ver docs/robustness/
+    progress-log.md Fase 11): ampliar esto a "resuelto este turno" (sin exigir
+    ambiguedad) llama al LLM en TODO turno donde se resuelve `activity` --
+    incluidos los casos claros, sin ambiguedad real -- y el sesgo propio del
+    LLM hacia 'minicourse' en mensajes escuetos ("Hola quiero bucear")
+    sobreescribia el default correcto del regex, hundiendo el agreement de
+    89%->73%. La ambiguedad real (2+ categorias) sigue siendo la señal
+    correcta de "aqui SI hay riesgo real de colision" -- el gap de la
+    conversacion 913 se cerro por otra via (ver `_PADI_COURSE_PATTERNS` en
+    intent_detector.py, patron nuevo para "primer nivel"/"primer curso"),
+    no ampliando este trigger."""
+    return len(matched_activity_categories(message)) >= 2
 
-    def __init__(self, shadow_flag: str, cutover_flag: str, apply=None):
+
+class _VetoSpec:
+    __slots__ = ("shadow_flag", "cutover_flag", "apply", "should_verify")
+
+    def __init__(self, shadow_flag: str, cutover_flag: str, apply=None, should_verify=None):
         self.shadow_flag = shadow_flag
         self.cutover_flag = cutover_flag
         self.apply = apply
+        # Por defecto: "el campo se resolvio ESTE turno" (field in
+        # regex_intent.detected_fields). `activity` sobreescribe esto con un
+        # trigger mas estricto (ambiguedad real) -- ver `_activity_should_
+        # verify` y su comentario para el porque.
+        self.should_verify = should_verify
 
 
 # Mecanismo por-campo (docs/multi-agent-refactor-plan.md, hallazgo en vivo
@@ -2298,32 +2321,31 @@ class _VetoSpec:
 # 2026-09-10): un LLM verifica INDEPENDIENTEMENTE un campo que el regex ya
 # resolvio y lo corrige si discrepa. Nacio como `_maybe_veto_activity_via_llm`
 # (solo `activity`, disparado unicamente cuando el mensaje se autodiagnostica
-# ambiguo via `matched_activity_categories`) y se generalizo por dos motivos:
+# ambiguo via `matched_activity_categories`) y se generalizo para no repetir,
+# al nivel del propio fix, el mismo anti-patron de "logica duplicada que se
+# desincroniza" que motivo la auditoria regex de hoy -- el usuario pidio
+# explicitamente extender el mismo patron a `is_certified`/`is_colombian`/
+# `location`.
 #
-# 1. El trigger de ambiguedad no cubre vocabulario NUEVO que el regex nunca
-#    vio -- "primer nivel de buceo" (conv. 913) solo matcheaba 1 categoria (la
-#    incorrecta), asi que el veto original ni se llamaba. El nuevo trigger es
-#    "el campo se resolvio en ESTE turno" (`field in regex_intent.detected_
-#    fields`), confirmado por lectura de `conversational_core._understand()`:
-#    `intent = _detector.detect(message, state)` crea un DetectedIntent nuevo
-#    cada turno, asi que ese chequeo es fiable sin depender de que el propio
-#    regex sepa que se equivoco.
-# 2. El usuario pidio explicitamente extender el mismo patron a `is_certified`/
-#    `is_colombian`/`location` -- escribir una copia casi identica de
-#    `_maybe_veto_activity_via_llm` por cada campo repetiria, al nivel del
-#    propio fix, el mismo anti-patron de "logica duplicada que se
-#    desincroniza" que motivo toda la auditoria regex de hoy.
-#
-# Cada campo tiene su PROPIO par de flags shadow/cutover (independientes,
-# igual que los 4 dominios de `_maybe_apply_llm_extraction_cutover` de
-# arriba) -- `is_certified`/`is_colombian`/`location` empiezan con ambos
-# flags en False (paridad preventiva, sin bug en vivo que los motive todavia;
-# `activity` es el unico con evidencia real y flags ya en produccion).
+# El trigger POR DEFECTO ("resuelto este turno") se intento ampliar tambien
+# para `activity` (cerrar el gap de la conv. 913 sin depender de que el regex
+# se autodiagnostique ambiguo), pero el eval-set demostro en vivo que eso
+# regresiona la precision (89%->73%: el LLM llamado en CADA resolucion,
+# incluidas las claras, introduce su propio sesgo por encima del default
+# correcto del regex). `activity` mantiene su trigger original de ambiguedad
+# (`_activity_should_verify`); el gap real de la conv. 913 se cerro con una
+# entrada nueva en `_PADI_COURSE_PATTERNS` (intent_detector.py), no ampliando
+# este trigger. Los otros 3 campos si usan el trigger generico "resuelto este
+# turno" -- pero permanecen con AMBOS flags en False (paridad preventiva,
+# sin evidencia de bug real ni de que su propio trigger generico sea seguro
+# a esa escala todavia; el eval-set de hoy ya deja datos parciales, ver
+# progress-log.md).
 _VETO_FIELD_SPECS = {
     "activity": _VetoSpec(
         shadow_flag="llm_activity_veto_shadow_mode",
         cutover_flag="llm_activity_veto_cutover",
         apply=_apply_activity_veto,
+        should_verify=_activity_should_verify,
     ),
     "is_certified": _VetoSpec(
         shadow_flag="llm_certification_veto_shadow_mode",
@@ -2359,6 +2381,8 @@ async def _maybe_veto_resolved_field_via_llm(
         return  # nada resuelto que vetar (eso ya lo cubre el cutover de huecos)
     if field not in regex_intent.detected_fields:
         return  # no se resolvio ESTE turno -- nada nuevo que verificar
+    if spec.should_verify is not None and not spec.should_verify(message, regex_intent):
+        return  # trigger especifico del campo (p. ej. ambiguedad de activity) no se cumple
     try:
         llm_value = await verify_field(
             field, message, value, history=state.history, lang=state.language,
