@@ -26,6 +26,7 @@ determinista; el LLM interpreta, nunca fija precio/link ni salta el gating.
 
 from __future__ import annotations
 
+import asyncio
 import logging
 import re
 from collections import Counter
@@ -1435,8 +1436,19 @@ async def _understand(state: ConversationState, message: str) -> tuple:
     # se resolvio en ESTE turno y lo corrige si discrepa -- gateado por un
     # par de flags shadow/cutover POR CAMPO, todos off por defecto. Ver
     # `supervisor._VETO_FIELD_SPECS`/`_maybe_veto_resolved_field_via_llm`.
-    for _veto_field in supervisor._VETO_FIELD_SPECS:
-        await supervisor._maybe_veto_resolved_field_via_llm(_veto_field, message, intent, state)
+    # EN PARALELO, no en serie (medido en vivo contra PRE, 2026-09-10): cada
+    # veto que dispara cuesta ~0.7-0.9s, y en serie se suman -- un turno que
+    # resuelve varios campos a la vez ("somos 4 certificados, estamos en
+    # bocagrande y queremos bucear") pagaba +1.78s con solo 2 vetos, y el
+    # peor caso crece linealmente con cada campo nuevo de la tabla. Las
+    # llamadas son independientes entre si (cada spec escribe SU campo, y el
+    # unico side-effect extra -- `service_id` de activity -- tambien es
+    # exclusivo de su campo), asi que paralelizarlas es seguro y acota el
+    # peor caso al coste de UNA llamada en vez de N.
+    await asyncio.gather(*(
+        supervisor._maybe_veto_resolved_field_via_llm(_veto_field, message, intent, state)
+        for _veto_field in supervisor._VETO_FIELD_SPECS
+    ))
     gaps = _relevant_gaps(state, intent, message)
     # Fase 3.4 (reducir llamadas/turno): un saludo puro no tiene slots que
     # extraer → se salta `fill_gaps` (misma rama que "pregunta" o "sin gaps": no
