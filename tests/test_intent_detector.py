@@ -271,6 +271,16 @@ class TestGroupDetection:
         assert intent.group_size == 5
         assert intent.group_allocation == {"certified_diving": 2, "snorkel": 3}
 
+    def test_pareja_alone_still_resolves_two(self, detector, state):
+        """El patrón 'pareja' -> 2 sigue funcionando para las afirmaciones
+        reales de "somos pareja"/"una pareja"/"con mi pareja" (sin más gente
+        mencionada). Investigado 2026-09-10 (batería sintética): "mi pareja
+        y nuestros dos hijos" también matchea esto y subcuenta a 2 en vez de
+        4 — gap conocido, no arreglado (un intento de excluir "mi/tu/su
+        pareja" rompió el caso real validado abajo, que SÍ debe dar 2)."""
+        intent = detector.detect("somos pareja", state)
+        assert intent.group_size == 2
+
 
 class TestLastDiveDetection:
     

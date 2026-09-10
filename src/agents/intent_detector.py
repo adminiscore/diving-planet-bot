@@ -770,7 +770,18 @@ class IntentDetector:
             # "2 certified divers" / "3 certified" — a count directly before a
             # certification word (EN+ES) is a group size.
             (r'\b(\d+)\s+(?:certified|certificad[oa]s)\b', {}),
-            # "una pareja" / "somos pareja" → 2 (capturing group required by loop)
+            # "una pareja" / "somos pareja" / "con mi pareja" → 2 (capturing
+            # group required by loop). NOTA (investigado 2026-09-10, bateria
+            # sintetica): "mi pareja y nuestros dos hijos" tambien matchea
+            # esto y resuelve 2, subcontando a los hijos (deberia ser 4). Un
+            # intento de excluir "mi/tu/su pareja" via lookbehind negativa
+            # rompio un caso real validado por el owner ("...con mi pareja,
+            # tenemos un presupuesto..." = 2, sin mas gente mencionada,
+            # test_owner_conversations_fase1.py::test_scenario3a_couple_
+            # group_size_two) -- la diferencia entre "pareja" = TODO el grupo
+            # vs. "pareja" = una mencion de acompañante con MAS gente detras
+            # no se puede distinguir con una exclusion simple por posesivo.
+            # Revertido; queda como gap conocido, no arreglado a medias.
             (r'\b(?:somos\s+)?(?:una?\s+)?(pareja)\b', {'pareja': 2}),
             # "familia de N" → N personas
             (rf'\bfamilia\s+de\s+(\d+|{_es_word_alt})\b', _es_word_nums),
