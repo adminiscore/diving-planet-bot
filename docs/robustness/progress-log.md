@@ -988,13 +988,11 @@ la siguiente escalación (anotada, no implementada) es sustituir las 13 cadenas 
 de `intent_detector.py` por detección multi-señal con prioridad explícita y documentada
 (Opción C, descartada por ahora por ser un refactor mayor).
 
-**Qué quedó a medias / bloqueadores**: decisión de activar `llm_activity_veto_cutover` en
-PRE (vs. correr shadow-mode primero) pendiente — se deja como decisión conjunta con el
-usuario tras la verificación en vivo del repro real.
-
-**Siguiente paso concreto**: verificar en vivo contra PRE el repro exacto (curso Open
-Water + "nunca he buceado" + pregunta de itinerario) con el flag de cutover activo antes
-de decidir el rollout.
+**Decisión (2026-09-10, ver Fase 11 abajo)**: `llm_activity_veto_cutover` está activo en
+`.env.pre` del VPS (confirmado en vivo, `docker exec dp-pre-bot printenv`) — verificado que
+corrige correctamente tanto el repro original (curso Open Water + "nunca he buceado") como el
+caso nuevo de la conversación 913 ("primer nivel de buceo"). El usuario decidió dejarlo activo
+tras la verificación en vivo de Fase 11 en vez de revertir a shadow-mode.
 
 ## 2026-09-10 — Fase 11: veto LLM generalizado por-campo, "A bien montado" (Gadea, agent-arch)
 
@@ -1048,10 +1046,21 @@ explícita → `location=island`). `scripts/run_extraction_eval.py` generalizado
 
 Suite completa (3 modos, 1739 passed/18 skipped) + compileall + ruff en verde.
 
+**Verificado en vivo contra PRE (2026-09-10)**: activado temporalmente
+`LLM_ACTIVITY_VETO_CUTOVER=true` en `docker-compose.vps.yml` (con backup, revertido después),
+redeploy, y reproducido el mensaje real de la conversación 913 vía
+`scripts/live_battery_driver.py` dentro del contenedor desplegado. Log real:
+`[EXTRACT][ACTIVITY_VETO] regex='certified_diving' llm='padi_open_water' applied=True
+msg='Pues me gustaria sacarme el primer nivel de buceo'` seguido de `[INTENT] Activity
+updated to: padi_open_water (service: open_water)` — el trigger ampliado ("resuelto este
+turno") captura correctamente un caso que el trigger de ambigüedad de Fase 9 nunca hubiera
+disparado. Al revertir el override temporal se descubrió que `.env.pre` en el VPS YA tenía
+`LLM_ACTIVITY_VETO_CUTOVER=true` de forma independiente y preexistente (no activado en esta
+sesión) — la decisión de Fase 9 que quedaba pendiente. El usuario decidió, con la verificación
+en vivo de hoy en mano, dejarlo activo tal cual en vez de revertir a shadow-mode.
+
 **Qué quedó a medias / bloqueadores**: correr `run_extraction_eval.py` contra un entorno con
 API key real para medir agreement antes/después en los 4 campos (pendiente, necesita
-`ENV_FILE=.env.dev` o ejecución en el VPS); verificación en vivo contra PRE del repro exacto
-de la conversación 913 con `llm_activity_veto_shadow_mode`/`_cutover` activos; decisión
-conjunta con el usuario sobre si activar shadow-mode para `is_certified`/`is_colombian`/
-`location` una vez haya datos del eval-set (ninguno de los 3 tiene evidencia de bug real
-todavía, así que no hay urgencia).
+`ENV_FILE=.env.dev` o ejecución en el VPS); decisión conjunta con el usuario sobre si activar
+shadow-mode para `is_certified`/`is_colombian`/`location` una vez haya datos del eval-set
+(ninguno de los 3 tiene evidencia de bug real todavía, así que no hay urgencia).
