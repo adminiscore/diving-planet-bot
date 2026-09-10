@@ -1150,3 +1150,23 @@ eval-set (`group-size-companion-plus-more-people`). Tests dedicados
 (`tests/test_group_size_veto.py`) que reproducen el bug real y verifican shadow-mode/cutover/
 degradación ante fallo. Suite completa (3 modos, 1756 passed/18 skipped) + compileall + ruff en
 verde.
+
+**Rollout completo, verificado en vivo contra PRE, MISMO DÍA** (a diferencia de `activity`, esta
+vez con el proceso completo ANTES de decidir cutover — lección aplicada):
+1. Desplegado con ambos flags en `False` (sin cambio de comportamiento) — verificado.
+2. `llm_group_size_veto_shadow_mode=true` activado y redeployado. Batería de control (7 casos:
+   3 ya-correctos + 4 con el bug real) contra el bot desplegado real:
+   **0 falsos positivos** en los 3 casos control (ningún log de discrepancia — el LLM coincidió),
+   **4/4 casos con bug real detectados** (`[EXTRACT][GROUP_SIZE_VETO] regex=2 llm=4
+   applied=False`, etc.) sin aplicar nada.
+3. `run_extraction_eval.py` contra el eval-set completo (107 casos, API key real):
+   `group_size` 43/44 agree (**98%**), sin ninguna regresión en los casos ya existentes.
+4. Con esos datos (no solo la corazonada), `llm_group_size_veto_cutover=true` activado y
+   redeployado. Misma batería de 7 casos: los 3 controles siguen intactos, los 4 casos con bug
+   real ahora corrigen de verdad (`applied=True`, valores 4/3/3/4) — verificado también end-to-end
+   con `route_message` completo: "vengo con mi pareja y nuestros dos hijos" → el bot ahora
+   responde "cuatro personas en total" (antes decía "tú y tu pareja", perdiendo a los hijos).
+
+**Estado final en PRE**: `activity` en cutover real (Fase 9+11), `group_size` en cutover real
+(Fase 11, hoy), `is_certified`/`location` en shadow-mode (midiendo), `is_colombian` apagado
+(riesgo documentado, sin should_verify propio todavía).
