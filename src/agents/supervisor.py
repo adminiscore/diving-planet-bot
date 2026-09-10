@@ -27,10 +27,9 @@ from src.agents.intent_detector import (
     _PERSON_NOUN_MENTION_ES,
     DetectedIntent,
     IntentDetector,
-    matched_activity_categories,
 )
 from src.agents.lead_summary import build_lead_summary
-from src.agents.llm_extractor import fill_gaps, missing_fields, verify_activity
+from src.agents.llm_extractor import fill_gaps, missing_fields, verify_field
 from src.agents.rag_agent import rag_answer
 from src.config import settings
 from src.flows import cart_render, eligibility
@@ -2276,51 +2275,106 @@ _ACTIVITY_TO_SERVICE_ID = {
 }
 
 
-async def _maybe_veto_activity_via_llm(
-    message: str, regex_intent: DetectedIntent, state: ConversationState
-) -> None:
-    """Hallazgo en vivo (conversacion real "purple-sun-590", 2026-09-03,
-    docs/multi-agent-refactor-plan.md): a diferencia de `_maybe_apply_llm_
-    extraction_cutover` (arriba, que SOLO rellena huecos y nunca toca un
-    campo que el regex ya resolvio), esta funcion puede CORREGIR `activity`
-    -- pero solo cuando `matched_activity_categories(message)` marca el
-    mensaje como ambiguo (2+ categorias de patrones disparadas a la vez, p.
-    ej. "quiero el open water, nunca he buceado" dispara minicourse Y
-    padi_course). Un mensaje NO ambiguo (0 o 1 categoria) nunca llega a
-    llamar al LLM -- coste/latencia solo donde hay riesgo real de colision.
+def _apply_activity_veto(regex_intent: DetectedIntent, llm_activity: str) -> None:
+    """Side-effect especifico de `activity`: ademas del valor, fija el
+    `service_id` correspondiente (mismo mapeo que _detect_activity aplica
+    inline). Es la unica pieza de logica que no generaliza al resto de los
+    campos verificados -- de ahi que viva como `apply` custom en
+    `_VETO_FIELD_SPECS` en vez de en el orquestador generico."""
+    regex_intent.service_id = _ACTIVITY_TO_SERVICE_ID.get(llm_activity)
 
-    Gateado por 2 flags independientes (mismo patron shadow->cutover que los
-    4 dominios de arriba): `llm_activity_veto_shadow_mode` mide sin aplicar
-    (solo loguea la discrepancia), `llm_activity_veto_cutover` aplica de
-    verdad (corrige `activity` + el `service_id` correspondiente). Ambos
-    off por defecto en todas partes -- sin ellos, esta funcion es un no-op
-    inmediato, cero coste. Cualquier fallo degrada a "regex-only" en
-    silencio, igual que el resto de la cadena de extraccion -- esto nunca
-    puede dejar la respuesta peor que antes de que el veto existiera.
+
+class _VetoSpec:
+    __slots__ = ("shadow_flag", "cutover_flag", "apply")
+
+    def __init__(self, shadow_flag: str, cutover_flag: str, apply=None):
+        self.shadow_flag = shadow_flag
+        self.cutover_flag = cutover_flag
+        self.apply = apply
+
+
+# Mecanismo por-campo (docs/multi-agent-refactor-plan.md, hallazgo en vivo
+# conversacion real "purple-sun-590" 2026-09-03 + conversacion real 913
+# 2026-09-10): un LLM verifica INDEPENDIENTEMENTE un campo que el regex ya
+# resolvio y lo corrige si discrepa. Nacio como `_maybe_veto_activity_via_llm`
+# (solo `activity`, disparado unicamente cuando el mensaje se autodiagnostica
+# ambiguo via `matched_activity_categories`) y se generalizo por dos motivos:
+#
+# 1. El trigger de ambiguedad no cubre vocabulario NUEVO que el regex nunca
+#    vio -- "primer nivel de buceo" (conv. 913) solo matcheaba 1 categoria (la
+#    incorrecta), asi que el veto original ni se llamaba. El nuevo trigger es
+#    "el campo se resolvio en ESTE turno" (`field in regex_intent.detected_
+#    fields`), confirmado por lectura de `conversational_core._understand()`:
+#    `intent = _detector.detect(message, state)` crea un DetectedIntent nuevo
+#    cada turno, asi que ese chequeo es fiable sin depender de que el propio
+#    regex sepa que se equivoco.
+# 2. El usuario pidio explicitamente extender el mismo patron a `is_certified`/
+#    `is_colombian`/`location` -- escribir una copia casi identica de
+#    `_maybe_veto_activity_via_llm` por cada campo repetiria, al nivel del
+#    propio fix, el mismo anti-patron de "logica duplicada que se
+#    desincroniza" que motivo toda la auditoria regex de hoy.
+#
+# Cada campo tiene su PROPIO par de flags shadow/cutover (independientes,
+# igual que los 4 dominios de `_maybe_apply_llm_extraction_cutover` de
+# arriba) -- `is_certified`/`is_colombian`/`location` empiezan con ambos
+# flags en False (paridad preventiva, sin bug en vivo que los motive todavia;
+# `activity` es el unico con evidencia real y flags ya en produccion).
+_VETO_FIELD_SPECS = {
+    "activity": _VetoSpec(
+        shadow_flag="llm_activity_veto_shadow_mode",
+        cutover_flag="llm_activity_veto_cutover",
+        apply=_apply_activity_veto,
+    ),
+    "is_certified": _VetoSpec(
+        shadow_flag="llm_certification_veto_shadow_mode",
+        cutover_flag="llm_certification_veto_cutover",
+    ),
+    "is_colombian": _VetoSpec(
+        shadow_flag="llm_nationality_veto_shadow_mode",
+        cutover_flag="llm_nationality_veto_cutover",
+    ),
+    "location": _VetoSpec(
+        shadow_flag="llm_location_veto_shadow_mode",
+        cutover_flag="llm_location_veto_cutover",
+    ),
+}
+
+
+async def _maybe_veto_resolved_field_via_llm(
+    field: str, message: str, regex_intent: DetectedIntent, state: ConversationState
+) -> None:
+    """Vetta/corrige UN campo (`field`) que el regex ya resolvio este turno,
+    via `llm_extractor.verify_field`. Ver el comentario de `_VETO_FIELD_SPECS`
+    arriba para el diseño completo. Cualquier fallo degrada a "regex-only" en
+    silencio -- esto nunca puede dejar la respuesta peor que antes de que el
+    veto existiera.
     """
-    if not (settings.llm_activity_veto_shadow_mode or settings.llm_activity_veto_cutover):
+    spec = _VETO_FIELD_SPECS[field]
+    shadow = getattr(settings, spec.shadow_flag)
+    cutover = getattr(settings, spec.cutover_flag)
+    if not (shadow or cutover):
         return
-    if not regex_intent.activity:
-        return  # sin actividad resuelta no hay nada que vetar (eso ya lo cubre el cutover de huecos)
-    if len(matched_activity_categories(message)) < 2:
-        return  # mensaje no ambiguo -- el regex no tuvo que elegir entre categorias, se confia en el
+    value = getattr(regex_intent, field, None)
+    if value in (None, [], ""):
+        return  # nada resuelto que vetar (eso ya lo cubre el cutover de huecos)
+    if field not in regex_intent.detected_fields:
+        return  # no se resolvio ESTE turno -- nada nuevo que verificar
     try:
-        llm_activity = await verify_activity(
-            message, regex_intent.activity, history=state.history, lang=state.language,
+        llm_value = await verify_field(
+            field, message, value, history=state.history, lang=state.language,
         )
-        if not llm_activity:
+        if llm_value is None:
             return  # el LLM coincide con el regex (o no pudo decidir) -- nada que vetar
         logger.info(
-            f"[EXTRACT][ACTIVITY_VETO] regex={regex_intent.activity!r} llm={llm_activity!r} "
-            f"applied={settings.llm_activity_veto_cutover} msg={_log_safe_message(message)!r}"
+            f"[EXTRACT][{field.upper()}_VETO] regex={value!r} llm={llm_value!r} "
+            f"applied={cutover} msg={_log_safe_message(message)!r}"
         )
-        if settings.llm_activity_veto_cutover:
-            regex_intent.activity = llm_activity
-            regex_intent.service_id = _ACTIVITY_TO_SERVICE_ID.get(llm_activity)
-            if "activity" not in regex_intent.detected_fields:
-                regex_intent.detected_fields.append("activity")
+        if cutover:
+            setattr(regex_intent, field, llm_value)
+            if spec.apply:
+                spec.apply(regex_intent, llm_value)
     except Exception as exc:  # noqa: BLE001
-        logger.warning(f"[EXTRACT][ACTIVITY_VETO] failed, degrading to regex-only (ignored): {exc}")
+        logger.warning(f"[EXTRACT][{field.upper()}_VETO] failed, degrading to regex-only (ignored): {exc}")
 
 
 async def _maybe_log_llm_extraction_shadow(

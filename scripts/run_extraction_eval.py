@@ -26,16 +26,23 @@ import asyncio
 import json
 from pathlib import Path
 
-from src.agents.intent_detector import IntentDetector, matched_activity_categories
+from src.agents.intent_detector import IntentDetector
 from src.agents.llm_extractor import (
     EXTRACTABLE_FIELDS,
     compare_with_ground_truth,
     fill_gaps,
-    verify_activity,
+    verify_field,
 )
 from src.flows.state import ConversationState
 
 EVAL_SET_PATH = Path(__file__).resolve().parent.parent / "docs" / "robustness" / "eval-set.json"
+
+# Campos cubiertos por el mecanismo de veto por-campo (docs/multi-agent-
+# refactor-plan.md, generalizacion "A bien montado", 2026-09-10). Debe
+# mantenerse en sync con `supervisor._VETO_FIELD_SPECS` -- duplicado aqui a
+# proposito de forma explicita (no un import cruzado a supervisor.py) porque
+# este script mide el efecto del mecanismo INDEPENDIENTEMENTE de sus flags.
+VETO_FIELDS = ("activity", "is_certified", "is_colombian", "location")
 
 
 def _regex_resolved(intent) -> dict:
@@ -63,20 +70,22 @@ async def run() -> None:
         )
         combined = {**resolved, **patch}
 
-        # Activity veto (docs/multi-agent-refactor-plan.md, hallazgo en vivo
-        # "purple-sun-590", 2026-09-03): solo se dispara si el mensaje es
-        # ambiguo (2+ categorias de patrones), y solo cuando hay una `activity`
-        # resuelta que verificar. Se aplica siempre aqui (no gateado por
-        # settings) para medir el efecto REAL de la Opcion B sobre el eval-set
-        # completo, independientemente de si el flag de cutover esta on/off
-        # en el entorno donde se corre este script.
-        if resolved.get("activity") and len(matched_activity_categories(case["message"])) >= 2:
-            llm_activity = await verify_activity(
-                case["message"], resolved["activity"],
+        # Veto por-campo (docs/multi-agent-refactor-plan.md, generalizacion
+        # "A bien montado", 2026-09-10): se dispara para cada campo resuelto
+        # por el regex ESTE turno (mismo trigger que supervisor._maybe_veto_
+        # resolved_field_via_llm). Se aplica siempre aqui (no gateado por
+        # settings) para medir el efecto REAL del mecanismo sobre el eval-set
+        # completo, independientemente de que flags esten on/off en el
+        # entorno donde se corre este script.
+        for veto_field in VETO_FIELDS:
+            if veto_field not in resolved or veto_field not in regex_intent.detected_fields:
+                continue
+            llm_value = await verify_field(
+                veto_field, case["message"], resolved[veto_field],
                 history=case.get("history"), lang=case.get("lang", "es"),
             )
-            if llm_activity:
-                combined["activity"] = llm_activity
+            if llm_value is not None:
+                combined[veto_field] = llm_value
 
         result = compare_with_ground_truth(combined, case["expected"])
         total_agree += len(result["agree"])

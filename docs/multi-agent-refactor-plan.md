@@ -1757,10 +1757,63 @@ asesor".
   repeticiones del repro completo (conversaciones 905-909)**: 5/5 preguntan la nacionalidad
   correctamente, responden con USD/link directo tras "No", sin ninguna contradicción.
 
+### Conversación real de un cliente (913, 2026-09-10) — "primer nivel de buceo" resolvía a
+### certified_diving en vez de Open Water; motivó la generalización del veto ("A bien montado")
+
+Conversación real detectada por el usuario ("acabo de hacer una nueva conversación, buscala y a
+ver si eres capaz de detectar donde está incorrecta"): "Pues me gustaría sacarme el primer nivel
+de buceo" — el cliente pide explícitamente empezar a certificarse (equivalente a Open Water), pero
+el regex lo resolvía a `certified_diving` y el bot terminaba ofreciendo Minicurso.
+
+- **Causa raíz**: a diferencia de "purple-sun-590" (Fase 9, §7 arriba), esto NO es un vocabulario
+  duplicado y desincronizado entre dos sitios — es vocabulario que **no existe todavía en ningún
+  sitio**. Confirmado con `re.search` directo: ningún patrón de `_PADI_COURSE_PATTERNS` ni del
+  resto de `_ACTIVITY_CATEGORY_PATTERNS` cubre "primer nivel"/"primer curso". El veto de Fase 9
+  (`matched_activity_categories(message) >= 2`) tampoco lo salvaba: la frase solo matcheaba 1
+  categoría (la incorrecta), así que ni se autodiagnosticaba ambigua.
+- **Decisión con el usuario**: no parchear con más regex ("cuando hay un caso nuevo caemos como el
+  Titanic"). Se pidió explícitamente una opción estructural — ampliar el trigger del veto LLM
+  existente (de "mensaje ambiguo" a "campo resuelto este turno") y generalizarlo a un mecanismo
+  único por-campo, reusable para `is_certified`/`is_colombian`/`location` sin repetir código
+  casi-idéntico por campo (ver Fase 11 en §8 para el diseño y los archivos tocados).
+- **Verificación**: caso `conv913-first-level-activity` añadido a `docs/robustness/eval-set.json`
+  con el mensaje real; test end-to-end `test_real_conv_913_message_end_to_end_via_understand`
+  (`tests/test_activity_veto.py`) reproduce el flujo completo de `_understand()` con el veto en
+  cutover. Verificación en vivo contra PRE pendiente hasta activar
+  `llm_activity_veto_shadow_mode`/`_cutover` en el entorno (mismos flags de siempre, comportamiento
+  sin cambios hasta que se activen).
+
 ---
 
 ## 8. Registro de ejecución
 *(Una línea por paso cerrado: fecha · dev · qué · commit. El más reciente arriba.)*
+
+- **2026-09-10 · Gadea (Claude) · Fase 11 — veto LLM por-campo generalizado ("A bien
+  montado").** Hallazgo en vivo en una conversación real (913): "Pues me gustaría sacarme el
+  primer nivel de buceo" resolvía mal a `certified_diving` en vez de `padi_open_water` — a
+  diferencia de "purple-sun-590" (Fase 9), esto NO era vocabulario desincronizado entre dos
+  sitios, era vocabulario que no existía en ningún sitio (`matched_activity_categories` solo
+  matcheaba 1 categoría, la incorrecta, así que el veto de Fase 9 — gateado por "mensaje
+  ambiguo, 2+ categorías" — ni se disparaba). El usuario, tras plantear el riesgo estructural
+  ("cualquier regex nuevo cae como el Titanic ante una frase nueva"), pidió explícitamente
+  generalizar el mecanismo en vez de parchear solo `activity`. Dos cambios:
+  (1) **trigger ampliado**: de "el regex se autodiagnostica ambiguo" a "el campo se resolvió
+  ESTE turno" (`field in regex_intent.detected_fields`, confirmado fiable porque `_understand()`
+  crea un `DetectedIntent` nuevo cada turno) — cierra exactamente el gap de la conv. 913 sin
+  depender de que el regex sepa que se equivocó; (2) **generalización a un mecanismo único
+  por-campo**: `llm_extractor.verify_activity` → `verify_field(field, ...)`,
+  `booking.activity_verification_system_prompt` → `field_verification_system_prompt(field,
+  lang)` (bloques nuevos para `is_certified`/`is_colombian`/`location`, construidos sobre las
+  descripciones ya existentes de `EXTRACTION_TOOL`, cada uno pidiendo explícitamente tener en
+  cuenta variación dialectal/regional), `supervisor._maybe_veto_activity_via_llm` →
+  `_VETO_FIELD_SPECS` + `_maybe_veto_resolved_field_via_llm(field, ...)` genérico (el único
+  side-effect específico de `activity`, fijar `service_id`, se extrajo a `_apply_activity_veto`).
+  6 flags nuevos (`llm_certification/nationality/location_veto_shadow_mode`/`_cutover`), todos
+  `False` por defecto — paridad preventiva pedida por el usuario, sin bug en vivo que los motive
+  todavía (a diferencia de `activity`, que sí tiene evidencia real y mantiene sus flags ya
+  desplegados sin renombrar). 4 casos nuevos en `docs/robustness/eval-set.json` (el mensaje real
+  de la conv. 913 + 3 sintéticos dialectales para is_certified/is_colombian/location). Suite
+  completa (3 modos, 1739 passed/18 skipped) + compileall + ruff en verde.
 
 - **2026-09-03 · Gadea (Claude) · Fase 10 — paso 4 cerrado y verificado en vivo: vocabulario
   compartido de "menciona a otra persona".** El último foco 🔴 del inventario: 6 estructuras

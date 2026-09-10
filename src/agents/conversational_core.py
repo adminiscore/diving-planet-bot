@@ -1426,15 +1426,17 @@ async def _understand(state: ConversationState, message: str) -> tuple:
     prev_refresher = state.refresher_interested
 
     intent = _detector.detect(message, state)
-    # Hallazgo en vivo (conversacion real "purple-sun-590", 2026-09-03): el
-    # regex resuelve `activity` por la primera categoria que matchea (orden
-    # de codigo), no por lo que el cliente realmente pidio -- un mensaje
-    # ambiguo (2+ categorias a la vez, p. ej. "quiero el open water, nunca
-    # he buceado") puede resolver mal sin que ningun mecanismo existente lo
-    # corrija (`fill_gaps`/el cutover por dominio solo rellenan huecos,
-    # nunca tocan un campo que el regex ya resolvio). Gateado por flags,
-    # off por defecto -- ver `supervisor._maybe_veto_activity_via_llm`.
-    await supervisor._maybe_veto_activity_via_llm(message, intent, state)
+    # Hallazgo en vivo (conversacion real "purple-sun-590", 2026-09-03, y
+    # conversacion real 913, 2026-09-10): el regex puede resolver un campo
+    # (activity/is_certified/is_colombian/location) con una frase que no
+    # conoce, sin que ningun mecanismo existente lo corrija (`fill_gaps`/el
+    # cutover por dominio solo rellenan huecos, nunca tocan un campo que el
+    # regex ya resolvio). Un LLM verifica INDEPENDIENTEMENTE cada campo que
+    # se resolvio en ESTE turno y lo corrige si discrepa -- gateado por un
+    # par de flags shadow/cutover POR CAMPO, todos off por defecto. Ver
+    # `supervisor._VETO_FIELD_SPECS`/`_maybe_veto_resolved_field_via_llm`.
+    for _veto_field in supervisor._VETO_FIELD_SPECS:
+        await supervisor._maybe_veto_resolved_field_via_llm(_veto_field, message, intent, state)
     gaps = _relevant_gaps(state, intent, message)
     # Fase 3.4 (reducir llamadas/turno): un saludo puro no tiene slots que
     # extraer → se salta `fill_gaps` (misma rama que "pregunta" o "sin gaps": no

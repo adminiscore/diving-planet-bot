@@ -169,6 +169,21 @@ class Settings(BaseSettings):
     # mismo patron shadow->cutover que los 4 dominios de arriba:
     llm_activity_veto_shadow_mode: bool = False  # mide sin aplicar (loguea discrepancias)
     llm_activity_veto_cutover: bool = False      # aplica de verdad (corrige activity/service_id)
+    # --- Generalizacion del veto por-campo (docs/multi-agent-refactor-plan.md,
+    # hallazgo en vivo conversacion real 913, 2026-09-10) ---
+    # Mismo mecanismo que `llm_activity_veto_*` (ver `supervisor._VETO_FIELD_
+    # SPECS`/`_maybe_veto_resolved_field_via_llm`), extendido a is_certified/
+    # is_colombian/location por pedido explicito del usuario ("por bandera").
+    # A diferencia de `activity` (evidencia real: conv. 913), estos 3 son
+    # paridad PREVENTIVA -- sin bug en vivo que los motive todavia. Los 6
+    # flags off por defecto en todas partes; sin ellos, cada campo es un
+    # no-op inmediato dentro del bucle de `_understand()`, cero coste.
+    llm_certification_veto_shadow_mode: bool = False
+    llm_certification_veto_cutover: bool = False
+    llm_nationality_veto_shadow_mode: bool = False
+    llm_nationality_veto_cutover: bool = False
+    llm_location_veto_shadow_mode: bool = False
+    llm_location_veto_cutover: bool = False
 
     @property
     def is_dev(self) -> bool:

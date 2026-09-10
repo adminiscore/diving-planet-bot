@@ -15,7 +15,7 @@ from src.agents.llm_extractor import (
     fill_gaps,
     missing_fields,
     resolve_slot_answer,
-    verify_activity,
+    verify_field,
 )
 
 # ---------------------------------------------------------------------------
@@ -420,18 +420,22 @@ async def test_resolve_slot_error_returns_empty():
 
 
 # ---------------------------------------------------------------------------
-# verify_activity() -- hallazgo en vivo (conversacion real "purple-sun-590",
-# 2026-09-03): a diferencia de fill_gaps (rellena huecos), esta funcion puede
-# CORREGIR un `activity` que el regex ya resolvio, solo se llama cuando el
-# mensaje es ambiguo (ver supervisor._maybe_veto_activity_via_llm).
+# verify_field() -- hallazgo en vivo (conversacion real "purple-sun-590",
+# 2026-09-03, y conversacion real 913, 2026-09-10): a diferencia de fill_gaps
+# (rellena huecos), esta funcion puede CORREGIR un campo que el regex ya
+# resolvio (ver supervisor._maybe_veto_resolved_field_via_llm). Generica por
+# campo -- nacio como verify_activity (especifica de `activity`) y se
+# generalizo para no repetir esta funcion casi-identica por cada campo
+# verificado (is_certified, is_colombian, location...).
 # ---------------------------------------------------------------------------
 
 @pytest.mark.asyncio
-async def test_verify_activity_returns_llm_value_when_it_disagrees():
+async def test_verify_field_returns_llm_value_when_it_disagrees():
     msg = _FakeMessage(tool_calls=[_FakeToolCall(
         "extract_fields", json.dumps({"activity": "padi_open_water"})
     )])
-    result = await verify_activity(
+    result = await verify_field(
+        "activity",
         "Me gustaria sacarme el open water, pero nunca he buceado",
         "minicourse",
         lang="es", client=_make_client(msg),
@@ -440,13 +444,14 @@ async def test_verify_activity_returns_llm_value_when_it_disagrees():
 
 
 @pytest.mark.asyncio
-async def test_verify_activity_returns_none_when_it_agrees():
+async def test_verify_field_returns_none_when_it_agrees():
     """El LLM coincide con el regex -- nada que vetar, no se aplica ningun
     cambio (aunque el flag de cutover estuviera activo)."""
     msg = _FakeMessage(tool_calls=[_FakeToolCall(
         "extract_fields", json.dumps({"activity": "minicourse"})
     )])
-    result = await verify_activity(
+    result = await verify_field(
+        "activity",
         "quiero hacer un minicurso, nunca he buceado",
         "minicourse",
         lang="es", client=_make_client(msg),
@@ -455,16 +460,16 @@ async def test_verify_activity_returns_none_when_it_agrees():
 
 
 @pytest.mark.asyncio
-async def test_verify_activity_returns_none_when_llm_abstains():
+async def test_verify_field_returns_none_when_llm_abstains():
     msg = _FakeMessage(tool_calls=[_FakeToolCall("extract_fields", json.dumps({}))])
-    result = await verify_activity(
-        "hola, que tal", "minicourse", lang="es", client=_make_client(msg),
+    result = await verify_field(
+        "activity", "hola, que tal", "minicourse", lang="es", client=_make_client(msg),
     )
     assert result is None
 
 
 @pytest.mark.asyncio
-async def test_verify_activity_empty_message_returns_none_without_calling_llm():
+async def test_verify_field_empty_message_returns_none_without_calling_llm():
     class _ShouldNotBeCalled:
         class chat:  # noqa: N801
             class completions:  # noqa: N801
@@ -472,30 +477,30 @@ async def test_verify_activity_empty_message_returns_none_without_calling_llm():
                 async def create(**kwargs):
                     raise AssertionError("must not call the LLM for an empty message")
 
-    result = await verify_activity("   ", "minicourse", client=_ShouldNotBeCalled())
+    result = await verify_field("activity", "   ", "minicourse", client=_ShouldNotBeCalled())
     assert result is None
 
 
 @pytest.mark.asyncio
-async def test_verify_activity_no_tool_call_returns_none():
+async def test_verify_field_no_tool_call_returns_none():
     msg = _FakeMessage(tool_calls=None)
-    result = await verify_activity(
-        "algo raro", "minicourse", lang="es", client=_make_client(msg),
+    result = await verify_field(
+        "activity", "algo raro", "minicourse", lang="es", client=_make_client(msg),
     )
     assert result is None
 
 
 @pytest.mark.asyncio
-async def test_verify_activity_bad_json_returns_none():
+async def test_verify_field_bad_json_returns_none():
     msg = _FakeMessage(tool_calls=[_FakeToolCall("extract_fields", "not json")])
-    result = await verify_activity(
-        "algo raro", "minicourse", lang="es", client=_make_client(msg),
+    result = await verify_field(
+        "activity", "algo raro", "minicourse", lang="es", client=_make_client(msg),
     )
     assert result is None
 
 
 @pytest.mark.asyncio
-async def test_verify_activity_exception_returns_none():
+async def test_verify_field_exception_returns_none():
     class _BoomClient:
         class chat:  # noqa: N801
             class completions:  # noqa: N801
@@ -503,14 +508,14 @@ async def test_verify_activity_exception_returns_none():
                 async def create(**kwargs):
                     raise RuntimeError("boom")
 
-    result = await verify_activity(
-        "algo raro", "minicourse", lang="es", client=_BoomClient(),
+    result = await verify_field(
+        "activity", "algo raro", "minicourse", lang="es", client=_BoomClient(),
     )
     assert result is None
 
 
 @pytest.mark.asyncio
-async def test_verify_activity_uses_extraction_model_not_orchestrator_model():
+async def test_verify_field_uses_extraction_model_not_orchestrator_model():
     captured = {}
 
     class _Completions:
@@ -527,8 +532,48 @@ async def test_verify_activity_uses_extraction_model_not_orchestrator_model():
         chat = _Chat()
 
     from src.config import settings
-    await verify_activity(
-        "quiero el open water, nunca he buceado", "minicourse",
+    await verify_field(
+        "activity", "quiero el open water, nunca he buceado", "minicourse",
         lang="es", client=_Client(),
     )
     assert captured["model"] == settings.extraction_model
+
+
+@pytest.mark.asyncio
+async def test_verify_field_is_certified_returns_llm_value_when_it_disagrees():
+    """Genericidad real: el mismo `verify_field` sirve para is_certified sin
+    ningun cambio de codigo, solo pasando otro `field`."""
+    msg = _FakeMessage(tool_calls=[_FakeToolCall(
+        "extract_fields", json.dumps({"is_certified": True})
+    )])
+    result = await verify_field(
+        "is_certified", "ya llevo el rescue", False,
+        lang="es", client=_make_client(msg),
+    )
+    assert result is True
+
+
+@pytest.mark.asyncio
+async def test_verify_field_is_colombian_false_is_a_valid_disagreement():
+    """False es un valor real (no 'sin senal') -- debe distinguirse de la
+    ausencia del campo/abstencion del LLM."""
+    msg = _FakeMessage(tool_calls=[_FakeToolCall(
+        "extract_fields", json.dumps({"is_colombian": False})
+    )])
+    result = await verify_field(
+        "is_colombian", "soy de españa", True,
+        lang="es", client=_make_client(msg),
+    )
+    assert result is False
+
+
+@pytest.mark.asyncio
+async def test_verify_field_location_returns_llm_value_when_it_disagrees():
+    msg = _FakeMessage(tool_calls=[_FakeToolCall(
+        "extract_fields", json.dumps({"location": "island"})
+    )])
+    result = await verify_field(
+        "location", "estoy en isla grande", "cartagena",
+        lang="es", client=_make_client(msg),
+    )
+    assert result == "island"

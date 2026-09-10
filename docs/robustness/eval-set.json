@@ -1042,7 +1042,10 @@
       "message": "ninguno colombiano",
       "lang": "es",
       "history": [
-        {"role": "assistant", "content": "¿ha pasado más de 2 años desde tu última inmersión?"}
+        {
+          "role": "assistant",
+          "content": "¿ha pasado más de 2 años desde tu última inmersión?"
+        }
       ],
       "expected": {
         "is_colombian": false,
@@ -1056,7 +1059,10 @@
       "message": "ninguno colombiano",
       "lang": "es",
       "history": [
-        {"role": "assistant", "content": "¿tienes alguna certificación de buceo?"}
+        {
+          "role": "assistant",
+          "content": "¿tienes alguna certificación de buceo?"
+        }
       ],
       "expected": {
         "is_colombian": false,
@@ -1070,8 +1076,14 @@
       "message": "desde cartagena",
       "lang": "es",
       "history": [
-        {"role": "user", "content": "somos 6: 2 bucean certificados, 2 hacen minicurso y 2 snorkel"},
-        {"role": "assistant", "content": "perfecto, ¿desde dónde nos escribís?"}
+        {
+          "role": "user",
+          "content": "somos 6: 2 bucean certificados, 2 hacen minicurso y 2 snorkel"
+        },
+        {
+          "role": "assistant",
+          "content": "perfecto, ¿desde dónde nos escribís?"
+        }
       ],
       "expected": {
         "location": "cartagena",
@@ -1085,7 +1097,9 @@
       "message": "Me gustaria sacarme el open water, pero nunca he buceado",
       "lang": "es",
       "category": "ambiguous_compound",
-      "expected": {"activity": "padi_open_water"},
+      "expected": {
+        "activity": "padi_open_water"
+      },
       "source": "conversacion real 'purple-sun-590', 2026-09-03 — hallazgo en vivo",
       "notes": "Mensaje compuesto real: pide explicitamente el curso Open Water, pero 'nunca he buceado' dispara minicourse_patterns ANTES de que se compruebe padi_course_patterns (cadena if/elif de intent_detector.py) -- gana minicurso, no lo que el cliente pidio. Causa raiz del bug real: sin precio/link/itinerario del curso Open Water en toda la conversacion."
     },
@@ -1094,7 +1108,9 @@
       "message": "I want to get my open water, I have never been diving before",
       "lang": "en",
       "category": "ambiguous_compound",
-      "expected": {"activity": "padi_open_water"},
+      "expected": {
+        "activity": "padi_open_water"
+      },
       "source": "variante en ingles del hallazgo en vivo 'purple-sun-590'",
       "notes": "Misma colision que la version en espanol: 'never been diving' dispara minicourse_patterns antes de llegar a padi_course_patterns."
     },
@@ -1103,7 +1119,9 @@
       "message": "Quiero certificarme en open water, nunca he practicado buceo",
       "lang": "es",
       "category": "ambiguous_compound",
-      "expected": {"activity": "padi_open_water"},
+      "expected": {
+        "activity": "padi_open_water"
+      },
       "source": "variante del hallazgo en vivo 'purple-sun-590'",
       "notes": "Otra frase compuesta plausible con la misma colision minicurso-vs-open-water."
     },
@@ -1112,7 +1130,9 @@
       "message": "Me interesa el curso PADI, no se bucear",
       "lang": "es",
       "category": "ambiguous_compound",
-      "expected": {"activity": "padi_course"},
+      "expected": {
+        "activity": "padi_course"
+      },
       "source": "variante del hallazgo en vivo 'purple-sun-590' (sin nivel especifico nombrado)",
       "notes": "Sin nivel PADI especifico, 'padi_course' generico es la respuesta correcta (el propio flujo pregunta luego por el nivel) -- hoy resuelve a minicurso, perdiendo que el cliente pidio explicitamente un CURSO PADI."
     },
@@ -1121,7 +1141,9 @@
       "message": "Quiero el open water aunque no soy buzo certificado",
       "lang": "es",
       "category": "ambiguous_compound",
-      "expected": {"activity": "padi_open_water"},
+      "expected": {
+        "activity": "padi_open_water"
+      },
       "source": "variante del hallazgo en vivo 'purple-sun-590'",
       "notes": "Colision distinta: aqui gana certified_diving_patterns (buzo/certificado) en vez de minicourse_patterns, antes de llegar a padi_course_patterns -- mismo bug, otra categoria implicada."
     },
@@ -1130,7 +1152,9 @@
       "message": "I would like the open water course, first time diving for me",
       "lang": "en",
       "category": "ambiguous_compound",
-      "expected": {"activity": "padi_open_water"},
+      "expected": {
+        "activity": "padi_open_water"
+      },
       "source": "variante en ingles del hallazgo en vivo 'purple-sun-590'",
       "notes": "Misma colision minicurso-vs-open-water en ingles, orden de clausulas distinto."
     },
@@ -1139,7 +1163,9 @@
       "message": "Quiero sacarme el open water, no he buceado nunca",
       "lang": "es",
       "category": "ambiguous_compound",
-      "expected": {"activity": "padi_open_water"},
+      "expected": {
+        "activity": "padi_open_water"
+      },
       "source": "variante del hallazgo en vivo 'purple-sun-590' (orden de la clausula invertido)",
       "notes": "Con 'no he buceado nunca' (orden invertido respecto al mensaje real), la colision cambia de categoria (certified_diving_patterns en vez de minicourse_patterns) pero el resultado final es igual de incorrecto."
     },
@@ -1148,7 +1174,9 @@
       "message": "Quisiera hacer el curso advanced, aunque no tengo experiencia",
       "lang": "es",
       "category": "ambiguous_compound",
-      "expected": {"activity": "padi_advanced"},
+      "expected": {
+        "activity": "padi_advanced"
+      },
       "source": "control -- variante que HOY ya resuelve bien, para detectar regresiones del fix",
       "notes": "'no tengo experiencia' no dispara minicourse_patterns (solo 'sin experiencia'/'primera vez' literales) -- ya funciona hoy; el fix de verificacion LLM no debe romperlo."
     },
@@ -1157,9 +1185,51 @@
       "message": "Quiero sacar el rescue, soy primerizo en esto",
       "lang": "es",
       "category": "ambiguous_compound",
-      "expected": {"activity": "padi_rescue"},
+      "expected": {
+        "activity": "padi_rescue"
+      },
       "source": "control -- variante que HOY ya resuelve bien, para detectar regresiones del fix",
       "notes": "'primerizo' no dispara minicourse_patterns -- ya funciona hoy; el fix de verificacion LLM no debe romperlo."
+    },
+    {
+      "id": "conv913-first-level-activity",
+      "message": "Pues me gustaria sacarme el primer nivel de buceo",
+      "lang": "es",
+      "expected": {
+        "activity": "padi_open_water"
+      },
+      "source": "conversacion real 913, 2026-09-10 (hallazgo en vivo: regex resolvia mal a certified_diving)",
+      "notes": "Genuinely-new-phrasing gap; el veto activity-solo-si-ambiguo no lo cubria (matched_activity_categories solo devuelve 1 categoria, la incorrecta). Caso motivador de la generalizacion del veto por-campo."
+    },
+    {
+      "id": "certification-dialect-rescue-colloquial",
+      "message": "ya llevo el rescue, quiero seguir buceando",
+      "lang": "es",
+      "expected": {
+        "is_certified": true
+      },
+      "source": "caso sintetico -- generalizacion del veto por-campo, 2026-09-10",
+      "notes": "Frase dialectal (\"llevo el X\" = tengo el X) no cubierta explicitamente por los patrones existentes de certificacion."
+    },
+    {
+      "id": "nationality-dialect-paisa",
+      "message": "Soy paisa, vivo en Medellin",
+      "lang": "es",
+      "expected": {
+        "is_colombian": true
+      },
+      "source": "caso sintetico -- generalizacion del veto por-campo, 2026-09-10",
+      "notes": "Gentilicio regional colombiano (\"paisa\") no cubierto explicitamente por los patrones de nacionalidad."
+    },
+    {
+      "id": "location-dialect-island-hotel-name",
+      "message": "Estamos hospedados en Isla del Sol",
+      "lang": "es",
+      "expected": {
+        "location": "island"
+      },
+      "source": "caso sintetico -- generalizacion del veto por-campo, 2026-09-10",
+      "notes": "Nombre de hotel/isla especifico sin la palabra isla/rosario explicita en un patron generico."
     }
   ]
 }

@@ -28,8 +28,8 @@ from src.prompts.booking import (
     SIGNALS_TOOL,
     SLOT_RESOLVER_SPEC,
     acknowledgement_system_prompt,
-    activity_verification_system_prompt,
     extraction_system_prompt,
+    field_verification_system_prompt,
     signals_system_prompt,
     slot_resolver_prompt,
     slot_resolver_tool,
@@ -146,19 +146,21 @@ async def fill_gaps(
     return patch
 
 
-async def verify_activity(
+async def verify_field(
+    field: str,
     message: str,
-    regex_activity: str | None,
+    regex_value,
     *,
     history: list[dict] | None = None,
     lang: str = "es",
     client: AsyncOpenAI | None = None,
-) -> str | None:
-    """Solo se llama cuando `intent_detector.matched_activity_categories(message)`
-    dispara 2+ categorias -- el regex resolvio `activity`, pero el mensaje
-    mezcla senales de varias categorias y el resultado pudo depender del
-    ORDEN de comprobacion, no de lo que el cliente pidio de verdad (hallazgo
-    en vivo, conversacion real "purple-sun-590", 2026-09-03).
+):
+    """Verificacion generica de UN campo que el regex ya resolvio, para el
+    mecanismo de veto por-campo (ver `supervisor._maybe_veto_resolved_field_via_llm`).
+    Nacio como `verify_activity`, especifica de `activity` (hallazgo en vivo,
+    conversacion real "purple-sun-590", 2026-09-03), y se generalizo
+    (conversacion real 913, 2026-09-10) para no repetir esta funcion
+    casi-identica por cada campo verificado.
 
     A diferencia de `fill_gaps` (que solo rellena huecos y nunca toca un
     campo ya resuelto), esta funcion pregunta al LLM de forma independiente
@@ -169,7 +171,7 @@ async def verify_activity(
     """
     if not message or not message.strip():
         return None
-    messages: list[dict] = [{"role": "system", "content": activity_verification_system_prompt(lang)}]
+    messages: list[dict] = [{"role": "system", "content": field_verification_system_prompt(field, lang)}]
     for turn in (history or [])[-settings.history_retrieval_enrichment_window:]:
         role = turn.get("role")
         content = turn.get("content")
@@ -193,16 +195,16 @@ async def verify_activity(
             return None
         args = json.loads(tool_calls[0].function.arguments or "{}")
     except (json.JSONDecodeError, TypeError, AttributeError, IndexError) as exc:
-        logger.warning(f"[LLM_EXTRACTOR][ACTIVITY_VETO] malformed response: {exc}")
+        logger.warning(f"[LLM_EXTRACTOR][{field.upper()}_VETO] malformed response: {exc}")
         return None
     except Exception as exc:  # noqa: BLE001
-        logger.warning(f"[LLM_EXTRACTOR][ACTIVITY_VETO] error: {exc}")
+        logger.warning(f"[LLM_EXTRACTOR][{field.upper()}_VETO] error: {exc}")
         return None
 
-    llm_activity = (args or {}).get("activity")
-    if not llm_activity or llm_activity == regex_activity:
+    llm_value = (args or {}).get(field)
+    if llm_value in (None, "", [], {}) or llm_value == regex_value:
         return None
-    return llm_activity
+    return llm_value
 
 
 def compare_with_ground_truth(patch: dict, expected: dict) -> dict:

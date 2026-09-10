@@ -995,3 +995,63 @@ usuario tras la verificación en vivo del repro real.
 **Siguiente paso concreto**: verificar en vivo contra PRE el repro exacto (curso Open
 Water + "nunca he buceado" + pregunta de itinerario) con el flag de cutover activo antes
 de decidir el rollout.
+
+## 2026-09-10 — Fase 11: veto LLM generalizado por-campo, "A bien montado" (Gadea, agent-arch)
+
+**Origen**: conversación real (913) detectada y auditada por el usuario — "Pues me gustaría
+sacarme el primer nivel de buceo" resolvía a `certified_diving` en vez de `padi_open_water`.
+A diferencia de Fase 9, esto NO era vocabulario duplicado sin sincronizar: era vocabulario
+que ningún regex conocía todavía (`matched_activity_categories` solo matcheaba 1 categoría,
+la incorrecta), así que el trigger de Fase 9 ("mensaje ambiguo, 2+ categorías") ni se
+disparaba. El usuario resumió el riesgo de fondo: cualquier lista de regex, por bien
+mantenida que esté, siempre falla ante una frase nueva que nadie escribió ("caemos como el
+Titanic"), y pidió explícitamente una solución estructural en vez de otro parche puntual —
+además de extender el mismo patrón a `is_certified`/`is_colombian`/`location` ("punto 6 por
+bandera"), sin repetir la función casi-idéntica por cada campo.
+
+**Diseño (2 cambios independientes)**:
+1. **Trigger ampliado**: de "el regex se autodiagnostica ambiguo" a "el campo se resolvió
+   ESTE turno" — `field in regex_intent.detected_fields`. Confirmado fiable leyendo
+   `conversational_core._understand()`: `intent = _detector.detect(message, state)` crea un
+   `DetectedIntent` NUEVO cada turno, así que ese chequeo distingue de forma correcta "recién
+   resuelto" de "ya venía resuelto de un turno anterior" sin depender de que el propio regex
+   sepa que se equivocó. Cierra exactamente el gap de la conversación 913.
+2. **Generalización a un mecanismo único por-campo** (para no repetir, al nivel del propio
+   fix, el mismo anti-patrón de "lógica duplicada que se desincroniza" que motivó la
+   auditoría regex de Fase 10): `llm_extractor.verify_activity` → `verify_field(field,
+   message, regex_value, ...)`; `prompts/booking.activity_verification_system_prompt` →
+   `field_verification_system_prompt(field, lang)` (dispatch por campo, mismo texto de
+   `activity` sin cambios + bloques nuevos para `is_certified`/`is_colombian`/`location`,
+   basados en las descripciones ya existentes de `EXTRACTION_TOOL`, cada uno con una línea
+   explícita pidiendo tener en cuenta variación dialectal/regional); `supervisor.
+   _maybe_veto_activity_via_llm` → `_VETO_FIELD_SPECS` (tabla campo→par de flags→side-effect
+   opcional) + `_maybe_veto_resolved_field_via_llm(field, ...)` genérico. El único
+   side-effect específico de `activity` (fijar `service_id` vía `_ACTIVITY_TO_SERVICE_ID`) se
+   extrajo a `_apply_activity_veto`, pasado como `apply` en su spec — el resto de campos no
+   tiene side-effect, asignación directa.
+
+**Flags**: los de `activity` (`llm_activity_veto_shadow_mode`/`_cutover`) NO se renombraron —
+mismo nombre, solo cambia su condición de disparo internamente, para no requerir migración de
+variables de entorno en el VPS. 6 flags nuevos, uno por par y por campo
+(`llm_certification_veto_*`, `llm_nationality_veto_*`, `llm_location_veto_*`), todos `False`
+por defecto — a diferencia de `activity` (evidencia real, conv. 913), estos 3 son paridad
+PREVENTIVA sin bug en vivo que los motive todavía.
+
+**Eval-set**: 4 casos nuevos en `docs/robustness/eval-set.json` — el mensaje real de la
+conversación 913 (`conv913-first-level-activity`, `activity`→`padi_open_water`) y 3
+sintéticos con fraseo dialectal para medir el mecanismo en los campos nuevos
+(`certification-dialect-rescue-colloquial`: "ya llevo el rescue" → `is_certified=true`;
+`nationality-dialect-paisa`: "soy paisa" → `is_colombian=true`;
+`location-dialect-island-hotel-name`: nombre de hotel de isla sin la palabra "isla"/"rosario"
+explícita → `location=island`). `scripts/run_extraction_eval.py` generalizado para medir los
+4 campos (antes solo `activity`), con el mismo trigger "resuelto este turno".
+
+Suite completa (3 modos, 1739 passed/18 skipped) + compileall + ruff en verde.
+
+**Qué quedó a medias / bloqueadores**: correr `run_extraction_eval.py` contra un entorno con
+API key real para medir agreement antes/después en los 4 campos (pendiente, necesita
+`ENV_FILE=.env.dev` o ejecución en el VPS); verificación en vivo contra PRE del repro exacto
+de la conversación 913 con `llm_activity_veto_shadow_mode`/`_cutover` activos; decisión
+conjunta con el usuario sobre si activar shadow-mode para `is_certified`/`is_colombian`/
+`location` una vez haya datos del eval-set (ninguno de los 3 tiene evidencia de bug real
+todavía, así que no hay urgencia).

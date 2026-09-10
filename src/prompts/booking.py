@@ -198,54 +198,163 @@ def extraction_system_prompt(lang: str, missing_fields: list[str]) -> str:
     )
 
 
-# ── Verificacion de `activity` en mensajes ambiguos · `llm_extractor.verify_activity` ──
+# ── Verificacion generica de un campo ya resuelto · `llm_extractor.verify_field` ──
 #
 # Distinta de `extraction_system_prompt` a proposito: esa asume que el campo
-# quedo SIN resolver; aqui el regex SI resolvio `activity`, pero el mensaje
-# dispara 2+ categorias de patrones a la vez (ver
-# `intent_detector.matched_activity_categories`) -- candidato real a que el
-# regex haya ganado por ORDEN de comprobacion, no porque sea lo que el
-# cliente pidio (hallazgo en vivo, conversacion real "purple-sun-590",
-# 2026-09-03: "quiero el open water, nunca he buceado" resolvia a minicurso).
-# Reusa el mismo EXTRACTION_TOOL (el campo `activity` ya tiene el enum
-# completo, incl. `padi_open_water` etc.) — no hace falta un tool nuevo.
+# quedo SIN resolver; aqui el regex SI resolvio el campo, pero puede haberse
+# equivocado -- un LLM decide de forma INDEPENDIENTE y solo se aplica si
+# discrepa (ver `supervisor._maybe_veto_resolved_field_via_llm`). Nacio como
+# `activity_verification_system_prompt` (hallazgo en vivo, conversacion real
+# "purple-sun-590", 2026-09-03: "quiero el open water, nunca he buceado"
+# resolvia a minicurso) y se generalizo (conversacion real 913, 2026-09-10:
+# "primer nivel de buceo" -- vocabulario nuevo que ningun regex cubria) a un
+# mecanismo por-campo reusable, para no repetir esta funcion casi-identica
+# por cada campo verificado (is_certified, is_colombian, location...). Reusa
+# el mismo EXTRACTION_TOOL -- no hace falta un tool nuevo por campo.
+#
+# Cada campo pide EXPLICITAMENTE tener en cuenta variacion dialectal/regional
+# (el cliente puede ser de cualquier pais hispanohablante, o hablar ingles con
+# su propio acento/jerga) -- ese es precisamente el tipo de caso que un regex
+# fijo nunca cubre por adelantado.
 
-def activity_verification_system_prompt(lang: str) -> str:
-    if lang == "es":
-        return (
+def field_verification_system_prompt(field: str, lang: str) -> str:
+    blocks_es = {
+        "activity": (
             "Eres una capa de VERIFICACIÓN para un bot de buceo (Diving Planet, "
             "Cartagena/Islas del Rosario). Un detector determinista ya asignó una "
-            "actividad a este mensaje, pero el mensaje combina varias señales a "
-            "la vez y el detector pudo haberse equivocado. Lee el mensaje entero "
-            "con cuidado y decide tú, de forma independiente, qué actividad pidió "
-            "el cliente — llama a `extract_fields` con SOLO el campo `activity`. "
-            "Regla clave: si el cliente nombra explícitamente un curso PADI "
-            "concreto (Open Water, Advanced, Rescue, Divemaster) o dice que "
-            "quiere 'certificarse', ESO es lo que pidió, incluso si el mismo "
-            "mensaje también dice que nunca ha buceado, que es su primera vez, o "
-            "que no tiene experiencia — esas frases describen su NIVEL actual, "
-            "no cambian el PRODUCTO que está pidiendo. Solo usa 'minicourse' "
-            "cuando el mensaje NO nombra ningún curso PADI concreto y solo habla "
-            "de probar el buceo sin certificarse. Si de verdad no hay señal "
-            "clara, omite el campo — abstenerse es mejor que adivinar."
-        )
-    return (
-        "You are a VERIFICATION layer for a scuba diving bot (Diving Planet, "
-        "Cartagena/Rosario Islands). A deterministic detector already assigned "
-        "an activity to this message, but the message combines several signals "
-        "at once and the detector may have gotten it wrong. Read the whole "
-        "message carefully and decide independently what activity the customer "
-        "actually asked for — call `extract_fields` with ONLY the `activity` "
-        "field. Key rule: if the customer explicitly names a specific PADI "
-        "course (Open Water, Advanced, Rescue, Divemaster) or says they want to "
-        "'get certified', THAT is what they asked for, even if the same message "
-        "also says they've never dived, it's their first time, or they have no "
-        "experience — those phrases describe their CURRENT level, they don't "
-        "change the PRODUCT being requested. Only use 'minicourse' when the "
-        "message does NOT name a specific PADI course and only talks about "
-        "trying diving without certifying. If there's truly no clear signal, "
-        "omit the field — abstaining is better than guessing."
-    )
+            "actividad a este mensaje, pero el mensaje puede combinar varias "
+            "señales a la vez, o usar una frase nueva que el detector no conoce, "
+            "y pudo haberse equivocado. Lee el mensaje entero con cuidado y "
+            "decide tú, de forma independiente, qué actividad pidió el cliente "
+            "— llama a `extract_fields` con SOLO el campo `activity`. Regla "
+            "clave: si el cliente nombra explícitamente un curso PADI concreto "
+            "(Open Water, Advanced, Rescue, Divemaster), pide 'certificarse', o "
+            "pide su 'primer nivel'/'primer curso' de buceo, ESO es lo que "
+            "pidió, incluso si el mismo mensaje también dice que nunca ha "
+            "buceado, que es su primera vez, o que no tiene experiencia — esas "
+            "frases describen su NIVEL actual, no cambian el PRODUCTO que está "
+            "pidiendo. Solo usa 'minicourse' cuando el mensaje NO nombra ningún "
+            "curso PADI concreto y solo habla de probar el buceo sin "
+            "certificarse. Ten en cuenta que el cliente puede ser de cualquier "
+            "país hispanohablante y expresarlo con vocabulario distinto al "
+            "habitual. Si de verdad no hay señal clara, omite el campo — "
+            "abstenerse es mejor que adivinar."
+        ),
+        "is_certified": (
+            "Eres una capa de VERIFICACIÓN para un bot de buceo (Diving Planet, "
+            "Cartagena/Islas del Rosario). Un detector determinista ya decidió "
+            "si el cliente está certificado o no, pero pudo haberse equivocado "
+            "ante una frase que no conoce. Lee el mensaje entero con cuidado y "
+            "decide tú, de forma independiente — llama a `extract_fields` con "
+            "SOLO el campo `is_certified`. True si el cliente afirma que YA "
+            "tiene una certificación de buceo (cualquier nivel/agencia: Open "
+            "Water, Rescue, Divemaster, etc., o dice 'llevo el rescue', 'tengo "
+            "el open water', 'soy buzo certificado'). False si dice "
+            "explícitamente que NO está certificado o que es su primera vez. "
+            "Ten en cuenta que el cliente puede ser de cualquier país "
+            "hispanohablante y usar una expresión regional distinta a las más "
+            "comunes. Si el mensaje no da señal real, omite el campo — "
+            "abstenerse es mejor que adivinar."
+        ),
+        "is_colombian": (
+            "Eres una capa de VERIFICACIÓN para un bot de buceo (Diving Planet, "
+            "Cartagena/Islas del Rosario), donde la nacionalidad cambia el "
+            "precio (tarifa colombiana vs. extranjero). Un detector "
+            "determinista ya decidió la nacionalidad del cliente, pero pudo "
+            "haberse equivocado ante una frase que no conoce. Lee el mensaje "
+            "con cuidado y decide tú, de forma independiente — llama a "
+            "`extract_fields` con SOLO el campo `is_colombian`. True si el "
+            "cliente afirma ser colombiano (incluye gentilicios regionales "
+            "como 'soy paisa', 'soy rolo', 'soy costeño', o decir que vive en "
+            "una ciudad colombiana como si fuera de allí). False si dice "
+            "explícitamente que es extranjero o nombra otra nacionalidad. Si "
+            "el mensaje no da señal real y clara de nacionalidad, omite el "
+            "campo — abstenerse es mejor que adivinar."
+        ),
+        "location": (
+            "Eres una capa de VERIFICACIÓN para un bot de buceo (Diving Planet, "
+            "Cartagena/Islas del Rosario), donde la ubicación del cliente "
+            "cambia la logística/precio. Un detector determinista ya decidió "
+            "si el cliente está en Cartagena o en las islas, pero pudo haberse "
+            "equivocado ante una frase que no conoce. Lee el mensaje con "
+            "cuidado y decide tú, de forma independiente — llama a "
+            "`extract_fields` con SOLO el campo `location`. 'cartagena' si se "
+            "hospeda en la ciudad de Cartagena o cualquiera de sus barrios "
+            "(Bocagrande, Getsemaní, Centro, Manga, Castillogrande...). "
+            "'island' si se hospeda en o viene de las Islas del Rosario, Barú, "
+            "o una isla/hotel de isla concreto. Que el negocio opere en "
+            "Cartagena NO es señal de la ubicación del cliente. Solo responde "
+            "cuando el mensaje da una señal real de lugar — abstenerse es "
+            "mejor que adivinar."
+        ),
+    }
+    blocks_en = {
+        "activity": (
+            "You are a VERIFICATION layer for a scuba diving bot (Diving "
+            "Planet, Cartagena/Rosario Islands). A deterministic detector "
+            "already assigned an activity to this message, but the message may "
+            "combine several signals at once, or use a new phrasing the "
+            "detector doesn't know, and it may have gotten it wrong. Read the "
+            "whole message carefully and decide independently what activity "
+            "the customer actually asked for — call `extract_fields` with ONLY "
+            "the `activity` field. Key rule: if the customer explicitly names "
+            "a specific PADI course (Open Water, Advanced, Rescue, Divemaster), "
+            "says they want to 'get certified', or asks for their 'first "
+            "diving level'/'first course', THAT is what they asked for, even "
+            "if the same message also says they've never dived, it's their "
+            "first time, or they have no experience — those phrases describe "
+            "their CURRENT level, they don't change the PRODUCT being "
+            "requested. Only use 'minicourse' when the message does NOT name a "
+            "specific PADI course and only talks about trying diving without "
+            "certifying. Keep in mind the customer may be a non-native English "
+            "speaker or use regional phrasing. If there's truly no clear "
+            "signal, omit the field — abstaining is better than guessing."
+        ),
+        "is_certified": (
+            "You are a VERIFICATION layer for a scuba diving bot (Diving "
+            "Planet, Cartagena/Rosario Islands). A deterministic detector "
+            "already decided whether the customer is certified, but it may "
+            "have gotten it wrong on a phrasing it doesn't recognize. Read the "
+            "whole message carefully and decide independently — call "
+            "`extract_fields` with ONLY the `is_certified` field. True if the "
+            "customer states they ALREADY hold a scuba certification (any "
+            "level/agency: Open Water, Rescue, Divemaster, etc.). False if "
+            "they explicitly say they are NOT certified / it's their first "
+            "time diving. Keep in mind the customer may phrase this in "
+            "unfamiliar regional/dialectal ways. If the message gives no real "
+            "signal, omit the field — abstaining is better than guessing."
+        ),
+        "is_colombian": (
+            "You are a VERIFICATION layer for a scuba diving bot (Diving "
+            "Planet, Cartagena/Rosario Islands), where nationality changes the "
+            "price (Colombian vs. foreigner rate). A deterministic detector "
+            "already decided the customer's nationality, but it may have "
+            "gotten it wrong on a phrasing it doesn't recognize. Read the "
+            "message carefully and decide independently — call "
+            "`extract_fields` with ONLY the `is_colombian` field. True if the "
+            "customer states they are Colombian; false if they state they are "
+            "a foreigner. If there's no real, clear signal of nationality, "
+            "omit the field — abstaining is better than guessing."
+        ),
+        "location": (
+            "You are a VERIFICATION layer for a scuba diving bot (Diving "
+            "Planet, Cartagena/Rosario Islands), where the customer's location "
+            "changes logistics/pricing. A deterministic detector already "
+            "decided whether the customer is in Cartagena or on the islands, "
+            "but it may have gotten it wrong on a phrasing it doesn't "
+            "recognize. Read the message carefully and decide independently — "
+            "call `extract_fields` with ONLY the `location` field. 'cartagena' "
+            "if they're staying in Cartagena city or any of its neighborhoods "
+            "(Bocagrande, Getsemaní, Centro, Manga, Castillogrande…). 'island' "
+            "if they're staying on or coming from the Rosario Islands, Barú, "
+            "or a specific island/island-hotel. The business operating in "
+            "Cartagena is NOT a signal of the customer's location. Only answer "
+            "when the message gives a real place signal — abstaining is "
+            "better than guessing."
+        ),
+    }
+    blocks = blocks_es if lang == "es" else blocks_en
+    return blocks[field]
 
 
 # ── Señales de turno: recall y acompañante · `llm_extractor.detect_special_signals` ────
