@@ -1,5 +1,7 @@
 """Pure serialize/deserialize round-trip tests for state_store — no Redis needed."""
 
+import json
+
 from src.agents.intent_detector import DetectedIntent
 from src.flows.state import ConversationState, Step
 from src.state_store import deserialize_state, serialize_state
@@ -47,6 +49,34 @@ def test_roundtrip_pending_intent_confirmation_with_detected_intent():
     result = roundtrip(state)
     assert isinstance(result.pending_intent_confirmation, DetectedIntent)
     assert result.pending_intent_confirmation == intent
+
+
+def test_deserialize_state_drops_field_removed_from_dataclass():
+    """Hallazgo en vivo (2026-09-10): `mixed_pending_course_question` se
+    borro de ConversationState como limpieza de codigo muerto (2026-07-29,
+    docs/multi-agent-refactor-plan.md), pero un estado viejo guardado en
+    Redis con ese campo todavia serializado hacia fallar
+    `ConversationState(**data)` con TypeError en CADA poll de esa
+    conversacion, para siempre (hasta expirar el TTL). La deserializacion
+    debe ser tolerante a campos desconocidos -- los descarta, no falla."""
+    raw = json.loads(serialize_state(make_state()))
+    raw["mixed_pending_course_question"] = "algun_valor_viejo"
+    raw["otro_campo_que_ya_no_existe"] = 42
+    result = deserialize_state(json.dumps(raw), conversation_id="test-conv")
+    assert result.conversation_id == "test-conv"
+    assert not hasattr(result, "mixed_pending_course_question")
+
+
+def test_deserialize_state_drops_field_removed_from_detected_intent():
+    """Mismo hallazgo, pero para un campo obsoleto dentro del
+    DetectedIntent envuelto en pending_intent_confirmation."""
+    intent = DetectedIntent(language="es", activity="minicourse")
+    state = make_state(pending_intent_confirmation=intent)
+    raw = json.loads(serialize_state(state))
+    raw["pending_intent_confirmation"]["data"]["campo_obsoleto_de_intent"] = "x"
+    result = deserialize_state(json.dumps(raw), conversation_id="test-conv")
+    assert isinstance(result.pending_intent_confirmation, DetectedIntent)
+    assert result.pending_intent_confirmation.activity == "minicourse"
 
 
 def test_roundtrip_pending_intent_confirmation_none():
