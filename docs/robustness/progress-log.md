@@ -1059,8 +1059,51 @@ disparado. Al revertir el override temporal se descubrió que `.env.pre` en el V
 sesión) — la decisión de Fase 9 que quedaba pendiente. El usuario decidió, con la verificación
 en vivo de hoy en mano, dejarlo activo tal cual en vez de revertir a shadow-mode.
 
-**Qué quedó a medias / bloqueadores**: correr `run_extraction_eval.py` contra un entorno con
-API key real para medir agreement antes/después en los 4 campos (pendiente, necesita
-`ENV_FILE=.env.dev` o ejecución en el VPS); decisión conjunta con el usuario sobre si activar
-shadow-mode para `is_certified`/`is_colombian`/`location` una vez haya datos del eval-set
-(ninguno de los 3 tiene evidencia de bug real todavía, así que no hay urgencia).
+### Corrección urgente (mismo día, 2026-09-10): el trigger ampliado regresionaba `activity` en vivo
+
+Al correr `run_extraction_eval.py` contra PRE con API key real (paso pendiente de arriba), el
+trigger ampliado ("resuelto este turno", sin exigir ambigüedad) mostró una regresión severa:
+`activity` cayó de ~95% a **73%** de agreement. Causa: el trigger ahora llamaba al LLM en TODO
+turno donde `activity` se resuelve — incluidos los casos claros, sin ambigüedad real — y el
+sesgo propio del LLM hacia `minicourse` en mensajes escuetos ("Hola quiero bucear", sin más
+información) sobreescribía el default correcto del regex. Como `LLM_ACTIVITY_VETO_CUTOVER`
+resultó estar YA activo en `.env.pre` de forma preexistente (ver arriba), **esto degradaba
+respuestas reales en PRE en el momento del hallazgo** — desactivado de inmediato
+(`LLM_ACTIVITY_VETO_CUTOVER=false`) tras confirmarlo con el usuario.
+
+**Fix real, en dos partes**:
+1. `activity` recupera su trigger original de Fase 9 (ambigüedad real, `matched_activity_
+   categories(message) >= 2`) a través de un nuevo `should_verify` por-campo en
+   `supervisor._VetoSpec`/`_VETO_FIELD_SPECS` — la generalización a otros campos se mantiene,
+   pero cada campo puede tener su propio criterio de disparo, no solo "resuelto este turno".
+2. El gap real de la conversación 913 se cierra por otra vía, más segura: nuevo patrón en
+   `_PADI_COURSE_PATTERNS` (`intent_detector.py`) para "primer nivel"/"primer curso" (de
+   buceo) — con este patrón, el mensaje real SÍ dispara 2+ categorías genuinamente
+   (`{padi_course, certified_diving}`), así que el trigger de ambigüedad restaurado lo captura
+   sin necesidad de ampliar nada.
+
+**Segundo hallazgo, al re-correr el eval-set tras el fix**: `scripts/run_extraction_eval.py`
+tenía su PROPIA copia de la condición de disparo (sin el `should_verify` nuevo) — exactamente
+el anti-patrón de lógica duplicada que todo este trabajo intentaba evitar, y ocultaba que el
+fix real ya funcionaba. Corregido reusando `supervisor._VETO_FIELD_SPECS` directamente en el
+script en vez de reimplementar la condición.
+
+**Tercer hallazgo**: `tool_choice` forzado no obliga al modelo a respetar el `enum` declarado en
+`EXTRACTION_TOOL` — se observó un caso real donde `activity` volvió `'certificarse'` (ni
+siquiera un valor del enum) en vez de un valor real. `verify_field` ahora descarta cualquier
+valor fuera del enum declarado del campo (degrada a `None`, nunca deja pasar un valor
+inventado).
+
+**Resultado final, verificado en vivo contra PRE tras los 3 fixes**: `activity` 60/63 (95%,
+igual que la Fase 9 original), overall 198/206 (96.1%) — mejor que el 95.0%/97.0% de la Fase 9
+original y muy por encima del 73%/89% del trigger roto. Suite completa (3 modos, 1740
+passed/18 skipped) + compileall + ruff en verde en cada paso.
+
+**Qué quedó a medias / bloqueadores**: `is_colombian` mide 67% de agreement en este eval-set
+(6 agree/2 disagree/1 missed) — dato real, pero el flag sigue en `False` por defecto en todas
+partes (sin urgencia, no hay bug en vivo que lo motive). Antes de considerar activar shadow-mode
+para `is_certified`/`is_colombian`/`location`, revisar esos casos concretos y, si aplica, el
+mismo patrón de "el LLM llamado sin discriminar introduce su propio sesgo" que causó la
+regresión de `activity` — cada campo puede necesitar su propio `should_verify` más estricto que
+"resuelto este turno" antes de activarse en cutover, no asumir que el trigger genérico es
+automáticamente seguro solo porque `activity` lo demostró inseguro.

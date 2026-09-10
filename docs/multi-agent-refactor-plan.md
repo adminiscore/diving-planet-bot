@@ -1814,6 +1814,18 @@ el regex lo resolvía a `certified_diving` y el bot terminaba ofreciendo Minicur
   desplegados sin renombrar). 4 casos nuevos en `docs/robustness/eval-set.json` (el mensaje real
   de la conv. 913 + 3 sintéticos dialectales para is_certified/is_colombian/location). Suite
   completa (3 modos, 1739 passed/18 skipped) + compileall + ruff en verde.
+  **Corrección urgente el mismo día** (ver Fase 11 en `docs/robustness/progress-log.md`): al
+  correr el eval-set con API key real se descubrió que el trigger ampliado regresionaba
+  `activity` de ~95% a 73% (el LLM llamado en TODO turno, no solo ambiguos, introduce su propio
+  sesgo por encima del default correcto del regex) — y como el cutover ya estaba activo en
+  `.env.pre` de forma preexistente, esto degradaba respuestas reales en PRE. Desactivado de
+  inmediato, `activity` recuperó su trigger de ambigüedad original (nuevo `should_verify`
+  por-campo en `_VetoSpec`), y el gap de la conv. 913 se cerró por otra vía (patrón nuevo en
+  `_PADI_COURSE_PATTERNS` para "primer nivel"/"primer curso"). Dos hallazgos adicionales en el
+  camino: `run_extraction_eval.py` tenía su propia copia del trigger (corregido para reusar
+  `supervisor._VETO_FIELD_SPECS` directamente) y `verify_field` no validaba el `enum` declarado
+  (corregido). Resultado final verificado en vivo: `activity` 95%, overall 96.1% — mejor que la
+  Fase 9 original.
 
 - **2026-09-03 · Gadea (Claude) · Fase 10 — paso 4 cerrado y verificado en vivo: vocabulario
   compartido de "menciona a otra persona".** El último foco 🔴 del inventario: 6 estructuras
