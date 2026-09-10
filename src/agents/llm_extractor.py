@@ -204,6 +204,20 @@ async def verify_field(
     llm_value = (args or {}).get(field)
     if llm_value in (None, "", [], {}) or llm_value == regex_value:
         return None
+    # Robustez (hallazgo en vivo, eval-set 2026-09-10): un tool_choice forzado
+    # no obliga al modelo a respetar el `enum` declarado en EXTRACTION_TOOL --
+    # se observo un caso real donde `activity` volvio 'certificarse' (ni
+    # siquiera un valor del enum) en vez de un valor real como
+    # 'padi_open_water'. Si el campo declara enum, se descarta cualquier
+    # valor fuera de el (degrada a None = "nada que vetar", nunca a un valor
+    # inventado) en vez de dejarlo pasar sin validar.
+    field_schema = EXTRACTION_TOOL["function"]["parameters"]["properties"].get(field, {})
+    enum = field_schema.get("enum")
+    if enum is not None and llm_value not in enum:
+        logger.warning(
+            f"[LLM_EXTRACTOR][{field.upper()}_VETO] valor fuera de enum descartado: {llm_value!r}"
+        )
+        return None
     return llm_value
 
 

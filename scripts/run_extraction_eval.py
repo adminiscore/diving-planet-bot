@@ -33,16 +33,20 @@ from src.agents.llm_extractor import (
     fill_gaps,
     verify_field,
 )
+from src.agents.supervisor import _VETO_FIELD_SPECS
 from src.flows.state import ConversationState
 
 EVAL_SET_PATH = Path(__file__).resolve().parent.parent / "docs" / "robustness" / "eval-set.json"
 
-# Campos cubiertos por el mecanismo de veto por-campo (docs/multi-agent-
-# refactor-plan.md, generalizacion "A bien montado", 2026-09-10). Debe
-# mantenerse en sync con `supervisor._VETO_FIELD_SPECS` -- duplicado aqui a
-# proposito de forma explicita (no un import cruzado a supervisor.py) porque
-# este script mide el efecto del mecanismo INDEPENDIENTEMENTE de sus flags.
-VETO_FIELDS = ("activity", "is_certified", "is_colombian", "location")
+# Reusa DIRECTAMENTE `supervisor._VETO_FIELD_SPECS` (mismo trigger `should_
+# verify` por campo, p. ej. la ambiguedad real que `activity` exige) en vez
+# de reimplementar la condicion de disparo aqui -- hallazgo en vivo,
+# 2026-09-10: una primera version de este script SI la reimplemento
+# ("resuelto este turno" a secas, sin el `should_verify` de `activity`), y
+# ese drift exacto (logica duplicada, no sincronizada) hizo que este script
+# midiera un trigger que ya no era el que corria en produccion, ocultando
+# que el fix real (revertir el trigger de activity a ambiguedad) SI
+# funcionaba. No repetir ese error aqui otra vez.
 
 
 def _regex_resolved(intent) -> dict:
@@ -72,13 +76,15 @@ async def run() -> None:
 
         # Veto por-campo (docs/multi-agent-refactor-plan.md, generalizacion
         # "A bien montado", 2026-09-10): se dispara para cada campo resuelto
-        # por el regex ESTE turno (mismo trigger que supervisor._maybe_veto_
-        # resolved_field_via_llm). Se aplica siempre aqui (no gateado por
-        # settings) para medir el efecto REAL del mecanismo sobre el eval-set
-        # completo, independientemente de que flags esten on/off en el
-        # entorno donde se corre este script.
-        for veto_field in VETO_FIELDS:
+        # por el regex ESTE turno Y que pase el `should_verify` de su spec
+        # (para `activity`, ambiguedad real -- ver supervisor.py). Se aplica
+        # siempre aqui (no gateado por settings) para medir el efecto REAL
+        # del mecanismo sobre el eval-set completo, independientemente de
+        # que flags esten on/off en el entorno donde se corre este script.
+        for veto_field, spec in _VETO_FIELD_SPECS.items():
             if veto_field not in resolved or veto_field not in regex_intent.detected_fields:
+                continue
+            if spec.should_verify is not None and not spec.should_verify(case["message"], regex_intent):
                 continue
             llm_value = await verify_field(
                 veto_field, case["message"], resolved[veto_field],

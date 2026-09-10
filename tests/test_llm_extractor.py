@@ -577,3 +577,19 @@ async def test_verify_field_location_returns_llm_value_when_it_disagrees():
         lang="es", client=_make_client(msg),
     )
     assert result == "island"
+
+
+@pytest.mark.asyncio
+async def test_verify_field_discards_value_outside_declared_enum():
+    """Hallazgo en vivo (eval-set, 2026-09-10): tool_choice forzado no obliga
+    al modelo a respetar el `enum` declarado -- se observo 'activity' volver
+    'certificarse' (ni siquiera un valor del enum). Debe descartarse (None),
+    nunca pasar un valor inventado como si fuera real."""
+    msg = _FakeMessage(tool_calls=[_FakeToolCall(
+        "extract_fields", json.dumps({"activity": "certificarse"})
+    )])
+    result = await verify_field(
+        "activity", "quiero certificarme", "minicourse",
+        lang="es", client=_make_client(msg),
+    )
+    assert result is None
