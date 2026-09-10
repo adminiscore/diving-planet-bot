@@ -1201,3 +1201,49 @@ que costaría en serie. El coste ya no escala con el número de campos verificad
 Sobre coste económico: cada veto es una llamada a `gpt-4o-mini` con ~600 tokens de entrada y
 `max_tokens=100` — del orden de $0.0001 por llamada. No es el factor limitante; la latencia sí
 lo era.
+
+**Corrección al párrafo anterior (descubierto en vivo el mismo día)**: el factor limitante real
+no es el dinero ni la latencia, es el **número de peticiones por día**. Durante las pruebas de
+hoy la cuenta agotó el límite diario de OpenAI: `Rate limit reached for gpt-4o-mini ... requests
+per day (RPD): Limit 10000, Used 10000`. Cuentas: un turno consume ~4 peticiones de base y ~5-7
+con los vetos activos, todas contra la MISMA cuota de `gpt-4o-mini` (extracción, notas, señales,
+acuse, resolutor de slots y ahora los vetos compiten entre sí). Eso son ~1.400-2.500 turnos/día,
+o del orden de 200-400 conversaciones diarias, como techo duro. Para PRE sobra; para producción
+real es un número que conviene tener presente antes de añadir más llamadas por turno.
+
+Lo que sí funcionó perfecto: la degradación. Los vetos que se toparon con el 429 cayeron a
+"regex-only" en silencio (`[LLM_EXTRACTOR][*_VETO] error: Error code: 429`), el bot siguió
+respondiendo con normalidad y el contenedor siguió sano — exactamente el contrato defensivo que
+tiene todo el mecanismo desde el principio.
+
+### Bug real de reparto: un grupo de 5 se convertía en uno de 2 (2026-09-10)
+
+Buscando evidencia ANTES de extender el veto a `group_allocation` (en vez de asumir que hacía
+falta), una batería local de repartos mixtos encontró un bug peor que el de `group_size`:
+
+| mensaje | group_size | reparto | suma |
+|---|---|---|---|
+| "vamos 4: **2 certificados**, 1 minicurso y 1 snorkel" | **2** ❌ | `{minicourse:1, snorkel:1}` | 2 |
+| "somos 5: **3 certificados**, 1 minicurso y 1 snorkel" | **2** ❌ | `{minicourse:1, snorkel:1}` | 2 |
+| "somos 6: 2 **bucean** certificados, 2 minicurso, 2 snorkel" | 6 ✅ | completo | 6 |
+
+Causa raíz: `"N certificados"` no matchea `activity_kw` (le falta el verbo, a diferencia de
+`"N bucean certificados"`), así que el Patrón E de 3+ actividades no se activa, cae al Patrón A,
+captura solo las 2 cláusulas que sí ve, y la suma (2) **sobreescribía el total explícito del
+cliente**. Una reserva de 5 personas se convertía en una de 2 — mismo patrón de fallo que la
+§6.bis, con impacto directo en el precio.
+
+**Fix estructural, no una lista de fraseos** (`_set_group_size_from_allocation`): el total solo
+se fija desde el reparto si no había uno o si la suma es MAYOR. Un reparto puede ampliar el
+total (caso real: "2 de buceo y 3 de snorkel", donde el patrón genérico fijaba 2 y el total real
+es 5) pero nunca reducirlo por debajo de lo que el cliente contó. El reparto puede quedar
+incompleto, pero eso es ahora una inconsistencia visible (total 5, reparto suma 2) en vez de una
+pérdida silenciosa de personas. Verificado en vivo contra PRE: los dos casos de arriba resuelven
+ya `group_size` 5 y 4. Suite completa (3 modos, 1760 passed/18 skipped) + compileall + ruff.
+
+**Nota sobre el eval-set y `group_allocation`**: su 91% NO justifica por sí solo un veto — el
+único caso que falla (`hist-followup-must-not-rederive-resolved-group-allocation`) es una
+alucinación de `fill_gaps` leyendo el historial, no un error del regex, y el veto ni siquiera se
+dispararía ahí (solo actúa sobre campos que el REGEX resolvió ese turno). La justificación real
+para el veto de `group_allocation` es otra: los repartos incompletos que quedan tras este fix
+(total correcto, reparto que no suma el total).
