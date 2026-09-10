@@ -4,16 +4,24 @@ real 913, 2026-09-10): `supervisor._maybe_veto_resolved_field_via_llm("activity"
 
 Unlike `_maybe_apply_llm_extraction_cutover` (fills gaps only), this CAN
 correct an `activity` the regex already resolved -- but only when `activity`
-was resolved THIS turn (`"activity" in intent.detected_fields`), not merely
-because the message looks ambiguous (that self-diagnosis guard was replaced --
-see the plan -- because a genuinely NEW phrasing, like conversation 913's
-"primer nivel de buceo", only matches 1 category and would never have
-triggered the old ambiguity check). Critical properties to prove: off by
-default (no LLM call), no value resolved (no LLM call), not resolved THIS
-turn (no LLM call even with flags on), shadow mode logs but never mutates,
-cutover mode mutates activity + service_id (via the `activity`-specific
-`apply` side-effect), agreement means no mutation, and any failure degrades
-silently to regex-only.
+was resolved THIS turn (`"activity" in intent.detected_fields`) AND the
+message genuinely looks ambiguous (`activity`'s `should_verify`,
+`matched_activity_categories(message) >= 2`). A broader trigger ("resolved
+this turn" alone, no ambiguity required) was tried and measured live against
+PRE with a real eval-set run: it regressed `activity` agreement from ~95% to
+73%, because the LLM gets called on every clear-cut turn too and its own bias
+(toward `minicourse` on bare messages) overrides the regex's correct default
+-- see docs/robustness/progress-log.md, Fase 11 "Corrección urgente". The
+genuinely-new-phrasing gap from conversation 913 ("primer nivel de buceo")
+is closed a safer way instead: a new pattern in `_PADI_COURSE_PATTERNS`
+(intent_detector.py) makes that message trigger 2 real categories, so the
+restored ambiguity trigger catches it without widening the LLM call surface.
+Critical properties to prove: off by default (no LLM call), no value
+resolved (no LLM call), not resolved THIS turn (no LLM call even with flags
+on), not ambiguous (no LLM call even with flags on and resolved this turn),
+shadow mode logs but never mutates, cutover mode mutates activity +
+service_id (via the `activity`-specific `apply` side-effect), agreement
+means no mutation, and any failure degrades silently to regex-only.
 """
 
 from unittest.mock import AsyncMock, patch
@@ -62,6 +70,23 @@ async def test_not_resolved_this_turn_skips_llm_call():
     regex sin gastar una llamada LLM."""
     intent = DetectedIntent(activity="snorkel")  # detected_fields default: []
     state = ConversationState(conversation_id="veto-not-this-turn-test")
+
+    with patch.object(supervisor.settings, "llm_activity_veto_cutover", True), \
+         patch.object(supervisor, "verify_field", new=AsyncMock(side_effect=AssertionError("must not be called"))):
+        await _veto(_UNAMBIGUOUS_MSG, intent, state)
+    assert intent.activity == "snorkel"
+
+
+@pytest.mark.asyncio
+async def test_resolved_this_turn_but_not_ambiguous_skips_llm_call():
+    """Regresion medida en vivo (2026-09-10, docs/robustness/progress-log.md
+    Fase 11): resuelto ESTE turno ya NO basta por si solo para `activity` --
+    si el mensaje no dispara 2+ categorias (`_activity_should_verify`), no se
+    llama al LLM aunque `detected_fields` lo marque como recien resuelto.
+    Sin este segundo guard, el eval-set demostro una caida real de
+    ~95% a 73% en produccion."""
+    intent = DetectedIntent(activity="snorkel", detected_fields=["activity"])
+    state = ConversationState(conversation_id="veto-resolved-not-ambiguous-test")
 
     with patch.object(supervisor.settings, "llm_activity_veto_cutover", True), \
          patch.object(supervisor, "verify_field", new=AsyncMock(side_effect=AssertionError("must not be called"))):
