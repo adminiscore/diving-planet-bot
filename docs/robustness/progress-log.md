@@ -1247,3 +1247,46 @@ alucinación de `fill_gaps` leyendo el historial, no un error del regex, y el ve
 dispararía ahí (solo actúa sobre campos que el REGEX resolvió ese turno). La justificación real
 para el veto de `group_allocation` es otra: los repartos incompletos que quedan tras este fix
 (total correcto, reparto que no suma el total).
+
+### Rediseño: todas las verificaciones en UNA sola petición (2026-09-10)
+
+El límite diario obligó a mirar el mecanismo con otros ojos. Headers reales de OpenAI en el
+momento del 429:
+
+```
+x-ratelimit-limit-requests:     10000
+x-ratelimit-remaining-requests: 0
+x-ratelimit-limit-tokens:       200000
+x-ratelimit-remaining-tokens:   199997   ← intactos
+x-ratelimit-reset-requests:     24h6m34s (ventana deslizante, no corte a medianoche)
+```
+
+Es decir: el recurso escaso de la cuenta son las **peticiones**, no los tokens (que se reponen
+cada minuto y estaban prácticamente sin tocar). El diseño de "una petición por campo" gastaba
+justo el recurso limitado y desaprovechaba el abundante — y cada campo nuevo empeoraba la
+proporción. La paralelización de antes arreglaba la latencia pero no el número de peticiones.
+
+**Rediseño** (no un parche): una sola llamada verifica todos los campos elegibles del turno.
+- `booking.py`: el prompt pasa a ser cabecera compartida + reglas POR CAMPO + cierre compartido,
+  componibles. Agrupar 3 campos son 2.235 chars frente a 3.623 de los 3 prompts sueltos.
+- `llm_extractor.verify_fields(fields, message, regex_values, ...)` devuelve solo las
+  discrepancias; `verify_field` queda como atajo de un campo. La validación de enum y el saneado
+  de dicts (nulls de `group_allocation`, igual que en `fill_gaps`) se extraen a
+  `_clean_verified_value` y se aplican por campo.
+- `supervisor._maybe_veto_resolved_fields_via_llm` recolecta los elegibles y hace UNA llamada.
+  **Matiz crítico**: la llamada se hace si algún campo tiene alguna bandera encendida, pero la
+  APLICACIÓN es por campo según SU PROPIA bandera de cutover — un campo en shadow-mode nunca se
+  aplica aunque otro del mismo lote esté en cutover (test dedicado:
+  `tests/test_batched_field_veto.py::test_shadow_and_cutover_fields_in_the_same_call_keep_their_own_semantics`).
+
+Coste por turno, resumido en las tres etapas del día: **en serie** +1.78s y +2 peticiones (2
+campos) → **en paralelo** +0.53s y +3 peticiones (3 campos) → **agrupado** una ida y vuelta y
+**+1 petición** sea cual sea el número de campos. Verificado en vivo que el cableado nuevo
+funciona: un turno con 4 campos elegibles produce UNA sola entrada de log
+(`[LLM_EXTRACTOR][FIELDS_VETO]`) donde antes habría producido 4. Suite completa (3 modos, 1765
+passed/18 skipped).
+
+**Pendiente para cuando se reponga la cuota**: re-medir latencia real del camino agrupado y
+volver a correr el eval-set completo para confirmar que agrupar no degrada el acuerdo por campo
+(el prompt ahora pide varios campos a la vez, y eso podría cambiar cómo responde el modelo —
+hay que medirlo, no asumirlo). Solo después, retomar `group_allocation`.
