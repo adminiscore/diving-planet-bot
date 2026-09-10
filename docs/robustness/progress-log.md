@@ -1170,3 +1170,34 @@ vez con el proceso completo ANTES de decidir cutover — lección aplicada):
 **Estado final en PRE**: `activity` en cutover real (Fase 9+11), `group_size` en cutover real
 (Fase 11, hoy), `is_certified`/`location` en shadow-mode (midiendo), `is_colombian` apagado
 (riesgo documentado, sin should_verify propio todavía).
+
+### Coste real del mecanismo: medido y optimizado (2026-09-10)
+
+Tras activar 4 campos (2 en cutover, 2 en shadow) nadie había medido cuánto cuesta esto por
+turno. Medido en vivo contra PRE (mediana de 3 repeticiones, con calentamiento previo y orden
+alternado — la primera medición sin esas precauciones salía sesgada por el arranque en frío,
+3.29s vs 1.34s para la misma llamada única):
+
+| escenario | sin vetos | con vetos | delta |
+|---|---|---|---|
+| actividad simple (0 vetos disparan) | 3.43s / 4 llam | 3.60s / 4 llam | +0.17s / +0 |
+| multi-campo (2 vetos) | 3.58s / 4 llam | 5.36s / 6 llam | **+1.78s / +2** |
+| conv913 (1 veto) | 3.57s / 4 llam | 4.25s / 5 llam | +0.68s / +1 |
+| group_size (1 veto) | 3.53s / 4 llam | 4.28s / 5 llam | +0.75s / +1 |
+
+Dos conclusiones: (1) cuando no dispara ningún veto el coste es **cero** — el diseño de "solo
+verifica lo que se resolvió ESTE turno" cumple; (2) cada veto que sí dispara costaba ~0.7-0.9s
+y **se sumaban en serie** (`for field in _VETO_FIELD_SPECS: await ...`), así que el peor caso
+crecía linealmente con cada campo nuevo de la tabla — con los 5 actuales, +4s teóricos sobre un
+turno base de 3.5s, y `group_allocation` era el siguiente candidato.
+
+**Fix**: `asyncio.gather` en el punto de llamada (`conversational_core._understand`). Seguro
+porque las llamadas son independientes: cada spec escribe SU campo y el único side-effect extra
+(`service_id` de `activity`) también es exclusivo suyo. **Verificado en vivo tras desplegar**:
+el caso de 2 vetos baja de +1.78s a +1.21s, y el peor caso real (todos los flags ON, 3 vetos
+disparando en el mismo turno) cuesta **+0.53s en total** (4.83s vs 4.30s) en vez de los ~+2.5s
+que costaría en serie. El coste ya no escala con el número de campos verificados.
+
+Sobre coste económico: cada veto es una llamada a `gpt-4o-mini` con ~600 tokens de entrada y
+`max_tokens=100` — del orden de $0.0001 por llamada. No es el factor limitante; la latencia sí
+lo era.
