@@ -30,7 +30,7 @@ from src.agents.intent_detector import (
     matched_activity_categories,
 )
 from src.agents.lead_summary import build_lead_summary
-from src.agents.llm_extractor import fill_gaps, missing_fields, verify_field
+from src.agents.llm_extractor import fill_gaps, missing_fields, verify_fields
 from src.agents.rag_agent import rag_answer
 from src.config import settings
 from src.flows import cart_render, eligibility
@@ -2372,43 +2372,74 @@ _VETO_FIELD_SPECS = {
 }
 
 
+def _eligible_veto_fields(message: str, regex_intent: DetectedIntent) -> list[str]:
+    """Campos de `_VETO_FIELD_SPECS` que toca verificar en este turno: con
+    alguna de sus 2 banderas encendida, con valor resuelto, marcados como
+    resueltos ESTE turno, y que pasen su `should_verify` propio si lo tienen."""
+    eligible = []
+    for field, spec in _VETO_FIELD_SPECS.items():
+        if not (getattr(settings, spec.shadow_flag) or getattr(settings, spec.cutover_flag)):
+            continue
+        value = getattr(regex_intent, field, None)
+        if value in (None, [], ""):
+            continue  # nada resuelto que vetar (eso ya lo cubre el cutover de huecos)
+        if field not in regex_intent.detected_fields:
+            continue  # no se resolvio ESTE turno -- nada nuevo que verificar
+        if spec.should_verify is not None and not spec.should_verify(message, regex_intent):
+            continue  # trigger especifico del campo (p. ej. ambiguedad de activity)
+        eligible.append(field)
+    return eligible
+
+
+async def _maybe_veto_resolved_fields_via_llm(
+    message: str, regex_intent: DetectedIntent, state: ConversationState,
+    only_fields: list[str] | None = None,
+) -> None:
+    """Verifica en UNA SOLA peticion todos los campos que el regex resolvio
+    este turno y que tengan el veto encendido. Ver el comentario de
+    `_VETO_FIELD_SPECS` arriba para el diseño completo.
+
+    Una peticion para N campos, no N peticiones (medido en vivo 2026-09-10):
+    el recurso escaso de la cuenta son las peticiones/dia (limite RPD
+    agotado con los tokens intactos), asi que agrupar es lo correcto contra
+    el limite real -- y de paso deja una sola ida y vuelta de latencia.
+
+    IMPORTANTE: la LLAMADA se hace si algun campo tiene cualquiera de sus 2
+    banderas, pero la APLICACION es POR CAMPO segun SU PROPIA bandera de
+    cutover -- un campo en shadow-mode nunca se aplica aunque otro campo del
+    mismo lote si este en cutover. Cualquier fallo degrada a "regex-only" en
+    silencio.
+    """
+    fields = _eligible_veto_fields(message, regex_intent)
+    if only_fields is not None:
+        fields = [f for f in fields if f in only_fields]
+    if not fields:
+        return  # cero coste: ni una peticion
+    try:
+        regex_values = {f: getattr(regex_intent, f, None) for f in fields}
+        disagreements = await verify_fields(
+            fields, message, regex_values, history=state.history, lang=state.language,
+        )
+        for field, llm_value in disagreements.items():
+            spec = _VETO_FIELD_SPECS[field]
+            cutover = getattr(settings, spec.cutover_flag)
+            logger.info(
+                f"[EXTRACT][{field.upper()}_VETO] regex={regex_values[field]!r} "
+                f"llm={llm_value!r} applied={cutover} msg={_log_safe_message(message)!r}"
+            )
+            if cutover:
+                setattr(regex_intent, field, llm_value)
+                if spec.apply:
+                    spec.apply(regex_intent, llm_value)
+    except Exception as exc:  # noqa: BLE001
+        logger.warning(f"[EXTRACT][VETO] failed, degrading to regex-only (ignored): {exc}")
+
+
 async def _maybe_veto_resolved_field_via_llm(
     field: str, message: str, regex_intent: DetectedIntent, state: ConversationState
 ) -> None:
-    """Vetta/corrige UN campo (`field`) que el regex ya resolvio este turno,
-    via `llm_extractor.verify_field`. Ver el comentario de `_VETO_FIELD_SPECS`
-    arriba para el diseño completo. Cualquier fallo degrada a "regex-only" en
-    silencio -- esto nunca puede dejar la respuesta peor que antes de que el
-    veto existiera.
-    """
-    spec = _VETO_FIELD_SPECS[field]
-    shadow = getattr(settings, spec.shadow_flag)
-    cutover = getattr(settings, spec.cutover_flag)
-    if not (shadow or cutover):
-        return
-    value = getattr(regex_intent, field, None)
-    if value in (None, [], ""):
-        return  # nada resuelto que vetar (eso ya lo cubre el cutover de huecos)
-    if field not in regex_intent.detected_fields:
-        return  # no se resolvio ESTE turno -- nada nuevo que verificar
-    if spec.should_verify is not None and not spec.should_verify(message, regex_intent):
-        return  # trigger especifico del campo (p. ej. ambiguedad de activity) no se cumple
-    try:
-        llm_value = await verify_field(
-            field, message, value, history=state.history, lang=state.language,
-        )
-        if llm_value is None:
-            return  # el LLM coincide con el regex (o no pudo decidir) -- nada que vetar
-        logger.info(
-            f"[EXTRACT][{field.upper()}_VETO] regex={value!r} llm={llm_value!r} "
-            f"applied={cutover} msg={_log_safe_message(message)!r}"
-        )
-        if cutover:
-            setattr(regex_intent, field, llm_value)
-            if spec.apply:
-                spec.apply(regex_intent, llm_value)
-    except Exception as exc:  # noqa: BLE001
-        logger.warning(f"[EXTRACT][{field.upper()}_VETO] failed, degrading to regex-only (ignored): {exc}")
+    """Atajo de un solo campo sobre `_maybe_veto_resolved_fields_via_llm`."""
+    await _maybe_veto_resolved_fields_via_llm(message, regex_intent, state, only_fields=[field])
 
 
 async def _maybe_log_llm_extraction_shadow(

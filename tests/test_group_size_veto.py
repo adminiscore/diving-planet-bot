@@ -37,7 +37,7 @@ async def test_off_by_default_does_not_call_llm():
     intent = detector.detect(_REAL_BUG_MSG, state)
     assert intent.group_size == 2  # el bug real: subcuenta
 
-    with patch.object(supervisor, "verify_field", new=AsyncMock(side_effect=AssertionError("must not be called"))):
+    with patch.object(supervisor, "verify_fields", new=AsyncMock(side_effect=AssertionError("must not be called"))):
         await supervisor._maybe_veto_resolved_field_via_llm("group_size", _REAL_BUG_MSG, intent, state)
     assert intent.group_size == 2
 
@@ -52,7 +52,7 @@ async def test_shadow_mode_logs_the_real_undercounting_bug_but_never_mutates():
     assert intent.group_size == 2
 
     with patch.object(supervisor.settings, "llm_group_size_veto_shadow_mode", True), \
-         patch.object(supervisor, "verify_field", new=AsyncMock(return_value=4)):
+         patch.object(supervisor, "verify_fields", new=AsyncMock(return_value={"group_size": 4})):
         await supervisor._maybe_veto_resolved_field_via_llm("group_size", _REAL_BUG_MSG, intent, state)
     assert intent.group_size == 2  # shadow: nunca muta
 
@@ -65,7 +65,7 @@ async def test_cutover_mode_would_correct_the_real_undercounting_bug():
     assert intent.group_size == 2
 
     with patch.object(supervisor.settings, "llm_group_size_veto_cutover", True), \
-         patch.object(supervisor, "verify_field", new=AsyncMock(return_value=4)):
+         patch.object(supervisor, "verify_fields", new=AsyncMock(return_value={"group_size": 4})):
         await supervisor._maybe_veto_resolved_field_via_llm("group_size", _REAL_BUG_MSG, intent, state)
     assert intent.group_size == 4
 
@@ -78,7 +78,7 @@ async def test_cutover_mode_no_mutation_when_llm_agrees():
     assert intent.group_size == 2
 
     with patch.object(supervisor.settings, "llm_group_size_veto_cutover", True), \
-         patch.object(supervisor, "verify_field", new=AsyncMock(return_value=None)):
+         patch.object(supervisor, "verify_fields", new=AsyncMock(return_value={})):
         await supervisor._maybe_veto_resolved_field_via_llm("group_size", "somos pareja", intent, state)
     assert intent.group_size == 2
 
@@ -90,6 +90,6 @@ async def test_veto_failure_degrades_silently_to_regex_only():
     intent = detector.detect(_REAL_BUG_MSG, state)
 
     with patch.object(supervisor.settings, "llm_group_size_veto_cutover", True), \
-         patch.object(supervisor, "verify_field", new=AsyncMock(side_effect=RuntimeError("boom"))):
+         patch.object(supervisor, "verify_fields", new=AsyncMock(side_effect=RuntimeError("boom"))):
         await supervisor._maybe_veto_resolved_field_via_llm("group_size", _REAL_BUG_MSG, intent, state)
     assert intent.group_size == 2

@@ -45,7 +45,7 @@ async def test_off_by_default_does_not_call_llm():
     intent = DetectedIntent(activity="minicourse", detected_fields=["activity"])
     state = ConversationState(conversation_id="veto-off-test")
 
-    with patch.object(supervisor, "verify_field", new=AsyncMock(side_effect=AssertionError("must not be called"))):
+    with patch.object(supervisor, "verify_fields", new=AsyncMock(side_effect=AssertionError("must not be called"))):
         await _veto(_AMBIGUOUS_MSG, intent, state)
     assert intent.activity == "minicourse"
 
@@ -58,7 +58,7 @@ async def test_no_activity_resolved_skips_veto():
     state = ConversationState(conversation_id="veto-no-activity-test")
 
     with patch.object(supervisor.settings, "llm_activity_veto_cutover", True), \
-         patch.object(supervisor, "verify_field", new=AsyncMock(side_effect=AssertionError("must not be called"))):
+         patch.object(supervisor, "verify_fields", new=AsyncMock(side_effect=AssertionError("must not be called"))):
         await _veto(_AMBIGUOUS_MSG, intent, state)
     assert intent.activity is None
 
@@ -72,7 +72,7 @@ async def test_not_resolved_this_turn_skips_llm_call():
     state = ConversationState(conversation_id="veto-not-this-turn-test")
 
     with patch.object(supervisor.settings, "llm_activity_veto_cutover", True), \
-         patch.object(supervisor, "verify_field", new=AsyncMock(side_effect=AssertionError("must not be called"))):
+         patch.object(supervisor, "verify_fields", new=AsyncMock(side_effect=AssertionError("must not be called"))):
         await _veto(_UNAMBIGUOUS_MSG, intent, state)
     assert intent.activity == "snorkel"
 
@@ -89,7 +89,7 @@ async def test_resolved_this_turn_but_not_ambiguous_skips_llm_call():
     state = ConversationState(conversation_id="veto-resolved-not-ambiguous-test")
 
     with patch.object(supervisor.settings, "llm_activity_veto_cutover", True), \
-         patch.object(supervisor, "verify_field", new=AsyncMock(side_effect=AssertionError("must not be called"))):
+         patch.object(supervisor, "verify_fields", new=AsyncMock(side_effect=AssertionError("must not be called"))):
         await _veto(_UNAMBIGUOUS_MSG, intent, state)
     assert intent.activity == "snorkel"
 
@@ -100,7 +100,7 @@ async def test_shadow_mode_logs_but_never_mutates():
     state = ConversationState(conversation_id="veto-shadow-test")
 
     with patch.object(supervisor.settings, "llm_activity_veto_shadow_mode", True), \
-         patch.object(supervisor, "verify_field", new=AsyncMock(return_value="padi_open_water")):
+         patch.object(supervisor, "verify_fields", new=AsyncMock(return_value={"activity": "padi_open_water"})):
         await _veto(_AMBIGUOUS_MSG, intent, state)
     assert intent.activity == "minicourse"
     assert intent.service_id == "minicourse"
@@ -112,7 +112,7 @@ async def test_cutover_mode_applies_llm_activity_and_service_id():
     state = ConversationState(conversation_id="veto-cutover-test")
 
     with patch.object(supervisor.settings, "llm_activity_veto_cutover", True), \
-         patch.object(supervisor, "verify_field", new=AsyncMock(return_value="padi_open_water")):
+         patch.object(supervisor, "verify_fields", new=AsyncMock(return_value={"activity": "padi_open_water"})):
         await _veto(_AMBIGUOUS_MSG, intent, state)
     assert intent.activity == "padi_open_water"
     assert intent.service_id == "open_water"
@@ -121,13 +121,13 @@ async def test_cutover_mode_applies_llm_activity_and_service_id():
 
 @pytest.mark.asyncio
 async def test_cutover_mode_no_mutation_when_llm_agrees():
-    """verify_field devuelve None cuando el LLM coincide con el regex --
+    """verify_fields no devuelve el campo cuando el LLM coincide con el regex --
     nada que aplicar."""
     intent = DetectedIntent(activity="minicourse", service_id="minicourse", detected_fields=["activity"])
     state = ConversationState(conversation_id="veto-agree-test")
 
     with patch.object(supervisor.settings, "llm_activity_veto_cutover", True), \
-         patch.object(supervisor, "verify_field", new=AsyncMock(return_value=None)):
+         patch.object(supervisor, "verify_fields", new=AsyncMock(return_value={})):
         await _veto(_AMBIGUOUS_MSG, intent, state)
     assert intent.activity == "minicourse"
     assert intent.service_id == "minicourse"
@@ -139,7 +139,7 @@ async def test_veto_failure_degrades_silently_to_regex_only():
     state = ConversationState(conversation_id="veto-error-test")
 
     with patch.object(supervisor.settings, "llm_activity_veto_cutover", True), \
-         patch.object(supervisor, "verify_field", new=AsyncMock(side_effect=RuntimeError("boom"))):
+         patch.object(supervisor, "verify_fields", new=AsyncMock(side_effect=RuntimeError("boom"))):
         await _veto(_AMBIGUOUS_MSG, intent, state)
     assert intent.activity == "minicourse"
     assert intent.service_id == "minicourse"
@@ -154,7 +154,7 @@ async def test_real_bug_message_end_to_end_via_understand():
 
     state = ConversationState(conversation_id="veto-e2e-test")
     with patch.object(supervisor.settings, "llm_activity_veto_cutover", True), \
-         patch.object(supervisor, "verify_field", new=AsyncMock(return_value="padi_open_water")):
+         patch.object(supervisor, "verify_fields", new=AsyncMock(return_value={"activity": "padi_open_water"})):
         intent, _carry = await _understand(state, _AMBIGUOUS_MSG)
     assert intent.activity == "padi_open_water"
     assert intent.service_id == "open_water"
@@ -171,7 +171,7 @@ async def test_real_conv_913_message_end_to_end_via_understand():
     state = ConversationState(conversation_id="veto-conv913-test")
     msg = "Pues me gustaria sacarme el primer nivel de buceo"
     with patch.object(supervisor.settings, "llm_activity_veto_cutover", True), \
-         patch.object(supervisor, "verify_field", new=AsyncMock(return_value="padi_open_water")):
+         patch.object(supervisor, "verify_fields", new=AsyncMock(return_value={"activity": "padi_open_water"})):
         intent, _carry = await _understand(state, msg)
     assert intent.activity == "padi_open_water"
     assert intent.service_id == "open_water"

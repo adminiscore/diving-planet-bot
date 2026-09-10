@@ -31,7 +31,7 @@ from src.agents.llm_extractor import (
     EXTRACTABLE_FIELDS,
     compare_with_ground_truth,
     fill_gaps,
-    verify_field,
+    verify_fields,
 )
 from src.agents.supervisor import _VETO_FIELD_SPECS
 from src.flows.state import ConversationState
@@ -74,24 +74,25 @@ async def run() -> None:
         )
         combined = {**resolved, **patch}
 
-        # Veto por-campo (docs/multi-agent-refactor-plan.md, generalizacion
-        # "A bien montado", 2026-09-10): se dispara para cada campo resuelto
-        # por el regex ESTE turno Y que pase el `should_verify` de su spec
+        # Veto de campos ya resueltos (docs/multi-agent-refactor-plan.md,
+        # generalizacion "A bien montado" 2026-09-10, agrupado en UNA
+        # peticion el mismo dia): se verifica cada campo resuelto por el
+        # regex ESTE turno que ademas pase el `should_verify` de su spec
         # (para `activity`, ambiguedad real -- ver supervisor.py). Se aplica
         # siempre aqui (no gateado por settings) para medir el efecto REAL
         # del mecanismo sobre el eval-set completo, independientemente de
         # que flags esten on/off en el entorno donde se corre este script.
-        for veto_field, spec in _VETO_FIELD_SPECS.items():
-            if veto_field not in resolved or veto_field not in regex_intent.detected_fields:
-                continue
-            if spec.should_verify is not None and not spec.should_verify(case["message"], regex_intent):
-                continue
-            llm_value = await verify_field(
-                veto_field, case["message"], resolved[veto_field],
+        veto_fields = [
+            f for f, spec in _VETO_FIELD_SPECS.items()
+            if f in resolved and f in regex_intent.detected_fields
+            and (spec.should_verify is None or spec.should_verify(case["message"], regex_intent))
+        ]
+        if veto_fields:
+            disagreements = await verify_fields(
+                veto_fields, case["message"], {f: resolved[f] for f in veto_fields},
                 history=case.get("history"), lang=case.get("lang", "es"),
             )
-            if llm_value is not None:
-                combined[veto_field] = llm_value
+            combined.update(disagreements)
 
         result = compare_with_ground_truth(combined, case["expected"])
         total_agree += len(result["agree"])

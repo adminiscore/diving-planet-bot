@@ -53,7 +53,7 @@ async def test_generic_trigger_would_let_llm_override_correct_negation_case():
     # Simula el error real observado del LLM en este tipo de mensaje
     # (negacion compacta mal interpretada como afirmacion).
     with patch.object(supervisor.settings, "llm_nationality_veto_cutover", True), \
-         patch.object(supervisor, "verify_field", new=AsyncMock(return_value=True)):
+         patch.object(supervisor, "verify_fields", new=AsyncMock(return_value={"is_colombian": True})):
         await supervisor._maybe_veto_resolved_field_via_llm("is_colombian", _NEGATION_MSG, intent, state)
 
     # Comportamiento actual (sin should_verify): el LLM pisa la respuesta

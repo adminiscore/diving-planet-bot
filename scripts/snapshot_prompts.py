@@ -99,13 +99,21 @@ def _collect() -> dict[str, str]:
             )
     add_json("booking/extraction.tool", booking.EXTRACTION_TOOL)
 
-    # ── booking · veto por-campo de valores ya resueltos (verify_field) ──────
-    for field in ("activity", "is_certified", "is_colombian", "location"):
+    # ── booking · veto de valores ya resueltos (verify_fields) ──────────────
+    # Un bloque por campo (el prompt de 1 campo) + la combinacion de TODOS
+    # (el caso agrupado real, 1 peticion para N campos).
+    _veto_fields = ("activity", "is_certified", "is_colombian", "location", "group_size")
+    for field in _veto_fields:
         for lang in LANGS:
             add(
                 f"booking/field_verification.{field}.system.{lang}",
                 booking.field_verification_system_prompt(field, lang),
             )
+    for lang in LANGS:
+        add(
+            f"booking/field_verification.ALL.system.{lang}",
+            booking.fields_verification_system_prompt(list(_veto_fields), lang),
+        )
 
     # ── booking · señales especiales (detect_special_signals) ─────────────────
     for lang in LANGS:

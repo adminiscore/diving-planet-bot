@@ -29,7 +29,7 @@ from src.prompts.booking import (
     SLOT_RESOLVER_SPEC,
     acknowledgement_system_prompt,
     extraction_system_prompt,
-    field_verification_system_prompt,
+    fields_verification_system_prompt,
     signals_system_prompt,
     slot_resolver_prompt,
     slot_resolver_tool,
@@ -146,32 +146,65 @@ async def fill_gaps(
     return patch
 
 
-async def verify_field(
-    field: str,
+def _clean_verified_value(field: str, llm_value):
+    """Normaliza y valida el valor que devolvio el LLM para `field`.
+    Devuelve None si no hay valor utilizable."""
+    # `group_allocation` vuelve con las claves fijas del schema estricto y las
+    # actividades no usadas a null -- mismo tratamiento que en `fill_gaps`.
+    if isinstance(llm_value, dict):
+        llm_value = {k: v for k, v in llm_value.items() if v}
+    if llm_value in (None, "", [], {}):
+        return None
+    # Robustez (hallazgo en vivo, eval-set 2026-09-10): un tool_choice forzado
+    # no obliga al modelo a respetar el `enum` declarado en EXTRACTION_TOOL --
+    # se observo un caso real donde `activity` volvio 'certificarse' (ni
+    # siquiera un valor del enum) en vez de un valor real como
+    # 'padi_open_water'. Si el campo declara enum, se descarta cualquier
+    # valor fuera de el (degrada a "nada que vetar", nunca a un valor
+    # inventado) en vez de dejarlo pasar sin validar.
+    field_schema = EXTRACTION_TOOL["function"]["parameters"]["properties"].get(field, {})
+    enum = field_schema.get("enum")
+    if enum is not None and llm_value not in enum:
+        logger.warning(
+            f"[LLM_EXTRACTOR][{field.upper()}_VETO] valor fuera de enum descartado: {llm_value!r}"
+        )
+        return None
+    return llm_value
+
+
+async def verify_fields(
+    fields: list[str],
     message: str,
-    regex_value,
+    regex_values: dict,
     *,
     history: list[dict] | None = None,
     lang: str = "es",
     client: AsyncOpenAI | None = None,
-):
-    """Verificacion generica de UN campo que el regex ya resolvio, para el
-    mecanismo de veto por-campo (ver `supervisor._maybe_veto_resolved_field_via_llm`).
-    Nacio como `verify_activity`, especifica de `activity` (hallazgo en vivo,
-    conversacion real "purple-sun-590", 2026-09-03), y se generalizo
-    (conversacion real 913, 2026-09-10) para no repetir esta funcion
-    casi-identica por cada campo verificado.
+) -> dict:
+    """Verifica en UNA SOLA peticion varios campos que el regex ya resolvio
+    (ver `supervisor._maybe_veto_resolved_fields_via_llm`). Devuelve un dict
+    {campo: valor_del_llm} SOLO con los campos en los que el LLM DISCREPA del
+    regex; {} si coincide en todos o si la llamada falla.
+
+    Nacio como `verify_activity` (especifica de `activity`, hallazgo en vivo
+    "purple-sun-590" 2026-09-03), se generalizo a `verify_field` por-campo
+    (conversacion real 913, 2026-09-10) y finalmente se agrupo en una sola
+    peticion el mismo dia, al medir que el recurso escaso de la cuenta son
+    las PETICIONES/dia (limite RPD agotado con los tokens intactos), no los
+    tokens: N campos en N peticiones gastaba justo el recurso limitado.
 
     A diferencia de `fill_gaps` (que solo rellena huecos y nunca toca un
     campo ya resuelto), esta funcion pregunta al LLM de forma independiente
-    y devuelve su respuesta SOLO si DISCREPA del regex -- None si coincide
-    (nada que vetar) o si la llamada falla (degrada a regex, mismo patron
-    defensivo que `fill_gaps`: esto nunca puede dejar la respuesta peor que
-    antes de que este veto existiera).
+    y solo reporta lo que discrepa. Cualquier fallo degrada a {} (el llamador
+    se queda con el regex, mismo patron defensivo que `fill_gaps`: esto nunca
+    puede dejar la respuesta peor que antes de que el veto existiera).
     """
-    if not message or not message.strip():
-        return None
-    messages: list[dict] = [{"role": "system", "content": field_verification_system_prompt(field, lang)}]
+    if not fields or not message or not message.strip():
+        return {}
+    log_tag = "_".join(f.upper() for f in fields) if len(fields) == 1 else "FIELDS"
+    messages: list[dict] = [
+        {"role": "system", "content": fields_verification_system_prompt(fields, lang)}
+    ]
     for turn in (history or [])[-settings.history_retrieval_enrichment_window:]:
         role = turn.get("role")
         content = turn.get("content")
@@ -187,38 +220,47 @@ async def verify_field(
             tools=[EXTRACTION_TOOL],
             tool_choice={"type": "function", "function": {"name": "extract_fields"}},
             temperature=0.0,
-            max_tokens=100,
+            # Escala con el numero de campos pedidos (antes 100 fijo para 1).
+            max_tokens=60 + 60 * len(fields),
         )
         choice = response.choices[0].message
         tool_calls = getattr(choice, "tool_calls", None)
         if not tool_calls:
-            return None
+            return {}
         args = json.loads(tool_calls[0].function.arguments or "{}")
     except (json.JSONDecodeError, TypeError, AttributeError, IndexError) as exc:
-        logger.warning(f"[LLM_EXTRACTOR][{field.upper()}_VETO] malformed response: {exc}")
-        return None
+        logger.warning(f"[LLM_EXTRACTOR][{log_tag}_VETO] malformed response: {exc}")
+        return {}
     except Exception as exc:  # noqa: BLE001
-        logger.warning(f"[LLM_EXTRACTOR][{field.upper()}_VETO] error: {exc}")
-        return None
+        logger.warning(f"[LLM_EXTRACTOR][{log_tag}_VETO] error: {exc}")
+        return {}
 
-    llm_value = (args or {}).get(field)
-    if llm_value in (None, "", [], {}) or llm_value == regex_value:
-        return None
-    # Robustez (hallazgo en vivo, eval-set 2026-09-10): un tool_choice forzado
-    # no obliga al modelo a respetar el `enum` declarado en EXTRACTION_TOOL --
-    # se observo un caso real donde `activity` volvio 'certificarse' (ni
-    # siquiera un valor del enum) en vez de un valor real como
-    # 'padi_open_water'. Si el campo declara enum, se descarta cualquier
-    # valor fuera de el (degrada a None = "nada que vetar", nunca a un valor
-    # inventado) en vez de dejarlo pasar sin validar.
-    field_schema = EXTRACTION_TOOL["function"]["parameters"]["properties"].get(field, {})
-    enum = field_schema.get("enum")
-    if enum is not None and llm_value not in enum:
-        logger.warning(
-            f"[LLM_EXTRACTOR][{field.upper()}_VETO] valor fuera de enum descartado: {llm_value!r}"
-        )
-        return None
-    return llm_value
+    disagreements = {}
+    for field in fields:
+        value = _clean_verified_value(field, (args or {}).get(field))
+        # `is_certified=False` / `is_colombian=False` son respuestas reales:
+        # se comparan con `!=`, nunca por truthiness.
+        if value is not None and value != regex_values.get(field):
+            disagreements[field] = value
+    return disagreements
+
+
+async def verify_field(
+    field: str,
+    message: str,
+    regex_value,
+    *,
+    history: list[dict] | None = None,
+    lang: str = "es",
+    client: AsyncOpenAI | None = None,
+):
+    """Atajo de un solo campo sobre `verify_fields`. Devuelve el valor del
+    LLM si discrepa, o None."""
+    result = await verify_fields(
+        [field], message, {field: regex_value},
+        history=history, lang=lang, client=client,
+    )
+    return result.get(field)
 
 
 def compare_with_ground_truth(patch: dict, expected: dict) -> dict:
