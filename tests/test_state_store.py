@@ -4,7 +4,26 @@ import json
 
 from src.agents.intent_detector import DetectedIntent
 from src.flows.state import ConversationState, Step
-from src.state_store import deserialize_state, serialize_state
+from src.state_store import _PROCESSED_TTL, _STATE_TTL, deserialize_state, serialize_state
+
+
+def test_dedup_outlives_the_window_in_which_a_message_can_be_reread():
+    """INCIDENTE REAL (PRE, 2026-09-11): `_PROCESSED_TTL` era 3600 ("1 hour:
+    dedup only needs to survive the webhook/poll race window"), pero
+    `poll_active_conversations_once` RELEE todos los mensajes de cada
+    conversación del set activo cada segundo, durante toda la vida del
+    estado (30 días). Al caducar el dedup a la hora, el bot volvía a
+    responder mensajes ya contestados: ~110/hora las 24h, con respuesta
+    enviada a Chatwoot, y ~14.000 peticiones/día a OpenAI (por encima del
+    límite de 10.000 de la cuenta).
+
+    El invariante que hay que preservar no es un número concreto sino la
+    relación: el marcador de "ya procesado" debe durar al menos tanto como
+    la ventana en la que ese mensaje puede volver a leerse."""
+    assert _PROCESSED_TTL >= _STATE_TTL, (
+        "el dedup debe sobrevivir tanto como el estado: si caduca antes, el "
+        "poller vuelve a responder mensajes ya contestados"
+    )
 
 
 def make_state(**overrides) -> ConversationState:

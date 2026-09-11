@@ -47,7 +47,29 @@ def _drop_unknown_fields(data: dict, known: set[str], *, cls_name: str, conversa
     return {k: v for k, v in data.items() if k in known}
 
 _STATE_TTL = settings.conversation_state_ttl_seconds
-_PROCESSED_TTL = 3600  # 1 hour: dedup only needs to survive the webhook/poll race window
+# El dedup debe sobrevivir TANTO como la ventana en la que el mensaje puede
+# volver a leerse, y esa ventana es la vida del estado (30 dias), no unos
+# segundos de carrera webhook/poll.
+#
+# INCIDENTE REAL (PRE, detectado 2026-09-11): este valor era 3600 con el
+# comentario "1 hour: dedup only needs to survive the webhook/poll race
+# window". Esa suposicion es falsa: `poll_active_conversations_once`
+# (channels/chatwoot.py) recorre CADA conversacion del set activo cada
+# segundo y RELEE todos sus mensajes desde Chatwoot. Pasada 1 hora, el
+# marcador de "ya respondi a este mensaje" caducaba, el mensaje volvia a
+# parecer nuevo, y el bot lo respondia OTRA VEZ -- indefinidamente, mientras
+# el estado siguiera vivo (30 dias). La guarda de antiguedad
+# (`created_at < poll_started_at`) no protege de esto: solo descarta
+# mensajes anteriores a cuando se empezo a vigilar la conversacion, no los
+# que ya se respondieron.
+#
+# Efecto medido: ~110 mensajes/hora reprocesados de forma constante las 24h
+# (incluida la madrugada), sobre conversaciones de hace dias, con respuesta
+# ENVIADA a Chatwoot en proporcion 1:1. Son ~2.600 mensajes/dia ~= 14.000
+# peticiones a OpenAI, que por si solas superan el limite de 10.000 RPD de
+# la cuenta -- de ahi los agotamientos de cuota del 10 y el 11 de septiembre.
+# En produccion habria sido reenviar respuestas a clientes reales cada hora.
+_PROCESSED_TTL = _STATE_TTL
 
 _PREFIX = f"dp:{settings.app_env}:"
 _STATE_KEY = _PREFIX + "state:{id}"
