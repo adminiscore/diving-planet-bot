@@ -1314,3 +1314,56 @@ anterior, que se hicieron en picos.
 completo para confirmar que agrupar no degrada el acuerdo por campo (el prompt ahora pide varios
 campos a la vez y eso podría cambiar cómo responde el modelo — hay que medirlo, no asumirlo), y
 re-medir la latencia real del camino agrupado. Solo después, retomar `group_allocation`.
+
+## 2026-09-11 — INCIDENTE: el bot llevaba ≥12h re-respondiendo conversaciones antiguas en bucle
+
+Al intentar correr el eval-set con la cuota ya repuesta (9.998 disponibles), la tanda murió con
+429 diciendo "Used 10000". 10.000 peticiones en ~20 minutos no cuadraban con un eval de ~214, así
+que se investigó el origen en vez de asumir.
+
+**Lo que estaba pasando** (medido, no deducido):
+
+```
+procesados por hora, últimas 12h:
+22h:109  23h:116  00h:102  01h:107  02h:111  03h:110
+04h:110  05h:115  06h:109  07h:104  08h:107  09h:107
+```
+
+~110 mensajes/hora, constante, **las 24 horas incluida la madrugada** — nadie escribe a las 3am.
+El contenido eran mensajes **antiguos** de conversaciones de días atrás (conv 492 "no somos
+colombianos" msg 9315, conv 510 "hola quiero bucear certificado" msg 9369...), y se **enviaba
+respuesta a Chatwoot en proporción 1:1** (16 procesados = 16 enviados en 10 min). 545 procesados
+en 5h con 375 ids únicos: reproceso real, no tráfico nuevo.
+
+**Causa raíz**: `_PROCESSED_TTL = 3600` con el comentario *"1 hour: dedup only needs to survive
+the webhook/poll race window"*. La suposición es falsa: `poll_active_conversations_once`
+(`channels/chatwoot.py`) recorre **cada** conversación del set activo **cada segundo** y relee
+todos sus mensajes desde Chatwoot, durante toda la vida del estado (**30 días**). Pasada 1 hora
+el marcador de "ya respondí" caducaba, el mensaje volvía a parecer nuevo, y se respondía otra
+vez — indefinidamente. La guarda de antigüedad (`created_at < poll_started_at`) no protege de
+esto: solo descarta mensajes anteriores a cuando se empezó a vigilar la conversación, no los ya
+respondidos.
+
+**Impacto**: ~2.600 mensajes/día ≈ **14.000 peticiones a OpenAI**, que por sí solas superan el
+límite de 10.000 RPD de la cuenta. Esto explica los agotamientos de cuota del 10 y 11 de
+septiembre que se habían atribuido a las pruebas propias — las pruebas contribuyeron, pero el
+consumidor dominante era este bucle. Y en producción habría supuesto **reenviar respuestas a
+clientes reales cada hora**: bloqueante de lanzamiento, no una molestia.
+
+**Mitigación aplicada primero** (parar la sangría): adelantar `poll_started_at` a "ahora" en las
+708 conversaciones, lo que activa la guarda de antigüedad del propio sistema para todo lo
+existente sin borrar nada y sin afectar a mensajes nuevos. Verificado: de ~7 mensajes cada 4 min
+a **0**. (Un primer intento de podar el set activo NO funcionó: `save_state` re-añade la
+conversación al set cada vez que la procesa, así que se repoblaba sola.)
+
+**Fix de raíz**: `_PROCESSED_TTL = _STATE_TTL` — el marcador de "ya procesado" vive tanto como la
+ventana en la que ese mensaje puede volver a leerse. El test nuevo
+(`test_dedup_outlives_the_window_in_which_a_message_can_be_reread`) fija el **invariante**
+(`_PROCESSED_TTL >= _STATE_TTL`), no el número concreto. Suite completa (3 modos, 1766 passed/18
+skipped). Desplegado y verificado en PRE: 0 procesados y 0 enviados en los 4 min posteriores.
+
+**Consecuencia para la cuota**: con el bucle cortado, el consumo de base de PRE pasa de ~14.000
+peticiones/día a prácticamente cero salvo pruebas reales. La cuota del 11 quedó igualmente
+agotada (18 restantes, reset 23h57m) por las horas que el bucle estuvo activo, así que la
+validación del rediseño agrupado se pospone otra vez — pero a partir de mañana debería haber
+margen de verdad.
