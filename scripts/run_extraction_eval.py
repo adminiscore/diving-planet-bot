@@ -24,6 +24,8 @@ Usage: no arguments. Prints a per-case and a per-field summary to stdout.
 
 import asyncio
 import json
+import logging
+import sys
 from pathlib import Path
 
 from src.agents.intent_detector import IntentDetector
@@ -37,6 +39,56 @@ from src.agents.supervisor import _VETO_FIELD_SPECS
 from src.flows.state import ConversationState
 
 EVAL_SET_PATH = Path(__file__).resolve().parent.parent / "docs" / "robustness" / "eval-set.json"
+
+
+# ── Deteccion de tandas contaminadas ────────────────────────────────────────
+#
+# `fill_gaps`/`verify_fields` degradan en silencio ante cualquier fallo
+# (devuelven {} y siguen) -- ese contrato es CORRECTO en produccion: mas vale
+# responder con el regex que romper la conversacion. Pero en una medicion es
+# veneno: un 429 produce exactamente el mismo resultado que "el LLM coincidio
+# con el regex", asi que los fallos de red se cuelan en las estadisticas
+# disfrazados de aciertos/desaciertos reales.
+#
+# INCIDENTE REAL (2026-09-11): una tanda con 3 errores 429 dio `activity`
+# 92% frente al 95% de la tanda anterior, y los 3 casos "nuevos" que fallaban
+# devolvian precisamente el valor del regex -- justo lo que produce un 429.
+# Estuvo a punto de concluirse que un rediseño degradaba la precision cuando
+# lo que fallaba era la cuota. De ahi esta guarda: el arnes no debe publicar
+# numeros que no pueda garantizar.
+class _DegradationWatcher(logging.Handler):
+    def __init__(self):
+        super().__init__()
+        self.degraded = 0
+        self.rate_limited = 0
+
+    def emit(self, record):
+        # Cualquier registro de nivel WARNING+ de llm_extractor es una
+        # degradacion: error de red, 429, respuesta malformada, o un valor
+        # descartado por salirse del enum. Se filtra por NIVEL y no por
+        # palabras ("error", "malformed"...) a proposito: una lista de
+        # palabras se queda corta en cuanto se añade un mensaje nuevo, y el
+        # fallo seria silencioso -- exactamente lo que esta guarda existe
+        # para evitar.
+        if record.levelno < logging.WARNING:
+            return
+        try:
+            msg = record.getMessage()
+        except Exception:
+            return
+        if "[LLM_EXTRACTOR]" not in msg:
+            return
+        self.degraded += 1
+        if "429" in msg or "rate_limit" in msg.lower():
+            self.rate_limited += 1
+
+
+def _install_watcher() -> _DegradationWatcher:
+    w = _DegradationWatcher()
+    lg = logging.getLogger("uvicorn.error")   # el logger que usa llm_extractor
+    lg.addHandler(w)
+    lg.setLevel(logging.WARNING)
+    return w
 
 # Reusa DIRECTAMENTE `supervisor._VETO_FIELD_SPECS` (mismo trigger `should_
 # verify` por campo, p. ej. la ambiguedad real que `activity` exige) en vez
@@ -64,8 +116,11 @@ async def run() -> None:
     detector = IntentDetector()
     field_stats: dict[str, dict[str, int]] = {}
     total_agree = total_disagree = total_missed = 0
+    watcher = _install_watcher()
+    contaminados: list[str] = []
 
     for case in cases:
+        antes_degradado = watcher.degraded
         state = ConversationState(conversation_id=f"eval-{case['id']}")
         regex_intent = detector.detect(case["message"], state)
         resolved = _regex_resolved(regex_intent)
@@ -93,6 +148,27 @@ async def run() -> None:
                 history=case.get("history"), lang=case.get("lang", "es"),
             )
             combined.update(disagreements)
+
+        # Si la cuota se agoto, PARAR: seguir solo quema peticiones para
+        # producir numeros invalidos (y ademas impide re-correr la medicion
+        # bien despues). Mejor abortar fuerte que publicar basura.
+        if watcher.rate_limited:
+            print(
+                f"\n!! ABORTADO en el caso {case['id']!r}: la API devolvio rate-limit "
+                f"({watcher.rate_limited} veces). Las llamadas degradan en silencio al "
+                f"valor del regex, asi que cualquier estadistica de aqui en adelante "
+                f"seria indistinguible de 'el LLM coincidio'. Repetir la tanda con cuota.",
+                file=sys.stderr,
+            )
+            sys.exit(2)
+
+        # Degradacion no-429 (timeout, respuesta malformada...): el caso se
+        # marca y se EXCLUYE de las estadisticas en vez de contarlo como si
+        # el LLM hubiera opinado.
+        if watcher.degraded > antes_degradado:
+            contaminados.append(case["id"])
+            print(f"[SKIP] {case['id']}: llamada LLM degradada, excluido del computo")
+            continue
 
         result = compare_with_ground_truth(combined, case["expected"])
         total_agree += len(result["agree"])
@@ -122,7 +198,20 @@ async def run() -> None:
     total = total_agree + total_disagree + total_missed
     overall = total_agree / total if total else 0.0
     print(f"\nOverall: {total_agree}/{total} agree ({overall:.1%}), {total_disagree} disagree, {total_missed} missed")
-    print(f"Cases: {len(cases)}")
+    evaluados = len(cases) - len(contaminados)
+    print(f"Cases: {evaluados}/{len(cases)} evaluados")
+
+    # Veredicto explicito de comparabilidad: quien lea esto no deberia tener
+    # que deducir si los numeros valen para comparar contra otra tanda.
+    if contaminados:
+        print(
+            f"\n*** TANDA NO COMPARABLE: {len(contaminados)} caso(s) excluidos por "
+            f"llamadas LLM degradadas -> {contaminados}\n"
+            f"    Las cifras de arriba cubren solo los {evaluados} casos sanos y NO "
+            f"deben compararse contra tandas completas."
+        )
+    else:
+        print("\nTanda limpia: 0 llamadas LLM degradadas, cifras comparables.")
 
 
 if __name__ == "__main__":
