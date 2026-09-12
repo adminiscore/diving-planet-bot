@@ -2448,6 +2448,80 @@ def _eligible_veto_fields(
     return eligible
 
 
+def enforce_group_allocation_consistency(
+    regex_intent: DetectedIntent, state: ConversationState, message: str
+) -> None:
+    """Un reparto por actividad que NO suma el total conocido se descarta.
+
+    Por que existe (bateria de conversacion, 2026-09-12): la comprobacion
+    "el reparto debe sumar el total" solo la hacia el VETO, y el veto solo mira
+    campos que resolvio el REGEX (`field in regex_intent.detected_fields`, y la
+    lista se calcula ANTES de la llamada al LLM). Un reparto producido por
+    `fill_gaps` quedaba, por construccion, sin revisar: "4 con titulo y 2
+    snorkel" en un grupo de 6 se guardaba como {snorkel: 2}, dejando fuera a 4
+    personas y mal-tarificando la reserva EN SILENCIO.
+
+    Esto cierra el agujero por el otro lado: en vez de anadir otra comprobacion
+    a cada productor de repartos (regex, fill_gaps, veto), se comprueba UNA vez
+    sobre el resultado final, justo antes de aplicarlo al estado. Cualquier
+    fuente futura queda cubierta sin tocar nada.
+
+    Dos desenlaces segun por donde falle la cuenta, no uno:
+      - el reparto suma MAS que el total -> se cree al reparto y se sube el
+        total (mismo criterio que `_set_group_size_from_allocation`), porque el
+        total tambien puede venir mal leido;
+      - el reparto suma MENOS -> le falta gente y se descarta.
+
+    Se DESCARTA en vez de intentar arreglarlo: a estas alturas del turno la
+    peticion al LLM ya se hizo, y pedir otra por esto gastaria el recurso
+    escaso (peticiones/dia) en un caso que el bot resuelve gratis preguntando.
+    Un reparto ausente hace que el bot pregunte; un reparto incompleto se
+    aplica tal cual y se lleva por delante el precio. Abstenerse es mejor.
+
+    El total se busca primero en el turno y luego en la conversacion, igual que
+    `_group_allocation_should_verify`. Sin total conocido no hay invariante que
+    comprobar y no se toca nada.
+    """
+    allocation = getattr(regex_intent, "group_allocation", None)
+    if not allocation:
+        return
+    total = getattr(regex_intent, "group_size", None)
+    if not isinstance(total, int) or total <= 0:
+        total = getattr(state, "detected_group_size", None)
+    if not isinstance(total, int) or total <= 0:
+        return  # sin total con que comparar
+    try:
+        suma = sum(allocation.values())
+    except (AttributeError, TypeError):
+        return
+    if suma == total:
+        return
+    if suma > total:
+        # El reparto AMPLIA el total: se cree al reparto y se sube el total.
+        # Es el mismo criterio que ya aplica el regex en
+        # `_set_group_size_from_allocation` ("nunca a la baja, pero puede
+        # ampliar"), y hace falta aqui porque el total del turno tambien puede
+        # venir equivocado: "3 certified and 3 snorkel" con el total leido como
+        # 3 descartaba un reparto CORRECTO de 6 (medido en la bateria).
+        logger.info(
+            f"[EXTRACT][GROUP_ALLOCATION_AMPLIA_TOTAL] allocation={allocation!r} "
+            f"suma={suma} total_previo={total} msg={_log_safe_message(message)!r}"
+        )
+        regex_intent.group_size = suma
+        if "group_size" not in regex_intent.detected_fields:
+            regex_intent.detected_fields.append("group_size")
+        return
+    # suma < total: al reparto le FALTA gente. Nunca se guarda asi -- el bot
+    # pregunta, que sale gratis, en vez de tarificar de menos en silencio.
+    logger.info(
+        f"[EXTRACT][GROUP_ALLOCATION_INCOMPLETO] descartado={allocation!r} "
+        f"suma={suma} total={total} msg={_log_safe_message(message)!r}"
+    )
+    regex_intent.group_allocation = None
+    if "group_allocation" in regex_intent.detected_fields:
+        regex_intent.detected_fields.remove("group_allocation")
+
+
 async def _maybe_veto_resolved_fields_via_llm(
     message: str, regex_intent: DetectedIntent, state: ConversationState,
     only_fields: list[str] | None = None,

@@ -1998,3 +1998,102 @@ determinista, cero peticiones extra y cero regex. Con eso, `puerta fuera + veto`
 ser estrictamente mejor que hoy: 6 correctos, 0 parciales, 0 alucinaciones.
 
 No se implementa aquí: toca decidirlo con el owner.
+
+## 2026-09-12 (noche) — La invariante del reparto, la puerta fuera y el veto en cutover
+
+Cierre de la línea de `group_allocation`. Tres cambios que van juntos y que **solo juntos**
+tienen sentido.
+
+### La invariante: el reparto debe sumar el total, venga de donde venga
+
+`supervisor.enforce_group_allocation_consistency`, aplicada en `_understand` justo antes de
+escribir el estado — el **único punto** donde el intent del turno ya está completo (regex +
+veto + relleno).
+
+Nace de un agujero estructural: la comprobación "el reparto suma el total" solo la hacía el
+veto, y **el veto solo mira campos que resolvió el regex** (la lista se calcula antes de la
+llamada al LLM). Un reparto producido por `fill_gaps` quedaba sin revisar: "4 con titulo y 2
+snorkel" en un grupo de 6 se guardaba como `{snorkel: 2}` — 4 personas fuera y la reserva
+mal tarificada **en silencio**.
+
+Se comprueba una vez sobre el resultado final en lugar de en cada productor, así que
+cualquier fuente futura queda cubierta sin tocar nada.
+
+**Dos desenlaces, no uno** — y el segundo salió de la medición, no del diseño:
+
+- reparto suma **menos** que el total → le falta gente → se descarta (el bot pregunta,
+  que sale gratis, en vez de tarificar de menos sin avisar).
+- reparto suma **más** → se cree al reparto y se **sube** el total, mismo criterio que el
+  regex ya aplicaba en `_set_group_size_from_allocation`.
+
+La primera versión descartaba en los dos casos, y la batería la pilló: "3 certified and 3
+snorkel" con el total mal leído como 3 **descartaba un reparto correcto de 6**. El total
+también puede venir equivocado — es justo el hallazgo nº2 del parser de grupo.
+
+### La puerta, fuera (con un matiz que salió de un test)
+
+Retirado el filtro que quitaba `group_allocation` de los huecos cuando ya se sabía la
+cantidad. Se puso por coste, y ese argumento decayó al fusionar las peticiones del turno.
+
+Pero el argumento exacto es *"viaja gratis en una petición que ya se iba a hacer"*, y eso
+**solo vale si la petición existe**. Un test existente
+(`test_understand_skips_llm_when_state_knows_driving_fields`) lo cazó: con la puerta fuera
+del todo, una reserva ya completa haría una llamada LLM **en cada turno de charla**
+("genial, nos vemos") solo por el reparto. Así que se aplica el argumento literalmente:
+
+```python
+if gaps == ["group_allocation"]:
+    gaps = []
+```
+
+Puede viajar de acompañante; nunca originar la petición. Coste real del cambio: **cero
+peticiones nuevas**. En la batería no cuesta ni un caso.
+
+### El veto, en cutover
+
+`llm_group_allocation_veto_cutover` nace en `True`, a diferencia del resto de campos del
+mecanismo. No es capricho: es el único que se activa **con datos medidos de antemano** en
+vez de "a ver qué tal". Conviene anotar la inconsistencia — `activity` y `group_size` viven
+en `.env.pre` del VPS y aquí la decisión está en el código.
+
+### Resultado
+
+Batería de conversación (23 escenarios × 4 variantes × 2 repeticiones):
+
+| variante | correctos | parciales peligrosos | vacíos | alucinaciones |
+|---|---|---|---|---|
+| hoy (antes de todo esto) | 3/10 | 1 | 5 | 0/10 |
+| solo veto | 4/10 | 0 | 5 | 0/10 |
+| solo puerta fuera | 5/10 | 0 | 4 | 0/10 |
+| **lo que se queda** | **6/10** | **0** | **3** | **0/10** |
+
+**El doble de repartos correctos, cero repartos parciales y cero alucinaciones.** Los 10
+escenarios de riesgo salen limpios en las cuatro variantes.
+
+Eval-set, tanda limpia y declarada comparable, **con la invariante aplicada**:
+
+| campo | antes | ahora |
+|---|---|---|
+| activity | 62/63 (98%) | 62/63 (98%) |
+| group_size | 44/44 (100%) | 44/44 (100%) |
+| group_allocation | 10/11 (91%) | 10/11 (91%) |
+| is_colombian | 7/9 (78%) | 7/9 (78%) |
+| **overall** | **202/207 (97.6%)** | **202/207 (97.6%)** |
+
+La invariante **no cuesta nada** en el eval-set. Era el riesgo que había que descartar:
+podría haber tirado repartos correctos si los totales discrepaban.
+
+(Aviso metodológico: la fila de `group_allocation` salió **en blanco** en el stdout de esa
+tanda — un `grep -v` del ruido de LangSmith se llevó la línea, exactamente el fallo contra
+el que avisa la entrada del 2026-09-12. Los números salen de `eval-last-run.json`, que es
+para lo que existe.)
+
+### Lo que NO arregla, y por qué se deja
+
+`b03` ("4 con titulo"), `b04` ("3 brevetados"), `b05` ("2 open water"), `b10` ("4 con
+brevet") siguen sin dar reparto. El LLM no reconoce esas formas como tramo contable, y la
+invariante ahora hace que, en vez de guardar un reparto a medias, **el bot pregunte** — que
+es el desenlace seguro. Arreglarlos pasa por el prompt de `fill_gaps`, y ya está medido que
+meterle ahí las reglas de verificación **cuesta 5 casos del eval-set**: haría falta una
+versión neutra de esas reglas, escrita para rellenar y no para desconfiar. Queda anotado,
+no forzado.

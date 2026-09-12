@@ -1356,12 +1356,35 @@ def _relevant_gaps(state: ConversationState, intent, message: str) -> list[str]:
         gaps = [f for f in gaps if f != "ages"]
     if state.detected_activity and not _cart_will_include_cert(state):
         gaps = [f for f in gaps if f != "last_dive_over_2_years"]
-    # El reparto por actividades solo importa si aún no sabemos cuántos son, o
-    # si este mensaje añade gente ("viene también uno que...") — que es cuando
-    # añadir-vs-cambiar lo consume. Con la cantidad sabida y sin esa señal,
-    # pedirlo cada turno era gasto puro (el regex ya saca los repartos claros).
-    if state.detected_group_size and not _ADDED_PERSON_RE.search(message):
-        gaps = [f for f in gaps if f != "group_allocation"]
+    # PUERTA RETIRADA (2026-09-12). Aqui se quitaba `group_allocation` de los
+    # huecos cuando ya se sabia la cantidad y el mensaje no anadia gente. El
+    # motivo era el COSTE ("pedirlo cada turno era gasto puro"), y ese argumento
+    # decayo al fusionar las peticiones del turno: un campo mas viaja en la
+    # MISMA peticion, asi que cuesta tokens (abundante), no peticiones (lo
+    # escaso).
+    #
+    # Medido antes de quitarla, con scripts/battery_group_allocation_gate.py
+    # (23 escenarios de conversacion x 4 variantes x 2 repeticiones):
+    #   hoy (puerta puesta)     3/10 repartos correctos
+    #   puerta fuera + veto     6/10, 0 repartos parciales, 0 alucinaciones
+    # Los 10 escenarios de riesgo (turnos donde inventarse un reparto seria un
+    # misfill) salen limpios en las cuatro variantes: lo que protege de eso no
+    # era esta puerta sino `_state_known_fields`, que impide rederivar un
+    # reparto que la conversacion YA sabe.
+    #
+    # No va sola: depende de `supervisor.enforce_group_allocation_consistency`,
+    # que impide guardar un reparto que no suma el total. Sin esa invariante,
+    # quitar la puerta introducia repartos PARCIALES (medido), que son peores
+    # que no tener reparto.
+    #
+    # PERO el argumento "viaja gratis" solo vale si la peticion YA se iba a
+    # hacer. Si `group_allocation` fuese el UNICO hueco, seria el causante de
+    # una llamada que si no no existiria -- y una reserva ya completa haria una
+    # peticion en cada turno de charla ("genial, nos vemos"). Asi que se aplica
+    # el argumento tal cual: puede viajar de acompanante, nunca originar la
+    # peticion. Lo caza `test_understand_skips_llm_when_state_knows_driving_fields`.
+    if gaps == ["group_allocation"]:
+        gaps = []
     # GUARDA (a) — el slot booleano que el bot ACABA de preguntar no se le pide
     # nunca a `fill_gaps`. Ver `_BOOL_SLOT_FIELD`: esos campos ya tienen dos
     # resolutores anclados al mensaje del turno, y `fill_gaps` es el único de
@@ -1609,6 +1632,11 @@ async def _understand(state: ConversationState, message: str) -> tuple:
                 f"[EXTRACT][CUTOVER] applied={patch} "
                 f"msg={supervisor._log_safe_message(message)!r}"
             )
+    # Invariante del reparto, en el UNICO punto donde el intent del turno ya
+    # esta completo (regex + veto + relleno) y aun no se ha escrito al estado.
+    # Ponerla aqui la hace valida para cualquier fuente del reparto, presente o
+    # futura, en vez de repetir la comprobacion en cada una.
+    supervisor.enforce_group_allocation_consistency(intent, state, message)
     supervisor._apply_detected_intent(intent, state, message)
 
     # Circuit-breaker (portado 2026-09-01, hallazgo en vivo, batería de

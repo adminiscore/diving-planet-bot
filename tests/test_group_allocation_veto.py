@@ -70,9 +70,12 @@ def _client_returning(payload):
 
 # -- Los flags nacen apagados ------------------------------------------------
 
-def test_both_flags_default_to_false():
+def test_cutover_is_on_by_default_and_shadow_is_not():
+    """Unico campo del mecanismo que nace en cutover. Se activo con datos
+    medidos ANTES (bateria de conversacion: 6/10 repartos correctos frente a
+    3/10, 0 parciales, 0 alucinaciones), no a ver que tal."""
     assert settings.llm_group_allocation_veto_shadow_mode is False
-    assert settings.llm_group_allocation_veto_cutover is False
+    assert settings.llm_group_allocation_veto_cutover is True
 
 
 # -- El caso real que motiva el mecanismo ------------------------------------
@@ -114,9 +117,13 @@ def test_should_verify_abstains_without_allocation():
 
 def test_eligible_only_when_a_flag_is_on():
     intent, _ = _detect(_INCOMPLETE_MSG)
-    assert "group_allocation" not in supervisor._eligible_veto_fields(_INCOMPLETE_MSG, intent)
-    with patch.object(supervisor.settings, "llm_group_allocation_veto_shadow_mode", True):
-        assert "group_allocation" in supervisor._eligible_veto_fields(_INCOMPLETE_MSG, intent)
+    with patch.object(supervisor.settings, "llm_group_allocation_veto_cutover", False):
+        assert "group_allocation" not in supervisor._eligible_veto_fields(
+            _INCOMPLETE_MSG, intent)
+        with patch.object(supervisor.settings,
+                          "llm_group_allocation_veto_shadow_mode", True):
+            assert "group_allocation" in supervisor._eligible_veto_fields(
+                _INCOMPLETE_MSG, intent)
 
 
 # -- Es un DICT, no un escalar -----------------------------------------------
@@ -159,8 +166,11 @@ async def test_verify_fields_reports_nothing_when_the_dict_matches():
 
 @pytest.mark.asyncio
 async def test_shadow_mode_measures_without_applying():
+    """`cutover` va a True por defecto desde 2026-09-12, asi que aqui hay que
+    apagarlo explicitamente para probar el shadow."""
     intent, state = _detect(_INCOMPLETE_MSG)
     with patch.object(supervisor.settings, "llm_group_allocation_veto_shadow_mode", True), \
+         patch.object(supervisor.settings, "llm_group_allocation_veto_cutover", False), \
          patch.object(supervisor, "verify_fields",
                       new=AsyncMock(return_value={"group_allocation": _FULL_ALLOCATION})):
         await supervisor._maybe_veto_resolved_fields_via_llm(_INCOMPLETE_MSG, intent, state)
@@ -251,3 +261,96 @@ def test_should_verify_is_still_callable_with_two_arguments():
     """`state` es opcional a proposito: hay llamadas de 2 argumentos vivas."""
     intent = _intent_con_reparto({"snorkel": 2}, gs=5)
     assert supervisor._group_allocation_should_verify("...", intent) is True
+
+
+# -- La invariante: el reparto debe sumar el total, VENGA DE DONDE VENGA ------
+#
+# Hallazgo de scripts/battery_group_allocation_gate.py (2026-09-12): la
+# comprobacion "el reparto suma el total" solo la hacia el VETO, y el veto solo
+# mira campos que resolvio el REGEX (la lista se calcula ANTES de la llamada al
+# LLM). Un reparto producido por `fill_gaps` quedaba sin revisar: "4 con titulo
+# y 2 snorkel" en un grupo de 6 se guardaba como {snorkel: 2} -- 4 personas
+# fuera y la reserva mal tarificada EN SILENCIO.
+#
+# Se comprueba UNA vez sobre el resultado final en vez de en cada productor, asi
+# que cualquier fuente futura queda cubierta sin tocar nada.
+
+def _intent_alloc(alloc, gs=None, detected=True):
+    intent, _ = _detect("x")
+    intent.group_allocation = alloc
+    intent.group_size = gs
+    intent.detected_fields = ["group_allocation"] if detected else []
+    return intent
+
+
+def _state_con_total(total=None):
+    s = ConversationState(conversation_id="ga-invariante")
+    s.detected_group_size = total
+    return s
+
+
+def test_drops_an_allocation_that_does_not_add_up_to_the_turn_total():
+    intent = _intent_alloc({"snorkel": 2}, gs=6)
+    supervisor.enforce_group_allocation_consistency(intent, _state_con_total(), "msg")
+    assert intent.group_allocation is None
+    assert "group_allocation" not in intent.detected_fields
+
+
+def test_drops_using_the_total_known_by_the_conversation():
+    """El caso real: el total se dijo en un turno anterior."""
+    intent = _intent_alloc({"snorkel": 2})
+    supervisor.enforce_group_allocation_consistency(intent, _state_con_total(6), "msg")
+    assert intent.group_allocation is None
+
+
+def test_keeps_a_consistent_allocation():
+    alloc = {"certified_diving": 4, "snorkel": 2}
+    intent = _intent_alloc(alloc, gs=6)
+    supervisor.enforce_group_allocation_consistency(intent, _state_con_total(), "msg")
+    assert intent.group_allocation == alloc
+    assert "group_allocation" in intent.detected_fields
+
+
+def test_keeps_it_when_no_total_is_known_anywhere():
+    """Sin total no hay invariante que comprobar: no se toca."""
+    alloc = {"snorkel": 2}
+    intent = _intent_alloc(alloc)
+    supervisor.enforce_group_allocation_consistency(intent, _state_con_total(), "msg")
+    assert intent.group_allocation == alloc
+
+
+def test_a_split_that_exceeds_the_total_raises_the_total_instead_of_being_dropped():
+    """El total tambien puede venir mal leido. Medido en la bateria: "3 certified
+    and 3 snorkel" con el total leido como 3 descartaba un reparto CORRECTO de 6.
+    Mismo criterio que `_set_group_size_from_allocation`: nunca a la baja, pero
+    un reparto SI puede ampliar el total."""
+    alloc = {"certified_diving": 3, "snorkel": 3}
+    intent = _intent_alloc(alloc, gs=3)
+    supervisor.enforce_group_allocation_consistency(intent, _state_con_total(), "msg")
+    assert intent.group_allocation == alloc
+    assert intent.group_size == 6
+    assert "group_size" in intent.detected_fields
+
+
+def test_no_allocation_is_a_no_op():
+    intent = _intent_alloc(None, gs=6)
+    supervisor.enforce_group_allocation_consistency(intent, _state_con_total(), "msg")
+    assert intent.group_allocation is None
+
+
+@pytest.mark.asyncio
+async def test_invariant_runs_in_the_real_turn_path():
+    """No basta con que la funcion exista: tiene que estar cableada en el turno,
+    y ANTES de escribir el estado."""
+    from src.agents import conversational_core as cc
+
+    state = ConversationState(conversation_id="ga-invariante-e2e")
+    state.detected_group_size = 6
+    with patch.object(cc, "extract_and_verify",
+                      new=AsyncMock(return_value=({"group_allocation": {"snorkel": 2}}, {}))), \
+         patch.object(cc, "fill_gaps",
+                      new=AsyncMock(return_value={"group_allocation": {"snorkel": 2}})):
+        intent, _carry = await cc._understand(state, "4 con titulo y 2 snorkel")
+    assert intent.group_allocation is None, (
+        "un reparto que no suma el total no puede llegar al estado"
+    )

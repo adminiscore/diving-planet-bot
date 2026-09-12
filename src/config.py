@@ -220,7 +220,14 @@ class Settings(BaseSettings):
     # cuadran no se gasta ni una peticion.
     # Off por defecto en todas partes.
     llm_group_allocation_veto_shadow_mode: bool = False
-    llm_group_allocation_veto_cutover: bool = False
+    # CUTOVER por defecto (2026-09-12), a diferencia del resto de campos del
+    # mecanismo. No es una excepcion caprichosa: es el unico que se activa con
+    # datos medidos de antemano en vez de "a ver que tal". Con el trigger propio
+    # (solo dispara si el reparto no suma el total) y la invariante de
+    # `enforce_group_allocation_consistency`, la bateria de conversacion da
+    # 6/10 repartos correctos frente a 3/10, con 0 repartos parciales y 0
+    # alucinaciones en los 10 escenarios de riesgo.
+    llm_group_allocation_veto_cutover: bool = True
 
     @property
     def is_dev(self) -> bool:
