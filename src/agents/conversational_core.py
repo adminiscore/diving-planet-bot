@@ -1454,7 +1454,7 @@ async def _understand(state: ConversationState, message: str) -> tuple:
     # YA habia resuelto, y `_relevant_gaps`/`missing_fields` miran justo los
     # que siguen en None/[]. Por eso `gaps` se puede calcular antes del veto
     # sin que cambie respecto a calcularlo despues.
-    veto_fields = supervisor._eligible_veto_fields(message, intent)
+    veto_fields = supervisor._eligible_veto_fields(message, intent, state)
     gaps = _relevant_gaps(state, intent, message)
     _wants_gaps = bool(gaps) and not _looks_like_question(message) and not _is_greeting_only(message)
     _combined_patch = None

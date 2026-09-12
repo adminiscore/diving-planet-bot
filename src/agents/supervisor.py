@@ -2285,7 +2285,9 @@ def _apply_activity_veto(regex_intent: DetectedIntent, llm_activity: str) -> Non
     regex_intent.service_id = _ACTIVITY_TO_SERVICE_ID.get(llm_activity)
 
 
-def _activity_should_verify(message: str, regex_intent: DetectedIntent) -> bool:
+def _activity_should_verify(
+    message: str, regex_intent: DetectedIntent, state: ConversationState | None = None
+) -> bool:
     """Trigger de `activity`: SOLO cuando el mensaje dispara 2+ categorias a
     la vez (mismo criterio que el `_maybe_veto_activity_via_llm` original de
     Fase 9). Medido en vivo con el eval-set (2026-09-10, ver docs/robustness/
@@ -2302,7 +2304,9 @@ def _activity_should_verify(message: str, regex_intent: DetectedIntent) -> bool:
     return len(matched_activity_categories(message)) >= 2
 
 
-def _group_allocation_should_verify(message: str, regex_intent: DetectedIntent) -> bool:
+def _group_allocation_should_verify(
+    message: str, regex_intent: DetectedIntent, state: ConversationState | None = None
+) -> bool:
     """Trigger propio de `group_allocation`: solo si el reparto NO suma el
     `group_size` conocido.
 
@@ -2318,12 +2322,19 @@ def _group_allocation_should_verify(message: str, regex_intent: DetectedIntent) 
     en los casos CLAROS mete su sesgo por encima de un regex que acertaba.
     Aqui, ademas, un reparto que ya cuadra no tiene nada que corregir.
 
-    Sin `group_size` conocido no hay con que comparar: se abstiene (False).
+    Sin `group_size` conocido -- ni en el turno ni en la conversacion -- no hay
+    con que comparar: se abstiene (False).
     """
     allocation = getattr(regex_intent, "group_allocation", None)
     if not allocation:
         return False
+    # El total puede venir de ESTE turno o de uno anterior. Mirar solo el turno
+    # dejaba el veto mudo justo en el caso multi-turno ("somos 6" y, dos turnos
+    # despues, "4 con titulo y 2 snorkel") -- medido en
+    # scripts/battery_group_allocation_gate.py, 2026-09-12.
     group_size = getattr(regex_intent, "group_size", None)
+    if not isinstance(group_size, int) or group_size <= 0:
+        group_size = getattr(state, "detected_group_size", None) if state else None
     if not isinstance(group_size, int) or group_size <= 0:
         return False
     try:
@@ -2414,7 +2425,9 @@ _VETO_FIELD_SPECS = {
 }
 
 
-def _eligible_veto_fields(message: str, regex_intent: DetectedIntent) -> list[str]:
+def _eligible_veto_fields(
+    message: str, regex_intent: DetectedIntent, state: ConversationState | None = None
+) -> list[str]:
     """Campos de `_VETO_FIELD_SPECS` que toca verificar en este turno: con
     alguna de sus 2 banderas encendida, con valor resuelto, marcados como
     resueltos ESTE turno, y que pasen su `should_verify` propio si lo tienen."""
@@ -2427,7 +2440,9 @@ def _eligible_veto_fields(message: str, regex_intent: DetectedIntent) -> list[st
             continue  # nada resuelto que vetar (eso ya lo cubre el cutover de huecos)
         if field not in regex_intent.detected_fields:
             continue  # no se resolvio ESTE turno -- nada nuevo que verificar
-        if spec.should_verify is not None and not spec.should_verify(message, regex_intent):
+        if spec.should_verify is not None and not spec.should_verify(
+            message, regex_intent, state
+        ):
             continue  # trigger especifico del campo (p. ej. ambiguedad de activity)
         eligible.append(field)
     return eligible
@@ -2452,7 +2467,7 @@ async def _maybe_veto_resolved_fields_via_llm(
     mismo lote si este en cutover. Cualquier fallo degrada a "regex-only" en
     silencio.
     """
-    fields = _eligible_veto_fields(message, regex_intent)
+    fields = _eligible_veto_fields(message, regex_intent, state)
     if only_fields is not None:
         fields = [f for f in fields if f in only_fields]
     if not fields:

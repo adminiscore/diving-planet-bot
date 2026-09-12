@@ -400,7 +400,21 @@ _VERIFICATION_FOOTER_EN = (
     "speaker or use regional phrasing."
 )
 
-_FIELD_VERIFICATION_RULES_ES = {
+# Reglas por campo, en DOS piezas (centralizado 2026-09-12):
+#
+#   _FIELD_RULES_*          semantica del campo. La comparten `fill_gaps` y el
+#                           veto -- son la misma verdad de negocio, y tenerla
+#                           solo en el prompt del veto era la causa de que
+#                           `fill_gaps` devolviera repartos a medias
+#                           ("4 con titulo y 2 snorkel" -> {snorkel: 2}, medido
+#                           en scripts/battery_group_allocation_gate.py).
+#   _FIELD_DETECTOR_HINTS_* "asi suele fallar el detector". SOLO para el veto:
+#                           en `fill_gaps` no hay valor previo que desconfiar,
+#                           asi que ahi es ruido.
+#
+# Mismo criterio que con los `enum` (ver `_enum_values_sentence`): lo que es
+# compartido se escribe UNA vez y lo consumen los dos prompts.
+_FIELD_RULES_ES = {
     "activity": (
         "• `activity` — qué actividad pidió el cliente. Regla clave: si nombra "
         "explícitamente un curso PADI concreto (Open Water, Advanced, Rescue, "
@@ -411,8 +425,6 @@ _FIELD_VERIFICATION_RULES_ES = {
         "PRODUCTO que está pidiendo. Solo usa 'minicourse' cuando el mensaje "
         "NO nombra ningún curso PADI concreto y solo habla de probar el buceo "
         "sin certificarse."
-        # La lista de valores validos NO se escribe aqui: la genera
-        # `_enum_values_sentence` desde el propio schema (ver su comentario).
     ),
     "is_certified": (
         "• `is_certified` — si el cliente YA tiene una certificación de buceo. "
@@ -438,33 +450,45 @@ _FIELD_VERIFICATION_RULES_ES = {
     "group_size": (
         "• `group_size` — cuántas personas van en total (cambia el precio). "
         "Cuenta a TODAS las personas mencionadas, incluidos niños, no-buzos y "
-        "gente mencionada por relación. Ojo al fallo típico del detector: "
-        "cuando el mensaje menciona a un acompañante ('mi pareja', 'mi esposa') "
-        "Y ADEMÁS a más gente después ('y nuestros dos hijos', 'y mi suegro'), "
-        "puede haberse quedado solo con el acompañante. Solo responde cuando el "
-        "mensaje enumera un número concreto y contable ('mi pareja y yo' = 2, "
-        "'mi pareja y nuestros dos hijos' = 4, 'cuatro adultos y un niño' = 5); "
-        "NO inventes una cifra si los acompañantes son un plural vago ('mis "
+        "gente mencionada por relación. Solo responde cuando el mensaje "
+        "enumera un número concreto y contable ('mi pareja y yo' = 2, 'mi "
+        "pareja y nuestros dos hijos' = 4, 'cuatro adultos y un niño' = 5); NO "
+        "inventes una cifra si los acompañantes son un plural vago ('mis "
         "amigos', 'mi familia' sin decir cuántos)."
     ),
     "group_allocation": (
         "• `group_allocation` — cómo se reparte el grupo por actividad, en "
-        "formato {actividad: cuántos}. El fallo típico del detector es un "
-        "reparto INCOMPLETO: se queda con los tramos que llevan verbo y "
-        "pierde los que se nombran solo con un sustantivo ('somos 5: 3 "
-        "certificados, 1 minicurso y 1 snorkel' → pierde los 3 certificados, "
-        "que van a `certified_diving`). Devuelve el reparto COMPLETO, con "
-        "todas las actividades mencionadas, usando los mismos identificadores "
-        "de `activity` (`certified_diving`, `minicourse`, `snorkel`, "
-        "`padi_open_water`...). Las cifras deben sumar el total del grupo si "
-        "el mensaje lo dice. Si algún tramo NO tiene un número contable "
-        "('yo buceo y mis amigos snorkel'), o si a alguien se le menciona sin "
-        "decir qué actividad quiere, OMITE el campo entero en vez de inventar "
-        "una cifra o una actividad — el bot preguntará."
+        "formato {actividad: cuántos}. Devuelve el reparto COMPLETO, con TODAS "
+        "las actividades mencionadas, usando los mismos identificadores de "
+        "`activity` (`certified_diving`, `minicourse`, `snorkel`, "
+        "`padi_open_water`...). Cuenta también los tramos nombrados con un "
+        "sustantivo y sin verbo ('3 certificados', '4 con título', '2 open "
+        "water'), que son igual de contables que '3 bucean'. Las cifras deben "
+        "sumar el total del grupo si el mensaje lo dice: si te sale un reparto "
+        "que NO suma ese total, es que has perdido un tramo. Si algún tramo no "
+        "tiene un número contable ('yo buceo y mis amigos snorkel'), o si a "
+        "alguien se le menciona sin decir qué actividad quiere, OMITE el campo "
+        "entero en vez de inventar una cifra o una actividad — y omítelo "
+        "entero también antes que devolver un reparto incompleto."
     ),
 }
 
-_FIELD_VERIFICATION_RULES_EN = {
+_FIELD_DETECTOR_HINTS_ES = {
+    "group_size": (
+        " Ojo al fallo típico del detector: cuando el mensaje menciona a un "
+        "acompañante ('mi pareja', 'mi esposa') Y ADEMÁS a más gente después "
+        "('y nuestros dos hijos', 'y mi suegro'), puede haberse quedado solo "
+        "con el acompañante."
+    ),
+    "group_allocation": (
+        " El fallo típico del detector es un reparto INCOMPLETO: se queda con "
+        "los tramos que llevan verbo y pierde los que se nombran solo con un "
+        "sustantivo ('somos 5: 3 certificados, 1 minicurso y 1 snorkel' → "
+        "pierde los 3 certificados, que van a `certified_diving`)."
+    ),
+}
+
+_FIELD_RULES_EN = {
     "activity": (
         "• `activity` — which activity the customer asked for. Key rule: if "
         "they explicitly name a specific PADI course (Open Water, Advanced, "
@@ -475,7 +499,6 @@ _FIELD_VERIFICATION_RULES_EN = {
         "CURRENT level, they don't change the PRODUCT being requested. Only "
         "use 'minicourse' when the message does NOT name a specific PADI "
         "course and only talks about trying diving without certifying."
-        # La lista de valores validos la genera `_enum_values_sentence`.
     ),
     "is_certified": (
         "• `is_certified` — whether the customer ALREADY holds a scuba "
@@ -500,30 +523,104 @@ _FIELD_VERIFICATION_RULES_EN = {
     "group_size": (
         "• `group_size` — how many people in total (changes the price). Count "
         "EVERYONE mentioned, including children, non-divers and people "
-        "referred to by relationship. Watch for the detector's typical "
-        "failure: when the message mentions ONE companion ('my partner', 'my "
-        "wife') AND THEN more people afterward ('and our two kids', 'and my "
-        "father-in-law'), it may have stopped at the companion. Only answer "
-        "when the message enumerates a specific, countable number ('my partner "
-        "and I' = 2, 'my partner and our two kids' = 4, 'four adults and a "
-        "kid' = 5); do NOT invent a number for a vague plural ('my friends', "
-        "'my family' with no headcount)."
+        "referred to by relationship. Only answer when the message enumerates "
+        "a specific, countable number ('my partner and I' = 2, 'my partner and "
+        "our two kids' = 4, 'four adults and a kid' = 5); do NOT invent a "
+        "number for a vague plural ('my friends', 'my family' with no "
+        "headcount)."
     ),
     "group_allocation": (
         "• `group_allocation` — how the group splits by activity, as "
-        "{activity: headcount}. The detector's typical failure is an "
-        "INCOMPLETE split: it keeps the parts phrased with a verb and drops "
-        "the ones named with just a noun ('there are 5 of us: 3 certified, 1 "
-        "minicourse and 1 snorkel' → it loses the 3 certified, who belong in "
-        "`certified_diving`). Return the COMPLETE split, covering every "
+        "{activity: headcount}. Return the COMPLETE split, covering EVERY "
         "activity mentioned, using the same identifiers as `activity` "
         "(`certified_diving`, `minicourse`, `snorkel`, `padi_open_water`...). "
-        "The numbers must add up to the group total when the message states "
-        "it. If any part has NO countable number ('I dive and my friends "
-        "snorkel'), or someone is mentioned without saying which activity "
-        "they want, OMIT the whole field instead of inventing a headcount or "
-        "an activity — the bot will ask."
+        "Count the parts named with just a noun and no verb too ('3 certified', "
+        "'4 with a licence', '2 open water') — they are as countable as '3 are "
+        "diving'. The numbers must add up to the group total when the message "
+        "states it: if your split does NOT add up to that total, you have "
+        "dropped a part. If any part has no countable number ('I dive and my "
+        "friends snorkel'), or someone is mentioned without saying which "
+        "activity they want, OMIT the whole field rather than inventing a "
+        "headcount or an activity — and omit it rather than returning an "
+        "incomplete split."
     ),
+}
+
+_FIELD_DETECTOR_HINTS_EN = {
+    "group_size": (
+        " Watch for the detector's typical failure: when the message mentions "
+        "ONE companion ('my partner', 'my wife') AND THEN more people "
+        "afterward ('and our two kids', 'and my father-in-law'), it may have "
+        "stopped at the companion."
+    ),
+    "group_allocation": (
+        " The detector's typical failure is an INCOMPLETE split: it keeps the "
+        "parts phrased with a verb and drops the ones named with just a noun "
+        "('there are 5 of us: 3 certified, 1 minicourse and 1 snorkel' → it "
+        "loses the 3 certified, who belong in `certified_diving`)."
+    ),
+}
+
+
+def _field_guidance(field: str, lang: str, with_hints: bool) -> str:
+    """Guia completa de un campo: semantica + (solo al verificar) como suele
+    fallar el detector + la lista de valores validos que genera el schema.
+
+    Un campo puede tener enum SIN regla propia (`duration`): entonces la guia es
+    solo la lista de valores, que es justo lo que A anadio. Devolver "" ahi
+    seria perderla.
+    """
+    rules = _FIELD_RULES_ES if lang == "es" else _FIELD_RULES_EN
+    hints = _FIELD_DETECTOR_HINTS_ES if lang == "es" else _FIELD_DETECTOR_HINTS_EN
+    parts = []
+    rule = rules.get(field)
+    if rule:
+        parts.append(rule)
+        if with_hints and field in hints:
+            parts.append(hints[field])
+    enum_sentence = _enum_values_sentence(field, lang)
+    if enum_sentence:
+        parts.append((" " if parts else "") + enum_sentence)
+    return "".join(parts)
+
+
+def _field_guidance_block(fields: list[str], lang: str, with_hints: bool) -> str:
+    """Las guias de todos los `fields` que tengan, una por linea."""
+    lines = [g for g in (_field_guidance(f, lang, with_hints) for f in fields) if g]
+    return _NL.join(lines)
+
+
+# RESULTADO NEGATIVO, medido y conservado a proposito (2026-09-12).
+#
+# La idea era que `fill_gaps` viera la MISMA semantica por campo que el veto
+# (`_field_guidance_block(..., with_hints=False)`), porque tenerla solo en el
+# prompt del veto era lo que le hacia devolver repartos a medias. Se implemento
+# y se midio: **el eval-set bajo de 202/207 a 197/207**, y los 5 casos nuevos que
+# fallaban eran TODOS abstenciones de `fill_gaps` ("just the two of us wanna
+# dive" dejo de dar group_size, "im from the states" dejo de dar is_colombian...).
+# Y encima NO arreglo los repartos a medias que lo motivaban (bateria: b03/b04/b05
+# seguian parciales).
+#
+# Causa: estas reglas estan escritas para VERIFICAR, y van cargadas de "no
+# inventes" / "solo responde cuando" / "abstenerse es mejor". En un prompt cuya
+# tarea es RELLENAR huecos, ese tono empuja al modelo a no rellenar -- el mismo
+# efecto que ya se midio al fusionar las peticiones (ver
+# `combined_extraction_system_prompt`): la tarea de relleno es la fragil.
+#
+# Se revierte el uso, NO la estructura: `_FIELD_RULES_*` / `_FIELD_DETECTOR_HINTS_*`
+# siguen separados (una sola fuente, sin duplicar) y `_field_guidance` sigue
+# disponible. Si alguien quiere reintentarlo, el camino no es enchufar estas
+# reglas tal cual, sino escribir una version NEUTRA (solo que significa el campo
+# y que cuenta como contable, sin la carga de abstencion) y volver a medir con
+# scripts/run_extraction_eval.py + scripts/battery_group_allocation_gate.py.
+
+
+# Compatibilidad: el prompt del veto se sigue pudiendo mirar por campo.
+_FIELD_VERIFICATION_RULES_ES = {
+    f: _field_guidance(f, "es", True) for f in _FIELD_RULES_ES
+}
+_FIELD_VERIFICATION_RULES_EN = {
+    f: _field_guidance(f, "en", True) for f in _FIELD_RULES_EN
 }
 
 
@@ -535,17 +632,11 @@ def fields_verification_system_prompt(fields: list[str], lang: str) -> str:
     """
     if lang == "es":
         header, footer = _VERIFICATION_HEADER_ES, _VERIFICATION_FOOTER_ES
-        rules = _FIELD_VERIFICATION_RULES_ES
     else:
         header, footer = _VERIFICATION_HEADER_EN, _VERIFICATION_FOOTER_EN
-        rules = _FIELD_VERIFICATION_RULES_EN
-    # La regla de negocio la escribe una persona; la lista de valores validos
-    # la genera el schema (ver `_enum_values_sentence`). Asi un campo con enum
-    # nuevo no puede nacer sin ella.
-    body = "\n".join(
-        " ".join(part for part in (rules[f], _enum_values_sentence(f, lang)) if part)
-        for f in fields
-    )
+    # Semantica compartida + pistas de "asi falla el detector" (solo aqui) +
+    # la lista de valores validos que genera el schema.
+    body = _field_guidance_block(fields, lang, with_hints=True)
     return f"{header}\n\n{body}\n\n{footer}"
 
 
@@ -597,11 +688,7 @@ def combined_extraction_system_prompt(
     que su opinion valga como segunda opinion. Tampoco se le dice a que lista
     pertenece cada respuesta: eso lo reparte el CODIGO.
     """
-    rules = _FIELD_VERIFICATION_RULES_ES if lang == "es" else _FIELD_VERIFICATION_RULES_EN
-    verify_block = _NL.join(
-        " ".join(part for part in (rules[f], _enum_values_sentence(f, lang)) if part)
-        for f in verify
-    )
+    verify_block = _field_guidance_block(verify, lang, with_hints=True)
     # `extraction_system_prompt` se reutiliza SIN tocar y va AL FINAL.
     base = extraction_system_prompt(lang, gaps)
     if lang == "es":

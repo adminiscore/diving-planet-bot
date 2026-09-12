@@ -1909,3 +1909,92 @@ y el (2), que es la centralización que de verdad cierra la familia.
 
 Ningún cambio de código en esta entrada: la batería queda commiteada como herramienta
 reutilizable para volver a medir cuando esos dos se toquen.
+
+## 2026-09-12 (noche) — (2) centralizar reglas: RESULTADO NEGATIVO. (1) trigger multi-turno: hecho
+
+Los dos arreglos que la batería había señalado. Uno salió mal y se revierte; el otro se
+queda.
+
+### (2) Meter las reglas por campo en `fill_gaps` — medido y revertido
+
+La idea parecía la misma centralización que funcionó con los enums: `_FIELD_RULES_*` solo
+las consumía el prompt del veto, y `fill_gaps` se apañaba con la descripción del schema —
+que no dice "reparto completo o ninguno". De ahí los repartos a medias.
+
+Se implementó (partiendo las reglas en semántica compartida + pistas de "así falla el
+detector", que solo tienen sentido al verificar) y se midió. **Mal:**
+
+| eval-set (mismo arnés serial) | overall |
+|---|---|
+| antes | 202/207 (97.6%) |
+| con las reglas en `fill_gaps` | **197/207 (95.2%)** |
+
+Los **5 casos nuevos que fallaban eran todos abstenciones de `fill_gaps`**: "just the two
+of us wanna dive" dejó de dar `group_size`, "im from the states" dejó de dar
+`is_colombian`, "vengo sin compañía" dejó de dar `group_size`… Y encima **no arregló lo
+que lo motivaba**: en la batería, `b03`/`b04`/`b05` seguían dando repartos parciales.
+
+La causa es la misma que ya medimos al fusionar las peticiones: **estas reglas están
+escritas para VERIFICAR** y van cargadas de "no inventes" / "solo responde cuando" /
+"abstenerse es mejor". En un prompt cuya tarea es RELLENAR, ese tono hace que no rellene.
+La tarea de relleno es la frágil — es la tercera vez hoy que este proyecto se topa con lo
+mismo.
+
+**Se revierte el USO, no la estructura.** `_FIELD_RULES_*` y `_FIELD_DETECTOR_HINTS_*`
+siguen separados (una sola fuente, sin texto duplicado) y `_field_guidance` sigue ahí;
+simplemente `fill_gaps` vuelve a llevar solo los enums. Tras revertir, el eval-set vuelve
+a **202/207**, confirmando que el coste era exactamente ese.
+
+El resultado negativo queda escrito en el código y clavado con un test
+(`test_fill_gaps_prompt_does_not_carry_the_verification_rules`), para que el siguiente que
+tenga la idea no gaste una tanda entera en redescubrirla. Si alguien quiere reintentarlo,
+el camino no es enchufar estas reglas tal cual sino escribir una versión **neutra** (qué
+significa el campo y qué cuenta como contable, sin la carga de abstención) y volver a
+medir.
+
+### (1) El trigger del veto mira el total de la CONVERSACIÓN — hecho
+
+`_group_allocation_should_verify` comparaba contra `regex_intent.group_size`, el total de
+ESTE turno. En conversación real el total casi siempre se dijo antes y vive en
+`state.detected_group_size`, así que el veto se quedaba mudo justo en los casos
+multi-turno. Ahora `should_verify` recibe `state` (opcional, para no romper las llamadas
+de 2 argumentos) y cae al total de la conversación cuando el turno no lo trae.
+
+Neutro en el eval-set **por construcción**, no por suerte: su arnés crea un
+`ConversationState` limpio por caso, así que nunca hay total previo. Confirmado: 202/207
+antes y después. 5 tests nuevos lo fijan, incluido que el total del turno manda sobre el
+de la conversación cuando existe.
+
+### La batería, otra vez, con el estado final del código
+
+| variante | correctos | parciales peligrosos | vacíos | alucinaciones |
+|---|---|---|---|---|
+| hoy | 3/10 | 1 | 5 | 0/10 |
+| sin puerta | 5/10 | 1 | 1 | 0/10 |
+| solo veto | 4/10 | 0 | 5 | 0/10 |
+| **puerta fuera + veto** | **6/10** | **0** | **1** | **0/10** |
+
+Igual que la primera medición. Ni (1) ni (2) movieron esta tabla, y merece la pena decir
+por qué, porque es el hallazgo que queda vivo:
+
+### Por qué el veto no rescata `b03`/`b04`: un agujero estructural
+
+Con la puerta abierta, "4 con titulo y 2 snorkel" (grupo de 6) hace que `fill_gaps`
+devuelva **`{snorkel: 2}`** — un reparto que deja fuera a 4 de 6 personas. El veto NO lo
+corrige, y no es cuestión del trigger: **el veto solo mira campos que resolvió el REGEX**
+(`field in regex_intent.detected_fields`, y la lista se calcula ANTES de la llamada al
+LLM). Un reparto producido por `fill_gaps` está, por construcción, fuera de su alcance en
+ese turno.
+
+O sea que hoy la invariante "el reparto debe sumar el total" solo se comprueba para una de
+las dos fuentes posibles del reparto. Eso es lo que convierte "abrir la puerta" en un
+cambio con contrapartida: gana 3 repartos correctos pero introduce 2 repartos parciales
+equivocados, que son peores que abstenerse porque mal-tarifican la reserva en silencio.
+
+**La pieza que falta y que haría la decisión trivial**: aplicar esa invariante al reparto
+FINAL, venga de donde venga — si no suma el total conocido, o se manda al veto o se
+descarta (y el bot pregunta), pero nunca se guarda un reparto parcial. Es código puro,
+determinista, cero peticiones extra y cero regex. Con eso, `puerta fuera + veto` pasaría a
+ser estrictamente mejor que hoy: 6 correctos, 0 parciales, 0 alucinaciones.
+
+No se implementa aquí: toca decidirlo con el owner.

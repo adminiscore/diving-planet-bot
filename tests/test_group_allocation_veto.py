@@ -200,3 +200,54 @@ def test_verification_prompt_renders_group_allocation(lang):
     prompt = fields_verification_system_prompt(["group_size", "group_allocation"], lang)
     assert "group_allocation" in prompt
     assert "certified_diving" in prompt
+
+
+# -- El total puede venir de la CONVERSACION, no solo del turno ---------------
+#
+# Hallazgo de scripts/battery_group_allocation_gate.py (2026-09-12): el trigger
+# comparaba el reparto contra `regex_intent.group_size`, el total de ESTE turno.
+# En conversacion real el total casi siempre se dijo antes y vive en
+# `state.detected_group_size`, asi que el veto se quedaba mudo justo en los
+# casos multi-turno -- que eran los que quedaban mal en la bateria.
+
+def _intent_con_reparto(alloc, gs=None):
+    intent, _ = _detect("x")
+    intent.group_allocation = alloc
+    intent.group_size = gs
+    return intent
+
+
+def test_trigger_uses_the_total_known_by_the_conversation():
+    state = ConversationState(conversation_id="ga-multi-turno")
+    state.detected_group_size = 6
+    intent = _intent_con_reparto({"snorkel": 2})  # reparto a medias, sin total en el turno
+    assert supervisor._group_allocation_should_verify("4 con titulo y 2 snorkel",
+                                                      intent, state) is True
+
+
+def test_trigger_still_abstains_with_no_total_anywhere():
+    state = ConversationState(conversation_id="ga-sin-total")
+    intent = _intent_con_reparto({"snorkel": 2})
+    assert supervisor._group_allocation_should_verify("...", intent, state) is False
+    assert supervisor._group_allocation_should_verify("...", intent, None) is False
+
+
+def test_trigger_prefers_this_turns_total_over_the_conversations():
+    """Si el turno declara un total, manda ese: es el dato mas fresco."""
+    state = ConversationState(conversation_id="ga-turno-manda")
+    state.detected_group_size = 99
+    intent = _intent_con_reparto({"certified_diving": 2, "snorkel": 1}, gs=3)
+    assert supervisor._group_allocation_should_verify("...", intent, state) is False
+
+
+def test_trigger_stays_quiet_when_the_conversations_total_already_matches():
+    state = ConversationState(conversation_id="ga-cuadra")
+    state.detected_group_size = 3
+    intent = _intent_con_reparto({"certified_diving": 2, "snorkel": 1})
+    assert supervisor._group_allocation_should_verify("...", intent, state) is False
+
+
+def test_should_verify_is_still_callable_with_two_arguments():
+    """`state` es opcional a proposito: hay llamadas de 2 argumentos vivas."""
+    intent = _intent_con_reparto({"snorkel": 2}, gs=5)
+    assert supervisor._group_allocation_should_verify("...", intent) is True

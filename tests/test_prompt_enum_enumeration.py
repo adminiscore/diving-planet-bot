@@ -120,3 +120,65 @@ def test_certified_diving_is_glossed_as_the_default_not_as_already_certified(lan
     sentence = _enum_values_sentence("activity", lang).lower()
     marcador = "por defecto" if lang == "es" else "default"
     assert marcador in sentence
+
+
+# ── Las REGLAS por campo: una sola fuente, un solo consumidor ────────────────
+#
+# `_FIELD_RULES_*` (semantica) y `_FIELD_DETECTOR_HINTS_*` ("asi falla el
+# detector") estan separados para no duplicar texto, pero HOY solo los consume el
+# prompt del veto.
+#
+# Se intento que `fill_gaps` viera tambien la semantica -- parecia la misma
+# centralizacion que se hizo con los enums -- y se midio que es MALA idea: el
+# eval-set bajo de 202/207 a 197/207 y los 5 casos nuevos que fallaban eran todos
+# abstenciones de `fill_gaps`. Estas reglas estan escritas para verificar y van
+# cargadas de "no inventes"/"abstenerse es mejor"; en un prompt cuya tarea es
+# rellenar, eso hace que no rellene. Ver el comentario largo en booking.py.
+#
+# Estos tests fijan ese reparto para que el resultado negativo no se pierda.
+
+from src.prompts.booking import (  # noqa: E402
+    _FIELD_DETECTOR_HINTS_EN,
+    _FIELD_DETECTOR_HINTS_ES,
+    _FIELD_RULES_ES,
+    _field_guidance,
+)
+
+
+@pytest.mark.parametrize("lang", LANGS)
+@pytest.mark.parametrize("field", list(_FIELD_RULES_ES))
+def test_verification_prompt_carries_every_shared_field_rule(field, lang):
+    """El veto SI consume la regla completa (semantica + pista + enum)."""
+    prompt = fields_verification_system_prompt([field], lang)
+    assert _field_guidance(field, lang, with_hints=True) in prompt
+
+
+@pytest.mark.parametrize("lang", LANGS)
+@pytest.mark.parametrize("field", list(_FIELD_RULES_ES))
+def test_fill_gaps_prompt_does_not_carry_the_verification_rules(field, lang):
+    """RESULTADO NEGATIVO MEDIDO: meterlas aqui costo 5 casos del eval-set y no
+    arreglo lo que las motivaba. Si alguien las vuelve a enchufar tal cual, este
+    test se lo dice antes de gastar una tanda entera."""
+    prompt = extraction_system_prompt(lang, [field])
+    rule = _FIELD_RULES_ES[field] if lang == "es" else None
+    if rule:
+        assert rule not in prompt
+
+
+@pytest.mark.parametrize("lang", LANGS)
+@pytest.mark.parametrize("field", list(_FIELD_DETECTOR_HINTS_ES))
+def test_detector_hints_reach_the_veto_but_never_fill_gaps(field, lang):
+    """Las pistas de "asi suele fallar el detector" solo tienen sentido cuando hay
+    un valor previo del que desconfiar."""
+    hints = _FIELD_DETECTOR_HINTS_ES if lang == "es" else _FIELD_DETECTOR_HINTS_EN
+    hint = hints[field]
+    assert hint.strip() in fields_verification_system_prompt([field], lang)
+    assert hint.strip() not in extraction_system_prompt(lang, [field])
+
+
+def test_a_field_with_enum_but_no_rule_still_gets_its_values():
+    """`duration` tiene enum y no tiene regla: la guia debe ser la lista de
+    valores, no una cadena vacia."""
+    assert "duration" not in _FIELD_RULES_ES
+    guidance = _field_guidance("duration", "es", with_hints=False)
+    assert "single_day" in guidance and "multi_day" in guidance

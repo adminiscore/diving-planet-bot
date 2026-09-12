@@ -145,7 +145,8 @@ async def run() -> None:
         veto_fields = [
             f for f, spec in _VETO_FIELD_SPECS.items()
             if f in resolved and f in regex_intent.detected_fields
-            and (spec.should_verify is None or spec.should_verify(case["message"], regex_intent))
+            and (spec.should_verify is None
+                 or spec.should_verify(case["message"], regex_intent, state))
         ]
         if veto_fields:
             disagreements = await verify_fields(
