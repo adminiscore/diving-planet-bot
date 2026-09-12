@@ -1827,3 +1827,85 @@ decidir después, como con todo lo demás de hoy.
 
 Diagnóstico cerrado; los tres hallazgos se unifican en uno solo y se corrige el de inglés.
 Ningún cambio de código en C.
+
+## 2026-09-12 (noche) — Batería de conversación: las dos palancas de `group_allocation`
+
+Hacía falta porque **ni el eval-set ni PRE pueden responder esto**: el arnés del eval-set
+pide siempre todos los huecos, así que nunca pasa por `_relevant_gaps`; y PRE no tiene
+tráfico real (solo los 3 desarrolladores), así que esperar a producción no recoge nada.
+Hay que provocarlo.
+
+`scripts/battery_group_allocation_gate.py` — 23 escenarios (10 beneficio, 10 riesgo, 3
+frontera) × 4 variantes × 2 repeticiones, atacando `_understand` (que es donde viven las
+dos palancas y no toca BD ni RAG).
+
+Las dos palancas:
+- **puerta**: `_relevant_gaps` quita `group_allocation` de los huecos si ya se sabe la
+  cantidad y el mensaje no añade gente. Se puso **por coste**, y ese argumento decayó al
+  fusionar las peticiones del turno.
+- **veto**: `llm_group_allocation_veto_cutover`, que corrige un reparto que el regex
+  resolvió pero que no suma el total.
+
+### Resultado del 2×2
+
+| variante | repartos correctos | PARCIALES (peligrosos) | vacíos | alucinaciones |
+|---|---|---|---|---|
+| **hoy** (puerta sí, veto no) | 3/10 | 1 | 5 | **0/10** |
+| sin puerta | 5/10 | 1 | 1 | **0/10** |
+| solo veto | 4/10 | 0 | 5 | **0/10** |
+| **puerta fuera + veto** | **6/10** | **0** | **1** | **0/10** |
+
+**Las dos palancas son complementarias y solo juntas dominan**: duplican los repartos
+correctos (3→6), eliminan los parciales peligrosos (1→0) y vacían la cola de abstenciones
+(5→1), **sin introducir ni una sola alucinación**.
+
+### Lo que NO esperaba, y es lo más útil
+
+**Quitar la puerta sola puede EMPEORAR un caso.** En `b03` ("4 con titulo y 2 snorkel") y
+`b04` ("3 brevetados y 2 snorkel") hoy hay abstención limpia (`null`); sin la puerta,
+`fill_gaps` devuelve **`{snorkel: 2}`** — un reparto presente que se deja fuera a 4 de 6
+personas. Un reparto incompleto pero visible es **peor** que no tener reparto: es
+exactamente el fallo que el veto existe para cazar. Por eso la puerta sola no basta.
+
+**El riesgo que temíamos no apareció: 0 alucinaciones en 10 escenarios × 4 variantes × 2
+repeticiones.** La protección real no era la puerta, era `_state_known_fields`: un reparto
+ya conocido por la conversación nunca vuelve a pedirse (`r01`, el caso del eval-set,
+sale limpio en las cuatro variantes). El eval-set **sobreestimaba** ese riesgo porque su
+arnés no pasa por ese filtro.
+
+### Tres hallazgos accionables (no implementados)
+
+1. **El trigger del veto se pierde el caso multi-turno.**
+   `_group_allocation_should_verify` compara el reparto contra
+   `regex_intent.group_size` — el total de ESTE turno. Pero en una conversación el total
+   suele venir de un turno anterior y vive en `state.detected_group_size`. En `b03`/`b04`
+   el veto **no llega a dispararse** por eso, y son justo los casos que quedan mal.
+   Debería mirar el total que conoce la CONVERSACIÓN, no solo el turno. Es la misma
+   lección de centralizar: el trigger razona con media foto.
+
+2. **Las reglas de negocio por campo solo las tiene el prompt del veto.**
+   La regla que escribí para `group_allocation` ("devuelve el reparto COMPLETO… o OMITE el
+   campo entero") vive en `_FIELD_VERIFICATION_RULES_*`, que solo consume el veto.
+   `fill_gaps` se apaña con la descripción del schema, que no dice eso — y por eso
+   devuelve `{snorkel: 2}` en vez de omitir. **Es el mismo patrón que ya corregimos con
+   los enums (A), sin corregir para las reglas**: centralizar `_FIELD_VERIFICATION_RULES_*`
+   para que las consuman los dos prompts cerraría `b03`/`b04`/`b05` sin tocar un regex.
+
+3. **`b05` ("2 open water y 3 snorkel") falla en las cuatro variantes.** El LLM omite el
+   tramo de `padi_open_water` pese a estar en el enum. Cae en el mismo saco que (2).
+
+### Casos que NO arregla ninguna variante
+
+`b10` ("4 con brevet, 2 minicurso y 1 snorkel") y `b07` con el veto apagado: el regex ya
+produjo `{minicourse:2, snorkel:1}`, así que no es hueco y la puerta no pinta nada — solo
+el veto entra ahí. Con el veto puesto, `b07` pasa a **OK**.
+
+### Recomendación
+
+La combinación **quitar la puerta + veto de `group_allocation` en cutover** es la que
+domina en los datos, y el riesgo medido es cero. Pero antes conviene resolver el hallazgo
+(1) — el trigger multi-turno — porque es lo que impide que el veto rescate `b03`/`b04`,
+y el (2), que es la centralización que de verdad cierra la familia.
+
+Ningún cambio de código en esta entrada: la batería queda commiteada como herramienta
+reutilizable para volver a medir cuando esos dos se toquen.
