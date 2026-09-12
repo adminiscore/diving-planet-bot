@@ -274,6 +274,20 @@ _FIELD_VERIFICATION_RULES_ES = {
         "PRODUCTO que está pidiendo. Solo usa 'minicourse' cuando el mensaje "
         "NO nombra ningún curso PADI concreto y solo habla de probar el buceo "
         "sin certificarse."
+        # El modelo devolvia 'certificarse' -- literalmente una palabra de
+        # este mismo texto, no un valor del enum -- de forma REPRODUCIBLE
+        # (10/10 con temperature=0.0, probe 2026-09-12). El `enum` del schema
+        # no bastaba: hay que enumerar los valores en el texto del prompt.
+        " Valores validos de `activity` (devuelve EXACTAMENTE uno de estos "
+        "identificadores, nunca otra palabra ni una traduccion): "
+        "`certified_diving` (inmersion de buceo estandar; es el valor por "
+        "DEFECTO cuando se pide 'buceo' sin mas, tenga o no certificacion), "
+        "`minicourse` (bautismo/iniciacion: SOLO si el mensaje dice que es "
+        "para probar sin certificarse o que no sabe bucear), "
+        "`snorkel`, "
+        "`padi_open_water` (el PRIMER NIVEL de certificacion: 'primer nivel', "
+        "'primer curso', 'sacarme el titulo', 'certificarme' por primera vez), "
+        "`padi_advanced`, `padi_rescue`, `padi_divemaster`, `padi_specialty`."
     ),
     "is_certified": (
         "• `is_certified` — si el cliente YA tiene una certificación de buceo. "
@@ -321,6 +335,19 @@ _FIELD_VERIFICATION_RULES_EN = {
         "CURRENT level, they don't change the PRODUCT being requested. Only "
         "use 'minicourse' when the message does NOT name a specific PADI "
         "course and only talks about trying diving without certifying."
+        # Mismo refuerzo que en ES (ver el comentario alli): el enum del
+        # schema no basta, hay que enumerarlo en el texto.
+        " Valid `activity` values (return EXACTLY one of these identifiers, "
+        "never another word or a translation): "
+        "`certified_diving` (a standard dive; this is the DEFAULT value when "
+        "'diving' is requested with no further detail, certified or not), "
+        "`minicourse` (try-dive/discover scuba: ONLY if the message says it "
+        "is to try it out without certifying, or that they can't dive), "
+        "`snorkel`, "
+        "`padi_open_water` (the FIRST certification level: 'first level', "
+        "'first course', 'get my licence', 'get certified' for the first "
+        "time), "
+        "`padi_advanced`, `padi_rescue`, `padi_divemaster`, `padi_specialty`."
     ),
     "is_certified": (
         "• `is_certified` — whether the customer ALREADY holds a scuba "

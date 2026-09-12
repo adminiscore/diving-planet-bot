@@ -1420,3 +1420,93 @@ justamente lo que ocultaba la primera versión de la guarda.
 Hipótesis a probar (barata): el prompt describe las reglas de negocio pero no enumera los
 valores válidos del enum, confiando en que el schema baste. Añadir la lista explícita al texto
 probablemente lo arregle.
+
+## 2026-09-12 (tarde) — `conv913` cerrado: el enum habia que enumerarlo en el TEXTO
+
+Tarea 1 del `NEXT-SESSION-PROMPT.md`. **La hipotesis era correcta**, y la validacion
+salio mas barata y mas concluyente de lo previsto.
+
+### El fallo no era no-determinista: era 10/10
+
+Probe suelto contra el modelo real desde PRE (20 peticiones en total, no el eval-set
+entero), mensaje `"Pues me gustaria sacarme el primer nivel de buceo"`:
+
+| variante del prompt | resultado |
+|---|---|
+| A — actual | **10/10 `'certificarse'`** (fuera del enum) |
+| B — con el enum enumerado en el texto | **10/10 `padi_open_water`** |
+
+Ojo al matiz, porque cambia como se lee el hallazgo: el progress-log anterior lo daba
+por "no determinista" y sugeria repetir el mensaje "unas cuantas veces" por eso. Con
+`temperature=0.0` es **perfectamente reproducible**. Y `'certificarse'` no sale de la
+nada: es una palabra **del propio texto de la regla** (`pide 'certificarse'`), que el
+modelo copia literalmente. Declarar el `enum` en el schema de la tool NO basta ni con
+un `tool_choice` forzado.
+
+### El primer intento SI regresiono algo (y por eso se midio antes de dar por bueno)
+
+La primera version de la lista gloso `certified_diving` como *"inmersion para quien YA
+esta certificado"*. A/B controlado sobre los 63 casos con `activity` esperado
+(reutilizando un unico `fill_gaps` por caso, de modo que lo unico que cambia entre A y
+B es el texto de la regla):
+
+- **1 mejora** (`conv913`) y **1 regresion**: `mixed-uno-buceo-otro-snorkel`
+  ("uno quiere buceo y el otro snorkel") pasaba de `certified_diving` a `minicourse`.
+- Neto **59/63 → 59/63**: cero ganancia. Si solo se hubiera mirado el agregado del
+  eval-set (que dio exactamente el mismo 94% y el mismo overall 95.7% que la
+  referencia) se habria concluido "no cambia nada", cuando por dentro se habian
+  movido dos casos en sentidos opuestos.
+
+La causa: esa glosa **contradecia la regla que ya estaba escrita justo encima**
+("solo usa `minicourse` cuando... solo habla de probar el buceo sin certificarse").
+Reescrita como *"inmersion de buceo estandar; es el valor por DEFECTO cuando se pide
+'buceo' sin mas, tenga o no certificacion"*:
+
+| | A (prompt actual) | B (enum enumerado) |
+|---|---|---|
+| casos con `activity` esperado | 59/63 | **62/63** |
+| regresiones | — | **0** |
+
+Tres mejoras (`conv913`, `mixed-yo-buceo-amigo-snorkel`, `neg-es-vague-plural-companion-count`),
+ninguna regresion.
+
+### Eval-set completo, tanda limpia (107/107, 0 degradadas, el arnes la declara comparable)
+
+| campo | referencia 2026-09-12 | con el fix |
+|---|---|---|
+| activity | 59/63 (94%) | **62/63 (98%)** |
+| group_size | 44/44 (100%) | 43/44 (98%) |
+| is_certified | 31/32 (97%) | 31/32 (97%) |
+| location | 23/23 (100%) | 23/23 (100%) |
+| group_allocation | 10/11 (91%) | 10/11 (91%) |
+| is_colombian | 6/9 (67%) | 6/9 (67%) |
+| **overall** | **198/207 (95.7%)** | **200/207 (96.6%)** |
+
+El unico retroceso, `group_size` 44→43, es un **`missed` de `fill_gaps`**
+(`adv-es-double-negation`, "no es que no estemos certificados, si lo estamos, los 2"):
+el regex no resolvio `group_size` ese turno, asi que el veto ni se dispara sobre el y
+el prompt de `activity` no puede ser la causa. Ruido no determinista de `fill_gaps`,
+no una regresion del cambio.
+
+### Lo que queda abierto (y no se ha forzado)
+
+`ambig-curso-padi-generico-no-se-bucear` ("Me interesa el curso PADI, no se bucear")
+sigue en desacuerdo: el eval-set espera `'padi_course'`, un valor **generico que no
+existe en el enum de `EXTRACTION_TOOL`**. Es estructuralmente inalcanzable para el
+veto — `_clean_verified_value` descartaria `'padi_course'` por la misma regla que
+descartaba `'certificarse'`. El modelo responde `padi_open_water`, que es razonable
+(Open Water es el curso PADI de entrada). Ya estaba documentado asi desde 2026-09-03 y
+se deja igual: **no se toca el `expected` para que cuadre**. Si algun dia se quiere
+cerrar, la decision es de producto (¿anadir `padi_course` al enum, o cambiar el
+`expected`?), no de prompt.
+
+### Codigo
+
+- `src/prompts/booking.py`: la lista de valores validos, en ES y EN, dentro de
+  `_FIELD_VERIFICATION_RULES_*['activity']`.
+- `tests/test_activity_veto.py`: 4 tests nuevos (2 parametrizados x2 idiomas) que son
+  la barrera — uno exige que el prompt enumere **todos** los valores del enum, otro
+  que `certified_diving` se siga describiendo como el valor por defecto y no como
+  "solo para ya certificados". Verificado que **fallan** sin el fix.
+- Suite completa en verde (1766 passed, 18 skipped); ruff sobre el fichero tocado
+  limpio (el repo arrastra 175 avisos preexistentes, identicos antes y despues).
