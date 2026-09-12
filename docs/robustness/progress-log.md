@@ -1721,3 +1721,109 @@ precio real y medido de B, y se deja documentado en vez de esconderlo en el agre
   dejaba el test mudo y colándose a la API real.
 
 Suite completa: **1801 passed, 18 skipped**. Ruff limpio en lo tocado.
+
+## 2026-09-12 (tarde) — C: los tres hallazgos del parser de grupo son UNO
+
+Encargo: mirar el parser de grupo **como una sola cosa**, en vez de abrir tres tickets.
+Resultado: no son tres bugs. Son **un único fallo** con tres caras, y de paso se cae uno
+de los tres hallazgos tal y como lo reporté.
+
+### La causa
+
+Todo el reparto de grupo se apoya en una **lista cerrada de palabras**
+(`intent_detector.py`):
+
+```
+activity_kw = (buce\w*|buse\w*|snorkel|snorkeling|esnorkel|careteo|caretear|
+               minicurso|mini\s?curso|bautismo|bautizo|diving|scuba|submarinismo)
+```
+
+…más una cadena de patrones (A/B/C/E) que reconocen **formas fijas de cláusula**
+("N ACTIVIDAD y N ACTIVIDAD"), cada uno guardado por `if not intent.group_allocation`.
+
+**Cada uno de los tres hallazgos es "el mensaje usó una palabra o una forma que no está
+en la lista".** Nada más:
+
+| hallazgo | lo que falta en la lista |
+|---|---|
+| reparto incompleto ("3 certificados") | `certificados` **como sustantivo que nombra la actividad**. En la lista solo existe como sufijo adjetivo detrás de una actividad de verdad (`bucean certificados`) |
+| `group_size` equivocado | la frase de total. `somos 7`/`vamos 7` ✓, pero **`en total 7` ✗ y `seremos 7` ✗** → coge el "4" de la primera cláusula |
+| "hace falta ≥2 tramos" | consecuencia del primero: si "6 certificados" no se reconoce, queda **una** cláusula, y ningún patrón cubre la aridad 1 |
+
+Medido, regex puro:
+
+```
+somos 7: 4 certificados, 2 minicurso y 1 snorkel   -> group_size=7   ✓
+vamos 7: ...                                       -> group_size=7   ✓
+en total 7: ...                                    -> group_size=4   ✗
+seremos 7: ...                                     -> group_size=4   ✗
+somos 8: 6 certificados, 2 minicurso               -> allocation=None ✗
+somos 8: 6 bucean y 2 minicurso                    -> allocation={certified_diving:6, minicourse:2} ✓
+```
+
+`seremos 7` no estaba en el hallazgo original: apareció al mirar la familia en vez del
+caso.
+
+### Corrección de un hallazgo anterior mío
+
+En la entrada de `group_allocation` escribí que **"en EN el regex nunca produce
+reparto"**. **Es falso.** El inglés funciona:
+
+```
+we are 6: 4 diving and 2 snorkel  -> group_size=6, allocation={certified_diving:4, snorkel:2} ✓
+4 diving and 2 snorkel            -> allocation={certified_diving:4, snorkel:2}               ✓
+```
+
+Lo que fallaba en mis ejemplos era `3 certified` — o sea **la misma palabra que falta en
+español**, no el idioma. Un hallazgo "de inglés" que en realidad era el hallazgo nº1 otra
+vez: justo el error de individualizar que este trabajo venía a corregir.
+
+### Por qué NO se arregla añadiendo palabras
+
+Añadir `certificados`, `en total`, `seremos` cierra estos cuatro mensajes y deja el
+mecanismo igual de frágil para el siguiente cliente que escriba `somos 7 en total`,
+`entre todos 7`, `4 con título`, `4 brevetados`, `4 open water`… Es exactamente el modo
+de fallo que el owner señaló: *"un regex evita el problema puntual, pero luego llega otra
+persona con otra jerga y pinchamos"*. Y ya hay precedente en este repo: un intento previo
+de arreglar `group_size` por regex rompió un caso real validado por el owner y hubo que
+revertirlo.
+
+### La vía que sí es estructural (recomendada, NO implementada)
+
+El reparto de responsabilidades ya elegido en este proyecto es *"el LLM decide QUÉ pasó,
+el CÓDIGO decide la respuesta con el valor real"*. Para el grupo eso ya existe en dos
+sitios: `fill_gaps` (cuando el regex no resolvió) y el veto de `group_allocation`
+(cuando resolvió a medias, añadido hoy). El problema es que **hay una puerta que los
+apaga**, en `conversational_core._relevant_gaps`:
+
+```python
+if state.detected_group_size and not _ADDED_PERSON_RE.search(message):
+    gaps = [f for f in gaps if f != "group_allocation"]
+```
+
+Con la cantidad ya sabida y sin señal de "se añade alguien", `group_allocation` **se cae
+de los huecos**. Así que en "somos 8: 6 certificados, 2 minicurso" el regex se abstiene,
+el veto no se dispara (no hay reparto que contradecir) y `fill_gaps` tiene prohibido
+mirarlo: **el reparto se pierde en silencio**, que es el hallazgo nº3 visto desde el otro
+lado.
+
+Esa puerta se puso por **coste**: *"pedirlo cada turno era gasto puro"*. **Ese argumento
+ya no aplica**: desde la fusión de hoy, pedir un campo más va en la MISMA petición que ya
+se está haciendo — cuesta tokens (recurso abundante), no peticiones (el escaso). Quitar
+la puerta es una línea, y devuelve el reparto al camino LLM sin tocar un solo regex.
+
+**El contra, honesto**: la puerta también reducía superficie de misfill, y el riesgo está
+documentado y **sigue vivo** — `hist-followup-must-not-rederive-resolved-group-allocation`
+("desde cartagena" con historial) es hoy el único fallo de `group_allocation` en el
+eval-set, y es precisamente `fill_gaps` alucinando un reparto desde el historial. Abrir
+la puerta puede empeorar esa familia.
+
+Por eso **no se ha tocado**: el eval-set no puede medirlo (el arnés no pasa por
+`_relevant_gaps`, pide siempre todos los huecos), así que hace falta una batería a nivel
+de CONVERSACIÓN, con estado e historial — `scripts/live_battery_driver.py`. Medir primero,
+decidir después, como con todo lo demás de hoy.
+
+### Estado
+
+Diagnóstico cerrado; los tres hallazgos se unifican en uno solo y se corrige el de inglés.
+Ningún cambio de código en C.
