@@ -37,6 +37,22 @@ from src.prompts.booking import (
 
 logger = logging.getLogger("uvicorn.error")
 
+# Taxonomia de fallos en los logs (2026-09-12). Dos cosas muy distintas se
+# veian igual desde fuera y eso invalidaba mediciones:
+#
+#   [LLM_EXTRACTOR][DEGRADED] ...  -> la LLAMADA fallo (red, 429, timeout,
+#       respuesta malformada). No hubo opinion del modelo. En una medicion
+#       el caso NO es evaluable: hay que excluirlo o abortar la tanda.
+#
+#   [LLM_EXTRACTOR][<CAMPO>_VETO] valor fuera de enum descartado: ...
+#       -> la llamada FUNCIONO y el modelo respondio, pero con un valor que
+#       no existe en el enum. Es conducta real y reproducible del modelo, y
+#       cuenta como fallo suyo: debe puntuar en la medicion, no excluirse.
+#
+# El marcador es explicito a proposito: inferir la categoria por palabras
+# ("error", "malformed"...) se queda corto en cuanto se añade un mensaje
+# nuevo, y el fallo seria silencioso. Ver scripts/run_extraction_eval.py.
+
 # Fields DetectedIntent exposes that are worth LLM gap-filling. Deliberately
 # excludes `language` (already has a robust dedicated detector),
 # `service_id`/`confidence`/`detected_fields` (derived/meta, not extracted
@@ -121,10 +137,10 @@ async def fill_gaps(
             return {}
         args = json.loads(tool_calls[0].function.arguments or "{}")
     except (json.JSONDecodeError, TypeError, AttributeError, IndexError) as exc:
-        logger.warning(f"[LLM_EXTRACTOR] malformed response: {exc}")
+        logger.warning(f"[LLM_EXTRACTOR][DEGRADED] malformed response: {exc}")
         return {}
     except Exception as exc:  # noqa: BLE001
-        logger.warning(f"[LLM_EXTRACTOR] error: {exc}")
+        logger.warning(f"[LLM_EXTRACTOR][DEGRADED] error: {exc}")
         return {}
 
     # Strict schema: group_allocation comes back with fixed keys where the
@@ -229,10 +245,10 @@ async def verify_fields(
             return {}
         args = json.loads(tool_calls[0].function.arguments or "{}")
     except (json.JSONDecodeError, TypeError, AttributeError, IndexError) as exc:
-        logger.warning(f"[LLM_EXTRACTOR][{log_tag}_VETO] malformed response: {exc}")
+        logger.warning(f"[LLM_EXTRACTOR][DEGRADED][{log_tag}_VETO] malformed response: {exc}")
         return {}
     except Exception as exc:  # noqa: BLE001
-        logger.warning(f"[LLM_EXTRACTOR][{log_tag}_VETO] error: {exc}")
+        logger.warning(f"[LLM_EXTRACTOR][DEGRADED][{log_tag}_VETO] error: {exc}")
         return {}
 
     disagreements = {}
@@ -331,7 +347,7 @@ async def detect_special_signals(
             return {}
         args = json.loads(tool_calls[0].function.arguments or "{}")
     except (json.JSONDecodeError, TypeError, AttributeError, IndexError) as exc:
-        logger.warning(f"[LLM_EXTRACTOR] signals malformed response: {exc}")
+        logger.warning(f"[LLM_EXTRACTOR][DEGRADED] signals malformed response: {exc}")
         return {}
     except OpenAIError as exc:
         # Auditoría Fase B (2026-07-23): un timeout/error de red aquí degrada
@@ -343,10 +359,10 @@ async def detect_special_signals(
         # cambia el contrato ({} en cualquier fallo) — mismo patrón que
         # `fill_gaps`/`compose_acknowledgement`; cambiarlo es un rediseño de
         # resiliencia más amplio, no específico de acompañantes.
-        logger.error(f"[LLM_EXTRACTOR] signals API/network error (companion info may be lost silently this turn): {exc}")
+        logger.error(f"[LLM_EXTRACTOR][DEGRADED] signals API/network error (companion info may be lost silently this turn): {exc}")
         return {}
     except Exception as exc:  # noqa: BLE001
-        logger.warning(f"[LLM_EXTRACTOR] signals error: {exc}")
+        logger.warning(f"[LLM_EXTRACTOR][DEGRADED] signals error: {exc}")
         return {}
 
     result = {k: v for k, v in (args or {}).items() if v not in (None, "", [], {})}
@@ -399,13 +415,13 @@ async def resolve_slot_answer(
             return {}
         args = json.loads(tool_calls[0].function.arguments or "{}")
     except (json.JSONDecodeError, TypeError, AttributeError, IndexError) as exc:
-        logger.warning(f"[LLM_EXTRACTOR] slot-resolver malformed response ({slot}): {exc}")
+        logger.warning(f"[LLM_EXTRACTOR][DEGRADED] slot-resolver malformed response ({slot}): {exc}")
         return {}
     except OpenAIError as exc:
-        logger.error(f"[LLM_EXTRACTOR] slot-resolver API/network error ({slot}, answer may loop): {exc}")
+        logger.error(f"[LLM_EXTRACTOR][DEGRADED] slot-resolver API/network error ({slot}, answer may loop): {exc}")
         return {}
     except Exception as exc:  # noqa: BLE001
-        logger.warning(f"[LLM_EXTRACTOR] slot-resolver error ({slot}): {exc}")
+        logger.warning(f"[LLM_EXTRACTOR][DEGRADED] slot-resolver error ({slot}): {exc}")
         return {}
     if "value" not in args or args["value"] in (None, ""):
         return {}
@@ -446,7 +462,7 @@ async def compose_acknowledgement(
         )
         text = (response.choices[0].message.content or "").strip().strip('"')
     except Exception as exc:  # noqa: BLE001
-        logger.warning(f"[LLM_EXTRACTOR] ack error: {exc}")
+        logger.warning(f"[LLM_EXTRACTOR][DEGRADED] ack error: {exc}")
         return ""
     # Backstop determinista: si el modelo se saltó las reglas (precio/link/pregunta),
     # descartar el acuse — nunca dejar que invente datos duros.

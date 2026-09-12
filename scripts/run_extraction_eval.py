@@ -63,20 +63,25 @@ class _DegradationWatcher(logging.Handler):
         self.rate_limited = 0
 
     def emit(self, record):
-        # Cualquier registro de nivel WARNING+ de llm_extractor es una
-        # degradacion: error de red, 429, respuesta malformada, o un valor
-        # descartado por salirse del enum. Se filtra por NIVEL y no por
-        # palabras ("error", "malformed"...) a proposito: una lista de
-        # palabras se queda corta en cuanto se añade un mensaje nuevo, y el
-        # fallo seria silencioso -- exactamente lo que esta guarda existe
-        # para evitar.
+        # Solo cuenta como degradacion el marcador EXPLICITO [DEGRADED] que
+        # pone `llm_extractor` cuando la LLAMADA fallo (red, 429, timeout,
+        # respuesta malformada) y por tanto NO hubo opinion del modelo.
+        #
+        # Deliberadamente NO cuenta el descarte por enum
+        # ("valor fuera de enum descartado"): ahi la llamada funciono y el
+        # modelo respondio -- mal, pero respondio. Eso es conducta real y
+        # reproducible suya y debe PUNTUAR como fallo en la medicion, no
+        # excluirse. Confundir ambas cosas (version del 2026-09-11, que
+        # filtraba por nivel de log) hacia desaparecer del computo casos
+        # legitimos: `conv913-first-level-activity` quedaba excluido por un
+        # problema del modelo, no de la infraestructura.
         if record.levelno < logging.WARNING:
             return
         try:
             msg = record.getMessage()
         except Exception:
             return
-        if "[LLM_EXTRACTOR]" not in msg:
+        if "[LLM_EXTRACTOR][DEGRADED]" not in msg:
             return
         self.degraded += 1
         if "429" in msg or "rate_limit" in msg.lower():
@@ -200,6 +205,23 @@ async def run() -> None:
     print(f"\nOverall: {total_agree}/{total} agree ({overall:.1%}), {total_disagree} disagree, {total_missed} missed")
     evaluados = len(cases) - len(contaminados)
     print(f"Cases: {evaluados}/{len(cases)} evaluados")
+
+    # Resumen tambien en JSON, a fichero. El resumen de texto viaja por
+    # stdout mezclado con el ruido de otras librerias (LangSmith escribe a
+    # media linea), y filtrar ese ruido puede llevarse por delante lineas
+    # buenas: el 2026-09-12 un `grep -v` borro justo la fila de `activity`,
+    # el campo que se estaba midiendo. Un fichero aparte no se puede
+    # corromper asi.
+    out = EVAL_SET_PATH.parent / "eval-last-run.json"
+    out.write_text(json.dumps({
+        "per_field": field_stats,
+        "overall": {"agree": total_agree, "disagree": total_disagree, "missed": total_missed},
+        "cases_evaluados": evaluados,
+        "cases_totales": len(cases),
+        "excluidos": contaminados,
+        "comparable": not contaminados,
+    }, indent=2, ensure_ascii=False), encoding="utf-8")
+    print(f"(resumen JSON en {out})")
 
     # Veredicto explicito de comparabilidad: quien lea esto no deberia tener
     # que deducir si los numeros valen para comparar contra otra tanda.
