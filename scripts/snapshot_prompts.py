@@ -102,7 +102,10 @@ def _collect() -> dict[str, str]:
     # ── booking · veto de valores ya resueltos (verify_fields) ──────────────
     # Un bloque por campo (el prompt de 1 campo) + la combinacion de TODOS
     # (el caso agrupado real, 1 peticion para N campos).
-    _veto_fields = ("activity", "is_certified", "is_colombian", "location", "group_size")
+    _veto_fields = (
+        "activity", "is_certified", "is_colombian", "location", "group_size",
+        "group_allocation",
+    )
     for field in _veto_fields:
         for lang in LANGS:
             add(
@@ -113,6 +116,18 @@ def _collect() -> dict[str, str]:
         add(
             f"booking/field_verification.ALL.system.{lang}",
             booking.fields_verification_system_prompt(list(_veto_fields), lang),
+        )
+
+    # ── booking · prompt COMBINADO (huecos + veto en 1 peticion) ────────────
+    # Es el prompt que corre de verdad en el 61% de los turnos (ver
+    # `llm_extractor.extract_and_verify`): tiene que quedar en el snapshot
+    # igual que los dos que fusiona.
+    for lang in LANGS:
+        add(
+            f"booking/combined_extraction.system.{lang}",
+            booking.combined_extraction_system_prompt(
+                ["location", "duration"], ["activity", "group_size"], lang
+            ),
         )
 
     # ── booking · señales especiales (detect_special_signals) ─────────────────

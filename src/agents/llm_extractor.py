@@ -28,6 +28,7 @@ from src.prompts.booking import (
     SIGNALS_TOOL,
     SLOT_RESOLVER_SPEC,
     acknowledgement_system_prompt,
+    combined_extraction_system_prompt,
     extraction_system_prompt,
     fields_verification_system_prompt,
     signals_system_prompt,
@@ -83,6 +84,29 @@ def missing_fields(regex_intent: DetectedIntent) -> list[str]:
     them as gaps to fill.
     """
     return [f for f in EXTRACTABLE_FIELDS if getattr(regex_intent, f, None) in (None, [])]
+
+
+def _build_messages(system: str, message: str, history: list[dict] | None) -> list[dict]:
+    """system + ventana de historial + el mensaje del turno. Identico en las
+    tres funciones (fill_gaps, verify_fields, extract_and_verify): tenerlo en
+    un sitio evita que una de ellas se quede con una ventana distinta."""
+    messages: list[dict] = [{"role": "system", "content": system}]
+    for turn in (history or [])[-settings.history_retrieval_enrichment_window:]:
+        role = turn.get("role")
+        content = turn.get("content")
+        if role in ("user", "assistant") and content:
+            messages.append({"role": role, "content": content})
+    messages.append({"role": "user", "content": message})
+    return messages
+
+
+def _strip_schema_nulls(args: dict) -> dict:
+    """`group_allocation` vuelve con las claves fijas del schema estricto y las
+    actividades no usadas a null."""
+    ga = (args or {}).get("group_allocation")
+    if isinstance(ga, dict):
+        args["group_allocation"] = {k: v for k, v in ga.items() if v}
+    return args
 
 
 async def fill_gaps(
@@ -259,6 +283,89 @@ async def verify_fields(
         if value is not None and value != regex_values.get(field):
             disagreements[field] = value
     return disagreements
+
+
+async def extract_and_verify(
+    gaps: list[str],
+    verify: list[str],
+    message: str,
+    regex_values: dict,
+    *,
+    history: list[dict] | None = None,
+    lang: str = "es",
+    client: AsyncOpenAI | None = None,
+) -> tuple[dict, dict]:
+    """Rellena huecos Y verifica campos resueltos en UNA SOLA peticion.
+
+    Devuelve `(patch, disagreements)`: el patch de los huecos (mismo contrato
+    que `fill_gaps`) y las discrepancias de los campos verificados (mismo
+    contrato que `verify_fields`). Cualquier fallo degrada a `({}, {})` --
+    el llamador se queda con el regex, igual que las dos funciones que
+    sustituye.
+
+    Por que existe (medido 2026-09-12): `fill_gaps` y `verify_fields` usaban
+    el mismo modelo y la MISMA tool en 2 peticiones distintas del mismo turno,
+    y en el eval-set el 61% de los turnos disparan ambas. El recurso escaso de
+    la cuenta son las peticiones/dia (RPD), no los tokens -- el mismo
+    razonamiento que llevo a agrupar los N vetos en 1 peticion, un paso mas.
+
+    Seguro porque el conjunto de huecos NO depende del resultado del veto: el
+    veto solo cambia el VALOR de campos que el regex ya habia resuelto, y
+    `missing_fields` mira exactamente los que siguen en None/[]. Por eso se
+    pueden pedir los dos conjuntos a la vez en vez de encadenarlos.
+    """
+    if not message or not message.strip() or (not gaps and not verify):
+        return {}, {}
+    # Un solo camino de peticion para los tres casos; lo unico que cambia es
+    # que prompt se monta. Asi no hay dos implementaciones del mismo reparto
+    # de resultados que puedan desincronizarse.
+    if gaps and verify:
+        system = combined_extraction_system_prompt(gaps, verify, lang)
+    elif gaps:
+        system = extraction_system_prompt(lang, gaps)
+    else:
+        system = fields_verification_system_prompt(verify, lang)
+    messages = _build_messages(system, message, history)
+    try:
+        client = client or trace_openai(AsyncOpenAI(api_key=settings.openai_api_key))
+        response = await client.chat.completions.create(
+            model=settings.extraction_model,
+            messages=messages,
+            tools=[EXTRACTION_TOOL],
+            tool_choice={"type": "function", "function": {"name": "extract_fields"}},
+            temperature=0.0,
+            # El de huecos usaba 200 fijo; el del veto escalaba con los campos.
+            # Aqui conviven los dos conjuntos.
+            max_tokens=200 + 60 * len(verify),
+        )
+        choice = response.choices[0].message
+        tool_calls = getattr(choice, "tool_calls", None)
+        if not tool_calls:
+            return {}, {}
+        args = _strip_schema_nulls(json.loads(tool_calls[0].function.arguments or "{}"))
+    except (json.JSONDecodeError, TypeError, AttributeError, IndexError) as exc:
+        logger.warning(f"[LLM_EXTRACTOR][DEGRADED][COMBINED] malformed response: {exc}")
+        return {}, {}
+    except Exception as exc:  # noqa: BLE001
+        logger.warning(f"[LLM_EXTRACTOR][DEGRADED][COMBINED] error: {exc}")
+        return {}, {}
+
+    # El modelo no sabe a que lista pertenece cada campo -- lo reparte el
+    # CODIGO, con el mismo criterio que aplicaba cada funcion por separado.
+    patch = {
+        k: v for k, v in (args or {}).items()
+        if k in gaps and v not in (None, "", [], {})
+    }
+    disagreements = {}
+    for field in verify:
+        value = _clean_verified_value(field, (args or {}).get(field))
+        # `is_certified=False` / `is_colombian=False` son respuestas reales:
+        # se comparan con `!=`, nunca por truthiness.
+        if value is not None and value != regex_values.get(field):
+            disagreements[field] = value
+    if patch:
+        logger.info(f"[LLM_EXTRACTOR][COMBINED] filled gaps={list(patch.keys())} msg={message[:60]!r}")
+    return patch, disagreements
 
 
 async def verify_field(

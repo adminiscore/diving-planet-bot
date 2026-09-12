@@ -2462,19 +2462,36 @@ async def _maybe_veto_resolved_fields_via_llm(
         disagreements = await verify_fields(
             fields, message, regex_values, history=state.history, lang=state.language,
         )
-        for field, llm_value in disagreements.items():
-            spec = _VETO_FIELD_SPECS[field]
-            cutover = getattr(settings, spec.cutover_flag)
-            logger.info(
-                f"[EXTRACT][{field.upper()}_VETO] regex={regex_values[field]!r} "
-                f"llm={llm_value!r} applied={cutover} msg={_log_safe_message(message)!r}"
-            )
-            if cutover:
-                setattr(regex_intent, field, llm_value)
-                if spec.apply:
-                    spec.apply(regex_intent, llm_value)
+        apply_veto_disagreements(disagreements, regex_intent, message, regex_values)
     except Exception as exc:  # noqa: BLE001
         logger.warning(f"[EXTRACT][VETO] failed, degrading to regex-only (ignored): {exc}")
+
+
+def apply_veto_disagreements(
+    disagreements: dict, regex_intent: DetectedIntent, message: str,
+    regex_values: dict | None = None,
+) -> None:
+    """Aplica (o solo loguea) las discrepancias que devolvio el LLM.
+
+    Separado de la LLAMADA a proposito: desde que `extract_and_verify` puede
+    traer las discrepancias en la misma peticion que los huecos (ver
+    `conversational_core._understand`), hay DOS sitios que obtienen
+    discrepancias y uno solo que decide que hacer con ellas. La semantica
+    delicada -- aplicar POR CAMPO segun SU flag de cutover, y el side-effect
+    de `spec.apply` -- vive aqui una sola vez.
+    """
+    regex_values = regex_values or {}
+    for field, llm_value in disagreements.items():
+        spec = _VETO_FIELD_SPECS[field]
+        cutover = getattr(settings, spec.cutover_flag)
+        logger.info(
+            f"[EXTRACT][{field.upper()}_VETO] regex={regex_values.get(field)!r} "
+            f"llm={llm_value!r} applied={cutover} msg={_log_safe_message(message)!r}"
+        )
+        if cutover:
+            setattr(regex_intent, field, llm_value)
+            if spec.apply:
+                spec.apply(regex_intent, llm_value)
 
 
 async def _maybe_veto_resolved_field_via_llm(

@@ -48,6 +48,7 @@ from src.agents.intent_detector import (
 from src.agents.llm_extractor import (
     compose_acknowledgement,
     detect_special_signals,
+    extract_and_verify,
     fill_gaps,
     missing_fields,
     resolve_slot_answer,
@@ -1442,15 +1443,51 @@ async def _understand(state: ConversationState, message: str) -> tuple:
     # PETICIONES/dia (RPD), no los tokens (que seguian intactos): N campos en
     # N peticiones gastaba justo el recurso limitado. Agrupados en una sola
     # llamada dan la misma informacion por 1 peticion y 1 ida y vuelta.
-    await supervisor._maybe_veto_resolved_fields_via_llm(message, intent, state)
+    # FUSION de las dos peticiones del turno (2026-09-12). Antes esto eran dos
+    # llamadas encadenadas: el veto primero y `fill_gaps` despues. Usan el
+    # mismo modelo y la MISMA tool, y en el eval-set el 61% de los turnos
+    # disparan las dos -- con el recurso escaso siendo las peticiones/dia
+    # (RPD), eso era 1 peticion tirada en 6 de cada 10 turnos.
+    #
+    # Se pueden pedir a la vez porque el conjunto de huecos NO depende del
+    # resultado del veto: el veto solo cambia el VALOR de campos que el regex
+    # YA habia resuelto, y `_relevant_gaps`/`missing_fields` miran justo los
+    # que siguen en None/[]. Por eso `gaps` se puede calcular antes del veto
+    # sin que cambie respecto a calcularlo despues.
+    veto_fields = supervisor._eligible_veto_fields(message, intent)
     gaps = _relevant_gaps(state, intent, message)
+    _wants_gaps = bool(gaps) and not _looks_like_question(message) and not _is_greeting_only(message)
+    _combined_patch = None
+    if veto_fields and _wants_gaps:
+        regex_values = {f: getattr(intent, f, None) for f in veto_fields}
+        try:
+            _combined_patch, _disagreements = await extract_and_verify(
+                gaps, veto_fields, message, regex_values,
+                history=state.history, lang=state.language,
+            )
+            supervisor.apply_veto_disagreements(
+                _disagreements, intent, message, regex_values
+            )
+        except Exception as exc:  # noqa: BLE001
+            # Mismo contrato defensivo que las dos funciones que sustituye:
+            # nunca dejar el turno peor que con solo el regex.
+            logger.warning(f"[EXTRACT][COMBINED] failed, degrading to regex-only: {exc}")
+            _combined_patch = None
+    else:
+        await supervisor._maybe_veto_resolved_fields_via_llm(message, intent, state)
     # Fase 3.4 (reducir llamadas/turno): un saludo puro no tiene slots que
     # extraer → se salta `fill_gaps` (misma rama que "pregunta" o "sin gaps": no
     # se aplica patch). Ahorra 1 llamada LLM en el saludo, el turno más común,
     # sin cambiar conducta (fill_gaps devolvía `{}` para un saludo).
     if gaps and not _looks_like_question(message) and not _is_greeting_only(message):
-        patch = await fill_gaps(
-            message, intent, history=state.history, lang=state.language, only_fields=gaps
+        # Si la peticion fusionada de arriba ya trajo el patch, no se repite
+        # la llamada; si no hubo fusion (solo huecos, o la fusion degrado),
+        # se pide como siempre.
+        patch = (
+            _combined_patch if _combined_patch is not None
+            else await fill_gaps(
+                message, intent, history=state.history, lang=state.language, only_fields=gaps
+            )
         )
         # Verificado en vivo (2026-07-23): con el historial REAL de la
         # conversación por delante, fill_gaps puede alucinar un

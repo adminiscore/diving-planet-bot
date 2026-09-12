@@ -24,6 +24,7 @@ service_id (via the `activity`-specific `apply` side-effect), agreement
 means no mutation, and any failure degrades silently to regex-only.
 """
 
+import contextlib
 from unittest.mock import AsyncMock, patch
 
 import pytest
@@ -145,6 +146,26 @@ async def test_veto_failure_degrades_silently_to_regex_only():
     assert intent.service_id == "minicourse"
 
 
+@contextlib.contextmanager
+def _veto_returns(disagreements: dict, gaps_patch: dict | None = None):
+    """Mockea las DOS vias por las que `_understand` puede obtener el veto.
+
+    Desde la fusion de peticiones (2026-09-12), un turno que tiene huecos Y
+    campos que verificar pasa por `conversational_core.extract_and_verify`
+    (1 peticion) en vez de por `supervisor.verify_fields` (2). Un test e2e que
+    solo mockee una de las dos queda mudo -- y peor: se cuela hasta la API de
+    verdad. Se mockean ambas con el mismo resultado para que el test siga
+    probando la conducta y no la ruta interna que toque ese dia.
+    """
+    from src.agents import conversational_core as cc
+
+    with patch.object(supervisor, "verify_fields",
+                      new=AsyncMock(return_value=disagreements)), \
+         patch.object(cc, "extract_and_verify",
+                      new=AsyncMock(return_value=(gaps_patch or {}, disagreements))):
+        yield
+
+
 @pytest.mark.asyncio
 async def test_real_bug_message_end_to_end_via_understand():
     """Reproduce el flujo real (_understand, conversational_core.py) con el
@@ -154,7 +175,7 @@ async def test_real_bug_message_end_to_end_via_understand():
 
     state = ConversationState(conversation_id="veto-e2e-test")
     with patch.object(supervisor.settings, "llm_activity_veto_cutover", True), \
-         patch.object(supervisor, "verify_fields", new=AsyncMock(return_value={"activity": "padi_open_water"})):
+         _veto_returns({"activity": "padi_open_water"}):
         intent, _carry = await _understand(state, _AMBIGUOUS_MSG)
     assert intent.activity == "padi_open_water"
     assert intent.service_id == "open_water"
@@ -171,7 +192,7 @@ async def test_real_conv_913_message_end_to_end_via_understand():
     state = ConversationState(conversation_id="veto-conv913-test")
     msg = "Pues me gustaria sacarme el primer nivel de buceo"
     with patch.object(supervisor.settings, "llm_activity_veto_cutover", True), \
-         patch.object(supervisor, "verify_fields", new=AsyncMock(return_value={"activity": "padi_open_water"})):
+         _veto_returns({"activity": "padi_open_water"}):
         intent, _carry = await _understand(state, msg)
     assert intent.activity == "padi_open_water"
     assert intent.service_id == "open_water"

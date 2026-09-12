@@ -298,6 +298,10 @@ def _enum_values_block(fields: list[str], lang: str, tool: dict = EXTRACTION_TOO
     return (" " + " ".join(sentences)) if sentences else ""
 
 
+_NL = "\n"
+_PARA = "\n\n"
+
+
 def extraction_system_prompt(lang: str, missing_fields: list[str]) -> str:
     fields_list = ", ".join(missing_fields)
     if lang == "es":
@@ -548,6 +552,82 @@ def fields_verification_system_prompt(fields: list[str], lang: str) -> str:
 def field_verification_system_prompt(field: str, lang: str) -> str:
     """Atajo de un solo campo (mismo prompt, lista de uno)."""
     return fields_verification_system_prompt([field], lang)
+
+
+def combined_extraction_system_prompt(
+    gaps: list[str], verify: list[str], lang: str
+) -> str:
+    """UN solo prompt para las DOS tareas del turno: verificar los campos que el
+    regex SI resolvio y rellenar los huecos que dejo.
+
+    Por que fusionarlas (medido 2026-09-12): eran 2 peticiones por turno con el
+    mismo modelo y la MISMA tool (`EXTRACTION_TOOL`), y en el eval-set el 61% de
+    los turnos disparan ambas -- 172 peticiones bajan a 107, un 38% menos. El
+    recurso escaso de la cuenta son las peticiones/dia (RPD), no los tokens: es
+    el mismo razonamiento que llevo a agrupar los N vetos en 1 peticion, un paso
+    mas alla.
+
+    Se pueden pedir a la vez porque el conjunto de huecos NO depende del
+    resultado del veto: el veto solo cambia el VALOR de campos que el regex YA
+    habia resuelto, y `missing_fields` mira justo los que siguen en None/[].
+
+    EL ORDEN NO ES COSMETICO -- esta medido, 6 repeticiones por variante y todas
+    deterministas (0/6 o 6/6, nunca a medias):
+
+      1. Reencuadrando el texto en "(1) RELLENAR... (2) VERIFICAR...":
+         'vamos 3, mi pareja y yo buceamos y mi suegra hace snorkel' dejo de
+         rellenar `group_allocation` 6/6, y 'no es que no estemos certificados,
+         si lo estamos, los 2' dejo de rellenar `group_size` 6/6.
+      2. Reutilizando el prompt de huecos INTACTO pero con la verificacion
+         DETRAS: exactamente igual de mal, 0/6 los dos. No era el reencuadre.
+      3. Verificacion PRIMERO y huecos AL FINAL (esta version): el caso de la
+         suegra vuelve a 6/6.
+
+    Es un efecto de recencia: la ultima instruccion del prompt es la que el
+    modelo atiende mejor, y el relleno de huecos es la tarea fragil (para el,
+    abstenerse siempre es una salida valida, asi que se abstiene). Si alguien
+    reordena esto "por legibilidad", reintroduce el fallo.
+
+    Caso conocido que la fusion NO recupera: 'no es que no estemos certificados,
+    si lo estamos, los 2' sigue sin rellenar `group_size` (doble negacion +
+    cantidad implicita). Documentado en docs/robustness/progress-log.md.
+
+    La INDEPENDENCIA del veto se conserva: al modelo se le dice que esos campos
+    "ya los resolvio un detector", pero NUNCA con que valor -- que es lo que hace
+    que su opinion valga como segunda opinion. Tampoco se le dice a que lista
+    pertenece cada respuesta: eso lo reparte el CODIGO.
+    """
+    rules = _FIELD_VERIFICATION_RULES_ES if lang == "es" else _FIELD_VERIFICATION_RULES_EN
+    verify_block = _NL.join(
+        " ".join(part for part in (rules[f], _enum_values_sentence(f, lang)) if part)
+        for f in verify
+    )
+    # `extraction_system_prompt` se reutiliza SIN tocar y va AL FINAL.
+    base = extraction_system_prompt(lang, gaps)
+    if lang == "es":
+        return (
+            "Un detector determinista ya resolvió estos campos a partir del "
+            "mensaje, pero pudo haberse equivocado — sobre todo ante frases "
+            "nuevas o regionales que no conoce. Decide TÚ, de forma "
+            "independiente, el valor de cada uno:" + _NL
+            + verify_block
+            + _PARA + "Ten en cuenta que el cliente puede ser de cualquier país "
+            "hispanohablante y usar expresiones regionales distintas a las más "
+            "comunes."
+            + _PARA + "Y ADEMÁS, en esa MISMA llamada:" + _PARA
+            + base
+        )
+    return (
+        "A deterministic detector already resolved these fields from the "
+        "message, but it may have gotten them wrong — especially on new or "
+        "regional phrasings it doesn't know. Decide independently the value of "
+        "each:" + _NL
+        + verify_block
+        + _PARA + "Keep in mind the customer may be a non-native speaker or use "
+        "regional phrasing."
+        + _PARA + "AND ADDITIONALLY, in that SAME call:" + _PARA
+        + base
+    )
 
 
 # ── Señales de turno: recall y acompañante · `llm_extractor.detect_special_signals` ────

@@ -1624,3 +1624,100 @@ Desplegar a PRE con los flags en `False`, encender **shadow-mode** (`_shadow_mod
 que solo loguea `[EXTRACT][GROUP_ALLOCATION_VETO]` sin aplicar), dejar correr trafico
 real, y **solo entonces** decidir el cutover con esos datos. No se ha desplegado nada en
 esta sesion.
+
+## 2026-09-12 (tarde) — A y B: centralizar el enum y fusionar las 2 peticiones del turno
+
+Petición del owner, en sus palabras: **"centralizar, no individualizar"** y **"nada de
+más regex: arregla el caso de hoy y pincha con la jerga del siguiente"**. Dos trabajos
+salieron de ahí.
+
+### A — el enum, generado desde el schema (el fix de `activity` era un parche)
+
+El arreglo de la mañana escribía la lista de valores válidos **a mano, en un campo, en
+dos idiomas**. Pero hay **5 campos con enum** (`activity`, `duration`, `location`,
+`recall_field`, `companion_activity`) y **2 prompts** que los consumen
+(`extraction_system_prompt` para `fill_gaps` y `fields_verification_system_prompt` para
+el veto). Cubrir 1 de 5 en 1 de 2 dejaba la misma bomba puesta en el resto: **`fill_gaps`
+no enumeraba ningún enum**.
+
+Ahora la lista la genera `_enum_values_sentence` **desde el propio schema** y se inyecta
+sola en los dos prompts. Las **glosas** (lo único que no se deriva del schema, porque son
+reglas de negocio) viven en un mapa único por idioma.
+
+Eval-set, tanda limpia: **201/207 (97.1%) → 202/207 (97.6%)**, 0 regresiones. La subida
+es un caso de `is_colombian`, que **no tiene enum** y por tanto no tiene vía causal con el
+cambio: ruido, no mérito. El valor de A es estructural.
+
+Tests: `tests/test_prompt_enum_enumeration.py`, parametrizado **sobre el schema**. No
+comprueba `activity`: comprueba que *todo* campo con enum quede cubierto en *ambos*
+prompts, también al agrupar, más una barrera contra glosas huérfanas. Un campo nuevo lo
+hereda gratis.
+
+### B — una petición por turno en vez de dos
+
+`fill_gaps` y `verify_fields` usaban **el mismo modelo y la misma tool** en 2 peticiones
+distintas del mismo turno. En el eval-set, **el 61% de los turnos disparan las dos**.
+
+Se pueden fusionar porque **el conjunto de huecos NO depende del resultado del veto**: el
+veto solo cambia el VALOR de campos que el regex YA había resuelto, y `missing_fields`
+mira justo los que siguen en `None`/`[]`. Comprobado antes de tocar nada.
+
+**El orden dentro del prompt resultó ser lo decisivo, y costó tres intentos medidos.**
+6 repeticiones por variante, todas deterministas (0/6 o 6/6, nunca a medias):
+
+| intento | resultado |
+|---|---|
+| 1. Reencuadrar en "(1) RELLENAR… (2) VERIFICAR…" | `grp-es-mixed-suegra` deja de rellenar `group_allocation` **0/6**; `adv-es-double-negation` deja de rellenar `group_size` **0/6** |
+| 2. Prompt de huecos **intacto** + verificación **detrás** | igual de mal: **0/6** los dos. No era el reencuadre |
+| 3. Verificación **primero**, huecos **al final** | la suegra vuelve a **6/6** |
+
+Es un **efecto de recencia**: la última instrucción es la que el modelo atiende mejor, y
+el relleno de huecos es la tarea frágil (para él, abstenerse siempre es una salida
+válida). Si alguien reordena ese prompt "por legibilidad", reintroduce el fallo — por eso
+está escrito en el docstring de la función, no solo aquí.
+
+Ojo al primer número, porque casi engaña: la variante 1 dio **97.1% overall**, apenas
+−0.5 puntos, y parecía un coste asumible por el 38% de ahorro. Pero por dentro había
+**dos regresiones deterministas** compensadas por una mejora. El agregado del eval-set
+volvió a esconder movimientos en sentidos opuestos, igual que esta mañana con `activity`.
+Sin el A/B por caso se habría desplegado una regresión real creyendo que era ruido.
+
+**Resultado final (tanda limpia, 107/107, declarada comparable):**
+
+| | sin fusionar | fusionado (orden bueno) |
+|---|---|---|
+| overall | 202/207 (97.6%) | **204/207 (98.6%)** |
+| peticiones | 172 | **107 (−38%)** |
+| latencia/turno | 1.32s | **0.63s (−0.69s, −52%)** |
+| `is_certified` | 31/32 | 32/32 |
+| `is_colombian` | 7/9 | 9/9 |
+| `group_allocation` | 10/11 | 10/11 |
+
+La latencia está **medida** (18 muestras por variante), no extrapolada.
+
+Sobre el `is_colombian` 7/9 → 9/9: son los dos casos de "ninguno colombiano" con
+historial, y es el campo más ruidoso del set. Que la fusión los arregle es plausible (la
+regla de `is_colombian` va ahora al principio del prompt), pero con 2 casos **no lo doy
+por demostrado**.
+
+**Caso conocido que la fusión NO recupera**: `adv-es-double-negation` ("no es que no
+estemos certificados, si lo estamos, los 2") sigue sin rellenar `group_size`, 0/6
+determinista, frente a 6/6 sin fusionar. Doble negación + cantidad implícita. Es el
+precio real y medido de B, y se deja documentado en vez de esconderlo en el agregado.
+
+### Código
+
+- `src/prompts/booking.py`: `_enum_values_sentence`/`_enum_values_block` + glosas (A);
+  `combined_extraction_system_prompt` (B), que **reutiliza `extraction_system_prompt`
+  intacto y lo pone al final**.
+- `src/agents/llm_extractor.py`: `extract_and_verify` (1 petición, devuelve
+  `(patch, disagreements)`), más `_build_messages`/`_strip_schema_nulls` compartidos por
+  las tres funciones para que no se desincronicen.
+- `src/agents/supervisor.py`: `apply_veto_disagreements` separado de la llamada — ahora
+  hay dos sitios que **obtienen** discrepancias y uno solo que **decide qué hacer** con
+  ellas (flag de cutover por campo + `spec.apply`).
+- `scripts/snapshot_prompts.py`: el prompt combinado y `group_allocation` registrados.
+- `tests/test_activity_veto.py`: los e2e mockean ahora **las dos vías**; mockear solo una
+  dejaba el test mudo y colándose a la API real.
+
+Suite completa: **1801 passed, 18 skipped**. Ruff limpio en lo tocado.
