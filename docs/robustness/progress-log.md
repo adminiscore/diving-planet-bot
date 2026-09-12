@@ -1367,3 +1367,56 @@ peticiones/día a prácticamente cero salvo pruebas reales. La cuota del 11 qued
 agotada (18 restantes, reset 23h57m) por las horas que el bucle estuvo activo, así que la
 validación del rediseño agrupado se pospone otra vez — pero a partir de mañana debería haber
 margen de verdad.
+
+## 2026-09-12 — El rediseño agrupado, validado con datos limpios
+
+Con el bucle parado 23h, la cuota amaneció entera (9.999) — confirmación indirecta del
+diagnóstico: era el bucle, no un tope diario quemado.
+
+### Eval-set: misma precisión con 1 petición en vez de N
+
+Tanda limpia (107/107 evaluados, 0 llamadas degradadas, el propio arnés lo certifica):
+
+| campo | suelto (referencia) | agrupado |
+|---|---|---|
+| activity | 95% (60/63) | 94% (59/63) |
+| group_size | 98% (43/44) | **100% (44/44)** |
+| is_certified | 97% | 97% |
+| location | 100% | 100% |
+| is_colombian | 67% | 67% |
+| group_allocation | 91% | 91% |
+| **overall** | **95.7% (198/207)** | **95.7% (198/207)** |
+
+**Overall idéntico.** Un caso se desplaza de `activity` a `group_size` — dentro del ruido
+esperable de un modelo no determinista. No hay degradación por agrupar.
+
+Ojo al camino hasta este número, porque la primera medición decía otra cosa: una tanda con 3
+errores 429 dio `activity` 92% y estuvo a punto de hacer descartar el rediseño. Los 3 casos
+"nuevos" que fallaban devolvían exactamente el valor del regex, que es justo lo que produce un
+429 al degradar. De ahí el endurecimiento del arnés (abortar en rate-limit, excluir degradados,
+declarar si la tanda es comparable).
+
+### Latencia: el coste ya no escala con el número de campos
+
+| enfoque | multi-campo (4 campos elegibles) |
+|---|---|
+| en serie | +1.78s / +2 peticiones |
+| en paralelo | +1.21s / +2 peticiones |
+| **agrupado** | **+0.79s / +1 petición** |
+
+Cuando no dispara ningún veto el coste sigue siendo cero (−0.08s, ruido). Y lo importante es
+estructural: **+1 petición sea cual sea el número de campos verificados**, así que añadir campos
+nuevos al mecanismo ya no encarece el turno.
+
+### Fallo del modelo que queda abierto (no del código)
+
+`conv913-first-level-activity` sigue fallando, pero por un motivo concreto y reproducible: para
+"primer nivel de buceo" el modelo devuelve `'certificarse'`, que **no existe en el enum de
+`activity`**. La validación lo descarta (correctamente: nunca aplicar un valor inventado) y el
+campo se queda con el valor del regex. No es un fallo de infraestructura ni del mecanismo: es el
+modelo respondiendo mal, y ahora el arnés lo cuenta como tal en vez de excluirlo — que era
+justamente lo que ocultaba la primera versión de la guarda.
+
+Hipótesis a probar (barata): el prompt describe las reglas de negocio pero no enumera los
+valores válidos del enum, confiando en que el schema baste. Añadir la lista explícita al texto
+probablemente lo arregle.
