@@ -177,44 +177,9 @@ async def test_real_conv_913_message_end_to_end_via_understand():
     assert intent.service_id == "open_water"
 
 
-# ── El enum de `activity`, enumerado en el TEXTO del prompt ──────────────────
-#
-# Hallazgo 2026-09-12 (probe contra el modelo real desde PRE): para el mensaje
-# de la conversacion 913 el modelo devolvia `'certificarse'` -- una palabra
-# tomada del propio texto de la regla, no un valor del enum -- de forma
-# REPRODUCIBLE (10/10 con temperature=0.0). Declarar el `enum` en el schema de
-# la tool NO basta con un `tool_choice` forzado; hay que enumerar los valores
-# validos en el texto del prompt. Con el enum enumerado: 10/10 `padi_open_water`,
-# y el eval-set subio de 94% a 98% en `activity` (overall 95.7% -> 96.6%).
-#
-# Estos tests son la barrera para que nadie "limpie" esa lista del prompt.
 
-@pytest.mark.parametrize("lang", ["es", "en"])
-def test_activity_verification_prompt_enumerates_every_enum_value(lang):
-    from src.prompts.booking import EXTRACTION_TOOL, field_verification_system_prompt
-
-    prompt = field_verification_system_prompt("activity", lang)
-    enum = EXTRACTION_TOOL["function"]["parameters"]["properties"]["activity"]["enum"]
-    faltan = [v for v in enum if v not in prompt]
-    assert not faltan, (
-        f"El prompt de verificacion de `activity` ({lang}) no enumera {faltan}. "
-        "Sin la lista explicita el modelo inventa valores fuera del enum "
-        "(ver 'certificarse', conversacion 913)."
-    )
-
-
-@pytest.mark.parametrize("lang", ["es", "en"])
-def test_activity_prompt_does_not_describe_certified_diving_as_already_certified(lang):
-    """`certified_diving` es la actividad de buceo POR DEFECTO, no 'solo para
-    ya certificados'. Una primera version de la lista lo gloso asi y regresiono
-    'uno quiere buceo y el otro snorkel' a `minicourse` (medido A/B, 2026-09-12).
-    """
-    from src.prompts.booking import field_verification_system_prompt
-
-    prompt = field_verification_system_prompt("activity", lang).lower()
-    marcador = "por defecto" if lang == "es" else "default"
-    assert marcador in prompt, (
-        "La glosa de `certified_diving` debe decir que es el valor por DEFECTO "
-        "para 'buceo' a secas; describirlo como 'solo para ya certificados' "
-        "empuja al modelo a `minicourse` en mensajes mixtos."
-    )
+# Nota: los tests que fijaban "el prompt enumera el enum de `activity`" vivieron
+# aqui un rato y se movieron a tests/test_prompt_enum_enumeration.py, que lo
+# comprueba para TODOS los campos con enum y en los DOS prompts que los
+# consumen (fill_gaps y el veto) en vez de solo para este campo. El hallazgo que
+# los motivo (el modelo devolvia 'certificarse') esta documentado alli.

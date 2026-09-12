@@ -167,6 +167,137 @@ EXTRACTION_TOOL = {
 }
 
 
+# ---------------------------------------------------------------------------
+# Enumerar los `enum` del schema DENTRO del texto del prompt.
+#
+# Hallazgo 2026-09-12 (probe contra el modelo real): para "primer nivel de
+# buceo" el modelo devolvia `'certificarse'` -- una palabra tomada del propio
+# texto de la regla, no un valor del enum -- de forma REPRODUCIBLE (10/10 con
+# temperature=0.0). Declarar `enum` en el schema NO basta ni con un
+# `tool_choice` forzado. `_clean_verified_value` ya descartaba esos valores
+# (degradar a "nada que vetar" nunca a un valor inventado), pero descartar es
+# perder el turno: lo que hace falta es que el modelo no los invente.
+#
+# Se genera DESDE EL SCHEMA a proposito, en vez de escribir la lista a mano en
+# cada regla: los `enum` viven en un solo sitio (`EXTRACTION_TOOL`/
+# `SIGNALS_TOOL`) y el prompt no puede desincronizarse de ellos. Un campo nuevo
+# con enum lo hereda gratis, y un valor nuevo aparece en el prompt sin tocar
+# ningun texto -- que es justo lo que fallo con `activity`, donde la lista
+# escrita a mano solo existia para UN campo de los cinco que tienen enum.
+#
+# Las GLOSAS son la parte que no se puede derivar del schema (son reglas de
+# negocio) y por eso viven aqui, en un unico mapa por idioma. Cuidado con
+# ellas: la primera version gloso `certified_diving` como "para quien YA esta
+# certificado", contradiciendo la regla escrita encima, y eso REGRESIONO
+# "uno quiere buceo y el otro snorkel" a `minicourse` (medido A/B). Una glosa
+# no es decoracion: cambia la respuesta.
+_ENUM_VALUE_GLOSSES_ES = {
+    "activity": {
+        "certified_diving": (
+            "inmersion de buceo estandar; es el valor por DEFECTO cuando se "
+            "pide 'buceo' sin mas, tenga o no certificacion"
+        ),
+        "minicourse": (
+            "bautismo/iniciacion: SOLO si el mensaje dice que es para probar "
+            "sin certificarse o que no sabe bucear"
+        ),
+        "padi_open_water": (
+            "el PRIMER NIVEL de certificacion: 'primer nivel', 'primer curso', "
+            "'sacarme el titulo', 'certificarme' por primera vez"
+        ),
+    },
+    "location": {
+        "cartagena": "se hospeda en la ciudad o en cualquiera de sus barrios",
+        "island": "se hospeda en o viene de Islas del Rosario, Baru o un hotel de isla",
+    },
+    "duration": {
+        "single_day": "un solo dia",
+        "multi_day": "varios dias",
+    },
+    "companion_activity": {
+        "certified_diving": "inmersion de buceo estandar",
+        "minicourse": "bautismo/iniciacion sin certificarse",
+    },
+}
+
+_ENUM_VALUE_GLOSSES_EN = {
+    "activity": {
+        "certified_diving": (
+            "a standard dive; this is the DEFAULT value when 'diving' is "
+            "requested with no further detail, certified or not"
+        ),
+        "minicourse": (
+            "try-dive/discover scuba: ONLY if the message says it is to try it "
+            "out without certifying, or that they cannot dive"
+        ),
+        "padi_open_water": (
+            "the FIRST certification level: 'first level', 'first course', "
+            "'get my licence', 'get certified' for the first time"
+        ),
+    },
+    "location": {
+        "cartagena": "staying in the city or any of its neighborhoods",
+        "island": "staying on or coming from the Rosario Islands, Baru or an island hotel",
+    },
+    "duration": {
+        "single_day": "a single day",
+        "multi_day": "several days",
+    },
+    "companion_activity": {
+        "certified_diving": "a standard dive",
+        "minicourse": "try-dive/discover scuba without certifying",
+    },
+}
+
+_ENUM_LEAD_ES = (
+    "Valores válidos de `{field}` (devuelve EXACTAMENTE uno de estos "
+    "identificadores, nunca otra palabra ni una traducción): "
+)
+_ENUM_LEAD_EN = (
+    "Valid `{field}` values (return EXACTLY one of these identifiers, never "
+    "another word or a translation): "
+)
+
+
+def _field_enum(field: str, tool: dict = EXTRACTION_TOOL) -> list | None:
+    """Los valores del `enum` de `field`, o None si no declara ninguno.
+    Contempla tambien los campos array-of-enum (p. ej. `ages` no, pero el
+    patron existe en el schema y no debe romper aqui)."""
+    schema = tool["function"]["parameters"]["properties"].get(field, {})
+    enum = schema.get("enum")
+    if enum is None:
+        enum = (schema.get("items") or {}).get("enum")
+    return enum
+
+
+def _enum_values_sentence(field: str, lang: str, tool: dict = EXTRACTION_TOOL) -> str:
+    """Frase que enumera los valores validos de `field`, generada desde el
+    schema. Cadena vacia si el campo no declara `enum` (la inmensa mayoria:
+    booleanos y enteros no la necesitan)."""
+    enum = _field_enum(field, tool)
+    if not enum:
+        return ""
+    glosses = (_ENUM_VALUE_GLOSSES_ES if lang == "es" else _ENUM_VALUE_GLOSSES_EN)
+    field_glosses = glosses.get(field, {})
+    parts = []
+    for value in enum:
+        gloss = field_glosses.get(value)
+        parts.append(f"`{value}` ({gloss})" if gloss else f"`{value}`")
+    lead = (_ENUM_LEAD_ES if lang == "es" else _ENUM_LEAD_EN).format(field=field)
+    return lead + ", ".join(parts) + "."
+
+
+def _enum_values_block(fields: list[str], lang: str, tool: dict = EXTRACTION_TOOL) -> str:
+    """Las frases de valores validos de todos los `fields` que declaren enum,
+    listas para concatenar a un prompt. Cadena vacia si ninguno tiene."""
+    sentences = [
+        sentence
+        for sentence in (_enum_values_sentence(f, lang, tool) for f in fields)
+        if sentence
+    ]
+    return (" " + " ".join(sentences)) if sentences else ""
+
+
 def extraction_system_prompt(lang: str, missing_fields: list[str]) -> str:
     fields_list = ", ".join(missing_fields)
     if lang == "es":
@@ -182,6 +313,7 @@ def extraction_system_prompt(lang: str, missing_fields: list[str]) -> str:
             "en Cartagena NO es señal de la ubicación del cliente — 'quiero "
             "bucear' sin lugar deja location fuera; sin mención de días/estancia, "
             "duration queda fuera. Abstenerse siempre es mejor que rellenar mal."
+            + _enum_values_block(missing_fields, "es")
         )
     return (
         "You are a data-extraction layer for a scuba diving bot (Diving Planet, "
@@ -195,6 +327,7 @@ def extraction_system_prompt(lang: str, missing_fields: list[str]) -> str:
         "location — 'I want to dive' with no place leaves location out; no "
         "mention of days/stay leaves duration out. Abstaining is always better "
         "than a wrong fill."
+        + _enum_values_block(missing_fields, "en")
     )
 
 
@@ -274,20 +407,8 @@ _FIELD_VERIFICATION_RULES_ES = {
         "PRODUCTO que está pidiendo. Solo usa 'minicourse' cuando el mensaje "
         "NO nombra ningún curso PADI concreto y solo habla de probar el buceo "
         "sin certificarse."
-        # El modelo devolvia 'certificarse' -- literalmente una palabra de
-        # este mismo texto, no un valor del enum -- de forma REPRODUCIBLE
-        # (10/10 con temperature=0.0, probe 2026-09-12). El `enum` del schema
-        # no bastaba: hay que enumerar los valores en el texto del prompt.
-        " Valores validos de `activity` (devuelve EXACTAMENTE uno de estos "
-        "identificadores, nunca otra palabra ni una traduccion): "
-        "`certified_diving` (inmersion de buceo estandar; es el valor por "
-        "DEFECTO cuando se pide 'buceo' sin mas, tenga o no certificacion), "
-        "`minicourse` (bautismo/iniciacion: SOLO si el mensaje dice que es "
-        "para probar sin certificarse o que no sabe bucear), "
-        "`snorkel`, "
-        "`padi_open_water` (el PRIMER NIVEL de certificacion: 'primer nivel', "
-        "'primer curso', 'sacarme el titulo', 'certificarme' por primera vez), "
-        "`padi_advanced`, `padi_rescue`, `padi_divemaster`, `padi_specialty`."
+        # La lista de valores validos NO se escribe aqui: la genera
+        # `_enum_values_sentence` desde el propio schema (ver su comentario).
     ),
     "is_certified": (
         "• `is_certified` — si el cliente YA tiene una certificación de buceo. "
@@ -350,19 +471,7 @@ _FIELD_VERIFICATION_RULES_EN = {
         "CURRENT level, they don't change the PRODUCT being requested. Only "
         "use 'minicourse' when the message does NOT name a specific PADI "
         "course and only talks about trying diving without certifying."
-        # Mismo refuerzo que en ES (ver el comentario alli): el enum del
-        # schema no basta, hay que enumerarlo en el texto.
-        " Valid `activity` values (return EXACTLY one of these identifiers, "
-        "never another word or a translation): "
-        "`certified_diving` (a standard dive; this is the DEFAULT value when "
-        "'diving' is requested with no further detail, certified or not), "
-        "`minicourse` (try-dive/discover scuba: ONLY if the message says it "
-        "is to try it out without certifying, or that they can't dive), "
-        "`snorkel`, "
-        "`padi_open_water` (the FIRST certification level: 'first level', "
-        "'first course', 'get my licence', 'get certified' for the first "
-        "time), "
-        "`padi_advanced`, `padi_rescue`, `padi_divemaster`, `padi_specialty`."
+        # La lista de valores validos la genera `_enum_values_sentence`.
     ),
     "is_certified": (
         "• `is_certified` — whether the customer ALREADY holds a scuba "
@@ -426,7 +535,13 @@ def fields_verification_system_prompt(fields: list[str], lang: str) -> str:
     else:
         header, footer = _VERIFICATION_HEADER_EN, _VERIFICATION_FOOTER_EN
         rules = _FIELD_VERIFICATION_RULES_EN
-    body = "\n".join(rules[f] for f in fields)
+    # La regla de negocio la escribe una persona; la lista de valores validos
+    # la genera el schema (ver `_enum_values_sentence`). Asi un campo con enum
+    # nuevo no puede nacer sin ella.
+    body = "\n".join(
+        " ".join(part for part in (rules[f], _enum_values_sentence(f, lang)) if part)
+        for f in fields
+    )
     return f"{header}\n\n{body}\n\n{footer}"
 
 
