@@ -1510,3 +1510,117 @@ cerrar, la decision es de producto (¿anadir `padi_course` al enum, o cambiar el
   "solo para ya certificados". Verificado que **fallan** sin el fix.
 - Suite completa en verde (1766 passed, 18 skipped); ruff sobre el fichero tocado
   limpio (el repo arrastra 175 avisos preexistentes, identicos antes y despues).
+
+## 2026-09-12 (tarde) — `group_allocation` entra al veto: codigo + medida, flags apagados
+
+Tarea 2 del `NEXT-SESSION-PROMPT.md`. Hecho hasta el punto donde el proceso
+obligatorio exige desplegar: **codigo + tests + bateria dirigida + eval-set**, con
+`llm_group_allocation_veto_shadow_mode` y `_cutover` **en `False`**. Falta desplegar a
+PRE y correr shadow-mode en vivo.
+
+### La justificacion, y lo que NO es
+
+Confirmado el caso real que motiva el campo, reproducido sin LLM de por medio:
+
+    "somos 5: 3 certificados, 1 minicurso y 1 snorkel"
+    -> group_size=5 (correcto), allocation={minicourse:1, snorkel:1}   (suma 2)
+
+"N certificados" sin verbo no matchea `activity_kw`. Total bien, reparto que no suma el
+total: el regex **contesta con confianza y se equivoca**, que es lo que este mecanismo
+caza y lo que `fill_gaps` no puede tocar (su regla es no pisar un campo ya resuelto).
+
+Y se confirma tambien lo contrario, que era el aviso del prompt: **el 91% del eval-set
+no justifica nada**. Con el veto de `group_allocation` activo, el eval-set da
+`group_allocation` **10/11 (91%), identico**. El unico caso que falla alli
+(`hist-followup-must-not-rederive-resolved-group-allocation`) es una alucinacion de
+`fill_gaps` leyendo el historial, y el veto **ni se dispara** sobre el: solo actua sobre
+campos que el REGEX resolvio ESTE turno. La evidencia real es la bateria, no el
+agregado.
+
+### Trigger propio desde el minuto uno
+
+`_group_allocation_should_verify`: dispara **solo si el reparto no suma el `group_size`
+conocido**. Es aritmetica, comprobable sin preguntarle a nadie.
+
+No es una optimizacion de coste sino de precision: el trigger generico ("resuelto este
+turno") ya se midio en `activity` (89%->73%, revertido) porque llamar al LLM tambien en
+los casos claros mete su sesgo por encima de un regex que acertaba. Aqui, ademas, un
+reparto que ya cuadra no tiene nada que corregir. Sin `group_size` con que comparar, se
+abstiene.
+
+### Bateria dirigida contra el modelo real (shadow: mide, no aplica)
+
+10 mensajes de la familia + 5 controles:
+
+| resultado | casos |
+|---|---|
+| corregidos al reparto correcto etiquetado a mano | **9/9** |
+| abstencion correcta (sin inventar) | **1/1** |
+| fallos | **0** |
+| controles que disparan (coste) | **0/5** |
+
+Incluye variantes de la forma que se pierde ("3 certificados", "5 buzos certificados",
+"3 con titulo", "2 open water" -> `padi_open_water`) y tamanos de grupo de 5 a 10.
+
+El caso que mas importaba es el ultimo: **"somos 4: 2 minicurso y 1 snorkel"**, donde el
+4o integrante no declara actividad. El reparto es incompleto de verdad (el mensaje no
+dice que hace esa persona), asi que la respuesta correcta es **no inventar**. El modelo
+se abstuvo. Es el riesgo real de este campo y no se materializo.
+
+Los 5 controles (repartos que ya cuadran, y un plural vago) **no disparan**: coste cero.
+
+### Eval-set completo, tanda limpia y declarada comparable
+
+| campo | referencia 2026-09-12 | con ambos cambios de hoy |
+|---|---|---|
+| activity | 59/63 (94%) | **62/63 (98%)** |
+| group_size | 44/44 (100%) | 44/44 (100%) |
+| is_certified | 31/32 (97%) | 31/32 (97%) |
+| location | 23/23 (100%) | 23/23 (100%) |
+| group_allocation | 10/11 (91%) | 10/11 (91%) |
+| is_colombian | 6/9 (67%) | 6/9 (67%) |
+| **overall** | **198/207 (95.7%)** | **201/207 (97.1%)** |
+
+Cero regresiones. La ganancia entera viene de `activity` (tarea 1); `group_allocation`
+no mueve el eval-set, tal y como estaba previsto. De paso queda descartado el
+`group_size` 43/44 de la tanda anterior: vuelve a 44/44, era ruido de `fill_gaps`.
+
+### Hallazgos nuevos de la bateria (NO arreglados, a la cola)
+
+1. **El veto de `group_allocation` es, hoy, solo de ES.** Ningun mensaje en ingles
+   produce reparto: "we are 6: 3 certified, 2 minicourse and 1 snorkel" da
+   `allocation=None`. En EN esto es territorio de `fill_gaps` (hueco), no del veto.
+2. **`"en total 7: 4 certificados, 2 minicurso y 1 snorkel"` resuelve `group_size=4`**,
+   no 7 — se queda con el "4" del primer tramo en vez del total declarado. Bug de
+   `group_size`, independiente de este trabajo. El veto de `group_allocation` corrigio
+   igualmente el reparto, pero lo compara contra un total equivocado. Candidato claro
+   para el veto de `group_size` (que sigue apagado).
+3. **La superficie del veto es mas estrecha de lo que parece**: hacen falta >=2 tramos
+   que SI matcheen mas >=1 perdido. Con un solo tramo reconocible
+   ("somos 8: 6 certificados, 2 minicurso") el regex devuelve `allocation=None` entero,
+   que es un hueco de `fill_gaps`, no un reparto incompleto. Util para no sobrestimar
+   lo que este veto puede arreglar.
+
+### Codigo
+
+- `src/config.py`: los 2 flags nuevos, `False`, con la justificacion (y el aviso de que
+  no es el 91%).
+- `src/agents/supervisor.py`: `_group_allocation_should_verify` + entrada en
+  `_VETO_FIELD_SPECS`.
+- `src/prompts/booking.py`: regla de `group_allocation` en ES y EN — **obligatoria**:
+  `fields_verification_system_prompt` hace `rules[f]` y reventaria con `KeyError` en
+  cuanto el campo entrase en un lote.
+- `tests/test_group_allocation_veto.py`: 16 tests. Cubren el trigger (dispara/calla/se
+  abstiene), shadow-no-aplica vs cutover-aplica, degradado a regex ante fallo del LLM, y
+  sobre todo **que es un dict y no un escalar** (limpieza de nulls del schema estricto y
+  comparacion `!=` sobre dicts), que es lo que el prompt de la sesion pedia fijar.
+
+Suite completa en verde: **1786 passed, 18 skipped** (1766 antes; +4 de `activity`, +16
+de `group_allocation`). Ruff limpio en los ficheros tocados.
+
+### Lo que falta del proceso obligatorio
+
+Desplegar a PRE con los flags en `False`, encender **shadow-mode** (`_shadow_mode=true`,
+que solo loguea `[EXTRACT][GROUP_ALLOCATION_VETO]` sin aplicar), dejar correr trafico
+real, y **solo entonces** decidir el cutover con esos datos. No se ha desplegado nada en
+esta sesion.

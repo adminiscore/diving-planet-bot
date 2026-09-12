@@ -200,6 +200,28 @@ class Settings(BaseSettings):
     llm_group_size_veto_shadow_mode: bool = False
     llm_group_size_veto_cutover: bool = False
 
+    # --- Veto de `group_allocation` (reparto INCOMPLETO pero visible) ---
+    # Justificacion real (NO el 91% del eval-set: el unico caso que falla
+    # alli es una alucinacion de `fill_gaps` leyendo el historial, y el veto
+    # ni se disparia sobre el -- solo actua sobre campos que el REGEX
+    # resolvio ESTE turno). El caso que SI motiva esto es otro:
+    #   "somos 5: 3 certificados, 1 minicurso y 1 snorkel"
+    #   -> group_size=5 (correcto) pero allocation={minicourse:1, snorkel:1}
+    # porque "N certificados" sin verbo no matchea `activity_kw`. El total
+    # esta bien y el reparto no suma el total: el regex vuelve a CONTESTAR
+    # CON CONFIANZA y equivocarse, que es justo lo que este mecanismo caza.
+    # Quedo asi tras arreglar que un reparto incompleto redujera ademas el
+    # `group_size` declarado (ver progress-log 2026-09-10).
+    #
+    # Trigger PROPIO (`_group_allocation_should_verify`), no el generico:
+    # solo cuando el reparto NO suma el `group_size` conocido. La leccion de
+    # `activity` (trigger generico -> 89%->73%, revertido) vale igual aqui,
+    # y ademas hace el coste practicamente cero: en los repartos que ya
+    # cuadran no se gasta ni una peticion.
+    # Off por defecto en todas partes.
+    llm_group_allocation_veto_shadow_mode: bool = False
+    llm_group_allocation_veto_cutover: bool = False
+
     @property
     def is_dev(self) -> bool:
         return self.app_env == "development"

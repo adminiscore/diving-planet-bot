@@ -2302,6 +2302,37 @@ def _activity_should_verify(message: str, regex_intent: DetectedIntent) -> bool:
     return len(matched_activity_categories(message)) >= 2
 
 
+def _group_allocation_should_verify(message: str, regex_intent: DetectedIntent) -> bool:
+    """Trigger propio de `group_allocation`: solo si el reparto NO suma el
+    `group_size` conocido.
+
+    El fallo que motiva el veto es un reparto INCOMPLETO pero VISIBLE --
+    "somos 5: 3 certificados, 1 minicurso y 1 snorkel" da group_size=5 y
+    allocation={minicourse:1, snorkel:1}, porque "N certificados" sin verbo
+    no matchea `activity_kw`. Esa incoherencia (2 != 5) es comprobable con
+    aritmetica, sin preguntarle a nadie, asi que se usa como disparador en
+    vez del generico "resuelto este turno".
+
+    No es un detalle de eficiencia sino de precision: el trigger generico ya
+    se midio en `activity` (89%->73%, revertido) porque llamar al LLM tambien
+    en los casos CLAROS mete su sesgo por encima de un regex que acertaba.
+    Aqui, ademas, un reparto que ya cuadra no tiene nada que corregir.
+
+    Sin `group_size` conocido no hay con que comparar: se abstiene (False).
+    """
+    allocation = getattr(regex_intent, "group_allocation", None)
+    if not allocation:
+        return False
+    group_size = getattr(regex_intent, "group_size", None)
+    if not isinstance(group_size, int) or group_size <= 0:
+        return False
+    try:
+        total = sum(allocation.values())
+    except (AttributeError, TypeError):
+        return False
+    return total != group_size
+
+
 class _VetoSpec:
     __slots__ = ("shadow_flag", "cutover_flag", "apply", "should_verify")
 
@@ -2368,6 +2399,17 @@ _VETO_FIELD_SPECS = {
     "group_size": _VetoSpec(
         shadow_flag="llm_group_size_veto_shadow_mode",
         cutover_flag="llm_group_size_veto_cutover",
+    ),
+    # Reparto incompleto pero visible (ver config.py para la justificacion,
+    # que NO es el 91% del eval-set). Unico campo del mecanismo que es un
+    # DICT y no un escalar: `_clean_verified_value` ya limpia los nulls que
+    # mete el schema estricto y la comparacion `!=` de `verify_fields`
+    # funciona igual sobre dicts -- hay tests explicitos de eso porque el
+    # resto del mecanismo se diseño pensando en escalares.
+    "group_allocation": _VetoSpec(
+        shadow_flag="llm_group_allocation_veto_shadow_mode",
+        cutover_flag="llm_group_allocation_veto_cutover",
+        should_verify=_group_allocation_should_verify,
     ),
 }
 

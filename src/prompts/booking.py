@@ -322,6 +322,21 @@ _FIELD_VERIFICATION_RULES_ES = {
         "NO inventes una cifra si los acompañantes son un plural vago ('mis "
         "amigos', 'mi familia' sin decir cuántos)."
     ),
+    "group_allocation": (
+        "• `group_allocation` — cómo se reparte el grupo por actividad, en "
+        "formato {actividad: cuántos}. El fallo típico del detector es un "
+        "reparto INCOMPLETO: se queda con los tramos que llevan verbo y "
+        "pierde los que se nombran solo con un sustantivo ('somos 5: 3 "
+        "certificados, 1 minicurso y 1 snorkel' → pierde los 3 certificados, "
+        "que van a `certified_diving`). Devuelve el reparto COMPLETO, con "
+        "todas las actividades mencionadas, usando los mismos identificadores "
+        "de `activity` (`certified_diving`, `minicourse`, `snorkel`, "
+        "`padi_open_water`...). Las cifras deben sumar el total del grupo si "
+        "el mensaje lo dice. Si algún tramo NO tiene un número contable "
+        "('yo buceo y mis amigos snorkel'), o si a alguien se le menciona sin "
+        "decir qué actividad quiere, OMITE el campo entero en vez de inventar "
+        "una cifra o una actividad — el bot preguntará."
+    ),
 }
 
 _FIELD_VERIFICATION_RULES_EN = {
@@ -380,6 +395,21 @@ _FIELD_VERIFICATION_RULES_EN = {
         "and I' = 2, 'my partner and our two kids' = 4, 'four adults and a "
         "kid' = 5); do NOT invent a number for a vague plural ('my friends', "
         "'my family' with no headcount)."
+    ),
+    "group_allocation": (
+        "• `group_allocation` — how the group splits by activity, as "
+        "{activity: headcount}. The detector's typical failure is an "
+        "INCOMPLETE split: it keeps the parts phrased with a verb and drops "
+        "the ones named with just a noun ('there are 5 of us: 3 certified, 1 "
+        "minicourse and 1 snorkel' → it loses the 3 certified, who belong in "
+        "`certified_diving`). Return the COMPLETE split, covering every "
+        "activity mentioned, using the same identifiers as `activity` "
+        "(`certified_diving`, `minicourse`, `snorkel`, `padi_open_water`...). "
+        "The numbers must add up to the group total when the message states "
+        "it. If any part has NO countable number ('I dive and my friends "
+        "snorkel'), or someone is mentioned without saying which activity "
+        "they want, OMIT the whole field instead of inventing a headcount or "
+        "an activity — the bot will ask."
     ),
 }
 
