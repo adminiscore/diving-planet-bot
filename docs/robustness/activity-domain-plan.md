@@ -296,6 +296,18 @@ V1 arregla "viene mi primo" y un caso inestable, pero sigue diciendo `minicourse
 "mi amigo no está certificado" (con historial de buceo), que hoy la guarda sí evita.
 Aplicar V1 sin guarda empeoraría 2 casos, así que no vale tal cual.
 
+Dos redacciones más, explicando que "no estar certificado" no es una actividad (V3a en la
+descripción del campo, V3b en la definición de `undecided`): **23/26 las dos**. Ninguna
+arregla ese caso: con historial de buceo el modelo dice `minicourse` 3/3 en todas las
+variantes. V3a además rompe "bajar con tanque" y V3b vuelve inestable "viene mi primo".
+
+**Estado: sin aplicar. Decisión de negocio pendiente.** El modelo aplica de forma
+consistente "acompañante sin certificación que se suma a un grupo que bucea → minicurso".
+La auditoría del 2026-07-23 decidió preguntar. Si negocio acepta esa suposición por
+defecto (el minicurso no exige certificación y el resumen de la reserva lo muestra), V1
+sin la guarda de vocabulario da 24/26 y recupera los 9 casos que la guarda descarta. Si
+se mantiene "preguntar", la guarda sigue y el hueco queda abierto.
+
 **Incoherencias de textos que quedan en el registro (decisión de negocio, editar en
 `activities.json` sin tocar código):**
 
