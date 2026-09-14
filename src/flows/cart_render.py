@@ -365,7 +365,10 @@ def _goto_mixed_final_summary(state: ConversationState) -> str:
 
 
 def _is_contact_only_service(service_id: str | None) -> bool:
-    return service_id == "divemaster"
+    """Servicios que se cierran con un asesor, sin link de reserva: los marca
+    `contact_only` en services.json (Divemaster, curso referido). Antes era una
+    comparacion escrita a mano con "divemaster"."""
+    return bool((SERVICES.get(service_id or "") or {}).get("contact_only"))
 
 
 def _resolve_service_booking_url(service: dict, state: ConversationState) -> str | None:

@@ -52,6 +52,9 @@ class Activity:
     # Id de otra actividad cuyos servicios usa para reservarse y cobrarse (el
     # refresher se vende como el minicurso). No es duena de esos servicios.
     sold_as: str | None = None
+    # False = no se ofrece ni se recomienda: solo cuenta si el cliente lo pide
+    # (curso referido, owner 2026-09-14).
+    offer: bool = True
     # Glosa corta y MEDIDA para los prompts que extraen datos del cliente
     # (fill_gaps, veto, combinada). Opcional: sin glosa, el valor se enumera solo.
     # Distinta de `for_whom` a proposito -- ver el `_comment` de activities.json.
@@ -103,6 +106,7 @@ def _parse(raw: dict) -> Registry:
             for_whom=dict(entry["for_whom"]),
             sources=tuple(entry["sources"]),
             sold_as=entry.get("sold_as"),
+            offer=bool(entry.get("offer", True)),
             gloss=dict(entry["gloss"]) if entry.get("gloss") else None,
             texts={k: dict(v) for k, v in entry["texts"].items()} if entry.get("texts") else None,
             default_level=entry.get("default_level"),
@@ -146,6 +150,20 @@ def day_activity_ids() -> list[str]:
     return [
         a.id for a in registry().activities
         if a.family in _DAY_FAMILIES and a.all_services() and a.sold_as is None
+    ]
+
+
+def sibling_ids(activity_id: str | None) -> list[str]:
+    """Actividades "hermanas": misma familia y mismo nivel de curso, concretas y con
+    servicio (p. ej. Open Water y su curso referido). Derivado del registro, sin
+    listas: sirve para no decidir por regex entre dos productos del mismo nivel."""
+    base = by_id(activity_id) if activity_id else None
+    if base is None or base.course_level is None:
+        return []
+    return [
+        a.id for a in registry().activities
+        if a.id != base.id and a.family == base.family and a.course_level == base.course_level
+        and not a.generic and a.sold_as is None and a.all_services()
     ]
 
 

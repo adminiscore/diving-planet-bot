@@ -92,3 +92,13 @@ def test_detector_abstains_on_contradictory_nationality(message):
     intent, _state = _intent(message)
     assert intent.is_colombian is None
     assert "is_colombian" not in intent.detected_fields
+
+
+def test_mixed_nationality_group_pays_in_usd():
+    """Decision del owner (2026-09-14): grupo con nacionalidades mixtas -> USD para
+    todo el grupo (antes: pago individual por nacionalidad)."""
+    state = ConversationState(conversation_id="mixed")
+    state.language = "es"
+    resp = supervisor._mixed_nationality_response(state, "dos somos colombianos pero uno es extranjero")
+    assert state.is_colombian is False
+    assert "USD" in resp and "todo el grupo" in resp

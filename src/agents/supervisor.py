@@ -928,23 +928,22 @@ def _mixed_nationality_response(state: ConversationState, message: str) -> str:
     nacionalidad). Extraído de `_shared_turn_handler` para que la cascada y el
     nodo `booking` usen una única fuente de copy/estado, mismo patrón que
     `_booking_change_response`."""
+    # Decision del owner (2026-09-14): un grupo con nacionalidades mixtas paga
+    # TODO en dolares (USD). Antes se explicaba un pago individual por nacionalidad.
+    state.is_colombian = False
     if state.language == "es":
         response = (
-            "¡Entendido! Cuando el grupo tiene nacionalidades mixtas, cada quien paga según su "
-            "nacionalidad: los colombianos/residentes en pesos (COP) y los extranjeros en dólares "
-            "(USD), al mismo precio equivalente — no hay descuento especial por ser colombiano. "
-            "Para coordinar el pago individual de cada persona del grupo, lo mejor es que un "
-            "asesor te ayude directamente.\n\n¿Quieres que te conecte con un asesor, o prefieres "
+            "¡Entendido! Cuando en el grupo hay nacionalidades mixtas, la reserva se paga en "
+            "dólares (USD) para todo el grupo, al mismo precio equivalente — no hay descuento "
+            "especial por ser colombiano.\n\n¿Quieres que te conecte con un asesor, o prefieres "
             "volver al menú principal?"
         )
     else:
         response = (
-            "Got it! When the group has mixed nationalities, each person pays according to their "
-            "own nationality: Colombians/residents in pesos (COP) and foreign visitors in dollars "
-            "(USD), at the same equivalent price — there's no special discount for being "
-            "Colombian. To coordinate each person's individual payment, it's best for an advisor "
-            "to help you directly.\n\nWould you like me to connect you with an advisor, or would "
-            "you rather go back to the main menu?"
+            "Got it! When the group has mixed nationalities, the booking is paid in US dollars "
+            "(USD) for the whole group, at the same equivalent price — there's no special "
+            "discount for being Colombian.\n\nWould you like me to connect you with an advisor, "
+            "or would you rather go back to the main menu?"
         )
     state.quick_replies = _booking_change_buttons(state.language)
     logger.info("[SUPERVISOR] Mixed-nationality group detected -> honest explanation + escalate/home buttons")
@@ -2292,7 +2291,13 @@ def _activity_should_verify(
     correcta de "aqui SI hay riesgo real de colision" -- el gap de la
     conversacion 913 se cerro por otra via (ver `_PADI_COURSE_PATTERNS` en
     intent_detector.py, patron nuevo para "primer nivel"/"primer curso"),
-    no ampliando este trigger."""
+    no ampliando este trigger.
+
+    Probado y revertido (2026-09-14): disparar tambien cuando la actividad tiene
+    "hermanas" en el registro (Open Water y su referido), con el referido en el
+    enum. Detectaba el referido, pero el eval-set bajo 214 -> 213/219: "hey we
+    arent certified, first time diving" paso de minicourse a padi_open_water.
+    Pendiente de rediseño (ver progress-log, tarea 10)."""
     return len(matched_activity_categories(message)) >= 2
 
 

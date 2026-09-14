@@ -1082,6 +1082,7 @@ SLOT_RESOLVER_SPEC = {
         "enum": [
             a.id for a in _activities.registry().activities
             if a.family in ("course", "specialty") and not a.generic and a.cart_type and a.sold_as is None
+            and a.offer
         ],
         "value_meaning": (
             "the id of the course or specialty the customer picks from the options "

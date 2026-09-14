@@ -275,7 +275,7 @@ def _course_level_options(state: ConversationState) -> list[str]:
     family = current.family if current else "course"
     options = [
         a for a in dom.registry().activities
-        if a.family == family and not a.generic and a.cart_type and a.sold_as is None
+        if a.family == family and not a.generic and a.cart_type and a.sold_as is None and a.offer
     ]
     return [a.id for a in sorted(options, key=lambda a: (a.course_level is None, a.course_level or 0))]
 

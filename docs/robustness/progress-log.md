@@ -2445,3 +2445,44 @@ Segundo hueco del referido: en `activities.json`, `padi_open_water_referral` tie
 "hermanas" sí se pueden derivar del registro sin listas: misma `family` (`course`) y mismo
 `course_level` (1) que `padi_open_water`. Decisión de producto previa: ¿el bot pregunta si
 trae carta de referido cuando alguien pide el Open Water, o solo lo detecta si lo dice?
+
+### Decisiones del owner (2026-09-14, tarde) y lo aplicado
+
+1. **Carta de referido: solo si el cliente lo dice, y entonces con el asesor.** Ver la sección
+   del referido más abajo.
+2. **"2 open water" / "advanced" dentro de un reparto**: el bot debe hacer una pregunta
+   aclaratoria (¿ya certificados o quieren certificarse?). **Pendiente de implementar.**
+3. **"somos 3, uno no está certificado"**: se recomiendan opciones, no se asume minicurso.
+   **Pendiente**: el eval-set aún espera `{certified_diving: 2, minicourse: 1}` y el flujo de
+   recomendación (F6) solo se dispara para acompañantes detectados por la señal.
+4. **Grupo de nacionalidad mixta: USD para todo el grupo.** Aplicado en
+   `_mixed_nationality_response` (texto y `is_colombian=False`). Sigue dependiendo de que
+   `_MIXED_NATIONALITY_RE` reconozca el grupo ("yo soy colombiano y mi novia extranjera" no lo
+   reconoce).
+
+### Curso referido: preparado sin tocar prompts; la detección, medida y revertida
+
+Aplicado (sin cambios de prompt, snapshot idéntico):
+- `cart_render._is_contact_only_service` lee `contact_only` de `services.json` (antes
+  `== "divemaster"` a mano). `referral` y `referral_already_on_island` pasan a `contact_only`:
+  si el cliente acaba en el referido, se cierra con el asesor, sin link.
+- En el registro, el referido tiene `cart_type: "course"` y `offer: false`: el carrito lo cobra,
+  pero nunca se ofrece ni aparece en `course_level` (opciones del núcleo ni enum del resolutor).
+- `dom.sibling_ids()`: hermanas = misma familia y `course_level`. Hoy solo Open Water ↔ referido.
+
+Probado con LLM real y **revertido**:
+1. **Abstención del regex** en actividades con hermanas: rompía 11 tests. Con el LLM
+   simulado sin respuesta, "quiero el open water" se quedaba sin actividad; si el LLM falla
+   se perdería el Open Water. Descartado sin gastar eval-set.
+2. **Veto de actividad disparado por hermanas**, con `padi_open_water_referral` en el enum del
+   extractor y glosa "solo si dice que trae carta de referido…". Eval-set **213/219** frente a
+   214:
+   - arregla `f2b-referral-es`;
+   - rompe `adv-en-negation-contraction` ("hey we arent certified, first time diving…":
+     minicourse → padi_open_water), probablemente por la glosa que nombra `padi_open_water`;
+   - rompe `split-open-water-one-not` ("somos 3, 2 con open water y 1 no": → certified_diving,
+     el caso ambiguo que el owner quiere aclarar con una pregunta).
+
+Siguiente intento: glosa del referido que no nombre `padi_open_water` y medir solo el veto de
+hermanas. O un resolutor acotado Open Water/referido que solo se dispare si el mensaje habla de
+haber empezado el curso en otro centro, decidido por el LLM, no por palabras.
