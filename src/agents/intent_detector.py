@@ -1417,6 +1417,12 @@ class IntentDetector:
         Negation is checked first so "no soy colombiano" reads as NOT Colombian."""
         if intent.is_colombian is not None:
             return
+        # Con polaridad contradictoria el regex no decide (2026-09-14): "somos
+        # extranjeros pero vivimos en colombia" (residentes: pagan en COP) daba
+        # False y "colombiano no, soy venezolano" daba True. El hueco lo resuelve
+        # el LLM en la misma peticion del turno, o el bot lo pregunta.
+        if nationality_is_ambiguous(message):
+            return
         # Patrones en `_NOT_COLOMBIAN_RE`/`_COLOMBIAN_RE` (constantes de modulo,
         # compartidas con `nationality_is_ambiguous`).
         if _NOT_COLOMBIAN_RE.search(message):

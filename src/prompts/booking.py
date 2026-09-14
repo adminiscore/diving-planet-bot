@@ -161,7 +161,7 @@ EXTRACTION_TOOL = {
                 },
                 "is_colombian": {
                     "type": "boolean",
-                    "description": "True if the customer states they are Colombian; false if they state they are a foreigner.",
+                    "description": "True if the customer states they are Colombian or live in Colombia (residents pay as Colombians); false if they are a foreigner who does not live in Colombia.",
                 },
             },
         },
@@ -424,10 +424,11 @@ _FIELD_RULES_ES = {
         "está certificado o que es su primera vez."
     ),
     "is_colombian": (
-        "• `is_colombian` — nacionalidad del cliente (cambia el precio: tarifa "
-        "colombiana vs. extranjero). True si afirma ser colombiano, incluidos "
-        "gentilicios regionales ('soy paisa', 'soy rolo', 'soy costeño'). "
-        "False si dice que es extranjero o nombra otra nacionalidad."
+        "• `is_colombian` — si paga como colombiano (cambia la moneda: COP "
+        "para colombianos Y residentes en Colombia, USD para el resto). True si "
+        "afirma ser colombiano, incluidos gentilicios regionales ('soy paisa', "
+        "'soy rolo', 'soy costeño'), o si vive en Colombia aunque sea de otro "
+        "país. False si es extranjero y no vive en Colombia."
     ),
     "location": (
         "• `location` — desde dónde sale el cliente (cambia logística/precio). "
@@ -497,9 +498,11 @@ _FIELD_RULES_EN = {
         "are NOT certified / it's their first time diving."
     ),
     "is_colombian": (
-        "• `is_colombian` — the customer's nationality (it changes the price: "
-        "Colombian vs. foreigner rate). True if they state they are Colombian; "
-        "false if they state they are a foreigner or name another nationality."
+        "• `is_colombian` — whether they pay as Colombian (it changes the "
+        "currency: COP for Colombians AND Colombian residents, USD for everyone "
+        "else). True if they state they are Colombian, or that they live in "
+        "Colombia even if they are from another country; false if they are a "
+        "foreigner who does not live in Colombia."
     ),
     "location": (
         "• `location` — where the customer departs from (changes "

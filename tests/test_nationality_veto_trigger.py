@@ -77,3 +77,18 @@ def test_trigger_fires_on_real_ambiguity():
     intent, state = _intent(msg)
     spec = supervisor._VETO_FIELD_SPECS["is_colombian"]
     assert spec.should_verify(msg, intent, state) is True
+
+
+@pytest.mark.parametrize("message", [
+    "somos extranjeros pero vivimos en colombia",
+    "no soy colombiano pero vivo en colombia",
+    "colombiano no, soy venezolano",
+    "mi pareja es colombiana, yo no",
+])
+def test_detector_abstains_on_contradictory_nationality(message):
+    """2026-09-14: con polaridad contradictoria el regex no decide (daba False a
+    residentes, que pagan en COP, y True a "soy venezolano"). El hueco lo resuelve
+    el LLM en la misma peticion del turno o el bot lo pregunta."""
+    intent, _state = _intent(message)
+    assert intent.is_colombian is None
+    assert "is_colombian" not in intent.detected_fields

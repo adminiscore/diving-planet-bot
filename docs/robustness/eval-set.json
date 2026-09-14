@@ -1330,6 +1330,36 @@
       },
       "source": "F2b del plan de dominio de actividades, 2026-09-14",
       "notes": "Hueco conocido: el regex resuelve padi_open_water por 'open water' y el veto no dispara (una sola categoria). Documenta el caso para F5."
+    },
+    {
+      "id": "nat-residente-extranjeros-viven-en-colombia",
+      "message": "somos extranjeros pero vivimos en colombia",
+      "lang": "es",
+      "expected": {
+        "is_colombian": true
+      },
+      "source": "tarea 8, polaridad contradictoria (tests/test_nationality_veto_trigger.py), 2026-09-14",
+      "notes": "Politica: colombianos y residentes pagan en COP. Regex False y veto LLM False 3/3 (2026-09-14): el campo se entiende como nacionalidad, no como residencia."
+    },
+    {
+      "id": "nat-residente-no-colombiano-vive-en-colombia",
+      "message": "no soy colombiano pero vivo en colombia",
+      "lang": "es",
+      "expected": {
+        "is_colombian": true
+      },
+      "source": "tarea 8, polaridad contradictoria (tests/test_nationality_veto_trigger.py), 2026-09-14",
+      "notes": "Politica: residente = COP. Regex False y veto LLM False 3/3 (2026-09-14)."
+    },
+    {
+      "id": "nat-venezolano-niega-y-afirma-otra",
+      "message": "colombiano no, soy venezolano",
+      "lang": "es",
+      "expected": {
+        "is_colombian": false
+      },
+      "source": "tarea 8, polaridad contradictoria (tests/test_nationality_veto_trigger.py), 2026-09-14",
+      "notes": "Regex True (fallo); el veto LLM lo corrige a False 3/3 (2026-09-14). Con el flag apagado sigue fallando."
     }
   ]
 }

@@ -2361,3 +2361,29 @@ y sin guarda (3/3). Lo cubren la comprobación de cifras del texto y la invarian
 **Único cambio a peor, ambiguo:** `b05` "2 open water y 3 snorkel" pasa de VACIO a
 `{certified_diving: 2, snorkel: 3}`. "2 open water" también se dice de dos buzos con esa
 certificación. Pendiente de decisión del owner.
+
+### Tarea 8: nacionalidad — la definición del campo y el regex en los ambiguos
+
+El eval-set no tenía ningún caso ambiguo. Se añaden 3 con respuesta clara según la política
+(colombianos **y residentes** pagan en COP): dos residentes extranjeros y "colombiano no, soy
+venezolano". Los grupos mixtos no entran: los responde el supervisor con un mensaje propio.
+
+Hallazgos con LLM real (3 repeticiones):
+
+- **El prompt definía `is_colombian` como nacionalidad**, pero lo que decide es la moneda
+  (política y pregunta del bot: "¿eres colombiano o residente?"). Regex y veto daban `False` a
+  los dos residentes.
+- **El regex elige mal justo en los ambiguos**: residentes → `False`, "colombiano no, soy
+  venezolano" → `True`. El veto solo corregía el venezolano, y el flag está apagado.
+
+Cambios: definición "colombiano **o residente**" en la verificación ES/EN y en
+`EXTRACTION_TOOL`, y abstención del regex con polaridad contradictoria. El hueco lo rellena el
+LLM en la misma petición.
+
+- Los 3 ambiguos por la ruta real (regex abstenido + `fill_gaps`): **2/3** (antes 0/3). Sigue
+  fallando "no soy colombiano pero vivo en colombia" (`False` 3/3).
+- Eval-set con la definición nueva (119 casos, ejecución limpia): **214/219 (97,7 %)**, sin ningún
+  caso a peor en el resto de campos. Esa ejecución es anterior a la abstención; solo esos 3
+  casos son ambiguos y se midieron aparte.
+- Grupos mixtos ("yo soy colombiano y mi novia extranjera"): `_MIXED_NATIONALITY_RE` no
+  reconoce todos y el LLM elige un valor. Queda pendiente, con decisión de negocio.
