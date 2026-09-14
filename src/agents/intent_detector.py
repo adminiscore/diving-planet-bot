@@ -857,6 +857,14 @@ class IntentDetector:
         r"\b(?:soy|somos|estoy|estamos)\s+(?:un[ao]?\s+|buz[oa]s?\s+)?"
         r"(?:certificad[oa]s?\s+(?:en|como)\s+)?" + _CERT_LEVEL + r"\b"
         r"|\b(?:tengo|tenemos)\s+(?:el\s+|la\s+|mi\s+|un[ao]?\s+)?" + _CERT_LEVEL + r"\b"
+        # Tercera persona con la persona nombrada (2026-09-15): "mi pareja tiene el
+        # advanced" salia curso Advanced. Sin persona, "¿tienen el advanced?" es preguntar
+        # si el centro lo ofrece, asi que la persona sale de la lista compartida de
+        # sustantivos. Quien lo tiene dentro del grupo es cosa del reparto.
+        r"|\b(?:" + _PERSON_NOUN_SINGULAR_ES + r"|" + _PERSON_NOUN_PLURAL_ES + r")\s+(?:\w+\s+){0,2}?"
+        r"tienen?\s+(?:el\s+|la\s+|su\s+|un[ao]?\s+)?" + _CERT_LEVEL + r"\b"
+        r"|\b(?:" + _PERSON_NOUN_SINGULAR_EN + r"|" + _PERSON_NOUN_PLURAL_EN + r")\s+(?:\w+\s+){0,2}?"
+        r"(?:has|have)\s+(?:got\s+)?(?:her\s+|his\s+|their\s+|an?\s+|the\s+)?" + _CERT_LEVEL + r"\b"
         r"|\bi(?:'?m|\s+am)\s+(?:an?\s+)?" + _CERT_LEVEL + r"\b"
         # "i already have my open water card" — the adverb between "i/we" and
         # "have" used to break the match, so the message was classified as

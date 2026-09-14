@@ -2937,3 +2937,22 @@ tanda anterior solo cambian los dos casos de nacionalidad, y los cambia la rever
 grupo mixto: el residente vuelve a OK y "dos somos colombianos pero uno es extranjero" vuelve a
 fallar. Ningún caso de actividad ni de certificación cambia. Referencia para las siguientes tandas:
 **221/230**.
+
+### Tener un nivel PADI en tercera persona, con la persona nombrada
+
+"mi pareja tiene el advanced y quiere bucear" salía **curso Advanced**: `_HOLDS_CERT_RE` solo
+conocía "tengo/tenemos". Completar la conjugación a secas ("tiene/tienen") fue la primera versión
+y se descartó al medir. "¿tienen el advanced?" o "tiene el open water?" preguntan si el centro lo
+ofrece, y habrían pasado a buceo certificado. Ahora la tercera persona solo cuenta con un
+sustantivo de persona justo antes, sacado de la lista compartida (`_PERSON_NOUN_*`, ES y EN).
+
+Medido sin LLM:
+- Preguntas al centro frente a HEAD (en un worktree): **las 5 iguales**.
+- Foto sobre 244 mensajes: **4 cambios, ninguno del corpus**. "mi pareja tiene el advanced", "mis
+  amigos tienen el advanced" y "mi novia tiene el open water y quiere bucear conmigo" pasan a buceo
+  certificado.
+- "mi hermano tiene el rescue y yo quiero probar" estaba mal antes (curso Rescue) y lo sigue
+  estando (buceo certificado para todos). Es reparto del grupo, trabajo del LLM, no de esta lista.
+- "el tiene su open water" sigue sin reconocerse: "él" no es un sustantivo de persona.
+
+Como el regex da lo mismo en todos los mensajes del eval-set, no se volvió a correr.
