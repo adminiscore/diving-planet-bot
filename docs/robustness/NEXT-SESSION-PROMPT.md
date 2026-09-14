@@ -31,18 +31,20 @@ Retomamos el trabajo de robustez del bot en la rama `feature/pre_gadea`. Lee pri
 
 | medida | resultado |
 |---|---|
-| Eval-set (123 casos, `run_extraction_eval.py`) | **213/219** en la última tanda completa (antes de añadir 4 casos de ubicación). Fallos: 2 artefactos del arnés, "mindful diving specialty", "no soy colombiano pero vivo en colombia", la actividad de "two have open water and one does not" |
+| Eval-set (123 casos, `run_extraction_eval.py`) | **217/223 (97,3 %)**. Nacionalidad 12/12. Fallos: 2 artefactos del arnés, "mindful diving specialty", el caso ambiguo de ubicación "staying on the islands tomorrow" y la actividad de "2 con/two have open water y 1 no" (el regex lee el curso) |
 | Batería de grupo, config PRE | repartos correctos **10/10**, total **13/13**, riesgo 12/13 (r13 vacío: pregunta sin asumir), 0 parciales / 0 inventados |
 | Booleanos anclados | legítimos 18/24, alucinaciones evitadas 18/18 |
 | Recomendación al acompañante | resolutor 11/11, estancia 6/6 |
 | Pregunta "¿ya certificados o quieren certificarse?" | cuándo preguntar 10/10, resolutor 7/7 |
-| Suite | 2025 passed / 18 skipped |
+| Suite | 2016 passed / 18 skipped |
 
 ### Hecho el 2026-09-15 (no repetir)
 
 - Centralización sin cambios de prompt: precios (`money.py`, COP en un solo formato), quitatildes,
   edades desde el registro, carrito derivado del registro, etiqueta del acompañante, nombres de
-  curso con una sola tabla ("advanced open water" ya es Advanced).
+  curso con una sola tabla ("advanced open water" ya es Advanced), una definición por campo en
+  los prompts para `is_certified`/`location`/`is_colombian` (arregló el residente), código muerto de
+  recomposición de grupo borrado.
 - Curso referido detectado (v2) y cerrado con asesor (`contact_only`, `offer: false`).
 - Decisión 3: personas del grupo sin actividad elegida → `undecided` y recomendación (antes el LLM
   suponía snorkel y el regex minicurso).
@@ -51,17 +53,17 @@ Retomamos el trabajo de robustez del bot en la rama `feature/pre_gadea`. Lee pri
 
 ### Cola de trabajo, por orden de valor
 
-1. **Centralización de vocabulario por concepto** (inventario en el progress-log), siguiente paso
-   del orden: **mención de otra persona/acompañante** (unas 13 listas en núcleo, RAG y supervisor
-   que ya comparten `_PERSON_NOUN_*`), luego certificación en RAG/núcleo (la del RAG y
+1. **Centralización de vocabulario por concepto** (inventario en el progress-log). Hecho: cursos y
+   personas (las listas de personas del núcleo contestan preguntas distintas; la jerga plural NO
+   puede ir a la lista compartida: cambia totales, medido). Siguiente: certificación en RAG/núcleo (la del RAG y
    `certification_claim` discrepan en 34 de 202 mensajes en los dos sentidos: diseñar antes de
    fusionar), ubicación y paquete. Cada paso con foto antes/después sin LLM.
-2. **Definición única por campo en los prompts**: descripción del tool + guía de verificación ES/EN
-   repiten la definición (para `is_colombian` hubo que editar tres). Separar el significado neutro
+2. **Definición única por campo en los prompts, resto de campos**: hecho para `is_certified`,
+   `location`, `is_colombian`. Quedan `group_size`, `group_allocation` y `activity`, cuyo texto del
+   tool lleva reglas medidas propias (plural vago, `undecided`) que hay que reconciliar. Separar el significado neutro
    del tono de cada tarea (el tono de verificación en el prompt de relleno ya costó 5 casos) y medir
    con el eval-set completo.
-3. **Nacionalidad**: "no soy colombiano pero vivo en colombia" sigue dando `False`; grupos mixtos
-   que `_MIXED_NATIONALITY_RE` no reconoce ("yo soy colombiano y mi novia extranjera") → USD.
+3. **Nacionalidad**: grupos mixtos que `_MIXED_NATIONALITY_RE` no reconoce ("yo soy colombiano y mi novia extranjera") → USD.
 4. **"somos 4 y dos no tienen licencia"**: sin reparto ni recomendación (el LLM no siempre marca
    `undecided`; el regex no cubre "no tienen licencia").
 5. **Comparación entre opciones** con las opciones del LLM del router (9/9 medido) en vez de
