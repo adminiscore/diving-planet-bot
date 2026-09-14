@@ -1044,8 +1044,8 @@ async def test_intent_specialty_detection():
     await route_message(state, "Hola quiero hacer el curso de nitrox")
 
     assert state.language == "es"
-    assert state.detected_activity == "padi_specialty"
-    assert state.detected_service_id == "nitrox"
+    assert state.detected_activity == "specialty_nitrox"
+    assert state.detected_service_id == "nitrox_specialty"
 
 
 @pytest.mark.asyncio

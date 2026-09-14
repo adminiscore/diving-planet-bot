@@ -79,6 +79,9 @@ SLOT_COMPANION_QTY = "companion_qty"  # cuántos acompañantes cuando el plural 
 # adivinar snorkel/minicurso — se pregunta primero QUÉ quiere hacer, antes de
 # poder preguntar la cantidad (SLOT_COMPANION_QTY).
 SLOT_COMPANION_ACTIVITY = "companion_activity_choice"
+# Curso o especialidad sin nivel (padi_course / padi_specialty): el bot pregunta
+# cual, con las opciones del registro de actividades (F4, decision del owner).
+SLOT_COURSE_LEVEL = "course_level"
 
 # Slots booleanos/escalares que el resolutor LLM anti-bucle (Fase C) sabe
 # resolver cuando el parser canónico (is_affirmative/is_negative/número) falla
@@ -86,7 +89,7 @@ SLOT_COMPANION_ACTIVITY = "companion_activity_choice"
 # claves de `_SLOT_RESOLVER_SPEC` en llm_extractor.py.
 _LLM_RESOLVABLE_SLOTS = frozenset({
     SLOT_CERTIFICATION, SLOT_SAFETY, SLOT_REFRESHER, SLOT_QTY, SLOT_NATIONALITY,
-    SLOT_LOCATION,
+    SLOT_LOCATION, SLOT_COURSE_LEVEL,
 })
 # SLOT_COMPANION_QTY y SLOT_COMPANION_ACTIVITY NO van aquí: `next_missing_slot`
 # no los rastrea, así que con la reserva principal ya resuelta `advanced` es
@@ -267,12 +270,36 @@ def _group_allocation_fully_resolved(state: ConversationState) -> bool:
     return sum(alloc.values()) >= size
 
 
+def _course_level_options(state: ConversationState) -> list[str]:
+    """Opciones concretas para un curso/especialidad sin nivel: las actividades del
+    registro de la misma familia que la generica pendiente, reservables (con tipo
+    de carrito), ordenadas por nivel de curso. Salen del registro, no de una lista."""
+    current = dom.by_id(state.detected_activity) if state.detected_activity else None
+    family = current.family if current else "course"
+    options = [
+        a for a in dom.registry().activities
+        if a.family == family and not a.generic and a.cart_type and a.sold_as is None
+    ]
+    return [a.id for a in sorted(options, key=lambda a: (a.course_level is None, a.course_level or 0))]
+
+
+def _set_concrete_activity(state: ConversationState, activity_id: str) -> None:
+    """Fija la actividad concreta elegida y su servicio desde el registro."""
+    state.detected_activity = activity_id
+    state.detected_service_id = dom.base_service_id(activity_id)
+
+
 def next_missing_slot(state: ConversationState) -> str | None:
     """El ÚNICO slot obligatorio que falta, o None si la reserva está lista
     para el resumen + links. Lógica pura: no muta el estado."""
     act = state.detected_activity
     if act is None:
         return SLOT_ACTIVITY
+    activity = dom.by_id(act)
+    if activity is not None and activity.generic:
+        # Curso/especialidad sin nivel: nunca se cierra sin decidir cual (antes
+        # acababa en un curso sin precio ni link). F4 del plan de dominio.
+        return SLOT_COURSE_LEVEL
     if act == "certified_diving" and state.is_certified is None and not (
         state.detected_group_allocation or {}
     ).get("certified_diving"):
@@ -412,6 +439,20 @@ def ask_slot(state: ConversationState, slot: str, *, reasking: bool = False) -> 
             "• Full *PADI courses*, from Open Water up\n"
             "Tell me what catches your eye and we'll put it together. 🌊"
         )
+    if slot == SLOT_COURSE_LEVEL:
+        options = _course_level_options(state)
+        current = dom.by_id(state.detected_activity) if state.detected_activity else None
+        is_specialty = bool(current and current.family == "specialty")
+        state.quick_replies = [{"title": dom.label(o, lang), "value": o} for o in options]
+        lines = []
+        for option in options:
+            pitch = dom.text(option, "pitch", lang)
+            lines.append(f"• *{dom.label(option, lang)}*" + (f" — {pitch}" if pitch else ""))
+        if lang == "es":
+            head = "¿Qué especialidad te interesa? 🐠" if is_specialty else "¿Qué curso te interesa? 🎓"
+        else:
+            head = "Which specialty are you interested in? 🐠" if is_specialty else "Which course are you interested in? 🎓"
+        return head + "\n" + "\n".join(lines)
     if slot == SLOT_CERTIFICATION:
         plural = (state.detected_group_size or 1) > 1
         if lang == "es":
@@ -684,6 +725,23 @@ def _apply_short_answer(state: ConversationState, message: str) -> bool:
             state.needs_companion_activity = False
             return True
         return False
+    if slot == SLOT_COURSE_LEVEL:
+        # Respuesta exacta: el valor de un boton (id del registro), el numero de la
+        # opcion como mensaje completo, o el nombre exacto de la opcion. Cualquier
+        # otra forma de decirlo la interpreta el resolutor LLM (red anti-bucle).
+        options = _course_level_options(state)
+        chosen = msg if msg in options else None
+        if chosen is None and msg.isdigit() and 1 <= int(msg) <= len(options):
+            chosen = options[int(msg) - 1]
+        if chosen is None:
+            chosen = next(
+                (o for o in options if msg in {dom.label(o, "es").lower(), dom.label(o, "en").lower()}),
+                None,
+            )
+        if chosen is not None:
+            _set_concrete_activity(state, chosen)
+            return True
+        return False
     if slot == SLOT_AGES:
         ages = [int(a) for a in re.findall(r"\b(\d{1,2})\b", message) if 0 < int(a) < 100]
         if not ages:  # sin dígitos, probar edades en palabra ("cinco y siete")
@@ -726,6 +784,9 @@ def _apply_resolved_slot_value(state: ConversationState, slot: str, value) -> bo
         return True
     if slot == SLOT_LOCATION and value in ("cartagena", "island"):
         state.location = state.detected_location = value
+        return True
+    if slot == SLOT_COURSE_LEVEL and value in _course_level_options(state):
+        _set_concrete_activity(state, value)
         return True
     if slot == SLOT_COMPANION_ACTIVITY and value in ("snorkel", "minicourse"):
         state.pending_companion_activity = value

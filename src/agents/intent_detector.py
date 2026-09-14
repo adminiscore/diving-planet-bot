@@ -3,6 +3,7 @@ from dataclasses import dataclass, field
 
 from openai import OpenAI
 
+from src.domain import activities as dom
 from src.flows.state import ConversationState
 
 
@@ -283,6 +284,23 @@ _SPECIALTY_PATTERNS = [
     r'\bidentificación\s+de\s+peces\b',
     r'\bmindful\s+diving\b',
 ]
+
+# Especialidad concreta -> id del registro de actividades (F4 del plan de
+# dominio). Mismas palabras clave que usaba `_detect_activity`, pero ahora emiten
+# el id canonico: antes emitian `padi_specialty` + un service_id escrito a mano que
+# NO existia en el catalogo ("nitrox" en vez de "nitrox_specialty"), asi que la
+# especialidad acababa sin precio ni link. Las palabras clave son deteccion por
+# vocabulario y se revisan en F5.
+_SPECIALTY_KEYWORD_TO_ACTIVITY = (
+    ("nitrox", "specialty_nitrox"),
+    ("buoyancy", "specialty_buoyancy"),
+    ("flotabilidad", "specialty_buoyancy"),
+    ("naturalist", "specialty_naturalist"),
+    ("naturalista", "specialty_naturalist"),
+    ("fish", "specialty_fish_identification"),
+    ("peces", "specialty_fish_identification"),
+    ("mindful", "specialty_mindful_diving"),
+)
 
 _ACTIVITY_CATEGORY_PATTERNS: dict[str, list[str]] = {
     "certified_diving": _CERTIFIED_DIVING_PATTERNS,
@@ -645,53 +663,49 @@ class IntentDetector:
             or re.search(r"\bdon'?t\s+want\s+to\s+dive\b", message)
         ):
             intent.activity = "snorkel"
-            intent.service_id = "snorkeling"
+            intent.service_id = dom.base_service_id(intent.activity)
             intent.detected_fields.append("activity")
             return
 
         if any(re.search(pattern, message) for pattern in _MINICOURSE_PATTERNS):
             intent.activity = "minicourse"
-            intent.service_id = "minicourse"
+            intent.service_id = dom.base_service_id(intent.activity)
             intent.is_certified = False
             intent.detected_fields.extend(["activity", "is_certified"])
         elif any(re.search(pattern, message) for pattern in _CERTIFIED_DIVING_PATTERNS):
             intent.activity = "certified_diving"
-            intent.service_id = "2_dives_1_day"
+            intent.service_id = dom.base_service_id(intent.activity)
             intent.detected_fields.append("activity")
         elif any(re.search(pattern, message) for pattern in _SNORKEL_PATTERNS):
             intent.activity = "snorkel"
-            intent.service_id = "snorkeling"
+            intent.service_id = dom.base_service_id(intent.activity)
             intent.detected_fields.append("activity")
         elif any(re.search(pattern, message) for pattern in _PADI_COURSE_PATTERNS) and not self._holds_padi_cert(message):
             # Only a COURSE if they want to take it — "soy open water" (holds it)
             # is a certified diver, handled via is_certified + the activity fallback.
             if 'open water' in message or 'open-water' in message:
                 intent.activity = "padi_open_water"
-                intent.service_id = "open_water"
+                intent.service_id = dom.base_service_id(intent.activity)
             elif 'advanced' in message:
                 intent.activity = "padi_advanced"
-                intent.service_id = "advanced"
+                intent.service_id = dom.base_service_id(intent.activity)
             elif 'rescue' in message:
                 intent.activity = "padi_rescue"
-                intent.service_id = "rescue"
+                intent.service_id = dom.base_service_id(intent.activity)
             elif 'divemaster' in message or 'dive master' in message:
                 intent.activity = "padi_divemaster"
-                intent.service_id = "divemaster"
+                intent.service_id = dom.base_service_id(intent.activity)
             else:
                 intent.activity = "padi_course"
             intent.detected_fields.append("activity")
         elif any(re.search(pattern, message) for pattern in _SPECIALTY_PATTERNS):
-            intent.activity = "padi_specialty"
-            if 'nitrox' in message:
-                intent.service_id = "nitrox"
-            elif 'buoyancy' in message or 'flotabilidad' in message:
-                intent.service_id = "buoyancy"
-            elif 'naturalist' in message or 'naturalista' in message:
-                intent.service_id = "naturalist"
-            elif 'fish' in message or 'peces' in message:
-                intent.service_id = "fish_identification"
-            elif 'mindful' in message:
-                intent.service_id = "mindful_diving"
+            # Sin nombre de especialidad reconocible: la generica, y el nucleo
+            # pregunta cual (F4).
+            intent.activity = next(
+                (activity_id for keyword, activity_id in _SPECIALTY_KEYWORD_TO_ACTIVITY if keyword in message),
+                "padi_specialty",
+            )
+            intent.service_id = dom.base_service_id(intent.activity)
             intent.detected_fields.append("activity")
 
     def _detect_cert_dive_count(self, message: str) -> int | None:

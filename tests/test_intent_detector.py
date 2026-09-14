@@ -67,8 +67,8 @@ class TestActivityDetection:
 
     def test_detect_specialty_nitrox(self, detector, state):
         intent = detector.detect("quiero hacer el curso de nitrox", state)
-        assert intent.activity == "padi_specialty"
-        assert intent.service_id == "nitrox"
+        assert intent.activity == "specialty_nitrox"
+        assert intent.service_id == "nitrox_specialty"
 
     def test_already_have_cert_not_classified_as_wanting_the_course(self, detector, state):
         """Bug real hallado en la batería de la Fase 6 (docs/robustness/

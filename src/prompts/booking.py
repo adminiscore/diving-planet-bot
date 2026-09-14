@@ -1070,6 +1070,26 @@ SLOT_RESOLVER_SPEC = {
         "type": "boolean",
         "value_meaning": "true if they want the refresher, false if not.",
     },
+    "course_level": {
+        "question_es": "¿Qué curso o especialidad te interesa?",
+        "question_en": "Which course or specialty are you interested in?",
+        "type": "string",
+        # Generado desde el registro de actividades (F4): cursos y especialidades
+        # concretos y reservables. Un valor nuevo en el registro llega solo aqui.
+        "enum": [
+            a.id for a in _activities.registry().activities
+            if a.family in ("course", "specialty") and not a.generic and a.cart_type and a.sold_as is None
+        ],
+        "value_meaning": (
+            "the id of the course or specialty the customer picks from the options "
+            "the bot offered (Open Water is the first certification course, then "
+            "Advanced, Rescue, Divemaster; specialties are Nitrox, Buoyancy, "
+            "Naturalist, Fish Identification, Mindful Diving). Omit if the reply "
+            "does not clearly pick one, and ALSO omit it when the customer hands the "
+            "choice back to the bot instead of choosing (asks you to pick or "
+            "recommend): do not choose for them."
+        ),
+    },
     "companion_activity_choice": {
         "question_es": "¿Qué le gustaría hacer a tu acompañante — el minicurso de buceo o snorkel?",
         "question_en": "What would your companion like to do — the beginner mini-course or snorkeling?",

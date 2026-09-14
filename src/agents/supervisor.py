@@ -2691,7 +2691,13 @@ def _apply_detected_intent(intent, state: ConversationState, message: str | None
     # diving flow. Now a newly-detected activity replaces the stale one.
     if intent.activity and intent.activity != state.detected_activity:
         state.detected_activity = intent.activity
-        state.detected_service_id = intent.service_id
+        # El servicio SIEMPRE sale del registro de actividades, aqui, en el unico
+        # punto que guarda la actividad (F4 de docs/robustness/activity-domain-plan.md).
+        # Los detectores (regex, relleno LLM, veto) solo deciden la actividad: antes
+        # cada uno ponia su propio service_id, el relleno LLM no ponia ninguno (curso
+        # sin precio ni link) y el regex usaba nombres inexistentes ("nitrox" en vez
+        # de "nitrox_specialty"). Genericas (padi_course) -> None hasta decidir nivel.
+        state.detected_service_id = dom.base_service_id(intent.activity)
         # A beginner activity (minicurso/snorkel) also carries a certification
         # signal — refresh it so the (possibly stale) certified flag doesn't
         # send a beginner request down the certified path.
@@ -2703,6 +2709,15 @@ def _apply_detected_intent(intent, state: ConversationState, message: str | None
         state.detected_is_certified = intent.is_certified
         state.is_certified = intent.is_certified
         logger.info(f"[INTENT] Detected certification: {intent.is_certified}")
+
+    # Curso/especialidad generico que el estado ya permite concretar (regla del
+    # owner 2026-09-14: quien no tiene certificacion va a su `default_level`, p. ej.
+    # un "curso PADI" -> Open Water). Si no, el nucleo pregunta cual (F4).
+    generic = dom.by_id(state.detected_activity) if state.detected_activity else None
+    if generic and generic.generic and generic.default_level and state.is_certified is False:
+        state.detected_activity = generic.default_level
+        state.detected_service_id = dom.base_service_id(generic.default_level)
+        logger.info(f"[INTENT] Generic {generic.id} resolved to {generic.default_level} (not certified)")
 
     # La regla (una sola escritura, salvo correccion explicita) vive en
     # `_group_size_that_will_persist`: la invariante del reparto la usa ANTES de

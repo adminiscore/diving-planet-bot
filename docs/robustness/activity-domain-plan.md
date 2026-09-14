@@ -155,6 +155,23 @@ que no sale de aquí (mismo patrón que `test_prompt_enum_enumeration.py`).
   `advanced`…) pasan a ids del registro. Migración literal: 94 salidas visibles
   comparadas antes/después, **idénticas**.
 
+**F4 — hecha (2026-09-14)**
+
+- **Paso 1, el servicio sale siempre del registro**, en el único punto que guarda la
+  actividad (`supervisor._apply_detected_intent`). Arregla tres fallos vivos
+  reproducidos: un Open Water decidido por el LLM llegaba sin servicio (curso sin precio
+  ni link); las especialidades del regex apuntaban a servicios inexistentes ("nitrox" en
+  vez de "nitrox_specialty"); y cada detector escribía su propia tabla. El regex emite
+  ahora ids del registro (`specialty_nitrox`…) con las mismas palabras clave de siempre.
+- **Paso 2, el bot aclara el nivel** (decisión del owner): `padi_course`/`padi_specialty`
+  llevan al slot `course_level`, con las opciones del registro por nivel (botones,
+  número, nombre exacto; respuesta libre → resolutor LLM con enum generado del
+  registro). Regla del owner aplicada en el mismo punto único: quien no tiene
+  certificación va al `default_level` (Open Water) sin preguntar.
+- Pendiente de F2b/F5 (no es regresión): "identificacion" sin tilde y "mindful **diving**"
+  (gana "diving") son vocabulario del regex; los ids de especialidad todavía no están en
+  el enum del extractor.
+
 **Incoherencias de textos que quedan en el registro (decisión de negocio, editar en
 `activities.json` sin tocar código):**
 
