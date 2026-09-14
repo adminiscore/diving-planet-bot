@@ -2891,3 +2891,49 @@ paró a medias para no gastar peticiones en un prompt descartado. Conclusión: u
 distingue "residente" de "grupo mixto". Hace falta un valor propio (p. ej. un campo o un valor
 `mixed` que dispare `_mixed_nationality_response`), y eso es un cambio de schema que hay que diseñar
 y medir.
+
+### Certificación con una sola fuente: el deseo de certificarse y el "ya certificado" del RAG
+
+Sonda sin LLM sobre 225 mensajes. El deseo de certificarse vivía en tres listas que no
+coincidían:
+- `IntentDetector._WANTS_CERT_RE`: solo con un nivel como objeto.
+- un patrón de `_NOT_CERTIFIED_PATTERNS`: solo con "quiero …".
+- `rag_agent._WANTS_CERT_EXCLUDE_RE`: cualquier "quiero hacer …", incluido "quiero hacer buceo".
+
+Además, el RAG tenía su propia lista de "ya certificado". Frente a `is_certified` del detector
+discrepaba en 3 + 26 mensajes. Fallos reales:
+- "quiere sacarse la certificación", "me quiero certificar", "quisiera obtener la certificación" y
+  "we want to get our certification" salían **certificados**: ninguna lista de deseo los cubría y
+  caían en el comodín `cert\w*`.
+- el RAG leía "no soy certificado, es mi primera vez", "aunque no soy buzo certificado" y "no tengo
+  licencia" como certificado, y descartaba "tengo el open water y quiero hacer buceo" por el
+  "quiero hacer".
+
+Cambio:
+- Piezas únicas en el detector (`_DESIRE_VERB`, `_WANT_VERB`, `_WANT_OBJECT_PREFIX`, `_CERT_NOUN`).
+  Con ellas se construyen `_WANTS_CERT_RE` y `_WANTS_CERTIFICATION`, que sustituye a los tres
+  patrones de deseo de la lista negativa.
+- `certification_status()` es la única decisión de "ya certificado". La usan `_detect_certification`
+  y `rag_agent._mentions_already_certified`, y se borran las dos listas del RAG.
+
+Solo un verbo de **deseo** implica "aún no certificado": con "hacer" a secas, la primera versión
+convertía "no sé si hacer el open water o el advanced" en no certificado, y se vio en la foto.
+Querer Advanced o Rescue tampoco lo implica, porque exigen Open Water. Y quien quiere certificarse
+pide un curso: la regla "sin actividad + certificación conocida → buceo certificado" ya no se aplica
+en ese caso (lo detectó un test que falló: "quisiera sacarme la licencia de buzo").
+
+Foto sobre 234 mensajes: **9 cambios en el detector**, todos los buscados. Uno de ellos:
+"somos 3 y 1 quiere certificarse" deja de suponer buceo certificado. En el RAG hay **34 cambios**:
+sus 3 falsos positivos corregidos y 31 mensajes que ahora reconoce como certificados, porque
+coinciden con lo que el detector ya guardaba.
+- Límite heredado y visible: la fuente única lee en tercera persona ("viene mi primo, él es
+  certificado") y en grupos parciales ("4 certificados y 3 snorkel") igual que `is_certified`. En el
+  RAG solo cambia la frase de bienvenida del resumen de buceo, y únicamente si además es una
+  pregunta de resumen.
+- Arreglar el sujeto es trabajo del detector, no del RAG.
+
+Eval-set con la fuente única de certificación (130 casos): **221/230**, tanda limpia. Frente a la
+tanda anterior solo cambian los dos casos de nacionalidad, y los cambia la reversión del prompt de
+grupo mixto: el residente vuelve a OK y "dos somos colombianos pero uno es extranjero" vuelve a
+fallar. Ningún caso de actividad ni de certificación cambia. Referencia para las siguientes tandas:
+**221/230**.

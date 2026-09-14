@@ -495,17 +495,40 @@ _CERTIFIED_PATTERNS = [
     r'\bcert\w*\b',
 ]
 
+# Deseo de certificarse: una sola fuente (2026-09-15). Antes vivia en tres listas que no
+# coincidian: `IntentDetector._WANTS_CERT_RE` (solo niveles), un patron de
+# `_NOT_CERTIFIED_PATTERNS` (solo "quiero ...") y `rag_agent._WANTS_CERT_EXCLUDE_RE`
+# (cualquier "quiero hacer ...", incluido "quiero hacer buceo"). "quiere sacarse la
+# certificacion" o "me quiero certificar" no casaban ninguna y salian certificados.
+# Verbo de deseo: "quiero", "sacarse", "want to get". Solo este dice que aun no lo tiene;
+# "hacer el open water" a secas tambien sale en dudas ("no se si hacer el open water o
+# el advanced"), por eso el resto de verbos solo cuenta para `_WANTS_CERT_RE`.
+_DESIRE_VERB = (
+    r"(?:quier[eo]n?|queremos|quisiera|quisieramos|me\s+gustar[ií]a|nos\s+gustar[ií]a|"
+    r"sacar(?:me|te|se|nos)|want\s+to\s+(?:do|take|get))"
+)
+_WANT_VERB = r"(?:" + _DESIRE_VERB + r"|hacer(?:me|se|nos)?|sacar|obtener|tomar|get)"
+_WANT_OBJECT_PREFIX = (
+    r"\s+(?:el\s+|la\s+|mi\s+|un[ao]?\s+|nuestr[ao]\s+|hacer\s+|sacar\s+|obtener\s+|tomar\s+|"
+    r"the\s+|our\s+|my\s+|a\s+)*"
+    r"(?:curso\s+)?(?:padi\s+)?(?:de\s+)?"
+)
+_CERT_NOUN = r"(?:certificaci\w*|licencia|certification|licen[cs]e)"
+# Quiere el nivel de entrada o "la certificacion" en general: aun no esta certificado.
+# Querer Advanced o Rescue no dice eso (exigen Open Water), por eso no entra aqui.
+_WANTS_CERTIFICATION = (
+    r"\b" + _DESIRE_VERB + _WANT_OBJECT_PREFIX + r"(?:open[\s-]*water|aguas\s+abiertas|" + _CERT_NOUN + r")"
+    r"|\bcertificar(?:me|nos|te|se)?\b|\bget\s+certified\b"
+)
+
 _NOT_CERTIFIED_PATTERNS = [
     r'\bno\s+(?:esta\s+|estoy\s+|estamos\s+|est[aá]n\s+|soy\s+|somos\s+|es\s+|son\s+|eres\s+|fui\s+)?cert\w*\b',
     r'\bno\s+(?:soy|somos|son|es)\s+buz',   # "no somos buzos" = not certified
     r'\b(?:ser|hacerme|hacernos|convertirme|convertirnos)\s+(?:en\s+)?buz',  # wants to BECOME a diver
     r'\bsin\s+cert\w*\b',
-    # Reflexive "certificarme/certificarnos/certificarte/certificarse" =
-    # wants to GET certified (Open Water course), so NOT yet certified.
-    # Must be listed here (checked before the generic \bcert\w*\b catch-all).
-    r'\bcertificar(?:me|nos|te|se)\b',
-    r'\bquiero\s+(?:sacar|obtener|hacer)\s+(?:el\s+|la\s+|mi\s+)?(?:open\s+water|certificaci|licencia)\w*\b',
-    r'\bget\s+certified\b',
+    # Wants to GET certified, so NOT yet certified. Must be listed here (checked
+    # before the generic \bcert\w*\b catch-all).
+    _WANTS_CERTIFICATION,
     r'\bnunca\s+(?:\w+\s+){0,3}buce\w*\b',  # nunca he/ha/hemos/han (hecho) bucea(do)/buceo
     # "nunca me he certificado" (hallazgo en vivo, bateria sintetica shadow-
     # mode is_certified, 2026-09-10): mismo hueco que el patron de arriba
@@ -572,6 +595,24 @@ def _is_negated(prefix: str) -> bool:
         count += 1
         prefix = prefix[:match.start()]
     return count % 2 == 1
+
+
+def holds_padi_cert(message: str) -> bool:
+    """True if the message says the person HOLDS a PADI cert level (certified
+    diver), as opposed to wanting to take that course."""
+    if IntentDetector._WANTS_CERT_RE.search(message):
+        return False
+    return bool(IntentDetector._HOLDS_CERT_RE.search(message))
+
+
+def certification_status(message: str) -> bool | None:
+    """¿Esta ya certificado quien escribe? Unica fuente para `is_certified` del detector y
+    para el RAG (2026-09-15): lo que diga `certification_claim` o, si no dice nada, tener
+    un nivel PADI (Open Water, Advanced, Rescue, Divemaster, Nitrox) sin querer sacarlo."""
+    claim = certification_claim(message)
+    if claim is not None:
+        return claim
+    return True if holds_padi_cert(message) else None
 
 
 # Vocabulario compartido de sustantivos de parentesco/compañía -- inventario
@@ -665,7 +706,10 @@ class IntentDetector:
         # Tambien si piden un numero de inmersiones ("quiero hacer 2 inmersiones"): un
         # paquete de inmersiones es buceo certificado (2026-09-15, mismo detector de
         # cantidad que ya se usa, sin patron nuevo).
-        if intent.activity is None and (intent.is_certified is not None or intent.cert_dives):
+        # Quien quiere sacarse la certificacion pide un curso, no buceo: se deja sin
+        # actividad para que la resuelva el LLM o se pregunte.
+        if (intent.activity is None and (intent.is_certified is not None or intent.cert_dives)
+                and not self._WANTS_CERT_RE.search(message_lower)):
             intent.activity = "certified_diving"
             intent.detected_fields.append("activity")
 
@@ -827,34 +871,21 @@ class IntentDetector:
     # certified yet. Requires the want-verb to be followed by the cert level so
     # "quiero 2 inmersiones" (wanting dives) never counts as wanting a course.
     _WANTS_CERT_RE = re.compile(
-        r"\b(?:quiero|queremos|quisiera|me\s+gustar[ií]a|hacer(?:me)?|sacar(?:me)?|"
-        r"obtener|tomar)\s+(?:el\s+|la\s+|mi\s+|un\s+|hacer\s+|the\s+)*"
-        r"(?:curso\s+)?(?:padi\s+)?(?:de\s+)?" + _CERT_LEVEL
+        r"\b" + _WANT_VERB + _WANT_OBJECT_PREFIX + r"(?:" + _CERT_LEVEL + r"|" + _CERT_NOUN + r")"
         + r"|\bcurso\s+(?:de\s+)?(?:padi\s+)?" + _CERT_LEVEL
-        + r"|\bcertificar(?:me|nos|te|se)\b|\bget\s+certified\b"
-        + r"|\bwant\s+to\s+(?:do|take|get)\s+(?:the\s+)?(?:padi\s+)?" + _CERT_LEVEL,
+        + r"|\bcertificar(?:me|nos|te|se)\b|\bget\s+certified\b",
         re.IGNORECASE,
     )
 
     def _holds_padi_cert(self, message: str) -> bool:
-        """True if the message says the person HOLDS a PADI cert level (certified
-        diver), as opposed to wanting to take that course."""
-        if self._WANTS_CERT_RE.search(message):
-            return False
-        return bool(self._HOLDS_CERT_RE.search(message))
+        return holds_padi_cert(message)
 
     def _detect_certification(self, message: str, intent: DetectedIntent) -> None:
         if intent.is_certified is not None:
             return
-
-        claim = certification_claim(message)
-        if claim is False:
-            intent.is_certified = False
-            intent.detected_fields.append("is_certified")
-        elif claim is True or self._holds_padi_cert(message):
-            # Holding a PADI level (Open Water / Advanced / Rescue / Divemaster /
-            # Nitrox) means the person is a certified diver.
-            intent.is_certified = True
+        status = certification_status(message)
+        if status is not None:
+            intent.is_certified = status
             intent.detected_fields.append("is_certified")
 
     def _detect_group_info(self, message: str, intent: DetectedIntent) -> None:

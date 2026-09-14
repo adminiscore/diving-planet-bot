@@ -22,6 +22,7 @@ from src.agents.grounding_check import (
     requests_personal_data,
     urls_grounded,
 )
+from src.agents.intent_detector import certification_status
 from src.agents.query_rewriter import condense_query
 from src.config import settings
 from src.knowledge.loader import (
@@ -668,31 +669,6 @@ _OVERVIEW_EXCLUDE = re.compile(
     re.IGNORECASE,
 )
 
-# The overview covers 4 audiences (never dived / certified / wants course /
-# snorkel-only) so it's safe by default, but a client who already tells us
-# "soy buzo"/"tengo el open water" doesn't need to be asked "¿nunca has
-# buceado?" first — it reads as if we ignored what they just said. When this
-# fires, the certified block moves to the front and the intro acknowledges it,
-# without dropping the other blocks (their companion could still be a
-# beginner, so full coverage stays).
-_ALREADY_CERTIFIED_RE = re.compile(
-    r"\b(?:soy|somos|estoy|estamos)\s+(?:ya\s+)?(?:un[oa]?\s+)?buz[oa]s?\b"
-    r"|\bya\s+(?:soy|somos)\s+(?:buz[oa]s?|certificad\w*)\b"
-    r"|\b(?:soy|somos|estoy|estamos)\s+certificad\w*\b"
-    r"|\btengo\s+(?:el\s+|la\s+|mi\s+)?(?:open\s*water|advanced|rescue|divemaster|licencia)\b"
-    r"|\bi(?:'?m|\s+am)\s+a\s+certified\s+diver\b|\bwe\s+are\s+certified\s+divers?\b"
-    r"|\bi\s+have\s+(?:my\s+)?open\s*water\b",
-    re.IGNORECASE,
-)
-# Excludes "wants to get certified" phrasings so they're never read as already
-# holding a cert (mirrors intent_detector._WANTS_CERT_RE at a lighter weight,
-# since this only needs to gate the overview's framing, not full state).
-_WANTS_CERT_EXCLUDE_RE = re.compile(
-    r"\bquiero\s+(?:ser|sacar(?:me)?|hacer(?:me)?|certificar(?:me)?)\b"
-    r"|\bme\s+gustar[ií]a\s+certificarme\b|\bwant\s+to\s+(?:get|become)\s+certified\b",
-    re.IGNORECASE,
-)
-
 # A client traveling with someone else who doesn't dive is asking, in part,
 # what THAT person can do — the overview used to ignore this entirely. Not
 # everyone says "acompañante": "soy buzo y uno acompaña", "somos 5, tres
@@ -737,7 +713,15 @@ _COMPANION_PLURAL_QUANTIFIER_RE = re.compile(
 
 
 def _mentions_already_certified(query: str) -> bool:
-    return bool(_ALREADY_CERTIFIED_RE.search(query)) and not _WANTS_CERT_EXCLUDE_RE.search(query)
+    """The overview covers 4 audiences (never dived / certified / wants course /
+    snorkel-only), but a client who already tells us "soy buzo"/"tengo el open
+    water" doesn't need to be asked "¿nunca has buceado?" first. When this fires,
+    the intro acknowledges it without dropping the other blocks.
+
+    Misma fuente que `is_certified` del detector (2026-09-15). La lista propia leia
+    "no soy certificado" como certificado y descartaba "tengo el open water y quiero
+    hacer buceo" por el "quiero hacer"."""
+    return certification_status(query) is True
 
 
 def _mentions_plural_companions(query: str) -> bool:

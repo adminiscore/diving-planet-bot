@@ -31,7 +31,7 @@ Retomamos el trabajo de robustez del bot en la rama `feature/pre_gadea`. Lee pri
 
 | medida | resultado |
 |---|---|
-| Eval-set (123 casos, `ENV_FILE=.env.dev python -m scripts.run_extraction_eval`; sin `ENV_FILE` todo degrada) | **220/223 (98,7 %)**. Fallos: 2 artefactos del arnés (casos con historial) y el caso ambiguo de ubicación "staying on the islands tomorrow" |
+| Eval-set (130 casos, `ENV_FILE=.env.dev python -m scripts.run_extraction_eval`; sin `ENV_FILE` todo degrada) | **221/230**. Fallos: 5 de los 7 casos `nat-mixto-*` (hueco conocido), 2 artefactos del arnés (casos con historial) y el caso ambiguo de ubicación "staying on the islands tomorrow". Los 123 casos anteriores: 220/223 |
 | Batería de grupo, config PRE | repartos correctos **10/10**, total **13/13**, riesgo 12/13 (r13 vacío: pregunta sin asumir), 0 parciales / 0 inventados |
 | Booleanos anclados | legítimos 18/24, alucinaciones evitadas 18/18 |
 | Recomendación al acompañante | resolutor 11/11, estancia 6/6 |
@@ -55,9 +55,11 @@ Retomamos el trabajo de robustez del bot en la rama `feature/pre_gadea`. Lee pri
 
 1. **Centralización de vocabulario por concepto** (inventario en el progress-log). Hecho: cursos y
    personas (las listas de personas del núcleo contestan preguntas distintas; la jerga plural NO
-   puede ir a la lista compartida: cambia totales, medido). Siguiente: certificación en RAG/núcleo (la del RAG y
-   `certification_claim` discrepan en 34 de 202 mensajes en los dos sentidos: diseñar antes de
-   fusionar), ubicación y paquete. Cada paso con foto antes/después sin LLM.
+   puede ir a la lista compartida: cambia totales, medido). **Certificación hecha (2026-09-15)**:
+   `certification_status()` decide para el detector y el RAG, y el deseo de certificarse sale de
+   piezas únicas (`_DESIRE_VERB`, `_CERT_NOUN`…). Límite heredado: tercera persona ("mi primo es
+   certificado") y grupos parciales cuentan como "ya certificado"; arreglar el sujeto en el
+   detector. Siguiente: ubicación y paquete. Cada paso con foto antes/después sin LLM.
 2. **Definición única por campo en los prompts, resto de campos**: hecho para `is_certified`,
    `location`, `is_colombian`. Quedan `group_size`, `group_allocation` y `activity`, cuyo texto del
    tool lleva reglas medidas propias (plural vago, `undecided`) que hay que reconciliar. Separar el significado neutro
