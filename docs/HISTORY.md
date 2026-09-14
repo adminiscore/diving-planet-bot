@@ -26,6 +26,7 @@ History
   6. Comparación entre opciones con las opciones del LLM en vez del regex.
   7. "mindful diving specialty"; respuesta doble tras F5a; eval-set que pase por el núcleo; hallazgos antiguos por reproducir; Langfuse frente a LangSmith; `concurrency` en el deploy de la CI.
   8. Decisiones de negocio abiertas: Bubble Makers sin servicio y requisito previo del Rescue.
+  9. **Centralización, cero código duplicado** (owner): edades mínimas en `eligibility` y en el registro; definición de cada campo en tres textos de prompt; tres formateadores de precio; dos quitatildes; ramas de carrito escritas a mano por actividad; listas de vocabulario repartidas por concepto; dos caminos (cascada del supervisor y núcleo) que deciden cosas distintas; medir peticiones por turno antes de fusionar.
 
 0.24.1 - (2026-09-14)
 ----------------------

@@ -80,6 +80,52 @@ Fallos que quedan en el eval-set:
 11. **Observabilidad**: Langfuse frente a LangSmith (no pagar; LangSmith agotado hasta el 1 de
     octubre). Envoltorio centralizado en `src/llm_client.py::trace_openai`.
 
+### Centralización: cero código duplicado (owner 2026-09-14, "hay que ser óptimos")
+
+Mismo nivel de prioridad que la cola de arriba. Cada punto es una fuente única que sustituye
+copias. Toca código compartido, así que suite completa + snapshot de prompts; y eval-set
+cuando cambie un texto que vea el LLM.
+
+**Duplicados que ya se desincronizaron o obligaron a editar varios sitios:**
+- **Edades mínimas en dos sitios**: `eligibility.py` (`MIN_SNORKEL`, `MIN_DIVE`,
+  `MIN_ADVANCED`, `MIN_DIVEMASTER`, Bubble Makers) y `min_age`/`max_age` del registro. El
+  12→10 de Advanced/Rescue hubo que cambiarlo en ambos. `eligibility` debe leerlas del
+  registro.
+- **Definición de cada campo en tres textos**: descripción en `EXTRACTION_TOOL`, guía de
+  verificación ES y EN (`_FIELD_GUIDANCE_*`). Para `is_colombian` se editaron los tres. Una
+  sola definición por campo, generada hacia los tres (como las glosas). Cambia prompts de
+  extracción: medir con el eval-set completo.
+- **Tres formateadores de precio**: `rag_agent._fmt_price_usd`/`_fmt_price_cop`,
+  `catalog._round_usd_display`/`format_price` y el de `cart_render`. Una sola `format_price`
+  (formato del owner: "183 USD").
+- **Dos quitatildes**: `supervisor._strip_accents` frente a `src/utils/text.strip_accents`
+  (y el envoltorio `rag_agent._strip_accents_lower`). Dejar solo la utilidad.
+- **Carrito con ramas escritas a mano por actividad**: `conversational_core._cart_item`,
+  `cart_render._cart_label_for` y `_cart_service_id` (`if activity == "snorkel"`…).
+  Derivarlas del `cart_type`, los servicios y los textos del registro, como ya hace
+  `dom.cart_activity_ids()`.
+
+**Listas de vocabulario repartidas (causa de fondo de varios fallos del día):**
+- `_COURSE_MENTION_RE`, `_STRONG_CERTIFIED_DIVING_RE`, `_EXPLICIT_MINICOURSE_NAME_RE`
+  (núcleo); `_MIXED_NATIONALITY_RE` (supervisor); `_ADDED_PERSON_RE`, `_DELIBERATION_RE`,
+  `_COMMITMENT_RE` (núcleo); patrones de duración y apodos de Cartagena (detector); patrones
+  de precio del RAG (`_PRICE_SINGLE_SERVICE_PATTERNS`).
+- `_activity_has_textual_backing` sigue en la señal del acompañante y en el atajo de
+  certificación de las preguntas con "?".
+- Inventariar por concepto ("mención de producto", "otra persona", "duda", "compromiso",
+  "grupo mixto") y dejar una fuente por concepto, o sustituir por la vía LLM/estructural
+  donde la lista tire respuestas buenas (como se hizo en F5a y en la tarea 7).
+
+**Arquitectura y coste:**
+- **Dos caminos conviven**: la cascada de `supervisor.py` y `conversational_core.py`, ambos
+  por encima de 3.000 líneas. Algunas reglas solo se aplican por uno (p. ej. el grupo mixto
+  se resuelve en la cascada del supervisor). Inventariar qué decide cada camino y dejar
+  una sola vía por decisión.
+- **Peticiones por turno**: router (siempre) + extracción combinada + señales + captura de
+  notas + acuse LLM. Medir primero cuántas hace de media un turno real (RPD es el recurso
+  escaso) y solo después plantear fusiones, midiendo por caso: juntar prompts mueve
+  campos.
+
 Hecho y cerrado el 2026-09-14 (no repetir): fallback de la petición fusionada (decidido no
 tenerlo), `is_certified` con disparador propio, repartos "no contables", edad de
 Advanced/Rescue, textos del registro, precio "183 USD", recomendación al acompañante (F6).
