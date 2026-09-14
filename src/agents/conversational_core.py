@@ -38,9 +38,6 @@ from src.agents.intent_detector import (
     _PERSON_NOUN_SINGULAR_EN,
     _PERSON_NOUN_SINGULAR_ES,
     AGE_WORDS,
-    CERTIFICATION_TOPIC_RE,
-    LAST_DIVE_TOPIC_RE,
-    NATIONALITY_TOPIC_RE,
     IntentDetector,
     certification_claim,
     matched_activity_categories,
@@ -1262,15 +1259,8 @@ _BOOL_SLOT_FIELD = {
     SLOT_NATIONALITY: "is_colombian",
 }
 
-# Gate de TEMA por campo booleano — ver `_boolean_has_textual_backing`. Los
-# regexes viven en `intent_detector` (a nivel de módulo) porque son los mismos
-# que usan sus detectores deterministas: un solo vocabulario por campo, no dos
-# listas que se desincronizan.
-_BOOL_FIELD_TOPIC_RE = {
-    "last_dive_over_2_years": LAST_DIVE_TOPIC_RE,
-    "is_certified": CERTIFICATION_TOPIC_RE,
-    "is_colombian": NATIONALITY_TOPIC_RE,
-}
+# Booleanos cuyo valor del LLM pasa por `_boolean_patch_is_anchored`.
+_BOOL_PATCH_FIELDS = frozenset(_BOOL_SLOT_FIELD.values())
 
 
 # Campo de estado que resuelve cada slot que la red anti-bucle de Fase C sabe
@@ -1296,7 +1286,7 @@ def _turn_answered_a_different_slot(state: ConversationState, pending: str, carr
     "ninguno colombiano")` devolvía `{"value": False}` — otra vez un extractor
     LLM contestando por el cliente una pregunta que el mensaje no responde.
 
-    Aquí NO sirve el gate de tema de `_boolean_has_textual_backing`: esta red
+    Aquí NO sirve un gate de tema por vocabulario: esta red
     existe precisamente para las respuestas válidas pero no-canónicas, y la
     legítima de este mismo slot ("uf, hace muchísimo") tampoco menciona el
     buceo. Lo que distingue "uf, hace muchísimo" de "ninguno colombiano" no es
@@ -1328,30 +1318,38 @@ _SLOT_PREV_KEY = {
 }
 
 
-def _boolean_has_textual_backing(field: str, message: str) -> bool:
-    """GUARDA (b): ¿el mensaje habla siquiera del TEMA de este campo booleano?
+def _boolean_patch_is_anchored(field: str, pending_slot: str | None, intent, patch: dict) -> bool:
+    """GUARDA (b): ¿es de fiar el booleano que el LLM rellenó en este turno?
 
-    Complementa a `_BOOL_SLOT_FIELD` (guarda (a), que solo cubre el slot que
-    está pendiente AHORA) con el caso simétrico: el LLM alucinando un booleano
-    que no es el slot pendiente, arrastrado por el historial (p. ej.
-    rellenando `is_certified` en un turno que solo daba la ubicación).
+    Complementa a `_BOOL_SLOT_FIELD` (guarda (a), que ni siquiera le pide al LLM
+    el booleano del slot pendiente) con el caso simétrico: el LLM rellenando un
+    booleano DISTINTO del que el bot preguntó. Caso real: el bot pregunta la
+    ubicación, el cliente contesta "Desde Cartagena" y el LLM añade
+    `is_colombian=True` (3/3 con LLM real, 2026-09-14).
 
-    Misma verificación determinista que ya se aplica al reparto de grupo en
-    `_understand` (`_activity_has_textual_backing`/`_message_numbers`): si el
-    valor que dice el LLM no tiene respaldo en el TEXTO del turno, no es de
-    fiar. Reforzar el prompt no funciona para esta familia de fallo — está
-    medido y documentado en `_message_numbers`, y `extraction_system_prompt`
-    ya pide explícitamente abstenerse.
+    Antes esto era una lista de vocabulario por campo ("¿el mensaje menciona el
+    tema?"). Medido 2026-09-14 con turnos reales: en aperturas descartaba el
+    valor correcto en todo lo que la lista no conocía ("soy paisa", "ya soy
+    sertificado", "tengo el AOWD", "nunca lo he hecho"), 0/24 frente a 18/24, con
+    la misma protección (18/18). Lo que separa "Desde Cartagena" de "soy paisa"
+    no es el vocabulario sino la estructura del turno: el primero es la
+    RESPUESTA a otra pregunta pendiente; un booleano que viaja pegado a esa
+    respuesta no se acepta. Mismo principio que `_turn_answered_a_different_slot`
+    en la red anti-bucle.
 
-    Un campo sin gate definido pasa siempre (no es un booleano de esta
-    familia). Falso positivo = dejar pasar un valor que el regex tampoco
-    habría resuelto; falso negativo = una pregunta de más. Nunca una reserva
-    equivocada — mismo principio que el resto del bloque.
+    Coste conocido: una respuesta doble legítima ("desde cartagena, somos
+    paisas") pierde el booleano y el bot lo pregunta después. Una pregunta de
+    más, nunca una reserva equivocada.
     """
-    topic_re = _BOOL_FIELD_TOPIC_RE.get(field)
-    if topic_re is None:
+    if field not in _BOOL_PATCH_FIELDS or pending_slot is None:
         return True
-    return bool(topic_re.search(message or ""))
+    if _BOOL_SLOT_FIELD.get(pending_slot) == field:
+        return False  # guarda (a): ese slot solo lo resuelven los resolutores anclados
+    answered_field = _SLOT_STATE_FIELD.get(pending_slot, "").removeprefix("detected_")
+    if not answered_field:
+        return True
+    answered = getattr(intent, answered_field, None) is not None or patch.get(answered_field) is not None
+    return not answered
 
 
 def _state_known_fields(state: ConversationState) -> set[str]:
@@ -1636,21 +1634,19 @@ async def _understand(state: ConversationState, message: str) -> tuple:
         elif _ADDED_PERSON_RE.search(message) and not _EXPLICIT_NUMBER_RE.search(message):
             patch.pop("group_allocation", None)
             patch.pop("group_size", None)
-        # GUARDA (b) — respaldo textual de los booleanos (ver
-        # `_boolean_has_textual_backing`). Extiende a los sí/no la MISMA
-        # verificación determinista que el bloque de arriba ya aplica al
-        # reparto: si el mensaje no toca el tema del campo, el valor viene del
-        # historial, no del cliente. Se descarta y el slot sigue pendiente →
-        # se pregunta.
+        # GUARDA (b) — anclaje de los booleanos (ver `_boolean_patch_is_anchored`):
+        # un booleano que viaja pegado a la respuesta de OTRA pregunta pendiente
+        # no se acepta. Se descarta y el slot sigue pendiente → se pregunta.
         unbacked_bools = [
             f for f in patch
-            if f in _BOOL_FIELD_TOPIC_RE and not _boolean_has_textual_backing(f, message)
+            if f in _BOOL_PATCH_FIELDS
+            and not _boolean_patch_is_anchored(f, state.core_pending_slot, intent, patch)
         ]
         for field_name in unbacked_bools:
             patch.pop(field_name, None)
         if unbacked_bools:
             logger.info(
-                f"[CORE] gap-fill booleans dropped (sin respaldo textual): "
+                f"[CORE] gap-fill booleans dropped (pegados a otra respuesta): "
                 f"{unbacked_bools} msg={supervisor._log_safe_message(message)!r}"
             )
         for field_name, value in patch.items():
@@ -2681,7 +2677,7 @@ async def _extraction_phase(
         # (la MISMA actividad que ya tenía el grupo), corrompiendo
         # group_allocation con un compañero fantasma y dejando la reserva en
         # un BUCLE INFINITO. Un primer fix acotó esto a los 3 temas
-        # booleanos (`_BOOL_FIELD_TOPIC_RE`) pero el MISMO fallo reapareció
+        # booleanos (una lista de vocabulario por tema, ya retirada) pero el MISMO fallo reapareció
         # en un mensaje que no toca ninguno de esos temas: "perfecto,
         # hagamos la reserva" (afirmación de cierre lisa y llana) volvió a
         # disparar el mismo companion_activity=certified_diving fantasma —
@@ -3030,7 +3026,7 @@ async def _extraction_phase(
         # OTRO slot, el mensaje hablaba de ESE, no del pendiente — y lo que
         # este resolutor devuelva para el pendiente viene del historial, no
         # del cliente. Ver `_turn_answered_a_different_slot` para por qué aquí
-        # no vale el gate de tema de `_boolean_has_textual_backing`.
+        # no vale un gate de tema por vocabulario.
         if resolved_value is not None and _turn_answered_a_different_slot(
             state, prev_pending, carry
         ):

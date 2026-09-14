@@ -85,65 +85,17 @@ _CERT_DAY_COUNT_RE = re.compile(
 )
 
 
-# ── Gates de TEMA por campo booleano ───────────────────────────────────────
-# "¿Este mensaje habla siquiera del tema de este campo?" — NO deciden el valor
-# (eso lo hacen los detectores de abajo con su vocabulario completo), solo si
-# el mensaje toca el asunto en absoluto. Viven aquí, a nivel de módulo, porque
-# los usan DOS sitios: los propios detectores regex y el gate de respaldo
-# textual del núcleo conversacional (`_boolean_has_textual_backing`), que
-# descarta un booleano que `fill_gaps` haya alucinado desde el historial para
-# un mensaje que no menciona el tema (hallazgo en vivo 2026-09-01: "ninguno
-# colombiano" devolvía `last_dive_over_2_years=false`, marcando el slot de
-# seguridad como respondido sin que el cliente lo respondiera).
-#
-# Deliberadamente LAXOS (palabra clave, no clasificación fina), mismo criterio
-# que `conversational_core._activity_has_textual_backing`: un falso positivo
-# aquí cuesta como mucho dejar pasar un valor que el detector regex tampoco
-# habría resuelto; un falso negativo cuesta una pregunta de más. Nunca una
-# reserva equivocada.
+# ── Gate de TEMA del detector de última inmersión ──────────────────────────
+# Aquí vivían también los gates de tema de certificación y nacionalidad que
+# usaba el núcleo para aceptar o no un booleano del LLM. Se retiraron el
+# 2026-09-14: descartaban el valor correcto en todo lo que su vocabulario no
+# conocía ("soy paisa", "tengo el AOWD"). Ahora el núcleo decide por la
+# estructura del turno (`conversational_core._boolean_patch_is_anchored`).
 
 # Contexto de buceo — gate original de `_detect_last_dive` (extraído aquí sin
 # cambiarlo): sin él, un "hace un mes" de cualquier otro tema fijaría el campo.
 LAST_DIVE_TOPIC_RE = re.compile(
     r"\b(buce\w*|inmersi\w+|dive\w*|dived|sin\s+bucear)\b",
-    re.IGNORECASE,
-)
-
-# Contexto de certificación — vocabulario de `_detect_certification` reducido a
-# su raíz temática (certificación/licencia/agencia/nivel/buzo/principiante).
-CERTIFICATION_TOPIC_RE = re.compile(
-    r"\bcertific\w*|\blicenc\w*|\blicen[cs]e\w*|\bcarn\w*|\bbrevet\w*"
-    r"|\b(?:padi|ssi|cmas|naui|bsac)\b|\bopen\s+water\b|\badvanced\b"
-    r"|\brescue\b|\bdivemaster\b|\bbuz[oa]s?\b|\bdivers?\b"
-    r"|\bprincipiante\w*|\bbeginner\w*|\bnovat[oa]s?\b|\bcurso\w*|\bcourse\w*",
-    re.IGNORECASE,
-)
-
-# Contexto de nacionalidad/residencia — vocabulario de `_detect_nationality`
-# (incluida su lista de ciudades colombianas, que es la otra forma real en que
-# un cliente se auto-identifica: "soy de Medellín").
-#
-# Hallazgo en vivo (conversación real "purple-sun-590", 2026-09-03): la
-# lista de ciudades colombianas matcheaba SUELTA (sin exigir "soy/vivo
-# de"), a diferencia de `_detect_nationality` (más abajo), que sí exige ese
-# prefijo con este mismo comentario explícito: "not 'estoy en', which would
-# just mean their current location". Con la version suelta, "Desde
-# Cartagena" (respuesta al punto de encuentro/logística, SLOT_LOCATION, sin
-# relación con nacionalidad) contaba como "el mensaje habla de
-# nacionalidad" — la guarda de respaldo textual (`_boolean_has_textual_
-# backing`, conversational_core.py) dejaba pasar un `is_colombian=True`
-# alucinado por fill_gaps sin que el cliente hubiera dicho nada sobre su
-# nacionalidad. Ahora exige el mismo prefijo "soy/somos/vivo/vivimos/
-# resido/residimos" que ya usa el detector real — dos regex separados,
-# una sola regla.
-NATIONALITY_TOPIC_RE = re.compile(
-    r"\bcolombi\w*|\bextranjer[oa]s?\b|\bforeign\w*|\bnacional\w*"
-    r"|\bresiden\w*|\bresido\b|\bvivo\b|\bvivimos\b|\bpasaporte\b|\bc[eé]dula\b"
-    r"|\bturista\w*|\btourists?\b"
-    r"|\b(?:soy|somos|vivo|vivimos|resido|residimos)\s+(?:de\s+|en\s+)?"
-    r"(?:bogot[aá]|medell[ií]n|cali|cartagena|barranquilla|bucaramanga|"
-    r"pereira|manizales|c[uú]cuta|santa\s+marta|monter[ií]a|ibagu[eé]|"
-    r"villavicencio|neiva|pasto|armenia|popay[aá]n)\b",
     re.IGNORECASE,
 )
 

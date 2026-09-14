@@ -210,6 +210,54 @@ Vocabulario = `dom.bookable_activity_ids()`: actividades con servicio propio o g
   variantes `vocab`/`vocab+ctx` con los casos r07–r09 en la batería de elección. Todo
   sirve para medir F5 contra esta línea base.
 
+**F5 — tamaño del problema, medido antes de diseñar (2026-09-14)**
+
+El eval-set no pasa por las guardas del núcleo (`run_extraction_eval.py` = `fill_gaps` +
+veto), así que su nota no ve lo que ellas descartan. Medido aparte:
+
+- **Sin LLM**, sobre los valores esperados del eval-set: la guarda de tema de los
+  booleanos (`_boolean_has_textual_backing`) no respalda el valor correcto en 7 de 46
+  casos que el regex tampoco resuelve; la de actividad, en 5 de 18 entradas de reparto;
+  en los acompañantes de la batería de elección, 0 de 8.
+- **Con turnos reales en `_understand`** (esos 10 casos, con y sin guardas): **3/10 con
+  guardas, 8/10 sin ellas**. Todo lo que se pierde son booleanos: "soy paisa", "somos
+  paisas", "ya soy sertificado", "tengo el AOWD", "nunca lo he hecho". Los tres repartos
+  salen bien con y sin guarda. En los 2 casos restantes el LLM ya se abstiene solo.
+
+Conclusión: F5 empieza por los booleanos. La guarda protege contra alucinaciones reales
+(el LLM contestando desde el historial un slot que el mensaje no toca), así que
+sustituirla exige mantener esa protección sin depender del vocabulario.
+
+**F5a — booleanos: anclaje estructural en vez de vocabulario (hecha, 2026-09-14)**
+
+- La protección que había que conservar, con LLM real: con la ubicación pendiente,
+  "Desde Cartagena" hace que el LLM añada `is_colombian=True` 3/3 si nadie lo filtra.
+- La evidencia citada **no** lo arreglaría: "Cartagena" está en el mensaje. No es una
+  fuga del historial, es una sobreinferencia sobre el propio texto. Lo que separa
+  "Desde Cartagena" de "soy paisa" es la estructura: el primero **contesta otra
+  pregunta pendiente**. Es el principio que ya usaba `_turn_answered_a_different_slot`.
+- Batería nueva, `scripts/battery_boolean_anchoring.py` (14 escenarios × 3; los filtros
+  se compararon sobre la misma salida del LLM y después se midió la implementación):
+
+  | filtro | legítimos | alucinaciones evitadas |
+  |---|---|---|
+  | vocabulario (retirado) | 0/24 | 18/18 |
+  | sin guarda | 24/24 | 15/18 |
+  | "hay otro slot pendiente" | 15/24 | 18/18 |
+  | **"el turno contestó otro slot pendiente" (aplicado)** | **18/24** | **18/18** |
+
+  Ningún escenario empeora respecto a la guarda de vocabulario. Coste conocido: una
+  respuesta doble legítima ("desde cartagena, somos paisas") pierde el booleano y el bot
+  lo pregunta después.
+- Código: `_boolean_patch_is_anchored` sustituye a `_boolean_has_textual_backing`. Se
+  borran `CERTIFICATION_TOPIC_RE` y `NATIONALITY_TOPIC_RE`, que ya no usaba nadie más.
+  `LAST_DIVE_TOPIC_RE` se queda porque lo usa el propio detector regex. La guarda (a)
+  también se aplica al patch: el booleano del slot pendiente nunca sale del LLM de
+  huecos.
+- Pendiente de F5: la guarda de actividad (`_activity_has_textual_backing`). Medida sin
+  mordida real en los 3 repartos del eval-set; falta una batería de acompañantes con
+  historial antes de tocarla.
+
 **Incoherencias de textos que quedan en el registro (decisión de negocio, editar en
 `activities.json` sin tocar código):**
 
