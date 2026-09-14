@@ -121,6 +121,30 @@ def activity_for_service(service_id: str) -> Activity | None:
     )
 
 
+# Familias de actividades de un dia que el nucleo conversacional cierra con su
+# carrito (buceo, iniciacion, snorkel). Los cursos y especialidades tienen su
+# propio cierre.
+_DAY_FAMILIES = ("dive", "beginner", "snorkel")
+
+
+def day_activity_ids() -> list[str]:
+    """Actividades de un dia con servicios vendibles propios: las que el nucleo
+    cierra con su carrito. Sustituye a la lista escrita a mano del nucleo
+    (`_ACTIVITY_TO_CART_TYPE`); Bubble Makers queda fuera mientras no tenga
+    servicio en el catalogo (discrepancia D2 del plan)."""
+    return [
+        a.id for a in registry().activities
+        if a.family in _DAY_FAMILIES and a.all_services() and a.sold_as is None
+    ]
+
+
+def base_service_id(activity_id: str) -> str | None:
+    """Servicio base (desde Cartagena) de una actividad: el que se elige cuando
+    se sabe la actividad pero no el plan concreto. None para las genericas."""
+    ids = service_ids(activity_id, "cartagena")
+    return ids[0] if ids else None
+
+
 def service_ids(activity_id: str, location: str) -> tuple[str, ...]:
     activity = by_id(activity_id)
     return activity.services.get(location, ()) if activity else ()

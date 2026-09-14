@@ -54,6 +54,7 @@ from src.agents.llm_extractor import (
     resolve_slot_answer,
 )
 from src.agents.notes_extractor import extract_notes
+from src.domain import activities as dom
 from src.flows import cart_render
 from src.flows.state import ConversationState, Step
 from src.utils.fuzzy import is_affirmative, is_negative
@@ -93,10 +94,6 @@ _LLM_RESOLVABLE_SLOTS = frozenset({
 # saltaría. Tienen bloques dedicados en maybe_handle_turn (gate `not
 # resolved_short`).
 
-# Actividades "de producto" que el vertical actual del núcleo sabe cerrar.
-# course:* llega en Fase 3; mientras, un curso PADI detectado se atiende pero
-# el cierre lo hace el resumen genérico (plan del servicio detectado).
-_PRODUCT_ACTIVITIES = {"certified_diving", "minicourse", "snorkel"}
 
 _DIVES_TO_BASE_PLAN = {2: "2_dives_1_day", 3: "3_dives_1_day", 4: "4_dives_2_days",
                        5: "5_dives_2_days", 7: "7_dives_3_days", 9: "9_dives_4_days"}
@@ -898,7 +895,11 @@ def _consume_number(counts: Counter, n) -> bool:
     return False
 
 
-_ACTIVITY_TO_CART_TYPE = {"certified_diving": "cert", "minicourse": "beginner", "snorkel": "snorkel"}
+# Actividades de un dia que el nucleo cierra con carrito -> tipo de item. Sale del
+# registro de actividades (F3a de docs/robustness/activity-domain-plan.md).
+_ACTIVITY_TO_CART_TYPE = {
+    activity_id: dom.by_id(activity_id).cart_type for activity_id in dom.day_activity_ids()
+}
 
 # Auditoría multi-ítem 2026-07-23 (segundo hallazgo, más profundo que el
 # primero): cuando el LLM se ABSTIENE correctamente ante un plural vago (no

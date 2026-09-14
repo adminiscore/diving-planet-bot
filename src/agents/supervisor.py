@@ -34,6 +34,7 @@ from src.agents.lead_summary import build_lead_summary
 from src.agents.llm_extractor import fill_gaps, missing_fields, verify_fields
 from src.agents.rag_agent import rag_answer
 from src.config import settings
+from src.domain import activities as dom
 from src.flows import cart_render, eligibility
 from src.flows.messages import set_quick_replies
 from src.flows.state import ConversationState, Step
@@ -2149,15 +2150,6 @@ def _finalize_tree_response(state: ConversationState, message: str, response: st
     return response
 
 
-# Map the `remember` tool's activity enum to the internal detected_activity naming.
-_REMEMBER_ACTIVITY_MAP = {
-    "certified": "certified_diving",
-    "beginner": "minicourse",
-    "snorkel": "snorkel",
-    "course": "padi_course",
-    "padi_course": "padi_course",
-}
-
 
 # Cap on state.remembered_facts["notes"] (Fase C) — keeps the most recent
 # entries so the list doesn't grow unbounded over a very long conversation.
@@ -2264,18 +2256,15 @@ async def _maybe_apply_llm_extraction_cutover(
         logger.warning(f"[EXTRACT][CUTOVER] failed, degrading to regex-only (ignored): {exc}")
 
 
-# Mapeo activity(enum del LLM) -> service_id del catalogo, mismo mapeo que
-# _detect_activity aplica inline para su rama padi_course_patterns. padi_course/
-# padi_specialty se quedan sin service_id (igual que el regex): sin nivel
-# concreto nombrado no hay un unico item de catalogo que elegir.
+# Mapeo activity(enum del LLM) -> service_id del catalogo: el servicio base de
+# cada actividad en el registro (F3a de docs/robustness/activity-domain-plan.md;
+# antes una tabla a mano con los mismos valores). padi_course/padi_specialty se
+# quedan sin service_id (igual que el regex): sin nivel concreto nombrado no hay
+# un unico item de catalogo que elegir.
 _ACTIVITY_TO_SERVICE_ID = {
-    "certified_diving": "2_dives_1_day",
-    "minicourse": "minicourse",
-    "snorkel": "snorkeling",
-    "padi_open_water": "open_water",
-    "padi_advanced": "advanced",
-    "padi_rescue": "rescue",
-    "padi_divemaster": "divemaster",
+    activity_id: service_id
+    for activity_id in dom.activity_ids()
+    if (service_id := dom.base_service_id(activity_id)) and not dom.by_id(activity_id).sold_as
 }
 
 

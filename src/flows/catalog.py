@@ -4,11 +4,14 @@ Catálogo de servicios y formateadores.
 Extraído de ``decision_tree.py`` (reorg §1): carga los datos de servicios/precios
 desde JSON (``SERVICES``, ``ISLAND_SERVICE_MAP``, ``MULTI_DAY_SERVICES``,
 ``COMPANION_PRICE``, …) y expone los formateadores de precio/duración/notas y la
-heurística de idioma por stopwords. Módulo hoja — solo depende de la stdlib.
+heurística de idioma por stopwords. Casi hoja: depende de la stdlib y de
+``src.domain`` (el registro de actividades, a su vez hoja).
 """
 
 import json
 from pathlib import Path
+
+from src.domain import activities as dom
 
 # Common Spanish/English words used to guess the language of ANY free-text
 # first message (not just exact greetings), so the bot never re-asks something
@@ -209,25 +212,19 @@ def _load_services() -> dict:
     raw_services = json.loads(path.read_text(encoding="utf-8-sig")).get("services", {})
     services = {}
     for service_id, service in raw_services.items():
+        # Edad minima: la del servicio si la declara, si no la de su actividad en
+        # el registro (antes se deducia aqui con ids escritos a mano y buscando
+        # "Minicurso"/"Snorkeling" dentro del nombre; F3a del plan de dominio).
         inferred_min_age = service.get("min_age")
         if inferred_min_age is None:
-            if service_id == "divemaster":
-                inferred_min_age = 18
-            elif service_id in {"advanced", "advanced_already_on_island", "rescue"}:
-                inferred_min_age = 12
-            elif service_id in {"open_water", "open_water_already_on_island"}:
-                inferred_min_age = 10
-            elif service.get("requires_certification"):
-                inferred_min_age = 10
-            elif "Minicurso" in service.get("name_es", ""):
-                inferred_min_age = 10
-            elif "Snorkeling" in service.get("name_es", ""):
-                inferred_min_age = 6
+            activity = dom.activity_for_service(service_id)
+            inferred_min_age = activity.min_age if activity else None
 
         services[service_id] = {
             "name_es": service.get("name_es", service_id),
             "name_en": service.get("name_en", service.get("name_es", service_id)),
             "requires_cert": service.get("requires_certification", False),
+            "duration_days": service.get("duration_days"),
             "price": _format_price(service),
             # Precios crudos para poder elegir COP/USD segun el cliente
             "price_usd": service.get("price_usd"),
@@ -274,64 +271,24 @@ def _load_services() -> dict:
 
 SERVICES = _load_services()
 
+# Servicio desde Cartagena -> su variante "ya en las islas". Se deriva de la
+# convencion de ids de services.json (`<id>_already_on_island`, que valida
+# `src.domain.activities.validate`) en vez de mantenerse a mano: la lista escrita
+# a mano no tenia las variantes de 3 y 4 inmersiones (discrepancia D5).
 ISLAND_SERVICE_MAP = {
-    "2_dives_1_day": "2_dives_1_day_already_on_island",
-    "minicourse": "minicourse_already_on_island",
-    "snorkeling": "snorkeling_already_on_island",
-    "5_dives_2_days": "5_dives_2_days_already_on_island",
-    "7_dives_3_days": "7_dives_3_days_already_on_island",
-    "9_dives_4_days": "9_dives_4_days_already_on_island",
-    "open_water": "open_water_already_on_island",
-    "advanced": "advanced_already_on_island",
-    "fish_identification_specialty": "fish_identification_specialty_already_on_island",
-    "nitrox_specialty": "nitrox_specialty_already_on_island",
-    "naturalist_specialty": "naturalist_specialty_already_on_island",
-    "buoyancy_specialty": "buoyancy_specialty_already_on_island",
-    "referral": "referral_already_on_island",
+    service_id: f"{service_id}_already_on_island"
+    for service_id in SERVICES
+    if f"{service_id}_already_on_island" in SERVICES
 }
 
-# Maps service_id (from the info detail card) to the cart activity type used by
-# orchestrator_start_activity. Services not listed here (contact_only, referral,
-# private) are excluded on purpose — they still escalate.
-SERVICE_TO_CART_TYPE: dict[str, str] = {
-    # Certified diving plans
-    "2_dives_1_day": "cert", "3_dives_1_day": "cert",
-    "4_dives_2_days": "cert", "5_dives_2_days": "cert",
-    "7_dives_3_days": "cert", "9_dives_4_days": "cert",
-    "1_dive_1_day_already_on_island": "cert",
-    "2_dives_1_day_already_on_island": "cert",
-    "3_dives_1_day_already_on_island": "cert",
-    "4_dives_2_days_already_on_island": "cert",
-    "4_dives_2_days_mixed_already_on_island": "cert",
-    "5_dives_2_days_already_on_island": "cert",
-    "7_dives_3_days_already_on_island": "cert",
-    "9_dives_4_days_already_on_island": "cert",
-    # Beginner / minicourse
-    "minicourse": "beginner", "minicourse_already_on_island": "beginner",
-    # Snorkel
-    "snorkeling": "snorkel", "snorkeling_already_on_island": "snorkel",
-    # PADI courses and specialties
-    "open_water": "course", "open_water_already_on_island": "course",
-    "advanced": "course", "advanced_already_on_island": "course",
-    "rescue": "course", "divemaster": "course",
-    "nitrox_specialty": "course", "nitrox_specialty_already_on_island": "course",
-    "buoyancy_specialty": "course", "buoyancy_specialty_already_on_island": "course",
-    "naturalist_specialty": "course", "naturalist_specialty_already_on_island": "course",
-    "fish_identification_specialty": "course",
-    "fish_identification_specialty_already_on_island": "course",
-    "mindful_diving": "course",
-}
-
+# Servicios de varios dias (paquetes de inmersiones y cursos que obligan a dormir
+# en las islas). Se deriva de `duration_days` de services.json en vez de una lista
+# a mano, que solo tenia los paquetes: el contexto del LLM describia el Open Water
+# como "de un solo dia", contra la politica `courses_overnight_requirement`
+# (F3a del plan de dominio). `SERVICE_TO_CART_TYPE` se borro: no tenia ningun uso.
 MULTI_DAY_SERVICES = {
-    "4_dives_2_days",
-    "5_dives_2_days",
-    "7_dives_3_days",
-    "9_dives_4_days",
-    "4_dives_2_days_already_on_island",
-    "4_dives_2_days_mixed_already_on_island",
-    "5_dives_2_days_already_on_island",
-    "7_dives_3_days_already_on_island",
-    "9_dives_4_days_already_on_island",
+    service_id for service_id, service in SERVICES.items()
+    if (service.get("duration_days") or 0) > 1
 }
 
 # Above this many people in one line item, nudge toward a human-coordinated
