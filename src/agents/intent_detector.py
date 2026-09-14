@@ -1095,7 +1095,8 @@ class IntentDetector:
                 rf'{word_num}\s+no\s+(?:esta[nb]?\s+|son\s+)?cert\w*\b'
                 rf'|\b(?:y\s+)?(?:el\s+|la\s+)?otr[ao]s?\s+no\s+(?:esta[nb]?\s+)?cert\w*\b'
                 rf'|{word_num}\s+(?:is|are)\s+not\s+cert\w*\b',
-                message, re.IGNORECASE,
+                # Sin tildes (2026-09-15): "dos no están certificados" no casaba "esta[nb]".
+                strip_accents(message), re.IGNORECASE,
             )
             if m_not_cert_only:
                 groups = m_not_cert_only.groups()

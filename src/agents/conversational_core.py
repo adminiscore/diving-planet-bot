@@ -575,6 +575,14 @@ def ask_slot(state: ConversationState, slot: str, *, reasking: bool = False) -> 
                 [{"title": "☀️ One day", "value": "single_day"},
                  {"title": "🏝️ Several days", "value": "multi_day"}]
             )
+            if state.pending_undecided_qty:
+                return (
+                    "Para recomendar lo que mejor les encaje a quienes no están certificados: "
+                    "¿van a estar *un solo día* o *varios días*? 🌊"
+                    if lang == "es" else
+                    "So I can recommend what suits those who aren't certified: will you be "
+                    "here for *one day* or *several days*? 🌊"
+                )
             return (
                 "¡Qué bien que venga alguien más! 🌊 Para recomendarle lo que mejor le "
                 "encaje: ¿van a estar *un solo día* o *varios días*?"
@@ -588,11 +596,23 @@ def ask_slot(state: ConversationState, slot: str, *, reasking: bool = False) -> 
         for option in options:
             pitch = dom.text(option, "pitch", lang)
             lines.append(f"• *{dom.label(option, lang)}*" + (f" — {pitch}" if pitch else ""))
-        head = (
-            "Para tu acompañante te recomiendo estas opciones. ¿Cuál le apetece más? 🐠"
-            if lang == "es" else
-            "For your companion I'd recommend these options. Which one do they like best? 🐠"
-        )
+        if state.pending_undecided_qty:
+            plural = state.pending_undecided_qty > 1
+            head = (
+                ("Para quienes no están certificados te recomiendo estas opciones. ¿Cuál les apetece más? 🐠"
+                 if plural else
+                 "Para quien no está certificado te recomiendo estas opciones. ¿Cuál le apetece más? 🐠")
+                if lang == "es" else
+                ("For those who aren't certified I'd recommend these options. Which one do they like best? 🐠"
+                 if plural else
+                 "For the one who isn't certified I'd recommend these options. Which one do they like best? 🐠")
+            )
+        else:
+            head = (
+                "Para tu acompañante te recomiendo estas opciones. ¿Cuál le apetece más? 🐠"
+                if lang == "es" else
+                "For your companion I'd recommend these options. Which one do they like best? 🐠"
+            )
         return head + "\n" + "\n".join(lines)
     if slot == SLOT_AGES:
         return (

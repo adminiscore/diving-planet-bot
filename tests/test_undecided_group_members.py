@@ -90,3 +90,13 @@ async def test_without_known_total_the_main_group_is_not_guessed():
     assert not state.detected_group_allocation
     assert state.pending_undecided_qty == 1
     assert state.needs_companion_activity is True
+
+
+def test_recommendation_speaks_to_the_uncertified_group_members():
+    state = _state()
+    state.pending_undecided_qty = 2
+    state.detected_duration = "single_day"
+    text = core.ask_slot(state, core.SLOT_COMPANION_ACTIVITY)
+    assert "quienes no están certificados" in text and "acompañante" not in text.splitlines()[0]
+    state.pending_undecided_qty = None
+    assert "tu acompañante" in core.ask_slot(state, core.SLOT_COMPANION_ACTIVITY)

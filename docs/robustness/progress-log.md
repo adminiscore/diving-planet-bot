@@ -2654,3 +2654,15 @@ Sonda con LLM real (2 repeticiones por caso):
 
 Snapshot: solo aparecen los 3 prompts nuevos del resolutor. No se repitió el eval-set ni la batería
 de grupo: el arnés no pasa por el núcleo y la regla no cambia repartos.
+
+### Ajustes tras la decisión 3
+
+- **Texto de la recomendación** (`ask_slot` de `companion_activity_choice`): con
+  `pending_undecided_qty` habla a "quien no está certificado" o "quienes no están certificados",
+  en singular o plural según la cantidad, en lugar de a "tu acompañante"; lo mismo en el paso de
+  "¿un día o varios?".
+- **Regla "N no están certificados" sin tildes**: `m_not_cert_only` se comparaba con "esta[nb]"
+  sin tilde. Ahora busca sobre `strip_accents(message)`. Foto antes/después del detector sobre 192
+  mensajes (eval-set, baterías y 5 variantes): **solo cambian las 4 variantes con tilde**, las
+  cuatro al reparto esperado (p. ej. "somos 5, dos no están certificados" →
+  `{certified_diving: 3, undecided: 2}`).
