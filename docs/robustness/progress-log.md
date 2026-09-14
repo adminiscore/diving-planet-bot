@@ -2438,3 +2438,10 @@ No se arregla hoy con los mecanismos existentes:
 Pendiente de diseño medido. Idea a evaluar: cuando la actividad resuelta tiene **hermanas en el
 registro** (misma familia y nivel, como Open Water y su referido), elegir entre ellas con un
 resolutor acotado al estilo de `course_level` (F4), no con el extractor general.
+
+Segundo hueco del referido: en `activities.json`, `padi_open_water_referral` tiene
+`cart_type: null`, así que aunque se detectara bien **el carrito no sabría cobrarlo**
+(`dom.cart_activity_ids()` lo excluye), igual que pasaba con el acompañante antes de F6. Las
+"hermanas" sí se pueden derivar del registro sin listas: misma `family` (`course`) y mismo
+`course_level` (1) que `padi_open_water`. Decisión de producto previa: ¿el bot pregunta si
+trae carta de referido cuando alguien pide el Open Water, o solo lo detecta si lo dice?
