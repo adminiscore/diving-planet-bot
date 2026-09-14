@@ -16,7 +16,16 @@ History
 * **Curso referido (474 USD frente a 693 del Open Water): preparado, sin detección.** Decisión del owner: solo si el cliente lo dice, y entonces con el asesor. Aplicado sin tocar prompts: el cierre con asesor sale del campo `contact_only` de `services.json` (antes estaba escrito a mano solo para Divemaster), el referido tiene tipo de carrito y `offer: false` (nunca se ofrece ni sale en las opciones de curso), y `dom.sibling_ids()` deriva del registro las actividades hermanas. **La detección se midió y se revirtió**: verificar con el LLM cada Open Water (hermanas + referido en el enum) acertaba el referido, pero el eval-set bajó 214 → 213/219 ("hey we arent certified, first time diving" pasó de minicurso a Open Water). Pendiente de rediseño.
 * **Grupo con nacionalidades mixtas: USD para todo el grupo** (decisión del owner). Antes el bot explicaba un pago individual por nacionalidad; ahora lo dice así y deja `is_colombian=False` en el estado. Sigue aplicándose solo cuando `_MIXED_NATIONALITY_RE` reconoce el grupo mixto.
 * **Decisiones de negocio aplicadas:** edad mínima de Advanced y Rescue **10**; textos de actividades unificados (Rescue Diver, "una especialidad PADI", "dive mini-course", "snorkeling", sin voseo, descripciones impersonales); precio **"183 USD"** en carrito, RAG, catálogo y comparación. Pendientes: Bubble Makers sin servicio y requisito del Rescue.
-* Suite: **1961 passed / 18 skipped**.
+* Suite: **1982 passed / 18 skipped**. Eval-set **214/219 (97,7 %)**; batería de grupo 9/10 repartos, 13/13 total, 0 parciales/inventados.
+* **Dónde estamos — pendiente** (detalle y orden en `docs/robustness/NEXT-SESSION-PROMPT.md`):
+  1. Detectar la carta de referido solo si el cliente lo dice (preparado el cierre con asesor; la detección medida bajaba el eval-set y se revirtió).
+  2. Pregunta aclaratoria "¿ya certificados o quieren certificarse?" para "2 open water" / "advanced" dentro de un reparto (decisión del owner).
+  3. "somos 3, uno no está certificado" → recomendar opciones en vez de asumir minicurso (decisión del owner).
+  4. Nacionalidad: "no soy colombiano pero vivo en colombia", más formas de grupo mixto (→ USD) y decidir el flag del veto.
+  5. `location` con disparador propio (faltan casos en el eval-set).
+  6. Comparación entre opciones con las opciones del LLM en vez del regex.
+  7. "mindful diving specialty"; respuesta doble tras F5a; eval-set que pase por el núcleo; hallazgos antiguos por reproducir; Langfuse frente a LangSmith; `concurrency` en el deploy de la CI.
+  8. Decisiones de negocio abiertas: Bubble Makers sin servicio y requisito previo del Rescue.
 
 0.24.1 - (2026-09-14)
 ----------------------
