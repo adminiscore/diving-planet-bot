@@ -2504,6 +2504,37 @@ async def _maybe_veto_resolved_fields_via_llm(
         logger.warning(f"[EXTRACT][VETO] failed, degrading to regex-only (ignored): {exc}")
 
 
+def _veto_would_generalize(regex_activity, llm_activity) -> bool:
+    """True si el LLM solo propone la actividad GENERICA de la misma familia que la
+    concreta que ya dio el regex. Derivado del registro (`generic`, `family`)."""
+    concrete = dom.by_id(regex_activity) if isinstance(regex_activity, str) else None
+    proposed = dom.by_id(llm_activity) if isinstance(llm_activity, str) else None
+    return (
+        concrete is not None and proposed is not None
+        and not concrete.generic and proposed.generic
+        and concrete.family == proposed.family
+    )
+
+
+def valid_veto_corrections(disagreements: dict, regex_values: dict, message: str = "") -> dict:
+    """Discrepancias del LLM que cuentan como correccion. Unico filtro: lo usan
+    `apply_veto_disagreements` y el eval-set, para que midan lo mismo."""
+    valid = {}
+    for field, llm_value in disagreements.items():
+        if field == "activity" and _veto_would_generalize(regex_values.get(field), llm_value):
+            # La lista del LLM no tiene todas las actividades concretas: si solo puede
+            # decir la generica de la MISMA familia ("padi_specialty" frente a
+            # "specialty_mindful_diving"), eso no es una correccion, es perder lo que
+            # el cliente nombro (2026-09-15).
+            logger.info(
+                f"[EXTRACT][ACTIVITY_VETO] ignorado (generaliza) regex={regex_values.get(field)!r} "
+                f"llm={llm_value!r} msg={_log_safe_message(message)!r}"
+            )
+            continue
+        valid[field] = llm_value
+    return valid
+
+
 def apply_veto_disagreements(
     disagreements: dict, regex_intent: DetectedIntent, message: str,
     regex_values: dict | None = None,
@@ -2518,7 +2549,7 @@ def apply_veto_disagreements(
     de `spec.apply` -- vive aqui una sola vez.
     """
     regex_values = regex_values or {}
-    for field, llm_value in disagreements.items():
+    for field, llm_value in valid_veto_corrections(disagreements, regex_values, message).items():
         spec = _VETO_FIELD_SPECS[field]
         cutover = getattr(settings, spec.cutover_flag)
         logger.info(

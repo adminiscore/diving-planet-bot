@@ -35,7 +35,7 @@ from src.agents.llm_extractor import (
     fill_gaps,
     verify_fields,
 )
-from src.agents.supervisor import _VETO_FIELD_SPECS
+from src.agents.supervisor import _VETO_FIELD_SPECS, valid_veto_corrections
 from src.flows.state import ConversationState
 
 EVAL_SET_PATH = Path(__file__).resolve().parent.parent / "docs" / "robustness" / "eval-set.json"
@@ -153,7 +153,8 @@ async def run() -> None:
                 veto_fields, case["message"], {f: resolved[f] for f in veto_fields},
                 history=case.get("history"), lang=case.get("lang", "es"),
             )
-            combined.update(disagreements)
+            # El mismo filtro que aplica el producto (supervisor.apply_veto_disagreements).
+            combined.update(valid_veto_corrections(disagreements, resolved, case["message"]))
 
         # Si la cuota se agoto, PARAR: seguir solo quema peticiones para
         # producir numeros invalidos (y ademas impide re-correr la medicion

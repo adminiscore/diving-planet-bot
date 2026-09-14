@@ -457,8 +457,9 @@ _CERTIFIED_PATTERNS = [
     r'\bcertificaci[oó]n\b',
     r'\bestamos\s+certificados\b',
     r'\bsomos\s+certificados\b',
-    r'\btengo\s+licencia\b',
-    r'\btenemos\s+licencia\b',
+    # Verbo "tener" en cualquier persona: "tengo", "tenemos", pero tambien "tienen" y
+    # "tiene" ("dos no tienen licencia" no tenia senal, 2026-09-15).
+    r'\bt(?:engo|enemos|ienen?|ienes)\s+(?:la\s+|su\s+)?licencia\b',
     r'\bhave\s+(?:a\s+)?(?:license|licence|card|certification)\b',
     r'\b(?:padi|ssi|cmas|naui|bsac)\s+(?:certified|card|license|licence|certification|open\s+water|advanced)\b',
     r'\blicencia\s+(?:padi|ssi|cmas|naui|bsac)\b',
@@ -529,6 +530,13 @@ _NOT_CERTIFIED_ANY_RE = re.compile("|".join(f"(?:{strip_accents(p)})" for p in _
 _CERTIFIED_ANY_RE = re.compile("|".join(f"(?:{strip_accents(p)})" for p in _CERTIFIED_PATTERNS))
 
 
+# Negacion que alcanza a lo que viene justo despues (hasta dos palabras por medio):
+# "no tienen certificación", "aren't certified", "sin la licencia". Sin tildes.
+_NEGATION_BEFORE_RE = re.compile(
+    r"(?:\bno\b|\bnot\b|n't\b|\bnunca\b|\bnever\b|\bsin\b|\bwithout\b)(?:\s+\S+){0,2}\s*$"
+)
+
+
 def certification_claim(text: str) -> bool | None:
     """True si el texto AFIRMA certificacion, False si la NIEGA, None si no
     hay señal. Negacion primero (misma prioridad que `_detect_certification`,
@@ -545,9 +553,25 @@ def certification_claim(text: str) -> bool | None:
     text = strip_accents((text or "").lower())
     if any(re.search(strip_accents(pattern), text) for pattern in _NOT_CERTIFIED_PATTERNS):
         return False
-    if any(re.search(strip_accents(pattern), text) for pattern in _CERTIFIED_PATTERNS):
-        return True
-    return None
+    positives = [m for pattern in _CERTIFIED_PATTERNS for m in re.finditer(strip_accents(pattern), text)]
+    if not positives:
+        return None
+    # Alcance de la negacion (2026-09-15): "2 no tienen certificación" o "two aren't
+    # certified" casaban el positivo y daban True. En vez de anadir cada frase
+    # negativa a la lista, una afirmacion precedida de cerca por una negacion no cuenta.
+    if all(_is_negated(text[:m.start()]) for m in positives):
+        return False
+    return True
+
+
+def _is_negated(prefix: str) -> bool:
+    """Paridad de la cadena de negaciones pegadas al final de `prefix`: "no tienen" niega,
+    "no es que no estemos" (doble negacion) no."""
+    count = 0
+    while (match := _NEGATION_BEFORE_RE.search(prefix)):
+        count += 1
+        prefix = prefix[:match.start()]
+    return count % 2 == 1
 
 
 # Vocabulario compartido de sustantivos de parentesco/compañía -- inventario
@@ -638,7 +662,10 @@ class IntentDetector:
         # certificado"), infer the activity instead of leaving it ambiguous,
         # so the booking flow still asks for what's missing (location, etc.)
         # instead of falling through to a generic LLM answer.
-        if intent.activity is None and intent.is_certified is not None:
+        # Tambien si piden un numero de inmersiones ("quiero hacer 2 inmersiones"): un
+        # paquete de inmersiones es buceo certificado (2026-09-15, mismo detector de
+        # cantidad que ya se usa, sin patron nuevo).
+        if intent.activity is None and (intent.is_certified is not None or intent.cert_dives):
             intent.activity = "certified_diving"
             intent.detected_fields.append("activity")
 
@@ -804,7 +831,7 @@ class IntentDetector:
         r"obtener|tomar)\s+(?:el\s+|la\s+|mi\s+|un\s+|hacer\s+|the\s+)*"
         r"(?:curso\s+)?(?:padi\s+)?(?:de\s+)?" + _CERT_LEVEL
         + r"|\bcurso\s+(?:de\s+)?(?:padi\s+)?" + _CERT_LEVEL
-        + r"|\bcertificar(?:me|nos)\b|\bget\s+certified\b"
+        + r"|\bcertificar(?:me|nos|te|se)\b|\bget\s+certified\b"
         + r"|\bwant\s+to\s+(?:do|take|get)\s+(?:the\s+)?(?:padi\s+)?" + _CERT_LEVEL,
         re.IGNORECASE,
     )
@@ -1138,17 +1165,23 @@ class IntentDetector:
         # cert\w*). Without this, a message that only describes who is NOT
         # certified (instead of spelling out "N certified and M not") never
         # resolves to a group_allocation and falls through to a generic answer.
+        # La frase que sigue a la cantidad se juzga con `certification_claim` (la misma
+        # fuente que decide `is_certified`, con su alcance de negacion), no con un patron
+        # propio que solo conocia "cert*" ("dos no tienen licencia", "uno no es buzo"
+        # quedaban sin reparto, 2026-09-15). La frase acaba en puntuacion o conjuncion.
         if not intent.group_allocation and intent.group_size:
-            m_not_cert_only = re.search(
-                rf'{word_num}\s+no\s+(?:esta[nb]?\s+|son\s+)?cert\w*\b'
-                rf'|\b(?:y\s+)?(?:el\s+|la\s+)?otr[ao]s?\s+no\s+(?:esta[nb]?\s+)?cert\w*\b'
-                rf'|{word_num}\s+(?:is|are)\s+not\s+cert\w*\b',
-                # Sin tildes (2026-09-15): "dos no están certificados" no casaba "esta[nb]".
-                strip_accents(message), re.IGNORECASE,
-            )
-            if m_not_cert_only:
-                groups = m_not_cert_only.groups()
-                beg_n = _parse_num(groups[0]) if groups and groups[0] else 1
+            beg_n = 0
+            for m_count in re.finditer(
+                rf'(?:\b{word_num}|\b(?:el\s+|la\s+)?otr[ao]s?)\s+(?=([^,.;]+))',
+                strip_accents(message.lower()),
+            ):
+                clause = re.split(r'\b(?:y|and|pero|but)\b', m_count.group(2))[0]
+                # Quien "quiere certificarse" ya eligio: no es un tramo sin actividad.
+                if (clause.strip() and certification_claim(clause) is False
+                        and not self._WANTS_CERT_RE.search(clause)):
+                    beg_n = _parse_num(m_count.group(1)) if m_count.group(1) else 1
+                    break
+            if beg_n:
                 if 0 < beg_n < intent.group_size:
                     cert_n = intent.group_size - beg_n
                     # Solo un atributo ("uno no esta certificado"): sin actividad elegida.

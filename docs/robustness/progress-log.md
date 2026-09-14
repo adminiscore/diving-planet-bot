@@ -2799,3 +2799,60 @@ Foto del detector sobre 208 mensajes: **12 cambios**.
 Eval-set, con este cambio y el de reparto/actividad: **219/223 (98,2 %)**, actividad 71/72, sin
 ningún caso a peor. Queda `f2b-specialty-mindful-en`: el regex ya da `specialty_mindful_diving`,
 pero el veto, cuyo enum solo tiene `padi_specialty`, lo generaliza.
+
+### El veto de actividad no generaliza lo que el cliente nombró
+
+`f2b-specialty-mindful-en` ("I'd like to do the mindful diving specialty"): el regex ya daba
+`specialty_mindful_diving`; el mensaje toca 2 categorías, el veto dispara y el LLM, cuyo enum solo
+tiene `padi_specialty`, lo cambiaba por la genérica. Regla desde el registro
+(`_veto_would_generalize`): si la corrección propuesta es la genérica de la **misma familia** de
+una actividad concreta, no es corrección. Las correcciones reales siguen aplicando ("ya llevo el
+rescue, quiero seguir buceando" → buceo certificado).
+
+Hallazgo de medición: el eval-set aplicaba las discrepancias por su cuenta
+(`combined.update(disagreements)`), así que la primera tanda con la regla dio lo mismo (219/223):
+el script no pasaba por el punto de decisión del producto. Ahora los dos usan
+`supervisor.valid_veto_corrections`.
+
+### Alcance de la negación en `certification_claim` y "N inmersiones"
+
+Sonda sin LLM: "2 no tienen certificación", "two aren't certified", "no tenemos certificación",
+"we aren't certified divers" y "no tengo licencia de buceo" salían **certificado**: el patrón
+positivo casaba dentro de la negación. Añadir cada frase negativa era el parche que no queremos.
+Regla general: una afirmación precedida de cerca (hasta dos palabras) por no/not/n't/nunca/never/
+sin/without no cuenta, y la cadena de negaciones se cuenta por paridad ("no es que no estemos
+certificados" sigue siendo sí; la primera versión sin paridad lo rompía y se vio en la foto). La
+puntuación corta el alcance ("no, ya soy certificado" sigue siendo sí).
+
+"quiero hacer 2 inmersiones" / "want to do 3 dives" daban actividad `None` aunque
+`_detect_cert_dive_count` leía la cantidad: la regla que ya ponía buceo certificado cuando hay
+certificación sin actividad usa también la cantidad de inmersiones.
+
+Foto del detector sobre 207 mensajes (eval-set, las tres baterías y sondas): **7 cambios, todos
+los buscados**; ningún mensaje del eval-set ni de las baterías cambia. Sin resolver:
+"somos 4 y dos no tienen licencia" sigue sin reparto (el patrón de reparto no conoce "licencia").
+
+Eval-set con las dos reglas de arriba (el veto que no generaliza, ya con el filtro compartido, y
+el alcance de la negación): **220/223 (98,7 %)**, tanda limpia. Diferencia por caso con la tanda
+anterior: **solo `f2b-specialty-mindful-en` pasa a OK**, sin ningún caso a peor. Quedan
+`loc-en-cartagena-now-islands-tomorrow` (ambiguo) y dos casos con historial que el script no pasa
+por el núcleo. Nota operativa: sin `ENV_FILE=.env.dev` el script corre sin clave y **todas** las
+llamadas degradan; el propio script lo marca como tanda no comparable.
+
+### "N no están certificados" con la misma fuente de certificación
+
+El reparto `{certified_diving: resto, undecided: N}` tenía su propio patrón, que solo conocía
+"cert*". "somos 4 y dos no tienen licencia", "dos no son buzos" o "2 sin certificar" quedaban sin
+reparto, y "we are 4 and two are not certified" repartía 3/1. Ahora la frase que sigue a cada
+cantidad, hasta puntuación o conjunción, se juzga con `certification_claim`: la misma fuente que
+`is_certified`, con su alcance de negación. Dos huecos de conjugación en las listas únicas, no
+frases nuevas: "tener licencia" solo existía como "tengo"/"tenemos" (ahora también "tiene(n)"), y
+`_WANTS_CERT_RE` conjugaba `certificar(me|nos)` pero no `te|se`, como ya hacía la lista negativa.
+Quien "quiere certificarse" ya eligió y no se marca como pendiente.
+
+Foto del detector sobre 219 mensajes: **10 cambios**. Del corpus solo cambia "vamos 4 pero dos no
+tienen licencia", que pasa a lo que la batería de grupo ya esperaba (2 certificados y 2 sin
+decidir); el resto son sondas nuevas y todas mejoran. No se volvió a correr la batería: el regex da
+ya exactamente el reparto esperado. Visto y pendiente: "somos 5 y 2 nunca han buceado" reparte 3/2,
+pero la actividad sigue siendo minicurso, que es una suposición anterior del detector ("nunca he
+buceado" → minicurso).
