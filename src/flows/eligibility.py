@@ -9,7 +9,7 @@ and services.json `min_age`):
 - Snorkel: from 6 years old.
 - Bubble Makers (intro dive for kids — pool / very shallow water, max 2 m): 8-10.
 - Dive mini-course (bautismo / discover scuba): from 10.
-- PADI Open Water and courses: from 10 (Advanced/Rescue from 12, Divemaster 18).
+- PADI Open Water, Advanced and Rescue: from 10 (owner 2026-09-14). Divemaster 18.
 - Certified fun dives: require an Open Water certification (and age >= 10).
 - Under 6: no in-water activity yet — can come along as a companion.
 - Minors must be accompanied by a responsible adult.
@@ -26,7 +26,7 @@ MIN_SNORKEL = 6
 BUBBLE_MAKERS_MIN = 8
 BUBBLE_MAKERS_MAX = 10
 MIN_DIVE = 10          # mini-course + Open Water
-MIN_ADVANCED = 12      # Advanced / Rescue
+MIN_ADVANCED = 10      # Advanced / Rescue (owner 2026-09-14: desde los 10, como Open Water)
 MIN_DIVEMASTER = 18
 
 # Canonical activity keys used across the flow.
@@ -221,12 +221,7 @@ def age_eligibility_note(age: int, lang: str = "es") -> str:
         base = (
             f"¡Con {age} años puede hacer *snorkel*, el *minicurso de buceo* y el curso *Open Water*! 🎉 "
         )
-        if age < MIN_ADVANCED:            # 10-11
-            base += (
-                f"Los cursos *Advanced* y *Rescue* son desde los {MIN_ADVANCED} años, "
-                f"y el *Divemaster* desde los {MIN_DIVEMASTER}. "
-            )
-        elif age < MIN_DIVEMASTER:        # 12-17
+        if age < MIN_DIVEMASTER:          # 10-17
             base += (
                 f"¡Y a esa edad ya puede hacer también los cursos *Advanced* y *Rescue* "
                 f"(desde los {MIN_ADVANCED} años)! El *Divemaster* es a partir de los {MIN_DIVEMASTER}. "
@@ -260,12 +255,7 @@ def age_eligibility_note(age: int, lang: str = "es") -> str:
     base = (
         f"At {age} they can do *snorkeling*, the *dive mini-course* and the *Open Water* course! 🎉 "
     )
-    if age < MIN_ADVANCED:              # 10-11
-        base += (
-            f"The *Advanced* and *Rescue* courses start at {MIN_ADVANCED}, "
-            f"and *Divemaster* at {MIN_DIVEMASTER}. "
-        )
-    elif age < MIN_DIVEMASTER:          # 12-17
+    if age < MIN_DIVEMASTER:            # 10-17
         base += (
             f"And at that age they can also take the *Advanced* and *Rescue* courses "
             f"(from {MIN_ADVANCED})! *Divemaster* starts at {MIN_DIVEMASTER}. "

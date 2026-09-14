@@ -340,14 +340,24 @@ se mantiene "preguntar", la guarda sigue y el hueco queda abierto.
 **Incoherencias de textos que quedan en el registro (decisión de negocio, editar en
 `activities.json` sin tocar código):**
 
-| actividad | qué pasa |
-|---|---|
-| Rescue | tres nombres: "el curso Rescue" (recordar), "curso Rescue Diver" (comparar), "Curso Rescue Diver + EFR" (etiqueta y catálogo) |
-| Especialidad genérica | `recall` dice "un curso PADI" en español y "a PADI specialty" en inglés |
-| Minicurso | EN: "the mini-course" (recordar), "beginner mini-course" (comparar), "Dive mini-course" (precio) |
-| Snorkel | `recall` en inglés dice "snorkel"; el resto dice "snorkeling" |
-| Buceo certificado | `pitch` usa voseo ("explorás") y el resto del bot tutea |
-| Buceo certificado | la etiqueta del plan de grupo dice "certified fun dive" en inglés y "Certified diving" en el resto |
+**Resueltas el 2026-09-14 (owner: "soluciona"):**
+
+| actividad | antes | ahora |
+|---|---|---|
+| Rescue | "el curso Rescue" / "curso Rescue Diver" / "Curso Rescue Diver + EFR" | "Rescue Diver" en recordar y comparar; la etiqueta conserva "+ EFR" del catálogo |
+| Especialidad genérica | `recall` "un curso PADI" (ES) frente a "a PADI specialty" (EN) | "una especialidad PADI" |
+| Minicurso | EN "the mini-course" / "beginner mini-course" / "Dive mini-course" | "dive mini-course" en todos |
+| Snorkel | `recall` EN "snorkel" | "snorkeling" |
+| Buceo certificado | voseo "explorás"; plan de grupo EN "certified fun dive" | sin voseo; "certified diving (dive trip)" |
+| Descripciones (`pitch`) | en segunda persona ("Tu primera vez…", "Disfrutas…", "te habilita") | impersonales: valen para el cliente y para su acompañante (F6) |
+
+**Otras decisiones del owner (2026-09-14):**
+- **Edad mínima de Advanced y Rescue: 10** (antes 12 en `eligibility` y en el registro).
+- **Formato de precio único: "183 USD"**, sin "$" ni "U$", en carrito, respuestas de
+  precio del RAG, catálogo y comparación. Los precios dentro de `faqs.json` siguen con
+  "$" (datos del KB, no se tocaron).
+- **Pendientes:** Bubble Makers sin servicio en el catálogo (D2) y requisito previo del
+  Rescue.
 
 **Por qué F2 se parte en dos** (corregido al empezar, 2026-09-14): si los enums de los
 prompts pasaran al vocabulario completo antes de migrar el código, el LLM devolvería ids

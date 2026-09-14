@@ -2169,7 +2169,7 @@ def test_compose_comparison_uses_catalog_facts():
     # Nombres del catálogo + requisito de cert + precio (nunca inventado).
     assert "Snorkel" in out
     assert "Sin certificación previa" in out and "Requiere certificación previa" in out
-    assert "U$" in out
+    assert "USD" in out
     # Cierra invitando a elegir, NO ofreciendo asesor.
     assert "asesor" not in out.lower()
     assert "con cuál te animas" in out.lower()
@@ -2186,7 +2186,7 @@ async def test_deliberation_falls_back_to_catalog_when_rag_has_no_pair():
          patch("src.agents.supervisor.rag_answer", new=AsyncMock(return_value=FALLBACK_ES)):
         resp = await route_message(state, "no sé si buceo o snorkel")
     assert "no lo tengo a la mano" not in resp  # ya no cae al asesor
-    assert "Snorkel" in resp and "U$" in resp
+    assert "Snorkel" in resp and "USD" in resp
     assert not state.mixed_cart
 
 

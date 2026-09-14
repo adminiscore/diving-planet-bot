@@ -107,9 +107,9 @@ def _format_price(service: dict) -> str:
         except (TypeError, ValueError):
             return v
     if price and normal:
-        return f"U${_round_usd_display(price)} online / U${_round_usd_display(normal)} normal"
+        return f"{_round_usd_display(price)} USD online / {_round_usd_display(normal)} USD normal"
     if price:
-        return f"U${_round_usd_display(price)}"
+        return f"{_round_usd_display(price)} USD"
     if note:
         return note
     return "Consultar precio actualizado en la web"

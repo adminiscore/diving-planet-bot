@@ -776,7 +776,8 @@ async def test_final_summary_price_arithmetic_adds_up():
     state.mixed_cart = [{"type": "snorkel", "qty": 12, "label": "Snorkel"}]  # $125.57 p.p.
     state.mixed_display_currency = "USD"
     resp = cart_render.goto_final_summary(state)
-    m = re.search(r"(\d+) × \$(\d+) USD p\.p\. = \*\$(\d+) USD\*", resp)
+    # Formato unico de precio (owner 2026-09-14): "183 USD", sin "$".
+    m = re.search(r"(\d+) × (\d+) USD p\.p\. = \*(\d+) USD\*", resp)
     assert m, resp
     qty, pp, sub = int(m.group(1)), int(m.group(2)), int(m.group(3))
     assert pp * qty == sub  # shown arithmetic is internally consistent

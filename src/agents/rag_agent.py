@@ -945,7 +945,8 @@ _PRICE_SPECIFIC = re.compile(
 
 def _fmt_price_usd(v) -> str:
     try:
-        return f"${int(round(float(v)))}"
+        # Formato unico de precio en USD (owner 2026-09-14): "183 USD", sin "$".
+        return f"{int(round(float(v)))}"
     except (TypeError, ValueError):
         return "consultar"
 

@@ -196,7 +196,7 @@ def _format_activity_booking_messages(state: ConversationState) -> list[str]:
         # shown to the client always adds up (e.g. "2 × $126 = $252", never $251).
         if primary == "COP":
             return f"COP {int(round(cop or 0)) * qty:,}".replace(",", ".") if cop else None
-        return f"${int(round(float(usd))) * qty} USD" if usd else None
+        return f"{int(round(float(usd))) * qty} USD" if usd else None
 
     includes = (
         "✅ Incluye: transporte Cartagena-Islas-Cartagena, almuerzo, equipo y seguro."

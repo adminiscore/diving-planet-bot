@@ -1231,8 +1231,8 @@ def _compose_comparison(offerings: list[str], lang: str) -> str:
         row = f"🤿 *{name}*\n• {cert_line}\n• {dom.text(o, 'pitch', lang, default='')}"
         price = svc.get("price_usd")
         if price:
-            row += (f"\n• Desde U${int(round(price))} por persona"
-                    if lang == "es" else f"\n• From U${int(round(price))} per person")
+            row += (f"\n• Desde {int(round(price))} USD por persona"
+                    if lang == "es" else f"\n• From {int(round(price))} USD per person")
         rows.append(row)
     if lang == "es":
         return ("¡Con gusto te explico la diferencia! 🌊\n\n" + "\n\n".join(rows)
