@@ -25,6 +25,11 @@ que se leen y se revisan junto al prompt, no aparte.
 1. **Solo texto.** Estos módulos no importan nada de `src/` (son una hoja del
    grafo de dependencias) y no llaman al LLM: quien hace la llamada es la red en
    `src/agents/`. Así un prompt se puede leer/diffear sin arrastrar el runtime.
+   **Única excepción: `src.domain`** (2026-09-14), la fuente de negocio compartida
+   (qué actividades hay y para quién es cada una). Los enums y el contexto de
+   negocio de los prompts salen de ahí para que ningún prompt decida con menos
+   información que otro; es seguro porque `src.domain` es a su vez una hoja (solo
+   stdlib). Ambas cosas las fija `tests/test_prompts_surface.py`.
 2. **Los HECHOS no se piden al LLM** (principio #4 del plan): ningún prompt de
    aquí produce precios, links, cupos ni confirmaciones — eso lo pone la capa
    determinista (`src/flows/`). Los prompts que lo mencionan es para

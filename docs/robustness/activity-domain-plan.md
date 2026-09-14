@@ -107,6 +107,41 @@ que no sale de aquí (mismo patrón que `test_prompt_enum_enumeration.py`).
 | **F4** | `padi_course` en el flujo: si el LLM no pudo decidir el nivel con el contexto, el núcleo pregunta el nivel con opciones del registro; nunca un curso sin precio. | tests + conversación en batería |
 | **F5** | Evidencia citada: sustituye `_activity_has_textual_backing` y `_boolean_has_textual_backing` (guardas de vocabulario) por "el LLM cita el fragmento literal y el código lo comprueba". | eval-set + batería + tests de alucinación existentes |
 
+**F2a — lo medido (2026-09-14)**
+
+- Superficie de prompts: cambian exactamente los 17 prompts que deciden actividades
+  (de 77); ninguno más.
+- Regla de arquitectura precisada: `src/prompts` puede importar **solo** `src.domain`,
+  que a su vez es hoja (test en `tests/test_prompts_surface.py`). Los tool schemas son
+  constantes de módulo: sin importar el registro no podrían generar sus enums (F2b).
+- Primera tanda del eval-set: **203/207** frente a 204/207. Un caso regresionó de forma
+  determinista (`adv-en-elliptical-no-dive-verb`: el extractor dejó de rellenar
+  `is_certified`). Ablación (3 repeticiones por variante): la causa era una sola frase
+  del `for_whom` de `certified_diving`, "**y eso se confirma después**", que el modelo
+  tomó como orden de no extraer la certificación. Quitar también "requiere carné"
+  volvía a fallar: el requisito ayuda, lo que estropea es aplazarlo. Regla escrita en
+  el propio `activities.json` y fijada con un test.
+- Hipótesis descartada con datos: partir `for_whom` en "criterios" y "descripción"
+  no arreglaba el caso; no se aplicó.
+
+**Mapa de F3** (usos reales, 2026-09-14):
+
+| tabla | usos | destino |
+|---|---|---|
+| `_PRODUCT_ACTIVITIES` (núcleo) | **0** | borrar |
+| `_REMEMBER_ACTIVITY_MAP` (supervisor) | **0** | borrar |
+| `SERVICE_TO_CART_TYPE` (catálogo) | **0** en `src` | borrar |
+| `_ACTIVITY_TO_CART_TYPE` (núcleo) | 6 | `cart_type` del registro |
+| `_ACTIVITY_TO_SERVICE_ID` (supervisor) | 1 | `service_ids(id, "cartagena")[0]` |
+| `ISLAND_SERVICE_MAP` (catálogo) | 1 (`cart_render._service_for_location`) | `services["island"]` del registro (corrige D5) |
+| `MULTI_DAY_SERVICES` (catálogo) | 1 (supervisor) | `duration_days` de `services.json` |
+| `_RECALL_LABELS_*`, `_DELIB_LABELS_*` (núcleo) | 3 + 2 | `label` del registro |
+| `_OFFERING_TO_SERVICE`, `_OFFERING_BLURB_*` (núcleo) | 1 + 1 | `services` + `for_whom` del registro |
+| `_COURSE_MENTION_RE` (núcleo) | 1 | revisar en F5 (es detección por vocabulario) |
+| `_PRICE_CATALOG_LABELS_*`, `_PRICE_SINGLE_SERVICE_PATTERNS` (RAG) | 1 + 1 | etiquetas del registro; los patrones, revisar en F5 |
+| `_ACTIVITY_LABELS` (elegibilidad) | 1 | `label` del registro |
+| edades mínimas en `_load_services` (catálogo) | — | `min_age` del registro |
+
 **Por qué F2 se parte en dos** (corregido al empezar, 2026-09-14): si los enums de los
 prompts pasaran al vocabulario completo antes de migrar el código, el LLM devolvería ids
 (`specialty_nitrox`, `padi_open_water_referral`…) que `_ACTIVITY_TO_SERVICE_ID` y las
@@ -135,7 +170,7 @@ Cargados por el código (fuente válida): `services.json`, `policies.json`, `faq
 
 | # | tema | qué dice cada fuente | impacto |
 |---|---|---|---|
-| D1 | **Precio del refresher** | `pricing.json` (tarifa 2026): "Minicurso de Buceo / Refresh" 655.000 COP online desde Cartagena, 134 USD desde islas. El bot (`rag_agent._canonical_refresher_cost_answer`, fix del lote 5) dice que **no tiene coste adicional**, y el carrito no lo incluye en el resumen. | **Alto**: se puede estar prometiendo gratis algo que se cobra. |
+| D1 | **Precio del refresher** — ✅ **decidido por el owner (2026-09-14): se cobra, tarifa 2026** | `pricing.json` (tarifa 2026): "Minicurso de Buceo / Refresh" 655.000 COP / 183 USD online desde Cartagena, 475.000 COP / 134,1 USD desde islas (idéntico al servicio `minicourse` del catálogo). El bot decía que **no tiene coste adicional** en 4 sitios (pregunta del flujo, nota de cierre, respuesta canónica del RAG, contexto del LLM en `supervisor`). Arreglo: entrada `refresher` en el registro vendida como el servicio del minicurso (`sold_as`); el precio por persona sale del catálogo, sin cifras a mano. | **Alto**: se prometía gratis algo que se cobra. |
 | D2 | **Bubble Makers** | `faqs.json` lo vende (187 USD) y `eligibility` lo ofrece a niños de 8-10; **no existe en `services.json`** (sin link ni precio de catálogo). En el registro está como actividad sin servicios. | Medio: un niño de 8-10 no puede cerrar reserva con link. |
 | D3 | **Edad mínima Advanced/Rescue** | `policies.json:age_minimum`: "cursos PADI desde los 10". `faqs.json` (Advanced: "edad mínima habitual de 12") y el código (`eligibility`, `_load_services`): 12. El registro usa 12. | Bajo. |
 | D4 | **Requisito del Rescue** | `faqs.json`: requiere Advanced + EFR reciente. `services.json:rescue` no lo lista en requisitos. | Bajo. |

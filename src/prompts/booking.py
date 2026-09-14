@@ -26,6 +26,8 @@ ninguno "lo abarca todo".
 
 from __future__ import annotations
 
+from src.domain import activities as _activities
+
 # ── Idioma del primer turno · `language_detector.detect_language_llm` ───────
 
 LANGUAGE_DETECT_PROMPT = (
@@ -191,21 +193,15 @@ EXTRACTION_TOOL = {
 # certificado", contradiciendo la regla escrita encima, y eso REGRESIONO
 # "uno quiere buceo y el otro snorkel" a `minicourse` (medido A/B). Una glosa
 # no es decoracion: cambia la respuesta.
+#
+# Las glosas de los campos cuyo valor es una ACTIVIDAD ya no viven aqui: salen del
+# registro (`data/knowledge_base/activities.json`, campo `gloss`) via
+# `_value_glosses` (docs/robustness/activity-domain-plan.md, F2a). Son las MISMAS
+# glosas medidas que vivian aqui, movidas a la fuente unica. NO es el `for_whom`
+# completo: se probo meterlo en estos prompts de extraccion y cada frase movia lo
+# que el modelo se atreve a rellenar (un caso del eval-set y dos de la bateria,
+# en sentidos opuestos segun la redaccion). Ver el `_comment` del registro.
 _ENUM_VALUE_GLOSSES_ES = {
-    "activity": {
-        "certified_diving": (
-            "inmersion de buceo estandar; es el valor por DEFECTO cuando se "
-            "pide 'buceo' sin mas, tenga o no certificacion"
-        ),
-        "minicourse": (
-            "bautismo/iniciacion: SOLO si el mensaje dice que es para probar "
-            "sin certificarse o que no sabe bucear"
-        ),
-        "padi_open_water": (
-            "el PRIMER NIVEL de certificacion: 'primer nivel', 'primer curso', "
-            "'sacarme el titulo', 'certificarme' por primera vez"
-        ),
-    },
     "location": {
         "cartagena": "se hospeda en la ciudad o en cualquiera de sus barrios",
         "island": "se hospeda en o viene de Islas del Rosario, Baru o un hotel de isla",
@@ -214,27 +210,9 @@ _ENUM_VALUE_GLOSSES_ES = {
         "single_day": "un solo dia",
         "multi_day": "varios dias",
     },
-    "companion_activity": {
-        "certified_diving": "inmersion de buceo estandar",
-        "minicourse": "bautismo/iniciacion sin certificarse",
-    },
 }
 
 _ENUM_VALUE_GLOSSES_EN = {
-    "activity": {
-        "certified_diving": (
-            "a standard dive; this is the DEFAULT value when 'diving' is "
-            "requested with no further detail, certified or not"
-        ),
-        "minicourse": (
-            "try-dive/discover scuba: ONLY if the message says it is to try it "
-            "out without certifying, or that they cannot dive"
-        ),
-        "padi_open_water": (
-            "the FIRST certification level: 'first level', 'first course', "
-            "'get my licence', 'get certified' for the first time"
-        ),
-    },
     "location": {
         "cartagena": "staying in the city or any of its neighborhoods",
         "island": "staying on or coming from the Rosario Islands, Baru or an island hotel",
@@ -243,11 +221,24 @@ _ENUM_VALUE_GLOSSES_EN = {
         "single_day": "a single day",
         "multi_day": "several days",
     },
-    "companion_activity": {
-        "certified_diving": "a standard dive",
-        "minicourse": "try-dive/discover scuba without certifying",
-    },
 }
+
+# Campos cuyo `enum` son actividades: su glosa es la `gloss` del registro, no un
+# texto escrito aqui.
+_ACTIVITY_VALUED_FIELDS = frozenset({"activity", "companion_activity"})
+
+
+def _value_glosses(field: str, lang: str) -> dict[str, str]:
+    """Glosa de cada valor del enum de `field`. Para las actividades sale del
+    registro (`gloss`, solo las que la tienen); para el resto, de
+    `_ENUM_VALUE_GLOSSES_*`."""
+    if field in _ACTIVITY_VALUED_FIELDS:
+        return {
+            a.id: (a.gloss.get(lang) or a.gloss["es"])
+            for a in _activities.registry().activities
+            if a.gloss
+        }
+    return (_ENUM_VALUE_GLOSSES_ES if lang == "es" else _ENUM_VALUE_GLOSSES_EN).get(field, {})
 
 _ENUM_LEAD_ES = (
     "Valores válidos de `{field}` (devuelve EXACTAMENTE uno de estos "
@@ -277,8 +268,7 @@ def _enum_values_sentence(field: str, lang: str, tool: dict = EXTRACTION_TOOL) -
     enum = _field_enum(field, tool)
     if not enum:
         return ""
-    glosses = (_ENUM_VALUE_GLOSSES_ES if lang == "es" else _ENUM_VALUE_GLOSSES_EN)
-    field_glosses = glosses.get(field, {})
+    field_glosses = _value_glosses(field, lang)
     parts = []
     for value in enum:
         gloss = field_glosses.get(value)

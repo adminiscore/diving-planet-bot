@@ -32,24 +32,56 @@ def _prompt_modules() -> list[Path]:
     return sorted(p for p in PROMPTS_DIR.glob("*.py") if p.name != "__init__.py")
 
 
+DOMAIN_DIR = Path(__file__).resolve().parents[1] / "src" / "domain"
+# Lo UNICO de `src` que un prompt puede importar: el dominio de negocio, que a su
+# vez es una hoja (ver `test_domain_modules_are_a_leaf_no_src_imports`).
+_ALLOWED_SRC_PACKAGE = "src.domain"
+
+
+def _src_imports(path: Path) -> list[str]:
+    """Modulos de `src` que importa un fichero, fuera del dominio permitido."""
+    found = []
+    for node in ast.walk(ast.parse(path.read_text(encoding="utf-8"))):
+        if isinstance(node, ast.Import):
+            found += [a.name for a in node.names if a.name.startswith("src")]
+        elif isinstance(node, ast.ImportFrom) and (node.module or "").startswith("src"):
+            found.append(node.module)
+    return found
+
+
 def test_prompt_modules_are_a_leaf_no_src_imports():
-    """`src/prompts/*` no importa NADA de `src/` (regla #1 del paquete).
+    """`src/prompts/*` no importa nada de `src/` salvo el dominio (regla #1).
 
     Es lo que permite (a) leer/diffear un prompt sin arrastrar el runtime y (b)
     que cualquier módulo de `src/agents/` pueda importar su prompt sin riesgo de
     import circular — el problema que obligó a los imports perezosos de
     `supervisor` en los nodos-agente.
+
+    Excepción única (2026-09-14): `src.domain`, la fuente de negocio compartida
+    (docs/robustness/activity-domain-plan.md). No rompe ninguno de los dos
+    motivos porque el propio dominio es hoja (solo stdlib), y es imprescindible:
+    los tool schemas son constantes de módulo, no reciben parámetros, así que sus
+    enums y su contexto de negocio solo pueden salir del registro importándolo.
     """
     offenders = []
     for path in [*_prompt_modules(), PROMPTS_DIR / "__init__.py"]:
-        for node in ast.walk(ast.parse(path.read_text(encoding="utf-8"))):
-            if isinstance(node, ast.Import):
-                offenders += [
-                    f"{path.name}: import {a.name}" for a in node.names if a.name.startswith("src")
-                ]
-            elif isinstance(node, ast.ImportFrom) and (node.module or "").startswith("src"):
-                offenders.append(f"{path.name}: from {node.module} import ...")
+        offenders += [
+            f"{path.name}: {module}" for module in _src_imports(path)
+            if not (module == _ALLOWED_SRC_PACKAGE or module.startswith(_ALLOWED_SRC_PACKAGE + "."))
+        ]
     assert not offenders, f"src/prompts debe ser una hoja del grafo de imports: {offenders}"
+
+
+def test_domain_modules_are_a_leaf_no_src_imports():
+    """El dominio no importa NADA de `src/`: es la condición que hace segura la
+    excepción de la regla #1. Si alguien le mete un import del runtime, los
+    prompts dejan de ser hoja sin que lo diga ningún otro test."""
+    offenders = [
+        f"{path.name}: {module}"
+        for path in sorted(DOMAIN_DIR.glob("*.py"))
+        for module in _src_imports(path)
+    ]
+    assert not offenders, f"src/domain debe ser una hoja del grafo de imports: {offenders}"
 
 
 @pytest.mark.parametrize(

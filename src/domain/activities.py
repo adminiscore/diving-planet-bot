@@ -52,6 +52,10 @@ class Activity:
     # Id de otra actividad cuyos servicios usa para reservarse y cobrarse (el
     # refresher se vende como el minicurso). No es duena de esos servicios.
     sold_as: str | None = None
+    # Glosa corta y MEDIDA para los prompts que extraen datos del cliente
+    # (fill_gaps, veto, combinada). Opcional: sin glosa, el valor se enumera solo.
+    # Distinta de `for_whom` a proposito -- ver el `_comment` de activities.json.
+    gloss: dict[str, str] | None = None
 
     def all_services(self) -> tuple[str, ...]:
         return tuple(s for loc in LOCATIONS for s in self.services.get(loc, ()))
@@ -90,6 +94,7 @@ def _parse(raw: dict) -> Registry:
             for_whom=dict(entry["for_whom"]),
             sources=tuple(entry["sources"]),
             sold_as=entry.get("sold_as"),
+            gloss=dict(entry["gloss"]) if entry.get("gloss") else None,
         ))
     return Registry(tuple(activities), dict(raw.get("non_activity_services", {})))
 
@@ -187,6 +192,8 @@ def validate(services_path: Path = SERVICES_PATH) -> list[str]:
         if activity.generic and activity.all_services():
             problems.append(f"{activity.id}: una actividad generica no puede tener servicios")
         for lang in LANGS:
+            if activity.gloss is not None and not activity.gloss.get(lang):
+                problems.append(f"{activity.id}: gloss sin {lang}")
             if not activity.label.get(lang):
                 problems.append(f"{activity.id}: falta label.{lang}")
             if not activity.for_whom.get(lang):

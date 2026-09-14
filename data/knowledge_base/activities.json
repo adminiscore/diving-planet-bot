@@ -1,5 +1,5 @@
 {
-  "_comment": "Fuente UNICA del dominio de actividades (docs/robustness/activity-domain-plan.md, 2026-09-14). Cada actividad tiene un id canonico, sus servicios del catalogo (services.json) desde Cartagena y desde las islas, y el contexto de negocio (for_whom) que ven los prompts. Textos derivados de services.json, policies.json y faqs.json (los ficheros que carga el codigo). Editable por negocio: src/domain/activities.py lo valida contra services.json. OJO al redactar for_whom: lo leen los prompts que extraen datos del cliente, y cada frase cambia lo que el modelo extrae (medido). Describe para quien es la actividad y sus requisitos; NUNCA digas cuando o como se piden otros datos (p. ej. 'la certificacion se confirma despues'): el modelo lo toma como orden de no extraerlos (2026-09-14, el extractor dejo de rellenar is_certified). Cualquier cambio se mide con scripts/run_extraction_eval.py antes de desplegar.",
+  "_comment": "Fuente UNICA del dominio de actividades (docs/robustness/activity-domain-plan.md, 2026-09-14). Cada actividad tiene un id canonico, sus servicios del catalogo (services.json) desde Cartagena y desde las islas, y el contexto de negocio (for_whom) que ven los prompts. Textos derivados de services.json, policies.json y faqs.json (los ficheros que carga el codigo). Editable por negocio: src/domain/activities.py lo valida contra services.json. DOS TEXTOS con propositos distintos (decision del owner 2026-09-14, tras medir): `gloss` (opcional, corto) es lo que ven los prompts que EXTRAEN datos del cliente (fill_gaps, veto, combinada) -- ahi cada palabra cambia lo que el modelo se atreve a rellenar (medido: una frase del contexto completo hizo dejar de extraer is_certified; quitarla hizo perder repartos), asi que solo se edita midiendo con scripts/run_extraction_eval.py Y scripts/battery_group_allocation_gate.py. `for_whom` es el contexto de negocio completo para los prompts que ELIGEN entre actividades; NUNCA digas en el cuando o como se piden otros datos (p. ej. 'la certificacion se confirma despues').",
   "non_activity_services": {
     "private": "Servicio privado a medida: se coordina con un asesor, no es una actividad del flujo de reserva."
   },
@@ -19,6 +19,10 @@
       "min_age": 10,
       "max_age": null,
       "label": {"es": "Buceo certificado", "en": "Certified diving"},
+      "gloss": {
+        "es": "inmersion de buceo estandar; es el valor por DEFECTO cuando se pide 'buceo' sin mas, tenga o no certificacion",
+        "en": "a standard dive; this is the DEFAULT value when 'diving' is requested with no further detail, certified or not"
+      },
       "for_whom": {
         "es": "Inmersiones de buceo guiadas: 2 en un día o paquetes de varios días (3 a 9 inmersiones). Es la opción por DEFECTO cuando alguien pide 'bucear' o 'buceo' sin más detalle, tenga o no certificación; para hacerla hace falta carné de buzo (mínimo Open Water).",
         "en": "Guided dives: 2 in one day or multi-day packages (3 to 9 dives). It is the DEFAULT when someone asks to 'dive' with no further detail, certified or not; it requires a diver card (minimum Open Water)."
@@ -37,6 +41,10 @@
       "min_age": 10,
       "max_age": null,
       "label": {"es": "Minicurso de buceo", "en": "Dive mini-course"},
+      "gloss": {
+        "es": "bautismo/iniciacion: SOLO si el mensaje dice que es para probar sin certificarse o que no sabe bucear",
+        "en": "try-dive/discover scuba: ONLY if the message says it is to try it out without certifying, or that they cannot dive"
+      },
       "for_whom": {
         "es": "Bautismo de buceo de UN solo día (Discover Scuba): SOLO cuando el cliente dice que quiere probar sin certificarse, o que no sabe bucear o nunca ha buceado. Teoría online, piscina y 1 inmersión en el mar con instructor PADI. No da certificación ni obliga a quedarse varios días ni a dormir en las islas. Desde 10 años.",
         "en": "A ONE-day try-dive (Discover Scuba): ONLY when the customer says they want to try it without certifying, or that they cannot dive or have never dived. Online theory, pool session and 1 ocean dive with a PADI instructor. It does not certify and does not require staying several days or sleeping on the islands. From age 10."
@@ -109,6 +117,10 @@
       "min_age": 10,
       "max_age": null,
       "label": {"es": "Curso Open Water", "en": "Open Water course"},
+      "gloss": {
+        "es": "el PRIMER NIVEL de certificacion: 'primer nivel', 'primer curso', 'sacarme el titulo', 'certificarme' por primera vez",
+        "en": "the FIRST certification level: 'first level', 'first course', 'get my licence', 'get certified' for the first time"
+      },
       "for_whom": {
         "es": "El PRIMER curso de certificación PADI, para quien no tiene certificación y quiere sacarse el título de buzo autónomo (hasta 18 metros): su 'primer nivel', 'primer curso', 'sacarse el título' o 'certificarse' por primera vez. 2 días con teoría eLearning, piscina y 4 inmersiones; obliga a dormir al menos 1 noche en las islas. Desde 10 años.",
         "en": "The FIRST PADI certification course, for people with no certification who want to become autonomous divers (down to 18 metres): their 'first level', 'first course', 'get my licence' or 'get certified' for the first time. 2 days with eLearning theory, pool and 4 dives; requires at least 1 night on the islands. From age 10."
