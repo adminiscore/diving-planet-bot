@@ -2708,3 +2708,29 @@ variantes de curso):
   suposición.
 - **Versión final: 1 cambio**, "advanced open water" → `padi_advanced`. Cursos mencionados y
   ofertas del núcleo, idénticos.
+
+### Centralización: listas de "mención de otra persona"
+
+Paso 2 del orden del inventario. Qué contesta cada lista:
+- **Núcleo**: son preguntas distintas, no duplicados. `_ADDED_PERSON_RE` (alguien se suma),
+  `_MENTIONS_PERSON_RE` (se menciona a otra persona), `_SINGULAR_COMPANION_RE` /
+  `_PLURAL_COMPANION_RE` (uno o varios) y `_BARE_HEADCOUNT_RE` (conteo "para 2 personas"). Ya
+  comparten los sustantivos de `_PERSON_NOUN_*`.
+- **RAG**: `_NON_DIVER_*` detecta acompañantes que no bucean, un concepto propio del resumen del
+  RAG. Sí había un duplicado: `_mentions_plural_companions` repetía en línea el patrón de
+  `_MENTIONS_COMPANION_RE`.
+- **Supervisor**: `_GROUP_RECOMPOSE_RE` / `_apply_group_recomposition` era **código muerto**:
+  solo lo llamaban sus tests, como ya decía el inventario del 2026-09-03.
+
+Aplicado:
+- Borrado el código muerto (103 líneas: `_PERSON_NOUN`, `_GROUP_RECOMPOSE_RE`,
+  `_apply_group_recomposition`, `_GROUP_COUNT_WORDS`), `tests/test_group_recomposition.py` y
+  dos imports que solo usaba ese código.
+- `_mentions_plural_companions` reutiliza `_MENTIONS_COMPANION_RE`.
+
+Medido y **no** aplicado: la jerga plural ("parceros", "cuates", "panas", "carnales", "compas"…)
+vive solo en `_PLURAL_COMPANION_RE`. Llevarla a `_PERSON_NOUN_PLURAL_ES` (lista compartida)
+cambió 1 de 200 mensajes en la foto: "somos 4, dos panas y yo buceamos" pasó de total 4 a **3**
+(el conteo del detector sumó "dos panas y yo" y pisó el "somos 4"). Revertido: ahí la jerga solo
+decide singular o plural. Foto final antes/después: **0 cambios** en 200 mensajes. Suite 2009
+passed (18 tests menos: los del código borrado).

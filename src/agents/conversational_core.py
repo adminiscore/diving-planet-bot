@@ -1004,6 +1004,9 @@ _SINGULAR_COMPANION_RE = re.compile(
 # vocabulario compartido a propósito -- se queda local a este patrón.
 _PLURAL_COMPANION_RE = re.compile(
     r"\b(?:" + _PERSON_NOUN_PLURAL_ES + r"|"
+    # La jerga plural se queda AQUI a proposito (medido 2026-09-15): llevarla a la
+    # lista compartida hacia que el conteo de grupo del detector sumara "dos panas
+    # y yo" = 3 y pisara un "somos 4" explicito. Aqui solo decide singular/plural.
     r"parceros?|parceras?|cuates|panas|carnales|compas|patas|causas|"
     + _PERSON_NOUN_PLURAL_EN + r")\b",
     re.IGNORECASE,

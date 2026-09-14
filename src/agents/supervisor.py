@@ -22,8 +22,6 @@ from src.agents.escalation import (
     sensitive_response_for,
 )
 from src.agents.intent_detector import (
-    _PERSON_NOUN_MENTION_EN,
-    _PERSON_NOUN_MENTION_ES,
     DetectedIntent,
     IntentDetector,
     matched_activity_categories,
@@ -476,109 +474,6 @@ _BOOKING_PROCESS_QUESTION_RE = re.compile(
 
 
 
-
-
-# Free-text that RECOMPOSES the group mid-flow: adding a person, or restating a
-# new total ("y mi hijo de 12", "se suma mi hermano", "ya seríamos 3", "también
-# viene mi esposa"). Deliberately requires an explicit change/addition cue + a
-# person noun (or "ya/ahora somos N") so a normal count answer ("somos 3") or a
-# location answer starting with "y" ("y desde Cartagena") does NOT trigger it.
-#
-# Inventario regex 2026-09-03: `_apply_group_recomposition` (más abajo, único
-# consumidor de este regex) es código MUERTO -- solo lo llaman sus propios
-# tests (tests/test_group_recomposition.py), nunca el flujo real de turno.
-# Se migra igual a la fuente compartida (`_PERSON_NOUN_MENTION_ES/EN`,
-# intent_detector.py) por consistencia y para que, si algún día se conecta,
-# no arrastre un vocabulario ya desincronizado -- "niño"/"persona" se quedan
-# como extras locales (no son sustantivos de parentesco compartidos con las
-# demás listas).
-_PERSON_NOUN = (
-    r"(?:" + _PERSON_NOUN_MENTION_ES + r"|niñ[oa]s?|nin[oa]s?|persona|personas|"
-    + _PERSON_NOUN_MENTION_EN + r")"
-)
-_GROUP_RECOMPOSE_RE = re.compile(
-    r"\bse\s+(?:suma|sumar[oa]n?|a[ñn]ade|agrega|une|unen|apunta|apuntan)\b"
-    r"|\b(?:ahora|ya|en realidad|realmente)\s+(?:somos|ser[íi]amos|seremos|vamos)\s+(?:\d+|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|diez)\b"
-    rf"|\btambi[ée]n\s+vien[ea]n?\b"
-    rf"|\b(?:y|más|mas|adem[aá]s|tambi[ée]n)\s+(?:(?:mi|mis|otr[oa]s?|un|una|el|la|los|las|nuestr[oa]s?|pequeñ[oa]|mayor|menor)\s+){{1,2}}{_PERSON_NOUN}"
-    rf"|\b(?:se\s+nos\s+)?(?:suma|apunta|une)\s+(?:(?:mi|mis|otr[oa]|un|una)\s+){{1,2}}{_PERSON_NOUN}"
-    # "se me olvidó (mencionar) mi cuñado" — customer remembers a companion they
-    # forgot to count, a natural way of restating the group mid-flow (T008).
-    rf"|\bse\s+me\s+(?:olvid[oó]|olvidaba)\b(?:\s+\w+){{0,3}}\s+(?:mi|mis|otr[oa]s?)\s+{_PERSON_NOUN}",
-    re.IGNORECASE,
-)
-
-
-def _apply_group_recomposition(message: str, state: ConversationState) -> str | None:
-    """If the message adds people / restates the group size mid-flow, capture the
-    change (new total and/or new ages) into state and return an acknowledgment
-    that keeps the current step's buttons — instead of the step handler answering
-    'no te entendí'. Returns None when the message is not a recomposition."""
-    if not _GROUP_RECOMPOSE_RE.search(_strip_accents(message)):
-        return None
-
-    # NOTE (robustness review H4, deferred): the LLM cutover is NOT wired here.
-    # This is a narrow, regex-cued pre-dispatch short-circuit for group
-    # recomposition; the cutover belongs in a single early hook shared by all
-    # paths, tracked as future work rather than bolted onto this path.
-    intent = intent_detector.detect(message, state)
-    changed = False
-
-    # New explicit total ("ya seríamos 3", "ahora somos 4").
-    m_total = re.search(
-        r"\b(?:ahora|ya|en realidad|realmente)\s+(?:somos|ser[íi]amos|seremos|vamos)\s+"
-        r"(\d+|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|diez)\b",
-        _strip_accents(message), re.IGNORECASE,
-    )
-    if m_total:
-        n = _GROUP_COUNT_WORDS.get(m_total.group(1), None)
-        if n is None and m_total.group(1).isdigit():
-            n = int(m_total.group(1))
-        if n and n != state.detected_group_size:
-            state.detected_group_size = n
-            changed = True
-    else:
-        # A person was added without a new total -> increment by 1 (assume the
-        # speaker was at least 1 if the group size wasn't known yet).
-        state.detected_group_size = (state.detected_group_size or 1) + 1
-        changed = True
-
-    # Merge any newly-mentioned ages.
-    if intent.ages:
-        merged = sorted(set((state.detected_ages or []) + list(intent.ages)))
-        if merged != (state.detected_ages or []):
-            state.detected_ages = merged
-            changed = True
-
-    if not changed:
-        return None
-
-    lang = state.language or "es"
-    bits = []
-    if state.detected_group_size:
-        bits.append(f"ahora sois {state.detected_group_size}" if lang == "es"
-                    else f"you're now {state.detected_group_size}")
-    if intent.ages:
-        edades = ", ".join(str(a) for a in sorted(intent.ages))
-        bits.append(f"anoto la(s) edad(es): {edades}" if lang == "es"
-                    else f"noting age(s): {edades}")
-    detail = "; ".join(bits)
-    logger.info(f"[SUPERVISOR] Group recomposition mid-flow -> {detail}")
-    if lang == "es":
-        return f"¡Anotado! {detail.capitalize()}. Sigamos: elige una de las opciones de abajo 👇"
-    return f"Got it! {detail.capitalize()}. Let's continue: pick one of the options below 👇"
-
-
-_GROUP_COUNT_WORDS = {
-    "un": 1,
-    "uno": 1,
-    "una": 1,
-    "dos": 2,
-    "tres": 3,
-    "cuatro": 4,
-    "cinco": 5,
-    "seis": 6,
-}
 
 
 # Keywords that send the user all the way back to the main menu.
@@ -2065,10 +1960,9 @@ def _maybe_answer_age_eligibility(message: str, state: ConversationState) -> str
     """
     if not _AGE_ELIGIBILITY_CUE.search(message):
         return None
-    # NOTE (robustness review H4, deferred): LLM cutover not wired here for the
-    # same reason as _apply_group_recomposition — this is a pre-dispatch
-    # short-circuit; wiring it would double the LLM call on fall-through. See that
-    # function's note.
+    # NOTE (robustness review H4, deferred): LLM cutover not wired here because this
+    # is a pre-dispatch short-circuit; wiring it would double the LLM call on
+    # fall-through (the turn is extracted again later by the core).
     intent = intent_detector.detect(message, state)
     ages = sorted({a for a in (intent.ages or []) if 1 <= a <= 99})
     # Persist any age mentioned here so a later follow-up can reuse it (this
@@ -2675,7 +2569,7 @@ async def _maybe_log_llm_extraction_shadow(
 # Cue de CORRECCIÓN explícita de un dato ya fijado ("en realidad revisamos y
 # somos 4", "perdón, en realidad somos 3", "me equivoqué, somos 2",
 # "actually we're 4"/"sorry, we're actually 3") — a diferencia de
-# `_GROUP_RECOMPOSE_RE` (código legacy nunca conectado al núcleo actual),
+# `_GROUP_RECOMPOSE_RE` (código legacy nunca conectado, borrado 2026-09-15),
 # esta NO exige que "en realidad" preceda INMEDIATAMENTE a "somos": tolera
 # relleno intermedio ("revisamos y", "lo pensamos y", "checamos y") —
 # hallazgo en vivo (batería sintética contra PRE, 2026-08-26, lote 4,

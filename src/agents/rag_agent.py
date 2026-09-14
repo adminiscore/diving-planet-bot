@@ -741,7 +741,7 @@ def _mentions_already_certified(query: str) -> bool:
 
 
 def _mentions_plural_companions(query: str) -> bool:
-    match = re.search(r"\bacompa\w+\b|\bcompanions?\b", query, re.IGNORECASE)
+    match = _MENTIONS_COMPANION_RE.search(query)
     if match and match.group(0).lower().rstrip("?.,;:!").endswith("s"):
         return True
     return bool(_COMPANION_PLURAL_QUANTIFIER_RE.search(query))
