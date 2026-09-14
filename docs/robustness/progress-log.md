@@ -2856,3 +2856,38 @@ decidir); el resto son sondas nuevas y todas mejoran. No se volvió a correr la 
 ya exactamente el reparto esperado. Visto y pendiente: "somos 5 y 2 nunca han buceado" reparte 3/2,
 pero la actividad sigue siendo minicurso, que es una suposición anterior del detector ("nunca he
 buceado" → minicurso).
+
+### Respuesta doble tras F5a: analizado, sin arreglo determinista
+
+"desde cartagena, somos paisas" con la ubicación pendiente pierde `is_colombian`, porque la guarda
+(b) descarta el booleano que viaja con la respuesta a otra pregunta. Idea estudiada: separar la
+frase que contesta al slot del resto del mensaje y aceptar el booleano solo si queda resto. No
+sirve sin LLM:
+- el regex localiza "desde cartagena", pero no "salimos de bocagrande";
+- tampoco ve el booleano en "somos paisas" ni en "ya tenemos el AOWD", que llegan del LLM;
+- un resto de cortesía ("desde cartagena, gracias") dejaría pasar justo la alucinación que la
+  guarda evita (18/18).
+
+La salida general sería que el propio extractor diga en qué parte del mensaje apoya cada booleano,
+en la misma petición. Es un cambio de prompt y hay que medirlo con la batería de booleanos
+(escenarios nuevos: "desde cartagena, gracias", "desde cartagena, vale"). Queda en cola; mientras
+tanto sigue el coste conocido: una pregunta de más, nunca una reserva equivocada.
+
+### Grupo con nacionalidades mixtas en la definición del campo: medido y revertido
+
+Idea: la decisión del owner (grupo mixto → USD) equivale a `is_colombian=false`, así que se añadió a
+la definición única del campo ("un grupo que mezcla colombianos o residentes con extranjeros paga
+todo en USD: false"). Foto de prompts: cambiaban solo los 5 que llevan esa definición. Eval-set con
+7 casos nuevos (6 mixtos y 1 control), 130 casos: **221/230**.
+- **Rompe** "no soy colombiano pero vivo en colombia" (OK → False): el LLM lo lee como grupo mixto.
+- De los 6 mixtos solo acierta "dos somos colombianos pero uno es extranjero", que el regex ya
+  reconocía. Con "yo soy colombiano y mi novia extranjera" y "mi esposa es colombiana y yo no", el
+  LLM sigue diciendo True.
+- "somos colombianos pero mi amigo es aleman" y "i'm colombian but my girlfriend is from spain": el
+  regex da True sin ambigüedad (no conoce gentilicios extranjeros) y el LLM ni se consulta.
+
+Revertido. Los 7 casos se quedan en el eval-set como medida del hueco. La batería de booleanos se
+paró a medias para no gastar peticiones en un prompt descartado. Conclusión: un booleano no
+distingue "residente" de "grupo mixto". Hace falta un valor propio (p. ej. un campo o un valor
+`mixed` que dispare `_mixed_nationality_response`), y eso es un cambio de schema que hay que diseñar
+y medir.

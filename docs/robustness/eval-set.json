@@ -1362,6 +1362,62 @@
       "notes": "Regex True (fallo); el veto LLM lo corrige a False 3/3 (2026-09-14). Con el flag apagado sigue fallando."
     },
     {
+      "id": "nat-mixto-yo-colombiano-novia-extranjera",
+      "message": "yo soy colombiano y mi novia extranjera",
+      "lang": "es",
+      "expected": {"is_colombian": false},
+      "source": "grupo mixto -> USD (decision del owner), 2026-09-15",
+      "notes": "Regex se abstiene (polaridad contradictoria); _MIXED_NATIONALITY_RE no lo reconoce."
+    },
+    {
+      "id": "nat-mixto-esposa-colombiana-yo-no",
+      "message": "mi esposa es colombiana y yo no",
+      "lang": "es",
+      "expected": {"is_colombian": false},
+      "source": "grupo mixto -> USD (decision del owner), 2026-09-15",
+      "notes": "Regex se abstiene; _MIXED_NATIONALITY_RE si lo reconoce."
+    },
+    {
+      "id": "nat-mixto-dos-colombianos-uno-extranjero",
+      "message": "dos somos colombianos pero uno es extranjero",
+      "lang": "es",
+      "expected": {"is_colombian": false},
+      "source": "grupo mixto -> USD (decision del owner), 2026-09-15",
+      "notes": "Regex se abstiene; _MIXED_NATIONALITY_RE si lo reconoce."
+    },
+    {
+      "id": "nat-mixto-colombianos-amigo-aleman",
+      "message": "somos colombianos pero mi amigo es aleman",
+      "lang": "es",
+      "expected": {"is_colombian": false},
+      "source": "grupo mixto -> USD (decision del owner), 2026-09-15",
+      "notes": "Limite conocido: el regex da True sin ambiguedad (no conoce gentilicios extranjeros) y el LLM no se consulta."
+    },
+    {
+      "id": "nat-mixto-en-colombian-girlfriend-spain",
+      "message": "i'm colombian but my girlfriend is from spain",
+      "lang": "en",
+      "expected": {"is_colombian": false},
+      "source": "grupo mixto -> USD (decision del owner), 2026-09-15",
+      "notes": "Limite conocido: el regex da True sin ambiguedad y el LLM no se consulta."
+    },
+    {
+      "id": "nat-mixto-vivo-bogota-amigo-gringo",
+      "message": "yo vivo en bogota y mi amigo es gringo",
+      "lang": "es",
+      "expected": {"is_colombian": false},
+      "source": "grupo mixto -> USD (decision del owner), 2026-09-15",
+      "notes": "Regex sin senal: decide fill_gaps."
+    },
+    {
+      "id": "nat-control-somos-colombianos",
+      "message": "somos colombianos, queremos bucear",
+      "lang": "es",
+      "expected": {"is_colombian": true},
+      "source": "control del grupo mixto, 2026-09-15",
+      "notes": ""
+    },
+    {
       "id": "loc-cartagena-luego-baru",
       "message": "llegamos a cartagena y luego nos vamos a baru",
       "lang": "es",

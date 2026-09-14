@@ -31,7 +31,7 @@ Retomamos el trabajo de robustez del bot en la rama `feature/pre_gadea`. Lee pri
 
 | medida | resultado |
 |---|---|
-| Eval-set (123 casos, `run_extraction_eval.py`) | **217/223 (97,3 %)**. Nacionalidad 12/12. Fallos: 2 artefactos del arnés, "mindful diving specialty", el caso ambiguo de ubicación "staying on the islands tomorrow" y la actividad de "2 con/two have open water y 1 no" (el regex lee el curso) |
+| Eval-set (123 casos, `ENV_FILE=.env.dev python -m scripts.run_extraction_eval`; sin `ENV_FILE` todo degrada) | **220/223 (98,7 %)**. Fallos: 2 artefactos del arnés (casos con historial) y el caso ambiguo de ubicación "staying on the islands tomorrow" |
 | Batería de grupo, config PRE | repartos correctos **10/10**, total **13/13**, riesgo 12/13 (r13 vacío: pregunta sin asumir), 0 parciales / 0 inventados |
 | Booleanos anclados | legítimos 18/24, alucinaciones evitadas 18/18 |
 | Recomendación al acompañante | resolutor 11/11, estancia 6/6 |
@@ -64,12 +64,20 @@ Retomamos el trabajo de robustez del bot en la rama `feature/pre_gadea`. Lee pri
    del tono de cada tarea (el tono de verificación en el prompt de relleno ya costó 5 casos) y medir
    con el eval-set completo.
 3. **Nacionalidad**: grupos mixtos que `_MIXED_NATIONALITY_RE` no reconoce ("yo soy colombiano y mi novia extranjera") → USD.
-4. **"somos 4 y dos no tienen licencia"**: sin reparto ni recomendación (el LLM no siempre marca
-   `undecided`; el regex no cubre "no tienen licencia").
+   Medido y revertido (2026-09-15): meterlo en la definición del booleano rompe al residente y no
+   arregla los mixtos (1/6). Hace falta un valor propio (`mixed`) que dispare
+   `_mixed_nationality_response`. 7 casos `nat-mixto-*` ya en el eval-set (fallan hoy 5 de 6).
+4. ~~"somos 4 y dos no tienen licencia"~~ **hecho (88bb4c7)**: el reparto juzga la frase con
+   `certification_claim`. Visto y pendiente: "somos 5 y 2 nunca han buceado" reparte 3/2, pero la
+   actividad sigue siendo minicurso (suposición antigua del detector: "nunca he buceado" → minicurso).
 5. **Comparación entre opciones** con las opciones del LLM del router (9/9 medido) en vez de
    `_mentioned_offerings`, midiendo también las otras 8 señales del router.
-6. **"mindful diving specialty"** y la actividad de "two have open water and one does not".
-7. **Respuesta doble tras F5a** ("desde cartagena, somos paisas" pierde la nacionalidad).
+6. ~~"mindful diving specialty"~~ **hecho (88bb4c7)**: el veto no generaliza a la genérica de la
+   familia; también la negación de certificación ("2 no tienen certificación") y "N inmersiones".
+7. **Respuesta doble tras F5a** ("desde cartagena, somos paisas" pierde la nacionalidad). Analizado
+   en el progress-log: no hay arreglo determinista (el regex no localiza "bocagrande" ni ve "somos
+   paisas"). Vía propuesta: que el extractor diga en qué parte apoya cada booleano, en la misma
+   petición, medido con la batería de booleanos más escenarios de cortesía ("desde cartagena, gracias").
 8. **Eval-set que pase por el núcleo** (`_understand`), para que su nota vea las guardas.
 9. **Hallazgos antiguos por reproducir**: acompañante que llega a trozos, corrección tras el precio,
    "qué incluye el tour", cambio de reparto (f01).
