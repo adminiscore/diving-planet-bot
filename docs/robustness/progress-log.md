@@ -2486,3 +2486,78 @@ Probado con LLM real y **revertido**:
 Siguiente intento: glosa del referido que no nombre `padi_open_water` y medir solo el veto de
 hermanas. O un resolutor acotado Open Water/referido que solo se dispare si el mensaje habla de
 haber empezado el curso en otro centro, decidido por el LLM, no por palabras.
+
+## 2026-09-15 — Centralización: sin código duplicado (owner: "hay que ser óptimos")
+
+### Hecho y desplegado
+
+- **Precios** (`src/utils/money.py`): una sola fuente para `usd`, `cop` y `usd_cop`, en lugar
+  de cinco formateadores (RAG, catálogo, carrito, refresher, resumen colombiano). El COP ya no
+  sale en dos formatos ("COP 1.260.000" y "630.000 COP"): ahora siempre "630.000 COP".
+- **Quitatildes**: todo usa `src/utils/text.strip_accents`; borradas las copias del supervisor,
+  rag_agent y cart_render.
+- **Edades mínimas**: `eligibility` y el detector leen `min_age`/`max_age` del registro.
+- **Carrito derivado del registro**: `_cart_item`, `_cart_label_for` y `_cart_service_id` ya
+  no tienen una rama por actividad (tipo = `cart_type`, servicio = `services`, etiqueta =
+  `texts.price_label`). Servicios idénticos a los de antes en las 12 combinaciones tipo ×
+  ubicación. Etiquetas que pasan a las del registro: "Minicurso de buceo" y "Acompañante (no
+  bucea ni hace snorkel)".
+- Sin cambios de prompt (snapshot idéntico). Suite 1997 passed.
+
+### Inventario de listas de vocabulario (78 regex de módulo en `src`)
+
+Por fichero: supervisor 27, núcleo 22, detector 15, rag_agent 11, grounding_check 2,
+lead_summary 1. Agrupadas por concepto:
+
+| concepto | listas | ¿duplicado real? |
+|---|---|---|
+| mención de otra persona / acompañante | núcleo `_ADDED_PERSON_RE`, `_MENTIONS_PERSON_RE`, `_SINGULAR_COMPANION_RE`, `_PLURAL_COMPANION_RE`, `_BARE_HEADCOUNT_RE`, `_NOT_ALONE_RE`, `_COURSE_SOLO_RE`; rag `_MENTIONS_COMPANION_RE`, `_NON_DIVER_*` (4), `_COMPANION_PLURAL_QUANTIFIER_RE`; supervisor `_PURE_COMPANION_RE`, `_GROUP_RECOMPOSE_RE` | **sí**: ya comparten `_PERSON_NOUN_*` del detector, pero hay tres familias de patrones para la misma pregunta |
+| certificación | detector `_CERTIFIED_PATTERNS`, `_NOT_CERTIFIED_PATTERNS`; núcleo `_STRONG_CERTIFIED_DIVING_RE`; rag `_ALREADY_CERTIFIED_RE`, `_WANTS_CERT_EXCLUDE_RE`; supervisor `_CERTIFIED_MENTION_RE`, `_INACTIVE_MENTION_RE`, `_UNCERTIFIED_COMPANION_NOTE_RE` | **parcial**: las del supervisor operan sobre notas parafraseadas por el LLM (dominio distinto, documentado); las de rag y núcleo sí repiten a `certification_claim` |
+| mención de actividad o producto | detector `_CERTIFIED_DIVING_PATTERNS`, `_MINICOURSE_PATTERNS`, `_SNORKEL_PATTERNS`, `_PADI_COURSE_PATTERNS`, `_SPECIALTY_PATTERNS`; núcleo `_EXPLICIT_MINICOURSE_NAME_RE`, `_COURSE_MENTION_RE`; rag `_OVERVIEW_BARE_WORD_RE` | **sí**: los nombres de producto deberían salir del registro (labels + vocabulario por actividad) |
+| ubicación | núcleo `_CARTAGENA_RE`, `_ISLAND_RE`, `_HOTEL_UNKNOWN_RE`, `_LOCATION_DEFER_RE`; detector `_detect_location` en línea | **sí** para Cartagena/isla |
+| nº de inmersiones / paquete | detector `_CERT_DIVE_COUNT_RE`, `_BARE_PACKAGE_DIVE_RE`, `_CERT_DAY_COUNT_RE`; núcleo `_CONFIRMS_DESCRIBED_PACKAGE_RE`, `_PACKAGE_DIVE_COUNT_IN_TEXT_RE` | revisar |
+| nacionalidad | detector `_NOT_COLOMBIAN_RE`, `_COLOMBIAN_RE`; supervisor `_MIXED_NATIONALITY_RE`, `_SAME_PRICE_DIFFERENT_NATIONALITY_RE` | parcial (el grupo mixto podría derivarse de `polarity_is_ambiguous` + persona) |
+| disponibilidad | supervisor `_AVAILABILITY_PATTERN`, `_AVAILABILITY_RE` | **no**: van al mismo handler con condiciones distintas medidas (la ampliada no se aplica mientras se construye la reserva; "¿algo para más días?" es plan, no cupo) |
+| nombre / presentación | núcleo `_NAME_TRIGGER_RE` (+ stoplist); supervisor `_NAME_INTRO_RE`, `_INTRO_PHRASE_RE` | **no del todo**: uno captura el nombre, el otro decide un reinicio de conversación y es sensible a mayúsculas a propósito ("soy Sofía" frente a "soy certificado") |
+| actos de diálogo | núcleo `_DELIBERATION_RE`, `_COMMITMENT_RE`, `_SWITCH_TO_*`; supervisor `_INFO_QUESTION_STARTER_PATTERN`, `_GENERAL_INTEREST_PATTERN`, `_BOOKING_PROCESS_QUESTION_RE`, `_BARE_AFFIRMATION_RE`, `_ADVISOR_OFFER_RE`, `_OFFER_VERB_RE`, `_GREETING_START_RE` | candidatos a la señal LLM del router (ya existe `comparing_options`) |
+| seguridad / sensibles | supervisor `_ADAPTIVE_DIVING_PATTERN`, `_DIVE_TO_HEAL_OVERRIDE_RE`, `_ALCOHOL_BEFORE_DIVING_RE`, `_ALLERGY_WORD_RE`, `_FOOD_ALLERGEN_RE`, `_PRIVATE_GROUP_EVENT_RE`, `_AI_IDENTITY_RE`, `_CLOSED_DATE_RE` | no: cada uno es una política distinta |
+
+Orden propuesto (de más a menos riesgo de fallo por vocabulario): actividad/producto desde el
+registro → mención de persona → certificación en rag/núcleo sobre `certification_claim` →
+ubicación → paquete. Cada paso: comparación antes/después sobre los mensajes del eval-set y
+de las baterías, sin LLM, más la suite completa.
+
+**Certificación en el RAG: no se fusiona a ciegas.** `rag_agent._mentions_already_certified`
+(`_ALREADY_CERTIFIED_RE` y no `_WANTS_CERT_EXCLUDE_RE`) frente a `certification_claim`, sobre
+202 mensajes (eval-set, rag-eval-set, baterías y variantes): **34 discrepancias en los dos
+sentidos**.
+- La del RAG da "ya certificado" a "no soy buzo", "no soy certificado, es mi primera vez" y
+  "Quiero el open water aunque no soy buzo certificado".
+- `certification_claim` no reconoce "tengo el open water", "ya tengo el rescue diver" ni "i
+  have my open water", y da `True` a "quiere sacarse la certificación de buceo".
+
+Sustituir una por otra movería respuestas en ambos sentidos, y tapar los huecos sería añadir
+vocabulario. Además `rag_answer` solo recibe la pregunta y `extra_context` (texto), no el
+estado, así que usar lo ya extraído obliga a cambiar la firma en sus tres llamadas (núcleo,
+info_agent, supervisor), y aun así la primera pregunta de una conversación no tiene estado.
+Pendiente de diseño: una sola fuente de "¿afirma/niega certificación?" que resuelva los dos
+tipos de error sin crecer por vocabulario.
+
+### Curso referido v2: detectado sin empeorar el eval-set
+
+Glosa del referido reescrita para describirlo sin nombrar `padi_open_water` ("trae la carta de
+referido firmada, o ya hizo la teoría y la piscina en otro centro PADI y viene a terminar las
+inmersiones"), referido de nuevo en el enum y veto de actividad disparado por hermanas.
+
+Eval-set, ejecución limpia: **214/219 (97,7 %)**. Por caso, frente a la ejecución anterior:
+- arregla `f2b-referral-es` (referido) y `nat-venezolano-niega-y-afirma-otra` (por la
+  abstención del regex de la tarea 8);
+- `adv-en-negation-contraction` ("first time diving") vuelve a acertar: el v1 lo rompía y la
+  causa era la glosa que nombraba al Open Water;
+- `split-open-water-one-not` ("somos 3, 2 CON open water y 1 no") pasa a `certified_diving`.
+  La expectativa esperaba `padi_open_water` pero pedía `{certified_diving: 2, minicourse: 1}`
+  como reparto: era incoherente. "2 con open water" es tener la certificación; se corrige;
+- sigue fallando `nat-residente-no-colombiano-vive-en-colombia` (el LLM da `False`; conocido
+  desde la tarea 8).
+
+Snapshot: cambian exactamente los 13 prompts de actividad (enum + glosa).

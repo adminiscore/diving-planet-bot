@@ -68,8 +68,8 @@ EXTRACTION_TOOL = {
                     "type": "string",
                     "enum": [
                         "certified_diving", "minicourse", "snorkel",
-                        "padi_open_water", "padi_advanced", "padi_rescue",
-                        "padi_divemaster", "padi_specialty",
+                        "padi_open_water", "padi_open_water_referral", "padi_advanced",
+                        "padi_rescue", "padi_divemaster", "padi_specialty",
                     ],
                     "description": "The diving-related activity the customer wants.",
                 },

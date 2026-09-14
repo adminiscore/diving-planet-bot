@@ -437,7 +437,7 @@
       "message": "somos 3, 2 con open water y 1 no",
       "lang": "es",
       "expected": {
-        "activity": "padi_open_water",
+        "activity": "certified_diving",
         "is_certified": true,
         "group_size": 3,
         "group_allocation": {
@@ -446,7 +446,7 @@
         }
       },
       "source": "test_intent_detector.py (regex ground truth)",
-      "notes": ""
+      "notes": "2026-09-15: '2 CON open water y 1 no' = dos ya tienen la certificacion; la actividad principal es certified_diving, coherente con su propio group_allocation (antes esperaba padi_open_water, incoherente). El '1 no' se recomendara (decision del owner, pendiente)."
     },
     {
       "id": "split-en-have-open-water",

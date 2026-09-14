@@ -2285,12 +2285,14 @@ def _activity_should_verify(
     intent_detector.py, patron nuevo para "primer nivel"/"primer curso"),
     no ampliando este trigger.
 
-    Probado y revertido (2026-09-14): disparar tambien cuando la actividad tiene
-    "hermanas" en el registro (Open Water y su referido), con el referido en el
-    enum. Detectaba el referido, pero el eval-set bajo 214 -> 213/219: "hey we
-    arent certified, first time diving" paso de minicourse a padi_open_water.
-    Pendiente de rediseño (ver progress-log, tarea 10)."""
-    return len(matched_activity_categories(message)) >= 2
+    Segunda condicion: la actividad del regex tiene "hermanas" en el registro
+    (misma familia y nivel: Open Water y su curso referido, 474 USD frente a 693).
+    El regex se queda con la suya si el LLM falla o no discrepa. Un primer intento
+    (2026-09-14) con una glosa que nombraba `padi_open_water` bajo el eval-set 214
+    -> 213; esta version usa una glosa que solo describe al referido."""
+    if len(matched_activity_categories(message)) >= 2:
+        return True
+    return bool(dom.sibling_ids(getattr(regex_intent, "activity", None)))
 
 
 def _nationality_should_verify(
