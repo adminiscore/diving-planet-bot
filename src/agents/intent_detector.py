@@ -1,5 +1,6 @@
 import re
 from dataclasses import dataclass, field
+from functools import lru_cache
 
 from openai import OpenAI
 
@@ -353,6 +354,39 @@ def polarity_is_ambiguous(message: str, negative: re.Pattern, positive: re.Patte
     if not positive.search(lowered):
         return False
     return bool(_BARE_NEGATION_RE.search(positive.sub(" ", lowered)))
+
+
+def course_level_is_ambiguous(message: str) -> bool:
+    """Nivel PADI nombrado ("open water", "advanced"...) sin decir si la persona YA lo
+    tiene o QUIERE sacarlo ("hola somos 4 open water", "2 advanced and 2 snorkel").
+
+    Reusa los patrones del propio detector (`_CERT_LEVEL`, `_HOLDS_CERT_RE`,
+    `_WANTS_CERT_RE`) y `certification_claim`, sin vocabulario nuevo. Decision del
+    owner (2026-09-15): en ese caso el bot pregunta, no supone."""
+    text = message or ""
+    if not re.search(r"\b" + IntentDetector._CERT_LEVEL + r"\b", text, re.IGNORECASE):
+        return False
+    if IntentDetector._WANTS_CERT_RE.search(text) or IntentDetector._HOLDS_CERT_RE.search(text):
+        return False
+    # Nombra el PRODUCTO ("the advanced course", "curso de advanced"): pide el curso.
+    words = set(re.findall(r"\w+", strip_accents(text.lower())))
+    if words & _course_family_nouns():
+        return False
+    return certification_claim(text) is None
+
+
+@lru_cache(maxsize=1)
+def _course_family_nouns() -> frozenset[str]:
+    """El sustantivo con el que el catalogo nombra los cursos con nivel ("curso",
+    "course"), derivado del registro: la palabra comun a todas sus etiquetas en cada
+    idioma. Sin lista escrita a mano."""
+    courses = [a for a in dom.registry().activities if a.family == "course" and a.course_level]
+    nouns: set[str] = set()
+    for lang in dom.LANGS:
+        token_sets = [set(re.findall(r"\w+", strip_accents(a.label[lang].lower()))) for a in courses]
+        if token_sets:
+            nouns |= set.intersection(*token_sets)
+    return frozenset(nouns)
 
 
 def certification_is_ambiguous(message: str) -> bool:

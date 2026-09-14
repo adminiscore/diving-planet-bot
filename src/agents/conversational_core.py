@@ -80,6 +80,7 @@ SLOT_COMPANION_ACTIVITY = "companion_activity_choice"
 # Curso o especialidad sin nivel (padi_course / padi_specialty): el bot pregunta
 # cual, con las opciones del registro de actividades (F4, decision del owner).
 SLOT_COURSE_LEVEL = "course_level"
+SLOT_CERT_OR_COURSE = "cert_or_course"
 
 # Slots booleanos/escalares que el resolutor LLM anti-bucle (Fase C) sabe
 # resolver cuando el parser canónico (is_affirmative/is_negative/número) falla
@@ -87,7 +88,7 @@ SLOT_COURSE_LEVEL = "course_level"
 # claves de `_SLOT_RESOLVER_SPEC` en llm_extractor.py.
 _LLM_RESOLVABLE_SLOTS = frozenset({
     SLOT_CERTIFICATION, SLOT_SAFETY, SLOT_REFRESHER, SLOT_QTY, SLOT_NATIONALITY,
-    SLOT_LOCATION, SLOT_COURSE_LEVEL,
+    SLOT_LOCATION, SLOT_COURSE_LEVEL, SLOT_CERT_OR_COURSE,
 })
 # SLOT_COMPANION_QTY y SLOT_COMPANION_ACTIVITY NO van aquí: `next_missing_slot`
 # no los rastrea, así que con la reserva principal ya resuelta `advanced` es
@@ -307,6 +308,10 @@ def next_missing_slot(state: ConversationState) -> str | None:
     act = state.detected_activity
     if act is None:
         return SLOT_ACTIVITY
+    if state.needs_cert_or_course:
+        # Nivel PADI nombrado sin decir si ya lo tienen o lo quieren (owner
+        # 2026-09-15): se aclara antes de cotizar nada.
+        return SLOT_CERT_OR_COURSE
     activity = dom.by_id(act)
     if activity is not None and activity.generic:
         # Curso/especialidad sin nivel: nunca se cierra sin decidir cual (antes
@@ -451,6 +456,21 @@ def ask_slot(state: ConversationState, slot: str, *, reasking: bool = False) -> 
             "• Full *PADI courses*, from Open Water up\n"
             "Tell me what catches your eye and we'll put it together. 🌊"
         )
+    if slot == SLOT_CERT_OR_COURSE:
+        state.quick_replies = (
+            [{"title": "✅ Ya la tenemos", "value": "already_certified"},
+             {"title": "🎓 Queremos sacarla", "value": "wants_course"}]
+            if lang == "es" else
+            [{"title": "✅ We already have it", "value": "already_certified"},
+             {"title": "🎓 We want to get it", "value": "wants_course"}]
+        )
+        level = state.cert_or_course_level
+        name = dom.label(level, lang) if level else None
+        if lang == "es":
+            what = f"el *{name}*" if name else "esa certificación"
+            return f"Para recomendarte bien: ¿ya tienen {what} o quieren sacarla con el curso? 🤿"
+        what = f"the *{name}*" if name else "that certification"
+        return f"So I can recommend the right plan: do you already hold {what}, or do you want to get it with the course? 🤿"
     if slot == SLOT_COURSE_LEVEL:
         options = _course_level_options(state)
         current = dom.by_id(state.detected_activity) if state.detected_activity else None
@@ -780,6 +800,9 @@ def _apply_short_answer(state: ConversationState, message: str) -> bool:
                 state.needs_companion_activity = True
                 return True
         return False
+    if slot == SLOT_CERT_OR_COURSE:
+        chosen = {"1": "already_certified", "2": "wants_course"}.get(msg, msg)
+        return _apply_cert_or_course(state, chosen)
     if slot == SLOT_COURSE_LEVEL:
         # Respuesta exacta: el valor de un boton (id del registro), el numero de la
         # opcion como mensaje completo, o el nombre exacto de la opcion. Cualquier
@@ -840,6 +863,8 @@ def _apply_resolved_slot_value(state: ConversationState, slot: str, value) -> bo
     if slot == SLOT_LOCATION and value in ("cartagena", "island"):
         state.location = state.detected_location = value
         return True
+    if slot == SLOT_CERT_OR_COURSE:
+        return _apply_cert_or_course(state, value)
     if slot == SLOT_COURSE_LEVEL and value in _course_level_options(state):
         _set_concrete_activity(state, value)
         return True
@@ -1747,6 +1772,7 @@ async def _understand(state: ConversationState, message: str) -> tuple:
     # futura, en vez de repetir la comprobacion en cada una.
     supervisor.enforce_group_allocation_consistency(intent, state, message)
     _take_undecided_members(intent, state)
+    _flag_cert_or_course(intent, state, message)
     supervisor._apply_detected_intent(intent, state, message)
 
     # Circuit-breaker (portado 2026-09-01, hallazgo en vivo, batería de
@@ -1876,6 +1902,38 @@ def _restore_main_diver_fields(
     state.is_certified = is_certified
     state.last_dive_over_2_years = last_dive
     state.refresher_interested = refresher
+
+
+def _apply_cert_or_course(state: ConversationState, value) -> bool:
+    """Respuesta a "¿ya la tienen o quieren sacarla?": si ya la tienen, son buzos
+    certificados; si la quieren, es el curso de ese nivel."""
+    if value == "already_certified":
+        state.is_certified = state.detected_is_certified = True
+        _set_concrete_activity(state, "certified_diving")
+    elif value == "wants_course":
+        state.is_certified = state.detected_is_certified = False
+        _set_concrete_activity(state, state.cert_or_course_level or "padi_course")
+    else:
+        return False
+    state.needs_cert_or_course = False
+    state.cert_or_course_level = None
+    return True
+
+
+def _flag_cert_or_course(intent, state: ConversationState, message: str) -> None:
+    """Nivel PADI nombrado sin decir si lo tienen o lo quieren: no se da por buena la
+    lectura del regex ni la del LLM (curso o buceo certificado) y se pregunta."""
+    if state.needs_cert_or_course or state.is_certified is not None:
+        return
+    from src.agents.intent_detector import course_level_is_ambiguous
+    if not course_level_is_ambiguous(message):
+        return
+    registered = dom.by_id(intent.activity) if intent.activity else None
+    if registered is not None and registered.course_level is not None:
+        state.cert_or_course_level = intent.activity
+    intent.is_certified = None
+    intent.detected_fields = [f for f in intent.detected_fields if f != "is_certified"]
+    state.needs_cert_or_course = True
 
 
 def _take_undecided_members(intent, state: ConversationState) -> None:

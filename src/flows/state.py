@@ -184,6 +184,12 @@ class ConversationState:
     # esta cantidad sin volver a preguntar cuantos son.
     pending_undecided_qty: int | None = None
 
+    # Nivel PADI nombrado sin decir si ya lo tienen o lo quieren sacar ("hola
+    # somos 4 open water"): se pregunta antes de seguir (owner 2026-09-15).
+    # `cert_or_course_level` guarda el curso nombrado, si el detector lo resolvio.
+    needs_cert_or_course: bool = False
+    cert_or_course_level: str | None = None
+
     # Portado de pre_gadea v0.21.1 (batería sintética contra PRE): distinto
     # de `needs_companion_activity` (detección FRESCA del turno actual, se
     # consume de inmediato tras `_understand()`). Este se marca cuando la

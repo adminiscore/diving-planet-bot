@@ -2627,3 +2627,30 @@ Medición (tanda limpia):
 
 Pendiente: frases con el tramo en plural sin cifra delante del atributo ("dos no tienen licencia"
 tras "somos 4") y el texto de la recomendación de F6, que sigue diciendo "acompañante".
+
+### Decisión 2 del owner: pregunta aclaratoria "¿ya tienen esa certificación o quieren sacarla?"
+
+Aplicada con una señal estructural en lugar de depender de lo que rellene el LLM:
+`course_level_is_ambiguous(message)`. Da ambiguo cuando se nombra un nivel PADI (`_CERT_LEVEL`) y
+no se cumple nada de esto:
+- se quiere (`_WANTS_CERT_RE`);
+- se tiene (`_HOLDS_CERT_RE`);
+- se nombra el producto con el sustantivo del catálogo ("curso"/"course", **derivado** de las
+  etiquetas de los cursos con nivel del registro);
+- afirma o niega certificación (`certification_claim`).
+
+Con esa señal, `_flag_cert_or_course` descarta la certificación supuesta del turno y marca
+`needs_cert_or_course`; `next_missing_slot` pregunta antes de cotizar. La respuesta, por botón,
+número o texto libre (resolutor `cert_or_course`), deja buceo certificado o el curso nombrado.
+
+Sonda con LLM real (2 repeticiones por caso):
+- **cuándo pregunta 10/10**: sí en "hola somos 4 open water", "2 open water y 3 snorkel" y "2
+  advanced and 2 snorkel"; no en "quiero el open water", "quiero hacer el advanced", "I'd like to
+  take the advanced course", "tengo el open water", "we are 2 open water divers", "somos 3, 2 con
+  open water y 1 no" ni "quiero bucear, somos 2". La primera versión (sin el sustantivo del
+  catálogo) daba 9/10: preguntaba de más en "I'd like to take the advanced course".
+- **resolutor 7/7**: "sí, ya somos buzos", "ya lo tenemos desde hace años", "queremos hacer el
+  curso", "no, queremos sacárnoslo aquí", EN, y abstención ante "no sé, lo que me recomiendes".
+
+Snapshot: solo aparecen los 3 prompts nuevos del resolutor. No se repitió el eval-set ni la batería
+de grupo: el arnés no pasa por el núcleo y la regla no cambia repartos.

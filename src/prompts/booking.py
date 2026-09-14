@@ -1122,6 +1122,19 @@ SLOT_RESOLVER_SPEC = {
             "the choice back to the bot: do not choose for them."
         ),
     },
+    "cert_or_course": {
+        "question_es": "¿Ya tienen esa certificación o quieren sacarla con el curso?",
+        "question_en": "Do you already hold that certification, or do you want to get it with the course?",
+        "type": "string",
+        "enum": ["already_certified", "wants_course"],
+        "value_meaning": (
+            "'already_certified' if they say they already hold that PADI level (ya lo "
+            "tenemos, somos buzos, we have it); 'wants_course' if they want to take the "
+            "course to get it (queremos sacarlo, hacer el curso, we want to get "
+            "certified). Omit if the reply doesn't say, or if it hands the choice back "
+            "to the bot."
+        ),
+    },
     "stay_duration": {
         "question_es": "¿Van a estar un solo día o varios días?",
         "question_en": "Will you be here for a single day or several days?",
