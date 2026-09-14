@@ -2734,3 +2734,27 @@ cambió 1 de 200 mensajes en la foto: "somos 4, dos panas y yo buceamos" pasó d
 (el conteo del detector sumó "dos panas y yo" y pisó el "somos 4"). Revertido: ahí la jerga solo
 decide singular o plural. Foto final antes/después: **0 cambios** en 200 mensajes. Suite 2009
 passed (18 tests menos: los del código borrado).
+
+### Centralización: una definición por campo en los prompts
+
+`is_certified`, `location` e `is_colombian` tenían su definición en tres sitios: descripción del
+tool (EN), `_FIELD_RULES_EN` y `_FIELD_RULES_ES`. Ya divergían:
+- la guía ES tenía ejemplos que el tool y la EN no ("llevo el rescue", "tengo el título de
+  buceo", "soy paisa", "soy rolo");
+- `location` decía "only set it when the message gives a real place signal" en el tool y "the
+  business operating in Cartagena is NOT a signal" en la guía.
+
+Ahora hay `_FIELD_MEANING_EN` / `_FIELD_MEANING_ES` con la unión del contenido. La descripción del
+tool es el significado EN y las guías se construyen con `_meaning_rule(field, lang)`. Se borraron
+los literales viejos. Snapshot: 7 prompts cambiados (tool y verificaciones de esos campos; las
+guías ES de `is_certified`/`is_colombian` no cambian porque ya eran las más completas).
+
+Medido (tanda limpia):
+- eval-set **217/223** (con los 4 casos de ubicación). Por caso, frente a la tanda anterior:
+  **arregla `nat-residente-no-colombiano-vive-en-colombia`** (nacionalidad 12/12); falla el caso
+  ambiguo de ubicación ya documentado; ninguno a peor;
+- batería de booleanos anclados idéntica: legítimos 18/24, alucinaciones evitadas 18/18.
+
+Siguen aparte, a propósito, `group_size`, `group_allocation` y `activity`: su descripción en el
+tool lleva reglas medidas una a una (plural vago, `undecided`) que las guías no tienen. Unificarlos
+exige reconciliar ese contenido y medirlo aparte.

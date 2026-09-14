@@ -50,6 +50,65 @@ LANGUAGE_DETECT_PROMPT = (
 # limpio. El JSON malformado ocasional del modo no-strict ya degrada seguro a
 # {} (regex-only) vía el try/except de fill_gaps. Ver
 # docs/robustness/eval-set.json casos neg-* y docs/robustness/progress-log.md.
+# Definicion UNICA por campo (centralizacion 2026-09-15): la usan la descripcion del
+# tool (`EXTRACTION_TOOL`) y las guias de verificacion (`_FIELD_RULES_ES/EN`). Antes eran
+# tres textos que ya divergian (la guia ES tenia ejemplos que las otras no, y `location`
+# decia cosas distintas en el tool y en la guia). Solo los campos cuya descripcion del
+# tool no lleva reglas propias medidas; `group_size`/`group_allocation`/`activity`
+# siguen aparte (ver progress-log).
+_FIELD_MEANING_EN = {
+    "is_certified": (
+        "whether the customer ALREADY holds a scuba certification. True if they "
+        "state they have one (any level/agency: Open Water, Rescue, Divemaster, or "
+        "phrases like 'llevo el rescue', 'tengo el título de buceo', 'soy buzo "
+        "certificado'). False if they explicitly say they are NOT certified / it's "
+        "their first time diving."
+    ),
+    "location": (
+        "where the customer departs from (changes logistics/pricing). 'cartagena' if "
+        "they're staying in Cartagena city or any of its neighborhoods (Bocagrande, "
+        "Getsemaní, Centro/Old City, Manga, Castillogrande…). 'island' if they're "
+        "staying on or coming from the Rosario Islands, Barú, or a specific "
+        "island/island-hotel. Only set it when the message gives a real place signal: "
+        "the business operating in Cartagena is NOT a signal of where the customer is."
+    ),
+    "is_colombian": (
+        "whether they pay as Colombian (it changes the currency: COP for Colombians "
+        "AND Colombian residents, USD for everyone else). True if they state they are "
+        "Colombian, including regional demonyms ('soy paisa', 'soy rolo', 'soy "
+        "costeño'), or that they live in Colombia even if they are from another "
+        "country; false if they are a foreigner who does not live in Colombia."
+    ),
+}
+_FIELD_MEANING_ES = {
+    "is_certified": (
+        "si el cliente YA tiene una certificación de buceo. True si afirma tenerla "
+        "(cualquier nivel/agencia: Open Water, Rescue, Divemaster, o expresiones como "
+        "'llevo el rescue', 'tengo el título de buceo', 'soy buzo certificado'). False "
+        "si dice explícitamente que NO está certificado o que es su primera vez."
+    ),
+    "location": (
+        "desde dónde sale el cliente (cambia logística/precio). 'cartagena' si se "
+        "hospeda en la ciudad o cualquiera de sus barrios (Bocagrande, Getsemaní, "
+        "Centro, Manga, Castillogrande...). 'island' si se hospeda en o viene de las "
+        "Islas del Rosario, Barú, o una isla/hotel de isla concreto. Solo cuando el "
+        "mensaje da una señal real de lugar: que el negocio opere en Cartagena NO es "
+        "señal de dónde está el cliente."
+    ),
+    "is_colombian": (
+        "si paga como colombiano (cambia la moneda: COP para colombianos Y residentes "
+        "en Colombia, USD para el resto). True si afirma ser colombiano, incluidos "
+        "gentilicios regionales ('soy paisa', 'soy rolo', 'soy costeño'), o si vive en "
+        "Colombia aunque sea de otro país. False si es extranjero y no vive en Colombia."
+    ),
+}
+
+
+def _meaning_rule(field: str, lang: str) -> str:
+    meanings = _FIELD_MEANING_ES if lang == "es" else _FIELD_MEANING_EN
+    return f"• `{field}` — {meanings[field]}"
+
+
 EXTRACTION_TOOL = {
     "type": "function",
     "function": {
@@ -75,12 +134,7 @@ EXTRACTION_TOOL = {
                 },
                 "is_certified": {
                     "type": "boolean",
-                    "description": (
-                        "True if the customer states they ALREADY hold a scuba "
-                        "certification (any level/agency, e.g. having Open Water/"
-                        "Rescue/Divemaster). False if they explicitly say they "
-                        "are NOT certified / it's their first time diving."
-                    ),
+                    "description": _FIELD_MEANING_EN["is_certified"],
                 },
                 "group_size": {
                     "type": "integer",
@@ -141,15 +195,7 @@ EXTRACTION_TOOL = {
                 "location": {
                     "type": "string",
                     "enum": ["cartagena", "island"],
-                    "description": (
-                        "Where the customer is based / departs from. 'cartagena' "
-                        "if they're staying in Cartagena city or any of its "
-                        "neighborhoods (Bocagrande, Getsemaní, Centro/Old City, "
-                        "Manga, Castillogrande…). 'island' if they're staying on "
-                        "or coming from the Rosario Islands, Barú, or a specific "
-                        "island/island-hotel. Only set it when the message gives "
-                        "a real place signal."
-                    ),
+                    "description": _FIELD_MEANING_EN["location"],
                 },
                 "island": {"type": "string", "description": "Specific island name, if mentioned (e.g. Isla Grande, Barú, Isla del Sol)."},
                 "hotel": {"type": "string", "description": "Specific hotel/lodging name on the islands, if mentioned."},
@@ -168,7 +214,7 @@ EXTRACTION_TOOL = {
                 },
                 "is_colombian": {
                     "type": "boolean",
-                    "description": "True if the customer states they are Colombian or live in Colombia (residents pay as Colombians); false if they are a foreigner who does not live in Colombia.",
+                    "description": _FIELD_MEANING_EN["is_colombian"],
                 },
             },
         },
@@ -423,28 +469,9 @@ _FIELD_RULES_ES = {
         "NO nombra ningún curso PADI concreto y solo habla de probar el buceo "
         "sin certificarse."
     ),
-    "is_certified": (
-        "• `is_certified` — si el cliente YA tiene una certificación de buceo. "
-        "True si afirma tenerla (cualquier nivel/agencia: Open Water, Rescue, "
-        "Divemaster, o expresiones como 'llevo el rescue', 'tengo el título de "
-        "buceo', 'soy buzo certificado'). False si dice explícitamente que NO "
-        "está certificado o que es su primera vez."
-    ),
-    "is_colombian": (
-        "• `is_colombian` — si paga como colombiano (cambia la moneda: COP "
-        "para colombianos Y residentes en Colombia, USD para el resto). True si "
-        "afirma ser colombiano, incluidos gentilicios regionales ('soy paisa', "
-        "'soy rolo', 'soy costeño'), o si vive en Colombia aunque sea de otro "
-        "país. False si es extranjero y no vive en Colombia."
-    ),
-    "location": (
-        "• `location` — desde dónde sale el cliente (cambia logística/precio). "
-        "'cartagena' si se hospeda en la ciudad o cualquiera de sus barrios "
-        "(Bocagrande, Getsemaní, Centro, Manga, Castillogrande...). 'island' "
-        "si se hospeda en o viene de las Islas del Rosario, Barú, o una "
-        "isla/hotel de isla concreto. OJO: que el negocio opere en Cartagena "
-        "NO es señal de dónde está el cliente."
-    ),
+    "is_certified": _meaning_rule("is_certified", "es"),
+    "is_colombian": _meaning_rule("is_colombian", "es"),
+    "location": _meaning_rule("location", "es"),
     "group_size": (
         "• `group_size` — cuántas personas van en total (cambia el precio). "
         "Cuenta a TODAS las personas mencionadas, incluidos niños, no-buzos y "
@@ -498,28 +525,9 @@ _FIELD_RULES_EN = {
         "use 'minicourse' when the message does NOT name a specific PADI "
         "course and only talks about trying diving without certifying."
     ),
-    "is_certified": (
-        "• `is_certified` — whether the customer ALREADY holds a scuba "
-        "certification. True if they state they have one (any level/agency: "
-        "Open Water, Rescue, Divemaster...). False if they explicitly say they "
-        "are NOT certified / it's their first time diving."
-    ),
-    "is_colombian": (
-        "• `is_colombian` — whether they pay as Colombian (it changes the "
-        "currency: COP for Colombians AND Colombian residents, USD for everyone "
-        "else). True if they state they are Colombian, or that they live in "
-        "Colombia even if they are from another country; false if they are a "
-        "foreigner who does not live in Colombia."
-    ),
-    "location": (
-        "• `location` — where the customer departs from (changes "
-        "logistics/pricing). 'cartagena' if they're staying in Cartagena city "
-        "or any of its neighborhoods (Bocagrande, Getsemaní, Centro, Manga, "
-        "Castillogrande…). 'island' if they're staying on or coming from the "
-        "Rosario Islands, Barú, or a specific island/island-hotel. NOTE: the "
-        "business operating in Cartagena is NOT a signal of where the customer "
-        "is."
-    ),
+    "is_certified": _meaning_rule("is_certified", "en"),
+    "is_colombian": _meaning_rule("is_colombian", "en"),
+    "location": _meaning_rule("location", "en"),
     "group_size": (
         "• `group_size` — how many people in total (changes the price). Count "
         "EVERYONE mentioned, including children, non-divers and people "
