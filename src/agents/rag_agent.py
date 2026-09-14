@@ -199,11 +199,8 @@ _STALE_COLOMBIAN_WORDS = ("colombian", "residente", "descuento local", "precio l
 
 
 def _strip_accents_lower(text: str) -> str:
-    import unicodedata
-    return "".join(
-        c for c in unicodedata.normalize("NFD", text.lower())
-        if unicodedata.category(c) != "Mn"
-    )
+    from src.utils.text import strip_accents
+    return strip_accents(text.lower())
 
 
 def _example_teaches_stale_colombian_discount(example: dict) -> bool:

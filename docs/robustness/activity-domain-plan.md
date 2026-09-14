@@ -258,6 +258,44 @@ sustituirla exige mantener esa protección sin depender del vocabulario.
   mordida real en los 3 repartos del eval-set; falta una batería de acompañantes con
   historial antes de tocarla.
 
+**F5b — guarda de actividad del acompañante: medida (2026-09-14)**
+
+`detect_special_signals` (`companion_activity`) con LLM real, 16 frases × 3, historial
+de 2 turnos:
+
+| | casos 3/3 |
+|---|---|
+| solo LLM | 13/16 |
+| LLM + guarda de vocabulario (hoy) | 7/16 |
+
+- La guarda tira 9 aciertos del LLM: "tiene el AOWD", "licencia SSI", "buzo avanzado",
+  "el open water de hace años", "bajar con tanque", "respirar bajo el agua", "quedarse
+  arriba viendo los peces", "máscara y tubo", "float and look at fish".
+- Los 3 fallos del LLM son la misma familia: frases **sin actividad**. "mi amigo no
+  está certificado" (con y sin tilde) → `minicourse`; "viene mi primo" →
+  `certified_diving`. La guarda los evita.
+- Aquí no hay atajo estructural: separar "quiere nadar con máscara y tubo" de "no está
+  certificado" depende del significado. Es el caso para la evidencia citada.
+- Bug encontrado de paso, **arreglado**: `certification_claim("mi amigo no está
+  certificado")` daba `True` con tilde y `False` sin ella, así que el detector regex ponía
+  `is_certified=True`. El patrón de negación escribía "esta" sin tilde. Arreglo general,
+  sin añadir variantes: texto y patrones se comparan sin tildes (`src/utils/text.py`,
+  que también usa `rag_agent`). Sobre los 177 mensajes del eval-set y las baterías solo
+  cambia ese caso.
+
+Variantes del prompt de señales, sobre los 10 casos de `battery_activity_choice` y las 16
+frases (26 × 3):
+
+| variante | casos 3/3 |
+|---|---|
+| base (LLM solo) | 22/26 |
+| V1: `undecided` en el enum ("se une pero no dice qué hará") | **24/26**, sin empeorar ninguno |
+| V2: cita literal obligatoria | 15/26 (el modelo casi nunca rellena la cita) |
+
+V1 arregla "viene mi primo" y un caso inestable, pero sigue diciendo `minicourse` para
+"mi amigo no está certificado" (con historial de buceo), que hoy la guarda sí evita.
+Aplicar V1 sin guarda empeoraría 2 casos, así que no vale tal cual.
+
 **Incoherencias de textos que quedan en el registro (decisión de negocio, editar en
 `activities.json` sin tocar código):**
 

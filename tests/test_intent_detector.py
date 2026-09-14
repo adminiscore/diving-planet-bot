@@ -703,6 +703,10 @@ class TestCertificationClaim:
             # lo contrario de lo que dice el cliente.
             "hola nunca me he certificado pero quiero probar",
             "nunca me he certificado",
+            # Hallazgo 2026-09-14: con tilde ("está") la negacion no casaba y el
+            # catch-all resolvia True. Texto y patrones se comparan sin tildes.
+            "mi amigo no está certificado", "no está certificada",
+            "No Está Certificado", "todavía no están certificados",
         ],
     )
     def test_denies_certification(self, message):

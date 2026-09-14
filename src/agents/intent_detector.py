@@ -5,6 +5,7 @@ from openai import OpenAI
 
 from src.domain import activities as dom
 from src.flows.state import ConversationState
+from src.utils.text import strip_accents
 
 
 @dataclass
@@ -437,9 +438,14 @@ def certification_claim(text: str) -> bool | None:
     por LLM -- ver `supervisor._CERTIFIED_MENTION_RE`/`_UNCERTIFIED_
     COMPANION_NOTE_RE`, que operan sobre ese dominio distinto a proposito y
     NO reusan esta funcion)."""
-    if any(re.search(pattern, text) for pattern in _NOT_CERTIFIED_PATTERNS):
+    # Texto y patrones se comparan sin tildes (hallazgo 2026-09-14): el patron de
+    # negacion escribia "esta" sin tilde, asi que "mi amigo no está certificado"
+    # no casaba la negacion, caia en `\bcertificado\b` y resolvia True. Normalizar
+    # una vez aqui cubre todas las variantes de tilde de las dos listas.
+    text = strip_accents((text or "").lower())
+    if any(re.search(strip_accents(pattern), text) for pattern in _NOT_CERTIFIED_PATTERNS):
         return False
-    if any(re.search(pattern, text) for pattern in _CERTIFIED_PATTERNS):
+    if any(re.search(strip_accents(pattern), text) for pattern in _CERTIFIED_PATTERNS):
         return True
     return None
 
