@@ -15,6 +15,12 @@ RUN pip install --no-cache-dir .
 # Copy data and scripts (not needed for pip install but useful inside container)
 COPY data/ data/
 COPY scripts/ scripts/
+# Datasets que leen los scripts de medicion (run_extraction_eval,
+# calibrate_rag_threshold). Sin ellos, `python -m scripts.run_extraction_eval`
+# fallaba dentro del contenedor con FileNotFoundError (2026-09-14). Solo los
+# JSON: el resto de docs/ no hace falta en la imagen.
+COPY docs/robustness/eval-set.json docs/robustness/eval-set.json
+COPY docs/rag-eval-set.json docs/rag-eval-set.json
 COPY alembic.ini .
 COPY alembic/ alembic/
 

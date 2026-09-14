@@ -113,9 +113,18 @@ en PRE). Mismo riesgo que tenía `is_colombian`: antes de pensar en su cutover,
 darles `should_verify` propio (ambigüedad autodiagnosticada, reutilizando los
 patrones del detector) y medir.
 
-**4. LangSmith sin cuota mensual.** PRE no guarda trazas. Decidir: subir de plan,
-muestrear (`LANGSMITH_SAMPLING_RATE` o equivalente) o apagarlo en PRE. No afecta a
-las respuestas.
+**4. Observabilidad: revisar si merece la pena Langfuse frente a LangSmith.**
+LangSmith (plan gratuito, 5.000 trazas/mes, reset el día 1 en UTC) se agotó el
+2026-09-10 por el bucle de re-respuesta: 790 trazas del 1 al 9-sep y 3.850 del 9
+al 11. Borrar trazas no devuelve cuota. Decisión del owner (2026-09-14): **no
+pagar**; se deja LangSmith como está hasta decidir. A comparar: Langfuse Cloud
+Hobby (gratis, 50k unidades/mes, 30 días de datos; una unidad es cada traza,
+observación o score, así que un turno ≈ 10 unidades) o Langfuse autoalojado
+(gratis, sin límites, pero en un VPS con historial de problemas de disco).
+Coste de migrar: el envoltorio de OpenAI está centralizado en
+`src/llm_client.py::trace_openai`, más el callback del grafo. Contrapartida: el
+contenido de las conversaciones pasa a otro proveedor. No afecta a las
+respuestas del bot.
 
 **5. El fallback de la petición fusionada no existe.** `_understand` comprueba
 `_combined_patch is None` para volver a `fill_gaps`, pero `extract_and_verify`
