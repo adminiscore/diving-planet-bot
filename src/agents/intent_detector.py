@@ -644,6 +644,19 @@ class IntentDetector:
 
         self._split_out_uncertifiable_kids(intent)
 
+        # El reparto ya leyo el nivel PADI como una certificacion que TIENEN ("somos 3,
+        # 2 con open water y 1 no" -> {certified_diving: 2, ...}); la rama de cursos no
+        # puede contradecirlo dejando la actividad en el curso. Solo si el mensaje no
+        # dice que lo QUIEREN sacar (2026-09-15).
+        registered = dom.by_id(intent.activity) if intent.activity else None
+        if (
+            registered is not None and registered.course_level
+            and (intent.group_allocation or {}).get("certified_diving")
+            and not self._WANTS_CERT_RE.search(message_lower)
+        ):
+            intent.activity = "certified_diving"
+            intent.service_id = dom.base_service_id(intent.activity)
+
         self._calculate_confidence(intent)
 
         return intent
@@ -730,14 +743,10 @@ class IntentDetector:
             intent.service_id = dom.base_service_id(intent.activity)
             intent.is_certified = False
             intent.detected_fields.extend(["activity", "is_certified"])
-        elif any(re.search(pattern, message) for pattern in _CERTIFIED_DIVING_PATTERNS):
-            intent.activity = "certified_diving"
-            intent.service_id = dom.base_service_id(intent.activity)
-            intent.detected_fields.append("activity")
-        elif any(re.search(pattern, message) for pattern in _SNORKEL_PATTERNS):
-            intent.activity = "snorkel"
-            intent.service_id = dom.base_service_id(intent.activity)
-            intent.detected_fields.append("activity")
+        # Un producto NOMBRADO (curso o especialidad) va antes que la palabra generica de
+        # buceo (2026-09-15): con el orden anterior, "quiero bucear y hacer la
+        # especialidad de flotabilidad" o "el curso open water de buceo" salian buceo
+        # certificado porque "buce*"/"diving" casaba primero.
         elif any(re.search(pattern, message) for pattern in _PADI_COURSE_PATTERNS) and not self._holds_padi_cert(message):
             # Only a COURSE if they want to take it — "soy open water" (holds it)
             # is a certified diver, handled via is_certified + the activity fallback.
@@ -752,6 +761,14 @@ class IntentDetector:
                 (activity_id for keyword, activity_id in _SPECIALTY_KEYWORD_TO_ACTIVITY if keyword in message),
                 "padi_specialty",
             )
+            intent.service_id = dom.base_service_id(intent.activity)
+            intent.detected_fields.append("activity")
+        elif any(re.search(pattern, message) for pattern in _CERTIFIED_DIVING_PATTERNS):
+            intent.activity = "certified_diving"
+            intent.service_id = dom.base_service_id(intent.activity)
+            intent.detected_fields.append("activity")
+        elif any(re.search(pattern, message) for pattern in _SNORKEL_PATTERNS):
+            intent.activity = "snorkel"
             intent.service_id = dom.base_service_id(intent.activity)
             intent.detected_fields.append("activity")
 

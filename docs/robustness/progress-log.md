@@ -2758,3 +2758,44 @@ Medido (tanda limpia):
 Siguen aparte, a propósito, `group_size`, `group_allocation` y `activity`: su descripción en el
 tool lleva reglas medidas una a una (plural vago, `undecided`) que las guías no tienen. Unificarlos
 exige reconciliar ese contenido y medirlo aparte.
+
+### Reparto y actividad coherentes en "2 con open water y 1 no"
+
+Los dos casos del eval-set que seguían fallando en actividad (`split-open-water-one-not`,
+`split-en-have-open-water`) venían de una contradicción dentro del propio detector:
+- la regla de reparto leía "2 con / two have open water" como certificación que **tienen**
+  (`{certified_diving: 2, undecided: 1}`);
+- la rama de cursos, que va antes, había dejado `activity = padi_open_water`.
+
+Regla nueva al final de `detect()`: si la actividad es un curso con nivel, el reparto trae
+`certified_diving` y el mensaje no casa `_WANTS_CERT_RE`, la actividad es `certified_diving`. Sin
+vocabulario nuevo.
+
+Foto del detector antes/después sobre 197 mensajes: **3 cambios, los esperados**: los dos del
+eval-set y "somos 4, dos con advanced y dos no". Controles sin cambio: "quiero el open water, somos
+3 y 2 no estan certificados" (quiere el curso) y "hola somos 4 open water" (ambiguo, se pregunta).
+
+### Un producto nombrado gana a la palabra genérica de buceo
+
+Sonda sin LLM: en 7 de 10 mensajes que combinan "buceo/diving" con un curso o especialidad
+nombrados, el detector daba `certified_diving`. `_detect_activity` probaba
+`_CERTIFIED_DIVING_PATTERNS` ("buce*", "diving") antes que `_PADI_COURSE_PATTERNS` y
+`_SPECIALTY_PATTERNS`. El veto de actividad (2+ categorías) solo lo podía arreglar en cursos:
+el enum del extractor no tiene especialidades concretas.
+
+Cambio: curso y especialidad se prueban antes que el buceo genérico. El minicurso sigue primero y
+se conserva la excepción `_holds_padi_cert` ("ya tengo el open water").
+
+Foto del detector sobre 208 mensajes: **12 cambios**.
+- 9 mejoras claras: especialidades concretas y cursos con "buceo" ("el curso open water de buceo",
+  "Quiero sacarme el open water, no he buceado nunca", "soy buzo certificado y quiero hacer el
+  advanced"…).
+- "Pues me gustaría sacarme el primer nivel de buceo": de `certified_diving` (mal) a `padi_course`
+  (el núcleo aclara el nivel o aplica Open Water a quien no está certificado).
+- "2 open water y 3 snorkel": de snorkel a curso (caso ambiguo, que ahora se pregunta).
+- "ya llevo el rescue, quiero seguir buceando": el regex pasa a `padi_rescue`, pero tiene 2
+  categorías y el veto lo corrige a `certified_diving`.
+
+Eval-set, con este cambio y el de reparto/actividad: **219/223 (98,2 %)**, actividad 71/72, sin
+ningún caso a peor. Queda `f2b-specialty-mindful-en`: el regex ya da `specialty_mindful_diving`,
+pero el veto, cuyo enum solo tiene `padi_specialty`, lo generaliza.

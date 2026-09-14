@@ -100,3 +100,23 @@ def test_recommendation_speaks_to_the_uncertified_group_members():
     assert "quienes no están certificados" in text and "acompañante" not in text.splitlines()[0]
     state.pending_undecided_qty = None
     assert "tu acompañante" in core.ask_slot(state, core.SLOT_COMPANION_ACTIVITY)
+
+
+@pytest.mark.parametrize("message", [
+    "somos 3, 2 con open water y 1 no",
+    "we are three, two have open water and one does not",
+    "somos 4, dos con advanced y dos no",
+])
+def test_split_that_reads_the_level_as_held_keeps_certified_diving(message):
+    """El reparto ya leyo el nivel como certificacion que TIENEN: la actividad no
+    puede quedarse en el curso (2026-09-15)."""
+    from src.agents.intent_detector import IntentDetector
+    intent = IntentDetector().detect(message, _state())
+    assert intent.group_allocation.get("certified_diving")
+    assert intent.activity == "certified_diving"
+
+
+def test_split_with_wanting_the_course_keeps_the_course():
+    from src.agents.intent_detector import IntentDetector
+    intent = IntentDetector().detect("quiero el open water, somos 3 y 2 no estan certificados", _state())
+    assert intent.activity == "padi_open_water"
