@@ -59,7 +59,12 @@ Retomamos el trabajo de robustez del bot en la rama `feature/pre_gadea`. Lee pri
    `certification_status()` decide para el detector y el RAG, y el deseo de certificarse sale de
    piezas únicas (`_DESIRE_VERB`, `_CERT_NOUN`…). Límite heredado: tercera persona ("mi primo es
    certificado") y grupos parciales cuentan como "ya certificado"; arreglar el sujeto en el
-   detector. Siguiente: ubicación y paquete. Cada paso con foto antes/después sin LLM.
+   detector. **Ubicación analizada (2026-09-15), sin unificar**: el resolutor corto del núcleo y
+   `_detect_location` discrepan en 15 de 262 mensajes con precedencias contrarias, y el detector
+   confunde destino con alojamiento ("ir a las islas del rosario desde cartagena" → isla; "nos vemos
+   en la marina" → Isla Marina). Vía propuesta: que el LLM distinga salida de destino. Arreglado de
+   paso: la duda con ubicación pendiente fijaba Cartagena aunque el mensaje hablara de otra cosa.
+   Siguiente: paquete. Cada paso con foto antes/después sin LLM.
 2. **Definición única por campo en los prompts, resto de campos**: hecho para `is_certified`,
    `location`, `is_colombian`. Quedan `group_size`, `group_allocation` y `activity`, cuyo texto del
    tool lleva reglas medidas propias (plural vago, `undecided`) que hay que reconciliar. Separar el significado neutro

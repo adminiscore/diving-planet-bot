@@ -2956,3 +2956,33 @@ Medido sin LLM:
 - "el tiene su open water" sigue sin reconocerse: "él" no es un sustantivo de persona.
 
 Como el regex da lo mismo en todos los mensajes del eval-set, no se volvió a correr.
+
+### Ubicación: la unificación detector/núcleo se para, y aparece un fallo real de la duda
+
+Comparación sin LLM sobre 262 mensajes entre el resolutor corto del núcleo (`_apply_short_answer`,
+ubicación pendiente) y `_detect_location` del detector: discrepan en 15. Cada uno sabe lo que el
+otro no:
+- el núcleo no conoce "ctg", los apodos de la ciudad ni los hoteles;
+- el detector no conoce "barú" ni "island"/"isla" sueltos, que como respuesta a "¿desde dónde
+  salen?" bastan.
+
+La precedencia es contraria. El detector da isla concreta > Cartagena > genérico, y el eval-set le
+da la razón en "estoy en cartagena pero el hotel es en isla grande". Pero no se puede copiar al
+núcleo tal cual:
+- "quiero ir a las islas del rosario desde cartagena" sale isla en el detector, cuando las islas son
+  el destino de la excursión (el núcleo acierta con Cartagena);
+- "nos vemos en la marina" sale Isla Marina por el "marina" suelto.
+
+Distinguir dónde se aloja de adónde va es semántico: queda para la vía LLM, sin parches.
+
+**Fallo real encontrado en la línea base.** Con la ubicación pendiente, `_LOCATION_DEFER_RE` ("no
+sé", "recomiéndame"…) fijaba **Cartagena** en "Me interesa el curso PADI, no se bucear", "no sé si
+hacer el minicurso o el snorkel" o "no sé si hacer el open water o el advanced". Nadie la eligió, y
+la ubicación decide el servicio y el precio. Además, al darse la respuesta por resuelta, el turno
+se saltaba la comparación de opciones. La verificación del resolutor LLM ya descartaba la ubicación
+cuando el turno cambiaba la actividad, pero la vía determinista no tenía esa guarda. Arreglo, mismo
+principio: la duda solo delega si el detector no encuentra ningún otro campo en el mensaje.
+- Los 14 "no sé / da igual / tú decides / up to you" a secas siguen dando Cartagena.
+- Foto: **4 cambios de 224**, los 4 buscados, sin cambios en el detector.
+- Sigue abierto: "que solo nos acompañe en la lancha, no se mete al agua" casa "no se" (es el "se"
+  reflexivo) y no trae otros campos.

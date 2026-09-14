@@ -717,7 +717,14 @@ def _apply_short_answer(state: ConversationState, message: str) -> bool:
             return True
         # Deferral ("no sé/da igual/recomiéndame") → Cartagena (salida más
         # común). Sin esto, el regex fallaba y se re-preguntaba en bucle.
-        if _LOCATION_DEFER_RE.search(msg):
+        # Solo si el mensaje no dice nada más (2026-09-15): "no sé si hacer el
+        # minicurso o el snorkel" o "me interesa el curso PADI, no se bucear" con
+        # la ubicación pendiente fijaban Cartagena sin que nadie la eligiera, y
+        # además saltaban la comparación de opciones. Mismo principio que la
+        # verificación del resolutor LLM ("si este turno habla de otra cosa, no
+        # contestaba la ubicación"), con los campos del detector.
+        other_fields = [f for f in _detector.detect(message, state).detected_fields if f != "language"]
+        if _LOCATION_DEFER_RE.search(msg) and not other_fields:
             state.location = state.detected_location = "cartagena"
             return True
         return False
