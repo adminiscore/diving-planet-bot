@@ -258,6 +258,17 @@ sustituirla exige mantener esa protección sin depender del vocabulario.
   mordida real en los 3 repartos del eval-set; falta una batería de acompañantes con
   historial antes de tocarla.
 
+**F5 — guarda de actividad en el REPARTO: retirada (2026-09-14)**
+
+La misma `_activity_has_textual_backing` se aplicaba a cada tramo del reparto en
+`_understand`. Tiraba tramos correctos ("4 con título", "3 brevetados", "2 minicourse") y la
+invariante descartaba el reparto entero. Batería de grupo (config PRE): correctos 7/10 →
+9/10, total 12/13 → 13/13, riesgo 10/10 y 0 parciales o inventados con y sin ella. Con los
+escenarios nuevos `r11`–`r13` ("mi amigo no está certificado"…), 0 inventados en ambos
+casos. Ambiguo para el owner: "2 open water y 3 snorkel" se lee ahora como buzos
+certificados. La guarda sigue en la señal del acompañante (F5b, abajo) y en el atajo de
+certificación de las preguntas con "?".
+
 **F5b — guarda de actividad del acompañante: medida (2026-09-14)**
 
 `detect_special_signals` (`companion_activity`) con LLM real, 16 frases × 3, historial

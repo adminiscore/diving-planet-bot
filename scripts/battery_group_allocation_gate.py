@@ -103,7 +103,10 @@ SCENARIOS = [
     {
         "id": "b05-open-water-nombrado",
         "familia": "beneficio",
-        "desc": "Curso PADI concreto nombrado dentro del reparto.",
+        # AMBIGUO (2026-09-14): "2 open water" tambien se dice de dos personas CON la
+        # certificacion Open Water. Sin la guarda de vocabulario el LLM lo lee asi
+        # ({certified_diving: 2, snorkel: 3}). Pendiente de que el owner decida.
+        "desc": "Curso PADI concreto nombrado dentro del reparto (ambiguo: ver comentario).",
         "message": "2 open water y 3 snorkel",
         "state": {"detected_group_size": 5},
         "expect": ("ALLOC", {OW: 2, SNK: 3}),
@@ -374,6 +377,34 @@ SCENARIOS = [
         "desc": "Turno de nacionalidad con grupo conocido: nada de reparto.",
         "message": "ninguno es colombiano",
         "state": {"detected_group_size": 6},
+        "expect": ("NONE",),
+    },
+    # 2026-09-14: el caso para el que existia la guarda de vocabulario de actividad
+    # en el reparto (acompanante descrito solo por un atributo). Medido con LLM
+    # real: 0 repartos inventados con y sin esa guarda (3/3); lo cubren la
+    # comprobacion de cifras del texto y la invariante de la suma.
+    {
+        "id": "r11-atributo-sin-actividad",
+        "familia": "riesgo",
+        "desc": "Acompanante descrito solo por un atributo: no hay actividad que repartir.",
+        "message": "mi amigo no esta certificado",
+        "state": {"detected_activity": "certified_diving", "is_certified": True, "detected_group_size": 2},
+        "expect": ("NONE",),
+    },
+    {
+        "id": "r12-atributo-con-total",
+        "familia": "riesgo",
+        "desc": "Atributo del acompanante con el total en el mismo mensaje.",
+        "message": "somos 2, mi amigo no está certificado",
+        "state": {"detected_activity": "certified_diving", "is_certified": True},
+        "expect": ("NONE",),
+    },
+    {
+        "id": "r13-atributo-plural",
+        "familia": "riesgo",
+        "desc": "Atributo de un tramo con cifra pero sin actividad.",
+        "message": "vamos 4 pero dos no tienen licencia",
+        "state": {"detected_activity": "certified_diving", "is_certified": True},
         "expect": ("NONE",),
     },
 

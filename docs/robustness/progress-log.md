@@ -2336,3 +2336,28 @@ Resolutores con LLM real (3 repeticiones), antiguo frente a nuevo:
 
 Solo cambian esos resolutores en el snapshot de prompts (3 cambiados y 3 nuevos, frente a F4).
 Suite **1961 passed / 18 skipped**.
+
+### Tarea 7: repartos "no contables" — era la guarda de vocabulario
+
+Los VACIO de `b03` "4 con titulo y 2 snorkel", `b04` "3 brevetados…" y `t05` "7 in total: 4
+certified, 2 minicourse and 1 snorkel" **no eran del LLM**. Devolvía el reparto bien, pero
+`_activity_has_textual_backing` no respaldaba "con titulo", "brevetados" ni "minicourse" en
+inglés. Tiraba ese tramo, el reparto dejaba de sumar el total y
+`enforce_group_allocation_consistency` lo descartaba entero.
+
+Batería de grupo completa, configuración de PRE (dos vetos), 2 repeticiones, con y sin la guarda:
+
+| | con guarda | sin guarda |
+|---|---|---|
+| beneficio | 7/10 | **9/10** |
+| total | 12/13 | **13/13** |
+| riesgo | 10/10 | 10/10 |
+| PARCIAL / TOTAL_MAL / ALUCINA | 0 / 0 / 0 | 0 / 0 / 0 |
+
+Riesgo nuevo, el caso que la justificaba (`r11`–`r13`: "mi amigo no esta certificado", "somos 2,
+mi amigo no está certificado", "vamos 4 pero dos no tienen licencia"): 0 repartos inventados con
+y sin guarda (3/3). Lo cubren la comprobación de cifras del texto y la invariante.
+
+**Único cambio a peor, ambiguo:** `b05` "2 open water y 3 snorkel" pasa de VACIO a
+`{certified_diving: 2, snorkel: 3}`. "2 open water" también se dice de dos buzos con esa
+certificación. Pendiente de decisión del owner.

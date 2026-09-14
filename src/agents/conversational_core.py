@@ -1636,15 +1636,14 @@ async def _understand(state: ConversationState, message: str) -> tuple:
             # determinista igual que el resto de este bloque. No aplica a la
             # actividad PRINCIPAL ya conocida (`prev_activity`), que puede
             # restatearse sin repetir la palabra en este turno.
-            activity_unbacked = [
-                act for act in alloc_patch
-                if act != prev_activity and not _activity_has_textual_backing(act, message)
-            ]
-            if activity_unbacked:
-                for act in activity_unbacked:
-                    alloc_patch.pop(act, None)
-                if _mentions_person(message):
-                    state.needs_companion_activity = True
+            # RETIRADA (2026-09-14) la guarda de vocabulario de actividad que iba
+            # aquí: tiraba tramos correctos que su lista no conocía ("4 con título",
+            # "3 brevetados", "2 minicourse"), el reparto dejaba de sumar y la
+            # invariante lo descartaba entero. Batería de grupo (config PRE, 2
+            # repeticiones): correctos 7/10 -> 9/10, total 12/13 -> 13/13, riesgo
+            # 10/10 y 0 parciales/inventados con y sin ella. El caso para el que
+            # nació ("mi amigo no está certificado", r11-r13) queda cubierto por la
+            # comprobación de cifras de abajo y la invariante de la suma.
             # Counter con consumo, no un set de presencia (auditoría
             # 2026-07-23): un mismo número no puede "avalar" dos actividades
             # distintas solo porque aparece una vez en el texto para otra.
