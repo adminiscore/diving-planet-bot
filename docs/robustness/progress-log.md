@@ -2387,3 +2387,20 @@ LLM en la misma petición.
   casos son ambiguos y se midieron aparte.
 - Grupos mixtos ("yo soy colombiano y mi novia extranjera"): `_MIXED_NATIONALITY_RE` no
   reconoce todos y el LLM elige un valor. Queda pendiente, con decisión de negocio.
+
+### Tarea 9: `is_certified` con disparador propio (la regla común no siempre implica abstenerse)
+
+La regla "polaridad contradictoria" de la nacionalidad pasa a una función común,
+`polarity_is_ambiguous(message, negative, positive)`, que usa los patrones del propio detector.
+`nationality_is_ambiguous` y la nueva `certification_is_ambiguous` son dos llamadas a ella.
+
+Sin LLM, sobre el eval-set: 4 mensajes con polaridad de certificación contradictoria ("somos 3,
+2 con open water y 1 no", "no es que no estemos certificados, si lo estamos, los 2", "hey we
+arent certified, first time diving…", "Quiero el open water aunque no soy buzo certificado").
+**El regex acierta en todos**, al revés que en la nacionalidad. Con LLM real (3 repeticiones)
+sobre esos más dos extra, el veto coincide con el regex **6/6**.
+
+Decisión: el detector **no** se abstiene en certificación. El veto de `is_certified` pasa del
+disparador genérico (todo turno que resuelve el campo, el riesgo que documentaba
+`test_field_veto_generic_trigger_risk.py`) al propio. Flag apagado: hoy no ganaría nada.
+`location` sigue con el genérico, en shadow.

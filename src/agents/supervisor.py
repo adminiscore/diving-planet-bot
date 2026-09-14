@@ -2311,6 +2311,18 @@ def _nationality_should_verify(
     return nationality_is_ambiguous(message)
 
 
+def _certification_should_verify(
+    message: str, regex_intent: DetectedIntent, state: ConversationState | None = None
+) -> bool:
+    """Trigger de `is_certified`: SOLO con polaridad de certificacion
+    contradictoria (`intent_detector.certification_is_ambiguous`), misma regla
+    comun que la nacionalidad. Sustituye al trigger generico que el test de
+    riesgo marcaba como peligroso. Encender el flag sigue siendo una decision
+    aparte, con medida."""
+    from src.agents.intent_detector import certification_is_ambiguous
+    return certification_is_ambiguous(message)
+
+
 def _group_size_that_will_persist(
     intent: DetectedIntent, state: ConversationState | None, message: str | None
 ) -> int | None:
@@ -2427,6 +2439,7 @@ _VETO_FIELD_SPECS = {
     "is_certified": _VetoSpec(
         shadow_flag="llm_certification_veto_shadow_mode",
         cutover_flag="llm_certification_veto_cutover",
+        should_verify=_certification_should_verify,
     ),
     "is_colombian": _VetoSpec(
         shadow_flag="llm_nationality_veto_shadow_mode",

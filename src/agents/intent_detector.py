@@ -336,13 +336,33 @@ def nationality_is_ambiguous(message: str) -> bool:
     regex acierta y el LLM confunde ("ninguno colombiano", eval-set). Esas no
     son ambiguas: la afirmacion queda DENTRO del tramo negado.
     """
-    lowered = message.lower()
-    outside_negation = _NOT_COLOMBIAN_RE.sub(" ", lowered)
+    return polarity_is_ambiguous(message, _NOT_COLOMBIAN_RE, _COLOMBIAN_RE)
+
+
+def polarity_is_ambiguous(message: str, negative: re.Pattern, positive: re.Pattern) -> bool:
+    """Regla comun de "polaridad contradictoria" para un campo si/no, con los
+    MISMOS patrones que usa su detector (nunca una lista nueva de fraseos):
+      - hay negacion reconocida y, fuera de ella, queda una afirmacion; o
+      - no hay negacion reconocida, pero fuera de la afirmacion queda una
+        negacion suelta que el detector no sabe atribuir.
+    Texto sin tildes y en minusculas, como `certification_claim`."""
+    lowered = strip_accents((message or "").lower())
+    outside_negation = negative.sub(" ", lowered)
     if outside_negation != lowered:
-        return bool(_COLOMBIAN_RE.search(outside_negation))
-    if not _COLOMBIAN_RE.search(lowered):
+        return bool(positive.search(outside_negation))
+    if not positive.search(lowered):
         return False
-    return bool(_BARE_NEGATION_RE.search(_COLOMBIAN_RE.sub(" ", lowered)))
+    return bool(_BARE_NEGATION_RE.search(positive.sub(" ", lowered)))
+
+
+def certification_is_ambiguous(message: str) -> bool:
+    """Polaridad de certificacion contradictoria ("no es que no estemos
+    certificados, si lo estamos", "somos 3, 2 con open water y 1 no").
+
+    Medido 2026-09-14: en estos mensajes el regex ACIERTA (a diferencia de la
+    nacionalidad), asi que el detector NO se abstiene. Sirve solo de trigger del
+    veto de `is_certified`, para que el LLM no opine en los casos claros."""
+    return polarity_is_ambiguous(message, _NOT_CERTIFIED_ANY_RE, _CERTIFIED_ANY_RE)
 
 
 # Vocabulario de "¿el mensaje afirma/niega certificacion?" -- elevado de
@@ -427,6 +447,10 @@ _NOT_CERTIFIED_PATTERNS = [
     r'\bbeginner\b',
     r'\bprincipiante\b',
 ]
+
+
+_NOT_CERTIFIED_ANY_RE = re.compile("|".join(f"(?:{strip_accents(p)})" for p in _NOT_CERTIFIED_PATTERNS))
+_CERTIFIED_ANY_RE = re.compile("|".join(f"(?:{strip_accents(p)})" for p in _CERTIFIED_PATTERNS))
 
 
 def certification_claim(text: str) -> bool | None:

@@ -44,8 +44,9 @@ async def test_own_trigger_keeps_the_llm_away_from_the_correct_negation_case():
     (`_nationality_should_verify`, polaridad contradictoria), que era la
     condicion que este test pedia. "ninguno colombiano" no es ambiguo, asi que
     el LLM ni se consulta y el valor correcto se conserva aunque el LLM
-    hubiera contestado mal. `is_certified` y `location` siguen con el trigger
-    generico: el aviso de arriba sigue valiendo para ellos."""
+    hubiera contestado mal. `is_certified` tambien tiene trigger propio desde el
+    mismo dia (polaridad contradictoria, test_certification_veto_trigger.py).
+    Solo `location` sigue con el trigger generico: el aviso de arriba vale para el."""
     detector = IntentDetector()
     state = ConversationState(conversation_id="veto-risk-is-colombian-test")
     intent = detector.detect(_NEGATION_MSG, state)
