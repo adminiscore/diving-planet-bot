@@ -1,0 +1,299 @@
+{
+  "_comment": "Fuente UNICA del dominio de actividades (docs/robustness/activity-domain-plan.md, 2026-09-14). Cada actividad tiene un id canonico, sus servicios del catalogo (services.json) desde Cartagena y desde las islas, y el contexto de negocio (for_whom) que ven los prompts. Textos derivados de services.json, policies.json y faqs.json (los ficheros que carga el codigo). Editable por negocio: src/domain/activities.py lo valida contra services.json.",
+  "non_activity_services": {
+    "private": "Servicio privado a medida: se coordina con un asesor, no es una actividad del flujo de reserva."
+  },
+  "activities": [
+    {
+      "id": "certified_diving",
+      "family": "dive",
+      "cart_type": "cert",
+      "services": {
+        "cartagena": ["2_dives_1_day", "3_dives_1_day", "4_dives_2_days", "5_dives_2_days", "7_dives_3_days", "9_dives_4_days"],
+        "island": ["1_dive_1_day_already_on_island", "2_dives_1_day_already_on_island", "3_dives_1_day_already_on_island", "4_dives_2_days_already_on_island", "4_dives_2_days_mixed_already_on_island", "5_dives_2_days_already_on_island", "7_dives_3_days_already_on_island", "9_dives_4_days_already_on_island"]
+      },
+      "requires_certification": true,
+      "certifies": false,
+      "course_level": null,
+      "generic": false,
+      "min_age": 10,
+      "max_age": null,
+      "label": {"es": "Buceo certificado", "en": "Certified diving"},
+      "for_whom": {
+        "es": "Salidas de buceo guiadas para quien YA tiene certificación de buzo (carné, nivel mínimo Open Water): 2 inmersiones en un día o paquetes de varios días (3 a 9 inmersiones). Es también la opción por defecto cuando alguien pide 'bucear' sin más detalle.",
+        "en": "Guided dive trips for people who ALREADY hold a diving certification (card, minimum Open Water level): 2 dives in one day or multi-day packages (3 to 9 dives). It is also the default when someone just asks to 'dive' with no further detail."
+      },
+      "sources": ["services.json:2_dives_1_day", "policies.json:certification_required", "policies.json:packages_certification_requirement"]
+    },
+    {
+      "id": "minicourse",
+      "family": "beginner",
+      "cart_type": "beginner",
+      "services": {"cartagena": ["minicourse"], "island": ["minicourse_already_on_island"]},
+      "requires_certification": false,
+      "certifies": false,
+      "course_level": null,
+      "generic": false,
+      "min_age": 10,
+      "max_age": null,
+      "label": {"es": "Minicurso de buceo", "en": "Dive mini-course"},
+      "for_whom": {
+        "es": "Bautismo de buceo de UN solo día (Discover Scuba) para quien nunca ha buceado o no sabe bucear y quiere probarlo con instructor PADI: teoría online, piscina y 1 inmersión en el mar. No da certificación ni obliga a quedarse varios días ni a dormir en las islas. Desde 10 años.",
+        "en": "A ONE-day try-dive (Discover Scuba) for people who have never dived or cannot dive and want to try it with a PADI instructor: online theory, pool session and 1 ocean dive. It does not certify and does not require staying several days or sleeping on the islands. From age 10."
+      },
+      "sources": ["services.json:minicourse", "faqs.json:Es mi primera vez buceando", "policies.json:age_minimum"]
+    },
+    {
+      "id": "bubble_makers",
+      "family": "beginner",
+      "cart_type": "beginner",
+      "services": {"cartagena": [], "island": []},
+      "requires_certification": false,
+      "certifies": false,
+      "course_level": null,
+      "generic": false,
+      "min_age": 8,
+      "max_age": 10,
+      "label": {"es": "Bubble Makers (niños 8-10)", "en": "Bubble Makers (kids 8-10)"},
+      "for_whom": {
+        "es": "Programa PADI de iniciación para niños de 8 a 10 años que quieren probar el buceo: en piscina o aguas muy poco profundas (máximo 2 metros), con un instructor dedicado. No da certificación.",
+        "en": "PADI intro programme for kids aged 8 to 10 who want to try diving: in a pool or very shallow water (max 2 metres), with a dedicated instructor. It does not certify."
+      },
+      "sources": ["faqs.json:Que es el Bubble Makers", "policies.json:age_minimum"]
+    },
+    {
+      "id": "snorkel",
+      "family": "snorkel",
+      "cart_type": "snorkel",
+      "services": {"cartagena": ["snorkeling"], "island": ["snorkeling_already_on_island"]},
+      "requires_certification": false,
+      "certifies": false,
+      "course_level": null,
+      "generic": false,
+      "min_age": 6,
+      "max_age": null,
+      "label": {"es": "Snorkel", "en": "Snorkeling"},
+      "for_whom": {
+        "es": "Snorkel desde la superficie con máscara y aletas, sin bucear: 2 salidas guiadas por el arrecife. Para quien no quiere bucear o prefiere quedarse en la superficie. Desde 6 años.",
+        "en": "Snorkeling from the surface with mask and fins, no diving: 2 guided reef sessions. For people who do not want to dive or prefer to stay at the surface. From age 6."
+      },
+      "sources": ["services.json:snorkeling", "policies.json:age_minimum"]
+    },
+    {
+      "id": "padi_course",
+      "family": "course",
+      "cart_type": "course",
+      "services": {"cartagena": [], "island": []},
+      "requires_certification": false,
+      "certifies": true,
+      "course_level": null,
+      "generic": true,
+      "min_age": null,
+      "max_age": null,
+      "label": {"es": "Curso PADI", "en": "PADI course"},
+      "for_whom": {
+        "es": "Curso PADI cuando el cliente no dice cuál. El nivel lo decide su certificación actual: si no tiene certificación (no sabe bucear, nunca ha buceado) le corresponde `padi_open_water`, el primer curso; si ya es Open Water, `padi_advanced`; si ya es Advanced, `padi_rescue`. Ojo: quien no sabe bucear y solo quiere probar un día, sin certificarse, busca `minicourse`, no un curso.",
+        "en": "A PADI course when the customer does not say which one. The level follows their current certification: with no certification (cannot dive, never dived) it is `padi_open_water`, the first course; already Open Water, `padi_advanced`; already Advanced, `padi_rescue`. Note: someone who cannot dive and only wants to try for one day, without certifying, wants `minicourse`, not a course."
+      },
+      "sources": ["faqs.json:Como elegir entre Open Water, Scuba Diver, especialidades, Rescue y Divemaster", "owner 2026-09-14"]
+    },
+    {
+      "id": "padi_open_water",
+      "family": "course",
+      "cart_type": "course",
+      "services": {"cartagena": ["open_water"], "island": ["open_water_already_on_island"]},
+      "requires_certification": false,
+      "certifies": true,
+      "course_level": 1,
+      "generic": false,
+      "min_age": 10,
+      "max_age": null,
+      "label": {"es": "Curso Open Water", "en": "Open Water course"},
+      "for_whom": {
+        "es": "El PRIMER curso de certificación PADI: para quien no tiene certificación y quiere sacarse el título de buzo autónomo (hasta 18 metros). 2 días con teoría eLearning, piscina y 4 inmersiones; obliga a dormir al menos 1 noche en las islas. Desde 10 años.",
+        "en": "The FIRST PADI certification course: for people with no certification who want to become autonomous divers (down to 18 metres). 2 days with eLearning theory, pool and 4 dives; requires at least 1 night on the islands. From age 10."
+      },
+      "sources": ["services.json:open_water", "policies.json:courses_overnight_requirement", "faqs.json:Que puedo hacer con la certificacion Open Water Diver"]
+    },
+    {
+      "id": "padi_open_water_referral",
+      "family": "course",
+      "cart_type": null,
+      "services": {"cartagena": ["referral"], "island": ["referral_already_on_island"]},
+      "requires_certification": false,
+      "certifies": true,
+      "course_level": 1,
+      "generic": false,
+      "min_age": 10,
+      "max_age": null,
+      "label": {"es": "Curso referido (Open Water)", "en": "Open Water referral course"},
+      "for_whom": {
+        "es": "Final del Open Water para quien ya hizo la teoría y la piscina en otro centro PADI y trae la carta de referido firmada: 2 días de inmersiones de certificación en las islas.",
+        "en": "Completion of the Open Water for people who already did the theory and pool sessions at another PADI centre and bring the signed referral form: 2 days of certification dives on the islands."
+      },
+      "sources": ["services.json:referral", "faqs.json:Como es el curso referido (Open Water) desde Cartagena"]
+    },
+    {
+      "id": "padi_advanced",
+      "family": "course",
+      "cart_type": "course",
+      "services": {"cartagena": ["advanced"], "island": ["advanced_already_on_island"]},
+      "requires_certification": true,
+      "certifies": true,
+      "course_level": 2,
+      "generic": false,
+      "min_age": 12,
+      "max_age": null,
+      "label": {"es": "Curso Advanced Open Water", "en": "Advanced Open Water course"},
+      "for_whom": {
+        "es": "Siguiente curso tras el Open Water: para buzos Open Water que quieren más experiencia y bajar hasta 30 metros. 2 días, 5 inmersiones con nocturna; obliga a dormir 1 noche en las islas.",
+        "en": "The next course after Open Water: for Open Water divers who want more experience and to go down to 30 metres. 2 days, 5 dives including a night dive; requires 1 night on the islands."
+      },
+      "sources": ["services.json:advanced", "faqs.json:Que es Advanced Open Water Diver", "policies.json:courses_overnight_requirement"]
+    },
+    {
+      "id": "padi_rescue",
+      "family": "course",
+      "cart_type": "course",
+      "services": {"cartagena": ["rescue"], "island": []},
+      "requires_certification": true,
+      "certifies": true,
+      "course_level": 3,
+      "generic": false,
+      "min_age": 12,
+      "max_age": null,
+      "label": {"es": "Curso Rescue Diver + EFR", "en": "Rescue Diver + EFR course"},
+      "for_whom": {
+        "es": "Curso de prevención y rescate con primeros auxilios (EFR) para buzos con Advanced que quieren estar preparados ante emergencias. 2 días con 1 noche en las islas.",
+        "en": "Prevention and rescue course with first aid (EFR) for Advanced divers who want to be ready for emergencies. 2 days with 1 night on the islands."
+      },
+      "sources": ["services.json:rescue", "faqs.json:Que es Rescue Diver y por que es importante"]
+    },
+    {
+      "id": "padi_divemaster",
+      "family": "course",
+      "cart_type": "course",
+      "services": {"cartagena": ["divemaster"], "island": []},
+      "requires_certification": true,
+      "certifies": true,
+      "course_level": 4,
+      "generic": false,
+      "min_age": 18,
+      "max_age": null,
+      "label": {"es": "Curso Divemaster", "en": "Divemaster course"},
+      "for_whom": {
+        "es": "Primer nivel profesional PADI, en internado de al menos 2 meses viviendo en las islas. Requiere Rescue + EFR vigente, 40 inmersiones registradas y ser mayor de 18. Se gestiona con un asesor, no se reserva online.",
+        "en": "The first PADI professional level, as an internship of at least 2 months living on the islands. Requires Rescue + current EFR, 40 logged dives and being over 18. Handled by an advisor, not booked online."
+      },
+      "sources": ["services.json:divemaster", "faqs.json:Como funciona el curso Divemaster"]
+    },
+    {
+      "id": "padi_specialty",
+      "family": "specialty",
+      "cart_type": "course",
+      "services": {"cartagena": [], "island": []},
+      "requires_certification": true,
+      "certifies": true,
+      "course_level": null,
+      "generic": true,
+      "min_age": null,
+      "max_age": null,
+      "label": {"es": "Especialidad", "en": "Specialty"},
+      "for_whom": {
+        "es": "Especialidad cuando el cliente no dice cuál. Todas requieren certificación Open Water. Disponibles: `specialty_nitrox`, `specialty_buoyancy`, `specialty_naturalist`, `specialty_fish_identification` y `specialty_mindful_diving`.",
+        "en": "A specialty when the customer does not say which one. All require Open Water certification. Available: `specialty_nitrox`, `specialty_buoyancy`, `specialty_naturalist`, `specialty_fish_identification` and `specialty_mindful_diving`."
+      },
+      "sources": ["services.json:*_specialty", "services.json:mindful_diving"]
+    },
+    {
+      "id": "specialty_nitrox",
+      "family": "specialty",
+      "cart_type": "course",
+      "services": {"cartagena": ["nitrox_specialty"], "island": ["nitrox_specialty_already_on_island"]},
+      "requires_certification": true,
+      "certifies": true,
+      "course_level": null,
+      "generic": false,
+      "min_age": 10,
+      "max_age": null,
+      "label": {"es": "Especialidad Nitrox", "en": "Nitrox specialty"},
+      "for_whom": {
+        "es": "Especialidad PADI de aire enriquecido para buzos certificados: aprender a analizar la mezcla y planificar inmersiones con nitrox, útil en viajes con muchas inmersiones. 1 día, 2 inmersiones.",
+        "en": "PADI enriched-air specialty for certified divers: learn to analyse the mix and plan nitrox dives, useful on trips with many dives. 1 day, 2 dives."
+      },
+      "sources": ["services.json:nitrox_specialty", "faqs.json:Que es Nitrox y para quien sirve"]
+    },
+    {
+      "id": "specialty_buoyancy",
+      "family": "specialty",
+      "cart_type": "course",
+      "services": {"cartagena": ["buoyancy_specialty"], "island": ["buoyancy_specialty_already_on_island"]},
+      "requires_certification": true,
+      "certifies": true,
+      "course_level": null,
+      "generic": false,
+      "min_age": 10,
+      "max_age": null,
+      "label": {"es": "Especialidad Flotabilidad", "en": "Buoyancy specialty"},
+      "for_whom": {
+        "es": "Especialidad PADI para buzos certificados que quieren mejorar el control de flotabilidad, consumir menos aire y cuidar el arrecife. 1 día, 2 inmersiones.",
+        "en": "PADI specialty for certified divers who want better buoyancy control, lower air consumption and to protect the reef. 1 day, 2 dives."
+      },
+      "sources": ["services.json:buoyancy_specialty", "faqs.json:Que especialidad me ayuda a mejorar flotabilidad y consumo de aire"]
+    },
+    {
+      "id": "specialty_naturalist",
+      "family": "specialty",
+      "cart_type": "course",
+      "services": {"cartagena": ["naturalist_specialty"], "island": ["naturalist_specialty_already_on_island"]},
+      "requires_certification": true,
+      "certifies": true,
+      "course_level": null,
+      "generic": false,
+      "min_age": 10,
+      "max_age": null,
+      "label": {"es": "Especialidad Naturalista", "en": "Naturalist specialty"},
+      "for_whom": {
+        "es": "Especialidad PADI para buzos certificados que quieren entender el ecosistema marino y relacionarse de forma responsable con la vida marina. 1 día, 2 inmersiones.",
+        "en": "PADI specialty for certified divers who want to understand the marine ecosystem and interact responsibly with marine life. 1 day, 2 dives."
+      },
+      "sources": ["services.json:naturalist_specialty", "faqs.json:Que diferencia hay entre Identificacion de Peces y Naturalista Subacuatico"]
+    },
+    {
+      "id": "specialty_fish_identification",
+      "family": "specialty",
+      "cart_type": "course",
+      "services": {"cartagena": ["fish_identification_specialty"], "island": ["fish_identification_specialty_already_on_island"]},
+      "requires_certification": true,
+      "certifies": true,
+      "course_level": null,
+      "generic": false,
+      "min_age": 10,
+      "max_age": null,
+      "label": {"es": "Especialidad Identificación de Peces", "en": "Fish Identification specialty"},
+      "for_whom": {
+        "es": "Especialidad PADI para buzos certificados que quieren aprender a reconocer familias y especies de peces del Caribe. 1 día, 2 inmersiones.",
+        "en": "PADI specialty for certified divers who want to learn to recognise Caribbean fish families and species. 1 day, 2 dives."
+      },
+      "sources": ["services.json:fish_identification_specialty", "faqs.json:Que diferencia hay entre Identificacion de Peces y Naturalista Subacuatico"]
+    },
+    {
+      "id": "specialty_mindful_diving",
+      "family": "specialty",
+      "cart_type": "course",
+      "services": {"cartagena": ["mindful_diving"], "island": []},
+      "requires_certification": true,
+      "certifies": true,
+      "course_level": null,
+      "generic": false,
+      "min_age": 10,
+      "max_age": null,
+      "label": {"es": "Especialidad Mindful Diving", "en": "Mindful Diving specialty"},
+      "for_whom": {
+        "es": "Especialidad para buzos certificados que buscan un buceo más consciente: 2 días, 4 inmersiones con una nocturna de bioluminiscencia; obliga a dormir 1 noche en las islas.",
+        "en": "Specialty for certified divers looking for a more mindful dive experience: 2 days, 4 dives including a bioluminescent night dive; requires 1 night on the islands."
+      },
+      "sources": ["services.json:mindful_diving", "faqs.json:Como es la especialidad Mindful Diving desde Cartagena"]
+    }
+  ]
+}
