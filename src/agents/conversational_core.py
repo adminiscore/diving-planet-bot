@@ -40,6 +40,7 @@ from src.agents.intent_detector import (
     AGE_WORDS,
     IntentDetector,
     certification_claim,
+    courses_mentioned,
     matched_activity_categories,
 )
 from src.agents.llm_extractor import (
@@ -1206,20 +1207,13 @@ def _looks_like_deliberation(message: str) -> bool:
 # disparaba el ancla de 2+ opciones. Cada nombre de curso cuenta como una opción
 # propia. Conservador: solo nombres inequívocos de curso, no la palabra "curso"
 # suelta (evita casar dentro de "minicurso").
-# Claves = ids del registro de actividades (F3b): antes eran un vocabulario
-# propio ("open_water", "advanced"...) que no coincidia con ningun otro. Los
-# patrones son deteccion por vocabulario y se revisan en F5.
-_COURSE_MENTION_RE = {
-    "padi_open_water": re.compile(r"\bopen\s*water\b|\bowd\b", re.IGNORECASE),
-    "padi_advanced": re.compile(r"\badvanced\b|\baowd\b|\bavanzad\w*\b", re.IGNORECASE),
-    "padi_rescue": re.compile(r"\brescue\b|\brescate\b", re.IGNORECASE),
-    "padi_divemaster": re.compile(r"\bdive\s*master\b|\bdivemaster\b", re.IGNORECASE),
-    "specialty_nitrox": re.compile(r"\bnitrox\b|\benriched\s+air\b", re.IGNORECASE),
-}
+# Los nombres salen de la tabla UNICA del detector (`courses_mentioned`,
+# centralizacion 2026-09-15): antes esta era una segunda lista con variantes que
+# el detector de actividad no conocia.
 
 
 def _mentioned_courses(message: str) -> list:
-    return [c for c, pat in _COURSE_MENTION_RE.items() if pat.search(message)]
+    return courses_mentioned(message)
 
 
 def _mentioned_offerings(message: str) -> list:

@@ -31,7 +31,10 @@ def test_hand_written_text_tables_are_gone():
 
 
 def test_course_mentions_use_registry_ids():
-    assert set(core._COURSE_MENTION_RE) <= set(dom.activity_ids())
+    """Tabla unica de nombres de curso en el detector (centralizacion 2026-09-15)."""
+    from src.agents.intent_detector import _COURSE_NAME_PATTERNS
+    assert {activity_id for activity_id, _ in _COURSE_NAME_PATTERNS} <= set(dom.activity_ids())
+    assert not hasattr(core, "_COURSE_MENTION_RE"), "la segunda lista de cursos del nucleo volvio"
 
 
 @pytest.mark.parametrize("lang", LANGS)

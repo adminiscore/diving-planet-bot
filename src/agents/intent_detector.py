@@ -256,6 +256,48 @@ _SPECIALTY_KEYWORD_TO_ACTIVITY = (
     ("mindful", "specialty_mindful_diving"),
 )
 
+# Nombres de curso que por si solos identifican un producto, en el orden del
+# registro (nivel ascendente). Tabla UNICA (centralizacion 2026-09-15): antes el
+# detector buscaba subcadenas ("open water", "advanced"...) y el nucleo tenia su
+# propia `_COURSE_MENTION_RE` con variantes que el detector no conocia ("owd",
+# "aowd", "avanzado", "rescate", "enriched air"). Las especialidades por palabra
+# suelta ("peces", "fish") NO van aqui: solo cuentan con el contexto de
+# "especialidad" (`_SPECIALTY_KEYWORD_TO_ACTIVITY`).
+_COURSE_NAME_PATTERNS = (
+    ("padi_open_water", r"\bopen[\s-]*water\b|\bowd\b"),
+    ("padi_advanced", r"\badvanced\b|\baowd\b|\bavanzad\w*\b"),
+    ("padi_rescue", r"\brescue\b|\brescate\b"),
+    ("padi_divemaster", r"\bdive\s*master\b"),
+    ("specialty_nitrox", r"\bnitrox\b|\benriched\s+air\b"),
+)
+
+
+def courses_mentioned(message: str) -> list[str]:
+    """Ids de los cursos nombrados en el mensaje, en el orden del registro."""
+    text = message or ""
+    return [activity_id for activity_id, pattern in _COURSE_NAME_PATTERNS
+            if re.search(pattern, text, re.IGNORECASE)]
+
+
+def _distinct_course_levels(message: str) -> list[str]:
+    """Cursos con nivel nombrados, sin contar un nombre que solo aparece DENTRO del
+    nombre de otro curso nombrado: "advanced open water" es el Advanced, no el Open
+    Water. El nombre compuesto sale de la etiqueta del registro sin el sustantivo
+    del catalogo ("Advanced Open Water course" -> "advanced open water"). Si quedan
+    varios (una duda entre dos cursos), se conserva el orden del registro."""
+    text = " ".join(re.findall(r"\w+", strip_accents((message or "").lower())))
+    levels = [c for c in courses_mentioned(message) if dom.by_id(c).course_level]
+    nouns = _course_family_nouns()
+    dropped = set()
+    for other in levels:
+        for lang in dom.LANGS:
+            words = [w for w in re.findall(r"\w+", strip_accents(dom.by_id(other).label[lang].lower())) if w not in nouns]
+            phrase = " ".join(words)
+            if len(words) > 1 and re.search(rf"\b{re.escape(phrase)}\b", text):
+                dropped |= {c for c in levels
+                            if c != other and re.search(dict(_COURSE_NAME_PATTERNS)[c], phrase, re.IGNORECASE)}
+    return [c for c in levels if c not in dropped]
+
 _ACTIVITY_CATEGORY_PATTERNS: dict[str, list[str]] = {
     "certified_diving": _CERTIFIED_DIVING_PATTERNS,
     "minicourse": _MINICOURSE_PATTERNS,
@@ -699,20 +741,9 @@ class IntentDetector:
         elif any(re.search(pattern, message) for pattern in _PADI_COURSE_PATTERNS) and not self._holds_padi_cert(message):
             # Only a COURSE if they want to take it — "soy open water" (holds it)
             # is a certified diver, handled via is_certified + the activity fallback.
-            if 'open water' in message or 'open-water' in message:
-                intent.activity = "padi_open_water"
-                intent.service_id = dom.base_service_id(intent.activity)
-            elif 'advanced' in message:
-                intent.activity = "padi_advanced"
-                intent.service_id = dom.base_service_id(intent.activity)
-            elif 'rescue' in message:
-                intent.activity = "padi_rescue"
-                intent.service_id = dom.base_service_id(intent.activity)
-            elif 'divemaster' in message or 'dive master' in message:
-                intent.activity = "padi_divemaster"
-                intent.service_id = dom.base_service_id(intent.activity)
-            else:
-                intent.activity = "padi_course"
+            levels = _distinct_course_levels(message)
+            intent.activity = levels[0] if levels else "padi_course"
+            intent.service_id = dom.base_service_id(intent.activity)
             intent.detected_fields.append("activity")
         elif any(re.search(pattern, message) for pattern in _SPECIALTY_PATTERNS):
             # Sin nombre de especialidad reconocible: la generica, y el nucleo

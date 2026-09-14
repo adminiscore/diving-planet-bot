@@ -2666,3 +2666,45 @@ de grupo: el arnés no pasa por el núcleo y la regla no cambia repartos.
   mensajes (eval-set, baterías y 5 variantes): **solo cambian las 4 variantes con tilde**, las
   cuatro al reparto esperado (p. ej. "somos 5, dos no están certificados" →
   `{certified_diving: 3, undecided: 2}`).
+
+### `location`: medido con casos de ciudad + islas — sin cambios
+
+Se añadieron al eval-set 4 casos que nombran la ciudad y las islas (123 casos en total). Sin LLM,
+el regex acierta 3/4. Con la verificación de `location` (hoy en shadow), 3 repeticiones:
+
+| mensaje | esperado | regex | con verificación |
+|---|---|---|---|
+| "llegamos a cartagena y luego nos vamos a baru" | cartagena | cartagena | 3/3 |
+| "estoy en cartagena pero el hotel es en isla grande" | island | island | 3/3 |
+| "salimos desde cartagena, no estamos en las islas" | cartagena | cartagena | 3/3 |
+| "we're in cartagena now, staying on the islands tomorrow" | island | cartagena | **0/3** |
+
+La verificación no estropea los claros, pero tampoco arregla el ambiguo, así que un disparador
+propio no ganaría nada. Preguntar siempre que aparezcan ciudad e islas añadiría preguntas en los
+dos claros que hoy salen bien. **Sin cambios**: `location` sigue en shadow. El caso ambiguo queda en
+el eval-set como hueco conocido.
+
+### Centralización: nombres de curso con una sola fuente
+
+Primer paso del orden propuesto en el inventario ("actividad/producto desde una fuente").
+Había dos vocabularios de curso → id que no coincidían:
+- **Detector**: subcadenas en cadena if/elif ("open water" antes que "advanced": "quiero hacer
+  el advanced open water" salía **Open Water**).
+- **Núcleo** (`_COURSE_MENTION_RE`): variantes que el detector no conocía ("owd", "aowd",
+  "avanzado", "rescate", "enriched air").
+
+Ahora hay una tabla única en el detector, `_COURSE_NAME_PATTERNS` / `courses_mentioned`, en el
+orden del registro, que usan los dos. Las especialidades por palabra suelta ("peces", "fish") no
+entran: solo cuentan con el contexto de "especialidad".
+
+`_distinct_course_levels` descarta un nombre que solo aparece dentro de otro curso nombrado. El
+nombre compuesto sale de la etiqueta del registro sin el sustantivo del catálogo ("Advanced Open
+Water course" → "advanced open water"). Si quedan varios, se conserva el orden del registro.
+
+Foto del detector y del núcleo antes/después sobre 202 mensajes (eval-set, baterías y
+variantes de curso):
+- Primer intento, "el nivel más alto nombrado": 5 cambios. Arreglaba "advanced open water",
+  pero también cambiaba 4 dudas entre dos cursos ("open water o advanced" → Advanced): otra
+  suposición.
+- **Versión final: 1 cambio**, "advanced open water" → `padi_advanced`. Cursos mencionados y
+  ofertas del núcleo, idénticos.

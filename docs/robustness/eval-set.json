@@ -1360,6 +1360,46 @@
       },
       "source": "tarea 8, polaridad contradictoria (tests/test_nationality_veto_trigger.py), 2026-09-14",
       "notes": "Regex True (fallo); el veto LLM lo corrige a False 3/3 (2026-09-14). Con el flag apagado sigue fallando."
+    },
+    {
+      "id": "loc-cartagena-luego-baru",
+      "message": "llegamos a cartagena y luego nos vamos a baru",
+      "lang": "es",
+      "expected": {
+        "location": "cartagena"
+      },
+      "source": "tarea location con disparador propio, 2026-09-15",
+      "notes": "Barú se cotiza como salida desde Cartagena (pricing/políticas). Caso de ciudad + islas para medir `location` (2026-09-15)."
+    },
+    {
+      "id": "loc-cartagena-pero-hotel-isla-grande",
+      "message": "estoy en cartagena pero el hotel es en isla grande",
+      "lang": "es",
+      "expected": {
+        "location": "island"
+      },
+      "source": "tarea location con disparador propio, 2026-09-15",
+      "notes": "Se hospeda en Isla Grande: sale desde las islas. Caso de ciudad + islas (2026-09-15)."
+    },
+    {
+      "id": "loc-desde-cartagena-no-en-islas",
+      "message": "salimos desde cartagena, no estamos en las islas",
+      "lang": "es",
+      "expected": {
+        "location": "cartagena"
+      },
+      "source": "tarea location con disparador propio, 2026-09-15",
+      "notes": "Negación explícita de las islas. Caso de ciudad + islas (2026-09-15)."
+    },
+    {
+      "id": "loc-en-cartagena-now-islands-tomorrow",
+      "message": "we're in cartagena now, staying on the islands tomorrow",
+      "lang": "en",
+      "expected": {
+        "location": "island"
+      },
+      "source": "tarea location con disparador propio, 2026-09-15",
+      "notes": "Se aloja en las islas cuando bucea: sale desde las islas. Caso ambiguo de ciudad + islas (2026-09-15)."
     }
   ]
 }
