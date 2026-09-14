@@ -1592,9 +1592,13 @@ async def _understand(state: ConversationState, message: str) -> tuple:
     # se aplica patch). Ahorra 1 llamada LLM en el saludo, el turno más común,
     # sin cambiar conducta (fill_gaps devolvía `{}` para un saludo).
     if gaps and not _looks_like_question(message) and not _is_greeting_only(message):
-        # Si la peticion fusionada de arriba ya trajo el patch, no se repite
-        # la llamada; si no hubo fusion (solo huecos, o la fusion degrado),
-        # se pide como siempre.
+        # Si hubo peticion fusionada arriba, su patch se usa tal cual y NO se
+        # repite la llamada. Ojo: cuando la API falla, `extract_and_verify`
+        # devuelve `({}, {})` (no None), asi que el turno sigue con solo el regex
+        # y el bot pregunta lo que falte. Es deliberado (decidido 2026-09-14): una
+        # segunda peticion contra la misma API que acaba de fallar fallaria igual
+        # y gastaria RPD. `fill_gaps` solo se pide si no hubo fusion (solo huecos)
+        # o si la fusion lanzo una excepcion inesperada (`_combined_patch = None`).
         patch = (
             _combined_patch if _combined_patch is not None
             else await fill_gaps(

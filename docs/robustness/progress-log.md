@@ -2404,3 +2404,12 @@ Decisión: el detector **no** se abstiene en certificación. El veto de `is_cert
 disparador genérico (todo turno que resuelve el campo, el riesgo que documentaba
 `test_field_veto_generic_trigger_risk.py`) al propio. Flag apagado: hoy no ganaría nada.
 `location` sigue con el genérico, en shadow.
+
+### Tarea 13: el fallback de la petición fusionada — decidido no tenerlo
+
+`extract_and_verify` captura sus errores y devuelve `({}, {})`, así que `_understand` nunca
+volvía a `fill_gaps` como decía su comentario: ante un fallo, el turno sigue solo con el regex y
+el bot pregunta lo que falte. Se mantiene así: una segunda petición contra la misma API que
+acaba de fallar fallaría igual y gastaría RPD, el recurso escaso. Solo se corrige el comentario
+para que describa el comportamiento real. `fill_gaps` se sigue pidiendo si no hubo fusión o si
+la fusión lanza una excepción inesperada.
