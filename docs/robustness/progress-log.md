@@ -2413,3 +2413,28 @@ el bot pregunta lo que falte. Se mantiene así: una segunda petición contra la 
 acaba de fallar fallaría igual y gastaría RPD, el recurso escaso. Solo se corrige el comentario
 para que describa el comportamiento real. `fill_gaps` se sigue pidiendo si no hubo fusión o si
 la fusión lanza una excepción inesperada.
+
+### `location`: sin disparador propio por falta de casos
+
+En los 176 mensajes del eval-set y las baterías **ninguno** nombra a la vez la ciudad y las islas,
+así que no hay con qué medir una regla de ambigüedad. En 4 mensajes de prueba el regex acierta los
+claros ("llegamos a cartagena y luego nos vamos a baru" → cartagena; Barú se cotiza como salida
+desde Cartagena) y solo duda en "we're in cartagena now, staying on the islands tomorrow". Queda
+pendiente: añadir antes casos así al eval-set. Sigue en shadow con el disparador genérico.
+
+### Tarea 10: la carta de referido es un fallo de precio, no solo de vocabulario
+
+"ya hice la teoria y la piscina en mi centro PADI y traigo la carta de referido para terminar el
+open water" se resuelve como `padi_open_water`. En `services.json` el referido cuesta **474 USD**
+(432 ya en las islas) frente a **693 USD** del Open Water (595,8 en las islas): el bot cotizaría
+**219 USD de más**.
+
+No se arregla hoy con los mecanismos existentes:
+- el veto de `activity` solo dispara con 2+ categorías (`_activity_should_verify`) y este mensaje
+  tiene una sola (curso);
+- aunque disparara, `EXTRACTION_TOOL` no tiene `padi_open_water_referral` en el enum, y abrirlo
+  rompía otros campos del mismo prompt (F2b).
+
+Pendiente de diseño medido. Idea a evaluar: cuando la actividad resuelta tiene **hermanas en el
+registro** (misma familia y nivel, como Open Water y su referido), elegir entre ellas con un
+resolutor acotado al estilo de `course_level` (F4), no con el extractor general.
