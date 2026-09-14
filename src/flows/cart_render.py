@@ -80,42 +80,32 @@ def _service_for_location(service_id: str, state: ConversationState) -> str:
 
 
 def _cart_label_for(item_type: str, plan: str | None, lang: str) -> str:
-    """Human-readable label for a cart item."""
-    if item_type == "cert":
-        service = SERVICES.get(plan) or {}
-        label = service.get(f"name_{lang}") or service.get("name_es")
-        if label:
-            return label
-        if lang == "es":
-            return "Salidas de Buceo - 2 inmersiones (1 día)" if plan == "2_dives_1_day" else "Buceo certificado"
-        return "Fun Dives - 2 dives (1 day)" if plan == "2_dives_1_day" else "Certified diving"
-    if item_type == "beginner":
-        return "Buceo principiantes (Minicurso)" if lang == "es" else "Beginner diving (Mini-course)"
-    if item_type == "refresh":
-        return "Refresher para certificados" if lang == "es" else "Certified diver refresher"
-    if item_type == "snorkel":
-        return "Snorkel" if lang == "es" else "Snorkeling"
+    """Etiqueta de un item del carrito. Con plan concreto, el nombre del servicio del
+    catalogo; si no, la etiqueta de precio (o el nombre) de su actividad en el
+    registro. Antes eran textos escritos aqui por tipo de item."""
+    service = (SERVICES.get(plan) or {}) if plan else {}
+    name = service.get(f"name_{lang}") or service.get("name_es")
+    if name:
+        return name
     if item_type == "course":
-        service = SERVICES.get(plan) or {}
-        return service.get(f"name_{lang}") or service.get("name_es") or ("Curso PADI" if lang == "es" else "PADI course")
-    if item_type == "companion":
-        return "Acompañante (sin actividad)" if lang == "es" else "Companion (no activity)"
+        # Varias actividades comparten `course`: sin plan concreto, la etiqueta generica.
+        return dom.label("padi_course", lang)
+    activity = dom.cart_activity_for_type(item_type)
+    if activity:
+        return dom.text(activity, "price_label", lang) or dom.label(activity, lang)
     return item_type
 
 
 def _cart_service_id(item_type: str, plan: str | None, state: ConversationState) -> str | None:
-    """Map a cart item to the catalog service ID (for prices and booking URLs)."""
-    if item_type == "cert":
-        return plan or _service_for_location("2_dives_1_day", state)
-    if item_type == "beginner":
-        return _service_for_location("minicourse", state)
-    if item_type == "refresh":
-        return _service_for_location("minicourse", state)
-    if item_type == "snorkel":
-        return _service_for_location("snorkeling", state)
-    if item_type == "course":
+    """Servicio del catalogo de un item (precio y link). El plan concreto manda
+    (buceo certificado, cursos); si no, el servicio base de la actividad de ese tipo
+    de item en el registro, en su variante de ubicacion."""
+    if plan:
         return plan
-    return None
+    if item_type == "course":
+        return None
+    base = dom.base_service_id(dom.cart_activity_for_type(item_type) or "")
+    return _service_for_location(base, state) if base else None
 
 
 def _parse_mixed_quantity(message: str) -> int | None:

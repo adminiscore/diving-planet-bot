@@ -167,15 +167,27 @@ def sibling_ids(activity_id: str | None) -> list[str]:
     ]
 
 
+def _is_chargeable(a: Activity) -> bool:
+    """El carrito sabe cobrarla: servicios en el catalogo, o el acompanante sin
+    actividad (su precio vive en pricing.json). Genericas y actividades sin precio
+    (Bubble Makers, D2) no."""
+    return bool(a.cart_type) and not a.generic and (bool(a.all_services()) or a.family == "companion")
+
+
 def cart_activity_ids() -> list[str]:
-    """Actividades que el carrito sabe cobrar: las que tienen servicios propios en el
-    catalogo y el acompanante sin actividad, cuyo precio vive en pricing.json.
-    Genericas, `sold_as` y actividades sin precio (Bubble Makers, D2) quedan fuera."""
-    return [
-        a.id for a in registry().activities
-        if a.cart_type and not a.generic and a.sold_as is None
-        and (a.all_services() or a.family == "companion")
-    ]
+    """Actividades que pueden ser un item del carrito por si mismas (sin `sold_as`)."""
+    return [a.id for a in registry().activities if a.sold_as is None and _is_chargeable(a)]
+
+
+def cart_activity_for_type(cart_type: str) -> str | None:
+    """La actividad que representa un tipo de item del carrito (`cert`, `beginner`,
+    `snorkel`, `refresh`, `companion`): la primera cobrable con ese `cart_type`.
+    Incluye las `sold_as` (el refresher). `course` agrupa varias: su servicio va en el
+    propio item, no aqui."""
+    return next(
+        (a.id for a in registry().activities if a.cart_type == cart_type and _is_chargeable(a)),
+        None,
+    )
 
 
 def bookable_activity_ids() -> list[str]:

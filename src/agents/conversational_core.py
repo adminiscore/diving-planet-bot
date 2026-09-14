@@ -2000,30 +2000,22 @@ def _is_greeting_only(message: str) -> bool:
 # ─── Cierre: carrito desde slots + resumen determinista con links ───
 
 def _cart_item(state: ConversationState, activity: str, qty: int) -> dict:
-    """Ítem del carrito para una actividad de producto (plan del catálogo)."""
-    if activity == "certified_diving":
+    """Ítem del carrito para una actividad: el tipo sale del registro (`cart_type`).
+    Solo dos tipos llevan plan propio: el buceo certificado (plan de inmersiones del
+    catálogo) y los cursos, con el servicio de ESTE ítem en su variante de ubicación
+    (un acompañante que elige Open Water no hereda el servicio del principal;
+    Divemaster y el referido se cierran con asesor por `contact_only`)."""
+    registered = dom.by_id(activity)
+    item_type = (registered.cart_type if registered else None) or "course"
+    plan = None
+    if item_type == "cert":
         plan = _resolve_cert_plan(state)
-        return {"type": "cert", "qty": qty, "plan": plan,
-                "label": cart_render.cart_label_for("cert", plan, state.language)}
-    if activity == "minicourse":
-        return {"type": "beginner", "qty": qty, "plan": None,
-                "label": cart_render.cart_label_for("beginner", None, state.language)}
-    if activity == "snorkel":
-        return {"type": "snorkel", "qty": qty, "plan": None,
-                "label": cart_render.cart_label_for("snorkel", None, state.language)}
-    if activity == "companion":
-        return {"type": "companion", "qty": qty, "plan": None,
-                "label": cart_render.cart_label_for("companion", None, state.language)}
-    # Curso PADI: resolver la variante por ubicación (open_water →
-    # open_water_already_on_island si está en las islas). Divemaster es
-    # contact-only y _cart_booking_blocks ya lo cierra vía asesor (sin link).
-    # El servicio es el del curso de ESTE ítem: un acompañante que elige Open
-    # Water no hereda el servicio de la actividad principal.
-    plan = state.detected_service_id if activity == state.detected_activity else dom.base_service_id(activity)
-    if plan:
-        plan = cart_render.service_for_location(plan, state)
-    return {"type": "course", "qty": qty, "plan": plan,
-            "label": cart_render.cart_label_for("course", plan, state.language)}
+    elif item_type == "course":
+        plan = state.detected_service_id if activity == state.detected_activity else dom.base_service_id(activity)
+        if plan:
+            plan = cart_render.service_for_location(plan, state)
+    return {"type": item_type, "qty": qty, "plan": plan,
+            "label": cart_render.cart_label_for(item_type, plan, state.language)}
 
 
 def _derive_kids_counts(state: ConversationState) -> None:
