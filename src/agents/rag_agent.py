@@ -22,9 +22,10 @@ from src.agents.grounding_check import (
     requests_personal_data,
     urls_grounded,
 )
-from src.agents.intent_detector import certification_status
+from src.agents.intent_detector import certification_status, detect_cert_day_count, dive_counts_in
 from src.agents.query_rewriter import condense_query
 from src.config import settings
+from src.domain import activities as dom
 from src.knowledge.loader import (
     load_brand_tone,
     load_conversations,
@@ -1071,30 +1072,40 @@ def _canonical_price_named_services_answer(query: str, lang: str) -> str | None:
 # alucinación confiada es más grave que abstenerse) para el mismo tipo de
 # pregunta, sobre datos que SÍ están en `SERVICES` con precio exacto (igual
 # que `_canonical_price_named_services_answer` para los 4 servicios base).
-# Se responde determinista para los 4 paquetes multi-día reales (4/5/7/9
-# inmersiones) en vez de arriesgar otra alucinación.
-_PRICE_PACKAGE_PATTERNS: list[tuple[str, re.Pattern]] = [
-    ("4_dives_2_days", re.compile(r"\b4\s*(?:d[ií]as?|dives?|inmersi\w+|buceos?)\b|\bpaquete\s+de\s+4\b|\b4[\s-]dive\s+package\b", re.IGNORECASE)),
-    ("5_dives_2_days", re.compile(r"\b5\s*(?:d[ií]as?|dives?|inmersi\w+|buceos?)\b|\bpaquete\s+de\s+5\b|\b5[\s-]dive\s+package\b", re.IGNORECASE)),
-    ("7_dives_3_days", re.compile(r"\b7\s*(?:d[ií]as?|dives?|inmersi\w+|buceos?)\b|\bpaquete\s+de\s+7\b|\b7[\s-]dive\s+package\b", re.IGNORECASE)),
-    ("9_dives_4_days", re.compile(r"\b9\s*(?:d[ií]as?|dives?|inmersi\w+|buceos?)\b|\bpaquete\s+de\s+9\b|\b9[\s-]dive\s+package\b", re.IGNORECASE)),
-]
+# Se responde determinista para los paquetes multi-día reales en vez de arriesgar
+# otra alucinación.
+def _price_package_service(query: str) -> str | None:
+    """Paquete multi-día que nombra la pregunta, por inmersiones o por días, o None si
+    no nombra exactamente uno (2026-09-15: mismas lecturas que el detector y tamaños del
+    catálogo). La lista anterior leía "paquete de 4 días" como el de 4 inmersiones y
+    "plan de 5 días" como el de 5 inmersiones, y no conocía "cinco inmersiones"."""
+    multi_day = {dives: pkg for dives, pkg in dom.dive_packages().items() if pkg[0] > 1}
+    dives = [n for n in dive_counts_in(query) if n in multi_day]
+    days = detect_cert_day_count(query)
+    if len(dives) > 1:
+        return None
+    if dives:
+        candidates = [n for n in dives if days is None or multi_day[n][0] == days]
+    elif days:
+        candidates = [n for n, (pkg_days, _) in multi_day.items() if pkg_days == days]
+    else:
+        return None
+    return multi_day[candidates[0]][1] if len(candidates) == 1 else None
 
 
 def _canonical_price_package_answer(query: str, lang: str) -> str | None:
-    """Precio del paquete multi-día nombrado explícitamente por su número de
-    inmersiones (4/5/7/9) — solo cuando la pregunta nombra EXACTAMENTE uno
-    de ellos sin ambigüedad; 2+ o ninguno se deja a RAG."""
+    """Precio del paquete multi-día nombrado explícitamente — solo cuando la pregunta
+    nombra EXACTAMENTE uno sin ambigüedad; 2+ o ninguno se deja a RAG."""
     if not _PRICE_QUESTION.search(query):
         return None
-    matched = [key for key, pat in _PRICE_PACKAGE_PATTERNS if pat.search(query)]
-    if len(matched) != 1:
+    service_id = _price_package_service(query)
+    if service_id is None:
         return None
     try:
         from src.flows.catalog import SERVICES
     except Exception:
         return None
-    svc = SERVICES.get(matched[0], {})
+    svc = SERVICES.get(service_id, {})
     usd, cop = svc.get("price_usd"), svc.get("price_cop")
     if usd is None and cop is None:
         return None

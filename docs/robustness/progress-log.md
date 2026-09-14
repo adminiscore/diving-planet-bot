@@ -2986,3 +2986,45 @@ principio: la duda solo delega si el detector no encuentra ningún otro campo en
 - Foto: **4 cambios de 224**, los 4 buscados, sin cambios en el detector.
 - Sigue abierto: "que solo nos acompañe en la lancha, no se mete al agua" casa "no se" (es el "se"
   reflexivo) y no trae otros campos.
+
+### Paquetes de buceo con una sola fuente, y dos fallos de precio en el RAG
+
+**Duplicado.** Los tamaños de paquete estaban copiados en cinco sitios:
+- el detector (`(2,3,4,5,7,9)`, `(5,7,9)`, `(1,2,3,4)`);
+- el núcleo (`_DIVES_TO_BASE_PLAN`, `_DAYS_TO_DIVES` y `_PACKAGE_DIVE_COUNT_IN_TEXT_RE`, que solo leía
+  4/5/7/9 en cifra);
+- el RAG (`_PRICE_PACKAGE_PATTERNS`, un regex por paquete).
+
+**Fallos reales en la línea base** (21 preguntas de precio, sin LLM):
+- "¿cuánto cuesta el paquete de 4 días?" y "cuánto cuesta bucear 4 días?" respondían el precio del
+  paquete de **4 inmersiones** (2 días); el de 4 días es el de 9 inmersiones.
+- "plan de 5 días" y "paquete de 7 días" respondían los paquetes de 5 y 7 inmersiones, que no son de
+  esos días.
+- Sin respuesta: "cinco inmersiones", "five dives", "pack de 9", "3-day"/"4-day dive package" y
+  "9 buceos en 4 días".
+- En el núcleo, confirmar "quiero este paquete" cogía el primer número del mensaje del bot, aunque el
+  bot hubiera comparado dos paquetes.
+
+**Cambio:**
+- `dom.dive_packages()` deriva `{inmersiones: (días, servicio)}` de los ids `N_dives_D_days` de
+  `services.json`.
+- `dive_counts_in(texto)` (detector) es la única lectura de "N inmersiones":
+  - devuelve todos los tamaños reales que nombra el texto, incluidas coordinaciones ("4 o 5
+    inmersiones");
+  - un "paquete de N" sin unidad solo cuenta si N no puede ser un número de días.
+- `detect_cert_dive_count` devuelve un número solo si hay exactamente uno (antes, el primero).
+- El núcleo deriva sus tablas (mismos valores; con solo los días sigue eligiendo el paquete más grande)
+  y confirma el paquete solo si el bot describió uno multi-día.
+- El RAG responde precio solo si la pregunta apunta a exactamente un paquete multi-día, por
+  inmersiones o por días. "2 días" son dos paquetes (4 o 5 inmersiones): no supone.
+
+**Medido:**
+- Detector: **0 cambios** en 244 mensajes.
+- Confirmación de paquete frente a HEAD (worktree): **2 cambios**, los dos correctos (dos paquetes
+  comparados → no elige; "cinco inmersiones" → 5).
+- Precios: **11 cambios de 21, todos a bien** (4 precios equivocados que desaparecen, 7 respuestas
+  nuevas correctas). Los tests de precio existentes siguen pasando.
+- Suite: 2109 passed.
+
+Queda: `_BARE_PACKAGE_DIVE_RE` escribe todavía `5|7|9` en el regex. El filtro ya sale del catálogo,
+pero un paquete nuevo de otro tamaño sin unidad no se leería.

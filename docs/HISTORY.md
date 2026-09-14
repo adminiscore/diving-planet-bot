@@ -23,7 +23,9 @@ History
 * **Grupo con nacionalidades mixtas: medido y revertido.** Añadirlo a la definición de `is_colombian` rompía al residente y solo arreglaba 1 de 6 mixtos. Hace falta un valor propio. Los 7 casos nuevos se quedan en el eval-set: **221/230**.
 * **Un "no sé" sobre otra cosa ya no fija la salida desde Cartagena.** Con la ubicación pendiente, "no sé si hacer el minicurso o el snorkel" o "me interesa el curso PADI, no se bucear" daban la ubicación por resuelta en Cartagena (cambia servicio y precio) y el turno se saltaba la comparación de opciones. La duda solo delega si el mensaje no trae ningún otro campo, el mismo principio que ya aplicaba el resolutor LLM. Foto: 4 cambios de 224, los buscados; "no sé" o "da igual" a secas siguen recomendando Cartagena.
 * **Ubicación, analizada sin unificar:** el resolutor del núcleo y el detector discrepan en 15 de 262 mensajes y tienen precedencias contrarias; el detector confunde el destino de la excursión ("ir a las islas del rosario desde cartagena") con dónde se aloja. Queda para la vía LLM.
-* Suite: **2087 passed / 18 skipped**.
+* **Paquetes de buceo con una sola fuente, y precio correcto por días.** "¿cuánto cuesta el paquete de 4 días?" respondía el precio del paquete de 4 inmersiones (el de 4 días es el de 9), y "plan de 5 días" o "paquete de 7 días" respondían paquetes que no son de esos días. Los tamaños estaban copiados en cinco sitios; ahora salen de `services.json` (`dom.dive_packages()`) y "N inmersiones" se lee con una función compartida (`dive_counts_in`) por el detector, el núcleo y el RAG. El RAG solo da precio si la pregunta apunta a un único paquete ("2 días" o "4 o 5 inmersiones" no suponen), y confirmar "quiero este paquete" ya no coge el primer número si el bot comparó dos. Medido sin LLM: detector 0 cambios en 244 mensajes; precios 11 cambios de 21, todos a bien.
+* **Para reinvestigar** (owner): grupo mixto → USD (necesita un valor propio, no el booleano), respuesta doble tras F5a y unificar la ubicación entre detector y núcleo. Detalle en `docs/robustness/NEXT-SESSION-PROMPT.md`.
+* Suite: **2109 passed / 18 skipped**.
 
 0.25.0 - (2026-09-14)
 ----------------------

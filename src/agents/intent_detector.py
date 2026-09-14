@@ -39,9 +39,14 @@ class DetectedIntent:
 # Explicit certified dive-count: "2 inmersiones", "paquete de 5 buceos",
 # "7 buceos en 3 dias", "2-dive package". The number must sit right before a
 # dive noun so "hace 2 años sin bucear" (a timeframe, not a count) never matches.
-_CERT_DIVE_COUNT_RE = re.compile(
-    r"\b(\d+|un[oa]?|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|"
+_DIVE_NUMBER = (
+    r"(\d+|un[oa]?|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|"
     r"one|two|three|four|five|six|seven|eight|nine)"
+)
+# "4 o 5 inmersiones" nombra dos paquetes: la cifra coordinada tambien se captura para
+# no quedarse con una sola y dar por elegido lo que el cliente aun duda (2026-09-15).
+_CERT_DIVE_COUNT_RE = re.compile(
+    r"\b" + _DIVE_NUMBER + r"(?:\s*(?:,|o|u|y|or|and)\s*" + _DIVE_NUMBER + r")?"
     r"[\s\-]+(?:inmersi\w+|buceos?|dives?|immersions?)\b",
     re.IGNORECASE,
 )
@@ -106,18 +111,33 @@ def detect_cert_dive_count(message: str) -> int | None:
     """Requested certified dive-count as a real package size (2/3/4/5/7/9), or None.
     Shared by the intent detector and the cart's cert-plan step so a natural-language
     "2 buceos" is understood in both places."""
-    message = message or ""
-    match = _CERT_DIVE_COUNT_RE.search(message)
-    if match:
-        token = match.group(1).lower()
-        n = int(token) if token.isdigit() else _DIVE_WORD_TO_NUM.get(token)
-        return n if n in (2, 3, 4, 5, 7, 9) else None
-    match = _BARE_PACKAGE_DIVE_RE.search(message)
-    if match:
-        token = next(g for g in match.groups() if g is not None).lower()
-        n = int(token) if token.isdigit() else _DIVE_WORD_TO_NUM.get(token)
-        return n if n in (5, 7, 9) else None
-    return None
+    counts = dive_counts_in(message)
+    return counts[0] if len(counts) == 1 else None
+
+
+def _dive_number(token: str) -> int | None:
+    token = token.lower()
+    return int(token) if token.isdigit() else _DIVE_WORD_TO_NUM.get(token)
+
+
+def dive_counts_in(message: str) -> list[int]:
+    """Tamanos de paquete reales que nombra el texto, en orden y sin repetir. Unica
+    lectura de "N inmersiones" para el detector, el nucleo (paquete que describio el
+    bot) y el RAG (precio). Los tamanos salen del catalogo (`dom.dive_packages`). Un
+    "paquete de N" sin unidad solo cuenta si N no puede ser un numero de dias."""
+    packages = dom.dive_packages()
+    day_counts = {days for days, _ in packages.values()}
+    counts = [
+        _dive_number(token)
+        for match in _CERT_DIVE_COUNT_RE.finditer(message or "")
+        for token in match.groups() if token
+    ]
+    counts += [
+        n for match in _BARE_PACKAGE_DIVE_RE.finditer(message or "")
+        for n in (_dive_number(token) for token in match.groups() if token)
+        if n not in day_counts
+    ]
+    return list(dict.fromkeys(n for n in counts if n in packages))
 
 
 def detect_cert_day_count(message: str) -> int | None:
@@ -127,9 +147,8 @@ def detect_cert_day_count(message: str) -> int | None:
     match = _CERT_DAY_COUNT_RE.search(message or "")
     if not match:
         return None
-    token = next(g for g in match.groups() if g is not None).lower()
-    n = int(token) if token.isdigit() else _DIVE_WORD_TO_NUM.get(token)
-    return n if n in (1, 2, 3, 4) else None
+    n = _dive_number(next(g for g in match.groups() if g is not None))
+    return n if n in {days for days, _ in dom.dive_packages().values()} else None
 
 
 # Edades en PALABRA (2026-07-24, opción A del análisis del gate age-eligibility).

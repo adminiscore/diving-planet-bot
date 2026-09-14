@@ -256,6 +256,27 @@ def business_context(lang: str, ids: list[str] | None = None) -> str:
     return "\n".join(lines)
 
 
+_DIVE_PACKAGE_ID = re.compile(r"^(\d+)_dives?_(\d+)_days?$")
+
+
+@lru_cache(maxsize=1)
+def dive_packages() -> dict[int, tuple[int, str]]:
+    """Paquetes de buceo certificado del catalogo: {inmersiones: (dias, servicio base)}.
+
+    Fuente unica de los tamanos de paquete (2026-09-15). Estaban copiados en el
+    detector ((2,3,4,5,7,9), (5,7,9), (1,2,3,4)), en el nucleo (`_DIVES_TO_BASE_PLAN`,
+    `_DAYS_TO_DIVES`) y en el RAG, que ademas leia "paquete de 4 dias" como el de 4
+    inmersiones. Sale de los ids `N_dives_D_days` de services.json; las variantes de
+    isla se resuelven aparte (`cart_render.service_for_location`)."""
+    catalog = json.loads(SERVICES_PATH.read_text(encoding="utf-8-sig")).get("services", {})
+    packages = {}
+    for service_id in catalog:
+        match = _DIVE_PACKAGE_ID.match(service_id)
+        if match:
+            packages[int(match.group(1))] = (int(match.group(2)), service_id)
+    return dict(sorted(packages.items()))
+
+
 def validate(services_path: Path = SERVICES_PATH) -> list[str]:
     """Problemas de coherencia del registro contra `services.json`. Lista vacia = OK.
 

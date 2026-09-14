@@ -41,6 +41,7 @@ from src.agents.intent_detector import (
     IntentDetector,
     certification_claim,
     courses_mentioned,
+    dive_counts_in,
     matched_activity_categories,
 )
 from src.agents.llm_extractor import (
@@ -98,9 +99,13 @@ _LLM_RESOLVABLE_SLOTS = frozenset({
 # resolved_short`).
 
 
-_DIVES_TO_BASE_PLAN = {2: "2_dives_1_day", 3: "3_dives_1_day", 4: "4_dives_2_days",
-                       5: "5_dives_2_days", 7: "7_dives_3_days", 9: "9_dives_4_days"}
-_DAYS_TO_DIVES = {2: 5, 3: 7, 4: 9}
+# Desde el catalogo (`dom.dive_packages`, 2026-09-15). Con solo los dias se elige el
+# paquete mas grande de esa duracion (2 dias -> 5 inmersiones), como antes.
+_DIVES_TO_BASE_PLAN = {dives: service for dives, (_, service) in dom.dive_packages().items()}
+_DAYS_TO_DIVES = {
+    days: max(dives for dives, (pkg_days, _) in dom.dive_packages().items() if pkg_days == days)
+    for days, _ in dom.dive_packages().values() if days > 1
+}
 
 # Cliente confirma un paquete multi-día deícticamente ("quiero este paquete",
 # sin repetir el número) justo después de que el bot lo describió -- hallazgo
@@ -113,10 +118,6 @@ _DAYS_TO_DIVES = {2: 5, 3: 7, 4: 9}
 _CONFIRMS_DESCRIBED_PACKAGE_RE = re.compile(
     r"quiero\s+(?:este|ese|el)\s+paquete|quiero\s+ir\s+con\s+(?:este|ese|el)\s+plan|"
     r"i\s+want\s+(?:this|that|the)\s+package|(?:l['e]|voy\s+con)\s+(?:este|ese)\s+paquete",
-    re.IGNORECASE,
-)
-_PACKAGE_DIVE_COUNT_IN_TEXT_RE = re.compile(
-    r"\bpaquete\s+de\s+(4|5|7|9)\b|\b(4|5|7|9)\s*(?:inmersiones|buceos|dives?)\b",
     re.IGNORECASE,
 )
 
@@ -136,12 +137,12 @@ def _maybe_apply_confirmed_package(state: ConversationState, message: str) -> No
         (h.get("content", "") for h in reversed(state.history or []) if h.get("role") == "assistant"),
         "",
     )
-    m = _PACKAGE_DIVE_COUNT_IN_TEXT_RE.search(last_bot_msg)
-    if not m:
+    # Solo si el bot describio UN paquete multi-dia: si comparo varios, "este paquete"
+    # no dice cual (2026-09-15, lectura compartida con el detector y el RAG).
+    multi_day = [n for n in dive_counts_in(last_bot_msg) if dom.dive_packages()[n][0] > 1]
+    if len(multi_day) != 1 or multi_day[0] == state.detected_cert_dives:
         return
-    dives = int(m.group(1) or m.group(2))
-    if dives not in _DIVES_TO_BASE_PLAN or dives == state.detected_cert_dives:
-        return
+    dives = multi_day[0]
     state.detected_cert_dives = dives
     state.mixed_cart = []
 
