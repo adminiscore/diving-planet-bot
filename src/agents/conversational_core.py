@@ -52,7 +52,7 @@ from src.agents.llm_extractor import (
 )
 from src.agents.notes_extractor import extract_notes
 from src.domain import activities as dom
-from src.flows import cart_render
+from src.flows import cart_render, eligibility
 from src.flows.state import ConversationState, Step
 from src.utils.fuzzy import is_affirmative, is_negative
 
@@ -284,6 +284,20 @@ def _set_concrete_activity(state: ConversationState, activity_id: str) -> None:
     """Fija la actividad concreta elegida y su servicio desde el registro."""
     state.detected_activity = activity_id
     state.detected_service_id = dom.base_service_id(activity_id)
+
+
+def _companion_activity_options(state: ConversationState) -> list[str]:
+    """Lo que el bot RECOMIENDA a un acompañante que no dijo qué quiere hacer
+    (owner 2026-09-14: "no podemos dar por hecho; recomendamos si entendemos la
+    situación, pero el cliente elige").
+
+    Base: las opciones de un principiante de `eligibility` (minicurso, snorkel e ir
+    de acompañante). El curso Open Water se añade solo si se sabe que se quedan
+    varios días: certificarse no cabe en un día."""
+    options = [eligibility.option_activity_id(o) for o in eligibility.beginner_options_for_age(None)]
+    if state.detected_duration == "multi_day" and "minicourse" in options:
+        options.insert(options.index("minicourse") + 1, "padi_open_water")
+    return [o for o in options if dom.by_id(o) is not None]
 
 
 def next_missing_slot(state: ConversationState) -> str | None:
@@ -528,13 +542,37 @@ def ask_slot(state: ConversationState, slot: str, *, reasking: bool = False) -> 
             f"How many people would that be for {label}? That way I can give you the exact plan. 😊"
         )
     if slot == SLOT_COMPANION_ACTIVITY:
-        return (
-            "¿Qué le gustaría hacer a tu acompañante — probar el buceo con el "
-            "*minicurso*, o prefiere *snorkel*?"
+        # Dos pasos, mismo slot pendiente: sin saber si se quedan uno o varios días
+        # no se puede recomendar bien (el Open Water necesita varios), así que se
+        # pregunta primero, como la nacionalidad o la ubicación. Con ese dato, se
+        # recomiendan las opciones y el cliente elige.
+        if state.detected_duration is None:
+            state.quick_replies = (
+                [{"title": "☀️ Un día", "value": "single_day"},
+                 {"title": "🏝️ Varios días", "value": "multi_day"}]
+                if lang == "es" else
+                [{"title": "☀️ One day", "value": "single_day"},
+                 {"title": "🏝️ Several days", "value": "multi_day"}]
+            )
+            return (
+                "¡Qué bien que venga alguien más! 🌊 Para recomendarle lo que mejor le "
+                "encaje: ¿van a estar *un solo día* o *varios días*?"
+                if lang == "es" else
+                "Great that someone else is coming! 🌊 So I can recommend what suits "
+                "them best: will you be here for *one day* or *several days*?"
+            )
+        options = _companion_activity_options(state)
+        state.quick_replies = [{"title": dom.label(o, lang), "value": o} for o in options]
+        lines = []
+        for option in options:
+            pitch = dom.text(option, "pitch", lang)
+            lines.append(f"• *{dom.label(option, lang)}*" + (f" — {pitch}" if pitch else ""))
+        head = (
+            "Para tu acompañante te recomiendo estas opciones. ¿Cuál le apetece más? 🐠"
             if lang == "es" else
-            "What would your companion like to do — try diving with the "
-            "*mini-course*, or would they rather go *snorkeling*?"
+            "For your companion I'd recommend these options. Which one do they like best? 🐠"
         )
+        return head + "\n" + "\n".join(lines)
     if slot == SLOT_AGES:
         return (
             "Me comentaste que van menores — ¿qué edades tienen? Así les preparo "
@@ -704,23 +742,42 @@ def _apply_short_answer(state: ConversationState, message: str) -> bool:
             return True
         return False
     if slot == SLOT_COMPANION_ACTIVITY:
-        # Respuesta a "¿qué le gustaría hacer a tu acompañante?" — solo
-        # snorkel/minicurso son opciones válidas aquí (ya se sabe que no
-        # está certificado; certified_diving no tendría sentido en sí
-        # mismo). "quiere bucear"/"wants to dive" se traduce a minicurso
-        # (regla de negocio, mismo criterio que `_activity_has_textual_
-        # backing`). Si la respuesta no deja claro UNA sola opción, se
-        # abstiene (nunca se adivina cuál).
-        mentioned = set(_mentioned_product_activities(message))
-        candidates = set()
-        if "snorkel" in mentioned:
-            candidates.add("snorkel")
-        if "minicourse" in mentioned or "certified_diving" in mentioned:
-            candidates.add("minicourse")
-        if len(candidates) == 1:
-            state.pending_companion_activity = next(iter(candidates))
+        # Respuesta a la recomendación para el acompañante: el valor de un botón,
+        # el número de la opción o su nombre exacto. Por palabra clave se sigue
+        # aceptando snorkel/minicurso ("quiere bucear" = minicurso, regla de
+        # negocio). Si no elige UNA sola opción, no se adivina.
+        options = _companion_activity_options(state)
+        chosen = msg if msg in options else None
+        if chosen is None and state.detected_duration is not None and msg.isdigit() and 1 <= int(msg) <= len(options):
+            chosen = options[int(msg) - 1]
+        if chosen is None:
+            chosen = next(
+                (o for o in options if msg in {dom.label(o, "es").lower(), dom.label(o, "en").lower()}),
+                None,
+            )
+        if chosen is None:
+            mentioned = set(_mentioned_product_activities(message))
+            candidates = set()
+            if "snorkel" in mentioned:
+                candidates.add("snorkel")
+            if "minicourse" in mentioned or "certified_diving" in mentioned:
+                candidates.add("minicourse")
+            if len(candidates) == 1:
+                chosen = next(iter(candidates))
+        if chosen is not None:
+            state.pending_companion_activity = chosen
             state.needs_companion_activity = False
             return True
+        # Primer paso (aún sin duración): "un día"/"varios días", botón o 1/2. Con el
+        # dato se vuelve a preguntar, ahora con las recomendaciones.
+        if state.detected_duration is None:
+            duration = {"1": "single_day", "2": "multi_day"}.get(msg, msg)
+            if duration not in ("single_day", "multi_day"):
+                duration = _detector.detect(message, state).duration
+            if duration in ("single_day", "multi_day"):
+                state.detected_duration = duration
+                state.needs_companion_activity = True
+                return True
         return False
     if slot == SLOT_COURSE_LEVEL:
         # Respuesta exacta: el valor de un boton (id del registro), el numero de la
@@ -785,7 +842,7 @@ def _apply_resolved_slot_value(state: ConversationState, slot: str, value) -> bo
     if slot == SLOT_COURSE_LEVEL and value in _course_level_options(state):
         _set_concrete_activity(state, value)
         return True
-    if slot == SLOT_COMPANION_ACTIVITY and value in ("snorkel", "minicourse"):
+    if slot == SLOT_COMPANION_ACTIVITY and value in _companion_activity_options(state):
         state.pending_companion_activity = value
         state.needs_companion_activity = False
         return True
@@ -1950,10 +2007,15 @@ def _cart_item(state: ConversationState, activity: str, qty: int) -> dict:
     if activity == "snorkel":
         return {"type": "snorkel", "qty": qty, "plan": None,
                 "label": cart_render.cart_label_for("snorkel", None, state.language)}
+    if activity == "companion":
+        return {"type": "companion", "qty": qty, "plan": None,
+                "label": cart_render.cart_label_for("companion", None, state.language)}
     # Curso PADI: resolver la variante por ubicación (open_water →
     # open_water_already_on_island si está en las islas). Divemaster es
     # contact-only y _cart_booking_blocks ya lo cierra vía asesor (sin link).
-    plan = state.detected_service_id
+    # El servicio es el del curso de ESTE ítem: un acompañante que elige Open
+    # Water no hereda el servicio de la actividad principal.
+    plan = state.detected_service_id if activity == state.detected_activity else dom.base_service_id(activity)
     if plan:
         plan = cart_render.service_for_location(plan, state)
     return {"type": "course", "qty": qty, "plan": plan,
@@ -1976,7 +2038,10 @@ def _derive_kids_counts(state: ConversationState) -> None:
 def _build_cart_from_slots(state: ConversationState) -> None:
     _derive_kids_counts(state)
     alloc = state.detected_group_allocation or {}
-    product_alloc = {k: v for k, v in alloc.items() if k in _ACTIVITY_TO_CART_TYPE and v}
+    # Todo lo que el carrito sabe cobrar, no solo los productos de un día: un
+    # acompañante puede elegir el Open Water o ir sin actividad.
+    cartable = set(dom.cart_activity_ids())
+    product_alloc = {k: v for k, v in alloc.items() if k in cartable and v}
     if product_alloc:
         # Grupo mixto: un ítem por subgrupo ("3 certificados y 2 snorkel").
         # Las claves ya vienen resueltas por el detector (los no certificados
@@ -2975,9 +3040,17 @@ async def _extraction_phase(
         and not state.pending_companion_activity
         and not _looks_like_question(message)
     ):
-        resolved = await resolve_slot_answer(SLOT_COMPANION_ACTIVITY, message, lang=state.language)
-        if _apply_resolved_slot_value(state, SLOT_COMPANION_ACTIVITY, resolved.get("value")):
-            advanced = True
+        if state.detected_duration is None:
+            # Primer paso de la recomendación: la respuesta libre es la duración
+            # ("nos quedamos el finde"). Con ella, el re-pregunta de abajo ya
+            # muestra las opciones.
+            resolved = await resolve_slot_answer("stay_duration", message, lang=state.language)
+            if resolved.get("value") in ("single_day", "multi_day"):
+                state.detected_duration = resolved["value"]
+        else:
+            resolved = await resolve_slot_answer(SLOT_COMPANION_ACTIVITY, message, lang=state.language)
+            if _apply_resolved_slot_value(state, SLOT_COMPANION_ACTIVITY, resolved.get("value")):
+                advanced = True
 
     # Red anti-BUCLE de slot (Fase C, 2026-07-23): si el turno NO avanzó y el
     # slot pendiente es booleano/escalar, el cliente pudo haber respondido de

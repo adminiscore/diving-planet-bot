@@ -61,6 +61,12 @@ SLOT = [
     ("c04-bajar-tanque", "es", "que se anime a bajar con tanque", MINI),
     ("c05-careteo", "es", "careteo nomás", SNK),
     ("c06-en-surface", "en", "she'd rather just swim at the surface", SNK),
+    # Opciones que el bot recomienda desde 2026-09-14 (owner): venir de acompañante
+    # y, si se quedan varios días, el curso Open Water.
+    ("c07-solo-acompana", "es", "que solo nos acompañe en la lancha, no se mete al agua", "companion"),
+    ("c08-certificarse", "es", "quiere sacarse la certificación de buceo", "padi_open_water"),
+    ("c09-devuelve-la-eleccion", "es", "lo que tú me recomiendes", None),
+    ("c10-en-come-along", "en", "he'll just come along on the boat", "companion"),
 ]
 
 # esperado: None = no esta comparando; set = esta comparando esas opciones.

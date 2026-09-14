@@ -2253,3 +2253,86 @@ Suite **1873 passed / 18 skipped**. ruff limpio en todo lo tocado (`test_convers
 arrastra 7 avisos que ya estaban en `HEAD`, no se tocaron). Pendiente: desplegar y repetir
 batería + eval-set desde la imagen; tarea 2 (reglas neutras para `fill_gaps`); tarea 5
 (`padi_course`, decisión de producto); decidir sobre el flag de `is_colombian`.
+
+## 2026-09-14 (tarde) — F2b medida, booleanos anclados por estructura, la tilde y recomendar al acompañante
+
+### F2b: abrir el vocabulario de actividad en los prompts — medida, no aplicada
+
+- **Extractor** (enum de `activity`, 8 → 15 valores): eval-set 212/216 frente a 211/216, pero
+  por caso **no pasa**. Arregla `ambig-curso-padi-generico-no-se-bucear` y
+  `f2b-specialty-mindful-en`, pero rompe dos casos deterministas en **otros campos** del mismo
+  prompt de relleno: `prof-en-from-states` (`is_colombian=False` 3/3 → abstención 3/3) y
+  `b08-ninos` de la batería de grupo (reparto vacío en las cuatro variantes). Mandar solo las
+  propiedades pedidas arregla `is_colombian`, pero rompe `is_certified` en "no es que no
+  estemos certificados, sí lo estamos, los 2".
+- **Router** (`comparing_options`): opciones 6/9 → 9/9 con vocabulario más contexto, pero la
+  base ya marcaba `comparing=true` en los tres casos nuevos y el núcleo solo lee ese booleano.
+  No cambiaría ninguna respuesta, y alarga en cada turno un tool con otras 8 señales sin medir.
+- Queda como infraestructura: `dom.bookable_activity_ids()`, 9 casos `f2b-*` y las variantes
+  `vocab`/`vocab+ctx` de `battery_activity_choice.py`.
+
+### F5a: los booleanos del LLM, anclados por la estructura del turno
+
+El eval-set no pasa por las guardas del núcleo, así que su nota no ve lo que descartan. Medido
+aparte con turnos reales de `_understand` sobre los 10 casos donde la guarda de tema no
+respaldaba el valor correcto: **3/10 con guardas, 8/10 sin ellas**. Todo lo perdido eran
+booleanos de apertura ("soy paisa", "ya soy sertificado", "tengo el AOWD").
+
+La guarda sí protegía de algo real: con la ubicación pendiente, "Desde Cartagena" hace que el
+LLM añada `is_colombian=True` 3/3. La cita literal no lo arreglaría ("Cartagena" está en el
+mensaje). Lo que separa ese caso de "soy paisa" es que **contesta otra pregunta pendiente**.
+`scripts/battery_boolean_anchoring.py` (14 × 3; los filtros se compararon sobre la misma
+salida del LLM y después se midió la implementación):
+
+| filtro | legítimos | alucinaciones evitadas |
+|---|---|---|
+| vocabulario (retirado) | 0/24 | 18/18 |
+| sin guarda | 24/24 | 15/18 |
+| hay otro slot pendiente | 15/24 | 18/18 |
+| **el turno contestó otro slot pendiente (aplicado)** | **18/24** | **18/18** |
+
+### "no está certificado" con tilde
+
+`certification_claim("mi amigo no está certificado")` daba `True`: la negación escribía "esta"
+sin tilde, así que caía en el catch-all `\bcertificado\b` y el detector ponía
+`is_certified=True`. Texto y patrones se comparan ahora sin tildes; sobre 177 mensajes solo
+cambia ese caso.
+
+### F5b: guarda de actividad del acompañante
+
+`detect_special_signals` con LLM real (16 frases × 3): **13/16 solo LLM, 7/16 con la guarda**.
+La guarda tira 9 aciertos ("tiene el AOWD", "máscara y tubo", "bajar con tanque"…); los 3
+fallos del LLM son frases sin actividad ("mi amigo no está certificado" → `minicourse`).
+Variantes del prompt de señales (26 × 3): base 22, `undecided` 24, cita literal 15,
+dos redacciones más 23 y 23, "elegida o inferida" 15 y 10. Ninguna evita suponer el minicurso.
+
+**Decisión del owner:** no dar por hecho. Se recomienda según la situación y el cliente elige.
+La guarda se queda y cambia **cómo se pregunta** (F6, abajo).
+
+### F6: recomendar al acompañante en vez de preguntar "¿A o B?"
+
+Cuando un acompañante no dijo qué quiere hacer, el bot ya no pregunta "¿minicurso o
+snorkel?". Mismo slot pendiente, dos pasos:
+
+1. Si no se sabe la estancia, pregunta "¿un solo día o varios días?" con botones. Si ya se dijo
+   en la conversación, la usa.
+2. Recomienda con descripción y botones: minicurso, snorkel y venir de acompañante (de
+   `eligibility.beginner_options_for_age`), más el curso Open Water solo si se quedan varios
+   días. El cliente elige por botón, número, nombre o texto libre.
+
+"Acompañante" entra al registro (precio en `pricing.json`, sin servicios; fuera de los prompts
+y de los productos de un día). El carrito cobra todo lo que sabe cobrar
+(`dom.cart_activity_ids()`). Antes, un acompañante con Open Water o sin actividad se habría
+perdido del carrito, y un curso de acompañante heredaba el servicio del principal.
+
+Resolutores con LLM real (3 repeticiones), antiguo frente a nuevo:
+
+- `companion_activity_choice`: **8/11 → 11/11**, sin empeorar los 6 casos de la batería. El
+  antiguo **suponía snorkel 3/3** para "que solo nos acompañe en la lancha, no se mete al agua"
+  y minicurso para "quiere sacarse la certificación". "lo que tú me recomiendes" sigue sin
+  elegir por el cliente.
+- `stay_duration` (nuevo): **6/6** ("el finde", "solo mañana", "3 noches", "aún no lo sé",
+  EN).
+
+Solo cambian esos resolutores en el snapshot de prompts (3 cambiados y 3 nuevos, frente a F4).
+Suite **1961 passed / 18 skipped**.

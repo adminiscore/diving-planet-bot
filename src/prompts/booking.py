@@ -1091,17 +1091,35 @@ SLOT_RESOLVER_SPEC = {
         ),
     },
     "companion_activity_choice": {
-        "question_es": "¿Qué le gustaría hacer a tu acompañante — el minicurso de buceo o snorkel?",
-        "question_en": "What would your companion like to do — the beginner mini-course or snorkeling?",
+        "question_es": "¿Qué le gustaría hacer a tu acompañante?",
+        "question_en": "What would your companion like to do?",
         "type": "string",
-        "enum": ["snorkel", "minicourse"],
+        # Lo que el bot puede recomendar a un acompañante sin certificación
+        # (owner 2026-09-14). El nucleo valida la respuesta contra las opciones
+        # que de verdad ofrecio (Open Water solo si se quedan varios dias).
+        "enum": ["minicourse", "padi_open_water", "snorkel", "companion"],
         "value_meaning": (
             "'minicourse' if the companion wants to TRY diving / go underwater "
             "with an instructor (bautizo, discover scuba, 'probar el buceo', "
-            "'bajar con tanque', 'que se anime a bucear'); 'snorkel' if they "
+            "'bajar con tanque', 'que se anime a bucear'); 'padi_open_water' if "
+            "they want to get CERTIFIED (the Open Water course); 'snorkel' if they "
             "want to stay at the surface with mask and fins (snorkel, careteo, "
-            "'ver los peces desde arriba', 'solo nadar'). Omit if the reply "
-            "doesn't clearly choose one (e.g. 'lo que sea mejor', 'no sé')."
+            "'ver los peces desde arriba', 'solo nadar'); 'companion' if they will "
+            "just come along without any in-water activity ('solo acompaña', "
+            "'no se mete al agua'). Omit if the reply doesn't clearly choose one "
+            "(e.g. 'lo que sea mejor', 'no sé'), and omit it when the customer hands "
+            "the choice back to the bot: do not choose for them."
+        ),
+    },
+    "stay_duration": {
+        "question_es": "¿Van a estar un solo día o varios días?",
+        "question_en": "Will you be here for a single day or several days?",
+        "type": "string",
+        "enum": ["single_day", "multi_day"],
+        "value_meaning": (
+            "'single_day' if they only have one day for the activity; 'multi_day' "
+            "if they stay two or more days near the dive sites (several days, a "
+            "weekend, 'nos quedamos 3 noches'). Omit if the reply doesn't say."
         ),
     },
     "companion_qty": {

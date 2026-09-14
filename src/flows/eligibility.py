@@ -166,10 +166,13 @@ _COMPANION_LABELS = {
 }
 
 
+def option_activity_id(option: str) -> str:
+    """Id del registro de actividades para una opcion de este modulo."""
+    return _OPTION_TO_ACTIVITY.get(option, option)
+
+
 def _plan_label(option: str, lang: str) -> str:
-    if option == COMPANION:
-        return _COMPANION_LABELS[lang]
-    return dom.text(_OPTION_TO_ACTIVITY.get(option, option), "plan_label", lang, default=option)
+    return dom.text(option_activity_id(option), "plan_label", lang, default=_COMPANION_LABELS[lang] if option == COMPANION else option)
 
 
 def format_group_plan(plans: list[PersonPlan], lang: str = "es") -> str:

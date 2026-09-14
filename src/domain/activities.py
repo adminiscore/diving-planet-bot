@@ -149,6 +149,17 @@ def day_activity_ids() -> list[str]:
     ]
 
 
+def cart_activity_ids() -> list[str]:
+    """Actividades que el carrito sabe cobrar: las que tienen servicios propios en el
+    catalogo y el acompanante sin actividad, cuyo precio vive en pricing.json.
+    Genericas, `sold_as` y actividades sin precio (Bubble Makers, D2) quedan fuera."""
+    return [
+        a.id for a in registry().activities
+        if a.cart_type and not a.generic and a.sold_as is None
+        and (a.all_services() or a.family == "companion")
+    ]
+
+
 def bookable_activity_ids() -> list[str]:
     """Actividades que un cliente puede pedir y el flujo sabe cerrar: con servicios
     propios en el catalogo, o genericas (el nucleo pregunta el nivel, F4). Quedan

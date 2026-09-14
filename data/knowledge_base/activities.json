@@ -488,6 +488,31 @@
         "en": "A short in-water review with an instructor for ALREADY certified divers who have not dived for more than 2 years, before their dive. It is booked and charged like the mini-course (same rate, per person who needs it). It is not for people who were never certified: they want `minicourse`."
       },
       "sources": ["pricing.json:minicurso_refresh", "policies.json:refresh_requirement", "owner 2026-09-14: se cobra"]
+    },
+    {
+      "id": "companion",
+      "family": "companion",
+      "cart_type": "companion",
+      "services": {"cartagena": [], "island": []},
+      "requires_certification": false,
+      "certifies": false,
+      "course_level": null,
+      "generic": false,
+      "min_age": null,
+      "max_age": null,
+      "label": {"es": "Ir de acompañante", "en": "Come along as a companion"},
+      "texts": {
+        "name_in_sentence": {"es": "ir de acompañante", "en": "coming along as a companion"},
+        "recall": {"es": "acompañante (sin actividad en el agua)", "en": "companion (no in-water activity)"},
+        "price_label": {"es": "Acompañante (no bucea ni hace snorkel)", "en": "Companion (no diving or snorkeling)"},
+        "plan_label": {"es": "acompañante (sin actividad en el agua)", "en": "companion (no in-water activity)"},
+        "pitch": {"es": "Viene en la lancha y disfruta el día con el grupo, sin meterse al agua.", "en": "Comes on the boat and enjoys the day with the group, without getting in the water."}
+      },
+      "for_whom": {
+        "es": "Para quien acompaña al grupo en la salida pero no bucea ni hace snorkel. Tiene su propio precio (pricing.json).",
+        "en": "For someone who joins the group on the trip but does not dive or snorkel. It has its own price (pricing.json)."
+      },
+      "sources": ["pricing.json:acompanante", "owner 2026-09-14: opción a recomendar al acompañante"]
     }
   ]
 }

@@ -301,7 +301,36 @@ descripción del campo, V3b en la definición de `undecided`): **23/26 las dos**
 arregla ese caso: con historial de buceo el modelo dice `minicourse` 3/3 en todas las
 variantes. V3a además rompe "bajar con tanque" y V3b vuelve inestable "viene mi primo".
 
-**Estado: sin aplicar. Decisión de negocio pendiente.** El modelo aplica de forma
+Otras dos variantes, pidiendo al modelo que diga si la actividad la **eligió el cliente** o
+la **infiere** (V4: sí/no; V5: `stated_by_customer`/`inferred`). Son mucho peores: dejan
+vacíos casos claros como "hay un amigo que quiere hacer snorkel" o "mi parce quiere
+caretear" (V4 15/26, V5 10/26). Descartadas.
+
+**Decisión del owner (2026-09-14): recomendar, no dar por hecho.** "No podemos dar por
+hecho; podemos recomendar si entendemos la situación, pero es el cliente el que elige."
+Con esa regla, la guarda de actividad **se queda**: si el LLM infiere una actividad que el
+mensaje no respalda, se descarta y el bot pregunta. Lo que cambia es **cómo pregunta**:
+
+- **F6: recomendación al acompañante.** Mismo slot pendiente (`companion_activity_choice`),
+  dos pasos:
+  1. Si no se sabe la estancia, se pregunta "¿un solo día o varios días?" con botones,
+     como la nacionalidad o la ubicación. Si ya se dijo en la conversación, se usa.
+  2. Se recomiendan opciones con su descripción y botones: minicurso, snorkel y venir de
+     acompañante (de `eligibility.beginner_options_for_age`), más el curso Open Water
+     solo si se quedan varios días. El cliente elige por botón, número, nombre o texto
+     libre (resolutor LLM, validado contra las opciones que se ofrecieron).
+- "Acompañante" entra en el registro de actividades (precio en `pricing.json`, sin
+  servicios): fuente única de sus textos. No entra en el vocabulario de los prompts ni en
+  los productos de un día.
+- El carrito cobra todo lo que sabe cobrar (`dom.cart_activity_ids()`), no solo los
+  productos de un día. Antes un acompañante con Open Water o sin actividad se habría
+  perdido del carrito, y un curso de acompañante heredaba el servicio del principal.
+- Medido con LLM real (3 repeticiones): resolutor del acompañante **8/11 → 11/11**, sin
+  empeorar los 6 casos de la batería. El antiguo suponía snorkel 3/3 para "que solo nos
+  acompañe en la lancha". Resolutor de estancia nuevo **6/6**. Casos nuevos c07–c10 en
+  `battery_activity_choice.py`.
+
+**Estado anterior: sin aplicar. Decisión de negocio pendiente.** El modelo aplica de forma
 consistente "acompañante sin certificación que se suma a un grupo que bucea → minicurso".
 La auditoría del 2026-07-23 decidió preguntar. Si negocio acepta esa suposición por
 defecto (el minicurso no exige certificación y el resumen de la reserva lo muestra), V1

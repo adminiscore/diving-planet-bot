@@ -2476,6 +2476,9 @@ def _at_companion_activity_stage(lang: str = "es") -> ConversationState:
     s.detected_group_size = 1
     s.last_dive_over_2_years = False
     s.is_colombian = False
+    # Estancia ya conocida: estos tests son del segundo paso (las opciones). El
+    # primero (preguntar un día o varios) tiene sus propios tests abajo.
+    s.detected_duration = "single_day"
     s.core_pending_slot = core.SLOT_COMPANION_ACTIVITY
     return s
 
@@ -2514,6 +2517,90 @@ def test_apply_resolved_slot_value_companion_activity():
     assert state.pending_companion_activity == "minicourse"
     assert state.needs_companion_activity is False
     assert not core._apply_resolved_slot_value(state, core.SLOT_COMPANION_ACTIVITY, "buceo")
+
+
+# ── Recomendar al acompañante, no dar por hecho (owner 2026-09-14) ─────────────
+# "No podemos dar por hecho; podemos recomendar si entendemos la situación, pero es
+# el cliente el que elige": minicurso si quiere probar, snorkel, el Open Water si se
+# quedan más de un día, o venir de acompañante. La estancia, si no se sabe, se
+# pregunta como la nacionalidad o la ubicación.
+
+def test_companion_question_asks_stay_first_when_unknown():
+    state = make_state("es")
+    text = core.ask_slot(state, core.SLOT_COMPANION_ACTIVITY)
+    assert "un solo día" in text and "varios días" in text
+    assert [q["value"] for q in state.quick_replies] == ["single_day", "multi_day"]
+    assert state.core_pending_slot == core.SLOT_COMPANION_ACTIVITY
+
+
+@pytest.mark.parametrize("duration,expected", [
+    ("single_day", ["minicourse", "snorkel", "companion"]),
+    ("multi_day", ["minicourse", "padi_open_water", "snorkel", "companion"]),
+])
+def test_companion_recommendations_depend_on_the_stay(duration, expected):
+    state = make_state("es")
+    state.detected_duration = duration
+    text = core.ask_slot(state, core.SLOT_COMPANION_ACTIVITY)
+    assert [q["value"] for q in state.quick_replies] == expected
+    for option in expected:
+        assert core.dom.label(option, "es") in text
+
+
+def test_open_water_is_only_accepted_when_it_was_offered():
+    state = make_state("es")
+    state.detected_duration = "single_day"
+    assert not core._apply_resolved_slot_value(state, core.SLOT_COMPANION_ACTIVITY, "padi_open_water")
+    state.detected_duration = "multi_day"
+    assert core._apply_resolved_slot_value(state, core.SLOT_COMPANION_ACTIVITY, "padi_open_water")
+    assert state.pending_companion_activity == "padi_open_water"
+
+
+@pytest.mark.asyncio
+async def test_stay_button_then_recommendations_with_open_water():
+    state = _at_companion_activity_stage()
+    state.detected_duration = None
+    with patch("src.agents.supervisor.detect_routing_signals", new=AsyncMock(return_value={})):
+        resp = await route_message(state, "multi_day")
+    assert state.detected_duration == "multi_day"
+    assert state.core_pending_slot == core.SLOT_COMPANION_ACTIVITY
+    assert "padi_open_water" in [q["value"] for q in state.quick_replies]
+    assert core.dom.label("padi_open_water", "es") in resp
+
+
+@pytest.mark.asyncio
+async def test_free_text_stay_goes_through_the_stay_resolver(monkeypatch):
+    resolver = AsyncMock(return_value={"value": "multi_day"})
+    monkeypatch.setattr(core, "resolve_slot_answer", resolver)
+    state = _at_companion_activity_stage()
+    state.detected_duration = None
+    with patch("src.agents.supervisor.detect_routing_signals", new=AsyncMock(return_value={})):
+        await route_message(state, "nos quedamos todo el finde largo")
+    assert resolver.await_args.args[0] == "stay_duration"
+    assert state.detected_duration == "multi_day"
+    assert state.core_pending_slot == core.SLOT_COMPANION_ACTIVITY
+
+
+@pytest.mark.asyncio
+async def test_choosing_to_just_come_along_chains_to_quantity():
+    state = _at_companion_activity_stage()
+    with patch("src.agents.supervisor.detect_routing_signals", new=AsyncMock(return_value={})):
+        await route_message(state, "companion")
+    assert state.pending_companion_activity == "companion"
+    assert state.core_pending_slot == core.SLOT_COMPANION_QTY
+
+
+def test_cart_charges_companion_and_a_companion_open_water_with_its_own_service():
+    state = make_state("es")
+    state.detected_activity = "certified_diving"
+    state.detected_service_id = "2_dives_1_day"
+    state.is_certified = True
+    state.location = "cartagena"
+    state.detected_group_allocation = {"certified_diving": 1, "companion": 1, "padi_open_water": 1}
+    state.detected_group_size = 3
+    core._build_cart_from_slots(state)
+    by_type = {item["type"]: item for item in state.mixed_cart}
+    assert set(by_type) == {"cert", "companion", "course"}
+    assert by_type["course"]["plan"] == "open_water"
 
 
 # ---------------------------------------------------------------------------
