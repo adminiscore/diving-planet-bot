@@ -56,6 +56,15 @@ class Activity:
     # (fill_gaps, veto, combinada). Opcional: sin glosa, el valor se enumera solo.
     # Distinta de `for_whom` a proposito -- ver el `_comment` de activities.json.
     gloss: dict[str, str] | None = None
+    # Textos para el CLIENTE segun el uso (F3b): `name_in_sentence` ("dudas entre
+    # X y Y"), `recall` (con articulo: "me dijiste que querias el curso Open
+    # Water"), `price_label`, `plan_label` (plan de grupo por edades) y `pitch`
+    # (descripcion corta al comparar). Cada uso tiene su gramatica; por eso no hay
+    # un unico nombre.
+    texts: dict[str, dict[str, str]] | None = None
+    # Para una actividad generica, la concreta que corresponde a quien no tiene
+    # certificacion (padi_course -> padi_open_water, regla del owner 2026-09-14).
+    default_level: str | None = None
 
     def all_services(self) -> tuple[str, ...]:
         return tuple(s for loc in LOCATIONS for s in self.services.get(loc, ()))
@@ -95,6 +104,8 @@ def _parse(raw: dict) -> Registry:
             sources=tuple(entry["sources"]),
             sold_as=entry.get("sold_as"),
             gloss=dict(entry["gloss"]) if entry.get("gloss") else None,
+            texts={k: dict(v) for k, v in entry["texts"].items()} if entry.get("texts") else None,
+            default_level=entry.get("default_level"),
         ))
     return Registry(tuple(activities), dict(raw.get("non_activity_services", {})))
 
@@ -157,6 +168,26 @@ def label(activity_id: str, lang: str) -> str:
     return activity.label.get(lang) or activity.label["es"]
 
 
+TEXT_KINDS = ("name_in_sentence", "recall", "price_label", "plan_label", "pitch")
+
+
+def text(activity_id: str, kind: str, lang: str, default: str | None = None) -> str | None:
+    """Texto para el cliente de una actividad segun su uso (ver `Activity.texts`).
+    `default` si la actividad no existe o no tiene ese texto."""
+    activity = by_id(activity_id)
+    variants = (activity.texts or {}).get(kind) if activity else None
+    if not variants:
+        return default
+    return variants.get(lang) or variants.get("es") or default
+
+
+def resolved_activity_id(activity_id: str) -> str:
+    """La actividad concreta que representa a una generica cuando hay que elegir
+    un servicio (padi_course -> padi_open_water); la propia si no es generica."""
+    activity = by_id(activity_id)
+    return activity.default_level if activity and activity.default_level else activity_id
+
+
 def business_context(lang: str, ids: list[str] | None = None) -> str:
     """Una linea por actividad: "`id` — para quien es". Es el contexto de negocio
     que tienen que ver TODOS los prompts que hablen de actividades, para que ninguno
@@ -215,6 +246,14 @@ def validate(services_path: Path = SERVICES_PATH) -> list[str]:
                 problems.append(f"{activity.id}: {service_id!r} esta en 'island' sin ser variante de isla")
         if activity.generic and activity.all_services():
             problems.append(f"{activity.id}: una actividad generica no puede tener servicios")
+        if activity.default_level is not None and reg.get(activity.default_level) is None:
+            problems.append(f"{activity.id}: default_level apunta a un id inexistente {activity.default_level!r}")
+        for kind, variants in (activity.texts or {}).items():
+            if kind not in TEXT_KINDS:
+                problems.append(f"{activity.id}: texts.{kind} no es un uso conocido {TEXT_KINDS}")
+            for lang in LANGS:
+                if not variants.get(lang):
+                    problems.append(f"{activity.id}: texts.{kind} sin {lang}")
         for lang in LANGS:
             if activity.gloss is not None and not activity.gloss.get(lang):
                 problems.append(f"{activity.id}: gloss sin {lang}")

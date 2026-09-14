@@ -2071,7 +2071,7 @@ def test_is_deliberation_between_options_matrix(message, signals, expected):
 
 
 def test_mentioned_offerings_includes_courses_and_dedupes():
-    assert core._mentioned_offerings("open water o advanced") == ["open_water", "advanced"]
+    assert core._mentioned_offerings("open water o advanced") == ["padi_open_water", "padi_advanced"]
     assert core._mentioned_offerings("snorkel o buceo") == ["certified_diving", "snorkel"] \
         or set(core._mentioned_offerings("snorkel o buceo")) == {"certified_diving", "snorkel"}
     assert core._mentioned_offerings("no sé si cartagena o islas") == []
@@ -2097,8 +2097,8 @@ def test_mentioned_product_activities_drops_generic_backing_when_course_named():
     cuenta como oferta aparte."""
     msg = "Me gustaría sacarme el open water, pero nunca he buceado"
     assert core._mentioned_product_activities(msg) == []
-    assert core._mentioned_courses(msg) == ["open_water"]
-    assert core._mentioned_offerings(msg) == ["open_water"]
+    assert core._mentioned_courses(msg) == ["padi_open_water"]
+    assert core._mentioned_offerings(msg) == ["padi_open_water"]
 
 
 def test_mentioned_product_activities_keeps_explicit_minicourse_name_even_with_course():
@@ -2107,7 +2107,7 @@ def test_mentioned_product_activities_keeps_explicit_minicourse_name_even_with_c
     no un cualificador de experiencia genérico."""
     msg = "dudo entre el minicurso o el curso open water"
     assert "minicourse" in core._mentioned_product_activities(msg)
-    assert set(core._mentioned_offerings(msg)) == {"minicourse", "open_water"}
+    assert set(core._mentioned_offerings(msg)) == {"minicourse", "padi_open_water"}
 
 
 def test_mentioned_product_activities_keeps_strong_certified_diving_signal():

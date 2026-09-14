@@ -23,6 +23,28 @@
         "es": "inmersion de buceo estandar; es el valor por DEFECTO cuando se pide 'buceo' sin mas, tenga o no certificacion",
         "en": "a standard dive; this is the DEFAULT value when 'diving' is requested with no further detail, certified or not"
       },
+      "texts": {
+        "name_in_sentence": {
+          "es": "buceo certificado",
+          "en": "certified diving"
+        },
+        "recall": {
+          "es": "buceo certificado",
+          "en": "certified diving"
+        },
+        "price_label": {
+          "es": "Buceo certificado (2 inmersiones, 1 día)",
+          "en": "Certified diving (2 dives, 1 day)"
+        },
+        "plan_label": {
+          "es": "buceo certificado (salida de buceo)",
+          "en": "certified fun dive"
+        },
+        "pitch": {
+          "es": "Inmersiones guiadas para buzos ya certificados; explorás el arrecife a profundidad.",
+          "en": "Guided dives for already-certified divers; explore the reef at depth."
+        }
+      },
       "for_whom": {
         "es": "Inmersiones de buceo guiadas: 2 en un día o paquetes de varios días (3 a 9 inmersiones). Es la opción por DEFECTO cuando alguien pide 'bucear' o 'buceo' sin más detalle, tenga o no certificación; para hacerla hace falta carné de buzo (mínimo Open Water).",
         "en": "Guided dives: 2 in one day or multi-day packages (3 to 9 dives). It is the DEFAULT when someone asks to 'dive' with no further detail, certified or not; it requires a diver card (minimum Open Water)."
@@ -45,6 +67,28 @@
         "es": "bautismo/iniciacion: SOLO si el mensaje dice que es para probar sin certificarse o que no sabe bucear",
         "en": "try-dive/discover scuba: ONLY if the message says it is to try it out without certifying, or that they cannot dive"
       },
+      "texts": {
+        "name_in_sentence": {
+          "es": "minicurso de buceo",
+          "en": "beginner mini-course"
+        },
+        "recall": {
+          "es": "minicurso",
+          "en": "the mini-course"
+        },
+        "price_label": {
+          "es": "Minicurso de buceo",
+          "en": "Dive mini-course"
+        },
+        "plan_label": {
+          "es": "minicurso de buceo",
+          "en": "dive mini-course"
+        },
+        "pitch": {
+          "es": "Tu primera vez bajo el agua con instructor: entrenamiento en piscina y una inmersión real. Sin experiencia previa.",
+          "en": "Your first time underwater with an instructor: pool training and a real dive. No experience needed."
+        }
+      },
       "for_whom": {
         "es": "Bautismo de buceo de UN solo día (Discover Scuba): SOLO cuando el cliente dice que quiere probar sin certificarse, o que no sabe bucear o nunca ha buceado. Teoría online, piscina y 1 inmersión en el mar con instructor PADI. No da certificación ni obliga a quedarse varios días ni a dormir en las islas. Desde 10 años.",
         "en": "A ONE-day try-dive (Discover Scuba): ONLY when the customer says they want to try it without certifying, or that they cannot dive or have never dived. Online theory, pool session and 1 ocean dive with a PADI instructor. It does not certify and does not require staying several days or sleeping on the islands. From age 10."
@@ -63,6 +107,12 @@
       "min_age": 8,
       "max_age": 10,
       "label": {"es": "Bubble Makers (niños 8-10)", "en": "Bubble Makers (kids 8-10)"},
+      "texts": {
+        "plan_label": {
+          "es": "Bubble Makers (buceo para niños 8-10)",
+          "en": "Bubble Makers (kids diving 8-10)"
+        }
+      },
       "for_whom": {
         "es": "Programa PADI de iniciación para niños de 8 a 10 años que quieren probar el buceo: en piscina o aguas muy poco profundas (máximo 2 metros), con un instructor dedicado. No da certificación.",
         "en": "PADI intro programme for kids aged 8 to 10 who want to try diving: in a pool or very shallow water (max 2 metres), with a dedicated instructor. It does not certify."
@@ -81,6 +131,28 @@
       "min_age": 6,
       "max_age": null,
       "label": {"es": "Snorkel", "en": "Snorkeling"},
+      "texts": {
+        "name_in_sentence": {
+          "es": "snorkel",
+          "en": "snorkeling"
+        },
+        "recall": {
+          "es": "snorkel",
+          "en": "snorkel"
+        },
+        "price_label": {
+          "es": "Snorkel",
+          "en": "Snorkeling"
+        },
+        "plan_label": {
+          "es": "snorkel",
+          "en": "snorkeling"
+        },
+        "pitch": {
+          "es": "Disfrutas el arrecife desde la superficie, con máscara y aletas. Ideal en familia.",
+          "en": "Enjoy the reef from the surface, with mask and fins. Great for families."
+        }
+      },
       "for_whom": {
         "es": "Snorkel desde la superficie con máscara y aletas, sin bucear: 2 salidas guiadas por el arrecife. Para quien no quiere bucear o prefiere quedarse en la superficie. Desde 6 años.",
         "en": "Snorkeling from the surface with mask and fins, no diving: 2 guided reef sessions. For people who do not want to dive or prefer to stay at the surface. From age 6."
@@ -99,6 +171,17 @@
       "min_age": null,
       "max_age": null,
       "label": {"es": "Curso PADI", "en": "PADI course"},
+      "default_level": "padi_open_water",
+      "texts": {
+        "name_in_sentence": {
+          "es": "curso PADI",
+          "en": "PADI course"
+        },
+        "pitch": {
+          "es": "Curso de certificación inicial: te habilita a bucear de forma autónoma hasta 18 m.",
+          "en": "Entry certification course: qualifies you to dive independently down to 18 m."
+        }
+      },
       "for_whom": {
         "es": "Curso PADI cuando el cliente no dice cuál. El nivel lo decide su certificación actual: si no tiene certificación (no sabe bucear, nunca ha buceado) le corresponde `padi_open_water`, el primer curso; si ya es Open Water, `padi_advanced`; si ya es Advanced, `padi_rescue`. Ojo: quien no sabe bucear y solo quiere probar un día, sin certificarse, busca `minicourse`, no un curso.",
         "en": "A PADI course when the customer does not say which one. The level follows their current certification: with no certification (cannot dive, never dived) it is `padi_open_water`, the first course; already Open Water, `padi_advanced`; already Advanced, `padi_rescue`. Note: someone who cannot dive and only wants to try for one day, without certifying, wants `minicourse`, not a course."
@@ -120,6 +203,28 @@
       "gloss": {
         "es": "el PRIMER NIVEL de certificacion: 'primer nivel', 'primer curso', 'sacarme el titulo', 'certificarme' por primera vez",
         "en": "the FIRST certification level: 'first level', 'first course', 'get my licence', 'get certified' for the first time"
+      },
+      "texts": {
+        "name_in_sentence": {
+          "es": "curso Open Water",
+          "en": "Open Water course"
+        },
+        "recall": {
+          "es": "el curso Open Water",
+          "en": "the Open Water course"
+        },
+        "price_label": {
+          "es": "Curso Open Water (certificación PADI)",
+          "en": "Open Water course (PADI certification)"
+        },
+        "plan_label": {
+          "es": "curso Open Water",
+          "en": "Open Water course"
+        },
+        "pitch": {
+          "es": "Curso de certificación inicial: te habilita a bucear de forma autónoma hasta 18 m.",
+          "en": "Entry certification course: qualifies you to dive independently down to 18 m."
+        }
       },
       "for_whom": {
         "es": "El PRIMER curso de certificación PADI, para quien no tiene certificación y quiere sacarse el título de buzo autónomo (hasta 18 metros): su 'primer nivel', 'primer curso', 'sacarse el título' o 'certificarse' por primera vez. 2 días con teoría eLearning, piscina y 4 inmersiones; obliga a dormir al menos 1 noche en las islas. Desde 10 años.",
@@ -157,6 +262,20 @@
       "min_age": 12,
       "max_age": null,
       "label": {"es": "Curso Advanced Open Water", "en": "Advanced Open Water course"},
+      "texts": {
+        "name_in_sentence": {
+          "es": "curso Advanced Open Water",
+          "en": "Advanced Open Water course"
+        },
+        "recall": {
+          "es": "el curso Advanced",
+          "en": "the Advanced course"
+        },
+        "pitch": {
+          "es": "Para buzos ya certificados que quieren profundizar y sumar especialidades.",
+          "en": "For already-certified divers who want to go deeper and add specialties."
+        }
+      },
       "for_whom": {
         "es": "Siguiente curso tras el Open Water: para buzos Open Water que quieren más experiencia y bajar hasta 30 metros. 2 días, 5 inmersiones con nocturna; obliga a dormir 1 noche en las islas.",
         "en": "The next course after Open Water: for Open Water divers who want more experience and to go down to 30 metres. 2 days, 5 dives including a night dive; requires 1 night on the islands."
@@ -175,6 +294,20 @@
       "min_age": 12,
       "max_age": null,
       "label": {"es": "Curso Rescue Diver + EFR", "en": "Rescue Diver + EFR course"},
+      "texts": {
+        "name_in_sentence": {
+          "es": "curso Rescue Diver",
+          "en": "Rescue Diver course"
+        },
+        "recall": {
+          "es": "el curso Rescue",
+          "en": "the Rescue course"
+        },
+        "pitch": {
+          "es": "Curso enfocado en seguridad y rescate; el paso previo a Divemaster.",
+          "en": "Safety- and rescue-focused course; the step before Divemaster."
+        }
+      },
       "for_whom": {
         "es": "Curso de prevención y rescate con primeros auxilios (EFR) para buzos con Advanced que quieren estar preparados ante emergencias. 2 días con 1 noche en las islas.",
         "en": "Prevention and rescue course with first aid (EFR) for Advanced divers who want to be ready for emergencies. 2 days with 1 night on the islands."
@@ -193,6 +326,20 @@
       "min_age": 18,
       "max_age": null,
       "label": {"es": "Curso Divemaster", "en": "Divemaster course"},
+      "texts": {
+        "name_in_sentence": {
+          "es": "curso Divemaster",
+          "en": "Divemaster course"
+        },
+        "recall": {
+          "es": "el curso Divemaster",
+          "en": "the Divemaster course"
+        },
+        "pitch": {
+          "es": "El primer nivel profesional PADI.",
+          "en": "The first professional PADI level."
+        }
+      },
       "for_whom": {
         "es": "Primer nivel profesional PADI, en internado de al menos 2 meses viviendo en las islas. Requiere Rescue + EFR vigente, 40 inmersiones registradas y ser mayor de 18. Se gestiona con un asesor, no se reserva online.",
         "en": "The first PADI professional level, as an internship of at least 2 months living on the islands. Requires Rescue + current EFR, 40 logged dives and being over 18. Handled by an advisor, not booked online."
@@ -211,6 +358,12 @@
       "min_age": null,
       "max_age": null,
       "label": {"es": "Especialidad", "en": "Specialty"},
+      "texts": {
+        "recall": {
+          "es": "un curso PADI",
+          "en": "a PADI specialty"
+        }
+      },
       "for_whom": {
         "es": "Especialidad cuando el cliente no dice cuál. Todas requieren certificación Open Water. Disponibles: `specialty_nitrox`, `specialty_buoyancy`, `specialty_naturalist`, `specialty_fish_identification` y `specialty_mindful_diving`.",
         "en": "A specialty when the customer does not say which one. All require Open Water certification. Available: `specialty_nitrox`, `specialty_buoyancy`, `specialty_naturalist`, `specialty_fish_identification` and `specialty_mindful_diving`."
@@ -229,6 +382,16 @@
       "min_age": 10,
       "max_age": null,
       "label": {"es": "Especialidad Nitrox", "en": "Nitrox specialty"},
+      "texts": {
+        "name_in_sentence": {
+          "es": "especialidad Nitrox",
+          "en": "Nitrox specialty"
+        },
+        "pitch": {
+          "es": "Especialidad de aire enriquecido para inmersiones más largas.",
+          "en": "Enriched-air specialty for longer dives."
+        }
+      },
       "for_whom": {
         "es": "Especialidad PADI de aire enriquecido para buzos certificados: aprender a analizar la mezcla y planificar inmersiones con nitrox, útil en viajes con muchas inmersiones. 1 día, 2 inmersiones.",
         "en": "PADI enriched-air specialty for certified divers: learn to analyse the mix and plan nitrox dives, useful on trips with many dives. 1 day, 2 dives."

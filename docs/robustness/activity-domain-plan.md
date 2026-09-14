@@ -142,6 +142,31 @@ que no sale de aquí (mismo patrón que `test_prompt_enum_enumeration.py`).
 | `_ACTIVITY_LABELS` (elegibilidad) | 1 | `label` del registro |
 | edades mínimas en `_load_services` (catálogo) | — | `min_age` del registro |
 
+**F3 — hecha (2026-09-14)**
+
+- **F3a** (datos): `_ACTIVITY_TO_CART_TYPE`, `_ACTIVITY_TO_SERVICE_ID`, mapa de isla
+  (corrige D5), multi-día (corrige el contexto del LLM de los cursos de 2 días), edades
+  mínimas; borradas las 3 tablas sin uso. Prompts idénticos.
+- **F3b** (textos): las 6 tablas de textos para el cliente (`_DELIB_LABELS`,
+  `_OFFERING_TO_SERVICE`, `_OFFERING_BLURB`, `_RECALL_LABELS`, `_PRICE_CATALOG_LABELS`,
+  `_ACTIVITY_LABELS`) pasan al registro: `texts` por actividad con una variante por uso
+  (`name_in_sentence`, `recall`, `price_label`, `plan_label`, `pitch`) y
+  `default_level` en `padi_course`. Las claves propias de los cursos (`open_water`,
+  `advanced`…) pasan a ids del registro. Migración literal: 94 salidas visibles
+  comparadas antes/después, **idénticas**.
+
+**Incoherencias de textos que quedan en el registro (decisión de negocio, editar en
+`activities.json` sin tocar código):**
+
+| actividad | qué pasa |
+|---|---|
+| Rescue | tres nombres: "el curso Rescue" (recordar), "curso Rescue Diver" (comparar), "Curso Rescue Diver + EFR" (etiqueta y catálogo) |
+| Especialidad genérica | `recall` dice "un curso PADI" en español y "a PADI specialty" en inglés |
+| Minicurso | EN: "the mini-course" (recordar), "beginner mini-course" (comparar), "Dive mini-course" (precio) |
+| Snorkel | `recall` en inglés dice "snorkel"; el resto dice "snorkeling" |
+| Buceo certificado | `pitch` usa voseo ("explorás") y el resto del bot tutea |
+| Buceo certificado | la etiqueta del plan de grupo dice "certified fun dive" en inglés y "Certified diving" en el resto |
+
 **Por qué F2 se parte en dos** (corregido al empezar, 2026-09-14): si los enums de los
 prompts pasaran al vocabulario completo antes de migrar el código, el LLM devolvería ids
 (`specialty_nitrox`, `padi_open_water_referral`…) que `_ACTIVITY_TO_SERVICE_ID` y las

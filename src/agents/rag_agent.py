@@ -1026,9 +1026,11 @@ def _canonical_price_overview_answer(query: str, lang: str) -> str | None:
 _PRICE_SINGLE_SERVICE_PATTERNS: list[tuple[str, re.Pattern]] = [
     ("certified_diving", re.compile(r"\bbuce\w*|\bbuse\w*|\bbuz\w*|\bdiv(?:e|es|er|ers|ing)\b", re.IGNORECASE)),
     ("minicourse", re.compile(r"\bminicurso\b|\bmini[\s-]?curso\b|\bmini[\s-]?course\b", re.IGNORECASE)),
-    ("snorkeling", re.compile(r"\bsnorkel\w*\b", re.IGNORECASE)),
-    ("open_water", re.compile(r"\bopen\s*water\b", re.IGNORECASE)),
+    ("snorkel", re.compile(r"\bsnorkel\w*\b", re.IGNORECASE)),
+    ("padi_open_water", re.compile(r"\bopen\s*water\b", re.IGNORECASE)),
 ]
+# Claves = ids del registro de actividades (F3b): el servicio y la etiqueta de
+# precio de cada uno salen de ahi, no de tablas propias de este modulo.
 # Cualquiera de estas señales significa que la pregunta NO es un simple
 # lookup de precio de catálogo (multi-día, comida, acompañante, curso
 # specialty sin precio fijo en `SERVICES`...) — se excluye explícitamente
@@ -1040,20 +1042,6 @@ _PRICE_NON_CATALOG_RE = re.compile(
     r"multi[\s\-]?d[ií]as?|varios\s+d[ií]as|\d\s*(?:d[ií]as|dives?|inmersi\w+)|multi[\s\-]?day)\b",
     re.IGNORECASE,
 )
-
-
-_PRICE_CATALOG_LABELS_ES = {
-    "certified_diving": "Buceo certificado (2 inmersiones, 1 día)",
-    "minicourse": "Minicurso de buceo",
-    "snorkeling": "Snorkel",
-    "open_water": "Curso Open Water (certificación PADI)",
-}
-_PRICE_CATALOG_LABELS_EN = {
-    "certified_diving": "Certified diving (2 dives, 1 day)",
-    "minicourse": "Dive mini-course",
-    "snorkeling": "Snorkeling",
-    "open_water": "Open Water course (PADI certification)",
-}
 
 
 def _canonical_price_named_services_answer(query: str, lang: str) -> str | None:
@@ -1069,19 +1057,18 @@ def _canonical_price_named_services_answer(query: str, lang: str) -> str | None:
     if not matched or len(matched) > 2:
         return None
     try:
+        from src.domain import activities as dom
         from src.flows.catalog import SERVICES
     except Exception:
         return None
-    labels = _PRICE_CATALOG_LABELS_ES if lang == "es" else _PRICE_CATALOG_LABELS_EN
     lines = []
     for key in matched:
-        lookup_key = "2_dives_1_day" if key == "certified_diving" else key
-        svc = SERVICES.get(lookup_key, {})
+        svc = SERVICES.get(dom.base_service_id(key) or "", {})
         usd, cop = svc.get("price_usd"), svc.get("price_cop")
         if usd is None and cop is None:
             return None  # un servicio nombrado sin precio en catálogo -> no arriesgar, dejar a RAG
         price_line = f"{_fmt_price_usd(usd)} USD / {_fmt_price_cop(cop)} COP"
-        lines.append((labels[key], price_line))
+        lines.append((dom.text(key, "price_label", lang, default=key), price_line))
 
     disclaimer = (
         "Los colombianos/residentes pagan en pesos (COP) y los internacionales en dólares (USD) "

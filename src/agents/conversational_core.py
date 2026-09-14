@@ -483,7 +483,7 @@ def ask_slot(state: ConversationState, slot: str, *, reasking: bool = False) -> 
         )
     if slot == SLOT_COMPANION_QTY:
         act = state.pending_companion_activity
-        label = (_RECALL_LABELS_ES if lang == "es" else _RECALL_LABELS_EN).get(act, act or "")
+        label = dom.text(act, "recall", "es" if lang == "es" else "en", default=act or "")
         return (
             f"¿Cuántos serían para {label}? Así les cuento el plan exacto. 😊"
             if lang == "es" else
@@ -1045,24 +1045,16 @@ def _looks_like_deliberation(message: str) -> bool:
 # disparaba el ancla de 2+ opciones. Cada nombre de curso cuenta como una opción
 # propia. Conservador: solo nombres inequívocos de curso, no la palabra "curso"
 # suelta (evita casar dentro de "minicurso").
+# Claves = ids del registro de actividades (F3b): antes eran un vocabulario
+# propio ("open_water", "advanced"...) que no coincidia con ningun otro. Los
+# patrones son deteccion por vocabulario y se revisan en F5.
 _COURSE_MENTION_RE = {
-    "open_water": re.compile(r"\bopen\s*water\b|\bowd\b", re.IGNORECASE),
-    "advanced": re.compile(r"\badvanced\b|\baowd\b|\bavanzad\w*\b", re.IGNORECASE),
-    "rescue": re.compile(r"\brescue\b|\brescate\b", re.IGNORECASE),
-    "divemaster": re.compile(r"\bdive\s*master\b|\bdivemaster\b", re.IGNORECASE),
-    "nitrox": re.compile(r"\bnitrox\b|\benriched\s+air\b", re.IGNORECASE),
+    "padi_open_water": re.compile(r"\bopen\s*water\b|\bowd\b", re.IGNORECASE),
+    "padi_advanced": re.compile(r"\badvanced\b|\baowd\b|\bavanzad\w*\b", re.IGNORECASE),
+    "padi_rescue": re.compile(r"\brescue\b|\brescate\b", re.IGNORECASE),
+    "padi_divemaster": re.compile(r"\bdive\s*master\b|\bdivemaster\b", re.IGNORECASE),
+    "specialty_nitrox": re.compile(r"\bnitrox\b|\benriched\s+air\b", re.IGNORECASE),
 }
-
-_DELIB_LABELS_ES = {"certified_diving": "buceo certificado", "minicourse": "minicurso de buceo",
-                    "snorkel": "snorkel", "padi_course": "curso PADI",
-                    "open_water": "curso Open Water", "advanced": "curso Advanced Open Water",
-                    "rescue": "curso Rescue Diver", "divemaster": "curso Divemaster",
-                    "nitrox": "especialidad Nitrox"}
-_DELIB_LABELS_EN = {"certified_diving": "certified diving", "minicourse": "beginner mini-course",
-                    "snorkel": "snorkeling", "padi_course": "PADI course",
-                    "open_water": "Open Water course", "advanced": "Advanced Open Water course",
-                    "rescue": "Rescue Diver course", "divemaster": "Divemaster course",
-                    "nitrox": "Nitrox specialty"}
 
 
 def _mentioned_courses(message: str) -> list:
@@ -1086,8 +1078,10 @@ def _comparison_query(offerings: list[str], lang: str) -> str:
     duda entre buceo y minicurso") es una query pobre — recupera mal y el juez
     de grounding la rechaza (hallazgo en vivo 2026-07-24); una pregunta clara de
     diferencia recupera igual de bien que cuando el cliente la formula con "?"."""
-    labels = _DELIB_LABELS_ES if lang == "es" else _DELIB_LABELS_EN
-    names = [labels.get(o, o) for o in offerings] or ([labels["snorkel"]])
+    names = (
+        [dom.text(o, "name_in_sentence", lang, default=o) for o in offerings]
+        or [dom.text("snorkel", "name_in_sentence", lang)]
+    )
     joined = (" y ".join(names) if lang == "es" else " and ".join(names))
     return (f"¿Qué diferencia hay entre {joined}? ¿Cuál me recomiendas?"
             if lang == "es" else
@@ -1099,52 +1093,27 @@ def _comparison_query(offerings: list[str], lang: str) -> str:
 # fallback de asesor 4/4, consistente — no flaky), se arma la comparación desde
 # el catálogo SERVICES. Los HECHOS (precio, certificación, nombre) salen del
 # catálogo — nunca se inventan; solo el descriptor de tono es copy curado, igual
-# que el menú de actividades. Nunca cae al asesor.
-_OFFERING_TO_SERVICE = {
-    "certified_diving": "2_dives_1_day", "minicourse": "minicourse",
-    "snorkel": "snorkeling", "padi_course": "open_water",
-    "open_water": "open_water", "advanced": "advanced", "rescue": "rescue",
-    "divemaster": "divemaster", "nitrox": "nitrox_specialty",
-}
-_OFFERING_BLURB_ES = {
-    "certified_diving": "Inmersiones guiadas para buzos ya certificados; explorás el arrecife a profundidad.",
-    "minicourse": "Tu primera vez bajo el agua con instructor: entrenamiento en piscina y una inmersión real. Sin experiencia previa.",
-    "snorkel": "Disfrutas el arrecife desde la superficie, con máscara y aletas. Ideal en familia.",
-    "padi_course": "Curso de certificación inicial: te habilita a bucear de forma autónoma hasta 18 m.",
-    "open_water": "Curso de certificación inicial: te habilita a bucear de forma autónoma hasta 18 m.",
-    "advanced": "Para buzos ya certificados que quieren profundizar y sumar especialidades.",
-    "rescue": "Curso enfocado en seguridad y rescate; el paso previo a Divemaster.",
-    "divemaster": "El primer nivel profesional PADI.",
-    "nitrox": "Especialidad de aire enriquecido para inmersiones más largas.",
-}
-_OFFERING_BLURB_EN = {
-    "certified_diving": "Guided dives for already-certified divers; explore the reef at depth.",
-    "minicourse": "Your first time underwater with an instructor: pool training and a real dive. No experience needed.",
-    "snorkel": "Enjoy the reef from the surface, with mask and fins. Great for families.",
-    "padi_course": "Entry certification course: qualifies you to dive independently down to 18 m.",
-    "open_water": "Entry certification course: qualifies you to dive independently down to 18 m.",
-    "advanced": "For already-certified divers who want to go deeper and add specialties.",
-    "rescue": "Safety- and rescue-focused course; the step before Divemaster.",
-    "divemaster": "The first professional PADI level.",
-    "nitrox": "Enriched-air specialty for longer dives.",
-}
+# que el menú de actividades. Nunca cae al asesor. El servicio, el nombre y la
+# descripcion de cada oferta salen del registro de actividades (F3b); una
+# generica (padi_course) se compara como su nivel por defecto (Open Water).
 
 
 def _compose_comparison(offerings: list[str], lang: str) -> str:
     """Comparación lado-a-lado desde el catálogo, sin depender de RAG. Precio y
     requisito de certificación salen de SERVICES (nunca inventados)."""
     from src.flows.catalog import SERVICES
-    blurbs = _OFFERING_BLURB_ES if lang == "es" else _OFFERING_BLURB_EN
-    labels = _DELIB_LABELS_ES if lang == "es" else _DELIB_LABELS_EN
     rows = []
     for o in offerings:
-        svc = SERVICES.get(_OFFERING_TO_SERVICE.get(o, ""), {})
-        name = (svc.get("name_es") if lang == "es" else svc.get("name_en")) or labels.get(o, o)
+        svc = SERVICES.get(dom.base_service_id(dom.resolved_activity_id(o)) or "", {})
+        name = (
+            (svc.get("name_es") if lang == "es" else svc.get("name_en"))
+            or dom.text(o, "name_in_sentence", lang, default=o)
+        )
         if lang == "es":
             cert_line = "Requiere certificación previa" if svc.get("requires_cert") else "Sin certificación previa"
         else:
             cert_line = "Requires prior certification" if svc.get("requires_cert") else "No certification needed"
-        row = f"🤿 *{name}*\n• {cert_line}\n• {blurbs.get(o, '')}"
+        row = f"🤿 *{name}*\n• {cert_line}\n• {dom.text(o, 'pitch', lang, default='')}"
         price = svc.get("price_usd")
         if price:
             row += (f"\n• Desde U${int(round(price))} por persona"
@@ -1787,20 +1756,6 @@ def _merge_companion_activity(state: ConversationState, activity: str, qty: int)
     logger.info(f"[CORE] merged companion activity {activity} x{qty} -> alloc={alloc}")
 
 
-_RECALL_LABELS_ES = {
-    "certified_diving": "buceo certificado", "minicourse": "minicurso",
-    "snorkel": "snorkel", "padi_open_water": "el curso Open Water",
-    "padi_advanced": "el curso Advanced", "padi_rescue": "el curso Rescue",
-    "padi_divemaster": "el curso Divemaster", "padi_specialty": "un curso PADI",
-}
-_RECALL_LABELS_EN = {
-    "certified_diving": "certified diving", "minicourse": "the mini-course",
-    "snorkel": "snorkel", "padi_open_water": "the Open Water course",
-    "padi_advanced": "the Advanced course", "padi_rescue": "the Rescue course",
-    "padi_divemaster": "the Divemaster course", "padi_specialty": "a PADI specialty",
-}
-
-
 def _full_booking_recap(state: ConversationState) -> str | None:
     """Recap COMPLETO y cálido de la reserva (todas las actividades/personas +
     ubicación), del ESTADO (nunca inventado). Para la pregunta general "¿qué te
@@ -1808,18 +1763,21 @@ def _full_booking_recap(state: ConversationState) -> str | None:
     equivocado ("Me habías dicho: snorkel"). Estilo Monegros: recap estructurado.
     Devuelve None si no hay nada resuelto (el caller cae a RAG)."""
     es = state.language == "es"
-    labels = _RECALL_LABELS_ES if es else _RECALL_LABELS_EN
+    lang = "es" if es else "en"
     lines: list[str] = []
     alloc = state.detected_group_allocation or {}
-    product_alloc = {k: v for k, v in alloc.items() if k in labels and v}
+    # Solo actividades con texto de recordatorio en el registro (F3b).
+    product_alloc = {k: v for k, v in alloc.items() if v and dom.text(k, "recall", lang)}
     if product_alloc:
         for act, qty in product_alloc.items():
-            lines.append(f"• *{qty}* para *{labels[act]}*" if es else f"• *{qty}* for *{labels[act]}*")
+            label = dom.text(act, "recall", lang)
+            lines.append(f"• *{qty}* para *{label}*" if es else f"• *{qty}* for *{label}*")
     else:
         act = _effective_activity(state)
         if act:
             n = state.detected_group_size or 1
-            lines.append(f"• *{n}* para *{labels.get(act, act)}*" if es else f"• *{n}* for *{labels.get(act, act)}*")
+            label = dom.text(act, "recall", lang, default=act)
+            lines.append(f"• *{n}* para *{label}*" if es else f"• *{n}* for *{label}*")
     if not lines:
         return None
     loc = state.location or state.detected_location
@@ -1857,7 +1815,7 @@ def _recall_answer(state: ConversationState, field: str) -> str | None:
         act = _effective_activity(state)
         if not act:
             return None
-        label = (_RECALL_LABELS_ES if es else _RECALL_LABELS_EN).get(act, act)
+        label = dom.text(act, "recall", "es" if es else "en", default=act)
         return f"Me habías dicho: *{label}*." if es else f"You told me: *{label}*."
     if field == "location":
         loc = state.location

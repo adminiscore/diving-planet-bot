@@ -19,6 +19,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
+from src.domain import activities as dom
+
 # --- Age thresholds ---------------------------------------------------------
 MIN_SNORKEL = 6
 BUBBLE_MAKERS_MIN = 8
@@ -147,29 +149,33 @@ def plan_group(certified: int = 0, noncert_ages: list[int] | None = None,
     return plans
 
 
-_ACTIVITY_LABELS = {
-    "es": {
-        CERTIFIED_DIVING: "buceo certificado (salida de buceo)",
-        MINICOURSE: "minicurso de buceo",
-        BUBBLE_MAKERS: "Bubble Makers (buceo para niños 8-10)",
-        SNORKEL: "snorkel",
-        OPEN_WATER: "curso Open Water",
-        COMPANION: "acompañante (sin actividad en el agua)",
-    },
-    "en": {
-        CERTIFIED_DIVING: "certified fun dive",
-        MINICOURSE: "dive mini-course",
-        BUBBLE_MAKERS: "Bubble Makers (kids diving 8-10)",
-        SNORKEL: "snorkeling",
-        OPEN_WATER: "Open Water course",
-        COMPANION: "companion (no in-water activity)",
-    },
+# Clave de opcion de este modulo -> id del registro de actividades (F3b). Las
+# etiquetas del plan de grupo salen del registro (`texts.plan_label`).
+_OPTION_TO_ACTIVITY = {
+    CERTIFIED_DIVING: "certified_diving",
+    MINICOURSE: "minicourse",
+    BUBBLE_MAKERS: "bubble_makers",
+    SNORKEL: "snorkel",
+    OPEN_WATER: "padi_open_water",
 }
+# "Acompañante" no es una actividad del catalogo (su precio vive en pricing.json,
+# no en services.json), asi que su etiqueta se queda aqui.
+_COMPANION_LABELS = {
+    "es": "acompañante (sin actividad en el agua)",
+    "en": "companion (no in-water activity)",
+}
+
+
+def _plan_label(option: str, lang: str) -> str:
+    if option == COMPANION:
+        return _COMPANION_LABELS[lang]
+    return dom.text(_OPTION_TO_ACTIVITY.get(option, option), "plan_label", lang, default=option)
 
 
 def format_group_plan(plans: list[PersonPlan], lang: str = "es") -> str:
     """A clear, positive per-person breakdown of what each can do."""
-    labels = _ACTIVITY_LABELS[lang if lang in _ACTIVITY_LABELS else "es"]
+    lang = lang if lang in _COMPANION_LABELS else "es"
+    labels = {option: _plan_label(option, lang) for option in (*_OPTION_TO_ACTIVITY, COMPANION)}
     lines: list[str] = []
     for p in plans:
         opts = " / ".join(labels[o] for o in p.options)
