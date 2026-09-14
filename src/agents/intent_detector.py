@@ -1036,7 +1036,16 @@ class IntentDetector:
                     total = cert_n + beg_n
 
                 if cert_n > 0 and beg_n > 0:
-                    intent.group_allocation = {'certified_diving': cert_n, 'minicourse': beg_n}
+                    # Decision del owner (2026-09-15): el tramo no certificado solo es
+                    # minicurso si el mensaje lo nombra ("y dos minicurso"); si solo
+                    # dice que no estan certificados, queda `undecided` y el bot les
+                    # recomienda opciones. Mismas categorias que el detector de
+                    # actividad, sin vocabulario nuevo.
+                    beg_key = (
+                        "minicourse" if "minicourse" in matched_activity_categories(m_split.group(0))
+                        else "undecided"
+                    )
+                    intent.group_allocation = {'certified_diving': cert_n, beg_key: beg_n}
                     intent.group_size = total
                     intent.detected_fields.append("group_allocation")
                 break
@@ -1059,7 +1068,8 @@ class IntentDetector:
                 beg_n = _parse_num(groups[0]) if groups and groups[0] else 1
                 if 0 < beg_n < intent.group_size:
                     cert_n = intent.group_size - beg_n
-                    intent.group_allocation = {'certified_diving': cert_n, 'minicourse': beg_n}
+                    # Solo un atributo ("uno no esta certificado"): sin actividad elegida.
+                    intent.group_allocation = {'certified_diving': cert_n, 'undecided': beg_n}
                     intent.detected_fields.append("group_allocation")
 
         def _set_group_size_from_allocation(allocation: dict[str, int]) -> None:

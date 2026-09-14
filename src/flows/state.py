@@ -178,6 +178,12 @@ class ConversationState:
     # preguntar la cantidad.
     needs_companion_activity: bool = False
 
+    # Personas del grupo que el cliente describio sin actividad elegida ("somos 3,
+    # uno no esta certificado"): el LLM las marca `undecided` en el reparto y el
+    # bot les recomienda opciones (owner 2026-09-15). Al elegir, se fusionan con
+    # esta cantidad sin volver a preguntar cuantos son.
+    pending_undecided_qty: int | None = None
+
     # Portado de pre_gadea v0.21.1 (batería sintética contra PRE): distinto
     # de `needs_companion_activity` (detección FRESCA del turno actual, se
     # consume de inmediato tras `_understand()`). Este se marca cuando la

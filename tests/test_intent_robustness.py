@@ -104,7 +104,7 @@ def test_verb_form_activity_split():
 def test_open_water_and_sin_certificar_is_cert_split():
     """'dos con open water y uno sin certificar' -> 2 certified + 1 beginner."""
     i = _d("somos 3, dos con open water y uno sin certificar")
-    assert i.group_allocation == {"certified_diving": 2, "minicourse": 1}
+    assert i.group_allocation == {"certified_diving": 2, "undecided": 1}
 
 
 def test_somos_dos_queremos_bucear_asks_cert_not_lost():

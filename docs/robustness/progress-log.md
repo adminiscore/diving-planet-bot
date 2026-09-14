@@ -2561,3 +2561,69 @@ Eval-set, ejecución limpia: **214/219 (97,7 %)**. Por caso, frente a la ejecuci
   desde la tarea 8).
 
 Snapshot: cambian exactamente los 13 prompts de actividad (enum + glosa).
+
+### Decisión 2 del owner: "¿ya certificados o quieren certificarse?" — análisis previo
+
+Owner: cuando se nombra un nivel que también es una certificación ("2 open water y 3 snorkel",
+"3 advanced"), el bot pregunta si ya lo tienen o quieren sacárselo, en lugar de suponer.
+
+Sin LLM (detector actual):
+
+| mensaje | categorías | `certification_claim` | lectura |
+|---|---|---|---|
+| "2 open water y 3 snorkel" | curso + snorkel | — | **ambiguo** (el LLM reparte `certified_diving: 2`, batería b05) |
+| "hola somos 4 open water" | curso | — | **ambiguo** (el regex resuelve el curso Open Water) |
+| "2 advanced and 2 snorkel" | curso + snorkel | — | **ambiguo** |
+| "somos 3, 2 con open water y 1 no" | curso | `True` | claro: certificados |
+| "tengo el open water" | curso | — (el detector pone `is_certified=True`) | claro: certificado |
+| "we are 2 open water divers" / "somos 2 buzos open water" | curso (+ buceo) | `True` | claro: certificados |
+| "quiero el open water" / "quiero hacer el advanced" | curso | — | claro: curso |
+
+Los ambiguos y "quiero el open water" dan las mismas señales deterministas: distinguirlos exige
+entender el verbo, así que tiene que decidirlo el LLM, no una lista.
+
+Diseño propuesto, a medir antes de aplicar:
+1. Medir primero si el LLM rellena `is_certified` en esos mensajes ("quiero el open water" →
+   `False`; "somos 4 open water" → `True` o abstención).
+2. Slot nuevo "¿ya tienen el <nivel> o quieren sacárselo?" solo cuando, **después** de la
+   extracción, hay un nivel de curso certificable nombrado y `is_certified` sigue sin resolver.
+   Es la misma regla de "si no lo sabemos, se pregunta".
+3. En repartos, un tramo nombrado solo por el nivel ("2 open water") no se asume
+   `certified_diving`: se marca para aclarar, igual que `undecided`.
+
+Medición: eval-set completo + batería de grupo (b05) + sonda de los mensajes de la tabla.
+
+### Decisión 3 del owner: personas del grupo sin actividad elegida → recomendar opciones
+
+Punto de partida, medido con LLM real:
+- `fill_gaps` repartía "somos 3, uno no está certificado" como `{certified_diving: 2, snorkel: 1}`
+  (**snorkel supuesto**, 3/3).
+- El regex asignaba **minicurso** al tramo en "2 con open water y 1 no", "uno no está
+  certificado" y "5 certificados y 2 principiantes".
+
+Diseño (sin vocabulario nuevo):
+1. **LLM**: la descripción de `group_allocation` en `EXTRACTION_TOOL` pide la clave `undecided`
+   para quien solo se describe sin actividad (p. ej. "no está certificado"). Solo cambia ese tool
+   (snapshot: 1 prompt).
+2. **Regex**: el tramo no certificado es `minicourse` solo si su propio texto lo nombra
+   (`matched_activity_categories` devuelve `minicourse` para "dos minicurso" o "2 bautismo", y
+   nada para "1 no", "2 principiantes" o "sin certificar"); si no, `undecided`.
+3. **Núcleo**: en el bloque del reparto del LLM se valida la cifra de `undecided` contra el texto
+   y se completa el grupo principal por aritmética (total − sin decidir − otros tramos). Un punto
+   único, `_take_undecided_members`, después de la invariante de la suma, saca `undecided` del
+   intent final (regex o LLM), guarda `pending_undecided_qty` y marca la recomendación de F6. Al
+   elegir, `_merge_pending_undecided` fusiona con esa cantidad sin preguntar "¿cuántos?".
+
+Medición (tanda limpia):
+- Primera versión (solo LLM): eval-set 210/219, porque el regex seguía asignando minicurso.
+  Batería: r13 salía "parcial" porque la batería no sabía de pendientes (se le enseñó).
+- **Versión final**:
+  - eval-set **213/219**; reparto de nuevo al 91 %; el único caso nuevo que falla es la
+    actividad de "two have open water and one does not", cuya expectativa se cambió a mano;
+  - batería de grupo, config PRE: **beneficio 10/10** (antes 9/10), total 13/13, riesgo 12/13,
+    0 parciales, 0 inventados (r13 queda vacío: el bot pregunta, igual que antes, sin asumir);
+  - sonda en `_understand`: 4 de 5 frases acaban `{certified_diving: 2}` + 1 pendiente de
+    recomendación; "somos 4 y dos no tienen licencia" sigue sin reparto.
+
+Pendiente: frases con el tramo en plural sin cifra delante del atributo ("dos no tienen licencia"
+tras "somos 4") y el texto de la recomendación de F6, que sigue diciendo "acompañante".

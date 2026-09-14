@@ -103,13 +103,14 @@ SCENARIOS = [
     {
         "id": "b05-open-water-nombrado",
         "familia": "beneficio",
-        # AMBIGUO (2026-09-14): "2 open water" tambien se dice de dos personas CON la
-        # certificacion Open Water. Sin la guarda de vocabulario el LLM lo lee asi
-        # ({certified_diving: 2, snorkel: 3}). Pendiente de que el owner decida.
-        "desc": "Curso PADI concreto nombrado dentro del reparto (ambiguo: ver comentario).",
+        # AMBIGUO: "2 open water" tambien se dice de dos personas CON la certificacion.
+        # Decision del owner (2026-09-15): el bot pregunta si ya estan certificados o
+        # quieren certificarse; no se asume ni curso ni buceo certificado. Hasta que
+        # exista esa pregunta, lo correcto es no guardar reparto (el bot pregunta).
+        "desc": "Nivel de curso nombrado sin decir si lo tienen o lo quieren (ambiguo: se pregunta).",
         "message": "2 open water y 3 snorkel",
         "state": {"detected_group_size": 5},
-        "expect": ("ALLOC", {OW: 2, SNK: 3}),
+        "expect": ("NONE",),
     },
     {
         "id": "b06-en-certified",
@@ -405,7 +406,9 @@ SCENARIOS = [
         "desc": "Atributo de un tramo con cifra pero sin actividad.",
         "message": "vamos 4 pero dos no tienen licencia",
         "state": {"detected_activity": "certified_diving", "is_certified": True},
-        "expect": ("NONE",),
+        # 2026-09-15 (owner: recomendar, no asumir): 2 certificados y 2 sin decidir,
+        # a los que el bot recomienda opciones. Antes se esperaba no repartir.
+        "expect": ("ALLOC", {CERT: 2}),
     },
 
     # ── FRONTERA (observacional) ─────────────────────────────────────────
@@ -470,7 +473,8 @@ async def _run(spec, veto_total, veto_reparto):
         await cc._understand(state, spec["message"])
     except Exception as exc:  # noqa: BLE001
         return {"err": f"{type(exc).__name__}: {exc}"}
-    return {"alloc": state.detected_group_allocation, "gs": state.detected_group_size}
+    return {"alloc": state.detected_group_allocation, "gs": state.detected_group_size,
+            "undecided": state.pending_undecided_qty or 0}
 
 
 def _total_esperado(spec):
@@ -492,7 +496,9 @@ def _clasificar(spec, got):
     esperado = _total_esperado(spec)
     if esperado is not None and gs != esperado:
         return "TOTAL_MAL"
-    if alloc and isinstance(gs, int) and gs > 0 and sum(alloc.values()) != gs:
+    # Las personas sin actividad elegida (se les recomiendan opciones, 2026-09-15)
+    # cuentan para el total aunque aun no esten en el reparto.
+    if alloc and isinstance(gs, int) and gs > 0 and sum(alloc.values()) + got.get("undecided", 0) != gs:
         return "PARCIAL"
     kind = spec["expect"][0]
     if kind == "ALLOC":

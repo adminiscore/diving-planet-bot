@@ -549,16 +549,16 @@ class TestOpenWaterCertSplit:
             "hola somos tres personas que queremos bucear, dos tenemos el open water y una no",
             state,
         )
-        assert intent.group_allocation == {"certified_diving": 2, "minicourse": 1}
+        assert intent.group_allocation == {"certified_diving": 2, "undecided": 1}
         assert intent.group_size == 3
 
     def test_es_con_open_water_short(self, detector, state):
         intent = detector.detect("somos 3, 2 con open water y 1 no", state)
-        assert intent.group_allocation == {"certified_diving": 2, "minicourse": 1}
+        assert intent.group_allocation == {"certified_diving": 2, "undecided": 1}
 
     def test_en_have_open_water(self, detector, state):
         intent = detector.detect("we are three, two have open water and one does not", state)
-        assert intent.group_allocation == {"certified_diving": 2, "minicourse": 1}
+        assert intent.group_allocation == {"certified_diving": 2, "undecided": 1}
 
 
 class TestCertificationOnlyNotCertifiedCount:
@@ -574,7 +574,7 @@ class TestCertificationOnlyNotCertifiedCount:
             "Hola somos dos personas y uno no esta certificado", state
         )
         assert intent.activity == "certified_diving"
-        assert intent.group_allocation == {"certified_diving": 1, "minicourse": 1}
+        assert intent.group_allocation == {"certified_diving": 1, "undecided": 1}
         assert intent.confidence > 0.2
 
     def test_es_typo_certficado_still_detected(self, detector, state):
@@ -584,18 +584,18 @@ class TestCertificationOnlyNotCertifiedCount:
         )
         assert intent.activity == "certified_diving"
         assert intent.is_certified is False
-        assert intent.group_allocation == {"certified_diving": 1, "minicourse": 1}
+        assert intent.group_allocation == {"certified_diving": 1, "undecided": 1}
 
     def test_es_three_people_one_not_certified(self, detector, state):
         intent = detector.detect("somos 3, uno no esta certificado", state)
-        assert intent.group_allocation == {"certified_diving": 2, "minicourse": 1}
+        assert intent.group_allocation == {"certified_diving": 2, "undecided": 1}
 
     def test_en_one_is_not_certified(self, detector, state):
         intent = detector.detect(
             "we are 2 and one is not certified", state
         )
         assert intent.activity == "certified_diving"
-        assert intent.group_allocation == {"certified_diving": 1, "minicourse": 1}
+        assert intent.group_allocation == {"certified_diving": 1, "undecided": 1}
 
     def test_certification_mention_without_group_size_still_infers_activity(
         self, detector, state

@@ -1629,6 +1629,11 @@ async def _understand(state: ConversationState, message: str) -> tuple:
         # el reparto entero, para no perder las que sí son correctas.
         alloc_patch = patch.get("group_allocation")
         if isinstance(alloc_patch, dict) and alloc_patch:
+            # Decision del owner (2026-09-15): quien solo se describe sin actividad
+            # elegida ("uno no esta certificado") no se asume en ninguna (el LLM
+            # suponia snorkel 3/3). El LLM lo marca `undecided` y el bot le
+            # recomienda opciones (F6).
+            undecided_qty = alloc_patch.pop("undecided", None)
             # Auditoría 2026-07-23 (segunda pasada, más allá de la cantidad):
             # una actividad sin NINGÚN respaldo textual (ni siquiera la
             # palabra del producto aparece en el mensaje) es un problema de
@@ -1657,6 +1662,19 @@ async def _understand(state: ConversationState, message: str) -> tuple:
                 act: qty for act, qty in alloc_patch.items()
                 if _consume_number(msg_nums, qty)
             }
+            if isinstance(undecided_qty, int) and undecided_qty > 0 and _consume_number(msg_nums, undecided_qty):
+                # El resto del grupo hace la actividad principal: aritmetica con el
+                # total conocido, no una suposicion ("somos 3, uno no esta
+                # certificado" + buceo certificado -> 2 certificados). El tramo
+                # `undecided` sigue en el reparto hasta `_take_undecided_members`.
+                main_act = intent.activity or state.detected_activity
+                total = patch.get("group_size") or intent.group_size or state.detected_group_size
+                if main_act and main_act not in cleaned and total:
+                    rest = total - undecided_qty - sum(cleaned.values())
+                    if rest > 0:
+                        cleaned[main_act] = rest
+                cleaned["undecided"] = undecided_qty
+                patch["group_allocation"] = dict(cleaned)
             dropped = [act for act in alloc_patch if act not in cleaned]
             if dropped:
                 # No se descarta en silencio — se pregunta (mismo principio
@@ -1728,6 +1746,7 @@ async def _understand(state: ConversationState, message: str) -> tuple:
     # Ponerla aqui la hace valida para cualquier fuente del reparto, presente o
     # futura, en vez de repetir la comprobacion en cada una.
     supervisor.enforce_group_allocation_consistency(intent, state, message)
+    _take_undecided_members(intent, state)
     supervisor._apply_detected_intent(intent, state, message)
 
     # Circuit-breaker (portado 2026-09-01, hallazgo en vivo, batería de
@@ -1743,6 +1762,7 @@ async def _understand(state: ConversationState, message: str) -> tuple:
         state.companion_activity_deferred = False
         state.pending_companion_activity = None
         state.pending_companion_queue = []
+        state.pending_undecided_qty = None
 
     # "voy solo" → 1 persona. Nació para cursos PADI (Fase 3 causa A) y el owner
     # decidió extenderlo a CUALQUIER actividad (2026-07-22): la señal explícita
@@ -1856,6 +1876,34 @@ def _restore_main_diver_fields(
     state.is_certified = is_certified
     state.last_dive_over_2_years = last_dive
     state.refresher_interested = refresher
+
+
+def _take_undecided_members(intent, state: ConversationState) -> None:
+    """Punto UNICO para las personas del grupo sin actividad elegida, vengan del
+    regex o del LLM: salen del reparto (que se guarda sin ellas), su cantidad queda
+    pendiente y se marca la recomendacion de opciones (F6). Va DESPUES de la
+    invariante de la suma, que las cuenta porque aun estan dentro del reparto."""
+    allocation = getattr(intent, "group_allocation", None)
+    if not isinstance(allocation, dict):
+        return
+    qty = allocation.pop("undecided", None)
+    if not (isinstance(qty, int) and qty > 0):
+        return
+    intent.group_allocation = allocation or None
+    state.pending_undecided_qty = qty
+    state.needs_companion_activity = True
+
+
+def _merge_pending_undecided(state: ConversationState) -> bool:
+    """Si ya se eligio actividad para las personas `undecided` del grupo, se
+    fusionan con su cantidad conocida (sin preguntar "¿cuantos serian?")."""
+    qty, activity = state.pending_undecided_qty, state.pending_companion_activity
+    if not (qty and activity):
+        return False
+    _merge_companion_activity(state, activity, qty)
+    state.pending_companion_activity = None
+    state.pending_undecided_qty = None
+    return True
 
 
 def _merge_companion_activity(state: ConversationState, activity: str, qty: int) -> None:
@@ -2402,7 +2450,10 @@ async def _routing_phase(
     # amigo no está certificado" -> se preguntó y respondió "snorkel"),
     # sigue faltando CUÁNTOS son — se encadena la pregunta de cantidad ya
     # mismo, mismo patrón que la cola de sub-grupos.
-    if resolved_short and prev_pending == SLOT_COMPANION_ACTIVITY and state.pending_companion_activity:
+    if (
+        resolved_short and prev_pending == SLOT_COMPANION_ACTIVITY and state.pending_companion_activity
+        and not _merge_pending_undecided(state)
+    ):
         response = greeting + ask_slot(state, SLOT_COMPANION_QTY)
         state.history.append({"role": "assistant", "content": response})
         return response
@@ -2520,6 +2571,7 @@ async def _extraction_phase(
         state.companion_activity_deferred = False
         state.pending_companion_activity = None
         state.pending_companion_queue = []
+        state.pending_undecided_qty = None
 
     # Multi-ítem (auditoría 2026-07-23): si _understand() encoló alguna
     # actividad del reparto sin respaldo numérico real (fill_gaps inventando
@@ -3145,6 +3197,7 @@ async def _slotfill_close_phase(
         state.companion_activity_deferred = False
         state.pending_companion_activity = None
         state.pending_companion_queue = []
+        state.pending_undecided_qty = None
 
     # RESOLVER + RESPONDER.
     #
@@ -3159,6 +3212,7 @@ async def _slotfill_close_phase(
     # huérfana — el estado seguía "pensando" que faltaba responderla pero
     # nada volvía a preguntarla nunca. Se prioriza sobre next_missing_slot
     # igual que el resto de comprobaciones de este bloque multi-ítem.
+    _merge_pending_undecided(state)
     if state.pending_companion_activity:
         response = ask_slot(state, SLOT_COMPANION_QTY, reasking=True)
         state.step = Step.FREE_TEXT

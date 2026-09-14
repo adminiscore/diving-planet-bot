@@ -118,7 +118,14 @@ EXTRACTION_TOOL = {
                         "try diving'/'quiere snorkel'), do NOT guess which "
                         "activity that companion wants (neither snorkel nor "
                         "minicourse) — leave that companion out of this field "
-                        "entirely; the bot will ask what they'd like to do."
+                        "entirely; the bot will ask what they'd like to do. "
+                        "Use the key 'undecided' for people who are in the group "
+                        "but for whom the message does not say what activity they "
+                        "will do (e.g. they are only described as not certified: "
+                        "'somos 3, uno no está certificado' -> "
+                        '{"certified_diving": 2, "undecided": 1}). Never turn a '
+                        "certification fact alone into 'minicourse' or 'snorkel': "
+                        "the bot will recommend options to those people."
                     ),
                     "additionalProperties": {"type": "integer"},
                 },
