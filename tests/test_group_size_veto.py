@@ -30,14 +30,26 @@ from src.flows.state import ConversationState
 _REAL_BUG_MSG = "vengo con mi pareja y nuestros dos hijos"
 
 
+def test_cutover_is_on_by_default_and_shadow_is_not():
+    """Desde 2026-09-14 el cutover vive en el codigo (antes solo en `.env.pre`):
+    ver el comentario de `config.py` para el criterio y la medida."""
+    from src.config import Settings
+
+    defaults = Settings.model_fields
+    assert defaults["llm_group_size_veto_cutover"].default is True
+    assert defaults["llm_group_size_veto_shadow_mode"].default is False
+
+
 @pytest.mark.asyncio
-async def test_off_by_default_does_not_call_llm():
+async def test_both_flags_off_does_not_call_llm():
     detector = IntentDetector()
     state = ConversationState(conversation_id="gsize-veto-off-test")
     intent = detector.detect(_REAL_BUG_MSG, state)
     assert intent.group_size == 2  # el bug real: subcuenta
 
-    with patch.object(supervisor, "verify_fields", new=AsyncMock(side_effect=AssertionError("must not be called"))):
+    with patch.object(supervisor.settings, "llm_group_size_veto_cutover", False), \
+         patch.object(supervisor.settings, "llm_group_size_veto_shadow_mode", False), \
+         patch.object(supervisor, "verify_fields", new=AsyncMock(side_effect=AssertionError("must not be called"))):
         await supervisor._maybe_veto_resolved_field_via_llm("group_size", _REAL_BUG_MSG, intent, state)
     assert intent.group_size == 2
 
@@ -52,6 +64,7 @@ async def test_shadow_mode_logs_the_real_undercounting_bug_but_never_mutates():
     assert intent.group_size == 2
 
     with patch.object(supervisor.settings, "llm_group_size_veto_shadow_mode", True), \
+         patch.object(supervisor.settings, "llm_group_size_veto_cutover", False), \
          patch.object(supervisor, "verify_fields", new=AsyncMock(return_value={"group_size": 4})):
         await supervisor._maybe_veto_resolved_field_via_llm("group_size", _REAL_BUG_MSG, intent, state)
     assert intent.group_size == 2  # shadow: nunca muta

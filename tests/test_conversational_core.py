@@ -1218,10 +1218,16 @@ async def test_vague_plural_in_other_companions_asks_instead_of_guessing():
     group_allocation debe descartar esa entrada concreta y preguntar, sin
     perder las otras dos (respaldadas por "2" y "uno" reales)."""
     state = make_state("es")
+    # Con los vetos en cutover por defecto (2026-09-14) el turno va por la
+    # peticion FUSIONADA: se simulan las dos vias con el mismo relleno.
     with patch.object(core, "fill_gaps", new=AsyncMock(return_value={
         "group_allocation": {"certified_diving": 2, "minicourse": 1, "snorkel": 2},
         "group_size": 5, "is_certified": True,
     })), \
+         patch.object(core, "extract_and_verify", new=AsyncMock(return_value=({
+        "group_allocation": {"certified_diving": 2, "minicourse": 1, "snorkel": 2},
+        "group_size": 5, "is_certified": True,
+    }, {}))), \
          patch.object(core, "detect_special_signals", new=AsyncMock(return_value={})):
         resp = await route_message(state, "2 bucean, mis amigos hacen snorkel, y uno hace el minicurso")
     assert state.core_pending_slot == core.SLOT_COMPANION_QTY
@@ -1245,11 +1251,16 @@ async def test_vague_plural_in_other_companions_then_answer_completes_booking():
         "group_allocation": {"certified_diving": 2, "minicourse": 1, "snorkel": 2},
         "group_size": 5, "is_certified": True,
     })), \
+         patch.object(core, "extract_and_verify", new=AsyncMock(return_value=({
+        "group_allocation": {"certified_diving": 2, "minicourse": 1, "snorkel": 2},
+        "group_size": 5, "is_certified": True,
+    }, {}))), \
          patch.object(core, "detect_special_signals", new=AsyncMock(return_value={})):
         await route_message(state, "2 bucean, mis amigos hacen snorkel, y uno hace el minicurso")
     assert state.core_pending_slot == core.SLOT_COMPANION_QTY
 
     with patch.object(core, "fill_gaps", new=AsyncMock(return_value={})), \
+         patch.object(core, "extract_and_verify", new=AsyncMock(return_value=({}, {}))), \
          patch.object(core, "detect_special_signals", new=AsyncMock(return_value={})):
         await route_message(state, "4")
     alloc = state.detected_group_allocation
@@ -1314,7 +1325,11 @@ async def test_correctly_abstained_activity_is_not_silently_lost():
     with patch.object(core, "fill_gaps", new=AsyncMock(return_value={
         "group_size": 5,
         "group_allocation": {"certified_diving": 3, "minicourse": 2},
-    })):
+    })), \
+         patch.object(core, "extract_and_verify", new=AsyncMock(return_value=({
+        "group_size": 5,
+        "group_allocation": {"certified_diving": 3, "minicourse": 2},
+    }, {}))):
         resp = await route_message(
             state, "tres bucean, mis amigos hacen snorkel, y dos hacen el minicurso"
         )

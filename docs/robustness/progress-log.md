@@ -2097,3 +2097,159 @@ es el desenlace seguro. Arreglarlos pasa por el prompt de `fill_gaps`, y ya est�
 meterle ahí las reglas de verificación **cuesta 5 casos del eval-set**: haría falta una
 versión neutra de esas reglas, escrita para rellenar y no para desconfiar. Queda anotado,
 no forzado.
+
+## 2026-09-14 — El total que cuenta es el que se GUARDA, triggers propios y los cutover al código
+
+Sesión siguiendo `NEXT-SESSION-PROMPT.md` del 2026-09-12. Tres cambios de código, una
+batería reescrita y tres hallazgos de infraestructura.
+
+### Arranque
+
+- La rama local `feature/pre_gadea` iba 178 commits por detrás de `origin` (y con 18
+  propios). Los 18 están íntegros en `origin/backup-pre_gadea-2026-09-01` (su punta es
+  exactamente el mismo commit) y ya se portaron en 0.22.1, así que se movió la rama a
+  `origin` sin perder nada.
+- Cuota OpenAI: 9999 peticiones restantes. PRE corría `b42ba26`.
+- Logs de PRE, 72h: **ni una sola etiqueta `[EXTRACT]`**. Confirmado otra vez: sin tráfico,
+  hay que provocarlo.
+
+### Tarea 1 (total mal leído): la hipótesis del prompt era falsa
+
+El prompt suponía que el trigger genérico del veto de `group_size` no disparaba porque el
+regex "acierta con confianza". **Sí dispara**: con "en total 7: 4 certificados…" el regex da
+`group_size=4` (el patrón `(\d+)\s+certificad[oa]s` de `intent_detector` toma la cifra de un
+TRAMO por el total) y `_eligible_veto_fields` devuelve `group_size` y `group_allocation`.
+
+Sonda con LLM real dentro del contenedor de PRE, pasando por `_understand` (14 escenarios × 2
+repeticiones, deterministas):
+
+| veto de `group_size` | total correcto | repartos parciales guardados |
+|---|---|---|
+| apagado (el default del código) | 20/28 | 6 |
+| encendido (lo que tiene `.env.pre`) | **28/28** | **0** |
+
+Controles intactos, incluido el caso del owner "con mi pareja, tenemos un presupuesto…" = 2.
+Conclusión: **en PRE ya estaba resuelto, pero solo por un flag que vive fuera del repo** — lo
+que convierte la tarea 1 en la tarea 4.
+
+### El agujero que sí había: la invariante comparaba con el total del TURNO
+
+La misma sonda destapó `m02`: con 7 personas ya sabidas, "4 certificados" → total de turno 4,
+`fill_gaps` devuelve `{certified_diving: 4}`, el reparto **cuadra con ese 4** y se guarda. Pero
+el estado sigue en 7 (el total se escribe una sola vez salvo corrección explícita): **reparto
+de 4 para un grupo de 7**. `enforce_group_allocation_consistency` y
+`_group_allocation_should_verify` razonaban con el total del turno, que es justo el que el
+regex lee mal.
+
+Y la batería lo encontró **fallando en PRE con los dos vetos encendidos** (`b10`): "4 con
+brevet, 2 minicurso y 1 snorkel" con 7 sabidos. El regex deduce el total de turno (3) **del
+propio reparto** `{minicourse: 2, snorkel: 1}`, así que el reparto cuadra consigo mismo, el
+veto no dispara y la invariante lo acepta. 4 personas fuera, en silencio.
+
+**Arreglo del mecanismo, no del fraseo**: `supervisor._group_size_that_will_persist(intent,
+state, message)` es ahora la única fuente de "qué total queda guardado" (la regla de escritura
+única + `_GROUP_SIZE_CORRECTION_CUE_RE` que ya aplicaba `_apply_detected_intent`), y la usan
+los tres sitios que razonan sobre el total: el guardado del estado, la invariante y el trigger
+del veto de reparto. Además, la rama "el reparto amplía el total" ahora sube también el total
+del **estado** (antes solo el del intent, y la escritura única lo dejaba en el valor viejo —
+mismo criterio que `_merge_companion_activity`).
+
+Cambia un test existente a propósito: `test_trigger_prefers_this_turns_total_over_the_
+conversations` fijaba que el total del turno manda siempre; ahora solo manda cuando es una
+corrección explícita.
+
+### La batería, reescrita (`scripts/battery_group_allocation_gate.py`)
+
+- Juzga el **estado final** del turno, no el intent: `m02` solo se ve en el estado.
+- Variantes = los dos vetos (`sin_vetos`/`solo_reparto`/`solo_total`/`ambos`). La "puerta" que
+  medía la versión anterior ya no existe.
+- Familia nueva **total** (13 escenarios: frases de total no listadas, multi-turno, corrección
+  explícita, controles) y total esperado por escenario → veredicto nuevo `TOTAL_MAL`.
+- Una sola repetición mala ya cuenta como fallo (antes mandaba la mayoría).
+
+A/B en PRE, mismo LLM y escenarios, código desplegado vs local (2 repeticiones):
+
+| variante | beneficio OK | total OK | TOTAL_MAL | PARCIAL | alucinaciones |
+|---|---|---|---|---|---|
+| `ambos` (config PRE), desplegado | 6/10 | 12/13 | 0 | **1** | 0/10 |
+| `ambos` (config PRE), **local** | **7/10** | 12/13 | 0 | **0** | 0/10 |
+| `sin_vetos`, desplegado → local | 5 → 5 | 8 → 9 | 5 → 5 | **2 → 0** | 0 → 0 |
+
+Por caso solo se mueven dos escenarios y los dos a mejor: `b10` PARCIAL → **OK** (el veto ya
+dispara y el LLM completa `{certified_diving: 4, minicourse: 2, snorkel: 1}`) y `m02`
+PARCIAL → OK. Riesgo y controles, idénticos. `b03`/`b04`/`b05` y `t05` siguen en VACIO (seguro:
+el bot pregunta) — es la tarea 2.
+
+### Tarea 4: los cutover medidos viven en el código
+
+`llm_activity_veto_cutover` y `llm_group_size_veto_cutover` pasan a `True` por defecto, como ya
+estaba `group_allocation`. Criterio único escrito en `config.py`: **un flag de cutover medido,
+que decide respuestas, vive en el código**; los de shadow (solo loguean) siguen en el entorno.
+Motivo: `.env.pre` no está en el repo, y cualquier entorno nuevo (PRO no existe todavía)
+arrancaría con `TOTAL_MAL` en 5 de 33 escenarios. En PRE el efecto es nulo (ya estaban en
+`True`).
+
+Destapó 5 tests que dependían de que estuvieran apagados: los 2 de shadow-mode (ahora apagan el
+cutover explícitamente) y 3 de `test_conversational_core.py` que solo simulaban `fill_gaps` —
+con los vetos activos el turno va por la petición fusionada, así que ahora simulan también
+`extract_and_verify`, igual que `test_invariant_runs_in_the_real_turn_path`.
+
+### Tarea 3: `is_colombian` con trigger propio
+
+`intent_detector.nationality_is_ambiguous(message)`: verdadero solo con **polaridad
+contradictoria** — una negación reconocida y, fuera de su tramo, una afirmación ("dos somos
+colombianos pero uno es extranjero"), o una afirmación con una negación suelta fuera de ella
+("mi pareja es colombiana, yo no"). Reutiliza los mismos patrones que `_detect_nationality`
+(elevados a `_NOT_COLOMBIAN_RE`/`_COLOMBIAN_RE`, sin cambio de comportamiento), sin fraseos
+nuevos. "ninguno colombiano" — la negación compacta que el LLM confunde — **ya no dispara**.
+`test_field_veto_generic_trigger_risk.py` se actualizó como pedía su propio docstring: ahora
+fija que el LLM no se consulta en ese caso. **El flag sigue apagado.**
+
+**Medido con el eval-set** (A/B por caso, tanda limpia y comparable las dos, código desplegado
+vs local inyectado):
+
+| | desplegado | local |
+|---|---|---|
+| `is_colombian` | 7/9 (78%) | **9/9 (100%)** |
+| overall | 202/207 (97.6%) | **204/207 (98.6%)** |
+
+Por caso solo cambian `hist-nationality-answer-must-not-fill-pending-safety` y
+`...-pending-certification`, los dos "ninguno colombiano" donde el LLM pisaba al regex. Ningún
+caso a peor. (El arnés aplica siempre el `should_verify` de cada campo, esté o no el flag, así
+que el 78% del 2026-09-12 medía el veto con el trigger genérico — en PRE, con el flag apagado,
+nunca llegó a un cliente.)
+
+**Lo que este número NO dice**: ninguno de los 9 casos de nacionalidad del eval-set es ambiguo,
+así que con el trigger nuevo el veto no se ejercita en ninguno y el 9/9 es el regex. Queda
+probado que el trigger ya no estropea los casos claros; no que el veto acierte en los ambiguos.
+Antes de plantear encender `llm_nationality_veto_cutover` hay que añadir al eval-set casos de
+polaridad contradictoria (los de `tests/test_nationality_veto_trigger.py` son un buen punto de
+partida) y medirlos.
+
+### Cómo se midió sin desplegar
+
+Un lanzador en el scratchpad antepone el código local en base64 y lo ejecuta con `exec` sobre
+el `__dict__` del módulo ya importado dentro del contenedor (`intent_detector` antes que
+`supervisor`), y luego corre la batería o el arnés sin cambios. No toca ficheros de código del
+contenedor, y la misma batería sin inyección da el lado "desplegado" del A/B.
+
+### Hallazgos de infraestructura
+
+1. **LangSmith agotó su cuota mensual** ("Monthly unique traces usage limit exceeded", 274
+   errores 429 en una sola pasada). PRE no está guardando trazas. No afecta a las respuestas
+   ni a las mediciones (0 llamadas OpenAI degradadas), pero sin trazas no hay observabilidad.
+2. **`docs/robustness/eval-set.json` no está dentro de la imagen** (no se copia `docs/`), así
+   que `docker exec -i dp-pre-bot python3 -m scripts.run_extraction_eval` falla con
+   `FileNotFoundError`. Se inyectó desde el lanzador.
+3. **El fallback de la petición fusionada no existe en la práctica**: `_understand` dice "si la
+   fusión degradó, se pide `fill_gaps` como siempre" comprobando `_combined_patch is None`,
+   pero `extract_and_verify` captura sus errores y devuelve `({}, {})`, así que ante un fallo
+   el turno se queda sin huecos rellenados. No se cambió: contra la misma API caída, una
+   segunda petición fallaría igual y gastaría RPD. Queda anotado para decidirlo.
+
+### Estado
+
+Suite **1873 passed / 18 skipped**. ruff limpio en todo lo tocado (`test_conversational_core.py`
+arrastra 7 avisos que ya estaban en `HEAD`, no se tocaron). Pendiente: desplegar y repetir
+batería + eval-set desde la imagen; tarea 2 (reglas neutras para `fill_gaps`); tarea 5
+(`padi_course`, decisión de producto); decidir sobre el flag de `is_colombian`.

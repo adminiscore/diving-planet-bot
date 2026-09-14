@@ -34,14 +34,18 @@ _NEGATION_MSG = "ninguno colombiano"
 
 
 @pytest.mark.asyncio
-async def test_generic_trigger_would_let_llm_override_correct_negation_case():
-    """Caracteriza el riesgo actual: con el trigger generico (sin
-    should_verify), si el LLM se equivoca en un caso de negacion compacta
-    -- comportamiento real observado en el eval-set contra PRE -- el veto
-    en cutover SI sobreescribe el valor correcto del regex por el
-    incorrecto. Este test debe seguir en verde mientras is_colombian no
-    tenga su propio should_verify: es la prueba de que el flag de cutover
-    NO debe activarse todavia tal como esta montado el mecanismo."""
+async def test_own_trigger_keeps_the_llm_away_from_the_correct_negation_case():
+    """El riesgo que caracterizaba este test: con el trigger generico, si el
+    LLM se equivoca en una negacion compacta -- comportamiento real observado
+    en el eval-set contra PRE -- el veto en cutover sobreescribia el valor
+    correcto del regex por el incorrecto.
+
+    Desde 2026-09-14 `is_colombian` tiene `should_verify` propio
+    (`_nationality_should_verify`, polaridad contradictoria), que era la
+    condicion que este test pedia. "ninguno colombiano" no es ambiguo, asi que
+    el LLM ni se consulta y el valor correcto se conserva aunque el LLM
+    hubiera contestado mal. `is_certified` y `location` siguen con el trigger
+    generico: el aviso de arriba sigue valiendo para ellos."""
     detector = IntentDetector()
     state = ConversationState(conversation_id="veto-risk-is-colombian-test")
     intent = detector.detect(_NEGATION_MSG, state)
@@ -51,15 +55,14 @@ async def test_generic_trigger_would_let_llm_override_correct_negation_case():
     assert "is_colombian" in intent.detected_fields
 
     # Simula el error real observado del LLM en este tipo de mensaje
-    # (negacion compacta mal interpretada como afirmacion).
+    # (negacion compacta mal interpretada como afirmacion). Si el trigger
+    # dejara pasar el caso, este mock lo pisaria.
+    llm = AsyncMock(return_value={"is_colombian": True})
     with patch.object(supervisor.settings, "llm_nationality_veto_cutover", True), \
-         patch.object(supervisor, "verify_fields", new=AsyncMock(return_value={"is_colombian": True})):
+         patch.object(supervisor, "verify_fields", new=llm):
         await supervisor._maybe_veto_resolved_field_via_llm("is_colombian", _NEGATION_MSG, intent, state)
 
-    # Comportamiento actual (sin should_verify): el LLM pisa la respuesta
-    # correcta. Si esta asercion alguna vez falla porque is_colombian ganó
-    # su propio should_verify (o porque el flag esta protegido de otra
-    # forma), actualizar este test para reflejar el nuevo diseño -- no
-    # borrarlo sin mas: su proposito es impedir que se active el cutover
-    # sin resolver esto primero.
-    assert intent.is_colombian is True
+    # Si esto vuelve a fallar es que alguien quito o ensancho el trigger propio:
+    # no "arreglar" el test, sino volver a medir (eval-set) antes de tocarlo.
+    llm.assert_not_called()
+    assert intent.is_colombian is False

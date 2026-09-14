@@ -28,6 +28,7 @@ from src.agents.intent_detector import (
     DetectedIntent,
     IntentDetector,
     matched_activity_categories,
+    nationality_is_ambiguous,
 )
 from src.agents.lead_summary import build_lead_summary
 from src.agents.llm_extractor import fill_gaps, missing_fields, verify_fields
@@ -2304,6 +2305,50 @@ def _activity_should_verify(
     return len(matched_activity_categories(message)) >= 2
 
 
+def _nationality_should_verify(
+    message: str, regex_intent: DetectedIntent, state: ConversationState | None = None
+) -> bool:
+    """Trigger de `is_colombian`: SOLO cuando el mensaje trae polaridad de
+    nacionalidad contradictoria (`intent_detector.nationality_is_ambiguous`).
+
+    Mismo razonamiento que `_activity_should_verify`: con el trigger generico el
+    LLM opinaba tambien en los casos claros y su sesgo pisaba al regex -- aqui,
+    en las negaciones compactas ("ninguno colombiano" -> True, eval-set; ver
+    test_field_veto_generic_trigger_risk.py). Es la condicion que el propio test
+    de riesgo exigia antes de plantearse encender el flag; encenderlo sigue
+    siendo una decision aparte, con medida."""
+    return nationality_is_ambiguous(message)
+
+
+def _group_size_that_will_persist(
+    intent: DetectedIntent, state: ConversationState | None, message: str | None
+) -> int | None:
+    """El total del grupo que quedara GUARDADO al terminar el turno.
+
+    Unica fuente de la regla que ya aplicaba `_apply_detected_intent`: el total
+    se escribe una sola vez, y el de un turno posterior solo lo sustituye si el
+    mensaje es una correccion explicita (`_GROUP_SIZE_CORRECTION_CUE_RE`).
+
+    Existe porque la invariante del reparto y el trigger de su veto razonaban
+    con el total del TURNO, que es justo el que el regex lee mal: con 7 ya
+    sabidos, "4 certificados" da group_size=4 en el turno (cifra de un tramo
+    tomada por el total), un reparto {certified_diving: 4} "cuadraba" con ese 4
+    y se guardaba junto a un estado que seguia en 7. Medido con LLM real en PRE
+    (2026-09-14, docs/robustness/progress-log.md). Comparar contra lo que se
+    guarda, y no contra lo que dijo el turno, cierra el caso para cualquier
+    fraseo sin tocar un regex.
+    """
+    turn = getattr(intent, "group_size", None)
+    turn = turn if isinstance(turn, int) and turn > 0 else None
+    known = getattr(state, "detected_group_size", None) if state else None
+    known = known if isinstance(known, int) and known > 0 else None
+    if turn is None or known is None:
+        return turn or known
+    if turn != known and message and _GROUP_SIZE_CORRECTION_CUE_RE.search(message):
+        return turn
+    return known
+
+
 def _group_allocation_should_verify(
     message: str, regex_intent: DetectedIntent, state: ConversationState | None = None
 ) -> bool:
@@ -2331,11 +2376,10 @@ def _group_allocation_should_verify(
     # El total puede venir de ESTE turno o de uno anterior. Mirar solo el turno
     # dejaba el veto mudo justo en el caso multi-turno ("somos 6" y, dos turnos
     # despues, "4 con titulo y 2 snorkel") -- medido en
-    # scripts/battery_group_allocation_gate.py, 2026-09-12.
-    group_size = getattr(regex_intent, "group_size", None)
-    if not isinstance(group_size, int) or group_size <= 0:
-        group_size = getattr(state, "detected_group_size", None) if state else None
-    if not isinstance(group_size, int) or group_size <= 0:
+    # scripts/battery_group_allocation_gate.py, 2026-09-12. Y cuando hay los dos,
+    # cuenta el que se va a GUARDAR (ver `_group_size_that_will_persist`).
+    group_size = _group_size_that_will_persist(regex_intent, state, message)
+    if group_size is None:
         return False
     try:
         total = sum(allocation.values())
@@ -2396,6 +2440,7 @@ _VETO_FIELD_SPECS = {
     "is_colombian": _VetoSpec(
         shadow_flag="llm_nationality_veto_shadow_mode",
         cutover_flag="llm_nationality_veto_cutover",
+        should_verify=_nationality_should_verify,
     ),
     "location": _VetoSpec(
         shadow_flag="llm_location_veto_shadow_mode",
@@ -2485,10 +2530,10 @@ def enforce_group_allocation_consistency(
     allocation = getattr(regex_intent, "group_allocation", None)
     if not allocation:
         return
-    total = getattr(regex_intent, "group_size", None)
-    if not isinstance(total, int) or total <= 0:
-        total = getattr(state, "detected_group_size", None)
-    if not isinstance(total, int) or total <= 0:
+    # El total contra el que se comprueba es el que QUEDARA GUARDADO, no el del
+    # turno: ver `_group_size_that_will_persist` para el caso medido.
+    total = _group_size_that_will_persist(regex_intent, state, message)
+    if total is None:
         return  # sin total con que comparar
     try:
         suma = sum(allocation.values())
@@ -2510,6 +2555,12 @@ def enforce_group_allocation_consistency(
         regex_intent.group_size = suma
         if "group_size" not in regex_intent.detected_fields:
             regex_intent.detected_fields.append("group_size")
+        # Si la conversacion ya tenia un total, la escritura unica de
+        # `_apply_detected_intent` lo conservaria y quedaria un reparto de 7
+        # con un total de 6. Mismo criterio que `_merge_companion_activity`: el
+        # reparto completo manda sobre el total.
+        if state is not None and (state.detected_group_size or 0) < suma:
+            state.detected_group_size = suma
         return
     # suma < total: al reparto le FALTA gente. Nunca se guarda asi -- el bot
     # pregunta, que sale gratis, en vez de tarificar de menos en silencio.
@@ -2662,19 +2713,18 @@ def _apply_detected_intent(intent, state: ConversationState, message: str | None
         state.is_certified = intent.is_certified
         logger.info(f"[INTENT] Detected certification: {intent.is_certified}")
 
-    if intent.group_size and not state.detected_group_size:
-        state.detected_group_size = intent.group_size
-        logger.info(f"[INTENT] Detected group size: {intent.group_size}")
-    elif (
-        intent.group_size
-        and intent.group_size != state.detected_group_size
-        and message
-        and _GROUP_SIZE_CORRECTION_CUE_RE.search(message)
-    ):
+    # La regla (una sola escritura, salvo correccion explicita) vive en
+    # `_group_size_that_will_persist`: la invariante del reparto la usa ANTES de
+    # llegar aqui, y las dos tienen que ver el mismo total.
+    persisted_group_size = _group_size_that_will_persist(intent, state, message)
+    if persisted_group_size and not state.detected_group_size:
+        state.detected_group_size = persisted_group_size
+        logger.info(f"[INTENT] Detected group size: {persisted_group_size}")
+    elif persisted_group_size and persisted_group_size != state.detected_group_size:
         logger.info(
-            f"[INTENT] Group size CORRECTED: {state.detected_group_size} -> {intent.group_size}"
+            f"[INTENT] Group size CORRECTED: {state.detected_group_size} -> {persisted_group_size}"
         )
-        state.detected_group_size = intent.group_size
+        state.detected_group_size = persisted_group_size
 
     if getattr(intent, "solo_confirmed", False):
         state.solo_traveler_confirmed = True

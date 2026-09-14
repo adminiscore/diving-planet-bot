@@ -1,22 +1,29 @@
-"""Bateria a nivel de CONVERSACION para `group_allocation` (2026-09-12).
+"""Bateria a nivel de CONVERSACION para el grupo: reparto Y total (2026-09-12,
+ampliada 2026-09-14).
 
 Existe porque el eval-set NO puede responder esta pregunta: su arnes
-(`run_extraction_eval.py`) pide SIEMPRE todos los huecos, asi que nunca pasa por
-`conversational_core._relevant_gaps`, que es justo donde se decide si
-`group_allocation` se le llega a preguntar al LLM. Y PRE no tiene trafico real
-(solo los 3 desarrolladores), asi que tampoco se puede esperar a que lo conteste
-la produccion: hay que provocarlo.
+(`run_extraction_eval.py`) pide SIEMPRE todos los huecos y crea un estado limpio
+por caso, asi que nunca pasa por `conversational_core._relevant_gaps` ni tiene
+un total de un turno anterior. Y PRE no tiene trafico real (solo los 3
+desarrolladores), asi que tampoco se puede esperar a que lo conteste la
+produccion: hay que provocarlo.
 
-Mide las CUATRO combinaciones de las dos palancas que afectan al reparto:
+Mide las CUATRO combinaciones de los dos vetos que tocan al grupo:
 
-  puerta  -> `_relevant_gaps` quita `group_allocation` de los huecos cuando ya se
-             sabe la cantidad y el mensaje no anade gente. Se puso por COSTE, y
-             ese argumento decayo al fusionar las peticiones del turno (un campo
-             mas viaja en la misma peticion: cuesta tokens, no peticiones).
-  veto    -> `llm_group_allocation_veto_cutover`: corrige un reparto que el regex
-             resolvio pero que NO suma el total.
+  veto de total   -> `llm_group_size_veto_cutover`: corrige un total que el regex
+                     resolvio con confianza y mal ("en total 7: 4 certificados..."
+                     da 4 -- la cifra de un tramo tomada por el total).
+  veto de reparto -> `llm_group_allocation_veto_cutover`: corrige un reparto que
+                     el regex resolvio pero que NO suma el total.
 
-Se ataca por `_understand`, que es donde viven las dos y que no toca BD ni RAG.
+(La version del 2026-09-12 media la "puerta" de `_relevant_gaps` en lugar del
+veto de total; la puerta se retiro ese mismo dia con estos datos, ver
+docs/robustness/progress-log.md.)
+
+Se ataca por `_understand`, que no toca BD ni RAG, y se juzga el ESTADO que queda
+al final del turno, no el intent: el fallo del 2026-09-14 (un reparto de 4
+guardado para un grupo de 7) solo se ve en el estado, porque el total se escribe
+una sola vez y el intent del turno decia 4.
 
 Uso (necesita una API key real, igual que el eval-set):
 
@@ -29,8 +36,13 @@ que distingue una regresion real del ruido -- leccion de 2026-09-12.
 
 Familias de escenario:
   beneficio -> el cliente SI dio un reparto contable; perderlo es un fallo real
+  total     -> el total se lee mal (frase no listada, o cifra de un tramo); hay
+               controles donde el regex acierta y nadie debe tocarlo
   riesgo    -> NO hay reparto contable; inventarlo seria un misfill
   frontera  -> observacional, para mirarlo a mano
+
+Cada escenario lleva el total esperado (`gs`); si no lo lleva, se espera que el
+total ya sabido por la conversacion no cambie.
 """
 
 import asyncio
@@ -40,10 +52,18 @@ from collections import Counter
 
 from src.agents import conversational_core as cc
 from src.agents import supervisor as sup
-from src.agents.llm_extractor import missing_fields
 from src.flows.state import ConversationState
 
 CERT, MINI, SNK, OW = "certified_diving", "minicourse", "snorkel", "padi_open_water"
+
+_PREGUNTA_REPARTO_ES = [
+    {"role": "user", "content": "somos 7"},
+    {"role": "assistant", "content": "Perfecto, 7 personas. Que quiere hacer cada uno?"},
+]
+_PREGUNTA_REPARTO_EN = [
+    {"role": "user", "content": "we are 7"},
+    {"role": "assistant", "content": "Great, 7 people. What would each one like to do?"},
+]
 
 SCENARIOS = [
     # ── BENEFICIO ────────────────────────────────────────────────────────
@@ -53,6 +73,7 @@ SCENARIOS = [
         "desc": "Total y reparto en el MISMO turno, con la actividad nombrada como sustantivo.",
         "message": "somos 8: 6 certificados, 2 minicurso",
         "state": {},
+        "gs": 8,
         "expect": ("ALLOC", {CERT: 6, MINI: 2}),
     },
     {
@@ -102,6 +123,7 @@ SCENARIOS = [
         "desc": "Frase de total fuera de la lista ('en total') + reparto de 3 tramos.",
         "message": "en total 7: 4 certificados, 2 minicurso y 1 snorkel",
         "state": {},
+        "gs": 7,
         "expect": ("ALLOC", {CERT: 4, MINI: 2, SNK: 1}),
     },
     {
@@ -131,6 +153,130 @@ SCENARIOS = [
         "message": "4 con brevet, 2 minicurso y 1 snorkel",
         "state": {"detected_group_size": 7},
         "expect": ("ALLOC", {CERT: 4, MINI: 2, SNK: 1}),
+    },
+
+    # ── TOTAL (2026-09-14) ───────────────────────────────────────────────
+    # Mismo fallo de lista cerrada que el reparto, visto desde el total: el
+    # regex coge la cifra del primer tramo ("4 certificados") como total.
+    {
+        "id": "t01-seremos-dos-tramos",
+        "familia": "total",
+        "desc": "'seremos' no esta en la lista de frases de total.",
+        "message": "seremos 7, 4 certificados y 3 snorkel",
+        "state": {},
+        "gs": 7,
+        "expect": ("ALLOC", {CERT: 4, SNK: 3}),
+    },
+    {
+        "id": "t02-total-al-final",
+        "familia": "total",
+        "desc": "El total va DETRAS del tramo; los otros 3 no dicen actividad.",
+        "message": "4 certificados y en total seremos 7",
+        "state": {},
+        "gs": 7,
+        "expect": ("NONE",),
+    },
+    {
+        "id": "t03-entre-todos",
+        "familia": "total",
+        "desc": "'entre todos' como frase de total.",
+        "message": "entre todos 7, 4 certificados y 3 snorkel",
+        "state": {},
+        "gs": 7,
+        "expect": ("ALLOC", {CERT: 4, SNK: 3}),
+    },
+    {
+        "id": "t04-grupo-de-un-tramo",
+        "familia": "total",
+        "desc": "Total + un solo tramo: no hay reparto completo.",
+        "message": "somos un grupo de 7, 4 certificados",
+        "state": {},
+        "gs": 7,
+        "expect": ("NONE",),
+    },
+    {
+        "id": "t05-en-in-total",
+        "familia": "total",
+        "desc": "Ingles: 'in total' + tres tramos.",
+        "message": "7 in total: 4 certified, 2 minicourse and 1 snorkel",
+        "lang": "en",
+        "state": {},
+        "gs": 7,
+        "expect": ("ALLOC", {CERT: 4, MINI: 2, SNK: 1}),
+    },
+    {
+        "id": "t06-pareja-e-hijos",
+        "familia": "total",
+        "desc": "El bug original del veto de total: 'pareja' gana y no suma a los hijos.",
+        "message": "vengo con mi pareja y nuestros dos hijos",
+        "state": {},
+        "gs": 4,
+        "expect": ("ANY",),
+    },
+    {
+        "id": "m01-tramo-tras-total-sabido",
+        "familia": "total",
+        "desc": "Multi-turno: 7 ya sabidos, el turno trae el reparto completo.",
+        "message": "4 certificados y 3 snorkel",
+        "state": {"detected_group_size": 7},
+        "history": _PREGUNTA_REPARTO_ES,
+        "expect": ("ALLOC", {CERT: 4, SNK: 3}),
+    },
+    {
+        "id": "m02-un-tramo-tras-total-sabido",
+        "familia": "total",
+        "desc": "El caso del 2026-09-14: 7 sabidos, 'N certificados' da total 4 en el "
+                "turno y un reparto de 4 'cuadraba' con el. No puede guardarse.",
+        "message": "4 certificados",
+        "state": {"detected_group_size": 7},
+        "history": _PREGUNTA_REPARTO_ES,
+        "expect": ("NONE",),
+    },
+    {
+        "id": "m03-en-tramos-tras-total-sabido",
+        "familia": "total",
+        "desc": "Ingles, multi-turno, reparto completo.",
+        "message": "4 certified and 3 snorkel",
+        "lang": "en",
+        "state": {"detected_group_size": 7},
+        "history": _PREGUNTA_REPARTO_EN,
+        "expect": ("ALLOC", {CERT: 4, SNK: 3}),
+    },
+    {
+        "id": "m04-correccion-explicita",
+        "familia": "total",
+        "desc": "Una correccion explicita SI cambia un total ya sabido.",
+        "message": "perdon, en realidad somos 5",
+        "state": {"detected_group_size": 7},
+        "gs": 5,
+        "expect": ("NONE",),
+    },
+    {
+        "id": "c01-control-somos",
+        "familia": "total",
+        "desc": "Control: el regex acierta.",
+        "message": "somos 4",
+        "state": {},
+        "gs": 4,
+        "expect": ("NONE",),
+    },
+    {
+        "id": "c02-control-pareja-sola",
+        "familia": "total",
+        "desc": "Control: caso real validado por el owner, 'con mi pareja' = 2.",
+        "message": "con mi pareja, tenemos un presupuesto ajustado",
+        "state": {},
+        "gs": 2,
+        "expect": ("NONE",),
+    },
+    {
+        "id": "c03-control-reparto-con-verbo",
+        "familia": "total",
+        "desc": "Control: total y reparto que el regex ya entiende.",
+        "message": "somos 7: 4 bucean y 3 snorkel",
+        "state": {},
+        "gs": 7,
+        "expect": ("ALLOC", {CERT: 4, SNK: 3}),
     },
 
     # ── RIESGO ───────────────────────────────────────────────────────────
@@ -171,9 +317,11 @@ SCENARIOS = [
     {
         "id": "r04-acompanante-sin-numero",
         "familia": "riesgo",
-        "desc": "Se anade gente sin cifra: no se puede repartir.",
+        "desc": "Se anade gente sin cifra: no se puede repartir. (Que el total suba en "
+                "uno aqui es el flujo de acompanante, no este mecanismo.)",
         "message": "tambien viene un amigo",
         "state": {"detected_group_size": 4},
+        "gs": None,
         "expect": ("NONE",),
     },
     {
@@ -247,8 +395,7 @@ SCENARIOS = [
     {
         "id": "f02-reparto-parcial-visible",
         "familia": "frontera",
-        "desc": "El regex resuelve un reparto INCOMPLETO: territorio del veto de "
-                "group_allocation (flags off aqui), no de la puerta.",
+        "desc": "El regex resuelve un reparto INCOMPLETO: territorio del veto de reparto.",
         "message": "somos 5: 3 certificados, 1 minicurso y 1 snorkel",
         "state": {},
         "expect": ("OBS",),
@@ -256,8 +403,7 @@ SCENARIOS = [
     {
         "id": "f03-sin-total-conocido",
         "familia": "frontera",
-        "desc": "Sin total en estado la puerta NO se aplica: control de que la puerta es "
-                "lo unico que cambia entre variantes.",
+        "desc": "Sin total en estado ni en el turno: no hay invariante que aplicar.",
         "message": "6 certificados y 2 minicurso",
         "state": {},
         "expect": ("OBS",),
@@ -265,28 +411,14 @@ SCENARIOS = [
 ]
 
 
-# ── Las dos palancas, conmutables ───────────────────────────────────────────
-
-_ORIG_RELEVANT_GAPS = cc._relevant_gaps
-
-
-def _gaps_sin_puerta(state, intent, message):
-    """Modela EXACTAMENTE quitar la puerta de coste: si `group_allocation` sigue
-    sin resolver y la CONVERSACION tampoco lo sabe, no se le echa de los huecos.
-    El resto de filtros se respetan tal cual -- en particular el de
-    `_state_known_fields`, que es el que impide rederivar un reparto ya sabido."""
-    gaps = list(_ORIG_RELEVANT_GAPS(state, intent, message))
-    if "group_allocation" not in gaps and "group_allocation" in missing_fields(intent):
-        if "group_allocation" not in cc._state_known_fields(state):
-            gaps.append("group_allocation")
-    return gaps
-
+# ── Los dos vetos, conmutables ──────────────────────────────────────────────
 
 VARIANTES = [
-    ("hoy", False, False),
-    ("sin_puerta", True, False),
-    ("solo_veto", False, True),
-    ("puerta+veto", True, True),
+    # (nombre, veto de total, veto de reparto)
+    ("sin_vetos", False, False),
+    ("solo_reparto", False, True),
+    ("solo_total", True, False),
+    ("ambos", True, True),
 ]
 
 
@@ -295,47 +427,57 @@ def _build_state(spec):
     s.language = spec.get("lang", "es")
     for k, v in (spec.get("state") or {}).items():
         setattr(s, k, v)
-    s.history = spec.get("history") or []
+    s.history = list(spec.get("history") or [])
     return s
 
 
-async def _run(spec, sin_puerta, con_veto):
-    cc._relevant_gaps = _gaps_sin_puerta if sin_puerta else _ORIG_RELEVANT_GAPS
-    object.__setattr__(sup.settings, "llm_group_allocation_veto_cutover", con_veto)
+async def _run(spec, veto_total, veto_reparto):
+    object.__setattr__(sup.settings, "llm_group_size_veto_cutover", veto_total)
+    object.__setattr__(sup.settings, "llm_group_allocation_veto_cutover", veto_reparto)
+    state = _build_state(spec)
     try:
-        intent, _carry = await cc._understand(_build_state(spec), spec["message"])
+        await cc._understand(state, spec["message"])
     except Exception as exc:  # noqa: BLE001
         return {"err": f"{type(exc).__name__}: {exc}"}
-    return {"alloc": getattr(intent, "group_allocation", None),
-            "gs": getattr(intent, "group_size", None)}
+    return {"alloc": state.detected_group_allocation, "gs": state.detected_group_size}
 
 
-def _clasificar(spec, got, state_gs):
-    """OK / PARCIAL / DISTINTO / VACIO / ALUCINA.
+def _total_esperado(spec):
+    if "gs" in spec:
+        return spec["gs"]
+    return (spec.get("state") or {}).get("detected_group_size")
 
-    `PARCIAL` es la categoria que importa vigilar: un reparto PRESENTE que no
-    suma el total es peor que no tener reparto -- es el fallo que el veto de
-    `group_allocation` existe para cazar. El total puede venir de este turno o
-    de la conversacion, asi que se miran los dos.
+
+def _clasificar(spec, got):
+    """OK / TOTAL_MAL / PARCIAL / DISTINTO / VACIO / ALUCINA / ALTERA.
+
+    Se juzga el estado final. `PARCIAL` (un reparto guardado que no suma el total
+    guardado) y `TOTAL_MAL` son las categorias que importan: las dos tarifican
+    mal la reserva sin que nadie pregunte. Un `VACIO` es seguro: el bot pregunta.
     """
     if "err" in got:
         return "ERROR"
-    alloc = got.get("alloc")
-    total = got.get("gs") or state_gs
+    alloc, gs = got.get("alloc"), got.get("gs")
+    esperado = _total_esperado(spec)
+    if esperado is not None and gs != esperado:
+        return "TOTAL_MAL"
+    if alloc and isinstance(gs, int) and gs > 0 and sum(alloc.values()) != gs:
+        return "PARCIAL"
     kind = spec["expect"][0]
     if kind == "ALLOC":
         if alloc == spec["expect"][1]:
             return "OK"
-        if not alloc:
-            return "VACIO"
-        if isinstance(total, int) and total > 0 and sum(alloc.values()) != total:
-            return "PARCIAL"
-        return "DISTINTO"
+        return "VACIO" if not alloc else "DISTINTO"
     if kind == "NONE":
         return "OK" if not alloc else "ALUCINA"
     if kind == "KEEP":
-        return "OK" if (alloc == spec["expect"][1] or not alloc) else "ALTERA"
+        return "OK" if alloc == spec["expect"][1] else "ALTERA"
+    if kind == "ANY":
+        return "OK"
     return "OBS"
+
+
+_FAMILIAS = ("beneficio", "total", "riesgo", "frontera")
 
 
 async def main():
@@ -343,56 +485,57 @@ async def main():
     nombres = [v[0] for v in VARIANTES]
     tabla = {}
     for spec in SCENARIOS:
-        state_gs = (spec.get("state") or {}).get("detected_group_size")
-        for nombre, sin_puerta, con_veto in VARIANTES:
-            veredictos, allocs = [], []
+        for nombre, veto_total, veto_reparto in VARIANTES:
+            veredictos, vistos = [], []
             for _ in range(reps):
-                got = await _run(spec, sin_puerta, con_veto)
-                veredictos.append(_clasificar(spec, got, state_gs))
-                allocs.append(got.get("err") or json.dumps(
-                    got.get("alloc"), ensure_ascii=False, sort_keys=True))
-            tabla[(spec["id"], nombre)] = (Counter(veredictos).most_common(1)[0][0],
-                                           Counter(allocs))
+                got = await _run(spec, veto_total, veto_reparto)
+                veredictos.append(_clasificar(spec, got))
+                vistos.append(got.get("err") or "gs={} {}".format(
+                    got.get("gs"), json.dumps(got.get("alloc"), ensure_ascii=False, sort_keys=True)))
+            # El PEOR veredicto manda: una sola repeticion mala ya es un fallo.
+            peor = next((v for v in veredictos if v != "OK"), "OK")
+            tabla[(spec["id"], nombre)] = (peor, Counter(vistos))
 
-    for fam in ("beneficio", "riesgo", "frontera"):
+    for fam in _FAMILIAS:
         specs = [s for s in SCENARIOS if s["familia"] == fam]
         if not specs:
             continue
         print()
-        print("=" * 78)
+        print("=" * 90)
         print(f"FAMILIA: {fam.upper()}")
-        print("=" * 78)
-        print(f"{'escenario':<34}" + "".join(f"{n:<14}" for n in nombres))
+        print("=" * 90)
+        print(f"{'escenario':<36}" + "".join(f"{n:<14}" for n in nombres))
         for s in specs:
-            print(f"{s['id']:<34}"
+            print(f"{s['id']:<36}"
                   + "".join(f"{tabla[(s['id'], n)][0]:<14}" for n in nombres))
         print()
         for s in specs:
             print(f"  [{s['id']}] {s['message']!r}")
             for n in nombres:
-                _v, allocs = tabla[(s["id"], n)]
-                print(f"      {n:<12} "
-                      + ", ".join(f"{c}x {a}" for a, c in allocs.most_common()))
+                _v, vistos = tabla[(s["id"], n)]
+                print(f"      {n:<13} "
+                      + ", ".join(f"{c}x {a}" for a, c in vistos.most_common()))
 
     print()
-    print("=" * 78)
+    print("=" * 90)
     print("RESUMEN POR VARIANTE")
-    print("=" * 78)
-    total_ben = sum(1 for s in SCENARIOS if s["familia"] == "beneficio")
-    total_rie = sum(1 for s in SCENARIOS if s["familia"] == "riesgo")
+    print("=" * 90)
+    medibles = [s for s in SCENARIOS if s["familia"] != "frontera"]
     resumen = {}
     for n in nombres:
-        def cuenta(fam, veredicto):
-            return sum(1 for s in SCENARIOS
-                       if s["familia"] == fam and tabla[(s["id"], n)][0] == veredicto)
-        resumen[n] = {"ok": cuenta("beneficio", "OK"),
-                      "parcial": cuenta("beneficio", "PARCIAL"),
-                      "vacio": cuenta("beneficio", "VACIO"),
-                      "alucina": cuenta("riesgo", "ALUCINA")}
-        r = resumen[n]
-        print(f"  {n:<13} correctos {r['ok']}/{total_ben} | "
-              f"PARCIALES (peligrosos) {r['parcial']} | vacios {r['vacio']} | "
-              f"alucinaciones {r['alucina']}/{total_rie}")
+        veredictos = Counter(tabla[(s["id"], n)][0] for s in medibles)
+        ok_por_familia = {
+            fam: sum(1 for s in medibles if s["familia"] == fam and tabla[(s["id"], n)][0] == "OK")
+            for fam in _FAMILIAS if fam != "frontera"
+        }
+        resumen[n] = {"ok": ok_por_familia, "veredictos": dict(veredictos)}
+        tot = {fam: sum(1 for s in medibles if s["familia"] == fam) for fam in ok_por_familia}
+        print(f"  {n:<13} "
+              + " | ".join(f"{fam} {ok_por_familia[fam]}/{tot[fam]}" for fam in ok_por_familia)
+              + f" | TOTAL_MAL {veredictos.get('TOTAL_MAL', 0)}"
+              + f" | PARCIAL {veredictos.get('PARCIAL', 0)}"
+              + f" | ALUCINA {veredictos.get('ALUCINA', 0)}"
+              + f" | VACIO {veredictos.get('VACIO', 0)}")
     print("JSON " + json.dumps(resumen, ensure_ascii=False))
 
 

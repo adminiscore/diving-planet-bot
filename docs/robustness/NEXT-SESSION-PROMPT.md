@@ -8,13 +8,14 @@ que creemos que sirve, y solo después tocar nada.
 ## PROMPT
 
 Retomamos el trabajo de robustez del bot. Lee primero
-`docs/robustness/progress-log.md` (las 6 entradas del 2026-09-12) y la entrada
-`0.24.0` de `docs/HISTORY.md`.
+`docs/robustness/progress-log.md` (la entrada del 2026-09-14 y, si hace falta
+contexto, las del 2026-09-12) y la entrada `0.24.1` de `docs/HISTORY.md`.
 
-**Antes de nada**, dos comprobaciones baratas:
+**Antes de nada**, tres comprobaciones baratas:
 
 ```bash
-# 1) cuota (casi todo lo de abajo la necesita; un eval-set son ~215 peticiones)
+# 1) cuota (casi todo lo de abajo la necesita; un eval-set son ~215 peticiones,
+#    una pasada de la bateria ~300)
 ssh -i ~/.ssh/dp_pre_vps root@89.167.4.161 "docker exec dp-pre-bot python3 -c \"
 import httpx
 from src.config import settings
@@ -23,94 +24,108 @@ r = httpx.post('https://api.openai.com/v1/chat/completions',
     json={'model':'gpt-4o-mini','messages':[{'role':'user','content':'hi'}],'max_tokens':1}, timeout=30)
 print(r.status_code, r.headers.get('x-ratelimit-remaining-requests'))\""
 
-# 2) que PRE corre lo desplegado el 2026-09-12 (debe salir af47e04 o posterior)
+# 2) que PRE corre lo del 2026-09-14 (el commit de 0.24.1 o posterior)
 ssh -i ~/.ssh/dp_pre_vps root@89.167.4.161 "cd /opt/diving-planet-bot && git log --oneline -1"
+
+# 3) flags reales del contenedor (booleanos, sin leer el .env con secretos)
+ssh -i ~/.ssh/dp_pre_vps root@89.167.4.161 "docker exec dp-pre-bot python3 -c \"
+from src.config import Settings, settings
+for k in sorted(Settings.model_fields):
+    if 'veto' in k: print(k, getattr(settings, k))\""
 ```
 
-### Estado: qué se hizo el 2026-09-12
+### Estado: qué se hizo el 2026-09-14
 
-Cinco cosas, todas medidas y desplegadas a PRE:
+1. **El total que cuenta es el que se GUARDA.** La invariante del reparto y el
+   trigger de su veto comparaban con el total del turno, que es el que el regex
+   lee mal; se guardaban repartos parciales **en PRE con los dos vetos
+   encendidos** (`b10`: "4 con brevet, 2 minicurso y 1 snorkel" con 7 sabidos →
+   reparto de 3). `_group_size_that_will_persist` es ahora la única fuente y la
+   usan los tres sitios. Batería, config PRE: parciales 1 → 0, correctos 6 → 7.
+2. **Cutover medidos al código**: `activity` y `group_size` en `True` por
+   defecto, como `group_allocation`. Shadow sigue en el entorno.
+3. **`is_colombian` con trigger propio** (`nationality_is_ambiguous`, polaridad
+   contradictoria). Eval-set: `is_colombian` 7/9 → 9/9, overall 202 → 204/207,
+   sin casos a peor — pero ningún caso del eval-set es ambiguo (ver cola, punto 2). **Flag apagado.**
+4. **Batería de grupo reescrita**: estado final, los dos vetos, familia "total".
 
-1. **El enum del schema, enumerado en el texto del prompt**, generado desde el
-   propio schema para los 5 campos con enum y los 2 prompts que los consumen.
-   Cierra `conv913`. `activity` 94%→98%.
-2. **Una petición por turno en vez de dos** (`extract_and_verify`): −38%
-   peticiones, −0.69s medidos. El ORDEN dentro del prompt es lo que lo hace
-   funcionar (verificación primero, huecos al final) — está en el docstring,
-   **no lo reordenes "por legibilidad"**.
-3. **`group_allocation` en el veto**, con trigger propio (solo si el reparto no
-   suma el total) y consciente del total de la CONVERSACIÓN, no solo del turno.
-4. **Invariante**: un reparto que no suma el total no se guarda, venga de donde
-   venga (`supervisor.enforce_group_allocation_consistency`). Si suma de menos
-   se descarta; si suma de más, sube el total.
-5. **Puerta de coste retirada** de `_relevant_gaps`, con el matiz de que
-   `group_allocation` puede viajar de acompañante pero nunca originar la
-   petición.
+La tarea 1 del prompt anterior (total mal leído) resultó estar ya resuelta en PRE
+por el veto de `group_size`; su hipótesis ("el trigger no dispara") era falsa.
 
-Números: eval-set **198/207 (95.7%) → 204/207 (98.6%)**. Batería de
-conversación: repartos correctos **3/10 → 6/10**, 0 parciales, 0 alucinaciones.
-Suite 1842 passed.
+### Lo PRIMERO: verificar desde la imagen lo que se desplegó
 
-### Lo PRIMERO: verificar en vivo lo que se desplegó
-
-Nada de esto se ha visto con tráfico de verdad — **PRE no tiene tráfico** (solo
-nosotros 3), así que hay que provocarlo. Dos herramientas ya hechas:
+El 2026-09-14 todo se midió **inyectando el código local en memoria** dentro del
+contenedor (ver "Cómo se midió sin desplegar" en el progress-log). Tras el
+despliegue hay que repetirlo desde la imagen:
 
 ```bash
 ssh ... "docker exec -i dp-pre-bot python3 -m scripts.battery_group_allocation_gate 2"
-ssh ... "docker exec -i dp-pre-bot python3 -m scripts.run_extraction_eval"
 ```
 
-Lo que hay que mirar en los logs de PRE, que es lo único que no se puede
-simular:
+El eval-set **no está dentro de la imagen** (`docs/` no se copia), así que antes:
 
-- `[EXTRACT][GROUP_ALLOCATION_INCOMPLETO]` — cuántos repartos se están
-  descartando de verdad. Si son muchos, la invariante está siendo demasiado
-  agresiva y hay que mirar los mensajes concretos.
-- `[EXTRACT][GROUP_ALLOCATION_AMPLIA_TOTAL]` — cuántas veces el reparto corrige
-  al total. Si son muchos, el bug de `group_size` (ver abajo) es más gordo de lo
-  que parece.
-- `[EXTRACT][GROUP_ALLOCATION_VETO]` — el veto está en **cutover**, así que
-  `applied=True` significa que cambió una respuesta real.
-- `[LLM_EXTRACTOR][DEGRADED][COMBINED]` — si aparece, la petición fusionada está
-  fallando y el turno degrada a regex.
+```bash
+scp -i ~/.ssh/dp_pre_vps docs/robustness/eval-set.json root@89.167.4.161:/tmp/eval-set.json
+ssh ... "docker exec dp-pre-bot mkdir -p /app/docs/robustness && \
+         docker cp /tmp/eval-set.json dp-pre-bot:/app/docs/robustness/eval-set.json && \
+         docker exec -i dp-pre-bot python3 -m scripts.run_extraction_eval"
+```
+
+Qué esperar (config de PRE, variante `ambos` de la batería): beneficio 7/10, total
+12/13, **TOTAL_MAL 0, PARCIAL 0, ALUCINA 0**. Eval-set: ver la tabla de abajo.
+
+Lo que hay que mirar en los logs de PRE (lo único que no se puede simular):
+
+- `[EXTRACT][GROUP_ALLOCATION_INCOMPLETO]` — repartos descartados de verdad. Ahora
+  también descarta los que solo cuadraban con un total de turno mal leído: si
+  salen muchos, mirar los mensajes.
+- `[EXTRACT][GROUP_ALLOCATION_AMPLIA_TOTAL]` — ahora sube también el total del
+  estado. Si aparece a menudo, revisar que no esté subiendo totales con repartos
+  inventados.
+- `[EXTRACT][GROUP_ALLOCATION_VETO]` / `[EXTRACT][GROUP_SIZE_VETO]` — en cutover:
+  `applied=True` cambió una respuesta real.
+- `[LLM_EXTRACTOR][DEGRADED][COMBINED]` — la petición fusionada falla. **Ojo**: ante
+  ese fallo el turno se queda sin huecos rellenados (ver cola, punto 5).
 
 ### Cola de trabajo, por orden de valor
 
-**1. `group_size` lee mal el total con frases no listadas.** `en total 7: 4
-certificados...` resuelve `group_size=4`; `seremos 7` igual. Es el mismo fallo de
-lista cerrada del parser de grupo. **No lo arregles añadiendo frases al regex**
-(decisión del owner, y hay precedente de un intento así que rompió un caso real
-suyo). La vía es el veto de `group_size`, que existe y está en cutover en
-`.env.pre` — mirar por qué no lo caza: probablemente su trigger genérico no
-dispara porque el regex "acierta" con confianza. Medir con
-`scripts/battery_group_allocation_gate.py`, añadiendo escenarios de esa familia.
+**1. Repartos que el LLM no reconoce como contables.** `b03` "4 con titulo",
+`b04` "3 brevetados", `b05` "2 open water", `t05` "7 in total: 4 certified, 2
+minicourse and 1 snorkel" siguen en VACIO. Es seguro (el bot pregunta), pero es
+lo que más beneficio queda por sacar. El camino **no** es meter las reglas de
+verificación en `fill_gaps`: ya está medido que cuesta 5 casos del eval-set
+(202→197). Hace falta una versión **neutra** de las reglas (qué significa el
+campo y qué cuenta como contable, sin la carga de abstención) y medir con el
+eval-set **y** la batería, A/B por caso.
 
-**2. Repartos que el LLM no reconoce como contables.** `4 con titulo`,
-`3 brevetados`, `2 open water`, `4 con brevet` siguen sin dar reparto (b03/b04/
-b05/b10 de la batería). Hoy el desenlace es SEGURO (la invariante hace que el bot
-pregunte en vez de guardar un reparto a medias), así que no es urgente. El camino
-**no** es meter las reglas de verificación en el prompt de `fill_gaps`: **ya está
-medido que cuesta 5 casos del eval-set** (202→197) porque esas reglas están
-escritas para desconfiar, no para rellenar. Haría falta una versión **neutra**
-(qué significa el campo y qué cuenta como contable, sin la carga de abstención) y
-volver a medir con el eval-set Y la batería.
+**2. `is_colombian`: decidir el flag, con medida.** El trigger propio ya existe y el eval-set
+sube a 9/9, pero **ninguno de sus 9 casos de nacionalidad es ambiguo**: el veto
+no se ejercitó en ninguno, así que no hay medida de si acierta cuando dispara.
+Primero añadir al eval-set casos de polaridad contradictoria (partir de los de
+`tests/test_nationality_veto_trigger.py`: "dos somos colombianos pero uno es
+extranjero", "mi pareja es colombiana, yo no"…), medir en shadow y solo
+entonces decidir el cutover. Ojo: con grupos mixtos el campo es por persona y
+`is_colombian` es un booleano único — puede que la respuesta correcta no sea
+ni True ni False sino `_detect_mixed_nationality_request`.
 
-**3. `is_colombian` sigue al 67-78% y su trigger genérico es inseguro.** Hay un
-test (`test_field_veto_generic_trigger_risk.py`) que lo demuestra con "ninguno
-colombiano" y actúa de barrera. **No activar su flag** sin darle antes un
-`should_verify` propio como el de `activity`/`group_allocation`.
+**3. `is_certified` y `location` siguen con el trigger genérico** (hoy en shadow
+en PRE). Mismo riesgo que tenía `is_colombian`: antes de pensar en su cutover,
+darles `should_verify` propio (ambigüedad autodiagnosticada, reutilizando los
+patrones del detector) y medir.
 
-**4. Decidir dónde vive el flag de `group_allocation`.**
-`llm_group_allocation_veto_cutover` está en `True` **en el código**, mientras que
-`activity` y `group_size` están en `False` en código y activados vía `.env.pre`.
-Es deliberado (es el único que se activó con datos medidos de antemano) pero es
-una inconsistencia: decidir si se mueve a `.env.pre` por coherencia.
+**4. LangSmith sin cuota mensual.** PRE no guarda trazas. Decidir: subir de plan,
+muestrear (`LANGSMITH_SAMPLING_RATE` o equivalente) o apagarlo en PRE. No afecta a
+las respuestas.
 
-**5. `ambig-curso-padi-generico-no-se-bucear`** espera `'padi_course'`, un valor
-que **no existe en el enum** de `EXTRACTION_TOOL`, así que es inalcanzable para el
-veto por construcción. Es decisión de producto: ¿se añade `padi_course` al enum,
-o se cambia el `expected`? No lo fuerces sin decidirlo.
+**5. El fallback de la petición fusionada no existe.** `_understand` comprueba
+`_combined_patch is None` para volver a `fill_gaps`, pero `extract_and_verify`
+devuelve `({}, {})` ante cualquier error. Decidir si se quiere ese fallback (una
+petición más contra una API que acaba de fallar) o si se borra el comentario que
+lo promete.
+
+**6. `ambig-curso-padi-generico-no-se-bucear`** espera `'padi_course'`, que **no
+existe en el enum** de `EXTRACTION_TOOL`: inalcanzable por construcción. Decisión
+de producto (¿se añade al enum o se cambia el `expected`?). No forzarlo.
 
 ### Cómo trabajar aquí (lo pidió el owner explícitamente)
 
@@ -118,44 +133,41 @@ o se cambia el `expected`? No lo fuerces sin decidirlo.
   siguiente que escriba. Si la solución natural parece "añadir un patrón", busca
   la vía LLM o generar lo que haga falta desde el schema.
 - **Centralizar, no individualizar.** Si el error puede salir en otras zonas, se
-  arregla el mecanismo común. Un fix que solo cubre el campo que falló hoy está
-  incompleto. (Esta sesión empezó con dos fixes individualizados que hubo que
-  rehacer.)
+  arregla el mecanismo común. (El 2026-09-14: una regla — qué total se guarda —
+  usada por tres sitios en vez de tres comprobaciones parecidas.)
 - **Optimizar peticiones y latencia.** El recurso escaso es
   **peticiones/día (RPD)**, no tokens.
-- **Medir por caso, no solo el agregado.** Dos veces el mismo día el overall del
-  eval-set escondió movimientos en sentidos opuestos. Un A/B por caso,
-  reutilizando el resto del pipeline para que solo varíe lo que se prueba, es lo
-  que los encontró.
-- **Los resultados negativos se documentan, no se fuerzan.** Hay dos de esta
-  sesión clavados con tests para que nadie los redescubra gastando una tanda.
+- **Medir por caso, no solo el agregado.** El A/B por caso es lo que distingue
+  una mejora de dos movimientos que se compensan.
+- **Juzgar el estado, no el intent.** El fallo del 2026-09-14 solo se veía en el
+  estado final del turno.
+- **Los resultados negativos se documentan, no se fuerzan.**
 
-### Referencia para comparar (eval-set, 107 casos, 2026-09-12)
+### Referencia para comparar (eval-set, 107 casos)
 
-| campo | agree | % |
+| campo | 2026-09-12 | 2026-09-14 (local, inyectado) |
 |---|---|---|
-| activity | 62/63 | 98% |
-| group_size | 44/44 | 100% |
-| is_certified | 31/32 | 97% |
-| location | 23/23 | 100% |
-| group_allocation | 10/11 | 91% |
-| is_colombian | 7/9 | 78% |
-| **overall (arnés serial)** | **202/207** | **97.6%** |
-| **overall (petición fusionada)** | **204/207** | **98.6%** |
+| activity | 62/63 (98%) | 62/63 (98%) |
+| group_size | 44/44 (100%) | 44/44 (100%) |
+| is_certified | 31/32 (97%) | 31/32 (97%) |
+| location | 23/23 (100%) | 23/23 (100%) |
+| group_allocation | 10/11 (91%) | 10/11 (91%) |
+| is_colombian | 7/9 (78%) | **9/9 (100%)** |
+| **overall (arnés serial)** | **202/207 (97.6%)** | **204/207 (98.6%)** |
 
 El arnés declara al final si la tanda es comparable. **Si dice "TANDA NO
-COMPARABLE", los números no valen** — no los uses igualmente. Lee el resumen de
-`docs/robustness/eval-last-run.json`, **no del stdout**: un `grep -v` del ruido de
-LangSmith borró la fila de `group_allocation` en una tanda de esta sesión, que es
-exactamente el fallo contra el que avisa la entrada del arnés.
+COMPARABLE", los números no valen.** Lee el resumen de
+`docs/robustness/eval-last-run.json`, no del stdout filtrado: un `grep -v` del
+ruido de LangSmith ya borró una fila una vez (y ahora LangSmith mete ~270 líneas
+de 429 por pasada).
 
-### Estado de flags en PRE
+### Estado de flags
 
-`activity` y `group_size` en **cutover**; `is_certified` y `location` en
-**shadow**; `is_colombian` **apagado**; `group_allocation` en **cutover desde el
-código** (no hace falta tocar `.env.pre`). Los demás viven en
-`/opt/diving-planet-bot/.env.pre` del VPS, no en el repo, así que un redespliegue
-no los pisa.
+En el **código**: cutover en `True` para `activity`, `group_size` y
+`group_allocation`; todo lo demás en `False`. En `/opt/diving-planet-bot/.env.pre`
+del VPS: shadow de `is_certified`, `location` y `group_size`, y los cutover que ya
+estaban (ahora redundantes con el código, inofensivos). `is_colombian`
+**apagado** en los dos sitios.
 
 ### Aviso sobre PRE
 

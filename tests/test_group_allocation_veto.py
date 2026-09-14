@@ -242,12 +242,17 @@ def test_trigger_still_abstains_with_no_total_anywhere():
     assert supervisor._group_allocation_should_verify("...", intent, None) is False
 
 
-def test_trigger_prefers_this_turns_total_over_the_conversations():
-    """Si el turno declara un total, manda ese: es el dato mas fresco."""
+def test_trigger_takes_this_turns_total_when_it_is_an_explicit_correction():
+    """El total del turno solo manda sobre el de la conversacion cuando es una
+    CORRECCION explicita -- la misma regla con la que se guarda el estado
+    (`_group_size_that_will_persist`). Antes mandaba siempre, y eso dejaba el
+    veto mudo cuando el total del turno venia mal leido (ver el bloque de
+    abajo)."""
     state = ConversationState(conversation_id="ga-turno-manda")
     state.detected_group_size = 99
     intent = _intent_con_reparto({"certified_diving": 2, "snorkel": 1}, gs=3)
-    assert supervisor._group_allocation_should_verify("...", intent, state) is False
+    assert supervisor._group_allocation_should_verify(
+        "en realidad somos 3", intent, state) is False
 
 
 def test_trigger_stays_quiet_when_the_conversations_total_already_matches():
@@ -354,3 +359,107 @@ async def test_invariant_runs_in_the_real_turn_path():
     assert intent.group_allocation is None, (
         "un reparto que no suma el total no puede llegar al estado"
     )
+
+
+# -- El total que cuenta es el que QUEDA GUARDADO, no el del turno ------------
+#
+# Sonda con LLM real en PRE (2026-09-14): con 7 personas ya sabidas, "4
+# certificados" da group_size=4 EN EL TURNO (el regex toma la cifra de un tramo
+# por el total) y `fill_gaps` devuelve {certified_diving: 4}. Contra el total del
+# turno el reparto "cuadraba" y se guardaba -- pero el estado sigue en 7, porque
+# el total se escribe una sola vez salvo correccion explicita. Resultado: un
+# reparto de 4 personas para un grupo de 7, mal tarificado en silencio. Solo lo
+# evitaba el veto de `group_size`, que depende de un flag de `.env.pre` y de que
+# el LLM no degrade (con el flag apagado: 6 repartos parciales en 28 turnos).
+#
+# Arreglo del mecanismo, no del fraseo: los tres sitios que razonan sobre "el
+# total" (guardado del estado, invariante, trigger del veto) usan la MISMA regla.
+
+def test_the_persisted_total_ignores_a_turn_total_without_correction_cue():
+    intent = _intent_alloc(None, gs=4)
+    assert supervisor._group_size_that_will_persist(
+        intent, _state_con_total(7), "4 certificados") == 7
+
+
+def test_the_persisted_total_takes_the_turn_total_with_a_correction_cue():
+    intent = _intent_alloc(None, gs=4)
+    assert supervisor._group_size_that_will_persist(
+        intent, _state_con_total(7), "en realidad somos 4") == 4
+
+
+def test_the_persisted_total_takes_the_turn_total_when_nothing_was_known():
+    intent = _intent_alloc(None, gs=4)
+    assert supervisor._group_size_that_will_persist(
+        intent, _state_con_total(), "somos 4") == 4
+    assert supervisor._group_size_that_will_persist(
+        _intent_alloc(None), _state_con_total(), "hola") is None
+
+
+def test_drops_a_split_that_only_matches_a_misread_turn_total():
+    intent = _intent_alloc({"certified_diving": 4}, gs=4)
+    supervisor.enforce_group_allocation_consistency(
+        intent, _state_con_total(7), "4 certificados")
+    assert intent.group_allocation is None
+
+
+def test_keeps_a_split_that_matches_an_explicitly_corrected_total():
+    alloc = {"certified_diving": 4}
+    intent = _intent_alloc(alloc, gs=4)
+    supervisor.enforce_group_allocation_consistency(
+        intent, _state_con_total(7), "en realidad somos 4, los 4 certificados")
+    assert intent.group_allocation == alloc
+
+
+def test_a_split_that_exceeds_the_known_total_raises_the_persisted_total():
+    """La rama "amplia" tiene que llegar al ESTADO, no solo al intent: si no,
+    el total escrito una sola vez se queda en 6 con un reparto de 7."""
+    alloc = {"certified_diving": 4, "snorkel": 3}
+    state = _state_con_total(6)
+    intent = _intent_alloc(alloc)
+    supervisor.enforce_group_allocation_consistency(intent, state, "4 bucean y 3 snorkel")
+    supervisor._apply_detected_intent(intent, state, "4 bucean y 3 snorkel")
+    assert state.detected_group_size == 7
+    assert state.detected_group_allocation == alloc
+
+
+def test_trigger_fires_when_the_split_only_matches_a_misread_turn_total():
+    """Mismo caso visto desde el veto: antes comparaba 4 con 4 y no disparaba."""
+    intent = _intent_con_reparto({"certified_diving": 4}, gs=4)
+    assert supervisor._group_allocation_should_verify(
+        "4 certificados", intent, _state_con_total(7)) is True
+
+
+def test_split_whose_turn_total_the_regex_derived_from_the_split_itself():
+    """El caso `b10` de scripts/battery_group_allocation_gate.py, fallando en PRE
+    con los DOS vetos encendidos (2026-09-14): con 7 sabidos, "4 con brevet, 2
+    minicurso y 1 snorkel" deja al regex con {minicourse: 2, snorkel: 1} y un
+    total de turno 3 DEDUCIDO de ese mismo reparto -- asi que el reparto
+    "cuadraba" consigo mismo, el veto no disparaba y se guardaba un reparto de 3
+    para un grupo de 7. Contra el total guardado (7) el veto dispara y, si el LLM
+    no lo completa, la invariante lo descarta."""
+    msg = "4 con brevet, 2 minicurso y 1 snorkel"
+    state = ConversationState(conversation_id="ga-b10")
+    state.detected_group_size = 7
+    intent = IntentDetector().detect(msg, state)
+    assert intent.group_allocation == {"minicourse": 2, "snorkel": 1}
+    assert intent.group_size == 3  # el total que el regex dedujo del reparto
+
+    assert supervisor._group_allocation_should_verify(msg, intent, state) is True
+    supervisor.enforce_group_allocation_consistency(intent, state, msg)
+    assert intent.group_allocation is None
+
+
+@pytest.mark.asyncio
+async def test_a_misread_turn_total_cannot_carry_a_partial_split_into_the_state():
+    """El caso `m02` de la sonda, por el camino real del turno."""
+    from src.agents import conversational_core as cc
+
+    state = ConversationState(conversation_id="ga-total-mal-leido-e2e")
+    state.detected_group_size = 7
+    partial = {"group_allocation": {"certified_diving": 4}}
+    with patch.object(cc, "extract_and_verify", new=AsyncMock(return_value=(partial, {}))), \
+         patch.object(cc, "fill_gaps", new=AsyncMock(return_value=dict(partial))), \
+         patch.object(supervisor, "verify_fields", new=AsyncMock(return_value={})):
+        await cc._understand(state, "4 certificados")
+    assert state.detected_group_size == 7
+    assert state.detected_group_allocation is None

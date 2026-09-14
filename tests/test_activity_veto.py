@@ -41,12 +41,24 @@ async def _veto(message: str, intent: DetectedIntent, state: ConversationState) 
     await supervisor._maybe_veto_resolved_field_via_llm("activity", message, intent, state)
 
 
+def test_cutover_is_on_by_default_and_shadow_is_not():
+    """Desde 2026-09-14 el cutover vive en el codigo (antes solo en `.env.pre`):
+    ver el comentario de `config.py` para el criterio."""
+    from src.config import Settings
+
+    defaults = Settings.model_fields
+    assert defaults["llm_activity_veto_cutover"].default is True
+    assert defaults["llm_activity_veto_shadow_mode"].default is False
+
+
 @pytest.mark.asyncio
-async def test_off_by_default_does_not_call_llm():
+async def test_both_flags_off_does_not_call_llm():
     intent = DetectedIntent(activity="minicourse", detected_fields=["activity"])
     state = ConversationState(conversation_id="veto-off-test")
 
-    with patch.object(supervisor, "verify_fields", new=AsyncMock(side_effect=AssertionError("must not be called"))):
+    with patch.object(supervisor.settings, "llm_activity_veto_cutover", False), \
+         patch.object(supervisor.settings, "llm_activity_veto_shadow_mode", False), \
+         patch.object(supervisor, "verify_fields", new=AsyncMock(side_effect=AssertionError("must not be called"))):
         await _veto(_AMBIGUOUS_MSG, intent, state)
     assert intent.activity == "minicourse"
 
@@ -101,6 +113,7 @@ async def test_shadow_mode_logs_but_never_mutates():
     state = ConversationState(conversation_id="veto-shadow-test")
 
     with patch.object(supervisor.settings, "llm_activity_veto_shadow_mode", True), \
+         patch.object(supervisor.settings, "llm_activity_veto_cutover", False), \
          patch.object(supervisor, "verify_fields", new=AsyncMock(return_value={"activity": "padi_open_water"})):
         await _veto(_AMBIGUOUS_MSG, intent, state)
     assert intent.activity == "minicourse"

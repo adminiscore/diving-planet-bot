@@ -168,7 +168,13 @@ class Settings(BaseSettings):
     # 'nunca rellena un campo ya resuelto' es su regla explicita. Dos fases,
     # mismo patron shadow->cutover que los 4 dominios de arriba:
     llm_activity_veto_shadow_mode: bool = False  # mide sin aplicar (loguea discrepancias)
-    llm_activity_veto_cutover: bool = False      # aplica de verdad (corrige activity/service_id)
+    # CUTOVER por defecto desde 2026-09-14 (antes solo en `.env.pre` del VPS).
+    # Criterio para todo el mecanismo: un flag de CUTOVER que ya se midio y
+    # decide respuestas vive en el CODIGO, no en un .env que no esta en el repo
+    # -- si no, cualquier entorno nuevo (PRO, dev) arranca con el fallo que ya se
+    # cerro. Los de SHADOW (solo loguean) siguen en el entorno. Medido: eval-set
+    # `activity` 98% con el trigger de ambiguedad (progress-log 2026-09-12).
+    llm_activity_veto_cutover: bool = True       # aplica de verdad (corrige activity/service_id)
     # --- Generalizacion del veto por-campo (docs/multi-agent-refactor-plan.md,
     # hallazgo en vivo conversacion real 913, 2026-09-10) ---
     # Mismo mecanismo que `llm_activity_veto_*` (ver `supervisor._VETO_FIELD_
@@ -196,9 +202,15 @@ class Settings(BaseSettings):
     # pareja") rompio un caso real validado por el owner
     # (test_owner_conversations_fase1.py::test_scenario3a_couple_group_size_two,
     # donde "con mi pareja" SI debe valer 2) -- revertido. Se deja en manos
-    # de este mecanismo en su lugar. Off por defecto en todas partes.
+    # de este mecanismo en su lugar.
     llm_group_size_veto_shadow_mode: bool = False
-    llm_group_size_veto_cutover: bool = False
+    # CUTOVER por defecto desde 2026-09-14 (mismo criterio que
+    # `llm_activity_veto_cutover`). Medido en PRE con
+    # scripts/battery_group_allocation_gate.py: sin este veto, TOTAL_MAL en 5 de
+    # 33 escenarios ("en total 7: 4 certificados..." -> 4, "mi pareja y nuestros
+    # dos hijos" -> 2); con el, 0 -- y los controles donde el regex acierta (incl.
+    # el caso del owner "con mi pareja" = 2) intactos.
+    llm_group_size_veto_cutover: bool = True
 
     # --- Veto de `group_allocation` (reparto INCOMPLETO pero visible) ---
     # Justificacion real (NO el 91% del eval-set: el unico caso que falla

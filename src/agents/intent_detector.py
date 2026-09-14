@@ -311,6 +311,69 @@ def matched_activity_categories(message: str) -> set[str]:
     }
 
 
+# Vocabulario de nacionalidad, elevado de `_detect_nationality` a constantes de
+# modulo (2026-09-14) para que `nationality_is_ambiguous` reuse EXACTAMENTE los
+# mismos patrones en vez de duplicarlos -- mismo criterio que
+# `matched_activity_categories`.
+_NOT_COLOMBIAN_RE = re.compile(
+    r"\bextranjer[oa]s?\b|\bforeigners?\b|\bwe\s+are\s+foreign\b"
+    r"|\bno\s+(?:soy|somos)\s+colombian[oa]s?\b|\bnot\s+colombian\b"
+    # Hallazgo en vivo (batería de grupos mixtos contra PRE, 2026-09-01,
+    # lote 8): "ninguno colombiano"/"ninguno es colombiano"/"nadie es
+    # colombiano" (respuesta de GRUPO a "¿sois colombianos?") no
+    # matcheaba esta negación (exigía "no soy/somos" literal) — caía al
+    # segundo regex de abajo, que solo busca la palabra "colombiano" en
+    # cualquier parte del mensaje, y marcaba is_colombian=True: justo lo
+    # contrario de la intención. El resumen final terminaba diciendo
+    # "como sois colombianos, el pago es en pesos" a un grupo que
+    # explícitamente dijo que NINGUNO lo era.
+    r"|\bning[uú]n[oa]?\b[^.]{0,30}\bcolombian[oa]s?\b"
+    r"|\bnadie\b[^.]{0,30}\bcolombian[oa]s?\b"
+)
+_COLOMBIAN_RE = re.compile(
+    r"\bcolombian[oa]s?\b|\bcolombian\b"
+    r"|\b(?:soy|somos|vivo|vivimos|residente|resido)\b[^.]{0,20}\bcolombia\b"
+    r"|\bfrom\s+colombia\b|\bresident\s+in\s+colombia\b"
+    # A common way to self-identify as Colombian is naming a Colombian
+    # city ("soy de Medellín") instead of the country. Requires the
+    # explicit "soy/somos DE" origin claim (not "estoy en", which
+    # would just mean their current location, e.g. a foreign tourist
+    # in Cartagena) so it never misreads current whereabouts as origin.
+    r"|\b(?:soy|somos)\s+de\s+(?:bogot[aá]|medell[ií]n|cali|cartagena|barranquilla|"
+    r"bucaramanga|pereira|manizales|c[uú]cuta|santa\s+marta|monter[ií]a|ibagu[eé]|"
+    r"villavicencio|neiva|pasto|armenia|popay[aá]n)\b"
+)
+_BARE_NEGATION_RE = re.compile(r"\b(?:no|not|nope)\b")
+
+
+def nationality_is_ambiguous(message: str) -> bool:
+    """True si el mensaje dice cosas de nacionalidad con polaridad
+    CONTRADICTORIA -- la senal barata de "aqui el regex puede haber elegido mal"
+    que dispara el veto LLM de `is_colombian` (`supervisor._nationality_should_
+    verify`). Funcion pura, sin llamadas ni estado.
+
+    Contradictoria significa que, ademas de la marca que el detector usaria,
+    queda otra de sentido contrario FUERA del tramo que la produjo:
+      - hay negacion reconocida y, fuera de ella, una afirmacion
+        ("dos somos colombianos pero uno es extranjero");
+      - no hay negacion reconocida, pero fuera de la afirmacion queda una
+        negacion suelta que el detector no sabe atribuir ("mi pareja es
+        colombiana, yo no").
+
+    Por que existe (2026-09-14): con el trigger generico, el LLM se consultaba
+    en toda nacionalidad resuelta, incluidas las negaciones compactas que el
+    regex acierta y el LLM confunde ("ninguno colombiano", eval-set). Esas no
+    son ambiguas: la afirmacion queda DENTRO del tramo negado.
+    """
+    lowered = message.lower()
+    outside_negation = _NOT_COLOMBIAN_RE.sub(" ", lowered)
+    if outside_negation != lowered:
+        return bool(_COLOMBIAN_RE.search(outside_negation))
+    if not _COLOMBIAN_RE.search(lowered):
+        return False
+    return bool(_BARE_NEGATION_RE.search(_COLOMBIAN_RE.sub(" ", lowered)))
+
+
 # Vocabulario de "¿el mensaje afirma/niega certificacion?" -- elevado de
 # variables locales de `_detect_certification` a constantes de modulo
 # (2026-09-03, inventario regex tras el hallazgo "purple-sun-590") para que
@@ -1382,39 +1445,13 @@ class IntentDetector:
         Negation is checked first so "no soy colombiano" reads as NOT Colombian."""
         if intent.is_colombian is not None:
             return
-        if re.search(
-            r"\bextranjer[oa]s?\b|\bforeigners?\b|\bwe\s+are\s+foreign\b"
-            r"|\bno\s+(?:soy|somos)\s+colombian[oa]s?\b|\bnot\s+colombian\b"
-            # Hallazgo en vivo (batería de grupos mixtos contra PRE, 2026-09-01,
-            # lote 8): "ninguno colombiano"/"ninguno es colombiano"/"nadie es
-            # colombiano" (respuesta de GRUPO a "¿sois colombianos?") no
-            # matcheaba esta negación (exigía "no soy/somos" literal) — caía al
-            # segundo regex de abajo, que solo busca la palabra "colombiano" en
-            # cualquier parte del mensaje, y marcaba is_colombian=True: justo lo
-            # contrario de la intención. El resumen final terminaba diciendo
-            # "como sois colombianos, el pago es en pesos" a un grupo que
-            # explícitamente dijo que NINGUNO lo era.
-            r"|\bning[uú]n[oa]?\b[^.]{0,30}\bcolombian[oa]s?\b"
-            r"|\bnadie\b[^.]{0,30}\bcolombian[oa]s?\b",
-            message,
-        ):
+        # Patrones en `_NOT_COLOMBIAN_RE`/`_COLOMBIAN_RE` (constantes de modulo,
+        # compartidas con `nationality_is_ambiguous`).
+        if _NOT_COLOMBIAN_RE.search(message):
             intent.is_colombian = False
             intent.detected_fields.append("is_colombian")
             return
-        if re.search(
-            r"\bcolombian[oa]s?\b|\bcolombian\b"
-            r"|\b(?:soy|somos|vivo|vivimos|residente|resido)\b[^.]{0,20}\bcolombia\b"
-            r"|\bfrom\s+colombia\b|\bresident\s+in\s+colombia\b"
-            # A common way to self-identify as Colombian is naming a Colombian
-            # city ("soy de Medellín") instead of the country. Requires the
-            # explicit "soy/somos DE" origin claim (not "estoy en", which
-            # would just mean their current location, e.g. a foreign tourist
-            # in Cartagena) so it never misreads current whereabouts as origin.
-            r"|\b(?:soy|somos)\s+de\s+(?:bogot[aá]|medell[ií]n|cali|cartagena|barranquilla|"
-            r"bucaramanga|pereira|manizales|c[uú]cuta|santa\s+marta|monter[ií]a|ibagu[eé]|"
-            r"villavicencio|neiva|pasto|armenia|popay[aá]n)\b",
-            message,
-        ):
+        if _COLOMBIAN_RE.search(message):
             intent.is_colombian = True
             intent.detected_fields.append("is_colombian")
 
