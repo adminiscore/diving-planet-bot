@@ -76,7 +76,7 @@
       "message": "quiero hacer el curso de nitrox",
       "lang": "es",
       "expected": {
-        "activity": "padi_specialty"
+        "activity": "specialty_nitrox"
       },
       "source": "test_intent_detector.py (regex ground truth)",
       "notes": ""
@@ -1240,6 +1240,96 @@
       },
       "source": "hallazgo en vivo, bateria sintetica shadow-mode, 2026-09-10",
       "notes": "El regex resuelve group_size=2 via el patron pareja->2, subcontando a los hijos. Motivador de la extension del veto por-campo a group_size (fix por regex descartado, rompia un caso real del owner)."
+    },
+    {
+      "id": "f2b-specialty-buoyancy-es",
+      "message": "me interesa la especialidad de flotabilidad",
+      "lang": "es",
+      "expected": {
+        "activity": "specialty_buoyancy"
+      },
+      "source": "F2b del plan de dominio de actividades, 2026-09-14",
+      "notes": "Especialidad con nombre: el regex la reconoce y desde F4 emite el id del registro."
+    },
+    {
+      "id": "f2b-specialty-naturalist-es",
+      "message": "quiero hacer la especialidad naturalista",
+      "lang": "es",
+      "expected": {
+        "activity": "specialty_naturalist"
+      },
+      "source": "F2b del plan de dominio de actividades, 2026-09-14",
+      "notes": ""
+    },
+    {
+      "id": "f2b-specialty-fish-es",
+      "message": "quiero la especialidad de identificación de peces",
+      "lang": "es",
+      "expected": {
+        "activity": "specialty_fish_identification"
+      },
+      "source": "F2b del plan de dominio de actividades, 2026-09-14",
+      "notes": ""
+    },
+    {
+      "id": "f2b-specialty-nitrox-en",
+      "message": "I'd like to do the enriched air nitrox specialty",
+      "lang": "en",
+      "expected": {
+        "activity": "specialty_nitrox"
+      },
+      "source": "F2b del plan de dominio de actividades, 2026-09-14",
+      "notes": ""
+    },
+    {
+      "id": "f2b-specialty-mindful-en",
+      "message": "I'd like to do the mindful diving specialty",
+      "lang": "en",
+      "expected": {
+        "activity": "specialty_mindful_diving"
+      },
+      "source": "F2b del plan de dominio de actividades, 2026-09-14",
+      "notes": "El regex lo resuelve como certified_diving porque 'diving' gana antes que la especialidad (vocabulario, F5); solo el LLM puede corregirlo si el id esta en el enum."
+    },
+    {
+      "id": "f2b-rescue-es",
+      "message": "quiero hacer el curso de rescate",
+      "lang": "es",
+      "expected": {
+        "activity": "padi_rescue"
+      },
+      "source": "F2b del plan de dominio de actividades, 2026-09-14",
+      "notes": "'rescate' no esta en los patrones del regex (solo 'rescue'): lo tiene que rellenar el LLM."
+    },
+    {
+      "id": "f2b-generic-course-es",
+      "message": "quiero sacarme un curso PADI",
+      "lang": "es",
+      "expected": {
+        "activity": "padi_course"
+      },
+      "source": "F2b del plan de dominio de actividades, 2026-09-14",
+      "notes": "Curso sin nivel: el nucleo pregunta cual (F4)."
+    },
+    {
+      "id": "f2b-generic-specialty-es",
+      "message": "me gustaria hacer alguna especialidad",
+      "lang": "es",
+      "expected": {
+        "activity": "padi_specialty"
+      },
+      "source": "F2b del plan de dominio de actividades, 2026-09-14",
+      "notes": "Especialidad sin nombre: el nucleo pregunta cual (F4)."
+    },
+    {
+      "id": "f2b-referral-es",
+      "message": "ya hice la teoria y la piscina en mi centro PADI y traigo la carta de referido para terminar el open water",
+      "lang": "es",
+      "expected": {
+        "activity": "padi_open_water_referral"
+      },
+      "source": "F2b del plan de dominio de actividades, 2026-09-14",
+      "notes": "Hueco conocido: el regex resuelve padi_open_water por 'open water' y el veto no dispara (una sola categoria). Documenta el caso para F5."
     }
   ]
 }

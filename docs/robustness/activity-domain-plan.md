@@ -103,7 +103,7 @@ que no sale de aquí (mismo patrón que `test_prompt_enum_enumeration.py`).
 | **F1** ✅ | `activities.json` + `src/domain/activities.py` + test de coherencia con `services.json`. Sin consumidores. | tests (10, contra los datos reales) |
 | **F2a** | Prompts: el **contexto de negocio** (`for_whom`) del registro entra en **todos** los prompts que hablan de actividades, **solo para los valores que el código ya entiende hoy**. Los enums no cambian todavía. | eval-set + batería, A/B por caso |
 | **F3** | Código: las ≈30 tablas (etiquetas, mapas al carrito y a servicios, isla, edades mínimas, overview del RAG) pasan a leer del registro, aceptando ya todos sus ids. Se borra `_REMEMBER_ACTIVITY_MAP`. | suite completa (sin cambio de comportamiento salvo los huecos corregidos) |
-| **F2b** | Enums: todos los tools (extractor, señales, acompañante, router) usan el vocabulario completo del registro (`padi_course`, especialidades, referido…), generado desde él. | eval-set + batería, A/B por caso |
+| **F2b** 📏 (medida, no aplicada) | Enums al vocabulario reservable del registro. Extractor: rompe otros campos. Router: acierta las opciones, pero hoy nadie las usa. Ninguno se aplica; pasa a F5 (ver abajo). | eval-set + batería, A/B por caso |
 | **F4** | `padi_course` en el flujo: si el LLM no pudo decidir el nivel con el contexto, el núcleo pregunta el nivel con opciones del registro; nunca un curso sin precio. | tests + conversación en batería |
 | **F5** | Evidencia citada: sustituye `_activity_has_textual_backing` y `_boolean_has_textual_backing` (guardas de vocabulario) por "el LLM cita el fragmento literal y el código lo comprueba". | eval-set + batería + tests de alucinación existentes |
 
@@ -171,6 +171,44 @@ que no sale de aquí (mismo patrón que `test_prompt_enum_enumeration.py`).
 - Pendiente de F2b/F5 (no es regresión): "identificacion" sin tilde y "mindful **diving**"
   (gana "diving") son vocabulario del regex; los ids de especialidad todavía no están en
   el enum del extractor.
+
+**F2b — lo medido (2026-09-14)**
+
+Vocabulario = `dom.bookable_activity_ids()`: actividades con servicio propio o genéricas
+(F4 pregunta el nivel). Sin `refresher` (se vende como minicurso) ni `bubble_makers` (D2).
+
+- **Router** (`comparing_options`), `scripts/battery_activity_choice.py`, 3 repeticiones:
+  base 6/9, solo contexto 6/9, solo vocabulario 8/9, **vocabulario + contexto 9/9**. Los
+  casos nuevos (Open Water o Advanced, Nitrox o flotabilidad, Rescue o Divemaster) no se
+  podían expresar con los 4 valores escritos a mano. Señales y resolutor del acompañante,
+  idénticos en las cuatro variantes: no se tocan. **No aplicado**: en los tres casos
+  nuevos la base ya marcaba `comparing=true` y solo erraba las opciones
+  (`padi_course`, `certified_diving`). Hoy el núcleo solo lee el booleano: las opciones
+  van al log y la comparación sale de `_mentioned_offerings` (regex). Aplicarlo no
+  cambiaría ninguna respuesta. En cambio, alarga en cada turno un tool que emite otras
+  señales (contacto, escalado…) que esta batería no mide, y el extractor acaba de
+  demostrar que eso mueve campos vecinos. Su sitio es F5: que la comparación use las
+  opciones del LLM en vez del regex, y medirlo entonces junto con las demás señales del
+  router.
+- **Extractor** (enum de `activity`, 8 → 15 valores). Eval-set 116 casos: 212/216 frente
+  a 211/216, pero caso a caso **no pasa**:
+  - arregla `ambig-curso-padi-generico-no-se-bucear` y `f2b-specialty-mindful-en`;
+  - rompe `prof-en-from-states` ("im from the states, wanna dive"): `is_colombian=False`
+    3/3 con el enum anterior, abstención 3/3 con el nuevo;
+  - rompe `b08-ninos` en la batería de grupo ("2 adultos bucean y 2 niños hacen
+    snorkel"): el reparto sale vacío en las cuatro variantes de vetos.
+
+  Los dos fallos están en **otros campos** del mismo prompt de relleno: un enum más largo
+  cambia lo que el modelo se atreve a rellenar en todo lo demás (misma lección que las
+  glosas en F2a). Probado también mandar solo las propiedades pedidas: arregla
+  `is_colombian`, pero rompe `is_certified` en "no es que no estemos certificados, sí lo
+  estamos, los 2". **No aplicado.** Las especialidades concretas siguen llegando por el
+  regex y el curso genérico se resuelve en F4. Queda para F5: con evidencia citada, el
+  extractor podría devolver cualquier id del registro sin depender del tamaño del enum.
+- Se queda como infraestructura: `dom.bookable_activity_ids()` con su test, 9 casos
+  `f2b-*` en el eval-set (y `activity-nitrox` corregido a `specialty_nitrox`), y las
+  variantes `vocab`/`vocab+ctx` con los casos r07–r09 en la batería de elección. Todo
+  sirve para medir F5 contra esta línea base.
 
 **Incoherencias de textos que quedan en el registro (decisión de negocio, editar en
 `activities.json` sin tocar código):**

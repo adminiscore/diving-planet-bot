@@ -35,6 +35,16 @@ def test_every_activity_enum_value_exists_in_the_registry():
         assert set(_field_enum(field, tool)) <= ids, f"{field} usa valores fuera del registro"
 
 
+def test_extraction_activity_enum_is_bookable_but_not_widened():
+    """F2b, medido 2026-09-14: abrir el enum del extractor a todo lo reservable
+    (15 valores) arreglo 2 casos del eval-set pero rompio 2 deterministas en OTROS
+    campos del mismo prompt de relleno ('im from the states' dejo de dar
+    is_colombian=False; '2 adultos bucean y 2 ninos hacen snorkel' dejo de dar el
+    reparto). El vocabulario abierto se queda en el router; el extractor sigue con
+    su enum medido, que tiene que ser reservable."""
+    assert set(_field_enum("activity")) <= set(dom.bookable_activity_ids())
+
+
 def test_activity_glosses_are_not_copied_by_hand_anymore():
     for glosses in (_ENUM_VALUE_GLOSSES_ES, _ENUM_VALUE_GLOSSES_EN):
         assert "activity" not in glosses

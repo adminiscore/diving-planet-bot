@@ -59,6 +59,14 @@ def test_business_context_can_be_restricted():
     assert "`padi_open_water` —" not in context
 
 
+def test_bookable_activities_exclude_add_ons_and_activities_without_service():
+    bookable = dom.bookable_activity_ids()
+    assert "refresher" not in bookable          # se vende como el minicurso
+    assert "bubble_makers" not in bookable      # sin servicio en el catalogo (D2)
+    assert {"padi_course", "padi_specialty"} <= set(bookable)   # genericas: F4 pregunta el nivel
+    assert {"specialty_nitrox", "padi_open_water_referral", "certified_diving"} <= set(bookable)
+
+
 def test_lookups():
     assert dom.service_ids("minicourse", "island") == ("minicourse_already_on_island",)
     assert dom.label("snorkel", "en") == "Snorkeling"

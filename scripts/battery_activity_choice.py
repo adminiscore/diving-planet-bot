@@ -16,6 +16,8 @@ Mide dos variantes por caso (docs/robustness/activity-domain-plan.md, F2a):
   base      -> los prompts tal cual.
   for_whom  -> los mismos prompts + el contexto de negocio de cada opcion, sacado
                del registro de actividades (`for_whom` de activities.json).
+  vocab     -> (F2b) opciones del router = actividades reservables del registro.
+  vocab+ctx -> vocab + el contexto de negocio de esas opciones.
 
 La decision de activar `for_whom` en produccion se toma con esta tabla, caso a
 caso: una mejora que se compensa con un empeoramiento no vale (leccion del
@@ -66,9 +68,16 @@ ROUTER = [
     ("r01-minicurso-o-snorkel", "es", "no sé si hacer el minicurso o el snorkel", {MINI, SNK}),
     ("r02-pareja-duda", "es", "mi pareja duda entre buceo y minicurso", {CERT, MINI}),
     ("r03-elige-una", "es", "quiero el minicurso", None),
-    ("r04-curso-o-minicurso", "es", "qué me recomiendas, el curso open water o el minicurso? nunca he buceado", {COURSE, MINI}),
+    ("r04-curso-o-minicurso", "es", "qué me recomiendas, el curso open water o el minicurso? nunca he buceado",
+     # Con el vocabulario de hoy solo cabe `padi_course`; con el abierto (F2b) lo
+     # correcto es el curso que nombra. Las dos respuestas son validas.
+     [{COURSE, MINI}, {"padi_open_water", MINI}]),
     ("r05-reserva-ambas", "es", "quiero buceo y snorkel para los dos", None),
     ("r06-en-first-timer", "en", "is snorkeling or the mini course better for a first timer?", {SNK, MINI}),
+    # F2b: dudas entre opciones que el vocabulario de hoy (4 valores) no puede expresar.
+    ("r07-open-water-o-advanced", "es", "no sé si hacer el open water o el advanced", {"padi_open_water", "padi_advanced"}),
+    ("r08-nitrox-o-flotabilidad", "es", "dudo entre la especialidad de nitrox y la de flotabilidad", {"specialty_nitrox", "specialty_buoyancy"}),
+    ("r09-en-rescue-or-divemaster", "en", "should I do the rescue course or go for divemaster?", {"padi_rescue", "padi_divemaster"}),
 ]
 
 
@@ -111,7 +120,26 @@ def _restore():
     escalation.ROUTING_TOOL = _ORIG["routing_tool"]
 
 
-VARIANTES = [("base", _restore), ("for_whom", _with_for_whom)]
+def _with_open_vocabulary(with_context: bool):
+    """F2b: las opciones del router pasan a ser todas las actividades reservables
+    del registro (antes 4 valores escritos a mano)."""
+    def apply():
+        _restore()
+        tool = copy.deepcopy(_ORIG["routing_tool"])
+        options = tool["function"]["parameters"]["properties"]["comparing_options"]["properties"]["options"]
+        options["items"]["enum"] = dom.bookable_activity_ids()
+        if with_context:
+            options["description"] += _context_block("en", options["items"]["enum"])
+        escalation.ROUTING_TOOL = tool
+    return apply
+
+
+VARIANTES = [
+    ("base", _restore),
+    ("for_whom", _with_for_whom),
+    ("vocab", _with_open_vocabulary(False)),
+    ("vocab+ctx", _with_open_vocabulary(True)),
+]
 
 
 # ── Ejecucion y veredicto ────────────────────────────────────────────────────
@@ -135,6 +163,8 @@ async def _router(lang, msg):
 
 
 def _ok(got, expected):
+    if isinstance(expected, list):  # varias respuestas validas
+        return any(_ok(got, option) for option in expected)
     if isinstance(expected, set):
         return got is not None and set(got) == expected
     return got == expected
@@ -166,7 +196,8 @@ async def main():
             for variant, _apply in VARIANTES:
                 oks, n, vistos = tabla[(net, case_id, variant)]
                 cells.append(f"{variant} {oks}/{n} {dict(vistos)}")
-            esperado = sorted(expected) if isinstance(expected, set) else expected
+            esperado = ([sorted(e) for e in expected] if isinstance(expected, list)
+                        else sorted(expected) if isinstance(expected, set) else expected)
             print(f"  {case_id:40} esperado={esperado}")
             for cell in cells:
                 print(f"      {cell}")
@@ -182,14 +213,15 @@ async def main():
             por_red[net] = sum(1 for c in cases if tabla[(net, c[0], variant)][0] == reps)
         resumen[variant] = por_red
         print(f"  {variant:10} " + " | ".join(f"{net} {por_red[net]}/{len(cases)}" for net, cases, _ in NETS))
+    names = [v for v, _apply in VARIANTES]
     cambios = [
-        (net, c[0], tabla[(net, c[0], 'base')][0], tabla[(net, c[0], 'for_whom')][0])
+        (net, c[0], {v: tabla[(net, c[0], v)][0] for v in names})
         for net, cases, _call in NETS for c in cases
-        if tabla[(net, c[0], 'base')][0] != tabla[(net, c[0], 'for_whom')][0]
+        if len({tabla[(net, c[0], v)][0] for v in names}) > 1
     ]
-    print("  CASOS QUE CAMBIAN (base -> for_whom, aciertos):")
-    for net, case_id, b, f in cambios:
-        print(f"    {net:8} {case_id:40} {b}/{reps} -> {f}/{reps}")
+    print("  CASOS QUE CAMBIAN ENTRE VARIANTES (aciertos por variante):")
+    for net, case_id, per_variant in cambios:
+        print(f"    {net:8} {case_id:40} " + "  ".join(f"{v}={n}/{reps}" for v, n in per_variant.items()))
     print("JSON " + json.dumps({"resumen": resumen, "cambios": cambios}, ensure_ascii=False))
 
 

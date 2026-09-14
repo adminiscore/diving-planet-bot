@@ -149,6 +149,18 @@ def day_activity_ids() -> list[str]:
     ]
 
 
+def bookable_activity_ids() -> list[str]:
+    """Actividades que un cliente puede pedir y el flujo sabe cerrar: con servicios
+    propios en el catalogo, o genericas (el nucleo pregunta el nivel, F4). Quedan
+    fuera las que se venden como otra (`sold_as`, el refresher) y las que no tienen
+    servicio en el catalogo (Bubble Makers, discrepancia D2 del plan). Es el
+    vocabulario de actividad de los prompts (F2b)."""
+    return [
+        a.id for a in registry().activities
+        if a.sold_as is None and (a.all_services() or a.generic)
+    ]
+
+
 def base_service_id(activity_id: str) -> str | None:
     """Servicio base (desde Cartagena) de una actividad: el que se elige cuando
     se sabe la actividad pero no el plan concreto. None para las genericas."""
