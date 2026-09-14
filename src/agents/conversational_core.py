@@ -468,12 +468,15 @@ def ask_slot(state: ConversationState, slot: str, *, reasking: bool = False) -> 
             if lang == "es" else
             [{"title": "✅ Yes", "value": "yes"}, {"title": "❌ No", "value": "no"}]
         )
+        # Se cobra (owner 2026-09-14): precio por persona desde el catalogo.
+        price = cart_render.refresher_price_text(state)
         return (
             "El *refresher* es una sesión corta de repaso en el agua antes de la "
-            "inmersión, sin coste adicional. ¿Os interesa?"
+            f"inmersión. Tiene un costo de *{price}* por persona que lo necesite. "
+            "¿Os interesa?"
             if lang == "es" else
-            "The *refresher* is a short in-water review session before the dive, at "
-            "no extra cost. Are you interested?"
+            "The *refresher* is a short in-water review session before the dive. "
+            f"It costs *{price}* per person who needs it. Are you interested?"
         )
     if slot == SLOT_QTY:
         return (
@@ -1973,6 +1976,27 @@ def _build_cart_from_slots(state: ConversationState) -> None:
         state.mixed_final_is_colombian = True
 
 
+def _refresher_note(state: ConversationState) -> str:
+    """Nota del refresher en el cierre. Se cobra (owner 2026-09-14): precio por
+    persona desde el catalogo y, fuera del gating colombiano, su link de reserva.
+    No se inventa cuantos lo necesitan: la pregunta de seguridad es de grupo."""
+    if not state.refresher_interested:
+        return ""
+    price = cart_render.refresher_price_text(state)
+    url = None if state.is_colombian else cart_render.refresher_booking_url(state)
+    if state.language == "es":
+        how = f" Resérvalo aquí: {url}" if url else " El asesor te lo confirma junto con el pago."
+        return (
+            "✅ *Refresher añadido* — el guía hace el repaso en el agua antes de la "
+            f"inmersión. Tiene un costo de *{price}* por persona que lo necesite.{how}\n\n"
+        )
+    how = f" Book it here: {url}" if url else " The advisor will confirm it with the payment."
+    return (
+        "✅ *Refresher added* — the guide runs the in-water review before the dive. "
+        f"It costs *{price}* per person who needs it.{how}\n\n"
+    )
+
+
 def _finalize(state: ConversationState) -> str:
     """Todos los slots listos → resumen por actividad + links (determinista,
     del catálogo), con gating colombiano: colombiano → asesor coordina el pago
@@ -1984,15 +2008,7 @@ def _finalize(state: ConversationState) -> str:
     if not state.mixed_cart:
         _build_cart_from_slots(state)
 
-    refresher_note = ""
-    if state.refresher_interested:
-        refresher_note = (
-            "✅ *Refresher añadido* — el guía hace el repaso en el agua antes de la "
-            "inmersión, sin coste adicional.\n\n"
-            if lang == "es" else
-            "✅ *Refresher added* — the guide runs the in-water review before the "
-            "dive, at no extra cost.\n\n"
-        )
+    refresher_note = _refresher_note(state)
 
     if state.is_colombian:
         # Gating colombiano: SIN link de reserva directa — el asesor coordina el

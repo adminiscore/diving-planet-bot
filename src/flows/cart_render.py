@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import unicodedata
 
+from src.domain import activities as dom
 from src.flows.catalog import COMPANION_PRICE, ISLAND_SERVICE_MAP, SERVICES
 from src.flows.state import MESSAGE_SPLIT, ConversationState, Step
 from src.utils.fuzzy import fuzzy_word_number
@@ -50,6 +51,30 @@ def cart_service_id(item_type, plan, state):
 
 
 # ─────────────── Implementación (funciones puras, movidas de DecisionTree) ───────────────
+
+
+def _refresher_service(state: ConversationState) -> dict:
+    """Servicio del catalogo con el que se reserva y cobra el refresher en la
+    ubicacion del cliente (registro: `refresher.sold_as`)."""
+    location = "island" if state.location == "island" else "cartagena"
+    ids = dom.service_ids("refresher", location)
+    return (SERVICES.get(ids[0]) or {}) if ids else {}
+
+
+def refresher_price_text(state: ConversationState) -> str:
+    """Precio por persona del refresher, desde el catalogo (tarifa 2026, decision
+    del owner 2026-09-14: se cobra). Nunca una cifra escrita a mano."""
+    service = _refresher_service(state)
+    parts = []
+    if service.get("price_usd"):
+        parts.append(f"{int(round(float(service['price_usd'])))} USD")
+    if service.get("price_cop"):
+        parts.append(f"{int(service['price_cop']):,} COP".replace(",", "."))
+    return " / ".join(parts)
+
+
+def refresher_booking_url(state: ConversationState) -> str | None:
+    return _resolve_service_booking_url(_refresher_service(state), state)
 
 
 def _service_for_location(service_id: str, state: ConversationState) -> str:

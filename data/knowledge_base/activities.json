@@ -1,5 +1,5 @@
 {
-  "_comment": "Fuente UNICA del dominio de actividades (docs/robustness/activity-domain-plan.md, 2026-09-14). Cada actividad tiene un id canonico, sus servicios del catalogo (services.json) desde Cartagena y desde las islas, y el contexto de negocio (for_whom) que ven los prompts. Textos derivados de services.json, policies.json y faqs.json (los ficheros que carga el codigo). Editable por negocio: src/domain/activities.py lo valida contra services.json.",
+  "_comment": "Fuente UNICA del dominio de actividades (docs/robustness/activity-domain-plan.md, 2026-09-14). Cada actividad tiene un id canonico, sus servicios del catalogo (services.json) desde Cartagena y desde las islas, y el contexto de negocio (for_whom) que ven los prompts. Textos derivados de services.json, policies.json y faqs.json (los ficheros que carga el codigo). Editable por negocio: src/domain/activities.py lo valida contra services.json. OJO al redactar for_whom: lo leen los prompts que extraen datos del cliente, y cada frase cambia lo que el modelo extrae (medido). Describe para quien es la actividad y sus requisitos; NUNCA digas cuando o como se piden otros datos (p. ej. 'la certificacion se confirma despues'): el modelo lo toma como orden de no extraerlos (2026-09-14, el extractor dejo de rellenar is_certified). Cualquier cambio se mide con scripts/run_extraction_eval.py antes de desplegar.",
   "non_activity_services": {
     "private": "Servicio privado a medida: se coordina con un asesor, no es una actividad del flujo de reserva."
   },
@@ -20,8 +20,8 @@
       "max_age": null,
       "label": {"es": "Buceo certificado", "en": "Certified diving"},
       "for_whom": {
-        "es": "Salidas de buceo guiadas para quien YA tiene certificación de buzo (carné, nivel mínimo Open Water): 2 inmersiones en un día o paquetes de varios días (3 a 9 inmersiones). Es también la opción por defecto cuando alguien pide 'bucear' sin más detalle.",
-        "en": "Guided dive trips for people who ALREADY hold a diving certification (card, minimum Open Water level): 2 dives in one day or multi-day packages (3 to 9 dives). It is also the default when someone just asks to 'dive' with no further detail."
+        "es": "Inmersiones de buceo guiadas: 2 en un día o paquetes de varios días (3 a 9 inmersiones). Es la opción por DEFECTO cuando alguien pide 'bucear' o 'buceo' sin más detalle, tenga o no certificación; para hacerla hace falta carné de buzo (mínimo Open Water).",
+        "en": "Guided dives: 2 in one day or multi-day packages (3 to 9 dives). It is the DEFAULT when someone asks to 'dive' with no further detail, certified or not; it requires a diver card (minimum Open Water)."
       },
       "sources": ["services.json:2_dives_1_day", "policies.json:certification_required", "policies.json:packages_certification_requirement"]
     },
@@ -38,8 +38,8 @@
       "max_age": null,
       "label": {"es": "Minicurso de buceo", "en": "Dive mini-course"},
       "for_whom": {
-        "es": "Bautismo de buceo de UN solo día (Discover Scuba) para quien nunca ha buceado o no sabe bucear y quiere probarlo con instructor PADI: teoría online, piscina y 1 inmersión en el mar. No da certificación ni obliga a quedarse varios días ni a dormir en las islas. Desde 10 años.",
-        "en": "A ONE-day try-dive (Discover Scuba) for people who have never dived or cannot dive and want to try it with a PADI instructor: online theory, pool session and 1 ocean dive. It does not certify and does not require staying several days or sleeping on the islands. From age 10."
+        "es": "Bautismo de buceo de UN solo día (Discover Scuba): SOLO cuando el cliente dice que quiere probar sin certificarse, o que no sabe bucear o nunca ha buceado. Teoría online, piscina y 1 inmersión en el mar con instructor PADI. No da certificación ni obliga a quedarse varios días ni a dormir en las islas. Desde 10 años.",
+        "en": "A ONE-day try-dive (Discover Scuba): ONLY when the customer says they want to try it without certifying, or that they cannot dive or have never dived. Online theory, pool session and 1 ocean dive with a PADI instructor. It does not certify and does not require staying several days or sleeping on the islands. From age 10."
       },
       "sources": ["services.json:minicourse", "faqs.json:Es mi primera vez buceando", "policies.json:age_minimum"]
     },
@@ -110,8 +110,8 @@
       "max_age": null,
       "label": {"es": "Curso Open Water", "en": "Open Water course"},
       "for_whom": {
-        "es": "El PRIMER curso de certificación PADI: para quien no tiene certificación y quiere sacarse el título de buzo autónomo (hasta 18 metros). 2 días con teoría eLearning, piscina y 4 inmersiones; obliga a dormir al menos 1 noche en las islas. Desde 10 años.",
-        "en": "The FIRST PADI certification course: for people with no certification who want to become autonomous divers (down to 18 metres). 2 days with eLearning theory, pool and 4 dives; requires at least 1 night on the islands. From age 10."
+        "es": "El PRIMER curso de certificación PADI, para quien no tiene certificación y quiere sacarse el título de buzo autónomo (hasta 18 metros): su 'primer nivel', 'primer curso', 'sacarse el título' o 'certificarse' por primera vez. 2 días con teoría eLearning, piscina y 4 inmersiones; obliga a dormir al menos 1 noche en las islas. Desde 10 años.",
+        "en": "The FIRST PADI certification course, for people with no certification who want to become autonomous divers (down to 18 metres): their 'first level', 'first course', 'get my licence' or 'get certified' for the first time. 2 days with eLearning theory, pool and 4 dives; requires at least 1 night on the islands. From age 10."
       },
       "sources": ["services.json:open_water", "policies.json:courses_overnight_requirement", "faqs.json:Que puedo hacer con la certificacion Open Water Diver"]
     },
@@ -294,6 +294,25 @@
         "en": "Specialty for certified divers looking for a more mindful dive experience: 2 days, 4 dives including a bioluminescent night dive; requires 1 night on the islands."
       },
       "sources": ["services.json:mindful_diving", "faqs.json:Como es la especialidad Mindful Diving desde Cartagena"]
+    },
+    {
+      "id": "refresher",
+      "family": "addon",
+      "cart_type": "refresh",
+      "sold_as": "minicourse",
+      "services": {"cartagena": ["minicourse"], "island": ["minicourse_already_on_island"]},
+      "requires_certification": true,
+      "certifies": false,
+      "course_level": null,
+      "generic": false,
+      "min_age": 10,
+      "max_age": null,
+      "label": {"es": "Refresher", "en": "Refresher"},
+      "for_whom": {
+        "es": "Repaso corto en el agua con instructor para buzos YA certificados que llevan más de 2 años sin bucear, antes de su inmersión. Se reserva y se cobra como el minicurso (misma tarifa, por persona que lo necesite). No es para quien nunca se ha certificado: ese busca `minicourse`.",
+        "en": "A short in-water review with an instructor for ALREADY certified divers who have not dived for more than 2 years, before their dive. It is booked and charged like the mini-course (same rate, per person who needs it). It is not for people who were never certified: they want `minicourse`."
+      },
+      "sources": ["pricing.json:minicurso_refresh", "policies.json:refresh_requirement", "owner 2026-09-14: se cobra"]
     }
   ]
 }

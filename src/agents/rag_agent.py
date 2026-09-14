@@ -1176,8 +1176,13 @@ def _canonical_price_package_answer(query: str, lang: str) -> str | None:
 # ("sin coste adicional"). La política de `policies.json`
 # (`refresh_requirement`) es ambigua sobre el costo y no lo aclara — el RAG
 # rellenaba el hueco adivinando que sí tiene costo, dos respuestas
-# incompatibles a la misma pregunta según el camino. Se responde con la
-# verdad ya conocida (gratis) en vez de dejar que el RAG adivine.
+# incompatibles a la misma pregunta según el camino.
+#
+# CORREGIDO 2026-09-14: la "verdad ya conocida" era falsa. El owner confirma que
+# el refresher SE COBRA con la tarifa 2026 (`pricing.json`: "Minicurso de Buceo /
+# Refresh"), así que la respuesta determinista da ahora ese precio, sacado del
+# catálogo (el servicio con el que se vende el refresher según el registro de
+# actividades), nunca escrito aquí.
 _REFRESHER_COST_QUESTION_RE = re.compile(
     r"\brefresher\b.{0,30}\b(?:costo|coste|cuesta|precio|adicional|gratis|cost|"
     r"price|free|extra)\b"
@@ -1189,16 +1194,33 @@ _REFRESHER_COST_QUESTION_RE = re.compile(
 def _canonical_refresher_cost_answer(query: str, lang: str) -> str | None:
     if not _REFRESHER_COST_QUESTION_RE.search(query):
         return None
+    try:
+        from src.domain import activities as dom
+        from src.flows.catalog import SERVICES
+    except Exception:
+        return None
+    prices = {}
+    for location in ("cartagena", "island"):
+        ids = dom.service_ids("refresher", location)
+        svc = SERVICES.get(ids[0], {}) if ids else {}
+        usd, cop = svc.get("price_usd"), svc.get("price_cop")
+        if usd is None or cop is None:
+            return None  # sin precio en catálogo -> no arriesgar, dejar a RAG
+        prices[location] = f"{_fmt_price_usd(usd)} USD / {_fmt_price_cop(cop)} COP"
     if lang == "es":
         return (
-            "🌊 El *refresher* (repaso corto en el agua antes de la inmersión) "
-            "**no tiene costo adicional** — está incluido si te hace falta, sin "
-            "cobro extra. ¿Te ayudo a armar la reserva? 😊"
+            "🌊 El *refresher* (repaso corto en el agua antes de la inmersión, para buzos "
+            "certificados que llevan más de 2 años sin bucear) **tiene costo**, por persona "
+            f"que lo necesite: *{prices['cartagena']}* saliendo desde Cartagena, o "
+            f"*{prices['island']}* si ya estás en las islas (con el descuento por reservar "
+            "online). ¿Te ayudo a armar la reserva? 😊"
         ) + _CANONICAL_SAFETY_NET["es"]
     return (
-        "🌊 The *refresher* (a short in-water review before the dive) is "
-        "**at no extra cost** — it's included if you need it, no additional "
-        "charge. Want me to help you put the booking together? 😊"
+        "🌊 The *refresher* (a short in-water review before the dive, for certified divers "
+        "who haven't dived in over 2 years) **is a paid service**, per person who needs it: "
+        f"*{prices['cartagena']}* departing from Cartagena, or *{prices['island']}* if you're "
+        "already on the islands (with the online-booking discount). Want me to help you put "
+        "the booking together? 😊"
     ) + _CANONICAL_SAFETY_NET["en"]
 
 

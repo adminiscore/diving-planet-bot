@@ -700,22 +700,26 @@ class TestCanonicalPricePackage:
 
 class TestCanonicalRefresherCost:
     """Hallazgo en vivo 2026-08-26 (batería sintética contra PRE, lote 5,
-    conversaciones largas): "¿el refresher tiene costo adicional?" respondía
-    "sí, puede tener costo, escríbenos por WhatsApp" — CONTRADICE la
-    respuesta determinista que el propio núcleo da al ofrecer el refresher
-    dentro del flujo de reserva ("sin coste adicional"). Respuesta
-    determinista con la verdad ya conocida (gratis) en vez de dejar que el
-    RAG adivine desde una política ambigua."""
+    conversaciones largas): "¿el refresher tiene costo adicional?" daba una
+    respuesta distinta a la del flujo de reserva. Se fijó una respuesta
+    determinista... con un dato FALSO ("gratis").
+
+    Corregido 2026-09-14: el owner confirma que el refresher se cobra con la
+    tarifa 2026. La respuesta sigue siendo determinista y única para los dos
+    caminos, pero ahora con el precio del catálogo (ver
+    tests/test_refresher_price.py para el detalle de la fuente)."""
 
     def test_spanish_question(self):
         r = rag_agent._canonical_refresher_cost_answer(
             "el refresher tiene costo adicional?", "es")
-        assert r and "no tiene costo adicional" in r.lower()
+        assert r and "tiene costo" in r.lower()
+        assert "no tiene costo adicional" not in r.lower()
 
     def test_english_question(self):
         r = rag_agent._canonical_refresher_cost_answer(
             "does the refresher cost extra?", "en")
-        assert r and "no extra cost" in r.lower()
+        assert r and "paid service" in r.lower()
+        assert "no extra cost" not in r.lower()
 
     def test_unrelated_price_question_returns_none(self):
         assert rag_agent._canonical_refresher_cost_answer(
@@ -728,7 +732,7 @@ class TestCanonicalRefresherCost:
         palabra que el overview también reconocería ("cost") — el fix se
         aplicó reordenando los checks para que este vaya primero."""
         resp = await rag_agent.rag_answer("does the refresher cost extra?", lang="en", history=[])
-        assert "no extra cost" in resp.lower()
+        assert "paid service" in resp.lower()
         assert "reference prices" not in resp.lower()
 
 

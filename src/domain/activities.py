@@ -49,6 +49,9 @@ class Activity:
     label: dict[str, str]
     for_whom: dict[str, str]
     sources: tuple[str, ...]
+    # Id de otra actividad cuyos servicios usa para reservarse y cobrarse (el
+    # refresher se vende como el minicurso). No es duena de esos servicios.
+    sold_as: str | None = None
 
     def all_services(self) -> tuple[str, ...]:
         return tuple(s for loc in LOCATIONS for s in self.services.get(loc, ()))
@@ -86,6 +89,7 @@ def _parse(raw: dict) -> Registry:
             label=dict(entry["label"]),
             for_whom=dict(entry["for_whom"]),
             sources=tuple(entry["sources"]),
+            sold_as=entry.get("sold_as"),
         ))
     return Registry(tuple(activities), dict(raw.get("non_activity_services", {})))
 
@@ -106,7 +110,10 @@ def by_id(activity_id: str) -> Activity | None:
 
 def activity_for_service(service_id: str) -> Activity | None:
     """La actividad a la que pertenece un servicio del catalogo (Cartagena o isla)."""
-    return next((a for a in registry().activities if service_id in a.all_services()), None)
+    return next(
+        (a for a in registry().activities if a.sold_as is None and service_id in a.all_services()),
+        None,
+    )
 
 
 def service_ids(activity_id: str, location: str) -> tuple[str, ...]:
@@ -154,7 +161,16 @@ def validate(services_path: Path = SERVICES_PATH) -> list[str]:
 
     owners: dict[str, list[str]] = {}
     for activity in reg.activities:
-        for service_id in activity.all_services():
+        if activity.sold_as is not None:
+            target = reg.get(activity.sold_as)
+            if target is None:
+                problems.append(f"{activity.id}: sold_as apunta a un id inexistente {activity.sold_as!r}")
+            elif activity.services != target.services:
+                problems.append(f"{activity.id}: sus servicios no coinciden con los de {activity.sold_as}")
+        # Una actividad `sold_as` usa servicios ajenos: ni es su duena ni se le
+        # exige su `requires_certification` (el refresher es para certificados y
+        # se cobra como el minicurso, que no lo es).
+        for service_id in (() if activity.sold_as else activity.all_services()):
             owners.setdefault(service_id, []).append(activity.id)
             if service_id not in catalog:
                 problems.append(f"{activity.id}: el servicio {service_id!r} no existe en services.json")
