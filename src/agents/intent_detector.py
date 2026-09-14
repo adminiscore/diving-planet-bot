@@ -575,7 +575,7 @@ class IntentDetector:
     # PADI Open Water (the entry certification) has a minimum age of 10, so a
     # child under 10 can NEVER be a certified diver. This is a hard, unambiguous
     # rule (no false positives) — unlike guessing whether a teenager is certified.
-    _MIN_CERTIFIED_AGE = 10
+    _MIN_CERTIFIED_AGE = dom.by_id("padi_open_water").min_age  # del registro
 
     def _split_out_uncertifiable_kids(self, intent: "DetectedIntent") -> None:
         """When a group is tagged certified but includes kids too young to hold a

@@ -12,6 +12,7 @@ import json
 from pathlib import Path
 
 from src.domain import activities as dom
+from src.utils import money
 
 # Common Spanish/English words used to guess the language of ANY free-text
 # first message (not just exact greetings), so the bot never re-asks something
@@ -101,15 +102,10 @@ def _format_price(service: dict) -> str:
     price = service.get("price_usd")
     normal = service.get("price_usd_normal")
     note = service.get("price_note")
-    def _round_usd_display(v):
-        try:
-            return int(round(float(v)))
-        except (TypeError, ValueError):
-            return v
     if price and normal:
-        return f"{_round_usd_display(price)} USD online / {_round_usd_display(normal)} USD normal"
+        return f"{money.usd(price)} online / {money.usd(normal)} normal"
     if price:
-        return f"{_round_usd_display(price)} USD"
+        return money.usd(price)
     if note:
         return note
     return "Consultar precio actualizado en la web"

@@ -22,12 +22,15 @@ from dataclasses import dataclass, field
 from src.domain import activities as dom
 
 # --- Age thresholds ---------------------------------------------------------
-MIN_SNORKEL = 6
-BUBBLE_MAKERS_MIN = 8
-BUBBLE_MAKERS_MAX = 10
-MIN_DIVE = 10          # mini-course + Open Water
-MIN_ADVANCED = 10      # Advanced / Rescue (owner 2026-09-14: desde los 10, como Open Water)
-MIN_DIVEMASTER = 18
+# Salen del registro de actividades (`min_age`/`max_age` de activities.json), la
+# fuente unica: antes estaban escritas aqui y en el registro, y el cambio de
+# Advanced/Rescue a 10 (owner 2026-09-14) hubo que hacerlo en los dos sitios.
+MIN_SNORKEL = dom.by_id("snorkel").min_age
+BUBBLE_MAKERS_MIN = dom.by_id("bubble_makers").min_age
+BUBBLE_MAKERS_MAX = dom.by_id("bubble_makers").max_age
+MIN_DIVE = dom.by_id("minicourse").min_age          # mini-course + Open Water
+MIN_ADVANCED = dom.by_id("padi_advanced").min_age    # Advanced / Rescue
+MIN_DIVEMASTER = dom.by_id("padi_divemaster").min_age
 
 # Canonical activity keys used across the flow.
 SNORKEL = "snorkel"
@@ -158,12 +161,6 @@ _OPTION_TO_ACTIVITY = {
     SNORKEL: "snorkel",
     OPEN_WATER: "padi_open_water",
 }
-# "Acompañante" no es una actividad del catalogo (su precio vive en pricing.json,
-# no en services.json), asi que su etiqueta se queda aqui.
-_COMPANION_LABELS = {
-    "es": "acompañante (sin actividad en el agua)",
-    "en": "companion (no in-water activity)",
-}
 
 
 def option_activity_id(option: str) -> str:
@@ -172,12 +169,12 @@ def option_activity_id(option: str) -> str:
 
 
 def _plan_label(option: str, lang: str) -> str:
-    return dom.text(option_activity_id(option), "plan_label", lang, default=_COMPANION_LABELS[lang] if option == COMPANION else option)
+    return dom.text(option_activity_id(option), "plan_label", lang, default=option)
 
 
 def format_group_plan(plans: list[PersonPlan], lang: str = "es") -> str:
     """A clear, positive per-person breakdown of what each can do."""
-    lang = lang if lang in _COMPANION_LABELS else "es"
+    lang = lang if lang in dom.LANGS else "es"
     labels = {option: _plan_label(option, lang) for option in (*_OPTION_TO_ACTIVITY, COMPANION)}
     lines: list[str] = []
     for p in plans:

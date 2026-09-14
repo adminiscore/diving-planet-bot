@@ -54,6 +54,7 @@ from src.agents.notes_extractor import extract_notes
 from src.domain import activities as dom
 from src.flows import cart_render, eligibility
 from src.flows.state import ConversationState, Step
+from src.utils import money
 from src.utils.fuzzy import is_affirmative, is_negative
 
 logger = logging.getLogger("uvicorn.error")
@@ -2133,12 +2134,10 @@ def _colombian_summary_lines(state: ConversationState) -> str:
         lines.append(f"🤿 *{b['label']}*")
         cop = b.get("cop")
         if cop:
-            per = f"{int(round(cop)):,}".replace(",", ".")
             if qty > 1:
-                total = f"{int(round(cop)) * qty:,}".replace(",", ".")
-                lines.append(f"💰 {qty} × COP {per} p.p. = *COP {total}*")
+                lines.append(f"💰 {qty} × {money.cop(cop)} p.p. = *{money.cop(cop, qty)}*")
             else:
-                lines.append(f"💰 *COP {per}*" + (" por persona" if lang == "es" else " per person"))
+                lines.append(f"💰 *{money.cop(cop)}*" + (" por persona" if lang == "es" else " per person"))
         if b.get("note"):
             lines.append(b["note"])
         lines.append("")

@@ -11,12 +11,12 @@ ISLAND_SERVICE_MAP/ConversationState/Step).
 
 from __future__ import annotations
 
-import unicodedata
-
 from src.domain import activities as dom
 from src.flows.catalog import COMPANION_PRICE, ISLAND_SERVICE_MAP, SERVICES
 from src.flows.state import MESSAGE_SPLIT, ConversationState, Step
+from src.utils import money as money_fmt
 from src.utils.fuzzy import fuzzy_word_number
+from src.utils.text import strip_accents
 
 # ─────────────────────── API pública (la usa el núcleo) ───────────────────────
 
@@ -65,12 +65,8 @@ def refresher_price_text(state: ConversationState) -> str:
     """Precio por persona del refresher, desde el catalogo (tarifa 2026, decision
     del owner 2026-09-14: se cobra). Nunca una cifra escrita a mano."""
     service = _refresher_service(state)
-    parts = []
-    if service.get("price_usd"):
-        parts.append(f"{int(round(float(service['price_usd'])))} USD")
-    if service.get("price_cop"):
-        parts.append(f"{int(service['price_cop']):,} COP".replace(",", "."))
-    return " / ".join(parts)
+    parts = [money_fmt.usd(service.get("price_usd")), money_fmt.cop(service.get("price_cop"))]
+    return " / ".join(p for p in parts if p)
 
 
 def refresher_booking_url(state: ConversationState) -> str | None:
@@ -168,9 +164,7 @@ def _parse_mixed_quantity(message: str) -> int | None:
     # "mi hijo y yo", "me acompaña mi esposo". Fixes the qty step answering
     # "no te entendí" to a perfectly clear two-person answer. "familia" is
     # excluded on purpose (its size is unknown — don't guess 2).
-    _norm = "".join(
-        c for c in unicodedata.normalize("NFD", msg) if unicodedata.category(c) != "Mn"
-    )
+    _norm = strip_accents(msg)
     _comp = r"(?:pareja|novi[oa]|espos[oa]|amig[oa]|herman[oa]|hij[oa]|mama|papa|acompanante)"
     _self_companion = [
         rf"\byo\s+y\s+mi\s+{_comp}",
@@ -194,9 +188,7 @@ def _format_activity_booking_messages(state: ConversationState) -> list[str]:
     def money(usd, cop, qty=1):
         # Round the per-person price first, then multiply, so the arithmetic
         # shown to the client always adds up (e.g. "2 × $126 = $252", never $251).
-        if primary == "COP":
-            return f"COP {int(round(cop or 0)) * qty:,}".replace(",", ".") if cop else None
-        return f"{int(round(float(usd))) * qty} USD" if usd else None
+        return money_fmt.cop(cop, qty) if primary == "COP" else money_fmt.usd(usd, qty)
 
     includes = (
         "✅ Incluye: transporte Cartagena-Islas-Cartagena, almuerzo, equipo y seguro."

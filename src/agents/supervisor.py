@@ -12,7 +12,6 @@ keeping costs minimal.
 
 import logging
 import re
-import unicodedata
 from datetime import datetime
 from zoneinfo import ZoneInfo
 
@@ -40,6 +39,7 @@ from src.flows.messages import set_quick_replies
 from src.flows.state import ConversationState, Step
 from src.knowledge.loader import load_policies
 from src.privacy import detect_pii, privacy_block_message
+from src.utils.text import strip_accents as _strip_accents
 
 logger = logging.getLogger("uvicorn.error")
 
@@ -1125,14 +1125,6 @@ MENU_MATCH_QUESTION_WORDS = {
     "dónde", "donde", "cuándo", "cuando", "cuál", "cual",
     "how", "what", "when", "where", "why", "which",
 }
-
-
-def _strip_accents(text: str) -> str:
-    """Remove diacritics (á→a, ñ→n, ü→u, …) so text comparison is accent-insensitive."""
-    return "".join(
-        c for c in unicodedata.normalize("NFD", text)
-        if unicodedata.category(c) != "Mn"
-    )
 
 
 def _normalize_for_menu_match(text: str) -> str:

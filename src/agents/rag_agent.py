@@ -41,6 +41,8 @@ from src.prompts.info import (
     RAG_SECURITY_EN,
     RAG_SECURITY_ES,
 )
+from src.utils import money
+from src.utils.text import strip_accents
 
 logger = logging.getLogger("uvicorn.error")
 
@@ -198,16 +200,11 @@ _STALE_DISCOUNT_WORDS = ("descuento", "bono", "tarifa especial", "precio especia
 _STALE_COLOMBIAN_WORDS = ("colombian", "residente", "descuento local", "precio local")
 
 
-def _strip_accents_lower(text: str) -> str:
-    from src.utils.text import strip_accents
-    return strip_accents(text.lower())
-
-
 def _example_teaches_stale_colombian_discount(example: dict) -> bool:
     """True if the ADVISOR messages offer a (now-removed) Colombian discount."""
     bot_msgs = (example.get("diving_planet") or {}).get("messages") or []
     for msg in bot_msgs:
-        norm = _strip_accents_lower(str(msg))
+        norm = strip_accents(str(msg).lower())
         if any(d in norm for d in _STALE_DISCOUNT_WORDS) and any(
             c in norm for c in _STALE_COLOMBIAN_WORDS
         ):
@@ -943,21 +940,6 @@ _PRICE_SPECIFIC = re.compile(
 )
 
 
-def _fmt_price_usd(v) -> str:
-    try:
-        # Formato unico de precio en USD (owner 2026-09-14): "183 USD", sin "$".
-        return f"{int(round(float(v)))}"
-    except (TypeError, ValueError):
-        return "consultar"
-
-
-def _fmt_price_cop(v) -> str:
-    try:
-        return f"{int(v):,}".replace(",", ".")
-    except (TypeError, ValueError):
-        return "consultar"
-
-
 def _canonical_price_overview_answer(query: str, lang: str) -> str | None:
     if not _PRICE_QUESTION.search(query):
         return None
@@ -974,7 +956,7 @@ def _canonical_price_overview_answer(query: str, lang: str) -> str | None:
     svc = {k: SERVICES.get(k, {}) for k in ("2_dives_1_day", "minicourse", "snorkeling", "open_water")}
 
     def line(usd, cop):
-        return f"{_fmt_price_usd(usd)} USD / {_fmt_price_cop(cop)} COP"
+        return money.usd_cop(usd, cop)
 
     cert = svc["2_dives_1_day"]
     mini = svc["minicourse"]
@@ -1065,7 +1047,7 @@ def _canonical_price_named_services_answer(query: str, lang: str) -> str | None:
         usd, cop = svc.get("price_usd"), svc.get("price_cop")
         if usd is None and cop is None:
             return None  # un servicio nombrado sin precio en catálogo -> no arriesgar, dejar a RAG
-        price_line = f"{_fmt_price_usd(usd)} USD / {_fmt_price_cop(cop)} COP"
+        price_line = money.usd_cop(usd, cop)
         lines.append((dom.text(key, "price_label", lang, default=key), price_line))
 
     disclaimer = (
@@ -1135,7 +1117,7 @@ def _canonical_price_package_answer(query: str, lang: str) -> str | None:
     name = svc.get("name_es") if lang == "es" else svc.get("name_en")
     if not name:
         return None
-    price_line = f"{_fmt_price_usd(usd)} USD / {_fmt_price_cop(cop)} COP"
+    price_line = money.usd_cop(usd, cop)
     disclaimer = (
         "Los colombianos/residentes pagan en pesos (COP) y los internacionales en dólares (USD) "
         "— mismo precio, sin cobro extra por la divisa."
@@ -1191,7 +1173,7 @@ def _canonical_refresher_cost_answer(query: str, lang: str) -> str | None:
         usd, cop = svc.get("price_usd"), svc.get("price_cop")
         if usd is None or cop is None:
             return None  # sin precio en catálogo -> no arriesgar, dejar a RAG
-        prices[location] = f"{_fmt_price_usd(usd)} USD / {_fmt_price_cop(cop)} COP"
+        prices[location] = money.usd_cop(usd, cop)
     if lang == "es":
         return (
             "🌊 El *refresher* (repaso corto en el agua antes de la inmersión, para buzos "
