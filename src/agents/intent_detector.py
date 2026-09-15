@@ -238,32 +238,38 @@ _PADI_COURSE_PATTERNS = [
     r'\bfirst\s+(?:level|course)\s*(?:of\s+diving)?\b',
 ]
 
-_SPECIALTY_PATTERNS = [
-    r'\bnitrox\b',
-    r'\bbuoyancy\b',
-    r'\bflotabilidad\b',
-    r'\bnaturalista\b',
-    r'\bfish\s+identification\b',
-    r'\bidentificación\s+de\s+peces\b',
-    r'\bmindful\s+diving\b',
-]
+def _label_nouns(activities) -> frozenset[str]:
+    """La palabra comun a todas las etiquetas de un grupo de actividades en cada idioma
+    ("curso"/"course", "especialidad"/"specialty"), sin tildes."""
+    nouns: set[str] = set()
+    for lang in dom.LANGS:
+        token_sets = [set(re.findall(r"\w+", strip_accents(a.label[lang].lower()))) for a in activities]
+        if token_sets:
+            nouns |= set.intersection(*token_sets)
+    return frozenset(nouns)
 
-# Especialidad concreta -> id del registro de actividades (F4 del plan de
-# dominio). Mismas palabras clave que usaba `_detect_activity`, pero ahora emiten
-# el id canonico: antes emitian `padi_specialty` + un service_id escrito a mano que
-# NO existia en el catalogo ("nitrox" en vez de "nitrox_specialty"), asi que la
-# especialidad acababa sin precio ni link. Las palabras clave son deteccion por
-# vocabulario y se revisan en F5.
-_SPECIALTY_KEYWORD_TO_ACTIVITY = (
-    ("nitrox", "specialty_nitrox"),
-    ("buoyancy", "specialty_buoyancy"),
-    ("flotabilidad", "specialty_buoyancy"),
-    ("naturalist", "specialty_naturalist"),
-    ("naturalista", "specialty_naturalist"),
-    ("fish", "specialty_fish_identification"),
-    ("peces", "specialty_fish_identification"),
-    ("mindful", "specialty_mindful_diving"),
-)
+
+def _specialty_name_patterns() -> tuple[tuple[str, str], ...]:
+    """Especialidad concreta -> patron de su nombre, desde las etiquetas del registro
+    (2026-09-15): la etiqueta sin el sustantivo de la familia ("Especialidad
+    Flotabilidad" -> "flotabilidad", "Fish Identification specialty" -> "fish
+    identification"), con y sin tildes. Antes el vocabulario estaba escrito tres veces
+    (categoria, palabra -> id y tabla de cursos, que solo conocia nitrox)."""
+    specialties = [a for a in dom.registry().activities if a.family == "specialty" and not a.generic]
+    nouns = _label_nouns(specialties)
+    table = []
+    for activity in specialties:
+        names = set()
+        for lang in dom.LANGS:
+            name = " ".join(w for w in re.findall(r"\w+", activity.label[lang].lower()) if strip_accents(w) not in nouns)
+            names |= {name, strip_accents(name)}
+        alternatives = "|".join(re.escape(n).replace(r"\ ", r"\s+") for n in sorted(names, key=len, reverse=True))
+        table.append((activity.id, rf"\b(?:{alternatives})\b"))
+    return tuple(table)
+
+
+_SPECIALTY_NAME_PATTERNS = _specialty_name_patterns()
+_SPECIALTY_PATTERNS = [pattern for _, pattern in _SPECIALTY_NAME_PATTERNS]
 
 # Nombres de curso que por si solos identifican un producto, en el orden del
 # registro (nivel ascendente). Tabla UNICA (centralizacion 2026-09-15): antes el
@@ -271,13 +277,20 @@ _SPECIALTY_KEYWORD_TO_ACTIVITY = (
 # propia `_COURSE_MENTION_RE` con variantes que el detector no conocia ("owd",
 # "aowd", "avanzado", "rescate", "enriched air"). Las especialidades por palabra
 # suelta ("peces", "fish") NO van aqui: solo cuentan con el contexto de
-# "especialidad" (`_SPECIALTY_KEYWORD_TO_ACTIVITY`).
-_COURSE_NAME_PATTERNS = (
-    ("padi_open_water", r"\bopen[\s-]*water\b|\bowd\b"),
-    ("padi_advanced", r"\badvanced\b|\baowd\b|\bavanzad\w*\b"),
-    ("padi_rescue", r"\brescue\b|\brescate\b"),
-    ("padi_divemaster", r"\bdive\s*master\b"),
-    ("specialty_nitrox", r"\bnitrox\b|\benriched\s+air\b"),
+# "especialidad". Las especialidades salen de las etiquetas del registro
+# (`_SPECIALTY_NAME_PATTERNS`); aqui solo quedan las variantes que ninguna etiqueta
+# contiene ("owd", "rescate", "enriched air").
+_COURSE_NAME_VARIANTS = {
+    "padi_open_water": r"\bopen[\s-]*water\b|\bowd\b",
+    "padi_advanced": r"\badvanced\b|\baowd\b|\bavanzad\w*\b",
+    "padi_rescue": r"\brescue\b|\brescate\b",
+    "padi_divemaster": r"\bdive\s*master\b",
+    "specialty_nitrox": r"\benriched\s+air\b",
+}
+_COURSE_NAME_PATTERNS = tuple(
+    (a.id, "|".join(p for p in (_COURSE_NAME_VARIANTS.get(a.id), dict(_SPECIALTY_NAME_PATTERNS).get(a.id)) if p))
+    for a in dom.registry().activities
+    if a.id in _COURSE_NAME_VARIANTS or a.id in dict(_SPECIALTY_NAME_PATTERNS)
 )
 
 
@@ -431,13 +444,7 @@ def _course_family_nouns() -> frozenset[str]:
     """El sustantivo con el que el catalogo nombra los cursos con nivel ("curso",
     "course"), derivado del registro: la palabra comun a todas sus etiquetas en cada
     idioma. Sin lista escrita a mano."""
-    courses = [a for a in dom.registry().activities if a.family == "course" and a.course_level]
-    nouns: set[str] = set()
-    for lang in dom.LANGS:
-        token_sets = [set(re.findall(r"\w+", strip_accents(a.label[lang].lower()))) for a in courses]
-        if token_sets:
-            nouns |= set.intersection(*token_sets)
-    return frozenset(nouns)
+    return _label_nouns([a for a in dom.registry().activities if a.family == "course" and a.course_level])
 
 
 def certification_is_ambiguous(message: str) -> bool:
@@ -941,7 +948,7 @@ class IntentDetector:
             # Sin nombre de especialidad reconocible: la generica, y el nucleo
             # pregunta cual (F4).
             intent.activity = next(
-                (activity_id for keyword, activity_id in _SPECIALTY_KEYWORD_TO_ACTIVITY if keyword in message),
+                (activity_id for activity_id, pattern in _SPECIALTY_NAME_PATTERNS if re.search(pattern, message)),
                 "padi_specialty",
             )
             intent.service_id = dom.base_service_id(intent.activity)

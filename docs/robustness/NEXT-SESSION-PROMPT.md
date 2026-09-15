@@ -111,8 +111,18 @@ Retomamos el trabajo de robustez del bot en la rama `feature/pre_gadea`. Lee pri
    - **Hecho:** alineados los rangos ES/EN del RAG, nacionalidad mixta hasta 10 y días de paquete
      desde el catálogo. Foto: 7 cambios de 1215, todos buscados.
    - **Punto 4 cerrado** salvo lo que está en "Para reinvestigar" (ubicación, nacionalidad mixta).
-5. **Comparación entre opciones** con las opciones del LLM del router (9/9 medido) en vez de
-   `_mentioned_offerings`, midiendo también las otras 8 señales del router.
+5. ~~Comparación entre opciones con las opciones del LLM del router~~ **medida y no aplicada
+   (2026-09-15)**. El enum del registro vuelve más ruidosas "soy epiléptica" (9/9 → 17/21) y "quiero
+   buceo y snorkel para los dos" (9/9 → 9/12) a cambio de un único fraseo. Queda la batería real de
+   las 9 señales: `scripts/battery_router_signals.py`.
+   - **Hecho por la vía general:** los nombres de especialidad salen de las etiquetas del registro
+     (antes estaban escritos tres veces y la tabla de cursos solo conocía nitrox). "dudo entre la
+     especialidad de nitrox y la de flotabilidad" ya compara sin tocar el router. Foto sin LLM: 5
+     cambios de 238 en el corpus, todos a mejor.
+   - **Hallazgos nuevos por atacar, medidos:**
+     - "¿va a llover mañana?" no escala: el LLM usa una clave `weather_conditions` que no está en el
+       esquema.
+     - "tengo un amigo que quiere bucear y yo hago snorkel" se toma como comparación.
 6. **Eval-set que pase por el núcleo** (`_understand`), para que su nota vea las guardas y deje de
    tener los 2 artefactos de casos con historial.
 7. **Hallazgos antiguos por reproducir**: acompañante que llega a trozos, corrección tras el precio,

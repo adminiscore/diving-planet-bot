@@ -3465,3 +3465,83 @@ cambian conducta:
 
 **Lint:** el primer push falló en CI por ruff UP033 (`lru_cache(maxsize=None)` → `functools.cache`);
 el deploy no llegó a correr.
+
+### Tarea 1: opciones del router para la comparación — medida y no aplicada
+
+**Idea.** Hay dos piezas:
+- **Router.** El enum de `comparing_options.options` pasa de 4 valores escritos a mano a
+  `dom.bookable_activity_ids()`.
+- **Núcleo.** Las ofertas que se comparan pasan a ser las del texto más las del LLM, solo con la
+  duda escrita en el texto y quitando la genérica si hay una concreta de su familia.
+
+Caso que arreglaba: "dudo entre la especialidad de nitrox y la de flotabilidad", sin "?". El regex
+solo ve nitrox, así que se reservaba nitrox en vez de explicar la diferencia.
+
+**Batería nueva de las 9 señales del router** (`scripts/battery_router_signals.py`). Los tests del
+router van con mock y no había medida real. Tiene 28 casos de las otras 8 señales, sacados de
+hallazgos en vivo de HISTORY y de los negativos que piden las descripciones del tool, más los 9 de
+`comparing_options`. Un caso acierta si salen exactamente las señales esperadas.
+
+**Resultado, enum viejo frente a nuevo** (todas las tandas sumadas):
+
+| caso | enum viejo | enum del registro |
+|---|---|---|
+| "soy epiléptica" (solo médico) | 9/9 | 17/21 (marca también discapacidad) |
+| "quiero buceo y snorkel para los dos" (no compara) | 9/9 | 9/12 (dice que compara) |
+| las otras 26 de las 8 señales | igual | igual |
+| r08 opciones "nitrox o flotabilidad" | no | sí |
+
+- Ninguna de las dos pérdidas cambia hoy lo que ve el cliente:
+  - La señal médica del LLM sigue escalando antes que DIVE TO HEAL, en la cascada y en el grafo.
+  - "quiero" bloquea la comparación.
+- Aun así son dos señales más ruidosas a cambio de un único fraseo: **no se aplica** (regla del owner).
+- Con el enum viejo, la unión del núcleo no aporta nada que el regex no vea, así que también se
+  revierte. Se queda la batería.
+
+**Ruido medido:** con el mismo prompt a temperatura 0 salen cambios sueltos de 1 repetición
+en 6. Un cambio de una sola repetición no es una regresión.
+
+**Error de método, anotado:** la segunda tanda comparó el mismo prompt dos veces, porque `base`
+toma el tool de producción y ese ya estaba editado. La comparación válida se repitió con un
+worktree de HEAD.
+
+**Hallazgos nuevos (igual con los dos enums, ya en producción):**
+- **Pronóstico del tiempo sin escalar.** "¿va a llover mañana en cartagena?" no lo caza ninguna
+  palabra clave, y el LLM devuelve una clave `weather_conditions` que no existe en el esquema en vez
+  de `sensitive_topic` (3/3 y 2/3). Nadie la lee, así que va al flujo normal.
+- **Reparto leído como comparación.** "tengo un amigo que quiere bucear y yo hago snorkel": el LLM
+  dice `comparing=true` 3/3 y el núcleo lo acepta, porque hay 2 ofertas en el texto, ni número ni
+  "quiero". Va a RAG en vez de a la reserva.
+- **"me cobraron dos veces y nadie me responde"** sale `real_time_issues`, no queja. Escala
+  igual; la etiqueta de la batería acepta los dos.
+
+**Vía general para r08, sin tocar el router:** `courses_mentioned` solo conoce nitrox entre las
+especialidades. "especialidad de flotabilidad", "buoyancy specialty" (la propia etiqueta del
+registro), "naturalista" o "mindful diving" dan `[]`, y el vocabulario de especialidades está
+escrito tres veces en el detector.
+
+### Tarea 1, vía general: nombres de especialidad desde el registro (aplicada)
+
+**Cambio.** El nombre de cada especialidad es su etiqueta del registro sin el sustantivo común
+de la familia ("Especialidad Flotabilidad" → "flotabilidad", "Fish Identification specialty" →
+"fish identification"), con y sin tildes. El sustantivo sale igual que el de los cursos, y
+`_label_nouns` es la pieza que comparten los dos. Con eso:
+- `_SPECIALTY_PATTERNS` se genera a partir de esos nombres.
+- La especialidad concreta del detector sale de esos mismos patrones. Se borra
+  `_SPECIALTY_KEYWORD_TO_ACTIVITY`, que buscaba subcadenas sueltas como "fish" o "peces".
+- `_COURSE_NAME_PATTERNS` junta las variantes que ninguna etiqueta contiene ("owd",
+  "rescate", "enriched air") con los nombres del registro.
+
+**Foto sin LLM** sobre 737 mensajes (corpus más una rejilla de 20 nombres × 11 plantillas):
+- **Corpus real: 5 cambios de 238, todos a mejor.**
+  - "dudo entre la especialidad de nitrox y la de flotabilidad" pasa a comparación (r08).
+  - Cuatro especialidades pasan a ser oferta: flotabilidad, naturalista, identificación de peces y
+    mindful diving. "I'd like to do the mindful diving specialty" ya no cuenta como buceo
+    certificado.
+- **Actividad: 22 cambios, todos en la rejilla y buscados.**
+  - "naturalist" (EN) e "identificacion de peces" sin tilde ya se reconocen.
+  - "fish/peces o mindful diving" sale mindful: la palabra suelta no es un nombre.
+- Ninguna plantilla sin duda cambia su veredicto de comparación, ni con la señal del LLM ni sin ella.
+- **Siguen sin comparar**, a propósito: los sinónimos de la misma especialidad (buoyancy y
+  flotabilidad son una oferta) y las palabras sueltas ("fish", "peces", "mindful"), que no se
+  añaden a mano.
