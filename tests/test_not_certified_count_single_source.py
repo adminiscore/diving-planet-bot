@@ -28,6 +28,14 @@ def test_negated_count_splits_the_group(message, expected):
     assert _alloc(message) == expected
 
 
+def test_main_activity_never_contradicts_the_allocation():
+    """"somos 5 y 2 nunca han buceado" reparte 3 certificados; la actividad principal
+    no puede quedarse en minicurso (regla general de detect(), 2026-09-15)."""
+    intent = IntentDetector().detect("somos 5 y 2 nunca han buceado", ConversationState(conversation_id="c"))
+    assert intent.group_allocation == {"certified_diving": 3, "undecided": 2}
+    assert intent.activity == "certified_diving"
+
+
 @pytest.mark.parametrize("message", [
     "somos 3 y 1 quiere certificarse",   # ya eligio: no es un tramo sin actividad
     "somos 4 y los 4 estamos certificados",

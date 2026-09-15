@@ -3028,3 +3028,44 @@ principio: la duda solo delega si el detector no encuentra ningún otro campo en
 
 Queda: `_BARE_PACKAGE_DIVE_RE` escribe todavía `5|7|9` en el regex. El filtro ya sale del catálogo,
 pero un paquete nuevo de otro tamaño sin unidad no se leería.
+
+### La actividad principal no contradice el reparto (regla general)
+
+"somos 5 y 2 nunca han buceado" repartía `{certified_diving: 3, undecided: 2}`, pero la rama del
+minicurso ("nunca he buceado") dejaba la actividad principal en minicurso. Ya existía una regla al
+final de `detect()` para lo mismo con cursos con nivel ("2 con open water y 1 no"). Se generaliza
+en vez de añadir otra: si el reparto trae buceo certificado y no contiene la actividad principal,
+la actividad es buceo certificado, salvo que el mensaje diga que lo quieren sacar.
+
+Foto sobre 244 mensajes: **1 cambio**, el buscado. Suite verde.
+
+### Quién tiene la certificación dentro del grupo: sonda con LLM real (punto 1 de la cola)
+
+9 mensajes con personas de estado distinto, a través de `_understand`, con los dos vetos del grupo
+encendidos (config PRE) y 2 repeticiones idénticas. Resultado: **ningún reparto y el acompañante no
+se activa nunca**.
+- **Cliente marcado certificado sin serlo:** "mi amigo tiene licencia, yo no", "mi hermano tiene el
+  rescue y yo quiero probar", "mi pareja tiene el advanced y yo no tengo nada" y "somos 2, mi amigo
+  es buzo y yo no" (en este último, `is_certified=True` lo rellena el propio LLM).
+- **La segunda persona se pierde:** "yo tengo el open water, mi esposa quiere probar" y "soy
+  certificado y mi hijo no" dejan bien al cliente, pero la esposa o el hijo no aparecen en ningún
+  campo.
+- **"mi esposo bucea, yo prefiero snorkel"** deja solo snorkel.
+
+**Por qué:**
+- No es una puerta del código: `_relevant_gaps` sí pide `group_size` y `group_allocation`, y el LLM
+  no los rellena.
+- El detector fija `is_certified` con la afirmación de otra persona. La señal de polaridad
+  (`certification_is_ambiguous`) solo marca 3 de los 9.
+
+**Diseño propuesto (sin aplicar):**
+- Señal estructural "la certificación se atribuye a otra persona": afirmación de certificación junto
+  a un sustantivo de persona de la lista compartida.
+- Con ella, el regex no fija `is_certified`.
+- La definición única de `is_certified` y la de `group_allocation` dicen que se refieren a cada
+  persona: con estados distintos, reparto con `certified_diving` para quien lo es y `undecided`
+  para el resto, y total contable.
+
+Es cambio de prompt: medir con el eval-set, la batería de grupo (escenarios nuevos de tercera
+persona) y la batería de booleanos. Script de la sonda: `mixed_cert_probe.py` (scratchpad de la
+sesión, se reproduce con `scripts/battery_group_allocation_gate._run`).

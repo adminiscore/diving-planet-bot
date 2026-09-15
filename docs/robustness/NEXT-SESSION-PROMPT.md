@@ -58,7 +58,7 @@ Retomamos el trabajo de robustez del bot en la rama `feature/pre_gadea`. Lee pri
 | Recomendación al acompañante | resolutor 11/11, estancia 6/6 |
 | Pregunta "¿ya certificados o quieren certificarse?" | cuándo preguntar 10/10, resolutor 7/7 |
 | Precio de paquetes (RAG, 21 preguntas sin LLM) | 11 cambios de 21 frente a antes, todos a bien |
-| Suite | **2109 passed / 18 skipped** |
+| Suite | **2110 passed / 18 skipped** |
 
 ### Hecho el 2026-09-15 (no repetir)
 
@@ -86,18 +86,25 @@ Retomamos el trabajo de robustez del bot en la rama `feature/pre_gadea`. Lee pri
 ### Cola de trabajo, por orden de valor
 
 1. **Quién tiene la certificación dentro del grupo** (afecta a elegibilidad y precio).
-   - Qué falla:
-     - "mi amigo tiene licencia, yo no" marca al cliente como certificado;
-     - "mi hermano tiene el rescue y yo quiero probar" da buceo certificado para todos;
-     - "viene mi primo, él es certificado" y "4 certificados y 3 snorkel" cuentan como "ya
-       certificado" en `certification_status` (detector y RAG).
-   - Es reparto por persona: vía LLM (`group_allocation`), no listas.
-   - Medir con la batería de grupo más escenarios nuevos de tercera persona.
-2. **"somos 5 y 2 nunca han buceado"**: reparte 3 certificados + 2 sin decidir, pero la actividad
-   principal sigue siendo minicurso. Viene de la suposición antigua del detector "nunca he buceado →
-   minicurso", que el eval-set espera en mensajes de una sola persona. Revisar la regla final de
-   `detect()` para que el reparto y la actividad no se contradigan, igual que ya se hizo con los
-   cursos.
+   - **Sonda con LLM real (2026-09-15, en el progress-log):** en 9 de 9 mensajes con personas de
+     estado distinto no sale reparto y el acompañante no se activa.
+     - "mi amigo tiene licencia, yo no" y "somos 2, mi amigo es buzo y yo no" marcan al cliente como
+       certificado.
+     - "yo tengo el open water, mi esposa quiere probar" pierde a la esposa.
+     - "mi esposo bucea, yo prefiero snorkel" pierde el buceo.
+   - No es una puerta: `_relevant_gaps` pide total y reparto, y el LLM no los rellena. El detector
+     fija `is_certified` con la afirmación de otra persona.
+   - **Diseño propuesto:**
+     - señal estructural "certificación atribuida a otra persona" (afirmación + sustantivo de
+       persona de la lista compartida) para que el regex no fije `is_certified`;
+     - definición única de `is_certified`/`group_allocation` por persona, con `certified_diving` +
+       `undecided` y total contable.
+   - Medir con el eval-set, la batería de grupo con escenarios nuevos de tercera persona y la
+     batería de booleanos.
+   - Mismo problema de fondo en `certification_status` (detector y RAG): "viene mi primo, él es
+     certificado" y "4 certificados y 3 snorkel".
+2. ~~"somos 5 y 2 nunca han buceado"~~ **hecho (2026-09-15)**: la regla final de `detect()` se
+   generalizó ("la actividad principal no contradice el reparto"). Foto: 1 cambio de 244.
 3. **Definición única por campo en los prompts, resto de campos**: `group_size`, `group_allocation`
    y `activity`.
    - Su texto en el tool lleva reglas medidas propias (plural vago, `undecided`) que hay que

@@ -734,14 +734,16 @@ class IntentDetector:
 
         self._split_out_uncertifiable_kids(intent)
 
-        # El reparto ya leyo el nivel PADI como una certificacion que TIENEN ("somos 3,
-        # 2 con open water y 1 no" -> {certified_diving: 2, ...}); la rama de cursos no
-        # puede contradecirlo dejando la actividad en el curso. Solo si el mensaje no
-        # dice que lo QUIEREN sacar (2026-09-15).
-        registered = dom.by_id(intent.activity) if intent.activity else None
+        # La actividad principal no puede contradecir el reparto (2026-09-15). "somos 3, 2
+        # con open water y 1 no" reparte {certified_diving: 2, ...} pero la rama de cursos
+        # dejaba el curso; "somos 5 y 2 nunca han buceado" reparte 3 certificados y la
+        # rama del minicurso dejaba minicurso. Regla general: si el reparto trae buceo
+        # certificado y no contiene la actividad principal, esa es buceo certificado.
+        # Solo si el mensaje no dice que lo QUIEREN sacar.
+        allocation = intent.group_allocation or {}
         if (
-            registered is not None and registered.course_level
-            and (intent.group_allocation or {}).get("certified_diving")
+            intent.activity and intent.activity not in allocation
+            and allocation.get("certified_diving")
             and not self._WANTS_CERT_RE.search(message_lower)
         ):
             intent.activity = "certified_diving"
