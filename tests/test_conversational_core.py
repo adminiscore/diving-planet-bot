@@ -637,9 +637,17 @@ async def test_understand_requests_only_state_missing_fields(monkeypatch):
     state.is_certified = state.detected_is_certified = True
     state.detected_group_size = 2
     # location aún desconocida → único hueco conductor
+    async def _capturing_extract_and_verify(gaps, verify, message, values, **kwargs):
+        # Con campos ya sabidos, los huecos viajan en la peticion que tambien verifica
+        # esos campos contra lo guardado (tarea 7b, 2026-09-15).
+        captured.update(only_fields=gaps, verify=verify)
+        return {}, {}
+
     monkeypatch.setattr(core, "fill_gaps", _capturing_fill_gaps)
+    monkeypatch.setattr(core, "extract_and_verify", _capturing_extract_and_verify)
     await core._understand(state, "pues estamos por el centro histórico ahora mismo")
 
+    assert {"is_certified", "group_size"} <= set(captured.get("verify") or [])
     only = captured.get("only_fields")
     assert only is not None
     assert "location" in only

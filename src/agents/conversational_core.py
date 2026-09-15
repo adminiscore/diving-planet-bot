@@ -39,6 +39,7 @@ from src.agents.intent_detector import (
     _PERSON_NOUN_SINGULAR_ES,
     _SINGULAR_PERSON,
     AGE_WORDS,
+    DetectedIntent,
     IntentDetector,
     certification_claim,
     course_level_is_ambiguous,
@@ -46,6 +47,7 @@ from src.agents.intent_detector import (
     dive_counts_in,
     holds_padi_cert,
     matched_activity_categories,
+    mentions_other_person_subject,
     other_person_certification,
 )
 from src.agents.llm_extractor import (
@@ -55,13 +57,14 @@ from src.agents.llm_extractor import (
     fill_gaps,
     missing_fields,
     resolve_slot_answer,
+    verify_fields,
 )
 from src.agents.notes_extractor import extract_notes
 from src.domain import activities as dom
 from src.flows import cart_render, eligibility
 from src.flows.state import ConversationState, Step
 from src.utils import money
-from src.utils.fuzzy import is_affirmative, is_negative
+from src.utils.fuzzy import is_affirmative, is_agree, is_negative
 from src.utils.number_words import number_alt, number_words
 
 logger = logging.getLogger("uvicorn.error")
@@ -88,6 +91,8 @@ SLOT_COMPANION_ACTIVITY = "companion_activity_choice"
 # cual, con las opciones del registro de actividades (F4, decision del owner).
 SLOT_COURSE_LEVEL = "course_level"
 SLOT_CERT_OR_COURSE = "cert_or_course"
+# "Antes me dijiste X, ¿lo cambio a Y?" (tarea 7b, owner 2026-09-15).
+SLOT_CONFIRM_CORRECTION = "confirm_correction"
 
 # Slots booleanos/escalares que el resolutor LLM anti-bucle (Fase C) sabe
 # resolver cuando el parser canónico (is_affirmative/is_negative/número) falla
@@ -322,6 +327,9 @@ def next_missing_slot(state: ConversationState) -> str | None:
     if state.pending_companion_in_group:
         # ¿Esa persona ya estaba contada o se suma? Antes de cotizar (tarea 7a).
         return SLOT_QTY
+    if state.pending_correction:
+        # Un dato que contradice lo guardado, sin cue: se confirma antes de cotizar (7b).
+        return SLOT_CONFIRM_CORRECTION
     if state.needs_cert_or_course:
         # Nivel PADI nombrado sin decir si ya lo tienen o lo quieren (owner
         # 2026-09-15): se aclara antes de cotizar nada.
@@ -562,6 +570,22 @@ def ask_slot(state: ConversationState, slot: str, *, reasking: bool = False) -> 
             "The *refresher* is a short in-water review session before the dive. "
             f"It costs *{price}* per person who needs it. Are you interested?"
         )
+    if slot == SLOT_CONFIRM_CORRECTION and state.pending_correction:
+        known = _known_field_values(state)
+        lines = "\n".join(
+            f"• {_describe_value(field, known.get(field), lang)} → *{_describe_value(field, value, lang)}*"
+            for field, value in state.pending_correction.items()
+        )
+        state.quick_replies = (
+            [{"title": "✅ Sí, cámbialo", "value": "sí"}, {"title": "↩️ No, como estaba", "value": "no"}]
+            if lang == "es" else
+            [{"title": "✅ Yes, change it", "value": "yes"}, {"title": "↩️ No, keep it", "value": "no"}]
+        )
+        return (
+            f"Solo para confirmar, ¿lo cambio?\n{lines}"
+            if lang == "es" else
+            f"Just to confirm, should I change it?\n{lines}"
+        )
     if slot == SLOT_QTY and state.pending_companion_in_group:
         pending = state.pending_companion_in_group
         total = state.detected_group_size or 0
@@ -799,6 +823,15 @@ def _apply_short_answer(state: ConversationState, message: str) -> bool:
             return True
         if is_negative(msg) or msg == "2":
             state.refresher_interested = False
+            return True
+        return False
+    if slot == SLOT_CONFIRM_CORRECTION:
+        # Se lee la primera palabra: "sí, cámbialo", "no, lo de antes".
+        first = next(iter(_words(message)), "")
+        if is_affirmative(first) or is_agree(first):
+            return _accept_pending_correction(state, message)
+        if is_negative(first):
+            state.pending_correction = None
             return True
         return False
     if slot == SLOT_QTY:
@@ -1526,9 +1559,158 @@ def _boolean_patch_is_anchored(field: str, pending_slot: str | None, intent, pat
     return not answered
 
 
+def _recheck_proposals(state: ConversationState, intent, answered_pending: bool, disagreements: dict, recheck) -> dict:
+    """GUARDA (b) aplicada a la verificacion de campos ya sabidos (tarea 7b, 2026-09-15).
+
+    Mismo principio que `_boolean_patch_is_anchored`: lo que viaja pegado a la respuesta
+    de OTRA pregunta pendiente no se acepta. Medido en conversacion con el LLM real: en
+    "desde cartagena" (ubicacion pendiente) o "no, buceamos hace 6 meses" (seguridad
+    pendiente) la verificacion re-derivaba del historial el total y el reparto y pedia
+    confirmar cambios que nadie habia dicho. "ah no, somos gringos" con la ubicacion
+    pendiente no contesta esa pregunta y se sigue leyendo; tras el cierre no hay nada
+    pendiente."""
+    proposals = {f: v for f, v in disagreements.items() if f in recheck}
+    pending = state.core_pending_slot
+    answered_field = _SLOT_STATE_FIELD.get(pending, "").removeprefix("detected_") if pending else ""
+    answered = answered_pending or bool(answered_field and getattr(intent, answered_field, None) is not None)
+    if proposals and answered:
+        logger.info(f"[CORE] verificacion de campos sabidos descartada (el turno contesto {pending!r}): {proposals}")
+        return {}
+    return proposals
+
+
 def _state_known_fields(state: ConversationState) -> set[str]:
     """Campos extraíbles que la CONVERSACIÓN ya conoce (estado), con la misma
     convención que missing_fields: False es un valor resuelto, None/[] no."""
+    return {f for f, v in _known_field_values(state).items() if v not in (None, [], {})}
+
+
+# Campos que un turno puede corregir (tarea 7b, 2026-09-15).
+_CORRECTABLE_FIELDS = (
+    "is_certified", "is_colombian", "last_dive_over_2_years", "location", "group_size", "group_allocation",
+)
+
+
+def _route_contradictions(state: ConversationState, message: str, intent, proposed: dict) -> None:
+    """Punto unico para un dato de ESTE mensaje que contradice lo ya guardado, venga
+    del regex o de la verificacion LLM de campos sabidos (tarea 7b, 2026-09-15).
+
+    Antes se ignoraba en silencio (los campos se escribian una sola vez) y "espera,
+    en realidad no somos colombianos" re-emitia el precio en COP. No se aplica a
+    ciegas ni se ignora (owner): con un cue explicito de correccion se acepta
+    (`intent.overwrite`); sin el, queda en `pending_correction` y se confirma con el
+    cliente. Ni la jerga ni el cue deciden si hay contradiccion: la decide comparar
+    el valor con el guardado."""
+    from src.agents import supervisor  # lazy
+
+    known = _known_field_values(state)
+    cue = bool(supervisor._CORRECTION_CUE_RE.search(message))
+    for field, value in proposed.items():
+        old = known.get(field)
+        if value in (None, [], {}) or old in (None, [], {}) or value == old:
+            continue
+        if cue:
+            setattr(intent, field, value)
+            if field not in intent.overwrite:
+                intent.overwrite.append(field)
+            if field not in intent.detected_fields:
+                intent.detected_fields.append(field)
+            logger.info(f"[CORE] correccion aceptada (cue) {field}: {old!r} -> {value!r}")
+            continue
+        state.pending_correction = {**(state.pending_correction or {}), field: value}
+        setattr(intent, field, None)
+        if field in intent.detected_fields:
+            intent.detected_fields.remove(field)
+        logger.info(f"[CORE] contradiccion sin cue {field}: {old!r} -> {value!r}, se confirma")
+
+
+def _regex_contradictions(state: ConversationState, message: str, intent) -> dict:
+    """Lo que el regex lee y contradice lo guardado sale del intent: el regex propone,
+    no decide. Tambien deduce (minicurso -> no certificado) y lee frases de otra
+    persona ("mi novia no es buzo", "mi parce no esta certificado") (tarea 7b).
+
+    Solo se acepta sin mas lo que quien escribe dice de si mismo CON cue explicito
+    ("espera, en realidad no somos colombianos"). El resto de lo que dice de si mismo
+    se devuelve para que la verificacion LLM de campos sabidos lo arbitre (una
+    peticion, solo cuando hay contradiccion): el LLM entiende la jerga y se abstiene
+    si habla de otra persona (medido 24/24)."""
+    from src.agents import supervisor  # lazy
+
+    known = _known_field_values(state)
+    contradicting = {
+        f: getattr(intent, f) for f in _CORRECTABLE_FIELDS
+        if f in intent.detected_fields and known.get(f) not in (None, [], {})
+        and getattr(intent, f) not in (None, [], {}) and getattr(intent, f) != known[f]
+    }
+    for field in contradicting:
+        setattr(intent, field, None)
+        intent.detected_fields.remove(field)
+    stated = {} if mentions_other_person_subject(message) else {
+        f: v for f, v in contradicting.items() if f != "is_certified" or certification_claim(message) == v
+    }
+    if stated and supervisor._CORRECTION_CUE_RE.search(message):
+        _route_contradictions(state, message, intent, stated)
+        return {}
+    return stated
+
+
+def _accept_pending_correction(state: ConversationState, message: str) -> bool:
+    """El cliente confirma: los valores pasan por el MISMO camino que un turno normal
+    (invariante del reparto, personas sin decidir y escritura), marcados como
+    sobrescribibles. No hay un segundo escritor del estado."""
+    from src.agents import supervisor  # lazy
+
+    pending = state.pending_correction or {}
+    state.pending_correction = None
+    intent = DetectedIntent()
+    for field, value in pending.items():
+        setattr(intent, field, dict(value) if isinstance(value, dict) else value)
+        intent.detected_fields.append(field)
+        intent.overwrite.append(field)
+    supervisor.enforce_group_allocation_consistency(intent, state, message)
+    _take_undecided_members(intent, state)
+    supervisor._apply_detected_intent(intent, state, message)
+    return True
+
+
+def _describe_value(field: str, value, lang: str) -> str:
+    """Texto corto de un valor para la pregunta de confirmacion."""
+    es = lang == "es"
+    if field == "group_allocation":
+        return ", ".join(
+            f"{qty} {('sin decidir' if es else 'undecided') if act == 'undecided' else dom.text(act, 'recall', lang, default=act)}"
+            for act, qty in (value or {}).items()
+        )
+    if field == "group_size":
+        return f"{value} personas" if es else f"{value} people"
+    if field == "location":
+        return {
+            "cartagena": "salida desde Cartagena" if es else "departing from Cartagena",
+            "island": "en las islas" if es else "on the islands",
+        }.get(value, str(value))
+    yes_no = {
+        "is_colombian": ("colombianos o residentes", "no colombianos", "Colombian or resident", "not Colombian"),
+        "is_certified": ("con certificación de buceo", "sin certificación", "certified", "not certified"),
+        "last_dive_over_2_years": ("más de 2 años sin bucear", "buceo en los últimos 2 años",
+                                   "over 2 years since the last dive", "dived in the last 2 years"),
+    }[field]
+    return yes_no[(0 if value else 1) + (0 if es else 2)]
+
+
+def _words(message: str) -> list[str]:
+    return [w for w in re.split(r"[^\wáéíóúñü]+", (message or "").lower()) if w]
+
+
+def _is_short_ack(message: str) -> bool:
+    """"vale", "ok", "sí" a secas: tras el cierre no justifican una peticion."""
+    words = _words(message)
+    return 0 < len(words) <= 2 and all(is_agree(w) or is_affirmative(w) for w in words)
+
+
+def _known_field_values(state: ConversationState) -> dict:
+    """Valor de cada campo extraible que la conversacion ya conoce: el confirmado
+    antes que el detectado. Una sola lectura para los huecos, las correcciones y el
+    eval-set (`run_extraction_eval --core`)."""
     candidates = {
         "activity": state.detected_activity,
         "is_certified": state.is_certified if state.is_certified is not None
@@ -1544,7 +1726,7 @@ def _state_known_fields(state: ConversationState) -> set[str]:
         else state.detected_last_dive_over_2_years,
         "is_colombian": state.is_colombian,
     }
-    return {f for f, v in candidates.items() if v not in (None, [], {})}
+    return candidates
 
 
 def _relevant_gaps(state: ConversationState, intent, message: str) -> list[str]:
@@ -1632,7 +1814,7 @@ async def _maybe_capture_notes(state: ConversationState, message: str) -> None:
         logger.warning(f"[CORE] notes capture failed (ignored): {exc}")
 
 
-async def _understand(state: ConversationState, message: str) -> tuple:
+async def _understand(state: ConversationState, message: str, *, answered_pending: bool = False) -> tuple:
     """Regex fast-path + gap-fill LLM sobre los campos que la CONVERSACIÓN aún
     no conoce (Fix B: nunca se piden campos que el estado ya tiene), y volcado
     al estado por el camino ya probado (_apply_detected_intent). Cualquier
@@ -1656,6 +1838,8 @@ async def _understand(state: ConversationState, message: str) -> tuple:
     prev_refresher = state.refresher_interested
 
     intent = _detector.detect(message, state)
+    # Un dato del mensaje que contradice lo guardado (tarea 7b): ver `_regex_contradictions`.
+    regex_candidates = _regex_contradictions(state, message, intent)
     # Hallazgo en vivo (conversacion real "purple-sun-590", 2026-09-03, y
     # conversacion real 913, 2026-09-10): el regex puede resolver un campo
     # (activity/is_certified/is_colombian/location) con una frase que no
@@ -1686,22 +1870,56 @@ async def _understand(state: ConversationState, message: str) -> tuple:
     veto_fields = supervisor._eligible_veto_fields(message, intent, state)
     gaps = _relevant_gaps(state, intent, message)
     _wants_gaps = bool(gaps) and not _looks_like_question(message) and not _is_greeting_only(message)
+    # Campos ya sabidos que el mensaje podria corregir con palabras que el regex no lee
+    # ("ah no, somos gringos", "cambio de plan, estamos en barú") (tarea 7b, 2026-09-15).
+    # Viajan en la verificacion con el valor GUARDADO, que el LLM no ve; solo hay
+    # discrepancia si el mensaje dice otra cosa. Medido con el LLM real: 24/24, se
+    # abstiene en "perfecto, gracias", en el mismo valor y si habla de otra persona.
+    # Owner: en la peticion que el turno ya hace, y tras el cierre en una propia.
+    known = _known_field_values(state)
+    recheck = [
+        f for f in _CORRECTABLE_FIELDS
+        if known.get(f) not in (None, [], {}) and f not in veto_fields
+        and f not in intent.overwrite and f not in (state.pending_correction or {})
+    ]
+    regex_values = {f: getattr(intent, f, None) for f in veto_fields}
+    verify_values = {**regex_values, **{f: known[f] for f in recheck}}
     _combined_patch = None
-    if veto_fields and _wants_gaps:
-        regex_values = {f: getattr(intent, f, None) for f in veto_fields}
+    if (veto_fields or recheck) and _wants_gaps:
         try:
             _combined_patch, _disagreements = await extract_and_verify(
-                gaps, veto_fields, message, regex_values,
+                gaps, veto_fields + recheck, message, verify_values,
                 history=state.history, lang=state.language,
             )
             supervisor.apply_veto_disagreements(
-                _disagreements, intent, message, regex_values
+                {f: v for f, v in _disagreements.items() if f in veto_fields}, intent, message, regex_values
+            )
+            _route_contradictions(
+                state, message, intent, _recheck_proposals(state, intent, answered_pending, _disagreements, recheck)
             )
         except Exception as exc:  # noqa: BLE001
             # Mismo contrato defensivo que las dos funciones que sustituye:
             # nunca dejar el turno peor que con solo el regex.
             logger.warning(f"[EXTRACT][COMBINED] failed, degrading to regex-only: {exc}")
             _combined_patch = None
+    elif recheck and (
+        regex_candidates
+        or (state.mixed_cart and not _is_greeting_only(message) and not _is_short_ack(message))
+    ):
+        # Sin huecos que pedir: la verificacion va en su propia peticion, solo si el regex
+        # leyo una contradiccion o si la reserva ya se cerro.
+        try:
+            _disagreements = await verify_fields(
+                veto_fields + recheck, message, verify_values, history=state.history, lang=state.language,
+            )
+            supervisor.apply_veto_disagreements(
+                {f: v for f, v in _disagreements.items() if f in veto_fields}, intent, message, regex_values
+            )
+            _route_contradictions(
+                state, message, intent, _recheck_proposals(state, intent, answered_pending, _disagreements, recheck)
+            )
+        except Exception as exc:  # noqa: BLE001
+            logger.warning(f"[EXTRACT][RECHECK] failed, degrading to regex-only: {exc}")
     else:
         await supervisor._maybe_veto_resolved_fields_via_llm(message, intent, state)
     # Fase 3.4 (reducir llamadas/turno): un saludo puro no tiene slots que
@@ -2085,7 +2303,17 @@ def _flag_cert_or_course(intent, state: ConversationState, message: str) -> None
     if registered is not None and registered.course_level is not None:
         state.cert_or_course_level = intent.activity
     intent.is_certified = None
-    intent.detected_fields = [f for f in intent.detected_fields if f != "is_certified"]
+    # Un reparto con el nivel ("2 open water y 3 snorkel" -> {padi_open_water: 2, ...})
+    # depende justo de la respuesta que se va a pedir: no se guarda hasta tenerla. Antes
+    # solo lo evitaba que el LLM se abstuviera, y cualquier cambio en la peticion lo
+    # rompia (b05, 6/6 con la verificacion de campos sabidos, 2026-09-15).
+    allocation = intent.group_allocation or {}
+    if any(getattr(dom.by_id(key), "course_level", None) for key in allocation):
+        intent.group_allocation = None
+    intent.detected_fields = [
+        f for f in intent.detected_fields
+        if f != "is_certified" and (f != "group_allocation" or intent.group_allocation)
+    ]
     state.needs_cert_or_course = True
 
 
@@ -2366,6 +2594,10 @@ def _build_cart_from_slots(state: ConversationState) -> None:
     if state.is_colombian:
         state.mixed_display_currency = "COP"
         state.mixed_final_is_colombian = True
+    elif state.mixed_final_is_colombian:
+        # Nacionalidad corregida despues de cerrar en COP (tarea 7b).
+        state.mixed_display_currency = "USD"
+        state.mixed_final_is_colombian = None
 
 
 def _refresher_note(state: ConversationState) -> str:
@@ -2397,8 +2629,10 @@ def _finalize(state: ConversationState) -> str:
 
     lang = state.language
     state.core_pending_slot = None
-    if not state.mixed_cart:
-        _build_cart_from_slots(state)
+    # Siempre desde el estado (tarea 7b, 2026-09-15): con el carrito congelado tras
+    # el primer cierre, "espera, en realidad no somos colombianos" re-emitia el mismo
+    # resumen en COP. Las altas post-cierre ya estan en el reparto, asi que no se pierden.
+    _build_cart_from_slots(state)
 
     refresher_note = _refresher_note(state)
 
@@ -2823,7 +3057,7 @@ async def _extraction_phase(
     # COMPRENDER: extracción del resto del mensaje.
     companion_merged_fastpath = False
     if not (resolved_short and len(message.strip()) <= 12):
-        _, companion_merged_fastpath = await _understand(state, message)
+        _, companion_merged_fastpath = await _understand(state, message, answered_pending=resolved_short)
 
     # Circuit-breaker (portado 2026-09-01, hallazgo en vivo, batería de
     # grupos mixtos contra PRE, lote 8): este chequeo es el punto REAL que
@@ -3451,6 +3685,20 @@ async def _slotfill_close_phase(
 
     resolved_short = carry["resolved_short"]
     prev_pending = carry["prev_pending"]
+
+    # El reparto sigue a un cambio de la actividad principal cuando solo tenia la
+    # anterior (tarea 7b, 2026-09-15): "mejor snorkel" con {certified_diving: 2}
+    # cerraba cobrando 2 inmersiones. Va aqui, con el turno ya decidido, y no al
+    # escribir la actividad: si el turno hablaba de otra persona, la red de
+    # precision ya ha restaurado la principal y no hay cambio que seguir.
+    prev_main_activity = carry["prev_main_activity"]
+    alloc = state.detected_group_allocation or {}
+    if (
+        prev_main_activity and state.detected_activity
+        and state.detected_activity != prev_main_activity and set(alloc) == {prev_main_activity}
+    ):
+        state.detected_group_allocation = {state.detected_activity: alloc[prev_main_activity]}
+        logger.info(f"[CORE] reparto sigue a la actividad principal -> {state.detected_group_allocation}")
 
     # Circuit-breaker (portado 2026-09-01, hallazgo en vivo, batería de
     # grupos mixtos contra PRE, lote 8): repetido aquí (además de en

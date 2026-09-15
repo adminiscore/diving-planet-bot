@@ -134,24 +134,18 @@ def _state_values(state: ConversationState) -> dict:
     personas sin actividad elegida salen del reparto a `pending_undecided_qty`
     (`_take_undecided_members`); se devuelven como `undecided`, igual que las etiqueta
     el eval-set."""
-    allocation = dict(state.detected_group_allocation or {})
+    from src.agents.conversational_core import _known_field_values  # lazy: solo en --core
+
+    values = _known_field_values(state)
+    allocation = dict(values["group_allocation"] or {})
     if state.pending_undecided_qty:
         allocation["undecided"] = state.pending_undecided_qty
     return {
-        "activity": state.detected_activity,
-        "is_certified": state.is_certified if state.is_certified is not None else state.detected_is_certified,
-        "group_size": state.detected_group_size,
+        **values,
         "group_allocation": allocation or None,
-        "last_dive_over_2_years": state.last_dive_over_2_years if state.last_dive_over_2_years is not None
-        else state.detected_last_dive_over_2_years,
         "duration": state.detected_duration,
-        "location": state.location or state.detected_location,
-        "island": state.island or state.detected_island,
-        "hotel": state.hotel or state.detected_hotel,
-        "ages": state.detected_ages,
         "cert_dives": state.detected_cert_dives,
         "cert_days": state.detected_cert_days,
-        "is_colombian": state.is_colombian,
     }
 
 

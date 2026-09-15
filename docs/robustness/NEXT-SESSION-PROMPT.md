@@ -53,12 +53,13 @@ Retomamos el trabajo de robustez del bot en la rama `feature/pre_gadea`. Lee pri
 | medida | resultado |
 |---|---|
 | Eval-set (130 casos) | **221/230**. Fallan: 5 de los 7 casos `nat-mixto-*` (hueco conocido), 2 artefactos del arnés (casos con historial) y el ambiguo de ubicación "staying on the islands tomorrow". `split-one-not-certified-es` espera `is_certified: null` desde el 2026-09-15 (la frase habla de un miembro del grupo) |
+| Eval-set por el núcleo (`run_extraction_eval --core`) | **216/230**, idéntico por caso con la verificación de campos sabidos de 7b; los 7 casos por debajo del modo script están explicados en el progress-log (tarea 6) |
 | Batería de grupo, config PRE (52 escenarios) | repartos **17/17**, total **13/13**, riesgo **17/17**, **0 alucinaciones, 0 parciales, 0 totales mal**; segunda petición de grupo +8,1 % peticiones |
 | Booleanos anclados | legítimos 18/24, alucinaciones evitadas 18/18 |
 | Recomendación al acompañante | resolutor 11/11, estancia 6/6 |
 | Pregunta "¿ya certificados o quieren certificarse?" | cuándo preguntar 10/10, resolutor 7/7 |
 | Precio de paquetes (RAG, 21 preguntas sin LLM) | 11 cambios de 21 frente a antes, todos a bien |
-| Suite | **2180 passed / 18 skipped** |
+| Suite | **2252 passed / 18 skipped** |
 
 ### Hecho el 2026-09-15 (no repetir)
 
@@ -138,12 +139,12 @@ Retomamos el trabajo de robustez del bot en la rama `feature/pre_gadea`. Lee pri
      - **Causa:** el núcleo no ve el pronombre como otra persona, y el "latest wins" de actividad
        pisa la principal; la red de precisión no se llama.
      - **Pista:** reutilizar `_OTHER_PERSON_SUBJECT_RE` del detector antes del "latest wins".
-   - **7b. Correcciones.** "espera, en realidad no somos colombianos" tras el precio re-emite COP
+   - ~~**7b. Correcciones.**~~ **arreglado (2026-09-15)**: con cue se aplica, sin cue se confirma; el regex propone y la verificación LLM de campos sabidos arbitra; el cierre se reconstruye. Antes: "espera, en realidad no somos colombianos" tras el precio re-emite COP
      (2/2), y antes del precio tampoco se aplica en `is_certified` ni en `location`.
      - **Causa:** `_apply_detected_intent` solo escribe esos campos la primera vez.
      - **Pista:** una única regla de corrección para todos los campos (la del total, con cue
        explícito) y re-emitir el resumen tras el cierre.
-   - **7c. Cambio de reparto (f01, 3/3).** "al final mi suegra también bucea" no cambia el
+   - ~~**7c. Cambio de reparto (f01, 3/3).**~~ **arreglado (2026-09-15)** con el mismo mecanismo que 7b. Antes: "al final mi suegra también bucea" no cambia el
      reparto. Es la misma familia que 7b.
    - ~~**7d. "primero dime qué incluye el tour"**~~ **arreglado (2026-09-15)**, por estructura; antes recibía un acuse genérico:
      `_looks_like_info_question` va anclado al inicio del mensaje. Medir los falsos positivos de
@@ -236,6 +237,29 @@ F. **Costes de las guardas del núcleo** (hallazgo 2026-09-15 con `run_extractio
       - **Pista:** es de prompt; medir con el eval-set en los dos modos.
    - **Medir con:** `--core`, la batería de grupo (config PRE) y la de booleanos. Sin empeorar
      los casos de riesgo, que son justo los que estas guardas protegen.
+
+H. **"¿Cuántos serían para X?" suma encima del total ya sabido** (hallazgo 2026-09-15 al medir 7c;
+   ya estaba antes de 7a, reproducido en 4a9c327). **Grave: cobra personas que no existen.**
+   - "hola, vamos 3, mi pareja y yo buceamos y mi suegra hace snorkel": la guarda de cifras tira el
+     reparto (F.2), encola las dos actividades y pregunta "¿cuántos serían para buceo
+     certificado?". Contestar "uno" deja 4 buceadores y el snorkel lo lleva a 5, con un total de 3
+     ya conocido.
+   - **Causa:** la respuesta de `SLOT_COMPANION_QTY` fusiona con `_merge_companion_activity`, que
+     suma sin mirar el total. Además pregunta por la actividad principal, que el mensaje de
+     apertura no permite distinguir de un acompañante.
+   - **Pista:** la misma regla de 7a (`_add_or_ask_companion`, quien ya estaba contado no se suma)
+     aplicada a esa respuesta, y arreglar F.2 ("X y yo" respalda un 2), que es lo que la dispara.
+
+G. **Una respuesta que no contesta la pregunta pendiente se toma como su respuesta** (hallazgo
+   2026-09-15, al medir 7c con una conversación que ignoraba lo que preguntaba el bot).
+   - Con "¿cuántos serían para snorkel?" pendiente, "no, buceamos hace 6 meses" llevó el grupo de
+     3 a 9 buceadores. La respuesta corta determinista lo rechaza (`_apply_short_answer` →
+     False); el 6 lo pone el resolutor LLM del slot al leer "6 meses".
+   - La verificación de campos sabidos de 7b lo detectó al turno siguiente y propuso volver a 3 (2
+     buceo + 1 snorkel) con confirmación, pero el valor malo se había escrito antes.
+   - **Pista:** es la misma familia que la guarda (b) de F5a (el turno contestó otra pregunta).
+     `_turn_answered_a_different_slot` no lo cubre porque el dato de seguridad ya estaba. Medir con
+     conversaciones que respondan otra cosa a cada slot pendiente.
 
 ### Decisiones pendientes del owner
 

@@ -2257,7 +2257,8 @@ def _group_size_that_will_persist(
 
     Unica fuente de la regla que ya aplicaba `_apply_detected_intent`: el total
     se escribe una sola vez, y el de un turno posterior solo lo sustituye si el
-    mensaje es una correccion explicita (`_GROUP_SIZE_CORRECTION_CUE_RE`).
+    turno lo acepta como correccion (`intent.overwrite`: cue explicito o confirmada
+    por el cliente, ver `conversational_core._route_contradictions`).
 
     Existe porque la invariante del reparto y el trigger de su veto razonaban
     con el total del TURNO, que es justo el que el regex lee mal: con 7 ya
@@ -2274,7 +2275,7 @@ def _group_size_that_will_persist(
     known = known if isinstance(known, int) and known > 0 else None
     if turn is None or known is None:
         return turn or known
-    if turn != known and message and _GROUP_SIZE_CORRECTION_CUE_RE.search(message):
+    if turn != known and "group_size" in getattr(intent, "overwrite", ()):
         return turn
     return known
 
@@ -2642,7 +2643,7 @@ async def _maybe_log_llm_extraction_shadow(
 # casi nunca es tan limpio. Deliberadamente estrecho (exige el cue léxico
 # explícito) para no convertir `detected_group_size` en escribible en
 # cualquier mensaje — un número suelto sin este cue nunca lo sobreescribe.
-_GROUP_SIZE_CORRECTION_CUE_RE = re.compile(
+_CORRECTION_CUE_RE = re.compile(
     r"\b(?:en\s+realidad|realmente|perd[oó]n|me\s+equivoqu[eé]|corrijo|"
     r"en\s+verdad|actually|sorry|my\s+mistake|i\s+made\s+a\s+mistake)\b",
     re.IGNORECASE,
@@ -2676,7 +2677,9 @@ def _apply_detected_intent(intent, state: ConversationState, message: str | None
             state.detected_is_certified = intent.is_certified
             state.is_certified = intent.is_certified
         logger.info(f"[INTENT] Activity updated to: {intent.activity} (service: {intent.service_id})")
-    elif intent.is_certified is not None and state.detected_is_certified is None:
+    elif intent.is_certified is not None and (
+        state.detected_is_certified is None or "is_certified" in intent.overwrite
+    ):
         state.detected_is_certified = intent.is_certified
         state.is_certified = intent.is_certified
         logger.info(f"[INTENT] Detected certification: {intent.is_certified}")
@@ -2706,7 +2709,11 @@ def _apply_detected_intent(intent, state: ConversationState, message: str | None
     if getattr(intent, "solo_confirmed", False):
         state.solo_traveler_confirmed = True
 
-    if intent.group_allocation and not state.detected_group_allocation:
+    # Estos campos se escriben una vez; un turno solo los sobrescribe con una correccion
+    # aceptada (`intent.overwrite`, tarea 7b).
+    if intent.group_allocation and (
+        not state.detected_group_allocation or "group_allocation" in intent.overwrite
+    ):
         state.detected_group_allocation = intent.group_allocation
         logger.info(f"[INTENT] Detected group allocation: {intent.group_allocation}")
 
@@ -2716,12 +2723,16 @@ def _apply_detected_intent(intent, state: ConversationState, message: str | None
             state.detected_ages = merged
             logger.info(f"[INTENT] Detected ages: {merged}")
 
-    if intent.last_dive_over_2_years is not None and state.detected_last_dive_over_2_years is None:
+    if intent.last_dive_over_2_years is not None and (
+        state.detected_last_dive_over_2_years is None or "last_dive_over_2_years" in intent.overwrite
+    ):
         state.detected_last_dive_over_2_years = intent.last_dive_over_2_years
         state.last_dive_over_2_years = intent.last_dive_over_2_years
         logger.info(f"[INTENT] Detected last dive: {intent.last_dive_over_2_years}")
 
-    if getattr(intent, "is_colombian", None) is not None and state.is_colombian is None:
+    if getattr(intent, "is_colombian", None) is not None and (
+        state.is_colombian is None or "is_colombian" in intent.overwrite
+    ):
         # Set only is_colombian; the checkout's _goto_mixed_final_colombian inherits
         # it (and sets mixed_final_is_colombian + currency) so its skip stays intact.
         state.is_colombian = intent.is_colombian
@@ -2739,7 +2750,7 @@ def _apply_detected_intent(intent, state: ConversationState, message: str | None
         state.detected_cert_days = intent.cert_days
         logger.info(f"[INTENT] Detected cert day count: {intent.cert_days}")
 
-    if intent.location and not state.detected_location:
+    if intent.location and (not state.detected_location or "location" in intent.overwrite):
         state.detected_location = intent.location
         state.location = intent.location
         logger.info(f"[INTENT] Detected location: {intent.location}")

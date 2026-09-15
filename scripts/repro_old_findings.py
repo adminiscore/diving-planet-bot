@@ -7,7 +7,8 @@ docs/robustness/progress-log.md ("Tarea 7").
 
     ENV_FILE=.env.dev python -m scripts.repro_old_findings [repeticiones] [casos]
 
-casos: lista separada por comas de drip,correccion,correccion_antes,f01,tour (por defecto todos).
+casos: lista separada por comas de drip,correccion,correccion_antes,f01,f01_conversacion,tour
+(por defecto todos).
 """
 
 import asyncio
@@ -24,7 +25,7 @@ ANSWERS = {
     "hotel": "no tenemos hotel todavía", "safety": "no, buceamos hace 6 meses", "refresher": "no gracias",
     "qty": "somos 2", "ages": "somos adultos", "nationality": "somos colombianos",
     "companion_qty": "uno", "companion_activity_choice": "snorkel", "course_level": "open water",
-    "cert_or_course": "ya la tenemos",
+    "cert_or_course": "ya la tenemos", "confirm_correction": "sí",
 }
 
 
@@ -99,6 +100,18 @@ async def f01(rep):
     return [f"  {spec['message']!r} estado_inicial={spec['state']} -> {got}"]
 
 
+async def f01_conversacion(rep):
+    """7c: el mismo cambio de reparto en una conversacion cerrada, confirmando con "sí".
+    La apertura dice las cifras ("2 buceamos y 1 hace snorkel") para no caer en el
+    hallazgo H, que corrompe el total antes de llegar a la correccion."""
+    st, log = _new(f"f01-conv-{rep}"), []
+    await _say(st, "hola, somos 3: 2 buceamos certificados y mi suegra hace snorkel", log)
+    await _autopilot(st, log, stop=_priced)
+    await _say(st, "al final mi suegra tambien bucea, no hace snorkel", log)
+    await _autopilot(st, log, max_turns=2, stop=_priced)
+    return log
+
+
 async def tour(rep):
     """7d: peticion de informacion sin "?" ni palabra-pregunta al principio."""
     st, log = _new(f"tour-{rep}"), []
@@ -107,7 +120,8 @@ async def tour(rep):
     return log
 
 
-CASES = {"drip": drip, "correccion": correccion, "correccion_antes": correccion_antes, "f01": f01, "tour": tour}
+CASES = {"drip": drip, "correccion": correccion, "correccion_antes": correccion_antes, "f01": f01,
+         "f01_conversacion": f01_conversacion, "tour": tour}
 
 
 async def main():

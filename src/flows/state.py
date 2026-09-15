@@ -189,6 +189,11 @@ class ConversationState:
     # pregunta el total antes de sumar o mover a nadie (tarea 7a, 2026-09-15).
     pending_companion_in_group: dict | None = None
 
+    # Dato que contradice lo guardado y llego sin cue de correccion ("ah no, somos
+    # gringos" tras decir colombianos): {campo: valor nuevo}. Se confirma con el
+    # cliente antes de cambiar nada (owner 2026-09-15, tarea 7b).
+    pending_correction: dict | None = None
+
     # Nivel PADI nombrado sin decir si ya lo tienen o lo quieren sacar ("hola
     # somos 4 open water"): se pregunta antes de seguir (owner 2026-09-15).
     # `cert_or_course_level` guarda el curso nombrado, si el detector lo resolvio.

@@ -3748,3 +3748,107 @@ y eso trae almuerzo"), sigue recibiendo el acuse. No hay estructura que leer sin
 **Hallazgo al medir (pasa a 7b):** "mejor snorkel", un cambio de opinión del propio grupo, cambia
 la actividad principal pero deja el reparto en `{certified_diving: 2}`, y el cierre cobra 2
 inmersiones. Es la misma familia que 7b/7c: el reparto guardado no se reescribe.
+
+### Tareas 7b y 7c, arregladas: una contradicción no se ignora ni se aplica a ciegas
+
+**Problema.** Los campos se escribían una sola vez (salvo la actividad, que siempre gana, y el
+total, que se sustituía con cue):
+- "espera, en realidad no somos colombianos" tras el precio re-emitía COP;
+- "al final mi suegra también bucea" no cambiaba el reparto;
+- "mejor snorkel" cambiaba la actividad pero cobraba el reparto anterior.
+
+Sonda del regex sobre 21 fraseos de corrección: lee el valor nuevo en 11 y trae cue solo en 6. Una
+lista de cues no es una solución global.
+
+**Decisiones del owner (2026-09-15):**
+- Con cue explícito se aplica; sin cue se confirma con botones ("¿lo cambio?").
+- Los campos ya sabidos se leen con el LLM en la petición que el turno ya hace, y tras el cierre en
+  una propia (salvo "vale"/"ok" a secas).
+
+**Diseño**, con un solo escritor del estado:
+- **Detectar.** Un valor de ESTE mensaje distinto del guardado es una contradicción; no la decide
+  ni la jerga ni el cue.
+  - **El regex propone, no decide** (`_regex_contradictions`). También deduce (minicurso → no
+    certificado) y lee frases de otra persona ("mi novia no es buzo", "mi parce no está
+    certificado"): tres tests existentes lo destaparon al pedir confirmación donde no tocaba.
+  - **Se acepta sin más** solo lo que quien escribe dice de sí mismo con cue: sin otra persona de
+    sujeto (`mentions_other_person_subject`) y, para la certificación, con `certification_claim`.
+  - **Lo demás lo arbitra el LLM:** la verificación existente (`verify_fields` /
+    `extract_and_verify`) con los campos sabidos y su valor guardado, que el LLM no ve. Sonda real:
+    discrepa solo cuando el mensaje dice otra cosa ("somos gringos", "somos de fuera", "estamos en
+    barú", "ninguno tiene licencia", f01) y se abstiene en "perfecto, gracias", en el mismo valor y
+    si habla de otra persona, **24/24**. Pide una petición propia solo si el regex vio una
+    contradicción o tras el cierre.
+- **Aceptar** (`_route_contradictions`). Con cue marca `intent.overwrite`; sin cue deja
+  `pending_correction` y `next_missing_slot` pregunta `SLOT_CONFIRM_CORRECTION` con botones. La
+  respuesta se lee por la primera palabra ("sí, cámbialo", "no, lo de antes").
+- **Escribir.** `_apply_detected_intent` y `_group_size_that_will_persist` respetan
+  `intent.overwrite`. El cue de corrección vive en un único sitio, renombrado
+  `_CORRECTION_CUE_RE`. Al confirmar, los valores pasan por el mismo camino que un turno normal
+  (invariante del reparto, `_take_undecided_members`, escritura).
+- **Cerrar.** `_finalize` reconstruye siempre el carrito y la moneda desde el estado.
+- **"mejor snorkel".** Al empezar la fase de cierre, un reparto que solo tenía la actividad anterior
+  sigue al cambio. Va ahí y no al escribir la actividad: si el turno era de otra persona, la red de
+  7a ya restauró la principal.
+
+**Medido:**
+- Suite en verde con 9 tests nuevos. Se actualizaron 4 tests que fijaban el contrato viejo (el cue
+  leído dentro de la función del total, y `fill_gaps` como única petición con campos sabidos).
+- **Foto determinista** de los 66 escenarios de las baterías de grupo y booleanos, HEAD frente a
+  árbol, con `pending_correction` incluido: **0 cambios**.
+- **LLM real:**
+  - "espera, en realidad no somos colombianos" tras el precio re-emite el resumen en **USD (356 USD)**, 2/2;
+  - "perdón, en realidad no estamos certificados" se aplica;
+  - "mejor desde las islas, estamos en isla grande" pregunta "¿lo cambio? salida desde Cartagena →
+    en las islas", 2/2;
+  - acompañante a trozos (7a) sigue 2/2.
+- **Baterías:**
+  - booleanos idéntica por caso (18/24, 18/18);
+  - `eval --core` idéntico por caso (216/230);
+  - grupo, config PRE: 16/17, 13/13, 17/17, con un solo cambio frente a la base de las 12:51:
+    `b05-open-water-nombrado` pasa a ALUCINA. b05 ya alucinaba en la tanda de las 12:35 con el
+    código anterior, y lo único que cambia en su petición es `group_size` en la lista a verificar.
+
+**b05, regresión de 7b: medida, explicada y cerrada con una guarda estructural.**
+- **Síntoma.** Con la verificación de campos sabidos, "2 open water y 3 snorkel" (total 5 conocido)
+  guardaba `{padi_open_water: 2, snorkel: 3}`: **6/6 frente a 0/6 en HEAD**, la misma petición salvo
+  `group_size` en la lista a verificar.
+- **Causa de fondo.** Réplica con el LLM mockeado a ese reparto: **HEAD lo guardaba igual**. La
+  decisión del owner (nivel PADI ambiguo → se pregunta, no se asume curso ni buceo) solo la sostenía
+  que el LLM se abstuviera.
+- **Arreglo.** En `_flag_cert_or_course`, el único punto que marca esa pregunta, un reparto con una
+  clave de nivel de curso no se guarda hasta tener la respuesta, diga lo que diga el LLM.
+
+**Hallazgo al medir 7c (pasa a "Para reinvestigar", G).** Con "¿cuántos serían para snorkel?"
+pendiente, "no, buceamos hace 6 meses" llevó el grupo de 3 a 9 buceadores.
+- La respuesta corta determinista lo rechaza. El 6 lo pone el resolutor LLM del slot.
+- La verificación de 7b lo detectó al turno siguiente y propuso volver a 3 con confirmación.
+
+**Guarda (b) sobre la verificación de campos sabidos.** f01 medido como conversación completa con
+el LLM real destapó un riesgo de 7b. En turnos que contestan otra pregunta pendiente ("desde
+cartagena" con la ubicación pendiente, "no, buceamos hace 6 meses" con la seguridad), la
+verificación re-derivaba del historial el total y el reparto y pedía confirmar cambios que nadie
+había dicho. En la sonda de un solo mensaje se abstenía 24/24; en conversación larga, el historial
+tira de él.
+- **Arreglo:** el mismo principio que `_boolean_patch_is_anchored`: lo que viaja pegado a la
+  respuesta de otra pregunta no se acepta. `_recheck_proposals` descarta las propuestas cuando el
+  turno contestó el slot pendiente, sea por respuesta corta (`answered_pending`, que `_understand`
+  recibe como `resolved_short`) o porque el intent trae el campo de ese slot.
+- **Sigue leyéndose** "ah no, somos gringos" con la ubicación pendiente, que no la contesta, y
+  cualquier corrección tras el cierre, donde no hay nada pendiente.
+- Tests: se descarta en "desde cartagena" y se conserva en "ah no, somos gringos".
+- **Batería de grupo, config PRE, con la guarda de b05:** **17/17, 13/13, 17/17, 0 alucinaciones, 0
+  cambios frente a la base de las 12:51**.
+
+**Reproducción final con el LLM real** (`scripts/repro_old_findings`, 2 repeticiones por caso, con
+todas las guardas): **todos los casos correctos 2/2**.
+- **f01 como conversación (7c).** Apertura con cifras, para no caer en H. "al final mi suegra
+  también bucea, no hace snorkel" pide confirmar; con "sí" pasa a `{certified_diving: 3}` y cobra 3
+  inmersiones.
+- **Corrección tras el precio (7b).** Pasa a USD.
+- **Correcciones antes del precio.** Con cue se aplican; "mejor desde las islas" sin cue pregunta.
+- **Acompañante a trozos (7a).** Cobra 1 inmersión + 1 snorkel.
+- **Ninguna confirmación de más** en "desde cartagena" ni en "no, buceamos hace 6 meses".
+
+**Tarea 7 cerrada.** Queda en "Para reinvestigar" lo que salió al medirla y es de otra familia: D, E,
+F, G y H.

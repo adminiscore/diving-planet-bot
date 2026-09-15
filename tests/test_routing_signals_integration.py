@@ -605,7 +605,7 @@ async def test_group_size_correction_with_filler_words_is_applied():
     quedó como código MUERTO tras el refactor de Fase 4 (nunca se llama
     desde ningún sitio), además de exigir "en realidad" pegado
     directamente a "somos" sin relleno. Fix: cue de corrección explícita
-    más tolerante (`_GROUP_SIZE_CORRECTION_CUE_RE`) conectado directamente
+    más tolerante (`_CORRECTION_CUE_RE`) conectado directamente
     en `_apply_detected_intent`, que sí es parte del pipeline activo."""
     state = make_state()
     with patch("src.agents.supervisor.detect_routing_signals", new=AsyncMock(return_value={})):

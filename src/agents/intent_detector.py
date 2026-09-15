@@ -33,6 +33,10 @@ class DetectedIntent:
     # batería de grupos mixtos contra PRE, 2026-09-01, lote 8, en
     # conversational_core.py donde se consume.
     solo_confirmed: bool = False
+    # Campos que este turno puede SOBRESCRIBIR aunque el estado ya los tenga: una
+    # correccion aceptada (con cue explicito o confirmada por el cliente). Lo decide
+    # `conversational_core._route_contradictions` (tarea 7b, 2026-09-15).
+    overwrite: list = field(default_factory=list)   # lista, no set: el estado se guarda en JSON
     confidence: float = 0.0
     detected_fields: list = field(default_factory=list)
 
@@ -735,6 +739,13 @@ _OTHER_PERSON_SUBJECT = (
     r"|is|are|isn'?t|aren'?t|has|have|hasn'?t|haven'?t|wants)\b"
 )
 _OTHER_PERSON_SUBJECT_RE = re.compile(strip_accents(_OTHER_PERSON_SUBJECT), re.IGNORECASE)
+
+
+def mentions_other_person_subject(message: str) -> bool:
+    """True si alguna frase del mensaje tiene de sujeto a OTRA persona ("mi novia no es
+    buzo", "él quiere", "dos no tienen licencia"). Lo usa el nucleo para no tomar como
+    correccion de quien escribe lo que dice de otro (tarea 7b, 2026-09-15)."""
+    return bool(_OTHER_PERSON_SUBJECT_RE.search(strip_accents((message or "").lower())))
 # Sujeto pospuesto (2026-09-15): "no es certificado mi acompañante", "está certificada mi
 # novia". Verbo en tercera persona y, detras en la misma frase, una persona nombrada, sin
 # una preposicion de compania o destino por medio: "quiero bucear con mi pareja" o "es para

@@ -251,6 +251,9 @@ def test_trigger_takes_this_turns_total_when_it_is_an_explicit_correction():
     state = ConversationState(conversation_id="ga-turno-manda")
     state.detected_group_size = 99
     intent = _intent_con_reparto({"certified_diving": 2, "snorkel": 1}, gs=3)
+    # El cue lo marca un unico punto, el enrutado de correcciones del nucleo
+    # (`conversational_core._regex_contradictions`, tarea 7b), en `intent.overwrite`.
+    intent.overwrite = ["group_size"]
     assert supervisor._group_allocation_should_verify(
         "en realidad somos 3", intent, state) is False
 
@@ -383,6 +386,7 @@ def test_the_persisted_total_ignores_a_turn_total_without_correction_cue():
 
 def test_the_persisted_total_takes_the_turn_total_with_a_correction_cue():
     intent = _intent_alloc(None, gs=4)
+    intent.overwrite = ["group_size"]  # correccion aceptada (cue), ver tarea 7b
     assert supervisor._group_size_that_will_persist(
         intent, _state_con_total(7), "en realidad somos 4") == 4
 
@@ -405,6 +409,7 @@ def test_drops_a_split_that_only_matches_a_misread_turn_total():
 def test_keeps_a_split_that_matches_an_explicitly_corrected_total():
     alloc = {"certified_diving": 4}
     intent = _intent_alloc(alloc, gs=4)
+    intent.overwrite = ["group_size"]  # correccion aceptada (cue), ver tarea 7b
     supervisor.enforce_group_allocation_consistency(
         intent, _state_con_total(7), "en realidad somos 4, los 4 certificados")
     assert intent.group_allocation == alloc
