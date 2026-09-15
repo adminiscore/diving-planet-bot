@@ -2130,15 +2130,6 @@ async def _understand(state: ConversationState, message: str, *, answered_pendin
             # tiene total: "tambien viene un amigo" a mitad no puede pisar el que ya habia.
             if state.detected_group_size or patch.get("group_size") != _named_people(message)[1]:
                 patch.pop("group_size", None)
-        # Un total del relleno LLM que el detector lee como otra magnitud no son personas
-        # (hallazgo G, 2026-09-15): con "¿para cuantas personas?" pendiente, "2
-        # inmersiones" volvia con group_size=2 2/2. Misma regla que en el resolutor del slot.
-        if isinstance(patch.get("group_size"), int) and _number_of_something_else(state, message, patch["group_size"]):
-            logger.info(
-                f"[CORE] group_size del relleno descartado (numero de otra magnitud): "
-                f"{patch['group_size']} msg={supervisor._log_safe_message(message)!r}"
-            )
-            patch.pop("group_size")
         # GUARDA (b) — anclaje de los booleanos (ver `_boolean_patch_is_anchored`):
         # un booleano que viaja pegado a la respuesta de OTRA pregunta pendiente
         # no se acepta. Se descarta y el slot sigue pendiente → se pregunta.
@@ -2165,6 +2156,19 @@ async def _understand(state: ConversationState, message: str, *, answered_pendin
                 f"[CORE] gap-fill booleans dropped (pegados a otra respuesta): "
                 f"{unbacked_bools} msg={supervisor._log_safe_message(message)!r}"
             )
+        # Un total del relleno LLM que el detector lee como otra magnitud no son personas
+        # (hallazgo G, 2026-09-15): con "¿para cuantas personas?" pendiente, "2
+        # inmersiones" volvia con group_size=2 2/2. Misma regla que en el resolutor del slot.
+        # Va DESPUES de la guarda (b): aunque el total no valga, el LLM trato el mensaje
+        # como respuesta a la pregunta pendiente, y lo que viaja con ese intento no es de
+        # fiar. Medido con el LLM real e historial completo: el mismo patch traia
+        # `is_colombian: false` 2/2, y con esta guarda antes de la (b) entraba al estado.
+        if isinstance(patch.get("group_size"), int) and _number_of_something_else(state, message, patch["group_size"]):
+            logger.info(
+                f"[CORE] group_size del relleno descartado (numero de otra magnitud): "
+                f"{patch['group_size']} msg={supervisor._log_safe_message(message)!r}"
+            )
+            patch.pop("group_size")
         for field_name, value in patch.items():
             setattr(intent, field_name, value)
             if field_name not in intent.detected_fields:

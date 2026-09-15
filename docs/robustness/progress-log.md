@@ -4008,3 +4008,17 @@ mensaje.
 - **Arreglo:** la misma guarda (`_number_of_something_else`) en el único punto donde el relleno entra
   al turno: un `group_size` del LLM que el detector lee como inmersiones, días o edades se descarta.
   Test con el relleno mockeado. Suite 2303.
+
+**G destapó una alucinación que ocultaba el orden de las guardas: medido y corregido.**
+- **Síntoma.** En la conversación de la repro, el turno "2 inmersiones" dejaba `is_colombian=False`
+  sin que nadie lo dijera (2/2).
+- **Causa**, localizada con traza del escritor y el patch copiado. La petición del turno, con el
+  historial completo (hijo de 9 años y acuses del bot), devolvía `{"group_size": 2, "is_colombian":
+  false}`; con un historial corto no pasaba (0/15).
+  - Antes de G, ese `group_size` contaba como respuesta a la pregunta pendiente y la guarda (b)
+    tiraba el booleano que viajaba con él.
+  - La guarda de G quitaba el `group_size` **antes** de la (b), así que la (b) ya no veía el intento
+    de respuesta y dejaba pasar la nacionalidad.
+- **Arreglo, sin regla nueva:** la guarda de G va **después** de la (b). Aunque el total no valga, el
+  LLM trató el mensaje como respuesta a la pregunta pendiente, y lo que viaja con ese intento no es de
+  fiar. Test con el patch exacto del LLM real. Suite 2304.

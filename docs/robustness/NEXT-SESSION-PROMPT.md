@@ -59,7 +59,7 @@ Retomamos el trabajo de robustez del bot en la rama `feature/pre_gadea`. Lee pri
 | Recomendación al acompañante | resolutor 11/11, estancia 6/6 |
 | Pregunta "¿ya certificados o quieren certificarse?" | cuándo preguntar 10/10, resolutor 7/7 |
 | Precio de paquetes (RAG, 21 preguntas sin LLM) | 11 cambios de 21 frente a antes, todos a bien |
-| Suite | **2303 passed / 18 skipped** |
+| Suite | **2304 passed / 18 skipped** |
 
 ### Hecho el 2026-09-15 (no repetir)
 
