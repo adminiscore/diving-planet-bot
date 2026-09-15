@@ -751,11 +751,11 @@
       "message": "im from the states, wanna dive",
       "lang": "en",
       "expected": {
-        "is_colombian": false,
+        "is_colombian": null,
         "activity": "certified_diving"
       },
       "source": "adversarial-fase8-perfil (validado contra IntentDetector real, 2026-07-21)",
-      "notes": "'from the states' = extranjero; hueco de is_colombian en regex."
+      "notes": "Ser de otro pais no dice si vive en Colombia (el residente paga en COP): el extractor se abstiene y el bot pregunta la nacionalidad. Decision del owner 2026-09-15 (hallazgo F.4); antes esperaba false."
     },
     {
       "id": "prof-es-paisa-slang",

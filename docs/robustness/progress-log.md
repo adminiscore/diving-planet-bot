@@ -4152,3 +4152,27 @@ de Sofía pasan de curso ambiguo a `certified_diving`, certificado.
 - **Consecuencia aceptada:** "llevo el open water a medias" (curso en marcha) se lee como tenerlo.
   No hay ninguna frase así en el corpus.
 - **Tests:** 21 nuevos (`tests/test_holds_level_conjugations.py`). Suite 2363.
+
+### Hallazgo F.4: "im from the states" sin nacionalidad (cerrado sin cambio de código)
+
+**Síntoma anotado.** "im from the states, wanna dive": el LLM se abstiene de `is_colombian` y el
+eval-set (`prof-en-from-states`) esperaba `false`. Se había atribuido a la sensibilidad del relleno a
+la forma del prompt.
+
+**Lo que se vio al investigarlo.** No es un fallo de forma:
+- **La definición del campo** (`_FIELD_MEANING_EN/ES`, una sola fuente para el tool y las guías) da
+  `false` solo a quien es extranjero **y** no vive en Colombia. "from the states" no dice dónde vive:
+  abstenerse es aplicarla bien.
+- **El detector hace lo mismo.** "soy de mexico", "i'm from spain", "soy gringo", "we're american",
+  "i'm canadian" y "somos alemanes" dan `None`. Solo "soy extranjero" da `false`.
+- **Con la abstención, el bot pregunta** cerca del checkout: "are you Colombian or a resident of
+  Colombia?". Una pregunta, sin valor malo.
+- **El intento anterior** de ampliar la definición (grupo mixto) rompía al residente.
+
+**Decisión del owner: preguntar.** Se corrige la expectativa a `null` ("el extractor debe
+abstenerse", la convención de `neg-en-no-location-signal`). "vivo en españa pero estoy de visita"
+sigue esperando `false`: ahí sí dice que no vive en Colombia.
+
+- **Sin cambio de código ni de prompt.** 0 peticiones.
+- **Eval:** no se repite la tanda. En la última (`eval --core` tras F.1) el caso se abstuvo de
+  `is_colombian` y acertó la actividad, así que con la expectativa corregida cuenta como acierto.

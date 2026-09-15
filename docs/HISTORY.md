@@ -81,6 +81,7 @@ History
   - **Arreglo en la pieza, no por frases:** la clase cerrada de verbos de posesión (tener, llevar) y de haberlo hecho (hacer, sacar, terminar, completar; have, did, completed, finished, took), en primera y tercera persona. Querer sacarlo sigue ganando, y un nivel sin verbo ("somos 4 open water") o preguntar al centro ("¿tienen el advanced?") se sigue preguntando.
   - **Medido:** foto del detector sobre 2333 frases con 3 cambios, los tres buscados. `eval --core` 218 → **219/230**, 0 a peor.
   - **Consecuencia aceptada:** "llevo el open water a medias" se lee como tenerlo.
+* **Hallazgo F.4 cerrado sin cambio de código (decisión del owner): "im from the states" se pregunta.** El LLM se abstenía de `is_colombian` y el eval-set lo contaba como fallo, pero la definición del campo solo da "no colombiano" a quien es extranjero y no vive en Colombia, y el detector hace lo mismo con "soy de méxico" o "i'm canadian". Ser de otro país no dice dónde vive, y el residente paga en COP: el bot pregunta "are you Colombian or a resident of Colombia?". Se corrige la expectativa del caso a "sin valor". Coste: 0 peticiones.
 * **Para reinvestigar** (owner): grupo mixto → USD (necesita un valor propio, no el booleano), respuesta doble tras F5a y unificar la ubicación entre detector y núcleo. Detalle en `docs/robustness/NEXT-SESSION-PROMPT.md`.
 * Suite: **2363 passed / 18 skipped**.
 

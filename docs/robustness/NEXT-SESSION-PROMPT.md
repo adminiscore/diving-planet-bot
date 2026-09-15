@@ -53,7 +53,7 @@ Retomamos el trabajo de robustez del bot en la rama `feature/pre_gadea`. Lee pri
 | medida | resultado |
 |---|---|
 | Eval-set (130 casos) | **221/230**. Fallan: 5 de los 7 casos `nat-mixto-*` (hueco conocido), 2 artefactos del arnés (casos con historial) y el ambiguo de ubicación "staying on the islands tomorrow". `split-one-not-certified-es` espera `is_certified: null` desde el 2026-09-15 (la frase habla de un miembro del grupo) |
-| Eval-set por el núcleo (`run_extraction_eval --core`) | **219/230** tras F.1 (218 tras H y D; 216 con 7b; +2 por F.2, +1 por F.1, 0 a peor); los 7 casos por debajo del modo script están explicados en el progress-log (tarea 6) |
+| Eval-set por el núcleo (`run_extraction_eval --core`) | **219/230** tras F.1 (218 tras H y D; 216 con 7b; +2 por F.2, +1 por F.1, 0 a peor; con la expectativa de F.4 corregida, el caso `prof-en-from-states` pasa a acierto sin repetir la tanda); los 7 casos por debajo del modo script están explicados en el progress-log (tarea 6) |
 | Batería de grupo, config PRE (52 escenarios) | repartos **17/17**, total **13/13**, riesgo **17/17**, **0 alucinaciones, 0 parciales, 0 totales mal**; segunda petición de grupo +8,1 % peticiones |
 | Booleanos anclados | legítimos 18/24, alucinaciones evitadas 18/18 |
 | Recomendación al acompañante | resolutor 11/11, estancia 6/6 |
@@ -238,7 +238,9 @@ F. **Costes de las guardas del núcleo** (hallazgo 2026-09-15 con `run_extractio
       `{certified_diving: 2, undecided: 2}` 3/3. La misma guarda tira el reparto y, con él, el total.
       - **Pista:** no tirar un total que cuadra con las personas nombradas (esa regla ya existe
         sin reparto).
-   4. **"im from the states, wanna dive"**: el LLM se abstiene de `is_colombian` 3/3 cuando solo se
+   4. ~~**"im from the states, wanna dive"**~~ **cerrado sin cambio (2026-09-15, owner: preguntar)**: la
+      abstención cumple la definición (extranjero Y no vive en Colombia) y protege al residente, que paga
+      en COP. Se corrige la expectativa del eval-set a `null`. Antes: el LLM se abstiene de `is_colombian` 3/3 cuando solo se
       piden los huecos. Es la sensibilidad a la forma del prompt ya vista en F2b.
       - **Pista:** es de prompt; medir con el eval-set en los dos modos.
    - **Medir con:** `--core`, la batería de grupo (config PRE) y la de booleanos. Sin empeorar
