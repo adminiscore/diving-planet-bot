@@ -119,12 +119,21 @@ Retomamos el trabajo de robustez del bot en la rama `feature/pre_gadea`. Lee pri
      (antes estaban escritos tres veces y la tabla de cursos solo conocía nitrox). "dudo entre la
      especialidad de nitrox y la de flotabilidad" ya compara sin tocar el router. Foto sin LLM: 5
      cambios de 238 en el corpus, todos a mejor.
-   - **Hallazgos nuevos por atacar, medidos:**
-     - "¿va a llover mañana?" no escala: el LLM usa una clave `weather_conditions` que no está en el
-       esquema.
-     - "tengo un amigo que quiere bucear y yo hago snorkel" se toma como comparación.
-6. **Eval-set que pase por el núcleo** (`_understand`), para que su nota vea las guardas y deje de
-   tener los 2 artefactos de casos con historial.
+   - Dos hallazgos nuevos que salieron de esta medida pasan a "Para reinvestigar" (D y E).
+6. ~~Eval-set que pase por el núcleo~~ **hecho (2026-09-15)**: `run_extraction_eval --core`. Da
+   216/230 frente a 221/230 del modo script: los 2 artefactos de historial pasan a bien y hay 7 a
+   peor, explicados uno a uno en el progress-log. Usar `--core` para medir cambios del núcleo; el
+   modo script sigue sirviendo para medir el extractor suelto.
+   - **Costes de las guardas medidos** (cada uno es una pregunta de más, nunca un valor malo).
+     Atacar por la vía general y medir con `--core` y la batería de grupo:
+     - "ya **llevo** el rescue": `_flag_cert_or_course` borra `is_certified=True`, porque "llevo" no
+       está en las piezas de tener un nivel.
+     - "vamos 3, mi pareja y yo buceamos y mi suegra hace snorkel": la guarda de cifras tira un
+       reparto correcto. La composición "X y yo" = 2 no respalda la cifra.
+     - "my daughter is 9 and my son is 12, my wife and i dive": la misma guarda tira el reparto y,
+       con él, el total 4, que sí cuadra con las personas nombradas.
+     - "im from the states, wanna dive": el LLM se abstiene de `is_colombian` cuando solo se piden
+       los huecos (sensibilidad ya vista en F2b).
 7. **Hallazgos antiguos por reproducir**: acompañante que llega a trozos, corrección tras el precio,
    "qué incluye el tour", cambio de reparto (f01).
 8. **Observabilidad**: Langfuse frente a LangSmith (no pagar).
@@ -173,6 +182,25 @@ C. **Unificar la ubicación entre detector y núcleo.**
    - **Pista:** distinguir salida o alojamiento de destino es semántico. Vía LLM, y después una sola
      fuente para las palabras de ubicación.
    - Foto base: script de comparación en el progress-log (224–262 mensajes).
+
+D. **Pronóstico del tiempo sin escalar** (hallazgo 2026-09-15, ya en producción; es de seguridad).
+   - "¿va a llover mañana en cartagena?": ninguna palabra clave de `detect_sensitive_escalation` lo
+     caza, y el LLM del router devuelve una clave `weather_conditions: true` que no existe en el
+     esquema (3/3 con el enum actual) en vez de `sensitive_topic: "weather_conditions"`. Nadie la
+     lee y el mensaje sigue el flujo normal, donde se podría inventar el pronóstico.
+   - Medido con `scripts/battery_router_signals.py` (caso `s04-llover-manana`).
+   - **Pista:** es un fallo de forma del tool, no de vocabulario. Mirar por qué el modelo saca el
+     valor del enum a clave propia (la descripción de `sensitive_topic` es muy larga y mezcla cuatro
+     temas) antes de pensar en añadir palabras clave. Medir las 9 señales, no solo esta.
+
+E. **Reparto leído como comparación** (hallazgo 2026-09-15, ya en producción).
+   - "tengo un amigo que quiere bucear y yo hago snorkel": el router dice `comparing=true` 3/3 y
+     `_is_deliberation_between_options` lo acepta, porque el texto nombra 2 ofertas y no hay número
+     ni "quiero". Va a RAG a explicar la diferencia en vez de a la reserva.
+   - Medido con `scripts/battery_router_signals.py` (caso `n07-amigo-snorkel`).
+   - **Pista:** cada oferta tiene su propio sujeto (el amigo, yo), igual que un reparto. Buscar la
+     señal estructural (sujetos distintos por actividad) en vez de ampliar `_COMMITMENT_RE`, y medir
+     con los casos de deliberación del núcleo y la batería del router.
 
 ### Decisiones pendientes del owner
 

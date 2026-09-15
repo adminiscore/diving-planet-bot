@@ -19,7 +19,11 @@ environment that has one, e.g.:
     ENV_FILE=.env.dev python -m scripts.run_extraction_eval
     ssh ... "docker exec -i dp-pre-bot python3 -m scripts.run_extraction_eval"
 
-Usage: no arguments. Prints a per-case and a per-field summary to stdout.
+Usage: no arguments, or `--core` to run each case through the real turn
+(`conversational_core._understand`, production config, guards included) and
+score what the turn changed in the state. Cases may carry an optional `state`
+(e.g. the pending slot a `history` implies). Prints a per-case and a per-field
+summary to stdout.
 """
 
 import asyncio
@@ -114,7 +118,92 @@ def _regex_resolved(intent) -> dict:
     }
 
 
-async def run() -> None:
+# ── Modo --core (2026-09-15) ─────────────────────────────────────────────────
+#
+# El modo por defecto mide regex + `fill_gaps` + veto, sin las guardas del nucleo,
+# y los casos con historial salian mal por un artefacto: el LLM veia la pregunta
+# del bot pero no el estado que esa conversacion tendria (slot pendiente, reparto ya
+# sabido). Con --core cada caso pasa por `conversational_core._understand`, el turno
+# real de produccion con su config (vetos y guardas incluidos), sobre un estado
+# sembrado con `history` y el `state` opcional del caso. Se puntua lo que el TURNO
+# cambio en el estado: un campo que ya estaba y no se toca cuenta como abstencion.
+
+def _state_values(state: ConversationState) -> dict:
+    """Valor de cada campo extraible en el estado, con la misma lectura que el
+    nucleo (`_state_known_fields`): el valor confirmado antes que el detectado. Las
+    personas sin actividad elegida salen del reparto a `pending_undecided_qty`
+    (`_take_undecided_members`); se devuelven como `undecided`, igual que las etiqueta
+    el eval-set."""
+    allocation = dict(state.detected_group_allocation or {})
+    if state.pending_undecided_qty:
+        allocation["undecided"] = state.pending_undecided_qty
+    return {
+        "activity": state.detected_activity,
+        "is_certified": state.is_certified if state.is_certified is not None else state.detected_is_certified,
+        "group_size": state.detected_group_size,
+        "group_allocation": allocation or None,
+        "last_dive_over_2_years": state.last_dive_over_2_years if state.last_dive_over_2_years is not None
+        else state.detected_last_dive_over_2_years,
+        "duration": state.detected_duration,
+        "location": state.location or state.detected_location,
+        "island": state.island or state.detected_island,
+        "hotel": state.hotel or state.detected_hotel,
+        "ages": state.detected_ages,
+        "cert_dives": state.detected_cert_dives,
+        "cert_days": state.detected_cert_days,
+        "is_colombian": state.is_colombian,
+    }
+
+
+async def _core_turn(case: dict) -> tuple[dict, dict]:
+    from src.agents import conversational_core  # lazy: solo en --core
+
+    state = ConversationState(conversation_id=f"eval-core-{case['id']}")
+    state.language = case.get("lang", "es")
+    state.history = list(case.get("history") or [])
+    for key, value in (case.get("state") or {}).items():
+        setattr(state, key, value)
+    before = _state_values(state)
+    await conversational_core._understand(state, case["message"])
+    after = _state_values(state)
+    produced = {f: v for f, v in after.items() if v != before[f] and v not in (None, [], {})}
+    return produced, {"estado_inicial": {f: v for f, v in before.items() if v not in (None, [], {})}}
+
+
+async def _script_turn(case: dict, detector: IntentDetector) -> tuple[dict, dict]:
+    state = ConversationState(conversation_id=f"eval-{case['id']}")
+    regex_intent = detector.detect(case["message"], state)
+    resolved = _regex_resolved(regex_intent)
+    patch = await fill_gaps(
+        case["message"], regex_intent, history=case.get("history"), lang=case.get("lang", "es"),
+    )
+    combined = {**resolved, **patch}
+
+    # Veto de campos ya resueltos (docs/multi-agent-refactor-plan.md,
+    # generalizacion "A bien montado" 2026-09-10, agrupado en UNA
+    # peticion el mismo dia): se verifica cada campo resuelto por el
+    # regex ESTE turno que ademas pase el `should_verify` de su spec
+    # (para `activity`, ambiguedad real -- ver supervisor.py). Se aplica
+    # siempre aqui (no gateado por settings) para medir el efecto REAL
+    # del mecanismo sobre el eval-set completo, independientemente de
+    # que flags esten on/off en el entorno donde se corre este script.
+    veto_fields = [
+        f for f, spec in _VETO_FIELD_SPECS.items()
+        if f in resolved and f in regex_intent.detected_fields
+        and (spec.should_verify is None
+             or spec.should_verify(case["message"], regex_intent, state))
+    ]
+    if veto_fields:
+        disagreements = await verify_fields(
+            veto_fields, case["message"], {f: resolved[f] for f in veto_fields},
+            history=case.get("history"), lang=case.get("lang", "es"),
+        )
+        # El mismo filtro que aplica el producto (supervisor.apply_veto_disagreements).
+        combined.update(valid_veto_corrections(disagreements, resolved, case["message"]))
+    return combined, {"regex_had": resolved, "llm_patch": patch}
+
+
+async def run(core: bool = False) -> None:
     with open(EVAL_SET_PATH, encoding="utf-8") as f:
         cases = json.load(f)["cases"]
 
@@ -123,38 +212,11 @@ async def run() -> None:
     total_agree = total_disagree = total_missed = 0
     watcher = _install_watcher()
     contaminados: list[str] = []
+    print(f"Modo: {'nucleo (_understand, config de produccion)' if core else 'script (regex + fill_gaps + veto)'}")
 
     for case in cases:
         antes_degradado = watcher.degraded
-        state = ConversationState(conversation_id=f"eval-{case['id']}")
-        regex_intent = detector.detect(case["message"], state)
-        resolved = _regex_resolved(regex_intent)
-        patch = await fill_gaps(
-            case["message"], regex_intent, history=case.get("history"), lang=case.get("lang", "es"),
-        )
-        combined = {**resolved, **patch}
-
-        # Veto de campos ya resueltos (docs/multi-agent-refactor-plan.md,
-        # generalizacion "A bien montado" 2026-09-10, agrupado en UNA
-        # peticion el mismo dia): se verifica cada campo resuelto por el
-        # regex ESTE turno que ademas pase el `should_verify` de su spec
-        # (para `activity`, ambiguedad real -- ver supervisor.py). Se aplica
-        # siempre aqui (no gateado por settings) para medir el efecto REAL
-        # del mecanismo sobre el eval-set completo, independientemente de
-        # que flags esten on/off en el entorno donde se corre este script.
-        veto_fields = [
-            f for f, spec in _VETO_FIELD_SPECS.items()
-            if f in resolved and f in regex_intent.detected_fields
-            and (spec.should_verify is None
-                 or spec.should_verify(case["message"], regex_intent, state))
-        ]
-        if veto_fields:
-            disagreements = await verify_fields(
-                veto_fields, case["message"], {f: resolved[f] for f in veto_fields},
-                history=case.get("history"), lang=case.get("lang", "es"),
-            )
-            # El mismo filtro que aplica el producto (supervisor.apply_veto_disagreements).
-            combined.update(valid_veto_corrections(disagreements, resolved, case["message"]))
+        combined, context = await (_core_turn(case) if core else _script_turn(case, detector))
 
         # Si la cuota se agoto, PARAR: seguir solo quema peticiones para
         # producir numeros invalidos (y ademas impide re-correr la medicion
@@ -194,7 +256,7 @@ async def run() -> None:
         if result["disagree"]:
             print(f"       disagree={result['disagree']}")
         if result["missed"]:
-            print(f"       missed={result['missed']} (regex_had={resolved}, llm_patch={patch})")
+            print(f"       missed={result['missed']} ({context})")
 
     print("\n--- Per-field summary ---")
     for f, stats in sorted(field_stats.items()):
@@ -214,8 +276,9 @@ async def run() -> None:
     # buenas: el 2026-09-12 un `grep -v` borro justo la fila de `activity`,
     # el campo que se estaba midiendo. Un fichero aparte no se puede
     # corromper asi.
-    out = EVAL_SET_PATH.parent / "eval-last-run.json"
+    out = EVAL_SET_PATH.parent / ("eval-last-run-core.json" if core else "eval-last-run.json")
     out.write_text(json.dumps({
+        "modo": "core" if core else "script",
         "per_field": field_stats,
         "overall": {"agree": total_agree, "disagree": total_disagree, "missed": total_missed},
         "cases_evaluados": evaluados,
@@ -239,4 +302,4 @@ async def run() -> None:
 
 
 if __name__ == "__main__":
-    asyncio.run(run())
+    asyncio.run(run(core="--core" in sys.argv[1:]))

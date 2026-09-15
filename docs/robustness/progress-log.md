@@ -3545,3 +3545,46 @@ de la familia ("Especialidad Flotabilidad" → "flotabilidad", "Fish Identificat
 - **Siguen sin comparar**, a propósito: los sinónimos de la misma especialidad (buoyancy y
   flotabilidad son una oferta) y las palabras sueltas ("fish", "peces", "mindful"), que no se
   añaden a mano.
+
+### Tarea 6: el eval-set pasa por el núcleo (`--core`)
+
+**Por qué.** El eval-set medía regex + `fill_gaps` + veto, sin las guardas del núcleo. Los
+casos con historial fallaban por un artefacto: el LLM veía la pregunta del bot, pero no el estado
+que esa conversación tendría.
+
+**Cambio.** `scripts/run_extraction_eval.py --core` pasa cada caso por
+`conversational_core._understand` con la config de producción, sobre un estado sembrado con
+`history` y un `state` opcional por caso.
+- Se puntúa lo que el turno cambió en el estado: un campo que ya estaba y no se toca cuenta como
+  abstención.
+- Las personas sin decidir (`pending_undecided_qty`) se leen como `undecided` dentro del reparto.
+- Los 3 casos `hist-*` llevan ya su slot pendiente, y el del reparto también el reparto sabido.
+- El modo por defecto no cambia y cada modo escribe su propio resumen JSON.
+
+**Resultado** (tanda limpia, 0 degradadas): **núcleo 216/230** frente a script 221/230 (base
+eval_d). Por caso:
+- **2 a mejor:** los dos artefactos de historial (`hist-...-pending-certification`,
+  `hist-followup-...-group-allocation`).
+- **7 a peor.** Se explicaron uno a uno con sondas del LLM real (3 repeticiones) y réplicas
+  deterministas con los valores devueltos:
+
+| caso | qué pasa | ¿pérdida en producción? |
+|---|---|---|
+| `prof-es-toda-la-semana`, `prof-en-just-the-day` | el núcleo no pide `duration` a propósito (Fix B, no conduce slots) | no |
+| `adv-en-elliptical-no-dive-verb` | el LLM da minicurso sin `is_certified`; con minicurso el siguiente slot es ubicación | no |
+| `certification-dialect-rescue-colloquial` | el LLM da `is_certified=True` 3/3, pero `_flag_cert_or_course` lo borra: "ya **llevo** el rescue" no cuenta como tenerlo | sí, segura: pregunta "¿ya la tienes o quieres sacarla?" |
+| `grp-es-mixed-suegra` | el LLM da `{certified_diving: 2, snorkel: 1}`; la guarda de cifras lo tira ("mi pareja y yo" = 2 no es una cifra ni una persona suelta) | sí, segura: encola y pregunta |
+| `grp-en-implicit-count-ages` | el LLM da total 4 y `{certified_diving: 2, undecided: 2}` 3/3; la misma guarda tira el reparto y, con él, el total | sí, segura: pregunta |
+| `prof-en-from-states` | el LLM se abstiene de `is_colombian` 3/3 cuando se piden solo los huecos (la sensibilidad ya medida en F2b) | sí, segura: pregunta la nacionalidad |
+
+**Lectura:** ninguna guarda deja pasar un valor malo en estos casos; el coste es una pregunta de
+más en 4 mensajes. Las tres pistas quedan en la cola, sin tocar (orden del owner):
+- **"llevo" como tener un nivel.** Es un hueco en las piezas de `_HOLDS_WRITER`, no una frase nueva.
+- **Guarda de cifras.** La composición "X y yo" o "mi mujer y yo" respalda un 2, igual que
+  `_named_people` respalda cifras 1.
+- **Total con reparto.** No tirar un total que cuadra con las personas nombradas cuando se tira el
+  reparto. Ya existe esa regla para el caso sin reparto.
+
+**Nota de método:** la sonda espiaba el dict que devuelve el LLM por referencia, y el núcleo lo
+muta después (`pop`). Un `{}` en el espía parecía una abstención; se corrigió con `deepcopy`
+antes de sacar conclusiones.

@@ -1041,6 +1041,9 @@
       "id": "hist-nationality-answer-must-not-fill-pending-safety",
       "message": "ninguno colombiano",
       "lang": "es",
+      "state": {
+        "core_pending_slot": "safety"
+      },
       "history": [
         {
           "role": "assistant",
@@ -1058,6 +1061,9 @@
       "id": "hist-nationality-answer-must-not-fill-pending-certification",
       "message": "ninguno colombiano",
       "lang": "es",
+      "state": {
+        "core_pending_slot": "certification"
+      },
       "history": [
         {
           "role": "assistant",
@@ -1075,6 +1081,15 @@
       "id": "hist-followup-must-not-rederive-resolved-group-allocation",
       "message": "desde cartagena",
       "lang": "es",
+      "state": {
+        "core_pending_slot": "location",
+        "detected_group_size": 6,
+        "detected_group_allocation": {
+          "certified_diving": 2,
+          "minicourse": 2,
+          "snorkel": 2
+        }
+      },
       "history": [
         {
           "role": "user",
