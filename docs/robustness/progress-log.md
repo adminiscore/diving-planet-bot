@@ -4423,3 +4423,47 @@ que no dice que el destino no cuenta, medida con esta misma sonda.
   repite.
 
 - Tests: 19 nuevos (`tests/test_location_single_source.py`). Suite 2424.
+
+### Tarea 8: observabilidad, LangSmith frente a Langfuse (analizada, pendiente del owner)
+
+**Hoy.** PRE traza con LangSmith: `trace_openai` envuelve cada cliente OpenAI y el SDK traza el grafo
+(`AGENT_ARCH=true` en el compose de PRE). El plan Developer agotó su cuota (274 respuestas 429 en una
+pasada de batería dentro del contenedor): PRE se queda sin trazas y las pruebas gastan la misma cuota
+que el tráfico real.
+
+**Medido** (`obs_volume.py`, reserva completa con `route_message`, grafo activo, RAG simulado, sin enviar
+nada fuera): 4 turnos, **12 llamadas al LLM (3 por turno)** y 2 ejecuciones raíz de LangGraph por
+turno. El colector local no ve los nodos anidados. Los turnos de RAG (embeddings, respuesta, juez) no
+están en la cifra.
+
+**Planes** (consultados el 2026-09-16):
+- **LangSmith Developer:** 5.000 trazas base/mes, 14 días, 1 usuario; rechaza al pasarse. Plus: 39 $ por
+  asiento al mes.
+- **Langfuse Cloud Hobby:** 50.000 unidades/mes (traza + spans + llamadas LLM + evaluaciones), 30 días,
+  2 usuarios; sin excedente en el plan gratis. Core: 29 $ al mes.
+- **Langfuse self-hosted:** gratis (código abierto), pero pide Postgres, ClickHouse, Redis, S3, web y
+  worker, ≥ 4 vCPU y 16 GiB; Docker Compose solo lo recomiendan para pruebas. No cabe en el VPS
+  actual, que ya lleva PRE, PRO, Chatwoot, tres Postgres y tres Redis.
+
+**Estimación** con 6 turnos por conversación:
+- **LangSmith:** 1–2 trazas por turno → **~420–830 conversaciones/mes**. Si las llamadas al LLM no se
+  anidaran dentro del turno, 4–5 trazas → ~170.
+- **Langfuse Hobby:** 8–10 unidades por turno → **~830–1.040 conversaciones/mes**.
+
+**Recomendación: Langfuse Cloud Hobby.** Da más margen, 2 usuarios y 30 días, y deja la salida de
+alojarlo nosotros sin reescribir la integración.
+
+**Decide el owner:**
+- enviar trazas a un tercero, con `src/privacy.py` como máscara;
+- tráfico esperado en PRO (por encima de ~800 conversaciones/mes, ningún plan gratis traza todo: muestrear
+  o pagar);
+- quién crea la cuenta y las claves (un proyecto para PRE y otro para PRO).
+
+**Migración, si se aprueba:**
+1. Claves por entorno; sin claves, trazado apagado.
+2. `redact_pii` como función `mask`.
+3. `trace_openai` pasa al cliente OpenAI de Langfuse, callback en `run_turn_via_graph`, fuera
+   `_activate_langsmith_tracing`.
+4. Baterías y eval sin trazas por defecto.
+5. Una semana midiendo unidades reales en PRE.
+6. Retirar LangSmith.

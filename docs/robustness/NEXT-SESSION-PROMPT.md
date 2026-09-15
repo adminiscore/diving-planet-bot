@@ -151,7 +151,10 @@ Retomamos el trabajo de robustez del bot en la rama `feature/pre_gadea`. Lee pri
      carrito antes de desanclar.
    - **Medir con:** el script de reproducción (3 repeticiones), `--core`, la batería de grupo y la
      de booleanos.
-8. **Observabilidad**: Langfuse frente a LangSmith (no pagar).
+8. **Observabilidad**: Langfuse frente a LangSmith (no pagar). **Analizada (2026-09-16), pendiente del owner.**
+   Recomendación: Langfuse Cloud Hobby (50k unidades/mes, 30 días, 2 usuarios; ~830–1.040 conversaciones/mes
+   frente a ~420–830 con LangSmith Developer). Decide el owner: trazas en un tercero (con `redact_pii` como
+   máscara), tráfico esperado en PRO y quién crea la cuenta. Plan de migración en el progress-log.
 9. **CI**: `concurrency` en el job de deploy (dos pushes seguidos chocan; consultar con el equipo).
 
 ### Para reinvestigar (owner, 2026-09-15): medidos, sin solución todavía
