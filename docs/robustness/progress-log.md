@@ -3327,3 +3327,46 @@ Era el límite que quedaba del punto 1: la atribución de sujeto solo reconocía
 
 No se volvió a correr la batería con LLM: el cambio es determinista y el detector da lo mismo en todos
 los mensajes del corpus (eval-set y las tres baterías).
+
+### Punto 2: definición única de `activity`, `group_size` y `group_allocation`
+
+**Inventario.** Cada campo estaba escrito dos o tres veces (descripción del tool, guías de
+verificación ES y EN), con divergencias reales:
+- el tool de `activity` solo decía "The diving-related activity the customer wants"; la regla del
+  curso PADI nombrado vivía solo en las guías;
+- al tool de `group_allocation` le faltaban "tramos con sustantivo" y "debe sumar el total";
+- a las guías de verificación les faltaba la regla `undecided` que decidió el owner.
+
+**Ronda C, negativo medido y revertido: la unión completa también en el tool.** El prompt de relleno
+no cambió, pero la descripción del tool (lo único que ve `fill_gaps`) ganó la regla del curso PADI y
+los tramos con sustantivo. Con el LLM real, frente a la ronda B:
+- **Eval-set 217/230 (−4 frente a 221).** Pierden `is_certified`/`group_size` "never been underwater
+  before, wanna give it a try, solo", "hola quiero probar el buceo, nunca lo he hecho, voy solo" y "my
+  daughter is 9 and my son is 12, my wife and i dive".
+- **Batería de grupo:** b05 ("2 open water y 3 snorkel") vuelve a ALUCINA. El LLM reparte
+  `{certified_diving: 2, snorkel: 3}` en la primera petición, sin la pregunta aclaratoria.
+- **Booleanos:** "apertura-nunca" pasa de 3/3 a 0/3 (15/24 frente a 18/24).
+
+Causa: es la lección de 2026-09-12 otra vez. Una regla escrita para VERIFICAR hace que el camino de
+RELLENO se abstenga, y justo en los mensajes que nombra ("nunca he buceado", "first time").
+
+**Diseño final, dos capas desde una sola fuente:**
+- `_FIELD_MEANING_EN/ES` = el texto ya medido del tool. El tool queda idéntico byte a byte.
+- `_FIELD_VERIFY_RULES_EN/ES` = lo que solo sabía el veto (curso PADI nombrado; reparto completo, tramos
+  con sustantivo y suma al total; "cambia el precio").
+- `_meaning_rule` compone definición + regla de verificación para las guías.
+- Así las guías ganan `undecided` y dejan de divergir entre sí, sin tocar el relleno.
+- Foto de prompts: el tool no cambia; cambian las 10 guías y prompts fusionados.
+
+**Ronda D, diseño en dos capas, con el LLM real y frente a la ronda B:**
+- **Eval-set 221/230.** La única diferencia es `split-one-not-certified-es`, que pasa a OK por el
+  cambio de expectativa ya hecho. No reaparece ninguna de las pérdidas de la ronda C.
+- **Batería de grupo, config PRE:** 17/17, 13/13, 17/17, 0 alucinaciones, mismo veredicto escenario a
+  escenario (b05 OK). Segunda petición +8,6 %.
+- **Booleanos:** 18/24 y 18/18, idéntica ("apertura-nunca" vuelve a 3/3).
+- **Tanda enfocada:** todo OK las 3 veces.
+
+**Siguiente, del mismo punto:** la regla "un plural vago no es una cantidad" está escrita en cinco
+sitios (`group_size`, `group_allocation` y tres campos del prompt de señales). Borrador de pieza
+compartida preparado; se mide aparte con `battery_activity_choice`, la de grupo, la de booleanos y el
+eval-set.

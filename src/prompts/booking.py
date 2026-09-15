@@ -53,9 +53,11 @@ LANGUAGE_DETECT_PROMPT = (
 # Definicion UNICA por campo (centralizacion 2026-09-15): la usan la descripcion del
 # tool (`EXTRACTION_TOOL`) y las guias de verificacion (`_FIELD_RULES_ES/EN`). Antes eran
 # tres textos que ya divergian (la guia ES tenia ejemplos que las otras no, y `location`
-# decia cosas distintas en el tool y en la guia). Solo los campos cuya descripcion del
-# tool no lleva reglas propias medidas; `group_size`/`group_allocation`/`activity`
-# siguen aparte (ver progress-log).
+# decia cosas distintas en el tool y en la guia). Punto 2 (2026-09-15): tambien
+# `activity`, `group_size` y `group_allocation`, con la UNION de lo que decia cada copia
+# (al tool le faltaba la regla del curso PADI nombrado y los tramos con sustantivo; a las
+# guias, la regla `undecided`). El tono de cada tarea (rellenar o verificar) y las pistas
+# de "asi falla el detector" siguen en su prompt, no en la definicion.
 _FIELD_MEANING_EN = {
     "is_certified": (
         "whether the customer ALREADY holds a scuba certification. True if they "
@@ -79,6 +81,43 @@ _FIELD_MEANING_EN = {
         "costeño'), or that they live in Colombia even if they are from another "
         "country; false if they are a foreigner who does not live in Colombia."
     ),
+    # Estos tres son EXACTAMENTE el texto del tool ya medido en el camino de relleno.
+    # Anadirles reglas de verificacion aqui (curso PADI nombrado, tramos con sustantivo)
+    # hizo perder datos a `fill_gaps` y volvio a repartir b05 (medido 2026-09-15, ronda
+    # C): esas reglas van en `_FIELD_VERIFY_RULES_*`, solo para las guias.
+    "activity": "The diving-related activity the customer wants.",
+    "group_size": (
+        "Total number of people in the customer's party — count "
+        "EVERYONE mentioned, including children, non-divers, and "
+        "people referred to by relationship. Infer the count ONLY "
+        "when the message enumerates a specific, countable number of "
+        "individuals: 'my wife and I' = 2, 'me plus 3 friends' = 4, "
+        "'my daughter, my son and us two' = 4, 'four adults and a "
+        "kid' = 5. Do NOT set this field when companions are "
+        "mentioned as a vague, uncounted plural with no number given "
+        "at all — e.g. 'my friends'/'mis amigos', 'some friends'/"
+        "'unos amigos', 'my family' with no headcount. A vague plural "
+        "implies more than one but NOT a specific total; guessing a "
+        "number here is exactly the kind of invented value you must "
+        "avoid — omit the field and let the bot ask how many."
+    ),
+    "group_allocation": (
+        "Split of the group by activity, ONLY when each activity's "
+        "headcount is explicitly countable, e.g. "
+        '{"certified_diving": 2, "snorkel": 1}. If the message '
+        "describes a mixed group but one side has no countable "
+        "number — e.g. 'yo buceo y mis amigos snorkel' (an "
+        "uncounted plural of companions) — omit this field "
+        "entirely rather than guessing a headcount for that side; "
+        "the bot will ask how many. "
+        "Use the key 'undecided' for people who are in the group "
+        "but for whom the message does not say what activity they "
+        "will do (e.g. they are only described as not certified: "
+        "'somos 3, uno no está certificado' -> "
+        '{"certified_diving": 2, "undecided": 1}). Never turn a '
+        "certification fact alone into 'minicourse' or 'snorkel': "
+        "the bot will recommend options to those people."
+    ),
 }
 _FIELD_MEANING_ES = {
     "is_certified": (
@@ -101,12 +140,88 @@ _FIELD_MEANING_ES = {
         "gentilicios regionales ('soy paisa', 'soy rolo', 'soy costeño'), o si vive en "
         "Colombia aunque sea de otro país. False si es extranjero y no vive en Colombia."
     ),
+    "activity": "qué actividad de buceo quiere el cliente.",
+    "group_size": (
+        "cuántas personas van en total — cuenta a TODAS las personas mencionadas, "
+        "incluidos niños, no-buzos y gente mencionada por relación. Solo cuenta cuando "
+        "el mensaje enumera un número concreto y contable de personas: 'mi esposa y "
+        "yo' = 2, 'yo y 3 amigos' = 4, 'mi hija, mi hijo y nosotros dos' = 4, 'cuatro "
+        "adultos y un niño' = 5. NO rellenes el campo si los acompañantes son un plural "
+        "vago sin ninguna cifra — p. ej. 'mis amigos', 'unos amigos', 'mi familia' sin "
+        "decir cuántos. Un plural vago implica más de uno pero NO un total concreto; "
+        "inventar una cifra ahí es justo el tipo de valor inventado que hay que evitar "
+        "— omite el campo y el bot preguntará cuántos."
+    ),
+    "group_allocation": (
+        "cómo se reparte el grupo por actividad, SOLO cuando la cifra de cada "
+        'actividad es explícitamente contable, p. ej. {"certified_diving": 2, '
+        '"snorkel": 1}. Si el grupo es mixto pero algún tramo no tiene cifra contable '
+        "— p. ej. 'yo buceo y mis amigos snorkel' (un plural de acompañantes sin "
+        "contar) — omite el campo entero en vez de inventar una cifra para ese tramo; "
+        "el bot preguntará cuántos. Usa la clave 'undecided' para las personas que "
+        "están en el grupo pero de las que el mensaje no dice qué actividad harán (p. "
+        "ej. solo se dice que no están certificadas: 'somos 3, uno no está "
+        'certificado\' -> {"certified_diving": 2, "undecided": 1}). Nunca conviertas '
+        "un dato de certificación en 'minicourse' o 'snorkel': el bot les recomendará "
+        "opciones a esas personas."
+    ),
+}
+
+# Reglas SOLO de verificacion (2026-09-15, ronda C): lo que las guias del veto sabian y
+# el tool no. Se anaden a la definicion en las guias (`_meaning_rule`), nunca al tool:
+# en el camino de relleno hicieron perder `is_certified`/`group_size` en "quiero probar
+# el buceo, nunca lo he hecho" y repartir b05 sin la pregunta aclaratoria.
+_FIELD_VERIFY_RULES_EN = {
+    "activity": (
+        "Key rule: if they explicitly name a specific PADI course (Open Water, "
+        "Advanced, Rescue, Divemaster), say they want to 'get certified', or ask for "
+        "their 'first diving level'/'first course', THAT is what they asked for, even "
+        "if the same message says they've never dived, it's their first time, or they "
+        "have no experience — those phrases describe their CURRENT level, they don't "
+        "change the PRODUCT being requested. Only use 'minicourse' when the message "
+        "does NOT name a specific PADI course and only talks about trying diving "
+        "without certifying."
+    ),
+    "group_size": "It changes the price.",
+    "group_allocation": (
+        "Return the COMPLETE split, covering EVERY activity mentioned, using the same "
+        "identifiers as `activity`. Count the parts named with just a noun and no verb "
+        "too ('3 certified', '4 with a licence', '2 open water') — they are as "
+        "countable as '3 are diving'. The numbers must add up to the group total when "
+        "the message states it: if your split does NOT add up to that total, you have "
+        "dropped a part — and omit the whole field rather than returning an "
+        "incomplete split."
+    ),
+}
+_FIELD_VERIFY_RULES_ES = {
+    "activity": (
+        "Regla clave: si nombra explícitamente un curso PADI concreto (Open Water, "
+        "Advanced, Rescue, Divemaster), pide 'certificarse', o pide su 'primer "
+        "nivel'/'primer curso' de buceo, ESO es lo que pidió, incluso si el mismo "
+        "mensaje dice que nunca ha buceado, que es su primera vez, o que no tiene "
+        "experiencia — esas frases describen su NIVEL actual, no cambian el PRODUCTO "
+        "que está pidiendo. Solo usa 'minicourse' cuando el mensaje NO nombra ningún "
+        "curso PADI concreto y solo habla de probar el buceo sin certificarse."
+    ),
+    "group_size": "Cambia el precio.",
+    "group_allocation": (
+        "Devuelve el reparto COMPLETO, con TODAS las actividades mencionadas, usando "
+        "los mismos identificadores de `activity`. Cuenta también los tramos nombrados "
+        "con un sustantivo y sin verbo ('3 certificados', '4 con título', '2 open "
+        "water'), que son igual de contables que '3 bucean'. Las cifras deben sumar el "
+        "total del grupo si el mensaje lo dice: si te sale un reparto que NO suma ese "
+        "total, es que has perdido un tramo — y omite el campo entero antes que "
+        "devolver un reparto incompleto."
+    ),
 }
 
 
 def _meaning_rule(field: str, lang: str) -> str:
+    """Guia de verificacion de un campo: su definicion unica (la misma del tool) mas, si
+    la tiene, la regla que solo aplica al verificar."""
     meanings = _FIELD_MEANING_ES if lang == "es" else _FIELD_MEANING_EN
-    return f"• `{field}` — {meanings[field]}"
+    extra = (_FIELD_VERIFY_RULES_ES if lang == "es" else _FIELD_VERIFY_RULES_EN).get(field)
+    return f"• `{field}` — {meanings[field]}" + (f" {extra}" if extra else "")
 
 
 EXTRACTION_TOOL = {
@@ -130,7 +245,7 @@ EXTRACTION_TOOL = {
                         "padi_open_water", "padi_open_water_referral", "padi_advanced",
                         "padi_rescue", "padi_divemaster", "padi_specialty",
                     ],
-                    "description": "The diving-related activity the customer wants.",
+                    "description": _FIELD_MEANING_EN["activity"],
                 },
                 "is_certified": {
                     "type": "boolean",
@@ -138,41 +253,11 @@ EXTRACTION_TOOL = {
                 },
                 "group_size": {
                     "type": "integer",
-                    "description": (
-                        "Total number of people in the customer's party — count "
-                        "EVERYONE mentioned, including children, non-divers, and "
-                        "people referred to by relationship. Infer the count ONLY "
-                        "when the message enumerates a specific, countable number of "
-                        "individuals: 'my wife and I' = 2, 'me plus 3 friends' = 4, "
-                        "'my daughter, my son and us two' = 4, 'four adults and a "
-                        "kid' = 5. Do NOT set this field when companions are "
-                        "mentioned as a vague, uncounted plural with no number given "
-                        "at all — e.g. 'my friends'/'mis amigos', 'some friends'/"
-                        "'unos amigos', 'my family' with no headcount. A vague plural "
-                        "implies more than one but NOT a specific total; guessing a "
-                        "number here is exactly the kind of invented value you must "
-                        "avoid — omit the field and let the bot ask how many."
-                    ),
+                    "description": _FIELD_MEANING_EN["group_size"],
                 },
                 "group_allocation": {
                     "type": "object",
-                    "description": (
-                        "Split of the group by activity, ONLY when each activity's "
-                        "headcount is explicitly countable, e.g. "
-                        '{"certified_diving": 2, "snorkel": 1}. If the message '
-                        "describes a mixed group but one side has no countable "
-                        "number — e.g. 'yo buceo y mis amigos snorkel' (an "
-                        "uncounted plural of companions) — omit this field "
-                        "entirely rather than guessing a headcount for that side; "
-                        "the bot will ask how many. "
-                        "Use the key 'undecided' for people who are in the group "
-                        "but for whom the message does not say what activity they "
-                        "will do (e.g. they are only described as not certified: "
-                        "'somos 3, uno no está certificado' -> "
-                        '{"certified_diving": 2, "undecided": 1}). Never turn a '
-                        "certification fact alone into 'minicourse' or 'snorkel': "
-                        "the bot will recommend options to those people."
-                    ),
+                    "description": _FIELD_MEANING_EN["group_allocation"],
                     "additionalProperties": {"type": "integer"},
                 },
                 "last_dive_over_2_years": {
@@ -450,43 +535,12 @@ _VERIFICATION_FOOTER_EN = (
 # Mismo criterio que con los `enum` (ver `_enum_values_sentence`): lo que es
 # compartido se escribe UNA vez y lo consumen los dos prompts.
 _FIELD_RULES_ES = {
-    "activity": (
-        "• `activity` — qué actividad pidió el cliente. Regla clave: si nombra "
-        "explícitamente un curso PADI concreto (Open Water, Advanced, Rescue, "
-        "Divemaster), pide 'certificarse', o pide su 'primer nivel'/'primer "
-        "curso' de buceo, ESO es lo que pidió, incluso si el mismo mensaje "
-        "dice que nunca ha buceado, que es su primera vez, o que no tiene "
-        "experiencia — esas frases describen su NIVEL actual, no cambian el "
-        "PRODUCTO que está pidiendo. Solo usa 'minicourse' cuando el mensaje "
-        "NO nombra ningún curso PADI concreto y solo habla de probar el buceo "
-        "sin certificarse."
-    ),
+    "activity": _meaning_rule("activity", "es"),
     "is_certified": _meaning_rule("is_certified", "es"),
     "is_colombian": _meaning_rule("is_colombian", "es"),
     "location": _meaning_rule("location", "es"),
-    "group_size": (
-        "• `group_size` — cuántas personas van en total (cambia el precio). "
-        "Cuenta a TODAS las personas mencionadas, incluidos niños, no-buzos y "
-        "gente mencionada por relación. Solo responde cuando el mensaje "
-        "enumera un número concreto y contable ('mi pareja y yo' = 2, 'mi "
-        "pareja y nuestros dos hijos' = 4, 'cuatro adultos y un niño' = 5); NO "
-        "inventes una cifra si los acompañantes son un plural vago ('mis "
-        "amigos', 'mi familia' sin decir cuántos)."
-    ),
-    "group_allocation": (
-        "• `group_allocation` — cómo se reparte el grupo por actividad, en "
-        "formato {actividad: cuántos}. Devuelve el reparto COMPLETO, con TODAS "
-        "las actividades mencionadas, usando los mismos identificadores de "
-        "`activity` (`certified_diving`, `minicourse`, `snorkel`, "
-        "`padi_open_water`...). Cuenta también los tramos nombrados con un "
-        "sustantivo y sin verbo ('3 certificados', '4 con título', '2 open "
-        "water'), que son igual de contables que '3 bucean'. Las cifras deben "
-        "sumar el total del grupo si el mensaje lo dice: si te sale un reparto "
-        "que NO suma ese total, es que has perdido un tramo. Si algún tramo no "
-        "tiene un número contable ('yo buceo y mis amigos snorkel'), OMITE el "
-        "campo entero en vez de inventar una cifra — y omítelo "
-        "entero también antes que devolver un reparto incompleto."
-    ),
+    "group_size": _meaning_rule("group_size", "es"),
+    "group_allocation": _meaning_rule("group_allocation", "es"),
 }
 
 _FIELD_DETECTOR_HINTS_ES = {
@@ -505,43 +559,12 @@ _FIELD_DETECTOR_HINTS_ES = {
 }
 
 _FIELD_RULES_EN = {
-    "activity": (
-        "• `activity` — which activity the customer asked for. Key rule: if "
-        "they explicitly name a specific PADI course (Open Water, Advanced, "
-        "Rescue, Divemaster), say they want to 'get certified', or ask for "
-        "their 'first diving level'/'first course', THAT is what they asked "
-        "for, even if the same message says they've never dived, it's their "
-        "first time, or they have no experience — those phrases describe their "
-        "CURRENT level, they don't change the PRODUCT being requested. Only "
-        "use 'minicourse' when the message does NOT name a specific PADI "
-        "course and only talks about trying diving without certifying."
-    ),
+    "activity": _meaning_rule("activity", "en"),
     "is_certified": _meaning_rule("is_certified", "en"),
     "is_colombian": _meaning_rule("is_colombian", "en"),
     "location": _meaning_rule("location", "en"),
-    "group_size": (
-        "• `group_size` — how many people in total (changes the price). Count "
-        "EVERYONE mentioned, including children, non-divers and people "
-        "referred to by relationship. Only answer when the message enumerates "
-        "a specific, countable number ('my partner and I' = 2, 'my partner and "
-        "our two kids' = 4, 'four adults and a kid' = 5); do NOT invent a "
-        "number for a vague plural ('my friends', 'my family' with no "
-        "headcount)."
-    ),
-    "group_allocation": (
-        "• `group_allocation` — how the group splits by activity, as "
-        "{activity: headcount}. Return the COMPLETE split, covering EVERY "
-        "activity mentioned, using the same identifiers as `activity` "
-        "(`certified_diving`, `minicourse`, `snorkel`, `padi_open_water`...). "
-        "Count the parts named with just a noun and no verb too ('3 certified', "
-        "'4 with a licence', '2 open water') — they are as countable as '3 are "
-        "diving'. The numbers must add up to the group total when the message "
-        "states it: if your split does NOT add up to that total, you have "
-        "dropped a part. If any part has no countable number ('I dive and my "
-        "friends snorkel'), OMIT the whole field rather than inventing a "
-        "headcount — and omit it rather than returning an "
-        "incomplete split."
-    ),
+    "group_size": _meaning_rule("group_size", "en"),
+    "group_allocation": _meaning_rule("group_allocation", "en"),
 }
 
 _FIELD_DETECTOR_HINTS_EN = {

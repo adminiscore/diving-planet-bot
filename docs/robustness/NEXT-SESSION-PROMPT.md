@@ -58,7 +58,7 @@ Retomamos el trabajo de robustez del bot en la rama `feature/pre_gadea`. Lee pri
 | Recomendación al acompañante | resolutor 11/11, estancia 6/6 |
 | Pregunta "¿ya certificados o quieren certificarse?" | cuándo preguntar 10/10, resolutor 7/7 |
 | Precio de paquetes (RAG, 21 preguntas sin LLM) | 11 cambios de 21 frente a antes, todos a bien |
-| Suite | **2161 passed / 18 skipped** |
+| Suite | **2173 passed / 18 skipped** |
 
 ### Hecho el 2026-09-15 (no repetir)
 
@@ -93,13 +93,14 @@ Retomamos el trabajo de robustez del bot en la rama `feature/pre_gadea`. Lee pri
      todo) y el sujeto pospuesto ("no es certificado mi acompañante" ya no es de quien escribe).
 2. ~~"somos 5 y 2 nunca han buceado"~~ **hecho (2026-09-15)**: la regla final de `detect()` se
    generalizó ("la actividad principal no contradice el reparto"). Foto: 1 cambio de 244.
-3. **Definición única por campo en los prompts, resto de campos**: `group_size`, `group_allocation`
-   y `activity`.
-   - Su texto en el tool lleva reglas medidas propias (plural vago, `undecided`) que hay que
-     reconciliar.
-   - Separar el significado neutro del tono de cada tarea: el tono de verificación en el prompt de
-     relleno ya costó 5 casos.
-   - Medir con el eval-set completo y la batería de grupo.
+3. ~~Definición única por campo en los prompts, resto de campos~~ **hecho (2026-09-15)**.
+   - `activity`, `group_size` y `group_allocation` salen de `_FIELD_MEANING_*` (el texto ya medido del
+     tool) más `_FIELD_VERIFY_RULES_*` (solo en las guías de verificación).
+   - **Negativo medido:** poner las reglas de verificación en el tool baja el eval-set a 217/230 y
+     vuelve a repartir b05.
+   - **Siguiente, mismo principio:** la regla "un plural vago no es una cantidad" está en cinco sitios
+     (`group_size`, `group_allocation` y tres campos del prompt de señales). Borrador en el
+     progress-log; medir con `battery_activity_choice`, grupo, booleanos y eval-set.
 4. **Centralización de vocabulario, conceptos que quedan** (inventario en el progress-log). Cada paso
    con foto antes/después sin LLM.
    - `_BARE_PACKAGE_DIVE_RE` aún escribe `5|7|9` en el regex (el filtro ya sale del catálogo).
