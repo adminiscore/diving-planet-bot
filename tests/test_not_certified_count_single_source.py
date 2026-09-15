@@ -67,7 +67,9 @@ def test_person_split_respects_the_known_total(known_total, expected):
 
 @pytest.mark.parametrize("message", [
     "mi novia es buza certificada y yo tambien",       # mismo estado: nada que repartir
-    "mi amigo tiene licencia, yo no",                  # quien escribe no dice nada propio
+    # "mi amigo tiene licencia, yo no" ya reparte: la frase eliptica se lee por su
+    # polaridad (hallazgo I, 2026-09-15, tests/test_elided_certification_contrast.py).
+    "mi amigo no tiene licencia y yo tampoco",         # misma polaridad: nada que repartir
     "soy buzo certificado y vengo con mi pareja",      # la pareja sin certificacion dicha
 ])
 def test_no_person_split_without_both_opposite_statements(message):

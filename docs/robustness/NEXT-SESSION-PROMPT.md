@@ -59,7 +59,7 @@ Retomamos el trabajo de robustez del bot en la rama `feature/pre_gadea`. Lee pri
 | Recomendación al acompañante | resolutor 11/11, estancia 6/6 |
 | Pregunta "¿ya certificados o quieren certificarse?" | cuándo preguntar 10/10, resolutor 7/7 |
 | Precio de paquetes (RAG, 21 preguntas sin LLM) | 11 cambios de 21 frente a antes, todos a bien |
-| Suite | **2304 passed / 18 skipped** |
+| Suite | **2326 passed / 18 skipped** |
 
 ### Hecho el 2026-09-15 (no repetir)
 
@@ -242,7 +242,9 @@ F. **Costes de las guardas del núcleo** (hallazgo 2026-09-15 con `run_extractio
    - **Medir con:** `--core`, la batería de grupo (config PRE) y la de booleanos. Sin empeorar
      los casos de riesgo, que son justo los que estas guardas protegen.
 
-I. **El LLM se abstiene del grupo entero con muchos campos pedidos** (medido 2026-09-15, ya en PRE).
+I. ~~**El LLM se abstiene del grupo entero con muchos campos pedidos**~~ **arreglado (2026-09-15)** para la
+   familia "persona con estado distinto": la frase elíptica del contraste se lee por su polaridad y el
+   detector reparte sin depender del LLM. Antes: (medido 2026-09-15, ya en PRE).
    - "soy certificado y mi hijo no", "my wife is certified and I am not" y "mi pareja tiene el
      advanced y yo no tengo nada" (familia p de la batería de grupo), con estado vacío: con los
      mismos prompts y peticiones, el LLM devuelve a veces `{}` completo. p02 1/2, p05 1/2, p07 0/2

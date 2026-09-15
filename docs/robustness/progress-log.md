@@ -4026,3 +4026,44 @@ mensaje.
 **G medido tras el reorden, con el LLM real y en conversación completa (2/2):** con "¿para cuántas
 personas?" pendiente, "mi hijo tiene 9 años", "llegamos el 12" y "2 inmersiones" no fijan el total
 ni la nacionalidad; "somos 3" fija 3. **Hallazgo G cerrado.**
+
+### Hallazgo I: el reparto de "persona con estado distinto" ya no depende de que el LLM conteste
+
+**Síntoma**, medido con el LLM real. En la familia p de la batería de grupo, con estado vacío, el LLM
+devolvía a veces `{}` entero y el reparto dependía de esa tirada: p02 1/2, p05 1/2 y p07 0/2 en HEAD,
+con prompts y peticiones idénticos. Casos: "soy certificado y mi hijo no", "my wife is certified and
+I am not" y "mi pareja tiene el advanced y yo no tengo nada". Disparar más peticiones no bastaba: en
+p07 la segunda petición de grupo también volvía vacía, y además cuesta RPD.
+
+**Causa estructural: la elipsis del contraste.** El detector ya tiene una regla por persona (otra
+persona nombrada y quien escribe, de estado contrario → `{certified_diving: 1, undecided: 1}`),
+pero necesita las dos certificaciones. La frase coordinada no repite el predicado ("..., yo no",
+"y mi hijo no", "and I am not", "y yo no tengo nada") y `certification_claim` devolvía None para ese
+lado.
+
+**Arreglo, sin vocabulario de dominio: `elided_certification`.** La frase coordinada sin afirmación
+propia, cuyo sujeto es la contraparte ("yo"/"I" si lo afirmado es de otra persona, o la persona
+nombrada si es de quien escribe), se lee **por su propia polaridad**:
+- **Negación → no certificado**, aunque la frase siga ("yo no tengo nada").
+- **Afirmación → certificado**, solo si quitado el sujeto quedan partículas o auxiliares ("pero yo
+  sí", "but I am"). "yo sí quiero bucear" no cuenta.
+- **Solo hay reparto si las dos polaridades son distintas.** "mi amigo no tiene licencia y yo
+  tampoco" no reparte.
+- Reutiliza `_CLAUSE_BOUNDARY_RE`, `_SINGULAR_PERSON`, `certification_claim` y `holds_padi_cert`. La
+  regla por persona solo rellena el lado que falta.
+
+**Medido sin LLM:**
+- **Foto del detector** sobre 265 entradas (eval-set, las tres baterías y sondas de contraste):
+  **18 cambios, todos buscados**.
+  - p01, p02, p03, p05 y p07 reparten de forma determinista, con total 2.
+  - Las sondas de contraste también, incluidas las afirmativas.
+  - Ningún mensaje del eval-set cambia.
+- **Consecuencia aceptada:** "mi hermano es buzo, yo no quiero bucear" deja a quien escribe sin
+  decidir y el bot le recomienda opciones.
+- **Quedan fuera:** plurales vagos, "tampoco", mensajes sin estado dicho y dos personas nombradas
+  sin quien escribe.
+- **Tests:** 22 nuevos.
+  - Se actualizan dos que fijaban la limitación anterior.
+  - "mi amigo tiene licencia, yo no" pasa de "no reparte" a reparto.
+  - El test de la segunda petición de grupo usa ahora un mensaje que el detector no puede repartir.
+- Suite 2326.

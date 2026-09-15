@@ -785,6 +785,47 @@ def _other_person_cert_re() -> re.Pattern:
     )
 
 
+# Polaridad de una frase eliptica ("yo no", "pero yo si", "and I am not"): la negacion
+# se reconoce aunque la frase siga ("yo no tengo nada"); la afirmacion solo si, quitado
+# el sujeto, la frase son particulas o auxiliares ("yo si", "I am", "I do too"), para que
+# "yo si quiero bucear" no pase por una afirmacion de certificacion.
+_ELIDED_NEGATION_RE = re.compile(r"\b(?:no|not|nunca|never)\b|n't\b")
+_ELIDED_AFFIRMATIVE_WORDS = frozenset({"si", "yes", "tambien", "also", "too", "am", "do", "does", "is", "have", "has"})
+_WRITER_SUBJECT_WORDS = frozenset({"yo", "i", "me", "m"})
+
+
+def elided_certification(message: str, about_writer: bool) -> bool | None:
+    """Certificacion de una frase eliptica de contraste (2026-09-15, hallazgo I): "mi amigo
+    tiene licencia, yo no", "soy certificado y mi hijo no", "my wife is certified and I am
+    not", "mi pareja tiene el advanced y yo no tengo nada". La frase coordinada no repite
+    el predicado y `certification_claim` no la leia, asi que el reparto dependia de que el
+    LLM contestara (y a veces devolvia `{}` entero).
+
+    Devuelve la polaridad de la frase sin afirmacion propia cuyo sujeto es quien escribe
+    (`about_writer`) o la persona nombrada: False si niega, True si solo afirma, None si no
+    hay tal frase. No invierte nada: "mi amigo no tiene licencia y yo tampoco" no es un
+    contraste y no se lee aqui."""
+    text = strip_accents((message or "").lower())
+    for clause in _CLAUSE_BOUNDARY_RE.split(text):
+        if not clause.strip() or certification_claim(clause, about_writer=False) is not None:
+            continue
+        if holds_padi_cert(clause, about_writer=False):
+            continue
+        words = re.findall(r"\w+", clause)
+        writer = bool(_WRITER_SUBJECT_WORDS & set(words))
+        other = bool(re.search(_SINGULAR_PERSON, clause, re.IGNORECASE))
+        if about_writer != writer or writer == other:
+            continue
+        if _ELIDED_NEGATION_RE.search(clause):
+            return False
+        rest = [w for w in words if w not in _WRITER_SUBJECT_WORDS]
+        if other:
+            rest = re.findall(r"\w+", re.sub(_SINGULAR_PERSON, " ", clause, flags=re.IGNORECASE))
+        if rest and set(rest) <= _ELIDED_AFFIRMATIVE_WORDS:
+            return True
+    return None
+
+
 def other_person_certification(message: str) -> bool | None:
     """Certificacion dicha de OTRA persona del mensaje: True si la afirma ("mi amigo es
     buzo"), False si la niega ("mi amigo no esta certificado"), None si no habla de eso.
@@ -1371,6 +1412,12 @@ class IntentDetector:
         if not intent.group_allocation and known_total in (None, 0, 2):
             other = other_person_certification(message)
             writer = certification_claim(message)
+            # El lado que no repite el predicado ("..., yo no", "y mi hijo no") se lee por
+            # su propia polaridad (hallazgo I, 2026-09-15). Solo se rellena el que falta.
+            if other is not None and writer is None:
+                writer = elided_certification(message, about_writer=True)
+            elif writer is not None and other is None:
+                other = elided_certification(message, about_writer=False)
             if (
                 len(re.findall(_SINGULAR_PERSON, strip_accents(message.lower()), re.IGNORECASE)) == 1
                 and other is not None and writer is not None and other != writer

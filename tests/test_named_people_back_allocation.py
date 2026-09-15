@@ -146,7 +146,9 @@ async def test_group_fields_lost_by_the_merged_request_are_asked_alone():
 async def test_group_fields_lost_among_many_gaps_are_asked_alone():
     # Sin campo que verificar (solo `fill_gaps`), con muchos huecos el LLM devolvio 1/2
     # solo `is_certified` para "mi amigo tiene licencia, yo no". Dos personas nombradas:
-    # se piden los campos del grupo solos.
+    # se piden los campos del grupo solos. Ese mensaje ya lo reparte el detector (frase
+    # eliptica, hallazgo I, 2026-09-15); el mecanismo se sigue probando con uno que el
+    # detector no puede repartir.
     calls = []
 
     async def fake_fill(*args, **kwargs):
@@ -163,7 +165,7 @@ async def test_group_fields_lost_among_many_gaps_are_asked_alone():
         patch.object(supervisor.settings, "llm_group_size_veto_cutover", True),
         patch.object(supervisor.settings, "llm_group_allocation_veto_cutover", True),
     ):
-        await cc._understand(state, "mi amigo tiene licencia, yo no")
+        await cc._understand(state, "mi amigo tiene licencia y yo estoy aprendiendo")
     assert calls[-1] == ("group_size", "group_allocation")
     assert state.detected_group_allocation == {"certified_diving": 1}
     assert state.detected_group_size == 2
