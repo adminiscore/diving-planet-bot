@@ -21,6 +21,7 @@ Diseño:
 
 from __future__ import annotations
 
+import json
 import logging
 from typing import TypeVar
 
@@ -42,3 +43,35 @@ def trace_openai(client: _C) -> _C:
         except Exception as exc:  # noqa: BLE001 — el tracing nunca debe romper el bot
             logger.warning(f"[LANGSMITH] wrap_openai falló, sigo sin trazar el cliente: {exc}")
     return client
+
+
+def tool_arguments(tool_call, tool: dict) -> dict:
+    """Argumentos de una llamada a tool, reencajados en el esquema de ESE tool. Punto
+    unico de lectura para todos los tools del bot (2026-09-15).
+
+    Por que (hallazgo D): con "¿va a llover mañana en cartagena?" el LLM del router
+    devolvia `{"weather_conditions": true}` -- un valor del enum de `sensitive_topic`
+    sacado a clave propia -- en vez de `{"sensitive_topic": "weather_conditions"}`.
+    Nadie leia esa clave y la pregunta de pronostico no se escalaba. Es un fallo de
+    FORMA, no de vocabulario, asi que se arregla desde el esquema: una clave que el tool
+    no declara, con valor `true`, que es valor del enum de UN solo campo vacio, vuelve a
+    ese campo. Con un valor de texto no se toca (seria otra cosa, no un flag aplanado),
+    ni si el valor pertenece a varios enums o el campo ya viene relleno.
+
+    Deja pasar `json.JSONDecodeError` como antes: cada llamador ya lo gestiona."""
+    args = json.loads(tool_call.function.arguments or "{}")
+    if not isinstance(args, dict):
+        return args
+    properties = tool.get("function", {}).get("parameters", {}).get("properties", {})
+    owners: dict[str, list[str]] = {}
+    for name, spec in properties.items():
+        for value in spec.get("enum") or ():
+            if isinstance(value, str):
+                owners.setdefault(value, []).append(name)
+    for key in [k for k in args if k not in properties]:
+        fields = owners.get(key, [])
+        if args[key] is True and len(fields) == 1 and args.get(fields[0]) in (None, "", [], {}):
+            args[fields[0]] = key
+            del args[key]
+            logger.info(f"[LLM_TOOL] clave aplanada reencajada: {key}=true -> {fields[0]}={key!r}")
+    return args

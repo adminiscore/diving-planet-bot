@@ -3910,3 +3910,30 @@ cuota diaria agotada tras las mediciones del día). El script para en seco para 
 degradados. Los dos casos del eval-set que F.2 cambia (`grp-es-mixed-suegra`,
 `grp-en-implicit-count-ages`) están cubiertos por tests con la respuesta exacta que dio el LLM real en
 la sonda de la tarea 6. Repetir la tanda con cuota y compararla por caso con la de 7b (216/230).
+
+### Hallazgo D, arreglado (pendiente de medir con el LLM): la pregunta de pronóstico se escala
+
+**Síntoma** (batería del router, caso `s04-llover-manana`). Con "¿va a llover mañana en cartagena?"
+el LLM devolvía `{"weather_conditions": true}` (3/3 con el enum de hoy): un valor del enum de
+`sensitive_topic` sacado a clave propia, en vez de `{"sensitive_topic": "weather_conditions"}`.
+Ninguna palabra clave lo caza, nadie leía esa clave y el mensaje seguía el flujo normal, donde se
+podía inventar el pronóstico. La respuesta de escalado ya existía (`SENSITIVE_RULES` /
+`sensitive_response_for`); solo fallaba la forma.
+
+**Arreglo, sin vocabulario y desde el esquema.** Un único lector, `llm_client.tool_arguments(tool_call,
+tool)`, para los 7 sitios que leían la respuesta de un tool: router, extracción ×3, señales,
+resolutor de slot y notas.
+- **Se reencaja** una clave que el tool no declara, con valor `true`, que sea valor del enum de un
+  solo campo vacío.
+- **No se toca** si el valor es de texto (sería otra cosa, no un flag aplanado), si pertenece a
+  varios enums o si el campo ya viene relleno.
+- Arregla la misma forma de fallo en cualquier enum de cualquier tool, sin coste en peticiones.
+
+**Medido sin LLM:**
+- 8 tests: el reencaje, las formas que no se tocan y `detect_routing_signals` con un cliente falso que
+  devuelve exactamente la respuesta de la sonda real, que ahora da `sensitive_topic` y su respuesta de
+  escalado.
+- Suite 2266. Sin cambios de prompts.
+
+**Pendiente con cuota:** `scripts/battery_router_signals.py` (37 casos), para ver `s04` en verde y
+que ninguna otra señal cambie.

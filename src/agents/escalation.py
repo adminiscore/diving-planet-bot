@@ -26,7 +26,7 @@ import structlog
 from openai import AsyncOpenAI
 
 from src.config import settings
-from src.llm_client import trace_openai
+from src.llm_client import tool_arguments, trace_openai
 from src.prompts.router import ROUTING_TOOL, routing_system_prompt
 
 logger = structlog.get_logger()
@@ -165,7 +165,7 @@ async def detect_routing_signals(
         tool_calls = getattr(choice, "tool_calls", None)
         if not tool_calls:
             return {}
-        args = json.loads(tool_calls[0].function.arguments or "{}")
+        args = tool_arguments(tool_calls[0], ROUTING_TOOL)
     except (json.JSONDecodeError, TypeError, AttributeError, IndexError) as exc:
         _llm_logger.warning(f"[ESCALATION] routing signals malformed response: {exc}")
         return {}

@@ -54,6 +54,10 @@ History
   - **Cambio de reparto (f01, 3/3):** "al final mi suegra también bucea, no hace snorkel" no cambia el reparto guardado.
   - **"primero dime qué incluye el tour":** recibe un acuse genérico en vez de la información, porque la detección de pregunta solo mira el principio del mensaje.
   - Causas y pistas generales en el progress-log.
+* **Hallazgo D arreglado (pendiente de medir con el LLM): una pregunta de pronóstico ya se escala.**
+  - **Síntoma:** con "¿va a llover mañana?" el LLM del router devolvía la categoría como clave propia (`weather_conditions: true`) en vez de dentro de `sensitive_topic`. Nadie la leía y el bot podía inventarse el tiempo.
+  - **Arreglo:** un único lector de respuestas de tool (`llm_client.tool_arguments`, en los 7 sitios que las leen) reencaja desde el esquema una clave aplanada con valor `true` en su campo. Arregla esa forma de fallo en cualquier enum, sin vocabulario ni peticiones.
+  - **Medido:** 8 tests; suite 2266. Falta la batería del router con cuota.
 * **Hallazgo H arreglado: los tramos de un grupo ya contado no se cobran dos veces.** Con "vamos 3, mi pareja y yo buceamos y mi suegra hace snorkel", el bot tiraba el reparto y preguntaba "¿cuántos para buceo?"; cada respuesta sumaba encima del total (3 → 4 → 5 personas cobradas). Una regla única, que ya se usaba con las personas sin decidir: con el total sabido, la actividad principal se queda con el resto.
   - Un reparto que cubre exactamente a las personas nombradas se acepta (F.2).
   - La principal no se pregunta.
@@ -68,7 +72,7 @@ History
 * **7a arreglado: la actividad de otra persona ya no pisa la principal ni se cobra mal.** "él quiere hacer snorkel" a mitad de la reserva cambiaba la actividad principal a snorkel y el resumen cobraba 2 inmersiones. Quién es otra persona lo decide el LLM de señales, que reconoce pronombres y jerga. Como nadie sabe si esa persona ya estaba contada, el bot pregunta "¿seguís siendo 2 o se suma alguien?" antes de mover o añadir a nadie, salvo que el mensaje diga que se suma alguien. LLM real 3/3: se cobra 1 inmersión + 1 snorkel. Foto de las baterías: 0 cambios.
 * **7d arreglado: una pregunta de información ya no tiene que abrir el mensaje.** "primero dime qué incluye el tour", "vale, cuánto cuesta" o "perfecto, y cómo pago" recibían un acuse genérico en vez de la información. Se reconocen por estructura, con clases gramaticales cerradas y no frases: el imperativo de pedir información en cualquier posición, y la palabra interrogativa al inicio de una cláusula. Foto sin LLM sobre 440 mensajes: cambian 7, todos sondas buscadas, y ningún mensaje del eval-set ni de las baterías.
 * **Para reinvestigar** (owner): grupo mixto → USD (necesita un valor propio, no el booleano), respuesta doble tras F5a y unificar la ubicación entre detector y núcleo. Detalle en `docs/robustness/NEXT-SESSION-PROMPT.md`.
-* Suite: **2232 passed / 18 skipped**.
+* Suite: **2266 passed / 18 skipped**.
 
 0.25.0 - (2026-09-14)
 ----------------------
@@ -86,7 +90,7 @@ History
 * **Curso referido (474 USD frente a 693 del Open Water): preparado, sin detección.** Decisión del owner: solo si el cliente lo dice, y entonces con el asesor. Aplicado sin tocar prompts: el cierre con asesor sale del campo `contact_only` de `services.json` (antes estaba escrito a mano solo para Divemaster), el referido tiene tipo de carrito y `offer: false` (nunca se ofrece ni sale en las opciones de curso), y `dom.sibling_ids()` deriva del registro las actividades hermanas. **La detección se midió y se revirtió**: verificar con el LLM cada Open Water (hermanas + referido en el enum) acertaba el referido, pero el eval-set bajó 214 → 213/219 ("hey we arent certified, first time diving" pasó de minicurso a Open Water). Pendiente de rediseño.
 * **Grupo con nacionalidades mixtas: USD para todo el grupo** (decisión del owner). Antes el bot explicaba un pago individual por nacionalidad; ahora lo dice así y deja `is_colombian=False` en el estado. Sigue aplicándose solo cuando `_MIXED_NATIONALITY_RE` reconoce el grupo mixto.
 * **Decisiones de negocio aplicadas:** edad mínima de Advanced y Rescue **10**; textos de actividades unificados (Rescue Diver, "una especialidad PADI", "dive mini-course", "snorkeling", sin voseo, descripciones impersonales); precio **"183 USD"** en carrito, RAG, catálogo y comparación. Pendientes: Bubble Makers sin servicio y requisito del Rescue.
-* Suite: **1982 passed / 18 skipped**. Eval-set **214/219 (97,7 %)**; batería de grupo 9/10 repartos, 13/13 total, 0 parciales/inventados.
+* Suite: **2266 passed / 18 skipped**. Eval-set **214/219 (97,7 %)**; batería de grupo 9/10 repartos, 13/13 total, 0 parciales/inventados.
 * **Dónde estamos — pendiente** (detalle y orden en `docs/robustness/NEXT-SESSION-PROMPT.md`):
   1. Detectar la carta de referido solo si el cliente lo dice (preparado el cierre con asesor; la detección medida bajaba el eval-set y se revirtió).
   2. Pregunta aclaratoria "¿ya certificados o quieren certificarse?" para "2 open water" / "advanced" dentro de un reparto (decisión del owner).
@@ -107,7 +111,7 @@ History
 * **`is_colombian` con trigger propio** (`nationality_is_ambiguous`): solo verifica con polaridad contradictoria ("dos somos colombianos pero uno es extranjero", "mi pareja es colombiana, yo no"), reutilizando los patrones del detector. La negación compacta que el LLM confundía ("ninguno colombiano") ya no se le consulta. Eval-set (A/B por caso, tanda limpia): `is_colombian` **7/9 → 9/9**, overall **202/207 → 204/207**, sin ningún caso a peor. Ojo al leerlo: ninguno de los 9 casos es ambiguo, así que ese 9/9 prueba que el trigger ya no estropea los casos claros, **no** que el veto acierte en los ambiguos. El flag sigue apagado.
 * **Batería de grupo reescrita**: juzga el estado final, mide los dos vetos, familia nueva de "total mal leído" (13 escenarios) y veredicto `TOTAL_MAL`.
 * **Infraestructura**: LangSmith agotó su cuota mensual (PRE sin trazas); `eval-set.json` no está en la imagen, así que el eval-set no se puede lanzar tal cual dentro del contenedor; y el fallback de la petición fusionada a `fill_gaps` no llega a ejecutarse nunca (`extract_and_verify` se traga el error). Documentado en `docs/robustness/progress-log.md`.
-* Suite: **1873 passed / 18 skipped**.
+* Suite: **2266 passed / 18 skipped**.
 
 0.24.0 - (2026-09-12)
 ----------------------

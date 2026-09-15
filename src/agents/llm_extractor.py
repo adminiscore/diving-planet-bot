@@ -22,7 +22,7 @@ from openai import AsyncOpenAI, OpenAIError
 
 from src.agents.intent_detector import DetectedIntent
 from src.config import settings
-from src.llm_client import trace_openai
+from src.llm_client import tool_arguments, trace_openai
 from src.prompts.booking import (
     EXTRACTION_TOOL,
     SIGNALS_TOOL,
@@ -159,7 +159,7 @@ async def fill_gaps(
         tool_calls = getattr(choice, "tool_calls", None)
         if not tool_calls:
             return {}
-        args = json.loads(tool_calls[0].function.arguments or "{}")
+        args = tool_arguments(tool_calls[0], EXTRACTION_TOOL)
     except (json.JSONDecodeError, TypeError, AttributeError, IndexError) as exc:
         logger.warning(f"[LLM_EXTRACTOR][DEGRADED] malformed response: {exc}")
         return {}
@@ -267,7 +267,7 @@ async def verify_fields(
         tool_calls = getattr(choice, "tool_calls", None)
         if not tool_calls:
             return {}
-        args = json.loads(tool_calls[0].function.arguments or "{}")
+        args = tool_arguments(tool_calls[0], EXTRACTION_TOOL)
     except (json.JSONDecodeError, TypeError, AttributeError, IndexError) as exc:
         logger.warning(f"[LLM_EXTRACTOR][DEGRADED][{log_tag}_VETO] malformed response: {exc}")
         return {}
@@ -342,7 +342,7 @@ async def extract_and_verify(
         tool_calls = getattr(choice, "tool_calls", None)
         if not tool_calls:
             return {}, {}
-        args = _strip_schema_nulls(json.loads(tool_calls[0].function.arguments or "{}"))
+        args = _strip_schema_nulls(tool_arguments(tool_calls[0], EXTRACTION_TOOL))
     except (json.JSONDecodeError, TypeError, AttributeError, IndexError) as exc:
         logger.warning(f"[LLM_EXTRACTOR][DEGRADED][COMBINED] malformed response: {exc}")
         return {}, {}
@@ -452,7 +452,7 @@ async def detect_special_signals(
         tool_calls = getattr(choice, "tool_calls", None)
         if not tool_calls:
             return {}
-        args = json.loads(tool_calls[0].function.arguments or "{}")
+        args = tool_arguments(tool_calls[0], SIGNALS_TOOL)
     except (json.JSONDecodeError, TypeError, AttributeError, IndexError) as exc:
         logger.warning(f"[LLM_EXTRACTOR][DEGRADED] signals malformed response: {exc}")
         return {}
@@ -520,7 +520,7 @@ async def resolve_slot_answer(
         tool_calls = getattr(response.choices[0].message, "tool_calls", None)
         if not tool_calls:
             return {}
-        args = json.loads(tool_calls[0].function.arguments or "{}")
+        args = tool_arguments(tool_calls[0], slot_resolver_tool(slot))
     except (json.JSONDecodeError, TypeError, AttributeError, IndexError) as exc:
         logger.warning(f"[LLM_EXTRACTOR][DEGRADED] slot-resolver malformed response ({slot}): {exc}")
         return {}

@@ -59,7 +59,7 @@ Retomamos el trabajo de robustez del bot en la rama `feature/pre_gadea`. Lee pri
 | Recomendación al acompañante | resolutor 11/11, estancia 6/6 |
 | Pregunta "¿ya certificados o quieren certificarse?" | cuándo preguntar 10/10, resolutor 7/7 |
 | Precio de paquetes (RAG, 21 preguntas sin LLM) | 11 cambios de 21 frente a antes, todos a bien |
-| Suite | **2252 passed / 18 skipped** |
+| Suite | **2266 passed / 18 skipped** |
 
 ### Hecho el 2026-09-15 (no repetir)
 
@@ -156,6 +156,8 @@ Retomamos el trabajo de robustez del bot en la rama `feature/pre_gadea`. Lee pri
 
 ### Primero, con cuota del LLM
 
+- Batería del router (`ENV_FILE=.env.dev python -m scripts.battery_router_signals 3 base`): `s04`
+  debe pasar a verde con el arreglo de D, sin cambios en las otras 36.
 - Repetir `ENV_FILE=.env.dev python -m scripts.run_extraction_eval --core` y compararlo por caso
   con la tanda de 7b (216/230). La del arreglo de H abortó por rate-limit. Se espera que mejoren
   `grp-es-mixed-suegra` y `grp-en-implicit-count-ages` (F.2) y que no empeore ninguno.
@@ -204,7 +206,9 @@ C. **Unificar la ubicación entre detector y núcleo.**
      fuente para las palabras de ubicación.
    - Foto base: script de comparación en el progress-log (224–262 mensajes).
 
-D. **Pronóstico del tiempo sin escalar** (hallazgo 2026-09-15, ya en producción; es de seguridad).
+D. ~~**Pronóstico del tiempo sin escalar**~~ **arreglado sin LLM (2026-09-15), pendiente de medir**: un
+   único lector `llm_client.tool_arguments` reencaja desde el esquema la clave aplanada
+   (`weather_conditions: true` → `sensitive_topic`). Antes: (hallazgo 2026-09-15, ya en producción; es de seguridad).
    - "¿va a llover mañana en cartagena?": ninguna palabra clave de `detect_sensitive_escalation` lo
      caza, y el LLM del router devuelve una clave `weather_conditions: true` que no existe en el
      esquema (3/3 con el enum actual) en vez de `sensitive_topic: "weather_conditions"`. Nadie la
