@@ -794,6 +794,18 @@ _ELIDED_AFFIRMATIVE_WORDS = frozenset({"si", "yes", "tambien", "also", "too", "a
 _WRITER_SUBJECT_WORDS = frozenset({"yo", "i", "me", "m"})
 
 
+def clause_subject(clause: str, person: str = _NAMED_OTHER_PERSON) -> str | None:
+    """De quien habla una frase: "writer" si solo nombra a quien escribe ("yo", "I"),
+    "other" si solo nombra a otra persona (`person`), None si a las dos o a nadie. Pieza
+    unica para leer el sujeto frase a frase (2026-09-15): la usan el contraste eliptico de
+    certificacion (hallazgo I) y el reparto de ofertas por persona del nucleo (hallazgo E)."""
+    writer = bool(_WRITER_SUBJECT_WORDS & set(re.findall(r"\w+", clause)))
+    other = bool(re.search(person, clause, re.IGNORECASE))
+    if writer == other:
+        return None
+    return "writer" if writer else "other"
+
+
 def elided_certification(message: str, about_writer: bool) -> bool | None:
     """Certificacion de una frase eliptica de contraste (2026-09-15, hallazgo I): "mi amigo
     tiene licencia, yo no", "soy certificado y mi hijo no", "my wife is certified and I am
@@ -812,10 +824,10 @@ def elided_certification(message: str, about_writer: bool) -> bool | None:
         if holds_padi_cert(clause, about_writer=False):
             continue
         words = re.findall(r"\w+", clause)
-        writer = bool(_WRITER_SUBJECT_WORDS & set(words))
-        other = bool(re.search(_SINGULAR_PERSON, clause, re.IGNORECASE))
-        if about_writer != writer or writer == other:
+        subject = clause_subject(clause, person=_SINGULAR_PERSON)
+        if subject != ("writer" if about_writer else "other"):
             continue
+        other = subject == "other"
         if _ELIDED_NEGATION_RE.search(clause):
             return False
         rest = [w for w in words if w not in _WRITER_SUBJECT_WORDS]

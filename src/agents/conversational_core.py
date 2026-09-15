@@ -31,6 +31,7 @@ import re
 from collections import Counter
 
 from src.agents.intent_detector import (
+    _CLAUSE_BOUNDARY_RE,
     _PERSON_NOUN_MENTION_EN,
     _PERSON_NOUN_MENTION_ES,
     _PERSON_NOUN_PLURAL_EN,
@@ -42,6 +43,7 @@ from src.agents.intent_detector import (
     DetectedIntent,
     IntentDetector,
     certification_claim,
+    clause_subject,
     course_level_is_ambiguous,
     courses_mentioned,
     dive_counts_in,
@@ -1400,6 +1402,21 @@ def _compose_comparison(offerings: list[str], lang: str) -> str:
             + "\n\nWhich one are you leaning toward? Let's put it together. 🐠")
 
 
+def _offerings_with_own_subject(message: str) -> bool:
+    """¿Cada oferta va con su propio sujeto? "tengo un amigo que quiere bucear y yo hago
+    snorkel", "mi novia hace el minicurso y yo buceo": quien escribe y otra persona, cada
+    uno en su frase con ofertas distintas, es un reparto, no una comparacion (hallazgo E,
+    2026-09-15). Una sola persona que duda ("mi amigo no sabe si bucear o hacer snorkel")
+    tiene un solo sujeto y no cuenta."""
+    owners: dict[str, set] = {}
+    for clause in _CLAUSE_BOUNDARY_RE.split((message or "").lower()):
+        subject = clause_subject(clause)
+        offerings = _mentioned_offerings(clause)
+        if subject and offerings:
+            owners.setdefault(subject, set()).update(offerings)
+    return len(owners) == 2 and owners["writer"] != owners["other"]
+
+
 def _is_deliberation_between_options(message: str, routing_signals: dict) -> bool:
     """True si el mensaje sopesa 2+ ofertas (actividades o cursos) sin decidirse
     — va a RAG en vez de a extracción. Ancla determinista fuerte: exige 2+
@@ -1422,6 +1439,9 @@ def _is_deliberation_between_options(message: str, routing_signals: dict) -> boo
     # snorkel" sigue siendo deliberación pese al número). Sin esto, el gate de
     # deliberación corre ANTES de la extracción y el reparto se pierde a RAG.
     if _EXPLICIT_NUMBER_RE.search(message):
+        return False
+    # El mismo reparto sin cifras: cada oferta con su propio sujeto (hallazgo E).
+    if _offerings_with_own_subject(message):
         return False
     obj = routing_signals.get("comparing_options")
     llm_comparing = bool(obj.get("comparing")) if isinstance(obj, dict) else False

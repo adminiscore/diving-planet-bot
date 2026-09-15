@@ -7,7 +7,7 @@ docs/robustness/progress-log.md ("Tarea 7").
 
     ENV_FILE=.env.dev python -m scripts.repro_old_findings [repeticiones] [casos]
 
-casos: lista separada por comas de drip,correccion,correccion_antes,f01,f01_conversacion,h_total,g_numeros,tour
+casos: lista separada por comas de drip,correccion,correccion_antes,f01,f01_conversacion,h_total,g_numeros,tour,reparto_personas
 (por defecto todos).
 """
 
@@ -145,8 +145,26 @@ async def tour(rep):
     return log
 
 
+async def reparto_personas(rep):
+    """E: cada oferta con su propio sujeto es un reparto, no una comparacion. El ultimo
+    mensaje es el control: una sola persona que duda sigue yendo a comparar."""
+    log = []
+    for opening in (
+        "tengo un amigo que quiere bucear y yo hago snorkel",
+        "mi novia hace el minicurso y yo buceo",
+        "my wife wants to snorkel and I'll dive",
+        "mi amigo no sabe si bucear o hacer snorkel",
+    ):
+        st = _new(f"e-{rep}")
+        st.language = "en" if opening.startswith("my ") else "es"
+        reply = await _say(st, opening, log)
+        log.append(f"      a_comparar={'RAG_MARCADOR' in reply or 'diferencia' in reply or 'difference' in reply}")
+    return log
+
+
 CASES = {"drip": drip, "correccion": correccion, "correccion_antes": correccion_antes, "f01": f01,
-         "f01_conversacion": f01_conversacion, "h_total": h_total, "g_numeros": g_numeros, "tour": tour}
+         "f01_conversacion": f01_conversacion, "h_total": h_total, "g_numeros": g_numeros, "tour": tour,
+         "reparto_personas": reparto_personas}
 
 
 async def main():

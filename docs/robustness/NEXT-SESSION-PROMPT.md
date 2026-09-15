@@ -59,7 +59,7 @@ Retomamos el trabajo de robustez del bot en la rama `feature/pre_gadea`. Lee pri
 | Recomendación al acompañante | resolutor 11/11, estancia 6/6 |
 | Pregunta "¿ya certificados o quieren certificarse?" | cuándo preguntar 10/10, resolutor 7/7 |
 | Precio de paquetes (RAG, 21 preguntas sin LLM) | 11 cambios de 21 frente a antes, todos a bien |
-| Suite | **2326 passed / 18 skipped** |
+| Suite | **2342 passed / 18 skipped** |
 
 ### Hecho el 2026-09-15 (no repetir)
 
@@ -210,7 +210,8 @@ D. ~~**Pronóstico del tiempo sin escalar**~~ **arreglado y medido (2026-09-15, 
      valor del enum a clave propia (la descripción de `sensitive_topic` es muy larga y mezcla cuatro
      temas) antes de pensar en añadir palabras clave. Medir las 9 señales, no solo esta.
 
-E. **Reparto leído como comparación** (hallazgo 2026-09-15, ya en producción).
+E. ~~**Reparto leído como comparación**~~ **arreglado (2026-09-15)**: cada oferta con su propio sujeto
+   (`clause_subject`) es un reparto y anula la señal `comparing_options` del LLM. LLM real 3/3.
    - "tengo un amigo que quiere bucear y yo hago snorkel": el router dice `comparing=true` 3/3 y
      `_is_deliberation_between_options` lo acepta, porque el texto nombra 2 ofertas y no hay número
      ni "quiero". Va a RAG a explicar la diferencia en vez de a la reserva.

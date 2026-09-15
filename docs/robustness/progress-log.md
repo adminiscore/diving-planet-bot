@@ -4074,3 +4074,45 @@ total, 17/17 riesgo, 0 alucinaciones, 0 parciales, 0 totales mal, 0 cambios fren
 1/2, 1/2 y 0/2 según contestara el LLM.
 
 **`eval --core` tras I:** **218/230, idéntico por caso** (0 a mejor, 0 a peor; tanda limpia). **Hallazgo I cerrado.**
+
+### Hallazgo E: reparto por personas leído como comparación (arreglado)
+
+**Síntoma.** "tengo un amigo que quiere bucear y yo hago snorkel": el router marca
+`comparing_options` 3/3 y `_is_deliberation_between_options` lo acepta (2 ofertas, sin cifra ni
+"quiero"). El turno va a RAG a explicar la diferencia en vez de a la reserva.
+
+**Referencia con el LLM real** (`repro_old_findings 3 reparto_personas`, conversación completa):
+
+| Frase | Base |
+|---|---|
+| "tengo un amigo que quiere bucear y yo hago snorkel" | 3/3 a comparar |
+| "mi novia hace el minicurso y yo buceo" | 1/3 a comparar |
+| "my wife wants to snorkel and I'll dive" | 0/3 a comparar |
+| control: "mi amigo no sabe si bucear o hacer snorkel" | 3/3 a comparar (correcto) |
+
+**Causa estructural.** La puerta ya descartaba al LLM cuando el mensaje reparte con cifras ("2
+bucean, mis amigos hacen snorkel"). El mismo reparto sin cifras no tenía señal: cada oferta va con
+su propio sujeto.
+
+**Arreglo, sin verbos ni frases nuevas.**
+- `clause_subject(clause)` en el detector: "writer" si la frase solo nombra a quien escribe, "other"
+  si solo nombra a otra persona, None si a las dos o a nadie. El contraste elíptico de la I usaba
+  esa misma lectura en línea y ahora la llama (con `_SINGULAR_PERSON`).
+- `_offerings_with_own_subject` en el núcleo: frase a frase (`_CLAUSE_BOUNDARY_RE`), ofertas de quien
+  escribe y de otra persona, distintas → reparto. Va junto a la regla de las cifras, después de la
+  duda escrita, así que "mi novia bucea y yo no sé si snorkel o minicurso" sigue comparando.
+- Conservador: una frase sin sujeto explícito ("hago snorkel" sin "yo") no cuenta, y el turno sigue
+  dependiendo del LLM como antes.
+
+**Medido sin LLM.** Foto de la puerta (con y sin `comparing`) y de `elided_certification` sobre
+2308 frases (eval-set, baterías y literales de los tests), HEAD frente al árbol: **10 cambios, todos
+con el LLM diciendo comparing y todos repartos con sujeto propio** ("mi esposo bucea, yo prefiero
+snorkel", "yo haría el minicurso y mi novia snorkel"...). Sin la señal del LLM, 0 cambios. El
+contraste elíptico, 0 cambios.
+
+**Medido con el LLM real** tras el cambio: la frase de E 3/3 reservando (`{snorkel: 1,
+certified_diving: 1}`, total 2, pregunta la ubicación), el minicurso 3/3, el inglés 3/3 y el control
+3/3 comparando. El router no cambia (ni prompt ni tool), así que no se repite su batería; el
+eval-set y la batería de grupo no pasan por esta puerta y la foto ya los cubre.
+
+- Tests: 16 nuevos (`tests/test_offerings_by_subject.py`). Suite 2342.
