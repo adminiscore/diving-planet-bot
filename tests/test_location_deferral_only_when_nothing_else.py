@@ -37,3 +37,19 @@ def test_plain_deferral_still_recommends_cartagena(message):
 @pytest.mark.parametrize("message, location", [("cartagena", "cartagena"), ("ya estamos en la isla", "island"), ("1", "cartagena"), ("2", "island")])
 def test_real_answers_unchanged(message, location):
     assert _answer(message) == (True, location)
+
+
+@pytest.mark.parametrize("message", [
+    "que solo nos acompañe en la lancha, no se mete al agua",   # "se" reflexivo, no "sé"
+    "no se todavía donde nos vamos a quedar",
+])
+def test_doubt_inside_a_longer_answer_is_not_a_deferral(message):
+    """La duda solo delega si es la respuesta entera (2026-09-15): quitadas sus frases
+    quedan como mucho 4 palabras. Sin tildes, "no se mete" y "no sé" se escriben igual;
+    lo que las separa es que la primera trae contenido propio."""
+    assert _answer(message) == (False, None)
+
+
+@pytest.mark.parametrize("message", ["lo que tú me recomiendes", "no sé la verdad, tú decides"])
+def test_short_deferrals_with_filler_still_recommend_cartagena(message):
+    assert _answer(message) == (True, "cartagena")

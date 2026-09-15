@@ -58,7 +58,7 @@ Retomamos el trabajo de robustez del bot en la rama `feature/pre_gadea`. Lee pri
 | Recomendación al acompañante | resolutor 11/11, estancia 6/6 |
 | Pregunta "¿ya certificados o quieren certificarse?" | cuándo preguntar 10/10, resolutor 7/7 |
 | Precio de paquetes (RAG, 21 preguntas sin LLM) | 11 cambios de 21 frente a antes, todos a bien |
-| Suite | **2173 passed / 18 skipped** |
+| Suite | **2180 passed / 18 skipped** |
 
 ### Hecho el 2026-09-15 (no repetir)
 
@@ -102,12 +102,12 @@ Retomamos el trabajo de robustez del bot en la rama `feature/pre_gadea`. Lee pri
      una pieza compartida. En el prompt de señales empeora "ocho personas hacen snorkel y yo buceo"
      (hablante como acompañante fantasma 2/3) y "mi amigo bucea y mis amigos hacen snorkel". Se deja
      cada texto como está.
-4. **Centralización de vocabulario, conceptos que quedan** (inventario en el progress-log). Cada paso
-   con foto antes/después sin LLM.
-   - `_BARE_PACKAGE_DIVE_RE` aún escribe `5|7|9` en el regex (el filtro ya sale del catálogo).
-   - `_LOCATION_DEFER_RE` lee el "se" reflexivo como "sé": "que solo nos acompañe en la lancha, no se
-     mete al agua".
-   - Revisar el resto de listas del inventario.
+4. **Centralización de vocabulario, conceptos que quedan** (inventario en el progress-log).
+   - **Hecho (2026-09-15):** paquete sin unidad desde el catálogo y el "no se" reflexivo en la duda de
+     ubicación (la duda delega solo si es la respuesta entera).
+   - **Queda como duplicado real:** la familia de acompañante/no buzo del RAG y el supervisor
+     (`_NON_DIVER_*`, `_COMPANION_PLURAL_QUANTIFIER_RE`, `_PURE_COMPANION_RE`). Foto antes/después sin
+     LLM.
 5. **Comparación entre opciones** con las opciones del LLM del router (9/9 medido) en vez de
    `_mentioned_offerings`, midiendo también las otras 8 señales del router.
 6. **Eval-set que pase por el núcleo** (`_understand`), para que su nota vea las guardas y deje de

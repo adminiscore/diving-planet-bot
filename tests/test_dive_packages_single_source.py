@@ -31,6 +31,9 @@ def test_packages_come_from_the_catalog():
     ("4 o 5 inmersiones", [4, 5]),
     ("el pack de 9", [9]),
     ("el pack de 3", []),          # 3 tambien puede ser dias: no se adivina
+    ("paquete de siete", [7]),     # tamano sin unidad, desde el catalogo (sin 5|7|9 en el regex)
+    ("pack de 6", []),             # no existe ese paquete en el catalogo
+    ("package of nine", [9]),
     ("10 inmersiones", []),        # no existe ese paquete
 ])
 def test_dive_counts_in(text, counts):

@@ -3399,3 +3399,33 @@ producción): signals 10/10, slot 10/10, router 6/9.
 
 **Lección:** en los prompts del LLM, "una sola fuente" solo es seguro donde el texto ya era idéntico.
 Unificar redacciones distintas es un cambio de prompt y hay que medirlo como tal.
+
+### Punto 4: vocabulario que quedaba (paquete sin unidad y "no se" reflexivo)
+
+**Paquete sin unidad.** `_BARE_PACKAGE_DIVE_RE` todavía escribía `5|7|9|cinco|siete|nueve` y
+`five|seven|nine` a mano. Ahora casa cualquier cifra (`_DIVE_NUMBER`) y `dive_counts_in` se queda
+con los paquetes del catálogo que no pueden ser un número de días; un tamaño nuevo del catálogo se
+lee sin tocar el regex.
+- Foto del detector: **0 cambios de 252**.
+- Sonda: "el pack de 5", "paquete de siete", "plan de 9" y "package of nine" se leen; "pack de 6" y
+  "paquete de 8" no (no existen en el catálogo); "paquete de 3" y "paquete de 4 dias" siguen
+  excluidos.
+
+**"no se" reflexivo en la duda de ubicación.** Sin tildes, "no se mete al agua" y "no sé" se escriben
+igual, y `_LOCATION_DEFER_RE` fijaba Cartagena en "que solo nos acompañe en la lancha, no se mete al
+agua". Lo que las separa es estructural, no vocabulario: una duda que delega es la respuesta
+entera. Quitadas sus frases quedan como mucho 4 palabras ("lo que tú me recomiendes" deja "lo que
+tú me"); a la otra le quedan 9 de contenido propio.
+- Foto del resolutor de ubicación: **1 cambio de 236**, el buscado.
+- Las dudas cortas siguen recomendando Cartagena ("no sé", "da igual", "tú decides", "lo que tú me
+  recomiendes", "no sé, lo que sea mejor", "up to you", "whatever", "no sé la verdad, tú decides").
+- Cambio de conducta fuera del corpus: "no se todavía donde nos vamos a quedar" deja de suponer
+  Cartagena y el bot vuelve a preguntar (no dar por hecho lo que el cliente no eligió).
+
+**Estado del inventario de las 78 listas:**
+- **Cerrados:** certificación (`certification_status`), cursos (`courses_mentioned`), paquete
+  (`dive_counts_in` + catálogo) y la pieza de persona (`_SINGULAR_PERSON`, `_NAMED_OTHER_PERSON`).
+- **Para reinvestigar:** ubicación y grupo con nacionalidades mixtas.
+- **No son duplicado real:** disponibilidad, nombre, actos de diálogo y seguridad.
+- **Queda como duplicado real:** la familia de acompañante/no buzo del RAG y el supervisor
+  (`_NON_DIVER_*`, `_COMPANION_PLURAL_QUANTIFIER_RE`, `_PURE_COMPANION_RE`).

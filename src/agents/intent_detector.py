@@ -68,9 +68,13 @@ _DIVE_WORD_TO_NUM = {
 # would risk booking the wrong plan — falls through to the normal "which
 # idea" question instead. Excludes a trailing "día(s)" so "paquete de 3 dias"
 # still resolves as a DAY count via _CERT_DAY_COUNT_RE, not hijacked here.
+#
+# Los tamanos ya no se escriben aqui (2026-09-15): cualquier cifra casa y
+# `dive_counts_in` se queda solo con los paquetes del catalogo que no pueden ser un
+# numero de dias (hoy 5/7/9). Un paquete nuevo del catalogo se lee sin tocar el regex.
 _BARE_PACKAGE_DIVE_RE = re.compile(
-    r"\b(?:paquete|pack|plan)\s+de\s+(5|7|9|cinco|siete|nueve)\b(?!\s*d[ií]as?)"
-    r"|\b(?:package|pack|plan)\s+of\s+(5|7|9|five|seven|nine)\b(?!\s*days?)",
+    r"\b(?:paquete|pack|plan)\s+de\s+" + _DIVE_NUMBER + r"\b(?!\s*d[ií]as?)"
+    r"|\b(?:package|pack|plan)\s+of\s+" + _DIVE_NUMBER + r"\b(?!\s*days?)",
     re.IGNORECASE,
 )
 

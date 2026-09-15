@@ -729,7 +729,12 @@ def _apply_short_answer(state: ConversationState, message: str) -> bool:
         # verificación del resolutor LLM ("si este turno habla de otra cosa, no
         # contestaba la ubicación"), con los campos del detector.
         other_fields = [f for f in _detector.detect(message, state).detected_fields if f != "language"]
-        if _LOCATION_DEFER_RE.search(msg) and not other_fields:
+        # Y la duda tiene que ser la respuesta entera (2026-09-15): quitadas sus frases,
+        # como mucho quedan 4 palabras ("lo que tu me recomiendes" deja "lo que tu me").
+        # "que solo nos acompañe en la lancha, no se mete al agua" casaba el "no se"
+        # reflexivo y fijaba Cartagena; le quedan 9 palabras de contenido propio.
+        leftover = re.findall(r"[a-záéíóúñü]+", _LOCATION_DEFER_RE.sub(" ", msg))
+        if _LOCATION_DEFER_RE.search(msg) and not other_fields and len(leftover) <= 4:
             state.location = state.detected_location = "cartagena"
             return True
         return False
