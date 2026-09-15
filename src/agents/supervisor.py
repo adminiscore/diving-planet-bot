@@ -774,9 +774,9 @@ _MIXED_NATIONALITY_RE = re.compile(
     # pre_gadea v0.21.14) — cantidad explícita + "pero"/"y" en vez del
     # "unos/algunos... y otros" ya cubierto arriba. Cubre ambos órdenes
     # (colombiano-primero / extranjero-primero).
-    r"|\b(?:\d+|" + number_alt(2, 5, "es") + r")\s+(?:de\s+(?:nosotros|el\s+grupo)\s+)?somos\s+colombian[oa]s?\s+"
+    r"|\b(?:\d+|" + number_alt(2, 10, "es") + r")\s+(?:de\s+(?:nosotros|el\s+grupo)\s+)?somos\s+colombian[oa]s?\s+"
     r"(?:pero|y)\s+(?:\d+|el\s+resto|otr[oa]s?|un[oa])\s*(?:es|son|somos)?\s*extranjer[oa]s?\b"
-    r"|\b(?:\d+|" + number_alt(2, 5, "es") + r")\s+(?:de\s+(?:nosotros|el\s+grupo)\s+)?somos\s+extranjer[oa]s?\s+"
+    r"|\b(?:\d+|" + number_alt(2, 10, "es") + r")\s+(?:de\s+(?:nosotros|el\s+grupo)\s+)?somos\s+extranjer[oa]s?\s+"
     r"(?:pero|y)\s+(?:\d+|el\s+resto|otr[oa]s?|un[oa])\s*(?:es|son|somos)?\s*colombian[oa]s?\b"
     r"|\bmy\s+(?:friend|partner|husband|wife|brother|sister|boyfriend|girlfriend)\s+is\s+(?:a\s+)?foreign(?:er)?\b"
     r"|\bmy\s+(?:friend|partner|husband|wife|brother|sister|boyfriend|girlfriend)\s+is\s+colombian\b"

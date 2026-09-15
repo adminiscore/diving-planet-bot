@@ -10,7 +10,9 @@ import re
 import pytest
 
 from src.agents import conversational_core as core
-from src.agents.intent_detector import AGE_WORDS
+from src.agents import rag_agent, supervisor
+from src.agents.intent_detector import _MAX_PACKAGE_DAYS, AGE_WORDS
+from src.domain import activities as dom
 from src.flows import cart_render
 from src.utils import fuzzy
 from src.utils.number_words import number_alt, number_words
@@ -36,3 +38,19 @@ def test_consumers_share_the_source():
 @pytest.mark.parametrize("message, qty", [("dos", 2), ("somos cuatro", 4), ("ten", 10), ("doss", 2)])
 def test_quantity_parsing_unchanged(message, qty):
     assert cart_render.parse_quantity(message) == qty
+
+
+@pytest.mark.parametrize("message", ["three dive and six don't", "tres bucean y seis no"])
+def test_rag_non_divers_same_range_in_both_languages(message):
+    """Rangos alineados (2026-09-15): antes el ingles paraba en "five"."""
+    assert rag_agent._detect_companion_mention(message) == (True, True)
+
+
+@pytest.mark.parametrize("word", ["dos", "seis", "diez"])
+def test_mixed_nationality_count_up_to_ten(word):
+    text = f"{word} de nosotros somos colombianos pero uno es extranjero"
+    assert supervisor._MIXED_NATIONALITY_RE.search(text)
+
+
+def test_package_days_come_from_the_catalog():
+    assert _MAX_PACKAGE_DAYS == max(days for days, _ in dom.dive_packages().values())

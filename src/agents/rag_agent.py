@@ -695,13 +695,13 @@ _NON_DIVER_ELLIPTICAL_ES_RE = re.compile(
     re.IGNORECASE,
 )
 _NON_DIVER_ELLIPTICAL_EN_RE = re.compile(
-    r"\band\s+(?:\d+|" + number_alt(1, 5, "en") + r"|another|others?|the\s+rest)\s+"
+    r"\band\s+(?:\d+|" + number_alt(1, 6, "en") + r"|another|others?|the\s+rest)\s+"
     r"(?:don'?t|doesn'?t)\b",
     re.IGNORECASE,
 )
 _NON_DIVER_ELLIPTICAL_PLURAL_WORDS = (
     *number_words(2, 6, "es"), "otros", "otras",
-    "el resto", "los dem", *number_words(2, 5, "en"), "rest", "others",
+    "el resto", "los dem", *number_words(2, 6, "en"), "rest", "others",
 )
 # Distinguishes "un acompañante" (one) from several, so the reply says "your
 # companion" vs "your companions" instead of always assuming just one.
@@ -709,7 +709,7 @@ _NON_DIVER_ELLIPTICAL_PLURAL_WORDS = (
 # quantifier > 1 right before it ("2 acompañantes", "varios amigos que...").
 _COMPANION_PLURAL_QUANTIFIER_RE = re.compile(
     r"\b(?:\d+|" + number_alt(2, 10, "es") + r"|varios|varias|"
-    r"algunos|algunas|unos|unas|several|multiple|" + number_alt(2, 5, "en") + r")\s+(?:acompa\w+|companions?)",
+    r"algunos|algunas|unos|unas|several|multiple|" + number_alt(2, 10, "en") + r")\s+(?:acompa\w+|companions?)",
     re.IGNORECASE,
 )
 

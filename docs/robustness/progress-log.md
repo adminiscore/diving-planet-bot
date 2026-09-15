@@ -3451,9 +3451,17 @@ veces en detector, núcleo, supervisor, RAG, carrito y fuzzy, cada una con su ra
   palabras 1-19 ES/EN en 43 plantillas: **0 cambios de 1215**.
 - `AGE_WORDS` y `_WORD_TO_NUM` son idénticos, orden incluido.
 
-**Asimetrías que la fuente única deja a la vista (no tocadas, cambian conducta).** Hay que medirlas
-aparte:
-- **RAG, elíptico:** ES 1-6, EN 1-5.
-- **RAG, cuantificador de acompañantes:** ES 2-10, EN 2-5.
-- **Supervisor, nacionalidad mixta:** ES 2-5 (solo español, igual que el resto de ese patrón).
-- **Días de paquete (1-4):** coinciden hoy con el catálogo, pero no salen de él.
+**Asimetrías de rango que la fuente única dejó a la vista: alineadas en un paso aparte**, porque
+cambian conducta:
+- **RAG, elíptico:** EN pasa de 1-5 a 1-6, como ES. Lo mismo en la lista de plurales.
+- **RAG, cuantificador de acompañantes:** EN pasa de 2-5 a 2-10, como ES.
+- **Supervisor, nacionalidad mixta:** ES pasa de 2-5 a 2-10, el rango de los otros patrones de grupo.
+- **Días de paquete:** el rango sale del catálogo (`_MAX_PACKAGE_DAYS`, hoy 4), no de un 4 escrito a
+  mano.
+- Foto contra el commit anterior: **7 cambios de 1215, todos buscados.** "seis"…"diez de nosotros
+  somos colombianos pero uno es extranjero" pasan a grupo mixto (5), y "three dive and six don't"
+  pasa a no buzos en plural en el RAG (2 lecturas del mismo mensaje).
+- El cuantificador EN no cambia nada visible: "companions" en plural ya marcaba plural.
+
+**Lint:** el primer push falló en CI por ruff UP033 (`lru_cache(maxsize=None)` → `functools.cache`);
+el deploy no llegó a correr.

@@ -108,8 +108,9 @@ Retomamos el trabajo de robustez del bot en la rama `feature/pre_gadea`. Lee pri
    - **Hecho (2026-09-15):** palabras numéricas con una sola fuente, `src/utils/number_words.py`
      (eran 20 copias). Foto sin LLM: 0 cambios de 1215. `_PURE_COMPANION_RE` era código muerto
      (borrado). La familia de acompañante del RAG no era duplicado: pregunta otra cosa.
-   - **Queda:** alinear las asimetrías de rango ES/EN del RAG (elíptico 1-6/1-5, cuantificador
-     2-10/2-5) y sacar del catálogo los días de paquete (1-4). Cambian conducta: medir con foto.
+   - **Hecho:** alineados los rangos ES/EN del RAG, nacionalidad mixta hasta 10 y días de paquete
+     desde el catálogo. Foto: 7 cambios de 1215, todos buscados.
+   - **Punto 4 cerrado** salvo lo que está en "Para reinvestigar" (ubicación, nacionalidad mixta).
 5. **Comparación entre opciones** con las opciones del LLM del router (9/9 medido) en vez de
    `_mentioned_offerings`, midiendo también las otras 8 señales del router.
 6. **Eval-set que pase por el núcleo** (`_understand`), para que su nota vea las guardas y deje de

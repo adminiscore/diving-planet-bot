@@ -80,11 +80,13 @@ _BARE_PACKAGE_DIVE_RE = re.compile(
 # resolves the same as "2-day package" — found missing (ES-only) 2026-07-09.
 # "pack" added to the qualifier list 2026-07-09 (was missing entirely —
 # "el pack de 3 dias" didn't match "paquete"/"plan").
+# Dias en palabra hasta el paquete mas largo del catalogo (hoy 4).
+_MAX_PACKAGE_DAYS = max(days for days, _ in dom.dive_packages().values())
 _CERT_DAY_COUNT_RE = re.compile(
-    r"\b(?:paquete|pack|plan)\s+de\s+(\d+|" + number_alt(1, 4, "es") + r"|un)\s*d[ií]as?\b"
-    r"|\b(\d+|" + number_alt(1, 4, "es") + r"|un)[\s\-]+d[ií]as?\s+(?:de\s+)?buce\w*\b"
-    r"|\b(\d+|" + number_alt(1, 4, "en") + r")[\s\-]?days?\s+(?:of\s+)?(?:dive\s+|diving\s+)?package\b"
-    r"|\b(\d+|" + number_alt(1, 4, "en") + r")[\s\-]?days?\s+(?:of\s+)?div(?:e|ing)\b",
+    r"\b(?:paquete|pack|plan)\s+de\s+(\d+|" + number_alt(1, _MAX_PACKAGE_DAYS, "es") + r"|un)\s*d[ií]as?\b"
+    r"|\b(\d+|" + number_alt(1, _MAX_PACKAGE_DAYS, "es") + r"|un)[\s\-]+d[ií]as?\s+(?:de\s+)?buce\w*\b"
+    r"|\b(\d+|" + number_alt(1, _MAX_PACKAGE_DAYS, "en") + r")[\s\-]?days?\s+(?:of\s+)?(?:dive\s+|diving\s+)?package\b"
+    r"|\b(\d+|" + number_alt(1, _MAX_PACKAGE_DAYS, "en") + r")[\s\-]?days?\s+(?:of\s+)?div(?:e|ing)\b",
     re.IGNORECASE,
 )
 
