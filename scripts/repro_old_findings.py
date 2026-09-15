@@ -7,7 +7,7 @@ docs/robustness/progress-log.md ("Tarea 7").
 
     ENV_FILE=.env.dev python -m scripts.repro_old_findings [repeticiones] [casos]
 
-casos: lista separada por comas de drip,correccion,correccion_antes,f01,f01_conversacion,h_total,g_numeros,tour,reparto_personas
+casos: lista separada por comas de drip,correccion,correccion_antes,f01,f01_conversacion,h_total,g_numeros,tour,reparto_personas,grupo_mixto
 (por defecto todos).
 """
 
@@ -162,9 +162,25 @@ async def reparto_personas(rep):
     return log
 
 
+async def grupo_mixto(rep):
+    """A: grupo con nacionalidades mixtas -> explicacion de USD (owner). Los dos ultimos son
+    controles: un residente extranjero y un solo lado del grupo no son mixtos."""
+    log = []
+    for opening in (
+        "hola, somos colombianos pero mi amigo es aleman, queremos bucear",
+        "hola, yo vivo en bogota y mi amigo es gringo, queremos hacer snorkel",
+        "hola, somos extranjeros pero vivimos en colombia, queremos bucear",
+        "hola, mi novio es aleman y quiere hacer snorkel",
+    ):
+        st = _new(f"a-{rep}")
+        reply = await _say(st, opening, log)
+        log.append(f"      explicacion_mixta={'nacionalidades mixtas' in reply.lower()}")
+    return log
+
+
 CASES = {"drip": drip, "correccion": correccion, "correccion_antes": correccion_antes, "f01": f01,
          "f01_conversacion": f01_conversacion, "h_total": h_total, "g_numeros": g_numeros, "tour": tour,
-         "reparto_personas": reparto_personas}
+         "reparto_personas": reparto_personas, "grupo_mixto": grupo_mixto}
 
 
 async def main():

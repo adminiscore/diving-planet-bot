@@ -195,6 +195,10 @@ class ConversationState:
     # se queda con el resto, sin sumar encima (hallazgo H, 2026-09-15).
     pending_split_total: int | None = None
 
+    # El LLM leyo en ESTE turno un grupo con nacionalidades mixtas: el nucleo responde con
+    # la explicacion de pago en USD (decision del owner) en vez de seguir (hallazgo A, 2026-09-15).
+    mixed_nationality_notice: bool = False
+
     # Dato que contradice lo guardado y llego sin cue de correccion ("ah no, somos
     # gringos" tras decir colombianos): {campo: valor nuevo}. Se confirma con el
     # cliente antes de cambiar nada (owner 2026-09-15, tarea 7b).

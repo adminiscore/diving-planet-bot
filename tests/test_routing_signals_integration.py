@@ -633,53 +633,18 @@ async def test_group_size_not_overwritten_without_correction_cue():
     assert state.detected_group_size == 3
 
 
-def test_mixed_nationality_regex_covers_explicit_count_and_pero():
-    """Hallazgo en vivo (batería sintética contra PRE, 2026-08-26, lote 5,
-    conversación larga): "bueno dos de nosotros somos colombianos pero uno
-    es extranjero" no matchea `_MIXED_NATIONALITY_RE` (la lista original
-    solo cubría "unos/algunos... y otros", no una cantidad explícita +
-    "pero") — el grupo se trataba como si fuera enteramente extranjero, sin
-    reconocer la nacionalidad mixta. Extendido el regex para cubrir cantidad
-    explícita + "pero"/"y", en ambos órdenes (colombiano-primero /
-    extranjero-primero)."""
-    from src.agents.supervisor import _detect_mixed_nationality_request
-    assert _detect_mixed_nationality_request(
-        "bueno dos de nosotros somos colombianos pero uno es extranjero")
-    assert _detect_mixed_nationality_request(
-        "tres somos extranjeros y uno es colombiano")
-
-
-def test_mixed_nationality_regex_covers_uno_y_los_otros_phrasing():
-    """Hallazgo en vivo (lote 12, bateria "natural/deictica", 2026-09-02,
-    conv. real 849): "uno de nosotros es colombiano y los otros dos no" no
-    matcheaba ningun patron existente (no usa "unos/algunos", no repite
-    "extranjero", no da una cantidad explicita con "pero/y" antes del
-    verbo). Sin esto, el grupo caia al `_finalize()` generico ("Como SOIS
-    colombianos/residentes", plural, implicando que TODOS lo son) en vez
-    de la explicacion real de pago mixto por persona."""
-    from src.agents.supervisor import _detect_mixed_nationality_request
-    assert _detect_mixed_nationality_request(
-        "uno de nosotros es colombiano y los otros dos no")
-    assert _detect_mixed_nationality_request(
-        "uno de nosotros es colombiano y los otros no")
-    assert _detect_mixed_nationality_request(
-        "one of us is colombian and the others are not")
-
-
 @pytest.mark.asyncio
 async def test_mixed_nationality_gets_advisor_explanation_end_to_end():
-    """Gap encontrado y cerrado 2026-08-27: en agent-arch la explicación de
-    nacionalidad mixta vivía solo en la cascada (`_shared_turn_handler`) —
-    el router ya clasificaba estos mensajes como ROUTE_BOOKING, pero el
-    subgrafo de `booking` nunca reproducía la respuesta, así que caían al
-    slot-fill normal sin decir nada del pago por nacionalidad. Ahora
-    `booking_node` reproduce la misma explicación (`_mixed_nationality_
-    response`, compartida con la cascada) con un chequeo puntual antes del
-    subgrafo — verificado end-to-end vía `route_message` (funciona igual con
-    el flag on u off)."""
+    """Grupo con nacionalidades mixtas -> explicacion de pago en USD + botones asesor/menu.
+    Hallazgo A (2026-09-15): lo lee el LLM (`mixed_nationality`, en la peticion que el turno
+    ya hace) en vez de una lista de fraseos que no conocia gentilicios ("mi amigo es aleman")
+    y marcaba mixto "mi amigo es colombiano y yo tambien". Un solo camino, el nucleo, para la
+    cascada y el grafo."""
     state = make_state()
-    with patch("src.agents.supervisor.detect_routing_signals", new=AsyncMock(return_value={})):
-        resp = await route_message(
-            state, "bueno dos de nosotros somos colombianos pero uno es extranjero")
+    with patch("src.agents.supervisor.detect_routing_signals", new=AsyncMock(return_value={})),          patch("src.agents.conversational_core.extract_and_verify",
+               new=AsyncMock(side_effect=lambda *a, **k: ({"mixed_nationality": True}, {}))),          patch("src.agents.conversational_core.fill_gaps",
+               new=AsyncMock(side_effect=lambda *a, **k: {"mixed_nationality": True})):
+        resp = await route_message(state, "somos colombianos pero mi amigo es aleman")
     assert "nacionalidades mixtas" in resp.lower()
+    assert state.is_colombian is False
     assert state.quick_replies

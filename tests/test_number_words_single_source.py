@@ -46,11 +46,5 @@ def test_rag_non_divers_same_range_in_both_languages(message):
     assert rag_agent._detect_companion_mention(message) == (True, True)
 
 
-@pytest.mark.parametrize("word", ["dos", "seis", "diez"])
-def test_mixed_nationality_count_up_to_ten(word):
-    text = f"{word} de nosotros somos colombianos pero uno es extranjero"
-    assert supervisor._MIXED_NATIONALITY_RE.search(text)
-
-
 def test_package_days_come_from_the_catalog():
     assert _MAX_PACKAGE_DAYS == max(days for days, _ in dom.dive_packages().values())

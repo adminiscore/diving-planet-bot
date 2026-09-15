@@ -50,6 +50,7 @@ from src.agents.intent_detector import (
     holds_padi_cert,
     matched_activity_categories,
     mentions_other_person_subject,
+    mentions_writer_and_others,
     other_person_certification,
 )
 from src.agents.llm_extractor import (
@@ -1867,6 +1868,7 @@ async def _understand(state: ConversationState, message: str, *, answered_pendin
     prev_refresher = state.refresher_interested
 
     intent = _detector.detect(message, state)
+    state.mixed_nationality_notice = False
     # Un dato del mensaje que contradice lo guardado (tarea 7b): ver `_regex_contradictions`.
     regex_candidates = _regex_contradictions(state, message, intent)
     # Hallazgo en vivo (conversacion real "purple-sun-590", 2026-09-03, y
@@ -1898,6 +1900,9 @@ async def _understand(state: ConversationState, message: str, *, answered_pendin
     # sin que cambie respecto a calcularlo despues.
     veto_fields = supervisor._eligible_veto_fields(message, intent, state)
     gaps = _relevant_gaps(state, intent, message)
+    # Grupo con nacionalidades mixtas (hallazgo A, owner: que lo lea el LLM): viaja en la
+    # peticion que el turno ya hace, solo si el mensaje habla de los dos lados del grupo.
+    extra_fields = ("mixed_nationality",) if mentions_writer_and_others(message) else ()
     _wants_gaps = bool(gaps) and not _looks_like_question(message) and not _is_greeting_only(message)
     # Campos ya sabidos que el mensaje podria corregir con palabras que el regex no lee
     # ("ah no, somos gringos", "cambio de plan, estamos en barú") (tarea 7b, 2026-09-15).
@@ -1918,7 +1923,7 @@ async def _understand(state: ConversationState, message: str, *, answered_pendin
         try:
             _combined_patch, _disagreements = await extract_and_verify(
                 gaps, veto_fields + recheck, message, verify_values,
-                history=state.history, lang=state.language,
+                history=state.history, lang=state.language, extra_fields=extra_fields,
             )
             supervisor.apply_veto_disagreements(
                 {f: v for f, v in _disagreements.items() if f in veto_fields}, intent, message, regex_values
@@ -1966,7 +1971,8 @@ async def _understand(state: ConversationState, message: str, *, answered_pendin
         patch = (
             _combined_patch if _combined_patch is not None
             else await fill_gaps(
-                message, intent, history=state.history, lang=state.language, only_fields=gaps
+                message, intent, history=state.history, lang=state.language, only_fields=gaps,
+                extra_fields=extra_fields,
             )
         )
         # Los campos del grupo se pierden cuando viajan con muchos otros (2026-09-15,
@@ -2189,10 +2195,20 @@ async def _understand(state: ConversationState, message: str, *, answered_pendin
                 f"{patch['group_size']} msg={supervisor._log_safe_message(message)!r}"
             )
             patch.pop("group_size")
+        # Solo cuenta si se pidio (dos lados del grupo en el mensaje), venga de donde venga el patch.
+        mixed_nationality = patch.pop("mixed_nationality", None) is True and bool(extra_fields)
         for field_name, value in patch.items():
             setattr(intent, field_name, value)
             if field_name not in intent.detected_fields:
                 intent.detected_fields.append(field_name)
+        if mixed_nationality:
+            # Decision del owner (2026-09-14): el grupo mixto paga todo en USD, aunque el
+            # regex leyera "colombianos" en una de las frases.
+            intent.is_colombian = False
+            for listed in (intent.detected_fields, intent.overwrite):
+                if "is_colombian" not in listed:
+                    listed.append("is_colombian")
+            state.mixed_nationality_notice = True
         if patch:
             # (Fix A del handoff) Mismo tag y formato que el cutover legacy —
             # es lo que scripts/harvest_cutover_logs.py parsea para el bucle de
@@ -3196,6 +3212,12 @@ async def _extraction_phase(
     companion_merged_fastpath = False
     if not (resolved_short and len(message.strip()) <= 12):
         _, companion_merged_fastpath = await _understand(state, message, answered_pending=resolved_short)
+    if state.mixed_nationality_notice:
+        # Una sola fuente de copy y efecto para el grupo mixto (hallazgo A, 2026-09-15).
+        state.mixed_nationality_notice = False
+        response = greeting + supervisor._mixed_nationality_response(state, message)
+        state.history.append({"role": "assistant", "content": response})
+        return response
 
     # Circuit-breaker (portado 2026-09-01, hallazgo en vivo, batería de
     # grupos mixtos contra PRE, lote 8): este chequeo es el punto REAL que

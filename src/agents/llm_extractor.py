@@ -30,6 +30,7 @@ from src.prompts.booking import (
     acknowledgement_system_prompt,
     combined_extraction_system_prompt,
     extraction_system_prompt,
+    extraction_tool,
     fields_verification_system_prompt,
     signals_system_prompt,
     slot_resolver_prompt,
@@ -117,6 +118,7 @@ async def fill_gaps(
     lang: str = "es",
     client: AsyncOpenAI | None = None,
     only_fields: list[str] | None = None,
+    extra_fields=(),
 ) -> dict:
     """Ask the LLM to fill ONLY the fields `regex_intent` left unresolved.
 
@@ -136,6 +138,10 @@ async def fill_gaps(
         missing = [f for f in missing if f in only_fields]
     if not missing or not message or not message.strip():
         return {}
+    # Campos que no salen del detector y solo viajan cuando se piden, con su propia
+    # variante del tool (`extraction_tool`, hallazgo A): nunca abren una peticion solos.
+    missing = missing + [f for f in extra_fields if f not in missing]
+    tool = extraction_tool(extra_fields)
 
     messages: list[dict] = [{"role": "system", "content": extraction_system_prompt(lang, missing)}]
     for turn in (history or [])[-settings.history_retrieval_enrichment_window:]:
@@ -150,7 +156,7 @@ async def fill_gaps(
         response = await client.chat.completions.create(
             model=settings.extraction_model,
             messages=messages,
-            tools=[EXTRACTION_TOOL],
+            tools=[tool],
             tool_choice={"type": "function", "function": {"name": "extract_fields"}},
             temperature=0.0,
             max_tokens=200,
@@ -159,7 +165,7 @@ async def fill_gaps(
         tool_calls = getattr(choice, "tool_calls", None)
         if not tool_calls:
             return {}
-        args = tool_arguments(tool_calls[0], EXTRACTION_TOOL)
+        args = tool_arguments(tool_calls[0], tool)
     except (json.JSONDecodeError, TypeError, AttributeError, IndexError) as exc:
         logger.warning(f"[LLM_EXTRACTOR][DEGRADED] malformed response: {exc}")
         return {}
@@ -294,6 +300,7 @@ async def extract_and_verify(
     history: list[dict] | None = None,
     lang: str = "es",
     client: AsyncOpenAI | None = None,
+    extra_fields=(),
 ) -> tuple[dict, dict]:
     """Rellena huecos Y verifica campos resueltos en UNA SOLA peticion.
 
@@ -316,6 +323,9 @@ async def extract_and_verify(
     """
     if not message or not message.strip() or (not gaps and not verify):
         return {}, {}
+    # Extras de relleno con su variante del tool (ver `fill_gaps`).
+    gaps = list(gaps) + [f for f in extra_fields if f not in gaps]
+    tool = extraction_tool(extra_fields)
     # Un solo camino de peticion para los tres casos; lo unico que cambia es
     # que prompt se monta. Asi no hay dos implementaciones del mismo reparto
     # de resultados que puedan desincronizarse.
@@ -331,7 +341,7 @@ async def extract_and_verify(
         response = await client.chat.completions.create(
             model=settings.extraction_model,
             messages=messages,
-            tools=[EXTRACTION_TOOL],
+            tools=[tool],
             tool_choice={"type": "function", "function": {"name": "extract_fields"}},
             temperature=0.0,
             # El de huecos usaba 200 fijo; el del veto escalaba con los campos.
@@ -342,7 +352,7 @@ async def extract_and_verify(
         tool_calls = getattr(choice, "tool_calls", None)
         if not tool_calls:
             return {}, {}
-        args = _strip_schema_nulls(tool_arguments(tool_calls[0], EXTRACTION_TOOL))
+        args = _strip_schema_nulls(tool_arguments(tool_calls[0], tool))
     except (json.JSONDecodeError, TypeError, AttributeError, IndexError) as exc:
         logger.warning(f"[LLM_EXTRACTOR][DEGRADED][COMBINED] malformed response: {exc}")
         return {}, {}

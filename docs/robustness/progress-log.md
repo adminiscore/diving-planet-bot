@@ -4176,3 +4176,59 @@ sigue esperando `false`: ahí sí dice que no vive en Colombia.
 - **Sin cambio de código ni de prompt.** 0 peticiones.
 - **Eval:** no se repite la tanda. En la última (`eval --core` tras F.1) el caso se abstuvo de
   `is_colombian` y acertó la actividad, así que con la expectativa corregida cuenta como acierto.
+
+### Hallazgo A: grupo con nacionalidades mixtas (arreglado, decisión del owner: que lo lea el LLM)
+
+**Síntoma.** Decisión del owner (2026-09-14): un grupo mixto paga todo en USD. La detección era
+`_MIXED_NATIONALITY_RE`, una lista de fraseos en la cascada, el nodo `booking` y el router. No conocía
+gentilicios ("somos colombianos pero mi amigo es aleman" cobraba en COP) y marcaba mixto "mi amigo es
+colombiano y yo tambien". `eval --core`: 6/6 casos `nat-mixto-*` fallaban.
+
+**Opciones presentadas al owner.**
+- Lectura por frases con el vocabulario conocido: 3 de 6 casos.
+- Preguntar al grupo.
+- **Un valor propio en el LLM (elegida).**
+
+**Sonda antes de tocar src** (22 frases y luego 28, 2 repeticiones, tool actual frente a variante):
+- **v1 de la descripción:** 8/8 mixtos, residentes y controles bien, el resto de campos igual salvo en
+  2 mixtos (`is_colombian` a `false`, en la dirección buscada). Falsos positivos 2/2: "ninguno
+  colombiano" y "mi novio es aleman y quiere hacer snorkel". El LLM supone la otra mitad.
+- **v2 (insistiendo en no suponer la nacionalidad de nadie): peor.** Marca mixtos a los residentes
+  ("somos extranjeros pero vivimos en colombia" 2/2) y cambia `is_colombian` de "no soy colombiano pero
+  vivo en colombia" 1/2. Descartada.
+- **Los fallos de v1 son todos de un solo lado del grupo:** eso lo corta la estructura, no el prompt.
+
+**Arreglo.**
+- `extraction_tool(extra_fields)`: `EXTRACTION_TOOL` intacto, o una copia con `mixed_nationality`
+  (definición en `_FIELD_MEANING_EN`, texto v1). `fill_gaps` y `extract_and_verify` aceptan
+  `extra_fields`, que nunca abren una petición solos.
+- `mentions_writer_and_others` (detector): quien escribe o su grupo (`yo/I/me`, "nosotros/we/us" o la
+  desinencia "-mos") Y otra persona (`_NAMED_OTHER_PERSON`) o parte del grupo
+  (`_OTHER_PERSON_SUBJECT_RE`: "uno es", "the others are"). Es la puerta para pedir el valor.
+- Núcleo: si vuelve `true` y se pidió, `is_colombian=False` (con `overwrite`, porque el regex pudo leer
+  "colombianos") y el turno responde con `_mixed_nationality_response`, la copy ya decidida. Una sola
+  fuente: la lista sale de la cascada, del nodo del grafo y del router; `_mixed_nationality_response`
+  ya no escribe el historial.
+
+**Medido sin LLM.**
+- `snapshot_prompts`: los 86 prompts idénticos byte a byte; 1 nuevo, la variante del tool.
+- Suite 2379 (16 tests nuevos en `tests/test_mixed_nationality_llm.py`; se quitan los 3 que fijaban la
+  lista y el e2e pasa a mockear el extractor).
+
+**Medido con el LLM real.**
+- `eval --core`: **226/230** (219 con F.1), **0 a peor, 7 a mejor**: los 6 `nat-mixto-*` y
+  `prof-en-from-states`, este último por la expectativa corregida en F.4. Tanda limpia.
+- Conversación completa (`repro_old_findings 3 grupo_mixto`): "somos colombianos pero mi amigo es
+  aleman" y "yo vivo en bogota y mi amigo es gringo" 3/3 con la explicación de USD; el residente
+  extranjero y "mi novio es aleman y quiere hacer snorkel" 3/3 siguen la reserva sin marcar mixto.
+- **Batería de grupo** (config PRE, 3 repeticiones): 16/17, 13/13, 17/17. Único cambio, `b03-con-titulo`
+  ("4 con titulo y 2 snorkel"), que no abre la puerta. Repetido con el hash de cada petición: **la misma
+  petición en HEAD y en el árbol** (`b8637c7eb17e`), con resultado variable en los dos (2/3 y 1/3).
+  Variabilidad del LLM.
+- **Batería de booleanos:** 18/24 legítimos, 15/18 alucinaciones evitadas. Único cambio,
+  `charla-vale-perfecto` ("vale perfecto"), que no abre la puerta. HEAD en la misma tanda: 17/18, y
+  repetido con hashes: **la misma petición** (`739e80bb2ecb`), 2 de 4 alucinan en los dos. No es A; queda
+  como hallazgo J (la referencia de 7b lo evitaba 3/3).
+
+- **Consecuencia aceptada:** "somos de nacionalidad mixta", sin nombrar a nadie, no abre la puerta y ya
+  no dispara la explicación.

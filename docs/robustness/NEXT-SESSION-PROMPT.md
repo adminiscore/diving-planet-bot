@@ -53,13 +53,13 @@ Retomamos el trabajo de robustez del bot en la rama `feature/pre_gadea`. Lee pri
 | medida | resultado |
 |---|---|
 | Eval-set (130 casos) | **221/230**. Fallan: 5 de los 7 casos `nat-mixto-*` (hueco conocido), 2 artefactos del arnés (casos con historial) y el ambiguo de ubicación "staying on the islands tomorrow". `split-one-not-certified-es` espera `is_certified: null` desde el 2026-09-15 (la frase habla de un miembro del grupo) |
-| Eval-set por el núcleo (`run_extraction_eval --core`) | **219/230** tras F.1 (218 tras H y D; 216 con 7b; +2 por F.2, +1 por F.1, 0 a peor; con la expectativa de F.4 corregida, el caso `prof-en-from-states` pasa a acierto sin repetir la tanda); los 7 casos por debajo del modo script están explicados en el progress-log (tarea 6) |
+| Eval-set por el núcleo (`run_extraction_eval --core`) | **226/230** tras A (219 tras F.1; 218 tras H y D; 216 con 7b; +2 por F.2, +1 por F.1, +7 por A y la expectativa de F.4, 0 a peor); los 7 casos por debajo del modo script están explicados en el progress-log (tarea 6) |
 | Batería de grupo, config PRE (52 escenarios) | repartos **17/17**, total **13/13**, riesgo **17/17**, **0 alucinaciones, 0 parciales, 0 totales mal**; segunda petición de grupo +8,1 % peticiones |
 | Booleanos anclados | legítimos 18/24, alucinaciones evitadas 18/18 |
 | Recomendación al acompañante | resolutor 11/11, estancia 6/6 |
 | Pregunta "¿ya certificados o quieren certificarse?" | cuándo preguntar 10/10, resolutor 7/7 |
 | Precio de paquetes (RAG, 21 preguntas sin LLM) | 11 cambios de 21 frente a antes, todos a bien |
-| Suite | **2363 passed / 18 skipped** |
+| Suite | **2379 passed / 18 skipped** |
 
 ### Hecho el 2026-09-15 (no repetir)
 
@@ -158,7 +158,9 @@ Retomamos el trabajo de robustez del bot en la rama `feature/pre_gadea`. Lee pri
 
 Leer antes su entrada en el progress-log, porque cada uno tiene un intento descartado y medido.
 
-A. **Grupo con nacionalidades mixtas → USD** (decisión del owner).
+A. ~~**Grupo con nacionalidades mixtas → USD**~~ **arreglado (2026-09-15, owner: que lo lea el LLM)**: valor
+   `mixed_nationality` en la petición del turno, solo con los dos lados del grupo en el mensaje
+   (`mentions_writer_and_others`); la lista de fraseos, fuera. `eval --core` 226/230. Antes:
    - Hueco: "yo soy colombiano y mi novia extranjera" no lo reconoce `_MIXED_NATIONALITY_RE`, que
      es una lista de fraseos.
    - **Intento descartado:** meter "grupo mixto → false" en la definición de `is_colombian`. Rompía
@@ -245,6 +247,12 @@ F. **Costes de las guardas del núcleo** (hallazgo 2026-09-15 con `run_extractio
       - **Pista:** es de prompt; medir con el eval-set en los dos modos.
    - **Medir con:** `--core`, la batería de grupo (config PRE) y la de booleanos. Sin empeorar
      los casos de riesgo, que son justo los que estas guardas protegen.
+
+J. **"vale perfecto" con la ubicación pendiente rellena `is_certified=False`** (hallazgo 2026-09-15, ya en HEAD).
+   - Batería de booleanos (`charla-vale-perfecto`): la alucinación se evitaba 3/3 en la referencia de 7b;
+     hoy 2 de 4 en HEAD y en el árbol, con la petición idéntica byte a byte (`bool_scn_reps`).
+   - No lo causa A (el mensaje no abre su puerta). Algún cambio entre 7b y F.4 lo dejó expuesto, o
+     la referencia tuvo suerte: bisecar con la misma sonda antes de tocar nada.
 
 I. ~~**El LLM se abstiene del grupo entero con muchos campos pedidos**~~ **arreglado (2026-09-15)** para la
    familia "persona con estado distinto": la frase elíptica del contraste se lee por su polaridad y el

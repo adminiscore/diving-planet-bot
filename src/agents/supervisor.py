@@ -790,52 +790,6 @@ def _contact_number_deflection(lang: str) -> str:
     )
 
 
-# A group where NOT everyone shares the same nationality (some Colombian/
-# resident, some foreign) — pricing/currency is set per-conversation
-# (state.is_colombian), so this is a real gap: not implemented as a feature
-# (T013 in docs/archive/test-battery-edge-cases.md). Detect the contradiction
-# explicitly instead of letting it fall through to a generic RAG fallback.
-_MIXED_NATIONALITY_RE = re.compile(
-    r"\bmi\s+(?:amig[oa]|parej[ao]|espos[oa]|hij[oa]|herman[oa]|novi[oa])\s+es\s+extranjer[oa]\b"
-    r"|\bmi\s+(?:amig[oa]|parej[ao]|espos[oa]|hij[oa]|herman[oa]|novi[oa])\s+es\s+colombian[oa]\b"
-    r"|\b(?:unos?|algunos?)\s+(?:somos\s+|son\s+)?colombian[oa]s?\s+y\s+(?:otros?|l[oa]s?\s+demas)\s+extranjer[oa]s?\b"
-    r"|\bnacionalidad\s+mixta\b"
-    r"|\bparte\s+del\s+grupo\s+es\s+extranjer[oa]\b"
-    r"|\bsolo\s+yo\s+soy\s+(?:colombian[oa]|extranjer[oa])\b"
-    # "dos de nosotros somos colombianos pero uno es extranjero" (hallazgo en
-    # vivo, batería sintética contra PRE, 2026-08-26, lote 5, portado de
-    # pre_gadea v0.21.14) — cantidad explícita + "pero"/"y" en vez del
-    # "unos/algunos... y otros" ya cubierto arriba. Cubre ambos órdenes
-    # (colombiano-primero / extranjero-primero).
-    r"|\b(?:\d+|" + number_alt(2, 10, "es") + r")\s+(?:de\s+(?:nosotros|el\s+grupo)\s+)?somos\s+colombian[oa]s?\s+"
-    r"(?:pero|y)\s+(?:\d+|el\s+resto|otr[oa]s?|un[oa])\s*(?:es|son|somos)?\s*extranjer[oa]s?\b"
-    r"|\b(?:\d+|" + number_alt(2, 10, "es") + r")\s+(?:de\s+(?:nosotros|el\s+grupo)\s+)?somos\s+extranjer[oa]s?\s+"
-    r"(?:pero|y)\s+(?:\d+|el\s+resto|otr[oa]s?|un[oa])\s*(?:es|son|somos)?\s*colombian[oa]s?\b"
-    r"|\bmy\s+(?:friend|partner|husband|wife|brother|sister|boyfriend|girlfriend)\s+is\s+(?:a\s+)?foreign(?:er)?\b"
-    r"|\bmy\s+(?:friend|partner|husband|wife|brother|sister|boyfriend|girlfriend)\s+is\s+colombian\b"
-    r"|\bonly\s+i\s*(?:'m| am)\s+colombian\b"
-    r"|\bmixed\s+nationalit(?:y|ies)\b"
-    # "uno de nosotros es colombiano y los otros/demás no" — hallazgo en vivo
-    # (lote 12, bateria "natural/deictica", 2026-09-02, conv. real 849): "uno
-    # de nosotros es colombiano y los otros dos no" no matcheaba ningun
-    # patron existente (no usa "unos/algunos", ni repite "extranjero", ni
-    # da una cantidad explicita con "pero/y"). Sin esto, el grupo caia al
-    # `_finalize()` generico, que dice "Como SOIS colombianos/residentes"
-    # (plural, implica que TODOS lo son) para un grupo donde solo 1 de 3 lo
-    # es -- en vez de la explicacion real de pago mixto por persona.
-    r"|\buno\s+(?:de\s+nosotros\s+)?es\s+colombian[oa]\s+y\s+(?:l[oa]s?\s+)?(?:otro|dem[aá]s)s?"
-    r"(?:\s+\w+)?\s+no\b"
-    r"|\buno\s+(?:de\s+nosotros\s+)?es\s+extranjer[oa]\s+y\s+(?:l[oa]s?\s+)?(?:otro|dem[aá]s)s?"
-    r"(?:\s+\w+)?\s+(?:s[ií]|no)\b"
-    r"|\bone\s+of\s+us\s+is\s+colombian\s+and\s+the\s+(?:other|rest)s?\s+(?:aren'?t|are\s+not|isn'?t)\b",
-    re.IGNORECASE,
-)
-
-
-def _detect_mixed_nationality_request(msg_lower: str) -> bool:
-    return bool(_MIXED_NATIONALITY_RE.search(_strip_accents(msg_lower)))
-
-
 def _booking_change_buttons(lang: str) -> list[dict]:
     if lang == "es":
         return [
@@ -856,7 +810,11 @@ def _mixed_nationality_response(state: ConversationState, message: str) -> str:
     el grafo caían al slot-fill normal sin decir nada del pago individual por
     nacionalidad). Extraído de `_shared_turn_handler` para que la cascada y el
     nodo `booking` usen una única fuente de copy/estado, mismo patrón que
-    `_booking_change_response`."""
+    `_booking_change_response`.
+
+    Hallazgo A (2026-09-15): lo dispara el nucleo cuando el LLM lee un grupo mixto
+    (antes una lista de fraseos en la cascada, el nodo `booking` y el router), y el
+    historial lo escribe quien llama."""
     # Decision del owner (2026-09-14): un grupo con nacionalidades mixtas paga
     # TODO en dolares (USD). Antes se explicaba un pago individual por nacionalidad.
     state.is_colombian = False
@@ -876,8 +834,6 @@ def _mixed_nationality_response(state: ConversationState, message: str) -> str:
         )
     state.quick_replies = _booking_change_buttons(state.language)
     logger.info("[SUPERVISOR] Mixed-nationality group detected -> honest explanation + escalate/home buttons")
-    state.history.append({"role": "user", "content": message})
-    state.history.append({"role": "assistant", "content": response})
     return response
 
 
@@ -3069,13 +3025,6 @@ async def _shared_turn_handler(
         state.history.append({"role": "user", "content": message})
         state.history.append({"role": "assistant", "content": response})
         return response
-
-    # Mixed-nationality group (some Colombian/resident, some foreign) — not
-    # implemented as a feature: pricing/currency is set once per conversation.
-    # Answer honestly instead of falling through to a generic RAG fallback
-    # (T013 in docs/archive/test-battery-edge-cases.md).
-    if _detect_mixed_nationality_request(msg_lower):
-        return _mixed_nationality_response(state, message)
 
     # Age-eligibility question ("mi hijo de 9 años puede bucear?", "hay edad
     # mínima?", "una persona de 14 puede?"). Answer deterministically from the

@@ -794,6 +794,22 @@ _ELIDED_AFFIRMATIVE_WORDS = frozenset({"si", "yes", "tambien", "also", "too", "a
 _WRITER_SUBJECT_WORDS = frozenset({"yo", "i", "me", "m"})
 
 
+# Primera persona del plural: el pronombre o la desinencia verbal ("somos", "vivimos").
+_FIRST_PERSON_PLURAL_RE = re.compile(r"\b(?:nosotr[oa]s|we|us|our|\w+mos)\b")
+
+
+def mentions_writer_and_others(message: str) -> bool:
+    """¿Habla de quien escribe (o de su grupo) Y de otra persona o parte del grupo? "yo soy
+    colombiano y mi novia extranjera", "dos somos colombianos pero uno es extranjero", "one
+    of us is colombian and the others are not". Puerta para preguntar al LLM si el grupo
+    mezcla nacionalidades (hallazgo A, 2026-09-15): con un solo lado ("mi novio es aleman",
+    "ninguno colombiano") el LLM suponia la otra mitad 2/2."""
+    text = strip_accents((message or "").lower())
+    writer = bool(_WRITER_SUBJECT_WORDS & set(re.findall(r"\w+", text))) or bool(_FIRST_PERSON_PLURAL_RE.search(text))
+    others = bool(_OTHER_PERSON_SUBJECT_RE.search(text) or re.search(_NAMED_OTHER_PERSON, text, re.IGNORECASE))
+    return writer and others
+
+
 def clause_subject(clause: str, person: str = _NAMED_OTHER_PERSON) -> str | None:
     """De quien habla una frase: "writer" si solo nombra a quien escribe ("yo", "I"),
     "other" si solo nombra a otra persona (`person`), None si a las dos o a nadie. Pieza

@@ -135,22 +135,13 @@ def classify_route(conv_state: ConversationState, message: str, signals: dict) -
     if sup._asks_about_ai_identity(msg_lower):
         return ROUTE_DEFLECT
 
-    # ── BOOKING (sub-caso: nacionalidad mixta) ──
-    # La taxonomía §4.bis lo clasifica como reserva; la cascada lo responde con
-    # una explicación + botones de asesor. `booking_node` (booking_agent.py)
-    # reproduce esa misma explicación con un chequeo puntual ANTES del
-    # subgrafo (portado 2026-08-27 — antes era un gap real: el router mandaba
-    # aquí pero el subgrafo caía al slot-fill normal sin decir nada).
-    if sup._detect_mixed_nationality_request(msg_lower):
-        return ROUTE_BOOKING
-
     # ── INFO (elegibilidad por edad) ──
     # Cierre del hueco "patrón A" del audit §1.5: la cascada responde las
     # preguntas de edad de forma determinista (`_maybe_answer_age_eligibility`,
     # ROUTE_INFO) ANTES del núcleo, pero es un gate "decide-haciendo" que el
     # router no podía predecir. `_looks_like_age_eligibility_question` es el
-    # predicado puro equivalente (cue + edad presente/recordada). Va aquí, entre
-    # mixta y DIVE TO HEAL, igual que en la cascada.
+    # predicado puro equivalente (cue + edad presente/recordada). Va aquí, antes
+    # de DIVE TO HEAL, igual que en la cascada.
     if sup._looks_like_age_eligibility_question(message, conv_state):
         return ROUTE_INFO
 

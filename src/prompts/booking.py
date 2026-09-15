@@ -81,6 +81,17 @@ _FIELD_MEANING_EN = {
         "costeño'), or that they live in Colombia even if they are from another "
         "country; false if they are a foreigner who does not live in Colombia."
     ),
+    # Solo viaja en `extraction_tool(["mixed_nationality"])` (hallazgo A, 2026-09-15). Texto
+    # medido con el LLM real: una version que insistia en "no supongas" marcaba a los
+    # residentes como grupo mixto; los mensajes de un solo lado los corta la puerta del
+    # nucleo (`mentions_writer_and_others`), no el prompt.
+    "mixed_nationality": (
+        "whether the party mixes nationalities for payment: true if it includes BOTH people "
+        "who are Colombian or live in Colombia AND people who are neither (for example the writer "
+        "is Colombian and a companion is German, or two are Colombian and one is a foreigner). "
+        "Only when the message says the nationality or residence of different people in the party "
+        "and they differ."
+    ),
     # Estos tres son EXACTAMENTE el texto del tool ya medido en el camino de relleno.
     # Anadirles reglas de verificacion aqui (curso PADI nombrado, tramos con sustantivo)
     # hizo perder datos a `fill_gaps` y volvio a repartir b05 (medido 2026-09-15, ronda
@@ -356,6 +367,25 @@ _ENUM_VALUE_GLOSSES_EN = {
 # Campos cuyo `enum` son actividades: su glosa es la `gloss` del registro, no un
 # texto escrito aqui.
 _ACTIVITY_VALUED_FIELDS = frozenset({"activity", "companion_activity"})
+
+
+# Propiedades que solo viajan cuando el nucleo las pide (hallazgo A, 2026-09-15): el tool de
+# siempre no cambia, asi que ninguna otra peticion ve un prompt distinto.
+_EXTRA_EXTRACTION_PROPERTIES = {
+    "mixed_nationality": {"type": "boolean", "description": _FIELD_MEANING_EN["mixed_nationality"]},
+}
+
+
+def extraction_tool(extra_fields=()) -> dict:
+    """`EXTRACTION_TOOL` tal cual, o una copia con las propiedades extra pedidas."""
+    extra = [f for f in extra_fields if f in _EXTRA_EXTRACTION_PROPERTIES]
+    if not extra:
+        return EXTRACTION_TOOL
+    from copy import deepcopy
+
+    tool = deepcopy(EXTRACTION_TOOL)
+    tool["function"]["parameters"]["properties"].update({f: _EXTRA_EXTRACTION_PROPERTIES[f] for f in extra})
+    return tool
 
 
 def _value_glosses(field: str, lang: str) -> dict[str, str]:

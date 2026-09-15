@@ -82,8 +82,14 @@ History
   - **Medido:** foto del detector sobre 2333 frases con 3 cambios, los tres buscados. `eval --core` 218 → **219/230**, 0 a peor.
   - **Consecuencia aceptada:** "llevo el open water a medias" se lee como tenerlo.
 * **Hallazgo F.4 cerrado sin cambio de código (decisión del owner): "im from the states" se pregunta.** El LLM se abstenía de `is_colombian` y el eval-set lo contaba como fallo, pero la definición del campo solo da "no colombiano" a quien es extranjero y no vive en Colombia, y el detector hace lo mismo con "soy de méxico" o "i'm canadian". Ser de otro país no dice dónde vive, y el residente paga en COP: el bot pregunta "are you Colombian or a resident of Colombia?". Se corrige la expectativa del caso a "sin valor". Coste: 0 peticiones.
+* **Hallazgo A arreglado: el grupo con nacionalidades mixtas lo lee el LLM** (decisión del owner). Un grupo mixto paga todo en USD, pero lo detectaba una lista de fraseos: "somos colombianos pero mi amigo es alemán" o "yo vivo en bogotá y mi amigo es gringo" se cobraban en COP, y "mi amigo es colombiano y yo también" se marcaba mixto.
+  - **Cómo:** un valor `mixed_nationality` que viaja en la petición que el turno ya hace (0 peticiones de más), con una variante del tool: el resto de prompts no cambia (snapshot: 86 idénticos byte a byte).
+  - **Puerta estructural:** solo se pide si el mensaje habla de quien escribe (o su grupo) y de otra persona o parte del grupo. Con un solo lado ("mi novio es alemán", "ninguno colombiano") el LLM suponía la otra mitad 2/2.
+  - **Una sola fuente:** la lista sale de la cascada, del nodo `booking` del grafo y del router; el núcleo responde con la explicación de USD ya existente.
+  - **Medido:** `eval --core` 219 → **226/230**, 0 a peor (los 6 mixtos). Conversación completa: los mixtos 3/3 con la explicación, el residente extranjero y el mensaje de un solo lado 3/3 siguen la reserva. Baterías de grupo y de booleanos: un cambio en cada una, los dos con la petición idéntica byte a byte en HEAD y en el árbol (variabilidad del LLM).
+  - **Consecuencia aceptada:** "somos de nacionalidad mixta", sin nombrar a nadie, ya no dispara la explicación.
 * **Para reinvestigar** (owner): grupo mixto → USD (necesita un valor propio, no el booleano), respuesta doble tras F5a y unificar la ubicación entre detector y núcleo. Detalle en `docs/robustness/NEXT-SESSION-PROMPT.md`.
-* Suite: **2363 passed / 18 skipped**.
+* Suite: **2379 passed / 18 skipped**.
 
 0.25.0 - (2026-09-14)
 ----------------------
