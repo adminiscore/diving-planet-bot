@@ -1035,17 +1035,27 @@ class IntentDetector:
         r"(?:open[\s-]*water|advanced|rescue|dive\s*master|divemaster|"
         r"aguas\s+abiertas|nitrox)"
     )
+    # Verbos de tener un nivel (hallazgo F.1, 2026-09-15): la posesion (tener, llevar) y
+    # haberlo hecho (hacer, sacar, terminar, completar), en primera y tercera persona.
+    # Antes solo "tengo/tenemos/tiene(n)": "ya llevo el rescue" o "hice mi open water"
+    # se tomaban por un nivel sin decir si lo tienen y el bot preguntaba de mas. Querer
+    # sacarlo (`_WANTS_CERT_RE`) sigue ganando: "hice el open water y quiero el advanced".
+    _HOLD_VERB_WRITER_ES = r"(?:tengo|tenemos|llevo|llevamos|hice|hicimos|saqu[eé]|termin[eé]|complet[eé])"
+    _HOLD_VERB_OTHER_ES = (
+        r"(?:tienen?|llevan?|hizo|hicieron|sac[oó]|sacaron|termin[oó]|terminaron|complet[oó]|completaron)"
+    )
+    _HOLD_VERB_EN = r"(?:have|has|got|did|completed|finished|took)\s+(?:got\s+|done\s+|completed\s+|finished\s+)?"
     # "I HAVE / I AM this cert" — status, not a course to take.
     _HOLDS_WRITER = (
         r"\b(?:soy|somos|estoy|estamos)\s+(?:un[ao]?\s+|buz[oa]s?\s+)?"
         r"(?:certificad[oa]s?\s+(?:en|como)\s+)?" + _CERT_LEVEL + r"\b"
-        r"|\b(?:tengo|tenemos)\s+(?:el\s+|la\s+|mi\s+|un[ao]?\s+)?" + _CERT_LEVEL + r"\b"
+        r"|\b" + _HOLD_VERB_WRITER_ES + r"\s+(?:el\s+|la\s+|mi\s+|nuestr[oa]\s+|un[ao]?\s+)?" + _CERT_LEVEL + r"\b"
         r"|\bi(?:'?m|\s+am)\s+(?:an?\s+)?" + _CERT_LEVEL + r"\b"
         # "i already have my open water card" — the adverb between "i/we" and
         # "have" used to break the match, so the message was classified as
         # WANTING the Open Water course instead of holding it (real bug from
         # the Fase 6 battery — Fase 7, docs/robustness/plan.md).
-        r"|\b(?:i|we)\s+(?:already\s+|now\s+|both\s+)?(?:have|got)\s+(?:got\s+)?(?:my\s+|our\s+|an?\s+|the\s+)?" + _CERT_LEVEL + r"\b"
+        r"|\b(?:i|we)\s+(?:already\s+|now\s+|both\s+)?" + _HOLD_VERB_EN + r"(?:my\s+|our\s+|an?\s+|the\s+)?" + _CERT_LEVEL + r"\b"
         r"|\b" + _CERT_LEVEL + r"\s+(?:diver|certified)\b"
         r"|\bbuz[oa]\s+avanzad[oa]\b"
     )
@@ -1055,9 +1065,9 @@ class IntentDetector:
     # sustantivos. Dice que NO pide el curso, pero nada del estado de quien escribe.
     _HOLDS_OTHER_PERSON = (
         r"\b(?:" + _PERSON_NOUN_SINGULAR_ES + r"|" + _PERSON_NOUN_PLURAL_ES + r")\s+(?:\w+\s+){0,2}?"
-        r"tienen?\s+(?:el\s+|la\s+|su\s+|un[ao]?\s+)?" + _CERT_LEVEL + r"\b"
+        + _HOLD_VERB_OTHER_ES + r"\s+(?:el\s+|la\s+|su\s+|un[ao]?\s+)?" + _CERT_LEVEL + r"\b"
         r"|\b(?:" + _PERSON_NOUN_SINGULAR_EN + r"|" + _PERSON_NOUN_PLURAL_EN + r")\s+(?:\w+\s+){0,2}?"
-        r"(?:has|have)\s+(?:got\s+)?(?:her\s+|his\s+|their\s+|an?\s+|the\s+)?" + _CERT_LEVEL + r"\b"
+        + _HOLD_VERB_EN + r"(?:her\s+|his\s+|their\s+|an?\s+|the\s+)?" + _CERT_LEVEL + r"\b"
     )
     _HOLDS_CERT_RE = re.compile(_HOLDS_WRITER + r"|" + _HOLDS_OTHER_PERSON, re.IGNORECASE)
     _HOLDS_CERT_WRITER_RE = re.compile(_HOLDS_WRITER, re.IGNORECASE)

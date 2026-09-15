@@ -4116,3 +4116,39 @@ certified_diving: 1}`, total 2, pregunta la ubicación), el minicurso 3/3, el in
 eval-set y la batería de grupo no pasan por esta puerta y la foto ya los cubre.
 
 - Tests: 16 nuevos (`tests/test_offerings_by_subject.py`). Suite 2342.
+
+### Hallazgo F.1: "ya llevo el rescue" no contaba como tener el nivel (arreglado)
+
+**Síntoma.** "ya llevo el rescue, quiero seguir buceando": el LLM da `is_certified=True` 3/3, pero
+`course_level_is_ambiguous` ve un nivel sin decir si lo tienen y `_flag_cert_or_course` borra el
+valor para preguntar "¿ya la tienes o quieres sacarla?". Una pregunta de más, nunca un valor malo.
+
+**Causa.** La pieza de tener un nivel (`_HOLDS_WRITER`, `_HOLDS_OTHER_PERSON`) solo conocía
+"tengo/tenemos/tiene(n)" y "have/got".
+
+**Opciones valoradas.** Barrido del corpus: 36 frases salen ambiguas hoy.
+- Con verbo de posesión o de haberlo hecho: "ya llevo el rescue", "hola soy Sofia de chile, hice mi
+  open water y quiero bucear" (conversación real).
+- Deseos que no caza `_WANTS_CERT_RE` ("quiero ser divemaster", "me interesa el rescue").
+- Preguntas al centro ("¿tienen el advanced?", "que es el open water").
+- **Vía B descartada:** dejar al LLM cuando hay cualquier verbo delante del nivel. Metería en la
+  vía del LLM las preguntas al centro y los "me interesa", demasiado amplio para un coste de una
+  pregunta.
+- **Vía A aplicada:** completar la clase cerrada de verbos de la pieza compartida.
+
+**Arreglo.** Tres piezas en el detector: `_HOLD_VERB_WRITER_ES` (tengo, llevo, hice, saqué, terminé,
+completé y plurales), `_HOLD_VERB_OTHER_ES` (tercera persona) y `_HOLD_VERB_EN` (have, has, got,
+did, completed, finished, took, con "have done"). Las usan quien escribe y la persona nombrada.
+`_WANTS_CERT_RE` sigue ganando ("hice el open water y quiero hacer el advanced").
+
+**Medido sin LLM.** Foto del detector (actividad, certificación, total, reparto, ambigüedad y las dos
+posesiones) sobre 2333 frases (eval-set, baterías, escenarios de grupo con estado y literales de los
+tests), HEAD frente al árbol: **3 cambios, los tres buscados**. "ya llevo el rescue" (dos) y el mensaje
+de Sofía pasan de curso ambiguo a `certified_diving`, certificado.
+
+**Medido con el LLM real.** `eval --core`: **219/230** (218 con la I), 0 a peor, 1 a mejor
+(`certification-dialect-rescue-colloquial`), tanda limpia.
+
+- **Consecuencia aceptada:** "llevo el open water a medias" (curso en marcha) se lee como tenerlo.
+  No hay ninguna frase así en el corpus.
+- **Tests:** 21 nuevos (`tests/test_holds_level_conjugations.py`). Suite 2363.

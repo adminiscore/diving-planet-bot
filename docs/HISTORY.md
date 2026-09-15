@@ -77,8 +77,12 @@ History
   - **Señal estructural, sin verbos:** cada oferta en su frase con su propio sujeto (quien escribe y otra persona) es un reparto. Una sola persona que duda ("mi amigo no sabe si bucear o hacer snorkel") sigue comparando. La duda escrita se comprueba antes y gana.
   - **Pieza compartida:** `clause_subject` en el detector lee el sujeto de una frase; la usan este reparto y el contraste elíptico de la I.
   - **Medido:** con el LLM real, la frase de E pasa de 0/3 a 3/3 reservando (`{snorkel: 1, certified_diving: 1}`, total 2), "mi novia hace el minicurso y yo buceo" de 2/3 a 3/3, y el control sigue comparando 3/3. Foto sin LLM sobre 2308 frases (eval-set, baterías y literales de los tests): 10 cambios, todos repartos con sujeto propio; el contraste elíptico no cambia en ninguna.
+* **Hallazgo F.1 arreglado: "ya llevo el rescue" ya cuenta como tener el nivel.** La pieza compartida de tener un nivel PADI solo conocía "tengo/tenemos/tiene(n)": "ya llevo el rescue, quiero seguir buceando" o "hice mi open water y quiero bucear" (conversación real) quedaban como nivel sin decir si lo tienen, y el bot borraba el `is_certified=True` del LLM para preguntar "¿ya la tienes o quieres sacarla?".
+  - **Arreglo en la pieza, no por frases:** la clase cerrada de verbos de posesión (tener, llevar) y de haberlo hecho (hacer, sacar, terminar, completar; have, did, completed, finished, took), en primera y tercera persona. Querer sacarlo sigue ganando, y un nivel sin verbo ("somos 4 open water") o preguntar al centro ("¿tienen el advanced?") se sigue preguntando.
+  - **Medido:** foto del detector sobre 2333 frases con 3 cambios, los tres buscados. `eval --core` 218 → **219/230**, 0 a peor.
+  - **Consecuencia aceptada:** "llevo el open water a medias" se lee como tenerlo.
 * **Para reinvestigar** (owner): grupo mixto → USD (necesita un valor propio, no el booleano), respuesta doble tras F5a y unificar la ubicación entre detector y núcleo. Detalle en `docs/robustness/NEXT-SESSION-PROMPT.md`.
-* Suite: **2342 passed / 18 skipped**.
+* Suite: **2363 passed / 18 skipped**.
 
 0.25.0 - (2026-09-14)
 ----------------------
