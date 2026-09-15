@@ -54,6 +54,11 @@ History
   - **Cambio de reparto (f01, 3/3):** "al final mi suegra también bucea, no hace snorkel" no cambia el reparto guardado.
   - **"primero dime qué incluye el tour":** recibe un acuse genérico en vez de la información, porque la detección de pregunta solo mira el principio del mensaje.
   - Causas y pistas generales en el progress-log.
+* **Hallazgo H arreglado: los tramos de un grupo ya contado no se cobran dos veces.** Con "vamos 3, mi pareja y yo buceamos y mi suegra hace snorkel", el bot tiraba el reparto y preguntaba "¿cuántos para buceo?"; cada respuesta sumaba encima del total (3 → 4 → 5 personas cobradas). Una regla única, que ya se usaba con las personas sin decidir: con el total sabido, la actividad principal se queda con el resto.
+  - Un reparto que cubre exactamente a las personas nombradas se acepta (F.2).
+  - La principal no se pregunta.
+  - Las respuestas se reparten dentro del total.
+  - "my wife and i dive" con dos hijos conserva el total 4 (F.3).
 * **7b y 7c arreglados: una corrección del cliente ya no se ignora ni se aplica a ciegas** (decisión del owner). "espera, en realidad no somos colombianos" tras el precio re-emitía COP; "al final mi suegra también bucea" no cambiaba el reparto; "mejor snorkel" cobraba el reparto anterior.
   - **Qué hace ahora:** con un cue explícito ("perdón", "en realidad") se aplica; sin cue, el bot pregunta "¿lo cambio?" con botones.
   - **Quién decide:** el regex propone. La verificación LLM de los campos ya sabidos arbitra: entiende la jerga y se abstiene si el mensaje habla de otra persona (sonda real 24/24).

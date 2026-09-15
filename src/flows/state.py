@@ -189,6 +189,12 @@ class ConversationState:
     # pregunta el total antes de sumar o mover a nadie (tarea 7a, 2026-09-15).
     pending_companion_in_group: dict | None = None
 
+    # Total del grupo al que pertenecen los tramos de `pending_companion_queue` que salen
+    # de un reparto de ESE grupo ("vamos 3, ... mi suegra hace snorkel"): la respuesta a
+    # "¿cuantos serian para X?" se reparte dentro de este total y la actividad principal
+    # se queda con el resto, sin sumar encima (hallazgo H, 2026-09-15).
+    pending_split_total: int | None = None
+
     # Dato que contradice lo guardado y llego sin cue de correccion ("ah no, somos
     # gringos" tras decir colombianos): {campo: valor nuevo}. Se confirma con el
     # cliente antes de cambiar nada (owner 2026-09-15, tarea 7b).

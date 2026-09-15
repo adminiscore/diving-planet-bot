@@ -7,7 +7,7 @@ docs/robustness/progress-log.md ("Tarea 7").
 
     ENV_FILE=.env.dev python -m scripts.repro_old_findings [repeticiones] [casos]
 
-casos: lista separada por comas de drip,correccion,correccion_antes,f01,f01_conversacion,tour
+casos: lista separada por comas de drip,correccion,correccion_antes,f01,f01_conversacion,h_total,tour
 (por defecto todos).
 """
 
@@ -112,6 +112,19 @@ async def f01_conversacion(rep):
     return log
 
 
+async def h_total(rep):
+    """H: los tramos que se preguntan de un grupo con total sabido no suman encima."""
+    log = []
+    for opening in (
+        "hola, vamos 3, mi pareja y yo buceamos y mi suegra hace snorkel, estamos certificados",
+        "hola, vamos 5, mis amigos bucean y mis primos hacen snorkel, estamos certificados",
+    ):
+        st = _new(f"h-{rep}")
+        await _say(st, opening, log)
+        await _autopilot(st, log, stop=_priced)
+    return log
+
+
 async def tour(rep):
     """7d: peticion de informacion sin "?" ni palabra-pregunta al principio."""
     st, log = _new(f"tour-{rep}"), []
@@ -121,7 +134,7 @@ async def tour(rep):
 
 
 CASES = {"drip": drip, "correccion": correccion, "correccion_antes": correccion_antes, "f01": f01,
-         "f01_conversacion": f01_conversacion, "tour": tour}
+         "f01_conversacion": f01_conversacion, "h_total": h_total, "tour": tour}
 
 
 async def main():

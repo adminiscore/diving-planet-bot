@@ -3852,3 +3852,61 @@ todas las guardas): **todos los casos correctos 2/2**.
 
 **Tarea 7 cerrada.** Queda en "Para reinvestigar" lo que salió al medirla y es de otra familia: D, E,
 F, G y H.
+
+### Hallazgo H y F.2/F.3, arreglados: tramos de un total ya sabido y personas nombradas
+
+**H (grave, anterior a la tarea 7).** "hola, vamos 3, mi pareja y yo buceamos y mi suegra hace
+snorkel": la guarda de cifras tiraba el reparto `{2, 1}` del LLM, encolaba las dos actividades y
+preguntaba "¿cuántos serían para buceo certificado?". La respuesta se fusionaba con
+`_merge_companion_activity`, que suma sin mirar el total: "uno" dejaba 4 personas y el siguiente
+tramo 5, con un total de 3 conocido. Reproducido igual en 4a9c327, antes de 7a.
+
+**Regla única**, que el núcleo ya aplicaba a las personas sin decidir: **con el total sabido, la
+actividad principal se queda con el resto.** Vive en un único helper, `_with_main_rest`, que ahora
+usan los tres sitios.
+- **F.2, partición de las personas nombradas.** Si las cifras del reparto suman exactamente las
+  personas nombradas una a una, incluido quien escribe (`_named_people`), es un reparto de esas
+  personas y se acepta.
+  - "mi pareja y yo buceamos y mi suegra hace snorkel" nombra a 3 y `{2, 1}` las cubre.
+  - Los plurales ("mis amigos") siguen sin contar.
+- **Arreglo de H en la guarda.** Si solo la actividad principal se queda sin respaldo y hay un total
+  que dijo el mensaje o la conversación (nunca el del LLM), su cifra es el resto.
+- **Cola dentro del total.** Si aun así hay tramos sin respaldo ("vamos 5, mis amigos bucean y mis
+  primos hacen snorkel"):
+  - no se pregunta la principal;
+  - se guarda `pending_split_total`;
+  - la respuesta a "¿cuántos para X?" se reparte dentro del total (`_assign_split_share`) y, al
+    contestar el último tramo, la principal se queda con el resto.
+  - Si las respuestas superan el total, se hace la pregunta de 7a ("¿seguís siendo N o se suma
+    alguien?").
+  - El marcador se limpia donde se limpia la cola.
+- **F.3 queda cubierto por la misma partición:** "my daughter is 9 and my son is 12, my wife and i
+  dive" (4 personas, `{certified_diving: 2, undecided: 2}`) conserva el total 4.
+
+**Medido sin LLM:**
+- Suite 2258, con 6 tests nuevos.
+- Foto determinista de los 66 escenarios de las baterías de grupo y booleanos, HEAD frente a
+  árbol: **0 cambios**.
+
+**Medido con el LLM real:**
+- **Reproducción de H, 3/3.** "vamos 3, mi pareja y yo buceamos y mi suegra hace snorkel" guarda
+  `{certified_diving: 2, snorkel: 1}` y cobra 3 personas (antes 5). "vamos 5, mis amigos bucean y
+  mis primos hacen snorkel" solo pregunta el snorkel; "uno" deja `{snorkel: 1, certified_diving: 4}`,
+  total 5.
+- **Acompañante a trozos (7a):** sigue correcto.
+- **Batería de grupo, config PRE: 13/17, 13/13, 17/17, con 4 cambios frente a la base.** Son p02,
+  p03, p05 y p07: el reparto vacío o el total sin fijar. **No los causa H**, comprobado por cuatro
+  vías:
+  - la foto de prompts es idéntica, 86/86 byte a byte;
+  - las peticiones son idénticas en HEAD y en el árbol (función, huecos y campos a verificar);
+  - con la misma respuesta del LLM, HEAD y el árbol dejan el mismo estado;
+  - sonda real en HEAD (c45cd8b, ya en PRE, sin H): p02 1/2, p05 1/2, p07 0/2, el mismo fallo.
+  
+  Con los mismos prompts, el LLM devuelve a veces `{}` completo para esos mensajes. El 17/17 de las
+  16:45 fue una tirada favorable. Pasa a "Para reinvestigar" (I).
+
+**Pendiente de medir: `eval --core` completo.** La tanda abortó en el primer caso por rate-limit (429,
+cuota diaria agotada tras las mediciones del día). El script para en seco para no publicar números
+degradados. Los dos casos del eval-set que F.2 cambia (`grp-es-mixed-suegra`,
+`grp-en-implicit-count-ages`) están cubiertos por tests con la respuesta exacta que dio el LLM real en
+la sonda de la tarea 6. Repetir la tanda con cuota y compararla por caso con la de 7b (216/230).

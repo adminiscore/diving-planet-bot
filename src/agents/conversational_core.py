@@ -855,7 +855,10 @@ def _apply_short_answer(state: ConversationState, message: str) -> bool:
             return False
         n = cart_render.parse_quantity(message)
         if n is not None and n > 0 and act:
-            _merge_companion_activity(state, act, n)
+            if state.pending_split_total:
+                _assign_split_share(state, act, n)
+            else:
+                _merge_companion_activity(state, act, n)
             state.pending_companion_activity = None
             return True
         return False
@@ -2039,21 +2042,37 @@ async def _understand(state: ConversationState, message: str, *, answered_pendin
             # nada: solo si respaldan TODAS las cifras. "soy certificado y mi hijo no"
             # nombra una sola persona (la primera va en el verbo) y dejaba un reparto
             # parcial con total 1 en vez de preguntar.
+            main_act = intent.activity or state.detected_activity
             if len(cleaned) + undecided_backed < len(alloc_patch) + wants_undecided:
                 with_people, undecided_with_people = _back(_message_numbers(message) + _named_people(message))
+                people = _named_people(message)[1]
+                # Total que dijo el mensaje o la conversacion, nunca el del LLM.
+                known_total = intent.group_size or state.detected_group_size
                 if len(with_people) + undecided_with_people == len(alloc_patch) + wants_undecided:
                     cleaned, undecided_backed = with_people, undecided_with_people
+                elif people and sum(alloc_patch.values()) + (undecided_qty if wants_undecided else 0) == people:
+                    # Las cifras reparten a las personas nombradas (F.2, 2026-09-15): "mi
+                    # pareja y yo buceamos y mi suegra hace snorkel" nombra a 3 y {2, 1} las
+                    # cubre a todas. Cada persona respalda un 1, pero un tramo de 2 no tenia
+                    # respaldo y la guarda tiraba un reparto correcto (y el total con el).
+                    cleaned, undecided_backed = dict(alloc_patch), wants_undecided
+                elif (
+                    known_total and undecided_with_people == wants_undecided
+                    and [a for a in alloc_patch if a not in with_people] == [main_act]
+                ):
+                    # Solo falta respaldo para la actividad principal y el total ya se sabe:
+                    # su cifra es el resto (hallazgo H, 2026-09-15), no una cantidad inventada.
+                    cleaned = _with_main_rest(with_people, main_act, known_total, undecided_qty if wants_undecided else 0)
+                    undecided_backed = wants_undecided
+                    patch["group_allocation"] = dict(cleaned)
             if undecided_backed:
                 # El resto del grupo hace la actividad principal: aritmetica con el
                 # total conocido, no una suposicion ("somos 3, uno no esta
                 # certificado" + buceo certificado -> 2 certificados). El tramo
                 # `undecided` sigue en el reparto hasta `_take_undecided_members`.
-                main_act = intent.activity or state.detected_activity
                 total = patch.get("group_size") or intent.group_size or state.detected_group_size
                 if main_act and main_act not in cleaned and total:
-                    rest = total - undecided_qty - sum(cleaned.values())
-                    if rest > 0:
-                        cleaned[main_act] = rest
+                    cleaned = _with_main_rest(cleaned, main_act, total, undecided_qty)
                 cleaned["undecided"] = undecided_qty
                 patch["group_allocation"] = dict(cleaned)
             dropped = [act for act in alloc_patch if act not in cleaned]
@@ -2079,11 +2098,17 @@ async def _understand(state: ConversationState, message: str, *, answered_pendin
                 # aplica al mensaje de apertura (`prev_activity` es None ahí),
                 # donde la actividad principal SÍ puede ser un sub-grupo
                 # legítimo por confirmar.
+                # Con el total ya sabido, los tramos que se preguntan son de ESE grupo: la
+                # respuesta se reparte dentro del total y la principal no se pregunta, se
+                # queda con el resto (hallazgo H, 2026-09-15: "uno" sumaba encima de 3).
+                known_total = intent.group_size or state.detected_group_size
                 for act in dropped:
-                    if act == prev_activity:
+                    if act == prev_activity or (known_total and act == main_act):
                         continue
                     if act not in state.pending_companion_queue:
                         state.pending_companion_queue.append(act)
+                if known_total and state.pending_companion_queue:
+                    state.pending_split_total = known_total
                 if cleaned:
                     patch["group_allocation"] = cleaned
                 else:
@@ -2160,6 +2185,7 @@ async def _understand(state: ConversationState, message: str, *, answered_pendin
         state.companion_activity_deferred = False
         state.pending_companion_activity = None
         state.pending_companion_queue = []
+        state.pending_split_total = None
         state.pending_undecided_qty = None
 
     # "voy solo" → 1 persona. Nació para cursos PADI (Fase 3 causa A) y el owner
@@ -2367,6 +2393,42 @@ def _merge_companion_activity(state: ConversationState, activity: str, qty: int)
     state.detected_group_allocation = alloc
     state.detected_group_size = sum(alloc.values())
     logger.info(f"[CORE] merged companion activity {activity} x{qty} -> alloc={alloc}")
+
+
+def _with_main_rest(allocation: dict, main_activity, total, taken: int = 0) -> dict:
+    """El resto del grupo hace la actividad principal: con el total ya sabido, su cifra
+    es aritmetica y no necesita respaldo en el texto. `taken` son personas del total que
+    no estan en el reparto (las `undecided`). Punto unico (2026-09-15): lo usan las
+    personas sin decidir, la guarda de cifras y las respuestas a "¿cuantos para X?"."""
+    others = sum(v for k, v in allocation.items() if k != main_activity)
+    rest = (total or 0) - others - taken
+    result = {k: v for k, v in allocation.items() if k != main_activity}
+    if main_activity and rest > 0:
+        result[main_activity] = rest
+    return result
+
+
+def _assign_split_share(state: ConversationState, activity: str, qty: int) -> None:
+    """Respuesta a "¿cuantos serian para X?" cuando X es un tramo del grupo YA contado
+    (hallazgo H, 2026-09-15). Antes se sumaba encima: con 3 sabidos, "uno" dejaba 4 y el
+    siguiente tramo 5. Ahora se reparte dentro del total; al contestar el ultimo tramo, la
+    actividad principal se queda con el resto. Si las respuestas superan el total, se
+    pregunta si se suma alguien (la pregunta de 7a)."""
+    total = state.pending_split_total
+    allocation = dict(state.detected_group_allocation or {})
+    allocation[activity] = allocation.get(activity, 0) + qty
+    main = state.detected_activity
+    if sum(v for k, v in allocation.items() if k != main) > total:
+        state.pending_split_total = None
+        state.pending_companion_queue = []
+        state.pending_companion_in_group = {"activity": activity, "qty": qty}
+        return
+    if not state.pending_companion_queue:
+        state.pending_split_total = None
+        allocation = _with_main_rest(allocation, main, total)
+    state.detected_group_allocation = allocation
+    state.detected_group_size = total
+    logger.info(f"[CORE] tramo {activity} x{qty} dentro del total {total} -> alloc={allocation}")
 
 
 def _add_or_ask_companion(state: ConversationState, message: str, activity: str, qty: int) -> None:
@@ -3072,6 +3134,7 @@ async def _extraction_phase(
         state.companion_activity_deferred = False
         state.pending_companion_activity = None
         state.pending_companion_queue = []
+        state.pending_split_total = None
         state.pending_undecided_qty = None
 
     # Multi-ítem (auditoría 2026-07-23): si _understand() encoló alguna
@@ -3715,6 +3778,7 @@ async def _slotfill_close_phase(
         state.companion_activity_deferred = False
         state.pending_companion_activity = None
         state.pending_companion_queue = []
+        state.pending_split_total = None
         state.pending_undecided_qty = None
 
     # RESOLVER + RESPONDER.

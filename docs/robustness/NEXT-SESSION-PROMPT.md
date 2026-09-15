@@ -154,6 +154,12 @@ Retomamos el trabajo de robustez del bot en la rama `feature/pre_gadea`. Lee pri
 8. **Observabilidad**: Langfuse frente a LangSmith (no pagar).
 9. **CI**: `concurrency` en el job de deploy (dos pushes seguidos chocan; consultar con el equipo).
 
+### Primero, con cuota del LLM
+
+- Repetir `ENV_FILE=.env.dev python -m scripts.run_extraction_eval --core` y compararlo por caso
+  con la tanda de 7b (216/230). La del arreglo de H abortó por rate-limit. Se espera que mejoren
+  `grp-es-mixed-suegra` y `grp-en-implicit-count-ages` (F.2) y que no empeore ninguno.
+
 ### Para reinvestigar (owner, 2026-09-15): medidos, sin solución todavía
 
 Leer antes su entrada en el progress-log, porque cada uno tiene un intento descartado y medido.
@@ -224,11 +230,13 @@ F. **Costes de las guardas del núcleo** (hallazgo 2026-09-15 con `run_extractio
       `_flag_cert_or_course` lo borra, porque "llevo" no está en las piezas de tener un nivel
       (`_HOLDS_WRITER`). El bot pregunta "¿ya la tienes o quieres sacarla?".
       - **Pista:** hueco de conjugación en la pieza compartida, no una frase nueva.
-   2. **"vamos 3, mi pareja y yo buceamos y mi suegra hace snorkel"**: el LLM da
+   2. ~~**"vamos 3, mi pareja y yo buceamos y mi suegra hace snorkel"**~~ **arreglado con H (partición de
+      las personas nombradas)**. Antes: el LLM da
       `{certified_diving: 2, snorkel: 1}` y la guarda de cifras lo tira, porque el 2 no está en el
       texto.
       - **Pista:** la composición "X y yo" respalda un 2, igual que `_named_people` respalda cifras 1.
-   3. **"my daughter is 9 and my son is 12, my wife and i dive"**: el LLM da total 4 y
+   3. ~~**"my daughter is 9 and my son is 12, my wife and i dive"**~~ **arreglado con H (la misma
+      partición conserva el total 4)**. Antes: el LLM da total 4 y
       `{certified_diving: 2, undecided: 2}` 3/3. La misma guarda tira el reparto y, con él, el total.
       - **Pista:** no tirar un total que cuadra con las personas nombradas (esa regla ya existe
         sin reparto).
@@ -238,7 +246,25 @@ F. **Costes de las guardas del núcleo** (hallazgo 2026-09-15 con `run_extractio
    - **Medir con:** `--core`, la batería de grupo (config PRE) y la de booleanos. Sin empeorar
      los casos de riesgo, que son justo los que estas guardas protegen.
 
-H. **"¿Cuántos serían para X?" suma encima del total ya sabido** (hallazgo 2026-09-15 al medir 7c;
+I. **El LLM se abstiene del grupo entero con muchos campos pedidos** (medido 2026-09-15, ya en PRE).
+   - "soy certificado y mi hijo no", "my wife is certified and I am not" y "mi pareja tiene el
+     advanced y yo no tengo nada" (familia p de la batería de grupo), con estado vacío: con los
+     mismos prompts y peticiones, el LLM devuelve a veces `{}` completo. p02 1/2, p05 1/2, p07 0/2
+     en HEAD. La base de las 12:51 y la tanda de las 16:45 dieron 17/17; es inestabilidad del
+     modelo, no de un cambio.
+   - **Consecuencia segura:** sin reparto ni total, el bot pregunta. No cobra mal.
+   - **Causa conocida:** los campos del grupo se pierden cuando viajan con muchos otros (efecto de
+     recencia, ver `combined_extraction_system_prompt`). La segunda petición de grupo no se lanza
+     si la primera volvió vacía del todo; fue una decisión de coste (+13 % → +27 % peticiones en el
+     peor caso).
+   - **Pista:** una señal estructural barata de "hay grupo que repartir" (2+ personas nombradas y
+     un contraste de estado, como "y yo no") que dispare la segunda petición también cuando la
+     primera vuelve vacía. Medir coste y aciertos con la batería de grupo en 3+ repeticiones: con
+     2 no se distingue el ruido.
+
+H. ~~**"¿Cuántos serían para X?" suma encima del total ya sabido**~~ **arreglado (2026-09-15)**: con el
+   total sabido la actividad principal se queda con el resto (`_with_main_rest`), la principal no se
+   pregunta y las respuestas se reparten dentro del total. Detalle en el progress-log. Antes (hallazgo 2026-09-15 al medir 7c;
    ya estaba antes de 7a, reproducido en 4a9c327). **Grave: cobra personas que no existen.**
    - "hola, vamos 3, mi pareja y yo buceamos y mi suegra hace snorkel": la guarda de cifras tira el
      reparto (F.2), encola las dos actividades y pregunta "¿cuántos serían para buceo
