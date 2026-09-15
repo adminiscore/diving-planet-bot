@@ -40,8 +40,9 @@ History
     - **Batería de grupo, config PRE: 17/17, 13/13, 17/17, 0 alucinaciones, 0 parciales, 0 totales mal.** Segunda petición +8,1 %.
   - **Regla contradictoria de `group_allocation`:** se quitan solo las tres frases antiguas ("a quien solo se describe por un atributo, déjalo fuera"). Empata en la batería de grupo, la tanda enfocada, los booleanos y el eval-set, y deja una sola regla (`undecided`).
   - **Eval-set:** `split-one-not-certified-es` ("somos 3, uno no esta certificado") pasa a esperar `is_certified: null`, porque la frase habla de un miembro del grupo y no de quien escribe (mismo criterio que r11/r12). Eval-set **221/230**.
+  - **Sujeto pospuesto:** "no es certificado mi acompañante" o "está certificada mi novia" ya no fijan el estado de quien escribe (verbo en tercera persona + persona nombrada detrás, sin preposición de compañía por medio). Foto del detector: 0 cambios en el corpus.
 * **Para reinvestigar** (owner): grupo mixto → USD (necesita un valor propio, no el booleano), respuesta doble tras F5a y unificar la ubicación entre detector y núcleo. Detalle en `docs/robustness/NEXT-SESSION-PROMPT.md`.
-* Suite: **2151 passed / 18 skipped**.
+* Suite: **2161 passed / 18 skipped**.
 
 0.25.0 - (2026-09-14)
 ----------------------

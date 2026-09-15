@@ -714,15 +714,21 @@ _SINGULAR_PERSON = (
     r"\b(?:mi|my|un[ao]?|an?|su|tu|his|her|el|la)\s+(?:"
     + _PERSON_NOUN_SINGULAR_ES + r"|" + _PERSON_NOUN_SINGULAR_EN + r")\b"
 )
+# Persona nombrada que no es quien escribe: singular con determinante o plural con
+# posesivo ("mi amigo", "mis amigos", "my wife"). Pieza de los dos ordenes del sujeto.
+_NAMED_OTHER_PERSON = (
+    _SINGULAR_PERSON
+    + r"|\b(?:mis|sus|tus|los|las|my|our|his|her|their)\s+(?:"
+    + _PERSON_NOUN_PLURAL_ES + r"|" + _PERSON_NOUN_PLURAL_EN + r")\b"
+)
+_THIRD_PERSON_VERB = r"(?:es|son|esta|estan|tiene|tienen|ha|han|is|are|has|have)"
 # Sujeto que es OTRA persona (2026-09-15), siempre seguido de su verbo en tercera persona:
 # "mi amigo es", "mis amigos tienen", "él es", "uno no esta", "two aren't", "my wife is".
 # Sin verbo detras es un complemento, no el sujeto: "i am a certified diver with a
 # companion" sigue siendo de quien escribe. Sirve para saber de quien habla una frase de
 # certificacion.
 _OTHER_PERSON_SUBJECT = (
-    r"(?:" + _SINGULAR_PERSON
-    + r"|\b(?:mis|sus|tus|los|las|my|our|his|her|their)\s+(?:"
-    + _PERSON_NOUN_PLURAL_ES + r"|" + _PERSON_NOUN_PLURAL_EN + r")\b"
+    r"(?:" + _NAMED_OTHER_PERSON
     + r"|\b(?:el|ella|ellos|ellas|he|she|they"
     # Una cantidad o "el otro" como sujeto: "uno no esta certificado", "dos no tienen
     # licencia", "two aren't certified" hablan de otros miembros del grupo.
@@ -733,6 +739,17 @@ _OTHER_PERSON_SUBJECT = (
     r"|is|are|isn'?t|aren'?t|has|have|hasn'?t|haven'?t|wants)\b"
 )
 _OTHER_PERSON_SUBJECT_RE = re.compile(strip_accents(_OTHER_PERSON_SUBJECT), re.IGNORECASE)
+# Sujeto pospuesto (2026-09-15): "no es certificado mi acompañante", "está certificada mi
+# novia". Verbo en tercera persona y, detras en la misma frase, una persona nombrada, sin
+# una preposicion de compania o destino por medio: "quiero bucear con mi pareja" o "es para
+# mi novia" son complementos, no el sujeto.
+_POSTVERBAL_OTHER_SUBJECT_RE = re.compile(
+    strip_accents(
+        r"\b" + _THIRD_PERSON_VERB + r"\b(?:\s+(?!(?:con|para|a|al|with|for|to)\b)\w+){0,4}?\s+(?:"
+        + _NAMED_OTHER_PERSON + r")"
+    ),
+    re.IGNORECASE,
+)
 # Una frase acaba en puntuacion o conjuncion: "mi amigo es buzo y yo no" son dos.
 _CLAUSE_BOUNDARY_RE = re.compile(r"[,;.]|\b(?:y|e|pero|and|but)\b")
 
@@ -742,16 +759,21 @@ def _about_other_person(text: str, start: int) -> bool:
     Se mira la frase entera, antes y despues: en "uno no esta certificado" el verbo del
     sujeto cae dentro de la coincidencia. `text` ya en minusculas y sin tildes."""
     clause = _CLAUSE_BOUNDARY_RE.split(text[:start])[-1] + _CLAUSE_BOUNDARY_RE.split(text[start:])[0]
-    return bool(_OTHER_PERSON_SUBJECT_RE.search(clause))
+    return bool(_OTHER_PERSON_SUBJECT_RE.search(clause) or _POSTVERBAL_OTHER_SUBJECT_RE.search(clause))
 
 
 @lru_cache(maxsize=1)
 def _other_person_cert_re() -> re.Pattern:
+    cert = (
+        r"(?:buz[oa]s?|certificad\w*|certified|divers?|licencia|licen[cs]e|"
+        + strip_accents(IntentDetector._CERT_LEVEL) + r")"
+    )
     return re.compile(
         r"(?:" + strip_accents(_OTHER_PERSON_SUBJECT) + r")\s+(?:\w+\s+){0,2}?"
-        r"(?:es|son|esta|estan|tiene|tienen|is|are|has|have)?\s*(?:\w+\s+){0,2}?"
-        r"(?:buz[oa]s?|certificad\w*|certified|divers?|licencia|licen[cs]e|"
-        + strip_accents(IntentDetector._CERT_LEVEL) + r")\b",
+        r"(?:es|son|esta|estan|tiene|tienen|is|are|has|have)?\s*(?:\w+\s+){0,2}?" + cert + r"\b"
+        # Orden invertido: "no es certificado mi acompañante", "tiene licencia mi amigo".
+        r"|\b(?:no\s+)?" + _THIRD_PERSON_VERB + r"\s+(?:\w+\s+){0,2}?" + cert
+        + r"\s+(?:\w+\s+)?(?:" + strip_accents(_NAMED_OTHER_PERSON) + r")",
         re.IGNORECASE,
     )
 

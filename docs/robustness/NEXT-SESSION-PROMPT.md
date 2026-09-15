@@ -58,7 +58,7 @@ Retomamos el trabajo de robustez del bot en la rama `feature/pre_gadea`. Lee pri
 | Recomendación al acompañante | resolutor 11/11, estancia 6/6 |
 | Pregunta "¿ya certificados o quieren certificarse?" | cuándo preguntar 10/10, resolutor 7/7 |
 | Precio de paquetes (RAG, 21 preguntas sin LLM) | 11 cambios de 21 frente a antes, todos a bien |
-| Suite | **2151 passed / 18 skipped** |
+| Suite | **2161 passed / 18 skipped** |
 
 ### Hecho el 2026-09-15 (no repetir)
 
@@ -89,9 +89,8 @@ Retomamos el trabajo de robustez del bot en la rama `feature/pre_gadea`. Lee pri
    en el progress-log.
    - **Batería de grupo, config PRE:** repartos 17/17, total 13/13, riesgo 17/17, 0 alucinaciones, 0
      parciales, 0 totales mal. Segunda petición de grupo +8,1 % peticiones.
-   - **Queda:**
-     - "no es certificado mi acompañante" (sujeto detrás del verbo) sigue atribuyéndose a quien
-       escribe.
+   - **Hecho también:** la regla contradictoria de `group_allocation` (parche mínimo, empata en
+     todo) y el sujeto pospuesto ("no es certificado mi acompañante" ya no es de quien escribe).
 2. ~~"somos 5 y 2 nunca han buceado"~~ **hecho (2026-09-15)**: la regla final de `detect()` se
    generalizó ("la actividad principal no contradice el reparto"). Foto: 1 cambio de 244.
 3. **Definición única por campo en los prompts, resto de campos**: `group_size`, `group_allocation`

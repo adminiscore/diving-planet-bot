@@ -3300,3 +3300,30 @@ atributo, déjalo fuera / OMITE el campo". Contradecía la regla `undecided` de 
 
 **Veredicto:** el parche empata en todas las mediciones y elimina una instrucción que contradice
 `undecided`. Se sube aparte.
+
+### Sujeto pospuesto: "no es certificado mi acompañante" ya no se atribuye a quien escribe
+
+Era el límite que quedaba del punto 1: la atribución de sujeto solo reconocía a la otra persona
+**delante** del verbo.
+- **Nueva pieza `_POSTVERBAL_OTHER_SUBJECT_RE`:** verbo en tercera persona y, detrás en la misma frase
+  (hasta 4 palabras), una persona nombrada.
+- **Complementos:** no cuentan si hay una preposición de compañía o destino por medio ("quiero bucear
+  con mi pareja", "es para mi novia"). "de" sí cuenta: "la primera vez de mi hijo" habla del hijo.
+- **Sin duplicar:** la persona nombrada sale de una pieza compartida por los dos órdenes
+  (`_NAMED_OTHER_PERSON`).
+- **`other_person_certification`:** reconoce también el orden invertido, así que la guarda del
+  booleano del LLM lo cubre.
+
+**Medido sin LLM:**
+- Foto del detector: **0 cambios de 252**.
+- Sondas:
+  - "no es certificado mi acompañante", "está certificada mi novia", "no es buzo mi hermano", "is
+    certified my wife" y "es la primera vez de mi hijo" dejan de fijar el estado de quien escribe, y
+    se sigue sabiendo el del acompañante.
+  - Controles sin cambio: "soy buzo certificado y viene conmigo mi novia", "i am a certified diver with
+    a companion…", "es mi primera vez, vengo con mi pareja".
+- Un test antiguo esperaba la atribución al cliente de "no es certificado mi acompañante"; se movió a
+  un test propio.
+
+No se volvió a correr la batería con LLM: el cambio es determinista y el detector da lo mismo en todos
+los mensajes del corpus (eval-set y las tres baterías).

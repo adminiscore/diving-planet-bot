@@ -18,11 +18,19 @@ def _d(msg: str):
 @pytest.mark.parametrize("msg", [
     "no soy certificado todavía",
     "no somos certificados",
-    "no es certificado mi acompañante",
     "todavía no soy certificada",
 ])
 def test_no_soy_certificado_is_not_certified(msg):
     assert _d(msg).is_certified is False
+
+
+def test_companion_denial_with_postponed_subject_is_not_the_writers():
+    """"no es certificado mi acompañante" habla del acompañante, con el sujeto detras del
+    verbo (2026-09-15): no fija el estado de quien escribe."""
+    from src.agents.intent_detector import other_person_certification
+
+    assert _d("no es certificado mi acompañante").is_certified is None
+    assert other_person_certification("no es certificado mi acompañante") is False
 
 
 @pytest.mark.parametrize("msg", [
