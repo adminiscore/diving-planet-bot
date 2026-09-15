@@ -6,7 +6,7 @@ anade en su sitio lo que no es un numero ("un", "otros", "varios", "couple").
 
 from __future__ import annotations
 
-from functools import lru_cache
+from functools import cache
 from types import MappingProxyType
 
 _ES = (
@@ -22,7 +22,7 @@ _EN = (
 _BY_LANG = {"es": (_ES,), "en": (_EN,), None: (_ES, _EN)}
 
 
-@lru_cache(maxsize=None)
+@cache
 def number_words(lo: int = 1, hi: int = 19, lang: str | None = None) -> MappingProxyType:
     """Palabra -> valor entre `lo` y `hi`, de menor a mayor valor y, en cada valor, ES
     antes que EN. `lang` "es"/"en" limita a un idioma."""
@@ -33,7 +33,7 @@ def number_words(lo: int = 1, hi: int = 19, lang: str | None = None) -> MappingP
     return MappingProxyType(words)
 
 
-@lru_cache(maxsize=None)
+@cache
 def number_alt(lo: int = 1, hi: int = 19, lang: str | None = None) -> str:
     """Alternancia regex de `number_words`, la palabra mas larga primero para que
     "seventeen" no se quede en "seven"."""
