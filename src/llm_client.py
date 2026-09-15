@@ -54,9 +54,13 @@ def tool_arguments(tool_call, tool: dict) -> dict:
     sacado a clave propia -- en vez de `{"sensitive_topic": "weather_conditions"}`.
     Nadie leia esa clave y la pregunta de pronostico no se escalaba. Es un fallo de
     FORMA, no de vocabulario, asi que se arregla desde el esquema: una clave que el tool
-    no declara, con valor `true`, que es valor del enum de UN solo campo vacio, vuelve a
-    ese campo. Con un valor de texto no se toca (seria otra cosa, no un flag aplanado),
-    ni si el valor pertenece a varios enums o el campo ya viene relleno.
+    no declara, con valor `true`, que es valor del enum de UN solo campo, vuelve a ese
+    campo si este no trae ya un valor valido de su enum. Medido con el LLM real: rellena
+    TODOS los campos, tambien los de enum de texto con `false`
+    (`"sensitive_topic": false, ..., "weather_conditions": true`), asi que "vacio" es "sin
+    valor valido del enum", no solo None. Con un valor de texto en la clave no se toca
+    (seria otra cosa, no un flag aplanado), ni si el valor pertenece a varios enums, ni
+    si el campo ya trae un valor valido.
 
     Deja pasar `json.JSONDecodeError` como antes: cada llamador ya lo gestiona."""
     args = json.loads(tool_call.function.arguments or "{}")
@@ -70,7 +74,10 @@ def tool_arguments(tool_call, tool: dict) -> dict:
                 owners.setdefault(value, []).append(name)
     for key in [k for k in args if k not in properties]:
         fields = owners.get(key, [])
-        if args[key] is True and len(fields) == 1 and args.get(fields[0]) in (None, "", [], {}):
+        if (
+            args[key] is True and len(fields) == 1
+            and args.get(fields[0]) not in properties[fields[0]]["enum"]
+        ):
             args[fields[0]] = key
             del args[key]
             logger.info(f"[LLM_TOOL] clave aplanada reencajada: {key}=true -> {fields[0]}={key!r}")

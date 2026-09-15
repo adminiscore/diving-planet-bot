@@ -3937,3 +3937,26 @@ resolutor de slot y notas.
 
 **Pendiente con cuota:** `scripts/battery_router_signals.py` (37 casos), para ver `s04` en verde y
 que ninguna otra señal cambie.
+
+**D con el LLM real: el primer arreglo no bastaba, medido y corregido.**
+- **Primera tanda de la batería del router tras el deploy:** `s04` seguía **0/3**.
+- **Por qué:** la sonda de los argumentos crudos mostró que el LLM rellena **todos** los campos del
+  tool, también los de enum de texto con `false`, y además repite claves:
+  `{"sensitive_topic":false, ..., "comparing_options":false, "booking_change_topic":false,
+  "weather_conditions":true}`. La guarda solo trataba como vacío `None`/`""`/`[]`/`{}`, así que
+  `sensitive_topic: false` contaba como "ya relleno" y no se reencajaba. El test con cliente falso
+  lo construí sin esos `false` y no lo vio.
+- **Corrección, desde el esquema y más estricta:** un campo está vacío para el reencaje cuando **no
+  trae un valor válido de su enum**. Un valor real (`"medical_questions"`) nunca se pisa. El test
+  usa ahora la cadena exacta que devolvió el LLM real. Suite 2267.
+- **Lectura de las otras diferencias de esa primera tanda frente a la base:**
+  - `r07`-`r09` (3/3 → 0/3) no son regresión: la base de esos tres venía de la tanda en la que
+    `router.py` llevaba el enum del registro, revertido después. Con el enum de hoy no caben esas
+    comparaciones (router 6/9, ya documentado).
+  - `s05` (0/3 → 3/3) es el cambio de etiqueta, que acepta queja o problema en tiempo real.
+
+**D medido con el LLM real tras la corrección** (`battery_router_signals 3 base`): **`s04` 0/3 → 3/3**,
+con `{"sensitive_topic": "weather_conditions"}`. Frente a la tanda de justo antes de la corrección,
+**es el único caso que cambia**; ninguna otra de las 37 señales se mueve. Resumen 33/37: los 4 que no
+pasan son `r07`-`r09` (comparaciones de cursos y especialidades que el enum de hoy no expresa, ya
+documentado) y el negativo `n07` (hallazgo E).

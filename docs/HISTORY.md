@@ -54,10 +54,10 @@ History
   - **Cambio de reparto (f01, 3/3):** "al final mi suegra también bucea, no hace snorkel" no cambia el reparto guardado.
   - **"primero dime qué incluye el tour":** recibe un acuse genérico en vez de la información, porque la detección de pregunta solo mira el principio del mensaje.
   - Causas y pistas generales en el progress-log.
-* **Hallazgo D arreglado (pendiente de medir con el LLM): una pregunta de pronóstico ya se escala.**
+* **Hallazgo D arreglado: una pregunta de pronóstico ya se escala.**
   - **Síntoma:** con "¿va a llover mañana?" el LLM del router devolvía la categoría como clave propia (`weather_conditions: true`) en vez de dentro de `sensitive_topic`. Nadie la leía y el bot podía inventarse el tiempo.
   - **Arreglo:** un único lector de respuestas de tool (`llm_client.tool_arguments`, en los 7 sitios que las leen) reencaja desde el esquema una clave aplanada con valor `true` en su campo. Arregla esa forma de fallo en cualquier enum, sin vocabulario ni peticiones.
-  - **Medido:** 8 tests; suite 2266. Falta la batería del router con cuota.
+  - **Medido:** batería del router con el LLM real, `s04` 0/3 → 3/3 y ninguna otra señal cambia. El primer arreglo no bastaba: el LLM rellena con `false` también los campos de enum de texto, y "vacío" pasó a ser "sin valor válido del enum" (test con la cadena exacta del LLM). Suite 2267.
 * **Hallazgo H arreglado: los tramos de un grupo ya contado no se cobran dos veces.** Con "vamos 3, mi pareja y yo buceamos y mi suegra hace snorkel", el bot tiraba el reparto y preguntaba "¿cuántos para buceo?"; cada respuesta sumaba encima del total (3 → 4 → 5 personas cobradas). Una regla única, que ya se usaba con las personas sin decidir: con el total sabido, la actividad principal se queda con el resto.
   - Un reparto que cubre exactamente a las personas nombradas se acepta (F.2).
   - La principal no se pregunta.
@@ -72,7 +72,7 @@ History
 * **7a arreglado: la actividad de otra persona ya no pisa la principal ni se cobra mal.** "él quiere hacer snorkel" a mitad de la reserva cambiaba la actividad principal a snorkel y el resumen cobraba 2 inmersiones. Quién es otra persona lo decide el LLM de señales, que reconoce pronombres y jerga. Como nadie sabe si esa persona ya estaba contada, el bot pregunta "¿seguís siendo 2 o se suma alguien?" antes de mover o añadir a nadie, salvo que el mensaje diga que se suma alguien. LLM real 3/3: se cobra 1 inmersión + 1 snorkel. Foto de las baterías: 0 cambios.
 * **7d arreglado: una pregunta de información ya no tiene que abrir el mensaje.** "primero dime qué incluye el tour", "vale, cuánto cuesta" o "perfecto, y cómo pago" recibían un acuse genérico en vez de la información. Se reconocen por estructura, con clases gramaticales cerradas y no frases: el imperativo de pedir información en cualquier posición, y la palabra interrogativa al inicio de una cláusula. Foto sin LLM sobre 440 mensajes: cambian 7, todos sondas buscadas, y ningún mensaje del eval-set ni de las baterías.
 * **Para reinvestigar** (owner): grupo mixto → USD (necesita un valor propio, no el booleano), respuesta doble tras F5a y unificar la ubicación entre detector y núcleo. Detalle en `docs/robustness/NEXT-SESSION-PROMPT.md`.
-* Suite: **2266 passed / 18 skipped**.
+* Suite: **2267 passed / 18 skipped**.
 
 0.25.0 - (2026-09-14)
 ----------------------
