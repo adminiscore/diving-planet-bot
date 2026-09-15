@@ -3370,3 +3370,32 @@ RELLENO se abstenga, y justo en los mensajes que nombra ("nunca he buceado", "fi
 sitios (`group_size`, `group_allocation` y tres campos del prompt de señales). Borrador de pieza
 compartida preparado; se mide aparte con `battery_activity_choice`, la de grupo, la de booleanos y el
 eval-set.
+
+### "Un plural vago no es una cantidad" en una sola pieza: medido y revertido
+
+**Idea.** La regla está escrita en cinco sitios: `group_size`, `group_allocation` y tres campos del
+prompt de señales (`companion_is_singular`, `companion_qty`, `other_companions`). Se hicieron piezas
+compartidas con las palabras ya medidas de `group_size` (lista de ejemplos + "un plural vago no es un
+total concreto"), y cada campo conservaba su propia acción.
+- Foto de prompts: el tool de extracción y las guías de `group_size` quedaban idénticos byte a byte;
+  solo cambiaba el tool de señales.
+
+**Medido con LLM real** (sonda de `detect_special_signals`, 8 casos × 3, prompt viejo en un worktree
+de HEAD frente al nuevo):
+- **Iguales:** "también vienen mis amigos a hacer snorkel", "viene mi familia a hacer snorkel" y los 4
+  controles (singular, jerga, contado, mixto contado).
+- **Peor, "ocho personas hacen snorkel y yo buceo":** vuelve el fallo medido nº 2. El hablante aparece
+  como acompañante fantasma `{certified_diving: 1}` en 2 de 3; con el prompt viejo, 0 de 3.
+- **Peor, "mi amigo bucea y mis amigos hacen snorkel":** `companion_is_singular` pasa de true 3/3 a
+  false 3/3.
+- La cantidad inventada para "mis amigos" (2 o 3) ya estaba en los dos.
+
+**Revertido entero.** Reescribir esas descripciones cambia cómo el modelo pondera las advertencias
+medidas que las rodean. Dejar las piezas solo para `group_size` no quitaba ninguna duplicación
+(las señales seguían con su texto), así que tampoco se conservan.
+
+**Referencia útil** (batería `battery_activity_choice` con el prompt actual, variante `base` de
+producción): signals 10/10, slot 10/10, router 6/9.
+
+**Lección:** en los prompts del LLM, "una sola fuente" solo es seguro donde el texto ya era idéntico.
+Unificar redacciones distintas es un cambio de prompt y hay que medirlo como tal.

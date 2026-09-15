@@ -98,9 +98,10 @@ Retomamos el trabajo de robustez del bot en la rama `feature/pre_gadea`. Lee pri
      tool) más `_FIELD_VERIFY_RULES_*` (solo en las guías de verificación).
    - **Negativo medido:** poner las reglas de verificación en el tool baja el eval-set a 217/230 y
      vuelve a repartir b05.
-   - **Siguiente, mismo principio:** la regla "un plural vago no es una cantidad" está en cinco sitios
-     (`group_size`, `group_allocation` y tres campos del prompt de señales). Borrador en el
-     progress-log; medir con `battery_activity_choice`, grupo, booleanos y eval-set.
+   - **Medido y revertido:** unificar la regla "un plural vago no es una cantidad" (cinco sitios) en
+     una pieza compartida. En el prompt de señales empeora "ocho personas hacen snorkel y yo buceo"
+     (hablante como acompañante fantasma 2/3) y "mi amigo bucea y mis amigos hacen snorkel". Se deja
+     cada texto como está.
 4. **Centralización de vocabulario, conceptos que quedan** (inventario en el progress-log). Cada paso
    con foto antes/después sin LLM.
    - `_BARE_PACKAGE_DIVE_RE` aún escribe `5|7|9` en el regex (el filtro ya sale del catálogo).
