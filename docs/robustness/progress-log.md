@@ -4022,3 +4022,7 @@ mensaje.
 - **Arreglo, sin regla nueva:** la guarda de G va **después** de la (b). Aunque el total no valga, el
   LLM trató el mensaje como respuesta a la pregunta pendiente, y lo que viaja con ese intento no es de
   fiar. Test con el patch exacto del LLM real. Suite 2304.
+
+**G medido tras el reorden, con el LLM real y en conversación completa (2/2):** con "¿para cuántas
+personas?" pendiente, "mi hijo tiene 9 años", "llegamos el 12" y "2 inmersiones" no fijan el total
+ni la nacionalidad; "somos 3" fija 3. **Hallazgo G cerrado.**
