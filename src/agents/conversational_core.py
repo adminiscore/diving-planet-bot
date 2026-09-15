@@ -42,6 +42,7 @@ from src.agents.intent_detector import (
     AGE_WORDS,
     DetectedIntent,
     IntentDetector,
+    _is_negated,
     certification_claim,
     clause_subject,
     course_level_is_ambiguous,
@@ -1404,6 +1405,32 @@ def _compose_comparison(offerings: list[str], lang: str) -> str:
             + "\n\nWhich one are you leaning toward? Let's put it together. 🐠")
 
 
+def _weighed_offerings(message: str) -> set:
+    """Ofertas que el mensaje presenta como opciones: las de cada frase, menos las de una
+    frase que las niega ("al final mi suegra tambien bucea, no hace snorkel": el snorkel
+    se descarta, no se sopesa) (hallazgo K, 2026-09-15). Sin vocabulario: la negacion es la
+    del detector (`_is_negated`, con paridad), mirada justo antes de la primera palabra que
+    ya nombra una oferta en la frase. Una pregunta subordinada corta su alcance: en "mi amigo
+    no sabe si bucear o hacer snorkel" el "no" niega saber, no las ofertas."""
+    weighed = set()
+    for clause in _CLAUSE_BOUNDARY_RE.split((message or "").lower()):
+        offerings = _mentioned_offerings(clause)
+        if not offerings:
+            continue
+        words = clause.split()
+        first = next((k for k in range(1, len(words) + 1) if _mentioned_offerings(" ".join(words[:k]))), len(words))
+        prefix = words[:first - 1]
+        start = max((i + 1 for i, word in enumerate(prefix) if word in _EMBEDDED_QUESTION_WORDS), default=0)
+        if not _is_negated(" ".join(prefix[start:])):
+            weighed.update(offerings)
+    return weighed
+
+
+# Palabras que abren una pregunta subordinada ("no se SI...", "not sure WHETHER...",
+# "duda ENTRE..."): clase cerrada, no vocabulario de dominio.
+_EMBEDDED_QUESTION_WORDS = frozenset({"si", "if", "whether", "entre", "between"})
+
+
 def _offerings_with_own_subject(message: str) -> bool:
     """¿Cada oferta va con su propio sujeto? "tengo un amigo que quiere bucear y yo hago
     snorkel", "mi novia hace el minicurso y yo buceo": quien escribe y otra persona, cada
@@ -1444,6 +1471,10 @@ def _is_deliberation_between_options(message: str, routing_signals: dict) -> boo
         return False
     # El mismo reparto sin cifras: cada oferta con su propio sujeto (hallazgo E).
     if _offerings_with_own_subject(message):
+        return False
+    # Una oferta negada no es una opcion que se sopesa (hallazgo K). Solo en el camino que
+    # depende del LLM: la duda escrita ("no se si buceo o snorkel") ya se comprobo arriba.
+    if len(_weighed_offerings(message)) < 2:
         return False
     obj = routing_signals.get("comparing_options")
     llm_comparing = bool(obj.get("comparing")) if isinstance(obj, dict) else False

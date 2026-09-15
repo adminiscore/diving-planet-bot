@@ -4288,3 +4288,41 @@ comparación). **V 25/39, F 36/39.**
 - `f01_conversacion`: "al final mi suegra también bucea, no hace snorkel" tras el cierre fue a RAG 2/2.
   Con la reserva cerrada ese turno no tiene huecos (no pasa por este cambio) y la puerta de deliberación
   corre antes de la extracción; ya pasó en la tanda de H. **Hallazgo K**, anotado en pendientes.
+
+### Hallazgo K: una oferta negada contaba como opción que se compara (arreglado)
+
+**Síntoma** (visto al medir J). `repro_old_findings f01_conversacion`: tras el cierre, "al final mi suegra
+tambien bucea, no hace snorkel" fue a RAG 2/2 (también en la tanda de H; en la de 7b pedía confirmación
+2/2, intermitente). El router marca `comparing_options` y `_is_deliberation_between_options` lo acepta:
+dos ofertas, sin cifra, sin "quiero" y sin sujetos distintos (E). La puerta va antes de la extracción,
+así que J no lo causa.
+
+**Causa estructural.** La puerta cuenta las ofertas nombradas, pero el snorkel está negado: se descarta,
+no se sopesa.
+
+**Arreglo, sin palabras nuevas.**
+- `_weighed_offerings`: frase a frase (`_CLAUSE_BOUNDARY_RE`), las ofertas de una frase cuya primera oferta
+  va negada no cuentan. La negación es `_is_negated` del detector (con paridad: "no es que no quiera
+  bucear" sigue afirmando), mirada sobre las palabras anteriores a la primera que ya nombra una oferta.
+- **Primer intento, corregido antes de medir:** rompía el control de E. En "mi amigo no sabe si bucear o
+  hacer snorkel", la ventana de la negación llega a "bucear". Una pregunta subordinada corta su alcance:
+  `_EMBEDDED_QUESTION_WORDS` ("si", "if", "whether", "entre", "between"), una clase cerrada.
+- Solo en el camino que depende del LLM, después de la duda escrita, las cifras y el sujeto propio (E).
+  "no sé si buceo o snorkel" sigue comparando.
+
+**Medido sin LLM.** Foto de la puerta (con y sin `comparing`) y del contraste elíptico sobre 2325 frases,
+HEAD frente al árbol: **14 cambios, todos con el LLM diciendo comparación y todos correctos**. Sin la señal
+del LLM, 0 cambios; el contraste elíptico, 0.
+- **El caso de K** y "just snorkel, no diving": una elección, no una comparación.
+- **"nunca he buceado", "no sé bucear", "nunca hemos hecho buceo", "primo nunca ha buceado":** la misma
+  frase contaba como dos ofertas (buceo certificado por "buce*" y minicurso por el cualificador de
+  experiencia).
+- **"mi novia es buza certificada y yo nunca he buceado"** (grupo) y **"Me interesa el curso PADI, no se
+  bucear"** (ya eligió el curso).
+- **Con "?":** otra puerta anterior las atiende, sin cambio de flujo.
+
+**Medido con el LLM real.** `repro_old_findings 3 f01_conversacion`: **3/3 pide confirmar el cambio** y,
+tras "sí", cobra 3 inmersiones. El router no cambia y el eval-set no pasa por esta puerta, así que no se
+repiten su batería ni el eval.
+
+- Tests: 13 nuevos (`tests/test_negated_offering.py`). Suite 2392.

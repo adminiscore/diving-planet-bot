@@ -59,7 +59,7 @@ Retomamos el trabajo de robustez del bot en la rama `feature/pre_gadea`. Lee pri
 | Recomendación al acompañante | resolutor 11/11, estancia 6/6 |
 | Pregunta "¿ya certificados o quieren certificarse?" | cuándo preguntar 10/10, resolutor 7/7 |
 | Precio de paquetes (RAG, 21 preguntas sin LLM) | 11 cambios de 21 frente a antes, todos a bien |
-| Suite | **2379 passed / 18 skipped** |
+| Suite | **2392 passed / 18 skipped** |
 
 ### Hecho el 2026-09-15 (no repetir)
 
@@ -256,7 +256,8 @@ J. ~~**"vale perfecto" con la ubicación pendiente rellena `is_certified=False`*
    - No lo causa A (el mensaje no abre su puerta). Algún cambio entre 7b y F.4 lo dejó expuesto, o
      la referencia tuvo suerte: bisecar con la misma sonda antes de tocar nada.
 
-K. **"al final mi suegra también bucea, no hace snorkel" tras el cierre va a RAG** (hallazgo 2026-09-15, ya en HEAD).
+K. ~~**"al final mi suegra también bucea, no hace snorkel" tras el cierre va a RAG**~~ **arreglado (2026-09-15)**:
+   las ofertas de una frase negada no cuentan como opciones (`_weighed_offerings`); conversación 3/3. Antes:
    - La corrección del reparto se pierde: el router marca `comparing_options` y la puerta de deliberación
      del núcleo lo acepta (2 ofertas, sin cifra ni "quiero"). Visto 2/2 en la tanda de J y ya en la de H;
      en la de 7b pedía confirmación 2/2 (intermitente).
