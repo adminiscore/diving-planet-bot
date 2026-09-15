@@ -3588,3 +3588,88 @@ más en 4 mensajes. Las tres pistas quedan en la cola, sin tocar (orden del owne
 **Nota de método:** la sonda espiaba el dict que devuelve el LLM por referencia, y el núcleo lo
 muta después (`pop`). Un `{}` en el espía parecía una abstención; se corrigió con `deepcopy`
 antes de sacar conclusiones.
+
+### Tarea 7: hallazgos antiguos, reproducidos
+
+Los cuatro venían de la batería sintética contra PRE (lote 5, 2026-08-26) y de la de grupo. Se
+reproducen en local con `route_message`. Sin BD local, RAG va mockeado, lo que no afecta a
+ninguno de ellos. Nada arreglado todavía (orden del owner: primero reproducir).
+
+**"primero dime qué incluye el tour" → acuse genérico, sin la información.** Reproducido de forma
+determinista, con el LLM mockeado.
+- Con un slot pendiente, el mensaje va a extracción y el cliente recibe el acuse más la pregunta
+  del slot; RAG no se llama.
+- Con "?" ("…el tour?") o empezando por "que incluye" sí va a RAG.
+- **Causa:** `supervisor._looks_like_info_question` ancla la palabra de pregunta al principio
+  (`^(qué|dime|cuéntame|…)`), y "primero" delante lo rompe.
+- Es el mismo hueco que ya se cerró en `_BOOKING_PROCESS_QUESTION_RE` ("vale y como reservo"),
+  que por eso no va anclado.
+- **Pista general:** no anclar al principio del mensaje, sino al principio de la cláusula (tras
+  relleno o puntuación). Antes hay que medir los falsos positivos que el anclaje evita, que son
+  acciones de carrito ("puedo añadir…").
+
+**Una corrección no se aplica, y no solo tras el precio.** Reproducido de forma determinista.
+- **Tras el resumen en COP**, "espera, en realidad no somos colombianos" y "perdón, no somos
+  colombianos, somos españoles" dejan `is_colombian=True` y re-emiten el mismo resumen en COP.
+- **Antes del precio** pasa lo mismo, con un slot pendiente:
+  - "perdón, en realidad no estamos certificados" deja `is_certified=True`;
+  - "mejor desde las islas, estamos en isla grande" deja `location=cartagena`.
+- **Causa:** el detector lee bien el valor nuevo (`is_colombian=False`), pero
+  `supervisor._apply_detected_intent` solo escribe estos campos si el estado aún no los tenía.
+  Además, `_relevant_gaps` no los pide al LLM porque ya se conocen.
+- Solo dos campos se corrigen:
+  - la actividad, porque "latest wins";
+  - el total, que se sustituye si el mensaje trae el cue `_GROUP_SIZE_CORRECTION_CUE_RE`.
+- Ningún test fija "la primera nacionalidad gana" como decisión. El único test de "latest wins"
+  protege al buceador principal de lo que se dice del acompañante.
+- **Pista general:** llevar la regla del total (el valor nuevo solo gana con un cue explícito de
+  corrección) a una sola función para todos los campos que escribe `_apply_detected_intent`.
+  Tras el cierre, esa función re-emitiría el resumen, que hoy solo se re-emite si se añade un tipo
+  de actividad nuevo.
+  - El cue actual ya reconoce "espera, en realidad…" y "perdón…".
+  - No reconoce "mejor desde las islas" ni "al final mi suegra también bucea".
+  - Hay que medir que "mejor" o "al final" no conviertan en corrección un mensaje normal.
+- **Con el LLM real (2/2) es peor que en la réplica:** el acuse dice "Entendido, ninguno es
+  colombiano" y justo debajo re-emite el mismo precio en COP.
+
+**Acompañante que llega a trozos: ahora cobra mal, de forma consistente (3/3 con LLM real).**
+- **Conversación:**
+  1. "hola, quiero bucear con mi amigo, yo soy certificado";
+  2. "desde cartagena";
+  3. "no, buceamos hace 6 meses";
+  4. con la nacionalidad pendiente, "él quiere hacer snorkel";
+  5. "somos colombianos".
+- **Resultado:** la actividad principal pasa a snorkel, el reparto sigue en
+  `{certified_diving: 2}` y el resumen cobra **2 × inmersiones en COP**. El amigo que quiere
+  snorkel se cobra como buceador, aunque el acuse dice "Entiendo que él está interesado en hacer
+  snorkel".
+- Ya no es el doble conteo del informe de agosto (reparto de 3 para 2 personas): el código cambió
+  desde entonces, y el síntoma de hoy es este.
+- **Causa**, reproducida sin LLM:
+  - El núcleo no ve a otra persona en "él quiere hacer snorkel". `_ADDED_PERSON_RE`,
+    `_singular_companion` y `_MENTIONS_PERSON_RE` no conocen el pronombre.
+  - El detector lee `activity=snorkel`, y `_apply_detected_intent` aplica "la última actividad
+    gana" sobre la actividad **principal**.
+  - Como el turno "avanzó" (cambió la actividad), la red de precisión (`detect_special_signals`)
+    no se llama: 0 llamadas en la réplica, aunque se mockeó para devolver el acompañante.
+- **Pista general, sin vocabulario nuevo:** la pieza del detector `_OTHER_PERSON_SUBJECT_RE` (sujeto
+  de otra persona + su verbo) ya reconoce "él quiere hacer snorkel", "mi amigo quiere…" y "she wants
+  to snorkel", y no "quiero hacer snorkel" ni "mejor snorkel".
+  - Usarla antes del "latest wins" de la actividad: una actividad dicha de otra persona va al
+    reparto como la del acompañante, no a la principal.
+  - Falta "ella prefiere": el verbo no está en la pieza, y hay que medirlo aparte.
+
+**Cambio de reparto (f01, 3/3 con LLM real): "al final mi suegra también bucea, no hace snorkel"**
+deja `{certified_diving: 2, snorkel: 1}`.
+- **Causa:**
+  - el reparto ya se conoce, así que no se pide al LLM (`_state_known_fields`);
+  - el detector no lee reparto nuevo;
+  - no hay cue de corrección ("al final" no está en `_GROUP_SIZE_CORRECTION_CUE_RE`);
+  - `_ADDED_PERSON_RE` casa con "mi suegra" sin número, así que se quita cualquier reparto del patch.
+- Es la misma familia que las correcciones de arriba: un dato guardado solo se reescribe por el
+  total y por la actividad.
+
+**Lectura conjunta.** Tres de los cuatro son un mismo mecanismo: el estado no tiene una regla única
+de **corrección**. Hay campos que no se reescriben nunca, uno con cue (el total) y uno siempre (la
+actividad), y en ese último sin distinguir si la actividad es de otra persona. Dos cobran mal sin
+avisar (acompañante y nacionalidad). El cuarto (qué incluye el tour) es independiente.

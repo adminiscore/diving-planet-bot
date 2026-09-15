@@ -124,18 +124,30 @@ Retomamos el trabajo de robustez del bot en la rama `feature/pre_gadea`. Lee pri
    216/230 frente a 221/230 del modo script: los 2 artefactos de historial pasan a bien y hay 7 a
    peor, explicados uno a uno en el progress-log. Usar `--core` para medir cambios del núcleo; el
    modo script sigue sirviendo para medir el extractor suelto.
-   - **Costes de las guardas medidos** (cada uno es una pregunta de más, nunca un valor malo).
-     Atacar por la vía general y medir con `--core` y la batería de grupo:
-     - "ya **llevo** el rescue": `_flag_cert_or_course` borra `is_certified=True`, porque "llevo" no
-       está en las piezas de tener un nivel.
-     - "vamos 3, mi pareja y yo buceamos y mi suegra hace snorkel": la guarda de cifras tira un
-       reparto correcto. La composición "X y yo" = 2 no respalda la cifra.
-     - "my daughter is 9 and my son is 12, my wife and i dive": la misma guarda tira el reparto y,
-       con él, el total 4, que sí cuadra con las personas nombradas.
-     - "im from the states, wanna dive": el LLM se abstiene de `is_colombian` cuando solo se piden
-       los huecos (sensibilidad ya vista en F2b).
-7. **Hallazgos antiguos por reproducir**: acompañante que llega a trozos, corrección tras el precio,
-   "qué incluye el tour", cambio de reparto (f01).
+   - Los 4 costes de guarda que salieron de esta medida pasan a "Para reinvestigar" (F).
+7. ~~Hallazgos antiguos por reproducir~~ **reproducidos (2026-09-15)**, con causa y pista en el
+   progress-log ("Tarea 7"). Reproducción en local: `ENV_FILE=.env.dev python -m
+   scripts.repro_old_findings [repeticiones] [drip,correccion,correccion_antes,f01,tour]`
+   (conversación con `route_message`, RAG mockeado sin BD local, respuestas a slots según
+   `core_pending_slot`). **Por arreglar, en este
+   orden** (los dos primeros cobran mal sin avisar):
+   - **7a. Acompañante que llega a trozos (3/3).** "él quiere hacer snorkel" cambia la actividad
+     principal, el reparto sigue en 2 buceadores y el resumen cobra 2 inmersiones.
+     - **Causa:** el núcleo no ve el pronombre como otra persona, y el "latest wins" de actividad
+       pisa la principal; la red de precisión no se llama.
+     - **Pista:** reutilizar `_OTHER_PERSON_SUBJECT_RE` del detector antes del "latest wins".
+   - **7b. Correcciones.** "espera, en realidad no somos colombianos" tras el precio re-emite COP
+     (2/2), y antes del precio tampoco se aplica en `is_certified` ni en `location`.
+     - **Causa:** `_apply_detected_intent` solo escribe esos campos la primera vez.
+     - **Pista:** una única regla de corrección para todos los campos (la del total, con cue
+       explícito) y re-emitir el resumen tras el cierre.
+   - **7c. Cambio de reparto (f01, 3/3).** "al final mi suegra también bucea" no cambia el
+     reparto. Es la misma familia que 7b.
+   - **7d. "primero dime qué incluye el tour"** recibe un acuse genérico:
+     `_looks_like_info_question` va anclado al inicio del mensaje. Medir los falsos positivos de
+     carrito antes de desanclar.
+   - **Medir con:** el script de reproducción (3 repeticiones), `--core`, la batería de grupo y la
+     de booleanos.
 8. **Observabilidad**: Langfuse frente a LangSmith (no pagar).
 9. **CI**: `concurrency` en el job de deploy (dos pushes seguidos chocan; consultar con el equipo).
 
@@ -201,6 +213,27 @@ E. **Reparto leído como comparación** (hallazgo 2026-09-15, ya en producción)
    - **Pista:** cada oferta tiene su propio sujeto (el amigo, yo), igual que un reparto. Buscar la
      señal estructural (sujetos distintos por actividad) en vez de ampliar `_COMMITMENT_RE`, y medir
      con los casos de deliberación del núcleo y la batería del router.
+
+F. **Costes de las guardas del núcleo** (hallazgo 2026-09-15 con `run_extraction_eval --core`).
+   El LLM acierta y una guarda descarta el valor. Cada uno cuesta una pregunta de más, nunca un
+   valor malo. Detalle, sondas y réplicas deterministas en el progress-log ("Tarea 6").
+   1. **"ya llevo el rescue, quiero seguir buceando"**: el LLM da `is_certified=True` 3/3 y
+      `_flag_cert_or_course` lo borra, porque "llevo" no está en las piezas de tener un nivel
+      (`_HOLDS_WRITER`). El bot pregunta "¿ya la tienes o quieres sacarla?".
+      - **Pista:** hueco de conjugación en la pieza compartida, no una frase nueva.
+   2. **"vamos 3, mi pareja y yo buceamos y mi suegra hace snorkel"**: el LLM da
+      `{certified_diving: 2, snorkel: 1}` y la guarda de cifras lo tira, porque el 2 no está en el
+      texto.
+      - **Pista:** la composición "X y yo" respalda un 2, igual que `_named_people` respalda cifras 1.
+   3. **"my daughter is 9 and my son is 12, my wife and i dive"**: el LLM da total 4 y
+      `{certified_diving: 2, undecided: 2}` 3/3. La misma guarda tira el reparto y, con él, el total.
+      - **Pista:** no tirar un total que cuadra con las personas nombradas (esa regla ya existe
+        sin reparto).
+   4. **"im from the states, wanna dive"**: el LLM se abstiene de `is_colombian` 3/3 cuando solo se
+      piden los huecos. Es la sensibilidad a la forma del prompt ya vista en F2b.
+      - **Pista:** es de prompt; medir con el eval-set en los dos modos.
+   - **Medir con:** `--core`, la batería de grupo (config PRE) y la de booleanos. Sin empeorar
+     los casos de riesgo, que son justo los que estas guardas protegen.
 
 ### Decisiones pendientes del owner
 
