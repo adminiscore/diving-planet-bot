@@ -128,7 +128,8 @@ async def h_total(rep):
 async def g_numeros(rep):
     """G: con "¿para cuantas personas?" pendiente, un numero de otra magnitud no es el total."""
     st, log = _new(f"g-{rep}"), []
-    await _say(st, "hola, quiero bucear, soy certificado, salimos desde cartagena", log)
+    # Plural sin cantidad: "soy certificado" se lee como una sola persona y nunca pregunta el total.
+    await _say(st, "hola, queremos bucear, estamos certificados, salimos desde cartagena", log)
     for msg in ("mi hijo tiene 9 años", "llegamos el 12", "2 inmersiones", "somos 3"):
         if st.core_pending_slot != "qty":
             break

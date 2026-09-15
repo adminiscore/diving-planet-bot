@@ -73,6 +73,25 @@ def test_resolver_count_that_the_detector_reads_as_something_else(message, value
     assert core._number_of_something_else(ConversationState(conversation_id="g"), message, value) is other
 
 
+@pytest.mark.asyncio
+async def test_llm_fill_does_not_take_a_dive_count_as_the_group_total():
+    """Medido con el LLM real: con el total pendiente, "2 inmersiones" volvia del relleno
+    como group_size=2 (la guarda del resolutor no lo veia porque entraba por la extraccion)."""
+    from unittest.mock import AsyncMock, patch
+
+    state = _pending(core.SLOT_QTY)
+    state.location = state.detected_location = "cartagena"
+    state.is_certified = state.detected_is_certified = True
+    fill = {"group_size": 2}
+    with patch.object(core, "extract_and_verify", new=AsyncMock(return_value=(fill, {}))), \
+         patch.object(core, "fill_gaps", new=AsyncMock(return_value=fill)), \
+         patch.object(core, "verify_fields", new=AsyncMock(return_value={})), \
+         patch("src.agents.supervisor._maybe_veto_resolved_fields_via_llm", new=AsyncMock(return_value=None)):
+        await core._understand(state, "2 inmersiones")
+    assert state.detected_group_size is None
+    assert state.detected_cert_dives == 2
+
+
 @pytest.mark.parametrize("message", NOT_A_COUNT)
 def test_quantity_answer_helper(message):
     assert core._quantity_answer(ConversationState(conversation_id="g"), message) is None

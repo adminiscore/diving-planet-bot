@@ -3997,3 +3997,14 @@ mensaje.
     y mis 3 amigos" (4);
   - leía "2 inmersiones" como 2 personas 2/2, que es lo que cierra la guarda de arriba.
 - 34 tests nuevos. Suite 2302.
+
+**G en conversación con el LLM real: una segunda entrada, cerrada con la misma regla.**
+- **Repro** (`scripts/repro_old_findings g_numeros`): apertura en plural sin cantidad, para que el bot
+  pregunte el total. La primera versión del caso abría con "soy certificado", que se lee como una
+  sola persona, y nunca llegaba a preguntarlo.
+- **Resultado:** "mi hijo tiene 9 años" y "llegamos el 12" ya no fijan el total (2/2). "2 inmersiones"
+  seguía fijando 2 personas (2/2), pero no por el resolutor, que ya tenía la guarda: entraba por el
+  **relleno LLM de la extracción**, porque el total es un hueco que se le pide.
+- **Arreglo:** la misma guarda (`_number_of_something_else`) en el único punto donde el relleno entra
+  al turno: un `group_size` del LLM que el detector lee como inmersiones, días o edades se descarta.
+  Test con el relleno mockeado. Suite 2303.
