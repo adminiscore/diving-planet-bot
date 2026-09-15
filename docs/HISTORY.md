@@ -33,8 +33,13 @@ History
   - **Batería de grupo, config PRE.** Familia nueva de 13 escenarios. Repartos 16/17, total 13/13, riesgo 16/17, **0 alucinaciones, 0 parciales**. Personas con estado distinto 7/7 en la tanda enfocada (3 repeticiones). Batería de booleanos igual (18/24, 18/18).
   - **Expectativas r11/r12 actualizadas** por decisión del owner: acompañante no certificado → sin decidir y opciones.
   - **Negativo revertido:** reconciliar la regla contradictoria del prompt de `group_allocation` no mejoraba y hacía variar b03.
+  - **Segunda vuelta:**
+    - acompañante singular = exactamente una persona nombrada;
+    - de quién habla una frase de certificación (sujeto = otra persona + su verbo), y guarda del booleano del LLM: "somos 2, mi amigo es buzo y yo no" ya no marca al cliente;
+    - r11 ("mi amigo no esta certificado" con el grupo sabido) y p06 ("mi novia es buza certificada y yo nunca he buceado") reparten de forma determinista.
+    - **Batería de grupo, config PRE: 17/17, 13/13, 17/17, 0 alucinaciones, 0 parciales, 0 totales mal.** Segunda petición +8,1 %.
 * **Para reinvestigar** (owner): grupo mixto → USD (necesita un valor propio, no el booleano), respuesta doble tras F5a y unificar la ubicación entre detector y núcleo. Detalle en `docs/robustness/NEXT-SESSION-PROMPT.md`.
-* Suite: **2110 passed / 18 skipped**.
+* Suite: **2151 passed / 18 skipped**.
 
 0.25.0 - (2026-09-14)
 ----------------------

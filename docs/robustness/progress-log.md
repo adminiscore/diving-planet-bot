@@ -3222,3 +3222,54 @@ yo no"), y **no llega a p03**: "mi amigo es buzo" pasa por los patrones genéric
   idéntica a la referencia.
 - El eval-set no se volvió a correr: el prompt es el de HEAD, su arnés no pasa por el núcleo y el
   regex no cambia en ninguno de sus mensajes (foto de 252 mensajes).
+
+### Punto 1, segunda vuelta: los cuatro pendientes (deterministas)
+
+**Acompañante singular = exactamente una persona nombrada** (`_singular_companion`). Antes bastaba
+con una ("vamos 3, mi pareja y yo buceamos y mi suegra hace snorkel" asumía cantidad 1). Frente a la
+regla anterior cambian **2 de 210 mensajes**, los dos de varias personas.
+
+**De quién habla una frase de certificación** (p03). Nueva pieza `_OTHER_PERSON_SUBJECT`: una persona
+nombrada, un plural con posesivo, un pronombre o una cantidad ("uno", "dos", "two", "el otro"),
+**siempre seguida de su verbo en tercera persona**. La primera versión sin verbo leía como sujeto el
+complemento de "i am a certified diver with a companion" y lo detectó un test del RAG.
+- `certification_claim(..., about_writer=True)` ignora afirmaciones y negaciones de esa frase, mirada
+  entera (en "uno no esta certificado" el verbo cae dentro de la coincidencia).
+- `other_person_certification()` da la polaridad de lo dicho del otro. En `_understand`, un
+  `is_certified` del LLM igual a esa polaridad se descarta si quien escribe no dice nada propio:
+  "somos 2, mi amigo es buzo y yo no" ya no marca al cliente, y el False de "my wife is certified and
+  I am not" se conserva.
+- Foto del detector: **17 cambios de 252**, todos frases sobre otra persona que dejan de fijar el
+  estado del cliente ("somos 3, uno no esta certificado", "two aren't certified", "my wife is
+  certified and I am not"…).
+- Límite: "no es certificado mi acompañante" (sujeto detrás del verbo) sigue atribuyéndose a quien
+  escribe.
+
+**r11 determinista.** En el reparto "N no están certificados" una persona nombrada cuenta como 1 y el
+total puede venir de la conversación: "mi amigo no esta certificado" con 2 ya sabidos →
+`{certified_diving: 1, undecided: 1}`.
+
+**p06 determinista (regla por personas).** Exactamente una persona nombrada con su certificación
+dicha y quien escribe con la contraria → 1 certificado + 1 sin decidir, total 2. Solo sin total o con
+total 2 conocido: con 4 serían 2 de 4 y no se reparte. Cubre también "soy buzo certificado y mi novia
+no esta certificada" e "i'm not certified yet but my wife is certified".
+
+**Fotos sin LLM:**
+- Estado vacío: **3 cambios de 252**, los buscados (r12, p06 y el inglés).
+- Con total conocido (2 y 4): pasan a repartir "mi amigo no está/esta certificado" y "my friend wants
+  to try diving for the first time". p06 solo con 2.
+- Suite: 2151 passed.
+
+**Ronda A con LLM real** (código de la segunda vuelta, prompt de HEAD):
+- **Batería de grupo, config PRE:** repartos **17/17**, total **13/13**, riesgo **17/17**.
+  - **0 ALUCINA, 0 PARCIAL, 0 TOTAL_MAL, 0 VACIO**.
+  - p06 y r11 pasan a OK frente a la tanda final anterior.
+  - Segunda petición: 33 sobre 408 (**+8,1 %**, antes +10,8 %), porque p06 y r11 ya se resuelven sin
+    ella.
+- **Tanda enfocada:** todos los escenarios OK las 3 veces.
+- **Batería de booleanos:** 18/24 y 18/18, idéntica.
+- **Sonda del estado de quien escribe:** "somos 2, mi amigo es buzo y yo no" deja
+  `is_certified=None` 2/2 (antes el LLM ponía True). "my wife is certified and I am not", "mi novia es
+  buza certificada y yo nunca he buceado" y "soy buzo certificado y mi novia no esta certificada"
+  quedan con el estado correcto 2/2. En "mi amigo tiene licencia, yo no" el cliente sale False 2/2: la
+  expectativa de la sonda (None) estaba mal, porque "yo no" sí lo dice.

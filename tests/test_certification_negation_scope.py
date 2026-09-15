@@ -13,14 +13,20 @@ from src.flows.state import ConversationState
 
 
 @pytest.mark.parametrize("message", [
-    "2 no tienen certificación",
-    "two aren't certified",
     "no tenemos certificación",
     "we aren't certified divers",
     "no tengo licencia de buceo",
 ])
 def test_negated_claim_is_not_certified(message):
     assert certification_claim(message) is False
+
+
+@pytest.mark.parametrize("message", ["2 no tienen certificación", "two aren't certified"])
+def test_negation_about_others_is_not_the_writers(message):
+    # La negacion se sigue leyendo, pero habla de otros (2026-09-15): quien escribe queda
+    # sin senal y el reparto usa `about_writer=False`.
+    assert certification_claim(message, about_writer=False) is False
+    assert certification_claim(message) is None
 
 
 @pytest.mark.parametrize("message", [

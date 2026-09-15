@@ -46,6 +46,7 @@ from src.agents.intent_detector import (
     dive_counts_in,
     holds_padi_cert,
     matched_activity_categories,
+    other_person_certification,
 )
 from src.agents.llm_extractor import (
     compose_acknowledgement,
@@ -1084,6 +1085,15 @@ def _named_people(message: str) -> Counter:
     return Counter({1: others + 1}) if others else Counter()
 
 
+def _singular_companion(message: str) -> bool:
+    """¿El mensaje habla de UN solo acompañante? Exactamente una persona nombrada o, si no
+    nombra a nadie, "someone"/"uno que" (2026-09-15). Antes bastaba con que apareciera una:
+    "vamos 3, mi pareja y yo buceamos y mi suegra hace snorkel" o "my daughter is 9 and my
+    son is 12" contaban como un acompañante y se asumia cantidad 1 sin preguntar."""
+    named = len(_NAMED_PERSON_RE.findall(message))
+    return named == 1 or (named == 0 and bool(_SINGULAR_COMPANION_RE.search(message)))
+
+
 def _consume_number(counts: Counter, n) -> bool:
     """True y descuenta una ocurrencia si `n` sigue disponible en `counts`."""
     if n is not None and counts.get(n, 0) > 0:
@@ -1848,6 +1858,17 @@ async def _understand(state: ConversationState, message: str) -> tuple:
             if f in _BOOL_PATCH_FIELDS
             and not _boolean_patch_is_anchored(f, state.core_pending_slot, intent, patch)
         ]
+        # La certificacion que el mensaje dice de OTRA persona no es la del cliente
+        # (2026-09-15): "somos 2, mi amigo es buzo y yo no" -> el LLM devolvia
+        # is_certified=True. Solo si coincide con lo que se dice del otro y quien escribe no
+        # dice nada propio: el False de "I am not" en "my wife is certified and I am not" se
+        # conserva.
+        if (
+            "is_certified" in patch and "is_certified" not in unbacked_bools
+            and patch["is_certified"] == other_person_certification(message)
+            and certification_claim(message) is None
+        ):
+            unbacked_bools.append("is_certified")
         for field_name in unbacked_bools:
             patch.pop(field_name, None)
         if unbacked_bools:
@@ -1950,7 +1971,7 @@ async def _understand(state: ConversationState, message: str) -> tuple:
             explicit_qty = None
         if (
             explicit_qty is None
-            and not _SINGULAR_COMPANION_RE.search(message)
+            and not _singular_companion(message)
         ):
             pass
         else:
@@ -3025,7 +3046,7 @@ async def _extraction_phase(
             # (sustantivo de compañero en plural inequívoco: "amigos",
             # "parceros"...) invalida esa confianza igual que
             # `_EXPLICIT_NUMBER_RE` invalida `companion_qty`.
-            singular_confirmed = _SINGULAR_COMPANION_RE.search(message) or (
+            singular_confirmed = _singular_companion(message) or (
                 signals.get("companion_is_singular")
                 and not _PLURAL_COMPANION_RE.search(message)
             )

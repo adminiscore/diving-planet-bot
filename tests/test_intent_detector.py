@@ -583,7 +583,8 @@ class TestCertificationOnlyNotCertifiedCount:
             "Hola somos dos personas y uno no esta certficado", state
         )
         assert intent.activity == "certified_diving"
-        assert intent.is_certified is False
+        # "uno no esta certficado" habla de uno de los dos, no de quien escribe (2026-09-15).
+        assert intent.is_certified is None
         assert intent.group_allocation == {"certified_diving": 1, "undecided": 1}
 
     def test_es_three_people_one_not_certified(self, detector, state):
@@ -705,12 +706,18 @@ class TestCertificationClaim:
             "nunca me he certificado",
             # Hallazgo 2026-09-14: con tilde ("está") la negacion no casaba y el
             # catch-all resolvia True. Texto y patrones se comparan sin tildes.
-            "mi amigo no está certificado", "no está certificada",
+            "no está certificada",
             "No Está Certificado", "todavía no están certificados",
         ],
     )
     def test_denies_certification(self, message):
         assert certification_claim(message) is False
+
+    def test_someone_elses_denial_is_not_the_writers(self):
+        """"mi amigo no está certificado" habla del amigo (2026-09-15): no dice nada de
+        quien escribe, pero sigue negando la certificacion de esa otra persona (con tilde)."""
+        assert certification_claim("mi amigo no está certificado") is None
+        assert certification_claim("mi amigo no está certificado", about_writer=False) is False
 
     def test_no_signal_returns_none(self):
         assert certification_claim("hola, cuál es el horario") is None

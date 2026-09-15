@@ -602,10 +602,16 @@ def certification_claim(text: str, about_writer: bool = True) -> bool | None:
     # no casaba la negacion, caia en `\bcertificado\b` y resolvia True. Normalizar
     # una vez aqui cubre todas las variantes de tilde de las dos listas.
     text = strip_accents((text or "").lower())
-    if any(re.search(strip_accents(pattern), text) for pattern in _NOT_CERTIFIED_PATTERNS):
+
+    def _counts(match) -> bool:
+        # Sujeto (2026-09-15): lo que se dice de otra persona en su propia frase ("mi
+        # amigo no esta certificado", "my wife is certified") no es de quien escribe.
+        return not about_writer or not _about_other_person(text, match.start())
+
+    if any(_counts(m) for pattern in _NOT_CERTIFIED_PATTERNS for m in re.finditer(strip_accents(pattern), text)):
         return False
     patterns = _CERTIFIED_PATTERNS if about_writer else _CERTIFIED_PATTERNS + _CERTIFIED_OTHER_PERSON_PATTERNS
-    positives = [m for pattern in patterns for m in re.finditer(strip_accents(pattern), text)]
+    positives = [m for pattern in patterns for m in re.finditer(strip_accents(pattern), text) if _counts(m)]
     if not positives:
         return None
     # Alcance de la negacion (2026-09-15): "2 no tienen certificación" o "two aren't
@@ -708,6 +714,57 @@ _SINGULAR_PERSON = (
     r"\b(?:mi|my|un[ao]?|an?|su|tu|his|her|el|la)\s+(?:"
     + _PERSON_NOUN_SINGULAR_ES + r"|" + _PERSON_NOUN_SINGULAR_EN + r")\b"
 )
+# Sujeto que es OTRA persona (2026-09-15), siempre seguido de su verbo en tercera persona:
+# "mi amigo es", "mis amigos tienen", "él es", "uno no esta", "two aren't", "my wife is".
+# Sin verbo detras es un complemento, no el sujeto: "i am a certified diver with a
+# companion" sigue siendo de quien escribe. Sirve para saber de quien habla una frase de
+# certificacion.
+_OTHER_PERSON_SUBJECT = (
+    r"(?:" + _SINGULAR_PERSON
+    + r"|\b(?:mis|sus|tus|los|las|my|our|his|her|their)\s+(?:"
+    + _PERSON_NOUN_PLURAL_ES + r"|" + _PERSON_NOUN_PLURAL_EN + r")\b"
+    + r"|\b(?:el|ella|ellos|ellas|he|she|they"
+    # Una cantidad o "el otro" como sujeto: "uno no esta certificado", "dos no tienen
+    # licencia", "two aren't certified" hablan de otros miembros del grupo.
+    r"|\d+|un[oa]|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|otr[oa]s?"
+    r"|one|two|three|four|five|six|seven|eight|nine|others?)\b"
+    r")\s+(?:de\s+\w+\s+|que\s+|\w+\s+)?(?:no\s+|nunca\s+|never\s+)?"
+    r"(?:es|son|esta|estan|tiene|tienen|ha|han|quiere|quieren|se\s+certific\w*"
+    r"|is|are|isn'?t|aren'?t|has|have|hasn'?t|haven'?t|wants)\b"
+)
+_OTHER_PERSON_SUBJECT_RE = re.compile(strip_accents(_OTHER_PERSON_SUBJECT), re.IGNORECASE)
+# Una frase acaba en puntuacion o conjuncion: "mi amigo es buzo y yo no" son dos.
+_CLAUSE_BOUNDARY_RE = re.compile(r"[,;.]|\b(?:y|e|pero|and|but)\b")
+
+
+def _about_other_person(text: str, start: int) -> bool:
+    """¿La coincidencia que empieza en `start` va en una frase cuyo sujeto es otra persona?
+    Se mira la frase entera, antes y despues: en "uno no esta certificado" el verbo del
+    sujeto cae dentro de la coincidencia. `text` ya en minusculas y sin tildes."""
+    clause = _CLAUSE_BOUNDARY_RE.split(text[:start])[-1] + _CLAUSE_BOUNDARY_RE.split(text[start:])[0]
+    return bool(_OTHER_PERSON_SUBJECT_RE.search(clause))
+
+
+@lru_cache(maxsize=1)
+def _other_person_cert_re() -> re.Pattern:
+    return re.compile(
+        r"(?:" + strip_accents(_OTHER_PERSON_SUBJECT) + r")\s+(?:\w+\s+){0,2}?"
+        r"(?:es|son|esta|estan|tiene|tienen|is|are|has|have)?\s*(?:\w+\s+){0,2}?"
+        r"(?:buz[oa]s?|certificad\w*|certified|divers?|licencia|licen[cs]e|"
+        + strip_accents(IntentDetector._CERT_LEVEL) + r")\b",
+        re.IGNORECASE,
+    )
+
+
+def other_person_certification(message: str) -> bool | None:
+    """Certificacion dicha de OTRA persona del mensaje: True si la afirma ("mi amigo es
+    buzo"), False si la niega ("mi amigo no esta certificado"), None si no habla de eso.
+    Nunca dice nada de quien escribe (2026-09-15)."""
+    text = strip_accents((message or "").lower())
+    match = _other_person_cert_re().search(text)
+    if not match:
+        return None
+    return not re.search(r"\b(?:no|not|nunca|never|sin)\b|n't\b", match.group(0))
 
 
 class IntentDetector:
@@ -730,7 +787,7 @@ class IntentDetector:
         if intent.cert_dives is None:
             intent.cert_days = detect_cert_day_count(message_lower)
         self._detect_certification(message_lower, intent)
-        self._detect_group_info(message_lower, intent)
+        self._detect_group_info(message_lower, intent, state)
         self._detect_ages(message_lower, intent)
         self._detect_last_dive(message_lower, intent)
         self._detect_duration(message_lower, intent)
@@ -945,7 +1002,7 @@ class IntentDetector:
             intent.is_certified = status
             intent.detected_fields.append("is_certified")
 
-    def _detect_group_info(self, message: str, intent: DetectedIntent) -> None:
+    def _detect_group_info(self, message: str, intent: DetectedIntent, state: ConversationState | None = None) -> None:
         # Fixed 2026-07-08: the verb-split patterns below (pat_numeric_fwd/rev,
         # "N bucean y M hacen snorkel") used to require the activity keyword to
         # sit right next to the split clause. Inserting an explicit dive/day
@@ -1257,10 +1314,14 @@ class IntentDetector:
         # fuente que decide `is_certified`, con su alcance de negacion), no con un patron
         # propio que solo conocia "cert*" ("dos no tienen licencia", "uno no es buzo"
         # quedaban sin reparto, 2026-09-15). La frase acaba en puntuacion o conjuncion.
-        if not intent.group_allocation and intent.group_size:
+        # El total puede venir de la conversacion y una persona nombrada cuenta como 1
+        # (2026-09-15, r11): "mi amigo no esta certificado" con el grupo de 2 ya sabido deja
+        # al amigo sin decidir y el bot le recomienda opciones (decision del owner).
+        known_total = intent.group_size or (state.detected_group_size if state else None)
+        if not intent.group_allocation and known_total:
             beg_n = 0
             for m_count in re.finditer(
-                rf'(?:\b{word_num}|\b(?:el\s+|la\s+)?otr[ao]s?)\s+(?=([^,.;]+))',
+                rf'(?:\b{word_num}|\b(?:el\s+|la\s+)?otr[ao]s?|{_SINGULAR_PERSON})\s+(?=([^,.;]+))',
                 strip_accents(message.lower()),
             ):
                 clause = re.split(r'\b(?:y|and|pero|but)\b', m_count.group(2))[0]
@@ -1270,11 +1331,30 @@ class IntentDetector:
                     beg_n = _parse_num(m_count.group(1)) if m_count.group(1) else 1
                     break
             if beg_n:
-                if 0 < beg_n < intent.group_size:
-                    cert_n = intent.group_size - beg_n
+                if 0 < beg_n < known_total:
+                    cert_n = known_total - beg_n
                     # Solo un atributo ("uno no esta certificado"): sin actividad elegida.
                     intent.group_allocation = {'certified_diving': cert_n, 'undecided': beg_n}
                     intent.detected_fields.append("group_allocation")
+        # Una persona nombrada y quien escribe, cada uno con su certificacion y de signo
+        # contrario (2026-09-15): "mi novia es buza certificada y yo nunca he buceado" o
+        # "soy buzo certificado y mi novia no esta certificada" son 2 personas, 1 certificada
+        # y 1 sin decidir. Fuentes unicas: `_SINGULAR_PERSON`, `other_person_certification`
+        # y `certification_claim`. Sin esto dependia de que el LLM devolviera el reparto.
+        # Sin total, o con el total de 2 ya sabido (las dos personas cuadran); con otro total
+        # serian solo 2 de N y no se reparte.
+        if not intent.group_allocation and known_total in (None, 0, 2):
+            other = other_person_certification(message)
+            writer = certification_claim(message)
+            if (
+                len(re.findall(_SINGULAR_PERSON, strip_accents(message.lower()), re.IGNORECASE)) == 1
+                and other is not None and writer is not None and other != writer
+            ):
+                intent.group_allocation = {'certified_diving': 1, 'undecided': 1}
+                intent.detected_fields.append("group_allocation")
+                if not intent.group_size:
+                    intent.group_size = 2
+                    intent.detected_fields.append("group_size")
 
         def _set_group_size_from_allocation(allocation: dict[str, int]) -> None:
             """Fija `group_size` a la suma del reparto, pero NUNCA a la baja

@@ -28,6 +28,52 @@ def test_negated_count_splits_the_group(message, expected):
     assert _alloc(message) == expected
 
 
+def test_named_companion_counts_as_one_with_the_known_total():
+    """"mi amigo no esta certificado" con el grupo de 2 ya sabido (r11, decision del owner):
+    el amigo queda sin decidir y se le recomiendan opciones (2026-09-15)."""
+    state = ConversationState(conversation_id="c")
+    state.detected_group_size = 2
+    intent = IntentDetector().detect("mi amigo no esta certificado", state)
+    assert intent.group_allocation == {"certified_diving": 1, "undecided": 1}
+    assert intent.is_certified is None
+
+
+def test_named_companion_without_a_total_is_not_split():
+    assert _alloc("mi amigo no esta certificado") is None
+
+
+@pytest.mark.parametrize("message", [
+    "mi novia es buza certificada y yo nunca he buceado",
+    "soy buzo certificado y mi novia no esta certificada",
+])
+def test_one_other_person_and_the_writer_with_opposite_status(message):
+    """Una persona nombrada y quien escribe, cada uno con su certificacion y de signo
+    contrario: 1 certificado y 1 sin decidir, total 2, sin depender del LLM (2026-09-15)."""
+    intent = IntentDetector().detect(message, ConversationState(conversation_id="c"))
+    assert intent.group_allocation == {"certified_diving": 1, "undecided": 1}
+    assert intent.group_size == 2
+
+
+@pytest.mark.parametrize("known_total, expected", [
+    (2, {"certified_diving": 1, "undecided": 1}),      # las dos personas cuadran con el total
+    (4, None),                                         # serian 2 de 4: no se reparte
+])
+def test_person_split_respects_the_known_total(known_total, expected):
+    state = ConversationState(conversation_id="c")
+    state.detected_group_size = known_total
+    intent = IntentDetector().detect("mi novia es buza certificada y yo nunca he buceado", state)
+    assert intent.group_allocation == expected
+
+
+@pytest.mark.parametrize("message", [
+    "mi novia es buza certificada y yo tambien",       # mismo estado: nada que repartir
+    "mi amigo tiene licencia, yo no",                  # quien escribe no dice nada propio
+    "soy buzo certificado y vengo con mi pareja",      # la pareja sin certificacion dicha
+])
+def test_no_person_split_without_both_opposite_statements(message):
+    assert _alloc(message) is None
+
+
 def test_main_activity_never_contradicts_the_allocation():
     """"somos 5 y 2 nunca han buceado" reparte 3 certificados; la actividad principal
     no puede quedarse en minicurso (regla general de detect(), 2026-09-15)."""

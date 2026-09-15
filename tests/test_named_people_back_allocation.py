@@ -47,6 +47,18 @@ def test_one_piece_for_a_singular_person():
     assert cc._SINGULAR_COMPANION_RE.search("my wife wants to snorkel")
 
 
+@pytest.mark.parametrize("message, singular", [
+    ("viene mi novia", True),
+    ("my wife wants to snorkel", True),
+    ("viene uno que quiere bucear", True),               # sin persona nombrada: extras
+    ("vamos 3, mi pareja y yo buceamos y mi suegra hace snorkel", False),
+    ("my daughter is 9 and my son is 12, my wife and i dive", False),
+    ("vienen mis amigos", False),
+])
+def test_singular_companion_needs_exactly_one_person(message, singular):
+    assert cc._singular_companion(message) is singular
+
+
 async def _understand_with_llm(message, llm_patch, combined=None, **state_fields):
     """`llm_patch` es lo que devuelve `fill_gaps`; `combined`, lo que devuelve la peticion
     fusionada (por defecto, lo mismo)."""
