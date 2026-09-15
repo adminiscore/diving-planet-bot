@@ -4067,3 +4067,10 @@ nombrada si es de quien escribe), se lee **por su propia polaridad**:
   - "mi amigo tiene licencia, yo no" pasa de "no reparte" a reparto.
   - El test de la segunda petición de grupo usa ahora un mensaje que el detector no puede repartir.
 - Suite 2326.
+
+**I medido con el LLM real** (batería de grupo, config PRE, 3 repeticiones): **17/17 repartos, 13/13
+total, 17/17 riesgo, 0 alucinaciones, 0 parciales, 0 totales mal, 0 cambios frente a la base de las
+12:51**. p02, p03, p05 y p07 salen `gs=2 {certified_diving: 1}` en las 3 repeticiones; antes daban
+1/2, 1/2 y 0/2 según contestara el LLM.
+
+**`eval --core` tras I:** **218/230, idéntico por caso** (0 a mejor, 0 a peor; tanda limpia). **Hallazgo I cerrado.**
