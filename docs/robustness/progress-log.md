@@ -3429,3 +3429,31 @@ tú me"); a la otra le quedan 9 de contenido propio.
 - **No son duplicado real:** disponibilidad, nombre, actos de diálogo y seguridad.
 - **Queda como duplicado real:** la familia de acompañante/no buzo del RAG y el supervisor
   (`_NON_DIVER_*`, `_COMPANION_PLURAL_QUANTIFIER_RE`, `_PURE_COMPANION_RE`).
+
+### Punto 4: acompañante/no buzo y palabras numéricas
+
+**Corrección del inventario.** Revisada de cerca, la familia de acompañante del RAG no duplica
+nada: pregunta otra cosa ("¿hay alguien que no bucea, uno o varios?") y solo la usa el resumen
+de buceo del RAG, cubierto por `test_rag_safety.py`. `_PURE_COMPANION_RE` del supervisor era
+**código muerto** (sin referencias en src, tests ni scripts): borrado.
+
+**El duplicado real eran las palabras numéricas.** Estaba la lista "dos|tres|cuatro…" copiada 20
+veces en detector, núcleo, supervisor, RAG, carrito y fuzzy, cada una con su rango (1-4, 1-6, 2-9,
+1-10, 2-19). Ahora hay una sola fuente, `src/utils/number_words.py`:
+- `number_words(lo, hi, lang)` devuelve el mapa palabra → valor, ordenado por valor y con ES antes que
+  EN en cada valor (el carrito y fuzzy eligen por orden).
+- `number_alt(lo, hi, lang)` devuelve la alternancia regex con la palabra más larga primero, para que
+  "seventeen" no se quede en "seven".
+- Cada consumidor conserva su rango y sus extras ("un", "otros", "varios", "couple").
+- Foto sin LLM de todos los consumidores (intent completo, `dive_counts_in`, sujeto de otra
+  persona, `_message_numbers`, `_NOT_ALONE_RE`, nacionalidad mixta, normalización y niños del
+  supervisor, acompañante del RAG, cantidad del carrito, fuzzy) sobre el corpus más una rejilla de
+  palabras 1-19 ES/EN en 43 plantillas: **0 cambios de 1215**.
+- `AGE_WORDS` y `_WORD_TO_NUM` son idénticos, orden incluido.
+
+**Asimetrías que la fuente única deja a la vista (no tocadas, cambian conducta).** Hay que medirlas
+aparte:
+- **RAG, elíptico:** ES 1-6, EN 1-5.
+- **RAG, cuantificador de acompañantes:** ES 2-10, EN 2-5.
+- **Supervisor, nacionalidad mixta:** ES 2-5 (solo español, igual que el resto de ese patrón).
+- **Días de paquete (1-4):** coinciden hoy con el catálogo, pero no salen de él.

@@ -44,6 +44,7 @@ from src.prompts.info import (
     RAG_SECURITY_ES,
 )
 from src.utils import money
+from src.utils.number_words import number_alt, number_words
 from src.utils.text import strip_accents
 
 logger = logging.getLogger("uvicorn.error")
@@ -689,26 +690,26 @@ _NON_DIVER_PLURAL_RE = re.compile(
 # "y/and <quantifier> no/don't". Spanish drops the verb after "no"; English
 # keeps the negated auxiliary ("don't"/"doesn't"), so each needs its own regex.
 _NON_DIVER_ELLIPTICAL_ES_RE = re.compile(
-    r"\by\s+(?:\d+|uno|una|dos|tres|cuatro|cinco|seis|otro|otra|otros|otras|"
+    r"\by\s+(?:\d+|" + number_alt(1, 6, "es") + r"|otro|otra|otros|otras|"
     r"el\s+resto|los\s+dem[aá]s)\s+no\b",
     re.IGNORECASE,
 )
 _NON_DIVER_ELLIPTICAL_EN_RE = re.compile(
-    r"\band\s+(?:\d+|one|two|three|four|five|another|others?|the\s+rest)\s+"
+    r"\band\s+(?:\d+|" + number_alt(1, 5, "en") + r"|another|others?|the\s+rest)\s+"
     r"(?:don'?t|doesn'?t)\b",
     re.IGNORECASE,
 )
 _NON_DIVER_ELLIPTICAL_PLURAL_WORDS = (
-    "dos", "tres", "cuatro", "cinco", "seis", "otros", "otras",
-    "el resto", "los dem", "two", "three", "four", "five", "rest", "others",
+    *number_words(2, 6, "es"), "otros", "otras",
+    "el resto", "los dem", *number_words(2, 5, "en"), "rest", "others",
 )
 # Distinguishes "un acompañante" (one) from several, so the reply says "your
 # companion" vs "your companions" instead of always assuming just one.
 # Plural fires on the plain plural noun ("acompañantes"/"companions") or a
 # quantifier > 1 right before it ("2 acompañantes", "varios amigos que...").
 _COMPANION_PLURAL_QUANTIFIER_RE = re.compile(
-    r"\b(?:\d+|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|diez|varios|varias|"
-    r"algunos|algunas|unos|unas|several|multiple|two|three|four|five)\s+(?:acompa\w+|companions?)",
+    r"\b(?:\d+|" + number_alt(2, 10, "es") + r"|varios|varias|"
+    r"algunos|algunas|unos|unas|several|multiple|" + number_alt(2, 5, "en") + r")\s+(?:acompa\w+|companions?)",
     re.IGNORECASE,
 )
 

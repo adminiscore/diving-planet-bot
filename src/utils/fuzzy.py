@@ -16,6 +16,8 @@ from __future__ import annotations
 import re as _re
 from difflib import SequenceMatcher
 
+from src.utils.number_words import number_words
+
 # Strip punctuation that users append to command words ("sii!", "cancelar.")
 _PUNCT = _re.compile(r"[¿¡?!.,;:()\[\]\"'/\\]")
 
@@ -51,18 +53,7 @@ _NONE_ZERO: frozenset[str] = frozenset({
 })
 
 # Word → integer mapping (1–10, ES + EN)
-_WORD_NUMBERS: dict[str, int] = {
-    "uno": 1, "una": 1, "one": 1,
-    "dos": 2, "two": 2,
-    "tres": 3, "three": 3,
-    "cuatro": 4, "four": 4,
-    "cinco": 5, "five": 5,
-    "seis": 6, "six": 6,
-    "siete": 7, "seven": 7,
-    "ocho": 8, "eight": 8,
-    "nueve": 9, "nine": 9,
-    "diez": 10, "ten": 10,
-}
+_WORD_NUMBERS = number_words(1, 10)
 
 # ---------------------------------------------------------------------------
 # Thresholds

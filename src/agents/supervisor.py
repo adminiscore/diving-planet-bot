@@ -37,6 +37,7 @@ from src.flows.messages import set_quick_replies
 from src.flows.state import ConversationState, Step
 from src.knowledge.loader import load_policies
 from src.privacy import detect_pii, privacy_block_message
+from src.utils.number_words import number_alt
 from src.utils.text import strip_accents as _strip_accents
 
 logger = logging.getLogger("uvicorn.error")
@@ -773,9 +774,9 @@ _MIXED_NATIONALITY_RE = re.compile(
     # pre_gadea v0.21.14) — cantidad explícita + "pero"/"y" en vez del
     # "unos/algunos... y otros" ya cubierto arriba. Cubre ambos órdenes
     # (colombiano-primero / extranjero-primero).
-    r"|\b(?:\d+|dos|tres|cuatro|cinco)\s+(?:de\s+(?:nosotros|el\s+grupo)\s+)?somos\s+colombian[oa]s?\s+"
+    r"|\b(?:\d+|" + number_alt(2, 5, "es") + r")\s+(?:de\s+(?:nosotros|el\s+grupo)\s+)?somos\s+colombian[oa]s?\s+"
     r"(?:pero|y)\s+(?:\d+|el\s+resto|otr[oa]s?|un[oa])\s*(?:es|son|somos)?\s*extranjer[oa]s?\b"
-    r"|\b(?:\d+|dos|tres|cuatro|cinco)\s+(?:de\s+(?:nosotros|el\s+grupo)\s+)?somos\s+extranjer[oa]s?\s+"
+    r"|\b(?:\d+|" + number_alt(2, 5, "es") + r")\s+(?:de\s+(?:nosotros|el\s+grupo)\s+)?somos\s+extranjer[oa]s?\s+"
     r"(?:pero|y)\s+(?:\d+|el\s+resto|otr[oa]s?|un[oa])\s*(?:es|son|somos)?\s*colombian[oa]s?\b"
     r"|\bmy\s+(?:friend|partner|husband|wife|brother|sister|boyfriend|girlfriend)\s+is\s+(?:a\s+)?foreign(?:er)?\b"
     r"|\bmy\s+(?:friend|partner|husband|wife|brother|sister|boyfriend|girlfriend)\s+is\s+colombian\b"
@@ -1039,7 +1040,7 @@ def _normalize_for_menu_match(text: str) -> str:
     # Split "3amigos" / "tresamigos" → "3 amigos" / "tres amigos" so person-count
     # parsing (which requires whitespace between the count and the noun) works.
     cleaned = re.sub(
-        r"\b(?:uno|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|diez|\d+)(amig[oa]s?|person[ao]s?|companer[oa]s?|hij[oa]s?|herman[oa]s?|acompanantes?)\b",
+        r"\b(?:uno|" + number_alt(2, 10, "es") + r"|\d+)(amig[oa]s?|person[ao]s?|companer[oa]s?|hij[oa]s?|herman[oa]s?|acompanantes?)\b",
         lambda m: m.group(0)[: -len(m.group(1))] + " " + m.group(1),
         cleaned,
     )
@@ -1097,7 +1098,7 @@ def _detect_kids_mention(message: str) -> bool:
         r"\bmis\s+(hij[oa]s|sobrin[oa]s|nin[oa]s|niet[oa]s)\b",
         r"\bmi\s+familia\s+con\s+(hij[oa]s|nin[oa]s|menores)\b",
         r"\bmy\s+(grandchild|grandson|granddaughter|baby|kid|child)\b",
-        r"\b(?:\d+|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|diez)\s+(hij[oa]s|nin[oa]s|sobrin[oa]s|menores)\b",
+        r"\b(?:\d+|" + number_alt(2, 10, "es") + r")\s+(hij[oa]s|nin[oa]s|sobrin[oa]s|menores)\b",
     )
     return any(re.search(pattern, normalized) for pattern in kids_patterns)
 
@@ -2756,23 +2757,6 @@ def _should_skip_to_certified_flow(intent, state: ConversationState) -> bool:
         and intent.is_certified is True
         and state.step in _INTENT_TRIGGER_STEPS
     )
-
-
-# A companion who ONLY accompanies, mentioned in free text ("va mi novia que solo
-# acompaña", "voy con alguien que solo va a mirar"). We proactively offer that
-# companion the mini-course/snorkel upsell. Questions ("¿el acompañante paga?")
-# are excluded (they go to RAG).
-_PURE_COMPANION_RE = re.compile(
-    r"\bsolo\s+(?:me\s+|te\s+|nos\s+|lo\s+|la\s+)?acompan"
-    r"|\bsolo\s+(?:va|van|viene|vienen|ira|iran|quiere|quieren)\s+(?:a\s+)?acompan"
-    r"|\b(?:de|como)\s+acompan(?:ante|antes)?\b"
-    r"|\b(?:va|van|viene|vienen)\s+a\s+acompan"
-    r"|\bsolo\s+(?:a\s+)?(?:mirar|ver|acompan)"
-    r"|\bno\s+(?:va\s+a\s+|van\s+a\s+|quiere[n]?\s+)?buce\w*\s+ni\b"
-    r"|\bjust\s+(?:to\s+)?accompany|\bonly\s+(?:to\s+)?accompany|\bjust\s+accompanying\b"
-    r"|\bcome\s+along\b|\bjust\s+(?:to\s+)?watch\b|\bwon'?t\s+dive\b",
-    re.IGNORECASE,
-)
 
 
 async def route_message(state: ConversationState, message: str) -> str:

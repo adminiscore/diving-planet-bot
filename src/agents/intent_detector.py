@@ -6,6 +6,7 @@ from openai import OpenAI
 
 from src.domain import activities as dom
 from src.flows.state import ConversationState
+from src.utils.number_words import number_alt, number_words
 from src.utils.text import strip_accents
 
 
@@ -39,10 +40,7 @@ class DetectedIntent:
 # Explicit certified dive-count: "2 inmersiones", "paquete de 5 buceos",
 # "7 buceos en 3 dias", "2-dive package". The number must sit right before a
 # dive noun so "hace 2 años sin bucear" (a timeframe, not a count) never matches.
-_DIVE_NUMBER = (
-    r"(\d+|un[oa]?|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|"
-    r"one|two|three|four|five|six|seven|eight|nine)"
-)
+_DIVE_NUMBER = r"(\d+|" + number_alt(1, 9) + r"|un)"
 # "4 o 5 inmersiones" nombra dos paquetes: la cifra coordinada tambien se captura para
 # no quedarse con una sola y dar por elegido lo que el cliente aun duda (2026-09-15).
 _CERT_DIVE_COUNT_RE = re.compile(
@@ -50,12 +48,7 @@ _CERT_DIVE_COUNT_RE = re.compile(
     r"[\s\-]+(?:inmersi\w+|buceos?|dives?|immersions?)\b",
     re.IGNORECASE,
 )
-_DIVE_WORD_TO_NUM = {
-    "uno": 1, "una": 1, "un": 1, "dos": 2, "tres": 3, "cuatro": 4, "cinco": 5,
-    "seis": 6, "siete": 7, "ocho": 8, "nueve": 9,
-    "one": 1, "two": 2, "three": 3, "four": 4, "five": 5,
-    "six": 6, "seven": 7, "eight": 8, "nine": 9,
-}
+_DIVE_WORD_TO_NUM = {**number_words(1, 9), "un": 1}
 
 # Bare "paquete/pack/plan de N" with NO unit word at all ("el pack de 5") —
 # found live on PRE 2026-07-09: a customer who'd already said "queremos
@@ -88,10 +81,10 @@ _BARE_PACKAGE_DIVE_RE = re.compile(
 # "pack" added to the qualifier list 2026-07-09 (was missing entirely —
 # "el pack de 3 dias" didn't match "paquete"/"plan").
 _CERT_DAY_COUNT_RE = re.compile(
-    r"\b(?:paquete|pack|plan)\s+de\s+(\d+|un[oa]?|dos|tres|cuatro)\s*d[ií]as?\b"
-    r"|\b(\d+|un[oa]?|dos|tres|cuatro)[\s\-]+d[ií]as?\s+(?:de\s+)?buce\w*\b"
-    r"|\b(\d+|one|two|three|four)[\s\-]?days?\s+(?:of\s+)?(?:dive\s+|diving\s+)?package\b"
-    r"|\b(\d+|one|two|three|four)[\s\-]?days?\s+(?:of\s+)?div(?:e|ing)\b",
+    r"\b(?:paquete|pack|plan)\s+de\s+(\d+|" + number_alt(1, 4, "es") + r"|un)\s*d[ií]as?\b"
+    r"|\b(\d+|" + number_alt(1, 4, "es") + r"|un)[\s\-]+d[ií]as?\s+(?:de\s+)?buce\w*\b"
+    r"|\b(\d+|" + number_alt(1, 4, "en") + r")[\s\-]?days?\s+(?:of\s+)?(?:dive\s+|diving\s+)?package\b"
+    r"|\b(\d+|" + number_alt(1, 4, "en") + r")[\s\-]?days?\s+(?:of\s+)?div(?:e|ing)\b",
     re.IGNORECASE,
 )
 
@@ -162,19 +155,10 @@ def detect_cert_day_count(message: str) -> int | None:
 # propio parseo de SLOT_AGES, sin duplicar. Cierre DETERMINISTA — nunca adivina
 # una edad (a diferencia del cutover LLM que H4 difirió: en una decisión de
 # seguridad, adivinar "es adolescente"->15 es peor que no responder).
-AGE_WORDS = {
-    "dos": 2, "tres": 3, "cuatro": 4, "cinco": 5, "seis": 6, "siete": 7,
-    "ocho": 8, "nueve": 9, "diez": 10, "once": 11, "doce": 12, "trece": 13,
-    "catorce": 14, "quince": 15, "dieciseis": 16, "dieciséis": 16,
-    "diecisiete": 17, "dieciocho": 18, "diecinueve": 19,
-    "two": 2, "three": 3, "four": 4, "five": 5, "six": 6, "seven": 7,
-    "eight": 8, "nine": 9, "ten": 10, "eleven": 11, "twelve": 12,
-    "thirteen": 13, "fourteen": 14, "fifteen": 15, "sixteen": 16,
-    "seventeen": 17, "eighteen": 18, "nineteen": 19,
-}
+AGE_WORDS = number_words(2, 19)
 # Alternación ordenada por longitud desc (así "dieciseis" gana a "diez" en el
 # motor regex antes de que un prefijo corte el match).
-_AGE_WORD_ALT = "|".join(sorted(map(re.escape, AGE_WORDS), key=len, reverse=True))
+_AGE_WORD_ALT = number_alt(2, 19)
 
 
 # Listas de patrones por categoria de actividad — elevadas de variables locales
@@ -736,8 +720,7 @@ _OTHER_PERSON_SUBJECT = (
     + r"|\b(?:el|ella|ellos|ellas|he|she|they"
     # Una cantidad o "el otro" como sujeto: "uno no esta certificado", "dos no tienen
     # licencia", "two aren't certified" hablan de otros miembros del grupo.
-    r"|\d+|un[oa]|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|otr[oa]s?"
-    r"|one|two|three|four|five|six|seven|eight|nine|others?)\b"
+    r"|\d+|" + number_alt(1, 9) + r"|otr[oa]s?|others?)\b"
     r")\s+(?:de\s+\w+\s+|que\s+|\w+\s+)?(?:no\s+|nunca\s+|never\s+)?"
     r"(?:es|son|esta|estan|tiene|tienen|ha|han|quiere|quieren|se\s+certific\w*"
     r"|is|are|isn'?t|aren'?t|has|have|hasn'?t|haven'?t|wants)\b"
@@ -1059,10 +1042,10 @@ class IntentDetector:
         # patterns while every other number-word map in this file already
         # goes to "diez"/"ten" — "somos nueve"/"somos diez" silently resolved
         # to no group size at all (digits like "9"/"10" still worked).
-        _es_word_nums = {'dos': 2, 'tres': 3, 'cuatro': 4, 'cinco': 5, 'seis': 6, 'siete': 7, 'ocho': 8, 'nueve': 9, 'diez': 10}
-        _en_word_nums = {'two': 2, 'three': 3, 'four': 4, 'five': 5, 'six': 6, 'seven': 7, 'eight': 8, 'nine': 9, 'ten': 10}
-        _es_word_alt = r'dos|tres|cuatro|cinco|seis|siete|ocho|nueve|diez'
-        _en_word_alt = r'two|three|four|five|six|seven|eight|nine|ten'
+        _es_word_nums = number_words(2, 10, "es")
+        _en_word_nums = number_words(2, 10, "en")
+        _es_word_alt = number_alt(2, 10, "es")
+        _en_word_alt = number_alt(2, 10, "en")
 
         # "me plus 3 friends" / "3 amigos y yo" / "vienen 3 amigos conmigo" /
         # "voy con 2 amigos" / "tengo 3 amigos" / "I have 3 friends": a
@@ -1167,8 +1150,7 @@ class IntentDetector:
                 message,
             )
             other_num = re.search(
-                r'\b([2-9]|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|'
-                r'two|three|four|five|six|seven|eight|nine)\b',
+                r'\b([2-9]|' + number_alt(2, 9) + r')\b',
                 message,
             )
             # Any plural first-person or collective noun means "not just me".
@@ -1190,11 +1172,8 @@ class IntentDetector:
 
         # ── Numeric split: "3 de buceo y 2 de snorkel", "5 snorkel y 2 buceo" ──
         activity_kw = r'(buce\w*|buse\w*|snorkel|snorkeling|esnorkel|careteo|caretear|minicurso|mini\s?curso|bautismo|bautizo|diving|scuba|submarinismo)'
-        num_pat = r'(\d+|dos|tres|cuatro|cinco|seis|two|three|four|five|six)'
-        _word_num_map: dict[str, int] = {
-            'dos': 2, 'tres': 3, 'cuatro': 4, 'cinco': 5, 'seis': 6,
-            'two': 2, 'three': 3, 'four': 4, 'five': 5, 'six': 6,
-        }
+        num_pat = r'(\d+|' + number_alt(2, 6) + r')'
+        _word_num_map = number_words(2, 6)
 
         def _parse_num(s: str) -> int:
             return int(s) if s.isdigit() else _word_num_map.get(s, 1)
@@ -1257,7 +1236,7 @@ class IntentDetector:
         )
         # ── Pattern B (priority): cert/no-cert splits — BEFORE numeric split ──
         # "2 buceadores (1 certificado y otro no)" / "N cert y M principiante"
-        word_num = r'(\d+|un[ao]?|dos|tres|cuatro|cinco|seis|one|two|three|four|five|six)'
+        word_num = r'(\d+|' + number_alt(1, 6) + r'|un)'
         cert_split_patterns = [
             # "2 buceadores (1 certificado y otro/s no)" / "4 buceadores (2 cert y 2 no)"
             rf'(\d+)\s+buceador[aes]*[^,\(]*[\(,]\s*{word_num}\s+certificad[ao]s?\s+y\s+(?:{word_num}\s+)?(?:el\s+)?otr[ao]s?\s+no',
@@ -1300,7 +1279,7 @@ class IntentDetector:
                     cert_n = n2
                     # si hay tercer grupo (K no cert), usarlo; si no, resto
                     n3_raw = g[2] if len(g) > 2 else None
-                    if n3_raw and re.match(r'\d+|dos|tres|cuatro|cinco|seis', n3_raw, re.IGNORECASE):
+                    if n3_raw and re.match(r'\d+|' + number_alt(2, 6, "es"), n3_raw, re.IGNORECASE):
                         beg_n = _parse_num(n3_raw)
                         total = cert_n + beg_n
                     else:
@@ -1665,9 +1644,7 @@ class IntentDetector:
             intent.detected_fields.append("ages")
 
     _LASTDIVE_NUM = {
-        "un": 1, "uno": 1, "una": 1, "unos": 2, "unas": 2, "dos": 2, "tres": 3,
-        "cuatro": 4, "cinco": 5, "seis": 6, "a": 1, "an": 1, "one": 1, "two": 2,
-        "three": 3, "four": 4, "five": 5, "six": 6, "couple": 2, "few": 3,
+        **number_words(1, 6), "un": 1, "unos": 2, "unas": 2, "a": 1, "an": 1, "couple": 2, "few": 3,
     }
 
     def _last_dive_num(self, token: str) -> int:
@@ -1687,7 +1664,7 @@ class IntentDetector:
         if not LAST_DIVE_TOPIC_RE.search(message):
             return
 
-        num = r"(\d+|un[oa]?|unos|unas|dos|tres|cuatro|cinco|seis|a|an|one|two|three|four|five|six|couple|few)"
+        num = r"(\d+|unos|unas|" + number_alt(1, 6) + r"|un|a|an|couple|few)"
 
         # Explicitly recent -> NOT over 2 years.
         if re.search(

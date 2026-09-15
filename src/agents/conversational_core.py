@@ -62,6 +62,7 @@ from src.flows import cart_render, eligibility
 from src.flows.state import ConversationState, Step
 from src.utils import money
 from src.utils.fuzzy import is_affirmative, is_negative
+from src.utils.number_words import number_alt, number_words
 
 logger = logging.getLogger("uvicorn.error")
 
@@ -220,8 +221,7 @@ _NOT_ALONE_RE = re.compile(
     r"|con\s+mi\b|y\s+mi\b|and\s+my\b"
     r"|mi\s+(?:" + _PERSON_NOUN_MENTION_ES + r")"
     r"|my\s+(?:" + _PERSON_NOUN_MENTION_EN + r")"
-    r"|[2-9]|dos|tres|cuatro|cinco|seis|siete|ocho|nueve"
-    r"|two|three|four|five|six|seven|eight|nine)\b",
+    r"|[2-9]|" + number_alt(2, 9) + r")\b",
     re.IGNORECASE,
 )
 
@@ -1037,17 +1037,11 @@ _PLURAL_COMPANION_RE = re.compile(
 # descarta cualquier companion_qty que el LLM haya devuelto igualmente, antes
 # de decidir si preguntar o asumir 1 por singular inequívoco.
 _EXPLICIT_NUMBER_RE = re.compile(
-    r"\d+|\b(?:uno|una|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|diez|"
-    r"one|two|three|four|five|six|seven|eight|nine|ten)\b",
+    r"\d+|\b(?:" + number_alt(1, 10) + r")\b",
     re.IGNORECASE,
 )
 
-_WORD_TO_NUM = {
-    "uno": 1, "una": 1, "one": 1, "dos": 2, "two": 2, "tres": 3, "three": 3,
-    "cuatro": 4, "four": 4, "cinco": 5, "five": 5, "seis": 6, "six": 6,
-    "siete": 7, "seven": 7, "ocho": 8, "eight": 8, "nueve": 9, "nine": 9,
-    "diez": 10, "ten": 10,
-}
+_WORD_TO_NUM = number_words(1, 10)
 
 
 def _message_numbers(message: str) -> Counter:

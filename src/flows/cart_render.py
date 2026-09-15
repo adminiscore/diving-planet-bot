@@ -16,6 +16,7 @@ from src.flows.catalog import COMPANION_PRICE, ISLAND_SERVICE_MAP, SERVICES
 from src.flows.state import MESSAGE_SPLIT, ConversationState, Step
 from src.utils import money as money_fmt
 from src.utils.fuzzy import fuzzy_word_number
+from src.utils.number_words import number_words
 from src.utils.text import strip_accents
 
 # ─────────────────────── API pública (la usa el núcleo) ───────────────────────
@@ -120,18 +121,7 @@ def _parse_mixed_quantity(message: str) -> int | None:
     except ValueError:
         pass
     # Accept word numbers (with typo tolerance via fuzzy helper)
-    _word_num = {
-        'uno': 1, 'una': 1, 'one': 1,
-        'dos': 2, 'two': 2,
-        'tres': 3, 'three': 3,
-        'cuatro': 4, 'four': 4,
-        'cinco': 5, 'five': 5,
-        'seis': 6, 'six': 6,
-        'siete': 7, 'seven': 7,
-        'ocho': 8, 'eight': 8,
-        'nueve': 9, 'nine': 9,
-        'diez': 10, 'ten': 10,
-    }
+    _word_num = number_words(1, 10)
     _fuzzy_n = fuzzy_word_number(msg)
     if _fuzzy_n is not None:
         return _fuzzy_n
