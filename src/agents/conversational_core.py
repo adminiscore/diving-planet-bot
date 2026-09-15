@@ -31,8 +31,8 @@ import re
 from collections import Counter
 
 from src.agents.intent_detector import (
-    _CARTAGENA_NAME_RE,
     _CLAUSE_BOUNDARY_RE,
+    _EMBEDDED_QUESTION_WORDS,
     _GENERIC_ISLAND_RE,
     _PERSON_NOUN_MENTION_EN,
     _PERSON_NOUN_MENTION_ES,
@@ -168,12 +168,9 @@ def _departure_place(message: str) -> str | None:
     """Lugar de salida en la RESPUESTA a "¿desde donde saldrias?" (hallazgo C, 2026-09-15).
     Las palabras de lugar son las del detector (apodos de la ciudad, hoteles, islas; "rezar
     el rosario" no es isla), y una isla sin nombre ("isla", "Barú") vale como respuesta.
-    Precedencia de siempre en la respuesta: Cartagena nombrada gana ("quiero ir a las islas
-    del rosario desde cartagena"). Dejar al LLM los mensajes con los dos lugares se midio y
-    fue peor."""
+    Con Cartagena y una isla, decide el papel de cada lugar en el detector (`place_by_role`,
+    hallazgo C.2): "quiero ir a las islas del rosario desde cartagena" sale de Cartagena."""
     text = (message or "").lower()
-    if _CARTAGENA_NAME_RE.search(text):
-        return "cartagena"
     intent = DetectedIntent()
     _detector._detect_location(text, intent)
     if intent.location:
@@ -1437,11 +1434,6 @@ def _weighed_offerings(message: str) -> set:
         if not _is_negated(" ".join(prefix[start:])):
             weighed.update(offerings)
     return weighed
-
-
-# Palabras que abren una pregunta subordinada ("no se SI...", "not sure WHETHER...",
-# "duda ENTRE..."): clase cerrada, no vocabulario de dominio.
-_EMBEDDED_QUESTION_WORDS = frozenset({"si", "if", "whether", "entre", "between"})
 
 
 def _offerings_with_own_subject(message: str) -> bool:

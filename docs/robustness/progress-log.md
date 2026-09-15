@@ -4467,3 +4467,45 @@ alojarlo nosotros sin reescribir la integración.
 4. Baterías y eval sin trazas por defecto.
 5. Una semana midiendo unidades reales en PRE.
 6. Retirar LangSmith.
+
+### Hallazgos C.2 y C.3: salida, estancia y destino; formas cortas de isla (arreglados)
+
+**C.2. Punto de partida.** Con Cartagena y una isla en el mismo mensaje, los dos lectores decidían por precedencia
+(detector: isla concreta primero; resolutor: Cartagena primero). Dejarlo al LLM se había medido peor (el LLM
+también toma el destino por la ubicación).
+
+**Arreglo, estructural: la preposición de cada lugar** (`place_by_role` en el detector, clase cerrada):
+- papel de cada mención por la última palabra antes del nombre, dentro de su frase y sin artículos:
+  - estancia: "en", "in", "on", "at";
+  - origen: "desde", "de", "del", "from";
+  - destino: "a", "al", "hacia", "hasta", "para", "to", "into";
+- una pregunta subordinada corta el alcance (`_EMBEDDED_QUESTION_WORDS`, ahora con una sola fuente para K y C.2);
+- una mención negada no cuenta (`_is_negated`: "no estamos en las islas");
+- un hotel de isla es alojamiento (estancia al final del mensaje);
+- **decide:** la última estancia > el primer origen > la primera sin preposición > la primera; sin ninguna
+  preposición, la precedencia de siempre;
+- `_departure_place` del núcleo lee directamente el detector (fuera la regla "Cartagena primero").
+
+**C.3.** Barrido del corpus: los 15 mensajes que el detector fija sin la palabra isla, hotel o resort son nombres
+propios correctos (Cocoliso, Pao Pao, Majagua, Bora Bora). El riesgo real son las formas cortas de las islas "Isla X"
+("grande", "marina", "arena", "pirata", "pelícano", "pavitos"), que son palabras corrientes. Solo cuentan si el
+mensaje nombra una isla (patrón sin "isl" y sin isla nombrada, fuera). Los hoteles no cambian.
+
+**Medido sin LLM** (`c_snapshot.py`, 3395 frases, HEAD frente al árbol): **12 cambios, los buscados**:
+- **C.2:**
+  - "quiero ir a las islas del rosario desde cartagena" → Cartagena;
+  - "we're in cartagena now, staying on the islands tomorrow" → isla;
+  - "estoy en cartagena pero el hotel es en isla grande" como respuesta → isla;
+  - "estoy en cartagena y me hospedo en el hotel pao pao" → isla;
+  - "nos quedamos en baru, vamos a cartagena de paseo" → isla;
+  - "salimos de la isla y queremos ir a cartagena" → isla;
+- **C.3:** "somos un grupo grande", "nos vemos en la marina", "la arena es blanca", "vamos al pirata" → sin isla;
+- **discutible:** "estamos en las islas pero salimos desde cartagena" → isla (la estancia gana al origen).
+
+**Medido con el LLM real** (`c_probe.py`, 2 repeticiones):
+- **Apertura 26/28:** en los 11 casos de la referencia, 16/22 → **22/22**.
+- **Respuesta a "¿desde dónde saldrías?" 26/26:** en los 10 de la referencia, 14/20 → **20/20**.
+- **Único fallo:** "no sé si cartagena o las islas" fija Cartagena, igual que HEAD.
+- `eval --core`: **227/230**, 0 a peor, 1 a mejor (`loc-en-cartagena-now-islands-tomorrow`), tanda limpia.
+
+- Tests: `tests/test_location_single_source.py` ampliado (C.2 y C.3). Suite 2446.

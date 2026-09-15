@@ -48,18 +48,18 @@ Retomamos el trabajo de robustez del bot en la rama `feature/pre_gadea`. Lee pri
   `--compare base.json` en el árbol de trabajo.
 - Comparar por caso: `diff` de las líneas `[OK]/[GAP] id` entre dos `.raw`.
 
-### Números de referencia (2026-09-15, último commit desplegado)
+### Números de referencia (2026-09-16, último commit desplegado)
 
 | medida | resultado |
 |---|---|
 | Eval-set (130 casos) | **221/230**. Fallan: 5 de los 7 casos `nat-mixto-*` (hueco conocido), 2 artefactos del arnés (casos con historial) y el ambiguo de ubicación "staying on the islands tomorrow". `split-one-not-certified-es` espera `is_certified: null` desde el 2026-09-15 (la frase habla de un miembro del grupo) |
-| Eval-set por el núcleo (`run_extraction_eval --core`) | **226/230** tras A (219 tras F.1; 218 tras H y D; 216 con 7b; +2 por F.2, +1 por F.1, +7 por A y la expectativa de F.4, 0 a peor); los 7 casos por debajo del modo script están explicados en el progress-log (tarea 6) |
+| Eval-set por el núcleo (`run_extraction_eval --core`) | **227/230**, 0 a peor (219 tras F.1; 226 tras A; +1 por C.2). Fallan 3: `adv-en-elliptical-no-dive-verb` (is_certified), `prof-es-toda-la-semana` y `prof-en-just-the-day` (duration) |
 | Batería de grupo, config PRE (52 escenarios) | repartos **17/17**, total **13/13**, riesgo **17/17**, **0 alucinaciones, 0 parciales, 0 totales mal**; segunda petición de grupo +8,1 % peticiones |
-| Booleanos anclados | legítimos 18/24, alucinaciones evitadas 18/18 |
+| Booleanos anclados (21 escenarios, con cortesías) | legítimos **33/33**, alucinaciones evitadas **30/30** (tras B y J) |
 | Recomendación al acompañante | resolutor 11/11, estancia 6/6 |
 | Pregunta "¿ya certificados o quieren certificarse?" | cuándo preguntar 10/10, resolutor 7/7 |
 | Precio de paquetes (RAG, 21 preguntas sin LLM) | 11 cambios de 21 frente a antes, todos a bien |
-| Suite | **2424 passed / 18 skipped** |
+| Suite | **2446 passed / 18 skipped** |
 
 ### Hecho el 2026-09-15 (no repetir)
 
@@ -151,11 +151,12 @@ Retomamos el trabajo de robustez del bot en la rama `feature/pre_gadea`. Lee pri
      carrito antes de desanclar.
    - **Medir con:** el script de reproducción (3 repeticiones), `--core`, la batería de grupo y la
      de booleanos.
-8. **Observabilidad**: Langfuse frente a LangSmith (no pagar). **Analizada (2026-09-16), pendiente del owner.**
-   Recomendación: Langfuse Cloud Hobby (50k unidades/mes, 30 días, 2 usuarios; ~830–1.040 conversaciones/mes
-   frente a ~420–830 con LangSmith Developer). Decide el owner: trazas en un tercero (con `redact_pii` como
-   máscara), tráfico esperado en PRO y quién crea la cuenta. Plan de migración en el progress-log.
-9. **CI**: `concurrency` en el job de deploy (dos pushes seguidos chocan; consultar con el equipo).
+8. **Observabilidad: PENDIENTE — migrar a Langfuse.** Analizada (2026-09-16): recomendación Langfuse Cloud Hobby
+   (50k unidades/mes, 30 días, 2 usuarios; ~830–1.040 conversaciones/mes frente a ~420–830 con LangSmith
+   Developer, que ya agotó su cuota). Antes de migrar, el owner decide: trazas en un tercero (con `redact_pii`
+   como máscara), tráfico esperado en PRO y quién crea la cuenta. Plan de migración en 6 pasos en el
+   progress-log ("Tarea 8") y en la página publicada https://claude.ai/artifact/4dwaZZmDm7566oPg9sBJ19.
+9. **CI: PENDIENTE.** `concurrency` en el job de deploy (dos pushes seguidos chocan con "container name already in use"; consultar con el equipo).
 
 ### Para reinvestigar (owner, 2026-09-15): medidos, sin solución todavía
 
@@ -189,27 +190,13 @@ B. ~~**Respuesta doble tras F5a**~~ **arreglado (2026-09-15)**: cita de cada boo
    - **Pista:** que el extractor diga en qué parte del mensaje apoya cada booleano, en la misma
      petición. Medir con la batería de booleanos más escenarios de cortesía.
 
-C. **Unificar la ubicación entre detector y núcleo.** **Hecho en parte (2026-09-15):** una sola fuente de
-   palabras de lugar (el resolutor corto usa el lector del detector). Quedan abiertos:
-   - **C.2 salida/alojamiento frente a destino con los dos lugares.** Dejarlo al LLM (hueco) se midió y fue
-     peor: el prompt de relleno y el resolutor de slot también leen el destino como ubicación ("vamos de
-     cartagena a baru" → isla 2/2). Si se retoma: la definición del campo (`_FIELD_MEANING_*["location"]`)
-     no dice que el destino de la excursión no cuenta; medir con `c_probe` (progress-log) y el eval-set.
-   - **C.3 alias de una palabra común en el detector** ("marina", "grande", "arena", "flores", "secreto").
-   Antes:
-   - **Discrepancias:** el resolutor corto (`_apply_short_answer`, con `_CARTAGENA_RE`/`_ISLAND_RE`)
-     y `_detect_location` discrepan en 15 de 262 mensajes.
-     - El núcleo no conoce "ctg", los apodos de la ciudad ni los hoteles.
-     - El detector no conoce "barú" ni "isla"/"island" sueltos.
-   - **Precedencias contrarias:**
-     - el detector hace isla concreta > Cartagena > genérico, y el eval-set le da la razón en
-       "estoy en cartagena pero el hotel es en isla grande";
-     - copiarla al núcleo rompería "quiero ir a las islas del rosario desde cartagena", donde las
-       islas son el destino.
-   - **Otro fallo del detector:** "nos vemos en la marina" → Isla Marina, por el "marina" suelto.
-   - **Pista:** distinguir salida o alojamiento de destino es semántico. Vía LLM, y después una sola
-     fuente para las palabras de ubicación.
-   - Foto base: script de comparación en el progress-log (224–262 mensajes).
+C. ~~**Unificar la ubicación entre detector y núcleo**~~ **arreglado (2026-09-15/16)**:
+   - **C:** una sola fuente de palabras de lugar; el resolutor corto usa el lector del detector.
+   - **C.2:** con Cartagena y una isla, la preposición de cada lugar (estancia > origen > sin preposición >
+     destino; lo negado no cuenta) en `place_by_role`. Dejarlo al LLM se midió peor y se revirtió.
+   - **C.3:** la forma corta de "Isla X" ("grande", "marina"...) solo cuenta si el mensaje nombra una isla.
+   - Sonda con el LLM real: apertura 22/22 y respuesta 20/20 en los casos de referencia; `eval --core` 227/230.
+   - Quedan: ver "Huecos conocidos para la próxima sesión".
 
 D. ~~**Pronóstico del tiempo sin escalar**~~ **arreglado y medido (2026-09-15, router `s04` 0/3 → 3/3)**: un
    único lector `llm_client.tool_arguments` reencaja desde el esquema la clave aplanada
@@ -321,10 +308,56 @@ G. ~~**Una respuesta que no contesta la pregunta pendiente se toma como su respu
      `_turn_answered_a_different_slot` no lo cubre porque el dato de seguridad ya estaba. Medir con
      conversaciones que respondan otra cosa a cada slot pendiente.
 
+### Huecos conocidos para la próxima sesión (2026-09-16)
+
+Revisados contra el último `eval --core` (227/230) y lo anotado. Orden propuesto: fallos 1–3, optimización 1, optimización 2 y el resto.
+
+**Fallos que nota el cliente**
+1. **Querer un curso que no se reconoce como querer.** "quiero ser divemaster", "me interesa el rescue", "quiero la
+   especialidad de nitrox" hacen que el bot pregunte "¿ya la tienes o quieres sacarla?" (`course_level_is_ambiguous`:
+   `_WANTS_CERT_RE` no cubre "ser" ni "me interesa"). Una pregunta de más. Reverso de F.1; mirar la clase de verbos de
+   querer, igual que se hizo con los de tener.
+2. **Duración que no se lee.** "estaremos toda la semana en las islas" y "just here for the day" (2 fallos del eval).
+3. **Certificación en inglés elíptico.** "never been underwater before, wanna give it a try, solo" no queda como no
+   certificado (1 fallo del eval).
+4. **Reparto intermitente del LLM.** "4 con título y 2 snorkel" (b03 de la batería de grupo) sale bien 1–2 de cada 3
+   veces con la petición idéntica; se podría leer sin depender del LLM.
+5. **Reparto sin "yo" explícito.** "mi amigo quiere bucear y hago snorkel" sigue dependiendo del LLM: la señal de E
+   (`clause_subject`) exige un sujeto explícito.
+6. **Ubicación, restos de C:**
+   - "no sé si cartagena o las islas" fija Cartagena (sin preposición decide la precedencia; la duda debería preguntarse);
+   - "estamos en las islas pero salimos desde cartagena" sale isla (la estancia gana al origen), discutible;
+   - alias de hotel que son palabras corrientes: "luxury", "flores", "secreto".
+
+**Optimizaciones**
+1. **Peticiones por turno.** Una reserva hace 3 llamadas al LLM por turno (medido para la tarea 8, `obs_volume.py`).
+   Ver cuáles son y si alguna se fusiona con otra, como se hizo con verificar y rellenar. Es lo que más RPD ahorra.
+2. **Las pruebas gastan la cuota de trazas.** Baterías y eval trazan en LangSmith y agotaron la cuota de PRE. Apagarlo
+   por defecto en los scripts es rápido y no depende de migrar a Langfuse (paso 4 del plan de la tarea 8).
+3. **Tamaños de paquete escritos a mano.** `_BARE_PACKAGE_DIVE_RE` fija todavía `5|7|9`; un paquete nuevo sin unidad no
+   se leería.
+4. **Segunda petición de grupo.** Cuesta +8 % peticiones en la batería de grupo; revisar si sigue haciendo falta tras I.
+
+**Infraestructura**
+1. **`docs/robustness/eval-set.json` no está en la imagen de Docker**: el eval no se puede lanzar dentro del contenedor
+   de PRE sin inyectarlo.
+2. **Tarea 8** (pendiente: migrar a Langfuse) y **tarea 9** (pendiente: `concurrency` en el deploy), arriba en la cola.
+3. **Veto LLM de `location` apagado** por defecto (`llm_location_veto_*`); no se ha comprobado PRE sin leer `.env.pre`.
+
+**Consecuencias aceptadas (no tocar sin decisión)**
+- "somos de nacionalidad mixta" sin nombrar a nadie no dispara la explicación de USD (A).
+- "llevo el open water a medias" se lee como tener el nivel (F.1).
+- "mi hermano es buzo, yo no quiero bucear" deja a quien escribe sin decidir (I).
+- "nos vemos en la marina" como respuesta a la ubicación ya no es isla (C.3), pero "vamos al pirata" tampoco.
+
+
 ### Decisiones pendientes del owner
 
 - **Bubble Makers** sin servicio en `services.json` (D2).
 - **Requisito previo del Rescue.**
+
+- **Tarea 8, antes de migrar a Langfuse:** trazas en un tercero (con `redact_pii`), tráfico esperado en PRO y quién crea la cuenta.
+- **Tarea 9:** `concurrency` en el deploy de la CI (con el equipo).
 
 ### Aviso sobre PRE
 

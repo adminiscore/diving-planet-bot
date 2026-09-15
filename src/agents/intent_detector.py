@@ -882,6 +882,52 @@ _CARTAGENA_NAME_RE = re.compile(
 # "¿desde donde saldrias?".
 _GENERIC_ISLAND_RE = re.compile(r"\b(?:isla\w*|island\w*|bar[uú]|(?:los|the)\s+rosarios)\b", re.IGNORECASE)
 
+# Palabras que abren una pregunta subordinada ("no se SI...", "not sure WHETHER...", "duda
+# ENTRE..."): clase cerrada, no vocabulario de dominio. Cortan el alcance de una negacion
+# (hallazgo K) y el papel de un lugar (hallazgo C.2).
+_EMBEDDED_QUESTION_WORDS = frozenset({"si", "if", "whether", "entre", "between"})
+# Papel de un lugar por la preposicion que lleva delante (hallazgo C.2, 2026-09-16): clase cerrada.
+_STAY_WORDS = frozenset({"en", "in", "on", "at"})
+_ORIGIN_WORDS = frozenset({"desde", "de", "del", "from"})
+_DESTINATION_WORDS = frozenset({"a", "al", "hacia", "hasta", "para", "to", "toward", "towards", "into"})
+_ARTICLE_WORDS = frozenset({"el", "la", "los", "las", "the", "un", "una"})
+
+
+def place_by_role(text: str, lodging_island: bool = False) -> str | None:
+    """Ubicacion cuando el mensaje nombra Cartagena Y una isla (hallazgo C.2, 2026-09-16).
+
+    Si es la salida o el alojamiento, o el destino de la excursion, lo dice la preposicion que
+    lleva cada lugar: estancia ("estoy en", "staying on") > origen ("desde", "from") > sin
+    preposicion > destino ("ir a las islas", "head to"). El destino no es la ubicacion. Una
+    mencion negada ("no estamos en las islas") no cuenta, y un hotel de isla es alojamiento
+    (`lodging_island`). Devuelve None si ninguna mencion lleva preposicion: decide la
+    precedencia de siempre. Dejar estos mensajes al LLM se midio y fue peor (el LLM tambien
+    toma el destino por la ubicacion). `text` en minusculas."""
+    mentions = []
+    for kind, regex in (("cartagena", _CARTAGENA_NAME_RE), ("island", _GENERIC_ISLAND_RE)):
+        for match in regex.finditer(text):
+            clause = _CLAUSE_BOUNDARY_RE.split(text[:match.start()])[-1]
+            words = [w for w in re.findall(r"\w+", clause) if w not in _ARTICLE_WORDS]
+            words = words[max((i + 1 for i, w in enumerate(words) if w in _EMBEDDED_QUESTION_WORDS), default=0):]
+            last = words[-1] if words else ""
+            role = ("stay" if last in _STAY_WORDS else "origin" if last in _ORIGIN_WORDS
+                    else "destination" if last in _DESTINATION_WORDS else None)
+            if not _is_negated(" ".join(words)):
+                mentions.append((match.start(), kind, role))
+    if lodging_island:
+        mentions.append((len(text), "island", "stay"))
+    mentions.sort()
+    if not any(role for _, _, role in mentions):
+        return None
+    stays = [kind for _, kind, role in mentions if role == "stay"]
+    if stays:
+        return stays[-1]
+    for wanted in ("origin", None):
+        kinds = [kind for _, kind, role in mentions if role == wanted]
+        if kinds:
+            return kinds[0]
+    return mentions[0][1]
+
 
 class IntentDetector:
 
@@ -1978,9 +2024,13 @@ class IntentDetector:
             'isla_rosario': [r'\bisla\s+rosario\b', r'\bislas\s+del\s+rosario\b'],
         }
 
-        # Detectar isla primero
+        # Detectar isla primero. La forma corta de una isla que se llama "Isla X" ("grande",
+        # "marina", "arena", "pirata") es tambien una palabra corriente: solo cuenta si el
+        # mensaje nombra una isla (hallazgo C.3, 2026-09-16; "nos vemos en la marina" o "somos un
+        # grupo grande" no son una isla). Los nombres de hotel son nombres propios y no cambian.
+        names_an_island = bool(_GENERIC_ISLAND_RE.search(msg_lower))
         for island_id, patterns in island_patterns.items():
-            if any(re.search(pattern, msg_lower) for pattern in patterns):
+            if any(re.search(pattern, msg_lower) for pattern in patterns if "isl" in pattern or names_an_island):
                 intent.island = island_id
                 intent.location = "island"
                 intent.detected_fields.extend(["island", "location"])
@@ -2162,10 +2212,16 @@ class IntentDetector:
         ):
             intent.location = "island"
             intent.detected_fields.append("location")
-        # Cartagena Y una isla en el mismo mensaje (salida o alojamiento frente a destino) se
-        # sigue decidiendo por precedencia. Dejarlo al LLM se midio y fue peor (hallazgo C,
-        # 2026-09-15): "vamos de cartagena a baru" o "llegamos a cartagena y luego nos vamos a
-        # baru" pasaban de Cartagena a isla 2/2. Ver docs/robustness/progress-log.md.
+        # Cartagena Y una isla en el mismo mensaje: el papel de cada lugar (`place_by_role`).
+        if _CARTAGENA_NAME_RE.search(msg_lower) and (intent.island or names_an_island):
+            place = place_by_role(msg_lower, lodging_island=bool(intent.hotel and intent.island))
+            if place == "cartagena":
+                intent.location, intent.island = "cartagena", None
+                intent.detected_fields = [f for f in intent.detected_fields if f != "island"]
+            elif place == "island":
+                intent.location = "island"
+            if place and "location" not in intent.detected_fields:
+                intent.detected_fields.append("location")
 
     def _calculate_confidence(self, intent: DetectedIntent) -> None:
         field_weights = {

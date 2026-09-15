@@ -102,8 +102,13 @@ History
 * **Hallazgo C, en parte: palabras de lugar con una sola fuente.** El resolutor de "¿desde dónde saldrías?" tenía su propio `_CARTAGENA_RE`/`_ISLAND_RE`: no conocía los apodos de la ciudad ("la heroica", "the walled city") ni los hoteles ("Pao Pao", "Cocoliso"), que acababan en el resolutor LLM, y leía isla en "rezar el rosario". Ahora usa el lector del detector (`_CARTAGENA_NAME_RE`, `_GENERIC_ISLAND_RE`) con su precedencia de siempre. Foto sin LLM sobre 3379 frases: el detector no cambia; 55 respuestas del resolutor pasan a resolverse sin LLM o dejan el falso "rosario".
   - **Medido y revertido: dejar al LLM los mensajes con Cartagena y una isla** (salida o alojamiento frente a destino). El LLM también confunde el destino: "vamos de cartagena a baru" y "llegamos a cartagena y luego nos vamos a baru" pasaban de Cartagena a isla 2/2, y "quiero ir a las islas del rosario desde cartagena" como respuesta, de 2/2 a 0/2. Sonda: apertura 16/22 → 15/22. Sigue abierto (C.2).
   - **Consecuencia aceptada:** "nos vemos en la marina" como respuesta a la ubicación sale isla, por el "marina" suelto que ya tenía el detector (C.3).
+* **Hallazgos C.2 y C.3 arreglados: la ubicación distingue salida, estancia y destino.**
+  - **C.2:** con Cartagena y una isla en el mismo mensaje, la preposición de cada lugar decide (clase cerrada, sin palabras de dominio): estancia ("estoy en", "staying on") > origen ("desde", "from") > sin preposición > destino ("ir a las islas"). Una mención negada no cuenta y un hotel de isla es alojamiento. "quiero ir a las islas del rosario desde cartagena" pasa a Cartagena y "we're in cartagena now, staying on the islands tomorrow" a isla. Dejarlo al LLM se había medido peor: también toma el destino por la ubicación.
+  - **C.3:** la forma corta de una isla "Isla X" ("grande", "marina", "arena", "pirata") solo cuenta si el mensaje nombra una isla: "nos vemos en la marina" o "somos un grupo grande" ya no son una isla. Los hoteles no cambian.
+  - **Medido:** sonda con el LLM real, apertura 16/22 → **22/22** y respuesta 14/20 → **20/20** en los mismos casos. `eval --core` **227/230**, 0 a peor. Foto sin LLM sobre 3395 frases: 12 cambios, los buscados.
+  - **Quedan:** "no sé si cartagena o las islas" fija Cartagena (sin preposición decide la precedencia de siempre); "estamos en las islas pero salimos desde cartagena" sale isla (la estancia gana); alias de hotel que son palabras corrientes ("luxury", "flores", "secreto").
 * **Para reinvestigar** (owner): grupo mixto → USD (necesita un valor propio, no el booleano), respuesta doble tras F5a y unificar la ubicación entre detector y núcleo. Detalle en `docs/robustness/NEXT-SESSION-PROMPT.md`.
-* Suite: **2424 passed / 18 skipped**.
+* Suite: **2446 passed / 18 skipped**.
 
 0.25.0 - (2026-09-14)
 ----------------------
