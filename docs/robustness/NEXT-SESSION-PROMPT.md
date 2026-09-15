@@ -53,7 +53,7 @@ Retomamos el trabajo de robustez del bot en la rama `feature/pre_gadea`. Lee pri
 | medida | resultado |
 |---|---|
 | Eval-set (130 casos) | **221/230**. Fallan: 5 de los 7 casos `nat-mixto-*` (hueco conocido), 2 artefactos del arnés (casos con historial) y el ambiguo de ubicación "staying on the islands tomorrow". `split-one-not-certified-es` espera `is_certified: null` desde el 2026-09-15 (la frase habla de un miembro del grupo) |
-| Eval-set por el núcleo (`run_extraction_eval --core`) | **216/230**, idéntico por caso con la verificación de campos sabidos de 7b; los 7 casos por debajo del modo script están explicados en el progress-log (tarea 6) |
+| Eval-set por el núcleo (`run_extraction_eval --core`) | **218/230** tras H y D (216 con 7b; +2 por F.2, 0 a peor); los 7 casos por debajo del modo script están explicados en el progress-log (tarea 6) |
 | Batería de grupo, config PRE (52 escenarios) | repartos **17/17**, total **13/13**, riesgo **17/17**, **0 alucinaciones, 0 parciales, 0 totales mal**; segunda petición de grupo +8,1 % peticiones |
 | Booleanos anclados | legítimos 18/24, alucinaciones evitadas 18/18 |
 | Recomendación al acompañante | resolutor 11/11, estancia 6/6 |
@@ -153,12 +153,6 @@ Retomamos el trabajo de robustez del bot en la rama `feature/pre_gadea`. Lee pri
      de booleanos.
 8. **Observabilidad**: Langfuse frente a LangSmith (no pagar).
 9. **CI**: `concurrency` en el job de deploy (dos pushes seguidos chocan; consultar con el equipo).
-
-### Primero, con cuota del LLM
-
-- Repetir `ENV_FILE=.env.dev python -m scripts.run_extraction_eval --core` y compararlo por caso
-  con la tanda de 7b (216/230). La del arreglo de H abortó por rate-limit. Se espera que mejoren
-  `grp-es-mixed-suegra` y `grp-en-implicit-count-ages` (F.2) y que no empeore ninguno.
 
 ### Para reinvestigar (owner, 2026-09-15): medidos, sin solución todavía
 

@@ -3960,3 +3960,8 @@ con `{"sensitive_topic": "weather_conditions"}`. Frente a la tanda de justo ante
 **es el único caso que cambia**; ninguna otra de las 37 señales se mueve. Resumen 33/37: los 4 que no
 pasan son `r07`-`r09` (comparaciones de cursos y especialidades que el enum de hoy no expresa, ya
 documentado) y el negativo `n07` (hallazgo E).
+
+**`eval --core` con cuota, tras H y D** (tanda limpia, 0 degradadas): **218/230** frente a 216/230 de 7b.
+Por caso, **2 a mejor y 0 a peor**; son exactamente los dos que F.2 debía arreglar:
+- `grp-es-mixed-suegra`: el reparto `{2, 1}` de las personas nombradas ya no se tira;
+- `grp-en-implicit-count-ages`: se conserva el total 4.
