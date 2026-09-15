@@ -37,11 +37,14 @@ from src.agents.intent_detector import (
     _PERSON_NOUN_PLURAL_ES,
     _PERSON_NOUN_SINGULAR_EN,
     _PERSON_NOUN_SINGULAR_ES,
+    _SINGULAR_PERSON,
     AGE_WORDS,
     IntentDetector,
     certification_claim,
+    course_level_is_ambiguous,
     courses_mentioned,
     dive_counts_in,
+    holds_padi_cert,
     matched_activity_categories,
 )
 from src.agents.llm_extractor import (
@@ -987,7 +990,7 @@ _SINGULAR_COMPANION_RE = re.compile(
     # fuente compartida (`_PERSON_NOUN_SINGULAR_ES/EN`, intent_detector.py) —
     # esta lista ya tenía "compañero"/"acompañante"/"companion" (era la más
     # completa de las 3 con determinante singular), sin cambio de cobertura.
-    r"\b(?:un|una|mi|a)\s+(?:" + _PERSON_NOUN_SINGULAR_ES + r"|" + _PERSON_NOUN_SINGULAR_EN + r")\b|\bsomeone\b"
+    _SINGULAR_PERSON + r"|\bsomeone\b"
     # "uno/una que..." / "one who/that..." — pronombre numeral, no un
     # sustantivo de relación: "viene también uno que hace snorkel" es
     # exactamente 1 persona, mismo patrón que ya usa _ADDED_PERSON_RE.
@@ -1058,6 +1061,27 @@ def _message_numbers(message: str) -> Counter:
         tok = m.group(0).lower()
         counts[int(tok) if tok.isdigit() else _WORD_TO_NUM[tok]] += 1
     return counts
+
+
+# Personas nombradas una a una: la misma pieza `_SINGULAR_PERSON` que usa
+# `_SINGULAR_COMPANION_RE`. Los plurales ("mis amigos") no cuentan: siguen sin respaldar cifra.
+_NAMED_PERSON_RE = re.compile(_SINGULAR_PERSON, re.IGNORECASE)
+
+
+def _named_people(message: str) -> Counter:
+    """Cada persona del grupo nombrada una a una respalda una cifra 1 del reparto (2026-09-15).
+
+    "mi amigo tiene licencia, yo no": el LLM devuelve bien {certified_diving: 1,
+    undecided: 1} y total 2, pero sin ninguna cifra escrita la comprobación de
+    `_message_numbers` tiraba el reparto entero y, con él, el total. El propio prompt ya
+    cuenta así ("mi pareja y yo" = 2).
+
+    Quien escribe cuenta siempre que nombra a otra persona, lo diga con "yo" o solo con
+    el verbo ("soy certificado y mi hijo no"). Sin nadie más nombrado no cuenta: un "yo
+    quiero bucear" respaldaría un reparto de una sola entrada y fijaría el total en 1 sin
+    que nadie lo dijera."""
+    others = len(_NAMED_PERSON_RE.findall(message))
+    return Counter({1: others + 1}) if others else Counter()
 
 
 def _consume_number(counts: Counter, n) -> bool:
@@ -1164,7 +1188,8 @@ def _activity_has_textual_backing(activity: str, message: str) -> bool:
         return True
     if activity == "minicourse" and "certified_diving" in mentioned:
         return True
-    if activity == "certified_diving" and certification_claim(message) is True:
+    # El acompanante es OTRA persona: cuenta su certificacion ("mi amigo tiene licencia").
+    if activity == "certified_diving" and certification_claim(message, about_writer=False) is True:
         return True
     return False
 
@@ -1656,6 +1681,36 @@ async def _understand(state: ConversationState, message: str) -> tuple:
                 message, intent, history=state.history, lang=state.language, only_fields=gaps
             )
         )
+        # Los campos del grupo se pierden cuando viajan con muchos otros (2026-09-15,
+        # medido con el LLM real): con un campo que verificar (peticion fusionada), "mi
+        # esposo bucea, yo prefiero snorkel", "somos 2, mi amigo es buzo y yo no" o "2
+        # adultos bucean y 2 ninos hacen snorkel" vuelven sin reparto 2/2, y pedidos solos
+        # salen bien 2/2 (efecto de recencia, ver `combined_extraction_system_prompt`); con
+        # muchos huecos, "mi amigo tiene licencia, yo no" vuelve sin reparto 1/2. Se piden
+        # solos si no volvieron y el mensaje trae una senal de grupo que el regex no
+        # resolvio. En la peticion fusionada, que vuelve vacia del todo: 2+ personas
+        # nombradas o 2+ cifras. Con `fill_gaps` a solas, solo si el LLM SI contesto otros
+        # campos pero no el grupo, con 2+ personas: si no contesto nada, no habia nada que
+        # sacar ("con mi pareja, tenemos un presupuesto ajustado"), y repetirlo siempre
+        # subia el peor caso de +13% a +27% peticiones.
+        group_gaps = [f for f in gaps if f in ("group_size", "group_allocation")]
+        people = _named_people(message)[1]
+        numbers = sum(_message_numbers(message).values())
+        merged = _combined_patch is not None
+        # No si el mensaje nombra un nivel PADI sin decir si lo tienen o lo quieren ("2
+        # open water y 3 snorkel"): el bot pregunta primero (decision del owner) y la
+        # segunda peticion guardaba un reparto con el curso antes de la respuesta (b05).
+        if (
+            group_gaps and len(group_gaps) < len(gaps)
+            and not any(f in patch for f in group_gaps)
+            and not intent.group_allocation
+            and ((merged and (people >= 2 or numbers >= 2)) or (not merged and patch and people >= 2))
+            and not course_level_is_ambiguous(message)
+        ):
+            group_patch = await fill_gaps(
+                message, intent, history=state.history, lang=state.language, only_fields=group_gaps
+            )
+            patch = {**patch, **{f: v for f, v in group_patch.items() if f in group_gaps}}
         # Verificado en vivo (2026-07-23): con el historial REAL de la
         # conversación por delante, fill_gaps puede alucinar un
         # group_allocation/group_size completo para un mensaje de "se añade
@@ -1684,6 +1739,13 @@ async def _understand(state: ConversationState, message: str) -> tuple:
             # suponia snorkel 3/3). El LLM lo marca `undecided` y el bot le
             # recomienda opciones (F6).
             undecided_qty = alloc_patch.pop("undecided", None)
+            # Un nivel PADI que alguien del grupo YA tiene no es el curso (2026-09-15):
+            # "mi pareja tiene el advanced y yo no tengo nada" volvia 1/2 como
+            # {padi_advanced: 1}. Misma fuente que la actividad del detector
+            # (`holds_padi_cert`, que ya descarta a quien quiere sacarlo).
+            if holds_padi_cert(message, about_writer=False):
+                for key in [k for k in alloc_patch if getattr(dom.by_id(k), "course_level", None)]:
+                    alloc_patch["certified_diving"] = alloc_patch.get("certified_diving", 0) + alloc_patch.pop(key)
             # Auditoría 2026-07-23 (segunda pasada, más allá de la cantidad):
             # una actividad sin NINGÚN respaldo textual (ni siquiera la
             # palabra del producto aparece en el mensaje) es un problema de
@@ -1707,12 +1769,22 @@ async def _understand(state: ConversationState, message: str) -> tuple:
             # Counter con consumo, no un set de presencia (auditoría
             # 2026-07-23): un mismo número no puede "avalar" dos actividades
             # distintas solo porque aparece una vez en el texto para otra.
-            msg_nums = _message_numbers(message)
-            cleaned = {
-                act: qty for act, qty in alloc_patch.items()
-                if _consume_number(msg_nums, qty)
-            }
-            if isinstance(undecided_qty, int) and undecided_qty > 0 and _consume_number(msg_nums, undecided_qty):
+            wants_undecided = isinstance(undecided_qty, int) and undecided_qty > 0
+
+            def _back(counts: Counter) -> tuple[dict, bool]:
+                kept = {act: qty for act, qty in alloc_patch.items() if _consume_number(counts, qty)}
+                return kept, wants_undecided and _consume_number(counts, undecided_qty)
+
+            cleaned, undecided_backed = _back(_message_numbers(message))
+            # Personas nombradas como respaldo (2026-09-15, ver `_named_people`), todo o
+            # nada: solo si respaldan TODAS las cifras. "soy certificado y mi hijo no"
+            # nombra una sola persona (la primera va en el verbo) y dejaba un reparto
+            # parcial con total 1 en vez de preguntar.
+            if len(cleaned) + undecided_backed < len(alloc_patch) + wants_undecided:
+                with_people, undecided_with_people = _back(_message_numbers(message) + _named_people(message))
+                if len(with_people) + undecided_with_people == len(alloc_patch) + wants_undecided:
+                    cleaned, undecided_backed = with_people, undecided_with_people
+            if undecided_backed:
                 # El resto del grupo hace la actividad principal: aritmetica con el
                 # total conocido, no una suposicion ("somos 3, uno no esta
                 # certificado" + buceo certificado -> 2 certificados). El tramo
@@ -1762,7 +1834,12 @@ async def _understand(state: ConversationState, message: str) -> tuple:
                 patch.pop("group_size", None)
         elif _ADDED_PERSON_RE.search(message) and not _EXPLICIT_NUMBER_RE.search(message):
             patch.pop("group_allocation", None)
-            patch.pop("group_size", None)
+            # Un total que cuadra con las personas nombradas una a una no esta inventado
+            # (2026-09-15): "mi novia es buza certificada y yo nunca he buceado" volvio con
+            # total 2 y sin reparto, y se tiraba el total. Solo si la conversacion aun no
+            # tiene total: "tambien viene un amigo" a mitad no puede pisar el que ya habia.
+            if state.detected_group_size or patch.get("group_size") != _named_people(message)[1]:
+                patch.pop("group_size", None)
         # GUARDA (b) — anclaje de los booleanos (ver `_boolean_patch_is_anchored`):
         # un booleano que viaja pegado a la respuesta de OTRA pregunta pendiente
         # no se acepta. Se descarta y el slot sigue pendiente → se pregunta.
@@ -1950,7 +2027,6 @@ def _flag_cert_or_course(intent, state: ConversationState, message: str) -> None
     lectura del regex ni la del LLM (curso o buceo certificado) y se pregunta."""
     if state.needs_cert_or_course or state.is_certified is not None:
         return
-    from src.agents.intent_detector import course_level_is_ambiguous
     if not course_level_is_ambiguous(message):
         return
     registered = dom.by_id(intent.activity) if intent.activity else None
@@ -1972,6 +2048,14 @@ def _take_undecided_members(intent, state: ConversationState) -> None:
     qty = allocation.pop("undecided", None)
     if not (isinstance(qty, int) and qty > 0):
         return
+    # El total incluye a esas personas (2026-09-15): sin total escrito ("mi amigo tiene
+    # licencia, yo no"), el total se sincronizaba despues con la suma del reparto ya sin
+    # ellas y quedaba en 1.
+    with_undecided = sum(v for v in allocation.values() if isinstance(v, int) and v > 0) + qty
+    if (intent.group_size or state.detected_group_size or 0) < with_undecided:
+        intent.group_size = with_undecided
+        if "group_size" not in intent.detected_fields:
+            intent.detected_fields.append("group_size")
     intent.group_allocation = allocation or None
     state.pending_undecided_qty = qty
     state.needs_companion_activity = True

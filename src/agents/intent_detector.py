@@ -476,9 +476,9 @@ _CERTIFIED_PATTERNS = [
     r'\bcertificaci[oó]n\b',
     r'\bestamos\s+certificados\b',
     r'\bsomos\s+certificados\b',
-    # Verbo "tener" en cualquier persona: "tengo", "tenemos", pero tambien "tienen" y
-    # "tiene" ("dos no tienen licencia" no tenia senal, 2026-09-15).
-    r'\bt(?:engo|enemos|ienen?|ienes)\s+(?:la\s+|su\s+)?licencia\b',
+    # Quien escribe. "tiene/tienen licencia" habla de otra persona: ver
+    # `_CERTIFIED_OTHER_PERSON_PATTERNS` (2026-09-15).
+    r'\bt(?:engo|enemos)\s+(?:la\s+|su\s+)?licencia\b',
     r'\bhave\s+(?:a\s+)?(?:license|licence|card|certification)\b',
     r'\b(?:padi|ssi|cmas|naui|bsac)\s+(?:certified|card|license|licence|certification|open\s+water|advanced)\b',
     r'\blicencia\s+(?:padi|ssi|cmas|naui|bsac)\b',
@@ -512,6 +512,14 @@ _CERTIFIED_PATTERNS = [
     # Checked LAST so the more specific _NOT_CERTIFIED_PATTERNS below
     # (which also start with "cert") always get first chance.
     r'\bcert\w*\b',
+]
+
+# Certificacion de OTRA persona (2026-09-15): "mi amigo tiene licencia", "dos no tienen
+# licencia". Cuenta para repartir el grupo o respaldar la actividad de un acompanante,
+# nunca para el estado de quien escribe: "mi amigo tiene licencia, yo no" marcaba al
+# cliente como certificado.
+_CERTIFIED_OTHER_PERSON_PATTERNS = [
+    r'\bt(?:iene|ienen)\s+(?:la\s+|su\s+)?licencia\b',
 ]
 
 # Deseo de certificarse: una sola fuente (2026-09-15). Antes vivia en tres listas que no
@@ -579,9 +587,10 @@ _NEGATION_BEFORE_RE = re.compile(
 )
 
 
-def certification_claim(text: str) -> bool | None:
+def certification_claim(text: str, about_writer: bool = True) -> bool | None:
     """True si el texto AFIRMA certificacion, False si la NIEGA, None si no
-    hay señal. Negacion primero (misma prioridad que `_detect_certification`,
+    hay señal. Con `about_writer=False` cuenta tambien lo que se dice de otra
+    persona ("mi amigo tiene licencia"). Negacion primero (misma prioridad que `_detect_certification`,
     que reusa esta funcion internamente). Funcion pura, sin estado ni
     llamadas -- fuente unica para "¿este texto dice que alguien esta/no esta
     certificado?" en mensajes CRUDOS del cliente (no en notas parafraseadas
@@ -595,7 +604,8 @@ def certification_claim(text: str) -> bool | None:
     text = strip_accents((text or "").lower())
     if any(re.search(strip_accents(pattern), text) for pattern in _NOT_CERTIFIED_PATTERNS):
         return False
-    positives = [m for pattern in _CERTIFIED_PATTERNS for m in re.finditer(strip_accents(pattern), text)]
+    patterns = _CERTIFIED_PATTERNS if about_writer else _CERTIFIED_PATTERNS + _CERTIFIED_OTHER_PERSON_PATTERNS
+    positives = [m for pattern in patterns for m in re.finditer(strip_accents(pattern), text)]
     if not positives:
         return None
     # Alcance de la negacion (2026-09-15): "2 no tienen certificación" o "two aren't
@@ -616,18 +626,22 @@ def _is_negated(prefix: str) -> bool:
     return count % 2 == 1
 
 
-def holds_padi_cert(message: str) -> bool:
-    """True if the message says the person HOLDS a PADI cert level (certified
-    diver), as opposed to wanting to take that course."""
+def holds_padi_cert(message: str, about_writer: bool = True) -> bool:
+    """True if the message says someone HOLDS a PADI cert level (certified
+    diver), as opposed to wanting to take that course. `about_writer=False` also
+    counts another named person ("mi pareja tiene el advanced")."""
     if IntentDetector._WANTS_CERT_RE.search(message):
         return False
-    return bool(IntentDetector._HOLDS_CERT_RE.search(message))
+    regex = IntentDetector._HOLDS_CERT_WRITER_RE if about_writer else IntentDetector._HOLDS_CERT_RE
+    return bool(regex.search(message))
 
 
 def certification_status(message: str) -> bool | None:
     """¿Esta ya certificado quien escribe? Unica fuente para `is_certified` del detector y
     para el RAG (2026-09-15): lo que diga `certification_claim` o, si no dice nada, tener
-    un nivel PADI (Open Water, Advanced, Rescue, Divemaster, Nitrox) sin querer sacarlo."""
+    un nivel PADI (Open Water, Advanced, Rescue, Divemaster, Nitrox) sin querer sacarlo.
+    Solo lo que quien escribe dice de si mismo: la certificacion de otra persona es
+    reparto del grupo."""
     claim = certification_claim(message)
     if claim is not None:
         return claim
@@ -687,6 +701,13 @@ _PERSON_NOUN_PLURAL_EN = (
     r"friends|buddies|companions|partners|wives|brothers|sisters|sons|"
     r"daughters|cousins|kids|children"
 )
+# Una persona en singular con su determinante ("mi amigo", "un hijo", "my wife", "su
+# hermano"). Pieza unica (2026-09-15) para el acompanante singular del nucleo y para
+# contar personas nombradas en el reparto: antes cada uno tenia su lista de determinantes.
+_SINGULAR_PERSON = (
+    r"\b(?:mi|my|un[ao]?|an?|su|tu|his|her|el|la)\s+(?:"
+    + _PERSON_NOUN_SINGULAR_ES + r"|" + _PERSON_NOUN_SINGULAR_EN + r")\b"
+)
 
 
 class IntentDetector:
@@ -740,9 +761,11 @@ class IntentDetector:
         # rama del minicurso dejaba minicurso. Regla general: si el reparto trae buceo
         # certificado y no contiene la actividad principal, esa es buceo certificado.
         # Solo si el mensaje no dice que lo QUIEREN sacar.
+        # Tambien sin actividad: "vamos 4 pero dos no tienen licencia" reparte buceo
+        # certificado, y la actividad ya no sale de un estado atribuido a quien escribe.
         allocation = intent.group_allocation or {}
         if (
-            intent.activity and intent.activity not in allocation
+            intent.activity not in allocation
             and allocation.get("certified_diving")
             and not self._WANTS_CERT_RE.search(message_lower)
         ):
@@ -874,18 +897,10 @@ class IntentDetector:
         r"aguas\s+abiertas|nitrox)"
     )
     # "I HAVE / I AM this cert" — status, not a course to take.
-    _HOLDS_CERT_RE = re.compile(
+    _HOLDS_WRITER = (
         r"\b(?:soy|somos|estoy|estamos)\s+(?:un[ao]?\s+|buz[oa]s?\s+)?"
         r"(?:certificad[oa]s?\s+(?:en|como)\s+)?" + _CERT_LEVEL + r"\b"
         r"|\b(?:tengo|tenemos)\s+(?:el\s+|la\s+|mi\s+|un[ao]?\s+)?" + _CERT_LEVEL + r"\b"
-        # Tercera persona con la persona nombrada (2026-09-15): "mi pareja tiene el
-        # advanced" salia curso Advanced. Sin persona, "¿tienen el advanced?" es preguntar
-        # si el centro lo ofrece, asi que la persona sale de la lista compartida de
-        # sustantivos. Quien lo tiene dentro del grupo es cosa del reparto.
-        r"|\b(?:" + _PERSON_NOUN_SINGULAR_ES + r"|" + _PERSON_NOUN_PLURAL_ES + r")\s+(?:\w+\s+){0,2}?"
-        r"tienen?\s+(?:el\s+|la\s+|su\s+|un[ao]?\s+)?" + _CERT_LEVEL + r"\b"
-        r"|\b(?:" + _PERSON_NOUN_SINGULAR_EN + r"|" + _PERSON_NOUN_PLURAL_EN + r")\s+(?:\w+\s+){0,2}?"
-        r"(?:has|have)\s+(?:got\s+)?(?:her\s+|his\s+|their\s+|an?\s+|the\s+)?" + _CERT_LEVEL + r"\b"
         r"|\bi(?:'?m|\s+am)\s+(?:an?\s+)?" + _CERT_LEVEL + r"\b"
         # "i already have my open water card" — the adverb between "i/we" and
         # "have" used to break the match, so the message was classified as
@@ -893,9 +908,20 @@ class IntentDetector:
         # the Fase 6 battery — Fase 7, docs/robustness/plan.md).
         r"|\b(?:i|we)\s+(?:already\s+|now\s+|both\s+)?(?:have|got)\s+(?:got\s+)?(?:my\s+|our\s+|an?\s+|the\s+)?" + _CERT_LEVEL + r"\b"
         r"|\b" + _CERT_LEVEL + r"\s+(?:diver|certified)\b"
-        r"|\bbuz[oa]\s+avanzad[oa]\b",
-        re.IGNORECASE,
+        r"|\bbuz[oa]\s+avanzad[oa]\b"
     )
+    # Tercera persona con la persona nombrada (2026-09-15): "mi pareja tiene el
+    # advanced" salia curso Advanced. Sin persona, "¿tienen el advanced?" es preguntar
+    # si el centro lo ofrece, asi que la persona sale de la lista compartida de
+    # sustantivos. Dice que NO pide el curso, pero nada del estado de quien escribe.
+    _HOLDS_OTHER_PERSON = (
+        r"\b(?:" + _PERSON_NOUN_SINGULAR_ES + r"|" + _PERSON_NOUN_PLURAL_ES + r")\s+(?:\w+\s+){0,2}?"
+        r"tienen?\s+(?:el\s+|la\s+|su\s+|un[ao]?\s+)?" + _CERT_LEVEL + r"\b"
+        r"|\b(?:" + _PERSON_NOUN_SINGULAR_EN + r"|" + _PERSON_NOUN_PLURAL_EN + r")\s+(?:\w+\s+){0,2}?"
+        r"(?:has|have)\s+(?:got\s+)?(?:her\s+|his\s+|their\s+|an?\s+|the\s+)?" + _CERT_LEVEL + r"\b"
+    )
+    _HOLDS_CERT_RE = re.compile(_HOLDS_WRITER + r"|" + _HOLDS_OTHER_PERSON, re.IGNORECASE)
+    _HOLDS_CERT_WRITER_RE = re.compile(_HOLDS_WRITER, re.IGNORECASE)
     # "I WANT / I'm doing the <level> COURSE" — wants the certification, so NOT
     # certified yet. Requires the want-verb to be followed by the cert level so
     # "quiero 2 inmersiones" (wanting dives) never counts as wanting a course.
@@ -907,7 +933,9 @@ class IntentDetector:
     )
 
     def _holds_padi_cert(self, message: str) -> bool:
-        return holds_padi_cert(message)
+        # Para decidir la actividad cuenta cualquier persona: "mi pareja tiene el advanced"
+        # no pide el curso Advanced.
+        return holds_padi_cert(message, about_writer=False)
 
     def _detect_certification(self, message: str, intent: DetectedIntent) -> None:
         if intent.is_certified is not None:
@@ -1237,7 +1265,7 @@ class IntentDetector:
             ):
                 clause = re.split(r'\b(?:y|and|pero|but)\b', m_count.group(2))[0]
                 # Quien "quiere certificarse" ya eligio: no es un tramo sin actividad.
-                if (clause.strip() and certification_claim(clause) is False
+                if (clause.strip() and certification_claim(clause, about_writer=False) is False
                         and not self._WANTS_CERT_RE.search(clause)):
                     beg_n = _parse_num(m_count.group(1)) if m_count.group(1) else 1
                     break

@@ -53,12 +53,12 @@ Retomamos el trabajo de robustez del bot en la rama `feature/pre_gadea`. Lee pri
 | medida | resultado |
 |---|---|
 | Eval-set (130 casos) | **221/230**. Fallan: 5 de los 7 casos `nat-mixto-*` (hueco conocido), 2 artefactos del arnés (casos con historial) y el ambiguo de ubicación "staying on the islands tomorrow". Los 123 casos anteriores: 220/223 |
-| Batería de grupo, config PRE | repartos correctos **10/10**, total **13/13**, riesgo 12/13 (r13 vacío: pregunta sin asumir), 0 parciales / 0 inventados |
+| Batería de grupo, config PRE (52 escenarios) | repartos **16/17**, total **13/13**, riesgo **16/17** (r11: sin reparto, pero la conversación ofrece opciones), **0 alucinaciones, 0 parciales**; segunda petición de grupo +10,8 % peticiones |
 | Booleanos anclados | legítimos 18/24, alucinaciones evitadas 18/18 |
 | Recomendación al acompañante | resolutor 11/11, estancia 6/6 |
 | Pregunta "¿ya certificados o quieren certificarse?" | cuándo preguntar 10/10, resolutor 7/7 |
 | Precio de paquetes (RAG, 21 preguntas sin LLM) | 11 cambios de 21 frente a antes, todos a bien |
-| Suite | **2110 passed / 18 skipped** |
+| Suite | **2136 passed / 18 skipped** |
 
 ### Hecho el 2026-09-15 (no repetir)
 
@@ -85,24 +85,31 @@ Retomamos el trabajo de robustez del bot en la rama `feature/pre_gadea`. Lee pri
 
 ### Cola de trabajo, por orden de valor
 
-1. **Quién tiene la certificación dentro del grupo** (afecta a elegibilidad y precio).
-   - **Sonda con LLM real (2026-09-15, en el progress-log):** en 9 de 9 mensajes con personas de
-     estado distinto no sale reparto y el acompañante no se activa.
-     - "mi amigo tiene licencia, yo no" y "somos 2, mi amigo es buzo y yo no" marcan al cliente como
-       certificado.
-     - "yo tengo el open water, mi esposa quiere probar" pierde a la esposa.
-     - "mi esposo bucea, yo prefiero snorkel" pierde el buceo.
-   - No es una puerta: `_relevant_gaps` pide total y reparto, y el LLM no los rellena. El detector
-     fija `is_certified` con la afirmación de otra persona.
-   - **Diseño propuesto:**
-     - señal estructural "certificación atribuida a otra persona" (afirmación + sustantivo de
-       persona de la lista compartida) para que el regex no fije `is_certified`;
-     - definición única de `is_certified`/`group_allocation` por persona, con `certified_diving` +
-       `undecided` y total contable.
-   - Medir con el eval-set, la batería de grupo con escenarios nuevos de tercera persona y la
-     batería de booleanos.
-   - Mismo problema de fondo en `certification_status` (detector y RAG): "viene mi primo, él es
-     certificado" y "4 certificados y 3 snorkel".
+1. ~~Quién tiene la certificación dentro del grupo~~ **casi cerrado (2026-09-15)**. Detalle y
+   mediciones en el progress-log.
+   - **Arreglado:**
+     - respaldo de cifras por personas nombradas (todo o nada);
+     - segunda petición de campos del grupo cuando la fusionada los pierde (+10,8 % peticiones en la
+       batería de grupo; no con nivel PADI ambiguo);
+     - la certificación de otra persona ya no cuenta para el cliente (`about_writer`);
+     - el total incluye a los sin decidir;
+     - un nivel que alguien ya tiene no es el curso en el reparto.
+   - **Batería de grupo (config PRE):** repartos 16/17, total 13/13, riesgo 16/17, 0 alucinaciones.
+     Personas con estado distinto 7/7 en la tanda enfocada.
+   - **Queda, en este orden:**
+     - **p06** ("mi novia es buza certificada y yo nunca he buceado"): 6 de los últimos 7 intentos
+       bien; la segunda petición del LLM a veces vuelve vacía.
+     - **p03** ("somos 2, mi amigo es buzo y yo no"): el reparto sale bien, pero la petición
+       fusionada marca al cliente `is_certified=True`. Los patrones genéricos de certificación
+       ("buzo", `cert\w*`) no dicen de quién hablan; una guarda "solo hay certificación de otra
+       persona" solo tocaría 3 mensajes y no llega a p03.
+     - **r11** ("mi amigo no esta certificado" con el grupo ya sabido): el LLM no devuelve reparto,
+       pero el núcleo pregunta al acompañante con las tres opciones (conversación correcta).
+     - **Acompañante singular:** exige "al menos una" persona nombrada; con "exactamente una"
+       cambiarían 2 de 198 mensajes (los de varias personas).
+     - **Regla contradictoria en la descripción de `group_allocation`** ("déjalo fuera" frente a
+       `undecided`): reconciliarla sola no mejoraba y hacía variar b03; necesita otra redacción
+       medida.
 2. ~~"somos 5 y 2 nunca han buceado"~~ **hecho (2026-09-15)**: la regla final de `detect()` se
    generalizó ("la actividad principal no contradice el reparto"). Foto: 1 cambio de 244.
 3. **Definición única por campo en los prompts, resto de campos**: `group_size`, `group_allocation`

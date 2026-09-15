@@ -3069,3 +3069,156 @@ se activa nunca**.
 Es cambio de prompt: medir con el eval-set, la batería de grupo (escenarios nuevos de tercera
 persona) y la batería de booleanos. Script de la sonda: `mixed_cert_probe.py` (scratchpad de la
 sesión, se reproduce con `scripts/battery_group_allocation_gate._run`).
+
+### Quién tiene la certificación dentro del grupo: la causa estaba en el núcleo, no en el LLM
+
+**Diagnóstico.** Llamando a `fill_gaps` directamente, el LLM ya devolvía lo correcto:
+- "mi amigo tiene licencia, yo no" → total 2 y `{certified_diving: 1, undecided: 1}`;
+- "yo tengo el open water, mi esposa quiere probar" → lo mismo.
+
+Lo borraba la comprobación de cifras de `_understand` (`_message_numbers` + `_consume_number`), que
+exige que cada cantidad del reparto aparezca escrita como número. Aquí las personas se nombran una a
+una ("mi amigo", "yo"), así que se tiraba el reparto entero y, con él, el total. El propio prompt ya
+cuenta así ("mi pareja y yo" = 2).
+
+**Arreglo (núcleo):**
+- **Respaldo por persona nombrada.** `_named_people` cuenta personas nombradas en singular y la
+  primera persona. Cada una respalda una cifra 1, y solo **todo o nada**: si con ellas quedan
+  respaldadas todas las cifras. "soy certificado y mi hijo no" nombra a una sola persona (la primera
+  va en el verbo); con respaldo parcial guardaba un reparto a medias con total 1 en vez de preguntar,
+  y se vio en la sonda.
+- **Total con las personas pendientes.** `_take_undecided_members` deja un total que incluye a las
+  personas sin actividad elegida. Sin total escrito, el total se sincronizaba con la suma del reparto
+  ya sin ellas y quedaba en 1: reproducido con el LLM simulado, y visto con el LLM real.
+- **Sin duplicado.** "Determinante + persona en singular" ya existía en `_SINGULAR_COMPANION_RE`
+  (`un|una|mi|a`). Ahora hay una pieza única, `_SINGULAR_PERSON`, en el detector, usada por los dos.
+  - Efecto medido sin LLM: `_SINGULAR_COMPANION_RE` cambia en **8 de 209 mensajes**, todos "my …" en
+    inglés más "viene su hermano", que no reconocía.
+  - Como ya pasaba en español con "mi hija … mi hijo", también se lee como acompañante singular un
+    mensaje con varias personas ("my daughter is 9 and my son is 12, my wife and i dive").
+  - Exigir exactamente una persona cambiaría 2 de 198 mensajes (los dos de varias personas):
+    pendiente.
+
+**Negativo, revertido: reconciliar la regla del prompt.** La descripción de `group_allocation` y sus
+guías ES/EN tienen una regla antigua ("a quien solo se describe por un atributo, déjalo fuera") que
+contradice `undecided`.
+- La reconciliación sola no cambiaba la sonda.
+- Con ella, la batería de grupo bajó **b03** ("4 con titulo y 2 snorkel") de OK a VACIO: el LLM pasó
+  a devolver `{certified_diving: 2, snorkel: 2}` 2/2 (con el parche antiguo simulado el núcleo lo
+  guarda bien).
+- Revertida. La contradicción del prompt sigue ahí: arreglarla necesita otra redacción y medirla
+  contra b03. Copia de la versión probada en el scratchpad de la sesión (`booking_reconciled.diff`).
+
+**Sonda con LLM real, solo el arreglo del núcleo** (prompt de HEAD, 9 mensajes, 2 repeticiones
+idénticas). **4 de 9 pasan a correctos**, con total 2, 1 certificado + 1 pendiente y recomendación de
+opciones: "mi amigo tiene licencia, yo no", "mi hermano tiene el rescue y yo quiero probar", "yo tengo
+el open water, mi esposa quiere probar" y "mi pareja tiene el advanced y yo no tengo nada".
+- "soy certificado y mi hijo no" sigue sin reparto (el bot pregunta), como antes.
+- Sin cambio: "viene mi primo…", "mi novia es buza certificada y yo nunca he buceado", "somos 2, mi
+  amigo es buzo y yo no" y "mi esposo bucea, yo prefiero snorkel".
+- Queda: en tres de los arreglados el cliente sigue marcado `is_certified=True`; el reparto ya dice
+  quién es quién.
+
+### Quién tiene la certificación dentro del grupo: las tres causas que quedaban
+
+Se añadió a la batería de grupo una familia de **personas con estado distinto**, cada una nombrada
+una a una y sin cifras:
+- beneficio p01–p07;
+- riesgo q01–q04 ("mi amigo no sabe si viene", "le preguntaré a mi hermano si quiere bucear", "mis
+  amigos tienen licencia, yo no", "mi hijo tiene 8 años");
+- frontera g01–g02.
+
+Una tanda enfocada con el parche en bruto del LLM separó tres causas.
+
+**1. La petición fusionada pierde los campos del grupo** (b08, p03, p04, p06).
+- Experimento con los mismos huecos: `fill_gaps` a solas da el reparto correcto **2/2** en los cuatro,
+  y `extract_and_verify` lo devuelve vacío **2/2**.
+- Es el efecto de recencia ya documentado en `combined_extraction_system_prompt`.
+- La petición a b08 ("2 adultos bucean y 2 ninos hacen snorkel") es **idéntica** hoy y en b722d23
+  (mismo camino, huecos y hash del prompt). Su paso de OK a VACIO frente a ayer es variación del LLM,
+  no un cambio de código.
+- Arreglo: si los campos del grupo no vuelven y el mensaje trae señal de grupo que el regex no
+  resolvió, se piden solos. En la fusionada, con 2+ personas o 2+ cifras. Con `fill_gaps` a solas,
+  solo si el LLM contestó otros campos pero no el grupo, con 2+ personas.
+- Coste sin LLM sobre 208 turnos de una sola frase:
+  - +13,5 % si la fusionada vuelve vacía;
+  - tope teórico +26,5 %.
+  - La primera versión (repetir siempre en `fill_gaps` con cifras) subía el peor caso a +28,5 %.
+
+**2. Quien escribe no cuenta cuando va en el verbo** (p02, "soy certificado y mi hijo no").
+- El LLM acierta y la guarda de cifras lo rechazaba.
+- Ahora `_named_people` suma a quien escribe siempre que nombra a otra persona.
+- Sin nadie más nombrado no cuenta: la regla anterior (un "yo"/"I" suelto) dejaba pasar un reparto de
+  una sola entrada y fijaba el total en 1.
+
+**3. El cliente se marcaba como certificado por lo que se decía de otra persona.**
+- Lo introdujeron dos cambios propios de ayer: "tiene/tienen licencia" y "mi pareja tiene el
+  advanced".
+- Ahora `certification_claim(..., about_writer=False)` y `holds_padi_cert(..., about_writer=False)`
+  cuentan la tercera persona solo para repartir, para la actividad de un acompañante o para decidir
+  que no se pide el curso, nunca para el estado de quien escribe.
+- La regla final de `detect()` pasa a cubrir también "sin actividad + reparto con buceo certificado".
+- Foto del detector sobre 252 mensajes: 12 cambios, todos de mensajes con otra persona. "vamos 4 pero
+  dos no tienen licencia" conserva reparto y actividad, pero ya no marca al cliente como no
+  certificado.
+
+**Más:** en el reparto, un curso con nivel que alguien del grupo YA tiene es buceo certificado
+(`holds_padi_cert`). "mi pareja tiene el advanced y yo no tengo nada" volvió 1/2 como
+`{padi_advanced: 1}`; quien quiere sacarlo conserva el curso.
+
+**Pendiente del owner:** r11 ("mi amigo no esta certificado", grupo de 2) y r12 ("somos 2, mi amigo
+no está certificado") esperan "sin reparto", una expectativa anterior a la decisión del 2026-09-15
+("uno no está certificado" → `undecided` y recomendación). Con los cambios, r12 reparte `{certified:
+1}` + 1 sin decidir y la batería lo cuenta como ALUCINA. Se deja la expectativa sin tocar hasta que
+decida.
+
+**Medición con el código final** (tanda enfocada, config PRE, 3 repeticiones):
+- **Personas con estado distinto:** p01–p07 **7/7, las 3 veces**. Antes del punto 1 fallaban los 7:
+  sin reparto, cliente marcado certificado o persona perdida.
+- **r12:** 3/3 con la expectativa del owner.
+- **Riesgo** (r03, r04, q01–q04): todo OK, **0 alucinaciones**.
+- **r11** ("mi amigo no esta certificado"): sigue sin reparto 3/3, porque el LLM devuelve un parche
+  vacío. La conversación sí es correcta: el núcleo ve a otra persona sin actividad respaldada y
+  pregunta por el acompañante con las tres opciones
+  (`test_companion_attribute_without_activity_asks_instead_of_guessing`).
+
+**b05, regresión encontrada y cerrada.** La batería completa intermedia marcó b05 ("2 open water y 3
+snorkel", grupo de 5) como ALUCINA. La segunda petición guardaba `{padi_open_water: 2, snorkel: 3}`
+antes de la pregunta "¿ya certificados o quieren sacarlo?", que el owner decidió hacer primero. Ahora
+la segunda petición no se hace cuando `course_level_is_ambiguous`. Confirmado con el LLM real: b05 2/2
+sin reparto y el control b06 bien.
+
+**Total respaldado por personas.** p06 volvió una vez con `group_size: 2` y sin reparto, y la rama
+"persona añadida sin cifra" tiraba el total. Ahora se conserva cuando cuadra exactamente con las
+personas nombradas y la conversación aún no tenía total. Un "tambien viene un amigo" a mitad nunca
+pisa el total conocido (test).
+
+**Coste real de la segunda petición** (batería completa intermedia, mensajes de grupo):
+**47 sobre 408 peticiones de extracción (+11,5 %)**. En tráfico normal, con menos mensajes de grupo,
+será menor.
+
+**Pendiente, visto en la sonda:** en p03 ("somos 2, mi amigo es buzo y yo no") la petición fusionada
+devuelve `is_certified: true` para el cliente (atribución del LLM, no del regex). El reparto sale
+bien, pero el booleano del cliente queda mal. La guarda (b) no lo cubre porque no hay pregunta
+pendiente.
+Guarda estudiada y no aplicada para ese pendiente: descartar un `is_certified=True` del LLM cuando la
+única certificación afirmada del mensaje es de otra persona. Sobre 210 mensajes solo toca 3 ("mi amigo
+tiene licencia, yo no", "mi pareja tiene el advanced y yo no tengo nada", "mis amigos tienen licencia,
+yo no"), y **no llega a p03**: "mi amigo es buzo" pasa por los patrones genéricos (`buzo`,
+`cert\w*`), que no dicen de quién hablan. Arreglar el sujeto de esos patrones es el paso previo.
+
+**Batería de grupo completa con el código final** (52 escenarios × 4 variantes × 2 repeticiones):
+- **Config PRE:** repartos **16/17**, total **13/13**, riesgo **16/17**, **0 ALUCINA, 0 PARCIAL**,
+  1 TOTAL_MAL, 1 VACIO.
+  - El TOTAL_MAL es p06: 1 de 2 sin total ni reparto. Pasó 3/3 en la tanda enfocada y 2/2 en la
+    batería intermedia, así que va bien en 6 de los últimos 7 intentos (variación de la segunda
+    petición del LLM).
+  - El VACIO es r11: el LLM no devuelve reparto, pero la conversación pregunta al acompañante.
+- **Frente a la tanda solo-núcleo** (antes de la familia nueva): b05 queda igual (OK), b08 pasa a OK,
+  r12 a OK con la expectativa del owner, y la familia nueva p01–p07 aparece bien salvo esa repetición
+  de p06.
+- **Coste real:** 44 segundas peticiones sobre 408 (**+10,8 %**).
+- **Batería de booleanos** (3 repeticiones): legítimos **18/24**, alucinaciones evitadas **18/18**,
+  idéntica a la referencia.
+- El eval-set no se volvió a correr: el prompt es el de HEAD, su arnés no pasa por el núcleo y el
+  regex no cambia en ninguno de sus mensajes (foto de 252 mensajes).

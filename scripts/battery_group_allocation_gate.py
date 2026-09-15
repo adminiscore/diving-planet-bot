@@ -390,7 +390,11 @@ SCENARIOS = [
         "desc": "Acompanante descrito solo por un atributo: no hay actividad que repartir.",
         "message": "mi amigo no esta certificado",
         "state": {"detected_activity": "certified_diving", "is_certified": True, "detected_group_size": 2},
-        "expect": ("NONE",),
+        # 2026-09-15 (owner, mismo criterio que r13): se sabe que hay un acompanante y
+        # que no esta certificado, asi que queda sin decidir y se le ofrecen minicurso,
+        # snorkel o venir de acompanante. El cliente sigue en buceo certificado. Antes se
+        # esperaba no repartir.
+        "expect": ("ALLOC", {CERT: 1}),
     },
     {
         "id": "r12-atributo-con-total",
@@ -398,7 +402,10 @@ SCENARIOS = [
         "desc": "Atributo del acompanante con el total en el mismo mensaje.",
         "message": "somos 2, mi amigo no está certificado",
         "state": {"detected_activity": "certified_diving", "is_certified": True},
-        "expect": ("NONE",),
+        "gs": 2,
+        # 2026-09-15 (owner, mismo criterio que r13): acompanante no certificado -> sin
+        # decidir y se le ofrecen opciones. Antes se esperaba no repartir.
+        "expect": ("ALLOC", {CERT: 1}),
     },
     {
         "id": "r13-atributo-plural",
@@ -409,6 +416,125 @@ SCENARIOS = [
         # 2026-09-15 (owner: recomendar, no asumir): 2 certificados y 2 sin decidir,
         # a los que el bot recomienda opciones. Antes se esperaba no repartir.
         "expect": ("ALLOC", {CERT: 2}),
+    },
+    # ── PERSONAS CON ESTADO DISTINTO (2026-09-15, punto 1 de la cola) ─────────
+    # Cada persona se nombra una a una ("mi amigo", "yo"), sin cifras. Quien no dice
+    # que actividad hace queda sin decidir (cuenta en el total, no en el reparto) y el
+    # bot le recomienda opciones (decision del owner).
+    {
+        "id": "p01-amigo-licencia-yo-no",
+        "familia": "beneficio",
+        "desc": "Una persona certificada y el que escribe no.",
+        "message": "mi amigo tiene licencia, yo no",
+        "state": {},
+        "gs": 2,
+        "expect": ("ALLOC", {CERT: 1}),
+    },
+    {
+        "id": "p02-soy-certificado-hijo-no",
+        "familia": "beneficio",
+        "desc": "El que escribe se nombra solo con el verbo ('soy').",
+        "message": "soy certificado y mi hijo no",
+        "state": {},
+        "gs": 2,
+        "expect": ("ALLOC", {CERT: 1}),
+    },
+    {
+        "id": "p03-somos-2-amigo-buzo",
+        "familia": "beneficio",
+        "desc": "Total escrito y el estado de cada uno.",
+        "message": "somos 2, mi amigo es buzo y yo no",
+        "state": {},
+        "gs": 2,
+        "expect": ("ALLOC", {CERT: 1}),
+    },
+    {
+        "id": "p04-esposo-bucea-yo-snorkel",
+        "familia": "beneficio",
+        "desc": "Dos personas con actividades distintas y nombradas.",
+        "message": "mi esposo bucea, yo prefiero snorkel",
+        "state": {},
+        "gs": 2,
+        "expect": ("ALLOC", {CERT: 1, SNK: 1}),
+    },
+    {
+        "id": "p05-en-wife-certified",
+        "familia": "beneficio",
+        "desc": "Lo mismo en ingles.",
+        "message": "my wife is certified and I am not",
+        "lang": "en",
+        "state": {},
+        "gs": 2,
+        "expect": ("ALLOC", {CERT: 1}),
+    },
+    {
+        "id": "p06-novia-buza-yo-nunca",
+        "familia": "beneficio",
+        "desc": "El que escribe nunca ha buceado: sin actividad elegida.",
+        "message": "mi novia es buza certificada y yo nunca he buceado",
+        "state": {},
+        "gs": 2,
+        "expect": ("ALLOC", {CERT: 1}),
+    },
+    {
+        "id": "p07-pareja-advanced-yo-nada",
+        "familia": "beneficio",
+        "desc": "Nivel PADI de la pareja y el que escribe sin nada.",
+        "message": "mi pareja tiene el advanced y yo no tengo nada",
+        "state": {},
+        "gs": 2,
+        "expect": ("ALLOC", {CERT: 1}),
+    },
+    {
+        "id": "q01-persona-sin-confirmar",
+        "familia": "riesgo",
+        "desc": "Una persona que quiza venga: ni total ni reparto.",
+        "message": "mi amigo no sabe si viene",
+        "state": {},
+        "gs": None,
+        "expect": ("NONE",),
+    },
+    {
+        "id": "q02-preguntara-al-hermano",
+        "familia": "riesgo",
+        "desc": "Intencion futura de otra persona: nada que repartir.",
+        "message": "le preguntare a mi hermano si quiere bucear",
+        "state": {},
+        "gs": None,
+        "expect": ("NONE",),
+    },
+    {
+        "id": "q03-plural-con-licencia",
+        "familia": "riesgo",
+        "desc": "Plural sin cifra con certificacion: no se puede contar.",
+        "message": "mis amigos tienen licencia, yo no",
+        "state": {},
+        "gs": None,
+        "expect": ("NONE",),
+    },
+    {
+        "id": "q04-edad-del-hijo",
+        "familia": "riesgo",
+        "desc": "Solo la edad de otra persona: ni actividad ni reparto.",
+        "message": "mi hijo tiene 8 años",
+        "state": {},
+        "expect": ("NONE",),
+    },
+    {
+        "id": "g01-primo-tambien-certificado",
+        "familia": "frontera",
+        "desc": "'tambien' implica que el que escribe es buzo: todos hacen lo mismo.",
+        "message": "viene mi primo a bucear, él es certificado también",
+        "state": {},
+        "expect": ("OBS",),
+    },
+    {
+        "id": "g02-esposa-quiere-probar",
+        "familia": "frontera",
+        "desc": "'quiere probar' puede leerse como minicurso o sin decidir.",
+        "message": "yo tengo el open water, mi esposa quiere probar",
+        "state": {},
+        "expect": ("OBS",),
     },
 
     # ── FRONTERA (observacional) ─────────────────────────────────────────
