@@ -3669,7 +3669,43 @@ deja `{certified_diving: 2, snorkel: 1}`.
 - Es la misma familia que las correcciones de arriba: un dato guardado solo se reescribe por el
   total y por la actividad.
 
+**Corrección de la causa de 7a** (revisada al ir a arreglarlo): la red de precisión no se salta
+porque el turno "avanzara". La nacionalidad seguía pendiente antes y después, así que `advanced`
+era False. La salta el circuit-breaker `_group_allocation_fully_resolved`: `{certified_diving: 2}`
+suma el total 2 y el grupo se da por explicado, aunque la actividad principal ya no esté en el
+reparto. Si corriera, la guarda "misma actividad que el grupo" compara con
+`state.detected_activity`, que este turno ya pisó, y tiraría la señal. Y
+`_merge_companion_activity` suma sin restar, así que contaría dos veces al amigo que ya estaba en
+el 2 (el doble conteo de agosto).
+
 **Lectura conjunta.** Tres de los cuatro son un mismo mecanismo: el estado no tiene una regla única
 de **corrección**. Hay campos que no se reescriben nunca, uno con cue (el total) y uno siempre (la
 actividad), y en ese último sin distinguir si la actividad es de otra persona. Dos cobran mal sin
 avisar (acompañante y nacionalidad). El cuarto (qué incluye el tour) es independiente.
+
+### Tarea 7d, arreglada: la pregunta de información se reconoce por su estructura
+
+`supervisor._looks_like_info_question` iba anclada al inicio del mensaje. Ahora reconoce además,
+con clases gramaticales cerradas y sin frases nuevas:
+- **Imperativo de pedir información en cualquier posición:** dime, cuéntame, explícame, infórmame,
+  quiero/quisiera/necesito/me gustaría saber, tell me, let me know, i'd like to know.
+- **Palabra interrogativa al inicio de una cláusula:**
+  - tras puntuación, con o sin conjunción ("vale, cuánto cuesta", "perfecto, y cómo pago");
+  - o tras una conjunción sola ("ok y dónde nos recogen").
+  - Tras puntuación no valen "hay/tiene/incluye" ("somos 3, hay un niño" es un dato), y
+    "como/cuando/donde" solo con tilde ("somos 3, como te dije").
+  - Tras una conjunción sola, "que" solo con tilde ("quiero bucear y que mi hijo haga snorkel"), y
+    en inglés solo what/how/which ("and when we arrive").
+
+**Foto sin LLM** sobre 440 mensajes (eval-set, baterías, eval de RAG, mensajes de los tests y
+sondas):
+- Cambia la conducta en **7, todos sondas buscadas**: "primero dime qué incluye el tour", "antes de
+  nada, dime qué horario tienen", "bueno, cuéntame del minicurso", "perfecto, y cómo pago", "ok y
+  dónde nos recogen", "oye y cuánto cuesta el snorkel" y "vale pero qué incluye el almuerzo".
+- **Ningún mensaje del eval-set ni de las baterías cambia.** Otros 11 cambian solo la marca interna,
+  porque ya llevaban "?" y el núcleo ya los trataba como pregunta.
+- Las sondas de falso positivo siguen fuera: "genial, lo que tú digas", "creo que somos 3", "es que
+  mi novia no bucea", "vale, cuando lleguemos te escribo".
+
+**Límite conocido:** una pregunta solo por entonación, sin "?" ni interrogativo ni imperativo ("parce
+y eso trae almuerzo"), sigue recibiendo el acuse. No hay estructura que leer sin LLM.

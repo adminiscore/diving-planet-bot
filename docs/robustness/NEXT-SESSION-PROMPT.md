@@ -143,7 +143,7 @@ Retomamos el trabajo de robustez del bot en la rama `feature/pre_gadea`. Lee pri
        explícito) y re-emitir el resumen tras el cierre.
    - **7c. Cambio de reparto (f01, 3/3).** "al final mi suegra también bucea" no cambia el
      reparto. Es la misma familia que 7b.
-   - **7d. "primero dime qué incluye el tour"** recibe un acuse genérico:
+   - ~~**7d. "primero dime qué incluye el tour"**~~ **arreglado (2026-09-15)**, por estructura; antes recibía un acuse genérico:
      `_looks_like_info_question` va anclado al inicio del mensaje. Medir los falsos positivos de
      carrito antes de desanclar.
    - **Medir con:** el script de reproducción (3 repeticiones), `--core`, la batería de grupo y la

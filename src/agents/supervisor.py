@@ -445,17 +445,50 @@ _INFO_QUESTION_STARTER_PATTERN = re.compile(
 )
 
 
+# La pregunta no siempre abre el mensaje (2026-09-15): "primero dime qué incluye el
+# tour", "vale, cuánto cuesta", "antes de nada, cuéntame del minicurso". Se reconoce
+# por la ESTRUCTURA, con clases gramaticales cerradas y no frases:
+#   - pedir informacion en imperativo, en cualquier posicion (inequivoco);
+#   - palabra interrogativa al inicio de una clausula: tras puntuacion, con o sin
+#     conjuncion ("perfecto, y como pago"), o tras una conjuncion sola ("ok y donde
+#     nos recogen"). Ahi no valen "hay/tiene/incluye" ("somos 3, hay un nino" es un
+#     dato), y "como/cuando/donde" solo con tilde: sin ella son relativos ("somos 3,
+#     como te dije"). Tras una conjuncion sola, "que" solo con tilde ("quiero bucear y
+#     que mi hijo haga snorkel" es un dato), y en ingles solo what/how/which ("and when
+#     we arrive" es declarativa).
+_INFO_REQUEST_ANYWHERE_RE = re.compile(
+    r"\b(?:d[ií]me|cu[ée]ntame|expl[ií]came|inf[óo]rmame|"
+    r"(?:quiero|quisiera|necesito|me\s+gustar[ií]a)\s+saber|"
+    r"tell\s+me|let\s+me\s+know|i'?d\s+like\s+to\s+know|i\s+want\s+to\s+know)\b",
+    re.IGNORECASE,
+)
+_CLAUSE_QUESTION_RE = re.compile(
+    r"[,.;:!¡¿]\s*(?:(?:y|e|pero|o|u|and|but|or|so)\s+)?"
+    r"(?:qu[ée]" + _QUE_CONJUNCION + r"|cu[áa]nt[oa]s?|cu[áa]l(?:es)?|cómo|dónde|cuándo"
+    r"|what|how|which|where|when)\b"
+    r"|\b(?:y|e|pero|and|but)\s+(?:qué|cu[áa]nt[oa]s?|cu[áa]l(?:es)?|cómo|dónde|cuándo|what|how|which)\b",
+    re.IGNORECASE,
+)
+
+
 def _looks_like_info_question(message: str) -> bool:
     """True for plain informational questions ("incluye comida?", "what's
     included?"). Deliberately conservative: only starter words that signal
     "I'm asking for information" (qué/incluye/hay/what/does...), NOT polite
     request phrasing like "puedo añadir..." / "can you remove..." — those are
-    real cart actions and must still reach the orchestrator.
+    real cart actions and must still reach the orchestrator. The question may
+    also sit later in the message (`_INFO_REQUEST_ANYWHERE_RE`,
+    `_CLAUSE_QUESTION_RE`).
     """
-    normalized = _strip_accents(message.strip().lower())
+    lowered = message.strip().lower()
+    normalized = _strip_accents(lowered)
     if not normalized:
         return False
-    return bool(_INFO_QUESTION_STARTER_PATTERN.match(normalized))
+    return bool(
+        _INFO_QUESTION_STARTER_PATTERN.match(normalized)
+        or _INFO_REQUEST_ANYWHERE_RE.search(lowered)
+        or _CLAUSE_QUESTION_RE.search(lowered)
+    )
 
 
 # "¿Cómo reservo?" / "how do I book?" — a question about the booking PROCESS

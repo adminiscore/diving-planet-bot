@@ -54,8 +54,9 @@ History
   - **Cambio de reparto (f01, 3/3):** "al final mi suegra también bucea, no hace snorkel" no cambia el reparto guardado.
   - **"primero dime qué incluye el tour":** recibe un acuse genérico en vez de la información, porque la detección de pregunta solo mira el principio del mensaje.
   - Causas y pistas generales en el progress-log.
+* **7d arreglado: una pregunta de información ya no tiene que abrir el mensaje.** "primero dime qué incluye el tour", "vale, cuánto cuesta" o "perfecto, y cómo pago" recibían un acuse genérico en vez de la información. Se reconocen por estructura, con clases gramaticales cerradas y no frases: el imperativo de pedir información en cualquier posición, y la palabra interrogativa al inicio de una cláusula. Foto sin LLM sobre 440 mensajes: cambian 7, todos sondas buscadas, y ningún mensaje del eval-set ni de las baterías.
 * **Para reinvestigar** (owner): grupo mixto → USD (necesita un valor propio, no el booleano), respuesta doble tras F5a y unificar la ubicación entre detector y núcleo. Detalle en `docs/robustness/NEXT-SESSION-PROMPT.md`.
-* Suite: **2208 passed / 18 skipped**.
+* Suite: **2232 passed / 18 skipped**.
 
 0.25.0 - (2026-09-14)
 ----------------------
