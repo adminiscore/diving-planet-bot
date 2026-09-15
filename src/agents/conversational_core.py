@@ -1587,6 +1587,41 @@ _SLOT_PREV_KEY = {
 }
 
 
+def _pending_answer_field(pending_slot: str | None) -> str:
+    """Campo del intent que contesta la pregunta pendiente ("location", "group_size"...), o
+    "" si no hay. Una sola lectura para la guarda (b), la de campos sabidos y la cita."""
+    return _SLOT_STATE_FIELD.get(pending_slot, "").removeprefix("detected_") if pending_slot else ""
+
+
+def _asks_for_evidence(pending_slot: str | None) -> bool:
+    """¿Puede la guarda (b) descartar un booleano en este turno? Solo si la pregunta
+    pendiente la contesta un campo extraible que no es un booleano (ubicacion, total)."""
+    return pending_slot not in _BOOL_SLOT_FIELD and _pending_answer_field(pending_slot) in _DRIVING_FIELDS
+
+
+def _normalized_words(text: str) -> str:
+    return " ".join(re.findall(r"\w+", strip_accents((text or "").lower())))
+
+
+def _quote_backs_boolean(field: str, pending_slot: str | None, message: str, evidence: dict) -> bool:
+    """Respuesta doble (hallazgo B, 2026-09-15): "desde cartagena, somos paisas" con la
+    ubicacion pendiente. El extractor cita, en la misma peticion, las palabras del mensaje
+    que dicen cada booleano; la cita lo respalda si
+      - esta literalmente en el mensaje (cita del historial, no),
+      - no es el mensaje entero: la respuesta pendiente tiene que estar en otra parte, y
+      - el detector no lee en ella la respuesta pendiente ("Desde Cartagena" no dice la
+        nacionalidad aunque el LLM la infiera de ahi).
+    Sonda con el LLM real (21 escenarios x 3): respuestas dobles legitimas 24/33 -> 33/33,
+    alucinaciones evitadas 30/30 igual, cortesias incluidas ("desde cartagena, gracias")."""
+    answered_field = _pending_answer_field(pending_slot)
+    if not _asks_for_evidence(pending_slot) or not isinstance(evidence, dict) or not isinstance(evidence.get(field), str):
+        return False
+    quote, text = _normalized_words(evidence.get(field)), _normalized_words(message)
+    if not quote or quote not in text or len(quote) >= len(text):
+        return False
+    return getattr(_detector.detect(evidence[field], ConversationState(conversation_id="evidence")), answered_field, None) is None
+
+
 def _boolean_patch_is_anchored(field: str, pending_slot: str | None, intent, patch: dict) -> bool:
     """GUARDA (b): ¿es de fiar el booleano que el LLM rellenó en este turno?
 
@@ -1614,7 +1649,7 @@ def _boolean_patch_is_anchored(field: str, pending_slot: str | None, intent, pat
         return True
     if _BOOL_SLOT_FIELD.get(pending_slot) == field:
         return False  # guarda (a): ese slot solo lo resuelven los resolutores anclados
-    answered_field = _SLOT_STATE_FIELD.get(pending_slot, "").removeprefix("detected_")
+    answered_field = _pending_answer_field(pending_slot)
     if not answered_field:
         return True
     answered = getattr(intent, answered_field, None) is not None or patch.get(answered_field) is not None
@@ -1633,7 +1668,7 @@ def _recheck_proposals(state: ConversationState, intent, answered_pending: bool,
     pendiente."""
     proposals = {f: v for f, v in disagreements.items() if f in recheck}
     pending = state.core_pending_slot
-    answered_field = _SLOT_STATE_FIELD.get(pending, "").removeprefix("detected_") if pending else ""
+    answered_field = _pending_answer_field(pending)
     answered = answered_pending or bool(answered_field and getattr(intent, answered_field, None) is not None)
     if proposals and answered:
         logger.info(f"[CORE] verificacion de campos sabidos descartada (el turno contesto {pending!r}): {proposals}")
@@ -1935,6 +1970,9 @@ async def _understand(state: ConversationState, message: str, *, answered_pendin
     # Grupo con nacionalidades mixtas (hallazgo A, owner: que lo lea el LLM): viaja en la
     # peticion que el turno ya hace, solo si el mensaje habla de los dos lados del grupo.
     extra_fields = ("mixed_nationality",) if mentions_writer_and_others(message) else ()
+    # Con la ubicacion o el total pendientes, la cita de cada booleano (hallazgo B).
+    if _asks_for_evidence(state.core_pending_slot):
+        extra_fields += ("evidence",)
     _wants_gaps = bool(gaps) and not _looks_like_question(message) and not _is_greeting_only(message)
     # Campos ya sabidos que el mensaje podria corregir con palabras que el regex no lee
     # ("ah no, somos gringos", "cambio de plan, estamos en barú") (tarea 7b, 2026-09-15).
@@ -2016,6 +2054,7 @@ async def _understand(state: ConversationState, message: str, *, answered_pendin
                 extra_fields=extra_fields,
             )
         )
+        evidence = patch.pop("evidence", None) or {}
         # Los campos del grupo se pierden cuando viajan con muchos otros (2026-09-15,
         # medido con el LLM real): con un campo que verificar (peticion fusionada), "mi
         # esposo bucea, yo prefiero snorkel", "somos 2, mi amigo es buzo y yo no" o "2
@@ -2204,6 +2243,7 @@ async def _understand(state: ConversationState, message: str, *, answered_pendin
             f for f in patch
             if f in _BOOL_PATCH_FIELDS
             and not _boolean_patch_is_anchored(f, state.core_pending_slot, intent, patch)
+            and not _quote_backs_boolean(f, state.core_pending_slot, message, evidence)
         ]
         # La certificacion que el mensaje dice de OTRA persona no es la del cliente
         # (2026-09-15): "somos 2, mi amigo es buzo y yo no" -> el LLM devolvia

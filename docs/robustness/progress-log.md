@@ -4326,3 +4326,45 @@ tras "sí", cobra 3 inmersiones. El router no cambia y el eval-set no pasa por e
 repiten su batería ni el eval.
 
 - Tests: 13 nuevos (`tests/test_negated_offering.py`). Suite 2392.
+
+### Hallazgo B: respuesta doble con otra pregunta pendiente (arreglado)
+
+**Síntoma.** Con la ubicación pendiente, "desde cartagena, somos paisas" perdía `is_colombian`. La guarda
+(b) descarta todo booleano que viaja con la respuesta a otra pregunta: "Desde Cartagena" rellenaba
+`is_colombian=True` 3/3. Batería de booleanos: `doble-cartagena-paisas` y `doble-bocagrande-aowd` 0/3.
+Separar la frase del slot con regex no servía: no localiza "salimos de bocagrande" ni "somos paisas", y
+una cortesía de resto dejaría pasar la alucinación.
+
+**Pista aplicada:** que el extractor diga en qué parte del mensaje apoya cada booleano, en la misma
+petición.
+
+**Sonda antes de tocar src** (`b_probe.py`: los 14 escenarios de la batería + 7 nuevos, cortesías y
+dobles; misma petición que el núcleo, tool actual frente a variante con `evidence`):
+- **v1, con cita también de `location` y `group_size`:** legítimos 16/22 → 22/22 y alucinaciones 20/20,
+  pero en los dos mensajes con Bocagrande el LLM citaba "Bocagrande" y **dejaba de rellenar `location`**
+  2/2. Descartada.
+- **v2, cita solo de los booleanos:** legítimos **24/33 → 33/33**, alucinaciones **30/30** igual; el patch
+  solo difiere en `is_certified` de "somos 3, todos colombianos", sacado del historial en las dos
+  variantes y descartado igual por la guarda.
+- **Citas del historial** ("si los dos", "somos 2"): aparecen pese a la instrucción. Las filtra la regla
+  de que la cita esté en el mensaje.
+
+**Arreglo.**
+- `extraction_tool(["evidence"])`: objeto con una cadena por booleano. `EVIDENCE_FIELDS` en los prompts,
+  con un test que la ata a `_BOOL_PATCH_FIELDS` del núcleo.
+- Se pide solo si la guarda (b) puede actuar: la pregunta pendiente la contesta un campo extraíble que no
+  es booleano (ubicación, total; `_asks_for_evidence`). Viaja con `extra_fields`, sin peticiones de más.
+- `_quote_backs_boolean`: la cita respalda el booleano si está literalmente en el mensaje (sin tildes ni
+  puntuación), no es el mensaje entero y el detector no lee en ella la respuesta pendiente.
+- `_pending_answer_field`: una sola lectura del campo que contesta la pregunta pendiente para la guarda
+  (b), la de campos sabidos y la cita.
+
+**Medido.**
+- `snapshot_prompts`: 87 idénticos, 2 nuevos (la variante y la lista). Suite 2405 (13 tests nuevos en
+  `tests/test_double_answer_evidence.py`).
+- Batería de booleanos (21 escenarios, 3 repeticiones): **legítimos 33/33, alucinaciones evitadas
+  30/30**. De los 14 anteriores solo cambian las dos dobles, 0/3 → 3/3.
+- Conversación completa (`repro_old_findings 2 respuesta_doble`): "desde cartagena, somos paisas" guarda
+  ubicación y nacionalidad y pasa a seguridad 2/2; "desde cartagena, gracias" no cuela la nacionalidad 2/2.
+- `eval --core`: **226/230, idéntico por caso**, tanda limpia.
+- Batería de grupo (config PRE): 17/17, 13/13, 17/17, **0 cambios de veredicto**.

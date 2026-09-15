@@ -7,7 +7,7 @@ docs/robustness/progress-log.md ("Tarea 7").
 
     ENV_FILE=.env.dev python -m scripts.repro_old_findings [repeticiones] [casos]
 
-casos: lista separada por comas de drip,correccion,correccion_antes,f01,f01_conversacion,h_total,g_numeros,tour,reparto_personas,grupo_mixto
+casos: lista separada por comas de drip,correccion,correccion_antes,f01,f01_conversacion,h_total,g_numeros,tour,reparto_personas,grupo_mixto,respuesta_doble
 (por defecto todos).
 """
 
@@ -178,9 +178,21 @@ async def grupo_mixto(rep):
     return log
 
 
+async def respuesta_doble(rep):
+    """B: con la ubicacion pendiente, la respuesta doble no pierde el booleano; la cortesia
+    no cuela uno."""
+    log = []
+    for second in ("desde cartagena, somos paisas", "desde cartagena, gracias"):
+        st = _new(f"b-{rep}")
+        await _say(st, "hola, somos 2 buzos certificados y queremos bucear", log)
+        if st.core_pending_slot == "location":
+            await _say(st, second, log)
+    return log
+
+
 CASES = {"drip": drip, "correccion": correccion, "correccion_antes": correccion_antes, "f01": f01,
          "f01_conversacion": f01_conversacion, "h_total": h_total, "g_numeros": g_numeros, "tour": tour,
-         "reparto_personas": reparto_personas, "grupo_mixto": grupo_mixto}
+         "reparto_personas": reparto_personas, "grupo_mixto": grupo_mixto, "respuesta_doble": respuesta_doble}
 
 
 async def main():

@@ -100,6 +100,8 @@ def _collect() -> dict[str, str]:
     add_json("booking/extraction.tool", booking.EXTRACTION_TOOL)
     # Variante con los campos que solo viajan cuando el nucleo los pide (hallazgo A).
     add_json("booking/extraction.tool+mixed_nationality", booking.extraction_tool(["mixed_nationality"]))
+    add_json("booking/extraction.tool+evidence", booking.extraction_tool(["evidence"]))
+    add_json("booking/evidence.fields", list(booking.EVIDENCE_FIELDS))
 
     # ── booking · veto de valores ya resueltos (verify_fields) ──────────────
     # Un bloque por campo (el prompt de 1 campo) + la combinacion de TODOS

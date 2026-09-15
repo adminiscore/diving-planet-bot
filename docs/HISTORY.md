@@ -94,8 +94,13 @@ History
 * **Hallazgo K arreglado: una oferta negada no es una opción que se compara.** Con la reserva cerrada, "al final mi suegra también bucea, no hace snorkel" iba a RAG a explicar la diferencia entre buceo y snorkel (2/2 con el LLM real) en vez de proponer el cambio de reparto: el router marcaba comparación y la puerta de deliberación lo aceptaba porque el texto nombra dos ofertas.
   - **Arreglo sin palabras nuevas:** frase a frase, las ofertas de una frase negada no cuentan. La negación es la pieza del detector (`_is_negated`, con paridad), mirada justo antes de la primera oferta. Una pregunta subordinada ("si", "whether", "entre") corta su alcance: "mi amigo no sabe si bucear o hacer snorkel" sigue comparando. Solo en el camino que depende del LLM: la duda escrita se comprueba antes.
   - **Medido:** conversación completa 3/3 pide confirmar y cobra 3 inmersiones. Foto sin LLM sobre 2325 frases: 14 cambios, todos con el LLM diciendo comparación y todos correctos (el caso de K, "just snorkel, no diving" y "nunca he buceado" y variantes, que contaban como dos ofertas sin que nadie las sopesara).
+* **Hallazgo B arreglado: la respuesta doble ya no pierde el dato.** Con la ubicación pendiente, "desde cartagena, somos paisas" o "salimos de bocagrande, ya tenemos el AOWD" perdían la nacionalidad o la certificación: la guarda (b) descarta todo booleano que viaja con la respuesta a otra pregunta, porque "Desde Cartagena" rellenaba `is_colombian=True`. El bot lo preguntaba después.
+  - **Cómo:** con la ubicación o el total pendientes, el extractor cita en la misma petición las palabras del mensaje que dicen cada booleano (`evidence`, variante del tool: el resto de prompts no cambia). El booleano se acepta si la cita está en el mensaje, no es el mensaje entero y el detector no lee en ella la respuesta pendiente. Sin vocabulario.
+  - **Una sola lectura** de "qué campo contesta la pregunta pendiente" para la guarda (b), la de campos sabidos y la cita.
+  - **Medido:** batería de booleanos con 7 escenarios nuevos (cortesías como "desde cartagena, gracias" y más respuestas dobles): legítimos 18/24 → **33/33**, alucinaciones evitadas **30/30**. Conversación completa 2/2 (la cortesía no cuela nada). `eval --core` 226/230 idéntico por caso, batería de grupo sin cambios, prompts: 87 idénticos.
+  - **Descartado en la sonda:** citar también la ubicación. El LLM citaba "Bocagrande" y dejaba de rellenar `location` 2/2.
 * **Para reinvestigar** (owner): grupo mixto → USD (necesita un valor propio, no el booleano), respuesta doble tras F5a y unificar la ubicación entre detector y núcleo. Detalle en `docs/robustness/NEXT-SESSION-PROMPT.md`.
-* Suite: **2392 passed / 18 skipped**.
+* Suite: **2405 passed / 18 skipped**.
 
 0.25.0 - (2026-09-14)
 ----------------------

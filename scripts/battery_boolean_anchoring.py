@@ -14,7 +14,9 @@ Mide `conversational_core._boolean_patch_is_anchored` con turnos reales de
 Linea base medida (3 repeticiones):
   guarda de vocabulario (retirada)  legitimos 0/24   alucinaciones evitadas 18/18
   sin guarda                        legitimos 24/24  alucinaciones evitadas 15/18
-  anclaje estructural (actual)      legitimos 18/24  alucinaciones evitadas 18/18
+  anclaje estructural               legitimos 18/24  alucinaciones evitadas 18/18
+  anclaje + cita del booleano (B, 2026-09-15, 21 escenarios con cortesias)
+                                    legitimos 33/33  alucinaciones evitadas 30/30
 
 Uso (necesita una API key real; los scripts no trazan en LangSmith):
 
@@ -70,6 +72,15 @@ SCENARIOS = [
     ("doble-cartagena-paisas", "legit", lambda: _state(cc.SLOT_LOCATION, H_LOCATION, **CERTIFIED), "desde cartagena, somos paisas", {"is_colombian": True}),
     ("doble-bocagrande-aowd", "legit", lambda: _state(cc.SLOT_LOCATION, H_DIVING, **DIVING), "salimos de bocagrande, ya tenemos el AOWD", {"is_certified": True}),
     ("cambio-de-tema-paisas", "legit", lambda: _state(cc.SLOT_LOCATION, H_DIVING, **DIVING), "ah y somos paisas", {"is_colombian": True}),
+    # Hallazgo B (2026-09-15): cortesias que no deben colar un booleano con la cita, y mas
+    # respuestas dobles (una con un barrio que el detector no conoce).
+    ("cortesia-cartagena-gracias", "halluc", lambda: _state(cc.SLOT_LOCATION, H_LOCATION, **CERTIFIED), "desde cartagena, gracias", {"is_colombian": None}),
+    ("cortesia-cartagena-vale", "halluc", lambda: _state(cc.SLOT_LOCATION, H_LOCATION, **CERTIFIED), "desde cartagena, vale", {"is_colombian": None}),
+    ("cortesia-bocagrande-genial", "halluc", lambda: _state(cc.SLOT_LOCATION, H_DIVING, **DIVING), "salimos de bocagrande, genial", {"is_certified": None, "is_colombian": None}),
+    ("cortesia-manga", "halluc", lambda: _state(cc.SLOT_LOCATION, H_DIVING, **DIVING), "estamos en manga", {"is_certified": None, "is_colombian": None}),
+    ("doble-islas-colombianos", "legit", lambda: _state(cc.SLOT_LOCATION, H_LOCATION, **CERTIFIED), "desde las islas y somos colombianos", {"is_colombian": True}),
+    ("doble-qty-colombianos", "legit", lambda: _state(cc.SLOT_QTY, H_CERT, detected_activity="certified_diving"), "somos 3, todos colombianos", {"is_colombian": True}),
+    ("doble-manga-nunca", "legit", lambda: _state(cc.SLOT_LOCATION, H_DIVING, **DIVING), "estamos en manga y ninguno ha buceado nunca", {"is_certified": False}),
 ]
 
 

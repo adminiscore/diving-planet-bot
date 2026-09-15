@@ -59,7 +59,7 @@ Retomamos el trabajo de robustez del bot en la rama `feature/pre_gadea`. Lee pri
 | Recomendación al acompañante | resolutor 11/11, estancia 6/6 |
 | Pregunta "¿ya certificados o quieren certificarse?" | cuándo preguntar 10/10, resolutor 7/7 |
 | Precio de paquetes (RAG, 21 preguntas sin LLM) | 11 cambios de 21 frente a antes, todos a bien |
-| Suite | **2392 passed / 18 skipped** |
+| Suite | **2405 passed / 18 skipped** |
 
 ### Hecho el 2026-09-15 (no repetir)
 
@@ -173,7 +173,8 @@ A. ~~**Grupo con nacionalidades mixtas → USD**~~ **arreglado (2026-09-15, owne
      cambio de schema: diseñar y medir.
    - Ya hay 7 casos `nat-mixto-*` en el eval-set; hoy fallan 5 de 6.
 
-B. **Respuesta doble tras F5a**: "desde cartagena, somos paisas" con la ubicación pendiente pierde la
+B. ~~**Respuesta doble tras F5a**~~ **arreglado (2026-09-15)**: cita de cada booleano en la misma petición
+   (`evidence`, solo con ubicación o total pendientes); booleanos 33/33 y 30/30. Antes: "desde cartagena, somos paisas" con la ubicación pendiente pierde la
    nacionalidad. La guarda (b) descarta el booleano que viaja con la respuesta a otra pregunta; coste
    conocido: una pregunta de más.
    - **Intento analizado:** separar la frase que contesta al slot del resto del mensaje. No hay

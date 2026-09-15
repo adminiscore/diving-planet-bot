@@ -371,8 +371,22 @@ _ACTIVITY_VALUED_FIELDS = frozenset({"activity", "companion_activity"})
 
 # Propiedades que solo viajan cuando el nucleo las pide (hallazgo A, 2026-09-15): el tool de
 # siempre no cambia, asi que ninguna otra peticion ve un prompt distinto.
+#
+# Booleanos con cita (hallazgo B, 2026-09-15): con otra pregunta pendiente, la guarda (b) del
+# nucleo descarta el booleano que viaja con la respuesta; la cita permite aceptar el de una
+# respuesta doble ("desde cartagena, somos paisas"). Solo booleanos: con la cita de location
+# el LLM citaba "Bocagrande" y dejaba de rellenar location 2/2.
+EVIDENCE_FIELDS = ("is_certified", "is_colombian", "last_dive_over_2_years")
 _EXTRA_EXTRACTION_PROPERTIES = {
     "mixed_nationality": {"type": "boolean", "description": _FIELD_MEANING_EN["mixed_nationality"]},
+    "evidence": {
+        "type": "object",
+        "description": (
+            "For each of these fields that you fill, the exact words of the customer's CURRENT message "
+            "that state it, copied verbatim (not from earlier turns). Omit fields you don't fill."
+        ),
+        "properties": {f: {"type": "string"} for f in EVIDENCE_FIELDS},
+    },
 }
 
 
