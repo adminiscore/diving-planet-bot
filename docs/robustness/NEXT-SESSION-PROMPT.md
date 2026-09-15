@@ -52,7 +52,7 @@ Retomamos el trabajo de robustez del bot en la rama `feature/pre_gadea`. Lee pri
 
 | medida | resultado |
 |---|---|
-| Eval-set (130 casos) | **221/230**. Fallan: 5 de los 7 casos `nat-mixto-*` (hueco conocido), 2 artefactos del arnés (casos con historial) y el ambiguo de ubicación "staying on the islands tomorrow". Los 123 casos anteriores: 220/223 |
+| Eval-set (130 casos) | **221/230**. Fallan: 5 de los 7 casos `nat-mixto-*` (hueco conocido), 2 artefactos del arnés (casos con historial) y el ambiguo de ubicación "staying on the islands tomorrow". `split-one-not-certified-es` espera `is_certified: null` desde el 2026-09-15 (la frase habla de un miembro del grupo) |
 | Batería de grupo, config PRE (52 escenarios) | repartos **17/17**, total **13/13**, riesgo **17/17**, **0 alucinaciones, 0 parciales, 0 totales mal**; segunda petición de grupo +8,1 % peticiones |
 | Booleanos anclados | legítimos 18/24, alucinaciones evitadas 18/18 |
 | Recomendación al acompañante | resolutor 11/11, estancia 6/6 |
@@ -90,8 +90,6 @@ Retomamos el trabajo de robustez del bot en la rama `feature/pre_gadea`. Lee pri
    - **Batería de grupo, config PRE:** repartos 17/17, total 13/13, riesgo 17/17, 0 alucinaciones, 0
      parciales, 0 totales mal. Segunda petición de grupo +8,1 % peticiones.
    - **Queda:**
-     - la regla contradictoria de la descripción de `group_allocation` ("déjalo fuera" frente a
-       `undecided`), con un parche mínimo en medición;
      - "no es certificado mi acompañante" (sujeto detrás del verbo) sigue atribuyéndose a quien
        escribe.
 2. ~~"somos 5 y 2 nunca han buceado"~~ **hecho (2026-09-15)**: la regla final de `detect()` se

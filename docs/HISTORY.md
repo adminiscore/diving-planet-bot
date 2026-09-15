@@ -38,6 +38,8 @@ History
     - de quién habla una frase de certificación (sujeto = otra persona + su verbo), y guarda del booleano del LLM: "somos 2, mi amigo es buzo y yo no" ya no marca al cliente;
     - r11 ("mi amigo no esta certificado" con el grupo sabido) y p06 ("mi novia es buza certificada y yo nunca he buceado") reparten de forma determinista.
     - **Batería de grupo, config PRE: 17/17, 13/13, 17/17, 0 alucinaciones, 0 parciales, 0 totales mal.** Segunda petición +8,1 %.
+  - **Regla contradictoria de `group_allocation`:** se quitan solo las tres frases antiguas ("a quien solo se describe por un atributo, déjalo fuera"). Empata en la batería de grupo, la tanda enfocada, los booleanos y el eval-set, y deja una sola regla (`undecided`).
+  - **Eval-set:** `split-one-not-certified-es` ("somos 3, uno no esta certificado") pasa a esperar `is_certified: null`, porque la frase habla de un miembro del grupo y no de quien escribe (mismo criterio que r11/r12). Eval-set **221/230**.
 * **Para reinvestigar** (owner): grupo mixto → USD (necesita un valor propio, no el booleano), respuesta doble tras F5a y unificar la ubicación entre detector y núcleo. Detalle en `docs/robustness/NEXT-SESSION-PROMPT.md`.
 * Suite: **2151 passed / 18 skipped**.
 

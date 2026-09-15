@@ -3273,3 +3273,30 @@ no esta certificada" e "i'm not certified yet but my wife is certified".
   buza certificada y yo nunca he buceado" y "soy buzo certificado y mi novia no esta certificada"
   quedan con el estado correcto 2/2. En "mi amigo tiene licencia, yo no" el cliente sale False 2/2: la
   expectativa de la sonda (None) estaba mal, porque "yo no" sí lo dice.
+
+### Regla contradictoria de `group_allocation`: parche mínimo, medido y aplicado (ronda B)
+
+La descripción del tool y las guías ES/EN tenían una frase antigua: "a quien solo se describe por un
+atributo, déjalo fuera / OMITE el campo". Contradecía la regla `undecided` de la decisión del owner.
+- La reescritura completa de la mañana hizo variar b03 y se revirtió.
+- Esta vez se **quitaron solo esas tres frases**, sin reescribir el resto.
+- Foto de prompts: cambian exactamente los 5 que llevan la regla.
+
+**Medido con LLM real, frente a la ronda A (código idéntico sin el parche):**
+- **Batería de grupo, config PRE:** 17/17, 13/13, 17/17, **mismo veredicto en todos los escenarios**.
+  Segunda petición +7,6 %.
+- **Tanda enfocada:** todo OK las 3 veces.
+- **Booleanos:** 18/24 y 18/18, idéntica.
+- **Eval-set:** 220/230 frente a la referencia de la mañana (221/230). La única diferencia es
+  `split-one-not-certified-es` ("somos 3, uno no esta certificado"): pierde `is_certified=False`.
+  - **La causa no es el parche**: es la atribución de sujeto del detector ya subida en 327379e. El
+    eval-set no se había vuelto a correr tras la ronda A.
+  - El reparto, el total y la actividad siguen bien.
+  - La expectativa venía del "regex ground truth" antiguo y codificaba la mala atribución: "uno no está
+    certificado" habla de un miembro del grupo, no de quien escribe. Se cambia a `is_certified: null`,
+    mismo criterio que r11/r12.
+  - Con la salida medida (regex y LLM sin valor) el caso vuelve a OK y el eval-set queda en
+    **221/230**, recalculado sobre la tanda ya hecha, no re-corrido.
+
+**Veredicto:** el parche empata en todas las mediciones y elimina una instrucción que contradice
+`undecided`. Se sube aparte.
