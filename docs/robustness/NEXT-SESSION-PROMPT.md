@@ -131,7 +131,9 @@ Retomamos el trabajo de robustez del bot en la rama `feature/pre_gadea`. Lee pri
    (conversación con `route_message`, RAG mockeado sin BD local, respuestas a slots según
    `core_pending_slot`). **Por arreglar, en este
    orden** (los dos primeros cobran mal sin avisar):
-   - **7a. Acompañante que llega a trozos (3/3).** "él quiere hacer snorkel" cambia la actividad
+   - ~~**7a. Acompañante que llega a trozos (3/3).**~~ **arreglado (2026-09-15)**: el LLM decide
+     quién es otra persona, se pregunta el total si podía estar ya contada y se mueve o se añade
+     según la respuesta. LLM real 3/3; foto de baterías 0 cambios. Antes: "él quiere hacer snorkel" cambia la actividad
      principal, el reparto sigue en 2 buceadores y el resumen cobra 2 inmersiones.
      - **Causa:** el núcleo no ve el pronombre como otra persona, y el "latest wins" de actividad
        pisa la principal; la red de precisión no se llama.

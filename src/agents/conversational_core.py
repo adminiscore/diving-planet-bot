@@ -272,6 +272,11 @@ def _group_allocation_fully_resolved(state: ConversationState) -> bool:
     size = state.detected_group_size
     if not size:
         return False
+    # Un reparto que no contiene la actividad principal no la explica (tarea 7a,
+    # 2026-09-15): "él quiere hacer snorkel" pisa la principal y {certified_diving: 2}
+    # seguia "cubriendo" el grupo, asi que la red de precision no llegaba a correr.
+    if state.detected_activity in _ACTIVITY_TO_CART_TYPE and state.detected_activity not in alloc:
+        return False
     return sum(alloc.values()) >= size
 
 
@@ -314,6 +319,9 @@ def next_missing_slot(state: ConversationState) -> str | None:
     act = state.detected_activity
     if act is None:
         return SLOT_ACTIVITY
+    if state.pending_companion_in_group:
+        # ¿Esa persona ya estaba contada o se suma? Antes de cotizar (tarea 7a).
+        return SLOT_QTY
     if state.needs_cert_or_course:
         # Nivel PADI nombrado sin decir si ya lo tienen o lo quieren (owner
         # 2026-09-15): se aclara antes de cotizar nada.
@@ -554,6 +562,25 @@ def ask_slot(state: ConversationState, slot: str, *, reasking: bool = False) -> 
             "The *refresher* is a short in-water review session before the dive. "
             f"It costs *{price}* per person who needs it. Are you interested?"
         )
+    if slot == SLOT_QTY and state.pending_companion_in_group:
+        pending = state.pending_companion_in_group
+        total = state.detected_group_size or 0
+        more = total + pending["qty"]
+        label = dom.text(pending["activity"], "recall", lang, default=pending["activity"])
+        state.quick_replies = (
+            [{"title": f"Seguimos siendo {total}", "value": str(total)},
+             {"title": f"Somos {more}", "value": str(more)}]
+            if lang == "es" else
+            [{"title": f"Still {total}", "value": str(total)},
+             {"title": f"We're {more}", "value": str(more)}]
+        )
+        return (
+            f"¡Anotado, *{label}*! Para cuadrar el precio: ¿seguís siendo *{total}* en total "
+            "o se suma alguien más? 😊"
+            if lang == "es" else
+            f"Got it, *{label}*! To get the price right: are you still *{total}* in total, "
+            "or is someone else joining? 😊"
+        )
     if slot == SLOT_QTY:
         return (
             "¿Y para cuántas personas armamos el plan? Así te paso el precio exacto. 😊"
@@ -777,8 +804,7 @@ def _apply_short_answer(state: ConversationState, message: str) -> bool:
     if slot == SLOT_QTY:
         n = cart_render.parse_quantity(message)
         if n is not None and n > 0:
-            state.detected_group_size = n
-            return True
+            return _apply_group_total(state, n)
         return False
     if slot == SLOT_COMPANION_QTY:
         act = state.pending_companion_activity
@@ -896,8 +922,7 @@ def _apply_resolved_slot_value(state: ConversationState, slot: str, value) -> bo
         state.is_colombian = value
         return True
     if slot == SLOT_QTY and isinstance(value, int) and value > 0:
-        state.detected_group_size = value
-        return True
+        return _apply_group_total(state, value)
     if slot == SLOT_LOCATION and value in ("cartagena", "island"):
         state.location = state.detected_location = value
         return True
@@ -918,11 +943,18 @@ def _apply_resolved_slot_value(state: ConversationState, slot: str, value) -> bo
 # -- cierra un gap real: esta lista no tenía "compañero"/"acompañante"/
 # "primo" (ES) ni "companion"/"cousin"/"kid"/"child" (EN) pese a que otras
 # listas del mismo concepto sí los tenían.
+# Solo la señal de que se SUMA alguien ("también", "viene", "se apunta"), sin el
+# "mi amigo" de abajo: nombrar a una persona no dice si ya estaba contada en el total
+# (tarea 7a, 2026-09-15). La usa `_add_or_ask_companion`.
+_ADDITION_CUE = (
+    r"tambi[eé]n|adem[aá]s|viene|acompa[ñn]a|se\s+(?:suma|apunta)|otra?\s+que"
+    r"|also|joining|is\s+coming|comes?\s+along"
+)
+_ADDITION_CUE_RE = re.compile(r"\b(?:" + _ADDITION_CUE + r")\b", re.IGNORECASE)
 _ADDED_PERSON_RE = re.compile(
-    r"\b(tambi[eé]n|adem[aá]s|viene|acompa[ñn]a|se\s+(?:suma|apunta)|uno?\s+que|otra?\s+que"
+    r"\b(" + _ADDITION_CUE + r"|uno?\s+que"
     r"|mi\s+(?:" + _PERSON_NOUN_SINGULAR_ES + r")"
-    r"|my\s+(?:" + _PERSON_NOUN_SINGULAR_EN + r")"
-    r"|also|joining|is\s+coming|comes?\s+along)\b",
+    r"|my\s+(?:" + _PERSON_NOUN_SINGULAR_EN + r"))\b",
     re.IGNORECASE,
 )
 
@@ -1975,7 +2007,7 @@ async def _understand(state: ConversationState, message: str) -> tuple:
             pass
         else:
             _restore_main_diver_fields(state, prev_activity, prev_service_id, prev_is_certified, prev_last_dive, prev_refresher)
-            _merge_companion_activity(state, turn_act, explicit_qty or 1)
+            _add_or_ask_companion(state, message, turn_act, explicit_qty or 1)
             companion_merged_fastpath = True
             # `turn_act` puede haber quedado encolado arriba (guard del
             # alloc_patch alucinado, sin respaldo numérico) antes de que este
@@ -2107,6 +2139,54 @@ def _merge_companion_activity(state: ConversationState, activity: str, qty: int)
     state.detected_group_allocation = alloc
     state.detected_group_size = sum(alloc.values())
     logger.info(f"[CORE] merged companion activity {activity} x{qty} -> alloc={alloc}")
+
+
+def _add_or_ask_companion(state: ConversationState, message: str, activity: str, qty: int) -> None:
+    """Punto unico para la actividad de otra persona (tarea 7a, 2026-09-15).
+
+    Quien es otra persona lo decide el turno (fast-path o red de precision LLM, que
+    reconoce pronombres y jerga). Lo que ni el texto ni el LLM dicen es si esa persona
+    YA estaba contada: "él quiere hacer snorkel" y "también viene mi hermana que quiere
+    hacer snorkel" dan la misma señal. Si sumarla supera el total conocido y el mensaje
+    no dice que se suma alguien, no se adivina: se pregunta el total
+    (`pending_companion_in_group` -> SLOT_QTY) y la respuesta decide mover o añadir.
+    Quien escribe siempre es uno de los contados, asi que con un total de 1 cualquier
+    otra persona es nueva (`qty <= total - 1`)."""
+    total = state.detected_group_size
+    counted = sum((state.detected_group_allocation or {}).values()) or (total or 0)
+    if (
+        total and qty <= total - 1 and counted + qty > total
+        and not _ADDITION_CUE_RE.search(message)
+    ):
+        state.pending_companion_in_group = {"activity": activity, "qty": qty}
+        logger.info(f"[CORE] companion {activity} x{qty}: ¿ya contado en {total}? -> se pregunta el total")
+        return
+    _merge_companion_activity(state, activity, qty)
+
+
+def _apply_group_total(state: ConversationState, total: int) -> bool:
+    """Respuesta al total del grupo. Con una persona pendiente de ubicar
+    (`pending_companion_in_group`): si el total no crece, esa persona ya estaba
+    contada y se MUEVE de la actividad principal; si crece, se AÑADEN los que faltan."""
+    pending = state.pending_companion_in_group
+    if not pending:
+        state.detected_group_size = total
+        return True
+    state.pending_companion_in_group = None
+    known = state.detected_group_size or 0
+    activity, qty = pending["activity"], pending["qty"]
+    if total > known:
+        _merge_companion_activity(state, activity, total - known)
+        return True
+    alloc = dict(state.detected_group_allocation or {})
+    main = state.detected_activity
+    alloc.setdefault(main, known or qty)
+    moved = min(qty, alloc[main])
+    alloc[main] -= moved
+    alloc[activity] = alloc.get(activity, 0) + moved
+    state.detected_group_allocation = {k: v for k, v in alloc.items() if v}
+    logger.info(f"[CORE] companion {activity} x{moved} ya contado -> alloc={state.detected_group_allocation}")
+    return True
 
 
 def _full_booking_recap(state: ConversationState) -> str | None:
@@ -2999,10 +3079,13 @@ async def _extraction_phase(
         # reserva", que no menciona nada de buceo): con `activity` ya en
         # None, `None == state.detected_activity` siempre da False y este
         # guard nunca se disparaba para el caso que motivó el fix.
+        # "La misma actividad que el grupo" es la de ANTES de este turno (tarea 7a,
+        # 2026-09-15): "él quiere hacer snorkel" ya ha pisado la principal con snorkel, y
+        # comparar con el estado de ahora tiraba justo el acompañante real.
         if (
             llm_mentions_other_person
             and not regex_mentions_other_person
-            and raw_companion_activity == state.detected_activity
+            and raw_companion_activity == (prev_main_activity or state.detected_activity)
         ):
             llm_mentions_other_person = False
         if activity and (llm_mentions_other_person or regex_mentions_other_person):
@@ -3088,7 +3171,7 @@ async def _extraction_phase(
                 if activity not in state.pending_companion_queue:
                     state.pending_companion_queue.insert(0, activity)
             else:
-                _merge_companion_activity(state, activity, qty)
+                _add_or_ask_companion(state, message, activity, qty)
 
             if state.pending_companion_queue:
                 state.pending_companion_activity = state.pending_companion_queue.pop(0)

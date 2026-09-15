@@ -184,6 +184,11 @@ class ConversationState:
     # esta cantidad sin volver a preguntar cuantos son.
     pending_undecided_qty: int | None = None
 
+    # Actividad de otra persona que no se sabe si ya estaba contada en el total
+    # ("él quiere hacer snorkel" con 2 ya repartidos): {"activity", "qty"}. Se
+    # pregunta el total antes de sumar o mover a nadie (tarea 7a, 2026-09-15).
+    pending_companion_in_group: dict | None = None
+
     # Nivel PADI nombrado sin decir si ya lo tienen o lo quieren sacar ("hola
     # somos 4 open water"): se pregunta antes de seguir (owner 2026-09-15).
     # `cert_or_course_level` guarda el curso nombrado, si el detector lo resolvio.

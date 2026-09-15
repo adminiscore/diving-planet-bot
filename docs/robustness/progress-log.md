@@ -3709,3 +3709,42 @@ sondas):
 
 **Límite conocido:** una pregunta solo por entonación, sin "?" ni interrogativo ni imperativo ("parce
 y eso trae almuerzo"), sigue recibiendo el acuse. No hay estructura que leer sin LLM.
+
+### Tarea 7a, arreglada: la actividad de otra persona ya no pisa la principal ni se cuenta dos veces
+
+**Cambio**, sin vocabulario nuevo:
+- **Quién es otra persona lo decide el LLM de señales.** Sonda real, 15/15 estable: "él quiere…",
+  "mi parce se anima al snorkel" y "ella prefiere snorkel" salen como acompañante; "mejor snorkel"
+  no devuelve nada.
+- **Circuit-breaker** (`_group_allocation_fully_resolved`): un reparto que no contiene la actividad
+  principal no explica al grupo. Así la red de precisión vuelve a correr cuando el turno pisa la
+  principal.
+- **Guarda de "misma actividad que el grupo":** compara con la actividad de ANTES del turno
+  (`prev_main_activity`), no con la que el propio turno acaba de escribir.
+- **Un solo punto de decisión, `_add_or_ask_companion`** (fast-path y red). Ni el texto ni el LLM
+  dicen si esa persona ya estaba contada: "él quiere hacer snorkel" y "también viene mi hermana
+  que quiere hacer snorkel" dan la misma señal.
+  - **Pregunta el total** si sumar supera el total conocido, el mensaje no trae señal de adición
+  (`_ADDITION_CUE_RE`, separada de "mi amigo" en `_ADDED_PERSON_RE`) y `qty <= total - 1`. La
+  pregunta es "¿seguís siendo N o se suma alguien?", con botones, y `pending_companion_in_group`
+  guarda a la persona pendiente.
+  - Esa última condición existe porque quien escribe siempre es uno de los contados, así que con un
+    total de 1 la otra persona es nueva.
+- **La respuesta se aplica en un único sitio** (`_apply_group_total`, respuesta corta y resolutor
+  LLM): si el total no crece, esa persona se MUEVE de la actividad principal; si crece, se AÑADE.
+
+**Medido:**
+- **LLM real, 3/3** (`scripts/repro_old_findings drip`): "él quiere hacer snorkel" → pregunta el
+  total → "somos 2" → `{certified_diving: 1, snorkel: 1}`. El resumen cobra 1 inmersión y 1 snorkel
+  (antes, 2 inmersiones).
+- **Réplica determinista:**
+  - "somos 3" añade;
+  - "también viene mi hermana…" añade sin preguntar;
+  - "mi acompañante…" con total 1 añade sin preguntar.
+- **Foto determinista** de los 66 escenarios de las baterías de grupo y booleanos por `_understand`,
+  HEAD frente a árbol: **0 cambios**.
+- Suite 2240.
+
+**Hallazgo al medir (pasa a 7b):** "mejor snorkel", un cambio de opinión del propio grupo, cambia
+la actividad principal pero deja el reparto en `{certified_diving: 2}`, y el cierre cobra 2
+inmersiones. Es la misma familia que 7b/7c: el reparto guardado no se reescribe.
