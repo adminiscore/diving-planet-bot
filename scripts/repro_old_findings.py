@@ -7,7 +7,7 @@ docs/robustness/progress-log.md ("Tarea 7").
 
     ENV_FILE=.env.dev python -m scripts.repro_old_findings [repeticiones] [casos]
 
-casos: lista separada por comas de drip,correccion,correccion_antes,f01,f01_conversacion,h_total,tour
+casos: lista separada por comas de drip,correccion,correccion_antes,f01,f01_conversacion,h_total,g_numeros,tour
 (por defecto todos).
 """
 
@@ -125,6 +125,17 @@ async def h_total(rep):
     return log
 
 
+async def g_numeros(rep):
+    """G: con "¿para cuantas personas?" pendiente, un numero de otra magnitud no es el total."""
+    st, log = _new(f"g-{rep}"), []
+    await _say(st, "hola, quiero bucear, soy certificado, salimos desde cartagena", log)
+    for msg in ("mi hijo tiene 9 años", "llegamos el 12", "2 inmersiones", "somos 3"):
+        if st.core_pending_slot != "qty":
+            break
+        await _say(st, msg, log)
+    return log
+
+
 async def tour(rep):
     """7d: peticion de informacion sin "?" ni palabra-pregunta al principio."""
     st, log = _new(f"tour-{rep}"), []
@@ -134,7 +145,7 @@ async def tour(rep):
 
 
 CASES = {"drip": drip, "correccion": correccion, "correccion_antes": correccion_antes, "f01": f01,
-         "f01_conversacion": f01_conversacion, "h_total": h_total, "tour": tour}
+         "f01_conversacion": f01_conversacion, "h_total": h_total, "g_numeros": g_numeros, "tour": tour}
 
 
 async def main():

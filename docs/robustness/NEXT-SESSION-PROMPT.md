@@ -59,7 +59,7 @@ Retomamos el trabajo de robustez del bot en la rama `feature/pre_gadea`. Lee pri
 | Recomendación al acompañante | resolutor 11/11, estancia 6/6 |
 | Pregunta "¿ya certificados o quieren certificarse?" | cuándo preguntar 10/10, resolutor 7/7 |
 | Precio de paquetes (RAG, 21 preguntas sin LLM) | 11 cambios de 21 frente a antes, todos a bien |
-| Suite | **2267 passed / 18 skipped** |
+| Suite | **2302 passed / 18 skipped** |
 
 ### Hecho el 2026-09-15 (no repetir)
 
@@ -272,7 +272,9 @@ H. ~~**"¿Cuántos serían para X?" suma encima del total ya sabido**~~ **arregl
    - **Pista:** la misma regla de 7a (`_add_or_ask_companion`, quien ya estaba contado no se suma)
      aplicada a esa respuesta, y arreglar F.2 ("X y yo" respalda un 2), que es lo que la dispara.
 
-G. **Una respuesta que no contesta la pregunta pendiente se toma como su respuesta** (hallazgo
+G. ~~**Una respuesta que no contesta la pregunta pendiente se toma como su respuesta**~~ **arreglado (2026-09-15)**:
+   solo es respuesta a "¿cuántos?" lo que ES la cantidad o lo que el detector lee como total; el resto va al resolutor LLM,
+   que descarta números de otra magnitud. Antes: (hallazgo
    2026-09-15, al medir 7c con una conversación que ignoraba lo que preguntaba el bot).
    - Con "¿cuántos serían para snorkel?" pendiente, "no, buceamos hace 6 meses" llevó el grupo de
      3 a 9 buceadores. La respuesta corta determinista lo rechaza (`_apply_short_answer` →

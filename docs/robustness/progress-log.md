@@ -3965,3 +3965,35 @@ documentado) y el negativo `n07` (hallazgo E).
 Por caso, **2 a mejor y 0 a peor**; son exactamente los dos que F.2 debía arreglar:
 - `grp-es-mixed-suegra`: el reparto `{2, 1}` de las personas nombradas ya no se tira;
 - `grp-en-implicit-count-ages`: se conserva el total 4.
+
+### Hallazgo G, arreglado: un número de otra magnitud no es la respuesta a "¿cuántos?"
+
+**Síntoma, determinista (sin LLM).** El parser de cantidad cogía el primer número de cualquier
+mensaje.
+- Con "¿para cuántas personas?" pendiente, se leía como total: "hace 3 años que no buceo" → 3, "mi
+  hijo tiene 9 años" → 9, "llegamos el 12" → 12, "a las 8" → 8, "2 inmersiones" → 2.
+- Con "¿cuántos serían para snorkel?" pendiente, esos números se **sumaban** al total. Solo se
+  libraban los mensajes que nombraban otra actividad.
+- El caso de la conversación de 7c ("no, buceamos hace 6 meses" → 6) era uno de ellos.
+
+**Arreglo, sin lista de unidades:**
+- **Respuesta determinista (`_quantity_answer`):** solo cuenta lo que ES la cantidad (un único
+  elemento: "4", "dos", "6+") o lo que el detector ya lee como total del grupo ("somos 4", "4
+  personas", "we are 4", "yo y mi pareja"), la misma fuente que la extracción. Lo demás no se
+  resuelve ahí:
+  - la pregunta del total va al resolutor LLM que ya existía, con su contexto y su guarda de
+    anclaje;
+  - la de "¿cuántos para X?" se vuelve a hacer.
+- **Escribir el título de un botón es pulsarlo** (`_button_value`, para cualquier pregunta con
+  botones): "seguimos siendo 2", "si cambialo" o "ya la tenemos" tecleados. Lo destapó un test de
+  7a, en el que la regla nueva dejaba sin resolver el título tecleado.
+- **Guarda del resolutor LLM del total (`_number_of_something_else`).** Una cantidad que el detector
+  ya lee como otra magnitud (inmersiones, días, edades) se descarta.
+
+**Medido:**
+- **Sonda del resolutor LLM, 2 repeticiones:**
+  - se abstiene en "a las 8", "llegamos el 12", "mi hijo tiene 9 años" y "hace 3 años que no buceo";
+  - resuelve bien "unos 3" (3), "seremos 5" (5), "2 adultos y un niño" (3), "un par" (2) y "somos yo
+    y mis 3 amigos" (4);
+  - leía "2 inmersiones" como 2 personas 2/2, que es lo que cierra la guarda de arriba.
+- 34 tests nuevos. Suite 2302.

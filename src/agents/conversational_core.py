@@ -66,6 +66,7 @@ from src.flows.state import ConversationState, Step
 from src.utils import money
 from src.utils.fuzzy import is_affirmative, is_agree, is_negative
 from src.utils.number_words import number_alt, number_words
+from src.utils.text import strip_accents
 
 logger = logging.getLogger("uvicorn.error")
 
@@ -746,6 +747,11 @@ def _apply_short_answer(state: ConversationState, message: str) -> bool:
     slot = state.core_pending_slot
     if not slot:
         return False
+    # Escribir el titulo de un boton de la pregunta es pulsarlo (hallazgo G, 2026-09-15):
+    # "seguimos siendo 2" tecleado no es un numero suelto ni un total que lea el detector.
+    button = _button_value(state, message)
+    if button is not None:
+        message = button
     msg = message.strip().lower()
 
     if slot == SLOT_CERTIFICATION:
@@ -835,7 +841,7 @@ def _apply_short_answer(state: ConversationState, message: str) -> bool:
             return True
         return False
     if slot == SLOT_QTY:
-        n = cart_render.parse_quantity(message)
+        n = _quantity_answer(state, message)
         if n is not None and n > 0:
             return _apply_group_total(state, n)
         return False
@@ -853,7 +859,7 @@ def _apply_short_answer(state: ConversationState, message: str) -> bool:
         mentioned = _mentioned_product_activities(message)
         if mentioned and act not in mentioned:
             return False
-        n = cart_render.parse_quantity(message)
+        n = _quantity_answer(state, message)
         if n is not None and n > 0 and act:
             if state.pending_split_total:
                 _assign_split_share(state, act, n)
@@ -2395,6 +2401,43 @@ def _merge_companion_activity(state: ConversationState, activity: str, qty: int)
     logger.info(f"[CORE] merged companion activity {activity} x{qty} -> alloc={alloc}")
 
 
+def _button_value(state: ConversationState, message: str) -> str | None:
+    """Valor del boton de la pregunta pendiente cuyo titulo es exactamente lo que se
+    escribio (sin emojis, signos ni tildes): "✅ Ya la tenemos", "Seguimos siendo 2"."""
+    typed = strip_accents(" ".join(_words(message)))
+    for option in state.quick_replies or []:
+        if typed and typed == strip_accents(" ".join(_words(str(option.get("title", ""))))):
+            return str(option.get("value"))
+    return None
+
+
+def _number_of_something_else(state: ConversationState, message: str, value) -> bool:
+    """¿El detector ya lee ese numero como otra magnitud (inmersiones, dias, edades)? Lo
+    usa el resolutor LLM de la pregunta del total (G): con "¿cuantas personas?"
+    pendiente, "2 inmersiones" volvia como 2 personas 2/2."""
+    intent = _detector.detect(message, state)
+    return value in {intent.cert_dives, intent.cert_days, *(intent.ages or [])}
+
+
+def _quantity_answer(state: ConversationState, message: str) -> int | None:
+    """Respuesta determinista a "¿cuantas personas?" / "¿cuantos serian para X?"
+    (hallazgo G, 2026-09-15).
+
+    El parser de cantidad cogia el primer numero de cualquier mensaje: con la pregunta
+    pendiente, "hace 3 años que no buceo", "mi hijo tiene 9 años", "llegamos el 12" o "a
+    las 8" fijaban 3, 9, 12 u 8 personas (y en "¿cuantos para snorkel?" se sumaban). Sin
+    lista de unidades: solo cuenta como respuesta lo que ES la cantidad (un unico
+    elemento: "4", "dos", "6+") o lo que el detector ya lee como total del grupo ("somos
+    4", "4 personas", "we are 4"), la misma fuente que la extraccion. Lo demas no se
+    resuelve aqui: la pregunta del total la interpreta el resolutor LLM con su contexto y
+    su guarda de anclaje; la de "¿cuantos para X?" se vuelve a hacer."""
+    if len(_words(message)) == 1:
+        n = cart_render.parse_quantity(message)
+    else:
+        n = _detector.detect(message, state).group_size
+    return n if isinstance(n, int) and n > 0 else None
+
+
 def _with_main_rest(allocation: dict, main_activity, total, taken: int = 0) -> dict:
     """El resto del grupo hace la actividad principal: con el total ya sabido, su cifra
     es aritmetica y no necesita respaldo en el texto. `taken` son personas del total que
@@ -3719,6 +3762,15 @@ async def _extraction_phase(
             logger.info(
                 f"[CORE] slot resolver descartado para {prev_pending!r} "
                 f"(el turno respondio a otro slot) msg={supervisor._log_safe_message(message)!r}"
+            )
+            resolved_value = None
+        if (
+            resolved_value is not None and prev_pending == SLOT_QTY
+            and _number_of_something_else(state, message, resolved_value)
+        ):
+            logger.info(
+                f"[CORE] slot resolver descartado para 'qty' (el numero es de otra magnitud) "
+                f"msg={supervisor._log_safe_message(message)!r}"
             )
             resolved_value = None
         if resolved_value is not None and _apply_resolved_slot_value(state, prev_pending, resolved_value):
