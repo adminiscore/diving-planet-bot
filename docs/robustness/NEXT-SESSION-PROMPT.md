@@ -59,7 +59,7 @@ Retomamos el trabajo de robustez del bot en la rama `feature/pre_gadea`. Lee pri
 | Recomendación al acompañante | resolutor 11/11, estancia 6/6 |
 | Pregunta "¿ya certificados o quieren certificarse?" | cuándo preguntar 10/10, resolutor 7/7 |
 | Precio de paquetes (RAG, 21 preguntas sin LLM) | 11 cambios de 21 frente a antes, todos a bien |
-| Suite | **2405 passed / 18 skipped** |
+| Suite | **2424 passed / 18 skipped** |
 
 ### Hecho el 2026-09-15 (no repetir)
 
@@ -186,7 +186,14 @@ B. ~~**Respuesta doble tras F5a**~~ **arreglado (2026-09-15)**: cita de cada boo
    - **Pista:** que el extractor diga en qué parte del mensaje apoya cada booleano, en la misma
      petición. Medir con la batería de booleanos más escenarios de cortesía.
 
-C. **Unificar la ubicación entre detector y núcleo.**
+C. **Unificar la ubicación entre detector y núcleo.** **Hecho en parte (2026-09-15):** una sola fuente de
+   palabras de lugar (el resolutor corto usa el lector del detector). Quedan abiertos:
+   - **C.2 salida/alojamiento frente a destino con los dos lugares.** Dejarlo al LLM (hueco) se midió y fue
+     peor: el prompt de relleno y el resolutor de slot también leen el destino como ubicación ("vamos de
+     cartagena a baru" → isla 2/2). Si se retoma: la definición del campo (`_FIELD_MEANING_*["location"]`)
+     no dice que el destino de la excursión no cuenta; medir con `c_probe` (progress-log) y el eval-set.
+   - **C.3 alias de una palabra común en el detector** ("marina", "grande", "arena", "flores", "secreto").
+   Antes:
    - **Discrepancias:** el resolutor corto (`_apply_short_answer`, con `_CARTAGENA_RE`/`_ISLAND_RE`)
      y `_detect_location` discrepan en 15 de 262 mensajes.
      - El núcleo no conoce "ctg", los apodos de la ciudad ni los hoteles.

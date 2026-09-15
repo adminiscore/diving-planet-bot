@@ -31,7 +31,9 @@ import re
 from collections import Counter
 
 from src.agents.intent_detector import (
+    _CARTAGENA_NAME_RE,
     _CLAUSE_BOUNDARY_RE,
+    _GENERIC_ISLAND_RE,
     _PERSON_NOUN_MENTION_EN,
     _PERSON_NOUN_MENTION_ES,
     _PERSON_NOUN_PLURAL_EN,
@@ -162,8 +164,21 @@ def _maybe_apply_confirmed_package(state: ConversationState, message: str) -> No
     state.detected_cert_dives = dives
     state.mixed_cart = []
 
-_CARTAGENA_RE = re.compile(r"\b(cartagena|cartagen\w*)\b", re.IGNORECASE)
-_ISLAND_RE = re.compile(r"\b(isla\w*|island\w*|bar[uú]|rosario\w*)\b", re.IGNORECASE)
+def _departure_place(message: str) -> str | None:
+    """Lugar de salida en la RESPUESTA a "¿desde donde saldrias?" (hallazgo C, 2026-09-15).
+    Las palabras de lugar son las del detector (apodos de la ciudad, hoteles, islas; "rezar
+    el rosario" no es isla), y una isla sin nombre ("isla", "Barú") vale como respuesta.
+    Precedencia de siempre en la respuesta: Cartagena nombrada gana ("quiero ir a las islas
+    del rosario desde cartagena"). Dejar al LLM los mensajes con los dos lugares se midio y
+    fue peor."""
+    text = (message or "").lower()
+    if _CARTAGENA_NAME_RE.search(text):
+        return "cartagena"
+    intent = DetectedIntent()
+    _detector._detect_location(text, intent)
+    if intent.location:
+        return intent.location
+    return "island" if _GENERIC_ISLAND_RE.search(text) else None
 
 # Auditoría 2026-08-26 (batería sintética contra PRE, Grupo 4, portado de
 # pre_gadea v0.21.4): una petición EXPLÍCITA de cambiar de idioma a mitad de
@@ -776,11 +791,9 @@ def _apply_short_answer(state: ConversationState, message: str) -> bool:
         # "island" sin que nadie lo dijera). El atajo "1"/"2" (mismo patrón
         # que is_certified/nationality/safety) solo tiene sentido si es la
         # respuesta COMPLETA, no una cifra suelta dentro de otra frase.
-        if msg == "2" or (_ISLAND_RE.search(msg) and not _CARTAGENA_RE.search(msg)):
-            state.location = state.detected_location = "island"
-            return True
-        if msg == "1" or _CARTAGENA_RE.search(msg):
-            state.location = state.detected_location = "cartagena"
+        place = {"1": "cartagena", "2": "island"}.get(msg) or _departure_place(msg)
+        if place:
+            state.location = state.detected_location = place
             return True
         # Deferral ("no sé/da igual/recomiéndame") → Cartagena (salida más
         # común). Sin esto, el regex fallaba y se re-preguntaba en bucle.

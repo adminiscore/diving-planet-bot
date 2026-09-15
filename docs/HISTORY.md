@@ -99,8 +99,11 @@ History
   - **Una sola lectura** de "qué campo contesta la pregunta pendiente" para la guarda (b), la de campos sabidos y la cita.
   - **Medido:** batería de booleanos con 7 escenarios nuevos (cortesías como "desde cartagena, gracias" y más respuestas dobles): legítimos 18/24 → **33/33**, alucinaciones evitadas **30/30**. Conversación completa 2/2 (la cortesía no cuela nada). `eval --core` 226/230 idéntico por caso, batería de grupo sin cambios, prompts: 87 idénticos.
   - **Descartado en la sonda:** citar también la ubicación. El LLM citaba "Bocagrande" y dejaba de rellenar `location` 2/2.
+* **Hallazgo C, en parte: palabras de lugar con una sola fuente.** El resolutor de "¿desde dónde saldrías?" tenía su propio `_CARTAGENA_RE`/`_ISLAND_RE`: no conocía los apodos de la ciudad ("la heroica", "the walled city") ni los hoteles ("Pao Pao", "Cocoliso"), que acababan en el resolutor LLM, y leía isla en "rezar el rosario". Ahora usa el lector del detector (`_CARTAGENA_NAME_RE`, `_GENERIC_ISLAND_RE`) con su precedencia de siempre. Foto sin LLM sobre 3379 frases: el detector no cambia; 55 respuestas del resolutor pasan a resolverse sin LLM o dejan el falso "rosario".
+  - **Medido y revertido: dejar al LLM los mensajes con Cartagena y una isla** (salida o alojamiento frente a destino). El LLM también confunde el destino: "vamos de cartagena a baru" y "llegamos a cartagena y luego nos vamos a baru" pasaban de Cartagena a isla 2/2, y "quiero ir a las islas del rosario desde cartagena" como respuesta, de 2/2 a 0/2. Sonda: apertura 16/22 → 15/22. Sigue abierto (C.2).
+  - **Consecuencia aceptada:** "nos vemos en la marina" como respuesta a la ubicación sale isla, por el "marina" suelto que ya tenía el detector (C.3).
 * **Para reinvestigar** (owner): grupo mixto → USD (necesita un valor propio, no el booleano), respuesta doble tras F5a y unificar la ubicación entre detector y núcleo. Detalle en `docs/robustness/NEXT-SESSION-PROMPT.md`.
-* Suite: **2405 passed / 18 skipped**.
+* Suite: **2424 passed / 18 skipped**.
 
 0.25.0 - (2026-09-14)
 ----------------------

@@ -4368,3 +4368,58 @@ dobles; misma petición que el núcleo, tool actual frente a variante con `evide
   ubicación y nacionalidad y pasa a seguridad 2/2; "desde cartagena, gracias" no cuela la nacionalidad 2/2.
 - `eval --core`: **226/230, idéntico por caso**, tanda limpia.
 - Batería de grupo (config PRE): 17/17, 13/13, 17/17, **0 cambios de veredicto**.
+
+### Hallazgo C: ubicación entre detector y núcleo (hecho en parte, con un resultado negativo)
+
+**Punto de partida.** Dos lectores de la ubicación:
+- el resolutor corto del núcleo (`_apply_short_answer`, solo con la ubicación pendiente), con su propio
+  `_CARTAGENA_RE`/`_ISLAND_RE`;
+- `_detect_location` del detector (cada turno), con apodos, hoteles e islas concretas.
+
+Discrepaban en 29 de 155 mensajes con palabra de lugar:
+- el núcleo no conocía apodos ni hoteles y leía isla en "rezar el rosario";
+- el detector no usa "isla" suelta;
+- con Cartagena y una isla en el mismo mensaje, las precedencias son contrarias (detector: isla
+  concreta primero; núcleo: Cartagena primero).
+
+El veto LLM de `location` está apagado por defecto (no se ha podido comprobar PRE sin leer `.env.pre`).
+
+**Referencia con el LLM real** (`c_probe.py`, 2 repeticiones; apertura con `_understand`, respuesta con
+`route_message` y la ubicación pendiente): **apertura 16/22, pendiente 14/20**.
+- **Fallan:** "quiero ir a las islas del rosario desde cartagena" (apertura → isla), "we're in cartagena
+  now, staying on the islands tomorrow" (los dos contextos → Cartagena), "estoy en cartagena pero el
+  hotel es en isla grande" (respuesta → Cartagena), "nos vemos en la marina" (→ isla) y "rezar el
+  rosario" como respuesta (→ isla).
+
+**Primer diseño, medido y revertido: con los dos lugares, ningún lector determinista decide y el LLM
+rellena el hueco.** Sonda con el LLM real:
+- **"llegamos a cartagena y luego nos vamos a baru":** apertura 2/2 → **0/2** (isla).
+- **"vamos de cartagena a baru":** Cartagena en HEAD → **isla 2/2**.
+- **"quiero ir a las islas del rosario desde cartagena" como respuesta:** 2/2 → **0/2**.
+- **Mejora:** solo "we're in cartagena now…" en apertura (0/2 → 1/2).
+- **En los mismos casos de la referencia:** apertura 16 → 15 de 22, pendiente 14 → 14 de 20.
+
+El prompt de relleno y el resolutor de slot también leen el destino de la excursión como la ubicación:
+mejora uno y empeoran otros, no se acepta. Sigue abierto (C.2). La pista sería la definición del campo,
+que no dice que el destino no cuenta, medida con esta misma sonda.
+
+**Lo que queda: una sola fuente de palabras de lugar.**
+- `_CARTAGENA_NAME_RE` (nombre y apodos, antes una cadena de `if`) y `_GENERIC_ISLAND_RE` ("isla",
+  "island", "Barú", "los rosarios") en el detector.
+- `_departure_place` del núcleo: Cartagena nombrada gana (la precedencia de siempre en la respuesta);
+  si no, el lector del detector (islas concretas, hoteles, la guarda de "rezar el rosario"); si no, una
+  isla sin nombre vale como respuesta. Fuera `_CARTAGENA_RE`/`_ISLAND_RE`.
+
+**Medido sin LLM** (`c_snapshot.py`, 3379 frases, HEAD frente al árbol):
+- **detector, 0 cambios**;
+- **resolutor corto, 55 cambios**, todos en la dirección buscada salvo uno:
+  - hoteles y apodos que antes iban al resolutor LLM ("Hotel Pao Pao", "La Heroica" ya salían bien 2/2 por
+    esa vía en la referencia: mismo valor, sin petición);
+  - "rezar el rosario" deja de ser isla (2/2 sin ubicación con el LLM real);
+  - unos cuantos son literales de tests con forma de identificador;
+  - **el que no:** "nos vemos en la marina" como respuesta pasa a isla, por el alias "marina" que el
+    detector ya tenía (C.3).
+- El eval-set no pasa por el resolutor corto (`_understand` y el detector no cambian), así que no se
+  repite.
+
+- Tests: 19 nuevos (`tests/test_location_single_source.py`). Suite 2424.

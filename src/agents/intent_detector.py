@@ -865,6 +865,24 @@ def other_person_certification(message: str) -> bool | None:
     return not re.search(r"\b(?:no|not|nunca|never|sin)\b|n't\b", match.group(0))
 
 
+# Palabras de lugar con una sola fuente (hallazgo C, 2026-09-15). Antes el nucleo tenia su
+# propio `_CARTAGENA_RE`/`_ISLAND_RE`: no conocia los apodos de la ciudad ni los hoteles, y
+# leia isla en "rezar el rosario".
+# Cartagena por su nombre o sus apodos historicos ("la heroica", "corralito de piedra",
+# "the walled city"...). "cartagena"/"ctg" como subcadena: "cartagenaa" con errata cuenta.
+_CARTAGENA_NAME_RE = re.compile(
+    r"cartagena|ctg|\bla\s+heroica\b|\bcorralito\s+de\s+piedra\b|\bciudad\s+redentora\b"
+    r"|\b(?:la\s+)?ciudad\s+amurallada\b|\bcentro\s+amurallado\b|\b(?:the\s+)?heroic\s+city\b"
+    r"|\b(?:the\s+)?walled\s+city\b|\bqueen\s+of\s+the\s+caribbean\b",
+    re.IGNORECASE,
+)
+# Isla sin nombre concreto ("isla", "las islas", "island", "Barú", "los rosarios"). Sola no
+# dice si es el destino o donde se aloja: el detector no la usa para fijar la ubicacion,
+# pero si para saber que el mensaje nombra una isla, y el nucleo la acepta como respuesta a
+# "¿desde donde saldrias?".
+_GENERIC_ISLAND_RE = re.compile(r"\b(?:isla\w*|island\w*|bar[uú]|(?:los|the)\s+rosarios)\b", re.IGNORECASE)
+
+
 class IntentDetector:
 
     def __init__(self, openai_client: OpenAI | None = None):
@@ -1899,18 +1917,7 @@ class IntentDetector:
         # usado por locales y turistas hispanohablantes; "queen of the
         # caribbean": apodo turístico en inglés).
         # Encontrado 2026-07-09 que ninguno se reconocía — solo "cartagena"/"ctg".
-        if (
-            'cartagena' in msg_lower
-            or 'ctg' in msg_lower
-            or re.search(r'\bla\s+heroica\b', msg_lower)
-            or re.search(r'\bcorralito\s+de\s+piedra\b', msg_lower)
-            or re.search(r'\bciudad\s+redentora\b', msg_lower)
-            or re.search(r'\b(?:la\s+)?ciudad\s+amurallada\b', msg_lower)
-            or re.search(r'\bcentro\s+amurallado\b', msg_lower)
-            or re.search(r'\b(?:the\s+)?heroic\s+city\b', msg_lower)
-            or re.search(r'\b(?:the\s+)?walled\s+city\b', msg_lower)
-            or re.search(r'\bqueen\s+of\s+the\s+caribbean\b', msg_lower)
-        ):
+        if _CARTAGENA_NAME_RE.search(msg_lower):
             intent.location = "cartagena"
             intent.detected_fields.append("location")
 
@@ -2155,6 +2162,10 @@ class IntentDetector:
         ):
             intent.location = "island"
             intent.detected_fields.append("location")
+        # Cartagena Y una isla en el mismo mensaje (salida o alojamiento frente a destino) se
+        # sigue decidiendo por precedencia. Dejarlo al LLM se midio y fue peor (hallazgo C,
+        # 2026-09-15): "vamos de cartagena a baru" o "llegamos a cartagena y luego nos vamos a
+        # baru" pasaban de Cartagena a isla 2/2. Ver docs/robustness/progress-log.md.
 
     def _calculate_confidence(self, intent: DetectedIntent) -> None:
         field_weights = {
