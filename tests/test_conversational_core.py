@@ -638,22 +638,24 @@ async def test_understand_requests_only_state_missing_fields(monkeypatch):
     state.detected_group_size = 2
     # location aún desconocida → único hueco conductor
     async def _capturing_extract_and_verify(gaps, verify, message, values, **kwargs):
-        # Con campos ya sabidos, los huecos viajan en la peticion que tambien verifica
-        # esos campos contra lo guardado (tarea 7b, 2026-09-15).
-        captured.update(only_fields=gaps, verify=verify)
-        return {}, {}
+        # Con campos ya sabidos, esos campos viajan en la MISMA peticion como campos a
+        # rellenar y se comparan con lo guardado (tarea 7b; forma de relleno, hallazgo J).
+        captured.update(only_fields=gaps, verify=verify, values=values)
+        return {"is_certified": True, "group_size": 2}, {}
 
     monkeypatch.setattr(core, "fill_gaps", _capturing_fill_gaps)
     monkeypatch.setattr(core, "extract_and_verify", _capturing_extract_and_verify)
     await core._understand(state, "pues estamos por el centro histórico ahora mismo")
 
-    assert {"is_certified", "group_size"} <= set(captured.get("verify") or [])
     only = captured.get("only_fields")
     assert only is not None
     assert "location" in only
-    assert "activity" not in only
-    assert "is_certified" not in only
-    assert "group_size" not in only
+    assert "activity" not in only                        # no es corregible: no se pide
+    assert {"is_certified", "group_size"} <= set(only)   # sabidos y corregibles
+    assert "is_certified" not in (captured.get("verify") or [])
+    assert "group_size" not in (captured.get("values") or {})   # el LLM nunca ve lo guardado
+    assert state.pending_correction is None                     # mismo valor: nada que corregir
+    assert state.detected_group_size == 2
 
 
 @pytest.mark.asyncio

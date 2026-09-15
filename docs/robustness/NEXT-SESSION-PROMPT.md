@@ -248,11 +248,21 @@ F. **Costes de las guardas del núcleo** (hallazgo 2026-09-15 con `run_extractio
    - **Medir con:** `--core`, la batería de grupo (config PRE) y la de booleanos. Sin empeorar
      los casos de riesgo, que son justo los que estas guardas protegen.
 
-J. **"vale perfecto" con la ubicación pendiente rellena `is_certified=False`** (hallazgo 2026-09-15, ya en HEAD).
+J. ~~**"vale perfecto" con la ubicación pendiente rellena `is_certified=False`**~~ **arreglado (2026-09-15)**: la
+   petición cambió en 7b (prompt combinado); los campos sabidos viajan ahora como relleno y se comparan con lo
+   guardado. Booleanos 18/18, sonda 36/39 frente a 25/39. Antes (hallazgo 2026-09-15, ya en HEAD):
    - Batería de booleanos (`charla-vale-perfecto`): la alucinación se evitaba 3/3 en la referencia de 7b;
      hoy 2 de 4 en HEAD y en el árbol, con la petición idéntica byte a byte (`bool_scn_reps`).
    - No lo causa A (el mensaje no abre su puerta). Algún cambio entre 7b y F.4 lo dejó expuesto, o
      la referencia tuvo suerte: bisecar con la misma sonda antes de tocar nada.
+
+K. **"al final mi suegra también bucea, no hace snorkel" tras el cierre va a RAG** (hallazgo 2026-09-15, ya en HEAD).
+   - La corrección del reparto se pierde: el router marca `comparing_options` y la puerta de deliberación
+     del núcleo lo acepta (2 ofertas, sin cifra ni "quiero"). Visto 2/2 en la tanda de J y ya en la de H;
+     en la de 7b pedía confirmación 2/2 (intermitente).
+   - No pasa por la petición de extracción (la puerta va antes), así que no lo causa J.
+   - **Pista:** una oferta negada ("no hace snorkel") no es una opción que se sopesa; señal estructural,
+     igual que la de E (sujeto propio). Medir con `repro_old_findings f01_conversacion` y la batería del router.
 
 I. ~~**El LLM se abstiene del grupo entero con muchos campos pedidos**~~ **arreglado (2026-09-15)** para la
    familia "persona con estado distinto": la frase elíptica del contraste se lee por su polaridad y el

@@ -218,6 +218,19 @@ def _clean_verified_value(field: str, llm_value):
     return llm_value
 
 
+def disagreements_with(values: dict, fields, reference: dict) -> dict:
+    """Campos de `fields` cuyo valor del LLM (limpio) existe y difiere de `reference`.
+    Una sola comparacion para la verificacion y para los campos sabidos que viajan como
+    relleno (hallazgo J). `is_certified=False` / `is_colombian=False` son respuestas
+    reales: se comparan con `!=`, nunca por truthiness."""
+    out = {}
+    for field in fields:
+        value = _clean_verified_value(field, (values or {}).get(field))
+        if value is not None and value != reference.get(field):
+            out[field] = value
+    return out
+
+
 async def verify_fields(
     fields: list[str],
     message: str,
@@ -281,14 +294,7 @@ async def verify_fields(
         logger.warning(f"[LLM_EXTRACTOR][DEGRADED][{log_tag}_VETO] error: {exc}")
         return {}
 
-    disagreements = {}
-    for field in fields:
-        value = _clean_verified_value(field, (args or {}).get(field))
-        # `is_certified=False` / `is_colombian=False` son respuestas reales:
-        # se comparan con `!=`, nunca por truthiness.
-        if value is not None and value != regex_values.get(field):
-            disagreements[field] = value
-    return disagreements
+    return disagreements_with(args, fields, regex_values)
 
 
 async def extract_and_verify(
@@ -366,13 +372,7 @@ async def extract_and_verify(
         k: v for k, v in (args or {}).items()
         if k in gaps and v not in (None, "", [], {})
     }
-    disagreements = {}
-    for field in verify:
-        value = _clean_verified_value(field, (args or {}).get(field))
-        # `is_certified=False` / `is_colombian=False` son respuestas reales:
-        # se comparan con `!=`, nunca por truthiness.
-        if value is not None and value != regex_values.get(field):
-            disagreements[field] = value
+    disagreements = disagreements_with(args, verify, regex_values)
     if patch:
         logger.info(f"[LLM_EXTRACTOR][COMBINED] filled gaps={list(patch.keys())} msg={message[:60]!r}")
     return patch, disagreements

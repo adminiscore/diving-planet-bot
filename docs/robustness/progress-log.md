@@ -4232,3 +4232,59 @@ colombiano y yo tambien". `eval --core`: 6/6 casos `nat-mixto-*` fallaban.
 
 - **Consecuencia aceptada:** "somos de nacionalidad mixta", sin nombrar a nadie, no abre la puerta y ya
   no dispara la explicación.
+
+### Hallazgo J: "vale perfecto" rellena is_certified=False (arreglado)
+
+**Síntoma** (visto al medir A). Batería de booleanos, `charla-vale-perfecto` (ubicación pendiente,
+buceo certificado y total 2 sabidos): la alucinación se evitaba 3/3 en la referencia de 7b y hoy 2 de 4,
+con la petición idéntica byte a byte en HEAD y en el árbol.
+
+**Búsqueda del origen, sin gastar peticiones.** `bool_scn_hash.py` corta la llamada al LLM antes de
+enviarla y guarda el hash de la petición. Recorrido por los commits desde 7b:
+- **4c7e2df (antes de 7b):** `d418eabc0b7b`.
+- **c45cd8b (7b) y todos los posteriores hasta e3fa566:** `739e80bb2ecb`.
+
+La petición cambió solo en 7b. La medición de 7b ya se hizo con esa petición: su 3/3 fue suerte.
+Tasa con 8 repeticiones: **antes de 7b 0/8, HEAD 5/8**.
+
+**Causa.** 7b añadió la verificación de campos sabidos a la petición del turno: con huecos, el turno
+pasaba del prompt de rellenar (`extraction_system_prompt`) al combinado (verificar primero, rellenar al
+final). Con ese prompt, un mensaje sin contenido rellena booleanos desde el historial.
+
+**Descartado:**
+- **Ampliar `_is_short_ack`:** no conoce "perfecto", "gracias" ni "listo", y la siguiente jerga ("de una",
+  "chévere") volvería a caer.
+- **"El detector no vio nada":** "ah y somos paisas" tampoco lo ve el detector y hay que rellenarlo.
+
+**Sonda antes de tocar src** (`j_probe.py`, 13 casos × 3). Mismos estados, huecos y campos sabidos que el
+núcleo. Compara V (HEAD, combinado) con F (los campos sabidos como campos a rellenar y la contradicción por
+comparación). **V 25/39, F 36/39.**
+- "vale perfecto": V 1/3, F 3/3.
+- "ah no, somos gringos": V 1/3, F 3/3 (V proponía además total 4 y un reparto con `undecided` 2/3).
+- "al final mi suegra también bucea…": V 1/3, F 3/3.
+- "perfecto, gracias": V inventaba `group_size` 4 2/3, F 3/3 limpio.
+- "ah y somos paisas": los dos rellenan la nacionalidad, pero V añadía `is_certified=False` 3/3.
+- **Único fallo de F:** "al final somos 4", igual en V (propone total 4 con la persona nueva `undecided`,
+  razonable; la expectativa de la sonda era estricta).
+
+**Arreglo.**
+- Misma petición única (decisión del owner en 7b): `extract_and_verify(gaps + recheck, veto_fields, ...)`.
+  Sin campos del regex que vetar, es el prompt de rellenar de siempre.
+- Lo devuelto para los campos sabidos se compara con lo guardado con `disagreements_with`, que es también
+  la comparación de `verify_fields` y `extract_and_verify` (dos bucles iguales menos). Esos valores salen
+  del patch antes de aplicarse.
+- El LLM sigue sin ver el valor guardado. La verificación propia (sin huecos, tras el cierre) y el veto
+  de lo que resolvió el regex en el turno no cambian.
+
+**Medido.**
+- `snapshot_prompts`: 87 idénticos byte a byte. Suite 2379 (2 tests actualizados al nuevo contrato).
+- Batería de booleanos: **18/24 legítimos, 18/18 alucinaciones evitadas** (15/18 con A). Único cambio,
+  `charla-vale-perfecto` 0/3 → 3/3.
+- `eval --core`: **226/230, idéntico por caso**, tanda limpia.
+- Batería de grupo (config PRE): **17/17, 13/13, 17/17**. Único cambio, b03, que vuelve a OK (ya
+  probado variable con la petición idéntica).
+- Conversaciones de 7b (`repro_old_findings 2`): corrección tras el precio a USD 2/2, correcciones antes
+  del precio iguales y actividad del acompañante que llega tarde 2/2.
+- `f01_conversacion`: "al final mi suegra también bucea, no hace snorkel" tras el cierre fue a RAG 2/2.
+  Con la reserva cerrada ese turno no tiene huecos (no pasa por este cambio) y la puerta de deliberación
+  corre antes de la extracción; ya pasó en la tanda de H. **Hallazgo K**, anotado en pendientes.

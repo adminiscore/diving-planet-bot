@@ -56,6 +56,7 @@ from src.agents.intent_detector import (
 from src.agents.llm_extractor import (
     compose_acknowledgement,
     detect_special_signals,
+    disagreements_with,
     extract_and_verify,
     fill_gaps,
     missing_fields,
@@ -1906,8 +1907,9 @@ async def _understand(state: ConversationState, message: str, *, answered_pendin
     _wants_gaps = bool(gaps) and not _looks_like_question(message) and not _is_greeting_only(message)
     # Campos ya sabidos que el mensaje podria corregir con palabras que el regex no lee
     # ("ah no, somos gringos", "cambio de plan, estamos en barú") (tarea 7b, 2026-09-15).
-    # Viajan en la verificacion con el valor GUARDADO, que el LLM no ve; solo hay
-    # discrepancia si el mensaje dice otra cosa. Medido con el LLM real: 24/24, se
+    # Viajan en la peticion del turno (como campos a rellenar si hay huecos, hallazgo J; si
+    # no, en una verificacion propia) y se comparan con el valor GUARDADO, que el LLM no
+    # ve; solo hay discrepancia si el mensaje dice otra cosa. Medido con el LLM real: 24/24, se
     # abstiene en "perfecto, gracias", en el mismo valor y si habla de otra persona.
     # Owner: en la peticion que el turno ya hace, y tras el cierre en una propia.
     known = _known_field_values(state)
@@ -1921,15 +1923,23 @@ async def _understand(state: ConversationState, message: str, *, answered_pendin
     _combined_patch = None
     if (veto_fields or recheck) and _wants_gaps:
         try:
+            # Los campos sabidos viajan como campos a RELLENAR, no a verificar (hallazgo J,
+            # 2026-09-15): con el prompt combinado, "vale perfecto" rellenaba
+            # is_certified=False 5/8 (0/8 antes de 7b) y la verificacion re-derivaba totales
+            # del historial ("perfecto, gracias" -> group_size 4). La contradiccion sale de
+            # comparar lo rellenado con lo guardado, que el LLM tampoco ve. Sonda con el LLM
+            # real: 36/39 frente a 25/39. Lo que resolvio el regex ESTE turno se sigue
+            # verificando (veto).
             _combined_patch, _disagreements = await extract_and_verify(
-                gaps, veto_fields + recheck, message, verify_values,
+                gaps + recheck, veto_fields, message, regex_values,
                 history=state.history, lang=state.language, extra_fields=extra_fields,
             )
-            supervisor.apply_veto_disagreements(
-                {f: v for f, v in _disagreements.items() if f in veto_fields}, intent, message, regex_values
-            )
+            supervisor.apply_veto_disagreements(_disagreements, intent, message, regex_values)
+            _known_disagreements = disagreements_with(_combined_patch, recheck, known)
+            for known_field in recheck:
+                _combined_patch.pop(known_field, None)
             _route_contradictions(
-                state, message, intent, _recheck_proposals(state, intent, answered_pending, _disagreements, recheck)
+                state, message, intent, _recheck_proposals(state, intent, answered_pending, _known_disagreements, recheck)
             )
         except Exception as exc:  # noqa: BLE001
             # Mismo contrato defensivo que las dos funciones que sustituye:

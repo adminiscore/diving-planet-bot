@@ -35,9 +35,12 @@ def _closed(allocation=None, colombian=True):
 
 
 async def _send(state, message, verify=None):
+    # En la peticion del turno, el valor de un campo sabido vuelve en el relleno y la
+    # contradiccion sale de compararlo con lo guardado (hallazgo J, 2026-09-15).
     with patch("src.agents.supervisor.detect_routing_signals", new=AsyncMock(return_value={})), \
          patch.object(core, "fill_gaps", new=AsyncMock(return_value={})), \
-         patch.object(core, "extract_and_verify", new=AsyncMock(return_value=({}, verify or {}))), \
+         patch.object(core, "extract_and_verify",
+                      new=AsyncMock(side_effect=lambda *a, **k: (dict(verify or {}), {}))), \
          patch.object(core, "verify_fields", new=AsyncMock(return_value=verify or {})), \
          patch.object(core, "detect_special_signals", new=AsyncMock(return_value={})), \
          patch.object(core, "compose_acknowledgement", new=AsyncMock(return_value="")), \
