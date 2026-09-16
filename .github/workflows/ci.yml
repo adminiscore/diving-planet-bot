@@ -180,6 +180,34 @@ jobs:
             docker image prune -af || true
             echo "=== disco tras limpieza post-build ==="
             df -h / || true
+            # --- Chatwoot health-check + auto-recuperacion (2026-09-16) ---
+            # El widget de "Abrir el chat" lo sirve dp-chatwoot (Rails); si el disco
+            # se llena, Rails responde 500 y el chat NO abre aunque la landing
+            # estatica de Caddy siga cargando (enganya). El disco ya se libero
+            # arriba; aqui probamos Chatwoot por HTTP con su PROPIO Ruby (stdlib
+            # net/http, siempre presente en la imagen) y SOLO si no esta sano lo
+            # reiniciamos. Condicional a proposito: Chatwoot es COMPARTIDO con PRO
+            # -> un restart corta el chat unos segundos para ambos, asi que en un
+            # deploy con Chatwoot sano NO se toca. Sin comillas simples (romperian
+            # el string SSH); mismo patron de \" que el health-check del bot.
+            cw=$(docker exec dp-chatwoot ruby -e "require \"net/http\"; begin; puts Net::HTTP.get_response(URI(\"http://localhost:3000/\")).code; rescue; puts \"000\"; end" 2>/dev/null || echo "000")
+            echo "chatwoot http = $cw"
+            case "$cw" in
+              2*|3*) echo "chatwoot sano ($cw) -> no se toca" ;;
+              *)
+                echo "=== dp-chatwoot NO sano ($cw) -> restart (web + worker) ==="
+                docker restart dp-chatwoot dp-chatwoot-worker || true
+                echo "--- esperando arranque de Rails (~20-40s) ---"
+                for i in $(seq 1 18); do
+                  sleep 5
+                  cw=$(docker exec dp-chatwoot ruby -e "require \"net/http\"; begin; puts Net::HTTP.get_response(URI(\"http://localhost:3000/\")).code; rescue; puts \"000\"; end" 2>/dev/null || echo "000")
+                  echo "  wait $i: http=$cw"
+                  case "$cw" in 2*|3*) break ;; esac
+                done
+                echo "chatwoot http tras recuperacion = $cw"
+                docker logs dp-chatwoot --tail 30 2>&1 || true
+                ;;
+            esac
             sleep 5
             docker exec dp-pre-bot python -m scripts.load_embeddings --yes
             docker exec dp-pre-bot python -c "import urllib.request; print(urllib.request.urlopen(\"http://localhost:8000/health\").read())"
