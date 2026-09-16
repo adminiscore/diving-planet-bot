@@ -178,4 +178,11 @@ jobs:
             sleep 5
             docker exec dp-pre-bot python -m scripts.load_embeddings --yes
             docker exec dp-pre-bot python -c "import urllib.request; print(urllib.request.urlopen(\"http://localhost:8000/health\").read())"
+            # --- Diagnostico de Langfuse (2026-09-16): confirmar que el tracing
+            # se activo en el contenedor (claves presentes + init ok). Sale en el
+            # log de la Action, sin exponer los valores. ---
+            echo "=== LANGFUSE: estado en dp-pre-bot ==="
+            docker exec dp-pre-bot sh -c "env | grep -iE '^LANGFUSE_' | sed 's/=.*/=SET/'" || echo "(sin LANGFUSE_* en el env del contenedor)"
+            docker exec dp-pre-bot python -c "from src.config import settings; from src.observability import langfuse_enabled; print('langfuse_enabled=', langfuse_enabled(settings), '| host=', settings.langfuse_host, '| pk_set=', bool(settings.langfuse_public_key), '| sk_set=', bool(settings.langfuse_secret_key))" 2>&1 || true
+            docker logs dp-pre-bot 2>&1 | grep -i LANGFUSE | tail -8 || echo "(sin lineas [LANGFUSE] en el log del bot)"
           '
