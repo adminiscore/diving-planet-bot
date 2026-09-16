@@ -97,15 +97,11 @@ jobs:
     # docs/deploy-pre-redeploy.md).
     if: (github.ref == 'refs/heads/feature/pre_gadea' || github.ref == 'refs/heads/feature/pre_alvaro' || github.ref == 'refs/heads/feature/pre_pruebaGon') && github.event_name == 'push'
     runs-on: ubuntu-latest
-    # PRE es UN entorno compartido (un solo VPS): dos deploys a la vez chocan con
-    # "container name already in use" al recrear dp-pre-bot. Grupo GLOBAL (constante,
-    # no por rama/ref) para serializar TODOS los deploys entre ramas. cancel-in-
-    # progress: false = el deploy en curso NO se cancela (cancelarlo a mitad dejaria
-    # PRE roto); el nuevo espera. Si llegan varios en cola, GitHub deja solo el
-    # ultimo pendiente = "el ultimo push gana", que ya es el modelo.
-    concurrency:
-      group: deploy-pre
-      cancel-in-progress: false
+    # NOTA: la serializacion via `concurrency: deploy-pre` se retiro porque dejaba
+    # deploys en cola detras de una corrida colgada (SSH/docker), impidiendo que
+    # aterrizaran los fixes. El modelo "ultimo push gana" ya lo da el `git reset
+    # --hard` + `docker compose up -d --build`. Reintroducir la serializacion solo
+    # con cancel-in-progress: true si vuelve el choque de "container name in use".
 
     steps:
       - name: Set up SSH
