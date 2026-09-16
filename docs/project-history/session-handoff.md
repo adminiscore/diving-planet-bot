@@ -11,6 +11,44 @@ Read this file before changing code in the Diving Planet Bot. For a quick versio
 
 ## Current branch and workflow
 
+### 🚨 2026-09-16 — HANDOFF A GADEA (cierre de Álvaro). LEER ESTO PRIMERO
+
+**Ramas en sync (todas en `b7c291b`):** `feature/agent-arch` == `feature/pre_alvaro` ==
+`feature/pre_gadea`. PRO intacto.
+
+**Hecho esta sesión:**
+1. **Observabilidad migrada LangSmith → Langfuse** (`src/observability.py`, `langfuse==3.15.0`).
+   La cuota Developer de LangSmith se agotó (proceso runaway) → muerta hasta el 1-oct. Langfuse
+   confirmado trazando en PRE por el owner. Import **lazy + gated por claves** (langfuse crashea
+   al import bajo Python 3.14; PRE/CI corren 3.11, así que off en local y on en PRE). Claves por
+   secrets de GitHub (`LANGFUSE_PUBLIC_KEY/SECRET_KEY/HOST`) inyectadas en `.env.pre` por el deploy.
+   ⚠️ Toda mención a "LangSmith" más abajo en este doc está OBSOLETA — es Langfuse ahora.
+2. **Bug del saludo doble ARREGLADO en código** (`_is_greeting_only` en `conversational_core.py`
+   + guards en las fases `_routing_phase`/`_extract_close_phase`; `GREETING_SMALLTALK_KEYWORDS` en
+   `supervisor.py`). Un saludo+cortesía ("hola que tal?") ya **NO** va a RAG → un solo mensaje.
+   **Verificado en código** (879 tests CI verdes + repro de punta a punta por el grafo real:
+   router→booking→subgrafo = 1 burbuja, sin RAG). ⚠️ **NO verificado en vivo todavía** (ver bloqueo).
+3. **CI: retirado el `concurrency: deploy-pre`** (`cancel-in-progress:false` encolaba deploys
+   detrás de corridas colgadas → los fixes no aterrizaban). Documentado con motivo en
+   `docs/deploy-pre-redeploy.md` (nota 2026-09-16). Si vuelve el choque "container name in use",
+   reintroducir con `cancel-in-progress:true`, **nunca `false`**.
+
+**🔴 BLOQUEO ACTIVO — PRE caído (chat no abre):** `pre.is-core.dev` carga la landing (estática,
+Caddy up) pero **"Abrir el chat" se queda pillado**. Causa: **`dp-chatwoot` caído** (disco lleno
+→ Rails 500; Chatwoot comparte disco con los build de docker). El deploy auto-recupera
+`dp-pre-postgres` + reconstruye `dp-pre-bot`, **pero NO reinicia Chatwoot**. Fix (necesita SSH al
+VPS — el owner no lo tenía a mano en esta sesión):
+```bash
+ssh root@pre.is-core.dev          # o la IP real del secret PRE_VPS_HOST
+docker builder prune -af && docker image prune -af      # liberar disco
+docker restart dp-chatwoot dp-chatwoot-worker
+docker logs dp-chatwoot --tail 40                        # confirmar arranque sin 500
+```
+Tras esto: recargar `pre.is-core.dev` → "hola que tal?" debe dar **un solo saludo + menú**
+(valida el fix nº2 en vivo). **Mejora propuesta (pendiente decisión):** añadir al job `deploy-pre`
+un health-check + restart automático de `dp-chatwoot` como el que ya existe para postgres (ojo:
+Chatwoot es compartido PRE+PRO, el restart corta el chat unos segundos para ambos).
+
 ### 🧭 GADEA — CONTEXTO COMPLETO PARA CONTINUAR (2026-08-11, cierre de Álvaro)
 
 **Resumen en una frase:** el refactor multi-agente está **funcionalmente completo y en
