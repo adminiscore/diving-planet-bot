@@ -29,12 +29,37 @@ def make_state(**over) -> ConversationState:
     ("  buenas   tardes  ", True),
     ("hi", True),
     ("hey", True),
+    # saludo + cortesía / combinaciones (bug en vivo 2026-09-16): también es saludo
+    ("hola buenas", True),
+    ("hola buenas que tal?", True),
+    ("¿qué tal?", True),
+    ("buenas que tal", True),
+    ("hi how are you", True),
     ("hola quiero bucear", False),      # saludo + contenido → NO es puro
+    ("que tal el buceo nocturno?", False),  # cortesía + contenido real → NO
     ("somos 2 personas", False),
     ("buenos días, ya soy certificada", False),
 ])
 def test_is_greeting_only(msg, expected):
     assert _is_greeting_only(msg) is expected
+
+
+@pytest.mark.asyncio
+async def test_greeting_smalltalk_first_turn_does_not_hit_rag(monkeypatch):
+    """Bug en vivo (2026-09-16): "hola buenas que tal?" daba saludo + el fallback
+    de asesor de RAG ("ese detalle no lo tengo a la mano..."). Un saludo+cortesía
+    NO es una pregunta de info → no debe llegar a RAG (`_answer_question`)."""
+    answer_q = AsyncMock(return_value="RAG-NO-DEBERIA-LLAMARSE")
+    monkeypatch.setattr(core, "_answer_question", answer_q)
+    monkeypatch.setattr(core, "fill_gaps", AsyncMock(return_value={}))
+    monkeypatch.setattr(core, "detect_special_signals", AsyncMock(return_value={}))
+    monkeypatch.setattr(core, "extract_notes", AsyncMock(return_value=[]))
+    monkeypatch.setattr(core, "compose_acknowledgement", AsyncMock(return_value=""))
+
+    reply = await core.maybe_handle_turn(make_state(step=Step.WELCOME), "hola buenas que tal?",
+                                         routing_signals={})
+    answer_q.assert_not_awaited()          # no se fue a RAG
+    assert reply and "RAG-NO-DEBERIA-LLAMARSE" not in reply  # respondió (el saludo)
 
 
 @pytest.mark.asyncio

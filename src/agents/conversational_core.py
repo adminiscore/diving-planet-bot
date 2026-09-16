@@ -2768,16 +2768,29 @@ def _looks_like_question(message: str) -> bool:
 
 
 def _is_greeting_only(message: str) -> bool:
-    """True si el mensaje es SOLO un saludo ("hola", "buenas", "hi"...) sin
-    contenido de reserva. Se normaliza (minúsculas, espacios colapsados, sin
-    signos) y se compara contra `supervisor.GREETING_ONLY_KEYWORDS`.
+    """True si el mensaje es SOLO saludo y/o cortesía de small-talk ("hola",
+    "buenas", "hola buenas que tal?", "hi how are you") — sin contenido de
+    reserva ni pregunta de info real.
 
-    Fase 3.4: un saludo puro no tiene slots que extraer, así que la llamada LLM
-    de `fill_gaps` es evitable — devolvía `{}` de todas formas. "hola quiero
-    bucear" NO es saludo puro (tiene contenido) y sí llama a `fill_gaps`."""
+    Se compone del vocabulario de saludo + cortesía (`GREETING_ONLY_KEYWORDS` +
+    `GREETING_SMALLTALK_KEYWORDS`, una sola fuente): se quitan esas frases del
+    mensaje (sin tildes ni signos) y, si no queda nada sustantivo, es un saludo.
+    Así cubre combinaciones ("hola buenas") y saludo+cortesía ("hola que tal")
+    sin enumerarlas. "que tal el buceo nocturno?" NO lo es (queda "el buceo
+    nocturno") y sí va a RAG.
+
+    Fase 3.4: un saludo no tiene slots que extraer (skip `fill_gaps`). Fase
+    robustez (2026-09-16, bug en vivo): tampoco es una pregunta → no va a RAG
+    (antes "hola buenas que tal?" daba saludo + fallback de asesor)."""
     from src.agents import supervisor  # lazy
-    norm = re.sub(r"\s+", " ", message.strip().lower()).strip(" ¡!¿?.,")
-    return norm in supervisor.GREETING_ONLY_KEYWORDS
+    norm = re.sub(r"[^a-z0-9\s]", " ", strip_accents(message).lower())
+    norm = re.sub(r"\s+", " ", norm).strip()
+    if not norm:
+        return False
+    phrases = supervisor.GREETING_ONLY_KEYWORDS | supervisor.GREETING_SMALLTALK_KEYWORDS
+    for phrase in sorted((strip_accents(p).lower() for p in phrases), key=len, reverse=True):
+        norm = re.sub(rf"\b{re.escape(phrase)}\b", " ", norm)
+    return norm.strip() == ""
 
 
 # ─── Cierre: carrito desde slots + resumen determinista con links ───
@@ -3205,7 +3218,7 @@ async def _routing_phase(
     # nunca con lo que el LLM "cree" que se dijo (hallazgo en vivo
     # 2026-07-22: el bot no sabía recuperar sus propios datos y ofrecía
     # escalar a un asesor para algo que ya tenía).
-    if not resolved_short and has_qmark:
+    if not resolved_short and has_qmark and not _is_greeting_only(message):
         signals = await detect_special_signals(message, history=state.history, lang=state.language)
         recalled = None
         if signals.get("recall_field"):
@@ -3919,7 +3932,7 @@ async def _extraction_phase(
 
     # Última red antes del genérico: heurística blanda de pregunta de info
     # (sin exigir "?", ya descartado arriba) — mismo camino RAG de siempre.
-    if not advanced and _looks_like_question(message):
+    if not advanced and _looks_like_question(message) and not _is_greeting_only(message):
         answer = greeting + await _answer_question(state, message)
         state.history.append({"role": "assistant", "content": answer})
         return answer

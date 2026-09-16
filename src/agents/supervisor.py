@@ -914,6 +914,15 @@ GREETING_ONLY_KEYWORDS = {
     "buenas tardes", "buenas noches", "hey",
 }
 
+# Cortesías de small-talk que acompañan a un saludo ("hola buenas que tal?", "hi
+# how are you") y NO son una pregunta de info real. Se comparan sin tildes (ver
+# `conversational_core._is_greeting_only`, que compone saludo + cortesía).
+GREETING_SMALLTALK_KEYWORDS = {
+    "que tal", "que mas", "que hubo", "como estas", "como andas", "como va",
+    "como te va", "todo bien", "how are you", "hows it going", "whats up",
+    "what's up", "buenas buenas",
+}
+
 # --------------------------------------------------------------------------- #
 # New-scenario memory reset (owner decision, 2026-07-20)
 #
