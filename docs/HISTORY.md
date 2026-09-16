@@ -1,6 +1,12 @@
 History
 =======
 
+0.28.1 - (2026-09-16)
+----------------------
+* **Un saludo con cortesía ya no va a RAG** (bug en vivo). "hola buenas que tal?" daba el saludo + el fallback de asesor de RAG porque el "?" lo marcaba como pregunta; y "hola buenas" ni se reconocía como saludo. `_is_greeting_only` ahora compone el vocabulario de saludo + cortesía (`GREETING_ONLY_KEYWORDS` + nuevo `GREETING_SMALLTALK_KEYWORDS`) y los dos gates a RAG del núcleo excluyen los saludos; "que tal el buceo nocturno?" sigue yendo a RAG. Solo cambia la clasificación de saludos puros (no están en el eval-set). Dominio del detector — para revisión de Gadea.
+* **CI: `concurrency` en el deploy** (tarea 9). Dos pushes seguidos a ramas pre_* chocaban con "container name already in use"; grupo global + `cancel-in-progress: false` serializa los deploys a PRE sin cortar uno en curso.
+* Suite **2530 passed / 18 skipped**.
+
 0.28.0 - (2026-09-16)
 ----------------------
 * **Observabilidad migrada de LangSmith a Langfuse** (robustez tarea 8). LangSmith Developer agotó su cuota (un proceso en bucle → 429 hasta el 1-oct) y su límite es bajo; Langfuse Cloud Hobby da más margen. Nuevo `src/observability.py` (módulo hoja): inicializa Langfuse con **máscara de PII** (`redact_pii` recursivo antes de enviar a un tercero), traza cada llamada LLM (drop-in `langfuse.openai`) y el grafo (`CallbackHandler`). `trace_openai` pasa a Langfuse sin tocar los 13 puntos de instanciación; `config` gana `langfuse_public_key/secret_key/host` y arranca el tracing; `scripts/__init__.py` lo apaga en baterías/eval; el deploy inyecta los secrets en `.env.pre`.
