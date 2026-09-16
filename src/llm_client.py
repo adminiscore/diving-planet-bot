@@ -45,6 +45,17 @@ def trace_openai(client: _C) -> _C:
     return client
 
 
+def _is_empty_for(spec: dict, value) -> bool:
+    """¿Es `value` la forma del LLM de decir "nada" en un campo con este esquema? En un
+    booleano `false` es un dato; en el resto (enum de texto, objeto, lista, numero) el LLM
+    rellena con `false` o null lo que no tiene (medido en el hallazgo D)."""
+    if value is None:
+        return True
+    if spec.get("type") == "boolean":
+        return False
+    return value is False or value == "" or value == [] or value == {}
+
+
 def tool_arguments(tool_call, tool: dict) -> dict:
     """Argumentos de una llamada a tool, reencajados en el esquema de ESE tool. Punto
     unico de lectura para todos los tools del bot (2026-09-15).
@@ -62,11 +73,39 @@ def tool_arguments(tool_call, tool: dict) -> dict:
     (seria otra cosa, no un flag aplanado), ni si el valor pertenece a varios enums, ni
     si el campo ya trae un valor valido.
 
+    Claves repetidas (2026-09-16, medido al probar las notas en el tool del router): el
+    LLM detectaba el pronostico pero escribia la clave dos veces en el mismo objeto
+    (`"sensitive_topic": "weather_conditions", ..., "sensitive_topic": false`) y
+    `json.loads` se queda con la ultima. Ya pasaba sin notas (la cadena real de la sonda
+    del hallazgo D repite `sensitive_topic`). Mismo tipo de fallo de forma: una clave
+    repetida nunca borra un valor real con el "nada" de ese campo (ver `_is_empty_for`).
+    Entre dos valores reales gana el ultimo, como en JSON.
+
     Deja pasar `json.JSONDecodeError` como antes: cada llamador ya lo gestiona."""
-    args = json.loads(tool_call.function.arguments or "{}")
+    objects: list[tuple[dict, list]] = []
+
+    def _record(pairs: list) -> dict:
+        obj = dict(pairs)
+        objects.append((obj, pairs))
+        return obj
+
+    args = json.loads(tool_call.function.arguments or "{}", object_pairs_hook=_record)
     if not isinstance(args, dict):
         return args
     properties = tool.get("function", {}).get("parameters", {}).get("properties", {})
+    # El objeto de nivel superior es el ultimo que se cierra al parsear.
+    top_pairs = objects[-1][1] if objects and objects[-1][0] is args else []
+    repeated: dict[str, list] = {}
+    for key, value in top_pairs:
+        repeated.setdefault(key, []).append(value)
+    for key, values in repeated.items():
+        if len(values) < 2:
+            continue
+        spec = properties.get(key, {})
+        real = [v for v in values if not _is_empty_for(spec, v)]
+        if real and args[key] is not real[-1]:
+            logger.info(f"[LLM_TOOL] clave repetida: {key}={values!r} -> {real[-1]!r}")
+            args[key] = real[-1]
     owners: dict[str, list[str]] = {}
     for name, spec in properties.items():
         for value in spec.get("enum") or ():

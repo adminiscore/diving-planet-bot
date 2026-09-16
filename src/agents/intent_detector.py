@@ -95,6 +95,74 @@ _CERT_DAY_COUNT_RE = re.compile(
 )
 
 
+# ── Cuanto dura la estancia ────────────────────────────────────────────────
+# Hueco 2 (2026-09-16): eran dos listas de fraseos ("un dia", "varios dias", "\d+ days",
+# "staying \d+ days"...), asi que "estaremos toda la semana en las islas", "tres dias" o
+# "just here for the day" no se leian y el bot volvia a preguntar. Ahora se compone con las
+# piezas que ya hay: la CANTIDAD multiplica los dias de la UNIDAD y el total decide (1 dia
+# -> single_day, mas -> multi_day). Las noches se quedan fuera a proposito: "una noche" no
+# dice cuantos dias se bucea, y suponerlo seria dar por hecho lo que el cliente no dijo.
+# "d[ií]a(s)" tolera el "dias"/"dia" sin tilde, muy comun al escribir desde el movil.
+_DURATION_UNITS = (
+    (r"d[ií]as?", 1), (r"days?", 1),
+    (r"fin(?:es)?\s+de\s+semana", 2), (r"weekends?", 2),
+    (r"semanas?", 7), (r"weeks?", 7),
+    (r"mes(?:es)?", 30), (r"months?", 30),
+)
+_DURATION_QTY_WORDS = {
+    **number_words(1, 19), "un": 1, "unos": 3, "unas": 3, "par": 2, "couple": 2,
+    "varios": 3, "varias": 3, "several": 3, "few": 3, "a": 1, "an": 1,
+}
+_DURATION_QTY = r"\d+|" + "|".join(sorted(_DURATION_QTY_WORDS, key=len, reverse=True))
+# Palabras que pueden ir entre la cantidad y la unidad sin cambiarla: "un SOLO dia",
+# "un par DE dias", "a couple OF days", "a FULL day".
+_DURATION_FILLER = r"(?:\s+(?:de|of|solo|s[oó]lo|solamente|only|just|full))*"
+_DURATION_RES = tuple(
+    (
+        re.compile(
+            r"\b(?:"
+            # La unidad entera, sin cantidad: "toda la semana", "the whole weekend". El
+            # articulo va delante en ingles y detras en espanol.
+            r"(?:(?:el|la|the)\s+)?(?:tod[oa]|all|whole|entire)(?:\s+(?:el|la|the))?\s+"
+            # "por el dia", "for the day": el articulo vale por la unidad entera solo tras
+            # una preposicion de duracion, para que un "el dia" suelto (una fecha, "que dia
+            # salen") no cuente.
+            r"|(?:por|durante|for|in)\s+(?:el|la|the)\s+"
+            r"|(?P<qty>" + _DURATION_QTY + r")" + _DURATION_FILLER + r"\s+"
+            r")(?:" + unit + r")\b",
+            re.IGNORECASE,
+        ),
+        unit_days,
+    )
+    for unit, unit_days in _DURATION_UNITS
+)
+# Tiempo transcurrido, no estancia: "hace 3 dias que llegamos", "3 days ago". Marcadores
+# de clase cerrada, a los dos lados de la cantidad.
+_ELAPSED_BEFORE_RE = re.compile(r"\bhace(?:\s+(?:como|casi|ya|m[aá]s|menos|de))*\s+$", re.IGNORECASE)
+_ELAPSED_AFTER_RE = re.compile(r"^\s*(?:ago|atr[aá]s|antes)\b", re.IGNORECASE)
+# Un paquete es multi-dia por definicion: cuenta como el mas largo del catalogo.
+_MULTI_DAY_PRODUCT_RE = re.compile(r"\b(?:paquete|package|multi[-\s]?day)\b", re.IGNORECASE)
+_TODAY_ONLY_RE = re.compile(r"\b(?:solo|s[oó]lo|solamente)\s+hoy\b|\bjust\s+today\b", re.IGNORECASE)
+
+
+def _duration_span(match: re.Match, unit_days: int) -> int:
+    """Dias que ocupa la duracion leida. Sin cantidad ("toda la semana", "for the day")
+    la unidad va entera; con cantidad, la multiplica."""
+    qty = match.group("qty")
+    if not qty:
+        return unit_days
+    return (int(qty) if qty.isdigit() else _DURATION_QTY_WORDS[qty.lower()]) * unit_days
+
+
+def _is_elapsed_time(message: str, match: re.Match) -> bool:
+    """¿La duracion cuenta tiempo transcurrido en vez de la estancia? "hace 3 dias que
+    llegamos" o "3 days ago" no dicen cuanto se quedan."""
+    return bool(
+        _ELAPSED_BEFORE_RE.search(message[:match.start()])
+        or _ELAPSED_AFTER_RE.search(message[match.end():])
+    )
+
+
 # ── Gate de TEMA del detector de última inmersión ──────────────────────────
 # Aquí vivían también los gates de tema de certificación y nacionalidad que
 # usaba el núcleo para aceptar o no un booleano del LLM. Se retiraron el
@@ -201,14 +269,44 @@ _CERTIFIED_DIVING_PATTERNS = [
     r'\bsubmarinismo\b',           # synonym
 ]
 
+# "Nunca se ha sumergido": una sola fuente para sus dos usos (hueco 3, 2026-09-16). Estaba
+# escrito dos veces y divergia: la lista del minicurso admitia en espanol hasta tres
+# palabras por medio ("nunca he/ha/hemos hecho bucea(do)") y en ingles cuatro frases
+# cerradas, de las que la lista de certificacion solo tenia una ("never dived"). Asi,
+# "never been underwater before, wanna give it a try" no salia como no certificado. Ahora
+# la regla es la misma en los dos idiomas: nunca + auxiliares + el tema de sumergirse; el
+# ingles ademas elide el objeto ("never tried", "never done it").
+# Entre "nunca" y el tema solo caben auxiliares, participios y cliticos ("nunca HE HECHO
+# buceo", "never HAVE BEEN diving", "nunca NOS HEMOS sumergido"). Con tres palabras
+# cualesquiera, "i will never stop diving" salia como que nunca ha buceado.
+_NEVER_AUX = (
+    # `\w+[ai]do` es el participio regular ("practicado", "estado", "sumergido"); "hecho"
+    # es el irregular que aparece de verdad ("nunca he HECHO buceo").
+    r"(?:\s+(?:he|ha|hemos|han|hab\w+|me|nos|se|te|lo|hecho|\w+[ai]do|"
+    r"have|has|had|been|done|tried|really|actually|even))*"
+)
+# El ingles elide el objeto: "never tried, wanna give it a try", "never done it before".
+# Con otro objeto nombrado ("never tried nitrox") habla de ese producto, no de sumergirse.
+_NEVER_TRIED_IT = (
+    r"\bnever\s+(?:tried|done)(?:\s+(?:it|this|that|scuba|before|yet|ever))*"
+    r"(?=\s*(?:[,.;!?]|$)|\s+(?:but|and|so|though)\b)"
+)
+_NEVER_DIVED = (
+    r"\b(?:nunca|never)\b" + _NEVER_AUX + r"\s+"
+    r"(?:buce\w*|inmersi\w+|div(?:e|ed|es|ing)|underwater|bajo\s+el\s+agua|sumerg\w*)\b"
+    r"|" + _NEVER_TRIED_IT
+)
+# Nunca se ha certificado: mismo esqueleto, otro tema. Solo dice el estado, no la
+# actividad, asi que no entra en la lista del minicurso.
+_NEVER_CERTIFIED = r"\b(?:nunca|never)\b" + _NEVER_AUX + r"\s+(?:certific\w*|certified)\b"
+
 _MINICOURSE_PATTERNS = [
     r'\bmini[\s\-]?curso\b',       # minicurso, mini curso, mini-curso
     r'\bbubble\s?makers?\b',       # Bubble Makers = kids intro dive (beginner, not certified)
     r'\bbautizo\s+de\s+buceo\b',
     r'\bbauti[sz]\w{0,3}\b',       # bautismo, bautizo, bautismos, bautizos
     r'\bprimera\s+vez\b',
-    r'\bnunca\s+(?:\w+\s+){0,3}buce\w*\b',  # nunca he/ha/hemos/han (hecho) bucea(do)/buceo
-    r'\bnever\s+(?:tried|dived|done\s+it|been\s+diving)\b',
+    _NEVER_DIVED,
     r'\bno\s+experience\b',
     r'\bsin\s+experiencia\b',
     r'\bdiscover\s+scuba\b',
@@ -436,9 +534,10 @@ def course_level_is_ambiguous(message: str) -> bool:
         return False
     if IntentDetector._WANTS_CERT_RE.search(text) or IntentDetector._HOLDS_CERT_RE.search(text):
         return False
-    # Nombra el PRODUCTO ("the advanced course", "curso de advanced"): pide el curso.
+    # Nombra el PRODUCTO ("the advanced course", "curso de advanced", "la especialidad de
+    # nitrox"): pide el curso o la especialidad, no dice que ya lo tenga.
     words = set(re.findall(r"\w+", strip_accents(text.lower())))
-    if words & _course_family_nouns():
+    if words & _product_family_nouns():
         return False
     return certification_claim(text) is None
 
@@ -449,6 +548,15 @@ def _course_family_nouns() -> frozenset[str]:
     "course"), derivado del registro: la palabra comun a todas sus etiquetas en cada
     idioma. Sin lista escrita a mano."""
     return _label_nouns([a for a in dom.registry().activities if a.family == "course" and a.course_level])
+
+
+@lru_cache(maxsize=1)
+def _product_family_nouns() -> frozenset[str]:
+    """Los sustantivos con los que el catalogo nombra un producto que lleva nivel: el de
+    los cursos y el de las especialidades ("especialidad"/"specialty"), del registro
+    (hueco 1, 2026-09-16: "quiero la especialidad de nitrox" preguntaba si ya la tenia)."""
+    specialties = [a for a in dom.registry().activities if a.family == "specialty" and not a.generic]
+    return _course_family_nouns() | _label_nouns(specialties)
 
 
 def certification_is_ambiguous(message: str) -> bool:
@@ -528,16 +636,37 @@ _CERTIFIED_OTHER_PERSON_PATTERNS = [
 # `_NOT_CERTIFIED_PATTERNS` (solo "quiero ...") y `rag_agent._WANTS_CERT_EXCLUDE_RE`
 # (cualquier "quiero hacer ...", incluido "quiero hacer buceo"). "quiere sacarse la
 # certificacion" o "me quiero certificar" no casaban ninguna y salian certificados.
-# Verbo de deseo: "quiero", "sacarse", "want to get". Solo este dice que aun no lo tiene;
-# "hacer el open water" a secas tambien sale en dudas ("no se si hacer el open water o
-# el advanced"), por eso el resto de verbos solo cuenta para `_WANTS_CERT_RE`.
+# Verbo de deseo: "quiero", "sacarse", "want to get", "me interesa". Solo este dice que aun
+# no lo tiene; "hacer el open water" a secas tambien sale en dudas ("no se si hacer el open
+# water o el advanced"), por eso el resto de verbos solo cuenta para `_WANTS_CERT_RE`.
+# El interes es querer (hueco 1, 2026-09-16, reverso de F.1): "me interesa el rescue",
+# "my son is interested in the open water". Misma clase cerrada que el deseo, en primera y
+# tercera persona; sin esto el nivel quedaba sin decir si lo tienen o lo quieren y el bot
+# preguntaba de mas ("¿ya la tienes o quieres sacarla?").
+# El verbo lleva su propio sujeto: el clitico dativo ("me"/"le") y la persona del auxiliar
+# dicen de quien se habla aunque el sujeto vaya detras ("le interesa el open water a mi
+# hijo"), asi que `_about_other_person` lee la variante de tercera persona.
+_INTEREST_VERB_WRITER = (
+    r"(?:(?:me|nos)\s+interesa\w*|"
+    r"est(?:oy|amos)\s+interesad[oa]s?\s+en|"
+    r"(?:i'?m|i\s+am|we'?re|we\s+are)\s+interested\s+in)"
+)
+_INTEREST_VERB_OTHER = (
+    r"(?:(?:le|les)\s+interesa\w*|"
+    r"est[aá]n?\s+interesad[oa]s?\s+en|"
+    r"(?:is|are)\s+interested\s+in)"
+)
+_INTEREST_VERB = r"(?:" + _INTEREST_VERB_WRITER + r"|" + _INTEREST_VERB_OTHER + r")"
 _DESIRE_VERB = (
-    r"(?:quier[eo]n?|queremos|quisiera|quisieramos|me\s+gustar[ií]a|nos\s+gustar[ií]a|"
-    r"sacar(?:me|te|se|nos)|want\s+to\s+(?:do|take|get))"
+    r"(?:quier[eo]n?|queremos|quisiera|quisi[eé]ramos|me\s+gustar[ií]a|nos\s+gustar[ií]a|"
+    r"sacar(?:me|te|se|nos)|want\s+to\s+(?:do|take|get|be|become)|" + _INTEREST_VERB + r")"
 )
 _WANT_VERB = r"(?:" + _DESIRE_VERB + r"|hacer(?:me|se|nos)?|sacar|obtener|tomar|get)"
+# Llegar a serlo es querer el nivel ("quiero ser divemaster", "want to be a divemaster"):
+# el camino al objeto admite el verbo copulativo, igual que admite "hacer" o "sacar".
 _WANT_OBJECT_PREFIX = (
     r"\s+(?:el\s+|la\s+|mi\s+|un[ao]?\s+|nuestr[ao]\s+|hacer\s+|sacar\s+|obtener\s+|tomar\s+|"
+    r"ser\s+|llegar\s+a\s+ser\s+|be\s+|become\s+|"
     r"the\s+|our\s+|my\s+|a\s+)*"
     r"(?:curso\s+)?(?:padi\s+)?(?:de\s+)?"
 )
@@ -557,20 +686,19 @@ _NOT_CERTIFIED_PATTERNS = [
     # Wants to GET certified, so NOT yet certified. Must be listed here (checked
     # before the generic \bcert\w*\b catch-all).
     _WANTS_CERTIFICATION,
-    r'\bnunca\s+(?:\w+\s+){0,3}buce\w*\b',  # nunca he/ha/hemos/han (hecho) bucea(do)/buceo
+    _NEVER_DIVED,
     # "nunca me he certificado" (hallazgo en vivo, bateria sintetica shadow-
     # mode is_certified, 2026-09-10): mismo hueco que el patron de arriba
     # pero para "certificado" en vez de "buce*" -- sin esto, caia al catch-all
     # generico \bcertificado\b de _CERTIFIED_PATTERNS y resolvia True cuando
     # el cliente dice justo lo contrario.
-    r'\bnunca\s+(?:\w+\s+){0,3}certific\w*\b',
+    _NEVER_CERTIFIED,
     r'\bprimera\s+vez\b',
     # Typo-tolerant (real bug live 2026-07-21: "not certfied" matched
     # neither this pattern nor the exact positive certified pattern, and
     # fell through to that list's own typo-tolerant \bcert\w*\b catch-all,
     # wrongly resolving to is_certified=True).
     r'\bnot\s+cert\w*\b',
-    r'\bnever\s+dived\b',
     r'\bfirst\s+time\b',
     r'\bbeginner\b',
     r'\bprincipiante\b',
@@ -759,6 +887,7 @@ _POSTVERBAL_OTHER_SUBJECT_RE = re.compile(
 )
 # Una frase acaba en puntuacion o conjuncion: "mi amigo es buzo y yo no" son dos.
 _CLAUSE_BOUNDARY_RE = re.compile(r"[,;.]|\b(?:y|e|pero|and|but)\b")
+_OTHER_PERSON_EXPERIENCER_RE = re.compile(strip_accents(_INTEREST_VERB_OTHER), re.IGNORECASE)
 
 
 def _about_other_person(text: str, start: int) -> bool:
@@ -766,7 +895,13 @@ def _about_other_person(text: str, start: int) -> bool:
     Se mira la frase entera, antes y despues: en "uno no esta certificado" el verbo del
     sujeto cae dentro de la coincidencia. `text` ya en minusculas y sin tildes."""
     clause = _CLAUSE_BOUNDARY_RE.split(text[:start])[-1] + _CLAUSE_BOUNDARY_RE.split(text[start:])[0]
-    return bool(_OTHER_PERSON_SUBJECT_RE.search(clause) or _POSTVERBAL_OTHER_SUBJECT_RE.search(clause))
+    return bool(
+        _OTHER_PERSON_SUBJECT_RE.search(clause)
+        or _POSTVERBAL_OTHER_SUBJECT_RE.search(clause)
+        # El verbo de interes en tercera persona lleva el sujeto dentro (2026-09-16):
+        # "le interesa el open water a mi hijo" no dice nada de quien escribe.
+        or _OTHER_PERSON_EXPERIENCER_RE.search(clause)
+    )
 
 
 @lru_cache(maxsize=1)
@@ -1924,33 +2059,24 @@ class IntentDetector:
             intent.detected_fields.append("is_colombian")
 
     def _detect_duration(self, message: str, intent: DetectedIntent) -> None:
-        # "d[ií]a(s)" tolerates the very common typed-without-accent "dias"/"dia"
-        # (phones/autocorrect often drop it) alongside the correct "días"/"día".
-        single_day_patterns = [
-            r'\bun\s+d[ií]a\b',
-            r'\bone\s+day\b',
-            r'\bsolo\s+hoy\b',
-            r'\bjust\s+today\b',
-            r'\bun\s+solo\s+d[ií]a\b',
+        spans = [
+            _duration_span(m, unit_days)
+            for pattern, unit_days in _DURATION_RES
+            for m in pattern.finditer(message)
+            if not _is_elapsed_time(message, m)
         ]
-
-        multi_day_patterns = [
-            r'\bvarios\s+d[ií]as\b',
-            r'\bmulti[- ]?day\b',
-            r'\b\d+\s+d[ií]as\b',
-            r'\b\d+\s+days\b',
-            r'\bestoy\s+en\s+las\s+islas\s+\d+\s+d[ií]as\b',
-            r'\bstaying\s+\d+\s+days\b',
-            r'\bpaquete\b',
-            r'\bpackage\b',
-        ]
-
-        if any(re.search(pattern, message) for pattern in multi_day_patterns):
-            intent.duration = "multi_day"
-            intent.detected_fields.append("duration")
-        elif any(re.search(pattern, message) for pattern in single_day_patterns):
-            intent.duration = "single_day"
-            intent.detected_fields.append("duration")
+        # Lo que no es cantidad x unidad: un paquete dura varios dias por definicion
+        # (lo dice el catalogo) y "solo hoy" es un dia.
+        if _MULTI_DAY_PRODUCT_RE.search(message):
+            spans.append(_MAX_PACKAGE_DAYS)
+        if _TODAY_ONLY_RE.search(message):
+            spans.append(1)
+        if not spans:
+            return
+        # La estancia mas larga manda, como antes mandaba el patron de varios dias:
+        # "un dia de buceo y 3 dias en las islas" es multi-dia.
+        intent.duration = "multi_day" if max(spans) > 1 else "single_day"
+        intent.detected_fields.append("duration")
 
     def _detect_location(self, message: str, intent: DetectedIntent) -> None:
         msg_lower = message.lower()

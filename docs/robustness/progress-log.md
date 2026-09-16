@@ -4509,3 +4509,83 @@ mensaje nombra una isla (patrón sin "isl" y sin isla nombrada, fuera). Los hote
 - `eval --core`: **227/230**, 0 a peor, 1 a mejor (`loc-en-cartagena-now-islands-tomorrow`), tanda limpia.
 
 - Tests: `tests/test_location_single_source.py` ampliado (C.2 y C.3). Suite 2446.
+
+## 2026-09-16 — Huecos 1–3 cerrados; peticiones por turno medidas (fusión descartada)
+
+### Hueco 1: querer un nivel con cualquier verbo de querer (arreglado)
+
+**Causa.** `_WANTS_CERT_RE` solo conocía el deseo con objeto directo ("quiero el rescue"). "quiero ser divemaster",
+"me interesa el rescue" o "i'm interested in the advanced" dejaban el nivel "sin decir si lo tienen o lo quieren" y
+`course_level_is_ambiguous` preguntaba. "quiero la especialidad de nitrox" además no contaba como nombre de producto:
+el sustantivo salía solo de las etiquetas de los cursos.
+
+**Arreglo, clase cerrada como la de tener (F.1):**
+- `_INTEREST_VERB_WRITER` / `_INTEREST_VERB_OTHER` dentro de `_DESIRE_VERB` ("me/nos interesa", "estoy interesado en",
+  "i'm interested in"; "le/les interesa", "is/are interested in");
+- el camino al objeto admite llegar a serlo ("ser", "llegar a ser", "be", "become");
+- el verbo en tercera persona lleva el sujeto dentro: `_about_other_person` lo lee, así que "le interesa el open water a
+  mi hijo" no marca a quien escribe (sí cuenta para repartir el grupo);
+- `_product_family_nouns`: curso y especialidad, del registro.
+
+**Medido sin LLM** (`cert_snapshot.py`, 3420 frases, HEAD frente al árbol): 13 cambios de este hueco, todos buscados.
+El único del eval-set (`f2b-specialty-nitrox-en`) pasa por el núcleo 3/3 bien.
+
+### Hueco 2: la duración se compone (arreglado)
+
+**Causa.** Dos listas de fraseos. **Arreglo:** cantidad × unidad (`_DURATION_RES`):
+- cantidad: cifra, `number_words`, "un par", "varios", "a few"; o la unidad entera ("toda la semana", "the whole
+  weekend") o tras preposición de duración ("por el día", "for the day");
+- unidad: día 1, fin de semana 2, semana 7, mes 30; total 1 → `single_day`, más → `multi_day`;
+- fuera: tiempo transcurrido (`hace` delante, `ago/atrás` detrás), noches, un artículo suelto ("el día 5 de octubre",
+  "venimos el fin de semana": dice cuándo, no cuánto);
+- residuo no compositivo: paquete (multi-día por definición) y "solo hoy".
+
+**Medido sin LLM** (`dur_snapshot.py`, 3430 frases): 22 cambios, todos buscados; incluye "hace 3 días que llegamos" y
+"3 days ago", que antes daban multi-día.
+
+### Hueco 3: "nunca se ha sumergido" con una sola fuente (arreglado)
+
+**Causa.** La regla estaba en `_MINICOURSE_PATTERNS` y en `_NOT_CERTIFIED_PATTERNS` con formas distintas; en inglés
+la de certificación solo tenía "never dived". **Arreglo:** `_NEVER_DIVED` (nunca + auxiliares/participios/clíticos +
+sumergirse; el inglés elide el objeto: "never tried, …", "never done it before") y `_NEVER_CERTIFIED` con el mismo
+esqueleto.
+- **Medido y corregido en la foto:** con "tres palabras cualesquiera" en inglés, "i will never stop diving" salía
+  principiante; con el participio regular sin "hecho", "nunca hemos hecho buceo" se perdía. Versión final: 10 cambios,
+  todos buscados; "never tried nitrox but i am advanced" pasa de minicurso/no certificado a nitrox/certificado.
+
+**Eval-set por el núcleo: 230/230** (antes 227/230), tanda limpia; cambian exactamente `adv-en-elliptical-no-dive-verb`,
+`prof-es-toda-la-semana` y `prof-en-just-the-day`, 0 a peor. Suite 2517.
+
+### Optimización 1: peticiones por turno (medida, fusión revertida)
+
+**Qué peticiones hace un turno** (`obs_calls.py`, reserva de 4 turnos con `route_message`, RAG simulado): 12 llamadas.
+- `detect_routing_signals` en los 4 turnos (salvo clics numéricos);
+- `extract_fields` (petición fusionada de extracción y verificación) en 3;
+- la respuesta redactada ("Coral") en 3;
+- `capture_notes` en 2 (mensajes de 3+ palabras). El resumen rodante solo cada `history_window_size` mensajes.
+
+**Intento: llevar las notas a la petición del router** (la única de todos los turnos; mismo mensaje crudo). Por turno
+real guardaba las mismas notas con 0 peticiones propias (HEAD: 2 en 4 turnos) y la sonda de notas daba 9–10/10 frente
+a 10/10. Pero el prompt de las 9 señales no lo aguanta (batería del router, 8 repeticiones en seguridad):
+- instrucción "(10) anota en `notes`…" en el prompt: "¿va a llover mañana?" **8/8 → 3/8**; aislado, es la frase del
+  prompt y no el campo del esquema;
+- solo "ya tienes anotado…": 7/8;
+- campo solo en el esquema, detrás de las señales: **2/8** (dos tandas);
+- campo delante: el tiempo 8/8, pero a veces el modelo escribe solo las notas y cierra: "perdí una pierna" pierde
+  `adaptive_diving_topic` **2/8**.
+- Control de ruido: "soy epiléptica" (2 palabras, petición idéntica en las dos columnas) oscila 0–3/8, y "soy
+  sordomuda" 4/8–8/8 entre tandas. Aun así, el tiempo cae de forma repetida con notas.
+
+**Decisión:** revertido (una señal de seguridad no se cambia por una petición). Queda una lección para la siguiente
+fusión: el prompt del router es el más frágil del bot; la vía restante es la petición de extracción (ya fusionada), con
+el eval-set completo, la batería de grupo y la de booleanos.
+
+**De la medida sale un arreglo general:** el LLM repite claves en el mismo objeto (`"sensitive_topic":
+"weather_conditions", …, "sensitive_topic": false`) y `json.loads` se queda con la última. `tool_arguments` ya no deja que
+el "nada" de un campo (null, false fuera de booleanos, vacío) borre un valor real. La cadena real de la sonda del
+hallazgo D ya repetía `sensitive_topic`. Tests en `test_tool_arguments_schema.py`.
+
+### Optimización 2: scripts sin trazas (ya estaba)
+
+`scripts/__init__.py` apaga LangSmith para todo `python -m scripts.X` desde el 2026-09-14 (comprobado:
+`langchain_tracing_v2=False`, `trace_openai` no envuelve). La nota de la cola estaba desactualizada.

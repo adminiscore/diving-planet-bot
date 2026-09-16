@@ -79,3 +79,28 @@ async def test_routing_signals_escalate_the_forecast_question_with_the_flattened
     assert signals.get("sensitive_topic") == "weather_conditions"
     assert "weather_conditions" not in signals
     assert escalation.sensitive_response_for(signals["sensitive_topic"], "es") is not None
+
+
+# ── Claves repetidas (2026-09-16) ───────────────────────────────────────────
+
+def _raw(raw: str):
+    return SimpleNamespace(function=SimpleNamespace(arguments=raw))
+
+
+def test_repeated_enum_key_keeps_the_real_value():
+    # Cadena real del LLM: detecta el pronostico y despues repite la clave en false.
+    raw = '{"wants_human":false,"sensitive_topic":"weather_conditions","adaptive_diving_topic":false,"sensitive_topic":false}'
+    assert tool_arguments(_raw(raw), ROUTING_TOOL)["sensitive_topic"] == "weather_conditions"
+
+
+def test_repeated_boolean_key_is_last_wins_as_json():
+    # En un booleano `false` es un dato, no "nada".
+    assert tool_arguments(_raw('{"adaptive_diving_topic":true,"adaptive_diving_topic":false}'), ROUTING_TOOL) == {
+        "adaptive_diving_topic": False
+    }
+
+
+def test_repeated_key_without_a_real_value_stays_as_json():
+    assert tool_arguments(_raw('{"sensitive_topic":false,"sensitive_topic":false}'), ROUTING_TOOL) == {
+        "sensitive_topic": False
+    }

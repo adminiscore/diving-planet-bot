@@ -7,8 +7,8 @@ Copia y pega lo de abajo.
 ## PROMPT
 
 Retomamos el trabajo de robustez del bot en la rama `feature/pre_gadea`. Lee primero:
-- la entrada `0.26.0` de `docs/HISTORY.md` (y la `0.25.0` si hace falta contexto);
-- las entradas del 2026-09-15 de `docs/robustness/progress-log.md`: incluyen el inventario de las
+- las entradas `0.27.0` y `0.26.0` de `docs/HISTORY.md`;
+- la entrada del 2026-09-16 de `docs/robustness/progress-log.md` y las del 2026-09-15: incluyen el inventario de las
   78 listas de vocabulario y cada medición de esta tanda, también las negativas;
 - `docs/robustness/activity-domain-plan.md`.
 
@@ -48,18 +48,19 @@ Retomamos el trabajo de robustez del bot en la rama `feature/pre_gadea`. Lee pri
   `--compare base.json` en el árbol de trabajo.
 - Comparar por caso: `diff` de las líneas `[OK]/[GAP] id` entre dos `.raw`.
 
-### Números de referencia (2026-09-16, último commit desplegado)
+### Números de referencia (2026-09-16, tras cerrar los huecos 1–3)
 
 | medida | resultado |
 |---|---|
 | Eval-set (130 casos) | **221/230**. Fallan: 5 de los 7 casos `nat-mixto-*` (hueco conocido), 2 artefactos del arnés (casos con historial) y el ambiguo de ubicación "staying on the islands tomorrow". `split-one-not-certified-es` espera `is_certified: null` desde el 2026-09-15 (la frase habla de un miembro del grupo) |
-| Eval-set por el núcleo (`run_extraction_eval --core`) | **227/230**, 0 a peor (219 tras F.1; 226 tras A; +1 por C.2). Fallan 3: `adv-en-elliptical-no-dive-verb` (is_certified), `prof-es-toda-la-semana` y `prof-en-just-the-day` (duration) |
+| Eval-set por el núcleo (`run_extraction_eval --core`) | **230/230**, 0 a peor (227 antes de los huecos 1–3) |
 | Batería de grupo, config PRE (52 escenarios) | repartos **17/17**, total **13/13**, riesgo **17/17**, **0 alucinaciones, 0 parciales, 0 totales mal**; segunda petición de grupo +8,1 % peticiones |
 | Booleanos anclados (21 escenarios, con cortesías) | legítimos **33/33**, alucinaciones evitadas **30/30** (tras B y J) |
 | Recomendación al acompañante | resolutor 11/11, estancia 6/6 |
 | Pregunta "¿ya certificados o quieren certificarse?" | cuándo preguntar 10/10, resolutor 7/7 |
 | Precio de paquetes (RAG, 21 preguntas sin LLM) | 11 cambios de 21 frente a antes, todos a bien |
-| Suite | **2446 passed / 18 skipped** |
+| Batería del router (8 rep. en seguridad, 3 en el resto) | seguridad **18/21**, resto **12/16**. Fallos estables: `s02` y `a03`/`a02` marcan las dos señales o la equivocada (oscilan entre tandas con la petición idéntica), `n07`, `r07`–`r09` |
+| Suite | **2517 passed / 18 skipped** |
 
 ### Hecho el 2026-09-15 (no repetir)
 
@@ -310,16 +311,13 @@ G. ~~**Una respuesta que no contesta la pregunta pendiente se toma como su respu
 
 ### Huecos conocidos para la próxima sesión (2026-09-16)
 
-Revisados contra el último `eval --core` (227/230) y lo anotado. Orden propuesto: fallos 1–3, optimización 1, optimización 2 y el resto.
+Revisados contra el último `eval --core` (230/230) y lo anotado. Hechos el 2026-09-16: fallos 1–3 y la medida de las optimizaciones 1–2. Orden propuesto ahora: fallos 4–5, optimización 1 (vía extracción), optimización 3 y el resto.
 
 **Fallos que nota el cliente**
-1. **Querer un curso que no se reconoce como querer.** "quiero ser divemaster", "me interesa el rescue", "quiero la
-   especialidad de nitrox" hacen que el bot pregunte "¿ya la tienes o quieres sacarla?" (`course_level_is_ambiguous`:
-   `_WANTS_CERT_RE` no cubre "ser" ni "me interesa"). Una pregunta de más. Reverso de F.1; mirar la clase de verbos de
-   querer, igual que se hizo con los de tener.
-2. **Duración que no se lee.** "estaremos toda la semana en las islas" y "just here for the day" (2 fallos del eval).
-3. **Certificación en inglés elíptico.** "never been underwater before, wanna give it a try, solo" no queda como no
-   certificado (1 fallo del eval).
+1. ~~Querer un curso que no se reconoce como querer~~ **arreglado (2026-09-16)**: clase de querer con interés y
+   "ser"; nombre de producto de cursos y especialidades desde el registro.
+2. ~~Duración que no se lee~~ **arreglado (2026-09-16)**: cantidad × unidad.
+3. ~~Certificación en inglés elíptico~~ **arreglado (2026-09-16)**: `_NEVER_DIVED`, una sola fuente.
 4. **Reparto intermitente del LLM.** "4 con título y 2 snorkel" (b03 de la batería de grupo) sale bien 1–2 de cada 3
    veces con la petición idéntica; se podría leer sin depender del LLM.
 5. **Reparto sin "yo" explícito.** "mi amigo quiere bucear y hago snorkel" sigue dependiendo del LLM: la señal de E
@@ -330,10 +328,12 @@ Revisados contra el último `eval --core` (227/230) y lo anotado. Orden propuest
    - alias de hotel que son palabras corrientes: "luxury", "flores", "secreto".
 
 **Optimizaciones**
-1. **Peticiones por turno.** Una reserva hace 3 llamadas al LLM por turno (medido para la tarea 8, `obs_volume.py`).
-   Ver cuáles son y si alguna se fusiona con otra, como se hizo con verificar y rellenar. Es lo que más RPD ahorra.
-2. **Las pruebas gastan la cuota de trazas.** Baterías y eval trazan en LangSmith y agotaron la cuota de PRE. Apagarlo
-   por defecto en los scripts es rápido y no depende de migrar a Langfuse (paso 4 del plan de la tarea 8).
+1. **Peticiones por turno: medidas, una fusión descartada (2026-09-16).** Por turno: router (siempre), extracción,
+   respuesta y notas (3+ palabras). Llevar las notas al router tiraba "¿va a llover mañana?" (hasta 2/8) o "perdí una
+   pierna" (2/8): revertido, detalle en el progress-log. Siguiente candidata: las notas dentro de la petición de
+   extracción con `extra_fields` (mismo mecanismo que `mixed_nationality`/`evidence`), midiendo con `--core`, la batería
+   de grupo y la de booleanos; no tocar el prompt del router.
+2. ~~Las pruebas gastan la cuota de trazas~~ **ya estaba hecho** desde el 2026-09-14 (`scripts/__init__.py`).
 3. **Tamaños de paquete escritos a mano.** `_BARE_PACKAGE_DIVE_RE` fija todavía `5|7|9`; un paquete nuevo sin unidad no
    se leería.
 4. **Segunda petición de grupo.** Cuesta +8 % peticiones en la batería de grupo; revisar si sigue haciendo falta tras I.
