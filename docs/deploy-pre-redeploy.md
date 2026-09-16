@@ -35,6 +35,20 @@
 > nuevas (ej. `feature/pre_alvaro`) por más veces que se corra. El job y
 > `scripts/redeploy_pre.sh` ahora corren `git remote set-branches origin '*'`
 > antes de cada fetch para arreglarlo (idempotente, seguro repetir siempre).
+>
+> **Nota (2026-09-16) — sobre `concurrency` en el job `deploy-pre`:**
+> Se probó a serializar los deploys con `concurrency: { group: deploy-pre,
+> cancel-in-progress: false }` (motivo: PRE es UN entorno compartido, y dos
+> `docker compose up` casi simultáneos chocan con *"container name already in
+> use"*). **Se RETIRÓ** porque con `cancel-in-progress: false` una corrida
+> colgada (SSH/`docker` sin responder) deja **todos** los deploys siguientes en
+> cola indefinidamente → los fixes dejan de aterrizar en PRE sin que nadie lo
+> note. El modelo *"el último push gana"* NO dependía del `concurrency`: lo da el
+> `git reset --hard` + `docker compose up --build` de este runbook.
+> **Si vuelve el choque de "container name in use", reintroducir con
+> `cancel-in-progress: true`** (serializa igual pero cancela la corrida anterior
+> en vez de encolar detrás de una colgada — sin el riesgo de cola atascada). No
+> volver a usar `cancel-in-progress: false`.
 
 Actualiza el entorno **PRE** (`dp-pre-bot` en el VPS) con la rama `feature/pre_gadea`
 (pruebaGon mergeada, v0.19.13+): nuevo código + KB reindexada + `RAG_MIN_SCORE=0.50`.
