@@ -13,8 +13,13 @@ Read this file before changing code in the Diving Planet Bot. For a quick versio
 
 ### 🚨 2026-09-16 — HANDOFF A GADEA (cierre de Álvaro). LEER ESTO PRIMERO
 
-**Ramas en sync (todas en `b7c291b`):** `feature/agent-arch` == `feature/pre_alvaro` ==
-`feature/pre_gadea`. PRO intacto.
+**➡️ PLAN DEL SIGUIENTE CICLO: `docs/plan-maestro-final.md`** — reúne todo el contexto (estado
+actual "qué tenemos/qué falta", hallazgos verificados de latencia/estructura, el plan por fases
+M0→Q5 con medición calidad+latencia en Langfuse, y cómo empezar). **Empezar por la Fase M0
+(instrumentación + baseline, bloqueante).**
+
+**Ramas:** trabajo en `feature/agent-arch` y `feature/pre_alvaro`. **`feature/pre_gadea` se deja
+INTACTA en `eda6929`** por decisión del owner (no la muevas sin que lo pida). PRO no existe.
 
 **Hecho esta sesión:**
 1. **Observabilidad migrada LangSmith → Langfuse** (`src/observability.py`, `langfuse==3.15.0`).
