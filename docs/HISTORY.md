@@ -1,6 +1,11 @@
 History
 =======
 
+0.28.0 - (2026-09-16)
+----------------------
+* **Observabilidad migrada de LangSmith a Langfuse** (robustez tarea 8). LangSmith Developer agotó su cuota (un proceso en bucle → 429 hasta el 1-oct) y su límite es bajo; Langfuse Cloud Hobby da más margen. Nuevo `src/observability.py` (módulo hoja): inicializa Langfuse con **máscara de PII** (`redact_pii` recursivo antes de enviar a un tercero), traza cada llamada LLM (drop-in `langfuse.openai`) y el grafo (`CallbackHandler`). `trace_openai` pasa a Langfuse sin tocar los 13 puntos de instanciación; `config` gana `langfuse_public_key/secret_key/host` y arranca el tracing; `scripts/__init__.py` lo apaga en baterías/eval; el deploy inyecta los secrets en `.env.pre`.
+* **Seguro en Python 3.14:** `langfuse` (cuyo cliente `api` usa `pydantic.v1`) solo se importa cuando hay claves = PRE (Python 3.11); dev/CI/tests sin claves nunca lo tocan (verificado: ausente de `sys.modules`). Suite **2523 passed / 18 skipped**. Pendiente: 1 semana midiendo en PRE (paso 5) y retirar `langsmith` (paso 6).
+
 0.27.0 - (2026-09-16)
 ----------------------
 * **Querer un nivel con cualquier verbo de querer** (hueco 1, reverso de F.1). "quiero ser divemaster", "me interesa el rescue" o "quiero la especialidad de nitrox" preguntaban "¿ya la tienes o quieres sacarla?". La clase cerrada de querer suma el interés ("me interesa", "i'm interested in") y llegar a serlo ("ser", "be", "become"), en primera y tercera persona; el verbo en tercera persona lleva su sujeto ("le interesa el open water a mi hijo" no dice nada de quien escribe). El nombre del producto sale del registro para cursos Y especialidades ("especialidad"/"specialty"). "me interesa el open water" ya es no certificado. Foto sin LLM: 13 cambios de 3420, todos buscados.

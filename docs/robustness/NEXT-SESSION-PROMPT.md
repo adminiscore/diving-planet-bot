@@ -152,11 +152,13 @@ Retomamos el trabajo de robustez del bot en la rama `feature/pre_gadea`. Lee pri
      carrito antes de desanclar.
    - **Medir con:** el script de reproducción (3 repeticiones), `--core`, la batería de grupo y la
      de booleanos.
-8. **Observabilidad: PENDIENTE — migrar a Langfuse.** Analizada (2026-09-16): recomendación Langfuse Cloud Hobby
-   (50k unidades/mes, 30 días, 2 usuarios; ~830–1.040 conversaciones/mes frente a ~420–830 con LangSmith
-   Developer, que ya agotó su cuota). Antes de migrar, el owner decide: trazas en un tercero (con `redact_pii`
-   como máscara), tráfico esperado en PRO y quién crea la cuenta. Plan de migración en 6 pasos en el
-   progress-log ("Tarea 8") y en la página publicada https://claude.ai/artifact/4dwaZZmDm7566oPg9sBJ19.
+8. **Observabilidad: MIGRADA a Langfuse (código, pasos 1-4; 0.28.0, Álvaro 2026-09-16).** Owner aprobó
+   trazas en un tercero con `redact_pii` como máscara y creó la cuenta + los 3 GitHub secrets
+   (`LANGFUSE_PUBLIC_KEY/SECRET_KEY/HOST`). Implementado en `src/observability.py` (init + máscara PII +
+   cliente OpenAI trazado + `CallbackHandler` del grafo), `config`, `llm_client`, `graph`,
+   `scripts/__init__.py` (tracing off en baterías/eval) y el deploy (inyecta los secrets en `.env.pre`).
+   `langfuse` solo se importa con claves (= PRE, Python 3.11; NO importa bajo 3.14). Suite 2523 verde.
+   **Pendiente:** paso 5 (≥1 semana midiendo unidades reales en PRE) y paso 6 (retirar `langsmith`).
 9. **CI: PENDIENTE.** `concurrency` en el job de deploy (dos pushes seguidos chocan con "container name already in use"; consultar con el equipo).
 
 ### Para reinvestigar (owner, 2026-09-15): medidos, sin solución todavía
