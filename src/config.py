@@ -50,10 +50,13 @@ class Settings(BaseSettings):
     # Vector hits gate on rag_min_score (cosine); lexical hits gate on this.
     rag_min_bm25_rank: float = 0.05
 
-    # --- LangSmith ---
-    langsmith_api_key: str = ""
-    langsmith_project: str = "diving-planet-bot"
-    langchain_tracing_v2: bool = True
+    # --- Observabilidad: Langfuse (sustituye a LangSmith, cuota Developer
+    # agotada; ver docs/robustness/progress-log.md "Tarea 8"). Sin claves, el
+    # tracing queda apagado y `langfuse` ni se importa (3.14-safe). Claves por
+    # entorno vía secrets de GitHub inyectados en .env.pre por el deploy. ---
+    langfuse_public_key: str = ""
+    langfuse_secret_key: str = ""
+    langfuse_host: str = "https://cloud.langfuse.com"
 
     # --- Refactor multiagente sobre LangGraph (Fase 0.5, docs/multi-agent-
     # refactor-plan.md) --- strangler-fig kill switch: off en todos lados hasta
@@ -250,33 +253,11 @@ class Settings(BaseSettings):
         return [lang.strip() for lang in self.supported_languages.split(",")]
 
 
-def _activate_langsmith_tracing(s: Settings) -> None:
-    """Propaga la config de LangSmith al entorno del proceso.
-
-    pydantic-settings lee `.env` hacia los campos de `Settings` pero nunca toca
-    `os.environ` — el SDK de langsmith/langchain solo mira variables de entorno
-    reales (`LANGSMITH_*`/`LANGCHAIN_*`), así que sin este paso los campos de
-    abajo eran solo decorativos (0 imports de langsmith/langchain en `src/`
-    hasta Fase 0.4 del refactor multiagente). No-op sin API key: mantiene el
-    dev sin cuenta LangSmith exactamente igual que hoy (sin overhead ni error).
-    """
-    if not s.langchain_tracing_v2 or not s.langsmith_api_key:
-        return
-    # Nombres canónicos que leen langsmith/langchain. La var de ACTIVACIÓN es
-    # `LANGSMITH_TRACING` (nueva) o `LANGCHAIN_TRACING_V2` (legacy) — NO
-    # `LANGSMITH_TRACING_V2`, que no existe (bug: el tracing nunca se encendía).
-    # Se fijan ambos prefijos (LANGSMITH_* y LANGCHAIN_*) por compatibilidad de
-    # versiones del SDK.
-    for k, v in (
-        ("LANGSMITH_TRACING", "true"),
-        ("LANGCHAIN_TRACING_V2", "true"),
-        ("LANGSMITH_API_KEY", s.langsmith_api_key),
-        ("LANGCHAIN_API_KEY", s.langsmith_api_key),
-        ("LANGSMITH_PROJECT", s.langsmith_project),
-        ("LANGCHAIN_PROJECT", s.langsmith_project),
-    ):
-        os.environ.setdefault(k, v)
-
-
 settings = Settings()
-_activate_langsmith_tracing(settings)
+
+# Observabilidad: inicializa Langfuse (con la máscara de PII) si hay claves.
+# Sin claves es no-op y `langfuse` ni se importa (3.14-safe). La integración vive
+# en `src/observability.py` (módulo hoja) para no crear un ciclo con este módulo.
+from src.observability import init_langfuse  # noqa: E402 — tras definir `settings`
+
+init_langfuse(settings)

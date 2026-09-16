@@ -154,6 +154,17 @@ async def run_turn_via_graph(conv_state, message: str) -> str:
     """Punto de entrada del grafo para `supervisor.route_message` (Fase 1.4).
     Devuelve la respuesta; el `conv_state` queda mutado in-place por el nodo
     de ruta (que delega en la cascada), igual que si se hubiera llamado a
-    `_shared_turn_handler` directamente."""
-    result = await get_compiled_graph().ainvoke({"conv_state": conv_state, "message": message})
+    `_shared_turn_handler` directamente.
+
+    Observabilidad (Fase 5.3): si el tracing de Langfuse está activo, se pasa su
+    `CallbackHandler` para trazar la corrida del grafo (nodos + latencia). Off →
+    `config=None`, sin coste (ver `src/observability.py`)."""
+    from src.config import settings
+    from src.observability import langfuse_callback_handler
+
+    handler = langfuse_callback_handler(settings)
+    config = {"callbacks": [handler]} if handler is not None else None
+    result = await get_compiled_graph().ainvoke(
+        {"conv_state": conv_state, "message": message}, config=config
+    )
     return result["reply"]

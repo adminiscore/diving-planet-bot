@@ -1,22 +1,17 @@
-"""Tracing del cliente OpenAI para LangSmith (Fase 5.3 — observabilidad).
+"""Tracing del cliente OpenAI para Langfuse (Fase 5.3 — observabilidad).
 
-`trace_openai(client)` envuelve un cliente `AsyncOpenAI` ya instanciado con
-`langsmith.wrappers.wrap_openai` **solo si LangSmith está activo** (hay
-`langsmith_api_key` + `langchain_tracing_v2`), para que **cada llamada LLM**
-(chat + embeddings) se trace en LangSmith con tokens/latencia/coste — el detalle
-por-llamada que el grafo LangGraph no captura solo.
+`trace_openai(client)` devuelve un cliente OpenAI **trazado por Langfuse** cuando
+el tracing está activo (hay claves), para que **cada llamada LLM** (chat +
+embeddings) se registre con tokens/latencia/coste — el detalle por-llamada que el
+grafo LangGraph no captura solo.
 
-Se envuelve el cliente en su sitio (`trace_openai(AsyncOpenAI(...))`) en vez de
-una fábrica que instancia, para NO cambiar el punto donde cada módulo referencia
-`AsyncOpenAI` (los tests lo mockean vía `monkeypatch.setattr(mod, "AsyncOpenAI",
-...)`; con tracing off, `trace_openai` devuelve el mock intacto).
-
-Diseño:
-- **Cero overhead/cambio cuando el tracing está off** (dev sin cuenta, CI con key
-  falsa, tests): devuelve el cliente tal cual.
-- **Nunca rompe las llamadas por el tracing**: si `wrap_openai` fallara, degrada
-  al cliente sin envolver.
-- Import perezoso de `langsmith` dentro de la función (no se paga a import).
+Langfuse no "envuelve" un cliente ya instanciado: su integración es un drop-in
+(`langfuse.openai.AsyncOpenAI`). Como TODOS los llamadores instancian
+`AsyncOpenAI(api_key=settings.openai_api_key)` (uniforme), `trace_openai` con el
+tracing activo devuelve el cliente equivalente de `langfuse.openai` y descarta el
+pelado; con el tracing off devuelve el que le pasan **sin tocar** (los tests
+mockean `AsyncOpenAI` en su módulo y siguen funcionando). La lógica de Langfuse
+(y su import perezoso, 3.14-safe) vive en `src/observability.py`.
 """
 
 from __future__ import annotations
@@ -26,6 +21,7 @@ import logging
 from typing import TypeVar
 
 from src.config import settings
+from src.observability import traced_openai_client
 
 logger = logging.getLogger("uvicorn.error")
 
@@ -33,16 +29,10 @@ _C = TypeVar("_C")
 
 
 def trace_openai(client: _C) -> _C:
-    """Devuelve `client` envuelto para LangSmith si el tracing está activo; si no,
-    lo devuelve sin tocar (no-op)."""
-    if settings.langchain_tracing_v2 and settings.langsmith_api_key:
-        try:
-            from langsmith.wrappers import wrap_openai
-
-            return wrap_openai(client)
-        except Exception as exc:  # noqa: BLE001 — el tracing nunca debe romper el bot
-            logger.warning(f"[LANGSMITH] wrap_openai falló, sigo sin trazar el cliente: {exc}")
-    return client
+    """Cliente OpenAI trazado por Langfuse si el tracing está activo; si no, el
+    `client` que se pasa, sin tocar (no-op)."""
+    traced = traced_openai_client(settings)
+    return traced if traced is not None else client
 
 
 def _is_empty_for(spec: dict, value) -> bool:

@@ -37,7 +37,13 @@ dependencies = [
     "redis>=5.0.0",
 
     # --- Observability ---
-    "langsmith==0.10.10",  # fijada junto a langgraph/langchain (ver nota arriba)
+    # Langfuse: observabilidad activa (sustituye a LangSmith, cuota agotada;
+    # robustez tarea 8). Pineado a lo instalado y verificado. Nota: su cliente
+    # `api` generado usa pydantic.v1 y NO importa bajo Python 3.14 — por eso
+    # `src/observability.py` lo importa perezosamente y SOLO con claves (= PRE,
+    # que corre Python 3.11). Dev local (3.14) sin claves nunca lo toca.
+    "langfuse==3.15.0",
+    "langsmith==0.10.10",  # legacy, sin uso ya; se retira en el paso 6 (tras 1 semana midiendo)
 
     # --- Utilities ---
     "python-dotenv>=1.0.0",

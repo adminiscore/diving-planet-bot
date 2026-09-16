@@ -149,13 +149,16 @@ jobs:
                 docker logs dp-pre-postgres --tail 60 2>&1 || true
               fi
             fi
-            # LangSmith (Fase 5.3 / periodo de medicion del rollout, plan §5): inyecta
-            # la API key desde el secret de GitHub en .env.pre (PRE only) para que el
-            # bot trace a LangSmith. config._activate_langsmith_tracing la lee y enciende
-            # el tracing. Se borra cualquier linea previa y se re-escribe (idempotente).
-            # Si el secret esta vacio, config no enciende el tracing (no-op).
-            sed -i "/^LANGSMITH_API_KEY=/d" .env.pre 2>/dev/null || true
-            echo "LANGSMITH_API_KEY=${{ secrets.LANGSMITH_API_KEY }}" >> .env.pre
+            # Langfuse (Fase 5.3 / observabilidad, robustez tarea 8): inyecta las
+            # claves desde los secrets de GitHub en .env.pre (PRE only) para que el
+            # bot trace a Langfuse. observability.init_langfuse las lee y enciende el
+            # tracing (con la mascara de PII). Se borran las lineas previas y se
+            # reescriben (idempotente). Sin secrets configurados, config no enciende
+            # el tracing (no-op) y langfuse ni se importa.
+            sed -i "/^LANGFUSE_PUBLIC_KEY=/d;/^LANGFUSE_SECRET_KEY=/d;/^LANGFUSE_HOST=/d" .env.pre 2>/dev/null || true
+            echo "LANGFUSE_PUBLIC_KEY=${{ secrets.LANGFUSE_PUBLIC_KEY }}" >> .env.pre
+            echo "LANGFUSE_SECRET_KEY=${{ secrets.LANGFUSE_SECRET_KEY }}" >> .env.pre
+            echo "LANGFUSE_HOST=${{ secrets.LANGFUSE_HOST }}" >> .env.pre
             docker compose -f docker-compose.vps.yml up -d --build dp-pre-bot
             # --- Limpieza de disco POST-build (2026-09-01) ---
             # Antes solo se limpiaba de forma REACTIVA (arriba, solo si postgres ya
