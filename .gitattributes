@@ -1,0 +1,8 @@
+# Ficheros que se EJECUTAN en Linux (runner de CI y VPS) y deben ir SIEMPRE en
+# LF. Con CRLF, el bash remoto del deploy recibe cada linea con un `\r` final y
+# el script se rompe a mitad (sintoma real 2026-09-16: el deploy moria tras
+# `git checkout` sin reconstruir el bot -> PRE se quedaba con codigo viejo).
+*.yml   text eol=lf
+*.yaml  text eol=lf
+*.sh    text eol=lf
+Dockerfile text eol=lf

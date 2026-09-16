@@ -91,7 +91,7 @@ jobs:
   deploy-pre:
     name: Deploy to PRE
     needs: test
-     # PRE is a single shared environment. Each person deploys via their own
+    # PRE is a single shared environment. Each person deploys via their own
     # "pre_*" mirror branch (pushed intentionally, not on every routine commit
     # to their integration branch); whichever pushes last "wins" (see
     # docs/deploy-pre-redeploy.md).
@@ -111,118 +111,85 @@ jobs:
           chmod 600 ~/.ssh/pre_vps
           ssh-keyscan -H "${{ secrets.PRE_VPS_HOST }}" >> ~/.ssh/known_hosts
 
+      # El script remoto se entrega por STDIN con un heredoc `bash -s <<'REMOTE'`
+      # (NO como un argumento entre comillas simples). Motivo (2026-09-16): el
+      # patron anterior `ssh host 'script largo...'` era fragil -- una comilla
+      # simple en cualquier parte del script (p.ej. `grep '^LANGFUSE_'`) rompia el
+      # entrecomillado y truncaba el script remoto, que moria tras `git checkout`
+      # sin llegar al `docker compose up --build` -> PRE se quedaba con el bot
+      # viejo (deploy "verde" en 9s pero sin reconstruir). Con el heredoc el script
+      # viaja intacto por stdin, inmune a comillas/globbing. El fichero se guarda
+      # en LF (sin CRLF) para no mandar `\r` al bash remoto.
       - name: Redeploy dp-pre-bot
         run: |
-          ssh -i ~/.ssh/pre_vps root@${{ secrets.PRE_VPS_HOST }} '
-            set -euo pipefail
-            cd /opt/diving-planet-bot
-            git remote set-branches origin "*"
-            git fetch origin
-            git checkout ${{ github.ref_name }}
-            git reset --hard origin/${{ github.ref_name }}
-            # --- Diagnostico + auto-recuperacion de dp-pre-postgres (2026-07-31) ---
-            # Solo actua si Postgres NO esta healthy (compose aborta el deploy por
-            # depends_on: service_healthy). Imprime el motivo en el log de la Action
-            # (disco/memoria/logs) e intenta recuperarlo (liberar imagenes colgantes
-            # + restart, esperando healthy). Seguro: restart preserva el volumen.
-            h=$(docker inspect --format "{{if .State.Health}}{{.State.Health.Status}}{{end}}" dp-pre-postgres 2>/dev/null || echo missing)
-            echo "postgres health = $h"
-            if [ "$h" != "healthy" ]; then
-              echo "=== dp-pre-postgres NO healthy -> diagnostico ==="
-              df -h / || true
-              free -h || true
-              docker system df || true
-              echo "--- postgres logs (tail 50) ---"
-              docker logs dp-pre-postgres --tail 50 2>&1 || true
-              echo "=== recuperacion: liberar disco (SEGURO — no toca contenedores en marcha, imagenes en uso ni volumenes/datos; PRO intacto) ==="
-              docker builder prune -af || true
-              docker image prune -af || true
-              echo "--- disco tras limpieza ---"
-              df -h / || true
-              docker system df || true
-              echo "=== restart dp-pre-postgres ==="
-              docker restart dp-pre-postgres || true
-              for i in $(seq 1 24); do
-                h=$(docker inspect --format "{{if .State.Health}}{{.State.Health.Status}}{{end}}" dp-pre-postgres 2>/dev/null || echo "")
-                echo "  wait $i: health=$h"
-                if [ "$h" = "healthy" ]; then break; fi
-                sleep 5
-              done
-              echo "postgres health tras recuperacion = $h"
-              if [ "$h" != "healthy" ]; then
-                echo "!!! postgres sigue unhealthy tras liberar disco + restart. Ultimos logs:"
-                docker logs dp-pre-postgres --tail 60 2>&1 || true
-              fi
-            fi
-            # Langfuse (Fase 5.3 / observabilidad, robustez tarea 8): inyecta las
-            # claves desde los secrets de GitHub en .env.pre (PRE only) para que el
-            # bot trace a Langfuse. observability.init_langfuse las lee y enciende el
-            # tracing (con la mascara de PII). Se borran las lineas previas y se
-            # reescriben (idempotente). Sin secrets configurados, config no enciende
-            # el tracing (no-op) y langfuse ni se importa.
-            sed -i "/^LANGFUSE_PUBLIC_KEY=/d;/^LANGFUSE_SECRET_KEY=/d;/^LANGFUSE_HOST=/d" .env.pre 2>/dev/null || true
-            echo "LANGFUSE_PUBLIC_KEY=${{ secrets.LANGFUSE_PUBLIC_KEY }}" >> .env.pre
-            echo "LANGFUSE_SECRET_KEY=${{ secrets.LANGFUSE_SECRET_KEY }}" >> .env.pre
-            echo "LANGFUSE_HOST=${{ secrets.LANGFUSE_HOST }}" >> .env.pre
-            docker compose -f docker-compose.vps.yml up -d --build dp-pre-bot
-            # --- Limpieza de disco POST-build (2026-09-01) ---
-            # Antes solo se limpiaba de forma REACTIVA (arriba, solo si postgres ya
-            # estaba unhealthy) -- para entonces el disco ya se habia llenado y
-            # Chatwoot (servicio aparte, mismo disco) se caia con 500 en todo sin
-            # que nadie lo notara hasta la siguiente vez que se probaba en vivo.
-            # Cada "docker compose ... --build" deja cache/capas huerfanas del build
-            # anterior; se libera aqui SIEMPRE, tras cada deploy, en vez de esperar a
-            # que algo se rompa. Mismos comandos ya probados seguros (no tocan
-            # contenedores en marcha, imagenes en uso ni volumenes/datos; PRO intacto).
-            echo "=== disco tras el build ==="
+          ssh -i ~/.ssh/pre_vps root@${{ secrets.PRE_VPS_HOST }} bash -s <<'REMOTE'
+          set -euo pipefail
+          cd /opt/diving-planet-bot
+          git remote set-branches origin "*"
+          git fetch origin
+          git checkout ${{ github.ref_name }}
+          git reset --hard origin/${{ github.ref_name }}
+          echo "=== codigo desplegado en el VPS ==="
+          git log --oneline -1
+          # Postgres: auto-recuperacion si NO esta healthy (compose aborta por depends_on)
+          h=$(docker inspect --format '{{if .State.Health}}{{.State.Health.Status}}{{end}}' dp-pre-postgres 2>/dev/null || echo missing)
+          echo "postgres health = $h"
+          if [ "$h" != "healthy" ]; then
+            echo "=== dp-pre-postgres NO healthy -> liberar disco + restart ==="
             df -h / || true
+            docker logs dp-pre-postgres --tail 40 2>&1 || true
             docker builder prune -af || true
             docker image prune -af || true
-            echo "=== disco tras limpieza post-build ==="
-            df -h / || true
-            # --- Chatwoot health-check + auto-recuperacion (2026-09-16) ---
-            # El widget de "Abrir el chat" lo sirve dp-chatwoot (Rails); si el disco
-            # se llena, Rails responde 500 y el chat NO abre aunque la landing
-            # estatica de Caddy siga cargando (enganya). El disco ya se libero
-            # arriba; aqui probamos Chatwoot por HTTP con su PROPIO Ruby (stdlib
-            # net/http, siempre presente en la imagen) y SOLO si no esta sano lo
-            # reiniciamos. Condicional a proposito: Chatwoot es COMPARTIDO con PRO
-            # -> un restart corta el chat unos segundos para ambos, asi que en un
-            # deploy con Chatwoot sano NO se toca. Sin comillas simples (romperian
-            # el string SSH); mismo patron de \" que el health-check del bot.
-            cw=$(docker exec dp-chatwoot ruby -e "require \"net/http\"; begin; puts Net::HTTP.get_response(URI(\"http://localhost:3000/\")).code; rescue; puts \"000\"; end" 2>/dev/null || echo "000")
-            echo "chatwoot http = $cw"
-            case "$cw" in
-              2*|3*) echo "chatwoot sano ($cw) -> no se toca" ;;
-              *)
-                echo "=== dp-chatwoot NO sano ($cw) -> restart (web + worker) ==="
-                docker restart dp-chatwoot dp-chatwoot-worker || true
-                echo "--- esperando arranque de Rails (~20-40s) ---"
-                for i in $(seq 1 18); do
-                  sleep 5
-                  cw=$(docker exec dp-chatwoot ruby -e "require \"net/http\"; begin; puts Net::HTTP.get_response(URI(\"http://localhost:3000/\")).code; rescue; puts \"000\"; end" 2>/dev/null || echo "000")
-                  echo "  wait $i: http=$cw"
-                  case "$cw" in 2*|3*) break ;; esac
-                done
-                echo "chatwoot http tras recuperacion = $cw"
-                docker logs dp-chatwoot --tail 30 2>&1 || true
-                ;;
-            esac
-            sleep 5
-            docker exec dp-pre-bot python -m scripts.load_embeddings --yes
-            docker exec dp-pre-bot python -c "import urllib.request; print(urllib.request.urlopen(\"http://localhost:8000/health\").read())"
-            # --- Verificacion de codigo en el contenedor (2026-09-16): prueba
-            # DEFINITIVA de que el rebuild aterrizo el fix del saludo.
-            # _is_greeting_only("hola que tal?") == True SOLO en el codigo nuevo
-            # (el viejo daba False -> caia en RAG -> saludo doble). Si sale False
-            # o ERROR, dp-pre-bot NO se reconstruyo con el codigo nuevo.
-            echo "=== VERIFICACION FIX SALUDO EN dp-pre-bot ==="
-            docker exec dp-pre-bot python -c "from src.agents.conversational_core import _is_greeting_only; print(\"GREETING_FIX_LIVE=\", _is_greeting_only(\"hola que tal?\"))" 2>&1 || echo "GREETING_FIX_LIVE= ERROR"
-            # --- Diagnostico de Langfuse (2026-09-16): confirmar que el tracing
-            # se activo en el contenedor (claves presentes + init ok). Sale en el
-            # log de la Action, sin exponer los valores. ---
-            echo "=== LANGFUSE: estado en dp-pre-bot ==="
-            docker exec dp-pre-bot sh -c "env | grep -iE '^LANGFUSE_' | sed 's/=.*/=SET/'" || echo "(sin LANGFUSE_* en el env del contenedor)"
-            docker exec dp-pre-bot python -c "from src.config import settings; from src.observability import langfuse_enabled; print('langfuse_enabled=', langfuse_enabled(settings), '| host=', settings.langfuse_host, '| pk_set=', bool(settings.langfuse_public_key), '| sk_set=', bool(settings.langfuse_secret_key))" 2>&1 || true
-            docker logs dp-pre-bot 2>&1 | grep -i LANGFUSE | tail -8 || echo "(sin lineas [LANGFUSE] en el log del bot)"
-          '
+            docker restart dp-pre-postgres || true
+            for i in $(seq 1 24); do
+              h=$(docker inspect --format '{{if .State.Health}}{{.State.Health.Status}}{{end}}' dp-pre-postgres 2>/dev/null || echo "")
+              echo "  wait $i: health=$h"
+              if [ "$h" = "healthy" ]; then break; fi
+              sleep 5
+            done
+            echo "postgres health tras recuperacion = $h"
+          fi
+          # Langfuse keys -> .env.pre (idempotente; sin claves, config no enciende el tracing)
+          sed -i "/^LANGFUSE_PUBLIC_KEY=/d;/^LANGFUSE_SECRET_KEY=/d;/^LANGFUSE_HOST=/d" .env.pre 2>/dev/null || true
+          echo "LANGFUSE_PUBLIC_KEY=${{ secrets.LANGFUSE_PUBLIC_KEY }}" >> .env.pre
+          echo "LANGFUSE_SECRET_KEY=${{ secrets.LANGFUSE_SECRET_KEY }}" >> .env.pre
+          echo "LANGFUSE_HOST=${{ secrets.LANGFUSE_HOST }}" >> .env.pre
+          echo "=== rebuild + recreate dp-pre-bot ==="
+          docker compose -f docker-compose.vps.yml up -d --build --force-recreate dp-pre-bot
+          # Limpieza de disco post-build (cada --build deja capas huerfanas; si el
+          # disco se llena, Chatwoot -mismo disco- responde 500 y el chat no abre)
+          docker builder prune -af || true
+          docker image prune -af || true
+          echo "=== disco tras limpieza ==="
+          df -h / || true
+          # Chatwoot: restart SOLO si no responde (probe por su propio Ruby). Es
+          # COMPARTIDO con PRO -> un restart corta el chat unos segundos para ambos,
+          # asi que en un deploy con Chatwoot sano NO se toca.
+          cw=$(docker exec dp-chatwoot ruby -e 'require "net/http"; begin; puts Net::HTTP.get_response(URI("http://localhost:3000/")).code; rescue; puts "000"; end' 2>/dev/null || echo "000")
+          echo "chatwoot http = $cw"
+          case "$cw" in
+            2*|3*) echo "chatwoot sano ($cw) -> no se toca" ;;
+            *)
+              echo "=== dp-chatwoot NO sano ($cw) -> restart (web + worker) ==="
+              docker restart dp-chatwoot dp-chatwoot-worker || true
+              echo "--- esperando arranque de Rails (~20-40s) ---"
+              for i in $(seq 1 18); do
+                sleep 5
+                cw=$(docker exec dp-chatwoot ruby -e 'require "net/http"; begin; puts Net::HTTP.get_response(URI("http://localhost:3000/")).code; rescue; puts "000"; end' 2>/dev/null || echo "000")
+                echo "  wait $i: http=$cw"
+                case "$cw" in 2*|3*) break ;; esac
+              done
+              echo "chatwoot http final = $cw"
+              docker logs dp-chatwoot --tail 30 2>&1 || true
+              ;;
+          esac
+          sleep 5
+          docker exec dp-pre-bot python -m scripts.load_embeddings --yes
+          docker exec dp-pre-bot python -c 'import urllib.request; print(urllib.request.urlopen("http://localhost:8000/health").read())'
+          # Verificacion DEFINITIVA de que el rebuild aterrizo el fix del saludo:
+          # _is_greeting_only("hola que tal?") == True SOLO en el codigo nuevo.
+          echo "=== VERIFICACION FIX SALUDO EN dp-pre-bot ==="
+          docker exec dp-pre-bot python -c 'from src.agents.conversational_core import _is_greeting_only; print("GREETING_FIX_LIVE=", _is_greeting_only("hola que tal?"))' 2>&1 || echo "GREETING_FIX_LIVE= ERROR"
+          echo "=== LANGFUSE: estado en dp-pre-bot ==="
+          docker exec dp-pre-bot sh -c "env | grep -iE '^LANGFUSE_' | sed 's/=.*/=SET/'" || echo "(sin LANGFUSE_* en el env)"
+          REMOTE
