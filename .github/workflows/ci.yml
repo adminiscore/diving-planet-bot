@@ -211,6 +211,13 @@ jobs:
             sleep 5
             docker exec dp-pre-bot python -m scripts.load_embeddings --yes
             docker exec dp-pre-bot python -c "import urllib.request; print(urllib.request.urlopen(\"http://localhost:8000/health\").read())"
+            # --- Verificacion de codigo en el contenedor (2026-09-16): prueba
+            # DEFINITIVA de que el rebuild aterrizo el fix del saludo.
+            # _is_greeting_only("hola que tal?") == True SOLO en el codigo nuevo
+            # (el viejo daba False -> caia en RAG -> saludo doble). Si sale False
+            # o ERROR, dp-pre-bot NO se reconstruyo con el codigo nuevo.
+            echo "=== VERIFICACION FIX SALUDO EN dp-pre-bot ==="
+            docker exec dp-pre-bot python -c "from src.agents.conversational_core import _is_greeting_only; print(\"GREETING_FIX_LIVE=\", _is_greeting_only(\"hola que tal?\"))" 2>&1 || echo "GREETING_FIX_LIVE= ERROR"
             # --- Diagnostico de Langfuse (2026-09-16): confirmar que el tracing
             # se activo en el contenedor (claves presentes + init ok). Sale en el
             # log de la Action, sin exponer los valores. ---
