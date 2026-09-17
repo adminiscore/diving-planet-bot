@@ -19,7 +19,11 @@ Uso (no llama a ningun LLM, solo lee Langfuse):
     ENV_FILE=.env.dev python -m scripts.langfuse_snapshot --label "Baseline M0" \\
         [--from 2026-09-16T00:00:00Z] [--to 2026-09-17T00:00:00Z] [--env staging] [--out foto.json]
 
-Sin `--from` toma los ultimos 7 dias. Claves: `LANGFUSE_PUBLIC_KEY`, `LANGFUSE_SECRET_KEY`
+    # Tras una ejecucion de scripts.run_synthetic_pre: ventana y tiempo del cliente salen del fichero
+    ENV_FILE=.env.dev python -m scripts.langfuse_snapshot --label "Cierre L1" \\
+        --from-run docs/robustness/synthetic-runs/2026-09-17-m0.jsonl
+
+Sin `--from` ni `--from-run` toma los ultimos 7 dias. Claves: `LANGFUSE_PUBLIC_KEY`, `LANGFUSE_SECRET_KEY`
 y `LANGFUSE_HOST` del entorno o del fichero `ENV_FILE`.
 """
 
@@ -150,12 +154,15 @@ def build_snapshot(observations: list[dict], label: str, start: str, end: str, e
     except (OSError, subprocess.CalledProcessError):
         commit = None
 
+    starts = [t["start"] for t in turns if t["start"]]
     return {
         "label": label,
         "taken_at": datetime.now(UTC).isoformat(timespec="seconds"),
+        # Cuando se ejecuto el trafico medido (ultimo turno): el eje temporal del seguimiento.
+        "run_at": max(starts) if starts else end,
         "commit": commit,
         "environment": environment,
-        "window": {"from": start, "to": end},
+        "window": {"from": start, "to": end, "first_turn": min(starts) if starts else None, "last_turn": max(starts) if starts else None},
         "merged_traces": {"traces": len(merged), "turns": sum(sum(o.get("name") == "router" for o in obs) for obs in merged)},
         "all": aggregate(turns),
         "by_type": {kind: aggregate([t for t in turns if t["type"] == kind]) for kind in ("reserva", "rag")},
@@ -167,14 +174,44 @@ def build_snapshot(observations: list[dict], label: str, start: str, end: str, e
     }
 
 
+def client_side(run_records: list[dict]) -> dict:
+    """Resumen de una ejecucion de `run_synthetic_pre`: turnos, sin respuesta, varias
+    burbujas y el tiempo que ve el cliente en Chatwoot."""
+    lat = [r["client_latency_s"] for r in run_records if r.get("client_latency_s") is not None]
+    return {
+        "turns": len(run_records),
+        "conversations": len({r["conv"] for r in run_records}),
+        "no_reply": sum(r.get("reply") is None for r in run_records),
+        "multi_bubble": sum((r.get("bubbles") or 0) > 1 for r in run_records),
+        "latency_p50": _pct(lat, 50),
+        "latency_p95": _pct(lat, 95),
+        "latency_max": max(lat) if lat else None,
+    }
+
+
+def run_window(run_records: list[dict]) -> tuple[str, str]:
+    """Ventana de Langfuse que cubre una ejecucion (margen para el primer turno y la ingesta)."""
+    stamps = [_ts(r["at"]) for r in run_records]
+    fmt = lambda d: d.astimezone(UTC).isoformat(timespec="seconds").replace("+00:00", "Z")  # noqa: E731
+    return fmt(min(stamps) - timedelta(minutes=5)), fmt(max(stamps) + timedelta(minutes=2))
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--label", default="Foto")
     parser.add_argument("--from", dest="start")
     parser.add_argument("--to", dest="end")
+    parser.add_argument("--from-run", help="JSONL de scripts.run_synthetic_pre: fija la ventana y anade el tiempo del cliente")
     parser.add_argument("--env", default="staging", help="environment de Langfuse ('' = todos)")
     parser.add_argument("--out")
     args = parser.parse_args(argv)
+
+    run_records = None
+    if args.from_run:
+        with open(args.from_run, encoding="utf-8") as fh:
+            run_records = [json.loads(line) for line in fh if line.strip()]
+        run_start, run_end = run_window(run_records)
+        args.start, args.end = args.start or run_start, args.end or run_end
 
     public, secret = _env("LANGFUSE_PUBLIC_KEY"), _env("LANGFUSE_SECRET_KEY")
     if not (public and secret):
@@ -189,6 +226,9 @@ def main(argv: list[str] | None = None) -> int:
     environment = args.env or None
 
     snapshot = build_snapshot(fetch_observations(host, auth, start, end, environment), args.label, start, end, environment)
+    if run_records is not None:
+        snapshot["run_file"] = args.from_run.replace("\\", "/")
+        snapshot["client_latency"] = client_side(run_records)
     text = json.dumps(snapshot, ensure_ascii=False, indent=2)
     if args.out:
         with open(args.out, "w", encoding="utf-8") as fh:

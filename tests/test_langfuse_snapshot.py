@@ -51,3 +51,21 @@ def test_build_snapshot_excludes_traces_that_merge_several_turns():
     assert snap["all"]["turns"] == 1
     assert snap["all"]["latency_p95"] == 1.0
     assert snap["merged_traces"] == {"traces": 1, "turns": 2}
+
+
+def test_from_run_window_and_client_side_summary():
+    from scripts.langfuse_snapshot import client_side, run_window
+
+    records = [
+        {"at": "2026-09-17T08:00:00+00:00", "conv": 1, "reply": "hola", "bubbles": 1, "client_latency_s": 3.0},
+        {"at": "2026-09-17T08:10:00+00:00", "conv": 1, "reply": "a\n---\nb", "bubbles": 2, "client_latency_s": 7.0},
+        {"at": "2026-09-17T08:20:00+00:00", "conv": 2, "reply": None, "bubbles": 0, "client_latency_s": None},
+    ]
+
+    assert run_window(records) == ("2026-09-17T07:55:00Z", "2026-09-17T08:22:00Z")
+    summary = client_side(records)
+    assert summary["turns"] == 3
+    assert summary["conversations"] == 2
+    assert summary["no_reply"] == 1
+    assert summary["multi_bubble"] == 1
+    assert summary["latency_max"] == 7.0
