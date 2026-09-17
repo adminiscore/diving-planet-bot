@@ -14,6 +14,7 @@ en `docs/robustness/synthetic-runs/<fecha>-<nombre>.jsonl`, que luego alimenta l
 Uso (manda trafico real a PRE: gasta LLM y cuota de Langfuse; va de uno en uno a proposito):
 
     ENV_FILE=.env.dev python -m scripts.run_synthetic_pre --name m0 --sample m0
+    ENV_FILE=.env.dev python -m scripts.run_synthetic_pre --name golden --sample golden   # luego scripts.judge_golden_set
     ENV_FILE=.env.dev python -m scripts.run_synthetic_pre --name lote7 --batches 7
     ENV_FILE=.env.dev python -m scripts.run_synthetic_pre --name todo --all [--dry]
 
@@ -44,7 +45,20 @@ def load_batches() -> dict[str, list[tuple[str, list[str]]]]:
     return {k: [(c["tag"], c["turns"]) for c in v["cases"]] for k, v in doc["batches"].items()}
 
 
+GOLDEN_FILE = Path("docs/robustness/golden-set/golden-dialogues.json")
+
+
+def golden_cases(batches: dict) -> list[tuple[str, str, list[str]]]:
+    """Dialogos del golden-set: los turnos salen del lote que citan (o de `turns` si son
+    propios). El tag es el id del dialogo, que es lo que casa el juez."""
+    golden = json.loads(GOLDEN_FILE.read_text(encoding="utf-8"))
+    by_tag = {tag: turns for cases in batches.values() for tag, turns in cases}
+    return [("golden", d["id"], d.get("turns") or by_tag[d["source"]["tag"]]) for d in golden["dialogues"]]
+
+
 def select_cases(batches: dict, sample: str | None, only: list[str] | None) -> list[tuple[str, str, list[str]]]:
+    if sample == "golden":
+        return golden_cases(batches)
     if only:
         return [(b, tag, turns) for b in only for tag, turns in batches[b]]
     if sample == "m0":
@@ -122,7 +136,7 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--name", required=True, help="nombre corto de la ejecucion (va en el fichero)")
     group = parser.add_mutually_exclusive_group(required=True)
-    group.add_argument("--sample", choices=["m0"])
+    group.add_argument("--sample", choices=["m0", "golden"], help="m0 = muestra de latencia; golden = dialogos del golden-set")
     group.add_argument("--batches", help="lotes separados por coma, p. ej. 5,7")
     group.add_argument("--all", action="store_true")
     parser.add_argument("--dry", action="store_true", help="solo cuenta conversaciones y turnos")

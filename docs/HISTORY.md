@@ -1,6 +1,12 @@
 History
 =======
 
+0.29.0 - (2026-09-17)
+----------------------
+* **Golden-set de diálogos + LLM-juez end-to-end** (plan maestro, M0 m0-3/m0-4). `docs/robustness/golden-set/golden-dialogues.json` (validado por Gadea): 41 diálogos (121 turnos) de los lotes sintéticos + "hola que tal?", con 5 criterios globales y 74 propios sobre la RESPUESTA final (precios, edades, escalado, inyección, correcciones...). Los turnos se referencian por lote y etiqueta en `batches.json` y los hechos no se escriben en los criterios: el juez recibe `pricing`, `policies`, `discounts`, `availability`, `escalation_rules` y un extracto de `activities`. `scripts/run_synthetic_pre --sample golden` lanza los diálogos contra PRE y `scripts/judge_golden_set.py` (gpt-4.1, una llamada por diálogo, ~0,46 $/ronda) marca cada criterio como cumple / no_cumple / no_aplica y añade `quality` a la foto de Langfuse.
+* **Política de grupo con nacionalidades mixtas en `policies.json`** (`mixed_nationality_group`): todo el grupo paga en USD al mismo precio. Era una decisión del owner que solo estaba en el código; ahora tiene fuente única y la usan el RAG y el juez.
+* Decisión del owner: un cambio de fecha antes de tener la reserva pagada se pasa a un asesor (criterio del golden-set; hoy el bot no lo hace).
+
 0.28.2 - (2026-09-17)
 ----------------------
 * **Foto de latencia desde Langfuse** (plan maestro, fase M0). Nuevo `scripts/langfuse_snapshot.py`: lee las observaciones de PRE (API v2; la de trazas legacy no existe para organizaciones nuevas), agrupa por turno y saca p50/p95 del turno, llamadas LLM y embeddings por turno, tokens, coste, p50/p95 por nodo y modelos, en total y por tipo (`rag`/`reserva`). No llama al LLM. La salida se guarda como foto en la página compartida "Plan Coral" para comparar antes/después de cada fase. Línea base 16-sep (19 turnos): p50 7,5 s / p95 14 s, 5,8 llamadas LLM por turno (RAG 7,2, hasta 10); los modelos en PRE son `gpt-4o-mini` y `gpt-4.1-mini`, no `gpt-4o`.
