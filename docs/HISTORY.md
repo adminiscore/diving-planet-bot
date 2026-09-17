@@ -15,10 +15,19 @@ History
   casos cuyo equivalente español sí funciona: "Is accommodation included?" cae a fallback y "I have
   Open Water, which plan do you recommend?" no recupera ningún documento. No es falta de contenido
   (la FAQ existe en inglés, 380 docs EN en la base). Queda medido como candidato, sin tocar nada.
-* **Hallazgo: `vocab+ctx` da router 9/9** en la batería de actividad — arregla las tres comparaciones
-  de cursos (r07/r08/r09) sin romper `r05`, donde `vocab` a secas sí lo hace. Pero esa batería no
-  tiene casos de seguridad, y es ahí donde `vocab` rompía `a02-sordomuda` (3/3 → 0/3). Medir
-  `vocab+ctx` contra seguridad es lo que decidiría si F2b se reabre; cuesta ~111 peticiones.
+* **F2b (vocabulario del registro en el router) medida a fondo: sigue sin promocionarse, pero el
+  motivo documentado era el equivocado.** Tanda de las 3 variantes en la misma corrida (333
+  peticiones): `base` 29/37, `vocab` 32/37, `vocab+ctx` 32/37. El vocabulario del registro **no
+  ensucia las señales de seguridad, las mejora** en 2 de 4 (`base` falla `s02` y `a03` por marcar
+  `adaptive_diving_topic` y `sensitive_topic` a la vez, que el prompt prohíbe), y el fallo de
+  `a02-sordomuda` con `vocab+ctx` resulta ser el **bug de forma del tool del hallazgo D** —
+  devuelve `{"sensitive_topic": "adaptive_diving_topic"}` 3/3: detecta la accesibilidad siempre y
+  la coloca en el campo equivocado. Lo que de verdad bloquea F2b son los negativos de reserva
+  (`r05` y `n06` caen a 1/3: una reserva real leída como comparación se iría a RAG). Además, `base`
+  dio 33/37 y 29/37 en dos tandas de la misma tarde con la config idéntica: **con 3 repeticiones no
+  se decide nada en la familia de seguridad** (el protocolo documentado usa 8). Para reabrirlo:
+  arreglar primero la forma del tool y luego re-medir con 8 repeticiones sobre seguridad y
+  negativos.
 
 0.29.1 - (2026-09-17)
 ----------------------

@@ -4653,23 +4653,60 @@ Es el único frente donde la línea base sale claramente peor que su equivalente
 16/20 ES. No se toca ahora (M0 no cambia conducta); queda como candidato con dos casos concretos
 para medir un arreglo.
 
-### Hallazgo: `vocab+ctx` merece una medición que nadie ha hecho
+### F2b medida a fondo: sigue sin promocionarse, pero el motivo documentado era EL EQUIVOCADO
 
-F2b (enums del vocabulario del registro en el router) se midió y **no se aplicó** porque `vocab`
-arreglaba las comparaciones de cursos pero ensuciaba señales de seguridad. Esta tanda lo reproduce
-con números frescos y añade un matiz:
+F2b (enums del vocabulario del registro en el router) estaba anotada como "medida y no aplicada"
+porque `vocab` arreglaba las comparaciones de cursos pero **ensuciaba señales de seguridad**. Al
+congelar la línea base salió el matiz de que `vocab+ctx` (vocabulario + contexto de negocio) daba
+router **9/9** en la batería de actividad — pero esa batería **no tiene casos de seguridad**, que es
+justo donde se había descartado F2b. Se cerró la pregunta con una tanda de las **tres variantes
+juntas** (`base,vocab,vocab+ctx`, 3 repeticiones, 333 peticiones, 56 min): en la misma tanda, porque
+el progress-log ya documenta que estos casos oscilan con la petición idéntica y comparar contra
+números de una hora antes no decidiría nada.
 
-- Batería del router (incluye seguridad): `base` 33/37 · `vocab` 32/37. `vocab` arregla `r07`/`r08`/
-  `r09` (0/3 → 3/3, 3/3, 2/3) pero **rompe `a02-sordomuda` de 3/3 a 0/3** — una señal de
-  discapacidad/DIVE TO HEAL. Ese intercambio sigue sin valer.
-- Batería de actividad (solo casos de elección, **sin seguridad**): **`vocab+ctx` da router 9/9**,
-  arregla los tres de cursos y, a diferencia de `vocab` a secas, mantiene `r05-reserva-ambas` en
-  3/3 (`vocab` 2/3, `for_whom` 1/3).
+| caso | base | vocab | vocab+ctx |
+|---|---|---|---|
+| **TOTAL** | **29/37** | **32/37** | **32/37** |
+| `s02-epileptica` (seguridad) | 0/3 | 2/3 | **3/3** |
+| `s04-llover-manana` (seguridad) | 2/3 | 1/3 | 2/3 |
+| `a02-sordomuda` (accesibilidad) | 2/3 | 2/3 | **0/3** |
+| `a03-lesion-medular` (accesibilidad) | 0/3 | **3/3** | **3/3** |
+| `n06-reserva-grupo` (negativo) | **3/3** | 1/3 | 1/3 |
+| `r05-reserva-ambas` (negativo) | **3/3** | **3/3** | 1/3 |
+| `r07`/`r08`/`r09` (cursos) | 0/3 | **3/3** | **3/3** |
 
-**Nadie ha medido `vocab+ctx` contra los casos de seguridad**, que es justo el motivo por el que
-F2b se descartó. Es barato cerrarlo: `python -m scripts.battery_router_signals 3 vocab+ctx` (37
-casos × 3 ≈ 111 peticiones, ~6 min). Si el contexto de negocio recupera `a02`, F2b se puede
-reabrir; si no, queda definitivamente cerrado con dato.
+**Lo que corrige el diagnóstico anterior — dos cosas:**
+
+1. **El vocabulario del registro no "ensucia" la seguridad: la MEJORA en 2 de 4 casos.** `base`
+   falla `s02` y `a03` porque el modelo marca `adaptive_diving_topic` **y** `sensitive_topic` a la
+   vez, que es exactamente lo que el prompt prohíbe ("NEVER together"); con el vocabulario del
+   registro los separa bien (3/3).
+2. **El fallo de `a02-sordomuda` con `vocab+ctx` NO es de vocabulario: es el mismo bug de FORMA del
+   tool que el hallazgo D.** Devuelve `{"sensitive_topic": "adaptive_diving_topic"}` 3/3 — o sea,
+   **detecta la accesibilidad siempre** y la mete en el campo equivocado (el valor del booleano
+   puesto como valor del enum de otro campo). `base` y `vocab` hacen lo mismo 1 de cada 3. El
+   consumidor leería "tema sensible" y escalaría en genérico en vez de dar el contexto DIVE TO HEAL.
+
+**Por qué NO se promociona igualmente:** los que rompe de verdad son los **negativos de reserva**.
+`r05-reserva-ambas` ("quiero buceo y snorkel para los dos") cae a 1/3 con `vocab+ctx` y
+`n06-reserva-grupo` a 1/3 con las dos variantes: una reserva real leída como comparación se va a RAG
+a explicar diferencias en vez de reservar. Eso sí es una regresión por caso, y la regla del owner es
+clara: mejorar el agregado (32 frente a 29) empeorando un caso **no vale**.
+
+**Aviso sobre el ruido, importante para quien retome esto:** `base` dio **33/37 a las 17:52 y 29/37
+a las 19:53**, misma config y mismas 3 repeticiones; lo que se mueve son justo los casos de
+seguridad (`s02`, `s04`, `a02`, `a03`). **Con 3 repeticiones no se decide nada en esa familia** — el
+protocolo documentado usa 8 para seguridad. Lo único estable en las dos tandas de hoy es que
+`r07`/`r08`/`r09` solo aciertan con el vocabulario del registro (0/3 en `base` las dos veces).
+
+**Siguiente paso concreto si alguien quiere reabrir F2b** (por este orden, no al revés): arreglar la
+**forma del tool** para que el valor de un enum no pueda aterrizar en otro campo (misma familia que
+el hallazgo D, que ya tiene lector en `llm_client.tool_arguments`), y **luego** re-medir con 8
+repeticiones sobre el subconjunto de seguridad y los negativos:
+`python -m scripts.battery_router_signals 8 base,vocab+ctx s,a,n`. Mientras la forma del tool deje
+pasar eso, la medida no distingue "no lo detecta" de "lo detecta y lo coloca mal".
+
+Foto de la tanda: `docs/robustness/baselines/2026-09-17-m0-7/10_f2b_router_variantes.raw`.
 
 ### Notas de entorno (para quien repita la tanda)
 

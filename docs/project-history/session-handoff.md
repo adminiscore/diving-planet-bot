@@ -37,10 +37,20 @@ limpia: 0 llamadas degradadas" es lo que hace comparables las cifras.
    concretos cuyo equivalente español sí funciona: "Is accommodation included?" cae a fallback, y
    "I have Open Water, which plan do you recommend?" recupera **0 documentos**. No es falta de
    contenido (la FAQ existe en inglés). Candidato claro, medible con esos dos casos.
-2. **`vocab+ctx` tiene una medición pendiente que nadie hizo** y que podría reabrir F2b: da router
-   **9/9** en la batería de actividad (arregla r07/r08/r09 sin romper r05), pero esa batería **no
-   tiene casos de seguridad**, que es justo donde `vocab` a secas rompía `a02-sordomuda` (3/3→0/3).
-   Cerrarlo cuesta ~111 peticiones: `python -m scripts.battery_router_signals 3 vocab+ctx`.
+2. **F2b medida a fondo y NO promocionada — pero el motivo que había documentado era el
+   equivocado.** Tanda de las 3 variantes juntas (333 peticiones): `base` **29/37**, `vocab`
+   **32/37**, `vocab+ctx` **32/37**. Dos correcciones al diagnóstico anterior: (a) el vocabulario
+   del registro **no ensucia la seguridad, la mejora** en 2 de 4 casos — `base` falla `s02` y `a03`
+   porque marca `adaptive_diving_topic` y `sensitive_topic` a la vez, lo que el prompt prohíbe; y
+   (b) el fallo de `a02-sordomuda` con `vocab+ctx` **es el bug de FORMA del tool del hallazgo D**,
+   no de vocabulario: devuelve `{"sensitive_topic": "adaptive_diving_topic"}` 3/3, o sea detecta la
+   accesibilidad siempre y la pone en el campo equivocado. Lo que de verdad lo bloquea son los
+   **negativos de reserva**: `r05-reserva-ambas` 3/3→1/3 y `n06-reserva-grupo` 3/3→1/3 (una reserva
+   real leída como comparación se va a RAG). Regla del owner: mejorar el agregado empeorando un
+   caso no vale. **Y ojo con el ruido**: `base` dio 33/37 a las 17:52 y 29/37 a las 19:53, misma
+   config — con 3 repeticiones no se decide nada en la familia de seguridad (el protocolo usa 8).
+   **Para reabrirlo, en este orden**: arreglar la forma del tool (que un valor de enum no pueda
+   caer en otro campo) y luego `python -m scripts.battery_router_signals 8 base,vocab+ctx s,a,n`.
 3. **Entorno**: los evals de RAG en local necesitan `DATABASE_URL=postgresql://postgres:postgres@localhost:5432/diving_planet`
    — `.env` apunta a `host.docker.internal`, que solo resuelve dentro de un contenedor. Y el
    `rag_min_score` efectivo es **0,5** (lo fija `.env`), no el 0,40 del default.
