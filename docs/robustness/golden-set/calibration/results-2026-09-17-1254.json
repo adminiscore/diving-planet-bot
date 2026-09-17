@@ -1,0 +1,391 @@
+{
+ "judged_at": "2026-09-17T12:51:40+00:00",
+ "human_agreement": {
+  "items_with_2plus_labelers": 9,
+  "labelers_agree": 9
+ },
+ "models": {
+  "gpt-5:low": {
+   "tune": {
+    "items": 0,
+    "agreement_pct": null,
+    "false_fail": 0,
+    "missed_fail": 0,
+    "human_fails": 0,
+    "to_review": 0,
+    "errors": 0
+   },
+   "holdout": {
+    "items": 17,
+    "agreement_pct": 100.0,
+    "false_fail": 0,
+    "missed_fail": 0,
+    "human_fails": 1,
+    "to_review": 0,
+    "errors": 0
+   },
+   "all": {
+    "items": 17,
+    "agreement_pct": 100.0,
+    "false_fail": 0,
+    "missed_fail": 0,
+    "human_fails": 1,
+    "to_review": 0,
+    "errors": 0
+   },
+   "usage": {
+    "input": 539192,
+    "cached": 532480,
+    "output": 6896
+   },
+   "cost_usd": 0.1439,
+   "est_cost_per_round_usd": 1.98,
+   "rows": [
+    {
+     "dialogue": "paquete-en-carrito",
+     "criterion": "global:sin-invenciones",
+     "split": "holdout",
+     "human": "cumple",
+     "judge": "cumple",
+     "reason": "El bot no dio datos que contradigan la referencia ni inventó políticas, horarios, edades o contactos. La información sobre paquetes para quienes ya están en las islas es consistente con la referencia y no se mencionaron importes.",
+     "evidencia_bot": null
+    },
+    {
+     "dialogue": "paquete-en-carrito",
+     "criterion": "global:sin-repreguntas",
+     "split": "holdout",
+     "human": "cumple",
+     "judge": "cumple",
+     "reason": "El bot no volvió a pedir ningún dato que el cliente ya hubiera dado; preguntó por el origen solo una vez (dato aún no respondido) y reconoció correctamente que eran 2 personas.",
+     "evidencia_bot": null
+    },
+    {
+     "dialogue": "paquete-en-carrito",
+     "criterion": "no-escala",
+     "split": "holdout",
+     "human": "cumple",
+     "judge": "cumple",
+     "reason": "El bot respondió con información sobre paquetes y no transfirió a un asesor ni ofreció contacto humano.",
+     "evidencia_bot": null
+    },
+    {
+     "dialogue": "paquete-en-carrito",
+     "criterion": "mantiene",
+     "split": "holdout",
+     "human": "cumple",
+     "judge": "cumple",
+     "reason": "El bot reconoce que son 2 personas y mantiene la conversación en planes de buceo certificado, sin cambiar la actividad ni el tamaño del grupo.",
+     "evidencia_bot": "Entendido, son 2 personas."
+    },
+    {
+     "dialogue": "paquete-en-carrito",
+     "criterion": "no-asume-ubicacion",
+     "split": "holdout",
+     "human": "no_cumple",
+     "judge": "no_cumple",
+     "reason": "El cliente no indicó desde dónde saldrá y el bot respondió solo con paquetes para quienes ya están en las islas; debía ofrecer opciones de ambas salidas o volver a preguntar la ubicación.",
+     "evidencia_bot": "¡Claro que sí! 🐠 Tenemos paquetes para buzos certificados que ya están en las Islas del Rosario, ideales para varios días.\n\nPor ejemplo:\n- Paquete de 4 inmersiones en 2 días: 3 diurnas + 1 nocturna.\n- Paquete de 4 inmersiones en 2 días: 4 diurnas.\n- Paquete de 5 inmersiones en 2 días: combinación de diurnas y nocturnas.\n\nEstos paquetes incluyen recogida en el hotel (si tiene acceso marítimo), seguro, equipo y acompañamiento profesional PADI. Eso sí, no incluyen transporte desde Cartagena ni almuerzo."
+    },
+    {
+     "dialogue": "isla-hotel-refresher",
+     "criterion": "global:sin-invenciones",
+     "split": "holdout",
+     "human": "cumple",
+     "judge": "cumple",
+     "reason": "El bot no contradice la referencia ni asume datos no dichos. Ofrece correctamente el refresher con el precio desde islas y no introduce políticas, horarios o contactos inventados.",
+     "evidencia_bot": null
+    },
+    {
+     "dialogue": "isla-hotel-refresher",
+     "criterion": "global:sin-repreguntas",
+     "split": "holdout",
+     "human": "cumple",
+     "judge": "cumple",
+     "reason": "El bot no vuelve a pedir ningún dato que el cliente ya hubiera dado. Repite la pregunta de certificación solo porque el cliente no la había contestado y reitera el interés en el refresher tras una respuesta no relacionada, lo cual no cuenta como repregunta según las reglas.",
+     "evidencia_bot": null
+    },
+    {
+     "dialogue": "isla-hotel-refresher",
+     "criterion": "tarifa-isla",
+     "split": "holdout",
+     "human": "cumple",
+     "judge": "cumple",
+     "reason": "Usó el precio de refresher para clientes ya en las islas (134 USD / 475.000 COP), no la tarifa desde Cartagena.",
+     "evidencia_bot": "El *refresher* es una sesión corta de repaso en el agua antes de la inmersión. Tiene un costo de *134 USD / 475.000 COP* por persona que lo necesite."
+    },
+    {
+     "dialogue": "isla-hotel-refresher",
+     "criterion": "refresher",
+     "split": "holdout",
+     "human": "cumple",
+     "judge": "cumple",
+     "reason": "El cliente es certificado y lleva 3 años sin bucear; el bot ofrece explícitamente el refresher.",
+     "evidencia_bot": "Entiendo que ha pasado un buen tiempo desde tu última inmersión.\n\nEl *refresher* es una sesión corta de repaso en el agua antes de la inmersión. Tiene un costo de *134 USD / 475.000 COP* por persona que lo necesite. ¿Os interesa?"
+    },
+    {
+     "dialogue": "grupo-con-refresher",
+     "criterion": "global:sin-invenciones",
+     "split": "holdout",
+     "human": "cumple",
+     "judge": "cumple",
+     "reason": "El bot no contradice la referencia ni asume datos no dichos. La descripción del refresher y precios coinciden con el catálogo; no inventa políticas, edades ni contactos.",
+     "evidencia_bot": null
+    },
+    {
+     "dialogue": "grupo-con-refresher",
+     "criterion": "global:sin-repreguntas",
+     "split": "holdout",
+     "human": "cumple",
+     "judge": "cumple",
+     "reason": "El bot solo repite la pregunta sobre el lugar de salida porque el cliente no la había respondido aún; no volvió a pedir ningún dato que el cliente ya hubiese dado claramente.",
+     "evidencia_bot": null
+    },
+    {
+     "dialogue": "grupo-con-refresher",
+     "criterion": "reparto",
+     "split": "holdout",
+     "human": "no_aplica",
+     "judge": "no_aplica",
+     "reason": "El bot no llegó a mostrar un plan, resumen ni precio de grupo; solo mencionó el costo del refresher. Por tanto, el criterio de reparto no aplica en esta conversación.",
+     "evidencia_bot": null
+    },
+    {
+     "dialogue": "grupo-con-refresher",
+     "criterion": "refresher-uno",
+     "split": "holdout",
+     "human": "cumple",
+     "judge": "cumple",
+     "reason": "El bot ofreció explícitamente el refresher tras saber que un certificado lleva 5 años sin bucear.",
+     "evidencia_bot": "El *refresher* es una sesión corta de repaso en el agua antes de la inmersión. Tiene un costo de *183 USD / 655.000 COP* por persona que lo necesite. ¿Os interesa?"
+    },
+    {
+     "dialogue": "refresher-rechaza-acepta",
+     "criterion": "global:sin-invenciones",
+     "split": "holdout",
+     "human": "cumple",
+     "judge": "cumple",
+     "reason": "No hay datos inventados ni contradicciones con la referencia. El bot no asume información no dada; confirma salida desde Cartagena, cantidad de personas y muestra precios y horarios coherentes con la referencia.",
+     "evidencia_bot": null
+    },
+    {
+     "dialogue": "refresher-rechaza-acepta",
+     "criterion": "global:sin-repreguntas",
+     "split": "holdout",
+     "human": "cumple",
+     "judge": "cumple",
+     "reason": "El bot repite la pregunta sobre el punto de salida solo hasta que el cliente la responde; esto no es repregunta según la regla (repetir una pregunta no contestada no cuenta). No pide de nuevo datos ya dados.",
+     "evidencia_bot": null
+    },
+    {
+     "dialogue": "refresher-rechaza-acepta",
+     "criterion": "coste",
+     "split": "holdout",
+     "human": "cumple",
+     "judge": "cumple",
+     "reason": "El bot confirma que sí tiene costo y da los precios exactos del catálogo para Cartagena e Islas.",
+     "evidencia_bot": "🌊 El *refresher* (repaso corto en el agua antes de la inmersión, para buzos certificados que llevan más de 2 años sin bucear) **tiene costo**, por persona que lo necesite: *183 USD / 655.000 COP* saliendo desde Cartagena, o *134 USD / 475.000 COP* si ya estás en las islas (con el descuento por reservar online). ¿Te ayudo a armar la reserva? 😊"
+    },
+    {
+     "dialogue": "refresher-rechaza-acepta",
+     "criterion": "final-con-refresher",
+     "split": "holdout",
+     "human": "cumple",
+     "judge": "cumple",
+     "reason": "El bot ofrece explícitamente el refresher y el plan de buceo certificado de 2 inmersiones desde Cartagena en la respuesta final.",
+     "evidencia_bot": "✅ *Refresher añadido* — el guía hace el repaso en el agua antes de la inmersión. Tiene un costo de *183 USD / 655.000 COP* por persona que lo necesite. Resérvalo aquí: https://book.divingplanet.org/book/minicurso-de-buceo/2?language=es\n\n🤿 *Salidas de Buceo - 2 inmersiones (1 día)*\n💰 *178 USD* por persona (reservando online)\n✅ Incluye: transporte Cartagena-Islas-Cartagena, almuerzo, equipo y seguro.\n📍 Salida desde Cartagena (Muelle de la Bodeguita, 8:00 a.m.)."
+    }
+   ]
+  },
+  "gpt-5-mini:low": {
+   "tune": {
+    "items": 0,
+    "agreement_pct": null,
+    "false_fail": 0,
+    "missed_fail": 0,
+    "human_fails": 0,
+    "to_review": 0,
+    "errors": 0
+   },
+   "holdout": {
+    "items": 17,
+    "agreement_pct": 100.0,
+    "false_fail": 0,
+    "missed_fail": 0,
+    "human_fails": 1,
+    "to_review": 0,
+    "errors": 0
+   },
+   "all": {
+    "items": 17,
+    "agreement_pct": 100.0,
+    "false_fail": 0,
+    "missed_fail": 0,
+    "human_fails": 1,
+    "to_review": 0,
+    "errors": 0
+   },
+   "usage": {
+    "input": 539192,
+    "cached": 524032,
+    "output": 7081
+   },
+   "cost_usd": 0.0311,
+   "est_cost_per_round_usd": 0.43,
+   "rows": [
+    {
+     "dialogue": "paquete-en-carrito",
+     "criterion": "global:sin-invenciones",
+     "split": "holdout",
+     "human": "cumple",
+     "judge": "cumple",
+     "reason": "Toda la información dada por el bot (tipos de paquetes, inclusiones y exclusiones) coincide con la REFERENCIA y no introduce datos del cliente que no estén ya en la conversación.",
+     "evidencia_bot": null
+    },
+    {
+     "dialogue": "paquete-en-carrito",
+     "criterion": "global:sin-repreguntas",
+     "split": "holdout",
+     "human": "cumple",
+     "judge": "cumple",
+     "reason": "El bot no volvió a preguntar un dato que el cliente ya había proporcionado; la única información repetida fue la solicitud del lugar de salida, que el cliente aún no había dado, por lo que no es una repregunta según las reglas.",
+     "evidencia_bot": null
+    },
+    {
+     "dialogue": "paquete-en-carrito",
+     "criterion": "no-escala",
+     "split": "holdout",
+     "human": "cumple",
+     "judge": "cumple",
+     "reason": "El bot respondió con información sobre paquetes multi-día y opciones disponibles directamente en el chat, sin transferir la conversación a un asesor humano.",
+     "evidencia_bot": "BOT: ¡Claro que sí! 🐠 Tenemos paquetes para buzos certificados que ya están en las Islas del Rosario, ideales para varios días.\n\nPor ejemplo:\n- Paquete de 4 inmersiones en 2 días: 3 diurnas + 1 nocturna.\n- Paquete de 4 inmersiones en 2 días: 4 diurnas.\n- Paquete de 5 inmersiones en 2 días: combinación de diurnas y nocturnas.\n\nEstos paquetes incluyen recogida en el hotel (si tiene acceso marítimo), seguro, equipo y acompañamiento profesional PADI. Eso sí, no incluyen transporte desde Cartagena ni almuerzo.\n\n¿Quieres que te ayude a armar la reserva para alguno de estos paquetes?"
+    },
+    {
+     "dialogue": "paquete-en-carrito",
+     "criterion": "mantiene",
+     "split": "holdout",
+     "human": "cumple",
+     "judge": "cumple",
+     "reason": "El bot reconoce explícitamente que son 2 personas y continúa ofreciendo paquetes dirigidos a buzos certificados, manteniendo el contexto solicitado.",
+     "evidencia_bot": "Entendido, son 2 personas.\n\n¡Claro que sí! 🐠 Tenemos paquetes para buzos certificados que ya están en las Islas del Rosario, ideales para varios días."
+    },
+    {
+     "dialogue": "paquete-en-carrito",
+     "criterion": "no-asume-ubicacion",
+     "split": "holdout",
+     "human": "no_cumple",
+     "judge": "no_cumple",
+     "reason": "El cliente no indicó desde dónde saldría y el bot asumió que el cliente ya está en las islas en vez de ofrecer paquetes para ambas salidas o preguntar la ubicación primero.",
+     "evidencia_bot": "¡Claro que sí! 🐠 Tenemos paquetes para buzos certificados que ya están en las Islas del Rosario, ideales para varios días.\n\nPor ejemplo:\n- Paquete de 4 inmersiones en 2 días: 3 diurnas + 1 nocturna.\n- Paquete de 4 inmersiones en 2 días: 4 diurnas.\n- Paquete de 5 inmersiones en 2 días: combinación de diurnas y nocturnas.\n\nEstos paquetes incluyen recogida en el hotel (si tiene acceso marítimo), seguro, equipo y acompañamiento profesional PADI. Eso sí, no incluyen transporte desde Cartagena ni almuerzo.\n\n¿Quieres que te ayude a armar la reserva para alguno de estos paquetes?"
+    },
+    {
+     "dialogue": "isla-hotel-refresher",
+     "criterion": "global:sin-invenciones",
+     "split": "holdout",
+     "human": "cumple",
+     "judge": "cumple",
+     "reason": "El bot solo usó información que coincide con la REFERENCIA (ofreció el refresher disponible para clientes en las islas y dio el precio correcto en USD/COP) y no afirmó datos no dichos por el cliente.",
+     "evidencia_bot": null
+    },
+    {
+     "dialogue": "isla-hotel-refresher",
+     "criterion": "global:sin-repreguntas",
+     "split": "holdout",
+     "human": "cumple",
+     "judge": "cumple",
+     "reason": "El bot no volvió a preguntar ningún dato que el cliente ya hubiera proporcionado; las preguntas repetidas ocurrieron antes de que el cliente respondiera y las posteriores se basaron en nuevas respuestas del cliente.",
+     "evidencia_bot": null
+    },
+    {
+     "dialogue": "isla-hotel-refresher",
+     "criterion": "tarifa-isla",
+     "split": "holdout",
+     "human": "cumple",
+     "judge": "cumple",
+     "reason": "El bot ofreció la tarifa de refresher vigente para clientes que ya están en las islas (134 USD / 475.000 COP), que coincide con la referencia 'from_islands'.",
+     "evidencia_bot": "El *refresher* es una sesión corta de repaso en el agua antes de la inmersión. Tiene un costo de *134 USD / 475.000 COP* por persona que lo necesite. ¿Os interesa?"
+    },
+    {
+     "dialogue": "isla-hotel-refresher",
+     "criterion": "refresher",
+     "split": "holdout",
+     "human": "cumple",
+     "judge": "cumple",
+     "reason": "El cliente declaró más de 2 años sin bucear y el bot le ofreció explícitamente el refresher con precio, cumpliendo el criterio.",
+     "evidencia_bot": "El *refresher* es una sesión corta de repaso en el agua antes de la inmersión. Tiene un costo de *134 USD / 475.000 COP* por persona que lo necesite. ¿Os interesa?"
+    },
+    {
+     "dialogue": "grupo-con-refresher",
+     "criterion": "global:sin-invenciones",
+     "split": "holdout",
+     "human": "cumple",
+     "judge": "cumple",
+     "reason": "El bot ofreció el refresher (actividad y descripción) y el precio coincide con la tarifa online de 'minicurso/refresh' en la REFERENCIA; no introdujo datos contradictorios ni asumió información no dada por el cliente.",
+     "evidencia_bot": "Entendido, todos son extranjeros.\n\nEl *refresher* es una sesión corta de repaso en el agua antes de la inmersión. Tiene un costo de *183 USD / 655.000 COP* por persona que lo necesite. ¿Os interesa?"
+    },
+    {
+     "dialogue": "grupo-con-refresher",
+     "criterion": "global:sin-repreguntas",
+     "split": "holdout",
+     "human": "cumple",
+     "judge": "cumple",
+     "reason": "El bot no volvió a preguntar información que el cliente ya había dado con claridad; cada pregunta del bot fue pertinente al estado previo del diálogo (p. ej. volvió a preguntar el punto de salida sólo porque el cliente no lo había indicado aún).",
+     "evidencia_bot": null
+    },
+    {
+     "dialogue": "grupo-con-refresher",
+     "criterion": "reparto",
+     "split": "holdout",
+     "human": "no_aplica",
+     "judge": "no_aplica",
+     "reason": "La conversación terminó antes de que el bot mostrara un plan/resumen o precio para el grupo (2 buzos certificados + 1 minicurso), por lo que el criterio no llega a evaluarse.",
+     "evidencia_bot": null
+    },
+    {
+     "dialogue": "grupo-con-refresher",
+     "criterion": "refresher-uno",
+     "split": "holdout",
+     "human": "cumple",
+     "judge": "cumple",
+     "reason": "El bot ofreció explícitamente el refresher (con precio) tras el cliente indicar que un certificado no bucea desde hace 5 años.",
+     "evidencia_bot": "Entendido, todos son extranjeros.\n\nEl *refresher* es una sesión corta de repaso en el agua antes de la inmersión. Tiene un costo de *183 USD / 655.000 COP* por persona que lo necesite. ¿Os interesa?"
+    },
+    {
+     "dialogue": "refresher-rechaza-acepta",
+     "criterion": "global:sin-invenciones",
+     "split": "holdout",
+     "human": "cumple",
+     "judge": "cumple",
+     "reason": "Todas las afirmaciones del bot (precios, horarios, inclusión del refresher y moneda) coinciden con la REFERENCIA y no introduce datos no autorizados ni asume información no proporcionada por el cliente.",
+     "evidencia_bot": null
+    },
+    {
+     "dialogue": "refresher-rechaza-acepta",
+     "criterion": "global:sin-repreguntas",
+     "split": "holdout",
+     "human": "cumple",
+     "judge": "cumple",
+     "reason": "El bot no volvió a pedir ningún dato que el cliente ya hubiera dado claramente; las preguntas del bot solicitaron información aún no proporcionada (origen y nacionalidad).",
+     "evidencia_bot": null
+    },
+    {
+     "dialogue": "refresher-rechaza-acepta",
+     "criterion": "coste",
+     "split": "holdout",
+     "human": "cumple",
+     "judge": "cumple",
+     "reason": "El bot respondió afirmativamente y dio los precios exactos que coinciden con el catálogo (183 USD / 655.000 COP desde Cartagena; 134 USD / 475.000 COP desde las islas).",
+     "evidencia_bot": "🌊 El *refresher* (repaso corto en el agua antes de la inmersión, para buzos certificados que llevan más de 2 años sin bucear) **tiene costo**, por persona que lo necesite: *183 USD / 655.000 COP* saliendo desde Cartagena, o *134 USD / 475.000 COP* si ya estás en las islas (con el descuento por reservar online). ¿Te ayudo a armar la reserva? 😊"
+    },
+    {
+     "dialogue": "refresher-rechaza-acepta",
+     "criterion": "final-con-refresher",
+     "split": "holdout",
+     "human": "cumple",
+     "judge": "cumple",
+     "reason": "El bot confirma explícitamente que el refresher fue añadido y además incluye el plan de 2 inmersiones saliendo desde Cartagena, que coincide con la indicación del cliente.",
+     "evidencia_bot": "✅ *Refresher añadido* — el guía hace el repaso en el agua antes de la inmersión. Tiene un costo de *183 USD / 655.000 COP* por persona que lo necesite. Resérvalo aquí: https://book.divingplanet.org/book/minicurso-de-buceo/2?language=es\n\n🤿 *Salidas de Buceo - 2 inmersiones (1 día)*\n💰 *178 USD* por persona (reservando online)\n✅ Incluye: transporte Cartagena-Islas-Cartagena, almuerzo, equipo y seguro.\n📍 Salida desde Cartagena (Muelle de la Bodeguita, 8:00 a.m.)."
+    }
+   ]
+  }
+ }
+}

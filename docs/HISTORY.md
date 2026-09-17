@@ -1,6 +1,12 @@
 History
 =======
 
+0.29.1 - (2026-09-17)
+----------------------
+* **Juez del golden-set medido contra etiquetas humanas y elegido por datos.** El juez de gpt-4.1 en una sola llamada por diálogo acertaba ~60 % de los fallos que marcaba. Nuevo diseño: los criterios mecánicos (se presenta una vez, da el link de pago, importes del catálogo) los comprueba código; el resto se juzga **un criterio por llamada con evidencia literal obligatoria** (un `no_cumple` sin cita verificable baja a `revisar`), con la referencia del negocio + FAQ y las reglas "un fallo, un criterio" y "conversación cortada = no aplica".
+* **Calibración** (`scripts/calibrate_judge.py`, `docs/robustness/golden-set/calibration/`): 71 veredictos sobre conversaciones reales de PRE, etiquetados por Claude y revisados por Gadea (16 dudas resueltas + 9/9 controles a ciegas), con 17 apartados para la medida final. Resultado: gpt-5 low 95,8 % (~2 $/ronda), **gpt-5-mini medium 91,5 % (~0,67 $/ronda, elegido)**, gpt-5-mini low 88,7 %. Cada ronda saca una lista de revisión humana: todos los fallos del juez + 5 aciertos al azar.
+* **Decisiones de negocio de Gadea** incorporadas a la base de conocimiento: el nacido en Colombia cuenta como colombiano viva donde viva (`policies.json`); siempre hay disponibilidad salvo 25-dic, 1-ene y clima (`availability.json`). Golden-set v5: el bot da el teléfono si se lo piden, basta con ofrecer el refresher y no asume nada del acompañante.
+
 0.29.0 - (2026-09-17)
 ----------------------
 * **Golden-set de diálogos + LLM-juez end-to-end** (plan maestro, M0 m0-3/m0-4). `docs/robustness/golden-set/golden-dialogues.json` (validado por Gadea): 41 diálogos (121 turnos) de los lotes sintéticos + "hola que tal?", con 5 criterios globales y 74 propios sobre la RESPUESTA final (precios, edades, escalado, inyección, correcciones...). Los turnos se referencian por lote y etiqueta en `batches.json` y los hechos no se escriben en los criterios: el juez recibe `pricing`, `policies`, `discounts`, `availability`, `escalation_rules` y un extracto de `activities`. `scripts/run_synthetic_pre --sample golden` lanza los diálogos contra PRE y `scripts/judge_golden_set.py` (gpt-4.1, una llamada por diálogo, ~0,46 $/ronda) marca cada criterio como cumple / no_cumple / no_aplica y añade `quality` a la foto de Langfuse.

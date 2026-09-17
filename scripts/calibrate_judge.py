@@ -84,8 +84,9 @@ def main(argv: list[str] | None = None) -> int:
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--models", nargs="+", default=["gpt-5:low", "gpt-5-mini:low"], help="modelo:esfuerzo")
-    parser.add_argument("--labels", default=str(CALIBRATION_DIR / "labels.json"))
+    parser.add_argument("--labels", nargs="+", default=[str(CALIBRATION_DIR / "labels-claude.json"), str(CALIBRATION_DIR / "labels-gadea.json")], help="uno o varios ficheros de etiquetas")
     parser.add_argument("--reference-labeler", help="id del etiquetador que manda si hay varias etiquetas")
+    parser.add_argument("--split", choices=["tune", "holdout", "all"], default="all", help="tune para iterar; holdout solo para la medicion final")
     args = parser.parse_args(argv)
 
     from openai import OpenAI
@@ -96,7 +97,8 @@ def main(argv: list[str] | None = None) -> int:
         return 2
 
     calib = json.loads((CALIBRATION_DIR / "items.json").read_text(encoding="utf-8"))
-    reference, human_agreement = consolidate(json.loads(Path(args.labels).read_text(encoding="utf-8")), args.reference_labeler)
+    all_labels = [lab for path in args.labels for lab in json.loads(Path(path).read_text(encoding="utf-8"))]
+    reference, human_agreement = consolidate(all_labels, args.reference_labeler)
     runs = latest_conversations(calib["run_file"])
     golden = json.loads(GOLDEN_FILE.read_text(encoding="utf-8"))
     dialogues = {d["id"]: d for d in golden["dialogues"]}
@@ -108,6 +110,8 @@ def main(argv: list[str] | None = None) -> int:
         if records[0]["conv"] != item["conv"]:
             print(f"!!! {item['dialogue']}: la conversacion del run ({records[0]['conv']}) no es la etiquetada ({item['conv']})", file=sys.stderr)
             return 1
+        if args.split != "all" and item["split"] != args.split:
+            continue
         for crit in item["criteria"]:
             if (item["dialogue"], crit["id"]) in reference:
                 todo.append((item, records, crit))
@@ -120,7 +124,8 @@ def main(argv: list[str] | None = None) -> int:
         pairs = defaultdict(list)
         rows, usage = [], Counter()
         for n, (item, records, crit) in enumerate(todo, 1):
-            v = llm_judge_criterion(client, model, effort or None, ref_text, dialogues[item["dialogue"]], records, crit)
+            dialogue = dialogues[item["dialogue"]]
+            v = llm_judge_criterion(client, model, effort or None, ref_text, dialogue, records, crit, criteria_for(dialogue, golden["global_criteria"]))
             human = reference[(item["dialogue"], crit["id"])]
             pairs[item["split"]].append((human, v["verdict"]))
             usage.update(v["usage"])

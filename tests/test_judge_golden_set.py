@@ -145,3 +145,22 @@ def test_calibration_items_match_golden_criteria():
         known = {c["id"] for c in criteria_for(by_id[item["dialogue"]], golden["global_criteria"])}
         assert {c["id"] for c in item["criteria"]} <= known
     assert {i["split"] for i in calib["items"]} == {"tune", "holdout"}
+
+
+def test_review_list_takes_all_llm_failures_and_a_reproducible_sample_of_passes():
+    from scripts.judge_golden_set import review_list
+
+    results = [
+        {"id": "d1", "criteria": [
+            {"id": "a", "verdict": "no_cumple", "by": "gpt-5-mini"},
+            {"id": "b", "verdict": "no_cumple", "by": "auto"},
+            {"id": "c", "verdict": "revisar", "by": "gpt-5-mini"},
+            {"id": "d", "verdict": "no_aplica", "by": "gpt-5-mini"},
+        ]},
+        {"id": "d2", "criteria": [{"id": f"p{i}", "verdict": "cumple", "by": "gpt-5-mini"} for i in range(10)]},
+    ]
+    review = review_list(results, 3, "run-x")
+    flagged = [r for r in review if r["why"].startswith("fallo")]
+    assert [(r["dialogue"], r["criterion"]) for r in flagged] == [("d1", "a"), ("d1", "c")]
+    assert len(review) == 5
+    assert review == review_list(results, 3, "run-x")

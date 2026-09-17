@@ -1,7 +1,7 @@
 {
  "about": "Set de calibracion del juez: veredictos etiquetados por personas sobre conversaciones reales de la ronda golden del 2026-09-17. 'tune' se usa para ajustar; 'holdout' solo para medir al final.",
  "run_file": "docs/robustness/synthetic-runs/2026-09-17-golden.jsonl",
- "golden_version": 4,
+ "golden_version": 5,
  "items": [
   {
    "dialogue": "acompanante-goteo",
@@ -70,11 +70,11 @@
     },
     {
      "id": "reparto",
-     "check": "Queda 1 buceo certificado (el cliente) y 1 snorkel (el amigo), 2 personas en total."
+     "check": "En el cierre (precios o resumen final) queda 1 buceo certificado (el cliente) y 1 snorkel (el amigo), 2 personas en total. Las propuestas intermedias no cuentan aquí."
     },
     {
      "id": "no-asume",
-     "check": "Decisión del owner: del amigo solo sabe que acompaña; no le asigna ninguna actividad (tampoco buceo) hasta que el cliente la diga, y pregunta en vez de asumir."
+     "check": "Decisión del owner: del amigo solo sabe que acompaña. No le asigna ninguna actividad hasta que el cliente la diga: si el bot muestra al amigo contado como buceo (por ejemplo '2 buceo certificado' al proponer un cambio), ya lo había asumido y no cumple."
     },
     {
      "id": "precios",
@@ -436,7 +436,7 @@
     },
     {
      "id": "reserva",
-     "check": "Al final recoge la reserva de buceo certificado para 1 persona sin perder el contexto."
+     "check": "Al final toma buceo certificado como actividad (pedir el número de personas se juzga en sin-repreguntas, no aquí)."
     }
    ]
   },
@@ -532,7 +532,7 @@
     },
     {
      "id": "reparto",
-     "check": "Refleja 2 buceo certificado y 1 minicurso."
+     "check": "Si el bot muestra un plan, resumen o precio del grupo, refleja 2 buceo certificado y 1 minicurso. Si la conversación acaba antes de que lo muestre, no aplica."
     },
     {
      "id": "refresher-uno",
@@ -580,7 +580,7 @@
     },
     {
      "id": "reserva-4",
-     "check": "Termina con snorkel para 4 personas."
+     "check": "Tras 'reservemos snorkel para toda la familia, somos 4' el bot toma snorkel para 4 personas (puede seguir pidiendo datos que faltan, como la salida)."
     }
    ]
   },
@@ -676,7 +676,7 @@
     },
     {
      "id": "reparto",
-     "check": "Refleja exactamente 2 buceo certificado, 2 minicurso y 2 snorkel (6 personas)."
+     "check": "Si el bot muestra un plan, resumen o precio del grupo, refleja exactamente 2 buceo certificado, 2 minicurso y 2 snorkel (6 personas). Si la conversación acaba antes de que lo muestre, no aplica."
     },
     {
      "id": "precios",

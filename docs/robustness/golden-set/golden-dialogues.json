@@ -1,9 +1,9 @@
 {
- "version": 4,
- "status": "validado por Gadea (2026-09-17); v2 calibrada tras la ronda 1; v3 separa los criterios mecanicos (auto, por codigo) de los que juzga el LLM; v4 con las decisiones de Gadea en la calibracion (telefono, refresher, datos del cliente)",
+ "version": 5,
+ "status": "validado por Gadea (2026-09-17); v5 aclara criterios de reparto, reserva y acompanante tras la calibracion; v2 calibrada tras la ronda 1; v3 separa los criterios mecanicos (auto, por codigo) de los que juzga el LLM; v4 con las decisiones de Gadea en la calibracion (telefono, refresher, datos del cliente); un fallo cuenta solo en el criterio que mejor lo describe",
  "about": "Golden-set de dialogos para el LLM-juez end-to-end (plan maestro, M0 m0-3/m0-4). Cada dialogo se lanza contra PRE y el juez comprueba la conversacion real contra los criterios globales y los suyos. Los turnos salen de docs/robustness/synthetic-runs/batches.json (source) salvo los casos nuevos (turns). Los hechos (precios, edades, politicas) NO se escriben aqui: el juez los recibe de los ficheros de referencia.",
  "judge": {
-  "model": "pendiente de la comparacion (gpt-5 low vs gpt-5-mini)",
+  "model": "gpt-5-mini (reasoning_effort medium), elegido en la calibracion del 2026-09-17 con revision humana de sus fallos y una muestra de aciertos",
   "mode": "criterios auto por codigo; el resto, una llamada por criterio con evidencia citada",
   "verdicts": [
    "cumple",
@@ -204,7 +204,7 @@
    "criteria": [
     {
      "id": "reparto",
-     "check": "Refleja exactamente 2 buceo certificado, 2 minicurso y 2 snorkel (6 personas)."
+     "check": "Si el bot muestra un plan, resumen o precio del grupo, refleja exactamente 2 buceo certificado, 2 minicurso y 2 snorkel (6 personas). Si la conversación acaba antes de que lo muestre, no aplica."
     },
     {
      "id": "precios",
@@ -244,11 +244,11 @@
    "criteria": [
     {
      "id": "reparto",
-     "check": "Queda 1 buceo certificado (el cliente) y 1 snorkel (el amigo), 2 personas en total."
+     "check": "En el cierre (precios o resumen final) queda 1 buceo certificado (el cliente) y 1 snorkel (el amigo), 2 personas en total. Las propuestas intermedias no cuentan aquí."
     },
     {
      "id": "no-asume",
-     "check": "Decisión del owner: del amigo solo sabe que acompaña; no le asigna ninguna actividad (tampoco buceo) hasta que el cliente la diga, y pregunta en vez de asumir."
+     "check": "Decisión del owner: del amigo solo sabe que acompaña. No le asigna ninguna actividad hasta que el cliente la diga: si el bot muestra al amigo contado como buceo (por ejemplo '2 buceo certificado' al proponer un cambio), ya lo había asumido y no cumple."
     },
     {
      "id": "precios",
@@ -352,7 +352,7 @@
    "criteria": [
     {
      "id": "reparto",
-     "check": "Refleja 2 buceo certificado y 1 minicurso."
+     "check": "Si el bot muestra un plan, resumen o precio del grupo, refleja 2 buceo certificado y 1 minicurso. Si la conversación acaba antes de que lo muestre, no aplica."
     },
     {
      "id": "refresher-uno",
@@ -377,10 +377,6 @@
      "check": "Para el de 10 años ofrece opciones válidas a su edad (snorkel, minicurso o Bubble Makers)."
     },
     {
-     "id": "no-pregunta-certificado",
-     "check": "Sabiendo que son niños, no insiste en preguntar si son buzos certificados."
-    },
-    {
      "id": "recomienda-cada-uno",
      "check": "A 'qué actividad me recomiendas para cada uno' responde con una recomendación por niño y no cambia el número de personas."
     }
@@ -400,7 +396,7 @@
     },
     {
      "id": "reserva-4",
-     "check": "Termina con snorkel para 4 personas."
+     "check": "Tras 'reservemos snorkel para toda la familia, somos 4' el bot toma snorkel para 4 personas (puede seguir pidiendo datos que faltan, como la salida)."
     }
    ]
   },
@@ -450,7 +446,7 @@
     },
     {
      "id": "reserva",
-     "check": "Al final recoge la reserva de buceo certificado para 1 persona sin perder el contexto."
+     "check": "Al final toma buceo certificado como actividad (pedir el número de personas se juzga en sin-repreguntas, no aquí)."
     }
    ]
   },

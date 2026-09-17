@@ -12,12 +12,13 @@
  {
   "dialogue": "acompanante-goteo",
   "criterion": "global:sin-repreguntas",
-  "label": "no_cumple",
+  "label": "cumple",
   "confidence": "alta",
   "reason": "Tras 'el quiere hacer snorkel' vuelve dos veces a proponer '1 buceo, 1 sin decidir', pidiendo de nuevo lo ya decidido.",
   "by": "claude",
   "at": "2026-09-17T13:00:00Z",
-  "note": "Tras 'el quiere hacer snorkel' vuelve dos veces a proponer '1 buceo, 1 sin decidir', pidiendo de nuevo lo ya decidido."
+  "note": "Gadea (control): no lo cuenta como repregunta; el fallo con el amigo lo recoge 'no-asume'.",
+  "resolved_by": "gadea (chat 2026-09-17: un fallo cuenta solo en el criterio que mejor lo describe)"
  },
  {
   "dialogue": "acompanante-goteo",
@@ -58,7 +59,8 @@
   "reason": "No da datos.",
   "by": "claude",
   "at": "2026-09-17T13:00:00Z",
-  "note": "No da datos."
+  "note": "No inventa nada; ignorar el descuento lo recogen 'grupo' y 'reserva'.",
+  "resolved_by": "gadea (chat 2026-09-17: un fallo cuenta solo en el criterio que mejor lo describe)"
  },
  {
   "dialogue": "regateo-grupo-6",
@@ -351,12 +353,13 @@
  {
   "dialogue": "vuelo-tras-bucear",
   "criterion": "reserva",
-  "label": "no_cumple",
+  "label": "cumple",
   "confidence": "alta",
   "reason": "Pierde 'solo' (1 persona) y pregunta cuántas personas.",
   "by": "claude",
   "at": "2026-09-17T13:00:00Z",
-  "note": "Pierde 'solo' (1 persona) y pregunta cuántas personas."
+  "note": "Gadea: el '¿para cuántas personas?' ya cuenta en sin-repreguntas.",
+  "resolved_by": "gadea (chat 2026-09-17: un fallo cuenta solo en el criterio que mejor lo describe)"
  },
  {
   "dialogue": "isla-hotel-refresher",
@@ -577,13 +580,13 @@
  {
   "dialogue": "pide-telefono",
   "criterion": "global:sin-invenciones",
-  "label": "no_cumple",
+  "label": "cumple",
   "confidence": "alta",
   "reason": "Dice 'por aquí no manejo teléfono ni WhatsApp' aunque existe el WhatsApp +57 320 231515; parece una decisión de diseño, no una invención. ¿Debería darlo?",
   "by": "claude",
   "at": "2026-09-17T13:00:00Z",
-  "note": "Gadea: 'no manejo teléfono ni WhatsApp' es falso, hay número disponible.",
-  "resolved_by": "gadea (chat 2026-09-17)"
+  "note": "Mismo fallo que no dar el teléfono: lo recoge 'contacto-real'.",
+  "resolved_by": "gadea (chat 2026-09-17: un fallo cuenta solo en el criterio que mejor lo describe)"
  },
  {
   "dialogue": "pide-telefono",

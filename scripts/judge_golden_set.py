@@ -20,7 +20,13 @@ aprovechar la cache de prompts de OpenAI.
 Uso (en serie):
 
     ENV_FILE=.env.dev python -m scripts.judge_golden_set \\
-        --run docs/robustness/synthetic-runs/2026-09-17-golden.jsonl [--model gpt-5 --effort low] [--snapshot foto.json]
+        --run docs/robustness/synthetic-runs/2026-09-17-golden.jsonl [--snapshot foto.json] [--review-sample 5]
+
+Juez oficial: gpt-5-mini con reasoning_effort medium (calibracion del 2026-09-17: 91,5 % de
+acuerdo con las etiquetas humanas, 5 fallos falsos y 1 escapado en 71 veredictos, ~0,67 $/ronda;
+gpt-5 low daba 95,8 % a ~2 $/ronda). Por eso cada ronda sale con una lista de REVISION HUMANA:
+todos los `no_cumple`/`revisar` del juez (para cazar fallos falsos) y una muestra al azar de
+`cumple` (para cazar fallos que se le escapen). Ver docs/robustness/golden-set/calibration/.
 
 Escribe `docs/robustness/golden-set/results/<ejecucion>__<modelo>.json`. Con `--snapshot`
 anade `quality` a una foto de `scripts.langfuse_snapshot` (linea temporal de la pagina).
@@ -28,6 +34,7 @@ anade `quality` a una foto de `scripts.langfuse_snapshot` (linea temporal de la 
 
 import argparse
 import json
+import random
 import re
 import sys
 import time
@@ -56,7 +63,7 @@ PRICES = {
 JUDGE_INSTRUCTIONS = """Eres un evaluador estricto de conversaciones de Coral, el asistente de reservas de Diving Planet (buceo en las Islas del Rosario, Colombia).
 
 Recibes:
-1. REFERENCIA: los datos oficiales del negocio (precios 2026, politicas, descuentos, disponibilidad, reglas de escalado a humano y actividades con edades). Es la unica fuente de verdad.
+1. REFERENCIA: los datos oficiales del negocio (precios 2026, politicas, descuentos, disponibilidad, reglas de escalado a humano, actividades con edades y preguntas frecuentes). Es la unica fuente de verdad: si un dato del bot aparece en cualquier parte de ella (tambien en las preguntas frecuentes), no es una invencion.
 2. Una CONVERSACION real entre un CLIENTE y el BOT.
 3. UN CRITERIO.
 
@@ -69,8 +76,10 @@ Reglas:
 - Juzga solo lo que dice el BOT; el cliente puede decir cosas falsas.
 - Los precios "reservando online" de la referencia son los validos. Un precio redondeado a la unidad es correcto.
 - Un "saludo" es presentarse o decir hola/hi. "¡Genial!", "¡Buena noticia!" o "¡Con gusto te ayudo!" no son saludos.
-- Una "repregunta" es volver a pedir un dato que el cliente YA dio. Repetir una pregunta que el cliente no ha contestado NO es repreguntar.
+- Una "repregunta" es volver a pedir un dato que el cliente YA dio, o que se deduce claramente de lo que dijo (por ejemplo, preguntar a unos ninos pequenos si son buzos certificados, o preguntar cuantas personas son a quien dijo que va solo). Repetir una pregunta que el cliente no ha contestado y que no se deduce de lo dicho NO es repreguntar.
 - Ofrecer que un asesor contacte al cliente cuenta como pasar a un asesor.
+- UN FALLO, UN CRITERIO. Recibes tambien los OTROS criterios del dialogo. Antes de marcar "no_cumple", comprueba si ese mismo fallo lo describe mejor (de forma mas especifica) otro criterio de la lista: si es asi, en el criterio que juzgas marca "cumple". Los criterios globales (sin-invenciones, sin-repreguntas...) ceden siempre ante un criterio propio del dialogo que describa el mismo fallo.
+- CONVERSACION CORTADA. El dialogo es un guion fijo y termina cuando se acaban los mensajes del cliente. Si algo no llego a pasar porque la conversacion se acabo (el bot estaba pidiendo un dato razonable que el cliente ya no dio), es "no_aplica", no "no_cumple". Solo es "no_cumple" si el bot tuvo ocasion y no lo hizo o hizo algo incorrecto.
 
 EVIDENCIA OBLIGATORIA para "no_cumple":
 - "evidencia_bot": copia LITERAL (sin cambiar palabras) del fragmento del BOT que demuestra el incumplimiento; si el fallo es no hacer algo, copia la respuesta del bot donde debia hacerlo.
@@ -107,6 +116,9 @@ def load_reference() -> str:
     activities = json.loads((KB_DIR / "activities.json").read_text(encoding="utf-8-sig"))["activities"]
     compact = [{k: a.get(k) for k in ("id", "label", "requires_certification", "min_age", "max_age")} for a in activities]
     parts.append(f"### activities.json (extracto)\n{json.dumps(compact, ensure_ascii=False, separators=(',', ':'))}")
+    faqs = json.loads((KB_DIR / "faqs.json").read_text(encoding="utf-8-sig"))["faqs"]
+    qa = [{"p": f.get("question_es"), "r": f.get("answer_es")} for f in faqs]
+    parts.append(f"### faqs.json (preguntas frecuentes, en espanol)\n{json.dumps(qa, ensure_ascii=False, separators=(',', ':'))}")
     return "\n\n".join(parts)
 
 
@@ -269,10 +281,14 @@ def parse_verdict(raw: str) -> dict:
     }
 
 
-def llm_judge_criterion(client, model: str, effort: str | None, reference: str, dialogue: dict, records: list[dict], criterion: dict) -> dict:
+def llm_judge_criterion(
+    client, model: str, effort: str | None, reference: str, dialogue: dict, records: list[dict], criterion: dict, others: list[dict] | None = None
+) -> dict:
+    other_lines = "\n".join(f"- {c['id']}: {c['check']}" for c in (others or []) if c["id"] != criterion["id"])
     user = (
         f"CONVERSACION (dialogo '{dialogue['id']}', categoria {dialogue['category']}):\n{transcript(records)}\n\n"
-        f"CRITERIO ({criterion['id']}): {criterion['check']}"
+        f"OTROS CRITERIOS DEL DIALOGO (no los juzgues; solo para no contar dos veces un fallo):\n{other_lines or '- ninguno'}\n\n"
+        f"CRITERIO A JUZGAR ({criterion['id']}): {criterion['check']}"
     )
     kwargs = {"reasoning_effort": effort} if model.startswith(("gpt-5", "o")) and effort else {"temperature": 0}
     resp = client.chat.completions.create(
@@ -290,11 +306,11 @@ def llm_judge_criterion(client, model: str, effort: str | None, reference: str, 
     return {**verdict, "usage": {"input": usage.prompt_tokens, "cached": cached, "output": usage.completion_tokens}}
 
 
-def evaluate_criterion(client, model, effort, reference, dialogue, records, criterion) -> dict:
+def evaluate_criterion(client, model, effort, reference, dialogue, records, criterion, others=None) -> dict:
     if criterion.get("auto"):
         result = {**AUTO_CHECKS[criterion["auto"]](records), "by": "auto"}
     else:
-        result = {**llm_judge_criterion(client, model, effort, reference, dialogue, records, criterion), "by": model}
+        result = {**llm_judge_criterion(client, model, effort, reference, dialogue, records, criterion, others), "by": model}
     return {"id": criterion["id"], **result}
 
 
@@ -327,6 +343,20 @@ def summarize(results: list[dict]) -> dict:
     return {**block(results), "by_category": {k: block(v) for k, v in sorted(by_cat.items())}}
 
 
+def review_list(results: list[dict], sample: int, seed: str) -> list[dict]:
+    """Veredictos del juez LLM para revision humana: todos los no_cumple/revisar/error y
+    `sample` cumple al azar (semilla fija por ejecucion, reproducible)."""
+    flagged, passed = [], []
+    for d in results:
+        for c in d["criteria"]:
+            if c.get("by") == "auto":
+                continue
+            row = {"dialogue": d["id"], "criterion": c["id"], "judge": c["verdict"], "reason": c.get("reason"), "evidencia_bot": c.get("evidencia_bot")}
+            (flagged if c["verdict"] in ("no_cumple", "revisar", "error") else passed if c["verdict"] == "cumple" else []).append(row)
+    picked = random.Random(seed).sample(passed, min(sample, len(passed)))
+    return [{**r, "why": "fallo del juez: confirmar"} for r in flagged] + [{**r, "why": "muestra de cumple: buscar fallos escapados"} for r in picked]
+
+
 def cost_usd(model: str, usage: dict) -> float | None:
     if model not in PRICES:
         return None
@@ -338,8 +368,9 @@ def main(argv: list[str] | None = None) -> int:
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--run", required=True, help="JSONL de scripts.run_synthetic_pre --sample golden")
-    parser.add_argument("--model", default="gpt-5")
-    parser.add_argument("--effort", default="low", help="reasoning_effort para modelos razonadores")
+    parser.add_argument("--model", default="gpt-5-mini")
+    parser.add_argument("--effort", default="medium", help="reasoning_effort para modelos razonadores")
+    parser.add_argument("--review-sample", type=int, default=5, help="cumple al azar que se anaden a la revision humana")
     parser.add_argument("--snapshot", help="foto JSON de scripts.langfuse_snapshot a la que anadir `quality`")
     args = parser.parse_args(argv)
 
@@ -359,7 +390,8 @@ def main(argv: list[str] | None = None) -> int:
         if not records:
             missing.append(dialogue["id"])
             continue
-        criteria = [evaluate_criterion(client, args.model, args.effort, reference, dialogue, records, c) for c in criteria_for(dialogue, golden["global_criteria"])]
+        all_criteria = criteria_for(dialogue, golden["global_criteria"])
+        criteria = [evaluate_criterion(client, args.model, args.effort, reference, dialogue, records, c, all_criteria) for c in all_criteria]
         results.append({"id": dialogue["id"], "category": dialogue["category"], "conv": records[0]["conv"], "criteria": criteria})
         flagged = [f"{c['id']}={c['verdict']}" for c in criteria if c["verdict"] not in ("cumple", "no_aplica")]
         print(f"[{n}/{len(golden['dialogues'])}] {dialogue['id']}: {'OK' if not flagged else ', '.join(flagged)}", flush=True)
@@ -377,6 +409,7 @@ def main(argv: list[str] | None = None) -> int:
         "usage": usage,
         "cost_usd": cost_usd(args.model, usage),
         "summary": summary,
+        "human_review": review_list(results, args.review_sample, Path(args.run).stem),
         "dialogues": results,
     }
     RESULTS_DIR.mkdir(parents=True, exist_ok=True)
@@ -396,7 +429,7 @@ def main(argv: list[str] | None = None) -> int:
     print(
         f"\nCriterios cumplidos: {summary['criteria_pass_pct']} % ({summary['criteria_failed']} fallos de {summary['criteria_judged']}); "
         f"a revisar: {summary['to_review']}; dialogos sin fallos: {summary['dialogues_passed']}/{summary['dialogues']}; "
-        f"coste: {report['cost_usd']} $ ({usage['input']} entrada, {usage['cached']} en cache, {usage['output']} salida).\nResultado: {out}",
+        f"a revision humana: {len(report['human_review'])}; coste: {report['cost_usd']} $ ({usage['input']} entrada, {usage['cached']} en cache, {usage['output']} salida).\nResultado: {out}",
         flush=True,
     )
     return 0
