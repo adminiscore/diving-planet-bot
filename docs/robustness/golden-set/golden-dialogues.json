@@ -1,14 +1,15 @@
 {
- "version": 2,
- "status": "validado por Gadea (2026-09-17); v2 calibrada tras la ronda 1 (turnos de reserva y criterios aclarados)",
+ "version": 3,
+ "status": "validado por Gadea (2026-09-17); v2 calibrada tras la ronda 1; v3 separa los criterios mecanicos (auto, por codigo) de los que juzga el LLM",
  "about": "Golden-set de dialogos para el LLM-juez end-to-end (plan maestro, M0 m0-3/m0-4). Cada dialogo se lanza contra PRE y el juez comprueba la conversacion real contra los criterios globales y los suyos. Los turnos salen de docs/robustness/synthetic-runs/batches.json (source) salvo los casos nuevos (turns). Los hechos (precios, edades, politicas) NO se escriben aqui: el juez los recibe de los ficheros de referencia.",
  "judge": {
-  "model": "gpt-4.1",
-  "mode": "una llamada por dialogo con todos sus criterios",
+  "model": "pendiente de la comparacion (gpt-5 low vs gpt-5-mini)",
+  "mode": "criterios auto por codigo; el resto, una llamada por criterio con evidencia citada",
   "verdicts": [
    "cumple",
    "no_cumple",
-   "no_aplica"
+   "no_aplica",
+   "revisar"
   ]
  },
  "reference_files": [
@@ -26,11 +27,17 @@
   },
   {
    "id": "sin-invenciones",
-   "check": "Ningún precio, edad, horario, política, descuento o dato de contacto contradice la referencia ni se inventa."
+   "check": "Ninguna edad, horario, política, descuento, servicio o dato de contacto contradice la referencia ni se inventa. Los importes de dinero NO se juzgan aquí (se comprueban aparte)."
+  },
+  {
+   "id": "importes-catalogo",
+   "check": "Todo importe en USD o COP que da el bot sale del catálogo (precio unitario, o unidades × precio, o suma de varias líneas).",
+   "auto": "amounts_match_catalog"
   },
   {
    "id": "un-saludo",
-   "check": "No se presenta ni saluda más de una vez en la conversación."
+   "check": "El bot se presenta ('Soy Coral' / 'I'm Coral') como mucho una vez.",
+   "auto": "single_greeting"
   },
   {
    "id": "sin-repreguntas",
@@ -50,8 +57,8 @@
    ],
    "criteria": [
     {
-     "id": "un-saludo",
-     "check": "Responde con UN solo saludo de presentación, sin un segundo mensaje de 'no tengo esa información' ni pase a asesor."
+     "id": "sin-fallback",
+     "check": "No añade un mensaje de 'no tengo esa información' ni pasa a un asesor: un saludo con cortesía no es una pregunta."
     },
     {
      "id": "ofrece-opciones",
@@ -79,16 +86,13 @@
    ],
    "criteria": [
     {
-     "id": "un-saludo",
-     "check": "Solo saluda una vez en toda la conversación."
-    },
-    {
      "id": "precio-buceo",
      "check": "Cuando pregunta 'cuánto cuesta', da el precio del buceo certificado desde Cartagena para 1 persona extranjera, en USD, igual que el catálogo."
     },
     {
-     "id": "como-pagar",
-     "check": "A 'cómo pago' responde con el link de reserva del servicio correcto, sin volver a pedir datos ya dados."
+     "id": "como-pagar-link",
+     "check": "La respuesta a 'perfecto, como pago' incluye el link de reserva.",
+     "auto": "last_reply_has_booking_link"
     }
    ],
    "review_note": "Ronda 1: el guion no contestaba '¿más de 2 años?' y el bot no podía dar el link; se añade la respuesta."
@@ -119,7 +123,8 @@
     },
     {
      "id": "link",
-     "check": "Da el link de reserva del servicio de buceo certificado."
+     "check": "La respuesta a 'listo, como pago' incluye el link de reserva.",
+     "auto": "last_reply_has_booking_link"
     }
    ],
    "review_note": "Ronda 1: se añade la respuesta a '¿más de 2 años?'."
@@ -151,7 +156,8 @@
     },
     {
      "id": "link",
-     "check": "A 'how do i pay' da el link de reserva, sin repetir preguntas."
+     "check": "La respuesta a 'great, how do i pay' incluye el link de reserva.",
+     "auto": "last_reply_has_booking_link"
     }
    ],
    "review_note": "Ronda 1: se añade la respuesta a 'more than 2 years?'."
