@@ -11,7 +11,73 @@ Read this file before changing code in the Diving Planet Bot. For a quick versio
 
 ## Current branch and workflow
 
-### 🚨 2026-09-16 — HANDOFF A GADEA (cierre de Álvaro). LEER ESTO PRIMERO
+### 🚨 2026-09-17 — HANDOFF DE GADEA AL EQUIPO (Álvaro / Gonzalo). LEER ESTO PRIMERO
+
+**Las tareas NO son de nadie en exclusiva**: el responsable que aparece en la página es orientativo;
+quien continúe coge la siguiente tarea pendiente, sea "de Gadea", "de Álvaro" o "de Gonzalo".
+
+**Dónde mirar:**
+- **Página de seguimiento "Plan Coral"** (fases, tareas, bitácora y gráficos de latencia/calidad por
+  ejecución): https://claude.ai/artifact/XiGd3kguTNwwqTnH7mQwgi — la bitácora del 17-sep resume el día.
+- **Plan**: `docs/plan-maestro-final.md` (Fase M0 en curso). **Qué se hizo**: `docs/HISTORY.md` 0.28.2 → 0.29.1.
+- Rama `feature/pre_gadea`, desplegada en PRE en `8ec3132` (push a `pre_*` = deploy a PRE).
+
+**Hecho el 17-sep (Gadea + Claude):**
+1. `pre_gadea` al día con `pre_alvaro`; PRE redesplegado y sano (saludo doble arreglado y verificado en vivo).
+2. **Medir latencia** — `scripts/langfuse_snapshot.py` (foto de Langfuse: p50/p95 por turno y por nodo,
+   llamadas LLM, coste; `--from-run` toma la ventana de una ejecución). **Línea base M0**: turno p50 3,1 s
+   / p95 6,2 s, 3,65 llamadas LLM/turno; RAG p50 5,8 s y 5,5 llamadas (el turno caro).
+3. **Tráfico sintético reproducible** — `scripts/run_synthetic_pre.py` (lotes en
+   `docs/robustness/synthetic-runs/batches.json`, 265 conversaciones; `--sample m0|golden`, `--ids`, `--dry`).
+4. **Golden-set + LLM-juez (m0-3 HECHA)** — `docs/robustness/golden-set/golden-dialogues.json` (v5, 41
+   diálogos). Juez `scripts/judge_golden_set.py`: criterios mecánicos por código + un criterio por
+   llamada con evidencia obligatoria. **Juez oficial: gpt-5-mini (reasoning medium)**, elegido por
+   calibración contra 71 veredictos etiquetados (`scripts/calibrate_judge.py`, carpeta
+   `golden-set/calibration/`): gpt-5 low 95,8 %, mini medium 91,5 %, mini low 88,7 %. Por eso **cada
+   ronda se revisa a mano** (lista `human_review`: fallos del juez + 5 aciertos al azar) y se aplica con
+   `scripts/apply_golden_review.py`. **Ronda 1 revisada: 95,1 % de criterios, 30/41 diálogos sin fallos.**
+5. **Decisiones de negocio de Gadea** ya en la base de conocimiento: nacido en Colombia = colombiano
+   (`policies.json`); siempre hay disponibilidad salvo 25-dic, 1-ene y clima (`availability.json`);
+   colombianos pagan 100 % online o 50/50 (`faqs.json`); grupo con nacionalidades mixtas paga en USD.
+   Más decisiones (criterios del golden-set): dar el teléfono si lo piden; basta con ofrecer el
+   refresher; no asumir la actividad del acompañante; un cambio de fecha sin reserva pagada → asesor;
+   "un fallo cuenta en un solo criterio".
+6. **10 fallos del bot** encontrados por el golden-set → tareas **S4-6 a S4-16** en la página, sin
+   responsable. Varios son de ENTENDER el mensaje ("voy solo" = 1, acompañante, niños, nacionalidad):
+   mejor resolverlos con **U3** que con parches (regla del owner). No cambiar conducta antes de cerrar m0-7.
+
+**Siguiente, en este orden:**
+1. **m0-7 — congelar la línea base de CALIDAD** (lo que falta para cerrar M0 de calidad): eval-set
+   (`run_extraction_eval` normal y `--core`), las 4 baterías (`battery_*`), `eval_rag_answers` y
+   `eval_retrieval`. ~1.200 llamadas y ~1 h de ejecución EN SERIE (RPD 10.000/día compartido con PRE; un 429
+   aborta). Los evals de RAG necesitan la BD con embeddings (local cargada o dentro del contenedor de PRE).
+   Guardar el resultado como foto/nota en la página y en `docs/robustness/progress-log.md`.
+2. **m0-1 / m0-5 (Langfuse)**: resumen por turno, tipo de turno y métricas de negocio; **arreglar la traza
+   que junta varios turnos** (visto el 17-sep: 8 turnos en una traza de 50 min; el snapshot la descarta y la
+   cuenta en `merged_traces`).
+3. **m0-2**: decidir si `battery_latency.py` sigue haciendo falta (run_synthetic_pre + langfuse_snapshot ya lo cubren).
+4. **m0-4**: añadir tráfico real curado (`harvest_cutover_logs`, necesita SSH al VPS) al golden-set.
+5. Con M0 cerrada: **L1** (latencia barata, el RAG primero) y **U3** (entender una vez) midiendo cada cambio.
+
+**Cómo medir una ronda completa** (latencia + calidad, un punto nuevo en los gráficos de la página):
+```bash
+ENV_FILE=.env.dev python -m scripts.run_synthetic_pre --name golden --sample golden        # ~25 min, tráfico a PRE
+ENV_FILE=.env.dev python -m scripts.langfuse_snapshot --label "..." --from-run docs/robustness/synthetic-runs/<fecha>-golden.jsonl --out foto.json
+ENV_FILE=.env.dev python -m scripts.judge_golden_set --run docs/robustness/synthetic-runs/<fecha>-golden.jsonl --snapshot foto.json   # ~45 min, ~0,6 $
+# revisar a mano `human_review` del resultado → decisiones en golden-set/results/<fecha>-golden__review.json
+python -m scripts.apply_golden_review --results <resultado> --decisions <review.json> --snapshot foto.json
+# pegar foto.json en "Añadir foto" de la página (o pedírselo a Claude)
+```
+Claves en `.env.dev` (no se commitean): `OPENAI_API_KEY`, `LANGFUSE_PUBLIC_KEY/SECRET_KEY/HOST`,
+`SYNTH_CHATWOOT_TOKEN` (pedírselo a Gadea por privado).
+
+**Avisos:**
+- En local con Python 3.14 fallan 37 tests por falta de `tzdata` (no es del código; en CI pasan 888): `pip install tzdata` en el `.venv`.
+- `langfuse` no importa en Python 3.14: en local no se traza (en PRE, 3.11, sí).
+- Los antiguos `batchN.py` de scratchpads EJECUTAN al importarse; usar siempre `batches.json`.
+- Página de calibración del juez (ya cerrada, solo consulta): https://claude.ai/artifact/4kDXumzu3QT7KpTQvuenHf
+
+### 🚨 2026-09-16 — HANDOFF A GADEA (cierre de Álvaro)
 
 **➡️ PLAN DEL SIGUIENTE CICLO: `docs/plan-maestro-final.md`** — reúne todo el contexto (estado
 actual "qué tenemos/qué falta", hallazgos verificados de latencia/estructura, el plan por fases

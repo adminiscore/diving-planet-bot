@@ -6,6 +6,16 @@
 > latencia/estructura, el reporte HTML de arquitectura, y los dos planes vivos
 > (`docs/multi-agent-refactor-plan.md`, `docs/robustness/plan.md`).
 
+> **Estado M0 a 2026-09-17 (Gadea → equipo; tareas de cualquiera).** Seguimiento vivo en la página
+> "Plan Coral" (https://claude.ai/artifact/XiGd3kguTNwwqTnH7mQwgi) y detalle en
+> `docs/project-history/session-handoff.md` (banner 2026-09-17).
+> - ✅ m0-3 golden-set + LLM-juez calibrado (gpt-5-mini medium + revisión humana); ronda 1: 95,1 %.
+> - ✅ m0-6 fotos de Langfuse + página; ✅ m0-8 saludo verificado en vivo.
+> - 🟡 m0-7 línea base: latencia y golden-set hechas; **falta eval-set, baterías y evals de RAG** (siguiente).
+> - 🟡 m0-4 datos del golden-set: sintéticos hechos; falta tráfico real (harvest).
+> - ⏳ m0-1 / m0-5 Langfuse (resumen por turno, negocio, traza que junta turnos) · ⏳ m0-2 decidir si hace falta.
+> - 10 fallos del bot del golden-set como tareas S4-6..S4-16 (varios encajan en U3).
+
 ---
 
 ## PARTE 0 — Estado actual: qué tenemos / qué falta (leer primero)
