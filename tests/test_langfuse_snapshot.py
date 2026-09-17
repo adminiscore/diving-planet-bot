@@ -36,3 +36,18 @@ def test_build_snapshot_separates_rag_and_booking_turns():
     assert set(snap["nodes"]) == {"router"}
     assert snap["nodes"]["router"]["n"] == 2
     assert snap["models"] == {"gpt-4o-mini": 2, "gpt-4.1-mini": 1}
+    assert snap["merged_traces"] == {"traces": 0, "turns": 0}
+
+
+def test_build_snapshot_excludes_traces_that_merge_several_turns():
+    observations = [
+        _obs("ok", "CHAIN", "router", "2026-09-17T08:00:00Z", "2026-09-17T08:00:01Z", 1.0),
+        _obs("merged", "CHAIN", "router", "2026-09-17T08:00:00Z", "2026-09-17T08:00:01Z", 1.0),
+        _obs("merged", "CHAIN", "router", "2026-09-17T08:50:00Z", "2026-09-17T08:50:01Z", 1.0),
+    ]
+
+    snap = build_snapshot(observations, "prueba", "2026-09-17T00:00:00Z", "2026-09-18T00:00:00Z", "staging")
+
+    assert snap["all"]["turns"] == 1
+    assert snap["all"]["latency_p95"] == 1.0
+    assert snap["merged_traces"] == {"traces": 1, "turns": 2}

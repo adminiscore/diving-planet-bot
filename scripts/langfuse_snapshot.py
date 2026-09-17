@@ -130,7 +130,13 @@ def build_snapshot(observations: list[dict], label: str, start: str, end: str, e
     by_trace: dict[str, list[dict]] = defaultdict(list)
     for o in observations:
         by_trace[o["traceId"]].append(o)
-    turns = sorted((summarize_turn(obs) for obs in by_trace.values()), key=lambda t: t["start"] or "")
+    # Una traza con varios `router` junta varios turnos (contexto de traza que se queda
+    # pegado entre turnos, visto en PRE el 2026-09-17): no es un turno, se cuenta aparte.
+    merged = [obs for obs in by_trace.values() if sum(o.get("name") == "router" for o in obs) > 1]
+    turns = sorted(
+        (summarize_turn(obs) for obs in by_trace.values() if sum(o.get("name") == "router" for o in obs) <= 1),
+        key=lambda t: t["start"] or "",
+    )
 
     node_lat: dict[str, list[float]] = defaultdict(list)
     models: Counter = Counter()
@@ -150,6 +156,7 @@ def build_snapshot(observations: list[dict], label: str, start: str, end: str, e
         "commit": commit,
         "environment": environment,
         "window": {"from": start, "to": end},
+        "merged_traces": {"traces": len(merged), "turns": sum(sum(o.get("name") == "router" for o in obs) for obs in merged)},
         "all": aggregate(turns),
         "by_type": {kind: aggregate([t for t in turns if t["type"] == kind]) for kind in ("reserva", "rag")},
         "nodes": {
