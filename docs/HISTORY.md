@@ -1,6 +1,10 @@
 History
 =======
 
+0.28.2 - (2026-09-17)
+----------------------
+* **Foto de latencia desde Langfuse** (plan maestro, fase M0). Nuevo `scripts/langfuse_snapshot.py`: lee las observaciones de PRE (API v2; la de trazas legacy no existe para organizaciones nuevas), agrupa por turno y saca p50/p95 del turno, llamadas LLM y embeddings por turno, tokens, coste, p50/p95 por nodo y modelos, en total y por tipo (`rag`/`reserva`). No llama al LLM. La salida se guarda como foto en la página compartida "Plan Coral" para comparar antes/después de cada fase. Línea base 16-sep (19 turnos): p50 7,5 s / p95 14 s, 5,8 llamadas LLM por turno (RAG 7,2, hasta 10); los modelos en PRE son `gpt-4o-mini` y `gpt-4.1-mini`, no `gpt-4o`.
+
 0.28.1 - (2026-09-16)
 ----------------------
 * **Un saludo con cortesía ya no va a RAG** (bug en vivo). "hola buenas que tal?" daba el saludo + el fallback de asesor de RAG porque el "?" lo marcaba como pregunta; y "hola buenas" ni se reconocía como saludo. `_is_greeting_only` ahora compone el vocabulario de saludo + cortesía (`GREETING_ONLY_KEYWORDS` + nuevo `GREETING_SMALLTALK_KEYWORDS`) y los dos gates a RAG del núcleo excluyen los saludos; "que tal el buceo nocturno?" sigue yendo a RAG. Solo cambia la clasificación de saludos puros (no están en el eval-set). Dominio del detector — para revisión de Gadea.
