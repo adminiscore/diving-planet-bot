@@ -164,3 +164,16 @@ def test_review_list_takes_all_llm_failures_and_a_reproducible_sample_of_passes(
     assert [(r["dialogue"], r["criterion"]) for r in flagged] == [("d1", "a"), ("d1", "c")]
     assert len(review) == 5
     assert review == review_list(results, 3, "run-x")
+
+
+def test_apply_review_corrects_verdicts_and_recomputes_score():
+    from scripts.apply_golden_review import apply_review
+
+    report = {"summary": {}, "dialogues": [
+        {"id": "d1", "category": "info", "criteria": [{"id": "a", "verdict": "no_cumple"}, {"id": "b", "verdict": "cumple"}]},
+    ]}
+    out = apply_review(report, [{"dialogue": "d1", "criterion": "a", "verdict": "cumple", "note": "falso"}, {"dialogue": "d1", "criterion": "b", "verdict": "cumple"}])
+    assert out["summary_reviewed"]["criteria_pass_pct"] == 100.0
+    assert out["judge_accuracy_on_review"] == {"reviewed": 2, "confirmed": 1, "corrected": 1}
+    assert out["reviewed_dialogues"][0]["criteria"][0]["judge_verdict"] == "no_cumple"
+    assert report["dialogues"][0]["criteria"][0]["verdict"] == "no_cumple"
