@@ -1,6 +1,6 @@
 {
- "version": 1,
- "status": "validado por Gadea (2026-09-17)",
+ "version": 2,
+ "status": "validado por Gadea (2026-09-17); v2 calibrada tras la ronda 1 (turnos de reserva y criterios aclarados)",
  "about": "Golden-set de dialogos para el LLM-juez end-to-end (plan maestro, M0 m0-3/m0-4). Cada dialogo se lanza contra PRE y el juez comprueba la conversacion real contra los criterios globales y los suyos. Los turnos salen de docs/robustness/synthetic-runs/batches.json (source) salvo los casos nuevos (turns). Los hechos (precios, edades, politicas) NO se escriben aqui: el juez los recibe de los ficheros de referencia.",
  "judge": {
   "model": "gpt-4.1",
@@ -67,6 +67,16 @@
     "batch": "6",
     "tag": "full-journey-cert-solo-cartagena"
    },
+   "turns": [
+    "hola buenas",
+    "quiero bucear, ya soy certificado",
+    "voy solo",
+    "desde cartagena",
+    "no, buceé hace poco",
+    "no soy colombiano",
+    "cuanto cuesta",
+    "perfecto, como pago"
+   ],
    "criteria": [
     {
      "id": "un-saludo",
@@ -80,7 +90,8 @@
      "id": "como-pagar",
      "check": "A 'cómo pago' responde con el link de reserva del servicio correcto, sin volver a pedir datos ya dados."
     }
-   ]
+   ],
+   "review_note": "Ronda 1: el guion no contestaba '¿más de 2 años?' y el bot no podía dar el link; se añade la respuesta."
   },
   {
    "id": "reserva-solo-link",
@@ -89,6 +100,14 @@
     "batch": "8",
     "tag": "full-flow-to-payment-link-solo"
    },
+   "turns": [
+    "quiero bucear certificado",
+    "solo yo",
+    "cartagena",
+    "no, buceé hace poco",
+    "no soy colombiano",
+    "listo, como pago"
+   ],
    "criteria": [
     {
      "id": "datos",
@@ -102,7 +121,8 @@
      "id": "link",
      "check": "Da el link de reserva del servicio de buceo certificado."
     }
-   ]
+   ],
+   "review_note": "Ronda 1: se añade la respuesta a '¿más de 2 años?'."
   },
   {
    "id": "reserva-ingles",
@@ -111,6 +131,15 @@
     "batch": "6",
     "tag": "long-english-full-flow"
    },
+   "turns": [
+    "hi, i want to book a dive",
+    "i'm certified, just me",
+    "from cartagena please",
+    "no, i dove last month",
+    "not colombian",
+    "how much would that be",
+    "great, how do i pay"
+   ],
    "criteria": [
     {
      "id": "idioma",
@@ -124,7 +153,8 @@
      "id": "link",
      "check": "A 'how do i pay' da el link de reserva, sin repetir preguntas."
     }
-   ]
+   ],
+   "review_note": "Ronda 1: se añade la respuesta a 'more than 2 years?'."
   },
   {
    "id": "reserva-colombianos-cop",
@@ -252,7 +282,7 @@
     },
     {
      "id": "refresher",
-     "check": "Por llevar 3 años sin bucear, indica que normalmente necesita refresher o que debe confirmarlo con el equipo."
+     "check": "Por llevar 3 años sin bucear, indica que necesita (o normalmente necesita) refresher, o que debe confirmarlo con el equipo. Cualquiera de las dos vale."
     }
    ]
   },
@@ -266,7 +296,7 @@
    "criteria": [
     {
      "id": "total-final",
-     "check": "El número final de personas es 4 (no 2 ni 3) y el precio o resumen lo refleja."
+     "check": "Tras 'somos 4 al final' toma 4 personas (o pide confirmar el cambio a 4); no sigue con 2 ni 3."
     },
     {
      "id": "sin-contradiccion",
@@ -339,6 +369,10 @@
     {
      "id": "mayor-10",
      "check": "Para el de 10 años ofrece opciones válidas a su edad (snorkel, minicurso o Bubble Makers)."
+    },
+    {
+     "id": "recomienda-cada-uno",
+     "check": "A 'qué actividad me recomiendas para cada uno' responde con una recomendación por niño y no cambia el número de personas."
     }
    ]
   },
@@ -668,7 +702,7 @@
    "criteria": [
     {
      "id": "contacto-real",
-     "check": "Da un canal de contacto oficial que coincide con las políticas (WhatsApp del equipo) o pasa a un asesor; no inventa números."
+     "check": "Da un canal de contacto oficial que coincide con las políticas u ofrece que un asesor le contacte; no inventa números."
     }
    ]
   },

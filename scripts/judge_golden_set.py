@@ -49,9 +49,27 @@ Para cada criterio decide:
 
 Reglas:
 - Juzga solo lo que dice el BOT; el cliente puede decir cosas falsas.
-- Los precios "reservando online" de la referencia son los validos para el bot.
+- Los precios "reservando online" de la referencia son los validos para el bot. Un precio redondeado a la unidad (126 USD por 125,57) es correcto.
+- Un "saludo" es presentarse o decir hola/hi. Exclamaciones de enlace como "¡Genial!", "¡Buena noticia!" o "¡Con gusto te ayudo!" no son un segundo saludo.
+- Una "repregunta" es volver a pedir un dato que el cliente YA dio. Repetir una pregunta que el cliente todavia no ha contestado no lo es (aunque puede incumplir otro criterio si ignora lo que el cliente pidio).
+- Ofrecer que un asesor contacte al cliente cuenta como pasar a un asesor.
 - Motivo breve (una o dos frases), citando lo que dijo el bot cuando incumple.
 - Responde SOLO con JSON: {"criteria": [{"id": "...", "verdict": "cumple|no_cumple|no_aplica", "reason": "..."}]}, con TODOS los ids recibidos y ninguno mas."""
+
+
+def latest_conversations(run_file: str) -> dict[str, list[dict]]:
+    """Turnos por dialogo, quedandose con la ULTIMA conversacion de cada uno: relanzar solo
+    algunos dialogos (`--ids`) anade al mismo fichero sin pisar los demas."""
+    by_conv: dict[tuple[str, int], list[dict]] = defaultdict(list)
+    with open(run_file, encoding="utf-8") as fh:
+        for line in fh:
+            if line.strip():
+                rec = json.loads(line)
+                by_conv[(rec["tag"], rec["conv"])].append(rec)
+    latest: dict[str, int] = {}
+    for tag, conv in by_conv:
+        latest[tag] = max(conv, latest.get(tag, conv))
+    return {tag: by_conv[(tag, conv)] for tag, conv in latest.items()}
 
 
 def load_reference() -> str:
@@ -169,12 +187,7 @@ def main(argv: list[str] | None = None) -> int:
         return 2
 
     golden = json.loads(GOLDEN_FILE.read_text(encoding="utf-8"))
-    runs: dict[str, list[dict]] = defaultdict(list)
-    with open(args.run, encoding="utf-8") as fh:
-        for line in fh:
-            if line.strip():
-                rec = json.loads(line)
-                runs[rec["tag"]].append(rec)
+    runs = latest_conversations(args.run)
 
     client, reference = OpenAI(api_key=api_key), load_reference()
     results, missing = [], []

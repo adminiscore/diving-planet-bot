@@ -25,6 +25,7 @@ Claves: `SYNTH_CHATWOOT_TOKEN` (token de API de un agente de PRE), opcionales
 
 import argparse
 import json
+import ssl
 import sys
 import time
 import urllib.request
@@ -32,8 +33,11 @@ import uuid
 from datetime import UTC, datetime
 from pathlib import Path
 
+import certifi
+
 from scripts.langfuse_snapshot import _env
 
+_SSL_CONTEXT = ssl.create_default_context(cafile=certifi.where())
 RUNS_DIR = Path("docs/robustness/synthetic-runs")
 BATCHES_FILE = RUNS_DIR / "batches.json"
 REPLY_TIMEOUT_S = 90
@@ -86,7 +90,9 @@ class Chatwoot:
             # `Api-Access-Token` con guion: con guion bajo lo descarta el proxy de PRE.
             headers={"Api-Access-Token": self.token, "Content-Type": "application/json"},
         )
-        with urllib.request.urlopen(req, timeout=20) as resp:
+        # CA de certifi: el almacen de Windows de algun equipo del equipo tiene una raiz
+        # caducada y rechaza el certificado (valido) de Chatwoot.
+        with urllib.request.urlopen(req, timeout=20, context=_SSL_CONTEXT) as resp:
             return json.load(resp)
 
     def new_conversation(self, tag: str) -> int:
@@ -139,10 +145,14 @@ def main(argv: list[str] | None = None) -> int:
     group.add_argument("--sample", choices=["m0", "golden"], help="m0 = muestra de latencia; golden = dialogos del golden-set")
     group.add_argument("--batches", help="lotes separados por coma, p. ej. 5,7")
     group.add_argument("--all", action="store_true")
+    parser.add_argument("--ids", help="solo estas etiquetas/dialogos, separados por coma (p. ej. relanzar parte del golden-set)")
     parser.add_argument("--dry", action="store_true", help="solo cuenta conversaciones y turnos")
     args = parser.parse_args(argv)
 
     cases = select_cases(load_batches(), args.sample, args.batches.split(",") if args.batches else None)
+    if args.ids:
+        wanted = set(args.ids.split(","))
+        cases = [c for c in cases if c[1] in wanted]
     print(f"{len(cases)} conversaciones, {sum(len(t) for _, _, t in cases)} turnos", flush=True)
     if args.dry:
         return 0
