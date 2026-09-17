@@ -11,6 +11,45 @@ Read this file before changing code in the Diving Planet Bot. For a quick versio
 
 ## Current branch and workflow
 
+### ✅ 2026-09-17 (tarde, Gonzalo) — m0-7 HECHA: línea base de CALIDAD congelada
+
+Cierra lo que faltaba de M0 en calidad (latencia y golden-set ya estaban). **Cero cambios de
+conducta**: M0 solo mide. Detalle completo, hallazgos y notas de entorno en
+`docs/robustness/progress-log.md` (entrada 2026-09-17); **foto por caso** en
+`docs/robustness/baselines/2026-09-17-m0-7/` (los 9 `.raw` + JSON + tiempos) — es lo que permite el
+`diff` por caso de la próxima tanda.
+
+| medida | resultado |
+|---|---|
+| Eval-set modo script / por el núcleo | **220/230** · **230/230** (las dos "tanda limpia") |
+| Booleanos anclados | legítimos 33/33 · alucinaciones evitadas 30/30 |
+| Router (9 señales, `base`) | 33/37 — fallan los documentados n07, r07–r09 |
+| Actividad | signals 10/10 · slot 10/10 · router 6/9 |
+| Grupo (config PRE) | 17/17 · 13/13 · 17/17, 0 alucinaciones / parciales / totales mal |
+| RAG respuestas · recuperación | 38/39 · 16/20 ES, 13/20 EN |
+
+~1.900 peticiones **en serie**, 85 min. Antes de gastar cuota se verificó la clave con una llamada
+cruda: `fill_gaps` se traga los errores, así que un 429 se disfraza de acierto — el sello "tanda
+limpia: 0 llamadas degradadas" es lo que hace comparables las cifras.
+
+**Tres cosas para quien siga:**
+1. **La recuperación en INGLÉS es el punto débil** (13/20 frente a 16/20 ES), con dos casos
+   concretos cuyo equivalente español sí funciona: "Is accommodation included?" cae a fallback, y
+   "I have Open Water, which plan do you recommend?" recupera **0 documentos**. No es falta de
+   contenido (la FAQ existe en inglés). Candidato claro, medible con esos dos casos.
+2. **`vocab+ctx` tiene una medición pendiente que nadie hizo** y que podría reabrir F2b: da router
+   **9/9** en la batería de actividad (arregla r07/r08/r09 sin romper r05), pero esa batería **no
+   tiene casos de seguridad**, que es justo donde `vocab` a secas rompía `a02-sordomuda` (3/3→0/3).
+   Cerrarlo cuesta ~111 peticiones: `python -m scripts.battery_router_signals 3 vocab+ctx`.
+3. **Entorno**: los evals de RAG en local necesitan `DATABASE_URL=postgresql://postgres:postgres@localhost:5432/diving_planet`
+   — `.env` apunta a `host.docker.internal`, que solo resuelve dentro de un contenedor. Y el
+   `rag_min_score` efectivo es **0,5** (lo fija `.env`), no el 0,40 del default.
+
+**Siguiente según el orden del handoff de Gadea:** m0-1/m0-5 (Langfuse: resumen por turno, métricas
+de negocio y la traza que junta varios turnos), m0-2 (decidir si `battery_latency.py` sigue
+haciendo falta) y m0-4 (tráfico real curado al golden-set, necesita SSH). Con M0 cerrada: **L1** y
+**U3**.
+
 ### 🚨 2026-09-17 — HANDOFF DE GADEA AL EQUIPO (Álvaro / Gonzalo). LEER ESTO PRIMERO
 
 **Las tareas NO son de nadie en exclusiva**: el responsable que aparece en la página es orientativo;

@@ -1,0 +1,171 @@
+﻿
+============================================================================================
+RED: signals
+============================================================================================
+  s01-amigo-snorkel                        esperado=snorkel
+      base 3/3 {'"snorkel"': 3}
+      for_whom 3/3 {'"snorkel"': 3}
+      vocab 3/3 {'"snorkel"': 3}
+      vocab+ctx 3/3 {'"snorkel"': 3}
+  s02-primo-certificado                    esperado=certified_diving
+      base 3/3 {'"certified_diving"': 3}
+      for_whom 3/3 {'"certified_diving"': 3}
+      vocab 3/3 {'"certified_diving"': 3}
+      vocab+ctx 3/3 {'"certified_diving"': 3}
+  s03-acompanante-no-certificado-bucear    esperado=minicourse
+      base 3/3 {'"minicourse"': 3}
+      for_whom 3/3 {'"minicourse"': 3}
+      vocab 3/3 {'"minicourse"': 3}
+      vocab+ctx 3/3 {'"minicourse"': 3}
+  s04-solo-atributo                        esperado=None
+      base 3/3 {'null': 3}
+      for_whom 3/3 {'null': 3}
+      vocab 3/3 {'null': 3}
+      vocab+ctx 3/3 {'null': 3}
+  s05-jerga-parces                         esperado=snorkel
+      base 3/3 {'"snorkel"': 3}
+      for_whom 3/3 {'"snorkel"': 3}
+      vocab 3/3 {'"snorkel"': 3}
+      vocab+ctx 3/3 {'"snorkel"': 3}
+  s06-cambio-propio                        esperado=None
+      base 3/3 {'null': 3}
+      for_whom 3/3 {'null': 3}
+      vocab 3/3 {'null': 3}
+      vocab+ctx 3/3 {'null': 3}
+  s07-novia-probar                         esperado=minicourse
+      base 3/3 {'"minicourse"': 3}
+      for_whom 3/3 {'"minicourse"': 3}
+      vocab 3/3 {'"minicourse"': 3}
+      vocab+ctx 3/3 {'"minicourse"': 3}
+  s08-certificado-inactivo                 esperado=certified_diving
+      base 3/3 {'"certified_diving"': 3}
+      for_whom 3/3 {'"certified_diving"': 3}
+      vocab 3/3 {'"certified_diving"': 3}
+      vocab+ctx 3/3 {'"certified_diving"': 3}
+  s09-en-first-time                        esperado=minicourse
+      base 3/3 {'"minicourse"': 3}
+      for_whom 3/3 {'"minicourse"': 3}
+      vocab 3/3 {'"minicourse"': 3}
+      vocab+ctx 3/3 {'"minicourse"': 3}
+  s10-en-open-water                        esperado=certified_diving
+      base 3/3 {'"certified_diving"': 3}
+      for_whom 3/3 {'"certified_diving"': 3}
+      vocab 3/3 {'"certified_diving"': 3}
+      vocab+ctx 3/3 {'"certified_diving"': 3}
+
+============================================================================================
+RED: slot
+============================================================================================
+  c01-bautizo                              esperado=minicourse
+      base 3/3 {'"minicourse"': 3}
+      for_whom 3/3 {'"minicourse"': 3}
+      vocab 3/3 {'"minicourse"': 3}
+      vocab+ctx 3/3 {'"minicourse"': 3}
+  c02-arriba-peces                         esperado=snorkel
+      base 3/3 {'"snorkel"': 3}
+      for_whom 3/3 {'"snorkel"': 3}
+      vocab 3/3 {'"snorkel"': 3}
+      vocab+ctx 3/3 {'"snorkel"': 3}
+  c03-lo-que-sea                           esperado=None
+      base 3/3 {'null': 3}
+      for_whom 3/3 {'null': 3}
+      vocab 3/3 {'null': 3}
+      vocab+ctx 3/3 {'null': 3}
+  c04-bajar-tanque                         esperado=minicourse
+      base 3/3 {'"minicourse"': 3}
+      for_whom 3/3 {'"minicourse"': 3}
+      vocab 3/3 {'"minicourse"': 3}
+      vocab+ctx 3/3 {'"minicourse"': 3}
+  c05-careteo                              esperado=snorkel
+      base 3/3 {'"snorkel"': 3}
+      for_whom 3/3 {'"snorkel"': 3}
+      vocab 3/3 {'"snorkel"': 3}
+      vocab+ctx 3/3 {'"snorkel"': 3}
+  c06-en-surface                           esperado=snorkel
+      base 3/3 {'"snorkel"': 3}
+      for_whom 3/3 {'"snorkel"': 3}
+      vocab 3/3 {'"snorkel"': 3}
+      vocab+ctx 3/3 {'"snorkel"': 3}
+  c07-solo-acompana                        esperado=companion
+      base 3/3 {'"companion"': 3}
+      for_whom 3/3 {'"companion"': 3}
+      vocab 3/3 {'"companion"': 3}
+      vocab+ctx 3/3 {'"companion"': 3}
+  c08-certificarse                         esperado=padi_open_water
+      base 3/3 {'"padi_open_water"': 3}
+      for_whom 3/3 {'"padi_open_water"': 3}
+      vocab 3/3 {'"padi_open_water"': 3}
+      vocab+ctx 3/3 {'"padi_open_water"': 3}
+  c09-devuelve-la-eleccion                 esperado=None
+      base 3/3 {'null': 3}
+      for_whom 3/3 {'null': 3}
+      vocab 3/3 {'null': 3}
+      vocab+ctx 3/3 {'null': 3}
+  c10-en-come-along                        esperado=companion
+      base 3/3 {'"companion"': 3}
+      for_whom 3/3 {'"companion"': 3}
+      vocab 3/3 {'"companion"': 3}
+      vocab+ctx 3/3 {'"companion"': 3}
+
+============================================================================================
+RED: router
+============================================================================================
+  r01-minicurso-o-snorkel                  esperado=['minicourse', 'snorkel']
+      base 3/3 {'["minicourse", "snorkel"]': 3}
+      for_whom 3/3 {'["minicourse", "snorkel"]': 3}
+      vocab 3/3 {'["minicourse", "snorkel"]': 3}
+      vocab+ctx 3/3 {'["minicourse", "snorkel"]': 3}
+  r02-pareja-duda                          esperado=['certified_diving', 'minicourse']
+      base 3/3 {'["certified_diving", "minicourse"]': 3}
+      for_whom 3/3 {'["certified_diving", "minicourse"]': 3}
+      vocab 3/3 {'["certified_diving", "minicourse"]': 3}
+      vocab+ctx 3/3 {'["certified_diving", "minicourse"]': 3}
+  r03-elige-una                            esperado=None
+      base 3/3 {'null': 3}
+      for_whom 3/3 {'null': 3}
+      vocab 3/3 {'null': 3}
+      vocab+ctx 3/3 {'null': 3}
+  r04-curso-o-minicurso                    esperado=[['minicourse', 'padi_course'], ['minicourse', 'padi_open_water']]
+      base 3/3 {'["minicourse", "padi_course"]': 3}
+      for_whom 3/3 {'["minicourse", "padi_course"]': 3}
+      vocab 3/3 {'["minicourse", "padi_open_water"]': 3}
+      vocab+ctx 3/3 {'["minicourse", "padi_open_water"]': 3}
+  r05-reserva-ambas                        esperado=None
+      base 3/3 {'null': 3}
+      for_whom 1/3 {'null': 1, '["certified_diving", "snorkel"]': 2}
+      vocab 2/3 {'["certified_diving", "snorkel"]': 1, 'null': 2}
+      vocab+ctx 3/3 {'null': 3}
+  r06-en-first-timer                       esperado=['minicourse', 'snorkel']
+      base 3/3 {'["minicourse", "snorkel"]': 3}
+      for_whom 3/3 {'["minicourse", "snorkel"]': 3}
+      vocab 3/3 {'["minicourse", "snorkel"]': 3}
+      vocab+ctx 3/3 {'["minicourse", "snorkel"]': 3}
+  r07-open-water-o-advanced                esperado=['padi_advanced', 'padi_open_water']
+      base 0/3 {'["certified_diving", "padi_course"]': 3}
+      for_whom 0/3 {'["padi_course"]': 3}
+      vocab 3/3 {'["padi_advanced", "padi_open_water"]': 3}
+      vocab+ctx 3/3 {'["padi_advanced", "padi_open_water"]': 3}
+  r08-nitrox-o-flotabilidad                esperado=['specialty_buoyancy', 'specialty_nitrox']
+      base 0/3 {'["padi_course"]': 3}
+      for_whom 0/3 {'["padi_course"]': 3}
+      vocab 3/3 {'["specialty_buoyancy", "specialty_nitrox"]': 3}
+      vocab+ctx 3/3 {'["specialty_buoyancy", "specialty_nitrox"]': 3}
+  r09-en-rescue-or-divemaster              esperado=['padi_divemaster', 'padi_rescue']
+      base 0/3 {'["certified_diving", "padi_course"]': 3}
+      for_whom 0/3 {'["certified_diving", "padi_course"]': 3}
+      vocab 3/3 {'["padi_divemaster", "padi_rescue"]': 3}
+      vocab+ctx 3/3 {'["padi_divemaster", "padi_rescue"]': 3}
+
+============================================================================================
+RESUMEN (casos con todas las repeticiones correctas)
+============================================================================================
+  base       signals 10/10 | slot 10/10 | router 6/9
+  for_whom   signals 10/10 | slot 10/10 | router 5/9
+  vocab      signals 10/10 | slot 10/10 | router 8/9
+  vocab+ctx  signals 10/10 | slot 10/10 | router 9/9
+  CASOS QUE CAMBIAN ENTRE VARIANTES (aciertos por variante):
+    router   r05-reserva-ambas                        base=3/3  for_whom=1/3  vocab=2/3  vocab+ctx=3/3
+    router   r07-open-water-o-advanced                base=0/3  for_whom=0/3  vocab=3/3  vocab+ctx=3/3
+    router   r08-nitrox-o-flotabilidad                base=0/3  for_whom=0/3  vocab=3/3  vocab+ctx=3/3
+    router   r09-en-rescue-or-divemaster              base=0/3  for_whom=0/3  vocab=3/3  vocab+ctx=3/3
+JSON {"resumen": {"base": {"signals": 10, "slot": 10, "router": 6}, "for_whom": {"signals": 10, "slot": 10, "router": 5}, "vocab": {"signals": 10, "slot": 10, "router": 8}, "vocab+ctx": {"signals": 10, "slot": 10, "router": 9}}, "cambios": [["router", "r05-reserva-ambas", {"base": 3, "for_whom": 1, "vocab": 2, "vocab+ctx": 3}], ["router", "r07-open-water-o-advanced", {"base": 0, "for_whom": 0, "vocab": 3, "vocab+ctx": 3}], ["router", "r08-nitrox-o-flotabilidad", {"base": 0, "for_whom": 0, "vocab": 3, "vocab+ctx": 3}], ["router", "r09-en-rescue-or-divemaster", {"base": 0, "for_whom": 0, "vocab": 3, "vocab+ctx": 3}]]}

@@ -1,6 +1,25 @@
 History
 =======
 
+0.29.2 - (2026-09-17)
+----------------------
+* **Línea base de CALIDAD congelada (plan maestro, M0 m0-7).** Cierra lo que faltaba de M0: eval-set
+  **220/230** en modo script y **230/230 por el núcleo**, booleanos anclados 33/33 legítimos y 30/30
+  alucinaciones evitadas, router 33/37 en la variante de producción, actividad 10/10 · 10/10 · 6/9,
+  batería de grupo con la config de PRE 17/17 · 13/13 · 17/17 sin una sola alucinación, RAG 38/39 en
+  el modo esperado y recuperación 16/20 ES / 13/20 EN. ~1.900 peticiones en serie (el RPD es el
+  recurso escaso), 85 min, con el sello "tanda limpia: 0 llamadas degradadas" en las dos tandas del
+  eval-set — sin él las cifras no serían comparables, porque un 429 se disfraza de acierto. Sin
+  cambios de conducta: M0 solo mide. Foto **por caso** en `docs/robustness/baselines/2026-09-17-m0-7/`.
+* **Hallazgo: la recuperación en inglés es más débil que en español** (13/20 frente a 16/20), con dos
+  casos cuyo equivalente español sí funciona: "Is accommodation included?" cae a fallback y "I have
+  Open Water, which plan do you recommend?" no recupera ningún documento. No es falta de contenido
+  (la FAQ existe en inglés, 380 docs EN en la base). Queda medido como candidato, sin tocar nada.
+* **Hallazgo: `vocab+ctx` da router 9/9** en la batería de actividad — arregla las tres comparaciones
+  de cursos (r07/r08/r09) sin romper `r05`, donde `vocab` a secas sí lo hace. Pero esa batería no
+  tiene casos de seguridad, y es ahí donde `vocab` rompía `a02-sordomuda` (3/3 → 0/3). Medir
+  `vocab+ctx` contra seguridad es lo que decidiría si F2b se reabre; cuesta ~111 peticiones.
+
 0.29.1 - (2026-09-17)
 ----------------------
 * **Juez del golden-set medido contra etiquetas humanas y elegido por datos.** El juez de gpt-4.1 en una sola llamada por diálogo acertaba ~60 % de los fallos que marcaba. Nuevo diseño: los criterios mecánicos (se presenta una vez, da el link de pago, importes del catálogo) los comprueba código; el resto se juzga **un criterio por llamada con evidencia literal obligatoria** (un `no_cumple` sin cita verificable baja a `revisar`), con la referencia del negocio + FAQ y las reglas "un fallo, un criterio" y "conversación cortada = no aplica".

@@ -1,0 +1,442 @@
+﻿========================================================================================================================
+[1/39] es_meeting_point | meeting_point_schedule | es
+QUERY: ¿Dónde es el punto de encuentro?
+2026-09-17 18:40:18 [info     ] knowledge_loaded               file=conversations.json items=1
+2026-09-17 18:40:18 [info     ] knowledge_loaded               file=brand_tone.json items=1
+EXPECTED_MODE: answer
+ACTUAL_MODE: answer
+MATCHES_EXPECTATION: True
+ANSWER_START
+¡Hola! El punto de encuentro es en el Muelle de la Bodeguita a las 8:00 a.m. No necesitas hacer fila; solo pregunta por DIVING PLANET en la entrada 3. Aquí te dejo la ubicación para que la tengas a mano: [Ubicación en Google Maps](https://www.google.com/maps/place/Muelle+de+la+Bodeguita/@[REDACTED_PHONE],-[REDACTED_PHONE],828m/data=!3m2!1e3!4b1!4m6!3m5!1s0x8ef62f[REDACTED_PHONE]d:0x1bbcdd8224d0eaaf!8m2!3d[REDACTED_PHONE]!4d-[REDACTED_PHONE]!16s%2Fg%2F113gzkckf?entry=ttu).
+
+¿Hay algo más en lo que te pueda ayudar? 😊
+ANSWER_END
+========================================================================================================================
+[2/39] es_gate_bodeguita | meeting_point_schedule | es
+QUERY: ¿Es en el muelle de la Bodeguita? ¿Qué puerta?
+EXPECTED_MODE: answer
+ACTUAL_MODE: answer
+MATCHES_EXPECTATION: True
+ANSWER_START
+¡Hola! Sí, el punto de encuentro es en el Muelle de la Bodeguita. Debes dirigirte a la entrada 3 y preguntar por DIVING PLANET. No necesitas hacer fila. ¿Tienes alguna otra duda o te ayudo a armar tu reserva? 🌊
+ANSWER_END
+========================================================================================================================
+[3/39] es_schedule_return | meeting_point_schedule | es
+QUERY: ¿A qué hora es el encuentro y a qué hora regresamos?
+EXPECTED_MODE: answer
+ACTUAL_MODE: answer
+MATCHES_EXPECTATION: True
+ANSWER_START
+¡Hola! Si ya estás en las Islas del Rosario, el encuentro para el tour de snorkeling o el paquete de buceo es directamente en tu hotel, entre las 9:30 y 9:45 de la mañana, siempre que tenga acceso por lancha. Para el snorkeling, regresarías al hotel alrededor de las 2:00 p.m. Y si estás haciendo el paquete de buceo con inmersión nocturna, el regreso sería hacia las 7:30 p.m. 
+
+¿Te gustaría saber más sobre alguna de estas actividades? 🌊
+ANSWER_END
+========================================================================================================================
+[4/39] es_food | food | es
+QUERY: ¿Qué comida incluye el tour?
+2026-09-17 18:40:37 [info     ] knowledge_loaded               file=faqs.json items=1
+EXPECTED_MODE: answer
+ACTUAL_MODE: answer
+MATCHES_EXPECTATION: True
+ANSWER_START
+El tour incluye agua durante todo el dia, dulces de coco entre inmersiones y almuerzo. El almuerzo es arroz con pollo o arroz con vegetales. Los vegetarianos, veganos y celianos reciben arroz con vegetales. Si tienes algun tipo de alergia alimentaria, por favor informanos antes del tour para que podamos tenerlo en cuenta.
+
+Si tu pregunta era sobre algo más concreto que esto, cuéntamelo con más detalle y te confirmo con exactitud. 🙂
+ANSWER_END
+========================================================================================================================
+[5/39] es_vegetarian | food | es
+QUERY: Soy vegetariana, ¿qué hay para comer?
+EXPECTED_MODE: answer
+ACTUAL_MODE: answer
+MATCHES_EXPECTATION: True
+ANSWER_START
+Si. Vegetarianos, veganos y celianos reciben almuerzo de arroz con vegetales. Si tienes alguna alergia especifica (marisco, gluten, nueces, etc.) o prefieres traer tu propia comida, puedes hacerlo sin problema; solo avisanos antes del tour para poder gestionarlo. No es necesario que el bot pregunte proactivamente por alergias; solo informanos si es tu caso.
+
+Si tu pregunta era sobre algo más concreto que esto, cuéntamelo con más detalle y te confirmo con exactitud. 🙂
+ANSWER_END
+========================================================================================================================
+[6/39] es_allergy | food | es
+QUERY: Tengo alergia al marisco, ¿hay problema?
+EXPECTED_MODE: answer
+ACTUAL_MODE: answer
+MATCHES_EXPECTATION: True
+ANSWER_START
+Si. Vegetarianos, veganos y celianos reciben almuerzo de arroz con vegetales. Si tienes alguna alergia especifica (marisco, gluten, nueces, etc.) o prefieres traer tu propia comida, puedes hacerlo sin problema; solo avisanos antes del tour para poder gestionarlo. No es necesario que el bot pregunte proactivamente por alergias; solo informanos si es tu caso.
+
+Si tu pregunta era sobre algo más concreto que esto, cuéntamelo con más detalle y te confirmo con exactitud. 🙂
+ANSWER_END
+========================================================================================================================
+[7/39] es_photos | media | es
+QUERY: ¿Hacen fotos durante la inmersión?
+EXPECTED_MODE: answer_or_fallback
+ACTUAL_MODE: answer
+MATCHES_EXPECTATION: True
+ANSWER_START
+¡Claro que sí! Nuestros instructores pueden tomar fotos y videos durante la inmersión, pero no es un servicio automático ni está incluido en el precio. Si el instructor decide hacerlo, es un gesto voluntario y te entregarán las fotos al día siguiente como máximo. La propina al instructor por las fotos/videos suele ser de unos $50.000 COP / $14 USD, que se paga directamente a él. Ten en cuenta que no se realizan fotos ni videos en el minicurso ni en las primeras experiencias. ¿Te gustaría saber más sobre nuestras actividades de buceo? 🌊📸
+ANSWER_END
+========================================================================================================================
+[8/39] es_videos | media | es
+QUERY: ¿Graban video bajo el agua?
+EXPECTED_MODE: answer_or_fallback
+ACTUAL_MODE: fallback
+MATCHES_EXPECTATION: True
+ANSWER_START
+¡Con gusto te ayudo! 🌊 Ese detalle en concreto no lo tengo a la mano, pero puedo ayudarte con las actividades, precios, logística o a armar tu reserva. ¿Quieres que te pase con un asesor para resolver eso puntual?
+ANSWER_END
+========================================================================================================================
+[9/39] es_price_2_dives_usd | pricing | es
+QUERY: ¿Cuánto cuesta el plan de 2 buceos en USD?
+EXPECTED_MODE: answer
+ACTUAL_MODE: answer
+MATCHES_EXPECTATION: True
+ANSWER_START
+🌊 *Buceo certificado (2 inmersiones, 1 día)*: *178 USD / 630.000 COP* por persona (con el descuento por reservar online).
+
+Los colombianos/residentes pagan en pesos (COP) y los internacionales en dólares (USD) — mismo precio, sin cobro extra por la divisa. ¿Te ayudo a armar la reserva? 😊
+
+Si tu pregunta era sobre algo más concreto que esto, cuéntamelo con más detalle y te confirmo con exactitud. 🙂
+ANSWER_END
+========================================================================================================================
+[10/39] es_price_local_cop | pricing | es
+QUERY: ¿Cuánto cuesta en pesos para colombianos?
+EXPECTED_MODE: answer
+ACTUAL_MODE: answer
+MATCHES_EXPECTATION: True
+ANSWER_START
+🌊 Te dejo los *precios de referencia saliendo desde Cartagena* (incluyen lancha, almuerzo, equipo y entrada al parque), con el descuento por reservar online:
+
+🤿 *Buceo certificado* (2 inmersiones, 1 día): *178 USD / 630.000 COP* por persona.
+🆕 *Minicurso de buceo* (sin experiencia): *183 USD / 655.000 COP* por persona.
+🐠 *Snorkel*: *126 USD / 448.000 COP* por persona.
+🎓 *Curso Open Water* (certificación PADI): *693 USD / 2.450.000 COP*.
+
+Los colombianos/residentes pagan en pesos (COP) y los internacionales en dólares (USD) — mismo precio, sin cobro extra por la divisa. También hay paquetes multi-día (4/5/7/9 inmersiones) y otros cursos. ¿Cuál te interesa? 😄
+
+Si tu pregunta era sobre algo más concreto que esto, cuéntamelo con más detalle y te confirmo con exactitud. 🙂
+ANSWER_END
+========================================================================================================================
+[11/39] es_discount_code | pricing | es
+QUERY: ¿El 10% de descuento necesita código?
+EXPECTED_MODE: answer_or_fallback
+ACTUAL_MODE: fallback
+MATCHES_EXPECTATION: True
+ANSWER_START
+¡Con gusto te ayudo! 🌊 Ese detalle en concreto no lo tengo a la mano, pero puedo ayudarte con las actividades, precios, logística o a armar tu reserva. ¿Quieres que te pase con un asesor para resolver eso puntual?
+ANSWER_END
+========================================================================================================================
+[12/39] es_snorkel_price_included | pricing_included | es
+QUERY: ¿Cuánto cuesta snorkeling y qué incluye?
+EXPECTED_MODE: answer
+ACTUAL_MODE: answer
+MATCHES_EXPECTATION: True
+ANSWER_START
+🌊 *Snorkel*: *126 USD / 448.000 COP* por persona (con el descuento por reservar online).
+
+Los colombianos/residentes pagan en pesos (COP) y los internacionales en dólares (USD) — mismo precio, sin cobro extra por la divisa. ¿Te ayudo a armar la reserva? 😊
+
+Si tu pregunta era sobre algo más concreto que esto, cuéntamelo con más detalle y te confirmo con exactitud. 🙂
+ANSWER_END
+========================================================================================================================
+[13/39] es_booking_process | booking_payment | es
+QUERY: ¿Cómo reservo?
+EXPECTED_MODE: answer_or_fallback
+ACTUAL_MODE: answer
+MATCHES_EXPECTATION: True
+ANSWER_START
+¡Hola! 😊 Para reservar con nosotros, puedes hacerlo en línea a través de nuestro sistema de reservas. Si estás interesado en un plan específico, puedo ayudarte con la información básica y luego te paso el enlace para que completes la reserva. Si prefieres, también puedo pasarte con un asesor para que te guíe en el proceso. ¿Te gustaría que te ayude con algún plan en particular o prefieres hablar con un asesor?
+ANSWER_END
+========================================================================================================================
+[14/39] es_payment_transfer_qr | booking_payment | es
+QUERY: ¿Puedo pagar por transferencia o QR?
+EXPECTED_MODE: answer_or_fallback
+ACTUAL_MODE: answer
+MATCHES_EXPECTATION: True
+ANSWER_START
+python.exe : [RAG][GROUNDING] Rejecting after 2 attempts query=¿Qué formulario tengo que llenar para bucear 
+certificado?... reason=HALLUCINATED|retry:HALLUCINATED
+En C:\Users\gonza\AppData\Local\Temp\claude\c--Users-gonza--devin-diving-planet-bot\17ee10e5-cda6-4175-a2ec-4021ce5138c
+a\scratchpad\m0-7\run_rag.ps1: 16 Carácter: 5
++     & python -m @argList 2>&1 | Out-File "$out\$name.raw" -Encoding u ...
++     ~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ([RAG][GROUNDING...ry:HALLUCINATED:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+¡Hola! En Diving Planet aceptamos pagos en línea para clientes colombianos a través de métodos de pago locales como Llave y el sistema de pagos instantáneos de Bancolombia/ACH. También puedes pagar el 50% de anticipo en línea y el resto de forma presencial con tarjeta o efectivo. Para clientes extranjeros, el pago se realiza al 100% en línea o presencialmente. No aceptamos pagos por transferencia directa ni por QR. ¿Te gustaría que te ayude con más información sobre las actividades o a armar tu reserva? 🌊
+ANSWER_END
+========================================================================================================================
+[15/39] es_waiver_form | forms | es
+QUERY: ¿Qué formulario tengo que llenar para bucear certificado?
+EXPECTED_MODE: answer_or_fallback
+ACTUAL_MODE: fallback
+MATCHES_EXPECTATION: True
+ANSWER_START
+¡Con gusto te ayudo! 🌊 Ese detalle en concreto no lo tengo a la mano, pero puedo ayudarte con las actividades, precios, logística o a armar tu reserva. ¿Quieres que te pase con un asesor para resolver eso puntual?
+ANSWER_END
+========================================================================================================================
+[16/39] es_card_photo | forms | es
+QUERY: ¿Necesitan foto del carné de certificación?
+EXPECTED_MODE: answer_or_fallback
+ACTUAL_MODE: fallback
+MATCHES_EXPECTATION: True
+ANSWER_START
+¡Con gusto te ayudo! 🌊 Ese detalle en concreto no lo tengo a la mano, pero puedo ayudarte con las actividades, precios, logística o a armar tu reserva. ¿Quieres que te pase con un asesor para resolver eso puntual?
+ANSWER_END
+========================================================================================================================
+[17/39] es_weather_cancel | weather_policy | es
+QUERY: ¿Qué pasa si se cancela por clima? ¿Hay reembolso o cambio de fecha?
+EXPECTED_MODE: answer_or_fallback
+ACTUAL_MODE: answer
+MATCHES_EXPECTATION: True
+ANSWER_START
+¡Hola! 😊 Las cancelaciones por mal clima son poco probables en las Islas del Rosario, ya que están en aguas protegidas. Sin embargo, si la Capitanía de Puerto decide cerrar las salidas debido al clima, primero intentamos reprogramar tu actividad para que no pierdas tu reserva. Si no es posible reagendar, te haremos un reembolso del 100%. La seguridad es nuestra prioridad. Si tienes más preguntas o quieres saber más sobre nuestras políticas, aquí estoy para ayudarte. ¿Te gustaría saber algo más sobre nuestras actividades? 🌊
+ANSWER_END
+========================================================================================================================
+[18/39] es_reschedule | weather_policy | es
+QUERY: Si no puedo viajar, ¿puedo mover la fecha?
+EXPECTED_MODE: answer_or_fallback
+ACTUAL_MODE: fallback
+MATCHES_EXPECTATION: True
+ANSWER_START
+¡Con gusto te ayudo! 🌊 Ese detalle en concreto no lo tengo a la mano, pero puedo ayudarte con las actividades, precios, logística o a armar tu reserva. ¿Quieres que te pase con un asesor para resolver eso puntual?
+ANSWER_END
+========================================================================================================================
+[19/39] es_refresher | certification | es
+QUERY: Hace años no buceo, ¿necesito refresher?
+EXPECTED_MODE: answer
+ACTUAL_MODE: answer
+MATCHES_EXPECTATION: True
+ANSWER_START
+¡Hola! 😊 Si ha pasado más de 2 años desde tu última inmersión, te recomendamos hacer un refresher para volver al agua con seguridad y confianza. Es una excelente manera de recordar las técnicas y sentirte cómodo bajo el agua nuevamente. Si eres un buzo muy experimentado, como un Dive Master o tienes más de 500 inmersiones, podríamos revisar tu caso específico. ¿Quieres que te ayude a organizarlo?
+ANSWER_END
+========================================================================================================================
+[20/39] es_max_depth | certification | es
+QUERY: ¿Qué profundidad máxima se bucea normalmente?
+EXPECTED_MODE: answer_or_fallback
+ACTUAL_MODE: answer
+MATCHES_EXPECTATION: True
+ANSWER_START
+¡Hola! 😊 En las Islas del Rosario, las inmersiones suelen ser en arrecifes someros y formaciones coralinas de media profundidad, que son perfectas para principiantes y cursos. Estas inmersiones suelen estar entre 5 y 12 metros para los minicursos o bautizos. Los buzos certificados Open Water pueden llegar hasta 18 metros, y los Advanced hasta 30 metros. La profundidad real de cada inmersión depende del punto de buceo y siempre se respeta el límite de tu titulación. ¿Te gustaría saber más sobre alguna actividad específica? 🐠
+ANSWER_END
+========================================================================================================================
+[21/39] es_open_water_from_islands | courses_location | es
+QUERY: ¿Cómo es el Curso Básico PADI Open Water si ya estoy en las Islas del Rosario?
+EXPECTED_MODE: answer
+ACTUAL_MODE: answer
+MATCHES_EXPECTATION: True
+ANSWER_START
+¡Hola! 😊 El Curso Básico PADI Open Water es una experiencia increíble para quienes ya están en las Islas del Rosario. Te prepara para explorar el mundo submarino con confianza y seguridad. Aquí te cuento cómo funciona:
+
+**Precio:**
+- Normal: U$662
+- Pagando online: U$596
+
+**Antes de la práctica:**
+- La teoría (eLearning) toma aproximadamente 12 horas y debes completarla antes de comenzar las prácticas. Puedes hacerla antes de llegar a la isla en tu computadora, tablet o teléfono.
+
+**Itinerario:**
+- **Día 1:** Recogida en tu hotel entre 9:30 y 9:45 (si tiene acceso por lancha), traslado a nuestra base, entrenamiento en piscina y 2 inmersiones en aguas abiertas. Regreso al hotel alrededor de las 4:30 p.m.
+- **Día 2:** Recogida a las 7:30, más entrenamiento en piscina y 2 inmersiones en aguas abiertas. Regreso al hotel alrededor de las 2:00 p.m.
+
+**Incluye:**
+- Curso eLearning, recogida en hotel (si tiene acceso marítimo), seguro de buceo, equipo, instructor de buceo, certificación PADI y bitácora de buceo.
+
+**Requisitos:**
+- Completar la teoría del curso y el formato que enviamos en el correo de confirmación para procesar el seguro. Recuerda esperar al menos 18 horas después de bucear antes de volar.
+
+¿En qué hotel estás y si tiene muelle/acceso por lancha? 🏝️
+ANSWER_END
+========================================================================================================================
+[22/39] es_open_water_followup_islands | followup_rewrite | es
+QUERY: ¿y si ya estoy en las islas?
+HISTORY_TURNS: 2
+EXPECTED_MODE: answer
+ACTUAL_MODE: answer
+MATCHES_EXPECTATION: True
+ANSWER_START
+¡Qué chévere que ya estés en las Islas del Rosario! 🌴 El Curso Básico PADI Open Water es perfecto para ti. Este curso dura 2 días y es ideal para quienes ya están en las islas, así que no incluye traslado desde Cartagena ni almuerzo.
+
+Antes de comenzar, necesitas haber terminado la teoría del curso, que puedes hacer online antes de llegar. El curso incluye el eLearning, seguro de buceo, equipo, instructor, certificación PADI y bitácora de buceo.
+
+El itinerario es así:
+- **Día 1:** Recogida en tu hotel (si tiene acceso por lancha), entrenamiento en piscina y 2 inmersiones en aguas abiertas.
+- **Día 2:** Similar al primer día, con más práctica y buceo.
+
+Recuerda esperar al menos 18 horas antes de volar después de bucear. El precio es de U$662, pero si pagas online, es U$596.
+
+¿En qué hotel estás y si tiene acceso por lancha? Así podemos coordinar mejor. 🚤
+ANSWER_END
+========================================================================================================================
+[23/39] es_hotel_pickup_pao_pao | islands_pickup | es
+QUERY: Hotel Pao Pao recogida?
+EXPECTED_MODE: answer_or_fallback
+ACTUAL_MODE: answer
+MATCHES_EXPECTATION: True
+ANSWER_START
+¡Hola! 😊 Si te hospedas en el Hotel Pao Pao, podemos coordinar la recogida, pero necesitamos confirmar la logística contigo primero. Dependiendo del acceso del hotel, la lancha puede llegar directamente o puede que haya una caminata corta hasta el muelle más cercano. 
+
+¿Quieres que te ayude a coordinarlo?
+ANSWER_END
+========================================================================================================================
+[24/39] es_pickup_extra_cost_island | islands_pickup | es
+QUERY: ¿La recogida en lancha tiene algún costo extra?
+EXTRA_CONTEXT: yes
+EXPECTED_MODE: answer_or_fallback
+ACTUAL_MODE: answer
+MATCHES_EXPECTATION: True
+ANSWER_START
+¡Hola! 😊 No te preocupes, si ya estás en las Islas del Rosario y tu hotel en Isla Grande tiene acceso marítimo, la recogida y regreso en lancha están incluidos sin costo adicional. Así que puedes disfrutar de tu experiencia de buceo sin preocuparte por cargos extra. ¿Te gustaría saber más sobre las actividades disponibles? 🐠
+ANSWER_END
+========================================================================================================================
+[25/39] es_accommodation_included | accommodation | es
+QUERY: ¿El alojamiento está incluido?
+EXPECTED_MODE: answer
+ACTUAL_MODE: answer
+MATCHES_EXPECTATION: True
+ANSWER_START
+¡Hola! 😊 El alojamiento no está incluido en nuestros planes de buceo. Si decides hospedarte en las Islas del Rosario, puedes elegir entre varios hoteles como el Hotel San Pedro de Majagua o el Hotel Cocoliso, entre otros. Tendrías que reservar directamente con el hotel que elijas. ¿Te gustaría saber más sobre las actividades de buceo que ofrecemos? 🐠
+ANSWER_END
+========================================================================================================================
+[26/39] es_isla_grande_from_there | accommodation | es
+QUERY: Si me quedo en Isla Grande, ¿puedo bucear saliendo desde allá?
+EXPECTED_MODE: answer
+ACTUAL_MODE: answer
+MATCHES_EXPECTATION: True
+ANSWER_START
+¡Claro que sí! Si ya estás en Isla Grande, puedes bucear directamente desde allí sin necesidad de trasladarte desde Cartagena. Tenemos opciones para quienes ya están en las islas, lo que hace todo más cómodo y rápido. ¿Te gustaría saber más sobre los planes disponibles o necesitas ayuda para organizar tu día de buceo? 🐠
+ANSWER_END
+========================================================================================================================
+[27/39] es_ambiguous_pao_pao | ambiguous_location | es
+QUERY: Pao Pao
+EXPECTED_MODE: clarify
+ACTUAL_MODE: clarify
+MATCHES_EXPECTATION: True
+ANSWER_START
+¿Te refieres a Pao Pao para recogida, alojamiento o para saber qué plan aplica si ya estás allí? Si me dices eso, te respondo más preciso.
+ANSWER_END
+========================================================================================================================
+[28/39] es_ambiguous_cocoliso | ambiguous_location | es
+QUERY: Cocoliso
+EXPECTED_MODE: clarify
+ACTUAL_MODE: clarify
+MATCHES_EXPECTATION: True
+ANSWER_START
+¿Te refieres a Cocoliso para recogida, alojamiento o para saber qué plan aplica si ya estás allí? Si me dices eso, te respondo más preciso.
+ANSWER_END
+========================================================================================================================
+[29/39] es_ambiguous_san_pedro | ambiguous_location | es
+QUERY: San Pedro de Majagua
+EXPECTED_MODE: clarify
+ACTUAL_MODE: clarify
+MATCHES_EXPECTATION: True
+ANSWER_START
+¿Te refieres a San Pedro de Majagua para recogida, alojamiento o para saber qué plan aplica si ya estás allí? Si me dices eso, te respondo más preciso.
+ANSWER_END
+========================================================================================================================
+[30/39] es_baru | misc_ops | es
+QUERY: ¿También van a Barú?
+EXPECTED_MODE: answer_or_fallback
+ACTUAL_MODE: answer
+MATCHES_EXPECTATION: True
+ANSWER_START
+¡Hola! 😊 No, nosotros operamos exclusivamente en las Islas del Rosario, que es un archipiélago separado por mar y parte del Parque Nacional Natural Corales del Rosario. Barú, por otro lado, es una península continental conectada a tierra. Son destinos distintos, pero ambos tienen su encanto. Si te interesa explorar la biodiversidad marina de las Islas del Rosario, ¡aquí estamos para ayudarte! 🐠🌊 ¿Te gustaría saber más sobre nuestras actividades de buceo?
+ANSWER_END
+========================================================================================================================
+[31/39] es_private_service | misc_ops | es
+QUERY: ¿Pueden organizar un servicio privado para mi grupo?
+EXPECTED_MODE: answer_or_fallback
+ACTUAL_MODE: answer
+MATCHES_EXPECTATION: True
+ANSWER_START
+¡Claro que sí! Podemos organizar un servicio privado para tu grupo. La cotización es personalizada y depende del tamaño del grupo y las actividades que quieran realizar. Un asesor te ayudará a coordinar un instructor disponible para la fecha que elijas y te dará todos los detalles. ¿Quieres que te pase con un asesor para que te ayude con esto?
+ANSWER_END
+========================================================================================================================
+[32/39] es_closed_christmas | misc_ops | es
+QUERY: ¿Abren el 25 de diciembre?
+EXPECTED_MODE: answer_or_fallback
+ACTUAL_MODE: answer
+MATCHES_EXPECTATION: True
+ANSWER_START
+¡Hola! El 25 de diciembre es uno de los pocos días en que no operamos. El resto del año, incluyendo festivos, estamos abiertos para que disfrutes del buceo en las Islas del Rosario. ¿Te gustaría planear tu visita para otro día? 🌊
+ANSWER_END
+========================================================================================================================
+[33/39] es_new_year | misc_ops | es
+QUERY: ¿Salen el 1 de enero?
+EXPECTED_MODE: answer_or_fallback
+ACTUAL_MODE: answer
+MATCHES_EXPECTATION: True
+ANSWER_START
+¡Hola! El 1 de enero no operamos, es uno de los dos días del año en que cerramos. Pero cualquier otro día del año es ideal para disfrutar del buceo con nosotros. ¿Te gustaría que te ayude a planificar tu visita para otro día? 🌊
+ANSWER_END
+========================================================================================================================
+[34/39] en_meeting_point | meeting_point_schedule | en
+QUERY: Where is the meeting point?
+EXPECTED_MODE: answer
+ACTUAL_MODE: answer
+MATCHES_EXPECTATION: True
+ANSWER_START
+The meeting point for our tours is Muelle de la Bodeguita at 8:00 a.m. You don't need to queue; just ask for DIVING PLANET at entrance 3. It's conveniently located just 5 minutes from the historic center. If you need directions, here's the [location on Google Maps](https://www.google.com/maps/place/Muelle+de+la+Bodeguita/@[REDACTED_PHONE],-[REDACTED_PHONE],828m/data=!3m2!1e3!4b1!4m6!3m5!1s0x8ef62f[REDACTED_PHONE]d:0x1bbcdd8224d0eaaf!8m2!3d[REDACTED_PHONE]!4d-[REDACTED_PHONE]!16s%2Fg%2F113gzkckf?entry=ttu).
+
+Would you like more information about our snorkeling tour?
+ANSWER_END
+========================================================================================================================
+[35/39] en_price_2_dives | pricing | en
+QUERY: How much is the 2 dives 1 day plan in USD?
+EXPECTED_MODE: answer
+ACTUAL_MODE: answer
+MATCHES_EXPECTATION: True
+ANSWER_START
+Sure thing! The Fun Dives - 2 dives (1 day) plan is priced at $178 USD if you book online. If you prefer the regular booking, it's $197.29 USD. Would you like more information on how to book this exciting diving experience?
+ANSWER_END
+========================================================================================================================
+[36/39] en_refresher | certification | en
+QUERY: I haven't dived in years, do I need a refresher?
+EXPECTED_MODE: answer
+ACTUAL_MODE: answer
+MATCHES_EXPECTATION: True
+ANSWER_START
+If it's been more than 2 years since your last dive, we usually recommend doing a refresher to ensure you return to the water safely and confidently. If you're a very experienced diver with over 500 logged dives or hold a Dive Master certification, there might be exceptions. Would you like more information on the refresher course?
+ANSWER_END
+========================================================================================================================
+[37/39] en_accommodation | accommodation | en
+QUERY: Is accommodation included?
+EXPECTED_MODE: answer
+ACTUAL_MODE: fallback
+MATCHES_EXPECTATION: False
+ANSWER_START
+Happy to help! 🌊 I don't have that specific detail handy, but I can help you with activities, prices, logistics or putting your booking together. Would you like me to connect you with an advisor for that specific point?
+ANSWER_END
+========================================================================================================================
+[38/39] en_followup_islands | followup_rewrite | en
+QUERY: and if I'm already on the islands?
+HISTORY_TURNS: 2
+EXPECTED_MODE: answer
+ACTUAL_MODE: answer
+MATCHES_EXPECTATION: True
+ANSWER_START
+Perfect! If you're already on the Rosario Islands, you can take the PADI Open Water course right there. This course lasts 2 days and includes both pool training and open-water dives. Here's a quick overview:
+
+- **Duration**: 2 days
+- **Price**: US$662 (regular), US$596 (online payment)
+- **Itinerary**:
+  - **Day 1**: Hotel pick-up (if your hotel has boat access), pool training, and 2 open-water dives. Return around 4:30 p.m.
+  - **Day 2**: Hotel pick-up, pool training, and 2 open-water dives. Return around 2:00 p.m.
+
+- **Included**: eLearning course, dive insurance, equipment, instructor, PADI certification, and dive logbook.
+
+Before starting, make sure to complete the eLearning theory, which takes about 12 hours, and finish it before arriving. Also, remember to wait at least 18 hours after diving before flying.
+
+Would you like more details or help with setting up your booking?
+ANSWER_END
+========================================================================================================================
+[39/39] en_ambiguous_pao_pao | ambiguous_location | en
+QUERY: Pao Pao
+EXPECTED_MODE: clarify
+ACTUAL_MODE: clarify
+MATCHES_EXPECTATION: True
+ANSWER_START
+Do you mean Pao Pao for pickup, accommodation, or to know which plan applies if you're already there? If you tell me that, I can answer more precisely.
+ANSWER_END
+========================================================================================================================
+WROTE_JSON: C:\Users\gonza\AppData\Local\Temp\claude\c--Users-gonza--devin-diving-planet-bot\17ee10e5-cda6-4175-a2ec-4021ce5138ca\scratchpad\m0-7\07_rag_answers.json
+========================================================================================================================
+SUMMARY cases=39 answers=29 fallbacks=6 clarifications=4 expectation_matches=38

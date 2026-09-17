@@ -1,0 +1,353 @@
+﻿python.exe : [LLM_EXTRACTOR][DEGRADED][COMBINED] error: Request timed out.
+En C:\Users\gonza\AppData\Local\Temp\claude\c--Users-gonza--devin-diving-planet-bot\17ee10e5-cda6-4175-a2ec-4021ce5138c
+a\scratchpad\m0-7\run_baseline.ps1: 14 Carácter: 5
++     & python -m @argList 2>&1 | Out-File "$out\$name.raw" -Encoding u ...
++     ~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ([LLM_EXTRACTOR]...uest timed out.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+
+==========================================================================================
+FAMILIA: BENEFICIO
+==========================================================================================
+escenario                           sin_vetos     solo_reparto  solo_total    ambos         
+b01-sustantivo-mismo-turno          OK            OK            OK            OK            
+b02-sustantivo-turno-previo         OK            OK            OK            OK            
+b03-con-titulo                      OK            OK            OK            OK            
+b04-brevetados                      OK            OK            OK            OK            
+b05-open-water-nombrado             OK            OK            OK            OK            
+b06-en-certified                    OK            OK            OK            OK            
+b07-en-total-frase-no-listada       TOTAL_MAL     OK            VACIO         OK            
+b08-ninos                           OK            OK            OK            OK            
+b09-respuesta-a-pregunta-del-bot    OK            OK            OK            OK            
+b10-mixto-tres-actividades-jerga    VACIO         OK            VACIO         OK            
+p01-amigo-licencia-yo-no            OK            OK            OK            OK            
+p02-soy-certificado-hijo-no         OK            OK            OK            OK            
+p03-somos-2-amigo-buzo              OK            OK            OK            OK            
+p04-esposo-bucea-yo-snorkel         OK            OK            OK            OK            
+p05-en-wife-certified               OK            OK            OK            OK            
+p06-novia-buza-yo-nunca             OK            OK            OK            OK            
+p07-pareja-advanced-yo-nada         OK            OK            OK            OK            
+
+  [b01-sustantivo-mismo-turno] 'somos 8: 6 certificados, 2 minicurso'
+      sin_vetos     2x gs=8 {"certified_diving": 6, "minicourse": 2}
+      solo_reparto  2x gs=8 {"certified_diving": 6, "minicourse": 2}
+      solo_total    2x gs=8 {"certified_diving": 6, "minicourse": 2}
+      ambos         2x gs=8 {"certified_diving": 6, "minicourse": 2}
+  [b02-sustantivo-turno-previo] '6 certificados y 2 minicurso'
+      sin_vetos     2x gs=8 {"certified_diving": 6, "minicourse": 2}
+      solo_reparto  2x gs=8 {"certified_diving": 6, "minicourse": 2}
+      solo_total    2x gs=8 {"certified_diving": 6, "minicourse": 2}
+      ambos         2x gs=8 {"certified_diving": 6, "minicourse": 2}
+  [b03-con-titulo] '4 con titulo y 2 snorkel'
+      sin_vetos     2x gs=6 {"certified_diving": 4, "snorkel": 2}
+      solo_reparto  2x gs=6 {"certified_diving": 4, "snorkel": 2}
+      solo_total    2x gs=6 {"certified_diving": 4, "snorkel": 2}
+      ambos         2x gs=6 {"certified_diving": 4, "snorkel": 2}
+  [b04-brevetados] '3 brevetados y 2 snorkel'
+      sin_vetos     2x gs=5 {"certified_diving": 3, "snorkel": 2}
+      solo_reparto  2x gs=5 {"certified_diving": 3, "snorkel": 2}
+      solo_total    2x gs=5 {"certified_diving": 3, "snorkel": 2}
+      ambos         2x gs=5 {"certified_diving": 3, "snorkel": 2}
+  [b05-open-water-nombrado] '2 open water y 3 snorkel'
+      sin_vetos     2x gs=5 null
+      solo_reparto  2x gs=5 null
+      solo_total    2x gs=5 null
+      ambos         2x gs=5 null
+  [b06-en-certified] '3 certified and 3 snorkel'
+      sin_vetos     2x gs=6 {"certified_diving": 3, "snorkel": 3}
+      solo_reparto  2x gs=6 {"certified_diving": 3, "snorkel": 3}
+      solo_total    2x gs=6 {"certified_diving": 3, "snorkel": 3}
+      ambos         2x gs=6 {"certified_diving": 3, "snorkel": 3}
+  [b07-en-total-frase-no-listada] 'en total 7: 4 certificados, 2 minicurso y 1 snorkel'
+      sin_vetos     2x gs=4 null
+      solo_reparto  2x gs=7 {"certified_diving": 4, "minicourse": 2, "snorkel": 1}
+      solo_total    2x gs=7 null
+      ambos         2x gs=7 {"certified_diving": 4, "minicourse": 2, "snorkel": 1}
+  [b08-ninos] '2 adultos bucean y 2 ninos hacen snorkel'
+      sin_vetos     2x gs=4 {"certified_diving": 2, "snorkel": 2}
+      solo_reparto  2x gs=4 {"certified_diving": 2, "snorkel": 2}
+      solo_total    2x gs=4 {"certified_diving": 2, "snorkel": 2}
+      ambos         2x gs=4 {"certified_diving": 2, "snorkel": 2}
+  [b09-respuesta-a-pregunta-del-bot] '3 buceo y 3 snorkel'
+      sin_vetos     2x gs=6 {"certified_diving": 3, "snorkel": 3}
+      solo_reparto  2x gs=6 {"certified_diving": 3, "snorkel": 3}
+      solo_total    2x gs=6 {"certified_diving": 3, "snorkel": 3}
+      ambos         2x gs=6 {"certified_diving": 3, "snorkel": 3}
+  [b10-mixto-tres-actividades-jerga] '4 con brevet, 2 minicurso y 1 snorkel'
+      sin_vetos     2x gs=7 null
+      solo_reparto  2x gs=7 {"certified_diving": 4, "minicourse": 2, "snorkel": 1}
+      solo_total    2x gs=7 null
+      ambos         2x gs=7 {"certified_diving": 4, "minicourse": 2, "snorkel": 1}
+  [p01-amigo-licencia-yo-no] 'mi amigo tiene licencia, yo no'
+      sin_vetos     2x gs=2 {"certified_diving": 1}
+      solo_reparto  2x gs=2 {"certified_diving": 1}
+      solo_total    2x gs=2 {"certified_diving": 1}
+      ambos         2x gs=2 {"certified_diving": 1}
+  [p02-soy-certificado-hijo-no] 'soy certificado y mi hijo no'
+      sin_vetos     2x gs=2 {"certified_diving": 1}
+      solo_reparto  2x gs=2 {"certified_diving": 1}
+      solo_total    2x gs=2 {"certified_diving": 1}
+      ambos         2x gs=2 {"certified_diving": 1}
+  [p03-somos-2-amigo-buzo] 'somos 2, mi amigo es buzo y yo no'
+      sin_vetos     2x gs=2 {"certified_diving": 1}
+      solo_reparto  2x gs=2 {"certified_diving": 1}
+      solo_total    2x gs=2 {"certified_diving": 1}
+      ambos         2x gs=2 {"certified_diving": 1}
+  [p04-esposo-bucea-yo-snorkel] 'mi esposo bucea, yo prefiero snorkel'
+      sin_vetos     2x gs=2 {"certified_diving": 1, "snorkel": 1}
+      solo_reparto  2x gs=2 {"certified_diving": 1, "snorkel": 1}
+      solo_total    2x gs=2 {"certified_diving": 1, "snorkel": 1}
+      ambos         2x gs=2 {"certified_diving": 1, "snorkel": 1}
+  [p05-en-wife-certified] 'my wife is certified and I am not'
+      sin_vetos     2x gs=2 {"certified_diving": 1}
+      solo_reparto  2x gs=2 {"certified_diving": 1}
+      solo_total    2x gs=2 {"certified_diving": 1}
+      ambos         2x gs=2 {"certified_diving": 1}
+  [p06-novia-buza-yo-nunca] 'mi novia es buza certificada y yo nunca he buceado'
+      sin_vetos     2x gs=2 {"certified_diving": 1}
+      solo_reparto  2x gs=2 {"certified_diving": 1}
+      solo_total    2x gs=2 {"certified_diving": 1}
+      ambos         2x gs=2 {"certified_diving": 1}
+  [p07-pareja-advanced-yo-nada] 'mi pareja tiene el advanced y yo no tengo nada'
+      sin_vetos     2x gs=2 {"certified_diving": 1}
+      solo_reparto  2x gs=2 {"certified_diving": 1}
+      solo_total    2x gs=2 {"certified_diving": 1}
+      ambos         2x gs=2 {"certified_diving": 1}
+
+==========================================================================================
+FAMILIA: TOTAL
+==========================================================================================
+escenario                           sin_vetos     solo_reparto  solo_total    ambos         
+t01-seremos-dos-tramos              OK            OK            OK            OK            
+t02-total-al-final                  TOTAL_MAL     TOTAL_MAL     OK            OK            
+t03-entre-todos                     OK            OK            OK            OK            
+t04-grupo-de-un-tramo               TOTAL_MAL     TOTAL_MAL     OK            OK            
+t05-en-in-total                     OK            OK            OK            OK            
+t06-pareja-e-hijos                  TOTAL_MAL     TOTAL_MAL     OK            OK            
+m01-tramo-tras-total-sabido         OK            OK            OK            OK            
+m02-un-tramo-tras-total-sabido      OK            OK            OK            OK            
+m03-en-tramos-tras-total-sabido     OK            OK            OK            OK            
+m04-correccion-explicita            OK            OK            OK            OK            
+c01-control-somos                   OK            OK            OK            OK            
+c02-control-pareja-sola             OK            OK            OK            OK            
+c03-control-reparto-con-verbo       OK            OK            OK            OK            
+
+  [t01-seremos-dos-tramos] 'seremos 7, 4 certificados y 3 snorkel'
+      sin_vetos     2x gs=7 {"certified_diving": 4, "snorkel": 3}
+      solo_reparto  2x gs=7 {"certified_diving": 4, "snorkel": 3}
+      solo_total    2x gs=7 {"certified_diving": 4, "snorkel": 3}
+      ambos         2x gs=7 {"certified_diving": 4, "snorkel": 3}
+  [t02-total-al-final] '4 certificados y en total seremos 7'
+      sin_vetos     2x gs=4 null
+      solo_reparto  2x gs=4 null
+      solo_total    2x gs=7 null
+      ambos         2x gs=7 null
+  [t03-entre-todos] 'entre todos 7, 4 certificados y 3 snorkel'
+      sin_vetos     2x gs=7 {"certified_diving": 4, "snorkel": 3}
+      solo_reparto  2x gs=7 {"certified_diving": 4, "snorkel": 3}
+      solo_total    2x gs=7 {"certified_diving": 4, "snorkel": 3}
+      ambos         2x gs=7 {"certified_diving": 4, "snorkel": 3}
+  [t04-grupo-de-un-tramo] 'somos un grupo de 7, 4 certificados'
+      sin_vetos     2x gs=4 {"certified_diving": 4}
+      solo_reparto  2x gs=4 {"certified_diving": 4}
+      solo_total    2x gs=7 null
+      ambos         2x gs=7 null
+  [t05-en-in-total] '7 in total: 4 certified, 2 minicourse and 1 snorkel'
+      sin_vetos     2x gs=7 {"certified_diving": 4, "minicourse": 2, "snorkel": 1}
+      solo_reparto  2x gs=7 {"certified_diving": 4, "minicourse": 2, "snorkel": 1}
+      solo_total    2x gs=7 {"certified_diving": 4, "minicourse": 2, "snorkel": 1}
+      ambos         2x gs=7 {"certified_diving": 4, "minicourse": 2, "snorkel": 1}
+  [t06-pareja-e-hijos] 'vengo con mi pareja y nuestros dos hijos'
+      sin_vetos     2x gs=2 null
+      solo_reparto  2x gs=2 null
+      solo_total    2x gs=4 null
+      ambos         2x gs=4 null
+  [m01-tramo-tras-total-sabido] '4 certificados y 3 snorkel'
+      sin_vetos     2x gs=7 {"certified_diving": 4, "snorkel": 3}
+      solo_reparto  2x gs=7 {"certified_diving": 4, "snorkel": 3}
+      solo_total    2x gs=7 {"certified_diving": 4, "snorkel": 3}
+      ambos         2x gs=7 {"certified_diving": 4, "snorkel": 3}
+  [m02-un-tramo-tras-total-sabido] '4 certificados'
+      sin_vetos     2x gs=7 null
+      solo_reparto  2x gs=7 null
+      solo_total    2x gs=7 null
+      ambos         2x gs=7 null
+  [m03-en-tramos-tras-total-sabido] '4 certified and 3 snorkel'
+      sin_vetos     2x gs=7 {"certified_diving": 4, "snorkel": 3}
+      solo_reparto  2x gs=7 {"certified_diving": 4, "snorkel": 3}
+      solo_total    2x gs=7 {"certified_diving": 4, "snorkel": 3}
+      ambos         2x gs=7 {"certified_diving": 4, "snorkel": 3}
+  [m04-correccion-explicita] 'perdon, en realidad somos 5'
+      sin_vetos     2x gs=5 null
+      solo_reparto  2x gs=5 null
+      solo_total    2x gs=5 null
+      ambos         2x gs=5 null
+  [c01-control-somos] 'somos 4'
+      sin_vetos     2x gs=4 null
+      solo_reparto  2x gs=4 null
+      solo_total    2x gs=4 null
+      ambos         2x gs=4 null
+  [c02-control-pareja-sola] 'con mi pareja, tenemos un presupuesto ajustado'
+      sin_vetos     2x gs=2 null
+      solo_reparto  2x gs=2 null
+      solo_total    2x gs=2 null
+      ambos         2x gs=2 null
+  [c03-control-reparto-con-verbo] 'somos 7: 4 bucean y 3 snorkel'
+      sin_vetos     2x gs=7 {"certified_diving": 4, "snorkel": 3}
+      solo_reparto  2x gs=7 {"certified_diving": 4, "snorkel": 3}
+      solo_total    2x gs=7 {"certified_diving": 4, "snorkel": 3}
+      ambos         2x gs=7 {"certified_diving": 4, "snorkel": 3}
+
+==========================================================================================
+FAMILIA: RIESGO
+==========================================================================================
+escenario                           sin_vetos     solo_reparto  solo_total    ambos         
+r01-followup-con-reparto-ya-sabido  OK            OK            OK            OK            
+r02-followup-sin-reparto-sabido     OK            OK            OK            OK            
+r03-plural-vago                     OK            OK            OK            OK            
+r04-acompanante-sin-numero          OK            OK            OK            OK            
+r05-pregunta-de-precio              OK            OK            OK            OK            
+r06-saludo                          OK            OK            OK            OK            
+r07-total-repetido                  OK            OK            OK            OK            
+r08-actividades-sin-numeros         OK            OK            OK            OK            
+r09-respuesta-a-slot-pendiente      OK            OK            OK            OK            
+r10-nacionalidad                    OK            OK            OK            OK            
+r11-atributo-sin-actividad          OK            OK            OK            OK            
+r12-atributo-con-total              OK            OK            OK            OK            
+r13-atributo-plural                 OK            OK            OK            OK            
+q01-persona-sin-confirmar           OK            OK            OK            OK            
+q02-preguntara-al-hermano           OK            OK            OK            OK            
+q03-plural-con-licencia             OK            OK            OK            OK            
+q04-edad-del-hijo                   OK            OK            OK            OK            
+
+  [r01-followup-con-reparto-ya-sabido] 'desde cartagena'
+      sin_vetos     2x gs=6 {"certified_diving": 2, "minicourse": 2, "snorkel": 2}
+      solo_reparto  2x gs=6 {"certified_diving": 2, "minicourse": 2, "snorkel": 2}
+      solo_total    2x gs=6 {"certified_diving": 2, "minicourse": 2, "snorkel": 2}
+      ambos         2x gs=6 {"certified_diving": 2, "minicourse": 2, "snorkel": 2}
+  [r02-followup-sin-reparto-sabido] 'desde cartagena'
+      sin_vetos     2x gs=6 null
+      solo_reparto  2x gs=6 null
+      solo_total    2x gs=6 null
+      ambos         2x gs=6 null
+  [r03-plural-vago] 'yo buceo y mis amigos hacen snorkel'
+      sin_vetos     2x gs=5 null
+      solo_reparto  2x gs=5 null
+      solo_total    2x gs=5 null
+      ambos         2x gs=5 null
+  [r04-acompanante-sin-numero] 'tambien viene un amigo'
+      sin_vetos     2x gs=4 null
+      solo_reparto  2x gs=4 null
+      solo_total    2x gs=4 null
+      ambos         2x gs=4 null
+  [r05-pregunta-de-precio] 'cuanto cuesta el minicurso?'
+      sin_vetos     2x gs=6 null
+      solo_reparto  2x gs=6 null
+      solo_total    2x gs=6 null
+      ambos         2x gs=6 null
+  [r06-saludo] 'hola buenas'
+      sin_vetos     2x gs=6 null
+      solo_reparto  2x gs=6 null
+      solo_total    2x gs=6 null
+      ambos         2x gs=6 null
+  [r07-total-repetido] 'somos 8'
+      sin_vetos     2x gs=8 null
+      solo_reparto  2x gs=8 null
+      solo_total    2x gs=8 null
+      ambos         2x gs=8 null
+  [r08-actividades-sin-numeros] 'unos quieren bucear y otros hacer snorkel'
+      sin_vetos     2x gs=6 null
+      solo_reparto  2x gs=6 null
+      solo_total    2x gs=6 null
+      ambos         2x gs=6 null
+  [r09-respuesta-a-slot-pendiente] 'cartagena'
+      sin_vetos     2x gs=5 null
+      solo_reparto  2x gs=5 null
+      solo_total    2x gs=5 null
+      ambos         2x gs=5 null
+  [r10-nacionalidad] 'ninguno es colombiano'
+      sin_vetos     2x gs=6 null
+      solo_reparto  2x gs=6 null
+      solo_total    2x gs=6 null
+      ambos         2x gs=6 null
+  [r11-atributo-sin-actividad] 'mi amigo no esta certificado'
+      sin_vetos     2x gs=2 {"certified_diving": 1}
+      solo_reparto  2x gs=2 {"certified_diving": 1}
+      solo_total    2x gs=2 {"certified_diving": 1}
+      ambos         2x gs=2 {"certified_diving": 1}
+  [r12-atributo-con-total] 'somos 2, mi amigo no está certificado'
+      sin_vetos     2x gs=2 {"certified_diving": 1}
+      solo_reparto  2x gs=2 {"certified_diving": 1}
+      solo_total    2x gs=2 {"certified_diving": 1}
+      ambos         2x gs=2 {"certified_diving": 1}
+  [r13-atributo-plural] 'vamos 4 pero dos no tienen licencia'
+      sin_vetos     2x gs=4 {"certified_diving": 2}
+      solo_reparto  2x gs=4 {"certified_diving": 2}
+      solo_total    2x gs=4 {"certified_diving": 2}
+      ambos         2x gs=4 {"certified_diving": 2}
+  [q01-persona-sin-confirmar] 'mi amigo no sabe si viene'
+      sin_vetos     2x gs=None null
+      solo_reparto  2x gs=None null
+      solo_total    2x gs=None null
+      ambos         2x gs=None null
+  [q02-preguntara-al-hermano] 'le preguntare a mi hermano si quiere bucear'
+      sin_vetos     2x gs=None null
+      solo_reparto  2x gs=None null
+      solo_total    2x gs=None null
+      ambos         2x gs=None null
+  [q03-plural-con-licencia] 'mis amigos tienen licencia, yo no'
+      sin_vetos     2x gs=None null
+      solo_reparto  2x gs=None null
+      solo_total    2x gs=None null
+      ambos         2x gs=None null
+  [q04-edad-del-hijo] 'mi hijo tiene 8 años'
+      sin_vetos     2x gs=None null
+      solo_reparto  2x gs=None null
+      solo_total    2x gs=None null
+      ambos         2x gs=None null
+
+==========================================================================================
+FAMILIA: FRONTERA
+==========================================================================================
+escenario                           sin_vetos     solo_reparto  solo_total    ambos         
+g01-primo-tambien-certificado       OBS           OBS           OBS           OBS           
+g02-esposa-quiere-probar            OBS           OBS           OBS           OBS           
+f01-cambio-legitimo-del-reparto     OBS           OBS           OBS           OBS           
+f02-reparto-parcial-visible         OBS           OBS           OBS           OBS           
+f03-sin-total-conocido              OBS           OBS           OBS           OBS           
+
+  [g01-primo-tambien-certificado] 'viene mi primo a bucear, él es certificado también'
+      sin_vetos     2x gs=None null
+      solo_reparto  2x gs=None null
+      solo_total    2x gs=None null
+      ambos         2x gs=None null
+  [g02-esposa-quiere-probar] 'yo tengo el open water, mi esposa quiere probar'
+      sin_vetos     1x gs=2 {"certified_diving": 1}, 1x gs=2 {"certified_diving": 1, "minicourse": 1}
+      solo_reparto  2x gs=2 {"certified_diving": 1, "minicourse": 1}
+      solo_total    2x gs=2 {"certified_diving": 1, "minicourse": 1}
+      ambos         2x gs=2 {"certified_diving": 1, "minicourse": 1}
+  [f01-cambio-legitimo-del-reparto] 'al final mi suegra tambien bucea, no hace snorkel'
+      sin_vetos     2x gs=3 {"certified_diving": 2, "snorkel": 1}
+      solo_reparto  2x gs=3 {"certified_diving": 2, "snorkel": 1}
+      solo_total    2x gs=3 {"certified_diving": 2, "snorkel": 1}
+      ambos         2x gs=3 {"certified_diving": 2, "snorkel": 1}
+  [f02-reparto-parcial-visible] 'somos 5: 3 certificados, 1 minicurso y 1 snorkel'
+      sin_vetos     2x gs=5 null
+      solo_reparto  2x gs=5 {"certified_diving": 3, "minicourse": 1, "snorkel": 1}
+      solo_total    2x gs=5 null
+      ambos         2x gs=5 {"certified_diving": 3, "minicourse": 1, "snorkel": 1}
+  [f03-sin-total-conocido] '6 certificados y 2 minicurso'
+      sin_vetos     2x gs=8 {"certified_diving": 6, "minicourse": 2}
+      solo_reparto  2x gs=8 {"certified_diving": 6, "minicourse": 2}
+      solo_total    2x gs=8 {"certified_diving": 6, "minicourse": 2}
+      ambos         2x gs=8 {"certified_diving": 6, "minicourse": 2}
+
+==========================================================================================
+RESUMEN POR VARIANTE
+==========================================================================================
+  sin_vetos     beneficio 15/17 | total 10/13 | riesgo 17/17 | TOTAL_MAL 4 | PARCIAL 0 | ALUCINA 0 | VACIO 1
+  solo_reparto  beneficio 17/17 | total 10/13 | riesgo 17/17 | TOTAL_MAL 3 | PARCIAL 0 | ALUCINA 0 | VACIO 0
+  solo_total    beneficio 15/17 | total 13/13 | riesgo 17/17 | TOTAL_MAL 0 | PARCIAL 0 | ALUCINA 0 | VACIO 2
+  ambos         beneficio 17/17 | total 13/13 | riesgo 17/17 | TOTAL_MAL 0 | PARCIAL 0 | ALUCINA 0 | VACIO 0
+JSON {"sin_vetos": {"ok": {"beneficio": 15, "total": 10, "riesgo": 17}, "veredictos": {"OK": 42, "TOTAL_MAL": 4, "VACIO": 1}}, "solo_reparto": {"ok": {"beneficio": 17, "total": 10, "riesgo": 17}, "veredictos": {"OK": 44, "TOTAL_MAL": 3}}, "solo_total": {"ok": {"beneficio": 15, "total": 13, "riesgo": 17}, "veredictos": {"OK": 45, "VACIO": 2}}, "ambos": {"ok": {"beneficio": 17, "total": 13, "riesgo": 17}, "veredictos": {"OK": 47}}}

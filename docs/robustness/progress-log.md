@@ -4589,3 +4589,98 @@ hallazgo D ya repetía `sensitive_topic`. Tests en `test_tool_arguments_schema.p
 
 `scripts/__init__.py` apaga LangSmith para todo `python -m scripts.X` desde el 2026-09-14 (comprobado:
 `langchain_tracing_v2=False`, `trace_openai` no envuelve). La nota de la cola estaba desactualizada.
+
+## 2026-09-17 — m0-7: línea base de CALIDAD congelada (Gonzalo)
+
+Cierra lo que faltaba de la Fase M0 del plan maestro: latencia (16-sep) y golden-set (17-sep, Gadea)
+ya estaban; esto congela la calidad de **extracción, señales y RAG**. Ningún cambio de conducta: M0
+solo mide.
+
+**Cómo se corrió.** En serie (RPD es el recurso escaso; un 429 aborta la tanda), ~1.900 peticiones,
+**85 min** de reloj. Antes de gastar cuota se comprobó la clave con una llamada CRUDA a los dos
+modelos: `fill_gaps` se traga los errores y devuelve `{}`, así que un 429 se disfraza de acierto y
+una tanda degradada parece buena. Las dos tandas del eval-set terminaron con **"Tanda limpia: 0
+llamadas LLM degradadas"** — sin ese sello las cifras no serían comparables.
+
+### Las cifras
+
+| medida | resultado (2026-09-17) | referencia (2026-09-16) |
+|---|---|---|
+| Eval-set, modo script (130 casos / 230 aserciones) | **220/230** (95,7 %), tanda limpia | 221/230 |
+| Eval-set por el núcleo (`--core`) | **230/230** (100 %), tanda limpia | 230/230 |
+| Booleanos anclados (21 escenarios × 3) | legítimos **33/33** · alucinaciones evitadas **30/30** | 33/33 · 30/30 |
+| Router, 9 señales (37 casos × 3, variante `base`) | **33/37** | fallos estables: n07, r07–r09 |
+| Actividad (29 casos × 3, `base`) | signals **10/10** · slot **10/10** · router **6/9** | — |
+| Grupo, config de PRE (52 escenarios × 2, `ambos`) | repartos **17/17** · total **13/13** · riesgo **17/17** · 0 alucinaciones, 0 parciales, 0 totales mal | idéntico |
+| RAG, respuestas finales (39 casos ES+EN) | **38/39** en el modo esperado (29 respuesta · 6 fallback · 4 aclaración) | — |
+| RAG, recuperación ES (20 consultas) | **16/20** con top-1 ≥ 0,5 · mediana 0,6025 · mínimo 0,3272 | — |
+| RAG, recuperación EN (20 consultas) | **13/20** con top-1 ≥ 0,5 · mediana 0,5805 · mínimo **0,0** | — |
+
+**Foto por caso congelada en `docs/robustness/baselines/2026-09-17-m0-7/`** (los 9 `.raw` + los JSON
++ los tiempos). Es lo que permite el `diff` por caso que pide el owner; sin los ficheros, "medir por
+caso" en la siguiente tanda no se puede hacer.
+
+**`ambos` es la config de PRE**, verificado en `config.py`: `llm_group_size_veto_cutover` y
+`llm_group_allocation_veto_cutover` están en `True`. La ablación de la batería lo respalda: sin
+vetos 4 totales mal, solo-reparto 3, solo-total 2 vacíos, **ambos 47/47 limpio**.
+
+### Los 10 fallos del eval-set son los huecos ya documentados, ninguno nuevo
+
+6 × `nat-mixto-*` (hueco A), 2 × `hist-*` (artefactos del arnés con historial), el ambiguo
+`loc-en-cartagena-now-islands-tomorrow`, y `prof-en-from-states` (F.4: el owner decidió que
+abstenerse es lo correcto y la expectativa se cambió a `null`; hoy el LLM rellenó `False` — la
+sensibilidad al prompt ya documentada, intermitente). Frente a 221/230 del 16-sep, la diferencia es
+un `nat-mixto` más o el `prof-en-from-states`: **ruido del modelo dentro de lo ya medido, no una
+regresión**.
+
+**El contraste entre los dos modos es el dato que hay que leer:** `is_colombian` pasa de **63 %
+(12/19) con el extractor suelto** a **100 % (19/19) por el núcleo**. Los 6 `nat-mixto` que fallan en
+modo script los resuelve el mecanismo del núcleo (`mixed_nationality`), no el extractor. El hueco A
+está cerrado donde importa, en el turno real; el modo script mide otra cosa.
+
+### Hallazgo nuevo: la recuperación en INGLÉS es más débil que en español
+
+Dos casos, los dos con equivalente en español que SÍ funciona:
+
+1. **`en_accommodation`** — "Is accommodation included?" cae a fallback; "¿El alojamiento está
+   incluido?" responde bien. **No es falta de contenido**: la FAQ existe en inglés ("Do you have
+   accommodation options in the Rosario Islands?", comprobado en `kb_documents`, 403 docs ES / 380
+   EN). Es que la pregunta por *inclusión* no recupera la FAQ de *disponibilidad* con confianza.
+2. **"I have Open Water, which plan do you recommend?"** — **0 documentos recuperados**, mientras
+   que "Tengo Open Water, ¿qué plan me recomiendas?" trae 3 con top-1 0,5998.
+
+Es el único frente donde la línea base sale claramente peor que su equivalente: 13/20 EN frente a
+16/20 ES. No se toca ahora (M0 no cambia conducta); queda como candidato con dos casos concretos
+para medir un arreglo.
+
+### Hallazgo: `vocab+ctx` merece una medición que nadie ha hecho
+
+F2b (enums del vocabulario del registro en el router) se midió y **no se aplicó** porque `vocab`
+arreglaba las comparaciones de cursos pero ensuciaba señales de seguridad. Esta tanda lo reproduce
+con números frescos y añade un matiz:
+
+- Batería del router (incluye seguridad): `base` 33/37 · `vocab` 32/37. `vocab` arregla `r07`/`r08`/
+  `r09` (0/3 → 3/3, 3/3, 2/3) pero **rompe `a02-sordomuda` de 3/3 a 0/3** — una señal de
+  discapacidad/DIVE TO HEAL. Ese intercambio sigue sin valer.
+- Batería de actividad (solo casos de elección, **sin seguridad**): **`vocab+ctx` da router 9/9**,
+  arregla los tres de cursos y, a diferencia de `vocab` a secas, mantiene `r05-reserva-ambas` en
+  3/3 (`vocab` 2/3, `for_whom` 1/3).
+
+**Nadie ha medido `vocab+ctx` contra los casos de seguridad**, que es justo el motivo por el que
+F2b se descartó. Es barato cerrarlo: `python -m scripts.battery_router_signals 3 vocab+ctx` (37
+casos × 3 ≈ 111 peticiones, ~6 min). Si el contexto de negocio recupera `a02`, F2b se puede
+reabrir; si no, queda definitivamente cerrado con dato.
+
+### Notas de entorno (para quien repita la tanda)
+
+- **Los evals de RAG en local necesitan sobreescribir `DATABASE_URL`**: `.env` apunta a
+  `host.docker.internal`, que solo resuelve dentro de un contenedor. Desde el host Windows hay que
+  usar `postgresql://postgres:postgres@localhost:5432/diving_planet`. Sin eso, el eval muere con un
+  timeout de semáforo que no dice nada.
+- Esta máquina no tiene `.env.dev`; `.env` sí lleva `OPENAI_API_KEY`, y `config.py` lee `.env` por
+  defecto, así que la tanda va sin `ENV_FILE`. El sello de "tanda limpia" es lo que lo confirma.
+- La BD local ya tenía los embeddings cargados (783 docs), no hizo falta `load_embeddings`.
+- `rag_min_score` **efectivo es 0,5** (lo fija `.env`), no el 0,40 del default de `config.py`.
+- `eval_retrieval` es un volcado diagnóstico, no un pasa/no pasa. Para poder comparar entre tandas
+  se resume por: consultas con top-1 por encima del umbral, mediana y mínimo. El resumidor está en
+  la carpeta de la línea base.

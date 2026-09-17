@@ -11,7 +11,12 @@
 > `docs/project-history/session-handoff.md` (banner 2026-09-17).
 > - ✅ m0-3 golden-set + LLM-juez calibrado (gpt-5-mini medium + revisión humana); ronda 1: 95,1 %.
 > - ✅ m0-6 fotos de Langfuse + página; ✅ m0-8 saludo verificado en vivo.
-> - 🟡 m0-7 línea base: latencia y golden-set hechas; **falta eval-set, baterías y evals de RAG** (siguiente).
+> - ✅ **m0-7 línea base de calidad CONGELADA (2026-09-17, Gonzalo)**: eval-set 220/230 (modo script)
+>   y **230/230 por el núcleo**, booleanos 33/33 y 30/30, router 33/37 (`base`), actividad 10/10 ·
+>   10/10 · 6/9, grupo (config PRE) 17/17 · 13/13 · 17/17 con 0 alucinaciones, RAG 38/39 y
+>   recuperación 16/20 ES / 13/20 EN. Foto **por caso** en
+>   `docs/robustness/baselines/2026-09-17-m0-7/`; detalle y hallazgos en
+>   `docs/robustness/progress-log.md` (entrada 2026-09-17).
 > - 🟡 m0-4 datos del golden-set: sintéticos hechos; falta tráfico real (harvest).
 > - ⏳ m0-1 / m0-5 Langfuse (resumen por turno, negocio, traza que junta turnos) · ⏳ m0-2 decidir si hace falta.
 > - 10 fallos del bot del golden-set como tareas S4-6..S4-16 (varios encajan en U3).

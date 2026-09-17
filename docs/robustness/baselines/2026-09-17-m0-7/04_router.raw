@@ -1,0 +1,132 @@
+﻿python.exe : [ESCALATION] routing signals error: Request timed out.
+En C:\Users\gonza\AppData\Local\Temp\claude\c--Users-gonza--devin-diving-planet-bot\17ee10e5-cda6-4175-a2ec-4021ce5138c
+a\scratchpad\m0-7\run_baseline.ps1: 14 Carácter: 5
++     & python -m @argList 2>&1 | Out-File "$out\$name.raw" -Encoding u ...
++     ~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ([ESCALATION] ro...uest timed out.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+  h01-asesor                       esperado={"wants_human": true}  «quiero hablar con un asesor»
+      base   3/3 {'{"wants_human": true}': 3}
+      vocab  3/3 {'{"wants_human": true}': 3}
+  h02-persona-real                 esperado={"wants_human": true}  «me puede atender una persona de verdad?»
+      base   3/3 {'{"wants_human": true}': 3}
+      vocab  3/3 {'{"wants_human": true}': 3}
+  h03-en-someone                   esperado={"wants_human": true}  «can I speak with someone from your team»
+      base   3/3 {'{"wants_human": true}': 3}
+      vocab  3/3 {'{"wants_human": true}': 3}
+  m01-de-cero                      esperado={"wants_menu_or_restart": true}  «mejor empecemos de cero»
+      base   3/3 {'{"wants_menu_or_restart": true}': 3}
+      vocab  3/3 {'{"wants_menu_or_restart": true}': 3}
+  s01-embarazadita                 esperado={"sensitive_topic": "medical_questions"}  «estoy embarazadita, puedo bucear?»
+      base   3/3 {'{"sensitive_topic": "medical_questions"}': 3}
+      vocab  3/3 {'{"sensitive_topic": "medical_questions"}': 3}
+  s02-epileptica                   esperado={"sensitive_topic": "medical_questions"}  «soy epiléptica»
+      base   3/3 {'{"sensitive_topic": "medical_questions"}': 3}
+      vocab  3/3 {'{"sensitive_topic": "medical_questions"}': 3}
+  s03-cardiaca                     esperado={"sensitive_topic": "medical_questions"}  «tengo una condición cardiaca»
+      base   3/3 {'{"sensitive_topic": "medical_questions"}': 3}
+      vocab  3/3 {'{"sensitive_topic": "medical_questions"}': 3}
+  s04-llover-manana                esperado={"sensitive_topic": "weather_conditions"}  «¿va a llover mañana en cartagena?»
+      base   3/3 {'{"sensitive_topic": "weather_conditions"}': 3}
+      vocab  2/3 {'{}': 1, '{"sensitive_topic": "weather_conditions"}': 2}
+  s05-cobro-doble                  esperado={"sensitive_topic": ["complaints_or_emergencies", "real_time_issues"]}  «me cobraron dos veces y nadie me responde»
+      base   3/3 {'{"sensitive_topic": "real_time_issues"}': 3}
+      vocab  3/3 {'{"sensitive_topic": "real_time_issues"}': 3}
+  a01-pierna                       esperado={"adaptive_diving_topic": true}  «perdí una pierna en un accidente, puedo bucear?»
+      base   3/3 {'{"adaptive_diving_topic": true}': 3}
+      vocab  3/3 {'{"adaptive_diving_topic": true}': 3}
+  a02-sordomuda                    esperado={"adaptive_diving_topic": true}  «soy sordomuda»
+      base   3/3 {'{"adaptive_diving_topic": true}': 3}
+      vocab  0/3 {'{"sensitive_topic": "adaptive_diving_topic"}': 2, '{"adaptive_diving_topic": true, "sensitive_topic": "adaptive_diving_topic"}': 1}
+  a03-lesion-medular               esperado={"adaptive_diving_topic": true}  «tengo una lesión medular»
+      base   3/3 {'{"adaptive_diving_topic": true}': 3}
+      vocab  3/3 {'{"adaptive_diving_topic": true}': 3}
+  d01-domingo                      esperado={"availability_question": true}  «¿queda espacio el domingo?»
+      base   3/3 {'{"availability_question": true}': 3}
+      vocab  3/3 {'{"availability_question": true}': 3}
+  d02-en-saturday                  esperado={"availability_question": true}  «any spots left for saturday?»
+      base   3/3 {'{"availability_question": true}': 3}
+      vocab  3/3 {'{"availability_question": true}': 3}
+  l01-pagina-blanco                esperado={"broken_link_complaint": true}  «me sale página en blanco al reservar»
+      base   3/3 {'{"broken_link_complaint": true}': 3}
+      vocab  3/3 {'{"broken_link_complaint": true}': 3}
+  l02-en-dead-link                 esperado={"broken_link_complaint": true}  «your booking link is dead»
+      base   3/3 {'{"broken_link_complaint": true}': 3}
+      vocab  3/3 {'{"broken_link_complaint": true}': 3}
+  c01-numero                       esperado={"asks_for_contact_number": true}  «¿me pasas un número para llamar?»
+      base   3/3 {'{"asks_for_contact_number": true}': 3}
+      vocab  3/3 {'{"asks_for_contact_number": true}': 3}
+  c02-correo                       esperado={"asks_for_contact_number": true}  «tienen algún correo?»
+      base   3/3 {'{"asks_for_contact_number": true}': 3}
+      vocab  3/3 {'{"asks_for_contact_number": true}': 3}
+  b01-imprevisto                   esperado={"booking_change_topic": "cancellation"}  «me surgió un imprevisto y no puedo asistir»
+      base   3/3 {'{"booking_change_topic": "cancellation"}': 3}
+      vocab  3/3 {'{"booking_change_topic": "cancellation"}': 3}
+  b02-otro-dia                     esperado={"booking_change_topic": "reschedule"}  «quiero pasar mi buceo para otro día»
+      base   3/3 {'{"booking_change_topic": "reschedule"}': 3}
+      vocab  3/3 {'{"booking_change_topic": "reschedule"}': 3}
+  b03-agregar-persona              esperado={"booking_change_topic": "modify_headcount"}  «ya tengo una reserva hecha, quiero agregar una persona más»
+      base   3/3 {'{"booking_change_topic": "modify_headcount"}': 3}
+      vocab  3/3 {'{"booking_change_topic": "modify_headcount"}': 3}
+  n01-politica-cancelacion         esperado={}  «¿cuál es la política de cancelación?»
+      base   3/3 {'{}': 3}
+      vocab  3/3 {'{}': 3}
+  n02-si-llueve                    esperado={}  «¿qué pasa si llueve ese día?»
+      base   3/3 {'{}': 3}
+      vocab  3/3 {'{}': 3}
+  n03-pago-tarjeta                 esperado={}  «puedo pagar con tarjeta?»
+      base   3/3 {'{}': 3}
+      vocab  3/3 {'{}': 3}
+  n04-link-seguro                  esperado={}  «¿el link de pago es seguro?»
+      base   3/3 {'{}': 3}
+      vocab  3/3 {'{}': 3}
+  n05-precio-manana                esperado={}  «quiero bucear mañana, cuánto cuesta?»
+      base   3/3 {'{}': 3}
+      vocab  3/3 {'{}': 3}
+  n06-reserva-grupo                esperado={}  «si, tengo el AOWD, además tengo 3 amigos que quieren hacer a»
+      base   3/3 {'{}': 3}
+      vocab  2/3 {'{}': 2, '{"comparing_options": ["certified_diving", "minicourse", "snorkel"]}': 1}
+  n07-amigo-snorkel                esperado={}  «tengo un amigo que quiere bucear y yo hago snorkel»
+      base   1/3 {'{"comparing_options": ["certified_diving", "snorkel"]}': 2, '{}': 1}
+      vocab  0/3 {'{"comparing_options": ["certified_diving", "snorkel"]}': 3}
+  r01-minicurso-o-snorkel          esperado={"comparing_options": ["minicourse", "snorkel"]}  «no sé si hacer el minicurso o el snorkel»
+      base   3/3 {'{"comparing_options": ["minicourse", "snorkel"]}': 3}
+      vocab  3/3 {'{"comparing_options": ["minicourse", "snorkel"]}': 3}
+  r02-pareja-duda                  esperado={"comparing_options": ["certified_diving", "minicourse"]}  «mi pareja duda entre buceo y minicurso»
+      base   3/3 {'{"comparing_options": ["certified_diving", "minicourse"]}': 3}
+      vocab  3/3 {'{"comparing_options": ["certified_diving", "minicourse"]}': 3}
+  r03-elige-una                    esperado={}  «quiero el minicurso»
+      base   3/3 {'{}': 3}
+      vocab  3/3 {'{}': 3}
+  r04-curso-o-minicurso            esperado={"comparing_options": [["minicourse", "padi_course"], ["minicourse", "padi_open_water"]]}  «qué me recomiendas, el curso open water o el minicurso? nunc»
+      base   3/3 {'{"comparing_options": ["minicourse", "padi_course"]}': 3}
+      vocab  3/3 {'{"comparing_options": ["minicourse", "padi_open_water"]}': 3}
+  r05-reserva-ambas                esperado={}  «quiero buceo y snorkel para los dos»
+      base   3/3 {'{}': 3}
+      vocab  3/3 {'{}': 3}
+  r06-en-first-timer               esperado={"comparing_options": ["minicourse", "snorkel"]}  «is snorkeling or the mini course better for a first timer?»
+      base   3/3 {'{"comparing_options": ["minicourse", "snorkel"]}': 3}
+      vocab  3/3 {'{"comparing_options": ["minicourse", "snorkel"]}': 3}
+  r07-open-water-o-advanced        esperado={"comparing_options": ["padi_advanced", "padi_open_water"]}  «no sé si hacer el open water o el advanced»
+      base   0/3 {'{"comparing_options": ["certified_diving", "padi_course"]}': 3}
+      vocab  3/3 {'{"comparing_options": ["padi_advanced", "padi_open_water"]}': 3}
+  r08-nitrox-o-flotabilidad        esperado={"comparing_options": ["specialty_buoyancy", "specialty_nitrox"]}  «dudo entre la especialidad de nitrox y la de flotabilidad»
+      base   0/3 {'{"comparing_options": ["padi_course"]}': 2, '{"comparing_options": ["minicourse", "padi_course"]}': 1}
+      vocab  3/3 {'{"comparing_options": ["specialty_buoyancy", "specialty_nitrox"]}': 3}
+  r09-en-rescue-or-divemaster      esperado={"comparing_options": ["padi_divemaster", "padi_rescue"]}  «should I do the rescue course or go for divemaster?»
+      base   0/3 {'{"comparing_options": ["certified_diving", "padi_course"]}': 3}
+      vocab  2/3 {'{"comparing_options": ["padi_divemaster", "padi_rescue"]}': 2, '{}': 1}
+
+RESUMEN (casos con todas las repeticiones correctas)
+  base   33/37
+  vocab  32/37
+  CASOS QUE CAMBIAN ENTRE VARIANTES:
+    s04-llover-manana                base=3/3  vocab=2/3
+    a02-sordomuda                    base=3/3  vocab=0/3
+    n06-reserva-grupo                base=3/3  vocab=2/3
+    n07-amigo-snorkel                base=1/3  vocab=0/3
+    r07-open-water-o-advanced        base=0/3  vocab=3/3
+    r08-nitrox-o-flotabilidad        base=0/3  vocab=3/3
+    r09-en-rescue-or-divemaster      base=0/3  vocab=2/3
+JSON {"resumen": {"base": 33, "vocab": 32}, "cambios": [["s04-llover-manana", {"base": 3, "vocab": 2}], ["a02-sordomuda", {"base": 3, "vocab": 0}], ["n06-reserva-grupo", {"base": 3, "vocab": 2}], ["n07-amigo-snorkel", {"base": 1, "vocab": 0}], ["r07-open-water-o-advanced", {"base": 0, "vocab": 3}], ["r08-nitrox-o-flotabilidad", {"base": 0, "vocab": 3}], ["r09-en-rescue-or-divemaster", {"base": 0, "vocab": 2}]]}
