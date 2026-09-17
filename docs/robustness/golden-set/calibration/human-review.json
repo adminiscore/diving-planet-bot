@@ -1,0 +1,140 @@
+{
+ "about": "Veredictos que revisa una persona a ciegas: 'duda' (Claude no esta seguro o depende de una regla de negocio) y 'control' (muestra de etiquetas seguras de Claude para medir su acuerdo con la persona).",
+ "items": [
+  {
+   "dialogue": "acompanante-goteo",
+   "criterion": "no-asume",
+   "kind": "duda"
+  },
+  {
+   "dialogue": "ninos-6-y-10",
+   "criterion": "global:sin-repreguntas",
+   "kind": "duda"
+  },
+  {
+   "dialogue": "nacionalidad-ambigua",
+   "criterion": "global:sin-invenciones",
+   "kind": "duda"
+  },
+  {
+   "dialogue": "nacionalidad-ambigua",
+   "criterion": "no-asume",
+   "kind": "duda"
+  },
+  {
+   "dialogue": "paquete-en-carrito",
+   "criterion": "mantiene",
+   "kind": "duda"
+  },
+  {
+   "dialogue": "premisa-falsa-lunes",
+   "criterion": "global:sin-invenciones",
+   "kind": "duda"
+  },
+  {
+   "dialogue": "premisa-falsa-lunes",
+   "criterion": "reserva-cop",
+   "kind": "duda"
+  },
+  {
+   "dialogue": "vuelo-tras-bucear",
+   "criterion": "global:sin-invenciones",
+   "kind": "duda"
+  },
+  {
+   "dialogue": "vuelo-tras-bucear",
+   "criterion": "global:sin-repreguntas",
+   "kind": "duda"
+  },
+  {
+   "dialogue": "isla-hotel-refresher",
+   "criterion": "refresher",
+   "kind": "duda"
+  },
+  {
+   "dialogue": "grupo-con-refresher",
+   "criterion": "reparto",
+   "kind": "duda"
+  },
+  {
+   "dialogue": "grupo-con-refresher",
+   "criterion": "refresher-uno",
+   "kind": "duda"
+  },
+  {
+   "dialogue": "grupo-cambia-dos-veces",
+   "criterion": "sin-contradiccion",
+   "kind": "duda"
+  },
+  {
+   "dialogue": "grupo-3-actividades",
+   "criterion": "reparto",
+   "kind": "duda"
+  },
+  {
+   "dialogue": "grupo-3-actividades",
+   "criterion": "descuento-grupo",
+   "kind": "duda"
+  },
+  {
+   "dialogue": "pide-telefono",
+   "criterion": "global:sin-invenciones",
+   "kind": "duda"
+  },
+  {
+   "dialogue": "refresher-rechaza-acepta",
+   "criterion": "global:sin-invenciones",
+   "kind": "duda"
+  },
+  {
+   "dialogue": "vuelo-tras-bucear",
+   "criterion": "reserva",
+   "kind": "control"
+  },
+  {
+   "dialogue": "paquete-en-carrito",
+   "criterion": "no-asume-ubicacion",
+   "kind": "control"
+  },
+  {
+   "dialogue": "cambio-fecha-carrito",
+   "criterion": "asesor",
+   "kind": "control"
+  },
+  {
+   "dialogue": "acompanante-goteo",
+   "criterion": "global:sin-repreguntas",
+   "kind": "control"
+  },
+  {
+   "dialogue": "regateo-grupo-6",
+   "criterion": "global:sin-invenciones",
+   "kind": "control"
+  },
+  {
+   "dialogue": "ninos-6-y-10",
+   "criterion": "global:sin-invenciones",
+   "kind": "control"
+  },
+  {
+   "dialogue": "grupo-cambia-dos-veces",
+   "criterion": "global:sin-repreguntas",
+   "kind": "control"
+  },
+  {
+   "dialogue": "cambio-fecha-carrito",
+   "criterion": "global:sin-repreguntas",
+   "kind": "control"
+  },
+  {
+   "dialogue": "grupo-3-actividades",
+   "criterion": "global:sin-invenciones",
+   "kind": "control"
+  },
+  {
+   "dialogue": "isla-hotel-refresher",
+   "criterion": "tarifa-isla",
+   "kind": "control"
+  }
+ ]
+}

@@ -1,7 +1,7 @@
 {
  "about": "Set de calibracion del juez: veredictos etiquetados por personas sobre conversaciones reales de la ronda golden del 2026-09-17. 'tune' se usa para ajustar; 'holdout' solo para medir al final.",
  "run_file": "docs/robustness/synthetic-runs/2026-09-17-golden.jsonl",
- "golden_version": 3,
+ "golden_version": 4,
  "items": [
   {
    "dialogue": "acompanante-goteo",
@@ -62,7 +62,7 @@
    "criteria": [
     {
      "id": "global:sin-invenciones",
-     "check": "Ninguna edad, horario, política, descuento, servicio o dato de contacto contradice la referencia ni se inventa. Los importes de dinero NO se juzgan aquí (se comprueban aparte)."
+     "check": "Ninguna edad, horario, política, descuento, servicio o dato de contacto contradice la referencia ni se inventa, y el bot no da por hechos datos del cliente que este no ha dicho (actividad, personas, certificación...). Los importes de dinero NO se juzgan aquí (se comprueban aparte)."
     },
     {
      "id": "global:sin-repreguntas",
@@ -74,7 +74,7 @@
     },
     {
      "id": "no-asume",
-     "check": "No asigna al amigo minicurso ni buceo antes de que diga que quiere snorkel."
+     "check": "Decisión del owner: del amigo solo sabe que acompaña; no le asigna ninguna actividad (tampoco buceo) hasta que el cliente la diga, y pregunta en vez de asumir."
     },
     {
      "id": "precios",
@@ -122,7 +122,7 @@
    "criteria": [
     {
      "id": "global:sin-invenciones",
-     "check": "Ninguna edad, horario, política, descuento, servicio o dato de contacto contradice la referencia ni se inventa. Los importes de dinero NO se juzgan aquí (se comprueban aparte)."
+     "check": "Ninguna edad, horario, política, descuento, servicio o dato de contacto contradice la referencia ni se inventa, y el bot no da por hechos datos del cliente que este no ha dicho (actividad, personas, certificación...). Los importes de dinero NO se juzgan aquí (se comprueban aparte)."
     },
     {
      "id": "global:sin-repreguntas",
@@ -184,7 +184,7 @@
    "criteria": [
     {
      "id": "global:sin-invenciones",
-     "check": "Ninguna edad, horario, política, descuento, servicio o dato de contacto contradice la referencia ni se inventa. Los importes de dinero NO se juzgan aquí (se comprueban aparte)."
+     "check": "Ninguna edad, horario, política, descuento, servicio o dato de contacto contradice la referencia ni se inventa, y el bot no da por hechos datos del cliente que este no ha dicho (actividad, personas, certificación...). Los importes de dinero NO se juzgan aquí (se comprueban aparte)."
     },
     {
      "id": "global:sin-repreguntas",
@@ -220,7 +220,7 @@
    "criteria": [
     {
      "id": "global:sin-invenciones",
-     "check": "Ninguna edad, horario, política, descuento, servicio o dato de contacto contradice la referencia ni se inventa. Los importes de dinero NO se juzgan aquí (se comprueban aparte)."
+     "check": "Ninguna edad, horario, política, descuento, servicio o dato de contacto contradice la referencia ni se inventa, y el bot no da por hechos datos del cliente que este no ha dicho (actividad, personas, certificación...). Los importes de dinero NO se juzgan aquí (se comprueban aparte)."
     },
     {
      "id": "global:sin-repreguntas",
@@ -228,7 +228,7 @@
     },
     {
      "id": "regla",
-     "check": "Explica o aplica la regla: colombianos o residentes en Colombia pagan en COP, el resto en USD, mismo precio."
+     "check": "Aplica la política: toda persona nacida en Colombia cuenta como colombiana viva donde viva, así que paga en COP (mismo precio). Si pasa a un asesor sin resolverlo, no cumple."
     },
     {
      "id": "no-asume",
@@ -264,7 +264,7 @@
    "criteria": [
     {
      "id": "global:sin-invenciones",
-     "check": "Ninguna edad, horario, política, descuento, servicio o dato de contacto contradice la referencia ni se inventa. Los importes de dinero NO se juzgan aquí (se comprueban aparte)."
+     "check": "Ninguna edad, horario, política, descuento, servicio o dato de contacto contradice la referencia ni se inventa, y el bot no da por hechos datos del cliente que este no ha dicho (actividad, personas, certificación...). Los importes de dinero NO se juzgan aquí (se comprueban aparte)."
     },
     {
      "id": "global:sin-repreguntas",
@@ -318,7 +318,7 @@
    "criteria": [
     {
      "id": "global:sin-invenciones",
-     "check": "Ninguna edad, horario, política, descuento, servicio o dato de contacto contradice la referencia ni se inventa. Los importes de dinero NO se juzgan aquí (se comprueban aparte)."
+     "check": "Ninguna edad, horario, política, descuento, servicio o dato de contacto contradice la referencia ni se inventa, y el bot no da por hechos datos del cliente que este no ha dicho (actividad, personas, certificación...). Los importes de dinero NO se juzgan aquí (se comprueban aparte)."
     },
     {
      "id": "global:sin-repreguntas",
@@ -374,7 +374,7 @@
    "criteria": [
     {
      "id": "global:sin-invenciones",
-     "check": "Ninguna edad, horario, política, descuento, servicio o dato de contacto contradice la referencia ni se inventa. Los importes de dinero NO se juzgan aquí (se comprueban aparte)."
+     "check": "Ninguna edad, horario, política, descuento, servicio o dato de contacto contradice la referencia ni se inventa, y el bot no da por hechos datos del cliente que este no ha dicho (actividad, personas, certificación...). Los importes de dinero NO se juzgan aquí (se comprueban aparte)."
     },
     {
      "id": "global:sin-repreguntas",
@@ -424,7 +424,7 @@
    "criteria": [
     {
      "id": "global:sin-invenciones",
-     "check": "Ninguna edad, horario, política, descuento, servicio o dato de contacto contradice la referencia ni se inventa. Los importes de dinero NO se juzgan aquí (se comprueban aparte)."
+     "check": "Ninguna edad, horario, política, descuento, servicio o dato de contacto contradice la referencia ni se inventa, y el bot no da por hechos datos del cliente que este no ha dicho (actividad, personas, certificación...). Los importes de dinero NO se juzgan aquí (se comprueban aparte)."
     },
     {
      "id": "global:sin-repreguntas",
@@ -480,7 +480,7 @@
    "criteria": [
     {
      "id": "global:sin-invenciones",
-     "check": "Ninguna edad, horario, política, descuento, servicio o dato de contacto contradice la referencia ni se inventa. Los importes de dinero NO se juzgan aquí (se comprueban aparte)."
+     "check": "Ninguna edad, horario, política, descuento, servicio o dato de contacto contradice la referencia ni se inventa, y el bot no da por hechos datos del cliente que este no ha dicho (actividad, personas, certificación...). Los importes de dinero NO se juzgan aquí (se comprueban aparte)."
     },
     {
      "id": "global:sin-repreguntas",
@@ -492,7 +492,7 @@
     },
     {
      "id": "refresher",
-     "check": "Por llevar 3 años sin bucear, indica que necesita (o normalmente necesita) refresher, o que debe confirmarlo con el equipo. Cualquiera de las dos vale."
+     "check": "Por ser certificado y llevar 3 años sin bucear, le ofrece el refresher (basta con ofrecerlo)."
     }
    ]
   },
@@ -524,7 +524,7 @@
    "criteria": [
     {
      "id": "global:sin-invenciones",
-     "check": "Ninguna edad, horario, política, descuento, servicio o dato de contacto contradice la referencia ni se inventa. Los importes de dinero NO se juzgan aquí (se comprueban aparte)."
+     "check": "Ninguna edad, horario, política, descuento, servicio o dato de contacto contradice la referencia ni se inventa, y el bot no da por hechos datos del cliente que este no ha dicho (actividad, personas, certificación...). Los importes de dinero NO se juzgan aquí (se comprueban aparte)."
     },
     {
      "id": "global:sin-repreguntas",
@@ -536,7 +536,7 @@
     },
     {
      "id": "refresher-uno",
-     "check": "Señala que el certificado con 5 años sin bucear necesita refresher (o confirmarlo), solo para esa persona."
+     "check": "Ofrece el refresher por el certificado que lleva 5 años sin bucear (basta con ofrecerlo)."
     }
    ]
   },
@@ -568,7 +568,7 @@
    "criteria": [
     {
      "id": "global:sin-invenciones",
-     "check": "Ninguna edad, horario, política, descuento, servicio o dato de contacto contradice la referencia ni se inventa. Los importes de dinero NO se juzgan aquí (se comprueban aparte)."
+     "check": "Ninguna edad, horario, política, descuento, servicio o dato de contacto contradice la referencia ni se inventa, y el bot no da por hechos datos del cliente que este no ha dicho (actividad, personas, certificación...). Los importes de dinero NO se juzgan aquí (se comprueban aparte)."
     },
     {
      "id": "global:sin-repreguntas",
@@ -624,7 +624,7 @@
    "criteria": [
     {
      "id": "global:sin-invenciones",
-     "check": "Ninguna edad, horario, política, descuento, servicio o dato de contacto contradice la referencia ni se inventa. Los importes de dinero NO se juzgan aquí (se comprueban aparte)."
+     "check": "Ninguna edad, horario, política, descuento, servicio o dato de contacto contradice la referencia ni se inventa, y el bot no da por hechos datos del cliente que este no ha dicho (actividad, personas, certificación...). Los importes de dinero NO se juzgan aquí (se comprueban aparte)."
     },
     {
      "id": "global:sin-repreguntas",
@@ -668,7 +668,7 @@
    "criteria": [
     {
      "id": "global:sin-invenciones",
-     "check": "Ninguna edad, horario, política, descuento, servicio o dato de contacto contradice la referencia ni se inventa. Los importes de dinero NO se juzgan aquí (se comprueban aparte)."
+     "check": "Ninguna edad, horario, política, descuento, servicio o dato de contacto contradice la referencia ni se inventa, y el bot no da por hechos datos del cliente que este no ha dicho (actividad, personas, certificación...). Los importes de dinero NO se juzgan aquí (se comprueban aparte)."
     },
     {
      "id": "global:sin-repreguntas",
@@ -704,7 +704,7 @@
    "criteria": [
     {
      "id": "global:sin-invenciones",
-     "check": "Ninguna edad, horario, política, descuento, servicio o dato de contacto contradice la referencia ni se inventa. Los importes de dinero NO se juzgan aquí (se comprueban aparte)."
+     "check": "Ninguna edad, horario, política, descuento, servicio o dato de contacto contradice la referencia ni se inventa, y el bot no da por hechos datos del cliente que este no ha dicho (actividad, personas, certificación...). Los importes de dinero NO se juzgan aquí (se comprueban aparte)."
     },
     {
      "id": "global:sin-repreguntas",
@@ -712,7 +712,7 @@
     },
     {
      "id": "contacto-real",
-     "check": "Da un canal de contacto oficial que coincide con las políticas u ofrece que un asesor le contacte; no inventa números."
+     "check": "Decisión del owner: si el cliente pide un teléfono para llamar, el bot le da el teléfono/WhatsApp oficial de la referencia (puede además ofrecer ayuda por el chat). No inventa números."
     }
    ]
   },
@@ -732,7 +732,7 @@
    "criteria": [
     {
      "id": "global:sin-invenciones",
-     "check": "Ninguna edad, horario, política, descuento, servicio o dato de contacto contradice la referencia ni se inventa. Los importes de dinero NO se juzgan aquí (se comprueban aparte)."
+     "check": "Ninguna edad, horario, política, descuento, servicio o dato de contacto contradice la referencia ni se inventa, y el bot no da por hechos datos del cliente que este no ha dicho (actividad, personas, certificación...). Los importes de dinero NO se juzgan aquí (se comprueban aparte)."
     },
     {
      "id": "global:sin-repreguntas",
@@ -764,7 +764,7 @@
    "criteria": [
     {
      "id": "global:sin-invenciones",
-     "check": "Ninguna edad, horario, política, descuento, servicio o dato de contacto contradice la referencia ni se inventa. Los importes de dinero NO se juzgan aquí (se comprueban aparte)."
+     "check": "Ninguna edad, horario, política, descuento, servicio o dato de contacto contradice la referencia ni se inventa, y el bot no da por hechos datos del cliente que este no ha dicho (actividad, personas, certificación...). Los importes de dinero NO se juzgan aquí (se comprueban aparte)."
     },
     {
      "id": "global:sin-repreguntas",
@@ -826,7 +826,7 @@
    "criteria": [
     {
      "id": "global:sin-invenciones",
-     "check": "Ninguna edad, horario, política, descuento, servicio o dato de contacto contradice la referencia ni se inventa. Los importes de dinero NO se juzgan aquí (se comprueban aparte)."
+     "check": "Ninguna edad, horario, política, descuento, servicio o dato de contacto contradice la referencia ni se inventa, y el bot no da por hechos datos del cliente que este no ha dicho (actividad, personas, certificación...). Los importes de dinero NO se juzgan aquí (se comprueban aparte)."
     },
     {
      "id": "global:sin-repreguntas",
