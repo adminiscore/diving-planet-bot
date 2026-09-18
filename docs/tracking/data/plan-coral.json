@@ -1,0 +1,846 @@
+{
+ "exported_at": "2026-09-18T09:22:07+00:00",
+ "source": "https://claude.ai/artifact/XiGd3kguTNwwqTnH7mQwgi",
+ "about": "Copia de la base de datos de la página Plan Coral (fases, tareas, fotos, capas, bitácora). La página la usa como respaldo de solo lectura si no puede conectar con su base de datos; en el repo sirve de historial versionado.",
+ "collections": {
+  "phases": [
+   {
+    "id": "L1",
+    "code": "L1",
+    "goal": "Quitar trabajo repetido y en serie sin cambiar lo que responde el bot.",
+    "name": "Mejoras de latencia baratas",
+    "order": 2
+   },
+   {
+    "id": "L2",
+    "code": "L2",
+    "goal": "Modelo más pequeño donde el eval lo permita, caché y latencia percibida.",
+    "name": "Modelos a medida y caché",
+    "order": 3
+   },
+   {
+    "id": "M0",
+    "code": "M0",
+    "goal": "Medir antes de tocar nada. Bloqueante, sin cambios de conducta.",
+    "name": "Instrumentación y línea base",
+    "order": 1
+   },
+   {
+    "id": "Q5",
+    "code": "Q5",
+    "goal": "Gates en CI de calidad y latencia, SOAK en PRE y entrega al cliente.",
+    "name": "Calidad continua y entrega",
+    "order": 7
+   },
+   {
+    "id": "R6",
+    "code": "R6",
+    "goal": "Resiliencia ante fallos del LLM y guardrails contra inyección. En paralelo.",
+    "name": "Robustez de producción",
+    "order": 6
+   },
+   {
+    "id": "S4",
+    "code": "S4",
+    "goal": "Un solo cerebro: quitar la cascada y partir los módulos gigantes.",
+    "name": "Corte del legacy y consolidación",
+    "order": 5
+   },
+   {
+    "id": "U3",
+    "code": "U3",
+    "goal": "Una llamada estructurada (intención + datos + señales) detrás de flag, con A/B por caso.",
+    "name": "Entender el mensaje una sola vez",
+    "order": 4
+   }
+  ],
+  "tasks": [
+   {
+    "id": "l1-1",
+    "note": "_verify_grounding_with_retry, rag_agent.py",
+    "order": 1,
+    "owner": "Álvaro",
+    "phase": "L1",
+    "status": "pendiente",
+    "title": "RAG sin doble juez: juzgar una vez; si falla, regenerar y juzgar"
+   },
+   {
+    "id": "l1-2",
+    "note": "currency_amounts / urls / capacity_claims_grounded",
+    "order": 2,
+    "owner": "Álvaro",
+    "phase": "L1",
+    "status": "pendiente",
+    "title": "Checks deterministas antes del juez LLM"
+   },
+   {
+    "id": "l1-3",
+    "note": "",
+    "order": 3,
+    "owner": "Álvaro",
+    "phase": "L1",
+    "status": "pendiente",
+    "title": "Saltar condense_query si no hay historial o el mensaje es autónomo"
+   },
+   {
+    "id": "l1-4",
+    "note": "asyncio.create_task tras enviar",
+    "order": 4,
+    "owner": "Álvaro",
+    "phase": "L1",
+    "status": "pendiente",
+    "title": "Sacar del turno extract_notes, maybe_update_summary y trazas"
+   },
+   {
+    "id": "l1-5",
+    "note": "",
+    "order": 5,
+    "owner": "Gonzalo",
+    "phase": "L1",
+    "status": "pendiente",
+    "title": "Paralelizar llamadas independientes (medido)"
+   },
+   {
+    "id": "l2-1",
+    "note": "Revisar primero: en PRE ya se usan gpt-4o-mini y gpt-4.1-mini.",
+    "order": 1,
+    "owner": "Gonzalo",
+    "phase": "L2",
+    "status": "pendiente",
+    "title": "Juez de grounding y condense_query en modelo pequeño, A/B contra eval_rag_answers"
+   },
+   {
+    "id": "l2-2",
+    "note": "",
+    "order": 2,
+    "owner": "Gonzalo",
+    "phase": "L2",
+    "status": "pendiente",
+    "title": "Prompt caching de OpenAI + caché semántica de FAQ"
+   },
+   {
+    "id": "l2-3",
+    "note": "",
+    "order": 3,
+    "owner": "Gonzalo",
+    "phase": "L2",
+    "status": "pendiente",
+    "title": "Streaming / \"escribiendo\" en Chatwoot"
+   },
+   {
+    "id": "m0-1",
+    "note": "Hecha por Gadea (18-sep). Una traza raíz 'turno' por mensaje en contexto limpio (se cierra siempre): se acabó la traza que juntaba turnos. Resumen del turno en metadata/tags (tipo saludo/reserva/rag/escalado/cambios/deflection, ruta, RAG, idioma, paso, link de pago, escalado, error) y session_id = conversación. Verificado en PRE: 12/12 turnos con su traza y resumen.",
+    "order": 1,
+    "owner": "Gadea",
+    "phase": "M0",
+    "status": "hecha",
+    "title": "Spans por nodo y resumen por turno en Langfuse (nº llamadas, ms por nodo)",
+    "updatedAt": "2026-09-18T10:00:00Z"
+   },
+   {
+    "id": "m0-2",
+    "note": "Hecha por Gadea (18-sep). Sin script nuevo, para no duplicar: run_synthetic_pre --sample rapida (7 diálogos del golden-set, 12 turnos, ~2 min, uno por camino del grafo) + langfuse_snapshot --from-run. Prueba 18-sep: p50 3,1 s / p95 7,0 s; reserva 2,9 s, RAG 7,0 s. Para antes/después de cambios; no va a la línea temporal.",
+    "order": 2,
+    "owner": "Gadea",
+    "phase": "M0",
+    "status": "hecha",
+    "title": "Medición rápida de latencia: turnos canónicos con p50/p95 por nodo",
+    "updatedAt": "2026-09-18T09:30:00Z"
+   },
+   {
+    "id": "m0-3",
+    "note": "Golden-set v5 (41 diálogos) + juez calibrado: gpt-5-mini medium (91,5 % en calibración) con revisión humana de sus fallos. Ronda 1 revisada: 95,1 % de criterios, 30/41 diálogos sin fallos. Flujo: run_synthetic_pre --sample golden → langfuse_snapshot --from-run → judge_golden_set → apply_golden_review.",
+    "order": 3,
+    "owner": "Gadea",
+    "phase": "M0",
+    "status": "hecha",
+    "title": "Golden-set de diálogos + LLM-juez end-to-end",
+    "updatedAt": "2026-09-17T14:30:00Z"
+   },
+   {
+    "id": "m0-4",
+    "note": "Hecho: 41 diálogos del golden-set salen de los 8 lotes sintéticos (grupos, cortesías, fuera de tema, inyección). Falta: añadir tráfico real curado con harvest_cutover_logs.",
+    "order": 4,
+    "owner": "Gadea",
+    "phase": "M0",
+    "status": "en_curso",
+    "title": "Datos sintéticos para el golden-set (grupos mixtos, cortesías, off-topic, inyección)",
+    "updatedAt": "2026-09-17T14:30:00Z"
+   },
+   {
+    "id": "m0-5",
+    "note": "",
+    "order": 5,
+    "owner": "Álvaro",
+    "phase": "M0",
+    "status": "pendiente",
+    "title": "Métricas de negocio en Langfuse: embudo, tasa de escalado, % fallback"
+   },
+   {
+    "id": "m0-6",
+    "note": "Commit c8ed139 en pre_gadea (script + test). Primera foto guardada como línea base.",
+    "order": 6,
+    "owner": "Gadea",
+    "phase": "M0",
+    "status": "hecha",
+    "title": "scripts/langfuse_snapshot.py + página de seguimiento",
+    "updatedAt": "2026-09-17T08:00:00Z"
+   },
+   {
+    "id": "m0-7",
+    "note": "Congelada el 17-sep (Gonzalo): eval-set 220/230 (script) y 230/230 (núcleo), booleanos 33/33 y 30/30, router 33/37, actividad 10/10·10/10·6/9, grupo 17/17·13/13·17/17, RAG 38/39, recuperación 16/20 ES y 13/20 EN. Foto por caso en docs/robustness/baselines/2026-09-17-m0-7/.",
+    "order": 7,
+    "owner": "Gonzalo",
+    "phase": "M0",
+    "status": "hecha",
+    "title": "Congelar línea base de calidad (eval-set, baterías, RAG, golden-set) y de latencia",
+    "updatedAt": "2026-09-18T08:00:00Z"
+   },
+   {
+    "id": "m0-8",
+    "note": "Verificado en PRE con el golden-set: 'hola que tal?' da un solo saludo (juez y comprobación por código).",
+    "order": 8,
+    "owner": "Gadea",
+    "phase": "M0",
+    "status": "hecha",
+    "title": "Verificar en vivo el arreglo del saludo doble (\"hola que tal?\")",
+    "updatedAt": "2026-09-17T14:30:00Z"
+   },
+   {
+    "id": "q5-1",
+    "note": "",
+    "order": 1,
+    "owner": "—",
+    "phase": "Q5",
+    "status": "pendiente",
+    "title": "Gate en CI: golden-set + presupuesto de latencia"
+   },
+   {
+    "id": "q5-2",
+    "note": "",
+    "order": 2,
+    "owner": "Todos",
+    "phase": "Q5",
+    "status": "pendiente",
+    "title": "SOAK en PRE y entrega al cliente"
+   },
+   {
+    "id": "r6-1",
+    "note": "",
+    "order": 1,
+    "owner": "Gonzalo",
+    "phase": "R6",
+    "status": "pendiente",
+    "title": "Timeouts por llamada LLM, fallback y backoff ante 429"
+   },
+   {
+    "id": "r6-2",
+    "note": "Muestra del 17-sep: los 3 intentos de inyección de los lotes (precio gratis, JSON de admin falso, acceso a ROVERD) se ignoran bien. Sirven de casos para el golden-set.",
+    "order": 2,
+    "owner": "Gadea",
+    "phase": "R6",
+    "status": "pendiente",
+    "title": "Guardrails contra inyección de prompts / jailbreak",
+    "updatedAt": "2026-09-17T09:10:00Z"
+   },
+   {
+    "id": "s4-1",
+    "note": "Gated en PRE ~90 %",
+    "order": 1,
+    "owner": "Álvaro",
+    "phase": "S4",
+    "status": "pendiente",
+    "title": "Quitar el flag agent_arch y borrar los gates muertos de la cascada"
+   },
+   {
+    "id": "s4-10",
+    "createdAt": "2026-09-17T14:30:00Z",
+    "note": "Política añadida a policies.json el 17-sep. Golden-set: nacionalidad-ambigua.",
+    "order": 10,
+    "owner": "—",
+    "phase": "S4",
+    "status": "pendiente",
+    "title": "Aplicar 'nacido en Colombia = colombiano' (hoy dice 'no tengo ese dato')"
+   },
+   {
+    "id": "s4-11",
+    "createdAt": "2026-09-17T14:30:00Z",
+    "note": "Golden-set: vuelo-tras-bucear.",
+    "order": 11,
+    "owner": "—",
+    "phase": "S4",
+    "status": "pendiente",
+    "title": "'Voy solo' / 'buceo certificado solo' = 1 persona (no preguntar cuántas)"
+   },
+   {
+    "id": "s4-12",
+    "createdAt": "2026-09-17T14:30:00Z",
+    "note": "Golden-set: paquete-en-carrito.",
+    "order": 12,
+    "owner": "—",
+    "phase": "S4",
+    "status": "pendiente",
+    "title": "Paquetes con carrito abierto: no ofrecer solo los de islas sin saber la salida"
+   },
+   {
+    "id": "s4-13",
+    "createdAt": "2026-09-17T14:30:00Z",
+    "note": "Golden-set: regateo-grupo-6.",
+    "order": 13,
+    "owner": "—",
+    "phase": "S4",
+    "status": "pendiente",
+    "title": "Bucle '¿Desde dónde saldrías?' que ignora preguntas (descuento de grupo, cómo reservar)"
+   },
+   {
+    "id": "s4-14",
+    "createdAt": "2026-09-17T14:30:00Z",
+    "note": "Decisión de Gadea. Golden-set: pide-telefono.",
+    "order": 14,
+    "owner": "—",
+    "phase": "S4",
+    "status": "pendiente",
+    "title": "Si piden teléfono, dar el WhatsApp oficial (hoy dice 'no manejo teléfono')"
+   },
+   {
+    "id": "s4-15",
+    "createdAt": "2026-09-17T14:30:00Z",
+    "note": "Golden-set: es-un-bot (responde 'De temas técnicos mejor no te cuento').",
+    "order": 15,
+    "owner": "—",
+    "phase": "S4",
+    "status": "pendiente",
+    "title": "'¿Eres un bot?': decir claramente que es un asistente virtual"
+   },
+   {
+    "id": "s4-16",
+    "createdAt": "2026-09-17T14:30:00Z",
+    "note": "Gadea: el pase es correcto, pero mejor con una disculpa/reconocimiento. Golden-set: queja.",
+    "order": 16,
+    "owner": "—",
+    "phase": "S4",
+    "status": "pendiente",
+    "title": "Mejora: empatía al pasar una queja a staff"
+   },
+   {
+    "id": "s4-2",
+    "note": "",
+    "order": 2,
+    "owner": "Álvaro",
+    "phase": "S4",
+    "status": "pendiente",
+    "title": "Partir conversational_core.py y supervisor.py por nodo"
+   },
+   {
+    "id": "s4-3",
+    "note": "",
+    "order": 3,
+    "owner": "Gadea",
+    "phase": "S4",
+    "status": "pendiente",
+    "title": "Robustez Fase 6 (harvest_cutover_logs) → Fase 5 (regex muerto)"
+   },
+   {
+    "id": "s4-4",
+    "note": "nat-mixto, señales router s02/n07/r07-r09",
+    "order": 4,
+    "owner": "Gadea",
+    "phase": "S4",
+    "status": "pendiente",
+    "title": "Huecos del detector por el mecanismo general, no por parches"
+   },
+   {
+    "id": "s4-5",
+    "note": "",
+    "order": 5,
+    "owner": "Álvaro",
+    "phase": "S4",
+    "status": "pendiente",
+    "title": "Retirar la dependencia langsmith"
+   },
+   {
+    "id": "s4-6",
+    "createdAt": "2026-09-17T10:30:00Z",
+    "note": "Hallazgo 17-sep (golden-set cambio-fecha-carrito): el bot dice 'entiendo que necesitas cambiar la fecha' y sigue preguntando la nacionalidad. Decisión del owner: sin reserva pagada, pasa a asesor. Arreglar por el mecanismo común, no con regex.",
+    "order": 6,
+    "owner": "Gadea",
+    "phase": "S4",
+    "status": "pendiente",
+    "title": "Cambio de fecha con carrito abierto: pasar a asesor",
+    "updatedAt": "2026-09-17T10:30:00Z"
+   },
+   {
+    "id": "s4-7",
+    "createdAt": "2026-09-17T14:30:00Z",
+    "note": "Golden-set ronda 1: reserva-completa-saludo-a-pago y reserva-ingles.",
+    "order": 7,
+    "owner": "—",
+    "phase": "S4",
+    "status": "pendiente",
+    "title": "'Cómo pago' debe dar el link (ES propone quitar la certificación; EN pasa a asesor y 'You told me: certified diving')"
+   },
+   {
+    "id": "s4-8",
+    "createdAt": "2026-09-17T14:30:00Z",
+    "note": "Golden-set: acompanante-goteo ('2 buceo certificado' con 'quiero bucear con mi amigo'). Decisión de Gadea.",
+    "order": 8,
+    "owner": "—",
+    "phase": "S4",
+    "status": "pendiente",
+    "title": "No asumir la actividad del acompañante; preguntar"
+   },
+   {
+    "id": "s4-9",
+    "createdAt": "2026-09-17T14:30:00Z",
+    "note": "Golden-set: ninos-6-y-10 (responde '2 → 3 personas').",
+    "order": 9,
+    "owner": "—",
+    "phase": "S4",
+    "status": "pendiente",
+    "title": "Niños: no preguntar si son buzos certificados; 'recomiéndame para cada uno' no debe cambiar el nº de personas"
+   },
+   {
+    "id": "u3-1",
+    "note": "",
+    "order": 1,
+    "owner": "Gadea",
+    "phase": "U3",
+    "status": "pendiente",
+    "title": "Una llamada estructurada: intención + slots + señales (flag unified_understanding)"
+   },
+   {
+    "id": "u3-2",
+    "note": "Solo se promociona si calidad ≥ actual y latencia baja.",
+    "order": 2,
+    "owner": "Gadea",
+    "phase": "U3",
+    "status": "pendiente",
+    "title": "A/B por caso: eval-set (230) + todas las baterías + latencia"
+   },
+   {
+    "id": "u3-3",
+    "note": "",
+    "order": 3,
+    "owner": "Gadea",
+    "phase": "U3",
+    "status": "pendiente",
+    "title": "intent_detector como fast-path determinista + backstop LLM"
+   }
+  ],
+  "snapshots": [
+   {
+    "id": "s-golden1-0917",
+    "all": {
+     "cost_avg_usd": 0.000771,
+     "embeddings_avg": 0.08,
+     "latency_avg": 3.542,
+     "latency_p50": 3.363,
+     "latency_p95": 6.089,
+     "llm_calls_avg": 3.73,
+     "llm_calls_max": 9,
+     "llm_calls_p95": 6,
+     "llm_share": 0.936,
+     "tokens_avg": 6096,
+     "turns": 142
+    },
+    "by_type": {
+     "rag": {
+      "cost_avg_usd": 0.002521,
+      "embeddings_avg": 1,
+      "latency_avg": 6.281,
+      "latency_p50": 6.09,
+      "latency_p95": 8.164,
+      "llm_calls_avg": 5.82,
+      "llm_calls_max": 9,
+      "llm_calls_p95": 9,
+      "llm_share": 0.867,
+      "tokens_avg": 13354,
+      "turns": 11
+     },
+     "reserva": {
+      "cost_avg_usd": 0.000624,
+      "embeddings_avg": 0,
+      "latency_avg": 3.312,
+      "latency_p50": 3.172,
+      "latency_p95": 5.741,
+      "llm_calls_avg": 3.55,
+      "llm_calls_max": 6,
+      "llm_calls_p95": 6,
+      "llm_share": 0.947,
+      "tokens_avg": 5486,
+      "turns": 131
+     }
+    },
+    "client_latency": {
+     "conversations": 44,
+     "latency_max": 9,
+     "latency_p50": 4,
+     "latency_p95": 6,
+     "multi_bubble": 1,
+     "no_reply": 0,
+     "turns": 142
+    },
+    "commit": "b279353",
+    "environment": "staging",
+    "label": "Golden-set ronda 1",
+    "merged_traces": {
+     "traces": 0,
+     "turns": 0
+    },
+    "models": {
+     "gpt-4.1-mini-2025-04-14": 13,
+     "gpt-4o-mini-2024-07-18": 516
+    },
+    "nodes": {
+     "availability": {
+      "n": 129,
+      "p50": 0.006,
+      "p95": 0.014
+     },
+     "booking": {
+      "n": 129,
+      "p50": 2.248,
+      "p95": 5.008
+     },
+     "changes": {
+      "n": 2,
+      "p50": 0.307,
+      "p95": 0.58
+     },
+     "deflection": {
+      "n": 2,
+      "p50": 0.004,
+      "p95": 0.005
+     },
+     "extraction": {
+      "n": 120,
+      "p50": 0.909,
+      "p95": 3.148
+     },
+     "info": {
+      "n": 3,
+      "p50": 3.415,
+      "p95": 3.715
+     },
+     "router": {
+      "n": 142,
+      "p50": 1.104,
+      "p95": 1.586
+     },
+     "routing": {
+      "n": 128,
+      "p50": 0.007,
+      "p95": 0.716
+     },
+     "safety": {
+      "n": 6,
+      "p50": 0.003,
+      "p95": 0.005
+     },
+     "setup": {
+      "n": 129,
+      "p50": 0.643,
+      "p95": 1.083
+     },
+     "slotfill_close": {
+      "n": 110,
+      "p50": 0.69,
+      "p95": 1.271
+     }
+    },
+    "quality": {
+     "by_category": {
+      "adaptado": 100,
+      "cambios": 92.9,
+      "correccion": 100,
+      "deflection": 83.3,
+      "descuentos": 84.6,
+      "edades": 86.7,
+      "escalado": 100,
+      "grupo": 97.2,
+      "idioma": 100,
+      "info": 95,
+      "nacionalidad": 92.3,
+      "refresher": 100,
+      "reserva": 90.9,
+      "saludo": 100,
+      "seguridad": 100
+     },
+     "criteria_failed": 14,
+     "criteria_judged": 284,
+     "criteria_pass_pct": 95.1,
+     "dialogues": 41,
+     "dialogues_pass_pct": 73.2,
+     "dialogues_passed": 30,
+     "errors": 0,
+     "judge_accuracy_on_review": {
+      "confirmed": 16,
+      "corrected": 8,
+      "reviewed": 24
+     },
+     "judge_raw_pass_pct": 93.3,
+     "model": "gpt-5-mini (medium) + revision humana",
+     "not_applicable": 35,
+     "results_file": "docs/robustness/golden-set/results/2026-09-17-golden__gpt-5-mini-medium.json",
+     "to_review": 0
+    },
+    "run_at": "2026-09-17T10:40:16.039000+00:00",
+    "run_file": "docs/robustness/synthetic-runs/2026-09-17-golden.jsonl",
+    "taken_at": "2026-09-17T13:17:17+00:00",
+    "window": {
+     "first_turn": "2026-09-17T09:59:42.884000+00:00",
+     "from": "2026-09-17T09:54:50Z",
+     "last_turn": "2026-09-17T10:40:16.039000+00:00",
+     "to": "2026-09-17T10:42:25Z"
+    }
+   },
+   {
+    "id": "s-m0-synth-0917",
+    "all": {
+     "cost_avg_usd": 0.000795,
+     "embeddings_avg": 0.12,
+     "latency_avg": 3.503,
+     "latency_p50": 3.178,
+     "latency_p95": 6.647,
+     "llm_calls_avg": 3.72,
+     "llm_calls_max": 10,
+     "llm_calls_p95": 6,
+     "llm_share": 0.939,
+     "tokens_avg": 6374,
+     "turns": 345
+    },
+    "by_type": {
+     "rag": {
+      "cost_avg_usd": 0.002391,
+      "embeddings_avg": 1.03,
+      "latency_avg": 6.362,
+      "latency_p50": 5.915,
+      "latency_p95": 9.576,
+      "llm_calls_avg": 6,
+      "llm_calls_max": 10,
+      "llm_calls_p95": 10,
+      "llm_share": 0.903,
+      "tokens_avg": 14532,
+      "turns": 39
+     },
+     "reserva": {
+      "cost_avg_usd": 0.000592,
+      "embeddings_avg": 0,
+      "latency_avg": 3.138,
+      "latency_p50": 2.931,
+      "latency_p95": 5.265,
+      "llm_calls_avg": 3.43,
+      "llm_calls_max": 6,
+      "llm_calls_p95": 6,
+      "llm_share": 0.948,
+      "tokens_avg": 5334,
+      "turns": 306
+     }
+    },
+    "client_latency": {
+     "conversations": 106,
+     "latency_max": 10,
+     "latency_p50": 3,
+     "latency_p95": 7,
+     "multi_bubble": 1,
+     "no_reply": 0,
+     "turns": 333
+    },
+    "commit": "d57f5f9",
+    "environment": "staging",
+    "label": "Baseline M0",
+    "merged_traces": {
+     "traces": 1,
+     "turns": 7
+    },
+    "models": {
+     "gpt-4.1-mini-2025-04-14": 50,
+     "gpt-4o-mini-2024-07-18": 1235
+    },
+    "nodes": {
+     "availability": {
+      "n": 312,
+      "p50": 0.006,
+      "p95": 0.011
+     },
+     "booking": {
+      "n": 312,
+      "p50": 2.175,
+      "p95": 5.496
+     },
+     "changes": {
+      "n": 6,
+      "p50": 0.004,
+      "p95": 0.51
+     },
+     "deflection": {
+      "n": 4,
+      "p50": 0.002,
+      "p95": 0.003
+     },
+     "extraction": {
+      "n": 264,
+      "p50": 0.869,
+      "p95": 2.483
+     },
+     "info": {
+      "n": 10,
+      "p50": 2.974,
+      "p95": 3.517
+     },
+     "router": {
+      "n": 345,
+      "p50": 1.08,
+      "p95": 1.569
+     },
+     "routing": {
+      "n": 305,
+      "p50": 0.007,
+      "p95": 4.378
+     },
+     "safety": {
+      "n": 13,
+      "p50": 0.003,
+      "p95": 0.007
+     },
+     "setup": {
+      "n": 312,
+      "p50": 0.627,
+      "p95": 1.047
+     },
+     "slotfill_close": {
+      "n": 247,
+      "p50": 0.7,
+      "p95": 1.126
+     }
+    },
+    "note": "Muestra sintética de los lotes 2-8 (108 conversaciones) por Chatwoot contra PRE. Sustituye a la foto del 16-sep (19 turnos casi todos RAG, no comparable).",
+    "run_at": "2026-09-17T08:56:21.730000+00:00",
+    "run_file": "docs/robustness/synthetic-runs/2026-09-17-m0.jsonl",
+    "taken_at": "2026-09-17T09:17:48+00:00",
+    "window": {
+     "first_turn": "2026-09-17T07:52:26.659000+00:00",
+     "from": "2026-09-17T07:52:23Z",
+     "last_turn": "2026-09-17T08:56:21.730000+00:00",
+     "to": "2026-09-17T08:58:27Z"
+    }
+   }
+  ],
+  "layers": [
+   {
+    "id": "entender",
+    "name": "Entender el mensaje",
+    "order": 4,
+    "phase": "U3",
+    "status": "falta",
+    "today": "Repartido en 4 sitios: router, intent_detector (2.367 líneas de regex), fill_gaps / detect_special_signals / resolve_slot_answer"
+   },
+   {
+    "id": "estado",
+    "name": "Estado",
+    "order": 3,
+    "phase": null,
+    "status": "ok",
+    "today": "Un único ConversationState en Redis (~70 campos)"
+   },
+   {
+    "id": "fuentes",
+    "name": "Fuentes de verdad (precios, catálogo, elegibilidad)",
+    "order": 1,
+    "phase": null,
+    "status": "ok",
+    "today": "Python plano desde JSON"
+   },
+   {
+    "id": "gestor",
+    "name": "Gestor de diálogo",
+    "order": 5,
+    "phase": "S4",
+    "status": "parcial",
+    "today": "Nodos del grafo que delegan en la cascada _shared_turn_handler"
+   },
+   {
+    "id": "organizacion",
+    "name": "Organización del código",
+    "order": 6,
+    "phase": "S4",
+    "status": "falta",
+    "today": "conversational_core.py 4.174 líneas, supervisor.py 3.273"
+   },
+   {
+    "id": "paralelismo",
+    "name": "Paralelismo",
+    "order": 8,
+    "phase": "L1",
+    "status": "falta",
+    "today": "Solo búsqueda vectorial + BM25 en paralelo"
+   },
+   {
+    "id": "secundarias",
+    "name": "Tareas secundarias",
+    "order": 7,
+    "phase": "L1",
+    "status": "falta",
+    "today": "extract_notes y compose_acknowledgement se esperan dentro del turno"
+   },
+   {
+    "id": "verificacion",
+    "name": "Verificación de respuestas (grounding)",
+    "order": 2,
+    "phase": "L1",
+    "status": "parcial",
+    "today": "Checks deterministas + LLM juez; el juez re-juzga la misma respuesta"
+   }
+  ],
+  "log": [
+   {
+    "id": "l-0916-alvaro",
+    "at": "2026-09-16T21:00:00Z",
+    "byLabel": "Álvaro (vía handoff)",
+    "text": "Álvaro (16-sep): observabilidad migrada a Langfuse, arreglado el saludo doble que iba a RAG y arreglado el deploy a PRE (el script remoto se truncaba y PRE servía código viejo). Deja el plan maestro en docs/plan-maestro-final.md."
+   },
+   {
+    "id": "l-0917-gadea",
+    "at": "2026-09-17T07:45:00Z",
+    "byLabel": "Gadea (con Claude)",
+    "text": "17-sep: pre_gadea al día con pre_alvaro y desplegada en PRE (ddf07e3, GREETING_FIX_LIVE=True, Chatwoot sano). Primera foto de Langfuse como línea base: turno p50 7,5 s / p95 14 s, 5,8 llamadas LLM de media (RAG 7,2, hasta 10). Ojo: los modelos reales son gpt-4o-mini y gpt-4.1-mini, no gpt-4o como dice el plan. Nuevo scripts/langfuse_snapshot.py para sacar las fotos."
+   },
+   {
+    "id": "l-0917-golden",
+    "at": "2026-09-17T14:30:00Z",
+    "byLabel": "Gadea (con Claude)",
+    "text": "17-sep: golden-set + LLM-juez listos (m0-3 hecha). El juez de gpt-4.1 en una llamada acertaba ~60 % de sus fallos; se rediseñó (código para lo mecánico, un criterio por llamada con evidencia) y se calibró contra 71 veredictos etiquetados por Claude + Gadea: gpt-5 low 95,8 %, gpt-5-mini medium 91,5 % (elegido, ~0,67 $/ronda), mini low 88,7 %. Ronda 1: juez 93,3 %, revisada 95,1 % de criterios y 30/41 diálogos sin fallos (juez: 16 confirmados, 8 corregidos). 10 fallos del bot apuntados como tareas S4-7 a S4-16. Decisiones de negocio a la base de conocimiento: nacido en Colombia = colombiano; siempre hay disponibilidad; colombianos pueden pagar 100 % online o 50/50."
+   },
+   {
+    "id": "l-0917-gonzalo",
+    "at": "2026-09-17T20:00:00Z",
+    "byLabel": "Gonzalo (resumen de Claude)",
+    "text": "Gonzalo (17-sep, tarde): m0-7 cerrada, línea base de calidad congelada caso a caso (~1.900 peticiones en serie, 85 min, tandas limpias sin llamadas degradadas). Hallazgos: 1) la recuperación del RAG en inglés es más débil (13/20 vs 16/20 ES; 'Is accommodation included?' cae a fallback y 'I have Open Water, which plan...' recupera 0 documentos, aunque la FAQ existe en inglés). 2) F2b (vocabulario del registro en el router) medida a fondo: mejora el agregado (29→32/37) y no ensucia la seguridad, pero empeora dos reservas reales (r05, n06: 3/3→1/3), así que no se promociona; antes hay que arreglar la forma del tool del router (un valor de enum que cae en otro campo) y re-medir con 8 repeticiones."
+   },
+   {
+    "id": "l-0917-handoff",
+    "at": "2026-09-17T14:45:00Z",
+    "byLabel": "Gadea (con Claude)",
+    "text": "HANDOFF 17-sep (Gadea → Álvaro / Gonzalo): las tareas NO son exclusivas de nadie; el responsable es orientativo, coged la siguiente pendiente. Orden: 1) m0-7 línea base de calidad (eval-set normal y --core, 4 baterías, eval_rag_answers, eval_retrieval; ~1 h en serie, cuidado con RPD). 2) m0-1/m0-5 Langfuse + arreglar la traza que junta turnos. 3) decidir m0-2. 4) m0-4 tráfico real. 5) Con M0 cerrada: L1 y U3 (varios fallos S4-6..16 encajan en U3). Todo el detalle y los comandos de una ronda completa: docs/project-history/session-handoff.md (banner 2026-09-17). PRE en 8ec3132."
+   },
+   {
+    "id": "l-0917-synth",
+    "at": "2026-09-17T09:10:00Z",
+    "byLabel": "Gadea (con Claude)",
+    "text": "17-sep: muestra sintética contra PRE por Chatwoot: 108 conversaciones de los lotes 2-8 (+ lote 1), 333 turnos, 0 sin respuesta. Nueva línea base de latencia: turno p50 3,1 s / p95 6,2 s, 3,65 llamadas LLM por turno. Reserva (291): p50 3,0 s / p95 5,3 s, 3,5 llamadas. RAG (28): p50 5,8 s / p95 8,4 s, 5,5 llamadas (hasta 10), 4 veces el coste de un turno de reserva. El cliente lo ve en p50 3 s / p95 7 s: Chatwoot apenas añade tiempo. Sustituye a la foto del 16-sep (19 turnos casi todos RAG: p50 7,5 s / p95 14 s), que no era comparable. Hallazgo: una traza junta 8 turnos (fuga de contexto de traza, en m0-1)."
+   },
+   {
+    "id": "l-0918-m0-1",
+    "at": "2026-09-18T10:00:00Z",
+    "byLabel": "Gadea",
+    "text": "18-sep (Gadea): m0-1 hecha. Cada mensaje tiene ahora su propia traza en Langfuse con un resumen del turno (tipo de turno, agente, si usó RAG, si mandó link de pago, si escaló, errores) y los turnos se agrupan por conversación. Causa de la traza que juntó 8 turnos: el contexto de traza de un turno se quedaba como 'actual' en la tarea que procesa los mensajes y los siguientes heredaban su id; ahora cada turno arranca limpio. Verificado en PRE con la muestra rápida (12/12). Latencia por tipo: reserva 3,2 s, RAG 6,0 s, saludo 5,2 s, escalado 0,8 s, cambios 0,6 s, deflection 1,1 s. Siguiente: m0-5 (métricas de negocio)."
+   },
+   {
+    "id": "l-0918-m0-2",
+    "at": "2026-09-18T09:30:00Z",
+    "byLabel": "Gadea",
+    "text": "18-sep (Gadea): m0-2 hecha. En vez de crear battery_latency.py, la muestra rápida (run_synthetic_pre --sample rapida + langfuse_snapshot) da p50/p95 por turno y por nodo en ~2 min; prueba: p50 3,1 s / p95 7,0 s. Descubierto: las preguntas de información van por el agente booking (que llama al RAG), no por info. Falsa alarma aclarada: Langfuse tarda unos minutos en dejar ver las trazas nuevas; la foto ahora avisa si le faltan turnos. El deploy muestra el estado de Langfuse dentro del contenedor."
+   }
+  ]
+ }
+}

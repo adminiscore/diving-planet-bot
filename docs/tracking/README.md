@@ -14,3 +14,16 @@ Claude (herramienta ArtifactData).
 
 Capacidades que declaran: `db` (datos compartidos) y `user` (quién edita). Colecciones de `plan-coral`:
 `phases`, `tasks`, `snapshots`, `layers`, `log`. De `calibracion-juez`: `items`, `labels`.
+
+## Dónde viven los datos y la copia de respaldo (2026-09-18)
+
+- **Datos en vivo**: en la base de datos de la página (claude.ai). Se leen y editan desde la página
+  por miembros de la organización **con sesión iniciada**. Por un enlace público, sin sesión o fuera
+  de claude.ai la página no recibe esos datos.
+- **Copia versionada**: `data/plan-coral.json` (todas las colecciones). Además va **incrustada** en
+  `plan-coral.html`: la página la pinta al instante y la sustituye por los datos en vivo al conectar.
+  Si no conecta, se queda con la copia en solo lectura y un aviso con la fecha de la copia.
+- **Refrescar la copia** (tras cambios importantes, p. ej. al cerrar una tarea o una fase):
+  1. Pedir a Claude "exporta la base de datos de Plan Coral a docs/tracking/data/plan-coral.json".
+  2. `python docs/tracking/embed_backup.py`
+  3. Republicar `plan-coral.html` en la MISMA URL y hacer commit de los dos ficheros.
