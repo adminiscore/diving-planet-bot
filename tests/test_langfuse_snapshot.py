@@ -78,3 +78,19 @@ def test_traces_without_router_are_not_turns():
     ]
     snap = build_snapshot(observations, "prueba", "2026-09-18T00:00:00Z", "2026-09-19T00:00:00Z", "staging")
     assert snap["all"]["turns"] == 1
+
+
+def test_turn_type_comes_from_the_bot_summary_when_present():
+    observations = [
+        _obs("t1", "SPAN", "turno", "2026-09-18T08:00:00Z", "2026-09-18T08:00:02Z", 2.0,
+             metadata={"turn": {"turn_type": "saludo", "route": "booking", "booking_link_sent": False}}),
+        _obs("t1", "CHAIN", "router", "2026-09-18T08:00:00Z", "2026-09-18T08:00:01Z", 1.0),
+        # traza antigua sin resumen: se deduce por el embedding
+        _obs("t2", "CHAIN", "router", "2026-09-18T09:00:00Z", "2026-09-18T09:00:01Z", 1.0),
+        _obs("t2", "EMBEDDING", "OpenAI-embedding", "2026-09-18T09:00:01Z", "2026-09-18T09:00:02Z", 0.3),
+    ]
+    snap = build_snapshot(observations, "prueba", "2026-09-18T00:00:00Z", "2026-09-19T00:00:00Z", "staging")
+    assert set(snap["by_turn_type"]) == {"saludo", "rag"}
+    assert snap["by_type"]["reserva"]["turns"] == 1  # el saludo sigue en el corte historico "resto"
+    assert snap["by_type"]["rag"]["turns"] == 1
+    assert snap["turns_with_summary"] == 1

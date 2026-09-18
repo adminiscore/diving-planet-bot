@@ -2784,14 +2784,29 @@ async def route_message(state: ConversationState, message: str) -> str:
     flag OFF, `_shared_turn_handler` es el único camino, llamado aquí
     directamente. El flag es la red de rollback hasta que el grafo tenga
     confianza en producción.
+
+    Observabilidad (m0-1): todo el turno va dentro de `turn_trace` — una traza
+    raíz `turno` por mensaje, en contexto limpio y con el resumen del turno.
     """
-    if settings.agent_arch:
-        from src.orchestration.graph import run_turn_via_graph
-        response = await run_turn_via_graph(state, message)
-    else:
-        response = await _shared_turn_handler(state, message)
-    await conversation_summarizer.maybe_update_summary(state)
-    return response
+    from src.agents.conversational_core import _is_greeting_only
+    from src.observability import note_turn, turn_trace
+
+    escalation_before = state.pending_escalation_reason
+    async with turn_trace(settings, state.conversation_id, message) as turn:
+        note_turn(language=state.language, greeting=_is_greeting_only(message))
+        if settings.agent_arch:
+            from src.orchestration.graph import run_turn_via_graph
+            response = await run_turn_via_graph(state, message)
+        else:
+            response = await _shared_turn_handler(state, message)
+        await conversation_summarizer.maybe_update_summary(state)
+        turn.update(
+            reply=response,
+            language=state.language,
+            step=getattr(state.step, "value", state.step),
+            escalated=state.pending_escalation_reason is not None and state.pending_escalation_reason != escalation_before,
+        )
+        return response
 
 
 async def _shared_turn_handler(

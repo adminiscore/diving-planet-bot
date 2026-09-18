@@ -1364,6 +1364,9 @@ async def rag_answer(
       adicional y el historial.
     - Si no hay ni docs ni ``extra_context`` util -> devolver el fallback seguro.
     """
+    from src.observability import note_turn
+
+    note_turn(rag_used=True)  # el turno lo responde el RAG (resumen del turno, m0-1)
     pii_hits = detect_pii(query)
     if pii_hits:
         logger.warning(f"[RAG][PRIVACY] PII detected in query hits={pii_hits}")

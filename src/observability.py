@@ -4,6 +4,13 @@ Sustituye a LangSmith (cuota Developer agotada). Langfuse Cloud Hobby da más
 margen; ver `docs/robustness/progress-log.md` "Tarea 8".
 
 ## Qué traza
+- **Una traza raíz `turno` por mensaje** (`turn_trace`, abierta en
+  `supervisor.route_message`): todo lo del turno cuelga de ella y lleva un
+  RESUMEN del turno en la metadata (agente, tipo de turno, RAG, idioma, paso,
+  link de pago, escalado, error) y `session_id` = conversación. Arranca en un
+  contexto de OpenTelemetry LIMPIO y se cierra siempre: antes, un turno cortado a
+  medias dejaba su span abierto como "actual" y los turnos siguientes se colgaban
+  de él (una traza de PRE juntó 8 turnos en 50 min el 2026-09-17).
 - El **grafo LangGraph** (nodos + latencia/turno) vía `langfuse.langchain.CallbackHandler`,
   pasado como callback en `graph.run_turn_via_graph`.
 - **Cada llamada LLM** (chat + embeddings) vía la integración drop-in
@@ -25,13 +32,33 @@ Las trazas salen a un tercero (Langfuse Cloud), así que se enmascara el PII con
 
 from __future__ import annotations
 
+import contextlib
+import contextvars
 import logging
 import os
+from collections.abc import AsyncIterator
 from typing import Any
 
 from src.privacy import redact_pii
 
 logger = logging.getLogger("uvicorn.error")
+
+BOOKING_LINK = "book.divingplanet.org"
+
+# Hechos del turno en curso (los apuntan el grafo y el RAG con `note_turn`). Un dict
+# por turno: las tareas hijas (`asyncio.create_task`) heredan la MISMA referencia, asi
+# que lo que apunten tambien cuenta.
+_TURN_FACTS: contextvars.ContextVar[dict | None] = contextvars.ContextVar("coral_turn_facts", default=None)
+
+# Agente del grafo -> tipo de turno (el RAG manda: una pregunta de informacion la
+# resuelve el agente booking llamando al RAG, no el agente info).
+_TURN_TYPE_BY_ROUTE = {
+    "booking": "reserva",
+    "info": "info",
+    "safety": "escalado",
+    "changes": "cambios",
+    "deflection": "deflection",
+}
 
 
 def langfuse_enabled(s: Any) -> bool:
@@ -92,6 +119,84 @@ def traced_openai_client(s: Any):
     except Exception as exc:  # noqa: BLE001
         logger.warning("[LANGFUSE] no se pudo envolver el cliente OpenAI: %s", exc)
         return None
+
+
+def note_turn(**facts: Any) -> None:
+    """Apunta hechos del turno en curso para su resumen (no-op fuera de un turno).
+    Barato y sin dependencias: se puede llamar desde cualquier capa."""
+    current = _TURN_FACTS.get()
+    if current is not None:
+        current.update(facts)
+
+
+def turn_summary(facts: dict, reply: str | None) -> dict:
+    """Resumen de un turno a partir de sus hechos y la respuesta final. Sin PII:
+    solo etiquetas, booleanos y el paso de la reserva."""
+    route = facts.get("route")
+    if facts.get("rag_used"):
+        turn_type = "rag"
+    elif facts.get("greeting"):
+        turn_type = "saludo"
+    else:
+        turn_type = _TURN_TYPE_BY_ROUTE.get(route or "", "otro")
+    return {
+        "turn_type": turn_type,
+        "route": route,
+        "rag_used": bool(facts.get("rag_used")),
+        "language": facts.get("language"),
+        "step": facts.get("step"),
+        "booking_link_sent": bool(reply and BOOKING_LINK in reply),
+        "escalated": bool(facts.get("escalated")),
+        "error": facts.get("error"),
+    }
+
+
+@contextlib.asynccontextmanager
+async def turn_trace(s: Any, conversation_id: str, message: str) -> AsyncIterator[dict]:
+    """Envuelve UN turno: traza raiz `turno` en un contexto de OpenTelemetry limpio,
+    que se cierra siempre (tambien con error o cancelacion), con el resumen del
+    turno y `session_id` = conversacion. Devuelve el dict de hechos del turno; el
+    llamador pone `facts["reply"]` al terminar.
+
+    Sin tracing activo no importa nada y solo recoge los hechos. Si Langfuse
+    falla, el turno sigue sin trazar: la observabilidad nunca rompe el bot."""
+    facts: dict = {}
+    facts_token = _TURN_FACTS.set(facts)
+    span_cm = span = otel_context = otel_token = None
+    if langfuse_enabled(s):
+        try:
+            from langfuse import get_client
+            from opentelemetry import context as otel_context
+
+            otel_token = otel_context.attach(otel_context.Context())  # raiz limpia
+            span_cm = get_client().start_as_current_span(name="turno", input={"message": message})
+            span = span_cm.__enter__()
+            span.update_trace(name="turno", session_id=conversation_id)
+        except Exception as exc:  # noqa: BLE001
+            logger.warning("[LANGFUSE] no se pudo abrir la traza del turno: %s", exc)
+            span_cm = span = None
+    try:
+        yield facts
+    except BaseException as exc:  # incluye CancelledError: queda en el resumen y se relanza
+        facts["error"] = type(exc).__name__
+        raise
+    finally:
+        if span is not None:
+            try:
+                reply = facts.get("reply")
+                summary = turn_summary(facts, reply)
+                tags = [f"tipo:{summary['turn_type']}", f"lang:{summary['language']}"]
+                span.update(output={"reply": reply}, metadata={"turn": summary})
+                span.update_trace(output={"reply": reply}, metadata={"turn": summary}, tags=tags)
+                span_cm.__exit__(None, None, None)
+            except Exception as exc:  # noqa: BLE001
+                logger.warning("[LANGFUSE] no se pudo cerrar la traza del turno: %s", exc)
+        if otel_token is not None:
+            try:
+                otel_context.detach(otel_token)
+            except Exception:  # noqa: BLE001 — un detach fuera de orden no debe romper el turno
+                pass
+        _TURN_FACTS.reset(facts_token)
 
 
 def langfuse_callback_handler(s: Any):

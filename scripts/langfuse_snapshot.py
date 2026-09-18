@@ -39,7 +39,7 @@ import urllib.request
 from collections import Counter, defaultdict
 from datetime import UTC, datetime, timedelta
 
-_FIELDS = "core,basic,time,usage,model"
+_FIELDS = "core,basic,time,usage,model,metadata"
 
 
 def _env(name: str, default: str = "") -> str:
@@ -88,9 +88,22 @@ def _pct(values: list[float], q: float) -> float | None:
     return round(statistics.quantiles(values, n=100, method="inclusive")[int(q) - 1], 3)
 
 
+def turn_facts(observations: list[dict]) -> dict:
+    """Resumen del turno que escribe el bot en la raiz `turno` (m0-1, desde el 2026-09-18).
+    Vacio en trazas anteriores."""
+    for o in observations:
+        meta = o.get("metadata") or {}
+        if o.get("name") == "turno" and isinstance(meta, dict) and isinstance(meta.get("turn"), dict):
+            return meta["turn"]
+    return {}
+
+
 def summarize_turn(observations: list[dict]) -> dict:
     gens = [o for o in observations if o["type"] == "GENERATION"]
     embs = [o for o in observations if o["type"] == "EMBEDDING"]
+    facts = turn_facts(observations)
+    # Tipo detallado: el del resumen del bot; en trazas antiguas, deducido (embedding = RAG).
+    turn_type = facts.get("turn_type") or ("rag" if embs else "reserva")
     starts = [_ts(o["startTime"]) for o in observations if o.get("startTime")]
     ends = [_ts(o["endTime"]) for o in observations if o.get("endTime")]
     nodes: dict[str, float] = {}
@@ -100,7 +113,14 @@ def summarize_turn(observations: list[dict]) -> dict:
             nodes[name] = nodes.get(name, 0.0) + o["latency"]
     return {
         "start": min(starts).isoformat() if starts else None,
-        "type": "rag" if embs else "reserva",
+        # `type` mantiene el corte historico RAG / resto para que las fotos sigan siendo
+        # comparables con la linea base; `turn_type` es el desglose fino.
+        "type": "rag" if turn_type == "rag" else "reserva",
+        "turn_type": turn_type,
+        "route": facts.get("route"),
+        "booking_link_sent": facts.get("booking_link_sent"),
+        "escalated": facts.get("escalated"),
+        "has_summary": bool(facts),
         "latency": (max(ends) - min(starts)).total_seconds() if starts and ends else None,
         "llm_calls": len(gens),
         "embeddings": len(embs),
@@ -167,6 +187,8 @@ def build_snapshot(observations: list[dict], label: str, start: str, end: str, e
         "merged_traces": {"traces": len(merged), "turns": sum(sum(o.get("name") == "router" for o in obs) for obs in merged)},
         "all": aggregate(turns),
         "by_type": {kind: aggregate([t for t in turns if t["type"] == kind]) for kind in ("reserva", "rag")},
+        "by_turn_type": {kind: aggregate([t for t in turns if t["turn_type"] == kind]) for kind in sorted({t["turn_type"] for t in turns})},
+        "turns_with_summary": sum(t["has_summary"] for t in turns),
         "nodes": {
             name: {"n": len(v), "p50": _pct(v, 50), "p95": _pct(v, 95)}
             for name, v in sorted(node_lat.items(), key=lambda kv: -statistics.median(kv[1]))

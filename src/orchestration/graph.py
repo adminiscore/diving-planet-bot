@@ -98,6 +98,9 @@ async def _router_node(state: BotState) -> dict:
     signals = {} if msg_lower.isdigit() else await detect_routing_signals(message, lang=conv.language)
     route = classify_route(conv, message, signals)
     logger.info(f"[GRAPH] conv={conv.conversation_id} route={route}")
+    from src.observability import note_turn
+
+    note_turn(route=route)  # resumen del turno en Langfuse (m0-1)
     return {"signals": signals, "route": route}
 
 

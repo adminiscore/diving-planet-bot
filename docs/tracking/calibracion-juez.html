@@ -1,0 +1,246 @@
+<title>Calibración del juez Coral</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+:root{
+  color-scheme: light;
+  --ground:#f3f6f5; --surface:#fcfdfc; --sunk:#e9efed;
+  --ink:#0e1b1d; --ink-2:#4a5a5c; --muted:#7c8a8b;
+  --line:#d8e1df; --line-strong:#b9c7c4;
+  --accent:#0d6b73; --accent-soft:#d3e8e8;
+  --client:#dde9f8; --client-ink:#123a66;
+  --good:#006300; --good-bg:#e1f3e1; --bad:#b42f2f; --bad-bg:#f9e1e1; --na:#5c5a52; --na-bg:#ecebe6;
+  --font:"Figtree",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme: dark;
+    --ground:#0b1213; --surface:#131c1d; --sunk:#0f1718;
+    --ink:#eef4f3; --ink-2:#b3c2c1; --muted:#7f8f8f;
+    --line:#243234; --line-strong:#34494b;
+    --accent:#4fb3ba; --accent-soft:#16383b;
+    --client:#15284a; --client-ink:#cfe0f7;
+    --good:#3fc43f; --good-bg:#12301a; --bad:#ef7a7a; --bad-bg:#3a1717; --na:#c3c2b7; --na-bg:#2a2a27;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme: dark;
+  --ground:#0b1213; --surface:#131c1d; --sunk:#0f1718;
+  --ink:#eef4f3; --ink-2:#b3c2c1; --muted:#7f8f8f;
+  --line:#243234; --line-strong:#34494b;
+  --accent:#4fb3ba; --accent-soft:#16383b;
+  --client:#15284a; --client-ink:#cfe0f7;
+  --good:#3fc43f; --good-bg:#12301a; --bad:#ef7a7a; --bad-bg:#3a1717; --na:#c3c2b7; --na-bg:#2a2a27;
+}
+*{box-sizing:border-box}
+body{background:var(--ground);color:var(--ink);font-family:var(--font);font-size:15px;line-height:1.5}
+button,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+h1,h2,h3{margin:0;text-wrap:balance}
+p{margin:0}
+.wrap{max-width:1180px;margin:0 auto;padding-inline:20px;padding-block:24px 64px;display:flex;flex-direction:column;gap:20px}
+.eyebrow{font-size:11.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);font-weight:600}
+header.top{display:grid;grid-template-columns:1fr auto;gap:12px 28px;align-items:end;border-bottom:1px solid var(--line);padding-bottom:16px}
+h1{font-size:26px;font-weight:700}
+.lede{color:var(--ink-2);max-width:70ch;margin-top:6px;font-size:14px}
+.progress{display:flex;flex-direction:column;gap:6px;min-width:220px}
+.bar{height:8px;border-radius:4px;background:var(--sunk);overflow:hidden}
+.bar span{display:block;height:100%;background:var(--accent)}
+.num{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.rules{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 16px;font-size:13.5px;color:var(--ink-2)}
+.rules summary{cursor:pointer;font-weight:600;color:var(--ink)}
+.rules ul{margin:8px 0 0;padding-left:18px;display:flex;flex-direction:column;gap:4px}
+.layout{display:grid;grid-template-columns:260px 1fr;gap:20px;align-items:start}
+nav.list{position:sticky;top:calc(env(safe-area-inset-top,0px) + 12px);background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:6px;display:flex;flex-direction:column;gap:2px;max-height:calc(100vh - 40px);overflow:auto}
+nav.list button{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;text-align:left;border:0;background:transparent;border-radius:7px;padding:7px 10px;font-size:13.5px}
+nav.list button:hover{background:var(--sunk)}
+nav.list button[aria-current="true"]{background:var(--accent-soft);color:var(--ink);font-weight:600}
+nav.list .count{font-family:var(--mono);font-size:12px;color:var(--muted)}
+nav.list .done .count{color:var(--good)}
+main{display:flex;flex-direction:column;gap:16px;min-width:0}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px 18px}
+.card-head{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:baseline;margin-bottom:12px}
+.chat{display:flex;flex-direction:column;gap:8px;max-height:560px;overflow:auto;padding-right:4px}
+.msg{max-width:88%;border-radius:10px;padding:8px 11px;font-size:14px;white-space:pre-wrap;word-break:break-word}
+.msg .who{display:block;font-size:11px;letter-spacing:.06em;text-transform:uppercase;font-weight:600;margin-bottom:2px;opacity:.75}
+.msg.client{align-self:flex-end;background:var(--client);color:var(--client-ink)}
+.msg.bot{align-self:flex-start;background:var(--sunk);color:var(--ink)}
+.msg.none{font-style:italic;color:var(--muted)}
+.crit{display:flex;flex-direction:column;gap:10px;padding:14px 0;border-top:1px solid var(--line)}
+.crit:first-of-type{border-top:0;padding-top:0}
+.crit .cid{font-family:var(--mono);font-size:12px;color:var(--muted)}
+.crit .check{font-size:14.5px}
+.choices{display:flex;gap:8px;flex-wrap:wrap}
+.choice{border:1px solid var(--line-strong);background:var(--surface);border-radius:999px;padding:5px 14px;font-size:13.5px;font-weight:600}
+.choice[data-v="cumple"][aria-pressed="true"]{background:var(--good-bg);border-color:var(--good);color:var(--good)}
+.choice[data-v="no_cumple"][aria-pressed="true"]{background:var(--bad-bg);border-color:var(--bad);color:var(--bad)}
+.choice[data-v="no_aplica"][aria-pressed="true"]{background:var(--na-bg);border-color:var(--na);color:var(--na)}
+.note{width:100%;border:1px solid var(--line);background:var(--sunk);border-radius:7px;padding:6px 9px;font-size:13.5px;resize:vertical;min-height:34px}
+.pager{display:flex;justify-content:space-between;gap:10px}
+.btn{border:1px solid var(--line-strong);background:var(--surface);border-radius:7px;padding:7px 14px;font-size:13.5px;font-weight:600}
+.btn:hover{border-color:var(--accent);color:var(--accent)}
+.status{font-size:12.5px;color:var(--muted)}
+.status.err{color:var(--bad)}
+.ro .choice,.ro .note{pointer-events:none;opacity:.7}
+@media (max-width:820px){
+  .layout{grid-template-columns:1fr}
+  nav.list{position:static;max-height:220px}
+  header.top{grid-template-columns:1fr}
+}
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div>
+      <div class="eyebrow">Plan Coral · M0 · golden-set</div>
+      <h1>Calibración del juez</h1>
+      <p class="lede">Conversaciones reales de PRE (ronda golden del 17-sep). Para cada criterio, marca si el bot lo cumple según tu criterio. Tus etiquetas son la referencia con la que medimos a los modelos juez (gpt-5 low y gpt-5-mini).</p>
+    </div>
+    <div class="progress" aria-live="polite">
+      <div class="eyebrow">Tu progreso</div>
+      <div class="bar"><span id="bar" style="width:0%"></span></div>
+      <div class="status"><span class="num" id="done">0</span> de <span class="num" id="total">0</span> veredictos · <span id="save">—</span></div>
+    </div>
+  </header>
+
+  <details class="rules">
+    <summary>Cómo etiquetar (1 minuto)</summary>
+    <ul>
+      <li><b>Cumple</b> / <b>No cumple</b>: juzga solo lo que dice el bot contra el criterio y lo que sabes del negocio.</li>
+      <li><b>No aplica</b>: la conversación no llega a esa situación (por ejemplo, el bot nunca da precio y el criterio es sobre el precio). Si debía llegar y no llegó, es <b>No cumple</b>.</li>
+      <li><b>Repreguntar</b> es volver a pedir un dato que el cliente ya dio; repetir una pregunta que el cliente no contestó no lo es.</li>
+      <li>Los importes, el link de pago y el saludo único los comprueba código: aquí no aparecen.</li>
+      <li>No se muestra lo que opinó ningún modelo, para no condicionarte. La nota es opcional; úsala en los casos dudosos.</li>
+    </ul>
+  </details>
+
+  <div class="layout">
+    <nav class="list" id="list" aria-label="Diálogos"></nav>
+    <main id="main">
+      <div class="card"><p class="status">Cargando conversaciones…</p></div>
+    </main>
+  </div>
+</div>
+
+<script>
+(() => {
+  const CHOICES = [["cumple","Cumple"],["no_cumple","No cumple"],["no_aplica","No aplica"]];
+  const state = { items: [], labels: {}, uid: null, db: null, current: null, readOnly: false };
+  try { state.current = localStorage.getItem("calib-current"); } catch (_) {}
+
+  const $ = s => document.querySelector(s);
+  const el = (tag, attrs = {}, ...kids) => {
+    const n = document.createElement(tag);
+    for (const [k, v] of Object.entries(attrs)) {
+      if (v == null) continue;
+      if (k === "class") n.className = v; else if (k === "text") n.textContent = v;
+      else if (k.startsWith("on")) n.addEventListener(k.slice(2), v); else n.setAttribute(k, v);
+    }
+    for (const kid of kids) if (kid != null) n.append(kid);
+    return n;
+  };
+  const key = (dialogue, crit) => `${dialogue}~${crit}~${state.uid}`;
+  const mine = (dialogue, crit) => state.labels[key(dialogue, crit)];
+  const setSave = (t, err) => { const s = $("#save"); s.textContent = t; s.parentElement.classList.toggle("err", !!err); };
+
+  function progress() {
+    const total = state.items.reduce((n, i) => n + i.criteria.length, 0);
+    const done = state.items.reduce((n, i) => n + i.criteria.filter(c => mine(i.id, c.id)?.label).length, 0);
+    $("#total").textContent = total; $("#done").textContent = done;
+    $("#bar").style.width = total ? (done / total * 100) + "%" : "0%";
+  }
+
+  function renderList() {
+    const list = $("#list"); list.replaceChildren();
+    for (const it of state.items) {
+      const done = it.criteria.filter(c => mine(it.id, c.id)?.label).length;
+      list.append(el("button", {type:"button", class: done === it.criteria.length ? "done" : "", "aria-current": String(it.id === state.current), onclick: () => select(it.id)},
+        el("span", {text: it.id}), el("span", {class:"count", text: `${done}/${it.criteria.length}`})));
+    }
+  }
+
+  function renderMain() {
+    const main = $("#main");
+    const idx = state.items.findIndex(i => i.id === state.current);
+    const it = state.items[idx];
+    if (!it) { main.replaceChildren(el("div", {class:"card"}, el("p", {class:"status", text:"Sin conversaciones cargadas."}))); return; }
+    const focusedNote = document.activeElement?.id?.startsWith("note-") ? document.activeElement.id : null;
+
+    const chat = el("div", {class:"chat"});
+    for (const t of it.turns) {
+      chat.append(el("div", {class:"msg client"}, el("span", {class:"who", text:"Cliente"}), t.client));
+      if (!t.bot.length) chat.append(el("div", {class:"msg bot none"}, "[sin respuesta]"));
+      for (const b of t.bot) chat.append(el("div", {class:"msg bot"}, el("span", {class:"who", text:"Coral"}), b));
+    }
+
+    const crits = el("div", {class:"card"}, el("div", {class:"card-head"}, el("h3", {text:"Criterios"}), el("span", {class:"status", text:"Marca uno por criterio"})));
+    it.criteria.forEach((c, n) => {
+      const cur = mine(it.id, c.id) || {};
+      const choices = el("div", {class:"choices", role:"group", "aria-label": `Veredicto para ${c.id}`});
+      for (const [v, label] of CHOICES) {
+        choices.append(el("button", {type:"button", class:"choice", "data-v": v, "aria-pressed": String(cur.label === v), id: `c-${n}-${v}`,
+          onclick: () => save(it.id, c.id, {label: cur.label === v ? null : v})}, label));
+      }
+      const note = el("textarea", {class:"note", id:`note-${n}`, rows:"1", placeholder:"Nota (opcional)", "aria-label": `Nota para ${c.id}`});
+      note.value = cur.note || "";
+      note.addEventListener("change", () => { if (note.value !== (cur.note || "")) save(it.id, c.id, {note: note.value}); });
+      crits.append(el("div", {class:"crit"},
+        el("span", {class:"cid", text: c.id.replace("global:", "global · ")}),
+        el("p", {class:"check", text: c.check}),
+        choices, note));
+    });
+
+    const pager = el("div", {class:"pager"},
+      el("button", {type:"button", class:"btn", onclick: () => select(state.items[Math.max(0, idx - 1)].id), disabled: idx === 0 ? "" : null}, "← Anterior"),
+      el("button", {type:"button", class:"btn", onclick: () => select(state.items[Math.min(state.items.length - 1, idx + 1)].id), disabled: idx === state.items.length - 1 ? "" : null}, "Siguiente →"));
+
+    main.replaceChildren(
+      el("div", {class:"card"},
+        el("div", {class:"card-head"}, el("h2", {text: it.id, style:"font-size:19px"}), el("span", {class:"status", text:`${it.category} · conversación ${it.conv} · ${idx + 1} de ${state.items.length}`})),
+        chat),
+      crits, pager);
+    if (focusedNote) document.getElementById(focusedNote)?.focus();
+  }
+
+  function select(id) {
+    state.current = id;
+    try { localStorage.setItem("calib-current", id); } catch (_) {}
+    renderList(); renderMain(); window.scrollTo({top: 0});
+  }
+
+  async function save(dialogue, crit, patch) {
+    if (!state.db || !state.uid || state.readOnly) return;
+    const k = key(dialogue, crit);
+    const body = {dialogue, criterion: crit, label: null, note: "", ...(state.labels[k] || {}), ...patch, by: state.uid, at: new Date().toISOString()};
+    state.labels[k] = body; renderList(); renderMain(); progress();
+    setSave("Guardando…");
+    try { await state.db.collection("labels").doc(k).set(body); setSave("Guardado"); }
+    catch (e) {
+      if (e?.code === "invalid_argument") { state.readOnly = true; document.body.classList.add("ro"); setSave("Solo lectura: no puedes etiquetar en esta página.", true); }
+      else setSave("No se pudo guardar; vuelve a marcarlo.", true);
+    }
+  }
+
+  (async () => {
+    const use = n => window.claude?.use ? window.claude.use(n).catch(() => null) : Promise.resolve(null);
+    const [db, user] = await Promise.all([use("db"), use("user")]);
+    if (!db) { $("#main").replaceChildren(el("div", {class:"card"}, el("p", {class:"status err", text:"No se pudo conectar con los datos de la página. Ábrela desde claude.ai con tu cuenta."}))); return; }
+    state.db = db;
+    state.uid = user ? await user.id() : null;
+    if (!state.uid) { state.readOnly = true; document.body.classList.add("ro"); setSave("Inicia sesión para etiquetar.", true); }
+    else if ((await user.can("data.write")) === false) { state.readOnly = true; document.body.classList.add("ro"); setSave("Solo lectura", true); }
+    db.collection("items").orderBy("order").onSnapshot(snap => {
+      state.items = snap.docs.map(d => ({id: d.id, ...d.data()}));
+      if (!state.items.some(i => i.id === state.current)) state.current = state.items[0]?.id ?? null;
+      renderList(); renderMain(); progress();
+    }, () => setSave("Se perdió la conexión; recarga la página.", true));
+    db.collection("labels").onSnapshot(snap => {
+      const active = document.activeElement?.classList?.contains("note");
+      state.labels = Object.fromEntries(snap.docs.map(d => [d.id, d.data()]));
+      renderList(); if (!active) renderMain(); progress();
+    }, () => setSave("Se perdió la conexión; recarga la página.", true));
+  })();
+})();
+</script>
