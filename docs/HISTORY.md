@@ -1,6 +1,11 @@
 History
 =======
 
+0.29.2 - (2026-09-18)
+----------------------
+* **m0-2 cerrada sin duplicar herramientas**: el `battery_latency.py` que preveía el plan lo cubre `scripts/run_synthetic_pre --sample rapida` + `scripts/langfuse_snapshot --from-run`. La muestra rápida son 7 diálogos del golden-set (12 turnos, ~2 min), uno por cada camino del grafo, elegidos mirando en Langfuse por dónde pasó cada turno de la ronda golden: saludo y reserva completa con link (`booking`), dos preguntas que resuelve el RAG (`booking` con embedding — las preguntas de información NO pasan por el agente `info`), escalado (`safety`), cambios (`changes`) y "¿eres un bot?" (`deflection`). Para medir antes/después de un cambio; no se guarda en la línea temporal de la página.
+* **Hallazgo: PRE no envía trazas a Langfuse desde el 17-sep** (última traza 10:40 UTC; la muestra rápida de hoy, 0 trazas). La ingesta de Langfuse funciona (acepta una traza de prueba con las mismas claves) y el deploy muestra las claves en el contenedor, así que el fallo está en el proceso del bot. El job `deploy-pre` imprime ahora los logs de Langfuse/OpenTelemetry del bot y envía una traza de prueba DESDE el contenedor, para diagnosticarlo sin SSH. Bloquea la medición de latencia (m0-1).
+
 0.29.2 - (2026-09-17)
 ----------------------
 * **Línea base de CALIDAD congelada (plan maestro, M0 m0-7).** Cierra lo que faltaba de M0: eval-set

@@ -192,4 +192,13 @@ jobs:
           docker exec dp-pre-bot python -c 'from src.agents.conversational_core import _is_greeting_only; print("GREETING_FIX_LIVE=", _is_greeting_only("hola que tal?"))' 2>&1 || echo "GREETING_FIX_LIVE= ERROR"
           echo "=== LANGFUSE: estado en dp-pre-bot ==="
           docker exec dp-pre-bot sh -c "env | grep -iE '^LANGFUSE_' | sed 's/=.*/=SET/'" || echo "(sin LANGFUSE_* en el env)"
+          # Diagnostico de trazas (2026-09-18: PRE dejo de enviar trazas sin cambio de claves).
+          # 1) lo que el bot logueo de Langfuse/OpenTelemetry al arrancar y exportar;
+          # 2) una traza de prueba DESDE DENTRO del contenedor, con el mismo init que el bot:
+          #    si llega a Langfuse (environment=pre, nombre deploy-diagnostico), la red y las
+          #    claves estan bien y el problema esta en el proceso del bot.
+          echo "=== LANGFUSE: logs del bot ==="
+          docker logs dp-pre-bot 2>&1 | grep -iE "langfuse|opentelemetry|otel|exporter" | tail -20 || true
+          echo "=== LANGFUSE: traza de prueba desde el contenedor ==="
+          docker exec dp-pre-bot python -c 'from src.config import settings; from src import observability as o; print("LANGFUSE_ENABLED=", o.langfuse_enabled(settings), "APP_ENV=", settings.app_env); from langfuse import get_client; c = get_client(); print("LANGFUSE_AUTH=", c.auth_check()); s = c.start_span(name="deploy-diagnostico"); s.end(); c.flush(); print("LANGFUSE_TEST_SPAN= enviado")' 2>&1 | tail -8 || echo "LANGFUSE_TEST_SPAN= ERROR"
           REMOTE

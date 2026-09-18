@@ -15,6 +15,12 @@ Uso (manda trafico real a PRE: gasta LLM y cuota de Langfuse; va de uno en uno a
 
     ENV_FILE=.env.dev python -m scripts.run_synthetic_pre --name m0 --sample m0
     ENV_FILE=.env.dev python -m scripts.run_synthetic_pre --name golden --sample golden   # luego scripts.judge_golden_set
+    ENV_FILE=.env.dev python -m scripts.run_synthetic_pre --name rapida --sample rapida   # latencia rapida (m0-2)
+
+La muestra `rapida` sustituye al `battery_latency.py` que preveia el plan (m0-2): con
+`langfuse_snapshot --from-run` da p50/p95 por turno y por nodo en ~3 min. Sirve para comparar
+antes/despues de un cambio; no se guarda en la linea temporal de la pagina (mezclaria una
+muestra de 12 turnos con las rondas completas).
     ENV_FILE=.env.dev python -m scripts.run_synthetic_pre --name lote7 --batches 7
     ENV_FILE=.env.dev python -m scripts.run_synthetic_pre --name todo --all [--dry]
 
@@ -60,9 +66,28 @@ def golden_cases(batches: dict) -> list[tuple[str, str, list[str]]]:
     return [("golden", d["id"], d.get("turns") or by_tag[d["source"]["tag"]]) for d in golden["dialogues"]]
 
 
+# Muestra RAPIDA (m0-2, 2026-09-18): un dialogo del golden-set por cada camino del grafo, para
+# medir latencia antes/despues de un cambio en ~3 min sin lanzar la ronda completa. Elegidos
+# mirando en Langfuse por donde paso cada turno de la ronda golden del 2026-09-17: saludo y
+# reserva completa con link (booking), dos preguntas que resuelve el RAG (booking con
+# embedding), escalado (safety), cambios (changes) y "¿eres un bot?" (deflection).
+QUICK_IDS = (
+    "saludo-cortesia",
+    "reserva-solo-link",
+    "edad-minima-open-water",
+    "punto-encuentro",
+    "embarazo",
+    "cancelacion-indirecta",
+    "es-un-bot",
+)
+
+
 def select_cases(batches: dict, sample: str | None, only: list[str] | None) -> list[tuple[str, str, list[str]]]:
     if sample == "golden":
         return golden_cases(batches)
+    if sample == "rapida":
+        by_id = {case[1]: case for case in golden_cases(batches)}
+        return [by_id[i] for i in QUICK_IDS]
     if only:
         return [(b, tag, turns) for b in only for tag, turns in batches[b]]
     if sample == "m0":
@@ -142,7 +167,11 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--name", required=True, help="nombre corto de la ejecucion (va en el fichero)")
     group = parser.add_mutually_exclusive_group(required=True)
-    group.add_argument("--sample", choices=["m0", "golden"], help="m0 = muestra de latencia; golden = dialogos del golden-set")
+    group.add_argument(
+        "--sample",
+        choices=["m0", "golden", "rapida"],
+        help="m0 = muestra de latencia (108 conv.); golden = golden-set (41); rapida = 1 por camino del grafo (7, ~3 min)",
+    )
     group.add_argument("--batches", help="lotes separados por coma, p. ej. 5,7")
     group.add_argument("--all", action="store_true")
     parser.add_argument("--ids", help="solo estas etiquetas/dialogos, separados por coma (p. ej. relanzar parte del golden-set)")

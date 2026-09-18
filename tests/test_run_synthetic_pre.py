@@ -18,3 +18,13 @@ def test_m0_sample_is_the_baseline_selection():
 def test_dry_run_sends_nothing(capsys):
     assert main(["--name", "prueba", "--batches", "7", "--dry"]) == 0
     assert "18 conversaciones, 45 turnos" in capsys.readouterr().out
+
+
+def test_quick_sample_is_one_golden_dialogue_per_graph_path():
+    from scripts.run_synthetic_pre import QUICK_IDS
+
+    cases = select_cases(load_batches(), "rapida", None)
+    assert [tag for _, tag, _ in cases] == list(QUICK_IDS)
+    golden = {tag: turns for _, tag, turns in select_cases(load_batches(), "golden", None)}
+    assert all(turns == golden[tag] for _, tag, turns in cases)
+    assert sum(len(t) for _, _, t in cases) <= 15
