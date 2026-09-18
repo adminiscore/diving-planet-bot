@@ -11,6 +11,17 @@ Read this file before changing code in the Diving Planet Bot. For a quick versio
 
 ## Current branch and workflow
 
+### ✅ 2026-09-18 (Gadea) — m0-2 HECHA sin duplicar herramientas
+
+- `battery_latency.py` NO se crea: lo cubre `python -m scripts.run_synthetic_pre --name rapida --sample rapida`
+  (7 diálogos del golden-set, 12 turnos, ~2 min, uno por camino del grafo) + `scripts.langfuse_snapshot --from-run`.
+  Para comparar latencia antes/después de un cambio (L1); no se guarda en la línea temporal de la página.
+- **Las preguntas de información NO pasan por el agente `info`**: van por `booking`, que llama al RAG por dentro
+  (se ve por el embedding). Por eso hoy el tipo de turno se deduce; lo resolverá el resumen por turno de m0-1.
+- **Retraso de ingesta de Langfuse**: las trazas tardan varios minutos en ser consultables. Si la foto sale vacía
+  o corta, el script lo avisa: esperar 5-10 min y repetir. (Hubo una falsa alarma de "PRE no traza" por esto.)
+- El deploy imprime ahora el estado de Langfuse dentro del contenedor (logs + tracing activo + claves válidas).
+
 ### ✅ 2026-09-17 (tarde, Gonzalo) — m0-7 HECHA: línea base de CALIDAD congelada
 
 Cierra lo que faltaba de M0 en calidad (latencia y golden-set ya estaban). **Cero cambios de

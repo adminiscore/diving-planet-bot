@@ -69,3 +69,12 @@ def test_from_run_window_and_client_side_summary():
     assert summary["no_reply"] == 1
     assert summary["multi_bubble"] == 1
     assert summary["latency_max"] == 7.0
+
+
+def test_traces_without_router_are_not_turns():
+    observations = [
+        _obs("turn", "CHAIN", "router", "2026-09-18T08:00:00Z", "2026-09-18T08:00:01Z", 1.0),
+        _obs("manual", "SPAN", "deploy-diagnostico", "2026-09-18T08:00:00Z", "2026-09-18T08:00:00Z", 0.0),
+    ]
+    snap = build_snapshot(observations, "prueba", "2026-09-18T00:00:00Z", "2026-09-19T00:00:00Z", "staging")
+    assert snap["all"]["turns"] == 1

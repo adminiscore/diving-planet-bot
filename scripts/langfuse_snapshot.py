@@ -134,13 +134,14 @@ def build_snapshot(observations: list[dict], label: str, start: str, end: str, e
     by_trace: dict[str, list[dict]] = defaultdict(list)
     for o in observations:
         by_trace[o["traceId"]].append(o)
-    # Una traza con varios `router` junta varios turnos (contexto de traza que se queda
-    # pegado entre turnos, visto en PRE el 2026-09-17): no es un turno, se cuenta aparte.
-    merged = [obs for obs in by_trace.values() if sum(o.get("name") == "router" for o in obs) > 1]
-    turns = sorted(
-        (summarize_turn(obs) for obs in by_trace.values() if sum(o.get("name") == "router" for o in obs) <= 1),
-        key=lambda t: t["start"] or "",
-    )
+    # Un turno del bot es una traza con exactamente un `router`. Con varios, la traza junta
+    # varios turnos (contexto de traza que se queda pegado, visto en PRE el 2026-09-17): se
+    # cuenta aparte. Sin router no es un turno del bot (p. ej. una traza manual): se ignora.
+    def routers(obs: list[dict]) -> int:
+        return sum(o.get("name") == "router" for o in obs)
+
+    merged = [obs for obs in by_trace.values() if routers(obs) > 1]
+    turns = sorted((summarize_turn(obs) for obs in by_trace.values() if routers(obs) == 1), key=lambda t: t["start"] or "")
 
     node_lat: dict[str, list[float]] = defaultdict(list)
     models: Counter = Counter()
@@ -229,6 +230,16 @@ def main(argv: list[str] | None = None) -> int:
     if run_records is not None:
         snapshot["run_file"] = args.from_run.replace("\\", "/")
         snapshot["client_latency"] = client_side(run_records)
+        # Langfuse tarda unos minutos en dejar consultables las trazas nuevas: una foto sacada
+        # justo al acabar la ejecucion sale vacia o a medias (2026-09-18 salio 0 de 12).
+        seen, sent = snapshot["all"]["turns"] + snapshot["merged_traces"]["turns"], len(run_records)
+        if seen < 0.9 * sent:
+            snapshot["incomplete"] = {"langfuse_turns": seen, "client_turns": sent}
+            print(
+                f"AVISO: Langfuse solo tiene {seen} de {sent} turnos de la ejecucion. Si acaba de terminar, "
+                "espera 5-10 minutos (retraso de ingesta) y repite la foto.",
+                file=sys.stderr,
+            )
     text = json.dumps(snapshot, ensure_ascii=False, indent=2)
     if args.out:
         with open(args.out, "w", encoding="utf-8") as fh:
