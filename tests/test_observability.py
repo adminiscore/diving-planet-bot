@@ -158,8 +158,8 @@ def test_turn_trace_opens_clean_root_with_session_and_summary(monkeypatch):
 
 
 def test_turn_trace_closes_and_restores_context_when_the_turn_is_cancelled(monkeypatch):
-    """El fallo real (2026-09-17): un turno cortado dejaba su traza abierta y los
-    siguientes se colgaban de ella. Ahora se cierra y se restaura el contexto igual."""
+    """Aunque el turno se corte, la traza se cierra y se restaura el contexto: el
+    turno siguiente no puede heredar su id de traza (fallo visto en PRE el 2026-09-17)."""
     log = _install_fake_langfuse(monkeypatch)
     s = _settings(langfuse_public_key="pk", langfuse_secret_key="sk")
 

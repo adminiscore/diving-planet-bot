@@ -1,6 +1,13 @@
 History
 =======
 
+0.29.4 - (2026-09-18)
+----------------------
+* **m0-1: una traza raíz `turno` por mensaje, con resumen del turno** (`observability.turn_trace`, abierta en `supervisor.route_message`). Cada turno arranca en un contexto de OpenTelemetry LIMPIO y su traza se cierra siempre (también con error o cancelación). Arregla la fuga vista el 17-sep: una traza de PRE juntó 8 turnos en 50 min porque el contexto de traza de un turno se quedaba como "actual" en la tarea de larga duración que procesa los mensajes y los siguientes heredaban su id de traza. (Nota: en Langfuse la raíz sin hora de fin es el registro de la TRAZA, no un span abierto; cada traza tenía 4 porque 4 turnos compartían id.)
+* **Resumen del turno** en metadata y tags de la traza: agente, tipo de turno (`saludo`, `reserva`, `rag`, `escalado`, `cambios`, `deflection`), RAG usado, idioma, paso, link de pago enviado, escalado y error; `session_id` = conversación (Langfuse agrupa los turnos por conversación: base para m0-5). El router apunta la ruta y `rag_answer` que el turno lo resolvió el RAG (`note_turn`): las preguntas de información van por el agente `booking`, no por `info`.
+* `langfuse_snapshot` lee el tipo del resumen (`by_turn_type`) y mantiene el corte histórico RAG / resto en `by_type`, comparable con la línea base. Verificado en PRE con la muestra rápida: 12/12 turnos, cada uno en su traza con una sola raíz y su resumen (reserva p50 3,2 s · RAG 6,0 s · saludo 5,2 s · escalado 0,8 s · cambios 0,6 s · deflection 1,1 s). La línea base del 17-sep no estaba distorsionada (0 trazas sin router en su ventana).
+* `docs/tracking/`: código fuente de las páginas Plan Coral y de calibración del juez (antes solo en un scratchpad temporal), con cómo republicarlas sin perder datos.
+
 0.29.3 - (2026-09-18)
 ----------------------
 * **m0-2 cerrada sin duplicar herramientas**: el `battery_latency.py` que preveía el plan lo cubre `scripts/run_synthetic_pre --sample rapida` + `scripts/langfuse_snapshot --from-run`. La muestra rápida son 7 diálogos del golden-set (12 turnos, ~2 min), uno por cada camino del grafo, elegidos mirando en Langfuse por dónde pasó cada turno de la ronda golden: saludo y reserva completa con link (`booking`), dos preguntas que resuelve el RAG (`booking` con embedding — las preguntas de información NO pasan por el agente `info`), escalado (`safety`), cambios (`changes`) y "¿eres un bot?" (`deflection`). Para medir antes/después de un cambio; no se guarda en la línea temporal de la página.

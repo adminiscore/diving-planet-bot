@@ -11,6 +11,16 @@ Read this file before changing code in the Diving Planet Bot. For a quick versio
 
 ## Current branch and workflow
 
+### ✅ 2026-09-18 (Gadea) — m0-1 HECHA: una traza por turno con su resumen
+
+- Cada mensaje = una traza raíz `turno` en Langfuse (contexto limpio, se cierra siempre). Se acabó la traza que
+  juntaba varios turnos. Metadata `turn`: `turn_type` (saludo/reserva/rag/escalado/cambios/deflection), `route`,
+  `rag_used`, `language`, `step`, `booking_link_sent`, `escalated`, `error`; `session_id` = conversación.
+- Para añadir un dato al resumen desde cualquier capa: `from src.observability import note_turn; note_turn(clave=valor)`.
+- `langfuse_snapshot` da `by_turn_type` (desglose fino) y conserva `by_type` (RAG/resto) comparable con la base.
+- **Siguiente de M0: m0-5** (métricas de negocio: embudo, escalado, % fallback) sobre este resumen y las sesiones; y
+  **m0-4** (tráfico real, necesita SSH).
+
 ### ✅ 2026-09-18 (Gadea) — m0-2 HECHA sin duplicar herramientas
 
 - `battery_latency.py` NO se crea: lo cubre `python -m scripts.run_synthetic_pre --name rapida --sample rapida`

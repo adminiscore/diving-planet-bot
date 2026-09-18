@@ -19,7 +19,8 @@
 >   `docs/robustness/progress-log.md` (entrada 2026-09-17).
 > - 🟡 m0-4 datos del golden-set: sintéticos hechos; falta tráfico real (harvest).
 > - ✅ m0-2 cubierta por `run_synthetic_pre --sample rapida` + `langfuse_snapshot` (2026-09-18, sin script nuevo).
-> - ⏳ m0-1 / m0-5 Langfuse (resumen por turno, negocio, traza que junta turnos).
+> - ✅ m0-1 una traza por turno con resumen (tipo, ruta, RAG, link, escalado; sesión = conversación) (2026-09-18).
+> - ⏳ m0-5 métricas de negocio en Langfuse (embudo, escalado, % fallback).
 > - 10 fallos del bot del golden-set como tareas S4-6..S4-16 (varios encajan en U3).
 
 ---

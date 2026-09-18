@@ -8,9 +8,10 @@ margen; ver `docs/robustness/progress-log.md` "Tarea 8".
   `supervisor.route_message`): todo lo del turno cuelga de ella y lleva un
   RESUMEN del turno en la metadata (agente, tipo de turno, RAG, idioma, paso,
   link de pago, escalado, error) y `session_id` = conversación. Arranca en un
-  contexto de OpenTelemetry LIMPIO y se cierra siempre: antes, un turno cortado a
-  medias dejaba su span abierto como "actual" y los turnos siguientes se colgaban
-  de él (una traza de PRE juntó 8 turnos en 50 min el 2026-09-17).
+  contexto de OpenTelemetry LIMPIO y se cierra siempre: antes, el contexto de
+  traza de un turno podía quedarse como "actual" en la tarea de larga duración
+  que procesa los mensajes, y los turnos siguientes heredaban su id de traza (una
+  traza de PRE juntó 8 turnos en 50 min el 2026-09-17).
 - El **grafo LangGraph** (nodos + latencia/turno) vía `langfuse.langchain.CallbackHandler`,
   pasado como callback en `graph.run_turn_via_graph`.
 - **Cada llamada LLM** (chat + embeddings) vía la integración drop-in
