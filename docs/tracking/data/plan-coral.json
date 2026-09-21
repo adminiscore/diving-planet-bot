@@ -1,13 +1,20 @@
 {
- "exported_at": "2026-09-21T13:47:10+00:00",
+ "exported_at": "2026-09-21T15:22:40+00:00",
  "source": "https://claude.ai/artifact/XiGd3kguTNwwqTnH7mQwgi",
  "about": "Copia de la base de datos de la página Plan Coral (fases, tareas, fotos, capas, bitácora). La página la usa como respaldo de solo lectura si no puede conectar con su base de datos; en el repo sirve de historial versionado.",
  "collections": {
   "phases": [
    {
+    "id": "G",
+    "code": "G",
+    "goal": "Un examen que se parezca a la realidad: chats reales minados, cobertura medida, simulador de usuario y bucle producción→regresión. G1+G2 bloquean L1; m0-4 sigue en paralelo.",
+    "name": "Golden-set robusto con casos reales",
+    "order": 1.5
+   },
+   {
     "id": "L1",
     "code": "L1",
-    "goal": "Quitar trabajo repetido y en serie sin cambiar lo que responde el bot.",
+    "goal": "Quitar trabajo repetido y en serie sin cambiar lo que responde el bot. Empieza cuando G1+G2 estén hechas (examen robusto) y con la línea base de m0-4.",
     "name": "Mejoras de latencia baratas",
     "order": 2
    },
@@ -55,6 +62,60 @@
    }
   ],
   "tasks": [
+   {
+    "id": "g-1",
+    "note": "40 chats reales de WhatsApp (107 ejemplos, 65 ES / 42 EN). Limpiar (34 vacíos, 26 con texto del centro mezclado), anonimizar bien (nombres, enlaces, correos), trocear en turnos → ~25-30 diálogos. Criterios propuestos por LLM desde la respuesta del equipo + KB actual (manda la KB), revisión humana. Split por chat de origen: los que pasan al golden salen del few-shot del RAG (evita contaminación).",
+    "order": 1,
+    "owner": "—",
+    "phase": "G",
+    "status": "pendiente",
+    "title": "G1 · Minar los chats reales de conversations.json → diálogos del golden"
+   },
+   {
+    "id": "g-2",
+    "note": "Etiquetar cada caso: intención × actividad × idioma × perfil × dificultad. Golden proporcional a la distribución real (certificación, islas, disponibilidad, precios…) + casos críticos (seguridad, inyección, quejas). Huecos en la página. Partir en core (rápido) y full. Cierra con ronda del juez = línea base v7.",
+    "order": 2,
+    "owner": "—",
+    "phase": "G",
+    "status": "pendiente",
+    "title": "G2 · Mapa de cobertura y golden core/full"
+   },
+   {
+    "id": "g-3",
+    "note": "Personas sacadas de los chats reales, con objetivo y datos ocultos que el bot debe preguntar. Contra PRE por el inbox sintético; juez actual + criterios genéricos (logra el objetivo, no inventa, no repregunta). Fallos = candidatos al golden con revisión humana. En serie por RPD. Después de G1.",
+    "order": 3,
+    "owner": "—",
+    "phase": "G",
+    "status": "pendiente",
+    "title": "G3 · Simulador de usuario con LLM (modo de run_synthetic_pre)"
+   },
+   {
+    "id": "g-4",
+    "note": "Conversación cosechada (m0-4 ahora, PRO después) que falla → caso source=prod en el golden. Regla: ningún fallo arreglado sin su caso de regresión (como s4-17..19). Continuo.",
+    "order": 4,
+    "owner": "—",
+    "phase": "G",
+    "status": "pendiente",
+    "title": "G4 · Bucle producción → regresión"
+   },
+   {
+    "id": "g-5",
+    "note": "p95 con N usuarios a la vez y errores 429. Mide volumen, no calidad: se hace junto a R6.",
+    "order": 5,
+    "owner": "—",
+    "phase": "G",
+    "status": "pendiente",
+    "title": "G5 · Pruebas de carga aparte (Locust/k6)"
+   },
+   {
+    "id": "g-6",
+    "note": "Tareas libres, justo antes de entregar (Q5). Sus conversaciones entran por G4.",
+    "order": 6,
+    "owner": "—",
+    "phase": "G",
+    "status": "pendiente",
+    "title": "G6 · Testers reales (20-50) antes de PRO"
+   },
    {
     "id": "l1-1",
     "note": "_verify_grounding_with_retry, rag_agent.py",
@@ -159,13 +220,13 @@
    },
    {
     "id": "m0-4",
-    "note": "Hecho: 41 diálogos del golden-set salen de los 8 lotes sintéticos (grupos, cortesías, fuera de tema, inyección). Falta: añadir tráfico real curado con harvest_cutover_logs.",
+    "note": "En curso y EN PARALELO con la fase G (m0-4 mide con tráfico real; G construye el examen). Primeras 2 de Gadea (21-sep, conv 1163 y 1164): las dos fallan al seguir hablando tras el link (S4-17..19) y ya están en el golden v6 como manual-acompanante-mayor y manual-duracion-curso. Siguen haciendo falta más; idea: usar los escenarios minados en G1 como guion, reescritos con palabras propias. Lo cosechado con harvest_cutover_logs entra en el golden por G4.",
     "order": 4,
     "owner": "Gadea",
     "phase": "M0",
     "status": "en_curso",
     "title": "Datos sintéticos para el golden-set (grupos mixtos, cortesías, off-topic, inyección)",
-    "updatedAt": "2026-09-17T14:30:00Z"
+    "updatedAt": "2026-09-21T16:00:00Z"
    },
    {
     "id": "m0-5",
@@ -322,6 +383,36 @@
     "phase": "S4",
     "status": "pendiente",
     "title": "Mejora: empatía al pasar una queja a staff"
+   },
+   {
+    "id": "s4-17",
+    "createdAt": "2026-09-21T14:20:00Z",
+    "note": "Conv 1164 (Gadea, widget, 21-sep). El atajo de precios del RAG (_PRICE_QUESTION en rag_agent.py) toma cualquier 'cuánto' suelto como pregunta de precio. Arreglar el mecanismo (entender la pregunta, U3), no con otro patrón. Golden-set: manual-duracion-curso.",
+    "order": 17,
+    "owner": "—",
+    "phase": "S4",
+    "status": "pendiente",
+    "title": "'¿Cuánto tiempo dura?' responde con la lista de precios"
+   },
+   {
+    "id": "s4-18",
+    "createdAt": "2026-09-21T14:20:00Z",
+    "note": "Conv 1164 + golden-set (reserva-ingles 'You told me: certified diving'). Una referencia a algo dicho no es una petición de recordatorio; en 1164 se repitió en bucle. Golden-set: manual-duracion-curso.",
+    "order": 18,
+    "owner": "—",
+    "phase": "S4",
+    "status": "pendiente",
+    "title": "'El curso que te he pedido…' dispara el recall ('Me habías dicho…') en vez de responder"
+   },
+   {
+    "id": "s4-19",
+    "createdAt": "2026-09-21T14:20:00Z",
+    "note": "Conv 1163 (Gadea, widget). El router marcó adaptive_diving_topic con 'mi madre no puede hacer deporte, es mayor' y el contexto DIVE TO HEAL quedó pegado: 'ofréceme un plan de acompañante' también fue a info. 7-8 llamadas LLM por turno para un fallback. Debe ofrecer acompañante. Golden-set: manual-acompanante-mayor.",
+    "order": 19,
+    "owner": "—",
+    "phase": "S4",
+    "status": "pendiente",
+    "title": "Acompañante mayor leído como buceo adaptado (DIVE TO HEAL): va a info y acaba en 'no lo tengo'"
    },
    {
     "id": "s4-2",
@@ -1103,10 +1194,28 @@
     "text": "18-sep (Gadea): m0-2 hecha. En vez de crear battery_latency.py, la muestra rápida (run_synthetic_pre --sample rapida + langfuse_snapshot) da p50/p95 por turno y por nodo en ~2 min; prueba: p50 3,1 s / p95 7,0 s. Descubierto: las preguntas de información van por el agente booking (que llama al RAG), no por info. Falsa alarma aclarada: Langfuse tarda unos minutos en dejar ver las trazas nuevas; la foto ahora avisa si le faltan turnos. El deploy muestra el estado de Langfuse dentro del contenedor."
    },
    {
+    "id": "l-0921-fase-g",
+    "at": "2026-09-21T16:00:00Z",
+    "byLabel": "Gadea (con Claude)",
+    "text": "21-sep: nueva fase G (golden-set robusto) entre M0 y L1. Revisado conversations.json: 40 chats reales de WhatsApp (107 ejemplos), mucho ruido, anonimización floja y ya usados como few-shot del RAG (riesgo de contaminación → split por chat de origen). Tareas G1 minar chats, G2 mapa de cobertura, G3 simulador de usuario LLM, G4 bucle producción→regresión, G5 carga (con R6), G6 testers reales (antes de PRO). G1+G2 bloquean L1; m0-4 sigue en paralelo y alimenta G4."
+   },
+   {
+    "id": "l-0921-handoff",
+    "at": "2026-09-21T15:00:00Z",
+    "byLabel": "Gadea",
+    "text": "21-sep (Gadea → Álvaro): lo dejo aquí. M0 cerrada salvo m0-4. Decisión pendiente antes de L1: m0-4 necesita tráfico real y PRE no tiene clientes, así que la idea es que el equipo meta conversaciones a mano por el widget (naturales y variadas: reservas, dudas, grupos, cambios, quejas; espaciadas por el rate-limit) y luego sacar los logs por SSH con harvest_cutover_logs --summary. Con eso: si hay material útil se cura al golden-set y se re-congela la línea base; si no, m0-4 se marca diferida con la cifra y se pasa a L1. Recordatorio para L1: comparar latencia antes/después el MISMO día."
+   },
+   {
     "id": "l-0921-m0-5",
     "at": "2026-09-21T14:00:00Z",
     "byLabel": "Gadea",
     "text": "21-sep (Gadea): m0-5 hecha y M0 cerrada salvo m0-4 (tráfico real, necesita SSH y PRE aún no tiene clientes). Métricas de negocio por conversación en cada foto y panel 'Negocio' en la página. Línea base con el golden-set (41 conv., 124 turnos): eligen actividad 22 %, carrito con personas 22 %, reciben link de pago 19,5 %, escalado 14,6 %, respuestas 'no lo sé' 1,6 % de los turnos (es tráfico sintético: refleja el guion de las pruebas). Arreglado de paso: Langfuse recortaba el resumen anidado del turno (~200 caracteres), ahora va en claves planas. Aviso para L1: ese día la API de OpenAI iba ~25 % más lenta (todos los nodos con LLM igual de más lentos, mismas llamadas y tokens), así que las comparaciones de latencia deben hacerse antes/después el MISMO día."
+   },
+   {
+    "id": "l-0921-manual",
+    "at": "2026-09-21T14:20:00Z",
+    "byLabel": "Gadea",
+    "text": "21-sep (Gadea): primeras conversaciones reales a mano por el widget (m0-4) y ya dan fruto: las 2 fallan cuando el cliente sigue hablando después del link, algo que los guiones sintéticos casi no cubren. (1) '¿Cuánto tiempo dura?' → lista de precios (el atajo de precios toma 'cuánto' suelto). (2) 'El curso que te he pedido…' → 'Me habías dicho…' en bucle (el recall salta con una referencia). (3) 'Mi madre es mayor y no puede hacer deporte' → el router lo lee como buceo adaptado, el contexto se queda pegado y todo va a info/RAG con 'no lo tengo' (7-8 llamadas LLM). Diagnosticado con las trazas de m0-1. Tareas S4-17..19 (sin responsable) y 2 diálogos nuevos en el golden-set v6."
    }
   ]
  }

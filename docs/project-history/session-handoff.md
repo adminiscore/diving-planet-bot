@@ -11,6 +11,20 @@ Read this file before changing code in the Diving Planet Bot. For a quick versio
 
 ## Current branch and workflow
 
+### 🧭 2026-09-21 tarde (Gadea) — nueva fase G (golden-set robusto) entre M0 y L1
+
+- Plan en `docs/plan-maestro-final.md` (Fase G) y en la página Plan Coral (tareas g-1..g-6, sin dueño).
+- **Orden:** G1 (minar `data/knowledge_base/conversations.json`) + G2 (mapa de cobertura, golden core/full)
+  **bloquean L1**. Después G3 (simulador de usuario LLM en `run_synthetic_pre`); G4 (producción→regresión) continuo;
+  G5 carga con R6; G6 testers reales antes de PRO.
+- **m0-4 sigue en paralelo:** mide con tráfico real; lo cosechado con harvest entra en el golden por G4. Para el
+  widget se pueden usar los escenarios de G1 como guion, reescritos con palabras propias (no literal).
+- **Ojo al minar:** conversations.json son 40 chats reales troceados (107 ejemplos); 34 vacíos, 26 con texto del
+  centro en el lado cliente, anonimización floja (nombres, enlaces) y **ya son few-shot del RAG** → los chats que
+  pasen al golden salen del few-shot (split por chat de origen). Referencia de criterios = KB actual, no la respuesta
+  antigua del equipo (p. ej. el descuento colombiano ya no existe).
+- Siguiente paso: script de minado de G1.
+
 ### ✅ 2026-09-21 (Gadea) — m0-5 HECHA: M0 cerrada salvo m0-4
 
 - Cada foto de `langfuse_snapshot` trae `business`: embudo por conversación (hablan → eligen actividad → carrito

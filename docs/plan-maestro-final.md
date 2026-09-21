@@ -145,7 +145,7 @@ Cada fase se abre y se cierra con la **misma foto**, comparando *lo que teníamo
 
 ---
 
-## PARTE 4 — Roadmap (orden: medir primero → wins baratos → fusión → corte)
+## PARTE 4 — Roadmap (orden: medir primero → examen robusto → wins baratos → fusión → corte)
 
 ### Fase M0 — Instrumentación y línea base · **BLOQUEANTE, antes de tocar nada**
 - Enriquecer la traza de Langfuse: spans por nodo del grafo (ya hay `CallbackHandler`) + latencia por
@@ -161,6 +161,39 @@ Cada fase se abre y se cierra con la **misma foto**, comparando *lo que teníamo
 - Congelar baseline de calidad (eval-set + baterías + RAG + golden-set) y de latencia/negocio.
 - **DoD:** Langfuse muestra, por tipo de turno, nº de llamadas, p50/p95 por nodo y el embudo; baseline
   guardada; sin cambios de conducta. *(Álvaro instrumentación · Gadea golden-set/juez · Gonzalo battery_latency)*
+
+### Fase G — Golden-set robusto con casos reales · **G1+G2 bloquean L1** · *añadida 2026-09-21*
+Por qué: el golden-set v6 (43 diálogos) es sintético y apenas cubre lo que más pregunta el cliente real
+(islas/ubicación, formularios, fotos). Sin un examen que se parezca a la realidad, las mejoras de L1 en
+adelante no se pueden dar por buenas. **m0-4 sigue en paralelo**: m0-4 *mide* (línea base con tráfico real
+por el widget), G *construye el examen*; lo que cosecha m0-4 entra en G4.
+
+Punto de partida, `data/knowledge_base/conversations.json` (revisado 21-sep): 107 ejemplos = 40 chats
+reales de WhatsApp troceados + 10 resumidos a mano; 65 ES / 42 EN; temas reales: certificación 70,
+islas/ubicación 52, disponibilidad 26, precios 24, descuento colombiano 19, equipo, pago, punto de
+encuentro, formularios, fotos. Problemas: 34 importados vacíos ("Hola buenas tardes"/bienvenida), 26 con
+texto del centro mezclado en el lado cliente, anonimización floja (quedan nombres, dominios, enlaces),
+respuestas desfasadas (descuento colombiano quitado en v0.18.0) y **contaminación**: el RAG ya los usa como
+few-shot (`_select_fewshot_examples`), así que tal cual inflarían la nota.
+
+1. **G1 — Minar los chats reales:** script que limpia, separa cliente/centro, trocea en turnos, anonimiza
+   (nombres, enlaces, correos) y descarta vacíos → ~25-30 diálogos nuevos. Criterios propuestos por LLM a
+   partir de la respuesta del equipo **+ KB actual** (la KB manda si discrepan), revisados por humanos.
+   **Split examen/entrenamiento por chat de origen:** los chats que pasan al golden salen del few-shot.
+2. **G2 — Mapa de cobertura:** cada caso etiquetado intención × actividad × idioma × perfil (solo, grupo
+   mixto, familia) × dificultad; golden proporcional a la distribución real + cola de casos críticos
+   (seguridad, inyección, quejas). Huecos visibles en la página. Golden partido en **core** (rápido) y **full**.
+3. **G3 — Simulador de usuario con LLM** (modo nuevo de `run_synthetic_pre`): personas sacadas de los chats
+   reales, con objetivo y datos ocultos que el bot tiene que preguntar; habla con PRE por el inbox
+   sintético; juez actual + criterios genéricos (logra el objetivo, no inventa, no repregunta lo dicho).
+   Los fallos son *candidatos* al golden, con revisión humana. En serie (RPD).
+4. **G4 — Bucle producción → regresión:** conversación cosechada (m0-4 ahora, PRO después) que falla →
+   caso `source=prod` en el golden. Regla: ningún fallo arreglado sin su caso de regresión.
+5. **G5 — Carga aparte** (Locust/k6): p95 con N concurrentes y 429; mide volumen, no calidad → en R6.
+6. **G6 — Testers reales (20-50)** justo antes de PRO, con tareas libres; sus conversaciones entran por G4.
+- **Orden:** G1+G2 → (L1 puede empezar) → G3; G4 continuo; G5 con R6; G6 antes de entregar (Q5).
+- **DoD G1+G2:** golden v7 con casos reales anonimizados y revisados, split sin fugas al few-shot, mapa de
+  cobertura publicado, nueva ronda del juez como línea base de calidad.
 
 ### Fase L1 — Wins de latencia baratos y seguros · *preservan conducta*
 1. **RAG sin doble juez:** `_verify_grounding_with_retry` juzga UNA vez; si falla, **regenera** y juzga.
