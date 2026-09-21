@@ -49,3 +49,16 @@ def load_brand_tone() -> dict:
 
 def load_conversations() -> dict:
     return load_json("conversations.json")
+
+
+def load_golden_holdout_chats() -> dict:
+    """Chats reales reservados como EXAMEN del golden-set (Fase G, G1).
+
+    El RAG los excluye del few-shot para que el examen no puntue sobre ejemplos que el propio
+    modelo ya esta viendo. Lo genera `docs/robustness/golden-set/mine_conversations.py`.
+    Devuelve {} si el fichero aun no existe (antes de la primera ejecucion del minador).
+    """
+    try:
+        return load_json("golden_holdout_chats.json")
+    except (FileNotFoundError, OSError):
+        return {}

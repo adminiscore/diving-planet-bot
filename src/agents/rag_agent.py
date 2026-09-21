@@ -30,6 +30,7 @@ from src.knowledge.loader import (
     load_brand_tone,
     load_conversations,
     load_faqs,
+    load_golden_holdout_chats,
     load_policies,
 )
 from src.knowledge.vector_store import detect_query_topics, get_pool, search_knowledge_base
@@ -132,11 +133,31 @@ def _build_tone_section(lang: str) -> str:
     return "\n".join(bullets)
 
 
+def _holdout_chat_of(example_id: str) -> str:
+    """Chat de origen de un ejemplo: `whatsapp_import_1_403_7957813_part3` -> sin el `_partN`.
+    El split examen/entrenamiento es por CHAT, no por trozo."""
+    return re.sub(r"_part\d+$", "", example_id or "")
+
+
 def _load_conversations_cached() -> list[dict]:
-    """Load and cache conversation_examples from conversations.json at first access."""
+    """Load and cache conversation_examples from conversations.json at first access.
+
+    Anti-contaminacion (Fase G, G1): los chats reservados como EXAMEN del golden-set se
+    excluyen aqui, que es el UNICO punto de carga, asi que ningun camino de few-shot puede
+    usarlos. Sin esto el bot puntuaria el examen habiendo visto las respuestas.
+    """
     global _CONVERSATIONS_CACHE
     if _CONVERSATIONS_CACHE is None:
-        _CONVERSATIONS_CACHE = (load_conversations() or {}).get("conversation_examples", []) or []
+        examples = (load_conversations() or {}).get("conversation_examples", []) or []
+        holdout = set((load_golden_holdout_chats() or {}).get("holdout_chat_ids") or [])
+        if holdout:
+            kept = [e for e in examples if _holdout_chat_of(e.get("id", "")) not in holdout]
+            logger.info(
+                f"[RAG][FEWSHOT] golden holdout: {len(examples) - len(kept)} ejemplos "
+                f"excluidos ({len(holdout)} chats de examen)"
+            )
+            examples = kept
+        _CONVERSATIONS_CACHE = examples
     return _CONVERSATIONS_CACHE
 
 
