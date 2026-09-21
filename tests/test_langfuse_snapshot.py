@@ -94,3 +94,42 @@ def test_turn_type_comes_from_the_bot_summary_when_present():
     assert snap["by_type"]["reserva"]["turns"] == 1  # el saludo sigue en el corte historico "resto"
     assert snap["by_type"]["rag"]["turns"] == 1
     assert snap["turns_with_summary"] == 1
+
+
+def _turn(session, **facts):
+    """Una traza de un turno con su resumen (raiz `turno` + router)."""
+    tid = f"{session}-{facts.pop('n', 0)}"
+    start, end = "2026-09-21T08:00:00Z", "2026-09-21T08:00:02Z"
+    return [
+        _obs(tid, "SPAN", "turno", start, end, 2.0, sessionId=session, metadata={"turn": {"turn_type": "reserva", **facts}}),
+        _obs(tid, "CHAIN", "router", start, end, 1.0, sessionId=session),
+    ]
+
+
+def test_business_funnel_counts_conversations_not_turns():
+    observations = [
+        # conv A: elige actividad, llena carrito y recibe el link (3 turnos)
+        *_turn("A", n=1, activity_chosen=False, cart_items=0),
+        *_turn("A", n=2, activity_chosen=True, cart_items=2),
+        *_turn("A", n=3, activity_chosen=True, cart_items=2, booking_link_sent=True),
+        # conv B: elige actividad y se queda ahi
+        *_turn("B", n=1, activity_chosen=True, cart_items=0),
+        # conv C: escala a humano y ademas un turno con fallback
+        *_turn("C", n=1, escalated=True, fallback=True),
+    ]
+    b = build_snapshot(observations, "prueba", "2026-09-21T00:00:00Z", "2026-09-22T00:00:00Z", "staging")["business"]
+    assert (b["conversations"], b["turns"], b["turns_per_conversation"]) == (3, 5, 1.67)
+    assert b["funnel"]["eligen_actividad"]["conversations"] == 2
+    assert b["funnel"]["carrito_con_personas"] == {"conversations": 1, "pct": 33.3}
+    assert b["funnel"]["link_de_pago"]["pct"] == 33.3
+    assert b["escalation_rate_pct"] == 33.3
+    assert (b["fallback_turns"], b["fallback_pct_of_turns"]) == (1, 20.0)
+
+
+def test_business_ignores_turns_without_the_bot_summary():
+    old = [
+        _obs("t", "CHAIN", "router", "2026-09-21T08:00:00Z", "2026-09-21T08:00:01Z", 1.0),
+        _obs("t", "EMBEDDING", "OpenAI-embedding", "2026-09-21T08:00:01Z", "2026-09-21T08:00:02Z", 0.3),
+    ]
+    b = build_snapshot(old, "prueba", "2026-09-21T00:00:00Z", "2026-09-22T00:00:00Z", "staging")["business"]
+    assert b["conversations"] == 0 and "note" in b

@@ -29,7 +29,7 @@ from src.agents.intent_detector import (
 )
 from src.agents.lead_summary import build_lead_summary
 from src.agents.llm_extractor import fill_gaps, missing_fields, verify_fields
-from src.agents.rag_agent import rag_answer
+from src.agents.rag_agent import FALLBACK_EN, FALLBACK_ES, rag_answer
 from src.config import settings
 from src.domain import activities as dom
 from src.flows import cart_render, eligibility
@@ -2805,6 +2805,10 @@ async def route_message(state: ConversationState, message: str) -> str:
             language=state.language,
             step=getattr(state.step, "value", state.step),
             escalated=state.pending_escalation_reason is not None and state.pending_escalation_reason != escalation_before,
+            # Embudo de negocio (m0-5): qué tiene la conversación al acabar el turno.
+            activity_chosen=bool(state.selected_service or state.mixed_cart),
+            cart_items=sum(int(item.get("qty") or 0) for item in state.mixed_cart) if state.mixed_cart else 0,
+            fallback=bool(response) and (FALLBACK_ES in response or FALLBACK_EN in response),
         )
         return response
 

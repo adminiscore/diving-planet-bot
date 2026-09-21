@@ -88,6 +88,47 @@ def _pct(values: list[float], q: float) -> float | None:
     return round(statistics.quantiles(values, n=100, method="inclusive")[int(q) - 1], 3)
 
 
+def business_metrics(turns: list[dict]) -> dict:
+    """Metricas de negocio (m0-5) sobre los turnos de la ventana, agrupados por conversacion
+    (`sessionId` de Langfuse). Solo cuentan las conversaciones cuyos turnos traen el resumen
+    del bot; las trazas anteriores al 2026-09-18 no lo tienen y quedan fuera.
+
+    El embudo es acumulativo por conversacion: de las que hablan con el bot, cuantas eligen
+    actividad, cuantas llegan a tener personas en el carrito y cuantas reciben el link."""
+    by_conv: dict[str, list[dict]] = defaultdict(list)
+    for t in turns:
+        if t["has_summary"] and t.get("session"):
+            by_conv[t["session"]].append(t)
+    convs = list(by_conv.values())
+    judged_turns = [t for c in convs for t in c]
+    if not convs:
+        return {"conversations": 0, "turns": 0, "note": "sin turnos con resumen del bot (trazas anteriores a m0-1)"}
+
+    def pct(n: int) -> float:
+        return round(100 * n / len(convs), 1)
+
+    with_activity = [c for c in convs if any(t.get("activity_chosen") for t in c)]
+    with_cart = [c for c in convs if any((t.get("cart_items") or 0) > 0 for t in c)]
+    with_link = [c for c in convs if any(t.get("booking_link_sent") for t in c)]
+    escalated = [c for c in convs if any(t.get("escalated") for t in c)]
+    fallback_turns = [t for t in judged_turns if t.get("fallback")]
+    return {
+        "conversations": len(convs),
+        "turns": len(judged_turns),
+        "turns_per_conversation": round(len(judged_turns) / len(convs), 2),
+        "funnel": {
+            "hablan": {"conversations": len(convs), "pct": 100.0},
+            "eligen_actividad": {"conversations": len(with_activity), "pct": pct(len(with_activity))},
+            "carrito_con_personas": {"conversations": len(with_cart), "pct": pct(len(with_cart))},
+            "link_de_pago": {"conversations": len(with_link), "pct": pct(len(with_link))},
+        },
+        "escalation_rate_pct": pct(len(escalated)),
+        "fallback_turns": len(fallback_turns),
+        "fallback_pct_of_turns": round(100 * len(fallback_turns) / len(judged_turns), 1) if judged_turns else None,
+        "by_turn_type": dict(Counter(t["turn_type"] for t in judged_turns).most_common()),
+    }
+
+
 def turn_facts(observations: list[dict]) -> dict:
     """Resumen del turno que escribe el bot en la raiz `turno` (m0-1, desde el 2026-09-18).
     Vacio en trazas anteriores."""
@@ -120,6 +161,10 @@ def summarize_turn(observations: list[dict]) -> dict:
         "route": facts.get("route"),
         "booking_link_sent": facts.get("booking_link_sent"),
         "escalated": facts.get("escalated"),
+        "activity_chosen": facts.get("activity_chosen"),
+        "cart_items": facts.get("cart_items"),
+        "fallback": facts.get("fallback"),
+        "session": next((o.get("sessionId") for o in observations if o.get("sessionId")), None),
         "has_summary": bool(facts),
         "latency": (max(ends) - min(starts)).total_seconds() if starts and ends else None,
         "llm_calls": len(gens),
@@ -189,6 +234,7 @@ def build_snapshot(observations: list[dict], label: str, start: str, end: str, e
         "by_type": {kind: aggregate([t for t in turns if t["type"] == kind]) for kind in ("reserva", "rag")},
         "by_turn_type": {kind: aggregate([t for t in turns if t["turn_type"] == kind]) for kind in sorted({t["turn_type"] for t in turns})},
         "turns_with_summary": sum(t["has_summary"] for t in turns),
+        "business": business_metrics(turns),
         "nodes": {
             name: {"n": len(v), "p50": _pct(v, 50), "p95": _pct(v, 95)}
             for name, v in sorted(node_lat.items(), key=lambda kv: -statistics.median(kv[1]))

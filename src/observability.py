@@ -146,8 +146,12 @@ def turn_summary(facts: dict, reply: str | None) -> dict:
         "rag_used": bool(facts.get("rag_used")),
         "language": facts.get("language"),
         "step": facts.get("step"),
+        # Embudo de negocio (m0-5): actividad elegida -> carrito con personas -> link de pago.
+        "activity_chosen": bool(facts.get("activity_chosen")),
+        "cart_items": facts.get("cart_items"),
         "booking_link_sent": bool(reply and BOOKING_LINK in reply),
         "escalated": bool(facts.get("escalated")),
+        "fallback": bool(facts.get("fallback")),
         "error": facts.get("error"),
     }
 
