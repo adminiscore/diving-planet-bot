@@ -19,7 +19,12 @@ Read this file before changing code in the Diving Planet Bot. For a quick versio
 - El resumen del turno va en **claves planas** `turn_*` (Langfuse recortaba el anidado a ~200 caracteres).
 - **Latencia: comparar SIEMPRE antes/después el mismo día.** El 21-sep todo lo que llama al LLM iba ~25 % más lento
   que el 17-sep sin cambio de código (API de OpenAI).
-- **Siguiente: L1 y U3.** m0-4 queda para cuando PRE tenga clientes reales (y alguien con SSH saque los logs).
+- **Antes de L1, decidir m0-4 con datos** (Gadea → Álvaro, 21-sep tarde). PRE no tiene clientes, así que el equipo
+  mete conversaciones A MANO por el widget de PRE (naturales y variadas: reservas, dudas, grupos, cambios, quejas;
+  espaciadas, el widget tiene rate-limit) y después, con SSH:
+  `ssh root@<VPS> "docker logs dp-pre-bot 2>&1" | python -m scripts.harvest_cutover_logs --summary`.
+  Si hay material útil → curarlo al golden-set y re-congelar la línea base; si no → m0-4 "diferida" con la cifra.
+  Luego **L1 y U3**.
 - Refrescar la copia de la página: exportar su BD (pedírselo a Claude) → `python docs/tracking/consolidate_export.py <dir>`
   → `python docs/tracking/embed_backup.py` → republicar `plan-coral.html` en la misma URL.
 
