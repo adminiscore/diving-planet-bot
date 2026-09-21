@@ -153,7 +153,9 @@ def test_turn_trace_opens_clean_root_with_session_and_summary(monkeypatch):
     assert events[-2:] == ["span.end", "otel.detach"]
     assert ("trace.update", {"name": "turno", "session_id": "conv-7"}) in log
     meta = next(kw for e, kw in log if e == "trace.update" and "metadata" in kw)
-    assert meta["metadata"]["turn"]["turn_type"] == "rag"
+    assert meta["metadata"]["turn_type"] == "rag"  # claves planas: Langfuse recorta la metadata anidada
+    assert meta["metadata"]["turn_route"] == "booking"
+    assert all(not isinstance(v, dict) for v in meta["metadata"].values())
     assert "tipo:rag" in meta["tags"]
 
 
@@ -172,7 +174,7 @@ def test_turn_trace_closes_and_restores_context_when_the_turn_is_cancelled(monke
     events = [e for e, _ in log]
     assert events[-2:] == ["span.end", "otel.detach"]
     meta = next(kw for e, kw in log if e == "trace.update" and "metadata" in kw)
-    assert meta["metadata"]["turn"]["error"] == "CancelledError"
+    assert meta["metadata"]["turn_error"] == "CancelledError"
     assert obs._TURN_FACTS.get() is None
 
 

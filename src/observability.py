@@ -191,8 +191,11 @@ async def turn_trace(s: Any, conversation_id: str, message: str) -> AsyncIterato
                 reply = facts.get("reply")
                 summary = turn_summary(facts, reply)
                 tags = [f"tipo:{summary['turn_type']}", f"lang:{summary['language']}"]
-                span.update(output={"reply": reply}, metadata={"turn": summary})
-                span.update_trace(output={"reply": reply}, metadata={"turn": summary}, tags=tags)
+                # Claves PLANAS: Langfuse devuelve la metadata anidada como texto y la
+                # recorta (~200 caracteres); un resumen anidado llegaba cortado e ilegible.
+                flat = {("turn_type" if k == "turn_type" else f"turn_{k}"): v for k, v in summary.items()}
+                span.update(output={"reply": reply}, metadata=flat)
+                span.update_trace(output={"reply": reply}, metadata=flat, tags=tags)
                 span_cm.__exit__(None, None, None)
             except Exception as exc:  # noqa: BLE001
                 logger.warning("[LANGFUSE] no se pudo cerrar la traza del turno: %s", exc)

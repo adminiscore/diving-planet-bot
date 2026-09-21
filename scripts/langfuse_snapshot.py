@@ -129,13 +129,29 @@ def business_metrics(turns: list[dict]) -> dict:
     }
 
 
+def _scalar(value):
+    """Langfuse puede devolver los valores de metadata como texto ("false", "0")."""
+    if isinstance(value, str):
+        try:
+            return json.loads(value)
+        except ValueError:
+            return value
+    return value
+
+
 def turn_facts(observations: list[dict]) -> dict:
-    """Resumen del turno que escribe el bot en la raiz `turno` (m0-1, desde el 2026-09-18).
-    Vacio en trazas anteriores."""
+    """Resumen del turno que escribe el bot en la raiz `turno` (m0-1). Desde el 2026-09-21
+    en claves planas `turn_type`, `turn_route`, ... (el 18-sep iba anidado en `turn`, que
+    Langfuse recortaba al crecer). Vacio en trazas anteriores a m0-1."""
     for o in observations:
         meta = o.get("metadata") or {}
-        if o.get("name") == "turno" and isinstance(meta, dict) and isinstance(meta.get("turn"), dict):
-            return meta["turn"]
+        if o.get("name") != "turno" or not isinstance(meta, dict):
+            continue
+        if "turn_type" in meta:
+            return {("turn_type" if k == "turn_type" else k[len("turn_"):]): _scalar(v) for k, v in meta.items() if k.startswith("turn_")}
+        nested = _scalar(meta.get("turn"))
+        if isinstance(nested, dict):
+            return nested
     return {}
 
 

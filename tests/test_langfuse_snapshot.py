@@ -101,7 +101,8 @@ def _turn(session, **facts):
     tid = f"{session}-{facts.pop('n', 0)}"
     start, end = "2026-09-21T08:00:00Z", "2026-09-21T08:00:02Z"
     return [
-        _obs(tid, "SPAN", "turno", start, end, 2.0, sessionId=session, metadata={"turn": {"turn_type": "reserva", **facts}}),
+        _obs(tid, "SPAN", "turno", start, end, 2.0, sessionId=session,
+             metadata={"turn_type": "reserva", **{f"turn_{k}": v for k, v in facts.items()}}),
         _obs(tid, "CHAIN", "router", start, end, 1.0, sessionId=session),
     ]
 
@@ -133,3 +134,14 @@ def test_business_ignores_turns_without_the_bot_summary():
     ]
     b = build_snapshot(old, "prueba", "2026-09-21T00:00:00Z", "2026-09-22T00:00:00Z", "staging")["business"]
     assert b["conversations"] == 0 and "note" in b
+
+
+def test_turn_facts_read_flat_keys_even_as_text_and_the_old_nested_form():
+    from scripts.langfuse_snapshot import turn_facts
+
+    flat = [{"name": "turno", "metadata": {"turn_type": "rag", "turn_rag_used": "true", "turn_cart_items": "2", "scope": {}}}]
+    assert turn_facts(flat) == {"turn_type": "rag", "rag_used": True, "cart_items": 2}
+    nested_18_sep = [{"name": "turno", "metadata": {"turn": {"turn_type": "saludo"}}}]
+    assert turn_facts(nested_18_sep) == {"turn_type": "saludo"}
+    truncated = [{"name": "turno", "metadata": {"turn": '{"turn_type": "deflection", "escalated": false, '}}]
+    assert turn_facts(truncated) == {}
