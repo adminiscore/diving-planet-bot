@@ -66,10 +66,11 @@
     "id": "g-1",
     "note": "40 chats reales de WhatsApp (107 ejemplos, 65 ES / 42 EN). Limpiar (34 vacíos, 26 con texto del centro mezclado), anonimizar bien (nombres, enlaces, correos), trocear en turnos → ~25-30 diálogos. Criterios propuestos por LLM desde la respuesta del equipo + KB actual (manda la KB), revisión humana. Split por chat de origen: los que pasan al golden salen del few-shot del RAG (evita contaminación).",
     "order": 1,
-    "owner": "—",
+    "owner": "Álvaro",
     "phase": "G",
-    "status": "pendiente",
-    "title": "G1 · Minar los chats reales de conversations.json → diálogos del golden"
+    "status": "en_curso",
+    "title": "G1 · Minar los chats reales de conversations.json → diálogos del golden",
+    "updatedAt": "2026-09-21T18:30:00Z"
    },
    {
     "id": "g-2",
@@ -97,6 +98,16 @@
     "phase": "G",
     "status": "pendiente",
     "title": "G4 · Bucle producción → regresión"
+   },
+   {
+    "id": "g-4b",
+    "createdAt": "2026-09-21T18:30:00Z",
+    "note": "Decisión del owner (21-sep). Capa ENCIMA de Chatwoot con flag on/off, sin tocar el núcleo: con el modo activo el bot SUGIERE en vez de enviar (su respuesta va a una cola de revisión — nota privada, etiqueta o inbox aparte) y un humano la acepta o corrige antes de que salga al cliente. Cada corrección se convierte en caso de regresión del golden (source=training). Es la fuente de datos etiquetados más barata que tenemos (el equipo ya atiende por Chatwoot) y alimenta el mismo golden que G1/G3/G4. Activable/desactivable. Depende de G1+G2; no bloquea L1.",
+    "order": 4.5,
+    "owner": "—",
+    "phase": "G",
+    "status": "pendiente",
+    "title": "G4b · Modo entrenamiento: el bot sugiere, un humano corrige y la corrección entra al golden"
    },
    {
     "id": "g-5",
@@ -187,6 +198,16 @@
     "phase": "L2",
     "status": "pendiente",
     "title": "Streaming / \"escribiendo\" en Chatwoot"
+   },
+   {
+    "id": "l2-4",
+    "createdAt": "2026-09-21T21:30:00Z",
+    "note": "Jev (TypeSafe, System One model, 15-sep-2026): decisiones tipadas sin generar texto (~0,4 s, coste de salida 0). Candidatos: detect_routing_signals (9 booleanos, hoy p50 ~1,1 s en cada turno), clasificacion de actividad (Choice) y is_grounded en cascada por probabilidad calibrada. NO para respuesta RAG, acuses, fill_gaps ni el juez del golden (no da evidencia). Benchmarks del fabricante: 68% (paridad con GPT-5.6 Terra; Opus 5 73%). RIESGO: sin evaluacion multilingue publicada y el 65% de nuestro trafico es ES. Contexto 32k. Hacer DESPUES de G1+G2, detras de flag, A/B por caso.",
+    "order": 4,
+    "owner": "—",
+    "phase": "L2",
+    "status": "pendiente",
+    "title": "L2-4 · Evaluar Jev como clasificador (router, actividad, grounding en cascada)"
    },
    {
     "id": "m0-1",
@@ -1194,6 +1215,12 @@
     "text": "18-sep (Gadea): m0-2 hecha. En vez de crear battery_latency.py, la muestra rápida (run_synthetic_pre --sample rapida + langfuse_snapshot) da p50/p95 por turno y por nodo en ~2 min; prueba: p50 3,1 s / p95 7,0 s. Descubierto: las preguntas de información van por el agente booking (que llama al RAG), no por info. Falsa alarma aclarada: Langfuse tarda unos minutos en dejar ver las trazas nuevas; la foto ahora avisa si le faltan turnos. El deploy muestra el estado de Langfuse dentro del contenedor."
    },
    {
+    "id": "l-0921-alvaro-g1",
+    "at": "2026-09-21T18:30:00Z",
+    "byLabel": "Álvaro (con Claude)",
+    "text": "21-sep (tarde): Álvaro retoma donde paró Gadea = G1 (minado de conversations.json, su 'siguiente paso' documentado). Decisiones del owner: (a) el MODO ENTRENAMIENTO entra como tarea g-4b dentro de G4 — capa sobre Chatwoot con flag on/off: el bot sugiere, un humano corrige, y la corrección se vuelve caso de regresión; (b) la visión de producto (multicanal Instagram/email, white-label sin que el cliente vea Chatwoot, all-in tipo CRM + web del cliente) queda como ANEXO del plan maestro, fuera del camino técnico hasta cerrar Q5. Correcciones medidas: en PRE NO se usa gpt-4o — son gpt-4o-mini y gpt-4.1-mini, así que L2 se re-encuadra (el lever es caché, no bajar de tier); y G3 (simulador con roles LLM) NO está construido: run_synthetic_pre manda guiones fijos. OJO: g-4b y esta entrada están solo en la COPIA del repo porque la BD de la página no es accesible desde la cuenta de Álvaro — hay que replicarlo en la página viva o se perderá en la próxima exportación."
+   },
+   {
     "id": "l-0921-fase-g",
     "at": "2026-09-21T16:00:00Z",
     "byLabel": "Gadea (con Claude)",
@@ -1204,6 +1231,12 @@
     "at": "2026-09-21T15:00:00Z",
     "byLabel": "Gadea",
     "text": "21-sep (Gadea → Álvaro): lo dejo aquí. M0 cerrada salvo m0-4. Decisión pendiente antes de L1: m0-4 necesita tráfico real y PRE no tiene clientes, así que la idea es que el equipo meta conversaciones a mano por el widget (naturales y variadas: reservas, dudas, grupos, cambios, quejas; espaciadas por el rate-limit) y luego sacar los logs por SSH con harvest_cutover_logs --summary. Con eso: si hay material útil se cura al golden-set y se re-congela la línea base; si no, m0-4 se marca diferida con la cifra y se pasa a L1. Recordatorio para L1: comparar latencia antes/después el MISMO día."
+   },
+   {
+    "id": "l-0921-jev",
+    "at": "2026-09-21T21:30:00Z",
+    "byLabel": "Álvaro (con Claude)",
+    "text": "21-sep (noche): investigado Jev (TypeSafe), el modelo que comento Gadea. Es real y encaja: decisiones tipadas (booleano con probabilidad calibrada, choice, score) sin generar texto, ~0,4 s y coste de salida 0, frente a los ~1,1 s que cuesta hoy el router en CADA turno. Se anota como l2-4 con protocolo estricto: despues de G1+G2, detras de flag y A/B por caso con battery_router_signals (8 repeticiones). Riesgo gordo: el espanol, sin evaluacion multilingue publicada. No sirve para respuesta RAG, acuses, fill_gaps ni el juez del golden (necesita evidencia escrita). Tambien: la BD de la pagina NO es escribible desde la cuenta de Alvaro (artifact fuera de su organizacion): compartir el enlace no basta."
    },
    {
     "id": "l-0921-m0-5",
