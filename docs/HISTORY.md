@@ -1,6 +1,11 @@
 History
 =======
 
+0.29.6 - (2026-09-21)
+----------------------
+* **Primeras conversaciones reales a mano (m0-4)**: Gadea en el widget de PRE, conv 1163 y 1164. Las dos fallan cuando el cliente sigue hablando DESPUÉS del link, algo que los guiones sintéticos casi no cubren. Diagnosticado con las trazas por turno de m0-1: (1) "¿cuánto tiempo dura?" → lista de precios, porque `_PRICE_QUESTION` (rag_agent) toma "cuánto" suelto como precio; (2) "el curso que te he pedido…" → "Me habías dicho…" en bucle, el recall salta con una referencia; (3) "mi madre es mayor y no puede hacer deporte" → el router lo marca `adaptive_diving_topic`, el contexto DIVE TO HEAL queda pegado y los dos turnos van a `info`/RAG con fallback (7-8 llamadas LLM cada uno). Tareas S4-17..19 en la página, sin responsable; no se parchean con regex (encajan en U3).
+* **Golden-set v6** (43 diálogos): añade `manual-acompanante-mayor` y `manual-duracion-curso` con esos turnos reales. El generador pasa al repo: `docs/robustness/golden-set/build_golden.py` (antes solo existía en un scratchpad).
+
 0.29.5 - (2026-09-21)
 ----------------------
 * **m0-5: métricas de negocio.** El resumen de cada turno lleva además actividad elegida, personas en el carrito y si la respuesta fue el fallback del RAG (`FALLBACK_ES/EN`, no una frase copiada). `langfuse_snapshot` agrupa los turnos por conversación (`sessionId`) y calcula el embudo acumulativo *hablan → eligen actividad → carrito con personas → link de pago*, la tasa de escalado y el % de turnos con fallback (`business`). Panel "Negocio" en la página Plan Coral.
