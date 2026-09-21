@@ -11,6 +11,18 @@ Read this file before changing code in the Diving Planet Bot. For a quick versio
 
 ## Current branch and workflow
 
+### ✅ 2026-09-21 (Gadea) — m0-5 HECHA: M0 cerrada salvo m0-4
+
+- Cada foto de `langfuse_snapshot` trae `business`: embudo por conversación (hablan → eligen actividad → carrito
+  con personas → link de pago), tasa de escalado y % de turnos con fallback. Panel "Negocio" en la página.
+- Línea base (golden-set, 41 conv.): actividad 22 %, carrito 22 %, link 19,5 %, escalado 14,6 %, fallback 1,6 %.
+- El resumen del turno va en **claves planas** `turn_*` (Langfuse recortaba el anidado a ~200 caracteres).
+- **Latencia: comparar SIEMPRE antes/después el mismo día.** El 21-sep todo lo que llama al LLM iba ~25 % más lento
+  que el 17-sep sin cambio de código (API de OpenAI).
+- **Siguiente: L1 y U3.** m0-4 queda para cuando PRE tenga clientes reales (y alguien con SSH saque los logs).
+- Refrescar la copia de la página: exportar su BD (pedírselo a Claude) → `python docs/tracking/consolidate_export.py <dir>`
+  → `python docs/tracking/embed_backup.py` → republicar `plan-coral.html` en la misma URL.
+
 ### ✅ 2026-09-18 (Gadea) — m0-1 HECHA: una traza por turno con su resumen
 
 - Cada mensaje = una traza raíz `turno` en Langfuse (contexto limpio, se cierra siempre). Se acabó la traza que

@@ -24,6 +24,7 @@ Capacidades que declaran: `db` (datos compartidos) y `user` (quién edita). Cole
   `plan-coral.html`: la página la pinta al instante y la sustituye por los datos en vivo al conectar.
   Si no conecta, se queda con la copia en solo lectura y un aviso con la fecha de la copia.
 - **Refrescar la copia** (tras cambios importantes, p. ej. al cerrar una tarea o una fase):
-  1. Pedir a Claude "exporta la base de datos de Plan Coral a docs/tracking/data/plan-coral.json".
-  2. `python docs/tracking/embed_backup.py`
-  3. Republicar `plan-coral.html` en la MISMA URL y hacer commit de los dos ficheros.
+  1. Pedir a Claude "exporta la base de datos de Plan Coral" (deja un JSON por documento en una carpeta).
+  2. `python docs/tracking/consolidate_export.py <carpeta>` → escribe `data/plan-coral.json`.
+  3. `python docs/tracking/embed_backup.py`
+  4. Republicar `plan-coral.html` en la MISMA URL y hacer commit de los dos ficheros.

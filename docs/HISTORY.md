@@ -1,6 +1,14 @@
 History
 =======
 
+0.29.5 - (2026-09-21)
+----------------------
+* **m0-5: métricas de negocio.** El resumen de cada turno lleva además actividad elegida, personas en el carrito y si la respuesta fue el fallback del RAG (`FALLBACK_ES/EN`, no una frase copiada). `langfuse_snapshot` agrupa los turnos por conversación (`sessionId`) y calcula el embudo acumulativo *hablan → eligen actividad → carrito con personas → link de pago*, la tasa de escalado y el % de turnos con fallback (`business`). Panel "Negocio" en la página Plan Coral.
+* **Línea base de negocio** (golden-set completo, 41 conversaciones, 124 turnos, 21-sep): eligen actividad 22 %, carrito con personas 22 %, reciben link de pago 19,5 %, escalado 14,6 %, "no lo sé" 1,6 % de los turnos. Es tráfico sintético: refleja el guion de las pruebas y sirve para comparar antes/después con la misma muestra.
+* **Arreglado**: Langfuse devuelve la metadata anidada como texto y la recorta a ~200 caracteres; con los campos de negocio el resumen del turno llegaba cortado (primera prueba: 0 de 12 turnos con resumen). Ahora va en claves planas (`turn_type`, `turn_route`, `turn_cart_items`...) y la foto las lee aunque lleguen como texto.
+* **Aviso de medición para L1**: ese día la latencia salió ~25 % peor que el 17-sep (p50 4,3 s frente a 3,4 s) sin cambio de código que la explique: todos los nodos con LLM más lentos en la misma proporción, con las mismas llamadas y tokens, y los nodos sin LLM iguales. Es la API de OpenAI: **comparar latencia antes/después el MISMO día**.
+* `docs/tracking/consolidate_export.py`: junta una exportación de la base de datos de la página en `data/plan-coral.json` (refresco de la copia de respaldo sin depender de nadie).
+
 0.29.4 - (2026-09-18)
 ----------------------
 * **m0-1: una traza raíz `turno` por mensaje, con resumen del turno** (`observability.turn_trace`, abierta en `supervisor.route_message`). Cada turno arranca en un contexto de OpenTelemetry LIMPIO y su traza se cierra siempre (también con error o cancelación). Arregla la fuga vista el 17-sep: una traza de PRE juntó 8 turnos en 50 min porque el contexto de traza de un turno se quedaba como "actual" en la tarea de larga duración que procesa los mensajes y los siguientes heredaban su id de traza. (Nota: en Langfuse la raíz sin hora de fin es el registro de la TRAZA, no un span abierto; cada traza tenía 4 porque 4 turnos compartían id.)

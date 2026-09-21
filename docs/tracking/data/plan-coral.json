@@ -1,5 +1,5 @@
 {
- "exported_at": "2026-09-18T09:22:07+00:00",
+ "exported_at": "2026-09-21T13:47:10+00:00",
  "source": "https://claude.ai/artifact/XiGd3kguTNwwqTnH7mQwgi",
  "about": "Copia de la base de datos de la página Plan Coral (fases, tareas, fotos, capas, bitácora). La página la usa como respaldo de solo lectura si no puede conectar con su base de datos; en el repo sirve de historial versionado.",
  "collections": {
@@ -169,12 +169,13 @@
    },
    {
     "id": "m0-5",
-    "note": "",
+    "note": "Hecha por Gadea (21-sep). El resumen de cada turno lleva actividad elegida, personas en el carrito, link de pago, escalado y fallback ('no lo tengo', constantes del RAG); langfuse_snapshot agrupa por conversación y calcula embudo, escalado y % fallback. Línea base (golden-set, 41 conv.): eligen actividad 22 %, carrito 22 %, link 19,5 %, escalado 14,6 %, fallback 1,6 % de turnos. Panel 'Negocio' en la página.",
     "order": 5,
-    "owner": "Álvaro",
+    "owner": "Gadea",
     "phase": "M0",
-    "status": "pendiente",
-    "title": "Métricas de negocio en Langfuse: embudo, tasa de escalado, % fallback"
+    "status": "hecha",
+    "title": "Métricas de negocio en Langfuse: embudo, tasa de escalado, % fallback",
+    "updatedAt": "2026-09-21T14:00:00Z"
    },
    {
     "id": "m0-6",
@@ -428,6 +429,266 @@
    }
   ],
   "snapshots": [
+   {
+    "id": "s-golden-negocio-0921",
+    "all": {
+     "cost_avg_usd": 0.000743,
+     "embeddings_avg": 0.08,
+     "latency_avg": 4.484,
+     "latency_p50": 4.332,
+     "latency_p95": 8.774,
+     "llm_calls_avg": 3.68,
+     "llm_calls_max": 9,
+     "llm_calls_p95": 6,
+     "llm_share": 0.946,
+     "tokens_avg": 5984,
+     "turns": 124
+    },
+    "business": {
+     "by_turn_type": {
+      "cambios": 2,
+      "deflection": 2,
+      "escalado": 6,
+      "info": 1,
+      "rag": 14,
+      "reserva": 97,
+      "saludo": 2
+     },
+     "conversations": 41,
+     "escalation_rate_pct": 14.6,
+     "fallback_pct_of_turns": 1.6,
+     "fallback_turns": 2,
+     "funnel": {
+      "carrito_con_personas": {
+       "conversations": 9,
+       "pct": 22
+      },
+      "eligen_actividad": {
+       "conversations": 9,
+       "pct": 22
+      },
+      "hablan": {
+       "conversations": 41,
+       "pct": 100
+      },
+      "link_de_pago": {
+       "conversations": 8,
+       "pct": 19.5
+      }
+     },
+     "turns": 124,
+     "turns_per_conversation": 3.02
+    },
+    "by_turn_type": {
+     "cambios": {
+      "cost_avg_usd": 0.000276,
+      "embeddings_avg": 0,
+      "latency_avg": 1.545,
+      "latency_p50": 1.545,
+      "latency_p95": 2.235,
+      "llm_calls_avg": 1.5,
+      "llm_calls_max": 2,
+      "llm_calls_p95": 1.95,
+      "llm_share": 0.941,
+      "tokens_avg": 3057,
+      "turns": 2
+     },
+     "deflection": {
+      "cost_avg_usd": 0.000253,
+      "embeddings_avg": 0,
+      "latency_avg": 1.413,
+      "latency_p50": 1.413,
+      "latency_p95": 1.51,
+      "llm_calls_avg": 1,
+      "llm_calls_max": 1,
+      "llm_calls_p95": 1,
+      "llm_share": 0.955,
+      "tokens_avg": 2841,
+      "turns": 2
+     },
+     "escalado": {
+      "cost_avg_usd": 0.000245,
+      "embeddings_avg": 0,
+      "latency_avg": 1.265,
+      "latency_p50": 1.312,
+      "latency_p95": 1.436,
+      "llm_calls_avg": 1,
+      "llm_calls_max": 1,
+      "llm_calls_p95": 1,
+      "llm_share": 0.894,
+      "tokens_avg": 2829,
+      "turns": 6
+     },
+     "info": {
+      "cost_avg_usd": 0.000236,
+      "embeddings_avg": 0,
+      "latency_avg": 1.77,
+      "latency_p50": 1.77,
+      "latency_p95": 1.77,
+      "llm_calls_avg": 1,
+      "llm_calls_max": 1,
+      "llm_calls_p95": 1,
+      "llm_share": 0.976,
+      "tokens_avg": 2814,
+      "turns": 1
+     },
+     "rag": {
+      "cost_avg_usd": 0.00187,
+      "embeddings_avg": 0.71,
+      "latency_avg": 6.739,
+      "latency_p50": 6.109,
+      "latency_p95": 11.02,
+      "llm_calls_avg": 5.07,
+      "llm_calls_max": 9,
+      "llm_calls_p95": 9,
+      "llm_share": 0.902,
+      "tokens_avg": 11587,
+      "turns": 14
+     },
+     "reserva": {
+      "cost_avg_usd": 0.000644,
+      "embeddings_avg": 0,
+      "latency_avg": 4.516,
+      "latency_p50": 4.44,
+      "latency_p95": 6.885,
+      "llm_calls_avg": 3.81,
+      "llm_calls_max": 6,
+      "llm_calls_p95": 6,
+      "llm_share": 0.956,
+      "tokens_avg": 5590,
+      "turns": 97
+     },
+     "saludo": {
+      "cost_avg_usd": 0.000377,
+      "embeddings_avg": 0,
+      "latency_avg": 4.17,
+      "latency_p50": 4.17,
+      "latency_p95": 5.947,
+      "llm_calls_avg": 1.5,
+      "llm_calls_max": 2,
+      "llm_calls_p95": 1.95,
+      "llm_share": 0.973,
+      "tokens_avg": 2999,
+      "turns": 2
+     }
+    },
+    "by_type": {
+     "rag": {
+      "cost_avg_usd": 0.00187,
+      "embeddings_avg": 0.71,
+      "latency_avg": 6.739,
+      "latency_p50": 6.109,
+      "latency_p95": 11.02,
+      "llm_calls_avg": 5.07,
+      "llm_calls_max": 9,
+      "llm_calls_p95": 9,
+      "llm_share": 0.902,
+      "tokens_avg": 11587,
+      "turns": 14
+     },
+     "reserva": {
+      "cost_avg_usd": 0.0006,
+      "embeddings_avg": 0,
+      "latency_avg": 4.197,
+      "latency_p50": 4.257,
+      "latency_p95": 6.844,
+      "llm_calls_avg": 3.5,
+      "llm_calls_max": 6,
+      "llm_calls_p95": 6,
+      "llm_share": 0.955,
+      "tokens_avg": 5271,
+      "turns": 110
+     }
+    },
+    "client_latency": {
+     "conversations": 41,
+     "latency_max": 13,
+     "latency_p50": 5,
+     "latency_p95": 8.85,
+     "multi_bubble": 1,
+     "no_reply": 0,
+     "turns": 124
+    },
+    "commit": "4fdf31f",
+    "environment": "staging",
+    "label": "Base de negocio M0 (golden-set)",
+    "merged_traces": {
+     "traces": 0,
+     "turns": 0
+    },
+    "models": {
+     "gpt-4.1-mini-2025-04-14": 12,
+     "gpt-4o-mini-2024-07-18": 444
+    },
+    "nodes": {
+     "availability": {
+      "n": 111,
+      "p50": 0.006,
+      "p95": 0.015
+     },
+     "booking": {
+      "n": 111,
+      "p50": 2.77,
+      "p95": 6.438
+     },
+     "changes": {
+      "n": 2,
+      "p50": 0.422,
+      "p95": 0.799
+     },
+     "deflection": {
+      "n": 2,
+      "p50": 0.006,
+      "p95": 0.008
+     },
+     "extraction": {
+      "n": 102,
+      "p50": 1.167,
+      "p95": 3.257
+     },
+     "info": {
+      "n": 3,
+      "p50": 3.464,
+      "p95": 4.216
+     },
+     "router": {
+      "n": 124,
+      "p50": 1.515,
+      "p95": 2.702
+     },
+     "routing": {
+      "n": 110,
+      "p50": 0.008,
+      "p95": 2.461
+     },
+     "safety": {
+      "n": 6,
+      "p50": 0.003,
+      "p95": 0.006
+     },
+     "setup": {
+      "n": 111,
+      "p50": 0.797,
+      "p95": 1.113
+     },
+     "slotfill_close": {
+      "n": 95,
+      "p50": 0.792,
+      "p95": 1.062
+     }
+    },
+    "note": "Golden-set completo (41 conversaciones) tras m0-1/m0-5: primera línea base de NEGOCIO. Latencia ~25 % peor que el 17-sep por la API de OpenAI (todos los nodos con LLM más lentos en la misma proporción, mismas llamadas y tokens), no por código: comparar L1 antes/después el MISMO día.",
+    "run_at": "2026-09-21T13:36:40.246000+00:00",
+    "run_file": "docs/robustness/synthetic-runs/2026-09-21-golden-m0-5.jsonl",
+    "taken_at": "2026-09-21T13:45:52+00:00",
+    "turns_with_summary": 124,
+    "window": {
+     "first_turn": "2026-09-21T13:13:15.004000+00:00",
+     "from": "2026-09-21T13:08:24Z",
+     "last_turn": "2026-09-21T13:36:40.246000+00:00",
+     "to": "2026-09-21T13:38:47Z"
+    }
+   },
    {
     "id": "s-golden1-0917",
     "all": {
@@ -840,6 +1101,12 @@
     "at": "2026-09-18T09:30:00Z",
     "byLabel": "Gadea",
     "text": "18-sep (Gadea): m0-2 hecha. En vez de crear battery_latency.py, la muestra rápida (run_synthetic_pre --sample rapida + langfuse_snapshot) da p50/p95 por turno y por nodo en ~2 min; prueba: p50 3,1 s / p95 7,0 s. Descubierto: las preguntas de información van por el agente booking (que llama al RAG), no por info. Falsa alarma aclarada: Langfuse tarda unos minutos en dejar ver las trazas nuevas; la foto ahora avisa si le faltan turnos. El deploy muestra el estado de Langfuse dentro del contenedor."
+   },
+   {
+    "id": "l-0921-m0-5",
+    "at": "2026-09-21T14:00:00Z",
+    "byLabel": "Gadea",
+    "text": "21-sep (Gadea): m0-5 hecha y M0 cerrada salvo m0-4 (tráfico real, necesita SSH y PRE aún no tiene clientes). Métricas de negocio por conversación en cada foto y panel 'Negocio' en la página. Línea base con el golden-set (41 conv., 124 turnos): eligen actividad 22 %, carrito con personas 22 %, reciben link de pago 19,5 %, escalado 14,6 %, respuestas 'no lo sé' 1,6 % de los turnos (es tráfico sintético: refleja el guion de las pruebas). Arreglado de paso: Langfuse recortaba el resumen anidado del turno (~200 caracteres), ahora va en claves planas. Aviso para L1: ese día la API de OpenAI iba ~25 % más lenta (todos los nodos con LLM igual de más lentos, mismas llamadas y tokens), así que las comparaciones de latencia deben hacerse antes/después el MISMO día."
    }
   ]
  }

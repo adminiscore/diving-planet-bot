@@ -20,7 +20,8 @@
 > - 🟡 m0-4 datos del golden-set: sintéticos hechos; falta tráfico real (harvest).
 > - ✅ m0-2 cubierta por `run_synthetic_pre --sample rapida` + `langfuse_snapshot` (2026-09-18, sin script nuevo).
 > - ✅ m0-1 una traza por turno con resumen (tipo, ruta, RAG, link, escalado; sesión = conversación) (2026-09-18).
-> - ⏳ m0-5 métricas de negocio en Langfuse (embudo, escalado, % fallback).
+> - ✅ m0-5 métricas de negocio por conversación (2026-09-21). Línea base golden-set: actividad 22 %, carrito 22 %, link 19,5 %, escalado 14,6 %, fallback 1,6 % de turnos.
+> - **M0 cerrada salvo m0-4** (tráfico real: necesita SSH y que PRE tenga clientes). Siguiente: **L1** y **U3**. Latencia: comparar antes/después el MISMO día (la API de OpenAI varía ~25 % entre días).
 > - 10 fallos del bot del golden-set como tareas S4-6..S4-16 (varios encajan en U3).
 
 ---
