@@ -11,6 +11,30 @@ Read this file before changing code in the Diving Planet Bot. For a quick versio
 
 ## Current branch and workflow
 
+### ✅ 2026-09-22 (Gadea) — G1 casi cerrada: golden-set v7 con 73 casos REALES
+
+- **Fuente:** los exports ORIGINALES de WhatsApp que descargó Gadea (39 chats). Viven FUERA del repo (tienen
+  PII); en `<carpeta>/_coral/` quedan transcripciones, nombres detectados y el mapa chat→número. Al repo solo va
+  lo anonimizado.
+- **Tubería (docs/robustness/golden-set/):**
+  1. `mine_whatsapp_exports.py transcribe|build --src <carpeta>` → `real-episodes.json` (75 episodios: una
+     consulta por pausa ≥72 h; notas de voz transcritas; nombres detectados por LLM aplicados a TODOS los chats;
+     precios/descuentos del centro marcados `[precio histórico: …]`, manda el catálogo).
+  2. `draft_real_cases.py` → `real-cases-draft.json` (gpt-5 low, misma referencia que el juez, ~1,7 $; turnos
+     anclados por código al mensaje original).
+  3. `real-cases-review.json` = revisión humana (qué se quita/edita y por qué). `build_golden.py` lo ensambla.
+- **Golden v7:** 116 diálogos (43 sintéticos + 73 reales), 465 turnos, 251 criterios propios. **Una ronda
+  completa ≈ 80 min y ≈ 3.800 peticiones** → G2 debe separar un golden **core**.
+- **Decisiones de Gadea (22-sep), ya en la KB (policies.json/faqs.json):** una mochila o bolso por persona en la
+  lancha; maleta → asesor o se guarda en la oficina de Cartagena; regreso otro día → asesor; cédula de
+  extranjería paga en COP; clases en español e inglés (se acepta intérprete); Majagua y Cocoliso están en Isla
+  Grande. Para criterios: fotos → política enfocada a la pregunta; al escalar no se piden datos; indispuesto que
+  cambia fecha → solo pasa a persona; no hay tamaño máximo oficial de grupo (el bot no inventa cifra).
+- **Pendiente de G1:** comparar con el minado de Álvaro (rama `feature/agent-arch`, desde conversations.json) y
+  decidir el split examen/few-shot. **Decisión de Gadea:** si gana el minado nuevo se BORRA
+  `data/knowledge_base/conversations.json` (tiene 22 nombres reales y va al prompt del RAG) y el few-shot sale de
+  los episodios nuevos no reservados para el examen; si gana el de Álvaro, se anonimiza conversations.json.
+
 ### 🧭 2026-09-21 tarde (Gadea) — nueva fase G (golden-set robusto) entre M0 y L1
 
 - Plan en `docs/plan-maestro-final.md` (Fase G) y en la página Plan Coral (tareas g-1..g-6, sin dueño).

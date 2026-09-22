@@ -1,5 +1,5 @@
 {
- "exported_at": "2026-09-21T15:22:40+00:00",
+ "exported_at": "2026-09-22T10:08:38+00:00",
  "source": "https://claude.ai/artifact/XiGd3kguTNwwqTnH7mQwgi",
  "about": "Copia de la base de datos de la página Plan Coral (fases, tareas, fotos, capas, bitácora). La página la usa como respaldo de solo lectura si no puede conectar con su base de datos; en el repo sirve de historial versionado.",
  "collections": {
@@ -64,12 +64,13 @@
   "tasks": [
    {
     "id": "g-1",
-    "note": "40 chats reales de WhatsApp (107 ejemplos, 65 ES / 42 EN). Limpiar (34 vacíos, 26 con texto del centro mezclado), anonimizar bien (nombres, enlaces, correos), trocear en turnos → ~25-30 diálogos. Criterios propuestos por LLM desde la respuesta del equipo + KB actual (manda la KB), revisión humana. Split por chat de origen: los que pasan al golden salen del few-shot del RAG (evita contaminación).",
+    "note": "Casi cerrada (22-sep). Dos minados en paralelo para comparar: Álvaro (rama agent-arch, desde conversations.json: 30 candidatos + split del few-shot) y Gadea (desde los exports ORIGINALES de WhatsApp, fuera del repo): 39 chats → 75 episodios, 52 notas de voz transcritas, anonimización auditada (0 nombres), precios del chat marcados como históricos. 73 casos redactados por LLM contra la referencia y revisados a mano → golden v7: 116 diálogos, 465 turnos, 251 criterios. Decisiones de negocio a la KB (equipaje, regreso otro día, cédula de extranjería, idiomas, base en Isla Grande). Falta: comparar con el minado de Álvaro y decidir el split examen/few-shot (si gana el minado nuevo, se borra conversations.json, que aún tiene 22 nombres reales).",
     "order": 1,
     "owner": "—",
     "phase": "G",
-    "status": "pendiente",
-    "title": "G1 · Minar los chats reales de conversations.json → diálogos del golden"
+    "status": "en_curso",
+    "title": "G1 · Minar los chats reales de WhatsApp → diálogos del golden",
+    "updatedAt": "2026-09-22T13:00:00Z"
    },
    {
     "id": "g-2",
@@ -1216,6 +1217,12 @@
     "at": "2026-09-21T14:20:00Z",
     "byLabel": "Gadea",
     "text": "21-sep (Gadea): primeras conversaciones reales a mano por el widget (m0-4) y ya dan fruto: las 2 fallan cuando el cliente sigue hablando después del link, algo que los guiones sintéticos casi no cubren. (1) '¿Cuánto tiempo dura?' → lista de precios (el atajo de precios toma 'cuánto' suelto). (2) 'El curso que te he pedido…' → 'Me habías dicho…' en bucle (el recall salta con una referencia). (3) 'Mi madre es mayor y no puede hacer deporte' → el router lo lee como buceo adaptado, el contexto se queda pegado y todo va a info/RAG con 'no lo tengo' (7-8 llamadas LLM). Diagnosticado con las trazas de m0-1. Tareas S4-17..19 (sin responsable) y 2 diálogos nuevos en el golden-set v6."
+   },
+   {
+    "id": "l-0922-g1",
+    "at": "2026-09-22T13:00:00Z",
+    "byLabel": "Gadea (con Claude)",
+    "text": "22-sep: golden-set v7 con 73 casos REALES. Gadea descargó los chats originales de WhatsApp; nuevo minado (mine_whatsapp_exports.py): episodios por consulta (pausa ≥72 h), notas de voz transcritas, anonimización con nombres detectados por LLM aplicados a todos los chats, precios del chat marcados como históricos (el bot debe atenerse al catálogo). draft_real_cases.py redacta los casos con gpt-5 (~1,7 $) y la revisión humana queda en real-cases-review.json. Decisiones de Gadea: 1 mochila o bolso por persona en la lancha (maleta → asesor o guardarla en la oficina de Cartagena); regreso otro día → asesor; cédula de extranjería paga en COP; al escalar no se piden datos; indispuesto que cambia fecha → solo pasa a persona; no hay tamaño máximo oficial de grupo; clases en español e inglés (se acepta intérprete); Majagua y Cocoliso están en Isla Grande. Ojo: una ronda completa v7 son ~80 min y ~3.800 peticiones → G2 separa un golden core."
    }
   ]
  }

@@ -1,6 +1,12 @@
 History
 =======
 
+0.29.7 - (2026-09-22)
+----------------------
+* **Fase G / G1: golden-set v7 con 73 casos REALES** (116 diálogos, 465 turnos, 251 criterios propios). Fuente: los exports originales de WhatsApp del cliente (39 chats, fuera del repo). `mine_whatsapp_exports.py` los parte en 75 episodios (una consulta por pausa ≥72 h), transcribe las 52 notas de voz y anonimiza con los nombres que detecta un LLM en cada chat aplicados a todos (auditado: 0 nombres de persona); los precios y descuentos del centro van marcados como históricos porque manda el catálogo. `draft_real_cases.py` redacta cada caso con gpt-5 contra la misma referencia que el juez; la revisión humana (`real-cases-review.json`) quita lo que el cliente no pidió y lo que la referencia no respalda. Casos nuevos: post-venta, Barú, recogida en hoteles de la isla, regreso otro día, maletas, agencias, regateo, código de descuento y evaluación médica. Independiente del minado de Álvaro (`feature/agent-arch`) para compararlos.
+* **Base de conocimiento, decisiones de Gadea**: `luggage_policy` (una mochila o bolso por persona; maleta → asesor o se guarda en la oficina de Cartagena), `return_different_day` (regreso otro día no incluido, lo coordina un asesor), `instruction_languages` (español e inglés; se acepta intérprete), `colombian_pricing` (cédula de extranjería paga en COP) y en faqs Majagua y Cocoliso están en Isla Grande.
+* **Coste de medir**: una ronda completa del golden v7 son ~80 min y ~3.800 peticiones a OpenAI (de 10.000/día compartidas con PRE); G2 separará un golden core para el día a día.
+
 0.29.6 - (2026-09-21)
 ----------------------
 * **Primeras conversaciones reales a mano (m0-4)**: Gadea en el widget de PRE, conv 1163 y 1164. Las dos fallan cuando el cliente sigue hablando DESPUÉS del link, algo que los guiones sintéticos casi no cubren. Diagnosticado con las trazas por turno de m0-1: (1) "¿cuánto tiempo dura?" → lista de precios, porque `_PRICE_QUESTION` (rag_agent) toma "cuánto" suelto como precio; (2) "el curso que te he pedido…" → "Me habías dicho…" en bucle, el recall salta con una referencia; (3) "mi madre es mayor y no puede hacer deporte" → el router lo marca `adaptive_diving_topic`, el contexto DIVE TO HEAL queda pegado y los dos turnos van a `info`/RAG con fallback (7-8 llamadas LLM cada uno). Tareas S4-17..19 en la página, sin responsable; no se parchean con regex (encajan en U3).
