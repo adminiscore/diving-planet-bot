@@ -49,6 +49,13 @@ class Settings(BaseSettings):
     # Minimum raw ts_rank_cd score for a BM25-only hit to count as "confident".
     # Vector hits gate on rag_min_score (cosine); lexical hits gate on this.
     rag_min_bm25_rank: float = 0.05
+    # g-7 (Fase G): interruptores para retirar los chats antiguos (conversations.json) sin
+    # reindexar ni desplegar. Por defecto la conducta es la de siempre. Marcha atras: quitar la
+    # variable de entorno y reiniciar. Ver docs/robustness/g7-retirar-conversations-plan.md.
+    # Fuentes del indice que la busqueda ignora, separadas por coma (p. ej. "conversations").
+    rag_exclude_sources: str = ""
+    # Bloque de ejemplos reales (few-shot) en el prompt del RAG.
+    rag_fewshot_enabled: bool = True
 
     # --- Observabilidad: Langfuse (sustituye a LangSmith, cuota Developer
     # agotada; ver docs/robustness/progress-log.md "Tarea 8"). Sin claves, el

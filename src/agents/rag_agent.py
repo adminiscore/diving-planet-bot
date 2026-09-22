@@ -307,7 +307,8 @@ def build_system_prompt(lang: str, query: str | None = None) -> str:
     and appends them as compact reference context (not as imitation templates).
     """
     fewshot_block = ""
-    if query:
+    # g-7: el few-shot sale de los chats antiguos; se puede apagar sin desplegar (por defecto, encendido)
+    if query and settings.rag_fewshot_enabled:
         examples = _select_fewshot_examples(query, lang, k=2)
         fewshot_block = _format_fewshot_block(examples, lang)
 

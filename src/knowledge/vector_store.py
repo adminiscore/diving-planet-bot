@@ -77,6 +77,16 @@ def detect_query_topics(query: str) -> list[str]:
     return detected
 
 
+def excluded_sources() -> list[str]:
+    """Fuentes del indice que la busqueda ignora (g-7: `settings.rag_exclude_sources`).
+
+    Lista vacia por defecto: `x = ANY('{}')` es falso, asi que el filtro no quita nada y la
+    busqueda es identica a la de siempre.
+    """
+    raw = settings.rag_exclude_sources or ""
+    return [part.strip() for part in raw.split(",") if part.strip()]
+
+
 def source_weight_for_topics(source: str | None, topics: list[str]) -> float:
     if not source or not topics:
         return 0.0
@@ -222,12 +232,14 @@ async def _vector_search(query: str, lang: str = "es", k: int = 8) -> list[dict]
                 SELECT id, content, metadata, 1 - (embedding <=> $1::vector) AS score
                 FROM kb_documents
                 WHERE metadata->>'lang' = $2
+                  AND NOT (COALESCE(metadata->>'source', '') = ANY($4::text[]))
                 ORDER BY embedding <=> $1::vector
                 LIMIT $3
                 """,
                 str(query_embedding),
                 lang,
                 k,
+                excluded_sources(),
             )
     except Exception as exc:
         logger.info(f"[RAG][VECTOR] unavailable or failed: {exc}")
@@ -259,12 +271,14 @@ async def _bm25_search(query: str, lang: str = "es", k: int = 8) -> list[dict]:
                 FROM kb_documents
                 WHERE metadata->>'lang' = $2
                   AND content_tsv @@ websearch_to_tsquery('simple', $1)
+                  AND NOT (COALESCE(metadata->>'source', '') = ANY($4::text[]))
                 ORDER BY score DESC
                 LIMIT $3
                 """,
                 query,
                 lang,
                 k,
+                excluded_sources(),
             )
     except Exception as exc:
         logger.info(f"[RAG][BM25] unavailable or failed: {exc}")
