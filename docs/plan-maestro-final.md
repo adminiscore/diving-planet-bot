@@ -194,6 +194,11 @@ few-shot (`_select_fewshot_examples`), así que tal cual inflarían la nota.
 - **Orden:** G1+G2 → (L1 puede empezar) → G3; G4 continuo; G5 con R6; G6 antes de entregar (Q5).
 - **DoD G1+G2:** golden v7 con casos reales anonimizados y revisados, split sin fugas al few-shot, mapa de
   cobertura publicado, nueva ronda del juez como línea base de calidad.
+- **Estado (22-sep):** G2 hecha; G1 casi (falta comparar con el minado de Álvaro y retirar conversations.json, g-7).
+  Golden v7 = 116 diálogos (73 reales), **core** de 32 (día a día) y **examen oculto** de 21 (solo al cerrar fase;
+  no se mira al arreglar). **Línea base v7 revisada: 83,8 % de criterios, 38/116 sin fallos (reales 78,8 %, 9/73).**
+  Los fallos, agrupados por causa, ya son tareas: u3-4/u3-5 (entender el mensaje: la causa mayor), l1-6/l1-7 (RAG),
+  g-7, g-8, s4-20..22. Regla: soluciones globales por causa, nunca caso a caso del golden.
 
 ### Fase L1 — Wins de latencia baratos y seguros · *preservan conducta*
 1. **RAG sin doble juez:** `_verify_grounding_with_retry` juzga UNA vez; si falla, **regenera** y juzga.

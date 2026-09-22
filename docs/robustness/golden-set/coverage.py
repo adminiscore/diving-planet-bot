@@ -69,7 +69,8 @@ def select_core(dialogues: list[dict], batch_turns: dict) -> dict[str, str]:
     def en_share() -> float:
         return sum(is_en(by_id[i]) for i in core) / max(len(core), 1)
 
-    pool = [d for d in dialogues if d["id"] not in core]
+    # el examen oculto nunca entra en el core: el core se mira a diario al arreglar
+    pool = [d for d in dialogues if d["id"] not in core and d.get("suite") != "oculto"]
     while pool:
         need = {i for d in pool for i in d["cobertura"]["intents"] if count(i) < PER_INTENT}
         want_en = en_share() < MIN_EN_SHARE

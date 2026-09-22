@@ -1,0 +1,108 @@
+{
+ "dialogos": 116,
+ "turnos": 465,
+ "patrones": {
+  "disponibilidad-enlatada": {
+   "descripcion": "Responde con el mensaje fijo de disponibilidad ('las salidas son diarias...') aunque el cliente preguntaba otra cosa o daba fechas.",
+   "dialogos": 16,
+   "turnos": 18,
+   "casos": {
+    "premisa-falsa-lunes": 2,
+    "semana-santa-solo-avanzado-islas": 2,
+    "curso-open-water-disponibilidad-pasos-y-precio-citado": 1,
+    "paquete-5-buceos-islas-residente-sin-recogida": 1,
+    "snorkel-precio-residente-y-pago-link": 1,
+    "no-delfinario-sugerir-snorkel": 1,
+    "certificado-fechas-fotos-y-reserva": 1,
+    "confirmacion-salida-y-pago-sin-concepto": 1,
+    "confirma-fecha-y-punto-encuentro": 1,
+    "regreso-otro-dia-paquete-5": 1,
+    "equipaje-maleta-y-bolso-en-lancha": 1,
+    "certificado-viernes-precio-cop-y-reserva": 1,
+    "disponibilidad-hora-precio-y-pecios": 1,
+    "paquete-5-buceos-precio-fecha-y-equipaje": 1,
+    "precio-fundive-datos-faltan": 1,
+    "precio-dispo-buceo-certificado-grupo-mixto": 1
+   }
+  },
+  "cambio-sin-motivo": {
+   "descripcion": "Pide confirmar un cambio del carrito ('¿lo cambio? X -> Y') que el cliente no pidio (extraccion equivocada).",
+   "dialogos": 13,
+   "turnos": 29,
+   "casos": {
+    "grupo-mixto-cotiza-y-pide-link": 4,
+    "punto-encuentro-corrige-todo-mar-y-hora": 4,
+    "acompanante-goteo": 3,
+    "grupo-mixto-precio-cop-total": 3,
+    "cambio-fecha-por-enfermedad": 3,
+    "actividad-cambia-varias": 2,
+    "ninos-6-y-10": 2,
+    "paquete-5-buceos-islas-residente-sin-recogida": 2,
+    "paquete-5-buceos-precio-overnight-isla-grande-baru": 2,
+    "reserva-completa-saludo-a-pago": 1,
+    "grupo-cambia-dos-veces": 1,
+    "curso-mas-paquetes-desde-islas-sin-nocturno-y-total": 1,
+    "curso-alojamiento-y-recogida-islas": 1
+   }
+  },
+  "rag-no-lo-tengo": {
+   "descripcion": "El RAG contesta 'no lo tengo a la mano' (fallback).",
+   "dialogos": 16,
+   "turnos": 18,
+   "casos": {
+    "manual-acompanante-mayor": 2,
+    "curso-mas-paquetes-desde-islas-sin-nocturno-y-total": 2,
+    "descuento-efectivo": 1,
+    "paquete-5-buceos-cop-refresh-y-hoteles": 1,
+    "paquete-5-buceos-islas-residente-sin-recogida": 1,
+    "snorkel-precio-residente-y-pago-link": 1,
+    "grupo-mixto-precio-cop-total": 1,
+    "confirmacion-salida-y-pago-sin-concepto": 1,
+    "clima-y-cancelacion-reserva-existente": 1,
+    "equipaje-mochilas-y-almacenamiento": 1,
+    "logistica-isla-fragata-regreso-otro-dia": 1,
+    "paquete-5-buceos-precio-overnight-isla-grande-baru": 1,
+    "baru-no-recogida": 1,
+    "precio-paquetes-5-o-3-buceos-y-opcion-2-diurnos": 1,
+    "precios-y-disponibilidad-con-negociacion": 1,
+    "pareja-reactivate-y-refresh-cartagena": 1
+   }
+  },
+  "recuerdo-en-vez-de-respuesta": {
+   "descripcion": "Contesta 'Me habias dicho: ...' / 'You told me' a una pregunta.",
+   "dialogos": 5,
+   "turnos": 6,
+   "casos": {
+    "manual-duracion-curso": 2,
+    "reserva-ingles": 1,
+    "curso-open-water-precio-cop-hoteles-y-transporte": 1,
+    "paquete-5-buceos-islas-residente-sin-recogida": 1,
+    "certificado-precio-dia-paquete-5-y-hoteles-base": 1
+   }
+  },
+  "aviso-privacidad": {
+   "descripcion": "Salta el aviso de privacidad (datos de pago o documentos).",
+   "dialogos": 1,
+   "turnos": 1,
+   "casos": {
+    "curso-open-water-disponibilidad-pasos-y-precio-citado": 1
+   }
+  },
+  "ignora-pregunta-repite-paso": {
+   "descripcion": "El cliente pregunta algo y el bot solo repite la misma pregunta del flujo que ya habia hecho.",
+   "dialogos": 9,
+   "turnos": 9,
+   "casos": {
+    "refresher-rechaza-acepta": 1,
+    "certificado-fecha-precio-cop-descuento-transferencia": 1,
+    "pareja-certificados-cop-descuento-almuerzo": 1,
+    "certificado-precio-dia-paquete-5-y-hoteles-base": 1,
+    "colombianos-precio-minicurso-dos-inmersiones": 1,
+    "minicurso-precio-colombianos-origen-pendiente": 1,
+    "open-water-precio-duracion-hospedaje": 1,
+    "paquete-5-buceos-precio-fecha-y-equipaje": 1,
+    "principiante-hora-lugar-y-precio": 1
+   }
+  }
+ }
+}

@@ -11,6 +11,19 @@ Read this file before changing code in the Diving Planet Bot. For a quick versio
 
 ## Current branch and workflow
 
+### ✅ 2026-09-22 tarde (Gadea) — G2 hecha + LÍNEA BASE v7. Siguiente: L1 (con el core)
+
+- **Medir un cambio:** `ENV_FILE=.env.dev python -m scripts.run_synthetic_pre --name <x> --sample core` (32 diálogos,
+  ~20 min) → `scripts.judge_golden_set --run <jsonl>` → revisar sus fallos (`human_review`) →
+  `scripts.apply_golden_review`. La ronda COMPLETA (`--sample golden`, ~80 min + ~100 min de juez, ~2 $) solo al cerrar
+  fase: incluye el **examen oculto** (21 diálogos de `hidden-exam.json`), del que solo se mira la nota global.
+- **Línea base v7 revisada:** 83,8 % de criterios, 38/116 sin fallos; reales 78,8 % (9/73), sintéticos 93 % (28/43).
+  Ficheros: `results/2026-09-22-golden-v7__*.json`, `synthetic-runs/2026-09-22-golden-v7*.jsonl|json`.
+- **Tareas por causa (página, sin responsable):** u3-4, u3-5 (entender el mensaje: lo más grande), l1-6, l1-7 (RAG),
+  g-7 (retirar conversations.json del RAG), g-8 (afinar criterios reales), s4-20..22. Cada una lista sus casos de
+  regresión (visibles). **Regla de Gadea: arreglar la causa con soluciones globales, nunca caso a caso del golden.**
+- El juez con casos reales acierta el 75 % de sus "no cumple": revisar siempre su lista de revisión.
+
 ### ✅ 2026-09-22 (Gadea) — G1 casi cerrada: golden-set v7 con 73 casos REALES
 
 - **Fuente:** los exports ORIGINALES de WhatsApp que descargó Gadea (39 chats). Viven FUERA del repo (tienen

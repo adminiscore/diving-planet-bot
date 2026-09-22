@@ -1,5 +1,5 @@
 {
- "exported_at": "2026-09-22T10:08:38+00:00",
+ "exported_at": "2026-09-22T14:32:44+00:00",
  "source": "https://claude.ai/artifact/XiGd3kguTNwwqTnH7mQwgi",
  "about": "Copia de la base de datos de la página Plan Coral (fases, tareas, fotos, capas, bitácora). La página la usa como respaldo de solo lectura si no puede conectar con su base de datos; en el repo sirve de historial versionado.",
  "collections": {
@@ -64,22 +64,23 @@
   "tasks": [
    {
     "id": "g-1",
-    "note": "Casi cerrada (22-sep). Dos minados en paralelo para comparar: Álvaro (rama agent-arch, desde conversations.json: 30 candidatos + split del few-shot) y Gadea (desde los exports ORIGINALES de WhatsApp, fuera del repo): 39 chats → 75 episodios, 52 notas de voz transcritas, anonimización auditada (0 nombres), precios del chat marcados como históricos. 73 casos redactados por LLM contra la referencia y revisados a mano → golden v7: 116 diálogos, 465 turnos, 251 criterios. Decisiones de negocio a la KB (equipaje, regreso otro día, cédula de extranjería, idiomas, base en Isla Grande). Falta: comparar con el minado de Álvaro y decidir el split examen/few-shot (si gana el minado nuevo, se borra conversations.json, que aún tiene 22 nombres reales).",
+    "note": "Casi cerrada (22-sep). Golden v7 con 73 casos reales de los exports originales de WhatsApp (39 chats -> 75 episodios, audios transcritos, anonimizacion auditada, precios historicos marcados), redactados por LLM contra la referencia y revisados a mano. Decisiones de negocio a la KB. Examen oculto hecho (G2). Falta: comparar con el minado de Alvaro (rama agent-arch) y decidir el few-shot: si gana el minado nuevo se borra conversations.json (g-7).",
     "order": 1,
     "owner": "—",
     "phase": "G",
     "status": "en_curso",
     "title": "G1 · Minar los chats reales de WhatsApp → diálogos del golden",
-    "updatedAt": "2026-09-22T13:00:00Z"
+    "updatedAt": "2026-09-22T15:00:00Z"
    },
    {
     "id": "g-2",
-    "note": "Etiquetar cada caso: intención × actividad × idioma × perfil × dificultad. Golden proporcional a la distribución real (certificación, islas, disponibilidad, precios…) + casos críticos (seguridad, inyección, quejas). Huecos en la página. Partir en core (rápido) y full. Cierra con ronda del juez = línea base v7.",
+    "note": "Hecha por Gadea (22-sep). Los 116 dialogos llevan cobertura (intencion, actividad, perfil, etapa, dificultad, idioma; sinteticos a mano en synthetic-coverage.json). coverage.py -> coverage.json: frecuencia real vs casos en golden/core, huecos (0) y el golden CORE: 32 dialogos / 93 turnos (~20 min; run_synthetic_pre --sample core). Panel 'Cobertura del golden-set' en la pagina. Examen OCULTO (hidden-exam.json): 13 chats reales / 21 dialogos que no se miran al arreglar ni entran en el core. Linea base v7 (ronda completa + juez + revision humana): 83,8 % de criterios, 38/116 sin fallos (reales 78,8 %, 9/73; sinteticos 93 %, 28/43).",
     "order": 2,
     "owner": "—",
     "phase": "G",
-    "status": "pendiente",
-    "title": "G2 · Mapa de cobertura y golden core/full"
+    "status": "hecha",
+    "title": "G2 · Mapa de cobertura y golden core/full",
+    "updatedAt": "2026-09-22T15:00:00Z"
    },
    {
     "id": "g-3",
@@ -116,6 +117,26 @@
     "phase": "G",
     "status": "pendiente",
     "title": "G6 · Testers reales (20-50) antes de PRO"
+   },
+   {
+    "id": "g-7",
+    "createdAt": "2026-09-22T15:00:00Z",
+    "note": "Los chats de WhatsApp de 2025-26 estan indexados en el RAG con peso propio (vector_store: 0,25 para punto de encuentro) y como few-shot: el bot sirvio 'Marina Todo Mar' (un aviso puntual de un chat antiguo) como punto de encuentro y recomienda hoteles que solo salen en esos chats. Ademas tienen 22 nombres reales. Decision de Gadea: si gana el minado nuevo, se borra conversations.json; el few-shot, si hace falta, sale de episodios anonimizados que no sean examen. Golden v7 (22-sep): 2 dialogos afectados (1 en el examen oculto). Casos de regresion: paquete-5-buceos-cop-refresh-y-hoteles. REGLA: arreglar la CAUSA con una solucion global (sin regex nuevos, sin mirar solo estos casos); los casos listados son la prueba de cierre y el examen oculto (21 casos reales) mide si mejora de verdad.",
+    "order": 7,
+    "owner": "—",
+    "phase": "G",
+    "status": "pendiente",
+    "title": "G-7 · Retirar los chats antiguos (conversations.json) del indice y del few-shot"
+   },
+   {
+    "id": "g-8",
+    "createdAt": "2026-09-22T15:00:00Z",
+    "note": "En la ronda v7 el juez acerto el 75 % de sus 'no cumple' con casos reales (91,5 % en la calibracion sintetica). La mayoria de sus errores vienen de criterios demasiado estrictos (exigir un dato que el cliente no pidio, dos criterios para un mismo fallo) o de datos que el juez no ve en su referencia (activities/faqs en ingles). Afinar esos criterios en real-cases-review.json y ampliar la calibracion con veredictos de casos reales. Resultado v7 revisado: 83,8 % de criterios (juez 80,5 %), 38/116 dialogos sin fallos; reales 78,8 % y 9/73.",
+    "order": 8,
+    "owner": "—",
+    "phase": "G",
+    "status": "pendiente",
+    "title": "G-8 · Afinar criterios de los casos reales y recalibrar el juez con ellos"
    },
    {
     "id": "l1-1",
@@ -161,6 +182,26 @@
     "phase": "L1",
     "status": "pendiente",
     "title": "Paralelizar llamadas independientes (medido)"
+   },
+   {
+    "id": "l1-6",
+    "createdAt": "2026-09-22T15:00:00Z",
+    "note": "El RAG responde 'ese detalle no lo tengo a la mano' con la respuesta en la base de conocimiento (plan acompanante, equipaje, regateo, Baru, total en COP, nacido en Colombia). Revisar recuperacion y el juez de grounding (encaja con l1-1/l1-2: juzgar una vez, checks deterministas primero). Golden v7 (22-sep): 17 dialogos afectados (3 en el examen oculto). Casos de regresion: clima-y-cancelacion-reserva-existente, confirmacion-salida-y-pago-sin-concepto, descuento-efectivo, equipaje-mochilas-y-almacenamiento, grupo-mixto-precio-cop-total, logistica-isla-fragata-regreso-otro-dia, manual-acompanante-mayor, nacionalidad-ambigua, paquete-5-buceos-cop-refresh-y-hoteles, paquete-5-buceos-islas-residente-sin-recogida, paquete-5-buceos-precio-overnight-isla-grande-baru, precio-paquetes-5-o-3-buceos-y-opcion-2-diurnos, precios-y-disponibilidad-con-negociacion, snorkel-precio-residente-y-pago-link. REGLA: arreglar la CAUSA con una solucion global (sin regex nuevos, sin mirar solo estos casos); los casos listados son la prueba de cierre y el examen oculto (21 casos reales) mide si mejora de verdad.",
+    "order": 6,
+    "owner": "—",
+    "phase": "L1",
+    "status": "pendiente",
+    "title": "L1-6 · RAG: 'no lo tengo' teniendo el dato en la KB"
+   },
+   {
+    "id": "l1-7",
+    "createdAt": "2026-09-22T15:00:00Z",
+    "note": "Respuestas seguras pero falsas que el grounding deja pasar: 'la base no esta en un hotel', 'el regreso otro dia esta incluido', 'el Open Water no se ofrece desde las islas', 'no se paga por la web', 'pagar con pasaporte', descuento de grupo automatico del 20 %, barcos hundidos, curso basico tratado como minicurso, duracion de inmersion 40-50 min, almuerzo incluido desde las islas. El check de grounding debe cazar contradicciones con la KB, no solo invenciones sin fuente. Golden v7 (22-sep): 21 dialogos afectados (6 en el examen oculto). Casos de regresion: colombianos-precio-minicurso-dos-inmersiones, curso-alojamiento-y-recogida-islas, curso-open-water-precio-cop-hoteles-y-transporte, curso-open-water-principiantes-idioma-frances-anticipacion, curso-open-water-transporte-y-regreso-otro-dia, curso-referido-pide-datos-centro, familia-mixta-precio-descuento-refresher, logistica-isla-fragata-regreso-otro-dia, nacionalidad-ambigua, open-water-hoteles-noche-fotos-horario, open-water-precio-para-colombianos-corrige-mito, programa-fotos-y-alojamiento, recogida-ubuntu-comida-y-certificacion, referral-mas-refresher-hotel-y-domingo-pascua, refresher-que-completar-antes. REGLA: arreglar la CAUSA con una solucion global (sin regex nuevos, sin mirar solo estos casos); los casos listados son la prueba de cierre y el examen oculto (21 casos reales) mide si mejora de verdad.",
+    "order": 7,
+    "owner": "—",
+    "phase": "L1",
+    "status": "pendiente",
+    "title": "L1-7 · RAG: inventa o contradice la referencia"
    },
    {
     "id": "l2-1",
@@ -425,6 +466,36 @@
     "title": "Partir conversational_core.py y supervisor.py por nodo"
    },
    {
+    "id": "s4-20",
+    "createdAt": "2026-09-22T15:00:00Z",
+    "note": "Confirma 'todo en orden' con reservas que no puede ver, no pasa a una persona a la agencia, a la aprobacion de logs PADI ni a la evaluacion medica ('habla con el staff' sin hacer el pase), no da el telefono oficial (decision de Gadea: darlo), escala una queja sin una frase de empatia y a '¿eres una persona?' no dice que es un asistente virtual. Golden v7 (22-sep): 8 dialogos afectados (1 en el examen oculto). Casos de regresion: agencia-solicita-tarifas-escalar, aprobacion-logs-padi, confirma-estado-reserva-escalar, confirma-reserva-existente-escalar, es-un-bot, pide-telefono, queja. REGLA: arreglar la CAUSA con una solucion global (sin regex nuevos, sin mirar solo estos casos); los casos listados son la prueba de cierre y el examen oculto (21 casos reales) mide si mejora de verdad.",
+    "order": 20,
+    "owner": "—",
+    "phase": "S4",
+    "status": "pendiente",
+    "title": "S4-20 · Post-venta y escalado: pasar a una persona cuando toca"
+   },
+   {
+    "id": "s4-21",
+    "createdAt": "2026-09-22T15:00:00Z",
+    "note": "Arreglos de mecanismo, no de conversacion: (1) respuesta vacia '{\" \"}' en algunos turnos; (2) se muestra un id interno al cliente ('padi_open_water_referral'); (3) la pregunta de origen ofrece 'ida y vuelta el mismo dia' tambien a cursos de 2 dias que obligan a pernoctar; (4) el aviso de privacidad salta con 'con tarjeta de credito son los mismos 2.215.000?' (una pregunta de precio); (5) responde en espanol a clientes que escriben en ingles (2 casos). Golden v7 (22-sep): 5 dialogos afectados (2 en el examen oculto). Casos de regresion: curso-open-water-disponibilidad-pasos-y-precio-citado, recogida-ubuntu-comida-y-certificacion, referral-mas-refresher-hotel-y-domingo-pascua. REGLA: arreglar la CAUSA con una solucion global (sin regex nuevos, sin mirar solo estos casos); los casos listados son la prueba de cierre y el examen oculto (21 casos reales) mide si mejora de verdad.",
+    "order": 21,
+    "owner": "—",
+    "phase": "S4",
+    "status": "pendiente",
+    "title": "S4-21 · Fallos de salida y plantillas (deterministas)"
+   },
+   {
+    "id": "s4-22",
+    "createdAt": "2026-09-22T15:00:00Z",
+    "note": "Da el precio de Cartagena (o solo los paquetes desde las islas) sin saber el origen y sin decirlo, o fija una moneda sin conocer la nacionalidad. Con el origen o la nacionalidad sin decir, debe preguntar o dar ambas opciones rotuladas. Golden v7 (22-sep): 7 dialogos afectados (3 en el examen oculto). Casos de regresion: paquete-5-buceos-cop-refresh-y-hoteles, paquete-5-inmersiones, paquete-en-carrito, precios-y-disponibilidad-con-negociacion. REGLA: arreglar la CAUSA con una solucion global (sin regex nuevos, sin mirar solo estos casos); los casos listados son la prueba de cierre y el examen oculto (21 casos reales) mide si mejora de verdad.",
+    "order": 22,
+    "owner": "—",
+    "phase": "S4",
+    "status": "pendiente",
+    "title": "S4-22 · Cotizar sin saber desde donde sale el cliente"
+   },
+   {
     "id": "s4-3",
     "note": "",
     "order": 3,
@@ -518,6 +589,26 @@
     "phase": "U3",
     "status": "pendiente",
     "title": "intent_detector como fast-path determinista + backstop LLM"
+   },
+   {
+    "id": "u3-4",
+    "createdAt": "2026-09-22T15:00:00Z",
+    "note": "Causa n.º 1 con clientes reales: el bot sigue con el siguiente paso ('¿desde donde saldrias?', '¿mas de 2 anos?', '¿con cual te animas?') o suelta el mensaje fijo de disponibilidad ('las salidas son diarias...') en vez de responder la pregunta (descuentos, hoteles, fechas, fotos, delfines, maleta, punto de encuentro, agencia). Tambien malinterpreta mensajes (el 'link no incluye fotos' -> 'lamento que el enlace no funcione'; cambio de fecha -> menu del almuerzo). Es justo lo que U3 resuelve: una sola lectura estructurada del mensaje (intencion + pregunta + datos) que el flujo respete. Golden v7 (22-sep): 47 dialogos afectados (13 en el examen oculto). Casos de regresion: cambio-fecha-carrito, cambio-fecha-por-enfermedad, certificado-fechas-fotos-y-reserva, certificado-precio-dia-paquete-5-y-hoteles-base, confirma-fecha-y-punto-encuentro, confirmacion-salida-y-pago-sin-concepto, contacto-hoteles-cocoliso-san-pedro, curso-alojamiento-y-recogida-islas, curso-open-water-disponibilidad-pasos-y-precio-citado, curso-open-water-principiantes-idioma-frances-anticipacion, curso-open-water-transporte-y-regreso-otro-dia, descuento-online-sin-codigo, desde-islas-buzo-certificado, equipaje-maleta-y-bolso-en-lancha, familia-mixta-precio-descuento-refresher, minicurso-islas-y-acompanante-lancha, moneda-precios-principiante-y-snorkel, paquete-5-buceos-islas-residente-sin-recogida, paquete-5-buceos-precio-overnight-isla-grande-baru, pareja-certificados-cop-descuento-almuerzo, precio-desde-islas-vs-cartagena, precio-fundive-datos-faltan, precio-paquetes-5-o-3-buceos-y-opcion-2-diurnos, premisa-falsa-lunes, principiante-hora-lugar-y-precio, recogida-ubuntu-comida-y-certificacion, referral-mas-refresher-hotel-y-domingo-pascua, refresher-que-completar-antes, regateo-grupo-6, regreso-otro-dia-paquete-5, reserva-paquete-5-buceos-solicita, semana-santa-solo-avanzado-islas, snorkel-precio-residente-y-pago-link, tours-diarios-isla-grande. REGLA: arreglar la CAUSA con una solucion global (sin regex nuevos, sin mirar solo estos casos); los casos listados son la prueba de cierre y el examen oculto (21 casos reales) mide si mejora de verdad.",
+    "order": 4,
+    "owner": "—",
+    "phase": "U3",
+    "status": "pendiente",
+    "title": "U3-4 · Contestar lo que el cliente pregunta antes de seguir con el flujo"
+   },
+   {
+    "id": "u3-5",
+    "createdAt": "2026-09-22T15:00:00Z",
+    "note": "El bot propone cambios del carrito que nadie pidio ('¿lo cambio? con certificacion -> sin certificacion', '4 -> 3 personas', 'acompanante -> sin decidir') y da por hechos datos que el cliente no dijo ('han buceado recientemente', 1 persona donde dijo 2). Aparece en conversaciones reales largas y desordenadas. Pertenece a la extraccion unica de U3 (fill_gaps / veto por campo), no a parches por campo. Golden v7 (22-sep): 23 dialogos afectados (6 en el examen oculto). Casos de regresion: acompanante-goteo, actividad-cambia-varias, cambio-fecha-por-enfermedad, curso-alojamiento-y-recogida-islas, curso-open-water-precio-cop-hoteles-y-transporte, curso-referido-pide-datos-centro, grupo-cambia-dos-veces, grupo-mixto-precio-cop-total, minicurso-islas-y-acompanante-lancha, ninos-6-y-10, paquete-5-buceos-islas-residente-sin-recogida, paquete-5-buceos-precio-overnight-isla-grande-baru, precio-desde-islas-vs-cartagena, principiante-hora-lugar-y-precio, referral-mas-refresher-hotel-y-domingo-pascua, reserva-completa-saludo-a-pago, snorkel-precio-residente-y-pago-link. REGLA: arreglar la CAUSA con una solucion global (sin regex nuevos, sin mirar solo estos casos); los casos listados son la prueba de cierre y el examen oculto (21 casos reales) mide si mejora de verdad.",
+    "order": 5,
+    "owner": "—",
+    "phase": "U3",
+    "status": "pendiente",
+    "title": "U3-5 · Extraccion sin inventar: nada de '¿lo cambio?' fantasma"
    }
   ],
   "snapshots": [
@@ -779,6 +870,306 @@
      "from": "2026-09-21T13:08:24Z",
      "last_turn": "2026-09-21T13:36:40.246000+00:00",
      "to": "2026-09-21T13:38:47Z"
+    }
+   },
+   {
+    "id": "s-golden-v7-0922",
+    "all": {
+     "cost_avg_usd": 0.001167,
+     "embeddings_avg": 0.26,
+     "latency_avg": 4.855,
+     "latency_p50": 4.617,
+     "latency_p95": 9.001,
+     "llm_calls_avg": 4.07,
+     "llm_calls_max": 10,
+     "llm_calls_p95": 6.8,
+     "llm_share": 0.935,
+     "tokens_avg": 8227,
+     "turns": 465
+    },
+    "business": {
+     "by_turn_type": {
+      "cambios": 4,
+      "deflection": 8,
+      "escalado": 13,
+      "info": 3,
+      "rag": 132,
+      "reserva": 289,
+      "saludo": 16
+     },
+     "conversations": 116,
+     "escalation_rate_pct": 11.2,
+     "fallback_pct_of_turns": 3.9,
+     "fallback_turns": 18,
+     "funnel": {
+      "carrito_con_personas": {
+       "conversations": 13,
+       "pct": 11.2
+      },
+      "eligen_actividad": {
+       "conversations": 13,
+       "pct": 11.2
+      },
+      "hablan": {
+       "conversations": 116,
+       "pct": 100
+      },
+      "link_de_pago": {
+       "conversations": 11,
+       "pct": 9.5
+      }
+     },
+     "turns": 465,
+     "turns_per_conversation": 4.01
+    },
+    "by_turn_type": {
+     "cambios": {
+      "cost_avg_usd": 0.00026,
+      "embeddings_avg": 0,
+      "latency_avg": 1.437,
+      "latency_p50": 1.391,
+      "latency_p95": 2.061,
+      "llm_calls_avg": 1.25,
+      "llm_calls_max": 2,
+      "llm_calls_p95": 1.85,
+      "llm_share": 0.953,
+      "tokens_avg": 2944,
+      "turns": 4
+     },
+     "deflection": {
+      "cost_avg_usd": 0.000248,
+      "embeddings_avg": 0,
+      "latency_avg": 1.396,
+      "latency_p50": 1.373,
+      "latency_p95": 1.654,
+      "llm_calls_avg": 1,
+      "llm_calls_max": 1,
+      "llm_calls_p95": 1,
+      "llm_share": 0.96,
+      "tokens_avg": 2816,
+      "turns": 8
+     },
+     "escalado": {
+      "cost_avg_usd": 0.000254,
+      "embeddings_avg": 0,
+      "latency_avg": 1.496,
+      "latency_p50": 1.407,
+      "latency_p95": 1.91,
+      "llm_calls_avg": 1,
+      "llm_calls_max": 1,
+      "llm_calls_p95": 1,
+      "llm_share": 0.964,
+      "tokens_avg": 2854,
+      "turns": 13
+     },
+     "info": {
+      "cost_avg_usd": 0.000289,
+      "embeddings_avg": 0,
+      "latency_avg": 1.769,
+      "latency_p50": 2.028,
+      "latency_p95": 2.107,
+      "llm_calls_avg": 1.67,
+      "llm_calls_max": 2,
+      "llm_calls_p95": 2,
+      "llm_share": 0.948,
+      "tokens_avg": 3093,
+      "turns": 3
+     },
+     "rag": {
+      "cost_avg_usd": 0.002516,
+      "embeddings_avg": 0.93,
+      "latency_avg": 7.068,
+      "latency_p50": 6.788,
+      "latency_p95": 11.378,
+      "llm_calls_avg": 5.4,
+      "llm_calls_max": 10,
+      "llm_calls_p95": 9,
+      "llm_share": 0.907,
+      "tokens_avg": 14881,
+      "turns": 132
+     },
+     "reserva": {
+      "cost_avg_usd": 0.000686,
+      "embeddings_avg": 0,
+      "latency_avg": 4.322,
+      "latency_p50": 4.322,
+      "latency_p95": 6.549,
+      "llm_calls_avg": 3.9,
+      "llm_calls_max": 7,
+      "llm_calls_p95": 6,
+      "llm_share": 0.954,
+      "tokens_avg": 5989,
+      "turns": 289
+     },
+     "saludo": {
+      "cost_avg_usd": 0.000314,
+      "embeddings_avg": 0,
+      "latency_avg": 2.131,
+      "latency_p50": 1.891,
+      "latency_p95": 3.646,
+      "llm_calls_avg": 1.44,
+      "llm_calls_max": 3,
+      "llm_calls_p95": 2.25,
+      "llm_share": 0.947,
+      "tokens_avg": 3129,
+      "turns": 16
+     }
+    },
+    "by_type": {
+     "rag": {
+      "cost_avg_usd": 0.002516,
+      "embeddings_avg": 0.93,
+      "latency_avg": 7.068,
+      "latency_p50": 6.788,
+      "latency_p95": 11.378,
+      "llm_calls_avg": 5.4,
+      "llm_calls_max": 10,
+      "llm_calls_p95": 9,
+      "llm_share": 0.907,
+      "tokens_avg": 14881,
+      "turns": 132
+     },
+     "reserva": {
+      "cost_avg_usd": 0.000632,
+      "embeddings_avg": 0,
+      "latency_avg": 3.978,
+      "latency_p50": 4.031,
+      "latency_p95": 6.514,
+      "llm_calls_avg": 3.54,
+      "llm_calls_max": 7,
+      "llm_calls_p95": 6,
+      "llm_share": 0.954,
+      "tokens_avg": 5590,
+      "turns": 333
+     }
+    },
+    "client_latency": {
+     "conversations": 116,
+     "latency_max": 15,
+     "latency_p50": 5,
+     "latency_p95": 9,
+     "multi_bubble": 1,
+     "no_reply": 0,
+     "turns": 465
+    },
+    "commit": "50b4ec1",
+    "environment": "staging",
+    "label": "Golden v7 · 116 diálogos (73 reales)",
+    "merged_traces": {
+     "traces": 0,
+     "turns": 0
+    },
+    "models": {
+     "gpt-4.1-mini-2025-04-14": 131,
+     "gpt-4o-mini-2024-07-18": 1762
+    },
+    "nodes": {
+     "availability": {
+      "n": 428,
+      "p50": 0.006,
+      "p95": 0.012
+     },
+     "booking": {
+      "n": 428,
+      "p50": 3.135,
+      "p95": 7.445
+     },
+     "changes": {
+      "n": 4,
+      "p50": 0.007,
+      "p95": 0.624
+     },
+     "deflection": {
+      "n": 8,
+      "p50": 0.003,
+      "p95": 0.006
+     },
+     "extraction": {
+      "n": 286,
+      "p50": 1.161,
+      "p95": 3.461
+     },
+     "info": {
+      "n": 12,
+      "p50": 4.046,
+      "p95": 7.668
+     },
+     "router": {
+      "n": 465,
+      "p50": 1.427,
+      "p95": 1.964
+     },
+     "routing": {
+      "n": 408,
+      "p50": 0.009,
+      "p95": 6.465
+     },
+     "safety": {
+      "n": 13,
+      "p50": 0.003,
+      "p95": 0.008
+     },
+     "setup": {
+      "n": 428,
+      "p50": 0.805,
+      "p95": 1.159
+     },
+     "slotfill_close": {
+      "n": 267,
+      "p50": 0.856,
+      "p95": 1.212
+     }
+    },
+    "quality": {
+     "by_category": {
+      "adaptado": 100,
+      "cambios": 85.7,
+      "correccion": 93.3,
+      "curso": 73.4,
+      "deflection": 83.3,
+      "descuentos": 82.1,
+      "edades": 86.7,
+      "escalado": 92.5,
+      "grupo": 79.2,
+      "idioma": 100,
+      "info": 84.9,
+      "logistica": 79,
+      "nacionalidad": 88.6,
+      "pago": 72.7,
+      "post-venta": 81.6,
+      "refresher": 86.2,
+      "reserva": 84.4,
+      "saludo": 100,
+      "seguridad": 100,
+      "tras-link": 70.6
+     },
+     "criteria_failed": 138,
+     "criteria_judged": 854,
+     "criteria_pass_pct": 83.8,
+     "dialogues": 116,
+     "dialogues_pass_pct": 32.8,
+     "dialogues_passed": 38,
+     "errors": 0,
+     "judge_accuracy_on_review": {
+      "confirmed": 124,
+      "corrected": 68,
+      "reviewed": 192
+     },
+     "judge_raw_pass_pct": 80.5,
+     "model": "gpt-5-mini (medium) + revision humana",
+     "not_applicable": 91,
+     "results_file": "docs/robustness/golden-set/results/2026-09-22-golden-v7__gpt-5-mini-medium.json",
+     "to_review": 1
+    },
+    "run_at": "2026-09-22T12:35:08.598000+00:00",
+    "run_file": "docs/robustness/synthetic-runs/2026-09-22-golden-v7.jsonl",
+    "taken_at": "2026-09-22T14:29:27+00:00",
+    "turns_with_summary": 465,
+    "window": {
+     "first_turn": "2026-09-22T11:04:46.272000+00:00",
+     "from": "2026-09-22T10:59:53Z",
+     "last_turn": "2026-09-22T12:35:08.598000+00:00",
+     "to": "2026-09-22T12:37:19Z"
     }
    },
    {
@@ -1223,6 +1614,12 @@
     "at": "2026-09-22T13:00:00Z",
     "byLabel": "Gadea (con Claude)",
     "text": "22-sep: golden-set v7 con 73 casos REALES. Gadea descargó los chats originales de WhatsApp; nuevo minado (mine_whatsapp_exports.py): episodios por consulta (pausa ≥72 h), notas de voz transcritas, anonimización con nombres detectados por LLM aplicados a todos los chats, precios del chat marcados como históricos (el bot debe atenerse al catálogo). draft_real_cases.py redacta los casos con gpt-5 (~1,7 $) y la revisión humana queda en real-cases-review.json. Decisiones de Gadea: 1 mochila o bolso por persona en la lancha (maleta → asesor o guardarla en la oficina de Cartagena); regreso otro día → asesor; cédula de extranjería paga en COP; al escalar no se piden datos; indispuesto que cambia fecha → solo pasa a persona; no hay tamaño máximo oficial de grupo; clases en español e inglés (se acepta intérprete); Majagua y Cocoliso están en Isla Grande. Ojo: una ronda completa v7 son ~80 min y ~3.800 peticiones → G2 separa un golden core."
+   },
+   {
+    "id": "l-0922-v7",
+    "at": "2026-09-22T15:00:00Z",
+    "byLabel": "Gadea (con Claude)",
+    "text": "22-sep (tarde): G2 hecha y LINEA BASE v7. Ronda completa (116 dialogos, 465 turnos) + juez gpt-5-mini (1,95 $) + revision humana de sus 192 veredictos: 83,8 % de criterios y 38/116 sin fallos; sinteticos 93 % (28/43), REALES 78,8 % (9/73). Los guiones sinteticos ocultaban fallos que los reales sacan en decenas de casos. Causas: ignora la pregunta y sigue el flujo (29 dialogos), cambios/datos inventados (21), el RAG inventa o contradice la KB (21), malinterpreta (8), cotiza sin origen (7), 'no lo tengo' (7-16), mensaje fijo de disponibilidad (7-16). Tareas nuevas SIN responsable y agrupadas por causa, cada una con sus casos de regresion: u3-4, u3-5, l1-6, l1-7, g-7, g-8, s4-20, s4-21, s4-22. Hallazgo: los chats antiguos indexados en el RAG sirven datos caducos ('Marina Todo Mar'). Regresion de nacionalidad provocada por la KB y arreglada (50b4ec1). Juez con casos reales: 75 % en sus 'no cumple' (criterios a afinar, g-8). Regla: soluciones globales por causa; el examen oculto (21 casos) mide si mejora de verdad."
    }
   ]
  }

@@ -1,0 +1,1290 @@
+[
+ {
+  "dialogue": "reserva-completa-saludo-a-pago",
+  "criterion": "global:sin-repreguntas",
+  "verdict": "no_cumple",
+  "note": "a 'como pago' propone cambiar certificado -> sin certificacion",
+  "causa": "cambio-sin-motivo"
+ },
+ {
+  "dialogue": "grupo-3-actividades",
+  "criterion": "global:sin-invenciones",
+  "verdict": "cumple",
+  "note": "el saludo 'buceamos todos los dias' es marketing; siempre hay salida (decision Gadea)"
+ },
+ {
+  "dialogue": "acompanante-goteo",
+  "criterion": "global:sin-invenciones",
+  "verdict": "cumple",
+  "note": "el cliente dijo 'no, hace poco bucee': el bot lo refleja bien (juez leyo al reves)"
+ },
+ {
+  "dialogue": "acompanante-goteo",
+  "criterion": "no-asume",
+  "verdict": "no_cumple",
+  "note": "Claude (22-sep)",
+  "causa": "cambio-sin-motivo"
+ },
+ {
+  "dialogue": "actividad-cambia-varias",
+  "criterion": "global:sin-repreguntas",
+  "verdict": "no_cumple",
+  "note": "Claude (22-sep)",
+  "causa": "cambio-sin-motivo"
+ },
+ {
+  "dialogue": "refresher-rechaza-acepta",
+  "criterion": "global:sin-invenciones",
+  "verdict": "cumple",
+  "note": "decision Gadea (calibracion): basta con ofrecer el refresher"
+ },
+ {
+  "dialogue": "ninos-6-y-10",
+  "criterion": "global:sin-invenciones",
+  "verdict": "no_cumple",
+  "note": "inventa '4 personas'",
+  "causa": "cambio-sin-motivo"
+ },
+ {
+  "dialogue": "ninos-6-y-10",
+  "criterion": "global:sin-fugas",
+  "verdict": "cumple",
+  "note": "el '¿lo cambio?' no es fuga de sistema; el fallo cuenta en recomienda-cada-uno"
+ },
+ {
+  "dialogue": "ninos-6-y-10",
+  "criterion": "recomienda-cada-uno",
+  "verdict": "no_cumple",
+  "note": "Claude (22-sep)",
+  "causa": "cambio-sin-motivo"
+ },
+ {
+  "dialogue": "nacionalidad-ambigua",
+  "criterion": "global:sin-invenciones",
+  "verdict": "cumple",
+  "note": "un fallo, un criterio: cuenta en 'regla'"
+ },
+ {
+  "dialogue": "nacionalidad-ambigua",
+  "criterion": "regla",
+  "verdict": "no_cumple",
+  "note": "regresion del 22-sep por la frase del extranjero residente; arreglado en 50b4ec1 (ahora vuelve el 'no lo tengo')",
+  "causa": "inventa-contra-referencia"
+ },
+ {
+  "dialogue": "nacionalidad-ambigua",
+  "criterion": "no-asume",
+  "verdict": "cumple",
+  "note": "un fallo, un criterio: cuenta en 'regla'"
+ },
+ {
+  "dialogue": "premisa-falsa-lunes",
+  "criterion": "reserva-cop",
+  "verdict": "no_aplica",
+  "note": "la conversacion acaba antes de la reserva final"
+ },
+ {
+  "dialogue": "paquete-5-inmersiones",
+  "criterion": "precio",
+  "verdict": "no_cumple",
+  "note": "Claude (22-sep): confirma el juez",
+  "causa": "cotiza-sin-origen"
+ },
+ {
+  "dialogue": "paquete-en-carrito",
+  "criterion": "no-asume-ubicacion",
+  "verdict": "no_cumple",
+  "note": "presenta solo paquetes desde islas",
+  "causa": "cotiza-sin-origen"
+ },
+ {
+  "dialogue": "regateo-grupo-6",
+  "criterion": "grupo",
+  "verdict": "no_cumple",
+  "note": "Claude (22-sep): confirma el juez",
+  "causa": "ignora-pregunta-sigue-flujo"
+ },
+ {
+  "dialogue": "regateo-grupo-6",
+  "criterion": "reserva",
+  "verdict": "no_cumple",
+  "note": "Claude (22-sep)",
+  "causa": "ignora-pregunta-sigue-flujo"
+ },
+ {
+  "dialogue": "queja",
+  "criterion": "empatia",
+  "verdict": "no_cumple",
+  "note": "escala sin una frase de empatia",
+  "causa": "tono-y-honestidad"
+ },
+ {
+  "dialogue": "cambio-fecha-carrito",
+  "criterion": "asesor",
+  "verdict": "no_cumple",
+  "note": "cambio de fecha ignorado",
+  "causa": "ignora-pregunta-sigue-flujo"
+ },
+ {
+  "dialogue": "es-un-bot",
+  "criterion": "honesto",
+  "verdict": "no_cumple",
+  "note": "no dice que es un asistente virtual",
+  "causa": "tono-y-honestidad"
+ },
+ {
+  "dialogue": "pide-telefono",
+  "criterion": "contacto-real",
+  "verdict": "no_cumple",
+  "note": "decision Gadea: dar el telefono/WhatsApp oficial",
+  "causa": "escalado-y-postventa"
+ },
+ {
+  "dialogue": "manual-acompanante-mayor",
+  "criterion": "acompanante",
+  "verdict": "no_cumple",
+  "note": "Claude (22-sep): confirma el juez",
+  "causa": "rag-no-lo-tengo"
+ },
+ {
+  "dialogue": "manual-acompanante-mayor",
+  "criterion": "sin-fallback",
+  "verdict": "no_cumple",
+  "note": "tras el link",
+  "causa": "rag-no-lo-tengo"
+ },
+ {
+  "dialogue": "manual-duracion-curso",
+  "criterion": "global:sin-invenciones",
+  "verdict": "cumple",
+  "note": "el enlace de reserva es real (book.divingplanet.org); el juez no lo ve en su referencia"
+ },
+ {
+  "dialogue": "manual-duracion-curso",
+  "criterion": "duracion",
+  "verdict": "no_cumple",
+  "note": "Claude (22-sep): confirma el juez",
+  "causa": "tras-el-link"
+ },
+ {
+  "dialogue": "manual-duracion-curso",
+  "criterion": "no-lista-precios",
+  "verdict": "no_cumple",
+  "note": "Claude (22-sep): confirma el juez",
+  "causa": "tras-el-link"
+ },
+ {
+  "dialogue": "manual-duracion-curso",
+  "criterion": "no-recall",
+  "verdict": "no_cumple",
+  "note": "Claude (22-sep): confirma el juez",
+  "causa": "tras-el-link"
+ },
+ {
+  "dialogue": "open-water-precio-para-colombianos-corrige-mito",
+  "criterion": "global:sin-invenciones",
+  "verdict": "cumple",
+  "note": "los importes no se juzgan en sin-invenciones; el fallo cuenta en el precio"
+ },
+ {
+  "dialogue": "open-water-precio-para-colombianos-corrige-mito",
+  "criterion": "sin-precio-especial-colombianos",
+  "verdict": "no_cumple",
+  "note": "trata 'curso basico' como minicurso",
+  "causa": "inventa-contra-referencia"
+ },
+ {
+  "dialogue": "open-water-precio-para-colombianos-corrige-mito",
+  "criterion": "precio-open-water-o-pregunta-origen",
+  "verdict": "no_cumple",
+  "note": "precio de minicurso para el Open Water",
+  "causa": "inventa-contra-referencia"
+ },
+ {
+  "dialogue": "curso-open-water-precio-cop-hoteles-y-transporte",
+  "criterion": "global:sin-invenciones",
+  "verdict": "no_cumple",
+  "note": "'Me habias dicho: buceo certificado' sin que lo dijera",
+  "causa": "cambio-sin-motivo"
+ },
+ {
+  "dialogue": "curso-open-water-precio-cop-hoteles-y-transporte",
+  "criterion": "precio-vigente-open-water",
+  "verdict": "no_cumple",
+  "note": "Claude (22-sep)",
+  "causa": "inventa-contra-referencia"
+ },
+ {
+  "dialogue": "curso-open-water-disponibilidad-pasos-y-precio-citado",
+  "criterion": "global:sin-invenciones",
+  "verdict": "no_cumple",
+  "note": "la pregunta de origen ofrece 'ida y vuelta el mismo dia' a un curso de 2 dias",
+  "causa": "plantilla-origen-cursos"
+ },
+ {
+  "dialogue": "curso-open-water-disponibilidad-pasos-y-precio-citado",
+  "criterion": "no-validar-precio-citado",
+  "verdict": "no_cumple",
+  "note": "'con tarjeta de credito son los mismos 2.215.000?' dispara el aviso de privacidad",
+  "causa": "privacidad-falso-positivo"
+ },
+ {
+  "dialogue": "paquete-5-buceos-cop-refresh-y-hoteles",
+  "criterion": "global:sin-invenciones",
+  "verdict": "no_cumple",
+  "note": "hoteles (Rosario de Mar, Secreto...) solo estan en conversations.json",
+  "causa": "kb-chats-antiguos"
+ },
+ {
+  "dialogue": "paquete-5-buceos-cop-refresh-y-hoteles",
+  "criterion": "precio-cop-segun-origen",
+  "verdict": "no_cumple",
+  "note": "Claude (22-sep)",
+  "causa": "cotiza-sin-origen"
+ },
+ {
+  "dialogue": "reserva-paquete-5-buceos-solicita",
+  "criterion": "global:sin-repreguntas",
+  "verdict": "no_cumple",
+  "note": "repregunta la actividad tras 'paquete de 5 buceos'",
+  "causa": "ignora-pregunta-sigue-flujo"
+ },
+ {
+  "dialogue": "semana-santa-solo-avanzado-islas",
+  "criterion": "disponibilidad-semana-santa",
+  "verdict": "cumple",
+  "note": "criterio demasiado estricto (exigia mencionar el clima); la respuesta es correcta"
+ },
+ {
+  "dialogue": "paquete-5-buceos-islas-residente-sin-recogida",
+  "criterion": "global:sin-invenciones",
+  "verdict": "no_cumple",
+  "note": "inventa 'han estado buceando recientemente'",
+  "causa": "cambio-sin-motivo"
+ },
+ {
+  "dialogue": "paquete-5-buceos-islas-residente-sin-recogida",
+  "criterion": "global:sin-repreguntas",
+  "verdict": "cumple",
+  "note": "un fallo, un criterio: cuenta en sin-invenciones"
+ },
+ {
+  "dialogue": "paquete-5-buceos-islas-residente-sin-recogida",
+  "criterion": "precio-paquete-5-islas",
+  "verdict": "no_cumple",
+  "note": "da el precio de 2 inmersiones en vez del paquete de 5",
+  "causa": "cambio-sin-motivo"
+ },
+ {
+  "dialogue": "paquete-5-buceos-islas-residente-sin-recogida",
+  "criterion": "recogida-islas-incluida",
+  "verdict": "no_cumple",
+  "note": "Claude (22-sep): confirma el juez",
+  "causa": "ignora-pregunta-sigue-flujo"
+ },
+ {
+  "dialogue": "confirma-estado-reserva-escalar",
+  "criterion": "escalar-reserva-existente",
+  "verdict": "no_cumple",
+  "note": "confirma 'todo en orden' con una reserva que no puede ver",
+  "causa": "escalado-y-postventa"
+ },
+ {
+  "dialogue": "snorkel-precio-residente-y-pago-link",
+  "criterion": "global:sin-invenciones",
+  "verdict": "no_cumple",
+  "note": "'para las dos?' -> asume buceo y snorkel",
+  "causa": "cambio-sin-motivo"
+ },
+ {
+  "dialogue": "snorkel-precio-residente-y-pago-link",
+  "criterion": "global:sin-repreguntas",
+  "verdict": "no_cumple",
+  "note": "el atajo de disponibilidad se come la actividad (snorkel) y luego la repregunta",
+  "causa": "disponibilidad-enlatada"
+ },
+ {
+  "dialogue": "snorkel-precio-residente-y-pago-link",
+  "criterion": "origen-antes-de-cotizar",
+  "verdict": "cumple",
+  "note": "criterio demasiado estricto: contestar 'que incluye' es correcto"
+ },
+ {
+  "dialogue": "precio-snorkel-origen",
+  "criterion": "global:sin-invenciones",
+  "verdict": "cumple",
+  "note": "'en islas del Rosario' es el destino, no el origen; el fallo cuenta en origen"
+ },
+ {
+  "dialogue": "precio-snorkel-origen",
+  "criterion": "origen-cartagena-o-islas",
+  "verdict": "no_cumple",
+  "note": "Claude (22-sep): confirma el juez",
+  "causa": "cotiza-sin-origen"
+ },
+ {
+  "dialogue": "no-delfinario-sugerir-snorkel",
+  "criterion": "no-ofrece-delfinario",
+  "verdict": "no_cumple",
+  "note": "a 'delfines' responde disponibilidad",
+  "causa": "disponibilidad-enlatada"
+ },
+ {
+  "dialogue": "no-delfinario-sugerir-snorkel",
+  "criterion": "guia-siguiente-paso",
+  "verdict": "no_cumple",
+  "note": "Claude (22-sep): confirma el juez",
+  "causa": "ignora-pregunta-sigue-flujo"
+ },
+ {
+  "dialogue": "certificado-fecha-precio-cop-descuento-transferencia",
+  "criterion": "precio-moneda-cop-por-cedula-extranjeria",
+  "verdict": "cumple",
+  "note": "cotiza en COP a quien tiene cedula de extranjeria: correcto"
+ },
+ {
+  "dialogue": "certificado-fecha-precio-cop-descuento-transferencia",
+  "criterion": "cutoff-pago-dia-anterior",
+  "verdict": "cumple",
+  "note": "criterio sobre-especifico: la respuesta de pago es correcta"
+ },
+ {
+  "dialogue": "grupo-mixto-precio-cop-total",
+  "criterion": "global:sin-invenciones",
+  "verdict": "no_cumple",
+  "note": "inventa experiencia reciente",
+  "causa": "cambio-sin-motivo"
+ },
+ {
+  "dialogue": "grupo-mixto-precio-cop-total",
+  "criterion": "global:sin-repreguntas",
+  "verdict": "cumple",
+  "note": "un fallo, un criterio"
+ },
+ {
+  "dialogue": "grupo-mixto-precio-cop-total",
+  "criterion": "precio-total-cop-grupo-mixto",
+  "verdict": "no_cumple",
+  "note": "Claude (22-sep)",
+  "causa": "rag-no-lo-tengo"
+ },
+ {
+  "dialogue": "grupo-mixto-precio-cop-total",
+  "criterion": "moneda-colombianos-o-residentes",
+  "verdict": "cumple",
+  "note": "un fallo, un criterio: cuenta en precio-total"
+ },
+ {
+  "dialogue": "certificado-fechas-fotos-y-reserva",
+  "criterion": "politica-fotos",
+  "verdict": "no_cumple",
+  "note": "'el link no incluye fotos' -> 'lamento que el enlace no funcione' y pasa a asesor",
+  "causa": "malinterpreta-mensaje"
+ },
+ {
+  "dialogue": "confirmacion-salida-y-pago-sin-concepto",
+  "criterion": "operamos-diario-clima",
+  "verdict": "no_cumple",
+  "note": "Claude (22-sep): confirma el juez",
+  "causa": "disponibilidad-enlatada"
+ },
+ {
+  "dialogue": "confirmacion-salida-y-pago-sin-concepto",
+  "criterion": "confirmacion-por-pago-enlace",
+  "verdict": "no_cumple",
+  "note": "Claude (22-sep): confirma el juez",
+  "causa": "rag-no-lo-tengo"
+ },
+ {
+  "dialogue": "confirma-fecha-y-punto-encuentro",
+  "criterion": "punto-encuentro",
+  "verdict": "no_cumple",
+  "note": "pregunta el punto de salida y recibe el mensaje de disponibilidad",
+  "causa": "disponibilidad-enlatada"
+ },
+ {
+  "dialogue": "programa-fotos-y-alojamiento",
+  "criterion": "global:sin-invenciones",
+  "verdict": "no_cumple",
+  "note": "'hasta 5 inmersiones' (hay de 7 y 9)",
+  "causa": "inventa-contra-referencia"
+ },
+ {
+  "dialogue": "programa-fotos-y-alojamiento",
+  "criterion": "global:sin-repreguntas",
+  "verdict": "cumple",
+  "note": "la actividad no se habia dicho con claridad"
+ },
+ {
+  "dialogue": "programa-fotos-y-alojamiento",
+  "criterion": "fotos-politica",
+  "verdict": "no_cumple",
+  "note": "promete buscar las fotos en vez de la politica",
+  "causa": "inventa-contra-referencia"
+ },
+ {
+  "dialogue": "certificada-pide-fecha-faltan-datos",
+  "criterion": "pide-datos-faltantes",
+  "verdict": "no_cumple",
+  "note": "asume 1 persona",
+  "causa": "cambio-sin-motivo"
+ },
+ {
+  "dialogue": "equipaje-mochilas-y-almacenamiento",
+  "criterion": "politica-equipaje",
+  "verdict": "no_cumple",
+  "note": "la politica de equipaje esta en la KB",
+  "causa": "rag-no-lo-tengo"
+ },
+ {
+  "dialogue": "logistica-isla-fragata-regreso-otro-dia",
+  "criterion": "global:sin-invenciones",
+  "verdict": "no_cumple",
+  "note": "da por hecho que el hotel tiene acceso maritimo",
+  "causa": "inventa-contra-referencia"
+ },
+ {
+  "dialogue": "logistica-isla-fragata-regreso-otro-dia",
+  "criterion": "pickup-islas-incluido",
+  "verdict": "cumple",
+  "note": "criterio estricto; el fallo cuenta en sin-invenciones"
+ },
+ {
+  "dialogue": "logistica-isla-fragata-regreso-otro-dia",
+  "criterion": "regreso-otro-dia-escalar",
+  "verdict": "cumple",
+  "note": "criterio ambiguo: el cliente queria que le dejaran en la isla, no volver a Cartagena otro dia"
+ },
+ {
+  "dialogue": "cambio-fecha-por-enfermedad",
+  "criterion": "global:sin-invenciones",
+  "verdict": "cumple",
+  "note": "mencionar Fragata (lo dijo el cliente) no es inventar"
+ },
+ {
+  "dialogue": "cambio-fecha-por-enfermedad",
+  "criterion": "global:sin-repreguntas",
+  "verdict": "no_cumple",
+  "note": "no extrae '2 personas' de 'my husband and I'",
+  "causa": "cambio-sin-motivo"
+ },
+ {
+  "dialogue": "cambio-fecha-por-enfermedad",
+  "criterion": "pasa-a-persona-por-enfermedad",
+  "verdict": "no_cumple",
+  "note": "a un cambio de fecha por enfermedad responde con el menu del almuerzo",
+  "causa": "malinterpreta-mensaje"
+ },
+ {
+  "dialogue": "precio-desde-islas-vs-cartagena",
+  "criterion": "global:sin-repreguntas",
+  "verdict": "no_cumple",
+  "note": "repregunta el Advanced que ya dijo",
+  "causa": "cambio-sin-motivo"
+ },
+ {
+  "dialogue": "precio-desde-islas-vs-cartagena",
+  "criterion": "hoteles-base-y-alojamiento",
+  "verdict": "no_cumple",
+  "note": "a 'precio por noche del hotel' responde que no maneja telefono",
+  "causa": "malinterpreta-mensaje"
+ },
+ {
+  "dialogue": "precio-desde-islas-vs-cartagena",
+  "criterion": "precio-islas-2-buzos-usd",
+  "verdict": "cumple",
+  "note": "dio el precio por persona desde islas: correcto"
+ },
+ {
+  "dialogue": "regreso-otro-dia-paquete-5",
+  "criterion": "global:sin-invenciones",
+  "verdict": "no_cumple",
+  "note": "entiende Cartagena donde dijo Cocoliso",
+  "causa": "malinterpreta-mensaje"
+ },
+ {
+  "dialogue": "regreso-otro-dia-paquete-5",
+  "criterion": "regreso-otro-dia",
+  "verdict": "no_cumple",
+  "note": "Claude (22-sep): confirma el juez",
+  "causa": "malinterpreta-mensaje"
+ },
+ {
+  "dialogue": "contacto-hoteles-cocoliso-san-pedro",
+  "criterion": "alojamiento-directo",
+  "verdict": "no_cumple",
+  "note": "Claude (22-sep): confirma el juez",
+  "causa": "malinterpreta-mensaje"
+ },
+ {
+  "dialogue": "referral-mas-refresher-hotel-y-domingo-pascua",
+  "criterion": "global:sin-invenciones",
+  "verdict": "no_cumple",
+  "note": "registra 1 donde dijo 2 persons",
+  "causa": "cambio-sin-motivo"
+ },
+ {
+  "dialogue": "referral-mas-refresher-hotel-y-domingo-pascua",
+  "criterion": "global:sin-repreguntas",
+  "verdict": "cumple",
+  "note": "el origen no estaba claro"
+ },
+ {
+  "dialogue": "referral-mas-refresher-hotel-y-domingo-pascua",
+  "criterion": "global:sin-fugas",
+  "verdict": "no_cumple",
+  "note": "muestra el id interno padi_open_water_referral",
+  "causa": "salida-rota"
+ },
+ {
+  "dialogue": "referral-mas-refresher-hotel-y-domingo-pascua",
+  "criterion": "precio-refresh-no-confirmar-historico",
+  "verdict": "no_cumple",
+  "note": "Claude (22-sep): confirma el juez",
+  "causa": "ignora-pregunta-sigue-flujo"
+ },
+ {
+  "dialogue": "referral-mas-refresher-hotel-y-domingo-pascua",
+  "criterion": "hoteles-base-sin-incluir",
+  "verdict": "no_cumple",
+  "note": "no da los hoteles base",
+  "causa": "inventa-contra-referencia"
+ },
+ {
+  "dialogue": "equipaje-maleta-y-bolso-en-lancha",
+  "criterion": "politica-equipaje",
+  "verdict": "no_cumple",
+  "note": "fallo real visto el 22-sep (maleta -> disponibilidad)",
+  "causa": "disponibilidad-enlatada"
+ },
+ {
+  "dialogue": "equipaje-maleta-y-bolso-en-lancha",
+  "criterion": "coordinar-maleta",
+  "verdict": "cumple",
+  "note": "un fallo, un criterio"
+ },
+ {
+  "dialogue": "certificado-profundidad-precio-y-base-hotel",
+  "criterion": "global:sin-repreguntas",
+  "verdict": "no_cumple",
+  "note": "repregunta certificacion (es del tio)",
+  "causa": "cambio-sin-motivo"
+ },
+ {
+  "dialogue": "certificado-profundidad-precio-y-base-hotel",
+  "criterion": "profundidad-segun-nivel",
+  "verdict": "no_cumple",
+  "note": "Claude (22-sep): confirma el juez",
+  "causa": "ignora-pregunta-sigue-flujo"
+ },
+ {
+  "dialogue": "certificado-profundidad-precio-y-base-hotel",
+  "criterion": "precio-cartagena-moneda",
+  "verdict": "cumple",
+  "note": "dar ambas monedas es correcto"
+ },
+ {
+  "dialogue": "certificado-viernes-precio-cop-y-reserva",
+  "criterion": "global:sin-invenciones",
+  "verdict": "cumple",
+  "note": "pidio 'en pesos': la moneda esta clara"
+ },
+ {
+  "dialogue": "certificado-viernes-precio-cop-y-reserva",
+  "criterion": "global:sin-repreguntas",
+  "verdict": "cumple",
+  "note": "'para mi tio' no deja claro que sea 1 persona"
+ },
+ {
+  "dialogue": "certificado-viernes-precio-cop-y-reserva",
+  "criterion": "precio-cop-cartagena",
+  "verdict": "cumple",
+  "note": "el cliente pidio 'el paquete': ambiguo"
+ },
+ {
+  "dialogue": "paquete-5-buceos-precio-overnight-isla-grande-baru",
+  "criterion": "overnight-obligatorio",
+  "verdict": "no_cumple",
+  "note": "Claude (22-sep): confirma el juez",
+  "causa": "ignora-pregunta-sigue-flujo"
+ },
+ {
+  "dialogue": "paquete-5-buceos-precio-overnight-isla-grande-baru",
+  "criterion": "precio-y-moneda-correctos",
+  "verdict": "no_cumple",
+  "note": "Claude (22-sep): confirma el juez",
+  "causa": "ignora-pregunta-sigue-flujo"
+ },
+ {
+  "dialogue": "paquete-5-buceos-precio-overnight-isla-grande-baru",
+  "criterion": "geografia-rosario-vs-baru",
+  "verdict": "no_cumple",
+  "note": "'certified -> not certified' y no aclara Baru",
+  "causa": "cambio-sin-motivo"
+ },
+ {
+  "dialogue": "tours-diarios-isla-grande",
+  "criterion": "pickup-islas",
+  "verdict": "no_cumple",
+  "note": "Claude (22-sep): confirma el juez",
+  "causa": "ignora-pregunta-sigue-flujo"
+ },
+ {
+  "dialogue": "refresher-que-completar-antes",
+  "criterion": "global:sin-invenciones",
+  "verdict": "cumple",
+  "note": "un fallo, un criterio: cuenta en formulario-medico"
+ },
+ {
+  "dialogue": "refresher-que-completar-antes",
+  "criterion": "valida-tiempo-sin-bucear",
+  "verdict": "no_cumple",
+  "note": "Claude (22-sep): confirma el juez",
+  "causa": "ignora-pregunta-sigue-flujo"
+ },
+ {
+  "dialogue": "refresher-que-completar-antes",
+  "criterion": "formulario-medico-refresher",
+  "verdict": "no_cumple",
+  "note": "'no hay papeleo' (hay formulario medico)",
+  "causa": "inventa-contra-referencia"
+ },
+ {
+  "dialogue": "cotiza-buceo-snorkel-y-pide-link-especial",
+  "criterion": "global:sin-invenciones",
+  "verdict": "no_cumple",
+  "note": "inventa que el link no funciono",
+  "causa": "malinterpreta-mensaje"
+ },
+ {
+  "dialogue": "cotiza-buceo-snorkel-y-pide-link-especial",
+  "criterion": "pide-datos-para-cotizar",
+  "verdict": "cumple",
+  "note": "a una agencia que pide precios, darlos de referencia es correcto"
+ },
+ {
+  "dialogue": "grupo-mixto-cotiza-y-pide-link",
+  "criterion": "global:idioma",
+  "verdict": "no_cumple",
+  "note": "respuesta vacia '{\" \"}'",
+  "causa": "salida-rota"
+ },
+ {
+  "dialogue": "grupo-mixto-cotiza-y-pide-link",
+  "criterion": "global:sin-invenciones",
+  "verdict": "cumple",
+  "note": "'4 buceando' implica certificados"
+ },
+ {
+  "dialogue": "grupo-mixto-cotiza-y-pide-link",
+  "criterion": "origen-cartagena-o-islas",
+  "verdict": "no_cumple",
+  "note": "Claude (22-sep): confirma el juez",
+  "causa": "cotiza-sin-origen"
+ },
+ {
+  "dialogue": "grupo-mixto-cotiza-y-pide-link",
+  "criterion": "moneda-segun-nacionalidad",
+  "verdict": "no_cumple",
+  "note": "moneda sin preguntar nacionalidad",
+  "causa": "cotiza-sin-origen"
+ },
+ {
+  "dialogue": "grupo-mixto-cotiza-y-pide-link",
+  "criterion": "link-reserva",
+  "verdict": "no_cumple",
+  "note": "'5 -> 6 personas' y respuesta vacia",
+  "causa": "cambio-sin-motivo"
+ },
+ {
+  "dialogue": "link-pago-extranjeros-sin-cedula",
+  "criterion": "global:sin-invenciones",
+  "verdict": "no_cumple",
+  "note": "'pagar con pasaporte'",
+  "causa": "inventa-contra-referencia"
+ },
+ {
+  "dialogue": "link-pago-extranjeros-sin-cedula",
+  "criterion": "link-pago",
+  "verdict": "no_cumple",
+  "note": "no da el link pedido",
+  "causa": "ignora-pregunta-sigue-flujo"
+ },
+ {
+  "dialogue": "link-pago-extranjeros-sin-cedula",
+  "criterion": "moneda-extranjeros",
+  "verdict": "no_cumple",
+  "note": "Claude (22-sep): confirma el juez",
+  "causa": "ignora-pregunta-sigue-flujo"
+ },
+ {
+  "dialogue": "punto-encuentro-corrige-todo-mar-y-hora",
+  "criterion": "global:sin-invenciones",
+  "verdict": "no_cumple",
+  "note": "cambia acompanante por 'sin decidir' y 6 -> 5",
+  "causa": "cambio-sin-motivo"
+ },
+ {
+  "dialogue": "punto-encuentro-corrige-todo-mar-y-hora",
+  "criterion": "punto-encuentro",
+  "verdict": "no_cumple",
+  "note": "'Marina Todo Mar': aviso puntual de un chat antiguo servido como punto de encuentro",
+  "causa": "kb-chats-antiguos"
+ },
+ {
+  "dialogue": "pareja-certificados-cop-descuento-almuerzo",
+  "criterion": "precio-moneda-cartagena-cop",
+  "verdict": "no_cumple",
+  "note": "Claude (22-sep): confirma el juez",
+  "causa": "ignora-pregunta-sigue-flujo"
+ },
+ {
+  "dialogue": "pareja-certificados-cop-descuento-almuerzo",
+  "criterion": "descuentos-vigentes",
+  "verdict": "no_cumple",
+  "note": "Claude (22-sep): confirma el juez",
+  "causa": "ignora-pregunta-sigue-flujo"
+ },
+ {
+  "dialogue": "aprobacion-logs-padi",
+  "criterion": "humano-historico",
+  "verdict": "no_cumple",
+  "note": "Claude (22-sep): confirma el juez",
+  "causa": "escalado-y-postventa"
+ },
+ {
+  "dialogue": "open-water-hoteles-noche-fotos-horario",
+  "criterion": "global:sin-invenciones",
+  "verdict": "no_cumple",
+  "note": "alquiler de camara",
+  "causa": "inventa-contra-referencia"
+ },
+ {
+  "dialogue": "open-water-hoteles-noche-fotos-horario",
+  "criterion": "fotos-no-incluidas-sin-fotografo",
+  "verdict": "cumple",
+  "note": "un fallo, un criterio"
+ },
+ {
+  "dialogue": "curso-open-water-transporte-y-regreso-otro-dia",
+  "criterion": "global:sin-invenciones",
+  "verdict": "cumple",
+  "note": "un fallo, un criterio: cuenta en regreso-otro-dia"
+ },
+ {
+  "dialogue": "curso-open-water-transporte-y-regreso-otro-dia",
+  "criterion": "incluye-transporte-curso-desde-cartagena",
+  "verdict": "no_cumple",
+  "note": "Claude (22-sep): confirma el juez",
+  "causa": "malinterpreta-mensaje"
+ },
+ {
+  "dialogue": "curso-open-water-transporte-y-regreso-otro-dia",
+  "criterion": "regreso-otro-dia-escalar",
+  "verdict": "no_cumple",
+  "note": "dice que el regreso otro dia esta incluido (la KB dice lo contrario)",
+  "causa": "inventa-contra-referencia"
+ },
+ {
+  "dialogue": "descuento-online-sin-codigo",
+  "criterion": "global:sin-repreguntas",
+  "verdict": "no_cumple",
+  "note": "Claude (22-sep): confirma el juez",
+  "causa": "ignora-pregunta-sigue-flujo"
+ },
+ {
+  "dialogue": "curso-mas-paquetes-desde-islas-sin-nocturno-y-total",
+  "criterion": "global:idioma",
+  "verdict": "no_cumple",
+  "note": "contesta en espanol a un cliente en ingles",
+  "causa": "idioma"
+ },
+ {
+  "dialogue": "curso-mas-paquetes-desde-islas-sin-nocturno-y-total",
+  "criterion": "global:sin-repreguntas",
+  "verdict": "no_cumple",
+  "note": "repregunta el origen (esta en Isla Mulata)",
+  "causa": "cambio-sin-motivo"
+ },
+ {
+  "dialogue": "curso-mas-paquetes-desde-islas-sin-nocturno-y-total",
+  "criterion": "sin-nocturno-ofrece-4-diurnos",
+  "verdict": "no_cumple",
+  "note": "no ofrece el paquete de 4 diurnos",
+  "causa": "inventa-contra-referencia"
+ },
+ {
+  "dialogue": "curso-mas-paquetes-desde-islas-sin-nocturno-y-total",
+  "criterion": "seguro-incluido",
+  "verdict": "no_cumple",
+  "note": "Claude (22-sep): confirma el juez",
+  "causa": "ignora-pregunta-sigue-flujo"
+ },
+ {
+  "dialogue": "curso-mas-paquetes-desde-islas-sin-nocturno-y-total",
+  "criterion": "no-confirmar-total-del-cliente",
+  "verdict": "no_cumple",
+  "note": "Claude (22-sep): confirma el juez",
+  "causa": "rag-no-lo-tengo"
+ },
+ {
+  "dialogue": "certificado-precio-dia-paquete-5-y-hoteles-base",
+  "criterion": "paquete-5-requiere-noche",
+  "verdict": "no_cumple",
+  "note": "Claude (22-sep): confirma el juez",
+  "causa": "ignora-pregunta-sigue-flujo"
+ },
+ {
+  "dialogue": "certificado-precio-dia-paquete-5-y-hoteles-base",
+  "criterion": "hoteles-base-islas",
+  "verdict": "no_cumple",
+  "note": "Claude (22-sep): confirma el juez",
+  "causa": "ignora-pregunta-sigue-flujo"
+ },
+ {
+  "dialogue": "colombianos-precio-minicurso-dos-inmersiones",
+  "criterion": "global:sin-invenciones",
+  "verdict": "no_cumple",
+  "note": "duracion de 40-50 min no esta en la KB",
+  "causa": "inventa-contra-referencia"
+ },
+ {
+  "dialogue": "colombianos-precio-minicurso-dos-inmersiones",
+  "criterion": "precio-minicurso-cop-o-origen",
+  "verdict": "cumple",
+  "note": "criterio estricto: el precio por persona es correcto"
+ },
+ {
+  "dialogue": "disponibilidad-hora-precio-y-pecios",
+  "criterion": "origen-para-precio",
+  "verdict": "no_cumple",
+  "note": "Claude (22-sep): confirma el juez",
+  "causa": "ignora-pregunta-sigue-flujo"
+ },
+ {
+  "dialogue": "disponibilidad-hora-precio-y-pecios",
+  "criterion": "no-promete-pecios",
+  "verdict": "no_cumple",
+  "note": "promete barcos hundidos",
+  "causa": "inventa-contra-referencia"
+ },
+ {
+  "dialogue": "baru-no-recogida",
+  "criterion": "no-operamos-desde-baru",
+  "verdict": "no_cumple",
+  "note": "Claude (22-sep): confirma el juez",
+  "causa": "disponibilidad-enlatada"
+ },
+ {
+  "dialogue": "baru-no-recogida",
+  "criterion": "alternativa-desde-cartagena",
+  "verdict": "no_cumple",
+  "note": "Claude (22-sep): confirma el juez",
+  "causa": "rag-no-lo-tengo"
+ },
+ {
+  "dialogue": "recogida-ubuntu-comida-y-certificacion",
+  "criterion": "global:idioma",
+  "verdict": "no_cumple",
+  "note": "Claude (22-sep): confirma el juez",
+  "causa": "idioma"
+ },
+ {
+  "dialogue": "recogida-ubuntu-comida-y-certificacion",
+  "criterion": "global:sin-repreguntas",
+  "verdict": "no_cumple",
+  "note": "Claude (22-sep): confirma el juez",
+  "causa": "ignora-pregunta-sigue-flujo"
+ },
+ {
+  "dialogue": "recogida-ubuntu-comida-y-certificacion",
+  "criterion": "recogida-islas-escalar",
+  "verdict": "no_cumple",
+  "note": "responde algo medico a una pregunta de recogida",
+  "causa": "malinterpreta-mensaje"
+ },
+ {
+  "dialogue": "recogida-ubuntu-comida-y-certificacion",
+  "criterion": "comida-desde-islas",
+  "verdict": "no_cumple",
+  "note": "dice que incluye almuerzo desde las islas",
+  "causa": "inventa-contra-referencia"
+ },
+ {
+  "dialogue": "recogida-ubuntu-comida-y-certificacion",
+  "criterion": "minicurso-no-certifica",
+  "verdict": "no_cumple",
+  "note": "Claude (22-sep): confirma el juez",
+  "causa": "inventa-contra-referencia"
+ },
+ {
+  "dialogue": "curso-referido-pide-datos-centro",
+  "criterion": "global:sin-invenciones",
+  "verdict": "cumple",
+  "note": "'primer PADI 5 estrellas / 30 anos' esta en la KB (activities/faqs); el juez no lo ve"
+ },
+ {
+  "dialogue": "curso-referido-pide-datos-centro",
+  "criterion": "global:sin-repreguntas",
+  "verdict": "no_cumple",
+  "note": "Claude (22-sep): confirma el juez",
+  "causa": "cambio-sin-motivo"
+ },
+ {
+  "dialogue": "curso-referido-pide-datos-centro",
+  "criterion": "referido-requisito-carta",
+  "verdict": "no_cumple",
+  "note": "omite la carta de referido",
+  "causa": "inventa-contra-referencia"
+ },
+ {
+  "dialogue": "open-water-precio-duracion-hospedaje",
+  "criterion": "global:sin-invenciones",
+  "verdict": "no_cumple",
+  "note": "'el Open Water no se ofrece desde las islas'",
+  "causa": "inventa-contra-referencia"
+ },
+ {
+  "dialogue": "open-water-precio-duracion-hospedaje",
+  "criterion": "precio-moneda-origen",
+  "verdict": "cumple",
+  "note": "un fallo, un criterio"
+ },
+ {
+  "dialogue": "moneda-precios-principiante-y-snorkel",
+  "criterion": "moneda-por-nacionalidad",
+  "verdict": "no_cumple",
+  "note": "Claude (22-sep): confirma el juez",
+  "causa": "ignora-pregunta-sigue-flujo"
+ },
+ {
+  "dialogue": "moneda-precios-principiante-y-snorkel",
+  "criterion": "origen-para-cotizar",
+  "verdict": "cumple",
+  "note": "un fallo, un criterio"
+ },
+ {
+  "dialogue": "precio-paquetes-5-o-3-buceos-y-opcion-2-diurnos",
+  "criterion": "no-precio-historico-5-buceos",
+  "verdict": "no_cumple",
+  "note": "Claude (22-sep): confirma el juez",
+  "causa": "ignora-pregunta-sigue-flujo"
+ },
+ {
+  "dialogue": "precio-paquetes-5-o-3-buceos-y-opcion-2-diurnos",
+  "criterion": "alojamiento-no-incluido-5-buceos",
+  "verdict": "no_cumple",
+  "note": "Claude (22-sep): confirma el juez",
+  "causa": "ignora-pregunta-sigue-flujo"
+ },
+ {
+  "dialogue": "precio-paquetes-5-o-3-buceos-y-opcion-2-diurnos",
+  "criterion": "opcion-3-buceos-disponible",
+  "verdict": "cumple",
+  "note": "confirma la opcion de 3 buceos; criterio estricto"
+ },
+ {
+  "dialogue": "paquete-5-buceos-precio-fecha-y-equipaje",
+  "criterion": "global:sin-invenciones",
+  "verdict": "cumple",
+  "note": "un fallo, un criterio: cuenta en hora-regreso"
+ },
+ {
+  "dialogue": "paquete-5-buceos-precio-fecha-y-equipaje",
+  "criterion": "no-operamos-en-baru",
+  "verdict": "no_cumple",
+  "note": "Claude (22-sep): confirma el juez",
+  "causa": "ignora-pregunta-sigue-flujo"
+ },
+ {
+  "dialogue": "paquete-5-buceos-precio-fecha-y-equipaje",
+  "criterion": "precio-paquete-5-buceos",
+  "verdict": "no_cumple",
+  "note": "Claude (22-sep)",
+  "causa": "ignora-pregunta-sigue-flujo"
+ },
+ {
+  "dialogue": "paquete-5-buceos-precio-fecha-y-equipaje",
+  "criterion": "hora-regreso",
+  "verdict": "no_cumple",
+  "note": "regreso 4:00 en vez de 4:15 (menor)",
+  "causa": "inventa-contra-referencia"
+ },
+ {
+  "dialogue": "paquete-5-buceos-precio-fecha-y-equipaje",
+  "criterion": "equipaje-en-lancha",
+  "verdict": "cumple",
+  "note": "contesta lo que pregunta (dejar el bolso)"
+ },
+ {
+  "dialogue": "principiante-hora-lugar-y-precio",
+  "criterion": "global:sin-invenciones",
+  "verdict": "cumple",
+  "note": "un fallo, un criterio"
+ },
+ {
+  "dialogue": "principiante-hora-lugar-y-precio",
+  "criterion": "aclarar-actividad",
+  "verdict": "no_cumple",
+  "note": "Claude (22-sep): confirma el juez",
+  "causa": "cambio-sin-motivo"
+ },
+ {
+  "dialogue": "principiante-hora-lugar-y-precio",
+  "criterion": "lugar-y-hora",
+  "verdict": "no_cumple",
+  "note": "Claude (22-sep): confirma el juez",
+  "causa": "ignora-pregunta-sigue-flujo"
+ },
+ {
+  "dialogue": "principiante-hora-lugar-y-precio",
+  "criterion": "precio-moneda-datos",
+  "verdict": "cumple",
+  "note": "un fallo, un criterio"
+ },
+ {
+  "dialogue": "agencia-solicita-tarifas-escalar",
+  "criterion": "escala-agencia",
+  "verdict": "no_cumple",
+  "note": "agencia",
+  "causa": "escalado-y-postventa"
+ },
+ {
+  "dialogue": "principiantes-no-certificados-minicurso",
+  "criterion": "recomienda-minicurso",
+  "verdict": "no_cumple",
+  "note": "Claude (22-sep): confirma el juez",
+  "causa": "ignora-pregunta-sigue-flujo"
+ },
+ {
+  "dialogue": "confirma-reserva-existente-escalar",
+  "criterion": "no-confirma-y-escala",
+  "verdict": "no_cumple",
+  "note": "Claude (22-sep): confirma el juez",
+  "causa": "escalado-y-postventa"
+ },
+ {
+  "dialogue": "familia-mixta-precio-descuento-refresher",
+  "criterion": "global:sin-invenciones",
+  "verdict": "no_cumple",
+  "note": "descuento de grupo automatico (20 %)",
+  "causa": "inventa-contra-referencia"
+ },
+ {
+  "dialogue": "familia-mixta-precio-descuento-refresher",
+  "criterion": "global:sin-repreguntas",
+  "verdict": "cumple",
+  "note": "un fallo, un criterio"
+ },
+ {
+  "dialogue": "familia-mixta-precio-descuento-refresher",
+  "criterion": "precio-mixto-cartagena-o-pregunta-faltantes",
+  "verdict": "no_cumple",
+  "note": "Claude (22-sep): confirma el juez",
+  "causa": "ignora-pregunta-sigue-flujo"
+ },
+ {
+  "dialogue": "familia-mixta-precio-descuento-refresher",
+  "criterion": "refresh-no-requerido-1-5-anos",
+  "verdict": "no_cumple",
+  "note": "Claude (22-sep): confirma el juez",
+  "causa": "ignora-pregunta-sigue-flujo"
+ },
+ {
+  "dialogue": "grupo-mixto-buceo-y-snorkel-reserva-web",
+  "criterion": "links-reserva-web",
+  "verdict": "no_cumple",
+  "note": "Claude (22-sep): confirma el juez",
+  "causa": "disponibilidad-enlatada"
+ },
+ {
+  "dialogue": "precios-y-disponibilidad-con-negociacion",
+  "criterion": "precio-2-buceos-cartagena",
+  "verdict": "no_cumple",
+  "note": "cotiza en COP sin saber la nacionalidad",
+  "causa": "cotiza-sin-origen"
+ },
+ {
+  "dialogue": "precios-y-disponibilidad-con-negociacion",
+  "criterion": "no-acepta-precio-propuesto",
+  "verdict": "no_cumple",
+  "note": "regateo",
+  "causa": "rag-no-lo-tengo"
+ },
+ {
+  "dialogue": "curso-open-water-principiantes-idioma-frances-anticipacion",
+  "criterion": "global:idioma",
+  "verdict": "cumple",
+  "note": "'Frances' respondia al idioma del acompanante, no pedia cambiar"
+ },
+ {
+  "dialogue": "curso-open-water-principiantes-idioma-frances-anticipacion",
+  "criterion": "global:sin-invenciones",
+  "verdict": "no_cumple",
+  "note": "'no se paga por la web'",
+  "causa": "inventa-contra-referencia"
+ },
+ {
+  "dialogue": "curso-open-water-principiantes-idioma-frances-anticipacion",
+  "criterion": "curso-overnight-obligatorio",
+  "verdict": "no_cumple",
+  "note": "Claude (22-sep): confirma el juez",
+  "causa": "inventa-contra-referencia"
+ },
+ {
+  "dialogue": "curso-open-water-principiantes-idioma-frances-anticipacion",
+  "criterion": "anticipacion-cierre-sistema",
+  "verdict": "no_cumple",
+  "note": "Claude (22-sep)",
+  "causa": "ignora-pregunta-sigue-flujo"
+ },
+ {
+  "dialogue": "principiante-precio-y-evaluacion-medica",
+  "criterion": "global:sin-invenciones",
+  "verdict": "cumple",
+  "note": "'teoria online' esta en la KB"
+ },
+ {
+  "dialogue": "principiante-precio-y-evaluacion-medica",
+  "criterion": "pide-datos-antes-de-precio",
+  "verdict": "cumple",
+  "note": "no dio precio; criterio estricto"
+ },
+ {
+  "dialogue": "principiante-precio-y-evaluacion-medica",
+  "criterion": "escalar-medico",
+  "verdict": "no_cumple",
+  "note": "dice 'habla con el staff' pero no pasa",
+  "causa": "escalado-y-postventa"
+ },
+ {
+  "dialogue": "minicurso-islas-y-acompanante-lancha",
+  "criterion": "global:sin-invenciones",
+  "verdict": "no_cumple",
+  "note": "asume 2 minicursos",
+  "causa": "cambio-sin-motivo"
+ },
+ {
+  "dialogue": "minicurso-islas-y-acompanante-lancha",
+  "criterion": "acompanante-lancha-escalar",
+  "verdict": "no_cumple",
+  "note": "Claude (22-sep): confirma el juez",
+  "causa": "ignora-pregunta-sigue-flujo"
+ },
+ {
+  "dialogue": "precio-fundive-datos-faltan",
+  "criterion": "origen-cartagena-o-islas",
+  "verdict": "no_cumple",
+  "note": "Claude (22-sep): confirma el juez",
+  "causa": "ignora-pregunta-sigue-flujo"
+ },
+ {
+  "dialogue": "precio-fundive-datos-faltan",
+  "criterion": "moneda-segun-nacionalidad",
+  "verdict": "cumple",
+  "note": "un fallo, un criterio"
+ },
+ {
+  "dialogue": "pareja-reactivate-y-refresh-cartagena",
+  "criterion": "global:sin-repreguntas",
+  "verdict": "no_cumple",
+  "note": "Claude (22-sep): confirma el juez",
+  "causa": "cambio-sin-motivo"
+ },
+ {
+  "dialogue": "pareja-reactivate-y-refresh-cartagena",
+  "criterion": "politica-refresh",
+  "verdict": "no_cumple",
+  "note": "Claude (22-sep): confirma el juez",
+  "causa": "ignora-pregunta-sigue-flujo"
+ },
+ {
+  "dialogue": "pareja-reactivate-y-refresh-cartagena",
+  "criterion": "grupo-mixto-permitido",
+  "verdict": "cumple",
+  "note": "un fallo, un criterio"
+ },
+ {
+  "dialogue": "curso-alojamiento-y-recogida-islas",
+  "criterion": "global:sin-invenciones",
+  "verdict": "cumple",
+  "note": "un fallo, un criterio: cuenta en isla-grande"
+ },
+ {
+  "dialogue": "curso-alojamiento-y-recogida-islas",
+  "criterion": "curso-requiere-pernocta",
+  "verdict": "no_cumple",
+  "note": "Claude (22-sep): confirma el juez",
+  "causa": "ignora-pregunta-sigue-flujo"
+ },
+ {
+  "dialogue": "curso-alojamiento-y-recogida-islas",
+  "criterion": "recogida-hoteles-islas",
+  "verdict": "cumple",
+  "note": "criterio estricto"
+ },
+ {
+  "dialogue": "curso-alojamiento-y-recogida-islas",
+  "criterion": "no-confirmar-isla-grande",
+  "verdict": "no_cumple",
+  "note": "'la base no esta en un hotel'",
+  "causa": "inventa-contra-referencia"
+ },
+ {
+  "dialogue": "desde-islas-buzo-certificado",
+  "criterion": "desde-islas-si",
+  "verdict": "no_cumple",
+  "note": "Claude (22-sep)",
+  "causa": "ignora-pregunta-sigue-flujo"
+ },
+ {
+  "dialogue": "desde-islas-buzo-certificado",
+  "criterion": "hotel-acceso",
+  "verdict": "cumple",
+  "note": "criterio estricto"
+ },
+ {
+  "dialogue": "precio-dispo-buceo-certificado-grupo-mixto",
+  "criterion": "global:sin-invenciones",
+  "verdict": "no_cumple",
+  "note": "'tu companero no puede bucear contigo' (se puede combinar minicurso)",
+  "causa": "inventa-contra-referencia"
+ },
+ {
+  "dialogue": "precio-dispo-buceo-certificado-grupo-mixto",
+  "criterion": "origen-cartagena-o-islas",
+  "verdict": "no_cumple",
+  "note": "Claude (22-sep): confirma el juez",
+  "causa": "cotiza-sin-origen"
+ },
+ {
+  "dialogue": "grupo-recompuesto",
+  "criterion": "global:sin-invenciones",
+  "verdict": "cumple",
+  "note": "Claude (22-sep): confirma el juez"
+ },
+ {
+  "dialogue": "curso-referido-pide-datos-centro",
+  "criterion": "punto-encuentro",
+  "verdict": "cumple",
+  "note": "Claude (22-sep): confirma el juez"
+ },
+ {
+  "dialogue": "certificado-viernes-precio-cop-y-reserva",
+  "criterion": "global:idioma",
+  "verdict": "cumple",
+  "note": "Claude (22-sep): confirma el juez"
+ },
+ {
+  "dialogue": "refresher-rechaza-acepta",
+  "criterion": "final-con-refresher",
+  "verdict": "cumple",
+  "note": "Claude (22-sep): confirma el juez"
+ },
+ {
+  "dialogue": "principiantes-no-certificados-minicurso",
+  "criterion": "global:sin-invenciones",
+  "verdict": "cumple",
+  "note": "Claude (22-sep): confirma el juez"
+ }
+]

@@ -228,6 +228,7 @@ dialogues = [
 EN_WORDS = {"the", "you", "i", "we", "is", "are", "do", "can", "what", "how", "and", "to", "for", "my", "it", "have", "thanks", "thank", "hello", "hi"}
 REAL = json.load(open("docs/robustness/golden-set/real-cases-draft.json", encoding="utf-8"))["drafts"]
 REVIEW = json.load(open("docs/robustness/golden-set/real-cases-review.json", encoding="utf-8"))["cases"]
+HIDDEN_CHATS = set(json.load(open("docs/robustness/golden-set/hidden-exam.json", encoding="utf-8"))["chats"])
 for episode, draft in sorted(REAL.items()):
     fix = REVIEW.get(episode, {})
     if not fix.get("incluir", draft.get("incluir")):
@@ -243,6 +244,8 @@ for episode, draft in sorted(REAL.items()):
     words = " ".join(draft["turns"]).lower().split()
     english = sum(w.strip(".,!?¿¡") in EN_WORDS for w in words) / max(len(words), 1) > 0.08
     real["cobertura"] = {**draft["cobertura"], "idioma": "en" if english else "es"}
+    if episode.split("-e")[0] in HIDDEN_CHATS:
+        real["suite"] = "oculto"  # examen oculto: no se mira al arreglar (hidden-exam.json)
     dialogues.append(real)
 
 # Cobertura (G2) de los sinteticos: etiquetada a mano en synthetic-coverage.json.
