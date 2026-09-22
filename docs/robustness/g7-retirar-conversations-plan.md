@@ -2,7 +2,7 @@
 
 > Tarea g-7 de la página Plan Coral (Fase G). Plan acordado con Gadea el 2026-09-22: **primero se
 > documenta, luego se ejecuta paso a paso**. Principio: *nada se borra hasta haberlo medido y cada paso
-> se deshace en segundos*.
+> tiene marcha atras sin tocar codigo* (en PRE, ~5 min: una linea de configuracion + deploy).
 
 ## Por qué
 
@@ -59,8 +59,10 @@ en ese tema. Todo el plan va de encontrar esos huecos **antes** y taparlos en la
 
 ### Paso 3 — A/B en PRE el MISMO día
 1. Core con los interruptores por defecto (A).
-2. En PRE: `RAG_EXCLUDE_SOURCES=conversations` y `RAG_FEWSHOT_ENABLED=false` (variables de entorno,
-   reinicio del contenedor, **sin deploy de código**). Core otra vez (B).
+2. En PRE: `RAG_EXCLUDE_SOURCES=conversations` y `RAG_FEWSHOT_ENABLED=false` como el resto de flags del
+   equipo: dos lineas en `docker-compose.vps.yml` (`environment:` de `dp-pre-bot`) + deploy. **Sin cambio de
+   codigo.** Core otra vez (B). Como el RAG no es determinista (visto en la puerta del paso 1), **2 rondas
+   del core en A y 2 en B**, el mismo dia.
 3. Juez + revisión humana de las dos rondas; `failure_patterns.py` en las dos.
 - **Criterios para aceptar (todos):**
   - ningún caso del core pasa de cumplir a fallar sin explicación revisada;
@@ -68,7 +70,7 @@ en ese tema. Todo el plan va de encontrar esos huecos **antes** y taparlos en la
   - punto de encuentro, pago y disponibilidad: ninguna respuesta peor;
   - `eval_retrieval` / `eval_rag_answers` ≥ línea base m0-7;
   - latencia no peor (mismo día).
-- **Marcha atrás:** quitar las dos variables y reiniciar (segundos).
+- **Marcha atrás:** quitar las dos lineas de `docker-compose.vps.yml` y redesplegar (~5 min, sin tocar codigo).
 
 ### Paso 4 — Consolidar (solo si el paso 3 pasa)
 - Unos días con los interruptores activos en PRE (y el tráfico manual de m0-4).
@@ -80,8 +82,8 @@ en ese tema. Todo el plan va de encontrar esos huecos **antes** y taparlos en la
 - **Marcha atrás:** revertir el commit y reindexar.
 
 ### Aparte — privacidad (decisión del equipo)
-- `feature/agent-arch` (Álvaro) tiene `mined-candidates.json` con >25 nombres reales, subido a GitHub:
-  borrarlo de la rama. Su filtro de holdout sobre `conversations.json` queda obsoleto con este plan.
+- `feature/agent-arch` (Álvaro) tenía `mined-candidates.json` con >25 nombres reales: **borrado de la rama y
+  añadido a `.gitignore` el 22-sep (a56d124)**. Su filtro de holdout sobre `conversations.json` queda obsoleto con este plan.
 - Si se quiere que los nombres desaparezcan también del historial de git, hay que reescribirlo
   (afecta a todas las ramas): decisión aparte.
 

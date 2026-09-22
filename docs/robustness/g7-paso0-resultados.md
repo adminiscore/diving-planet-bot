@@ -56,3 +56,38 @@ Para cada punto: ¿es cierto hoy? ¿entra en la KB y con qué texto?
 10. **Pastillas para el mareo** en la marina: ¿se menciona?
 
 (Descartado sin preguntar: "máximo 7 por instructor" — Gadea dijo el 22-sep que no hay número oficial.)
+
+### Respuestas de Gadea (22-sep) — se aplican en el paso 2
+1. **Cómo reservar:** siempre por la web. Si ya pasó el cierre (4:30 PM del día anterior), también por la
+   web, pero la reserva es para el día siguiente disponible.
+2. **Formulario de exoneración:** valen los dos. El equipo pasa el formulario (Jotform) para rellenarlo y el
+   correo de confirmación lo recuerda si aún no se hizo.
+3. **Carné:** valen las dos opciones: enviar la foto antes o presentarlo el día de la actividad.
+4. **Minicurso:** es un bautizo, una iniciación al buceo. **No certifica nada y no hace falta nada previo.**
+   (Revisar en el paso 2 si la KB dice algo distinto, p. ej. "teoría online".)
+5. **Pago:** los colombianos pueden pagar el 50 % allí (en persona); los demás, con tarjeta por la web.
+6. **Tarjeta extranjera:** sí, el pasaporte sirve como identificación para pagar.
+7. **Si falla el sistema de reservas:** el equipo manda un link para hacer transferencia.
+8. **Hoteles:** Secreto **sí opera** (el chat antiguo que decía lo contrario está desfasado).
+9. **Snorkel en grupos mixtos:** va a una zona distinta de la del buceo. Si hay poca gente van juntos en la
+   lancha; si no, se dividen por actividad.
+10. **Pastillas para el mareo:** no se menciona (no entra en la KB).
+
+## Paso 1 (22-sep): hecho
+Interruptores `rag_exclude_sources` / `rag_fewshot_enabled` (3fb025e). Verificado en local contra el indice
+real (con los valores por defecto, mismos documentos y orden en las 40 preguntas; con el filtro, igual que la
+copia sin chats) y en PRE con una ronda del core: 16/32 sin fallos frente a 14/32 en la v7 con el mismo codigo;
+las diferencias son variabilidad del LLM (el juez de grounding del RAG a veces rechaza y da 'no lo tengo').
+**El RAG no es determinista**: por eso el A/B del paso 3 va con 2 rondas por lado.
+
+## Paso 2 (22-sep): huecos tapados en la KB oficial
+- `policies.json`: how_to_book, waiver_form, minicourse_scope, foreign_card_payment, payment_fallback,
+  mixed_group_boat, other_island_hotels; certification_required admite foto previa o carne el dia.
+- `faqs.json`: nueva "¿Que formularios tengo que llenar antes de bucear?" (la politica sola no entraba en el
+  top-8: el RAG pesa mas las FAQ en formularios, que antes cubrian los chats).
+- **Decision de Gadea: se quita la via de WhatsApp para ultima hora** (politica de reservas y 2 FAQ): pasado el
+  cierre de las 4:30 PM se reserva por la web para el siguiente dia disponible.
+- Puerta en local (copia sin chats): `eval_rag_answers` 35 respuestas / **0 'no lo tengo'** / 39 de 39,
+  igual que con chats; "como reservo", "formularios" y "foto del carne" bien. (En local solo funciona la
+  busqueda vectorial: falta la columna de BM25; el A/B real es el del paso 3 en PRE.)
+- Pendiente fuera del bot: la web del minicurso dice "30 % de deposito"; la regla es 50 % (Gadea: se deja).
