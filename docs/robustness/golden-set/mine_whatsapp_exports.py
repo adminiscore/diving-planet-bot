@@ -58,9 +58,9 @@ LONG_ID_RE = re.compile(r"\b\d{8,}\b")
 
 
 def _clean(text: str) -> str:
-    for ch in ("‎", "⁨", "⁩", "\r"):
+    for ch in ("\u200e", "\u2068", "\u2069", "\r"):
         text = text.replace(ch, "")
-    return text.replace(" ", " ").strip()
+    return text.replace("\u202f", " ").strip()
 
 
 def parse_chat(path: Path) -> list[dict]:
