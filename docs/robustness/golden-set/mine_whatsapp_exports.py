@@ -53,6 +53,30 @@ URL_RE = re.compile(r"https?://\S+", re.IGNORECASE)
 PHONE_RE = re.compile(r"\+?\d[\d\s().-]{7,}\d")
 LONG_ID_RE = re.compile(r"\b\d{8,}\b")
 
+# Precios y descuentos de chats ANTIGUOS: estan obsoletos. En la respuesta del centro se marcan
+# para que nadie (ni el LLM que redacte criterios) los tome como referencia: manda el catalogo.
+# En los turnos del cliente se dejan tal cual (es lo que escribiria) y se marca el episodio: el bot
+# debe dar el precio ACTUAL y no dar por bueno el que cita el cliente.
+_NUM_WORD = (
+    r"(?:un|uno|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|diez|cien|ciento|doscientos|trescientos|"
+    r"cuatrocientos|quinientos|seiscientos|setecientos|ochocientos|novecientos|veinte|treinta|"
+    r"cuarenta|cincuenta|sesenta|setenta|ochenta|noventa|mil|millón|millones)"
+)
+MONEY_RE = re.compile(
+    r"(?:US\$|USD|COP|\$)\s?\d[\d.,]*(?:\s?(?:USD|COP)\b)?"
+    r"|\b\d[\d.,]*\s?(?:de\s|US\s?)?(?:USD|COP|d[oó]lares|dollars|pesos|mil)\b"
+    r"|\b\d{1,3}(?:[.,]\d{3})+\b"
+    # dicho con palabras (notas de voz transcritas): "dos millones cien mil pesos"
+    rf"|\b{_NUM_WORD}(?:\s+(?:{_NUM_WORD}|y|de))*\s+(?:pesos|d[oó]lares)\b",
+    re.IGNORECASE,
+)
+PERCENT_RE = re.compile(r"\b\d{1,2}\s?%")
+
+
+def mark_old_prices(text: str) -> str:
+    text = MONEY_RE.sub(lambda m: f"[precio antiguo: {m.group(0).strip()}]", text)
+    return PERCENT_RE.sub(lambda m: f"[descuento antiguo: {m.group(0)}]", text)
+
 
 # --------------------------------------------------------------------------- parseo
 
@@ -379,6 +403,8 @@ def build(src: Path) -> None:
                     if role == "centro" and WELCOME_RE.search(m["rendered"])
                     else anon(m["rendered"])
                 )
+                if role == "centro":
+                    text = mark_old_prices(text)
                 transcript.append(
                     {"role": role, "text": text, "at": m["at"].strftime("%Y-%m-%d %H:%M")}
                 )
@@ -393,6 +419,15 @@ def build(src: Path) -> None:
                 flags.append("adjuntos")
             if any(m["rendered"] == "[llamada]" for m in ep):
                 flags.append("llamada")  # parte de la conversacion paso por telefono
+            if any(
+                MONEY_RE.search(m["rendered"]) or PERCENT_RE.search(m["rendered"]) for m in customer
+            ):
+                flags.append("cliente_cita_precio_antiguo")
+            if any(
+                "[precio antiguo" in t["text"] or "[descuento antiguo" in t["text"]
+                for t in transcript
+            ):
+                flags.append("referencia_con_precios_antiguos")
             if len(customer) > 15:
                 flags.append("largo")
             if not any(
@@ -425,7 +460,9 @@ def build(src: Path) -> None:
                 "about": (
                     "G1: episodios reales anonimizados, candidatos al golden-set. Nombres -> [NOMBRE], "
                     "telefonos -> [TELEFONO], correos -> [EMAIL], enlaces ajenos -> [ENLACE]. "
-                    "`transcript` trae la respuesta REAL del centro como referencia; la KB actual manda."
+                    "`transcript` trae la respuesta REAL del centro como referencia HISTORICA: precios, "
+                    "descuentos y condiciones pueden estar obsoletos (marcados [precio antiguo: ...] / "
+                    "[descuento antiguo: ...]). Los criterios se escriben contra la KB y el catalogo actuales."
                 ),
                 "chats": len(chats),
                 "episodes": len(episodes_out),
