@@ -201,6 +201,11 @@ few-shot (`_select_fewshot_examples`), así que tal cual inflarían la nota.
   g-7, g-8, s4-20..22. Regla: soluciones globales por causa, nunca caso a caso del golden.
 
 ### Fase L1 — Wins de latencia baratos y seguros · *preservan conducta*
+> **Condición de cierre de L1 (acordado con Gadea el 22-sep):** justo **antes** de la ronda completa del golden
+> que cierra L1, hacer el **paso 4 de g-7** (borrar `conversations.json` y su código; ver
+> `docs/robustness/g7-retirar-conversations-plan.md`). Tope: **6-oct-2026** aunque L1 no haya terminado.
+> Durante L1 los interruptores `RAG_EXCLUDE_SOURCES` / `RAG_FEWSHOT_ENABLED` siguen activos en PRE, así que
+> todo L1 se mide ya sin los chats antiguos.
 1. **RAG sin doble juez:** `_verify_grounding_with_retry` juzga UNA vez; si falla, **regenera** y juzga.
 2. **Checks deterministas primero:** `currency_amounts_grounded`/`urls_grounded`/`capacity_claims_grounded`
    antes; el juez LLM solo si pasan.

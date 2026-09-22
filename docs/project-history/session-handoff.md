@@ -11,6 +11,15 @@ Read this file before changing code in the Diving Planet Bot. For a quick versio
 
 ## Current branch and workflow
 
+### ⏰ 2026-09-22 noche (Gadea) — g-7 pasos 0-3 hechos; paso 4 PENDIENTE con disparador
+
+- En PRE están ACTIVOS `RAG_EXCLUDE_SOURCES=conversations` y `RAG_FEWSHOT_ENABLED=false`
+  (`docker-compose.vps.yml`): el RAG ya no usa los chats antiguos. A/B 2+2 del core sin empeoramiento
+  (`docs/robustness/g7-paso0-resultados.md`). Marcha atrás: quitar esas 2 líneas + redeploy.
+- **Paso 4 (borrar `conversations.json` y su código):** hacerlo **justo antes de la ronda completa que cierra
+  L1**, o el **6-oct-2026** como tope. Está también como condición de cierre en la fase L1 del plan y en la página.
+- Siguiente: L1, midiendo cada cambio con el core (2 rondas por lado: el RAG no es determinista).
+
 ### ✅ 2026-09-22 tarde (Gadea) — G2 hecha + LÍNEA BASE v7. Siguiente: L1 (con el core)
 
 - **Medir un cambio:** `ENV_FILE=.env.dev python -m scripts.run_synthetic_pre --name <x> --sample core` (32 diálogos,
