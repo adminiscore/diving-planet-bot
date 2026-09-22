@@ -1,5 +1,5 @@
 {
- "exported_at": "2026-09-22T14:32:44+00:00",
+ "exported_at": "2026-09-22T21:42:47+00:00",
  "source": "https://claude.ai/artifact/XiGd3kguTNwwqTnH7mQwgi",
  "about": "Copia de la base de datos de la página Plan Coral (fases, tareas, fotos, capas, bitácora). La página la usa como respaldo de solo lectura si no puede conectar con su base de datos; en el repo sirve de historial versionado.",
  "collections": {
@@ -14,7 +14,7 @@
    {
     "id": "L1",
     "code": "L1",
-    "goal": "Quitar trabajo repetido y en serie sin cambiar lo que responde el bot. Empieza cuando G1+G2 estén hechas (examen robusto) y con la línea base de m0-4.",
+    "goal": "Quitar trabajo repetido y en serie sin cambiar lo que responde el bot. Empieza cuando G1+G2 estén hechas (examen robusto) y con la línea base de m0-4. CONDICIÓN DE CIERRE: justo antes de la ronda completa que cierra L1, hacer el paso 4 de g-7 (borrar conversations.json); tope 6-oct.",
     "name": "Mejoras de latencia baratas",
     "order": 2
    },
@@ -64,23 +64,24 @@
   "tasks": [
    {
     "id": "g-1",
-    "note": "Casi cerrada (22-sep). Golden v7 con 73 casos reales de los exports originales de WhatsApp (39 chats -> 75 episodios, audios transcritos, anonimizacion auditada, precios historicos marcados), redactados por LLM contra la referencia y revisados a mano. Decisiones de negocio a la KB. Examen oculto hecho (G2). Falta: comparar con el minado de Alvaro (rama agent-arch) y decidir el few-shot: si gana el minado nuevo se borra conversations.json (g-7).",
+    "note": "Hecha (22-sep). Golden v7 con 73 casos reales de los exports originales de WhatsApp (39 chats -> 75 episodios, 52 notas de voz transcritas, anonimizacion auditada con 0 nombres, precios historicos marcados), redactados por LLM contra la referencia y revisados a mano; decisiones de negocio a la KB; examen oculto (G2). Comparacion con el minado de Alvaro (feature/agent-arch, desde conversations.json): 30 candidatos sin criterios, mediana de 12 turnos (max 42), sin notas de voz y con >25 nombres reales -> se queda el minado nuevo. El retiro de conversations.json del RAG pasa a g-7 (plan con riesgo cero).",
     "order": 1,
     "owner": "—",
     "phase": "G",
-    "status": "en_curso",
+    "status": "hecha",
     "title": "G1 · Minar los chats reales de WhatsApp → diálogos del golden",
-    "updatedAt": "2026-09-22T15:00:00Z"
+    "updatedAt": "2026-09-22T16:30:00Z"
    },
    {
     "id": "g-2",
     "note": "Hecha por Gadea (22-sep). Los 116 dialogos llevan cobertura (intencion, actividad, perfil, etapa, dificultad, idioma; sinteticos a mano en synthetic-coverage.json). coverage.py -> coverage.json: frecuencia real vs casos en golden/core, huecos (0) y el golden CORE: 32 dialogos / 93 turnos (~20 min; run_synthetic_pre --sample core). Panel 'Cobertura del golden-set' en la pagina. Examen OCULTO (hidden-exam.json): 13 chats reales / 21 dialogos que no se miran al arreglar ni entran en el core. Linea base v7 (ronda completa + juez + revision humana): 83,8 % de criterios, 38/116 sin fallos (reales 78,8 %, 9/73; sinteticos 93 %, 28/43).",
     "order": 2,
-    "owner": "—",
+    "owner": "Gadea",
     "phase": "G",
     "status": "hecha",
     "title": "G2 · Mapa de cobertura y golden core/full",
-    "updatedAt": "2026-09-22T15:00:00Z"
+    "updatedAt": "2026-09-22T14:35:21.491Z",
+    "updatedBy": "u_IyyAjn0k84KqlRrCIGkx8g"
    },
    {
     "id": "g-3",
@@ -121,12 +122,13 @@
    {
     "id": "g-7",
     "createdAt": "2026-09-22T15:00:00Z",
-    "note": "Los chats de WhatsApp de 2025-26 estan indexados en el RAG con peso propio (vector_store: 0,25 para punto de encuentro) y como few-shot: el bot sirvio 'Marina Todo Mar' (un aviso puntual de un chat antiguo) como punto de encuentro y recomienda hoteles que solo salen en esos chats. Ademas tienen 22 nombres reales. Decision de Gadea: si gana el minado nuevo, se borra conversations.json; el few-shot, si hace falta, sale de episodios anonimizados que no sean examen. Golden v7 (22-sep): 2 dialogos afectados (1 en el examen oculto). Casos de regresion: paquete-5-buceos-cop-refresh-y-hoteles. REGLA: arreglar la CAUSA con una solucion global (sin regex nuevos, sin mirar solo estos casos); los casos listados son la prueba de cierre y el examen oculto (21 casos reales) mide si mejora de verdad.",
+    "note": "EN CURSO (22-sep). Pasos 0-3 hechos; falta el 4 (borrar conversations.json y su codigo) tras unos dias con los interruptores activos en PRE. Detalle: docs/robustness/g7-retirar-conversations-plan.md y g7-paso0-resultados.md. PASO 0 (analisis en una copia local del RAG): sin chats la recuperacion se rellena con documentos oficiales; 2 huecos reales (como reservar, formularios); con chats el bot decia que hay que enviar foto del carne. Inventario de 404 hechos: 327 ya en la KB, 13 desfasados (Todo Mar, precios viejos). Few-shot: 29 % de ejemplos = bienvenida automatica. PASO 1: interruptores RAG_EXCLUDE_SOURCES / RAG_FEWSHOT_ENABLED con conducta identica por defecto (verificado contra el indice real). PASO 2: decisiones de Gadea a la KB (reservas por la web tambien tras el cierre -sin WhatsApp de ultima hora-, formulario de exoneracion, carne, minicurso = bautizo, pago con pasaporte, link de transferencia si falla, snorkel en grupos mixtos, otros hoteles) + FAQ de formularios. PASO 3 (A/B en PRE el mismo dia, 2+2 rondas del core): con chats 86,0 % / 89,8 %, sin chats 86,8 % / 86,5 %; 'no lo tengo', latencia y temas sensibles sin empeorar; ningun dialogo empeora de forma consistente. Unico hueco: '¿me recuerda los hoteles?' (FAQ oficial en 0,36-0,38 bajo el umbral 0,40) -> tapado con FAQ de hoteles (7 formulaciones ES/EN entre 0,41 y 0,54); verificacion B3 en PRE en curso. Interruptores ACTIVOS en PRE (docker-compose.vps.yml). Marcha atras: quitar esas 2 lineas + redeploy. mined-candidates.json borrado de feature/agent-arch (a56d124).",
     "order": 7,
     "owner": "—",
     "phase": "G",
-    "status": "pendiente",
-    "title": "G-7 · Retirar los chats antiguos (conversations.json) del indice y del few-shot"
+    "status": "en_curso",
+    "title": "G-7 · Retirar los chats antiguos (conversations.json) del indice y del few-shot",
+    "updatedAt": "2026-09-22T22:40:00Z"
    },
    {
     "id": "g-8",
@@ -186,12 +188,13 @@
    {
     "id": "l1-6",
     "createdAt": "2026-09-22T15:00:00Z",
-    "note": "El RAG responde 'ese detalle no lo tengo a la mano' con la respuesta en la base de conocimiento (plan acompanante, equipaje, regateo, Baru, total en COP, nacido en Colombia). Revisar recuperacion y el juez de grounding (encaja con l1-1/l1-2: juzgar una vez, checks deterministas primero). Golden v7 (22-sep): 17 dialogos afectados (3 en el examen oculto). Casos de regresion: clima-y-cancelacion-reserva-existente, confirmacion-salida-y-pago-sin-concepto, descuento-efectivo, equipaje-mochilas-y-almacenamiento, grupo-mixto-precio-cop-total, logistica-isla-fragata-regreso-otro-dia, manual-acompanante-mayor, nacionalidad-ambigua, paquete-5-buceos-cop-refresh-y-hoteles, paquete-5-buceos-islas-residente-sin-recogida, paquete-5-buceos-precio-overnight-isla-grande-baru, precio-paquetes-5-o-3-buceos-y-opcion-2-diurnos, precios-y-disponibilidad-con-negociacion, snorkel-precio-residente-y-pago-link. REGLA: arreglar la CAUSA con una solucion global (sin regex nuevos, sin mirar solo estos casos); los casos listados son la prueba de cierre y el examen oculto (21 casos reales) mide si mejora de verdad.",
+    "note": "El RAG responde 'ese detalle no lo tengo a la mano' con la respuesta en la base de conocimiento (plan acompanante, equipaje, regateo, Baru, total en COP, nacido en Colombia). Revisar recuperacion y el juez de grounding (encaja con l1-1/l1-2: juzgar una vez, checks deterministas primero). OJO (g-7, 22-sep): (1) el RAG NO es determinista: la misma pregunta a veces se contesta y a veces da 'no lo tengo' (el juez de grounding decide distinto); (2) umbral RAG_MIN_SCORE 0,40 al limite: '¿me recuerda los hoteles?' sacaba la FAQ oficial con 0,36-0,38 y daba 'no lo tengo' (tapado con una FAQ que queda en 0,41). Medir con 2 rondas por lado. Golden v7 (22-sep): 17 dialogos afectados (3 en el examen oculto). Casos de regresion: clima-y-cancelacion-reserva-existente, confirmacion-salida-y-pago-sin-concepto, descuento-efectivo, equipaje-mochilas-y-almacenamiento, grupo-mixto-precio-cop-total, logistica-isla-fragata-regreso-otro-dia, manual-acompanante-mayor, nacionalidad-ambigua, paquete-5-buceos-cop-refresh-y-hoteles, paquete-5-buceos-islas-residente-sin-recogida, paquete-5-buceos-precio-overnight-isla-grande-baru, precio-paquetes-5-o-3-buceos-y-opcion-2-diurnos, precios-y-disponibilidad-con-negociacion, snorkel-precio-residente-y-pago-link. REGLA: arreglar la CAUSA con una solucion global (sin regex nuevos, sin mirar solo estos casos); los casos listados son la prueba de cierre y el examen oculto (21 casos reales) mide si mejora de verdad.",
     "order": 6,
     "owner": "—",
     "phase": "L1",
     "status": "pendiente",
-    "title": "L1-6 · RAG: 'no lo tengo' teniendo el dato en la KB"
+    "title": "L1-6 · RAG: 'no lo tengo' teniendo el dato en la KB",
+    "updatedAt": "2026-09-22T22:40:00Z"
    },
    {
     "id": "l1-7",

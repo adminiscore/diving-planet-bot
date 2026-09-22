@@ -1,0 +1,52 @@
+{
+ "dialogos": 32,
+ "turnos": 93,
+ "patrones": {
+  "disponibilidad-enlatada": {
+   "descripcion": "Responde con el mensaje fijo de disponibilidad ('las salidas son diarias...') aunque el cliente preguntaba otra cosa o daba fechas.",
+   "dialogos": 2,
+   "turnos": 2,
+   "casos": {
+    "certificado-fechas-fotos-y-reserva": 1,
+    "equipaje-maleta-y-bolso-en-lancha": 1
+   }
+  },
+  "cambio-sin-motivo": {
+   "descripcion": "Pide confirmar un cambio del carrito ('¿lo cambio? X -> Y') que el cliente no pidio (extraccion equivocada).",
+   "dialogos": 0,
+   "turnos": 0,
+   "casos": {}
+  },
+  "rag-no-lo-tengo": {
+   "descripcion": "El RAG contesta 'no lo tengo a la mano' (fallback).",
+   "dialogos": 4,
+   "turnos": 5,
+   "casos": {
+    "paquete-5-buceos-cop-refresh-y-hoteles": 2,
+    "manual-acompanante-mayor": 1,
+    "open-water-precio-para-colombianos-corrige-mito": 1,
+    "referral-mas-refresher-hotel-y-domingo-pascua": 1
+   }
+  },
+  "recuerdo-en-vez-de-respuesta": {
+   "descripcion": "Contesta 'Me habias dicho: ...' / 'You told me' a una pregunta.",
+   "dialogos": 1,
+   "turnos": 2,
+   "casos": {
+    "manual-duracion-curso": 2
+   }
+  },
+  "aviso-privacidad": {
+   "descripcion": "Salta el aviso de privacidad (datos de pago o documentos).",
+   "dialogos": 0,
+   "turnos": 0,
+   "casos": {}
+  },
+  "ignora-pregunta-repite-paso": {
+   "descripcion": "El cliente pregunta algo y el bot solo repite la misma pregunta del flujo que ya habia hecho.",
+   "dialogos": 0,
+   "turnos": 0,
+   "casos": {}
+  }
+ }
+}

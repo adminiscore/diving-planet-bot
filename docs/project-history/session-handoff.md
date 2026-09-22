@@ -11,6 +11,33 @@ Read this file before changing code in the Diving Planet Bot. For a quick versio
 
 ## Current branch and workflow
 
+### ▶️ 2026-09-22 noche — CÓMO ARRANCAR L1 (para Gonzalo o quien siga)
+
+- **Rama:** partir de `feature/pre_gadea` (último commit `a88abd3` + este). Push a `pre_*` = deploy a PRE:
+  **un solo push por tarea** y esperar a que acabe el deploy antes de medir (un deploy reinicia el bot a mitad
+  de una ronda y la invalida).
+- **Qué es L1** (plan maestro, fase L1; página Plan Coral): bajar latencia **sin cambiar lo que responde el bot**.
+  Tareas l1-1..l1-5: un solo juez de grounding en el RAG (si falla, regenerar y juzgar;
+  `rag_agent._verify_grounding_with_retry` hoy llama 2 veces al mismo juez con la misma respuesta), checks
+  deterministas antes del juez LLM, saltar `query_rewriter.condense_query` si no hay historial o la pregunta es
+  autónoma, sacar `notes_extractor.extract_notes` / `conversation_summarizer.maybe_update_summary` / trazas del
+  turno (después de enviar), paralelizar llamadas independientes. Más l1-6 ('no lo tengo' con el dato en la KB)
+  y l1-7 (el RAG inventa o contradice la KB), con sus casos de regresión en la página.
+- **Dónde está el tiempo (foto v7):** turnos RAG p50 6,8 s / p95 11,4 s y 5,4 llamadas LLM de media; reserva
+  p50 4,0 s y 3,5 llamadas. Por nodo: `scripts.langfuse_snapshot --from-run <jsonl>`.
+- **Cómo medir cada cambio (obligatorio):** detrás de un flag (patrón: campo en `src/config.py` con el valor por
+  defecto = conducta actual, y la línea en `docker-compose.vps.yml` para activarlo en PRE). **El RAG no es
+  determinista** → core **2 rondas antes y 2 después, el MISMO día** (la latencia de OpenAI varía ~25 % entre días):
+  `run_synthetic_pre --sample core` + `judge_golden_set` + `docs/robustness/golden-set/compare_rounds.py` +
+  `failure_patterns.py` + `langfuse_snapshot`. Criterio: 0 regresiones de calidad revisadas a mano + menos
+  llamadas/segundos. Ejemplo completo de A/B así: `docs/robustness/g7-paso0-resultados.md` (paso 3).
+- **Ojo operativo:** las rondas largas (core ~20 min + juez ~25 min) conviene lanzarlas como proceso
+  independiente (un cierre de sesión de Claude Code puede dejarlas colgadas o duplicadas; comprobar con
+  `Get-CimInstance Win32_Process -Filter "Name='python.exe'"` que no haya dos jueces del mismo fichero).
+- **Regla de Gadea:** arreglar por CAUSA con soluciones globales; nada de regex nuevos ni arreglos caso a caso
+  del golden; el examen oculto (`hidden-exam.json`) no se mira al arreglar.
+- **Antes de cerrar L1:** paso 4 de g-7 (siguiente bloque) y luego ronda COMPLETA del golden.
+
 ### ⏰ 2026-09-22 noche (Gadea) — g-7 pasos 0-3 hechos; paso 4 PENDIENTE con disparador
 
 - En PRE están ACTIVOS `RAG_EXCLUDE_SOURCES=conversations` y `RAG_FEWSHOT_ENABLED=false`
