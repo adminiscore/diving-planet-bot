@@ -28,3 +28,15 @@ def test_quick_sample_is_one_golden_dialogue_per_graph_path():
     golden = {tag: turns for _, tag, turns in select_cases(load_batches(), "golden", None)}
     assert all(turns == golden[tag] for _, tag, turns in cases)
     assert sum(len(t) for _, _, t in cases) <= 15
+
+
+def test_core_sample_is_the_coverage_core():
+    """El golden core (G2) sale de coverage.json: todos sus ids existen en el golden-set y la
+    muestra rapida de latencia va dentro (un core sin ella no sirve de red de seguridad)."""
+    import json
+    from pathlib import Path
+
+    core = json.loads(Path("docs/robustness/golden-set/coverage.json").read_text(encoding="utf-8"))["core"]
+    picked = {tag for _, tag, _ in select_cases(load_batches(), "core", None)}
+    assert picked == set(core)
+    assert {tag for _, tag, _ in select_cases(load_batches(), "rapida", None)} <= picked

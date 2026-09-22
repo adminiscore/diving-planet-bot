@@ -15,6 +15,7 @@ Uso (manda trafico real a PRE: gasta LLM y cuota de Langfuse; va de uno en uno a
 
     ENV_FILE=.env.dev python -m scripts.run_synthetic_pre --name m0 --sample m0
     ENV_FILE=.env.dev python -m scripts.run_synthetic_pre --name golden --sample golden   # luego scripts.judge_golden_set
+    ENV_FILE=.env.dev python -m scripts.run_synthetic_pre --name core --sample core       # golden core (G2), ~20 min
     ENV_FILE=.env.dev python -m scripts.run_synthetic_pre --name rapida --sample rapida   # latencia rapida (m0-2)
 
 La muestra `rapida` sustituye al `battery_latency.py` que preveia el plan (m0-2): con
@@ -56,6 +57,7 @@ def load_batches() -> dict[str, list[tuple[str, list[str]]]]:
 
 
 GOLDEN_FILE = Path("docs/robustness/golden-set/golden-dialogues.json")
+COVERAGE_FILE = Path("docs/robustness/golden-set/coverage.json")  # golden core (G2), de coverage.py
 
 
 def golden_cases(batches: dict) -> list[tuple[str, str, list[str]]]:
@@ -85,6 +87,9 @@ QUICK_IDS = (
 def select_cases(batches: dict, sample: str | None, only: list[str] | None) -> list[tuple[str, str, list[str]]]:
     if sample == "golden":
         return golden_cases(batches)
+    if sample == "core":
+        core = json.loads(COVERAGE_FILE.read_text(encoding="utf-8"))["core"]
+        return [case for case in golden_cases(batches) if case[1] in core]
     if sample == "rapida":
         by_id = {case[1]: case for case in golden_cases(batches)}
         return [by_id[i] for i in QUICK_IDS]
@@ -169,8 +174,9 @@ def main(argv: list[str] | None = None) -> int:
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument(
         "--sample",
-        choices=["m0", "golden", "rapida"],
-        help="m0 = muestra de latencia (108 conv.); golden = golden-set (41); rapida = 1 por camino del grafo (7, ~3 min)",
+        choices=["m0", "golden", "core", "rapida"],
+        help="m0 = muestra de latencia (108 conv.); golden = golden-set completo (v7: 116, ~80 min); "
+        "core = golden core de coverage.json (~32, ~20 min); rapida = 1 por camino del grafo (7, ~3 min)",
     )
     group.add_argument("--batches", help="lotes separados por coma, p. ej. 5,7")
     group.add_argument("--all", action="store_true")

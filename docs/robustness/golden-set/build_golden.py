@@ -225,6 +225,7 @@ dialogues = [
 # --- Casos REALES (Fase G, G1): episodios de los chats de WhatsApp del cliente, anonimizados
 # (mine_whatsapp_exports.py), redactados por LLM contra la referencia (draft_real_cases.py) y
 # corregidos por revision humana (real-cases-review.json). Aqui solo se ensamblan.
+EN_WORDS = {"the", "you", "i", "we", "is", "are", "do", "can", "what", "how", "and", "to", "for", "my", "it", "have", "thanks", "thank", "hello", "hi"}
 REAL = json.load(open("docs/robustness/golden-set/real-cases-draft.json", encoding="utf-8"))["drafts"]
 REVIEW = json.load(open("docs/robustness/golden-set/real-cases-review.json", encoding="utf-8"))["cases"]
 for episode, draft in sorted(REAL.items()):
@@ -239,8 +240,16 @@ for episode, draft in sorted(REAL.items()):
     ]
     real = dialogue(draft["id"], draft["category"], criteria, turns=draft["turns"], note=fix.get("note"))
     real["source"] = {"kind": "whatsapp", "episode": episode}
-    real["cobertura"] = draft["cobertura"]
+    words = " ".join(draft["turns"]).lower().split()
+    english = sum(w.strip(".,!?¿¡") in EN_WORDS for w in words) / max(len(words), 1) > 0.08
+    real["cobertura"] = {**draft["cobertura"], "idioma": "en" if english else "es"}
     dialogues.append(real)
+
+# Cobertura (G2) de los sinteticos: etiquetada a mano en synthetic-coverage.json.
+SYNTH_COVERAGE = json.load(open("docs/robustness/golden-set/synthetic-coverage.json", encoding="utf-8"))["cases"]
+for d in dialogues:
+    if d["id"] in SYNTH_COVERAGE:
+        d["cobertura"] = SYNTH_COVERAGE[d["id"]]
 
 doc = {
     "version": 7,
