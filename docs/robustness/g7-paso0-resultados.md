@@ -91,3 +91,24 @@ las diferencias son variabilidad del LLM (el juez de grounding del RAG a veces r
   igual que con chats; "como reservo", "formularios" y "foto del carne" bien. (En local solo funciona la
   busqueda vectorial: falta la columna de BM25; el A/B real es el del paso 3 en PRE.)
 - Pendiente fuera del bot: la web del minicurso dice "30 % de deposito"; la regla es 50 % (Gadea: se deja).
+
+## Paso 3 (22-sep): A/B en PRE el mismo dia — pasa, con un hueco tapado
+Core (32 dialogos), 2 rondas por lado, juez gpt-5-mini:
+
+| Ronda | Chats antiguos | Criterios | Sin fallos | 'no lo tengo' (dialogos/turnos) | Latencia p50 / p95 |
+|---|---|---|---|---|---|
+| A1 | si | 86,0 % | 17/32 | 3 / 4 | 4 s / 9 s |
+| A2 | si | 89,8 % | 18/32 | 4 / 5 | 5 s / 10 s |
+| B1 | no | 86,8 % | 17/32 | 4 / 5 | 5 s / 10 s |
+| B2 | no | 86,5 % | 18/32 | 4 / 6 | 5 s / 11 s |
+
+- Ningun dialogo empeora de forma consistente (sin fallos en las 2 A y con fallos en las 2 B); 1 mejora
+  (cancelacion de una reserva existente). Punto de encuentro, pago y disponibilidad: sin empeoramientos.
+- **1 criterio empeora en las 2 B:** "¿Y me recuerda los hoteles por favor?" -> 'no lo tengo'. Causa: las
+  FAQ oficiales de hoteles salian con similitud 0,36-0,38, bajo el umbral del RAG (0,40); con chats respondia
+  gracias a listas de hoteles de chats antiguos. **Tapado con una FAQ oficial** ("¿Que hoteles me
+  recomiendan?"): en la copia local sin chats, 7 formulaciones ES/EN ("¿que hoteles hay?", "donde me puedo
+  quedar a dormir en la isla", "which hotels do you recommend?"...) quedan entre 0,41 y 0,54 con la
+  informacion oficial. Que la frase original quede en 0,41 (umbral 0,40) es el problema de fondo de l1-6.
+- Decision: se mantienen los interruptores activos en PRE; paso 4 (borrar conversations.json) tras unos
+  dias asi.
