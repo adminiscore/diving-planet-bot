@@ -222,9 +222,29 @@ dialogues = [
     ], tag="off-topic-recipe"),
 ]
 
+# --- Casos REALES (Fase G, G1): episodios de los chats de WhatsApp del cliente, anonimizados
+# (mine_whatsapp_exports.py), redactados por LLM contra la referencia (draft_real_cases.py) y
+# corregidos por revision humana (real-cases-review.json). Aqui solo se ensamblan.
+REAL = json.load(open("docs/robustness/golden-set/real-cases-draft.json", encoding="utf-8"))["drafts"]
+REVIEW = json.load(open("docs/robustness/golden-set/real-cases-review.json", encoding="utf-8"))["cases"]
+for episode, draft in sorted(REAL.items()):
+    fix = REVIEW.get(episode, {})
+    if not fix.get("incluir", draft.get("incluir")):
+        continue
+    criteria = [c for c in draft["criteria"] if c["id"] not in fix.get("drop", [])] + fix.get("add", [])
+    criteria = [
+        (c["id"], fix.get("edit", {}).get(c["id"], c["check"]))
+        + ((c["auto"],) if c.get("auto") and c["id"] not in fix.get("no_auto", []) else ())
+        for c in criteria
+    ]
+    real = dialogue(draft["id"], draft["category"], criteria, turns=draft["turns"], note=fix.get("note"))
+    real["source"] = {"kind": "whatsapp", "episode": episode}
+    real["cobertura"] = draft["cobertura"]
+    dialogues.append(real)
+
 doc = {
-    "version": 6,
-    "status": "validado por Gadea (2026-09-17); v6 añade 2 conversaciones reales de Gadea en el widget (21-sep); v5 aclara criterios de reparto, reserva y acompanante tras la calibracion; v2 calibrada tras la ronda 1; v3 separa los criterios mecanicos (auto, por codigo) de los que juzga el LLM; v4 con las decisiones de Gadea en la calibracion (telefono, refresher, datos del cliente); un fallo cuenta solo en el criterio que mejor lo describe",
+    "version": 7,
+    "status": "v7 (22-sep, Fase G/G1): añade los casos reales de los chats de WhatsApp del cliente, revisados por Claude + Gadea; validado por Gadea (2026-09-17); v6 añade 2 conversaciones reales de Gadea en el widget (21-sep); v5 aclara criterios de reparto, reserva y acompanante tras la calibracion; v2 calibrada tras la ronda 1; v3 separa los criterios mecanicos (auto, por codigo) de los que juzga el LLM; v4 con las decisiones de Gadea en la calibracion (telefono, refresher, datos del cliente); un fallo cuenta solo en el criterio que mejor lo describe",
     "about": (
         "Golden-set de dialogos para el LLM-juez end-to-end (plan maestro, M0 m0-3/m0-4). Cada dialogo se lanza "
         "contra PRE y el juez comprueba la conversacion real contra los criterios globales y los suyos. Los turnos "

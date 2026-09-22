@@ -1,0 +1,3634 @@
+{
+ "model": "gpt-5 (low)",
+ "drafts": {
+  "wa-01-e1": {
+   "incluir": true,
+   "motivo": "Cliente pide el precio del curso Open Water para colombianos y afirma que hay 'precio especial'; el bot debe corregir la premisa y cotizar o pedir el dato faltante (origen).",
+   "id": "open-water-precio-para-colombianos-corrige-mito",
+   "category": "descuentos",
+   "cobertura": {
+    "intents": [
+     "precio",
+     "descuento"
+    ],
+    "actividad": "curso-open-water",
+    "perfil": "desconocido",
+    "etapa": "pre-venta",
+    "dificultad": "media"
+   },
+   "turns": [
+    "Buenos días. Estoy interesada en el curso básico de buceo. Cuál es el costo para colombianos?",
+    "Estoy interesada en el curso básico de buceo. Según la página tienen un precio especial para colombianos. Me podrían dar el costo por favor"
+   ],
+   "criteria": [
+    {
+     "id": "sin-precio-especial-colombianos",
+     "check": "Aclara que no existe un 'precio especial para colombianos'; el precio es el mismo y solo cambia la moneda. Ofrece el valor en COP para colombianos.",
+     "base": "policies.json: \"Los clientes colombianos y residentes en Colombia pagan en pesos colombianos (COP)... Los precios son los mismos, solo cambia la moneda.\""
+    },
+    {
+     "id": "precio-open-water-o-pregunta-origen",
+     "check": "Da el precio del catálogo en COP para el Curso Open Water por persona saliendo desde Cartagena; si no sabe si sale desde Cartagena o ya está en las islas, pregunta ese dato para dar el precio correcto.",
+     "base": "pricing.json: from_cartagena.cursos_buceo.curso_open_water (...) y from_islands.cursos_buceo.curso_open_water (...)."
+    }
+   ],
+   "dudas": [],
+   "episode": "wa-01-e1",
+   "flags": [
+    "referencia_con_precios_historicos"
+   ],
+   "_checks": {
+    "turnos_sin_anclar": [],
+    "n_turnos": 2,
+    "importes_en_criterio": [],
+    "categoria_desconocida": false
+   }
+  },
+  "wa-01-e2": {
+   "incluir": true,
+   "motivo": "Cliente pide precio del curso Open Water en COP, consulta hoteles en islas y si el transporte está incluido: buen caso multi-intento para el bot.",
+   "id": "curso-open-water-precio-cop-hoteles-y-transporte",
+   "category": "curso",
+   "cobertura": {
+    "intents": [
+     "precio",
+     "alojamiento-islas",
+     "info-actividad"
+    ],
+    "actividad": "curso-open-water",
+    "perfil": "desconocido",
+    "etapa": "pre-venta",
+    "dificultad": "media"
+   },
+   "turns": [
+    "Buenas tardes.",
+    "Estoy interesada en el curso básico de buceo. Me podrían dar el costo para colombianos por favor",
+    "Gracias. Y en pesos?",
+    "Estoy interesada en el curso básico de buceo. Me podrían dar el costo para colombianos por favor",
+    "Que hoteles recomiendan?",
+    "Está incluido el transporte a la isla?"
+   ],
+   "criteria": [
+    {
+     "id": "precio-vigente-open-water",
+     "check": "Ante la solicitud de costo del 'curso básico', cotiza con el precio vigente del catálogo para el Curso Open Water (no confirma el precio histórico). Si falta saber desde dónde salen o cuántas personas, puede preguntar esos datos antes de cotizar.",
+     "base": "pricing.json: from_cartagena.cursos_buceo.curso_open_water.name_es"
+    },
+    {
+     "id": "moneda-cop-colombianos",
+     "check": "Da el precio en COP por ser cliente colombiana.",
+     "base": "policies.json: colombian_pricing 'Los clientes colombianos... pagan en pesos colombianos (COP).'"
+    },
+    {
+     "id": "hoteles-base-no-incluido",
+     "check": "Al pedir hoteles, indica que su base está en Hotel San Pedro de Majagua y Hotel Cocoliso y que el alojamiento no está incluido; se reserva directamente con el hotel.",
+     "base": "faqs.json: 'Tenemos nuestra base de buceo en dos hoteles: Hotel San Pedro de Majagua y Hotel Cocoliso... el alojamiento no está incluido'."
+    },
+    {
+     "id": "transporte-incluido-cartagena",
+     "check": "Responde que el transporte en lancha Cartagena–Islas–Cartagena está incluido en los planes desde Cartagena.",
+     "base": "pricing.json: from_cartagena.context_note_es 'Incluye... transporte en lancha rapida Cartagena-Islas-Cartagena'"
+    }
+   ],
+   "dudas": [],
+   "episode": "wa-01-e2",
+   "flags": [
+    "referencia_con_precios_historicos"
+   ],
+   "_checks": {
+    "turnos_sin_anclar": [],
+    "n_turnos": 6,
+    "importes_en_criterio": [],
+    "categoria_desconocida": false
+   }
+  },
+  "wa-01-e3": {
+   "incluir": true,
+   "motivo": "Cliente pide disponibilidad y pasos para reservar el curso básico y cita un precio histórico: buen caso para que el bot guíe, aplique eLearning y no valide importes obsoletos.",
+   "id": "curso-open-water-disponibilidad-pasos-y-precio-citado",
+   "category": "curso",
+   "cobertura": {
+    "intents": [
+     "disponibilidad",
+     "reserva",
+     "pago",
+     "certificacion-curso"
+    ],
+    "actividad": "curso-open-water",
+    "perfil": "solo",
+    "etapa": "pre-venta",
+    "dificultad": "media"
+   },
+   "turns": [
+    "Buenos días. Tienen cupo para este martes y miércoles?",
+    "Gracias. Entonces por favor los pasos para hacer la reserva/ curso básico",
+    "Con tarjeta de crédito son los mismos 2.215.000?"
+   ],
+   "criteria": [
+    {
+     "id": "no-validar-precio-citado",
+     "check": "No confirma el precio citado por el cliente; da el precio del catálogo para el Curso Open Water y aplica la moneda según la nacionalidad (COP si es colombiano/residente; USD si es internacional).",
+     "base": "policies.json > colombian_pricing: \"Los clientes colombianos... pagan en COP... Clientes internacionales pagan en USD. Los precios son los mismos...\"; pricing.json > cursos_buceo > curso_open_water"
+    },
+    {
+     "id": "elearning-requisito-tiempo",
+     "check": "Explica que el curso incluye teoría PADI eLearning (~10–12 horas) y que debe completarse antes de iniciar la práctica.",
+     "base": "faqs.json > \"¿Como es el Curso Basico PADI (Open Water) desde Cartagena?\" > \"La teoria es por PADI eLearning (aprox. 10 a 12 horas)... Debes completarla para poder empezar la parte practica\""
+    },
+    {
+     "id": "datos-faltantes-para-cotizar",
+     "check": "Antes de cotizar o enviar a pago, pide los datos faltantes: número de personas, si sale desde Cartagena o ya está en las islas, y nacionalidad (para la moneda).",
+     "base": "pricing.json > from_cartagena vs from_islands (precios dependen del origen); policies.json > colombian_pricing (moneda segun nacionalidad)"
+    }
+   ],
+   "dudas": [],
+   "episode": "wa-01-e3",
+   "flags": [
+    "adjuntos",
+    "llamada",
+    "cliente_cita_precio",
+    "referencia_con_precios_historicos",
+    "largo"
+   ],
+   "_checks": {
+    "turnos_sin_anclar": [],
+    "n_turnos": 3,
+    "importes_en_criterio": [],
+    "categoria_desconocida": false
+   }
+  },
+  "wa-01-e4": {
+   "incluir": true,
+   "motivo": "Cliente pide precio en COP para el paquete de 5 buceos, consulta si requiere refresh y solicita opciones de hotel.",
+   "id": "paquete-5-buceos-cop-refresh-y-hoteles",
+   "category": "info",
+   "cobertura": {
+    "intents": [
+     "precio",
+     "nacionalidad",
+     "info-actividad",
+     "alojamiento-islas"
+    ],
+    "actividad": "buceo-certificado",
+    "perfil": "desconocido",
+    "etapa": "pre-venta",
+    "dificultad": "media"
+   },
+   "turns": [
+    "Buenos días. Quiero hacer el paquete de 5 buceos. Cuál es el costo para colombianos por favor?",
+    "Gracias - y en pesos? Para colombianos?",
+    "Gracias - yo complete el curso básico el 3 de abril 2025. Tengo que hacer algo especial?",
+    "Y me recuerda los hoteles por favor?"
+   ],
+   "criteria": [
+    {
+     "id": "precio-cop-segun-origen",
+     "check": "Da el precio del catálogo en COP para el paquete de 5 buceos según salga desde Cartagena o desde islas; si el cliente no dice desde dónde, el bot pregunta si sale de Cartagena o si ya está en las islas antes de cotizar.",
+     "base": "pricing.json: from_cartagena.paquetes.paquete_5_buceos / from_islands.paquetes.paquete_5_buceos; policies.island_pickup: planes desde islas manejan precios diferentes"
+    },
+    {
+     "id": "refresh-menos-de-dos-anos",
+     "check": "Confirma que no necesita refresh porque su última actividad fue hace menos de 2 años; recuerda que debe presentar su carné de certificación.",
+     "base": "policies.json: refresh_requirement: 'Si has pasado mas de 2 anos ...'; certification_required: 'debes presentar tu carne de buzo certificado.'"
+    },
+    {
+     "id": "hoteles-base-y-no-incluido",
+     "check": "Al pedir hoteles, menciona que la base está en San Pedro de Majagua y Cocoliso y aclara que el alojamiento no está incluido y se reserva directamente con el hotel.",
+     "base": "faqs.json: 'Tenemos nuestra base de buceo en ... Hotel San Pedro de Majagua y Hotel Cocoliso ... El alojamiento no está incluido y debes reservarlo directamente con el hotel.'"
+    }
+   ],
+   "dudas": [],
+   "episode": "wa-01-e4",
+   "flags": [
+    "referencia_con_precios_historicos"
+   ],
+   "_checks": {
+    "turnos_sin_anclar": [],
+    "n_turnos": 4,
+    "importes_en_criterio": [],
+    "categoria_desconocida": false
+   }
+  },
+  "wa-01-e5": {
+   "incluir": true,
+   "motivo": "Cliente pide reservar paquete de 5 buceos; hay que guiar la reserva pidiendo datos clave y no validar descuentos/pagos fuera de la referencia.",
+   "id": "reserva-paquete-5-buceos-solicita",
+   "category": "reserva",
+   "cobertura": {
+    "intents": [
+     "reserva"
+    ],
+    "actividad": "buceo-certificado",
+    "perfil": "desconocido",
+    "etapa": "pre-venta",
+    "dificultad": "media"
+   },
+   "turns": [
+    "Buenos días. Me gustaría hacer una reserva para el paquete de 5 buceos por favor?"
+   ],
+   "criteria": [
+    {
+     "id": "origen-cartagena-o-islas",
+     "check": "Antes de cotizar o enviar link, pregunta si sale desde Cartagena o si ya está en las islas (los planes y precios cambian según origen).",
+     "base": "policies.json: \"Si ya estas en las Islas del Rosario... Estos planes manejan precios diferentes porque no incluyen transporte desde Cartagena ni almuerzo.\""
+    },
+    {
+     "id": "no-validar-descuento-historico",
+     "check": "No confirma ni ofrece el descuento histórico citado; se ciñe al descuento online estándar reservando por la web/sistema (aprox. 10%).",
+     "base": "discounts.json: \"10% de descuento reservando online directamente... (sistema ROVERD)\""
+    },
+    {
+     "id": "pago-segun-nacionalidad",
+     "check": "Al ofrecer cómo reservar/pagar, indica el esquema correcto según nacionalidad (extranjeros 100% online; colombianos 100% o 50% anticipo online + 50% presencial).",
+     "base": "faqs.json: \"Para clientes colombianos... un anticipo del 50% en linea... Para clientes extranjeros: el 100% se paga a traves del enlace de pago en linea\""
+    }
+   ],
+   "dudas": [],
+   "episode": "wa-01-e5",
+   "flags": [
+    "referencia_con_precios_historicos"
+   ],
+   "_checks": {
+    "turnos_sin_anclar": [],
+    "n_turnos": 1,
+    "importes_en_criterio": [
+     "no-validar-descuento-historico",
+     "pago-segun-nacionalidad"
+    ],
+    "categoria_desconocida": false
+   }
+  },
+  "wa-02-e1": {
+   "incluir": true,
+   "motivo": "Cliente pide precios, disponibilidad en fechas pico y recomendaciones/gestión de hotel; además cita un precio que el bot no debe confirmar sin referencia.",
+   "id": "semana-santa-solo-avanzado-islas",
+   "category": "info",
+   "cobertura": {
+    "intents": [
+     "precio",
+     "disponibilidad",
+     "alojamiento-islas"
+    ],
+    "actividad": "buceo-certificado",
+    "perfil": "solo",
+    "etapa": "pre-venta",
+    "dificultad": "media"
+   },
+   "turns": [
+    "Estoy interesada en bucear en semana santa 18 y 19",
+    "Un solo buzo avanzado",
+    "1. Cuakes son sus costos con equipo?\n2. ⁠tienen disponibilidad?\n3. ⁠tienen algun hospedaje o zona para hospedarme que recomienden centrico a nuestras partidas?",
+    "Quiero quedarme en las islas",
+    "Veo q los 5 buceos serian por 293 pagando en el website",
+    "Ustedes cotizan los hoteles san pedro y cocoliso",
+    "Me interesa llegaria el 17 de abril y me iria el 20 de abril",
+    "Hay disponibilidad?",
+    "Uno de los buceos puede ser en wreck?"
+   ],
+   "criteria": [
+    {
+     "id": "no-confirmar-precio-citado",
+     "check": "No da por bueno el '293' que cita el cliente; se atiene a la referencia para el Paquete 5 buceos desde Cartagena y, si no tiene nacionalidad/moneda, la pide antes de cotizar.",
+     "base": "pricing.json: from_cartagena.paquetes.paquete_5_buceos ... usd_online/cop_online; policies.json: colombian_pricing ('precios son los mismos, solo cambia la moneda')"
+    },
+    {
+     "id": "disponibilidad-semana-santa",
+     "check": "Confirma que operan todos los días del año (incluye Semana Santa) y que hay disponibilidad salvo cierres por clima.",
+     "base": "availability.json: operations.daily_service 'Operamos todos los días del año'; availability_note 'Siempre hay disponibilidad... salvo suspensión por condiciones meteorológicas'; policies.json: closed_days"
+    },
+    {
+     "id": "alojamiento-no-incluido-directo",
+     "check": "Aclara que el alojamiento no está incluido, se reserva directamente con el hotel, y puede sugerir San Pedro de Majagua y Cocoliso como opciones en las islas.",
+     "base": "faqs.json: 'Opciones de alojamiento...' (base en Majagua y Cocoliso; alojamiento no está incluido y debes reservarlo directamente)"
+    }
+   ],
+   "dudas": [],
+   "episode": "wa-02-e1",
+   "flags": [
+    "referencia_con_precios_historicos"
+   ],
+   "_checks": {
+    "turnos_sin_anclar": [],
+    "n_turnos": 9,
+    "importes_en_criterio": [],
+    "categoria_desconocida": false
+   }
+  },
+  "wa-02-e2": {
+   "incluir": true,
+   "motivo": "Cliente pide el paquete de 5 buceos desde islas, consulta si hay descuento por ser residente y solicita el costo 'como residente' y 'sin recogos'.",
+   "id": "paquete-5-buceos-islas-residente-sin-recogida",
+   "category": "reserva",
+   "cobertura": {
+    "intents": [
+     "precio",
+     "descuento",
+     "disponibilidad"
+    ],
+    "actividad": "buceo-certificado",
+    "perfil": "pareja",
+    "etapa": "pre-venta",
+    "dificultad": "media"
+   },
+   "turns": [
+    "Tienes disponibilidad para el plan de 5 buceos para el finde del 27 de junio al 30 de junio",
+    "Para dos personas",
+    "Hola para residentes en colombia (3 años) no aplica el desc colombia o?",
+    "Va quiero comprar sin ir de cartagena",
+    "COcoliso",
+    "cual es el costo del paquete",
+    "como residente?",
+    "sin recojos",
+    "El 21 y 22",
+    "Y me regreso el 23 a las 6:30 pm"
+   ],
+   "criteria": [
+    {
+     "id": "no-descuento-colombiano-moneda-cop",
+     "check": "Aclara que no hay descuento especial por ser colombiano/residente; el precio es el mismo y solo cambia la moneda a COP para colombianos y residentes.",
+     "base": "policies.json > colombian_pricing: \"No hay un precio distinto por ser colombiano;... Colombianos y residentes pagan en COP.\""
+    },
+    {
+     "id": "precio-paquete-5-islas",
+     "check": "Da el precio del catálogo para el Paquete 5 Buceos (2 días) desde las islas, por persona (en COP por ser residente).",
+     "base": "pricing.json > from_islands.paquetes.paquete_5_buceos"
+    },
+    {
+     "id": "recogida-islas-incluida",
+     "check": "Indica que si ya están en las islas (ej. Cocoliso), la recogida y regreso en lancha están incluidos sin cargo adicional.",
+     "base": "policies.json > island_pickup_free: \"...recogida y regreso ... incluidos sin cargo adicional.\""
+    }
+   ],
+   "dudas": [],
+   "episode": "wa-02-e2",
+   "flags": [
+    "audio_transcrito",
+    "adjuntos",
+    "referencia_con_precios_historicos",
+    "largo"
+   ],
+   "_checks": {
+    "turnos_sin_anclar": [],
+    "n_turnos": 10,
+    "importes_en_criterio": [],
+    "categoria_desconocida": false
+   }
+  },
+  "wa-02-e3": {
+   "incluir": true,
+   "motivo": "Cliente pide confirmar estado de reservas existentes; el bot no puede verlas y debe escalar.",
+   "id": "confirma-estado-reserva-escalar",
+   "category": "post-venta",
+   "cobertura": {
+    "intents": [
+     "post-venta"
+    ],
+    "actividad": "ninguna",
+    "perfil": "desconocido",
+    "etapa": "post-venta",
+    "dificultad": "facil"
+   },
+   "turns": [
+    "Hola",
+    "Todo ok con mis reservas el 21 y 22"
+   ],
+   "criteria": [
+    {
+     "id": "escalar-reserva-existente",
+     "check": "No confirma el estado de reservas existentes y ofrece pasar con un asesor humano para verificarlo.",
+     "base": "faqs.json: \"Si tienes dudas sobre tu reserva especifica, podemos pasarte con un asesor.\""
+    }
+   ],
+   "dudas": [],
+   "episode": "wa-02-e3",
+   "flags": [],
+   "_checks": {
+    "turnos_sin_anclar": [],
+    "n_turnos": 2,
+    "importes_en_criterio": [],
+    "categoria_desconocida": false
+   }
+  },
+  "wa-02-e4": {
+   "incluir": true,
+   "motivo": "Cliente pide snorkel para 2, pregunta precio/incluye, consulta descuento por ser residente y pide pagar por transferencia: buen caso para validar origen, descuentos y forma de pago (link).",
+   "id": "snorkel-precio-residente-y-pago-link",
+   "category": "reserva",
+   "cobertura": {
+    "intents": [
+     "precio",
+     "info-actividad",
+     "descuento",
+     "pago",
+     "reserva"
+    ],
+    "actividad": "snorkel",
+    "perfil": "pareja",
+    "etapa": "pre-venta",
+    "dificultad": "media"
+   },
+   "turns": [
+    "cupo para snorkeling para dos personas el sábado?",
+    "cuanto cuesta",
+    "?",
+    "y que incluye?",
+    "yo soy residente",
+    "me aplica el descuento adicional?",
+    "si si puede",
+    "para las dos?",
+    "ok ya he buceado con ustedes",
+    "dame la cuenta y transfiero"
+   ],
+   "criteria": [
+    {
+     "id": "origen-antes-de-cotizar",
+     "check": "Da el precio del catálogo para snorkeling según salgan desde Cartagena o si ya están en las islas; si el cliente no lo dijo, primero pregunta desde dónde salen antes de cotizar o detallar inclusiones.",
+     "base": "pricing.json: from_cartagena.context_note_es y from_islands.context_note_es (incluye/no incluye transporte y almuerzo) y servicios snorkel_doble en ambos orígenes."
+    },
+    {
+     "id": "sin-descuento-por-residente",
+     "check": "A 'soy residente, ¿me aplica el descuento adicional?' aclara que no hay descuento especial por ser colombiano/residente; solo cambia la moneda a COP. Sí menciona el descuento online estándar si reserva por la web.",
+     "base": "policies.json > colombian_pricing.es: 'No hay un precio distinto por ser colombiano'; discounts.json > online_direct_booking: 10% reservando online."
+    },
+    {
+     "id": "pago-por-link",
+     "check": "Ante 'dame la cuenta y transfiero', no pide transferencia bancaria ni da cuentas; envía el enlace de reserva/pago online (ROVERD) y explica los medios de pago según nacionalidad.",
+     "base": "policies.json > booking_system_info.es (ROVERD) y faqs.json > '¿Qué medios de pago aceptan?' (pagos en línea; 100% o 50%/50% para colombianos).",
+     "auto": "last_reply_has_booking_link"
+    }
+   ],
+   "dudas": [],
+   "episode": "wa-02-e4",
+   "flags": [
+    "adjuntos",
+    "referencia_con_precios_historicos",
+    "largo"
+   ],
+   "_checks": {
+    "turnos_sin_anclar": [],
+    "n_turnos": 10,
+    "importes_en_criterio": [],
+    "categoria_desconocida": false
+   }
+  },
+  "wa-03-e1": {
+   "incluir": true,
+   "motivo": "Cliente inicia y pide snorkel; buen caso para que el bot guíe con el plan correcto y pida origen.",
+   "id": "snorkel-inicio-pide-info",
+   "category": "info",
+   "cobertura": {
+    "intents": [
+     "info-actividad"
+    ],
+    "actividad": "snorkel",
+    "perfil": "desconocido",
+    "etapa": "pre-venta",
+    "dificultad": "facil"
+   },
+   "turns": [
+    "Buenos días",
+    "Mi nombre es [NOMBRE] [NOMBRE] busco realizar snorkel 🤿"
+   ],
+   "criteria": [
+    {
+     "id": "pide-origen",
+     "check": "Pregunta si sale desde Cartagena o si ya está en las islas para ofrecer el plan y precio correctos.",
+     "base": "policies.json island_pickup: \"Estos planes manejan precios diferentes porque no incluyen transporte desde Cartagena ni almuerzo.\""
+    },
+    {
+     "id": "enlace-snorkel",
+     "check": "Comparte el enlace oficial del Tour de Snorkeling cuando el cliente pide snorkel.",
+     "base": "faqs.json: \"Quiero hacer snorkeling, ¿donde veo el plan? ... https://divingplanet.org/tours-buceo-snorkel-cartagena/tour-snorkeling/\""
+    }
+   ],
+   "dudas": [],
+   "episode": "wa-03-e1",
+   "flags": [
+    "llamada",
+    "referencia_con_precios_historicos"
+   ],
+   "_checks": {
+    "turnos_sin_anclar": [],
+    "n_turnos": 2,
+    "importes_en_criterio": [],
+    "categoria_desconocida": false
+   }
+  },
+  "wa-03-e2": {
+   "incluir": true,
+   "motivo": "Pregunta clara de precio para snorkel; buen caso para que el bot use la tarifa vigente y aclare desde dónde sale.",
+   "id": "precio-snorkel-origen",
+   "category": "info",
+   "cobertura": {
+    "intents": [
+     "precio"
+    ],
+    "actividad": "snorkel",
+    "perfil": "desconocido",
+    "etapa": "pre-venta",
+    "dificultad": "media"
+   },
+   "turns": [
+    "Buenas tardes",
+    "Me informas cuánto cuesta el viaje para hacer snorkel 🤿 en islas del Rosario ?"
+   ],
+   "criteria": [
+    {
+     "id": "no-precio-historico",
+     "check": "No confirma ni repite precios históricos; da el precio vigente del catálogo para snorkel (2 salidas) según corresponda.",
+     "base": "pricing.json: from_cartagena.servicios_buceo_snorkel.snorkel_doble / from_islands.servicios_buceo_snorkel.snorkel_doble; discounts.online_direct_booking ~10% online"
+    },
+    {
+     "id": "origen-cartagena-o-islas",
+     "check": "Pregunta si sale desde Cartagena o si ya está en las islas para dar el precio exacto, o bien ofrece ambas opciones con sus precios de catálogo.",
+     "base": "policies.json: island_pickup (planes distintos desde islas) + pricing.json: secciones from_cartagena vs from_islands"
+    }
+   ],
+   "dudas": [],
+   "episode": "wa-03-e2",
+   "flags": [
+    "referencia_con_precios_historicos"
+   ],
+   "_checks": {
+    "turnos_sin_anclar": [],
+    "n_turnos": 2,
+    "importes_en_criterio": [],
+    "categoria_desconocida": false
+   }
+  },
+  "wa-03-e3": {
+   "incluir": true,
+   "motivo": "Pregunta por un plan que el centro no ofrece (delfinario) y permite probar que el bot redirige a las actividades reales (buceo/snorkel) y guía siguiente paso.",
+   "id": "no-delfinario-sugerir-snorkel",
+   "category": "info",
+   "cobertura": {
+    "intents": [
+     "info-actividad"
+    ],
+    "actividad": "ninguna",
+    "perfil": "desconocido",
+    "etapa": "pre-venta",
+    "dificultad": "facil"
+   },
+   "turns": [
+    "Buenas tardes ustedes tienen plan para ir a la isla del Rosario donde están los delfines 🐬?",
+    "Ok gracias",
+    "Si es mejor verlos libres 🤿"
+   ],
+   "criteria": [
+    {
+     "id": "no-ofrece-delfinario",
+     "check": "Aclara que no manejamos tours al delfinario y, en su lugar, explica brevemente que nuestras actividades son buceo y/o snorkel en los arrecifes de las Islas del Rosario.",
+     "base": "faqs.json: \"¿Qué es Diving Planet y qué ofrecen? [...] ofrecemos planes para buzos certificados, minicurso para principiantes, cursos PADI y snorkeling.\""
+    },
+    {
+     "id": "guia-siguiente-paso",
+     "check": "Tras el acuerdo del cliente, invita a elegir entre snorkel, minicurso o buceo certificado para poder darle la info correcta.",
+     "base": "faqs.json: \"Quiero informacion, ¿que plan me recomiendan? [...] cuentanos si buscas un plan para: buzos certificados, principiantes (Discover Scuba / Bautizo), cursos PADI o snorkeling.\""
+    }
+   ],
+   "dudas": [],
+   "episode": "wa-03-e3",
+   "flags": [],
+   "_checks": {
+    "turnos_sin_anclar": [],
+    "n_turnos": 3,
+    "importes_en_criterio": [],
+    "categoria_desconocida": false
+   }
+  },
+  "wa-04-e1": {
+   "incluir": true,
+   "motivo": "Cliente certificado pide salidas y condiciones para una fecha, precio según su nacionalidad (cédula de extranjería), forma de pago y si hay descuento por transferencia.",
+   "id": "certificado-fecha-precio-cop-descuento-transferencia",
+   "category": "info",
+   "cobertura": {
+    "intents": [
+     "disponibilidad",
+     "precio",
+     "pago",
+     "descuento",
+     "info-actividad"
+    ],
+    "actividad": "buceo-certificado",
+    "perfil": "desconocido",
+    "etapa": "pre-venta",
+    "dificultad": "media"
+   },
+   "turns": [
+    "Buzos certificados",
+    "Me gustaria saber las salidas para 17 enero",
+    "Como estan las salidas?",
+    "Si, pero puede pasar de ir al mismo punto o me llevan a otros puntos?",
+    "Yo tengo extrangeria",
+    "Como esta el precio?",
+    "El pago se hace en el dia?",
+    "Sabes para cuanto va subir?",
+    "Y para transferência tiene descuento? Tengo cuenta local"
+   ],
+   "criteria": [
+    {
+     "id": "precio-moneda-cop-por-cedula-extranjeria",
+     "check": "Cotiza (o indica que cotizará) el precio del catálogo para buzo certificado desde Cartagena en COP por tener cédula de extranjería; si faltan datos (personas y si sale de Cartagena o ya está en las islas), los pregunta en vez de asumir.",
+     "base": "policies.json > colombian_pricing: \"Un extranjero residente en Colombia (con cédula de extranjería) también paga en COP.\""
+    },
+    {
+     "id": "no-descuento-transferencia",
+     "check": "Aclara que no existe descuento por transferencia bancaria; el descuento aplicable es el online reservando por la web (ROVERD).",
+     "base": "discounts.json > online_direct_booking: \"10% de descuento reservando online... (ROVERD)\""
+    },
+    {
+     "id": "cutoff-pago-dia-anterior",
+     "check": "Responde que no se paga el mismo día: el sistema de reservas cierra a las 4:30 PM del día anterior.",
+     "base": "policies.json > booking_system_info: \"Se cierra automáticamente a las 4:30 PM del día anterior.\""
+    }
+   ],
+   "dudas": [],
+   "episode": "wa-04-e1",
+   "flags": [
+    "adjuntos",
+    "referencia_con_precios_historicos",
+    "largo"
+   ],
+   "_checks": {
+    "turnos_sin_anclar": [],
+    "n_turnos": 9,
+    "importes_en_criterio": [],
+    "categoria_desconocida": false
+   }
+  },
+  "wa-04-e2": {
+   "incluir": true,
+   "motivo": "Pregunta clara sobre si un acompañante puede ir y quedarse en la base; buen caso para validar cómo el bot ofrece el plan de acompañante y maneja precio/moneda según referencia.",
+   "id": "acompanante-madre-desde-cartagena",
+   "category": "info",
+   "cobertura": {
+    "intents": [
+     "info-actividad"
+    ],
+    "actividad": "acompanante",
+    "perfil": "familia",
+    "etapa": "pre-venta",
+    "dificultad": "media"
+   },
+   "turns": [
+    "Hola, buenas tardes!",
+    "Una consulta",
+    "Mi madre puede acompañarme en el buceo y se quedar en la isla de apoyo?"
+   ],
+   "criteria": [
+    {
+     "id": "ofrecer-acompanante",
+     "check": "Confirma que existe el plan de acompañante (no bucea ni hace snorkel) para acompañar al grupo durante el día.",
+     "base": "pricing.json: from_cartagena.servicios_buceo_snorkel.acompanante.name_es y note_es"
+    },
+    {
+     "id": "precio-moneda-o-pregunta",
+     "check": "Da el precio del catálogo para acompañante saliendo desde Cartagena en la moneda que corresponda según su nacionalidad, o pregunta nacionalidad y si sale desde Cartagena o ya está en islas antes de cotizar.",
+     "base": "policies.json: colombian_pricing; pricing.json: from_cartagena.servicios_buceo_snorkel.acompanante"
+    }
+   ],
+   "dudas": [],
+   "episode": "wa-04-e2",
+   "flags": [
+    "referencia_con_precios_historicos"
+   ],
+   "_checks": {
+    "turnos_sin_anclar": [],
+    "n_turnos": 3,
+    "importes_en_criterio": [],
+    "categoria_desconocida": false
+   }
+  },
+  "wa-04-e3": {
+   "incluir": true,
+   "motivo": "Cliente pide cotización total en COP para un grupo mixto (1 buzo avanzado + 2 bautismo) y da fecha; caso típico de precios y guía de datos faltantes.",
+   "id": "grupo-mixto-precio-cop-total",
+   "category": "grupo",
+   "cobertura": {
+    "intents": [
+     "precio"
+    ],
+    "actividad": "varias",
+    "perfil": "familia",
+    "etapa": "pre-venta",
+    "dificultad": "media"
+   },
+   "turns": [
+    "Busco el seguinte:\nVamos en família a Cartagena. 1 buzo avanzado y 2 para bautismo",
+    "Para el sabado, 30/05",
+    "Muchas gracias!",
+    "Cual seria el valor en COP?",
+    "Yo vivo en Colombia",
+    "Para el total"
+   ],
+   "criteria": [
+    {
+     "id": "precio-total-cop-grupo-mixto",
+     "check": "Entrega el total en COP con el precio del catálogo para 1 buzo certificado (2 inmersiones) y 2 participantes de minicurso, saliendo desde Cartagena; si no está claro desde dónde salen, lo pregunta antes de cotizar.",
+     "base": "pricing.json -> from_cartagena.servicios_buceo_snorkel.buzo_certificado_doble y from_cartagena.servicios_buceo_snorkel.minicurso_refresh"
+    },
+    {
+     "id": "moneda-colombianos-o-residentes",
+     "check": "Cotiza en COP por indicar que vive en Colombia; si hiciera falta, confirma si son colombianos o residentes con cédula para aplicar COP, sin inventar descuentos especiales por nacionalidad.",
+     "base": "policies.json -> colombian_pricing: 'Colombianos y residentes en Colombia pagan en COP... No hay un precio distinto por ser colombiano.'"
+    }
+   ],
+   "dudas": [],
+   "episode": "wa-04-e3",
+   "flags": [
+    "referencia_con_precios_historicos"
+   ],
+   "_checks": {
+    "turnos_sin_anclar": [],
+    "n_turnos": 6,
+    "importes_en_criterio": [],
+    "categoria_desconocida": false
+   }
+  },
+  "wa-05-e1": {
+   "incluir": true,
+   "motivo": "Cliente buzo certificado pide fechas, pregunta por fotos y cómo reservar; buen caso para disponibilidad, política de fotos y link de reserva.",
+   "id": "certificado-fechas-fotos-y-reserva",
+   "category": "reserva",
+   "cobertura": {
+    "intents": [
+     "disponibilidad",
+     "fotos",
+     "reserva",
+     "info-actividad"
+    ],
+    "actividad": "buceo-certificado",
+    "perfil": "desconocido",
+    "etapa": "pre-venta",
+    "dificultad": "media"
+   },
+   "turns": [
+    "Hola, buenos días. Deca del centro de buceo. Me recomendaron a ustedes para bucear en Cartagena. Yo voy a estar entre el 5 y el 7 por allá. Entonces quería ver si tienen alguna salida programada. Yo soy open y me gustaría salir un día y tal. No sé qué tienen. Muchas gracias.",
+    "Mil gracias por la info. Oye, quiero hacerte una pregunta. Estuve consultando con otra agencia, um principalmente para mirar como los lugares y demás, pero pues no conozco. Entonces quería preguntarte si existe como alguna diferencia entre estos lugares al que ustedes van y el que te compartí en la foto. um Sí, principalmente por eso. Seguramente tú sí tienes eso super claro para que me orientes y tomar una decisión ahorita. Gracias.",
+    "Y, aprovecho para preguntarte, entonces, si tienes en esas fechas, el 5 y 6 de febrero, y miré en el link que no incluye las fotos, ¿eso tiene como un precio adicional o cómo lo hacen?",
+    "Vale, perfecto. Muchas gracias por la explicación. um Listo, entonces tienes la fecha del 5 o 6 de febrero y no sé cómo se haga la reserva para para hacerlo."
+   ],
+   "criteria": [
+    {
+     "id": "disponibilidad-diaria",
+     "check": "Confirma que operan todos los días y que puede salir el 5 o 6 de febrero (salida diaria a las 8:00 a. m.).",
+     "base": "availability.json: \"Operamos todos los días del año\"; \"Salida diaria a las 8:00 AM\""
+    },
+    {
+     "id": "politica-fotos",
+     "check": "Explica que las fotos no están incluidas ni se ofrecen proactivamente; el instructor puede hacerlas voluntariamente y se suelen entregar como máximo al día siguiente; se agradece con propina directa al instructor.",
+     "base": "policies.json: \"Las fotos y videos no se ofrecen proactivamente ni están incluidas... El instructor puede hacerlas voluntariamente y las entrega al día siguiente... La propina al instructor...\""
+    },
+    {
+     "id": "link-de-reserva",
+     "check": "Cuando el cliente pregunta cómo reservar, incluye el enlace de reserva para buzo certificado de 2 inmersiones desde Cartagena.",
+     "base": "faqs.json: \"Soy buzo certificado, ¿donde veo los planes?... https://divingplanet.org/tours-buceo-snorkel-cartagena/2-buceos-1-dia/\"",
+     "auto": "last_reply_has_booking_link"
+    }
+   ],
+   "dudas": [],
+   "episode": "wa-05-e1",
+   "flags": [
+    "audio_transcrito",
+    "adjuntos",
+    "referencia_con_precios_historicos"
+   ],
+   "_checks": {
+    "turnos_sin_anclar": [],
+    "n_turnos": 4,
+    "importes_en_criterio": [],
+    "categoria_desconocida": false
+   }
+  },
+  "wa-05-e2": {
+   "incluir": true,
+   "motivo": "Cliente pregunta si la salida está garantizada y cómo pagar (menciona 'concepto'); el bot debe aclarar operación diaria/condición por clima y que la confirmación es al pagar por el enlace, sin inventar datos de transferencia.",
+   "id": "confirmacion-salida-y-pago-sin-concepto",
+   "category": "pago",
+   "cobertura": {
+    "intents": [
+     "disponibilidad",
+     "pago"
+    ],
+    "actividad": "ninguna",
+    "perfil": "desconocido",
+    "etapa": "pre-venta",
+    "dificultad": "media"
+   },
+   "turns": [
+    "Hola, listo, dejé haciendo esto para el 6 de febrero. Me confirmas o ya es fijo que se sale?",
+    "Vale, en concepto le coloco otros?"
+   ],
+   "criteria": [
+    {
+     "id": "operamos-diario-clima",
+     "check": "Aclara que operan todos los días y que una salida solo puede suspenderse por mal clima (no da garantías absolutas incondicionales).",
+     "base": "availability.json -> operations.daily_service: \"Operamos todos los días del año\"; availability.json -> availability_note: \"Solo se cierra el 25 de diciembre y el 1 de enero... puede suspenderse por condiciones meteorológicas\""
+    },
+    {
+     "id": "confirmacion-por-pago-enlace",
+     "check": "Indica que la reserva queda confirmada al completar el pago por el enlace online y, ante 'concepto', no inventa instrucciones de transferencia: sugiere pagar por el enlace o, si requiere otra forma, ofrece pasar con un asesor.",
+     "base": "discounts.json -> online_direct_booking: \"10% de descuento reservando online...\"; faqs.json -> \"¿Qué medios de pago aceptan?\" y \"¿Hay que pagar todo de una vez o se puede dar un anticipo?\" (pagos se realizan en línea según nacionalidad)"
+    }
+   ],
+   "dudas": [],
+   "episode": "wa-05-e2",
+   "flags": [],
+   "_checks": {
+    "turnos_sin_anclar": [],
+    "n_turnos": 2,
+    "importes_en_criterio": [],
+    "categoria_desconocida": false
+   }
+  },
+  "wa-05-e3": {
+   "incluir": false,
+   "motivo": "Solo operativa de post-venta (envío de datos y formulario ya hecho) sin una petición que el bot deba resolver ni políticas específicas que aplicar.",
+   "id": "post-venta-formulario-hecho",
+   "category": "post-venta",
+   "cobertura": {
+    "intents": [
+     "formularios",
+     "post-venta"
+    ],
+    "actividad": "ninguna",
+    "perfil": "desconocido",
+    "etapa": "post-venta",
+    "dificultad": "facil"
+   },
+   "turns": [
+    "Hola",
+    "[imagen] ya quedó",
+    "[NOMBRE]\nC.c [TELEFONO]",
+    "Ya hice esto"
+   ],
+   "criteria": [],
+   "dudas": [],
+   "episode": "wa-05-e3",
+   "flags": [
+    "adjuntos"
+   ],
+   "_checks": {
+    "turnos_sin_anclar": [],
+    "n_turnos": 4,
+    "importes_en_criterio": [],
+    "categoria_desconocida": false
+   }
+  },
+  "wa-05-e4": {
+   "incluir": true,
+   "motivo": "Cliente pregunta por salidas con mal clima y luego solicita política y proceso de cancelación/reagendamiento de una reserva ya hecha.",
+   "id": "clima-y-cancelacion-reserva-existente",
+   "category": "post-venta",
+   "cobertura": {
+    "intents": [
+     "clima",
+     "cambio-cancelacion",
+     "post-venta"
+    ],
+    "actividad": "ninguna",
+    "perfil": "desconocido",
+    "etapa": "post-venta",
+    "dificultad": "media"
+   },
+   "turns": [
+    "Hola, cómo vas?",
+    "Pregunta, supongo que no están saliendo con el clima verdad?",
+    "En caso de que no pueda viajar podemos mover la fecha de esto? O cuál es la política para cancelación?",
+    "Podemos cancelar porfa?",
+    "Mi vuelo es mañana y con lo del cierre me tocó cancelar",
+    "Cuál es el proceso? Te diría que reagendemos, pero no tengo claro si vuelvo este año o no"
+   ],
+   "criteria": [
+    {
+     "id": "clima-escalar",
+     "check": "No inventa pronóstico ni confirma estado del mar; explica que el clima cambia rápido y ofrece pasarlo con alguien del equipo para info actualizada.",
+     "base": "escalation_rules.json > weather_conditions > \"Las condiciones del tiempo cambian rápidamente... te conecto con alguien que puede darte información actualizada\""
+    },
+    {
+     "id": "reschedule-politica",
+     "check": "Responde que los cambios de fecha están sujetos a disponibilidad y a los Términos y Condiciones (comparte el enlace).",
+     "base": "policies.json > reschedule > \"Los cambios de fecha estan sujetos a disponibilidad y a nuestros terminos y condiciones. Ver: https://divingplanet.org/terminos-y-condiciones/\""
+    },
+    {
+     "id": "cancelacion-politica",
+     "check": "Ante '¿cuál es el proceso?' y la solicitud de cancelar, remite a la política de cancelación sin inventar ventanas ni porcentajes; comparte el enlace a Términos y Condiciones.",
+     "base": "policies.json > cancellation > \"Al reservar aceptas nuestros terminos y condiciones... Ver: https://divingplanet.org/terminos-y-condiciones/\""
+    }
+   ],
+   "dudas": [],
+   "episode": "wa-05-e4",
+   "flags": [
+    "audio_transcrito"
+   ],
+   "_checks": {
+    "turnos_sin_anclar": [],
+    "n_turnos": 6,
+    "importes_en_criterio": [],
+    "categoria_desconocida": false
+   }
+  },
+  "wa-05-e5": {
+   "incluir": true,
+   "motivo": "Cliente pide confirmar que operan en una fecha concreta y pregunta el punto de salida; la referencia permite responder ambas.",
+   "id": "confirma-fecha-y-punto-encuentro",
+   "category": "logistica",
+   "cobertura": {
+    "intents": [
+     "disponibilidad",
+     "punto-encuentro"
+    ],
+    "actividad": "ninguna",
+    "perfil": "desconocido",
+    "etapa": "pre-venta",
+    "dificultad": "facil"
+   },
+   "turns": [
+    "Hola, buenos días, ¿cómo estás? Quisiera hacerte una pregunta, ¿todo está bien para el primero de mayo, ¿cierto? estoy como por agendarlas el hotel y demás, entonces quería preguntar si todo está ok. ¿Me podrías confirmar desde dónde es la salida, por favor? y gracias.",
+    "Súper gracias"
+   ],
+   "criteria": [
+    {
+     "id": "confirma-operacion",
+     "check": "Confirma que el 1 de mayo sí operan (operan todos los días salvo 25/12 y 1/1).",
+     "base": "policies.json: \"Solo cerramos el 25 de diciembre y el 1 de enero.\""
+    },
+    {
+     "id": "punto-encuentro",
+     "check": "Indica que la salida es desde el Muelle de la Bodeguita.",
+     "base": "policies.json: \"Muelle de la Bodeguita...\""
+    }
+   ],
+   "dudas": [],
+   "episode": "wa-05-e5",
+   "flags": [
+    "audio_transcrito"
+   ],
+   "_checks": {
+    "turnos_sin_anclar": [],
+    "n_turnos": 2,
+    "importes_en_criterio": [],
+    "categoria_desconocida": false
+   }
+  },
+  "wa-05-e6": {
+   "incluir": true,
+   "motivo": "Caso mixto: pide el programa del día, luego pregunta por fotos/videos y si puede hospedarse con ellos; útil para política de fotos y alojamiento.",
+   "id": "programa-fotos-y-alojamiento",
+   "category": "post-venta",
+   "cobertura": {
+    "intents": [
+     "info-actividad",
+     "fotos",
+     "alojamiento-islas"
+    ],
+    "actividad": "ninguna",
+    "perfil": "solo",
+    "etapa": "post-venta",
+    "dificultad": "media"
+   },
+   "turns": [
+    "De una, tienes por ahí la info de a donde vamos y el programa depronto?",
+    "Te recomiendo si depronto tomaron alguna foto o video por ahí",
+    "Uno de los señores me lo iba a enviar pero se me perdió en la salida",
+    "Oye, par de preguntas. Si quisiera también me puedo hospedar con ustedes? Estoy pensando en ir en unos meses de nuevo",
+    "Depronto te pasaron las fotos??",
+    "Mire que los muchachos tomaron una en la lancha, pero, uno de los clientes (creo que se llama [NOMBRE]) tomó un video"
+   ],
+   "criteria": [
+    {
+     "id": "lugar-hora",
+     "check": "A la pregunta sobre el programa indica el punto de encuentro (Muelle de la Bodeguita) y la hora de salida (8:00 a. m.).",
+     "base": "policies.json: \"Muelle de la Bodeguita... a las 8:00 AM.\""
+    },
+    {
+     "id": "fotos-politica",
+     "check": "Explica que las fotos/videos no están incluidas y dependen de que el instructor las haga voluntariamente; no promete recuperarlas en nombre del equipo.",
+     "base": "policies.json: \"Las fotos y videos no se ofrecen proactivamente ni estan incluidas... El instructor puede hacerlas voluntariamente...\""
+    },
+    {
+     "id": "alojamiento-no-incluido",
+     "check": "Aclara que el alojamiento en las islas no está incluido en los planes y se reserva directamente con el hotel.",
+     "base": "faqs.json: \"El alojamiento no está incluido en nuestros planes de buceo y debes reservarlo directamente con el hotel.\""
+    }
+   ],
+   "dudas": [
+    "¿Quieres que el bot, además de explicar la política de fotos, ofrezca pasar con un asesor para intentar localizar fotos específicas tomadas por otros clientes o instructores?"
+   ],
+   "episode": "wa-05-e6",
+   "flags": [
+    "referencia_con_precios_historicos"
+   ],
+   "_checks": {
+    "turnos_sin_anclar": [],
+    "n_turnos": 6,
+    "importes_en_criterio": [],
+    "categoria_desconocida": false
+   }
+  },
+  "wa-06-e1": {
+   "incluir": true,
+   "motivo": "Cliente certificada pide información general sobre buceo recreativo; es útil que el bot guíe y pida datos clave antes de cotizar.",
+   "id": "info-buza-certificada-pedir-origen",
+   "category": "info",
+   "cobertura": {
+    "intents": [
+     "info-actividad"
+    ],
+    "actividad": "buceo-certificado",
+    "perfil": "desconocido",
+    "etapa": "pre-venta",
+    "dificultad": "facil"
+   },
+   "turns": [
+    "Hola buenas tardes, me podría brindar información acerca de sus buceos por favor",
+    "Soy buza con certificación open water y busco buceo recreativo"
+   ],
+   "criteria": [
+    {
+     "id": "pide-origen-cartagena-o-islas",
+     "check": "Antes de cotizar o dar un plan específico, pregunta si sale desde Cartagena o si ya está en las islas (los planes y precios cambian según origen).",
+     "base": "policies.json: \"Cliente ya esta en las Islas del Rosario... Estos planes manejan precios diferentes porque no incluyen transporte desde Cartagena ni almuerzo.\""
+    },
+    {
+     "id": "pide-carnet-certificado",
+     "check": "Aclara que para buceo recreativo debe presentar su carné de buzo certificado.",
+     "base": "policies.json: \"Para las salidas de buceo recreativo, debes presentar tu carne de buzo certificado.\""
+    }
+   ],
+   "dudas": [],
+   "episode": "wa-06-e1",
+   "flags": [
+    "referencia_con_precios_historicos"
+   ],
+   "_checks": {
+    "turnos_sin_anclar": [],
+    "n_turnos": 2,
+    "importes_en_criterio": [],
+    "categoria_desconocida": false
+   }
+  },
+  "wa-06-e2": {
+   "incluir": true,
+   "motivo": "Cliente pide reservar buceo certificado para una fecha concreta; el bot debe confirmar operación diaria y pedir datos faltantes clave para cotizar/reservar.",
+   "id": "certificada-pide-fecha-faltan-datos",
+   "category": "reserva",
+   "cobertura": {
+    "intents": [
+     "disponibilidad",
+     "reserva"
+    ],
+    "actividad": "buceo-certificado",
+    "perfil": "desconocido",
+    "etapa": "pre-venta",
+    "dificultad": "media"
+   },
+   "turns": [
+    "Hola, me gustaría reservar",
+    "Soy buza certificada y me gustaría buceo recreativo",
+    "El 21 de mayo por favor"
+   ],
+   "criteria": [
+    {
+     "id": "pide-datos-faltantes",
+     "check": "Pide los datos que faltan para cotizar/reservar: cuántas personas, si salen desde Cartagena o ya están en las islas, y nacionalidad (para la moneda).",
+     "base": "policies.json > island_pickup: \"Estos planes manejan precios diferentes...\"; policies.json > colombian_pricing: \"Colombianos pagan en COP... internacionales en USD\""
+    },
+    {
+     "id": "opera-todos-los-dias",
+     "check": "Responde que operan todos los días (por lo tanto el 21 de mayo también), sin inventar cupos específicos.",
+     "base": "availability.json > operations > daily_service: \"Operamos todos los días del año\""
+    }
+   ],
+   "dudas": [],
+   "episode": "wa-06-e2",
+   "flags": [
+    "referencia_con_precios_historicos"
+   ],
+   "_checks": {
+    "turnos_sin_anclar": [],
+    "n_turnos": 3,
+    "importes_en_criterio": [],
+    "categoria_desconocida": false
+   }
+  },
+  "wa-07-e1": {
+   "incluir": true,
+   "motivo": "Pregunta concreta sobre equipaje y almacenamiento; el bot debe ceñirse a la política de equipaje sin inventar lockers.",
+   "id": "equipaje-mochilas-y-almacenamiento",
+   "category": "logistica",
+   "cobertura": {
+    "intents": [
+     "otro"
+    ],
+    "actividad": "buceo-certificado",
+    "perfil": "desconocido",
+    "etapa": "post-venta",
+    "dificultad": "media"
+   },
+   "turns": [
+    "Hello! We just booked a 5 dive package with you for April 13th under [NOMBRE].\nOn the morning of the 13th we will be checking out of our Airbnb, in order to stay on the Rosario islands that night. So we will have our luggage which consists of two large hiking backpacks (no suitcases). Will there be somewhere we can store these during the dives?\nThank you!",
+    "Amazing! Thank you so much!"
+   ],
+   "criteria": [
+    {
+     "id": "politica-equipaje",
+     "check": "Responde que cada persona puede llevar una mochila/bolso en la lancha y, si fueran maletas, habría que coordinar con un asesor. No debe prometer lockers ni almacenamiento específico que no esté en la referencia; si el cliente insiste en guardar equipaje, puede ofrecer pasarlo con un asesor para confirmarlo.",
+     "base": "policies.json: \"En la lancha se puede llevar una mochila o un bolso por persona. Si el cliente necesita llevar maleta, hay que coordinarlo con un asesor del equipo.\""
+    }
+   ],
+   "dudas": [],
+   "episode": "wa-07-e1",
+   "flags": [],
+   "_checks": {
+    "turnos_sin_anclar": [],
+    "n_turnos": 2,
+    "importes_en_criterio": [],
+    "categoria_desconocida": false
+   }
+  },
+  "wa-07-e2": {
+   "incluir": true,
+   "motivo": "Cliente pregunta por logística de traslado a su hotel en las islas y por regresar en fecha distinta, útil para aplicar políticas de recogida y regreso otro día.",
+   "id": "logistica-isla-fragata-regreso-otro-dia",
+   "category": "logistica",
+   "cobertura": {
+    "intents": [
+     "logistica-recogida"
+    ],
+    "actividad": "ninguna",
+    "perfil": "pareja",
+    "etapa": "post-venta",
+    "dificultad": "media"
+   },
+   "turns": [
+    "Hello! I have a question about the diving excursion. My husband and I are booked for April 13-14 and are staying in the Rosario islands that night. We will be staying at hotel fragata. Will you be able to transport us there?",
+    "Amazing thank you! We’re thinking about extending our stay on the Rosario islands. Would it be possible to get dropped back off there after diving on the 14th?"
+   ],
+   "criteria": [
+    {
+     "id": "pickup-islas-incluido",
+     "check": "Confirma (o aclara) que si el hotel en las islas tiene acceso marítimo, la recogida/traslado en lancha está incluido sin cargo y se coordina el punto exacto.",
+     "base": "policies.json: \"island_pickup\" / \"island_pickup_free\": recogida y regreso desde hoteles con acceso marítimo, incluido sin cargo adicional."
+    },
+    {
+     "id": "regreso-otro-dia-escalar",
+     "check": "Explica que volver a Cartagena en una fecha distinta no está incluido y ofrece pasar con un asesor para coordinarlo.",
+     "base": "policies.json: \"return_different_day\": no incluido y lo coordina un asesor; escalation_rules.json: \"complex_logistics\" para coordinar detalles."
+    }
+   ],
+   "dudas": [],
+   "episode": "wa-07-e2",
+   "flags": [
+    "referencia_con_precios_historicos"
+   ],
+   "_checks": {
+    "turnos_sin_anclar": [],
+    "n_turnos": 2,
+    "importes_en_criterio": [],
+    "categoria_desconocida": false
+   }
+  },
+  "wa-07-e3": {
+   "incluir": true,
+   "motivo": "Cliente con reserva pide mover fechas por enfermedad: el bot debe escalar y no dar consejo médico.",
+   "id": "cambio-fecha-por-enfermedad",
+   "category": "cambios",
+   "cobertura": {
+    "intents": [
+     "cambio-cancelacion"
+    ],
+    "actividad": "ninguna",
+    "perfil": "pareja",
+    "etapa": "post-venta",
+    "dificultad": "media"
+   },
+   "turns": [
+    "Hello! My husband and I arrived in Cartagena last night and are so excited for diving with your team on Monday. I just want to confirm that we will be meeting at the pier at 8am, then staying overnight on the Fragata island. We will need full gear - which I believe is included? Thank you!",
+    "Just completed the waivers. Thank you!",
+    "Hello. Unfortunately my husband is dealing with food poisoning and experienced the worst of it last night. He is still not feeling great. Is there any possibility we could move our dive to Tuesday-Wednesday by chance? We would both still love to go but we are worried about him diving while being sick. Do we have any options here? Thank you!",
+    "I think Tuesday would be best. We already have a room booked on the island for Monday night and Tuesday night",
+    "We do not have a transfer to the island. We will most likely stay in Cartagena tomorrow night, then come diving on Tuesday, and stay overnight on the island Tuesday night",
+    "I apologize for the change and confusion!"
+   ],
+   "criteria": [
+    {
+     "id": "pasa-a-persona-por-enfermedad",
+     "check": "Ante una solicitud de mover la fecha por enfermedad, el bot no gestiona el cambio por su cuenta y transfiere a un asesor humano.",
+     "base": "escalation_rules.json: \"condiciones médicas específicas (...)\" -> \"Para preguntas médicas específicas, es importante que hables con nuestro staff...\""
+    },
+    {
+     "id": "no-consejo-medico",
+     "check": "No afirma que sea seguro bucear estando enfermo ni da consejo médico; evita pronunciarse sobre aptitud para bucear.",
+     "base": "faqs.json: \"El bot puede orientar de forma general, pero no autoriza aptitud médica ni reemplaza el criterio del profesional de buceo.\""
+    }
+   ],
+   "dudas": [],
+   "episode": "wa-07-e3",
+   "flags": [],
+   "_checks": {
+    "turnos_sin_anclar": [],
+    "n_turnos": 6,
+    "importes_en_criterio": [],
+    "categoria_desconocida": false
+   }
+  },
+  "wa-08-e1": {
+   "incluir": true,
+   "motivo": "Cliente extranjero pide: hoteles base en islas, precio de 2 inmersiones quedándose en hotel (desde islas) y si el costo es igual saliendo desde Cartagena o desde islas.",
+   "id": "precio-desde-islas-vs-cartagena",
+   "category": "info",
+   "cobertura": {
+    "intents": [
+     "precio",
+     "info-actividad"
+    ],
+    "actividad": "buceo-certificado",
+    "perfil": "pareja",
+    "etapa": "pre-venta",
+    "dificultad": "media"
+   },
+   "turns": [
+    "Hola!! Te contacto desde Argentina.  Estaremos visitando Cartagena y queria coordinar inmersiones en Isla del Rosario.  Somos una pareja Advanced O.W.",
+    "Gracias por la información.\nMe podrías decir cual es el hotel en islas de Rosario? Para evaluar si tomar la propuesta desde Cartagena o quedarnos en el Hotel",
+    "Me pasas el precio por noche ? O me contacto con el hotel ?",
+    "Ese? Desde ahi sale la lancha de buceo ?",
+    "Me puedes decir el precio de las 2 inmersiones? Desde ese hotel?",
+    "Osea quedandonos en el hotel",
+    "Este costo es el mismo saliendo del continente o de la isla?"
+   ],
+   "criteria": [
+    {
+     "id": "hoteles-base-y-alojamiento",
+     "check": "Indica que su base en las islas es San Pedro de Majagua y Cocoliso, y que el alojamiento no está incluido y se reserva directamente con el hotel.",
+     "base": "faqs.json: \"Tenemos nuestra base de buceo en dos hoteles: Hotel San Pedro de Majagua y Hotel Cocoliso... El alojamiento no está incluido y debes reservarlo directamente con el hotel.\""
+    },
+    {
+     "id": "precio-islas-2-buzos-usd",
+     "check": "Da el precio del catálogo para 2 buzos certificados desde las islas, en USD por ser extranjeros (o pregunta el dato que falte si no puede asumirlo).",
+     "base": "pricing.json: from_islands.servicios_buceo_snorkel.buzo_certificado_doble; policies.json: colombian_pricing \"clientes internacionales pagan en USD\""
+    },
+    {
+     "id": "diferente-precio-cartagena-vs-islas",
+     "check": "Aclara que el precio saliendo desde Cartagena es distinto al de quienes ya están en las islas (planes manejan precios diferentes).",
+     "base": "policies.json: island_pickup \"Estos planes manejan precios diferentes porque no incluyen transporte desde Cartagena ni almuerzo.\""
+    }
+   ],
+   "dudas": [],
+   "episode": "wa-08-e1",
+   "flags": [
+    "adjuntos",
+    "referencia_con_precios_historicos"
+   ],
+   "_checks": {
+    "turnos_sin_anclar": [],
+    "n_turnos": 7,
+    "importes_en_criterio": [],
+    "categoria_desconocida": false
+   }
+  },
+  "wa-08-e2": {
+   "incluir": true,
+   "motivo": "Pregunta logística concreta sobre regresar en otra fecha, cubierta por la política de regreso en distinto día.",
+   "id": "regreso-otro-dia-paquete-5",
+   "category": "logistica",
+   "cobertura": {
+    "intents": [
+     "logistica-recogida"
+    ],
+    "actividad": "buceo-certificado",
+    "perfil": "pareja",
+    "etapa": "pre-venta",
+    "dificultad": "media"
+   },
+   "turns": [
+    "Seguramente tomaremos el paquete de 5 buceos para 2 personas con el traslado saliendo desde cartagena, niche en cocoliso, buceo nuevamente  .\nAqui esta mi duda ,\nSi nos quedamos una segunda noche en cocoliso,\nPodremos regresar con ustedes con el regreso del dia siguiente ?",
+    "Porque el paquete es saliendo un dia y regresando al siguiente a Cartagena. Nosotros quedaríamos 1 noche mas ."
+   ],
+   "criteria": [
+    {
+     "id": "regreso-otro-dia",
+     "check": "Aclara que el regreso a Cartagena en una fecha distinta no está incluido y que debe coordinarlo un asesor del equipo (ofrece pasar con un humano).",
+     "base": "policies.json: \"El regreso a Cartagena en una fecha distinta a la del plan no está incluido... lo coordina un asesor del equipo\""
+    }
+   ],
+   "dudas": [],
+   "episode": "wa-08-e2",
+   "flags": [],
+   "_checks": {
+    "turnos_sin_anclar": [],
+    "n_turnos": 2,
+    "importes_en_criterio": [],
+    "categoria_desconocida": false
+   }
+  },
+  "wa-08-e3": {
+   "incluir": true,
+   "motivo": "El cliente pide contactos de hoteles; el bot debe evitar compartirlos y aclarar que el alojamiento no está incluido y se reserva directamente con el hotel.",
+   "id": "contacto-hoteles-cocoliso-san-pedro",
+   "category": "deflection",
+   "cobertura": {
+    "intents": [
+     "alojamiento-islas"
+    ],
+    "actividad": "ninguna",
+    "perfil": "desconocido",
+    "etapa": "pre-venta",
+    "dificultad": "facil"
+   },
+   "turns": [
+    "Hola!!",
+    "Me pasas el contacto del hotel cocoliso?",
+    "Muchas gracias",
+    "O el San Pedro"
+   ],
+   "criteria": [
+    {
+     "id": "alojamiento-directo",
+     "check": "Ante pedir contactos de Cocoliso o San Pedro, no comparte teléfonos ni contactos; explica que el alojamiento no está incluido y que se reserva directamente con el hotel.",
+     "base": "faqs.json: \"Tenemos nuestra base de buceo en dos hoteles... Importante: el alojamiento no está incluido en nuestros planes de buceo y debes reservarlo directamente con el hotel.\""
+    }
+   ],
+   "dudas": [],
+   "episode": "wa-08-e3",
+   "flags": [],
+   "_checks": {
+    "turnos_sin_anclar": [],
+    "n_turnos": 4,
+    "importes_en_criterio": [],
+    "categoria_desconocida": false
+   }
+  },
+  "wa-08-e4": {
+   "incluir": false,
+   "motivo": "Solo hay un saludo y un \"Yendo\" sin ninguna petición o pregunta útil para evaluar al bot.",
+   "id": "solo-saludo-sin-pregunta",
+   "category": "saludo",
+   "cobertura": {
+    "intents": [
+     "otro"
+    ],
+    "actividad": "ninguna",
+    "perfil": "desconocido",
+    "etapa": "pre-venta",
+    "dificultad": "facil"
+   },
+   "turns": [
+    "Hola",
+    "Yendo"
+   ],
+   "criteria": [],
+   "dudas": [],
+   "episode": "wa-08-e4",
+   "flags": [
+    "llamada",
+    "referencia_con_precios_historicos"
+   ],
+   "_checks": {
+    "turnos_sin_anclar": [],
+    "n_turnos": 2,
+    "importes_en_criterio": [],
+    "categoria_desconocida": false
+   }
+  },
+  "wa-08-e5": {
+   "incluir": true,
+   "motivo": "Cliente pide las fotos de los guías tras la actividad: buen caso para política de fotos/vídeos post-venta.",
+   "id": "pedir-fotos-postventa",
+   "category": "post-venta",
+   "cobertura": {
+    "intents": [
+     "fotos",
+     "post-venta"
+    ],
+    "actividad": "ninguna",
+    "perfil": "desconocido",
+    "etapa": "post-venta",
+    "dificultad": "facil"
+   },
+   "turns": [
+    "Hola!! Buen Dia !!!",
+    "Los guias [NOMBRE] y [NOMBRE] sacaron fotos. Podran pasarnos algunas ?",
+    "Fueron muy buenos buceos,  excelente organización de todo el grupo. Muchas gracias"
+   ],
+   "criteria": [
+    {
+     "id": "fotos-entrega-instructor",
+     "check": "Explica que las fotos no están incluidas; si el instructor las tomó, él las entrega y normalmente a más tardar al día siguiente.",
+     "base": "policies.json > photos_videos_policy: \"Las fotos y videos no se ofrecen proactivamente ni estan incluidas... El instructor puede hacerlas voluntariamente y las entrega al dia siguiente como maximo.\""
+    },
+    {
+     "id": "no-prometer-envio-bot",
+     "check": "No promete que el bot las enviará ni que ya están disponibles; puede ofrecer pedir al equipo si no las han recibido.",
+     "base": "policies.json > photos_videos_policy: \"Las fotos y videos no se ofrecen proactivamente ni estan incluidas... El instructor puede hacerlas voluntariamente...\""
+    }
+   ],
+   "dudas": [],
+   "episode": "wa-08-e5",
+   "flags": [
+    "adjuntos"
+   ],
+   "_checks": {
+    "turnos_sin_anclar": [],
+    "n_turnos": 3,
+    "importes_en_criterio": [],
+    "categoria_desconocida": false
+   }
+  },
+  "wa-09-e1": {
+   "incluir": true,
+   "motivo": "Cliente pide precios del referral + refresher, recomendaciones de hotel y si operan en Domingo de Pascua; además cita un precio histórico ($50) que el bot debe corregir según la referencia.",
+   "id": "referral-mas-refresher-hotel-y-domingo-pascua",
+   "category": "curso",
+   "cobertura": {
+    "intents": [
+     "precio",
+     "disponibilidad",
+     "alojamiento-islas",
+     "pago"
+    ],
+    "actividad": "curso-open-water",
+    "perfil": "pareja",
+    "etapa": "pre-venta",
+    "dificultad": "media"
+   },
+   "turns": [
+    "Hi. We want to complete our PADI open water: we have referrals and e-learning certificates. We would also like a refresher first. How does the 2 day open water referral course cost plus a mini course the day before. 2 persons. Thanks",
+    "Ok. Thanks. We will work out the best days. Do you recommend any hotels on the island convenient for the diving?",
+    "Great. We will book diving with you on the website and will book our hotel on the island . Hope you are operating on Easter Sunday? We want to dive on April 5 and 6. How do we book/pay for the $50 refresher course?"
+   ],
+   "criteria": [
+    {
+     "id": "precio-refresh-no-confirmar-historico",
+     "check": "No confirma $50 para el refresher: da el precio del catálogo para el refresher (Mini curso/Refresh) y, si hace falta para cotizar bien, pregunta si lo harán saliendo desde Cartagena o ya en las islas para aplicar el plan correcto.",
+     "base": "pricing.json: from_cartagena.servicios_buceo_snorkel.minicurso_refresh ... y from_islands.servicios_buceo_snorkel.minicurso_refresh ...; Regla 1b: el bot pregunta el dato que falte."
+    },
+    {
+     "id": "opera-domingo-pascua",
+     "check": "Confirma que operan el Domingo de Pascua (operan todos los días salvo 25/dic y 1/ene).",
+     "base": "policies.json > closed_days.es: 'Solo cerramos el 25 de diciembre y el 1 de enero.'"
+    },
+    {
+     "id": "hoteles-base-sin-incluir",
+     "check": "Responde la recomendación de hoteles indicando que su base está en San Pedro de Majagua y Cocoliso, y que el alojamiento no está incluido y se reserva directamente con el hotel.",
+     "base": "faqs.json: 'Tenemos nuestra base de buceo en dos hoteles: Hotel San Pedro de Majagua y Hotel Cocoliso... Importante: el alojamiento no esta incluido y debes reservarlo directamente con el hotel.'"
+    }
+   ],
+   "dudas": [],
+   "episode": "wa-09-e1",
+   "flags": [
+    "cliente_cita_precio",
+    "referencia_con_precios_historicos"
+   ],
+   "_checks": {
+    "turnos_sin_anclar": [],
+    "n_turnos": 3,
+    "importes_en_criterio": [
+     "precio-refresh-no-confirmar-historico"
+    ],
+    "categoria_desconocida": false
+   }
+  },
+  "wa-09-e2": {
+   "incluir": true,
+   "motivo": "El cliente pregunta por llevar maletas en la lancha; la referencia tiene una política clara de equipaje que el bot debe aplicar y, en caso de maleta, coordinar con un asesor.",
+   "id": "equipaje-maleta-y-bolso-en-lancha",
+   "category": "logistica",
+   "cobertura": {
+    "intents": [
+     "otro"
+    ],
+    "actividad": "ninguna",
+    "perfil": "desconocido",
+    "etapa": "post-venta",
+    "dificultad": "facil"
+   },
+   "turns": [
+    "Hola. Mañana tendremos el equipaje  - una maleta y un bolso cada uno. ¿Esta bien en el barco? ¿Hay espacio?"
+   ],
+   "criteria": [
+    {
+     "id": "politica-equipaje",
+     "check": "Explica que en la lancha se permite una mochila o bolso por persona.",
+     "base": "policies.json: \"En la lancha se puede llevar una mochila o un bolso por persona.\""
+    },
+    {
+     "id": "coordinar-maleta",
+     "check": "Indica que llevar maleta requiere coordinarlo con un asesor (ofrece pasar con el equipo).",
+     "base": "policies.json: \"Si el cliente necesita llevar maleta, hay que coordinarlo con un asesor del equipo.\""
+    }
+   ],
+   "dudas": [],
+   "episode": "wa-09-e2",
+   "flags": [],
+   "_checks": {
+    "turnos_sin_anclar": [],
+    "n_turnos": 1,
+    "importes_en_criterio": [],
+    "categoria_desconocida": false
+   }
+  },
+  "wa-10-e1": {
+   "incluir": true,
+   "motivo": "Cliente pide info y cotización para buzo certificado (1 persona), pregunta profundidad, precio y hotel base en islas.",
+   "id": "certificado-profundidad-precio-y-base-hotel",
+   "category": "info",
+   "cobertura": {
+    "intents": [
+     "info-actividad",
+     "precio",
+     "otro"
+    ],
+    "actividad": "buceo-certificado",
+    "perfil": "solo",
+    "etapa": "pre-venta",
+    "dificultad": "media"
+   },
+   "turns": [
+    "Hola!!! Como estas?",
+    "Espero te encuentres super bien! Realmente estoy cotizando una buceada para mi tio! El es buzo certificado y ya con bastante experiencia y queria saber que planes ofrecen!! A que partes de las islas van, cuanto tiempo dura el plan, cantidad de inmersiones, cuantos metros bajan, y toda la cuestion!!",
+    "Me parece super!!!",
+    "Y alrededor de cuantas personas van?",
+    "Y que precio tiene??",
+    "De casualidad, ¿ también me podrías regalar cuál es la base, o sea, qué hotel base tienen ustedes en las islas para para llegar allá después de que coge la lancha en la bodeguita?"
+   ],
+   "criteria": [
+    {
+     "id": "profundidad-segun-nivel",
+     "check": "No fija una profundidad única; explica que depende del nivel de certificación (Open Water hasta 18 m; Advanced hasta 30 m) y, si no conoce el nivel del tío, lo pregunta.",
+     "base": "faqs.json: \"La profundidad maxima depende de tu nivel... Open Water hasta 18 metros; ... Advanced ... hasta 30 metros\""
+    },
+    {
+     "id": "precio-cartagena-moneda",
+     "check": "Da el precio del catálogo para 1 buzo certificado (2 inmersiones, 1 día) saliendo desde Cartagena, en la moneda que corresponda a la nacionalidad; si no han dicho su nacionalidad, lo pregunta antes de cotizar.",
+     "base": "pricing.json/from_cartagena/servicios_buceo_snorkel/buzo_certificado_doble + policies.json/colombian_pricing: \"Colombianos pagan en COP... Internacionales en USD\""
+    },
+    {
+     "id": "base-en-islas",
+     "check": "Indica que la base de buceo en las islas es en Hotel San Pedro de Majagua y Hotel Cocoliso (no solo uno).",
+     "base": "faqs.json: \"Tenemos nuestra base de buceo en dos hoteles: Hotel San Pedro de Majagua y Hotel Cocoliso.\""
+    }
+   ],
+   "dudas": [
+    "No hay política en la referencia sobre tamaño máximo de grupo o ratio alumnos/instructor. ¿Existe un número oficial para comunicar?"
+   ],
+   "episode": "wa-10-e1",
+   "flags": [
+    "audio_transcrito",
+    "referencia_con_precios_historicos"
+   ],
+   "_checks": {
+    "turnos_sin_anclar": [],
+    "n_turnos": 6,
+    "importes_en_criterio": [],
+    "categoria_desconocida": false
+   }
+  },
+  "wa-10-e2": {
+   "incluir": true,
+   "motivo": "Cliente pide disponibilidad para un buzo certificado, precio en COP y cómo reservar; buen caso para guiar, cotizar y dar link.",
+   "id": "certificado-viernes-precio-cop-y-reserva",
+   "category": "reserva",
+   "cobertura": {
+    "intents": [
+     "disponibilidad",
+     "precio",
+     "reserva"
+    ],
+    "actividad": "buceo-certificado",
+    "perfil": "desconocido",
+    "etapa": "pre-venta",
+    "dificultad": "media"
+   },
+   "turns": [
+    "Como estas?☺️ Precisamente les habia escrito preguntandoles por la experiencia para un tio que es buzo certificado! Y queria saber si tienen disponibilidad para este viernes!",
+    "Sip! Queda perfecto!",
+    "En pesos cuanto esta el paquete?",
+    "Sip! Queda perfecto!",
+    "Como seria para apartar un cupo para el viernes?!"
+   ],
+   "criteria": [
+    {
+     "id": "disponibilidad-viernes",
+     "check": "Confirma que hay disponibilidad para el viernes (operan todos los días) o, como alternativa válida, ofrece pasar con un asesor para confirmar; no inventa cierres.",
+     "base": "availability.json: \"Operamos todos los días del año\""
+    },
+    {
+     "id": "precio-cop-cartagena",
+     "check": "Da el precio del catálogo en COP para buzo certificado 2 inmersiones desde Cartagena, o pregunta si sale desde Cartagena o ya está en las islas antes de cotizar; si falta el número de personas, lo pide.",
+     "base": "pricing.json: from_cartagena.servicios_buceo_snorkel.buzo_certificado_doble + policies.json: colombian_pricing"
+    },
+    {
+     "id": "link-reserva",
+     "check": "A 'Como seria para apartar un cupo para el viernes?!' responde con el enlace de reserva online para buzo certificado 2 inmersiones.",
+     "base": "faqs.json: \"Si ya eres buzo certificado... puedes ver todos los detalles y reservar aqui: https://divingplanet.org/tours-buceo-snorkel-cartagena/2-buceos-1-dia/\"",
+     "auto": "last_reply_has_booking_link"
+    }
+   ],
+   "dudas": [],
+   "episode": "wa-10-e2",
+   "flags": [
+    "referencia_con_precios_historicos"
+   ],
+   "_checks": {
+    "turnos_sin_anclar": [],
+    "n_turnos": 5,
+    "importes_en_criterio": [],
+    "categoria_desconocida": false
+   }
+  },
+  "wa-11-e1": {
+   "incluir": true,
+   "motivo": "Cliente pide paquete de 2 dias, precios, logistica/hoteles y plantea dudas de geografia (Isla Grande vs Barú).",
+   "id": "paquete-5-buceos-precio-overnight-isla-grande-baru",
+   "category": "info",
+   "cobertura": {
+    "intents": [
+     "precio",
+     "info-actividad",
+     "alojamiento-islas",
+     "punto-encuentro"
+    ],
+    "actividad": "varias",
+    "perfil": "solo",
+    "etapa": "pre-venta",
+    "dificultad": "media"
+   },
+   "turns": [
+    "Hello My name is [NOMBRE], i'd like to inquiry about the modalities for a 2 day dive package at the rosario islands. i'll be heading in on april 13th and 14th leaving on the 15th in the morning. What do i need to bring. i<ll be in Cartagena, is it hard to get to your location, any advice?",
+    "certified diver",
+    "beginner",
+    "Looking for recommendations for hotels for a solo backpacker is Isla Grande part of rosario island?",
+    "or Playa Tranquila on Isla Barú",
+    "Price?  Can you help me with this information?"
+   ],
+   "criteria": [
+    {
+     "id": "overnight-obligatorio",
+     "check": "Aclara que el paquete de 5 buceos (2 días) requiere alojarse en las islas y que no hay opción de ir y volver ambos días desde Cartagena.",
+     "base": "policies.json: \"courses_overnight_requirement\" → \"Los cursos de 2 dias requieren alojamiento en las islas\" y faqs.json/paquetes multi-día desde Cartagena indica pernocta; paquete 5 buceos incluye noche en islas."
+    },
+    {
+     "id": "precio-y-moneda-correctos",
+     "check": "Da el precio del catálogo del paquete de 5 buceos desde Cartagena (y, si aplica, desde islas) en la moneda correcta según nacionalidad; o pregunta la nacionalidad/moneda si falta. También confirma si sale desde Cartagena o ya está en las islas antes de cotizar.",
+     "base": "pricing.json: from_cartagena.paquetes.paquete_5_buceos y from_islands.paquetes.paquete_5_buceos; policies.json: \"colombian_pricing\" (COP para colombianos/residentes; USD para internacionales)."
+    },
+    {
+     "id": "geografia-rosario-vs-baru",
+     "check": "Confirma que Isla Grande sí es parte de las Islas del Rosario y aclara que Barú no es lo mismo; que operan en las Islas del Rosario (no en Barú).",
+     "base": "faqs.json: \"¿Baru es lo mismo que las Islas del Rosario?\" → \"No... Nosotros operamos exclusivamente en las Islas del Rosario, no en Baru.\""
+    }
+   ],
+   "dudas": [],
+   "episode": "wa-11-e1",
+   "flags": [
+    "referencia_con_precios_historicos"
+   ],
+   "_checks": {
+    "turnos_sin_anclar": [],
+    "n_turnos": 6,
+    "importes_en_criterio": [],
+    "categoria_desconocida": false
+   }
+  },
+  "wa-11-e2": {
+   "incluir": true,
+   "motivo": "Pregunta si hay tours diarios y si Isla Grande sirve como parte de las Islas del Rosario; el bot puede responder con referencia oficial y aclarar recogida en hoteles de las islas.",
+   "id": "tours-diarios-isla-grande",
+   "category": "logistica",
+   "cobertura": {
+    "intents": [
+     "disponibilidad",
+     "logistica-recogida"
+    ],
+    "actividad": "ninguna",
+    "perfil": "desconocido",
+    "etapa": "pre-venta",
+    "dificultad": "facil"
+   },
+   "turns": [
+    "Tours are daily?",
+    "Does isla grande count acceptable is it part of the roasirio island^"
+   ],
+   "criteria": [
+    {
+     "id": "operamos-diario",
+     "check": "Confirma que operan todos los días (solo cierran el 25/12 y 1/1 si lo menciona).",
+     "base": "availability.json: \"Operamos todos los días del año\"; policies.json: \"Solo cerramos el 25 de diciembre y el 1 de enero.\""
+    },
+    {
+     "id": "pickup-islas",
+     "check": "Indica que si el cliente se hospeda en las Islas del Rosario se coordina la recogida en su hotel (si tiene acceso marítimo) y puede pedir el nombre del hotel para confirmarlo.",
+     "base": "policies.json: \"Si ya estas en las Islas del Rosario, coordinamos recogida y regreso desde hoteles con acceso maritimo.\""
+    }
+   ],
+   "dudas": [],
+   "episode": "wa-11-e2",
+   "flags": [],
+   "_checks": {
+    "turnos_sin_anclar": [],
+    "n_turnos": 2,
+    "importes_en_criterio": [],
+    "categoria_desconocida": false
+   }
+  },
+  "wa-11-e3": {
+   "incluir": true,
+   "motivo": "El cliente pregunta si debe completar algo antes y menciona que necesita refresher; la referencia define el requisito de refresh y los formularios aplicables.",
+   "id": "refresher-que-completar-antes",
+   "category": "refresher",
+   "cobertura": {
+    "intents": [
+     "info-actividad",
+     "refresher",
+     "formularios"
+    ],
+    "actividad": "refresher",
+    "perfil": "solo",
+    "etapa": "pre-venta",
+    "dificultad": "media"
+   },
+   "turns": [
+    "Hello , im getting in tmrw",
+    "Anything needs to be completed beforehand? I’m gonna need a little refresher."
+   ],
+   "criteria": [
+    {
+     "id": "valida-tiempo-sin-bucear",
+     "check": "Explica la política de refresh y pregunta hace cuánto no bucea para confirmar si debe hacer refresher antes de reservar.",
+     "base": "policies.json: \"Si has pasado mas de 2 anos de inactividad de buceo, normalmente debes hacer un refresh...\""
+    },
+    {
+     "id": "formulario-medico-refresher",
+     "check": "Indica que para el refresher/minicurso se requiere formulario médico (se envía tras reservar).",
+     "base": "policies.json: \"Para cursos o minicursos se requiere formulario medico.\""
+    },
+    {
+     "id": "cert-card-requerida",
+     "check": "Aclara que, si bucea como certificado, debe presentar su carné de certificación.",
+     "base": "policies.json: \"Para las salidas de buceo recreativo, debes presentar tu carne de buzo certificado.\""
+    }
+   ],
+   "dudas": [],
+   "episode": "wa-11-e3",
+   "flags": [],
+   "_checks": {
+    "turnos_sin_anclar": [],
+    "n_turnos": 2,
+    "importes_en_criterio": [],
+    "categoria_desconocida": false
+   }
+  },
+  "wa-12-e1": {
+   "incluir": true,
+   "motivo": "Cliente pide costos de buceo/snorkel y un link de pago especial para varios clientes; el bot debe pedir datos clave para cotizar y, ante logística especial/agencia, escalar.",
+   "id": "cotiza-buceo-snorkel-y-pide-link-especial",
+   "category": "pago",
+   "cobertura": {
+    "intents": [
+     "precio",
+     "pago",
+     "disponibilidad"
+    ],
+    "actividad": "varias",
+    "perfil": "grupo-mixto",
+    "etapa": "pre-venta",
+    "dificultad": "media"
+   },
+   "turns": [
+    ". Necesito costo de bucear y costo de snorkel",
+    "El buceo las personas tienen licencia pero no mucha experiencia",
+    "Lo necesito para unos clientes",
+    "Nos gustaría ayudarle con la reserva",
+    "Saber el costo",
+    "La cantidad máxima o mínima de personas",
+    "Si hacen un link para que ellos paguen",
+    "Pero un link especial",
+    "O quien vaya pagando debe ir enviando el pago",
+    "Deben hacerlos ellos mismo?\nNo podemos hacer como algo más fácil para ellos?\nComo que un link de pago solamente para el buceo,\nY un link de pago solamente para el snorkel.\nY que ya la reserva esté hecha"
+   ],
+   "criteria": [
+    {
+     "id": "pide-datos-para-cotizar",
+     "check": "Antes de dar precios, pide si salen desde Cartagena o ya están en las islas y la nacionalidad (moneda). Si el cliente da esos datos, entrega el precio del catálogo correspondiente para buceo certificado y snorkeling.",
+     "base": "policies.json: 'Colombianos pagan en COP... internacionales en USD'; pricing.json: 'from_cartagena' vs 'from_islands' indican planes y precios distintos según salida."
+    },
+    {
+     "id": "link-especial-escalar",
+     "check": "Ante la solicitud de un 'link especial' único para varios clientes o para omitir la selección de fecha, no lo inventa: ofrece pasar con un asesor humano para coordinar esa logística/agencia.",
+     "base": "escalation_rules.json: complex_logistics ('coordinación con agencias de viajes') y special_requests ('solicitudes no estándar') -> transferir con alguien que coordine detalles."
+    },
+    {
+     "id": "proceso-reserva-estandar",
+     "check": "Explica el proceso estándar: cada participante puede reservar y pagar por la web (ROVERD) seleccionando fecha y obteniendo el descuento online; menciona que el sistema cierra a las 4:30 PM del día anterior.",
+     "base": "policies.json: 'Sistema de reservas ROVERD... cierra a las 4:30 PM del día anterior'; discounts.json: '10% de descuento reservando online a través de la web (ROVERD)'."
+    }
+   ],
+   "dudas": [],
+   "episode": "wa-12-e1",
+   "flags": [
+    "audio_transcrito",
+    "llamada",
+    "referencia_con_precios_historicos",
+    "largo"
+   ],
+   "_checks": {
+    "turnos_sin_anclar": [],
+    "n_turnos": 10,
+    "importes_en_criterio": [],
+    "categoria_desconocida": false
+   }
+  },
+  "wa-12-e2": {
+   "incluir": true,
+   "motivo": "Grupo mixto pide precio total y link de pago sin indicar desde dónde salen ni la moneda.",
+   "id": "grupo-mixto-cotiza-y-pide-link",
+   "category": "grupo",
+   "cobertura": {
+    "intents": [
+     "precio",
+     "reserva",
+     "pago"
+    ],
+    "actividad": "varias",
+    "perfil": "grupo",
+    "etapa": "pre-venta",
+    "dificultad": "dificil"
+   },
+   "turns": [
+    "Somos 4 buceando, 1 de clase, y [NOMBRE]",
+    "[NOMBRE] es que no va hacer nada de eso",
+    "que costo tendría",
+    "para el 15 de abril",
+    "[NOMBRE], entonces serían 6 pax, 5 buceo, 1 de clase y el acompañante.",
+    "Dejame saber cuanto es todo, y el link que ella va a hacer el pago.",
+    "Me compartes el link por favor"
+   ],
+   "criteria": [
+    {
+     "id": "origen-cartagena-o-islas",
+     "check": "Antes de cotizar el total, confirma si salen desde Cartagena o si ya están en las islas (los precios cambian según el origen).",
+     "base": "policies.json: \"Estos planes manejan precios diferentes porque no incluyen transporte desde Cartagena ni almuerzo.\""
+    },
+    {
+     "id": "moneda-segun-nacionalidad",
+     "check": "Pregunta si el grupo es colombiano/residente o internacional para definir la moneda; si hay mezcla en el grupo, indica que toda la reserva se paga en USD.",
+     "base": "policies.json: \"Los clientes colombianos... pagan en COP... Internacionales pagan en USD\" y \"Si en el grupo hay colombianos... y también extranjeros, toda la reserva del grupo se paga en USD\""
+    },
+    {
+     "id": "link-reserva",
+     "check": "A la solicitud del link de pago, incluye el enlace de reserva (ROVERD); si faltan datos clave para generarlo, pídelos primero.",
+     "base": "policies.json: \"Sistema de reservas ROVERD\" y discounts.json: \"10% de descuento reservando online... a través de la web (ROVERD)\""
+    }
+   ],
+   "dudas": [],
+   "episode": "wa-12-e2",
+   "flags": [
+    "referencia_con_precios_historicos"
+   ],
+   "_checks": {
+    "turnos_sin_anclar": [],
+    "n_turnos": 7,
+    "importes_en_criterio": [],
+    "categoria_desconocida": false
+   }
+  },
+  "wa-12-e3": {
+   "incluir": true,
+   "motivo": "Pide explícitamente el enlace de pago para extranjeros que no tienen cédula; el bot debe enviar el link y aclarar la moneda.",
+   "id": "link-pago-extranjeros-sin-cedula",
+   "category": "pago",
+   "cobertura": {
+    "intents": [
+     "pago"
+    ],
+    "actividad": "ninguna",
+    "perfil": "desconocido",
+    "etapa": "pre-venta",
+    "dificultad": "facil"
+   },
+   "turns": [
+    "el link para hacer el pago total me lo puedes enviar",
+    "que no tenga cedula",
+    "porque son extranjeros"
+   ],
+   "criteria": [
+    {
+     "id": "link-pago",
+     "check": "Incluye el enlace de reserva/pago para completar el pago en línea.",
+     "base": "faqs.json: \"Para clientes extranjeros: el 100% se paga a través del enlace de pago en línea con tarjeta\""
+    },
+    {
+     "id": "moneda-extranjeros",
+     "check": "Aclara que, al ser extranjeros y no tener cédula colombiana, el pago se realiza en USD (misma tarifa, cambia la moneda).",
+     "base": "policies.json: \"Los clientes internacionales pagan en dólares (USD). Los precios son los mismos; solo cambia la moneda.\""
+    }
+   ],
+   "dudas": [],
+   "auto": "last_reply_has_booking_link",
+   "episode": "wa-12-e3",
+   "flags": [],
+   "_checks": {
+    "turnos_sin_anclar": [],
+    "n_turnos": 3,
+    "importes_en_criterio": [],
+    "categoria_desconocida": false
+   }
+  },
+  "wa-12-e4": {
+   "incluir": true,
+   "motivo": "El cliente pide confirmar el punto de encuentro y la hora, con premisas erróneas (Todo Mar/Bocagrande y 7:30 a. m.), útil para probar que el bot corrija a la referencia.",
+   "id": "punto-encuentro-corrige-todo-mar-y-hora",
+   "category": "logistica",
+   "cobertura": {
+    "intents": [
+     "punto-encuentro"
+    ],
+    "actividad": "varias",
+    "perfil": "grupo",
+    "etapa": "pre-venta",
+    "dificultad": "media"
+   },
+   "turns": [
+    "[imagen] [NOMBRE] no me dejo llenar que es pero recuérdales que somos 4 buzos certificados, 1 mini clase, y 1 acompañante",
+    "Se me perdió el número de [NOMBRE]",
+    "Me lo podrías compartir por favor",
+    "Mañana",
+    "El todo mar donde se van a encontrar donde es?",
+    "El de boca grande?",
+    "Me dijiste que a las 7:30 am",
+    "Perdí la información de mi chat por eso confirmo"
+   ],
+   "criteria": [
+    {
+     "id": "punto-encuentro",
+     "check": "Indica el punto de encuentro correcto: Muelle de la Bodeguita (no confirma 'Todo Mar' ni Bocagrande).",
+     "base": "policies.json: \"meeting_point\": \"Muelle de la Bodeguita...\""
+    },
+    {
+     "id": "hora-salida",
+     "check": "Confirma la hora de salida correcta: 8:00 a. m. (no 7:30 a. m.).",
+     "base": "availability.json: \"departure_time\": \"Salida diaria a las 8:00 AM desde el Muelle de la Bodeguita\""
+    }
+   ],
+   "dudas": [],
+   "episode": "wa-12-e4",
+   "flags": [
+    "adjuntos"
+   ],
+   "_checks": {
+    "turnos_sin_anclar": [],
+    "n_turnos": 8,
+    "importes_en_criterio": [],
+    "categoria_desconocida": false
+   }
+  },
+  "wa-13-e1": {
+   "incluir": true,
+   "motivo": "Cliente certificado define personas, salida desde Cartagena y nacionalidad; pide descuentos y si incluye almuerzo: buen caso para cotizar correcto en COP y aclarar descuentos actuales.",
+   "id": "pareja-certificados-cop-descuento-almuerzo",
+   "category": "reserva",
+   "cobertura": {
+    "intents": [
+     "precio",
+     "descuento",
+     "info-actividad"
+    ],
+    "actividad": "buceo-certificado",
+    "perfil": "pareja",
+    "etapa": "pre-venta",
+    "dificultad": "media"
+   },
+   "turns": [
+    "somos buzos certificados",
+    "nos gusta, somos 2 personas y queremos el de saliendo de cartagena, además somos colombianos",
+    "dice que hay un bono aadicional",
+    "incluye el almuerzo?"
+   ],
+   "criteria": [
+    {
+     "id": "precio-moneda-cartagena-cop",
+     "check": "Da el precio del catálogo para 2 buzos certificados saliendo desde Cartagena, en COP por ser colombianos (sin inventar otros cargos).",
+     "base": "pricing.json > from_cartagena.servicios_buceo_snorkel.buzo_certificado_doble + policies.json > colombian_pricing.es: 'colombianos... pagan en pesos (COP)'"
+    },
+    {
+     "id": "descuentos-vigentes",
+     "check": "Aclara que aplica el descuento online estándar al reservar por la web y que no hay descuento especial por ser colombiano; menciona solo los descuentos vigentes aplicables (equipo propio completo, grupo 5+ si correspondiera).",
+     "base": "discounts.json > online_direct_booking.description_es; policies.json > colombian_pricing.es; discounts.json > group_discount (5+) y own_equipment_discount (equipo COMPLETO)"
+    },
+    {
+     "id": "incluye-almuerzo",
+     "check": "Confirma que el plan desde Cartagena incluye almuerzo.",
+     "base": "pricing.json > from_cartagena.context_note_es: '... y almuerzo el primer dia'; faqs.json > 'Que incluye el tour?'"
+    }
+   ],
+   "dudas": [],
+   "episode": "wa-13-e1",
+   "flags": [
+    "adjuntos",
+    "referencia_con_precios_historicos",
+    "largo"
+   ],
+   "_checks": {
+    "turnos_sin_anclar": [],
+    "n_turnos": 4,
+    "importes_en_criterio": [],
+    "categoria_desconocida": false
+   }
+  },
+  "wa-13-e2": {
+   "incluir": true,
+   "motivo": "Pide ayuda con la aprobación de inmersiones en la app de PADI (registro histórico) que el bot no puede gestionar y debe escalar.",
+   "id": "aprobacion-logs-padi",
+   "category": "escalado",
+   "cobertura": {
+    "intents": [
+     "post-venta"
+    ],
+    "actividad": "ninguna",
+    "perfil": "desconocido",
+    "etapa": "post-venta",
+    "dificultad": "facil"
+   },
+   "turns": [
+    "Hola buenas tardes",
+    "el sábado pasado nosotros hicimos 2 buceos con uds y los registramos en PADI, no se si nos puedas ayudar con [NOMBRE] que fue nuestro Dive master para que nos los apruebe en la app",
+    "gracias"
+   ],
+   "criteria": [
+    {
+     "id": "humano-historico",
+     "check": "Pasa el caso a un asesor humano para revisar y coordinar la aprobación de los buceos en la app de PADI (registro histórico).",
+     "base": "escalation_rules.json: \"historical_requests\" -> \"información sobre buceos pasados específicos...\" y mensaje de traslado al staff"
+    }
+   ],
+   "dudas": [],
+   "episode": "wa-13-e2",
+   "flags": [
+    "adjuntos"
+   ],
+   "_checks": {
+    "turnos_sin_anclar": [],
+    "n_turnos": 3,
+    "importes_en_criterio": [],
+    "categoria_desconocida": false
+   }
+  },
+  "wa-14-e1": {
+   "incluir": true,
+   "motivo": "Cliente pregunta por curso Open Water: hoteles recomendados, si basta 1 noche, duracion, politica de fotos y horario de fin del dia 1.",
+   "id": "open-water-hoteles-noche-fotos-horario",
+   "category": "curso",
+   "cobertura": {
+    "intents": [
+     "info-actividad",
+     "alojamiento-islas",
+     "fotos"
+    ],
+    "actividad": "curso-open-water",
+    "perfil": "solo",
+    "etapa": "pre-venta",
+    "dificultad": "media"
+   },
+   "turns": [
+    "Hi, I'm interested in taking PADI Open Water Diver certification course.",
+    "do you have any hotel in Rosario you recommend?",
+    "so, if I understood correctly, booking just for one night will be enough, right?",
+    "and the total is 2 days course",
+    "2 full days course, right?",
+    "also- I saw pictures and videos are not included...?",
+    "but will have a photographer taking pictures during the divings?",
+    "Sorry again, do you have a more detailed schedule ?\nFor instance, what time does the course finish on the first day?\nBecause I wanted to know if I will have time to enjoy the hotel as well.",
+    "thanks"
+   ],
+   "criteria": [
+    {
+     "id": "pernocta-obligatoria",
+     "check": "Ante 'booking just for one night will be enough, right?', confirma que los cursos de 2 días requieren alojarse en las islas y que, como mínimo, una noche es necesaria.",
+     "base": "policies.json > courses_overnight_requirement: \"Los cursos de 2 dias (Open Water, Advanced) requieren alojamiento en las islas...\""
+    },
+    {
+     "id": "fotos-no-incluidas-sin-fotografo",
+     "check": "Explica que fotos y videos no están incluidos ni se ofrecen proactivamente y que no hay fotógrafo dedicado; el instructor podría tomarlas voluntariamente y se suelen entregar al día siguiente con propina, y aclara que en minicursos no se hacen.",
+     "base": "policies.json > photos_videos_policy: \"Las fotos y videos no se ofrecen proactivamente ni estan incluidas... El instructor puede hacerlas voluntariamente... propina... No se realizan fotos ni videos en minicursos ni primeras experiencias.\""
+    },
+    {
+     "id": "hora-fin-dia1",
+     "check": "Responde que el primer día suele terminar alrededor de las 4:30 p. m., para que el cliente sepa si tendrá tiempo de disfrutar el hotel.",
+     "base": "faqs.json > '¿Como es el Curso Basico PADI (Open Water) si ya estoy en las Islas del Rosario?': \"Regreso al hotel alrededor de las 4:30 p.m.\""
+    }
+   ],
+   "dudas": [],
+   "episode": "wa-14-e1",
+   "flags": [],
+   "_checks": {
+    "turnos_sin_anclar": [],
+    "n_turnos": 9,
+    "importes_en_criterio": [],
+    "categoria_desconocida": false
+   }
+  },
+  "wa-14-e2": {
+   "incluir": true,
+   "motivo": "Cliente pide confirmar si el curso incluye transporte, consulta regreso en otro día (logística especial) y pregunta el punto de encuentro.",
+   "id": "curso-open-water-transporte-y-regreso-otro-dia",
+   "category": "logistica",
+   "cobertura": {
+    "intents": [
+     "info-actividad",
+     "logistica-recogida",
+     "punto-encuentro"
+    ],
+    "actividad": "curso-open-water",
+    "perfil": "desconocido",
+    "etapa": "pre-venta",
+    "dificultad": "media"
+   },
+   "turns": [
+    "Hi,\nMy understanding is that the transportation to rosario is included, in case I decided to do PADI Open Water Diver certification course., correct?",
+    "What if I decide to stay one day longer in rosario, can you provide de transfer back to cartagena?",
+    "Thanks.\nAnother question is, where is the meeting point in cartagena?"
+   ],
+   "criteria": [
+    {
+     "id": "incluye-transporte-curso-desde-cartagena",
+     "check": "Confirma que el curso Open Water saliendo desde Cartagena incluye el transporte en lancha Cartagena–Islas–Cartagena.",
+     "base": "faqs.json: 'Curso Basico PADI (Open Water) desde Cartagena' -> Incluye 'Transporte en lancha'"
+    },
+    {
+     "id": "regreso-otro-dia-escalar",
+     "check": "Aclara que el regreso en fecha distinta no está incluido y ofrece pasar con un asesor para coordinarlo.",
+     "base": "policies.json: return_different_day -> 'no está incluido... lo coordina un asesor del equipo'"
+    },
+    {
+     "id": "punto-encuentro-hora",
+     "check": "Indica el punto de encuentro Muelle de la Bodeguita a las 8:00 a. m.",
+     "base": "policies.json: meeting_point -> 'Muelle de la Bodeguita... a las 8:00 AM.'"
+    }
+   ],
+   "dudas": [],
+   "episode": "wa-14-e2",
+   "flags": [],
+   "_checks": {
+    "turnos_sin_anclar": [],
+    "n_turnos": 3,
+    "importes_en_criterio": [],
+    "categoria_desconocida": false
+   }
+  },
+  "wa-14-e3": {
+   "incluir": true,
+   "motivo": "Cliente pregunta por el código del 10% en checkout; el bot debe aclarar que el descuento online se aplica automáticamente (sin código) y, si persiste el fallo, escalar como problema del sistema de reservas.",
+   "id": "descuento-online-sin-codigo",
+   "category": "descuentos",
+   "cobertura": {
+    "intents": [
+     "descuento"
+    ],
+    "actividad": "curso-open-water",
+    "perfil": "desconocido",
+    "etapa": "pre-venta",
+    "dificultad": "facil"
+   },
+   "turns": [
+    "Hi, I’m trying to checkout to take PADI Open Water Diver certification course but the discount of 10% is not showing up. what is the code?",
+    "ah I see.",
+    "Thanks"
+   ],
+   "criteria": [
+    {
+     "id": "descuento-automatico-sin-codigo",
+     "check": "Explica que el 10% online se aplica automáticamente al reservar en la web/ROVERD y que no se necesita código.",
+     "base": "discounts.json: \"10% de descuento... se aplica autom\u0019ticamente al reservar por la web\" / \"not through third parties like PADI\""
+    },
+    {
+     "id": "escala-si-no-aparece",
+     "check": "Si el cliente indica que el descuento no aparece o hay fallo en checkout, ofrece pasar con un asesor por problema del sistema de reservas.",
+     "base": "escalation_rules.json > booking_system_problems: \"Veo que tienes problemas con el sistema de reservas...\""
+    }
+   ],
+   "dudas": [],
+   "episode": "wa-14-e3",
+   "flags": [
+    "cliente_cita_precio"
+   ],
+   "_checks": {
+    "turnos_sin_anclar": [],
+    "n_turnos": 3,
+    "importes_en_criterio": [
+     "descuento-automatico-sin-codigo"
+    ],
+    "categoria_desconocida": false
+   }
+  },
+  "wa-15-e1": {
+   "incluir": true,
+   "motivo": "Cliente en islas pide curso + paquetes, pregunta cambiar buceo nocturno, seguro y confirma un total en USD: casos clave para el bot.",
+   "id": "curso-mas-paquetes-desde-islas-sin-nocturno-y-total",
+   "category": "grupo",
+   "cobertura": {
+    "intents": [
+     "precio",
+     "disponibilidad",
+     "info-actividad",
+     "otro"
+    ],
+    "actividad": "varias",
+    "perfil": "pareja",
+    "etapa": "pre-venta",
+    "dificultad": "dificil"
+   },
+   "turns": [
+    "Hola! My partner and I are staying at Isla Mulata on Isla Grande and would\nLike to dive. My husband needs to have Open Water Certification but I have advanced open water certification. We will be here until April 14. I would like to dive the training dives as well and 2 days of diving as well so four days of diving total with open water certification for one person. Is this possible?",
+    "[NOMBRE]: needs basic open water certification. And would like 2 days of diving after course completion.\n[NOMBRE]: has advance open water certification and would like to dive the two days during [NOMBRE] training as well as two days of diving after his certification is complete.\nTotal of four days of diving for two people with one certification course.",
+    "From Rosario Island. We are staying at Isla Mulata until April 14. Prefer to start diving April 9 or 10. Starting online portion of the course as soon as possible",
+    "Ok this is good. Isla Mulata has boat access. We would take the five day packages but do not want to night dive. Can we do an afternoon dive instead of a night dive for the 5th dive?",
+    "I ([NOMBRE]) have dive insurance but [NOMBRE] does not. Do we need to get him a DAN insurance coverage",
+    "Ok 4 dive package and certification for  [NOMBRE] and 8 dives for [NOMBRE]",
+    "Ok. So the total for both diving would be 1208 USD, correct?"
+   ],
+   "criteria": [
+    {
+     "id": "sin-nocturno-ofrece-4-diurnos",
+     "check": "Si el cliente no quiere buceo nocturno del paquete de 5, el bot explica que no se puede cambiar por una inmersión diurna y propone el Paquete 4 Buceos diurnos como alternativa.",
+     "base": "faqs.json: \"¿Que pasa si no quiero hacer el buceo nocturno incluido en el paquete? ... la opcion es cambiar a este paquete alternativo [4 Buceos Diurnos].\""
+    },
+    {
+     "id": "seguro-incluido",
+     "check": "Responde que el seguro de buceo está incluido en los planes (no es necesario comprar DAN para poder bucear con nosotros).",
+     "base": "faqs.json: \"Esta el seguro incluido en la actividad? Si, el seguro ... esta incluido en todos nuestros planes y tours.\""
+    },
+    {
+     "id": "no-confirmar-total-del-cliente",
+     "check": "No da por correcto el '1208 USD' sin verificar. Debe cotizar con los precios del catálogo (curso Open Water desde islas y paquete/costos de buzo certificado desde islas) y, si falta definir cómo se harán los 8 buceos (dos paquetes de 4 o 4 días de 2 buceos), pedir esa aclaración antes de dar el total.",
+     "base": "pricing.json: from_islands.cursos_buceo.curso_open_water; from_islands.paquetes.paquete_4_buceos_diurnos; from_islands.servicios_buceo_snorkel.buzo_certificado_doble"
+    }
+   ],
+   "dudas": [],
+   "episode": "wa-15-e1",
+   "flags": [
+    "adjuntos",
+    "llamada",
+    "cliente_cita_precio",
+    "referencia_con_precios_historicos",
+    "largo"
+   ],
+   "_checks": {
+    "turnos_sin_anclar": [],
+    "n_turnos": 7,
+    "importes_en_criterio": [
+     "no-confirmar-total-del-cliente"
+    ],
+    "categoria_desconocida": false
+   }
+  },
+  "wa-16-e1": {
+   "incluir": true,
+   "motivo": "Cliente certificado pide opciones y precio por día, pregunta por paquete de 5 buceos y qué hotel elegir en las islas.",
+   "id": "certificado-precio-dia-paquete-5-y-hoteles-base",
+   "category": "info",
+   "cobertura": {
+    "intents": [
+     "precio",
+     "info-actividad",
+     "alojamiento-islas"
+    ],
+    "actividad": "buceo-certificado",
+    "perfil": "desconocido",
+    "etapa": "pre-venta",
+    "dificultad": "media"
+   },
+   "turns": [
+    "Hi, I plan on being in Cartagena and do scuba diving on April 21 and 22. I have open water, advanced open water and deep diver certs. Please advise what options do you have for scuba diving and how much it costs",
+    "PADI open water, advanced open water and deep diver certs",
+    "So if I book for 2 days are we going to the same spots or do different one within San Brenardo National park?",
+    "And how much is per a day",
+    "I see this package of 5 dives",
+    "What island on rosario islands should I look for the hotel?"
+   ],
+   "criteria": [
+    {
+     "id": "precio-dia-cartagena",
+     "check": "Da el precio del catálogo por persona para buzo certificado (2 inmersiones, 1 día) saliendo desde Cartagena en USD, o pregunta la nacionalidad para definir la moneda.",
+     "base": "pricing.json: from_cartagena.servicios_buceo_snorkel.buzo_certificado_doble (USD/COP y nota de salida desde Cartagena)"
+    },
+    {
+     "id": "paquete-5-requiere-noche",
+     "check": "Si menciona el paquete de 5 buceos, aclara que dura 2 días, incluye buceo nocturno y requiere alojarse al menos 1 noche en las islas.",
+     "base": "faqs.json: “¿Como es el paquete de 5 buceos (2 dias) desde Cartagena?” -> “Con este plan debes alojarte 1 noche en las islas (hotel no incluido)” y pricing.json paquetes.paquete_5_buceos"
+    },
+    {
+     "id": "hoteles-base-islas",
+     "check": "Indica que la base de buceo está en los hoteles San Pedro de Majagua y Cocoliso como referencias de alojamiento en las islas (alojamiento no incluido).",
+     "base": "faqs.json: “Tenemos nuestra base de buceo en dos hoteles: Hotel San Pedro de Majagua y Hotel Cocoliso... Importante: el alojamiento no esta incluido...”"
+    }
+   ],
+   "dudas": [],
+   "episode": "wa-16-e1",
+   "flags": [
+    "referencia_con_precios_historicos"
+   ],
+   "_checks": {
+    "turnos_sin_anclar": [],
+    "n_turnos": 6,
+    "importes_en_criterio": [],
+    "categoria_desconocida": false
+   }
+  },
+  "wa-17-e1": {
+   "incluir": true,
+   "motivo": "Cliente colombiano principiante pide 'tarifa especial', pregunta por # de inmersiones y compara con un video de 2 inmersiones: buen caso para moneda COP, precio del minicurso y diferenciar plan de certificados.",
+   "id": "colombianos-precio-minicurso-dos-inmersiones",
+   "category": "nacionalidad",
+   "cobertura": {
+    "intents": [
+     "precio",
+     "info-actividad"
+    ],
+    "actividad": "minicurso",
+    "perfil": "pareja",
+    "etapa": "pre-venta",
+    "dificultad": "media"
+   },
+   "turns": [
+    "Ya vi la página, está increíble!",
+    "Cuál es la tarifa especial para Colombianos? Mi pareja y yo somos de Bogotá",
+    "Y de cuata duración aproximada sería la inmersión, tengo entendido que son una o dos?",
+    "Yo vi un video en YT de alguien que hizo el paquete con ustedes e hicieron dos inmersiones en dos distintos puntos",
+    "Eso es una tarifa diferente?"
+   ],
+   "criteria": [
+    {
+     "id": "moneda-colombianos",
+     "check": "Aclara que no existe 'tarifa especial' por ser colombiano: los colombianos pagan en COP y el precio es el mismo que en USD (solo cambia la moneda).",
+     "base": "policies.json > colombian_pricing.es: \"Los clientes colombianos y residentes en Colombia pagan en pesos colombianos (COP)... No hay un precio distinto por ser colombiano.\""
+    },
+    {
+     "id": "precio-minicurso-cop-o-origen",
+     "check": "Da el precio del catálogo para el Minicurso/Refresh en COP si salen desde Cartagena y son 2 personas, o pregunta si salen desde Cartagena o ya están en las islas antes de cotizar.",
+     "base": "pricing.json > from_cartagena.servicios_buceo_snorkel.minicurso_refresh ... y from_islands.servicios_buceo_snorkel.minicurso_refresh (precios difieren según origen)"
+    },
+    {
+     "id": "dos-inmersiones-para-certificados",
+     "check": "Explica que el plan de 2 inmersiones en dos puntos es para buzos certificados y es una actividad distinta al minicurso para principiantes.",
+     "base": "pricing.json > from_cartagena.servicios_buceo_snorkel.buzo_certificado_doble (\"Buzo Certificado - 2 inmersiones\") y activities.json > certified_diving.requires_certification:true"
+    }
+   ],
+   "dudas": [],
+   "episode": "wa-17-e1",
+   "flags": [
+    "referencia_con_precios_historicos"
+   ],
+   "_checks": {
+    "turnos_sin_anclar": [],
+    "n_turnos": 5,
+    "importes_en_criterio": [],
+    "categoria_desconocida": false
+   }
+  },
+  "wa-17-e2": {
+   "incluir": true,
+   "motivo": "Cliente principiante (2 personas) pregunta si el precio aplica para colombianos; el bot debe aclarar moneda para colombianos y pedir el dato clave de origen (Cartagena o islas) antes de cotizar.",
+   "id": "minicurso-precio-colombianos-origen-pendiente",
+   "category": "nacionalidad",
+   "cobertura": {
+    "intents": [
+     "precio"
+    ],
+    "actividad": "minicurso",
+    "perfil": "pareja",
+    "etapa": "pre-venta",
+    "dificultad": "media"
+   },
+   "turns": [
+    "Me gustaría agendar un día de buceo con ustedes",
+    "Buceo para principiantes",
+    "2 personas",
+    "Ese es el precio para ciudadanos colombianos? somos de Bogotá"
+   ],
+   "criteria": [
+    {
+     "id": "pregunta-origen-cartagena-o-islas",
+     "check": "Antes de dar un precio, pregunta si salen desde Cartagena o si ya están en las islas, porque el plan y el precio cambian según el origen.",
+     "base": "policies.json: \"Si ya estas en las Islas del Rosario... Estos planes manejan precios diferentes porque no incluyen transporte desde Cartagena ni almuerzo.\""
+    },
+    {
+     "id": "moneda-colombianos",
+     "check": "Aclara que los colombianos pagan en COP y que el precio es el mismo que para extranjeros (solo cambia la moneda), sin otorgar un 'precio de colombiano'.",
+     "base": "policies.json: \"Los clientes colombianos y residentes en Colombia pagan en pesos colombianos (COP)... Los precios son los mismos, solo cambia la moneda.\""
+    },
+    {
+     "id": "no-validar-precio-historico",
+     "check": "No confirma el importe histórico citado; usa el precio del catálogo para el Minicurso de buceo para 2 personas en COP si confirman salida desde Cartagena, o el precio del catálogo desde islas si dicen que ya están allá.",
+     "base": "pricing.json: from_cartagena.servicios_buceo_snorkel.minicurso_refresh y from_islands.servicios_buceo_snorkel.minicurso_refresh"
+    }
+   ],
+   "dudas": [],
+   "episode": "wa-17-e2",
+   "flags": [
+    "referencia_con_precios_historicos"
+   ],
+   "_checks": {
+    "turnos_sin_anclar": [],
+    "n_turnos": 4,
+    "importes_en_criterio": [],
+    "categoria_desconocida": false
+   }
+  },
+  "wa-18-e1": {
+   "incluir": true,
+   "motivo": "Cliente pide disponibilidad, horario, excursiones y precio para buceo certificado; además pregunta por pecios.",
+   "id": "disponibilidad-hora-precio-y-pecios",
+   "category": "info",
+   "cobertura": {
+    "intents": [
+     "disponibilidad",
+     "info-actividad",
+     "precio"
+    ],
+    "actividad": "buceo-certificado",
+    "perfil": "desconocido",
+    "etapa": "pre-venta",
+    "dificultad": "media"
+   },
+   "turns": [
+    "Hola! Que tal? Me llamo [NOMBRE] y llego hoy a Cartagena. Voy por unos días y me gustaría hacer un par de inmersiones. Un amigo me los recomendó y quería saber si me podrían dar más información. Tienen disponibilidad para los próximos días? A qué hora? Que excursiones tienes disponibles? Cuál es el precio?",
+    "Muchas gracias!",
+    "Tengo open water con más de 50 inmersiones. Me gustaría ver algun barco hundido o algo único de la zona."
+   ],
+   "criteria": [
+    {
+     "id": "disponibilidad-y-hora",
+     "check": "Confirma que operan todos los días y que la salida es a las 8:00 a. m. desde el Muelle de la Bodeguita.",
+     "base": "availability.json: \"Operamos todos los días del año\"; policies.json: \"Muelle de la Bodeguita... a las 8:00 AM.\""
+    },
+    {
+     "id": "origen-para-precio",
+     "check": "Antes de cotizar, aclara si sale desde Cartagena o si ya está en las islas (los planes y precios cambian según el origen); o da el precio correcto según el origen si ya estuviera claro.",
+     "base": "pricing.json from_cartagena.context_note_es / from_islands.context_note_es: planes y precios difieren según salga de Cartagena o ya esté en las islas."
+    },
+    {
+     "id": "moneda-por-nacionalidad",
+     "check": "Pregunta la nacionalidad para definir la moneda de pago (COP para colombianos/residentes, USD para internacionales); o aplica la moneda correcta si el cliente ya la hubiera indicado.",
+     "base": "policies.json colombian_pricing: colombianos/residentes pagan en COP; internacionales en USD."
+    },
+    {
+     "id": "no-promete-pecios",
+     "check": "No promete barcos hundidos específicos; explica que el buceo se realiza en los arrecifes de las Islas del Rosario y orienta sobre el tipo de entorno.",
+     "base": "faqs.json: \"Buceamos en las Islas del Rosario... arrecifes coralinos...\""
+    }
+   ],
+   "dudas": [],
+   "episode": "wa-18-e1",
+   "flags": [
+    "referencia_con_precios_historicos"
+   ],
+   "_checks": {
+    "turnos_sin_anclar": [],
+    "n_turnos": 3,
+    "importes_en_criterio": [],
+    "categoria_desconocida": false
+   }
+  },
+  "wa-18-e2": {
+   "incluir": true,
+   "motivo": "Cliente pregunta por recogida/salida desde Barú y pide alternativa; la referencia aclara que no operan en Barú y que la salida es desde Cartagena.",
+   "id": "baru-no-recogida",
+   "category": "logistica",
+   "cobertura": {
+    "intents": [
+     "logistica-recogida"
+    ],
+    "actividad": "ninguna",
+    "perfil": "solo",
+    "etapa": "pre-venta",
+    "dificultad": "media"
+   },
+   "turns": [
+    "Hola! Una pregunta, estoy quedándome en baru. Entiendo que salen desde el puerto de Cartagena, me pregunto si hay una parada o ruta que salga desde algún punto de baru?",
+    "Me puedo llegar a algún punto en baru en moto taxi",
+    "Gracias! Estoy pendiente 👌👌👌",
+    "Gracias por dejarme saber. Hay alguna otra opción por la zona que me recomiendes?"
+   ],
+   "criteria": [
+    {
+     "id": "no-operamos-desde-baru",
+     "check": "Aclara que no operamos en Barú ni tenemos ruta/parada allí; nuestras salidas son a Islas del Rosario, no en Barú.",
+     "base": "faqs.json: \"Baru es una peninsula... Nosotros operamos exclusivamente en las Islas del Rosario, no en Baru.\""
+    },
+    {
+     "id": "alternativa-desde-cartagena",
+     "check": "Ofrece la alternativa correcta con nosotros: unirse saliendo desde Cartagena, indicando que el punto es el Muelle de la Bodeguita a las 8:00 a. m.",
+     "base": "policies.json: \"Muelle de la Bodeguita... a las 8:00 AM.\""
+    }
+   ],
+   "dudas": [],
+   "episode": "wa-18-e2",
+   "flags": [],
+   "_checks": {
+    "turnos_sin_anclar": [],
+    "n_turnos": 4,
+    "importes_en_criterio": [],
+    "categoria_desconocida": false
+   }
+  },
+  "wa-19-e1": {
+   "incluir": true,
+   "motivo": "Cliente ya reservó minicurso desde islas, pide confirmar recogida exacta en su hotel, pregunta por comida y si su hijo puede obtener certificación PADI.",
+   "id": "recogida-ubuntu-comida-y-certificacion",
+   "category": "post-venta",
+   "cobertura": {
+    "intents": [
+     "punto-encuentro",
+     "certificacion-curso",
+     "otro"
+    ],
+    "actividad": "minicurso",
+    "perfil": "familia",
+    "etapa": "post-venta",
+    "dificultad": "media"
+   },
+   "turns": [
+    "Hi,\nI just booked a beginner mini diving experience online. I created accounts for my son ([NOMBRE], 17) and myself ([NOMBRE], 49). We have both completed the medical form and the online course.\nWe are staying at the Ubuntu Hotel. It mentions a pickup at 9:15 AM tomorrow—could you please confirm the exact meeting location?\nThank you!",
+    "Hi, is there a way to eat at your facility or we need to bring our food ?",
+    "Hi. Is it possible for my son [NOMBRE] a PADi certificat ?",
+    "We are leaving tomorrow before noon"
+   ],
+   "criteria": [
+    {
+     "id": "recogida-islas-escalar",
+     "check": "Para confirmar punto/hora exactos de recogida en un hotel específico de las islas (Ubuntu), el bot no inventa el lugar ni la hora y ofrece pasar con un asesor para coordinar la logística.",
+     "base": "escalation_rules.json > complex_logistics: \"recogida en hoteles específicos no estándar\" + policies.json > island_pickup: \"coordinamos recogida y regreso desde hoteles con acceso maritimo\""
+    },
+    {
+     "id": "comida-desde-islas",
+     "check": "Aclara que los planes desde las islas no incluyen almuerzo; pueden comprar en el hotel o traer su propia comida, según política.",
+     "base": "pricing.json > from_islands.context_note_es: \"No incluye ... almuerzo\" + policies.json > food_policy: \"El cliente puede llevar su propia comida si lo necesita\""
+    },
+    {
+     "id": "minicurso-no-certifica",
+     "check": "Explica que el minicurso no otorga certificación PADI y que para certificar (Open Water) se requieren 2 días de práctica y pernocta en las islas, por lo que no es posible si se van mañana al mediodía.",
+     "base": "policies.json > courses_overnight_requirement: \"Los cursos de 2 dias (Open Water, Advanced) requieren alojamiento en las islas\" + faqs.json > \"Curso Basico PADI (Open Water) ... Itinerario (2 dias) ... debes alojarte al menos 1 noche\""
+    }
+   ],
+   "dudas": [],
+   "episode": "wa-19-e1",
+   "flags": [],
+   "_checks": {
+    "turnos_sin_anclar": [],
+    "n_turnos": 4,
+    "importes_en_criterio": [],
+    "categoria_desconocida": false
+   }
+  },
+  "wa-20-e1": {
+   "incluir": true,
+   "motivo": "Piden completar un curso referido Open Water y solicitan datos del centro; la referencia cubre requisitos del referido y el punto de encuentro.",
+   "id": "curso-referido-pide-datos-centro",
+   "category": "curso",
+   "cobertura": {
+    "intents": [
+     "certificacion-curso",
+     "info-actividad"
+    ],
+    "actividad": "curso-open-water",
+    "perfil": "solo",
+    "etapa": "pre-venta",
+    "dificultad": "media"
+   },
+   "turns": [
+    "He's already doing the e-learning",
+    "So [NOMBRE] can go directly to Diving Planet to start the Open Water part?",
+    "Yes … I’ll let to you the form transfer to Dive Planet … but I need of infos of dive center",
+    "Can you send me this infos pls?",
+    "Full name of dive center, location, dates etc",
+    "And full [NOMBRE] infos to fill the form transfer to complete the certification in Cartagena"
+   ],
+   "criteria": [
+    {
+     "id": "referido-requisito-carta",
+     "check": "Aclara que para completar el Open Water como curso referido debe traer la carta/formato de referido PADI firmada por su instructor y que el plan correcto es el 'Curso Referido Open Water' (no una salida normal).",
+     "base": "faqs.json: \"Debes entregar la carta/formato de referido firmada por un instructor PADI\""
+    },
+    {
+     "id": "punto-encuentro",
+     "check": "Entrega el punto de encuentro y hora (Muelle de la Bodeguita a las 8:00 AM) cuando le piden la información del centro.",
+     "base": "policies.json: \"Muelle de la Bodeguita... a las 8:00 AM.\""
+    }
+   ],
+   "dudas": [],
+   "episode": "wa-20-e1",
+   "flags": [
+    "chat_de_grupo",
+    "adjuntos",
+    "largo"
+   ],
+   "_checks": {
+    "turnos_sin_anclar": [],
+    "n_turnos": 6,
+    "importes_en_criterio": [],
+    "categoria_desconocida": false
+   }
+  },
+  "wa-21-e1": {
+   "incluir": true,
+   "motivo": "Cliente pide info y precios del curso PADI (desde Cartagena vs islas), duración y alojamiento.",
+   "id": "open-water-precio-duracion-hospedaje",
+   "category": "curso",
+   "cobertura": {
+    "intents": [
+     "precio",
+     "info-actividad",
+     "alojamiento-islas"
+    ],
+    "actividad": "curso-open-water",
+    "perfil": "desconocido",
+    "etapa": "pre-venta",
+    "dificultad": "media"
+   },
+   "turns": [
+    "Buenas noches, podrias brindarme informacion acerca de los cursos padi para certificarse como buzo? Que precio tienen? Cuanto dura? Que traen? Ofrecen hospedaje ya que tengi entendido es en islas del rosario? Cuéntamelo todo por favor y gracias :)",
+    "Quiero certificarme",
+    "Soy principiante, que pla es ofrecen? Que precio tiene? Que incluye? Ofrecen hospedaje o eso es aparte?",
+    "Que precio tiene reservar desde cartagena y desde la isla?\nEl curso teórico lo dan uds o tiene uno que hacerlo antes?\nLa duración total del curso son 3 días?",
+    "Me regalas información del hospedaje en los dos lugares que dijiste teniendo en cuenta que serán 5 o 4 dias *dependiendo de la duración del curso y los tiempos de espera para volar).",
+    "Muchas gracias!!"
+   ],
+   "criteria": [
+    {
+     "id": "precio-moneda-origen",
+     "check": "Da el precio del catálogo para el Curso Open Water saliendo desde Cartagena y para el mismo curso si ya está en las islas; la moneda depende de la nacionalidad. Si el cliente no dijo su nacionalidad, el bot debe preguntarla antes de cotizar.",
+     "base": "policies.json: \"Los clientes colombianos... pagan en COP... Internacionales pagan en USD\"; pricing.json: from_cartagena.cursos_buceo.curso_open_water y from_islands.cursos_buceo.curso_open_water"
+    },
+    {
+     "id": "duracion-2-dias",
+     "check": "Aclara que la práctica del Curso Open Water dura 2 días (no 3) y se realiza en las Islas del Rosario.",
+     "base": "faqs.json: \"Curso Basico PADI (Open Water) ... Itinerario (2 dias)\""
+    },
+    {
+     "id": "hospedaje-no-incluido",
+     "check": "Informa que el alojamiento en las islas no está incluido y debe reservarse directamente con el hotel.",
+     "base": "faqs.json: \"alojamiento no está incluido y debes reservarlo directamente con el hotel\""
+    }
+   ],
+   "dudas": [],
+   "episode": "wa-21-e1",
+   "flags": [
+    "referencia_con_precios_historicos"
+   ],
+   "_checks": {
+    "turnos_sin_anclar": [],
+    "n_turnos": 6,
+    "importes_en_criterio": [],
+    "categoria_desconocida": false
+   }
+  },
+  "wa-22-e1": {
+   "incluir": true,
+   "motivo": "El cliente pregunta en qué moneda están los precios y menciona que busca principiante y snorkel: buen caso para que el bot explique moneda según nacionalidad y pida datos clave faltantes.",
+   "id": "moneda-precios-principiante-y-snorkel",
+   "category": "nacionalidad",
+   "cobertura": {
+    "intents": [
+     "precio",
+     "nacionalidad",
+     "info-actividad"
+    ],
+    "actividad": "varias",
+    "perfil": "desconocido",
+    "etapa": "pre-venta",
+    "dificultad": "media"
+   },
+   "turns": [
+    "Hola",
+    "Buen día",
+    "Me gustaría consultar información",
+    "Sería buzo principiante y snorkeling",
+    "Amigo el precio que está allí es en dólares o pesos colombianos"
+   ],
+   "criteria": [
+    {
+     "id": "moneda-por-nacionalidad",
+     "check": "Aclara que colombianos y residentes pagan en COP y clientes internacionales en USD; si el cliente no dijo su nacionalidad, preguntar para indicarle la moneda correcta.",
+     "base": "policies.json: \"Los clientes colombianos y residentes en Colombia pagan en pesos colombianos (COP)... Los clientes internacionales pagan en US dollars (USD).\""
+    },
+    {
+     "id": "origen-para-cotizar",
+     "check": "Dado que pide principiante y snorkeling, pregunta si saldrá desde Cartagena o si ya está en las islas para poder orientar/cotizar correctamente.",
+     "base": "pricing.json from_cartagena.context_note_es / from_islands.context_note_es: planes y precios cambian si sale de Cartagena o ya está en las islas."
+    }
+   ],
+   "dudas": [],
+   "episode": "wa-22-e1",
+   "flags": [
+    "referencia_con_precios_historicos"
+   ],
+   "_checks": {
+    "turnos_sin_anclar": [],
+    "n_turnos": 5,
+    "importes_en_criterio": [],
+    "categoria_desconocida": false
+   }
+  },
+  "wa-23-e1": {
+   "incluir": true,
+   "motivo": "Cliente internacional pide precios y opciones de paquetes (5 buceos y 3 buceos), y si hay 2 diurnos; hay que aclarar origen (Cartagena/islas), moneda y pernocta no incluida.",
+   "id": "precio-paquetes-5-o-3-buceos-y-opcion-2-diurnos",
+   "category": "info",
+   "cobertura": {
+    "intents": [
+     "precio",
+     "info-actividad"
+    ],
+    "actividad": "buceo-certificado",
+    "perfil": "solo",
+    "etapa": "pre-venta",
+    "dificultad": "media"
+   },
+   "turns": [
+    "Hey I am going to be in Colombia in a few days and moving around the country. I was hoping to include the island visit and dives as part of the plan.",
+    "I was seeing your 5 dive plan - and wanted to see whats the price for stay and dives",
+    "do you have an option for 2 dives and 1 night dive so I do one day of diving instead of two?",
+    "or 2 day dives?",
+    "amazing I may opt for that... i'll give you more confirmed details in the next week. thanks so much"
+   ],
+   "criteria": [
+    {
+     "id": "no-precio-historico-5-buceos",
+     "check": "Para el paquete de 5 buceos, no confirma ni repite el precio histórico: debe dar el precio del catálogo vigente según salida (Cartagena o islas) y moneda, o preguntar origen/nacionalidad si faltan.",
+     "base": "pricing.json: from_cartagena.paquetes.paquete_5_buceos / from_islands.paquetes.paquete_5_buceos (precios actuales) y policies.colombian_pricing (moneda segun nacionalidad)"
+    },
+    {
+     "id": "alojamiento-no-incluido-5-buceos",
+     "check": "Aclara que el paquete de 5 buceos requiere pernoctar en las islas y que el alojamiento no está incluido (se reserva directamente con el hotel).",
+     "base": "faqs.json: \"¿Como es el paquete de 5 buceos (2 dias) desde Cartagena?\" -> \"debes alojarte 1 noche en las islas (hotel no incluido)\""
+    },
+    {
+     "id": "origen-cartagena-o-islas",
+     "check": "Antes de cotizar, pregunta si saldrá desde Cartagena o si ya estará en las Islas del Rosario, porque los planes y precios cambian según el origen.",
+     "base": "policies.json: island_pickup \"Estos planes manejan precios diferentes porque no incluyen transporte desde Cartagena ni almuerzo.\""
+    },
+    {
+     "id": "opcion-3-buceos-disponible",
+     "check": "Confirma que existe la opción de 3 buceos (2 diurnos + 1 nocturno) y da el precio del catálogo según el origen y moneda, o pregunta el dato que falta para darlo.",
+     "base": "pricing.json: from_cartagena.paquetes.paquete_3_buceos y from_islands.paquetes.paquete_3_buceos (incluye nocturno)"
+    }
+   ],
+   "dudas": [],
+   "episode": "wa-23-e1",
+   "flags": [
+    "referencia_con_precios_historicos"
+   ],
+   "_checks": {
+    "turnos_sin_anclar": [],
+    "n_turnos": 5,
+    "importes_en_criterio": [],
+    "categoria_desconocida": false
+   }
+  },
+  "wa-24-e1": {
+   "incluir": true,
+   "motivo": "Cliente pide paquete de 5 buceos en 2 días, precio, disponibilidad en fecha concreta, horario de regreso y consulta sobre equipaje.",
+   "id": "paquete-5-buceos-precio-fecha-y-equipaje",
+   "category": "info",
+   "cobertura": {
+    "intents": [
+     "precio",
+     "disponibilidad",
+     "pago",
+     "otro"
+    ],
+    "actividad": "buceo-certificado",
+    "perfil": "desconocido",
+    "etapa": "pre-venta",
+    "dificultad": "media"
+   },
+   "turns": [
+    "Hola, quisiera averiguar por las salidas de buceo de 2 días",
+    "5 inmersiones",
+    "En baru y Rosario",
+    "Cuál es el precio? Hay salidas para el día 24 de abril?",
+    "Soy argentino pero resido en Bogotá",
+    "Y a qué hora se vuelve a Cartagena?",
+    "Genial. Apunto al viernes 24 al sábado 25",
+    "Reservo por la web cuando lo tenga confirmado?",
+    "Pregunta: les puedo dejar un bolso a Uds cuando vamos a islas del Rosario?"
+   ],
+   "criteria": [
+    {
+     "id": "no-operamos-en-baru",
+     "check": "Aclara que no operan en Barú y que las salidas son en las Islas del Rosario.",
+     "base": "faqs.json: \"Nosotros operamos exclusivamente en las Islas del Rosario, no en Baru.\""
+    },
+    {
+     "id": "precio-paquete-5-buceos",
+     "check": "Da el precio del catálogo por persona para el Paquete 5 Buceos desde Cartagena, o pregunta lo que falte (número de personas y moneda según nacionalidad/residencia con cédula de extranjería).",
+     "base": "pricing.json from_cartagena.paquetes.paquete_5_buceos + policies.json colombian_pricing: \"Un extranjero residente en Colombia (con cédula de extranjería) también paga en COP.\""
+    },
+    {
+     "id": "disponibilidad-y-cutoff",
+     "check": "Confirma que hay operación diaria y disponibilidad para el 24 de abril, e informa que el sistema cierra a las 4:30 p. m. del día anterior.",
+     "base": "availability.json: \"Operamos todos los días del año\" y policies.json booking_system_info: \"se cierra automáticamente a las 4:30 PM del día anterior\""
+    },
+    {
+     "id": "hora-regreso",
+     "check": "Indica el regreso estimado a Cartagena a las 4:15 p. m.",
+     "base": "availability.json return_time: \"Regreso estimado a las 4:15 PM\""
+    },
+    {
+     "id": "equipaje-en-lancha",
+     "check": "Explica que en la lancha se puede llevar una mochila/bolso por persona y que, si necesita llevar maleta o guardar equipaje extra, lo coordina un asesor.",
+     "base": "policies.json luggage_policy: \"una mochila o un bolso por persona... si necesita llevar maleta, hay que coordinarlo con un asesor\""
+    }
+   ],
+   "dudas": [
+    "¿Confirmamos oficialmente que se puede guardar equipaje en la oficina de Cartagena? La referencia solo habla de llevar una mochila en la lancha y coordinar maletas con un asesor, no de custodia en oficina."
+   ],
+   "episode": "wa-24-e1",
+   "flags": [
+    "referencia_con_precios_historicos"
+   ],
+   "_checks": {
+    "turnos_sin_anclar": [],
+    "n_turnos": 9,
+    "importes_en_criterio": [],
+    "categoria_desconocida": false
+   }
+  },
+  "wa-25-e1": {
+   "incluir": true,
+   "motivo": "Cliente pide reservar para mañana, solicita hora/lugar y precio; es principiante con 4-5 buceos (certificación dudosa). Caso útil para aclarar actividad, dar punto de encuentro correcto y cómo cotizar según moneda.",
+   "id": "principiante-hora-lugar-y-precio",
+   "category": "info",
+   "cobertura": {
+    "intents": [
+     "disponibilidad",
+     "punto-encuentro",
+     "precio"
+    ],
+    "actividad": "varias",
+    "perfil": "solo",
+    "etapa": "pre-venta",
+    "dificultad": "media"
+   },
+   "turns": [
+    "Hello, is it possible to book for a diving cruise tomorrow, for 1 person?",
+    "I am a beginner ( I have made 4/5 divings before)",
+    "OK, could you just confirm at what time and where we make the appointment?",
+    "And please confirm the price 👌",
+    "OK I will check thanks"
+   ],
+   "criteria": [
+    {
+     "id": "aclarar-actividad",
+     "check": "Antes de cotizar, confirma si es buzo certificado (presenta carné) o si prefiere el minicurso para principiantes; según la respuesta, da el plan correspondiente o pide ese dato si falta.",
+     "base": "policies.json: \"Para las salidas de buceo recreativo, debes presentar tu carne de buzo certificado.\"; activities.json: \"Buceo certificado\" requiere certificación; \"Minicurso de buceo\" no requiere."
+    },
+    {
+     "id": "lugar-y-hora",
+     "check": "Indica el punto de encuentro y hora correctos: Muelle de la Bodeguita a las 8:00 a. m.",
+     "base": "policies.json: \"Muelle de la Bodeguita... a las 8:00 AM.\""
+    },
+    {
+     "id": "precio-moneda-datos",
+     "check": "Para dar el precio, usa el plan del catálogo (minicurso o 2 inmersiones certificado) y la moneda correcta según nacionalidad; si no dijo nacionalidad ni si sale desde Cartagena o islas, preguntar esos datos.",
+     "base": "policies.json: \"Los clientes colombianos... pagan en COP... internacionales en USD\"; pricing.json: from_cartagena.servicios_buceo_snorkel.minicurso_refresh y buzo_certificado_doble."
+    }
+   ],
+   "dudas": [],
+   "episode": "wa-25-e1",
+   "flags": [
+    "referencia_con_precios_historicos"
+   ],
+   "_checks": {
+    "turnos_sin_anclar": [],
+    "n_turnos": 5,
+    "importes_en_criterio": [],
+    "categoria_desconocida": false
+   }
+  },
+  "wa-26-e1": {
+   "incluir": true,
+   "motivo": "La cliente es una agencia y pide gestionar tarifas 2026 por correo; esto requiere pasar a un humano segun reglas de escalado.",
+   "id": "agencia-solicita-tarifas-escalar",
+   "category": "escalado",
+   "cobertura": {
+    "intents": [
+     "otro"
+    ],
+    "actividad": "ninguna",
+    "perfil": "desconocido",
+    "etapa": "pre-venta",
+    "dificultad": "facil"
+   },
+   "turns": [
+    "Hola buenos días",
+    "Soy [NOMBRE] de la agencia de turismo Tucaya",
+    "Les escribo porque mande un correo la semana pasada pero todavía no he tenido respuesta de su parte",
+    "Me gustaría saber si me podrías ayudar con este tema?",
+    "Solicitud tarifas 2026 - Tucaya Colombia - Diving Planet"
+   ],
+   "criteria": [
+    {
+     "id": "escala-agencia",
+     "check": "Ante una solicitud de una agencia para coordinar tarifas 2026 por correo, el bot debe pasar la conversación a un miembro del staff (no gestionar él mismo).",
+     "base": "escalation_rules.json: \"coordinación con agencias de viajes\" -> complex_logistics"
+    }
+   ],
+   "dudas": [],
+   "episode": "wa-26-e1",
+   "flags": [],
+   "_checks": {
+    "turnos_sin_anclar": [],
+    "n_turnos": 5,
+    "importes_en_criterio": [],
+    "categoria_desconocida": false
+   }
+  },
+  "wa-27-e1": {
+   "incluir": true,
+   "motivo": "Cliente aclara que no está certificado y busca orientación: el bot debe recomendar el plan correcto para principiantes sin usar descuentos históricos.",
+   "id": "principiantes-no-certificados-minicurso",
+   "category": "info",
+   "cobertura": {
+    "intents": [
+     "info-actividad"
+    ],
+    "actividad": "minicurso",
+    "perfil": "desconocido",
+    "etapa": "pre-venta",
+    "dificultad": "facil"
+   },
+   "turns": [
+    "Hola",
+    "Buenas Tardes",
+    "muchas gracias",
+    "si hemos buceado pero somos principiantes",
+    "no estamos certificados"
+   ],
+   "criteria": [
+    {
+     "id": "recomienda-minicurso",
+     "check": "Informa que para principiantes sin certificación el plan adecuado es el Minicurso de buceo (Discover/DSD) y puede compartir el enlace de detalles.",
+     "base": "faqs.json: \"Es mi primera vez buceando... El Minicurso de buceo (Bautizo / DSD) es perfecto...\""
+    },
+    {
+     "id": "sin-descuento-historico",
+     "check": "No confirma ni repite el '[descuento histórico: 10%]'; si menciona descuento, se limita al descuento online estándar de la referencia al reservar por la web.",
+     "base": "discounts.json: online_direct_booking: \"10% de descuento reservando online... (sistema ROVERD)\""
+    }
+   ],
+   "dudas": [],
+   "episode": "wa-27-e1",
+   "flags": [
+    "referencia_con_precios_historicos"
+   ],
+   "_checks": {
+    "turnos_sin_anclar": [],
+    "n_turnos": 5,
+    "importes_en_criterio": [
+     "sin-descuento-historico"
+    ],
+    "categoria_desconocida": false
+   }
+  },
+  "wa-28-e1": {
+   "incluir": true,
+   "motivo": "Cliente pide confirmación de una reserva ya hecha; el bot no puede verla y debe escalar a un asesor.",
+   "id": "confirma-reserva-existente-escalar",
+   "category": "post-venta",
+   "cobertura": {
+    "intents": [
+     "post-venta"
+    ],
+    "actividad": "varias",
+    "perfil": "pareja",
+    "etapa": "post-venta",
+    "dificultad": "facil"
+   },
+   "turns": [
+    "Hello",
+    "It is [NOMBRE]",
+    "Hello, I just want to tell you, I just make a reservation for me and [NOMBRE] for diving with you on Monday 11th of May. Him is gonna be like a, I don't know how you tell that in English, but it's like his first time he want to like discover diving if he will like it or no. And me, I am advanced and we just make both reservations. I just want to ask you if you receive it. Thank you."
+   ],
+   "criteria": [
+    {
+     "id": "no-confirma-y-escala",
+     "check": "No confirma el estado de una reserva específica; indica que un asesor debe revisarla y hace el pase a una persona.",
+     "base": "faqs.json: \"Pague en linea, ¿mi reserva ya quedo confirmada? ... Si tienes dudas sobre tu reserva especifica, podemos pasarte con un asesor.\""
+    }
+   ],
+   "dudas": [],
+   "episode": "wa-28-e1",
+   "flags": [
+    "audio_transcrito"
+   ],
+   "_checks": {
+    "turnos_sin_anclar": [],
+    "n_turnos": 3,
+    "importes_en_criterio": [],
+    "categoria_desconocida": false
+   }
+  },
+  "wa-28-e2": {
+   "incluir": true,
+   "motivo": "Cliente con reserva existente pide confirmar formularios/estado del e-learning: el bot no puede verlo y debe escalar.",
+   "id": "post-venta-confirmar-formularios-elearning",
+   "category": "post-venta",
+   "cobertura": {
+    "intents": [
+     "post-venta"
+    ],
+    "actividad": "varias",
+    "perfil": "pareja",
+    "etapa": "post-venta",
+    "dificultad": "media"
+   },
+   "turns": [
+    "Good morning",
+    "Hi, good morning. I hope you are good. We're gonna dive with you next Monday. My name is [NOMBRE] and my boyfriend's name is [NOMBRE]. I am an advanced and he will try like, it's gonna be like his first dive. It's like, I don't know how you tell that in English, but we just want to know, I feel all my paper on the website and I send you the paper, it's all okay. But him too, he was, you tell him he need to assist like a little test he need to do. He do the test, but he don't have a confirmation after that if all okay. He don't have ticket number. We just want to be sure it's all okay and he don't need to do something else. Please, can you come back to me? Thank you so much."
+   ],
+   "criteria": [
+    {
+     "id": "escalar-estado-reserva",
+     "check": "No confirma el estado de formularios/e-learning ni inventa 'ticket numbers'; pasa el caso a un asesor para revisar la reserva y confirmar si falta algo.",
+     "base": "escalation_rules.json > booking_system_problems.conditions: \"dificultades para completar reservas online\" + handoff_protocol.escalation_message_es"
+    }
+   ],
+   "dudas": [],
+   "episode": "wa-28-e2",
+   "flags": [
+    "audio_transcrito"
+   ],
+   "_checks": {
+    "turnos_sin_anclar": [],
+    "n_turnos": 2,
+    "importes_en_criterio": [],
+    "categoria_desconocida": false
+   }
+  },
+  "wa-29-e1": {
+   "incluir": true,
+   "motivo": "Cliente pide cotización mixta (3 buzos certificados + 3 snorkelers), consulta si reservar por separado, pregunta por código de descuento y si requiere refresher tras 1.5 años.",
+   "id": "familia-mixta-precio-descuento-refresher",
+   "category": "grupo",
+   "cobertura": {
+    "intents": [
+     "precio",
+     "info-actividad",
+     "descuento"
+    ],
+    "actividad": "varias",
+    "perfil": "familia",
+    "etapa": "pre-venta",
+    "dificultad": "media"
+   },
+   "turns": [
+    "Hi There,\nI am looking to book 2 dives and snorkeling sessions for the following people.\n2 diving sessions - All PADI certified for open water.\n2 adults (ages 42, 19)\n1 youth (age 17)\nSnorkeling\n1 Adult (Age 43)\n2 kids (Ages 14, 10)\nCan you provide information and total price please\nThanks\n[NOMBRE]",
+    "May 3rd",
+    "So should I book 2  separately? One for diving and one for snorkeling",
+    "We are a family of 6 and 3 of us will dive and 3 will snorkeling",
+    "Is there a discount code?",
+    "Its been more than 1.5 years since last dive. So is there additional cost for refresher?"
+   ],
+   "criteria": [
+    {
+     "id": "precio-mixto-cartagena-o-pregunta-faltantes",
+     "check": "Da el precio del catálogo para 3 buzos certificados (2 inmersiones) y 3 snorkelers (2 salidas) desde Cartagena en la moneda según nacionalidad; si falta saber desde dónde salen o la nacionalidad, lo pregunta antes de cotizar.",
+     "base": "pricing.json from_cartagena.servicios_buceo_snorkel + policies.json.colombian_pricing"
+    },
+    {
+     "id": "descuento-online-sin-cupon",
+     "check": "A 'Is there a discount code?' responde que el descuento online (~10%) se aplica automáticamente al reservar por la web/ROVERD, sin necesitar código especial.",
+     "base": "discounts.json.discounts.online_direct_booking.description_es"
+    },
+    {
+     "id": "refresh-no-requerido-1-5-anos",
+     "check": "Aclara que el refresh se exige solo si han pasado más de 2 años sin bucear; con 1.5 años no es obligatorio ni tiene costo adicional por defecto.",
+     "base": "policies.json.policies.refresh_requirement.es: 'Si has pasado más de 2 años de inactividad... debes hacer un refresh'"
+    }
+   ],
+   "dudas": [],
+   "episode": "wa-29-e1",
+   "flags": [
+    "adjuntos",
+    "referencia_con_precios_historicos",
+    "largo"
+   ],
+   "_checks": {
+    "turnos_sin_anclar": [],
+    "n_turnos": 6,
+    "importes_en_criterio": [
+     "descuento-online-sin-cupon"
+    ],
+    "categoria_desconocida": false
+   }
+  },
+  "wa-30-e1": {
+   "incluir": true,
+   "motivo": "Cliente pregunta si se puede mezclar buceo y snorkel en el mismo tour y cómo reservar para una fecha concreta.",
+   "id": "grupo-mixto-buceo-y-snorkel-reserva-web",
+   "category": "grupo",
+   "cobertura": {
+    "intents": [
+     "disponibilidad",
+     "reserva",
+     "info-actividad"
+    ],
+    "actividad": "varias",
+    "perfil": "grupo",
+    "etapa": "pre-venta",
+    "dificultad": "media"
+   },
+   "turns": [
+    "Hello! I am a certified diver hoping to book a dive for May 22nd. Our group has 2 certified divers and two people who only want to snorkel. Can this be accommodated on the same boat or will we need to book separate trips? Thank you for the help!",
+    "Thank you! We would like to book May 22nd if it’s available for two certified divers and two snorkelers. How can we do that?",
+    "Do we use WhatsApp to book or is there somewhere on the website?"
+   ],
+   "criteria": [
+    {
+     "id": "grupo-mixto-posible",
+     "check": "Confirma que se pueden combinar buzos certificados y snorkelers en el mismo tour; aclara que durante la actividad los snorkelers pueden ir en una lancha separada solo para su salida.",
+     "base": "faqs.json: \u0000bfPueden venir grupos con diferentes niveles ...? 'Si, podemos combinar diferentes actividades en un solo tour... Mientras los buzos hacen la primera inmersi\u0000f3n... los del minicurso hacen... En la segunda inmersi\u0000f3n...' (mezcla de actividades en un mismo tour)."
+    },
+    {
+     "id": "disponibilidad-diaria",
+     "check": "Ante 'if it’s available', indica que operan todos los d\u0000edas y hay disponibilidad general, sin inventar una verificaci\u0000f3n puntual.",
+     "base": "availability.json: 'Operamos todos los d\u0000edas del a\u0000f1o' y 'Siempre hay disponibilidad'."
+    },
+    {
+     "id": "links-reserva-web",
+     "check": "Indica que se reserva por la web y comparte los enlaces de reserva para: 2 dives (certified) y snorkeling, explicando que pueden reservar ambos productos para la misma fecha.",
+     "base": "faqs.json: 'Soy buzo certificado... reservar aqu\u0000ed: https://divingplanet.org/tours-buceo-snorkel-cartagena/2-buceos-1-dia/' y 'Quiero hacer snorkeling... reservar aqu\u0000ed: https://divingplanet.org/tours-buceo-snorkel-cartagena/tour-snorkeling/'."
+    }
+   ],
+   "dudas": [],
+   "episode": "wa-30-e1",
+   "flags": [
+    "referencia_con_precios_historicos"
+   ],
+   "_checks": {
+    "turnos_sin_anclar": [],
+    "n_turnos": 3,
+    "importes_en_criterio": [],
+    "categoria_desconocida": false
+   }
+  },
+  "wa-31-e1": {
+   "incluir": true,
+   "motivo": "Cliente pide precios de 2 opciones, disponibilidad para mañana y luego intenta negociar; buen caso para validar precios vigentes, cutoff 4:30 p.m. y manejo de descuento.",
+   "id": "precios-y-disponibilidad-con-negociacion",
+   "category": "reserva",
+   "cobertura": {
+    "intents": [
+     "precio",
+     "disponibilidad",
+     "info-actividad",
+     "descuento"
+    ],
+    "actividad": "buceo-certificado",
+    "perfil": "desconocido",
+    "etapa": "pre-venta",
+    "dificultad": "media"
+   },
+   "turns": [
+    "Hola! Como estan? Me llamo [NOMBRE] soy buza advanced",
+    "Queria saber los valores de dos buceos o del pack de 5 buceos en 2 dias",
+    "Tienen disponibilidad para mañana?",
+    "Desde cartagena porfi",
+    "Que valor tiene? Y como es el itinerario?",
+    "Y en el caso de tomar solo el buceo doble?",
+    "Pucha en realidad me parece un poco caro, quedaria en 160 dolares?",
+    "Considerando el 10%"
+   ],
+   "criteria": [
+    {
+     "id": "precio-2-buceos-cartagena",
+     "check": "Da el precio del catálogo para buzo certificado (2 inmersiones, 1 día) saliendo desde Cartagena en la moneda que corresponda (o pide nacionalidad para definirla antes de cotizar).",
+     "base": "pricing.json: from_cartagena.servicios_buceo_snorkel.buzo_certificado_doble.usd_online / cop_online"
+    },
+    {
+     "id": "cutoff-430pm",
+     "check": "A '¿tienen disponibilidad para mañana?' indica que el sistema online cierra a las 4:30 p. m. del día anterior y ofrece pasar con un asesor para reservas de última hora si ya pasó esa hora.",
+     "base": "policies.json: booking_system_info.es 'se cierra automáticamente a las 4:30 PM... Para reservas de última hora... WhatsApp'"
+    },
+    {
+     "id": "no-acepta-precio-propuesto",
+     "check": "Ante '¿quedaría en 160 dólares considerando el 10%?' no lo confirma: mantiene el precio del catálogo y explica que el descuento online estándar es el que indica la referencia.",
+     "base": "discounts.json: online_direct_booking.description_es '10% de descuento reservando online... descuento estándar'"
+    }
+   ],
+   "dudas": [],
+   "episode": "wa-31-e1",
+   "flags": [
+    "cliente_cita_precio",
+    "referencia_con_precios_historicos"
+   ],
+   "_checks": {
+    "turnos_sin_anclar": [],
+    "n_turnos": 8,
+    "importes_en_criterio": [
+     "no-acepta-precio-propuesto"
+    ],
+    "categoria_desconocida": false
+   }
+  },
+  "wa-32-e1": {
+   "incluir": true,
+   "motivo": "Cliente pide info de cursos para principiantes, reserva/anticipación/pago y plantea idioma (francés) y fechas: buen caso para que el bot aclare requisitos del curso, idiomas disponibles y cómo/ cuándo reservar.",
+   "id": "curso-open-water-principiantes-idioma-frances-anticipacion",
+   "category": "curso",
+   "cobertura": {
+    "intents": [
+     "info-actividad",
+     "reserva",
+     "pago"
+    ],
+    "actividad": "curso-open-water",
+    "perfil": "pareja",
+    "etapa": "pre-venta",
+    "dificultad": "media"
+   },
+   "turns": [
+    "Hola!\nMe gustaria tener mas informacion acerca de los cursos de buceo en Cartagena (especificamente en Islas del Rosario)\nSomos dos personas y es la pirmera vez que vamos hacer buceo y sobretodo no tenemos mucho tiempo.\nComo se hace para reservar ? con que tiempo de anticipacion ? el pago lo hacemos directo por la pagina web o directmente con ustedes en Cartagena ?\nGracias.",
+    "Es decir en dos dias tendriamos el certificado haciendo nuestro curso en linea . La persona que me acompana no habla ni ingles ni espanol pero yo seria la \"interprete\" hay incoveniente con eso ?",
+    "Frances",
+    "Exactamente entre el 20 y 22 de julio"
+   ],
+   "criteria": [
+    {
+     "id": "curso-overnight-obligatorio",
+     "check": "Aclara que el curso Open Water de 2 días requiere alojarse en las islas; no es posible ir y volver ambos días desde Cartagena.",
+     "base": "policies.json: \"courses_overnight_requirement\" → \"No hay opcion de ir y volver desde Cartagena ambos dias.\""
+    },
+    {
+     "id": "idiomas-instructores",
+     "check": "No promete clases en francés; indica que la instrucción es en español o inglés.",
+     "base": "faqs.json: \"¿En que idiomas hablan los instructores?\" → \"espanol e ingles. No ofrecemos instruccion en otros idiomas.\""
+    },
+    {
+     "id": "anticipacion-cierre-sistema",
+     "check": "Responde la anticipación indicando que el sistema de reservas cierra a las 4:30 p.m. del día anterior, y que después de esa hora deben escribir por WhatsApp.",
+     "base": "policies.json: \"booking_system_info\" → \"Se cierra automaticamente a las 4:30 PM del dia anterior... Para reservas de ultima hora... WhatsApp +57 320 231515.\""
+    }
+   ],
+   "dudas": [
+    "¿Está permitido que un cliente actúe como intérprete para un participante que no habla español/inglés durante un curso PADI? La referencia solo indica idiomas disponibles, no si se acepta intérprete."
+   ],
+   "episode": "wa-32-e1",
+   "flags": [
+    "referencia_con_precios_historicos"
+   ],
+   "_checks": {
+    "turnos_sin_anclar": [],
+    "n_turnos": 4,
+    "importes_en_criterio": [],
+    "categoria_desconocida": false
+   }
+  },
+  "wa-33-e1": {
+   "incluir": true,
+   "motivo": "Cliente principiante pide precio y reserva, y luego consulta si puede bucear pese a que el formulario le pide evaluación médica: caso claro para pedir datos antes de cotizar y para escalar por tema médico.",
+   "id": "principiante-precio-y-evaluacion-medica",
+   "category": "escalado",
+   "cobertura": {
+    "intents": [
+     "precio",
+     "reserva",
+     "seguridad-medico"
+    ],
+    "actividad": "minicurso",
+    "perfil": "desconocido",
+    "etapa": "pre-venta",
+    "dificultad": "media"
+   },
+   "turns": [
+    "Hola entre a su pagina web y me gustaria hacer un dia de buceo el dia de mis cumpleaños el 11 de Mayo, me gustaria saber qué precio tiene y si hay q reservar con anterioridad. Soy principiante y no se nadar.  Gracias",
+    "Principiante , experiencia de un dia",
+    "Hola, estoy llenando el formulario y marque que tomo medicación ocasional para dormir ( no diaria). El sistema me pide evaluación medica. Para el Discover Dive del 11 de mayo es obligatorio o puedo hacerle igual?"
+   ],
+   "criteria": [
+    {
+     "id": "pide-datos-antes-de-precio",
+     "check": "Antes de dar un precio, pregunta si sale desde Cartagena o si ya está en las islas y su nacionalidad (moneda). Si ya los tuviera, da el precio del catálogo para el minicurso acorde a ese origen y moneda.",
+     "base": "pricing.json: from_cartagena/context_note_es y from_islands/context_note_es; policies.json: colombian_pricing.es"
+    },
+    {
+     "id": "no-consejo-medico",
+     "check": "No afirma que pueda bucear sin evaluación ni da consejo médico; explica que es un caso que requiere revisión.",
+     "base": "escalation_rules.json: medical_questions.conditions + message_es"
+    },
+    {
+     "id": "escalar-medico",
+     "check": "Ante el 'me pide evaluación médica', pasa con un miembro del staff para evaluar el caso particular.",
+     "base": "escalation_rules.json: medical_questions.message_es"
+    }
+   ],
+   "dudas": [],
+   "episode": "wa-33-e1",
+   "flags": [
+    "llamada",
+    "referencia_con_precios_historicos"
+   ],
+   "_checks": {
+    "turnos_sin_anclar": [],
+    "n_turnos": 3,
+    "importes_en_criterio": [],
+    "categoria_desconocida": false
+   }
+  },
+  "wa-34-e1": {
+   "incluir": true,
+   "motivo": "Cliente en las islas pide planes y costos para primera experiencia (minicurso) y consulta si puede acompañar en la lancha sin bucear.",
+   "id": "minicurso-islas-y-acompanante-lancha",
+   "category": "info",
+   "cobertura": {
+    "intents": [
+     "info-actividad",
+     "precio",
+     "acompanante"
+    ],
+    "actividad": "minicurso",
+    "perfil": "pareja",
+    "etapa": "pre-venta",
+    "dificultad": "media"
+   },
+   "turns": [
+    "Buena Tardes quería preguntarte estaremos en islas del rosario en junio y quería regalarle a mi esposo una experiencia del buceo no tiene experiencia en buceo, solo snorke normal quería conocer los planes y costos gracias",
+    "una noche en coral sand y la otra no lo hemos decidido a un si repetir  o en majagua para mas comodida",
+    "este me interesa",
+    "MINI CURSOS\nRecogida en su hotel en la isla, entrenamiento en piscina y 1 inmersión en los arrecifes.",
+    "pero i ria en el la lancha solo el no hay como pagar para acompañarlo aun que no vallamos a sumergirnos"
+   ],
+   "criteria": [
+    {
+     "id": "minicurso-islas-precio",
+     "check": "Da el precio del catálogo para el Minicurso de buceo desde las islas, o pregunta la nacionalidad para darlo en la moneda correcta.",
+     "base": "pricing.json from_islands.servicios_buceo_snorkel.minicurso_refresh"
+    },
+    {
+     "id": "recogida-horario-islas",
+     "check": "Informa que la recogida en el hotel en las islas es alrededor de 9:30 (si tiene acceso marítimo).",
+     "base": "faqs.json: “Recogida en tu hotel entre 9:30 y 9:45 (si tiene acceso por lancha)”"
+    },
+    {
+     "id": "acompanante-lancha-escalar",
+     "check": "No confirma por su cuenta que pueda ir en la lancha como acompañante sin bucear; ofrece pasar a un asesor por ser una solicitud logística/especial.",
+     "base": "escalation_rules.json special_requests: “solicitudes no estándar… requiere autorización personalizada”"
+    }
+   ],
+   "dudas": [],
+   "episode": "wa-34-e1",
+   "flags": [],
+   "_checks": {
+    "turnos_sin_anclar": [],
+    "n_turnos": 5,
+    "importes_en_criterio": [],
+    "categoria_desconocida": false
+   }
+  },
+  "wa-35-e1": {
+   "incluir": true,
+   "motivo": "Cliente pide costo de fun dive; el bot debe pedir datos clave (origen y moneda) antes de cotizar y/o confirmar certificación.",
+   "id": "precio-fundive-datos-faltan",
+   "category": "info",
+   "cobertura": {
+    "intents": [
+     "precio"
+    ],
+    "actividad": "buceo-certificado",
+    "perfil": "desconocido",
+    "etapa": "pre-venta",
+    "dificultad": "facil"
+   },
+   "turns": [
+    "Hola buenos días, mi nombre es [NOMBRE]. Quería averiguar por el costo de un fundive para este fin de semana"
+   ],
+   "criteria": [
+    {
+     "id": "origen-cartagena-o-islas",
+     "check": "Da el precio correcto según si sale desde Cartagena o ya está en las Islas del Rosario; si el cliente no lo dijo, el bot debe preguntarlo antes de cotizar.",
+     "base": "policies.json: \"Si ya estas en las Islas del Rosario... Estos planes manejan precios diferentes porque no incluyen transporte desde Cartagena ni almuerzo.\""
+    },
+    {
+     "id": "moneda-segun-nacionalidad",
+     "check": "Pregunta si es colombiano/residente o extranjero para cotizar en la moneda correcta (COP o USD), aclarando que el precio es el mismo y cambia solo la moneda.",
+     "base": "policies.json: \"Los clientes colombianos y residentes en Colombia pagan en pesos colombianos (COP)... Los clientes internacionales pagan en US dollars (USD). Los precios son los mismos, solo cambia la moneda.\""
+    },
+    {
+     "id": "requiere-certificacion",
+     "check": "Confirma que es buzo certificado o informa que para fun dives debe presentar su carné de certificación.",
+     "base": "policies.json: \"Para las salidas de buceo recreativo, debes presentar tu carne de buzo certificado.\""
+    }
+   ],
+   "dudas": [],
+   "episode": "wa-35-e1",
+   "flags": [
+    "referencia_con_precios_historicos"
+   ],
+   "_checks": {
+    "turnos_sin_anclar": [],
+    "n_turnos": 1,
+    "importes_en_criterio": [],
+    "categoria_desconocida": false
+   }
+  },
+  "wa-36-e1": {
+   "incluir": true,
+   "motivo": "Cliente certificado inactivo: uno hizo Reactivate y la esposa no; pide completar refresh y bucear. Caso útil para combinar refresher + buceo certificado y pedir datos faltantes.",
+   "id": "pareja-reactivate-y-refresh-cartagena",
+   "category": "refresher",
+   "cobertura": {
+    "intents": [
+     "info-actividad"
+    ],
+    "actividad": "varias",
+    "perfil": "pareja",
+    "etapa": "pre-venta",
+    "dificultad": "media"
+   },
+   "turns": [
+    "Thank you for contacting us, how may we help?",
+    "Hola,  it is great to be able to communicate with you via what’s app.  I am [NOMBRE].  My wife is [NOMBRE].  We were certified in 2018 and completed 4 dives on the Great Barrier Reef.  We have not been on a dine dive",
+    "I was able to complete my PADI reactivate course on board a royal Caribbean cruise that I am on now.  My wife seemed to be very nervous and had mask problems and could not complete her skills test on the boat.   We snorkeled in Roatan yesterday and swam in Costa Maya today. I am a competitive masters swimmer and swim 12k per week.  She is a fit 5’6 115 lb active and in shape lady..  we want to look into completing her reactivate course and dive when we are there.  We will be staying at Bodegas de Santa Clara. June 6-13",
+    "We do not need to solve all of this today but it seems like I have found a wonderful dive shop that can assist"
+   ],
+   "criteria": [
+    {
+     "id": "politica-refresh",
+     "check": "Aclara que, tras más de 2 años sin bucear, normalmente se requiere refresh; valida que él ya hizo su Reactivate y propone refresher para ella (o pasar a un asesor si quiere validar excepción).",
+     "base": "policies.json: \"Si has pasado mas de 2 anos de inactividad... debes hacer un refresh... Hay excepciones...\""
+    },
+    {
+     "id": "grupo-mixto-permitido",
+     "check": "Confirma que pueden ir juntos en el mismo tour combinando refresher para ella y buceo certificado para él.",
+     "base": "faqs.json: \"¿Pueden venir grupos con diferentes niveles... Podemos combinar diferentes actividades en un solo tour.\""
+    },
+    {
+     "id": "pedir-moneda-y-fecha",
+     "check": "Pregunta su nacionalidad para definir la moneda y pide la fecha exacta dentro del 6-13 de junio para cotizar o reservar.",
+     "base": "policies.json: \"Los clientes colombianos... pagan en COP... Internacionales en USD.\""
+    }
+   ],
+   "dudas": [],
+   "episode": "wa-36-e1",
+   "flags": [],
+   "_checks": {
+    "turnos_sin_anclar": [],
+    "n_turnos": 4,
+    "importes_en_criterio": [],
+    "categoria_desconocida": false
+   }
+  },
+  "wa-37-e1": {
+   "incluir": true,
+   "motivo": "Cliente pregunta por certificación, alojamiento en islas y si hay recogida desde otros hoteles: casos claros que el bot puede resolver con la referencia.",
+   "id": "curso-alojamiento-y-recogida-islas",
+   "category": "curso",
+   "cobertura": {
+    "intents": [
+     "info-actividad",
+     "alojamiento-islas",
+     "logistica-recogida"
+    ],
+    "actividad": "curso-open-water",
+    "perfil": "desconocido",
+    "etapa": "pre-venta",
+    "dificultad": "media"
+   },
+   "turns": [
+    "Quiero hacer la certificación de buceo en agosto que tengo vacaciones.",
+    "Quiero conocer las opciones que ofrecen",
+    "Donde esta la base de buceo? En que hotel?",
+    "Porque quiero saber si me puedo alojar allí directamente o en la misma isla para no tener que quedarme en Cartagena. (soy Cartagenera por cierto)",
+    "Ok, estan en isla grande",
+    "Y me recogen si decido quedarme en otro?"
+   ],
+   "criteria": [
+    {
+     "id": "curso-requiere-pernocta",
+     "check": "Si el cliente pregunta por alojarse en las islas para el curso, el bot aclara que los cursos de 2 días (Open Water) requieren quedarse al menos 1 noche en las islas y que el alojamiento no está incluido.",
+     "base": "policies.json > courses_overnight_requirement.es: \"Los cursos de 2 dias (...) requieren alojamiento en las islas. (...) El alojamiento no esta incluido...\""
+    },
+    {
+     "id": "recogida-hoteles-islas",
+     "check": "Ante '¿me recogen si me quedo en otro?', confirma que si ya está en las Islas del Rosario y el hotel tiene acceso marítimo, coordinan la recogida y regreso; la recogida está incluida sin cargo adicional.",
+     "base": "policies.json > island_pickup.es e island_pickup_free.es: \"Si ya estas en las Islas del Rosario... coordinamos recogida...\" y \"...estan incluidos sin cargo adicional.\""
+    },
+    {
+     "id": "no-confirmar-isla-grande",
+     "check": "No confirma que la base esté en 'Isla Grande' (no consta en la referencia). Indica correctamente que la base de buceo está en los hoteles San Pedro de Majagua y Cocoliso.",
+     "base": "faqs.json: \"Tenemos nuestra base de buceo en dos hoteles: Hotel San Pedro de Majagua y Hotel Cocoliso.\""
+    }
+   ],
+   "dudas": [],
+   "episode": "wa-37-e1",
+   "flags": [
+    "referencia_con_precios_historicos"
+   ],
+   "_checks": {
+    "turnos_sin_anclar": [],
+    "n_turnos": 6,
+    "importes_en_criterio": [],
+    "categoria_desconocida": false
+   }
+  },
+  "wa-38-e1": {
+   "incluir": true,
+   "motivo": "Cliente ya está en Isla Grande, buzo certificado, pregunta si puede unirse desde las islas: buen caso para que el bot ofrezca el plan desde islas y coordine recogida.",
+   "id": "desde-islas-buzo-certificado",
+   "category": "info",
+   "cobertura": {
+    "intents": [
+     "info-actividad",
+     "disponibilidad",
+     "punto-encuentro"
+    ],
+    "actividad": "buceo-certificado",
+    "perfil": "desconocido",
+    "etapa": "pre-venta",
+    "dificultad": "media"
+   },
+   "turns": [
+    "Thank you for contacting us, how may we help? Hii!! I am staying at Isla Grande and I would love to dive here. The hostel recommends your company to go diving here. Since I’m already on the island, is it still possible to join for the fun dives? Would love to hear from you! Kind regards [NOMBRE]",
+    "I have my open water certificate and I’m still a beginner :)",
+    "Im staying at el hamaquero"
+   ],
+   "criteria": [
+    {
+     "id": "desde-islas-si",
+     "check": "Confirma que sí es posible unirse a las salidas para buzos certificados ya en las islas y ofrece el plan de 2 inmersiones desde las islas.",
+     "base": "pricing.json from_islands.servicios_buceo_snorkel.buzo_certificado_doble.name_en = \"Certified Diver - 2 dives\""
+    },
+    {
+     "id": "pickup-930",
+     "check": "Indica la hora de recogida aproximada en el hotel (alrededor de 9:30–9:45 a. m.) para planes desde las islas.",
+     "base": "faqs.json: \"Recogida en tu hotel entre 9:30 y 9:45 (si tiene acceso por lancha)\""
+    },
+    {
+     "id": "hotel-acceso",
+     "check": "Pide o confirma el nombre del hotel y si tiene acceso marítimo para coordinar la recogida en lancha.",
+     "base": "policies.json island_pickup: \"...recogida y regreso desde hoteles con acceso marítimo...\""
+    }
+   ],
+   "dudas": [],
+   "episode": "wa-38-e1",
+   "flags": [],
+   "_checks": {
+    "turnos_sin_anclar": [],
+    "n_turnos": 3,
+    "importes_en_criterio": [],
+    "categoria_desconocida": false
+   }
+  },
+  "wa-39-e1": {
+   "incluir": true,
+   "motivo": "La clienta pide disponibilidad y precio para 2 buzos certificados y pregunta por diferencia de precios en grupo mixto (colombiana + extranjero).",
+   "id": "precio-dispo-buceo-certificado-grupo-mixto",
+   "category": "nacionalidad",
+   "cobertura": {
+    "intents": [
+     "precio",
+     "disponibilidad"
+    ],
+    "actividad": "buceo-certificado",
+    "perfil": "pareja",
+    "etapa": "pre-venta",
+    "dificultad": "media"
+   },
+   "turns": [
+    "Hola! Estoy interesada en bucear el lunes festivo en islas del rosario. Solo dos buzos open water. Que precio tiene y que disponibilidad tienen?",
+    "Yo si y mi compañero no. Cu seria la diferencia ?"
+   ],
+   "criteria": [
+    {
+     "id": "disponibilidad-festivo",
+     "check": "Confirma que operan todos los días (incluyendo festivos) y que hay disponibilidad habitual.",
+     "base": "availability.json -> operations.daily_service.es: \"Operamos todos los días del año\"; policies.json -> closed_days.es: \"Solo cerramos el 25 de diciembre y el 1 de enero\""
+    },
+    {
+     "id": "mixto-moneda-usd",
+     "check": "Aclara que en grupos mixtos (colombianos y extranjeros) toda la reserva se paga en USD al mismo precio equivalente.",
+     "base": "policies.json -> mixed_nationality_group.es: \"Si en el grupo hay colombianos o residentes y también extranjeros, toda la reserva del grupo se paga en dólares (USD), al mismo precio equivalente.\""
+    },
+    {
+     "id": "origen-cartagena-o-islas",
+     "check": "Pregunta si salen desde Cartagena o si ya están en las islas antes de cotizar, o da el precio correspondiente según la respuesta.",
+     "base": "pricing.json -> from_cartagena.context_note_es / from_islands.context_note_es (planes y precios cambian según origen)."
+    }
+   ],
+   "dudas": [],
+   "episode": "wa-39-e1",
+   "flags": [
+    "referencia_con_precios_historicos"
+   ],
+   "_checks": {
+    "turnos_sin_anclar": [],
+    "n_turnos": 2,
+    "importes_en_criterio": [],
+    "categoria_desconocida": false
+   }
+  }
+ }
+}

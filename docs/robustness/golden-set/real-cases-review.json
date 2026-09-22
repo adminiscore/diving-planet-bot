@@ -1,0 +1,33 @@
+{
+ "about": "Revision humana (Claude + Gadea, 22-sep) de real-cases-draft.json antes de entrar al golden-set. build_golden.py aplica estas correcciones: incluir (true/false), drop (criterios que se quitan), edit (texto nuevo de un criterio), add (criterios nuevos), no_auto (criterios que pasan de comprobacion por codigo a juez LLM), note. Motivos principales: exigir solo lo que el cliente pregunto, un dato por criterio, no copiar politicas enteras, y nada que la referencia no respalde.",
+ "reviewed_at": "2026-09-22",
+ "cases": {
+  "wa-01-e3": {"drop": ["datos-faltantes-para-cotizar", "elearning-requisito-tiempo"], "note": "El cliente pide los pasos para reservar y cita un precio; el eLearning y la lista de datos no los pregunto."},
+  "wa-01-e4": {"edit": {"refresh-menos-de-dos-anos": "A '¿tengo que hacer algo especial?' no le exige refresh: termino el curso basico el 3 de abril de 2025, hace menos de 2 años."}, "note": "Caduca en abril de 2027: a partir de ahi han pasado mas de 2 años y el criterio se invierte."},
+  "wa-01-e5": {"drop": ["no-validar-descuento-historico", "pago-segun-nacionalidad"], "note": "El cliente no cita ningun descuento ni pregunta como pagar."},
+  "wa-02-e4": {"no_auto": ["pago-por-link"], "edit": {"pago-por-link": "Ante 'dame la cuenta y transfiero' no da datos de cuentas bancarias: dirige al pago online (enlace de reserva) o, si le falta un dato para ello, lo pregunta; tambien vale pasar a una persona."}, "note": "Como comprobacion por codigo exigia el link en el ultimo turno aunque el bot aun necesite un dato."},
+  "wa-03-e1": {"drop": ["enlace-snorkel"], "edit": {"pide-origen": "Guia al cliente hacia el snorkel: pregunta si sale desde Cartagena o ya esta en las islas, o le comparte el plan del tour de snorkeling."}, "note": "El cliente solo dice que busca snorkel: preguntar o dar el plan son ambas correctas."},
+  "wa-05-e1": {"no_auto": ["link-de-reserva"], "edit": {"disponibilidad-diaria": "Confirma que operan todos los dias, asi que puede salir el 5 o el 6 de febrero.", "politica-fotos": "A '¿las fotos tienen precio adicional?' responde que no estan incluidas y que el instructor puede hacerlas de forma voluntaria (propina voluntaria), sin inventar un precio de fotos.", "link-de-reserva": "A 'no se como se haga la reserva' le da el enlace de reserva del plan de 2 inmersiones para buzos certificados, o pregunta el dato que le falte para darlo."}, "note": "Politica de fotos enfocada a la pregunta (decision de Gadea)."},
+  "wa-05-e4": {"drop": ["reschedule-politica"], "add": [{"id": "pasa-a-persona-cancelacion", "check": "Ante 'podemos cancelar' / '¿cual es el proceso?' de una reserva ya hecha, pasa a una persona para gestionarlo; no lo gestiona el ni inventa el proceso."}], "note": "Cancelar una reserva existente lo gestiona una persona."},
+  "wa-05-e6": {"note": "Duda resuelta por Gadea: basta con explicar la politica de fotos, enfocada a la pregunta."},
+  "wa-06-e1": {"drop": ["pide-carnet-certificado"], "edit": {"pide-origen-cartagena-o-islas": "Da informacion del plan para buzos certificados o pregunta si sale desde Cartagena o ya esta en las islas para darle el plan correcto."}, "note": "El carne no lo pregunto."},
+  "wa-07-e1": {"edit": {"politica-equipaje": "Responde que en la lancha se puede llevar una mochila o bolso por persona (sus dos mochilas, una por persona, entran en eso); no inventa casilleros ni custodia de equipaje."}},
+  "wa-10-e1": {"add": [{"id": "no-inventa-tamano-grupo", "check": "A '¿alrededor de cuantas personas van?' no da una cifra de personas por grupo o por instructor (no hay un numero oficial); puede decir que depende del dia o pasar a una persona."}], "note": "Decision de Gadea: no hay numero maximo oficial por grupo o instructor."},
+  "wa-10-e2": {"no_auto": ["link-reserva"], "edit": {"link-reserva": "A '¿como seria para apartar un cupo para el viernes?' le da el enlace de reserva online, o pregunta el dato que le falte para darlo."}},
+  "wa-11-e3": {"drop": ["cert-card-requerida"]},
+  "wa-12-e1": {"drop": ["proceso-reserva-estandar"], "note": "Es una agencia que cotiza para clientes: lo clave es no inventar el 'link especial' y pasar a una persona."},
+  "wa-14-e1": {"edit": {"fotos-no-incluidas-sin-fotografo": "A '¿habra un fotografo?' responde que no hay fotografo incluido; el instructor puede hacer fotos de forma voluntaria."}},
+  "wa-15-e1": {"edit": {"sin-nocturno-ofrece-4-diurnos": "Si no quieren el buceo nocturno, ofrece el paquete de 4 buceos diurnos del catalogo o pasa a una persona; no inventa un paquete de 5 con un buceo de tarde."}, "note": "La referencia no dice que el nocturno se pueda cambiar por uno diurno."},
+  "wa-18-e1": {"drop": ["moneda-por-nacionalidad"], "edit": {"disponibilidad-y-hora": "Confirma que operan todos los dias (tienen salida cuando pregunta)."}},
+  "wa-23-e1": {"drop": ["origen-cartagena-o-islas"], "note": "Ya lo cubre el criterio del precio del paquete de 5."},
+  "wa-24-e1": {"edit": {"disponibilidad-y-cutoff": "Confirma que hay salida el 24 de abril (operan todos los dias).", "equipaje-en-lancha": "A '¿les puedo dejar un bolso?' responde que en la lancha se puede llevar una mochila o bolso por persona; si quiere dejar equipaje aparte, pasa a una persona. No inventa una consigna."}},
+  "wa-27-e1": {"drop": ["sin-descuento-historico"], "note": "El cliente no cita ningun descuento."},
+  "wa-30-e1": {"edit": {"grupo-mixto-posible": "Confirma que buzos certificados y snorkelers pueden ir en el mismo tour.", "disponibilidad-diaria": "A 'if it's available' responde que operan todos los dias, sin inventar una comprobacion de cupo."}, "note": "Quitada la 'lancha separada' (no esta en la referencia) y texto con tildes corruptas."},
+  "wa-32-e1": {"drop": ["idiomas-instructores"], "note": "Los idiomas de instruccion no estan en la referencia: pendiente de Gadea."},
+  "wa-34-e1": {"drop": ["recogida-horario-islas"], "note": "La hora de recogida no la pregunto."},
+  "wa-35-e1": {"drop": ["requiere-certificacion"]},
+  "wa-36-e1": {"drop": ["pedir-moneda-y-fecha"], "note": "El cliente dice que no hace falta resolverlo hoy."},
+  "wa-37-e1": {"drop": ["no-confirmar-isla-grande"], "note": "Castigaria una respuesta que puede ser correcta: pendiente de Gadea si la base esta en Isla Grande."},
+  "wa-38-e1": {"drop": ["pickup-930"]}
+ }
+}
