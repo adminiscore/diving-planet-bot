@@ -53,10 +53,11 @@ URL_RE = re.compile(r"https?://\S+", re.IGNORECASE)
 PHONE_RE = re.compile(r"\+?\d[\d\s().-]{7,}\d")
 LONG_ID_RE = re.compile(r"\b\d{8,}\b")
 
-# Precios y descuentos de chats ANTIGUOS: estan obsoletos. En la respuesta del centro se marcan
-# para que nadie (ni el LLM que redacte criterios) los tome como referencia: manda el catalogo.
-# En los turnos del cliente se dejan tal cual (es lo que escribiria) y se marca el episodio: el bot
-# debe dar el precio ACTUAL y no dar por bueno el que cita el cliente.
+# Precios y descuentos de chats de 2025-26: pueden estar obsoletos (o seguir vigentes, como el 10 %
+# online). En la respuesta del centro se marcan como "historicos" para que nadie (ni el LLM que
+# redacte criterios) los tome como referencia: manda el catalogo actual. En los turnos del cliente
+# se dejan tal cual (es lo que escribiria) y se marca el episodio: el bot debe atenerse al catalogo
+# y no dar por bueno el importe que cita el cliente sin comprobarlo.
 _NUM_WORD = (
     r"(?:un|uno|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|diez|cien|ciento|doscientos|trescientos|"
     r"cuatrocientos|quinientos|seiscientos|setecientos|ochocientos|novecientos|veinte|treinta|"
@@ -74,8 +75,8 @@ PERCENT_RE = re.compile(r"\b\d{1,2}\s?%")
 
 
 def mark_old_prices(text: str) -> str:
-    text = MONEY_RE.sub(lambda m: f"[precio antiguo: {m.group(0).strip()}]", text)
-    return PERCENT_RE.sub(lambda m: f"[descuento antiguo: {m.group(0)}]", text)
+    text = MONEY_RE.sub(lambda m: f"[precio histórico: {m.group(0).strip()}]", text)
+    return PERCENT_RE.sub(lambda m: f"[descuento histórico: {m.group(0)}]", text)
 
 
 # --------------------------------------------------------------------------- parseo
@@ -422,12 +423,12 @@ def build(src: Path) -> None:
             if any(
                 MONEY_RE.search(m["rendered"]) or PERCENT_RE.search(m["rendered"]) for m in customer
             ):
-                flags.append("cliente_cita_precio_antiguo")
+                flags.append("cliente_cita_precio")
             if any(
-                "[precio antiguo" in t["text"] or "[descuento antiguo" in t["text"]
+                "[precio histórico" in t["text"] or "[descuento histórico" in t["text"]
                 for t in transcript
             ):
-                flags.append("referencia_con_precios_antiguos")
+                flags.append("referencia_con_precios_historicos")
             if len(customer) > 15:
                 flags.append("largo")
             if not any(
@@ -461,8 +462,8 @@ def build(src: Path) -> None:
                     "G1: episodios reales anonimizados, candidatos al golden-set. Nombres -> [NOMBRE], "
                     "telefonos -> [TELEFONO], correos -> [EMAIL], enlaces ajenos -> [ENLACE]. "
                     "`transcript` trae la respuesta REAL del centro como referencia HISTORICA: precios, "
-                    "descuentos y condiciones pueden estar obsoletos (marcados [precio antiguo: ...] / "
-                    "[descuento antiguo: ...]). Los criterios se escriben contra la KB y el catalogo actuales."
+                    "descuentos y condiciones pueden estar obsoletos (marcados [precio histórico: ...] / "
+                    "[descuento histórico: ...]). Los criterios se escriben contra la KB y el catalogo actuales."
                 ),
                 "chats": len(chats),
                 "episodes": len(episodes_out),
