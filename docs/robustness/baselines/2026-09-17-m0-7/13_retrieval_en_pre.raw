@@ -1,0 +1,233 @@
+﻿==============================================================================================================
+[1/20] Where is the meeting point?
+query_topics=[]
+  1. source=faqs id=None key=None score=0.6012 boosted=0.6176 topics=['meeting_point', 'depth']
+  2. source=faqs id=None key=None score=0.5324 boosted=0.5485 topics=['meeting_point', 'schedule']
+  3. source=policies id=None key=meeting_point score=0.5212 boosted=0.5370 topics=['meeting_point']
+  4. source=faqs id=None key=None score=0.3985 boosted=0.4141 topics=['meeting_point', 'depth', 'weather_cancellation']
+  5. source=services id=None key=snorkeling:requirements score=0.3973 boosted=0.4127 topics=['depth']
+  6. source=faqs id=None key=None score=0.3487 boosted=0.3638 topics=['location_islands', 'accommodation', 'depth']
+  7. source=faqs id=None key=None score=0.3336 boosted=0.3485 topics=['location_islands', 'accommodation']
+  8. source=conversations id=whatsapp_import_44_7769_721802_part3 key=None score=0.3282 boosted=0.3429 topics=['availability', 'meeting_point', 'certification', 'location_islands']
+==============================================================================================================
+[2/20] Is it at Muelle de la Bodeguita? Which gate?
+query_topics=['meeting_point']
+  1. source=faqs id=None key=None score=0.5393 boosted=0.7054 topics=['meeting_point', 'depth']
+  2. source=faqs id=None key=None score=0.5329 boosted=0.6988 topics=['meeting_point', 'schedule']
+  3. source=policies id=None key=meeting_point score=0.6075 boosted=0.6739 topics=['meeting_point']
+  4. source=conversations id=whatsapp_import_1_978_9145355_part3 key=None score=0.3578 boosted=0.6723 topics=['availability', 'meeting_point', 'schedule', 'certification', 'location_islands', 'equipment']
+  5. source=conversations id=whatsapp_import_1_647_5620690_part3 key=None score=0.3422 boosted=0.6559 topics=['meeting_point', 'schedule', 'certification', 'location_islands', 'photos_media']
+  6. source=conversations id=whatsapp_import_1_954_9903249_part3 key=None score=0.3280 boosted=0.6408 topics=['pricing', 'availability', 'meeting_point', 'certification', 'location_islands', 'forms_waiver', 'equipment', 'photos_media', 'seasickness']
+  7. source=faqs id=None key=None score=0.4668 boosted=0.6324 topics=['meeting_point', 'depth', 'weather_cancellation']
+  8. source=conversations id=whatsapp_maria_usa_rescue_diver_payment_meeting_point_seasick_and_logbook_sites key=None score=0.2936 boosted=0.6038 topics=['availability', 'meeting_point', 'seasickness']
+==============================================================================================================
+[3/20] What time do we meet and what time do we return?
+query_topics=['schedule']
+  1. source=faqs id=None key=None score=0.5300 boosted=0.7164 topics=['meeting_point', 'schedule']
+  2. source=faqs id=None key=None score=0.4632 boosted=0.5994 topics=['meeting_point', 'depth', 'weather_cancellation']
+  3. source=services id=None key=snorkeling_already_on_island:itinerary score=0.3561 boosted=0.5813 topics=['schedule', 'location_islands', 'accommodation', 'depth']
+  4. source=faqs id=None key=None score=0.4289 boosted=0.5647 topics=['meeting_point', 'depth']
+  5. source=services id=None key=minicourse_already_on_island:itinerary score=0.3367 boosted=0.5614 topics=['schedule', 'location_islands', 'accommodation', 'equipment', 'depth']
+  6. source=services id=None key=2_dives_1_day_already_on_island:itinerary score=0.3322 boosted=0.5567 topics=['schedule', 'location_islands', 'accommodation', 'equipment', 'depth']
+  7. source=services id=None key=1_dive_1_day_already_on_island:itinerary score=0.3262 boosted=0.5505 topics=['schedule', 'location_islands', 'accommodation', 'equipment', 'depth']
+  8. source=services id=None key=fish_identification_specialty_already_on_island:itinerary score=0.3135 boosted=0.5376 topics=['schedule', 'certification', 'location_islands', 'accommodation', 'equipment', 'depth']
+==============================================================================================================
+[4/20] What should I bring? (towel, sunscreen, etc.)
+query_topics=['equipment']
+  1. source=faqs id=None key=None score=0.4184 boosted=0.6448 topics=['location_islands', 'equipment', 'photos_media']
+  2. source=services id=None key=snorkeling_already_on_island:included score=0.3538 boosted=0.5592 topics=['certification', 'location_islands', 'accommodation', 'equipment']
+  3. source=faqs id=None key=None score=0.3770 boosted=0.5532 topics=[]
+  4. source=faqs id=None key=None score=0.3208 boosted=0.5443 topics=['equipment', 'depth']
+  5. source=faqs id=None key=None score=0.3206 boosted=0.5437 topics=['equipment']
+  6. source=faqs id=None key=None score=0.3190 boosted=0.5420 topics=['booking', 'schedule', 'certification', 'location_islands', 'accommodation', 'equipment', 'depth']
+  7. source=faqs id=None key=None score=0.3154 boosted=0.5379 topics=['equipment']
+  8. source=services id=None key=7_dives_3_days_already_on_island:included score=0.3295 boosted=0.5345 topics=['certification', 'location_islands', 'accommodation', 'equipment']
+==============================================================================================================
+[5/20] How much is the 2 dives 1 day plan in USD?
+query_topics=['pricing']
+  1. source=services id=None key=2_dives_1_day:pricing score=0.7088 boosted=1.0352 topics=['pricing', 'discount', 'booking']
+  2. source=services id=None key=3_dives_1_day:pricing score=0.7078 boosted=1.0339 topics=['pricing', 'booking']
+  3. source=services id=None key=4_dives_2_days:pricing score=0.6987 boosted=1.0246 topics=['pricing', 'booking']
+  4. source=services id=None key=5_dives_2_days:pricing score=0.6740 boosted=0.9997 topics=['pricing', 'booking']
+  5. source=services id=None key=9_dives_4_days:pricing score=0.6687 boosted=0.9941 topics=['pricing', 'booking']
+  6. source=services id=None key=7_dives_3_days:pricing score=0.6627 boosted=0.9879 topics=['pricing', 'booking']
+  7. source=services id=None key=1_dive_1_day_already_on_island:pricing score=0.6367 boosted=0.9616 topics=['pricing', 'booking', 'location_islands']
+  8. source=services id=None key=3_dives_1_day_already_on_island:pricing score=0.6351 boosted=0.9598 topics=['pricing', 'booking', 'location_islands']
+==============================================================================================================
+[6/20] Do Colombians get a local price?
+query_topics=[]
+  1. source=faqs id=None key=None score=0.6970 boosted=0.7134 topics=['pricing', 'discount', 'booking', 'discount_colombian']
+  2. source=policies id=None key=colombian_pricing score=0.6908 boosted=0.7069 topics=['pricing', 'discount_colombian']
+  3. source=faqs id=None key=None score=0.5901 boosted=0.6060 topics=['pricing', 'discount_colombian']
+  4. source=faqs id=None key=None score=0.5859 boosted=0.6015 topics=['pricing', 'discount', 'booking', 'refresher', 'discount_colombian', 'equipment']
+  5. source=faqs id=None key=None score=0.5389 boosted=0.5543 topics=['pricing', 'discount', 'booking', 'discount_colombian', 'equipment']
+  6. source=faqs id=None key=None score=0.5285 boosted=0.5436 topics=['booking', 'discount_colombian']
+  7. source=faqs id=None key=None score=0.5140 boosted=0.5289 topics=['booking', 'discount_colombian', 'payment']
+  8. source=services id=None key=snorkeling_already_on_island:pricing score=0.5097 boosted=0.5244 topics=['pricing', 'booking', 'location_islands']
+==============================================================================================================
+[7/20] Do I need a discount code for the 10% discount?
+query_topics=['discount']
+  1. source=services id=None key=minicourse:pricing score=0.3030 boosted=0.5686 topics=['pricing', 'discount', 'booking']
+  2. source=services id=None key=referral:pricing score=0.2931 boosted=0.5582 topics=['pricing', 'discount', 'booking', 'certification']
+  3. source=services id=None key=mindful_diving:pricing score=0.2853 boosted=0.5498 topics=['pricing', 'discount', 'booking']
+  4. source=services id=None key=nitrox_specialty:pricing score=0.2583 boosted=0.5214 topics=['pricing', 'discount', 'booking', 'certification']
+  5. source=services id=None key=snorkeling:pricing score=0.2557 boosted=0.5185 topics=['pricing', 'discount', 'booking']
+  6. source=services id=None key=2_dives_1_day:pricing score=0.2416 boosted=0.5034 topics=['pricing', 'discount', 'booking']
+  7. source=services id=None key=naturalist_specialty:pricing score=0.2366 boosted=0.4979 topics=['pricing', 'discount', 'booking', 'certification']
+  8. source=services id=None key=buoyancy_specialty:pricing score=0.2336 boosted=0.4941 topics=['pricing', 'discount', 'booking', 'certification']
+==============================================================================================================
+[8/20] How much is snorkeling and what is included?
+query_topics=[]
+  1. source=services id=None key=snorkeling_already_on_island:included score=0.6489 boosted=0.6653 topics=['certification', 'location_islands', 'accommodation', 'equipment']
+  2. source=services id=None key=snorkeling:included score=0.6365 boosted=0.6526 topics=['schedule', 'equipment', 'photos_media']
+  3. source=services id=None key=snorkeling:pricing score=0.6094 boosted=0.6253 topics=['pricing', 'discount', 'booking']
+  4. source=services id=None key=snorkeling_already_on_island:pricing score=0.5678 boosted=0.5834 topics=['pricing', 'booking', 'location_islands']
+  5. source=pricing id=None key=None score=0.5667 boosted=0.5821 topics=['pricing']
+  6. source=services id=None key=snorkeling_already_on_island:itinerary score=0.5651 boosted=0.5803 topics=['schedule', 'location_islands', 'accommodation', 'depth']
+  7. source=services id=None key=minicourse:included score=0.5649 boosted=0.5798 topics=['schedule', 'certification', 'equipment', 'photos_media']
+  8. source=services id=None key=snorkeling_already_on_island:requirements score=0.5590 boosted=0.5737 topics=['location_islands', 'accommodation', 'equipment', 'depth']
+==============================================================================================================
+[9/20] How do I book?
+query_topics=['booking']
+  1. source=faqs id=None key=None score=0.4800 boosted=0.6864 topics=['availability', 'booking']
+  2. source=faqs id=None key=None score=0.4718 boosted=0.6779 topics=['booking']
+  3. source=faqs id=None key=None score=0.4151 boosted=0.6207 topics=['booking', 'discount_colombian']
+  4. source=policies id=None key=booking_system_info score=0.4289 boosted=0.6147 topics=['booking']
+  5. source=policies id=None key=insurance_form_requirement score=0.3923 boosted=0.5775 topics=['booking', 'equipment']
+  6. source=policies id=None key=cancellation score=0.3917 boosted=0.5766 topics=['booking']
+  7. source=faqs id=None key=None score=0.3671 boosted=0.5706 topics=['booking', 'schedule', 'certification', 'refresher', 'location_islands', 'accommodation', 'equipment', 'depth']
+  8. source=faqs id=None key=None score=0.3634 boosted=0.5666 topics=['booking', 'schedule', 'certification', 'refresher', 'location_islands', 'accommodation', 'equipment', 'depth']
+==============================================================================================================
+[10/20] Can I pay by bank transfer or QR?
+query_topics=['payment']
+  1. source=faqs id=None key=None score=0.4478 boosted=0.6342 topics=['booking', 'discount_colombian', 'payment']
+  2. source=conversations id=whatsapp_import_1_506_4401632_part3 key=None score=0.3115 boosted=0.5762 topics=['availability', 'certification', 'location_islands', 'payment', 'forms_waiver', 'equipment']
+  3. source=faqs id=None key=None score=0.4278 boosted=0.5639 topics=['pricing']
+  4. source=faqs id=None key=None score=0.4199 boosted=0.5558 topics=['booking']
+  5. source=faqs id=None key=None score=0.4195 boosted=0.5551 topics=['booking', 'discount_colombian']
+  6. source=conversations id=whatsapp_import_kcyt_y___lk_part3 key=None score=0.3126 boosted=0.5276 topics=['certification']
+  7. source=faqs id=None key=None score=0.3811 boosted=0.5165 topics=['booking']
+  8. source=conversations id=whatsapp_maria_usa_rescue_diver_payment_meeting_point_seasick_and_logbook_sites key=None score=0.2976 boosted=0.5119 topics=['availability', 'meeting_point', 'seasickness']
+==============================================================================================================
+[11/20] Which form do I need to fill out as a certified diver?
+query_topics=[]
+  1. source=policies id=None key=certification_required score=0.7052 boosted=0.7216 topics=[]
+  2. source=faqs id=None key=None score=0.6624 boosted=0.6785 topics=['availability', 'certification']
+  3. source=faqs id=None key=None score=0.6568 boosted=0.6727 topics=['certification', 'equipment']
+  4. source=faqs id=None key=None score=0.6140 boosted=0.6297 topics=['certification']
+  5. source=policies id=None key=packages_certification_requirement score=0.6057 boosted=0.6211 topics=['availability', 'certification']
+  6. source=services id=None key=2_dives_1_day:requirements score=0.6007 boosted=0.6159 topics=['refresher', 'equipment']
+  7. source=services id=None key=divemaster:requirements score=0.5945 boosted=0.6094 topics=['certification', 'equipment']
+  8. source=faqs id=None key=None score=0.5919 boosted=0.6066 topics=['booking', 'schedule', 'refresher']
+==============================================================================================================
+[12/20] Do you need a photo of my certification card?
+query_topics=[]
+  1. source=faqs id=None key=None score=0.5309 boosted=0.5473 topics=['certification']
+  2. source=policies id=None key=certification_required score=0.5065 boosted=0.5226 topics=[]
+  3. source=faqs id=None key=None score=0.4420 boosted=0.4578 topics=['certification']
+  4. source=faqs id=None key=None score=0.4180 boosted=0.4336 topics=['booking', 'schedule', 'refresher']
+  5. source=faqs id=None key=None score=0.3537 boosted=0.3691 topics=['availability', 'certification']
+  6. source=policies id=None key=packages_certification_requirement score=0.3453 boosted=0.3604 topics=['availability', 'certification']
+  7. source=conversations id=whatsapp_import_kcyt_y___lk_part3 key=None score=0.3411 boosted=0.3561 topics=['certification']
+  8. source=policies id=None key=medical_restrictions score=0.3375 boosted=0.3522 topics=['forms_waiver']
+==============================================================================================================
+[13/20] What happens if the trip is canceled due to weather? Is there a refund or date change?
+query_topics=['weather_cancellation']
+  1. source=policies id=None key=reschedule score=0.4983 boosted=0.8642 topics=['availability']
+  2. source=faqs id=None key=None score=0.6140 boosted=0.8004 topics=['reschedule', 'weather_cancellation']
+  3. source=policies id=None key=cancellation score=0.3888 boosted=0.7540 topics=['booking']
+  4. source=faqs id=None key=None score=0.5558 boosted=0.7419 topics=['booking', 'reschedule', 'location_islands', 'weather_cancellation']
+  5. source=policies id=None key=closed_days score=0.3136 boosted=0.7277 topics=['weather_cancellation']
+  6. source=policies id=None key=booking_system_info score=0.2759 boosted=0.6389 topics=['booking']
+  7. source=policies id=None key=insurance_form_requirement score=0.2660 boosted=0.6288 topics=['booking', 'equipment']
+  8. source=faqs id=None key=None score=0.4424 boosted=0.6280 topics=['certification', 'location_islands', 'accommodation', 'weather_cancellation']
+==============================================================================================================
+[14/20] If I can't travel, can I change the date?
+query_topics=['reschedule']
+  1. source=policies id=None key=reschedule score=0.4917 boosted=0.6881 topics=['availability']
+  2. source=faqs id=None key=None score=0.4046 boosted=0.5907 topics=['reschedule', 'weather_cancellation']
+  3. source=faqs id=None key=None score=0.3382 boosted=0.5238 topics=['booking', 'reschedule', 'location_islands', 'weather_cancellation']
+  4. source=faqs id=None key=None score=0.3422 boosted=0.4781 topics=['weather_cancellation']
+  5. source=policies id=None key=cancellation score=0.2829 boosted=0.4764 topics=['booking']
+python.exe : C:\Users\gonza\.devin\diving-planet-bot\scripts\eval_retrieval.py:100: DeprecationWarning: 
+datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to 
+represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+En C:\Users\gonza\AppData\Local\Temp\claude\c--Users-gonza--devin-diving-planet-bot\17ee10e5-cda6-4175-a2ec-4021ce5138c
+a\scratchpad\m0-7\run_rag_alineado.ps1: 19 Carácter: 5
++     & python -m @argList 2>&1 | Out-File "$out\$name.raw" -Encoding u ...
++     ~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (C:\Users\gonza\...(datetime.UTC).:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+  "generated_at": datetime.utcnow().isoformat() + "Z",
+  6. source=faqs id=None key=None score=0.3303 boosted=0.4657 topics=['certification']
+  7. source=policies id=None key=closed_days score=0.2677 boosted=0.4605 topics=['weather_cancellation']
+  8. source=policies id=None key=booking_system_info score=0.2649 boosted=0.4575 topics=['booking']
+==============================================================================================================
+[15/20] I have Open Water, which plan do you recommend?
+query_topics=['certification']
+  1. source=faqs id=None key=None score=0.5663 boosted=0.7727 topics=['certification']
+  2. source=faqs id=None key=None score=0.4979 boosted=0.7041 topics=['certification', 'depth']
+  3. source=faqs id=None key=None score=0.4829 boosted=0.6888 topics=['certification', 'equipment']
+  4. source=faqs id=None key=None score=0.4597 boosted=0.6653 topics=['certification', 'equipment']
+  5. source=faqs id=None key=None score=0.4545 boosted=0.6599 topics=['availability', 'certification']
+  6. source=faqs id=None key=None score=0.4462 boosted=0.6513 topics=['certification', 'equipment']
+  7. source=faqs id=None key=None score=0.4410 boosted=0.6459 topics=['certification', 'depth']
+  8. source=faqs id=None key=None score=0.4185 boosted=0.6228 topics=['certification']
+==============================================================================================================
+[16/20] I haven't dived in years, do I need a refresher?
+query_topics=['refresher']
+  1. source=faqs id=None key=None score=0.7013 boosted=0.8877 topics=['booking', 'refresher']
+  2. source=policies id=None key=refresh_requirement score=0.6452 boosted=0.8510 topics=['booking', 'refresher']
+  3. source=faqs id=None key=None score=0.6526 boosted=0.8387 topics=['booking', 'schedule', 'refresher']
+  4. source=faqs id=None key=None score=0.6174 boosted=0.7530 topics=[]
+  5. source=faqs id=None key=None score=0.6002 boosted=0.7356 topics=['equipment', 'depth']
+  6. source=services id=None key=2_dives_1_day:requirements score=0.5793 boosted=0.7244 topics=['refresher', 'equipment']
+  7. source=faqs id=None key=None score=0.5415 boosted=0.6764 topics=['depth']
+  8. source=faqs id=None key=None score=0.5402 boosted=0.6749 topics=['availability', 'certification']
+==============================================================================================================
+[17/20] What is the usual maximum depth?
+query_topics=['depth']
+  1. source=faqs id=None key=None score=0.6032 boosted=0.8096 topics=['certification', 'depth']
+  2. source=faqs id=None key=None score=0.5641 boosted=0.7702 topics=['certification', 'depth']
+  3. source=faqs id=None key=None score=0.4226 boosted=0.6285 topics=['location_islands', 'depth']
+  4. source=faqs id=None key=None score=0.3535 boosted=0.5584 topics=['depth']
+  5. source=faqs id=None key=None score=0.3399 boosted=0.5442 topics=['depth']
+  6. source=faqs id=None key=None score=0.3344 boosted=0.5383 topics=['equipment', 'depth']
+  7. source=faqs id=None key=None score=0.3303 boosted=0.5334 topics=['certification', 'depth']
+  8. source=faqs id=None key=None score=0.3651 boosted=0.5208 topics=['certification', 'equipment']
+==============================================================================================================
+[18/20] Which hotels are your dive bases on the islands?
+query_topics=[]
+  1. source=faqs id=None key=None score=0.5948 boosted=0.6112 topics=['booking', 'location_islands', 'accommodation']
+  2. source=services id=None key=minicourse_already_on_island:itinerary score=0.5737 boosted=0.5898 topics=['schedule', 'location_islands', 'accommodation', 'equipment', 'depth']
+  3. source=services id=None key=4_dives_2_days_already_on_island:itinerary score=0.5690 boosted=0.5848 topics=['schedule', 'location_islands', 'accommodation', 'equipment', 'depth']
+  4. source=services id=None key=4_dives_2_days_mixed_already_on_island:itinerary score=0.5673 boosted=0.5830 topics=['schedule', 'location_islands', 'accommodation', 'equipment', 'depth']
+  5. source=services id=None key=1_dive_1_day_already_on_island:itinerary score=0.5652 boosted=0.5806 topics=['schedule', 'location_islands', 'accommodation', 'equipment', 'depth']
+  6. source=services id=None key=2_dives_1_day_already_on_island:itinerary score=0.5652 boosted=0.5804 topics=['schedule', 'location_islands', 'accommodation', 'equipment', 'depth']
+  7. source=services id=None key=3_dives_1_day_already_on_island:itinerary score=0.5651 boosted=0.5800 topics=['schedule', 'location_islands', 'accommodation', 'equipment', 'depth']
+  8. source=services id=None key=open_water_already_on_island:itinerary score=0.5558 boosted=0.5705 topics=['schedule', 'certification', 'location_islands', 'accommodation', 'equipment', 'depth']
+==============================================================================================================
+[19/20] Is accommodation included?
+query_topics=['accommodation']
+  1. source=faqs id=None key=None score=0.4932 boosted=0.6496 topics=['schedule', 'photos_media']
+  2. source=faqs id=None key=None score=0.4284 boosted=0.6325 topics=['booking', 'schedule', 'certification', 'refresher', 'location_islands', 'accommodation', 'equipment', 'depth']
+  3. source=faqs id=None key=None score=0.4279 boosted=0.6318 topics=['booking', 'location_islands', 'accommodation']
+  4. source=faqs id=None key=None score=0.4276 boosted=0.6313 topics=['booking', 'schedule', 'certification', 'refresher', 'location_islands', 'accommodation', 'equipment', 'depth']
+  5. source=faqs id=None key=None score=0.4275 boosted=0.6310 topics=['booking', 'schedule', 'certification', 'refresher', 'location_islands', 'accommodation', 'equipment', 'depth']
+  6. source=faqs id=None key=None score=0.4202 boosted=0.6232 topics=['certification', 'location_islands', 'accommodation']
+  7. source=faqs id=None key=None score=0.4147 boosted=0.6170 topics=['booking', 'schedule', 'certification', 'location_islands', 'accommodation', 'equipment', 'depth']
+  8. source=faqs id=None key=None score=0.4135 boosted=0.6155 topics=['booking', 'schedule', 'certification', 'location_islands', 'accommodation', 'equipment', 'depth']
+==============================================================================================================
+[20/20] If I'm already staying on Isla Grande, can I dive from there?
+query_topics=['location_islands', 'depth']
+  1. source=faqs id=None key=None score=0.5662 boosted=0.9426 topics=['booking', 'schedule', 'certification', 'refresher', 'location_islands', 'accommodation', 'equipment', 'depth']
+  2. source=faqs id=None key=None score=0.5651 boosted=0.9412 topics=['booking', 'schedule', 'certification', 'refresher', 'location_islands', 'accommodation', 'equipment', 'depth']
+  3. source=faqs id=None key=None score=0.5563 boosted=0.9319 topics=['booking', 'schedule', 'certification', 'refresher', 'location_islands', 'accommodation', 'equipment', 'depth']
+  4. source=faqs id=None key=None score=0.5553 boosted=0.9306 topics=['booking', 'schedule', 'certification', 'refresher', 'location_islands', 'accommodation', 'equipment', 'depth']
+  5. source=faqs id=None key=None score=0.5532 boosted=0.9283 topics=['booking', 'schedule', 'certification', 'refresher', 'location_islands', 'accommodation', 'equipment', 'depth']
+  6. source=faqs id=None key=None score=0.5504 boosted=0.9251 topics=['booking', 'schedule', 'certification', 'location_islands', 'accommodation', 'equipment', 'depth']
+  7. source=faqs id=None key=None score=0.5490 boosted=0.9235 topics=['booking', 'schedule', 'certification', 'location_islands', 'accommodation', 'equipment', 'depth']
+  8. source=faqs id=None key=None score=0.5453 boosted=0.9196 topics=['booking', 'schedule', 'certification', 'location_islands', 'accommodation', 'equipment', 'depth']
+==============================================================================================================
+Wrote report: C:\Users\gonza\AppData\Local\Temp\claude\c--Users-gonza--devin-diving-planet-bot\17ee10e5-cda6-4175-a2ec-4021ce5138ca\scratchpad\m0-7\13_retrieval_en_pre.json

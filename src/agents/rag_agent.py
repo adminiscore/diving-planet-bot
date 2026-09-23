@@ -1336,11 +1336,28 @@ def _build_grounding_context(
 
 
 async def _verify_grounding_with_retry(answer: str, context: str, lang: str) -> tuple[bool, str]:
+    """Juzga si la respuesta está sostenida por el contexto.
+
+    Con `rag_single_grounding_judge` (l1-1, Fase L1) el juez opina UNA vez: la
+    segunda oportunidad real la da el bucle de `_answer_with_llm`, que REGENERA
+    la respuesta y la vuelve a juzgar. Sin el flag (por defecto) se conserva la
+    conducta de siempre: re-preguntar al mismo juez por el mismo texto.
+
+    El log `[RAG][GROUNDING][RESCUE]` existe porque ese rescate devolvía `True`
+    y se perdía: en los logs solo quedaba rastro cuando FALLABA (`|retry:` en el
+    motivo), así que nadie podía saber cuántas veces valía la pena la llamada.
+    """
     grounded, reason = await is_grounded(answer, context, lang=lang)
     if grounded:
         return True, reason
+    if settings.rag_single_grounding_judge:
+        return False, reason
     grounded_retry, reason_retry = await is_grounded(answer, context, lang=lang)
     if grounded_retry:
+        logger.info(
+            f"[RAG][GROUNDING][RESCUE] el 2º juez salvó la respuesta que el 1º rechazó "
+            f"({reason} -> {reason_retry})"
+        )
         return True, f"{reason}|retry:{reason_retry}"
     return False, f"{reason}|retry:{reason_retry}"
 

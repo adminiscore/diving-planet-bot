@@ -13,10 +13,11 @@
 > - ✅ m0-6 fotos de Langfuse + página; ✅ m0-8 saludo verificado en vivo.
 > - ✅ **m0-7 línea base de calidad CONGELADA (2026-09-17, Gonzalo)**: eval-set 220/230 (modo script)
 >   y **230/230 por el núcleo**, booleanos 33/33 y 30/30, router 33/37 (`base`), actividad 10/10 ·
->   10/10 · 6/9, grupo (config PRE) 17/17 · 13/13 · 17/17 con 0 alucinaciones, RAG 38/39 y
->   recuperación 16/20 ES / 13/20 EN. Foto **por caso** en
->   `docs/robustness/baselines/2026-09-17-m0-7/`; detalle y hallazgos en
->   `docs/robustness/progress-log.md` (entrada 2026-09-17).
+>   10/10 · 6/9, grupo (config PRE) 17/17 · 13/13 · 17/17 con 0 alucinaciones. **RAG corregido el
+>   23-sep** (la primera tanda salió de un `.env` con umbral 0,50 / top-k 5 / gpt-4o, no el de PRE):
+>   respuestas **39/39 con 1 fallback** y recuperación **20/20 ES / 19/20 EN**. Foto **por caso** en
+>   `docs/robustness/baselines/2026-09-17-m0-7/` (ficheros `*_pre.*` = config de PRE); detalle y la
+>   corrección, en `docs/robustness/progress-log.md` (entrada 2026-09-17).
 > - 🟡 m0-4 datos del golden-set: sintéticos hechos; falta tráfico real (harvest).
 > - ✅ m0-2 cubierta por `run_synthetic_pre --sample rapida` + `langfuse_snapshot` (2026-09-18, sin script nuevo).
 > - ✅ m0-1 una traza por turno con resumen (tipo, ruta, RAG, link, escalado; sesión = conversación) (2026-09-18).
@@ -207,8 +208,33 @@ few-shot (`_select_fewshot_examples`), así que tal cual inflarían la nota.
 > Durante L1 los interruptores `RAG_EXCLUDE_SOURCES` / `RAG_FEWSHOT_ENABLED` siguen activos en PRE, así que
 > todo L1 se mide ya sin los chats antiguos.
 1. **RAG sin doble juez:** `_verify_grounding_with_retry` juzga UNA vez; si falla, **regenera** y juzga.
+   - **Implementado detrás de flag (2026-09-23, Gonzalo): `rag_single_grounding_judge`, por defecto
+     OFF.** Línea preparada y **comentada** en `docker-compose.vps.yml`. Falta el A/B del core para
+     decidir si se enciende. 6 tests (`tests/test_l1_single_grounding_judge.py`) que fijan el
+     **número de llamadas al juez** en cada modo, no solo el veredicto.
+   - **⚠️ Matiz que el enunciado no contemplaba: quitar el reintento NO es gratis en todos los
+     caminos.** El bucle de `_answer_with_llm` ya regenera la respuesta, así que el reintento no es
+     una segunda oportunidad real... **salvo que rescate**. Y cuando rescata, esa llamada al juez
+     está **evitando una regeneración**, que es más cara: sin él, ese camino sale más LENTO. El
+     ahorro solo es real si el rescate es raro.
+   - **El dato que lo decide no existía:** el rescate devolvía `True` en silencio (en los logs solo
+     quedaba rastro cuando FALLABA, por el `|retry:` del motivo). Añadido el log
+     `[RAG][GROUNDING][RESCUE]`. **Antes de encender el flag, contar cuántos hay en PRE.**
 2. **Checks deterministas primero:** `currency_amounts_grounded`/`urls_grounded`/`capacity_claims_grounded`
    antes; el juez LLM solo si pasan.
+   - **YA SE CUMPLÍA (verificado 2026-09-23, Gonzalo): no hay nada que implementar.** En
+     `_answer_with_llm` los siete guards deterministas van en una cadena `if/elif` y la llamada al
+     juez está en el `else` final; `is_grounded` solo se invoca desde
+     `_verify_grounding_with_retry`. Un rechazo determinista nunca gasta la petición.
+   - Pero se cumplía **por la disposición del código**, sin nada que lo fijara: mover el juez arriba
+     o añadir un guard detrás lo rompería sin que fallara un solo test. Clavado ahora en
+     `tests/test_l1_deterministic_guards_first.py`.
+   - **Hallazgo al escribirlo:** `rag_answer` tiene además una cadena de **atajos canónicos**
+     (comida, overview de buceo, coste del refresher, precios, ubicación ambigua) que responden
+     **sin una sola llamada al LLM** — un ahorro de L1 que no estaba anotado en ningún sitio. Queda
+     fijado con test: si alguien los desmonta, el coste por turno sube sin que falle nada más.
+     *(Salió porque el primer test se escribió con una pregunta de precio y pasaba en falso: el
+     atajo respondía antes de llegar al juez. Lo cazó el test de control.)*
 3. **Saltar `condense_query`** si no hay historial o el mensaje ya es autónomo.
 4. **Sacar del turno** (`asyncio.create_task` tras enviar): `extract_notes`, `maybe_update_summary`, trazas.
 5. **Paralelizar** llamadas independientes donde sea seguro (medido).

@@ -56,6 +56,21 @@ class Settings(BaseSettings):
     rag_exclude_sources: str = ""
     # Bloque de ejemplos reales (few-shot) en el prompt del RAG.
     rag_fewshot_enabled: bool = True
+    # l1-1 (Fase L1): el juez de grounding opina UNA vez por respuesta.
+    #
+    # Hoy `_verify_grounding_with_retry` pregunta DOS veces al mismo juez por la
+    # MISMA respuesta y el MISMO contexto. No es una segunda oportunidad real:
+    # el bucle de `_answer_with_llm` ya REGENERA la respuesta (2 intentos), que
+    # es la segunda oportunidad que de verdad arregla un falso negativo. La
+    # segunda consulta solo explota el ruido del juez sobre un texto idéntico.
+    #
+    # Ojo al medir: quitarla NO es gratis en todos los caminos. Si el reintento
+    # rescata a menudo, esa llamada evita una REGENERACIÓN (más cara), y sin ella
+    # el camino de fallo sale más lento, no más rápido. Por eso va detrás de flag
+    # y se decide con el A/B del core (2 rondas por lado, el mismo día). El log
+    # `[RAG][GROUNDING][RESCUE]` mide cuántas veces rescata de verdad: ese dato
+    # no existía porque el rescate devolvía True sin dejar rastro.
+    rag_single_grounding_judge: bool = False
 
     # --- Observabilidad: Langfuse (sustituye a LangSmith, cuota Developer
     # agotada; ver docs/robustness/progress-log.md "Tarea 8"). Sin claves, el

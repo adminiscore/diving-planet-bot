@@ -4638,9 +4638,40 @@ regresión**.
 modo script los resuelve el mecanismo del núcleo (`mixed_nationality`), no el extractor. El hueco A
 está cerrado donde importa, en el turno real; el modo script mide otra cosa.
 
-### Hallazgo nuevo: la recuperación en INGLÉS es más débil que en español
+### ~~Hallazgo: la recuperación en INGLÉS es más débil~~ — RETIRADO el 2026-09-23: era mi entorno
 
-Dos casos, los dos con equivalente en español que SÍ funciona:
+> **Corrección (2026-09-23, Gonzalo).** Este hallazgo **no era del bot, era de mi `.env`**. Las
+> cifras de RAG de esta tanda se midieron con `RAG_MIN_SCORE=0.50`, `RAG_TOP_K=5` y
+> `OPENAI_MODEL=gpt-4o`, y **PRE corre con 0.40, top-k 8 y `gpt-4o-mini`** (el umbral lo FIJA
+> `docker-compose.vps.yml`, con un comentario que llama "stale" justo al 0.50 que yo tenía a mano).
+> Mi medición era **más estricta que el bot real**, así que inventó un problema que no existe.
+>
+> Re-medido con la config de PRE:
+>
+> | | con mi config (0,50 / top-k 5 / gpt-4o) | con la de PRE (0,40 / top-k 8 / gpt-4o-mini) |
+> |---|---|---|
+> | Respuestas del RAG | 38/39 · **6 fallbacks**, 29 respuestas | **39/39** · **1 fallback**, 34 respuestas |
+> | Recuperación ES | 16/20 | **20/20** (mediana top-1 0,6025) |
+> | Recuperación EN | 13/20 | **19/20** (mediana top-1 0,5806) |
+> | "I have Open Water, which plan…" | **0 documentos** | 8 docs, top-1 **0,5663** |
+> | "Is accommodation included?" | fallback | top-1 **0,4932** |
+>
+> El `0,4932` del alojamiento explica el caso entero: pasaba el umbral de PRE y no el mío. Y el
+> salto de **6 fallbacks a 1** es la misma causa generalizada: con el umbral alto, el bot que yo
+> medía decía "no lo tengo" seis veces donde el de PRE responde. Ojo al leer esto junto a **l1-6**
+> ("no lo tengo teniendo el dato"): parte de lo que parecía ese síntoma, en mi tanda, era el umbral.
+>
+> **Lo que SÍ sobrevive**, y es un caso, no un frente: *"Do I need a discount code for the 10%
+> discount?"* da **0,303 en inglés** y **0,4638 en español**. Es el único con asimetría real de
+> idioma por debajo del umbral. Candidato, con un caso concreto para medir el arreglo.
+>
+> **Lección para el equipo, que es lo que de verdad vale de este error:** una línea base medida con
+> una config que no es la de producción no es conservadora, es **falsa en las dos direcciones**
+> (aquí inventó 7 fallos). Antes de congelar nada, comparar `settings` contra
+> `docker-compose.vps.yml`. Ficheros de la re-medición: `12_retrieval_es_pre.*`,
+> `13_retrieval_en_pre.*` y `11b_rag_answers_pre.*` en la carpeta de esta línea base.
+
+El texto original del hallazgo, para que se entienda la corrección:
 
 1. **`en_accommodation`** — "Is accommodation included?" cae a fallback; "¿El alojamiento está
    incluido?" responde bien. **No es falta de contenido**: la FAQ existe en inglés ("Do you have
@@ -4648,10 +4679,6 @@ Dos casos, los dos con equivalente en español que SÍ funciona:
    EN). Es que la pregunta por *inclusión* no recupera la FAQ de *disponibilidad* con confianza.
 2. **"I have Open Water, which plan do you recommend?"** — **0 documentos recuperados**, mientras
    que "Tengo Open Water, ¿qué plan me recomiendas?" trae 3 con top-1 0,5998.
-
-Es el único frente donde la línea base sale claramente peor que su equivalente: 13/20 EN frente a
-16/20 ES. No se toca ahora (M0 no cambia conducta); queda como candidato con dos casos concretos
-para medir un arreglo.
 
 ### F2b medida a fondo: sigue sin promocionarse, pero el motivo documentado era EL EQUIVOCADO
 

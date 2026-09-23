@@ -11,6 +11,65 @@ Read this file before changing code in the Diving Planet Bot. For a quick versio
 
 ## Current branch and workflow
 
+### 🔧 2026-09-23 (Gonzalo) — L1 arrancada: l1-1 detrás de flag + CORRECCIÓN de la línea base de RAG
+
+**1) Corrección importante: el hallazgo "la recuperación en inglés es más débil" era MÍO, no del bot.**
+Las cifras de RAG de la línea base del 17-sep se midieron con mi `.env` desalineado
+(`RAG_MIN_SCORE=0.50`, `RAG_TOP_K=5`, `OPENAI_MODEL=gpt-4o`) y **PRE corre con 0.40, top-k 8 y
+`gpt-4o-mini`**. Re-medido con la config de PRE: respuestas del RAG **39/39** con **1 fallback**
+(era 38/39 con **6**), recuperación **ES 20/20** (era 16/20) y **EN 19/20** (era 13/20);
+"I have Open Water, which plan…" pasa de **0 documentos a 8** (top-1 0,5663) y
+"Is accommodation included?" da 0,4932, que **pasa el umbral de PRE y no pasaba el mío**.
+- **De 6 fallbacks a 1** es la misma causa generalizada. Ojo al leerlo junto a **l1-6** ("no lo
+  tengo teniendo el dato"): parte de lo que parecía ese síntoma, en mi tanda, era el umbral.
+- **Sobrevive un solo caso**, no un frente: *"Do I need a discount code for the 10% discount?"* →
+  0,303 EN frente a 0,4638 ES. Candidato real, con un caso concreto para medir el arreglo.
+- **Lección:** una línea base medida con una config que no es la de producción **no es
+  conservadora, es falsa en las dos direcciones** (aquí inventó 7 fallos). Antes de congelar nada,
+  comparar `settings` contra `docker-compose.vps.yml`. Mi `.env` ya está alineado.
+
+**2) l1-1 implementado detrás de flag `rag_single_grounding_judge` (por defecto OFF).**
+- Línea preparada y **comentada** en `docker-compose.vps.yml`; 6 tests nuevos
+  (`tests/test_l1_single_grounding_judge.py`) que fijan el **número de llamadas al juez**, no solo
+  el veredicto. Verde: 6/6 + 261 de `test_rag_safety`/`test_history_window`, ruff limpio.
+- **⚠️ Quitar el reintento NO es gratis en todos los caminos**, y esto no estaba en el enunciado: el
+  bucle de `_answer_with_llm` ya regenera la respuesta, así que el reintento no es una segunda
+  oportunidad real **salvo cuando rescata** — y entonces esa llamada está **evitando una
+  regeneración**, que es más cara. Sin él, ese camino sale más LENTO. El ahorro solo es real si el
+  rescate es raro.
+- **El dato que lo decide no existía**: el rescate devolvía `True` en silencio (los logs solo
+  guardaban rastro cuando FALLABA). Añadido `[RAG][GROUNDING][RESCUE]`. **Paso siguiente, barato:
+  contar cuántos aparecen en los logs de PRE antes de encender el flag.**
+
+**3) Lo que me falta para cerrar l1-1 y no puedo hacer yo:** el A/B del core necesita
+`SYNTH_CHATWOOT_TOKEN` (pedírselo a Gadea) y un push a `pre_*`, que despliega. Sin eso, l1-1 queda
+implementado y medible, pero no promocionado.
+
+**4) ⚠️ HEAD de `pre_gadea` (`4741586`) NO está verde: 3 tests fallan y son PREEXISTENTES.**
+`tests/test_conversational_core.py::{test_companion_beginner_added_mid_flow,
+test_companion_signal_adds_minicourse_not_regex_match,
+test_slang_companion_with_different_activity_still_trusts_llm}`. Los tres fallan por lo mismo:
+donde se espera un slot (`safety`, `companion_activity_choice`) sale **`confirm_correction`** —
+o sea, el **"¿lo cambio?" fantasma**, que es exactamente la tarea **u3-5** de la línea base v7
+("extracción sin inventar ni «¿lo cambio?» fantasma", 21 diálogos). El bug conocido ya se nota en
+la suite, no solo en el golden.
+- **Verificado que NO son de mi cambio** con el método del proyecto: `git worktree add --detach
+  <scratchpad>/wt_head HEAD` y los mismos 3 tests fallan igual allí, con la misma aserción.
+- Fallan **también en aislamiento** (no es flake de carga); son de la familia que pega al LLM real.
+- **Suite completa en mi máquina**: 2576 passed / 3 failed / 18 skipped. Dos pasadas seguidas dieron
+  fallos DISTINTOS: en la primera cayó además `test_scripts_no_tracing::test_scripts_package_turns_
+  tracing_off_even_if_the_env_has_keys`, que **en aislamiento pasa** y tarda 112 s con un
+  `timeout=120` en su subproceso — con la máquina cargada no le caben esos 8 s de margen. Es un
+  flake de carga; si molesta, subir ese timeout.
+- **Coste de la suite aquí: entre 54 min y 2 h 34 min** según la carga. Con eso, "suite verde tras
+  cada paso" es caro: propongo para L1 el mismo patrón que Gadea usa con el golden — subconjunto
+  rápido (RAG + núcleo, ~5 min) por cambio y suite completa solo al cerrar la tarea.
+
+**5) Aviso de resiliencia, visto en vivo (encaja en R6):** `eval_rag_answers` se me quedó colgado
+**5 h 44 min con 40 s de CPU**, parado en el 4º de 39 casos. **No hay timeout por llamada LLM en
+ningún sitio**, así que una conexión parada bloquea el proceso para siempre. En producción eso es un
+turno que nunca responde. R6 lo tiene en la lista; esto es evidencia de que no es teórico.
+
 ### ▶️ 2026-09-22 noche — CÓMO ARRANCAR L1 (para Gonzalo o quien siga)
 
 - **Rama:** partir de `feature/pre_gadea` (último commit `a88abd3` + este). Push a `pre_*` = deploy a PRE:
