@@ -130,8 +130,8 @@ services:
       # No es "diferir": las notas entran en el contexto del RAG, asi que se
       # lanzan al principio y se ESPERAN justo antes de quien las usa -> el bot
       # responde igual. Revert = quitar esta linea + redeploy.
-      # DESCOMENTAR solo para el lado B del A/B.
-      # NOTES_IN_PARALLEL: "true"
+      # Encendida el 23-sep para el lado B del A/B (l14-B1 / l14-B2).
+      NOTES_IN_PARALLEL: "true"
       # Refactor multi-agente (docs/multi-agent-refactor-plan.md) — validación en
       # PRE antes del corte del legacy (Fase 5.2). STAGE B (ahora): el GRAFO sirve
       # de verdad (agent_arch on) — router → 5 nodos reales + subgrafo booking. La
