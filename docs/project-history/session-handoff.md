@@ -11,6 +11,66 @@ Read this file before changing code in the Diving Planet Bot. For a quick versio
 
 ## Current branch and workflow
 
+### 📌 2026-09-23 — DÓNDE ESTÁ MI TRABAJO Y QUÉ HAY QUE HACER CON ÉL (Gonzalo → Gadea)
+
+**Rama: `feature/l1_gonzalo`, commit `6bd3985`.** NO está en `agent-arch` ni en `pre_gadea`, a
+propósito (motivo abajo). Parte de `pre_gadea@4741586`, así que es un fast-forward sobre esa rama.
+
+**Qué trae:** l1-1 detrás de flag, l1-2 verificada y fijada con tests, la corrección de la línea
+base de RAG y el arreglo del `.gitignore`. **Cero cambio de conducta**: el flag
+`rag_single_grounding_judge` nace en `False` y su línea en `docker-compose.vps.yml` va **comentada**,
+así que desplegarlo no cambia nada en PRE. Lo único nuevo que se ejecuta es el log
+`[RAG][GROUNDING][RESCUE]`, y solo en el camino del rescate.
+
+**Revisado antes de entregarlo:** remoto == local; sin secretos (`sk-lf`/`pk-lf`/`sk-proj`/token de
+Chatwoot/`OPENAI_API_KEY`); ningún `.env` colado; `compileall` OK; `ruff` limpio en `src/` y en los
+2 tests nuevos. Los **122 avisos de `ruff tests/` son PREEXISTENTES** (los mismos 122 en
+`6bd3985~1`, comprobado con worktree): `test_intent_detector` 38, `FreeText/*` 46, etc.
+
+**⚠️ Por qué no lo mergeé yo: `agent-arch` y `pre_gadea` tienen copias DIVERGENTES de la página.**
+Al intentar `git merge origin/feature/agent-arch` saltó conflicto en `docs/tracking/plan-coral.json`
+y `plan-coral.html`, y **cada lado tiene cosas que el otro no**:
+- El export de `pre_gadea` (22-sep 21:42) tiene 57 tareas y 4 fotos; el de `agent-arch` (21-sep
+  15:22) tiene 50 tareas **pero incluye `l2-4` y `g-4b`**, y dos entradas de bitácora
+  (`l-0921-alvaro-g1`, `l-0921-jev`) **que el export más nuevo NO contiene**.
+- O sea: lo de Álvaro no salió de la base de datos viva (si no, el export posterior lo tendría).
+  Su commit toca también `consolidate_export.py` (+38 líneas), lo que encaja con entradas añadidas
+  a mano.
+- Resolver el conflicto eligiendo un lado **borraría trabajo de alguien en silencio**, y la fuente
+  de verdad es la BD de la página. **Lo tiene que reconciliar quien tenga acceso**: comprobar si
+  `l2-4`/`g-4b`/las 2 de bitácora están en la página viva, re-exportar, `consolidate_export.py` +
+  `embed_backup.py`, y commitear una única versión. Entonces las ramas convergen. Aborté el merge.
+
+**⚠️ La página está SIN ACTUALIZAR con esto, y no por permisos.** La herramienta `ArtifactData`
+**no existe en la sesión de Claude Code de Gonzalo** (buscada por descripción y por
+`select:ArtifactData`); el único acceso a artefactos disponible es publicar/listar, y ahí la página
+figura como `(shared)`, que no se puede actualizar. Es el caso que describe Gadea: sesión con clave
+de API en vez de cuenta, o versión antigua (`/status`, `/login`, `claude update`). **Texto a
+aplicar cuando se arregle:**
+- `l1-1` → **en curso**. Implementado tras flag `rag_single_grounding_judge` (OFF), línea comentada
+  en compose, 10 tests. Falta el A/B del core. Matiz: quitar el reintento solo ahorra si el rescate
+  es raro; cuando rescata, evita una regeneración (más cara). Log `[RAG][GROUNDING][RESCUE]` para
+  contarlo en PRE **antes** de encender el flag.
+- `l1-2` → **hecha**. Ya se cumplía; ahora fijada con tests. Extra: los atajos canónicos del RAG
+  responden sin ninguna llamada al LLM.
+- `log` 23-sep → la corrección de la línea base de RAG (ver punto 1 de abajo).
+
+**Estado de l1-3 (lo siguiente, sin empezar):** `_should_condense` **ya salta si no hay historial** y
+trata como autónoma toda pregunta de 8+ palabras. Lo que falta es la pregunta **corta pero
+autosuficiente** ("¿cuánto cuesta el minicurso?", 5 palabras, con historial), que hoy sigue gastando
+una llamada. La vía que encaja con las reglas del equipo **no es una lista de frases**: una pregunta
+es autosuficiente si **nombra su propio producto** del registro (`src/domain/activities.py`) —
+mecanismo común, no parche. Cambia qué query llega a la recuperación ⇒ **flag + foto determinista
+sobre el corpus + A/B con el core**.
+
+**🔭 Observación de fondo sobre L1, para no prometerle al owner lo que no hay:** van **tres tareas
+seguidas** más hechas de lo que dice el plan — l1-2 entera, l1-3 a medias, y los atajos canónicos
+que ahorran llamadas y no estaban contabilizados. **El margen real de L1 es menor que el que promete
+el plan**; conviene medir cuánto queda antes de comprometer una mejora de latencia.
+
+**Coste de la suite en la máquina de Gonzalo: entre 54 min y 2 h 34 min** según carga. Propuesta:
+subconjunto rápido (RAG + núcleo, ~5 min) por cambio y suite completa solo al cerrar la tarea.
+
 ### 🔧 2026-09-23 (Gonzalo) — L1 arrancada: l1-1 detrás de flag + CORRECCIÓN de la línea base de RAG
 
 **1) Corrección importante: el hallazgo "la recuperación en inglés es más débil" era MÍO, no del bot.**

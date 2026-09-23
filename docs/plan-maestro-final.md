@@ -236,6 +236,21 @@ few-shot (`_select_fewshot_examples`), así que tal cual inflarían la nota.
      *(Salió porque el primer test se escribió con una pregunta de precio y pasaba en falso: el
      atajo respondía antes de llegar al juez. Lo cazó el test de control.)*
 3. **Saltar `condense_query`** si no hay historial o el mensaje ya es autónomo.
+   - **La mitad ya está hecha (verificado 2026-09-23, Gonzalo).** `_should_condense` corta si no hay
+     historial (`if not query or not history: return False`) y trata como autónoma toda pregunta de
+     **8+ palabras**. Lo que falta es la pregunta **corta pero autosuficiente** ("¿cuánto cuesta el
+     minicurso?", 5 palabras, con historial), que hoy sigue gastando una llamada a `gpt-4o-mini`.
+   - **Vía propuesta, sin listas de frases** (regla del owner): una pregunta es autosuficiente si
+     **nombra su propio producto** del registro (`src/domain/activities.py`) — "¿cuánto cuesta el
+     minicurso?" se nombra a sí misma; "¿y para dos?" no. Mecanismo común, no parche.
+   - Cambia qué query llega a la recuperación ⇒ **flag + foto determinista sobre el corpus + A/B**.
+
+> **🔭 Aviso sobre el margen real de L1 (2026-09-23).** Van **tres tareas seguidas** más hechas de lo
+> que dice este plan: **l1-2 entera**, **l1-3 a medias**, y una cadena de **atajos canónicos** en
+> `rag_answer` (comida, overview, coste del refresher, precios, ubicación ambigua) que responden
+> **sin ninguna llamada al LLM** y que no estaba contabilizada en ningún sitio. **El ahorro
+> disponible en L1 es menor que el que promete el enunciado**: conviene medir cuánto queda de verdad
+> antes de comprometer una cifra de latencia con el owner.
 4. **Sacar del turno** (`asyncio.create_task` tras enviar): `extract_notes`, `maybe_update_summary`, trazas.
 5. **Paralelizar** llamadas independientes donde sea seguro (medido).
 - Cada punto: foto calidad (0 regresiones) + delta de latencia en Langfuse. *(Álvaro RAG/turno · Gonzalo medición)*
