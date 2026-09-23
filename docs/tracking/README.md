@@ -11,8 +11,8 @@ Claude (herramienta ArtifactData).
 
 ## Cola de cambios cuando no se puede escribir en la página (2026-09-23)
 
-`data/cambios-pendientes.json` es una **cola**, no una copia de la base de datos (eso es
-`data/plan-coral.json`, que se regenera exportando). Existe porque en la sesión de Claude Code de
+`data/plan-coral-cambios-pendientes.json` es una **cola** de cambios para la página, no una copia de
+su base de datos (eso es `data/plan-coral.json`, que se regenera exportando). Existe porque en la sesión de Claude Code de
 Gonzalo la herramienta **`ArtifactData` no existe**: verificado por nombre exacto
 (`select:ArtifactData` → *"No matching deferred tools found"*) y por descripción. **No es un problema
 de cuenta** — esa misma sesión sí tiene `DesignSync` y `RemoteTrigger`, que autentican con el login
