@@ -190,6 +190,12 @@ few-shot (`_select_fewshot_examples`), así que tal cual inflarían la nota.
    Los fallos son *candidatos* al golden, con revisión humana. En serie (RPD).
 4. **G4 — Bucle producción → regresión:** conversación cosechada (m0-4 ahora, PRO después) que falla →
    caso `source=prod` en el golden. Regla: ningún fallo arreglado sin su caso de regresión.
+   - **G4b · Modo entrenamiento** *(decisión del owner, 21-sep; tarea `g-4b` en la página)*. Capa **encima
+     de Chatwoot** con **flag on/off**, sin tocar el núcleo: con el modo activo el bot **sugiere** en vez
+     de enviar — su respuesta va a una cola de revisión (nota privada / etiqueta / inbox aparte) y un
+     humano la **acepta o corrige** antes de que salga al cliente. **Cada corrección se convierte en un
+     caso de regresión** del golden (`source=training`). Es la fuente de datos etiquetados más barata que
+     tenemos (el equipo ya atiende por Chatwoot). Depende de G1+G2; no bloquea L1.
 5. **G5 — Carga aparte** (Locust/k6): p95 con N concurrentes y 429; mide volumen, no calidad → en R6.
 6. **G6 — Testers reales (20-50)** justo antes de PRO, con tareas libres; sus conversaciones entran por G4.
 - **Orden:** G1+G2 → (L1 puede empezar) → G3; G4 continuo; G5 con R6; G6 antes de entregar (Q5).
@@ -260,10 +266,24 @@ few-shot (`_select_fewshot_examples`), así que tal cual inflarían la nota.
 - Cada punto: foto calidad (0 regresiones) + delta de latencia en Langfuse. *(Álvaro RAG/turno · Gonzalo medición)*
 
 ### Fase L2 — Right-sizing de modelos + caching · *latencia + coste, con eval*
-- Evaluar por llamada: juez de grounding y `condense_query` en `gpt-4o-mini` (A/B contra `eval_rag_answers`/
-  `eval_retrieval`); mantener `gpt-4o` en la respuesta RAG salvo que un modelo menor iguale el eval.
+> **Corrección (21-sep, medido en Langfuse; confirmado por la 0.29.9 del 23-sep):** en PRE **no se usa
+> `gpt-4o`**. Los modelos reales son **`gpt-4o-mini`** (la mayoría de llamadas) y **`gpt-4.1-mini`**. El
+> "bajar de tier" que asumía el plan **ya está hecho en gran parte**, así que L2 se re-encuadra: el lever
+> real es **caché** (prompt + semántica) y, como mucho, revisar el modelo de la **respuesta RAG**.
+- Evaluar por llamada **sobre los modelos reales**, siempre con A/B contra `eval_rag_answers`/
+  `eval_retrieval`. Sin dar por hecho el tier: mirar primero la foto de Langfuse de esa llamada.
 - **Prompt caching** de OpenAI (system-prompts/tool-schemas) + **caché semántica** de FAQ repetidas.
 - **Streaming / latencia percibida:** investigar envío por partes / "escribiendo" en Chatwoot; si no, trocear.
+- **`l2-4` · Evaluar Jev (TypeSafe, "System One model", 15-sep-2026) como clasificador.** Devuelve
+  decisiones **tipadas** (Boolean con probabilidad calibrada, Choice ≤255 opciones, Score) **sin generar
+  texto**: ~0,4 s y **coste de salida 0**. Encaja en **tres carriles**: (a) `detect_routing_signals` — 9
+  señales booleanas, hoy a **p50 ~1,1 s en CADA turno**; (b) clasificación de actividad (Choice); (c)
+  `is_grounded` en **cascada** (Jev decide cuando su probabilidad es alta; el juez LLM solo en la banda
+  dudosa). **NO sirve** para: respuesta RAG, acuses, extracción de slots (`fill_gaps` saca valores, no
+  elige de una lista → U3 sigue necesitando tool-calling) ni el **juez del golden-set** (necesita dar
+  **evidencia** por criterio y Jev no explica). **Riesgo principal: el español** — no hay evaluación
+  multilingüe publicada y el 65 % de nuestro tráfico es ES. Protocolo: después de G1+G2, detrás de flag,
+  A/B **por caso** con `battery_router_signals.py 8 base,jev s,a,n`. **Pendiente de investigar.**
   *(Gonzalo)*
 
 ### Fase U3 — Unificación del entendimiento · **CONSERVADOR, detrás de flag** · *el cambio grande*
@@ -349,3 +369,19 @@ de verdad (`money.py`/`activities.py`/`catalog.py`/`eligibility.py`), Langfuse c
 **Regla de oro del ciclo:** cada fase abre con baseline (calidad + latencia), cambia detrás de flag,
 cierra con foto A/B por caso, y se ve la mejora en Langfuse. No empezamos de cero — lo grande
 (orquestador → agentes) ya está; esto es acelerar, limpiar y pulir hasta nivel producción.
+
+---
+
+## ANEXO — Visión de producto (FUTURO, fuera del camino técnico actual)
+> Decisión del owner (21-sep). **No es trabajo de este plan**: son las piezas que convierten a Coral en
+> producto vendible una vez esté pulido. Se abordan **después** de Q5 (entrega). Ninguna toca el núcleo.
+
+1. **Multicanal.** Hoy entra WhatsApp por Chatwoot. Añadir **Instagram** y **correo** es conectar sus
+   webhooks/API en Chatwoot: el bot itera igual porque el canal ya está abstraído (`src/channels/`).
+   Coste bajo, valor comercial alto.
+2. **White-label.** Que el cliente **no vea Chatwoot**: (a) cambiar logos/colores/dominio desde el propio
+   panel, o (b) un frontend propio que hable con Chatwoot **por API**.
+3. **All-in tipo CRM + web del cliente.** El paso grande: además del bot, llevarle la web con reservas y
+   clientes en un panel. Es donde está el margen; requiere decidir alcance y precio antes de tocar nada.
+
+**Criterio:** no empezar ninguna hasta cerrar Q5. La 1 y la 2 son semanas; la 3 es un producto aparte.

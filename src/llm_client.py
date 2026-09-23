@@ -20,6 +20,8 @@ import json
 import logging
 from typing import TypeVar
 
+from openai import AsyncOpenAI as _RealAsyncOpenAI
+
 from src.config import settings
 from src.observability import traced_openai_client
 
@@ -28,11 +30,32 @@ logger = logging.getLogger("uvicorn.error")
 _C = TypeVar("_C")
 
 
+def _with_timeout(client: _C) -> _C:
+    """Aplica el timeout de r6-1 **solo a clientes REALES** de OpenAI.
+
+    Por qué el `isinstance`: los tests parchean `AsyncOpenAI` en su módulo y pasan
+    mocks. `with_options()` sobre un mock devuelve OTRO objeto, así que las
+    aserciones del test (`client.chat.completions.create...`) mirarían a un mock
+    distinto y fallarían. Un mock no es instancia del cliente real, así que se le
+    devuelve intacto; en producción sí se aplica.
+
+    El camino trazado (Langfuse, que es el de PRE) ya sale con el timeout puesto
+    desde `observability.traced_openai_client`, donde se construye.
+    """
+    if not isinstance(client, _RealAsyncOpenAI):
+        return client
+    try:
+        return client.with_options(timeout=settings.llm_timeout_seconds)
+    except Exception as exc:  # noqa: BLE001 — nunca romper el turno por el timeout
+        logger.warning("[LLM] no se pudo fijar el timeout en el cliente: %s", exc)
+        return client
+
+
 def trace_openai(client: _C) -> _C:
     """Cliente OpenAI trazado por Langfuse si el tracing está activo; si no, el
-    `client` que se pasa, sin tocar (no-op)."""
+    `client` que se pasa. En ambos casos con el timeout de r6-1 aplicado."""
     traced = traced_openai_client(settings)
-    return traced if traced is not None else client
+    return _with_timeout(traced if traced is not None else client)
 
 
 def _is_empty_for(spec: dict, value) -> bool:

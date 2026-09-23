@@ -116,7 +116,13 @@ def traced_openai_client(s: Any):
     try:
         from langfuse.openai import AsyncOpenAI as _LangfuseAsyncOpenAI
 
-        return _LangfuseAsyncOpenAI(api_key=s.openai_api_key)
+        # r6-1: timeout por llamada YA en la construcción. Es el camino de PRE
+        # (tracing on), así que aquí es donde de verdad protege al cliente: sin
+        # esto el default del SDK es read=600 s con 2 reintentos (~30 min colgado).
+        return _LangfuseAsyncOpenAI(
+            api_key=s.openai_api_key,
+            timeout=getattr(s, "llm_timeout_seconds", 30.0),
+        )
     except Exception as exc:  # noqa: BLE001
         logger.warning("[LANGFUSE] no se pudo envolver el cliente OpenAI: %s", exc)
         return None

@@ -1,6 +1,15 @@
 History
 =======
 
+0.29.11 - (2026-09-23)
+----------------------
+* **R6 · r6-1: toda llamada al LLM tiene tiempo máximo (`LLM_TIMEOUT_SECONDS`, por defecto 30 s).** El agujero medido en la 0.29.9 ("no hay timeout por llamada en ningún punto del código") tenía una causa concreta: el cliente de OpenAI trae por defecto **`Timeout(connect=5, read=600)` con `max_retries=2`**, o sea hasta **~30 min colgado en UNA llamada** — que es lo que dejó `eval_rag_answers` 5 h 44 min parado en el 4º de 39 casos. En producción eso es un turno que nunca responde. 30 s es margen de sobra: el turno entero va a p95 9 s con hasta 7-10 llamadas.
+* **Se aplica en UN punto para las 12+ llamadas**: todas construyen el cliente con `trace_openai(AsyncOpenAI(...))`, así que el timeout va ahí (`src/llm_client.py`) y, en el camino trazado de PRE, **en la propia construcción** del cliente de Langfuse (`observability.traced_openai_client`) — que es donde de verdad protege cuando el tracing está activo.
+* **Trampa evitada:** `with_options()` sobre un *mock* devuelve OTRO objeto, así que aplicarlo a ciegas habría roto en cadena las decenas de tests que parchean `AsyncOpenAI` en su módulo. Por eso el timeout **solo se aplica a clientes reales** (`isinstance`), y un mock pasa intacto. Clavado en un test para que nadie lo "simplifique" luego.
+* **Un timeout degrada, no tumba:** los `except` de `llm_extractor` ya devuelven vacío y registran `[LLM_EXTRACTOR][DEGRADED]`, así que la extracción se queda sin datos pero el turno sigue y queda rastro (y Langfuse registra la llamada fallida). Fijado en `tests/test_r6_llm_timeout.py` (4 tests).
+* **Suite:** línea base antes de tocar **2580 passed / 17 skipped / 0 failed** → después **2584 / 17 / 0** (los +4 son los tests nuevos). Los 3 fallos de `test_conversational_core.py` que citaba la 0.29.9 **ya no se reproducen**.
+* **Plan maestro:** recuperado lo que se perdió al divergir `feature/agent-arch` (solo estaba en la página): **G4b modo entrenamiento** dentro de G4, **l2-4 Jev**, el **anexo de Visión de producto** y la **corrección de modelos** de L2 (en PRE son `gpt-4o-mini`/`gpt-4.1-mini`, no `gpt-4o`) — que la 0.29.9 confirmó por su cuenta al re-medir la línea base de RAG.
+
 0.29.10 - (2026-09-23)
 ----------------------
 * **L1 · l1-1 encendida en PRE: el juez de grounding opina una sola vez** (`RAG_SINGLE_GROUNDING_JUDGE=true` en `docker-compose.vps.yml`). A/B el mismo día con 2+2 rondas del core. Con el juez actual, la repregunta solo salvó **1 de 24** respuestas rechazadas (4 %), contado con el log `[RAG][GROUNDING][RESCUE]`. Con el juez único: **−35 % de llamadas al juez de grounding** (83 → 54), **−10 % de coste por turno**, el peor turno del RAG baja de 9-10 llamadas a 7 y el "no lo tengo" de 11 a 8. **Calidad igual** (85,0/87,1 % → 87,5/87,2 %); lo que empeora frente a las dos rondas A se revisó a mano y es ruido del juez. Resultados en `docs/robustness/golden-set/results/2026-09-23-core-l11-*` y fotos en `docs/robustness/snapshots/2026-09-23-core-l11-*`.

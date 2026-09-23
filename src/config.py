@@ -72,6 +72,19 @@ class Settings(BaseSettings):
     # no existía porque el rescate devolvía True sin dejar rastro.
     rag_single_grounding_judge: bool = False
 
+    # r6-1 (Fase R6): tiempo maximo de UNA llamada al LLM, en segundos.
+    #
+    # Por que: el cliente de OpenAI trae por defecto `Timeout(connect=5, read=600)`
+    # con `max_retries=2`, o sea hasta ~30 min colgado en una sola llamada. Medido
+    # en vivo: `eval_rag_answers` se quedo 5 h 44 min con 40 s de CPU, parado en el
+    # 4º de 39 casos. En produccion eso es un turno que NUNCA responde.
+    #
+    # 30 s es margen de sobra: el turno ENTERO va hoy a p95 9 s con hasta 7-10
+    # llamadas (linea base v7), asi que ninguna llamada legitima se acerca. Se
+    # aplica en un unico punto, `llm_client.trace_openai`, que es por donde pasan
+    # todas. Subirlo por entorno si algun dia hay una llamada legitimamente larga.
+    llm_timeout_seconds: float = 30.0
+
     # --- Observabilidad: Langfuse (sustituye a LangSmith, cuota Developer
     # agotada; ver docs/robustness/progress-log.md "Tarea 8"). Sin claves, el
     # tracing queda apagado y `langfuse` ni se importa (3.14-safe). Claves por
