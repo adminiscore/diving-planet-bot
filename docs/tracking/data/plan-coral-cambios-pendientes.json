@@ -7,66 +7,7 @@
     "a_mano": "Abrir la pagina con sesion iniciada y copiar cada campo en su tarea o en la bitacora.",
     "al_terminar": "Dejar 'pendientes' como lista vacia, poner la fecha en 'aplicado_el' y quien lo aplico en 'aplicado_por', todo en el MISMO commit. Si esta lista se queda llena, el repo y la pagina han divergido: esa es la senal."
   },
-  "aplicado_el": null,
-  "aplicado_por": null,
-  "pendientes": [
-    {
-      "coleccion": "tasks",
-      "operacion": "update",
-      "doc_id": "l1-1",
-      "campos": {
-        "status": "en curso",
-        "note": "Implementado detras del flag `rag_single_grounding_judge` (OFF por defecto), con la linea COMENTADA en docker-compose.vps.yml. 10 tests nuevos que fijan el NUMERO de llamadas al juez, no solo el veredicto. Falta el A/B del core para promocionarlo.\n\nMATIZ que el enunciado no contemplaba: quitar el reintento NO es gratis en todos los caminos. El bucle de _answer_with_llm ya REGENERA la respuesta, asi que el reintento no es una segunda oportunidad real... salvo cuando RESCATA, y entonces esa llamada esta evitando una regeneracion, que es mas cara. Sin el, ese camino sale mas LENTO. El ahorro solo es real si el rescate es raro.\n\nEse dato no existia: el rescate devolvia True en silencio (en los logs solo quedaba rastro cuando FALLABA, por el `|retry:` del motivo). Anadido el log [RAG][GROUNDING][RESCUE]. PASO BARATO ANTES DE ENCENDER EL FLAG: contar cuantos aparecen en los logs de PRE; si el rescate es frecuente, l1-1 no compensa y te ahorras el A/B entero.\n\nCommit 6bd3985, en pre_gadea y en feature/l1_gonzalo."
-      }
-    },
-    {
-      "coleccion": "tasks",
-      "operacion": "update",
-      "doc_id": "l1-2",
-      "campos": {
-        "status": "hecha",
-        "note": "No era trabajo pendiente: YA se cumplia. Los 7 guards deterministas de _answer_with_llm van en cadena if/elif y el juez esta en el else final, asi que un rechazo determinista nunca gasta la peticion (is_grounded solo se invoca desde _verify_grounding_with_retry).\n\nPero se cumplia por la DISPOSICION del codigo y nada lo fijaba: mover el juez arriba 'para leerlo mejor' lo romperia sin que fallara un solo test. Clavado en tests/test_l1_deterministic_guards_first.py.\n\nEXTRA encontrado al escribirlo: rag_answer tiene una cadena de atajos canonicos (comida, overview de buceo, coste del refresher, precios, ubicacion ambigua) que responden SIN una sola llamada al LLM. Es ahorro de L1 que no estaba contabilizado en ningun sitio; queda con test. Salio porque el primer test se escribio con una pregunta de precio y pasaba EN FALSO (el atajo respondia antes de llegar al juez): lo cazo el test de control.\n\nCommit 6bd3985."
-      }
-    },
-    {
-      "coleccion": "log",
-      "operacion": "create",
-      "doc_id": null,
-      "campos": {
-        "at": "2026-09-23",
-        "byLabel": "Gonzalo",
-        "text": "Corregida la linea base de RAG del 17-sep: estaba medida con un .env a RAG_MIN_SCORE=0.50 / RAG_TOP_K=5 / OPENAI_MODEL=gpt-4o, y PRE corre con 0.40 / top-k 8 / gpt-4o-mini (el umbral lo FIJA docker-compose.vps.yml, con un comentario que llama 'stale' justo al 0.50). Con la config correcta: respuestas 39/39 con 1 fallback (era 38/39 con 6) y recuperacion 20/20 ES y 19/20 EN (eran 16/20 y 13/20). Se RETIRA el hallazgo 'la recuperacion en ingles es mas debil': era el entorno, no el bot. 'I have Open Water, which plan...' pasa de 0 documentos a 8 (top-1 0,5663) y 'Is accommodation included?' da 0,4932, que pasa el umbral de PRE y no pasaba el mio. Sobrevive UN caso: 'Do I need a discount code for the 10% discount?' (0,303 EN vs 0,4638 ES). El salto de 6 fallbacks a 1 matiza l1-6: parte de lo que parecia 'no lo tengo teniendo el dato' era el umbral. LECCION: una linea base medida con una config que no es la de produccion no es conservadora, es FALSA en las dos direcciones (aqui invento 7 fallos). Ficheros *_pre.* en docs/robustness/baselines/2026-09-17-m0-7/."
-      }
-    },
-    {
-      "coleccion": "log",
-      "operacion": "create",
-      "doc_id": null,
-      "campos": {
-        "at": "2026-09-23",
-        "byLabel": "Gonzalo",
-        "text": "La suite de pre_gadea NO esta verde, y no es por los cambios de L1: 2576 passed / 3 failed / 18 skipped. Los 3 fallan en test_conversational_core (test_companion_beginner_added_mid_flow, test_companion_signal_adds_minicourse_not_regex_match, test_slang_companion_with_different_activity_still_trusts_llm) porque sale `confirm_correction` donde se espera el slot: es el '¿lo cambio?' fantasma de la tarea u3-5. Verificado PREEXISTENTE con un worktree en HEAD (los mismos 3 fallan igual sin ningun cambio) y tambien en aislamiento. Aparte, test_scripts_no_tracing cayo en una pasada y no en otra: en aislamiento tarda 112 s con timeout=120 en su subproceso, asi que con la maquina cargada es un flake de carga (si molesta, subir ese timeout). La suite completa tarda aqui entre 54 min y 2 h 34 min segun carga."
-      }
-    },
-    {
-      "coleccion": "log",
-      "operacion": "create",
-      "doc_id": null,
-      "campos": {
-        "at": "2026-09-23",
-        "byLabel": "Gonzalo",
-        "text": "AVISO antes de mergear agent-arch y pre_gadea: tienen copias DIVERGENTES del export de esta pagina. El de pre_gadea (22-sep 21:42) tiene 57 tareas y 4 fotos; el de agent-arch (21-sep 15:22) tiene 50 tareas PERO incluye l2-4 y g-4b, y dos entradas de bitacora (l-0921-alvaro-g1, l-0921-jev) que el export MAS NUEVO no contiene. Es decir, esas entradas no salieron de la base de datos viva. Hay que comprobar en la pagina si existen: si estan, re-exportar y listo; si no, volver a crearlas antes de exportar o se pierden. El merge se aborto desde Claude Code para no borrar trabajo de nadie en silencio."
-      }
-    },
-    {
-      "coleccion": "log",
-      "operacion": "create",
-      "doc_id": null,
-      "campos": {
-        "at": "2026-09-23",
-        "byLabel": "Gonzalo",
-        "text": "Observacion de fondo sobre L1, para no prometer al owner lo que no hay: van TRES tareas seguidas mas hechas de lo que dice el plan. l1-2 entera ya se cumplia; l1-3 tiene ya la mitad (_should_condense salta si no hay historial y trata como autonoma toda pregunta de 8+ palabras, falta solo la pregunta corta pero autosuficiente); y los atajos canonicos del RAG ya responden sin ninguna llamada al LLM y no estaban contabilizados. El margen real de L1 es MENOR que el del enunciado: conviene medir cuanto queda antes de comprometer una cifra de latencia."
-      }
-    }
-  ]
+  "aplicado_el": "2026-09-23",
+  "aplicado_por": "Gadea (con Claude)",
+  "pendientes": []
 }
