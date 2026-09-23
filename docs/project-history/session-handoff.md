@@ -43,7 +43,11 @@ sigue instalado → **LangChain activa el tracing viejo por su cuenta** y falla 
 usage limit exceeded"* (~7 errores cada 20 min). Es ruido y trabajo de red **en cada turno**, hacia un
 sitio al que ya no miramos desde la migración a Langfuse (0.28.0). **Arreglo rápido:** quitar esas 3
 variables de `.env.pre` en el VPS (no las inyecta el deploy: son restos). De fondo es **s4-5**.
-**No lo he tocado**: es configuración de PRE y prefiero que lo decida el equipo.
+**✅ ARREGLADO** (23-sep, con el OK del owner): quitadas las 3 de `.env.pre` (copia en
+`.env.pre.bak-antes-quitar-langsmith`) y **recreado** el contenedor. **Ojo:** un `docker restart` NO
+relee el `env_file` — hay que `docker compose up -d --force-recreate dp-pre-bot`. Verificado con tráfico
+real: **0 errores de LangSmith** y **Langfuse intacto** (`langfuse_enabled = True`, timeout 30 s).
+Queda **s4-5** para sacar la dependencia `langsmith` del paquete.
 
 **Claves (para quien venga):** `.env.dev` ya tiene `SYNTH_CHATWOOT_TOKEN` y las dos de Langfuse.
 `LANGFUSE_HOST` **no hace falta** (el script usa `https://cloud.langfuse.com` por defecto). **Falta
