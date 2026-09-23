@@ -208,6 +208,10 @@ few-shot (`_select_fewshot_examples`), así que tal cual inflarían la nota.
 > Durante L1 los interruptores `RAG_EXCLUDE_SOURCES` / `RAG_FEWSHOT_ENABLED` siguen activos en PRE, así que
 > todo L1 se mide ya sin los chats antiguos.
 1. **RAG sin doble juez:** `_verify_grounding_with_retry` juzga UNA vez; si falla, **regenera** y juzga.
+   - **✅ HECHA y ENCENDIDA en PRE (2026-09-23, A/B de Gadea con 2+2 rondas del core).** El segundo juez
+     solo rescataba 1 de 24 rechazos (4 %). Con el juez único: −35 % de llamadas al juez de grounding,
+     −10 % de coste por turno, peor turno del RAG de 9-10 llamadas a 7, calidad igual (85,0/87,1 % →
+     87,5/87,2 %). Falta solo quitar del código la rama del reintento al cerrar L1.
    - **Implementado detrás de flag (2026-09-23, Gonzalo): `rag_single_grounding_judge`, por defecto
      OFF.** Línea preparada y **comentada** en `docker-compose.vps.yml`. Falta el A/B del core para
      decidir si se enciende. 6 tests (`tests/test_l1_single_grounding_judge.py`) que fijan el

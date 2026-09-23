@@ -1,6 +1,12 @@
 History
 =======
 
+0.29.10 - (2026-09-23)
+----------------------
+* **L1 · l1-1 encendida en PRE: el juez de grounding opina una sola vez** (`RAG_SINGLE_GROUNDING_JUDGE=true` en `docker-compose.vps.yml`). A/B el mismo día con 2+2 rondas del core. Con el juez actual, la repregunta solo salvó **1 de 24** respuestas rechazadas (4 %), contado con el log `[RAG][GROUNDING][RESCUE]`. Con el juez único: **−35 % de llamadas al juez de grounding** (83 → 54), **−10 % de coste por turno**, el peor turno del RAG baja de 9-10 llamadas a 7 y el "no lo tengo" de 11 a 8. **Calidad igual** (85,0/87,1 % → 87,5/87,2 %); lo que empeora frente a las dos rondas A se revisó a mano y es ruido del juez. Resultados en `docs/robustness/golden-set/results/2026-09-23-core-l11-*` y fotos en `docs/robustness/snapshots/2026-09-23-core-l11-*`.
+* **Hallazgo para l1-6:** el juez de grounding rechaza más de la mitad de las respuestas que ve (47 de 83), y 11 acabaron en "no lo tengo" tras dos intentos.
+* **Plan Coral:** cola `docs/tracking/data/plan-coral-cambios-pendientes.json` (de Gonzalo) para quien no tiene `ArtifactData` en su Claude Code; aplicada hoy. Recuperadas en la página g-4b, l2-4 y dos entradas de bitácora de Álvaro que solo estaban en la copia de `feature/agent-arch`.
+
 0.29.9 - (2026-09-23)
 ----------------------
 * **Corregida la línea base de RAG del 17-sep: estaba medida con una config que no es la de producción.** Las cifras de RAG de m0-7 salieron de un `.env` local con `RAG_MIN_SCORE=0.50`, `RAG_TOP_K=5` y `OPENAI_MODEL=gpt-4o`, mientras **PRE corre con 0.40, top-k 8 y `gpt-4o-mini`** (el umbral lo FIJA `docker-compose.vps.yml`, con un comentario que llama "stale" justo al 0.50). Re-medido con la config de PRE: respuestas **39/39 con 1 fallback** (era 38/39 con **6**), recuperación **ES 20/20** (era 16/20) y **EN 19/20** (era 13/20). Ficheros `*_pre.*` en `docs/robustness/baselines/2026-09-17-m0-7/`.

@@ -1,5 +1,5 @@
 {
- "exported_at": "2026-09-22T21:42:47+00:00",
+ "exported_at": "2026-09-23T11:21:56+00:00",
  "source": "https://claude.ai/artifact/XiGd3kguTNwwqTnH7mQwgi",
  "about": "Copia de la base de datos de la página Plan Coral (fases, tareas, fotos, capas, bitácora). La página la usa como respaldo de solo lectura si no puede conectar con su base de datos; en el repo sirve de historial versionado.",
  "collections": {
@@ -66,11 +66,12 @@
     "id": "g-1",
     "note": "Hecha (22-sep). Golden v7 con 73 casos reales de los exports originales de WhatsApp (39 chats -> 75 episodios, 52 notas de voz transcritas, anonimizacion auditada con 0 nombres, precios historicos marcados), redactados por LLM contra la referencia y revisados a mano; decisiones de negocio a la KB; examen oculto (G2). Comparacion con el minado de Alvaro (feature/agent-arch, desde conversations.json): 30 candidatos sin criterios, mediana de 12 turnos (max 42), sin notas de voz y con >25 nombres reales -> se queda el minado nuevo. El retiro de conversations.json del RAG pasa a g-7 (plan con riesgo cero).",
     "order": 1,
-    "owner": "—",
+    "owner": "Gadea",
     "phase": "G",
     "status": "hecha",
     "title": "G1 · Minar los chats reales de WhatsApp → diálogos del golden",
-    "updatedAt": "2026-09-22T16:30:00Z"
+    "updatedAt": "2026-09-23T07:15:50.879Z",
+    "updatedBy": "u_IyyAjn0k84KqlRrCIGkx8g"
    },
    {
     "id": "g-2",
@@ -100,6 +101,16 @@
     "phase": "G",
     "status": "pendiente",
     "title": "G4 · Bucle producción → regresión"
+   },
+   {
+    "id": "g-4b",
+    "createdAt": "2026-09-21T18:30:00Z",
+    "note": "Decisión del owner (21-sep). Capa ENCIMA de Chatwoot con flag on/off, sin tocar el núcleo: con el modo activo el bot SUGIERE en vez de enviar (su respuesta va a una cola de revisión — nota privada, etiqueta o inbox aparte) y un humano la acepta o corrige antes de que salga al cliente. Cada corrección se convierte en caso de regresión del golden (source=training). Es la fuente de datos etiquetados más barata que tenemos (el equipo ya atiende por Chatwoot) y alimenta el mismo golden que G1/G3/G4. Activable/desactivable. Depende de G1+G2; no bloquea L1.",
+    "order": 4.5,
+    "owner": "—",
+    "phase": "G",
+    "status": "pendiente",
+    "title": "G4b · Modo entrenamiento: el bot sugiere, un humano corrige y la corrección entra al golden"
    },
    {
     "id": "g-5",
@@ -142,21 +153,23 @@
    },
    {
     "id": "l1-1",
-    "note": "_verify_grounding_with_retry, rag_agent.py",
+    "note": "HECHA (23-sep). Implementada por Gonzalo (6bd3985, flag rag_single_grounding_judge) y medida por Gadea con A/B en PRE el mismo dia (2+2 rondas del core). El flag queda ENCENDIDO en PRE (docker-compose.vps.yml, 4ffa9aa). Marcha atras: quitar esa linea y redesplegar.\n\nRESCATES (lado A, juez actual): la repregunta al juez se hizo 24 veces y solo salvo 1 respuesta (4 %); las otras 23 llamadas repitieron el veredicto y hubo que reescribir igual.\n\nRESULTADO A -> B: llamadas al juez de grounding 83 -> 54 (-35 %); llamadas LLM por turno 3,70/3,88 -> 3,55/3,53; turno RAG 5,7/6,0 -> 5,3/5,2 llamadas (maximo 9-10 -> 7); coste por turno -10 %; 'no lo tengo' 11 -> 8 respuestas. Calidad igual: A 85,0 % / 87,1 % frente a B 87,5 % / 87,2 % (sin fallos 14/17 -> 16/17). Revisados a mano los criterios que empeoran frente a las DOS rondas A: todos son ruido del juez (mismo texto aprobado en A) o variacion al redactar sin rechazo del juez de grounding; ninguno por l1-1. Latencia: B1 la mejor ronda (media 4,4 s en Langfuse); B2 tuvo 10 min lentos de OpenAI (el router, que l1-1 no toca, tambien subio).\n\nPendiente menor: cuando L1 cierre, quitar la rama del reintento del codigo (hoy solo la apaga el flag).\n\nMATIZ de Gonzalo: quitar el reintento NO es gratis cuando rescata (evita una regeneracion, mas cara); por eso se midio antes con el log [RAG][GROUNDING][RESCUE].",
     "order": 1,
-    "owner": "Álvaro",
+    "owner": "Gonzalo",
     "phase": "L1",
-    "status": "pendiente",
-    "title": "RAG sin doble juez: juzgar una vez; si falla, regenerar y juzgar"
+    "status": "hecha",
+    "title": "RAG sin doble juez: juzgar una vez; si falla, regenerar y juzgar",
+    "updatedAt": "2026-09-23T11:10:00Z"
    },
    {
     "id": "l1-2",
-    "note": "currency_amounts / urls / capacity_claims_grounded",
+    "note": "No era trabajo pendiente: YA se cumplia. Los 7 guards deterministas de _answer_with_llm van en cadena if/elif y el juez esta en el else final, asi que un rechazo determinista nunca gasta la peticion (is_grounded solo se invoca desde _verify_grounding_with_retry).\n\nPero se cumplia por la DISPOSICION del codigo y nada lo fijaba: mover el juez arriba 'para leerlo mejor' lo romperia sin que fallara un solo test. Clavado en tests/test_l1_deterministic_guards_first.py.\n\nEXTRA encontrado al escribirlo: rag_answer tiene una cadena de atajos canonicos (comida, overview de buceo, coste del refresher, precios, ubicacion ambigua) que responden SIN una sola llamada al LLM. Es ahorro de L1 que no estaba contabilizado en ningun sitio; queda con test. Salio porque el primer test se escribio con una pregunta de precio y pasaba EN FALSO (el atajo respondia antes de llegar al juez): lo cazo el test de control.\n\nCommit 6bd3985.",
     "order": 2,
-    "owner": "Álvaro",
+    "owner": "Gonzalo",
     "phase": "L1",
-    "status": "pendiente",
-    "title": "Checks deterministas antes del juez LLM"
+    "status": "hecha",
+    "title": "Checks deterministas antes del juez LLM",
+    "updatedAt": "2026-09-23T08:23:51Z"
    },
    {
     "id": "l1-3",
@@ -188,13 +201,13 @@
    {
     "id": "l1-6",
     "createdAt": "2026-09-22T15:00:00Z",
-    "note": "El RAG responde 'ese detalle no lo tengo a la mano' con la respuesta en la base de conocimiento (plan acompanante, equipaje, regateo, Baru, total en COP, nacido en Colombia). Revisar recuperacion y el juez de grounding (encaja con l1-1/l1-2: juzgar una vez, checks deterministas primero). OJO (g-7, 22-sep): (1) el RAG NO es determinista: la misma pregunta a veces se contesta y a veces da 'no lo tengo' (el juez de grounding decide distinto); (2) umbral RAG_MIN_SCORE 0,40 al limite: '¿me recuerda los hoteles?' sacaba la FAQ oficial con 0,36-0,38 y daba 'no lo tengo' (tapado con una FAQ que queda en 0,41). Medir con 2 rondas por lado. Golden v7 (22-sep): 17 dialogos afectados (3 en el examen oculto). Casos de regresion: clima-y-cancelacion-reserva-existente, confirmacion-salida-y-pago-sin-concepto, descuento-efectivo, equipaje-mochilas-y-almacenamiento, grupo-mixto-precio-cop-total, logistica-isla-fragata-regreso-otro-dia, manual-acompanante-mayor, nacionalidad-ambigua, paquete-5-buceos-cop-refresh-y-hoteles, paquete-5-buceos-islas-residente-sin-recogida, paquete-5-buceos-precio-overnight-isla-grande-baru, precio-paquetes-5-o-3-buceos-y-opcion-2-diurnos, precios-y-disponibilidad-con-negociacion, snorkel-precio-residente-y-pago-link. REGLA: arreglar la CAUSA con una solucion global (sin regex nuevos, sin mirar solo estos casos); los casos listados son la prueba de cierre y el examen oculto (21 casos reales) mide si mejora de verdad.",
+    "note": "El RAG responde 'ese detalle no lo tengo a la mano' con la respuesta en la base de conocimiento (plan acompanante, equipaje, regateo, Baru, total en COP, nacido en Colombia). Revisar recuperacion y el juez de grounding (encaja con l1-1/l1-2: juzgar una vez, checks deterministas primero). MATIZ (Gonzalo, 23-sep): la linea base del RAG del 17-sep se midio con la config local (umbral 0,50, top-k 5, gpt-4o). Con la de PRE (0,40, top-k 8, gpt-4o-mini) pasa de 6 fallbacks a 1, asi que parte del 'no lo tengo' era el umbral. OJO (g-7, 22-sep): (1) el RAG NO es determinista: la misma pregunta a veces se contesta y a veces da 'no lo tengo' (el juez de grounding decide distinto); (2) umbral RAG_MIN_SCORE 0,40 al limite: '¿me recuerda los hoteles?' sacaba la FAQ oficial con 0,36-0,38 y daba 'no lo tengo' (tapado con una FAQ que queda en 0,41). Medir con 2 rondas por lado. Golden v7 (22-sep): 17 dialogos afectados (3 en el examen oculto). Casos de regresion: clima-y-cancelacion-reserva-existente, confirmacion-salida-y-pago-sin-concepto, descuento-efectivo, equipaje-mochilas-y-almacenamiento, grupo-mixto-precio-cop-total, logistica-isla-fragata-regreso-otro-dia, manual-acompanante-mayor, nacionalidad-ambigua, paquete-5-buceos-cop-refresh-y-hoteles, paquete-5-buceos-islas-residente-sin-recogida, paquete-5-buceos-precio-overnight-isla-grande-baru, precio-paquetes-5-o-3-buceos-y-opcion-2-diurnos, precios-y-disponibilidad-con-negociacion, snorkel-precio-residente-y-pago-link. REGLA: arreglar la CAUSA con una solucion global (sin regex nuevos, sin mirar solo estos casos); los casos listados son la prueba de cierre y el examen oculto (21 casos reales) mide si mejora de verdad.",
     "order": 6,
     "owner": "—",
     "phase": "L1",
     "status": "pendiente",
     "title": "L1-6 · RAG: 'no lo tengo' teniendo el dato en la KB",
-    "updatedAt": "2026-09-22T22:40:00Z"
+    "updatedAt": "2026-09-23T02:58:50Z"
    },
    {
     "id": "l1-7",
@@ -232,6 +245,16 @@
     "phase": "L2",
     "status": "pendiente",
     "title": "Streaming / \"escribiendo\" en Chatwoot"
+   },
+   {
+    "id": "l2-4",
+    "createdAt": "2026-09-21T21:30:00Z",
+    "note": "Jev (TypeSafe, System One model, 15-sep-2026): decisiones tipadas sin generar texto (~0,4 s, coste de salida 0). Candidatos: detect_routing_signals (9 booleanos, hoy p50 ~1,1 s en cada turno), clasificacion de actividad (Choice) y is_grounded en cascada por probabilidad calibrada. NO para respuesta RAG, acuses, fill_gaps ni el juez del golden (no da evidencia). Benchmarks del fabricante: 68% (paridad con GPT-5.6 Terra; Opus 5 73%). RIESGO: sin evaluacion multilingue publicada y el 65% de nuestro trafico es ES. Contexto 32k. Hacer DESPUES de G1+G2, detras de flag, A/B por caso.",
+    "order": 4,
+    "owner": "—",
+    "phase": "L2",
+    "status": "pendiente",
+    "title": "L2-4 · Evaluar Jev como clasificador (router, actividad, grounding en cascada)"
    },
    {
     "id": "m0-1",
@@ -295,13 +318,13 @@
    },
    {
     "id": "m0-7",
-    "note": "Congelada el 17-sep (Gonzalo): eval-set 220/230 (script) y 230/230 (núcleo), booleanos 33/33 y 30/30, router 33/37, actividad 10/10·10/10·6/9, grupo 17/17·13/13·17/17, RAG 38/39, recuperación 16/20 ES y 13/20 EN. Foto por caso en docs/robustness/baselines/2026-09-17-m0-7/.",
+    "note": "Congelada el 17-sep (Gonzalo): eval-set 220/230 (script) y 230/230 (núcleo), booleanos 33/33 y 30/30, router 33/37, actividad 10/10·10/10·6/9, grupo 17/17·13/13·17/17, RAG 38/39, recuperación 16/20 ES y 13/20 EN. Foto por caso en docs/robustness/baselines/2026-09-17-m0-7/. CORRECCION (Gonzalo, 23-sep): el RAG se midio con la config local (umbral 0,50, top-k 5, gpt-4o), no con la de PRE. Re-medido con la de PRE: respuestas 39/39 con 1 fallback, recuperacion 20/20 ES y 19/20 EN (ficheros *_pre en la misma carpeta). Se retira el hallazgo 'el ingles recupera peor'; solo queda 'Do I need a discount code…'.",
     "order": 7,
     "owner": "Gonzalo",
     "phase": "M0",
     "status": "hecha",
     "title": "Congelar línea base de calidad (eval-set, baterías, RAG, golden-set) y de latencia",
-    "updatedAt": "2026-09-18T08:00:00Z"
+    "updatedAt": "2026-09-23T02:58:50Z"
    },
    {
     "id": "m0-8",
@@ -333,12 +356,13 @@
    },
    {
     "id": "r6-1",
-    "note": "",
+    "note": "Evidencia real (Gonzalo, 23-sep): eval_rag_answers se quedo colgado 5 h 44 min con 40 s de CPU, parado en el caso 4 de 39. No hay timeout por llamada LLM en ningun sitio: una conexion parada bloquea el proceso para siempre. En produccion seria un turno que nunca responde.",
     "order": 1,
     "owner": "Gonzalo",
     "phase": "R6",
     "status": "pendiente",
-    "title": "Timeouts por llamada LLM, fallback y backoff ante 429"
+    "title": "Timeouts por llamada LLM, fallback y backoff ante 429",
+    "updatedAt": "2026-09-23T02:58:50Z"
    },
    {
     "id": "r6-2",
@@ -606,7 +630,7 @@
    {
     "id": "u3-5",
     "createdAt": "2026-09-22T15:00:00Z",
-    "note": "El bot propone cambios del carrito que nadie pidio ('¿lo cambio? con certificacion -> sin certificacion', '4 -> 3 personas', 'acompanante -> sin decidir') y da por hechos datos que el cliente no dijo ('han buceado recientemente', 1 persona donde dijo 2). Aparece en conversaciones reales largas y desordenadas. Pertenece a la extraccion unica de U3 (fill_gaps / veto por campo), no a parches por campo. Golden v7 (22-sep): 23 dialogos afectados (6 en el examen oculto). Casos de regresion: acompanante-goteo, actividad-cambia-varias, cambio-fecha-por-enfermedad, curso-alojamiento-y-recogida-islas, curso-open-water-precio-cop-hoteles-y-transporte, curso-referido-pide-datos-centro, grupo-cambia-dos-veces, grupo-mixto-precio-cop-total, minicurso-islas-y-acompanante-lancha, ninos-6-y-10, paquete-5-buceos-islas-residente-sin-recogida, paquete-5-buceos-precio-overnight-isla-grande-baru, precio-desde-islas-vs-cartagena, principiante-hora-lugar-y-precio, referral-mas-refresher-hotel-y-domingo-pascua, reserva-completa-saludo-a-pago, snorkel-precio-residente-y-pago-link. REGLA: arreglar la CAUSA con una solucion global (sin regex nuevos, sin mirar solo estos casos); los casos listados son la prueba de cierre y el examen oculto (21 casos reales) mide si mejora de verdad.",
+    "note": "El bot propone cambios del carrito que nadie pidio ('¿lo cambio? con certificacion -> sin certificacion', '4 -> 3 personas', 'acompanante -> sin decidir') y da por hechos datos que el cliente no dijo ('han buceado recientemente', 1 persona donde dijo 2). Aparece en conversaciones reales largas y desordenadas. Ya se ve en la suite de tests (Gonzalo, 23-sep): 3 tests de test_conversational_core.py (companion_beginner_added_mid_flow, companion_signal_adds_minicourse_not_regex_match, slang_companion_with_different_activity_still_trusts_llm) fallan en el HEAD de pre_gadea porque sale confirm_correction donde se espera el slot. Pertenece a la extraccion unica de U3 (fill_gaps / veto por campo), no a parches por campo. Golden v7 (22-sep): 23 dialogos afectados (6 en el examen oculto). Casos de regresion: acompanante-goteo, actividad-cambia-varias, cambio-fecha-por-enfermedad, curso-alojamiento-y-recogida-islas, curso-open-water-precio-cop-hoteles-y-transporte, curso-referido-pide-datos-centro, grupo-cambia-dos-veces, grupo-mixto-precio-cop-total, minicurso-islas-y-acompanante-lancha, ninos-6-y-10, paquete-5-buceos-islas-residente-sin-recogida, paquete-5-buceos-precio-overnight-isla-grande-baru, precio-desde-islas-vs-cartagena, principiante-hora-lugar-y-precio, referral-mas-refresher-hotel-y-domingo-pascua, reserva-completa-saludo-a-pago, snorkel-precio-residente-y-pago-link. REGLA: arreglar la CAUSA con una solucion global (sin regex nuevos, sin mirar solo estos casos); los casos listados son la prueba de cierre y el examen oculto (21 casos reales) mide si mejora de verdad.",
     "order": 5,
     "owner": "—",
     "phase": "U3",
@@ -1589,6 +1613,12 @@
     "text": "18-sep (Gadea): m0-2 hecha. En vez de crear battery_latency.py, la muestra rápida (run_synthetic_pre --sample rapida + langfuse_snapshot) da p50/p95 por turno y por nodo en ~2 min; prueba: p50 3,1 s / p95 7,0 s. Descubierto: las preguntas de información van por el agente booking (que llama al RAG), no por info. Falsa alarma aclarada: Langfuse tarda unos minutos en dejar ver las trazas nuevas; la foto ahora avisa si le faltan turnos. El deploy muestra el estado de Langfuse dentro del contenedor."
    },
    {
+    "id": "l-0921-alvaro-g1",
+    "at": "2026-09-21T18:30:00Z",
+    "byLabel": "Álvaro (con Claude)",
+    "text": "21-sep (tarde): Álvaro retoma donde paró Gadea = G1 (minado de conversations.json, su 'siguiente paso' documentado). Decisiones del owner: (a) el MODO ENTRENAMIENTO entra como tarea g-4b dentro de G4 — capa sobre Chatwoot con flag on/off: el bot sugiere, un humano corrige, y la corrección se vuelve caso de regresión; (b) la visión de producto (multicanal Instagram/email, white-label sin que el cliente vea Chatwoot, all-in tipo CRM + web del cliente) queda como ANEXO del plan maestro, fuera del camino técnico hasta cerrar Q5. Correcciones medidas: en PRE NO se usa gpt-4o — son gpt-4o-mini y gpt-4.1-mini, así que L2 se re-encuadra (el lever es caché, no bajar de tier); y G3 (simulador con roles LLM) NO está construido: run_synthetic_pre manda guiones fijos. (Pasado a la página el 23-sep desde la copia de feature/agent-arch.)"
+   },
+   {
     "id": "l-0921-fase-g",
     "at": "2026-09-21T16:00:00Z",
     "byLabel": "Gadea (con Claude)",
@@ -1599,6 +1629,12 @@
     "at": "2026-09-21T15:00:00Z",
     "byLabel": "Gadea",
     "text": "21-sep (Gadea → Álvaro): lo dejo aquí. M0 cerrada salvo m0-4. Decisión pendiente antes de L1: m0-4 necesita tráfico real y PRE no tiene clientes, así que la idea es que el equipo meta conversaciones a mano por el widget (naturales y variadas: reservas, dudas, grupos, cambios, quejas; espaciadas por el rate-limit) y luego sacar los logs por SSH con harvest_cutover_logs --summary. Con eso: si hay material útil se cura al golden-set y se re-congela la línea base; si no, m0-4 se marca diferida con la cifra y se pasa a L1. Recordatorio para L1: comparar latencia antes/después el MISMO día."
+   },
+   {
+    "id": "l-0921-jev",
+    "at": "2026-09-21T21:30:00Z",
+    "byLabel": "Álvaro (con Claude)",
+    "text": "21-sep (noche): investigado Jev (TypeSafe), el modelo que comento Gadea. Es real y encaja: decisiones tipadas (booleano con probabilidad calibrada, choice, score) sin generar texto, ~0,4 s y coste de salida 0, frente a los ~1,1 s que cuesta hoy el router en CADA turno. Se anota como l2-4 con protocolo estricto: despues de G1+G2, detras de flag y A/B por caso con battery_router_signals (8 repeticiones). Riesgo gordo: el espanol, sin evaluacion multilingue publicada. No sirve para respuesta RAG, acuses, fill_gaps ni el juez del golden (necesita evidencia escrita). (Pasado a la página el 23-sep desde la copia de feature/agent-arch.)"
    },
    {
     "id": "l-0921-m0-5",
@@ -1623,6 +1659,42 @@
     "at": "2026-09-22T15:00:00Z",
     "byLabel": "Gadea (con Claude)",
     "text": "22-sep (tarde): G2 hecha y LINEA BASE v7. Ronda completa (116 dialogos, 465 turnos) + juez gpt-5-mini (1,95 $) + revision humana de sus 192 veredictos: 83,8 % de criterios y 38/116 sin fallos; sinteticos 93 % (28/43), REALES 78,8 % (9/73). Los guiones sinteticos ocultaban fallos que los reales sacan en decenas de casos. Causas: ignora la pregunta y sigue el flujo (29 dialogos), cambios/datos inventados (21), el RAG inventa o contradice la KB (21), malinterpreta (8), cotiza sin origen (7), 'no lo tengo' (7-16), mensaje fijo de disponibilidad (7-16). Tareas nuevas SIN responsable y agrupadas por causa, cada una con sus casos de regresion: u3-4, u3-5, l1-6, l1-7, g-7, g-8, s4-20, s4-21, s4-22. Hallazgo: los chats antiguos indexados en el RAG sirven datos caducos ('Marina Todo Mar'). Regresion de nacionalidad provocada por la KB y arreglada (50b4ec1). Juez con casos reales: 75 % en sus 'no cumple' (criterios a afinar, g-8). Regla: soluciones globales por causa; el examen oculto (21 casos) mide si mejora de verdad."
+   },
+   {
+    "id": "l-0923-gonzalo-baseline",
+    "at": "2026-09-23T08:20:00Z",
+    "byLabel": "Gonzalo",
+    "text": "Corregida la linea base de RAG del 17-sep: estaba medida con un .env a RAG_MIN_SCORE=0.50 / RAG_TOP_K=5 / OPENAI_MODEL=gpt-4o, y PRE corre con 0.40 / top-k 8 / gpt-4o-mini (el umbral lo FIJA docker-compose.vps.yml, con un comentario que llama 'stale' justo al 0.50). Con la config correcta: respuestas 39/39 con 1 fallback (era 38/39 con 6) y recuperacion 20/20 ES y 19/20 EN (eran 16/20 y 13/20). Se RETIRA el hallazgo 'la recuperacion en ingles es mas debil': era el entorno, no el bot. 'I have Open Water, which plan...' pasa de 0 documentos a 8 (top-1 0,5663) y 'Is accommodation included?' da 0,4932, que pasa el umbral de PRE y no pasaba el mio. Sobrevive UN caso: 'Do I need a discount code for the 10% discount?' (0,303 EN vs 0,4638 ES). El salto de 6 fallbacks a 1 matiza l1-6: parte de lo que parecia 'no lo tengo teniendo el dato' era el umbral. LECCION: una linea base medida con una config que no es la de produccion no es conservadora, es FALSA en las dos direcciones (aqui invento 7 fallos). Ficheros *_pre.* en docs/robustness/baselines/2026-09-17-m0-7/."
+   },
+   {
+    "id": "l-0923-gonzalo-export",
+    "at": "2026-09-23T08:22:00Z",
+    "byLabel": "Gonzalo",
+    "text": "AVISO antes de mergear agent-arch y pre_gadea: tienen copias DIVERGENTES del export de esta pagina. El de pre_gadea (22-sep 21:42) tiene 57 tareas y 4 fotos; el de agent-arch (21-sep 15:22) tiene 50 tareas PERO incluye l2-4 y g-4b, y dos entradas de bitacora (l-0921-alvaro-g1, l-0921-jev) que el export MAS NUEVO no contiene. Es decir, esas entradas no salieron de la base de datos viva. Hay que comprobar en la pagina si existen: si estan, re-exportar y listo; si no, volver a crearlas antes de exportar o se pierden. El merge se aborto desde Claude Code para no borrar trabajo de nadie en silencio. RESUELTO (Gadea, 23-sep): las 4 no estaban en la pagina viva; ya estan creadas (g-4b, l2-4, l-0921-alvaro-g1, l-0921-jev). Al mergear agent-arch, quedarse con el plan-coral.json de pre_gadea."
+   },
+   {
+    "id": "l-0923-gonzalo-margen",
+    "at": "2026-09-23T08:23:00Z",
+    "byLabel": "Gonzalo",
+    "text": "Observacion de fondo sobre L1, para no prometer al owner lo que no hay: van TRES tareas seguidas mas hechas de lo que dice el plan. l1-2 entera ya se cumplia; l1-3 tiene ya la mitad (_should_condense salta si no hay historial y trata como autonoma toda pregunta de 8+ palabras, falta solo la pregunta corta pero autosuficiente); y los atajos canonicos del RAG ya responden sin ninguna llamada al LLM y no estaban contabilizados. El margen real de L1 es MENOR que el del enunciado: conviene medir cuanto queda antes de comprometer una cifra de latencia."
+   },
+   {
+    "id": "l-0923-gonzalo-suite",
+    "at": "2026-09-23T08:21:00Z",
+    "byLabel": "Gonzalo",
+    "text": "La suite de pre_gadea NO esta verde, y no es por los cambios de L1: 2576 passed / 3 failed / 18 skipped. Los 3 fallan en test_conversational_core (test_companion_beginner_added_mid_flow, test_companion_signal_adds_minicourse_not_regex_match, test_slang_companion_with_different_activity_still_trusts_llm) porque sale `confirm_correction` donde se espera el slot: es el '¿lo cambio?' fantasma de la tarea u3-5. Verificado PREEXISTENTE con un worktree en HEAD (los mismos 3 fallan igual sin ningun cambio) y tambien en aislamiento. Aparte, test_scripts_no_tracing cayo en una pasada y no en otra: en aislamiento tarda 112 s con timeout=120 en su subproceso, asi que con la maquina cargada es un flake de carga (si molesta, subir ese timeout). La suite completa tarda aqui entre 54 min y 2 h 34 min segun carga."
+   },
+   {
+    "id": "l-0923-handoff-alvaro",
+    "at": "2026-09-23T11:30:00Z",
+    "byLabel": "Gadea (con Claude)",
+    "text": "HANDOFF 23-sep (Gadea → Álvaro): L1 sigue con Álvaro. Todo subido a pre_gadea y desplegado; en PRE activos RAG_EXCLUDE_SOURCES, RAG_FEWSHOT_ENABLED (g-7) y RAG_SINGLE_GROUNDING_JUDGE (l1-1). Hechas l1-1 y l1-2. Orden recomendado: 1) l1-4, comprobando antes si notas y resumen ya van fuera del turno (en Langfuse no aparecen como pasos); 2) l1-3, falta la pregunta corta que se entiende sola; 3) l1-5, paralelizar según la foto por pasos; 4) l1-6 + l1-7 juntas (mismo juez de grounding, que hoy rechaza más de la mitad de lo que ve). Cierre: g-7 paso 4 (tope 6-oct), quitar el reintento del código, ronda completa del golden con examen oculto y foto como punto de L1. Método: flag + 2 rondas del core por lado el mismo día + juez + comparar contra cada ronda A + revisión a mano. No prometer cifra de latencia antes de medir 1-3. Detalle y comandos: docs/project-history/session-handoff.md (sección 23-sep tarde). Para la página desde Claude Code sin ArtifactData: docs/tracking/data/plan-coral-cambios-pendientes.json."
+   },
+   {
+    "id": "l-0923-l1-1-ab",
+    "at": "2026-09-23T11:10:00Z",
+    "byLabel": "Gadea (con Claude)",
+    "text": "23-sep: l1-1 HECHA y ENCENDIDA en PRE. A/B el mismo dia con 2+2 rondas del core. Con el juez actual, la repregunta al juez de grounding solo salvo 1 de 24 respuestas (4 %). Con el juez unico: 35 % menos llamadas a ese juez, 10 % menos coste por turno, el peor turno del RAG baja de 9-10 llamadas a 7 y el 'no lo tengo' baja de 11 a 8. Calidad igual o algo mejor (85,0/87,1 % -> 87,5/87,2 %); lo que empeora frente a las dos rondas A se reviso a mano y es ruido del juez. Hallazgo para l1-6: el juez de grounding rechaza mas de la mitad de lo que ve (47 de 83 en A) y 11 respuestas acabaron en 'no lo tengo' tras dos intentos. Leccion de proceso: no parar el script que lanza un juez mientras ese juez corre (se le corta la salida y muere)."
    }
   ]
  }

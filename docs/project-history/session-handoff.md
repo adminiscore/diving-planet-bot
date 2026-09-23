@@ -11,6 +11,61 @@ Read this file before changing code in the Diving Planet Bot. For a quick versio
 
 ## Current branch and workflow
 
+### ▶️ 2026-09-23 tarde — HANDOFF A ÁLVARO: l1-1 HECHA y encendida en PRE; qué queda para cerrar L1
+
+**Estado:** todo en `feature/pre_gadea` (subido y desplegado en PRE). La rama de Gonzalo
+(`feature/l1_gonzalo`) ya está dentro (fast-forward). En PRE están activos, en `docker-compose.vps.yml`:
+`RAG_EXCLUDE_SOURCES=conversations`, `RAG_FEWSHOT_ENABLED=false` (g-7) y
+**`RAG_SINGLE_GROUNDING_JUDGE=true` (l1-1)**. Marcha atrás de cualquiera: quitar su línea y redesplegar.
+
+**l1-1 — A/B hecho el 23-sep (2+2 rondas del core en PRE, el mismo día):**
+- **Rescates con el juez actual (lado A):** el segundo juez solo salvó **1 de 24** rechazos (4 %). Las otras
+  23 llamadas repitieron el veredicto y hubo que reescribir la respuesta igual. Contado en los logs de PRE:
+  `ssh -i ~/.ssh/dp_pre_vps root@89.167.4.161 "docker logs dp-pre-bot --since <ISO> 2>&1 | grep '\[RAG\]\[GROUNDING\]'"`.
+- **Lado B (juez único):** llamadas al juez de grounding **83 → 54 (−35 %)**; llamadas del RAG por turno
+  5,7-6,0 → 5,2-5,3 (máximo 9-10 → 7); **coste por turno −10 %**; "no lo tengo" 11 → 8.
+- **Calidad igual:** A 85,0 % / 87,1 % frente a B 87,5 % / 87,2 % (sin fallos 14/17 → 16/17). Revisado a mano
+  todo lo que empeora frente a **las dos** rondas A: ruido del juez (el mismo texto aprobado en A) o variación
+  al redactar sin rechazo del juez de grounding. Ninguno por l1-1.
+- **Latencia:** B1 fue la mejor ronda (Langfuse, media 4,4 s). B2 tuvo 10 min lentos de OpenAI: el router, que
+  l1-1 no toca, también subió. Por eso la latencia se lee con las fotos de Langfuse por nodo, no solo con el
+  cronómetro del cliente.
+- Ficheros: `docs/robustness/golden-set/results/2026-09-23-core-l11-{A1,A2,B1,B2}__gpt-5-mini-medium.json`,
+  `synthetic-runs/2026-09-23-core-l11-*.jsonl`, `snapshots/2026-09-23-core-l11-*.json`.
+- **Hallazgo para l1-6:** el juez de grounding rechaza **más de la mitad** de lo que ve (47 de 83 en A) y 11
+  respuestas acabaron en "no lo tengo" tras dos intentos. Ahí está la causa de fondo de l1-6.
+
+**Qué queda para cerrar L1 (orden recomendado):**
+1. **l1-4** (sacar `extract_notes` / `maybe_update_summary` del turno): **comprobar primero si ya van fuera**.
+   En la foto de Langfuse no aparecen como nodos del turno, y ya van tres tareas de L1 más hechas de lo que
+   decía el plan. Si ya van fuera, se cierra con un test (como l1-2).
+2. **l1-3**: falta solo la pregunta corta pero autosuficiente (vía propuesta por Gonzalo más abajo: que nombre su
+   propio producto del registro, sin listas de frases).
+3. **l1-5** (paralelizar): mirar la foto por nodo. Router 1,4 s, extracción 1,0 s, cierre 0,8 s y preparación
+   0,75 s se pagan en casi cada turno.
+4. **l1-6 + l1-7** (calidad del RAG: "no lo tengo" teniendo el dato / contradice la KB): diseñarlas juntas, son el
+   mismo juez. Solución global, sin regex; casos de regresión en cada tarea y el examen oculto al cierre.
+5. **Cierre:** g-7 paso 4 (borrar `conversations.json` y su código, reindexar; **tope 6-oct**) → quitar del código
+   la rama del reintento de l1-1 → **ronda completa del golden** (116, con examen oculto) + juez + revisión →
+   foto de Langfuse como punto de L1 en la página. Comparar con la línea base v7 (83,8 %, p50 4,6 s / p95 9,0 s).
+- **No prometer una cifra de latencia** hasta tener 1-3 medidas: el margen de L1 es menor que el del plan.
+
+**Cómo medir cada tarea (igual que g-7 y l1-1):** flag + línea en `docker-compose.vps.yml` → 2 rondas del core
+con el flag apagado y 2 encendido, **el mismo día** (`ENV_FILE=.env.dev python -m scripts.run_synthetic_pre
+--name <x> --sample core`, ~20 min cada una) → `python -m scripts.judge_golden_set --run <jsonl>` (~30 min,
+~0,47 $) → `compare_rounds.py <A> <B> --raw` contra **cada** ronda A (entre dos rondas iguales ya cambian ~10
+criterios por ruido: solo cuenta lo que empeora frente a las dos) → revisar esos casos a mano →
+`scripts.langfuse_snapshot --from-run <jsonl>` para llamadas y latencia por nodo.
+- Lanzar las rondas como proceso de Windows independiente (`Start-Process powershell -WindowStyle Hidden`).
+  **No parar el script que lanza un juez mientras ese juez corre**: se le corta la salida y muere en silencio
+  (pasó hoy con B1: hubo que repetirlo).
+
+**Página Plan Coral:** al día (l1-1 hecha, bitácora de hoy, lo de Álvaro del 21-sep recuperado: g-4b, l2-4 y sus
+2 entradas). Las sesiones de Claude Code de Gonzalo y Álvaro **no tienen la herramienta `ArtifactData`**, así que
+desde Claude no pueden escribir en la página. Desde el **navegador sí** pueden cambiar tareas y bitácora. Desde
+Claude, dejar los cambios en `docs/tracking/data/plan-coral-cambios-pendientes.json` (formato dentro) y Gadea los
+aplica. **Nunca editar `plan-coral.json`**: es la copia, se regenera desde la página.
+
 ### 📌 2026-09-23 — DÓNDE ESTÁ MI TRABAJO Y QUÉ HAY QUE HACER CON ÉL (Gonzalo → Gadea)
 
 **Rama: `feature/l1_gonzalo`, commit `6bd3985`.** NO está en `agent-arch` ni en `pre_gadea`, a
