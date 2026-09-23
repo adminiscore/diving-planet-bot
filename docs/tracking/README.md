@@ -9,6 +9,21 @@ Claude (herramienta ArtifactData).
 | `plan-coral.html` | https://claude.ai/artifact/XiGd3kguTNwwqTnH7mQwgi | Seguimiento del plan maestro: fases y tareas, bitácora, gráficos de latencia y calidad por ejecución (fotos de `scripts/langfuse_snapshot.py` + nota del golden-set) |
 | `calibracion-juez.html` | https://claude.ai/artifact/4kDXumzu3QT7KpTQvuenHf | Etiquetado humano para calibrar el LLM-juez del golden-set (`scripts/calibrate_judge.py`). Cerrada tras la calibración del 2026-09-17 |
 
+## Cola de cambios cuando no se puede escribir en la página (2026-09-23)
+
+`data/cambios-pendientes.json` es una **cola**, no una copia de la base de datos (eso es
+`data/plan-coral.json`, que se regenera exportando). Existe porque en la sesión de Claude Code de
+Gonzalo la herramienta **`ArtifactData` no existe**: verificado por nombre exacto
+(`select:ArtifactData` → *"No matching deferred tools found"*) y por descripción. **No es un problema
+de cuenta** — esa misma sesión sí tiene `DesignSync` y `RemoteTrigger`, que autentican con el login
+de claude.ai, y no hay ninguna `ANTHROPIC_API_KEY` en el entorno ni en el usuario. Tampoco se
+intentó republicar el HTML en ningún momento.
+
+**Cómo funciona**: quien no pueda escribir en la página deja ahí el cambio (colección, `doc_id` y
+campos) y lo sube con su commit. Quien sí pueda lo aplica con `ArtifactData` —o a mano desde la
+página— y en el MISMO commit deja `pendientes` vacío y rellena `aplicado_el`. Si la cola se queda
+llena, el repo y la página divergen: esa es la señal de que alguien tiene que pasar por ahí.
+
 **Para cambiar una página**: editar el HTML aquí y pedir a Claude que lo republique en la MISMA URL
 (publicar con `url` = la de la tabla). Publicar sin `url` crea una página nueva y se pierden los datos.
 
