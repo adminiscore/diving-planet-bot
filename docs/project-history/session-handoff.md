@@ -11,6 +11,63 @@ Read this file before changing code in the Diving Planet Bot. For a quick versio
 
 ## Current branch and workflow
 
+### 🛡️ 2026-09-23 noche (Álvaro) — r6-1 HECHA (timeouts) · falta confirmarla en PRE · l1-4 NO estaba hecha
+
+**Rama:** `feature/pre_alvaro`, ya al día con la de Gadea (fast-forward a `0ccf024`) + `c4bb91a`.
+**Desplegado a PRE** (push a `pre_alvaro`). `feature/pre_gadea` sin tocar.
+
+**r6-1 · timeout por llamada al LLM — hecho.** La causa del agujero estaba medida: el cliente de OpenAI
+trae `Timeout(connect=5, read=600)` con `max_retries=2` → **hasta ~30 min colgado en UNA llamada** (eso
+fue el cuelgue de 5 h 44 min). Ahora `LLM_TIMEOUT_SECONDS` (30 s por defecto) se aplica en **un único
+punto** que cubre las 12+ llamadas: todas pasan por `trace_openai()`, y en el camino trazado de PRE va
+**en la construcción** del cliente de Langfuse (`observability.traced_openai_client`), que es donde
+protege de verdad con el tracing activo.
+- **Trampa que casi rompe medio repo:** `with_options()` sobre un *mock* devuelve **otro objeto**, así que
+  aplicarlo a ciegas habría hecho fallar en cadena las decenas de tests que parchean `AsyncOpenAI` en su
+  módulo. El timeout **solo se aplica a clientes reales**; un mock pasa intacto, y hay test que lo fija.
+- Un timeout **degrada** (extracción vacía + log `[LLM_EXTRACTOR][DEGRADED]`) pero **no tumba** el turno.
+- **Suite:** base **2580 passed / 17 skipped / 0 failed** → **2584 / 17 / 0** (los +4 son los tests nuevos).
+  ⚠️ **Los 3 fallos de `test_conversational_core.py` que citaba la 0.29.9 YA NO se reproducen** — la suite
+  está verde en HEAD.
+
+**✅ VERIFICADO EN PRE** (ya con `.env.dev` y el acceso SSH que pasó Gadea): el contenedor corre
+`c4bb91a` con `settings.llm_timeout_seconds=30.0`, y la ronda `run_synthetic_pre --sample rapida` da
+**12/12 turnos respondidos, 0 sin respuesta, máximo 16 s**
+(`docs/robustness/synthetic-runs/2026-09-23-r61-check.jsonl`).
+*Fuera del alcance de r6-1:* el **backoff ante 429** sigue en el default del SDK (`max_retries=2`); si se
+quiere afinar, es tarea aparte.
+
+**🔴 HALLAZGO NUEVO (gracias al SSH) — PRE sigue trazando a LangSmith y comiéndose 429.** `.env.pre` del
+VPS conserva `LANGSMITH_API_KEY`, `LANGSMITH_PROJECT` y `LANGCHAIN_TRACING_V*`, y `langsmith 0.10.10`
+sigue instalado → **LangChain activa el tracing viejo por su cuenta** y falla con *"Monthly unique traces
+usage limit exceeded"* (~7 errores cada 20 min). Es ruido y trabajo de red **en cada turno**, hacia un
+sitio al que ya no miramos desde la migración a Langfuse (0.28.0). **Arreglo rápido:** quitar esas 3
+variables de `.env.pre` en el VPS (no las inyecta el deploy: son restos). De fondo es **s4-5**.
+**No lo he tocado**: es configuración de PRE y prefiero que lo decida el equipo.
+
+**Claves (para quien venga):** `.env.dev` ya tiene `SYNTH_CHATWOOT_TOKEN` y las dos de Langfuse.
+`LANGFUSE_HOST` **no hace falta** (el script usa `https://cloud.langfuse.com` por defecto). **Falta
+`OPENAI_API_KEY` en `.env.dev`**, que solo necesita `judge_golden_set` — sin ella no se puede hacer el
+A/B de calidad de l1-4. La clave SSH va en `~/.ssh/dp_pre_vps` (permisos solo-lectura del usuario);
+`ssh -i ~/.ssh/dp_pre_vps root@89.167.4.161`.
+⚠️ `.env.dev.example` **está desactualizado**: habla de `LANGSMITH_*` y no menciona `SYNTH_CHATWOOT_TOKEN`
+ni `LANGFUSE_*`, que son las que de verdad hacen falta hoy.
+
+**🔎 CORRECCIÓN IMPORTANTE SOBRE l1-4: NO está hecha.** El handoff de la tarde decía "comprobar primero si
+ya van fuera". Comprobado en el código: **siguen esperándose dentro del turno** —
+`conversational_core.py:3078` (`await _maybe_capture_notes` → `extract_notes`) y `supervisor.py:2802`
+(`await conversation_summarizer.maybe_update_summary`). No salían como nodos en Langfuse porque viven
+*dentro* de otras funciones, no porque estén fuera del turno. **Es trabajo real.**
+- **Y ojo al implementarla:** en `src/channels/chatwoot.py` el `save_state` va justo después de
+  `route_message`. Con un `asyncio.create_task` a secas, **el estado se guardaría antes de que terminen y
+  se perderían las notas y el resumen**. La vía segura es moverlas a *después de enviar la respuesta y
+  antes de guardar* (`finalize_chatwoot_delivery` → notas/resumen → `save_state`), detrás del flag
+  `defer_background_tasks`, y medir con el ritual de l1-1.
+
+**Plan maestro:** recuperado lo que se perdió al divergir `agent-arch` (solo estaba en la página): **G4b
+modo entrenamiento**, **l2-4 Jev**, **anexo de Visión** y la **corrección de modelos** de L2 — que la
+0.29.9 confirmó por su cuenta al re-medir la línea base de RAG.
+
 ### ▶️ 2026-09-23 tarde — HANDOFF A ÁLVARO: l1-1 HECHA y encendida en PRE; qué queda para cerrar L1
 
 **Estado:** todo en `feature/pre_gadea` (subido y desplegado en PRE). La rama de Gonzalo
