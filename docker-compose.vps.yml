@@ -120,7 +120,8 @@ services:
       # mirar cuantos `[RAG][GROUNDING][RESCUE]` hay en los logs: si el 2º juez
       # rescata a menudo, quitarlo obliga a REGENERAR (mas caro) y el camino de
       # fallo saldria mas lento, no mas rapido. Revert = quitar esta linea.
-      # RAG_SINGLE_GROUNDING_JUDGE: "true"
+      # A/B del 23-sep, lado A: el 2º juez rescato 1 de 24 rechazos (4 %).
+      RAG_SINGLE_GROUNDING_JUDGE: "true"
       # Refactor multi-agente (docs/multi-agent-refactor-plan.md) — validación en
       # PRE antes del corte del legacy (Fase 5.2). STAGE B (ahora): el GRAFO sirve
       # de verdad (agent_arch on) — router → 5 nodos reales + subgrafo booking. La
