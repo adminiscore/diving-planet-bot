@@ -85,6 +85,25 @@ class Settings(BaseSettings):
     # todas. Subirlo por entorno si algun dia hay una llamada legitimamente larga.
     llm_timeout_seconds: float = 30.0
 
+    # l1-4 (Fase L1): las notas del asesor se calculan EN PARALELO, no antes.
+    #
+    # `_maybe_capture_notes` cuesta ~0,75 s de media (nodo `setup` en Langfuse:
+    # p50 0,748 / p95 1,266 sobre 90 turnos, foto 2026-09-23-core-l11-B1) de un
+    # turno de ~4,2 s, y en ese paso no hay ninguna otra llamada al LLM: es la
+    # ganancia entera de l1-4.
+    #
+    # Por que en paralelo y no despues de responder (propuesta de Gadea, mejor
+    # que la primera version): las notas ALIMENTAN `_build_extra_context`, el
+    # contexto que recibe el RAG. Si se retrasan, la respuesta de ESE turno se
+    # queda sin la nota de ESE mensaje -> cambia la conducta. Lanzandolas al
+    # principio y esperandolas justo antes de quien las usa, la respuesta sigue
+    # viendo la nota y el tiempo queda escondido detras del router (1,4 s) y la
+    # extraccion (1,0 s), que corren mientras tanto.
+    #
+    # El resumen (`maybe_update_summary`) se queda como esta: solo recalcula cada
+    # N mensajes, asi que casi nunca cuesta nada.
+    notes_in_parallel: bool = False
+
     # --- Observabilidad: Langfuse (sustituye a LangSmith, cuota Developer
     # agotada; ver docs/robustness/progress-log.md "Tarea 8"). Sin claves, el
     # tracing queda apagado y `langfuse` ni se importa (3.14-safe). Claves por

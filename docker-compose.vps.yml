@@ -122,6 +122,16 @@ services:
       # fallo saldria mas lento, no mas rapido. Revert = quitar esta linea.
       # A/B del 23-sep, lado A: el 2º juez rescato 1 de 24 rechazos (4 %).
       RAG_SINGLE_GROUNDING_JUDGE: "true"
+      # l1-4 (Fase L1): la captura de notas se calcula EN PARALELO en vez de
+      # bloquear el turno. Ganancia ya medida: el nodo `setup` (donde viven las
+      # notas) va a p50 0,748 s / p95 1,266 s sobre 90 turnos, de un turno de
+      # ~4,2 s, y no hace ninguna otra llamada al LLM
+      # (docs/robustness/snapshots/2026-09-23-core-l11-B1.json).
+      # No es "diferir": las notas entran en el contexto del RAG, asi que se
+      # lanzan al principio y se ESPERAN justo antes de quien las usa -> el bot
+      # responde igual. Revert = quitar esta linea + redeploy.
+      # DESCOMENTAR solo para el lado B del A/B.
+      # NOTES_IN_PARALLEL: "true"
       # Refactor multi-agente (docs/multi-agent-refactor-plan.md) — validación en
       # PRE antes del corte del legacy (Fase 5.2). STAGE B (ahora): el GRAFO sirve
       # de verdad (agent_arch on) — router → 5 nodos reales + subgrafo booking. La

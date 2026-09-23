@@ -2799,6 +2799,12 @@ async def route_message(state: ConversationState, message: str) -> str:
             response = await run_turn_via_graph(state, message)
         else:
             response = await _shared_turn_handler(state, message)
+        # l1-4: red de seguridad. Si el turno no pasó por RAG, la captura de notas
+        # que `_setup_phase` lanzó en paralelo puede seguir viva; hay que esperarla
+        # ANTES de que el canal guarde el estado o se perdería la nota. Es no-op
+        # cuando el flag está apagado o cuando ya se esperó en el RAG.
+        from src.agents.conversational_core import await_pending_notes
+        await await_pending_notes(state)
         await conversation_summarizer.maybe_update_summary(state)
         turn.update(
             reply=response,

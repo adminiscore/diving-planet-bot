@@ -26,6 +26,7 @@ determinista; el LLM interpreta, nunca fija precio/link ni salta el gating.
 
 from __future__ import annotations
 
+import asyncio
 import logging
 import re
 from collections import Counter
@@ -67,6 +68,7 @@ from src.agents.llm_extractor import (
     verify_fields,
 )
 from src.agents.notes_extractor import extract_notes
+from src.config import settings
 from src.domain import activities as dom
 from src.flows import cart_render, eligibility
 from src.flows.state import ConversationState, Step
@@ -1885,6 +1887,28 @@ def _relevant_gaps(state: ConversationState, intent, message: str) -> list[str]:
     return gaps
 
 
+async def await_pending_notes(state: ConversationState) -> None:
+    """l1-4: espera a la captura de notas que `_setup_phase` lanzó en paralelo.
+
+    Se llama en los dos sitios donde importa que ya estén: antes de
+    `_build_extra_context` (el contexto del RAG las incluye) y al cerrar el turno
+    en `supervisor.route_message`, antes de que el canal guarde el estado. Es
+    idempotente: si no hay tarea, o ya se esperó, no hace nada.
+
+    Si la captura falla, se traga el error a propósito: la nota es un extra para el
+    asesor y no puede tumbar el turno del cliente (el código de siempre, cuando iba
+    en serie, tampoco propagaba: `_maybe_capture_notes` ya registra y sigue).
+    """
+    task = getattr(state, "_pending_notes_task", None)
+    if task is None:
+        return
+    state._pending_notes_task = None
+    try:
+        await task
+    except Exception as exc:  # noqa: BLE001
+        logger.warning(f"[NOTES][PARALELO] la captura de notas falló: {exc}")
+
+
 async def _maybe_capture_notes(state: ConversationState, message: str) -> None:
     """(Fase C, re-cableado 2026-07-28 — decisión owner: con LLM) Captura hechos
     abiertos que un asesor querría recordar (lesión/médico, accesibilidad,
@@ -3075,7 +3099,21 @@ async def _setup_phase(
     # remembered_facts["notes"]. Corre en cualquier mensaje sustantivo, sin
     # afectar el enrutado del turno (solo escribe estado); un mensaje puede
     # traer una nota junto a una pregunta, una respuesta de slot o una reserva.
-    await _maybe_capture_notes(state, message)
+    #
+    # l1-4: justo por eso —solo escribe estado— puede salir del turno. Con
+    # `defer_background_tasks` la llama el canal tras ENVIAR la respuesta
+    # (ver `supervisor.run_deferred_turn_tasks`), y el cliente no la espera.
+    if settings.notes_in_parallel:
+        # l1-4: se lanza y NO se espera aquí. La espera va justo antes de quien las
+        # usa (`_build_extra_context`, contexto del RAG) y, como red de seguridad,
+        # al cerrar el turno en `supervisor.route_message` — antes del `save_state`.
+        # La tarea se cuelga del `state` como atributo NO declarado: viaja por
+        # referencia entre los nodos del grafo (nada de ContextVars, que es donde
+        # se perdió el contexto de traza en m0-1) y `asdict()` la ignora al
+        # serializar, así que nunca llega a Redis.
+        state._pending_notes_task = asyncio.create_task(_maybe_capture_notes(state, message))
+    else:
+        await _maybe_capture_notes(state, message)
     return greeting, first_turn
 
 
@@ -4121,6 +4159,9 @@ async def _answer_question(
     # el historial sigue teniendo el mensaje real del cliente.
     from src.agents import supervisor  # lazy
 
+    # l1-4: las notas de ESTE mensaje pueden estar calculándose en paralelo. Aquí
+    # es donde se usan (van dentro del contexto del RAG), así que aquí se espera.
+    await await_pending_notes(state)
     extra_context = supervisor._build_extra_context(state)
     answer = await supervisor.rag_answer(
         rag_query or message, lang=state.language, history=state.history,
