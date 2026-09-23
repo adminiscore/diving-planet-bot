@@ -11,6 +11,71 @@ Read this file before changing code in the Diving Planet Bot. For a quick versio
 
 ## Current branch and workflow
 
+### 🧪 2026-09-23 noche (Álvaro) — r6-1 HECHA · l1-4 MEDIDA y NO promocionada (regresión real)
+
+**Rama:** `feature/pre_alvaro`, al día con la de Gadea. PRE desplegado y **sano**, con
+`notes_in_parallel` **APAGADO** (se encendió solo para medir). `feature/pre_gadea` sin tocar.
+
+#### ✅ r6-1 — timeout por llamada al LLM (hecha y verificada)
+El SDK de OpenAI traía `Timeout(read=600)` con `max_retries=2` → **hasta ~30 min colgado en UNA
+llamada** (el cuelgue de 5 h 44 min). Ahora `LLM_TIMEOUT_SECONDS=30` aplicado en **un único punto**
+(`trace_openai` + la construcción del cliente de Langfuse, que es el camino de PRE).
+**Trampa evitada:** `with_options()` sobre un *mock* devuelve otro objeto → se aplica **solo a
+clientes reales**, o se caerían en cadena las decenas de tests que parchean `AsyncOpenAI`.
+Verificado dentro del contenedor y con una ronda rápida (12/12 turnos). *Fuera de alcance:* el
+backoff de 429 sigue en el default del SDK.
+
+#### 🟡 l1-4 — la latencia mejora, pero NO se promociona
+A/B completo del core el mismo día (4 rondas × 93 turnos, 0 sin respuesta; juez 1,90 €/$).
+
+| | `setup` p50 | turno p50 | llamadas/turno | criterios |
+|---|---|---|---|---|
+| A1/A2 (OFF) | 0,912 / 0,784 s | 4,703 / 4,435 s | 3,56 / 3,60 | 86,7 % / 86,8 % |
+| B1/B2 (ON) | **0,039 / 0,037 s** | **3,805 / 3,637 s** | 3,59 / 3,62 | 87,2 % / 86,4 % |
+
+La latencia mejora de verdad (**−95 % el nodo, −18 % el turno**) y las llamadas no bajan, así que
+las notas se seguían capturando. **Pero 2 criterios fallan en LAS DOS rondas B y pasan en LAS DOS A**
+(4 de 4): el bot se inventa *"el enlace no te ha funcionado"*, y recomienda *refresh* a alguien
+certificado hace **menos** de 2 años.
+
+> **Lección de método:** el porcentaje agregado NO lo habría visto (86,7/86,8 vs 87,2/86,4 son
+> indistinguibles). Solo aparece **criterio a criterio contra las dos rondas A**. Es exactamente
+> para esto que Gadea montó ese protocolo.
+
+**CAUSA RAÍZ — carrera con `state.history`:** `_maybe_capture_notes` lee `state.history`, y las fases
+**meten la respuesta del propio bot en ese historial 18 veces** durante el turno. En serie las notas
+se calculan al final de `setup` (historial = solo el mensaje del cliente). En paralelo, en los turnos
+que **no pasan por RAG** la tarea se espera al final de `route_message`, cuando la respuesta del bot
+ya está dentro → `extract_notes` la ve, extrae notas distintas, **se persisten y contaminan el
+contexto del RAG de los turnos siguientes**. Por eso falla en diálogos multi-turno.
+
+**ARREGLO PROPUESTO (sin validar, ~1 línea):** congelar el historial al crear la tarea — pasar una
+**copia** (`list(state.history)`) en vez de la lista viva, para que la nota se calcule sobre lo mismo
+que veía en serie, corra cuando corra. **Exige repetir el A/B entero antes de encender nada.**
+
+#### 📌 Para quien siga: cómo repetir el A/B (probado hoy)
+1. Flag OFF (línea comentada en `docker-compose.vps.yml`) → 2 rondas:
+   `ENV_FILE=.env.dev python -m scripts.run_synthetic_pre --name <x>-A1 --sample core` (~20 min).
+2. Descomentar `NOTES_IN_PARALLEL`, push a `pre_alvaro`, **verificar dentro del contenedor**
+   (`docker exec dp-pre-bot python -c "from src.config import settings; print(settings.notes_in_parallel)"`)
+   y lanzar B1/B2.
+3. Juez: `python -m scripts.judge_golden_set --run <jsonl>` (~30 min, ~0,47 $ cada uno).
+4. `python docs/robustness/golden-set/compare_rounds.py <A> <B> --raw` contra **cada** A, y quedarse
+   solo con lo que empeora frente a **las dos**.
+5. Fotos: `python -m scripts.langfuse_snapshot --from-run <jsonl> --out <fichero>` — **sin `--out` no
+   guarda nada**, solo imprime.
+
+⚠️ **Trampa que me costó una ronda:** cualquier push a una rama `pre_*` **dispara el deploy y recrea
+el contenedor**, aunque el cambio sea solo documentación. **No subir nada mientras corre una ronda.**
+
+#### Claves y accesos (ya listos en esta máquina)
+`.env.dev` tiene `SYNTH_CHATWOOT_TOKEN`, las dos de Langfuse y `OPENAI_API_KEY`. `LANGFUSE_HOST` no
+hace falta (el script usa `https://cloud.langfuse.com` por defecto). SSH: `~/.ssh/dp_pre_vps`
+(permisos solo-lectura del usuario) → `ssh -i ~/.ssh/dp_pre_vps root@89.167.4.161`.
+⚠️ `.env.dev.example` sigue **desactualizado**: habla de `LANGSMITH_*` y no menciona
+`SYNTH_CHATWOOT_TOKEN` ni `LANGFUSE_*`.
+
+
 ### 🛡️ 2026-09-23 noche (Álvaro) — r6-1 HECHA (timeouts) · falta confirmarla en PRE · l1-4 NO estaba hecha
 
 **Rama:** `feature/pre_alvaro`, ya al día con la de Gadea (fast-forward a `0ccf024`) + `c4bb91a`.
