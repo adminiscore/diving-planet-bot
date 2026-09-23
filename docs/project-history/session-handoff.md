@@ -76,7 +76,10 @@ hace falta (el script usa `https://cloud.langfuse.com` por defecto). SSH: `~/.ss
 `SYNTH_CHATWOOT_TOKEN` ni `LANGFUSE_*`.
 
 
-### 🛡️ 2026-09-23 noche (Álvaro) — r6-1 HECHA (timeouts) · falta confirmarla en PRE · l1-4 NO estaba hecha
+### 🗂️ 2026-09-23 noche (Álvaro) — SUPERADO por el banner de arriba · detalle técnico de r6-1
+> ⚠️ **Este banner ya no es el estado actual.** Se escribió a media sesión, antes de verificar
+> r6-1 en PRE y antes de medir l1-4. Se conserva por el detalle técnico; **el estado bueno es el
+> banner de arriba** (r6-1 verificada, l1-4 medida y NO promocionada).
 
 **Rama:** `feature/pre_alvaro`, ya al día con la de Gadea (fast-forward a `0ccf024`) + `c4bb91a`.
 **Desplegado a PRE** (push a `pre_alvaro`). `feature/pre_gadea` sin tocar.
