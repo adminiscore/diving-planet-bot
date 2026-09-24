@@ -5,6 +5,7 @@ History
 ----------------------
 * **Medición propia sin Langfuse** (plan gratuito superado, reinicio el 16-oct; se decidió no pagar): cada turno escribe `[TURN_METRICS]` en el log de PRE (sin texto del cliente) con el tiempo del turno, las llamadas al LLM, el tiempo de cada paso del grafo y el router usado; `scripts/turn_metrics.py` saca la misma foto que Langfuse. Comprobado en PRE: 12/12 turnos, el paso del router con Jev tarda 0,42 s (antes ~1,4 s).
 * **Protocolo de medición** (`docs/robustness/protocolo-medicion.md`, decisiones de Gadea): A/B por escalones (local con los 257 mensajes → 1+1 en PRE → 2+2 solo si hay dudas; ronda completa solo al cerrar fase).
+* **u3-1 paso 2 ("¿se entiende sola?" para saltar `condense_query`) DESCARTADO en el escalón 0** del protocolo nuevo, en local y por céntimos: de 109 mensajes de seguimiento del golden que hoy se reescriben, Jev solo está seguro de 14 (11 bien, 3 arriesgados). En el bot sería ~1 turno de cada 93 (~0,01 s de media). No se fue a PRE y el código se deshizo. Primer caso en que el escalón 0 ahorra un A/B entero.
 * **Cache de veredictos del juez** (`judge-cache.jsonl`): no se vuelve a pagar por juzgar exactamente lo mismo. Medido: con el mismo código solo ~1 de cada 3 diálogos repite el texto del bot, así que el ahorro es ~40 % del juez por ronda (no el 60-80 % que se estimó al principio). Un A/B pasa de ~2,3 $ a ~0,7-0,8 $.
 
 0.29.15 - (2026-09-24, tarde)
