@@ -124,6 +124,11 @@ services:
       # 0 regresiones atribuibles (HISTORY 0.29.14) -> se QUEDA ENCENDIDA.
       # Revert = comentar esta linea.
       NOTES_IN_PARALLEL: "true"
+      # U3 (u3-1, paso 1): las 9 senales del router con Jev (src/agents/jev_router.py),
+      # con el router LLM de respaldo si Jev falla o tarda >2 s. ENCENDIDO para el lado B
+      # del A/B (24-sep); la clave OPENROUTER_API_KEY esta en .env.pre del VPS.
+      # Revert = quitar esta linea + redeploy.
+      JEV_ROUTER_ENABLED: "true"
       # Refactor multi-agente (docs/multi-agent-refactor-plan.md) — validación en
       # PRE antes del corte del legacy (Fase 5.2). STAGE B (ahora): el GRAFO sirve
       # de verdad (agent_arch on) — router → 5 nodos reales + subgrafo booking. La
