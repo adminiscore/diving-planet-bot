@@ -25,6 +25,8 @@
 > - **M0 cerrada salvo m0-4** (tráfico real: necesita SSH y que PRE tenga clientes). Siguiente: **L1** y **U3**. Latencia: comparar antes/después el MISMO día (la API de OpenAI varía ~25 % entre días).
 > - 10 fallos del bot del golden-set como tareas S4-6..S4-16 (varios encajan en U3).
 
+> **📏 Cómo se mide desde el 24-sep-2026 (decisiones de Gadea, para todo el equipo):** la latencia y las llamadas se sacan de nuestros logs (`[TURN_METRICS]` + `scripts/turn_metrics.py`) hasta que vuelva Langfuse (plan gratuito superado, reinicio 16-oct); y las pruebas A/B van por escalones (local → 1+1 juzgando solo lo que cambia → 2+2 si hay dudas; ronda completa solo al cerrar fase). Detalle: **`docs/robustness/protocolo-medicion.md`**.
+
 ---
 
 ## PARTE 0 — Estado actual: qué tenemos / qué falta (leer primero)

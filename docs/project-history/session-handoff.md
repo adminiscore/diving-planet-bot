@@ -11,6 +11,8 @@ Read this file before changing code in the Diving Planet Bot. For a quick versio
 
 ## Current branch and workflow
 
+> **📏 LEER ANTES DE MEDIR — decisiones del 24-sep-2026 (Gadea):** (1) latencia y llamadas con nuestros logs `[TURN_METRICS]` + `scripts/turn_metrics.py`, no con Langfuse (plan gratuito superado, reinicio 16-oct); (2) pruebas A/B por escalones, juzgando solo los diálogos que cambian. Todo en `docs/robustness/protocolo-medicion.md`.
+
 ### ✅ 2026-09-24 tarde (Gadea) — L1 CERRADA + Jev (u3-1) ENCENDIDO en PRE con cascada
 
 **Estado de PRE** (`feature/pre_gadea`, desplegado): sin los chats antiguos (índice de 718 documentos
