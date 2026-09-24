@@ -57,52 +57,6 @@ def detect_topics(text: str) -> list[str]:
     return topics
 
 
-def normalize_conversation_topics(raw_topics: list[str] | None) -> list[str]:
-    if not raw_topics:
-        return []
-
-    topic_map: dict[str, str] = {
-        "punto_de_encuentro": "meeting_point",
-        "muelle_bodeguita": "meeting_point",
-        "cancelacion_reembolso": "weather_cancellation",
-        "clima": "weather_cancellation",
-        "alojamiento_en_islas": "accommodation",
-        "base_en_islas": "accommodation",
-        "recogida_en_hotel": "accommodation",
-        "proceso_reserva": "booking",
-        "corte_reserva_online": "booking",
-        "pago": "payment",
-        "pago_50_por_ciento": "payment",
-        "link_pago": "payment",
-        "formulario_exoneracion": "forms_waiver",
-        "foto_certificacion": "forms_waiver",
-        "precios": "pricing",
-        "precios_usd": "pricing",
-        "precio_colombianos": "discount_colombian",
-        "descuento_10_por_ciento": "discount",
-        "disponibilidad_ultima_hora": "availability",
-        "ultima_hora": "availability",
-        "horarios": "schedule",
-        "duracion": "schedule",
-        "ubicacion_equipo": "equipment",
-        "equipo_incluido": "equipment",
-        "incluye": "equipment",
-        "refresh": "refresher",
-        "refresher": "refresher",
-    }
-
-    normalized: list[str] = []
-    for t in raw_topics:
-        if not t:
-            continue
-        mapped = topic_map.get(t, t)
-        if mapped in topic_map.values() or any(mapped == known for known, _ in TOPIC_PATTERNS):
-            normalized.append(mapped)
-
-    deduped = list(dict.fromkeys(normalized))
-    return deduped
-
-
 def _service_subchunks(service_id: str, service: dict, lang: str) -> list[dict]:
     name = service.get(f"name_{lang}", service_id)
     description = service.get(f"description_{lang}", "")
@@ -427,49 +381,6 @@ def load_knowledge_base() -> list[dict]:
             documents.append({
                 "content": "\n".join(lines_en).strip(),
                 "metadata": {"source": "pricing", "section": "discount_policies", "lang": "en", "topics": ["discount", "discount_colombian", "pricing"]},
-            })
-
-    conversations_path = DATA_DIR / "conversations.json"
-    if conversations_path.exists():
-        with open(conversations_path, "r", encoding="utf-8-sig") as f:
-            data = json.load(f)
-
-        for i, conv in enumerate(data.get("conversation_examples", [])):
-            lang = conv.get("lang", "es")
-            scenario = conv.get("scenario", "")
-            dp_msgs = (conv.get("diving_planet", {}) or {}).get("messages", [])
-            topics = normalize_conversation_topics(conv.get("extracted_topics", []))
-
-            # Deliberately do NOT include the real customer's literal messages
-            # (conv["customer"]["messages"]) in the indexed content. This source
-            # is boosted by source_weight_for_topics() for several topics
-            # (location_islands, meeting_point, payment...), so it regularly gets
-            # pulled into the RAG grounding context even when only loosely
-            # relevant. A raw WhatsApp quote from a DIFFERENT customer (family
-            # composition, spouse, budget) sitting in "Contexto" invites the LLM
-            # to blend those details into its answer for the CURRENT customer
-            # (root cause of a real hallucinated-companion bug, T113 in
-            # docs/test-battery-edge-cases.md). Only the scenario summary and the
-            # advisor's own (scripted, non-personal) responses are indexed —
-            # mirrors the same fix already applied to _format_fewshot_block in
-            # rag_agent.py.
-            content = (
-                f"Situacion real atendida (de OTRO cliente, no es el cliente actual)\n"
-                f"Escenario: {scenario}\n\n"
-                f"Como respondio el asesor:\n- " + "\n- ".join(dp_msgs)
-            )
-            if topics:
-                content += "\n\nTemas: " + ", ".join(topics)
-
-            documents.append({
-                "content": content.strip(),
-                "metadata": {
-                    "source": "conversations",
-                    "index": i,
-                    "id": conv.get("id"),
-                    "lang": lang,
-                    "topics": topics,
-                },
             })
 
     return documents

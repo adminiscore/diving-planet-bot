@@ -3,7 +3,7 @@
 **Ya se cumplía** cuando se revisó (2026-09-23): en `_answer_with_llm` los siete
 guards deterministas van en una cadena `if/elif` y la llamada al juez está en el
 `else` final, así que un rechazo determinista nunca llega a gastar la petición.
-`is_grounded` solo se invoca desde `_verify_grounding_with_retry`.
+`is_grounded` solo se invoca desde `_verify_grounding`.
 
 Pero se cumplía **por la disposición del código**, no por nada que lo fijara: mover
 el juez arriba "para leerlo mejor", o meter un guard nuevo detrás, lo rompería sin

@@ -46,6 +46,3 @@ def load_policies() -> dict:
 def load_brand_tone() -> dict:
     return load_json("brand_tone.json")
 
-
-def load_conversations() -> dict:
-    return load_json("conversations.json")

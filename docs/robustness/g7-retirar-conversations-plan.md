@@ -73,6 +73,7 @@ en ese tema. Todo el plan va de encontrar esos huecos **antes** y taparlos en la
 - **Marcha atrás:** quitar las dos lineas de `docker-compose.vps.yml` y redesplegar (~5 min, sin tocar codigo).
 
 ### Paso 4 — Consolidar (solo si el paso 3 pasa)
+> **✅ HECHO el 2026-09-24 (cierre de L1, l1-8).** Borrados `conversations.json` (y la copia `.bak` local, que no estaba en el repo), su indexado y su normalizador en `load_embeddings`, la fuente `conversations` de los pesos de `vector_store`, el few-shot de `rag_agent` (y el interruptor `rag_fewshot_enabled`), `load_conversations`, los scripts `import_whatsapp_conversations.py` / `cleanup_conversations_keep_chunked.py` y los tests que dependían. `rag_exclude_sources` se queda como interruptor genérico. El deploy reindexa (`load_embeddings` borra todo `kb_documents` antes): el índice queda en 718 documentos oficiales (services 352, faqs 270, policies 68, pricing 28). La ronda completa del golden que cierra L1 valida este estado.
 - Unos días con los interruptores activos en PRE (y el tráfico manual de m0-4).
 - Después, en un solo commit: borrar `conversations.json` (+ `.bak`), dejar de indexarlo
   (`load_embeddings`), quitar su fila de pesos en `vector_store`, el código de few-shot o dejarlo

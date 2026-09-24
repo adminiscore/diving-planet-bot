@@ -52,35 +52,36 @@ def test_detect_query_topics(query: str, expected: set[str]):
 def test_source_weight_prefers_policies_for_cancellation_weather():
     topics = ["weather_cancellation"]
     assert source_weight_for_topics("policies", topics) > source_weight_for_topics("faqs", topics)
-    assert source_weight_for_topics("faqs", topics) > source_weight_for_topics("conversations", topics)
+    assert source_weight_for_topics("faqs", topics) > source_weight_for_topics("services", topics)
 
 
-def test_source_weight_prefers_conversations_for_meeting_point():
+def test_source_weight_prefers_faqs_for_meeting_point():
+    """g-7 paso 4: sin los chats antiguos, el punto de encuentro sale de las FAQ oficiales
+    (antes el peso mayor era de "conversations", que servia "Marina Todo Mar")."""
     topics = ["meeting_point"]
-    assert source_weight_for_topics("conversations", topics) > source_weight_for_topics("faqs", topics)
     assert source_weight_for_topics("faqs", topics) > source_weight_for_topics("policies", topics)
+    assert source_weight_for_topics("conversations", topics) == 0.0
 
 
 def test_rerank_orders_candidates_by_boosted_score():
     query_topics = ["meeting_point"]
 
     candidates = [
+        Candidate(source="policies", topics=["meeting_point"], score=0.80),
         Candidate(source="faqs", topics=["meeting_point"], score=0.80),
-        Candidate(source="conversations", topics=["meeting_point"], score=0.80),
         Candidate(source="services", topics=["pricing"], score=0.95),
     ]
 
     ordered = sorted(candidates, key=lambda c: boosted_score(c, query_topics), reverse=True)
 
-    assert ordered[0].source == "conversations"
-    assert ordered[1].source == "faqs"
+    assert ordered[0].source == "faqs"
 
 
 def test_rerank_policies_win_for_cancellation_even_if_semantically_close():
     query_topics = ["weather_cancellation"]
 
     candidates = [
-        Candidate(source="conversations", topics=["weather_cancellation"], score=0.90),
+        Candidate(source="faqs", topics=["weather_cancellation"], score=0.90),
         Candidate(source="policies", topics=["weather_cancellation"], score=0.86),
     ]
 

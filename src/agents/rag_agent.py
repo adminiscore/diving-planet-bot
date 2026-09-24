@@ -28,11 +28,10 @@ from src.config import settings
 from src.domain import activities as dom
 from src.knowledge.loader import (
     load_brand_tone,
-    load_conversations,
     load_faqs,
     load_policies,
 )
-from src.knowledge.vector_store import detect_query_topics, get_pool, search_knowledge_base
+from src.knowledge.vector_store import get_pool, search_knowledge_base
 from src.llm_client import trace_openai
 from src.privacy import detect_pii, privacy_block_message, redact_pii
 from src.prompts.info import (
@@ -45,15 +44,12 @@ from src.prompts.info import (
 )
 from src.utils import money
 from src.utils.number_words import number_alt, number_words
-from src.utils.text import strip_accents
 
 logger = logging.getLogger("uvicorn.error")
 
 _BRAND_TONE_CACHE: dict | None = None
-_CONVERSATIONS_CACHE: list[dict] | None = None
 _FAQS_CACHE: list | None = None
 _POLICIES_CACHE: dict | None = None
-FEWSHOT_MAX_CHARS = 220
 
 
 def _load_brand_tone_cached() -> dict:
@@ -132,161 +128,6 @@ def _build_tone_section(lang: str) -> str:
     return "\n".join(bullets)
 
 
-def _load_conversations_cached() -> list[dict]:
-    """Load and cache conversation_examples from conversations.json at first access."""
-    global _CONVERSATIONS_CACHE
-    if _CONVERSATIONS_CACHE is None:
-        _CONVERSATIONS_CACHE = (load_conversations() or {}).get("conversation_examples", []) or []
-    return _CONVERSATIONS_CACHE
-
-
-# Translate the legacy/Spanish `extracted_topics` labels stored in
-# conversations.json into the canonical TOPIC_PATTERNS labels used by
-# detect_query_topics(). Canonical labels (certification, location_islands,
-# availability, schedule, meeting_point, pricing, equipment, discount_colombian,
-# refresher, accommodation, weather_cancellation, booking...) pass through
-# unchanged via aliases.get(t, t).
-_FEWSHOT_TOPIC_ALIASES: dict[str, str] = {
-    # Pricing / currency
-    "precios": "pricing",
-    "precios_usd": "pricing",
-    "price_usd": "pricing",
-    "precio_desde_isla": "pricing",
-    # Colombian / resident pricing
-    "precio_colombianos": "discount_colombian",
-    "precio_local_residente": "discount_colombian",
-    "precio_local": "discount_colombian",
-    # Availability / booking cutoff
-    "disponibilidad_ultima_hora": "availability",
-    "ultima_hora": "availability",
-    "corte_reserva_online": "availability",
-    # Schedule
-    "horarios": "schedule",
-    "snorkel": "schedule",
-    # Meeting point
-    "punto_encuentro": "meeting_point",
-    "punto_de_encuentro": "meeting_point",
-    # Islands / pickup / base location
-    "recogida_en_hotel": "location_islands",
-    "planes_desde_islas": "location_islands",
-    "base_en_islas": "location_islands",
-    "base_cocoliso": "location_islands",
-    "diferencia_isla_vs_cartagena": "location_islands",
-    # Equipment / included
-    "ubicacion_equipo": "equipment",
-    "equipo_incluido": "equipment",
-    "transfer_included": "equipment",
-    "incluye": "equipment",
-    # Booking process
-    "grupo_mixto": "booking",
-    "proceso_reserva": "booking",
-    # Refresher
-    "refresh": "refresher",
-    # Weather / cancellation
-    "clima": "weather_cancellation",
-    "cancelacion_reembolso": "weather_cancellation",
-    # Accommodation
-    "alojamiento": "accommodation",
-    # Courses
-    "open_water_course": "certification",
-}
-
-
-# Stale few-shot guard: the "Colombian discount" was removed (v0.18.0) — Colombian
-# clients now simply pay in COP (same price, currency only). Imported WhatsApp
-# examples where the ADVISOR offered a special Colombian discount/bonus would
-# teach the model the old behavior, so we skip them from few-shot selection.
-# We only exclude examples whose ADVISOR messages pair a discount word with a
-# Colombian/resident word — examples that merely quote a COP price for Colombians
-# ("el valor para colombianos es 630.000") stay, since that is still correct.
-_STALE_DISCOUNT_WORDS = ("descuento", "bono", "tarifa especial", "precio especial", "rebaja")
-_STALE_COLOMBIAN_WORDS = ("colombian", "residente", "descuento local", "precio local")
-
-
-def _example_teaches_stale_colombian_discount(example: dict) -> bool:
-    """True if the ADVISOR messages offer a (now-removed) Colombian discount."""
-    bot_msgs = (example.get("diving_planet") or {}).get("messages") or []
-    for msg in bot_msgs:
-        norm = strip_accents(str(msg).lower())
-        if any(d in norm for d in _STALE_DISCOUNT_WORDS) and any(
-            c in norm for c in _STALE_COLOMBIAN_WORDS
-        ):
-            return True
-    return False
-
-
-def _select_fewshot_examples(query: str, lang: str, k: int = 2) -> list[dict]:
-    """Pick up to k conversation examples whose extracted_topics overlap with the query topics.
-
-    Returns the raw example dicts (filtered by lang). Empty list if no useful match.
-    Uses detect_query_topics() to score overlap; ties broken by example order in JSON.
-    Examples that teach the removed Colombian discount are skipped entirely.
-    """
-    if not query:
-        return []
-    query_topics = set(detect_query_topics(query))
-    if not query_topics:
-        return []
-
-    candidates = []
-    for example in _load_conversations_cached():
-        if (example.get("lang") or "").lower() != lang:
-            continue
-        if _example_teaches_stale_colombian_discount(example):
-            continue
-        ex_topics = set(str(t) for t in (example.get("extracted_topics") or []))
-        normalized = {_FEWSHOT_TOPIC_ALIASES.get(t, t) for t in ex_topics}
-        overlap = len(query_topics & normalized)
-        if overlap > 0:
-            candidates.append((overlap, example))
-
-    candidates.sort(key=lambda pair: pair[0], reverse=True)
-    return [example for _, example in candidates[:k]]
-
-
-def _format_fewshot_block(examples: list[dict], lang: str) -> str:
-    """Render a compact reference block from picked conversation examples.
-
-    Each example is summarised in <= FEWSHOT_MAX_CHARS chars to keep the prompt cheap.
-    Framed as 'real situations the center has handled' so the model treats them as
-    domain context, not as a template to imitate verbatim.
-
-    Deliberately does NOT quote the real customer's literal message: it's personal,
-    specific detail (a spouse, a named hotel, a family composition) that belongs to a
-    DIFFERENT, unrelated customer. Quoting it invited the model to blend those details
-    into its answer for the current customer (e.g. inventing "tu esposo" out of thin
-    air because a past customer's message happened to mention one). Only the topic
-    label and the advisor's response pattern are shown — that's what teaches tone and
-    coverage without leaking someone else's facts.
-    """
-    if not examples:
-        return ""
-
-    header = (
-        "Situaciones reales del centro (referencia de tono/cobertura, NO son datos del cliente actual):"
-        if lang == "es"
-        else "Real situations the center has handled (tone/coverage reference, NOT facts about the current customer):"
-    )
-    lines = [header]
-    for ex in examples:
-        scenario = (ex.get("scenario") or "").strip()
-        first_bot_action = ""
-        bot_msgs = ((ex.get("diving_planet") or {}).get("messages") or [])
-        if bot_msgs:
-            first_bot_action = str(bot_msgs[0]).strip()
-
-        action = first_bot_action[:120] + ("..." if len(first_bot_action) > 120 else "")
-        bullet = f"- {scenario[:60]} | Asesor cubrio: {action}"
-        if lang == "en":
-            bullet = f"- {scenario[:60]} | Advisor covered: {action}"
-        # Hard cap per bullet
-        if len(bullet) > FEWSHOT_MAX_CHARS:
-            bullet = bullet[:FEWSHOT_MAX_CHARS - 3] + "..."
-        lines.append(bullet)
-
-    return "\n".join(lines)
-
-
 FALLBACK_ES = (
     "¡Con gusto te ayudo! 🌊 Ese detalle en concreto no lo tengo a la mano, pero puedo "
     "ayudarte con las actividades, precios, logística o a armar tu reserva. ¿Quieres que te "
@@ -301,17 +142,12 @@ FALLBACK_EN = (
 
 
 def build_system_prompt(lang: str, query: str | None = None) -> str:
-    """Compose the full system prompt: intro + dynamic tone + body + optional few-shot block.
+    """Compose the full system prompt: intro + dynamic tone + body.
 
-    When ``query`` is provided, picks up to 2 topic-matching examples from conversations.json
-    and appends them as compact reference context (not as imitation templates).
+    ``query`` ya no se usa: alimentaba el few-shot de los chats antiguos de WhatsApp
+    (conversations.json), retirado en g-7 paso 4 (2026-09-24). Se deja en la firma para
+    no tocar a quien llama.
     """
-    fewshot_block = ""
-    # g-7: el few-shot sale de los chats antiguos; se puede apagar sin desplegar (por defecto, encendido)
-    if query and settings.rag_fewshot_enabled:
-        examples = _select_fewshot_examples(query, lang, k=2)
-        fewshot_block = _format_fewshot_block(examples, lang)
-
     if lang == "es":
         prompt = (
             f"{RAG_INTRO_ES}\n\n"
@@ -326,9 +162,6 @@ def build_system_prompt(lang: str, query: str | None = None) -> str:
             f"Style and tone:\n{_build_tone_section('en')}\n\n"
             f"{RAG_BODY_EN}"
         )
-
-    if fewshot_block:
-        prompt = f"{prompt}\n\n{fewshot_block}"
     return prompt
 
 
@@ -1335,31 +1168,15 @@ def _build_grounding_context(
     return "\n\n".join(parts)
 
 
-async def _verify_grounding_with_retry(answer: str, context: str, lang: str) -> tuple[bool, str]:
-    """Juzga si la respuesta está sostenida por el contexto.
+async def _verify_grounding(answer: str, context: str, lang: str) -> tuple[bool, str]:
+    """Juzga UNA vez si la respuesta está sostenida por el contexto (l1-1, Fase L1).
 
-    Con `rag_single_grounding_judge` (l1-1, Fase L1) el juez opina UNA vez: la
-    segunda oportunidad real la da el bucle de `_answer_with_llm`, que REGENERA
-    la respuesta y la vuelve a juzgar. Sin el flag (por defecto) se conserva la
-    conducta de siempre: re-preguntar al mismo juez por el mismo texto.
-
-    El log `[RAG][GROUNDING][RESCUE]` existe porque ese rescate devolvía `True`
-    y se perdía: en los logs solo quedaba rastro cuando FALLABA (`|retry:` en el
-    motivo), así que nadie podía saber cuántas veces valía la pena la llamada.
+    Antes se re-preguntaba al mismo juez por el mismo texto cuando rechazaba. En el
+    A/B del 23-sep esa segunda consulta solo salvó 1 de 24 rechazos (4 %) y se quitó:
+    la segunda oportunidad real la da el bucle de `_answer_with_llm`, que REGENERA la
+    respuesta y la vuelve a juzgar. -35 % de llamadas al juez, calidad igual.
     """
-    grounded, reason = await is_grounded(answer, context, lang=lang)
-    if grounded:
-        return True, reason
-    if settings.rag_single_grounding_judge:
-        return False, reason
-    grounded_retry, reason_retry = await is_grounded(answer, context, lang=lang)
-    if grounded_retry:
-        logger.info(
-            f"[RAG][GROUNDING][RESCUE] el 2º juez salvó la respuesta que el 1º rechazó "
-            f"({reason} -> {reason_retry})"
-        )
-        return True, f"{reason}|retry:{reason_retry}"
-    return False, f"{reason}|retry:{reason_retry}"
+    return await is_grounded(answer, context, lang=lang)
 
 
 async def rag_answer(
@@ -1570,7 +1387,7 @@ async def rag_answer(
             elif not verify_grounding and not require_grounding:
                 return answer
             else:
-                grounded, reason = await _verify_grounding_with_retry(answer, grounding_context, lang=lang)
+                grounded, reason = await _verify_grounding(answer, grounding_context, lang=lang)
                 if grounded:
                     logger.info(
                         f"[RAG] Query: {query[:60]}... | Docs: {len(docs) if docs else 0} | "
@@ -1624,17 +1441,7 @@ async def rag_answer(
         metadata = doc.get("metadata", {})
         source = metadata.get("source", "unknown")
         sources.append(source)
-        # "conversations" docs describe a DIFFERENT customer's past situation (see
-        # scripts/load_embeddings.py). Label them explicitly so the LLM never
-        # mistakes their facts (family, companions, budget) for the current
-        # customer's — defense in depth alongside stripping their literal quotes
-        # at indexing time (T113 in docs/archive/test-battery-edge-cases.md).
-        source_label = (
-            f"{source} (situacion de otro cliente distinto, no es el cliente actual)"
-            if source == "conversations"
-            else source
-        )
-        context_parts.append(f"[{i}] Fuente: {source_label}\n{redact_pii(doc['content'])}")
+        context_parts.append(f"[{i}] Fuente: {source}\n{redact_pii(doc['content'])}")
     context = "\n\n".join(context_parts)
 
     return await _answer_with_llm(context, context_sources=sources)

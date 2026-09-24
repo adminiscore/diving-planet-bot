@@ -1370,139 +1370,13 @@ def test_brand_tone_injected_from_json_es(monkeypatch):
     monkeypatch.setattr(rag_agent, "_BRAND_TONE_CACHE", None)
 
 
-def test_fewshot_examples_selected_by_topic_overlap(monkeypatch):
-    """_select_fewshot_examples picks examples whose extracted_topics overlap with query topics."""
-    fake_examples = [
-        {
-            "id": "ex_pricing",
-            "lang": "es",
-            "scenario": "Cliente pregunta precio",
-            "customer": {"messages": ["cuanto cuesta?"]},
-            "diving_planet": {"messages": ["Se da precio en COP."]},
-            "extracted_topics": ["precios"],
-        },
-        {
-            "id": "ex_weather",
-            "lang": "es",
-            "scenario": "Cliente pregunta clima",
-            "customer": {"messages": ["llueve manana?"]},
-            "diving_planet": {"messages": ["Se escala a asesor."]},
-            "extracted_topics": ["weather_cancellation"],
-        },
-        {
-            "id": "ex_pricing_en",
-            "lang": "en",
-            "scenario": "EN pricing",
-            "customer": {"messages": ["how much?"]},
-            "diving_planet": {"messages": ["Price quoted in USD."]},
-            "extracted_topics": ["pricing"],
-        },
-    ]
-
-    monkeypatch.setattr(rag_agent, "_CONVERSATIONS_CACHE", None)
-    monkeypatch.setattr(rag_agent, "load_conversations", lambda: {"conversation_examples": fake_examples})
-
-    picked = rag_agent._select_fewshot_examples("cuanto cuesta para colombianos?", "es", k=2)
-    picked_ids = {ex["id"] for ex in picked}
-
-    assert "ex_pricing" in picked_ids  # topic 'precios' alias -> 'pricing' matches query 'pricing'
-    assert "ex_weather" not in picked_ids  # no overlap with pricing query
-    assert "ex_pricing_en" not in picked_ids  # wrong language
-
-    monkeypatch.setattr(rag_agent, "_CONVERSATIONS_CACHE", None)
-
-
-def test_fewshot_skips_stale_colombian_discount_examples(monkeypatch):
-    """Examples where the ADVISOR offered the removed Colombian discount are
-    excluded from few-shot, while examples that only quote a COP price for
-    Colombians (still valid) are kept."""
-    fake_examples = [
-        {
-            "id": "ex_colombian_cop_price",  # VALID: just COP pricing, no discount
-            "lang": "es",
-            "scenario": "Colombiano pregunta precio",
-            "customer": {"messages": ["para colombianos cuanto es?"]},
-            "diving_planet": {"messages": ["El valor para colombianos es de 630.000 pesos por persona."]},
-            "extracted_topics": ["precio_colombianos"],
-        },
-        {
-            "id": "ex_colombian_discount",  # STALE: advisor offers a Colombian discount/bono
-            "lang": "es",
-            "scenario": "Colombiano pregunta descuento",
-            "customer": {"messages": ["hay bono para colombianos?"]},
-            "diving_planet": {"messages": ["Si, para colombianos hay un descuento adicional."]},
-            "extracted_topics": ["precio_local_residente"],
-        },
-    ]
-
-    monkeypatch.setattr(rag_agent, "_CONVERSATIONS_CACHE", None)
-    monkeypatch.setattr(rag_agent, "load_conversations", lambda: {"conversation_examples": fake_examples})
-
-    picked_ids = {ex["id"] for ex in rag_agent._select_fewshot_examples("precio para colombianos?", "es", k=2)}
-
-    assert "ex_colombian_cop_price" in picked_ids  # COP pricing stays (still correct)
-    assert "ex_colombian_discount" not in picked_ids  # stale discount example filtered out
-
-    monkeypatch.setattr(rag_agent, "_CONVERSATIONS_CACHE", None)
-
-
-def test_fewshot_block_appended_when_query_provided(monkeypatch):
-    """build_system_prompt appends the few-shot section only when query is provided AND examples match."""
-    monkeypatch.setattr(rag_agent, "_CONVERSATIONS_CACHE", None)
-    monkeypatch.setattr(
-        rag_agent,
-        "load_conversations",
-        lambda: {
-            "conversation_examples": [
-                {
-                    "id": "ex_pricing",
-                    "lang": "es",
-                    "scenario": "Test pricing scenario",
-                    "customer": {"messages": ["cuanto cuesta?"]},
-                    "diving_planet": {"messages": ["Precio dado en COP."]},
-                    "extracted_topics": ["precios"],
-                }
-            ]
-        },
-    )
-
-    # No query -> no few-shot block
-    prompt_no_query = rag_agent.build_system_prompt("es")
-    assert "Situaciones reales" not in prompt_no_query
-
-    # With pricing-related query -> few-shot block appears
-    prompt_with_query = rag_agent.build_system_prompt("es", query="cuanto cuesta el buceo?")
-    assert "Situaciones reales" in prompt_with_query
-    assert "Test pricing scenario" in prompt_with_query
-
-    monkeypatch.setattr(rag_agent, "_CONVERSATIONS_CACHE", None)
-
-
-def test_fewshot_no_examples_when_query_topics_unknown(monkeypatch):
-    """Query with no detected topics -> no examples picked, no block appended."""
-    monkeypatch.setattr(rag_agent, "_CONVERSATIONS_CACHE", None)
-    monkeypatch.setattr(
-        rag_agent,
-        "load_conversations",
-        lambda: {
-            "conversation_examples": [
-                {
-                    "id": "ex_any",
-                    "lang": "es",
-                    "scenario": "x",
-                    "customer": {"messages": ["x"]},
-                    "diving_planet": {"messages": ["x"]},
-                    "extracted_topics": ["precios"],
-                }
-            ]
-        },
-    )
-
-    # "hola" has no topic match in TOPIC_PATTERNS -> nothing picked
-    prompt = rag_agent.build_system_prompt("es", query="hola")
-    assert "Situaciones reales" not in prompt
-
-    monkeypatch.setattr(rag_agent, "_CONVERSATIONS_CACHE", None)
+def test_prompt_sin_chats_antiguos():
+    """g-7 paso 4 (2026-09-24): el prompt del RAG ya no lleva ejemplos de los chats antiguos
+    de WhatsApp (conversations.json se borro); con o sin pregunta es el mismo."""
+    for lang in ("es", "en"):
+        base = rag_agent.build_system_prompt(lang)
+        assert rag_agent.build_system_prompt(lang, query="cuanto cuesta el buceo?") == base
+        assert "Situaciones reales" not in base and "Real situations" not in base
 
 
 @pytest.mark.asyncio
@@ -1856,7 +1730,7 @@ async def test_no_kb_docs_forces_grounding_even_when_caller_skips_it(monkeypatch
             self.chat = _Chat()
 
     monkeypatch.setattr(rag_agent, "search_knowledge_base", _no_docs)
-    monkeypatch.setattr(rag_agent, "_verify_grounding_with_retry", _fake_judge)
+    monkeypatch.setattr(rag_agent, "_verify_grounding", _fake_judge)
     monkeypatch.setattr(rag_agent, "AsyncOpenAI", _Client)
 
     answer = await rag_agent.rag_answer(

@@ -49,29 +49,10 @@ class Settings(BaseSettings):
     # Minimum raw ts_rank_cd score for a BM25-only hit to count as "confident".
     # Vector hits gate on rag_min_score (cosine); lexical hits gate on this.
     rag_min_bm25_rank: float = 0.05
-    # g-7 (Fase G): interruptores para retirar los chats antiguos (conversations.json) sin
-    # reindexar ni desplegar. Por defecto la conducta es la de siempre. Marcha atras: quitar la
-    # variable de entorno y reiniciar. Ver docs/robustness/g7-retirar-conversations-plan.md.
-    # Fuentes del indice que la busqueda ignora, separadas por coma (p. ej. "conversations").
+    # Fuentes del indice que la busqueda ignora, separadas por coma (p. ej. "services").
+    # Nacio en g-7 para medir el RAG sin los chats antiguos (conversations.json, retirados
+    # en el paso 4, 2026-09-24); se queda como interruptor generico sin reindexar.
     rag_exclude_sources: str = ""
-    # Bloque de ejemplos reales (few-shot) en el prompt del RAG.
-    rag_fewshot_enabled: bool = True
-    # l1-1 (Fase L1): el juez de grounding opina UNA vez por respuesta.
-    #
-    # Hoy `_verify_grounding_with_retry` pregunta DOS veces al mismo juez por la
-    # MISMA respuesta y el MISMO contexto. No es una segunda oportunidad real:
-    # el bucle de `_answer_with_llm` ya REGENERA la respuesta (2 intentos), que
-    # es la segunda oportunidad que de verdad arregla un falso negativo. La
-    # segunda consulta solo explota el ruido del juez sobre un texto idéntico.
-    #
-    # Ojo al medir: quitarla NO es gratis en todos los caminos. Si el reintento
-    # rescata a menudo, esa llamada evita una REGENERACIÓN (más cara), y sin ella
-    # el camino de fallo sale más lento, no más rápido. Por eso va detrás de flag
-    # y se decide con el A/B del core (2 rondas por lado, el mismo día). El log
-    # `[RAG][GROUNDING][RESCUE]` mide cuántas veces rescata de verdad: ese dato
-    # no existía porque el rescate devolvía True sin dejar rastro.
-    rag_single_grounding_judge: bool = False
-
     # r6-1 (Fase R6): tiempo maximo de UNA llamada al LLM, en segundos.
     #
     # Por que: el cliente de OpenAI trae por defecto `Timeout(connect=5, read=600)`

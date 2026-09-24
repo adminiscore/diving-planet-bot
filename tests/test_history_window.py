@@ -80,7 +80,7 @@ async def test_rag_answer_llm_call_respects_configured_window_size(monkeypatch):
         return True, "ok"
 
     monkeypatch.setattr(rag_agent, "search_knowledge_base", _no_docs)
-    monkeypatch.setattr(rag_agent, "_verify_grounding_with_retry", _fake_judge)
+    monkeypatch.setattr(rag_agent, "_verify_grounding", _fake_judge)
 
     history = _fill_history(10)  # 20 raw messages, way more than the window of 3
     await rag_agent.rag_answer(

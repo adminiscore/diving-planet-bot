@@ -104,24 +104,10 @@ services:
       # rationale as Fases 1-3. Off elsewhere by default (src/config.py).
       # Revert = remove this line + redeploy.
       LLM_EXTRACTION_CUTOVER_LOGISTICS: "true"
-      # g-7 (Fase G), paso 3: A/B para retirar los chats antiguos del RAG
-      # (docs/robustness/g7-retirar-conversations-plan.md). Los chats de 2025-26
-      # sirven datos caducados ("Marina Todo Mar" como punto de encuentro) y su
-      # info util ya esta en la KB oficial (paso 2). On en PRE only mientras dura
-      # la medicion. Revert = quitar estas dos lineas + redeploy (sin tocar codigo).
-      RAG_EXCLUDE_SOURCES: "conversations"
-      RAG_FEWSHOT_ENABLED: "false"
-      # l1-1 (Fase L1): el juez de grounding opina UNA vez por respuesta, en vez
-      # de preguntar dos veces al mismo juez por el MISMO texto. La segunda
-      # oportunidad de verdad ya la da el bucle de `_answer_with_llm`, que
-      # REGENERA la respuesta. DESACTIVADO todavia: se enciende para el A/B del
-      # core (2 rondas por lado el mismo dia) y solo se deja puesto si sale
-      # 0 regresiones de calidad + menos llamadas/segundos. Antes de encenderlo,
-      # mirar cuantos `[RAG][GROUNDING][RESCUE]` hay en los logs: si el 2º juez
-      # rescata a menudo, quitarlo obliga a REGENERAR (mas caro) y el camino de
-      # fallo saldria mas lento, no mas rapido. Revert = quitar esta linea.
-      # A/B del 23-sep, lado A: el 2º juez rescato 1 de 24 rechazos (4 %).
-      RAG_SINGLE_GROUNDING_JUDGE: "true"
+      # g-7 paso 4 (24-sep): los chats antiguos (conversations.json) y el few-shot
+      # se borraron del codigo y del indice, asi que RAG_EXCLUDE_SOURCES y
+      # RAG_FEWSHOT_ENABLED ya no hacen falta. l1-1 (juez de grounding unico) es
+      # ahora la unica conducta del codigo: su flag tambien se retiro.
       # l1-4 (Fase L1): la captura de notas se calcula EN PARALELO en vez de
       # bloquear el turno. Ganancia ya medida: el nodo `setup` (donde viven las
       # notas) va a p50 0,748 s / p95 1,266 s sobre 90 turnos, de un turno de
