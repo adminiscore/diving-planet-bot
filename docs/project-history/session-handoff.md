@@ -29,7 +29,9 @@ l1-6 + l1-7 (el "no lo tengo" en primeros mensajes está anotado en l1-6). En pa
 **Cómo medir sin engañarse (lecciones de hoy):** A/B siempre en la **misma franja horaria** (las rondas C, una
 hora más tarde, fueron ~0,8 s más lentas en turnos idénticos); comparar criterio a criterio contra las DOS
 rondas A y **leer el texto** del bot; lanzar cada juez como proceso propio; `run_synthetic_pre` ya reintenta las
-lecturas de Chatwoot. **Pendiente de decidir:** plan de pago de Langfuse (superado el gratuito).
+lecturas de Chatwoot.
+
+**Medir SIN Langfuse (desde el 24-sep):** se superó el plan gratuito (>55.000 unidades, reinicio el 16-oct) y se eligió no pagar. Cada turno escribe `[TURN_METRICS]` en el log de PRE; la foto se saca con `python -m scripts.turn_metrics --label "..." --from-run <ronda>.jsonl --out <foto>.json` (misma forma que la de Langfuse, sin tokens ni coste, y con el reparto del router jev / llm_uncertain / llm_fallback).
 
 ### 🧪 2026-09-23 noche (Álvaro) — r6-1 HECHA · l1-4 MEDIDA y NO promocionada (regresión real)
 
