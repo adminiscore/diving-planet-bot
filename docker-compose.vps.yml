@@ -125,8 +125,10 @@ services:
       # Revert = comentar esta linea.
       NOTES_IN_PARALLEL: "true"
       # U3 (u3-1, paso 1): las 9 senales del router con Jev (src/agents/jev_router.py),
-      # con el router LLM de respaldo si Jev falla o tarda >2 s. ENCENDIDO para el lado B
-      # del A/B (24-sep); la clave OPENROUTER_API_KEY esta en .env.pre del VPS.
+      # con el router LLM de respaldo si Jev falla, tarda >2 s o DUDA (cascada por
+      # confianza). A/B del 24-sep: -25 % de latencia de cliente sin cascada, y con
+      # cascada 0 regresiones frente a las dos rondas A (HISTORY 0.29.15) -> se QUEDA
+      # ENCENDIDO. La clave OPENROUTER_API_KEY esta en .env.pre del VPS.
       # Revert = quitar esta linea + redeploy.
       JEV_ROUTER_ENABLED: "true"
       # Refactor multi-agente (docs/multi-agent-refactor-plan.md) — validación en

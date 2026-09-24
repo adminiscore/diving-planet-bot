@@ -11,6 +11,26 @@ Read this file before changing code in the Diving Planet Bot. For a quick versio
 
 ## Current branch and workflow
 
+### ✅ 2026-09-24 tarde (Gadea) — L1 CERRADA + Jev (u3-1) ENCENDIDO en PRE con cascada
+
+**Estado de PRE** (`feature/pre_gadea`, desplegado): sin los chats antiguos (índice de 718 documentos
+oficiales), juez de grounding único sin flag, `NOTES_IN_PARALLEL=true` (l1-4) y **`JEV_ROUTER_ENABLED=true`**
+(u3-1: las 9 señales del router con Jev vía OpenRouter; si Jev falla, tarda >2 s o duda, decide el router LLM
+de siempre). La clave `OPENROUTER_API_KEY` está en `.env.pre` del VPS y en `.env.dev` (nunca en el repo).
+Marcha atrás de Jev: quitar la línea del compose y redesplegar.
+
+**Resultados (HISTORY 0.29.15):** cierre de L1 con la ronda completa (examen oculto 73,1 → 78,3 %, turno p50
+4,62 → 3,34 s). Jev: −25 % de latencia de cliente; con la cascada, 0 regresiones frente a las dos rondas A.
+
+**Siguiente (página Plan Coral, orden de la fase U3):** u3-1 sigue: la pregunta "¿se entiende sola?" (salta
+`condense_query`) y la llamada única del LLM para los DATOS (fechas, personas, edades); luego u3-2..u3-5 y
+l1-6 + l1-7 (el "no lo tengo" en primeros mensajes está anotado en l1-6). En paralelo: l2-3 y l2-2.
+
+**Cómo medir sin engañarse (lecciones de hoy):** A/B siempre en la **misma franja horaria** (las rondas C, una
+hora más tarde, fueron ~0,8 s más lentas en turnos idénticos); comparar criterio a criterio contra las DOS
+rondas A y **leer el texto** del bot; lanzar cada juez como proceso propio; `run_synthetic_pre` ya reintenta las
+lecturas de Chatwoot. **Pendiente de decidir:** plan de pago de Langfuse (superado el gratuito).
+
 ### 🧪 2026-09-23 noche (Álvaro) — r6-1 HECHA · l1-4 MEDIDA y NO promocionada (regresión real)
 
 **Rama:** `feature/pre_alvaro`, al día con la de Gadea. PRE desplegado y **sano**, con

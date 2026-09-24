@@ -208,6 +208,7 @@ few-shot (`_select_fewshot_examples`), así que tal cual inflarían la nota.
   g-7, g-8, s4-20..22. Regla: soluciones globales por causa, nunca caso a caso del golden.
 
 ### Fase L1 — Wins de latencia baratos y seguros · *preservan conducta*
+> **✅ L1 CERRADA el 2026-09-24 (l1-8).** Hechas l1-1 (juez de grounding único), l1-2, l1-4 (notas en paralelo) y el paso 4 de g-7 (sin chats antiguos). l1-3 y l1-5 se midieron y pasan a U3; l1-6 y l1-7 van detrás de U3. Ronda completa del golden frente a v7 (juez sin revisar): 80,5 → 81,5 %, **examen oculto 73,1 → 78,3 %**, **turno p50 4,62 → 3,34 s (−28 %)**, p95 9,00 → 7,33 s. Detalle en HISTORY 0.29.15. **U3 ya empezó:** Jev (u3-1) encendido en PRE con cascada por confianza.
 > **Condición de cierre de L1 (acordado con Gadea el 22-sep):** justo **antes** de la ronda completa del golden
 > que cierra L1, hacer el **paso 4 de g-7** (borrar `conversations.json` y su código; ver
 > `docs/robustness/g7-retirar-conversations-plan.md`). Tope: **6-oct-2026** aunque L1 no haya terminado.
