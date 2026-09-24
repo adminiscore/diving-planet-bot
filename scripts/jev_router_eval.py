@@ -17,6 +17,7 @@ Uso (necesita OPENROUTER_API_KEY y OPENAI_API_KEY en el .env):
     ENV_FILE=.env.dev python -m scripts.jev_router_eval [repeticiones] [umbral] [--v2]
 
 `--v2`: los dos arreglos generales de `_questions` (ver el comentario de `_NONE_SENSITIVE`).
+`--bias`: umbral bajo para las senales "ante la duda" (ver `BIAS_SIGNALS`).
 """
 
 import asyncio
@@ -94,15 +95,29 @@ def _questions(v2: bool = False) -> dict:
 QUESTIONS = _questions(v2="--v2" in sys.argv)
 
 
-def _to_signals(answers: dict, threshold: float) -> dict:
+# Senales que el esquema del router pide marcar "ante la duda" (description del tool:
+# "when genuinely unsure ... still set it"). Con `--bias` se marcan desde un umbral mas
+# bajo, fijado ANTES de medir: 0,3 = "salvo que Jev este bastante seguro de que no".
+BIAS_SIGNALS = ("sensitive_topic", "adaptive_diving_topic", "broken_link_complaint", "availability_question")
+BIAS_THRESHOLD = 0.3
+
+
+def _to_signals(answers: dict, threshold: float, bias: float | None = None) -> dict:
     """Respuestas de Jev -> el mismo dict que devuelve `detect_routing_signals`."""
     out = {}
     for name, a in answers.items():
+        cut = bias if bias is not None and name in BIAS_SIGNALS else threshold
         if a["type"] == "noul" and not name.startswith("opt_") and name != "comparing":
-            if a["noul"] >= threshold:
+            if a["noul"] >= cut:
                 out[name] = True
-        elif a["type"] == "choice" and a["choice"] != "none":
-            out[name] = a["choice"]
+        elif a["type"] == "choice":
+            if a["choice"] != "none":
+                out[name] = a["choice"]
+            elif cut < threshold:
+                # "ante la duda": la mejor opcion que no sea "none", si llega al umbral bajo
+                probs = {k: v for k, v in (a.get("probabilities") or {}).items() if k != "none"}
+                if probs and max(probs.values()) >= cut:
+                    out[name] = max(probs, key=probs.get)
     if answers["comparing"]["noul"] >= threshold:
         opts = [n[4:] for n, a in answers.items() if n.startswith("opt_") and a["noul"] >= threshold]
         out["comparing_options"] = {"comparing": True, "options": opts}
@@ -160,7 +175,7 @@ async def main():
                 answers, ms, cost = await _jev(client, key, msg)
                 lat["jev"].append(ms)
                 cost_jev += cost
-                outs["jev"].append(brs._signals(_to_signals(answers, threshold)))
+                outs["jev"].append(brs._signals(_to_signals(answers, threshold, BIAS_THRESHOLD if "--bias" in sys.argv else None)))
                 raw_probs.setdefault(cid, []).append(
                     {n: (a.get("noul") if a["type"] == "noul" else a.get("choice")) for n, a in answers.items()}
                 )

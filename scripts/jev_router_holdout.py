@@ -9,7 +9,7 @@ No hay etiquetas de senales para estos mensajes, asi que se compara Jev con el r
 actual y se listan los DESACUERDOS para revisarlos a mano. El router tampoco es la
 verdad (en la bateria fallaba "soy epileptica" 5 de 8 veces): cada desacuerdo se juzga.
 
-Uso:  ENV_FILE=.env.dev python -m scripts.jev_router_holdout [--v1] > salida.txt
+Uso:  ENV_FILE=.env.dev python -m scripts.jev_router_holdout [--v1] [--bias] > salida.txt
 """
 
 import asyncio
@@ -59,7 +59,8 @@ async def main():
         for mid, lang, msg in msgs:
             ans, ms_j, _ = await jre._jev(client, key, msg)
             got, ms_r = await jre._router(msg, lang)
-            j, r = brs._signals(jre._to_signals(ans, 0.5)), brs._signals(got)
+            j = brs._signals(jre._to_signals(ans, 0.5, jre.BIAS_THRESHOLD if "--bias" in sys.argv else None))
+            r = brs._signals(got)
             lat_j.append(ms_j)
             lat_r.append(ms_r)
             rows.append({"id": mid, "lang": lang, "msg": msg, "jev": brs._show(j), "router": brs._show(r),
