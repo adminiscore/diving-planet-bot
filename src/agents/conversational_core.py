@@ -1909,7 +1909,27 @@ async def await_pending_notes(state: ConversationState) -> None:
         logger.warning(f"[NOTES][PARALELO] la captura de notas falló: {exc}")
 
 
-async def _maybe_capture_notes(state: ConversationState, message: str) -> None:
+def _notes_snapshot(state: ConversationState) -> dict:
+    """l1-4: foto de lo que `extract_notes` debe leer, tomada al final de `setup`.
+
+    En serie da lo mismo que leer el estado en el momento. En paralelo es lo que
+    evita la carrera del A/B del 23-sep: una tarea de asyncio no arranca hasta que
+    el turno espera algo, y en los turnos sin más llamadas al LLM eso es el final
+    de `route_message`, cuando las fases ya han metido la respuesta del BOT en
+    `state.history`. Las notas salían de esa respuesta y contaminaban los turnos
+    siguientes. Copias: la lista del historial crece después, y sus mensajes no
+    se modifican."""
+    facts = state.remembered_facts or {}
+    return {
+        "history": list(state.history),
+        "existing": list(facts.get("notes") or []),
+        "lang": state.language,
+    }
+
+
+async def _maybe_capture_notes(
+    state: ConversationState, message: str, *, snapshot: dict | None = None
+) -> None:
     """(Fase C, re-cableado 2026-07-28 — decisión owner: con LLM) Captura hechos
     abiertos que un asesor querría recordar (lesión/médico, accesibilidad,
     ocasión especial, restricciones) y los persiste en
@@ -1918,20 +1938,27 @@ async def _maybe_capture_notes(state: ConversationState, message: str) -> None:
 
     Gate barato: se salta mensajes triviales (numéricos / <3 palabras) para no
     gastar una llamada en "sí"/"2"/"cartagena". Cualquier fallo se traga — nunca
-    puede romper el turno (mismo principio que el resto del núcleo)."""
+    puede romper el turno (mismo principio que el resto del núcleo).
+
+    `snapshot` (l1-4, en paralelo): lo que hay que leer, tomado en `_setup_phase`
+    antes de lanzar la tarea (ver `_notes_snapshot`). Sin él se toma ahora, que en
+    serie es el mismo momento."""
     from src.agents import supervisor  # lazy
 
     stripped = message.strip()
     if stripped.isdigit() or len(stripped.split()) < 3:
         return
     try:
-        facts = state.remembered_facts if state.remembered_facts is not None else {}
-        existing = list(facts.get("notes") or [])
+        snap = snapshot if snapshot is not None else _notes_snapshot(state)
         new_notes = await extract_notes(
-            message, history=state.history, existing_notes=existing, lang=state.language
+            message, history=snap["history"], existing_notes=snap["existing"], lang=snap["lang"]
         )
         if not new_notes:
             return
+        # Se fusiona con el estado de AHORA, no con el de la foto: en paralelo el
+        # turno ha podido seguir escribiendo `remembered_facts` mientras tanto.
+        facts = state.remembered_facts if state.remembered_facts is not None else {}
+        existing = list(facts.get("notes") or [])
         notes = existing + [n for n in new_notes if n not in existing]
         facts["notes"] = notes[-supervisor._MAX_REMEMBERED_NOTES:]
         state.remembered_facts = facts
@@ -3111,7 +3138,11 @@ async def _setup_phase(
         # referencia entre los nodos del grafo (nada de ContextVars, que es donde
         # se perdió el contexto de traza en m0-1) y `asdict()` la ignora al
         # serializar, así que nunca llega a Redis.
-        state._pending_notes_task = asyncio.create_task(_maybe_capture_notes(state, message))
+        # La foto se toma AQUÍ, no dentro de la tarea: la tarea puede no arrancar
+        # hasta que el bot ya ha metido su respuesta en el historial (A/B 23-sep).
+        state._pending_notes_task = asyncio.create_task(
+            _maybe_capture_notes(state, message, snapshot=_notes_snapshot(state))
+        )
     else:
         await _maybe_capture_notes(state, message)
     return greeting, first_turn
