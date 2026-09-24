@@ -1,54 +1,13 @@
 {
- "que_es": "Cola de cambios PENDIENTES DE APLICAR a la pagina Plan Coral. NO es una copia de su base de datos (eso es plan-coral.json, que se regenera exportando). Aqui se deja lo que alguien no ha podido escribir en la pagina, listo para volcarlo tal cual.",
- "pagina": "https://claude.ai/artifact/XiGd3kguTNwwqTnH7mQwgi",
- "por_que_existe": "En la sesion de Claude Code de Gonzalo la herramienta ArtifactData NO aparece: buscada 6 veces (select:ArtifactData, select:artifact_data/ArtifactDB/ArtifactStore/ArtifactCollections y 2 busquedas por descripcion) y siempre 'No matching deferred tools found'. No es cuenta ni permisos: esa misma sesion SI tiene DesignSync y RemoteTrigger, que autentican con el login de claude.ai, y la config tiene oauthAccount con organizationRole admin, sin ninguna ANTHROPIC_API_KEY. Si la herramienta existiera pero estuviera capada por no ser propietario, apareceria en la lista y fallaria AL LLAMARLA; no aparece en absoluto. Tampoco se intento republicar el HTML en ningun momento. Hipotesis viva: diferencia de version de Claude Code (pedir a Gadea la suya y comparar).",
- "como_aplicar": {
-  "con_claude": "Con la herramienta ArtifactData (NO con Artifact, y sin republicar el HTML): leer el documento, y hacer update pasando su version como if_version. Coleccion tasks -> doc_id = el id de la tarea. Coleccion log -> documentos nuevos.",
-  "a_mano": "Abrir la pagina con sesion iniciada y copiar cada campo en su tarea o en la bitacora.",
-  "al_terminar": "Dejar 'pendientes' como lista vacia, poner la fecha en 'aplicado_el' y quien lo aplico en 'aplicado_por', todo en el MISMO commit. Si esta lista se queda llena, el repo y la pagina han divergido: esa es la senal."
- },
- "aplicado_el": "",
- "aplicado_por": "",
- "pendientes": [
-  {
-   "coleccion": "tasks",
-   "operacion": "update",
-   "doc_id": "r6-1",
-   "campos": {
-    "status": "hecha",
-    "owner": "Alvaro",
-    "note": "HECHA y verificada en PRE (23-sep, commit c4bb91a). Causa concreta del agujero: el cliente de OpenAI trae por defecto Timeout(connect=5, read=600) con max_retries=2, o sea hasta ~30 min colgado en UNA llamada. Eso fue el cuelgue de 5h44m de eval_rag_answers. Ahora LLM_TIMEOUT_SECONDS=30 (el turno entero va a p95 9s, asi que ninguna llamada legitima se acerca).\n\nSe aplica en UN punto para las 12+ llamadas: todas pasan por trace_openai(), y en el camino trazado de PRE va en la construccion del cliente de Langfuse (observability.traced_openai_client), que es donde protege con el tracing activo.\n\nTRAMPA EVITADA: with_options() sobre un mock devuelve OTRO objeto, asi que aplicarlo a ciegas habria roto en cadena las decenas de tests que parchean AsyncOpenAI en su modulo. El timeout solo se aplica a clientes REALES; un mock pasa intacto, y hay test que lo fija.\n\nUn timeout degrada (extraccion vacia + log [LLM_EXTRACTOR][DEGRADED]) pero no tumba el turno. 4 tests en tests/test_r6_llm_timeout.py.\n\nVERIFICADO: en el contenedor settings.llm_timeout_seconds=30.0, y ronda rapida contra PRE 12/12 turnos respondidos, 0 sin respuesta, max 16s.\n\nPENDIENTE de r6-1: el backoff ante 429 queda en el default del SDK (max_retries=2); si se quiere afinar, es tarea aparte."
-   }
+  "que_es": "Cola de cambios PENDIENTES DE APLICAR a la pagina Plan Coral. NO es una copia de su base de datos (eso es plan-coral.json, que se regenera exportando). Aqui se deja lo que alguien no ha podido escribir en la pagina, listo para volcarlo tal cual.",
+  "pagina": "https://claude.ai/artifact/XiGd3kguTNwwqTnH7mQwgi",
+  "por_que_existe": "En la sesion de Claude Code de Gonzalo la herramienta ArtifactData NO aparece: buscada 6 veces (select:ArtifactData, select:artifact_data/ArtifactDB/ArtifactStore/ArtifactCollections y 2 busquedas por descripcion) y siempre 'No matching deferred tools found'. No es cuenta ni permisos: esa misma sesion SI tiene DesignSync y RemoteTrigger, que autentican con el login de claude.ai, y la config tiene oauthAccount con organizationRole admin, sin ninguna ANTHROPIC_API_KEY. Si la herramienta existiera pero estuviera capada por no ser propietario, apareceria en la lista y fallaria AL LLAMARLA; no aparece en absoluto. Tampoco se intento republicar el HTML en ningun momento. Hipotesis viva: diferencia de version de Claude Code (pedir a Gadea la suya y comparar).",
+  "como_aplicar": {
+    "con_claude": "Con la herramienta ArtifactData (NO con Artifact, y sin republicar el HTML): leer el documento, y hacer update pasando su version como if_version. Coleccion tasks -> doc_id = el id de la tarea. Coleccion log -> documentos nuevos.",
+    "a_mano": "Abrir la pagina con sesion iniciada y copiar cada campo en su tarea o en la bitacora.",
+    "al_terminar": "Dejar 'pendientes' como lista vacia, poner la fecha en 'aplicado_el' y quien lo aplico en 'aplicado_por', todo en el MISMO commit. Si esta lista se queda llena, el repo y la pagina han divergido: esa es la senal."
   },
-  {
-   "coleccion": "log",
-   "operacion": "set",
-   "doc_id": "l-0923-alvaro-r61",
-   "campos": {
-    "at": "2026-09-23T21:30:00Z",
-    "byLabel": "Alvaro (con Claude)",
-    "text": "23-sep (noche): r6-1 hecha y verificada en PRE. Timeout de 30s por llamada al LLM en un unico punto (trace_openai + la construccion del cliente de Langfuse). El default del SDK eran 600s de lectura con 2 reintentos = hasta ~30 min colgado, que es el cuelgue de 5h44m que vio Gonzalo. Suite: 2580 -> 2584 passed, 0 failed (los +4 son los tests nuevos); los 3 fallos que citaba la 0.29.9 YA NO se reproducen.\n\nCORRECCION sobre el handoff de la tarde: l1-4 NO estaba hecha. Las dos siguen esperandose dentro del turno (conversational_core.py:3078 y supervisor.py:2802); no salian como nodos en Langfuse porque viven dentro de otras funciones. Y ojo al implementarla: save_state va justo despues de route_message, asi que un create_task a secas perderia las notas y el resumen.\n\nHALLAZGO NUEVO (con el acceso SSH que paso Gadea): PRE sigue mandando trazas a LANGSMITH y comiendose 429 por cuota agotada, ~7 errores cada 20 min. .env.pre del VPS todavia tiene LANGSMITH_API_KEY / LANGSMITH_PROJECT / LANGCHAIN_TRACING_V*, y langsmith 0.10.10 sigue instalado: langchain ve la clave y activa el tracing viejo solo. Es ruido y trabajo de red desperdiciado en cada turno. Encaja en s4-5 (retirar la dependencia langsmith); el arreglo rapido es quitar esas 3 variables de .env.pre."
-   }
-  },
-  {
-   "coleccion": "tasks",
-   "operacion": "update",
-   "doc_id": "l1-4",
-   "campos": {
-    "status": "en curso",
-    "owner": "Alvaro",
-    "note": "MEDIDA y NO promocionada (23-sep). A/B completo del core el mismo dia: 4 rondas x 93 turnos, 0 sin respuesta, juez 1,90 $.\n\nLATENCIA (mejora real): nodo setup 0,912/0,784 s -> 0,039/0,037 s (-95%); turno p50 4,57 s -> 3,72 s (-18%); latencia de cliente -0,56 s. Las llamadas por turno NO bajan (3,56/3,60 -> 3,59/3,62): las notas se seguian capturando.\n\nPERO 2 criterios fallan en LAS DOS rondas B y pasan en LAS DOS A (4 de 4): certificado-fechas-fotos-y-reserva/sin-invenciones (el bot se inventa que 'el enlace no te ha funcionado') y paquete-5-buceos-cop-refresh-y-hoteles/refresh-menos-de-dos-anos (recomienda refresh a alguien certificado hace menos de 2 anos).\n\nOJO AL METODO: el agregado NO lo habria visto (A 86,7/86,8 % vs B 87,2/86,4 %). Solo sale comparando criterio a criterio contra las DOS rondas A.\n\nCAUSA RAIZ: carrera con state.history. _maybe_capture_notes lee state.history y las fases meten la respuesta del BOT en ese historial 18 veces por turno. En paralelo, en los turnos sin RAG la tarea se espera al final de route_message, cuando la respuesta del bot ya esta dentro -> notas distintas que se persisten y contaminan el RAG de los turnos siguientes.\n\nESTADO: flag NOTES_IN_PARALLEL apagado en PRE; el codigo se queda detras del flag. ARREGLO PROPUESTO (sin validar, ~1 linea): pasar una COPIA del historial al crear la tarea. Exige repetir el A/B entero."
-   }
-  },
-  {
-   "coleccion": "log",
-   "operacion": "set",
-   "doc_id": "l-0923-alvaro-l14",
-   "campos": {
-    "at": "2026-09-23T23:30:00Z",
-    "byLabel": "Alvaro (con Claude)",
-    "text": "23-sep (noche): r6-1 hecha y verificada (timeout de 30 s por llamada en un unico punto; el default del SDK eran 600 s con 2 reintentos = el cuelgue de 5h44m). l1-4 MEDIDA y NO promocionada: la latencia mejora (-95 % el nodo setup, -18 % el turno) pero el A/B destapa 2 criterios que empeoran en las DOS rondas B frente a las DOS A. Causa raiz: _maybe_capture_notes lee state.history y las fases meten ahi la respuesta del propio bot 18 veces por turno, asi que en paralelo las notas salen distintas y contaminan el RAG de los turnos siguientes. Flag apagado en PRE. Arreglo propuesto: congelar el historial al crear la tarea; hay que repetir el A/B. Tambien: quitado de .env.pre el tracing muerto de LangSmith, que se comia un 429 por turno."
-   }
-  }
- ]
+  "aplicado_el": "2026-09-24",
+  "aplicado_por": "Gadea (con Claude)",
+  "pendientes": []
 }
