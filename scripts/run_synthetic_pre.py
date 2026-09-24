@@ -35,6 +35,7 @@ import json
 import ssl
 import sys
 import time
+import urllib.error
 import urllib.request
 import uuid
 from datetime import UTC, datetime
@@ -122,8 +123,20 @@ class Chatwoot:
         )
         # CA de certifi: el almacen de Windows de algun equipo del equipo tiene una raiz
         # caducada y rechaza el certificado (valido) de Chatwoot.
-        with urllib.request.urlopen(req, timeout=20, context=_SSL_CONTEXT) as resp:
-            return json.load(resp)
+        # Las LECTURAS se reintentan ante un corte de red: el 24-sep un timeout puntual de
+        # Chatwoot tumbo la ronda completa del golden en el turno 262 de 465. Los POST no
+        # (reintentar un envio podria duplicar el mensaje del cliente).
+        attempts = 3 if method == "GET" else 1
+        for attempt in range(1, attempts + 1):
+            try:
+                with urllib.request.urlopen(req, timeout=20, context=_SSL_CONTEXT) as resp:
+                    return json.load(resp)
+            except (urllib.error.URLError, TimeoutError, ConnectionError) as exc:
+                if isinstance(exc, urllib.error.HTTPError) or attempt == attempts:
+                    raise
+                print(f"  (lectura de Chatwoot fallida, reintento {attempt}/{attempts - 1}: {exc})", flush=True)
+                time.sleep(3 * attempt)
+        raise AssertionError("inalcanzable")
 
     def new_conversation(self, tag: str) -> int:
         contact = self._req(

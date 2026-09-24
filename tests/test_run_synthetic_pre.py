@@ -1,5 +1,6 @@
 """Lanzador de conversaciones sinteticas: los lotes del repo y la muestra de M0."""
 
+import scripts.run_synthetic_pre as rsp
 from scripts.run_synthetic_pre import load_batches, main, select_cases
 
 
@@ -40,3 +41,48 @@ def test_core_sample_is_the_coverage_core():
     picked = {tag for _, tag, _ in select_cases(load_batches(), "core", None)}
     assert picked == set(core)
     assert {tag for _, tag, _ in select_cases(load_batches(), "rapida", None)} <= picked
+
+
+def _fake_urlopen(fallos: int, llamadas: list):
+    import io
+    import json as _json
+    import urllib.error
+
+    class _Resp(io.BytesIO):
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *a):
+            return False
+
+    def _open(req, timeout=None, context=None):
+        llamadas.append(req.get_method())
+        if len(llamadas) <= fallos:
+            raise urllib.error.URLError("timed out")
+        return _Resp(_json.dumps({"payload": []}).encode())
+
+    return _open
+
+
+def test_las_lecturas_de_chatwoot_se_reintentan(monkeypatch):
+    """24-sep: un timeout puntual de Chatwoot tumbo la ronda completa en el turno 262."""
+    llamadas = []
+    monkeypatch.setattr(rsp.urllib.request, "urlopen", _fake_urlopen(2, llamadas))
+    monkeypatch.setattr(rsp.time, "sleep", lambda s: None)
+    cw = rsp.Chatwoot("https://x", "t", 1, 2)
+    assert cw._req("GET", "/conversations/1/messages") == {"payload": []}
+    assert llamadas == ["GET", "GET", "GET"]
+
+
+def test_los_envios_no_se_reintentan(monkeypatch):
+    """Reintentar un POST podria duplicar el mensaje del cliente."""
+    import urllib.error
+
+    import pytest
+
+    llamadas = []
+    monkeypatch.setattr(rsp.urllib.request, "urlopen", _fake_urlopen(1, llamadas))
+    cw = rsp.Chatwoot("https://x", "t", 1, 2)
+    with pytest.raises(urllib.error.URLError):
+        cw._req("POST", "/conversations/1/messages", {"content": "hola"})
+    assert llamadas == ["POST"]
