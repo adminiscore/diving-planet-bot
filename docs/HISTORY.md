@@ -1,6 +1,12 @@
 History
 =======
 
+0.29.16 - (2026-09-24, noche)
+----------------------
+* **Medición propia sin Langfuse** (plan gratuito superado, reinicio el 16-oct; se decidió no pagar): cada turno escribe `[TURN_METRICS]` en el log de PRE (sin texto del cliente) con el tiempo del turno, las llamadas al LLM, el tiempo de cada paso del grafo y el router usado; `scripts/turn_metrics.py` saca la misma foto que Langfuse. Comprobado en PRE: 12/12 turnos, el paso del router con Jev tarda 0,42 s (antes ~1,4 s).
+* **Protocolo de medición** (`docs/robustness/protocolo-medicion.md`, decisiones de Gadea): A/B por escalones (local con los 257 mensajes → 1+1 en PRE → 2+2 solo si hay dudas; ronda completa solo al cerrar fase).
+* **Cache de veredictos del juez** (`judge-cache.jsonl`): no se vuelve a pagar por juzgar exactamente lo mismo. Medido: con el mismo código solo ~1 de cada 3 diálogos repite el texto del bot, así que el ahorro es ~40 % del juez por ronda (no el 60-80 % que se estimó al principio). Un A/B pasa de ~2,3 $ a ~0,7-0,8 $.
+
 0.29.15 - (2026-09-24, tarde)
 ----------------------
 * **L1 CERRADA (l1-8).** g-7 paso 4: los chats antiguos (`conversations.json`) fuera del código y del índice, que queda en 718 documentos oficiales (services 352, faqs 270, policies 68, pricing 28); el juez de grounding único es la única conducta (sin flag). **Ronda completa del golden** (116 diálogos, 465 turnos, 0 sin respuesta; se reanudó tras un corte de red de Chatwoot en el turno 262) + juez: frente a la línea base v7, juez sin revisar en los dos, **80,5 → 81,5 %** de criterios; sintéticos 91,3 → 92,0 %; reales 74,9 → 74,4 %; **examen oculto 73,1 → 78,3 %** (2 → 4 diálogos sin fallos). **Latencia (Langfuse): turno p50 4,62 → 3,34 s (−28 %), p95 9,00 → 7,33 s (−19 %)**, coste por turno −7 %; el cliente, media 5,17 → 4,15 s. Lo que empeora criterio a criterio (26, frente a 38 que mejoran) son causas ya conocidas; "no lo tengo" 18 → 23 turnos, casi todo en primeros mensajes (saludo + pregunta), anotado en l1-6.

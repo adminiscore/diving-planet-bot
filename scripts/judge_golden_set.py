@@ -33,6 +33,7 @@ anade `quality` a una foto de `scripts.langfuse_snapshot` (linea temporal de la 
 """
 
 import argparse
+import hashlib
 import json
 import random
 import re
@@ -281,15 +282,118 @@ def parse_verdict(raw: str) -> dict:
     }
 
 
-def llm_judge_criterion(
-    client, model: str, effort: str | None, reference: str, dialogue: dict, records: list[dict], criterion: dict, others: list[dict] | None = None
-) -> dict:
+def judge_user_message(dialogue: dict, records: list[dict], criterion: dict, others: list[dict] | None = None) -> str:
+    """Lo que ve el juez de UN criterio (junto con el sistema y la referencia)."""
     other_lines = "\n".join(f"- {c['id']}: {c['check']}" for c in (others or []) if c["id"] != criterion["id"])
-    user = (
+    return (
         f"CONVERSACION (dialogo '{dialogue['id']}', categoria {dialogue['category']}):\n{transcript(records)}\n\n"
         f"OTROS CRITERIOS DEL DIALOGO (no los juzgues; solo para no contar dos veces un fallo):\n{other_lines or '- ninguno'}\n\n"
         f"CRITERIO A JUZGAR ({criterion['id']}): {criterion['check']}"
     )
+
+
+# ------------------------------------------------------------------ cache de veredictos
+# Protocolo de medición (24-sep-2026): no volver a pagar por juzgar lo ya juzgado. Un
+# veredicto se reutiliza si es EXACTAMENTE la misma pregunta al mismo juez: mismo modelo y
+# esfuerzo, misma referencia (la base de conocimiento), mismo código del juez (este fichero:
+# cualquier cambio en el prompt invalida todo) y mismo mensaje (transcripción + criterios).
+# Medido el 24-sep: con el mismo código solo ~1 de cada 3 diálogos repite el texto exacto
+# del bot (el LLM redacta distinto cada vez), así que el ahorro es ~30 % por ronda y crece
+# con el tiempo en los diálogos de texto fijo (saludos, plantillas de reserva, escalados).
+CACHE_FILE = RESULTS_DIR / "judge-cache.jsonl"
+_CACHEABLE = ("cumple", "no_cumple", "no_aplica", "revisar")
+
+
+def _judge_logic_hash() -> str:
+    """Huella de lo que define la pregunta al juez y cómo se lee su respuesta: si cambia
+    el prompt, la transcripción o la validación de la evidencia, la cache no vale."""
+    import inspect
+
+    parts = [JUDGE_INSTRUCTIONS] + [
+        inspect.getsource(f) for f in (llm_judge_criterion, judge_user_message, transcript, bot_bubbles)
+    ]
+    return hashlib.sha256("\x1f".join(parts).encode()).hexdigest()[:16]
+
+
+def cache_key(model: str, effort: str | None, reference: str, user_message: str) -> str:
+    raw = "\x1f".join([model, effort or "", _judge_logic_hash(), hashlib.sha256(reference.encode()).hexdigest(), user_message])
+    return hashlib.sha256(raw.encode()).hexdigest()
+
+
+def judge_criteria(client, model, effort, reference, dialogue, records, all_criteria, cache: dict | None, stats: dict) -> list[dict]:
+    """Los criterios de un diálogo; los LLM, desde la cache si ya se juzgaron igual."""
+    out = []
+    for c in all_criteria:
+        if c.get("auto") or cache is None:
+            out.append(evaluate_criterion(client, model, effort, reference, dialogue, records, c, all_criteria))
+            continue
+        key = cache_key(model, effort, reference, judge_user_message(dialogue, records, c, all_criteria))
+        if key in cache:
+            stats["hits"] += 1
+            out.append({"id": c["id"], **cache[key], "cached": True})
+            continue
+        stats["misses"] += 1
+        if client is None:  # --dry-cache: solo contar
+            out.append({"id": c["id"], "verdict": "no_aplica", "by": "dry"})
+            continue
+        result = evaluate_criterion(client, model, effort, reference, dialogue, records, c, all_criteria)
+        save_to_cache(key, {k: v for k, v in result.items() if k != "id"})
+        cache[key] = {k: v for k, v in result.items() if k not in ("id", "usage")}
+        out.append(result)
+    return out
+
+
+def seed_cache_from_results(results_file: str, model: str, effort: str | None) -> int:
+    """Mete en la cache los veredictos de una ronda YA juzgada (con la referencia y el juez de
+    ahora: solo vale si la base de conocimiento y el prompt del juez no han cambiado desde)."""
+    report = json.loads(Path(results_file).read_text(encoding="utf-8"))
+    golden = json.loads(GOLDEN_FILE.read_text(encoding="utf-8"))
+    by_id = {d["id"]: d for d in golden["dialogues"]}
+    runs = latest_conversations(report["run_file"])
+    reference, cache, n = load_reference(), load_cache(), 0
+    for d in report.get("dialogs") or report.get("dialogues") or []:
+        dialogue, records = by_id.get(d["id"]), runs.get(d["id"])
+        if not dialogue or not records:
+            continue
+        all_criteria = criteria_for(dialogue, golden["global_criteria"])
+        verdicts = {c["id"]: c for c in d["criteria"]}
+        for c in all_criteria:
+            got = verdicts.get(c["id"])
+            if c.get("auto") or not got or got.get("by") in ("auto", "dry") or got.get("verdict") not in _CACHEABLE:
+                continue
+            key = cache_key(model, effort, reference, judge_user_message(dialogue, records, c, all_criteria))
+            if key not in cache:
+                save_to_cache(key, {k: v for k, v in got.items() if k not in ("id", "cached")})
+                cache[key] = got
+                n += 1
+    return n
+
+
+def load_cache(path: Path = CACHE_FILE) -> dict[str, dict]:
+    cache: dict[str, dict] = {}
+    if path.exists():
+        for line in path.read_text(encoding="utf-8").splitlines():
+            try:
+                row = json.loads(line)
+                cache[row["key"]] = row["result"]
+            except (ValueError, KeyError):
+                continue
+    return cache
+
+
+def save_to_cache(key: str, result: dict, path: Path = CACHE_FILE) -> None:
+    if result.get("verdict") not in _CACHEABLE:
+        return
+    keep = {k: v for k, v in result.items() if k != "usage"}
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("a", encoding="utf-8") as fh:
+        fh.write(json.dumps({"key": key, "result": keep}, ensure_ascii=False) + "\n")
+
+
+def llm_judge_criterion(
+    client, model: str, effort: str | None, reference: str, dialogue: dict, records: list[dict], criterion: dict, others: list[dict] | None = None
+) -> dict:
+    user = judge_user_message(dialogue, records, criterion, others)
     kwargs = {"reasoning_effort": effort} if model.startswith(("gpt-5", "o")) and effort else {"temperature": 0}
     resp = client.chat.completions.create(
         model=model,
@@ -372,18 +476,30 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--effort", default="medium", help="reasoning_effort para modelos razonadores")
     parser.add_argument("--review-sample", type=int, default=5, help="cumple al azar que se anaden a la revision humana")
     parser.add_argument("--snapshot", help="foto JSON de scripts.langfuse_snapshot a la que anadir `quality`")
+    parser.add_argument("--no-cache", action="store_true", help="juzgar todo de nuevo, sin reutilizar veredictos")
+    parser.add_argument("--dry-cache", action="store_true", help="solo contar cuantos criterios saldrian de la cache (sin API)")
+    parser.add_argument("--seed-from", help="meter en la cache los veredictos de este resultado ya juzgado y salir")
     args = parser.parse_args(argv)
 
-    from openai import OpenAI  # import tardio: los tests no necesitan la clave
-
-    api_key = _env("OPENAI_API_KEY")
-    if not api_key:
-        print("Falta OPENAI_API_KEY (entorno o ENV_FILE).", file=sys.stderr)
-        return 2
+    if args.seed_from:
+        n = seed_cache_from_results(args.seed_from, args.model, args.effort)
+        print(f"Cache: {n} veredictos nuevos desde {args.seed_from}")
+        return 0
 
     golden = json.loads(GOLDEN_FILE.read_text(encoding="utf-8"))
     runs = latest_conversations(args.run)
-    client, reference = OpenAI(api_key=api_key), load_reference()
+    reference = load_reference()
+    client = None
+    if not args.dry_cache:
+        from openai import OpenAI  # import tardio: los tests no necesitan la clave
+
+        api_key = _env("OPENAI_API_KEY")
+        if not api_key:
+            print("Falta OPENAI_API_KEY (entorno o ENV_FILE).", file=sys.stderr)
+            return 2
+        client = OpenAI(api_key=api_key)
+    cache = None if args.no_cache else load_cache()
+    stats = {"hits": 0, "misses": 0}
     results, missing = [], []
     for n, dialogue in enumerate(golden["dialogues"], 1):
         records = runs.get(dialogue["id"])
@@ -391,11 +507,18 @@ def main(argv: list[str] | None = None) -> int:
             missing.append(dialogue["id"])
             continue
         all_criteria = criteria_for(dialogue, golden["global_criteria"])
-        criteria = [evaluate_criterion(client, args.model, args.effort, reference, dialogue, records, c, all_criteria) for c in all_criteria]
+        criteria = judge_criteria(client, args.model, args.effort, reference, dialogue, records, all_criteria, cache, stats)
         results.append({"id": dialogue["id"], "category": dialogue["category"], "conv": records[0]["conv"], "criteria": criteria})
         flagged = [f"{c['id']}={c['verdict']}" for c in criteria if c["verdict"] not in ("cumple", "no_aplica")]
-        print(f"[{n}/{len(golden['dialogues'])}] {dialogue['id']}: {'OK' if not flagged else ', '.join(flagged)}", flush=True)
-        time.sleep(0.2)
+        if not args.dry_cache:
+            print(f"[{n}/{len(golden['dialogues'])}] {dialogue['id']}: {'OK' if not flagged else ', '.join(flagged)}", flush=True)
+            time.sleep(0.2)
+
+    total = stats["hits"] + stats["misses"]
+    if args.dry_cache:
+        pct = round(100 * stats["hits"] / total, 1) if total else 0
+        print(f"Cache (sin llamar a la API): {stats['hits']} de {total} criterios LLM ya juzgados ({pct} %); faltarian {stats['misses']}.")
+        return 0
 
     usage = {k: sum(c.get("usage", {}).get(k, 0) for d in results for c in d["criteria"]) for k in ("input", "cached", "output")}
     summary = summarize(results)
@@ -408,6 +531,7 @@ def main(argv: list[str] | None = None) -> int:
         "missing_dialogues": missing,
         "usage": usage,
         "cost_usd": cost_usd(args.model, usage),
+        "cache": {**stats, "hit_pct": round(100 * stats["hits"] / total, 1) if total else None},
         "summary": summary,
         "human_review": review_list(results, args.review_sample, Path(args.run).stem),
         "dialogues": results,
@@ -429,7 +553,7 @@ def main(argv: list[str] | None = None) -> int:
     print(
         f"\nCriterios cumplidos: {summary['criteria_pass_pct']} % ({summary['criteria_failed']} fallos de {summary['criteria_judged']}); "
         f"a revisar: {summary['to_review']}; dialogos sin fallos: {summary['dialogues_passed']}/{summary['dialogues']}; "
-        f"a revision humana: {len(report['human_review'])}; coste: {report['cost_usd']} $ ({usage['input']} entrada, {usage['cached']} en cache, {usage['output']} salida).\nResultado: {out}",
+        f"a revision humana: {len(report['human_review'])}; cache: {stats['hits']} de {total} criterios LLM reutilizados; coste: {report['cost_usd']} $ ({usage['input']} entrada, {usage['cached']} en cache, {usage['output']} salida).\nResultado: {out}",
         flush=True,
     )
     return 0

@@ -45,9 +45,26 @@ escalones**, y solo se sube al siguiente si hace falta:
 | Escalón | Qué | Coste aprox. |
 |---|---|---|
 | **0. En local** | Tests + evaluar la DECISIÓN que cambia sobre los 257 mensajes de cliente del golden (sin el examen oculto), como se hizo con Jev en l2-4. Si no pasa aquí, no se va a PRE. | céntimos |
-| **1. En PRE, 1 + 1** | Una ronda B (con el cambio) contra una ronda A del **mismo día**. Se compara el **texto** del bot turno a turno y **el juez solo evalúa los diálogos cuyo texto ha cambiado**. | ~0,3-0,5 $ |
-| **2. En PRE, 2 + 2** | Solo si en el escalón 1 algo empeora o hay dudas, o si es un cambio grande (p. ej. la extracción de U3). También juzgando solo lo que cambia. | ~1 $ |
+| **1. En PRE, 1 + 1** | Una ronda B (con el cambio) contra una ronda A del **mismo día**. El juez reutiliza lo ya juzgado con el mismo texto (cache, abajo) y se **lee el texto** de lo que empeora. | ~0,6-0,8 $ |
+| **2. En PRE, 2 + 2** | Solo si en el escalón 1 algo empeora o hay dudas, o si es un cambio grande (p. ej. la extracción de U3). También con la cache. | ~1,3 $ |
 | **Cierre de fase** | Ronda COMPLETA del golden (116 diálogos, con el examen oculto) + juez completo. **No se recorta.** | ~2 $ |
+
+**El juez ya no paga dos veces lo mismo (cache de veredictos).** `scripts/judge_golden_set.py` guarda cada
+veredicto en `docs/robustness/golden-set/results/judge-cache.jsonl` (en el repo: lo comparte todo el equipo) y lo
+reutiliza SOLO si la pregunta al juez es idéntica: mismo modelo y esfuerzo, misma base de conocimiento, mismo
+prompt del juez y mismo texto de la conversación. Si cambia cualquiera de esas cosas, se juzga de nuevo. Medido
+el 24-sep: con el mismo código solo ~1 de cada 3 diálogos repite el texto exacto del bot (el LLM redacta distinto
+cada vez), así que el ahorro es **~40 % del juez por ronda** (C2 con 5 rondas previas en la cache: 76 de 192
+criterios), y crece con el tiempo. La salida del juez dice cuántos criterios salieron de la cache.
+
+```
+python -m scripts.judge_golden_set --run <ronda>.jsonl              # usa la cache (por defecto)
+python -m scripts.judge_golden_set --run <ronda>.jsonl --dry-cache  # solo cuenta lo que saldría de la cache, sin API
+python -m scripts.judge_golden_set --run <ronda>.jsonl --no-cache   # juzgar todo de nuevo
+python -m scripts.judge_golden_set --run x --seed-from <resultado>.json  # meter en la cache una ronda ya juzgada
+```
+
+Si la cache crece demasiado (más de ~20 MB) se puede borrar sin perder nada: solo se vuelve a pagar el juez.
 
 Reglas que se mantienen:
 
