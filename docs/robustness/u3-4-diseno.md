@@ -1,7 +1,9 @@
 # u3-4 — "Contesta y sigue" (24-sep-2026)
 
-Estado: **escalón 0 cerrado** (programado detrás del flag `ANSWER_AND_CONTINUE`, apagado por defecto);
-siguiente, escalón 1 en PRE.
+Estado (24-sep noche): **escalón 0 y escalón 1 hechos; NO promocionado todavía** (flag
+`ANSWER_AND_CONTINUE`, apagado por defecto en el código y APAGADO en PRE desde el push del handoff,
+`"false"` en docker-compose.vps.yml; para la siguiente ronda B se pone `"true"`).
+Siguiente: dos arreglos y repetir solo la ronda B → ver "Siguiente paso" al final.
 Protocolo: [protocolo-medicion.md](protocolo-medicion.md).
 
 ## El problema, medido
@@ -118,3 +120,70 @@ encendido; extracción y router Jev de verdad, RAG/acuse/notas con respuestas fi
 
 **Coste**: una petición de extracción de más en los mensajes con "?" (hoy no extraen); el RAG va en
 paralelo a la extracción, así que la latencia no debería sumar (se mide en el escalón 1).
+
+Datos y salidas del escalón 0: `docs/robustness/u3-4/` (etiquetas de pregunta, reproducciones off/on,
+diff). Herramientas: `scripts/replay_golden_local.py` + `scripts/replay_diff.py`.
+
+### Escalón 1 (PRE, 24-sep noche) — hecho, veredicto: **AÚN NO se promociona**
+
+Rondas core `2026-09-24-u34-A` (flag apagado, commit 96f5844) y `2026-09-24-u34-B` (flag encendido,
+commit 4d85f04), misma franja (20:09 y 20:31). Fotos: `docs/robustness/snapshots/2026-09-24-u34-{A,B}.json`;
+juez: `docs/robustness/golden-set/results/2026-09-24-u34-{A,B}__gpt-5-mini-medium.json`; textos de los 18
+turnos afectados lado a lado: `docs/robustness/u3-4/escalon1-textos-A-vs-B.txt`. Comparar criterio a
+criterio: `python -m scripts.ab_judge_compare 2026-09-24-u34-A 2026-09-24-u34-B`.
+
+| | A (sin flag) | B (con flag) |
+|---|---|---|
+| Diálogos que pasan | 17/32 (53 %) | **19/32 (59 %)** |
+| Criterios | 87,3 % | **88,5 %** |
+| Turnos contestados por el RAG | 29 | **40** |
+| Turnos con "no lo tengo" (fallback) | 6 | 9 |
+| Turnos RAG, latencia p50 / media | 4,25 / 4,85 s | 4,30 / **4,55 s** |
+| Turnos de reserva, latencia p50 / media | 1,64 / 1,89 s | **1,45 / 1,73 s** |
+
+**Latencia: no empeora.** La media global sube (2,68 → 2,85 s) solo porque hay MÁS turnos de pregunta,
+que son los lentos; por tipo de turno B va igual o mejor.
+
+**9 mejoras** (moneda aclarada y origen preguntado, "no hay precio especial para colombianos",
+domingo de Pascua, Isla Grande sin inventar, acompañante mayor…). **8 regresiones, leído el texto:**
+
+- **Ruido (3), no es u3-4:** el descuento online escalado como "link roto" (Jev duda en ese mensaje,
+  0,48, y el router LLM es inestable ahí, ya pasaba en u3-1; además el mensaje de escalado sale en
+  español a un cliente en inglés → bug aparte del texto de escalado); "buceamos todos los días" (está en
+  el saludo de A y de B, igual); un "revisar" de bioluminiscencia en una respuesta del RAG.
+- **Sí son de u3-4 (3 causas):**
+  1. **Doble pregunta cuando el RAG no sabe.** Si el RAG contesta "no lo tengo, ¿te paso con un asesor?",
+     ahora se pega detrás "¿desde dónde saldrías?"; en `referral-mas-refresher…#3` además re-pregunta algo
+     que el cliente acababa de decir ("reservaremos hotel en la isla"). El camino antiguo
+     (`_answer_question`) no añadía la pregunta de la reserva si la respuesta ya acababa en pregunta; en
+     `_slotfill_close_phase` se relajó a "solo si el siguiente paso es el menú de actividades".
+  2. **El LLM guarda un dato hipotético.** "Transportation to rosario is included, in case I decided to do
+     the Open Water course?" → apunta location=island y, dos turnos después, el RAG (que recibe el estado)
+     le dice "como ya estás en las islas, tu punto de encuentro es el hotel". Mismo fallo de fondo que u3-5.
+  3. **Aflora una respuesta floja del RAG** que antes quedaba escondida (antes la pregunta se ignoraba):
+     "cómo reservo" → "un asesor te enviará el enlace". Es de l1-7.
+
+## Siguiente paso (para quien siga)
+
+Dos arreglos GENERALES y luego repetir **solo una ronda B** (se compara con esta A; la latencia no hace
+falta repetirla porque por tipo de turno no cambió):
+
+1. **Si la respuesta del RAG es el fallback** (`rag_agent.FALLBACK_ES/FALLBACK_EN`, "no lo tengo a la
+   mano…"), **no** se añade la pregunta de la reserva: se deja como en el camino antiguo (respuesta sola,
+   `core_pending_slot` fijado para el turno siguiente). Sitio: el bloque u3-4 de `_slotfill_close_phase` y
+   `_prepend_parallel_answer` en `src/agents/conversational_core.py`.
+2. **En un turno con pregunta, solo se guarda lo que el cliente AFIRMA y el LLM confirma**: en vez de
+   borrar lo que leyó el regex y dejar que el LLM rellene huecos (lo de ahora, `_leave_question_fields_to_llm`),
+   que el regex lea y el LLM **verifique** esos campos (el mecanismo de veto de `supervisor._VETO_FIELD_SPECS`
+   / `extract_and_verify`), **sin rellenar huecos** en ese turno. Así "reservaremos hotel en la isla" se
+   guarda (lo lee el regex y el LLM lo confirma), y ni "¿me recomiendas un hotel en Rosario?" (regex) ni
+   "in case I decided to…" (LLM rellenando) dejan datos inventados. OJO: el veto de actividad amplio bajó
+   la concordancia del 89 % al 73 % en septiembre (sesgo del LLM hacia minicurso en mensajes escuetos,
+   ver `supervisor._activity_should_verify`): medirlo en el escalón 0 antes de subir.
+
+Cómo medirlo: escalón 0 con `replay_golden_local` (off ya está en `docs/robustness/u3-4/replay-off.jsonl`,
+basta la pasada on) + `replay_diff` (leer los "INVENTADO" a mano: el juez es estricto con mapeos de
+producto correctos); tests. Luego escalón 1: SOLO ronda B (ver el banner del handoff para los comandos).
+
+El error de nacionalidad (`is_colombian` inventado desde una pregunta) se deja para **u3-5** (decisión de
+Gadea, 24-sep): ya existe sin el flag y arreglarlo en la instrucción de relleno hace perder datos.

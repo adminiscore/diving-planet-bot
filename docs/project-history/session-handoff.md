@@ -13,6 +13,81 @@ Read this file before changing code in the Diving Planet Bot. For a quick versio
 
 > **📏 LEER ANTES DE MEDIR — decisiones del 24-sep-2026 (Gadea):** (1) latencia y llamadas con nuestros logs `[TURN_METRICS]` + `scripts/turn_metrics.py`, no con Langfuse (plan gratuito superado, reinicio 16-oct); (2) pruebas A/B por escalones, juzgando solo los diálogos que cambian. Todo en `docs/robustness/protocolo-medicion.md`.
 
+### ▶️ 2026-09-24 noche (Gadea → Álvaro / Gonzalo) — u3-4 "contesta y sigue": A/B hecho, faltan 2 arreglos
+
+**Para quien lo coja: empieza leyendo `docs/robustness/u3-4-diseno.md` (todo está ahí) y
+`docs/robustness/protocolo-medicion.md`.**
+
+**Qué es u3-4.** Hoy cada mensaje es pregunta O dato: con "?" el bot contesta pero no guarda los datos
+del mismo mensaje; sin "?" la pregunta solo se contesta si la reserva no avanzó (si avanzó, se pierde:
+"perfecto, como pago" → "¿lo cambio a sin certificación?"). Con el flag `ANSWER_AND_CONTINUE` el bot
+**contesta la pregunta (RAG en paralelo) Y sigue con la reserva**. La pregunta se detecta con el regex/"?"
+o con **Jev** (`asks_question` ≥ 0,7, en la MISMA llamada del router: 0 peticiones de más).
+
+**Estado de PRE ahora:** igual que antes de u3-4. El código está desplegado pero el flag está a
+`"false"` en `docker-compose.vps.yml` (sigue encendido lo de antes: Jev router, notas y acuse en paralelo).
+
+**Lo hecho (commits 96f5844 feature, 4d85f04 flag para la ronda B):**
+- Escalón 0 (local, céntimos): preguntas contestadas **94 → 123 de 165**; tests 2638 verdes (flag apagado
+  = conducta de hoy) + 16 nuevos (`tests/test_u3_answer_and_continue.py`).
+- Escalón 1 (PRE, core 1+1): **diálogos 17 → 19 de 32, criterios 87,3 → 88,5 %, latencia por tipo de
+  turno igual o mejor**. Pero **3 regresiones con causa** → NO promocionado.
+
+**Lo que falta (en este orden):**
+1. **Arreglo 1** — si el RAG responde el fallback "no lo tengo a la mano" (`rag_agent.FALLBACK_ES/EN`),
+   NO pegar detrás la pregunta de la reserva (bloque u3-4 de `_slotfill_close_phase` y
+   `_prepend_parallel_answer`, `src/agents/conversational_core.py`). Con test.
+2. **Arreglo 2** — en un turno con pregunta, guardar solo lo que el cliente AFIRMA: el regex lee y el LLM
+   **verifica** (mecanismo de veto: `supervisor._VETO_FIELD_SPECS`, `extract_and_verify`), **sin
+   rellenar huecos** ese turno. Sustituye a `_leave_question_fields_to_llm`. Detalle y riesgo en el doc
+   ("Siguiente paso").
+3. **Escalón 0 otra vez** (local):
+   ```
+   ENV_FILE=.env.dev python -m scripts.replay_golden_local --flag answer_and_continue --side on
+   ENV_FILE=.env.dev python -m scripts.replay_diff --dir u3-4
+   ```
+   (la pasada `off` ya está guardada en `docs/robustness/u3-4/replay-off.jsonl`). Leer a mano los
+   "INVENTADO": el juez es estricto con mapeos de producto correctos ("paquete de 5 buceos" → buceo
+   certificado está BIEN). Y separar ruido: solo cuentan los turnos donde el flag cambia el camino y el
+   estado previo es igual en las dos pasadas.
+4. **Escalón 1: SOLO una ronda B** (se compara con la A de hoy, `2026-09-24-u34-A`): poner
+   `ANSWER_AND_CONTINUE: "true"` en el compose, commit + push a `feature/pre_gadea`, esperar el deploy,
+   comprobar el flag en PRE y lanzar:
+   ```
+   ssh -i ~/.ssh/dp_pre_vps root@89.167.4.161 "docker exec dp-pre-bot python -c 'from src.config import settings as s; print(s.answer_and_continue)'"
+   ENV_FILE=.env.dev python -m scripts.run_synthetic_pre --name u34-B2 --sample core
+   ENV_FILE=.env.dev python -m scripts.turn_metrics --label "u3-4 B2" --from-run docs/robustness/synthetic-runs/<fecha>-u34-B2.jsonl --out docs/robustness/snapshots/<fecha>-u34-B2.json
+   ENV_FILE=.env.dev python -m scripts.judge_golden_set --run docs/robustness/synthetic-runs/<fecha>-u34-B2.jsonl
+   python -m scripts.ab_judge_compare 2026-09-24-u34-A <fecha>-u34-B2
+   ```
+   y **leer el texto** de cada regresión (los 18 turnos afectados de hoy están lado a lado en
+   `docs/robustness/u3-4/escalon1-textos-A-vs-B.txt`). Si no hay regresiones propias → se deja el flag a
+   `"true"`, entrada en HISTORY y tarea u3-4 hecha en Plan Coral.
+5. Después: **u3-5** (datos inventados). Ya tiene deberes de aquí: la **nacionalidad** inventada desde una
+   pregunta ("¿el precio es en dólares o pesos?" → no colombiano). Decisión de Gadea: va en u3-5, no en
+   u3-4. NO arreglarlo tocando el tono de la instrucción de relleno: se probó y hace perder datos
+   (sonda: "we're german tourists" 5/6 → 1/6), igual que en septiembre (comentario "RESULTADO NEGATIVO" en
+   `src/prompts/booking.py`).
+
+**Tips que costó aprender hoy:**
+- **El juez tiene ruido: lee siempre el texto.** Hoy 3 de 8 "regresiones" eran ruido. Por ejemplo,
+  "buceamos todos los días" suspendido en B está en el saludo, idéntico en A.
+- **La latencia se compara por tipo de turno**, no la media global. Si el cambio manda más turnos al RAG,
+  la media sube aunque nada vaya más lento (RAG ~4,3 s, reserva ~1,5 s).
+- **El caso del descuento online ("the discount of 10% is not showing up") es inestable**: Jev duda
+  (0,4-0,5) y el router LLM a veces lo escala como "link roto". No es de u3-4. Su mensaje de escalado sale
+  en español a un cliente en inglés (bug aparte, para s4).
+- **El regex lee palabras sueltas y no entiende hipótesis ni preguntas** ("taking PADI Open Water course"
+  → ya certificado; "¿me recomiendas un hotel en Rosario?" → se aloja en la isla). Y el LLM rellenando
+  huecos también las toma por datos ("in case I decided to…"). Por eso, en los turnos con pregunta, verificar
+  y no rellenar.
+- **Una ronda A/B hace dos deploys** (flag apagado → encendido), y cada deploy borra los logs de PRE.
+  Para mirar `[TURN_METRICS]` o `[RAG][GROUNDING]` de una ronda, hazlo antes del siguiente push
+  (`docker logs dp-pre-bot 2>&1 | grep ...`).
+- **Lanza cada juez como proceso propio** y no mates la ventana que lo lanzó: se pierde la salida (lección
+  del 23-sep).
+- **No hagas push mientras corre una ronda**: el deploy recrea el contenedor a mitad de ronda.
+
 ### ✅ 2026-09-24 tarde (Gadea) — L1 CERRADA + Jev (u3-1) ENCENDIDO en PRE con cascada
 
 **Estado de PRE** (`feature/pre_gadea`, desplegado): sin los chats antiguos (índice de 718 documentos

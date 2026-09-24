@@ -1,6 +1,13 @@
 History
 =======
 
+0.29.18 - (2026-09-24, noche)
+----------------------
+* **U3 · u3-4 "contesta y sigue", detrás de flag y NO promocionado todavía** (`ANSWER_AND_CONTINUE`, apagado en el código y en PRE). Un mensaje con pregunta deja de ser pregunta O dato: el RAG contesta en paralelo y la reserva sigue en el mismo turno. La pregunta se detecta con el regex/"?" o con Jev (`asks_question` ≥ 0,7, en la misma llamada del router). En los turnos con pregunta, los datos los lee el LLM y no el regex. Detalle: `docs/robustness/u3-4-diseno.md`.
+* **Escalón 0 (local):** preguntas contestadas 94 → 123 de 165. **Escalón 1 (PRE, core 1+1):** diálogos 17 → 19 de 32, criterios 87,3 → 88,5 %, latencia por tipo de turno igual o mejor. Pero hay 3 regresiones con causa: se añade la pregunta de la reserva detrás del "no lo tengo" del RAG, el LLM guarda un dato hipotético ("in case I decided to…" → está en la isla) y aflora una respuesta floja del RAG. Faltan dos arreglos generales y repetir solo la ronda B (ver el handoff).
+* Descartado, con medida: arreglar la nacionalidad inventada desde una pregunta tocando la instrucción de relleno, porque hace perder datos. Pasa a u3-5.
+* Herramientas nuevas: `scripts/replay_golden_local.py` + `scripts/replay_diff.py` (escalón 0 por céntimos: el golden en local con un flag apagado y encendido) y `scripts/ab_judge_compare.py` (mejoras y regresiones del juez criterio a criterio).
+
 0.29.17 - (2026-09-24, noche)
 ----------------------
 * **U3 · u3-1 paso 3: el acuse cálido en paralelo, ENCENDIDO en PRE** (`ACK_IN_PARALLEL`). El diseño cambió al medir: la extracción ya era casi siempre UNA llamada (fusionarla ahorraba poco) y la cadena lenta era extracción (0,85 s) → acuse (1,0 s) en el 48 % de los turnos. El acuse se lanza al empezar el turno con una foto de los datos y se espera en el cierre; con una pregunta de sí/no pendiente (seguridad, certificación, nacionalidad, refresher) sigue en serie, porque su resumen necesita el valor recién extraído (`docs/robustness/u3-1-paso3-diseno.md`).

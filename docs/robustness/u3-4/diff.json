@@ -1,0 +1,719 @@
+{
+ "diffs": [
+  {
+   "key": [
+    "acompanante-madre-desde-cartagena",
+    3
+   ],
+   "extra": {
+    "detected_activity": "certified_diving"
+   },
+   "verdict": {
+    "inventados": [
+     "detected_activity"
+    ],
+    "por_que": "En los mensajes el cliente no afirma ser buceador certificado ni menciona explícitamente estar certificado; solo pregunta si su madre puede acompañarle y quedarse en la isla de apoyo. Por tanto, etiquetar la actividad como 'certified_diving' es una suposición no confirmada por el texto."
+   }
+  },
+  {
+   "key": [
+    "cambio-fecha-por-enfermedad",
+    1
+   ],
+   "extra": {
+    "detected_activity": "certified_diving",
+    "location": "island",
+    "detected_location": "island",
+    "detected_group_size": 2
+   },
+   "verdict": {
+    "inventados": [
+     "detected_activity"
+    ],
+    "por_que": "El cliente menciona que vendrán a bucear, pero no dice explícitamente que sean buceadores certificados; por tanto la etiqueta \"certified_diving\" es una suposición. En cambio indica que se quedarán en la isla Fragata (por ello \"location\" y \"detected_location\" están afirmadas) y dice \"My husband and I\" lo que confirma un grupo de 2 personas (por eso \"detected_group_size\" está afirmada)."
+   }
+  },
+  {
+   "key": [
+    "cambio-fecha-por-enfermedad",
+    2
+   ],
+   "extra": {
+    "hotel": "Fragata island"
+   },
+   "verdict": {
+    "inventados": [],
+    "por_que": "El cliente explícitamente dice: \"then staying overnight on the Fragata island.\" Por tanto el dato \"hotel\": \"Fragata island\" está AFIRMADO por el cliente en sus mensajes."
+   }
+  },
+  {
+   "key": [
+    "cambio-fecha-por-enfermedad",
+    5
+   ],
+   "extra": {
+    "is_colombian": false
+   },
+   "verdict": {
+    "inventados": [
+     "is_colombian"
+    ],
+    "por_que": "El cliente no afirma en ningún mensaje ser o no ser colombiano. Solo indica que llegaron a Cartagena y habla en inglés; eso no permite deducir su nacionalidad. Por tanto la etiqueta is_colombian=false es una suposición/inventada, no algo que el cliente haya declarado."
+   }
+  },
+  {
+   "key": [
+    "certificado-fechas-fotos-y-reserva",
+    1
+   ],
+   "extra": {
+    "detected_activity": "certified_diving",
+    "is_certified": true,
+    "location": "cartagena",
+    "detected_location": "cartagena",
+    "last_dive_over_2_years": false
+   },
+   "verdict": {
+    "inventados": [
+     "last_dive_over_2_years"
+    ],
+    "por_que": "El usuario no menciona cuándo fue su última inmersión. Dice que es 'open' (afirma estar certificado) y que estará en Cartagena entre el 5 y 7, por eso 'is_certified', 'detected_activity' y 'location'/'detected_location' están respaldados por sus mensajes. La afirmación de que su última inmersión fue hace menos de 2 años no aparece en el texto, por tanto es supuesto."
+   }
+  },
+  {
+   "key": [
+    "colombianos-precio-minicurso-dos-inmersiones",
+    2
+   ],
+   "extra": {
+    "detected_group_size": 2,
+    "is_colombian": true
+   },
+   "verdict": {
+    "inventados": [],
+    "por_que": "El cliente afirma explícitamente que son dos ('Mi pareja y yo') y que son de Bogotá ('somos de Bogotá'), lo que implica que son colombianos. Por tanto ambos datos están confirmados por los mensajes."
+   }
+  },
+  {
+   "key": [
+    "curso-alojamiento-y-recogida-islas",
+    4
+   ],
+   "extra": {
+    "is_colombian": true
+   },
+   "verdict": {
+    "inventados": [],
+    "por_que": "El cliente declara explícitamente 'soy Cartagenera por cierto', lo que afirma su nacionalidad/condición de ser de Cartagena (Colombiana); por tanto el dato no es inventado."
+   }
+  },
+  {
+   "key": [
+    "curso-open-water-precio-cop-hoteles-y-transporte",
+    2
+   ],
+   "extra": {
+    "detected_activity": "padi_open_water"
+   },
+   "verdict": {
+    "inventados": [
+     "padi_open_water"
+    ],
+    "por_que": "El cliente pidió un \"curso básico de buceo\" y solicitó el costo para colombianos, pero no mencionó explícitamente que sea el curso PADI Open Water; por tanto la etiqueta 'padi_open_water' es una suposición del sistema, no algo afirmado por el cliente."
+   }
+  },
+  {
+   "key": [
+    "curso-open-water-principiantes-idioma-frances-anticipacion",
+    1
+   ],
+   "extra": {
+    "detected_activity": "minicourse",
+    "is_certified": false,
+    "location": "island",
+    "detected_location": "island",
+    "detected_group_size": 2
+   },
+   "verdict": {
+    "inventados": [
+     "detected_activity"
+    ],
+    "por_que": "El cliente pide información sobre cursos y comenta que es la primera vez y que no tienen mucho tiempo, pero no afirma explícitamente que quieran un 'minicourse'. Ese campo es una suposición basada en contexto, no una afirmación directa."
+   }
+  },
+  {
+   "key": [
+    "curso-open-water-principiantes-idioma-frances-anticipacion",
+    3
+   ],
+   "extra": {
+    "hotel": "Frances"
+   },
+   "verdict": {
+    "inventados": [],
+    "por_que": "El dato 'hotel': 'Frances' no está inventado/supuesto porque el cliente lo proporcionó explícitamente como su tercer mensaje: 'Frances'. Por eso se considera afirmado por el cliente."
+   }
+  },
+  {
+   "key": [
+    "curso-open-water-transporte-y-regreso-otro-dia",
+    1
+   ],
+   "extra": {
+    "detected_activity": "padi_open_water"
+   },
+   "verdict": {
+    "inventados": [
+     "padi_open_water"
+    ],
+    "por_que": "El usuario menciona el curso como una posibilidad condicional (“in case I decided to do PADI Open Water Diver certification course”), no afirma que vaya a realizarlo. Por tanto el dato es supuestamente/hipotético, no confirmado en los mensajes."
+   }
+  },
+  {
+   "key": [
+    "curso-referido-pide-datos-centro",
+    5
+   ],
+   "extra": {
+    "detected_activity": "certified_diving"
+   },
+   "verdict": {
+    "inventados": [
+     "certified_diving"
+    ],
+    "por_que": "En los mensajes el cliente dice que la persona 'ya está haciendo el e-learning' y pregunta si puede ir directamente a Diving Planet para iniciar la parte Open Water; eso indica que está en proceso de formación, no que ya esté certificado. No hay ninguna afirmación explícita de certificación, por lo que 'certified_diving' es una suposición/inventado."
+   }
+  },
+  {
+   "key": [
+    "desde-islas-buzo-certificado",
+    1
+   ],
+   "extra": {
+    "detected_activity": "certified_diving",
+    "location": "island",
+    "detected_location": "island"
+   },
+   "verdict": {
+    "inventados": [
+     "detected_activity"
+    ],
+    "por_que": "El cliente menciona que quiere bucear y pregunta por 'fun dives', pero no afirma que sea buceador certificado ni menciona su certificación; por tanto 'detected_activity: certified_diving' es una suposición. En cambio dice explícitamente que está en 'Isla Grande', así que 'location' y 'detected_location' están afirmados."
+   }
+  },
+  {
+   "key": [
+    "equipaje-mochilas-y-almacenamiento",
+    1
+   ],
+   "extra": {
+    "detected_activity": "certified_diving",
+    "location": "island",
+    "detected_location": "island"
+   },
+   "verdict": {
+    "inventados": [
+     "detected_activity"
+    ],
+    "por_que": "El cliente menciona que reservaron un paquete de 5 inmersiones y que se quedarán en las Islas Rosario, por lo que la ubicación ('location' y 'detected_location' = 'island') está afirmada en sus mensajes. Sin embargo, nunca dice explícitamente que sean buceadores certificados; reservar un paquete de inmersiones no prueba por sí mismo que sean 'certified_diving', así que ese dato es una suposición/inventado."
+   }
+  },
+  {
+   "key": [
+    "equipaje-mochilas-y-almacenamiento",
+    2
+   ],
+   "extra": {
+    "detected_group_size": 2
+   },
+   "verdict": {
+    "inventados": [
+     "detected_group_size"
+    ],
+    "por_que": "El cliente no afirma explícitamente el tamaño del grupo. Usa 'we' y menciona 'two large hiking backpacks', pero eso no confirma que sean 2 personas (podría ser una sola persona con dos mochilas o un grupo de distinto tamaño). Por tanto el dato de tamaño de grupo (2) es una suposición/inventado."
+   }
+  },
+  {
+   "key": [
+    "familia-mixta-precio-descuento-refresher",
+    2
+   ],
+   "extra": {
+    "detected_group_allocation": {
+     "certified_diving": 3
+    }
+   },
+   "verdict": {
+    "inventados": [],
+    "por_que": "El usuario indica explícitamente \"2 diving sessions - All PADI certified for open water\" y lista 3 personas para buceo certificadas (2 adultos edades 42 y 19, 1 joven edad 17). Por tanto el dato detected_group_allocation.certified_diving = 3 está afirmado por los mensajes del cliente."
+   }
+  },
+  {
+   "key": [
+    "familia-mixta-precio-descuento-refresher",
+    3
+   ],
+   "extra": {
+    "is_certified": true
+   },
+   "verdict": {
+    "inventados": [],
+    "por_que": "El cliente escribió explícitamente “All PADI certified for open water” refiriéndose a los que hacen las inmersiones, por lo que el dato is_certified = true está afirmado en sus mensajes."
+   }
+  },
+  {
+   "key": [
+    "familia-mixta-precio-descuento-refresher",
+    4
+   ],
+   "extra": {
+    "detected_group_size": 6,
+    "detected_group_allocation": {
+     "certified_diving": 3,
+     "snorkel": 3
+    }
+   },
+   "verdict": {
+    "inventados": [],
+    "por_que": "El cliente explícitamente indica ser \"a family of 6\" (tamaño de grupo 6) y en sus mensajes detalla la asignación: 3 personas para buceo (2 adultos + 1 youth) y 3 para snorkel (1 adulto + 2 niños). Por tanto los datos detectados coinciden con lo afirmado por el cliente y no son inventados."
+   }
+  },
+  {
+   "key": [
+    "familia-mixta-precio-descuento-refresher",
+    6
+   ],
+   "extra": {
+    "last_dive_over_2_years": true
+   },
+   "verdict": {
+    "inventados": [
+     "last_dive_over_2_years"
+    ],
+    "por_que": "El cliente escribió \"It's been more than 1.5 years since last dive\", que confirma que pasó más de 1.5 años pero no afirma que hayan pasado más de 2 años. Por tanto guardar last_dive_over_2_years = true es una suposición/inventado, no algo explícitamente afirmado por el cliente."
+   }
+  },
+  {
+   "key": [
+    "grupo-mixto-precio-cop-total",
+    1
+   ],
+   "extra": {
+    "is_colombian": false
+   },
+   "verdict": {
+    "inventados": [
+     "is_colombian"
+    ],
+    "por_que": "El cliente no afirma su nacionalidad en ninguno de los mensajes. Decir que van a Cartagena o el uso de palabras mixtas no implica que sean colombianos; por tanto el dato 'is_colombian': false es una suposición/hipótesis no expresada por el cliente."
+   }
+  },
+  {
+   "key": [
+    "logistica-isla-fragata-regreso-otro-dia",
+    1
+   ],
+   "extra": {
+    "location": "island",
+    "detected_location": "island",
+    "hotel": "hotel fragata",
+    "detected_group_size": 2
+   },
+   "verdict": {
+    "inventados": [],
+    "por_que": "Todos los datos están explícitamente afirmados en los mensajes: 'staying in the Rosario islands' corrobora location y detected_location como 'island'; 'We will be staying at hotel fragata' afirma hotel 'hotel fragata'; 'My husband and I' indica un grupo de 2, por lo que detected_group_size = 2 está afirmado."
+   }
+  },
+  {
+   "key": [
+    "logistica-isla-fragata-regreso-otro-dia",
+    2
+   ],
+   "extra": {
+    "detected_activity": "certified_diving",
+    "is_colombian": false
+   },
+   "verdict": {
+    "inventados": [
+     "detected_activity",
+     "is_colombian"
+    ],
+    "por_que": "El cliente menciona una excursión de buceo y que están reservados para el 13-14 y que quieren ser trasladados a las Islas del Rosario, pero no afirma que sean buceadores certificados (solo habla de la excursión) —por lo tanto 'certified_diving' es una suposición. Tampoco menciona su nacionalidad en los mensajes, así que 'is_colombian' es inventado."
+   }
+  },
+  {
+   "key": [
+    "minicurso-precio-colombianos-origen-pendiente",
+    4
+   ],
+   "extra": {
+    "is_colombian": true
+   },
+   "verdict": {
+    "inventados": [],
+    "por_que": "El cliente escribió “somos de Bogotá”, lo cual afirma que son de Bogotá (Colombia). Por tanto la etiqueta is_colombian = true está respaldada por el mensaje y no es inventada."
+   }
+  },
+  {
+   "key": [
+    "moneda-precios-principiante-y-snorkel",
+    5
+   ],
+   "extra": {
+    "is_colombian": false
+   },
+   "verdict": {
+    "inventados": [
+     "is_colombian"
+    ],
+    "por_que": "El cliente no afirma ser colombiano en ninguno de sus mensajes. Solo preguntó si el precio está en dólares o pesos colombianos — eso es una consulta sobre la moneda, no una declaración de nacionalidad; por tanto el dato 'is_colombian': false está supuesto/inventado."
+   }
+  },
+  {
+   "key": [
+    "nacionalidad-ambigua",
+    1
+   ],
+   "extra": {
+    "is_colombian": false
+   },
+   "verdict": {
+    "inventados": [
+     "is_colombian"
+    ],
+    "por_que": "El usuario solo dice que nació en Colombia y pregunta si cuenta como colombiano — no afirma que no sea colombiano. El dato almacenado 'is_colombian': false es una suposición/invención, porque no hay en el mensaje una declaración explícita de no ser colombiano ni una confirmación de su nacionalidad actual."
+   }
+  },
+  {
+   "key": [
+    "open-water-precio-para-colombianos-corrige-mito",
+    1
+   ],
+   "extra": {
+    "detected_activity": "minicourse",
+    "is_colombian": true
+   },
+   "verdict": {
+    "inventados": [
+     "is_colombian"
+    ],
+    "por_que": "El cliente preguntó \"¿Cuál es el costo para colombianos?\" pero no afirmó explícitamente que ella misma sea colombiana; podría estar consultando por otra persona o por la tarifa en general. En cambio, sí expresó interés en un \"curso básico de buceo\", por lo que el campo detected_activity corresponde a lo afirmado en su mensaje."
+   }
+  },
+  {
+   "key": [
+    "paquete-5-buceos-cop-refresh-y-hoteles",
+    1
+   ],
+   "extra": {
+    "is_colombian": true
+   },
+   "verdict": {
+    "inventados": [
+     "is_colombian"
+    ],
+    "por_que": "El cliente pregunta \"¿Cuál es el costo para colombianos?\" pero no afirma explícitamente ser colombiano; podría estar consultando por otra persona o por interés general, así que asumir que es colombiano es una suposición."
+   }
+  },
+  {
+   "key": [
+    "paquete-5-buceos-cop-refresh-y-hoteles",
+    3
+   ],
+   "extra": {
+    "is_certified": true,
+    "last_dive_over_2_years": true
+   },
+   "verdict": {
+    "inventados": [
+     "last_dive_over_2_years"
+    ],
+    "por_que": "El cliente sí afirma que está certificado al decir que completó el curso básico el 3 de abril de 2025, por eso is_certified = true está respaldado. No mencionó en ningún momento que su última inmersión fuera hace más de 2 años, así que last_dive_over_2_years es una suposición/inventado por el sistema."
+   }
+  },
+  {
+   "key": [
+    "paquete-5-buceos-islas-residente-sin-recogida",
+    3
+   ],
+   "extra": {
+    "is_colombian": true
+   },
+   "verdict": {
+    "inventados": [
+     "is_colombian"
+    ],
+    "por_que": "El cliente pregunta si para residentes en Colombia (3 años) aplica el descuento, pero no afirma explícitamente que sea colombiano/nacional. La información guardada 'is_colombian': true se infiere o supone; no está confirmada en los mensajes."
+   }
+  },
+  {
+   "key": [
+    "paquete-5-buceos-islas-residente-sin-recogida",
+    4
+   ],
+   "extra": {
+    "detected_activity": "certified_diving",
+    "location": "island",
+    "detected_location": "island",
+    "last_dive_over_2_years": false
+   },
+   "verdict": {
+    "inventados": [
+     "detected_activity",
+     "location",
+     "detected_location",
+     "last_dive_over_2_years"
+    ],
+    "por_que": "Ninguno de esos datos fue afirmado explícitamente en los mensajes: el cliente solo pidió un plan de 5 buceos para fechas y para dos personas, preguntó por residencia en Colombia y mencionó Cartagena. No dijo ser buzo certificado ni que la ubicación sea una isla, ni indicó cuándo fue su último buceo."
+   }
+  },
+  {
+   "key": [
+    "paquete-5-buceos-precio-overnight-isla-grande-baru",
+    1
+   ],
+   "extra": {
+    "location": "island",
+    "detected_location": "island"
+   },
+   "verdict": {
+    "inventados": [],
+    "por_que": "El cliente menciona explícitamente \"rosario islands\" y pregunta cómo llegar desde Cartagena, por lo que la ubicación como \"island\" está afirmada por sus mensajes (incluye referencia a la isla y a la logística desde Cartagena)."
+   }
+  },
+  {
+   "key": [
+    "post-venta-confirmar-formularios-elearning",
+    2
+   ],
+   "extra": {
+    "detected_activity": "minicourse",
+    "is_certified": true,
+    "detected_group_size": 2,
+    "detected_group_allocation": {
+     "certified_diving": 1,
+     "minicourse": 1
+    }
+   },
+   "verdict": {
+    "inventados": [],
+    "por_que": "detected_activity: afirmado por el mensaje «he will try like, it's gonna be like his first dive» que indica un minicourse/try-dive. is_certified: afirmado por «I am an advanced» (la cliente declara que está certificada). detected_group_size: afirmado por la mención de dos personas («My name is ... and my boyfriend's name is ...»). detected_group_allocation: afirmado por el texto que indica una persona certificada (ella) y una haciendo su primera inmersión/prueba (él), por tanto 1 certified_diving y 1 minicourse."
+   }
+  },
+  {
+   "key": [
+    "precio-desde-islas-vs-cartagena",
+    2
+   ],
+   "extra": {
+    "is_certified": true
+   },
+   "verdict": {
+    "inventados": [],
+    "por_que": "El cliente escribe explícitamente \"Somos una pareja Advanced O.W.\", lo que afirma que están certificados (Advanced Open Water). No hay indicios de que ese dato sea una suposición."
+   }
+  },
+  {
+   "key": [
+    "precio-desde-islas-vs-cartagena",
+    4
+   ],
+   "extra": {
+    "is_colombian": false
+   },
+   "verdict": {
+    "inventados": [],
+    "por_que": "El cliente escribió \"Te contacto desde Argentina\", lo que afirma explícitamente su procedencia y por tanto apoya el dato is_colombian = false. No hay indicios de que sea una suposición: es una declaración directa del cliente."
+   }
+  },
+  {
+   "key": [
+    "precios-y-disponibilidad-con-negociacion",
+    1
+   ],
+   "extra": {
+    "detected_activity": "padi_advanced",
+    "is_certified": true
+   },
+   "verdict": {
+    "inventados": [],
+    "por_que": "El cliente escribe explícitamente “soy buza advanced”, lo que afirma tanto la certificación avanzada (padi_advanced) como que está certificada (is_certified=true). No hay datos añadidos por deducción o suposición."
+   }
+  },
+  {
+   "key": [
+    "premisa-falsa-lunes",
+    3
+   ],
+   "extra": {
+    "detected_activity": "certified_diving"
+   },
+   "verdict": {
+    "inventados": [
+     "detected_activity"
+    ],
+    "por_que": "El cliente solo pregunta por días disponibles y luego confirma una reserva para el martes; no menciona en ningún momento ser buzo certificado ni usar palabras que indiquen 'certified_diving'. Por tanto ese dato fue inferido/supuesto por el sistema y no afirmado por el cliente."
+   }
+  },
+  {
+   "key": [
+    "principiante-hora-lugar-y-precio",
+    4
+   ],
+   "extra": {
+    "location": "cartagena",
+    "detected_location": "cartagena"
+   },
+   "verdict": {
+    "inventados": [
+     "location",
+     "detected_location"
+    ],
+    "por_que": "El cliente no menciona en ninguno de sus mensajes la ubicación (ni 'Cartagena' ni otra). Solicita reservar para mañana, indica nivel (principiante) y pregunta hora, lugar y precio, pero no afirma la localización; por tanto esos campos proceden de detección/suposición del sistema, no de una afirmación del cliente."
+   }
+  },
+  {
+   "key": [
+    "recogida-ubuntu-comida-y-certificacion",
+    3
+   ],
+   "extra": {
+    "detected_activity": "padi_open_water",
+    "is_certified": false
+   },
+   "verdict": {
+    "inventados": [
+     "detected_activity",
+     "is_certified"
+    ],
+    "por_que": "El cliente dijo que reservó una 'beginner mini diving experience' y completó el 'online course', pero no afirmó en ningún momento que la actividad sea específicamente 'padi_open_water' (podría ser una experiencia de iniciación distinta). Tampoco declaró explícitamente que no esté certificado; señaló haber completado el curso online y preguntó sobre obtener un certificado para su hijo, por lo que el campo 'is_certified': false es una suposición/inferencia, no una afirmación directa del cliente."
+   }
+  },
+  {
+   "key": [
+    "recogida-ubuntu-comida-y-certificacion",
+    4
+   ],
+   "extra": {
+    "location": "cartagena",
+    "detected_location": "cartagena"
+   },
+   "verdict": {
+    "inventados": [
+     "location",
+     "detected_location"
+    ],
+    "por_que": "El cliente no menciona en ninguno de sus mensajes la ciudad 'Cartagena'. Solo indica que se alojan en el 'Ubuntu Hotel' y pregunta por la ubicación de recogida, comidas en la instalación, y certificado PADI, y que salen mañana antes del mediodía. Por tanto los campos 'location' y 'detected_location' no están afirmados por el cliente y parecen supuestos/derivados externamente."
+   }
+  },
+  {
+   "key": [
+    "referral-mas-refresher-hotel-y-domingo-pascua",
+    1
+   ],
+   "extra": {
+    "detected_group_size": 2
+   },
+   "verdict": {
+    "inventados": [],
+    "por_que": "El cliente escribió explícitamente '2 persons', por lo que el tamaño de grupo de 2 está afirmado en sus mensajes."
+   }
+  },
+  {
+   "key": [
+    "refresher-que-completar-antes",
+    2
+   ],
+   "extra": {
+    "detected_activity": "certified_diving",
+    "last_dive_over_2_years": true
+   },
+   "verdict": {
+    "inventados": [
+     "detected_activity",
+     "last_dive_over_2_years"
+    ],
+    "por_que": "El cliente solo escribió que llega mañana y que \"va a necesitar un pequeño repaso\". Eso sugiere que bucea y que quiere un refresco, pero no afirma explícitamente que esté certificado (no dice \"soy certificado\") ni que su última inmersión fuera hace más de 2 años. Ambos datos son deducciones/hipótesis a partir del mensaje, no declaraciones textuales del cliente."
+   }
+  },
+  {
+   "key": [
+    "regateo-grupo-6",
+    4
+   ],
+   "extra": {
+    "is_certified": true
+   },
+   "verdict": {
+    "inventados": [],
+    "por_que": "El dato is_certified está AFIRMADO: en el mensaje 4 el cliente dice \"somos 6 personas, todos certificados\", así que no es inventado ni hipotético."
+   }
+  },
+  {
+   "key": [
+    "regreso-otro-dia-paquete-5",
+    1
+   ],
+   "extra": {
+    "detected_activity": "certified_diving",
+    "location": "cartagena",
+    "detected_location": "cartagena",
+    "detected_group_size": 2,
+    "detected_group_allocation": {
+     "certified_diving": 2
+    },
+    "is_colombian": false
+   },
+   "verdict": {
+    "inventados": [
+     "is_colombian"
+    ],
+    "por_que": "El usuario menciona paquete de 5 buceos para 2 personas y traslado saliendo desde Cartagena (afirma actividad 'certified_diving', ubicación 'cartagena' y tamaño de grupo 2), pero en sus mensajes no indica su nacionalidad, por lo que 'is_colombian': false es una suposición/inventado."
+   }
+  },
+  {
+   "key": [
+    "reserva-colombianos-cop",
+    1
+   ],
+   "extra": {
+    "is_certified": false
+   },
+   "verdict": {
+    "inventados": [
+     "is_certified"
+    ],
+    "por_que": "El cliente solo dijo que quiere hacer snorkel, que son 2 y que son colombianos; no mencionó su certificación de buceo. Marcar is_certified como false es una suposición/posible inferencia (snorkel no requiere certificación de buceo), pero no fue afirmado explícitamente por el cliente."
+   }
+  },
+  {
+   "key": [
+    "reserva-paquete-5-buceos-solicita",
+    1
+   ],
+   "extra": {
+    "detected_activity": "certified_diving"
+   },
+   "verdict": {
+    "inventados": [
+     "detected_activity"
+    ],
+    "por_que": "El cliente solo pide una reserva para el paquete de 5 buceos; no menciona en ningún momento ser buceador certificado ni da información sobre su nivel. Por tanto la etiqueta \"certified_diving\" no está afirmada por el mensaje y parece una suposición."
+   }
+  },
+  {
+   "key": [
+    "snorkel-precio-residente-y-pago-link",
+    2
+   ],
+   "extra": {
+    "detected_activity": "snorkel",
+    "detected_group_size": 2
+   },
+   "verdict": {
+    "inventados": [],
+    "por_que": "El usuario solicita explícitamente \"snorkeling\" y menciona \"para dos personas\" en su primer mensaje, por lo que tanto la actividad detectada (snorkel) como el tamaño del grupo (2) están afirmados por el cliente. No hay datos inventados."
+   }
+  }
+ ]
+}

@@ -136,9 +136,10 @@ services:
       # calidad 86,4 -> 86,5 %, 0 regresiones por el acuse (HISTORY 0.29.17) -> se QUEDA ENCENDIDO.
       # Revert = quitar esta linea + redeploy.
       ACK_IN_PARALLEL: "true"
-      # u3-4 (24-sep): contesta y sigue (ver docs/robustness/u3-4-diseno.md).
-      # ENCENDIDO para el lado B del A/B. Revert = quitar esta linea + redeploy.
-      ANSWER_AND_CONTINUE: "true"
+      # u3-4 (24-sep): contesta y sigue (ver docs/robustness/u3-4-diseno.md). A/B escalon 1:
+      # +2 dialogos core pero 3 regresiones con causa -> NO promocionado, APAGADO hasta los
+      # dos arreglos del doc. Para la siguiente ronda B: poner "true" + redeploy.
+      ANSWER_AND_CONTINUE: "false"
       # Refactor multi-agente (docs/multi-agent-refactor-plan.md) — validación en
       # PRE antes del corte del legacy (Fase 5.2). STAGE B (ahora): el GRAFO sirve
       # de verdad (agent_arch on) — router → 5 nodos reales + subgrafo booking. La
