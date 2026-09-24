@@ -22,7 +22,6 @@ import httpx
 from scripts import battery_activity_choice as bac
 from scripts import battery_router_signals as brs
 from scripts import jev_router_eval as jre
-from src.agents import escalation
 
 GOLDEN = Path("docs/robustness/golden-set/golden-dialogues.json")
 
@@ -48,6 +47,7 @@ async def main():
     key = jre._key() if hasattr(jre, "_key") else None
     if not key:
         import os
+
         from dotenv import dotenv_values
         key = (dotenv_values(os.environ.get("ENV_FILE", ".env")).get("OPENROUTER_API_KEY") or "").strip()
     bac._restore()

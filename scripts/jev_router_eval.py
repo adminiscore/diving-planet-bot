@@ -140,8 +140,9 @@ async def main():
     threshold = float(args[1]) if len(args) > 1 else 0.5
     key = (settings.model_extra or {}).get("openrouter_api_key") or ""
     if not key:
-        from dotenv import dotenv_values
         import os
+
+        from dotenv import dotenv_values
         key = (dotenv_values(os.environ.get("ENV_FILE", ".env")).get("OPENROUTER_API_KEY") or "").strip()
     if not key:
         sys.exit("Falta OPENROUTER_API_KEY en el .env")
