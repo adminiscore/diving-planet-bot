@@ -35,8 +35,10 @@ from __future__ import annotations
 
 import contextlib
 import contextvars
+import json
 import logging
 import os
+import time
 from collections.abc import AsyncIterator
 from typing import Any
 
@@ -122,10 +124,126 @@ def traced_openai_client(s: Any):
         return _LangfuseAsyncOpenAI(
             api_key=s.openai_api_key,
             timeout=getattr(s, "llm_timeout_seconds", 30.0),
+            http_client=metered_http_client(),  # medición propia (TURN_METRICS)
         )
     except Exception as exc:  # noqa: BLE001
         logger.warning("[LANGFUSE] no se pudo envolver el cliente OpenAI: %s", exc)
         return None
+
+
+# ── Medición propia, sin Langfuse (2026-09-24) ─────────────────────────────────────
+# Se superó el plan gratuito de Langfuse (reinicio el 16-oct). Cada turno escribe en el
+# log UNA línea `[TURN_METRICS] {json}` con su resumen, las llamadas al LLM (cuántas,
+# cuánto tardan, modelo) y el tiempo de cada nodo del grafo; `scripts/turn_metrics.py`
+# la lee por SSH y saca las mismas cifras que las fotos de Langfuse. Sin texto del
+# cliente ni de la respuesta: solo etiquetas, contadores y tiempos. Nunca rompe el turno.
+TURN_METRICS_TAG = "[TURN_METRICS]"
+_METERED_HTTP: dict[int, Any] = {}
+
+
+def record_llm_call(kind: str, seconds: float, model: str | None = None) -> None:
+    """Apunta una llamada al LLM (`chat` o `embedding`) en el turno en curso."""
+    current = _TURN_FACTS.get()
+    if current is not None:
+        current.setdefault("_llm", []).append({"kind": kind, "s": round(seconds, 4), "model": model})
+
+
+async def _on_request(request) -> None:
+    request.extensions["coral_t0"] = time.perf_counter()
+
+
+async def _on_response(response) -> None:
+    try:
+        request = response.request
+        t0 = request.extensions.get("coral_t0")
+        path = request.url.path
+        kind = "chat" if path.endswith("/chat/completions") else "embedding" if path.endswith("/embeddings") else None
+        if t0 is None or kind is None:
+            return
+        model = None
+        try:
+            model = json.loads(request.content or b"{}").get("model")
+        except Exception:  # noqa: BLE001
+            pass
+        record_llm_call(kind, time.perf_counter() - t0, model)
+    except Exception:  # noqa: BLE001 — medir nunca rompe una llamada
+        pass
+
+
+def metered_http_client():
+    """Cliente HTTP para los clientes OpenAI que cronometra cada llamada al LLM. Uno por
+    bucle de eventos (un cliente httpx no se comparte entre bucles)."""
+    import asyncio
+
+    from openai import DefaultAsyncHttpxClient
+
+    try:
+        key = id(asyncio.get_running_loop())
+    except RuntimeError:
+        key = 0
+    client = _METERED_HTTP.get(key)
+    if client is None or client.is_closed:
+        client = DefaultAsyncHttpxClient(event_hooks={"request": [_on_request], "response": [_on_response]})
+        _METERED_HTTP[key] = client
+    return client
+
+
+def node_timer(facts: dict):
+    """Callback de LangChain que cronometra los nodos del grafo en `facts` (mismo criterio
+    que la foto de Langfuse: se ignoran `LangGraph` y las funciones de ruta `_...`)."""
+    from langchain_core.callbacks import BaseCallbackHandler
+
+    class _NodeTimer(BaseCallbackHandler):
+        run_inline = True  # en el bucle del turno, no en un hilo
+
+        def __init__(self):
+            self._open: dict = {}
+
+        def on_chain_start(self, serialized, inputs, *, run_id, **kwargs):
+            name = kwargs.get("name") or (serialized or {}).get("name") or ""
+            if name and name != "LangGraph" and not name.startswith("_"):
+                self._open[run_id] = (name, time.perf_counter())
+
+        def _close(self, run_id):
+            started = self._open.pop(run_id, None)
+            if started:
+                name, t0 = started
+                nodes = facts.setdefault("_nodes", {})
+                nodes[name] = round(nodes.get(name, 0.0) + time.perf_counter() - t0, 4)
+
+        def on_chain_end(self, outputs, *, run_id, **kwargs):
+            self._close(run_id)
+
+        def on_chain_error(self, error, *, run_id, **kwargs):
+            self._close(run_id)
+
+    return _NodeTimer()
+
+
+def current_turn_facts() -> dict | None:
+    return _TURN_FACTS.get()
+
+
+def turn_metrics_line(conversation_id: str, facts: dict, started_at: str, seconds: float) -> str:
+    """La línea `[TURN_METRICS]` del turno: el resumen (sin texto) + llamadas + nodos."""
+    calls = facts.get("_llm") or []
+    chats = [c for c in calls if c["kind"] == "chat"]
+    models: dict[str, int] = {}
+    for c in chats:
+        if c.get("model"):
+            models[c["model"]] = models.get(c["model"], 0) + 1
+    payload = {
+        "conv": str(conversation_id),
+        "start": started_at,
+        "latency": round(seconds, 3),
+        **turn_summary(facts, facts.get("reply")),
+        "llm_calls": len(chats),
+        "embeddings": len(calls) - len(chats),
+        "llm_seconds": round(sum(c["s"] for c in chats), 3),
+        "models": models,
+        "nodes": facts.get("_nodes") or {},
+    }
+    return f"{TURN_METRICS_TAG} {json.dumps(payload, ensure_ascii=False, default=str)}"
 
 
 def note_turn(**facts: Any) -> None:
@@ -176,6 +294,8 @@ async def turn_trace(s: Any, conversation_id: str, message: str) -> AsyncIterato
     falla, el turno sigue sin trazar: la observabilidad nunca rompe el bot."""
     facts: dict = {}
     facts_token = _TURN_FACTS.set(facts)
+    t0 = time.perf_counter()
+    started_at = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
     span_cm = span = otel_context = otel_token = None
     if langfuse_enabled(s):
         try:
@@ -213,6 +333,10 @@ async def turn_trace(s: Any, conversation_id: str, message: str) -> AsyncIterato
                 otel_context.detach(otel_token)
             except Exception:  # noqa: BLE001 — un detach fuera de orden no debe romper el turno
                 pass
+        try:  # medición propia: una línea por turno, con o sin Langfuse
+            logger.info(turn_metrics_line(conversation_id, facts, started_at, time.perf_counter() - t0))
+        except Exception as exc:  # noqa: BLE001
+            logger.warning("[TURN_METRICS] no se pudo escribir: %s", exc)
         _TURN_FACTS.reset(facts_token)
 
 

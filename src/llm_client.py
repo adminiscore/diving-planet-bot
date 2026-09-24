@@ -23,7 +23,7 @@ from typing import TypeVar
 from openai import AsyncOpenAI as _RealAsyncOpenAI
 
 from src.config import settings
-from src.observability import traced_openai_client
+from src.observability import metered_http_client, traced_openai_client
 
 logger = logging.getLogger("uvicorn.error")
 
@@ -45,7 +45,9 @@ def _with_timeout(client: _C) -> _C:
     if not isinstance(client, _RealAsyncOpenAI):
         return client
     try:
-        return client.with_options(timeout=settings.llm_timeout_seconds)
+        # Medición propia (TURN_METRICS, 2026-09-24): el cliente HTTP cronometra cada
+        # llamada al LLM del turno. Mismo criterio que el timeout: solo clientes reales.
+        return client.with_options(timeout=settings.llm_timeout_seconds, http_client=metered_http_client())
     except Exception as exc:  # noqa: BLE001 — nunca romper el turno por el timeout
         logger.warning("[LLM] no se pudo fijar el timeout en el cliente: %s", exc)
         return client

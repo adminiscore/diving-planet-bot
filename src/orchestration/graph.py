@@ -163,10 +163,15 @@ async def run_turn_via_graph(conv_state, message: str) -> str:
     `CallbackHandler` para trazar la corrida del grafo (nodos + latencia). Off →
     `config=None`, sin coste (ver `src/observability.py`)."""
     from src.config import settings
-    from src.observability import langfuse_callback_handler
+    from src.observability import current_turn_facts, langfuse_callback_handler, node_timer
 
     handler = langfuse_callback_handler(settings)
-    config = {"callbacks": [handler]} if handler is not None else None
+    callbacks = [handler] if handler is not None else []
+    # Medición propia (TURN_METRICS): tiempo de cada nodo, con o sin Langfuse.
+    facts = current_turn_facts()
+    if facts is not None:
+        callbacks.append(node_timer(facts))
+    config = {"callbacks": callbacks} if callbacks else None
     result = await get_compiled_graph().ainvoke(
         {"conv_state": conv_state, "message": message}, config=config
     )
