@@ -132,7 +132,9 @@ services:
       # Revert = quitar esta linea + redeploy.
       JEV_ROUTER_ENABLED: "true"
       # u3-1 paso 3 (24-sep): el acuse calido en paralelo (ver docs/robustness/u3-1-paso3-diseno.md).
-      # ENCENDIDO para el lado B del A/B. Revert = quitar esta linea + redeploy.
+      # A/B escalon 1 (misma franja): turnos de reserva p50 2,61 -> 2,07 s y media 2,90 -> 2,14 s,
+      # calidad 86,4 -> 86,5 %, 0 regresiones por el acuse (HISTORY 0.29.17) -> se QUEDA ENCENDIDO.
+      # Revert = quitar esta linea + redeploy.
       ACK_IN_PARALLEL: "true"
       # Refactor multi-agente (docs/multi-agent-refactor-plan.md) — validación en
       # PRE antes del corte del legacy (Fase 5.2). STAGE B (ahora): el GRAFO sirve

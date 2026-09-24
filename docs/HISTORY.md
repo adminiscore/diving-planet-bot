@@ -1,6 +1,11 @@
 History
 =======
 
+0.29.17 - (2026-09-24, noche)
+----------------------
+* **U3 · u3-1 paso 3: el acuse cálido en paralelo, ENCENDIDO en PRE** (`ACK_IN_PARALLEL`). El diseño cambió al medir: la extracción ya era casi siempre UNA llamada (fusionarla ahorraba poco) y la cadena lenta era extracción (0,85 s) → acuse (1,0 s) en el 48 % de los turnos. El acuse se lanza al empezar el turno con una foto de los datos y se espera en el cierre; con una pregunta de sí/no pendiente (seguridad, certificación, nacionalidad, refresher) sigue en serie, porque su resumen necesita el valor recién extraído (`docs/robustness/u3-1-paso3-diseno.md`).
+* **Primer A/B con el protocolo nuevo (escalón 1: 1 + 1 rondas, misma franja, latencia con `turn_metrics`, juez con cache):** paso de cierre p50 0,97 → 0,002 s; **turnos de reserva p50 2,61 → 2,07 s (−21 %) y media 2,90 → 2,14 s (−26 %)**; turno completo p50 3,46 → 2,53 s; cliente media 4,44 → 3,91 s. Calidad 86,4 → 86,5 %; los 3 criterios que fallan solo en B no vienen del acuse (primer turno sin acuse y un camino distinto decidido antes). Los acuses de sí/no salen idénticos; en el resto, equivalentes (alguno menos concreto, ninguno erróneo). Coste del A/B: juez 0,36 + 0,32 $ (cache: 63 y 76 criterios reutilizados).
+
 0.29.16 - (2026-09-24, noche)
 ----------------------
 * **Medición propia sin Langfuse** (plan gratuito superado, reinicio el 16-oct; se decidió no pagar): cada turno escribe `[TURN_METRICS]` en el log de PRE (sin texto del cliente) con el tiempo del turno, las llamadas al LLM, el tiempo de cada paso del grafo y el router usado; `scripts/turn_metrics.py` saca la misma foto que Langfuse. Comprobado en PRE: 12/12 turnos, el paso del router con Jev tarda 0,42 s (antes ~1,4 s).
