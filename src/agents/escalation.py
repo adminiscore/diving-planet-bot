@@ -20,6 +20,7 @@ Actions:
 import json
 import logging
 import re
+import time
 
 import httpx
 import structlog
@@ -148,6 +149,18 @@ async def detect_routing_signals(
     para que el caller siga con el comportamiento anterior (las listas)."""
     if not message or not message.strip():
         return {}
+    # U3 (u3-1): Jev contesta las mismas 9 señales en ~0,27 s. Si está apagado, no hay
+    # clave o falla, sigue el router LLM de siempre (y el turno lo apunta en su resumen).
+    if settings.jev_router_enabled and client is None:
+        from src.agents.jev_router import detect_routing_signals_jev
+        from src.observability import note_turn
+
+        t0 = time.perf_counter()
+        jev = await detect_routing_signals_jev(message, lang=lang)
+        note_turn(router="jev" if jev is not None else "llm_fallback",
+                  router_ms=round((time.perf_counter() - t0) * 1000))
+        if jev is not None:
+            return jev
     try:
         client = client or trace_openai(AsyncOpenAI(api_key=settings.openai_api_key))
         response = await client.chat.completions.create(

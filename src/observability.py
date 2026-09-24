@@ -159,6 +159,9 @@ def turn_summary(facts: dict, reply: str | None) -> dict:
         "escalated": bool(facts.get("escalated")),
         "fallback": bool(facts.get("fallback")),
         "error": facts.get("error"),
+        # U3 (u3-1): "jev" o "llm_fallback" cuando Jev está encendido; None = router LLM de siempre.
+        "router": facts.get("router"),
+        "router_ms": facts.get("router_ms"),
     }
 
 

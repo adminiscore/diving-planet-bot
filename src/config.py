@@ -85,6 +85,20 @@ class Settings(BaseSettings):
     # N mensajes, asi que casi nunca cuesta nada.
     notes_in_parallel: bool = False
 
+    # U3 (u3-1, paso 1): las 9 señales del router con Jev (TypeSafe, vía el Decisions API
+    # de OpenRouter) en vez de con el LLM. Evaluado en l2-4 (2026-09-24): mejor que el
+    # router LLM en la batería (32/37 frente a 30/37, seguridad 11/11 frente a 8/11) y
+    # ~0,27 s frente a ~1,3 s. Decisión de Gadea: Jev para U3 (en PRE sí; la privacidad
+    # para PRO se decide antes). APAGADO por defecto; sin clave o si Jev falla o tarda
+    # más de `jev_timeout_seconds`, se usa el router LLM de siempre. Ver
+    # `src/agents/jev_router.py`.
+    jev_router_enabled: bool = False
+    openrouter_api_key: str = ""
+    # Versión fija: si Jev cambia de versión, el comportamiento no cambia sin medirlo.
+    jev_model: str = "typesafe/jev-1.13"
+    # p95 medido ~0,37 s; en l2-4 1 de ~600 llamadas tardó >30 s (API en alpha).
+    jev_timeout_seconds: float = 2.0
+
     # --- Observabilidad: Langfuse (sustituye a LangSmith, cuota Developer
     # agotada; ver docs/robustness/progress-log.md "Tarea 8"). Sin claves, el
     # tracing queda apagado y `langfuse` ni se importa (3.14-safe). Claves por
