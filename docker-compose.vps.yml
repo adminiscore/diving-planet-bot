@@ -134,8 +134,9 @@ services:
       # real de calidad (ver HISTORY 0.29.13). No encender sin arreglar antes la
       # carrera con state.history.
       # 24-sep: carrera arreglada (la foto del historial se toma en _setup_phase,
-      # antes de lanzar la tarea). ENCENDIDA para repetir el lado B del A/B; se
-      # compara con las rondas A del 23-sep. Revert = comentar esta linea.
+      # antes de lanzar la tarea). A/B: 2 rondas B nuevas contra las A del 23-sep,
+      # 0 regresiones atribuibles (HISTORY 0.29.14) -> se QUEDA ENCENDIDA.
+      # Revert = comentar esta linea.
       NOTES_IN_PARALLEL: "true"
       # Refactor multi-agente (docs/multi-agent-refactor-plan.md) — validación en
       # PRE antes del corte del legacy (Fase 5.2). STAGE B (ahora): el GRAFO sirve
