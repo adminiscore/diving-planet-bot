@@ -3145,7 +3145,61 @@ async def _setup_phase(
         )
     else:
         await _maybe_capture_notes(state, message)
+    if not first_turn:
+        _maybe_launch_ack(state, message)
     return greeting, first_turn
+
+
+# u3-1 paso 3 (24-sep): el acuse cálido en PARALELO. Medido en la ronda A2: en el 48 % de
+# los turnos iban en serie extracción (p50 0,85 s) -> acuse (p50 1,0 s), y el acuse no
+# necesita esperar: recibe el mensaje (que ya trae lo que el cliente acaba de decir) y un
+# resumen de la reserva. EXCEPCIÓN: si la pregunta pendiente es una de sí/no de
+# `_JUST_ANSWERED_PHRASE`, el resumen necesita el valor RECIÉN extraído (antes de extraer,
+# un "sí" a "¿eres colombiano?" se leería como el valor viejo) -> ahí sigue en serie, como hoy.
+def _maybe_launch_ack(state: ConversationState, message: str) -> None:
+    if not settings.ack_in_parallel:
+        return
+    pending = state.core_pending_slot
+    if pending in _JUST_ANSWERED_PHRASE:
+        return
+    # La foto se toma AQUÍ, antes de lanzar la tarea (lección de la carrera de l1-4).
+    snapshot = {
+        "summary": _booking_context_summary(state, just_answered_slot=pending),
+        "client_name": state.client_name,
+        "lang": state.language,
+    }
+    state._pending_ack = {
+        "prev_pending": pending,
+        "task": asyncio.create_task(compose_acknowledgement(
+            message, state_summary=snapshot["summary"], client_name=snapshot["client_name"], lang=snapshot["lang"],
+        )),
+    }
+
+
+async def _take_parallel_ack(state: ConversationState, prev_pending) -> str | None:
+    """El acuse lanzado en `_setup_phase`, si sirve para este cierre; `None` = calcularlo
+    en serie como siempre (no había, o la pregunta pendiente cambió por el camino)."""
+    pending = getattr(state, "_pending_ack", None)
+    state._pending_ack = None
+    if not pending:
+        return None
+    task = pending["task"]
+    if pending["prev_pending"] != prev_pending:
+        task.cancel()
+        return None
+    try:
+        return await task
+    except Exception as exc:  # noqa: BLE001 — un acuse nunca tumba el turno
+        logger.warning(f"[CORE][ACK][PARALELO] falló, sin acuse: {exc}")
+        return ""
+
+
+def cancel_pending_ack(state: ConversationState) -> None:
+    """Red de seguridad al cerrar el turno: un acuse lanzado que nadie usó se cancela."""
+    pending = getattr(state, "_pending_ack", None)
+    state._pending_ack = None
+    if pending and not pending["task"].done():
+        pending["task"].cancel()
 
 
 async def _availability_phase(
@@ -4134,12 +4188,15 @@ async def _slotfill_close_phase(
     # LLM; el acuse solo pone el envoltorio. Si falla o se salta las reglas -> "".
     ack = ""
     if not first_turn:
-        ack = await compose_acknowledgement(
-            message,
-            state_summary=_booking_context_summary(state, just_answered_slot=prev_pending),
-            client_name=state.client_name,
-            lang=state.language,
-        )
+        # u3-1 paso 3: el acuse que se lanzó en paralelo en `_setup_phase`, si sirve.
+        ack = await _take_parallel_ack(state, prev_pending)
+        if ack is None:
+            ack = await compose_acknowledgement(
+                message,
+                state_summary=_booking_context_summary(state, just_answered_slot=prev_pending),
+                client_name=state.client_name,
+                lang=state.language,
+            )
         if ack:
             ack = ack.rstrip() + "\n\n"
     response = greeting + ack + response

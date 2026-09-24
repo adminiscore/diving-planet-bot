@@ -2803,8 +2803,10 @@ async def route_message(state: ConversationState, message: str) -> str:
         # que `_setup_phase` lanzó en paralelo puede seguir viva; hay que esperarla
         # ANTES de que el canal guarde el estado o se perdería la nota. Es no-op
         # cuando el flag está apagado o cuando ya se esperó en el RAG.
-        from src.agents.conversational_core import await_pending_notes
+        from src.agents.conversational_core import await_pending_notes, cancel_pending_ack
         await await_pending_notes(state)
+        # u3-1 paso 3: un acuse lanzado en paralelo que el turno no usó se cancela.
+        cancel_pending_ack(state)
         await conversation_summarizer.maybe_update_summary(state)
         turn.update(
             reply=response,

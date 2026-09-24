@@ -99,6 +99,13 @@ class Settings(BaseSettings):
     # p95 medido ~0,37 s; en l2-4 1 de ~600 llamadas tardó >30 s (API en alpha).
     jev_timeout_seconds: float = 2.0
 
+    # u3-1 paso 3 (24-sep): el acuse cálido (`compose_acknowledgement`) se lanza en
+    # paralelo al empezar el turno y se espera en el cierre, en vez de ir DESPUÉS de la
+    # extracción (en el 48 % de los turnos iban en serie: 0,85 s + 1,0 s). Si la pregunta
+    # pendiente es de sí/no (seguridad, certificación, nacionalidad, refresher), sigue en
+    # serie: su resumen necesita el valor recién extraído. APAGADO por defecto.
+    ack_in_parallel: bool = False
+
     # --- Observabilidad: Langfuse (sustituye a LangSmith, cuota Developer
     # agotada; ver docs/robustness/progress-log.md "Tarea 8"). Sin claves, el
     # tracing queda apagado y `langfuse` ni se importa (3.14-safe). Claves por
