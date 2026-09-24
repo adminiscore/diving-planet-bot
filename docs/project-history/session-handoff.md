@@ -13,6 +13,34 @@ Read this file before changing code in the Diving Planet Bot. For a quick versio
 
 > **📏 LEER ANTES DE MEDIR — decisiones del 24-sep-2026 (Gadea):** (1) latencia y llamadas con nuestros logs `[TURN_METRICS]` + `scripts/turn_metrics.py`, no con Langfuse (plan gratuito superado, reinicio 16-oct); (2) pruebas A/B por escalones, juzgando solo los diálogos que cambian. Todo en `docs/robustness/protocolo-medicion.md`.
 
+### 🔧 2026-09-25 (Gonzalo) — u3-4: los 2 arreglos HECHOS. Falta el escalón 0 (bloqueado por una clave)
+
+Ver el detalle en `docs/robustness/u3-4-diseno.md` (§ "Arreglos 1 y 2"). Resumen y lo que hace falta:
+
+- **Arreglo 1 hecho**: si el RAG contesta su fallback, la respuesta va SOLA (no se le pega detrás la
+  pregunta de la reserva). `core_pending_slot` se mantiene, así que la reserva sigue el turno
+  siguiente. De paso, `FALLBACK_ES in x or FALLBACK_EN in x` estaba duplicado en núcleo y supervisor:
+  ahora hay una fuente, `rag_agent.is_fallback_answer()`.
+- **Arreglo 2 hecho, con dos bloqueos que el enunciado no contemplaba** (los dos resueltos, detallados
+  en el doc): (1) `verify_fields` devolvía solo discrepancias, así que **confirmar y abstenerse eran
+  indistinguibles** y la hipótesis sobrevivía → nuevo `as_answers=True` que devuelve la respuesta del
+  LLM tal cual (contrato viejo intacto por defecto; fallo = `None`, no `{}`, para no tirar datos por
+  un corte de red); (2) **`location`, `is_certified` e `is_colombian` tienen el veto apagado**, así que
+  verificar no habría corregido nada → en el turno con pregunta se aplica sin mirar esas banderas,
+  porque gobiernan otra pregunta y este camino solo corre con el flag encendido.
+- **Tests 24/24** (16 de Gadea + 8 nuevos, dos de ellos controles deliberados). Los 2 fallos de
+  `test_conversational_core` son **preexistentes**, verificados en un worktree en `d3dc51e`.
+- **El flag sigue apagado** en el código y en el compose: esto no cambia nada en PRE.
+
+**🔴 Lo que falta y por qué no lo hice:** el escalón 0 (`replay_golden_local`) fuerza
+`JEV_ROUTER_ENABLED=true` y **no hay `OPENROUTER_API_KEY` en esta máquina** (tampoco `.env.dev`, que
+el script fija a fuego; eso se resuelve copiando `.env`). Sin Jev, la detección de pregunta de u3-4
+(`asks_question ≥ 0,7`) no se ejercita, así que la medida no sería comparable justo en el mecanismo
+que decide qué turnos entran. **Hace falta la clave de OpenRouter**, o decidir explícitamente medir
+sin Jev (mediría qué datos guarda cada versión —el grueso— pero no la detección).
+
+**Después del escalón 0**: ronda B en PRE (paso 4 del banner de abajo, sin cambios) y luego u3-5.
+
 ### ▶️ 2026-09-24 noche (Gadea → Álvaro / Gonzalo) — u3-4 "contesta y sigue": A/B hecho, faltan 2 arreglos
 
 **Para quien lo coja: empieza leyendo `docs/robustness/u3-4-diseno.md` (todo está ahí) y

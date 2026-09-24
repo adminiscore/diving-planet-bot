@@ -141,6 +141,20 @@ FALLBACK_EN = (
 )
 
 
+def is_fallback_answer(text: str | None) -> bool:
+    """¿Esta respuesta es el "no lo tengo a la mano" del RAG?
+
+    Una fuente para los sitios que lo preguntan: la comparación desde el catálogo
+    cuando el KB no cubre el par (`conversational_core._routing_phase`), la métrica
+    de negocio de m0-5 (`supervisor`, % de turnos con fallback) y u3-4, que no debe
+    pegar la pregunta de la reserva detrás de un "no lo sé".
+
+    Se busca como subcadena, no por igualdad, porque el fallback puede llegar
+    concatenado (saludo delante, acuse detrás).
+    """
+    return bool(text) and (FALLBACK_ES in text or FALLBACK_EN in text)
+
+
 def build_system_prompt(lang: str, query: str | None = None) -> str:
     """Compose the full system prompt: intro + dynamic tone + body.
 

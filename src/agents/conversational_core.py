@@ -1991,8 +1991,10 @@ async def _understand(state: ConversationState, message: str, *, answered_pendin
     prev_refresher = state.refresher_interested
 
     intent = _detector.detect(message, state)
+    # u3-4: turno con pregunta (solo con el flag: nadie lanza la respuesta sin él).
+    question_turn_fields = None
     if _has_pending_answer(state):
-        _leave_question_fields_to_llm(intent)
+        question_turn_fields = _question_turn_fields(intent)
         _named_certified_product_confirms_certification(state, message)
     state.mixed_nationality_notice = False
     # Un dato del mensaje que contradice lo guardado (tarea 7b): ver `_regex_contradictions`.
@@ -2025,6 +2027,16 @@ async def _understand(state: ConversationState, message: str, *, answered_pendin
     # que siguen en None/[]. Por eso `gaps` se puede calcular antes del veto
     # sin que cambie respecto a calcularlo despues.
     veto_fields = supervisor._eligible_veto_fields(message, intent, state)
+    if question_turn_fields is not None:
+        # u3-4 arreglo 2: en un turno con pregunta se verifica TODO lo que el regex leyó,
+        # saltándose el trigger propio de cada campo. Esos triggers («¿hay ambigüedad
+        # real?») están calibrados para un mensaje que AFIRMA; aquí el riesgo es otro y
+        # está en el propio mensaje: una pregunta convierte cualquier palabra suelta en
+        # hipótesis. Fuera del turno con pregunta no cambia nada, así que el hundimiento
+        # del 89 % al 73 % que documenta `supervisor._activity_should_verify` (veto de
+        # actividad en TODO turno) no aplica: ahí se llamaba al LLM en mensajes escuetos
+        # que afirmaban, y aquí solo en los que preguntan.
+        veto_fields = sorted(set(veto_fields) | set(question_turn_fields))
     gaps = _relevant_gaps(state, intent, message)
     # Grupo con nacionalidades mixtas (hallazgo A, owner: que lo lea el LLM): viaja en la
     # peticion que el turno ya hace, solo si el mensaje habla de los dos lados del grupo.
@@ -2032,7 +2044,16 @@ async def _understand(state: ConversationState, message: str, *, answered_pendin
     # Con la ubicacion o el total pendientes, la cita de cada booleano (hallazgo B).
     if _asks_for_evidence(state.core_pending_slot):
         extra_fields += ("evidence",)
-    _wants_gaps = bool(gaps) and not _skips_gaps_as_question(message) and not _is_greeting_only(message)
+    # u3-4 arreglo 2: en un turno con pregunta NO se rellenan huecos. Rellenar es una
+    # pregunta abierta al LLM e invita a suponer: "in case I decided to do the Open Water
+    # course?" acababa guardado como dato (escalón 1, 24-sep). Lo que el cliente afirma de
+    # verdad lo recoge el regex y lo confirma la verificación de arriba.
+    _wants_gaps = (
+        bool(gaps)
+        and question_turn_fields is None
+        and not _skips_gaps_as_question(message)
+        and not _is_greeting_only(message)
+    )
     # Campos ya sabidos que el mensaje podria corregir con palabras que el regex no lee
     # ("ah no, somos gringos", "cambio de plan, estamos en barú") (tarea 7b, 2026-09-15).
     # Viajan en la peticion del turno (como campos a rellenar si hay huecos, hallazgo J; si
@@ -2074,6 +2095,30 @@ async def _understand(state: ConversationState, message: str, *, answered_pendin
             # nunca dejar el turno peor que con solo el regex.
             logger.warning(f"[EXTRACT][COMBINED] failed, degrading to regex-only: {exc}")
             _combined_patch = None
+    elif question_turn_fields:
+        # u3-4 arreglo 2: turno con pregunta. Se pide la respuesta del LLM TAL CUAL
+        # (`as_answers`), no el diff, porque el diff no distingue "lo confirma" de "no
+        # opina": los dos son "no discrepa". Y aquí la diferencia es justo la regla —
+        # un campo que el LLM no devuelve es un campo que el cliente no afirmó.
+        try:
+            answers = await verify_fields(
+                question_turn_fields + recheck, message, verify_values,
+                history=state.history, lang=state.language, as_answers=True,
+            )
+        except Exception as exc:  # noqa: BLE001
+            logger.warning(f"[EXTRACT][U3-4] verificación falló, se queda el regex: {exc}")
+            answers = None
+        if answers is not None:
+            _apply_question_turn_answers(intent, question_turn_fields, answers, message)
+            _route_contradictions(
+                state, message, intent,
+                _recheck_proposals(
+                    state, intent, answered_pending,
+                    disagreements_with(answers, recheck, known), recheck,
+                ),
+            )
+        # `answers is None` = la llamada falló. No se toca nada: contrato de siempre,
+        # nunca dejar el turno peor que con solo el regex.
     elif recheck and (
         regex_candidates
         or (state.mixed_cart and not _is_greeting_only(message) and not _is_short_ack(message))
@@ -2098,7 +2143,10 @@ async def _understand(state: ConversationState, message: str, *, answered_pendin
     # extraer → se salta `fill_gaps` (misma rama que "pregunta" o "sin gaps": no
     # se aplica patch). Ahorra 1 llamada LLM en el saludo, el turno más común,
     # sin cambiar conducta (fill_gaps devolvía `{}` para un saludo).
-    if gaps and not _skips_gaps_as_question(message) and not _is_greeting_only(message):
+    # `_wants_gaps` es la MISMA condición que decidía arriba si la petición fusionada
+    # pedía huecos; estaba escrita dos veces y con u3-4 (arreglo 2) divergían: el turno
+    # con pregunta dejaba de pedir huecos arriba y los pedía igualmente aquí.
+    if _wants_gaps:
         # Si hubo peticion fusionada arriba, su patch se usa tal cual y NO se
         # repite la llamada. Ojo: cuando la API falla, `extract_and_verify`
         # devuelve `({}, {})` (no None), asi que el turno sigue con solo el regex
@@ -2828,23 +2876,81 @@ def _skips_gaps_as_question(message: str) -> bool:
     return _looks_like_question(message) and not settings.answer_and_continue
 
 
-def _leave_question_fields_to_llm(intent) -> None:
-    """u3-4: en un turno con pregunta, los datos de la reserva los lee el LLM, no el regex.
+def _apply_question_turn_answers(intent, fields: list[str], answers: dict, message: str) -> None:
+    """u3-4 arreglo 2: en un turno con pregunta se guarda lo que el LLM AFIRMA.
 
-    Escalón 0 (reproducción local del golden, 24-sep): al extraer también en los mensajes
-    con pregunta, casi todos los datos inventados venían del REGEX, que lee palabras sueltas
-    sin entender la frase: "I'm interested in taking PADI Open Water course" -> ya
-    certificado; "do you have any hotel in Rosario you recommend?" -> se aloja en la isla.
-    En una pregunta las palabras suelen ser hipotéticas. El LLM (`fill_gaps`/
-    `extract_and_verify`) sí lo distingue y va en la misma petición del turno: los campos
-    que el regex leyó pasan a ser huecos. No se amplía el veto a todo: ampliar el de
-    actividad bajó la concordancia del 89 % al 73 % (sesgo del LLM en mensajes escuetos,
-    ver `supervisor._activity_should_verify`), y aquí solo se toca el turno con pregunta."""
-    for f in _DRIVING_FIELDS & set(intent.detected_fields):
+    Tres casos por campo, y el tercero es el que arregla la regresión del escalón 1:
+
+    - el LLM devuelve el MISMO valor que el regex -> confirmado, se queda;
+    - devuelve OTRO valor -> corrige (el regex leyó mal la frase);
+    - **no lo devuelve** -> nadie lo afirma, se cae. Aquí es donde mueren
+      "¿me recomiendas un hotel en Rosario?" (el regex leía isla) e "in case I
+      decided to do the Open Water course?" (el relleno lo daba por dato).
+
+    Se aplica sin mirar el flag `llm_*_veto_cutover` de cada campo, y es a
+    propósito: esos flags gobiernan el veto del turno NORMAL, donde la pregunta es
+    "¿el regex leyó mal?" y cada campo se midió por separado (`location`,
+    `is_certified` e `is_colombian` están en `False`). Aquí la pregunta es otra —
+    "¿el cliente afirma esto o es hipótesis?" — y solo corre en turnos con pregunta
+    y con `answer_and_continue` encendido.
+    """
+    for f in fields:
+        llm_value = answers.get(f)
+        regex_value = getattr(intent, f, None)
+        if llm_value == regex_value:
+            continue
+        afirmado = f in answers and llm_value not in (None, [], "", {})
+        logger.info(
+            f"[EXTRACT][U3-4] campo={f} regex={regex_value!r} llm={llm_value!r} "
+            f"{'corregido' if afirmado else 'descartado (nadie lo afirma)'} "
+            f"msg={message[:60]!r}"
+        )
+        setattr(intent, f, llm_value if afirmado else ([] if f == "ages" else None))
+        if not afirmado and f in intent.detected_fields:
+            intent.detected_fields.remove(f)
+        if f == "activity":
+            intent.service_id = None
+
+
+def _question_turn_fields(intent) -> list[str]:
+    """u3-4 arreglo 2: en un turno con pregunta, el regex LEE y el LLM VERIFICA.
+
+    Historia, porque el diseño cambió dos veces con datos:
+
+    - Escalón 0 (24-sep): al extraer también en los mensajes con pregunta, casi todos
+      los datos inventados venían del REGEX, que lee palabras sueltas sin entender la
+      frase: "I'm interested in taking PADI Open Water course" -> ya certificado;
+      "do you have any hotel in Rosario you recommend?" -> se aloja en la isla. En una
+      pregunta, las palabras suelen ser hipotéticas.
+    - Primera versión (`_leave_question_fields_to_llm`): borrar lo que leyó el regex y
+      dejar que el LLM **rellenara** esos campos como huecos. Escalón 1 (24-sep): el LLM
+      rellenando también toma la hipótesis por dato — "Transportation to rosario is
+      included, in case I decided to do the Open Water course?" guardaba location=island,
+      y dos turnos después el RAG le decía "como ya estás en las islas...".
+    - Esta versión: el regex conserva lo que leyó y el LLM lo **verifica** (mecanismo de
+      veto), **sin rellenar huecos** ese turno. Verificar es una pregunta cerrada sobre
+      una frase concreta ("¿el cliente AFIRMA esto?"); rellenar es abierta, e invita a
+      suponer. Así "reservaremos hotel en la isla" se guarda (el regex lo lee y el LLM lo
+      confirma) y la hipótesis no.
+
+    Devuelve los campos a verificar. Los que el regex resolvió y NO se pueden verificar
+    (no están en `_VETO_FIELD_SPECS`: island, hotel, ages, last_dive_over_2_years) se
+    borran: si no se puede confirmar que el cliente lo afirma, no se guarda — que es la
+    regla entera de este arreglo. Con el flag apagado nada de esto corre.
+    """
+    from src.agents import supervisor  # lazy
+
+    verificables = set(supervisor._VETO_FIELD_SPECS)
+    a_verificar = []
+    for f in sorted(_DRIVING_FIELDS & set(intent.detected_fields)):
+        if f in verificables:
+            a_verificar.append(f)
+            continue
         setattr(intent, f, [] if f == "ages" else None)
         intent.detected_fields.remove(f)
         if f == "activity":
             intent.service_id = None
+    return a_verificar
 
 
 def _turn_has_question(message: str, routing_signals: dict) -> bool:
@@ -3424,8 +3530,7 @@ async def _routing_phase(
         # Fallback determinista: si el KB no tiene ese par (RAG devuelve su
         # respuesta de "no lo tengo a la mano"), comparar desde el catálogo en
         # vez de ofrecer un asesor (hallazgo en vivo 2026-07-24, consistente).
-        from src.agents.rag_agent import FALLBACK_EN, FALLBACK_ES
-        if FALLBACK_ES in rag or FALLBACK_EN in rag:
+        if _is_rag_fallback(rag):
             rag = _compose_comparison(offerings, state.language)
             state.core_pending_slot = SLOT_ACTIVITY
             state.quick_replies = []
@@ -4259,7 +4364,7 @@ async def _slotfill_close_phase(
     answer = await _take_parallel_answer(state)
     if answer:
         cancel_pending_ack(state)
-        if not finalized and state.core_pending_slot == SLOT_ACTIVITY and _answer_already_asks(answer):
+        if _answer_replaces_the_booking_question(state, answer, finalized=finalized):
             state.quick_replies = []
             response = answer
         else:
@@ -4423,14 +4528,52 @@ def cancel_pending_answer(state: ConversationState) -> None:
         task.cancel()
 
 
+def _is_rag_fallback(text: str | None) -> bool:
+    """El "no lo tengo a la mano" del RAG, con la comprobación en un solo sitio
+    (`rag_agent.is_fallback_answer`). Import perezoso, como el resto de usos de la
+    RAG en este módulo."""
+    from src.agents.rag_agent import is_fallback_answer
+
+    return is_fallback_answer(text)
+
+
+def _answer_replaces_the_booking_question(
+    state: ConversationState, answer: str, *, finalized: bool = False
+) -> bool:
+    """u3-4: ¿la respuesta a la pregunta va SOLA, sin pegarle detrás la de la reserva?
+
+    Dos casos, y los dos vienen de un fallo leído en vivo:
+
+    1. **El RAG no sabe** (arreglo 1, escalón 1 del 24-sep). Si contesta "eso no lo
+       tengo a la mano, ¿te paso con un asesor?" y detrás se pega "¿desde dónde
+       saldrías?", el cliente recibe DOS preguntas y la segunda tapa la oferta de
+       asesor. El camino antiguo (`_answer_question`) no encadenaba nada cuando la
+       respuesta ya acababa preguntando; al mover esto a `_slotfill_close_phase` se
+       relajó a "solo si el siguiente paso es el menú de actividades" y el caso se
+       coló. `core_pending_slot` se queda como está: la reserva sigue en el turno
+       siguiente, que es justo lo que hacía el camino antiguo.
+    2. **La respuesta ya invita a elegir actividad** y lo siguiente sería el menú
+       entero (fallo en vivo 2026-07-24), que era la condición original.
+    """
+    if _is_rag_fallback(answer):
+        return True
+    return not finalized and state.core_pending_slot == SLOT_ACTIVITY and _answer_already_asks(answer)
+
+
 async def _prepend_parallel_answer(state: ConversationState, response: str, greeting: str) -> str:
     """Pone la respuesta en paralelo delante de una respuesta ya escrita (y ya metida en el
-    historial). Sin respuesta pendiente, la deja igual."""
+    historial). Sin respuesta pendiente, la deja igual.
+
+    u3-4 arreglo 1: si el RAG no sabe, la respuesta va SOLA — no se le pega detrás la
+    pregunta de la reserva (ver `_answer_replaces_the_booking_question`)."""
     answer = await _take_parallel_answer(state)
     if not answer:
         return response
-    body = response[len(greeting):] if greeting and response.startswith(greeting) else response
-    merged = f"{greeting}{answer.rstrip()}\n\n{body}"
+    if _is_rag_fallback(answer):
+        merged = f"{greeting}{answer.rstrip()}"
+    else:
+        body = response[len(greeting):] if greeting and response.startswith(greeting) else response
+        merged = f"{greeting}{answer.rstrip()}\n\n{body}"
     last = state.history[-1] if state.history else {}
     if last.get("role") == "assistant" and last.get("content") == response:
         last["content"] = merged

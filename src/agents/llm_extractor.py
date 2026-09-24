@@ -239,7 +239,8 @@ async def verify_fields(
     history: list[dict] | None = None,
     lang: str = "es",
     client: AsyncOpenAI | None = None,
-) -> dict:
+    as_answers: bool = False,
+) -> dict | None:
     """Verifica en UNA SOLA peticion varios campos que el regex ya resolvio
     (ver `supervisor._maybe_veto_resolved_fields_via_llm`). Devuelve un dict
     {campo: valor_del_llm} SOLO con los campos en los que el LLM DISCREPA del
@@ -257,9 +258,22 @@ async def verify_fields(
     y solo reporta lo que discrepa. Cualquier fallo degrada a {} (el llamador
     se queda con el regex, mismo patron defensivo que `fill_gaps`: esto nunca
     puede dejar la respuesta peor que antes de que el veto existiera).
+
+    `as_answers` (u3-4 arreglo 2, 2026-09-25) cambia lo que se devuelve: en vez del
+    diff, **la respuesta del LLM tal cual**, restringida a los campos preguntados. Hace
+    falta porque el diff no distingue "el LLM CONFIRMA el valor" de "el LLM no opina":
+    los dos casos son "no discrepa" y devuelven `{}`. Para decidir si el cliente AFIRMA
+    algo en un mensaje con pregunta hay que poder ver la diferencia — un campo que el LLM
+    no devuelve es un campo que nadie afirmó.
+
+    Con `as_answers`, un fallo (API caída, respuesta malformada, sin tool-call) devuelve
+    **`None`**, no `{}`: `{}` significaría "el LLM no afirmó nada" y el llamante tiraría
+    datos buenos por un corte de red. Es el mismo contrato defensivo de siempre — nunca
+    dejar el turno peor que con solo el regex — pero aquí no se puede expresar con un
+    dict vacío.
     """
     if not fields or not message or not message.strip():
-        return {}
+        return {} if not as_answers else None
     log_tag = "_".join(f.upper() for f in fields) if len(fields) == 1 else "FIELDS"
     messages: list[dict] = [
         {"role": "system", "content": fields_verification_system_prompt(fields, lang)}
@@ -285,15 +299,17 @@ async def verify_fields(
         choice = response.choices[0].message
         tool_calls = getattr(choice, "tool_calls", None)
         if not tool_calls:
-            return {}
+            return {} if not as_answers else None
         args = tool_arguments(tool_calls[0], EXTRACTION_TOOL)
     except (json.JSONDecodeError, TypeError, AttributeError, IndexError) as exc:
         logger.warning(f"[LLM_EXTRACTOR][DEGRADED][{log_tag}_VETO] malformed response: {exc}")
-        return {}
+        return {} if not as_answers else None
     except Exception as exc:  # noqa: BLE001
         logger.warning(f"[LLM_EXTRACTOR][DEGRADED][{log_tag}_VETO] error: {exc}")
-        return {}
+        return {} if not as_answers else None
 
+    if as_answers:
+        return {f: args[f] for f in fields if f in args}
     return disagreements_with(args, fields, regex_values)
 
 

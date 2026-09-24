@@ -264,3 +264,209 @@ async def test_si_jev_duda_en_el_router_la_pregunta_viaja_igual(monkeypatch):
     monkeypatch.setattr(escalation, "trace_openai", lambda c: c)
     got = await escalation.detect_routing_signals("perfecto, como pago")
     assert got == {"asks_question": True}
+
+
+# ── Arreglo 1 (25-sep): si el RAG no sabe, su respuesta va SOLA ──────────────
+#
+# Regresión leída en el escalón 1 del 24-sep: el RAG contestaba "eso no lo tengo a
+# la mano, ¿te paso con un asesor?" y detrás se le pegaba "¿desde dónde saldrías?".
+# El cliente recibía DOS preguntas y la segunda tapaba la oferta de asesor. El
+# camino antiguo (`_answer_question`) no encadenaba nada cuando la respuesta ya
+# acababa preguntando; al mover esto a `_slotfill_close_phase` se relajó a "solo si
+# el siguiente paso es el menú de actividades" y el caso se coló.
+
+
+@pytest.fixture
+def rag_sin_respuesta(monkeypatch):
+    """El RAG devuelve su fallback de "no lo tengo a la mano"."""
+    from src.agents.rag_agent import FALLBACK_ES
+
+    async def _rag(message, **_kwargs):
+        return FALLBACK_ES
+
+    monkeypatch.setattr(supervisor, "rag_answer", _rag)
+    return FALLBACK_ES
+
+
+async def test_si_el_rag_no_sabe_no_se_pega_la_pregunta_de_la_reserva(
+    monkeypatch, signals, rag_sin_respuesta
+):
+    monkeypatch.setattr(settings, "answer_and_continue", True)
+    st = _state()
+    await route_message(st, "queremos bucear, somos certificados")
+    assert st.core_pending_slot == core.SLOT_LOCATION
+
+    resp = await route_message(st, "¿tenéis convenio con alguna aerolínea?")
+
+    assert rag_sin_respuesta in resp
+    assert "¿desde dónde" not in resp.lower() and "saldrías" not in resp.lower(), (
+        "dos preguntas en el mismo mensaje: la de la reserva tapa la oferta de asesor"
+    )
+    # La reserva no se pierde: sigue pendiente para el turno siguiente, igual que
+    # hacía el camino antiguo.
+    assert st.core_pending_slot == core.SLOT_LOCATION
+    assert st.history[-1] == {"role": "assistant", "content": resp}
+
+
+async def test_si_el_rag_si_sabe_la_pregunta_de_la_reserva_sigue_yendo_detras(
+    monkeypatch, signals, rag
+):
+    """Control del test anterior: el arreglo 1 NO puede cargarse el "y sigue" de
+    u3-4, que es justo lo que aporta. Sin él, el test de arriba pasaría aunque la
+    pregunta de la reserva no se encadenara nunca."""
+    monkeypatch.setattr(settings, "answer_and_continue", True)
+    st = _state()
+    await route_message(st, "queremos bucear, somos certificados")
+
+    resp = await route_message(st, "¿qué incluye el precio?")
+
+    assert resp.startswith("RESPUESTA_RAG")
+    assert len(resp) > len("RESPUESTA_RAG") + 10, "falta la parte de la reserva"
+    assert st.core_pending_slot == core.SLOT_LOCATION
+
+
+def test_el_fallback_se_reconoce_desde_un_solo_sitio():
+    """`rag_agent.is_fallback_answer` es la única comprobación: antes el patrón
+    `FALLBACK_ES in x or FALLBACK_EN in x` estaba copiado en el núcleo (comparación
+    desde catálogo), en el supervisor (métrica de negocio de m0-5) y habría hecho
+    falta un cuarto aquí."""
+    from src.agents.rag_agent import FALLBACK_EN, FALLBACK_ES, is_fallback_answer
+
+    assert is_fallback_answer(FALLBACK_ES)
+    assert is_fallback_answer(FALLBACK_EN)
+    assert is_fallback_answer(f"¡Hola! {FALLBACK_EN}\n\nOtra cosa"), "debe valer concatenado"
+    assert not is_fallback_answer("El plan de 2 inmersiones cuesta 178 USD.")
+    assert not is_fallback_answer("")
+    assert not is_fallback_answer(None)
+
+
+# ── Arreglo 2 (25-sep): en un turno con pregunta, el regex LEE y el LLM VERIFICA ──
+#
+# Regresión leída en el escalón 1 del 24-sep: la primera versión borraba lo que leía el
+# regex y dejaba al LLM RELLENAR esos campos. Pero rellenar es una pregunta abierta e
+# invita a suponer: "Transportation to rosario is included, in case I decided to do the
+# Open Water course?" guardaba location=island, y dos turnos después el RAG decía "como
+# ya estás en las islas, tu punto de encuentro es el hotel".
+#
+# Ahora el regex conserva lo que leyó, el LLM lo VERIFICA (pregunta cerrada: "¿el cliente
+# AFIRMA esto?") y no se rellena ningún hueco ese turno.
+
+
+@pytest.fixture
+def verificador(monkeypatch):
+    """El LLM que verifica en un turno con pregunta. Con `as_answers` devuelve su
+    respuesta TAL CUAL: `box["afirma"]` es lo que el cliente afirma segun el LLM.
+    Un campo que NO este ahi es un campo que nadie afirmo (y se cae)."""
+    calls = []
+    box = {"afirma": {}}
+
+    async def _verify(fields, message, values, **kwargs):
+        calls.append({"fields": list(fields), "message": message, "values": dict(values)})
+        if kwargs.get("as_answers"):
+            return {f: v for f, v in box["afirma"].items() if f in fields}
+        return {}
+
+    monkeypatch.setattr(core, "verify_fields", _verify)
+    return calls, box
+
+
+@pytest.fixture
+def no_rellena(monkeypatch):
+    """Cuenta si alguien pide rellenar huecos. En un turno con pregunta debe ser 0."""
+    calls = []
+
+    async def _fill(message, *_a, **_k):
+        calls.append(message)
+        return {}
+
+    async def _combined(fields, veto_fields, message, *_a, **_k):
+        calls.append(message)
+        return {}, {}
+
+    monkeypatch.setattr(core, "fill_gaps", _fill)
+    monkeypatch.setattr(core, "extract_and_verify", _combined)
+    return calls
+
+
+async def test_en_un_turno_con_pregunta_no_se_rellenan_huecos(
+    monkeypatch, signals, rag, verificador, no_rellena
+):
+    monkeypatch.setattr(settings, "answer_and_continue", True)
+    st = _state()
+    await route_message(st, "queremos bucear, somos certificados")
+    no_rellena.clear()
+
+    await route_message(st, "¿me recomiendas un hotel en Rosario?")
+
+    assert no_rellena == [], (
+        "rellenar es una pregunta abierta al LLM e invita a suponer: en un turno con "
+        "pregunta solo se verifica lo que el cliente afirma"
+    )
+
+
+async def test_lo_que_el_cliente_afirma_se_verifica_y_se_guarda(
+    monkeypatch, signals, rag, verificador, no_rellena
+):
+    """"reservaremos hotel en la isla" SÍ es un dato: el regex lo lee y el LLM lo confirma
+    (no discrepa), así que se guarda."""
+    monkeypatch.setattr(settings, "answer_and_continue", True)
+    calls, box = verificador
+    box["afirma"] = {"location": "island"}
+    st = _state()
+    await route_message(st, "queremos bucear, somos certificados")
+
+    await route_message(st, "reservaremos hotel en la isla, ¿el transporte está incluido?")
+
+    assert calls, "el turno con pregunta tiene que pasar por la verificación"
+    assert "location" in calls[-1]["fields"], "se verifica lo que leyó el regex"
+    assert (st.location or st.detected_location) == "island"
+
+
+async def test_si_el_llm_dice_que_no_lo_afirma_el_dato_no_se_guarda(
+    monkeypatch, signals, rag, verificador, no_rellena
+):
+    """La hipótesis del escalón 1: "in case I decided to..." no es un dato. El regex lo
+    lee, el LLM discrepa y el valor se cae."""
+    monkeypatch.setattr(settings, "answer_and_continue", True)
+    calls, box = verificador
+    box["afirma"] = {}  # no lo afirma nadie
+    st = _state()
+    await route_message(st, "queremos bucear, somos certificados")
+
+    await route_message(
+        st, "is transportation to rosario included, in case I decided to do the course?"
+    )
+
+    assert calls, "tiene que haberse consultado"
+    assert st.location is None and st.detected_location is None
+
+
+async def test_lo_que_no_se_puede_verificar_no_se_guarda(monkeypatch, signals, rag, verificador):
+    """`hotel`/`island`/`ages`/`last_dive_over_2_years` no tienen verificador en
+    `_VETO_FIELD_SPECS`. La regla del arreglo es "solo lo que el cliente afirma Y el LLM
+    confirma": si no se puede confirmar, no se guarda."""
+    from src.agents import supervisor
+
+    verificables = set(supervisor._VETO_FIELD_SPECS)
+    assert "hotel" not in verificables and "island" not in verificables
+
+    monkeypatch.setattr(settings, "answer_and_continue", True)
+    st = _state()
+    await route_message(st, "queremos bucear, somos certificados")
+
+    await route_message(st, "¿me podéis recoger en el hotel Pao Pao?")
+
+    assert st.hotel is None, "un hotel nombrado dentro de una pregunta no es dónde se aloja"
+
+
+async def test_sin_pregunta_se_siguen_rellenando_huecos(monkeypatch, signals, rag, no_rellena):
+    """Control: el arreglo 2 solo toca los turnos CON pregunta. Sin este test, los de
+    arriba pasarían aunque hubiéramos apagado el relleno en todos los turnos."""
+    monkeypatch.setattr(settings, "answer_and_continue", True)
+    st = _state()
+    await route_message(st, "queremos bucear, somos certificados")
+    no_rellena.clear()
+
+    await route_message(st, "somos 3")
+
+    assert no_rellena, "en un turno normal se siguen pidiendo los huecos"

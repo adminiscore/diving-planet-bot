@@ -163,6 +163,64 @@ domingo de Pascua, Isla Grande sin inventar, acompañante mayor…). **8 regresi
   3. **Aflora una respuesta floja del RAG** que antes quedaba escondida (antes la pregunta se ignoraba):
      "cómo reservo" → "un asesor te enviará el enlace". Es de l1-7.
 
+### Arreglos 1 y 2 — hechos (25-sep, Gonzalo), pendientes de medir
+
+Los dos arreglos que pedía el "siguiente paso" están implementados, con tests, detrás del
+mismo flag. **Falta el escalón 0** (ver el bloqueo al final).
+
+**Arreglo 1 — si el RAG no sabe, su respuesta va sola.** `_answer_replaces_the_booking_question`
+(núcleo) decide cuándo la respuesta ocupa el turno entero: si es el fallback del RAG, o el caso
+que ya existía (invita a elegir actividad y lo siguiente sería el menú). `core_pending_slot` se
+queda como estaba, así que la reserva continúa en el turno siguiente, igual que el camino
+antiguo. También en `_prepend_parallel_answer`, la otra puerta.
+- De paso: `FALLBACK_ES in x or FALLBACK_EN in x` estaba copiado en el núcleo y en el
+  supervisor, y este arreglo necesitaba dos más. Ahora hay una fuente,
+  `rag_agent.is_fallback_answer()`, y ningún uso suelto fuera de `rag_agent`.
+
+**Arreglo 2 — el regex lee y el LLM verifica.** Con dos bloqueos que hubo que resolver antes,
+y que conviene conocer porque el enunciado original no los contemplaba:
+
+1. **La verificación no distinguía "lo confirma" de "no opina".** `verify_fields` devolvía solo
+   las DISCREPANCIAS, así que confirmar y abstenerse eran el mismo `{}`. Con eso no se puede
+   implementar "solo se guarda lo que el cliente AFIRMA": ante "¿me recomiendas un hotel en
+   Rosario?" el LLM se abstiene y el `location=island` del regex sobrevive — la regresión que
+   el arreglo venía a matar. Lo demostraba un test que ya existía
+   (`test_en_una_pregunta_el_regex_no_escribe_datos`), que pasaba con el diseño viejo y falló
+   con el nuevo.
+   → **`verify_fields(..., as_answers=True)`** devuelve la respuesta del LLM tal cual. El
+   contrato de siempre (solo diff) sigue siendo el de por defecto: el eval-set, el supervisor y
+   el resto del núcleo no se tocan. Un fallo de la llamada devuelve **`None`**, no `{}`, porque
+   `{}` significaría "no afirmó nada" y un corte de red tiraría datos buenos.
+2. **Tres de los campos tenían el veto apagado** (`location`, `is_certified`, `is_colombian`
+   están en `False`; solo `activity`, `group_size` y `group_allocation` en `True`). Verificar
+   `location` —el campo de la regresión— no habría corregido nada.
+   → En el turno con pregunta la decisión se aplica **sin mirar esas banderas**, a propósito:
+   gobiernan el veto del turno NORMAL, donde la pregunta es "¿el regex leyó mal?" y cada campo
+   se midió por separado. Aquí la pregunta es otra ("¿lo afirma o es hipótesis?") y solo corre
+   con `answer_and_continue` encendido y en turnos con pregunta.
+
+Por campo: mismo valor → confirmado; otro valor → corrige; **ausente → nadie lo afirma y se
+cae**. Los que no tienen verificador (`island`, `hotel`, `ages`, `last_dive_over_2_years`) se
+descartan, por la misma regla. Y en ese turno **no se rellenan huecos**: rellenar es una
+pregunta abierta e invita a suponer (así entró "in case I decided to…"). De paso se quitó una
+condición duplicada (`gaps and not _skips_gaps... and not _is_greeting_only`, escrita dos veces)
+que con este cambio divergía: arriba se dejaba de pedir huecos y abajo se pedían igual.
+
+**Tests: 24/24** en `tests/test_u3_answer_and_continue.py` (16 de Gadea + 8 nuevos). Dos son
+controles deliberados —que con el RAG sabiendo la pregunta de la reserva SIGUE encadenándose, y
+que fuera del turno con pregunta se SIGUEN rellenando huecos—, porque sin ellos los otros
+pasarían aunque se hubiera roto lo que u3-4 aporta. `ruff` y `compileall` limpios. Los 2 fallos
+de `test_conversational_core` (familia `confirm_correction`, u3-5) son **preexistentes**:
+verificados en un worktree en `d3dc51e` sin ninguno de estos cambios.
+
+**🔴 Bloqueo para el escalón 0:** `replay_golden_local` fija `ENV_FILE=.env.dev` (esta máquina
+solo tiene `.env`, se resuelve copiándolo) y fuerza `JEV_ROUTER_ENABLED=true`, pero **no hay
+`OPENROUTER_API_KEY`**. Sin ella `jev_router` devuelve `None` y cae al router LLM — y la
+detección de pregunta de u3-4 usa justo Jev (`asks_question ≥ 0,7`), así que la medición no
+sería comparable en el mecanismo que decide qué turnos entran. Hace falta la clave, o aceptar
+explícitamente medir sin Jev (mide qué datos guarda cada versión, que es el grueso, pero no la
+detección).
+
 ## Siguiente paso (para quien siga)
 
 Dos arreglos GENERALES y luego repetir **solo una ronda B** (se compara con esta A; la latencia no hace
