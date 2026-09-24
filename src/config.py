@@ -106,6 +106,13 @@ class Settings(BaseSettings):
     # serie: su resumen necesita el valor recién extraído. APAGADO por defecto.
     ack_in_parallel: bool = False
 
+    # u3-4 (24-sep): "contesta y sigue". Un mensaje que trae una pregunta (regex, "?" o
+    # Jev >= 0,7 en la MISMA llamada del router) ya no se trata como pregunta O como dato:
+    # el RAG la contesta en paralelo, la extracción sigue su camino normal y la respuesta
+    # lleva las dos cosas (primero la respuesta, luego lo que toque de la reserva). Ver
+    # docs/robustness/u3-4-diseno.md. APAGADO por defecto.
+    answer_and_continue: bool = False
+
     # --- Observabilidad: Langfuse (sustituye a LangSmith, cuota Developer
     # agotada; ver docs/robustness/progress-log.md "Tarea 8"). Sin claves, el
     # tracing queda apagado y `langfuse` ni se importa (3.14-safe). Claves por

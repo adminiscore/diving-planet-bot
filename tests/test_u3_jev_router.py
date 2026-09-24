@@ -62,6 +62,14 @@ def facts(monkeypatch):
     return seen
 
 
+def _full(fn, asks=False):
+    """Un doble de `detect_routing_signals_jev` -> el de `_full` (añade `asks_question`, u3-4)."""
+    async def _wrapped(message, *, lang="es"):
+        return await fn(message, lang=lang), asks
+
+    return _wrapped
+
+
 def test_el_flag_nace_apagado():
     assert Settings().jev_router_enabled is False
 
@@ -71,7 +79,7 @@ async def test_flag_apagado_no_llama_a_jev(monkeypatch, llm):
         raise AssertionError("con el flag apagado no se llama a Jev")
 
     monkeypatch.setattr(settings, "jev_router_enabled", False)
-    monkeypatch.setattr(jev_router, "detect_routing_signals_jev", _no)
+    monkeypatch.setattr(jev_router, "detect_routing_signals_jev_full", _full(_no))
     await escalation.detect_routing_signals("quiero hablar con un asesor")
     assert llm.calls == 1
 
@@ -81,7 +89,7 @@ async def test_con_flag_manda_jev_y_no_se_llama_al_llm(monkeypatch, llm, facts):
         return {"wants_human": True}
 
     monkeypatch.setattr(settings, "jev_router_enabled", True)
-    monkeypatch.setattr(jev_router, "detect_routing_signals_jev", _jev)
+    monkeypatch.setattr(jev_router, "detect_routing_signals_jev_full", _full(_jev))
     got = await escalation.detect_routing_signals("quiero hablar con un asesor")
     assert got == {"wants_human": True}
     assert llm.calls == 0
@@ -93,7 +101,7 @@ async def test_si_jev_falla_se_usa_el_router_llm(monkeypatch, llm, facts):
         return None
 
     monkeypatch.setattr(settings, "jev_router_enabled", True)
-    monkeypatch.setattr(jev_router, "detect_routing_signals_jev", _falla)
+    monkeypatch.setattr(jev_router, "detect_routing_signals_jev_full", _full(_falla))
     await escalation.detect_routing_signals("quiero hablar con un asesor")
     assert llm.calls == 1
     assert facts["router"] == "llm_fallback"
@@ -219,7 +227,7 @@ async def test_si_jev_duda_decide_el_router_llm(monkeypatch, llm, facts):
         return jev_router.UNCERTAIN
 
     monkeypatch.setattr(settings, "jev_router_enabled", True)
-    monkeypatch.setattr(jev_router, "detect_routing_signals_jev", _duda)
+    monkeypatch.setattr(jev_router, "detect_routing_signals_jev_full", _full(_duda))
     await escalation.detect_routing_signals("the discount of 10% is not showing up")
     assert llm.calls == 1
     assert facts["router"] == "llm_uncertain"

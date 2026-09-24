@@ -90,6 +90,29 @@ def routing_questions() -> dict:
 
 _QUESTIONS = routing_questions()
 
+# u3-4: ¿trae el mensaje algo que haya que CONTESTAR? Va en la misma llamada (Jev contesta
+# cada pregunta sin ver las demás, así que no cambia las otras respuestas). Escalón 0 del
+# 24-sep, 257 mensajes del golden sin examen oculto: el regex de hoy ve 114 de 157
+# preguntas; regex O Jev >= 0,7 ve 134 con 0 falsas alarmas.
+ASKS_QUESTION = "asks_question"
+ASKS_QUESTION_MIN = 0.7
+_ASKS_QUESTION_Q = {
+    "type": "noul",
+    "instructions": (
+        "The customer's message contains a QUESTION or a REQUEST FOR INFORMATION that the booking assistant must "
+        "ANSWER (for example about prices, what is included, schedules, hotels, discounts, policies, logistics, "
+        "how something works). It is FALSE if the message only gives booking details (dates, number of people, "
+        "where they are, an activity choice), only answers the assistant's previous question, or is small talk "
+        "or thanks."
+    ),
+}
+
+
+def _questions_for_turn() -> dict:
+    if settings.answer_and_continue:
+        return {**_QUESTIONS, ASKS_QUESTION: _ASKS_QUESTION_Q}
+    return _QUESTIONS
+
 
 # Cascada por confianza (A/B del 24-sep): Jev decide solo cuando está seguro; si duda,
 # el turno lo decide el router LLM, o sea la conducta de hoy. En el A/B la única
@@ -106,7 +129,8 @@ def uncertain_answers(answers: dict) -> list[str]:
     importan si ya está comparando, y eso lo decide `comparing`)."""
     doubts = []
     for name, a in answers.items():
-        if name.startswith("opt_") or not isinstance(a, dict):
+        # La pregunta de u3-4 no es una señal del router: su duda no manda el turno al LLM.
+        if name.startswith("opt_") or name == ASKS_QUESTION or not isinstance(a, dict):
             continue
         if a.get("type") == "choice" and a.get("confidence", 1.0) < CHOICE_MIN_CONFIDENCE:
             doubts.append(f"{name}={a.get('choice')}@{a.get('confidence', 0):.2f}")
@@ -154,9 +178,19 @@ async def detect_routing_signals_jev(message: str, *, lang: str = "es") -> dict 
 
     Devuelve el dict de señales si Jev está seguro, `UNCERTAIN` si duda en alguna
     (cascada: decide el router LLM) y `None` si no está disponible o falla."""
+    result, _ = await detect_routing_signals_jev_full(message, lang=lang)
+    return result
+
+
+async def detect_routing_signals_jev_full(
+    message: str, *, lang: str = "es",
+) -> tuple[dict | str | None, bool]:
+    """Como `detect_routing_signals_jev`, y además si el mensaje trae algo que contestar
+    (u3-4, solo con `answer_and_continue`). Lo segundo vale también cuando Jev duda en
+    las señales del router: es otra pregunta y el router LLM no la contesta."""
     key = settings.openrouter_api_key
     if not key or not message or not message.strip():
-        return None
+        return None, False
     t0 = time.perf_counter()
     try:
         resp = await _http().post(
@@ -165,7 +199,7 @@ async def detect_routing_signals_jev(message: str, *, lang: str = "es") -> dict 
             json={
                 "model": settings.jev_model,
                 "state": f"{_CONTEXT}\n\nCustomer message: {message}",
-                "questions": _QUESTIONS,
+                "questions": _questions_for_turn(),
             },
             timeout=settings.jev_timeout_seconds,
         )
@@ -173,14 +207,15 @@ async def detect_routing_signals_jev(message: str, *, lang: str = "es") -> dict 
         answers = resp.json()["answers"]
         signals = answers_to_signals(answers)
         doubts = uncertain_answers(answers)
+        asks = (answers.get(ASKS_QUESTION) or {}).get("noul", 0.0) >= ASKS_QUESTION_MIN
     except Exception as exc:  # noqa: BLE001 — cualquier fallo cae al router LLM
         ms = (time.perf_counter() - t0) * 1000
         logger.warning(f"[ROUTER][JEV] fallo en {ms:.0f} ms, se usa el router LLM: {type(exc).__name__}: {exc}")
-        return None
+        return None, False
     ms = (time.perf_counter() - t0) * 1000
     if doubts:
         logger.info(f"[ROUTER][JEV] {ms:.0f} ms duda={doubts} -> router LLM msg={message[:80]!r}")
-        return UNCERTAIN
+        return UNCERTAIN, asks
     if signals:
         logger.info(f"[ROUTER][JEV] {ms:.0f} ms detected={signals} msg={message[:80]!r}")
-    return signals
+    return signals, asks

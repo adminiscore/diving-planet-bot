@@ -152,16 +152,17 @@ async def detect_routing_signals(
     # U3 (u3-1): Jev contesta las mismas 9 señales en ~0,27 s. Si está apagado, no hay
     # clave o falla, sigue el router LLM de siempre (y el turno lo apunta en su resumen).
     # Si Jev DUDA (cascada por confianza), decide el router LLM: la conducta de hoy.
+    asks_question = False
     if settings.jev_router_enabled and client is None:
-        from src.agents.jev_router import UNCERTAIN, detect_routing_signals_jev
+        from src.agents.jev_router import ASKS_QUESTION, UNCERTAIN, detect_routing_signals_jev_full
         from src.observability import note_turn
 
         t0 = time.perf_counter()
-        jev = await detect_routing_signals_jev(message, lang=lang)
+        jev, asks_question = await detect_routing_signals_jev_full(message, lang=lang)
         router = "jev" if isinstance(jev, dict) else ("llm_uncertain" if jev == UNCERTAIN else "llm_fallback")
         note_turn(router=router, router_ms=round((time.perf_counter() - t0) * 1000))
         if isinstance(jev, dict):
-            return jev
+            return {**jev, ASKS_QUESTION: True} if asks_question else jev
     try:
         client = client or trace_openai(AsyncOpenAI(api_key=settings.openai_api_key))
         response = await client.chat.completions.create(
@@ -177,17 +178,19 @@ async def detect_routing_signals(
         )
         choice = response.choices[0].message
         tool_calls = getattr(choice, "tool_calls", None)
-        if not tool_calls:
-            return {}
-        args = tool_arguments(tool_calls[0], ROUTING_TOOL)
+        args = tool_arguments(tool_calls[0], ROUTING_TOOL) if tool_calls else {}
     except (json.JSONDecodeError, TypeError, AttributeError, IndexError) as exc:
         _llm_logger.warning(f"[ESCALATION] routing signals malformed response: {exc}")
-        return {}
+        args = {}
     except Exception as exc:  # noqa: BLE001
         _llm_logger.warning(f"[ESCALATION] routing signals error: {exc}")
-        return {}
+        args = {}
 
     result = {k: v for k, v in (args or {}).items() if v not in (None, "", [], {})}
+    if asks_question:
+        # u3-4: Jev dudó en las señales del router, pero su respuesta a "¿hay algo que
+        # contestar?" sigue valiendo (es otra pregunta y el router LLM no la contesta).
+        result["asks_question"] = True
     if result:
         _llm_logger.info(f"[ESCALATION][ROUTING_SIGNALS] detected={result} msg={message[:80]!r}")
     return result

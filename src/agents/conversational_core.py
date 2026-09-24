@@ -1991,6 +1991,9 @@ async def _understand(state: ConversationState, message: str, *, answered_pendin
     prev_refresher = state.refresher_interested
 
     intent = _detector.detect(message, state)
+    if _has_pending_answer(state):
+        _leave_question_fields_to_llm(intent)
+        _named_certified_product_confirms_certification(state, message)
     state.mixed_nationality_notice = False
     # Un dato del mensaje que contradice lo guardado (tarea 7b): ver `_regex_contradictions`.
     regex_candidates = _regex_contradictions(state, message, intent)
@@ -2029,7 +2032,7 @@ async def _understand(state: ConversationState, message: str, *, answered_pendin
     # Con la ubicacion o el total pendientes, la cita de cada booleano (hallazgo B).
     if _asks_for_evidence(state.core_pending_slot):
         extra_fields += ("evidence",)
-    _wants_gaps = bool(gaps) and not _looks_like_question(message) and not _is_greeting_only(message)
+    _wants_gaps = bool(gaps) and not _skips_gaps_as_question(message) and not _is_greeting_only(message)
     # Campos ya sabidos que el mensaje podria corregir con palabras que el regex no lee
     # ("ah no, somos gringos", "cambio de plan, estamos en barú") (tarea 7b, 2026-09-15).
     # Viajan en la peticion del turno (como campos a rellenar si hay huecos, hallazgo J; si
@@ -2095,7 +2098,7 @@ async def _understand(state: ConversationState, message: str, *, answered_pendin
     # extraer → se salta `fill_gaps` (misma rama que "pregunta" o "sin gaps": no
     # se aplica patch). Ahorra 1 llamada LLM en el saludo, el turno más común,
     # sin cambiar conducta (fill_gaps devolvía `{}` para un saludo).
-    if gaps and not _looks_like_question(message) and not _is_greeting_only(message):
+    if gaps and not _skips_gaps_as_question(message) and not _is_greeting_only(message):
         # Si hubo peticion fusionada arriba, su patch se usa tal cual y NO se
         # repite la llamada. Ojo: cuando la API falla, `extract_and_verify`
         # devuelve `({}, {})` (no None), asi que el turno sigue con solo el regex
@@ -2818,6 +2821,41 @@ def _looks_like_question(message: str) -> bool:
     return supervisor._looks_like_info_question(message) or "?" in message
 
 
+def _skips_gaps_as_question(message: str) -> bool:
+    """¿Se salta el relleno de huecos por ser una pregunta? Así nació el núcleo (22-jul):
+    un mensaje era pregunta (-> RAG) O dato (-> extracción). Con `answer_and_continue`
+    (u3-4) es las dos cosas: el dato que venga junto a la pregunta ya no se pierde."""
+    return _looks_like_question(message) and not settings.answer_and_continue
+
+
+def _leave_question_fields_to_llm(intent) -> None:
+    """u3-4: en un turno con pregunta, los datos de la reserva los lee el LLM, no el regex.
+
+    Escalón 0 (reproducción local del golden, 24-sep): al extraer también en los mensajes
+    con pregunta, casi todos los datos inventados venían del REGEX, que lee palabras sueltas
+    sin entender la frase: "I'm interested in taking PADI Open Water course" -> ya
+    certificado; "do you have any hotel in Rosario you recommend?" -> se aloja en la isla.
+    En una pregunta las palabras suelen ser hipotéticas. El LLM (`fill_gaps`/
+    `extract_and_verify`) sí lo distingue y va en la misma petición del turno: los campos
+    que el regex leyó pasan a ser huecos. No se amplía el veto a todo: ampliar el de
+    actividad bajó la concordancia del 89 % al 73 % (sesgo del LLM en mensajes escuetos,
+    ver `supervisor._activity_should_verify`), y aquí solo se toca el turno con pregunta."""
+    for f in _DRIVING_FIELDS & set(intent.detected_fields):
+        setattr(intent, f, [] if f == "ages" else None)
+        intent.detected_fields.remove(f)
+        if f == "activity":
+            intent.service_id = None
+
+
+def _turn_has_question(message: str, routing_signals: dict) -> bool:
+    """u3-4: ¿trae el mensaje algo que CONTESTAR? El regex/"?" de siempre, o Jev en la
+    misma llamada del router (`asks_question`, >= 0,7): "perfecto, como pago" no lleva
+    "?" ni lo ve el regex, y se quedaba sin contestar."""
+    if _is_greeting_only(message):
+        return False
+    return _looks_like_question(message) or bool(routing_signals.get("asks_question"))
+
+
 def _is_greeting_only(message: str) -> bool:
     """True si el mensaje es SOLO saludo y/o cortesía de small-talk ("hola",
     "buenas", "hola buenas que tal?", "hi how are you") — sin contenido de
@@ -3342,20 +3380,25 @@ async def _routing_phase(
     # 2026-07-22: el bot no sabía recuperar sus propios datos y ofrecía
     # escalar a un asesor para algo que ya tenía).
     if not resolved_short and has_qmark and not _is_greeting_only(message):
+        # u3-4: la respuesta se lanza ANTES de mirar si es un "¿me recuerdas...?", para que
+        # corra a la vez que esa comprobación y que la extracción.
+        _maybe_launch_answer(state, message, routing_signals)
         signals = await detect_special_signals(message, history=state.history, lang=state.language)
         recalled = None
         if signals.get("recall_field"):
             recalled = _recall_answer(state, signals["recall_field"])
         if recalled:
+            cancel_pending_answer(state)
             response = recalled
             if prev_pending:
                 response += "\n\n" + ask_slot(state, prev_pending, reasking=True)
             response = greeting + response
             state.history.append({"role": "assistant", "content": response})
             return response
-        answer = greeting + await _answer_question(state, message)
-        state.history.append({"role": "assistant", "content": answer})
-        return answer
+        if not _has_pending_answer(state):
+            answer = greeting + await _answer_question(state, message)
+            state.history.append({"role": "assistant", "content": answer})
+            return answer
 
     # DELIBERACIÓN entre actividades (B2, 2026-07-24): un mensaje que sopesa
     # 2+ actividades sin decidirse ("mi pareja duda entre buceo y minicurso",
@@ -3366,7 +3409,10 @@ async def _routing_phase(
     # secuestrar dudas de slot (ubicación/hotel) y selecciones de una sola
     # actividad. `who`/`options` de la señal solo se registran (v1): RAG ve el
     # mensaje entero y explica; la forma rica deja el camino de upgrade abierto.
-    if not resolved_short and _is_deliberation_between_options(message, routing_signals):
+    if (
+        not resolved_short and not _has_pending_answer(state)
+        and _is_deliberation_between_options(message, routing_signals)
+    ):
         offerings = _mentioned_offerings(message)
         obj = routing_signals.get("comparing_options") or {}
         logger.info(
@@ -3388,6 +3434,9 @@ async def _routing_phase(
         state.history.append({"role": "assistant", "content": answer})
         return answer
 
+    # u3-4: una pregunta sin "?" (regex o Jev) también se contesta en paralelo.
+    _maybe_launch_answer(state, message, routing_signals)
+
     # Ningún gate de routing resolvió el turno → pasar a extracción con el carry
     # (los snapshots `prev_*` tomados ANTES de `_apply_short_answer` + `resolved_
     # short`, que la extracción usa para detectar qué cambió este turno).
@@ -3408,6 +3457,18 @@ async def _routing_phase(
 
 
 async def _extraction_phase(
+    state: ConversationState, message: str, routing_signals: dict,
+    greeting: str, carry: dict,
+) -> str | None:
+    """`_extraction_phase_body` + u3-4: si una de sus salidas anticipadas resuelve el
+    turno (acompañante, carrito post-cierre...), la respuesta a la pregunta va delante."""
+    response = await _extraction_phase_body(state, message, routing_signals, greeting, carry)
+    if response is None:
+        return None
+    return await _prepend_parallel_answer(state, response, greeting)
+
+
+async def _extraction_phase_body(
     state: ConversationState, message: str, routing_signals: dict,
     greeting: str, carry: dict,
 ) -> str | None:
@@ -4055,7 +4116,10 @@ async def _extraction_phase(
 
     # Última red antes del genérico: heurística blanda de pregunta de info
     # (sin exigir "?", ya descartado arriba) — mismo camino RAG de siempre.
-    if not advanced and _looks_like_question(message) and not _is_greeting_only(message):
+    if (
+        not advanced and _looks_like_question(message) and not _is_greeting_only(message)
+        and not _has_pending_answer(state)  # u3-4: ya se está contestando en paralelo
+    ):
         answer = greeting + await _answer_question(state, message)
         state.history.append({"role": "assistant", "content": answer})
         return answer
@@ -4077,6 +4141,7 @@ async def _slotfill_close_phase(
 
     resolved_short = carry["resolved_short"]
     prev_pending = carry["prev_pending"]
+    finalized = False
 
     # El reparto sigue a un cambio de la actividad principal cuando solo tenia la
     # anterior (tarea 7b, 2026-09-15): "mejor snorkel" con {certified_diving: 2}
@@ -4172,6 +4237,7 @@ async def _slotfill_close_phase(
                 response = ask_slot(state, SLOT_COMPANION_ACTIVITY, reasking=True)
                 state.step = Step.FREE_TEXT
             else:
+                finalized = True
                 response = _finalize(state)
                 # Materializar la nota de lead (el cierre no-colombiano deja solo
                 # pending_lead_note_reason; en el camino legacy la construye
@@ -4186,6 +4252,22 @@ async def _slotfill_close_phase(
     # pregunta/dato (el "responde-y-encadena" que se había perdido). Los datos DUROS
     # (precio/links/plan/seguridad/resumen) ya están en `response` y NO pasan por el
     # LLM; el acuse solo pone el envoltorio. Si falla o se salta las reglas -> "".
+    # u3-4: "contesta y sigue". La respuesta a la pregunta va primero y ocupa el sitio del
+    # acuse (un "¡genial!" delante de una respuesta sobra). Se omite la pregunta de la
+    # reserva solo en el caso que ya cubría `_answer_question`: la respuesta ya invita a
+    # elegir actividad y lo siguiente sería el menú entero (fallo en vivo 2026-07-24).
+    answer = await _take_parallel_answer(state)
+    if answer:
+        cancel_pending_ack(state)
+        if not finalized and state.core_pending_slot == SLOT_ACTIVITY and _answer_already_asks(answer):
+            state.quick_replies = []
+            response = answer
+        else:
+            response = f"{answer.rstrip()}\n\n{response}"
+        response = greeting + response
+        state.history.append({"role": "assistant", "content": response})
+        return response
+
     ack = ""
     if not first_turn:
         # u3-1 paso 3: el acuse que se lanzó en paralelo en `_setup_phase`, si sirve.
@@ -4245,36 +4327,9 @@ async def _answer_question(
     # el resto de respuestas de info del bot. `rag_query` (opcional): consulta
     # reescrita para RAG cuando el mensaje crudo recupera mal (deliberación);
     # el historial sigue teniendo el mensaje real del cliente.
-    from src.agents import supervisor  # lazy
-
-    # l1-4: las notas de ESTE mensaje pueden estar calculándose en paralelo. Aquí
-    # es donde se usan (van dentro del contexto del RAG), así que aquí se espera.
-    await await_pending_notes(state)
-    extra_context = supervisor._build_extra_context(state)
-    answer = await supervisor.rag_answer(
-        rag_query or message, lang=state.language, history=state.history,
-        extra_context=extra_context,
-    )
+    answer = await _rag_answer(state, message, rag_query=rag_query)
+    _named_certified_product_confirms_certification(state, message)
     pending = state.core_pending_slot or next_missing_slot(state)
-    # Hallazgo en vivo (lote 9, bateria sintetica contra PRE, 2026-09-02): un
-    # mensaje con "?" nunca pasa por `_understand()`/extraccion este turno
-    # (ver `_routing_phase`, gate de "?" explicito ANTES de RAG) -- asi que
-    # "how much for 2 people, certified diving?" respondia el precio
-    # correctamente pero volvia a preguntar "Are you a certified diver?"
-    # pese a que el propio mensaje ya nombra el producto certified_diving
-    # (lo que YA confirma certificacion por la misma regla de negocio de
-    # `_activity_has_textual_backing`/`certification_claim`). En vez de
-    # correr extraccion completa aqui (fuera de alcance, mas riesgo), se
-    # resuelve el caso puntual: si el slot pendiente es certificacion y el
-    # propio mensaje ya la respalda textualmente, se fija y se recalcula el
-    # pendiente antes de decidir si re-preguntar.
-    if (
-        pending == SLOT_CERTIFICATION
-        and state.is_certified is None
-        and _activity_has_textual_backing("certified_diving", message)
-    ):
-        state.is_certified = True
-        pending = next_missing_slot(state)
     # No re-anclar el slot si la propia respuesta RAG ya cierra con una
     # pregunta (una recomendación/comparación termina invitando a elegir): el
     # re-prompt sería redundante — dos preguntas seguidas y, si el pendiente
@@ -4289,6 +4344,97 @@ async def _answer_question(
     state.core_pending_slot = pending
     state.quick_replies = []
     return answer
+
+
+def _named_certified_product_confirms_certification(state: ConversationState, message: str) -> None:
+    """Nombrar el producto de buceo certificado confirma la certificación.
+
+    Hallazgo en vivo (lote 9, bateria sintetica contra PRE, 2026-09-02): un mensaje con
+    "?" nunca pasaba por la extraccion -- asi que "how much for 2 people, certified
+    diving?" respondia el precio pero volvia a preguntar "Are you a certified diver?"
+    pese a que el propio mensaje nombra el producto certified_diving (lo que YA confirma
+    certificacion por la regla de negocio de `_activity_has_textual_backing`/
+    `certification_claim`). Si lo pendiente es la certificacion y el mensaje la respalda,
+    se fija. u3-4: con `answer_and_continue` la pregunta SI pasa por la extraccion, pero lo
+    que lee el regex en ella se deja al LLM (`_leave_question_fields_to_llm`); esta regla,
+    medida, se aplica igual en los dos caminos."""
+    pending = state.core_pending_slot or next_missing_slot(state)
+    if (
+        pending == SLOT_CERTIFICATION
+        and state.is_certified is None
+        and _activity_has_textual_backing("certified_diving", message)
+    ):
+        state.is_certified = True
+
+
+async def _rag_answer(
+    state: ConversationState, message: str, *, rag_query: str | None = None, history: list | None = None,
+) -> str:
+    from src.agents import supervisor  # lazy
+
+    # l1-4: las notas de ESTE mensaje pueden estar calculándose en paralelo. Aquí
+    # es donde se usan (van dentro del contexto del RAG), así que aquí se espera.
+    await await_pending_notes(state)
+    extra_context = supervisor._build_extra_context(state)
+    return await supervisor.rag_answer(
+        rag_query or message, lang=state.language,
+        history=state.history if history is None else history,
+        extra_context=extra_context,
+    )
+
+
+# u3-4 (24-sep): "contesta y sigue". Escalón 0, 165 turnos con pregunta de la ronda de
+# cierre de L1: fallaban 79, y en 27 el bot se saltaba la pregunta y seguía con la reserva
+# (la pregunta solo se contestaba si la reserva NO avanzaba ese turno); y al revés, con "?"
+# contestaba pero no extraía los datos del mismo mensaje. Con el flag, la respuesta del RAG
+# se lanza en paralelo en `_routing_phase`, la extracción sigue su camino normal y el
+# cierre (o la salida anticipada de la extracción) pone la respuesta delante.
+def _has_pending_answer(state: ConversationState) -> bool:
+    return getattr(state, "_pending_answer", None) is not None
+
+
+def _maybe_launch_answer(state: ConversationState, message: str, routing_signals: dict) -> None:
+    if not settings.answer_and_continue or _has_pending_answer(state):
+        return
+    if not _turn_has_question(message, routing_signals):
+        return
+    # La foto del historial se toma AQUÍ (lección de la carrera de l1-4): la tarea puede no
+    # arrancar hasta después de que el bot meta otra cosa en el historial.
+    state._pending_answer = asyncio.create_task(_rag_answer(state, message, history=list(state.history)))
+
+
+async def _take_parallel_answer(state: ConversationState) -> str | None:
+    task = getattr(state, "_pending_answer", None)
+    state._pending_answer = None
+    if task is None:
+        return None
+    try:
+        return await task
+    except Exception as exc:  # noqa: BLE001 — si el RAG falla, el turno sigue sin respuesta
+        logger.warning(f"[CORE][U3-4] la respuesta en paralelo falló, sigue la reserva: {exc}")
+        return None
+
+
+def cancel_pending_answer(state: ConversationState) -> None:
+    """Red de seguridad al cerrar el turno: una respuesta lanzada que nadie usó se cancela."""
+    task = getattr(state, "_pending_answer", None)
+    state._pending_answer = None
+    if task is not None and not task.done():
+        task.cancel()
+
+
+async def _prepend_parallel_answer(state: ConversationState, response: str, greeting: str) -> str:
+    """Pone la respuesta en paralelo delante de una respuesta ya escrita (y ya metida en el
+    historial). Sin respuesta pendiente, la deja igual."""
+    answer = await _take_parallel_answer(state)
+    if not answer:
+        return response
+    body = response[len(greeting):] if greeting and response.startswith(greeting) else response
+    merged = f"{greeting}{answer.rstrip()}\n\n{body}"
+    last = state.history[-1] if state.history else {}
+    if last.get("role") == "assistant" and last.get("content") == response:
+        last["content"] = merged
+    return merged
 
 
 def _answer_already_asks(answer: str) -> bool:
