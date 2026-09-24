@@ -91,6 +91,30 @@ def routing_questions() -> dict:
 _QUESTIONS = routing_questions()
 
 
+# Cascada por confianza (A/B del 24-sep): Jev decide solo cuando está seguro; si duda,
+# el turno lo decide el router LLM, o sea la conducta de hoy. En el A/B la única
+# regresión de Jev ("the discount of 10% is not showing up" -> escalado por
+# "real_time_issues") tenía confianza 0,38, frente a 0,92-1,00 de los problemas de pago
+# reales. Umbrales fijados ANTES de medir; en los 257 mensajes del golden (sin examen
+# oculto) solo el 8 % de los turnos cae en la zona de duda.
+CHOICE_MIN_CONFIDENCE = 0.6
+NOUL_DOUBT_ZONE = (0.3, 0.7)
+
+
+def uncertain_answers(answers: dict) -> list[str]:
+    """Respuestas de Jev en las que duda (las opciones de comparación no cuentan: solo
+    importan si ya está comparando, y eso lo decide `comparing`)."""
+    doubts = []
+    for name, a in answers.items():
+        if name.startswith("opt_") or not isinstance(a, dict):
+            continue
+        if a.get("type") == "choice" and a.get("confidence", 1.0) < CHOICE_MIN_CONFIDENCE:
+            doubts.append(f"{name}={a.get('choice')}@{a.get('confidence', 0):.2f}")
+        elif a.get("type") == "noul" and NOUL_DOUBT_ZONE[0] < a.get("noul", 0.0) < NOUL_DOUBT_ZONE[1]:
+            doubts.append(f"{name}@{a['noul']:.2f}")
+    return doubts
+
+
 def answers_to_signals(answers: dict, threshold: float = THRESHOLD) -> dict:
     """Respuestas de Jev -> el mismo dict que devuelve el router LLM (solo lo marcado)."""
     out: dict = {}
@@ -122,8 +146,14 @@ def _http() -> httpx.AsyncClient:
     return _client
 
 
-async def detect_routing_signals_jev(message: str, *, lang: str = "es") -> dict | None:
-    """Las 9 señales con Jev. `None` = no disponible o fallo: usar el router LLM."""
+UNCERTAIN = "uncertain"  # Jev respondió pero duda: el turno lo decide el router LLM
+
+
+async def detect_routing_signals_jev(message: str, *, lang: str = "es") -> dict | str | None:
+    """Las 9 señales con Jev.
+
+    Devuelve el dict de señales si Jev está seguro, `UNCERTAIN` si duda en alguna
+    (cascada: decide el router LLM) y `None` si no está disponible o falla."""
     key = settings.openrouter_api_key
     if not key or not message or not message.strip():
         return None
@@ -142,11 +172,15 @@ async def detect_routing_signals_jev(message: str, *, lang: str = "es") -> dict 
         resp.raise_for_status()
         answers = resp.json()["answers"]
         signals = answers_to_signals(answers)
+        doubts = uncertain_answers(answers)
     except Exception as exc:  # noqa: BLE001 — cualquier fallo cae al router LLM
         ms = (time.perf_counter() - t0) * 1000
         logger.warning(f"[ROUTER][JEV] fallo en {ms:.0f} ms, se usa el router LLM: {type(exc).__name__}: {exc}")
         return None
     ms = (time.perf_counter() - t0) * 1000
+    if doubts:
+        logger.info(f"[ROUTER][JEV] {ms:.0f} ms duda={doubts} -> router LLM msg={message[:80]!r}")
+        return UNCERTAIN
     if signals:
         logger.info(f"[ROUTER][JEV] {ms:.0f} ms detected={signals} msg={message[:80]!r}")
     return signals

@@ -179,3 +179,47 @@ async def test_tiempo_maximo_devuelve_none(monkeypatch):
 async def test_sin_clave_no_se_llama(monkeypatch):
     monkeypatch.setattr(settings, "openrouter_api_key", "")
     assert await jev_router.detect_routing_signals_jev("hola, quiero bucear") is None
+
+
+# --- Cascada por confianza (A/B del 24-sep) -------------------------------------------
+
+
+def test_duda_con_los_numeros_reales_de_la_regresion():
+    """"the discount of 10% is not showing up": Jev lo marcaba como problema en tiempo
+    real con confianza 0,38 (y escalaba). Los problemas de pago reales van a 0,92-1,00."""
+    regresion = {"sensitive_topic": {"type": "choice", "choice": "real_time_issues", "confidence": 0.38}}
+    real = {"sensitive_topic": {"type": "choice", "choice": "real_time_issues", "confidence": 0.92}}
+    assert jev_router.uncertain_answers(regresion)
+    assert not jev_router.uncertain_answers(real)
+
+
+def test_zona_de_duda_de_los_si_no_y_opciones_ignoradas():
+    ans = {
+        "availability_question": {"type": "noul", "noul": 0.45},
+        "wants_human": {"type": "noul", "noul": 0.95},
+        "opt_snorkel": {"type": "noul", "noul": 0.5},  # las opciones no cuentan
+    }
+    assert jev_router.uncertain_answers(ans) == ["availability_question@0.45"]
+    assert not jev_router.uncertain_answers({"wants_human": {"type": "noul", "noul": 0.1}})
+
+
+async def test_si_jev_duda_devuelve_uncertain(monkeypatch):
+    def handler(request):
+        return httpx.Response(200, json={"answers": {
+            "sensitive_topic": {"type": "choice", "choice": "real_time_issues", "confidence": 0.38},
+        }})
+
+    _mock_http(monkeypatch, handler)
+    got = await jev_router.detect_routing_signals_jev("the discount of 10% is not showing up")
+    assert got == jev_router.UNCERTAIN
+
+
+async def test_si_jev_duda_decide_el_router_llm(monkeypatch, llm, facts):
+    async def _duda(message, *, lang="es"):
+        return jev_router.UNCERTAIN
+
+    monkeypatch.setattr(settings, "jev_router_enabled", True)
+    monkeypatch.setattr(jev_router, "detect_routing_signals_jev", _duda)
+    await escalation.detect_routing_signals("the discount of 10% is not showing up")
+    assert llm.calls == 1
+    assert facts["router"] == "llm_uncertain"
