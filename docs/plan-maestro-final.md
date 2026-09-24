@@ -290,6 +290,7 @@ few-shot (`_select_fewshot_examples`), así que tal cual inflarían la nota.
   *(Gonzalo)*
 
 ### Fase U3 — Unificación del entendimiento · **CONSERVADOR, detrás de flag** · *el cambio grande*
+> **🟦 Regla de Jev (Gadea, 24-sep-2026):** toda DECISIÓN de opciones fijas del bot (sí/no o elegir de una lista) se prueba primero con **Jev** (TypeSafe vía OpenRouter), siempre con cascada por confianza (si duda, el LLM de hoy) y con el protocolo de medición. Casos: router (u3-1, encendido), u3-4 (¿trae una pregunta?), u3-6 (`detect_special_signals`), u3-7 (`resolve_slot_answer` en sí/no y listas), u3-3 (respaldo del `intent_detector`) y el juez de grounding (l1-6/l1-7). **No** para extraer valores (fechas, cifras, nombres) ni para escribir texto. Adaptador de referencia: `src/agents/jev_router.py`.
 - **UNA llamada estructurada** (function-calling/JSON) que devuelve intención + slots + señales, dueña en
   router/setup, consumida por los nodos → reduce el reparto en 4 y encoge el regex de `intent_detector`
   a un **fast-path determinista** + backstop LLM. Alinea con la directiva del owner (extracción por LLM) y
