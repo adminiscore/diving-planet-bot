@@ -131,6 +131,9 @@ services:
       # ENCENDIDO. La clave OPENROUTER_API_KEY esta en .env.pre del VPS.
       # Revert = quitar esta linea + redeploy.
       JEV_ROUTER_ENABLED: "true"
+      # u3-1 paso 3 (24-sep): el acuse calido en paralelo (ver docs/robustness/u3-1-paso3-diseno.md).
+      # ENCENDIDO para el lado B del A/B. Revert = quitar esta linea + redeploy.
+      ACK_IN_PARALLEL: "true"
       # Refactor multi-agente (docs/multi-agent-refactor-plan.md) — validación en
       # PRE antes del corte del legacy (Fase 5.2). STAGE B (ahora): el GRAFO sirve
       # de verdad (agent_arch on) — router → 5 nodos reales + subgrafo booking. La
