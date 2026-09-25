@@ -20,7 +20,11 @@ Read this file before changing code in the Diving Planet Bot. For a quick versio
 - **Plantillas `.env.*.example`**: ya no encienden LangSmith (`LANGCHAIN_TRACING_V2=true` volvía a dar un
   429 por turno a quien montara PRO copiándolas), `RAG_TOP_K` es 8 como en PRE (el 5 era la trampa de
   la 0.29.9), y están `OPENROUTER_API_KEY`, Langfuse y `SYNTH_CHATWOOT_TOKEN`.
-- **Por confirmar**: si PRE usa `RAG_ANSWER_MODEL=gpt-4.1-mini` (comando en HISTORY 0.29.22).
+- **Confirmado**: PRE usa `RAG_ANSWER_MODEL=gpt-4.1-mini`; activo ya en las plantillas.
+- **⚠️ Antes de medir en local, comprobad vuestro `.env.dev`**: sin `OPENAI_MODEL` el código usa
+  `gpt-4o` (no es la config de PRE). Debe dar `gpt-4o-mini gpt-4.1-mini`:
+  `ENV_FILE=.env.dev python -c "from src.config import settings as s; print(s.openai_model, s.rag_answer_model or s.openai_model)"`.
+  En la máquina de Álvaro pasaba y está corregido.
 - **Commit solo local**, sin push: un push a `feature/pre_*` despliega PRE y corta cualquier ronda que
   esté en marcha. Va con el siguiente push coordinado (p. ej. la ronda B de u3-4).
 - **Para u3-5 en la máquina de Álvaro falta `OPENROUTER_API_KEY` en `.env.dev`**: sin ella Jev no se
