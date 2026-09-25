@@ -212,9 +212,16 @@ que con este cambio divergía: arriba se dejaba de pedir huecos y abajo se pedí
 **Tests: 24/24** en `tests/test_u3_answer_and_continue.py` (16 de Gadea + 8 nuevos). Dos son
 controles deliberados —que con el RAG sabiendo la pregunta de la reserva SIGUE encadenándose, y
 que fuera del turno con pregunta se SIGUEN rellenando huecos—, porque sin ellos los otros
-pasarían aunque se hubiera roto lo que u3-4 aporta. `ruff` y `compileall` limpios. Los 2 fallos
-de `test_conversational_core` (familia `confirm_correction`, u3-5) son **preexistentes**:
-verificados en un worktree en `d3dc51e` sin ninguno de estos cambios.
+pasarían aunque se hubiera roto lo que u3-4 aporta. `ruff` y `compileall` limpios.
+
+> **Corregido el 25-sep**: ese "24/24" y los "2 fallos preexistentes de `test_conversational_core`"
+> se midieron corriendo la suite con `.env` y la clave REAL (el `README` decía `pytest` a secas).
+> Así las redes de extracción y verificación llaman de verdad: lento, facturable y no determinista.
+> Con `ENV_FILE=.env.ci`, que es como corre CI, `test_conversational_core` pasa **237/237** y sale
+> un fallo de verdad que la clave viva tapaba: `test_en_una_pregunta_el_regex_no_escribe_datos` (de
+> los 16 de Gadea) **no sustituía el LLM**, así que con el LLM caído `verify_fields` devuelve `None`
+> —contrato defensivo, un corte de red no puede tirar datos buenos— y el `island` del regex
+> sobrevivía. Arreglado y hecho determinista, más un test nuevo que fija el otro lado del contrato.
 
 ### Escalón 0 de los arreglos (25-sep, Gonzalo) — veredicto: **NO promocionar el arreglo 2**
 
@@ -284,6 +291,53 @@ automatiza la separación de ruido que antes había que recordar hacer a mano.
 
 Datos: `u3-4/replay-on.jsonl` (v3), `replay-on-v2.jsonl` (la del escalón 1), `replay-on-v1.jsonl`,
 `diff.json` (v3) y `diff-v2.json`, `triaje-v3.txt`, `lectura-a-mano-v3.md`.
+
+### La puerta de Jev (v4 y v5, 25-sep) — el mecanismo funciona; la redacción hay que calibrarla
+
+La propuesta de abajo se implementó y se midió el mismo día. Dos preguntas nuevas a Jev
+(`affirms_location`, `affirms_activity`) en la MISMA llamada del router, detrás del mismo flag: en
+un turno con pregunta, un campo que Jev dice que el cliente NO afirma se cae **sin llegar siquiera
+a la verificación**. Ausente (Jev apagado, o dudó en una señal del router) NO es `False`: es "no lo
+sé" y se sigue con la conducta de hoy.
+
+**v4, con la redacción escrita a ojo: negativo.** Mataba los 3 `location` inventados, sí — pero
+fijaba **menos actividad que el propio flag apagado** (239 frente a 245) y se comía datos que el
+cliente afirma sin ambigüedad: "I plan on being in Cartagena and do scuba diving on April 21 and
+22. I have open water", "estaremos en islas del rosario en junio", y toda la familia "cuánto cuesta
+el paquete de 5 / el fundive". Ganaba 67 campos-turno y perdía 53.
+
+**Causa, medida en un banco de 20 casos reales** (`scripts/sonda_afirma_vs_pregunta.py`: los 3
+inventados que hay que matar y los datos buenos que v4 destruyó, que el flag apagado ya capturaba).
+La redacción fallaba en dos cosas concretas, las dos de negocio:
+
+1. **un plan de futuro sí dice dónde estarán** — "I'll be in Cartagena in April" daba 0,35;
+2. **nombrar un producto para preguntar su precio sí es elegirlo**, que es la regla del catálogo —
+   "los valores del pack de 5 buceos" daba 0,63.
+
+Con eso escrito en la pregunta: **19/20 frente a 15/20**, y los que deben morir siguen muriendo
+(0,07-0,48) mientras los buenos suben a 0,85-0,97.
+
+**v5, con la redacción calibrada:**
+
+| | contestadas (165) | contesta Y sigue | GANA | PIERDE | juez "inventado" | a leer | errores reales |
+|---|---|---|---|---|---|---|---|
+| v2 (escalón 1) | 123 | 122 | 163 | 24 | — | — | 4 |
+| v3 (regex + verificación) | 123 | 122 | 119 | 29 | 30 | 16 | 5 |
+| v4 (Jev, redacción a ojo) | 123 | 122 | 67 | 53 | — | — | destruye ~10 buenos |
+| **v5 (Jev calibrado)** | **123** | **122** | **69** | **33** | **13** | **7** | **2** (+3 de u3-5) |
+
+Los **3 inventados objetivo desaparecen** y los datos buenos vuelven. Lectura de los 7 en
+`u3-4/lectura-a-mano-v3.md` (sección v5).
+
+**Lo que sigue estorbando, y está medido.** De las 20 pérdidas frente al flag apagado (sin contar
+arrastre), **11 ya estaban en v3**: no las causa la puerta de Jev sino la **verificación** del
+arreglo 2 — el LLM no vuelve a extraer "fundive" → `certified_diving`, ni "buceo certificado" →
+`is_certified`. Las otras 9 son de la puerta, y la mayoría defendibles ("complete the certification
+in Cartagena" no dice dónde se aloja; "sin ir de cartagena" es justo lo contrario de Cartagena).
+
+Y los **2 errores reales** que quedan son de campos que la puerta NO vigila (`is_certified`,
+`group_size`): misma causa, misma solución, una pregunta más — pero cada campo hay que calibrarlo
+contra casos reales antes, que es la lección de v4.
 
 ## Siguiente paso (para quien siga) — actualizado 25-sep con la medida
 

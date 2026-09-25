@@ -131,10 +131,18 @@ async def test_con_flag_y_jev_contesta_sin_interrogacion(monkeypatch, signals, r
     assert st.core_pending_slot == core.SLOT_QTY
 
 
-async def test_en_una_pregunta_el_regex_no_escribe_datos(monkeypatch, signals, rag):
+async def test_en_una_pregunta_el_regex_no_escribe_datos(monkeypatch, signals, rag, verificador):
     """"¿me recomiendas un hotel en Rosario?" no dice que se aloje allí: el regex leería
-    location=island; el LLM (aquí, que se abstiene) es quien decide."""
+    location=island; el LLM (aquí, que se abstiene) es quien decide.
+
+    El `verificador` NO estaba y el test dependía de una llamada de verdad: con la clave
+    real del `.env` el LLM se abstenía y pasaba, y con la clave falsa de `.env.ci` (401)
+    fallaba. Lo que el test quiere fijar es la conducta CUANDO el LLM se abstiene, no si la
+    API responde — ver `test_si_el_llm_no_contesta_no_se_tira_nada` para el otro caso.
+    """
     monkeypatch.setattr(settings, "answer_and_continue", True)
+    _calls, box = verificador
+    box["afirma"] = {}  # el LLM se abstiene: nadie afirma la ubicación
     st = _state()
     await route_message(st, "queremos bucear, somos certificados")
     resp = await route_message(st, "do you have any hotel in Rosario you recommend?")
@@ -470,3 +478,137 @@ async def test_sin_pregunta_se_siguen_rellenando_huecos(monkeypatch, signals, ra
     await route_message(st, "somos 3")
 
     assert no_rellena, "en un turno normal se siguen pidiendo los huecos"
+
+
+# --- La pregunta que faltaba: ¿lo AFIRMA o solo lo NOMBRA en su pregunta? (u3-4, 25-sep) ---
+# Verificar no bastaba: `verify_fields` vuelve a EXTRAER, y para un extractor "¿me recomiendas
+# hoteles en la isla?" es una señal clara de `location=island`. La contesta Jev, en la misma
+# llamada del router. Medida y por qué: `docs/robustness/u3-4-diseno.md`.
+
+
+def test_flag_apagado_jev_no_recibe_las_preguntas_de_afirmacion(monkeypatch):
+    monkeypatch.setattr(settings, "answer_and_continue", False)
+    preguntas = jev_router._questions_for_turn()
+    assert jev_router.AFFIRMS_LOCATION not in preguntas
+    assert jev_router.AFFIRMS_ACTIVITY not in preguntas
+    monkeypatch.setattr(settings, "answer_and_continue", True)
+    preguntas = jev_router._questions_for_turn()
+    assert jev_router.AFFIRMS_LOCATION in preguntas
+    assert jev_router.AFFIRMS_ACTIVITY in preguntas
+
+
+def test_la_afirmacion_viaja_tambien_en_falso():
+    """`False` ("Jev dice que NO lo afirma") y ausente ("no lo sé") son cosas distintas y el
+    núcleo las trata distinto: sin esto, la duda y la negación se confundirían."""
+    alto = jev_router.answers_to_signals({
+        jev_router.AFFIRMS_LOCATION: {"type": "noul", "noul": 0.97},
+    })
+    bajo = jev_router.answers_to_signals({
+        jev_router.AFFIRMS_LOCATION: {"type": "noul", "noul": 0.08},
+    })
+    assert alto[jev_router.AFFIRMS_LOCATION] is True
+    assert bajo[jev_router.AFFIRMS_LOCATION] is False, "tiene que salir, no omitirse"
+    assert jev_router.AFFIRMS_LOCATION not in jev_router.answers_to_signals({})
+
+
+def test_la_duda_en_la_afirmacion_no_manda_el_turno_al_router_llm():
+    """Mismo trato que `asks_question`: no es una señal del router."""
+    medio = {
+        jev_router.AFFIRMS_LOCATION: {"type": "noul", "noul": 0.5},
+        jev_router.AFFIRMS_ACTIVITY: {"type": "noul", "noul": 0.45},
+    }
+    assert jev_router.uncertain_answers(medio) == []
+
+
+async def test_si_jev_dice_que_no_lo_afirma_el_dato_se_cae_sin_preguntar_al_llm(
+    monkeypatch, signals, rag, verificador, no_rellena
+):
+    """El caso del escalón 0 que el verificador NO arreglaba: el regex lee `island`, el
+    verificador lo CONFIRMA (vuelve a extraer, y la isla está en la frase) y el dato inventado
+    sobrevivía. Jev dice que no lo afirma → se cae, y encima se ahorra la verificación.
+
+    El contraste se hace con **el mismo mensaje** a los dos lados: si se usaran mensajes
+    distintos, la diferencia podría venir del mensaje y no de la señal, y el test pasaría sin
+    probar nada.
+    """
+    monkeypatch.setattr(settings, "answer_and_continue", True)
+    calls, box = verificador
+    box["afirma"] = {"location": "island"}  # el verificador SÍ lo confirmaría: da igual
+    msg = "¿el transporte está incluido si nos quedamos en la isla?"
+
+    signals["value"] = {}  # -- lado A: sin la respuesta de Jev, la conducta de antes
+    antes = _state()
+    await route_message(antes, "queremos bucear, somos certificados")
+    await route_message(antes, msg)
+    assert (antes.location or antes.detected_location) == "island", (
+        "el control: sin Jev el dato SÍ se guardaba (si no, el test de abajo no prueba nada)"
+    )
+
+    calls.clear()
+    signals["value"] = {"affirms_location": False}  # -- lado B: Jev dice que no lo afirma
+    st = _state()
+    await route_message(st, "queremos bucear, somos certificados")
+    await route_message(st, msg)
+
+    assert st.location is None and st.detected_location is None
+    assert all("location" not in c["fields"] for c in calls), "no hace falta verificar lo descartado"
+
+
+async def test_si_jev_dice_que_si_lo_afirma_el_dato_sigue_su_camino(
+    monkeypatch, signals, rag, verificador, no_rellena
+):
+    """Control del test anterior: sin él pasaría igual con un mecanismo que borrase SIEMPRE."""
+    monkeypatch.setattr(settings, "answer_and_continue", True)
+    calls, box = verificador
+    box["afirma"] = {"location": "island"}
+    signals["value"] = {"affirms_location": True}
+    st = _state()
+    await route_message(st, "queremos bucear, somos certificados")
+
+    await route_message(st, "reservaremos hotel en la isla, ¿el transporte está incluido?")
+
+    assert (st.location or st.detected_location) == "island"
+    assert any("location" in c["fields"] for c in calls), "se sigue verificando el valor"
+
+
+async def test_si_jev_no_contesta_se_sigue_con_la_conducta_de_hoy(
+    monkeypatch, signals, rag, verificador, no_rellena
+):
+    """Jev apagado, o dudó en una señal del router: la respuesta no llega. AUSENTE no es
+    `False` — se verifica como antes, en vez de tirar el dato."""
+    monkeypatch.setattr(settings, "answer_and_continue", True)
+    calls, box = verificador
+    box["afirma"] = {"location": "island"}
+    signals["value"] = {}  # ninguna afirmación en las señales
+    st = _state()
+    await route_message(st, "queremos bucear, somos certificados")
+
+    await route_message(st, "reservaremos hotel en la isla, ¿el transporte está incluido?")
+
+    assert (st.location or st.detected_location) == "island"
+    assert any("location" in c["fields"] for c in calls)
+
+
+async def test_si_el_llm_no_contesta_no_se_tira_nada(monkeypatch, signals, rag, no_rellena):
+    """El otro lado del contrato defensivo: si la verificación FALLA (API caída, 401, red),
+    `verify_fields` devuelve `None` y no se toca nada — un corte de red no puede tirar datos
+    buenos. El precio es que el dato hipotético sobrevive ese turno, y es a propósito.
+
+    Con Jev contestando no hace falta llegar aquí: su `False` descarta el campo sin LLM (ver
+    `test_si_jev_dice_que_no_lo_afirma_el_dato_se_cae_sin_preguntar_al_llm`), así que el
+    mecanismo nuevo cubre también el turno degradado.
+    """
+    monkeypatch.setattr(settings, "answer_and_continue", True)
+
+    async def _falla(*_a, **kwargs):
+        return None if kwargs.get("as_answers") else {}
+
+    monkeypatch.setattr(core, "verify_fields", _falla)
+    st = _state()
+    await route_message(st, "queremos bucear, somos certificados")
+
+    await route_message(st, "¿el transporte está incluido si nos quedamos en la isla?")
+
+    assert (st.location or st.detected_location) == "island", (
+        "con la verificación caída se conserva lo que leyó el regex, no se tira"
+    )

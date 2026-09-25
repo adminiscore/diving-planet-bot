@@ -57,3 +57,26 @@ recuento agregado como si fuera una medida.
 - `paquete-5-buceos-precio-overnight-isla-grande-baru#1` — "a 2 day dive package at the rosario
   islands" estando en Cartagena → `location=island`. Aquí el juez tiene razón: el destino no es el
   punto de salida.
+
+
+---
+
+# v5 — la puerta de Jev, redacción calibrada (25-sep). Lectura de los 7 que quedan
+
+`triaje-v5.txt`. El juez baja de 30 "INVENTADO" a **13**; el ruido objetivo se lleva 6 y quedan 7.
+
+| caso | mensaje | dato de más | veredicto |
+|---|---|---|---|
+| `reserva-paquete-5-buceos-solicita#1` | "reserva para el **paquete de 5 buceos**" | `certified_diving` | mapeo de producto correcto |
+| `familia-mixta-precio-descuento-refresher#1` | 3 bucean, 3 snorkel, 6 en total | `group_size=3` | dudoso (¿el grupo o los buceadores?) |
+| `moneda-precios-principiante-y-snorkel#5` | "¿en dólares o pesos colombianos?" | `is_colombian=False` | **u3-5** (ya existe sin el flag) |
+| `open-water-precio-para-colombianos-corrige-mito#1` | "¿costo para colombianos?" | `is_colombian=True` | **u3-5** |
+| `paquete-5-buceos-cop-refresh-y-hoteles#1` | "¿costo para colombianos?" | `is_colombian=True` | **u3-5** |
+| `curso-open-water-transporte-y-regreso-otro-dia#1` | "**in case I decided to** do PADI Open Water" | `is_certified=False` | **error real** |
+| `recogida-ubuntu-comida-y-certificacion#3` | son 2 (padre e hijo) | `group_size=1` | **error real** |
+
+**2 errores reales** fuera de la familia u3-5, frente a los 5 de v3. Y los dos son de campos que la
+puerta **no** vigila: `is_certified` y `group_size`. La causa es la misma que la de `location` y la
+de `activity` —un dato nombrado dentro de la pregunta— así que la solución también sería la misma:
+una pregunta más a Jev, en la misma llamada. No se hace ahora porque cada campo hay que calibrarlo
+contra casos reales, y `is_colombian` (los otros 3) es el encargo de **u3-5**.

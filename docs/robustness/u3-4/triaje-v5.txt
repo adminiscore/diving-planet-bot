@@ -1,0 +1,50 @@
+turnos con dato de más: 39 | el juez ve inventado en 13
+  ruido [sin-pregunta]: 5
+  ruido [estado-previo-distinto]: 1
+  >>> A LEER A MANO: 7
+
+===== a-leer (7) =====
+- curso-open-water-transporte-y-regreso-otro-dia#1  'Hi, My understanding is that the transportation to rosario is included, in case I decided to do PADI Open Wate'
+    de más: {'is_certified': False}
+    juez: ['is_certified'] — El cliente no afirma explícitamente que no está certificado. Solo pregunta si el transporte a Rosario está incluido en caso de que decida hacer el curso PADI Open Water Diver, lo cual es una condición hipotética/pregunta
+- familia-mixta-precio-descuento-refresher#1  'Hi There, I am looking to book 2 dives and snorkeling sessions for the following people. 2 diving sessions - A'
+    de más: {'detected_group_size': 3, 'detected_group_allocation': {'certified_diving': 3}}
+    juez: ['detected_group_size'] — El cliente lista 2 adultos + 1 youth para buceo (3) y 1 adulto + 2 niños para snorkel (3), es decir un total de 6 personas. Por tanto el dato detected_group_size = 3 no coincide con lo afirmado por el cliente. En cambio 
+- moneda-precios-principiante-y-snorkel#5  'Amigo el precio que está allí es en dólares o pesos colombianos'
+    de más: {'is_colombian': False}
+    juez: ['is_colombian'] — El cliente no afirma en ninguno de sus mensajes ser o no ser colombiano; solo pregunta si el precio está en dólares o pesos colombianos, por lo que la marca is_colombian = false está supuesta/inventada y no se deriva de 
+- open-water-precio-para-colombianos-corrige-mito#1  'Buenos días. Estoy interesada en el curso básico de buceo. Cuál es el costo para colombianos?'
+    de más: {'detected_activity': 'padi_open_water', 'is_colombian': True}
+    juez: ['is_colombian'] — El cliente sí menciona 'curso básico de buceo', por lo que el dato detected_activity = 'padi_open_water' está afirmado. En cambio la frase '¿Cuál es el costo para colombianos?' es una pregunta sobre tarifas para colombia
+- paquete-5-buceos-cop-refresh-y-hoteles#1  'Buenos días. Quiero hacer el paquete de 5 buceos. Cuál es el costo para colombianos por favor?'
+    de más: {'detected_activity': 'certified_diving', 'is_colombian': True}
+    juez: ['is_colombian'] — El usuario pidió el costo “para colombianos” y solicitó el paquete de 5 buceos, lo que confirma la actividad (detected_activity = certified_diving). Pero no afirmó explícitamente que él/ella sea colombiano(a); preguntó p
+- recogida-ubuntu-comida-y-certificacion#3  'Hi. Is it possible for my son [NOMBRE] a PADi certificat ?'
+    de más: {'detected_group_size': 1, 'detected_group_allocation': {'certified_diving': 1}}
+    juez: ['detected_group_size', 'detected_group_allocation.certified_diving'] — El cliente indica explícitamente que creó cuentas para su hijo y para sí mismo (dos personas: hijo 17 y adulto 49), por lo que detected_group_size=1 es incorrecto. No hay ninguna afirmación de que haya buceadores certifi
+- reserva-paquete-5-buceos-solicita#1  'Buenos días. Me gustaría hacer una reserva para el paquete de 5 buceos por favor?'
+    de más: {'detected_activity': 'certified_diving'}
+    juez: ['detected_activity'] — El cliente solo solicita una reserva para el paquete de 5 buceos; no menciona estar certificado ni indica actividad certificada. Por tanto la etiqueta 'certified_diving' es una suposición/invención del sistema.
+
+===== sin-pregunta (5) =====
+- equipaje-mochilas-y-almacenamiento#2  'Amazing! Thank you so much!'
+    de más: {'detected_activity': 'certified_diving'}
+    juez: ['certified_diving'] — El cliente no afirma ser buceador certificado en ninguno de sus mensajes. Menciona que reservó un paquete de 5 inmersiones y pregunta sobre el almacenamiento de equipaje, pero eso no implica explícitamente certificación;
+- minicurso-islas-y-acompanante-lancha#2  'una noche en coral sand y la otra no lo hemos decidido a un si repetir  o en majagua para mas comodida'
+    de más: {'is_colombian': False}
+    juez: ['is_colombian'] — En los mensajes el cliente solo pregunta por fechas, experiencia de buceo, planes y alojamiento; no menciona nacionalidad. Por tanto el dato 'is_colombian: false' no está afirmado por el cliente y parece supuesta/inventa
+- paquete-5-buceos-islas-residente-sin-recogida#5  'COcoliso'
+    de más: {'location': 'island', 'detected_location': 'island'}
+    juez: ['location', 'detected_location'] — Ninguno de los mensajes menciona explícitamente una 'isla'. El cliente indica fechas (27-30 de junio), número de personas (2), residencia en Colombia y dudas sobre descuento, y que quiere comprar sin ir desde Cartagena, 
+- paquete-5-inmersiones#1  'hola, cuanto cuesta el paquete de 5 inmersiones?'
+    de más: {'detected_activity': 'certified_diving'}
+    juez: ['detected_activity'] — El cliente solo pregunta por el precio del paquete de 5 inmersiones; no dice que esté certificado ni menciona su nivel de buceo. Por tanto, la etiqueta "certified_diving" fue inferida por el sistema y no está afirmada en
+- premisa-falsa-lunes#3  'perfecto, entonces reservo para el martes'
+    de más: {'detected_activity': 'certified_diving'}
+    juez: ['detected_activity'] — El cliente solo pregunta por disponibilidad y luego confirma una reserva para el martes; en sus mensajes no afirma ser buzo certificado ni menciona tener título. Por tanto 'certified_diving' es una suposición no expresad
+
+===== estado-previo-distinto (1) =====
+- curso-referido-pide-datos-centro#5  'Full name of dive center, location, dates etc'
+    de más: {'detected_activity': 'certified_diving'}
+    juez: ['detected_activity'] — El cliente solo afirma que la persona está haciendo el e-learning y pregunta si puede ir directamente al centro para la parte práctica (Open Water). No hay ninguna declaración de que ya esté certificada; por tanto el dat
+

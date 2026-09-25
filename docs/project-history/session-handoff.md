@@ -13,7 +13,7 @@ Read this file before changing code in the Diving Planet Bot. For a quick versio
 
 > **📏 LEER ANTES DE MEDIR — decisiones del 24-sep-2026 (Gadea):** (1) latencia y llamadas con nuestros logs `[TURN_METRICS]` + `scripts/turn_metrics.py`, no con Langfuse (plan gratuito superado, reinicio 16-oct); (2) pruebas A/B por escalones, juzgando solo los diálogos que cambian. Todo en `docs/robustness/protocolo-medicion.md`.
 
-### 🔧 2026-09-25 (Gonzalo) — u3-4: los 2 arreglos hechos y MEDIDOS. El arreglo 2 **no cumple**
+### 🔧 2026-09-25 (Gonzalo) — u3-4: el arreglo 2 NO cumplía; la causa, encontrada y arreglada con Jev
 
 Todo el detalle en `docs/robustness/u3-4-diseno.md` (§ "Escalón 0 de los arreglos" y § "Siguiente
 paso", reescrito con la medida). Lo esencial:
@@ -32,17 +32,48 @@ paso", reescrito con la medida). Lo esencial:
   señal clara de `location=island`. No existe en el sistema ninguna pregunta que distinga afirmar de
   preguntar. Meter el matiz en el prompt falló dos veces: en el de relleno (Gadea, 24-sep) y en el de
   verificación (25-sep, sonda fiel: no quita ni un `location` y rompe un `is_certified`).
-- **Siguiente paso, ya con medida: preguntárselo a Jev.** 11/12 en la sonda
-  (`scripts/sonda_afirma_vs_pregunta.py`), separando por márgenes anchos (0,07-0,48 los que no
-  afirman frente a 0,75-0,97 los que sí), a 0,30 s y **en la llamada del router que ya se hace** —
-  el mismo patrón con el que u3-4 añadió `asks_question` sin gastar peticiones. La tabla está en el
-  diseño.
+- **HECHO Y MEDIDO el mismo día: la pregunta se la hace Jev.** Dos preguntas nuevas
+  (`affirms_location`, `affirms_activity`) en la MISMA llamada del router, a coste 0 de peticiones;
+  un campo que Jev dice que el cliente no afirma se cae sin llegar a la verificación. **Ausente no
+  es `False`**: Jev apagado o dudando = "no lo sé" = conducta de hoy. Resultado: **los 3 `location`
+  inventados desaparecen**, contestar no cambia, el juez baja de 30 "INVENTADO" a **13**, los casos
+  a leer a mano de 16 a **7** y los errores reales de 5 a **2** (los otros 3 son la nacionalidad de
+  u3-5).
+- **La redacción de las preguntas hay que CALIBRARLA, y esto es lo que hay que llevarse.** La
+  primera versión, escrita a ojo, descartaba de más: fijaba MENOS actividad que el propio flag
+  apagado y se comía datos afirmados sin ambigüedad. Faltaban dos reglas de negocio en la pregunta:
+  un **plan de futuro** sí dice dónde estarán ("I'll be in Cartagena in April"), y **nombrar un
+  producto para preguntar su precio** sí es elegirlo ("cuánto cuesta el paquete de 5"). 19/20
+  frente a 15/20. Por eso `scripts/sonda_afirma_vs_pregunta.py` ya no es una sonda sino un **banco
+  de calibración** con los 20 casos reales: 10 s frente a los 20 min de una tanda del replay.
+- **Lo que queda señalado con el dedo**: de las 20 pérdidas frente al flag apagado, **11 no son de
+  la puerta de Jev** — ya estaban en v3 y las causa la verificación del arreglo 2 (el LLM no vuelve
+  a extraer "fundive" → buceo certificado). Y los 2 errores reales que quedan son de campos que la
+  puerta no vigila (`is_certified`, `group_size`): misma causa, misma solución, una pregunta más,
+  pero **calibrando cada campo antes**.
 - **Lo que sí queda en el código**: `verify_fields(..., as_answers=True)` (distinguir "confirma" de
   "no opina"; el contrato de siempre es el de por defecto, nada cambia sin el flag) y
   `scripts/replay_diff_triage.py`, que automatiza el apartado de ruido que `replay_diff` pide hacer a
   mano (sobre estos datos: 30 "INVENTADO" del juez → 16 a leer → 5 errores reales).
 - **Tests 24/24**, ruff y compileall limpios. Los 2 fallos de `test_conversational_core` son
   preexistentes (verificados en un worktree en `d3dc51e`).
+
+**⚠️ La suite se estaba corriendo mal, y no solo yo.** El `README` decía `pytest` a secas. Eso
+carga `.env` con la clave REAL, así que las redes de extracción y verificación hacen llamadas de
+verdad: ~20 min en vez de ~2, llamadas facturables y fallos no deterministas. CI lo hace bien
+(`ENV_FILE: .env.ci`, con una clave falsa que hace fallar rápido y ejercita el camino degradado).
+Consecuencias, todas comprobadas hoy:
+
+- Los "2 fallos preexistentes de `test_conversational_core`" que este banner daba por buenos **no
+  existen**: ese fichero pasa 237/237 en 9 s. Se medían en un worktree (que no lleva `.env`) contra
+  una ejecución con clave real, y se comparaban peras con manzanas.
+- Salió un fallo REAL que la clave viva tapaba: `test_en_una_pregunta_el_regex_no_escribe_datos` (de
+  los 16 de Gadea) **no sustituía el LLM**. Con clave real el LLM se abstenía y pasaba; con el LLM
+  caído, `verify_fields` devuelve `None` (contrato defensivo: un corte de red no puede tirar datos
+  buenos) y el `island` del regex sobrevivía. Arreglado: el test ahora es determinista, y hay uno
+  nuevo, `test_si_el_llm_no_contesta_no_se_tira_nada`, que fija a propósito el otro lado del
+  contrato. Con Jev contestando no hace falta llegar ahí: su `False` descarta el campo sin LLM.
+- `README` corregido: `ENV_FILE=.env.ci pytest`.
 
 **⚠️ Trampa de entorno encontrada al montar el escalón 0 (no es del repositorio, es de la máquina).**
 El Python global tiene una instalación editable (`site-packages/_editable_impl_diving_planet_bot.pth`)

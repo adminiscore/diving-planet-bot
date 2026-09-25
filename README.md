@@ -101,8 +101,11 @@ pip install -e ".[dev]"
 # 6. Load knowledge base embeddings
 python -m scripts.load_embeddings
 
-# 7. Run tests
-pytest
+# 7. Run tests — ENV_FILE matters. `.env.ci` carries a dummy OpenAI key, so the
+#    extraction/verification nets fail fast and the suite is deterministic (this is
+#    what CI does). Plain `pytest` picks up `.env`, hits the real API, and turns a
+#    ~2 min run into ~20 min of flaky, billable calls.
+ENV_FILE=.env.ci pytest
 
 # 8. Start the bot API
 ENV_FILE=.env.dev python -m src.main

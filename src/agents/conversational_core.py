@@ -1994,7 +1994,7 @@ async def _understand(state: ConversationState, message: str, *, answered_pendin
     # u3-4: turno con pregunta (solo con el flag: nadie lanza la respuesta sin él).
     question_turn_fields = None
     if _has_pending_answer(state):
-        question_turn_fields = _question_turn_fields(intent)
+        question_turn_fields = _question_turn_fields(intent, state)
         _named_certified_product_confirms_certification(state, message)
     state.mixed_nationality_notice = False
     # Un dato del mensaje que contradice lo guardado (tarea 7b): ver `_regex_contradictions`.
@@ -2912,7 +2912,7 @@ def _apply_question_turn_answers(intent, fields: list[str], answers: dict, messa
             intent.service_id = None
 
 
-def _question_turn_fields(intent) -> list[str]:
+def _question_turn_fields(intent, state: ConversationState) -> list[str]:
     """u3-4 arreglo 2: en un turno con pregunta, el regex LEE y el LLM VERIFICA.
 
     Historia, porque el diseño cambió dos veces con datos:
@@ -2933,17 +2933,37 @@ def _question_turn_fields(intent) -> list[str]:
       suponer. Así "reservaremos hotel en la isla" se guarda (el regex lo lee y el LLM lo
       confirma) y la hipótesis no.
 
-    Devuelve los campos a verificar. Los que el regex resolvió y NO se pueden verificar
-    (no están en `_VETO_FIELD_SPECS`: island, hotel, ages, last_dive_over_2_years) se
-    borran: si no se puede confirmar que el cliente lo afirma, no se guarda — que es la
-    regla entera de este arreglo. Con el flag apagado nada de esto corre.
+    - Escalón 0 de esa versión (25-sep): **tampoco cumple**. Verificar NO es una pregunta
+      cerrada: `verify_fields` vuelve a EXTRAER con el prompt de verificación, y para un
+      extractor "¿me recomiendas hoteles en la isla?" es una señal clara de `location=island`
+      (la definición del campo dice justo eso). Los 3 `location` que esa versión añadía eran
+      inventados. Meter el matiz en el prompt falló dos veces, con medida.
+    - Esta versión: la pregunta cerrada la contesta **Jev** (`affirms_location`,
+      `affirms_activity`), en la MISMA llamada del router, a coste 0 de peticiones. Sonda de
+      12 mensajes × 3 (`scripts/sonda_afirma_vs_pregunta.py`): 11/12, separando 0,07-0,48 los
+      que no afirman de 0,75-0,97 los que sí.
+
+    Devuelve los campos a verificar, y por el camino borra del `intent`:
+
+    - los que **Jev dice que el cliente no afirma** (`False`); si Jev está apagado o dudó en
+      alguna señal del router, la respuesta no llega y se sigue con la conducta de hoy —
+      ausente es "no lo sé", que NO es lo mismo que `False`;
+    - los que el regex resolvió y NO se pueden verificar (no están en `_VETO_FIELD_SPECS`:
+      island, hotel, ages, last_dive_over_2_years).
+
+    Si no se puede confirmar que el cliente lo afirma, no se guarda: es la regla entera de
+    este arreglo. Con el flag apagado nada de esto corre.
     """
     from src.agents import supervisor  # lazy
 
+    afirma = getattr(state, "_answer_affirms", None) or {}
     verificables = set(supervisor._VETO_FIELD_SPECS)
     a_verificar = []
     for f in sorted(_DRIVING_FIELDS & set(intent.detected_fields)):
-        if f in verificables:
+        if afirma.get(f) is False:
+            # Jev dice que el cliente NO lo afirma: lo nombra dentro de su pregunta.
+            logger.info(f"[EXTRACT][U3-4] campo={f} regex={getattr(intent, f, None)!r} descartado por Jev (no lo afirma)")
+        elif f in verificables:
             a_verificar.append(f)
             continue
         setattr(intent, f, [] if f == "ages" else None)
@@ -4503,6 +4523,16 @@ def _maybe_launch_answer(state: ConversationState, message: str, routing_signals
         return
     if not _turn_has_question(message, routing_signals):
         return
+    # u3-4 (25-sep): lo que Jev contestó sobre si el cliente AFIRMA el dato o solo lo nombra
+    # dentro de su pregunta. Se guarda aquí porque es el mismo sitio y el mismo turno en el que
+    # se decide que hay algo que contestar, y `_question_turn_fields` corre justo cuando esto
+    # existe. Un campo AUSENTE (Jev apagado, o dudó en el router) significa "no lo sé" -> la
+    # conducta de hoy; `False` significa "Jev dice que no lo afirma" -> el dato se cae.
+    state._answer_affirms = {
+        f: routing_signals[sig]
+        for f, sig in (("location", "affirms_location"), ("activity", "affirms_activity"))
+        if sig in routing_signals
+    }
     # La foto del historial se toma AQUÍ (lección de la carrera de l1-4): la tarea puede no
     # arrancar hasta después de que el bot meta otra cosa en el historial.
     state._pending_answer = asyncio.create_task(_rag_answer(state, message, history=list(state.history)))

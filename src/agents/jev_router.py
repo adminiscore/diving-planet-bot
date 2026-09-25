@@ -108,9 +108,55 @@ _ASKS_QUESTION_Q = {
 }
 
 
+# u3-4 (25-sep): la pregunta que NO existía en el sistema — ¿el cliente AFIRMA el dato, o
+# solo lo NOMBRA dentro de su pregunta? Ni el relleno ni la verificación la hacen: las dos son
+# extracción, y para un extractor "¿me recomiendas hoteles en la isla?" es una señal clara de
+# `location=island` (la definición del campo dice justo eso). Meter el matiz en el prompt falló
+# dos veces con medida (relleno 24-sep, verificación 25-sep). Jev sí la contesta: sonda de 12
+# mensajes × 3 (`scripts/sonda_afirma_vs_pregunta.py`), 11/12 y con márgenes anchos — 0,07-0,48
+# los que NO afirman frente a 0,75-0,97 los que sí. Van en la MISMA llamada del router, así que
+# no gastan ninguna petición de más, igual que `asks_question`.
+#
+# La redacción está CALIBRADA contra los casos reales del escalón 0, no escrita a ojo: la primera
+# versión descartaba de más (fijaba MENOS actividad que el propio flag apagado, y se comía datos
+# afirmados como "I plan on being in Cartagena and do scuba diving… I have open water" o "estaremos
+# en islas del rosario en junio"). Dos cosas lo arreglaron, las dos medidas: un plan de futuro
+# CUENTA como decir dónde estarán, y nombrar un producto para preguntar su precio CUENTA como
+# elegirlo (que es la regla de negocio del catálogo). 19/20 frente a 15/20 en
+# `scripts/sonda_afirma_vs_pregunta.py`.
+AFFIRMS_LOCATION = "affirms_location"
+AFFIRMS_ACTIVITY = "affirms_activity"
+AFFIRMS_MIN = 0.7  # mismo umbral alto que `asks_question`: ante la duda, la conducta de hoy
+_AFFIRMS_QUESTIONS = {
+    AFFIRMS_LOCATION: {
+        "type": "noul",
+        "instructions": (
+            "The customer tells us where THEY will be staying or will set out from for the diving "
+            "— a hotel, a city, an island. A future plan counts ('I'll be in Cartagena in April', "
+            "'estaremos en las islas en junio', 'reservaremos hotel en la isla'). It is FALSE when "
+            "the place appears ONLY inside what they are asking about: asking which hotels there "
+            "we recommend, wondering what if they stayed there, asking whether a place belongs to "
+            "an area, or saying where SOMEONE ELSE will be."
+        ),
+    },
+    AFFIRMS_ACTIVITY: {
+        "type": "noul",
+        "instructions": (
+            "The customer tells us which activity or course THEY want. Naming it to ask its price, "
+            "its availability or how to book it counts ('how much is the 5-dive package?', 'costo "
+            "de un fundive', 'quiero regalarle una experiencia de buceo'). It is FALSE when they "
+            "only raise it as a hypothesis ('in case I decided to do the Open Water course'), ask "
+            "whether it would be possible at all, or ask us to recommend an activity for them."
+        ),
+    },
+}
+# Las preguntas de u3-4 no son señales del router: su duda NO manda el turno al router LLM.
+_U34_QUESTIONS = (ASKS_QUESTION, AFFIRMS_LOCATION, AFFIRMS_ACTIVITY)
+
+
 def _questions_for_turn() -> dict:
     if settings.answer_and_continue:
-        return {**_QUESTIONS, ASKS_QUESTION: _ASKS_QUESTION_Q}
+        return {**_QUESTIONS, ASKS_QUESTION: _ASKS_QUESTION_Q, **_AFFIRMS_QUESTIONS}
     return _QUESTIONS
 
 
@@ -129,8 +175,8 @@ def uncertain_answers(answers: dict) -> list[str]:
     importan si ya está comparando, y eso lo decide `comparing`)."""
     doubts = []
     for name, a in answers.items():
-        # La pregunta de u3-4 no es una señal del router: su duda no manda el turno al LLM.
-        if name.startswith("opt_") or name == ASKS_QUESTION or not isinstance(a, dict):
+        # Las preguntas de u3-4 no son señales del router: su duda no manda el turno al LLM.
+        if name.startswith("opt_") or name in _U34_QUESTIONS or not isinstance(a, dict):
             continue
         if a.get("type") == "choice" and a.get("confidence", 1.0) < CHOICE_MIN_CONFIDENCE:
             doubts.append(f"{name}={a.get('choice')}@{a.get('confidence', 0):.2f}")
@@ -149,6 +195,13 @@ def answers_to_signals(answers: dict, threshold: float = THRESHOLD) -> dict:
         choice = (answers.get(name) or {}).get("choice")
         if choice and choice != "none":
             out[name] = choice
+    # u3-4: estas dos se emiten también en FALSE, a propósito. "ausente" (Jev apagado, o
+    # dudó en el router y el turno se fue al LLM) significa "no lo sé" -> conducta de hoy;
+    # `False` significa "Jev dice que el cliente NO lo afirma" -> el dato se cae. Son
+    # distintos y el llamante (`_question_turn_fields`) necesita distinguirlos.
+    for name in (AFFIRMS_LOCATION, AFFIRMS_ACTIVITY):
+        if name in answers:
+            out[name] = (answers.get(name) or {}).get("noul", 0.0) >= AFFIRMS_MIN
     if (answers.get("comparing") or {}).get("noul", 0.0) >= threshold:
         opts = [
             n[4:] for n, a in answers.items()
