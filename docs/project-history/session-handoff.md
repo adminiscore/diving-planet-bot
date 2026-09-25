@@ -93,8 +93,11 @@ ruta desde fuera de la raíz** (`python C:/algo/script.py`) importa `src` de jun
 así apareció, con un `ModuleNotFoundError: src.agents.jev_router` que no tenía sentido. Los comandos
 documentados (`python -m scripts.X` desde la raíz) **no** están afectados: el cwd va primero en
 `sys.path`. Ya le pasó a alguien en el refactor multi-agente (`docs/multi-agent-refactor-plan.md`,
-"Nota de entorno"), que lo resolvió renombrando el `.pth`. Regla práctica: **ejecutar siempre desde la
-raíz del repo con `python -m`**, y si hace falta lanzar por ruta, `PYTHONPATH=<raíz>`.
+"Nota de entorno"), que lo resolvió renombrando el `.pth`. **Arreglado en esta máquina** con
+`pip install -e . --no-deps` desde el repo vivo, que es lo que el `README` monta cuando se ejecuta
+en el sitio correcto; comprobado que el script que fallaba ya importa el `src` bueno. Regla
+práctica igualmente: **ejecutar siempre desde la raíz del repo con `python -m`**. Si alguien más
+tiene varios checkouts, que mire su `site-packages/_editable_impl_diving_planet_bot.pth`.
 
 ### ▶️ 2026-09-24 noche (Gadea → Álvaro / Gonzalo) — u3-4 "contesta y sigue": A/B hecho, faltan 2 arreglos
 

@@ -372,56 +372,46 @@ ahí. Por eso la lectura que decide es **por caso** y el recuento del juez tras 
 el agregado. Quien repita esto: con dos tandas de la MISMA versión se mediría el ruido de verdad
 (no se hizo hoy, por no gastar 20 min y otra tanda de peticiones en algo ya visible).
 
-## Siguiente paso (para quien siga) — actualizado 25-sep con la medida
+## Siguiente paso (para quien siga) — actualizado 25-sep, tarde
 
-**Estado.** Arreglo 1: hecho, y **sin medir** (el escalón 0 no lo puede medir: sustituye el RAG por
-un texto fijo; se mediría en el escalón 1). Arreglo 2: hecho, medido y **NO cumple** — ver "Escalón
-0 de los arreglos". El flag sigue apagado en el código y en el compose: PRE no ha cambiado.
+**Estado del código** (flag `answer_and_continue`, apagado en el código y en el compose; PRE no ha
+cambiado):
 
-**La causa, en una frase**: no existe en el sistema ninguna pregunta que distinga *afirmar* de
-*preguntar*. Ni el relleno ni la verificación la hacen — las dos son extracción, y un lugar
-nombrado dentro de una pregunta es, para un extractor, una señal clara. Meter el matiz en el prompt
-falló dos veces (relleno, 24-sep; verificación, 25-sep).
+1. **Arreglo 1** (si el RAG no sabe, su respuesta va sola): hecho. **Sin medir**, y no se puede
+   medir en el escalón 0 — el replay sustituye el RAG por un texto fijo que nunca es el fallback.
+   Se mide en el escalón 1.
+2. **Arreglo 2** (el regex lee, el LLM verifica): hecho, medido, **no cumplía solo**.
+3. **La puerta de Jev** (`affirms_location`, `affirms_activity`, misma llamada del router): hecho,
+   medido, **es lo que lo arregla**. Con las dos piezas: los 3 `location` inventados desaparecen,
+   el juez baja de 30 a 13 y los errores reales de 5 a 2.
 
-**Propuesta con medida previa: preguntárselo a Jev.** Jev contesta preguntas cerradas tipadas, y
-u3-4 ya le añadió una (`asks_question`) a la llamada del router **sin gastar ninguna petición de
-más**. Es exactamente la pregunta que falta. Sonda (12 mensajes × 3, `scripts/sonda_afirma_vs_pregunta.py`,
-0,30 s por pregunta, probabilidades estables ±0,03):
+**Lo que toca: escalón 1, SOLO ronda B.** Se compara con la ronda A del 24-sep
+(`2026-09-24-u34-A`, flag apagado); la latencia no hace falta repetirla porque por tipo de turno no
+cambió. Comandos en el banner de Gadea en el handoff. **Ojo con dos cosas antes de lanzarlo**:
 
-| pregunta | mensaje | p(afirma) | correcto |
-|---|---|---|---|
-| se aloja aquí | "What if I decide to **stay one day longer in rosario**…" | 0,46-0,48 | ✅ no |
-| se aloja aquí | "Do you **recommend any hotels on the island**…" | 0,07-0,10 | ✅ no |
-| se aloja aquí | "se quedar en **la isla** de apoyo?" (la madre) | 0,07-0,08 | ✅ no |
-| se aloja aquí | "I **am staying at Isla Grande**…" | 0,97 | ✅ sí |
-| se aloja aquí | "**reservaremos hotel en la isla**" | 0,75-0,78 | ✅ sí |
-| se aloja aquí | "**Estamos alojados en Bocagrande**" | 0,97 | ✅ sí |
-| se aloja aquí | "2 day dive package at **the rosario islands**, i'll be in cartagena" | 0,78-0,82 | ❌ (el destino no es el alojamiento) |
-| hace la actividad | "**in case I decided to** do PADI Open Water…" | 0,34-0,38 | ✅ no |
-| hace la actividad | "**Is it possible** for my son a PADi certificat?" | 0,34-0,35 | ✅ no |
-| hace la actividad | "trying to **checkout to take** PADI Open Water course" | 0,94-0,95 | ✅ sí |
-| hace la actividad | "**Quiero hacer** el paquete de 5 buceos" | 0,91-0,92 | ✅ sí |
-| hace la actividad | "**reservemos snorkel** para toda la familia" | 0,94-0,95 | ✅ sí |
+- enciende el flag en PRE (`docker-compose.vps.yml`) y un push a `feature/pre_gadea` despliega:
+  cambia lo que ve todo el mundo en PRE, así que se avisa antes;
+- una ronda core gasta una parte seria del presupuesto de peticiones del día.
 
-**11/12, y separa por márgenes anchos** (0,07-0,48 frente a 0,75-0,97), justo en los casos donde el
-extractor no distingue. El único fallo confunde destino con alojamiento, que es una ambigüedad real
-del campo, no de la pregunta.
+**Cuando se mire el resultado, leerlo por caso.** Jev no es determinista entre tandas (sección de
+arriba): el número de preguntas contestadas tiene ±5 de ruido. Dentro de una misma tanda, A frente
+a B, sí es comparable.
 
-Diseño que sugiere la medida: en un turno con pregunta, `_question_turn_fields` conserva un campo
-solo si Jev afirma su pregunta asociada (`location`/`detected_location` ← "se aloja aquí";
-`activity`/`service_id` ← "hace la actividad"), con el umbral alto que ya usa u3-4 (≥ 0,7) y la
-cascada de siempre (en la zona de duda, la conducta de hoy). El resto del arreglo 2 se queda como
-está: sin rellenar huecos, y los campos sin verificador se caen.
+**Lo que queda señalado, con evidencia y sin hacer:**
 
-**Antes de escribirlo, leer esto**: las dos sondas de hoy enseñan que una sonda de frases sueltas
-**no vale** — sin historial el LLM ya se abstenía en 2 de los 3 casos y la sonda medía otra cosa.
-Se valida con `scripts/replay_golden_local` (pasada `on`) + `scripts/replay_diff` +
-`scripts/replay_diff_triage`, leyendo a mano lo que queda, y comparando **por caso** contra
-`replay-on-v2.jsonl` y `replay-on.jsonl` (v3), no por el agregado.
-
-**Escalón 1 (cuando haya algo que promocionar)**: SOLO ronda B, se compara con la A del 24-sep
-(`2026-09-24-u34-A`); la latencia no hace falta repetirla. Comandos en el banner del handoff.
-
-El error de nacionalidad (`is_colombian` inventado desde una pregunta) sigue siendo de **u3-5**
-(decisión de Gadea, 24-sep) — y la sonda de Jev sugiere que es la misma causa y tendría la misma
-solución: una pregunta cerrada "¿afirma su nacionalidad?" en la misma llamada.
+- **Los 2 errores reales que sobreviven son de campos que la puerta NO vigila** (`is_certified` en
+  "in case I decided to do PADI Open Water", `group_size` en un mensaje con 2 personas). Misma
+  causa, misma solución —una pregunta más a Jev, en la misma llamada, coste 0— pero **calibrando
+  cada campo antes** contra casos reales: esa es la lección de v4, que con la redacción escrita a
+  ojo fijaba menos actividad que el propio flag apagado. El banco está en
+  `scripts/sonda_afirma_vs_pregunta.py`; añadir casos y comparar cuesta 10 s.
+- **`is_colombian` sigue siendo u3-5** (decisión de Gadea, 24-sep): 3 de los 7 casos que quedan a
+  leer son suyos. La sonda de Jev sugiere que es la misma familia y tendría la misma solución.
+- **Sin explicar**: "Quería averiguar por el costo de un **fundive**" pierde `certified_diving` en
+  v3, v5 y v6 por igual, así que no lo causa ni la verificación ni la puerta. En el banco de
+  calibración, Jev contesta 0,96 a esa misma frase. Hay algo en medio que no está entendido.
+- **Recuperar las respuestas de Jev cuando duda en el router**: hoy, si Jev duda en cualquier señal
+  del router, el turno se va al router LLM y las respuestas de `affirms_*` se pierden (~8 % de los
+  turnos) — se cae a la conducta de hoy, que es seguro pero desaprovecha una respuesta buena.
+  `asks_question` sí se rescata; estas no, porque hacerlo obliga a cambiar la firma de
+  `detect_routing_signals_jev_full`. Es una mejora pequeña y acotada.
