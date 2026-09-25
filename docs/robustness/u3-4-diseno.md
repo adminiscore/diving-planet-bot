@@ -407,6 +407,20 @@ volver sin reabrir ese agujero, porque `is_certified` solo se rellenaría con su
 nueva se calibra antes en `scripts/sonda_afirma_vs_pregunta.py` (lección de v4), lo que exige
 `OPENROUTER_API_KEY`.
 
+**⚠️ Corrección a la propuesta (misma tarde): Jev solo ve el mensaje ACTUAL; el relleno lee el
+historial.** Pasar por la puerta un valor que el relleno sacó de un turno anterior lo tiraría aunque
+el cliente lo hubiera dicho: es justo `principiante#4` ("for 1 person" está en el turno 1). Así que la
+puerta solo vale para valores que salen del mensaje de ESTE turno. Con eso la propuesta recupera
+**2 de los 3** datos reales ("fundive" y "el sábado pasado hicimos 2 buceos"), no los 3. Para lo que
+viene del historial hace falta otra regla; una candidata es pedir al relleno que diga de qué turno
+sale el dato, como ya hace `evidence` con los booleanos. Y `last_dive_over_2_years` tiene **un solo
+caso real** con pregunta en el golden: no da para calibrar su pregunta todavía.
+
+**Calibración hecha para los otros tres campos (u3-5, 25-sep, tarde)**: `is_certified`, `group_size`
+e `is_colombian` ya tienen pregunta candidata medida en el banco (`python -m
+scripts.sonda_afirma_vs_pregunta u35`): **66/67** sobre casos reales, con 28 de ellos no usados para
+escribir ninguna frase de las redacciones. Aún NO están en el código. Detalle en HISTORY 0.29.24.
+
 ### ⚠️ Jev no es determinista entre tandas, y eso cambia cómo se leen estas tablas
 
 Comparando v5 y v6, **9 turnos cambian en si la pregunta se contesta o no, en las dos direcciones**
@@ -458,7 +472,11 @@ a B, sí es comparable.
 - **Explicado (25-sep, tarde): "fundive"** se pierde porque en un turno con pregunta **no se
   rellenan huecos** y el regex no lee "fundive" junto. Es una familia: 4 de las 12 pérdidas
   estrictas de v5 (3 datos reales y 1 acierto). Propuesta: rellenar solo los campos con puerta de
-  Jev y pasar lo rellenado por la puerta. Sección "Explicado" más arriba.
+  Jev y pasar por la puerta lo rellenado **desde el mensaje actual** (Jev no ve el historial).
+  Sección "Explicado" más arriba.
+- **Las preguntas para `is_certified`, `group_size` e `is_colombian` ya están calibradas** (u3-5,
+  66/67 en el banco, `u35`), pero NO están en el código. Siguiente paso tras la ronda B: meterlas en
+  `jev_router` detrás del flag, repetir el escalón 0 y leer por caso.
 - **Recuperar las respuestas de Jev cuando duda en el router**: hoy, si Jev duda en cualquier señal
   del router, el turno se va al router LLM y las respuestas de `affirms_*` se pierden (~8 % de los
   turnos) — se cae a la conducta de hoy, que es seguro pero desaprovecha una respuesta buena.

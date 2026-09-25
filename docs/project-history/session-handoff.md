@@ -33,6 +33,12 @@ Read this file before changing code in the Diving Planet Bot. For a quick versio
   con pregunta no se rellenan huecos, y el regex no lee "fundive" junto. Es una familia de 4 de las 12
   pérdidas estrictas de v5 (3 datos reales, 1 acierto). Propuesta para DESPUÉS de la ronda B: rellenar
   solo los campos con puerta de Jev y pasar lo rellenado por la puerta. Código sin tocar.
+  **Corrección**: Jev no ve el historial, así que solo vale para valores del mensaje actual (recupera
+  2 de los 3, no "for 1 person" dicho en el turno 1).
+- **u3-5 calibrada, NO en el código** (HISTORY 0.29.24): preguntas de Jev para `is_certified`,
+  `group_size` e `is_colombian`, **66/67** en `python -m scripts.sonda_afirma_vs_pregunta u35`.
+  Siguiente paso tras la ronda B de u3-4: meterlas en `jev_router` detrás del flag, escalón 0, leer por
+  caso.
 
 ### 🔧 2026-09-25 (Gonzalo) — u3-4: el arreglo 2 NO cumplía; la causa, encontrada y arreglada con Jev
 

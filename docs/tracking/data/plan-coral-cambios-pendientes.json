@@ -39,6 +39,16 @@
         "byLabel": "Alvaro (con Claude)",
         "text": "25-sep: u3-4, explicado el caso 'costo de un fundive' que quedaba sin explicar (HISTORY 0.29.23). No es la verificacion ni la puerta de Jev: en un turno con pregunta no se rellenan huecos (arreglo 2), asi que solo sobrevive lo que lee el regex, y el regex no lee 'fundive' junto ('fun dive' separado si). Es una familia: 4 de las 12 perdidas estrictas de v5 (3 datos reales y 1 acierto: en 'que actividad le recomiendan' el camino apagado se inventaba snorkel). Propuesta para DESPUES de la ronda B: rellenar solo los campos con puerta de Jev y pasar lo rellenado por la puerta. Codigo sin tocar."
       }
+    },
+    {
+      "coleccion": "log",
+      "operacion": "set",
+      "doc_id": "l-0925-alvaro-u35-calibracion",
+      "campos": {
+        "at": "2026-09-25T19:30:00Z",
+        "byLabel": "Alvaro (con Claude)",
+        "text": "25-sep: u3-5, preguntas de Jev para is_certified, group_size e is_colombian CALIBRADAS en el banco (python -m scripts.sonda_afirma_vs_pregunta u35): 66/67 sobre casos reales del golden, 28 de ellos no usados para escribir ninguna frase. Aun NO en el codigo: van despues de la ronda B de u3-4 (detras del flag, escalon 0, leer por caso). Correccion a la propuesta del 'fundive': Jev no ve el historial, asi que la puerta solo vale para valores del mensaje actual (recupera 2 de los 3 datos reales). HISTORY 0.29.24."
+      }
     }
   ]
 }

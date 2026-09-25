@@ -1,6 +1,15 @@
 History
 =======
 
+0.29.24 - (2026-09-25)
+----------------------
+* **u3-5 · preguntas de Jev para certificado, grupo y nacionalidad: CALIBRADAS en el banco, aún no en el código.** Son los 2 errores reales que sobreviven a u3-4 v5 (`is_certified` en "in case I decided to do PADI Open Water", `group_size` en "is it possible for my son…?") y las nacionalidades inventadas de u3-5 ("¿cuál es el costo para colombianos?" → colombiano): la misma familia que la puerta ya arregla para lugar y actividad. Misma solución, una pregunta más en la misma llamada del router (coste 0), calibrada ANTES de tocar el código (lección de v4).
+* **Resultado: 66/67** (`python -m scripts.sonda_afirma_vs_pregunta u35`, N=2, umbral 0,7): certificado 15/15, grupo 12/12, nacionalidad 12/12 sobre los casos de calibración, y certificado 14/15, grupo 13/13 sobre 28 casos que no se usaron para escribir ninguna frase. Todos son reales del golden, etiquetados a mano ("¿lo dice ESTE mensaje?"), con trampas incluidas: "solo el buceo doble" ("solo" es "únicamente"), "dos días" (no son personas), "tarifa para colombianos, somos de Bogotá" (pregunta y afirma a la vez).
+* **Honestidad sobre ese 14/15 y 13/13**: ninguna frase suya se copió en las redacciones, pero las reglas de la v2 se escribieron DESPUÉS de leerlos. No son una prueba ciega; la ciega es el replay del golden. Y la v1, con ejemplos copiados de los casos, era PEOR en los nuevos (13/15): copiar frases del banco en la pregunta no generaliza.
+* **Jev baila más de lo anotado** en los casos frontera: "quiero bucear certificado" dio 0,79 y 0,67 en la misma tanda (el banco decía ±0,03).
+* **Corregida la propuesta del "fundive" (0.29.23)**: Jev solo ve el mensaje actual y el relleno lee el historial, así que la puerta no puede filtrar un valor que venga de un turno anterior (sería perder "for 1 person" de `principiante#4`). La propuesta recupera 2 de los 3 datos reales, no los 3. `last_dive_over_2_years` tiene un solo caso real con pregunta: no da para calibrar.
+* **Mi `.env.dev` medía con otro modelo**: sin `OPENAI_MODEL`, el código usa `gpt-4o`. Corregido antes de medir nada (ver 0.29.22). Jev no depende de eso: va por OpenRouter.
+
 0.29.23 - (2026-09-25)
 ----------------------
 * **u3-4 · explicado el caso que quedaba "sin explicar": "costo de un fundive" pierde la actividad por el relleno de huecos, no por la verificación ni por la puerta.** En un turno con pregunta no se rellenan huecos (arreglo 2), así que solo sobrevive lo que lee el regex, y el regex no lee "fundive" junto (con "fun dive" separado sí). Jev da 0,96 en el banco, pero la puerta solo filtra lo que alguien propone, y aquí no lo propone nadie.
