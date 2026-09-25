@@ -13,6 +13,29 @@ Read this file before changing code in the Diving Planet Bot. For a quick versio
 
 > **📏 LEER ANTES DE MEDIR — decisiones del 24-sep-2026 (Gadea):** (1) latencia y llamadas con nuestros logs `[TURN_METRICS]` + `scripts/turn_metrics.py`, no con Langfuse (plan gratuito superado, reinicio 16-oct); (2) pruebas A/B por escalones, juzgando solo los diálogos que cambian. Todo en `docs/robustness/protocolo-medicion.md`.
 
+### 🚨 2026-09-25 noche (Álvaro) — CI estaba ROTO desde el 24-sep y PRE no se actualizaba
+
+**Qué pasaba:** desde el 24-sep a las 23:04 UTC **todos** los pushes fallaban en CI, en el paso
+`Run DB migrations` (`alembic upgrade head`), y el job `Deploy to PRE` se **saltaba en silencio**.
+PRE se quedó en `d3dc51e` (24-sep, 19:04): nada de lo subido después llegó a PRE (los arreglos de
+u3-4 de Gonzalo incluidos). No afectó a ninguna medida: las del 25-sep fueron locales (escalón 0).
+
+**Causa (reproducida):** SQLAlchemy **2.1.0** salió el 24-sep a las 20:36 UTC, justo entre el último
+CI verde (19:04) y el primero rojo (23:04). `pyproject.toml` pedía `sqlalchemy>=2.0.0` sin techo, así
+que CI instaló la 2.1, que **ya no instala `greenlet`** sola; `alembic/env.py` usa
+`sqlalchemy.ext.asyncio`, que lo necesita → `ImportError`. Con 2.1.1 falla, con 2.0.51 (la del lock)
+pasa. No era culpa de ningún commit.
+
+**Arreglo:** `"sqlalchemy[asyncio]>=2.0.0,<2.1"` (la línea probada + `greenlet` declarado). Subir a
+2.1 es un cambio aparte, con su prueba. El bot en marcha no usa el modo asíncrono de SQLAlchemy, así
+que PRE no se habría caído, pero sí habría recibido una versión mayor sin probar.
+
+**Cómo verlo la próxima vez (no hace falta `gh` ni ser admin):**
+`curl -s "https://api.github.com/repos/adminiscore/diving-planet-bot/actions/runs?branch=<rama>&per_page=3"`
+muestra `conclusion` de cada run. **Tras cada push a `pre_*`, comprobad que el deploy corrió**: un CI
+rojo lo salta sin avisar. Y el SHA que sirve PRE:
+`ssh -i ~/.ssh/dp_pre_vps root@89.167.4.161 "cd /opt/diving-planet-bot && git log --oneline -1"`.
+
 ### 🧹 2026-09-25 tarde (Álvaro) — s4-5 cerrada como se puede cerrar + plantillas `.env` arregladas
 
 - **`langsmith` no se puede quitar**: la exige `langchain-core`. Se queda pineada (reproducibilidad).

@@ -1,6 +1,13 @@
 History
 =======
 
+0.29.27 - (2026-09-25)
+----------------------
+* **CI llevaba ROTO desde el 24-sep a las 23:04 UTC, y PRE no se actualizaba.** Todos los pushes fallaban en `Run DB migrations` y el job `Deploy to PRE` se saltaba sin avisar: PRE se quedó en `d3dc51e` (24-sep, 19:04) y no recibió nada posterior, los arreglos de u3-4 de Gonzalo incluidos. No afectó a ninguna medida (las del 25-sep fueron locales). Se descubrió al subir la ronda B de u3-4 y ver que PRE no cambiaba.
+* **Causa, reproducida:** SQLAlchemy 2.1.0 salió el 24-sep a las 20:36 UTC, entre el último CI verde y el primero rojo. `pyproject.toml` pedía `sqlalchemy>=2.0.0` sin techo; la 2.1 ya no instala `greenlet` sola y `alembic/env.py` usa `sqlalchemy.ext.asyncio`, que lo necesita → `ImportError`. Con 2.1.1 falla; con 2.0.51 (la del lock) pasa. No era culpa de ningún commit.
+* **Arreglo:** `"sqlalchemy[asyncio]>=2.0.0,<2.1"`, la línea probada con `greenlet` declarado. Subir a 2.1 queda como cambio aparte, con su prueba. Verificado reproduciendo CI en un entorno limpio (Python 3.12, `pip install -e ".[dev]"`): SQLAlchemy 2.0.54 + greenlet, ruff y compileall limpios, `alembic upgrade head` (offline) genera sus 87 líneas, y los tests de CI dan 876 passed / 17 skipped.
+* **Lección:** un CI rojo se salta el deploy en silencio y nadie lo vio en un día entero. Tras cada push a `pre_*` hay que comprobar que el deploy corrió; el handoff explica cómo sin `gh` ni permisos de admin (la API pública de runs de GitHub, y el SHA que sirve PRE por SSH).
+
 0.29.26 - (2026-09-25)
 ----------------------
 * **Los modelos de PRE quedan versionados y son el valor por defecto del código.** Confirmados los 6 en el contenedor de PRE (`gpt-4o-mini`, `gpt-4o-mini`, `gpt-4.1-mini`, `text-embedding-3-small`, `gpt-4o-mini-transcribe`, `typesafe/jev-1.13`). Dos cambios, decididos por el owner:

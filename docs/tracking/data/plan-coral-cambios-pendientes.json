@@ -49,6 +49,16 @@
         "byLabel": "Alvaro (con Claude)",
         "text": "25-sep: u3-5, preguntas de Jev para is_certified, group_size e is_colombian CALIBRADAS en el banco (python -m scripts.sonda_afirma_vs_pregunta u35): 66/67 sobre casos reales del golden, 28 de ellos no usados para escribir ninguna frase. Aun NO en el codigo: van despues de la ronda B de u3-4 (detras del flag, escalon 0, leer por caso). Correccion a la propuesta del 'fundive': Jev no ve el historial, asi que la puerta solo vale para valores del mensaje actual (recupera 2 de los 3 datos reales). HISTORY 0.29.24."
       }
+    },
+    {
+      "coleccion": "log",
+      "operacion": "set",
+      "doc_id": "l-0925-alvaro-ci-roto",
+      "campos": {
+        "at": "2026-09-25T21:45:00Z",
+        "byLabel": "Alvaro (con Claude)",
+        "text": "25-sep noche: CI estaba ROTO desde el 24-sep 23:04 UTC y el deploy a PRE se saltaba en silencio: PRE se quedo en d3dc51e y no recibio nada posterior (los arreglos de u3-4 incluidos; ninguna medida afectada, fueron locales). Causa reproducida: SQLAlchemy 2.1.0 (salio el 24-sep 20:36 UTC) ya no instala greenlet y alembic/env.py lo necesita. Arreglo: sqlalchemy[asyncio]>=2.0.0,<2.1. Verificado reproduciendo CI en entorno limpio: 876 passed. HISTORY 0.29.27. Leccion: tras cada push a pre_* comprobar que el deploy corrio (como, en el handoff)."
+      }
     }
   ]
 }

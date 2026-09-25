@@ -26,7 +26,13 @@ dependencies = [
     "pydantic-settings>=2.7.0",
 
     # --- Database ---
-    "sqlalchemy>=2.0.0",
+    # Techo <2.1 y extra [asyncio] (2026-09-25): SQLAlchemy 2.1.0 salio el 24-sep a las
+    # 20:36 UTC y desde entonces CI fallaba en `alembic upgrade head` -- la 2.1 ya no
+    # instala greenlet sola, y alembic/env.py usa sqlalchemy.ext.asyncio, que lo
+    # necesita. Reproducido: con 2.1.1 ImportError, con 2.0.51 (la del lock) pasa. Sin
+    # techo, el siguiente build de PRE habria metido una version MAYOR sin probar.
+    # Subir a 2.1 es un cambio aparte, con su propia prueba.
+    "sqlalchemy[asyncio]>=2.0.0,<2.1",
     "asyncpg>=0.30.0",
     "alembic>=1.14.0",
 
