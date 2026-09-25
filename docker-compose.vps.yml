@@ -149,7 +149,10 @@ services:
       # u3-4 (24-sep): contesta y sigue (ver docs/robustness/u3-4-diseno.md). A/B escalon 1:
       # +2 dialogos core pero 3 regresiones con causa -> NO promocionado, APAGADO hasta los
       # dos arreglos del doc. Para la siguiente ronda B: poner "true" + redeploy.
-      ANSWER_AND_CONTINUE: "false"
+      # 25-sep (Alvaro): ENCENDIDO para la ronda B del escalon 1 con v5 (arreglo 1 +
+      # arreglo 2 + puerta de Jev). Se compara con 2026-09-24-u34-A. Si hay regresiones
+      # propias, se vuelve a "false" en el mismo dia. Revert = "false" + redeploy.
+      ANSWER_AND_CONTINUE: "true"
       # Refactor multi-agente (docs/multi-agent-refactor-plan.md) — validación en
       # PRE antes del corte del legacy (Fase 5.2). STAGE B (ahora): el GRAFO sirve
       # de verdad (agent_arch on) — router → 5 nodos reales + subgrafo booking. La
