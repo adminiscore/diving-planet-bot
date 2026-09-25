@@ -27,6 +27,11 @@
 
 > **📏 Cómo se mide desde el 24-sep-2026 (decisiones de Gadea, para todo el equipo):** la latencia y las llamadas se sacan de nuestros logs (`[TURN_METRICS]` + `scripts/turn_metrics.py`) hasta que vuelva Langfuse (plan gratuito superado, reinicio 16-oct); y las pruebas A/B van por escalones (local → 1+1 juzgando solo lo que cambia → 2+2 si hay dudas; ronda completa solo al cerrar fase). Detalle: **`docs/robustness/protocolo-medicion.md`**.
 
+> **▶️ Estado a 26-sep-2026 (Álvaro):** L1 cerrada; U3 en marcha. u3-4 ("contesta y sigue") medida en PRE
+> con v5 y **no promocionada** (4 mejoras, 3 regresiones con causa, ya en el banco de calibración);
+> u3-5 calibrada pero aún fuera del código; CI arreglado (llevaba roto desde el 24-sep); modelos fijados.
+> Qué toca y cómo: bloque **"PARA SEGUIR"** al principio de `docs/project-history/session-handoff.md`.
+
 ---
 
 ## PARTE 0 — Estado actual: qué tenemos / qué falta (leer primero)

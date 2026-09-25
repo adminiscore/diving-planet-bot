@@ -13,6 +13,69 @@ Read this file before changing code in the Diving Planet Bot. For a quick versio
 
 > **📏 LEER ANTES DE MEDIR — decisiones del 24-sep-2026 (Gadea):** (1) latencia y llamadas con nuestros logs `[TURN_METRICS]` + `scripts/turn_metrics.py`, no con Langfuse (plan gratuito superado, reinicio 16-oct); (2) pruebas A/B por escalones, juzgando solo los diálogos que cambian. Todo en `docs/robustness/protocolo-medicion.md`.
 
+### ▶️ PARA SEGUIR — cierre del 25/26-sep (Álvaro). Leer esto primero
+
+**Estado de PRE** (`dp-pre-bot`, verificado por SSH): rama **`feature/pre_alvaro`**. Encendidos
+`AGENT_ARCH`, `JEV_ROUTER_ENABLED`, `NOTES_IN_PARALLEL`, `ACK_IN_PARALLEL`; **`ANSWER_AND_CONTINUE`
+apagado**. Modelos fijados en `docker-compose.vps.yml` (mapa: `README.md`, "LLM models").
+Base de conocimiento: 718 documentos.
+
+**Ramas.** `pre_alvaro` = todo `pre_gadea`/`l1_gonzalo` (`cb4415d`) + los commits de esta sesión. **Antes de
+seguir desde `pre_gadea`, integrad `pre_alvaro`** (`git merge --ff-only origin/feature/pre_alvaro`, es un
+avance limpio). Lleva el arreglo de CI: sin él, CI falla y **el deploy a PRE se salta sin avisar**. Ojo,
+un push a cualquier `pre_*` despliega esa rama en el MISMO PRE.
+
+**Qué se hizo** (detalle en HISTORY y en los bloques de abajo):
+
+| Versión | Qué |
+|---|---|
+| 0.29.22 | s4-5: `langsmith` no se puede quitar (la exige `langchain-core`); plantillas `.env` sin LangSmith y con la config de PRE |
+| 0.29.23 | u3-4: explicado el "fundive" (en turno con pregunta no se rellenan huecos y el regex no lo lee) |
+| 0.29.24 | u3-5: preguntas de Jev para certificado, grupo y nacionalidad calibradas en el banco (aún no en el código) |
+| 0.29.25-26 | Modelos: inventario verificado, fijados en el compose, y el valor por defecto del código = PRE (`tests/test_models_pinned.py`) |
+| 0.29.27 | **CI roto desde el 24-sep 23:04 UTC** por SQLAlchemy 2.1 → arreglado (`sqlalchemy[asyncio]>=2.0.0,<2.1`) |
+| 0.29.28 | **u3-4 ronda B2 en PRE: NO se promociona**. 4 mejoras reales, 3 regresiones propias con causa, ya en el banco |
+
+**Siguiente, en orden** (u3-4 + u3-5; detalle en `docs/robustness/u3-4-diseno.md`, "Siguiente paso tras
+la ronda B2"):
+1. Recalibrar `affirms_activity` con el caso nuevo del banco. Hoy `python -m scripts.sonda_afirma_vs_pregunta u34`
+   da 19/21, y hay que llegar a 21/21 sin romper los demás.
+2. Meter en `src/agents/jev_router.py` las 3 candidatas de u3-5 (`U35_CANDIDATAS` en el banco), detrás del
+   mismo flag, y usar la de certificado también para filtrar las contradicciones de datos ya guardados
+   (mata el "¿lo cambio?" fantasma).
+3. Relleno con puerta en turnos con pregunta: solo campos con pregunta de Jev y solo con datos del
+   mensaje actual.
+4. Escalón 0 (replay local) → ronda B3 frente a `2026-09-24-u34-A` → leer caso a caso con el log de PRE.
+
+Con más peso cuando u3-4 se encienda (el RAG contesta +12 turnos): l1-6/l1-7 (el RAG no sabe o inventa)
+y s4-7 (a "¿cómo pago?" el RAG dice "te lo enviará un asesor" aunque el enlace ya se dio).
+
+**Cómo se midió la ronda B2** (para repetirla tal cual; todo con `ENV_FILE=.env.dev`):
+```
+python -m scripts.sonda_afirma_vs_pregunta [u34|u35]                        # banco de Jev, ~10-35 s
+# flag a "true" en docker-compose.vps.yml -> commit -> push a pre_* -> esperar deploy (ver abajo)
+python -m scripts.run_synthetic_pre --name u34-B3 --sample core             # ~15 min, sin pushes mientras corre
+python -m scripts.turn_metrics --label "u3-4 B3" --from-run docs/robustness/synthetic-runs/<fecha>-u34-B3.jsonl --out docs/robustness/snapshots/<fecha>-u34-B3.json
+python -m scripts.judge_golden_set --run docs/robustness/synthetic-runs/<fecha>-u34-B3.jsonl   # ~17 min, ~0,4 $
+python -m scripts.ab_judge_compare 2026-09-24-u34-A <fecha>-u34-B3
+```
+Antes del siguiente push, guardad las líneas del log de PRE que expliquen cada regresión: se borran en
+cada deploy. `u3-4/logs-pre-ronda-B2.txt` es el ejemplo.
+
+**Comprobar que un push SÍ desplegó** (sin `gh` ni permisos de admin):
+```
+curl -s "https://api.github.com/repos/adminiscore/diving-planet-bot/actions/runs?branch=feature/pre_alvaro&per_page=1"   # conclusion: success
+ssh -i ~/.ssh/dp_pre_vps root@89.167.4.161 "cd /opt/diving-planet-bot && git log --oneline -1 && docker exec dp-pre-bot python -c 'from src.config import settings as s; print(s.answer_and_continue)'"
+```
+
+**Trampas nuevas de esta sesión:**
+- Un CI rojo **se salta el deploy en silencio**; PRE estuvo día y medio con código viejo.
+- Tests siempre con `ENV_FILE=.env.ci` (sin él se carga `.env` con clave real).
+- Jev baila más de ±0,03 en los casos frontera ("quiero bucear certificado": 0,79 y 0,67 en la misma tanda).
+- El agregado del juez puede empatar y esconder mejoras y regresiones reales: **leer por caso**.
+- **Plan Coral**: 7 cambios en `docs/tracking/data/plan-coral-cambios-pendientes.json` para volcar a la
+  página. Desde la sesión de Álvaro no se puede escribir en ella (es de otra organización).
+
 ### 🧪 2026-09-25 noche (Álvaro) — u3-4 ronda B2 en PRE: v5 NO se promociona (flag apagado)
 
 - **Resultado** (HISTORY 0.29.28; detalle y tabla caso a caso en `docs/robustness/u3-4-diseno.md`,
