@@ -339,6 +339,39 @@ Y los **2 errores reales** que quedan son de campos que la puerta NO vigila (`is
 `group_size`): misma causa, misma solución, una pregunta más — pero cada campo hay que calibrarlo
 contra casos reales antes, que es la lección de v4.
 
+### v6 — quitar la verificación y dejar solo la puerta: **medido y negativo**
+
+La atribución de arriba señalaba a la verificación (11 de las 20 pérdidas), así que se probó
+quitarla: en un turno con pregunta decide Jev y lo demás se queda como lo leyó el regex, **sin
+segunda llamada** (más barato y más rápido, además).
+
+| | GANA | PIERDE | juez "inventado" | a leer |
+|---|---|---|---|---|
+| v5 (puerta + verificación) | 69 | 33 | **13** | **7** |
+| v6 (solo puerta) | 97 | 31 | 19 | 9 |
+
+Recupera datos —`regateo-grupo-6#1` vuelve a guardar `is_certified=True` como el flag apagado, y
+`referral…#2` queda idéntico a `off`— **pero devuelve inventados**: 19 frente a 13. Las dos piezas
+hacen trabajo: la puerta de Jev decide si el cliente lo afirma, y la verificación arregla lo que el
+regex leyó mal. **Se revierte y se queda v5.** Evidencia: `replay-on-v6.jsonl`, `diff-v6.json`.
+
+Un aviso que salió de aquí: la hipótesis era que la verificación causaba esas 11 pérdidas, y **era
+falsa en al menos un caso** — "costo de un fundive" → `certified_diving` se pierde igual en v3, v5 y
+v6, así que no la causa ninguna de las dos piezas. Sigue sin explicar.
+
+### ⚠️ Jev no es determinista entre tandas, y eso cambia cómo se leen estas tablas
+
+Comparando v5 y v6, **9 turnos cambian en si la pregunta se contesta o no, en las dos direcciones**
+— y el cambio de v6 no toca ese camino. Es varianza de Jev: `asks_question` cae cerca del umbral
+(0,7) y baila entre tandas. El titular "94 → 123 preguntas contestadas" tiene por tanto un ruido de
+**±5**, y las comparaciones del número de contestadas ENTRE versiones a esa resolución no
+significan nada (dentro de una misma tanda, off frente a on, sí: es la misma).
+
+Arrastra también a `GANA`/`PIERDE`: si un turno se contesta o no, el estado diverge a partir de
+ahí. Por eso la lectura que decide es **por caso** y el recuento del juez tras apartar el ruido, no
+el agregado. Quien repita esto: con dos tandas de la MISMA versión se mediría el ruido de verdad
+(no se hizo hoy, por no gastar 20 min y otra tanda de peticiones en algo ya visible).
+
 ## Siguiente paso (para quien siga) — actualizado 25-sep con la medida
 
 **Estado.** Arreglo 1: hecho, y **sin medir** (el escalón 0 no lo puede medir: sustituye el RAG por

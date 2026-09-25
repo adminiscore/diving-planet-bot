@@ -46,6 +46,16 @@ paso", reescrito con la medida). Lo esencial:
   producto para preguntar su precio** sí es elegirlo ("cuánto cuesta el paquete de 5"). 19/20
   frente a 15/20. Por eso `scripts/sonda_afirma_vs_pregunta.py` ya no es una sonda sino un **banco
   de calibración** con los 20 casos reales: 10 s frente a los 20 min de una tanda del replay.
+- **Probado y NEGATIVO (v6): quitar la verificación y dejar solo la puerta.** Recupera datos (97
+  ganados frente a 69) pero **devuelve inventados**: el juez sube de 13 a 19. Las dos piezas hacen
+  trabajo distinto — la puerta decide si el cliente lo afirma, la verificación arregla lo que el
+  regex leyó mal. Revertido; se queda v5.
+- **⚠️ Jev no es determinista entre tandas.** Comparando v5 y v6, **9 turnos cambian en si la
+  pregunta se contesta, en las dos direcciones**, y el cambio de v6 no toca ese camino:
+  `asks_question` cae cerca del umbral 0,7 y baila. El "94 → 123 contestadas" tiene un ruido de
+  **±5**, así que comparar ese número ENTRE tandas no significa nada (dentro de una tanda, off
+  frente a on, sí). Lo que decide es la lectura **por caso** y el recuento del juez tras apartar el
+  ruido, no el agregado.
 - **Lo que queda señalado con el dedo**: de las 20 pérdidas frente al flag apagado, **11 no son de
   la puerta de Jev** — ya estaban en v3 y las causa la verificación del arreglo 2 (el LLM no vuelve
   a extraer "fundive" → buceo certificado). Y los 2 errores reales que quedan son de campos que la
