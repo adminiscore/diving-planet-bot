@@ -420,6 +420,8 @@ mantenerlos separados (más simple de razonar, cada uno con su propio contrato).
 fusión arriesgada): el extractor pasa a un modelo dedicado más barato y rápido,
 `settings.extraction_model` (default `gpt-4o-mini`), separado de `settings.openai_model`
 (gpt-4o, que sigue en el orquestador para su tarea más difícil de decidir acción).
+*(Nota 25-sep: el orquestador se retiró —commit `308488d`— y en PRE `OPENAI_MODEL=gpt-4o-mini`.
+Mapa actual de modelos: `README.md`, "LLM models".)*
 
 - Medido en `docs/robustness/eval-set.json` (64 casos): **gpt-4o-mini = 98.4%** vs
   **gpt-4o = 99.2%**. La única diferencia es **1 `missed` de más** (se abstiene en un caso

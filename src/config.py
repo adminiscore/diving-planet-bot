@@ -12,10 +12,14 @@ class Settings(BaseSettings):
 
     # --- OpenAI ---
     openai_api_key: str = ""
+    # OJO: este default NO es el de PRE. PRE fija OPENAI_MODEL=gpt-4o-mini en .env.pre;
+    # un entorno que no lo fije mide con gpt-4o, o sea otro bot. Mapa de modelos:
+    # README.md, "LLM models". Hoy lo usan condense_query, el juez de grounding, el
+    # detector de idioma, el resumen y la respuesta del RAG si RAG_ANSWER_MODEL esta vacio.
     openai_model: str = "gpt-4o"
     # Model for the narrow, structured LLM gap-filler extractor
     # (src/agents/llm_extractor.py, robustness Fases 1-3). Kept SEPARATE from
-    # openai_model (used by the action orchestrator): the extraction is a small
+    # openai_model (then used by the action orchestrator, retired in 308488d): the extraction is a small
     # forced-tool-call task where a cheaper/faster model suffices. Measured on
     # docs/robustness/eval-set.json (64 cases): gpt-4o-mini = 98.4% vs gpt-4o =
     # 99.2% — the only difference is 1 extra `missed` (it abstains on a hard

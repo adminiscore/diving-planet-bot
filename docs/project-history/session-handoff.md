@@ -35,6 +35,9 @@ Read this file before changing code in the Diving Planet Bot. For a quick versio
   solo los campos con puerta de Jev y pasar lo rellenado por la puerta. Código sin tocar.
   **Corrección**: Jev no ve el historial, así que solo vale para valores del mensaje actual (recupera
   2 de los 3, no "for 1 person" dicho en el turno 1).
+- **Modelos verificados y documentados en UN sitio**: `README.md`, "LLM models" (HISTORY 0.29.25). En PRE
+  todo es `gpt-4o-mini` salvo la respuesta del RAG (`gpt-4.1-mini`). Corregidos el README, el plan maestro,
+  `deploy-pre-redeploy.md`, `robustness/plan.md` y el comentario de `config.py`, que decían `gpt-4o` o LangSmith.
 - **u3-5 calibrada, NO en el código** (HISTORY 0.29.24): preguntas de Jev para `is_certified`,
   `group_size` e `is_colombian`, **66/67** en `python -m scripts.sonda_afirma_vs_pregunta u35`.
   Siguiente paso tras la ronda B de u3-4: meterlas en `jev_router` detrás del flag, escalón 0, leer por

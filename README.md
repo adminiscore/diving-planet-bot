@@ -38,13 +38,33 @@ the migration of the remaining legacy cascade onto the LangGraph graph is tracke
 | Component | Technology |
 |---|---|
 | Agents | LangGraph + LangChain |
-| LLM | GPT-4o-mini (OpenAI) |
+| LLM | OpenAI `gpt-4o-mini` (most calls) + `gpt-4.1-mini` (RAG answer) — see "LLM models" below |
+| Classifier | Jev (TypeSafe, via OpenRouter) for the router signals |
 | API | FastAPI |
 | Inbox / Live Chat | Chatwoot (self-hosted) |
 | Database | PostgreSQL + pgvector |
 | Cache | Redis |
-| Observability | LangSmith |
+| Observability | `[TURN_METRICS]` log lines (`scripts/turn_metrics.py`); Langfuse paused until 2026-10-16 (free plan used up). LangSmith retired. |
 | Channel | WhatsApp Business API |
+
+### LLM models (single source — verified in PRE on 2026-09-25)
+
+Two code defaults are **not** the PRE values: `OPENAI_MODEL` defaults to `gpt-4o` and
+`RAG_ANSWER_MODEL` to empty. PRE sets both in `.env.pre`, so every environment that measures
+anything must set them too (`.env.dev.example` does). Measuring with the code defaults is
+measuring a different bot.
+
+| Setting | PRE | Code default | Used by | How verified |
+|---|---|---|---|---|
+| `OPENAI_MODEL` | `gpt-4o-mini` | `gpt-4o` | `condense_query`, grounding judge (`is_grounded`), language detector, conversation summary; RAG answer if `RAG_ANSWER_MODEL` is empty | only `gpt-4o-mini`/`gpt-4.1-mini` in all 13 `[TURN_METRICS]` snapshots of 2026-09-24, never `gpt-4o` |
+| `RAG_ANSWER_MODEL` | `gpt-4.1-mini` | empty | the RAG answer (`rag_agent._answer_with_llm`) | read in the PRE container |
+| `EXTRACTION_MODEL` | `gpt-4o-mini` | `gpt-4o-mini` | router fallback (`detect_routing_signals`), `fill_gaps`, `verify_fields`, `extract_and_verify`, `detect_special_signals`, `resolve_slot_answer`, warm acknowledgement, notes | snapshots (as above) |
+| `OPENAI_EMBEDDING_MODEL` | `text-embedding-3-small` | same | retrieval and `scripts/load_embeddings.py` (must match the index) | code default, not set in the compose |
+| `OPENAI_TRANSCRIPTION_MODEL` | `gpt-4o-mini-transcribe` | same | customer voice notes | code default, not set in the compose |
+| `JEV_MODEL` | `typesafe/jev-1.13` | same | router signals (`JEV_ROUTER_ENABLED`), u3-4 questions | code default, not set in the compose |
+
+Measurement tools, not the bot: the golden-set judge is `gpt-5-mini` with reasoning `medium`
+(`scripts/judge_golden_set.py`); `scripts/replay_diff.py` uses `gpt-5-mini` `low`.
 
 ## Environments
 

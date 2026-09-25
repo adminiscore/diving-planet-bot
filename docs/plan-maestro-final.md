@@ -91,13 +91,15 @@ Comprobado contra el código en esta sesión:
   `intent_detector` (regex) + `fill_gaps`/`detect_special_signals`/`resolve_slot_answer` (núcleo, mini).
   `fill_gaps` se llama en `conversational_core.py:2057` **y** `:2089`; `extract_notes` en `:1906`;
   `compose_acknowledgement` en `:4068`.
-- **RAG (turno más lento, todo `gpt-4o`):** `condense_query`(4o) → embedding → answer(4o) → juez
-  `is_grounded`(4o). El juez **re-juzga la MISMA respuesta** antes de regenerar
+- **RAG (turno más lento):** `condense_query` (`gpt-4o-mini`) → embedding → answer (`gpt-4.1-mini`) →
+  juez `is_grounded` (`gpt-4o-mini`). *(Corregido 25-sep: decía `gpt-4o` en todo, que es el valor por
+  defecto del CÓDIGO; PRE fija otros. Mapa único de modelos: `README.md`, "LLM models".)* El juez **re-juzga la MISMA respuesta** antes de regenerar
   (`_verify_grounding_with_retry`, `rag_agent.py:1337-1344`) → gasto inútil. En el peor caso 6–8 llamadas.
 - **Turno de reserva:** hasta ~5 llamadas en serie (`detect_routing_signals` + `detect_special_signals`/
   `fill_gaps` + `resolve_slot_answer` + `extract_notes` + `compose_acknowledgement`). Las 3 primeras leen
   el mismo mensaje para sacar cosas distintas = duplicación de entendimiento convertida en latencia.
-- **Modelos:** extracción = `gpt-4o-mini`; RAG/condense/grounding = `gpt-4o`. **Paralelismo:** solo
+- **Modelos (en PRE):** todo `gpt-4o-mini` salvo la respuesta del RAG (`gpt-4.1-mini`); las señales del
+  router, con Jev. *(Corregido 25-sep: decía RAG/condense/grounding = `gpt-4o`.)* **Paralelismo:** solo
   vector + BM25.
 - Lo que la captura marca ✅ es correcto: **State único** (`ConversationState`, ~68 campos) y **grounding
   unificado** ya están hechos (refactor Fase 4). Datos duros deterministas desde Python/JSON, respuestas
@@ -270,7 +272,8 @@ few-shot (`_select_fewshot_examples`), así que tal cual inflarían la nota.
 
 ### Fase L2 — Right-sizing de modelos + caching · *latencia + coste, con eval*
 > **Corrección (21-sep, medido en Langfuse; confirmado por la 0.29.9 del 23-sep):** en PRE **no se usa
-> `gpt-4o`**. Los modelos reales son **`gpt-4o-mini`** (la mayoría de llamadas) y **`gpt-4.1-mini`**. El
+> `gpt-4o`**. Los modelos reales son **`gpt-4o-mini`** (la mayoría de llamadas) y **`gpt-4.1-mini`**
+> (la respuesta del RAG, `RAG_ANSWER_MODEL`, leído en el contenedor de PRE el 25-sep). El
 > "bajar de tier" que asumía el plan **ya está hecho en gran parte**, así que L2 se re-encuadra: el lever
 > real es **caché** (prompt + semántica) y, como mucho, revisar el modelo de la **respuesta RAG**.
 - Evaluar por llamada **sobre los modelos reales**, siempre con A/B contra `eval_rag_answers`/

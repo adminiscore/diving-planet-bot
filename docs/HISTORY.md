@@ -1,6 +1,13 @@
 History
 =======
 
+0.29.25 - (2026-09-25)
+----------------------
+* **Modelos: inventario completo y verificado, y una sola fuente.** El bot hace 15 llamadas distintas al LLM y todas pasan por 6 ajustes de `src/config.py` (ninguna por LangChain). En PRE: **`gpt-4o-mini` en todo salvo la respuesta del RAG, que va con `gpt-4.1-mini`**; embeddings `text-embedding-3-small`; notas de voz `gpt-4o-mini-transcribe`; señales del router con Jev (`typesafe/jev-1.13`). Tabla única, con qué usa cada modelo y cómo se verificó: `README.md`, "LLM models".
+* **Cómo se verificó**: `RAG_ANSWER_MODEL` leído en el contenedor de PRE; `OPENAI_MODEL=gpt-4o-mini` porque en las 13 fotos `[TURN_METRICS]` del 24-sep solo aparecen `gpt-4o-mini` (~90 %) y `gpt-4.1-mini` (~10 %) — nunca `gpt-4o`, y el juez de grounding y `condense_query` corren en cada turno de RAG. Embeddings, transcripción y Jev son el valor por defecto del código y el compose no los cambia.
+* **Documentación que lo decía mal, corregida**: el README ponía solo "GPT-4o-mini" y "Observability: LangSmith"; el plan maestro (PARTE 1) decía que el RAG, `condense_query` y el juez van con `gpt-4o`; `deploy-pre-redeploy.md` hablaba de un pipeline con `gpt-4o`; `robustness/plan.md` y el comentario de `config.py` decían que `openai_model` lo usa el orquestador, que se retiró en `308488d`. HISTORY, `docs/archive/` y las bitácoras con fecha no se tocan: cuentan lo que era verdad ese día.
+* **La raíz del problema sigue ahí**: los modelos de PRE viven en el `.env.pre` del VPS, que no está en el repo, y dos valores por defecto del código (`OPENAI_MODEL=gpt-4o`, `RAG_ANSWER_MODEL` vacío) no son los de PRE. Por eso nadie lo sabía con certeza y por eso un `.env.dev` incompleto mide otro bot. Propuesta, pendiente de decidir: fijarlos en `docker-compose.vps.yml` como ya se hace con `RAG_MIN_SCORE`, y que los valores por defecto del código sean los de PRE.
+
 0.29.24 - (2026-09-25)
 ----------------------
 * **u3-5 · preguntas de Jev para certificado, grupo y nacionalidad: CALIBRADAS en el banco, aún no en el código.** Son los 2 errores reales que sobreviven a u3-4 v5 (`is_certified` en "in case I decided to do PADI Open Water", `group_size` en "is it possible for my son…?") y las nacionalidades inventadas de u3-5 ("¿cuál es el costo para colombianos?" → colombiano): la misma familia que la puerta ya arregla para lugar y actividad. Misma solución, una pregunta más en la misma llamada del router (coste 0), calibrada ANTES de tocar el código (lección de v4).
