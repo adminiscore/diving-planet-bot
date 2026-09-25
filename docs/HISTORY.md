@@ -1,6 +1,16 @@
 History
 =======
 
+0.29.26 - (2026-09-25)
+----------------------
+* **Los modelos de PRE quedan versionados y son el valor por defecto del código.** Confirmados los 6 en el contenedor de PRE (`gpt-4o-mini`, `gpt-4o-mini`, `gpt-4.1-mini`, `text-embedding-3-small`, `gpt-4o-mini-transcribe`, `typesafe/jev-1.13`). Dos cambios, decididos por el owner:
+  - **Fijados en `docker-compose.vps.yml`** (PRE), como ya se hacía con `RAG_MIN_SCORE`: `environment` gana al `.env.pre` del VPS, así que ya nadie los cambia a mano en el servidor sin que se vea en el repo.
+  - **El valor por defecto de `src/config.py` es el de PRE**: `OPENAI_MODEL` pasa de `gpt-4o` (el del orquestador ya retirado) a `gpt-4o-mini`, y `RAG_ANSWER_MODEL` de vacío a `gpt-4.1-mini`. Un `.env.dev` sin esas líneas ya no mide otro bot, que es lo que pasaba (0.29.22).
+* **Sin cambio de conducta en PRE**: son los mismos valores que ya tenía.
+* **`tests/test_models_pinned.py`**: falla si el compose y el código se separan, si el compose deja de fijar un modelo, o si alguien añade un ajuste `*_model` nuevo sin vigilarlo. Comprobado que falla de verdad (cambiando un modelo del compose a propósito).
+* Las plantillas `.env.*.example` ya no repiten los modelos (serían otra fuente que puede quedarse desfasada); dicen dónde están. README ("LLM models"), `deploy-pre-redeploy.md` y el plan maestro, al día.
+* Suite: 2656 passed / 18 skipped (los 3 nuevos incluidos).
+
 0.29.25 - (2026-09-25)
 ----------------------
 * **Modelos: inventario completo y verificado, y una sola fuente.** El bot hace 15 llamadas distintas al LLM y todas pasan por 6 ajustes de `src/config.py` (ninguna por LangChain). En PRE: **`gpt-4o-mini` en todo salvo la respuesta del RAG, que va con `gpt-4.1-mini`**; embeddings `text-embedding-3-small`; notas de voz `gpt-4o-mini-transcribe`; señales del router con Jev (`typesafe/jev-1.13`). Tabla única, con qué usa cada modelo y cómo se verificó: `README.md`, "LLM models".

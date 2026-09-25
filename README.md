@@ -49,19 +49,20 @@ the migration of the remaining legacy cascade onto the LangGraph graph is tracke
 
 ### LLM models (single source — verified in PRE on 2026-09-25)
 
-Two code defaults are **not** the PRE values: `OPENAI_MODEL` defaults to `gpt-4o` and
-`RAG_ANSWER_MODEL` to empty. PRE sets both in `.env.pre`, so every environment that measures
-anything must set them too (`.env.dev.example` does). Measuring with the code defaults is
-measuring a different bot.
+The code defaults in `src/config.py` **are** the PRE models, so an environment that sets none of
+these variables runs the same bot as PRE. PRE also pins them in `docker-compose.vps.yml` (which
+wins over the VPS's `.env.pre`), and `tests/test_models_pinned.py` fails if the two drift apart.
+Changing a model means changing both, and measuring it. (Until 2026-09-25 the defaults were
+`gpt-4o` / empty and PRE overrode them from its unversioned `.env.pre`.)
 
-| Setting | PRE | Code default | Used by | How verified |
+| Setting | PRE | Code default | Used by | Verified |
 |---|---|---|---|---|
-| `OPENAI_MODEL` | `gpt-4o-mini` | `gpt-4o` | `condense_query`, grounding judge (`is_grounded`), language detector, conversation summary; RAG answer if `RAG_ANSWER_MODEL` is empty | only `gpt-4o-mini`/`gpt-4.1-mini` in all 13 `[TURN_METRICS]` snapshots of 2026-09-24, never `gpt-4o` |
-| `RAG_ANSWER_MODEL` | `gpt-4.1-mini` | empty | the RAG answer (`rag_agent._answer_with_llm`) | read in the PRE container |
-| `EXTRACTION_MODEL` | `gpt-4o-mini` | `gpt-4o-mini` | router fallback (`detect_routing_signals`), `fill_gaps`, `verify_fields`, `extract_and_verify`, `detect_special_signals`, `resolve_slot_answer`, warm acknowledgement, notes | snapshots (as above) |
-| `OPENAI_EMBEDDING_MODEL` | `text-embedding-3-small` | same | retrieval and `scripts/load_embeddings.py` (must match the index) | code default, not set in the compose |
-| `OPENAI_TRANSCRIPTION_MODEL` | `gpt-4o-mini-transcribe` | same | customer voice notes | code default, not set in the compose |
-| `JEV_MODEL` | `typesafe/jev-1.13` | same | router signals (`JEV_ROUTER_ENABLED`), u3-4 questions | code default, not set in the compose |
+| `OPENAI_MODEL` | `gpt-4o-mini` | same | `condense_query`, grounding judge (`is_grounded`), language detector, conversation summary; RAG answer if `RAG_ANSWER_MODEL` is empty | PRE container + `[TURN_METRICS]` snapshots |
+| `RAG_ANSWER_MODEL` | `gpt-4.1-mini` | same | the RAG answer (`rag_agent._answer_with_llm`) | PRE container + snapshots |
+| `EXTRACTION_MODEL` | `gpt-4o-mini` | same | router fallback (`detect_routing_signals`), `fill_gaps`, `verify_fields`, `extract_and_verify`, `detect_special_signals`, `resolve_slot_answer`, warm acknowledgement, notes | PRE container + snapshots |
+| `OPENAI_EMBEDDING_MODEL` | `text-embedding-3-small` | same | retrieval and `scripts/load_embeddings.py` (must match the index) | PRE container |
+| `OPENAI_TRANSCRIPTION_MODEL` | `gpt-4o-mini-transcribe` | same | customer voice notes | PRE container |
+| `JEV_MODEL` | `typesafe/jev-1.13` | same | router signals (`JEV_ROUTER_ENABLED`), u3-4 questions | PRE container |
 
 Measurement tools, not the bot: the golden-set judge is `gpt-5-mini` with reasoning `medium`
 (`scripts/judge_golden_set.py`); `scripts/replay_diff.py` uses `gpt-5-mini` `low`.

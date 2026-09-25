@@ -92,8 +92,9 @@ Comprobado contra el código en esta sesión:
   `fill_gaps` se llama en `conversational_core.py:2057` **y** `:2089`; `extract_notes` en `:1906`;
   `compose_acknowledgement` en `:4068`.
 - **RAG (turno más lento):** `condense_query` (`gpt-4o-mini`) → embedding → answer (`gpt-4.1-mini`) →
-  juez `is_grounded` (`gpt-4o-mini`). *(Corregido 25-sep: decía `gpt-4o` en todo, que es el valor por
-  defecto del CÓDIGO; PRE fija otros. Mapa único de modelos: `README.md`, "LLM models".)* El juez **re-juzga la MISMA respuesta** antes de regenerar
+  juez `is_grounded` (`gpt-4o-mini`). *(Corregido 25-sep: decía `gpt-4o` en todo, que era el valor por
+  defecto del CÓDIGO; PRE fijaba otros desde su `.env.pre`. Desde el 25-sep el código trae los de PRE
+  y el compose los fija. Mapa único: `README.md`, "LLM models".)* El juez **re-juzga la MISMA respuesta** antes de regenerar
   (`_verify_grounding_with_retry`, `rag_agent.py:1337-1344`) → gasto inútil. En el peor caso 6–8 llamadas.
 - **Turno de reserva:** hasta ~5 llamadas en serie (`detect_routing_signals` + `detect_special_signals`/
   `fill_gaps` + `resolve_slot_answer` + `extract_notes` + `compose_acknowledgement`). Las 3 primeras leen

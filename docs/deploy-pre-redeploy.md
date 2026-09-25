@@ -160,6 +160,7 @@ docker compose -f docker-compose.vps.yml up -d --build dp-pre-bot
 - Para **PRO** es idéntico cambiando `dp-pre-bot`→`dp-pro-bot`, `dp-pre-postgres`→`dp-pro-postgres`
   y `.env.pre`→`.env.pro`. No lo hagas hasta validar en PRE.
 - El pipeline `webhook → supervisor → LLM + pgvector → respuesta` es el mismo que
-  se validó en local, así que el comportamiento debería coincidir **si el `.env` local fija los
-  mismos modelos que PRE** (sin `OPENAI_MODEL` el código usa `gpt-4o`, que no es el de PRE). Mapa de
-  modelos: `README.md`, "LLM models".
+  se validó en local, así que el comportamiento debería coincidir. Los modelos son los mismos
+  sin configurar nada: el valor por defecto del código es el de PRE, y PRE además los fija en el
+  compose (desde el 25-sep; `tests/test_models_pinned.py` vigila que no se separen). Mapa:
+  `README.md`, "LLM models".

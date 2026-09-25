@@ -84,6 +84,16 @@ services:
       # hand-edited into the VPS's .env.pre can never override it, and the
       # value stays versioned in the repo instead of on the server.
       RAG_MIN_SCORE: "0.40"
+      # Modelos de PRE (25-sep), fijados aqui por la misma razon que el umbral: que
+      # vivan en el repo y no a mano en el .env.pre del VPS (environment > env_file).
+      # Son los mismos que el valor por defecto de src/config.py, y
+      # tests/test_models_pinned.py falla si se separan. Mapa: README "LLM models".
+      OPENAI_MODEL: "gpt-4o-mini"
+      RAG_ANSWER_MODEL: "gpt-4.1-mini"
+      EXTRACTION_MODEL: "gpt-4o-mini"
+      OPENAI_EMBEDDING_MODEL: "text-embedding-3-small"
+      OPENAI_TRANSCRIPTION_MODEL: "gpt-4o-mini-transcribe"
+      JEV_MODEL: "typesafe/jev-1.13"
       # Robustness Fase 1 cutover (see docs/robustness/plan.md,
       # docs/robustness/progress-log.md). On in PRE only, to gather real
       # traffic data before deciding whether to keep it. Off everywhere else

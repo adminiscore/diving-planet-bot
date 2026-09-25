@@ -12,11 +12,14 @@ class Settings(BaseSettings):
 
     # --- OpenAI ---
     openai_api_key: str = ""
-    # OJO: este default NO es el de PRE. PRE fija OPENAI_MODEL=gpt-4o-mini en .env.pre;
-    # un entorno que no lo fije mide con gpt-4o, o sea otro bot. Mapa de modelos:
-    # README.md, "LLM models". Hoy lo usan condense_query, el juez de grounding, el
-    # detector de idioma, el resumen y la respuesta del RAG si RAG_ANSWER_MODEL esta vacio.
-    openai_model: str = "gpt-4o"
+    # Modelos (25-sep): los valores por defecto de este bloque SON los de PRE, para que un
+    # entorno sin estas variables (el .env.dev de cualquiera) no mida otro bot. PRE ademas
+    # los fija en docker-compose.vps.yml, y tests/test_models_pinned.py falla si el compose
+    # y estos valores se separan. Mapa de que usa cada uno: README.md, "LLM models".
+    # Hasta el 25-sep este valia "gpt-4o" (el del orquestador ya retirado) y PRE lo
+    # cambiaba desde el .env.pre del VPS, fuera del repo.
+    # Lo usan condense_query, el juez de grounding, el detector de idioma y el resumen.
+    openai_model: str = "gpt-4o-mini"
     # Model for the narrow, structured LLM gap-filler extractor
     # (src/agents/llm_extractor.py, robustness Fases 1-3). Kept SEPARATE from
     # openai_model (then used by the action orchestrator, retired in 308488d): the extraction is a small
@@ -32,8 +35,8 @@ class Settings(BaseSettings):
     # `_answer_with_llm`). Kept SEPARATE from `openai_model` (used broadly
     # across the bot) so we can trial a stronger model for JUST this call --
     # scoped blast radius, same pattern as `extraction_model` above. Empty
-    # string (default) means "use `openai_model`", i.e. zero behavior change
-    # until explicitly set. Hallazgo en vivo (2026-09-03): gpt-4o-mini
+    # string means "use `openai_model`". En PRE desde el 2026-09-03 (antes solo en
+    # su .env.pre; default desde el 25-sep). Hallazgo en vivo (2026-09-03): gpt-4o-mini
     # ignora la regla de "certificado-pero-inactivo" (ver
     # docs/multi-agent-refactor-plan.md §7) pese a tenerla correctamente
     # inyectada en el contexto, en ~1/3 de las repeticiones -- un techo real
@@ -42,7 +45,7 @@ class Settings(BaseSettings):
     # `temperature`, usan `reasoning_effort`); cualquier modelo puesto aqui
     # debe seguir aceptando `temperature`/`max_tokens` como hoy (gpt-4.1-mini,
     # gpt-4o, etc.).
-    rag_answer_model: str = ""
+    rag_answer_model: str = "gpt-4.1-mini"
     openai_embedding_model: str = "text-embedding-3-small"
     # Model used to transcribe incoming customer voice notes (see
     # src/channels/audio.py). gpt-4o-mini-transcribe is cheaper/better than

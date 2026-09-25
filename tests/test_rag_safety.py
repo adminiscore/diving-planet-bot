@@ -225,8 +225,8 @@ async def test_rag_low_confidence_uses_extra_context_when_available(monkeypatch)
 @pytest.mark.asyncio
 async def test_rag_answer_model_setting_overrides_openai_model(monkeypatch):
     """`rag_answer_model` (scoped to just this call, see config.py) must win
-    over `openai_model` when set, and fall back to `openai_model` when empty
-    (default) -- zero behavior change until explicitly configured."""
+    over `openai_model` when set, and fall back to `openai_model` when empty.
+    (Its default is PRE's `gpt-4.1-mini` since 2026-09-25; this test sets both.)"""
     used_models = []
 
     class ModelCapturingCompletions:

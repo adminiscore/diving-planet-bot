@@ -21,10 +21,10 @@ Read this file before changing code in the Diving Planet Bot. For a quick versio
   429 por turno a quien montara PRO copiándolas), `RAG_TOP_K` es 8 como en PRE (el 5 era la trampa de
   la 0.29.9), y están `OPENROUTER_API_KEY`, Langfuse y `SYNTH_CHATWOOT_TOKEN`.
 - **Confirmado**: PRE usa `RAG_ANSWER_MODEL=gpt-4.1-mini`; activo ya en las plantillas.
-- **⚠️ Antes de medir en local, comprobad vuestro `.env.dev`**: sin `OPENAI_MODEL` el código usa
-  `gpt-4o` (no es la config de PRE). Debe dar `gpt-4o-mini gpt-4.1-mini`:
-  `ENV_FILE=.env.dev python -c "from src.config import settings as s; print(s.openai_model, s.rag_answer_model or s.openai_model)"`.
-  En la máquina de Álvaro pasaba y está corregido.
+- **Modelos resueltos de raíz (HISTORY 0.29.26)**: el valor por defecto del código ES el de PRE y PRE
+  los fija en `docker-compose.vps.yml`; `tests/test_models_pinned.py` vigila que no se separen. Ya no
+  hace falta ponerlos en ningún `.env`. Si vuestro `.env.dev` tiene `OPENAI_MODEL=gpt-4o` u otro valor,
+  quitadlo.
 - **Commit solo local**, sin push: un push a `feature/pre_*` despliega PRE y corta cualquier ronda que
   esté en marcha. Va con el siguiente push coordinado (p. ej. la ronda B de u3-4).
 - **Para u3-5 en la máquina de Álvaro falta `OPENROUTER_API_KEY` en `.env.dev`**: sin ella Jev no se
