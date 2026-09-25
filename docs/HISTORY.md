@@ -1,6 +1,14 @@
 History
 =======
 
+0.29.28 - (2026-09-25)
+----------------------
+* **u3-4 · ronda B2 en PRE con v5: NO se promociona; flag apagado otra vez.** Ronda core (32 diálogos / 93 turnos, 0 sin respuesta) con `ANSWER_AND_CONTINUE=true`, frente a la ronda A del 24-sep. Antes de subir se comprobó que todo el código nuevo va detrás del flag (con el flag apagado, HEAD = lo que corría en PRE), así que la A sigue siendo la referencia.
+* **El agregado empata** (criterios 87,3 → 87,4 %; diálogos sin fallos 17 → 16 de 32), así que se leyó cada caso con su texto y con el log de PRE: **4 mejoras reales** por el cambio (la puerta de Jev ya no inventa "estás en la isla"; se guarda el curso Open Water en un turno con pregunta; "how do I pay" contesta y da el enlace; pregunta el origen para cotizar) y **3 regresiones propias**, las 3 con causa en el log: (1) Jev tira una actividad afirmada ("soy open y me gustaría salir un día… no sé qué tienen"); (2) "completé el curso básico" dentro de una pregunta no se guarda y el bot repregunta si es certificado; (3) en "listo, como pago" el LLM contesta "no certificado" al revisar los datos guardados y sale el "¿lo cambio?" fantasma. Otros 3 fallos son de la respuesta del RAG (l1-6/l1-7), sin prueba de venir de u3-4; el resto, ruido del juez.
+* **v5 avanza sobre v1**: de las 8 regresiones de v1, 5 ya no aparecen, y el RAG contesta 12 preguntas más (29 → 41 turnos). Latencia por tipo de turno sin empeorar (otro día; orientativa); llamadas al LLM +10 % (v1: +20 %).
+* **Las 3 regresiones ya están en el banco de calibración**: la pregunta de actividad del código también falla el caso nuevo (hay que recalibrarla: `u34` 19/21), y la candidata de certificado de u3-5 resuelve las otras dos (0,90 en "completé el curso básico", 0,03 en "listo, como pago"). Siguiente paso, en orden, en `docs/robustness/u3-4-diseno.md` ("Siguiente paso tras la ronda B2").
+* **Pruebas guardadas en el repo** (el log de PRE se borra en cada deploy): `u3-4/escalon1-textos-A-vs-B2.txt` y `u3-4/logs-pre-ronda-B2.txt`, más la ronda, el resultado del juez (0,36 $) y la foto de métricas.
+
 0.29.27 - (2026-09-25)
 ----------------------
 * **CI llevaba ROTO desde el 24-sep a las 23:04 UTC, y PRE no se actualizaba.** Todos los pushes fallaban en `Run DB migrations` y el job `Deploy to PRE` se saltaba sin avisar: PRE se quedó en `d3dc51e` (24-sep, 19:04) y no recibió nada posterior, los arreglos de u3-4 de Gonzalo incluidos. No afectó a ninguna medida (las del 25-sep fueron locales). Se descubrió al subir la ronda B de u3-4 y ver que PRE no cambiaba.

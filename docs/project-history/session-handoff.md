@@ -13,6 +13,21 @@ Read this file before changing code in the Diving Planet Bot. For a quick versio
 
 > **📏 LEER ANTES DE MEDIR — decisiones del 24-sep-2026 (Gadea):** (1) latencia y llamadas con nuestros logs `[TURN_METRICS]` + `scripts/turn_metrics.py`, no con Langfuse (plan gratuito superado, reinicio 16-oct); (2) pruebas A/B por escalones, juzgando solo los diálogos que cambian. Todo en `docs/robustness/protocolo-medicion.md`.
 
+### 🧪 2026-09-25 noche (Álvaro) — u3-4 ronda B2 en PRE: v5 NO se promociona (flag apagado)
+
+- **Resultado** (HISTORY 0.29.28; detalle y tabla caso a caso en `docs/robustness/u3-4-diseno.md`,
+  "Ronda B2"): agregado empatado; **4 mejoras reales y 3 regresiones propias**, las 3 con causa exacta
+  en el log de PRE. Por la regla del escalón 1, `ANSWER_AND_CONTINUE` vuelve a `"false"`.
+- **Lo que se lleva el siguiente**: las 3 regresiones están ya en `scripts/sonda_afirma_vs_pregunta.py`.
+  Orden: (1) recalibrar `affirms_activity` (`u34` 19/21); (2) meter las candidatas de u3-5 y usar la de
+  certificado también contra las contradicciones de datos guardados (mata el "¿lo cambio?"); (3)
+  relleno con puerta en turnos con pregunta; (4) escalón 0 → ronda B3 frente a la misma A del 24-sep.
+- **Pruebas**: `u3-4/escalon1-textos-A-vs-B2.txt` (textos lado a lado) y `u3-4/logs-pre-ronda-B2.txt`
+  (el log de PRE se borra en cada deploy; ahí está por qué decidió cada cosa).
+- **Estado de PRE al cerrar**: `feature/pre_alvaro`, flag de u3-4 apagado, modelos fijados en el compose.
+  Si alguien sube a `pre_gadea`, PRE vuelve a esa rama: **integrad antes `pre_alvaro`** (lleva el
+  arreglo de CI; sin él, el deploy vuelve a saltarse).
+
 ### 🚨 2026-09-25 noche (Álvaro) — CI estaba ROTO desde el 24-sep y PRE no se actualizaba
 
 **Qué pasaba:** desde el 24-sep a las 23:04 UTC **todos** los pushes fallaban en CI, en el paso

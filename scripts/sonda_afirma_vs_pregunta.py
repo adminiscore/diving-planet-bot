@@ -71,6 +71,9 @@ CASOS = [
     ("act", "Hi, I plan on being in Cartagena and do scuba diving on April 21 and 22. I have open water, advanced open water", True),
     ("act", "bueno, reservemos snorkel para toda la familia, somos 4", True),
     ("act", "Buenos días. Quiero hacer el paquete de 5 buceos.", True),
+    # Ronda B2 del escalon 1 (25-sep, PRE): Jev lo dio por NO afirmado y se perdio la actividad
+    # -> el bot no llego a dar el enlace (regresion real de v5; ver u3-4-diseno.md, "Ronda B2").
+    ("act", "Hola, buenos días. Deca del centro de buceo. Me recomendaron a ustedes para bucear en Cartagena. Yo voy a estar entre el 5 y el 7 por allá. Entonces quería ver si tienen alguna salida programada. Yo soy open y me gustaría salir un día y tal. No sé qué tienen. Muchas gracias.", True),
 ]
 N = 2  # Jev es estable (±0,03); 2 repeticiones bastan para ver si una respuesta baila
 
@@ -203,7 +206,11 @@ CASOS_U35 = [
 ]
 
 # Reales del golden que NO se usaron para escribir ninguna frase de las redacciones (ver arriba).
+# Los dos ultimos salen de las regresiones de la ronda B2 de u3-4 (25-sep, PRE): el certificado
+# afirmado dentro de una pregunta que se perdio, y el "¿lo cambio?" fantasma de "listo, como pago".
 NUEVOS_U35 = [
+    ("cert", "Gracias - yo complete el curso básico el 3 de abril 2025. Tengo que hacer algo especial?", True),
+    ("cert", "listo, como pago", False),
     ('cert', 'quiero bucear, ya soy certificado', True),
     ('cert', 'Quiero bucear y tengo el open water', True),
     ('cert', 'Un solo buzo avanzado', True),

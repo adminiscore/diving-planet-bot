@@ -1,0 +1,543 @@
+Ronda A (2026-09-24, flag apagado) frente a ronda B2 (2026-09-25, v5, flag encendido) -- dialogos con algun criterio distinto.
+Lectura y veredicto por caso: docs/robustness/u3-4-diseno.md, seccion 'Ronda B2'.
+
+######## buceo-adaptado-visual
+  criterio global:sin-repreguntas: cumple -> no_cumple | juez: El cliente ya expresó interés y preguntó cómo organizarlo; el bot vuelve a pedir confirmación para pasarle con un asesor, lo que constituye una repregunta innecesaria.
+  (conv B2 en PRE: 2232)
+--- t1 CLIENTE: hola, tengo una discapacidad visual, puedo bucear con ustedes?
+    A : ¡Hola! Claro que sí, con mucho gusto. En Diving Planet tenemos el programa DIVE TO HEAL, que es buceo adaptado para personas con discapacidad visual, entre otras. Nuestros instructores están capacitados para acompañarte y hacer que disfrutes del mundo submarino con toda la seguridad.
+
+Solo te recomendamos avisarnos con anticipación para coordinar la logística y evaluar tu caso específico, ya que la única limitación sería alguna condición médica adicional que contraindique el buceo.
+
+¿Quieres que te cuente cómo seguimos con la coordinación o tienes alguna otra duda?
+    B2: ¡Hola! Claro que sí, con mucho gusto te cuento. En Diving Planet tenemos el programa DIVE TO HEAL, que es buceo adaptado para personas con discapacidad, incluyendo discapacidad visual (ya sea ceguera o baja visión). 
+
+Todos nuestros instructores están capacitados para acompañarte y adaptarnos a tus necesidades. Solo te recomendamos avisarnos con anticipación para coordinar bien la logística y evaluar tu caso particular. La única limitación sería si tienes alguna condición médica adicional que contraindique el buceo.
+
+¿Quieres que te explique cómo seguir para organizarlo?
+--- t2 CLIENTE: cuanto cuesta
+    [IDENTICA] En nuestro programa *DIVE TO HEAL* (buceo adaptado) el precio y la logística se coordinan de forma personalizada según la actividad y las necesidades de cada persona — por eso no es una tarifa fija de la web, la define un asesor evaluando tu caso para que la experiencia sea segura y a tu medida. 🤿
+
+¿Quieres que te pase con un asesor para darte todos los detalles? 😊
+--- t3 CLIENTE: me interesa, como lo organizamos
+    A : ¡Qué bueno que te interese! 😊 Para organizar tu experiencia con DIVE TO HEAL, lo ideal es que un asesor especializado evalúe tu caso y coordine toda la logística para que sea segura y a tu medida.
+
+Te recomiendo que un asesor se ponga en contacto contigo para revisar detalles como tu condición, fechas y cualquier requerimiento especial. Así te dan toda la info personalizada y te guían en el proceso.
+
+¿Quieres que te pase con un asesor para que te ayude con eso?
+    B2: ¡Qué bueno que te interese! Para organizar tu experiencia con DIVE TO HEAL, lo ideal es que un asesor especializado evalúe tu caso y coordine toda la logística para que sea segura y a tu medida.
+
+Te recomiendo que me confirmes si quieres que te ponga en contacto con un asesor para que te explique los pasos, fechas disponibles y requisitos. ¿Quieres que lo haga?
+
+######## certificado-fechas-fotos-y-reserva
+  criterio global:importes-catalogo: cumple -> no_aplica | juez: el bot no da importes
+  criterio link-de-reserva: cumple -> no_cumple | juez: El bot no proporcionó el enlace de reserva del plan de 2 inmersiones ni solicitó los datos necesarios para dártelo; solo ofreció ayudar y preguntó si querías continuar.
+  (conv B2 en PRE: 2239)
+--- t1 CLIENTE: Hola, buenos días. Deca del centro de buceo. Me recomendaron a ustedes para bucear en Cartagena. Yo voy a estar entre el 5 y el 7 por allá. Entonces quería ver si tienen alguna salida programada. Yo soy open y me gustaría salir un día y tal. No sé qué tienen. Muchas gracias.
+    A : ¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todos los días en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊
+
+¿Y para cuántas personas armamos el plan? Así te paso el precio exacto. 😊
+    B2: ¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todos los días en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊
+
+🌊 *Buceamos en las Islas del Rosario* (Parque Nacional Corales del Rosario), a 45–60 min en lancha desde Cartagena: aguas cálidas, arrecifes y mucha vida marina. Te resumo las opciones:
+
+🆕 *¿Nunca has buceado?* → el *Minicurso de buceo* (bautismo): teoría, práctica en piscina y una inmersión en el mar con instructor. Desde los 10 años.
+
+🤿 *¿Ya eres buzo certificado?* → *paquetes de inmersiones*: 2 buceos en 1 día, o planes multi-día (4, 5, 7 o 9 buceos).
+
+🎓 *¿Quieres sacarte el título?* → *cursos PADI*: Open Water (el básico), Advanced, Rescue, Divemaster y especialidades.
+
+🐠 Y si prefieres sin bucear, el *snorkel* es una chulada para ver el arrecife desde la superficie.
+
+¿Cuál te llama? Si quieres te armo la reserva. 😄
+
+Si tu pregunta era sobre algo más concreto que esto, cuéntamelo con más detalle y te confirmo con exactitud. 🙂
+
+Cuéntame, ¿qué te gustaría vivir con nosotros? 🤿
+• *Buceo* en las Islas del Rosario, si ya eres buzo certificado
+• *Minicurso* para probar el buceo por primera vez (¡no necesitas experiencia!)
+• *Snorkel* para disfrutar el arrecife desde la superficie, ideal en familia
+• *Cursos PADI* completos, del Open Water en adelante
+Dime qué te llama la atención y lo armamos juntos. 🌊
+--- t2 CLIENTE: Mil gracias por la info. Oye, quiero hacerte una pregunta. Estuve consultando con otra agencia, um principalmente para mirar como los lugares y demás, pero pues no conozco. Entonces quería preguntarte si existe como alguna diferencia entre estos lugares al que ustedes van y el que te compartí en la foto. um Sí, principalmente por eso. Seguramente tú sí tienes eso super claro para que me orientes y tomar una decisión ahorita. Gracias.
+    A : ¡Con gusto! Aprecio que estés buscando información para tomar la mejor decisión sobre tu experiencia de buceo.
+
+¿Y para cuántas personas armamos el plan? Así te paso el precio exacto. 😊
+    B2: ¡Con gusto te ayudo! 🌊 Ese detalle en concreto no lo tengo a la mano, pero puedo ayudarte con las actividades, precios, logística o a armar tu reserva. ¿Quieres que te pase con un asesor para resolver eso puntual?
+--- t3 CLIENTE: Y, aprovecho para preguntarte, entonces, si tienes en esas fechas, el 5 y 6 de febrero, y miré en el link que no incluye las fotos, ¿eso tiene como un precio adicional o cómo lo hacen?
+    A : 🌊 Te dejo los *precios de referencia saliendo desde Cartagena* (incluyen lancha, almuerzo, equipo y entrada al parque), con el descuento por reservar online:
+
+🤿 *Buceo certificado* (2 inmersiones, 1 día): *178 USD / 630.000 COP* por persona.
+🆕 *Minicurso de buceo* (sin experiencia): *183 USD / 655.000 COP* por persona.
+🐠 *Snorkel*: *126 USD / 448.000 COP* por persona.
+🎓 *Curso Open Water* (certificación PADI): *693 USD / 2.450.000 COP*.
+
+Los colombianos/residentes pagan en pesos (COP) y los internacionales en dólares (USD) — mismo precio, sin cobro extra por la divisa. También hay paquetes multi-día (4/5/7/9 inmersiones) y otros cursos. ¿Cuál te interesa? 😄
+
+Si tu pregunta era sobre algo más concreto que esto, cuéntamelo con más detalle y te confirmo con exactitud. 🙂
+
+¿Y para cuántas personas armamos el plan? Así te paso el precio exacto. 😊
+    B2: ¡Buena noticia! 📅 Las salidas son diarias y siempre hay disponibilidad. Vas a poder elegir el día exacto y el número de personas directamente en el calendario del link de reserva. 😊
+--- t4 CLIENTE: Vale, perfecto. Muchas gracias por la explicación. um Listo, entonces tienes la fecha del 5 o 6 de febrero y no sé cómo se haga la reserva para para hacerlo.
+    A : Me alegra que la explicación haya sido clara para ti.
+
+¿Y para cuántas personas armamos el plan? Así te paso el precio exacto. 😊
+    B2: ¡Listo! Para reservar tu salida de buceo el 5 o 6 de febrero desde Cartagena, debes hacerlo a través del link de reserva online que te enviarán los asesores o que puedes encontrar en nuestra página. Ahí eliges la fecha, número de personas y el plan que quieres.
+
+El sistema cierra reservas a las 4:30 p.m. del día anterior, así que es bueno reservar con tiempo. 
+
+Si quieres, te ayudo a armar la reserva y te paso el link oficial para que la completes. ¿Quieres que sigamos con eso?
+
+######## curso-open-water-transporte-y-regreso-otro-dia
+  criterio global:sin-invenciones: cumple -> no_cumple | juez: El bot afirma que el regreso en una fecha distinta se ofrece «sin cargo adicional», lo que contradice la referencia (política 'return_different_day') que dice que el regreso en fecha distinta no está incluido y debe coordinarlo un asesor.
+  (conv B2 en PRE: 2246)
+--- t1 CLIENTE: Hi,
+My understanding is that the transportation to rosario is included, in case I decided to do PADI Open Water Diver certification course., correct?
+    A : Hi! 🪸 I'm *Coral* from *Diving Planet* — we dive every day in the Rosario Islands, departing from Cartagena or right from the islands. So happy to have you here! I'd love to help you put your plan together. 🌊
+
+Hi! The PADI Open Water Diver course for guests already on the Rosario Islands does include hotel pick-up if your hotel has boat access, but it does not include transport from Cartagena to the islands. So if you’re already on the islands, we handle your transfers to the dive base and back. 
+
+Are you staying at a hotel with dock or boat access? That way I can help you better with the logistics.
+    B2: Hi! 🪸 I'm *Coral* from *Diving Planet* — we dive every day in the Rosario Islands, departing from Cartagena or right from the islands. So happy to have you here! I'd love to help you put your plan together. 🌊
+
+Hi! The PADI Open Water Diver course for guests already on the Rosario Islands does not include transport from Cartagena. However, if your hotel on the islands has boat access, hotel pick-up by boat is included for the course days. Could you tell me which hotel you’re staying at and if it has dock or boat access? That way I can give you the best info.
+--- t2 CLIENTE: What if I decide to stay one day longer in rosario, can you provide de transfer back to cartagena?
+    A : Of course! If you decide to stay one day longer in the Rosario Islands, we can arrange your boat pick-up and drop-off between your hotel and our dive center at no extra charge, as long as your hotel has maritime or boat access. However, transport from the islands back to Cartagena is not included in the diving or course packages, so that transfer would be a separate arrangement.
+
+Would you like me to help you check options for your transfer back to Cartagena when you’re ready? Also, which hotel will you be staying at in the Rosario Islands? That helps me give you the best info.
+    B2: Of course! If you decide to stay one day longer on the Rosario Islands, and your hotel has maritime or boat access, we can definitely provide the transfer back to Cartagena for you at no extra charge. Just let us know your hotel name and details so we can arrange the pick-up and drop-off smoothly. 
+
+Would you like help planning the extra day or adding any diving or snorkeling activities?
+--- t3 CLIENTE: Thanks.
+Another question is, where is the meeting point in cartagena?
+    A : Great question! The meeting point in Cartagena is at Muelle de la Bodeguita at 8:00 a.m. It’s just 5 minutes from the historic center. When you arrive, just ask for DIVING PLANET at entrance 3 — no need to queue.
+
+Would you like me to help you with directions or anything else for your first day?
+    B2: Perfect! The meeting point in Cartagena is at Muelle de la Bodeguita at 8:00 a.m. You don’t need to queue; just ask for DIVING PLANET at entrance 3. It’s about 5 minutes from the historic center. 
+
+Would you like me to help you with the details to get there or anything else for your day in the Rosario Islands?
+
+######## descuento-online-sin-codigo
+  criterio descuento-automatico-sin-codigo: cumple -> no_cumple | juez: El cliente preguntó por el descuento del 10% y el bot no explicó que ese descuento online se aplica automáticamente en la web/ROVERD sin código; en su lugar dijo que no tenía el detalle y ofreció pasar a un asesor.
+  criterio global:sin-invenciones: no_cumple -> cumple | juez: El bot afirma que los detalles de precio del curso Open Water "no están listados aquí", pero la REFERENCIA sí contiene precios y precio online para el curso Open Water; por tanto el bot dio un dato incorrecto/inventado.
+  criterio global:sin-repreguntas: no_cumple -> cumple | juez: El bot volvió a preguntar al cliente qué plan prefiere (incluso repitiendo la misma pregunta) cuando el cliente ya había indicado claramente que quiere el curso PADI Open Water Diver, por lo que es una repregunta.
+  (conv B2 en PRE: 2247)
+--- t1 CLIENTE: Hi, I’m trying to checkout to take PADI Open Water Diver certification course but the discount of 10% is not showing up. what is the code?
+    A : Hi! 🪸 I'm *Coral* from *Diving Planet* — we dive every day in the Rosario Islands, departing from Cartagena or right from the islands. So happy to have you here! I'd love to help you put your plan together. 🌊
+
+Hi! The 10% discount you see for the PADI Open Water Referral Course is actually applied automatically when you book online—there’s no special code needed. This discount is reflected in the "Online price" shown on the booking page.
+
+If you’re booking the full Open Water Diver certification course (not the referral), the discount might not be shown separately as a code either, since the pricing details for that course aren’t listed here.
+
+Would you like me to help you with the booking link or connect you with an advisor to clarify the pricing and discount for the full Open Water course?
+    B2: Hi! 🪸 I'm *Coral* from *Diving Planet* — we dive every day in the Rosario Islands, departing from Cartagena or right from the islands. So happy to have you here! I'd love to help you put your plan together. 🌊
+
+Happy to help! 🌊 I don't have that specific detail handy, but I can help you with activities, prices, logistics or putting your booking together. Would you like me to connect you with an advisor for that specific point?
+--- t2 CLIENTE: ah I see.
+    A : I'm glad you understand!
+
+Which one are you leaning toward — *diving*, a *mini-course*, *snorkeling* or a *PADI course*? 🌊
+    B2: I understand you're looking into the PADI Open Water activity.
+
+Where would you be departing from? We can pick you up *from Cartagena* (round trip, same day) or, if you're already *on the islands*, we arrange pickup at your hotel.
+--- t3 CLIENTE: Thanks
+    A : You're welcome!
+
+Which one are you leaning toward — *diving*, a *mini-course*, *snorkeling* or a *PADI course*? 🌊
+    B2: I appreciate your message!
+
+Where would you be departing from? We can pick you up *from Cartagena* (round trip, same day) or, if you're already *on the islands*, we arrange pickup at your hotel.
+
+######## manual-acompanante-mayor
+  criterio global:sin-invenciones: no_cumple -> cumple | juez: El bot afirma "buceamos todos los días", que contradice la referencia que especifica que solo no operan el 25 de diciembre y el 1 de enero (no es correcto afirmar 'todos los días').
+  (conv B2 en PRE: 2235)
+--- t1 CLIENTE: Hola
+    [IDENTICA] ¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todos los días en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊
+
+Cuéntame, ¿qué te gustaría vivir con nosotros? 🤿
+• *Buceo* en las Islas del Rosario, si ya eres buzo certificado
+• *Minicurso* para probar el buceo por primera vez (¡no necesitas experiencia!)
+• *Snorkel* para disfrutar el arrecife desde la superficie, ideal en familia
+• *Cursos PADI* completos, del Open Water en adelante
+Dime qué te llama la atención y lo armamos juntos. 🌊
+--- t2 CLIENTE: Quiero bucear y tengo el open water
+    A : ¡Qué emocionante que tengas el Open Water y estés listo para bucear!
+
+¿Desde dónde saldrías? Podemos recogerte saliendo *desde Cartagena* (ida y vuelta el mismo día) o, si ya estás *en las islas*, coordinamos la recogida en tu hotel.
+    B2: ¡Qué emocionante que tengas tu certificación Open Water y estés listo para bucear!
+
+¿Desde dónde saldrías? Podemos recogerte saliendo *desde Cartagena* (ida y vuelta el mismo día) o, si ya estás *en las islas*, coordinamos la recogida en tu hotel.
+--- t3 CLIENTE: cartagena
+    A : ¡Qué bonito que estés pensando en Cartagena!
+
+¿Y para cuántas personas armamos el plan? Así te paso el precio exacto. 😊
+    B2: Entiendo que estás interesado en Cartagena.
+
+¿Y para cuántas personas armamos el plan? Así te paso el precio exacto. 😊
+--- t4 CLIENTE: 1
+    A : Entiendo que estás interesado en bucear en Cartagena.
+
+Te recomiendo nuestro plan más popular: *2 inmersiones en 1 día* en las Islas del Rosario. (Si prefieres un *paquete multi-día* de 3 o más inmersiones, dímelo.)
+
+¿Han pasado *más de 2 años* desde tu última inmersión?
+    B2: Entendido, la actividad principal es buceo certificado en Cartagena.
+
+Te recomiendo nuestro plan más popular: *2 inmersiones en 1 día* en las Islas del Rosario. (Si prefieres un *paquete multi-día* de 3 o más inmersiones, dímelo.)
+
+¿Han pasado *más de 2 años* desde tu última inmersión?
+--- t5 CLIENTE: no
+    [IDENTICA] Entendido, no ha pasado más de 2 años desde tu última inmersión.
+
+Última cosa para darte el precio y el link correctos: ¿eres colombiano o residente en Colombia?
+--- t6 CLIENTE: no
+    [IDENTICA] Entendido, no eres colombiano.
+
+🤿 *Salidas de Buceo - 2 inmersiones (1 día)*
+💰 *178 USD* por persona (reservando online)
+✅ Incluye: transporte Cartagena-Islas-Cartagena, almuerzo, equipo y seguro.
+📍 Salida desde Cartagena (Muelle de la Bodeguita, 8:00 a.m.).
+
+👉 *Para más información y hacer tu reserva, haz clic aquí:*
+https://book.divingplanet.org/book/salidas-de-buceo/1?language=es
+
+_El precio es el mismo en pesos (COP) o dólares (USD), sin cobro extra por la divisa._
+
+¿Te ayudo con algo más? Puedo *añadir otra actividad*, resolver dudas o ajustar la reserva. 🤿
+--- t7 CLIENTE: Mi madre también quiere venir pero no puede hacer deporte es una mujer mayor
+    [IDENTICA] ¡Con gusto te ayudo! 🌊 Ese detalle en concreto no lo tengo a la mano, pero puedo ayudarte con las actividades, precios, logística o a armar tu reserva. ¿Quieres que te pase con un asesor para resolver eso puntual?
+--- t8 CLIENTE: Deberías ofrecerme un plan de acompañante
+    [IDENTICA] ¡Con gusto te ayudo! 🌊 Ese detalle en concreto no lo tengo a la mano, pero puedo ayudarte con las actividades, precios, logística o a armar tu reserva. ¿Quieres que te pase con un asesor para resolver eso puntual?
+
+######## moneda-precios-principiante-y-snorkel
+  criterio global:importes-catalogo: no_aplica -> cumple | juez: el bot no da importes
+  criterio origen-para-cotizar: no_cumple -> cumple | juez: El cliente indicó que es principiante y hará snorkeling; el bot debía preguntar si saldrán desde Cartagena o si ya están en las islas para poder orientar y cotizar correctamente, pero en vez de eso volvió a preguntar el número de personas y no solicitó el origen.
+  (conv B2 en PRE: 2248)
+--- t1 CLIENTE: Hola
+    [IDENTICA] ¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todos los días en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊
+
+Cuéntame, ¿qué te gustaría vivir con nosotros? 🤿
+• *Buceo* en las Islas del Rosario, si ya eres buzo certificado
+• *Minicurso* para probar el buceo por primera vez (¡no necesitas experiencia!)
+• *Snorkel* para disfrutar el arrecife desde la superficie, ideal en familia
+• *Cursos PADI* completos, del Open Water en adelante
+Dime qué te llama la atención y lo armamos juntos. 🌊
+--- t2 CLIENTE: Buen día
+    [IDENTICA] ¡Buen día!
+
+¿Con cuál te animas — *buceo*, *minicurso*, *snorkel* o un *curso PADI*? 🌊
+--- t3 CLIENTE: Me gustaría consultar información
+    A : Claro, estoy aquí para ayudarte con la información que necesites.
+
+¿Con cuál te animas — *buceo*, *minicurso*, *snorkel* o un *curso PADI*? 🌊
+    B2: ¡Claro que sí! Para recomendarte el plan ideal, dime si buscas algo para:
+
+• Buzos certificados que quieren bucear en las Islas del Rosario  
+• Principiantes que quieren probar el minicurso (Discover Scuba o Bautizo)  
+• Cursos PADI completos, como el Open Water Diver  
+• Snorkeling para disfrutar el arrecife desde la superficie  
+
+Así te paso la info exacta que necesitas. ¿Cuál de estos te interesa?
+--- t4 CLIENTE: Sería buzo principiante y snorkeling
+    A : ¿Cuántos serían para minicurso? Así les cuento el plan exacto. 😊
+    B2: Entiendo que serías buzo principiante y también te interesa el snorkeling.
+
+¿Desde dónde saldrías? Podemos recogerte saliendo *desde Cartagena* (ida y vuelta el mismo día) o, si ya estás *en las islas*, coordinamos la recogida en tu hotel.
+--- t5 CLIENTE: Amigo el precio que está allí es en dólares o pesos colombianos
+    A : Entiendo que deseas aclarar la moneda del precio.
+
+¿Cuántos serían para minicurso? Así les cuento el plan exacto. 😊
+    B2: 🌊 Te dejo los *precios de referencia saliendo desde Cartagena* (incluyen lancha, almuerzo, equipo y entrada al parque), con el descuento por reservar online:
+
+🤿 *Buceo certificado* (2 inmersiones, 1 día): *178 USD / 630.000 COP* por persona.
+🆕 *Minicurso de buceo* (sin experiencia): *183 USD / 655.000 COP* por persona.
+🐠 *Snorkel*: *126 USD / 448.000 COP* por persona.
+🎓 *Curso Open Water* (certificación PADI): *693 USD / 2.450.000 COP*.
+
+Los colombianos/residentes pagan en pesos (COP) y los internacionales en dólares (USD) — mismo precio, sin cobro extra por la divisa. También hay paquetes multi-día (4/5/7/9 inmersiones) y otros cursos. ¿Cuál te interesa? 😄
+
+Si tu pregunta era sobre algo más concreto que esto, cuéntamelo con más detalle y te confirmo con exactitud. 🙂
+
+¿Desde dónde saldrías? Podemos recogerte saliendo *desde Cartagena* (ida y vuelta el mismo día) o, si ya estás *en las islas*, coordinamos la recogida en tu hotel.
+
+######## open-water-precio-para-colombianos-corrige-mito
+  criterio global:importes-catalogo: no_aplica -> cumple | juez: el bot no da importes
+  (conv B2 en PRE: 2237)
+--- t1 CLIENTE: Buenos días. Estoy interesada en el curso básico de buceo. Cuál es el costo para colombianos?
+    [IDENTICA] ¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todos los días en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊
+
+¡Con gusto te ayudo! 🌊 Ese detalle en concreto no lo tengo a la mano, pero puedo ayudarte con las actividades, precios, logística o a armar tu reserva. ¿Quieres que te pase con un asesor para resolver eso puntual?
+--- t2 CLIENTE: Estoy interesada en el curso básico de buceo. Según la página tienen un precio especial para colombianos. Me podrían dar el costo por favor
+    A : Entiendo que estás interesada en el curso básico de buceo.
+
+¡Genial! Para recomendarte el plan perfecto: ¿Eres buzo certificado? (Y si no, ¡tranquilo! El minicurso es ideal para empezar. 🤿)
+    B2: 🌊 *Buceo certificado (2 inmersiones, 1 día)*: *178 USD / 630.000 COP* por persona (con el descuento por reservar online).
+
+Los colombianos/residentes pagan en pesos (COP) y los internacionales en dólares (USD) — mismo precio, sin cobro extra por la divisa. ¿Te ayudo a armar la reserva? 😊
+
+Si tu pregunta era sobre algo más concreto que esto, cuéntamelo con más detalle y te confirmo con exactitud. 🙂
+
+¿Desde dónde saldrías? Podemos recogerte saliendo *desde Cartagena* (ida y vuelta el mismo día) o, si ya estás *en las islas*, coordinamos la recogida en tu hotel.
+
+######## paquete-5-buceos-cop-refresh-y-hoteles
+  criterio global:sin-repreguntas: cumple -> no_cumple | juez: El cliente ya indicó que completó el curso básico (es buzo certificado), pero el bot volvió a preguntar '¿Eres buzo certificado?' — es una repregunta sobre un dato ya proporcionado.
+  criterio precio-cop-segun-origen: no_cumple -> revisar | juez: [evidencia del cliente no encontrada] El cliente no indicó si la salida sería desde Cartagena o si ya está en las islas; según el criterio y la referencia, el bot debía preguntar ese dato antes de cotizar. En su lugar el bot cotizó directamente el precio desde Cartagena.
+  criterio refresh-menos-de-dos-anos: cumple -> no_cumple | juez: El bot recomienda un refresh basándose en 'más de un año', pero la referencia exige refresh normalmente solo si han pasado más de 2 años desde la última inmersión; el cliente tiene menos de 2 años de inactividad, por tanto la recomendación es incorrecta.
+  (conv B2 en PRE: 2238)
+--- t1 CLIENTE: Buenos días. Quiero hacer el paquete de 5 buceos. Cuál es el costo para colombianos por favor?
+    [IDENTICA] ¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todos los días en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊
+
+¡Con gusto te ayudo! 🌊 Ese detalle en concreto no lo tengo a la mano, pero puedo ayudarte con las actividades, precios, logística o a armar tu reserva. ¿Quieres que te pase con un asesor para resolver eso puntual?
+--- t2 CLIENTE: Gracias - y en pesos? Para colombianos?
+    A : ¡Claro que sí! El paquete de 5 inmersiones (2 días, con 4 buceos diurnos y 1 nocturno) para colombianos cuesta:
+
+- Precio online con descuento: $1,429,000 COP  
+- Precio normal sin descuento: $1,587,000 COP
+
+El hotel no está incluido, y la salida es desde Cartagena hacia las Islas del Rosario. ¿Quieres que te ayude a armar la reserva o necesitas más detalles?
+    B2: ¡Claro que sí! El paquete de 5 inmersiones (2 días, con 4 buceos diurnos y 1 nocturno de bioluminiscencia) para colombianos cuesta:
+
+- Precio normal: $1,587,000 COP  
+- Precio con 10% de descuento por reserva online: $1,429,000 COP
+
+El hotel no está incluido, y la salida es desde Cartagena hacia las Islas del Rosario. ¿Quieres que te ayude a armar la reserva o te cuento más detalles del plan?
+
+¡Genial! Para recomendarte el plan perfecto: ¿Eres buzo certificado? (Y si no, ¡tranquilo! El minicurso es ideal para empezar. 🤿)
+--- t3 CLIENTE: Gracias - yo complete el curso básico el 3 de abril 2025. Tengo que hacer algo especial?
+    A : ¡Qué bueno que ya tienes tu curso básico listo! 🐠 Como lo completaste en abril de 2025, que es hace menos de dos años, no necesitas hacer un refresh antes de bucear con nosotros.
+
+Solo recuerda que para cualquier curso avanzado o inmersión, debes haber terminado la teoría y completar el formato que te enviamos para el seguro. ¿Quieres que te cuente más sobre las opciones para seguir buceando o hacer un curso avanzado?
+    B2: ¡Qué bacano que ya tienes tu curso básico listo desde abril del 2025! 🎉
+
+Como llevas más de un año sin bucear, normalmente recomendamos hacer un refrescamiento (refresh) para que vuelvas al agua con toda la confianza y seguridad. Eso es súper importante para que disfrutes al máximo.
+
+Si quieres, puedo ayudarte a coordinar ese refrescamiento o darte más detalles del paquete de 5 buceos que quieres hacer. ¿Quieres que te cuente cómo seguimos?
+
+¡Genial! Para recomendarte el plan perfecto: ¿Eres buzo certificado? (Y si no, ¡tranquilo! El minicurso es ideal para empezar. 🤿)
+--- t4 CLIENTE: Y me recuerda los hoteles por favor?
+    A : ¡Claro que sí! 🏝️ Nuestra base de buceo está en dos hoteles de Isla Grande, que son el Hotel San Pedro de Majagua y el Hotel Cocoliso. Si te alojas en alguno de estos, la recogida es directa y súper cómoda.
+
+También hay otros hoteles con acceso marítimo cerca, como Rosario de Mar, Secreto, Ubuntu, Mulata, Eco Hotel Las Palmeras y Pao Pao. En estos casos coordinamos la recogida, pero a veces puede que haya una caminata corta hasta el muelle más cercano.
+
+El alojamiento no está incluido en nuestros planes, así que reservas directamente con el hotel que prefieras. ¿Quieres que te ayude a coordinar la recogida o te cuento más sobre cómo funciona?
+    B2: ¡Claro que sí! 🌴 Nuestra base de buceo está en dos hoteles de Isla Grande, que son los principales para bucear con nosotros:  
+- Hotel San Pedro de Majagua  
+- Hotel Cocoliso  
+
+Si te alojas en alguno de estos, la recogida es directa desde el hotel.  
+
+Otros hoteles con acceso marítimo cerca son:  
+- Rosario de Mar  
+- Secreto  
+- Ubuntu  
+- Mulata  
+- Eco Hotel Las Palmeras  
+- Pao Pao (aquí coordinamos la recogida, pero puede que haya una caminata corta al muelle más cercano).  
+
+El alojamiento no está incluido en nuestros planes, se reserva directamente con el hotel.  
+
+¿Quieres que te ayude a coordinar la recogida o te cuento más sobre la logística?
+
+¡Genial! Para recomendarte el plan perfecto: ¿Eres buzo certificado? (Y si no, ¡tranquilo! El minicurso es ideal para empezar. 🤿)
+
+######## referral-mas-refresher-hotel-y-domingo-pascua
+  criterio precio-refresh-no-confirmar-historico: revisar -> no_cumple | juez: El bot no dio el precio del minicurso/refresh según el catálogo ni preguntó si la salida sería desde Cartagena o ya desde las islas (dato necesario para cotizar correctamente); en su lugar ofreció pasar a un asesor.
+  (conv B2 en PRE: 2242)
+--- t1 CLIENTE: Hi. We want to complete our PADI open water: we have referrals and e-learning certificates. We would also like a refresher first. How does the 2 day open water referral course cost plus a mini course the day before. 2 persons. Thanks
+    A : Hi! 🪸 I'm *Coral* from *Diving Planet* — we dive every day in the Rosario Islands, departing from Cartagena or right from the islands. So happy to have you here! I'd love to help you put your plan together. 🌊
+
+Where would you be departing from? We can pick you up *from Cartagena* (round trip, same day) or, if you're already *on the islands*, we arrange pickup at your hotel.
+    B2: Hi! 🪸 I'm *Coral* from *Diving Planet* — we dive every day in the Rosario Islands, departing from Cartagena or right from the islands. So happy to have you here! I'd love to help you put your plan together. 🌊
+
+Happy to help! 🌊 I don't have that specific detail handy, but I can help you with activities, prices, logistics or putting your booking together. Would you like me to connect you with an advisor for that specific point?
+--- t2 CLIENTE: Ok. Thanks. We will work out the best days. Do you recommend any hotels on the island convenient for the diving?
+    A : Perfect! For convenience, we recommend staying at either Hotel San Pedro de Majagua or Hotel Cocoliso on Isla Grande, since our dive base is right there and pick-up is direct from these hotels. Other nearby hotels with boat access include Rosario de Mar, Secreto, Ubuntu, Mulata, Eco Hotel Las Palmeras, and Pao Pao. You book accommodation directly with the hotel, as it's not included in our dive plans.
+
+Would you like info on how we organize pick-ups and dive schedules from these hotels?
+    B2: Perfect! Staying on Isla Grande is super convenient for diving with us. Our dive base is right at two hotels there: Hotel San Pedro de Majagua and Hotel Cocoliso. If you stay at either, pick-up for diving is direct from your hotel, which makes everything easier.
+
+Other nearby hotels with boat access to our dive base include Rosario de Mar, Secreto, Ubuntu, Mulata, Eco Hotel Las Palmeras, and Pao Pao. Accommodation is booked directly with the hotels.
+
+Would you like info on how to coordinate pick-up from any of these hotels?
+
+Where would you be departing from? We can pick you up *from Cartagena* (round trip, same day) or, if you're already *on the islands*, we arrange pickup at your hotel.
+--- t3 CLIENTE: Great. We will book diving with you on the website and will book our hotel on the island . Hope you are operating on Easter Sunday? We want to dive on April 5 and 6. How do we book/pay for the $50 refresher course?
+    [IDENTICA] Happy to help! 🌊 I don't have that specific detail handy, but I can help you with activities, prices, logistics or putting your booking together. Would you like me to connect you with an advisor for that specific point?
+
+######## reserva-ingles
+  criterio idioma: no_cumple -> cumple | juez: El bot incluyó la expresión en español 'Muelle de la Bodeguita' en su respuesta, por lo que no todas sus respuestas están completamente en inglés.
+  criterio link: no_cumple -> cumple | juez: la respuesta no incluye el link de reserva
+  (conv B2 en PRE: 2221)
+--- t1 CLIENTE: hi, i want to book a dive
+    [IDENTICA] Hi! 🪸 I'm *Coral* from *Diving Planet* — we dive every day in the Rosario Islands, departing from Cartagena or right from the islands. So happy to have you here! I'd love to help you put your plan together. 🌊
+
+Great! So I can recommend the perfect plan: Are you a certified diver? (And if not, no worries — the mini-course is the ideal way to start. 🤿)
+--- t2 CLIENTE: i'm certified, just me
+    A : I see you're certified and diving solo.
+
+Where would you be departing from? We can pick you up *from Cartagena* (round trip, same day) or, if you're already *on the islands*, we arrange pickup at your hotel.
+    B2: Got it, you're certified and it's just you.
+
+Where would you be departing from? We can pick you up *from Cartagena* (round trip, same day) or, if you're already *on the islands*, we arrange pickup at your hotel.
+--- t3 CLIENTE: from cartagena please
+    A : I see that you're from Cartagena.
+
+I recommend our most popular plan: *2 dives in 1 day* in the Rosario Islands. (If you'd rather a *multi-day package* of 3+ dives, just tell me.)
+
+Has it been *more than 2 years* since your last dive?
+    B2: I see you're from Cartagena.
+
+I recommend our most popular plan: *2 dives in 1 day* in the Rosario Islands. (If you'd rather a *multi-day package* of 3+ dives, just tell me.)
+
+Has it been *more than 2 years* since your last dive?
+--- t4 CLIENTE: no, i dove last month
+    A : I see you dove last month.
+
+One last thing so I can give you the right price and link: are you Colombian or a resident of Colombia?
+    B2: I see that you dove last month.
+
+One last thing so I can give you the right price and link: are you Colombian or a resident of Colombia?
+--- t5 CLIENTE: not colombian
+    [IDENTICA] Got it, you're not Colombian.
+
+🤿 *Fun Dives - 2 dives (1 day)*
+💰 *178 USD* per person (online rate)
+✅ Includes: Cartagena-Islands transport, lunch, gear and insurance.
+📍 Departure from Cartagena (Muelle de la Bodeguita, 8:00 a.m.).
+
+👉 *For more information and to book, click here:*
+https://book.divingplanet.org/book/salidas-de-buceo/1?language=en
+
+_The price is the same in COP or USD, with no extra charge for the currency._
+
+Is there anything else I can help you with? I can *add another activity*, answer questions, or adjust your booking. 🤿
+--- t6 CLIENTE: how much would that be
+    A : 🌊 Here are the *reference prices departing from Cartagena* (they include the boat, lunch, gear and park entrance), with the online-booking discount:
+
+🤿 *Certified diving* (2 dives, 1 day): *178 USD / 630.000 COP* per person.
+🆕 *Dive mini-course* (no experience): *183 USD / 655.000 COP* per person.
+🐠 *Snorkeling*: *126 USD / 448.000 COP* per person.
+🎓 *Open Water course* (PADI certification): *693 USD / 2.450.000 COP*.
+
+Colombians/residents pay in pesos (COP) and international guests in dollars (USD) — same price, no extra charge for the currency. There are also multi-day packages (4/5/7/9 dives) and other courses. Which one are you interested in? 😄
+
+If your question was about something more specific than this, tell me more and I'll confirm the exact details. 🙂
+    B2: 🌊 Here are the *reference prices departing from Cartagena* (they include the boat, lunch, gear and park entrance), with the online-booking discount:
+
+🤿 *Certified diving* (2 dives, 1 day): *178 USD / 630.000 COP* per person.
+🆕 *Dive mini-course* (no experience): *183 USD / 655.000 COP* per person.
+🐠 *Snorkeling*: *126 USD / 448.000 COP* per person.
+🎓 *Open Water course* (PADI certification): *693 USD / 2.450.000 COP*.
+
+Colombians/residents pay in pesos (COP) and international guests in dollars (USD) — same price, no extra charge for the currency. There are also multi-day packages (4/5/7/9 dives) and other courses. Which one are you interested in? 😄
+
+If your question was about something more specific than this, tell me more and I'll confirm the exact details. 🙂
+
+You told me: *certified diving*.
+--- t7 CLIENTE: great, how do i pay
+    A : Perfect! For international guests like you, payment is made 100% online by card through our secure booking system. After you select your plan and proceed, the system will guide you through the payment steps.
+
+If you have any trouble with the online payment, just let me know and I can connect you with an advisor to help sort it out.
+
+Would you like me to send you the direct booking link now?
+    B2: Perfect! For payment, a human advisor will guide you through the step-by-step process once you start your booking. They’ll send you the secure payment link and explain any advance payment if needed.
+
+Would you like me to connect you now to confirm your booking and get the payment details?
+
+🤿 *Fun Dives - 2 dives (1 day)*
+💰 *178 USD* per person (online rate)
+✅ Includes: Cartagena-Islands transport, lunch, gear and insurance.
+📍 Departure from Cartagena (Muelle de la Bodeguita, 8:00 a.m.).
+
+👉 *For more information and to book, click here:*
+https://book.divingplanet.org/book/salidas-de-buceo/1?language=en
+
+_The price is the same in COP or USD, with no extra charge for the currency._
+
+Is there anything else I can help you with? I can *add another activity*, answer questions, or adjust your booking. 🤿
+
+######## reserva-solo-link
+  criterio link: cumple -> no_cumple | juez: la respuesta no incluye el link de reserva
+  (conv B2 en PRE: 2220)
+--- t1 CLIENTE: quiero bucear certificado
+    [IDENTICA] ¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todos los días en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊
+
+¿Desde dónde saldrías? Podemos recogerte saliendo *desde Cartagena* (ida y vuelta el mismo día) o, si ya estás *en las islas*, coordinamos la recogida en tu hotel.
+--- t2 CLIENTE: solo yo
+    A : Entendido, solo serás tú.
+
+¿Desde dónde saldrías? Podemos recogerte saliendo *desde Cartagena* (ida y vuelta el mismo día) o, si ya estás *en las islas*, coordinamos la recogida en tu hotel.
+    B2: Entendido, solo eres tú.
+
+¿Desde dónde saldrías? Podemos recogerte saliendo *desde Cartagena* (ida y vuelta el mismo día) o, si ya estás *en las islas*, coordinamos la recogida en tu hotel.
+--- t3 CLIENTE: cartagena
+    A : Entendido, estás en Cartagena.
+
+Te recomiendo nuestro plan más popular: *2 inmersiones en 1 día* en las Islas del Rosario. (Si prefieres un *paquete multi-día* de 3 o más inmersiones, dímelo.)
+
+¿Han pasado *más de 2 años* desde tu última inmersión?
+    B2: Entiendo que estás interesado en bucear en Cartagena.
+
+Te recomiendo nuestro plan más popular: *2 inmersiones en 1 día* en las Islas del Rosario. (Si prefieres un *paquete multi-día* de 3 o más inmersiones, dímelo.)
+
+¿Han pasado *más de 2 años* desde tu última inmersión?
+--- t4 CLIENTE: no, buceé hace poco
+    A : Entiendo que buceaste hace poco, ¡qué emocionante!
+
+Última cosa para darte el precio y el link correctos: ¿eres colombiano o residente en Colombia?
+    B2: Entiendo que buceaste hace poco, ¡eso es genial!
+
+Última cosa para darte el precio y el link correctos: ¿eres colombiano o residente en Colombia?
+--- t5 CLIENTE: no soy colombiano
+    [IDENTICA] Entendido, no eres colombiano.
+
+🤿 *Salidas de Buceo - 2 inmersiones (1 día)*
+💰 *178 USD* por persona (reservando online)
+✅ Incluye: transporte Cartagena-Islas-Cartagena, almuerzo, equipo y seguro.
+📍 Salida desde Cartagena (Muelle de la Bodeguita, 8:00 a.m.).
+
+👉 *Para más información y hacer tu reserva, haz clic aquí:*
+https://book.divingplanet.org/book/salidas-de-buceo/1?language=es
+
+_El precio es el mismo en pesos (COP) o dólares (USD), sin cobro extra por la divisa._
+
+¿Te ayudo con algo más? Puedo *añadir otra actividad*, resolver dudas o ajustar la reserva. 🤿
+--- t6 CLIENTE: listo, como pago
+    A : Entendido, estás listo para el pago.
+
+🤿 *Salidas de Buceo - 2 inmersiones (1 día)*
+💰 *178 USD* por persona (reservando online)
+✅ Incluye: transporte Cartagena-Islas-Cartagena, almuerzo, equipo y seguro.
+📍 Salida desde Cartagena (Muelle de la Bodeguita, 8:00 a.m.).
+
+👉 *Para más información y hacer tu reserva, haz clic aquí:*
+https://book.divingplanet.org/book/salidas-de-buceo/1?language=es
+
+_El precio es el mismo en pesos (COP) o dólares (USD), sin cobro extra por la divisa._
+
+¿Te ayudo con algo más? Puedo *añadir otra actividad*, resolver dudas o ajustar la reserva. 🤿
+    B2: ¡Listo! Para clientes extranjeros como tú, el pago se hace 100% al reservar, ya sea en línea con tarjeta o de forma presencial con tarjeta o efectivo.
+
+Un asesor te enviará el enlace seguro para que puedas pagar con tarjeta en línea, o si prefieres, puedes hacer el pago presencial cuando llegues.
+
+¿Quieres que te pase con un asesor para que te envíe el link y te guíe con el proceso?
+
+Solo para confirmar, ¿lo cambio?
+• con certificación de buceo → *sin certificación*
+
+######## tours-diarios-isla-grande
+  criterio global:sin-invenciones: no_cumple -> cumple | juez: El bot afirma que el cliente ya está en las Islas del Rosario (y ofrece recogida en hotel) aunque el cliente no dijo que ya estuviera allí, es una suposición no respaldada por la conversación ni por la referencia.
+  (conv B2 en PRE: 2244)
+--- t1 CLIENTE: Tours are daily?
+    A : Hi! 🪸 I'm *Coral* from *Diving Planet* — we dive every day in the Rosario Islands, departing from Cartagena or right from the islands. So happy to have you here! I'd love to help you put your plan together. 🌊
+
+Yes, our tours operate every day of the year except on December 25 and January 1. We do sometimes suspend trips if the weather conditions affect safety, but otherwise, you can plan to dive any day you like! Would you like help putting together a booking for a specific date?
+    B2: Hi! 🪸 I'm *Coral* from *Diving Planet* — we dive every day in the Rosario Islands, departing from Cartagena or right from the islands. So happy to have you here! I'd love to help you put your plan together. 🌊
+
+Yes, we operate tours every day of the year except on December 25 and January 1. Trips may be suspended only if weather conditions affect safety. Would you like help planning your dive day?
+--- t2 CLIENTE: Does isla grande count acceptable is it part of the roasirio island^
+    A : Hi! Yes, Isla Grande is definitely part of the Rosario Islands. In fact, our dive base is located at two hotels on Isla Grande: Hotel San Pedro de Majagua and Hotel Cocoliso. Staying there makes your diving experience more convenient, but you can also stay at other nearby hotels with maritime access.
+
+Since you’re already on the Rosario Islands, boat pick-up from your hotel on Isla Grande is included with no extra charge. Would you like help planning your dives from Isla Grande?
+    B2: Hi! Isla Grande is indeed part of the Rosario Islands archipelago. Our dive base is actually located on Isla Grande, at Hotel San Pedro de Majagua and Hotel Cocoliso. Staying there makes your experience more convenient, though it's not required. 
+
+Would you like info on accommodation options or diving plans from Isla Grande?

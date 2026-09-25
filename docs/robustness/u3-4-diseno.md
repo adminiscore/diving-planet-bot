@@ -1,9 +1,10 @@
 # u3-4 — "Contesta y sigue" (24-sep-2026)
 
-Estado (24-sep noche): **escalón 0 y escalón 1 hechos; NO promocionado todavía** (flag
-`ANSWER_AND_CONTINUE`, apagado por defecto en el código y APAGADO en PRE desde el push del handoff,
-`"false"` en docker-compose.vps.yml; para la siguiente ronda B se pone `"true"`).
-Siguiente: dos arreglos y repetir solo la ronda B → ver "Siguiente paso" al final.
+Estado (25-sep noche): **v5 medida en PRE (ronda B2) y NO promocionada**: 4 mejoras y 3 regresiones
+propias, las 3 con causa exacta y ya en el banco de calibración. Flag `ANSWER_AND_CONTINUE` apagado por
+defecto en el código y `"false"` en docker-compose.vps.yml.
+Siguiente: ver "Siguiente paso tras la ronda B2" (recalibrar `affirms_activity`, meter las preguntas de
+u3-5 y el relleno con puerta) y repetir solo la ronda B.
 Protocolo: [protocolo-medicion.md](protocolo-medicion.md).
 
 ## El problema, medido
@@ -434,7 +435,74 @@ ahí. Por eso la lectura que decide es **por caso** y el recuento del juez tras 
 el agregado. Quien repita esto: con dos tandas de la MISMA versión se mediría el ruido de verdad
 (no se hizo hoy, por no gastar 20 min y otra tanda de peticiones en algo ya visible).
 
-## Siguiente paso (para quien siga) — actualizado 25-sep, tarde
+## Escalón 1 — ronda B2 en PRE (25-sep, noche): v5 NO se promociona
+
+**Qué se midió.** v5 (arreglo 1 + arreglo 2 + puerta de Jev) con `ANSWER_AND_CONTINUE=true` en PRE
+(commit `751b0e4`), ronda core de 32 diálogos / 93 turnos, juzgada con `gpt-5-mini` medium, frente a la
+ronda A del 24-sep (`2026-09-24-u34-A`, flag apagado). Antes de subir se comprobó que todo el código
+nuevo va detrás del flag, así que con el flag apagado HEAD = lo que había en PRE y la A sigue valiendo.
+Ficheros: `synthetic-runs/2026-09-25-u34-B2.jsonl`, `golden-set/results/2026-09-25-u34-B2__gpt-5-mini-medium.json`,
+`snapshots/2026-09-25-u34-B2.json`, textos lado a lado en `u3-4/escalon1-textos-A-vs-B2.txt` y las
+líneas del log de PRE que explican cada decisión en `u3-4/logs-pre-ronda-B2.txt` (el log se borra en
+cada deploy).
+
+> Nota: esta ronda se retrasó ~20 min porque **CI llevaba roto desde el 24-sep** (SQLAlchemy 2.1) y el
+> deploy se saltaba en silencio: los arreglos de u3-4 nunca habían llegado a PRE. HISTORY 0.29.27.
+
+**Agregado: empate.** Criterios 87,3 % (A) → 87,4 % (B2); diálogos sin fallos 17 → 16 de 32. El juez
+marca 9 mejoras y 8 regresiones. Por eso se lee cada caso, con el texto y el log.
+
+**Latencia (orientativa, otro día).** Turnos que van al RAG 29 → **41** (12 preguntas más contestadas);
+RAG p50 4,2 → 3,5 s, reserva p50 1,5 → 1,3 s; llamadas al LLM de la ronda 286 → 316 (+10 %; v1 hacía 344).
+
+**Lectura caso a caso** (causa confirmada en `logs-pre-ronda-B2.txt`):
+
+| | Caso | Qué pasa | Causa |
+|---|---|---|---|
+| ✅ | `tours-diarios-isla-grande` | ya no da por hecho que está en la isla | la puerta de Jev tira `location=island` de "is isla grande part of rosario?" |
+| ✅ | `descuento-online-sin-codigo` | no repregunta la actividad | se guarda `padi_open_water` en el turno con pregunta |
+| ✅ | `reserva-ingles` | "how do I pay" → contesta y añade el resumen con el enlace | contesta y sigue |
+| ✅ | `moneda-precios-principiante-y-snorkel` | pregunta el origen para cotizar | avanza la reserva |
+| ❌ | `certificado-fechas-fotos-y-reserva` | nunca llega a dar el enlace | **Jev tira una actividad AFIRMADA**: "Yo soy open y me gustaría salir un día y tal. No sé qué tienen." (0,36; lee el "no sé qué tienen" como petición de consejo) |
+| ❌ | `paquete-5-buceos-cop-refresh-y-hoteles` | vuelve a preguntar "¿eres buzo certificado?" | "yo completé el curso básico el 3 de abril 2025. ¿Tengo que hacer algo especial?": el regex no lo lee y en turno con pregunta **no se rellenan huecos** (la familia del "fundive") |
+| ❌ | `reserva-solo-link` | "listo, como pago" → "¿lo cambio? con certificación → sin certificación" | `[CORE] contradiccion sin cue is_certified: True -> False`: al revisar los datos ya guardados en el turno con pregunta, **el LLM contesta "no certificado"** a un mensaje que no habla de eso (u3-5) |
+| ⚠️ | `curso-open-water-transporte…` t2 | "transfer back to Cartagena at no extra charge" (falso) | respuesta del RAG que su juez de grounding dejó pasar (l1-7) |
+| ⚠️ | `descuento-online-sin-codigo` t1 | "no lo tengo a la mano" donde A explicaba el descuento | el juez de grounding rechazó 2 veces la respuesta (l1-6); turno ya inestable (Jev duda a 0,40) |
+| ⚠️ | `paquete-5…` t3 | recomienda refresh por "más de un año" (la regla es 2) | respuesta del RAG; el mismo criterio ya bailó en el A/B de l1-4 |
+| · | `buceo-adaptado-visual` y 2 mejoras | — | ruido del juez: texto equivalente en A y B2 (y 2 "no_aplica → cumple") |
+
+Los ⚠️ no tienen prueba de venir de u3-4 (el mismo RAG contesta en las dos rondas), pero **con u3-4 el
+RAG contesta 12 turnos más, así que sus fallos (l1-6/l1-7) pesan más**. Y en dos diálogos el RAG dice a
+"¿cómo pago?" que "un asesor te enviará el enlace" aunque ya se le dio (s4-7).
+
+**Veredicto (regla del escalón 1): hay 3 regresiones propias → NO se promociona; flag a `false` el
+mismo día.** Pero v5 avanza de verdad sobre v1: de las 8 regresiones de v1, **5 ya no aparecen**
+(idioma del descuento, "buceamos todos los días", dos repreguntas y la invención por la isla), y la
+puerta de Jev hace en PRE lo que prometía el escalón 0.
+
+**Las 3 regresiones propias ya están en el banco de calibración** (`scripts/sonda_afirma_vs_pregunta.py`):
+
+| Regresión | ¿Lo cubre algo preparado? |
+|---|---|
+| Jev tira "soy open y me gustaría salir un día…" | **No**: la pregunta `affirms_activity` del código también falla en el banco (0,36) → recalibrarla (banco `u34`: 19/21) |
+| "completé el curso básico" no se guarda | **Sí**: la candidata de certificado de u3-5 contesta 0,90; falta además el relleno con puerta (propuesta del "fundive") |
+| "¿lo cambio?" fantasma en "listo, como pago" | **Sí**: la candidata de certificado contesta 0,03 → usarla también para filtrar las contradicciones de los datos ya guardados |
+
+## Siguiente paso tras la ronda B2 (25-sep, noche) — ESTE es el vigente
+
+1. **Recalibrar `affirms_activity`** con el caso nuevo del banco ("Yo soy open y me gustaría salir un
+   día y tal. No sé qué tienen." → afirma), sin perder ninguno de los 20 anteriores (`u34`: hoy 19/21).
+2. **Meter en `jev_router` las candidatas de u3-5** (certificado, grupo, nacionalidad; `u35`: 16/17 y
+   13/13 en los casos nuevos) detrás del mismo flag, y usar la de certificado **también para filtrar
+   las contradicciones de los datos ya guardados** en el turno con pregunta (mata el "¿lo cambio?").
+3. **Relleno con puerta** en el turno con pregunta, solo para campos con pregunta de Jev y solo con
+   datos del mensaje actual (Jev no ve el historial). Recupera "fundive" y "completé el curso básico".
+4. Escalón 0 (replay local) → ronda B3 frente a la misma A del 24-sep. Leer por caso, como aquí.
+
+Aparte, y con más peso cuando u3-4 se encienda: l1-6/l1-7 (el RAG que no sabe o inventa) y s4-7 ("¿cómo
+pago?" debe dar el enlace, no "te lo enviará un asesor").
+
+## Siguiente paso (para quien siga) — actualizado 25-sep, tarde (SUPERADO por el de arriba)
 
 **Estado del código** (flag `answer_and_continue`, apagado en el código y en el compose; PRE no ha
 cambiado):
