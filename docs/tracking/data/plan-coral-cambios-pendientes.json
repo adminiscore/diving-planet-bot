@@ -29,6 +29,16 @@
         "byLabel": "Alvaro (con Claude)",
         "text": "25-sep: s4-5 cerrada. langsmith no se puede quitar (la exige langchain-core); se queda pineada. Arregladas las plantillas .env.*.example: ya no encienden LangSmith y RAG_TOP_K=8 como PRE. Commit solo local (un push a pre_* despliega PRE). Para seguir con u3-5 en la maquina de Alvaro falta OPENROUTER_API_KEY en .env.dev."
       }
+    },
+    {
+      "coleccion": "log",
+      "operacion": "set",
+      "doc_id": "l-0925-alvaro-u34-fundive",
+      "campos": {
+        "at": "2026-09-25T18:00:00Z",
+        "byLabel": "Alvaro (con Claude)",
+        "text": "25-sep: u3-4, explicado el caso 'costo de un fundive' que quedaba sin explicar (HISTORY 0.29.23). No es la verificacion ni la puerta de Jev: en un turno con pregunta no se rellenan huecos (arreglo 2), asi que solo sobrevive lo que lee el regex, y el regex no lee 'fundive' junto ('fun dive' separado si). Es una familia: 4 de las 12 perdidas estrictas de v5 (3 datos reales y 1 acierto: en 'que actividad le recomiendan' el camino apagado se inventaba snorkel). Propuesta para DESPUES de la ronda B: rellenar solo los campos con puerta de Jev y pasar lo rellenado por la puerta. Codigo sin tocar."
+      }
     }
   ]
 }

@@ -1,6 +1,12 @@
 History
 =======
 
+0.29.23 - (2026-09-25)
+----------------------
+* **u3-4 · explicado el caso que quedaba "sin explicar": "costo de un fundive" pierde la actividad por el relleno de huecos, no por la verificación ni por la puerta.** En un turno con pregunta no se rellenan huecos (arreglo 2), así que solo sobrevive lo que lee el regex, y el regex no lee "fundive" junto (con "fun dive" separado sí). Jev da 0,96 en el banco, pero la puerta solo filtra lo que alguien propone, y aquí no lo propone nadie.
+* **Es una familia**: de las 12 pérdidas de v5 con el estado previo idéntico, en **8** el regex lee el dato y lo tira la verificación o la puerta; en **4** el regex no lee nada. De esas 4, **3 son datos reales** ("fundive"; "el sábado pasado hicimos 2 buceos"; "for 1 person" dicho en el turno 1) y **1 es un acierto** (en "¿qué actividad le recomiendan?" el camino apagado se inventaba snorkel).
+* **Propuesta, sin implementar hasta después de la ronda B**: volver a rellenar huecos en los turnos con pregunta **solo en los campos con puerta de Jev**, pasando lo rellenado por la puerta. Coincide con la lista de preguntas que ya faltaban (`is_certified`, `group_size`, y ahora `last_dive_over_2_years`). Detalle: `docs/robustness/u3-4-diseno.md`, sección "Explicado". No se toca el código: cambiaría lo que mide la ronda B pendiente.
+
 0.29.22 - (2026-09-25)
 ----------------------
 * **s4-5 · `langsmith` NO se puede retirar — y lo que sí se ha retirado.** `langchain-core` la exige como dependencia (`pip show langchain-core` → `Requires: … langsmith …`), así que quitarla de `pyproject.toml` no la desinstala: solo la dejaría **sin pin**, y el siguiente build de PRE podría traer otra versión sin que nadie lo decidiera. Se queda pineada por reproducibilidad, con el porqué escrito en el comentario. `scripts/inspect_langsmith_trace.py` también se queda: el plan multi-agente remite a su docstring como el sitio donde está documentada una trampa.

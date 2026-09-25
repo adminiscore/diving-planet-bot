@@ -359,6 +359,54 @@ Un aviso que salió de aquí: la hipótesis era que la verificación causaba esa
 falsa en al menos un caso** — "costo de un fundive" → `certified_diving` se pierde igual en v3, v5 y
 v6, así que no la causa ninguna de las dos piezas. Sigue sin explicar.
 
+### Explicado (25-sep, tarde): por qué "fundive" se pierde en v3, v5 y v6
+
+**No es la verificación ni la puerta: es que en un turno con pregunta no se rellenan huecos.** Es la
+tercera pieza del arreglo 2, y la única que v3, v5 y v6 tienen en común (v6 quitó la verificación pero
+siguió sin rellenar: "lo demás se queda como lo leyó el regex"). En el código:
+`_wants_gaps` es falso cuando `question_turn_fields is not None` (`conversational_core.py`, bloque
+"en un turno con pregunta NO se rellenan huecos"). Así que en ese turno **solo sobrevive lo que leyó el
+regex**, y la verificación y la puerta solo filtran eso.
+
+El regex **no lee "fundive"** (junto): `matched_activity_categories` da `[]`, y con "fun dive" (separado)
+da `certified_diving`. Con el flag apagado la actividad la ponía el **relleno de huecos** del LLM. Por
+eso Jev contesta 0,96 en el banco y no sirve de nada: la puerta deja pasar un dato, pero aquí nadie lo
+propone.
+
+**Es una familia, no un caso.** Pérdidas de v5 frente a `off` con criterio estricto (turnos con el
+estado previo IDÉNTICO en las dos pasadas, `location`/`detected_location` contados una vez): **12**.
+Pasando cada mensaje por `_detector.detect()` con el estado previo de `off`:
+
+| | Pérdidas | Qué son |
+|---|---|---|
+| El regex **sí** lee el dato y la verificación o la puerta lo tiran | **8** | lo ya señalado arriba |
+| El regex **no** lee nada: solo podía venir del relleno | **4** | ver abajo |
+
+Las 4 del relleno, leídas a mano:
+
+- `precio-fundive-datos-faltan#1` → `certified_diving`: **dato real** (nombra el producto para
+  preguntar su precio, la regla de negocio de la calibración).
+- `aprobacion-logs-padi#2` → `last_dive_over_2_years=False` ("el sábado pasado hicimos 2 buceos"):
+  **dato real** (el juez de v5 lo da por afirmado un turno después).
+- `principiante-hora-lugar-y-precio#4` → `group_size=1`: **dato real**, dicho en el turno 1 ("for
+  1 person") dentro de una pregunta; `off` lo recuperaba del historial al rellenar en el turno 4.
+- `nino-7-familia#2` → `snorkel` ("entonces qué actividad le recomiendan"): **aquí perder es
+  acertar**: el cliente pide consejo, no elige. `off` se lo inventaba.
+
+**Propuesta, SIN implementar (para después de la ronda B):** en un turno con pregunta, volver a
+rellenar huecos **solo en los campos que tienen puerta de Jev**, y que lo rellenado pase por la
+puerta igual que lo que lee el regex. Es la misma regla de la puerta aplicada a las dos fuentes: el
+regex o el LLM proponen el valor y **Jev decide si el cliente lo afirma**. Con las puertas de hoy
+(actividad, ubicación) recuperaría "fundive" (0,96) y debería dejar caer el snorkel de "¿qué
+actividad le recomiendan?" (hay que meterlo en el banco). `group_size` y `last_dive_over_2_years`
+necesitan su propia pregunta, igual que `is_certified`: **la misma lista que ya señalan los 2 errores
+reales**. Así el relleno que se apagó por "in case I decided to do the Open Water course?" puede
+volver sin reabrir ese agujero, porque `is_certified` solo se rellenaría con su puerta calibrada.
+
+**Por qué no ahora:** cambiaría lo que mide la ronda B pendiente (que es de v5), y cada pregunta
+nueva se calibra antes en `scripts/sonda_afirma_vs_pregunta.py` (lección de v4), lo que exige
+`OPENROUTER_API_KEY`.
+
 ### ⚠️ Jev no es determinista entre tandas, y eso cambia cómo se leen estas tablas
 
 Comparando v5 y v6, **9 turnos cambian en si la pregunta se contesta o no, en las dos direcciones**
@@ -407,9 +455,10 @@ a B, sí es comparable.
   `scripts/sonda_afirma_vs_pregunta.py`; añadir casos y comparar cuesta 10 s.
 - **`is_colombian` sigue siendo u3-5** (decisión de Gadea, 24-sep): 3 de los 7 casos que quedan a
   leer son suyos. La sonda de Jev sugiere que es la misma familia y tendría la misma solución.
-- **Sin explicar**: "Quería averiguar por el costo de un **fundive**" pierde `certified_diving` en
-  v3, v5 y v6 por igual, así que no lo causa ni la verificación ni la puerta. En el banco de
-  calibración, Jev contesta 0,96 a esa misma frase. Hay algo en medio que no está entendido.
+- **Explicado (25-sep, tarde): "fundive"** se pierde porque en un turno con pregunta **no se
+  rellenan huecos** y el regex no lee "fundive" junto. Es una familia: 4 de las 12 pérdidas
+  estrictas de v5 (3 datos reales y 1 acierto). Propuesta: rellenar solo los campos con puerta de
+  Jev y pasar lo rellenado por la puerta. Sección "Explicado" más arriba.
 - **Recuperar las respuestas de Jev cuando duda en el router**: hoy, si Jev duda en cualquier señal
   del router, el turno se va al router LLM y las respuestas de `affirms_*` se pierden (~8 % de los
   turnos) — se cae a la conducta de hoy, que es seguro pero desaprovecha una respuesta buena.

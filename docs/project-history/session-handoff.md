@@ -25,6 +25,10 @@ Read this file before changing code in the Diving Planet Bot. For a quick versio
   esté en marcha. Va con el siguiente push coordinado (p. ej. la ronda B de u3-4).
 - **Para u3-5 en la máquina de Álvaro falta `OPENROUTER_API_KEY` en `.env.dev`**: sin ella Jev no se
   llama y el banco `scripts/sonda_afirma_vs_pregunta.py` no mide nada.
+- **u3-4: explicado el "fundive"** (HISTORY 0.29.23). No es la verificación ni la puerta: en un turno
+  con pregunta no se rellenan huecos, y el regex no lee "fundive" junto. Es una familia de 4 de las 12
+  pérdidas estrictas de v5 (3 datos reales, 1 acierto). Propuesta para DESPUÉS de la ronda B: rellenar
+  solo los campos con puerta de Jev y pasar lo rellenado por la puerta. Código sin tocar.
 
 ### 🔧 2026-09-25 (Gonzalo) — u3-4: el arreglo 2 NO cumplía; la causa, encontrada y arreglada con Jev
 
