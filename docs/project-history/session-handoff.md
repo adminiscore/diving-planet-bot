@@ -13,33 +13,47 @@ Read this file before changing code in the Diving Planet Bot. For a quick versio
 
 > **📏 LEER ANTES DE MEDIR — decisiones del 24-sep-2026 (Gadea):** (1) latencia y llamadas con nuestros logs `[TURN_METRICS]` + `scripts/turn_metrics.py`, no con Langfuse (plan gratuito superado, reinicio 16-oct); (2) pruebas A/B por escalones, juzgando solo los diálogos que cambian. Todo en `docs/robustness/protocolo-medicion.md`.
 
-### 🔧 2026-09-25 (Gonzalo) — u3-4: los 2 arreglos HECHOS. Falta el escalón 0 (bloqueado por una clave)
+### 🔧 2026-09-25 (Gonzalo) — u3-4: los 2 arreglos hechos y MEDIDOS. El arreglo 2 **no cumple**
 
-Ver el detalle en `docs/robustness/u3-4-diseno.md` (§ "Arreglos 1 y 2"). Resumen y lo que hace falta:
+Todo el detalle en `docs/robustness/u3-4-diseno.md` (§ "Escalón 0 de los arreglos" y § "Siguiente
+paso", reescrito con la medida). Lo esencial:
 
-- **Arreglo 1 hecho**: si el RAG contesta su fallback, la respuesta va SOLA (no se le pega detrás la
-  pregunta de la reserva). `core_pending_slot` se mantiene, así que la reserva sigue el turno
-  siguiente. De paso, `FALLBACK_ES in x or FALLBACK_EN in x` estaba duplicado en núcleo y supervisor:
-  ahora hay una fuente, `rag_agent.is_fallback_answer()`.
-- **Arreglo 2 hecho, con dos bloqueos que el enunciado no contemplaba** (los dos resueltos, detallados
-  en el doc): (1) `verify_fields` devolvía solo discrepancias, así que **confirmar y abstenerse eran
-  indistinguibles** y la hipótesis sobrevivía → nuevo `as_answers=True` que devuelve la respuesta del
-  LLM tal cual (contrato viejo intacto por defecto; fallo = `None`, no `{}`, para no tirar datos por
-  un corte de red); (2) **`location`, `is_certified` e `is_colombian` tienen el veto apagado**, así que
-  verificar no habría corregido nada → en el turno con pregunta se aplica sin mirar esas banderas,
-  porque gobiernan otra pregunta y este camino solo corre con el flag encendido.
-- **Tests 24/24** (16 de Gadea + 8 nuevos, dos de ellos controles deliberados). Los 2 fallos de
-  `test_conversational_core` son **preexistentes**, verificados en un worktree en `d3dc51e`.
-- **El flag sigue apagado** en el código y en el compose: esto no cambia nada en PRE.
+- **Arreglo 1 (el RAG que no sabe) hecho, y NO medible en el escalón 0**: el replay sustituye el RAG
+  por un texto fijo que nunca es el fallback. Se mediría en el escalón 1. De paso,
+  `FALLBACK_ES in x or FALLBACK_EN in x` estaba duplicado: ahora hay una fuente,
+  `rag_agent.is_fallback_answer()`.
+- **Arreglo 2 (el regex lee, el LLM verifica) hecho y MEDIDO: resultado negativo.** Contestar no
+  cambia (94 → 123, igual que la versión de Gadea), pero en el caso que el enunciado nombra por su
+  nombre —"What if I decide to stay one day longer in rosario"— mi versión guarda `location=island`
+  y la de Gadea **no**. Los 3 `location` nuevos que solo introduce son inventados. **No se
+  promociona.** El flag sigue apagado en el código y en el compose: PRE no ha cambiado.
+- **La causa, que es lo que hay que llevarse**: `verify_fields` no pregunta "¿el cliente AFIRMA
+  esto?", **vuelve a extraer**. Para un extractor, "¿me recomiendas hoteles **en la isla**?" es una
+  señal clara de `location=island`. No existe en el sistema ninguna pregunta que distinga afirmar de
+  preguntar. Meter el matiz en el prompt falló dos veces: en el de relleno (Gadea, 24-sep) y en el de
+  verificación (25-sep, sonda fiel: no quita ni un `location` y rompe un `is_certified`).
+- **Siguiente paso, ya con medida: preguntárselo a Jev.** 11/12 en la sonda
+  (`scripts/sonda_afirma_vs_pregunta.py`), separando por márgenes anchos (0,07-0,48 los que no
+  afirman frente a 0,75-0,97 los que sí), a 0,30 s y **en la llamada del router que ya se hace** —
+  el mismo patrón con el que u3-4 añadió `asks_question` sin gastar peticiones. La tabla está en el
+  diseño.
+- **Lo que sí queda en el código**: `verify_fields(..., as_answers=True)` (distinguir "confirma" de
+  "no opina"; el contrato de siempre es el de por defecto, nada cambia sin el flag) y
+  `scripts/replay_diff_triage.py`, que automatiza el apartado de ruido que `replay_diff` pide hacer a
+  mano (sobre estos datos: 30 "INVENTADO" del juez → 16 a leer → 5 errores reales).
+- **Tests 24/24**, ruff y compileall limpios. Los 2 fallos de `test_conversational_core` son
+  preexistentes (verificados en un worktree en `d3dc51e`).
 
-**🔴 Lo que falta y por qué no lo hice:** el escalón 0 (`replay_golden_local`) fuerza
-`JEV_ROUTER_ENABLED=true` y **no hay `OPENROUTER_API_KEY` en esta máquina** (tampoco `.env.dev`, que
-el script fija a fuego; eso se resuelve copiando `.env`). Sin Jev, la detección de pregunta de u3-4
-(`asks_question ≥ 0,7`) no se ejercita, así que la medida no sería comparable justo en el mecanismo
-que decide qué turnos entran. **Hace falta la clave de OpenRouter**, o decidir explícitamente medir
-sin Jev (mediría qué datos guarda cada versión —el grueso— pero no la detección).
-
-**Después del escalón 0**: ronda B en PRE (paso 4 del banner de abajo, sin cambios) y luego u3-5.
+**⚠️ Trampa de entorno encontrada al montar el escalón 0 (no es del repositorio, es de la máquina).**
+El Python global tiene una instalación editable (`site-packages/_editable_impl_diving_planet_bot.pth`)
+que apunta a **otro checkout del repo, parado en junio** (`Documents/Workspace/diving-planet-bot`,
+último commit `bcdf8fb` del 14-jun-2026, sin `jev_router.py`). Consecuencia: un script lanzado **por
+ruta desde fuera de la raíz** (`python C:/algo/script.py`) importa `src` de junio **en silencio** —
+así apareció, con un `ModuleNotFoundError: src.agents.jev_router` que no tenía sentido. Los comandos
+documentados (`python -m scripts.X` desde la raíz) **no** están afectados: el cwd va primero en
+`sys.path`. Ya le pasó a alguien en el refactor multi-agente (`docs/multi-agent-refactor-plan.md`,
+"Nota de entorno"), que lo resolvió renombrando el `.pth`. Regla práctica: **ejecutar siempre desde la
+raíz del repo con `python -m`**, y si hace falta lanzar por ruta, `PYTHONPATH=<raíz>`.
 
 ### ▶️ 2026-09-24 noche (Gadea → Álvaro / Gonzalo) — u3-4 "contesta y sigue": A/B hecho, faltan 2 arreglos
 

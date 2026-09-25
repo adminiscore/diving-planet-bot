@@ -1,0 +1,101 @@
+turnos con dato de más: 51 | el juez ve inventado en 30
+  ruido [sin-pregunta]: 9
+  ruido [estado-previo-distinto]: 5
+  >>> A LEER A MANO: 16
+
+===== a-leer (16) =====
+- acompanante-madre-desde-cartagena#3  'Mi madre puede acompañarme en el buceo y se quedar en la isla de apoyo?'
+    de más: {'detected_activity': 'certified_diving', 'location': 'island', 'detected_location': 'island'}
+    juez: ['detected_activity'] — El cliente menciona 'el buceo' y pregunta si su madre puede acompañarle y quedarse en la 'isla de apoyo', por lo que la ubicación ('island' / 'detected_location') está afirmada. No dice que sea buceador certificado ni us
+- cambio-fecha-por-enfermedad#1  'Hello! My husband and I arrived in Cartagena last night and are so excited for diving with your team on Monday'
+    de más: {'detected_activity': 'certified_diving', 'location': 'cartagena', 'detected_location': 'cartagena'}
+    juez: ['detected_activity'] — El cliente menciona que quiere bucear con el equipo el lunes, pero no dice que sean buceadores certificados ni proporciona información que permita afirmar "certified_diving". En cambio, sí afirma la ubicación: "arrived i
+- curso-open-water-principiantes-idioma-frances-anticipacion#1  'Hola! Me gustaria tener mas informacion acerca de los cursos de buceo en Cartagena (especificamente en Islas d'
+    de más: {'detected_activity': 'minicourse', 'location': 'island', 'detected_location': 'island', 'detected_group_size': 2}
+    juez: ['detected_activity'] — El cliente menciona que es la primera vez que van a hacer buceo y que no tienen mucho tiempo, pero no dice explícitamente que quiere un 'minicourse'. 'location'/'detected_location' ('Islas del Rosario') y 'detected_group
+- curso-open-water-transporte-y-regreso-otro-dia#1  'Hi, My understanding is that the transportation to rosario is included, in case I decided to do PADI Open Wate'
+    de más: {'detected_activity': 'padi_open_water'}
+    juez: ['detected_activity'] — El cliente formula una pregunta condicional ('in case I decided to do PADI Open Water Diver certification course'), no afirma que vaya a realizarlo. Es una suposición/hipótesis, no una declaración de hecho.
+- descuento-online-sin-codigo#1  'Hi, I’m trying to checkout to take PADI Open Water Diver certification course but the discount of 10% is not s'
+    de más: {'detected_activity': 'padi_open_water', 'is_certified': False}
+    juez: ['is_certified'] — El usuario explícitamente dice que quiere "take PADI Open Water Diver certification course", por lo que el campo detected_activity = "padi_open_water" está afirmado. Sin embargo, no afirma textualmente que no esté certif
+- desde-islas-buzo-certificado#1  'Thank you for contacting us, how may we help? Hii!! I am staying at Isla Grande and I would love to dive here.'
+    de más: {'detected_activity': 'certified_diving', 'location': 'island', 'detected_location': 'island'}
+    juez: ['detected_activity'] — El cliente dice que está en Isla Grande y quiere unirse a los "fun dives", por lo que la ubicación (location / detected_location) está afirmada. No dice en ningún momento que esté certificado para buceo; solo pregunta si
+- equipaje-mochilas-y-almacenamiento#1  'Hello! We just booked a 5 dive package with you for April 13th under [NOMBRE]. On the morning of the 13th we w'
+    de más: {'detected_activity': 'certified_diving', 'location': 'cartagena', 'detected_location': 'cartagena'}
+    juez: ['detected_activity', 'location', 'detected_location'] — detected_activity: el cliente menciona que reservó un '5 dive package' (buceos) pero no afirma explícitamente que son buzos certificados; podría ser un bautismo o una inmersión guiada para no certificados, así que etique
+- familia-mixta-precio-descuento-refresher#1  'Hi There, I am looking to book 2 dives and snorkeling sessions for the following people. 2 diving sessions - A'
+    de más: {'detected_group_size': 3, 'detected_group_allocation': {'certified_diving': 3}}
+    juez: ['detected_group_size'] — El cliente lista 6 participantes en total (3 para buceo: 2 adultos edades 42 y 19 y 1 joven 17; y 3 para snorkel: 1 adulto 43 y 2 niños 14 y 10). Por tanto el campo detected_group_size=3 no aparece afirmado en el mensaje
+- moneda-precios-principiante-y-snorkel#5  'Amigo el precio que está allí es en dólares o pesos colombianos'
+    de más: {'is_colombian': False}
+    juez: ['is_colombian'] — El cliente no afirmó su nacionalidad en ninguno de los mensajes; sólo preguntó si el precio estaba en dólares o pesos colombianos. Por tanto la clave is_colombian (false) es una suposición/inventada, no una afirmación de
+- open-water-precio-para-colombianos-corrige-mito#1  'Buenos días. Estoy interesada en el curso básico de buceo. Cuál es el costo para colombianos?'
+    de más: {'detected_activity': 'padi_open_water', 'is_colombian': True}
+    juez: ['is_colombian'] — La usuaria preguntó el precio para colombianos («Cuál es el costo para colombianos?»), pero no afirmó que ella misma sea colombiana. En cambio, dijo estar interesada en el curso básico de buceo, lo que coincide con detec
+- paquete-5-buceos-cop-refresh-y-hoteles#1  'Buenos días. Quiero hacer el paquete de 5 buceos. Cuál es el costo para colombianos por favor?'
+    de más: {'detected_activity': 'certified_diving', 'is_colombian': True}
+    juez: ['detected_activity'] — El cliente pide un paquete de 5 buceos y pregunta por el costo para colombianos, por lo que la condición 'is_colombian' está afirmada. No menciona estar certificado ni usa palabras que confirmen 'certified_diving', así q
+- paquete-5-buceos-islas-residente-sin-recogida#4  'Va quiero comprar sin ir de cartagena'
+    de más: {'location': 'island', 'detected_location': 'island'}
+    juez: ['location', 'detected_location'] — En los mensajes el cliente no menciona explícitamente una isla. Dice que quiere comprar ‘sin ir de Cartagena’ y que es residente en Colombia, pero no afirma que la ubicación sea una isla; por tanto los campos 'location' 
+- paquete-5-buceos-precio-overnight-isla-grande-baru#1  "Hello My name is [NOMBRE], i'd like to inquiry about the modalities for a 2 day dive package at the rosario is"
+    de más: {'location': 'island', 'detected_location': 'island'}
+    juez: ['location', 'detected_location'] — El cliente no afirma estar ubicado en una isla. Menciona que estará en Cartagena y que desea un paquete para las Islas del Rosario (va a ir allí el 13-14 y sale el 15), pero no dice que su ubicación actual sea 'island'. 
+- recogida-ubuntu-comida-y-certificacion#3  'Hi. Is it possible for my son [NOMBRE] a PADi certificat ?'
+    de más: {'detected_activity': 'padi_open_water', 'is_certified': False}
+    juez: ['detected_activity', 'is_certified'] — El cliente habla de haber reservado una "beginner mini diving experience" y de haber completado el formulario médico y el curso online, pero no afirma explícitamente que la actividad sea "padi_open_water" ni que no estén
+- regreso-otro-dia-paquete-5#1  'Seguramente tomaremos el paquete de 5 buceos para 2 personas con el traslado saliendo desde cartagena, niche e'
+    de más: {'detected_activity': 'certified_diving', 'location': 'cartagena', 'detected_location': 'cartagena', 'detected_group_size': 2}
+    juez: ['detected_activity'] — El cliente menciona un paquete de 5 buceos y traslado desde Cartagena para 2 personas, pero no dice explícitamente que sean buzos certificados. Por tanto la etiqueta 'certified_diving' es una suposición del sistema, no a
+- reserva-paquete-5-buceos-solicita#1  'Buenos días. Me gustaría hacer una reserva para el paquete de 5 buceos por favor?'
+    de más: {'detected_activity': 'certified_diving'}
+    juez: ['detected_activity'] — El cliente solo pide reservar el paquete de 5 buceos; no afirma en ningún momento que sea buceador certificado. El dato 'certified_diving' fue inferido por el sistema y no está respaldado por ninguna frase del mensaje.
+
+===== sin-pregunta (9) =====
+- minicurso-islas-y-acompanante-lancha#2  'una noche en coral sand y la otra no lo hemos decidido a un si repetir  o en majagua para mas comodida'
+    de más: {'is_colombian': False}
+    juez: ['is_colombian'] — El cliente no menciona su nacionalidad en ninguno de los mensajes; solo pregunta por planes y costos y menciona alojamiento. Por tanto declarar que no es colombiano es una suposición/inventado por el sistema y no está af
+- ninos-6-y-10#5  'pueden hacer snorkel los dos o el pequeno esta muy chico?'
+    de más: {'detected_activity': 'snorkel', 'detected_group_allocation': {'snorkel': 4}}
+    juez: ['detected_group_allocation.snorkel'] — El cliente menciona explícitamente snorkel al preguntar si ambos niños pueden hacerlo, por lo que la actividad detectada ('snorkel') está confirmada por sus mensajes. Sin embargo, el dato de asignación de grupo 'snorkel'
+- paquete-5-buceos-islas-residente-sin-recogida#5  'COcoliso'
+    de más: {'detected_activity': 'certified_diving', 'is_certified': True}
+    juez: ['detected_activity', 'is_certified'] — En los mensajes el cliente sólo pregunta por disponibilidad del plan de 5 buceos, indica 'para dos personas', consulta sobre descuento para residentes en Colombia y menciona compra sin ir de Cartagena. No declara en ning
+- paquete-5-buceos-islas-residente-sin-recogida#8  'sin recojos'
+    de más: {'location': 'cartagena', 'detected_location': 'cartagena'}
+    juez: ['location', 'detected_location'] — El usuario no afirma explícitamente que está en Cartagena. Su mensaje 'quiero comprar sin ir de cartagena' indica que no desea salir desde Cartagena (o no quiere recogida allí), pero no confirma su ubicación. 'detected_l
+- paquete-5-buceos-islas-residente-sin-recogida#9  'El 21 y 22'
+    de más: {'last_dive_over_2_years': False}
+    juez: ['last_dive_over_2_years'] — El cliente no menciona en ningún mensaje cuándo fue su última inmersión. El campo last_dive_over_2_years = false proviene del sistema y no está afirmado por el cliente en sus mensajes, por eso se considera inventado/supu
+- paquete-5-inmersiones#1  'hola, cuanto cuesta el paquete de 5 inmersiones?'
+    de más: {'detected_activity': 'certified_diving'}
+    juez: ['detected_activity'] — El cliente solo pregunta por el precio del paquete de 5 inmersiones; no menciona ser buceador certificado ni hace referencia a certificaciones. Por tanto la etiqueta detected_activity = "certified_diving" no está afirmad
+- premisa-falsa-lunes#3  'perfecto, entonces reservo para el martes'
+    de más: {'detected_activity': 'certified_diving'}
+    juez: ['detected_activity'] — El cliente solo pregunta por días y luego confirma una reserva para el martes; en ningún momento afirma ser buzo certificado ni menciona certificación. "certified_diving" es una deducción/suposición no declarada por el u
+- recogida-ubuntu-comida-y-certificacion#4  'We are leaving tomorrow before noon'
+    de más: {'location': 'cartagena', 'detected_location': 'cartagena'}
+    juez: ['location', 'detected_location'] — El cliente en sus mensajes no menciona 'Cartagena' ni confirma la ubicación. Los campos 'location' y 'detected_location' proceden del sistema y no son afirmados por el cliente; podrían ser deducciones del sistema (por IP
+- reserva-colombianos-cop#1  'hola quiero hacer snorkel, somos 2, somos colombianos'
+    de más: {'is_certified': False}
+    juez: ['is_certified'] — El cliente solo dijo que quiere hacer snorkel, que son 2 y que son colombianos. No mencionó en ningún momento si tiene o no certificación de buceo; por tanto el dato is_certified=false es una suposición/invención hecha p
+
+===== estado-previo-distinto (5) =====
+- curso-open-water-principiantes-idioma-frances-anticipacion#2  'Es decir en dos dias tendriamos el certificado haciendo nuestro curso en linea . La persona que me acompana no'
+    de más: {'detected_activity': 'padi_open_water', 'is_certified': False}
+    juez: ['detected_activity'] — El cliente no menciona PADI ni 'PADI Open Water' en sus mensajes; solo habla de un 'curso en línea' y obtener un certificado en dos días. En cambio sí afirma que es la primera vez que harán buceo, por lo que 'is_certifie
+- curso-open-water-transporte-y-regreso-otro-dia#2  'What if I decide to stay one day longer in rosario, can you provide de transfer back to cartagena?'
+    de más: {'location': 'island', 'detected_location': 'island'}
+    juez: ['location', 'detected_location'] — El cliente solo menciona 'rosario' y 'cartagena' en relación con transferencias y un curso PADI; no afirma en ningún momento que la ubicación sea una 'isla' ni usa la palabra 'island'. Por lo tanto los campos 'location' 
+- curso-referido-pide-datos-centro#5  'Full name of dive center, location, dates etc'
+    de más: {'detected_activity': 'certified_diving'}
+    juez: ['detected_activity'] — El cliente sólo dice que "he's already doing the e-learning" y pregunta si puede ir directamente a Diving Planet para empezar la parte Open Water; esto indica que está cursando la formación, no que ya esté certificado. P
+- curso-referido-pide-datos-centro#6  'And full [NOMBRE] infos to fill the form transfer to complete the certification in Cartagena'
+    de más: {'detected_activity': 'padi_open_water', 'is_certified': False}
+    juez: ['detected_activity'] — El cliente menciona que está haciendo el e-learning y que quiere hacer la parte 'Open Water' en Dive Planet, pero no dice explícitamente que sea PADI. Por eso 'padi_open_water' es una inferencia del sistema y no está afi
+- logistica-isla-fragata-regreso-otro-dia#2  'Amazing thank you! We’re thinking about extending our stay on the Rosario islands. Would it be possible to get'
+    de más: {'detected_activity': 'certified_diving'}
+    juez: ['detected_activity'] — El cliente menciona una excursión de buceo y reservas, pero no dice explícitamente que sean buceadores certificados. No hay en los mensajes confirmación de certificación; por tanto la etiqueta 'certified_diving' es una s
+

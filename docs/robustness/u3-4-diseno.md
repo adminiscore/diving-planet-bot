@@ -163,10 +163,13 @@ domingo de Pascua, Isla Grande sin inventar, acompañante mayor…). **8 regresi
   3. **Aflora una respuesta floja del RAG** que antes quedaba escondida (antes la pregunta se ignoraba):
      "cómo reservo" → "un asesor te enviará el enlace". Es de l1-7.
 
-### Arreglos 1 y 2 — hechos (25-sep, Gonzalo), pendientes de medir
+### Arreglos 1 y 2 — hechos y MEDIDOS (25-sep, Gonzalo). Arreglo 2: **resultado negativo**
 
-Los dos arreglos que pedía el "siguiente paso" están implementados, con tests, detrás del
-mismo flag. **Falta el escalón 0** (ver el bloqueo al final).
+Los dos arreglos que pedía el "siguiente paso" están implementados, con tests, detrás del mismo
+flag, y **ya medidos en el escalón 0** (ver "Escalón 0 de los arreglos" más abajo). Resumen del
+veredicto, por si no lees más: el **arreglo 1 no se puede medir aquí** (el replay sustituye el RAG
+por un texto fijo que nunca es el fallback) y el **arreglo 2 NO cumple**: no quita el dato
+hipotético y en tres casos de `location` lo *añade* donde la versión anterior no lo ponía.
 
 **Arreglo 1 — si el RAG no sabe, su respuesta va sola.** `_answer_replaces_the_booking_question`
 (núcleo) decide cuándo la respuesta ocupa el turno entero: si es el fallback del RAG, o el caso
@@ -213,35 +216,125 @@ pasarían aunque se hubiera roto lo que u3-4 aporta. `ruff` y `compileall` limpi
 de `test_conversational_core` (familia `confirm_correction`, u3-5) son **preexistentes**:
 verificados en un worktree en `d3dc51e` sin ninguno de estos cambios.
 
-**🔴 Bloqueo para el escalón 0:** `replay_golden_local` fija `ENV_FILE=.env.dev` (esta máquina
-solo tiene `.env`, se resuelve copiándolo) y fuerza `JEV_ROUTER_ENABLED=true`, pero **no hay
-`OPENROUTER_API_KEY`**. Sin ella `jev_router` devuelve `None` y cae al router LLM — y la
-detección de pregunta de u3-4 usa justo Jev (`asks_question ≥ 0,7`), así que la medición no
-sería comparable en el mecanismo que decide qué turnos entran. Hace falta la clave, o aceptar
-explícitamente medir sin Jev (mide qué datos guarda cada versión, que es el grueso, pero no la
-detección).
+### Escalón 0 de los arreglos (25-sep, Gonzalo) — veredicto: **NO promocionar el arreglo 2**
 
-## Siguiente paso (para quien siga)
+El bloqueo de la clave lo resolvió Gadea (pasó `OPENROUTER_API_KEY`, en `.env.dev` local, que está
+en `.gitignore`). Sonda previa: Jev contesta en ~0,3 s y `asks_question` discrimina bien
+(`True` en "¿puedo bucear si uso gafas graduadas?", "¿cuánto cuesta el bautizo?" y "soy epiléptica,
+¿puedo…?"; `False` en "vale, perfecto"). Misma pasada `off` del 24-sep: sigue valiendo, porque el
+replay sustituye el RAG por un texto fijo (`«RAG»`) que nunca es el fallback y el arreglo 2 está
+detrás de `_has_pending_answer`. **Eso también significa que el arreglo 1 no se mide aquí.**
 
-Dos arreglos GENERALES y luego repetir **solo una ronda B** (se compara con esta A; la latencia no hace
-falta repetirla porque por tipo de turno no cambió):
+Tres versiones del mismo flag, misma pasada `off` de referencia (368 turnos, 95 diálogos, 0 errores):
 
-1. **Si la respuesta del RAG es el fallback** (`rag_agent.FALLBACK_ES/FALLBACK_EN`, "no lo tengo a la
-   mano…"), **no** se añade la pregunta de la reserva: se deja como en el camino antiguo (respuesta sola,
-   `core_pending_slot` fijado para el turno siguiente). Sitio: el bloque u3-4 de `_slotfill_close_phase` y
-   `_prepend_parallel_answer` en `src/agents/conversational_core.py`.
-2. **En un turno con pregunta, solo se guarda lo que el cliente AFIRMA y el LLM confirma**: en vez de
-   borrar lo que leyó el regex y dejar que el LLM rellene huecos (lo de ahora, `_leave_question_fields_to_llm`),
-   que el regex lea y el LLM **verifique** esos campos (el mecanismo de veto de `supervisor._VETO_FIELD_SPECS`
-   / `extract_and_verify`), **sin rellenar huecos** en ese turno. Así "reservaremos hotel en la isla" se
-   guarda (lo lee el regex y el LLM lo confirma), y ni "¿me recomiendas un hotel en Rosario?" (regex) ni
-   "in case I decided to…" (LLM rellenando) dejan datos inventados. OJO: el veto de actividad amplio bajó
-   la concordancia del 89 % al 73 % en septiembre (sesgo del LLM hacia minicurso en mensajes escuetos,
-   ver `supervisor._activity_should_verify`): medirlo en el escalón 0 antes de subir.
+| | contestadas (de 165) | contesta Y sigue | campos-turno que GANA | que PIERDE |
+|---|---|---|---|---|
+| v1 (extraer en la pregunta) | 123 | — | 220 | 17 |
+| v2 (`_leave_question_fields_to_llm`, la del escalón 1) | 123 | 122 | 163 | 24 |
+| **v3 (regex lee + LLM verifica)** | **123** | **122** | **119** | **29** |
 
-Cómo medirlo: escalón 0 con `replay_golden_local` (off ya está en `docs/robustness/u3-4/replay-off.jsonl`,
-basta la pasada on) + `replay_diff` (leer los "INVENTADO" a mano: el juez es estricto con mapeos de
-producto correctos); tests. Luego escalón 1: SOLO ronda B (ver el banner del handoff para los comandos).
+**Contestar no cambia**: 94 → 123 (+29) en las tres. El arreglo 2 solo mueve el lado de los datos,
+y lo mueve a más conservador.
 
-El error de nacionalidad (`is_colombian` inventado desde una pregunta) se deja para **u3-5** (decisión de
-Gadea, 24-sep): ya existe sin el flag y arreglarlo en la instrucción de relleno hace perder datos.
+**El juez y la lectura a mano.** 51 turnos con dato de más, el juez (`gpt-5-mini`) ve inventado en
+30. `scripts/replay_diff_triage.py` (nuevo) aparta el ruido objetivo que el propio `replay_diff`
+avisa —9 turnos sin pregunta, 5 con estado previo ya distinto— y deja **16 para leer**. Leídos uno a
+uno en `u3-4/lectura-a-mano-v3.md`: 7 son mapeos de producto correctos ("paquete de 5 buceos" →
+`certified_diving`), 1 es una inferencia de negocio legítima, 3 son dudosos y **5 son errores
+reales**: 2 de nacionalidad (familia u3-5, ya existían) y **3 del dato hipotético, que es justo lo
+que el arreglo 2 venía a matar**.
+
+**La medida per-caso que decide.** En el caso que el "siguiente paso" nombra por su nombre:
+
+```
+curso-open-water-transporte-y-regreso-otro-dia#2
+  "What if I decide to stay one day longer in rosario, can you provide de transfer back to cartagena?"
+  off: (nada)   v2: padi_open_water   v3: padi_open_water + location=island + detected_location=island
+```
+
+Los **tres** `location` nuevos que solo introduce v3 son inventados, y ninguno es un dato bueno
+recuperado: "…hoteles **en la isla** que recomiendes", "se quedar en **la isla** de apoyo" (la isla
+es de la madre, no del cliente) y el "what if" de arriba. Una mejora agregada que empeora un caso no
+cuenta, y aquí empeora el caso de referencia: **v3 no se promociona**.
+
+**Por qué falla, que es lo que hay que llevarse.** El diseño suponía que verificar es una pregunta
+cerrada ("¿el cliente AFIRMA esto?"). No lo es: `verify_fields` **vuelve a extraer** con el prompt de
+verificación, y la definición de `location` dice *"'island' si se alojan o vienen de las Islas del
+Rosario"*. Ante "¿me recomiendas hoteles en la isla?" el LLM ve una señal clara y contesta `island`.
+No hay ninguna pregunta en el sistema que distinga afirmar de preguntar.
+
+**Intento de arreglo por el prompt, DESCARTADO (segundo resultado negativo).** Se probó añadir el
+matiz SOLO al prompt de verificación (no al de relleno, donde ya era negativo el 24-sep): *"un lugar,
+producto, curso, nacionalidad o precio nombrado DENTRO de una pregunta o una hipótesis es lo que el
+cliente PREGUNTA, no algo que afirme de sí mismo"*.
+
+- Sonda de frases sueltas (10 frases × 4, determinista 0/4 o 4/4): arreglaba 1 de 4 y no rompía
+  ninguno de los 6 controles. Parecía bueno.
+- **Pero la sonda no era fiel**: llamaba a `verify_fields` con un campo y sin historial, y en el
+  replay real se llama con la lista entera y con el historial. Sin historial el LLM **ya** se abstenía
+  en 2 de los 3 casos de `location`, así que la sonda medía otra cosa.
+- Sonda fiel (los mismos diálogos por el núcleo de verdad, `scripts/sonda_verificacion_fiel.py`): el matiz **no
+  quita ni un `location` inventado** y **rompe un caso** — en "we want to complete our PADI open
+  water: we have referrals and e-learning certificates", `is_certified` pasa de `False` a `True`.
+  Revertido, no está en el código.
+
+**Lo que sí queda**: `verify_fields(..., as_answers=True)` (poder distinguir "confirma" de "no
+opina") es útil por sí mismo y no cambia nada por defecto; y `scripts/replay_diff_triage.py`
+automatiza la separación de ruido que antes había que recordar hacer a mano.
+
+Datos: `u3-4/replay-on.jsonl` (v3), `replay-on-v2.jsonl` (la del escalón 1), `replay-on-v1.jsonl`,
+`diff.json` (v3) y `diff-v2.json`, `triaje-v3.txt`, `lectura-a-mano-v3.md`.
+
+## Siguiente paso (para quien siga) — actualizado 25-sep con la medida
+
+**Estado.** Arreglo 1: hecho, y **sin medir** (el escalón 0 no lo puede medir: sustituye el RAG por
+un texto fijo; se mediría en el escalón 1). Arreglo 2: hecho, medido y **NO cumple** — ver "Escalón
+0 de los arreglos". El flag sigue apagado en el código y en el compose: PRE no ha cambiado.
+
+**La causa, en una frase**: no existe en el sistema ninguna pregunta que distinga *afirmar* de
+*preguntar*. Ni el relleno ni la verificación la hacen — las dos son extracción, y un lugar
+nombrado dentro de una pregunta es, para un extractor, una señal clara. Meter el matiz en el prompt
+falló dos veces (relleno, 24-sep; verificación, 25-sep).
+
+**Propuesta con medida previa: preguntárselo a Jev.** Jev contesta preguntas cerradas tipadas, y
+u3-4 ya le añadió una (`asks_question`) a la llamada del router **sin gastar ninguna petición de
+más**. Es exactamente la pregunta que falta. Sonda (12 mensajes × 3, `scripts/sonda_afirma_vs_pregunta.py`,
+0,30 s por pregunta, probabilidades estables ±0,03):
+
+| pregunta | mensaje | p(afirma) | correcto |
+|---|---|---|---|
+| se aloja aquí | "What if I decide to **stay one day longer in rosario**…" | 0,46-0,48 | ✅ no |
+| se aloja aquí | "Do you **recommend any hotels on the island**…" | 0,07-0,10 | ✅ no |
+| se aloja aquí | "se quedar en **la isla** de apoyo?" (la madre) | 0,07-0,08 | ✅ no |
+| se aloja aquí | "I **am staying at Isla Grande**…" | 0,97 | ✅ sí |
+| se aloja aquí | "**reservaremos hotel en la isla**" | 0,75-0,78 | ✅ sí |
+| se aloja aquí | "**Estamos alojados en Bocagrande**" | 0,97 | ✅ sí |
+| se aloja aquí | "2 day dive package at **the rosario islands**, i'll be in cartagena" | 0,78-0,82 | ❌ (el destino no es el alojamiento) |
+| hace la actividad | "**in case I decided to** do PADI Open Water…" | 0,34-0,38 | ✅ no |
+| hace la actividad | "**Is it possible** for my son a PADi certificat?" | 0,34-0,35 | ✅ no |
+| hace la actividad | "trying to **checkout to take** PADI Open Water course" | 0,94-0,95 | ✅ sí |
+| hace la actividad | "**Quiero hacer** el paquete de 5 buceos" | 0,91-0,92 | ✅ sí |
+| hace la actividad | "**reservemos snorkel** para toda la familia" | 0,94-0,95 | ✅ sí |
+
+**11/12, y separa por márgenes anchos** (0,07-0,48 frente a 0,75-0,97), justo en los casos donde el
+extractor no distingue. El único fallo confunde destino con alojamiento, que es una ambigüedad real
+del campo, no de la pregunta.
+
+Diseño que sugiere la medida: en un turno con pregunta, `_question_turn_fields` conserva un campo
+solo si Jev afirma su pregunta asociada (`location`/`detected_location` ← "se aloja aquí";
+`activity`/`service_id` ← "hace la actividad"), con el umbral alto que ya usa u3-4 (≥ 0,7) y la
+cascada de siempre (en la zona de duda, la conducta de hoy). El resto del arreglo 2 se queda como
+está: sin rellenar huecos, y los campos sin verificador se caen.
+
+**Antes de escribirlo, leer esto**: las dos sondas de hoy enseñan que una sonda de frases sueltas
+**no vale** — sin historial el LLM ya se abstenía en 2 de los 3 casos y la sonda medía otra cosa.
+Se valida con `scripts/replay_golden_local` (pasada `on`) + `scripts/replay_diff` +
+`scripts/replay_diff_triage`, leyendo a mano lo que queda, y comparando **por caso** contra
+`replay-on-v2.jsonl` y `replay-on.jsonl` (v3), no por el agregado.
+
+**Escalón 1 (cuando haya algo que promocionar)**: SOLO ronda B, se compara con la A del 24-sep
+(`2026-09-24-u34-A`); la latencia no hace falta repetirla. Comandos en el banner del handoff.
+
+El error de nacionalidad (`is_colombian` inventado desde una pregunta) sigue siendo de **u3-5**
+(decisión de Gadea, 24-sep) — y la sonda de Jev sugiere que es la misma causa y tendría la misma
+solución: una pregunta cerrada "¿afirma su nacionalidad?" en la misma llamada.
