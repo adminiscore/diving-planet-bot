@@ -43,7 +43,10 @@ dependencies = [
     # `src/observability.py` lo importa perezosamente y SOLO con claves (= PRE,
     # que corre Python 3.11). Dev local (3.14) sin claves nunca lo toca.
     "langfuse==3.15.0",
-    "langsmith==0.10.10",  # legacy, sin uso ya; se retira en el paso 6 (tras 1 semana midiendo)
+    # langsmith NO se puede retirar (s4-5, 2026-09-25): langchain-core la exige.
+    # Se queda pineada para que el build de PRE sea reproducible. El bot no la usa
+    # y no traza a LangSmith: ningun .env la activa y scripts/__init__.py la apaga.
+    "langsmith==0.10.10",
 
     # --- Utilities ---
     "python-dotenv>=1.0.0",

@@ -22,6 +22,7 @@ import os
 
 if os.environ.get("SCRIPTS_TRACING", os.environ.get("SCRIPTS_LANGSMITH_TRACING", "")).strip().lower() != "true":
     os.environ["LANGFUSE_TRACING_ENABLED"] = "false"
-    # LangSmith (legacy, se retira en el paso 6): apagado por si queda algo cableado.
+    # LangSmith: retirado, pero langchain-core sigue trayendo su cliente y trazaria
+    # con solo ver estas variables (s4-5), asi que se fuerzan a false.
     for _var in ("LANGSMITH_TRACING", "LANGSMITH_TRACING_V2", "LANGCHAIN_TRACING", "LANGCHAIN_TRACING_V2"):
         os.environ[_var] = "false"

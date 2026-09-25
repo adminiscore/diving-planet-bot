@@ -1,6 +1,14 @@
 History
 =======
 
+0.29.22 - (2026-09-25)
+----------------------
+* **s4-5 · `langsmith` NO se puede retirar — y lo que sí se ha retirado.** `langchain-core` la exige como dependencia (`pip show langchain-core` → `Requires: … langsmith …`), así que quitarla de `pyproject.toml` no la desinstala: solo la dejaría **sin pin**, y el siguiente build de PRE podría traer otra versión sin que nadie lo decidiera. Se queda pineada por reproducibilidad, con el porqué escrito en el comentario. `scripts/inspect_langsmith_trace.py` también se queda: el plan multi-agente remite a su docstring como el sitio donde está documentada una trampa.
+* **Las 4 plantillas `.env.*.example` volvían a encender el bug de LangSmith.** Todas ponían `LANGCHAIN_TRACING_V2=true`: quien montara un entorno nuevo copiándolas (PRO, en la entrega) tendría otra vez un 429 por turno, lo que se quitó de PRE en la 0.29.11. Sustituido por un bloque que dice por qué NO poner esas variables, Langfuse (opcional), `OPENROUTER_API_KEY` (Jev) y, en dev, `SYNTH_CHATWOOT_TOKEN`.
+* **Y `.env.example` / `.env.dev.example` ponían `RAG_TOP_K=5`** cuando el código y PRE usan 8: es la misma trampa que falseó la línea base del RAG del 17-sep (0.29.9). Ahora llevan los valores de PRE con el porqué, y la de dev explica que todo se lanza con `ENV_FILE=.env.dev` (sin él se carga `.env`).
+* **Pendiente de confirmar (sin SSH desde esta sesión):** PRE hace el ~11 % de sus llamadas con `gpt-4.1-mini` (32 de 284 en la foto `TURN_METRICS` del 24-sep) y ese modelo no está en el código, así que casi seguro sale de `RAG_ANSWER_MODEL` en el `.env.pre` del VPS. En las plantillas va comentado hasta confirmarlo: `ssh -i ~/.ssh/dp_pre_vps root@89.167.4.161 "docker exec dp-pre-bot python -c 'from src.config import settings as s; print(s.rag_answer_model)'"`. Si sale `gpt-4.1-mini`, descomentarlo en `.env.dev.example`: medir en local sin él es medir otra config.
+* Sin cambios en el código del bot (solo comentarios en `pyproject.toml` y `scripts/__init__.py`). Suite: 2653 passed / 18 skipped.
+
 0.29.21 - (2026-09-25)
 ----------------------
 * **u3-4 · la pregunta que faltaba se la hace Jev, y funciona (flag sigue apagado).** Dos preguntas nuevas (`affirms_location`, `affirms_activity`) en la MISMA llamada del router, a coste 0 de peticiones: en un turno con pregunta, un campo que Jev dice que el cliente NO afirma se cae sin llegar siquiera a la verificación. **Ausente no es `False`**: si Jev está apagado o dudó en una señal del router, es "no lo sé" y se sigue con la conducta de hoy.

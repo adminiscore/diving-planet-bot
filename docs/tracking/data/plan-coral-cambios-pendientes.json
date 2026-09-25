@@ -7,7 +7,28 @@
     "a_mano": "Abrir la pagina con sesion iniciada y copiar cada campo en su tarea o en la bitacora.",
     "al_terminar": "Dejar 'pendientes' como lista vacia, poner la fecha en 'aplicado_el' y quien lo aplico en 'aplicado_por', todo en el MISMO commit. Si esta lista se queda llena, el repo y la pagina han divergido: esa es la senal."
   },
-  "aplicado_el": "2026-09-24",
-  "aplicado_por": "Gadea (con Claude)",
-  "pendientes": []
+  "aplicado_el": "",
+  "aplicado_por": "",
+  "pendientes": [
+    {
+      "coleccion": "tasks",
+      "operacion": "update",
+      "doc_id": "s4-5",
+      "campos": {
+        "status": "hecha",
+        "owner": "Alvaro",
+        "note": "CERRADA como se puede cerrar (25-sep, HISTORY 0.29.22). langsmith NO se puede retirar: langchain-core la exige como dependencia, asi que quitarla de pyproject.toml no la desinstala, solo la deja sin pin (el siguiente build de PRE podria traer otra version). Se queda pineada por reproducibilidad, con el porque en el comentario.\n\nLo que si se hizo: las 4 plantillas .env.*.example ponian LANGCHAIN_TRACING_V2=true (quien montara PRO copiandolas volveria a tener un 429 por turno) y RAG_TOP_K=5 cuando PRE usa 8 (la trampa de la linea base falsa del 17-sep). Arregladas, con OPENROUTER_API_KEY, Langfuse y SYNTH_CHATWOOT_TOKEN.\n\nPOR CONFIRMAR: si PRE usa RAG_ANSWER_MODEL=gpt-4.1-mini (32 de 284 llamadas en la foto del 24-sep; no esta en el codigo). Comando en HISTORY 0.29.22."
+      }
+    },
+    {
+      "coleccion": "log",
+      "operacion": "set",
+      "doc_id": "l-0925-alvaro-s45",
+      "campos": {
+        "at": "2026-09-25T17:00:00Z",
+        "byLabel": "Alvaro (con Claude)",
+        "text": "25-sep: s4-5 cerrada. langsmith no se puede quitar (la exige langchain-core); se queda pineada. Arregladas las plantillas .env.*.example: ya no encienden LangSmith y RAG_TOP_K=8 como PRE. Commit solo local (un push a pre_* despliega PRE). Para seguir con u3-5 en la maquina de Alvaro falta OPENROUTER_API_KEY en .env.dev."
+      }
+    }
+  ]
 }
