@@ -13,7 +13,31 @@ Read this file before changing code in the Diving Planet Bot. For a quick versio
 
 > **📏 LEER ANTES DE MEDIR — decisiones del 24-sep-2026 (Gadea):** (1) latencia y llamadas con nuestros logs `[TURN_METRICS]` + `scripts/turn_metrics.py`, no con Langfuse (plan gratuito superado, reinicio 16-oct); (2) pruebas A/B por escalones, juzgando solo los diálogos que cambian. Todo en `docs/robustness/protocolo-medicion.md`.
 
-### ✅ 26-sep (Gadea) — u3-4 PROMOCIONADO: `ANSWER_AND_CONTINUE=true` se queda en PRE. Leer esto primero
+### ▶️ PLAN SECUENCIAL (26-sep tarde, Álvaro) — leer esto primero
+
+**Regla del owner (26-sep): todo en SECUENCIA.** Lo pendiente se cierra antes de avanzar; no hay trabajo
+en paralelo ni tareas repartidas. El orden vigente, con el criterio de "hecho" de cada paso, es la **PARTE 8
+de `docs/plan-maestro-final.md`**. Resumen:
+
+| Paso | Qué | Estado |
+|---|---|---|
+| 0 | Aterrizar plan, handoff, HISTORY y página | ✅ 26-sep (falta aplicar la cola de Plan Coral y re-exportar `plan-coral.json`) |
+| **1** | **Cabos sueltos técnicos**: 1a dependencias con techo (r6-4) · 1b comprobar cada deploy (r6-3) · 1c control de correcciones en el banco (u3-5) · 1d re-triaje de s4-6…s4-22 contra la ronda B3 | **← SIGUIENTE** |
+| 2 | Juez con casos reales (g-8): hoy acierta el 75 % de sus "no cumple" reales y tapa contradicciones de política | ⏳ |
+| 3 | Ronda A nueva con u3-4 encendido (referencia para lo que queda de U3) | ⏳ |
+| 4 | Terminar U3: u3-5 → u3-6 → u3-7 → u3-3 | ⏳ |
+| 5 | Cierre de U3: ronda completa + examen oculto (u3-2 redefinida) | ⏳ |
+| 6 | RAG: l1-6 / l1-7 (primer caso: "regreso otro día" contradice la política en casi todas las rondas) | ⏳ |
+| 7 | L2: l2-2 caché, l2-3 "escribiendo…" | ⏳ |
+| 8 | S4: quitar la cascada legacy, partir módulos, retirar flags promocionados, fallos de plantillas | ⏳ |
+| 9 | R6: respaldo si OpenAI falla, guardrails, carga | ⏳ |
+| 10 | Q5: gate en CI, simulador, testers reales, SOAK, entrega | ⏳ |
+
+**Ramas:** se trabaja en `feature/pre_alvaro` (ya integra `pre_gadea` = `4192600`). Quien retome integra
+antes lo último que se haya subido: todas las `pre_*` despliegan el mismo PRE.
+**Estado técnico de PRE:** el del bloque de Gadea justo debajo (u3-4 encendido), que sigue siendo válido.
+
+### ✅ 26-sep (Gadea) — u3-4 PROMOCIONADO: `ANSWER_AND_CONTINUE=true` se queda en PRE (estado técnico vigente)
 
 **Estado de PRE** (`feature/pre_gadea`, commit con el cierre de hoy; ya integra `pre_alvaro`): encendidos
 `AGENT_ARCH`, `JEV_ROUTER_ENABLED`, `NOTES_IN_PARALLEL`, `ACK_IN_PARALLEL` y **`ANSWER_AND_CONTINUE`**.

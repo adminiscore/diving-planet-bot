@@ -1,6 +1,14 @@
 History
 =======
 
+0.29.34 - (2026-09-26)
+----------------------
+* **Plan secuencial (decisión del owner): lo pendiente se cierra antes de avanzar, sin trabajo en paralelo.** Nueva **PARTE 8** en `docs/plan-maestro-final.md` con 11 pasos en orden y el criterio de "hecho" de cada uno: 0 aterrizar → 1 cabos sueltos técnicos → 2 juez con casos reales (g-8) → 3 ronda A nueva → 4 terminar U3 (u3-5, u3-6, u3-7, u3-3) → 5 cierre de U3 con la ronda completa y el examen oculto → 6 RAG (l1-6/l1-7) → 7 L2 → 8 S4 → 9 R6 → 10 Q5.
+* **Aterrizado lo que estaba desfasado**: la sección U3 del plan describía el diseño original ("una llamada estructurada") y ahora refleja lo real (u3-1 hecha, u3-4 promocionada, u3-5 en curso, u3-6/u3-7/u3-3 pendientes); **u3-2 redefinida** (el eval-set `--core` no pasa por la fase donde actúa u3-4, así que el cierre de U3 es la ronda completa con el examen oculto); l2-4 hecha y l2-1 cerrada por obsoleta; la línea de estado del plan decía que u3-4 no se había promocionado.
+* **Hallazgos que entran en el plan**: r6-3 (un CI rojo se salta el deploy sin avisar) y r6-4 (dependencias sin techo: SQLAlchemy 2.1 rompió CI), paso 1; el RAG contradice la política `return_different_day` en casi todas las rondas desde el 22-sep, con u3-4 encendido o apagado, y el juez solo lo marca a veces (l1-7, paso 6; g-8, paso 2); el filtro de contradicciones de Jev va antes que la señal "ah no / perdón" (medido: 21/21 correcciones explícitas pasan, "mejor snorkel" justo, 0,41), paso 1c.
+* **Verificado el trabajo de Gadea del 26-sep** antes de planificar: suite 2677 passed, CI verde en sus pushes, PRE en `4192600` con u3-4 encendido y sin errores, y los números de la ronda B3 recalculados (18/32 diálogos, 88,6 % de criterios).
+* Plan Coral: la copia del repo (`plan-coral.json`) es del 23-sep; la cola lleva los cambios de estado, las tareas nuevas y el orden.
+
 0.29.33 - (2026-09-26)
 ----------------------
 * **u3-4 "contesta y sigue" PROMOCIONADO: `ANSWER_AND_CONTINUE=true` se queda en PRE.** Ronda B3 (core, frente a la ronda A del 24-sep): diálogos sin fallos 17 → 18 de 32, criterios 87,3 → 88,6 %, el RAG contesta 29 → 42 turnos, latencia por tipo de turno mejor (RAG p50 4,25 → 3,88 s; reserva 1,64 → 1,28 s; cliente p95 7,4 → 6,0 s), +14 % de llamadas al LLM. 8 mejoras; las 3 regresiones de la B2 resueltas; las 5 "regresiones" del juez leídas con el log de PRE: ninguna es de u3-4 (recordar mal disparado → u3-6; RAG → l1-7; un error del juez; un no-aplica). 0 "¿lo cambio?" propuestos en toda la ronda. Detalle y lo que queda: `docs/robustness/u3-4-diseno.md`, "Ronda B3".

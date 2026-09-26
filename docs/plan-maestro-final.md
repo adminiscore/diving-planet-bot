@@ -27,10 +27,10 @@
 
 > **📏 Cómo se mide desde el 24-sep-2026 (decisiones de Gadea, para todo el equipo):** la latencia y las llamadas se sacan de nuestros logs (`[TURN_METRICS]` + `scripts/turn_metrics.py`) hasta que vuelva Langfuse (plan gratuito superado, reinicio 16-oct); y las pruebas A/B van por escalones (local → 1+1 juzgando solo lo que cambia → 2+2 si hay dudas; ronda completa solo al cerrar fase). Detalle: **`docs/robustness/protocolo-medicion.md`**.
 
-> **▶️ Estado a 26-sep-2026 (Álvaro):** L1 cerrada; U3 en marcha. u3-4 ("contesta y sigue") medida en PRE
-> con v5 y **no promocionada** (4 mejoras, 3 regresiones con causa, ya en el banco de calibración);
-> u3-5 calibrada pero aún fuera del código; CI arreglado (llevaba roto desde el 24-sep); modelos fijados.
-> Qué toca y cómo: bloque **"PARA SEGUIR"** al principio de `docs/project-history/session-handoff.md`.
+> **▶️ Estado a 26-sep-2026 (tarde):** L1 cerrada; U3 a medias: u3-1 hecha, **u3-4 PROMOCIONADA** (ronda
+> B3, `ANSWER_AND_CONTINUE=true` en PRE), u3-5 en curso. CI arreglado (roto desde el 24-sep) y modelos fijados.
+> **Desde hoy el plan se ejecuta en SECUENCIA (decisión del owner): lo pendiente se cierra antes de avanzar
+> y no hay trabajo en paralelo.** El orden vigente, con su criterio de "hecho", es la **PARTE 8** (al final).
 
 ---
 
@@ -276,7 +276,16 @@ few-shot (`_select_fewshot_examples`), así que tal cual inflarían la nota.
 5. **Paralelizar** llamadas independientes donde sea seguro (medido).
 - Cada punto: foto calidad (0 regresiones) + delta de latencia en Langfuse. *(Álvaro RAG/turno · Gonzalo medición)*
 
+> **l1-6 / l1-7 (26-sep): pendientes, van en el PASO 6 de la PARTE 8** (detrás de U3, como se acordó el
+> 24-sep). Caso nuevo y sistemático para l1-7: a "¿me podéis devolver a Cartagena otro día?" el RAG contesta
+> "we can definitely provide the transfer back" en casi todas las rondas desde el 22-sep, con el flag de
+> u3-4 encendido o apagado, cuando la política `return_different_day` dice que NO está incluido y lo
+> coordina un asesor. El juez solo lo marca cuando además dice "sin cargo": el error queda medio oculto.
+
 ### Fase L2 — Right-sizing de modelos + caching · *latencia + coste, con eval*
+> **Estado (26-sep):** l2-4 (Jev) **hecha**: se evaluó y se usa en el router y en u3-4/u3-5. **l2-1 queda
+> obsoleta**: el juez de grounding y `condense_query` ya van en `gpt-4o-mini` (mapa en `README.md`, "LLM
+> models"). Quedan l2-2 (caché) y l2-3 ("escribiendo…"), en el PASO 7 de la PARTE 8.
 > **Corrección (21-sep, medido en Langfuse; confirmado por la 0.29.9 del 23-sep):** en PRE **no se usa
 > `gpt-4o`**. Los modelos reales son **`gpt-4o-mini`** (la mayoría de llamadas) y **`gpt-4.1-mini`**
 > (la respuesta del RAG, `RAG_ANSWER_MODEL`, leído en el contenedor de PRE el 25-sep). El
@@ -299,6 +308,22 @@ few-shot (`_select_fewshot_examples`), así que tal cual inflarían la nota.
   *(Gonzalo)*
 
 ### Fase U3 — Unificación del entendimiento · **CONSERVADOR, detrás de flag** · *el cambio grande*
+> **Estado real (26-sep) — el diseño de abajo es el ORIGINAL y cambió al medir.** La "UNA llamada
+> estructurada" se descartó: la extracción ya era casi siempre una sola llamada (`extract_and_verify`), y lo
+> que ralentizaba era la cadena extracción → acuse (`docs/robustness/u3-1-paso3-diseno.md`). U3 pasó a ser
+> "decisiones de opciones fijas con Jev + contesta y sigue":
+>
+> | Tarea | Qué | Estado |
+> |---|---|---|
+> | u3-1 | Jev en las señales del router (paso 1) y acuse en paralelo (paso 3); el paso 2 ("¿se entiende sola?") se midió y se descartó | ✅ encendido |
+> | u3-4 | Contesta y sigue (+ puerta de Jev, relleno con puerta) | ✅ promocionado 26-sep (ronda B3) |
+> | u3-5 | Extracción sin inventar (preguntas de Jev de certificado, grupo, nacionalidad) | 🟡 en curso: quedan 2 errores conocidos |
+> | u3-6 | `detect_special_signals` con Jev y el "recordar" mal disparado | ⏳ |
+> | u3-7 | `resolve_slot_answer` con Jev (sí/no y listas) | ⏳ |
+> | u3-3 | `intent_detector` como vía rápida determinista + respaldo (Jev/LLM) | ⏳ |
+> | u3-2 | **Redefinida**: el "eval-set + baterías" no pasa por la fase donde actúa u3-4 (el eval-set `--core` no ejecuta `_routing_phase`), así que el cierre de U3 es la **ronda completa del golden con el examen oculto** del protocolo | ⏳ cierre |
+>
+> Orden y criterios: PASOS 3-5 de la PARTE 8.
 > **🟦 Regla de Jev (Gadea, 24-sep-2026):** toda DECISIÓN de opciones fijas del bot (sí/no o elegir de una lista) se prueba primero con **Jev** (TypeSafe vía OpenRouter), siempre con cascada por confianza (si duda, el LLM de hoy) y con el protocolo de medición. Casos: router (u3-1, encendido), u3-4 (¿trae una pregunta?), u3-6 (`detect_special_signals`), u3-7 (`resolve_slot_answer` en sí/no y listas), u3-3 (respaldo del `intent_detector`) y el juez de grounding (l1-6/l1-7). **No** para extraer valores (fechas, cifras, nombres) ni para escribir texto. Adaptador de referencia: `src/agents/jev_router.py`.
 - **UNA llamada estructurada** (function-calling/JSON) que devuelve intención + slots + señales, dueña en
   router/setup, consumida por los nodos → reduce el reparto en 4 y encoge el regex de `intent_detector`
@@ -323,6 +348,12 @@ few-shot (`_select_fewshot_examples`), así que tal cual inflarían la nota.
 - **Guardrails:** defensa ante **inyección de prompts / jailbreak** en texto libre y en lo que entra al RAG
   (grounding + máscara PII cubren parte; falta el vector de inyección). Medido con casos sintéticos del
   golden-set. *(Gonzalo resiliencia · Gadea guardrails)*
+- **r6-3 (nueva, 26-sep) — comprobar cada deploy.** Un CI rojo se salta el deploy SIN avisar: del 24-sep 23:04
+  al 25-sep 21:30 PRE sirvió código viejo y nadie lo vio. Script que, tras un push a `pre_*`, confirme en la
+  API pública de GitHub que el run pasó y por SSH el SHA y los flags que sirve PRE (PASO 1 de la PARTE 8).
+- **r6-4 (nueva, 26-sep) — dependencias acotadas.** CI y Docker instalan con `pip install -e .` y casi todas las
+  dependencias van con `>=` sin techo: así entró SQLAlchemy 2.1 y rompió CI. Poner techo de versión mayor (o
+  instalar desde `requirements-lock.txt`) para que un major nuevo no entre sin probarlo (PASO 1).
 
 ### Fase Q5 — Calidad continua + entrega
 - Gate en CI: **golden-set** de regresión (incl. LLM-juez e2e) + **presupuesto de latencia** en Langfuse
@@ -351,6 +382,12 @@ few-shot (`_select_fewshot_examples`), así que tal cual inflarían la nota.
 | Grandes cías | Eval e2e (LLM-juez) + datos sintéticos | M0 |
 | Owner | Medición por caso, calidad+latencia, antes/después, Langfuse | Principio de medición + todas |
 | Owner | Nada de parches regex; una fuente por concepto | U3 + S4 |
+| Hallazgo 25-sep | CI rojo se salta el deploy sin avisar | R6 (r6-3), paso 1 |
+| Hallazgo 25-sep | Dependencias sin techo (SQLAlchemy 2.1 rompió CI) | R6 (r6-4), paso 1 |
+| Hallazgo 26-sep | El RAG contradice `return_different_day` en casi todas las rondas | L1 (l1-7), paso 6 |
+| Hallazgo 26-sep | El juez tapa contradicciones de política | G (g-8), paso 2 |
+| Hallazgo 26-sep | El filtro de contradicciones de Jev podría tragarse una corrección real | U3 (u3-5), paso 1c |
+| Owner 26-sep | Ejecución secuencial; lo pendiente antes de avanzar | PARTE 8 |
 
 ---
 
@@ -361,7 +398,7 @@ de verdad (`money.py`/`activities.py`/`catalog.py`/`eligibility.py`), Langfuse c
 
 ---
 
-## PARTE 7 — Cómo empezar (para Gadea)
+## PARTE 7 — Cómo empezar (para Gadea) · *HISTÓRICO (16-sep): el vigente es la PARTE 8*
 1. **Empieza por M0** (bloqueante): sin línea base no se puede medir ninguna mejora. Instrumentar Langfuse
    (per-nodo/per-llamada), crear `scripts/battery_latency.py`, montar el golden-set + LLM-juez, y congelar
    la baseline de calidad y latencia. **No cambies conducta en M0.**
@@ -384,6 +421,63 @@ cierra con foto A/B por caso, y se ve la mejora en Langfuse. No empezamos de cer
 (orquestador → agentes) ya está; esto es acelerar, limpiar y pulir hasta nivel producción.
 
 ---
+
+## PARTE 8 — Plan de ejecución SECUENCIAL (desde el 26-sep-2026) · *el vigente*
+
+**Regla (owner, 26-sep):** un paso detrás de otro. Lo que está pendiente se cierra antes de avanzar y no hay
+trabajo en paralelo. Cada paso se trabaja en la rama de quien tiene el turno (hoy `feature/pre_alvaro`;
+integrad antes lo que otro haya subido: todas las `pre_*` despliegan el MISMO PRE), detrás de flag si cambia
+conducta, con el protocolo por escalones (`docs/robustness/protocolo-medicion.md`), y se cierra con HISTORY,
+handoff y la cola de Plan Coral. **Un paso no está hecho hasta que cumple su criterio.**
+
+**Punto de partida (26-sep):** M0 hecha salvo m0-4 (necesita tráfico real); G1 y G2 hechas; L1 cerrada; U3 a
+medias (u3-1 ✅, u3-4 ✅ promocionada, u3-5 🟡); PRE con u3-4 encendido. Suite 2677 passed.
+
+| Paso | Qué | Tareas | Hecho cuando |
+|---|---|---|---|
+| **0** | Aterrizar: plan, handoff, HISTORY y página al día con lo nuevo | — | ✅ 26-sep (esta PARTE) · falta aplicar la cola de Plan Coral y re-exportar la copia `plan-coral.json` (del 23-sep) |
+| **1** | Cabos sueltos técnicos (riesgos vivos, antes de tocar conducta) | r6-4 · r6-3 · control de correcciones · re-triaje s4-6…s4-22 | ver 1a-1d abajo |
+| **2** | Afinar el instrumento: el juez | g-8 | criterios de los casos reales revisados, juez recalibrado con ellos y que detecta contradicciones de política |
+| **3** | Línea base nueva con u3-4 encendido | ronda A core, juzgada con el juez del paso 2 | ronda A de referencia para todos los A/B de U3 |
+| **4** | Terminar U3, en orden | 4a u3-5 · 4b u3-6 · 4c u3-7 · 4d u3-3 | cada una: escalón 0 → ronda B frente a la A del paso 3 → 0 regresiones propias, leídas por caso |
+| **5** | Cierre de U3 | u3-2 (redefinida) | ronda COMPLETA del golden (116 diálogos + examen oculto): examen oculto ≥ 78,3 % (cierre de L1) y sin regresiones propias |
+| **6** | Calidad del RAG | l1-6, l1-7 (+ s4-7, s4-17, s4-19) | los casos conocidos sin invención (el primero, "regreso otro día"); "no lo tengo" solo cuando el dato no está; `eval_rag_answers` y ronda core sin regresiones |
+| **7** | L2 que queda | l2-2, l2-3 (l2-1 cerrada el 26-sep: obsoleta) | caché y "escribiendo…" medidos: latencia percibida ↓ y calidad igual |
+| **8** | S4: un solo cerebro y código ordenado | s4-1, s4-2, s4-3, s4-4 (si u3-3 no lo cubre), retirar flags promocionados, s4-6/12/14/15/16/20/21/22 | sin cascada legacy; módulos partidos por nodo; flags promocionados convertidos en código; suite verde |
+| **9** | R6: robustez de producción | r6-1 (fallback y backoff ante 429), r6-2 (guardrails), g-5 (carga) | el bot nunca deja sin respuesta; inyección medida; p95 con N clientes a la vez |
+| **10** | Q5: calidad continua y entrega | q5-1, g-3, g-4, g-4b, g-6, m0-4, q5-2 | gate en CI; simulador; bucle producción → golden; testers reales; SOAK; entrega |
+
+**Detalle de cada paso:**
+
+- **1a · r6-4 dependencias acotadas.** Techo de versión mayor en `pyproject.toml` para las que van sin él
+  (fastapi, pydantic, pydantic-settings, asyncpg, alembic, pgvector, redis, httpx…), comprobando cada techo
+  contra `requirements-lock.txt`. Hecho cuando un entorno limpio (como CI) instala y pasa lint, migraciones
+  y tests, igual que se verificó el arreglo de SQLAlchemy (HISTORY 0.29.27).
+- **1b · r6-3 comprobar cada deploy.** `scripts/check_deploy.py`: sondea el run de GitHub (API pública,
+  `conclusion`) y, si pasa, el SHA, la rama y los flags que sirve PRE por SSH; sale con error si no cuadra.
+  Se añade al ritual de cierre (`/close-work`) y al handoff.
+- **1c · control de correcciones en el banco.** El filtro de contradicciones de Jev actúa en TODOS los turnos
+  (u3-5) y va antes que la señal "ah no / perdón": una corrección real con p < 0,7 se ignoraría. Medido el
+  26-sep: 21/21 correcciones explícitas pasan, pero "mejor snorkel" va justo (0,41 con la regla de actividad).
+  Se añade como bloque fijo de `scripts/sonda_afirma_vs_pregunta.py` para que cualquier cambio de redacción
+  lo vigile.
+- **1d · re-triaje de s4-6…s4-22** (los fallos del golden v7) contra la ronda B3: cada uno se marca resuelto
+  (con el turno que lo prueba) o se asigna a su paso por mecanismo: entender el mensaje → 4a/4b (s4-8, s4-9,
+  s4-10, s4-11, s4-13, s4-18); RAG → 6 (s4-7, s4-17, s4-19); plantillas y escalado → 8 (s4-6, s4-12, s4-14,
+  s4-15, s4-16, s4-20, s4-21, s4-22). s4-13 (el bucle "¿desde dónde saldrías?" que ignora preguntas) es
+  probablemente lo que ya arregló u3-4.
+- **2 · g-8.** Hoy el juez acierta el 75 % de sus "no cumple" en casos reales (91,5 % en la calibración
+  sintética) y deja pasar contradicciones de política (el "regreso otro día" solo lo marca si dice "sin
+  cargo"). Va ANTES de las rondas que quedan porque todas se juzgan con él.
+- **4a · u3-5:** "cursos de buceo… primera vez" → minicurso supuesto (regla del owner: recomendar, no
+  asumir) y "Vamos en família a Cartagena" → no colombiano (portugués); más s4-8/9/10/11 si el re-triaje los
+  deja aquí. **4b · u3-6:** `detect_special_signals` con Jev; el "recordar" mal disparado ("how do we book" →
+  resumen, sin contestar ni extraer; s4-18). **4c · u3-7:** `resolve_slot_answer` con Jev en sí/no y listas.
+  **4d · u3-3:** el regex de `intent_detector` como vía rápida con respaldo, sin parches.
+- **5 · cierre de U3** con la ronda completa (~2 $). Si sale bien, U3 queda cerrada y esa ronda es la línea
+  base de los pasos 6-10.
+- **Checkpoint de fecha:** Langfuse vuelve a tener cuota el **16-oct**. Decidir entonces si se reactiva o se
+  sigue con `[TURN_METRICS]`.
 
 ## ANEXO — Visión de producto (FUTURO, fuera del camino técnico actual)
 > Decisión del owner (21-sep). **No es trabajo de este plan**: son las piezas que convierten a Coral en
