@@ -13,6 +13,32 @@ Read this file before changing code in the Diving Planet Bot. For a quick versio
 
 > **📏 LEER ANTES DE MEDIR — decisiones del 24-sep-2026 (Gadea):** (1) latencia y llamadas con nuestros logs `[TURN_METRICS]` + `scripts/turn_metrics.py`, no con Langfuse (plan gratuito superado, reinicio 16-oct); (2) pruebas A/B por escalones, juzgando solo los diálogos que cambian. Todo en `docs/robustness/protocolo-medicion.md`.
 
+### ▶️ PARA GADEA (26-sep noche, Álvaro) — retomar aquí
+
+**Rama:** `feature/pre_alvaro` (integra tu `4192600`). Trabajamos en SECUENCIA (PARTE 8 del plan maestro).
+**Paso 1 cerrado** (1a techos de dependencias · 1b `python -m scripts.check_deploy` tras cada push · 1c control de
+correcciones en el banco de Jev · 1d re-triaje de s4-6…s4-22, `docs/robustness/s4-retriaje-2026-09-26.md`).
+
+**Paso 2 (g-8) EN CURSO — lo siguiente es esto:**
+
+| | Juez de hoy (2a) | Juez corregido (2c) |
+|---|---|---|
+| Acierto de sus suspensos (192 veredictos humanos de la v7) | 75,0 % (43 falsos) | **83,2 % (24 falsos)** |
+| Fallos que se le escapan | 7 | **16** (reales: 2 → 10) |
+| Examen oculto (criterios sin tocar: prueba ciega del juez) | 73,9 %, se escapan 2 | 76,7 %, se escapan 3 |
+| Sintéticos | 72,7 % | 94,1 % |
+
+1. Leer las **16 escapadas** del 2c (persona `no_cumple`, juez `cumple`): comparar
+   `docs/robustness/golden-set/results/2026-09-26-g8-v7-juez8__gpt-5-mini-medium.json` con
+   `2026-09-22-golden-v7__review.json`. Hipótesis: la regla nueva de los criterios generales (en
+   `scripts/judge_golden_set.py`, `judge_user_message`) da cumple aunque el criterio concreto NO suspenda.
+   Posible arreglo: que el general solo ceda cuando el concreto correspondiente también suspende.
+2. Ajustar y repetir el 2c (copiar `synthetic-runs/2026-09-26-g8-v7-base.jsonl` con otro nombre y
+   `python -m scripts.judge_golden_set --run …`; ~75 min, ~1,4 $). Cerrar cuando baje de 43 falsos sin subir de 7
+   escapadas, mirando aparte el examen oculto.
+3. Después: **paso 3** (ronda A nueva con u3-4 encendido y el juez nuevo). Ojo: el golden pasa a **v8**, así que
+   las cifras de antes no son comparables con las nuevas.
+
 ### ▶️ PLAN SECUENCIAL (26-sep tarde, Álvaro) — leer esto primero
 
 **Regla del owner (26-sep): todo en SECUENCIA.** Lo pendiente se cierra antes de avanzar; no hay trabajo
@@ -23,7 +49,7 @@ de `docs/plan-maestro-final.md`**. Resumen:
 |---|---|---|
 | 0 | Aterrizar plan, handoff, HISTORY y página | ✅ 26-sep (falta aplicar la cola de Plan Coral y re-exportar `plan-coral.json`) |
 | **1** | **Cabos sueltos técnicos**: 1a dependencias con techo (r6-4) ✅ · 1b comprobar cada deploy (r6-3) ✅ · 1c control de correcciones en el banco (u3-5) ✅ · 1d re-triaje de s4-6…s4-22 contra la ronda B3 ✅ | ✅ **cerrado 26-sep** |
-| **2** | **Juez con casos reales (g-8)**: hoy acierta el 75 % de sus "no cumple" reales y tapa contradicciones de política | **← SIGUIENTE** |
+| **2** | **Juez con casos reales (g-8)**: en la v7 acertó el 72,7 % de sus "no cumple" (51 falsos suspensos de 187) | **← EN CURSO (ver bloque de arriba)** |
 | 3 | Ronda A nueva con u3-4 encendido (referencia para lo que queda de U3) | ⏳ |
 | 4 | Terminar U3: u3-5 → u3-6 → u3-7 → u3-3 | ⏳ |
 | 5 | Cierre de U3: ronda completa + examen oculto (u3-2 redefinida) | ⏳ |

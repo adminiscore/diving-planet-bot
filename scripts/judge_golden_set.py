@@ -285,10 +285,19 @@ def parse_verdict(raw: str) -> dict:
 def judge_user_message(dialogue: dict, records: list[dict], criterion: dict, others: list[dict] | None = None) -> str:
     """Lo que ve el juez de UN criterio (junto con el sistema y la referencia)."""
     other_lines = "\n".join(f"- {c['id']}: {c['check']}" for c in (others or []) if c["id"] != criterion["id"])
+    # g-8 (26-sep): la causa mayor de falsos suspensos en la revision humana de la v7 era contar dos
+    # veces un fallo: un criterio GENERAL suspendia por lo mismo que ya suspende uno concreto del
+    # dialogo ("un fallo, un criterio"). Avisar de los otros criterios no bastaba: hay que decir cual
+    # manda. Manda el concreto; el general solo suspende por algo que ningun otro criterio cubre.
+    general = (
+        "\nEste criterio es GENERAL: si el unico problema que ves es justo lo que comprueba alguno de los "
+        "otros criterios del dialogo, marca cumple (ese fallo se cuenta alli, una sola vez)."
+        if criterion["id"].startswith("global:") else ""
+    )
     return (
         f"CONVERSACION (dialogo '{dialogue['id']}', categoria {dialogue['category']}):\n{transcript(records)}\n\n"
         f"OTROS CRITERIOS DEL DIALOGO (no los juzgues; solo para no contar dos veces un fallo):\n{other_lines or '- ninguno'}\n\n"
-        f"CRITERIO A JUZGAR ({criterion['id']}): {criterion['check']}"
+        f"CRITERIO A JUZGAR ({criterion['id']}): {criterion['check']}{general}"
     )
 
 

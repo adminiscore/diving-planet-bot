@@ -116,7 +116,7 @@ dialogues = [
     # --- Nacionalidad
     dialogue("nacionalidad-ambigua", "nacionalidad", [
         ("regla", "Aplica la política: toda persona nacida en Colombia cuenta como colombiana viva donde viva, así que paga en COP (mismo precio). Si pasa a un asesor sin resolverlo, no cumple."),
-        ("no-asume", "No da por hecha una moneda sin explicar por qué; si no está claro, pregunta."),
+        # g-8: 'no-asume' quitado (revision humana v7: "un fallo, un criterio: cuenta en 'regla'").
     ], tag="adv-nationality-ambiguous"),
     dialogue("nacionalidad-mixta-carrito", "nacionalidad", [
         ("usd-todo-el-grupo", "Aplica la política de grupo con nacionalidades mixtas: todo el grupo paga en USD al mismo precio (o pasa a un asesor). No cobra a unos en COP y a otros en USD."),
@@ -134,7 +134,7 @@ dialogues = [
     ], tag="meeting-point-question"),
     dialogue("premisa-falsa-lunes", "info", [
         ("corrige", "No confirma que los lunes estén cerrados: operan todos los días."),
-        ("reserva-cop", "La reserva final es buceo certificado, 1 persona, desde Cartagena y en COP por ser colombiano."),
+        ("reserva-cop", "Si la conversación llega a la reserva final, es buceo certificado, 1 persona, desde Cartagena y en COP por ser colombiano. Si no llega a la reserva final, no aplica (g-8: la conversación del golden termina antes)."),
     ], tag="closed-days-then-reschedule-long"),
     dialogue("paquete-5-inmersiones", "info", [
         ("precio", "Da el precio del paquete de 5 inmersiones (2 días) del catálogo, o pregunta desde dónde sale si el precio depende de ello; no inventa."),
@@ -255,7 +255,7 @@ for d in dialogues:
         d["cobertura"] = SYNTH_COVERAGE[d["id"]]
 
 doc = {
-    "version": 7,
+    "version": 8,  # g-8 (26-sep): criterios afinados con la revision humana de la v7
     "status": "v7 (22-sep, Fase G/G1): añade los casos reales de los chats de WhatsApp del cliente, revisados por Claude + Gadea; validado por Gadea (2026-09-17); v6 añade 2 conversaciones reales de Gadea en el widget (21-sep); v5 aclara criterios de reparto, reserva y acompanante tras la calibracion; v2 calibrada tras la ronda 1; v3 separa los criterios mecanicos (auto, por codigo) de los que juzga el LLM; v4 con las decisiones de Gadea en la calibracion (telefono, refresher, datos del cliente); un fallo cuenta solo en el criterio que mejor lo describe",
     "about": (
         "Golden-set de dialogos para el LLM-juez end-to-end (plan maestro, M0 m0-3/m0-4). Cada dialogo se lanza "
@@ -274,7 +274,7 @@ doc = {
     ],
     "global_criteria": [
         {"id": "idioma", "check": "Responde en el idioma del cliente (o en el que pide cambiar)."},
-        {"id": "sin-invenciones", "check": "Ninguna edad, horario, política, descuento, servicio o dato de contacto contradice la referencia ni se inventa, y el bot no da por hechos datos del cliente que este no ha dicho (actividad, personas, certificación...). Los importes de dinero NO se juzgan aquí (se comprueban aparte)."},
+        {"id": "sin-invenciones", "check": "Ninguna edad, horario, política, descuento, servicio o dato de contacto contradice la referencia ni se inventa, y el bot no da por hechos datos del cliente que este no ha dicho (actividad, personas, certificación...). Repetir lo que dijo el cliente o deducirlo de forma evidente de sus palabras NO es inventar (p. ej., si pidió 'en pesos', la moneda es COP). Los importes de dinero y los enlaces de book.divingplanet.org (los oficiales) NO se juzgan aquí (se comprueban aparte), ni el saludo de marca de Coral."},
         {"id": "importes-catalogo", "check": "Todo importe en USD o COP que da el bot sale del catálogo (precio unitario, o unidades × precio, o suma de varias líneas).", "auto": "amounts_match_catalog"},
         {"id": "un-saludo", "check": "El bot se presenta ('Soy Coral' / 'I'm Coral') como mucho una vez.", "auto": "single_greeting"},
         {"id": "sin-repreguntas", "check": "No vuelve a preguntar un dato que el cliente ya dio con claridad."},

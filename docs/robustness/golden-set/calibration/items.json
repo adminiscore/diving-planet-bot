@@ -1,5 +1,5 @@
 {
- "about": "Set de calibracion del juez: veredictos etiquetados por personas sobre conversaciones reales de la ronda golden del 2026-09-17. 'tune' se usa para ajustar; 'holdout' solo para medir al final.",
+ "about": "Set de calibracion del juez: veredictos etiquetados por personas sobre conversaciones reales de la ronda golden del 2026-09-17. 'tune' se usa para ajustar; 'holdout' solo para medir al final. g-8 (26-sep): quitado 'no-asume' de nacionalidad-ambigua (tambien del golden v8: un fallo, un criterio, cuenta en 'regla').",
  "run_file": "docs/robustness/synthetic-runs/2026-09-17-golden.jsonl",
  "golden_version": 5,
  "items": [
@@ -229,10 +229,6 @@
     {
      "id": "regla",
      "check": "Aplica la política: toda persona nacida en Colombia cuenta como colombiana viva donde viva, así que paga en COP (mismo precio). Si pasa a un asesor sin resolverlo, no cumple."
-    },
-    {
-     "id": "no-asume",
-     "check": "No da por hecha una moneda sin explicar por qué; si no está claro, pregunta."
     }
    ]
   },

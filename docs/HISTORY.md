@@ -1,6 +1,20 @@
 History
 =======
 
+0.29.39 - (2026-09-26)
+----------------------
+* **Plan secuencial, paso 2 (g-8, el juez con casos reales): EN CURSO, no cerrado.** 2a: el juez de hoy, pasado por las 84 conversaciones de la v7 con veredicto humano, acierta el 75,0 % de sus suspensos (43 falsos). 2b: regla "un fallo, un criterio" para los criterios GENERALES (`judge_user_message`), `sin-invenciones` aclarado (repetir o deducir lo evidente de lo que dijo el cliente no es inventar; enlaces oficiales y saludo de marca no se juzgan ahí), golden **v8**: 8 criterios quitados y 7 reescritos según las notas humanas, **ninguno del examen oculto**. 2c:
+
+| | Juez de hoy (2a) | Juez corregido (2c) |
+|---|---|---|
+| Acierto de sus suspensos (192 veredictos humanos de la v7) | 75,0 % (43 falsos) | **83,2 % (24 falsos)** |
+| Fallos que se le escapan | 7 | **16** (reales: 2 → 10) |
+| Examen oculto (criterios sin tocar: prueba ciega del juez) | 73,9 %, se escapan 2 | 76,7 %, se escapan 3 |
+| Sintéticos | 72,7 % | 94,1 % |
+
+* **No cumple el criterio fijado antes de medir** (menos falsos sin que suban los que se escapan): el juez se ha vuelto indulgente. Hipótesis a comprobar primero: la regla general da cumple aunque el criterio concreto NO suspenda. Siguiente: leer las 16 escapadas (`results/2026-09-26-g8-v7-juez8__gpt-5-mini-medium.json` frente a `2026-09-22-golden-v7__review.json`), ajustar y repetir el 2c. Coste de cada medida: ~75 min y ~1,4 $.
+* **Corregido lo del 0.29.34**: el juez NO tapa el "regreso otro día" del RAG; lo marca en su criterio específico (no cumple en 28 de 29 rondas). El error del bot sigue siendo real (paso 6).
+
 0.29.38 - (2026-09-26)
 ----------------------
 * **Plan secuencial, paso 1d: re-triaje de s4-6…s4-22 tras u3-4 — y PASO 1 CERRADO.** Cada fallo del golden que dio lugar a una tarea S4 se ha vuelto a mirar con u3-4 encendido: con la ronda B3 los 6 del core y con el replay v9 (encendido frente a apagado) el resto. Evidencia caso a caso en `docs/robustness/s4-retriaje-2026-09-26.md`.

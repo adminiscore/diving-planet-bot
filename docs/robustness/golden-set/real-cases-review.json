@@ -1,197 +1,255 @@
 {
- "about": "Revision humana (Claude + Gadea, 22-sep) de real-cases-draft.json antes de entrar al golden-set. build_golden.py aplica estas correcciones: incluir (true/false), drop (criterios que se quitan), edit (texto nuevo de un criterio), add (criterios nuevos), no_auto (criterios que pasan de comprobacion por codigo a juez LLM), note. Motivos principales: exigir solo lo que el cliente pregunto, un dato por criterio, no copiar politicas enteras, y nada que la referencia no respalde.",
- "reviewed_at": "2026-09-22",
- "cases": {
-  "wa-01-e3": {
-   "drop": [
-    "datos-faltantes-para-cotizar",
-    "elearning-requisito-tiempo"
-   ],
-   "note": "El cliente pide los pasos para reservar y cita un precio; el eLearning y la lista de datos no los pregunto."
-  },
-  "wa-01-e4": {
-   "edit": {
-    "refresh-menos-de-dos-anos": "A '¿tengo que hacer algo especial?' no le exige refresh: termino el curso basico el 3 de abril de 2025, hace menos de 2 años."
-   },
-   "note": "Caduca en abril de 2027: a partir de ahi han pasado mas de 2 años y el criterio se invierte."
-  },
-  "wa-01-e5": {
-   "drop": [
-    "no-validar-descuento-historico",
-    "pago-segun-nacionalidad"
-   ],
-   "note": "El cliente no cita ningun descuento ni pregunta como pagar."
-  },
-  "wa-02-e4": {
-   "no_auto": [
-    "pago-por-link"
-   ],
-   "edit": {
-    "pago-por-link": "Ante 'dame la cuenta y transfiero' no da datos de cuentas bancarias: dirige al pago online (enlace de reserva) o, si le falta un dato para ello, lo pregunta; tambien vale pasar a una persona."
-   },
-   "note": "Como comprobacion por codigo exigia el link en el ultimo turno aunque el bot aun necesite un dato."
-  },
-  "wa-03-e1": {
-   "drop": [
-    "enlace-snorkel"
-   ],
-   "edit": {
-    "pide-origen": "Guia al cliente hacia el snorkel: pregunta si sale desde Cartagena o ya esta en las islas, o le comparte el plan del tour de snorkeling."
-   },
-   "note": "El cliente solo dice que busca snorkel: preguntar o dar el plan son ambas correctas."
-  },
-  "wa-05-e1": {
-   "no_auto": [
-    "link-de-reserva"
-   ],
-   "edit": {
-    "disponibilidad-diaria": "Confirma que operan todos los dias, asi que puede salir el 5 o el 6 de febrero.",
-    "politica-fotos": "A '¿las fotos tienen precio adicional?' responde que no estan incluidas y que el instructor puede hacerlas de forma voluntaria (propina voluntaria), sin inventar un precio de fotos.",
-    "link-de-reserva": "A 'no se como se haga la reserva' le da el enlace de reserva del plan de 2 inmersiones para buzos certificados, o pregunta el dato que le falte para darlo."
-   },
-   "note": "Politica de fotos enfocada a la pregunta (decision de Gadea)."
-  },
-  "wa-05-e4": {
-   "drop": [
-    "reschedule-politica"
-   ],
-   "add": [
-    {
-     "id": "pasa-a-persona-cancelacion",
-     "check": "Ante 'podemos cancelar' / '¿cual es el proceso?' de una reserva ya hecha, pasa a una persona para gestionarlo; no lo gestiona el ni inventa el proceso."
+  "about": "Revision humana (Claude + Gadea, 22-sep) de real-cases-draft.json antes de entrar al golden-set. build_golden.py aplica estas correcciones: incluir (true/false), drop (criterios que se quitan), edit (texto nuevo de un criterio), add (criterios nuevos), no_auto (criterios que pasan de comprobacion por codigo a juez LLM), note. Motivos principales: exigir solo lo que el cliente pregunto, un dato por criterio, no copiar politicas enteras, y nada que la referencia no respalde. g-8 (26-sep): 7 criterios quitados y 6 reescritos segun la revision humana de los veredictos del juez en la v7 (solo casos NO ocultos).",
+  "reviewed_at": "2026-09-22",
+  "cases": {
+    "wa-01-e3": {
+      "drop": [
+        "datos-faltantes-para-cotizar",
+        "elearning-requisito-tiempo"
+      ],
+      "note": "El cliente pide los pasos para reservar y cita un precio; el eLearning y la lista de datos no los pregunto."
+    },
+    "wa-01-e4": {
+      "edit": {
+        "refresh-menos-de-dos-anos": "A '¿tengo que hacer algo especial?' no le exige refresh: termino el curso basico el 3 de abril de 2025, hace menos de 2 años."
+      },
+      "note": "Caduca en abril de 2027: a partir de ahi han pasado mas de 2 años y el criterio se invierte."
+    },
+    "wa-01-e5": {
+      "drop": [
+        "no-validar-descuento-historico",
+        "pago-segun-nacionalidad"
+      ],
+      "note": "El cliente no cita ningun descuento ni pregunta como pagar."
+    },
+    "wa-02-e4": {
+      "no_auto": [
+        "pago-por-link"
+      ],
+      "edit": {
+        "pago-por-link": "Ante 'dame la cuenta y transfiero' no da datos de cuentas bancarias: dirige al pago online (enlace de reserva) o, si le falta un dato para ello, lo pregunta; tambien vale pasar a una persona.",
+        "origen-antes-de-cotizar": "Da el precio del catálogo para snorkeling según salgan desde Cartagena o si ya están en las islas; si el cliente no lo dijo, pregunta desde dónde salen o da ambos precios rotulados. Contestar qué incluye no exige saber el origen."
+      },
+      "note": "Como comprobacion por codigo exigia el link en el ultimo turno aunque el bot aun necesite un dato. | g-8 (26-sep): reescrito 'origen-antes-de-cotizar' (criterio demasiado estricto: contestar 'que incluye' es correcto)."
+    },
+    "wa-03-e1": {
+      "drop": [
+        "enlace-snorkel"
+      ],
+      "edit": {
+        "pide-origen": "Guia al cliente hacia el snorkel: pregunta si sale desde Cartagena o ya esta en las islas, o le comparte el plan del tour de snorkeling."
+      },
+      "note": "El cliente solo dice que busca snorkel: preguntar o dar el plan son ambas correctas."
+    },
+    "wa-05-e1": {
+      "no_auto": [
+        "link-de-reserva"
+      ],
+      "edit": {
+        "disponibilidad-diaria": "Confirma que operan todos los dias, asi que puede salir el 5 o el 6 de febrero.",
+        "politica-fotos": "A '¿las fotos tienen precio adicional?' responde que no estan incluidas y que el instructor puede hacerlas de forma voluntaria (propina voluntaria), sin inventar un precio de fotos.",
+        "link-de-reserva": "A 'no se como se haga la reserva' le da el enlace de reserva del plan de 2 inmersiones para buzos certificados, o pregunta el dato que le falte para darlo."
+      },
+      "note": "Politica de fotos enfocada a la pregunta (decision de Gadea)."
+    },
+    "wa-05-e4": {
+      "drop": [
+        "reschedule-politica"
+      ],
+      "add": [
+        {
+          "id": "pasa-a-persona-cancelacion",
+          "check": "Ante 'podemos cancelar' / '¿cual es el proceso?' de una reserva ya hecha, pasa a una persona para gestionarlo; no lo gestiona el ni inventa el proceso."
+        }
+      ],
+      "note": "Cancelar una reserva existente lo gestiona una persona."
+    },
+    "wa-05-e6": {
+      "note": "Duda resuelta por Gadea: basta con explicar la politica de fotos, enfocada a la pregunta."
+    },
+    "wa-06-e1": {
+      "drop": [
+        "pide-carnet-certificado"
+      ],
+      "edit": {
+        "pide-origen-cartagena-o-islas": "Da informacion del plan para buzos certificados o pregunta si sale desde Cartagena o ya esta en las islas para darle el plan correcto."
+      },
+      "note": "El carne no lo pregunto."
+    },
+    "wa-07-e1": {
+      "edit": {
+        "politica-equipaje": "Responde que en la lancha se puede llevar una mochila o bolso por persona (sus dos mochilas, una por persona, entran en eso); si quieren dejar equipaje aparte, puede ofrecer guardarlo en la oficina de Cartagena o pasar a una persona. No inventa casilleros en la isla."
+      },
+      "note": "Decisiones de Gadea (22-sep): una mochila o bolso por persona; la maleta se puede guardar en la oficina de Cartagena."
+    },
+    "wa-10-e1": {
+      "add": [
+        {
+          "id": "no-inventa-tamano-grupo",
+          "check": "A '¿alrededor de cuantas personas van?' no da una cifra de personas por grupo o por instructor (no hay un numero oficial); puede decir que depende del dia o pasar a una persona."
+        }
+      ],
+      "note": "Decision de Gadea: no hay numero maximo oficial por grupo o instructor."
+    },
+    "wa-10-e2": {
+      "no_auto": [
+        "link-reserva"
+      ],
+      "edit": {
+        "link-reserva": "A '¿como seria para apartar un cupo para el viernes?' le da el enlace de reserva online, o pregunta el dato que le falte para darlo."
+      }
+    },
+    "wa-11-e3": {
+      "drop": [
+        "cert-card-requerida"
+      ]
+    },
+    "wa-12-e1": {
+      "drop": [
+        "proceso-reserva-estandar"
+      ],
+      "note": "Es una agencia que cotiza para clientes: lo clave es no inventar el 'link especial' y pasar a una persona."
+    },
+    "wa-14-e1": {
+      "edit": {
+        "fotos-no-incluidas-sin-fotografo": "A '¿habra un fotografo?' responde que no hay fotografo incluido; el instructor puede hacer fotos de forma voluntaria."
+      },
+      "drop": [
+        "fotos-no-incluidas-sin-fotografo"
+      ],
+      "note": "g-8 (26-sep): quitado 'fotos-no-incluidas-sin-fotografo' (un fallo, un criterio)."
+    },
+    "wa-15-e1": {
+      "edit": {
+        "sin-nocturno-ofrece-4-diurnos": "Si no quieren el buceo nocturno, ofrece el paquete de 4 buceos diurnos del catalogo o pasa a una persona; no inventa un paquete de 5 con un buceo de tarde."
+      },
+      "note": "La referencia no dice que el nocturno se pueda cambiar por uno diurno."
+    },
+    "wa-18-e1": {
+      "drop": [
+        "moneda-por-nacionalidad"
+      ],
+      "edit": {
+        "disponibilidad-y-hora": "Confirma que operan todos los dias (tienen salida cuando pregunta)."
+      }
+    },
+    "wa-23-e1": {
+      "drop": [
+        "origen-cartagena-o-islas"
+      ],
+      "note": "Ya lo cubre el criterio del precio del paquete de 5."
+    },
+    "wa-24-e1": {
+      "edit": {
+        "disponibilidad-y-cutoff": "Confirma que hay salida el 24 de abril (operan todos los dias).",
+        "equipaje-en-lancha": "A '¿les puedo dejar un bolso?' responde que si: se puede guardar en la oficina de Cartagena (o lo coordina una persona); en la lancha va una mochila o bolso por persona."
+      },
+      "note": "Decision de Gadea (22-sep): se puede guardar equipaje en la oficina de Cartagena."
+    },
+    "wa-27-e1": {
+      "drop": [
+        "sin-descuento-historico"
+      ],
+      "note": "El cliente no cita ningun descuento."
+    },
+    "wa-30-e1": {
+      "edit": {
+        "grupo-mixto-posible": "Confirma que buzos certificados y snorkelers pueden ir en el mismo tour.",
+        "disponibilidad-diaria": "A 'if it's available' responde que operan todos los dias, sin inventar una comprobacion de cupo."
+      },
+      "note": "Quitada la 'lancha separada' (no esta en la referencia) y texto con tildes corruptas."
+    },
+    "wa-32-e1": {
+      "edit": {
+        "idiomas-instructores": "Ante la pregunta del interprete: acepta que su acompañante haga de interprete, aclarando que la instruccion es en español o en ingles (no en frances)."
+      },
+      "note": "Decision de Gadea (22-sep): clases en español e ingles; se acepta interprete."
+    },
+    "wa-34-e1": {
+      "drop": [
+        "recogida-horario-islas"
+      ],
+      "note": "La hora de recogida no la pregunto."
+    },
+    "wa-35-e1": {
+      "drop": [
+        "moneda-segun-nacionalidad",
+        "requiere-certificacion"
+      ],
+      "note": "g-8 (26-sep): quitado 'moneda-segun-nacionalidad' (un fallo, un criterio)."
+    },
+    "wa-36-e1": {
+      "drop": [
+        "pedir-moneda-y-fecha"
+      ],
+      "note": "El cliente dice que no hace falta resolverlo hoy."
+    },
+    "wa-37-e1": {
+      "edit": {
+        "no-confirmar-isla-grande": "A 'ok, estan en Isla Grande' confirma (o no contradice) que la base, en los hoteles San Pedro de Majagua y Cocoliso, esta en Isla Grande.",
+        "recogida-hoteles-islas": "Ante '¿me recogen si me quedo en otro?', confirma que desde otro hotel de las Islas del Rosario con acceso marítimo también coordinan la recogida y el regreso, sin decir que tenga coste extra."
+      },
+      "note": "Decision de Gadea (22-sep): ambos hoteles base estan en Isla Grande. | g-8 (26-sep): reescrito 'recogida-hoteles-islas' (criterio estricto: no hace falta decir literalmente 'sin cargo adicional')."
+    },
+    "wa-38-e1": {
+      "drop": [
+        "pickup-930"
+      ],
+      "edit": {
+        "hotel-acceso": "Pide o confirma el hotel donde se aloja para coordinar la recogida en lancha (preguntar por el acceso marítimo es opcional)."
+      },
+      "note": "g-8 (26-sep): reescrito 'hotel-acceso' (criterio estricto: basta con pedir el hotel para coordinar la recogida)."
+    },
+    "wa-09-e2": {
+      "edit": {
+        "coordinar-maleta": "Sobre la maleta, indica que llevarla en la lancha se coordina con un asesor o que se puede dejar guardada en la oficina de Cartagena; no dice sin mas que 'cabe'."
+      },
+      "drop": [
+        "coordinar-maleta"
+      ],
+      "note": "g-8 (26-sep): quitado 'coordinar-maleta' (un fallo, un criterio)."
+    },
+    "wa-04-e1": {
+      "drop": [
+        "cutoff-pago-dia-anterior"
+      ],
+      "note": "g-8 (26-sep): quitado 'cutoff-pago-dia-anterior' (criterio sobre-especifico: la respuesta de pago es correcta)."
+    },
+    "wa-04-e3": {
+      "drop": [
+        "moneda-colombianos-o-residentes"
+      ],
+      "note": "g-8 (26-sep): quitado 'moneda-colombianos-o-residentes' (un fallo, un criterio: cuenta en precio-total)."
+    },
+    "wa-22-e1": {
+      "drop": [
+        "origen-para-cotizar"
+      ],
+      "note": "g-8 (26-sep): quitado 'origen-para-cotizar' (un fallo, un criterio)."
+    },
+    "wa-25-e1": {
+      "drop": [
+        "precio-moneda-datos"
+      ],
+      "note": "g-8 (26-sep): quitado 'precio-moneda-datos' (un fallo, un criterio)."
+    },
+    "wa-02-e1": {
+      "edit": {
+        "disponibilidad-semana-santa": "Confirma que operan en Semana Santa y que hay disponibilidad para esas fechas (o que se elige en el calendario del enlace de reserva). No hace falta mencionar el clima."
+      },
+      "note": "g-8 (26-sep): reescrito 'disponibilidad-semana-santa' (criterio demasiado estricto: exigia mencionar el clima)."
+    },
+    "wa-08-e1": {
+      "edit": {
+        "precio-islas-2-buzos-usd": "Da el precio del catálogo desde las islas en USD por ser extranjeros, por persona o el total para los 2 (o pregunta el dato que falte si no puede asumirlo)."
+      },
+      "note": "g-8 (26-sep): reescrito 'precio-islas-2-buzos-usd' (dar el precio por persona desde islas es correcto)."
+    },
+    "wa-07-e2": {
+      "edit": {
+        "regreso-otro-dia-escalar": "Ante '¿nos pueden dejar en la isla tras bucear el 14?' (alargar la estancia en las islas), no promete condiciones que la referencia no respalde; si no está claro, ofrece pasar con un asesor para coordinarlo."
+      },
+      "note": "g-8 (26-sep): reescrito 'regreso-otro-dia-escalar' (criterio ambiguo: la clienta queria que la dejaran en la isla, no volver a Cartagena otro dia)."
     }
-   ],
-   "note": "Cancelar una reserva existente lo gestiona una persona."
-  },
-  "wa-05-e6": {
-   "note": "Duda resuelta por Gadea: basta con explicar la politica de fotos, enfocada a la pregunta."
-  },
-  "wa-06-e1": {
-   "drop": [
-    "pide-carnet-certificado"
-   ],
-   "edit": {
-    "pide-origen-cartagena-o-islas": "Da informacion del plan para buzos certificados o pregunta si sale desde Cartagena o ya esta en las islas para darle el plan correcto."
-   },
-   "note": "El carne no lo pregunto."
-  },
-  "wa-07-e1": {
-   "edit": {
-    "politica-equipaje": "Responde que en la lancha se puede llevar una mochila o bolso por persona (sus dos mochilas, una por persona, entran en eso); si quieren dejar equipaje aparte, puede ofrecer guardarlo en la oficina de Cartagena o pasar a una persona. No inventa casilleros en la isla."
-   },
-   "note": "Decisiones de Gadea (22-sep): una mochila o bolso por persona; la maleta se puede guardar en la oficina de Cartagena."
-  },
-  "wa-10-e1": {
-   "add": [
-    {
-     "id": "no-inventa-tamano-grupo",
-     "check": "A '¿alrededor de cuantas personas van?' no da una cifra de personas por grupo o por instructor (no hay un numero oficial); puede decir que depende del dia o pasar a una persona."
-    }
-   ],
-   "note": "Decision de Gadea: no hay numero maximo oficial por grupo o instructor."
-  },
-  "wa-10-e2": {
-   "no_auto": [
-    "link-reserva"
-   ],
-   "edit": {
-    "link-reserva": "A '¿como seria para apartar un cupo para el viernes?' le da el enlace de reserva online, o pregunta el dato que le falte para darlo."
-   }
-  },
-  "wa-11-e3": {
-   "drop": [
-    "cert-card-requerida"
-   ]
-  },
-  "wa-12-e1": {
-   "drop": [
-    "proceso-reserva-estandar"
-   ],
-   "note": "Es una agencia que cotiza para clientes: lo clave es no inventar el 'link especial' y pasar a una persona."
-  },
-  "wa-14-e1": {
-   "edit": {
-    "fotos-no-incluidas-sin-fotografo": "A '¿habra un fotografo?' responde que no hay fotografo incluido; el instructor puede hacer fotos de forma voluntaria."
-   }
-  },
-  "wa-15-e1": {
-   "edit": {
-    "sin-nocturno-ofrece-4-diurnos": "Si no quieren el buceo nocturno, ofrece el paquete de 4 buceos diurnos del catalogo o pasa a una persona; no inventa un paquete de 5 con un buceo de tarde."
-   },
-   "note": "La referencia no dice que el nocturno se pueda cambiar por uno diurno."
-  },
-  "wa-18-e1": {
-   "drop": [
-    "moneda-por-nacionalidad"
-   ],
-   "edit": {
-    "disponibilidad-y-hora": "Confirma que operan todos los dias (tienen salida cuando pregunta)."
-   }
-  },
-  "wa-23-e1": {
-   "drop": [
-    "origen-cartagena-o-islas"
-   ],
-   "note": "Ya lo cubre el criterio del precio del paquete de 5."
-  },
-  "wa-24-e1": {
-   "edit": {
-    "disponibilidad-y-cutoff": "Confirma que hay salida el 24 de abril (operan todos los dias).",
-    "equipaje-en-lancha": "A '¿les puedo dejar un bolso?' responde que si: se puede guardar en la oficina de Cartagena (o lo coordina una persona); en la lancha va una mochila o bolso por persona."
-   },
-   "note": "Decision de Gadea (22-sep): se puede guardar equipaje en la oficina de Cartagena."
-  },
-  "wa-27-e1": {
-   "drop": [
-    "sin-descuento-historico"
-   ],
-   "note": "El cliente no cita ningun descuento."
-  },
-  "wa-30-e1": {
-   "edit": {
-    "grupo-mixto-posible": "Confirma que buzos certificados y snorkelers pueden ir en el mismo tour.",
-    "disponibilidad-diaria": "A 'if it's available' responde que operan todos los dias, sin inventar una comprobacion de cupo."
-   },
-   "note": "Quitada la 'lancha separada' (no esta en la referencia) y texto con tildes corruptas."
-  },
-  "wa-32-e1": {
-   "edit": {
-    "idiomas-instructores": "Ante la pregunta del interprete: acepta que su acompañante haga de interprete, aclarando que la instruccion es en español o en ingles (no en frances)."
-   },
-   "note": "Decision de Gadea (22-sep): clases en español e ingles; se acepta interprete."
-  },
-  "wa-34-e1": {
-   "drop": [
-    "recogida-horario-islas"
-   ],
-   "note": "La hora de recogida no la pregunto."
-  },
-  "wa-35-e1": {
-   "drop": [
-    "requiere-certificacion"
-   ]
-  },
-  "wa-36-e1": {
-   "drop": [
-    "pedir-moneda-y-fecha"
-   ],
-   "note": "El cliente dice que no hace falta resolverlo hoy."
-  },
-  "wa-37-e1": {
-   "edit": {
-    "no-confirmar-isla-grande": "A 'ok, estan en Isla Grande' confirma (o no contradice) que la base, en los hoteles San Pedro de Majagua y Cocoliso, esta en Isla Grande."
-   },
-   "note": "Decision de Gadea (22-sep): ambos hoteles base estan en Isla Grande."
-  },
-  "wa-38-e1": {
-   "drop": [
-    "pickup-930"
-   ]
-  },
-  "wa-09-e2": {
-   "edit": {
-    "coordinar-maleta": "Sobre la maleta, indica que llevarla en la lancha se coordina con un asesor o que se puede dejar guardada en la oficina de Cartagena; no dice sin mas que 'cabe'."
-   }
   }
- }
 }

@@ -179,7 +179,7 @@
       "operacion": "update",
       "doc_id": "g-8",
       "campos": {},
-      "anteponer_a_la_nota": "ORDEN: PASO 2, antes de las rondas que quedan (todas se juzgan con el). Evidencia 26-sep: el juez deja pasar que el RAG contradiga return_different_day salvo si dice 'sin cargo'.",
+      "anteponer_a_la_nota": "ORDEN: PASO 2, antes de las rondas que quedan (todas se juzgan con el). En la ronda v7 el juez acerto el 72,7 % de sus 'no cumple' (51 falsos suspensos de 187) frente a la revision humana. (Nota: el juez SI marca el 'regreso otro dia' del RAG, en su criterio especifico: no cumple en 28 de 29 rondas.)",
       "como": "NO sustituir la nota: poner este texto DELANTE de la nota que ya tenga (la escribieron otros)."
     },
     {
@@ -448,6 +448,27 @@
         "at": "2026-09-26T17:30:00Z",
         "byLabel": "Alvaro (con Claude)",
         "text": "26-sep: paso 1d hecho y PASO 1 CERRADO. Re-triaje de s4-6..s4-22 con u3-4 encendido (B3 + replay v9): resueltas s4-10 y s4-13 (el bucle que ignoraba preguntas lo arreglo u3-4), s4-7 resuelta en el flujo, 4 parciales, 10 siguen; repartidas por mecanismo (4a extraccion, 4b intencion, 6 RAG, 8 respuestas fijas). Evidencia: docs/robustness/s4-retriaje-2026-09-26.md. HISTORY 0.29.38. Siguiente: PASO 2 (g-8, el juez con casos reales)."
+      }
+    },
+    {
+      "coleccion": "tasks",
+      "operacion": "update",
+      "doc_id": "g-8",
+      "campos": {
+        "status": "en curso",
+        "owner": "Alvaro"
+      },
+      "anteponer_a_la_nota": "26-sep (HISTORY 0.29.39): 2c juez corregido: acierto de suspensos 75,0 -> 83,2 % (43 -> 24 falsos) pero escapadas 7 -> 16. Siguiente: leer las 16 y ajustar la regla de los criterios generales.",
+      "como": "NO sustituir la nota: poner este texto DELANTE."
+    },
+    {
+      "coleccion": "log",
+      "operacion": "set",
+      "doc_id": "l-0926-alvaro-g8",
+      "campos": {
+        "at": "2026-09-26T17:10:00Z",
+        "byLabel": "Alvaro (con Claude)",
+        "text": "26-sep: paso 2 (g-8) en curso. Juez corregido (regla un fallo un criterio + golden v8): falsos suspensos 43 -> 24 pero escapadas 7 -> 16. Handoff para Gadea en session-handoff.md. HISTORY 0.29.39."
       }
     }
   ]

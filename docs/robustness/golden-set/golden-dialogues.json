@@ -1,5 +1,5 @@
 {
- "version": 7,
+ "version": 8,
  "status": "v7 (22-sep, Fase G/G1): añade los casos reales de los chats de WhatsApp del cliente, revisados por Claude + Gadea; validado por Gadea (2026-09-17); v6 añade 2 conversaciones reales de Gadea en el widget (21-sep); v5 aclara criterios de reparto, reserva y acompanante tras la calibracion; v2 calibrada tras la ronda 1; v3 separa los criterios mecanicos (auto, por codigo) de los que juzga el LLM; v4 con las decisiones de Gadea en la calibracion (telefono, refresher, datos del cliente); un fallo cuenta solo en el criterio que mejor lo describe",
  "about": "Golden-set de dialogos para el LLM-juez end-to-end (plan maestro, M0 m0-3/m0-4). Cada dialogo se lanza contra PRE y el juez comprueba la conversacion real contra los criterios globales y los suyos. Los turnos salen de docs/robustness/synthetic-runs/batches.json (source) salvo los casos nuevos (turns). Los hechos (precios, edades, politicas) NO se escriben aqui: el juez los recibe de los ficheros de referencia.",
  "judge": {
@@ -27,7 +27,7 @@
   },
   {
    "id": "sin-invenciones",
-   "check": "Ninguna edad, horario, política, descuento, servicio o dato de contacto contradice la referencia ni se inventa, y el bot no da por hechos datos del cliente que este no ha dicho (actividad, personas, certificación...). Los importes de dinero NO se juzgan aquí (se comprueban aparte)."
+   "check": "Ninguna edad, horario, política, descuento, servicio o dato de contacto contradice la referencia ni se inventa, y el bot no da por hechos datos del cliente que este no ha dicho (actividad, personas, certificación...). Repetir lo que dijo el cliente o deducirlo de forma evidente de sus palabras NO es inventar (p. ej., si pidió 'en pesos', la moneda es COP). Los importes de dinero y los enlaces de book.divingplanet.org (los oficiales) NO se juzgan aquí (se comprueban aparte), ni el saludo de marca de Coral."
   },
   {
    "id": "importes-catalogo",
@@ -595,10 +595,6 @@
     {
      "id": "regla",
      "check": "Aplica la política: toda persona nacida en Colombia cuenta como colombiana viva donde viva, así que paga en COP (mismo precio). Si pasa a un asesor sin resolverlo, no cumple."
-    },
-    {
-     "id": "no-asume",
-     "check": "No da por hecha una moneda sin explicar por qué; si no está claro, pregunta."
     }
    ],
    "cobertura": {
@@ -728,7 +724,7 @@
     },
     {
      "id": "reserva-cop",
-     "check": "La reserva final es buceo certificado, 1 persona, desde Cartagena y en COP por ser colombiano."
+     "check": "Si la conversación llega a la reserva final, es buceo certificado, 1 persona, desde Cartagena y en COP por ser colombiano. Si no llega a la reserva final, no aplica (g-8: la conversación del golden termina antes)."
     }
    ],
    "cobertura": {
@@ -1502,13 +1498,14 @@
     },
     {
      "id": "disponibilidad-semana-santa",
-     "check": "Confirma que operan todos los días del año (incluye Semana Santa) y que hay disponibilidad salvo cierres por clima."
+     "check": "Confirma que operan en Semana Santa y que hay disponibilidad para esas fechas (o que se elige en el calendario del enlace de reserva). No hace falta mencionar el clima."
     },
     {
      "id": "alojamiento-no-incluido-directo",
      "check": "Aclara que el alojamiento no está incluido, se reserva directamente con el hotel, y puede sugerir San Pedro de Majagua y Cocoliso como opciones en las islas."
     }
    ],
+   "review_note": "g-8 (26-sep): reescrito 'disponibilidad-semana-santa' (criterio demasiado estricto: exigia mencionar el clima).",
    "source": {
     "kind": "whatsapp",
     "episode": "wa-02-e1"
@@ -1618,7 +1615,7 @@
    "criteria": [
     {
      "id": "origen-antes-de-cotizar",
-     "check": "Da el precio del catálogo para snorkeling según salgan desde Cartagena o si ya están en las islas; si el cliente no lo dijo, primero pregunta desde dónde salen antes de cotizar o detallar inclusiones."
+     "check": "Da el precio del catálogo para snorkeling según salgan desde Cartagena o si ya están en las islas; si el cliente no lo dijo, pregunta desde dónde salen o da ambos precios rotulados. Contestar qué incluye no exige saber el origen."
     },
     {
      "id": "sin-descuento-por-residente",
@@ -1629,7 +1626,7 @@
      "check": "Ante 'dame la cuenta y transfiero' no da datos de cuentas bancarias: dirige al pago online (enlace de reserva) o, si le falta un dato para ello, lo pregunta; tambien vale pasar a una persona."
     }
    ],
-   "review_note": "Como comprobacion por codigo exigia el link en el ultimo turno aunque el bot aun necesite un dato.",
+   "review_note": "Como comprobacion por codigo exigia el link en el ultimo turno aunque el bot aun necesite un dato. | g-8 (26-sep): reescrito 'origen-antes-de-cotizar' (criterio demasiado estricto: contestar 'que incluye' es correcto).",
    "source": {
     "kind": "whatsapp",
     "episode": "wa-02-e4"
@@ -1768,12 +1765,9 @@
     {
      "id": "no-descuento-transferencia",
      "check": "Aclara que no existe descuento por transferencia bancaria; el descuento aplicable es el online reservando por la web (ROVERD)."
-    },
-    {
-     "id": "cutoff-pago-dia-anterior",
-     "check": "Responde que no se paga el mismo día: el sistema de reservas cierra a las 4:30 PM del día anterior."
     }
    ],
+   "review_note": "g-8 (26-sep): quitado 'cutoff-pago-dia-anterior' (criterio sobre-especifico: la respuesta de pago es correcta).",
    "source": {
     "kind": "whatsapp",
     "episode": "wa-04-e1"
@@ -1841,12 +1835,9 @@
     {
      "id": "precio-total-cop-grupo-mixto",
      "check": "Entrega el total en COP con el precio del catálogo para 1 buzo certificado (2 inmersiones) y 2 participantes de minicurso, saliendo desde Cartagena; si no está claro desde dónde salen, lo pregunta antes de cotizar."
-    },
-    {
-     "id": "moneda-colombianos-o-residentes",
-     "check": "Cotiza en COP por indicar que vive en Colombia; si hiciera falta, confirma si son colombianos o residentes con cédula para aplicar COP, sin inventar descuentos especiales por nacionalidad."
     }
    ],
+   "review_note": "g-8 (26-sep): quitado 'moneda-colombianos-o-residentes' (un fallo, un criterio: cuenta en precio-total).",
    "source": {
     "kind": "whatsapp",
     "episode": "wa-04-e3"
@@ -2164,9 +2155,10 @@
     },
     {
      "id": "regreso-otro-dia-escalar",
-     "check": "Explica que volver a Cartagena en una fecha distinta no está incluido y ofrece pasar con un asesor para coordinarlo."
+     "check": "Ante '¿nos pueden dejar en la isla tras bucear el 14?' (alargar la estancia en las islas), no promete condiciones que la referencia no respalde; si no está claro, ofrece pasar con un asesor para coordinarlo."
     }
    ],
+   "review_note": "g-8 (26-sep): reescrito 'regreso-otro-dia-escalar' (criterio ambiguo: la clienta queria que la dejaran en la isla, no volver a Cartagena otro dia).",
    "source": {
     "kind": "whatsapp",
     "episode": "wa-07-e2"
@@ -2237,13 +2229,14 @@
     },
     {
      "id": "precio-islas-2-buzos-usd",
-     "check": "Da el precio del catálogo para 2 buzos certificados desde las islas, en USD por ser extranjeros (o pregunta el dato que falte si no puede asumirlo)."
+     "check": "Da el precio del catálogo desde las islas en USD por ser extranjeros, por persona o el total para los 2 (o pregunta el dato que falte si no puede asumirlo)."
     },
     {
      "id": "diferente-precio-cartagena-vs-islas",
      "check": "Aclara que el precio saliendo desde Cartagena es distinto al de quienes ya están en las islas (planes manejan precios diferentes)."
     }
    ],
+   "review_note": "g-8 (26-sep): reescrito 'precio-islas-2-buzos-usd' (dar el precio por persona desde islas es correcto).",
    "source": {
     "kind": "whatsapp",
     "episode": "wa-08-e1"
@@ -2402,12 +2395,9 @@
     {
      "id": "politica-equipaje",
      "check": "Explica que en la lancha se permite una mochila o bolso por persona."
-    },
-    {
-     "id": "coordinar-maleta",
-     "check": "Sobre la maleta, indica que llevarla en la lancha se coordina con un asesor o que se puede dejar guardada en la oficina de Cartagena; no dice sin mas que 'cabe'."
     }
    ],
+   "review_note": "g-8 (26-sep): quitado 'coordinar-maleta' (un fallo, un criterio).",
    "source": {
     "kind": "whatsapp",
     "episode": "wa-09-e2"
@@ -2873,14 +2863,11 @@
      "check": "Ante 'booking just for one night will be enough, right?', confirma que los cursos de 2 días requieren alojarse en las islas y que, como mínimo, una noche es necesaria."
     },
     {
-     "id": "fotos-no-incluidas-sin-fotografo",
-     "check": "A '¿habra un fotografo?' responde que no hay fotografo incluido; el instructor puede hacer fotos de forma voluntaria."
-    },
-    {
      "id": "hora-fin-dia1",
      "check": "Responde que el primer día suele terminar alrededor de las 4:30 p. m., para que el cliente sepa si tendrá tiempo de disfrutar el hotel."
     }
    ],
+   "review_note": "g-8 (26-sep): quitado 'fotos-no-incluidas-sin-fotografo' (un fallo, un criterio).",
    "source": {
     "kind": "whatsapp",
     "episode": "wa-14-e1"
@@ -3345,12 +3332,9 @@
     {
      "id": "moneda-por-nacionalidad",
      "check": "Aclara que colombianos y residentes pagan en COP y clientes internacionales en USD; si el cliente no dijo su nacionalidad, preguntar para indicarle la moneda correcta."
-    },
-    {
-     "id": "origen-para-cotizar",
-     "check": "Dado que pide principiante y snorkeling, pregunta si saldrá desde Cartagena o si ya está en las islas para poder orientar/cotizar correctamente."
     }
    ],
+   "review_note": "g-8 (26-sep): quitado 'origen-para-cotizar' (un fallo, un criterio).",
    "source": {
     "kind": "whatsapp",
     "episode": "wa-22-e1"
@@ -3483,12 +3467,9 @@
     {
      "id": "lugar-y-hora",
      "check": "Indica el punto de encuentro y hora correctos: Muelle de la Bodeguita a las 8:00 a. m."
-    },
-    {
-     "id": "precio-moneda-datos",
-     "check": "Para dar el precio, usa el plan del catálogo (minicurso o 2 inmersiones certificado) y la moneda correcta según nacionalidad; si no dijo nacionalidad ni si sale desde Cartagena o islas, preguntar esos datos."
     }
    ],
+   "review_note": "g-8 (26-sep): quitado 'precio-moneda-datos' (un fallo, un criterio).",
    "source": {
     "kind": "whatsapp",
     "episode": "wa-25-e1"
@@ -3884,12 +3865,9 @@
     {
      "id": "origen-cartagena-o-islas",
      "check": "Da el precio correcto según si sale desde Cartagena o ya está en las Islas del Rosario; si el cliente no lo dijo, el bot debe preguntarlo antes de cotizar."
-    },
-    {
-     "id": "moneda-segun-nacionalidad",
-     "check": "Pregunta si es colombiano/residente o extranjero para cotizar en la moneda correcta (COP o USD), aclarando que el precio es el mismo y cambia solo la moneda."
     }
    ],
+   "review_note": "g-8 (26-sep): quitado 'moneda-segun-nacionalidad' (un fallo, un criterio).",
    "source": {
     "kind": "whatsapp",
     "episode": "wa-35-e1"
@@ -3959,14 +3937,14 @@
     },
     {
      "id": "recogida-hoteles-islas",
-     "check": "Ante '¿me recogen si me quedo en otro?', confirma que si ya está en las Islas del Rosario y el hotel tiene acceso marítimo, coordinan la recogida y regreso; la recogida está incluida sin cargo adicional."
+     "check": "Ante '¿me recogen si me quedo en otro?', confirma que desde otro hotel de las Islas del Rosario con acceso marítimo también coordinan la recogida y el regreso, sin decir que tenga coste extra."
     },
     {
      "id": "no-confirmar-isla-grande",
      "check": "A 'ok, estan en Isla Grande' confirma (o no contradice) que la base, en los hoteles San Pedro de Majagua y Cocoliso, esta en Isla Grande."
     }
    ],
-   "review_note": "Decision de Gadea (22-sep): ambos hoteles base estan en Isla Grande.",
+   "review_note": "Decision de Gadea (22-sep): ambos hoteles base estan en Isla Grande. | g-8 (26-sep): reescrito 'recogida-hoteles-islas' (criterio estricto: no hace falta decir literalmente 'sin cargo adicional').",
    "source": {
     "kind": "whatsapp",
     "episode": "wa-37-e1"
@@ -3999,9 +3977,10 @@
     },
     {
      "id": "hotel-acceso",
-     "check": "Pide o confirma el nombre del hotel y si tiene acceso marítimo para coordinar la recogida en lancha."
+     "check": "Pide o confirma el hotel donde se aloja para coordinar la recogida en lancha (preguntar por el acceso marítimo es opcional)."
     }
    ],
+   "review_note": "g-8 (26-sep): reescrito 'hotel-acceso' (criterio estricto: basta con pedir el hotel para coordinar la recogida).",
    "source": {
     "kind": "whatsapp",
     "episode": "wa-38-e1"

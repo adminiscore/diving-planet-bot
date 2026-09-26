@@ -280,7 +280,10 @@ few-shot (`_select_fewshot_examples`), así que tal cual inflarían la nota.
 > 24-sep). Caso nuevo y sistemático para l1-7: a "¿me podéis devolver a Cartagena otro día?" el RAG contesta
 > "we can definitely provide the transfer back" en casi todas las rondas desde el 22-sep, con el flag de
 > u3-4 encendido o apagado, cuando la política `return_different_day` dice que NO está incluido y lo
-> coordina un asesor. El juez solo lo marca cuando además dice "sin cargo": el error queda medio oculto.
+> coordina un asesor. El juez SÍ lo marca, en su criterio específico `regreso-otro-dia-escalar` (no cumple
+> en 28 de 29 rondas; la única que cumple, el bot lo dijo bien). *(Corregido 26-sep: se había escrito que el
+> juez lo tapaba, mirando solo el criterio general `sin-invenciones`, que por "un fallo, un criterio" no
+> debe contarlo dos veces.)*
 
 ### Fase L2 — Right-sizing de modelos + caching · *latencia + coste, con eval*
 > **Estado (26-sep):** l2-4 (Jev) **hecha**: se evaluó y se usa en el router y en u3-4/u3-5. **l2-1 queda
@@ -385,7 +388,7 @@ few-shot (`_select_fewshot_examples`), así que tal cual inflarían la nota.
 | Hallazgo 25-sep | CI rojo se salta el deploy sin avisar | R6 (r6-3), paso 1 |
 | Hallazgo 25-sep | Dependencias sin techo (SQLAlchemy 2.1 rompió CI) | R6 (r6-4), paso 1 |
 | Hallazgo 26-sep | El RAG contradice `return_different_day` en casi todas las rondas | L1 (l1-7), paso 6 |
-| Hallazgo 26-sep | El juez tapa contradicciones de política | G (g-8), paso 2 |
+| Hallazgo 26-sep (corregido) | ~~El juez tapa contradicciones de política~~: NO, las marca en el criterio específico | — |
 | Hallazgo 26-sep | El filtro de contradicciones de Jev podría tragarse una corrección real | U3 (u3-5), paso 1c |
 | Owner 26-sep | Ejecución secuencial; lo pendiente antes de avanzar | PARTE 8 |
 
@@ -437,7 +440,7 @@ medias (u3-1 ✅, u3-4 ✅ promocionada, u3-5 🟡); PRE con u3-4 encendido. Sui
 |---|---|---|---|
 | **0** | Aterrizar: plan, handoff, HISTORY y página al día con lo nuevo | — | ✅ 26-sep (esta PARTE) · falta aplicar la cola de Plan Coral y re-exportar la copia `plan-coral.json` (del 23-sep) |
 | **1** | Cabos sueltos técnicos (riesgos vivos, antes de tocar conducta) | r6-4 · r6-3 · control de correcciones · re-triaje s4-6…s4-22 | ✅ **cerrado 26-sep** (1a-1d abajo) |
-| **2** | Afinar el instrumento: el juez | g-8 | criterios de los casos reales revisados, juez recalibrado con ellos y que detecta contradicciones de política |
+| **2** | Afinar el instrumento: el juez | g-8 | criterios de los casos reales revisados y juez recalibrado con ellos: menos falsos suspensos, medido contra los veredictos humanos |
 | **3** | Línea base nueva con u3-4 encendido | ronda A core, juzgada con el juez del paso 2 | ronda A de referencia para todos los A/B de U3 |
 | **4** | Terminar U3, en orden | 4a u3-5 (+ s4-8, s4-9, s4-11, s4-22 personas) · 4b u3-6 (+ s4-6, s4-18, s4-19, s4-20) · 4c u3-7 · 4d u3-3 | cada una: escalón 0 → ronda B frente a la A del paso 3 → 0 regresiones propias, leídas por caso |
 | **5** | Cierre de U3 | u3-2 (redefinida) | ronda COMPLETA del golden (116 diálogos + examen oculto): examen oculto ≥ 78,3 % (cierre de L1) y sin regresiones propias |
@@ -468,9 +471,10 @@ medias (u3-1 ✅, u3-4 ✅ promocionada, u3-5 🟡); PRE con u3-4 encendido. Sui
   s4-11, s4-22 (personas) · 4b s4-6, s4-18, s4-19, s4-20 · 6 s4-7 (texto), s4-11 (horas), s4-12, s4-17,
   s4-22 (contenido) · 8 s4-14, s4-15, s4-16, s4-21. s4-19 y s4-20 cambian de paso (del 6 y el 8 al 4b):
   la causa es la intención mal detectada, no el texto.
-- **2 · g-8.** Hoy el juez acierta el 75 % de sus "no cumple" en casos reales (91,5 % en la calibración
-  sintética) y deja pasar contradicciones de política (el "regreso otro día" solo lo marca si dice "sin
-  cargo"). Va ANTES de las rondas que quedan porque todas se juzgan con él.
+- **2 · g-8. 🟡 EN CURSO (26-sep, HISTORY 0.29.39): 2a y 2b hechos; el 2c baja los falsos suspensos (75,0 → 83,2 %) pero sube lo que se escapa (7 → 16): hay que leer esas 16 y ajustar antes de cerrar.** En la ronda v7 el juez acertó el 72,7 % de sus "no cumple" (91,5 % en la calibración
+  sintética): 51 falsos suspensos de 187, por criterios demasiado estrictos, contar dos veces un fallo o
+  datos que no ve en su referencia. Va ANTES de las rondas que quedan porque todas se juzgan con él.
+  *(Corregido 26-sep: NO deja pasar el "regreso otro día"; lo marca en su criterio específico.)*
 - **4a · u3-5:** "cursos de buceo… primera vez" → minicurso supuesto (regla del owner: recomendar, no
   asumir) y "Vamos en família a Cartagena" → no colombiano (portugués); más s4-8/9/10/11 si el re-triaje los
   deja aquí. Y del 1c: la regla de actividad da 0,36-0,46 a "mejor snorkel", así que en un turno con
