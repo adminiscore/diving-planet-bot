@@ -2062,6 +2062,15 @@ async def _understand(state: ConversationState, message: str, *, answered_pendin
         and not _skips_gaps_as_question(message)
         and not _is_greeting_only(message)
     )
+    # u3-4 paso 3 (26-sep): relleno CON PUERTA en el turno con pregunta. Sin rellenar se perdían
+    # datos que el cliente sí dice y el regex no lee ("costo de un fundive", "completé el curso
+    # básico el 3 de abril"; 4 de las 12 pérdidas de v5 y una regresión de la ronda B2). Se
+    # rellenan SOLO los huecos que Jev dice que el cliente afirma en este mensaje, y SIN
+    # historial: Jev solo ve el mensaje, así que su "sí" solo avala valores de este mensaje.
+    _gated_gaps = []
+    if question_turn_fields is not None and not _is_greeting_only(message):
+        _afirma = getattr(state, "_answer_affirms", None) or {}
+        _gated_gaps = [f for f in gaps if _afirma.get(f) is True]
     # Campos ya sabidos que el mensaje podria corregir con palabras que el regex no lee
     # ("ah no, somos gringos", "cambio de plan, estamos en barú") (tarea 7b, 2026-09-15).
     # Viajan en la peticion del turno (como campos a rellenar si hay huecos, hallazgo J; si
@@ -2154,7 +2163,12 @@ async def _understand(state: ConversationState, message: str, *, answered_pendin
     # `_wants_gaps` es la MISMA condición que decidía arriba si la petición fusionada
     # pedía huecos; estaba escrita dos veces y con u3-4 (arreglo 2) divergían: el turno
     # con pregunta dejaba de pedir huecos arriba y los pedía igualmente aquí.
-    if _wants_gaps:
+    if _wants_gaps or _gated_gaps:
+        # Turno normal: los huecos de siempre, con historial. Turno con pregunta (u3-4 paso 3):
+        # solo los huecos con el "sí" de Jev, y sin historial (ver `_gated_gaps` arriba).
+        if not _wants_gaps:
+            gaps = _gated_gaps
+        _fill_history = state.history if _wants_gaps else None
         # Si hubo peticion fusionada arriba, su patch se usa tal cual y NO se
         # repite la llamada. Ojo: cuando la API falla, `extract_and_verify`
         # devuelve `({}, {})` (no None), asi que el turno sigue con solo el regex
@@ -2165,7 +2179,7 @@ async def _understand(state: ConversationState, message: str, *, answered_pendin
         patch = (
             _combined_patch if _combined_patch is not None
             else await fill_gaps(
-                message, intent, history=state.history, lang=state.language, only_fields=gaps,
+                message, intent, history=_fill_history, lang=state.language, only_fields=gaps,
                 extra_fields=extra_fields,
             )
         )
@@ -2197,7 +2211,7 @@ async def _understand(state: ConversationState, message: str, *, answered_pendin
             and not course_level_is_ambiguous(message)
         ):
             group_patch = await fill_gaps(
-                message, intent, history=state.history, lang=state.language, only_fields=group_gaps
+                message, intent, history=_fill_history, lang=state.language, only_fields=group_gaps
             )
             patch = {**patch, **{f: v for f, v in group_patch.items() if f in group_gaps}}
         # Verificado en vivo (2026-07-23): con el historial REAL de la

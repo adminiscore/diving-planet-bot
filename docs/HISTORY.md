@@ -1,6 +1,10 @@
 History
 =======
 
+0.29.31 - (2026-09-26)
+----------------------
+* **u3-4 · paso 3: relleno con puerta en el turno con pregunta** (Gadea). Antes, en un turno con pregunta no se rellenaba nada y se perdían datos que el cliente sí dice y el regex no lee ("costo de un fundive", "completé el curso básico el 3 de abril"). Ahora se rellenan solo los huecos con el "sí" de Jev (`affirms_*`), y sin historial (Jev solo ve el mensaje). Detrás de `ANSWER_AND_CONTINUE` (apagado). 3 tests nuevos; suite 2673 passed.
+
 0.29.30 - (2026-09-26)
 ----------------------
 * **u3-4 / u3-5 · paso 2: las preguntas de u3-5 en el código** (Gadea, sobre la calibración de Álvaro). `affirms_certification`, `affirms_group` y `affirms_nationality` en la misma llamada de Jev (coste 0; +9 ms de p50), detrás de `ANSWER_AND_CONTINUE`. En un turno con pregunta tiran el dato del regex que el cliente solo nombra dentro de la pregunta ("¿precio para colombianos?") y, en `_route_contradictions`, evitan el "¿lo cambio?" fantasma de la ronda B2 ("listo, como pago" → "¿lo cambio a sin certificación?"): si Jev dice que el mensaje no afirma ese campo, se queda lo guardado. Banco `u35` 66/67 leyendo ya del código; 6 tests nuevos (con controles).

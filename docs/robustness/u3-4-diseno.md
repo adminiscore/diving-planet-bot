@@ -517,8 +517,12 @@ puerta de Jev hace en PRE lo que prometía el escalón 0.
      afirma nada de ese campo, no se propone el cambio y se queda lo guardado ("listo, como pago": 0,03).
      Fuera del turno con pregunta, o sin la señal, conducta de siempre (con test de control).
    - Coste: 0 peticiones; la llamada de Jev pasa de p50 278 a 287 ms (+4 preguntas).
-3. **Relleno con puerta** en el turno con pregunta, solo para campos con pregunta de Jev y solo con
-   datos del mensaje actual (Jev no ve el historial). Recupera "fundive" y "completé el curso básico".
+3. ✅ **HECHO (26-sep, Gadea) — relleno con puerta** en el turno con pregunta: se rellenan SOLO los
+   huecos que Jev dice que el cliente afirma en este mensaje (`affirms_* = True`), y **sin historial**
+   (Jev solo ve el mensaje, así que su "sí" solo avala valores de este mensaje). Sin señal o con el "no"
+   de Jev, no se rellena (lo de antes). Reutiliza el bloque de relleno de siempre (evidencia, reparto,
+   comprobación de cifras). Objetivo: "costo de un fundive" y "completé el curso básico". 3 tests (con
+   control: el "sí" de un campo no abre la puerta a los demás).
 4. Escalón 0 (replay local) → ronda B3 frente a la misma A del 24-sep. Leer por caso, como aquí.
 
 Aparte, y con más peso cuando u3-4 se encienda: l1-6/l1-7 (el RAG que no sabe o inventa) y s4-7 ("¿cómo

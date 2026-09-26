@@ -721,3 +721,72 @@ async def test_la_puerta_tira_nacionalidad_y_grupo_nombrados_dentro_de_la_pregun
     assert intent.is_colombian is None
     assert intent.group_size is None
     assert "is_colombian" not in intent.detected_fields
+
+
+# ---------------------------------------------------------------------------
+# u3-4 paso 3 (26-sep): relleno CON PUERTA en el turno con pregunta. Solo los
+# huecos que Jev dice que el cliente afirma, y solo con el mensaje actual.
+# ---------------------------------------------------------------------------
+
+
+@pytest.fixture
+def relleno(monkeypatch):
+    """Registra cada petición de relleno (campos e historial) y contesta lo que se le diga."""
+    calls, box = [], {"patch": {}}
+
+    async def _fill(message, *_a, only_fields=None, history=None, **_k):
+        calls.append({"fields": list(only_fields or []), "history": history})
+        return {f: v for f, v in box["patch"].items() if f in (only_fields or [])}
+
+    async def _combined(fields, veto_fields, message, *_a, **_k):
+        calls.append({"fields": list(fields), "history": "combinada"})
+        return {}, {}
+
+    monkeypatch.setattr(core, "fill_gaps", _fill)
+    monkeypatch.setattr(core, "extract_and_verify", _combined)
+    return calls, box
+
+
+async def test_con_el_si_de_jev_se_rellena_solo_ese_campo_y_sin_historial(
+    monkeypatch, signals, rag, verificador, relleno
+):
+    """"costo de un fundive": el regex no lo lee y en un turno con pregunta no se rellenaba."""
+    monkeypatch.setattr(settings, "answer_and_continue", True)
+    calls, box = relleno
+    st = _state()
+    await route_message(st, "hola")
+    calls.clear()
+    box["patch"] = {"activity": "certified_diving"}
+    signals["value"] = {"asks_question": True, "affirms_activity": True}
+    await route_message(st, "quería averiguar por el costo de un fundive para este finde")
+    assert calls, "tenía que pedir el relleno"
+    assert all(c["fields"] == ["activity"] for c in calls), calls
+    assert all(c["history"] is None for c in calls), "solo el mensaje actual: Jev no ve el historial"
+    assert st.detected_activity == "certified_diving"
+
+
+async def test_con_el_no_de_jev_no_se_rellena(monkeypatch, signals, rag, verificador, relleno):
+    monkeypatch.setattr(settings, "answer_and_continue", True)
+    calls, box = relleno
+    st = _state()
+    await route_message(st, "hola")
+    calls.clear()
+    box["patch"] = {"activity": "padi_open_water"}
+    signals["value"] = {"asks_question": True, "affirms_activity": False}
+    await route_message(st, "in case I decided to do the Open Water course, is transport included?")
+    assert calls == []
+    assert st.detected_activity is None
+
+
+async def test_el_si_de_un_campo_no_abre_la_puerta_a_los_demas(monkeypatch, signals, rag, verificador, relleno):
+    """Control: con el "sí" solo para la actividad, grupo y nacionalidad no viajan al relleno."""
+    monkeypatch.setattr(settings, "answer_and_continue", True)
+    calls, box = relleno
+    st = _state()
+    await route_message(st, "hola")
+    calls.clear()
+    box["patch"] = {"activity": "certified_diving", "group_size": 2, "is_colombian": True}
+    signals["value"] = {"asks_question": True, "affirms_activity": True}
+    await route_message(st, "cuánto cuesta un fundive para colombianos, para 2?")
+    assert calls and all(c["fields"] == ["activity"] for c in calls), calls
+    assert st.detected_group_size is None
