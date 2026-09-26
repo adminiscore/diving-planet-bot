@@ -449,7 +449,7 @@ medias (u3-1 ✅, u3-4 ✅ promocionada, u3-5 🟡); PRE con u3-4 encendido. Sui
 
 **Detalle de cada paso:**
 
-- **1a · r6-4 dependencias acotadas.** Techo de versión mayor en `pyproject.toml` para las que van sin él
+- **1a · r6-4 dependencias acotadas. ✅ HECHO 26-sep (HISTORY 0.29.35).** Techo de versión mayor en `pyproject.toml` para las que van sin él
   (fastapi, pydantic, pydantic-settings, asyncpg, alembic, pgvector, redis, httpx…), comprobando cada techo
   contra `requirements-lock.txt`. Hecho cuando un entorno limpio (como CI) instala y pasa lint, migraciones
   y tests, igual que se verificó el arreglo de SQLAlchemy (HISTORY 0.29.27).

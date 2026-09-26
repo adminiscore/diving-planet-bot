@@ -7,6 +7,14 @@ requires-python = ">=3.11"
 license = { text = "MIT" }
 
 dependencies = [
+    # r6-4 (2026-09-26): TODAS las dependencias llevan techo. Sin techo, CI y el build de PRE
+    # instalan la ultima version publicada ese dia: asi entro SQLAlchemy 2.1 el 24-sep y CI estuvo
+    # roto un dia entero sin que el deploy avisara (HISTORY 0.29.27). Criterio: el techo es la
+    # siguiente version que puede romper sobre la que corre PRE (verificada): la siguiente MAYOR en
+    # las 1.x o superiores, la siguiente MENOR en las 0.x (ahi rompen las menores), la siguiente
+    # anual en structlog (CalVer). tzdata va sin techo a proposito: son datos de zonas horarias.
+    # Subir un techo es un cambio aparte, con su prueba. Las que el codigo importa directamente se
+    # declaran aqui aunque lleguen de rebote (openai, langchain-core, opentelemetry-api, pyyaml).
     # --- Core LLM & Agents ---
     # Fijadas (Fase 0.5, docs/multi-agent-refactor-plan.md, principio #11:
     # "Reproducibilidad... versiones de LangGraph/LangChain pineadas, no
@@ -17,13 +25,17 @@ dependencies = [
     "langchain==1.3.14",
     "langchain-openai==1.4.1",
     "langchain-community==0.4.2",
+    # Importada directamente por src/ (la familia LangChain va fijada exacta, como el resto).
+    "langchain-core==1.6.5",
+    # El bot la importa directamente en todos los agentes; langchain-openai ya exige <3.
+    "openai>=2.45.0,<3",
 
     # --- API ---
-    "fastapi>=0.115.0",
-    "uvicorn[standard]>=0.34.0",
-    "httpx>=0.28.0",
-    "pydantic>=2.10.0",
-    "pydantic-settings>=2.7.0",
+    "fastapi>=0.115.0,<0.142",
+    "uvicorn[standard]>=0.34.0,<0.55",
+    "httpx>=0.28.0,<0.29",
+    "pydantic>=2.10.0,<3",
+    "pydantic-settings>=2.7.0,<3",
 
     # --- Database ---
     # Techo <2.1 y extra [asyncio] (2026-09-25): SQLAlchemy 2.1.0 salio el 24-sep a las
@@ -33,14 +45,14 @@ dependencies = [
     # techo, el siguiente build de PRE habria metido una version MAYOR sin probar.
     # Subir a 2.1 es un cambio aparte, con su propia prueba.
     "sqlalchemy[asyncio]>=2.0.0,<2.1",
-    "asyncpg>=0.30.0",
-    "alembic>=1.14.0",
+    "asyncpg>=0.30.0,<0.32",
+    "alembic>=1.14.0,<2",
 
     # --- Vector Store / Embeddings ---
-    "pgvector>=0.3.0",
+    "pgvector>=0.3.0,<0.6",
 
     # --- Cache ---
-    "redis>=5.0.0",
+    "redis>=5.0.0,<9",
 
     # --- Observability ---
     # Langfuse: observabilidad activa (sustituye a LangSmith, cuota agotada;
@@ -49,14 +61,16 @@ dependencies = [
     # `src/observability.py` lo importa perezosamente y SOLO con claves (= PRE,
     # que corre Python 3.11). Dev local (3.14) sin claves nunca lo toca.
     "langfuse==3.15.0",
+    # src/observability.py la importa directamente; langfuse ya exige <2.
+    "opentelemetry-api>=1.33.1,<2",
     # langsmith NO se puede retirar (s4-5, 2026-09-25): langchain-core la exige.
     # Se queda pineada para que el build de PRE sea reproducible. El bot no la usa
     # y no traza a LangSmith: ningun .env la activa y scripts/__init__.py la apaga.
     "langsmith==0.10.10",
 
     # --- Utilities ---
-    "python-dotenv>=1.0.0",
-    "structlog>=24.0.0",
+    "python-dotenv>=1.0.0,<2",
+    "structlog>=24.0.0,<27",
     # zoneinfo needs the IANA tz database; on Windows the OS provides none, so
     # America/Bogota resolution fails without this. Harmless on Linux/Docker.
     "tzdata>=2024.1",
@@ -64,11 +78,13 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = [
-    "pytest>=8.0.0",
-    "pytest-asyncio>=0.25.0",
-    "pytest-cov>=6.0.0",
-    "ruff>=0.9.0",
-    "mypy>=1.14.0",
+    "pytest>=8.0.0,<10",
+    "pytest-asyncio>=0.25.0,<2",
+    "pytest-cov>=6.0.0,<8",
+    "ruff>=0.9.0,<0.17",
+    "mypy>=1.14.0,<3",
+    # Lo usan los tests (tests/test_models_pinned.py) y solo llegaba de rebote por langchain-core.
+    "pyyaml>=6,<7",
 ]
 
 [tool.ruff]

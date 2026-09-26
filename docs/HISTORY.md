@@ -1,6 +1,12 @@
 History
 =======
 
+0.29.35 - (2026-09-26)
+----------------------
+* **Plan secuencial, paso 1a (r6-4): todas las dependencias llevan techo de versión.** Hasta hoy casi todas iban con `>=` sin techo, así que CI y el build de PRE instalaban lo último publicado ese día: así entró SQLAlchemy 2.1 y rompió CI (0.29.27). Criterio, sobre lo que corre PRE: la siguiente versión MAYOR en las 1.x o superiores (`pydantic<3`, `redis<9`…), la siguiente MENOR en las 0.x, que es donde rompen (`fastapi<0.142`, `httpx<0.29`, `ruff<0.17`…), y la siguiente anual en `structlog` (CalVer). `tzdata` sin techo a propósito (son datos de zonas horarias). Subir un techo es un cambio aparte, con su prueba.
+* **4 librerías que el código importa directamente y no estaban declaradas** (llegaban de rebote): `openai` (todos los agentes), `langchain-core`, `opentelemetry-api` (observabilidad) y `pyyaml` (un test). Ya están declaradas; `langchain-core` fijada exacta como el resto de la familia LangChain. Y `redis` ya iba por la 8 sin que nadie lo hubiera decidido (ahora `<9`).
+* **Verificado como CI, en un entorno limpio** (Python 3.12, `pip install -e ".[dev]"`): 86 de los 88 paquetes de PRE salen con la misma versión (las 2 diferencias: `uvloop` no existe en Windows y `numpy` 2.4.6 → 2.5.3, que llega de rebote con sus propios límites); ruff, compileall y `alembic upgrade head` limpios; **suite 2677 passed / 18 skipped**.
+
 0.29.34 - (2026-09-26)
 ----------------------
 * **Plan secuencial (decisión del owner): lo pendiente se cierra antes de avanzar, sin trabajo en paralelo.** Nueva **PARTE 8** en `docs/plan-maestro-final.md` con 11 pasos en orden y el criterio de "hecho" de cada uno: 0 aterrizar → 1 cabos sueltos técnicos → 2 juez con casos reales (g-8) → 3 ronda A nueva → 4 terminar U3 (u3-5, u3-6, u3-7, u3-3) → 5 cierre de U3 con la ronda completa y el examen oculto → 6 RAG (l1-6/l1-7) → 7 L2 → 8 S4 → 9 R6 → 10 Q5.

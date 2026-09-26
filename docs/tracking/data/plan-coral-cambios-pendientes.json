@@ -114,10 +114,10 @@
       "campos": {
         "id": "r6-4",
         "phase": "R6",
-        "status": "pendiente",
+        "status": "hecha",
         "owner": "Alvaro",
         "title": "R6-4 · Dependencias con techo de version (SQLAlchemy 2.1 rompio CI)",
-        "note": "CI y Docker instalan con pip install -e . y casi todas las dependencias van con >= sin techo. Techo de version mayor comprobado contra requirements-lock.txt y verificado en un entorno limpio como CI. ORDEN: PASO 1a."
+        "note": "HECHA 26-sep (HISTORY 0.29.35): todas las dependencias con techo sobre lo que corre PRE (siguiente mayor en 1.x+, siguiente menor en 0.x, anual en structlog; tzdata sin techo a proposito) y declaradas las 4 que el codigo importaba de rebote (openai, langchain-core, opentelemetry-api, pyyaml). Verificado en entorno limpio como CI: 86/88 paquetes con la misma version que PRE, suite 2677 passed."
       }
     },
     {
@@ -246,6 +246,16 @@
         "at": "2026-09-26T16:00:00Z",
         "byLabel": "Alvaro (con Claude)",
         "text": "26-sep: PLAN SECUENCIAL (decision del owner): todo en secuencia, lo pendiente se cierra antes de avanzar, sin trabajo en paralelo. Orden (docs/plan-maestro-final.md, PARTE 8): 0 aterrizar (hecho) -> 1 cabos sueltos: r6-4 dependencias con techo, r6-3 comprobar cada deploy, control de correcciones en el banco, re-triaje s4-6..s4-22 contra la B3 -> 2 g-8 juez con casos reales -> 3 ronda A nueva con u3-4 encendido -> 4 terminar U3: u3-5, u3-6, u3-7, u3-3 -> 5 cierre de U3: ronda completa + examen oculto (u3-2 redefinida) -> 6 RAG l1-6/l1-7 -> 7 L2 l2-2/l2-3 -> 8 S4 -> 9 R6 -> 10 Q5. Verificado antes el trabajo de Gadea del 26-sep (suite 2677, CI verde, PRE ok, numeros de la B3)."
+      }
+    },
+    {
+      "coleccion": "log",
+      "operacion": "set",
+      "doc_id": "l-0926-alvaro-paso1a",
+      "campos": {
+        "at": "2026-09-26T14:30:00Z",
+        "byLabel": "Alvaro (con Claude)",
+        "text": "26-sep: paso 1a hecho (r6-4). Todas las dependencias con techo; declaradas openai, langchain-core, opentelemetry-api y pyyaml. Suite 2677 passed en entorno limpio. HISTORY 0.29.35."
       }
     }
   ]
