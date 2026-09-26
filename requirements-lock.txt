@@ -1,104 +1,117 @@
-# Lockfile de reproducibilidad (Fase 0.5, docs/multi-agent-refactor-plan.md,
-# principio #11). Snapshot completo del entorno resuelto (pip freeze), no solo
-# las deps directas — el proyecto usa pip/pyproject.toml (no uv/poetry), así
-# que este archivo es el registro de qué versiones exactas de TODO el árbol
-# de dependencias estaban probadas cuando se congeló. Informativo/auditoría:
-# Docker/CI siguen instalando vía `pip install -e .` (pyproject.toml), que ya
-# trae pineadas las 5 deps de LangGraph/LangChain/LangSmith.
+# Lockfile de reproducibilidad (Fase 0.5, principio #11). Registro de las versiones EXACTAS probadas;
+# informativo/auditoría: Docker y CI instalan con `pip install -e .` desde pyproject.toml, que desde el
+# paso 1a del plan secuencial (r6-4, 26-sep-2026) pone techo a TODAS las dependencias.
 #
-# Regenerar: pip install -e ".[dev]" && pip freeze | grep -v "^-e " | grep -v diving-planet-bot > requirements-lock.txt
+# Regenerado el 2026-09-26 tras el build de PRE con los techos:
+# - Bloque 1 (ejecución): `pip freeze` DENTRO del contenedor dp-pre-bot (Linux, Python 3.11.16). Es lo que
+#   corre PRE de verdad. El build con techos dio exactamente los mismos 88 paquetes que había antes.
+# - Bloque 2 (solo desarrollo/CI): lo que añade `pip install -e ".[dev]"` en un entorno limpio (26-sep).
+#
+# Regenerar: ssh al VPS -> `docker exec dp-pre-bot pip freeze` (bloque 1) y, en un venv limpio,
+# `pip install -e ".[dev]" && pip freeze` quitando lo que ya está en el bloque 1 (bloque 2).
+
+# --- Bloque 1: ejecución (contenedor de PRE) ---
 aiohappyeyeballs==2.7.1
 aiohttp==3.14.3
 aiosignal==1.4.0
-alembic==1.18.5
-annotated-doc==0.0.4
+alembic==1.20.0
+annotated-doc==0.0.5
 annotated-types==0.8.0
-anyio==4.14.2
-ast_serialize==0.6.0
+anyio==4.15.1
 asyncpg==0.31.0
 attrs==26.1.0
+backoff==2.2.1
 certifi==2026.7.22
-cffi==2.1.0
-charset-normalizer==3.4.9
-click==8.4.2
-colorama==0.4.6
-coverage==7.15.2
-cryptography==49.0.0
+charset-normalizer==3.5.1
+click==8.5.0
 distro==1.9.0
-fastapi==0.139.2
+fastapi==0.141.1
 frozenlist==1.8.0
-greenlet==3.5.4
+googleapis-common-protos==1.75.4
+greenlet==3.5.6
 h11==0.16.0
 httpcore==1.0.9
 httptools==0.8.0
-httpx==0.28.1
 httpx-sse==0.4.3
-idna==3.18
-iniconfig==2.3.0
-jiter==0.16.0
+httpx==0.28.1
+idna==3.20
+jiter==0.17.0
 jsonpatch==1.33
 jsonpointer==3.1.1
-langchain==1.3.14
 langchain-classic==1.0.8
 langchain-community==0.4.2
-langchain-core==1.5.1
+langchain-core==1.6.5
 langchain-openai==1.4.1
-langchain-protocol==0.0.18
+langchain-protocol==0.0.19
 langchain-text-splitters==1.1.2
-langgraph==1.2.9
-langgraph-checkpoint==4.1.1
+langchain==1.3.14
+langfuse==3.15.0
+langgraph-checkpoint==4.2.0
 langgraph-prebuilt==1.1.0
-langgraph-sdk==0.4.2
+langgraph-sdk==0.4.5
+langgraph==1.2.9
 langsmith==0.10.10
-librt==0.13.0
-Mako==1.3.12
+Mako==1.4.3
 MarkupSafe==3.0.3
-multidict==6.7.1
-mypy==2.3.0
-mypy_extensions==1.1.0
-numpy==2.5.1
-openai==2.48.0
-orjson==3.11.9
+multidict==6.9.1
+numpy==2.4.6
+openai==2.54.0
+opentelemetry-api==1.45.0
+opentelemetry-exporter-http-transport==0.66b0
+opentelemetry-exporter-otlp-common==0.66b0
+opentelemetry-exporter-otlp-proto-common==1.45.0
+opentelemetry-exporter-otlp-proto-http==1.45.0
+opentelemetry-proto==1.45.0
+opentelemetry-sdk==1.45.0
+opentelemetry-semantic-conventions==0.66b0
+orjson==3.12.0
 ormsgpack==1.12.2
-packaging==26.2
-pathspec==1.1.1
-pdfminer.six==20260107
-pdfplumber==0.11.10
+packaging==25.0
 pgvector==0.5.0
-pillow==12.3.0
-pluggy==1.6.0
-propcache==0.5.2
-pycparser==3.0
-pydantic==2.13.4
-pydantic-settings==2.14.2
-pydantic_core==2.46.4
-Pygments==2.20.0
-pypdfium2==5.12.1
-pytest==9.1.1
-pytest-asyncio==1.4.0
-pytest-cov==7.1.0
-python-dotenv==1.2.2
+propcache==0.5.4
+protobuf==7.36.2
+pydantic-settings==2.15.0
+pydantic==2.13.5
+pydantic_core==2.46.5
+python-dotenv==1.2.3
 PyYAML==6.0.3
-redis==8.0.1
-regex==2026.7.19
-requests==2.34.2
+redis==8.1.0
+regex==2026.9.10
 requests-toolbelt==1.0.0
-ruff==0.16.0
+requests==2.34.2
 sniffio==1.3.1
-SQLAlchemy==2.0.51
-starlette==1.3.1
+SQLAlchemy==2.0.54
+starlette==1.7.0
 structlog==26.1.0
 tenacity==9.1.4
-tiktoken==0.13.0
-tqdm==4.69.0
-typing-inspection==0.4.2
+tiktoken==0.14.0
+tqdm==4.70.1
+typing-inspection==0.4.4
 typing_extensions==4.16.0
-tzdata==2026.3
-urllib3==2.7.0
-uuid_utils==0.17.0
-uvicorn==0.51.0
-watchfiles==1.2.0
-websockets==15.0.1
-xxhash==3.8.1
-yarl==1.24.5
+tzdata==2026.4
+urllib3==2.8.0
+uuid_utils==0.17.1
+uvicorn==0.54.0
+uvloop==0.22.1
+watchfiles==1.3.0
+websockets==16.1.1
+wrapt==1.17.3
+xxhash==4.0.1
+yarl==1.25.1
 zstandard==0.25.0
+
+# --- Bloque 2: solo desarrollo/CI (entorno limpio) ---
+Pygments==2.21.0
+ast_serialize==0.11.2
+colorama==0.4.6
+coverage==7.16.1
+iniconfig==2.3.0
+librt==0.15.0
+mypy==2.3.1
+mypy_extensions==1.1.0
+pathspec==1.1.1
+pluggy==1.6.0
+pytest-asyncio==1.4.0
+pytest-cov==7.1.0
+pytest==9.1.1
+ruff==0.16.9
