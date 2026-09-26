@@ -1,6 +1,10 @@
 History
 =======
 
+0.29.32 - (2026-09-26)
+----------------------
+* **u3-4 · escalón 0 de los pasos 1-3 (replay local): sale bien → ronda B3.** "¿Lo cambio?" en las respuestas 21 (flag apagado) → **13**; preguntas contestadas 94 → 121 de 165; las 3 regresiones de la ronda B2 resueltas en el replay. Por el camino, tres arreglos (detrás del flag): (1) cuando Jev duda en una señal del router, sus `affirms_*` viajan igual (antes solo `asks_question`; "Yo soy open…" perdía la actividad así); (2) el filtro de contradicciones de Jev vale en todos los turnos, no solo en los que traen pregunta (los "¿lo cambio?" de cortesía, "Just completed the waivers" → "¿Cartagena → islas?", salían de la revisión de datos guardados); (3) el relleno con puerta puede rellenar el sí/no que el bot acaba de preguntar ("completé el curso básico…, ¿tengo que hacer algo especial?"). Quedan 3 errores reales fuera de la muestra core (minicurso supuesto, nacionalidad por el portugués, grupo 1 por "my son"). Detalle en `docs/robustness/u3-4-diseno.md`, paso 4. Suite 2677 passed.
+
 0.29.31 - (2026-09-26)
 ----------------------
 * **u3-4 · paso 3: relleno con puerta en el turno con pregunta** (Gadea). Antes, en un turno con pregunta no se rellenaba nada y se perdían datos que el cliente sí dice y el regex no lee ("costo de un fundive", "completé el curso básico el 3 de abril"). Ahora se rellenan solo los huecos con el "sí" de Jev (`affirms_*`), y sin historial (Jev solo ve el mensaje). Detrás de `ANSWER_AND_CONTINUE` (apagado). 3 tests nuevos; suite 2673 passed.

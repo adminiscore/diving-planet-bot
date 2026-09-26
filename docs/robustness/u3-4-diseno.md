@@ -523,7 +523,34 @@ puerta de Jev hace en PRE lo que prometía el escalón 0.
    de Jev, no se rellena (lo de antes). Reutiliza el bloque de relleno de siempre (evidencia, reparto,
    comprobación de cifras). Objetivo: "costo de un fundive" y "completé el curso básico". 3 tests (con
    control: el "sí" de un campo no abre la puerta a los demás).
-4. Escalón 0 (replay local) → ronda B3 frente a la misma A del 24-sep. Leer por caso, como aquí.
+4. **Escalón 0 (26-sep, Gadea) — HECHO, sale bien → ronda B3.** Tres pasadas `on` frente a la misma `off`
+   (`docs/robustness/u3-4/replay-on-v7|v8|v9.jsonl`, `diff-v7|v9.json`, `triaje-v7|v9.txt`):
+
+   | | off | v5 (B2) | v7 | v8 | **v9** |
+   |---|---|---|---|---|---|
+   | Preguntas contestadas (de 165) | 94 | 123 | 120 | 122 | **121** |
+   | "¿Lo cambio?" en las respuestas | 21 | 19 | 27 | 21 | **13** |
+   | Datos que off guarda y on pierde (turnos con pregunta) | — | 12 | 8 | — | — |
+   | Casos a leer tras el triaje | — | 7 | 11 | — | **9** (6 correctos) |
+
+   - **v7** (pasos 1-3): recupera "fundive", pero los "¿lo cambio?" SUBEN (27). Leídos: casi todos en turnos
+     de cortesía ("Just completed the waivers. Thank you!") después de un dato CORRECTO guardado en un turno
+     con pregunta ("…meeting at the pier at 8am" → Cartagena): la revisión de datos guardados re-deduce
+     "en las islas" del historial (hallazgo J). Y "Yo soy open…" seguía sin actividad: **cuando Jev dudaba en
+     una señal del router, se perdían también los `affirms_*`** (solo viajaba `asks_question`).
+   - **v8**: los `affirms_*` viajan también cuando Jev duda en el router (`detect_routing_signals_jev_full`
+     devuelve todas las señales de u3-4/u3-5). "Yo soy open…" guarda actividad y certificado; "¿lo cambio?" 21.
+   - **v9**, dos arreglos más: (a) el filtro de contradicciones de Jev vale en TODOS los turnos con el flag,
+     no solo en los que traen pregunta (`_jev_says_not_affirmed`; la señal se renueva en cada turno en
+     `_routing_phase`) → desaparecen los "¿lo cambio?" de cortesía, y "COcoliso" (corrección legítima) se
+     sigue aplicando; (b) el relleno con puerta puede rellenar el sí/no que el bot ACABA de preguntar (la
+     guarda (a) lo impedía, y en un turno con pregunta ningún otro resolutor lo coge) → "completé el curso
+     básico el 3 de abril, ¿tengo que hacer algo especial?" guarda el certificado.
+   - **Quedan 3 errores reales, ninguno en la muestra core**: "cursos de buceo… primera vez" → minicurso
+     (da por hecha la actividad; el relleno con puerta), "Vamos en família a Cartagena" → no colombiano
+     (u3-5) y "Is it possible for my son…" → grupo 1 (ya en v5; viene de las señales especiales, u3-6).
+   - Ojo, Jev en la frontera de `asks_question` (0,7): "Yo soy open…" sale bien en v8 y sin actividad en
+     v9 (ese turno no se trató como pregunta; sin flag tampoco se extrae).
 
 Aparte, y con más peso cuando u3-4 se encienda: l1-6/l1-7 (el RAG que no sabe o inventa) y s4-7 ("¿cómo
 pago?" debe dar el enlace, no "te lo enviará un asesor").

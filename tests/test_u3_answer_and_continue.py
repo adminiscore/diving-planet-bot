@@ -274,6 +274,33 @@ async def test_si_jev_duda_en_el_router_la_pregunta_viaja_igual(monkeypatch):
     assert got == {"asks_question": True}
 
 
+async def test_si_jev_duda_en_el_router_los_afirma_viajan_igual(monkeypatch):
+    """26-sep: antes solo se rescataba `asks_question`; los `affirms_*` se perdían en los
+    turnos en que Jev duda en el router ("Yo soy open y me gustaría salir un día…" perdió la
+    actividad así en el replay, con Jev afirmándola a 0,93)."""
+    monkeypatch.setattr(settings, "answer_and_continue", True)
+    monkeypatch.setattr(settings, "jev_router_enabled", True)
+    _mock_http(monkeypatch, {
+        jev_router.ASKS_QUESTION: {"type": "noul", "noul": 0.9},
+        jev_router.AFFIRMS_ACTIVITY: {"type": "noul", "noul": 0.93},
+        jev_router.ACTIVITY_HYPOTHESIS: {"type": "noul", "noul": 0.04},
+        jev_router.AFFIRMS_NATIONALITY: {"type": "noul", "noul": 0.05},
+        "wants_human": {"type": "noul", "noul": 0.5},  # duda -> router LLM
+    })
+
+    class _NoTool:
+        class chat:  # noqa: N801
+            class completions:  # noqa: N801
+                @staticmethod
+                async def create(**_k):
+                    raise RuntimeError("sin LLM en tests")
+
+    monkeypatch.setattr(escalation, "AsyncOpenAI", lambda **_k: _NoTool())
+    monkeypatch.setattr(escalation, "trace_openai", lambda c: c)
+    got = await escalation.detect_routing_signals("Yo soy open y me gustaría salir un día. No sé qué tienen.")
+    assert got == {"asks_question": True, "affirms_activity": True, "affirms_nationality": False}
+
+
 # ── Arreglo 1 (25-sep): si el RAG no sabe, su respuesta va SOLA ──────────────
 #
 # Regresión leída en el escalón 1 del 24-sep: el RAG contestaba "eso no lo tengo a
@@ -683,9 +710,10 @@ def _con_pregunta(st, afirma):
     return st
 
 
-async def test_el_lo_cambio_fantasma_se_descarta_si_jev_dice_que_no_lo_afirma():
+async def test_el_lo_cambio_fantasma_se_descarta_si_jev_dice_que_no_lo_afirma(monkeypatch):
     """Ronda B2: "listo, como pago" -> la revisión de datos guardados dice "no certificado" ->
     "¿lo cambio?". Con Jev diciendo que el mensaje no habla de certificación, no se pregunta."""
+    monkeypatch.setattr(settings, "answer_and_continue", True)
     st = _con_pregunta(_state(), {"is_certified": False})
     st.is_certified = True
     intent = core._detector.detect("listo, como pago", st)
@@ -694,17 +722,45 @@ async def test_el_lo_cambio_fantasma_se_descarta_si_jev_dice_que_no_lo_afirma():
     assert st.is_certified is True
 
 
-async def test_sin_turno_con_pregunta_la_contradiccion_se_confirma_como_siempre():
-    """Control: fuera del turno con pregunta (o sin la señal de Jev) no cambia nada."""
+async def test_con_el_flag_apagado_la_contradiccion_se_confirma_como_siempre(monkeypatch):
+    """Control: sin el flag no cambia nada aunque quedara una señal guardada."""
+    monkeypatch.setattr(settings, "answer_and_continue", False)
     st = _state()
     st.is_certified = True
-    st._answer_affirms = {"is_certified": False}  # restos de otro turno: no cuentan
+    st._answer_affirms = {"is_certified": False}
     intent = core._detector.detect("ah no, no soy certificado", st)
     core._route_contradictions(st, "ah no, no soy certificado", intent, {"is_certified": False})
     assert st.pending_correction == {"is_certified": False}
 
 
-async def test_si_jev_dice_que_si_lo_afirma_la_contradiccion_se_confirma():
+async def test_el_lo_cambio_fantasma_tambien_se_descarta_en_un_turno_de_cortesia(monkeypatch):
+    """Replay del 26-sep: "Just completed the waivers. Thank you!" -> la revisión de datos
+    guardados re-deducía "en las islas" del historial -> "¿lo cambio? salida desde Cartagena ->
+    en las islas". No hay pregunta en el mensaje, pero Jev dice que no afirma ningún lugar."""
+    monkeypatch.setattr(settings, "answer_and_continue", True)
+    st = _state()
+    st.location = "cartagena"
+    st._answer_affirms = {"location": False}
+    intent = core._detector.detect("Just completed the waivers. Thank you!", st)
+    core._route_contradictions(st, "Just completed the waivers. Thank you!", intent, {"location": "island"})
+    assert not st.pending_correction
+    assert st.location == "cartagena"
+
+
+async def test_la_senal_de_jev_se_renueva_en_cada_turno(monkeypatch, signals, rag):
+    """Nunca se usa la señal de un turno anterior: sin señal en este turno, no hay nada."""
+    monkeypatch.setattr(settings, "answer_and_continue", True)
+    st = _state()
+    signals["value"] = {"affirms_location": False}
+    await route_message(st, "queremos bucear, somos certificados")
+    assert st._answer_affirms.get("location") is False
+    signals["value"] = {}
+    await route_message(st, "desde cartagena")
+    assert st._answer_affirms == {}
+
+
+async def test_si_jev_dice_que_si_lo_afirma_la_contradiccion_se_confirma(monkeypatch):
+    monkeypatch.setattr(settings, "answer_and_continue", True)
     st = _con_pregunta(_state(), {"is_certified": True})
     st.is_certified = True
     intent = core._detector.detect("no soy certificado, ¿qué me recomiendas?", st)
@@ -790,3 +846,24 @@ async def test_el_si_de_un_campo_no_abre_la_puerta_a_los_demas(monkeypatch, sign
     await route_message(st, "cuánto cuesta un fundive para colombianos, para 2?")
     assert calls and all(c["fields"] == ["activity"] for c in calls), calls
     assert st.detected_group_size is None
+
+
+async def test_el_si_de_jev_rellena_tambien_el_dato_que_el_bot_acaba_de_preguntar(
+    monkeypatch, signals, rag, verificador, relleno
+):
+    """Ronda B2: con "¿eres buzo certificado?" pendiente, "completé el curso básico el 3 de abril,
+    ¿tengo que hacer algo especial?" se perdía: la guarda (a) no deja pedir al relleno el dato
+    recién preguntado, y la respuesta corta y el resolutor se saltan los mensajes con pregunta.
+    El relleno con puerta va sin historial y con el "sí" de Jev, así que sí puede."""
+    monkeypatch.setattr(settings, "answer_and_continue", True)
+    monkeypatch.setattr(settings, "llm_extraction_cutover_certification", True)  # como en PRE
+    calls, box = relleno
+    st = _state()
+    await route_message(st, "quiero hacer el paquete de 5 buceos")
+    assert st.core_pending_slot == core.SLOT_CERTIFICATION
+    calls.clear()
+    box["patch"] = {"is_certified": True}
+    signals["value"] = {"asks_question": True, "affirms_certification": True}
+    await route_message(st, "completé el curso básico el 3 de abril, ¿tengo que hacer algo especial?")
+    assert any("is_certified" in c["fields"] and c["history"] is None for c in calls), calls
+    assert st.is_certified is True

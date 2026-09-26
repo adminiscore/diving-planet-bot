@@ -1629,7 +1629,9 @@ def _quote_backs_boolean(field: str, pending_slot: str | None, message: str, evi
     return getattr(_detector.detect(evidence[field], ConversationState(conversation_id="evidence")), answered_field, None) is None
 
 
-def _boolean_patch_is_anchored(field: str, pending_slot: str | None, intent, patch: dict) -> bool:
+def _boolean_patch_is_anchored(
+    field: str, pending_slot: str | None, intent, patch: dict, *, gated_by_jev: bool = False,
+) -> bool:
     """GUARDA (b): ¿es de fiar el booleano que el LLM rellenó en este turno?
 
     Complementa a `_BOOL_SLOT_FIELD` (guarda (a), que ni siquiera le pide al LLM
@@ -1655,7 +1657,10 @@ def _boolean_patch_is_anchored(field: str, pending_slot: str | None, intent, pat
     if field not in _BOOL_PATCH_FIELDS or pending_slot is None:
         return True
     if _BOOL_SLOT_FIELD.get(pending_slot) == field:
-        return False  # guarda (a): ese slot solo lo resuelven los resolutores anclados
+        # guarda (a): ese slot solo lo resuelven los resolutores anclados. Salvo el relleno CON
+        # PUERTA del turno con pregunta (u3-4, 26-sep): sin historial y con el "sí" de Jev para
+        # ESTE campo en ESTE mensaje, así que no puede "contestar" mirando el historial.
+        return gated_by_jev
     answered_field = _pending_answer_field(pending_slot)
     if not answered_field:
         return True
@@ -1841,7 +1846,7 @@ def _known_field_values(state: ConversationState) -> dict:
     return candidates
 
 
-def _relevant_gaps(state: ConversationState, intent, message: str) -> list[str]:
+def _relevant_gaps(state: ConversationState, intent, message: str, *, keep_pending_bool: bool = False) -> list[str]:
     """(Fix B del handoff) Huecos que de verdad vale la pena pedirle al LLM:
     los calcula contra el ESTADO (no solo contra el intent del mensaje suelto,
     que casi siempre está vacío) y descarta los campos que no aplican al
@@ -1889,8 +1894,15 @@ def _relevant_gaps(state: ConversationState, intent, message: str) -> list[str]:
     # nunca a `fill_gaps`. Ver `_BOOL_SLOT_FIELD`: esos campos ya tienen dos
     # resolutores anclados al mensaje del turno, y `fill_gaps` es el único de
     # los tres que puede "contestar" mirando el historial.
+    #
+    # Excepción (u3-4, 26-sep): el relleno CON PUERTA del turno con pregunta
+    # (`keep_pending_bool`). Va sin historial y con el "sí" de Jev para ese campo, así que
+    # el motivo de la guarda no aplica; y en un turno con pregunta los otros dos resolutores
+    # se lo saltan (la respuesta corta exige que no haya "?" y `resolve_slot_answer`, que no
+    # "parezca pregunta"), así que sin esto "completé el curso básico el 3 de abril, ¿tengo
+    # que hacer algo especial?" se perdía siempre (regresión de la ronda B2).
     pending_field = _BOOL_SLOT_FIELD.get(state.core_pending_slot)
-    if pending_field:
+    if pending_field and not keep_pending_bool:
         gaps = [f for f in gaps if f != pending_field]
     return gaps
 
@@ -2070,7 +2082,9 @@ async def _understand(state: ConversationState, message: str, *, answered_pendin
     _gated_gaps = []
     if question_turn_fields is not None and not _is_greeting_only(message):
         _afirma = getattr(state, "_answer_affirms", None) or {}
-        _gated_gaps = [f for f in gaps if _afirma.get(f) is True]
+        _gated_gaps = [
+            f for f in _relevant_gaps(state, intent, message, keep_pending_bool=True) if _afirma.get(f) is True
+        ]
     # Campos ya sabidos que el mensaje podria corregir con palabras que el regex no lee
     # ("ah no, somos gringos", "cambio de plan, estamos en barú") (tarea 7b, 2026-09-15).
     # Viajan en la peticion del turno (como campos a rellenar si hay huecos, hallazgo J; si
@@ -2371,7 +2385,9 @@ async def _understand(state: ConversationState, message: str, *, answered_pendin
         unbacked_bools = [
             f for f in patch
             if f in _BOOL_PATCH_FIELDS
-            and not _boolean_patch_is_anchored(f, state.core_pending_slot, intent, patch)
+            and not _boolean_patch_is_anchored(
+                f, state.core_pending_slot, intent, patch, gated_by_jev=not _wants_gaps and f in _gated_gaps,
+            )
             and not _quote_backs_boolean(f, state.core_pending_slot, message, evidence)
         ]
         # La certificacion que el mensaje dice de OTRA persona no es la del cliente
@@ -3470,6 +3486,16 @@ async def _routing_phase(
     # pegado al paquete de 1 día que se armó antes de esta conversación.
     _maybe_apply_confirmed_package(state, message)
 
+    # u3-4/u3-5: lo que Jev contestó en ESTE turno sobre si el cliente AFIRMA cada dato o solo lo
+    # nombra. Se guarda en CADA turno (y se vacía si no hay señal), así nunca se usa la de un turno
+    # anterior. Lo usan la puerta del turno con pregunta (`_question_turn_fields`), el relleno con
+    # puerta y el filtro de contradicciones (`_route_contradictions`). Un campo AUSENTE (flag o Jev
+    # apagados, o Jev falló) significa "no lo sé" -> la conducta de hoy; `False`, "no lo afirma".
+    state._answer_affirms = (
+        {f: routing_signals[sig] for f, sig in _AFFIRMS_SIGNAL_FIELDS if sig in routing_signals}
+        if settings.answer_and_continue else {}
+    )
+
     # COMPRENDER (carryover PRIMERO): si hay un slot pendiente y este mensaje
     # lo RESUELVE, el carryover gana aunque el mensaje "parezca pregunta" por
     # sus palabras — "tienen 7 y 9 años" responde SLOT_AGES aunque "tienen"
@@ -4550,9 +4576,14 @@ _AFFIRMS_SIGNAL_FIELDS = (
 
 
 def _jev_says_not_affirmed(state: ConversationState, field: str) -> bool:
-    """En un turno con pregunta, ¿dice Jev que el cliente NO afirma este campo? Ausente (Jev
-    apagado, o dudó en el router) = no lo sabemos -> la conducta de hoy."""
-    if not _has_pending_answer(state):
+    """¿Dice Jev que el mensaje de ESTE turno NO afirma este campo? Solo con el flag; ausente
+    (Jev apagado o falló) = no lo sabemos -> la conducta de hoy.
+
+    Vale en todos los turnos, no solo en los que traen pregunta (26-sep): el "¿lo cambio?"
+    fantasma también sale en turnos de cortesía ("Just completed the waivers. Thank you!" ->
+    "¿lo cambio? salida desde Cartagena -> en las islas", replay del golden), cuando la
+    revisión de datos guardados re-deduce desde el historial (hallazgo J, 15-sep)."""
+    if not settings.answer_and_continue:
         return False
     return (getattr(state, "_answer_affirms", None) or {}).get(field) is False
 
@@ -4566,16 +4597,6 @@ def _maybe_launch_answer(state: ConversationState, message: str, routing_signals
         return
     if not _turn_has_question(message, routing_signals):
         return
-    # u3-4 (25-sep): lo que Jev contestó sobre si el cliente AFIRMA el dato o solo lo nombra
-    # dentro de su pregunta. Se guarda aquí porque es el mismo sitio y el mismo turno en el que
-    # se decide que hay algo que contestar, y `_question_turn_fields` corre justo cuando esto
-    # existe. Un campo AUSENTE (Jev apagado, o dudó en el router) significa "no lo sé" -> la
-    # conducta de hoy; `False` significa "Jev dice que no lo afirma" -> el dato se cae.
-    state._answer_affirms = {
-        f: routing_signals[sig]
-        for f, sig in _AFFIRMS_SIGNAL_FIELDS
-        if sig in routing_signals
-    }
     # La foto del historial se toma AQUÍ (lección de la carrera de l1-4): la tarea puede no
     # arrancar hasta después de que el bot meta otra cosa en el historial.
     state._pending_answer = asyncio.create_task(_rag_answer(state, message, history=list(state.history)))

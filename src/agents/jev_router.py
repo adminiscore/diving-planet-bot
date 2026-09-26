@@ -328,15 +328,25 @@ async def detect_routing_signals_jev(message: str, *, lang: str = "es") -> dict 
     return result
 
 
+# Señales de u3-4/u3-5 que NO son del router: viajan aparte (ver `detect_routing_signals_jev_full`).
+_TURN_SIGNALS = (AFFIRMS_LOCATION, AFFIRMS_ACTIVITY, AFFIRMS_CERTIFICATION, AFFIRMS_GROUP, AFFIRMS_NATIONALITY)
+
+
 async def detect_routing_signals_jev_full(
     message: str, *, lang: str = "es",
-) -> tuple[dict | str | None, bool]:
-    """Como `detect_routing_signals_jev`, y además si el mensaje trae algo que contestar
-    (u3-4, solo con `answer_and_continue`). Lo segundo vale también cuando Jev duda en
-    las señales del router: es otra pregunta y el router LLM no la contesta."""
+) -> tuple[dict | str | None, dict]:
+    """Como `detect_routing_signals_jev`, y además las señales de u3-4/u3-5 (solo con
+    `answer_and_continue`): `asks_question` y los `affirms_*`. Van en el segundo valor
+    porque valen también cuando Jev DUDA en las señales del router: son otras preguntas
+    y el router LLM no las contesta.
+
+    Hasta el 26-sep solo viajaba `asks_question`; los `affirms_*` se perdían en el ~8 %
+    de turnos en que Jev duda en el router, y el turno caía a la conducta de hoy sin
+    necesidad (el "Yo soy open y me gustaría salir un día…" de la ronda B2 perdió la
+    actividad así en el replay del 26-sep, pese a que Jev la afirmaba a 0,93)."""
     key = settings.openrouter_api_key
     if not key or not message or not message.strip():
-        return None, False
+        return None, {}
     t0 = time.perf_counter()
     try:
         resp = await _http().post(
@@ -353,15 +363,17 @@ async def detect_routing_signals_jev_full(
         answers = resp.json()["answers"]
         signals = answers_to_signals(answers)
         doubts = uncertain_answers(answers)
-        asks = (answers.get(ASKS_QUESTION) or {}).get("noul", 0.0) >= ASKS_QUESTION_MIN
+        extras = {k: signals[k] for k in _TURN_SIGNALS if k in signals}
+        if (answers.get(ASKS_QUESTION) or {}).get("noul", 0.0) >= ASKS_QUESTION_MIN:
+            extras[ASKS_QUESTION] = True
     except Exception as exc:  # noqa: BLE001 — cualquier fallo cae al router LLM
         ms = (time.perf_counter() - t0) * 1000
         logger.warning(f"[ROUTER][JEV] fallo en {ms:.0f} ms, se usa el router LLM: {type(exc).__name__}: {exc}")
-        return None, False
+        return None, {}
     ms = (time.perf_counter() - t0) * 1000
     if doubts:
-        logger.info(f"[ROUTER][JEV] {ms:.0f} ms duda={doubts} -> router LLM msg={message[:80]!r}")
-        return UNCERTAIN, asks
+        logger.info(f"[ROUTER][JEV] {ms:.0f} ms duda={doubts} -> router LLM (se conservan {sorted(extras)}) msg={message[:80]!r}")
+        return UNCERTAIN, extras
     if signals:
         logger.info(f"[ROUTER][JEV] {ms:.0f} ms detected={signals} msg={message[:80]!r}")
-    return signals, asks
+    return signals, extras
