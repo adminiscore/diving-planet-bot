@@ -225,14 +225,6 @@
     {
       "coleccion": "tasks",
       "operacion": "update",
-      "doc_id": "s4-13",
-      "campos": {},
-      "anteponer_a_la_nota": "Probablemente resuelto por u3-4 (contesta y sigue): comprobar en el PASO 1d con la ronda B3.",
-      "como": "NO sustituir la nota: poner este texto DELANTE de la nota que ya tenga (la escribieron otros)."
-    },
-    {
-      "coleccion": "tasks",
-      "operacion": "update",
       "doc_id": "s4-18",
       "campos": {},
       "anteponer_a_la_nota": "Va con u3-6 (PASO 4b).",
@@ -276,6 +268,186 @@
         "at": "2026-09-26T16:00:00Z",
         "byLabel": "Alvaro (con Claude)",
         "text": "26-sep: paso 1c hecho. Control permanente de correcciones en el banco de Jev (python -m scripts.sonda_afirma_vs_pregunta corr) + test en CI: 20/20 en los campos que pasan por el filtro de contradicciones. 'mejor snorkel' (actividad, 0,36-0,46) no pasa por ese filtro; si por la puerta de u3-4 en turnos con pregunta: apuntado para el paso 4a. HISTORY 0.29.37. Sigue 1d."
+      }
+    },
+    {
+      "coleccion": "tasks",
+      "operacion": "update",
+      "doc_id": "s4-6",
+      "campos": {
+        "status": "pendiente"
+      },
+      "anteponer_a_la_nota": "RE-TRIAJE 26-sep: SIGUE (igual con u3-4). 'mejor cambiemos la fecha' -> sigue pidiendo la nacionalidad. Causa: intencion de cambio de fecha no detectada. ORDEN: PASO 4b.",
+      "como": "NO sustituir la nota: poner este texto DELANTE de la nota que ya tenga."
+    },
+    {
+      "coleccion": "tasks",
+      "operacion": "update",
+      "doc_id": "s4-7",
+      "campos": {
+        "status": "en curso"
+      },
+      "anteponer_a_la_nota": "RE-TRIAJE 26-sep: FLUJO RESUELTO por u3-4/u3-5 ('como pago' contesta y da el resumen con el enlace, sin '¿lo cambio?'). Queda el TEXTO del RAG: 'un asesor te enviara el enlace'. ORDEN: PASO 6.",
+      "como": "NO sustituir la nota: poner este texto DELANTE de la nota que ya tenga."
+    },
+    {
+      "coleccion": "tasks",
+      "operacion": "update",
+      "doc_id": "s4-8",
+      "campos": {
+        "status": "pendiente"
+      },
+      "anteponer_a_la_nota": "RE-TRIAJE 26-sep: MEJORA (ya no asume '2 buceo certificado') pero sale un '¿lo cambio? 1 buceo certificado, 1 snorkel -> 1 buceo certificado, 1 snorkel' (cambio al mismo valor). ORDEN: PASO 4a.",
+      "como": "NO sustituir la nota: poner este texto DELANTE de la nota que ya tenga."
+    },
+    {
+      "coleccion": "tasks",
+      "operacion": "update",
+      "doc_id": "s4-9",
+      "campos": {
+        "status": "pendiente"
+      },
+      "anteponer_a_la_nota": "RE-TRIAJE 26-sep: SIGUE (igual con u3-4): da buceo certificado a ninos de 6 y 10 sin mirar la edad. ORDEN: PASO 4a.",
+      "como": "NO sustituir la nota: poner este texto DELANTE de la nota que ya tenga."
+    },
+    {
+      "coleccion": "tasks",
+      "operacion": "update",
+      "doc_id": "s4-10",
+      "campos": {
+        "status": "hecha"
+      },
+      "anteponer_a_la_nota": "RE-TRIAJE 26-sep: RESUELTA. El RAG aplica la politica 'nacido en Colombia = colombiano'; cumplia todos los criterios en el cierre de L1. Se re-verifica en la ronda completa del paso 5.",
+      "como": "NO sustituir la nota: poner este texto DELANTE de la nota que ya tenga."
+    },
+    {
+      "coleccion": "tasks",
+      "operacion": "update",
+      "doc_id": "s4-11",
+      "campos": {
+        "status": "pendiente"
+      },
+      "anteponer_a_la_nota": "RE-TRIAJE 26-sep: SIGUE: 'buceo certificado solo' -> '¿para cuantas personas?'. ORDEN: PASO 4a (personas) y PASO 6 (las horas entre bucear y volar son del RAG).",
+      "como": "NO sustituir la nota: poner este texto DELANTE de la nota que ya tenga."
+    },
+    {
+      "coleccion": "tasks",
+      "operacion": "update",
+      "doc_id": "s4-12",
+      "campos": {
+        "status": "pendiente"
+      },
+      "anteponer_a_la_nota": "RE-TRIAJE 26-sep: FLUJO MEJOR (contesta y despues pregunta el origen); ofrecer solo paquetes de islas es contenido del RAG. ORDEN: PASO 6.",
+      "como": "NO sustituir la nota: poner este texto DELANTE de la nota que ya tenga."
+    },
+    {
+      "coleccion": "tasks",
+      "operacion": "update",
+      "doc_id": "s4-13",
+      "campos": {
+        "status": "hecha"
+      },
+      "anteponer_a_la_nota": "RE-TRIAJE 26-sep: RESUELTA POR u3-4. Apagado: '¿desde donde saldrias?' tres veces ignorando descuento, grupo y como reservar; encendido (replay v9): contesta cada pregunta. El contenido de esas respuestas, en el paso 6.",
+      "como": "NO sustituir la nota: poner este texto DELANTE de la nota que ya tenga."
+    },
+    {
+      "coleccion": "tasks",
+      "operacion": "update",
+      "doc_id": "s4-14",
+      "campos": {
+        "status": "pendiente"
+      },
+      "anteponer_a_la_nota": "RE-TRIAJE 26-sep: SIGUE (respuesta fija 'no manejo telefono ni WhatsApp'). ORDEN: PASO 8.",
+      "como": "NO sustituir la nota: poner este texto DELANTE de la nota que ya tenga."
+    },
+    {
+      "coleccion": "tasks",
+      "operacion": "update",
+      "doc_id": "s4-15",
+      "campos": {
+        "status": "pendiente"
+      },
+      "anteponer_a_la_nota": "RE-TRIAJE 26-sep: SIGUE (B3: falla 'honesto'). Respuesta fija. ORDEN: PASO 8.",
+      "como": "NO sustituir la nota: poner este texto DELANTE de la nota que ya tenga."
+    },
+    {
+      "coleccion": "tasks",
+      "operacion": "update",
+      "doc_id": "s4-16",
+      "campos": {
+        "status": "pendiente"
+      },
+      "anteponer_a_la_nota": "RE-TRIAJE 26-sep: SIGUE (pase a staff sin disculpa). Plantilla. ORDEN: PASO 8.",
+      "como": "NO sustituir la nota: poner este texto DELANTE de la nota que ya tenga."
+    },
+    {
+      "coleccion": "tasks",
+      "operacion": "update",
+      "doc_id": "s4-17",
+      "campos": {
+        "status": "pendiente"
+      },
+      "anteponer_a_la_nota": "RE-TRIAJE 26-sep: SIGUE (B3: '¿cuanto tiempo dura?' -> lista de precios). Atajo de precios del RAG; el tipo de pregunta es decision de opciones fijas (regla de Jev). ORDEN: PASO 6.",
+      "como": "NO sustituir la nota: poner este texto DELANTE de la nota que ya tenga."
+    },
+    {
+      "coleccion": "tasks",
+      "operacion": "update",
+      "doc_id": "s4-18",
+      "campos": {
+        "status": "pendiente"
+      },
+      "anteponer_a_la_nota": "RE-TRIAJE 26-sep: SIGUE (B3: falla no-recall). ORDEN: PASO 4b (u3-6).",
+      "como": "NO sustituir la nota: poner este texto DELANTE de la nota que ya tenga."
+    },
+    {
+      "coleccion": "tasks",
+      "operacion": "update",
+      "doc_id": "s4-19",
+      "campos": {
+        "status": "pendiente"
+      },
+      "anteponer_a_la_nota": "RE-TRIAJE 26-sep: SIGUE (B3). La causa es la SENAL de buceo adaptado del router ('mi madre es mayor'), no el RAG: pasa del paso 6 al PASO 4b.",
+      "como": "NO sustituir la nota: poner este texto DELANTE de la nota que ya tenga."
+    },
+    {
+      "coleccion": "tasks",
+      "operacion": "update",
+      "doc_id": "s4-20",
+      "campos": {
+        "status": "pendiente"
+      },
+      "anteponer_a_la_nota": "RE-TRIAJE 26-sep: SIGUE en los 4 casos (agencia, logs PADI, '¿todo ok con mis reservas?', 'ya hice una reserva'): no detecta la intencion de post-venta y sigue vendiendo. Pasa del paso 8 al PASO 4b.",
+      "como": "NO sustituir la nota: poner este texto DELANTE de la nota que ya tenga."
+    },
+    {
+      "coleccion": "tasks",
+      "operacion": "update",
+      "doc_id": "s4-21",
+      "campos": {
+        "status": "en curso"
+      },
+      "anteponer_a_la_nota": "RE-TRIAJE 26-sep: PARCIAL. Ya responde en ingles en la reserva. Siguen: aviso de privacidad con 'tarjeta de credito' en una pregunta de precio, 'ida y vuelta el mismo dia' en cursos de 2 dias, aviso medico en espanol a cliente en ingles, id interno padi_open_water_referral. ORDEN: PASO 8.",
+      "como": "NO sustituir la nota: poner este texto DELANTE de la nota que ya tenga."
+    },
+    {
+      "coleccion": "tasks",
+      "operacion": "update",
+      "doc_id": "s4-22",
+      "campos": {
+        "status": "pendiente"
+      },
+      "anteponer_a_la_nota": "RE-TRIAJE 26-sep: PARCIAL. Contesta y pide el origen; pero repite '¿para cuantas personas?' 4 veces a quien dijo 'soy buza'. Precio, cierre de las 4:30 y negociacion son del RAG. ORDEN: PASO 6 (contenido) y PASO 4a (personas).",
+      "como": "NO sustituir la nota: poner este texto DELANTE de la nota que ya tenga."
+    },
+    {
+      "coleccion": "log",
+      "operacion": "set",
+      "doc_id": "l-0926-alvaro-paso1d",
+      "campos": {
+        "at": "2026-09-26T17:30:00Z",
+        "byLabel": "Alvaro (con Claude)",
+        "text": "26-sep: paso 1d hecho y PASO 1 CERRADO. Re-triaje de s4-6..s4-22 con u3-4 encendido (B3 + replay v9): resueltas s4-10 y s4-13 (el bucle que ignoraba preguntas lo arreglo u3-4), s4-7 resuelta en el flujo, 4 parciales, 10 siguen; repartidas por mecanismo (4a extraccion, 4b intencion, 6 RAG, 8 respuestas fijas). Evidencia: docs/robustness/s4-retriaje-2026-09-26.md. HISTORY 0.29.38. Siguiente: PASO 2 (g-8, el juez con casos reales)."
       }
     }
   ]

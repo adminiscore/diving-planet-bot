@@ -22,8 +22,8 @@ de `docs/plan-maestro-final.md`**. Resumen:
 | Paso | Qué | Estado |
 |---|---|---|
 | 0 | Aterrizar plan, handoff, HISTORY y página | ✅ 26-sep (falta aplicar la cola de Plan Coral y re-exportar `plan-coral.json`) |
-| **1** | **Cabos sueltos técnicos**: 1a dependencias con techo (r6-4) ✅ · 1b comprobar cada deploy (r6-3) ✅ · 1c control de correcciones en el banco (u3-5) ✅ · 1d re-triaje de s4-6…s4-22 contra la ronda B3 | **← EN CURSO (1a, 1b y 1c hechos; sigue 1d)** |
-| 2 | Juez con casos reales (g-8): hoy acierta el 75 % de sus "no cumple" reales y tapa contradicciones de política | ⏳ |
+| **1** | **Cabos sueltos técnicos**: 1a dependencias con techo (r6-4) ✅ · 1b comprobar cada deploy (r6-3) ✅ · 1c control de correcciones en el banco (u3-5) ✅ · 1d re-triaje de s4-6…s4-22 contra la ronda B3 ✅ | ✅ **cerrado 26-sep** |
+| **2** | **Juez con casos reales (g-8)**: hoy acierta el 75 % de sus "no cumple" reales y tapa contradicciones de política | **← SIGUIENTE** |
 | 3 | Ronda A nueva con u3-4 encendido (referencia para lo que queda de U3) | ⏳ |
 | 4 | Terminar U3: u3-5 → u3-6 → u3-7 → u3-3 | ⏳ |
 | 5 | Cierre de U3: ronda completa + examen oculto (u3-2 redefinida) | ⏳ |

@@ -436,14 +436,14 @@ medias (u3-1 ✅, u3-4 ✅ promocionada, u3-5 🟡); PRE con u3-4 encendido. Sui
 | Paso | Qué | Tareas | Hecho cuando |
 |---|---|---|---|
 | **0** | Aterrizar: plan, handoff, HISTORY y página al día con lo nuevo | — | ✅ 26-sep (esta PARTE) · falta aplicar la cola de Plan Coral y re-exportar la copia `plan-coral.json` (del 23-sep) |
-| **1** | Cabos sueltos técnicos (riesgos vivos, antes de tocar conducta) | r6-4 · r6-3 · control de correcciones · re-triaje s4-6…s4-22 | ver 1a-1d abajo |
+| **1** | Cabos sueltos técnicos (riesgos vivos, antes de tocar conducta) | r6-4 · r6-3 · control de correcciones · re-triaje s4-6…s4-22 | ✅ **cerrado 26-sep** (1a-1d abajo) |
 | **2** | Afinar el instrumento: el juez | g-8 | criterios de los casos reales revisados, juez recalibrado con ellos y que detecta contradicciones de política |
 | **3** | Línea base nueva con u3-4 encendido | ronda A core, juzgada con el juez del paso 2 | ronda A de referencia para todos los A/B de U3 |
-| **4** | Terminar U3, en orden | 4a u3-5 · 4b u3-6 · 4c u3-7 · 4d u3-3 | cada una: escalón 0 → ronda B frente a la A del paso 3 → 0 regresiones propias, leídas por caso |
+| **4** | Terminar U3, en orden | 4a u3-5 (+ s4-8, s4-9, s4-11, s4-22 personas) · 4b u3-6 (+ s4-6, s4-18, s4-19, s4-20) · 4c u3-7 · 4d u3-3 | cada una: escalón 0 → ronda B frente a la A del paso 3 → 0 regresiones propias, leídas por caso |
 | **5** | Cierre de U3 | u3-2 (redefinida) | ronda COMPLETA del golden (116 diálogos + examen oculto): examen oculto ≥ 78,3 % (cierre de L1) y sin regresiones propias |
-| **6** | Calidad del RAG | l1-6, l1-7 (+ s4-7, s4-17, s4-19) | los casos conocidos sin invención (el primero, "regreso otro día"); "no lo tengo" solo cuando el dato no está; `eval_rag_answers` y ronda core sin regresiones |
+| **6** | Calidad del RAG | l1-6, l1-7 (+ s4-7 texto, s4-11 horas, s4-12, s4-17, s4-22 contenido) | los casos conocidos sin invención (el primero, "regreso otro día"); "no lo tengo" solo cuando el dato no está; `eval_rag_answers` y ronda core sin regresiones |
 | **7** | L2 que queda | l2-2, l2-3 (l2-1 cerrada el 26-sep: obsoleta) | caché y "escribiendo…" medidos: latencia percibida ↓ y calidad igual |
-| **8** | S4: un solo cerebro y código ordenado | s4-1, s4-2, s4-3, s4-4 (si u3-3 no lo cubre), retirar flags promocionados, s4-6/12/14/15/16/20/21/22 | sin cascada legacy; módulos partidos por nodo; flags promocionados convertidos en código; suite verde |
+| **8** | S4: un solo cerebro y código ordenado | s4-1, s4-2, s4-3, s4-4 (si u3-3 no lo cubre), retirar flags promocionados, s4-14, s4-15, s4-16, s4-21 | sin cascada legacy; módulos partidos por nodo; flags promocionados convertidos en código; suite verde |
 | **9** | R6: robustez de producción | r6-1 (fallback y backoff ante 429), r6-2 (guardrails), g-5 (carga) | el bot nunca deja sin respuesta; inyección medida; p95 con N clientes a la vez |
 | **10** | Q5: calidad continua y entrega | q5-1, g-3, g-4, g-4b, g-6, m0-4, q5-2 | gate en CI; simulador; bucle producción → golden; testers reales; SOAK; entrega |
 
@@ -461,19 +461,27 @@ medias (u3-1 ✅, u3-4 ✅ promocionada, u3-5 🟡); PRE con u3-4 encendido. Sui
   26-sep: 21/21 correcciones explícitas pasan, pero "mejor snorkel" va justo (0,41 con la regla de actividad).
   Se añade como bloque fijo de `scripts/sonda_afirma_vs_pregunta.py` para que cualquier cambio de redacción
   lo vigile.
-- **1d · re-triaje de s4-6…s4-22** (los fallos del golden v7) contra la ronda B3: cada uno se marca resuelto
-  (con el turno que lo prueba) o se asigna a su paso por mecanismo: entender el mensaje → 4a/4b (s4-8, s4-9,
-  s4-10, s4-11, s4-13, s4-18); RAG → 6 (s4-7, s4-17, s4-19); plantillas y escalado → 8 (s4-6, s4-12, s4-14,
-  s4-15, s4-16, s4-20, s4-21, s4-22). s4-13 (el bucle "¿desde dónde saldrías?" que ignora preguntas) es
-  probablemente lo que ya arregló u3-4.
+- **1d · re-triaje de s4-6…s4-22. ✅ HECHO 26-sep (HISTORY 0.29.38; detalle y evidencia caso a caso en
+  `docs/robustness/s4-retriaje-2026-09-26.md`).** Con la ronda B3 (core) y el replay v9 (el resto, u3-4
+  encendido): **resueltas s4-10 y s4-13** (el bucle que ignoraba preguntas lo arregló u3-4), s4-7 resuelta
+  en el flujo (queda el texto del RAG), 4 parciales y 10 siguen. Reparto por mecanismo: 4a s4-8, s4-9,
+  s4-11, s4-22 (personas) · 4b s4-6, s4-18, s4-19, s4-20 · 6 s4-7 (texto), s4-11 (horas), s4-12, s4-17,
+  s4-22 (contenido) · 8 s4-14, s4-15, s4-16, s4-21. s4-19 y s4-20 cambian de paso (del 6 y el 8 al 4b):
+  la causa es la intención mal detectada, no el texto.
 - **2 · g-8.** Hoy el juez acierta el 75 % de sus "no cumple" en casos reales (91,5 % en la calibración
   sintética) y deja pasar contradicciones de política (el "regreso otro día" solo lo marca si dice "sin
   cargo"). Va ANTES de las rondas que quedan porque todas se juzgan con él.
 - **4a · u3-5:** "cursos de buceo… primera vez" → minicurso supuesto (regla del owner: recomendar, no
   asumir) y "Vamos en família a Cartagena" → no colombiano (portugués); más s4-8/9/10/11 si el re-triaje los
   deja aquí. Y del 1c: la regla de actividad da 0,36-0,46 a "mejor snorkel", así que en un turno con
-  pregunta ("mejor snorkel, ¿cuánto cuesta?") la puerta de u3-4 perdería el cambio de opinión. **4b · u3-6:** `detect_special_signals` con Jev; el "recordar" mal disparado ("how do we book" →
-  resumen, sin contestar ni extraer; s4-18). **4c · u3-7:** `resolve_slot_answer` con Jev en sí/no y listas.
+  pregunta ("mejor snorkel, ¿cuánto cuesta?") la puerta de u3-4 perdería el cambio de opinión. Del 1d: el
+  "¿lo cambio? X → X" (se propone un cambio al mismo valor, acompanante-goteo), los niños a los que se da
+  buceo certificado sin mirar la edad (s4-9), "solo" = 1 persona (s4-11) y el "¿para cuántas personas?" en
+  bucle a quien habla en singular (s4-22). **4b · u3-6:** `detect_special_signals` con Jev; el "recordar"
+  mal disparado ("how do we book" → resumen, sin contestar ni extraer; s4-18); y del 1d, las intenciones mal
+  detectadas: cambio de fecha (s4-6), buceo adaptado con "mi madre es mayor" (s4-19), post-venta (s4-20:
+  agencia, logs de PADI, "¿todo ok con mis reservas?") y el aviso médico que salta con "completed the
+  medical form". **4c · u3-7:** `resolve_slot_answer` con Jev en sí/no y listas.
   **4d · u3-3:** el regex de `intent_detector` como vía rápida con respaldo, sin parches.
 - **5 · cierre de U3** con la ronda completa (~2 $). Si sale bien, U3 queda cerrada y esa ronda es la línea
   base de los pasos 6-10.

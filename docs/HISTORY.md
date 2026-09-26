@@ -1,6 +1,13 @@
 History
 =======
 
+0.29.38 - (2026-09-26)
+----------------------
+* **Plan secuencial, paso 1d: re-triaje de s4-6…s4-22 tras u3-4 — y PASO 1 CERRADO.** Cada fallo del golden que dio lugar a una tarea S4 se ha vuelto a mirar con u3-4 encendido: con la ronda B3 los 6 del core y con el replay v9 (encendido frente a apagado) el resto. Evidencia caso a caso en `docs/robustness/s4-retriaje-2026-09-26.md`.
+* **Resultado**: **resueltas s4-10 y s4-13** (el bucle "¿desde dónde saldrías?" que ignoraba el descuento, el grupo y "¿cómo reservamos?" lo arregló u3-4: ahora contesta cada pregunta), **s4-7 resuelta en el flujo** ("como pago" contesta y da el enlace; queda el texto del RAG "te lo enviará un asesor"), 4 parciales (s4-8, s4-12, s4-21, s4-22) y 10 siguen.
+* **Reparto por mecanismo, no por síntoma**: 4a (extracción) s4-8, s4-9, s4-11 y las personas de s4-22 · 4b (intención) s4-6, s4-18, s4-19, s4-20 · 6 (RAG) el texto de s4-7, las horas de s4-11, s4-12, s4-17 y el contenido de s4-22 · 8 (respuestas fijas) s4-14, s4-15, s4-16, s4-21. s4-19 y s4-20 pasan al 4b: su causa es la intención mal detectada.
+* **Tres hallazgos nuevos**, ya en el plan: un "¿lo cambio? X → X" (se propone cambiar al mismo valor) y el "¿para cuántas personas?" en bucle a quien habla en singular (4a); el aviso médico que salta con "we have both completed the medical form" (4b).
+
 0.29.37 - (2026-09-26)
 ----------------------
 * **Plan secuencial, paso 1c: control permanente de correcciones en el banco de Jev.** Con u3-4 encendido, el filtro de contradicciones (`_route_contradictions`) descarta un cambio de un dato guardado si Jev dice que el mensaje no lo afirma, y va antes que la señal "perdón / en realidad": una corrección real que Jev dude se perdería en silencio. Nuevo bloque `python -m scripts.sonda_afirma_vs_pregunta corr` con 24 correcciones explícitas (`docs/robustness/u3-4/banco-correcciones.json`) y un test en CI (`tests/test_u3_banco_correcciones.py`) que exige casos de control para cada campo que el filtro toca.
