@@ -516,8 +516,43 @@ def test_la_duda_en_la_afirmacion_no_manda_el_turno_al_router_llm():
     medio = {
         jev_router.AFFIRMS_LOCATION: {"type": "noul", "noul": 0.5},
         jev_router.AFFIRMS_ACTIVITY: {"type": "noul", "noul": 0.45},
+        jev_router.ACTIVITY_HYPOTHESIS: {"type": "noul", "noul": 0.5},
     }
     assert jev_router.uncertain_answers(medio) == []
+
+
+def test_con_el_flag_jev_recibe_tambien_la_pregunta_de_hipotesis(monkeypatch):
+    monkeypatch.setattr(settings, "answer_and_continue", False)
+    assert jev_router.ACTIVITY_HYPOTHESIS not in jev_router._questions_for_turn()
+    monkeypatch.setattr(settings, "answer_and_continue", True)
+    assert jev_router.ACTIVITY_HYPOTHESIS in jev_router._questions_for_turn()
+
+
+@pytest.mark.parametrize("p_afirma, p_hipotesis, esperado", [
+    (0.93, 0.05, True),    # seguro de que la afirma ("Yo soy open y me gustaría salir un día…")
+    (0.66, 0.17, True),    # bastante probable y sin pinta de hipótesis ("regalarle una experiencia de buceo")
+    (0.66, 0.60, False),   # probable, pero con pinta de hipótesis → la conducta prudente
+    (0.35, 0.75, False),   # "is it possible for my son a PADI certificate?"
+    (0.35, 0.05, False),   # poco probable aunque no parezca hipótesis
+    (0.55, None, False),   # sin la pregunta de hipótesis solo vale la afirmación segura
+])
+def test_regla_de_actividad_afirmada(p_afirma, p_hipotesis, esperado):
+    assert jev_router.activity_affirmed(p_afirma, p_hipotesis) is esperado
+
+
+def test_la_actividad_la_deciden_las_dos_preguntas():
+    """26-sep: la afirmativa sola tiraba actividades dichas de verdad (0,66 en "quería
+    regalarle a mi esposo una experiencia de buceo"); con la de hipótesis baja, se queda."""
+    sin_hipotesis = jev_router.answers_to_signals({
+        jev_router.AFFIRMS_ACTIVITY: {"type": "noul", "noul": 0.66},
+    })
+    con_hipotesis_baja = jev_router.answers_to_signals({
+        jev_router.AFFIRMS_ACTIVITY: {"type": "noul", "noul": 0.66},
+        jev_router.ACTIVITY_HYPOTHESIS: {"type": "noul", "noul": 0.17},
+    })
+    assert sin_hipotesis[jev_router.AFFIRMS_ACTIVITY] is False
+    assert con_hipotesis_baja[jev_router.AFFIRMS_ACTIVITY] is True
+    assert jev_router.ACTIVITY_HYPOTHESIS not in con_hipotesis_baja, "no es una señal para el núcleo"
 
 
 async def test_si_jev_dice_que_no_lo_afirma_el_dato_se_cae_sin_preguntar_al_llm(

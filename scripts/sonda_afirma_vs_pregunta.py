@@ -32,6 +32,9 @@ os.environ.setdefault("APP_ENV", "development")
 os.environ.setdefault("JEV_ROUTER_ENABLED", "true")
 sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
+import json  # noqa: E402
+from pathlib import Path  # noqa: E402
+
 import httpx  # noqa: E402
 
 from src.agents import jev_router  # noqa: E402
@@ -93,6 +96,21 @@ async def _preguntar(cli: httpx.AsyncClient, mensaje: str, instrucciones: str) -
     return r.json()["answers"]["q"].get("noul", 0.0)
 
 
+# Recalibración del 26-sep: 57 mensajes del golden fuera del banco, etiquetados por un anotador
+# LLM aparte. Destaparon que la redacción anterior de `affirms_activity` tiraba 23 actividades
+# afirmadas ("we just booked a 5 dive package"). Se usaron para elegir la regla, así que ya no son
+# prueba ciega, pero sirven de red: cualquier cambio de redacción tiene que mantenerlos.
+GOLDEN_ACT = Path("docs/robustness/u3-4/banco-actividad-golden.json")
+
+
+async def _actividad_afirmada(cli: httpx.AsyncClient, mensaje: str) -> tuple[bool, list]:
+    """La decisión del código: las dos preguntas de actividad + `jev_router.activity_affirmed`."""
+    qs = jev_router._AFFIRMS_QUESTIONS
+    pa = await _preguntar(cli, mensaje, qs[jev_router.AFFIRMS_ACTIVITY]["instructions"])
+    ph = await _preguntar(cli, mensaje, qs[jev_router.ACTIVITY_HYPOTHESIS]["instructions"])
+    return jev_router.activity_affirmed(pa, ph), [round(pa, 2), round(ph, 2)]
+
+
 async def main() -> None:
     viva = jev_router._AFFIRMS_QUESTIONS
     variantes = (
@@ -102,16 +120,33 @@ async def main() -> None:
     )
     async with httpx.AsyncClient() as cli:
         for etiqueta, loc, act in variantes:
+            en_codigo = etiqueta.startswith("la que")
             print(f"\n{'=' * 84}\n{etiqueta}\n{'=' * 84}")
             bien = 0
             t0 = time.perf_counter()
             for cual, mensaje, esperado in CASOS:
-                instrucciones = loc if cual == "loc" else act
-                ps = [round(await _preguntar(cli, mensaje, instrucciones), 2) for _ in range(N)]
-                ok = all((p >= jev_router.AFFIRMS_MIN) == esperado for p in ps)
+                if cual == "act" and en_codigo:
+                    # En el código la actividad la deciden DOS preguntas (afirma, hipótesis).
+                    res = [await _actividad_afirmada(cli, mensaje) for _ in range(N)]
+                    ok = all(d == esperado for d, _ in res)
+                    ps = [p for _, p in res]
+                else:
+                    instrucciones = loc if cual == "loc" else act
+                    ps = [round(await _preguntar(cli, mensaje, instrucciones), 2) for _ in range(N)]
+                    ok = all((p >= jev_router.AFFIRMS_MIN) == esperado for p in ps)
                 bien += ok
                 print(f"  [{'OK ' if ok else 'MAL'}] {cual} esperado={esperado!s:<5} p={ps}  {mensaje[:70]!r}")
             print(f"  --> {bien}/{len(CASOS)}  ({time.perf_counter() - t0:.0f} s, umbral {jev_router.AFFIRMS_MIN})")
+        casos = json.loads(GOLDEN_ACT.read_text(encoding="utf-8"))["casos"]
+        print(f"\n{'=' * 84}\nactividad en el código — {len(casos)} mensajes del golden fuera del banco\n{'=' * 84}")
+        bien, t0 = 0, time.perf_counter()
+        for c in casos:
+            res = [await _actividad_afirmada(cli, c["msg"]) for _ in range(N)]
+            ok = all(d == c["afirma"] for d, _ in res)
+            bien += ok
+            if not ok:
+                print(f"  [MAL] esperado={c['afirma']!s:<5} p(afirma, hipótesis)={[p for _, p in res]}  {c['msg'][:66]!r}")
+        print(f"  --> {bien}/{len(casos)}  ({time.perf_counter() - t0:.0f} s)")
 
 
 # ── u3-5 (25-sep, Alvaro): tres preguntas CANDIDATAS, aun NO en el codigo ────────────────────────

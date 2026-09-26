@@ -126,6 +126,7 @@ _ASKS_QUESTION_Q = {
 # `scripts/sonda_afirma_vs_pregunta.py`.
 AFFIRMS_LOCATION = "affirms_location"
 AFFIRMS_ACTIVITY = "affirms_activity"
+ACTIVITY_HYPOTHESIS = "activity_hypothesis"
 AFFIRMS_MIN = 0.7  # mismo umbral alto que `asks_question`: ante la duda, la conducta de hoy
 _AFFIRMS_QUESTIONS = {
     AFFIRMS_LOCATION: {
@@ -139,19 +140,59 @@ _AFFIRMS_QUESTIONS = {
             "an area, or saying where SOMEONE ELSE will be."
         ),
     },
+    # Recalibrada el 26-sep (Gadea, tras la ronda B2). La redacción anterior era demasiado
+    # conservadora: en 57 mensajes del golden que NO están en el banco (etiquetados por un
+    # anotador LLM aparte) tiraba 23 actividades que el cliente sí dice — "we just booked a
+    # 5 dive package", "so excited for diving with your team on Monday", "I just booked a
+    # beginner mini diving experience" — y la regresión de la ronda B2 ("Yo soy open y me
+    # gustaría salir un día… No sé qué tienen", 0,33) era la misma familia. Ahora cuenta
+    # también lo ya reservado o lo que viene a hacer, y preguntar qué salidas hay. Y no decide
+    # sola: ver `ACTIVITY_HYPOTHESIS` y `activity_affirmed`.
     AFFIRMS_ACTIVITY: {
         "type": "noul",
         "instructions": (
-            "The customer tells us which activity or course THEY want. Naming it to ask its price, "
-            "its availability or how to book it counts ('how much is the 5-dive package?', 'costo "
-            "de un fundive', 'quiero regalarle una experiencia de buceo'). It is FALSE when they "
-            "only raise it as a hypothesis ('in case I decided to do the Open Water course'), ask "
-            "whether it would be possible at all, or ask us to recommend an activity for them."
+            "The customer tells us which activity or course THEY want, are coming to do, or have already "
+            "booked: diving, a mini course, snorkeling or a certification course. Naming it to ask its "
+            "price, dates, schedule, what is included or how to book it counts, and so does saying they "
+            "would like to do it and then asking which trips or options we have. It is FALSE only when "
+            "they raise it as a hypothesis ('in case I decided to do the Open Water course'), ask whether "
+            "it would be possible at all for someone, or ask us to recommend WHICH activity to do."
+        ),
+    },
+    # La otra cara, en la misma llamada (coste 0): ¿aparece la actividad SOLO como hipótesis o
+    # pregunta abierta? Los datos que hay que matar tienen esa forma, y Jev la reconoce con
+    # márgenes anchos (0,75-0,94 en esos casos frente a 0,02-0,17 en los afirmados).
+    ACTIVITY_HYPOTHESIS: {
+        "type": "noul",
+        "instructions": (
+            "The customer mentions a diving activity or course ONLY as a hypothesis or an open question, "
+            "without telling us they want it, are coming to do it or have booked it: 'in case I decided to "
+            "do the course', 'would it be possible for my son to get certified?', 'which activity do you "
+            "recommend for them?'. It is FALSE when they say they want it, plan to do it, are booked for "
+            "it, or ask its price, dates, schedule or details as someone who is going to do it."
         ),
     },
 }
 # Las preguntas de u3-4 no son señales del router: su duda NO manda el turno al router LLM.
-_U34_QUESTIONS = (ASKS_QUESTION, AFFIRMS_LOCATION, AFFIRMS_ACTIVITY)
+_U34_QUESTIONS = (ASKS_QUESTION, AFFIRMS_LOCATION, AFFIRMS_ACTIVITY, ACTIVITY_HYPOTHESIS)
+
+
+def activity_affirmed(p_affirms: float, p_hypothesis: float | None) -> bool:
+    """¿El cliente afirma la actividad? Jev seguro de que sí (>= 0,7), o bastante probable
+    (>= 0,4) y sin pinta de hipótesis (< 0,5).
+
+    Medido el 26-sep con las dos preguntas de arriba, N=2 (`scripts/sonda_afirma_vs_pregunta.py`
+    y 57 mensajes del golden fuera del banco): banco 12/12; fuera del banco 52/57 (tira 1
+    dato bueno, deja 4 dudosos que el regex ya fijaba con el flag apagado), frente a 34/57 de
+    la redacción anterior sola. Las 4 reglas probadas: solo la afirmativa >= 0,7 (48/57), solo
+    la de hipótesis < 0,7 (48/57, pero deja 9 inventados), esta (52/57) y afirmativa >= 0,5 con
+    hipótesis < 0,7 (50/57). Ojo: la regla se eligió mirando esos 57, así que ya no son
+    una prueba ciega; la prueba ciega es el replay del golden."""
+    if p_affirms >= AFFIRMS_MIN:
+        return True
+    if p_hypothesis is None:
+        return False
+    return p_affirms >= 0.4 and p_hypothesis < 0.5
 
 
 def _questions_for_turn() -> dict:
@@ -199,9 +240,14 @@ def answers_to_signals(answers: dict, threshold: float = THRESHOLD) -> dict:
     # dudó en el router y el turno se fue al LLM) significa "no lo sé" -> conducta de hoy;
     # `False` significa "Jev dice que el cliente NO lo afirma" -> el dato se cae. Son
     # distintos y el llamante (`_question_turn_fields`) necesita distinguirlos.
-    for name in (AFFIRMS_LOCATION, AFFIRMS_ACTIVITY):
-        if name in answers:
-            out[name] = (answers.get(name) or {}).get("noul", 0.0) >= AFFIRMS_MIN
+    if AFFIRMS_LOCATION in answers:
+        out[AFFIRMS_LOCATION] = (answers.get(AFFIRMS_LOCATION) or {}).get("noul", 0.0) >= AFFIRMS_MIN
+    if AFFIRMS_ACTIVITY in answers:
+        hyp = answers.get(ACTIVITY_HYPOTHESIS)
+        out[AFFIRMS_ACTIVITY] = activity_affirmed(
+            (answers.get(AFFIRMS_ACTIVITY) or {}).get("noul", 0.0),
+            (hyp or {}).get("noul") if hyp else None,
+        )
     if (answers.get("comparing") or {}).get("noul", 0.0) >= threshold:
         opts = [
             n[4:] for n, a in answers.items()

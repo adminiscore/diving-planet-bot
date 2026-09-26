@@ -490,8 +490,22 @@ puerta de Jev hace en PRE lo que prometía el escalón 0.
 
 ## Siguiente paso tras la ronda B2 (25-sep, noche) — ESTE es el vigente
 
-1. **Recalibrar `affirms_activity`** con el caso nuevo del banco ("Yo soy open y me gustaría salir un
-   día y tal. No sé qué tienen." → afirma), sin perder ninguno de los 20 anteriores (`u34`: hoy 19/21).
+1. ✅ **HECHO (26-sep, Gadea) — recalibrar `affirms_activity`.** Banco `u34` **21/21** (antes 19/21).
+   Hallazgo al medir fuera del banco: en **57 mensajes del golden que no están en el banco** (turnos con
+   pregunta que nombran una actividad, etiquetados por un anotador LLM aparte:
+   `docs/robustness/u3-4/banco-actividad-golden.json`) la pregunta anterior tiraba **23** actividades que
+   el cliente sí dice ("we just booked a 5 dive package", "so excited for diving with your team on
+   Monday", "I just booked a beginner mini diving experience"): 34/57. La regresión de la ronda B2 era
+   la misma familia. Retocar la redacción no bastaba (36/57). Lo que funciona: **dos preguntas en la
+   misma llamada** (coste 0) — `affirms_activity` reescrita (cuenta lo ya reservado, lo que viene a
+   hacer y preguntar qué salidas hay) y una nueva, `activity_hypothesis` ("¿aparece SOLO como hipótesis o
+   pregunta abierta?") — y la regla `jev_router.activity_affirmed`: afirma si p ≥ 0,7, o si p ≥ 0,4 y la
+   hipótesis < 0,5. Resultado: **53/57** fuera del banco (los 4 que falla son discutibles: "uno de los
+   buceos puede ser en wreck?", "completé el curso básico…"). Se probaron 4 reglas (afirmativa sola 48/57;
+   hipótesis sola 48/57 pero deja 9 inventados; esta 52-53/57; afirmativa ≥ 0,5 con hipótesis < 0,7
+   50/57). **Ojo:** la regla se eligió mirando esos 57, así que ya no son prueba ciega; la prueba ciega es
+   el replay del golden (paso 4). El banco (`python -m scripts.sonda_afirma_vs_pregunta u34`) ahora mide
+   la actividad con la regla del código e incluye los 57 como segundo bloque.
 2. **Meter en `jev_router` las candidatas de u3-5** (certificado, grupo, nacionalidad; `u35`: 16/17 y
    13/13 en los casos nuevos) detrás del mismo flag, y usar la de certificado **también para filtrar
    las contradicciones de los datos ya guardados** en el turno con pregunta (mata el "¿lo cambio?").

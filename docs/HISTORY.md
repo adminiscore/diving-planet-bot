@@ -1,6 +1,11 @@
 History
 =======
 
+0.29.29 - (2026-09-26)
+----------------------
+* **u3-4 · paso 1 tras la ronda B2: `affirms_activity` recalibrada** (Gadea). Banco 21/21 (antes 19/21). Al medir con 57 mensajes del golden que NO están en el banco (anotados por un LLM aparte, `docs/robustness/u3-4/banco-actividad-golden.json`), la pregunta anterior tiraba 23 actividades que el cliente sí dice ("we just booked a 5 dive package"): 34/57. Ahora deciden dos preguntas en la misma llamada de Jev (coste 0): la afirmativa reescrita y una nueva de hipótesis (`activity_hypothesis`), con la regla `jev_router.activity_affirmed` (p ≥ 0,7, o p ≥ 0,4 y hipótesis < 0,5): **53/57**. Todo detrás de `ANSWER_AND_CONTINUE` (apagado): PRE no cambia. La regla se eligió mirando esos 57; la prueba ciega es el replay del golden. Detalle en `docs/robustness/u3-4-diseno.md`.
+* Integrada `feature/pre_alvaro` en `feature/pre_gadea` (avance limpio) y volcados a Plan Coral los cambios pendientes de Álvaro y Gonzalo del 25-sep.
+
 0.29.28 - (2026-09-25)
 ----------------------
 * **u3-4 · ronda B2 en PRE con v5: NO se promociona; flag apagado otra vez.** Ronda core (32 diálogos / 93 turnos, 0 sin respuesta) con `ANSWER_AND_CONTINUE=true`, frente a la ronda A del 24-sep. Antes de subir se comprobó que todo el código nuevo va detrás del flag (con el flag apagado, HEAD = lo que corría en PRE), así que la A sigue siendo la referencia.
