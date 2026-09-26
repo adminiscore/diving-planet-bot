@@ -1,0 +1,127 @@
+{
+  "que_es": "Control permanente (paso 1c del plan secuencial, 26-sep-2026): correcciones EXPLICITAS de un dato ya guardado. Con ANSWER_AND_CONTINUE encendido, _route_contradictions descarta el cambio si Jev dice que el mensaje NO afirma ese campo, y ese filtro va ANTES que la senal de correccion ('perdon', 'en realidad', 'actually'...): una correccion real con p < 0,7 se ignoraria en silencio. Solo cuentan los campos que pasan por ese filtro (con pregunta de Jev Y en _CORRECTABLE_FIELDS): location, is_certified, group_size, group_allocation, is_colombian. Las de actividad son INFORMATIVAS: la actividad no pasa por ese filtro, pero si por la puerta de u3-4 en un turno con pregunta.",
+  "como_se_usa": "python -m scripts.sonda_afirma_vs_pregunta corr (preguntas y regla de actividad, las del codigo). tests/test_u3_banco_correcciones.py comprueba que cada campo que filtra Jev tiene casos aqui.",
+  "medido": "26-sep, codigo en 3c49b87: campos filtrados 20/20 (el mas justo, 'al final 2 buceamos y 1 hace snorkel', 0,74-0,75). Informativo: 'mejor snorkel' da 0,36-0,43 con la regla de actividad (dia a dia cruza el minimo de 0,4): en un turno con pregunta ('mejor snorkel, ¿cuanto cuesta?') la puerta de u3-4 perderia el cambio. Apuntado para el paso 4a (u3-5).",
+  "casos": [
+    {
+      "campo": "location",
+      "mensaje": "ah no, al final nos quedamos en la isla",
+      "origen": "sintetico"
+    },
+    {
+      "campo": "location",
+      "mensaje": "cambio de plan, estamos en barú",
+      "origen": "sintetico (progress-log, tarea 7b)"
+    },
+    {
+      "campo": "location",
+      "mensaje": "perdón, salimos desde Cartagena, no desde las islas",
+      "origen": "sintetico"
+    },
+    {
+      "campo": "location",
+      "mensaje": "actually we're staying in Cartagena, not on the islands",
+      "origen": "sintetico"
+    },
+    {
+      "campo": "activity",
+      "mensaje": "mejor pensandolo bien quiero el minicurso",
+      "origen": "tests/test_corrections_confirmed.py"
+    },
+    {
+      "campo": "activity",
+      "mensaje": "mejor snorkel",
+      "origen": "tests/test_corrections_confirmed.py"
+    },
+    {
+      "campo": "activity",
+      "mensaje": "actually we'd rather do snorkeling",
+      "origen": "sintetico"
+    },
+    {
+      "campo": "activity",
+      "mensaje": "cambio de idea, quiero el curso open water",
+      "origen": "sintetico"
+    },
+    {
+      "campo": "is_certified",
+      "mensaje": "ah no, perdón, no soy certificado",
+      "origen": "sintetico"
+    },
+    {
+      "campo": "is_certified",
+      "mensaje": "sorry, I'm actually not certified yet",
+      "origen": "sintetico"
+    },
+    {
+      "campo": "is_certified",
+      "mensaje": "en realidad sí tengo el open water",
+      "origen": "sintetico"
+    },
+    {
+      "campo": "is_certified",
+      "mensaje": "wait, I do have my advanced",
+      "origen": "sintetico"
+    },
+    {
+      "campo": "group_size",
+      "mensaje": "perdón, somos 3, no 2",
+      "origen": "sintetico"
+    },
+    {
+      "campo": "group_size",
+      "mensaje": "ah no, al final vamos 4",
+      "origen": "sintetico"
+    },
+    {
+      "campo": "group_size",
+      "mensaje": "actually it's just me",
+      "origen": "sintetico"
+    },
+    {
+      "campo": "group_size",
+      "mensaje": "my wife is coming too, so 2 people",
+      "origen": "sintetico"
+    },
+    {
+      "campo": "group_allocation",
+      "mensaje": "al final 2 buceamos y 1 hace snorkel",
+      "origen": "sintetico"
+    },
+    {
+      "campo": "group_allocation",
+      "mensaje": "actually only my wife will dive, I'll just snorkel",
+      "origen": "sintetico"
+    },
+    {
+      "campo": "group_allocation",
+      "mensaje": "perdón, los niños harán snorkel y nosotros dos el buceo",
+      "origen": "sintetico"
+    },
+    {
+      "campo": "is_colombian",
+      "mensaje": "ah no, somos gringos",
+      "origen": "tests/test_corrections_confirmed.py"
+    },
+    {
+      "campo": "is_colombian",
+      "mensaje": "espera, en realidad no somos colombianos",
+      "origen": "tests/test_corrections_confirmed.py"
+    },
+    {
+      "campo": "is_colombian",
+      "mensaje": "somos colombianos, sí",
+      "origen": "sintetico"
+    },
+    {
+      "campo": "is_colombian",
+      "mensaje": "actually we are Colombian",
+      "origen": "sintetico"
+    },
+    {
+      "campo": "is_colombian",
+      "mensaje": "no no, somos de Medellín",
+      "origen": "sintetico"
+    }
+  ]
+}

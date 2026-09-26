@@ -1,6 +1,12 @@
 History
 =======
 
+0.29.37 - (2026-09-26)
+----------------------
+* **Plan secuencial, paso 1c: control permanente de correcciones en el banco de Jev.** Con u3-4 encendido, el filtro de contradicciones (`_route_contradictions`) descarta un cambio de un dato guardado si Jev dice que el mensaje no lo afirma, y va antes que la señal "perdón / en realidad": una corrección real que Jev dude se perdería en silencio. Nuevo bloque `python -m scripts.sonda_afirma_vs_pregunta corr` con 24 correcciones explícitas (`docs/robustness/u3-4/banco-correcciones.json`) y un test en CI (`tests/test_u3_banco_correcciones.py`) que exige casos de control para cada campo que el filtro toca.
+* **Resultado: 20/20** en los campos que pasan por ese filtro (ubicación, certificado, personas, reparto, nacionalidad); el más justo, "al final 2 buceamos y 1 hace snorkel" (0,74-0,75).
+* **Lo que enseñó al montarlo, y por qué NO se tocó el código**: la primera versión incluía la actividad y "mejor snorkel" salía bloqueado (Jev 0,36-0,46, cruza el mínimo según el día). Al seguir el código se vio que **la actividad no pasa por ese filtro** (sus cambios van por la reserva, no está en `_CORRECTABLE_FIELDS`), así que en el producto esa corrección no se pierde y se deshizo un cambio de código que ya estaba escrito: sin fallo demostrado no se cambia conducta. Donde sí importaría es en un turno con pregunta ("mejor snorkel, ¿cuánto cuesta?"): la puerta de u3-4 perdería el cambio. Queda como caso informativo del banco y apuntado para el paso 4a (u3-5).
+
 0.29.36 - (2026-09-26)
 ----------------------
 * **Plan secuencial, paso 1b (r6-3): `python -m scripts.check_deploy` comprueba que un push a `pre_*` SÍ se desplegó.** Un CI rojo se salta el deploy sin avisar (del 24-sep 23:04 al 25-sep 21:30 PRE sirvió código viejo sin que nadie lo viera). El script espera al run de GitHub de ese commit (API pública, sin `gh` ni permisos de admin; si falló, dice qué paso) y luego comprueba por SSH que PRE sirve ese commit y esa rama, que está `healthy`, y que **cada interruptor y modelo que `docker-compose.vps.yml` fija es el que tiene de verdad el bot**. Sale 0 bien, 1 fallo, 2 si no termina a tiempo.

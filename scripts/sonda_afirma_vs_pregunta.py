@@ -16,6 +16,7 @@ redaccion anterior, no contra la intuicion.
     python -m scripts.sonda_afirma_vs_pregunta          # todo (~50 s)
     python -m scripts.sonda_afirma_vs_pregunta u34      # lugar y actividad (las del codigo, ~10 s)
     python -m scripts.sonda_afirma_vs_pregunta u35      # certificado, grupo, nacionalidad (candidatas, ~35 s)
+    python -m scripts.sonda_afirma_vs_pregunta corr     # correcciones explícitas: el filtro de Jev no se las traga (~40 s)
 
 Leccion de metodo, que costo una medida: una sonda de frases SUELTAS no vale para juzgar el
 camino de la verificacion (`scripts/sonda_verificacion_fiel.py`), porque sin historial el LLM ya
@@ -272,6 +273,52 @@ async def banco_u35() -> None:
           + f"   (* = nuevos; {time.perf_counter() - t0:.0f} s, umbral {jev_router.AFFIRMS_MIN})")
 
 
+# ── Control de correcciones (paso 1c del plan secuencial, 26-sep) ────────────────────────────────
+# Con el flag, el filtro de contradicciones de Jev (`_route_contradictions`) descarta un cambio si
+# Jev dice que el mensaje NO afirma ese campo, y va ANTES que la señal "ah no / perdón": una
+# corrección real con p < 0,7 se ignoraría en silencio. Aquí, correcciones explícitas: Jev tiene que
+# decir que TODAS afirman su campo. Datos en banco-correcciones.json (también los lee un test).
+CORRECCIONES = Path("docs/robustness/u3-4/banco-correcciones.json")
+
+
+def campos_filtrados() -> set[str]:
+    """Los campos a los que de verdad se aplica el filtro de contradicciones de Jev: los que tienen
+    pregunta de Jev Y pasan por `_route_contradictions` (`_CORRECTABLE_FIELDS`). La actividad NO
+    pasa por ahí (sus cambios van por la reserva): sus correcciones son informativas."""
+    from src.agents.conversational_core import _AFFIRMS_SIGNAL_FIELDS, _CORRECTABLE_FIELDS  # lazy
+
+    return {campo for campo, _ in _AFFIRMS_SIGNAL_FIELDS} & set(_CORRECTABLE_FIELDS)
+
+
+async def banco_correcciones() -> None:
+    from src.agents.conversational_core import _AFFIRMS_SIGNAL_FIELDS  # lazy: carga el núcleo
+
+    pregunta = dict(_AFFIRMS_SIGNAL_FIELDS)
+    filtrados = campos_filtrados()
+    qs = jev_router._AFFIRMS_QUESTIONS
+    casos = json.loads(CORRECCIONES.read_text(encoding="utf-8"))["casos"]
+    print(f"\n{'=' * 84}\ncorrecciones explícitas — ninguna puede quedarse fuera del filtro de Jev\n{'=' * 84}")
+    bloqueadas = 0
+    async with httpx.AsyncClient() as cli:
+        t0 = time.perf_counter()
+        for c in casos:
+            campo, mensaje = c["campo"], c["mensaje"]
+            if campo == "activity":
+                vueltas = [await _actividad_afirmada(cli, mensaje) for _ in range(N)]
+                pasa, det = all(v[0] for v in vueltas), [v[1] for v in vueltas]
+            else:
+                ps = [round(await _preguntar(cli, mensaje, qs[pregunta[campo]]["instructions"]), 2) for _ in range(N)]
+                pasa, det = all(p >= jev_router.AFFIRMS_MIN for p in ps), ps
+            control = campo in filtrados
+            bloqueadas += control and not pasa
+            marca = ('pasa     ' if pasa else 'BLOQUEADA') if control else ('info: sí ' if pasa else 'info: NO ')
+            print(f"  [{marca}] {campo:16} {str(det):28} {mensaje!r}")
+    n_control = sum(1 for c in casos if c["campo"] in filtrados)
+    print(f"  --> {n_control - bloqueadas}/{n_control} correcciones de los campos filtrados pasan "
+          f"({bloqueadas} se descartarían en silencio; {time.perf_counter() - t0:.0f} s). "
+          f"'info' = actividad: no pasa por este filtro, sí por la puerta de u3-4 en turnos con pregunta.")
+
+
 if __name__ == "__main__":
     # Sin argumento: todo. `u34` = lugar y actividad (las del codigo); `u35` = las candidatas.
     que = sys.argv[1] if len(sys.argv) > 1 else "todo"
@@ -279,3 +326,5 @@ if __name__ == "__main__":
         asyncio.run(main())
     if que in ("todo", "u35"):
         asyncio.run(banco_u35())
+    if que in ("todo", "corr"):
+        asyncio.run(banco_correcciones())

@@ -456,7 +456,7 @@ medias (u3-1 ✅, u3-4 ✅ promocionada, u3-5 🟡); PRE con u3-4 encendido. Sui
 - **1b · r6-3 comprobar cada deploy. ✅ HECHO 26-sep (HISTORY 0.29.36).** `scripts/check_deploy.py`: sondea el run de GitHub (API pública,
   `conclusion`) y, si pasa, el SHA, la rama y los flags que sirve PRE por SSH; sale con error si no cuadra.
   Se añade al ritual de cierre (`/close-work`) y al handoff.
-- **1c · control de correcciones en el banco.** El filtro de contradicciones de Jev actúa en TODOS los turnos
+- **1c · control de correcciones en el banco. ✅ HECHO 26-sep (HISTORY 0.29.37): 20/20 en los campos filtrados.** El filtro de contradicciones de Jev actúa en TODOS los turnos
   (u3-5) y va antes que la señal "ah no / perdón": una corrección real con p < 0,7 se ignoraría. Medido el
   26-sep: 21/21 correcciones explícitas pasan, pero "mejor snorkel" va justo (0,41 con la regla de actividad).
   Se añade como bloque fijo de `scripts/sonda_afirma_vs_pregunta.py` para que cualquier cambio de redacción
@@ -471,7 +471,8 @@ medias (u3-1 ✅, u3-4 ✅ promocionada, u3-5 🟡); PRE con u3-4 encendido. Sui
   cargo"). Va ANTES de las rondas que quedan porque todas se juzgan con él.
 - **4a · u3-5:** "cursos de buceo… primera vez" → minicurso supuesto (regla del owner: recomendar, no
   asumir) y "Vamos en família a Cartagena" → no colombiano (portugués); más s4-8/9/10/11 si el re-triaje los
-  deja aquí. **4b · u3-6:** `detect_special_signals` con Jev; el "recordar" mal disparado ("how do we book" →
+  deja aquí. Y del 1c: la regla de actividad da 0,36-0,46 a "mejor snorkel", así que en un turno con
+  pregunta ("mejor snorkel, ¿cuánto cuesta?") la puerta de u3-4 perdería el cambio de opinión. **4b · u3-6:** `detect_special_signals` con Jev; el "recordar" mal disparado ("how do we book" →
   resumen, sin contestar ni extraer; s4-18). **4c · u3-7:** `resolve_slot_answer` con Jev en sí/no y listas.
   **4d · u3-3:** el regex de `intent_detector` como vía rápida con respaldo, sin parches.
 - **5 · cierre de U3** con la ronda completa (~2 $). Si sale bien, U3 queda cerrada y esa ronda es la línea
