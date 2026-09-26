@@ -127,6 +127,9 @@ _ASKS_QUESTION_Q = {
 AFFIRMS_LOCATION = "affirms_location"
 AFFIRMS_ACTIVITY = "affirms_activity"
 ACTIVITY_HYPOTHESIS = "activity_hypothesis"
+AFFIRMS_CERTIFICATION = "affirms_certification"
+AFFIRMS_GROUP = "affirms_group"
+AFFIRMS_NATIONALITY = "affirms_nationality"
 AFFIRMS_MIN = 0.7  # mismo umbral alto que `asks_question`: ante la duda, la conducta de hoy
 _AFFIRMS_QUESTIONS = {
     AFFIRMS_LOCATION: {
@@ -172,9 +175,52 @@ _AFFIRMS_QUESTIONS = {
             "it, or ask its price, dates, schedule or details as someone who is going to do it."
         ),
     },
+    # u3-5 (calibradas por Álvaro el 25-sep, en el código desde el 26-sep): la misma puerta para
+    # certificado, número de personas y nacionalidad. Banco `u35`: 66/67 sobre casos reales del
+    # golden, 28 de ellos no usados para escribir las frases (`scripts/sonda_afirma_vs_pregunta.py`).
+    # Matan los datos nombrados DENTRO de una pregunta ("in case I decided to do PADI Open Water"
+    # -> certificado; "costo para colombianos" -> colombiano) y, con la de certificado, el "¿lo
+    # cambio?" fantasma de la ronda B2 ("listo, como pago" -> 0,03): ver
+    # `conversational_core._route_contradictions`.
+    AFFIRMS_CERTIFICATION: {
+        "type": "noul",
+        "instructions": (
+            'The customer tells us whether THEY, or the people who will dive with them, already hold a '
+            "diving certification. Stating a level counts ('I'm Open Water certified', 'mi esposa es "
+            "Advanced'), and so does saying that someone has never dived, that they want to get certified "
+            'or are buying or booking a beginner course, that they are partway through a course '
+            '(e-learning, referral), or that they need a refresher. A short answer of a few words that '
+            'states it counts too. It is FALSE when a course or level is only mentioned as a hypothesis '
+            "('if I ever decided to get certified'), when they only ask whether something would be "
+            'possible for someone, or when they ask about dives, prices or options without saying '
+            "anyone's level."
+        ),
+    },
+    AFFIRMS_GROUP: {
+        "type": "noul",
+        "instructions": (
+            'The customer tells us HOW MANY people will take part, or who is coming: a number of people, '
+            "'just me', 'my wife and I', a family, a list of names. A plan counts ('we'll probably book "
+            "it for three'). It is FALSE when the numbers in the message count dives, days, nights or "
+            "packages rather than people, when 'solo' means 'only' ('solo la mañana'), or when they ask "
+            'about one single person without saying who is coming.'
+        ),
+    },
+    AFFIRMS_NATIONALITY: {
+        "type": "noul",
+        "instructions": (
+            "The customer tells us their nationality or where they come from ('somos de Medellín', 'I'm "
+            "from Canada', 'we are Mexican'). Saying that they are, or are not, Colombian counts, even in "
+            "a few words. It is FALSE when 'Colombian' only appears in what they ask about: prices or "
+            'rates for Colombians, or whether a price is in pesos or in dollars.'
+        ),
+    },
 }
-# Las preguntas de u3-4 no son señales del router: su duda NO manda el turno al router LLM.
-_U34_QUESTIONS = (ASKS_QUESTION, AFFIRMS_LOCATION, AFFIRMS_ACTIVITY, ACTIVITY_HYPOTHESIS)
+# Las preguntas de u3-4/u3-5 no son señales del router: su duda NO manda el turno al router LLM.
+_U34_QUESTIONS = (
+    ASKS_QUESTION, AFFIRMS_LOCATION, AFFIRMS_ACTIVITY, ACTIVITY_HYPOTHESIS,
+    AFFIRMS_CERTIFICATION, AFFIRMS_GROUP, AFFIRMS_NATIONALITY,
+)
 
 
 def activity_affirmed(p_affirms: float, p_hypothesis: float | None) -> bool:
@@ -240,8 +286,9 @@ def answers_to_signals(answers: dict, threshold: float = THRESHOLD) -> dict:
     # dudó en el router y el turno se fue al LLM) significa "no lo sé" -> conducta de hoy;
     # `False` significa "Jev dice que el cliente NO lo afirma" -> el dato se cae. Son
     # distintos y el llamante (`_question_turn_fields`) necesita distinguirlos.
-    if AFFIRMS_LOCATION in answers:
-        out[AFFIRMS_LOCATION] = (answers.get(AFFIRMS_LOCATION) or {}).get("noul", 0.0) >= AFFIRMS_MIN
+    for name in (AFFIRMS_LOCATION, AFFIRMS_CERTIFICATION, AFFIRMS_GROUP, AFFIRMS_NATIONALITY):
+        if name in answers:
+            out[name] = (answers.get(name) or {}).get("noul", 0.0) >= AFFIRMS_MIN
     if AFFIRMS_ACTIVITY in answers:
         hyp = answers.get(ACTIVITY_HYPOTHESIS)
         out[AFFIRMS_ACTIVITY] = activity_affirmed(

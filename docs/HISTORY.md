@@ -1,6 +1,10 @@
 History
 =======
 
+0.29.30 - (2026-09-26)
+----------------------
+* **u3-4 / u3-5 · paso 2: las preguntas de u3-5 en el código** (Gadea, sobre la calibración de Álvaro). `affirms_certification`, `affirms_group` y `affirms_nationality` en la misma llamada de Jev (coste 0; +9 ms de p50), detrás de `ANSWER_AND_CONTINUE`. En un turno con pregunta tiran el dato del regex que el cliente solo nombra dentro de la pregunta ("¿precio para colombianos?") y, en `_route_contradictions`, evitan el "¿lo cambio?" fantasma de la ronda B2 ("listo, como pago" → "¿lo cambio a sin certificación?"): si Jev dice que el mensaje no afirma ese campo, se queda lo guardado. Banco `u35` 66/67 leyendo ya del código; 6 tests nuevos (con controles).
+
 0.29.29 - (2026-09-26)
 ----------------------
 * **u3-4 · paso 1 tras la ronda B2: `affirms_activity` recalibrada** (Gadea). Banco 21/21 (antes 19/21). Al medir con 57 mensajes del golden que NO están en el banco (anotados por un LLM aparte, `docs/robustness/u3-4/banco-actividad-golden.json`), la pregunta anterior tiraba 23 actividades que el cliente sí dice ("we just booked a 5 dive package"): 34/57. Ahora deciden dos preguntas en la misma llamada de Jev (coste 0): la afirmativa reescrita y una nueva de hipótesis (`activity_hypothesis`), con la regla `jev_router.activity_affirmed` (p ≥ 0,7, o p ≥ 0,4 y hipótesis < 0,5): **53/57**. Todo detrás de `ANSWER_AND_CONTINUE` (apagado): PRE no cambia. La regla se eligió mirando esos 57; la prueba ciega es el replay del golden. Detalle en `docs/robustness/u3-4-diseno.md`.

@@ -647,3 +647,77 @@ async def test_si_el_llm_no_contesta_no_se_tira_nada(monkeypatch, signals, rag, 
     assert (st.location or st.detected_location) == "island", (
         "con la verificación caída se conserva lo que leyó el regex, no se tira"
     )
+
+
+# ---------------------------------------------------------------------------
+# u3-5 (26-sep): la misma puerta para certificado, grupo y nacionalidad, y el
+# "¿lo cambio?" fantasma de la ronda B2 ("listo, como pago").
+# ---------------------------------------------------------------------------
+
+
+def test_con_el_flag_jev_recibe_las_preguntas_de_u35(monkeypatch):
+    nuevas = (jev_router.AFFIRMS_CERTIFICATION, jev_router.AFFIRMS_GROUP, jev_router.AFFIRMS_NATIONALITY)
+    monkeypatch.setattr(settings, "answer_and_continue", False)
+    assert not any(q in jev_router._questions_for_turn() for q in nuevas)
+    monkeypatch.setattr(settings, "answer_and_continue", True)
+    assert all(q in jev_router._questions_for_turn() for q in nuevas)
+    assert jev_router.uncertain_answers({q: {"type": "noul", "noul": 0.5} for q in nuevas}) == []
+
+
+def test_las_senales_de_u35_viajan_tambien_en_falso():
+    out = jev_router.answers_to_signals({
+        jev_router.AFFIRMS_CERTIFICATION: {"type": "noul", "noul": 0.03},
+        jev_router.AFFIRMS_GROUP: {"type": "noul", "noul": 0.92},
+        jev_router.AFFIRMS_NATIONALITY: {"type": "noul", "noul": 0.10},
+    })
+    assert out["affirms_certification"] is False
+    assert out["affirms_group"] is True
+    assert out["affirms_nationality"] is False
+
+
+def _con_pregunta(st, afirma):
+    """Estado de un turno con pregunta: respuesta en marcha + lo que dijo Jev."""
+    loop = asyncio.get_event_loop()
+    st._pending_answer = loop.create_future()
+    st._answer_affirms = afirma
+    return st
+
+
+async def test_el_lo_cambio_fantasma_se_descarta_si_jev_dice_que_no_lo_afirma():
+    """Ronda B2: "listo, como pago" -> la revisión de datos guardados dice "no certificado" ->
+    "¿lo cambio?". Con Jev diciendo que el mensaje no habla de certificación, no se pregunta."""
+    st = _con_pregunta(_state(), {"is_certified": False})
+    st.is_certified = True
+    intent = core._detector.detect("listo, como pago", st)
+    core._route_contradictions(st, "listo, como pago", intent, {"is_certified": False})
+    assert not st.pending_correction
+    assert st.is_certified is True
+
+
+async def test_sin_turno_con_pregunta_la_contradiccion_se_confirma_como_siempre():
+    """Control: fuera del turno con pregunta (o sin la señal de Jev) no cambia nada."""
+    st = _state()
+    st.is_certified = True
+    st._answer_affirms = {"is_certified": False}  # restos de otro turno: no cuentan
+    intent = core._detector.detect("ah no, no soy certificado", st)
+    core._route_contradictions(st, "ah no, no soy certificado", intent, {"is_certified": False})
+    assert st.pending_correction == {"is_certified": False}
+
+
+async def test_si_jev_dice_que_si_lo_afirma_la_contradiccion_se_confirma():
+    st = _con_pregunta(_state(), {"is_certified": True})
+    st.is_certified = True
+    intent = core._detector.detect("no soy certificado, ¿qué me recomiendas?", st)
+    core._route_contradictions(st, "no soy certificado, ¿qué me recomiendas?", intent, {"is_certified": False})
+    assert st.pending_correction == {"is_certified": False}
+
+
+async def test_la_puerta_tira_nacionalidad_y_grupo_nombrados_dentro_de_la_pregunta():
+    """"¿cuál es el precio para colombianos, para 2?" no dice que sean colombianos ni cuántos van."""
+    st = _con_pregunta(_state(), {"is_colombian": False, "group_size": False, "group_allocation": False})
+    intent = core._detector.detect("somos colombianos y vamos 2", st)
+    assert intent.is_colombian is True and intent.group_size == 2, "el regex lo lee (control)"
+    core._question_turn_fields(intent, st)
+    assert intent.is_colombian is None
+    assert intent.group_size is None
+    assert "is_colombian" not in intent.detected_fields

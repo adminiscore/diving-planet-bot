@@ -1713,6 +1713,14 @@ def _route_contradictions(state: ConversationState, message: str, intent, propos
         old = known.get(field)
         if value in (None, [], {}) or old in (None, [], {}) or value == old:
             continue
+        # u3-5 (26-sep): el "¿lo cambio?" fantasma. En un turno con pregunta, al revisar los datos
+        # ya guardados el LLM re-deduce desde el historial y propone un cambio que el mensaje no
+        # dice ("listo, como pago" -> "¿lo cambio? con certificación -> sin certificación", ronda
+        # B2). Si Jev dice que el cliente no afirma nada de ese campo, no hay contradicción que
+        # confirmar: se queda lo guardado.
+        if _jev_says_not_affirmed(state, field):
+            logger.info(f"[CORE] contradiccion descartada {field}: {old!r} -> {value!r} (Jev: no lo afirma)")
+            continue
         if cue:
             setattr(intent, field, value)
             if field not in intent.overwrite:
@@ -4514,6 +4522,27 @@ async def _rag_answer(
 # contestaba pero no extraía los datos del mismo mensaje. Con el flag, la respuesta del RAG
 # se lanza en paralelo en `_routing_phase`, la extracción sigue su camino normal y el
 # cierre (o la salida anticipada de la extracción) pone la respuesta delante.
+# Campo del estado -> pregunta de Jev que dice si el cliente lo AFIRMA en este mensaje (u3-4 lugar y
+# actividad; u3-5 certificado, grupo y nacionalidad). El reparto por actividad cuelga de la del
+# grupo: si el cliente no dice cuántos van, tampoco dice cómo se reparten.
+_AFFIRMS_SIGNAL_FIELDS = (
+    ("location", "affirms_location"),
+    ("activity", "affirms_activity"),
+    ("is_certified", "affirms_certification"),
+    ("group_size", "affirms_group"),
+    ("group_allocation", "affirms_group"),
+    ("is_colombian", "affirms_nationality"),
+)
+
+
+def _jev_says_not_affirmed(state: ConversationState, field: str) -> bool:
+    """En un turno con pregunta, ¿dice Jev que el cliente NO afirma este campo? Ausente (Jev
+    apagado, o dudó en el router) = no lo sabemos -> la conducta de hoy."""
+    if not _has_pending_answer(state):
+        return False
+    return (getattr(state, "_answer_affirms", None) or {}).get(field) is False
+
+
 def _has_pending_answer(state: ConversationState) -> bool:
     return getattr(state, "_pending_answer", None) is not None
 
@@ -4530,7 +4559,7 @@ def _maybe_launch_answer(state: ConversationState, message: str, routing_signals
     # conducta de hoy; `False` significa "Jev dice que no lo afirma" -> el dato se cae.
     state._answer_affirms = {
         f: routing_signals[sig]
-        for f, sig in (("location", "affirms_location"), ("activity", "affirms_activity"))
+        for f, sig in _AFFIRMS_SIGNAL_FIELDS
         if sig in routing_signals
     }
     # La foto del historial se toma AQUÍ (lección de la carrera de l1-4): la tarea puede no

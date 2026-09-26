@@ -149,7 +149,7 @@ async def main() -> None:
         print(f"  --> {bien}/{len(casos)}  ({time.perf_counter() - t0:.0f} s)")
 
 
-# ── u3-5 (25-sep, Alvaro): tres preguntas CANDIDATAS, aun NO en el codigo ────────────────────────
+# ── u3-5 (25-sep, Alvaro): tres preguntas calibradas; en el código desde el 26-sep (Gadea) ─────────────────────────────────
 # Los 2 errores reales que sobreviven a u3-4 v5 (`is_certified` en "in case I decided to do PADI
 # Open Water", `group_size` en "is it possible for my son...") y la nacionalidad de u3-5 ("costo
 # para colombianos" -> colombiano) son la misma familia que la puerta ya arregla para lugar y
@@ -169,33 +169,12 @@ async def main() -> None:
 # ambiguas (producto o estado). No es turno con pregunta, asi que la puerta nunca lo veria.
 # Ojo: Jev baila mas de ±0,03 en los casos frontera ("quiero bucear certificado": 0,79 y 0,67).
 #
-# Cuando pasen al codigo (`jev_router`), este bloque debe leerlas de alli, como hace `main` con
+# Ya estan en el codigo (`jev_router`): este bloque las lee de alli, como hace `main` con
 # las de lugar y actividad.
-U35_CANDIDATAS = {
-    "cert": (
-        'The customer tells us whether THEY, or the people who will dive with them, already hold a '
-        "diving certification. Stating a level counts ('I'm Open Water certified', 'mi esposa es "
-        "Advanced'), and so does saying that someone has never dived, that they want to get certified "
-        'or are buying or booking a beginner course, that they are partway through a course '
-        '(e-learning, referral), or that they need a refresher. A short answer of a few words that '
-        'states it counts too. It is FALSE when a course or level is only mentioned as a hypothesis '
-        "('if I ever decided to get certified'), when they only ask whether something would be "
-        'possible for someone, or when they ask about dives, prices or options without saying '
-        "anyone's level."
-    ),
-    "grp": (
-        'The customer tells us HOW MANY people will take part, or who is coming: a number of people, '
-        "'just me', 'my wife and I', a family, a list of names. A plan counts ('we'll probably book "
-        "it for three'). It is FALSE when the numbers in the message count dives, days, nights or "
-        "packages rather than people, when 'solo' means 'only' ('solo la mañana'), or when they ask "
-        'about one single person without saying who is coming.'
-    ),
-    "nac": (
-        "The customer tells us their nationality or where they come from ('somos de Medellín', 'I'm "
-        "from Canada', 'we are Mexican'). Saying that they are, or are not, Colombian counts, even in "
-        "a few words. It is FALSE when 'Colombian' only appears in what they ask about: prices or "
-        'rates for Colombians, or whether a price is in pesos or in dollars.'
-    ),
+U35_CANDIDATAS = {  # desde el 26-sep viven en el código: se leen de allí
+    "cert": jev_router._AFFIRMS_QUESTIONS[jev_router.AFFIRMS_CERTIFICATION]["instructions"],
+    "grp": jev_router._AFFIRMS_QUESTIONS[jev_router.AFFIRMS_GROUP]["instructions"],
+    "nac": jev_router._AFFIRMS_QUESTIONS[jev_router.AFFIRMS_NATIONALITY]["instructions"],
 }
 
 CASOS_U35 = [
@@ -278,7 +257,7 @@ NUEVOS_U35 = [
 
 
 async def banco_u35() -> None:
-    print(f"\n{'=' * 84}\nu3-5 — candidatas (aun no en el codigo)\n{'=' * 84}")
+    print(f"\n{'=' * 84}\nu3-5 — certificado, grupo y nacionalidad (las del código)\n{'=' * 84}")
     tot: dict = {}
     async with httpx.AsyncClient() as cli:
         t0 = time.perf_counter()

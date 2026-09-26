@@ -506,9 +506,17 @@ puerta de Jev hace en PRE lo que prometía el escalón 0.
    50/57). **Ojo:** la regla se eligió mirando esos 57, así que ya no son prueba ciega; la prueba ciega es
    el replay del golden (paso 4). El banco (`python -m scripts.sonda_afirma_vs_pregunta u34`) ahora mide
    la actividad con la regla del código e incluye los 57 como segundo bloque.
-2. **Meter en `jev_router` las candidatas de u3-5** (certificado, grupo, nacionalidad; `u35`: 16/17 y
-   13/13 en los casos nuevos) detrás del mismo flag, y usar la de certificado **también para filtrar
-   las contradicciones de los datos ya guardados** en el turno con pregunta (mata el "¿lo cambio?").
+2. ✅ **HECHO (26-sep, Gadea) — las preguntas de u3-5 en el código.** `affirms_certification`,
+   `affirms_group` y `affirms_nationality` (redacción de Álvaro, sin tocar; banco `u35` 66/67 leyendo ya
+   del código) en la misma llamada de Jev, detrás del flag. Dos usos:
+   - **Puerta**: en un turno con pregunta, un dato del regex de certificado, grupo (y su reparto) o
+     nacionalidad que Jev dice que el cliente NO afirma se tira, igual que lugar y actividad
+     (`conversational_core._AFFIRMS_SIGNAL_FIELDS`).
+   - **"¿Lo cambio?" fantasma**: en `_route_contradictions` (el punto único por el que pasa toda
+     contradicción con un dato guardado), en un turno con pregunta, si Jev dice que el cliente no
+     afirma nada de ese campo, no se propone el cambio y se queda lo guardado ("listo, como pago": 0,03).
+     Fuera del turno con pregunta, o sin la señal, conducta de siempre (con test de control).
+   - Coste: 0 peticiones; la llamada de Jev pasa de p50 278 a 287 ms (+4 preguntas).
 3. **Relleno con puerta** en el turno con pregunta, solo para campos con pregunta de Jev y solo con
    datos del mensaje actual (Jev no ve el historial). Recupera "fundive" y "completé el curso básico".
 4. Escalón 0 (replay local) → ronda B3 frente a la misma A del 24-sep. Leer por caso, como aquí.
