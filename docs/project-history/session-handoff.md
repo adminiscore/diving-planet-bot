@@ -22,7 +22,7 @@ de `docs/plan-maestro-final.md`**. Resumen:
 | Paso | Qué | Estado |
 |---|---|---|
 | 0 | Aterrizar plan, handoff, HISTORY y página | ✅ 26-sep (falta aplicar la cola de Plan Coral y re-exportar `plan-coral.json`) |
-| **1** | **Cabos sueltos técnicos**: 1a dependencias con techo (r6-4) ✅ · 1b comprobar cada deploy (r6-3) · 1c control de correcciones en el banco (u3-5) · 1d re-triaje de s4-6…s4-22 contra la ronda B3 | **← EN CURSO (1a hecho)** |
+| **1** | **Cabos sueltos técnicos**: 1a dependencias con techo (r6-4) ✅ · 1b comprobar cada deploy (r6-3) ✅ · 1c control de correcciones en el banco (u3-5) · 1d re-triaje de s4-6…s4-22 contra la ronda B3 | **← EN CURSO (1a y 1b hechos; sigue 1c)** |
 | 2 | Juez con casos reales (g-8): hoy acierta el 75 % de sus "no cumple" reales y tapa contradicciones de política | ⏳ |
 | 3 | Ronda A nueva con u3-4 encendido (referencia para lo que queda de U3) | ⏳ |
 | 4 | Terminar U3: u3-5 → u3-6 → u3-7 → u3-3 | ⏳ |
@@ -33,6 +33,8 @@ de `docs/plan-maestro-final.md`**. Resumen:
 | 9 | R6: respaldo si OpenAI falla, guardrails, carga | ⏳ |
 | 10 | Q5: gate en CI, simulador, testers reales, SOAK, entrega | ⏳ |
 
+**Tras cada push a `pre_*`: `python -m scripts.check_deploy`** (espera al CI y comprueba que PRE sirve ese
+commit, healthy y con los flags y modelos del compose; si CI falla, dice el paso).
 **Ramas:** se trabaja en `feature/pre_alvaro` (ya integra `pre_gadea` = `4192600`). Quien retome integra
 antes lo último que se haya subido: todas las `pre_*` despliegan el mismo PRE.
 **Estado técnico de PRE:** el del bloque de Gadea justo debajo (u3-4 encendido), que sigue siendo válido.

@@ -15,14 +15,13 @@ Uso:
     python -m scripts.turn_metrics --label "..." --from-run docs/robustness/synthetic-runs/<fichero>.jsonl [--out foto.json]
     python -m scripts.turn_metrics --from 2026-09-24T10:00:00Z --to 2026-09-24T11:00:00Z
 
-SSH: `~/.ssh/dp_pre_vps` y `root@89.167.4.161` por defecto (`PRE_SSH_KEY` / `PRE_SSH_HOST`).
+SSH: `~/.ssh/dp_pre_vps` y `root@89.167.4.161` por defecto (`PRE_SSH_KEY` / `PRE_SSH_HOST`), vía `scripts/pre_access.py`.
 """
 
 from __future__ import annotations
 
 import argparse
 import json
-import os
 import statistics
 import subprocess
 import sys
@@ -31,6 +30,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 from scripts.langfuse_snapshot import _pct, aggregate, business_metrics, client_side, run_window
+from scripts.pre_access import pre_ssh
 
 TAG = "[TURN_METRICS]"
 
@@ -110,11 +110,8 @@ def build(turns: list[dict], label: str, start: str, end: str) -> dict:
 
 
 def fetch_log_lines(start: str, end: str) -> list[str]:
-    key = os.environ.get("PRE_SSH_KEY") or str(Path.home() / ".ssh" / "dp_pre_vps")
-    host = os.environ.get("PRE_SSH_HOST") or "root@89.167.4.161"
     cmd = f"docker logs dp-pre-bot --since {start} --until {end} 2>&1 | grep -F '{TAG}'"
-    out = subprocess.run(["ssh", "-i", key, "-o", "ConnectTimeout=15", host, cmd], capture_output=True, text=True, encoding="utf-8", errors="replace")
-    return out.stdout.splitlines()
+    return pre_ssh(cmd, timeout=300).stdout.splitlines()
 
 
 def main(argv: list[str] | None = None) -> int:

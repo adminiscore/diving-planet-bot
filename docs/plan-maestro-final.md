@@ -453,7 +453,7 @@ medias (u3-1 ✅, u3-4 ✅ promocionada, u3-5 🟡); PRE con u3-4 encendido. Sui
   (fastapi, pydantic, pydantic-settings, asyncpg, alembic, pgvector, redis, httpx…), comprobando cada techo
   contra `requirements-lock.txt`. Hecho cuando un entorno limpio (como CI) instala y pasa lint, migraciones
   y tests, igual que se verificó el arreglo de SQLAlchemy (HISTORY 0.29.27).
-- **1b · r6-3 comprobar cada deploy.** `scripts/check_deploy.py`: sondea el run de GitHub (API pública,
+- **1b · r6-3 comprobar cada deploy. ✅ HECHO 26-sep (HISTORY 0.29.36).** `scripts/check_deploy.py`: sondea el run de GitHub (API pública,
   `conclusion`) y, si pasa, el SHA, la rama y los flags que sirve PRE por SSH; sale con error si no cuadra.
   Se añade al ritual de cierre (`/close-work`) y al handoff.
 - **1c · control de correcciones en el banco.** El filtro de contradicciones de Jev actúa en TODOS los turnos

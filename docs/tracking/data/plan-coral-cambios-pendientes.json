@@ -101,10 +101,10 @@
       "campos": {
         "id": "r6-3",
         "phase": "R6",
-        "status": "pendiente",
+        "status": "hecha",
         "owner": "Alvaro",
         "title": "R6-3 · Comprobar cada deploy (un CI rojo se salta el deploy sin avisar)",
-        "note": "Del 24-sep 23:04 al 25-sep 21:30 PRE sirvio codigo viejo sin que nadie lo viera (HISTORY 0.29.27). scripts/check_deploy.py: run de GitHub (API publica) + SHA, rama y flags que sirve PRE por SSH; en el ritual de cierre. ORDEN: PASO 1b."
+        "note": "HECHA 26-sep (HISTORY 0.29.36): python -m scripts.check_deploy espera al run de GitHub del commit (API publica; si falla dice el paso) y comprueba por SSH que PRE sirve ese commit y rama, healthy, y que cada flag y modelo del compose es el que tiene el bot. Probado en el deploy real del paso 1a (17 ajustes iguales). En el ritual de cierre (/closework, paso 11). 13 tests."
       }
     },
     {
@@ -256,6 +256,16 @@
         "at": "2026-09-26T14:30:00Z",
         "byLabel": "Alvaro (con Claude)",
         "text": "26-sep: paso 1a hecho (r6-4). Todas las dependencias con techo; declaradas openai, langchain-core, opentelemetry-api y pyyaml. Suite 2677 passed en entorno limpio. HISTORY 0.29.35."
+      }
+    },
+    {
+      "coleccion": "log",
+      "operacion": "set",
+      "doc_id": "l-0926-alvaro-paso1b",
+      "campos": {
+        "at": "2026-09-26T15:10:00Z",
+        "byLabel": "Alvaro (con Claude)",
+        "text": "26-sep: paso 1b hecho (r6-3). scripts/check_deploy.py comprueba cada deploy (CI + commit, rama, salud y los flags/modelos del compose en PRE); en /closework. Probado en un deploy real. HISTORY 0.29.36. Sigue 1c."
       }
     }
   ]

@@ -99,9 +99,21 @@ git commit -m "feat: describe the completed milestone"
 git push origin HEAD
 ```
 
-11. Finish by reporting:
+11. If the branch is a `pre_*` branch (every push to one deploys PRE), confirm the deploy really happened.
+A red CI skips the deploy WITHOUT any warning (24-25 Sep 2026: PRE served old code for a day and a half):
+
+```powershell
+python -m scripts.check_deploy
+```
+
+It waits for the GitHub run of that commit, then checks by SSH that PRE serves that commit and branch, is
+healthy, and has every flag/model that `docker-compose.vps.yml` pins. Do not report the work as deployed
+until it exits 0; if CI failed it prints the failing step.
+
+12. Finish by reporting:
 
 - Commit hash.
 - Remote branch.
 - Validation results.
+- Deploy check result (`scripts.check_deploy`) when a `pre_*` branch was pushed.
 - Any deferred work.

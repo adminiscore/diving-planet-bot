@@ -1,6 +1,14 @@
 History
 =======
 
+0.29.36 - (2026-09-26)
+----------------------
+* **Plan secuencial, paso 1b (r6-3): `python -m scripts.check_deploy` comprueba que un push a `pre_*` SÍ se desplegó.** Un CI rojo se salta el deploy sin avisar (del 24-sep 23:04 al 25-sep 21:30 PRE sirvió código viejo sin que nadie lo viera). El script espera al run de GitHub de ese commit (API pública, sin `gh` ni permisos de admin; si falló, dice qué paso) y luego comprueba por SSH que PRE sirve ese commit y esa rama, que está `healthy`, y que **cada interruptor y modelo que `docker-compose.vps.yml` fija es el que tiene de verdad el bot**. Sale 0 bien, 1 fallo, 2 si no termina a tiempo.
+* **Probado en un deploy real** (el del paso 1a, `a8d731d`): CI verde, PRE en ese commit desde `feature/pre_alvaro`, healthy y los 17 ajustes del compose iguales en el bot.
+* **Un solo acceso a PRE**: `scripts/pre_access.py`, que ahora usa también `turn_metrics` (antes tenía la clave y el host escritos dentro).
+* **En el ritual de cierre**: paso 11 de `/closework`: tras un push a `pre_*`, no se da por desplegado hasta que `check_deploy` sale con 0.
+* 13 tests nuevos (`tests/test_check_deploy.py`), sin red ni SSH. `requirements-lock.txt` regenerado desde el contenedor de PRE tras el build con techos del 1a (los mismos 88 paquetes que antes).
+
 0.29.35 - (2026-09-26)
 ----------------------
 * **Plan secuencial, paso 1a (r6-4): todas las dependencias llevan techo de versión.** Hasta hoy casi todas iban con `>=` sin techo, así que CI y el build de PRE instalaban lo último publicado ese día: así entró SQLAlchemy 2.1 y rompió CI (0.29.27). Criterio, sobre lo que corre PRE: la siguiente versión MAYOR en las 1.x o superiores (`pydantic<3`, `redis<9`…), la siguiente MENOR en las 0.x, que es donde rompen (`fastapi<0.142`, `httpx<0.29`, `ruff<0.17`…), y la siguiente anual en `structlog` (CalVer). `tzdata` sin techo a propósito (son datos de zonas horarias). Subir un techo es un cambio aparte, con su prueba.
