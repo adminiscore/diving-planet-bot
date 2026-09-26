@@ -1,6 +1,10 @@
 History
 =======
 
+0.29.33 - (2026-09-26)
+----------------------
+* **u3-4 "contesta y sigue" PROMOCIONADO: `ANSWER_AND_CONTINUE=true` se queda en PRE.** Ronda B3 (core, frente a la ronda A del 24-sep): diálogos sin fallos 17 → 18 de 32, criterios 87,3 → 88,6 %, el RAG contesta 29 → 42 turnos, latencia por tipo de turno mejor (RAG p50 4,25 → 3,88 s; reserva 1,64 → 1,28 s; cliente p95 7,4 → 6,0 s), +14 % de llamadas al LLM. 8 mejoras; las 3 regresiones de la B2 resueltas; las 5 "regresiones" del juez leídas con el log de PRE: ninguna es de u3-4 (recordar mal disparado → u3-6; RAG → l1-7; un error del juez; un no-aplica). 0 "¿lo cambio?" propuestos en toda la ronda. Detalle y lo que queda: `docs/robustness/u3-4-diseno.md`, "Ronda B3".
+
 0.29.32 - (2026-09-26)
 ----------------------
 * **u3-4 · escalón 0 de los pasos 1-3 (replay local): sale bien → ronda B3.** "¿Lo cambio?" en las respuestas 21 (flag apagado) → **13**; preguntas contestadas 94 → 121 de 165; las 3 regresiones de la ronda B2 resueltas en el replay. Por el camino, tres arreglos (detrás del flag): (1) cuando Jev duda en una señal del router, sus `affirms_*` viajan igual (antes solo `asks_question`; "Yo soy open…" perdía la actividad así); (2) el filtro de contradicciones de Jev vale en todos los turnos, no solo en los que traen pregunta (los "¿lo cambio?" de cortesía, "Just completed the waivers" → "¿Cartagena → islas?", salían de la revisión de datos guardados); (3) el relleno con puerta puede rellenar el sí/no que el bot acaba de preguntar ("completé el curso básico…, ¿tengo que hacer algo especial?"). Quedan 3 errores reales fuera de la muestra core (minicurso supuesto, nacionalidad por el portugués, grupo 1 por "my son"). Detalle en `docs/robustness/u3-4-diseno.md`, paso 4. Suite 2677 passed.

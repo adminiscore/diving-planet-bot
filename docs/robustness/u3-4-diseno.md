@@ -1,5 +1,10 @@
 # u3-4 — "Contesta y sigue" (24-sep-2026)
 
+Estado (26-sep): **PROMOCIONADO.** Ronda B3 en PRE (pasos 1-3 + tres arreglos del escalón 0) frente a la
+ronda A del 24-sep: diálogos sin fallos 17 → 18 de 32, criterios 87,3 → 88,6 %, **0 regresiones propias**
+(leídas caso a caso con el log de PRE) → `ANSWER_AND_CONTINUE="true"` se queda en PRE. Detalle en
+"Ronda B3", al final. Lo que queda va a u3-5 / u3-6 / l1-7 / s4-7 / s4-21 (ver allí).
+
 Estado (25-sep noche): **v5 medida en PRE (ronda B2) y NO promocionada**: 4 mejoras y 3 regresiones
 propias, las 3 con causa exacta y ya en el banco de calibración. Flag `ANSWER_AND_CONTINUE` apagado por
 defecto en el código y `"false"` en docker-compose.vps.yml.
@@ -603,3 +608,56 @@ a B, sí es comparable.
   turnos) — se cae a la conducta de hoy, que es seguro pero desaprovecha una respuesta buena.
   `asks_question` sí se rescata; estas no, porque hacerlo obliga a cambiar la firma de
   `detect_routing_signals_jev_full`. Es una mejora pequeña y acotada.
+
+
+## Escalón 1 — ronda B3 en PRE (26-sep): PROMOCIONADO
+
+**Qué se midió.** Pasos 1-3 + los tres arreglos del escalón 0 (v9), `ANSWER_AND_CONTINUE=true` en PRE
+(commit `37bc558`), ronda core de 32 diálogos / 93 turnos (0 sin respuesta), juez `gpt-5-mini` medium,
+frente a la ronda A del 24-sep (`2026-09-24-u34-A`). Ficheros: `synthetic-runs/2026-09-26-u34-B3.jsonl`,
+`golden-set/results/2026-09-26-u34-B3__gpt-5-mini-medium.json`, `snapshots/2026-09-26-u34-B3.json`, log de
+PRE en `u3-4/logs-pre-ronda-B3.txt` y textos lado a lado A / B2 / B3 en
+`u3-4/escalon1-textos-A-vs-B2-vs-B3.txt`.
+
+| | A (sin flag) | B2 (v5) | **B3 (v9)** |
+|---|---|---|---|
+| Diálogos sin fallos (de 32) | 17 | 16 | **18** |
+| Criterios | 87,3 % | 87,4 % | **88,6 %** |
+| Turnos que contesta el RAG | 29 | 41 | **42** |
+| Turnos RAG, latencia p50 | 4,25 s | 3,50 s | **3,88 s** |
+| Turnos de reserva, latencia p50 | 1,64 s | 1,35 s | **1,28 s** |
+| Cliente p50 / p95 | 2,0 / 7,4 s | 2,0 / 6,0 s | **2,0 / 6,0 s** |
+| Llamadas al LLM por turno | 3,08 | 3,40 | 3,52 (+14 %) |
+| Contradicciones propuestas ("¿lo cambio?") en el log | — | 1 fantasma | **0** (1 descartada por Jev) |
+
+**8 mejoras** (juez): "how do I pay" contesta y da el enlace (idioma y enlace), pregunta el origen para
+cotizar la moneda, ya no inventa "estás en la isla" (Isla Grande), no repregunta la actividad en el
+descuento online, "no hay precio especial para colombianos" con importes del catálogo, acompañante mayor sin
+invenciones.
+
+**Las 3 regresiones de la B2, resueltas (con el log de PRE):**
+- "Yo soy open y me gustaría salir un día… No sé qué tienen." → guarda el certificado y pasa a pedir las
+  personas (en B2 se tiraba la actividad y nunca llegaba al enlace).
+- "Completé el curso básico el 3 de abril, ¿tengo que hacer algo especial?" → `is_certified=True` rellenado
+  con la puerta; ya no repregunta "¿eres buzo certificado?". Y el RAG da la regla bien (2 años; en B2 decía 1).
+- "Listo, como pago" → sin "¿lo cambio?" fantasma: contesta y da el resumen con el enlace.
+
+**5 regresiones del juez, leídas: ninguna es de u3-4.**
+| Caso | Qué pasa | Causa |
+|---|---|---|
+| `referral-mas-refresher…#3` | "How do we book/pay…" → resumen + "¿desde dónde saldrías?" (repregunta) | `detect_special_signals` dispara `recall_field: booking_recap` y el camino de "recordar" sale antes de extraer: ni contesta ni guarda "hotel en la isla" (Jev lo afirmaba). Misma familia que el "Me habías dicho…" mal disparado → **u3-6**. En A esa pregunta acababa en "no lo tengo". El resumen enseña además el id `padi_open_water_referral` → **s4-21** |
+| `curso-open-water-transporte…#2` | "transfer back to Cartagena… included" (falso) | respuesta del RAG que su juez de grounding dejó pasar (**l1-7**). Igual en B2; en B3 la puerta tiró bien los 3 datos inventados del turno 1, así que el RAG no recibió contexto falso |
+| `buceo-adaptado-visual` | "360 personas con discapacidad visual" (revisar) | texto del RAG (l1-7); ya era ruido en B2 |
+| `paquete-5-buceos…` | "nocturno de bioluminiscencia" (revisar) | **error del juez**: la base de conocimiento SÍ lo dice (activities, faqs, services) |
+| `minicurso-islas…` | importes: cumple → no aplica | no es un fallo |
+
+**Veredicto (regla del escalón 1): 0 regresiones propias → PROMOCIONADO, flag encendido en PRE.**
+
+**Lo que queda, para quien siga (no bloquea u3-4):**
+- **u3-6**: el "recordar" mal disparado ("how do we book" → recap) y que ese camino no extraiga ni conteste.
+- **u3-5**: fuera de la muestra core quedan "cursos de buceo… primera vez" → minicurso supuesto (el relleno
+  con puerta; la regla del owner es recomendar, no asumir) y "Vamos en família a Cartagena" → no colombiano.
+- **l1-6 / l1-7**: con u3-4 el RAG contesta +13 preguntas por ronda, así que sus fallos pesan más.
+- **s4-7**: a "¿cómo pago?" el RAG dice "un asesor te enviará el enlace" justo encima del enlace.
+- **s4-21**: ids internos en el resumen (`padi_open_water_referral`).
+- Jev en la frontera de `asks_question` (0,7) baila entre tandas: medir por caso, no por agregado.

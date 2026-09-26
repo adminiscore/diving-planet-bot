@@ -13,7 +13,31 @@ Read this file before changing code in the Diving Planet Bot. For a quick versio
 
 > **📏 LEER ANTES DE MEDIR — decisiones del 24-sep-2026 (Gadea):** (1) latencia y llamadas con nuestros logs `[TURN_METRICS]` + `scripts/turn_metrics.py`, no con Langfuse (plan gratuito superado, reinicio 16-oct); (2) pruebas A/B por escalones, juzgando solo los diálogos que cambian. Todo en `docs/robustness/protocolo-medicion.md`.
 
-### ▶️ PARA SEGUIR — cierre del 25/26-sep (Álvaro). Leer esto primero
+### ✅ 26-sep (Gadea) — u3-4 PROMOCIONADO: `ANSWER_AND_CONTINUE=true` se queda en PRE. Leer esto primero
+
+**Estado de PRE** (`feature/pre_gadea`, commit con el cierre de hoy; ya integra `pre_alvaro`): encendidos
+`AGENT_ARCH`, `JEV_ROUTER_ENABLED`, `NOTES_IN_PARALLEL`, `ACK_IN_PARALLEL` y **`ANSWER_AND_CONTINUE`**.
+Un push a `pre_alvaro` sin integrar antes `pre_gadea` devolvería PRE a código sin u3-4 encendido:
+**integrad `pre_gadea` primero** (`git merge --ff-only origin/feature/pre_gadea`).
+
+**Qué se hizo hoy** (HISTORY 0.29.29-0.29.33; detalle en `docs/robustness/u3-4-diseno.md`):
+1. `affirms_activity` recalibrada: dos preguntas a Jev (afirma / hipótesis) + regla `activity_affirmed`.
+   Banco 21/21; y en 57 mensajes del golden fuera del banco, 34 → 53/57.
+2. Las preguntas de u3-5 de Álvaro (certificado, grupo, nacionalidad) en el código: puerta + filtro del
+   "¿lo cambio?" fantasma en `_route_contradictions`.
+3. Relleno con puerta en el turno con pregunta (solo campos con el "sí" de Jev, sin historial).
+4. Escalón 0 (replay v7-v9) y tres arreglos: los `affirms_*` viajan aunque Jev dude en el router; el
+   filtro de contradicciones vale en todos los turnos; el relleno con puerta puede rellenar el sí/no recién
+   preguntado. "¿Lo cambio?" en el replay 21 → 13.
+5. **Ronda B3**: diálogos 17 → 18/32, criterios 87,3 → 88,6 %, 0 regresiones propias → promocionado.
+
+**Siguiente (Plan Coral):** u3-5 (quedan "primera vez" → minicurso supuesto y la nacionalidad por el
+portugués), **u3-6** (el "recordar" mal disparado: "how do we book" → resumen, sin contestar ni extraer),
+l1-6/l1-7 (el RAG contesta +13 preguntas por ronda, así que sus fallos pesan más), s4-7 y s4-21.
+Herramientas: banco `python -m scripts.sonda_afirma_vs_pregunta [u34|u35]`, replay
+`scripts.replay_golden_local` + `replay_diff` + `replay_diff_triage`, y `scripts.ab_judge_compare`.
+
+### ▶️ PARA SEGUIR — cierre del 25/26-sep (Álvaro) — SUPERADO por el bloque de arriba
 
 **Estado de PRE** (`dp-pre-bot`, verificado por SSH): rama **`feature/pre_alvaro`**. Encendidos
 `AGENT_ARCH`, `JEV_ROUTER_ENABLED`, `NOTES_IN_PARALLEL`, `ACK_IN_PARALLEL`; **`ANSWER_AND_CONTINUE`
