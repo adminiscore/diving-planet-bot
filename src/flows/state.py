@@ -203,6 +203,9 @@ class ConversationState:
     # gringos" tras decir colombianos): {campo: valor nuevo}. Se confirma con el
     # cliente antes de cambiar nada (owner 2026-09-15, tarea 7b).
     pending_correction: dict | None = None
+    # u3-5: correcciones ya preguntadas ({campo: valor propuesto}). No se vuelven a preguntar:
+    # si el cliente no las confirmó, se queda lo guardado (con `corrections_v2`).
+    asked_corrections: dict = field(default_factory=dict)
 
     # Nivel PADI nombrado sin decir si ya lo tienen o lo quieren sacar ("hola
     # somos 4 open water"): se pregunta antes de seguir (owner 2026-09-15).

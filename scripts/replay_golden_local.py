@@ -24,6 +24,7 @@ os.environ.update({
     "LLM_EXTRACTION_CUTOVER_LOCATION": "true", "LLM_EXTRACTION_CUTOVER_LOGISTICS": "true",
     "JEV_ROUTER_ENABLED": "true", "AGENT_ARCH": "true", "RAG_MIN_SCORE": "0.40",
     "NOTES_IN_PARALLEL": "false", "ACK_IN_PARALLEL": "false",
+    "ANSWER_AND_CONTINUE": "true",  # encendido en PRE desde el 26-sep (u3-4); --flag lo puede pisar
     "LANGFUSE_PUBLIC_KEY": "", "LANGFUSE_SECRET_KEY": "",
     "CHATWOOT_API_TOKEN": "", "CHATWOOT_BASE_URL": "http://127.0.0.1:9", "CHATWOOT_API_BASE_URL": "http://127.0.0.1:9",
 })

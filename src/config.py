@@ -120,6 +120,12 @@ class Settings(BaseSettings):
     # docs/robustness/u3-4-diseno.md. APAGADO por defecto.
     answer_and_continue: bool = False
 
+    # u3-5 (27-sep): correcciones de datos ya guardados ("¿lo cambio?"). Paso 1, deterministas:
+    # (a) no se propone un cambio que se lee igual para el cliente; (b) la confirmación se pregunta
+    # UNA vez: si el cliente no contesta sí/no, se queda lo guardado y esa propuesta no se repite.
+    # Ronda A del paso 3: de 12 "¿lo cambio?", 6 eran repeticiones y 2 "X -> X". APAGADO por defecto.
+    corrections_v2: bool = False
+
     # --- Observabilidad: Langfuse (sustituye a LangSmith, cuota Developer
     # agotada; ver docs/robustness/progress-log.md "Tarea 8"). Sin claves, el
     # tracing queda apagado y `langfuse` ni se importa (3.14-safe). Claves por

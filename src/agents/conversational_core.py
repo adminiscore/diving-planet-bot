@@ -1726,6 +1726,17 @@ def _route_contradictions(state: ConversationState, message: str, intent, propos
         if _jev_says_not_affirmed(state, field):
             logger.info(f"[CORE] contradiccion descartada {field}: {old!r} -> {value!r} (Jev: no lo afirma)")
             continue
+        if settings.corrections_v2:
+            # u3-5 paso 1a: un cambio que se lee igual para el cliente no es un cambio ("1 buceo
+            # certificado, 1 snorkel -> 1 buceo certificado, 1 snorkel", ronda A del paso 3).
+            if _same_for_customer(field, value, old, state.language or "es"):
+                logger.info(f"[CORE] contradiccion descartada {field}: mismo valor para el cliente")
+                continue
+            # u3-5 paso 1b: lo ya preguntado y no confirmado no se vuelve a preguntar (el LLM lo
+            # re-deducia del historial en cada turno: 6 de los 12 "¿lo cambio?" de la ronda A).
+            if (state.asked_corrections or {}).get(field) == value:
+                logger.info(f"[CORE] contradiccion descartada {field}: ya preguntada y no confirmada")
+                continue
         if cue:
             setattr(intent, field, value)
             if field not in intent.overwrite:
@@ -1735,6 +1746,8 @@ def _route_contradictions(state: ConversationState, message: str, intent, propos
             logger.info(f"[CORE] correccion aceptada (cue) {field}: {old!r} -> {value!r}")
             continue
         state.pending_correction = {**(state.pending_correction or {}), field: value}
+        if settings.corrections_v2:
+            state.asked_corrections = {**(state.asked_corrections or {}), field: value}
         setattr(intent, field, None)
         if field in intent.detected_fields:
             intent.detected_fields.remove(field)
@@ -1788,6 +1801,16 @@ def _accept_pending_correction(state: ConversationState, message: str) -> bool:
     _take_undecided_members(intent, state)
     supervisor._apply_detected_intent(intent, state, message)
     return True
+
+
+def _same_for_customer(field: str, a, b, lang: str) -> bool:
+    """¿Se leen igual para el cliente? En un reparto no cuentan el orden ni las cantidades a
+    cero (u3-5 paso 1a)."""
+    def canon(v):
+        if isinstance(v, dict):
+            return {k: q for k, q in sorted(v.items()) if q}
+        return v
+    return _describe_value(field, canon(a), lang) == _describe_value(field, canon(b), lang)
 
 
 def _describe_value(field: str, value, lang: str) -> str:
@@ -3521,6 +3544,16 @@ async def _routing_phase(
     resolved_short = False
     if prev_pending and not has_qmark:
         resolved_short = _apply_short_answer(state, message)
+    if settings.corrections_v2 and prev_pending == SLOT_CONFIRM_CORRECTION and not resolved_short:
+        # u3-5 paso 1b: la confirmación se pregunta UNA vez. Un "sí" al principio vale aunque el
+        # mensaje siga con una pregunta ("sí, ¿y cuánto es?"); cualquier otra cosa = no confirmado:
+        # se queda lo guardado y el turno sigue normal (el mensaje puede traer otra cosa).
+        first = next(iter(_words(message)), "")
+        if state.pending_correction and (is_affirmative(first) or is_agree(first)):
+            resolved_short = _accept_pending_correction(state, message)
+        elif state.pending_correction:
+            logger.info(f"[CORE] correccion no confirmada, se queda lo guardado: {sorted(state.pending_correction)}")
+            state.pending_correction = None
 
     # Encadenar la cola de sub-grupos adicionales (multi-ítem, auditoría
     # 2026-07-23): si se acaba de resolver la cantidad de UN sub-grupo

@@ -1,6 +1,10 @@
 History
 =======
 
+0.29.42 - (2026-09-27)
+----------------------
+* **u3-5, paso 1 (flag `CORRECTIONS_V2`, apagado): el "¿lo cambio?" se pregunta una vez y solo si cambia algo.** Línea base (ronda A del paso 3, golden completo): de 12 "¿lo cambio?", 6 eran la MISMA confirmación repetida porque el cliente no contestaba sí/no, 2 proponían cambiar X por X, 3 eran correcciones claras que se preguntaban (o se proponían mal) y 1 fantasma. Dos arreglos deterministas: (a) no se propone un cambio que se lee igual para el cliente (reparto sin orden ni ceros, `_same_for_customer`); (b) la confirmación se pregunta UNA vez: un "sí" al principio vale aunque siga una pregunta; cualquier otra respuesta = no confirmado, se queda lo guardado y esa propuesta no se repite (`state.asked_corrections`). Escalón 0 (replay local, u3-4 encendido como en PRE): "¿lo cambio?" 10 → 5, 0 nuevos; las diferencias de estado restantes son ruido de Jev/LLM salvo una (el bot sigue con la reserva en vez de repetir). 8 tests; suite 2713 passed. Siguiente: paso 2 (Jev decide si el cliente está corrigiendo).
+
 0.29.41 - (2026-09-27)
 ----------------------
 * **Plan secuencial, paso 3: ronda A nueva — HECHO.** Golden completo (116 diálogos / 465 turnos, con el examen oculto) en PRE con u3-4 encendido, juzgado con el juez del paso 2 (golden v8). **Es la nueva referencia** de U3: no es comparable con las rondas anteriores (cambian juez y criterios). Ficheros: `synthetic-runs/2026-09-27-paso3-A.jsonl`, `golden-set/results/2026-09-27-paso3-A__gpt-5-mini-medium.json`, `snapshots/2026-09-27-paso3-A.json`, log de PRE en `docs/robustness/logs-pre-2026-09-27-paso3-A.txt`.
