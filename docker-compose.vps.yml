@@ -174,6 +174,9 @@ services:
       # HISTORY 0.29.49-0.29.50. Ronda B (27-sep): core 91,2 -> 92,6 %, casos del paso 6 83,6 -> 91,6 %,
       # 3 regresiones propias arregladas -> PROMOCIONADO, se QUEDA ENCENDIDO. Revert = "false" + redeploy.
       S4_FIXES: "true"
+      # u3-6 (paso 7, 27-sep): Jev como filtro previo del LLM de senales (acompanantes/refresher/
+      # recordar). Ver HISTORY 0.29.51. ENCENDIDO para la ronda B; si no pasa, "false" el mismo dia.
+      SIGNALS_GATE: "true"
       # Refactor multi-agente (docs/multi-agent-refactor-plan.md) — validación en
       # PRE antes del corte del legacy (Fase 5.2). STAGE B (ahora): el GRAFO sirve
       # de verdad (agent_arch on) — router → 5 nodos reales + subgrafo booking. La
