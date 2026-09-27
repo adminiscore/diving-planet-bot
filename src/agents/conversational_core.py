@@ -2182,6 +2182,8 @@ async def _understand(state: ConversationState, message: str, *, answered_pendin
     if _has_pending_answer(state):
         question_turn_fields = _question_turn_fields(intent, state)
         _named_certified_product_confirms_certification(state, message)
+    else:
+        _drop_regex_fields_jev_denies(intent, state)
     state.mixed_nationality_notice = False
     # Un dato del mensaje que contradice lo guardado (tarea 7b): ver `_regex_contradictions`.
     regex_candidates = _regex_contradictions(state, message, intent)
@@ -3238,6 +3240,30 @@ def _question_turn_fields(intent, state: ConversationState) -> list[str]:
     return a_verificar
 
 
+def _drop_regex_fields_jev_denies(intent, state: ConversationState) -> None:
+    """u3-3 (flag `regex_jev_gate`): la puerta de u3-4 en los turnos SIN pregunta. El regex lee
+    palabras sueltas ("mi amigo es certificado" -> yo certificado; "¿y si fuera desde la isla?");
+    si Jev (misma llamada del router, `affirms_*`) dice que el cliente NO afirma ese dato, el dato
+    del regex no se guarda. Ausente (Jev apagado o sin contestar) = no lo sabemos -> se guarda como
+    hoy. Solo lo que leyo el REGEX en este mensaje; el relleno del LLM tiene su propia puerta."""
+    from src.agents.jev_router import AFFIRMS_DENY_MAX  # lazy
+
+    if not settings.regex_jev_gate:
+        return
+    # Escalon 0 (27-sep): con el "no" de u3-4 (p < 0,7) se perdian datos buenos en frases normales
+    # ("cartagena, todos extranjeros" -> 0,38-0,45). Aqui solo cuenta "seguro de que no" (p < 0,2).
+    probs = getattr(state, "_affirms_p", None) or {}
+    for f in sorted(_DRIVING_FIELDS & set(intent.detected_fields)):
+        p = probs.get(f)
+        if p is None or p >= AFFIRMS_DENY_MAX:
+            continue
+        logger.info(f"[EXTRACT][U3-3] campo={f} regex={getattr(intent, f, None)!r} descartado por Jev (no lo afirma, {p:.2f})")
+        setattr(intent, f, [] if f == "ages" else None)
+        intent.detected_fields.remove(f)
+        if f == "activity":
+            intent.service_id = None
+
+
 def _turn_has_question(message: str, routing_signals: dict) -> bool:
     """u3-4: ¿trae el mensaje algo que CONTESTAR? El regex/"?" de siempre, o Jev en la
     misma llamada del router (`asks_question`, >= 0,7): "perfecto, como pago" no lleva
@@ -3757,6 +3783,9 @@ async def _routing_phase(
     )
     # u3-5 paso 2: ¿el mensaje corrige un dato ya dado? (Jev, misma llamada). Se renueva cada turno.
     state._jev_corrects = routing_signals.get("corrects") if settings.corrections_v2 else None
+    # u3-3: probabilidad cruda de que el cliente afirme cada campo (Jev, misma llamada).
+    raw_p = routing_signals.get("affirms_p") or {} if settings.regex_jev_gate else {}
+    state._affirms_p = {f: raw_p[sig] for f, sig in _AFFIRMS_SIGNAL_FIELDS if sig in raw_p}
     # Paso 5: ¿pide que le recordemos algo que él dijo? (Jev, misma llamada). Se renueva cada turno.
     state._jev_asks_recall = routing_signals.get("asks_recall") if settings.rag_v2 else None
     # u3-6: probabilidad de Jev de que el mensaje meta a otra persona en la reserva (filtro previo del

@@ -968,3 +968,28 @@ def test_jev_solo_decide_la_respuesta_pendiente_si_esta_seguro(monkeypatch):
     assert core._jev_pending_answer("nationality", none) == {}  # seguro de que no contesta
     monkeypatch.setattr(settings, "slot_answers_jev", False)
     assert core._jev_pending_answer("nationality", sure) is None
+
+
+# u3-3 (flag `regex_jev_gate`): la puerta de Jev sobre el regex también en turnos sin pregunta.
+def test_sin_pregunta_jev_descarta_lo_que_el_cliente_no_afirma(monkeypatch):
+    from src.agents.intent_detector import DetectedIntent
+
+    monkeypatch.setattr(settings, "regex_jev_gate", True)
+    st = _state()
+    st._affirms_p = {"location": 0.05, "activity": 0.9, "is_colombian": 0.4}  # 0,4: no está seguro
+    intent = DetectedIntent()
+    intent.location = "island"
+    intent.activity = "snorkel"
+    intent.detected_fields = ["location", "activity"]
+    core._drop_regex_fields_jev_denies(intent, st)
+    assert intent.location is None and "location" not in intent.detected_fields
+    assert intent.activity == "snorkel"  # Jev lo ve afirmado
+    st._affirms_p = {}  # Jev no contestó -> como hoy
+    intent.location = "island"
+    intent.detected_fields = ["location"]
+    core._drop_regex_fields_jev_denies(intent, st)
+    assert intent.location == "island"
+    monkeypatch.setattr(settings, "regex_jev_gate", False)
+    st._affirms_p = {"location": 0.05}
+    core._drop_regex_fields_jev_denies(intent, st)
+    assert intent.location == "island"

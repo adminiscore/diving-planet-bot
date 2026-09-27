@@ -130,6 +130,8 @@ ACTIVITY_HYPOTHESIS = "activity_hypothesis"
 AFFIRMS_CERTIFICATION = "affirms_certification"
 AFFIRMS_GROUP = "affirms_group"
 AFFIRMS_NATIONALITY = "affirms_nationality"
+AFFIRMS_P = "affirms_p"  # u3-3: probabilidades crudas de los affirms_*
+AFFIRMS_DENY_MAX = 0.2  # u3-3: por debajo, Jev esta SEGURO de que el cliente no lo afirma
 AFFIRMS_MIN = 0.7  # mismo umbral alto que `asks_question`: ante la duda, la conducta de hoy
 _AFFIRMS_QUESTIONS = {
     AFFIRMS_LOCATION: {
@@ -493,7 +495,7 @@ async def detect_routing_signals_jev(message: str, *, lang: str = "es") -> dict 
 _TURN_SIGNALS = (
     AFFIRMS_LOCATION, AFFIRMS_ACTIVITY, AFFIRMS_CERTIFICATION, AFFIRMS_GROUP, AFFIRMS_NATIONALITY, CORRECTS,
     ASKS_RECALL, NEEDS_STAFF, CHANGES_DATE, COMPANION_JOINS,
-)
+)  # AFFIRMS_P y PENDING_ANSWER se anaden a mano en `detect_routing_signals_jev_full`
 
 
 async def detect_routing_signals_jev_full(
@@ -533,6 +535,14 @@ async def detect_routing_signals_jev_full(
             # y lo necesita la respuesta corta tras el pase a una persona (paso 6). Para el resto del
             # codigo False y ausente se leen igual.
             extras[ASKS_QUESTION] = (answers.get(ASKS_QUESTION) or {}).get("noul", 0.0) >= ASKS_QUESTION_MIN
+        if settings.regex_jev_gate:
+            # u3-3: la probabilidad cruda de cada `affirms_*` (el boolean de arriba corta en 0,7, pensado
+            # para turnos con pregunta; en frases normales Jev da falsos "no" entre 0,3 y 0,7).
+            extras[AFFIRMS_P] = {
+                name: (answers.get(name) or {}).get("noul", 0.0)
+                for name in (AFFIRMS_LOCATION, AFFIRMS_ACTIVITY, AFFIRMS_CERTIFICATION, AFFIRMS_GROUP, AFFIRMS_NATIONALITY)
+                if name in answers
+            }
         if pending_slot and PENDING_ANSWER in answers:
             extras[PENDING_ANSWER] = pending_answer_value(pending_slot, answers[PENDING_ANSWER])
     except Exception as exc:  # noqa: BLE001 — cualquier fallo cae al router LLM

@@ -1,6 +1,11 @@
 History
 =======
 
+0.29.54 - (2026-09-27)
+----------------------
+* **Paso 7 · u3-3: el regex del intent_detector como vía rápida y Jev como verificador en TODOS los turnos (flag `REGEX_JEV_GATE`, apagado hasta su ronda B).** El "fast-path + respaldo" ya existía casi entero: el regex decide primero, el LLM rellena huecos en los 4 dominios (cutovers encendidos en PRE) y veta actividad y grupo cuando el mensaje es ambiguo; Jev verificaba lo que lee el regex solo en los turnos con pregunta (u3-4) y la nacionalidad (u3-5). Lo que faltaba, según la regla del equipo (Jev en vez de listas de frases): la misma verificación en los turnos SIN pregunta. Si Jev está SEGURO de que el cliente no afirma un dato que leyó el regex (`affirms_*` < 0,2, probabilidad cruda en la misma llamada), no se guarda.
+* Escalón 0 (replay local): la primera versión, con el "no" de u3-4 (p < 0,7), perdía 9 datos frente a 3-4 del ruido medido, varios buenos ("cartagena, todos extranjeros" → 0,38-0,45; "I am a beginner" → 0,63): esas preguntas se calibraron para turnos con pregunta. Con "seguro de que no" (p < 0,2) quita 5 datos y los 5 son inventados ("May 3rd" → grupo de 3, "son 2 niños" → 4 certificados, "somos 2" → 1 por defecto, "quiero hacer snorkel" → no certificado), 0 datos buenos perdidos. Suite 2772 passed.
+
 0.29.53 - (2026-09-27)
 ----------------------
 * **Paso 7 · u3-7: Jev interpreta la respuesta a la pregunta pendiente (flag `SLOT_ANSWERS_JEV`, encendido en PRE para la ronda B).** Cuando el parser no entiende la respuesta ("uf, hace muchísimo", "vivo en Bogotá", "el avanzado"), hoy la interpreta el LLM `resolve_slot_answer`. Ahora el router le pasa a Jev la pregunta pendiente (`pending_slot`) y Jev contesta los sí/no y las listas en la misma llamada (coste 0); con confianza ≥ 0,8 vale su lectura (también "no contesta a eso"), si no, el LLM de hoy. Las cifras (cuántas personas) siguen en el LLM. Banco `scripts/sonda_respuesta_pendiente.py`: 28/30 con confianza alta, **0 equivocadas con confianza**, 2 al LLM. Escalón 0 (replay local): 6 turnos con datos de más, por debajo del ruido medido (7), ninguno de Jev.

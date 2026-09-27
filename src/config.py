@@ -156,6 +156,11 @@ class Settings(BaseSettings):
     # Cascada por confianza. APAGADO por defecto.
     slot_answers_jev: bool = False
 
+    # u3-3 (paso 7, 27-sep): el regex del intent_detector como via rapida y Jev como verificador en
+    # TODOS los turnos: si Jev dice que el cliente NO afirma un dato que el regex leyo, no se guarda
+    # (hasta ahora solo en los turnos con pregunta, u3-4, y la nacionalidad, u3-5). APAGADO.
+    regex_jev_gate: bool = False
+
     # --- Observabilidad: Langfuse (sustituye a LangSmith, cuota Developer
     # agotada; ver docs/robustness/progress-log.md "Tarea 8"). Sin claves, el
     # tracing queda apagado y `langfuse` ni se importa (3.14-safe). Claves por
