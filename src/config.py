@@ -139,6 +139,11 @@ class Settings(BaseSettings):
     # mensaje. Ronda A: 37 respuestas acabaron en "no lo tengo a la mano". APAGADO por defecto.
     rag_v2: bool = False
 
+    # Paso 6 (27-sep): respuestas fijas y salida deterministas de S4. s4-14: si piden un telefono se
+    # da el WhatsApp oficial (decision de Gadea; antes "no manejo un numero"); s4-15: "¿eres un bot?"
+    # -> dice que es la asistente virtual; s4-16: la queja se pasa a staff con una disculpa. APAGADO.
+    s4_fixes: bool = False
+
     # --- Observabilidad: Langfuse (sustituye a LangSmith, cuota Developer
     # agotada; ver docs/robustness/progress-log.md "Tarea 8"). Sin claves, el
     # tracing queda apagado y `langfuse` ni se importa (3.14-safe). Claves por

@@ -260,10 +260,49 @@ _ASKS_RECALL_Q = {
     ),
 }
 
+# s4-20 (paso 6, flag `s4_fixes`, 27-sep): lo que solo puede resolver una PERSONA del equipo porque el
+# bot no ve reservas, pagos ni correos, o porque es trato de empresa: una reserva o un pago YA hechos
+# ("ya hice una reserva, ¿la recibieron?", "¿está todo ok con mis reservas?"), una agencia o empresa que
+# coordina tarifas, o que el staff apruebe o revise algo (logs de PADI, un correo enviado). Hoy seguia
+# vendiendo o preguntaba el origen. Calibrado con `scripts/sonda_necesita_persona.py`.
+NEEDS_STAFF = "needs_staff"
+NEEDS_STAFF_MIN = 0.7
+_NEEDS_STAFF_Q = {
+    "type": "noul",
+    "instructions": (
+        "The message is about something only a PERSON from the dive center's staff can handle, because the "
+        "assistant cannot see bookings, payments or emails: a booking or payment the customer ALREADY made "
+        "(checking it was received, its status, 'is everything ok with my reservations?'), a travel agency or "
+        "company coordinating rates or groups, an email they already sent that is waiting for an answer, or "
+        "asking the staff to approve or review documents (dive logs, certifications). It is FALSE for questions "
+        "about how booking or paying works, prices, policies (cancellation, refunds), availability, what to "
+        "bring, or when the customer is still planning or making a new booking."
+    ),
+}
+
+# s4-6 (paso 6, flag `s4_fixes`): cambio de FECHA con la reserva aun en construccion. Decision del owner:
+# sin reserva pagada, un cambio de fecha pasa a un asesor. La senal del router (`booking_change_topic`)
+# no vale aqui: confunde "hazlo para 3 dias" o "en realidad somos 4" con reprogramar, y por eso se
+# ignora mientras se arma el carrito. Esta pregunta es SOLO el dia. Calibrada con
+# `scripts/sonda_cambia_fecha.py`.
+CHANGES_DATE = "changes_date"
+CHANGES_DATE_MIN = 0.7
+_CHANGES_DATE_Q = {
+    "type": "noul",
+    "instructions": (
+        "The customer wants to CHANGE THE DATE (the day) of their dive or booking to a different day than the "
+        "one already mentioned ('mejor cambiemos la fecha', 'can we move it to Sunday instead?', 'al final no "
+        "podemos el 12, ¿puede ser el 14?'). It is FALSE when they change how many days or dives, the number of "
+        "people or the activity, when they just state or ask about a date for the first time, or when they ask "
+        "about availability."
+    ),
+}
+
 # Las preguntas de u3-4/u3-5 no son señales del router: su duda NO manda el turno al router LLM.
 _U34_QUESTIONS = (
     ASKS_QUESTION, AFFIRMS_LOCATION, AFFIRMS_ACTIVITY, ACTIVITY_HYPOTHESIS,
-    AFFIRMS_CERTIFICATION, AFFIRMS_GROUP, AFFIRMS_NATIONALITY, CORRECTS, ASKS_RECALL,
+    AFFIRMS_CERTIFICATION, AFFIRMS_GROUP, AFFIRMS_NATIONALITY, CORRECTS, ASKS_RECALL, NEEDS_STAFF,
+    CHANGES_DATE,
 )
 
 
@@ -293,6 +332,9 @@ def _questions_for_turn() -> dict:
         q[CORRECTS] = _CORRECTS_Q
     if settings.rag_v2:
         q[ASKS_RECALL] = _ASKS_RECALL_Q
+    if settings.s4_fixes:
+        q[NEEDS_STAFF] = _NEEDS_STAFF_Q
+        q[CHANGES_DATE] = _CHANGES_DATE_Q
     return q
 
 
@@ -339,6 +381,10 @@ def answers_to_signals(answers: dict, threshold: float = THRESHOLD) -> dict:
         out[CORRECTS] = (answers.get(CORRECTS) or {}).get("noul", 0.0) >= CORRECTS_MIN
     if ASKS_RECALL in answers:
         out[ASKS_RECALL] = (answers.get(ASKS_RECALL) or {}).get("noul", 0.0) >= ASKS_RECALL_MIN
+    if NEEDS_STAFF in answers:
+        out[NEEDS_STAFF] = (answers.get(NEEDS_STAFF) or {}).get("noul", 0.0) >= NEEDS_STAFF_MIN
+    if CHANGES_DATE in answers:
+        out[CHANGES_DATE] = (answers.get(CHANGES_DATE) or {}).get("noul", 0.0) >= CHANGES_DATE_MIN
     for name in (AFFIRMS_LOCATION, AFFIRMS_CERTIFICATION, AFFIRMS_GROUP, AFFIRMS_NATIONALITY):
         if name in answers:
             out[name] = (answers.get(name) or {}).get("noul", 0.0) >= AFFIRMS_MIN
@@ -384,7 +430,7 @@ async def detect_routing_signals_jev(message: str, *, lang: str = "es") -> dict 
 # Señales de u3-4/u3-5 que NO son del router: viajan aparte (ver `detect_routing_signals_jev_full`).
 _TURN_SIGNALS = (
     AFFIRMS_LOCATION, AFFIRMS_ACTIVITY, AFFIRMS_CERTIFICATION, AFFIRMS_GROUP, AFFIRMS_NATIONALITY, CORRECTS,
-    ASKS_RECALL,
+    ASKS_RECALL, NEEDS_STAFF, CHANGES_DATE,
 )
 
 

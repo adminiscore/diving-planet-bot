@@ -176,6 +176,15 @@ def build_system_prompt(lang: str, query: str | None = None) -> str:
             f"Style and tone:\n{_build_tone_section('en')}\n\n"
             f"{RAG_BODY_EN}"
         )
+    if settings.s4_fixes:
+        from src.prompts.info import (  # lazy
+            RAG_PAYMENT_OLD_EN,
+            RAG_PAYMENT_OLD_ES,
+            RAG_PAYMENT_V2_EN,
+            RAG_PAYMENT_V2_ES,
+        )
+
+        prompt = prompt.replace(RAG_PAYMENT_OLD_ES, RAG_PAYMENT_V2_ES).replace(RAG_PAYMENT_OLD_EN, RAG_PAYMENT_V2_EN)
     return prompt
 
 
@@ -1228,6 +1237,16 @@ async def rag_answer(
         from src.flows.catalog import catalog_facts  # lazy
 
         facts = catalog_facts(lang)
+        if settings.s4_fixes:
+            # s4-22 (paso 6): cotizaba el precio de Cartagena (o solo el de las islas) sin saber de
+            # donde sale el cliente y sin decirlo. La moneda ya tenia su regla en el catalogo.
+            facts += (
+                "\nOrigen: si el contexto no dice desde dónde sale el cliente, da el precio desde Cartagena "
+                "y el de 'ya en las islas', cada uno rotulado, o pregúntale desde dónde saldría."
+                if lang == "es" else
+                "\nOrigin: if the context doesn't say where the customer departs from, give the price from "
+                "Cartagena and the 'already on the islands' one, each labelled, or ask where they'd leave from."
+            )
         extra_context = f"{extra_context}\n\n{facts}" if extra_context else facts
 
     canonical_food_answer = _canonical_food_answer(query, lang)

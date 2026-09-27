@@ -601,4 +601,10 @@ async def compose_acknowledgement(
     # descartar el acuse — nunca dejar que invente datos duros.
     if not text or "http" in text.lower() or "$" in text or "€" in text or "?" in text or "¿" in text:
         return ""
+    # s4-21 (1): un acuse sin prosa ('{" "}', golden v7 del 22-sep) salia tal cual delante de la
+    # respuesta. Mismo guard que el RAG (`is_coherent_text`).
+    from src.agents.grounding_check import is_coherent_text  # lazy
+
+    if not is_coherent_text(text):
+        return ""
     return text

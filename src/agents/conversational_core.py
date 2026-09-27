@@ -4614,6 +4614,11 @@ async def _slotfill_close_phase(
     # reserva solo en el caso que ya cubría `_answer_question`: la respuesta ya invita a
     # elegir actividad y lo siguiente sería el menú entero (fallo en vivo 2026-07-24).
     answer = await _take_parallel_answer(state)
+    if answer and finalized and settings.s4_fixes and _is_rag_fallback(answer):
+        # s4-7 (paso 6): con el cierre de la reserva (resumen + link) en este turno, un "eso no lo
+        # tengo a la mano" no aporta nada y, por la regla de arriba, TAPABA el cierre: "great, how do
+        # i pay" se quedaba sin el link (ronda B de u3-5). El cierre ya contesta "¿cómo pago?".
+        answer = None
     if answer:
         cancel_pending_ack(state)
         if _answer_replaces_the_booking_question(state, answer, finalized=finalized):

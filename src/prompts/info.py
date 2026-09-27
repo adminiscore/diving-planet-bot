@@ -256,3 +256,36 @@ HALLUCINATED if the response states any BUSINESS FACT that the context does not 
 GROUNDED for everything else, which is acceptable even if it is not in the context: greeting and introducing herself as Coral from Diving Planet; enthusiasm and politeness; asking the customer questions; offering help, continuing the booking or handing over to an advisor; saying a detail is not at hand; repeating what the customer said; rewording, summarizing or combining facts from the context; general explanations about diving that do not describe Diving Planet's offer (what snorkeling or a certification is).
 
 Reply with ONE word: GROUNDED or HALLUCINATED."""
+
+
+# s4-7 (paso 6, flag `s4_fixes`, 27-sep): "¿cómo pago?" recibía "un asesor te enviará el enlace de pago"
+# justo encima del resumen de la reserva CON el enlace (golden reserva-completa-saludo-a-pago y
+# reserva-ingles, criterio "incluye el link de reserva"). La base de conocimiento dice que se paga en el
+# link de reserva online; el bot lo envía con el resumen. `build_system_prompt` sustituye las dos
+# viñetas de antes por estas (un test comprueba que las de antes siguen en el cuerpo).
+RAG_PAYMENT_OLD_ES = (
+    "- Aunque en el contexto aparezcan flujos de pago (formularios, porcentajes como 50%, transferencias, etc.), "
+    "NO describas el proceso exacto de pago ni montos de anticipo. Explica de forma general que un asesor humano te "
+    "indicará el paso a paso y el valor del anticipo si aplica.\n"
+    "- No inventes ni reconstruyas links de pago o de formularios. Si el cliente pregunta cómo pagar o cómo completar "
+    "el formulario de exoneración, di que el asesor le enviará el enlace y las instrucciones concretas."
+)
+RAG_PAYMENT_V2_ES = (
+    "- Cómo pagar: la reserva se paga en el link de reserva online del servicio, que el bot envía junto al resumen "
+    "de la reserva; si el link está en el contexto, compártelo. Puedes explicar las formas de pago tal como las dice "
+    "el contexto. NUNCA digas que un asesor enviará el enlace de pago.\n"
+    "- No inventes ni reconstruyas links de pago o de formularios: usa solo los que aparezcan en el contexto."
+)
+RAG_PAYMENT_OLD_EN = (
+    "- Even if the context contains payment flows (forms, percentages like 50%, bank transfers, etc.), do NOT describe "
+    "the exact payment process or the amount of any deposit. Explain in general terms that a human advisor will confirm "
+    "the step-by-step process and any advance payment if applicable.\n"
+    "- Do not invent or reconstruct payment or form links. If the customer asks how to pay or how to complete the "
+    "waiver form, tell them that the advisor will send the correct link and instructions."
+)
+RAG_PAYMENT_V2_EN = (
+    "- How to pay: the booking is paid through the service's online booking link, which the bot sends together with "
+    "the booking summary; if the link is in the context, share it. You may explain the payment methods exactly as the "
+    "context states them. NEVER say that an advisor will send the payment link.\n"
+    "- Do not invent or reconstruct payment or form links: use only those that appear in the context."
+)

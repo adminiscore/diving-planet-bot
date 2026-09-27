@@ -85,8 +85,25 @@ SENSITIVE_RULES = {
         },
         "es": "Voy a transferirte inmediatamente con un miembro de nuestro staff para ayudarte con esta situación.",
         "en": "I'm immediately transferring you to a staff member to help with this situation.",
+        # s4-16 (flag `s4_fixes`): el pase es correcto, pero sin reconocer el problema sonaba frio
+        # (golden `queja`, criterio "empatia"). Vale igual para una emergencia.
+        "es_v2": (
+            "Siento mucho lo que ha pasado 🙏 y entiendo tu molestia. Voy a pasarte ahora mismo con un "
+            "miembro de nuestro staff para que lo revise contigo y te dé una solución."
+        ),
+        "en_v2": (
+            "I'm really sorry about what happened 🙏 and I understand your frustration. I'm passing you right "
+            "now to a member of our staff so they can look into it with you and sort it out."
+        ),
     },
 }
+
+
+def _rule_message(rule: dict, lang: str) -> str:
+    key = "es" if lang == "es" else "en"
+    if settings.s4_fixes and f"{key}_v2" in rule:
+        return rule[f"{key}_v2"]
+    return rule[key]
 
 
 # Idioms that contain a medical keyword but are NOT medical (avoid false-positive
@@ -126,7 +143,7 @@ def detect_sensitive_escalation(message: str, lang: str = "es") -> tuple[str, st
     for reason, rule in SENSITIVE_RULES.items():
         haystack = scrubbed if reason == "medical_questions" else msg_lower
         if _matches_any_keyword(haystack, rule["keywords"]):
-            return reason, rule["es"] if lang == "es" else rule["en"]
+            return reason, _rule_message(rule, lang)
     return None
 
 
@@ -137,7 +154,7 @@ def sensitive_response_for(category: str, lang: str = "es") -> tuple[str, str] |
     rule = SENSITIVE_RULES.get(category)
     if not rule:
         return None
-    return category, rule["es"] if lang == "es" else rule["en"]
+    return category, _rule_message(rule, lang)
 
 
 async def detect_routing_signals(

@@ -644,6 +644,14 @@ def _detect_modify_booking_request(msg_lower: str) -> bool:
     return any(phrase in normalized for phrase in MODIFY_BOOKING_PHRASES)
 
 
+def _jev_changes_date(signals: dict) -> bool:
+    """s4-6 (paso 6, flag `s4_fixes`): Jev dice que el cliente quiere cambiar el DIA. Vale tambien
+    con el carrito en construccion (decision del owner: sin reserva pagada, un cambio de fecha va a un
+    asesor), a diferencia de `booking_change_topic`, que ahi confunde "hazlo para 3 dias" con
+    reprogramar. Banco `scripts/sonda_cambia_fecha.py`: 7/8 cambios, 0/12 falsas."""
+    return bool(settings.s4_fixes and signals.get("changes_date") is True)
+
+
 def _in_active_cart_building(state: ConversationState) -> bool:
     """True cuando la conversación está CONSTRUYENDO una reserva NUEVA ahora
     mismo. Ahí un mensaje de "cambio" ("mejor 3 días", "cámbialo a snorkel",
@@ -736,6 +744,20 @@ def _asks_about_ai_identity(msg_lower: str) -> bool:
 
 
 def _ai_identity_deflection(lang: str) -> str:
+    if settings.s4_fixes:
+        # s4-15: a "¿eres un bot?" se contesta con claridad que es la asistente virtual (golden
+        # `es-un-bot`, criterio "honesto"), sin revelar la tecnologia y con la persona a mano.
+        if lang == "es":
+            return (
+                "Sí, soy *Coral*, la asistente virtual de Diving Planet 🐠. Te ayudo con todo lo del buceo, "
+                "precios y reservas en las Islas del Rosario, y si en algún momento prefieres hablar con una "
+                "persona del equipo, dímelo y te paso. ¿Te ayudo a armar tu salida? 🌊"
+            )
+        return (
+            "Yes, I'm *Coral*, Diving Planet's virtual assistant 🐠. I can help you with diving, prices and "
+            "bookings in the Rosario Islands, and if at any point you'd rather talk to a person from the team, "
+            "just tell me and I'll pass you over. Shall I help you set up your trip? 🌊"
+        )
     if lang == "es":
         return (
             "¡Soy Coral, de Diving Planet! 🐠 Me encanta ayudarte a vivir el buceo en las Islas "
@@ -772,9 +794,36 @@ def _asks_about_availability(msg_lower: str) -> bool:
     return bool(_AVAILABILITY_RE.search(_strip_accents(msg_lower)))
 
 
+def _official_whatsapp() -> str | None:
+    """El WhatsApp oficial, de la base de conocimiento (`escalation_rules.json`), nunca escrito aqui."""
+    from src.knowledge.loader import load_json
+
+    try:
+        info = load_json("escalation_rules.json").get("handoff_protocol", {}).get("contact_info", {})
+    except Exception:  # noqa: BLE001 — sin el dato, la deflexion de siempre
+        return None
+    return info.get("whatsapp") or None
+
+
 def _contact_number_deflection(lang: str) -> str:
     """Deflexión honesta para una petición de número/contacto directo: límite +
-    lo que SÍ se puede + redirección a la reserva (no escala, no inventa)."""
+    lo que SÍ se puede + redirección a la reserva (no escala, no inventa).
+
+    s4-14 (flag `s4_fixes`, decision de Gadea del 17-sep que sustituye a la del 20-jul): si lo
+    piden, se da el WhatsApp OFICIAL (solo mensajes), sacado de la base de conocimiento."""
+    number = _official_whatsapp() if settings.s4_fixes else None
+    if number:
+        if lang == "es":
+            return (
+                f"¡Claro! 😊 Nuestro WhatsApp oficial es *{number}* (solo mensajes de WhatsApp, no "
+                "llamadas). Y si quieres, aquí mismo te ayudo con todo: te armo la reserva o te paso con un "
+                "asesor del equipo. ¿Seguimos? 🌊"
+            )
+        return (
+            f"Sure! 😊 Our official WhatsApp is *{number}* (WhatsApp messages only, no calls). And if you "
+            "like, I can help you with everything right here: I'll put your booking together or pass you to "
+            "an advisor from the team. Shall we continue? 🌊"
+        )
     if lang == "es":
         return (
             "Por aquí no manejo un número de teléfono ni WhatsApp 🔒, pero puedo "
@@ -1347,6 +1396,44 @@ def _infer_language(message: str, fallback: str = "es") -> str:
     if spanish_matches > english_matches:
         return "es"
     return fallback
+
+
+def _needs_staff_handoff(state: ConversationState, message: str, routing_signals: dict) -> str | None:
+    """s4-20 (paso 6, flag `s4_fixes`): post-venta y trato de empresa -> pase a una persona ANTES del
+    nucleo. Jev (`needs_staff`, misma llamada) dice que el mensaje trata de una reserva o un pago ya
+    hechos, una agencia, un correo sin contestar o documentos que el staff debe revisar: el bot no ve
+    nada de eso. Antes seguia vendiendo ("¿desde dónde saldrías?") o confirmaba lo que no podia ver.
+    Devuelve la respuesta del pase, o None."""
+    if not (settings.s4_fixes and routing_signals.get("needs_staff") is True):
+        return None
+    reason = "post-venta o empresa: lo revisa una persona (reserva/pago ya hechos, agencia, documentos)"
+    state.step = Step.ESCALATE
+    state.quick_replies = []
+    state.pending_escalation_reason = reason
+    state.pending_note = build_lead_summary(state, escalation_reason=reason)
+    logger.info("[SUPERVISOR] needs_staff (Jev) -> pase a una persona")
+    if _reply_language(state, message) == "es":
+        return (
+            "Esto tiene que revisarlo una persona del equipo, que sí puede ver las reservas, los pagos y los "
+            "correos. Te paso ahora con un asesor de Diving Planet y enseguida se pone en contacto contigo. "
+            "¡Gracias! 🙌"
+        )
+    return (
+        "This needs to be checked by a person from our team, who can see bookings, payments and emails. "
+        "I'm passing you to a Diving Planet advisor now and they'll get in touch with you shortly. Thanks! 🙌"
+    )
+
+
+def _reply_language(state: ConversationState, message: str) -> str:
+    """Idioma para una respuesta fija de ESTE turno. Con el idioma ya fijado, ese; en la apertura
+    (aun sin fijar), el del mensaje: primero por palabras vacias (`_detect_language_heuristic`, mas
+    general) y si no hay senal, por las pistas de `_infer_language`. s4-21 (5): el aviso medico
+    salia en espanol a "I completed the medical form, is that ok?"."""
+    if state.detected_language:
+        return state.language
+    from src.flows.catalog import _detect_language_heuristic  # lazy
+
+    return _detect_language_heuristic(message) or _infer_language(message, state.language)
 
 
 def _build_extra_context(state: ConversationState) -> str | None:
@@ -2974,9 +3061,11 @@ async def _shared_turn_handler(
     if routing_signals.get("broken_link_complaint") and _has_link_tech_context(message, state.history):
         return _broken_link_escalation_response(state, message)
 
+    # s4-21 (5): en la apertura el idioma aun no esta fijado (ver `escalation_agent`).
+    sensitive_lang = _reply_language(state, message)
     sensitive_escalation_early = (
         None if routing_signals.get("adaptive_diving_topic")
-        else detect_sensitive_escalation(message, state.language)
+        else detect_sensitive_escalation(message, sensitive_lang)
     )
     if sensitive_escalation_early:
         reason, response = sensitive_escalation_early
@@ -2988,7 +3077,7 @@ async def _shared_turn_handler(
         return response
 
     if routing_signals.get("sensitive_topic"):
-        found = sensitive_response_for(routing_signals["sensitive_topic"], state.language)
+        found = sensitive_response_for(routing_signals["sensitive_topic"], sensitive_lang)
         if found:
             reason, response = found
             state.step = Step.ESCALATE
@@ -2997,6 +3086,10 @@ async def _shared_turn_handler(
             state.pending_note = build_lead_summary(state, escalation_reason=reason)
             logger.info(f"[SUPERVISOR] Sensitive escalation triggered (LLM signal, early) reason={reason}")
             return response
+
+    staff = _needs_staff_handoff(state, message, routing_signals)
+    if staff:
+        return staff
 
     # Booking cancellation/reschedule requests: inform the policy text from
     # the KB and let the customer choose between talking to an advisor or
@@ -3018,7 +3111,7 @@ async def _shared_turn_handler(
     if _detect_reschedule_request(msg_lower) or (
         routing_signals.get("booking_change_topic") == "reschedule"
         and not _in_active_cart_building(state)
-    ):
+    ) or _jev_changes_date(routing_signals):
         logger.info("[SUPERVISOR] Reschedule request detected -> policy info + escalate/home buttons")
         return _booking_change_response(state, message, "reschedule")
 

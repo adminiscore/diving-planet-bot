@@ -56,6 +56,7 @@ async def changes_node(state: BotState) -> dict:
         _detect_modify_booking_request,
         _detect_reschedule_request,
         _in_active_cart_building,
+        _jev_changes_date,
         _shared_turn_handler,
     )
 
@@ -76,7 +77,7 @@ async def changes_node(state: BotState) -> dict:
     if _detect_reschedule_request(msg_lower) or (
         signals.get("booking_change_topic") == "reschedule"
         and not _in_active_cart_building(conv)
-    ):
+    ) or _jev_changes_date(signals):
         logger.info("[NODE:changes] reprogramación -> política + botones asesor/menú")
         return {"reply": _booking_change_response(conv, message, "reschedule")}
 

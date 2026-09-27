@@ -73,6 +73,8 @@ async def escalation_node(state: BotState) -> dict:
         _broken_link_escalation_response,
         _detect_broken_link_complaint,
         _has_link_tech_context,
+        _needs_staff_handoff,
+        _reply_language,
         _shared_turn_handler,
         build_lead_summary,
         detect_pii,
@@ -84,6 +86,9 @@ async def escalation_node(state: BotState) -> dict:
     conv = state["conv_state"]
     message = state["message"]
     signals = state.get("signals") or {}
+    # s4-21 (5): en el mensaje de apertura el idioma aun no esta fijado; el aviso medico salia en
+    # espanol a quien escribe en ingles. Misma estimacion local que la deflexion (`deflection_agent`).
+    sensitive_lang = _reply_language(conv, message)
 
     # 1 · PII (pre-núcleo). Igual que la cascada: NO toca historial ni quick_replies.
     if detect_pii(message):
@@ -106,7 +111,7 @@ async def escalation_node(state: BotState) -> dict:
     #     que la cascada: sensitive_escalation_early es None si adaptive_diving_topic).
     sensitive_early = (
         None if signals.get("adaptive_diving_topic")
-        else detect_sensitive_escalation(message, conv.language)
+        else detect_sensitive_escalation(message, sensitive_lang)
     )
     if sensitive_early:
         reason, response = sensitive_early
@@ -119,7 +124,7 @@ async def escalation_node(state: BotState) -> dict:
 
     # 5 · Tema sensible por señal LLM.
     if signals.get("sensitive_topic"):
-        found = sensitive_response_for(signals["sensitive_topic"], conv.language)
+        found = sensitive_response_for(signals["sensitive_topic"], sensitive_lang)
         if found:
             reason, response = found
             conv.step = Step.ESCALATE
@@ -128,6 +133,11 @@ async def escalation_node(state: BotState) -> dict:
             conv.pending_note = build_lead_summary(conv, escalation_reason=reason)
             logger.info(f"[NODE:escalation] sensible (señal LLM) reason={reason}")
             return {"reply": response}
+
+    # 5b · s4-20: post-venta / empresa (Jev `needs_staff`, flag `s4_fixes`) -> una persona.
+    staff = _needs_staff_handoff(conv, message, signals)
+    if staff:
+        return {"reply": staff}
 
     # 6 · DIVE TO HEAL precio/reserva -> asesor (sin precios genéricos). Persiste
     #     el contexto adaptativo igual que la cascada (líneas 2130-2146). El router

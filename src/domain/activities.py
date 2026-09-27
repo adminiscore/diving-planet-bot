@@ -230,6 +230,13 @@ def text(activity_id: str, kind: str, lang: str, default: str | None = None) -> 
     activity = by_id(activity_id)
     variants = (activity.texts or {}).get(kind) if activity else None
     if not variants:
+        # s4-21 (27-sep): a una actividad que existe pero no tiene este texto se le da su etiqueta,
+        # nunca el id — los llamantes pasaban el id como `default` y el cliente leia
+        # "padi_open_water_referral" en el resumen. Solo "recall" y "name_in_sentence", que son
+        # nombres; los demas textos (pitch, plan) no tienen equivalente.
+        if activity is not None and kind in ("recall", "name_in_sentence"):
+            name = activity.label.get(lang) or activity.label["es"]
+            return name[:1].lower() + name[1:]
         return default
     return variants.get(lang) or variants.get("es") or default
 
