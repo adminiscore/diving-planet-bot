@@ -1,6 +1,10 @@
 History
 =======
 
+0.29.55 - (2026-09-27)
+----------------------
+* **u3-7 · ronda B en PRE: `SLOT_ANSWERS_JEV` PROMOCIONADO.** Core `2026-09-27-u37-B` frente a `u36-B`: **diálogos sin fallos 20 → 23 de 32**, criterios 92,2 → 93,0 %, 6 mejoras (descuento online sin código, cancelación con pase a persona, moneda por nacionalidad, 2 diálogos sin invenciones). Latencia del servidor p95 5,45 → 4,84 s, llamadas LLM por turno 3,04 → 2,85. Jev decidió 8 respuestas pendientes (log `[CORE][U3-7]`), las 8 correctas: 7 "eso no contesta a lo preguntado" ("ah I see", "Thanks", "este me interesa"), donde el LLM tendía a inventar, y 1 sí/no. Regresiones leídas con el log: ninguna propia — 3 del RAG (recogida en hotel desde Cartagena, formulario médico, no escalar el descuento), 1 de extracción por variación del LLM (sin decisión de Jev en ese turno) y 1 no_aplica.
+
 0.29.54 - (2026-09-27)
 ----------------------
 * **Paso 7 · u3-3: el regex del intent_detector como vía rápida y Jev como verificador en TODOS los turnos (flag `REGEX_JEV_GATE`, apagado hasta su ronda B).** El "fast-path + respaldo" ya existía casi entero: el regex decide primero, el LLM rellena huecos en los 4 dominios (cutovers encendidos en PRE) y veta actividad y grupo cuando el mensaje es ambiguo; Jev verificaba lo que lee el regex solo en los turnos con pregunta (u3-4) y la nacionalidad (u3-5). Lo que faltaba, según la regla del equipo (Jev en vez de listas de frases): la misma verificación en los turnos SIN pregunta. Si Jev está SEGURO de que el cliente no afirma un dato que leyó el regex (`affirms_*` < 0,2, probabilidad cruda en la misma llamada), no se guarda.
