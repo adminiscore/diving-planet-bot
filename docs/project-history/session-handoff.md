@@ -13,6 +13,16 @@ Read this file before changing code in the Diving Planet Bot. For a quick versio
 
 > **📏 LEER ANTES DE MEDIR — decisiones del 24-sep-2026 (Gadea):** (1) latencia y llamadas con nuestros logs `[TURN_METRICS]` + `scripts/turn_metrics.py`, no con Langfuse (plan gratuito superado, reinicio 16-oct); (2) pruebas A/B por escalones, juzgando solo los diálogos que cambian. Todo en `docs/robustness/protocolo-medicion.md`.
 
+### ✅ 27-sep tarde (Gadea) — PASO 3 HECHO: nueva ronda A de referencia. Siguiente: PASO 4 (u3-5)
+
+**Referencia para todo lo que queda de U3: `2026-09-27-paso3-A`** (golden completo, u3-4 encendido, juez g-8,
+golden v8; HISTORY 0.29.41). Criterios 83,6 % (sintéticos 93,0 %, reales 78,6 %, examen oculto 77,6 %), 38/116
+diálogos sin fallos; turno p50 2,16 s. Los A/B de U3 se hacen con una ronda B core y se comparan con la parte core
+de esta A (`python -m scripts.ab_judge_compare 2026-09-27-paso3-A <B>`, solo diálogos en común).
+**Siguiente, PASO 4 (terminar U3):** u3-5 (pasos propuestos en Plan Coral / conversación del 26-sep: 0 línea base
+de "¿lo cambio?" por tipo; 1 no proponer X → X y no repetir la confirmación; 2 Jev "¿está corrigiendo?"; 3 los datos
+inventados), luego u3-6 ("Me habías dicho" 3 → 8 en la ronda completa), u3-7 y u3-3.
+
 ### ✅ 27-sep (Gadea) — PASO 2 (g-8) CERRADO. Siguiente: PASO 3 (ronda A nueva)
 
 **Juez final** (HISTORY 0.29.40), contra los 192 veredictos humanos de la v7: falsos suspensos 43 → **26-27**,

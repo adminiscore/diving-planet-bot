@@ -441,7 +441,7 @@ medias (u3-1 ✅, u3-4 ✅ promocionada, u3-5 🟡); PRE con u3-4 encendido. Sui
 | **0** | Aterrizar: plan, handoff, HISTORY y página al día con lo nuevo | — | ✅ 26-sep (esta PARTE) · falta aplicar la cola de Plan Coral y re-exportar la copia `plan-coral.json` (del 23-sep) |
 | **1** | Cabos sueltos técnicos (riesgos vivos, antes de tocar conducta) | r6-4 · r6-3 · control de correcciones · re-triaje s4-6…s4-22 | ✅ **cerrado 26-sep** (1a-1d abajo) |
 | **2** | Afinar el instrumento: el juez | g-8 | criterios de los casos reales revisados y juez recalibrado con ellos: menos falsos suspensos, medido contra los veredictos humanos |
-| **3** | Línea base nueva con u3-4 encendido | ronda A core, juzgada con el juez del paso 2 | ronda A de referencia para todos los A/B de U3 |
+| **3** ✅ 27-sep | Línea base nueva con u3-4 encendido | ronda A del golden COMPLETO (116, con examen oculto; decisión de Gadea), juzgada con el juez del paso 2: `2026-09-27-paso3-A` | ronda A de referencia para todos los A/B de U3 (los A/B de U3 se comparan con su parte core) |
 | **4** | Terminar U3, en orden | 4a u3-5 (+ s4-8, s4-9, s4-11, s4-22 personas) · 4b u3-6 (+ s4-6, s4-18, s4-19, s4-20) · 4c u3-7 · 4d u3-3 | cada una: escalón 0 → ronda B frente a la A del paso 3 → 0 regresiones propias, leídas por caso |
 | **5** | Cierre de U3 | u3-2 (redefinida) | ronda COMPLETA del golden (116 diálogos + examen oculto): examen oculto ≥ 78,3 % (cierre de L1) y sin regresiones propias |
 | **6** | Calidad del RAG | l1-6, l1-7 (+ s4-7 texto, s4-11 horas, s4-12, s4-17, s4-22 contenido) | los casos conocidos sin invención (el primero, "regreso otro día"); "no lo tengo" solo cuando el dato no está; `eval_rag_answers` y ronda core sin regresiones |

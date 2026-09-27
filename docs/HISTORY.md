@@ -1,6 +1,13 @@
 History
 =======
 
+0.29.41 - (2026-09-27)
+----------------------
+* **Plan secuencial, paso 3: ronda A nueva — HECHO.** Golden completo (116 diálogos / 465 turnos, con el examen oculto) en PRE con u3-4 encendido, juzgado con el juez del paso 2 (golden v8). **Es la nueva referencia** de U3: no es comparable con las rondas anteriores (cambian juez y criterios). Ficheros: `synthetic-runs/2026-09-27-paso3-A.jsonl`, `golden-set/results/2026-09-27-paso3-A__gpt-5-mini-medium.json`, `snapshots/2026-09-27-paso3-A.json`, log de PRE en `docs/robustness/logs-pre-2026-09-27-paso3-A.txt`.
+* **Calidad:** criterios 83,6 % (sintéticos 93,0 %, casos reales 78,6 %, examen oculto 77,6 %), diálogos sin fallos 38/116. Fallos: 80 de criterios concretos, 37 `sin-invenciones`, 16 `sin-repreguntas`, 3 `idioma`, 2 `sin-fugas`.
+* **Latencia frente al cierre de L1 (24-sep):** turno p50 3,34 → 2,16 s y p95 7,33 → 5,63 s; lo que espera el cliente p50 4 → 2 s y p95 8 → 6 s; turnos de reserva p50 3,13 → 1,59 s; el RAG contesta 131 → 195 turnos (p50 5,76 → 3,69 s).
+* **Señales para el paso 4** (contadas en las respuestas, misma ronda completa): "¿lo cambio?" 21 → 12 (u3-5), "Me habías dicho" 3 → 8 (u3-6: el "recordar" mal disparado), "no lo tengo a la mano" 23 → 36 (l1-6: el RAG contesta más preguntas), pasa a asesor 29 → 47. Coste del juez 2,16 $ (cache invalidada por el cambio de prompt del paso 2).
+
 0.29.40 - (2026-09-27)
 ----------------------
 * **Plan secuencial, paso 2 (g-8, el juez con casos reales): CERRADO** (Gadea). Medido contra los 192 veredictos humanos de la v7:
