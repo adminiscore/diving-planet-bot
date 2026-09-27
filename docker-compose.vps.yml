@@ -175,7 +175,8 @@ services:
       # 3 regresiones propias arregladas -> PROMOCIONADO, se QUEDA ENCENDIDO. Revert = "false" + redeploy.
       S4_FIXES: "true"
       # u3-6 (paso 7, 27-sep): Jev como filtro previo del LLM de senales (acompanantes/refresher/
-      # recordar). Ver HISTORY 0.29.51. ENCENDIDO para la ronda B; si no pasa, "false" el mismo dia.
+      # recordar). Ver HISTORY 0.29.51-0.29.52. Ronda B (27-sep): calidad empatada (92,6 -> 92,2 %, ruido),
+      # 0 regresiones propias, llamadas LLM/turno 3,46 -> 3,04 -> PROMOCIONADO. Revert = "false" + redeploy.
       SIGNALS_GATE: "true"
       # Refactor multi-agente (docs/multi-agent-refactor-plan.md) — validación en
       # PRE antes del corte del legacy (Fase 5.2). STAGE B (ahora): el GRAFO sirve
