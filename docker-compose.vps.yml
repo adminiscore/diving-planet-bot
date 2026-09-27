@@ -171,7 +171,8 @@ services:
       RAG_V2: "true"
       # Paso 6 (27-sep): respuestas fijas y salida deterministas de S4 (WhatsApp oficial, asistente
       # virtual, queja con disculpa, link al pagar, post-venta y cambio de fecha a una persona). Ver
-      # HISTORY 0.29.49. ENCENDIDO para la ronda B del paso 6; si no pasa, "false" el mismo dia.
+      # HISTORY 0.29.49-0.29.50. Ronda B (27-sep): core 91,2 -> 92,6 %, casos del paso 6 83,6 -> 91,6 %,
+      # 3 regresiones propias arregladas -> PROMOCIONADO, se QUEDA ENCENDIDO. Revert = "false" + redeploy.
       S4_FIXES: "true"
       # Refactor multi-agente (docs/multi-agent-refactor-plan.md) — validación en
       # PRE antes del corte del legacy (Fase 5.2). STAGE B (ahora): el GRAFO sirve

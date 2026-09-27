@@ -150,3 +150,112 @@ def test_cambio_de_fecha_con_el_carrito_abierto_va_a_cambios(on, monkeypatch):
     assert router.classify_route(st, "espera, mejor cambiemos la fecha", signals) == router.ROUTE_CHANGE
     # sin la pregunta de Jev, la señal del router sigue sin valer con el carrito abierto
     assert router.classify_route(st, "hazlo para 3 días", {"booking_change_topic": "reschedule"}) != router.ROUTE_CHANGE
+
+
+async def test_con_el_flag_el_rag_tiene_los_links_de_reserva(on, monkeypatch):
+    """Ronda B del paso 6: "no sé cómo se haga la reserva" acababa en "no lo tengo" porque el LLM
+    escribía un link que no estaba en el contexto y el guard de URLs lo rechazaba."""
+    from src.flows.catalog import SERVICES
+
+    seen = []
+
+    async def _no_docs(*a, **k):
+        return []
+
+    async def _same(q, history=None, lang="es"):
+        return q
+
+    class _Resp:
+        def __init__(self, text):
+            msg = type("M", (), {"content": text})()
+            self.choices = [type("C", (), {"message": msg})()]
+            self.usage = type("U", (), {"total_tokens": 1})()
+
+    url = SERVICES["2_dives_1_day"]["booking_url"]
+
+    class _Cli:
+        def __init__(self, *a, **k):
+            async def create(**kw):
+                seen.append(kw)
+                return _Resp(f"Reservas aquí: {url}")
+            self.chat = type("Ch", (), {"completions": type("Co", (), {"create": staticmethod(create)})()})()
+
+    async def _judge(answer, context, lang="es"):
+        return True, "GROUNDED"
+
+    monkeypatch.setattr(settings, "rag_v2", True)
+    monkeypatch.setattr(rag_agent, "search_knowledge_base", _no_docs)
+    monkeypatch.setattr(rag_agent, "condense_query", _same)
+    monkeypatch.setattr(rag_agent, "AsyncOpenAI", _Cli)
+    monkeypatch.setattr(rag_agent, "is_grounded", _judge)
+    answer = await rag_agent.rag_answer("¿cómo hago la reserva?", lang="es", extra_context="Cliente certificado.")
+    assert url in answer
+
+
+async def test_tras_el_pase_a_una_persona_un_gracias_no_vuelve_a_vender(on):
+    from src.agents import conversational_core as core
+    from src.flows.state import Step
+
+    st = _state(step=Step.ESCALATE)
+    quiet = {"asks_question": False, "needs_staff": False, "affirms_location": False, "affirms_activity": False}
+    reply = await core._availability_phase(st, "gracias", quiet, "")
+    assert reply and "asesor" in reply and "animas" not in reply
+    # si pregunta algo, o Jev no contestó, sigue el turno normal
+    assert await core._availability_phase(_state(step=Step.ESCALATE), "¿y a qué hora?", {**quiet, "asks_question": True}, "") is None
+    assert await core._availability_phase(_state(step=Step.ESCALATE), "gracias", {}, "") is None
+
+
+def test_ida_y_vuelta_solo_si_se_sabe_que_el_plan_es_de_un_dia(on):
+    from src.agents import conversational_core as core
+
+    generic = _state(detected_activity="padi_course")
+    assert not core._plan_is_single_day(generic)
+    assert "mismo día" not in core.ask_slot(generic, core.SLOT_LOCATION)
+    assert "mismo día" not in core.ask_slot(_state(), core.SLOT_LOCATION)
+    mini = _state(detected_activity="minicourse")
+    assert core._plan_is_single_day(mini)
+    assert "ida y vuelta el mismo día" in core.ask_slot(mini, core.SLOT_LOCATION)
+
+
+def test_el_catalogo_dice_si_el_almuerzo_va_incluido():
+    from src.flows.catalog import SERVICES, catalog_facts
+
+    es = catalog_facts("es")
+    island = next(l for l in es.splitlines() if l.startswith(f"- {SERVICES['minicourse_already_on_island']['name_es']}:"))
+    cartagena = next(l for l in es.splitlines() if l.startswith(f"- {SERVICES['minicourse']['name_es']}:"))
+    assert "almuerzo NO incluido" in island and "almuerzo incluido" in cartagena
+
+
+async def test_corregir_el_precio_que_cita_el_cliente_no_acaba_en_no_lo_tengo(on, monkeypatch):
+    """Ronda B del paso 6: "¿con tarjeta son los mismos 2.215.000?" -> la corrección nombra su cifra."""
+    async def _docs(*a, **k):
+        return [{"content": "Curso Basico PADI: 2.450.000 COP online.", "score": 0.99, "metadata": {"source": "faqs"}}]
+
+    async def _same(q, history=None, lang="es"):
+        return q
+
+    async def _docs_back(docs, lang="es"):
+        return docs
+
+    async def _judge(answer, context, lang="es"):
+        return True, "GROUNDED"
+
+    class _Resp:
+        def __init__(self, text):
+            msg = type("M", (), {"content": text})()
+            self.choices = [type("C", (), {"message": msg})()]
+            self.usage = type("U", (), {"total_tokens": 1})()
+
+    class _Cli:
+        def __init__(self, *a, **k):
+            async def create(**kw):
+                return _Resp("El precio online es 2.450.000 COP, no 2.215.000 COP.")
+            self.chat = type("Ch", (), {"completions": type("Co", (), {"create": staticmethod(create)})()})()
+
+    monkeypatch.setattr(rag_agent, "search_knowledge_base", _docs)
+    monkeypatch.setattr(rag_agent, "_expand_with_parent_context", _docs_back)
+    monkeypatch.setattr(rag_agent, "condense_query", _same)
+    monkeypatch.setattr(rag_agent, "AsyncOpenAI", _Cli)
+    monkeypatch.setattr(rag_agent, "is_grounded", _judge)
+    answer = await rag_agent.rag_answer("Con tarjeta de crédito son los mismos 2.215.000 COP?", lang="es")
+    assert "2.450.000" in answer

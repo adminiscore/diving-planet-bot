@@ -581,6 +581,16 @@ def ask_slot(state: ConversationState, slot: str, *, reasking: bool = False) -> 
                 "on the islands* (accommodation is not included): you can leave *from Cartagena* on the "
                 "first day or, if you're already *on the islands*, we arrange pickup at your hotel."
             )
+        if settings.s4_fixes and not _plan_is_single_day(state):
+            # Paso 6 (ronda B): con la actividad sin concretar ("curso básico" -> curso PADI generico)
+            # se ofrecia "ida y vuelta el mismo dia" a un Open Water. Solo se afirma si se sabe.
+            return (
+                "¿Desde dónde saldrías? Podemos recogerte saliendo *desde Cartagena* o, si ya estás "
+                "*en las islas*, coordinamos la recogida en tu hotel."
+                if lang == "es" else
+                "Where would you be departing from? We can pick you up *from Cartagena* or, if you're "
+                "already *on the islands*, we arrange pickup at your hotel."
+            )
         return (
             "¿Desde dónde saldrías? Podemos recogerte saliendo *desde Cartagena* "
             "(ida y vuelta el mismo día) o, si ya estás *en las islas*, coordinamos "
@@ -772,6 +782,21 @@ def _plan_needs_overnight(state: ConversationState) -> bool:
     if services and all(sid in MULTI_DAY_SERVICES for sid in services):
         return True
     return state.detected_activity == "certified_diving" and state.detected_duration == "multi_day"
+
+
+def _plan_is_single_day(state: ConversationState) -> bool:
+    """¿Se SABE que el plan es de un dia (ida y vuelta desde Cartagena)? El servicio ya resuelto, o
+    una actividad cuyos servicios son todos de un dia sin pernocta. Sin actividad, o con una que mezcla
+    (curso PADI generico: Open Water de 2 dias y especialidades de 1), no se sabe."""
+    from src.flows.catalog import OVERNIGHT_SERVICES  # lazy
+
+    if state.detected_service_id:
+        return state.detected_service_id not in OVERNIGHT_SERVICES
+    if state.detected_activity == "certified_diving":
+        return state.detected_duration != "multi_day"
+    act = dom.by_id(state.detected_activity) if state.detected_activity else None
+    services = act.all_services() if act else ()
+    return bool(services) and not any(sid in OVERNIGHT_SERVICES for sid in services)
 
 
 def _recommended_plan_intro(state: ConversationState) -> str:
@@ -3567,6 +3592,29 @@ def cancel_pending_ack(state: ConversationState) -> None:
         pending["task"].cancel()
 
 
+def _courtesy_after_handoff(state: ConversationState, routing_signals: dict, greeting: str) -> str | None:
+    """s4-20 (paso 6, flag `s4_fixes`): tras pasar la conversacion a una persona, un mensaje que ni
+    pregunta ni da ningun dato ("gracias", "ok, quedo atento") recibe una respuesta corta en vez de
+    volver a vender ("¿Con cuál te animas — buceo, minicurso…?", ronda B del paso 6 tras el pase de
+    los logs de PADI). Lo decide Jev con lo que ya contesta en la misma llamada (`asks_question` y los
+    `affirms_*`, todos en falso); si Jev no contesto, la conducta de hoy."""
+    if not settings.s4_fixes or state.step != Step.ESCALATE:
+        return None
+    keys = ("asks_question", "needs_staff", *(sig for _, sig in _AFFIRMS_SIGNAL_FIELDS))
+    if "asks_question" not in routing_signals or any(routing_signals.get(k) for k in keys):
+        return None
+    response = greeting + (
+        "¡Con gusto! 🙌 Ya le pasé tu caso a un asesor del equipo y te escribe por aquí enseguida. Si "
+        "mientras tanto necesitas algo más, cuéntame."
+        if state.language == "es" else
+        "You're welcome! 🙌 I've already passed your case to an advisor from the team and they'll write to "
+        "you here shortly. If you need anything else in the meantime, just tell me."
+    )
+    state.quick_replies = []
+    state.history.append({"role": "assistant", "content": response})
+    return response
+
+
 async def _availability_phase(
     state: ConversationState, message: str, routing_signals: dict, greeting: str,
 ) -> str | None:
@@ -3583,6 +3631,10 @@ async def _availability_phase(
     (booking) y no el nodo `changes`; aislarla en su propia fase/nodo facilita
     reubicarla en el cutover (Fase 5.2)."""
     from src.agents import supervisor  # lazy
+
+    courtesy = _courtesy_after_handoff(state, routing_signals, greeting)
+    if courtesy is not None:
+        return courtesy
 
     msg_lower = message.strip().lower()
     # Hallazgo (batería sintética contra PRE, 2026-08-26, conv 395, portado

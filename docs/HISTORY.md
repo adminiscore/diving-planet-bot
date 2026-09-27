@@ -1,6 +1,12 @@
 History
 =======
 
+0.29.50 - (2026-09-27)
+----------------------
+* **Paso 6 · ronda B en PRE: `S4_FIXES` PROMOCIONADO (se queda encendido).** Core `2026-09-27-paso6-B` frente a `paso5-B`: criterios 91,2 → 92,6 %, diálogos 20/32 en ambas, 9 mejoras (queja con empatía, "¿eres un bot?", idioma, "no hay precio especial para colombianos", 2 diálogos sin invenciones). Casos del paso 6 (12 diálogos fuera del core, sin examen oculto; `paso6-B-casos`) frente a la ronda A del paso 3: criterios 83,6 → 91,6 %, 13 mejoras — pasan el WhatsApp oficial, el cambio de fecha con asesor, las tres de post-venta, los logs PADI y el precio citado no aceptado.
+* Regresiones leídas: en el core, 2 de variación del RAG (DIVE TO HEAL para el acompañante, "no pierdes la reserva") y 1 que no es fallo (no_aplica); en los casos, 2 no_aplica y 1 del RAG (la hora de corte sin ofrecer asesor). **Propias, 3, arregladas** (se validan en la próxima ronda): (1) "no sé cómo se haga la reserva" acababa en "no lo tengo": la regla nueva pide el link, el LLM lo inventaba y el guard de URLs lo rechazaba → los links reales de reserva van en el contexto del RAG; (2) "ida y vuelta el mismo día" a un "curso básico" aún sin concretar → solo se afirma si se SABE que el plan es de un día (`_plan_is_single_day`), si no, texto neutro; (3) "el tour incluye almuerzo" a quien ya está en las islas (atajo fijo de comida) → el catálogo dice por servicio si el almuerzo va incluido y contesta el RAG.
+* Y tres más con lo visto: "Soy X de la agencia…" ya cuenta como post-venta/empresa (banco 11/11, 0/16); tras pasar a una persona, un mensaje sin pregunta ni datos ("gracias") recibe una respuesta corta en vez del menú (Jev, sin regex); corregir un precio que cita el cliente ya no cae al "no lo tengo" (sus cifras cuentan para el guard de importes; el juez sigue rechazando que se confirme). Suite 2766 passed.
+
 0.29.49 - (2026-09-27)
 ----------------------
 * **Paso 6 (salida y flujo deterministas + escalado): flag `S4_FIXES` (encendido en PRE para su ronda B).** Todos globales, ninguno por caso; los casos del golden son la prueba de cierre:

@@ -30,6 +30,7 @@ POSITIVOS = [
     "I sent you my dive logs, could the instructor approve them so I can join the advanced?",
     "¿Pueden revisar mi certificado PADI que les envié por correo?",
     "Reservé para 4 pero no me llegó el correo de confirmación",
+    "Soy Laura de la agencia de viajes Caribe Tours",
     "Hello, we booked the 5 dive package for next week under my name, just checking everything is fine",
 ]
 NEGATIVOS = [
@@ -47,6 +48,8 @@ NEGATIVOS = [
     "Me pasas el contacto del hotel cocoliso?",
     "¿Se puede pagar con transferencia?",
     "Hola, quisiera averiguar por las salidas de buceo de 2 días",
+    "Somos un grupo de 8 amigos, ¿tienen descuento de grupo?",
+    "Trabajo en una empresa y quiero regalar un minicurso a mi jefe",
 ]
 N = 2
 

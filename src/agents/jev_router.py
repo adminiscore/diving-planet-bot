@@ -272,8 +272,8 @@ _NEEDS_STAFF_Q = {
     "instructions": (
         "The message is about something only a PERSON from the dive center's staff can handle, because the "
         "assistant cannot see bookings, payments or emails: a booking or payment the customer ALREADY made "
-        "(checking it was received, its status, 'is everything ok with my reservations?'), a travel agency or "
-        "company coordinating rates or groups, an email they already sent that is waiting for an answer, or "
+        "(checking it was received, its status, 'is everything ok with my reservations?'), a travel agency, tour "
+        "operator or company writing as a business (introducing their agency, asking for rates or group deals), an email they already sent that is waiting for an answer, or "
         "asking the staff to approve or review documents (dive logs, certifications). It is FALSE for questions "
         "about how booking or paying works, prices, policies (cancellation, refunds), availability, what to "
         "bring, or when the customer is still planning or making a new booking."

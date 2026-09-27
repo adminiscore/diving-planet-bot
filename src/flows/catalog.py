@@ -392,6 +392,9 @@ def catalog_facts(lang: str) -> str:
                          if es else "you must stay overnight on the islands (lodging not included), not a same-day round trip")
         elif not island and days == 1:
             parts.append("ida y vuelta desde Cartagena el mismo día" if es else "same-day round trip from Cartagena")
+        includes = (svc.get("includes_es") or "").lower()
+        parts.append(("almuerzo incluido" if "almuerzo" in includes else "almuerzo NO incluido")
+                     if es else ("lunch included" if "almuerzo" in includes else "lunch NOT included"))
         parts.append(("requiere certificación" if svc.get("requires_cert") else "sin certificación previa")
                      if es else ("certification required" if svc.get("requires_cert") else "no prior certification"))
         if svc.get("min_age") and svc["min_age"] != 10:
@@ -433,3 +436,24 @@ def catalog_facts(lang: str) -> str:
     text = chr(10).join(out)
     _FACTS_CACHE[lang] = text
     return text
+
+
+def catalog_booking_links(lang: str) -> str:
+    """Paso 6 (flag `s4_fixes`): el link de reserva de cada servicio para el contexto del RAG. Con la
+    regla nueva de "¿cómo pago?" (el link de reserva) el LLM escribía un link que no estaba en el
+    contexto, el guard de URLs lo rechazaba y la respuesta acababa en "no lo tengo a la mano" (ronda B
+    del paso 6, "no sé cómo se haga la reserva"). Los de servicios que cierra un asesor no van."""
+    es = lang == "es"
+    lines = []
+    for service_id, svc in SERVICES.items():
+        url = svc.get("booking_url")
+        if not url or svc.get("contact_only") or svc.get("category") == "private":
+            continue
+        if not es:
+            url = url.replace("language=es", "language=en")
+        lines.append(f"- {svc.get('name_es' if es else 'name_en') or service_id}: {url}")
+    head = ("LINKS DE RESERVA ONLINE (el cliente elige fecha y personas y paga ahí; comparte solo el del "
+            "servicio que corresponde):" if es else
+            "ONLINE BOOKING LINKS (the customer picks date and people and pays there; share only the one "
+            "for the matching service):")
+    return chr(10).join([head, *lines])

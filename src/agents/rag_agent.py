@@ -1247,9 +1247,14 @@ async def rag_answer(
                 "\nOrigin: if the context doesn't say where the customer departs from, give the price from "
                 "Cartagena and the 'already on the islands' one, each labelled, or ask where they'd leave from."
             )
+            from src.flows.catalog import catalog_booking_links  # lazy
+
+            facts += "\n" + catalog_booking_links(lang)
         extra_context = f"{extra_context}\n\n{facts}" if extra_context else facts
 
-    canonical_food_answer = _canonical_food_answer(query, lang)
+    # Paso 6 (s4_fixes): el atajo de comida decia "el tour incluye almuerzo" a quien ya esta en las
+    # islas (esos planes no lo incluyen); con el catalogo en el contexto lo contesta el RAG.
+    canonical_food_answer = None if (settings.rag_v2 and settings.s4_fixes) else _canonical_food_answer(query, lang)
     if canonical_food_answer:
         logger.info(f"[RAG][CANONICAL_SHORTCUT] shortcut=food query={query!r} lang={lang}")
         return canonical_food_answer
@@ -1374,6 +1379,11 @@ async def rag_answer(
         messages.append({"role": "user", "content": user_content})
 
         grounding_context = _build_grounding_context(context, extra_context=extra_context, history=history)
+        # Paso 6 (s4_fixes): corregir un precio que cita el cliente ("¿son los mismos 2.215.000?" -> "el
+        # precio es 2.450.000, no 2.215.000") nombra su cifra; el guard la tomaba por inventada y la
+        # respuesta acababa en "no lo tengo". Sus propias cifras cuentan; el juez sigue rechazando que
+        # se CONFIRME un precio que el contexto no respalda.
+        amounts_context = f"{grounding_context}\n{redact_pii(query)}" if settings.s4_fixes else grounding_context
         client = trace_openai(AsyncOpenAI(api_key=settings.openai_api_key))
         fallback = FALLBACK_ES if lang == "es" else FALLBACK_EN
 
@@ -1405,7 +1415,7 @@ async def rag_answer(
             # to trip the other guards on, so it needs its own catch.
             if not is_coherent_text(answer):
                 last_reject = "garbled_output"
-            elif not currency_amounts_grounded(answer, grounding_context):
+            elif not currency_amounts_grounded(answer, amounts_context):
                 last_reject = "ungrounded_amount"
             elif not urls_grounded(answer, grounding_context):
                 last_reject = "ungrounded_url"
