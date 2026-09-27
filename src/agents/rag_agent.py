@@ -1221,6 +1221,15 @@ async def rag_answer(
         logger.warning(f"[RAG][PRIVACY] PII detected in query hits={pii_hits}")
         return privacy_block_message(lang)
 
+    if settings.rag_v2:
+        # Paso 5: el catalogo va entero al contexto (fuente de verdad de precios, duracion y
+        # pernocta) y los atajos de precio por regex dejan de contestar: se disparaban con
+        # "cuánto" aunque se preguntara otra cosa y no sabian de que servicio se hablaba.
+        from src.flows.catalog import catalog_facts  # lazy
+
+        facts = catalog_facts(lang)
+        extra_context = f"{extra_context}\n\n{facts}" if extra_context else facts
+
     canonical_food_answer = _canonical_food_answer(query, lang)
     if canonical_food_answer:
         logger.info(f"[RAG][CANONICAL_SHORTCUT] shortcut=food query={query!r} lang={lang}")
@@ -1240,22 +1249,22 @@ async def rag_answer(
     # funcionaba porque "costo" no matchea `\bcost\b` por casualidad de
     # frontera de palabra. La pregunta específica del refresher debe ganar
     # siempre que aplique, sin depender de ese accidente de regex.
-    refresher_cost = _canonical_refresher_cost_answer(query, lang)
+    refresher_cost = None if settings.rag_v2 else _canonical_refresher_cost_answer(query, lang)
     if refresher_cost:
         logger.info(f"[RAG][CANONICAL_SHORTCUT] shortcut=refresher_cost query={query!r} lang={lang}")
         return refresher_cost
 
-    price_overview = _canonical_price_overview_answer(query, lang)
+    price_overview = None if settings.rag_v2 else _canonical_price_overview_answer(query, lang)
     if price_overview:
         logger.info(f"[RAG][CANONICAL_SHORTCUT] shortcut=price_overview query={query!r} lang={lang}")
         return price_overview
 
-    price_named_services = _canonical_price_named_services_answer(query, lang)
+    price_named_services = None if settings.rag_v2 else _canonical_price_named_services_answer(query, lang)
     if price_named_services:
         logger.info(f"[RAG][CANONICAL_SHORTCUT] shortcut=price_named_services query={query!r} lang={lang}")
         return price_named_services
 
-    price_package = _canonical_price_package_answer(query, lang)
+    price_package = None if settings.rag_v2 else _canonical_price_package_answer(query, lang)
     if price_package:
         logger.info(f"[RAG][CANONICAL_SHORTCUT] shortcut=price_package query={query!r} lang={lang}")
         return price_package

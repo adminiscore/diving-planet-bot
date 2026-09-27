@@ -287,6 +287,13 @@ MULTI_DAY_SERVICES = {
     if (service.get("duration_days") or 0) > 1
 }
 
+# Servicios que obligan a dormir en las islas: los de varios dias y los que llevan buceo
+# nocturno (el paquete de 3 inmersiones "de 1 dia" termina de noche: services.json lo dice en
+# `requirements_es`, "debes alojarte 1 noche", y la ronda A del paso 3 lo contradecia).
+OVERNIGHT_SERVICES = MULTI_DAY_SERVICES | {
+    service_id for service_id, service in SERVICES.items() if service.get("includes_night_dive")
+}
+
 # Above this many people in one line item, nudge toward a human-coordinated
 # private/group service instead of silently treating it like a normal small
 # group (T123 in docs/archive/test-battery-edge-cases.md). Deliberately does NOT state
@@ -344,3 +351,81 @@ def _load_companion_price() -> dict:
 
 
 COMPANION_PRICE = _load_companion_price()
+
+
+_FACTS_CACHE: dict[str, str] = {}
+
+
+def catalog_facts(lang: str) -> str:
+    """Paso 5 (RAG, flag `rag_v2`): el catalogo entero como hechos compactos para el contexto
+    del RAG — precio online y normal, duracion, si obliga a dormir en las islas y si pide
+    certificacion, de cada servicio y desde cada origen. Sale de services.json/pricing.json, no
+    se escribe a mano.
+
+    Ronda A (27-sep): los atajos de precio por regex contestaban preguntas que no eran de precio
+    ("¿cuánto tiempo dura?" -> lista de precios) o con el servicio equivocado ("curso básico" ->
+    buceo certificado), y el LLM contradecia reglas del catalogo que la busqueda no traia (cursos
+    de 2 dias "ida y vuelta el mismo dia", el paquete de 3 inmersiones "en 1 dia"). Con estos
+    hechos siempre en el contexto el LLM contesta la pregunta real y el precio sale del catalogo
+    (el guard de importes sigue exigiendo que cada cifra este en el contexto)."""
+    if lang in _FACTS_CACHE:
+        return _FACTS_CACHE[lang]
+    es = lang == "es"
+    groups: dict[bool, list[str]] = {False: [], True: []}
+    for service_id, svc in SERVICES.items():
+        if svc.get("category") == "private":
+            continue
+        name = svc.get("name_es" if es else "name_en") or service_id
+        parts = []
+        if svc.get("price_usd") is not None:
+            online = money.usd_cop(svc.get("price_usd"), svc.get("price_cop"))
+            normal = money.usd_cop(svc.get("price_usd_normal"), svc.get("price_cop_normal"))
+            parts.append(f"{online} online, {normal} normal" if es else f"{online} online, {normal} regular")
+        else:
+            parts.append("precio: lo cotiza un asesor" if es else "price: quoted by an advisor")
+        days = svc.get("duration_days")
+        if days:
+            parts.append((f"{days} día" + ("s" if days > 1 else "")) if es else (f"{days} day" + ("s" if days > 1 else "")))
+        island = service_id.endswith("_already_on_island")
+        if service_id in OVERNIGHT_SERVICES and not island:
+            parts.append("hay que dormir en las islas (alojamiento no incluido), no es ida y vuelta el mismo día"
+                         if es else "you must stay overnight on the islands (lodging not included), not a same-day round trip")
+        elif not island and days == 1:
+            parts.append("ida y vuelta desde Cartagena el mismo día" if es else "same-day round trip from Cartagena")
+        parts.append(("requiere certificación" if svc.get("requires_cert") else "sin certificación previa")
+                     if es else ("certification required" if svc.get("requires_cert") else "no prior certification"))
+        if svc.get("min_age") and svc["min_age"] != 10:
+            parts.append(f"edad mínima {svc['min_age']}" if es else f"minimum age {svc['min_age']}")
+        groups[island].append(f"- {name}: " + "; ".join(parts) + ".")
+    comp = COMPANION_PRICE
+    companion = money.usd_cop(comp["usd_online"], comp["cop_online"])
+    companion_normal = money.usd_cop(comp["usd_normal"], comp["cop_normal"])
+    if es:
+        head = ("CATÁLOGO OFICIAL (fuente de verdad; precios por persona, 'online' = con el 10% de "
+                "descuento por reservar en la web):")
+        out = [head, "Saliendo desde Cartagena:", *groups[False],
+               f"- Acompañante (no bucea, va en la lancha): {companion} online, {companion_normal} normal.",
+               "Si ya estás en las Islas del Rosario (recogida en tu hotel si tiene acceso marítimo):",
+               *groups[True],
+               "Edad mínima 10 años salvo que se indique otra.",
+               "Operamos todos los días del año salvo el 25 de diciembre y el 1 de enero. Tú no ves los cupos: "
+               "el cliente elige la fecha y el número de personas en el calendario del link de reserva.",
+               "Moneda: colombianos/residentes pagan en COP y extranjeros en USD, mismo precio; si no sabes "
+               "la nacionalidad del cliente, da las dos monedas. No sumes ni calcules totales. Si el cliente "
+               "cita un precio que no coincide con el catálogo, dale el del catálogo sin repetir su cifra."]
+    else:
+        head = ("OFFICIAL CATALOG (source of truth; prices per person, 'online' = with the 10% discount "
+                "for booking on the website):")
+        out = [head, "Departing from Cartagena:", *groups[False],
+               f"- Companion (doesn't dive, rides the boat): {companion} online, {companion_normal} regular.",
+               "If already on the Rosario Islands (pickup at your hotel if it has boat access):",
+               *groups[True],
+               "Minimum age 10 unless stated otherwise.",
+               "We operate every day of the year except December 25 and January 1. You can't see open slots: "
+               "the customer picks the date and number of people in the booking link's calendar.",
+               "Currency: Colombians/residents pay in COP and foreigners in USD, same price; if you don't "
+               "know the customer's nationality, give both currencies. Do not add up or compute totals. If the "
+               "customer quotes a price that doesn't match the catalog, give the catalog price without repeating theirs."]
+    text = chr(10).join(out)
+    _FACTS_CACHE[lang] = text
+    return text

@@ -131,6 +131,14 @@ class Settings(BaseSettings):
     # a mostrar). APAGADO hasta medirlo en su propio escalon.
     recommend_inferred_minicourse: bool = False
 
+    # Paso 5 (RAG, l1-6 + l1-7, 27-sep): (a) el catalogo entero como hechos en el contexto del RAG
+    # en vez de los atajos de precio por regex, que contestaban preguntas que no eran de precio;
+    # (b) juez de grounding que solo rechaza DATOS DEL NEGOCIO sin respaldo (saludos, cortesia y
+    # "no lo tengo" iban al fallback), con el modelo de la respuesta; (c) la pregunta de
+    # disponibilidad la contesta el RAG entera en vez de un texto fijo que se comia el resto del
+    # mensaje. Ronda A: 37 respuestas acabaron en "no lo tengo a la mano". APAGADO por defecto.
+    rag_v2: bool = False
+
     # --- Observabilidad: Langfuse (sustituye a LangSmith, cuota Developer
     # agotada; ver docs/robustness/progress-log.md "Tarea 8"). Sin claves, el
     # tracing queda apagado y `langfuse` ni se importa (3.14-safe). Claves por

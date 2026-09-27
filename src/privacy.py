@@ -16,6 +16,34 @@ SENSITIVE_KEYWORDS_RE = re.compile(
     re.IGNORECASE,
 )
 
+# Un numero con separadores de miles ("2.215.000", "1,429,000"): todos los grupos tras el primero
+# son de 3 cifras. Un telefono nunca tiene esa forma (3-3-4, +57 ...): es un importe... o una cedula
+# escrita con puntos ("1.023.456.789"). Ronda A del paso 5 (27-sep): "Con tarjeta de crédito son
+# los mismos 2.215.000?" recibia el bloqueo de privacidad por "telefono", y los precios en COP del
+# historial llegaban al LLM como [REDACTED_PHONE].
+_GROUPED_NUMBER_RE = re.compile(r"\d{1,3}([.,])\d{3}(?:\1\d{3})*")
+# Solo documento y cuenta, sin "tarjeta"/"card": una tarjeta no se escribe en grupos de 3, y "¿con
+# tarjeta son los mismos 2.215.000?" es una pregunta de precio.
+_ID_KEYWORDS_RE = re.compile(
+    r"\b(c[eé]dula|dni|pasaporte|passport|cuenta|account|iban|swift|bancolombia|nequi|daviplata)\b",
+    re.IGNORECASE,
+)
+_GROUPED_ID_MIN_DIGITS = 7
+
+
+def _phone_matches(text: str) -> list[re.Match]:
+    return [m for m in PHONE_RE.finditer(text) if not _GROUPED_NUMBER_RE.fullmatch(m.group(0))]
+
+
+def _grouped_id_matches(text: str) -> list[re.Match]:
+    """Numeros agrupados largos junto a una palabra de documento o cuenta (cedula con puntos)."""
+    if not _ID_KEYWORDS_RE.search(text):
+        return []
+    return [
+        m for m in _GROUPED_NUMBER_RE.finditer(text)
+        if sum(ch.isdigit() for ch in m.group(0)) >= _GROUPED_ID_MIN_DIGITS
+    ]
+
 
 def detect_pii(text: str) -> list[str]:
     hits: list[str] = []
@@ -24,16 +52,22 @@ def detect_pii(text: str) -> list[str]:
 
     if EMAIL_RE.search(text):
         hits.append("email")
-    if PHONE_RE.search(text):
+    if _phone_matches(text):
         hits.append("phone")
 
     if CARD_NUMBER_RE.search(text) and SENSITIVE_KEYWORDS_RE.search(text):
         hits.append("payment_card")
 
-    if LONG_DIGITS_RE.search(text) and SENSITIVE_KEYWORDS_RE.search(text):
+    if (LONG_DIGITS_RE.search(text) and SENSITIVE_KEYWORDS_RE.search(text)) or _grouped_id_matches(text):
         hits.append("id_or_account")
 
     return hits
+
+
+def _replace_matches(text: str, matches: list[re.Match], label: str) -> str:
+    for m in reversed(matches):
+        text = text[: m.start()] + label + text[m.end():]
+    return text
 
 
 def redact_pii(text: str) -> str:
@@ -42,7 +76,8 @@ def redact_pii(text: str) -> str:
 
     redacted = text
     redacted = EMAIL_RE.sub("[REDACTED_EMAIL]", redacted)
-    redacted = PHONE_RE.sub("[REDACTED_PHONE]", redacted)
+    redacted = _replace_matches(redacted, _phone_matches(redacted), "[REDACTED_PHONE]")
+    redacted = _replace_matches(redacted, _grouped_id_matches(redacted), "[REDACTED_NUMBER]")
 
     if SENSITIVE_KEYWORDS_RE.search(redacted):
         redacted = CARD_NUMBER_RE.sub("[REDACTED_CARD]", redacted)

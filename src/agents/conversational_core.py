@@ -763,9 +763,9 @@ def _plan_needs_overnight(state: ConversationState) -> bool:
     """¿El plan elegido obliga a dormir en las islas? Del catalogo (`duration_days` > 1), no de una
     lista: el servicio ya resuelto, o una actividad cuyos servicios son todos de varios dias (cursos
     de 2 dias), o el paquete multi-dia que el cliente ya pidio."""
-    from src.flows.catalog import MULTI_DAY_SERVICES  # lazy
+    from src.flows.catalog import MULTI_DAY_SERVICES, OVERNIGHT_SERVICES  # lazy
 
-    if state.detected_service_id and state.detected_service_id in MULTI_DAY_SERVICES:
+    if state.detected_service_id and state.detected_service_id in OVERNIGHT_SERVICES:
         return True
     act = dom.by_id(state.detected_activity) if state.detected_activity else None
     services = act.all_services() if act else ()
@@ -2989,6 +2989,14 @@ def _full_booking_recap(state: ConversationState) -> str | None:
     return header + "\n".join(lines)
 
 
+def _jev_says_no_recall(state: ConversationState) -> bool:
+    """Paso 5 (flag `rag_v2`): Jev dice que el mensaje NO pide recordar nada. Ausente (flag o Jev
+    apagados, o Jev fallo) = no lo sabemos -> la conducta de hoy. En la ronda A el "¿me recuerdas…?"
+    contesto 15 preguntas que no lo eran y cancelo su respuesta; banco
+    `scripts/sonda_pide_recordar.py`: 11/12 peticiones reales, 0/14 falsas."""
+    return getattr(state, "_jev_asks_recall", None) is False
+
+
 def _recall_answer(state: ConversationState, field: str) -> str | None:
     """Responde un pedido de "recuérdame qué dije" con el VALOR REAL del
     estado (nunca lo que el LLM "cree" que dijiste — el LLM solo identificó
@@ -3607,6 +3615,12 @@ async def _availability_phase(
             response = greeting + policy_text
             state.history.append({"role": "assistant", "content": response})
             return response
+        if settings.rag_v2:
+            # Paso 5: el texto fijo se comia el resto del mensaje ("¿el 6 de febrero ya es fijo que
+            # se sale?", "¿las fotos tienen precio adicional?") y ademas prometia "siempre hay
+            # disponibilidad". La pregunta sigue como cualquier otra: la contesta el RAG (con la
+            # regla de no confirmar cupos en el contexto) y la reserva sigue.
+            return None
         avail = (
             "¡Buena noticia! 📅 Las salidas son diarias y siempre hay disponibilidad. "
             "Vas a poder elegir el día exacto y el número de personas directamente en el "
@@ -3652,6 +3666,8 @@ async def _routing_phase(
     )
     # u3-5 paso 2: ¿el mensaje corrige un dato ya dado? (Jev, misma llamada). Se renueva cada turno.
     state._jev_corrects = routing_signals.get("corrects") if settings.corrections_v2 else None
+    # Paso 5: ¿pide que le recordemos algo que él dijo? (Jev, misma llamada). Se renueva cada turno.
+    state._jev_asks_recall = routing_signals.get("asks_recall") if settings.rag_v2 else None
 
     # COMPRENDER (carryover PRIMERO): si hay un slot pendiente y este mensaje
     # lo RESUELVE, el carryover gana aunque el mensaje "parezca pregunta" por
@@ -3726,7 +3742,7 @@ async def _routing_phase(
         _maybe_launch_answer(state, message, routing_signals)
         signals = await detect_special_signals(message, history=state.history, lang=state.language)
         recalled = None
-        if signals.get("recall_field"):
+        if signals.get("recall_field") and not _jev_says_no_recall(state):
             recalled = _recall_answer(state, signals["recall_field"])
         if recalled:
             cancel_pending_answer(state)
@@ -4289,7 +4305,7 @@ async def _extraction_phase_body(
             # lo mismo sin fin, único slot booleano de la reserva sin red.
             state.refresher_interested = signals["refresher_interested"]
             advanced = True
-        elif signals.get("recall_field"):
+        elif signals.get("recall_field") and not _jev_says_no_recall(state):
             recalled = _recall_answer(state, signals["recall_field"])
             if recalled:
                 response = recalled
@@ -4780,6 +4796,18 @@ async def _take_parallel_answer(state: ConversationState) -> str | None:
     except Exception as exc:  # noqa: BLE001 — si el RAG falla, el turno sigue sin respuesta
         logger.warning(f"[CORE][U3-4] la respuesta en paralelo falló, sigue la reserva: {exc}")
         return None
+
+
+async def attach_unused_answer(state: ConversationState, response):
+    """Cierre del turno: una respuesta lanzada en paralelo que ninguna salida del turno recogio se
+    pone delante en vez de cancelarse. Paso 5 (27-sep): salidas como el resumen ("Sure, here's
+    what we have so far") o el recordatorio de un dato no la tomaban y la pregunta se quedaba sin
+    contestar ("Hope you are operating on Easter Sunday? … How do we pay for the refresher?").
+    La unica salida que la descarta a proposito (el "¿me recuerdas…?") ya la cancela antes."""
+    if not isinstance(response, str) or not response or not _has_pending_answer(state):
+        return response
+    greeting = _greeting(state)
+    return await _prepend_parallel_answer(state, response, greeting if response.startswith(greeting) else "")
 
 
 def cancel_pending_answer(state: ConversationState) -> None:

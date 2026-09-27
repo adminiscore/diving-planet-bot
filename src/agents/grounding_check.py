@@ -6,7 +6,12 @@ from openai import AsyncOpenAI
 from src.config import settings
 from src.llm_client import trace_openai
 from src.privacy import redact_pii
-from src.prompts.info import GROUNDING_VERIFY_EN, GROUNDING_VERIFY_ES
+from src.prompts.info import (
+    GROUNDING_VERIFY_EN,
+    GROUNDING_VERIFY_ES,
+    GROUNDING_VERIFY_V2_EN,
+    GROUNDING_VERIFY_V2_ES,
+)
 
 logger = logging.getLogger("uvicorn.error")
 
@@ -284,7 +289,10 @@ async def is_grounded(answer: str, context: str, lang: str = "es") -> tuple[bool
     if not answer.strip() or not context.strip():
         return False, "empty_answer_or_context"
 
-    system = GROUNDING_VERIFY_ES if lang == "es" else GROUNDING_VERIFY_EN
+    if settings.rag_v2:
+        system = GROUNDING_VERIFY_V2_ES if lang == "es" else GROUNDING_VERIFY_V2_EN
+    else:
+        system = GROUNDING_VERIFY_ES if lang == "es" else GROUNDING_VERIFY_EN
     if lang == "es":
         user_content = (
             f"CONTEXTO:\n{redact_pii(context)}\n\n"
@@ -299,7 +307,9 @@ async def is_grounded(answer: str, context: str, lang: str = "es") -> tuple[bool
     try:
         client = trace_openai(AsyncOpenAI(api_key=settings.openai_api_key))
         response = await client.chat.completions.create(
-            model=settings.openai_model,
+            # rag_v2: el mismo modelo que escribe la respuesta (gpt-4.1-mini en PRE) sigue la
+            # distincion "dato del negocio / todo lo demas"; gpt-4o-mini fallaba en los dos sentidos.
+            model=(settings.rag_answer_model or settings.openai_model) if settings.rag_v2 else settings.openai_model,
             messages=[
                 {"role": "system", "content": system},
                 {"role": "user", "content": user_content},

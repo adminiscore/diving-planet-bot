@@ -867,3 +867,36 @@ async def test_el_si_de_jev_rellena_tambien_el_dato_que_el_bot_acaba_de_pregunta
     await route_message(st, "completé el curso básico el 3 de abril, ¿tengo que hacer algo especial?")
     assert any("is_certified" in c["fields"] and c["history"] is None for c in calls), calls
     assert st.is_certified is True
+
+
+# Paso 5 (flag `rag_v2`): Jev decide si el mensaje pide de verdad recordar algo. En la ronda A el
+# "¿me recuerdas…?" contestó 15 preguntas que no lo eran ("could you just confirm at what time and
+# where…?") y canceló su respuesta.
+async def test_si_jev_dice_que_no_pide_recordar_se_contesta_la_pregunta(monkeypatch, signals, rag):
+    monkeypatch.setattr(settings, "answer_and_continue", True)
+    monkeypatch.setattr(settings, "rag_v2", True)
+    monkeypatch.setattr(core, "detect_special_signals", AsyncMock(return_value={"recall_field": "booking_recap"}))
+    st = _state()
+    await route_message(st, "quiero bucear, soy certificado, desde cartagena, somos 2")
+    signals["value"] = {"asks_recall": False}
+    resp = await route_message(st, "¿me confirmas a qué hora y dónde nos vemos?")
+    assert "RESPUESTA_RAG" in resp
+
+
+async def test_si_jev_dice_que_pide_recordar_sigue_la_respuesta_fija(monkeypatch, signals, rag):
+    monkeypatch.setattr(settings, "answer_and_continue", True)
+    monkeypatch.setattr(settings, "rag_v2", True)
+    monkeypatch.setattr(core, "detect_special_signals", AsyncMock(return_value={"recall_field": "group_size"}))
+    st = _state()
+    await route_message(st, "quiero bucear, soy certificado, desde cartagena, somos 2")
+    signals["value"] = {"asks_recall": True}
+    resp = await route_message(st, "¿cuántos te dije que éramos?")
+    assert "RESPUESTA_RAG" not in resp and "2" in resp
+
+
+def test_la_pregunta_de_recordar_solo_va_con_el_flag(monkeypatch):
+    monkeypatch.setattr(settings, "rag_v2", False)
+    assert jev_router.ASKS_RECALL not in jev_router._questions_for_turn()
+    monkeypatch.setattr(settings, "rag_v2", True)
+    assert jev_router.ASKS_RECALL in jev_router._questions_for_turn()
+    assert jev_router.answers_to_signals({"asks_recall": {"type": "noul", "noul": 0.1}}) == {"asks_recall": False}

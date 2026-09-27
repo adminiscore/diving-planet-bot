@@ -208,8 +208,12 @@ ROUTING_TOOL = {
                         "'a number to call you', 'how can I reach you'). Do "
                         "NOT set it for a normal booking message, for asking "
                         "to talk to a human IN this chat (that is "
-                        "wants_human), or for giving THEIR own number. When "
-                        "unsure, leave it false."
+                        "wants_human), for giving THEIR own number, for "
+                        "asking HOW or WHERE to book or pay ('do we book on "
+                        "WhatsApp or on the website?'), or for the contact of "
+                        "ANOTHER business such as a hotel ('¿me pasas el "
+                        "contacto del hotel?') — those are information "
+                        "questions. When unsure, leave it false."
                     ),
                 },
                 "comparing_options": {

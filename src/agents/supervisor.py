@@ -2804,10 +2804,13 @@ async def route_message(state: ConversationState, message: str) -> str:
         # ANTES de que el canal guarde el estado o se perdería la nota. Es no-op
         # cuando el flag está apagado o cuando ya se esperó en el RAG.
         from src.agents.conversational_core import (
+            attach_unused_answer,
             await_pending_notes,
             cancel_pending_ack,
             cancel_pending_answer,
         )
+        if state.pending_escalation_reason == escalation_before:  # un traspaso a persona va solo
+            response = await attach_unused_answer(state, response)
         await await_pending_notes(state)
         # u3-1 paso 3 / u3-4: un acuse o una respuesta lanzados en paralelo que el turno no
         # usó se cancelan.

@@ -241,10 +241,29 @@ _CORRECTS_Q = {
     ),
 }
 
+# Paso 5 (flag `rag_v2`, 27-sep): ¿el cliente pide que le RECORDEMOS algo que él mismo dijo? El
+# "¿me recuerdas…?" (`recall_field` del detector de señales) contesta con el dato guardado y
+# CANCELA la respuesta del RAG; en la ronda A salió 15 veces y casi ninguna lo era ("could you just
+# confirm at what time and where…?", "Hope you are operating on Easter Sunday?"). Calibrado con
+# `scripts/sonda_pide_recordar.py`.
+ASKS_RECALL = "asks_recall"
+ASKS_RECALL_MIN = 0.5
+_ASKS_RECALL_Q = {
+    "type": "noul",
+    "instructions": (
+        "The customer asks the assistant to REMIND them of, or repeat back, something THE CUSTOMER "
+        "THEMSELVES already said in this chat about their own booking ('¿cuántas personas te dije?', "
+        "'¿qué te había pedido?', 'remind me what I told you', '¿qué llevamos hasta ahora?'). It is FALSE "
+        "when they ask for information about the service, prices, schedules, meeting point, policies or "
+        "dates (even if they say 'confirm' or 'right?'), when they check their understanding of what WE "
+        "said, or when they give new details."
+    ),
+}
+
 # Las preguntas de u3-4/u3-5 no son señales del router: su duda NO manda el turno al router LLM.
 _U34_QUESTIONS = (
     ASKS_QUESTION, AFFIRMS_LOCATION, AFFIRMS_ACTIVITY, ACTIVITY_HYPOTHESIS,
-    AFFIRMS_CERTIFICATION, AFFIRMS_GROUP, AFFIRMS_NATIONALITY, CORRECTS,
+    AFFIRMS_CERTIFICATION, AFFIRMS_GROUP, AFFIRMS_NATIONALITY, CORRECTS, ASKS_RECALL,
 )
 
 
@@ -272,6 +291,8 @@ def _questions_for_turn() -> dict:
         q.update({ASKS_QUESTION: _ASKS_QUESTION_Q, **_AFFIRMS_QUESTIONS})
     if settings.corrections_v2:
         q[CORRECTS] = _CORRECTS_Q
+    if settings.rag_v2:
+        q[ASKS_RECALL] = _ASKS_RECALL_Q
     return q
 
 
@@ -316,6 +337,8 @@ def answers_to_signals(answers: dict, threshold: float = THRESHOLD) -> dict:
     # distintos y el llamante (`_question_turn_fields`) necesita distinguirlos.
     if CORRECTS in answers:
         out[CORRECTS] = (answers.get(CORRECTS) or {}).get("noul", 0.0) >= CORRECTS_MIN
+    if ASKS_RECALL in answers:
+        out[ASKS_RECALL] = (answers.get(ASKS_RECALL) or {}).get("noul", 0.0) >= ASKS_RECALL_MIN
     for name in (AFFIRMS_LOCATION, AFFIRMS_CERTIFICATION, AFFIRMS_GROUP, AFFIRMS_NATIONALITY):
         if name in answers:
             out[name] = (answers.get(name) or {}).get("noul", 0.0) >= AFFIRMS_MIN
@@ -359,7 +382,10 @@ async def detect_routing_signals_jev(message: str, *, lang: str = "es") -> dict 
 
 
 # Señales de u3-4/u3-5 que NO son del router: viajan aparte (ver `detect_routing_signals_jev_full`).
-_TURN_SIGNALS = (AFFIRMS_LOCATION, AFFIRMS_ACTIVITY, AFFIRMS_CERTIFICATION, AFFIRMS_GROUP, AFFIRMS_NATIONALITY, CORRECTS)
+_TURN_SIGNALS = (
+    AFFIRMS_LOCATION, AFFIRMS_ACTIVITY, AFFIRMS_CERTIFICATION, AFFIRMS_GROUP, AFFIRMS_NATIONALITY, CORRECTS,
+    ASKS_RECALL,
+)
 
 
 async def detect_routing_signals_jev_full(

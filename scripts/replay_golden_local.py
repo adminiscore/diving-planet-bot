@@ -25,6 +25,7 @@ os.environ.update({
     "JEV_ROUTER_ENABLED": "true", "AGENT_ARCH": "true", "RAG_MIN_SCORE": "0.40",
     "NOTES_IN_PARALLEL": "false", "ACK_IN_PARALLEL": "false",
     "ANSWER_AND_CONTINUE": "true",  # encendido en PRE desde el 26-sep (u3-4); --flag lo puede pisar
+    "CORRECTIONS_V2": "true",  # promocionado el 27-sep (u3-5)
     "LANGFUSE_PUBLIC_KEY": "", "LANGFUSE_SECRET_KEY": "",
     "CHATWOOT_API_TOKEN": "", "CHATWOOT_BASE_URL": "http://127.0.0.1:9", "CHATWOOT_API_BASE_URL": "http://127.0.0.1:9",
 })
