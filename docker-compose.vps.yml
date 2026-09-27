@@ -183,7 +183,8 @@ services:
       # 0 regresiones propias, p95 5,45 -> 4,84 s -> PROMOCIONADO. Revert = "false" + redeploy.
       SLOT_ANSWERS_JEV: "true"
       # u3-3 (paso 7, 27-sep): Jev verifica lo que lee el regex en todos los turnos (seguro de que no).
-      # Ver HISTORY 0.29.54. ENCENDIDO para la ronda B; si no pasa, "false" el mismo dia.
+      # Ver HISTORY 0.29.54-0.29.56. Ronda B (27-sep): la puerta no actuo en el core (0 turnos), diferencias
+      # = ruido; escalon 0: -5 datos inventados, 0 buenos perdidos -> PROMOCIONADO; se confirma en el paso 8.
       REGEX_JEV_GATE: "true"
       # Refactor multi-agente (docs/multi-agent-refactor-plan.md) — validación en
       # PRE antes del corte del legacy (Fase 5.2). STAGE B (ahora): el GRAFO sirve

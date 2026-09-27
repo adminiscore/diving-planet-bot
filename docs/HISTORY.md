@@ -1,6 +1,11 @@
 History
 =======
 
+0.29.56 - (2026-09-27)
+----------------------
+* **u3-3 · ronda B en PRE: `REGEX_JEV_GATE` PROMOCIONADO — PASO 7 CERRADO.** Core `2026-09-27-u33-B` frente a `u37-B`: 91,3 % y 21/32 frente a 93,0 % y 23/32, pero **la puerta no actuó en ningún turno del core** (0 líneas `[EXTRACT][U3-3]` en el log de PRE; las probabilidades `affirms_p` sí llegan): las 7 regresiones son las variaciones ya vistas del RAG ("llevamos 30 años", hoteles, link) y del router LLM (el descuento tomado por enlace roto), y el juez de grounding con un precio en COP. Sirve como medida del RUIDO entre dos rondas casi idénticas: ±2 diálogos. Se promociona por el escalón 0 (−5 datos inventados, 0 buenos perdidos, sobre todo en diálogos fuera del core); su efecto se confirma en la ronda completa del paso 8.
+* Pasos 5-7 del plan secuencial hechos (plan maestro PARTE 8 y handoff al día). Siguiente: paso 8, ronda de cierre (golden completo + examen oculto, ≥ 77,6 %).
+
 0.29.55 - (2026-09-27)
 ----------------------
 * **u3-7 · ronda B en PRE: `SLOT_ANSWERS_JEV` PROMOCIONADO.** Core `2026-09-27-u37-B` frente a `u36-B`: **diálogos sin fallos 20 → 23 de 32**, criterios 92,2 → 93,0 %, 6 mejoras (descuento online sin código, cancelación con pase a persona, moneda por nacionalidad, 2 diálogos sin invenciones). Latencia del servidor p95 5,45 → 4,84 s, llamadas LLM por turno 3,04 → 2,85. Jev decidió 8 respuestas pendientes (log `[CORE][U3-7]`), las 8 correctas: 7 "eso no contesta a lo preguntado" ("ah I see", "Thanks", "este me interesa"), donde el LLM tendía a inventar, y 1 sí/no. Regresiones leídas con el log: ninguna propia — 3 del RAG (recogida en hotel desde Cartagena, formulario médico, no escalar el descuento), 1 de extracción por variación del LLM (sin decisión de Jev en ese turno) y 1 no_aplica.

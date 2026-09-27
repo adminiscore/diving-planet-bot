@@ -13,6 +13,23 @@ Read this file before changing code in the Diving Planet Bot. For a quick versio
 
 > **📏 LEER ANTES DE MEDIR — decisiones del 24-sep-2026 (Gadea):** (1) latencia y llamadas con nuestros logs `[TURN_METRICS]` + `scripts/turn_metrics.py`, no con Langfuse (plan gratuito superado, reinicio 16-oct); (2) pruebas A/B por escalones, juzgando solo los diálogos que cambian. Todo en `docs/robustness/protocolo-medicion.md`.
 
+### ✅ 27-sep madrugada (Gadea) — PASOS 5, 6 y 7 HECHOS. Siguiente (28-sep): PASO 8, ronda de cierre
+
+**Flags nuevos, todos encendidos en PRE** (HISTORY 0.29.47-0.29.56): `RAG_V2` (paso 5: catálogo como hechos en el
+contexto del RAG, juez de grounding v2, disponibilidad por el RAG, Jev decide el "recordar"), `S4_FIXES` (paso 6:
+WhatsApp oficial, asistente virtual, queja con disculpa, link al pagar, post-venta y cambio de fecha a una persona,
+links de reserva en el contexto), `SIGNALS_GATE` (u3-6), `SLOT_ANSWERS_JEV` (u3-7), `REGEX_JEV_GATE` (u3-3).
+**Evolución del core** (32 diálogos, juez g-8): u35-B 86,2 % · 16/32 → paso5-B 91,2 % · 20/32 → paso6-B 92,6 % → u36-B
+92,2 % → **u37-B 93,0 % · 23/32**; latencia p95 del servidor ~5,8 → 4,8 s, llamadas LLM/turno 3,46 → 2,85.
+
+**Mañana, PASO 8:** ronda COMPLETA del golden (116 diálogos + examen oculto) con el juez g-8 contra
+`2026-09-27-paso3-A` — criterio: examen oculto ≥ 77,6 % y mejor que la A en reales, sin regresiones propias.
+`ENV_FILE=.env.dev python -m scripts.run_synthetic_pre --name paso8 --sample golden` (~2 h en serie) → guardar el log
+de PRE ANTES de cualquier push → `turn_metrics --from-run` → `judge_golden_set --run` → `ab_judge_compare
+2026-09-27-paso3-A 2026-09-2X-paso8`. Pendientes vistos por el camino (no bloquean): una invención del RAG que el
+juez v2 deja pasar ("debes haber completado la teoría", "llevamos 30 años"); `RECOMMEND_INFERRED_MINICOURSE` sin
+medir; el acuse del LLM a veces afirma datos que no se guardan ("no son colombianos").
+
 ### ✅ 27-sep noche (Gadea) — u3-5 PROMOCIONADO (`CORRECTIONS_V2=true` en PRE). Siguiente: PASO 5 (RAG)
 
 **Plan reordenado con datos** (plan maestro, PARTE 8; los 138 fallos de la ronda A: RAG 55 %): paso 5 = **RAG
