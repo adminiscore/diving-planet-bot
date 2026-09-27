@@ -50,6 +50,11 @@ CASOS = [
      "GROUNDED"),
     (CTX_FOTOS, "¡Qué bonito plan! El buceo en el Caribe es una experiencia increíble. Las fotos no van incluidas; "
                 "el instructor puede tomarlas de forma voluntaria.", "GROUNDED"),
+    # Ronda B del 28-sep: un precio correcto con otros separadores y el nocturno dicho en otra frase.
+    ("- Paquete de 5 inmersiones (2 dias): 392 USD / 1.429.000 COP online, 436 USD / 1.587.000 COP normal; 2 días; "
+     "incluye un buceo nocturno; hay que dormir en las islas (alojamiento no incluido).",
+     "El paquete de 5 inmersiones (2 días, con un buceo nocturno) cuesta $1,587,000 COP precio normal y $1,429,000 "
+     "COP online.", "GROUNDED"),
 ]
 N = 3
 

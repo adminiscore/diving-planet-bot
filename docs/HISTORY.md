@@ -1,6 +1,10 @@
 History
 =======
 
+0.29.58 - (2026-09-28)
+----------------------
+* **Ronda B conjunta (`juezv3-B`): `GROUNDING_V3` y `RECOMMEND_INFERRED_MINICOURSE` PROMOCIONADOS.** Frente a `u33-B`: criterios 91,3 → 93,0 %, diálogos sin fallos 21 → 23 de 32; 5 mejoras que son invenciones cortadas ("llevamos 30 años", Curso Referido, hoteles), 2 regresiones ya vistas en rondas anteriores (DIVE TO HEAL del RAG; "venga alguien más" de extracción), ninguna de estos flags. La recomendación del minicurso no se activa en el core (su escalón 0 fue correcto). El v3 caza inventos reales en PRE ("instructores PADI 5 estrellas", "puedes cancelar", "regreso otro día incluido") pero rechazó un precio correcto en COP ("$1,587,000" frente a "1.587.000"): **arreglado** — el juez sabe que una cifra con otros separadores es la misma, y el catálogo dice qué paquetes llevan buceo nocturno (`includes_night_dive`); banco 33/33. Coste: 5 respuestas cayeron al "no lo tengo" (1 en u33-B) y el p95 del servidor subió 5,3 → 7,0 s por las regeneraciones — a vigilar en el paso 8.
+
 0.29.57 - (2026-09-28)
 ----------------------
 * **Juez de grounding v3 (flag `GROUNDING_V3`, encendido en PRE para su ronda B).** El v2 contestaba con una palabra y dejaba pasar inventos que su propia lista nombra. Banco nuevo `scripts/sonda_juez_grounding.py` (5 inventos de las rondas del 27-sep + 5 respuestas correctas o de cortesía, ×3): v2 con gpt-4.1-mini **21/30** ("llevamos 30 años", "debes haber completado la teoría", "hay barcos hundidos" pasaban). El v3 enumera cada DATO DEL NEGOCIO de la respuesta y lo marca SÍ/NO frente al contexto, y el veredicto lo calcula el código con esas marcas (`verdict_from_fact_list`; el modelo a veces contradecía su lista en la última palabra). Con gpt-4.1-mini el v3 era inestable (23-24/30); con **gpt-4.1, 30/30 estable**, +0,25 s de mediana por juicio (0,48 → 0,73 s; el máximo baja). `GROUNDING_V3_MODEL` fijado en el compose y vigilado por `test_models_pinned`.

@@ -189,10 +189,12 @@ services:
       # = ruido; escalon 0: -5 datos inventados, 0 buenos perdidos -> PROMOCIONADO; se confirma en el paso 8.
       REGEX_JEV_GATE: "true"
       # Juez de grounding v3 (28-sep): enumera y marca cada dato del negocio; gpt-4.1 (GROUNDING_V3_MODEL).
-      # Ver HISTORY 0.29.57. ENCENDIDO para la ronda B; si no pasa, "false" el mismo dia.
+      # Ver HISTORY 0.29.57-0.29.58. Ronda B (28-sep): 91,3 -> 93,0 %, 21 -> 23/32, 0 regresiones propias
+      # -> PROMOCIONADO (vigilar p95: 5,3 -> 7,0 s por las regeneraciones). Revert = "false" + redeploy.
       GROUNDING_V3: "true"
       # u3-5 (decision de Gadea): el minicurso deducido se RECOMIENDA y lo confirma el cliente; a quien pide
-      # un curso se le recomienda el Open Water. Ver HISTORY 0.29.45-0.29.57. ENCENDIDO para la ronda B.
+      # un curso se le recomienda el Open Water. Ver HISTORY 0.29.45-0.29.58. Escalon 0 correcto, sin
+      # regresiones en la ronda B (no se activa en el core) -> PROMOCIONADO. Revert = "false" + redeploy.
       RECOMMEND_INFERRED_MINICOURSE: "true"
       # Refactor multi-agente (docs/multi-agent-refactor-plan.md) — validación en
       # PRE antes del corte del legacy (Fase 5.2). STAGE B (ahora): el GRAFO sirve

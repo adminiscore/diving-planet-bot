@@ -392,6 +392,8 @@ def catalog_facts(lang: str) -> str:
         days = svc.get("duration_days")
         if days:
             parts.append((f"{days} día" + ("s" if days > 1 else "")) if es else (f"{days} day" + ("s" if days > 1 else "")))
+        if svc.get("includes_night_dive"):
+            parts.append("incluye un buceo nocturno" if es else "includes a night dive")
         island = service_id.endswith("_already_on_island")
         if service_id in OVERNIGHT_SERVICES and not island:
             parts.append("hay que dormir en las islas (alojamiento no incluido), no es ida y vuelta el mismo día"
