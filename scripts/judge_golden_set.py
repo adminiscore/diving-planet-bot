@@ -78,7 +78,7 @@ Reglas:
 - Los precios "reservando online" de la referencia son los validos. Un precio redondeado a la unidad es correcto.
 - Un "saludo" es presentarse o decir hola/hi. "¡Genial!", "¡Buena noticia!" o "¡Con gusto te ayudo!" no son saludos.
 - Una "repregunta" es volver a pedir un dato que el cliente YA dio, o que se deduce claramente de lo que dijo (por ejemplo, preguntar a unos ninos pequenos si son buzos certificados, o preguntar cuantas personas son a quien dijo que va solo). Repetir una pregunta que el cliente no ha contestado y que no se deduce de lo dicho NO es repreguntar.
-- Ofrecer que un asesor contacte al cliente cuenta como pasar a un asesor.
+- Pasar a un asesor: decir que un asesor le contactara o que se le pasa con el equipo cuenta como pasar. Solo PREGUNTAR si quiere que le pasen ("¿quieres que te pase con un asesor?") cuenta si el criterio acepta ofrecerlo; si el criterio dice que el bot DEBE pasar o escalar la conversacion, esa pregunta no basta.
 - UN FALLO, UN CRITERIO. Recibes tambien los OTROS criterios del dialogo. Antes de marcar "no_cumple", comprueba si ese mismo fallo lo describe mejor (de forma mas especifica) otro criterio de la lista: si es asi, en el criterio que juzgas marca "cumple". Los criterios globales (sin-invenciones, sin-repreguntas...) ceden siempre ante un criterio propio del dialogo que describa el mismo fallo.
 - CONVERSACION CORTADA. El dialogo es un guion fijo y termina cuando se acaban los mensajes del cliente. Si algo no llego a pasar porque la conversacion se acabo (el bot estaba pidiendo un dato razonable que el cliente ya no dio), es "no_aplica", no "no_cumple". Solo es "no_cumple" si el bot tuvo ocasion y no lo hizo o hizo algo incorrecto.
 
@@ -255,8 +255,10 @@ def quote_found(quote: str | None, text: str) -> bool:
 
 
 def check_evidence(verdict: dict, records: list[dict]) -> dict:
-    """Un `no_cumple` sin cita verificable del bot (o con cita del cliente inventada) baja a `revisar`."""
-    if verdict["verdict"] != "no_cumple":
+    """Un `no_cumple` sin cita verificable del bot (o con cita del cliente inventada) baja a `revisar`.
+    Un criterio general con su lista de `problemas` se comprueba problema a problema en
+    `discount_counted`."""
+    if verdict["verdict"] != "no_cumple" or verdict.get("problemas"):
         return verdict
     bot_text = "\n".join(b for r in records for b in bot_bubbles(r))
     client_text = "\n".join(r["msg"] for r in records)
@@ -274,30 +276,57 @@ def parse_verdict(raw: str) -> dict:
         return {"verdict": "error", "reason": "el juez no devolvio JSON"}
     if not isinstance(data, dict) or data.get("verdict") not in VERDICTS:
         return {"verdict": "error", "reason": "el juez no devolvio un veredicto valido"}
-    return {
+    out = {
         "verdict": data["verdict"],
         "reason": str(data.get("motivo") or data.get("reason") or ""),
         "evidencia_bot": data.get("evidencia_bot"),
         "evidencia_cliente": data.get("evidencia_cliente"),
     }
+    if isinstance(data.get("problemas"), list):
+        out["problemas"] = [p for p in data["problemas"] if isinstance(p, dict)]
+    return out
 
 
-def judge_user_message(dialogue: dict, records: list[dict], criterion: dict, others: list[dict] | None = None) -> str:
-    """Lo que ve el juez de UN criterio (junto con el sistema y la referencia)."""
-    other_lines = "\n".join(f"- {c['id']}: {c['check']}" for c in (others or []) if c["id"] != criterion["id"])
-    # g-8 (26-sep): la causa mayor de falsos suspensos en la revision humana de la v7 era contar dos
-    # veces un fallo: un criterio GENERAL suspendia por lo mismo que ya suspende uno concreto del
-    # dialogo ("un fallo, un criterio"). Avisar de los otros criterios no bastaba: hay que decir cual
-    # manda. Manda el concreto; el general solo suspende por algo que ningun otro criterio cubre.
-    general = (
-        "\nEste criterio es GENERAL: si el unico problema que ves es justo lo que comprueba alguno de los "
-        "otros criterios del dialogo, marca cumple (ese fallo se cuenta alli, una sola vez)."
-        if criterion["id"].startswith("global:") else ""
-    )
+def is_general(criterion: dict) -> bool:
+    return criterion["id"].startswith("global:")
+
+
+def judge_user_message(
+    dialogue: dict, records: list[dict], criterion: dict, others: list[dict] | None = None,
+    counted: list[dict] | None = None,
+) -> str:
+    """Lo que ve el juez de UN criterio (junto con el sistema y la referencia).
+
+    `counted` se acepta por compatibilidad y no se usa: el general ya no ve los fallos contados
+    (se descuentan en el codigo, `discount_counted`)."""
+    if not is_general(criterion):
+        other_lines = "\n".join(f"- {c['id']}: {c['check']}" for c in (others or []) if c["id"] != criterion["id"])
+        return (
+            f"CONVERSACION (dialogo '{dialogue['id']}', categoria {dialogue['category']}):\n{transcript(records)}\n\n"
+            f"OTROS CRITERIOS DEL DIALOGO (no los juzgues; solo para no contar dos veces un fallo):\n{other_lines or '- ninguno'}\n\n"
+            f"CRITERIO A JUZGAR ({criterion['id']}): {criterion['check']}"
+        )
+    # g-8. La causa mayor de falsos suspensos en la revision humana de la v7 era contar dos veces un
+    # fallo: un criterio GENERAL suspendia por lo mismo que ya suspende uno concreto ("un fallo, un
+    # criterio"). Dos intentos que dejaban la decision al LLM, medidos contra los 192 veredictos
+    # humanos: (26-sep, Alvaro) decirle al general que ceda si el problema es "lo que comprueba otro
+    # criterio" -> falsos 43 -> 24 pero escapadas 7 -> 16 (cedia por PARECIDO de tema); (27-sep,
+    # Gadea) ensenarle solo los concretos que suspendieron, con su motivo -> falsos 18, escapadas 16:
+    # el LLM usa la lista como excusa aunque sea otro hecho ("el unico fallo ya esta en la lista").
+    # Por eso el general ya NO ve esa lista: solo DETECTA y enumera cada problema con su cita, y el
+    # descuento lo hace el codigo (`discount_counted`): un problema esta "ya contado" solo si su cita
+    # es la misma que la evidencia de un criterio concreto que suspendio.
     return (
         f"CONVERSACION (dialogo '{dialogue['id']}', categoria {dialogue['category']}):\n{transcript(records)}\n\n"
-        f"OTROS CRITERIOS DEL DIALOGO (no los juzgues; solo para no contar dos veces un fallo):\n{other_lines or '- ninguno'}\n\n"
-        f"CRITERIO A JUZGAR ({criterion['id']}): {criterion['check']}{general}"
+        f"CRITERIO A JUZGAR ({criterion['id']}): {criterion['check']}\n\n"
+        "Este criterio es GENERAL. Para el, NO apliques la regla UN FALLO, UN CRITERIO: no descartes nada porque "
+        "otro criterio pudiera cubrirlo (el sistema descuenta despues lo que ya se cuenta en otro criterio). "
+        "Revisa las respuestas del BOT UNA POR UNA, en orden, comparando cada una con lo que el cliente dijo hasta "
+        "ese momento y con la REFERENCIA; no juzgues por la impresion de conjunto. "
+        "Enumera en \"problemas\" CADA incumplimiento distinto de ESTE criterio (uno por hecho), cada uno con su "
+        "evidencia literal. Responde SOLO con JSON: {\"verdict\": \"cumple|no_cumple|no_aplica\", "
+        "\"problemas\": [{\"evidencia_bot\": \"...\", \"evidencia_cliente\": \"...\" o null, \"motivo\": \"...\"}], "
+        "\"motivo\": \"una o dos frases\"} (con \"no_cumple\" si y solo si \"problemas\" no esta vacia)."
     )
 
 
@@ -319,7 +348,7 @@ def _judge_logic_hash() -> str:
     import inspect
 
     parts = [JUDGE_INSTRUCTIONS] + [
-        inspect.getsource(f) for f in (llm_judge_criterion, judge_user_message, transcript, bot_bubbles)
+        inspect.getsource(f) for f in (llm_judge_criterion, judge_user_message, judge_criteria, transcript, bot_bubbles)
     ]
     return hashlib.sha256("\x1f".join(parts).encode()).hexdigest()[:16]
 
@@ -329,27 +358,128 @@ def cache_key(model: str, effort: str | None, reference: str, user_message: str)
     return hashlib.sha256(raw.encode()).hexdigest()
 
 
+def counted_failures(all_criteria: list[dict], verdicts: dict[str, dict], generals: bool = False) -> list[dict]:
+    """Los criterios que han suspendido, con su motivo y su evidencia: los CONCRETOS o, con
+    `generals`, los generales (un general tambien descuenta lo que ya conto otro general anterior,
+    en el orden del golden: sin-invenciones antes que sin-repreguntas, como lo cuentan las personas
+    en la revision de la v7)."""
+    return [
+        {
+            "id": c["id"], "check": c.get("check", ""),
+            "reason": (verdicts.get(c["id"]) or {}).get("reason", ""),
+            "evidencia_bot": (verdicts.get(c["id"]) or {}).get("evidencia_bot"),
+        }
+        for c in all_criteria
+        if is_general(c) == generals and (verdicts.get(c["id"]) or {}).get("verdict") in ("no_cumple", "revisar")
+    ]
+
+
+SAME_FACT_MIN_OVERLAP = 0.5
+
+
+def same_fact(quote_a: str | None, quote_b: str | None) -> bool:
+    """¿Dos citas del bot señalan el MISMO hecho? Solapan al menos la mitad de sus palabras
+    (Jaccard). Una cita corta dentro de una respuesta entera citada por "no hacer algo" NO es el
+    mismo hecho: en la misma respuesta caben dos fallos distintos."""
+    a, b = set(_norm(quote_a or "").split()), set(_norm(quote_b or "").split())
+    if not a or not b:
+        return False
+    return len(a & b) / len(a | b) >= SAME_FACT_MIN_OVERLAP
+
+
+SAME_ERROR_PROMPT = (
+    "Te doy dos fallos que un evaluador encontro en la MISMA conversacion de un chatbot de reservas de buceo. "
+    "Pueden citar la misma respuesta del bot y aun asi ser errores distintos (por ejemplo, en una misma "
+    "respuesta el bot puede equivocarse de idioma y ademas dar un total incorrecto). Di si describen el MISMO "
+    "error concreto del bot. Responde SOLO JSON: {\"mismo_error\": true|false}"
+)
+
+
+def llm_same_error(client, model: str):
+    """La comprobacion cerrada de `discount_counted`: ¿dos motivos describen el mismo error?"""
+    def ask(problem: dict, twin: dict) -> bool:
+        kwargs = {"reasoning_effort": "low"} if model.startswith(("gpt-5", "o")) else {"temperature": 0}
+        user = (f"FALLO A (criterio general): {problem.get('motivo') or ''}\n"
+                f"FALLO B (criterio {twin['id']}: {twin.get('check', '')}): {twin.get('reason') or ''}")
+        try:
+            resp = client.chat.completions.create(
+                model=model, response_format={"type": "json_object"},
+                messages=[{"role": "system", "content": SAME_ERROR_PROMPT}, {"role": "user", "content": user}], **kwargs,
+            )
+            return bool(json.loads(resp.choices[0].message.content or "{}").get("mismo_error"))
+        except Exception:  # noqa: BLE001 — ante la duda, NO se descuenta: se cuenta el fallo
+            return False
+    return ask
+
+
+def discount_counted(result: dict, counted: list[dict], records: list[dict], same_error=None) -> dict:
+    """"Un fallo, un criterio", aplicado por el CODIGO al veredicto de un criterio general: quita
+    los problemas cuya cita es la de un criterio concreto que ya suspendio. Si no queda ninguno,
+    cumple; si queda alguno verificable, no_cumple con su evidencia; si los que quedan no tienen
+    cita literal, revisar (la regla de siempre)."""
+    problems = result.get("problemas")
+    if result.get("verdict") not in ("no_cumple", "revisar") or not isinstance(problems, list):
+        return result
+    if not problems:  # dijo no_cumple sin enumerar: se juzga con su evidencia de siempre
+        problems = [{"evidencia_bot": result.get("evidencia_bot"), "evidencia_cliente": result.get("evidencia_cliente"),
+                     "motivo": result.get("reason")}]
+    left, dup = [], []
+    for p in problems:
+        # Mismo hecho = misma cita Y (si hay con quien preguntarlo) el mismo error: dos fallos
+        # distintos pueden citar la misma respuesta entera (medido 27-sep: "precio del refresh" y
+        # "apunta 1 persona donde dijo 2" citaban la misma respuesta).
+        twin = next(
+            (c for c in counted if same_fact(p.get("evidencia_bot"), c.get("evidencia_bot"))
+             and (same_error is None or same_error(p, c))),
+            None,
+        )
+        (dup if twin else left).append((p, twin))
+    if not left:
+        ids = sorted({t["id"] for _, t in dup})
+        return {**result, "verdict": "cumple", "evidencia_bot": None, "evidencia_cliente": None,
+                "reason": f"[ya contado en {', '.join(ids)}] {result.get('reason', '')}", "descontados": ids}
+    checked = [
+        check_evidence({"verdict": "no_cumple", "reason": p.get("motivo") or result.get("reason", ""),
+                        "evidencia_bot": p.get("evidencia_bot"), "evidencia_cliente": p.get("evidencia_cliente")}, records)
+        for p, _ in left
+    ]
+    firm = [c for c in checked if c["verdict"] == "no_cumple"]
+    pick = firm[0] if firm else checked[0]
+    return {**result, **pick, "descontados": sorted({t["id"] for _, t in dup})}
+
+
 def judge_criteria(client, model, effort, reference, dialogue, records, all_criteria, cache: dict | None, stats: dict) -> list[dict]:
-    """Los criterios de un diálogo; los LLM, desde la cache si ya se juzgaron igual."""
-    out = []
-    for c in all_criteria:
+    """Los criterios de un diálogo; los LLM, desde la cache si ya se juzgaron igual.
+
+    Dos pasadas (g-8, 27-sep): primero los concretos y despues los GENERALES, que reciben los
+    concretos que suspendieron (`counted_failures`) para no contar dos veces el mismo fallo."""
+    done: dict[str, dict] = {}
+
+    def one(c, counted=None):
         if c.get("auto") or cache is None:
-            out.append(evaluate_criterion(client, model, effort, reference, dialogue, records, c, all_criteria))
-            continue
-        key = cache_key(model, effort, reference, judge_user_message(dialogue, records, c, all_criteria))
+            return evaluate_criterion(client, model, effort, reference, dialogue, records, c, all_criteria, counted)
+        key = cache_key(model, effort, reference, judge_user_message(dialogue, records, c, all_criteria, counted))
         if key in cache:
             stats["hits"] += 1
-            out.append({"id": c["id"], **cache[key], "cached": True})
-            continue
+            return {"id": c["id"], **cache[key], "cached": True}
         stats["misses"] += 1
         if client is None:  # --dry-cache: solo contar
-            out.append({"id": c["id"], "verdict": "no_aplica", "by": "dry"})
-            continue
-        result = evaluate_criterion(client, model, effort, reference, dialogue, records, c, all_criteria)
+            return {"id": c["id"], "verdict": "no_aplica", "by": "dry"}
+        result = evaluate_criterion(client, model, effort, reference, dialogue, records, c, all_criteria, counted)
         save_to_cache(key, {k: v for k, v in result.items() if k != "id"})
         cache[key] = {k: v for k, v in result.items() if k not in ("id", "usage")}
-        out.append(result)
-    return out
+        return result
+
+    for c in all_criteria:
+        if not is_general(c):
+            done[c["id"]] = one(c)
+    counted = counted_failures(all_criteria, done)
+    same_error = llm_same_error(client, model) if client is not None and hasattr(client, "chat") else None
+    for c in all_criteria:
+        if is_general(c):
+            done[c["id"]] = discount_counted(one(c, counted), counted, records, same_error)
+            counted = counted + counted_failures([c], done, generals=True)
+    return [done[c["id"]] for c in all_criteria]
 
 
 def seed_cache_from_results(results_file: str, model: str, effort: str | None) -> int:
@@ -366,11 +496,15 @@ def seed_cache_from_results(results_file: str, model: str, effort: str | None) -
             continue
         all_criteria = criteria_for(dialogue, golden["global_criteria"])
         verdicts = {c["id"]: c for c in d["criteria"]}
+        counted = counted_failures(all_criteria, verdicts)
         for c in all_criteria:
             got = verdicts.get(c["id"])
             if c.get("auto") or not got or got.get("by") in ("auto", "dry") or got.get("verdict") not in _CACHEABLE:
                 continue
-            key = cache_key(model, effort, reference, judge_user_message(dialogue, records, c, all_criteria))
+            key = cache_key(
+                model, effort, reference,
+                judge_user_message(dialogue, records, c, all_criteria, counted if is_general(c) else None),
+            )
             if key not in cache:
                 save_to_cache(key, {k: v for k, v in got.items() if k not in ("id", "cached")})
                 cache[key] = got
@@ -400,9 +534,10 @@ def save_to_cache(key: str, result: dict, path: Path = CACHE_FILE) -> None:
 
 
 def llm_judge_criterion(
-    client, model: str, effort: str | None, reference: str, dialogue: dict, records: list[dict], criterion: dict, others: list[dict] | None = None
+    client, model: str, effort: str | None, reference: str, dialogue: dict, records: list[dict], criterion: dict,
+    others: list[dict] | None = None, counted: list[dict] | None = None,
 ) -> dict:
-    user = judge_user_message(dialogue, records, criterion, others)
+    user = judge_user_message(dialogue, records, criterion, others, counted)
     kwargs = {"reasoning_effort": effort} if model.startswith(("gpt-5", "o")) and effort else {"temperature": 0}
     resp = client.chat.completions.create(
         model=model,
@@ -419,11 +554,16 @@ def llm_judge_criterion(
     return {**verdict, "usage": {"input": usage.prompt_tokens, "cached": cached, "output": usage.completion_tokens}}
 
 
-def evaluate_criterion(client, model, effort, reference, dialogue, records, criterion, others=None) -> dict:
+def evaluate_criterion(client, model, effort, reference, dialogue, records, criterion, others=None, counted=None) -> dict:
     if criterion.get("auto"):
         result = {**AUTO_CHECKS[criterion["auto"]](records), "by": "auto"}
     else:
-        result = {**llm_judge_criterion(client, model, effort, reference, dialogue, records, criterion, others), "by": model}
+        judged = (
+            llm_judge_criterion(client, model, effort, reference, dialogue, records, criterion, others, counted)
+            if is_general(criterion) else
+            llm_judge_criterion(client, model, effort, reference, dialogue, records, criterion, others)
+        )
+        result = {**judged, "by": model}
     return {"id": criterion["id"], **result}
 
 

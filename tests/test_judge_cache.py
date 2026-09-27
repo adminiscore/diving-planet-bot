@@ -23,7 +23,7 @@ def test_la_clave_cambia_con_lo_que_cambia_la_pregunta():
 def _fake_judge(monkeypatch, verdict="cumple"):
     calls = []
 
-    def _judge(client, model, effort, reference, dialogue, records, criterion, others=None):
+    def _judge(client, model, effort, reference, dialogue, records, criterion, others=None, counted=None):
         calls.append(criterion["id"])
         return {"verdict": verdict, "reason": "ok", "usage": {"input": 10, "cached": 0, "output": 5}}
 
@@ -68,3 +68,68 @@ def test_sin_cache_se_juzga_todo(monkeypatch):
     for _ in range(2):
         jg.judge_criteria(object(), "gpt-5-mini", "medium", "REF", DIALOGUE, RECORDS, CRITERIA, None, stats)
     assert len(calls) == 4
+
+
+# ── g-8 (27-sep): "un fallo, un criterio" lo aplica el CODIGO, no el LLM ──────────────────────
+# El general solo detecta y enumera problemas con cita; se descuentan los que citan lo mismo que un
+# criterio concreto que ya suspendio (`discount_counted`).
+
+RECS = [{"turn": 1, "msg": "quiero el curso", "conv": 1,
+         "reply": "Me habias dicho: buceo certificado. Te cotizo el minicurso por 183 USD."}]
+
+
+def test_el_general_no_ve_la_lista_de_fallos():
+    msg = jg.judge_user_message(DIALOGUE, RECS, {"id": "global:sin-invenciones", "check": "no inventa"}, CRITERIA, [
+        {"id": "precio-xyz", "reason": "MOTIVO-DEL-CONCRETO", "evidencia_bot": "Te cotizo el minicurso"}])
+    assert "MOTIVO-DEL-CONCRETO" not in msg and "precio-xyz" not in msg and "problemas" in msg
+
+
+def test_el_problema_con_la_misma_cita_se_descuenta():
+    counted = [{"id": "precio", "evidencia_bot": "Te cotizo el minicurso por 183 USD"}]
+    got = jg.discount_counted({"verdict": "no_cumple", "reason": "x", "problemas": [
+        {"evidencia_bot": "Te cotizo el minicurso por 183 USD", "motivo": "cotiza otra cosa"}]}, counted, RECS)
+    assert got["verdict"] == "cumple" and got["descontados"] == ["precio"]
+
+
+def test_otro_hecho_en_la_misma_respuesta_no_se_descuenta():
+    """El caso de la v7: el concreto suspende por el precio y el general por "Me habias dicho", que
+    esta en la MISMA respuesta. Con la lista a la vista el LLM cedia; aqui no."""
+    counted = [{"id": "precio", "evidencia_bot": "Me habias dicho: buceo certificado. Te cotizo el minicurso por 183 USD."}]
+    got = jg.discount_counted({"verdict": "no_cumple", "reason": "x", "problemas": [
+        {"evidencia_bot": "Me habias dicho: buceo certificado", "motivo": "dato no dicho"}]}, counted, RECS)
+    assert got["verdict"] == "no_cumple" and "Me habias dicho" in got["evidencia_bot"]
+
+
+def test_sin_cita_literal_el_problema_queda_en_revisar():
+    got = jg.discount_counted({"verdict": "no_cumple", "reason": "x", "problemas": [
+        {"evidencia_bot": "algo que el bot nunca dijo en esta charla", "motivo": "y"}]}, [], RECS)
+    assert got["verdict"] == "revisar"
+
+
+def test_el_descuento_se_aplica_en_judge_criteria(monkeypatch):
+    def _judge(client, model, effort, reference, dialogue, records, criterion, others=None, counted=None):
+        if criterion["id"] == "saludo":
+            return {"verdict": "no_cumple", "reason": "dos saludos", "evidencia_bot": "Te cotizo el minicurso por 183 USD"}
+        return {"verdict": "no_cumple", "reason": "igual", "problemas": [{"evidencia_bot": "Te cotizo el minicurso por 183 USD"}]}
+
+    monkeypatch.setattr(jg, "llm_judge_criterion", _judge)
+    crits = [{"id": "global:sin-invenciones", "check": "x"}, {"id": "saludo", "check": "y"}]
+    out = jg.judge_criteria(object(), "m", None, "REF", DIALOGUE, RECS, crits, None, {"hits": 0, "misses": 0})
+    assert [c["id"] for c in out] == ["global:sin-invenciones", "saludo"]
+    assert out[0]["verdict"] == "cumple" and out[1]["verdict"] == "no_cumple"
+
+
+def test_un_general_descuenta_lo_que_ya_conto_otro_general_anterior(monkeypatch):
+    """Revision de la v7: el mismo "¿lo cambio?" suspendia sin-invenciones Y sin-repreguntas; las
+    personas lo cuentan una vez, en sin-invenciones (va antes en el golden)."""
+    cita = "Solo para confirmar, lo cambio? con certificacion de buceo"
+    recs = [{"turn": 1, "msg": "como pago", "conv": 1, "reply": cita}]
+
+    def _judge(client, model, effort, reference, dialogue, records, criterion, others=None, counted=None):
+        return {"verdict": "no_cumple", "reason": "cambio sin motivo", "problemas": [{"evidencia_bot": cita}]}
+
+    monkeypatch.setattr(jg, "llm_judge_criterion", _judge)
+    crits = [{"id": "global:sin-invenciones", "check": "x"}, {"id": "global:sin-repreguntas", "check": "y"}]
+    out = jg.judge_criteria(object(), "m", None, "REF", DIALOGUE, recs, crits, None, {"hits": 0, "misses": 0})
+    assert out[0]["verdict"] == "no_cumple"
+    assert out[1]["verdict"] == "cumple" and out[1]["descontados"] == ["global:sin-invenciones"]

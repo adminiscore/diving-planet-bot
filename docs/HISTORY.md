@@ -1,6 +1,22 @@
 History
 =======
 
+0.29.40 - (2026-09-27)
+----------------------
+* **Plan secuencial, paso 2 (g-8, el juez con casos reales): CERRADO** (Gadea). Medido contra los 192 veredictos humanos de la v7:
+
+| | Juez de partida (2a) | 2c de Álvaro (26-sep) | **Juez final (27-sep)** |
+|---|---|---|---|
+| Falsos suspensos | 43 | 24 | **26-27** |
+| Fallos que se escapan | 7 | 16 | **4-6** |
+| Examen oculto (prueba ciega): escapan / falsos | 2 / 12 | 3 / 10 | **1-2 / 10-11** |
+
+* **Causa de las 16 escapadas** (leídas una a una): 12 eran de criterios GENERALES que cedían por PARECIDO de tema; en 5 ningún otro criterio había suspendido. Enseñarle al general solo los concretos que suspendieron, con su motivo, tampoco bastó (falsos 18, escapadas 16): el LLM usaba la lista como excusa aunque fuera otro hecho. **Arreglo por causa: la regla la aplica el CÓDIGO.** El general solo detecta y enumera sus problemas con cita literal, sin ver la lista (`judge_user_message`); `discount_counted` descuenta un problema solo si su cita es la de un criterio que ya suspendió (`same_fact`, solape de palabras) **y** una pregunta cerrada aparte confirma que es el mismo error (`llm_same_error`: dos fallos distintos pueden citar la misma respuesta entera). Los generales se descuentan también entre sí, en el orden del golden (sin-invenciones antes que sin-repreguntas, como lo cuenta la revisión humana). El general revisa las respuestas del bot una por una.
+* Dos aclaraciones generales: "preguntar si quiere un asesor" no es escalar cuando el criterio exige pasar la conversación (instrucción del juez); `sin-fugas` nombra los identificadores internos (`padi_open_water_referral`). Ningún criterio del examen oculto tocado.
+* **Ruido del juez medido**: dos pasadas idénticas difieren en ±2 escapadas y ±3 falsos; por eso cada medida se hizo dos veces.
+* Herramienta nueva: `scripts/rejudge_generals.py` vuelve a juzgar solo los criterios generales de una ronda ya juzgada (céntimos y minutos frente a ~1,5 $ y ~75 min). Resultados: `results/2026-09-27-g8-v7-juez12__…` (tanda oficial completa) y `juez13a/b gen` (generales con el código final).
+* Siguiente: **paso 3**, ronda A nueva con u3-4 encendido y este juez (golden v8: las cifras de antes no son comparables).
+
 0.29.39 - (2026-09-26)
 ----------------------
 * **Plan secuencial, paso 2 (g-8, el juez con casos reales): EN CURSO, no cerrado.** 2a: el juez de hoy, pasado por las 84 conversaciones de la v7 con veredicto humano, acierta el 75,0 % de sus suspensos (43 falsos). 2b: regla "un fallo, un criterio" para los criterios GENERALES (`judge_user_message`), `sin-invenciones` aclarado (repetir o deducir lo evidente de lo que dijo el cliente no es inventar; enlaces oficiales y saludo de marca no se juzgan ahí), golden **v8**: 8 criterios quitados y 7 reescritos según las notas humanas, **ninguno del examen oculto**. 2c:

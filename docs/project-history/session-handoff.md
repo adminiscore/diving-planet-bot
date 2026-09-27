@@ -13,7 +13,21 @@ Read this file before changing code in the Diving Planet Bot. For a quick versio
 
 > **📏 LEER ANTES DE MEDIR — decisiones del 24-sep-2026 (Gadea):** (1) latencia y llamadas con nuestros logs `[TURN_METRICS]` + `scripts/turn_metrics.py`, no con Langfuse (plan gratuito superado, reinicio 16-oct); (2) pruebas A/B por escalones, juzgando solo los diálogos que cambian. Todo en `docs/robustness/protocolo-medicion.md`.
 
-### ▶️ PARA GADEA (26-sep noche, Álvaro) — retomar aquí
+### ✅ 27-sep (Gadea) — PASO 2 (g-8) CERRADO. Siguiente: PASO 3 (ronda A nueva)
+
+**Juez final** (HISTORY 0.29.40), contra los 192 veredictos humanos de la v7: falsos suspensos 43 → **26-27**,
+escapadas 7 → **4-6**, examen oculto escapadas 2 → 1-2 y falsos 12 → 10-11. "Un fallo, un criterio" lo aplica
+ahora el CÓDIGO (`discount_counted` en `scripts/judge_golden_set.py`): el criterio general solo detecta y enumera
+problemas con cita; se descuentan los que citan lo mismo que un criterio que ya suspendió y que una pregunta
+cerrada confirma que son el mismo error. Para probar cambios en los generales sin pagar la ronda:
+`python -m scripts.rejudge_generals --from <resultado> --only-reviewed <review> --out <nuevo>`. **Ruido del juez:
+±2 escapadas y ±3 falsos entre pasadas idénticas: medir dos veces.** La cache del juez se ha invalidado (cambió el
+prompt): la próxima ronda paga entera (~1,5 $).
+
+**Siguiente, PASO 3**: ronda A nueva (core o golden completo, a decidir) con u3-4 encendido y este juez, como
+referencia para lo que queda de U3 (paso 4: u3-5 → u3-6 → u3-7 → u3-3).
+
+### ▶️ PARA GADEA (26-sep noche, Álvaro) — SUPERADO por el bloque de arriba (paso 2 cerrado)
 
 **Rama:** `feature/pre_alvaro` (integra tu `4192600`). Trabajamos en SECUENCIA (PARTE 8 del plan maestro).
 **Paso 1 cerrado** (1a techos de dependencias · 1b `python -m scripts.check_deploy` tras cada push · 1c control de

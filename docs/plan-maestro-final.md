@@ -471,7 +471,7 @@ medias (u3-1 ✅, u3-4 ✅ promocionada, u3-5 🟡); PRE con u3-4 encendido. Sui
   s4-11, s4-22 (personas) · 4b s4-6, s4-18, s4-19, s4-20 · 6 s4-7 (texto), s4-11 (horas), s4-12, s4-17,
   s4-22 (contenido) · 8 s4-14, s4-15, s4-16, s4-21. s4-19 y s4-20 cambian de paso (del 6 y el 8 al 4b):
   la causa es la intención mal detectada, no el texto.
-- **2 · g-8. 🟡 EN CURSO (26-sep, HISTORY 0.29.39): 2a y 2b hechos; el 2c baja los falsos suspensos (75,0 → 83,2 %) pero sube lo que se escapa (7 → 16): hay que leer esas 16 y ajustar antes de cerrar.** En la ronda v7 el juez acertó el 72,7 % de sus "no cumple" (91,5 % en la calibración
+- **2 · g-8. ✅ CERRADO (27-sep, Gadea, HISTORY 0.29.40): falsos suspensos 43 → 26-27 y escapadas 7 → 4-6 (examen oculto: escapadas 2 → 1-2, falsos 12 → 10-11). "Un fallo, un criterio" lo aplica el CÓDIGO: el criterio general solo detecta y enumera problemas con cita; se descuentan los que citan lo mismo que un criterio que ya suspendió y una pregunta cerrada confirma que es el mismo error.** Antes (26-sep, HISTORY 0.29.39): 2a y 2b hechos; el 2c bajaba los falsos suspensos (75,0 → 83,2 %) pero subía lo que se escapa (7 → 16). En la ronda v7 el juez acertó el 72,7 % de sus "no cumple" (91,5 % en la calibración
   sintética): 51 falsos suspensos de 187, por criterios demasiado estrictos, contar dos veces un fallo o
   datos que no ve en su referencia. Va ANTES de las rondas que quedan porque todas se juzgan con él.
   *(Corregido 26-sep: NO deja pasar el "regreso otro día"; lo marca en su criterio específico.)*
