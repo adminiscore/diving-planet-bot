@@ -1,0 +1,830 @@
+[
+ {
+  "dialogo": "reserva-colombianos-cop",
+  "criterio": "global:sin-invenciones",
+  "causa": "rag_contenido",
+  "motivo": "El bot afirma que operan \"todos los días\", lo que contradice la referencia que indica que cierran el 25 de diciembre y el 1 de enero."
+ },
+ {
+  "dialogo": "cambio-idioma",
+  "criterio": "sigue-en-ingles",
+  "causa": "intencion_recordar",
+  "motivo": "El bot sí cambió a inglés pero no mantuvo ni confirmó la intención del cliente de hacer 'buceo certificado' (no menciona ser buzo certificado ni adapta la pregunta a esa actividad)."
+ },
+ {
+  "dialogo": "grupo-recompuesto",
+  "criterio": "global:sin-invenciones",
+  "causa": "rag_contenido",
+  "motivo": "El enunciado \"nuestro plan más popular\" no aparece en la REFERENCIA; es una afirmación de popularidad inventada por el bot."
+ },
+ {
+  "dialogo": "grupo-recompuesto",
+  "criterio": "moneda",
+  "causa": "rag_contenido",
+  "motivo": "El criterio exige que el bot dé precios en USD (catálogo desde Cartagena) para un grupo de extranjeros; el bot no proporcionó ningún precio en USD en su respuesta."
+ },
+ {
+  "dialogo": "acompanante-goteo",
+  "criterio": "global:sin-invenciones",
+  "causa": "rag_contenido",
+  "motivo": "El bot afirma 'buceamos todos los días', lo que contradice la referencia que indica que cierran el 25 de diciembre y el 1 de enero."
+ },
+ {
+  "dialogo": "acompanante-goteo",
+  "criterio": "global:sin-repreguntas",
+  "causa": "entender_datos",
+  "motivo": "El bot preguntó cuántas personas son cuando el cliente ya había indicado claramente que iba con su amigo (implícitamente 2 personas)."
+ },
+ {
+  "dialogo": "actividad-cambia-varias",
+  "criterio": "global:sin-repreguntas",
+  "causa": "entender_datos",
+  "motivo": "El cliente ya indicó claramente que quería el minicurso; el bot vuelve a pedir confirmación innecesaria."
+ },
+ {
+  "dialogo": "ninos-6-y-10",
+  "criterio": "global:sin-invenciones",
+  "causa": "rag_contenido",
+  "motivo": "El bot afirma que el plan de 2 inmersiones es \"nuestro plan más popular\", una afirmación de popularidad que no aparece en la REFERENCIA (es un dato inventado)."
+ },
+ {
+  "dialogo": "vuelo-tras-bucear",
+  "criterio": "global:sin-invenciones",
+  "causa": "entender_datos",
+  "motivo": "El bot afirma que el cliente es buzo certificado ('como me dices que eres buzo certificado') aunque el cliente no lo había dicho, por lo que atribuye un dato del cliente que no fue proporcionado."
+ },
+ {
+  "dialogo": "paquete-en-carrito",
+  "criterio": "no-asume-ubicacion",
+  "causa": "entender_datos",
+  "motivo": "El cliente no indicó desde dónde saldría, pero el bot presentó solo paquetes para quienes ya están en las islas y afirmó que no incluyen transporte desde Cartagena; debía ofrecer opciones para ambas s"
+ },
+ {
+  "dialogo": "queja",
+  "criterio": "empatia",
+  "causa": "escalado_postventa",
+  "motivo": "El bot no reconoce ni valida el problema ni muestra empatía (no hay disculpa ni expresión de comprensión); ofrece transferir pero no reconoce la frustración del cliente."
+ },
+ {
+  "dialogo": "link-roto-carrito",
+  "criterio": "global:sin-invenciones",
+  "causa": "rag_contenido",
+  "motivo": "El bot afirma 'buceamos todos los días', lo que contradice la referencia que indica que la operación cierra el 25 de diciembre y el 1 de enero."
+ },
+ {
+  "dialogo": "cambio-fecha-carrito",
+  "criterio": "global:sin-invenciones",
+  "causa": "entender_datos",
+  "motivo": "El bot afirma la existencia de 'tu reserva' (da por hecho que hay una reserva) cuando el cliente solo pidió cambiar la fecha y no confirmó tener una reserva."
+ },
+ {
+  "dialogo": "cambio-fecha-carrito",
+  "criterio": "asesor",
+  "causa": "escalado_postventa",
+  "motivo": "La política indica que un cambio de fecha antes de pago debe pasarse a un asesor; el bot en su lugar siguió con otra pregunta en vez de ofrecer/realizar la transferencia."
+ },
+ {
+  "dialogo": "pide-telefono",
+  "criterio": "contacto-real",
+  "causa": "rag_contenido",
+  "motivo": "El cliente pidió un número de teléfono y el bot no proporcionó el WhatsApp oficial (+57 320 231515) indicado en la referencia, limitándose a ofrecer contacto vía chat o pasar a un asesor sin dar el nú"
+ },
+ {
+  "dialogo": "manual-acompanante-mayor",
+  "criterio": "acompanante",
+  "causa": "rag_contenido",
+  "motivo": "El cliente pide explícitamente un plan de acompañante; el bot no ofreció el 'Acompanante (no bucea)' del catálogo y respondió que no tiene el detalle y ofreció pasar a un asesor en vez de dar la opció"
+ },
+ {
+  "dialogo": "manual-acompanante-mayor",
+  "criterio": "sin-fallback",
+  "causa": "flujo_plantilla",
+  "motivo": "El bot respondió tras el link con la frase exacta “ese detalle no lo tengo a la mano”, que el criterio prohíbe para las respuestas posteriores al enlace."
+ },
+ {
+  "dialogo": "manual-duracion-curso",
+  "criterio": "global:sin-invenciones",
+  "causa": "entender_datos",
+  "motivo": "El bot atribuye específicamente el curso 'PADI Open Water' cuando el cliente solo dijo que quería 'sacarse la certificación' sin especificar cuál."
+ },
+ {
+  "dialogo": "manual-duracion-curso",
+  "criterio": "duracion",
+  "causa": "intencion_recordar",
+  "motivo": "El cliente preguntó la duración del curso y el bot no respondió la cantidad de días; según la REFERENCIA el Curso Open Water desde Cartagena requiere 2 días (con pernocte en las islas) y el bot debía "
+ },
+ {
+  "dialogo": "manual-duracion-curso",
+  "criterio": "no-lista-precios",
+  "causa": "rag_contenido",
+  "motivo": "El cliente preguntó por la duración del curso y el bot respondió con una lista de precios en lugar de indicar la duración del Curso Open Water (según la referencia, es un curso de 2 días que requiere "
+ },
+ {
+  "dialogo": "manual-duracion-curso",
+  "criterio": "no-recall",
+  "causa": "intencion_recordar",
+  "motivo": "El bot respondió repitiendo 'Me habías dicho: ...' en lugar de contestar la pregunta del cliente sobre la duración del curso, lo que incumple la regla indicada."
+ },
+ {
+  "dialogo": "open-water-precio-para-colombianos-corrige-mito",
+  "criterio": "global:sin-invenciones",
+  "causa": "rag_contenido",
+  "motivo": "El cliente preguntó por el curso básico de buceo (Open Water) y el bot respondió con el precio del servicio 'Buceo certificado - 2 inmersiones', que no corresponde al curso solicitado."
+ },
+ {
+  "dialogo": "open-water-precio-para-colombianos-corrige-mito",
+  "criterio": "precio-open-water-o-pregunta-origen",
+  "causa": "rag_contenido",
+  "motivo": "El cliente pidió el precio del curso básico (Open Water) para colombianos; el bot respondió con el precio de un servicio distinto (2 inmersiones, 1 día: 630.000 COP) en lugar de dar el precio en COP d"
+ },
+ {
+  "dialogo": "curso-open-water-disponibilidad-pasos-y-precio-citado",
+  "criterio": "no-validar-precio-citado",
+  "causa": "rag_contenido",
+  "motivo": "El cliente preguntó el precio y la moneda; el bot no confirmó ni dio el precio del catálogo para el Curso Open Water ni aplicó la regla de moneda (COP/USD), y en su lugar evitó responder ofreciendo pa"
+ },
+ {
+  "dialogo": "paquete-5-buceos-cop-refresh-y-hoteles",
+  "criterio": "global:sin-invenciones",
+  "causa": "rag_contenido",
+  "motivo": "El bot afirma 'buceamos todos los días' sin mencionar las excepciones (25 de diciembre y 1 de enero) que la REFERENCIA especifica, lo que contradice la información oficial."
+ },
+ {
+  "dialogo": "semana-santa-solo-avanzado-islas",
+  "criterio": "global:sin-invenciones",
+  "causa": "rag_contenido",
+  "motivo": "Afirma \"buceamos todos los días\" sin mencionar las excepciones oficiales (cerrado 25 de diciembre y 1 de enero) que aparecen en la referencia."
+ },
+ {
+  "dialogo": "paquete-5-buceos-islas-residente-sin-recogida",
+  "criterio": "global:sin-invenciones",
+  "causa": "rag_contenido",
+  "motivo": "El bot afirma 'buceamos todos los días', lo cual contradice la referencia que precisa cierres el 25 de diciembre y el 1 de enero."
+ },
+ {
+  "dialogo": "confirma-estado-reserva-escalar",
+  "criterio": "escalar-reserva-existente",
+  "causa": "escalado_postventa",
+  "motivo": "El cliente mencionó reservas existentes y el bot las confirmó («todo está en orden») en vez de no confirmar y ofrecer pasar la conversación a un asesor humano para verificar el estado."
+ },
+ {
+  "dialogo": "snorkel-precio-residente-y-pago-link",
+  "criterio": "global:sin-repreguntas",
+  "causa": "entender_datos",
+  "motivo": "El bot vuelve a preguntar qué actividad quiere el cliente (buzéo/minicurso/snorkel) aunque el cliente ya indicó claramente 'snorkeling' al inicio."
+ },
+ {
+  "dialogo": "snorkel-precio-residente-y-pago-link",
+  "criterio": "global:sin-fugas",
+  "causa": "flujo_plantilla",
+  "motivo": "El bot revela el nombre del sistema de reservas 'ROVERD', que constituye un nombre de sistema interno/proveedor que según el criterio no debe divulgarse."
+ },
+ {
+  "dialogo": "snorkel-precio-residente-y-pago-link",
+  "criterio": "sin-descuento-por-residente",
+  "causa": "rag_contenido",
+  "motivo": "El bot no declaró explícitamente que no existe un descuento especial por ser residente; aunque mencionó el cambio a COP y el descuento online, no aclaró que ser colombiano/residente no otorga un descu"
+ },
+ {
+  "dialogo": "snorkel-inicio-pide-info",
+  "criterio": "global:sin-invenciones",
+  "causa": "rag_contenido",
+  "motivo": "El bot afirma 'buceamos todos los días' sin mencionar las excepciones; la REFERENCIA indica que solo se cierra el 25 de diciembre y el 1 de enero."
+ },
+ {
+  "dialogo": "precio-snorkel-origen",
+  "criterio": "global:sin-invenciones",
+  "causa": "entender_datos",
+  "motivo": "El bot proporcionó un precio (126 USD / 448.000 COP) que corresponde a la salida desde Cartagena sin confirmar el punto de salida; el cliente no especificó si saldría desde Cartagena o ya está en las "
+ },
+ {
+  "dialogo": "certificado-fecha-precio-cop-descuento-transferencia",
+  "criterio": "global:sin-invenciones",
+  "causa": "rag_contenido",
+  "motivo": "El bot asigna como punto/hora de encuentro para \"buzos certificados que ya están en las islas\" el Muelle de la Bodeguita a las 8:00 AM y regreso 4:15 PM, lo cual contradice la referencia (clientes ya "
+ },
+ {
+  "dialogo": "certificado-fecha-precio-cop-descuento-transferencia",
+  "criterio": "no-descuento-transferencia",
+  "causa": "rag_contenido",
+  "motivo": "El bot no aclaró que no existe descuento por transferencia y que el descuento aplicable es el online reservando por la web (ROVERD); en vez de eso dijo que no tenía el dato y ofreció pasar a un asesor"
+ },
+ {
+  "dialogo": "acompanante-madre-desde-cartagena",
+  "criterio": "precio-moneda-o-pregunta",
+  "causa": "flujo_plantilla",
+  "motivo": "El criterio exige dar el precio para acompañante saliendo desde Cartagena en la moneda correspondiente, o al menos preguntar la nacionalidad y si la salida es desde Cartagena/ya en las islas antes de "
+ },
+ {
+  "dialogo": "grupo-mixto-precio-cop-total",
+  "criterio": "global:sin-invenciones",
+  "causa": "entender_datos",
+  "motivo": "El bot afirma que el cliente tiene experiencia reciente sin que el cliente lo haya dicho."
+ },
+ {
+  "dialogo": "certificado-fechas-fotos-y-reserva",
+  "criterio": "politica-fotos",
+  "causa": "rag_contenido",
+  "motivo": "El cliente preguntó explícitamente por el precio/forma de las fotos y el bot no respondió la política de fotos; en vez de eso dio precios generales y no indicó que las fotos no están incluidas y que e"
+ },
+ {
+  "dialogo": "confirmacion-salida-y-pago-sin-concepto",
+  "criterio": "operamos-diario-clima",
+  "causa": "rag_contenido",
+  "motivo": "El bot menciona que operan todos los días pero no aclara que una salida puede suspenderse por mal clima; debía advertir la posibilidad de suspensión por condiciones meteorológicas."
+ },
+ {
+  "dialogo": "confirmacion-salida-y-pago-sin-concepto",
+  "criterio": "confirmacion-por-pago-enlace",
+  "causa": "rag_contenido",
+  "motivo": "No indica que la reserva queda confirmada al completar el pago por el enlace online; además, ante la pregunta sobre el \"concepto\" no sugiere pagar por el enlace ni ofrece pasar con un asesor (solo pid"
+ },
+ {
+  "dialogo": "clima-y-cancelacion-reserva-existente",
+  "criterio": "global:sin-invenciones",
+  "causa": "rag_contenido",
+  "motivo": "El bot afirma que 'la reserva puede quedar abierta' como política/alternativa; esa opción específica no aparece en la REFERENCIA y por tanto constituye una invención."
+ },
+ {
+  "dialogo": "clima-y-cancelacion-reserva-existente",
+  "criterio": "pasa-a-persona-cancelacion",
+  "causa": "escalado_postventa",
+  "motivo": "El cliente pidió cancelar y el bot solo ofreció pasar a un asesor preguntando si quería ser transferido; el criterio exige que el bot pase a una persona para gestionar la cancelación, no solo ofrecerl"
+ },
+ {
+  "dialogo": "confirma-fecha-y-punto-encuentro",
+  "criterio": "punto-encuentro",
+  "causa": "rag_contenido",
+  "motivo": "El cliente preguntó explícitamente desde dónde es la salida y el bot no mencionó el punto de encuentro concreto (Muelle de la Bodeguita)."
+ },
+ {
+  "dialogo": "programa-fotos-y-alojamiento",
+  "criterio": "fotos-politica",
+  "causa": "rag_contenido",
+  "motivo": "El bot no explicó la política requerida (que fotos/videos no están incluidas y dependen de que el instructor las tome voluntariamente) y en su lugar señaló solo que, si llegan, las compartirá, sin acl"
+ },
+ {
+  "dialogo": "certificada-pide-fecha-faltan-datos",
+  "criterio": "pide-datos-faltantes",
+  "causa": "flujo_plantilla",
+  "motivo": "El bot solicitó el punto de salida pero no pidió el número de personas ni la nacionalidad, datos que la referencia exige para cotizar/reservar correctamente (moneda y tarifas)."
+ },
+ {
+  "dialogo": "equipaje-mochilas-y-almacenamiento",
+  "criterio": "politica-equipaje",
+  "causa": "rag_contenido",
+  "motivo": "El bot no respondió la política de equipaje exigida (una mochila/bolso por persona en la lancha y opción de guardarla en la oficina de Cartagena o con personal); en su lugar dijo que no tenía el detal"
+ },
+ {
+  "dialogo": "logistica-isla-fragata-regreso-otro-dia",
+  "criterio": "global:sin-repreguntas",
+  "causa": "entender_datos",
+  "motivo": "El bot pregunta \"How many people...\" aunque el cliente ya indicó claramente \"My husband and I\" (2 personas)."
+ },
+ {
+  "dialogo": "cambio-fecha-por-enfermedad",
+  "criterio": "global:sin-invenciones",
+  "causa": "rag_contenido",
+  "motivo": "El bot afirma 'we dive every day' sin mencionar las excepciones oficiales (cerramos el 25 de diciembre y el 1 de enero), lo que contradice la referencia."
+ },
+ {
+  "dialogo": "cambio-fecha-por-enfermedad",
+  "criterio": "global:sin-repreguntas",
+  "causa": "entender_datos",
+  "motivo": "El bot vuelve a preguntar si debe cambiar la salida a 'on the islands' justo después de que el cliente dejó claro que NO tiene transferencia y que dormirá en Cartagena, por lo que es una repregunta in"
+ },
+ {
+  "dialogo": "cambio-fecha-por-enfermedad",
+  "criterio": "pasa-a-persona-por-enfermedad",
+  "causa": "escalado_postventa",
+  "motivo": "El cliente solicita mover la fecha por enfermedad y, según la regla, la conversación debía escalarse a un asesor humano; en cambio el bot intenta gestionar el cambio por sí mismo (preguntando si debe "
+ },
+ {
+  "dialogo": "precio-desde-islas-vs-cartagena",
+  "criterio": "global:sin-invenciones",
+  "causa": "entender_datos",
+  "motivo": "El bot vuelve a preguntar si tienen el curso Advanced Open Water pese a que el cliente ya indicó claramente que son Advanced O.W., es una repregunta innecesaria sobre un dato ya proporcionado por el c"
+ },
+ {
+  "dialogo": "precio-desde-islas-vs-cartagena",
+  "criterio": "global:sin-repreguntas",
+  "causa": "entender_datos",
+  "motivo": "El cliente ya indicó que tiene Advanced Open Water; el bot vuelve a preguntar lo mismo."
+ },
+ {
+  "dialogo": "regreso-otro-dia-paquete-5",
+  "criterio": "global:sin-invenciones",
+  "causa": "entender_datos",
+  "motivo": "El bot afirmó que la noche extra sería en Cartagena, contradiciendo el dato explícito del cliente de que la segunda noche sería en Cocoliso."
+ },
+ {
+  "dialogo": "regreso-otro-dia-paquete-5",
+  "criterio": "regreso-otro-dia",
+  "causa": "flujo_plantilla",
+  "motivo": "El bot ofreció pasar con un asesor pero no aclaró que el regreso a Cartagena en una fecha distinta no está incluido y que debe coordinarlo un asesor, por lo que no cumple el criterio exigido."
+ },
+ {
+  "dialogo": "contacto-hoteles-cocoliso-san-pedro",
+  "criterio": "alojamiento-directo",
+  "causa": "rag_contenido",
+  "motivo": "El bot sí se negó a dar un teléfono, pero no explicó que el alojamiento no está incluido y que debe reservarse directamente con el hotel, como exige la política."
+ },
+ {
+  "dialogo": "referral-mas-refresher-hotel-y-domingo-pascua",
+  "criterio": "global:sin-invenciones",
+  "causa": "rag_contenido",
+  "motivo": "El bot afirma que es posible volver a Cartagena cada día del curso referido de 2 días, lo cual contradice la referencia que exige pernoctar en las islas para cursos de 2 días (no hay opción de ir y vo"
+ },
+ {
+  "dialogo": "referral-mas-refresher-hotel-y-domingo-pascua",
+  "criterio": "global:sin-repreguntas",
+  "causa": "entender_datos",
+  "motivo": "El bot volvió a preguntar explícitamente el punto de salida ('Where would you be departing from?') después de que el cliente indicó claramente que reservará un hotel en la isla, lo que implica que par"
+ },
+ {
+  "dialogo": "referral-mas-refresher-hotel-y-domingo-pascua",
+  "criterio": "global:sin-fugas",
+  "causa": "flujo_plantilla",
+  "motivo": "El bot mostró un identificador interno de producto en formato con guiones bajos (padi_open_water_referral), que revela nombres internos/sistemas."
+ },
+ {
+  "dialogo": "referral-mas-refresher-hotel-y-domingo-pascua",
+  "criterio": "opera-domingo-pascua",
+  "causa": "rag_contenido",
+  "motivo": "El cliente preguntó explícitamente si operan el Domingo de Pascua (5 de abril) y el bot no respondió ni confirmó la operación en su respuesta, por lo que no cumple el criterio."
+ },
+ {
+  "dialogo": "certificado-profundidad-precio-y-base-hotel",
+  "criterio": "global:sin-repreguntas",
+  "causa": "entender_datos",
+  "motivo": "El bot preguntó \"¿Eres buzo certificado?\" después de que el cliente ya informó que su tío es buzo certificado."
+ },
+ {
+  "dialogo": "certificado-profundidad-precio-y-base-hotel",
+  "criterio": "profundidad-segun-nivel",
+  "causa": "rag_contenido",
+  "motivo": "El cliente preguntó explícitamente 'cuantos metros bajan' y el bot no respondió la parte de profundidad ni explicó que depende del nivel de certificación (Open Water hasta 18 m; Advanced hasta 30 m) n"
+ },
+ {
+  "dialogo": "certificado-profundidad-precio-y-base-hotel",
+  "criterio": "precio-cartagena-moneda",
+  "causa": "flujo_plantilla",
+  "motivo": "El cliente no informó su nacionalidad y el criterio exige preguntar la nacionalidad antes de cotizar; el bot cotizó directamente en USD/COP sin preguntar."
+ },
+ {
+  "dialogo": "certificado-viernes-precio-cop-y-reserva",
+  "criterio": "global:sin-repreguntas",
+  "causa": "entender_datos",
+  "motivo": "El cliente ya indicó que es para 'un tío' (una persona); preguntar '¿para cuántas personas?' es una repregunta."
+ },
+ {
+  "dialogo": "paquete-5-buceos-precio-overnight-isla-grande-baru",
+  "criterio": "global:sin-repreguntas",
+  "causa": "entender_datos",
+  "motivo": "El cliente ya indicó que viaja solo ('solo backpacker'), pero el bot vuelve a preguntar cuántas personas debe planear."
+ },
+ {
+  "dialogo": "paquete-5-buceos-precio-overnight-isla-grande-baru",
+  "criterio": "precio-y-moneda-correctos",
+  "causa": "rag_contenido",
+  "motivo": "El bot no dio el precio del Paquete 5 buceos (2 días) desde Cartagena ni desde las islas, y tampoco preguntó la nacionalidad/moneda cuando no cotizó ese paquete específico; por tanto no cumple el crit"
+ },
+ {
+  "dialogo": "tours-diarios-isla-grande",
+  "criterio": "pickup-islas",
+  "causa": "rag_contenido",
+  "motivo": "El bot no indicó que, si el cliente está hospedado en las Islas del Rosario, se coordina la recogida en su hotel (si tiene acceso marítimo) ni pidió el nombre del hotel para confirmarlo, como exige la"
+ },
+ {
+  "dialogo": "refresher-que-completar-antes",
+  "criterio": "valida-tiempo-sin-bucear",
+  "causa": "intencion_recordar",
+  "motivo": "El bot explicó la regla general (refresher si han pasado más de 2 años) pero no preguntó al cliente hace cuánto no bucea para confirmar si necesita el refresher antes de reservar, como exige el criter"
+ },
+ {
+  "dialogo": "refresher-que-completar-antes",
+  "criterio": "formulario-medico-refresher",
+  "causa": "rag_contenido",
+  "motivo": "El bot menciona el formulario de seguro pero no indica que para el refresher/minicurso se requiere un formulario médico (que según la referencia también debe enviarse tras reservar)."
+ },
+ {
+  "dialogo": "cotiza-buceo-snorkel-y-pide-link-especial",
+  "criterio": "global:sin-invenciones",
+  "causa": "rag_contenido",
+  "motivo": "El bot afirma categóricamente que “el sistema no genera links separados y pre-hechos”, una limitación concreta del sistema que no aparece en la REFERENCIA (la referencia sólo indica que el equipo pued"
+ },
+ {
+  "dialogo": "cotiza-buceo-snorkel-y-pide-link-especial",
+  "criterio": "pide-datos-para-cotizar",
+  "causa": "rag_contenido",
+  "motivo": "El bot dio precios en USD antes de preguntar la nacionalidad/moneda requerida; aunque después preguntó el punto de salida, nunca solicitó la nacionalidad (moneda) antes de dar precios, incumpliendo el"
+ },
+ {
+  "dialogo": "grupo-mixto-cotiza-y-pide-link",
+  "criterio": "global:sin-invenciones",
+  "causa": "rag_contenido",
+  "motivo": "El bot describe el paquete de 3 inmersiones como \"en 1 día\" junto con el precio que corresponde a salida desde Cartagena; según la referencia, el paquete de 3 inmersiones con nocturno desde Cartagena "
+ },
+ {
+  "dialogo": "grupo-mixto-cotiza-y-pide-link",
+  "criterio": "origen-cartagena-o-islas",
+  "causa": "rag_contenido",
+  "motivo": "El bot cotizó precios (total/unitarios) sin haber confirmado si la salida sería desde Cartagena o desde las Islas, requisito obligatorio antes de cotizar porque los precios cambian según el origen."
+ },
+ {
+  "dialogo": "grupo-mixto-cotiza-y-pide-link",
+  "criterio": "moneda-segun-nacionalidad",
+  "causa": "flujo_plantilla",
+  "motivo": "El bot no preguntó si el grupo es colombiano/residente o internacional (necesario para definir la moneda) ni comentó la regla para grupos mixtos (toda la reserva se paga en USD), por lo que incumple e"
+ },
+ {
+  "dialogo": "grupo-mixto-cotiza-y-pide-link",
+  "criterio": "link-reserva",
+  "causa": "escalado_postventa",
+  "motivo": "El usuario pidió el enlace de reserva (ROVERD) y el bot no lo incluyó ni pidió datos necesarios para generarlo; en su lugar delegó el envío a un asesor humano."
+ },
+ {
+  "dialogo": "link-pago-extranjeros-sin-cedula",
+  "criterio": "link-pago",
+  "causa": "escalado_postventa",
+  "motivo": "El cliente pidió el enlace de pago y el bot no lo proporcionó; en su lugar indicó que el equipo enviará el link y ofreció transferir a un asesor."
+ },
+ {
+  "dialogo": "link-pago-extranjeros-sin-cedula",
+  "criterio": "moneda-extranjeros",
+  "causa": "rag_contenido",
+  "motivo": "El bot explicó el método de pago y el documento de identificación, pero no aclaró que los extranjeros sin cédula pagan en USD (misma tarifa, solo cambia la moneda), como exige el criterio y la referen"
+ },
+ {
+  "dialogo": "punto-encuentro-corrige-todo-mar-y-hora",
+  "criterio": "global:sin-invenciones",
+  "causa": "entender_datos",
+  "motivo": "El bot resumió incorrectamente la composición del grupo omitiendo el '1 acompañante' que el cliente había especificado, por lo que presentó un dato del grupo incompleto."
+ },
+ {
+  "dialogo": "pareja-certificados-cop-descuento-almuerzo",
+  "criterio": "precio-moneda-cartagena-cop",
+  "causa": "rag_contenido",
+  "motivo": "El cliente pidió el precio en COP para 2 buzos certificados saliendo desde Cartagena y el bot no proporcionó el importe solicitado según el catálogo."
+ },
+ {
+  "dialogo": "pareja-certificados-cop-descuento-almuerzo",
+  "criterio": "descuentos-vigentes",
+  "causa": "intencion_recordar",
+  "motivo": "El cliente preguntó sobre un 'bono' y comunicó que son colombianos, pero el bot no aclaró los descuentos vigentes (descuento online ni que no existe descuento especial por ser colombiano) y en su luga"
+ },
+ {
+  "dialogo": "aprobacion-logs-padi",
+  "criterio": "global:sin-repreguntas",
+  "causa": "entender_datos",
+  "motivo": "El bot pregunta si tienen la certificación o si la quieren sacar, aunque el cliente ya indicó que registró las inmersiones en PADI (lo que implica que son buzos certificados), por lo que vuelve a pedi"
+ },
+ {
+  "dialogo": "aprobacion-logs-padi",
+  "criterio": "humano-historico",
+  "causa": "escalado_postventa",
+  "motivo": "El cliente pide explícitamente gestionar la aprobación histórica en la app de PADI (petición que según las reglas requiere escalado), pero el bot solo ofreció preguntar si quería pasar con un asesor e"
+ },
+ {
+  "dialogo": "open-water-hoteles-noche-fotos-horario",
+  "criterio": "global:sin-invenciones",
+  "causa": "entender_datos",
+  "motivo": "El bot presenta en el 'carrito' o resumen un ítem 'certified diving' que el cliente no indicó; además el cliente está pidiendo el curso Open Water (no se ha dicho que ya sea buzo certificado), por lo "
+ },
+ {
+  "dialogo": "curso-open-water-transporte-y-regreso-otro-dia",
+  "criterio": "incluye-transporte-curso-desde-cartagena",
+  "causa": "rag_contenido",
+  "motivo": "El cliente preguntó si el transporte está incluido al hacer el curso; el bot no confirmó que el curso saliendo desde Cartagena incluye transporte Cartagena–Islas–Cartagena, y en su lugar habló solo de"
+ },
+ {
+  "dialogo": "curso-open-water-transporte-y-regreso-otro-dia",
+  "criterio": "regreso-otro-dia-escalar",
+  "causa": "rag_contenido",
+  "motivo": "El bot afirma que el regreso en fecha distinta está incluido (“included at no extra charge”) y no ofrece pasar con un asesor; la referencia establece que el regreso en otra fecha no está incluido y de"
+ },
+ {
+  "dialogo": "descuento-online-sin-codigo",
+  "criterio": "global:sin-invenciones",
+  "causa": "rag_contenido",
+  "motivo": "El bot propone recogida y regreso el mismo día desde Cartagena para el curso PADI Open Water, lo cual contradice la referencia que indica que el curso Open Water requiere pernoctar en las islas y no h"
+ },
+ {
+  "dialogo": "descuento-online-sin-codigo",
+  "criterio": "descuento-automatico-sin-codigo",
+  "causa": "rag_contenido",
+  "motivo": "El bot no explicó que el 10% de descuento online se aplica automáticamente al reservar en la web/ROVERD y que no hace falta ningún código; en su lugar dijo que 'no tiene ese detalle' y ofreció pasar a"
+ },
+ {
+  "dialogo": "curso-mas-paquetes-desde-islas-sin-nocturno-y-total",
+  "criterio": "global:idioma",
+  "causa": "flujo_plantilla",
+  "motivo": "El cliente escribió principalmente en inglés; el bot respondió íntegramente en español."
+ },
+ {
+  "dialogo": "curso-mas-paquetes-desde-islas-sin-nocturno-y-total",
+  "criterio": "no-confirmar-total-del-cliente",
+  "causa": "escalado_postventa",
+  "motivo": "El cliente propone un total (USD 1208) y el bot no lo verifica con los precios del catálogo ni pide aclarar cómo se componen los 8 inmersiones; en vez de cotizar o preguntar la aclaración requerida, s"
+ },
+ {
+  "dialogo": "certificado-precio-dia-paquete-5-y-hoteles-base",
+  "criterio": "global:sin-invenciones",
+  "causa": "rag_contenido",
+  "motivo": "Afirma 'we dive every day' sin mencionar las excepciones (cerrado 25 de diciembre y 1 de enero), lo que contradice la referencia."
+ },
+ {
+  "dialogo": "certificado-precio-dia-paquete-5-y-hoteles-base",
+  "criterio": "paquete-5-requiere-noche",
+  "causa": "rag_contenido",
+  "motivo": "El bot no aclaró que el paquete de 5 buceos dura 2 días, incluye un buceo nocturno y requiere pernoctar al menos 1 noche en las islas, información que exige la referencia."
+ },
+ {
+  "dialogo": "certificado-precio-dia-paquete-5-y-hoteles-base",
+  "criterio": "hoteles-base-islas",
+  "causa": "rag_contenido",
+  "motivo": "El bot no indicó que la base de buceo está en los hoteles San Pedro de Majagua y Cocoliso ni mencionó que el alojamiento no está incluido, pese a que el cliente preguntó explícitamente sobre qué hotel"
+ },
+ {
+  "dialogo": "colombianos-precio-minicurso-dos-inmersiones",
+  "criterio": "global:sin-invenciones",
+  "causa": "rag_contenido",
+  "motivo": "El bot afirma \"buceamos todos los días\", pero la referencia indica que cierran el 25 de diciembre y el 1 de enero, por lo que decir \"todos los días\" es inexacto."
+ },
+ {
+  "dialogo": "colombianos-precio-minicurso-dos-inmersiones",
+  "criterio": "precio-minicurso-cop-o-origen",
+  "causa": "rag_contenido",
+  "motivo": "El criterio exige O entregar el precio en COP para el minicurso para 2 personas saliendo desde Cartagena O preguntar si salen desde Cartagena/están ya en las islas antes de cotizar; el bot sólo dio el"
+ },
+ {
+  "dialogo": "disponibilidad-hora-precio-y-pecios",
+  "criterio": "no-promete-pecios",
+  "causa": "rag_contenido",
+  "motivo": "El cliente pidió ver barcos hundidos y el bot afirmó que \"incluyendo sitios con naufragios\" en las Islas del Rosario, lo que promete la existencia de naufragios en lugar de limitarse a explicar que se"
+ },
+ {
+  "dialogo": "baru-no-recogida",
+  "criterio": "alternativa-desde-cartagena",
+  "causa": "rag_contenido",
+  "motivo": "El cliente preguntó si hay salida desde Barú; el bot negó operaciones en Barú pero no ofreció la alternativa concreta requerida (salir desde Cartagena indicando Muelle de la Bodeguita a las 8:00 AM)."
+ },
+ {
+  "dialogo": "recogida-ubuntu-comida-y-certificacion",
+  "criterio": "global:idioma",
+  "causa": "flujo_plantilla",
+  "motivo": "El cliente escribió en inglés, pero el bot respondió en español en su primera respuesta."
+ },
+ {
+  "dialogo": "recogida-ubuntu-comida-y-certificacion",
+  "criterio": "global:sin-repreguntas",
+  "causa": "entender_datos",
+  "motivo": "El bot pregunta qué experiencia quieren cuando el cliente ya informó que reservó un 'beginner mini diving experience'."
+ },
+ {
+  "dialogo": "recogida-ubuntu-comida-y-certificacion",
+  "criterio": "minicurso-no-certifica",
+  "causa": "rag_contenido",
+  "motivo": "El bot no explicó que el minicurso no certifica ni que la certificación Open Water requiere 2 días y pernocta en las islas, por lo que no es posible si se van mañana al mediodía; en su lugar solo preg"
+ },
+ {
+  "dialogo": "curso-referido-pide-datos-centro",
+  "criterio": "global:sin-invenciones",
+  "causa": "entender_datos",
+  "motivo": "El bot afirma que el cliente ya completó la teoría y las sesiones en piscina, dato que el cliente no dio (solo dijo que está haciendo el e-learning); es una invención sobre el estado del cliente."
+ },
+ {
+  "dialogo": "curso-referido-pide-datos-centro",
+  "criterio": "global:sin-repreguntas",
+  "causa": "entender_datos",
+  "motivo": "El bot vuelve a preguntar si ya tiene Open Water aunque el cliente ya indicó que está haciendo el e-learning (dato que responde la misma cuestión de si necesita completar la certificación)."
+ },
+ {
+  "dialogo": "open-water-precio-duracion-hospedaje",
+  "criterio": "global:sin-invenciones",
+  "causa": "rag_contenido",
+  "motivo": "El bot afirma que pueden recogerte desde Cartagena ida y vuelta el mismo día para una certificación, lo cual contradice la referencia que indica que los cursos de 2 días (Open Water) requieren pernoct"
+ },
+ {
+  "dialogo": "open-water-precio-duracion-hospedaje",
+  "criterio": "precio-moneda-origen",
+  "causa": "rag_contenido",
+  "motivo": "El bot cotiza el precio desde Cartagena sin preguntar la nacionalidad (la moneda debe depender de ella) y no dio el precio desde las islas, remitiendo a un asesor en lugar de informar el valor que fig"
+ },
+ {
+  "dialogo": "moneda-precios-principiante-y-snorkel",
+  "criterio": "moneda-por-nacionalidad",
+  "causa": "entender_datos",
+  "motivo": "El bot sí aclaró la regla de moneda, pero no preguntó la nacionalidad del cliente (que no la indicó) para confirmar qué moneda corresponde a su caso, como exige el criterio."
+ },
+ {
+  "dialogo": "precio-paquetes-5-o-3-buceos-y-opcion-2-diurnos",
+  "criterio": "global:sin-invenciones",
+  "causa": "rag_contenido",
+  "motivo": "El bot afirma que no existe un paquete de 1 día con 2 inmersiones desde las islas, pero la REFERENCIA indica explícitamente que sí existe el servicio 'Buzo Certificado - 2 inmersiones' para clientes q"
+ },
+ {
+  "dialogo": "precio-paquetes-5-o-3-buceos-y-opcion-2-diurnos",
+  "criterio": "no-precio-historico-5-buceos",
+  "causa": "rag_contenido",
+  "motivo": "El bot dio el precio correspondiente a la salida desde Cartagena sin confirmar el lugar de salida o la nacionalidad del cliente; el criterio exigía dar el precio según el origen (Cartagena o islas) o "
+ },
+ {
+  "dialogo": "precio-paquetes-5-o-3-buceos-y-opcion-2-diurnos",
+  "criterio": "alojamiento-no-incluido-5-buceos",
+  "causa": "rag_contenido",
+  "motivo": "El cliente preguntó por precio de estancia + buceos del paquete de 5 buceos, pero el bot sólo dio el precio y no aclaró que ese paquete requiere pernoctar en las islas ni que el alojamiento no está in"
+ },
+ {
+  "dialogo": "paquete-5-buceos-precio-fecha-y-equipaje",
+  "criterio": "global:sin-invenciones",
+  "causa": "rag_contenido",
+  "motivo": "El bot afirma no tener a mano información sobre salidas de 2 días, pero la REFERENCIA incluye detalles y precios de paquetes de varios días (p.ej. paquete de 5 buceos)."
+ },
+ {
+  "dialogo": "paquete-5-buceos-precio-fecha-y-equipaje",
+  "criterio": "no-operamos-en-baru",
+  "causa": "rag_contenido",
+  "motivo": "El cliente mencionó estar en Barú, pero el bot no aclaró que Diving Planet opera en las Islas del Rosario y no en Barú; en su respuesta solo repitió la ubicación sin corregir ni informar la política d"
+ },
+ {
+  "dialogo": "paquete-5-buceos-precio-fecha-y-equipaje",
+  "criterio": "precio-paquete-5-buceos",
+  "causa": "rag_contenido",
+  "motivo": "El criterio pedía dar el precio del Paquete 5 Buceos desde Cartagena (o preguntar lo que falta: número de personas y moneda); el bot no proporcionó ese precio ni formuló las preguntas necesarias."
+ },
+ {
+  "dialogo": "paquete-5-buceos-precio-fecha-y-equipaje",
+  "criterio": "disponibilidad-y-cutoff",
+  "causa": "rag_contenido",
+  "motivo": "El cliente preguntó si hay salidas el 24 de abril, pero el bot solo entregó precios y no confirmó explícitamente la disponibilidad para esa fecha."
+ },
+ {
+  "dialogo": "paquete-5-buceos-precio-fecha-y-equipaje",
+  "criterio": "equipaje-en-lancha",
+  "causa": "rag_contenido",
+  "motivo": "El bot no respondió la pregunta específica: debía confirmar que sí se puede llevar una mochila/bolso por persona en la lancha y que, si prefieren no llevarla, pueden guardar la maleta en la oficina de"
+ },
+ {
+  "dialogo": "principiante-hora-lugar-y-precio",
+  "criterio": "aclarar-actividad",
+  "causa": "flujo_plantilla",
+  "motivo": "El bot mostró precios y opciones antes de confirmar si el cliente es buzo certificado o si prefiere el minicurso; tampoco preguntó directamente por la certificación tras la declaración del cliente, po"
+ },
+ {
+  "dialogo": "principiante-hora-lugar-y-precio",
+  "criterio": "lugar-y-hora",
+  "causa": "rag_contenido",
+  "motivo": "El bot no indicó el punto de encuentro ni la hora (Muelle de la Bodeguita a las 8:00 AM), respondió con preguntas sobre el lugar de salida pero no confirmó el lugar y la hora requeridos en la referenc"
+ },
+ {
+  "dialogo": "principiantes-no-certificados-minicurso",
+  "criterio": "recomienda-minicurso",
+  "causa": "rag_contenido",
+  "motivo": "El cliente indicó que no está certificado y el bot no informó explícitamente que el Minicurso (Discover/DSD) es el plan adecuado ni ofreció el enlace con los detalles; en su lugar pidió el punto de sa"
+ },
+ {
+  "dialogo": "confirma-reserva-existente-escalar",
+  "criterio": "no-confirma-y-escala",
+  "causa": "escalado_postventa",
+  "motivo": "El cliente pregunta si la reserva fue recibida; el bot no confirma el estado de la reserva y solo ofrece preguntar si quiere pasar con un asesor, pero no realiza el pase/escala requerido por el criter"
+ },
+ {
+  "dialogo": "post-venta-confirmar-formularios-elearning",
+  "criterio": "global:sin-repreguntas",
+  "causa": "entender_datos",
+  "motivo": "El bot pide confirmar que la cliente es 'advanced' y que su novio hará su primera inmersión, dato que el cliente ya expresó claramente."
+ },
+ {
+  "dialogo": "post-venta-confirmar-formularios-elearning",
+  "criterio": "escalar-estado-reserva",
+  "causa": "escalado_postventa",
+  "motivo": "El cliente pide confirmar el estado del test/formularios y falta de ticket; el bot solo ofreció preguntar si quiere pasar con un asesor en lugar de pasar/transferir inmediatamente para que el equipo v"
+ },
+ {
+  "dialogo": "familia-mixta-precio-descuento-refresher",
+  "criterio": "global:sin-invenciones",
+  "causa": "rag_contenido",
+  "motivo": "El bot dio un precio de $45 USD para snorkeling sin haber confirmado el punto de salida; ese precio corresponde a partidas desde las islas, mientras que desde Cartagena el precio online es distinto se"
+ },
+ {
+  "dialogo": "familia-mixta-precio-descuento-refresher",
+  "criterio": "global:sin-repreguntas",
+  "causa": "entender_datos",
+  "motivo": "El bot volvió a preguntar cuántas personas son para el buceo cuando el cliente ya indicó claramente que son 3 buzos (2 adultos y 1 joven)."
+ },
+ {
+  "dialogo": "familia-mixta-precio-descuento-refresher",
+  "criterio": "refresh-no-requerido-1-5-anos",
+  "causa": "rag_contenido",
+  "motivo": "El bot no aclaró la política: debía indicar que el refresh se exige solo si han pasado más de 2 años y que con 1.5 años no es obligatorio ni tiene costo por defecto; en su lugar solo reiteró una inter"
+ },
+ {
+  "dialogo": "grupo-mixto-buceo-y-snorkel-reserva-web",
+  "criterio": "links-reserva-web",
+  "causa": "rag_contenido",
+  "motivo": "El cliente preguntó si se usa WhatsApp o la web para reservar, y el bot no indicó que la reserva se hace por la web ni compartió los enlaces de reserva solicitados para 2 inmersiones y snorkeling."
+ },
+ {
+  "dialogo": "precios-y-disponibilidad-con-negociacion",
+  "criterio": "precio-2-buceos-cartagena",
+  "causa": "rag_contenido",
+  "motivo": "El bot dio el precio en COP sin pedir la nacionalidad del cliente (o verificar que corresponde), cuando la regla exige dar la moneda correcta o preguntar la nacionalidad antes de cotizar."
+ },
+ {
+  "dialogo": "precios-y-disponibilidad-con-negociacion",
+  "criterio": "no-acepta-precio-propuesto",
+  "causa": "rag_contenido",
+  "motivo": "El cliente preguntó si el precio quedaría en US$160 considerando el 10% y el bot no confirmó ni explicó la política de descuento online ni mantuvo el precio del catálogo; en su lugar evitó responder y"
+ },
+ {
+  "dialogo": "curso-open-water-principiantes-idioma-frances-anticipacion",
+  "criterio": "global:idioma",
+  "causa": "flujo_plantilla",
+  "motivo": "El cliente pidió cambiar al francés ('Frances') y el bot respondió nuevamente en español en lugar de usar el idioma solicitado."
+ },
+ {
+  "dialogo": "curso-open-water-principiantes-idioma-frances-anticipacion",
+  "criterio": "curso-overnight-obligatorio",
+  "causa": "rag_contenido",
+  "motivo": "El bot explicó la duración y la parte online del Open Water pero no aclaró la política obligatoria de pernoctar en las islas ni que no es posible ir y volver desde Cartagena ambos días, requisito indi"
+ },
+ {
+  "dialogo": "curso-open-water-principiantes-idioma-frances-anticipacion",
+  "criterio": "anticipacion-cierre-sistema",
+  "causa": "rag_contenido",
+  "motivo": "El bot no informó el cierre del sistema de reservas a las 4:30 p.m. del día anterior ni indicó que, pasada esa hora, deben escribir por WhatsApp, como exige el criterio."
+ },
+ {
+  "dialogo": "principiante-precio-y-evaluacion-medica",
+  "criterio": "escalar-medico",
+  "causa": "escalado_postventa",
+  "motivo": "El cliente indicó que el sistema pide evaluación médica; la regla exige pasar la consulta a un miembro del staff para evaluar el caso, pero el bot solo recomendó contactar al staff en vez de transferi"
+ },
+ {
+  "dialogo": "minicurso-islas-y-acompanante-lancha",
+  "criterio": "global:sin-invenciones",
+  "causa": "entender_datos",
+  "motivo": "El bot afirma que hay 'dos participantes' en el minicurso aunque el cliente no indicó que dos personas realizarían el minicurso; el cliente expresó que quiere acompañar a su esposo sin sumergirse."
+ },
+ {
+  "dialogo": "minicurso-islas-y-acompanante-lancha",
+  "criterio": "acompanante-lancha-escalar",
+  "causa": "escalado_postventa",
+  "motivo": "El bot confirmó por su cuenta que la acompañante puede ir en la lancha sin pagar y no ofreció pasar a un asesor para coordinar la solicitud logística, que según el criterio debía escalarse."
+ },
+ {
+  "dialogo": "precio-fundive-datos-faltan",
+  "criterio": "global:sin-invenciones",
+  "causa": "rag_contenido",
+  "motivo": "El bot presenta el paquete de 3 inmersiones como 'en un día' desde Cartagena, pero la referencia indica que el paquete incluye buceo nocturno y requiere hospedarse en la isla (no está disponible como "
+ },
+ {
+  "dialogo": "precio-fundive-datos-faltan",
+  "criterio": "origen-cartagena-o-islas",
+  "causa": "flujo_plantilla",
+  "motivo": "El cliente no indicó si sale desde Cartagena o ya está en las Islas; la referencia exige preguntar la ubicación antes de cotizar, pero el bot ya dio un precio (desde Cartagena) sin pedir esa informaci"
+ },
+ {
+  "dialogo": "pareja-reactivate-y-refresh-cartagena",
+  "criterio": "global:sin-invenciones",
+  "causa": "entender_datos",
+  "motivo": "El bot asume la actividad 'snorkeling' y pregunta el número de personas para snorkeling, cuando el cliente expresó que quiere completar la reactivación de su esposa y bucear; el bot inventa la activid"
+ },
+ {
+  "dialogo": "pareja-reactivate-y-refresh-cartagena",
+  "criterio": "global:sin-repreguntas",
+  "causa": "entender_datos",
+  "motivo": "El bot vuelve a preguntar si son buzos certificados cuando el cliente ya indicó claramente: 'We were certified in 2018'."
+ },
+ {
+  "dialogo": "pareja-reactivate-y-refresh-cartagena",
+  "criterio": "politica-refresh",
+  "causa": "rag_contenido",
+  "motivo": "El bot no aclara la política de que después de más de 2 años normalmente se requiere refresh, no valida que el cliente ya hizo su Reactivate ni propone el refresher para su esposa ni ofrece escalar a "
+ },
+ {
+  "dialogo": "pareja-reactivate-y-refresh-cartagena",
+  "criterio": "grupo-mixto-permitido",
+  "causa": "escalado_postventa",
+  "motivo": "El cliente explica que quiere completar el reactivate para su esposa y bucear allí; el bot no confirma que se puede combinar un refresher/minicurso para ella con buceo certificado para él en el mismo "
+ },
+ {
+  "dialogo": "curso-alojamiento-y-recogida-islas",
+  "criterio": "recogida-hoteles-islas",
+  "causa": "rag_contenido",
+  "motivo": "El criterio exige confirmar que sí coordinan recogida y regreso desde otros hoteles de las Islas con acceso marítimo; el bot en cambio dice que no tiene ese detalle y no lo confirma."
+ },
+ {
+  "dialogo": "precio-dispo-buceo-certificado-grupo-mixto",
+  "criterio": "global:sin-invenciones",
+  "causa": "rag_contenido",
+  "motivo": "El bot afirma categóricamente que el compañero no puede hacer inmersiones certificadas contigo 'ni el mismo día ni al siguiente', lo cual contradice la referencia que permite grupos mixtos y explica q"
+ },
+ {
+  "dialogo": "precio-dispo-buceo-certificado-grupo-mixto",
+  "criterio": "origen-cartagena-o-islas",
+  "causa": "rag_contenido",
+  "motivo": "El bot no preguntó si la salida sería desde Cartagena o si ya están en las islas antes de cotizar (ni ofreció precios diferenciados según origen), incumpliendo la regla de origen antes de cotizar."
+ }
+]
