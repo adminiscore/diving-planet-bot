@@ -181,6 +181,9 @@ services:
       # u3-7 (paso 7, 27-sep): Jev interpreta la respuesta a la pregunta pendiente (si/no y listas).
       # Ver HISTORY 0.29.53. ENCENDIDO para la ronda B; si no pasa, "false" el mismo dia.
       SLOT_ANSWERS_JEV: "true"
+      # u3-3 (paso 7, 27-sep): Jev verifica lo que lee el regex en todos los turnos (seguro de que no).
+      # Ver HISTORY 0.29.54. ENCENDIDO para la ronda B; si no pasa, "false" el mismo dia.
+      REGEX_JEV_GATE: "true"
       # Refactor multi-agente (docs/multi-agent-refactor-plan.md) — validación en
       # PRE antes del corte del legacy (Fase 5.2). STAGE B (ahora): el GRAFO sirve
       # de verdad (agent_arch on) — router → 5 nodos reales + subgrafo booking. La
