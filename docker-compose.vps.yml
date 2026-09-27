@@ -90,6 +90,8 @@ services:
       # tests/test_models_pinned.py falla si se separan. Mapa: README "LLM models".
       OPENAI_MODEL: "gpt-4o-mini"
       RAG_ANSWER_MODEL: "gpt-4.1-mini"
+      # Juez de grounding v3 (flag GROUNDING_V3, 28-sep): gpt-4.1 (con gpt-4.1-mini el v3 era inestable).
+      GROUNDING_V3_MODEL: "gpt-4.1"
       EXTRACTION_MODEL: "gpt-4o-mini"
       OPENAI_EMBEDDING_MODEL: "text-embedding-3-small"
       OPENAI_TRANSCRIPTION_MODEL: "gpt-4o-mini-transcribe"
@@ -186,6 +188,12 @@ services:
       # Ver HISTORY 0.29.54-0.29.56. Ronda B (27-sep): la puerta no actuo en el core (0 turnos), diferencias
       # = ruido; escalon 0: -5 datos inventados, 0 buenos perdidos -> PROMOCIONADO; se confirma en el paso 8.
       REGEX_JEV_GATE: "true"
+      # Juez de grounding v3 (28-sep): enumera y marca cada dato del negocio; gpt-4.1 (GROUNDING_V3_MODEL).
+      # Ver HISTORY 0.29.57. ENCENDIDO para la ronda B; si no pasa, "false" el mismo dia.
+      GROUNDING_V3: "true"
+      # u3-5 (decision de Gadea): el minicurso deducido se RECOMIENDA y lo confirma el cliente; a quien pide
+      # un curso se le recomienda el Open Water. Ver HISTORY 0.29.45-0.29.57. ENCENDIDO para la ronda B.
+      RECOMMEND_INFERRED_MINICOURSE: "true"
       # Refactor multi-agente (docs/multi-agent-refactor-plan.md) — validación en
       # PRE antes del corte del legacy (Fase 5.2). STAGE B (ahora): el GRAFO sirve
       # de verdad (agent_arch on) — router → 5 nodos reales + subgrafo booking. La
