@@ -166,8 +166,13 @@ services:
       CORRECTIONS_V2: "true"
       # Paso 5 (RAG, 27-sep): catalogo como hechos en el contexto del RAG (sin atajos de precio), juez de
       # grounding v2, disponibilidad por el RAG y Jev decide si el cliente pide "recordar". Ver HISTORY
-      # 0.29.47. ENCENDIDO para la ronda B del paso 5; si no pasa, "false" el mismo dia.
+      # 0.29.47-0.29.48. Ronda B (27-sep) frente a u35-B: criterios 86,2 -> 91,2 %, dialogos 16 -> 20/32,
+      # 2 regresiones propias arregladas -> PROMOCIONADO, se QUEDA ENCENDIDO. Revert = "false" + redeploy.
       RAG_V2: "true"
+      # Paso 6 (27-sep): respuestas fijas y salida deterministas de S4 (WhatsApp oficial, asistente
+      # virtual, queja con disculpa, link al pagar, post-venta y cambio de fecha a una persona). Ver
+      # HISTORY 0.29.49. ENCENDIDO para la ronda B del paso 6; si no pasa, "false" el mismo dia.
+      S4_FIXES: "true"
       # Refactor multi-agente (docs/multi-agent-refactor-plan.md) — validación en
       # PRE antes del corte del legacy (Fase 5.2). STAGE B (ahora): el GRAFO sirve
       # de verdad (agent_arch on) — router → 5 nodos reales + subgrafo booking. La
