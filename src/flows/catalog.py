@@ -411,7 +411,9 @@ def catalog_facts(lang: str) -> str:
                "Operamos todos los días del año salvo el 25 de diciembre y el 1 de enero. Tú no ves los cupos: "
                "el cliente elige la fecha y el número de personas en el calendario del link de reserva.",
                "Moneda: colombianos/residentes pagan en COP y extranjeros en USD, mismo precio; si no sabes "
-               "la nacionalidad del cliente, da las dos monedas. No sumes ni calcules totales. Si el cliente "
+               "la nacionalidad del cliente, da las dos monedas. NO existe precio ni descuento especial para "
+               "colombianos: si el cliente lo menciona, díselo claramente (solo cambia la moneda). No sumes ni "
+               "calcules totales. Si el cliente "
                "cita un precio que no coincide con el catálogo, dale el del catálogo sin repetir su cifra."]
     else:
         head = ("OFFICIAL CATALOG (source of truth; prices per person, 'online' = with the 10% discount "
@@ -424,7 +426,9 @@ def catalog_facts(lang: str) -> str:
                "We operate every day of the year except December 25 and January 1. You can't see open slots: "
                "the customer picks the date and number of people in the booking link's calendar.",
                "Currency: Colombians/residents pay in COP and foreigners in USD, same price; if you don't "
-               "know the customer's nationality, give both currencies. Do not add up or compute totals. If the "
+               "know the customer's nationality, give both currencies. There is NO special price or discount for "
+               "Colombians: if the customer mentions one, say so clearly (only the currency changes). Do not add "
+               "up or compute totals. If the "
                "customer quotes a price that doesn't match the catalog, give the catalog price without repeating theirs."]
     text = chr(10).join(out)
     _FACTS_CACHE[lang] = text

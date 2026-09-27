@@ -1,6 +1,21 @@
 History
 =======
 
+0.29.49 - (2026-09-27)
+----------------------
+* **Paso 6 (salida y flujo deterministas + escalado): flag `S4_FIXES` (encendido en PRE para su ronda B).** Todos globales, ninguno por caso; los casos del golden son la prueba de cierre:
+  - **s4-14** si piden un teléfono, el WhatsApp oficial (decisión de Gadea, sale de `escalation_rules.json`, "solo mensajes"); **s4-15** "¿eres un bot?" → "soy Coral, la asistente virtual", con la persona a mano; **s4-16** la queja pasa a staff con una disculpa.
+  - **s4-7** "¿cómo pago?": el prompt del RAG manda al link de reserva (antes: "un asesor te enviará el enlace", justo encima del resumen CON el link), y con el cierre de la reserva en el turno un "no lo tengo a la mano" ya no tapa el resumen con el link (ronda B de u3-5: "great, how do i pay" se quedaba sin él).
+  - **s4-22** sin saber el origen, precio desde Cartagena y desde las islas rotulados, o se pregunta.
+  - **s4-20** post-venta y empresa (reserva o pago ya hechos, agencia, correo sin contestar, logs PADI) → una persona ANTES del núcleo, con Jev (`needs_staff`, misma llamada, coste 0); banco `scripts/sonda_necesita_persona.py`: 9/10, 0/14 falsas. **s4-6** cambio de fecha con el carrito abierto → política + asesor (decisión del owner), con Jev (`changes_date`): la señal del router confunde ahí "hazlo para 3 días" con reprogramar; banco `scripts/sonda_cambia_fecha.py`: 7/8, 0/12.
+  - Sin flag (s4-21): un resumen nunca muestra un id interno (`dom.text` da la etiqueta de la actividad si falta el texto: `padi_open_water_referral` y 7 más); las respuestas fijas de la apertura (aviso sensible, enlace roto, post-venta) salen en el idioma del mensaje y lo dejan como idioma de la conversación; un acuse sin prosa (`{" "}`) se descarta.
+* 14 tests nuevos (`tests/test_s4_fixes.py`); suite 2761 passed.
+
+0.29.48 - (2026-09-27)
+----------------------
+* **Paso 5 · ronda B en PRE: `RAG_V2` PROMOCIONADO (se queda encendido).** Ronda core `2026-09-27-paso5-B` frente a la última core (`2026-09-27-u35-B`): **criterios 86,2 → 91,2 %, diálogos sin fallos 16 → 20 de 32**, 21 mejoras (duración del curso, política de fotos, equipaje, acompañante, precio del Open Water y del minicurso de las islas, hoteles base, el "recordar" falso, "how do i pay" con link, 4 diálogos sin invenciones). "No lo tengo a la mano" por el juez: 37 en la ronda A (golden completo) → 2 en esta. Latencia p50 2 → 3 s, p95 igual (6 s); el pico de 17 s fue un turno sin RAG (lentitud de OpenAI).
+* 7 regresiones leídas con el texto y el log de PRE: 2 de ruido (texto idéntico; un acuse del LLM que "inventa" una nacionalidad que no se guarda), 1 de flujo por otro flag (la recomendación del minicurso estaba encendida en u35-B), 1 de extracción (u3, paso 7: "¡Qué bien que venga alguien más!" tras una respuesta correcta) y 1 de router LLM ante una duda de Jev (enlace roto; ya le pasaba en la ronda A) **que además salía en español a un cliente en inglés** → arreglado (0.29.49). **Propias, 2:** sin el atajo fijo, el RAG no aclaraba que no hay precio especial para colombianos → regla en el catálogo; y una invención ("debes haber completado la teoría") que el juez v2 dejó pasar → vigilar en la próxima ronda.
+
 0.29.47 - (2026-09-27)
 ----------------------
 * **Paso 5 (RAG, l1-6 + l1-7): flag `RAG_V2` (encendido en PRE para la ronda B) y cuatro arreglos sin flag.** Diagnóstico con una sonda nueva que reproduce DENTRO del contenedor de PRE los 57 turnos que fallaron por el RAG en la ronda A (`scripts/sonda_rag_pre.py`, `docs/robustness/paso5-rag/`): casi la mitad no eran de la búsqueda. Causas y arreglos (todos globales, ninguno por caso):

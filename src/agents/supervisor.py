@@ -1363,7 +1363,7 @@ def _broken_link_escalation_response(state: ConversationState, message: str) -> 
     state.pending_escalation_reason = reason
     state.pending_note = build_lead_summary(state, escalation_reason=reason)
     logger.warning(f"[SUPERVISOR] Broken-link complaint detected msg={message[:80]!r}")
-    if state.language == "es":
+    if _reply_language(state, message) == "es":
         return (
             "Lamento que el enlace no te haya funcionado. Aviso al equipo para revisarlo y te paso "
             "con un asesor para confirmar el siguiente paso o enviarte el link correcto.\n\n"
@@ -1433,7 +1433,12 @@ def _reply_language(state: ConversationState, message: str) -> str:
         return state.language
     from src.flows.catalog import _detect_language_heuristic  # lazy
 
-    return _detect_language_heuristic(message) or _infer_language(message, state.language)
+    lang = _detect_language_heuristic(message) or _infer_language(message, state.language)
+    # Se guarda como idioma de la conversacion (sin darlo por detectado: el nucleo lo confirma cuando
+    # le llegue un turno). Si no, tras una respuesta fija en la apertura el turno siguiente seguia en
+    # espanol ("ah I see." -> menu en espanol, ronda B del paso 5).
+    state.language = lang
+    return lang
 
 
 def _build_extra_context(state: ConversationState) -> str | None:
