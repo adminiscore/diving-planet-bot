@@ -1,0 +1,191 @@
+{
+ "diffs": [
+  {
+   "key": [
+    "acompanante-madre-desde-cartagena",
+    3
+   ],
+   "extra": {
+    "detected_group_size": 2,
+    "detected_group_allocation": {
+     "certified_diving": 2
+    }
+   },
+   "verdict": {
+    "inventados": [
+     "detected_group_size",
+     "detected_group_allocation.certified_diving"
+    ],
+    "por_que": "El cliente solo pregunta si su madre puede acompañarle y quedarse en la isla de apoyo; no afirma explícitamente que el grupo sea de 2 personas ni que ambos estén certificados para buceo. Es una consulta, no una declaración de tamaño de grupo ni de certificaciones."
+   }
+  },
+  {
+   "key": [
+    "cambio-fecha-por-enfermedad",
+    6
+   ],
+   "extra": {
+    "detected_group_allocation": {
+     "certified_diving": 2
+    }
+   },
+   "verdict": {
+    "inventados": [
+     "detected_group_allocation.certified_diving"
+    ],
+    "por_que": "El cliente no afirma en ningún mensaje que sean buzos certificados. Menciona que llegará con su esposo, quiere equipo completo, completó los formularios y pidió cambiar la fecha por enfermedad, pero no declara su nivel o certificación; por tanto asignar \"certified_diving\":2 es una suposición/invención."
+   }
+  },
+  {
+   "key": [
+    "descuento-online-sin-codigo",
+    1
+   ],
+   "extra": {
+    "detected_activity": "padi_open_water",
+    "is_certified": false
+   },
+   "verdict": {
+    "inventados": [
+     "is_certified"
+    ],
+    "por_que": "El cliente afirma explícitamente que está intentando inscribirse en el curso PADI Open Water (detected_activity está afirmado). No dice textualmente que no esté ya certificado; asumir 'is_certified: false' es una deducción basada en que quiere tomar el curso, pero no se afirma directamente en su mensaje, por lo que es inventado/hipotético."
+   }
+  },
+  {
+   "key": [
+    "familia-mixta-precio-descuento-refresher",
+    4
+   ],
+   "extra": {
+    "detected_group_size": 4,
+    "detected_group_allocation": {
+     "certified_diving": 4
+    }
+   },
+   "verdict": {
+    "inventados": [
+     "detected_group_size",
+     "detected_group_allocation.certified_diving"
+    ],
+    "por_que": "El cliente indica explícitamente un grupo de 6 personas: 3 que quieren bucear (2 adultos de 42 y 19 años y 1 joven de 17) y 3 que quieren hacer snorkel (1 adulto de 43 y 2 niños de 14 y 10). Por tanto detected_group_size = 4 es incorrecto. Además el cliente afirma que los buceadores son PADI certified, pero son 3 personas, no 4; por tanto detected_group_allocation.certified_diving = 4 está inventado/erróneo."
+   }
+  },
+  {
+   "key": [
+    "ninos-6-y-10",
+    2
+   ],
+   "extra": {
+    "detected_group_size": 4,
+    "detected_group_allocation": {
+     "certified_diving": 4
+    }
+   },
+   "verdict": {
+    "inventados": [
+     "detected_group_size",
+     "detected_group_allocation"
+    ],
+    "por_que": "El cliente solo dijo que quiere llevar a sus hijos a bucear y que son 2 niños: confirma 2 participantes (los niños) pero no menciona un grupo de 4 ni que haya 4 buceadores certificados. Ambos valores (grupo de 4 y asignación de 4 certificados) no están afirmados en los mensajes y por tanto son inventados/supuestos."
+   }
+  },
+  {
+   "key": [
+    "ninos-6-y-10",
+    6
+   ],
+   "extra": {
+    "location": "cartagena",
+    "detected_location": "cartagena"
+   },
+   "verdict": {
+    "inventados": [
+     "location",
+     "detected_location"
+    ],
+    "por_que": "El cliente no menciona ningún lugar en sus mensajes; solo expresa querer llevar a sus hijos a bucear, edades y pregunta sobre snorkel/actividades. Los campos 'location' y 'detected_location' provienen del sistema y no están afirmados por el cliente, por eso son inventados/suposición."
+   }
+  },
+  {
+   "key": [
+    "premisa-falsa-lunes",
+    3
+   ],
+   "extra": {
+    "detected_activity": "certified_diving"
+   },
+   "verdict": {
+    "inventados": [
+     "detected_activity"
+    ],
+    "por_que": "El cliente solo pregunta por disponibilidad de buceo y confirma una reserva para el martes; en ningún momento declara ser buzo certificado ni menciona certificación. Por tanto 'certified_diving' es una suposición/inferencia no afirmada en los mensajes."
+   }
+  },
+  {
+   "key": [
+    "premisa-falsa-lunes",
+    4
+   ],
+   "extra": {
+    "is_certified": true
+   },
+   "verdict": {
+    "inventados": [],
+    "por_que": "El cliente explícitamente escribió \"buceo certificado, solo yo\" en su último mensaje, por lo que el dato is_certified: true está AFIRMADO por el usuario, no es inventado ni supuesto."
+   }
+  },
+  {
+   "key": [
+    "referral-mas-refresher-hotel-y-domingo-pascua",
+    1
+   ],
+   "extra": {
+    "is_certified": false,
+    "detected_group_size": 4,
+    "detected_group_allocation": {
+     "padi_open_water_referral": 2,
+     "minicourse": 2
+    }
+   },
+   "verdict": {
+    "inventados": [
+     "detected_group_size"
+    ],
+    "por_que": "El cliente dice explícitamente \"2 persons\", por lo que detected_group_size = 4 es inventado/supuesto. is_certified = false está confirmado por \"we have referrals and e-learning certificates\" (aún no están certificados). La asignación detected_group_allocation con 2 en padi_open_water_referral y 2 en minicourse coincide con \"2 day open water referral course... plus a mini course... 2 persons\", así que está afirmada."
+   }
+  },
+  {
+   "key": [
+    "refresher-rechaza-acepta",
+    4
+   ],
+   "extra": {
+    "location": "cartagena",
+    "detected_location": "cartagena"
+   },
+   "verdict": {
+    "inventados": [
+     "location",
+     "detected_location"
+    ],
+    "por_que": "El cliente no menciona ningún lugar en sus mensajes; solo habla de su certificación, tiempo sin bucear y el refresher. Por tanto los campos 'location' y 'detected_location' no están afirmados por el cliente y parecen inferidos por el sistema."
+   }
+  },
+  {
+   "key": [
+    "reserva-colombianos-cop",
+    1
+   ],
+   "extra": {
+    "is_certified": false
+   },
+   "verdict": {
+    "inventados": [
+     "is_certified"
+    ],
+    "por_que": "El cliente no menciona en ningún momento si está certificado o no. Solo dice que quiere hacer snorkel, que son 2 y que son colombianos; por tanto el dato 'is_certified': false no está afirmado por el mensaje y parece una suposición/invención del sistema."
+   }
+  }
+ ]
+}

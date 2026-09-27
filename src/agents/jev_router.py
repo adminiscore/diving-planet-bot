@@ -298,11 +298,28 @@ _CHANGES_DATE_Q = {
     ),
 }
 
+# u3-6 (paso 7, flag `signals_gate`): ¿el mensaje mete a OTRA persona en la reserva? Filtro previo de
+# `detect_special_signals`: por debajo de COMPANION_NONE_MAX (Jev seguro de que no) no se llama al
+# LLM. Calibrado con `scripts/sonda_acompanante.py`.
+COMPANION_JOINS = "companion_joins"
+COMPANION_NONE_MAX = 0.2
+_COMPANION_JOINS_Q = {
+    "type": "noul",
+    "instructions": (
+        "The message says that ANOTHER person besides the customer is joining or taking part in the booking, "
+        "or describes what other people in their group will do (a friend, partner, family member, 'somos 3 y "
+        "uno hace snorkel', 'viene mi novia', 'mi amigo no está certificado', 'my wife wants to try'). It is "
+        "FALSE when the customer only talks about themselves, asks a question about the service, answers "
+        "with a date, place, nationality or yes/no, says thanks, or merely mentions someone who is not "
+        "coming."
+    ),
+}
+
 # Las preguntas de u3-4/u3-5 no son señales del router: su duda NO manda el turno al router LLM.
 _U34_QUESTIONS = (
     ASKS_QUESTION, AFFIRMS_LOCATION, AFFIRMS_ACTIVITY, ACTIVITY_HYPOTHESIS,
     AFFIRMS_CERTIFICATION, AFFIRMS_GROUP, AFFIRMS_NATIONALITY, CORRECTS, ASKS_RECALL, NEEDS_STAFF,
-    CHANGES_DATE,
+    CHANGES_DATE, COMPANION_JOINS,
 )
 
 
@@ -335,6 +352,8 @@ def _questions_for_turn() -> dict:
     if settings.s4_fixes:
         q[NEEDS_STAFF] = _NEEDS_STAFF_Q
         q[CHANGES_DATE] = _CHANGES_DATE_Q
+    if settings.signals_gate:
+        q[COMPANION_JOINS] = _COMPANION_JOINS_Q
     return q
 
 
@@ -383,6 +402,9 @@ def answers_to_signals(answers: dict, threshold: float = THRESHOLD) -> dict:
         out[ASKS_RECALL] = (answers.get(ASKS_RECALL) or {}).get("noul", 0.0) >= ASKS_RECALL_MIN
     if NEEDS_STAFF in answers:
         out[NEEDS_STAFF] = (answers.get(NEEDS_STAFF) or {}).get("noul", 0.0) >= NEEDS_STAFF_MIN
+    if COMPANION_JOINS in answers:
+        # Se emite la PROBABILIDAD: el filtro solo actua cuando Jev esta seguro de que NO.
+        out[COMPANION_JOINS] = (answers.get(COMPANION_JOINS) or {}).get("noul", 1.0)
     if CHANGES_DATE in answers:
         out[CHANGES_DATE] = (answers.get(CHANGES_DATE) or {}).get("noul", 0.0) >= CHANGES_DATE_MIN
     for name in (AFFIRMS_LOCATION, AFFIRMS_CERTIFICATION, AFFIRMS_GROUP, AFFIRMS_NATIONALITY):
@@ -430,7 +452,7 @@ async def detect_routing_signals_jev(message: str, *, lang: str = "es") -> dict 
 # Señales de u3-4/u3-5 que NO son del router: viajan aparte (ver `detect_routing_signals_jev_full`).
 _TURN_SIGNALS = (
     AFFIRMS_LOCATION, AFFIRMS_ACTIVITY, AFFIRMS_CERTIFICATION, AFFIRMS_GROUP, AFFIRMS_NATIONALITY, CORRECTS,
-    ASKS_RECALL, NEEDS_STAFF, CHANGES_DATE,
+    ASKS_RECALL, NEEDS_STAFF, CHANGES_DATE, COMPANION_JOINS,
 )
 
 

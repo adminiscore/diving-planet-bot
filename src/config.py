@@ -144,6 +144,13 @@ class Settings(BaseSettings):
     # -> dice que es la asistente virtual; s4-16: la queja se pasa a staff con una disculpa. APAGADO.
     s4_fixes: bool = False
 
+    # u3-6 (paso 7, 27-sep): Jev como filtro previo de `detect_special_signals` (el LLM de acompañantes,
+    # refresher y "recordar"). Si Jev dice, seguro, que el mensaje no mete a otra persona en la reserva
+    # ni pide recordar nada (y no se espera la respuesta del refresher), no se llama al LLM: ahorra
+    # ~0,85 s y los acompañantes fantasma que el LLM re-deriva del historial. La cifra y los subgrupos
+    # siguen en el LLM. APAGADO por defecto.
+    signals_gate: bool = False
+
     # --- Observabilidad: Langfuse (sustituye a LangSmith, cuota Developer
     # agotada; ver docs/robustness/progress-log.md "Tarea 8"). Sin claves, el
     # tracing queda apagado y `langfuse` ni se importa (3.14-safe). Claves por

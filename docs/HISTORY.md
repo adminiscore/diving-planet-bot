@@ -1,6 +1,11 @@
 History
 =======
 
+0.29.51 - (2026-09-27)
+----------------------
+* **Paso 7 · u3-6: Jev como filtro previo del LLM de señales (flag `SIGNALS_GATE`, encendido en PRE para la ronda B).** `detect_special_signals` (acompañantes, refresher, "recordar") se llamaba en ~1 de cada 4 turnos (~0,85 s) y re-derivaba acompañantes del historial ("Si cuantos días son?" → "¡Qué bien que venga alguien más!", ronda B del paso 5). Pasarlo entero a Jev no compensa: la cifra y los subgrupos son del LLM. En su lugar, cascada: Jev (`companion_joins`, misma llamada, coste 0) y `asks_recall` (paso 5); si Jev está SEGURO de que el mensaje no mete a otra persona (p < 0,2), no pide recordar y el refresher no está en juego, no se llama al LLM. En el turno con pregunta la llamada solo servía para "recordar", así que basta con `asks_recall`. Banco `scripts/sonda_acompanante.py`: 0/14 acompañantes perdidos, 13/14 turnos normales sin la llamada (positivos ≥ 0,66, negativos ≤ 0,27).
+* Escalón 0 (replay local, golden sin examen oculto): con/sin el flag 11 turnos con datos de más frente a 7 de RUIDO medido (dos pasadas con el flag apagado); de los 11, 6 son ruido (la pasada de ruido da lo mismo) y 3 son mensajes con acompañante donde el filtro no actúa (Jev ≥ 0,92). Atribuible: "espera, en realidad sí lo quiero" (refresher, con otra pregunta ya pendiente) perdía el cambio → el filtro no actúa con el refresher en juego (> 2 años sin bucear). Log `[CORE][U3-6]` para contar en PRE los turnos que se ahorra. Suite 2768 passed.
+
 0.29.50 - (2026-09-27)
 ----------------------
 * **Paso 6 · ronda B en PRE: `S4_FIXES` PROMOCIONADO (se queda encendido).** Core `2026-09-27-paso6-B` frente a `paso5-B`: criterios 91,2 → 92,6 %, diálogos 20/32 en ambas, 9 mejoras (queja con empatía, "¿eres un bot?", idioma, "no hay precio especial para colombianos", 2 diálogos sin invenciones). Casos del paso 6 (12 diálogos fuera del core, sin examen oculto; `paso6-B-casos`) frente a la ronda A del paso 3: criterios 83,6 → 91,6 %, 13 mejoras — pasan el WhatsApp oficial, el cambio de fecha con asesor, las tres de post-venta, los logs PADI y el precio citado no aceptado.

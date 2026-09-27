@@ -3014,6 +3014,27 @@ def _full_booking_recap(state: ConversationState) -> str | None:
     return header + "\n".join(lines)
 
 
+def _jev_rules_out_special_signals(state: ConversationState) -> bool:
+    """u3-6 (flag `signals_gate`): ¿Jev descarta todo lo que busca `detect_special_signals`? Seguro de
+    que el mensaje no mete a otra persona (p < COMPANION_NONE_MAX), que no pide recordar, y sin la
+    pregunta del refresher pendiente (esa respuesta la lee el LLM). Banco
+    `scripts/sonda_acompanante.py`: 0/14 acompanantes perdidos, 13/14 turnos normales sin la llamada."""
+    from src.agents.jev_router import COMPANION_NONE_MAX  # lazy
+
+    if not settings.signals_gate:
+        return False
+    p = getattr(state, "_jev_companion", None)
+    if p is None or p >= COMPANION_NONE_MAX or not _jev_says_no_recall(state):
+        return False
+    # Con el refresher en juego (mas de 2 anos sin bucear) la respuesta a esa pregunta puede llegar en
+    # cualquier turno ("espera, en realidad si lo quiero" con otra pregunta ya pendiente, escalon 0):
+    # esa la lee el LLM.
+    if state.last_dive_over_2_years or (state.core_pending_slot or next_missing_slot(state)) == SLOT_REFRESHER:
+        return False
+    logger.info(f"[CORE][U3-6] señales sin LLM (Jev: acompañante {p:.2f}, no pide recordar)")
+    return True
+
+
 def _jev_says_no_recall(state: ConversationState) -> bool:
     """Paso 5 (flag `rag_v2`): Jev dice que el mensaje NO pide recordar nada. Ausente (flag o Jev
     apagados, o Jev fallo) = no lo sabemos -> la conducta de hoy. En la ronda A el "¿me recuerdas…?"
@@ -3720,6 +3741,9 @@ async def _routing_phase(
     state._jev_corrects = routing_signals.get("corrects") if settings.corrections_v2 else None
     # Paso 5: ¿pide que le recordemos algo que él dijo? (Jev, misma llamada). Se renueva cada turno.
     state._jev_asks_recall = routing_signals.get("asks_recall") if settings.rag_v2 else None
+    # u3-6: probabilidad de Jev de que el mensaje meta a otra persona en la reserva (filtro previo del
+    # LLM de señales). Ausente = no lo sabemos -> se llama al LLM como hoy.
+    state._jev_companion = routing_signals.get("companion_joins") if settings.signals_gate else None
 
     # COMPRENDER (carryover PRIMERO): si hay un slot pendiente y este mensaje
     # lo RESUELVE, el carryover gana aunque el mensaje "parezca pregunta" por
@@ -3792,7 +3816,12 @@ async def _routing_phase(
         # u3-4: la respuesta se lanza ANTES de mirar si es un "¿me recuerdas...?", para que
         # corra a la vez que esa comprobación y que la extracción.
         _maybe_launch_answer(state, message, routing_signals)
-        signals = await detect_special_signals(message, history=state.history, lang=state.language)
+        # u3-6: aqui solo se usa `recall_field`; si Jev ya dice que no pide recordar, la llamada sobra.
+        if settings.signals_gate and _jev_says_no_recall(state):
+            logger.info("[CORE][U3-6] recordar sin LLM (Jev: no pide recordar)")
+            signals = {}
+        else:
+            signals = await detect_special_signals(message, history=state.history, lang=state.language)
         recalled = None
         if signals.get("recall_field") and not _jev_says_no_recall(state):
             recalled = _recall_answer(state, signals["recall_field"])
@@ -4082,7 +4111,10 @@ async def _extraction_phase_body(
     # explicado, no hay ninguna ambigüedad de acompañante que esta llamada
     # pueda resolver — se salta entera (ahorra una llamada LLM de paso).
     if (not advanced or companion_ambiguous) and not _group_allocation_fully_resolved(state):
-        signals = await detect_special_signals(message, history=state.history, lang=state.language)
+        signals = (
+            {} if _jev_rules_out_special_signals(state)
+            else await detect_special_signals(message, history=state.history, lang=state.language)
+        )
         activity = signals.get("companion_activity")
         # Guardado ANTES del descarte por falta de respaldo textual de abajo
         # (hallazgo en vivo, lote 10, 2026-09-02): el guard de "misma

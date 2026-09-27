@@ -900,3 +900,40 @@ def test_la_pregunta_de_recordar_solo_va_con_el_flag(monkeypatch):
     monkeypatch.setattr(settings, "rag_v2", True)
     assert jev_router.ASKS_RECALL in jev_router._questions_for_turn()
     assert jev_router.answers_to_signals({"asks_recall": {"type": "noul", "noul": 0.1}}) == {"asks_recall": False}
+
+
+# u3-6 (flag `signals_gate`): Jev como filtro previo del LLM de señales.
+def test_el_filtro_de_senales_solo_con_jev_seguro(monkeypatch):
+    monkeypatch.setattr(settings, "signals_gate", True)
+    monkeypatch.setattr(settings, "rag_v2", True)
+    st = _state()
+    st._jev_asks_recall = False
+    st._jev_companion = 0.04
+    assert core._jev_rules_out_special_signals(st)
+    st._jev_companion = 0.66  # quizá hay acompañante -> LLM
+    assert not core._jev_rules_out_special_signals(st)
+    st._jev_companion = None  # Jev no contestó -> LLM
+    assert not core._jev_rules_out_special_signals(st)
+    st._jev_companion = 0.04
+    st.core_pending_slot = core.SLOT_REFRESHER  # esa respuesta la lee el LLM
+    assert not core._jev_rules_out_special_signals(st)
+    st.core_pending_slot = None
+    st.last_dive_over_2_years = True  # refresher en juego: su respuesta puede llegar en cualquier turno
+    assert not core._jev_rules_out_special_signals(st)
+    st.last_dive_over_2_years = None
+    monkeypatch.setattr(settings, "signals_gate", False)
+    assert not core._jev_rules_out_special_signals(st)
+
+
+async def test_con_el_filtro_no_se_llama_al_llm_de_senales(monkeypatch, signals, rag):
+    monkeypatch.setattr(settings, "answer_and_continue", True)
+    monkeypatch.setattr(settings, "rag_v2", True)
+    monkeypatch.setattr(settings, "signals_gate", True)
+    spy = AsyncMock(return_value={})
+    monkeypatch.setattr(core, "detect_special_signals", spy)
+    st = _state()
+    await route_message(st, "quiero bucear, soy certificado, desde cartagena, somos 2")
+    spy.reset_mock()
+    signals["value"] = {"asks_recall": False, "companion_joins": 0.03, "asks_question": True}
+    await route_message(st, "¿cuánto dura la salida?")
+    assert spy.await_count == 0
