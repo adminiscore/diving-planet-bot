@@ -158,6 +158,10 @@ services:
       # (leidas con el log de PRE) -> PROMOCIONADO, se QUEDA ENCENDIDO (HISTORY 0.29.33).
       # Revert = poner "false" + redeploy.
       ANSWER_AND_CONTINUE: "true"
+      # u3-5 (27-sep, Gadea): correcciones sin "¿lo cambio?" repetido ni X -> X, Jev como senal de
+      # correccion, nacionalidad no deducida del idioma y minicurso recomendado (no asumido). Ver
+      # HISTORY 0.29.42-0.29.45. ENCENDIDO para la ronda B del paso 4; si no pasa, "false" el mismo dia.
+      CORRECTIONS_V2: "true"
       # Refactor multi-agente (docs/multi-agent-refactor-plan.md) — validación en
       # PRE antes del corte del legacy (Fase 5.2). STAGE B (ahora): el GRAFO sirve
       # de verdad (agent_arch on) — router → 5 nodos reales + subgrafo booking. La
