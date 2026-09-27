@@ -445,13 +445,13 @@ def _greeting(state: ConversationState) -> str:
     if state.language == "es":
         saludo = f"¡Hola, {name}! 🪸" if name else "¡Hola! 🪸"
         return (
-            f"{saludo} Soy *Coral*, de *Diving Planet* — buceamos todos los días en "
+            f"{saludo} Soy *Coral*, de *Diving Planet* — buceamos todo el año en "
             "las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. "
             "¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n\n"
         )
     saludo = f"Hi, {name}! 🪸" if name else "Hi! 🪸"
     return (
-        f"{saludo} I'm *Coral* from *Diving Planet* — we dive every day in the Rosario "
+        f"{saludo} I'm *Coral* from *Diving Planet* — we dive year-round in the Rosario "
         "Islands, departing from Cartagena or right from the islands. So happy to have "
         "you here! I'd love to help you put your plan together. 🌊\n\n"
     )
@@ -569,6 +569,18 @@ def ask_slot(state: ConversationState, slot: str, *, reasking: bool = False) -> 
             [{"title": "🚤 From Cartagena", "value": "cartagena"},
              {"title": "🏝️ Already on the islands", "value": "island"}]
         )
+        if _plan_needs_overnight(state):
+            # Politica `courses_overnight_requirement` / paquetes de varios dias: hay que dormir en
+            # las islas; ofrecer "ida y vuelta el mismo dia" contradecia la referencia (ronda A).
+            return (
+                "¿Desde dónde saldrías? Este plan dura varios días y hay que *dormir en las islas* "
+                "(el alojamiento no está incluido): puedes salir *desde Cartagena* el primer día o, si "
+                "ya estás *en las islas*, coordinamos la recogida en tu hotel."
+                if lang == "es" else
+                "Where would you be departing from? This plan takes several days and you need to *stay "
+                "on the islands* (accommodation is not included): you can leave *from Cartagena* on the "
+                "first day or, if you're already *on the islands*, we arrange pickup at your hotel."
+            )
         return (
             "¿Desde dónde saldrías? Podemos recogerte saliendo *desde Cartagena* "
             "(ida y vuelta el mismo día) o, si ya estás *en las islas*, coordinamos "
@@ -747,6 +759,21 @@ def ask_slot(state: ConversationState, slot: str, *, reasking: bool = False) -> 
     raise ValueError(f"unknown slot {slot!r}")
 
 
+def _plan_needs_overnight(state: ConversationState) -> bool:
+    """¿El plan elegido obliga a dormir en las islas? Del catalogo (`duration_days` > 1), no de una
+    lista: el servicio ya resuelto, o una actividad cuyos servicios son todos de varios dias (cursos
+    de 2 dias), o el paquete multi-dia que el cliente ya pidio."""
+    from src.flows.catalog import MULTI_DAY_SERVICES  # lazy
+
+    if state.detected_service_id and state.detected_service_id in MULTI_DAY_SERVICES:
+        return True
+    act = dom.by_id(state.detected_activity) if state.detected_activity else None
+    services = act.all_services() if act else ()
+    if services and all(sid in MULTI_DAY_SERVICES for sid in services):
+        return True
+    return state.detected_activity == "certified_diving" and state.detected_duration == "multi_day"
+
+
 def _recommended_plan_intro(state: ConversationState) -> str:
     """Recomendación del plan (determinista, del catálogo) antepuesta a la
     pregunta de seguridad — mismo criterio que v0.20.27: al certificado que ya
@@ -757,10 +784,10 @@ def _recommended_plan_intro(state: ConversationState) -> str:
     if plan_id and plan_id != cart_render.service_for_location("2_dives_1_day", state):
         return ""  # eligió un plan explícito: no hay que "recomendar" nada
     if lang == "es":
-        return ("Te recomiendo nuestro plan más popular: *2 inmersiones en 1 día* en las "
+        return ("Te recomiendo el plan de *2 inmersiones en 1 día* en las "
                 "Islas del Rosario. (Si prefieres un *paquete multi-día* de 3 o más "
                 "inmersiones, dímelo.)\n\n")
-    return ("I recommend our most popular plan: *2 dives in 1 day* in the Rosario "
+    return ("I recommend the *2 dives in 1 day* plan in the Rosario "
             "Islands. (If you'd rather a *multi-day package* of 3+ dives, just tell "
             "me.)\n\n")
 
