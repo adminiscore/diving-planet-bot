@@ -151,6 +151,11 @@ class Settings(BaseSettings):
     # siguen en el LLM. APAGADO por defecto.
     signals_gate: bool = False
 
+    # u3-7 (paso 7, 27-sep): Jev interpreta la respuesta a la pregunta pendiente (si/no y listas) cuando
+    # el parser no la entiende, en vez del LLM `resolve_slot_answer`; las cifras siguen en el LLM.
+    # Cascada por confianza. APAGADO por defecto.
+    slot_answers_jev: bool = False
+
     # --- Observabilidad: Langfuse (sustituye a LangSmith, cuota Developer
     # agotada; ver docs/robustness/progress-log.md "Tarea 8"). Sin claves, el
     # tracing queda apagado y `langfuse` ni se importa (3.14-safe). Claves por

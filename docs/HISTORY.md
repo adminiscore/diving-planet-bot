@@ -1,6 +1,12 @@
 History
 =======
 
+0.29.53 - (2026-09-27)
+----------------------
+* **Paso 7 · u3-7: Jev interpreta la respuesta a la pregunta pendiente (flag `SLOT_ANSWERS_JEV`, encendido en PRE para la ronda B).** Cuando el parser no entiende la respuesta ("uf, hace muchísimo", "vivo en Bogotá", "el avanzado"), hoy la interpreta el LLM `resolve_slot_answer`. Ahora el router le pasa a Jev la pregunta pendiente (`pending_slot`) y Jev contesta los sí/no y las listas en la misma llamada (coste 0); con confianza ≥ 0,8 vale su lectura (también "no contesta a eso"), si no, el LLM de hoy. Las cifras (cuántas personas) siguen en el LLM. Banco `scripts/sonda_respuesta_pendiente.py`: 28/30 con confianza alta, **0 equivocadas con confianza**, 2 al LLM. Escalón 0 (replay local): 6 turnos con datos de más, por debajo del ruido medido (7), ninguno de Jev.
+* **Curso Referido:** el catálogo decía "hay que dormir en las islas" (se deducía de `duration_days` > 1) y la base de conocimiento dice que el día 1 se puede volver a Cartagena (ronda B de u3-6, criterio sin-invenciones). `services.json` lo marca con `"overnight": "optional"` y los hechos del catálogo, la plantilla del origen y `_plan_needs_overnight` lo respetan.
+* **`asks_question` de Jev viaja también en FALSE.** Solo se emitía en verdadero, así que la respuesta corta tras el pase a una persona (paso 6), que exige "Jev dice que no pregunta", nunca se habría activado en PRE. Para el resto del código False y ausente se leen igual. Suite 2771 passed.
+
 0.29.52 - (2026-09-27)
 ----------------------
 * **u3-6 · ronda B en PRE: `SIGNALS_GATE` PROMOCIONADO.** Core `2026-09-27-u36-B` frente a `paso6-B`: criterios 92,6 → 92,2 % (dentro del ruido), 20/32 en ambas, 4 mejoras y 4 regresiones. **Llamadas LLM por turno 3,46 → 3,04 (−12 %)**, p95 del servidor 5,76 → 5,45 s; el filtro se saltó el LLM de señales en 47 turnos de 93. Regresiones leídas con el log: ninguna propia — 2 del RAG ("llevamos 30 años", sin la aclaración del precio para colombianos), 1 del juez de grounding (rechazó dos veces un precio correcto en COP) y 1 de ruido del juez (repregunta con el texto igual que en A). Mejoras que confirman los arreglos del paso 6: el link de reserva y el acompañante sin DIVE TO HEAL.

@@ -64,7 +64,7 @@ def facts(monkeypatch):
 
 def _full(fn, asks=False):
     """Un doble de `detect_routing_signals_jev` -> el de `_full` (añade `asks_question`, u3-4)."""
-    async def _wrapped(message, *, lang="es"):
+    async def _wrapped(message, *, lang="es", pending_slot=None):
         return await fn(message, lang=lang), asks
 
     return _wrapped

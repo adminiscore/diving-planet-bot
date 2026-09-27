@@ -250,7 +250,9 @@ async def test_por_debajo_de_07_no_es_pregunta(monkeypatch):
     monkeypatch.setattr(settings, "answer_and_continue", True)
     monkeypatch.setattr(settings, "jev_router_enabled", True)
     _mock_http(monkeypatch, {jev_router.ASKS_QUESTION: {"type": "noul", "noul": 0.65}})
-    assert await escalation.detect_routing_signals("desde cartagena") == {}
+    # 27-sep: el "no" viaja como False (lo usa la respuesta corta tras el pase a una persona); para
+    # `_turn_has_question` False y ausente son lo mismo.
+    assert await escalation.detect_routing_signals("desde cartagena") == {jev_router.ASKS_QUESTION: False}
 
 
 async def test_si_jev_duda_en_el_router_la_pregunta_viaja_igual(monkeypatch):
@@ -937,3 +939,32 @@ async def test_con_el_filtro_no_se_llama_al_llm_de_senales(monkeypatch, signals,
     signals["value"] = {"asks_recall": False, "companion_joins": 0.03, "asks_question": True}
     await route_message(st, "¿cuánto dura la salida?")
     assert spy.await_count == 0
+
+
+# u3-7 (flag `slot_answers_jev`): Jev interpreta la respuesta a la pregunta pendiente (si/no y listas).
+def test_la_pregunta_pendiente_solo_para_si_no_y_listas(monkeypatch):
+    assert jev_router.pending_answer_question("qty") is None  # las cifras se quedan en el LLM
+    assert jev_router.pending_answer_question(None) is None
+    q = jev_router.pending_answer_question("nationality")
+    assert q["type"] == "choice" and set(q["criteria"]) == {"yes", "no", "none"}
+    assert "island" in jev_router.pending_answer_question("location")["criteria"]
+    monkeypatch.setattr(settings, "slot_answers_jev", False)
+    assert jev_router.PENDING_ANSWER not in jev_router._questions_for_turn("nationality")
+    monkeypatch.setattr(settings, "slot_answers_jev", True)
+    assert jev_router.PENDING_ANSWER in jev_router._questions_for_turn("nationality")
+    assert jev_router.pending_answer_value("safety", {"choice": "yes", "confidence": 0.9}) == {
+        "slot": "safety", "value": True, "confidence": 0.9}
+    assert jev_router.pending_answer_value("safety", {"choice": "none", "confidence": 0.9})["value"] is None
+
+
+def test_jev_solo_decide_la_respuesta_pendiente_si_esta_seguro(monkeypatch):
+    monkeypatch.setattr(settings, "slot_answers_jev", True)
+    sure = {"pending_answer": {"slot": "nationality", "value": True, "confidence": 0.95}}
+    assert core._jev_pending_answer("nationality", sure) == {"value": True}
+    assert core._jev_pending_answer("safety", sure) is None  # era de otro slot
+    doubt = {"pending_answer": {"slot": "nationality", "value": True, "confidence": 0.6}}
+    assert core._jev_pending_answer("nationality", doubt) is None  # duda -> LLM
+    none = {"pending_answer": {"slot": "nationality", "value": None, "confidence": 0.95}}
+    assert core._jev_pending_answer("nationality", none) == {}  # seguro de que no contesta
+    monkeypatch.setattr(settings, "slot_answers_jev", False)
+    assert core._jev_pending_answer("nationality", sure) is None

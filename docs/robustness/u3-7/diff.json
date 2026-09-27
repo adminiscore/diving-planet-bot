@@ -1,0 +1,94 @@
+{
+ "diffs": [
+  {
+   "key": [
+    "descuento-online-sin-codigo",
+    1
+   ],
+   "extra": {
+    "detected_activity": "padi_open_water",
+    "is_certified": false
+   },
+   "verdict": {
+    "inventados": [
+     "is_certified"
+    ],
+    "por_que": "El cliente explícitamente menciona que está intentando reservar el curso 'PADI Open Water Diver', por lo que 'detected_activity' está afirmado. No dice directamente que no esté ya certificado; decir que quiere 'tomar' el curso no garantiza que no tenga ya una certificación, por lo que 'is_certified': false sería una deducción/inventado."
+   }
+  },
+  {
+   "key": [
+    "familia-ninos-resumen",
+    3
+   ],
+   "extra": {
+    "detected_group_allocation": {
+     "snorkel": 4
+    }
+   },
+   "verdict": {
+    "inventados": [],
+    "por_que": "El dato guardado (snorkel: 4) está afirmado explícitamente por el cliente en el primer mensaje: \"familia de 4, snorkel para todos\". Los otros datos del usuario (Cartagena; edades 6 y 9) aparecen en sus mensajes pero no fueron parte del campo guardado, por tanto no son inventados por el sistema."
+   }
+  },
+  {
+   "key": [
+    "paquete-5-buceos-islas-residente-sin-recogida",
+    4
+   ],
+   "extra": {
+    "location": "cartagena",
+    "detected_location": "cartagena"
+   },
+   "verdict": {
+    "inventados": [
+     "location",
+     "detected_location"
+    ],
+    "por_que": "El cliente no afirma estar en Cartagena; de hecho dice “quiero comprar sin ir de cartagena”, lo que indica que no quiere partir/ir desde Cartagena. Por eso los campos que asignan Cartagena son suposiciones/no afirmados por el cliente."
+   }
+  },
+  {
+   "key": [
+    "referral-mas-refresher-hotel-y-domingo-pascua",
+    1
+   ],
+   "extra": {
+    "is_certified": false
+   },
+   "verdict": {
+    "inventados": [],
+    "por_que": "El cliente dice explícitamente que quiere completar su PADI Open Water y que tiene referrals y certificados de e-learning, y pide además un refresher: eso indica que no está certificado aún. Por tanto el dato is_certified: false está AFIRMADO por los mensajes; no hay datos inventados/supuestos."
+   }
+  },
+  {
+   "key": [
+    "reserva-colombianos-cop",
+    1
+   ],
+   "extra": {
+    "is_certified": false
+   },
+   "verdict": {
+    "inventados": [
+     "is_certified"
+    ],
+    "por_que": "El cliente no dijo nada sobre estar certificado o no; solo mencionó que quieren hacer snorkel, que son 2 y que son colombianos. Marcar 'is_certified': false es una suposición no afirmada en sus mensajes."
+   }
+  },
+  {
+   "key": [
+    "reserva-completa-saludo-a-pago",
+    4
+   ],
+   "extra": {
+    "location": "cartagena",
+    "detected_location": "cartagena"
+   },
+   "verdict": {
+    "inventados": [],
+    "por_que": "El usuario explícitamente dijo \"desde cartagena\" (mensaje 4), por lo que los campos 'location' y 'detected_location' están afirmados por el cliente y no son inventados ni supuestos."
+   }
+  }
+ ]
+}

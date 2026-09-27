@@ -3053,7 +3053,9 @@ async def _shared_turn_handler(
     # del extractor de reserva, el sesgo aquí es escalar/enrutar de más que
     # de menos — el propio prompt se lo pide al LLM.
     if routing_signals is None:
-        routing_signals = {} if msg_lower.isdigit() else await detect_routing_signals(message, lang=state.language)
+        routing_signals = {} if msg_lower.isdigit() else await detect_routing_signals(
+            message, lang=state.language, pending_slot=state.core_pending_slot,
+        )
 
     # Respaldo LLM del gate de LINK ROTO (Bloque 2.3): el detector por keyword
     # de arriba exige frase-de-queja + token de link (o URL en el turno previo)

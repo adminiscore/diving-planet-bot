@@ -315,11 +315,48 @@ _COMPANION_JOINS_Q = {
     ),
 }
 
+# u3-7 (paso 7, flag `slot_answers_jev`): la respuesta a la pregunta PENDIENTE cuando el parser no la
+# entiende ("uf, hace muchisimo", "vivo en Bogota", "ya estamos por playa blanca"). Hoy la interpreta
+# el LLM (`resolve_slot_answer`); los si/no y las listas los contesta Jev en la misma llamada. Las
+# CIFRAS (cuantas personas) se quedan en el LLM: contar es un punto flojo de Jev. Cascada: con
+# confianza >= PENDING_ANSWER_MIN vale lo de Jev (tambien "no contesta a eso"); si no, el LLM de hoy.
+# Calibrado con `scripts/sonda_respuesta_pendiente.py`.
+PENDING_ANSWER = "pending_answer"
+PENDING_ANSWER_MIN = 0.8
+_NONE = "none"
+
+
+def pending_answer_question(slot: str | None) -> dict | None:
+    """La pregunta de Jev para el slot pendiente, o None si no es de si/no o de lista."""
+    from src.prompts.booking import SLOT_RESOLVER_SPEC  # lazy
+
+    spec = SLOT_RESOLVER_SPEC.get(slot or "")
+    if not spec or spec["type"] == "integer":
+        return None
+    asked = f"The assistant just asked the customer: \"{spec['question_en']}\""
+    if spec["type"] == "boolean":
+        criteria = {
+            "yes": f"The message answers YES. What yes means here: {spec['value_meaning']}",
+            "no": f"The message answers NO. What no means here: {spec['value_meaning']}",
+        }
+    else:
+        criteria = {opt: f"The message's answer is '{opt}'. {spec['value_meaning']}" for opt in spec["enum"]}
+    criteria[_NONE] = "The message does not answer that question (it asks something else, talks about something else, or is unclear)."
+    return {"type": "choice", "instructions": f"{asked} How does the customer's message answer it?", "criteria": criteria}
+
+
+def pending_answer_value(slot: str, answer: dict) -> dict:
+    """{"slot", "value", "confidence"}: `value` es True/False o la opcion, o None si no contesta."""
+    choice = (answer or {}).get("choice")
+    value = {"yes": True, "no": False}.get(choice, choice) if choice != _NONE else None
+    return {"slot": slot, "value": value, "confidence": float((answer or {}).get("confidence", 0.0))}
+
+
 # Las preguntas de u3-4/u3-5 no son señales del router: su duda NO manda el turno al router LLM.
 _U34_QUESTIONS = (
     ASKS_QUESTION, AFFIRMS_LOCATION, AFFIRMS_ACTIVITY, ACTIVITY_HYPOTHESIS,
     AFFIRMS_CERTIFICATION, AFFIRMS_GROUP, AFFIRMS_NATIONALITY, CORRECTS, ASKS_RECALL, NEEDS_STAFF,
-    CHANGES_DATE, COMPANION_JOINS,
+    CHANGES_DATE, COMPANION_JOINS, PENDING_ANSWER,
 )
 
 
@@ -341,8 +378,11 @@ def activity_affirmed(p_affirms: float, p_hypothesis: float | None) -> bool:
     return p_affirms >= 0.4 and p_hypothesis < 0.5
 
 
-def _questions_for_turn() -> dict:
+def _questions_for_turn(pending_slot: str | None = None) -> dict:
     q = dict(_QUESTIONS)
+    pending_q = pending_answer_question(pending_slot) if settings.slot_answers_jev else None
+    if pending_q:
+        q[PENDING_ANSWER] = pending_q
     if settings.answer_and_continue:
         q.update({ASKS_QUESTION: _ASKS_QUESTION_Q, **_AFFIRMS_QUESTIONS})
     if settings.corrections_v2:
@@ -457,7 +497,7 @@ _TURN_SIGNALS = (
 
 
 async def detect_routing_signals_jev_full(
-    message: str, *, lang: str = "es",
+    message: str, *, lang: str = "es", pending_slot: str | None = None,
 ) -> tuple[dict | str | None, dict]:
     """Como `detect_routing_signals_jev`, y además las señales de u3-4/u3-5 (solo con
     `answer_and_continue`): `asks_question` y los `affirms_*`. Van en el segundo valor
@@ -479,7 +519,7 @@ async def detect_routing_signals_jev_full(
             json={
                 "model": settings.jev_model,
                 "state": f"{_CONTEXT}\n\nCustomer message: {message}",
-                "questions": _questions_for_turn(),
+                "questions": _questions_for_turn(pending_slot),
             },
             timeout=settings.jev_timeout_seconds,
         )
@@ -488,8 +528,13 @@ async def detect_routing_signals_jev_full(
         signals = answers_to_signals(answers)
         doubts = uncertain_answers(answers)
         extras = {k: signals[k] for k in _TURN_SIGNALS if k in signals}
-        if (answers.get(ASKS_QUESTION) or {}).get("noul", 0.0) >= ASKS_QUESTION_MIN:
-            extras[ASKS_QUESTION] = True
+        if ASKS_QUESTION in answers:
+            # Tambien en FALSE (27-sep): "Jev dice que no pregunta nada" es distinto de "no lo sabemos"
+            # y lo necesita la respuesta corta tras el pase a una persona (paso 6). Para el resto del
+            # codigo False y ausente se leen igual.
+            extras[ASKS_QUESTION] = (answers.get(ASKS_QUESTION) or {}).get("noul", 0.0) >= ASKS_QUESTION_MIN
+        if pending_slot and PENDING_ANSWER in answers:
+            extras[PENDING_ANSWER] = pending_answer_value(pending_slot, answers[PENDING_ANSWER])
     except Exception as exc:  # noqa: BLE001 — cualquier fallo cae al router LLM
         ms = (time.perf_counter() - t0) * 1000
         logger.warning(f"[ROUTER][JEV] fallo en {ms:.0f} ms, se usa el router LLM: {type(exc).__name__}: {exc}")

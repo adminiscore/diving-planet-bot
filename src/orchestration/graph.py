@@ -95,7 +95,9 @@ async def _router_node(state: BotState) -> dict:
         conv.kids_mention_detected = True
 
     msg_lower = message.strip().lower()
-    signals = {} if msg_lower.isdigit() else await detect_routing_signals(message, lang=conv.language)
+    signals = {} if msg_lower.isdigit() else await detect_routing_signals(
+        message, lang=conv.language, pending_slot=conv.core_pending_slot,
+    )
     route = classify_route(conv, message, signals)
     logger.info(f"[GRAPH] conv={conv.conversation_id} route={route}")
     from src.observability import note_turn

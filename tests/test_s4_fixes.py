@@ -259,3 +259,16 @@ async def test_corregir_el_precio_que_cita_el_cliente_no_acaba_en_no_lo_tengo(on
     monkeypatch.setattr(rag_agent, "is_grounded", _judge)
     answer = await rag_agent.rag_answer("Con tarjeta de crédito son los mismos 2.215.000 COP?", lang="es")
     assert "2.450.000" in answer
+
+
+def test_el_curso_referido_no_obliga_a_dormir_pero_no_es_de_un_dia(on):
+    """Ronda B de u3-6: "necesitas quedarte en las islas" contradecia la referencia del Referido (el dia 1
+    se puede volver a Cartagena). services.json lo marca con "overnight": "optional"."""
+    from src.agents import conversational_core as core
+    from src.flows.catalog import OVERNIGHT_SERVICES, catalog_facts
+
+    assert "referral" not in OVERNIGHT_SERVICES and "mindful_diving" in OVERNIGHT_SERVICES
+    st = _state(detected_activity="padi_open_water_referral")
+    assert not core._plan_needs_overnight(st) and not core._plan_is_single_day(st)
+    assert "mismo día" not in core.ask_slot(st, core.SLOT_LOCATION)
+    assert "puedes volver a Cartagena o dormir en las islas" in catalog_facts("es")

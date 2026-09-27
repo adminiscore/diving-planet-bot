@@ -770,16 +770,17 @@ def ask_slot(state: ConversationState, slot: str, *, reasking: bool = False) -> 
 
 
 def _plan_needs_overnight(state: ConversationState) -> bool:
-    """¿El plan elegido obliga a dormir en las islas? Del catalogo (`duration_days` > 1), no de una
-    lista: el servicio ya resuelto, o una actividad cuyos servicios son todos de varios dias (cursos
-    de 2 dias), o el paquete multi-dia que el cliente ya pidio."""
-    from src.flows.catalog import MULTI_DAY_SERVICES, OVERNIGHT_SERVICES  # lazy
+    """¿El plan elegido obliga a dormir en las islas? Del catalogo (`OVERNIGHT_SERVICES`: varios dias
+    o buceo nocturno, salvo los marcados "overnight": "optional", como el Curso Referido), no de una
+    lista: el servicio ya resuelto, una actividad cuyos servicios obligan todos, o el paquete multi-dia
+    que el cliente ya pidio."""
+    from src.flows.catalog import OVERNIGHT_SERVICES  # lazy
 
     if state.detected_service_id and state.detected_service_id in OVERNIGHT_SERVICES:
         return True
     act = dom.by_id(state.detected_activity) if state.detected_activity else None
     services = act.all_services() if act else ()
-    if services and all(sid in MULTI_DAY_SERVICES for sid in services):
+    if services and all(sid in OVERNIGHT_SERVICES for sid in services):
         return True
     return state.detected_activity == "certified_diving" and state.detected_duration == "multi_day"
 
@@ -788,15 +789,16 @@ def _plan_is_single_day(state: ConversationState) -> bool:
     """¿Se SABE que el plan es de un dia (ida y vuelta desde Cartagena)? El servicio ya resuelto, o
     una actividad cuyos servicios son todos de un dia sin pernocta. Sin actividad, o con una que mezcla
     (curso PADI generico: Open Water de 2 dias y especialidades de 1), no se sabe."""
-    from src.flows.catalog import OVERNIGHT_SERVICES  # lazy
+    from src.flows.catalog import MULTI_DAY_SERVICES, OVERNIGHT_SERVICES  # lazy
 
+    not_single = MULTI_DAY_SERVICES | OVERNIGHT_SERVICES
     if state.detected_service_id:
-        return state.detected_service_id not in OVERNIGHT_SERVICES
+        return state.detected_service_id not in not_single
     if state.detected_activity == "certified_diving":
         return state.detected_duration != "multi_day"
     act = dom.by_id(state.detected_activity) if state.detected_activity else None
     services = act.all_services() if act else ()
-    return bool(services) and not any(sid in OVERNIGHT_SERVICES for sid in services)
+    return bool(services) and not any(sid in not_single for sid in services)
 
 
 def _recommended_plan_intro(state: ConversationState) -> str:
@@ -3014,6 +3016,22 @@ def _full_booking_recap(state: ConversationState) -> str | None:
     return header + "\n".join(lines)
 
 
+def _jev_pending_answer(slot: str | None, routing_signals: dict) -> dict | None:
+    """u3-7 (flag `slot_answers_jev`): lo que Jev leyo como respuesta a la pregunta pendiente, si esta
+    seguro (confianza >= PENDING_ANSWER_MIN). {"value": ...} si contesta, {} si Jev esta seguro de que
+    NO contesta a esa pregunta, None si hay que preguntar al LLM (flag apagado, Jev no la contesto, era
+    de otro slot o duda). Las verificaciones de despues (otro slot, cambio de actividad) valen igual."""
+    from src.agents.jev_router import PENDING_ANSWER_MIN  # lazy
+
+    if not settings.slot_answers_jev:
+        return None
+    pa = routing_signals.get("pending_answer")
+    if not pa or pa.get("slot") != slot or pa.get("confidence", 0.0) < PENDING_ANSWER_MIN:
+        return None
+    logger.info(f"[CORE][U3-7] respuesta a {slot} por Jev: {pa.get('value')!r} ({pa['confidence']:.2f})")
+    return {} if pa.get("value") is None else {"value": pa["value"]}
+
+
 def _jev_rules_out_special_signals(state: ConversationState) -> bool:
     """u3-6 (flag `signals_gate`): ¿Jev descarta todo lo que busca `detect_special_signals`? Seguro de
     que el mensaje no mete a otra persona (p < COMPANION_NONE_MAX), que no pide recordar, y sin la
@@ -4501,7 +4519,9 @@ async def _extraction_phase_body(
         and not _looks_like_question(message)
         and not state.pending_companion_activity
     ):
-        resolved = await resolve_slot_answer(prev_pending, message, lang=state.language)
+        resolved = _jev_pending_answer(prev_pending, routing_signals)
+        if resolved is None:
+            resolved = await resolve_slot_answer(prev_pending, message, lang=state.language)
         resolved_value = resolved.get("value")
         # Verificación determinista para SLOT_LOCATION (hallazgo en vivo,
         # batería sintética contra PRE, 2026-08-26, portado de pre_gadea —

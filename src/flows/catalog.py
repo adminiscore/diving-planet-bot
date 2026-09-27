@@ -256,6 +256,9 @@ def _load_services() -> dict:
             "flight_rule_es": _flight_rule(service, "es"),
             "flight_rule_en": _flight_rule(service, "en"),
             "includes_night_dive": service.get("includes_night_dive", False),
+            # "optional": plan de varios dias en el que dormir en las islas es opcional (Curso Referido:
+            # el dia 1 se puede volver a Cartagena). Sin el campo, lo deciden `duration_days` y el nocturno.
+            "overnight": service.get("overnight"),
             "web_url": service.get("url") or "https://divingplanet.org/contacto/",
             "booking_url": service.get("booking_url") or service.get("url") or "https://divingplanet.org/contacto/",
             "booking_url_island": "",
@@ -290,8 +293,11 @@ MULTI_DAY_SERVICES = {
 # Servicios que obligan a dormir en las islas: los de varios dias y los que llevan buceo
 # nocturno (el paquete de 3 inmersiones "de 1 dia" termina de noche: services.json lo dice en
 # `requirements_es`, "debes alojarte 1 noche", y la ronda A del paso 3 lo contradecia).
-OVERNIGHT_SERVICES = MULTI_DAY_SERVICES | {
-    service_id for service_id, service in SERVICES.items() if service.get("includes_night_dive")
+OVERNIGHT_SERVICES = {
+    service_id for service_id in MULTI_DAY_SERVICES | {
+        sid for sid, service in SERVICES.items() if service.get("includes_night_dive")
+    }
+    if SERVICES[service_id].get("overnight") != "optional"
 }
 
 # Above this many people in one line item, nudge toward a human-coordinated
@@ -390,6 +396,9 @@ def catalog_facts(lang: str) -> str:
         if service_id in OVERNIGHT_SERVICES and not island:
             parts.append("hay que dormir en las islas (alojamiento no incluido), no es ida y vuelta el mismo día"
                          if es else "you must stay overnight on the islands (lodging not included), not a same-day round trip")
+        elif svc.get("overnight") == "optional" and not island:
+            parts.append("el día 1 puedes volver a Cartagena o dormir en las islas (alojamiento no incluido)"
+                         if es else "on day 1 you can return to Cartagena or stay on the islands (lodging not included)")
         elif not island and days == 1:
             parts.append("ida y vuelta desde Cartagena el mismo día" if es else "same-day round trip from Cartagena")
         includes = (svc.get("includes_es") or "").lower()
