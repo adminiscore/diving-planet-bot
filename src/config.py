@@ -125,6 +125,11 @@ class Settings(BaseSettings):
     # UNA vez: si el cliente no contesta sí/no, se queda lo guardado y esa propuesta no se repite.
     # Ronda A del paso 3: de 12 "¿lo cambio?", 6 eran repeticiones y 2 "X -> X". APAGADO por defecto.
     corrections_v2: bool = False
+    # u3-5 (27-sep, decision de Gadea): el minicurso DEDUCIDO ("primera vez") se recomienda y lo confirma
+    # el cliente. Separado de `corrections_v2` tras la ronda B del 27-sep (su unica regresion propia:
+    # "MINI CURSOS" en plural no contaba como nombrarlo, y con acompanante la recomendacion no se llegaba
+    # a mostrar). APAGADO hasta medirlo en su propio escalon.
+    recommend_inferred_minicourse: bool = False
 
     # --- Observabilidad: Langfuse (sustituye a LangSmith, cuota Developer
     # agotada; ver docs/robustness/progress-log.md "Tarea 8"). Sin claves, el

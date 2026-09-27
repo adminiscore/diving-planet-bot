@@ -13,6 +13,16 @@ Read this file before changing code in the Diving Planet Bot. For a quick versio
 
 > **📏 LEER ANTES DE MEDIR — decisiones del 24-sep-2026 (Gadea):** (1) latencia y llamadas con nuestros logs `[TURN_METRICS]` + `scripts/turn_metrics.py`, no con Langfuse (plan gratuito superado, reinicio 16-oct); (2) pruebas A/B por escalones, juzgando solo los diálogos que cambian. Todo en `docs/robustness/protocolo-medicion.md`.
 
+### ✅ 27-sep noche (Gadea) — u3-5 PROMOCIONADO (`CORRECTIONS_V2=true` en PRE). Siguiente: PASO 5 (RAG)
+
+**Plan reordenado con datos** (plan maestro, PARTE 8; los 138 fallos de la ronda A: RAG 55 %): paso 5 = **RAG
+(l1-6 + l1-7)**, 6 = arreglos deterministas de S4 (s4-21, s4-22, s4-7, s4-20, s4-6, s4-14…16), 7 = u3-6/u3-7/u3-3,
+8 = cierre de calidad (examen oculto ≥ 77,6 % con el juez g-8). **u3-5** (HISTORY 0.29.42-0.29.46): "¿lo cambio?"
+se pregunta una vez y nunca X → X; Jev como señal de corrección ("somos 4 al final" se aplica sin preguntar); la
+nacionalidad no se deduce del idioma. Ronda B: empate y 8 mejoras, 0 regresiones propias → encendido. La
+recomendación del minicurso (decisión de Gadea: "recomendar y que lo confirme el cliente") está en su propio
+flag `RECOMMEND_INFERRED_MINICOURSE`, APAGADO, pendiente de su escalón.
+
 ### ✅ 27-sep tarde (Gadea) — PASO 3 HECHO: nueva ronda A de referencia. Siguiente: PASO 4 (u3-5)
 
 **Referencia para todo lo que queda de U3: `2026-09-27-paso3-A`** (golden completo, u3-4 encendido, juez g-8,

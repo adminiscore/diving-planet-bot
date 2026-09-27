@@ -160,7 +160,9 @@ services:
       ANSWER_AND_CONTINUE: "true"
       # u3-5 (27-sep, Gadea): correcciones sin "¿lo cambio?" repetido ni X -> X, Jev como senal de
       # correccion, nacionalidad no deducida del idioma y minicurso recomendado (no asumido). Ver
-      # HISTORY 0.29.42-0.29.45. ENCENDIDO para la ronda B del paso 4; si no pasa, "false" el mismo dia.
+      # HISTORY 0.29.42-0.29.46. Ronda B (27-sep) frente a la A del paso 3: empate y 8 mejoras, 0 regresiones
+      # propias de estos pasos -> PROMOCIONADO, se QUEDA ENCENDIDO. (La recomendacion del minicurso va en su
+      # propio flag, RECOMMEND_INFERRED_MINICOURSE, apagado.) Revert = "false" + redeploy.
       CORRECTIONS_V2: "true"
       # Refactor multi-agente (docs/multi-agent-refactor-plan.md) — validación en
       # PRE antes del corte del legacy (Fase 5.2). STAGE B (ahora): el GRAFO sirve

@@ -471,7 +471,7 @@ def ask_slot(state: ConversationState, slot: str, *, reasking: bool = False) -> 
     state.core_pending_slot = slot
     state.quick_replies = []
 
-    if slot == SLOT_ACTIVITY and settings.corrections_v2 and state.suggested_activity == "minicourse":
+    if slot == SLOT_ACTIVITY and settings.recommend_inferred_minicourse and state.suggested_activity == "minicourse":
         # u3-5: recomendar el minicurso a quien empieza, y que lo confirme el cliente (Gadea, 27-sep).
         state.quick_replies = (
             [{"title": "✅ Sí, el minicurso", "value": "minicurso"},
@@ -798,7 +798,7 @@ def _apply_short_answer(state: ConversationState, message: str) -> bool:
         message = button
     msg = message.strip().lower()
 
-    if slot == SLOT_ACTIVITY and settings.corrections_v2 and state.suggested_activity:
+    if slot == SLOT_ACTIVITY and settings.recommend_inferred_minicourse and state.suggested_activity:
         # u3-5: "si" / "vale" a la recomendacion del minicurso la confirma. Nombrar otra actividad
         # sigue el camino normal (extraccion).
         first = next(iter(_words(message)), "")
@@ -1267,7 +1267,7 @@ _STRONG_CERTIFIED_DIVING_RE = re.compile(
 # categoria "minicourse" de matched_activity_categories() pero no nombra el
 # producto en si.
 _EXPLICIT_MINICOURSE_NAME_RE = re.compile(
-    r"\bmini[\s\-]?curso\b|\bmini[\s\-]?course\b|\bbauti[sz]\w{0,3}\b|"
+    r"\bmini[\s\-]?cursos?\b|\bmini[\s\-]?courses?\b|\bbauti[sz]\w{0,3}\b|"
     r"\bbubble\s?makers?\b|\bdiscover\s+scuba\b",
     re.IGNORECASE,
 )
@@ -1874,10 +1874,15 @@ def _recommend_inferred_minicourse(intent, state: ConversationState, message: st
     ("Me gustaria informacion de los cursos de buceo… es la primera vez" acababa en minicurso sin que
     lo pidiera, y podia querer el Open Water). Nombrarlo (minicurso, bautismo, discover scuba) SI es
     elegirlo. Solo la actividad principal y solo si aun no hay ninguna."""
-    if not settings.corrections_v2 or intent.activity != "minicourse" or state.detected_activity:
+    if not settings.recommend_inferred_minicourse or intent.activity != "minicourse" or state.detected_activity:
         return
     if _EXPLICIT_MINICOURSE_NAME_RE.search(message):
         state.suggested_activity = None
+        return
+    # Con acompanante o reparto del grupo el flujo pregunta otra cosa antes que la actividad y la
+    # recomendacion no llegaba a mostrarse ("regalarle a mi esposo una experiencia de buceo", ronda B).
+    if (intent.group_allocation or state.detected_group_allocation or state.pending_companion_activity
+            or state.pending_companion_queue or _mentions_person(message)):
         return
     logger.info("[CORE][U3-5] minicurso deducido, no elegido: se recomienda y lo confirma el cliente")
     state.suggested_activity = "minicourse"

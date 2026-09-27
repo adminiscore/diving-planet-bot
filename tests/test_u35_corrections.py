@@ -189,7 +189,7 @@ async def test_la_nacionalidad_que_jev_no_ve_afirmada_no_se_rellena(monkeypatch)
 
 
 async def test_el_minicurso_deducido_se_recomienda_y_no_se_guarda(monkeypatch):
-    monkeypatch.setattr(settings, "corrections_v2", True)
+    monkeypatch.setattr(settings, "recommend_inferred_minicourse", True)
     st = _state()
     resp = await route_message(st, "nunca he buceado y quiero probar, somos 2")
     assert st.detected_activity is None
@@ -199,7 +199,7 @@ async def test_el_minicurso_deducido_se_recomienda_y_no_se_guarda(monkeypatch):
 
 
 async def test_un_si_confirma_el_minicurso_recomendado(monkeypatch):
-    monkeypatch.setattr(settings, "corrections_v2", True)
+    monkeypatch.setattr(settings, "recommend_inferred_minicourse", True)
     st = _state()
     await route_message(st, "nunca he buceado y quiero probar, somos 2")
     await route_message(st, "sí, dale")
@@ -207,14 +207,30 @@ async def test_un_si_confirma_el_minicurso_recomendado(monkeypatch):
 
 
 async def test_nombrarlo_es_elegirlo(monkeypatch):
-    monkeypatch.setattr(settings, "corrections_v2", True)
+    monkeypatch.setattr(settings, "recommend_inferred_minicourse", True)
     st = _state()
     await route_message(st, "queremos hacer el minicurso, somos 2")
     assert st.detected_activity == "minicourse"
 
 
 async def test_con_el_flag_apagado_se_deduce_como_antes(monkeypatch):
-    monkeypatch.setattr(settings, "corrections_v2", False)
+    monkeypatch.setattr(settings, "recommend_inferred_minicourse", False)
     st = _state()
     await route_message(st, "nunca he buceado y quiero probar, somos 2")
     assert st.detected_activity == "minicourse"
+
+
+def test_el_plural_minicursos_tambien_es_nombrarlo():
+    assert core._EXPLICIT_MINICOURSE_NAME_RE.search("MINI CURSOS")
+    assert core._EXPLICIT_MINICOURSE_NAME_RE.search("mini courses for two")
+
+
+def test_con_acompanante_no_se_recomienda(monkeypatch):
+    """Ronda B: con acompañante el flujo pregunta otra cosa y la recomendación no se mostraba."""
+    monkeypatch.setattr(settings, "recommend_inferred_minicourse", True)
+    st = _state()
+    msg = "quiero regalarle a mi esposo una experiencia de buceo, nunca ha buceado"
+    intent = core._detector.detect(msg, st)
+    intent.activity = "minicourse"
+    core._recommend_inferred_minicourse(intent, st, msg)
+    assert intent.activity == "minicourse" and st.suggested_activity is None
