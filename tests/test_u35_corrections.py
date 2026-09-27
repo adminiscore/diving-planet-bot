@@ -183,3 +183,38 @@ async def test_la_nacionalidad_que_jev_no_ve_afirmada_no_se_rellena(monkeypatch)
     await route_message(st, "quiero bucear, soy certificado")
     await route_message(st, "vamos en familia a cartagena")
     assert st.is_colombian is None
+
+
+# ── u3-5: el minicurso deducido se recomienda y lo confirma el cliente (Gadea, 27-sep) ─────────
+
+
+async def test_el_minicurso_deducido_se_recomienda_y_no_se_guarda(monkeypatch):
+    monkeypatch.setattr(settings, "corrections_v2", True)
+    st = _state()
+    resp = await route_message(st, "nunca he buceado y quiero probar, somos 2")
+    assert st.detected_activity is None
+    assert st.suggested_activity == "minicourse"
+    assert st.core_pending_slot == core.SLOT_ACTIVITY
+    assert "minicurso" in resp.lower() and "open water" in resp.lower()
+
+
+async def test_un_si_confirma_el_minicurso_recomendado(monkeypatch):
+    monkeypatch.setattr(settings, "corrections_v2", True)
+    st = _state()
+    await route_message(st, "nunca he buceado y quiero probar, somos 2")
+    await route_message(st, "sí, dale")
+    assert st.detected_activity == "minicourse" and st.suggested_activity is None
+
+
+async def test_nombrarlo_es_elegirlo(monkeypatch):
+    monkeypatch.setattr(settings, "corrections_v2", True)
+    st = _state()
+    await route_message(st, "queremos hacer el minicurso, somos 2")
+    assert st.detected_activity == "minicourse"
+
+
+async def test_con_el_flag_apagado_se_deduce_como_antes(monkeypatch):
+    monkeypatch.setattr(settings, "corrections_v2", False)
+    st = _state()
+    await route_message(st, "nunca he buceado y quiero probar, somos 2")
+    assert st.detected_activity == "minicourse"

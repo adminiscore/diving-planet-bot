@@ -206,6 +206,9 @@ class ConversationState:
     # u3-5: correcciones ya preguntadas ({campo: valor propuesto}). No se vuelven a preguntar:
     # si el cliente no las confirmó, se queda lo guardado (con `corrections_v2`).
     asked_corrections: dict = field(default_factory=dict)
+    # u3-5 (decision de Gadea, 27-sep): actividad RECOMENDADA, no elegida. El minicurso deducido de
+    # "es mi primera vez" se recomienda y lo confirma el cliente; hasta entonces no se guarda.
+    suggested_activity: str | None = None
 
     # Nivel PADI nombrado sin decir si ya lo tienen o lo quieren sacar ("hola
     # somos 4 open water"): se pregunta antes de seguir (owner 2026-09-15).

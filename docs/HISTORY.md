@@ -1,6 +1,10 @@
 History
 =======
 
+0.29.45 - (2026-09-27)
+----------------------
+* **u3-5 (mismo flag): el minicurso deducido se recomienda y lo confirma el cliente** (decisión de Gadea, 27-sep: "debe recomendar el minicurso pero lo confirma el cliente"). Antes, "es la primera vez que vamos a bucear" (o "nunca he buceado, quiero probar") guardaba el minicurso sin que el cliente lo eligiera, por la regla "no certificado + quiere bucear → minicurso". Ahora se guarda como `suggested_activity`, la pregunta de la actividad lo recomienda ("Para una primera vez te recomiendo el minicurso… si buscas certificarte, el curso PADI Open Water. ¿Te animas con el minicurso?", con botones) y un "sí" lo confirma; nombrarlo (minicurso, bautismo, discover scuba) sí es elegirlo. Replay: en "cursos de buceo… primera vez" el cliente acaba eligiendo el Open Water en el turno siguiente (antes quedaba el minicurso). Con el flag encendido cambian solo 2 tests de conversación, justo los que fijaban la deducción. Queda por afinar: "curso básico" (= Open Water) también recibe la recomendación del minicurso. Suite 2724 passed (flag apagado).
+
 0.29.44 - (2026-09-27)
 ----------------------
 * **u3-5, paso 3 (mismo flag): la nacionalidad no se deduce del idioma.** "Busco el seguinte: Vamos en família a Cartagena…" (portugués) acababa con "no colombiano", y dos turnos después salía "¿lo cambio? no colombianos → colombianos" a "Yo vivo en Colombia". Jev ya decía que el mensaje no afirma la nacionalidad, pero la puerta solo se aplicaba en turnos con pregunta. Ahora el relleno del LLM tampoco guarda la nacionalidad que Jev no ve afirmada, en ningún turno. **Solo la nacionalidad**, medido: aplicarla a todos los campos perdía 8 datos buenos que el relleno recupera legítimamente del historial (Jev solo ve el mensaje), y la nacionalidad es el único dato que se deducía del idioma. Pregunta de Jev ampliada con la residencia ("vivo en Colombia", "soy residente", "cédula de extranjería"; el campo es "colombiano o residente") y "el idioma no cuenta": banco 20/20 frente a 17/20; banco u3-5 completo 74/75.

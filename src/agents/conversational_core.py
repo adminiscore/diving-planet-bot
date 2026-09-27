@@ -471,6 +471,31 @@ def ask_slot(state: ConversationState, slot: str, *, reasking: bool = False) -> 
     state.core_pending_slot = slot
     state.quick_replies = []
 
+    if slot == SLOT_ACTIVITY and settings.corrections_v2 and state.suggested_activity == "minicourse":
+        # u3-5: recomendar el minicurso a quien empieza, y que lo confirme el cliente (Gadea, 27-sep).
+        state.quick_replies = (
+            [{"title": "✅ Sí, el minicurso", "value": "minicurso"},
+             {"title": "🎓 El curso Open Water", "value": "curso open water"}]
+            if lang == "es" else
+            [{"title": "✅ Yes, the mini-course", "value": "mini course"},
+             {"title": "🎓 The Open Water course", "value": "open water course"}]
+        )
+        if reasking:
+            return (
+                "¿Te animas con el *minicurso* (ideal para la primera vez) o prefieres el *curso Open Water*? 🌊"
+                if lang == "es" else
+                "Shall we go for the *mini-course* (ideal for a first time) or would you rather do the "
+                "*Open Water course*? 🌊"
+            )
+        return (
+            "Para una primera vez te recomiendo el *minicurso*: teoría, práctica en aguas tranquilas y una "
+            "inmersión en el mar con instructor, sin necesidad de experiencia. Si lo que buscas es "
+            "certificarte, está el *curso PADI Open Water*. ¿Te animas con el minicurso? 🤿"
+            if lang == "es" else
+            "For a first time I'd recommend the *mini-course*: theory, practice in calm water and a sea dive "
+            "with an instructor, no experience needed. If you want to get certified, there's the *PADI Open "
+            "Water course*. Shall we go for the mini-course? 🤿"
+        )
     if slot == SLOT_ACTIVITY:
         # `reasking=True`: se re-ancla la actividad tras una respuesta de info
         # (RAG). Repetir el bloque entero de 4 bullets que ya se mostró al
@@ -772,6 +797,20 @@ def _apply_short_answer(state: ConversationState, message: str) -> bool:
     if button is not None:
         message = button
     msg = message.strip().lower()
+
+    if slot == SLOT_ACTIVITY and settings.corrections_v2 and state.suggested_activity:
+        # u3-5: "si" / "vale" a la recomendacion del minicurso la confirma. Nombrar otra actividad
+        # sigue el camino normal (extraccion).
+        first = next(iter(_words(message)), "")
+        if is_affirmative(first) or is_agree(first):
+            from src.agents import supervisor  # lazy
+
+            confirmed = DetectedIntent()
+            confirmed.activity = state.suggested_activity
+            confirmed.detected_fields = ["activity"]
+            state.suggested_activity = None
+            supervisor._apply_detected_intent(confirmed, state, message)
+            return True
 
     if slot == SLOT_CERTIFICATION:
         if is_affirmative(msg) or msg == "1":
@@ -1826,6 +1865,28 @@ def _prune_applied_corrections(state: ConversationState) -> None:
     state.pending_correction = still or None
 
 
+def _recommend_inferred_minicourse(intent, state: ConversationState, message: str) -> None:
+    """u3-5 (decision de Gadea, 27-sep: "debe recomendar el minicurso pero lo confirma el cliente").
+
+    El minicurso DEDUCIDO ("es la primera vez que vamos a hacer buceo", "nunca he buceado, quiero
+    probar": la regla "no certificado + quiere bucear -> minicurso") no se da por elegido: se guarda
+    como recomendacion y la pregunta de la actividad lo recomienda para que el cliente lo confirme
+    ("Me gustaria informacion de los cursos de buceo… es la primera vez" acababa en minicurso sin que
+    lo pidiera, y podia querer el Open Water). Nombrarlo (minicurso, bautismo, discover scuba) SI es
+    elegirlo. Solo la actividad principal y solo si aun no hay ninguna."""
+    if not settings.corrections_v2 or intent.activity != "minicourse" or state.detected_activity:
+        return
+    if _EXPLICIT_MINICOURSE_NAME_RE.search(message):
+        state.suggested_activity = None
+        return
+    logger.info("[CORE][U3-5] minicurso deducido, no elegido: se recomienda y lo confirma el cliente")
+    state.suggested_activity = "minicourse"
+    intent.activity = None
+    intent.service_id = None
+    if "activity" in intent.detected_fields:
+        intent.detected_fields.remove("activity")
+
+
 def _same_for_customer(field: str, a, b, lang: str) -> bool:
     """¿Se leen igual para el cliente? En un reparto no cuentan el orden ni las cantidades a
     cero (u3-5 paso 1a)."""
@@ -2512,6 +2573,7 @@ async def _understand(state: ConversationState, message: str, *, answered_pendin
     supervisor.enforce_group_allocation_consistency(intent, state, message)
     _take_undecided_members(intent, state)
     _flag_cert_or_course(intent, state, message)
+    _recommend_inferred_minicourse(intent, state, message)
     supervisor._apply_detected_intent(intent, state, message)
 
     # Circuit-breaker (portado 2026-09-01, hallazgo en vivo, batería de
