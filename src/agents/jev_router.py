@@ -216,10 +216,31 @@ _AFFIRMS_QUESTIONS = {
         ),
     },
 }
+# u3-5 paso 2 (27-sep): ¿el mensaje CAMBIA o CORRIGE un dato que el cliente ya habia dado? Es la
+# señal de corrección de la regla del owner (tarea 7b: con señal explícita se acepta; sin ella, se
+# confirma), que hasta ahora solo leia un regex de palabras ("perdon", "en realidad", "actually"...):
+# "esperate, somos 4 al final, se sumo uno mas" o "mejor pensandolo bien quiero el minicurso" se
+# preguntaban. Banco (24 correcciones de Alvaro + 3 del golden frente a 20 mensajes que no corrigen
+# nada: los fantasmas y repeticiones de la ronda A del paso 3), N=2: con 0,7, 20/25 correcciones y
+# 0/20 falsas (los negativos no pasan de 0,20). Por debajo del umbral se pregunta, como hoy.
+CORRECTS = "corrects"
+CORRECTS_MIN = 0.7
+_CORRECTS_Q = {
+    "type": "noul",
+    "instructions": (
+        "The customer CHANGES or CORRECTS something they had already told us about their booking (how many "
+        "people, who does which activity, where they stay or leave from, which activity, nationality, "
+        "certification): for example 'actually...', 'al final...', 'mejor...', 'cambio de plan', 'ah no...', "
+        "'perdón, somos 3', 'se sumó uno más', 'my wife is coming too'. It is FALSE when they only give or repeat "
+        "a detail without saying that it changes, answer a question, thank us, apologise without stating a new "
+        "detail, or ask something."
+    ),
+}
+
 # Las preguntas de u3-4/u3-5 no son señales del router: su duda NO manda el turno al router LLM.
 _U34_QUESTIONS = (
     ASKS_QUESTION, AFFIRMS_LOCATION, AFFIRMS_ACTIVITY, ACTIVITY_HYPOTHESIS,
-    AFFIRMS_CERTIFICATION, AFFIRMS_GROUP, AFFIRMS_NATIONALITY,
+    AFFIRMS_CERTIFICATION, AFFIRMS_GROUP, AFFIRMS_NATIONALITY, CORRECTS,
 )
 
 
@@ -242,9 +263,12 @@ def activity_affirmed(p_affirms: float, p_hypothesis: float | None) -> bool:
 
 
 def _questions_for_turn() -> dict:
+    q = dict(_QUESTIONS)
     if settings.answer_and_continue:
-        return {**_QUESTIONS, ASKS_QUESTION: _ASKS_QUESTION_Q, **_AFFIRMS_QUESTIONS}
-    return _QUESTIONS
+        q.update({ASKS_QUESTION: _ASKS_QUESTION_Q, **_AFFIRMS_QUESTIONS})
+    if settings.corrections_v2:
+        q[CORRECTS] = _CORRECTS_Q
+    return q
 
 
 # Cascada por confianza (A/B del 24-sep): Jev decide solo cuando está seguro; si duda,
@@ -286,6 +310,8 @@ def answers_to_signals(answers: dict, threshold: float = THRESHOLD) -> dict:
     # dudó en el router y el turno se fue al LLM) significa "no lo sé" -> conducta de hoy;
     # `False` significa "Jev dice que el cliente NO lo afirma" -> el dato se cae. Son
     # distintos y el llamante (`_question_turn_fields`) necesita distinguirlos.
+    if CORRECTS in answers:
+        out[CORRECTS] = (answers.get(CORRECTS) or {}).get("noul", 0.0) >= CORRECTS_MIN
     for name in (AFFIRMS_LOCATION, AFFIRMS_CERTIFICATION, AFFIRMS_GROUP, AFFIRMS_NATIONALITY):
         if name in answers:
             out[name] = (answers.get(name) or {}).get("noul", 0.0) >= AFFIRMS_MIN
@@ -329,7 +355,7 @@ async def detect_routing_signals_jev(message: str, *, lang: str = "es") -> dict 
 
 
 # Señales de u3-4/u3-5 que NO son del router: viajan aparte (ver `detect_routing_signals_jev_full`).
-_TURN_SIGNALS = (AFFIRMS_LOCATION, AFFIRMS_ACTIVITY, AFFIRMS_CERTIFICATION, AFFIRMS_GROUP, AFFIRMS_NATIONALITY)
+_TURN_SIGNALS = (AFFIRMS_LOCATION, AFFIRMS_ACTIVITY, AFFIRMS_CERTIFICATION, AFFIRMS_GROUP, AFFIRMS_NATIONALITY, CORRECTS)
 
 
 async def detect_routing_signals_jev_full(

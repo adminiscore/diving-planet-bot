@@ -1700,6 +1700,17 @@ _CORRECTABLE_FIELDS = (
 )
 
 
+def _has_correction_cue(state: ConversationState, message: str) -> bool:
+    """La señal explícita de corrección de la regla del owner (tarea 7b): el regex de siempre
+    ("perdon", "en realidad", "actually"...) o, con `corrections_v2`, Jev seguro (>= 0,7) de que el
+    mensaje cambia o corrige un dato ya dado ("esperate, somos 4 al final"; u3-5 paso 2)."""
+    from src.agents import supervisor  # lazy
+
+    if supervisor._CORRECTION_CUE_RE.search(message):
+        return True
+    return bool(settings.corrections_v2 and getattr(state, "_jev_corrects", None) is True)
+
+
 def _route_contradictions(state: ConversationState, message: str, intent, proposed: dict) -> None:
     """Punto unico para un dato de ESTE mensaje que contradice lo ya guardado, venga
     del regex o de la verificacion LLM de campos sabidos (tarea 7b, 2026-09-15).
@@ -1710,10 +1721,9 @@ def _route_contradictions(state: ConversationState, message: str, intent, propos
     (`intent.overwrite`); sin el, queda en `pending_correction` y se confirma con el
     cliente. Ni la jerga ni el cue deciden si hay contradiccion: la decide comparar
     el valor con el guardado."""
-    from src.agents import supervisor  # lazy
 
     known = _known_field_values(state)
-    cue = bool(supervisor._CORRECTION_CUE_RE.search(message))
+    cue = _has_correction_cue(state, message)
     for field, value in proposed.items():
         old = known.get(field)
         if value in (None, [], {}) or old in (None, [], {}) or value == old:
@@ -1764,7 +1774,6 @@ def _regex_contradictions(state: ConversationState, message: str, intent) -> dic
     se devuelve para que la verificacion LLM de campos sabidos lo arbitre (una
     peticion, solo cuando hay contradiccion): el LLM entiende la jerga y se abstiene
     si habla de otra persona (medido 24/24)."""
-    from src.agents import supervisor  # lazy
 
     known = _known_field_values(state)
     contradicting = {
@@ -1778,7 +1787,7 @@ def _regex_contradictions(state: ConversationState, message: str, intent) -> dic
     stated = {} if mentions_other_person_subject(message) else {
         f: v for f, v in contradicting.items() if f != "is_certified" or certification_claim(message) == v
     }
-    if stated and supervisor._CORRECTION_CUE_RE.search(message):
+    if stated and _has_correction_cue(state, message):
         _route_contradictions(state, message, intent, stated)
         return {}
     return stated
@@ -1801,6 +1810,20 @@ def _accept_pending_correction(state: ConversationState, message: str) -> bool:
     _take_undecided_members(intent, state)
     supervisor._apply_detected_intent(intent, state, message)
     return True
+
+
+def _prune_applied_corrections(state: ConversationState) -> None:
+    """u3-5: antes de decidir qué preguntar, fuera las correcciones que ya coinciden con lo guardado.
+    Lo propuesto puede haberse aplicado en el MISMO turno por otro camino (el acompañante resuelto:
+    "2 buceo" -> "1 buceo, 1 snorkel") y la pregunta salía "X -> X" (replay del 27-sep)."""
+    if not (settings.corrections_v2 and state.pending_correction):
+        return
+    known = _known_field_values(state)
+    lang = state.language or "es"
+    still = {f: v for f, v in state.pending_correction.items() if not _same_for_customer(f, v, known.get(f), lang)}
+    if len(still) != len(state.pending_correction):
+        logger.info(f"[CORE] correcciones ya aplicadas en este turno: {sorted(set(state.pending_correction) - set(still))}")
+    state.pending_correction = still or None
 
 
 def _same_for_customer(field: str, a, b, lang: str) -> bool:
@@ -3518,6 +3541,8 @@ async def _routing_phase(
         {f: routing_signals[sig] for f, sig in _AFFIRMS_SIGNAL_FIELDS if sig in routing_signals}
         if settings.answer_and_continue else {}
     )
+    # u3-5 paso 2: ¿el mensaje corrige un dato ya dado? (Jev, misma llamada). Se renueva cada turno.
+    state._jev_corrects = routing_signals.get("corrects") if settings.corrections_v2 else None
 
     # COMPRENDER (carryover PRIMERO): si hay un slot pendiente y este mensaje
     # lo RESUELVE, el carryover gana aunque el mensaje "parezca pregunta" por
@@ -4395,6 +4420,7 @@ async def _slotfill_close_phase(
     # nada volvía a preguntarla nunca. Se prioriza sobre next_missing_slot
     # igual que el resto de comprobaciones de este bloque multi-ítem.
     _merge_pending_undecided(state)
+    _prune_applied_corrections(state)
     if state.pending_companion_activity:
         response = ask_slot(state, SLOT_COMPANION_QTY, reasking=True)
         state.step = Step.FREE_TEXT

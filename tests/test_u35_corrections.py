@@ -97,3 +97,60 @@ async def test_un_no_mantiene_lo_guardado(monkeypatch):
     st = await _con_confirmacion_pendiente(monkeypatch)
     await route_message(st, "no")
     assert st.detected_group_size == 3 and st.pending_correction is None
+
+
+# ── u3-5 paso 2: Jev como señal de corrección ────────────────────────────────────────────────
+
+from src.agents import jev_router  # noqa: E402
+
+
+def test_con_el_flag_jev_recibe_la_pregunta_de_correccion(monkeypatch):
+    monkeypatch.setattr(settings, "corrections_v2", False)
+    assert jev_router.CORRECTS not in jev_router._questions_for_turn()
+    monkeypatch.setattr(settings, "corrections_v2", True)
+    assert jev_router.CORRECTS in jev_router._questions_for_turn()
+    assert jev_router.uncertain_answers({jev_router.CORRECTS: {"type": "noul", "noul": 0.5}}) == []
+
+
+def test_la_senal_se_emite_en_verdadero_y_en_falso():
+    assert jev_router.answers_to_signals({"corrects": {"type": "noul", "noul": 0.98}})["corrects"] is True
+    assert jev_router.answers_to_signals({"corrects": {"type": "noul", "noul": 0.45}})["corrects"] is False
+
+
+def test_correccion_clara_segun_jev_se_aplica_sin_preguntar(monkeypatch):
+    """"esperate, somos 4 al final, se sumo uno mas": sin palabra del regex, se preguntaba."""
+    monkeypatch.setattr(settings, "corrections_v2", True)
+    st = _state(detected_group_size=3)
+    st._jev_corrects = True
+    msg = "esperate, somos 4 al final, se sumo uno mas"
+    intent = core._detector.detect(msg, st)
+    core._route_contradictions(st, msg, intent, {"group_size": 4})
+    assert not st.pending_correction
+    assert intent.group_size == 4 and "group_size" in intent.overwrite
+
+
+def test_si_jev_no_esta_seguro_se_pregunta_como_hoy(monkeypatch):
+    monkeypatch.setattr(settings, "corrections_v2", True)
+    st = _state(detected_group_size=3)
+    st._jev_corrects = False
+    _route(st, "somos 4", {"group_size": 4})
+    assert st.pending_correction == {"group_size": 4}
+
+
+def test_la_senal_de_otro_turno_no_cuenta_con_el_flag_apagado(monkeypatch):
+    monkeypatch.setattr(settings, "corrections_v2", False)
+    st = _state(detected_group_size=3)
+    st._jev_corrects = True
+    _route(st, "somos 4", {"group_size": 4})
+    assert st.pending_correction == {"group_size": 4}
+
+
+def test_una_correccion_ya_aplicada_en_el_turno_no_se_pregunta(monkeypatch):
+    monkeypatch.setattr(settings, "corrections_v2", True)
+    st = _state(detected_group_size=2, detected_group_allocation={"certified_diving": 1, "snorkel": 1})
+    st.pending_correction = {"group_allocation": {"snorkel": 1, "certified_diving": 1}, "group_size": 3}
+    core._prune_applied_corrections(st)
+    assert st.pending_correction == {"group_size": 3}
+    st.pending_correction = {"group_allocation": {"snorkel": 1, "certified_diving": 1}}
+    core._prune_applied_corrections(st)
+    assert st.pending_correction is None
