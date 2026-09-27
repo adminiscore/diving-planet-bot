@@ -254,6 +254,15 @@ NUEVOS_U35 = [
     ('grp', 'Es decir en dos dias tendriamos el certificado haciendo nuestro curso en linea', False),
     ('grp', 'Anything needs to be completed beforehand? I’m gonna need a little refresher.', False),
     ('grp', 'We are leaving tomorrow before noon', False),
+    # u3-5 paso 3 (27-sep): residencia (cuenta: el campo es "colombiano o residente") y el idioma (no cuenta).
+    ('nac', 'yo soy residente', True),
+    ('nac', 'Yo vivo en Colombia', True),
+    ('nac', 'Yo tengo extrangeria', True),
+    ('nac', 'vivimos en Cartagena hace 5 años', True),
+    ('nac', 'Busco el seguinte: Vamos en família a Cartagena. 1 buzo avanzado y 2 para bautismo', False),
+    ('nac', 'We are a family of 6 and 3 of us will dive and 3 will snorkeling', False),
+    ('nac', 'Hello! My husband and I arrived in Cartagena last night', False),
+    ('nac', 'vamos a Cartagena en abril', False),
 ]
 
 

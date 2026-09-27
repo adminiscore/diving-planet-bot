@@ -1,6 +1,11 @@
 History
 =======
 
+0.29.44 - (2026-09-27)
+----------------------
+* **u3-5, paso 3 (mismo flag): la nacionalidad no se deduce del idioma.** "Busco el seguinte: Vamos en família a Cartagena…" (portugués) acababa con "no colombiano", y dos turnos después salía "¿lo cambio? no colombianos → colombianos" a "Yo vivo en Colombia". Jev ya decía que el mensaje no afirma la nacionalidad, pero la puerta solo se aplicaba en turnos con pregunta. Ahora el relleno del LLM tampoco guarda la nacionalidad que Jev no ve afirmada, en ningún turno. **Solo la nacionalidad**, medido: aplicarla a todos los campos perdía 8 datos buenos que el relleno recupera legítimamente del historial (Jev solo ve el mensaje), y la nacionalidad es el único dato que se deducía del idioma. Pregunta de Jev ampliada con la residencia ("vivo en Colombia", "soy residente", "cédula de extranjería"; el campo es "colombiano o residente") y "el idioma no cuenta": banco 20/20 frente a 17/20; banco u3-5 completo 74/75.
+* Escalón 0 (replay local): solo quita 3 nacionalidades y las 3 eran inventadas (portugués, "I apologize for the change", "COcoliso"); "yo soy residente" se conserva; 0 nacionalidades perdidas frente al flag apagado. **"¿Lo cambio?" 10 (flag apagado) → 2** con los pasos 1-3. Suite 2720 passed.
+
 0.29.43 - (2026-09-27)
 ----------------------
 * **u3-5, paso 2 (mismo flag `CORRECTIONS_V2`): Jev como señal de corrección.** La regla del owner (tarea 7b) es "con señal explícita de corrección se acepta; sin ella, se confirma", y la señal solo la leía un regex de palabras ("perdón", "en realidad", "actually"…): "espérate, somos 4 al final, se sumó uno más" o "mejor pensándolo bien quiero el minicurso" se preguntaban. Ahora la señal es el regex **o** Jev ≥ 0,7 a "¿el mensaje cambia o corrige un dato ya dado?" (`jev_router.CORRECTS`, misma llamada, coste 0; viaja aunque Jev dude en el router). Banco (24 correcciones de Álvaro + 3 del golden frente a 20 mensajes que no corrigen: los fantasmas y repeticiones de la ronda A), N=2: 20/25 correcciones con 0/20 falsas (los negativos no pasan de 0,20); por debajo del umbral se pregunta, como hoy.

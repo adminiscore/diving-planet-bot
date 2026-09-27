@@ -2244,6 +2244,21 @@ async def _understand(state: ConversationState, message: str, *, answered_pendin
             )
         )
         evidence = patch.pop("evidence", None) or {}
+        if settings.corrections_v2 and question_turn_fields is None:
+            # u3-5 paso 3: la puerta de Jev tambien para lo que RELLENA el LLM fuera de los turnos
+            # con pregunta. "Vamos en família a Cartagena. 1 buzo avanzado y 2 para bautismo" (en
+            # portugues) acababa con is_colombian=False: el relleno deducia la nacionalidad del
+            # idioma, y Jev decia que el mensaje no la afirma (0,0x). Solo lo que Jev dice que NO se
+            # afirma en ESTE mensaje; sin señal, lo de siempre.
+            # Solo la NACIONALIDAD: es el unico dato que el relleno deduce del idioma. Los demas puede
+            # recuperarlos legitimamente del historial ("Just completed the waivers" -> 2 personas,
+            # dichas en el turno 1), y Jev solo ve el mensaje: aplicarlo a todos perdia 8 datos buenos
+            # en el replay del 27-sep.
+            dropped = [f for f in patch if f == "is_colombian" and _jev_says_not_affirmed(state, f)]
+            for f in dropped:
+                patch.pop(f)
+            if dropped:
+                logger.info(f"[EXTRACT][U3-5] relleno descartado por Jev (no lo afirma): {dropped}")
         # Los campos del grupo se pierden cuando viajan con muchos otros (2026-09-15,
         # medido con el LLM real): con un campo que verificar (peticion fusionada), "mi
         # esposo bucea, yo prefiero snorkel", "somos 2, mi amigo es buzo y yo no" o "2

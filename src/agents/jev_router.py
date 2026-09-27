@@ -206,13 +206,17 @@ _AFFIRMS_QUESTIONS = {
             'about one single person without saying who is coming.'
         ),
     },
+    # 27-sep (u3-5 paso 3): cuenta también la RESIDENCIA (el campo es "colombiano o residente": COP) y
+    # se dice que el idioma no cuenta. Banco `nac` + 8 casos reales: 20/20 frente a 17/20 (la anterior
+    # no veía "yo soy residente", "tengo extranjería" ni "vivimos en Cartagena hace 5 años").
     AFFIRMS_NATIONALITY: {
         "type": "noul",
         "instructions": (
-            "The customer tells us their nationality or where they come from ('somos de Medellín', 'I'm "
-            "from Canada', 'we are Mexican'). Saying that they are, or are not, Colombian counts, even in "
-            "a few words. It is FALSE when 'Colombian' only appears in what they ask about: prices or "
-            'rates for Colombians, or whether a price is in pesos or in dollars.'
+            "The customer tells us their nationality, where they come from, or that they live in Colombia "
+            "('somos de Medellín', 'I'm from Canada', 'we are Mexican', 'vivo en Bogotá', 'soy residente', 'tengo "
+            "cédula de extranjería'). Saying that they are, or are not, Colombian counts, even in a few words. It is "
+            "FALSE when 'Colombian' only appears in what they ask about: prices or rates for Colombians, or whether a "
+            "price is in pesos or in dollars; and the language they write in does not count."
         ),
     },
 }

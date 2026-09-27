@@ -154,3 +154,32 @@ def test_una_correccion_ya_aplicada_en_el_turno_no_se_pregunta(monkeypatch):
     st.pending_correction = {"group_allocation": {"snorkel": 1, "certified_diving": 1}}
     core._prune_applied_corrections(st)
     assert st.pending_correction is None
+
+
+# ── u3-5 paso 3: la nacionalidad no se deduce del idioma ─────────────────────────────────────
+
+
+async def test_la_nacionalidad_que_jev_no_ve_afirmada_no_se_rellena(monkeypatch):
+    """"Busco el seguinte: Vamos en família a Cartagena..." (portugués): el relleno ponía
+    is_colombian=False; Jev dice que el mensaje no la afirma. Los demás campos rellenados se quedan."""
+    monkeypatch.setattr(settings, "corrections_v2", True)
+    monkeypatch.setattr(settings, "answer_and_continue", True)
+
+    async def _fill(msg, *_a, only_fields=None, **_k):
+        return {f: v for f, v in {"is_colombian": False, "location": "cartagena"}.items() if f in (only_fields or [])}
+
+    async def _combined(fields, veto, msg, *_a, **_k):
+        return {f: v for f, v in {"is_colombian": False, "location": "cartagena"}.items() if f in fields}, {}
+
+    monkeypatch.setattr(core, "fill_gaps", _fill)
+    monkeypatch.setattr(core, "extract_and_verify", _combined)
+
+    async def _signals(message, **_k):
+        return {"affirms_nationality": False, "affirms_location": True}
+
+    from src.agents import supervisor
+    monkeypatch.setattr(supervisor, "detect_routing_signals", _signals)
+    st = _state()
+    await route_message(st, "quiero bucear, soy certificado")
+    await route_message(st, "vamos en familia a cartagena")
+    assert st.is_colombian is None
