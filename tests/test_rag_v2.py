@@ -196,3 +196,24 @@ async def test_sin_respuesta_pendiente_no_cambia_nada():
 
 def test_el_paquete_de_3_inmersiones_obliga_a_dormir():
     assert core._plan_needs_overnight(_state(detected_service_id="3_dives_1_day"))
+
+
+# ─── Juez v3 (flag `grounding_v3`) ───────────────────────────────────────────
+
+def test_el_veredicto_v3_sale_de_las_marcas_de_cada_dato():
+    assert not grounding_check.verdict_from_fact_list("- Llevamos 30 años en las islas. NO  \n\nHALLUCINATED")
+    assert grounding_check.verdict_from_fact_list("- Paquete de 5: 392 USD: SÍ\n\nGROUNDED")
+    # sin datos del negocio es GROUNDED aunque el modelo se contradiga en la última línea
+    assert grounding_check.verdict_from_fact_list("- (ninguno)\nHALLUCINATED")
+    assert not grounding_check.verdict_from_fact_list("- Hay barcos hundidos: NO.\nGROUNDED")
+
+
+async def test_el_juez_v3_usa_su_prompt_y_modelo(monkeypatch):
+    monkeypatch.setattr(settings, "rag_v2", True)
+    monkeypatch.setattr(settings, "grounding_v3", True)
+    seen: list = []
+    monkeypatch.setattr(grounding_check, "AsyncOpenAI", _openai("- Llevamos 30 años: NO\nHALLUCINATED", seen))
+    grounded, reason = await grounding_check.is_grounded("Llevamos 30 años", "contexto", lang="es")
+    assert not grounded and "30 años" in reason
+    assert seen[0]["messages"][0]["content"] == grounding_check.GROUNDING_VERIFY_V3_ES
+    assert seen[0]["model"] == settings.grounding_v3_model

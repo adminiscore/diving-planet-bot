@@ -234,3 +234,22 @@ def test_con_acompanante_no_se_recomienda(monkeypatch):
     intent.activity = "minicourse"
     core._recommend_inferred_minicourse(intent, st, msg)
     assert intent.activity == "minicourse" and st.suggested_activity is None
+
+
+def test_quien_pide_un_curso_recibe_la_recomendacion_del_open_water(monkeypatch):
+    """28-sep: "curso básico… es la primera vez" recibía la recomendación del minicurso."""
+    monkeypatch.setattr(settings, "recommend_inferred_minicourse", True)
+    for msg in ("Estoy interesada en el curso básico de buceo, es la primera vez",
+                "Me gustaria informacion de los cursos de buceo, es la primera vez que buceo",
+                "quiero certificarme, nunca he buceado"):
+        st = _state()
+        intent = core._detector.detect(msg, st)
+        intent.activity = "minicourse"
+        core._recommend_inferred_minicourse(intent, st, msg)
+        assert st.suggested_activity == "padi_open_water", msg
+        assert "Open Water" in core.ask_slot(st, core.SLOT_ACTIVITY)
+    st = _state()
+    msg = "nunca he buceado, quiero probar"
+    intent = core._detector.detect(msg, st)
+    core._recommend_inferred_minicourse(intent, st, msg)
+    assert st.suggested_activity == "minicourse"

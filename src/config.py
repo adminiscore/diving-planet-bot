@@ -138,6 +138,12 @@ class Settings(BaseSettings):
     # disponibilidad la contesta el RAG entera en vez de un texto fijo que se comia el resto del
     # mensaje. Ronda A: 37 respuestas acabaron en "no lo tengo a la mano". APAGADO por defecto.
     rag_v2: bool = False
+    # Juez de grounding v3 (28-sep): enumera cada dato del negocio de la respuesta y lo marca SÍ/NO frente
+    # al contexto; el veredicto lo calcula el codigo con esas marcas. Con gpt-4.1: banco
+    # `scripts/sonda_juez_grounding.py` 30/30 estable (v2 con gpt-4.1-mini: 21/30, dejaba pasar "llevamos
+    # 30 años", "debes haber completado la teoría", "hay barcos hundidos"); +0,25 s de mediana. APAGADO.
+    grounding_v3: bool = False
+    grounding_v3_model: str = "gpt-4.1"
 
     # Paso 6 (27-sep): respuestas fijas y salida deterministas de S4. s4-14: si piden un telefono se
     # da el WhatsApp oficial (decision de Gadea; antes "no manejo un numero"); s4-15: "¿eres un bot?"

@@ -471,6 +471,30 @@ def ask_slot(state: ConversationState, slot: str, *, reasking: bool = False) -> 
     state.core_pending_slot = slot
     state.quick_replies = []
 
+    if slot == SLOT_ACTIVITY and settings.recommend_inferred_minicourse and state.suggested_activity == "padi_open_water":
+        # Quien pide un curso desde cero: se recomienda el Open Water y el minicurso queda como opcion.
+        state.quick_replies = (
+            [{"title": "✅ Sí, el Open Water", "value": "curso open water"},
+             {"title": "🤿 Mejor el minicurso", "value": "minicurso"}]
+            if lang == "es" else
+            [{"title": "✅ Yes, Open Water", "value": "open water course"},
+             {"title": "🤿 The mini-course instead", "value": "mini course"}]
+        )
+        if reasking:
+            return (
+                "¿Te animas con el *curso Open Water* o prefieres probar antes con el *minicurso*? 🌊"
+                if lang == "es" else
+                "Shall we go for the *Open Water course*, or would you rather try the *mini-course* first? 🌊"
+            )
+        return (
+            "Para certificarte desde cero, el curso es el *PADI Open Water*: 2 días en las Islas del Rosario "
+            "con teoría online, piscina y 4 inmersiones. Si antes prefieres probar, está el *minicurso*, sin "
+            "necesidad de experiencia. ¿Te animas con el Open Water? 🤿"
+            if lang == "es" else
+            "To get certified from scratch, the course is the *PADI Open Water*: 2 days in the Rosario Islands "
+            "with online theory, pool and 4 dives. If you'd rather try first, there's the *mini-course*, no "
+            "experience needed. Shall we go for the Open Water? 🤿"
+        )
     if slot == SLOT_ACTIVITY and settings.recommend_inferred_minicourse and state.suggested_activity == "minicourse":
         # u3-5: recomendar el minicurso a quien empieza, y que lo confirme el cliente (Gadea, 27-sep).
         state.quick_replies = (
@@ -1938,12 +1962,26 @@ def _recommend_inferred_minicourse(intent, state: ConversationState, message: st
     if (intent.group_allocation or state.detected_group_allocation or state.pending_companion_activity
             or state.pending_companion_queue or _mentions_person(message)):
         return
-    logger.info("[CORE][U3-5] minicurso deducido, no elegido: se recomienda y lo confirma el cliente")
-    state.suggested_activity = "minicourse"
+    suggestion = "padi_open_water" if _asks_for_a_course(message) else "minicourse"
+    logger.info(f"[CORE][U3-5] minicurso deducido, no elegido: se recomienda {suggestion} y lo confirma el cliente")
+    state.suggested_activity = suggestion
     intent.activity = None
     intent.service_id = None
     if "activity" in intent.detected_fields:
         intent.detected_fields.remove("activity")
+
+
+def _asks_for_a_course(message: str) -> bool:
+    """¿El principiante pide un CURSO (certificarse) y no probar? El sustantivo de la familia de cursos
+    del registro ("curso"/"course", tambien en plural) o la intencion de curso que ya ve el detector.
+    28-sep: "Estoy interesada en el curso básico de buceo, es la primera vez" recibia la recomendacion
+    del minicurso (el regex no conoce "curso básico" y aplica "no certificado + bucear -> minicurso")."""
+    from src.agents.intent_detector import _course_family_nouns, matched_activity_categories  # lazy
+
+    nouns = _course_family_nouns()
+    if any(w in nouns or w.rstrip("s") in nouns for w in _words(message)):
+        return True
+    return "padi_course" in matched_activity_categories(message)
 
 
 def _same_for_customer(field: str, a, b, lang: str) -> bool:

@@ -180,6 +180,8 @@ def _collect() -> dict[str, str]:
     add("info/grounding_verify.system.en", info.GROUNDING_VERIFY_EN)
     add("info/grounding_verify_v2.system.es", info.GROUNDING_VERIFY_V2_ES)
     add("info/grounding_verify_v2.system.en", info.GROUNDING_VERIFY_V2_EN)
+    add("info/grounding_verify_v3.system.es", info.GROUNDING_VERIFY_V3_ES)
+    add("info/grounding_verify_v3.system.en", info.GROUNDING_VERIFY_V3_EN)
     add("info/rag_payment.old_es", info.RAG_PAYMENT_OLD_ES)
     add("info/rag_payment.v2_es", info.RAG_PAYMENT_V2_ES)
     add("info/rag_payment.old_en", info.RAG_PAYMENT_OLD_EN)

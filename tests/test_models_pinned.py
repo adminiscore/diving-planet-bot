@@ -21,6 +21,7 @@ ROOT = Path(__file__).resolve().parent.parent
 MODELOS = (
     "openai_model",
     "rag_answer_model",
+    "grounding_v3_model",
     "extraction_model",
     "openai_embedding_model",
     "openai_transcription_model",

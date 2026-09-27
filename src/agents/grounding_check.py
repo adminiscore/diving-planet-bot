@@ -11,6 +11,8 @@ from src.prompts.info import (
     GROUNDING_VERIFY_ES,
     GROUNDING_VERIFY_V2_EN,
     GROUNDING_VERIFY_V2_ES,
+    GROUNDING_VERIFY_V3_EN,
+    GROUNDING_VERIFY_V3_ES,
 )
 
 logger = logging.getLogger("uvicorn.error")
@@ -289,7 +291,9 @@ async def is_grounded(answer: str, context: str, lang: str = "es") -> tuple[bool
     if not answer.strip() or not context.strip():
         return False, "empty_answer_or_context"
 
-    if settings.rag_v2:
+    if settings.grounding_v3:
+        system = GROUNDING_VERIFY_V3_ES if lang == "es" else GROUNDING_VERIFY_V3_EN
+    elif settings.rag_v2:
         system = GROUNDING_VERIFY_V2_ES if lang == "es" else GROUNDING_VERIFY_V2_EN
     else:
         system = GROUNDING_VERIFY_ES if lang == "es" else GROUNDING_VERIFY_EN
@@ -309,19 +313,41 @@ async def is_grounded(answer: str, context: str, lang: str = "es") -> tuple[bool
         response = await client.chat.completions.create(
             # rag_v2: el mismo modelo que escribe la respuesta (gpt-4.1-mini en PRE) sigue la
             # distincion "dato del negocio / todo lo demas"; gpt-4o-mini fallaba en los dos sentidos.
-            model=(settings.rag_answer_model or settings.openai_model) if settings.rag_v2 else settings.openai_model,
+            model=(
+                settings.grounding_v3_model if settings.grounding_v3
+                else (settings.rag_answer_model or settings.openai_model) if settings.rag_v2
+                else settings.openai_model
+            ),
             messages=[
                 {"role": "system", "content": system},
                 {"role": "user", "content": user_content},
             ],
             temperature=0,
-            max_tokens=30,
+            max_tokens=300 if settings.grounding_v3 else 30,
         )
-        verdict = (response.choices[0].message.content or "").strip().upper()
-        grounded = verdict.startswith("GROUNDED")
-        reason = verdict if verdict else "empty_verdict"
+        content = (response.choices[0].message.content or "").strip()
+        if settings.grounding_v3:
+            grounded = verdict_from_fact_list(content)
+            unsupported = [ln.strip() for ln in content.splitlines()
+                           if ln.strip().startswith("-") and _FACT_NO.search(ln.strip().rstrip(" ."))]
+            reason = "GROUNDED" if grounded else "HALLUCINATED " + " | ".join(unsupported)[:200]
+        else:
+            verdict = content.upper()
+            grounded = verdict.startswith("GROUNDED")
+            reason = verdict if verdict else "empty_verdict"
         logger.info(f"[RAG][GROUNDING] grounded={grounded} verdict={reason}")
         return grounded, reason
     except Exception as exc:
         logger.warning(f"[RAG][GROUNDING] failed, allowing answer: {exc}")
         return True, f"check_failed:{type(exc).__name__}"
+
+
+_FACT_NO = re.compile(r"(?:\bNO\b|\bNO\.)\s*$", re.IGNORECASE)
+
+
+def verdict_from_fact_list(text: str) -> bool:
+    """Juez v3 (flag `rag_v2`, 28-sep): el veredicto sale de las MARCAS de cada dato del negocio que
+    enumera el juez ("- dato: SÍ/NO"), no de su ultima palabra, que a veces contradecia su propia
+    lista ("- (ninguno)" y luego HALLUCINATED). True = respaldada (ningun dato marcado NO)."""
+    facts = [ln.strip() for ln in text.splitlines() if ln.strip().startswith("-")]
+    return not any(_FACT_NO.search(ln.rstrip(" .")) for ln in facts)
