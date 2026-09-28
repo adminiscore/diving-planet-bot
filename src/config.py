@@ -186,6 +186,10 @@ class Settings(BaseSettings):
     chatwoot_account_id: int = 1
     chatwoot_inbox_id: int = 1
     chatwoot_owner_agent_id: int = 0  # 0 = auto-assign disabled
+    # l2-3 (28-sep): "escribiendo…" en el chat mientras el bot prepara la respuesta. Una pregunta
+    # tarda ~4 s (medido en PRE: escribir la respuesta ~1,9 s + juez ~1,2 s + búsqueda ~0,4 s); sin
+    # aviso, el cliente no sabe si le han leído. No cambia lo que dice el bot. Revert = "false".
+    chatwoot_typing_indicator: bool = True
     chatwoot_website_token: str = "T49iSq16SvRnqUqbayMQWmni"  # inbox website channel token (widget SDK)
 
     @property

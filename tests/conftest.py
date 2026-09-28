@@ -42,6 +42,20 @@ def _rag_answers_offline(request, monkeypatch):
 
 
 @pytest.fixture(autouse=True)
+def _no_typing_indicator(request, monkeypatch):
+    """l2-3: el "escribiendo…" llama a la API de Chatwoot en cada mensaje. En los tests se
+    anula para no tocar la red; tests/test_typing_indicator.py lo prueba de verdad."""
+    if request.node.module.__name__.rsplit(".", 1)[-1] == "test_typing_indicator":
+        return
+    from src.channels import chatwoot
+
+    async def _noop(conversation_id, on):
+        return None
+
+    monkeypatch.setattr(chatwoot, "set_typing", _noop)
+
+
+@pytest.fixture(autouse=True)
 def _no_llm_language_fallback(monkeypatch):
     """Default the welcome-step LLM language fallback (conversational_core →
     language_detector.detect_language_llm) to "no detection", so tests stay

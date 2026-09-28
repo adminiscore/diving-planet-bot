@@ -177,10 +177,15 @@ async def handle_message(payload: dict):
             await state_store.save_state(conversation_id, state)
             return
 
-        # Route through supervisor (decision tree + RAG)
-        response = await route_message(state, message)
+        # l2-3: "escribiendo…" mientras se prepara la respuesta; se apaga siempre al terminar.
+        await set_typing(conversation_id, True)
+        try:
+            # Route through supervisor (decision tree + RAG)
+            response = await route_message(state, message)
 
-        await finalize_chatwoot_delivery(conversation_id, state, response)
+            await finalize_chatwoot_delivery(conversation_id, state, response)
+        finally:
+            await set_typing(conversation_id, False)
         await state_store.save_state(conversation_id, state)
 
 
@@ -359,6 +364,26 @@ async def assign_conversation_to_owner(conversation_id: str):
             logger.info(f"[BOT] Conversation {conversation_id} set to open")
         except httpx.HTTPError as e:
             logger.error(f"[BOT] Status toggle error conv={conversation_id}: {e}")
+
+
+async def set_typing(conversation_id: str, on: bool) -> None:
+    """l2-3: enciende o apaga el "escribiendo…" de la conversación en Chatwoot.
+
+    Solo es un aviso visual: si Chatwoot falla o tarda, se registra y el turno sigue igual (nunca
+    lanza). Con `CHATWOOT_TYPING_INDICATOR=false` no hace nada."""
+    if not settings.chatwoot_typing_indicator or not conversation_id:
+        return
+    url = (
+        f"{settings.chatwoot_api_url.rstrip('/')}/api/v1/accounts/{settings.chatwoot_account_id}"
+        f"/conversations/{conversation_id}/toggle_typing_status"
+    )
+    headers = {"api_access_token": settings.chatwoot_api_token, "Content-Type": "application/json"}
+    try:
+        async with httpx.AsyncClient() as client:
+            resp = await client.post(url, json={"typing_status": "on" if on else "off"}, headers=headers, timeout=3.0)
+            resp.raise_for_status()
+    except Exception as exc:  # noqa: BLE001 — un aviso visual nunca rompe el turno
+        logger.warning(f"[BOT] typing {'on' if on else 'off'} falló conv={conversation_id}: {exc}")
 
 
 async def send_chatwoot_message(conversation_id: str, message: str, quick_replies: list[dict] | None = None):

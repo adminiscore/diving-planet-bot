@@ -13,6 +13,15 @@ Read this file before changing code in the Diving Planet Bot. For a quick versio
 
 > **📏 LEER ANTES DE MEDIR — decisiones del 24-sep-2026 (Gadea):** (1) latencia y llamadas con nuestros logs `[TURN_METRICS]` + `scripts/turn_metrics.py`, no con Langfuse (plan gratuito superado, reinicio 16-oct); (2) pruebas A/B por escalones, juzgando solo los diálogos que cambian. Todo en `docs/robustness/protocolo-medicion.md`.
 
+### ✅ 28-sep noche (Álvaro) — l2-3 "escribiendo…" HECHA. Siguiente: juez de grounding con gpt-4.1-mini en el banco
+
+Primer paso de "RAG calidad + latencia" (orden de Gadea). Una pregunta con RAG tarda ~4 s (búsqueda ~0,4 s, respuesta
+gpt-4.1-mini ~1,9 s, juez gpt-4.1 ~1,2 s; un rechazo lo duplica). Ahora el cliente ve "escribiendo…" mientras tanto:
+`set_typing()` en `src/channels/chatwoot.py`, flag `CHATWOOT_TYPING_INDICATOR` (encendido en PRE; revert = "false").
+Nunca rompe el turno si Chatwoot falla. No cambia las respuestas → sin ronda de calidad. HISTORY 0.29.65.
+**Siguiente, en orden:** (1) banco del juez de grounding con gpt-4.1-mini (¿mismos veredictos, ~0,5 s menos?) antes de
+tocar PRE; (2) respuestas más cortas solo si la ronda core no empeora; (3) contexto por servicio (mapa del paso 8).
+
 ### ✅ 28-sep noche (Gadea) — PASO 9 (l2-2) y PASO 10 (limpieza segura) HECHOS. Siguiente: RAG calidad + latencia
 
 **l2-2:** `RAG_PROMPT_CACHE` promocionado por coste (el caché funciona, ~75 % de tokens), no por tiempo: la latencia
@@ -130,7 +139,7 @@ de `docs/plan-maestro-final.md`**. Resumen:
 | 4 | Terminar U3: u3-5 → u3-6 → u3-7 → u3-3 | ⏳ |
 | 5 | Cierre de U3: ronda completa + examen oculto (u3-2 redefinida) | ⏳ |
 | 6 | RAG: l1-6 / l1-7 (primer caso: "regreso otro día" contradice la política en casi todas las rondas) | ⏳ |
-| 7 | L2: l2-2 caché, l2-3 "escribiendo…" | ⏳ |
+| 7 | L2: l2-2 caché, l2-3 "escribiendo…" | ✅ 28-sep (l2-2 por coste, l2-3 hecha) |
 | 8 | S4: quitar la cascada legacy, partir módulos, retirar flags promocionados, fallos de plantillas | ⏳ |
 | 9 | R6: respaldo si OpenAI falla, guardrails, carga | ⏳ |
 | 10 | Q5: gate en CI, simulador, testers reales, SOAK, entrega | ⏳ |

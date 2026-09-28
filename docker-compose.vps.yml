@@ -148,6 +148,9 @@ services:
       # calidad 86,4 -> 86,5 %, 0 regresiones por el acuse (HISTORY 0.29.17) -> se QUEDA ENCENDIDO.
       # Revert = quitar esta linea + redeploy.
       ACK_IN_PARALLEL: "true"
+      # l2-3 (28-sep): "escribiendo…" en el chat mientras el bot prepara la respuesta. Solo
+      # cambia lo que ve el cliente mientras espera, no lo que dice el bot. Revert = "false".
+      CHATWOOT_TYPING_INDICATOR: "true"
       # u3-4 (24-sep): contesta y sigue (ver docs/robustness/u3-4-diseno.md). A/B escalon 1:
       # +2 dialogos core pero 3 regresiones con causa -> NO promocionado, APAGADO hasta los
       # dos arreglos del doc. Para la siguiente ronda B: poner "true" + redeploy.
