@@ -227,3 +227,36 @@ def test_el_catalogo_trae_el_precio_del_refresher():
     svc = SERVICES[dom.service_ids("refresher", "cartagena")[0]]
     line = next(l for l in es.splitlines() if l.startswith("- Refresher"))
     assert money.usd_cop(svc["price_usd"], svc["price_cop"]) in line
+
+
+# ─── Paso 9 (l2-2, flag `rag_prompt_cache`) ──────────────────────────────────
+
+async def test_con_cache_el_catalogo_va_al_prompt_del_sistema(monkeypatch):
+    monkeypatch.setattr(settings, "rag_v2", True)
+    monkeypatch.setattr(settings, "rag_prompt_cache", True)
+    seen: list = []
+    judged: list = []
+
+    async def _busqueda(*a, **k):
+        return [{"content": "El curso dura 2 dias.", "score": 0.99, "metadata": {"source": "faqs"}}]
+
+    async def _same(q, history=None, lang="es"):
+        return q
+
+    async def _docs_back(docs, lang="es"):
+        return docs
+
+    async def _juez(answer, context, lang="es"):
+        judged.append(context)
+        return True, "GROUNDED"
+
+    monkeypatch.setattr(rag_agent, "search_knowledge_base", _busqueda)
+    monkeypatch.setattr(rag_agent, "_expand_with_parent_context", _docs_back)
+    monkeypatch.setattr(rag_agent, "condense_query", _same)
+    monkeypatch.setattr(rag_agent, "is_grounded", _juez)
+    monkeypatch.setattr(rag_agent, "AsyncOpenAI", _openai("El curso dura 2 días.", seen))
+    await rag_agent.rag_answer("¿cuánto dura el curso?", lang="es", extra_context="Cliente principiante.")
+    system, user = seen[0]["messages"][0]["content"], seen[0]["messages"][-1]["content"]
+    assert system.endswith(catalog_facts("es").splitlines()[-1]) or "CATÁLOGO OFICIAL" in system
+    assert "CATÁLOGO OFICIAL" not in user
+    assert judged[0].startswith("CATÁLOGO OFICIAL")

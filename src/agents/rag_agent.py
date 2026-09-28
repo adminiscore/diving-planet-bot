@@ -1230,6 +1230,7 @@ async def rag_answer(
         logger.warning(f"[RAG][PRIVACY] PII detected in query hits={pii_hits}")
         return privacy_block_message(lang)
 
+    catalog_prefix: str | None = None
     if settings.rag_v2:
         # Paso 5: el catalogo va entero al contexto (fuente de verdad de precios, duracion y
         # pernocta) y los atajos de precio por regex dejan de contestar: se disparaban con
@@ -1250,7 +1251,12 @@ async def rag_answer(
             from src.flows.catalog import catalog_booking_links  # lazy
 
             facts += "\n" + catalog_booking_links(lang)
-        extra_context = f"{extra_context}\n\n{facts}" if extra_context else facts
+        if settings.rag_prompt_cache:
+            # Paso 9 (l2-2): al prompt del sistema y a la cabeza del contexto del juez (prefijos fijos
+            # que OpenAI cachea); en el mensaje del usuario, detras del historial, nunca se cacheaba.
+            catalog_prefix = facts
+        else:
+            extra_context = f"{extra_context}\n\n{facts}" if extra_context else facts
 
     # Paso 6 (s4_fixes): el atajo de comida decia "el tour incluye almuerzo" a quien ya esta en las
     # islas (esos planes no lo incluyen); con el catalogo en el contexto lo contesta el RAG.
@@ -1362,6 +1368,8 @@ async def rag_answer(
         a list of fish species). The judge is the only thing standing between
         that and the customer."""
         system_prompt = build_system_prompt(lang, query=condensed_query)
+        if catalog_prefix:
+            system_prompt = f"{system_prompt}\n\n{catalog_prefix}"
         messages = [{"role": "system", "content": system_prompt}]
 
         # Add conversation history (settings.history_window_size messages max,
@@ -1379,6 +1387,8 @@ async def rag_answer(
         messages.append({"role": "user", "content": user_content})
 
         grounding_context = _build_grounding_context(context, extra_context=extra_context, history=history)
+        if catalog_prefix:
+            grounding_context = f"{catalog_prefix}\n\n{grounding_context}"
         # Paso 6 (s4_fixes): corregir un precio que cita el cliente ("¿son los mismos 2.215.000?" -> "el
         # precio es 2.450.000, no 2.215.000") nombra su cifra; el guard la tomaba por inventada y la
         # respuesta acababa en "no lo tengo". Sus propias cifras cuentan; el juez sigue rechazando que
@@ -1443,7 +1453,10 @@ async def rag_answer(
                 if grounded:
                     logger.info(
                         f"[RAG] Query: {query[:60]}... | Docs: {len(docs) if docs else 0} | "
-                        f"Tokens: {response.usage.total_tokens} | Sources: {context_sources or []}"
+                        f"Tokens: {response.usage.total_tokens} | "
+                        # Paso 9 (l2-2): cuanto del prompt reutilizo el caché de OpenAI.
+                        f"Cached: {getattr(getattr(response.usage, 'prompt_tokens_details', None), 'cached_tokens', 0)} | "
+                        f"Sources: {context_sources or []}"
                     )
                     return answer
                 last_reject = reason
@@ -1457,13 +1470,13 @@ async def rag_answer(
     # 1) Sin documentos del KB
     if not docs:
         logger.info(f"[RAG] No docs found query={query[:60]}...")
-        if extra_context:
+        if extra_context or catalog_prefix:
             # No hay nada util en el KB, pero si tenemos resumen de estado: dejamos que el LLM
             # razone SOLO con ese contexto en lugar de ir directo al fallback.
             # El juez de grounding es OBLIGATORIO aqui (require_grounding): sin
             # soporte del KB, el modelo responderia de su conocimiento propio.
             return await _answer_with_llm(
-                extra_context, context_sources=["extra_context_only"], require_grounding=True
+                extra_context or "", context_sources=["extra_context_only"], require_grounding=True
             )
         return FALLBACK_ES if lang == "es" else FALLBACK_EN
 
@@ -1476,12 +1489,12 @@ async def rag_answer(
             f"top_score={top_score:.3f} min_cosine={settings.rag_min_score:.3f} "
             f"min_bm25={settings.rag_min_bm25_rank:.3f} sources={sources}"
         )
-        if extra_context:
+        if extra_context or catalog_prefix:
             # Igual que en el caso sin docs: ignoramos estos resultados de baja confianza
             # y dejamos que el LLM trabaje solo con el contexto de estado, pero con
             # el juez de grounding SIEMPRE activo (ver require_grounding arriba).
             return await _answer_with_llm(
-                extra_context, context_sources=["extra_context_only"], require_grounding=True
+                extra_context or "", context_sources=["extra_context_only"], require_grounding=True
             )
         return FALLBACK_ES if lang == "es" else FALLBACK_EN
 

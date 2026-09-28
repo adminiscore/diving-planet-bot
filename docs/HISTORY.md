@@ -1,6 +1,14 @@
 History
 =======
 
+0.29.61 - (2026-09-28)
+----------------------
+* **Paso 9 (latencia, l2-2): diagnóstico de la subida de los turnos con RAG y dos arreglos.** En el paso 8 los turnos con RAG subieron p50 3,7 → 4,8 s con MENOS llamadas (5,7 → 4,9) y los mismos rechazos del juez (50 → 49): no eran regeneraciones. Casi todo es tiempo de LLM, y el cambio fue el juez: gpt-4o-mini contestaba UNA palabra y el v3 (gpt-4.1) escribía la lista de TODOS los datos de la respuesta (~150 tokens en una respuesta larga). (1) **Juez v3b** (va con `GROUNDING_V3`, ya encendido): escribe SOLO los datos sin respaldo ("- (ninguno)" si todo está bien) — mismo acierto en el banco (33/33), la mitad de salida, **1,4 → 0,9 s** por juicio en una respuesta larga. (2) **`RAG_PROMPT_CACHE`** (encendido en PRE para su ronda B): el catálogo pasa al final del prompt del SISTEMA (fijo por idioma) y a la cabeza del contexto del juez, para que el prompt caching de OpenAI lo reutilice ENTRE conversaciones (en el mensaje del usuario, detrás del historial, nunca se cacheaba). La línea `[RAG] Query` registra ahora los tokens cacheados. Suite 2777 passed.
+
+0.29.60 - (2026-09-28)
+----------------------
+* **PASO 8 CERRADO (decisión de Gadea, 28-sep):** la mejora es clara (86,6 %, 55/116 sin fallos, reales 83,2 %) y el examen oculto −1,2 puntos está dentro del ruido; no se repite la ronda. Los fallos que quedan no se repasan caso a caso (ruido ±2 diálogos, riesgo de sobreajuste, el oculto no se mira): se revisan al final del plan con una ronda nueva. **Mapa de fallos del paso 8** por causa (`docs/robustness/fallos-por-causa-2026-09-28-paso8.json`), 138 → 113: contenido del RAG 76 → 60 (inventa/contradice 25, incompleta 22, "no lo tengo" 18 → 11, cotiza sin origen/nacionalidad 7), entender datos 30 → 28 (repregunta 14, asume 9), flujo 13 → 14, escalado 14 → 10, "recordar" 5 → 1. Ninguna causa nueva grande y global. Siguiente: **paso 9 (latencia)**, empezando por la regresión medida en los turnos con RAG.
+
 0.29.59 - (2026-09-28)
 ----------------------
 * **PASO 8 · ronda de cierre `2026-09-27-paso8`** (golden COMPLETO, 116 diálogos + examen oculto, juez g-8) frente a `2026-09-27-paso3-A`: **criterios 83,6 → 86,6 %, diálogos sin fallos 38 → 55 de 116**. Sintéticos 93,0 → **96,7 %** (27 → 35/43), reales 78,6 → **83,2 %** (4 → 9/52), **examen oculto 77,6 → 76,4 %** (1 → 4/21 diálogos sin fallos). 85 criterios mejoran y 43 empeoran. **Criterio del paso 8:** mejor que la A en reales ✅; examen oculto ≥ 77,6 % ❌ por 1,2 puntos (dentro del ruido del juez, ±2-3), aunque con más diálogos sin fallos. Decisión de cierre: de Gadea.

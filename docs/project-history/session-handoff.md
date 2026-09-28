@@ -13,7 +13,7 @@ Read this file before changing code in the Diving Planet Bot. For a quick versio
 
 > **📏 LEER ANTES DE MEDIR — decisiones del 24-sep-2026 (Gadea):** (1) latencia y llamadas con nuestros logs `[TURN_METRICS]` + `scripts/turn_metrics.py`, no con Langfuse (plan gratuito superado, reinicio 16-oct); (2) pruebas A/B por escalones, juzgando solo los diálogos que cambian. Todo en `docs/robustness/protocolo-medicion.md`.
 
-### 🟡 28-sep (Gadea) — PASO 8 MEDIDO: mejora clara salvo el examen oculto (76,4 % vs 77,6 %). Decisión de cierre pendiente
+### ✅ 28-sep (Gadea) — PASO 8 CERRADO (decisión de Gadea: mejora clara; el oculto −1,2 está en el ruido). Siguiente: PASO 9 (latencia)
 
 `2026-09-27-paso8` frente a `paso3-A` (HISTORY 0.29.57-0.29.59): criterios 83,6 → 86,6 %, diálogos sin fallos 38 → 55/116;
 sintéticos 96,7 %, reales 83,2 % (✅ mejor que la A), **examen oculto 76,4 %** (−1,2 puntos, dentro del ruido; 1 → 4/21

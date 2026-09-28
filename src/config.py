@@ -144,6 +144,10 @@ class Settings(BaseSettings):
     # 30 años", "debes haber completado la teoría", "hay barcos hundidos"); +0,25 s de mediana. APAGADO.
     grounding_v3: bool = False
     grounding_v3_model: str = "gpt-4.1"
+    # Paso 9 (l2-2, 28-sep): el catalogo va al final del prompt del SISTEMA (fijo por idioma) y el primero en
+    # el contexto del juez, para que el prompt caching de OpenAI lo reutilice entre conversaciones (antes iba
+    # en el mensaje del usuario, detras del historial: nunca se cacheaba). APAGADO por defecto.
+    rag_prompt_cache: bool = False
 
     # Paso 6 (27-sep): respuestas fijas y salida deterministas de S4. s4-14: si piden un telefono se
     # da el WhatsApp oficial (decision de Gadea; antes "no manejo un numero"); s4-15: "¿eres un bot?"
