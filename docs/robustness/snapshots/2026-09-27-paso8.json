@@ -1,0 +1,301 @@
+{
+ "label": "paso8",
+ "source": "turn_metrics (log de PRE)",
+ "taken_at": "2026-09-28T00:37:40+00:00",
+ "run_at": "2026-09-28T00:37:00Z",
+ "commit": "fea1dc7",
+ "environment": "staging",
+ "window": {
+  "from": "2026-09-27T23:13:39Z",
+  "to": "2026-09-28T00:39:08Z",
+  "first_turn": "2026-09-27T23:18:30Z",
+  "last_turn": "2026-09-28T00:37:00Z"
+ },
+ "all": {
+  "turns": 465,
+  "latency_p50": 2.599,
+  "latency_p95": 7.388,
+  "latency_avg": 3.278,
+  "llm_calls_avg": 3.5,
+  "llm_calls_p95": 6.0,
+  "llm_calls_max": 9,
+  "embeddings_avg": 0.48,
+  "llm_share": 0.971,
+  "tokens_avg": 0,
+  "cost_avg_usd": 0
+ },
+ "by_type": {
+  "reserva": {
+   "turns": 257,
+   "latency_p50": 1.405,
+   "latency_p95": 2.954,
+   "latency_avg": 1.713,
+   "llm_calls_avg": 2.34,
+   "llm_calls_p95": 4.0,
+   "llm_calls_max": 6,
+   "embeddings_avg": 0,
+   "llm_share": 0.957,
+   "tokens_avg": 0,
+   "cost_avg_usd": 0
+  },
+  "rag": {
+   "turns": 208,
+   "latency_p50": 4.846,
+   "latency_p95": 7.996,
+   "latency_avg": 5.211,
+   "llm_calls_avg": 4.93,
+   "llm_calls_p95": 7.0,
+   "llm_calls_max": 9,
+   "embeddings_avg": 1.08,
+   "llm_share": 0.977,
+   "tokens_avg": 0,
+   "cost_avg_usd": 0
+  }
+ },
+ "by_turn_type": {
+  "cambios": {
+   "turns": 3,
+   "latency_p50": 1.263,
+   "latency_p95": 1.502,
+   "latency_avg": 1.089,
+   "llm_calls_avg": 0.67,
+   "llm_calls_p95": 1.0,
+   "llm_calls_max": 1,
+   "embeddings_avg": 0,
+   "llm_share": 0.516,
+   "tokens_avg": 0,
+   "cost_avg_usd": 0
+  },
+  "deflection": {
+   "turns": 2,
+   "latency_p50": 0.521,
+   "latency_p95": 0.572,
+   "latency_avg": 0.521,
+   "llm_calls_avg": 0.0,
+   "llm_calls_p95": 0.0,
+   "llm_calls_max": 0,
+   "embeddings_avg": 0,
+   "llm_share": 0.0,
+   "tokens_avg": 0,
+   "cost_avg_usd": 0
+  },
+  "escalado": {
+   "turns": 17,
+   "latency_p50": 0.504,
+   "latency_p95": 0.721,
+   "latency_avg": 0.558,
+   "llm_calls_avg": 0.06,
+   "llm_calls_p95": 0.2,
+   "llm_calls_max": 1,
+   "embeddings_avg": 0,
+   "llm_share": 0.097,
+   "tokens_avg": 0,
+   "cost_avg_usd": 0
+  },
+  "info": {
+   "turns": 1,
+   "latency_p50": 0.489,
+   "latency_p95": 0.489,
+   "latency_avg": 0.489,
+   "llm_calls_avg": 0.0,
+   "llm_calls_p95": 0.0,
+   "llm_calls_max": 0,
+   "embeddings_avg": 0,
+   "llm_share": 0.0,
+   "tokens_avg": 0,
+   "cost_avg_usd": 0
+  },
+  "rag": {
+   "turns": 208,
+   "latency_p50": 4.846,
+   "latency_p95": 7.996,
+   "latency_avg": 5.211,
+   "llm_calls_avg": 4.93,
+   "llm_calls_p95": 7.0,
+   "llm_calls_max": 9,
+   "embeddings_avg": 1.08,
+   "llm_share": 0.977,
+   "tokens_avg": 0,
+   "cost_avg_usd": 0
+  },
+  "reserva": {
+   "turns": 218,
+   "latency_p50": 1.493,
+   "latency_p95": 3.0,
+   "latency_avg": 1.886,
+   "llm_calls_avg": 2.72,
+   "llm_calls_p95": 4.0,
+   "llm_calls_max": 6,
+   "embeddings_avg": 0,
+   "llm_share": 1.009,
+   "tokens_avg": 0,
+   "cost_avg_usd": 0
+  },
+  "saludo": {
+   "turns": 16,
+   "latency_p50": 0.572,
+   "latency_p95": 1.907,
+   "latency_avg": 0.932,
+   "llm_calls_avg": 0.38,
+   "llm_calls_p95": 1.0,
+   "llm_calls_max": 1,
+   "embeddings_avg": 0,
+   "llm_share": 0.245,
+   "tokens_avg": 0,
+   "cost_avg_usd": 0
+  }
+ },
+ "turns_with_summary": 465,
+ "business": {
+  "conversations": 116,
+  "turns": 465,
+  "turns_per_conversation": 4.01,
+  "funnel": {
+   "hablan": {
+    "conversations": 116,
+    "pct": 100.0
+   },
+   "eligen_actividad": {
+    "conversations": 11,
+    "pct": 9.5
+   },
+   "carrito_con_personas": {
+    "conversations": 11,
+    "pct": 9.5
+   },
+   "link_de_pago": {
+    "conversations": 32,
+    "pct": 27.6
+   }
+  },
+  "escalation_rate_pct": 13.8,
+  "fallback_turns": 31,
+  "fallback_pct_of_turns": 6.7,
+  "by_turn_type": {
+   "reserva": 218,
+   "rag": 208,
+   "escalado": 17,
+   "saludo": 16,
+   "cambios": 3,
+   "deflection": 2,
+   "info": 1
+  }
+ },
+ "nodes": {
+  "info": {
+   "n": 8,
+   "p50": 3.393,
+   "p95": 6.643
+  },
+  "booking": {
+   "n": 434,
+   "p50": 1.796,
+   "p95": 6.804
+  },
+  "slotfill_close": {
+   "n": 420,
+   "p50": 0.697,
+   "p95": 6.171
+  },
+  "extraction": {
+   "n": 429,
+   "p50": 0.679,
+   "p95": 1.675
+  },
+  "router": {
+   "n": 465,
+   "p50": 0.494,
+   "p95": 1.623
+  },
+  "setup": {
+   "n": 434,
+   "p50": 0.038,
+   "p95": 0.066
+  },
+  "routing": {
+   "n": 430,
+   "p50": 0.01,
+   "p95": 0.018
+  },
+  "availability": {
+   "n": 434,
+   "p50": 0.006,
+   "p95": 0.013
+  },
+  "changes": {
+   "n": 4,
+   "p50": 0.004,
+   "p95": 3.127
+  },
+  "safety": {
+   "n": 17,
+   "p50": 0.003,
+   "p95": 0.003
+  },
+  "deflection": {
+   "n": 2,
+   "p50": 0.002,
+   "p95": 0.003
+  }
+ },
+ "router": {
+  "by_backend": {
+   "jev": 424,
+   "llm_uncertain": 39,
+   "llm": 1,
+   "llm_fallback": 1
+  },
+  "ms_p50": 484.0,
+  "ms_p95": 585.85
+ },
+ "models": {
+  "gpt-4o-mini": 1119,
+  "gpt-4.1-mini": 256,
+  "gpt-4.1": 251
+ },
+ "run_file": "docs/robustness/synthetic-runs/2026-09-27-paso8.jsonl",
+ "client_latency": {
+  "turns": 465,
+  "conversations": 116,
+  "no_reply": 0,
+  "multi_bubble": 1,
+  "latency_p50": 3.0,
+  "latency_p95": 8.0,
+  "latency_max": 34
+ },
+ "quality": {
+  "results_file": "docs/robustness/golden-set/results/2026-09-27-paso8__gpt-5-mini-medium.json",
+  "model": "gpt-5-mini (medium)",
+  "dialogues": 116,
+  "dialogues_passed": 55,
+  "dialogues_pass_pct": 47.4,
+  "criteria_judged": 846,
+  "criteria_failed": 113,
+  "criteria_pass_pct": 86.6,
+  "not_applicable": 75,
+  "to_review": 17,
+  "errors": 0,
+  "by_category": {
+   "adaptado": 85.7,
+   "cambios": 100.0,
+   "correccion": 93.3,
+   "curso": 81.7,
+   "deflection": 94.4,
+   "descuentos": 92.6,
+   "edades": 100.0,
+   "escalado": 96.4,
+   "grupo": 84.2,
+   "idioma": 100.0,
+   "info": 84.3,
+   "logistica": 82.0,
+   "nacionalidad": 88.4,
+   "pago": 63.6,
+   "post-venta": 89.8,
+   "refresher": 72.4,
+   "reserva": 88.5,
+   "saludo": 100.0,
+   "seguridad": 100.0,
+   "tras-link": 76.5
+  }
+ }
+}

@@ -217,3 +217,13 @@ async def test_el_juez_v3_usa_su_prompt_y_modelo(monkeypatch):
     assert not grounded and "30 años" in reason
     assert seen[0]["messages"][0]["content"] == grounding_check.GROUNDING_VERIFY_V3_ES
     assert seen[0]["model"] == settings.grounding_v3_model
+
+
+def test_el_catalogo_trae_el_precio_del_refresher():
+    """Paso 8 (28-sep): sin el atajo del refresher el RAG decía que no estaba listado."""
+    from src.domain import activities as dom
+
+    es = catalog_facts("es")
+    svc = SERVICES[dom.service_ids("refresher", "cartagena")[0]]
+    line = next(l for l in es.splitlines() if l.startswith("- Refresher"))
+    assert money.usd_cop(svc["price_usd"], svc["price_cop"]) in line

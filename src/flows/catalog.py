@@ -411,6 +411,20 @@ def catalog_facts(lang: str) -> str:
         if svc.get("min_age") and svc["min_age"] != 10:
             parts.append(f"edad mínima {svc['min_age']}" if es else f"minimum age {svc['min_age']}")
         groups[island].append(f"- {name}: " + "; ".join(parts) + ".")
+    # El refresher se vende con el servicio que le da el registro de actividades (hoy el minicurso). Paso 8
+    # (28-sep): sin el atajo fijo del refresher, el RAG decia "el refresh no esta listado con precio".
+    for location, target in (("cartagena", False), ("island", True)):
+        ids = dom.service_ids("refresher", location)
+        svc = SERVICES.get(ids[0], {}) if ids else {}
+        if svc.get("price_usd") is not None:
+            price = money.usd_cop(svc.get("price_usd"), svc.get("price_cop"))
+            groups[target].append(
+                f"- Refresher (repaso para certificados con más de 2 años sin bucear; se reserva como "
+                f"'{svc.get('name_es')}'): {price} online."
+                if es else
+                f"- Refresher (review for certified divers with more than 2 years without diving; booked as "
+                f"'{svc.get('name_en')}'): {price} online."
+            )
     comp = COMPANION_PRICE
     companion = money.usd_cop(comp["usd_online"], comp["cop_online"])
     companion_normal = money.usd_cop(comp["usd_normal"], comp["cop_normal"])
