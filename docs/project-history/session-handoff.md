@@ -13,32 +13,58 @@ Read this file before changing code in the Diving Planet Bot. For a quick versio
 
 > **📏 LEER ANTES DE MEDIR — decisiones del 24-sep-2026 (Gadea):** (1) latencia y llamadas con nuestros logs `[TURN_METRICS]` + `scripts/turn_metrics.py`, no con Langfuse (plan gratuito superado, reinicio 16-oct); (2) pruebas A/B por escalones, juzgando solo los diálogos que cambian. Todo en `docs/robustness/protocolo-medicion.md`.
 
-### ✅ 28-sep noche (Álvaro) — `RAG_REGEN_FEEDBACK` PROMOCIONADO. Siguiente: falso rechazo del precio en COP
+### ▶️ RETOMAR AQUÍ — cierre del 28-sep noche (Álvaro). Rama `feature/pre_alvaro`, PRE = esta rama
 
-Crédito de OpenAI recargado; PRE sano. `RAG_REGEN_FEEDBACK` (HISTORY 0.29.68): cuando el juez rechaza, la segunda
-muestra sabe qué quitar; "no lo tengo" 12 → 2 en los casos difíciles y core 93,0 → 93,3 % sin regresiones del flag.
-`RAG_CONCISE` sigue apagado (aparcado, HISTORY 0.29.67). **Siguiente, en orden:** (1) el juez rechaza el precio
-correcto del paquete de 5 buceos en COP (`paquete-5-buceos-cop-refresh-y-hoteles` t2, las 3 rondas del 28-sep):
-reproducir con el contexto que ve el juez; (2) huecos de contexto vistos: punto de encuentro en inglés, descuento de
-grupo, "how do i pay" en inglés; (3) luego conversaciones reales. Rondas del día: `2026-09-28-regen-A/B/B2`.
+**Cómo está todo.** `feature/pre_alvaro` contiene todo lo de Gadea (`4c4f0f1`, pasos 9 y 10) + lo de hoy, y es lo
+que sirve PRE (`python -m scripts.check_deploy` en verde, 26 ajustes del compose = PRE). Suite 2800 passed (modo
+normal y `AGENT_ARCH_SHADOW`), ruff limpio. Trabajo SECUENCIAL (PARTE 8 del plan maestro): se cierra lo pendiente
+antes de avanzar. Estamos en el bloque **"RAG, calidad y latencia"** del orden de Gadea (tras los pasos 9 y 10).
 
-### ⚠️ 28-sep tarde (Álvaro) — SUPERADO (crédito recargado) — OpenAI SIN CRÉDITO: PRE no contesta. `RAG_CONCISE` a medias (apagado)
+**Hecho hoy (HISTORY 0.29.65-0.29.69), en orden:**
 
-1. **Recargar crédito en OpenAI** (platform.openai.com → Billing). Hasta entonces PRE falla en todas las llamadas
-   (`429 insufficient_quota`) y ninguna medida vale.
-2. **Respuestas más cortas** (`RAG_CONCISE`, apagado; HISTORY 0.29.67): escalón 0 hecho con 3 variantes. Con tope de
-   longitud se ahorra ~1 s pero el bot comprime e inventa huecos (más "no lo tengo"); la variante suave (la del
-   código) no empeora pero ahorra ~0,3 s. **Decidir** si merece su ronda A/B (~1 h, ~0,6 $) o se pasa a "contexto
-   por servicio" (el cabo suelto de "how do i pay" en inglés va ahí). Scripts del escalón 0: ver HISTORY 0.29.67.
+| # | Qué | Estado | Dónde |
+|---|---|---|---|
+| 1 | l2-3 "escribiendo…" en Chatwoot mientras el bot prepara la respuesta | ✅ encendido (`CHATWOOT_TYPING_INDICATOR`) | `src/channels/chatwoot.py` `set_typing()`, 0.29.65 |
+| 2 | Juez de grounding con modelo más rápido (gpt-4.1-mini / gpt-4o-mini) | ❌ descartado: 48/70 y 37/70 frente a 70/70, no más rápidos | `scripts/sonda_juez_grounding.py`, 0.29.66 |
+| 3 | Respuestas más cortas (`RAG_CONCISE`) | ⏸️ APAGADO, aparcado: con tope ahorra ~1 s pero inventa huecos; la variante suave (en el código) no empeora pero ahorra ~0,3 s | `src/prompts/info.py`, 0.29.67 |
+| 4 | La regeneración del RAG sabe qué rechazó el juez (`RAG_REGEN_FEEDBACK`) | ✅ PROMOCIONADO: "no lo tengo" 12 → 2 en casos difíciles; core `regen-A` 93,0 % → `regen-B2` 93,3 %, 21 → 22/32 | `rag_agent.regen_feedback()`, 0.29.68 |
+| 5 | Herramienta del escalón 0 del RAG dentro de PRE | ✅ en el repo | `scripts/sonda_rag_turnos_pre.py`, 0.29.69 |
 
-### ✅ 28-sep noche (Álvaro) — l2-3 "escribiendo…" HECHA. Siguiente: juez de grounding con gpt-4.1-mini en el banco
+**Siguiente, en orden (no saltarse pasos):**
+1. **Falso rechazo del precio en COP del paquete de 5 buceos.** En `paquete-5-buceos-cop-refresh-y-hoteles` turno 2
+   ("Gracias - y en pesos? Para colombianos?") el juez rechaza "1.429.000 COP online / 1.587.000 COP normal", que está
+   en el catálogo, en las 3 rondas del 28-sep → el cliente recibe "no lo tengo". **Pista:** repetido con
+   `scripts/sonda_rag_turnos_pre.py` (que llama a `rag_answer` SIN el resumen del estado) el juez lo acepta 2 de 2;
+   en la conversación real `conversational_core._rag_answer` pasa `extra_context = supervisor._build_extra_context(state)`.
+   Mirar qué dice ese contexto en ese turno (¿origen "islas"? ¿nacionalidad?) y si el juez lo usa para rechazar.
+   Arreglo general, no del caso; medir con escalón 0 + ronda core A/B.
+2. **Huecos de contexto vistos (mismo bloque):** punto de encuentro y "how do i pay" cuando preguntan en INGLÉS (la
+   búsqueda no trae el dato y el modelo lo rellena), descuento de grupo (5+ personas) que no llega al contexto.
+3. Después, según el orden de Gadea: **conversaciones reales** (cliente o equipo) como examen fresco; luego R6 y Q5.
+   `RAG_CONCISE`: solo si se vuelve a priorizar la latencia (su ronda A/B no se hizo).
 
-Primer paso de "RAG calidad + latencia" (orden de Gadea). Una pregunta con RAG tarda ~4 s (búsqueda ~0,4 s, respuesta
-gpt-4.1-mini ~1,9 s, juez gpt-4.1 ~1,2 s; un rechazo lo duplica). Ahora el cliente ve "escribiendo…" mientras tanto:
-`set_typing()` en `src/channels/chatwoot.py`, flag `CHATWOOT_TYPING_INDICATOR` (encendido en PRE; revert = "false").
-Nunca rompe el turno si Chatwoot falla. No cambia las respuestas → sin ronda de calidad. HISTORY 0.29.65.
-**Siguiente, en orden:** (1) ~~juez de grounding con gpt-4.1-mini~~ **descartado** (HISTORY 0.29.66: 48/70 frente a
-70/70 y no más rápido); (2) respuestas más cortas solo si la ronda core no empeora; (3) contexto por servicio (mapa del paso 8).
+**Cómo medir (protocolo `docs/robustness/protocolo-medicion.md`), lo que se usó hoy:**
+- Escalón 0 dentro de PRE, sin desplegar nada nuevo para los clientes (el flag solo cambia en ese proceso):
+  `python -m scripts.sonda_rag_turnos_pre --run <ronda>.jsonl --turns "etiqueta#turno,..." --flag <setting> --reps 2`
+  (o `--from-log <logs de PRE de la ronda>` para todos los turnos del RAG; `--dry` para ver los casos sin gastar).
+  Salta siempre el examen oculto. Ojo: no pasa el `extra_context` del estado.
+- Escalón 1: `ENV_FILE=.env.dev python -m scripts.run_synthetic_pre --name X-A --sample core` (~20 min) → foto
+  `python -m scripts.turn_metrics --from-run ... --out docs/robustness/snapshots/...` **antes del siguiente deploy** →
+  juez `python -m scripts.judge_golden_set --run ... --snapshot ...` (~30 min, ~0,4 $, cada juez en su proceso) →
+  push con el flag encendido (config.py Y compose, `test_flags_pinned`) → `check_deploy` → ronda B igual →
+  `python docs/robustness/golden-set/compare_rounds.py <A> <B> --raw` → **leer a mano** lo que empeora; mirar en los
+  logs de PRE (`[RAG][GROUNDING] attempt 1 rejected`) si el cambio actuó en ese turno.
+
+**Riesgos y avisos aprendidos hoy:**
+- **OpenAI: una sola cuenta para PRE y para las pruebas.** El 28-sep se quedó sin crédito a mitad de una prueba y PRE
+  dejó de contestar a todos. Antes de un bucle largo, estimar el coste (≈0,025 $ por respuesta del RAG con contexto
+  real; una ronda core + juez ≈ 0,8 $). Si las dos ramas de un A/B empeoran a la vez, mirar si hay `429 insufficient_quota`.
+- **El deploy de CI recarga la base de conocimiento (`load_embeddings`) y eso llama a OpenAI:** sin crédito, el
+  contenedor se reconstruye pero CI sale en rojo. `load_embeddings` calcula antes de borrar, así que la base no se
+  vacía (718 documentos). Si pasa: recargar crédito y repetir el deploy (o `load_embeddings --yes` en el contenedor).
+- **Plan Coral:** la página es de otra organización; los cambios de hoy están en la cola
+  `docs/tracking/data/plan-coral-cambios-pendientes.json` (entradas `l-0928-alvaro-*` y `l2-3`), pendientes de que
+  alguien con acceso los aplique. No editar `plan-coral.json` (es la copia exportada).
 
 ### ✅ 28-sep noche (Gadea) — PASO 9 (l2-2) y PASO 10 (limpieza segura) HECHOS. Siguiente: RAG calidad + latencia
 

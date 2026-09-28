@@ -1,6 +1,12 @@
 History
 =======
 
+0.29.69 - (2026-09-28)
+----------------------
+* **Cierre de la sesión (Álvaro) para el relevo.** Nueva herramienta `scripts/sonda_rag_turnos_pre.py` (la que se usó en 0.29.67-0.29.68, antes en scripts sueltos): repite dentro de PRE turnos reales de una ronda con su historial, con un flag apagado y encendido, y guarda cada rechazo del juez con su motivo; salta siempre el examen oculto; `--dry` para ver casos y coste sin gastar. Tests `tests/test_sonda_rag_turnos_pre.py`. Suite 2800 passed (normal y `AGENT_ARCH_SHADOW`).
+* Primera pista del siguiente paso: el falso rechazo del precio en COP del paquete de 5 buceos NO se reproduce sin el resumen del estado (`extra_context`): 2 de 2 aceptados → mirar ese contexto en el turno real.
+* Aviso de operación: el deploy de CI recarga la base de conocimiento con OpenAI; sin crédito sale en rojo aunque el contenedor se reconstruya (la base no se vacía: se calcula antes de borrar). Handoff reescrito en un único bloque "RETOMAR AQUÍ".
+
 0.29.68 - (2026-09-28)
 ----------------------
 * **`RAG_REGEN_FEEDBACK` PROMOCIONADO: la segunda muestra del RAG sabe qué rechazó el juez.** Diagnóstico (sin mirar el examen oculto): de los 74 fallos visibles del mapa del paso 8, 40 son de contenido del RAG. Reproducidos en PRE los 16 turnos visibles que acabaron en "no lo tengo" (×2): los de precios en COP ya no pasan (pasos 9-10); los 12 que quedan son el modelo **repitiendo el mismo invento** en la regeneración, porque se le repetía la misma petición ("llevamos 30 años" 2 de 2, "cada inmersión dura 40-50 min", "el punto de encuentro suele ser el centro"). Con el flag, la segunda llamada lleva la respuesta rechazada + la lista de datos sin respaldo (o el motivo del guard), con la orden de quitarlos, no mencionarlos salvo que fueran justo lo preguntado (y entonces ofrecer que un asesor lo confirme). El juez sigue juzgando la segunda.

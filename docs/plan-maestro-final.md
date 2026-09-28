@@ -452,6 +452,14 @@ medias (u3-1 ✅, u3-4 ✅ promocionada, u3-5 🟡); PRE con u3-4 encendido. Sui
 | **11** | R6: robustez de producción | r6-2 (guardrails), g-5 (carga) | el bot nunca deja sin respuesta; inyección medida; p95 con N clientes a la vez |
 | **12** | Q5: calidad continua y entrega | q5-1, g-3, g-4, g-4b, g-6, m0-4, q5-2 | gate en CI; simulador; bucle producción → golden; testers reales; SOAK; entrega |
 
+> **Estado al 28-sep noche (Álvaro), dentro de (3) "RAG, calidad y latencia":** l2-3 "escribiendo…" hecho y
+> encendido; juez de grounding con modelo más rápido descartado; respuestas cortas (`RAG_CONCISE`) aparcadas y
+> apagadas; `RAG_REGEN_FEEDBACK` promocionado ("no lo tengo" 12 → 2 en los casos difíciles del paso 8, core 93,0 →
+> 93,3 %). **Siguiente:** el falso rechazo del precio en COP del paquete de 5 buceos (pista: el resumen del estado que
+> recibe el RAG), luego los huecos de contexto en inglés (punto de encuentro, cómo pagar) y el descuento de grupo;
+> después (4) conversaciones reales. Detalle y comandos: `session-handoff.md` (bloque "RETOMAR AQUÍ"), HISTORY
+> 0.29.65-0.29.69.
+
 > **Reordenado el 28-sep (Gadea), tras el paso 8.** Orden vigente de lo que queda: **(1)** cerrar l2-2 (caché del
 > prompt, ronda B en curso); **(2) paso 10 · limpieza** (flags promocionados a código, sin cascada legacy, módulos
 > partidos) ANTES de volver a tocar el RAG, que hoy tiene 9 flags vivos; **(3) RAG, calidad y latencia juntas**:
