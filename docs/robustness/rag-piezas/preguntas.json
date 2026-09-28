@@ -1,0 +1,1347 @@
+{
+  "about": "rag-1 (Plan Coral, fase RAG): preguntas VISIBLES para medir el RAG por piezas (búsqueda, redacción, juez). Nunca del examen oculto. Cada caso: pregunta del cliente, estado que el bot ya conoce (va a _build_extra_context como en una conversación real), historial opcional, los datos que la respuesta NECESITA y lo que NO debe decir. 'anclas' = textos que prueban que el dato está en el contexto (se normalizan: minúsculas, sin tildes, sin separadores de miles; ' + ' = todas las partes); 'opcional' = dato útil que el cliente no pidió (se informa aparte, no cuenta en la cobertura); 'calculo' = dato que la respuesta debe calcular (no cuenta para la búsqueda). La verdad sale de data/knowledge_base y del catálogo (src/flows/catalog.py), no de las respuestas del bot.",
+  "version": 2,
+  "creado": "2026-09-29",
+  "casos": [
+    {
+      "id": "ow-precio-colombianos-mito",
+      "origen": "golden:open-water-precio-para-colombianos-corrige-mito#2",
+      "lang": "es",
+      "pregunta": "Estoy interesada en el curso básico de buceo. Según la página tienen un precio especial para colombianos. Me podrían dar el costo por favor",
+      "estado": {
+        "is_colombian": true
+      },
+      "necesita": [
+        {
+          "id": "precio-cop",
+          "hecho": "El curso Open Water desde Cartagena cuesta 2.450.000 COP online.",
+          "anclas": [
+            "2450000"
+          ]
+        },
+        {
+          "id": "sin-precio-especial",
+          "hecho": "No hay un precio especial por ser colombiano: el precio es el mismo, solo cambia la moneda (COP).",
+          "anclas": [
+            "solo cambia la moneda",
+            "no hay un descuento especial",
+            "no hay un precio distinto"
+          ]
+        }
+      ],
+      "no_debe": [
+        "Existe un descuento o precio especial para colombianos."
+      ]
+    },
+    {
+      "id": "ow-transporte-incluido",
+      "origen": "golden:curso-open-water-transporte-y-regreso-otro-dia#1",
+      "lang": "en",
+      "pregunta": "Hi, my understanding is that the transportation to Rosario is included in case I decide to do the PADI Open Water Diver course, correct?",
+      "estado": {},
+      "necesita": [
+        {
+          "id": "lancha-incluida",
+          "hecho": "The speedboat transport Cartagena-Islands-Cartagena is included in the Open Water course.",
+          "anclas": [
+            "speedboat transport cartagena-islands-cartagena",
+            "boat cartagena-islands-cartagena included",
+            "lancha cartagena-islas-cartagena incluida"
+          ]
+        },
+        {
+          "id": "transporte-terrestre-no",
+          "hecho": "Ground transportation to the dock is not included.",
+          "anclas": [
+            "ground transportation to the dock"
+          ],
+          "opcional": true
+        }
+      ]
+    },
+    {
+      "id": "ow-regreso-otro-dia",
+      "origen": "golden:curso-open-water-transporte-y-regreso-otro-dia#2",
+      "lang": "en",
+      "pregunta": "What if I decide to stay one day longer in Rosario after the course, can you provide the transfer back to Cartagena?",
+      "estado": {
+        "selected_service": "open_water"
+      },
+      "necesita": [
+        {
+          "id": "regreso-otra-fecha-no-incluido",
+          "hecho": "Returning to Cartagena on a different date from the plan is not included.",
+          "anclas": [
+            "different date from the plan is not included",
+            "return on a different date"
+          ]
+        },
+        {
+          "id": "lo-coordina-equipo",
+          "hecho": "If they want to come back with Diving Planet another day, a member of the team arranges it (space on the boat).",
+          "anclas": [
+            "a member of our team arranges it"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "punto-encuentro-en",
+      "origen": "golden:curso-open-water-transporte-y-regreso-otro-dia#3",
+      "lang": "en",
+      "pregunta": "Another question, where is the meeting point in Cartagena?",
+      "estado": {
+        "location": "cartagena"
+      },
+      "necesita": [
+        {
+          "id": "bodeguita",
+          "hecho": "The meeting point is Muelle de la Bodeguita.",
+          "anclas": [
+            "bodeguita"
+          ]
+        },
+        {
+          "id": "hora-8",
+          "hecho": "The meeting time is 8:00 a.m.",
+          "anclas": [
+            "8:00 a.m",
+            "8:00 am"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "paquete5-cop-colombiano",
+      "origen": "golden:paquete-5-buceos-cop-refresh-y-hoteles#2",
+      "lang": "es",
+      "pregunta": "Quiero hacer el paquete de 5 buceos. ¿Cuál es el costo en pesos para colombianos por favor?",
+      "estado": {
+        "is_colombian": true,
+        "is_certified": true,
+        "location": "cartagena"
+      },
+      "necesita": [
+        {
+          "id": "precio-cop",
+          "hecho": "El paquete de 5 inmersiones desde Cartagena cuesta 1.429.000 COP online.",
+          "anclas": [
+            "1429000"
+          ]
+        },
+        {
+          "id": "pernocta",
+          "hecho": "Son 2 días e incluye un buceo nocturno; hay que dormir en las islas (alojamiento no incluido).",
+          "anclas": [
+            "hay que dormir en las islas",
+            "requieren alojamiento en las islas"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "refresh-menos-2-anos",
+      "origen": "golden:paquete-5-buceos-cop-refresh-y-hoteles#3",
+      "lang": "es",
+      "pregunta": "Yo completé el curso básico el 3 de abril de 2025. ¿Tengo que hacer algo especial antes de bucear?",
+      "estado": {
+        "is_certified": true
+      },
+      "necesita": [
+        {
+          "id": "refresh-regla-2-anos",
+          "hecho": "El refresh se recomienda solo si han pasado más de 2 años sin bucear (aquí no han pasado).",
+          "anclas": [
+            "mas de 2 anos"
+          ]
+        },
+        {
+          "id": "carne",
+          "hecho": "Para bucear certificado hay que presentar el carné de buzo (foto antes o mostrarlo el día).",
+          "anclas": [
+            "carne de buzo",
+            "foto del carne"
+          ],
+          "opcional": true
+        }
+      ],
+      "no_debe": [
+        "Necesita hacer un refresh por haber pasado más de un año."
+      ]
+    },
+    {
+      "id": "hoteles-base",
+      "origen": "golden:paquete-5-buceos-cop-refresh-y-hoteles#4",
+      "lang": "es",
+      "pregunta": "¿Y me recuerdas los hoteles por favor?",
+      "historial": [
+        {
+          "role": "user",
+          "content": "Quiero hacer el paquete de 5 buceos desde Cartagena."
+        },
+        {
+          "role": "assistant",
+          "content": "¡Genial! El paquete de 5 inmersiones son 2 días y hay que dormir una noche en las islas. ¿Te ayudo con algo más?"
+        }
+      ],
+      "estado": {
+        "is_certified": true,
+        "location": "cartagena",
+        "selected_service": "5_dives_2_days"
+      },
+      "necesita": [
+        {
+          "id": "majagua",
+          "hecho": "Nuestra base está en el Hotel San Pedro de Majagua (Isla Grande).",
+          "anclas": [
+            "majagua"
+          ]
+        },
+        {
+          "id": "cocoliso",
+          "hecho": "También el Hotel Cocoliso (Isla Grande).",
+          "anclas": [
+            "cocoliso"
+          ]
+        },
+        {
+          "id": "alojamiento-no-incluido",
+          "hecho": "El alojamiento no está incluido: se reserva directamente con el hotel.",
+          "anclas": [
+            "alojamiento no esta incluido",
+            "alojamiento no incluido"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "residente-cop",
+      "origen": "golden:paquete-5-buceos-islas-residente-sin-recogida#3",
+      "lang": "es",
+      "pregunta": "Hola, para residentes en Colombia (llevo 3 años) no aplica el precio de colombianos o sí?",
+      "estado": {},
+      "necesita": [
+        {
+          "id": "residente-cedula-cop",
+          "hecho": "Los extranjeros que residen en Colombia con cédula de extranjería pagan en pesos (COP).",
+          "anclas": [
+            "cedula de extranjeria",
+            "extranjeros que residen"
+          ]
+        },
+        {
+          "id": "solo-moneda",
+          "hecho": "El precio es el mismo; solo cambia la moneda.",
+          "anclas": [
+            "solo cambia la moneda",
+            "no hay un descuento especial",
+            "no hay un precio distinto"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "recogida-islas-cocoliso",
+      "origen": "golden:paquete-5-buceos-islas-residente-sin-recogida#5",
+      "lang": "es",
+      "pregunta": "Estoy en el Cocoliso, ¿me recogen en el hotel o cómo llego a la base?",
+      "estado": {
+        "location": "island",
+        "hotel": "Cocoliso",
+        "is_certified": true
+      },
+      "necesita": [
+        {
+          "id": "recogida-sin-cargo",
+          "hecho": "Si ya está en las islas y el hotel tiene acceso marítimo, la recogida y el regreso en lancha están incluidos sin cargo.",
+          "anclas": [
+            "sin cargo adicional",
+            "acceso maritimo"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "snorkel-incluye",
+      "origen": "golden:snorkel-precio-residente-y-pago-link#4",
+      "lang": "es",
+      "pregunta": "¿Y qué incluye el tour de snorkel?",
+      "historial": [
+        {
+          "role": "user",
+          "content": "cupo para snorkeling para dos personas el sábado?"
+        },
+        {
+          "role": "assistant",
+          "content": "¡Claro! Salimos todos los días. ¿Saldrían desde Cartagena?"
+        },
+        {
+          "role": "user",
+          "content": "sí desde Cartagena"
+        }
+      ],
+      "estado": {
+        "location": "cartagena",
+        "selected_service": "snorkeling"
+      },
+      "necesita": [
+        {
+          "id": "lancha",
+          "hecho": "Incluye el transporte en lancha Cartagena-Islas-Cartagena.",
+          "anclas": [
+            "lancha cartagena-islas-cartagena",
+            "transporte en lancha"
+          ]
+        },
+        {
+          "id": "almuerzo",
+          "hecho": "Incluye almuerzo.",
+          "anclas": [
+            "almuerzo"
+          ]
+        },
+        {
+          "id": "equipo",
+          "hecho": "Incluye el equipo de snorkel.",
+          "anclas": [
+            "equipo de snorkel"
+          ]
+        },
+        {
+          "id": "dos-salidas",
+          "hecho": "Son 2 salidas o sesiones guiadas de snorkel.",
+          "anclas": [
+            "2 sesiones",
+            "2 salidas"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "snorkel-descuento-adicional",
+      "origen": "golden:snorkel-precio-residente-y-pago-link#6",
+      "lang": "es",
+      "pregunta": "¿Me aplica algún descuento adicional para el snorkel?",
+      "estado": {
+        "location": "cartagena",
+        "selected_service": "snorkeling",
+        "is_colombian": true
+      },
+      "necesita": [
+        {
+          "id": "online-10",
+          "hecho": "Reservando por la web ya se aplica el 10% de descuento online.",
+          "anclas": [
+            "10% de descuento"
+          ]
+        },
+        {
+          "id": "equipo-solo-buceo",
+          "hecho": "El 5% por traer equipo propio completo aplica solo a buceo recreativo y cursos, no a snorkel.",
+          "anclas": [
+            "buceo recreativo y cursos",
+            "equipo completo"
+          ]
+        }
+      ],
+      "no_debe": [
+        "El 5% por traer equipo propio aplica al snorkel."
+      ]
+    },
+    {
+      "id": "pago-transferencia",
+      "origen": "golden:certificado-fecha-precio-cop-descuento-transferencia#9",
+      "lang": "es",
+      "pregunta": "¿Y si pago por transferencia tiene descuento? Tengo cuenta local",
+      "estado": {
+        "is_certified": true,
+        "is_colombian": true
+      },
+      "necesita": [
+        {
+          "id": "se-paga-web",
+          "hecho": "Se reserva y paga por la página web, con el 10% de descuento online.",
+          "anclas": [
+            "pagina web",
+            "por la web"
+          ]
+        },
+        {
+          "id": "transferencia-si-falla",
+          "hecho": "Si el pago en línea falla, el equipo envía un link para pagar por transferencia.",
+          "anclas": [
+            "link para pagar por transferencia"
+          ]
+        }
+      ],
+      "no_debe": [
+        "Hay un descuento especial por pagar por transferencia."
+      ]
+    },
+    {
+      "id": "temporada-alta-17-enero",
+      "origen": "golden:certificado-fecha-precio-cop-descuento-transferencia#2",
+      "lang": "es",
+      "pregunta": "¿El 17 de enero ya es temporada alta?",
+      "estado": {},
+      "necesita": [
+        {
+          "id": "temporada-hasta-15-enero",
+          "hecho": "La temporada alta de fin de año va del 20 de diciembre al 15 de enero (el 17 ya no lo es).",
+          "anclas": [
+            "15 de enero"
+          ]
+        }
+      ],
+      "no_debe": [
+        "El 17 de enero es temporada alta."
+      ]
+    },
+    {
+      "id": "acompanante-madre",
+      "origen": "golden:acompanante-madre-desde-cartagena#3",
+      "lang": "es",
+      "pregunta": "¿Mi madre puede acompañarme en el buceo y quedarse en la isla de apoyo? Ella no bucea",
+      "estado": {
+        "location": "cartagena"
+      },
+      "necesita": [
+        {
+          "id": "plan-acompanante",
+          "hecho": "Existe el plan de acompañante (no bucea, va en la lancha).",
+          "anclas": [
+            "acompanante (no bucea"
+          ]
+        },
+        {
+          "id": "precio-acompanante",
+          "hecho": "El acompañante cuesta 80 USD / 288.000 COP online.",
+          "anclas": [
+            "288000",
+            "80 usd"
+          ],
+          "opcional": true
+        }
+      ]
+    },
+    {
+      "id": "grupo-mixto-total-cop",
+      "origen": "golden:grupo-mixto-precio-cop-total#6",
+      "lang": "es",
+      "pregunta": "Somos 1 buzo avanzado y 2 personas para el bautismo, saliendo desde Cartagena. ¿Cuál sería el valor total en COP? Yo vivo en Colombia",
+      "estado": {
+        "location": "cartagena",
+        "is_colombian": true,
+        "detected_group_size": 3
+      },
+      "necesita": [
+        {
+          "id": "precio-2-buceos",
+          "hecho": "2 inmersiones para el certificado: 630.000 COP online.",
+          "anclas": [
+            "630000"
+          ]
+        },
+        {
+          "id": "precio-minicurso",
+          "hecho": "Minicurso (bautismo): 655.000 COP online por persona.",
+          "anclas": [
+            "655000"
+          ]
+        },
+        {
+          "id": "total",
+          "hecho": "Total: 630.000 + 2 × 655.000 = 1.940.000 COP online.",
+          "anclas": [
+            "1940000"
+          ],
+          "calculo": true
+        }
+      ]
+    },
+    {
+      "id": "salida-confirmada",
+      "origen": "golden:confirmacion-salida-y-pago-sin-concepto#1",
+      "lang": "es",
+      "pregunta": "Hola, listo, dejé haciendo esto para el 6 de febrero. ¿Me confirmas o ya es fijo que se sale?",
+      "estado": {},
+      "necesita": [
+        {
+          "id": "todos-los-dias",
+          "hecho": "Operan todos los días del año (salvo 25 de diciembre y 1 de enero).",
+          "anclas": [
+            "todos los dias"
+          ]
+        },
+        {
+          "id": "solo-clima",
+          "hecho": "Una salida solo se suspende por condiciones meteorológicas adversas.",
+          "anclas": [
+            "meteorologicas"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "equipaje-mochilas",
+      "origen": "golden:equipaje-mochilas-y-almacenamiento#1",
+      "lang": "en",
+      "pregunta": "We booked a 5 dive package and will stay on the Rosario islands that night, so we will have our luggage: two large hiking backpacks, no suitcases. Can we bring them on the boat?",
+      "estado": {
+        "is_certified": true,
+        "selected_service": "5_dives_2_days",
+        "location": "cartagena"
+      },
+      "necesita": [
+        {
+          "id": "una-por-persona",
+          "hecho": "Each person can bring one backpack or bag on the boat.",
+          "anclas": [
+            "one backpack or bag"
+          ]
+        },
+        {
+          "id": "guardar-oficina",
+          "hecho": "If they prefer, luggage can be stored at the Cartagena office.",
+          "anclas": [
+            "store the suitcase at our office"
+          ]
+        }
+      ],
+      "no_debe": [
+        "There is no storage available for luggage."
+      ]
+    },
+    {
+      "id": "fragata-transporte",
+      "origen": "golden:logistica-isla-fragata-regreso-otro-dia#1",
+      "lang": "en",
+      "pregunta": "My husband and I are booked for April 13-14 and are staying in the Rosario islands that night, at hotel Fragata. Will you be able to transport us there?",
+      "estado": {
+        "is_certified": true,
+        "detected_group_size": 2
+      },
+      "necesita": [
+        {
+          "id": "acceso-maritimo",
+          "hecho": "Pick-up and drop-off are coordinated for hotels with maritime (boat) access.",
+          "anclas": [
+            "maritime access"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "tours-diarios",
+      "origen": "golden:tours-diarios-isla-grande#1",
+      "lang": "en",
+      "pregunta": "Tours are daily?",
+      "estado": {},
+      "necesita": [
+        {
+          "id": "todos-los-dias",
+          "hecho": "They operate every day of the year except December 25 and January 1.",
+          "anclas": [
+            "every day"
+          ]
+        },
+        {
+          "id": "cerrado-25-1",
+          "hecho": "Closed only on December 25 and January 1.",
+          "anclas": [
+            "december 25"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "isla-grande-rosario",
+      "origen": "golden:tours-diarios-isla-grande#2",
+      "lang": "en",
+      "pregunta": "Does Isla Grande count, is it part of the Rosario islands? I'm staying there",
+      "estado": {
+        "location": "island",
+        "island": "Isla Grande"
+      },
+      "necesita": [
+        {
+          "id": "base-isla-grande",
+          "hecho": "Yes: the dive base (Hotel San Pedro de Majagua and Hotel Cocoliso) is on Isla Grande, in the Rosario Islands.",
+          "anclas": [
+            "isla grande"
+          ]
+        },
+        {
+          "id": "recogida",
+          "hecho": "From a hotel with maritime access there is hotel pick-up.",
+          "anclas": [
+            "maritime access",
+            "boat access"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "refresher-antes-en",
+      "origen": "golden:refresher-que-completar-antes#2",
+      "lang": "en",
+      "pregunta": "I'm getting in tomorrow. Anything needs to be completed beforehand? I'm gonna need a little refresher.",
+      "estado": {
+        "is_certified": true,
+        "last_dive_over_2_years": true,
+        "refresher_interested": true
+      },
+      "necesita": [
+        {
+          "id": "formulario-medico",
+          "hecho": "For courses and mini-courses (the refresher is booked as the mini course) a medical form is required.",
+          "anclas": [
+            "medical form"
+          ]
+        },
+        {
+          "id": "seguro",
+          "hecho": "The insurance form sent in the confirmation email must be completed.",
+          "anclas": [
+            "confirmation email"
+          ]
+        }
+      ],
+      "no_debe": [
+        "The refresher requires a theory review before diving."
+      ]
+    },
+    {
+      "id": "refresher-coste",
+      "origen": "golden:refresher-rechaza-acepta#2",
+      "lang": "es",
+      "pregunta": "¿El refresher tiene costo adicional?",
+      "estado": {
+        "is_certified": true,
+        "last_dive_over_2_years": true
+      },
+      "necesita": [
+        {
+          "id": "precio-refresher",
+          "hecho": "El refresher cuesta 183 USD / 655.000 COP online (se reserva como Minicurso de Buceo, desde Cartagena).",
+          "anclas": [
+            "655000",
+            "183 usd"
+          ]
+        }
+      ],
+      "no_debe": [
+        "El refresher no tiene un precio fijo o es gratis."
+      ]
+    },
+    {
+      "id": "almuerzo-cartagena",
+      "origen": "golden:pareja-certificados-cop-descuento-almuerzo#4",
+      "lang": "es",
+      "pregunta": "¿Incluye el almuerzo?",
+      "estado": {
+        "location": "cartagena",
+        "is_certified": true,
+        "is_colombian": true,
+        "detected_group_size": 2,
+        "selected_service": "2_dives_1_day"
+      },
+      "necesita": [
+        {
+          "id": "almuerzo-incluido",
+          "hecho": "Sí: saliendo desde Cartagena el almuerzo está incluido.",
+          "anclas": [
+            "almuerzo incluido"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "almuerzo-islas-ubuntu",
+      "origen": "golden:recogida-ubuntu-comida-y-certificacion#2",
+      "lang": "en",
+      "pregunta": "Hi, is there a way to eat at your facility or do we need to bring our food?",
+      "estado": {
+        "location": "island",
+        "hotel": "Ubuntu",
+        "selected_service": "minicourse_already_on_island"
+      },
+      "necesita": [
+        {
+          "id": "sin-almuerzo-islas",
+          "hecho": "Plans for guests already on the islands do not include lunch.",
+          "anclas": [
+            "almuerzo no incluido",
+            "lunch not included",
+            "without transfer from cartagena or lunch",
+            "ni almuerzo"
+          ]
+        }
+      ],
+      "no_debe": [
+        "Lunch is included in their plan."
+      ]
+    },
+    {
+      "id": "minicurso-no-certifica",
+      "origen": "golden:recogida-ubuntu-comida-y-certificacion#3",
+      "lang": "en",
+      "pregunta": "Is it possible for my son to get a PADI certificate with the mini course?",
+      "estado": {
+        "selected_service": "minicourse"
+      },
+      "necesita": [
+        {
+          "id": "no-certifica",
+          "hecho": "The mini course does not certify and does not count as part of any PADI course.",
+          "anclas": [
+            "does not certify"
+          ]
+        },
+        {
+          "id": "ow-2-dias",
+          "hecho": "Certification is the Open Water course: 2 days, sleeping on the islands.",
+          "anclas": [
+            "two-day courses (open water",
+            "require accommodation on the islands",
+            "you must stay overnight on the islands",
+            "hay que dormir en las islas"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ow-una-noche",
+      "origen": "golden:open-water-hoteles-noche-fotos-horario#3",
+      "lang": "en",
+      "pregunta": "So, if I understood correctly, booking just one night at a hotel will be enough for the Open Water course, right?",
+      "estado": {
+        "selected_service": "open_water"
+      },
+      "necesita": [
+        {
+          "id": "dos-dias-una-noche",
+          "hecho": "Yes: the course is 2 days and requires staying overnight on the islands (one night).",
+          "anclas": [
+            "require accommodation on the islands",
+            "you must stay overnight on the islands",
+            "hay que dormir en las islas",
+            "stay overnight"
+          ]
+        },
+        {
+          "id": "hotel-no-incluido",
+          "hecho": "Accommodation is not included and is booked directly with the hotel.",
+          "anclas": [
+            "accommodation is not included",
+            "hotel not included",
+            "lodging not included",
+            "alojamiento no incluido"
+          ]
+        }
+      ],
+      "no_debe": [
+        "One night will not be enough.",
+        "The course takes several days (more than 2)."
+      ]
+    },
+    {
+      "id": "ow-duracion",
+      "origen": "golden:manual-duracion-curso#5",
+      "lang": "es",
+      "pregunta": "El curso que te he pedido, ¿cuánto tiempo dura?",
+      "historial": [
+        {
+          "role": "user",
+          "content": "Hola quiero sacarme la certificación y estoy en cartagena"
+        },
+        {
+          "role": "assistant",
+          "content": "¡Qué bien! Para certificarte tenemos el Curso Básico PADI (Open Water). ¿Es para ti solo?"
+        },
+        {
+          "role": "user",
+          "content": "Para mi"
+        }
+      ],
+      "estado": {
+        "location": "cartagena",
+        "selected_service": "open_water",
+        "is_certified": false
+      },
+      "necesita": [
+        {
+          "id": "dos-dias",
+          "hecho": "El curso Open Water dura 2 días (más la teoría online previa).",
+          "anclas": [
+            "2 dias"
+          ]
+        }
+      ],
+      "no_debe": [
+        "Responde con la lista de precios en lugar de la duración."
+      ]
+    },
+    {
+      "id": "fotos-fotografo",
+      "origen": "golden:open-water-hoteles-noche-fotos-horario#7",
+      "lang": "en",
+      "pregunta": "I saw pictures and videos are not included... but will there be a photographer taking pictures during the dives?",
+      "estado": {
+        "selected_service": "open_water"
+      },
+      "necesita": [
+        {
+          "id": "no-incluidas",
+          "hecho": "Photos and videos are not included or offered proactively.",
+          "anclas": [
+            "not offered proactively",
+            "photos or videos",
+            "fotos/videos"
+          ]
+        },
+        {
+          "id": "instructor-voluntario",
+          "hecho": "The instructor may take them voluntarily (delivered by the next day at the latest).",
+          "anclas": [
+            "voluntarily",
+            "voluntario"
+          ]
+        },
+        {
+          "id": "propina",
+          "hecho": "The usual tip for photos/videos is 50,000 COP / 14 USD, paid to the instructor.",
+          "anclas": [
+            "50000",
+            "14 usd"
+          ],
+          "opcional": true
+        }
+      ]
+    },
+    {
+      "id": "ow-horario-dia1",
+      "origen": "golden:open-water-hoteles-noche-fotos-horario#8",
+      "lang": "en",
+      "pregunta": "Do you have a more detailed schedule? For instance, what time does the course finish on the first day? I want to know if I will have time to enjoy the hotel.",
+      "estado": {
+        "selected_service": "open_water"
+      },
+      "necesita": [
+        {
+          "id": "dia1",
+          "hecho": "Day 1: meeting at 8:00 a.m., pool session, 2 certification dives and lunch, then transfer to the hotel.",
+          "anclas": [
+            "day 1: 2 certification dives",
+            "transfer to the hotel"
+          ]
+        },
+        {
+          "id": "dia2-regreso",
+          "hecho": "Day 2: pool + 2 final dives and return to Cartagena at 3:00 p.m.",
+          "anclas": [
+            "3:00 p.m"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "referido-datos-centro",
+      "origen": "golden:curso-referido-pide-datos-centro#5",
+      "lang": "en",
+      "pregunta": "I need the info of the dive center to fill the referral form: full name of the dive center and location please",
+      "estado": {
+        "selected_service": "referral"
+      },
+      "necesita": [
+        {
+          "id": "direccion",
+          "hecho": "Diving Planet is at Plaza de San Diego, Calle 39 #8-24, second floor, Cartagena.",
+          "anclas": [
+            "calle 39",
+            "plaza de san diego"
+          ]
+        },
+        {
+          "id": "punto-encuentro",
+          "hecho": "The meeting point for the trips is Muelle de la Bodeguita at 8:00 a.m.",
+          "anclas": [
+            "bodeguita"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "moneda-pagina",
+      "origen": "golden:moneda-precios-principiante-y-snorkel#5",
+      "lang": "es",
+      "pregunta": "Amigo, el precio que está allí en la página, ¿es en dólares o en pesos colombianos?",
+      "estado": {},
+      "necesita": [
+        {
+          "id": "usd-internacionales",
+          "hecho": "Los clientes internacionales pagan en dólares (USD).",
+          "anclas": [
+            "dolares (usd)",
+            "usd"
+          ]
+        },
+        {
+          "id": "cop-colombianos",
+          "hecho": "Pagan en pesos (COP) los nacidos en Colombia y los extranjeros residentes con cédula de extranjería.",
+          "anclas": [
+            "nacida en colombia",
+            "nacidos en colombia",
+            "cedula de extranjeria"
+          ]
+        }
+      ],
+      "no_debe": [
+        "Paga en COP quien vive en Colombia, sin más (sin mencionar nacimiento o cédula)."
+      ]
+    },
+    {
+      "id": "dos-buceos-un-dia-en",
+      "origen": "golden:precio-paquetes-5-o-3-buceos-y-opcion-2-diurnos#4",
+      "lang": "en",
+      "pregunta": "Instead of the 5 dive package, do you have an option of just 2 day dives from Cartagena, so I only do one day?",
+      "estado": {
+        "is_certified": true
+      },
+      "necesita": [
+        {
+          "id": "precio",
+          "hecho": "Fun Dives - 2 dives (1 day) from Cartagena: 178 USD online.",
+          "anclas": [
+            "178"
+          ]
+        },
+        {
+          "id": "mismo-dia",
+          "hecho": "It is a same-day round trip from Cartagena (no overnight needed).",
+          "anclas": [
+            "same-day round trip from cartagena",
+            "returning the same day",
+            "ida y vuelta desde cartagena el mismo dia"
+          ]
+        }
+      ],
+      "no_debe": [
+        "The 2-dive option requires staying on the islands."
+      ]
+    },
+    {
+      "id": "principiante-hora-lugar",
+      "origen": "golden:principiante-hora-lugar-y-precio#3",
+      "lang": "en",
+      "pregunta": "OK, could you just confirm at what time and where we meet?",
+      "historial": [
+        {
+          "role": "user",
+          "content": "Hello, is it possible to book a dive trip for 1 person?"
+        },
+        {
+          "role": "assistant",
+          "content": "Sure! Are you a certified diver or would it be your first time?"
+        },
+        {
+          "role": "user",
+          "content": "I am a beginner (I have made 4/5 dives before, not certified)"
+        }
+      ],
+      "estado": {
+        "is_certified": false,
+        "detected_group_size": 1
+      },
+      "necesita": [
+        {
+          "id": "bodeguita",
+          "hecho": "Meeting point: Muelle de la Bodeguita.",
+          "anclas": [
+            "bodeguita"
+          ]
+        },
+        {
+          "id": "hora",
+          "hecho": "At 8:00 a.m.",
+          "anclas": [
+            "8:00 a.m",
+            "8:00 am"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "descuento-codigo-familia",
+      "origen": "golden:familia-mixta-precio-descuento-refresher#5",
+      "lang": "en",
+      "pregunta": "We are a family of 6, 3 of us will dive and 3 will snorkel. Is there a discount code?",
+      "estado": {
+        "detected_group_size": 6
+      },
+      "necesita": [
+        {
+          "id": "online-sin-codigo",
+          "hecho": "The 10% online discount is applied automatically when booking on the website (no code).",
+          "anclas": [
+            "applied automatically when booking on the web",
+            "se aplica automaticamente"
+          ]
+        },
+        {
+          "id": "grupo-no-automatico",
+          "hecho": "Groups of 5+ get an extra 10%, but it is not automatic: the group must contact the team.",
+          "anclas": [
+            "not applied automatically",
+            "no aplica automaticamente"
+          ]
+        }
+      ],
+      "no_debe": [
+        "The group discount is applied automatically online."
+      ]
+    },
+    {
+      "id": "refresher-1-5-anos",
+      "origen": "golden:familia-mixta-precio-descuento-refresher#6",
+      "lang": "en",
+      "pregunta": "It's been more than 1.5 years since my last dive. Is there an additional cost for a refresher?",
+      "estado": {
+        "is_certified": true
+      },
+      "necesita": [
+        {
+          "id": "regla-2-anos",
+          "hecho": "A refresher is recommended when more than 2 years have passed without diving.",
+          "anclas": [
+            "more than 2 years",
+            "mas de 2 anos",
+            "over 2 years"
+          ]
+        },
+        {
+          "id": "precio-refresher",
+          "hecho": "If done, the refresher costs 183 USD online (booked as the mini course).",
+          "anclas": [
+            "183"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "precio-2-buceos-cartagena",
+      "origen": "golden:precios-y-disponibilidad-con-negociacion#6",
+      "lang": "es",
+      "pregunta": "¿Y en el caso de tomar solo el buceo doble desde Cartagena, qué valor tiene?",
+      "estado": {
+        "location": "cartagena",
+        "is_certified": true
+      },
+      "necesita": [
+        {
+          "id": "usd",
+          "hecho": "2 inmersiones desde Cartagena: 178 USD online.",
+          "anclas": [
+            "178"
+          ]
+        },
+        {
+          "id": "cop",
+          "hecho": "630.000 COP online.",
+          "anclas": [
+            "630000"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "itinerario-5-buceos",
+      "origen": "intencion:info-actividad",
+      "lang": "es",
+      "pregunta": "¿Cómo es el itinerario del paquete de 5 buceos saliendo desde Cartagena?",
+      "estado": {
+        "location": "cartagena",
+        "is_certified": true
+      },
+      "necesita": [
+        {
+          "id": "dos-dias",
+          "hecho": "Son 2 días.",
+          "anclas": [
+            "2 dias"
+          ]
+        },
+        {
+          "id": "nocturno",
+          "hecho": "Incluye un buceo nocturno.",
+          "anclas": [
+            "nocturno"
+          ]
+        },
+        {
+          "id": "dormir-islas",
+          "hecho": "Hay que dormir en las islas (alojamiento no incluido).",
+          "anclas": [
+            "hay que dormir en las islas",
+            "hospedarte",
+            "alojamiento no incluido"
+          ]
+        },
+        {
+          "id": "encuentro",
+          "hecho": "El día 1 se sale del Muelle de la Bodeguita a las 8:00 a.m.",
+          "anclas": [
+            "bodeguita"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "discapacidad-visual",
+      "origen": "golden:buceo-adaptado-visual#1",
+      "lang": "es",
+      "pregunta": "Hola, tengo una discapacidad visual, ¿puedo bucear con ustedes?",
+      "estado": {},
+      "necesita": [
+        {
+          "id": "dive-to-heal",
+          "hecho": "Sí, con el programa DIVE TO HEAL (buceo adaptado); se acepta la discapacidad visual.",
+          "anclas": [
+            "dive to heal"
+          ]
+        },
+        {
+          "id": "visual",
+          "hecho": "La discapacidad visual está entre las aceptadas.",
+          "anclas": [
+            "discapacidad visual",
+            "ciegos"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "edad-minima-ninos",
+      "origen": "intencion:seguridad-medico",
+      "lang": "es",
+      "pregunta": "¿Desde qué edad pueden hacer el minicurso mis hijos? Tienen 7 y 11 años",
+      "estado": {},
+      "necesita": [
+        {
+          "id": "minicurso-10",
+          "hecho": "El minicurso de buceo es desde los 10 años.",
+          "anclas": [
+            "desde los 10 anos"
+          ]
+        },
+        {
+          "id": "snorkel-6",
+          "hecho": "El snorkel es desde los 6 años (opción para el de 7).",
+          "anclas": [
+            "desde los 6 anos",
+            "edad minima 6"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "volar-despues",
+      "origen": "golden-tema:vuelo-tras-bucear",
+      "lang": "en",
+      "pregunta": "How long should I wait to take a flight after diving?",
+      "estado": {
+        "is_certified": true
+      },
+      "necesita": [
+        {
+          "id": "18h",
+          "hecho": "At least 18 hours after recreational diving.",
+          "anclas": [
+            "18 hours"
+          ]
+        },
+        {
+          "id": "12h-minicurso",
+          "hecho": "12 hours minimum after the mini course.",
+          "anclas": [
+            "12 hours"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "clima-reembolso",
+      "origen": "intencion:clima",
+      "lang": "es",
+      "pregunta": "¿Qué pasa si se cancela por mal clima? ¿Me devuelven el dinero?",
+      "estado": {},
+      "necesita": [
+        {
+          "id": "reprogramar",
+          "hecho": "Si la Capitanía cierra las salidas, primero se intenta reprogramar.",
+          "anclas": [
+            "reprogramar"
+          ]
+        },
+        {
+          "id": "reembolso-100",
+          "hecho": "Si no se puede reagendar, se reembolsa el 100%.",
+          "anclas": [
+            "100%"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "formulario-certificado",
+      "origen": "intencion:formularios",
+      "lang": "es",
+      "pregunta": "¿Qué formulario tengo que llenar si soy buzo certificado?",
+      "estado": {
+        "is_certified": true
+      },
+      "necesita": [
+        {
+          "id": "exoneracion",
+          "hecho": "Un formulario de exoneración (enlace de jotform para buzos certificados).",
+          "anclas": [
+            "exoneracion"
+          ]
+        },
+        {
+          "id": "seguro",
+          "hecho": "El formato del seguro que llega en el correo de confirmación.",
+          "anclas": [
+            "correo de confirmacion"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "profundidad-open-water",
+      "origen": "intencion:info-actividad",
+      "lang": "es",
+      "pregunta": "Tengo Open Water, ¿hasta qué profundidad podemos bajar?",
+      "estado": {
+        "is_certified": true
+      },
+      "necesita": [
+        {
+          "id": "18m",
+          "hecho": "Con Open Water hasta 18 metros.",
+          "anclas": [
+            "18 metros"
+          ]
+        },
+        {
+          "id": "advanced-30",
+          "hecho": "Con Advanced hasta 30 metros.",
+          "anclas": [
+            "30 metros"
+          ],
+          "opcional": true
+        }
+      ]
+    },
+    {
+      "id": "idioma-frances",
+      "origen": "golden-tema:curso-open-water-principiantes-idioma-frances-anticipacion",
+      "lang": "en",
+      "pregunta": "Is it possible to take the course in French?",
+      "estado": {
+        "selected_service": "open_water"
+      },
+      "necesita": [
+        {
+          "id": "es-en",
+          "hecho": "Activities and courses are taught in Spanish and English only.",
+          "anclas": [
+            "spanish and english"
+          ]
+        },
+        {
+          "id": "interprete",
+          "hecho": "Someone can come as an interpreter, but instruction is still in Spanish or English.",
+          "anclas": [
+            "interpret"
+          ]
+        }
+      ],
+      "no_debe": [
+        "The course can be taught in French."
+      ]
+    },
+    {
+      "id": "ubicacion-oficina",
+      "origen": "intencion:punto-encuentro",
+      "lang": "es",
+      "pregunta": "¿Dónde están ubicados? ¿Tienen oficina en Cartagena?",
+      "estado": {},
+      "necesita": [
+        {
+          "id": "direccion",
+          "hecho": "Plaza de San Diego, Calle 39 #8-24, segundo piso (arriba de Juan Valdez), Ciudad Amurallada.",
+          "anclas": [
+            "calle 39",
+            "plaza de san diego"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "como-reservar-cierre",
+      "origen": "intencion:reserva",
+      "lang": "es",
+      "pregunta": "¿Cómo reservo para mañana?",
+      "estado": {
+        "location": "cartagena",
+        "is_certified": true,
+        "selected_service": "2_dives_1_day"
+      },
+      "necesita": [
+        {
+          "id": "web",
+          "hecho": "Se reserva por la página web, en el enlace de la actividad (10% de descuento online).",
+          "anclas": [
+            "pagina web",
+            "book.divingplanet.org"
+          ]
+        },
+        {
+          "id": "cierre-430",
+          "hecho": "El sistema cierra a las 4:30 PM del día anterior; pasada esa hora se reserva para el siguiente día disponible.",
+          "anclas": [
+            "4:30"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "grupo-mixto-mismo-tour",
+      "origen": "intencion:info-actividad",
+      "lang": "es",
+      "pregunta": "Mi novio está certificado y yo nunca he buceado, ¿podemos ir juntos el mismo día?",
+      "estado": {
+        "location": "cartagena",
+        "detected_group_size": 2
+      },
+      "necesita": [
+        {
+          "id": "grupos-mixtos",
+          "hecho": "Sí: se pueden combinar actividades en un mismo tour (certificado + minicurso o snorkel).",
+          "anclas": [
+            "grupos mixtos",
+            "combinar diferentes actividades"
+          ]
+        },
+        {
+          "id": "minicurso",
+          "hecho": "Para quien nunca ha buceado, el minicurso (183 USD / 655.000 COP online desde Cartagena).",
+          "anclas": [
+            "minicurso"
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,6 +1,11 @@
 History
 =======
 
+0.29.70 - (2026-09-29)
+----------------------
+* **rag-1 (fase RAG de Plan Coral): el RAG se mide por piezas.** Nuevo `scripts/rag_piezas.py` + `docs/robustness/rag-piezas/preguntas.json` (47 preguntas visibles, 93 datos con anclas; nunca el examen oculto, el script lo comprueba). Corre `rag_answer` dentro de PRE con el estado del cliente y espía reescritura, top-8, contexto visto, respuestas, juez y guardas; un verificador gpt-4.1 marca cada dato. Causa por dato: búsqueda / redacción / juez-guardas / contradice. `--solo-busqueda`, `--comparar`, `--repuntuar`. Tests `tests/test_rag_piezas.py`.
+* **Línea base (47 × 2):** dato en el top-8 69 % (en el contexto visto, con catálogo y estado, 83 %); la respuesta cubre el 81 %; faltan por búsqueda 17, contradice 7, redacción 7, juez 3; p50 3,2 s. La búsqueda es la mayor causa: los clones "si ya estoy en las islas" se comen el top-8 (y el modelo contesta con la variante equivocada), los trozos de precios tapan moneda y descuentos, y las políticas cortas no llegan. Detalle: `docs/robustness/rag-piezas/README.md`. Siguiente: rag-2.
+
 0.29.69 - (2026-09-28)
 ----------------------
 * **Cierre de la sesión (Álvaro) para el relevo.** Nueva herramienta `scripts/sonda_rag_turnos_pre.py` (la que se usó en 0.29.67-0.29.68, antes en scripts sueltos): repite dentro de PRE turnos reales de una ronda con su historial, con un flag apagado y encendido, y guarda cada rechazo del juez con su motivo; salta siempre el examen oculto; `--dry` para ver casos y coste sin gastar. Tests `tests/test_sonda_rag_turnos_pre.py`. Suite 2800 passed (normal y `AGENT_ARCH_SHADOW`).
