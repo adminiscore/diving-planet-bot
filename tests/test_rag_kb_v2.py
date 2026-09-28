@@ -46,3 +46,18 @@ async def test_el_flag_elige_el_esquema_de_la_busqueda(monkeypatch):
             await vector_store._get_pool()
         assert crear.call_args.kwargs["server_settings"] == esperado
     monkeypatch.setattr(vector_store, "_pool", None)
+
+
+@pytest.mark.asyncio
+async def test_con_la_base_v2_no_hay_empujones_por_regex(monkeypatch):
+    """Una política con más similitud no puede quedar por debajo de una FAQ por el empujón de su tema."""
+    politica = {"id": 1, "content": "maleta", "metadata": {"source": "policies", "topics": []},
+                "score": 0.60, "score_vector": 0.60, "retrieval_branches": ["vector"]}
+    faq = {"id": 2, "content": "equipo", "metadata": {"source": "faqs", "topics": ["equipment"]},
+           "score": 0.55, "score_vector": 0.55, "retrieval_branches": ["vector"]}
+    monkeypatch.setattr(vector_store, "_vector_search", AsyncMock(return_value=[politica, faq]))
+    monkeypatch.setattr(vector_store, "_bm25_search", AsyncMock(return_value=[]))
+    for flag, primero in ((True, 1), (False, 2)):
+        monkeypatch.setattr(settings, "rag_kb_v2", flag)
+        docs = await vector_store.search_knowledge_base("¿qué equipo llevo?", lang="es")
+        assert docs[0]["id"] == primero

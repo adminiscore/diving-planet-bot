@@ -1,6 +1,12 @@
 History
 =======
 
+0.29.71 - (2026-09-29)
+----------------------
+* **rag-2 (fase RAG): base de conocimiento curada detrás del flag `RAG_KB_V2` (apagado; esquema `kb_v2`).** Paso 1: inventario (`scripts/kb_inventario.py`): 50 fragmentos con el teléfono, 25 FAQs que repetían un servicio entero (los clones que llenaban el top-8), listas de precios duplicadas, "$0 COP por día" de equipo propio. Decisiones de Gadea (D1-D8, `docs/robustness/rag-2/decisiones.md`) aplicadas a las fuentes de verdad: moneda "colombianos y residentes", refresh sin teléfono, llegada 4:15, extranjeros pagan con tarjeta en la web (50 % solo colombianos), almuerzo solo el día 1 desde Cartagena, 5 % por equipo solo buceo y cursos; el catálogo dice a qué aplica cada descuento.
+* Base v2 (`scripts/kb_v2.py`, 364 documentos frente a 718): una ficha por servicio y origen con la misma línea de datos que el catálogo (`catalog.service_fact_parts`); 107 FAQs curadas (`scripts/kb_curar.py`: reescritas, auditadas y revisadas a mano); cada política y descuento con 3 formas de preguntarlo; sin teléfono ni trozos de precios. Con el flag, la búsqueda lee `kb_v2` y ordena sin los empujones por regex (enterraban las políticas: 76 % → 85 % en el top-8). CI regenera `kb_v2` en cada deploy.
+* **Medido con rag_piezas en PRE sin desplegar** (`--codigo-local`): dato en el top-8 71 % → 85 %, en el contexto visto 85 % → 94 %, la respuesta lo cubre 82 % → 89 %, contradicciones 5 → 1, p50 3,2 → 3,1 s. Pendiente para promocionar: ronda core A/B (necesita push) y ajustar el criterio del golden `moneda-precios-principiante-y-snorkel` a la decisión D1.
+
 0.29.70 - (2026-09-29)
 ----------------------
 * **rag-1 (fase RAG de Plan Coral): el RAG se mide por piezas.** Nuevo `scripts/rag_piezas.py` + `docs/robustness/rag-piezas/preguntas.json` (47 preguntas visibles, 93 datos con anclas; nunca el examen oculto, el script lo comprueba). Corre `rag_answer` dentro de PRE con el estado del cliente y espía reescritura, top-8, contexto visto, respuestas, juez y guardas; un verificador gpt-4.1 marca cada dato. Causa por dato: búsqueda / redacción / juez-guardas / contradice. `--solo-busqueda`, `--comparar`, `--repuntuar`. Tests `tests/test_rag_piezas.py`.

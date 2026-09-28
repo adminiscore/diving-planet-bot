@@ -59,3 +59,28 @@ python -m scripts.rag_piezas --repuntuar A.json        # recalcula con las ancla
 - La regla de la moneda, una y precisa.
 - Criterio de éxito con este instrumento: el dato en el top-8 ≥ 90 %, contradicciones ≤ 2, cobertura ≥ 90 %, sin
   subir el tiempo.
+
+## rag-2: base curada (flag `RAG_KB_V2`) — 29-sep
+
+Medido con `--codigo-local` (el código local dentro del contenedor de PRE, sin desplegar). A′ = código local con el
+flag apagado (base v1 + decisiones D1-D8 en catálogo y datos); B = base v2; B2 = base v2 sin los empujones por regex.
+Instrumento v3 (moneda según D1, sin el total del grupo).
+
+| | base desplegada | A′ | B | **B2** | objetivo |
+|---|---|---|---|---|---|
+| dato en el top-8 | 69 % | 71 % | 77 % | **85 %** | ≥ 90 % |
+| dato en el contexto visto | 83 % | 85 % | 87 % | **94 %** | — |
+| la respuesta lo cubre | 80 % | 82 % | 84 % | **89 %** | ≥ 90 % |
+| contradicciones | 7 | 5 | 4 | **1** | ≤ 2 |
+| "no lo tengo" | 2 | 1 | 1 | 2 | — |
+| tiempo p50 / p90 | 3,2 / 5,4 s | 3,2 / 5,3 s | 3,4 / 5,5 s | **3,1 / 5,5 s** | sin subir |
+
+- **B (solo la base curada) mejora poco**: los empujones por tema y fuente (regex de `vector_store`, ajustados para la
+  base v1) enterraban las políticas bajo FAQs genéricas. Experimento offline con los 60+60 candidatos de cada
+  pregunta: con empujones 76 % en el top-8, sin ellos 85 %; el dato está en algún candidato el 97 % de las veces.
+  Con `RAG_KB_V2` la búsqueda ordena solo por vector + palabras (B2).
+- **Lo que queda de búsqueda (4 casos)** es de rag-3: la ficha del servicio que el cliente ya eligió no entra en el
+  top-8 con preguntas genéricas ("¿a qué hora acaba el día 1?"); el formulario médico del refresher; la dirección
+  de la oficina. Un reordenador podría cerrar el hueco 85 % → 97 %.
+- **Redacción** (9): el modelo tiene el dato y contesta "no lo tengo, te paso con un asesor" (pago por transferencia,
+  "¿ya es fijo que se sale?") — son reglas del prompt ("el equipo confirma"): rag-4.

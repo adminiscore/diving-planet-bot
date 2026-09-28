@@ -335,7 +335,11 @@ async def search_knowledge_base(
         return []
 
     fused_results = _reciprocal_rank_fusion(rankings)
-    reranked_results = _apply_topic_and_source_boost(fused_results, query_topics)
+    # rag-2: con la base curada los empujones por tema/fuente (regex, ajustados para la base v1) enterraban las
+    # politicas bajo FAQs genericas: sin ellos, el dato llega al top-8 un 85 % frente al 76 % (29-sep, 47
+    # preguntas visibles de rag_piezas). Se ordena solo por vector + palabras (RRF).
+    reranked_results = (fused_results if settings.rag_kb_v2
+                        else _apply_topic_and_source_boost(fused_results, query_topics))
     reranked_results.sort(key=lambda result: result.get("score_final", result.get("score", 0.0)), reverse=True)
 
     top_meta = [
