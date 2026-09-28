@@ -35,8 +35,10 @@ async def _get_pool() -> asyncpg.Pool:
         return _pool
     async with _pool_lock:
         if _pool is None:
+            # rag-2: con `rag_kb_v2` las consultas sin esquema (`kb_documents`) resuelven a `kb_v2.kb_documents`.
+            server_settings = {"search_path": "kb_v2,public"} if settings.rag_kb_v2 else None
             _pool = await asyncpg.create_pool(
-                settings.database_url, min_size=1, max_size=10
+                settings.database_url, min_size=1, max_size=10, server_settings=server_settings
             )
     return _pool
 

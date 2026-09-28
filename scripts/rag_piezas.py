@@ -347,6 +347,10 @@ def main() -> None:
     ap.add_argument("--repuntuar", metavar="FICHERO", help="recalcula las causas de una medición guardada con las anclas "
                     "actuales de preguntas.json (sin volver a PRE; la verificación de la respuesta no cambia)")
     ap.add_argument("--dry", action="store_true", help="solo lista los casos")
+    ap.add_argument("--codigo-local", action="store_true",
+                    help="corre el código LOCAL (copiado a una carpeta temporal del contenedor) en vez del desplegado")
+    ap.add_argument("--env", action="append", default=[], metavar="CLAVE=VALOR",
+                    help="variable de entorno solo para este proceso (p. ej. RAG_KB_V2=true); se puede repetir")
     args = ap.parse_args()
 
     if args.comparar:
@@ -374,11 +378,13 @@ def main() -> None:
             print(f"  {c['id']} [{c['lang']}] {len(c['necesita'])} datos | {c['pregunta'][:90]}")
         return
 
-    from scripts.pre_access import pre_ssh
+    from scripts.pre_access import docker_python, pre_ssh, subir_codigo_local
 
     script = (f"CASOS_JSON = {json.dumps(casos, ensure_ascii=False)!r}\nSOLO_BUSQUEDA_FLAG = {args.solo_busqueda!r}\n"
               f"N_REPS = {args.reps}\nVERIFICADOR_PROMPT = {VERIFICADOR_PROMPT!r}\n{_REMOTO}")
-    r = pre_ssh("docker exec -i dp-pre-bot python -", input_text=script, timeout=max(600, 40 * total))
+    entorno = dict(x.split("=", 1) for x in args.env)
+    codigo = subir_codigo_local() if args.codigo_local else None
+    r = pre_ssh(docker_python(entorno, codigo), input_text=script, timeout=max(600, 40 * total))
     por_id = {c["id"]: c for c in casos}
     filas = [json.loads(ln) for ln in (r.stdout or "").splitlines() if ln.startswith("{")]
     for f in filas:
@@ -386,6 +392,7 @@ def main() -> None:
     res = resumen(filas, args.solo_busqueda)
     out = DIR / f"{date.today().isoformat()}-{args.name}.json"
     guardar(out, {"nombre": args.name, "solo_busqueda": args.solo_busqueda, "reps": args.reps,
+                  "codigo_local": args.codigo_local, "env": entorno,
                   "preguntas_version": json.loads(PREGUNTAS.read_text(encoding="utf-8"))["version"],
                   "resumen": res, "filas": filas})
     imprimir(res, args.name)

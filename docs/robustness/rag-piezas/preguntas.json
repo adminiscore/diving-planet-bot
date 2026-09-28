@@ -1,6 +1,6 @@
 {
-  "about": "rag-1 (Plan Coral, fase RAG): preguntas VISIBLES para medir el RAG por piezas (búsqueda, redacción, juez). Nunca del examen oculto. Cada caso: pregunta del cliente, estado que el bot ya conoce (va a _build_extra_context como en una conversación real), historial opcional, los datos que la respuesta NECESITA y lo que NO debe decir. 'anclas' = textos que prueban que el dato está en el contexto (se normalizan: minúsculas, sin tildes, sin separadores de miles; ' + ' = todas las partes); 'opcional' = dato útil que el cliente no pidió (se informa aparte, no cuenta en la cobertura); 'calculo' = dato que la respuesta debe calcular (no cuenta para la búsqueda). La verdad sale de data/knowledge_base y del catálogo (src/flows/catalog.py), no de las respuestas del bot.",
-  "version": 2,
+  "about": "rag-1 (Plan Coral, fase RAG): preguntas VISIBLES para medir el RAG por piezas (búsqueda, redacción, juez). Nunca del examen oculto. Cada caso: pregunta del cliente, estado que el bot ya conoce (va a _build_extra_context como en una conversación real), historial opcional, los datos que la respuesta NECESITA y lo que NO debe decir. 'anclas' = textos que prueban que el dato está en el contexto (se normalizan: minúsculas, sin tildes, sin separadores de miles; ' + ' = todas las partes); 'opcional' = dato útil que el cliente no pidió (se informa aparte, no cuenta en la cobertura); 'calculo' = dato que la respuesta debe calcular (no cuenta para la búsqueda). La verdad sale de data/knowledge_base y del catálogo (src/flows/catalog.py), no de las respuestas del bot. v3 (29-sep): moneda según la decisión D1 de Gadea ('colombianos y residentes'); fuera el total del grupo (el catálogo prohíbe calcular totales).",
+  "version": 3,
   "creado": "2026-09-29",
   "casos": [
     {
@@ -222,11 +222,12 @@
       "estado": {},
       "necesita": [
         {
-          "id": "residente-cedula-cop",
-          "hecho": "Los extranjeros que residen en Colombia con cédula de extranjería pagan en pesos (COP).",
+          "id": "residente-cop",
+          "hecho": "Los residentes en Colombia pagan en pesos (COP), igual que los colombianos (decisión D1, 29-sep).",
           "anclas": [
-            "cedula de extranjeria",
-            "extranjeros que residen"
+            "residentes en colombia",
+            "colombianos/residentes",
+            "colombianos y residentes"
           ]
         },
         {
@@ -448,15 +449,10 @@
           "anclas": [
             "655000"
           ]
-        },
-        {
-          "id": "total",
-          "hecho": "Total: 630.000 + 2 × 655.000 = 1.940.000 COP online.",
-          "anclas": [
-            "1940000"
-          ],
-          "calculo": true
         }
+      ],
+      "no_debe": [
+        "Da un total calculado (el catálogo dice que no se suman totales)."
       ]
     },
     {
@@ -888,16 +884,13 @@
         },
         {
           "id": "cop-colombianos",
-          "hecho": "Pagan en pesos (COP) los nacidos en Colombia y los extranjeros residentes con cédula de extranjería.",
+          "hecho": "Pagan en pesos (COP) los colombianos (vivan donde vivan) y los residentes en Colombia.",
           "anclas": [
-            "nacida en colombia",
-            "nacidos en colombia",
-            "cedula de extranjeria"
+            "residentes en colombia",
+            "colombianos/residentes",
+            "colombianos y residentes"
           ]
         }
-      ],
-      "no_debe": [
-        "Paga en COP quien vive en Colombia, sin más (sin mencionar nacimiento o cédula)."
       ]
     },
     {

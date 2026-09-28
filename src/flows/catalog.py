@@ -362,6 +362,52 @@ COMPANION_PRICE = _load_companion_price()
 _FACTS_CACHE: dict[str, str] = {}
 
 
+def service_fact_parts(service_id: str, lang: str) -> list[str]:
+    """Los datos de un servicio tal como los dice el catálogo (precio, días, noches, lancha, almuerzo,
+    certificación, edad). rag-2: la ficha del servicio en la base v2 usa esta misma línea, así el
+    catálogo y la ficha no pueden decir cosas distintas."""
+    svc = SERVICES[service_id]
+    es = lang == "es"
+    parts = []
+    if svc.get("price_usd") is not None:
+        online = money.usd_cop(svc.get("price_usd"), svc.get("price_cop"))
+        normal = money.usd_cop(svc.get("price_usd_normal"), svc.get("price_cop_normal"))
+        parts.append(f"{online} online, {normal} normal" if es else f"{online} online, {normal} regular")
+    else:
+        parts.append("precio: lo cotiza un asesor" if es else "price: quoted by an advisor")
+    days = svc.get("duration_days")
+    if days:
+        parts.append((f"{days} día" + ("s" if days > 1 else "")) if es else (f"{days} day" + ("s" if days > 1 else "")))
+    if svc.get("includes_night_dive"):
+        parts.append("incluye un buceo nocturno" if es else "includes a night dive")
+    island = service_id.endswith("_already_on_island")
+    if service_id in OVERNIGHT_SERVICES and not island:
+        parts.append("hay que dormir en las islas (alojamiento no incluido), no es ida y vuelta el mismo día"
+                     if es else "you must stay overnight on the islands (lodging not included), not a same-day round trip")
+    elif svc.get("overnight") == "optional" and not island:
+        parts.append("el día 1 puedes volver a Cartagena o dormir en las islas (alojamiento no incluido)"
+                     if es else "on day 1 you can return to Cartagena or stay on the islands (lodging not included)")
+    elif not island and days == 1:
+        parts.append("ida y vuelta desde Cartagena el mismo día" if es else "same-day round trip from Cartagena")
+    includes = (svc.get("includes_es") or "").lower()
+    if "transporte" in includes and not island:
+        # 28-sep (ronda cache-B2): "no es ida y vuelta el mismo dia" se leia como "no hay lancha".
+        parts.append("lancha Cartagena-Islas-Cartagena incluida" if es else
+                     "boat Cartagena-Islands-Cartagena included")
+    # rag-2 (D5, Gadea 29-sep): desde Cartagena el almuerzo va solo el día 1; desde las islas, nunca.
+    if "almuerzo" not in includes:
+        parts.append("almuerzo NO incluido" if es else "lunch NOT included")
+    elif days and days > 1:
+        parts.append("almuerzo solo el día 1" if es else "lunch on day 1 only")
+    else:
+        parts.append("almuerzo incluido" if es else "lunch included")
+    parts.append(("requiere certificación" if svc.get("requires_cert") else "sin certificación previa")
+                 if es else ("certification required" if svc.get("requires_cert") else "no prior certification"))
+    if svc.get("min_age") and svc["min_age"] != 10:
+        parts.append(f"edad mínima {svc['min_age']}" if es else f"minimum age {svc['min_age']}")
+    return parts
+
+
 def catalog_facts(lang: str) -> str:
     """Paso 5 (RAG, flag `rag_v2`): el catalogo entero como hechos compactos para el contexto
     del RAG — precio online y normal, duracion, si obliga a dormir en las islas y si pide
@@ -382,38 +428,8 @@ def catalog_facts(lang: str) -> str:
         if svc.get("category") == "private":
             continue
         name = svc.get("name_es" if es else "name_en") or service_id
-        parts = []
-        if svc.get("price_usd") is not None:
-            online = money.usd_cop(svc.get("price_usd"), svc.get("price_cop"))
-            normal = money.usd_cop(svc.get("price_usd_normal"), svc.get("price_cop_normal"))
-            parts.append(f"{online} online, {normal} normal" if es else f"{online} online, {normal} regular")
-        else:
-            parts.append("precio: lo cotiza un asesor" if es else "price: quoted by an advisor")
-        days = svc.get("duration_days")
-        if days:
-            parts.append((f"{days} día" + ("s" if days > 1 else "")) if es else (f"{days} day" + ("s" if days > 1 else "")))
-        if svc.get("includes_night_dive"):
-            parts.append("incluye un buceo nocturno" if es else "includes a night dive")
         island = service_id.endswith("_already_on_island")
-        if service_id in OVERNIGHT_SERVICES and not island:
-            parts.append("hay que dormir en las islas (alojamiento no incluido), no es ida y vuelta el mismo día"
-                         if es else "you must stay overnight on the islands (lodging not included), not a same-day round trip")
-        elif svc.get("overnight") == "optional" and not island:
-            parts.append("el día 1 puedes volver a Cartagena o dormir en las islas (alojamiento no incluido)"
-                         if es else "on day 1 you can return to Cartagena or stay on the islands (lodging not included)")
-        elif not island and days == 1:
-            parts.append("ida y vuelta desde Cartagena el mismo día" if es else "same-day round trip from Cartagena")
-        includes = (svc.get("includes_es") or "").lower()
-        if "transporte" in includes and not island:
-            # 28-sep (ronda cache-B2): "no es ida y vuelta el mismo dia" se leia como "no hay lancha".
-            parts.append("lancha Cartagena-Islas-Cartagena incluida" if es else
-                         "boat Cartagena-Islands-Cartagena included")
-        parts.append(("almuerzo incluido" if "almuerzo" in includes else "almuerzo NO incluido")
-                     if es else ("lunch included" if "almuerzo" in includes else "lunch NOT included"))
-        parts.append(("requiere certificación" if svc.get("requires_cert") else "sin certificación previa")
-                     if es else ("certification required" if svc.get("requires_cert") else "no prior certification"))
-        if svc.get("min_age") and svc["min_age"] != 10:
-            parts.append(f"edad mínima {svc['min_age']}" if es else f"minimum age {svc['min_age']}")
+        parts = service_fact_parts(service_id, lang)
         groups[island].append(f"- {name}: " + "; ".join(parts) + ".")
     # El refresher se vende con el servicio que le da el registro de actividades (hoy el minicurso). Paso 8
     # (28-sep): sin el atajo fijo del refresher, el RAG decia "el refresh no esta listado con precio".
@@ -442,7 +458,12 @@ def catalog_facts(lang: str) -> str:
                "Edad mínima 10 años salvo que se indique otra.",
                "Operamos todos los días del año salvo el 25 de diciembre y el 1 de enero. Tú no ves los cupos: "
                "el cliente elige la fecha y el número de personas en el calendario del link de reserva.",
-               "Moneda: colombianos/residentes pagan en COP y extranjeros en USD, mismo precio; si no sabes "
+               "Descuentos: 10% online (ya aplicado en el precio 'online'); 10% extra para grupos de 5 o más en "
+               "buceo recreativo, minicurso y snorkel (no en cursos PADI; no es automático: lo aplica el equipo); "
+               "5% si el cliente trae su equipo COMPLETO, solo en buceo recreativo y cursos (no en snorkel ni "
+               "minicurso); 10% el segundo día de buceo (buceo recreativo y cursos).",
+               "Moneda: los colombianos (vivan donde vivan) y los residentes en Colombia pagan en COP; el resto, en "
+               "USD; mismo precio; si no sabes "
                "la nacionalidad del cliente, da las dos monedas. NO existe precio ni descuento especial para "
                "colombianos: si el cliente lo menciona, díselo claramente (solo cambia la moneda). No sumes ni "
                "calcules totales. Si el cliente "
@@ -457,7 +478,12 @@ def catalog_facts(lang: str) -> str:
                "Minimum age 10 unless stated otherwise.",
                "We operate every day of the year except December 25 and January 1. You can't see open slots: "
                "the customer picks the date and number of people in the booking link's calendar.",
-               "Currency: Colombians/residents pay in COP and foreigners in USD, same price; if you don't "
+               "Discounts: 10% online (already in the 'online' price); an extra 10% for groups of 5 or more in "
+               "recreational diving, mini course and snorkeling (not PADI courses; not automatic: the team applies "
+               "it); 5% if the customer brings their COMPLETE gear, only for recreational diving and courses (not "
+               "snorkeling or the mini course); 10% on the second day of diving (recreational diving and courses).",
+               "Currency: Colombians (wherever they live) and residents of Colombia pay in COP; everyone else in "
+               "USD; same price; if you don't "
                "know the customer's nationality, give both currencies. There is NO special price or discount for "
                "Colombians: if the customer mentions one, say so clearly (only the currency changes). Do not add "
                "up or compute totals. If the "

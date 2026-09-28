@@ -2,25 +2,25 @@
  "nombre": "base",
  "solo_busqueda": false,
  "reps": 2,
- "preguntas_version": 2,
+ "preguntas_version": 3,
  "resumen": {
   "casos": 94,
-  "datos": 176,
-  "recall_top1": 0.4942528735632184,
-  "recall_top3": 0.6551724137931034,
-  "recall_top8": 0.6896551724137931,
-  "en_fragmentos": 0.6781609195402298,
-  "en_contexto": 0.8275862068965517,
+  "datos": 174,
+  "recall_top1": 0.5172413793103449,
+  "recall_top3": 0.6781609195402298,
+  "recall_top8": 0.7126436781609196,
+  "en_fragmentos": 0.7011494252873564,
+  "en_contexto": 0.8505747126436781,
   "sin_confianza": 0.02127659574468085,
   "atajos": 0,
   "contexto_chars_media": 31564.425531914894,
-  "cobertura": 0.8068181818181818,
+  "cobertura": 0.8045977011494253,
   "causas": {
-   "ok": 142,
+   "ok": 140,
    "contradice": 7,
-   "busqueda": 17,
-   "juez_corta": 3,
-   "redaccion": 7
+   "busqueda": 16,
+   "redaccion": 9,
+   "juez_corta": 2
   },
   "extras_cubiertos": "0/10",
   "prohibidas_afirmadas": 4,
@@ -1451,14 +1451,14 @@
    "puntos": {
     "datos": [
      {
-      "id": "residente-cedula-cop",
+      "id": "residente-cop",
       "calculo": false,
       "opcional": false,
-      "rango_top8": null,
-      "en_fragmentos": false,
-      "en_contexto": false,
-      "respuesta": "dice",
-      "causa": "ok"
+      "rango_top8": 1,
+      "en_fragmentos": true,
+      "en_contexto": true,
+      "respuesta": "no_dice",
+      "causa": "redaccion"
      },
      {
       "id": "solo-moneda",
@@ -2774,16 +2774,6 @@
       "rango_top8": null,
       "en_fragmentos": false,
       "en_contexto": true,
-      "respuesta": "no_dice",
-      "causa": "juez_corta"
-     },
-     {
-      "id": "total",
-      "calculo": true,
-      "opcional": false,
-      "rango_top8": null,
-      "en_fragmentos": null,
-      "en_contexto": null,
       "respuesta": "no_dice",
       "causa": "juez_corta"
      }
@@ -5522,9 +5512,9 @@
       "id": "cop-colombianos",
       "calculo": false,
       "opcional": false,
-      "rango_top8": null,
-      "en_fragmentos": false,
-      "en_contexto": false,
+      "rango_top8": 1,
+      "en_fragmentos": true,
+      "en_contexto": true,
       "respuesta": "dice",
       "causa": "ok"
      }
@@ -9806,14 +9796,14 @@
    "puntos": {
     "datos": [
      {
-      "id": "residente-cedula-cop",
+      "id": "residente-cop",
       "calculo": false,
       "opcional": false,
-      "rango_top8": null,
-      "en_fragmentos": false,
-      "en_contexto": false,
-      "respuesta": "dice",
-      "causa": "ok"
+      "rango_top8": 1,
+      "en_fragmentos": true,
+      "en_contexto": true,
+      "respuesta": "no_dice",
+      "causa": "redaccion"
      },
      {
       "id": "solo-moneda",
@@ -11142,16 +11132,6 @@
       "en_contexto": true,
       "respuesta": "dice",
       "causa": "ok"
-     },
-     {
-      "id": "total",
-      "calculo": true,
-      "opcional": false,
-      "rango_top8": null,
-      "en_fragmentos": null,
-      "en_contexto": null,
-      "respuesta": "no_dice",
-      "causa": "redaccion"
      }
     ],
     "prohibidas_afirmadas": 0,
@@ -13881,11 +13861,11 @@
       "id": "cop-colombianos",
       "calculo": false,
       "opcional": false,
-      "rango_top8": null,
-      "en_fragmentos": false,
-      "en_contexto": false,
+      "rango_top8": 1,
+      "en_fragmentos": true,
+      "en_contexto": true,
       "respuesta": "no_dice",
-      "causa": "busqueda"
+      "causa": "redaccion"
      }
     ],
     "prohibidas_afirmadas": 1,
