@@ -192,6 +192,10 @@ def _collect() -> dict[str, str]:
     add("info/rag_intro.short_es", info.RAG_INTRO_SHORT_ES)
     add("info/rag_intro.long_en", info.RAG_INTRO_LONG_EN)
     add("info/rag_intro.short_en", info.RAG_INTRO_SHORT_EN)
+    add("info/rag_regen_feedback.es", info.RAG_REGEN_FEEDBACK_ES)
+    add("info/rag_regen_feedback.en", info.RAG_REGEN_FEEDBACK_EN)
+    add_json("info/rag_regen_guard.es", info.RAG_REGEN_GUARD_ES)
+    add_json("info/rag_regen_guard.en", info.RAG_REGEN_GUARD_EN)
 
     # ── info · persona Coral + seguridad + reglas (prompt de respuesta RAG) ──
     # Piezas por separado (lo que se mueve a src/prompts/info.py) y el prompt

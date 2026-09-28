@@ -1205,6 +1205,36 @@ def _build_grounding_context(
     return "\n\n".join(parts)
 
 
+def regen_feedback(reject_reason: str, lang: str) -> str | None:
+    """Mensaje para la segunda muestra con lo que el juez o el guard rechazó (flag `rag_regen_feedback`).
+
+    El juez v3 devuelve "HALLUCINATED - dato NO | - dato NO"; los guards, su etiqueta. None = sin motivo que
+    contar (se regenera como antes)."""
+    from src.prompts.info import (  # lazy
+        RAG_REGEN_FEEDBACK_EN,
+        RAG_REGEN_FEEDBACK_ES,
+        RAG_REGEN_GUARD_EN,
+        RAG_REGEN_GUARD_ES,
+    )
+
+    guards = RAG_REGEN_GUARD_ES if lang == "es" else RAG_REGEN_GUARD_EN
+    if reject_reason in guards:
+        facts = guards[reject_reason]
+    elif reject_reason.startswith("HALLUCINATED"):
+        items = []
+        for raw in reject_reason[len("HALLUCINATED"):].split(" | "):
+            item = re.sub(r"[\s:.]*\bNO\b\.?\s*$", "", raw.strip().lstrip("- ").strip())
+            if item:
+                items.append(f"- {item}")
+        if not items:
+            return None
+        facts = "\n".join(items)
+    else:
+        return None
+    template = RAG_REGEN_FEEDBACK_ES if lang == "es" else RAG_REGEN_FEEDBACK_EN
+    return template.format(facts=facts)
+
+
 async def _verify_grounding(answer: str, context: str, lang: str) -> tuple[bool, str]:
     """Juzga UNA vez si la respuesta está sostenida por el contexto (l1-1, Fase L1).
 
@@ -1475,6 +1505,11 @@ async def rag_answer(
                     return answer
                 last_reject = reason
             logger.info(f"[RAG][GROUNDING] attempt {attempt + 1} rejected ({last_reject}) query={query[:50]}...")
+            if settings.rag_regen_feedback and attempt == 0:
+                feedback = regen_feedback(last_reject, lang)
+                if feedback:
+                    messages = [*messages, {"role": "assistant", "content": answer},
+                                {"role": "user", "content": feedback}]
 
         logger.warning(
             f"[RAG][GROUNDING] Rejecting after 2 attempts query={query[:60]}... reason={last_reject}"

@@ -326,6 +326,40 @@ RAG_CONCISE_EN = (
 )
 
 
+# Regenerar CON el motivo del rechazo (28-sep, flag `rag_regen_feedback`). Antes, si el juez o un guard rechazaba
+# la respuesta, se volvía a pedir la MISMA respuesta sin decir qué estaba mal, y el modelo repetía el invento
+# ("llevamos 30 años" 2 de 2, "cada inmersión dura 40-50 min", "el punto de encuentro suele ser el centro"):
+# reproducidos en PRE, los 12 "no lo tengo" de 32 turnos del paso 8 venían todos de ahí. `_answer_with_llm`
+# añade la respuesta rechazada y este mensaje con los datos sin respaldo, y el juez vuelve a juzgar.
+RAG_REGEN_FEEDBACK_ES = (
+    "Tu respuesta anterior NO se envió porque decía cosas que el contexto no respalda:\n{facts}\n"
+    "Escríbela de nuevo contestando la misma pregunta, SIN esas afirmaciones (ni otras parecidas) y sin añadir "
+    "datos que no estén en el contexto. Mantén lo demás. Si sin ellas no puedes contestar lo que preguntó, dilo con "
+    "naturalidad (\"ese detalle puntual no lo tengo a la mano\") y sigue con lo que sí sabes."
+)
+RAG_REGEN_FEEDBACK_EN = (
+    "Your previous reply was NOT sent because it stated things the context does not support:\n{facts}\n"
+    "Write it again answering the same question, WITHOUT those statements (or similar ones) and without adding "
+    "facts that are not in the context. Keep the rest. If without them you cannot answer what they asked, say so "
+    "naturally (\"I don't have that specific detail handy\") and continue with what you do know."
+)
+# Motivo legible de cada guard determinista de `_answer_with_llm` (los que no están aquí se regeneran sin motivo).
+RAG_REGEN_GUARD_ES = {
+    "ungrounded_amount": "- un precio, porcentaje o cifra que no aparece en el contexto",
+    "ungrounded_url": "- un link que no aparece en el contexto",
+    "ungrounded_capacity": "- un número de plazas o capacidad que no aparece en el contexto",
+    "phone_number": "- un número de teléfono (nunca se le da al cliente)",
+    "requests_personal_data": "- pedirle datos personales al cliente (nunca se piden por el chat)",
+}
+RAG_REGEN_GUARD_EN = {
+    "ungrounded_amount": "- a price, percentage or figure that is not in the context",
+    "ungrounded_url": "- a link that is not in the context",
+    "ungrounded_capacity": "- a number of places or capacity that is not in the context",
+    "phone_number": "- a phone number (never given to the customer)",
+    "requests_personal_data": "- asking the customer for personal data (never requested in the chat)",
+}
+
+
 # v3 (28-sep): el v2 contestaba con UNA palabra y dejaba pasar datos inventados que su propia lista
 # nombra ("llevamos 30 años", "debes haber completado la teoría", "hay barcos hundidos"; banco
 # `scripts/sonda_juez_grounding.py`: 21/30). Repasar los datos uno a uno antes del veredicto es lo que
