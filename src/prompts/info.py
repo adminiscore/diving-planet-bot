@@ -334,14 +334,15 @@ RAG_CONCISE_EN = (
 RAG_REGEN_FEEDBACK_ES = (
     "Tu respuesta anterior NO se envió porque decía cosas que el contexto no respalda:\n{facts}\n"
     "Escríbela de nuevo contestando la misma pregunta, SIN esas afirmaciones (ni otras parecidas) y sin añadir "
-    "datos que no estén en el contexto. Mantén lo demás. Si sin ellas no puedes contestar lo que preguntó, dilo con "
-    "naturalidad (\"ese detalle puntual no lo tengo a la mano\") y sigue con lo que sí sabes."
+    "datos que no estén en el contexto. Mantén lo demás. No menciones lo que quitaste: solo si era JUSTO lo que el "
+    "cliente preguntó, dile con naturalidad que ese detalle puntual no lo tienes a la mano y sigue con lo que sí sabes."
 )
 RAG_REGEN_FEEDBACK_EN = (
     "Your previous reply was NOT sent because it stated things the context does not support:\n{facts}\n"
     "Write it again answering the same question, WITHOUT those statements (or similar ones) and without adding "
-    "facts that are not in the context. Keep the rest. If without them you cannot answer what they asked, say so "
-    "naturally (\"I don't have that specific detail handy\") and continue with what you do know."
+    "facts that are not in the context. Keep the rest. Do not mention what you removed: only if it was EXACTLY what "
+    "the customer asked, tell them naturally you don't have that specific detail handy and continue with what you do "
+    "know."
 )
 # Motivo legible de cada guard determinista de `_answer_with_llm` (los que no están aquí se regeneran sin motivo).
 RAG_REGEN_GUARD_ES = {

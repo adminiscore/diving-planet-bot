@@ -156,8 +156,8 @@ class Settings(BaseSettings):
     rag_concise: bool = False
     # 28-sep: si el juez (o un guard) rechaza la respuesta, la segunda muestra recibe QUÉ se rechazó para quitarlo
     # y conservar el resto; antes se repetía la misma petición y el modelo repetía el invento (12 de 32 turnos del
-    # paso 8 acababan así en "no lo tengo"). El juez sigue juzgando la segunda. APAGADO hasta su A/B.
-    rag_regen_feedback: bool = False
+    # paso 8 acababan así en "no lo tengo"). El juez sigue juzgando la segunda. ENCENDIDO para su ronda B (= PRE).
+    rag_regen_feedback: bool = True
 
     # Paso 6 (27-sep): respuestas fijas y salida deterministas de S4. s4-14: si piden un telefono se
     # da el WhatsApp oficial (decision de Gadea; antes "no manejo un numero"); s4-15: "¿eres un bot?"
