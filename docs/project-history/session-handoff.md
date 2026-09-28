@@ -13,6 +13,15 @@ Read this file before changing code in the Diving Planet Bot. For a quick versio
 
 > **📏 LEER ANTES DE MEDIR — decisiones del 24-sep-2026 (Gadea):** (1) latencia y llamadas con nuestros logs `[TURN_METRICS]` + `scripts/turn_metrics.py`, no con Langfuse (plan gratuito superado, reinicio 16-oct); (2) pruebas A/B por escalones, juzgando solo los diálogos que cambian. Todo en `docs/robustness/protocolo-medicion.md`.
 
+### ⚠️ 28-sep tarde (Álvaro) — OpenAI SIN CRÉDITO: PRE no contesta. `RAG_CONCISE` a medias (apagado)
+
+1. **Recargar crédito en OpenAI** (platform.openai.com → Billing). Hasta entonces PRE falla en todas las llamadas
+   (`429 insufficient_quota`) y ninguna medida vale.
+2. **Respuestas más cortas** (`RAG_CONCISE`, apagado; HISTORY 0.29.67): escalón 0 hecho con 3 variantes. Con tope de
+   longitud se ahorra ~1 s pero el bot comprime e inventa huecos (más "no lo tengo"); la variante suave (la del
+   código) no empeora pero ahorra ~0,3 s. **Decidir** si merece su ronda A/B (~1 h, ~0,6 $) o se pasa a "contexto
+   por servicio" (el cabo suelto de "how do i pay" en inglés va ahí). Scripts del escalón 0: ver HISTORY 0.29.67.
+
 ### ✅ 28-sep noche (Álvaro) — l2-3 "escribiendo…" HECHA. Siguiente: juez de grounding con gpt-4.1-mini en el banco
 
 Primer paso de "RAG calidad + latencia" (orden de Gadea). Una pregunta con RAG tarda ~4 s (búsqueda ~0,4 s, respuesta

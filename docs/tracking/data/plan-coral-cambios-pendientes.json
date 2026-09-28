@@ -491,6 +491,16 @@
         "byLabel": "Alvaro (con Claude)",
         "text": "28-sep: l2-3 hecha, 'escribiendo…' en el chat (CHATWOOT_TYPING_INDICATOR). Latencia RAG medida en PRE: ~4 s (respuesta 1,9 s, juez 1,2 s, busqueda 0,4 s). Siguiente: juez de grounding con gpt-4.1-mini en el banco. HISTORY 0.29.65."
       }
+    },
+    {
+      "coleccion": "log",
+      "operacion": "set",
+      "doc_id": "l-0928-alvaro-concise",
+      "campos": {
+        "at": "2026-09-28T15:10:00Z",
+        "byLabel": "Alvaro (con Claude)",
+        "text": "28-sep: juez de grounding con gpt-4.1-mini descartado (48/70 vs 70/70, no mas rapido). RAG_CONCISE (respuestas cortas, apagado): escalon 0 con 3 variantes; con tope ahorra ~1 s pero inventa huecos, la suave no empeora pero ahorra ~0,3 s. Pendiente decidir A/B. OJO: OpenAI sin credito, PRE no contesta hasta recargar. HISTORY 0.29.66-0.29.67."
+      }
     }
   ]
 }

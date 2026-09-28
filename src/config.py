@@ -152,6 +152,7 @@ class Settings(BaseSettings):
     # Latencia del RAG (28-sep): la respuesta contesta SOLO lo preguntado, en 2-4 frases, y ofrece ampliar (la
     # intro cálida se queda, en una frase). Escribir la respuesta crece con la longitud (220 caracteres 1,1 s,
     # 720 caracteres 2,8 s); la mediana era ~680. Decisión del owner. APAGADO hasta su A/B (prompts/info.py).
+    # Escalón 0 (HISTORY 0.29.67): con tope de longitud comprime e inventa huecos; la variante suave del código no.
     rag_concise: bool = False
 
     # Paso 6 (27-sep): respuestas fijas y salida deterministas de S4. s4-14: si piden un telefono se

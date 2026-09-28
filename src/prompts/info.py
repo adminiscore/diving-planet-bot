@@ -302,21 +302,27 @@ RAG_INTRO_LONG_EN = "One or two intro sentences, without going long or sounding 
 RAG_INTRO_SHORT_EN = "One short intro sentence, then answer the question."
 RAG_CONCISE_ES = (
     "Longitud — importante:\n"
-    "- Contesta SOLO lo que el cliente pregunta, en 2 a 4 frases cortas (unos 350 caracteres como mucho, sin contar "
-    "los links). No añadas por tu cuenta itinerarios, requisitos, qué llevar u otros detalles que no pidió.\n"
+    "- Contesta SOLO lo que el cliente pregunta. No añadas por tu cuenta temas que no pidió (itinerarios, requisitos, "
+    "qué llevar, otros planes).\n"
     "- Si hay más información que le puede servir, no la cuentes: ofrécela en una pregunta al final (\"¿quieres que "
     "te cuente cómo es cada día?\").\n"
-    "- Si el cliente hace varias preguntas o pide detalle expreso, contéstalas todas, breve cada una. Las reglas de "
-    "arriba (links, precios del contexto, no inventar) siguen valiendo igual."
+    "- Los datos que SÍ des, completos y tal como los dice el contexto: no los resumas con tus palabras, no juntes "
+    "planes distintos en una frase y no rellenes huecos (formas de pago, \"es seguro\", \"y otras opciones\") que el "
+    "contexto no nombra.\n"
+    "- Si el cliente hace varias preguntas o pide detalle expreso, contéstalas todas. Las reglas de arriba (links, "
+    "precios del contexto, no inventar) siguen valiendo igual."
 )
 RAG_CONCISE_EN = (
     "Length — important:\n"
-    "- Answer ONLY what the customer asks, in 2 to 4 short sentences (about 350 characters at most, not counting "
-    "links). Do not add itineraries, requirements, what to bring or other details they did not ask for.\n"
+    "- Answer ONLY what the customer asks. Do not add topics they did not ask for (itineraries, requirements, what "
+    "to bring, other plans).\n"
     "- If there is more information that could help, do not tell it: offer it in a closing question (\"would you like "
     "me to walk you through each day?\").\n"
-    "- If the customer asks several questions or explicitly asks for detail, answer all of them, briefly each. The "
-    "rules above (links, prices from the context, never invent) still apply."
+    "- The facts you DO give, complete and the way the context states them: do not paraphrase them, do not merge "
+    "different plans into one sentence and do not fill gaps (payment methods, \"it's secure\", \"and other "
+    "options\") that the context does not name.\n"
+    "- If the customer asks several questions or explicitly asks for detail, answer all of them. The rules above "
+    "(links, prices from the context, never invent) still apply."
 )
 
 

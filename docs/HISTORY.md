@@ -1,6 +1,21 @@
 History
 =======
 
+0.29.67 - (2026-09-28)
+----------------------
+* **Respuestas del RAG más cortas (flag `RAG_CONCISE`, APAGADO): escalón 0 hecho, A/B pendiente.** Decisión del owner: mantener la intro cálida (una frase) y contestar solo lo preguntado, ofreciendo ampliar. Escalón 0 dentro de PRE: los 34 mensajes que el bot contestó con el RAG en `2026-09-28-cache-B2`, con su historial, flag apagado y encendido alternando, en serie:
+
+| Variante | Caracteres p50 (off → on) | Segundos media (off → on) | p90 | "No lo tengo" (off / on) |
+|---|---|---|---|---|
+| v1 "2-4 frases, ~350 caracteres" | 512 → 310 | 4,38 → 3,31 | 7,39 → 4,48 | 0 / 3 |
+| v2 = v1 + "no resumas con tus palabras" | 476 → 296 | 3,62 → 3,24 | 5,34 → 4,55 | 0 / 4 |
+| **v3 suave (en el código)**: solo lo preguntado, sin tope, los datos completos y como los dice el contexto | 465 → 396 | 3,67 → 3,40 | 5,05 → 4,71 | 1 / 2 |
+
+  - Con tope de longitud el bot **comprime y se inventa huecos** ("puedes pagar con PayPal", "los dos incluyen almuerzo", "precio especial"); el juez los caza bien, pero cada rechazo es una regeneración y a veces acaba en "no lo tengo" (en conjunto, 0/68 → 7/68). La v3 no sube los "no lo tengo" (el de más es "regreso otro día", que también falla sin el flag), pero ahorra poco (~0,3 s).
+  - Cabo suelto visto (no es de este flag): "great, how do i pay" en inglés — el contexto que se recupera no dice cómo se paga y el juez rechaza incluso "pagas online en el link" (1 de cada 5-9 veces cae al "no lo tengo" también sin el flag). Va al bloque "contexto por servicio".
+  - Juicio honesto: la ganancia buena (v1, ~1 s y p90 −3 s) cuesta calidad; la segura (v3) es pequeña. **Decidir antes de gastar la ronda A/B.**
+* **⚠️ Incidente 28-sep ~15:00: la cuenta de OpenAI se quedó SIN CRÉDITO** (`429 insufficient_quota`, "You have no credits remaining"). PRE usa la misma cuenta: **el bot de PRE no puede contestar** hasta que se recargue. Las pruebas de hoy (banco del juez con 3 modelos, 4 vueltas del escalón 0 con contexto real de ~8.000 tokens) gastaron del orden de 10 $; el saldo ya debía de estar bajo. La segunda vuelta de la v3 se invalidó (a partir del caso 6 fallaba todo por falta de crédito).
+
 0.29.66 - (2026-09-28)
 ----------------------
 * **Juez de grounding con un modelo más rápido: DESCARTADO, se queda gpt-4.1.** Banco `scripts/sonda_juez_grounding.py` (14 casos, 5 repeticiones, llamadas en serie para medir el tiempo): **gpt-4.1 70/70, p50 0,84 s** · gpt-4.1-mini 48/70, p50 0,94 s · gpt-4o-mini 37/70, p50 0,90 s. Los modelos pequeños no son más rápidos con este prompt (la salida es la lista de datos, igual de larga) y dejan pasar inventos ("llevamos 30 años", "instructores PADI 5 estrellas", "incluye recogida en el hotel", "no pierdes tu reserva ni tu dinero") o rechazan datos correctos ("pagar presencialmente con tarjeta o efectivo"). No se toca PRE. Siguiente de la latencia del RAG: respuestas más cortas (la generación crece con la longitud: 220 caracteres 1,1 s, 720 caracteres 2,8 s).
