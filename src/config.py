@@ -161,7 +161,8 @@ class Settings(BaseSettings):
     rag_regen_feedback: bool = True
     # rag-2 (29-sep, fase RAG de Plan Coral): la busqueda lee la base curada del esquema `kb_v2` (una ficha por
     # servicio y origen, FAQs sin telefono ni listas de precios, politicas con sus formas de preguntarlas;
-    # `scripts/kb_v2.py`). Apagado = `public.kb_documents` de siempre. Marcha atras: apagarlo.
+    # `scripts/kb_v2.py`). Apagado = `public.kb_documents` de siempre. PROMOCIONADO 29-sep (HISTORY 0.29.72): core
+    # rag2-A 92,5 % -> rag2-B 94,3 %, sin regresiones atribuibles. Marcha atras: apagarlo (aqui y en el compose).
     rag_kb_v2: bool = True
 
     # Paso 6 (27-sep): respuestas fijas y salida deterministas de S4. s4-14: si piden un telefono se

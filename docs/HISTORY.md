@@ -1,6 +1,12 @@
 History
 =======
 
+0.29.72 - (2026-09-29)
+----------------------
+* **`RAG_KB_V2` PROMOCIONADO (rag-2 cerrada).** Ronda core A/B en PRE (dos deploys seguidos: 96adcb9 flag apagado, 92d16dc encendido): criterios 92,5 % → **94,3 %** (juez gpt-5-mini; 7 mejoras, 3 "regresiones" revisadas a mano: una es ruido de muestreo en una repregunta de asesor que A y B hacen igual, otra pasa a "no aplica" y la tercera es el nombre "Fun Dives - 2 dives (1 day)" de `services.json`, que la referencia del juez (`pricing.json`) llama "Certified Diver - 2 dives": incoherencia de nombres entre fuentes, no invento). Diálogos sin fallos 22/32 en los dos. Turnos RAG: p50 5,3 → 4,9 s, p95 8,8 → 9,5 s (un turno lento), 4,7 llamadas en los dos.
+* Golden: criterio `anticipacion-cierre-sistema` alineado con `how_to_book` (tras el cierre se reserva por la web, sin WhatsApp). El de moneda ya decía "colombianos y residentes"; fallaba por la referencia antigua (cédula), corregida con D1.
+* Pendiente menor: unificar los nombres de servicio entre `services.json` y `pricing.json`.
+
 0.29.71 - (2026-09-29)
 ----------------------
 * **rag-2 (fase RAG): base de conocimiento curada detrás del flag `RAG_KB_V2` (apagado; esquema `kb_v2`).** Paso 1: inventario (`scripts/kb_inventario.py`): 50 fragmentos con el teléfono, 25 FAQs que repetían un servicio entero (los clones que llenaban el top-8), listas de precios duplicadas, "$0 COP por día" de equipo propio. Decisiones de Gadea (D1-D8, `docs/robustness/rag-2/decisiones.md`) aplicadas a las fuentes de verdad: moneda "colombianos y residentes", refresh sin teléfono, llegada 4:15, extranjeros pagan con tarjeta en la web (50 % solo colombianos), almuerzo solo el día 1 desde Cartagena, 5 % por equipo solo buceo y cursos; el catálogo dice a qué aplica cada descuento.
