@@ -291,6 +291,35 @@ RAG_PAYMENT_V2_EN = (
 )
 
 
+# Latencia del RAG (28-sep, flag `rag_concise`): escribir la respuesta es lo más lento del turno y crece con la
+# longitud (medido en PRE: 220 caracteres 1,1 s, 720 caracteres 2,8 s). La mediana era ~680 caracteres y no por
+# la intro cálida (el owner la pidió el 8-jul y se queda), sino por contar más de lo preguntado: a "¿cuánto
+# dura?" contestaba con el itinerario entero. Decisión del owner (28-sep): solo lo preguntado y ofrecer ampliar.
+# `build_system_prompt` cambia la frase de la intro por la corta y añade la regla al final del cuerpo.
+RAG_INTRO_LONG_ES = "Una o dos frases de intro, sin alargarte ni sonar a folleto, y luego respondes la pregunta."
+RAG_INTRO_SHORT_ES = "Una sola frase corta de intro, y luego respondes la pregunta."
+RAG_INTRO_LONG_EN = "One or two intro sentences, without going long or sounding like a brochure, then answer the question."
+RAG_INTRO_SHORT_EN = "One short intro sentence, then answer the question."
+RAG_CONCISE_ES = (
+    "Longitud — importante:\n"
+    "- Contesta SOLO lo que el cliente pregunta, en 2 a 4 frases cortas (unos 350 caracteres como mucho, sin contar "
+    "los links). No añadas por tu cuenta itinerarios, requisitos, qué llevar u otros detalles que no pidió.\n"
+    "- Si hay más información que le puede servir, no la cuentes: ofrécela en una pregunta al final (\"¿quieres que "
+    "te cuente cómo es cada día?\").\n"
+    "- Si el cliente hace varias preguntas o pide detalle expreso, contéstalas todas, breve cada una. Las reglas de "
+    "arriba (links, precios del contexto, no inventar) siguen valiendo igual."
+)
+RAG_CONCISE_EN = (
+    "Length — important:\n"
+    "- Answer ONLY what the customer asks, in 2 to 4 short sentences (about 350 characters at most, not counting "
+    "links). Do not add itineraries, requirements, what to bring or other details they did not ask for.\n"
+    "- If there is more information that could help, do not tell it: offer it in a closing question (\"would you like "
+    "me to walk you through each day?\").\n"
+    "- If the customer asks several questions or explicitly asks for detail, answer all of them, briefly each. The "
+    "rules above (links, prices from the context, never invent) still apply."
+)
+
+
 # v3 (28-sep): el v2 contestaba con UNA palabra y dejaba pasar datos inventados que su propia lista
 # nombra ("llevamos 30 años", "debes haber completado la teoría", "hay barcos hundidos"; banco
 # `scripts/sonda_juez_grounding.py`: 21/30). Repasar los datos uno a uno antes del veredicto es lo que

@@ -185,6 +185,20 @@ def build_system_prompt(lang: str, query: str | None = None) -> str:
         )
 
         prompt = prompt.replace(RAG_PAYMENT_OLD_ES, RAG_PAYMENT_V2_ES).replace(RAG_PAYMENT_OLD_EN, RAG_PAYMENT_V2_EN)
+    if settings.rag_concise:
+        from src.prompts.info import (  # lazy
+            RAG_CONCISE_EN,
+            RAG_CONCISE_ES,
+            RAG_INTRO_LONG_EN,
+            RAG_INTRO_LONG_ES,
+            RAG_INTRO_SHORT_EN,
+            RAG_INTRO_SHORT_ES,
+        )
+
+        if lang == "es":
+            prompt = f"{prompt.replace(RAG_INTRO_LONG_ES, RAG_INTRO_SHORT_ES)}\n\n{RAG_CONCISE_ES}"
+        else:
+            prompt = f"{prompt.replace(RAG_INTRO_LONG_EN, RAG_INTRO_SHORT_EN)}\n\n{RAG_CONCISE_EN}"
     return prompt
 
 

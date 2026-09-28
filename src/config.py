@@ -149,6 +149,10 @@ class Settings(BaseSettings):
     # el contexto del juez, para que el prompt caching de OpenAI lo reutilice entre conversaciones (antes iba
     # en el mensaje del usuario, detras del historial: nunca se cacheaba). ENCENDIDO por defecto (= PRE, paso 10).
     rag_prompt_cache: bool = True
+    # Latencia del RAG (28-sep): la respuesta contesta SOLO lo preguntado, en 2-4 frases, y ofrece ampliar (la
+    # intro cálida se queda, en una frase). Escribir la respuesta crece con la longitud (220 caracteres 1,1 s,
+    # 720 caracteres 2,8 s); la mediana era ~680. Decisión del owner. APAGADO hasta su A/B (prompts/info.py).
+    rag_concise: bool = False
 
     # Paso 6 (27-sep): respuestas fijas y salida deterministas de S4. s4-14: si piden un telefono se
     # da el WhatsApp oficial (decision de Gadea; antes "no manejo un numero"); s4-15: "¿eres un bot?"
