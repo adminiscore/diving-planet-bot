@@ -1,12 +1,16 @@
 """l2-3: "escribiendo…" en el chat mientras el bot prepara la respuesta.
 
 Una pregunta tarda ~4 s (medido en PRE el 28-sep). Se fija aquí, sin red:
-1. se enciende antes de preparar la respuesta y se apaga DESPUÉS de enviarla;
+1. se enciende a la vez que se prepara la respuesta (sin retrasarla) y se apaga DESPUÉS de enviarla,
+   cuando el encendido ya ha terminado;
 2. se apaga también si preparar la respuesta falla;
 3. si Chatwoot falla, el turno sigue (es solo un aviso);
 4. con el interruptor apagado no se llama a Chatwoot;
 5. la llamada es la de la API de Chatwoot (`toggle_typing_status`, on/off).
 """
+
+import asyncio
+import time
 
 import httpx
 import pytest
@@ -53,9 +57,33 @@ def _mensaje(n):
 
 
 @pytest.mark.asyncio
-async def test_se_enciende_antes_de_preparar_y_se_apaga_despues_de_enviar(pasos):
+async def test_se_apaga_despues_de_enviar_y_del_encendido(pasos):
     await chatwoot.handle_message(_mensaje(1))
-    assert pasos == ["typing-on", "preparar", "enviar", "typing-off"]
+    assert sorted(pasos[:3]) == sorted(["typing-on", "preparar", "enviar"])
+    assert pasos.index("preparar") < pasos.index("enviar")
+    assert pasos[-1] == "typing-off"
+
+
+@pytest.mark.asyncio
+async def test_encender_no_retrasa_la_respuesta(pasos, monkeypatch):
+    t0 = time.perf_counter()
+    empezo = {}
+
+    async def typing_lento(conversation_id, on):
+        if on:
+            await asyncio.sleep(0.3)  # Chatwoot lento
+        pasos.append(f"typing-{'on' if on else 'off'}")
+
+    async def route(state, message):
+        empezo["s"] = time.perf_counter() - t0
+        await asyncio.sleep(0)
+        return "respuesta"
+
+    monkeypatch.setattr(chatwoot, "set_typing", typing_lento)
+    monkeypatch.setattr(chatwoot, "route_message", route)
+    await chatwoot.handle_message(_mensaje(3))
+    assert empezo["s"] < 0.2
+    assert pasos[-2:] == ["typing-on", "typing-off"]
 
 
 @pytest.mark.asyncio
@@ -67,7 +95,8 @@ async def test_se_apaga_aunque_preparar_la_respuesta_falle(pasos, monkeypatch):
     monkeypatch.setattr(chatwoot, "route_message", falla)
     with pytest.raises(RuntimeError):
         await chatwoot.handle_message(_mensaje(2))
-    assert pasos == ["typing-on", "preparar", "typing-off"]
+    assert sorted(pasos[:2]) == ["preparar", "typing-on"]
+    assert pasos[-1] == "typing-off"
 
 
 class _Resp:

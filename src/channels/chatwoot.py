@@ -177,14 +177,17 @@ async def handle_message(payload: dict):
             await state_store.save_state(conversation_id, state)
             return
 
-        # l2-3: "escribiendo…" mientras se prepara la respuesta; se apaga siempre al terminar.
-        await set_typing(conversation_id, True)
+        # l2-3: "escribiendo…" mientras se prepara la respuesta. Se enciende A LA VEZ que se prepara
+        # (la llamada tarda ~0,18 s en PRE y no debe retrasar la respuesta) y se apaga siempre al terminar,
+        # después de que el encendido haya acabado (así nunca llegan al revés).
+        typing_on = asyncio.create_task(set_typing(conversation_id, True))
         try:
             # Route through supervisor (decision tree + RAG)
             response = await route_message(state, message)
 
             await finalize_chatwoot_delivery(conversation_id, state, response)
         finally:
+            await typing_on
             await set_typing(conversation_id, False)
         await state_store.save_state(conversation_id, state)
 
