@@ -13,7 +13,16 @@ Read this file before changing code in the Diving Planet Bot. For a quick versio
 
 > **📏 LEER ANTES DE MEDIR — decisiones del 24-sep-2026 (Gadea):** (1) latencia y llamadas con nuestros logs `[TURN_METRICS]` + `scripts/turn_metrics.py`, no con Langfuse (plan gratuito superado, reinicio 16-oct); (2) pruebas A/B por escalones, juzgando solo los diálogos que cambian. Todo en `docs/robustness/protocolo-medicion.md`.
 
-### ⚠️ 28-sep tarde (Álvaro) — OpenAI SIN CRÉDITO: PRE no contesta. `RAG_CONCISE` a medias (apagado)
+### ✅ 28-sep noche (Álvaro) — `RAG_REGEN_FEEDBACK` PROMOCIONADO. Siguiente: falso rechazo del precio en COP
+
+Crédito de OpenAI recargado; PRE sano. `RAG_REGEN_FEEDBACK` (HISTORY 0.29.68): cuando el juez rechaza, la segunda
+muestra sabe qué quitar; "no lo tengo" 12 → 2 en los casos difíciles y core 93,0 → 93,3 % sin regresiones del flag.
+`RAG_CONCISE` sigue apagado (aparcado, HISTORY 0.29.67). **Siguiente, en orden:** (1) el juez rechaza el precio
+correcto del paquete de 5 buceos en COP (`paquete-5-buceos-cop-refresh-y-hoteles` t2, las 3 rondas del 28-sep):
+reproducir con el contexto que ve el juez; (2) huecos de contexto vistos: punto de encuentro en inglés, descuento de
+grupo, "how do i pay" en inglés; (3) luego conversaciones reales. Rondas del día: `2026-09-28-regen-A/B/B2`.
+
+### ⚠️ 28-sep tarde (Álvaro) — SUPERADO (crédito recargado) — OpenAI SIN CRÉDITO: PRE no contesta. `RAG_CONCISE` a medias (apagado)
 
 1. **Recargar crédito en OpenAI** (platform.openai.com → Billing). Hasta entonces PRE falla en todas las llamadas
    (`429 insufficient_quota`) y ninguna medida vale.

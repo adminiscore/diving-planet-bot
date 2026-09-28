@@ -1,6 +1,14 @@
 History
 =======
 
+0.29.68 - (2026-09-28)
+----------------------
+* **`RAG_REGEN_FEEDBACK` PROMOCIONADO: la segunda muestra del RAG sabe qué rechazó el juez.** Diagnóstico (sin mirar el examen oculto): de los 74 fallos visibles del mapa del paso 8, 40 son de contenido del RAG. Reproducidos en PRE los 16 turnos visibles que acabaron en "no lo tengo" (×2): los de precios en COP ya no pasan (pasos 9-10); los 12 que quedan son el modelo **repitiendo el mismo invento** en la regeneración, porque se le repetía la misma petición ("llevamos 30 años" 2 de 2, "cada inmersión dura 40-50 min", "el punto de encuentro suele ser el centro"). Con el flag, la segunda llamada lleva la respuesta rechazada + la lista de datos sin respaldo (o el motivo del guard), con la orden de quitarlos, no mencionarlos salvo que fueran justo lo preguntado (y entonces ofrecer que un asesor lo confirme). El juez sigue juzgando la segunda.
+  - Escalón 0 (esos 16 turnos ×2): "no lo tengo" **12 → 2** de 32 (los 2 que quedan son huecos de contexto: punto de encuentro en inglés y descuento de grupo).
+  - Escalón 1 (core, mismo día): `regen-A` (off) 93,0 %, 21/32 sin fallos · `regen-B` (on) 93,0 %, 22/32 · `regen-B2` (on + "ofrece asesor") **93,3 %, 22/32**. Leído a mano lo que empeora en las dos B y pasa en A (4 criterios): ninguno es del flag (en 3 el juez no rechazó nada en esos turnos y los motivos cambian entre B y B2; "regreso otro día" falla 28 de 29 rondas en la historia, el acierto de A fue suerte). Mejoran en las dos B: inventos quitados en refresher y transporte, política de cancelación, repreguntas. Latencia dentro del ruido de franja (p50 4,0 / 3,6 / 4,6 s).
+  - La regla que se añadió tras `regen-B`: al quitar el dato que era la respuesta, el bot decía "no lo tengo" sin ofrecer asesor (el fallback sí lo ofrece) y perdía dos criterios de escalado.
+* **Hallazgo para el siguiente paso:** el juez de grounding RECHAZA el precio correcto del paquete de 5 buceos en COP ("1.429.000 COP online / 1.587.000 COP normal", que está en el catálogo) en `paquete-5-buceos-cop-refresh-y-hoteles` turno 2, en las tres rondas → el cliente recibe "no lo tengo". Es un falso rechazo reproducible: investigar qué contexto ve el juez en ese turno.
+
 0.29.67 - (2026-09-28)
 ----------------------
 * **Respuestas del RAG más cortas (flag `RAG_CONCISE`, APAGADO): escalón 0 hecho, A/B pendiente.** Decisión del owner: mantener la intro cálida (una frase) y contestar solo lo preguntado, ofreciendo ampliar. Escalón 0 dentro de PRE: los 34 mensajes que el bot contestó con el RAG en `2026-09-28-cache-B2`, con su historial, flag apagado y encendido alternando, en serie:

@@ -501,6 +501,16 @@
         "byLabel": "Alvaro (con Claude)",
         "text": "28-sep: juez de grounding con gpt-4.1-mini descartado (48/70 vs 70/70, no mas rapido). RAG_CONCISE (respuestas cortas, apagado): escalon 0 con 3 variantes; con tope ahorra ~1 s pero inventa huecos, la suave no empeora pero ahorra ~0,3 s. Pendiente decidir A/B. OJO: OpenAI sin credito, PRE no contesta hasta recargar. HISTORY 0.29.66-0.29.67."
       }
+    },
+    {
+      "coleccion": "log",
+      "operacion": "set",
+      "doc_id": "l-0928-alvaro-regen",
+      "campos": {
+        "at": "2026-09-28T19:30:00Z",
+        "byLabel": "Alvaro (con Claude)",
+        "text": "28-sep: RAG_REGEN_FEEDBACK promocionado (la regeneracion del RAG sabe que rechazo el juez). No lo tengo 12 -> 2 en los casos dificiles del paso 8; core regen-A 93,0 % -> regen-B2 93,3 %, 21 -> 22/32 sin fallos, sin regresiones del flag (leidas a mano). Siguiente: el juez rechaza el precio correcto del paquete de 5 en COP. HISTORY 0.29.68."
+      }
     }
   ]
 }

@@ -190,8 +190,8 @@ services:
       # Paso 9 (l2-2, 28-sep): catalogo en el prompt del sistema y a la cabeza del contexto del juez para el
       # prompt caching de OpenAI. Ver HISTORY 0.29.61. ENCENDIDO para la ronda B; si no pasa, "false".
       RAG_PROMPT_CACHE: "true"
-      # 28-sep (ronda B regen-B): si el juez rechaza la respuesta del RAG, la segunda muestra recibe QUE se
-      # rechazo (antes repetia el invento y acababa en "no lo tengo"). Revert = "false" aqui y en config.py.
+      # 28-sep, PROMOCIONADO (HISTORY 0.29.68): si el juez rechaza la respuesta del RAG, la segunda muestra recibe
+      # QUE se rechazo (antes repetia el invento y acababa en "no lo tengo"). Revert = "false" aqui y en config.py.
       RAG_REGEN_FEEDBACK: "true"
       # Refactor multi-agente (docs/multi-agent-refactor-plan.md) — validación en
       # PRE antes del corte del legacy (Fase 5.2). STAGE B (ahora): el GRAFO sirve
