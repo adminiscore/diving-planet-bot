@@ -188,6 +188,37 @@ def presente(hecho: dict, texto_norm: str) -> bool:
     return any(all(norm(p) in texto_norm for p in ancla.split(" + ")) for ancla in hecho["anclas"])
 
 
+def compactar(run: dict) -> dict:
+    """Guarda cada prompt de sistema distinto una sola vez (en cada respuesta pesa ~26.000 caracteres)."""
+    sistemas = run.setdefault("sistemas", [])
+    for f in run["filas"]:
+        for ll in f.get("llamadas") or []:
+            s = ll.get("sistema", "")
+            if isinstance(s, str) and not s.startswith("@"):
+                if s not in sistemas:
+                    sistemas.append(s)
+                ll["sistema"] = f"@{sistemas.index(s)}"
+    return run
+
+
+def expandir(run: dict) -> dict:
+    sistemas = run.get("sistemas") or []
+    for f in run["filas"]:
+        for ll in f.get("llamadas") or []:
+            s = ll.get("sistema", "")
+            if isinstance(s, str) and s.startswith("@") and s[1:].isdigit():
+                ll["sistema"] = sistemas[int(s[1:])]
+    return run
+
+
+def leer(path: Path) -> dict:
+    return expandir(json.loads(path.read_text(encoding="utf-8")))
+
+
+def guardar(path: Path, run: dict) -> None:
+    path.write_text(json.dumps(compactar(run), ensure_ascii=False, indent=1), encoding="utf-8")
+
+
 def _oculto() -> set[str]:
     dialogos = json.loads(GOLDEN.read_text(encoding="utf-8"))["dialogues"]
     return {d["id"] for d in dialogos if d.get("suite") == "oculto"}
@@ -293,7 +324,7 @@ def imprimir(r: dict, etiqueta: str = "") -> None:
 
 
 def comparar(a_path: Path, b_path: Path) -> None:
-    a, b = (json.loads(p.read_text(encoding="utf-8")) for p in (a_path, b_path))
+    a, b = (leer(p) for p in (a_path, b_path))
     imprimir(a["resumen"], f"A {a_path.stem}:")
     imprimir(b["resumen"], f"B {b_path.stem}:")
     ok = lambda run: {(f["id"], d["id"]): d["causa"] == "ok" for f in run["filas"] for d in f["puntos"]["datos"]}  # noqa: E731
@@ -323,13 +354,13 @@ def main() -> None:
         return
     if args.repuntuar:
         path = Path(args.repuntuar)
-        run = json.loads(path.read_text(encoding="utf-8"))
+        run = leer(path)
         por_id = {c["id"]: c for c in cargar_casos(None)}
         for f in run["filas"]:
             f["puntos"] = puntuar(por_id[f["id"]], f)
         run["resumen"] = resumen(run["filas"], run["solo_busqueda"])
         run["preguntas_version"] = json.loads(PREGUNTAS.read_text(encoding="utf-8"))["version"]
-        path.write_text(json.dumps(run, ensure_ascii=False, indent=1), encoding="utf-8")
+        guardar(path, run)
         imprimir(run["resumen"], path.stem)
         return
     if not args.name:
@@ -354,9 +385,9 @@ def main() -> None:
         f["puntos"] = puntuar(por_id[f["id"]], f)
     res = resumen(filas, args.solo_busqueda)
     out = DIR / f"{date.today().isoformat()}-{args.name}.json"
-    out.write_text(json.dumps({"nombre": args.name, "solo_busqueda": args.solo_busqueda, "reps": args.reps,
-                               "preguntas_version": json.loads(PREGUNTAS.read_text(encoding="utf-8"))["version"],
-                               "resumen": res, "filas": filas}, ensure_ascii=False, indent=1), encoding="utf-8")
+    guardar(out, {"nombre": args.name, "solo_busqueda": args.solo_busqueda, "reps": args.reps,
+                  "preguntas_version": json.loads(PREGUNTAS.read_text(encoding="utf-8"))["version"],
+                  "resumen": res, "filas": filas})
     imprimir(res, args.name)
     print(f"→ {out}")
     if len(filas) < total:

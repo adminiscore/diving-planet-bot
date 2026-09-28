@@ -48,3 +48,13 @@ def test_el_set_no_usa_el_examen_oculto():
     casos = json.loads(PREGUNTAS.read_text(encoding="utf-8"))["casos"]
     oculto = _oculto()
     assert casos and not [c["id"] for c in casos if c["origen"].split(":", 1)[-1].split("#")[0] in oculto]
+
+
+def test_compactar_y_expandir_ida_y_vuelta():
+    from scripts.rag_piezas import compactar, expandir
+
+    run = {"filas": [{"llamadas": [{"sistema": "S1", "usuario": "u"}, {"sistema": "S1"}]},
+                     {"llamadas": [{"sistema": "S2"}]}]}
+    c = compactar(json.loads(json.dumps(run)))
+    assert c["sistemas"] == ["S1", "S2"] and c["filas"][0]["llamadas"][1]["sistema"] == "@0"
+    assert expandir(c)["filas"] == run["filas"]
