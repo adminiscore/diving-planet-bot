@@ -1,6 +1,10 @@
 History
 =======
 
+0.29.62 - (2026-09-28)
+----------------------
+* **Ronda B `2026-09-28-cache-B` (juez v3b + `RAG_PROMPT_CACHE`): el caché funciona, el v3b NO.** El prompt caching reutiliza ~6.000 de ~8.000 tokens de cada respuesta del RAG (≈75 %, línea `[RAG] Query … Cached:`). Pero la latencia no mejoró (turnos con RAG p50 4,43 → 4,25 s, p95 7,45 → 8,1 s) porque el juez v3b (escribir solo lo no respaldado) rechazaba de más: rechazos 13 → 20 y "no lo tengo" 5 → 10, varios FALSOS sobre datos del catálogo ("el curso básico cuesta 2.450.000 COP", "pasas la noche en las islas"). Reproducido con el contexto real (~7.000 tokens): v3b 0/4 en el precio correcto, v3 con lista completa 4/4 — el banco no lo vio porque solo tenía contextos cortos. **Se vuelve al v3 con lista completa** (+ la regla de separadores) y el banco gana casos con el catálogo entero: **42/42**. Cada falso rechazo cuesta una regeneración entera (~2-3 s), mucho más que los ~0,5 s que ahorraba el v3b. `RAG_PROMPT_CACHE` sigue encendido; nueva ronda B.
+
 0.29.61 - (2026-09-28)
 ----------------------
 * **Paso 9 (latencia, l2-2): diagnóstico de la subida de los turnos con RAG y dos arreglos.** En el paso 8 los turnos con RAG subieron p50 3,7 → 4,8 s con MENOS llamadas (5,7 → 4,9) y los mismos rechazos del juez (50 → 49): no eran regeneraciones. Casi todo es tiempo de LLM, y el cambio fue el juez: gpt-4o-mini contestaba UNA palabra y el v3 (gpt-4.1) escribía la lista de TODOS los datos de la respuesta (~150 tokens en una respuesta larga). (1) **Juez v3b** (va con `GROUNDING_V3`, ya encendido): escribe SOLO los datos sin respaldo ("- (ninguno)" si todo está bien) — mismo acierto en el banco (33/33), la mitad de salida, **1,4 → 0,9 s** por juicio en una respuesta larga. (2) **`RAG_PROMPT_CACHE`** (encendido en PRE para su ronda B): el catálogo pasa al final del prompt del SISTEMA (fijo por idioma) y a la cabeza del contexto del juez, para que el prompt caching de OpenAI lo reutilice ENTRE conversaciones (en el mensaje del usuario, detrás del historial, nunca se cacheaba). La línea `[RAG] Query` registra ahora los tokens cacheados. Suite 2777 passed.

@@ -56,6 +56,28 @@ CASOS = [
      "El paquete de 5 inmersiones (2 días, con un buceo nocturno) cuesta $1,587,000 COP precio normal y $1,429,000 "
      "COP online.", "GROUNDED"),
 ]
+# Paso 9 (28-sep): el contexto REAL es largo (catalogo + documentos + historial); con contextos cortos el
+# banco no vio que una variante del juez rechazaba precios del catalogo. Estos casos van con el catalogo entero.
+def _ctx_largo():
+    from src.flows.catalog import catalog_booking_links, catalog_facts
+    nl = chr(10)
+    docs = nl.join([
+        "Pregunta: ¿Como es el Curso Basico PADI (Open Water)? Respuesta: Curso de 2 dias: teoria online, piscina y 4 "
+        "inmersiones. Dia 1: Muelle de la Bodeguita 8:00 a.m., noche en las islas (hotel no incluido).",
+        "Pregunta: ¿Que medios de pago aceptan? Respuesta: Para extranjeros: 100% online con tarjeta, o presencial "
+        "con tarjeta o efectivo.",
+    ])
+    return nl.join([catalog_facts("es"), catalog_booking_links("es"), "", docs, "", "Contexto adicional: cliente colombiano."])
+
+
+CTX_LARGO = _ctx_largo()
+CASOS += [
+    (CTX_LARGO, "El curso básico PADI para colombianos cuesta 2.450.000 COP online o 2.722.000 COP con tarifa normal. Dura "
+                "2 días y pasas la noche en las islas (hotel no incluido).", "GROUNDED"),
+    (CTX_LARGO, "También puedes pagar presencialmente con tarjeta o efectivo cuando llegues.", "GROUNDED"),
+    (CTX_LARGO, "¡Claro! Llevamos 30 años explorando esos sitios y operamos con instructores PADI 5 estrellas.",
+     "HALLUCINATED"),
+]
 N = 3
 
 
