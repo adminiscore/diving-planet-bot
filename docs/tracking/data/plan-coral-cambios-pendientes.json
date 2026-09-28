@@ -7,8 +7,8 @@
     "a_mano": "Abrir la pagina con sesion iniciada y copiar cada campo en su tarea o en la bitacora.",
     "al_terminar": "Dejar 'pendientes' como lista vacia, poner la fecha en 'aplicado_el' y quien lo aplico en 'aplicado_por', todo en el MISMO commit. Si esta lista se queda llena, el repo y la pagina han divergido: esa es la senal."
   },
-  "aplicado_el": "",
-  "aplicado_por": "",
+  "aplicado_el": "2026-09-29",
+  "aplicado_por": "Gadea (con Claude): aplicadas las entradas del 28-sep (l2-3 + 4 de la bitacora) y descartada la l2-3 antigua (\"ORDEN: PASO 7\", ya no vigente). Las demas son de dias anteriores y quedan por revisar contra la pagina.",
   "pendientes": [
     {
       "coleccion": "tasks",
@@ -202,14 +202,6 @@
       "coleccion": "tasks",
       "operacion": "update",
       "doc_id": "l2-2",
-      "campos": {},
-      "anteponer_a_la_nota": "ORDEN: PASO 7.",
-      "como": "NO sustituir la nota: poner este texto DELANTE de la nota que ya tenga (la escribieron otros)."
-    },
-    {
-      "coleccion": "tasks",
-      "operacion": "update",
-      "doc_id": "l2-3",
       "campos": {},
       "anteponer_a_la_nota": "ORDEN: PASO 7.",
       "como": "NO sustituir la nota: poner este texto DELANTE de la nota que ya tenga (la escribieron otros)."
@@ -469,57 +461,6 @@
         "at": "2026-09-26T17:10:00Z",
         "byLabel": "Alvaro (con Claude)",
         "text": "26-sep: paso 2 (g-8) en curso. Juez corregido (regla un fallo un criterio + golden v8): falsos suspensos 43 -> 24 pero escapadas 7 -> 16. Handoff para Gadea en session-handoff.md. HISTORY 0.29.39."
-      }
-    },
-    {
-      "coleccion": "tasks",
-      "operacion": "update",
-      "doc_id": "l2-3",
-      "campos": {
-        "status": "hecha",
-        "owner": "Alvaro"
-      },
-      "anteponer_a_la_nota": "28-sep (HISTORY 0.29.65): hecha. 'escribiendo…' en el chat mientras el bot prepara la respuesta (~4 s con RAG). Flag CHATWOOT_TYPING_INDICATOR encendido en PRE. No cambia las respuestas.",
-      "como": "NO sustituir la nota: poner este texto DELANTE."
-    },
-    {
-      "coleccion": "log",
-      "operacion": "set",
-      "doc_id": "l-0928-alvaro-l23",
-      "campos": {
-        "at": "2026-09-28T21:00:00Z",
-        "byLabel": "Alvaro (con Claude)",
-        "text": "28-sep: l2-3 hecha, 'escribiendo…' en el chat (CHATWOOT_TYPING_INDICATOR). Latencia RAG medida en PRE: ~4 s (respuesta 1,9 s, juez 1,2 s, busqueda 0,4 s). Siguiente: juez de grounding con gpt-4.1-mini en el banco. HISTORY 0.29.65."
-      }
-    },
-    {
-      "coleccion": "log",
-      "operacion": "set",
-      "doc_id": "l-0928-alvaro-concise",
-      "campos": {
-        "at": "2026-09-28T15:10:00Z",
-        "byLabel": "Alvaro (con Claude)",
-        "text": "28-sep: juez de grounding con gpt-4.1-mini descartado (48/70 vs 70/70, no mas rapido). RAG_CONCISE (respuestas cortas, apagado): escalon 0 con 3 variantes; con tope ahorra ~1 s pero inventa huecos, la suave no empeora pero ahorra ~0,3 s. Pendiente decidir A/B. OJO: OpenAI sin credito, PRE no contesta hasta recargar. HISTORY 0.29.66-0.29.67."
-      }
-    },
-    {
-      "coleccion": "log",
-      "operacion": "set",
-      "doc_id": "l-0928-alvaro-regen",
-      "campos": {
-        "at": "2026-09-28T19:30:00Z",
-        "byLabel": "Alvaro (con Claude)",
-        "text": "28-sep: RAG_REGEN_FEEDBACK promocionado (la regeneracion del RAG sabe que rechazo el juez). No lo tengo 12 -> 2 en los casos dificiles del paso 8; core regen-A 93,0 % -> regen-B2 93,3 %, 21 -> 22/32 sin fallos, sin regresiones del flag (leidas a mano). Siguiente: el juez rechaza el precio correcto del paquete de 5 en COP. HISTORY 0.29.68."
-      }
-    },
-    {
-      "coleccion": "log",
-      "operacion": "set",
-      "doc_id": "l-0928-alvaro-cierre",
-      "campos": {
-        "at": "2026-09-28T21:30:00Z",
-        "byLabel": "Alvaro (con Claude)",
-        "text": "28-sep cierre: rama feature/pre_alvaro lista para el relevo (PRE = esta rama, suite 2800). Nueva herramienta scripts/sonda_rag_turnos_pre.py. Siguiente: falso rechazo del precio COP del paquete de 5 buceos (pista: extra_context del estado). Handoff: bloque RETOMAR AQUI. HISTORY 0.29.69."
       }
     }
   ]
