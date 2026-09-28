@@ -36,8 +36,8 @@ def _route(st, message, proposed):
     core._route_contradictions(st, message, intent, proposed)
 
 
-def test_el_flag_nace_apagado():
-    assert Settings().corrections_v2 is False
+def test_el_flag_nace_encendido():
+    assert Settings().corrections_v2 is True  # promocionado: el valor por defecto es el de PRE
 
 
 def test_mismo_valor_para_el_cliente_no_se_pregunta(monkeypatch):

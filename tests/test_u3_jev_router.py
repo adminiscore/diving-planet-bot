@@ -160,7 +160,9 @@ async def test_llamada_correcta_devuelve_las_senales(monkeypatch):
     assert got == {"wants_human": True}
     assert enviado["model"] == settings.jev_model
     assert "me puede atender una persona?" in enviado["state"]
-    assert set(enviado["questions"]) == set(jev_router.routing_questions())
+    # Las del router siempre; además, solo preguntas de turno conocidas (las promocionadas van siempre).
+    assert set(jev_router.routing_questions()) <= set(enviado["questions"])
+    assert set(enviado["questions"]) - set(jev_router.routing_questions()) <= set(jev_router._U34_QUESTIONS)
 
 
 @pytest.mark.parametrize(

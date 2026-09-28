@@ -404,6 +404,10 @@ def catalog_facts(lang: str) -> str:
         elif not island and days == 1:
             parts.append("ida y vuelta desde Cartagena el mismo día" if es else "same-day round trip from Cartagena")
         includes = (svc.get("includes_es") or "").lower()
+        if "transporte" in includes and not island:
+            # 28-sep (ronda cache-B2): "no es ida y vuelta el mismo dia" se leia como "no hay lancha".
+            parts.append("lancha Cartagena-Islas-Cartagena incluida" if es else
+                         "boat Cartagena-Islands-Cartagena included")
         parts.append(("almuerzo incluido" if "almuerzo" in includes else "almuerzo NO incluido")
                      if es else ("lunch included" if "almuerzo" in includes else "lunch NOT included"))
         parts.append(("requiere certificación" if svc.get("requires_cert") else "sin certificación previa")

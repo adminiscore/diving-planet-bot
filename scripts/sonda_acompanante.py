@@ -1,4 +1,4 @@
-"""Banco de calibración de la pregunta de Jev `companion_joins` (u3-6, paso 7, flag `signals_gate`).
+"""Banco de calibración de la pregunta de Jev `companion_joins` (u3-6, paso 7).
 
 El filtro solo SALTA el LLM de señales cuando Jev está seguro de que el mensaje no mete a otra persona
 (p < COMPANION_NONE_MAX). Lo que importa: ningún positivo por debajo del umbral (se perdería un

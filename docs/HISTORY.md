@@ -1,6 +1,19 @@
 History
 =======
 
+0.29.64 - (2026-09-28)
+----------------------
+* **Paso 10 · limpieza (solo lo 100 % seguro, decisión de Gadea).** El código por defecto ya se comporta como PRE:
+  - **3 flags retirados del todo** (su camino encendido es ahora el código y se borró el apagado): `SLOT_ANSWERS_JEV`, `REGEX_JEV_GATE`, `SIGNALS_GATE`. Fuera de `config.py`, del compose y del replay; `affirms_p` solo viaja si trae algo.
+  - **14 interruptores con el valor por defecto de PRE** (antes apagados en el código y encendidos en PRE: un `.env.dev` sin ellos o la suite medían otro bot): `ANSWER_AND_CONTINUE`, `CORRECTIONS_V2`, `RECOMMEND_INFERRED_MINICOURSE`, `RAG_V2`, `GROUNDING_V3`, `RAG_PROMPT_CACHE`, `S4_FIXES`, `NOTES_IN_PARALLEL`, `ACK_IN_PARALLEL`, `AGENT_ARCH` y los 4 `LLM_EXTRACTION_CUTOVER_*`. Los tests que prueban el camino antiguo (que sigue en el código) lo fijan ahora de forma explícita en vez de depender del valor por defecto (30 tests).
+  - **Red nueva `tests/test_flags_pinned.py`:** cada interruptor que fija el compose tiene el mismo valor por defecto en el código (excepciones: `app_env`, `jev_router_enabled`, que depende de la clave de OpenRouter).
+  - PRE no cambia de conducta (los flags retirados ya estaban encendidos; el resto solo cambia el valor por defecto del código). Suite 2778 passed.
+* **Queda para "Limpieza 2" (nuevo paso en Plan Coral):** borrar los caminos antiguos de los 14 interruptores (atajos de precio del RAG, jueces v1/v2, textos fijos de disponibilidad y del teléfono, cascada vs grafo con `agent_arch`) y sus tests; s4-1 (gates muertos de la cascada), s4-2 (partir `conversational_core.py`, 5.000 líneas, y `supervisor.py`, 3.400), s4-3 (regex muerto) y s4-4 (huecos del detector). Son cambios grandes que conviene hacer con su propia medida.
+
+0.29.63 - (2026-09-28)
+----------------------
+* **l2-2 cerrada: `RAG_PROMPT_CACHE` PROMOCIONADO por coste, no por tiempo.** Ronda `2026-09-28-cache-B2` (caché + juez v3 con lista completa) frente a `juezv3-B`: calidad dentro del ruido (93,0 → 92,1 %, 23 → 21/32; regresiones = variación del RAG, la repregunta ya vista y el falso positivo de sin-fugas con los links públicos). El juez de grounding es el mejor medido: 10 rechazos y 4 "no lo tengo". El caché funciona (6.000-8.000 tokens cacheados por llamada, a mitad de precio) pero la latencia NO mejora (turnos con RAG p50 4,6 s, p95 8,7 s): la domina la GENERACIÓN — la lista del juez v3 con gpt-4.1 y las respuestas largas del RAG (mediana ~380 caracteres, p90 ~890). Se ataca en el bloque del RAG (acortar respuestas). Una regresión venía del catálogo ("el curso desde Cartagena no incluye transporte": "no es ida y vuelta el mismo día" se leía como "no hay lancha") → el catálogo dice "lancha Cartagena-Islas-Cartagena incluida" donde lo está. La caché semántica de FAQs (la otra mitad de l2-2) queda para el bloque del RAG.
+
 0.29.62 - (2026-09-28)
 ----------------------
 * **Ronda B `2026-09-28-cache-B` (juez v3b + `RAG_PROMPT_CACHE`): el caché funciona, el v3b NO.** El prompt caching reutiliza ~6.000 de ~8.000 tokens de cada respuesta del RAG (≈75 %, línea `[RAG] Query … Cached:`). Pero la latencia no mejoró (turnos con RAG p50 4,43 → 4,25 s, p95 7,45 → 8,1 s) porque el juez v3b (escribir solo lo no respaldado) rechazaba de más: rechazos 13 → 20 y "no lo tengo" 5 → 10, varios FALSOS sobre datos del catálogo ("el curso básico cuesta 2.450.000 COP", "pasas la noche en las islas"). Reproducido con el contexto real (~7.000 tokens): v3b 0/4 en el precio correcto, v3 con lista completa 4/4 — el banco no lo vio porque solo tenía contextos cortos. **Se vuelve al v3 con lista completa** (+ la regla de separadores) y el banco gana casos con el catálogo entero: **42/42**. Cada falso rechazo cuesta una regeneración entera (~2-3 s), mucho más que los ~0,5 s que ahorraba el v3b. `RAG_PROMPT_CACHE` sigue encendido; nueva ronda B.

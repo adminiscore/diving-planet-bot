@@ -1,4 +1,4 @@
-"""Banco de calibración de la pregunta de Jev `pending_answer` (u3-7, paso 7, flag `slot_answers_jev`).
+"""Banco de calibración de la pregunta de Jev `pending_answer` (u3-7, paso 7).
 
 Respuestas no canónicas a la pregunta pendiente (las que hoy interpreta el LLM `resolve_slot_answer`)
 y mensajes que NO contestan a esa pregunta. Lo que importa: ninguna respuesta EQUIVOCADA con
@@ -54,7 +54,6 @@ CASOS = [
 
 
 async def main() -> None:
-    settings.slot_answers_jev = True
     min_conf = jev_router.PENDING_ANSWER_MIN
     ok = wrong_conf = doubt = 0
     async with httpx.AsyncClient() as cli:

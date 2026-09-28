@@ -31,8 +31,8 @@ def _state(**kw) -> ConversationState:
     return s
 
 
-def test_el_flag_nace_apagado():
-    assert Settings().s4_fixes is False
+def test_el_flag_nace_encendido():
+    assert Settings().s4_fixes is True  # promocionado: el valor por defecto es el de PRE
 
 
 @pytest.fixture

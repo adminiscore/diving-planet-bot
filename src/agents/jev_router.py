@@ -300,7 +300,7 @@ _CHANGES_DATE_Q = {
     ),
 }
 
-# u3-6 (paso 7, flag `signals_gate`): ¿el mensaje mete a OTRA persona en la reserva? Filtro previo de
+# u3-6 (paso 7, promocionado el 27-sep): ¿el mensaje mete a OTRA persona en la reserva? Filtro previo de
 # `detect_special_signals`: por debajo de COMPANION_NONE_MAX (Jev seguro de que no) no se llama al
 # LLM. Calibrado con `scripts/sonda_acompanante.py`.
 COMPANION_JOINS = "companion_joins"
@@ -317,7 +317,7 @@ _COMPANION_JOINS_Q = {
     ),
 }
 
-# u3-7 (paso 7, flag `slot_answers_jev`): la respuesta a la pregunta PENDIENTE cuando el parser no la
+# u3-7 (paso 7, promocionado el 27-sep): la respuesta a la pregunta PENDIENTE cuando el parser no la
 # entiende ("uf, hace muchisimo", "vivo en Bogota", "ya estamos por playa blanca"). Hoy la interpreta
 # el LLM (`resolve_slot_answer`); los si/no y las listas los contesta Jev en la misma llamada. Las
 # CIFRAS (cuantas personas) se quedan en el LLM: contar es un punto flojo de Jev. Cascada: con
@@ -382,7 +382,7 @@ def activity_affirmed(p_affirms: float, p_hypothesis: float | None) -> bool:
 
 def _questions_for_turn(pending_slot: str | None = None) -> dict:
     q = dict(_QUESTIONS)
-    pending_q = pending_answer_question(pending_slot) if settings.slot_answers_jev else None
+    pending_q = pending_answer_question(pending_slot)
     if pending_q:
         q[PENDING_ANSWER] = pending_q
     if settings.answer_and_continue:
@@ -394,8 +394,7 @@ def _questions_for_turn(pending_slot: str | None = None) -> dict:
     if settings.s4_fixes:
         q[NEEDS_STAFF] = _NEEDS_STAFF_Q
         q[CHANGES_DATE] = _CHANGES_DATE_Q
-    if settings.signals_gate:
-        q[COMPANION_JOINS] = _COMPANION_JOINS_Q
+    q[COMPANION_JOINS] = _COMPANION_JOINS_Q
     return q
 
 
@@ -535,14 +534,15 @@ async def detect_routing_signals_jev_full(
             # y lo necesita la respuesta corta tras el pase a una persona (paso 6). Para el resto del
             # codigo False y ausente se leen igual.
             extras[ASKS_QUESTION] = (answers.get(ASKS_QUESTION) or {}).get("noul", 0.0) >= ASKS_QUESTION_MIN
-        if settings.regex_jev_gate:
-            # u3-3: la probabilidad cruda de cada `affirms_*` (el boolean de arriba corta en 0,7, pensado
-            # para turnos con pregunta; en frases normales Jev da falsos "no" entre 0,3 y 0,7).
-            extras[AFFIRMS_P] = {
-                name: (answers.get(name) or {}).get("noul", 0.0)
-                for name in (AFFIRMS_LOCATION, AFFIRMS_ACTIVITY, AFFIRMS_CERTIFICATION, AFFIRMS_GROUP, AFFIRMS_NATIONALITY)
-                if name in answers
-            }
+        # u3-3: la probabilidad cruda de cada `affirms_*` (el boolean de arriba corta en 0,7, pensado
+        # para turnos con pregunta; en frases normales Jev da falsos "no" entre 0,3 y 0,7).
+        affirms_p = {
+            name: (answers.get(name) or {}).get("noul", 0.0)
+            for name in (AFFIRMS_LOCATION, AFFIRMS_ACTIVITY, AFFIRMS_CERTIFICATION, AFFIRMS_GROUP, AFFIRMS_NATIONALITY)
+            if name in answers
+        }
+        if affirms_p:
+            extras[AFFIRMS_P] = affirms_p
         if pending_slot and PENDING_ANSWER in answers:
             extras[PENDING_ANSWER] = pending_answer_value(pending_slot, answers[PENDING_ANSWER])
     except Exception as exc:  # noqa: BLE001 — cualquier fallo cae al router LLM

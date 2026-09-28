@@ -28,8 +28,6 @@ os.environ.update({
     "CORRECTIONS_V2": "true",  # promocionado el 27-sep (u3-5)
     "RAG_V2": "true",  # promocionado el 27-sep (paso 5; aqui trae asks_recall de Jev)
     "S4_FIXES": "true",  # promocionado el 27-sep (paso 6)
-    "SIGNALS_GATE": "true",  # promocionado el 27-sep (u3-6)
-    "SLOT_ANSWERS_JEV": "true",  # encendido en PRE el 27-sep (u3-7, ronda B)
     "LANGFUSE_PUBLIC_KEY": "", "LANGFUSE_SECRET_KEY": "",
     "CHATWOOT_API_TOKEN": "", "CHATWOOT_BASE_URL": "http://127.0.0.1:9", "CHATWOOT_API_BASE_URL": "http://127.0.0.1:9",
 })

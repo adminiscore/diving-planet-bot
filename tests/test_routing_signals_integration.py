@@ -364,7 +364,9 @@ async def test_normal_group_size_mid_flow_does_not_trigger_modify_headcount():
 # SÍ + redirige), NO escalar ni caer al fallback evasivo.
 
 @pytest.mark.asyncio
-async def test_contact_number_request_deflects_by_keyword():
+async def test_contact_number_request_deflects_by_keyword(monkeypatch):
+    from src.config import settings as _flags  # camino antiguo: el flag sigue existiendo
+    monkeypatch.setattr(_flags, "s4_fixes", False)
     """"dame tu whatsapp" (keyword) → deflexión con límite + redirección, sin
     escalar."""
     state = make_state()
@@ -375,7 +377,9 @@ async def test_contact_number_request_deflects_by_keyword():
 
 
 @pytest.mark.asyncio
-async def test_contact_number_request_deflects_by_llm_signal_when_keyword_misses():
+async def test_contact_number_request_deflects_by_llm_signal_when_keyword_misses(monkeypatch):
+    from src.config import settings as _flags  # camino antiguo: el flag sigue existiendo
+    monkeypatch.setattr(_flags, "s4_fixes", False)
     """Una frase indirecta que la lista no caza pero el LLM marca
     asks_for_contact_number → misma deflexión."""
     state = make_state()
@@ -396,7 +400,9 @@ async def test_normal_message_does_not_deflect_as_contact_request():
 
 
 @pytest.mark.asyncio
-async def test_contact_deflection_in_english_when_language_not_yet_detected():
+async def test_contact_deflection_in_english_when_language_not_yet_detected(monkeypatch):
+    from src.config import settings as _flags  # camino antiguo: el flag sigue existiendo
+    monkeypatch.setattr(_flags, "s4_fixes", False)
     """Hallazgo en vivo 2026-08-26 (batería sintética contra PRE, Grupo 4/
     hallazgo B): esta deflexión corre ANTES de que `maybe_handle_turn` haga
     su detección de idioma de apertura — en el primer mensaje,
@@ -533,7 +539,9 @@ def test_availability_detector_positive(msg):
 
 
 @pytest.mark.asyncio
-async def test_availability_specific_date_gets_canned_answer_not_hallucination():
+async def test_availability_specific_date_gets_canned_answer_not_hallucination(monkeypatch):
+    from src.config import settings as _flags  # camino antiguo: el flag sigue existiendo
+    monkeypatch.setattr(_flags, "rag_v2", False)
     """"¿tienen disponibilidad el sábado?" (fecha específica) escapaba el
     `_AVAILABILITY_PATTERN` y RAG alucinaba "Tenemos disponibilidad para el
     sábado". Ahora cae al handler canónico (diarias + calendario del link),
@@ -547,7 +555,9 @@ async def test_availability_specific_date_gets_canned_answer_not_hallucination()
 
 
 @pytest.mark.asyncio
-async def test_availability_signal_routes_when_keyword_misses():
+async def test_availability_signal_routes_when_keyword_misses(monkeypatch):
+    from src.config import settings as _flags  # camino antiguo: el flag sigue existiendo
+    monkeypatch.setattr(_flags, "rag_v2", False)
     """Frase que la lista no caza pero el LLM marca availability_question →
     mismo handler canónico, sin alucinar."""
     state = make_state()

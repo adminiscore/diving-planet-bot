@@ -28,7 +28,13 @@ async def test_cutover_off_by_default_does_not_call_llm():
 
 
 @pytest.mark.asyncio
-async def test_cutover_on_fills_only_in_scope_fields():
+async def test_cutover_on_fills_only_in_scope_fields(monkeypatch):
+    # Cada dominio por SEPARADO: los otros tres, apagados de forma explicita (en PRE van los cuatro).
+    from src.config import settings as _flags
+    monkeypatch.setattr(_flags, "llm_extraction_cutover_certification", False)
+    monkeypatch.setattr(_flags, "llm_extraction_cutover_group", False)
+    monkeypatch.setattr(_flags, "llm_extraction_cutover_location", False)
+    monkeypatch.setattr(_flags, "llm_extraction_cutover_logistics", False)
     """Even if the LLM patch includes fields outside the certification domain
     (group_size, location...), only is_certified/activity get applied — the
     rest stay for their own future Fase N cutover."""
@@ -152,7 +158,13 @@ async def test_group_cutover_off_by_default_does_not_call_llm():
 
 
 @pytest.mark.asyncio
-async def test_group_cutover_on_fills_only_group_domain_fields():
+async def test_group_cutover_on_fills_only_group_domain_fields(monkeypatch):
+    # Cada dominio por SEPARADO: los otros tres, apagados de forma explicita (en PRE van los cuatro).
+    from src.config import settings as _flags
+    monkeypatch.setattr(_flags, "llm_extraction_cutover_certification", False)
+    monkeypatch.setattr(_flags, "llm_extraction_cutover_group", False)
+    monkeypatch.setattr(_flags, "llm_extraction_cutover_location", False)
+    monkeypatch.setattr(_flags, "llm_extraction_cutover_logistics", False)
     """With ONLY the group flag on, even if the LLM patch also carries
     certification fields, only group_size/group_allocation/ages get applied —
     is_certified/activity stay for the (independent) Fase 1 flag."""
@@ -285,7 +297,13 @@ async def test_location_cutover_off_by_default_does_not_call_llm():
 
 
 @pytest.mark.asyncio
-async def test_location_cutover_on_fills_only_location_domain_fields():
+async def test_location_cutover_on_fills_only_location_domain_fields(monkeypatch):
+    # Cada dominio por SEPARADO: los otros tres, apagados de forma explicita (en PRE van los cuatro).
+    from src.config import settings as _flags
+    monkeypatch.setattr(_flags, "llm_extraction_cutover_certification", False)
+    monkeypatch.setattr(_flags, "llm_extraction_cutover_group", False)
+    monkeypatch.setattr(_flags, "llm_extraction_cutover_location", False)
+    monkeypatch.setattr(_flags, "llm_extraction_cutover_logistics", False)
     """With ONLY the location flag on, even if the LLM patch also carries group/
     certification fields, only location/island/hotel get applied."""
     intent = DetectedIntent()
@@ -371,7 +389,13 @@ async def test_logistics_cutover_off_by_default_does_not_call_llm():
 
 
 @pytest.mark.asyncio
-async def test_logistics_cutover_on_fills_only_logistics_fields():
+async def test_logistics_cutover_on_fills_only_logistics_fields(monkeypatch):
+    # Cada dominio por SEPARADO: los otros tres, apagados de forma explicita (en PRE van los cuatro).
+    from src.config import settings as _flags
+    monkeypatch.setattr(_flags, "llm_extraction_cutover_certification", False)
+    monkeypatch.setattr(_flags, "llm_extraction_cutover_group", False)
+    monkeypatch.setattr(_flags, "llm_extraction_cutover_location", False)
+    monkeypatch.setattr(_flags, "llm_extraction_cutover_logistics", False)
     """With ONLY the logistics flag on, other domains' fields in the patch are
     ignored — only is_colombian/duration/last_dive_over_2_years get applied."""
     intent = DetectedIntent()

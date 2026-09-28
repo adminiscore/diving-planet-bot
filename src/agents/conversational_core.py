@@ -3057,14 +3057,12 @@ def _full_booking_recap(state: ConversationState) -> str | None:
 
 
 def _jev_pending_answer(slot: str | None, routing_signals: dict) -> dict | None:
-    """u3-7 (flag `slot_answers_jev`): lo que Jev leyo como respuesta a la pregunta pendiente, si esta
+    """u3-7: lo que Jev leyo como respuesta a la pregunta pendiente, si esta
     seguro (confianza >= PENDING_ANSWER_MIN). {"value": ...} si contesta, {} si Jev esta seguro de que
     NO contesta a esa pregunta, None si hay que preguntar al LLM (flag apagado, Jev no la contesto, era
     de otro slot o duda). Las verificaciones de despues (otro slot, cambio de actividad) valen igual."""
     from src.agents.jev_router import PENDING_ANSWER_MIN  # lazy
 
-    if not settings.slot_answers_jev:
-        return None
     pa = routing_signals.get("pending_answer")
     if not pa or pa.get("slot") != slot or pa.get("confidence", 0.0) < PENDING_ANSWER_MIN:
         return None
@@ -3073,14 +3071,12 @@ def _jev_pending_answer(slot: str | None, routing_signals: dict) -> dict | None:
 
 
 def _jev_rules_out_special_signals(state: ConversationState) -> bool:
-    """u3-6 (flag `signals_gate`): ¿Jev descarta todo lo que busca `detect_special_signals`? Seguro de
+    """u3-6: ¿Jev descarta todo lo que busca `detect_special_signals`? Seguro de
     que el mensaje no mete a otra persona (p < COMPANION_NONE_MAX), que no pide recordar, y sin la
     pregunta del refresher pendiente (esa respuesta la lee el LLM). Banco
     `scripts/sonda_acompanante.py`: 0/14 acompanantes perdidos, 13/14 turnos normales sin la llamada."""
     from src.agents.jev_router import COMPANION_NONE_MAX  # lazy
 
-    if not settings.signals_gate:
-        return False
     p = getattr(state, "_jev_companion", None)
     if p is None or p >= COMPANION_NONE_MAX or not _jev_says_no_recall(state):
         return False
@@ -3279,15 +3275,13 @@ def _question_turn_fields(intent, state: ConversationState) -> list[str]:
 
 
 def _drop_regex_fields_jev_denies(intent, state: ConversationState) -> None:
-    """u3-3 (flag `regex_jev_gate`): la puerta de u3-4 en los turnos SIN pregunta. El regex lee
+    """u3-3: la puerta de u3-4 en los turnos SIN pregunta. El regex lee
     palabras sueltas ("mi amigo es certificado" -> yo certificado; "¿y si fuera desde la isla?");
     si Jev (misma llamada del router, `affirms_*`) dice que el cliente NO afirma ese dato, el dato
     del regex no se guarda. Ausente (Jev apagado o sin contestar) = no lo sabemos -> se guarda como
     hoy. Solo lo que leyo el REGEX en este mensaje; el relleno del LLM tiene su propia puerta."""
     from src.agents.jev_router import AFFIRMS_DENY_MAX  # lazy
 
-    if not settings.regex_jev_gate:
-        return
     # Escalon 0 (27-sep): con el "no" de u3-4 (p < 0,7) se perdian datos buenos en frases normales
     # ("cartagena, todos extranjeros" -> 0,38-0,45). Aqui solo cuenta "seguro de que no" (p < 0,2).
     probs = getattr(state, "_affirms_p", None) or {}
@@ -3822,13 +3816,13 @@ async def _routing_phase(
     # u3-5 paso 2: ¿el mensaje corrige un dato ya dado? (Jev, misma llamada). Se renueva cada turno.
     state._jev_corrects = routing_signals.get("corrects") if settings.corrections_v2 else None
     # u3-3: probabilidad cruda de que el cliente afirme cada campo (Jev, misma llamada).
-    raw_p = routing_signals.get("affirms_p") or {} if settings.regex_jev_gate else {}
+    raw_p = routing_signals.get("affirms_p") or {}
     state._affirms_p = {f: raw_p[sig] for f, sig in _AFFIRMS_SIGNAL_FIELDS if sig in raw_p}
     # Paso 5: ¿pide que le recordemos algo que él dijo? (Jev, misma llamada). Se renueva cada turno.
     state._jev_asks_recall = routing_signals.get("asks_recall") if settings.rag_v2 else None
     # u3-6: probabilidad de Jev de que el mensaje meta a otra persona en la reserva (filtro previo del
     # LLM de señales). Ausente = no lo sabemos -> se llama al LLM como hoy.
-    state._jev_companion = routing_signals.get("companion_joins") if settings.signals_gate else None
+    state._jev_companion = routing_signals.get("companion_joins")
 
     # COMPRENDER (carryover PRIMERO): si hay un slot pendiente y este mensaje
     # lo RESUELVE, el carryover gana aunque el mensaje "parezca pregunta" por
@@ -3902,7 +3896,7 @@ async def _routing_phase(
         # corra a la vez que esa comprobación y que la extracción.
         _maybe_launch_answer(state, message, routing_signals)
         # u3-6: aqui solo se usa `recall_field`; si Jev ya dice que no pide recordar, la llamada sobra.
-        if settings.signals_gate and _jev_says_no_recall(state):
+        if _jev_says_no_recall(state):
             logger.info("[CORE][U3-6] recordar sin LLM (Jev: no pide recordar)")
             signals = {}
         else:

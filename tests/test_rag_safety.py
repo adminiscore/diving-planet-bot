@@ -726,7 +726,9 @@ class TestCanonicalRefresherCost:
             "cuanto cuesta el buceo certificado?", "es") is None
 
     @pytest.mark.asyncio
-    async def test_refresher_question_wins_over_generic_overview(self):
+    async def test_refresher_question_wins_over_generic_overview(self, monkeypatch):
+        from src.config import settings as _flags  # camino antiguo: el flag sigue existiendo
+        monkeypatch.setattr(_flags, "rag_v2", False)
         """La pregunta específica del refresher debe ganar sobre el
         overview genérico de precios incluso cuando la frase contiene una
         palabra que el overview también reconocería ("cost") — el fix se
@@ -877,6 +879,8 @@ async def test_rag_falls_back_when_answer_invents_private_tour_capacity(monkeypa
 
 @pytest.mark.asyncio
 async def test_rag_food_query_returns_canonical_kb_answer_without_search(monkeypatch):
+    from src.config import settings as _flags  # camino antiguo: el flag sigue existiendo
+    monkeypatch.setattr(_flags, "rag_v2", False)
     async def fail_search(*args, **kwargs):
         raise AssertionError("Food queries should use the canonical KB answer before retrieval")
 
@@ -1176,6 +1180,8 @@ def test_price_overview_defers_for_specific_or_offtopic(q):
 
 @pytest.mark.asyncio
 async def test_rag_bare_price_served_without_search(monkeypatch):
+    from src.config import settings as _flags  # camino antiguo: el flag sigue existiendo
+    monkeypatch.setattr(_flags, "rag_v2", False)
     async def fail_search(*args, **kwargs):
         raise AssertionError("Bare price must use the canonical overview before retrieval")
 

@@ -176,18 +176,6 @@ services:
       # HISTORY 0.29.49-0.29.50. Ronda B (27-sep): core 91,2 -> 92,6 %, casos del paso 6 83,6 -> 91,6 %,
       # 3 regresiones propias arregladas -> PROMOCIONADO, se QUEDA ENCENDIDO. Revert = "false" + redeploy.
       S4_FIXES: "true"
-      # u3-6 (paso 7, 27-sep): Jev como filtro previo del LLM de senales (acompanantes/refresher/
-      # recordar). Ver HISTORY 0.29.51-0.29.52. Ronda B (27-sep): calidad empatada (92,6 -> 92,2 %, ruido),
-      # 0 regresiones propias, llamadas LLM/turno 3,46 -> 3,04 -> PROMOCIONADO. Revert = "false" + redeploy.
-      SIGNALS_GATE: "true"
-      # u3-7 (paso 7, 27-sep): Jev interpreta la respuesta a la pregunta pendiente (si/no y listas).
-      # Ver HISTORY 0.29.53-0.29.55. Ronda B (27-sep): dialogos 20 -> 23/32, criterios 92,2 -> 93,0 %,
-      # 0 regresiones propias, p95 5,45 -> 4,84 s -> PROMOCIONADO. Revert = "false" + redeploy.
-      SLOT_ANSWERS_JEV: "true"
-      # u3-3 (paso 7, 27-sep): Jev verifica lo que lee el regex en todos los turnos (seguro de que no).
-      # Ver HISTORY 0.29.54-0.29.56. Ronda B (27-sep): la puerta no actuo en el core (0 turnos), diferencias
-      # = ruido; escalon 0: -5 datos inventados, 0 buenos perdidos -> PROMOCIONADO; se confirma en el paso 8.
-      REGEX_JEV_GATE: "true"
       # Juez de grounding v3 (28-sep): enumera y marca cada dato del negocio; gpt-4.1 (GROUNDING_V3_MODEL).
       # Ver HISTORY 0.29.57-0.29.58. Ronda B (28-sep): 91,3 -> 93,0 %, 21 -> 23/32, 0 regresiones propias
       # -> PROMOCIONADO (vigilar p95: 5,3 -> 7,0 s por las regeneraciones). Revert = "false" + redeploy.

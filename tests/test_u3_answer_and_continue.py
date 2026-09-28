@@ -70,8 +70,8 @@ def rag(monkeypatch):
     return calls
 
 
-def test_el_flag_nace_apagado():
-    assert Settings().answer_and_continue is False
+def test_el_flag_nace_encendido():
+    assert Settings().answer_and_continue is True  # promocionado: el valor por defecto es el de PRE
 
 
 def test_flag_apagado_jev_no_recibe_la_pregunta(monkeypatch):
@@ -300,7 +300,11 @@ async def test_si_jev_duda_en_el_router_los_afirma_viajan_igual(monkeypatch):
     monkeypatch.setattr(escalation, "AsyncOpenAI", lambda **_k: _NoTool())
     monkeypatch.setattr(escalation, "trace_openai", lambda c: c)
     got = await escalation.detect_routing_signals("Yo soy open y me gustaría salir un día. No sé qué tienen.")
-    assert got == {"asks_question": True, "affirms_activity": True, "affirms_nationality": False}
+    assert got == {
+        "asks_question": True, "affirms_activity": True, "affirms_nationality": False,
+        # u3-3 (promocionado el 28-sep): las probabilidades crudas viajan también
+        "affirms_p": {"affirms_activity": 0.93, "affirms_nationality": 0.05},
+    }
 
 
 # ── Arreglo 1 (25-sep): si el RAG no sabe, su respuesta va SOLA ──────────────
@@ -904,9 +908,8 @@ def test_la_pregunta_de_recordar_solo_va_con_el_flag(monkeypatch):
     assert jev_router.answers_to_signals({"asks_recall": {"type": "noul", "noul": 0.1}}) == {"asks_recall": False}
 
 
-# u3-6 (flag `signals_gate`): Jev como filtro previo del LLM de señales.
+# u3-6: Jev como filtro previo del LLM de señales.
 def test_el_filtro_de_senales_solo_con_jev_seguro(monkeypatch):
-    monkeypatch.setattr(settings, "signals_gate", True)
     monkeypatch.setattr(settings, "rag_v2", True)
     st = _state()
     st._jev_asks_recall = False
@@ -922,15 +925,11 @@ def test_el_filtro_de_senales_solo_con_jev_seguro(monkeypatch):
     st.core_pending_slot = None
     st.last_dive_over_2_years = True  # refresher en juego: su respuesta puede llegar en cualquier turno
     assert not core._jev_rules_out_special_signals(st)
-    st.last_dive_over_2_years = None
-    monkeypatch.setattr(settings, "signals_gate", False)
-    assert not core._jev_rules_out_special_signals(st)
 
 
 async def test_con_el_filtro_no_se_llama_al_llm_de_senales(monkeypatch, signals, rag):
     monkeypatch.setattr(settings, "answer_and_continue", True)
     monkeypatch.setattr(settings, "rag_v2", True)
-    monkeypatch.setattr(settings, "signals_gate", True)
     spy = AsyncMock(return_value={})
     monkeypatch.setattr(core, "detect_special_signals", spy)
     st = _state()
@@ -941,24 +940,21 @@ async def test_con_el_filtro_no_se_llama_al_llm_de_senales(monkeypatch, signals,
     assert spy.await_count == 0
 
 
-# u3-7 (flag `slot_answers_jev`): Jev interpreta la respuesta a la pregunta pendiente (si/no y listas).
+# u3-7: Jev interpreta la respuesta a la pregunta pendiente (si/no y listas).
 def test_la_pregunta_pendiente_solo_para_si_no_y_listas(monkeypatch):
     assert jev_router.pending_answer_question("qty") is None  # las cifras se quedan en el LLM
     assert jev_router.pending_answer_question(None) is None
     q = jev_router.pending_answer_question("nationality")
     assert q["type"] == "choice" and set(q["criteria"]) == {"yes", "no", "none"}
     assert "island" in jev_router.pending_answer_question("location")["criteria"]
-    monkeypatch.setattr(settings, "slot_answers_jev", False)
-    assert jev_router.PENDING_ANSWER not in jev_router._questions_for_turn("nationality")
-    monkeypatch.setattr(settings, "slot_answers_jev", True)
     assert jev_router.PENDING_ANSWER in jev_router._questions_for_turn("nationality")
+    assert jev_router.PENDING_ANSWER not in jev_router._questions_for_turn(None)
     assert jev_router.pending_answer_value("safety", {"choice": "yes", "confidence": 0.9}) == {
         "slot": "safety", "value": True, "confidence": 0.9}
     assert jev_router.pending_answer_value("safety", {"choice": "none", "confidence": 0.9})["value"] is None
 
 
 def test_jev_solo_decide_la_respuesta_pendiente_si_esta_seguro(monkeypatch):
-    monkeypatch.setattr(settings, "slot_answers_jev", True)
     sure = {"pending_answer": {"slot": "nationality", "value": True, "confidence": 0.95}}
     assert core._jev_pending_answer("nationality", sure) == {"value": True}
     assert core._jev_pending_answer("safety", sure) is None  # era de otro slot
@@ -966,15 +962,12 @@ def test_jev_solo_decide_la_respuesta_pendiente_si_esta_seguro(monkeypatch):
     assert core._jev_pending_answer("nationality", doubt) is None  # duda -> LLM
     none = {"pending_answer": {"slot": "nationality", "value": None, "confidence": 0.95}}
     assert core._jev_pending_answer("nationality", none) == {}  # seguro de que no contesta
-    monkeypatch.setattr(settings, "slot_answers_jev", False)
-    assert core._jev_pending_answer("nationality", sure) is None
 
 
-# u3-3 (flag `regex_jev_gate`): la puerta de Jev sobre el regex también en turnos sin pregunta.
+# u3-3: la puerta de Jev sobre el regex también en turnos sin pregunta.
 def test_sin_pregunta_jev_descarta_lo_que_el_cliente_no_afirma(monkeypatch):
     from src.agents.intent_detector import DetectedIntent
 
-    monkeypatch.setattr(settings, "regex_jev_gate", True)
     st = _state()
     st._affirms_p = {"location": 0.05, "activity": 0.9, "is_colombian": 0.4}  # 0,4: no está seguro
     intent = DetectedIntent()
@@ -987,9 +980,5 @@ def test_sin_pregunta_jev_descarta_lo_que_el_cliente_no_afirma(monkeypatch):
     st._affirms_p = {}  # Jev no contestó -> como hoy
     intent.location = "island"
     intent.detected_fields = ["location"]
-    core._drop_regex_fields_jev_denies(intent, st)
-    assert intent.location == "island"
-    monkeypatch.setattr(settings, "regex_jev_gate", False)
-    st._affirms_p = {"location": 0.05}
     core._drop_regex_fields_jev_denies(intent, st)
     assert intent.location == "island"

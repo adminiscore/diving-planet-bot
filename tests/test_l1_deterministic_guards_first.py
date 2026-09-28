@@ -133,6 +133,8 @@ async def test_una_respuesta_limpia_si_llega_al_juez(monkeypatch, juez_contador)
 
 
 async def test_los_atajos_canonicos_no_gastan_ni_llm_ni_juez(monkeypatch, juez_contador):
+    from src.config import settings as _flags  # camino antiguo: el flag sigue existiendo
+    monkeypatch.setattr(_flags, "rag_v2", False)
     """Hallazgo al escribir esto (2026-09-23): `rag_answer` tiene una cadena de
     atajos canónicos (comida, overview, coste del refresher, precios, ubicación
     ambigua) que responden **sin una sola llamada al LLM**. Ya son un ahorro de

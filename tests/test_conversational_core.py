@@ -346,6 +346,8 @@ async def test_question_mid_flow_answers_and_reasks_pending_slot():
 
 @pytest.mark.asyncio
 async def test_llm_gap_fill_feeds_slots(monkeypatch):
+    from src.config import settings as _flags  # camino antiguo: el flag sigue existiendo
+    monkeypatch.setattr(_flags, "recommend_inferred_minicourse", False)
     state = make_state("en")
     monkeypatch.setattr(core, "fill_gaps", AsyncMock(return_value={
         "activity": "minicourse", "is_certified": False, "group_size": 1,
@@ -660,6 +662,8 @@ async def test_understand_requests_only_state_missing_fields(monkeypatch):
 
 @pytest.mark.asyncio
 async def test_understand_still_fills_when_state_is_empty(monkeypatch):
+    from src.config import settings as _flags  # camino antiguo: el flag sigue existiendo
+    monkeypatch.setattr(_flags, "recommend_inferred_minicourse", False)
     """Primer mensaje (estado vacío): el gap-fill sigue funcionando igual."""
     state = make_state("en")
     monkeypatch.setattr(core, "fill_gaps", AsyncMock(return_value={
@@ -2401,7 +2405,9 @@ async def test_companion_qty_resolver_abstains_reasks(monkeypatch):
 
 
 @pytest.mark.asyncio
-async def test_availability_question_canned_answer_not_hallucination():
+async def test_availability_question_canned_answer_not_hallucination(monkeypatch):
+    from src.config import settings as _flags  # camino antiguo: el flag sigue existiendo
+    monkeypatch.setattr(_flags, "rag_v2", False)
     """Bug vivo en PRE (2026-07-24): "¿tienen disponibilidad el sábado?" con el
     núcleo on alucinaba "Claro que sí, tenemos disponibilidad". El gate del
     Bloque 2.5 estaba tras el hook; portado al núcleo. Va a RAG NUNCA."""

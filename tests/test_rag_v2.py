@@ -100,6 +100,8 @@ def rag_offline(monkeypatch):
 
 
 async def test_cuanto_tiempo_dura_ya_no_recibe_la_lista_de_precios(monkeypatch, rag_offline):
+    from src.config import settings as _flags  # camino antiguo: el flag sigue existiendo
+    monkeypatch.setattr(_flags, "rag_prompt_cache", False)
     monkeypatch.setattr(settings, "rag_v2", True)
     seen = rag_offline("El curso dura 2 días y hay que dormir en las islas.")
     answer = await rag_agent.rag_answer("Cuánto tiempo dura ?", lang="es")
@@ -132,6 +134,7 @@ async def test_sin_el_flag_sigue_el_atajo_de_precios(monkeypatch, rag_offline):
 ])
 async def test_el_juez_usa_el_prompt_y_el_modelo_del_flag(monkeypatch, flag, prompt, model_attr):
     monkeypatch.setattr(settings, "rag_v2", flag)
+    monkeypatch.setattr(settings, "grounding_v3", False)  # compara v2 con v1; el v3 tiene su test
     seen: list = []
     monkeypatch.setattr(grounding_check, "AsyncOpenAI", _openai("GROUNDED", seen))
     grounded, _ = await grounding_check.is_grounded("Hola, soy Coral 🪸", "contexto", lang="es")

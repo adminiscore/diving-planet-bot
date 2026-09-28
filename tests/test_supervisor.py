@@ -80,7 +80,9 @@ class TestContactNumberRequest:
     def test_negative_unrelated_question(self):
         assert not _asks_for_contact_number("cuanto cuesta el minicurso")
 
-    def test_deflection_never_contains_a_number(self):
+    def test_deflection_never_contains_a_number(self, monkeypatch):
+        from src.config import settings as _flags  # camino antiguo: el flag sigue existiendo
+        monkeypatch.setattr(_flags, "s4_fixes", False)
         """La política del owner: nunca dar el número real -- verificación
         determinista de que el texto de deflexión no contiene el patrón de
         un número de teléfono/WhatsApp."""

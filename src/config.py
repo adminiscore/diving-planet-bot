@@ -90,7 +90,7 @@ class Settings(BaseSettings):
     #
     # El resumen (`maybe_update_summary`) se queda como esta: solo recalcula cada
     # N mensajes, asi que casi nunca cuesta nada.
-    notes_in_parallel: bool = False
+    notes_in_parallel: bool = True
 
     # U3 (u3-1, paso 1): las 9 señales del router con Jev (TypeSafe, vía el Decisions API
     # de OpenRouter) en vez de con el LLM. Evaluado en l2-4 (2026-09-24): mejor que el
@@ -110,66 +110,49 @@ class Settings(BaseSettings):
     # paralelo al empezar el turno y se espera en el cierre, en vez de ir DESPUÉS de la
     # extracción (en el 48 % de los turnos iban en serie: 0,85 s + 1,0 s). Si la pregunta
     # pendiente es de sí/no (seguridad, certificación, nacionalidad, refresher), sigue en
-    # serie: su resumen necesita el valor recién extraído. APAGADO por defecto.
-    ack_in_parallel: bool = False
+    # serie: su resumen necesita el valor recién extraído. ENCENDIDO por defecto (= PRE, paso 10).
+    ack_in_parallel: bool = True
 
     # u3-4 (24-sep): "contesta y sigue". Un mensaje que trae una pregunta (regex, "?" o
     # Jev >= 0,7 en la MISMA llamada del router) ya no se trata como pregunta O como dato:
     # el RAG la contesta en paralelo, la extracción sigue su camino normal y la respuesta
     # lleva las dos cosas (primero la respuesta, luego lo que toque de la reserva). Ver
-    # docs/robustness/u3-4-diseno.md. APAGADO por defecto.
-    answer_and_continue: bool = False
+    # docs/robustness/u3-4-diseno.md. ENCENDIDO por defecto (= PRE, paso 10).
+    answer_and_continue: bool = True
 
     # u3-5 (27-sep): correcciones de datos ya guardados ("¿lo cambio?"). Paso 1, deterministas:
     # (a) no se propone un cambio que se lee igual para el cliente; (b) la confirmación se pregunta
     # UNA vez: si el cliente no contesta sí/no, se queda lo guardado y esa propuesta no se repite.
-    # Ronda A del paso 3: de 12 "¿lo cambio?", 6 eran repeticiones y 2 "X -> X". APAGADO por defecto.
-    corrections_v2: bool = False
+    # Ronda A del paso 3: de 12 "¿lo cambio?", 6 eran repeticiones y 2 "X -> X". ENCENDIDO por defecto (= PRE, paso 10).
+    corrections_v2: bool = True
     # u3-5 (27-sep, decision de Gadea): el minicurso DEDUCIDO ("primera vez") se recomienda y lo confirma
     # el cliente. Separado de `corrections_v2` tras la ronda B del 27-sep (su unica regresion propia:
     # "MINI CURSOS" en plural no contaba como nombrarlo, y con acompanante la recomendacion no se llegaba
-    # a mostrar). APAGADO hasta medirlo en su propio escalon.
-    recommend_inferred_minicourse: bool = False
+    # a mostrar). ENCENDIDO por defecto (= PRE, paso 10).
+    recommend_inferred_minicourse: bool = True
 
     # Paso 5 (RAG, l1-6 + l1-7, 27-sep): (a) el catalogo entero como hechos en el contexto del RAG
     # en vez de los atajos de precio por regex, que contestaban preguntas que no eran de precio;
     # (b) juez de grounding que solo rechaza DATOS DEL NEGOCIO sin respaldo (saludos, cortesia y
     # "no lo tengo" iban al fallback), con el modelo de la respuesta; (c) la pregunta de
     # disponibilidad la contesta el RAG entera en vez de un texto fijo que se comia el resto del
-    # mensaje. Ronda A: 37 respuestas acabaron en "no lo tengo a la mano". APAGADO por defecto.
-    rag_v2: bool = False
+    # mensaje. Ronda A: 37 respuestas acabaron en "no lo tengo a la mano". ENCENDIDO por defecto (= PRE, paso 10).
+    rag_v2: bool = True
     # Juez de grounding v3 (28-sep): enumera cada dato del negocio de la respuesta y lo marca SÍ/NO frente
     # al contexto; el veredicto lo calcula el codigo con esas marcas. Con gpt-4.1: banco
     # `scripts/sonda_juez_grounding.py` 30/30 estable (v2 con gpt-4.1-mini: 21/30, dejaba pasar "llevamos
-    # 30 años", "debes haber completado la teoría", "hay barcos hundidos"); +0,25 s de mediana. APAGADO.
-    grounding_v3: bool = False
+    # 30 años", "debes haber completado la teoría", "hay barcos hundidos"); +0,25 s de mediana. ENCENDIDO por defecto (= PRE, paso 10).
+    grounding_v3: bool = True
     grounding_v3_model: str = "gpt-4.1"
     # Paso 9 (l2-2, 28-sep): el catalogo va al final del prompt del SISTEMA (fijo por idioma) y el primero en
     # el contexto del juez, para que el prompt caching de OpenAI lo reutilice entre conversaciones (antes iba
-    # en el mensaje del usuario, detras del historial: nunca se cacheaba). APAGADO por defecto.
-    rag_prompt_cache: bool = False
+    # en el mensaje del usuario, detras del historial: nunca se cacheaba). ENCENDIDO por defecto (= PRE, paso 10).
+    rag_prompt_cache: bool = True
 
     # Paso 6 (27-sep): respuestas fijas y salida deterministas de S4. s4-14: si piden un telefono se
     # da el WhatsApp oficial (decision de Gadea; antes "no manejo un numero"); s4-15: "¿eres un bot?"
-    # -> dice que es la asistente virtual; s4-16: la queja se pasa a staff con una disculpa. APAGADO.
-    s4_fixes: bool = False
-
-    # u3-6 (paso 7, 27-sep): Jev como filtro previo de `detect_special_signals` (el LLM de acompañantes,
-    # refresher y "recordar"). Si Jev dice, seguro, que el mensaje no mete a otra persona en la reserva
-    # ni pide recordar nada (y no se espera la respuesta del refresher), no se llama al LLM: ahorra
-    # ~0,85 s y los acompañantes fantasma que el LLM re-deriva del historial. La cifra y los subgrupos
-    # siguen en el LLM. APAGADO por defecto.
-    signals_gate: bool = False
-
-    # u3-7 (paso 7, 27-sep): Jev interpreta la respuesta a la pregunta pendiente (si/no y listas) cuando
-    # el parser no la entiende, en vez del LLM `resolve_slot_answer`; las cifras siguen en el LLM.
-    # Cascada por confianza. APAGADO por defecto.
-    slot_answers_jev: bool = False
-
-    # u3-3 (paso 7, 27-sep): el regex del intent_detector como via rapida y Jev como verificador en
-    # TODOS los turnos: si Jev dice que el cliente NO afirma un dato que el regex leyo, no se guarda
-    # (hasta ahora solo en los turnos con pregunta, u3-4, y la nacionalidad, u3-5). APAGADO.
-    regex_jev_gate: bool = False
+    # -> dice que es la asistente virtual; s4-16: la queja se pasa a staff con una disculpa. ENCENDIDO por defecto (= PRE, paso 10).
+    s4_fixes: bool = True
 
     # --- Observabilidad: Langfuse (sustituye a LangSmith, cuota Developer
     # agotada; ver docs/robustness/progress-log.md "Tarea 8"). Sin claves, el
@@ -184,7 +167,7 @@ class Settings(BaseSettings):
     # que el grafo real (Fase 1+) esté probado en PRE. Con el flag apagado el
     # módulo `src/orchestration` ni se importa — cero riesgo/overhead para el
     # camino actual (cascada del supervisor).
-    agent_arch: bool = False
+    agent_arch: bool = True
 
     # --- Supabase ---
     supabase_url: str = ""
@@ -249,7 +232,7 @@ class Settings(BaseSettings):
     # (docs/robustness/progress-log.md, 2026-07-21) before enabling this. Off
     # by default everywhere; the regex stays the primary/fast path regardless —
     # this only fills gaps, never overrides a regex-resolved value.
-    llm_extraction_cutover_certification: bool = False
+    llm_extraction_cutover_certification: bool = True
     # --- Robustness Fase 2 (docs/robustness/plan.md §4, dominio grupo/cantidad/edades) ---
     # When True, the LLM extractor's result for `group_size`/`group_allocation`/
     # `ages` is actually APPLIED (not just logged) when the regex left them
@@ -257,7 +240,7 @@ class Settings(BaseSettings):
     # certification flag: each domain has its own kill switch (plan.md principle
     # #7). Off by default everywhere; the regex stays the primary/fast path —
     # this only fills gaps, never overrides a regex-resolved value.
-    llm_extraction_cutover_group: bool = False
+    llm_extraction_cutover_group: bool = True
     # --- Robustness Fase 3 (docs/robustness/plan.md §4, dominio ubicación) ---
     # When True, the LLM extractor's result for `location`/`island`/`hotel` is
     # actually APPLIED (not just logged) when the regex left them unresolved —
@@ -268,7 +251,7 @@ class Settings(BaseSettings):
     # degrade gracefully. Independent kill switch (plan.md #7). Off by default
     # everywhere; the regex stays the primary/fast path — gaps only, never
     # overrides a regex-resolved value.
-    llm_extraction_cutover_location: bool = False
+    llm_extraction_cutover_location: bool = True
     # --- Robustness Fase 8 (docs/robustness/review-2026-07-21.md H5, dominio
     # perfil/logística) ---
     # When True, the LLM extractor's result for `is_colombian`/`duration`/
@@ -279,7 +262,7 @@ class Settings(BaseSettings):
     # enumerate ("soy paisa"→colombiano, "toda la semana"→multi_day, "hace como 4
     # años que no buceo"→>2y). Independent kill switch (plan.md #7). Off by
     # default everywhere; regex stays primary — gaps only, never overrides.
-    llm_extraction_cutover_logistics: bool = False
+    llm_extraction_cutover_logistics: bool = True
     # --- Robustness Fase 9 (docs/multi-agent-refactor-plan.md, hallazgo en vivo
     # conversacion real "purple-sun-590", 2026-09-03) ---
     # A diferencia de los 4 dominios de arriba (que solo rellenan huecos), este

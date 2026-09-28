@@ -90,7 +90,9 @@ async def test_node_availability_delegates_to_cascade(monkeypatch):
 # flag `agent_arch`).
 
 @pytest.mark.asyncio
-async def test_node_availability_question_gives_canned_answer_directly():
+async def test_node_availability_question_gives_canned_answer_directly(monkeypatch):
+    from src.config import settings as _flags  # camino antiguo: el flag sigue existiendo
+    monkeypatch.setattr(_flags, "rag_v2", False)
     conv = make_state()
     result = await changes_node(
         {"conv_state": conv, "message": "¿tienen disponibilidad el sábado?", "signals": {}}

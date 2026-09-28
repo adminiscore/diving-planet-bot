@@ -13,6 +13,14 @@ Read this file before changing code in the Diving Planet Bot. For a quick versio
 
 > **📏 LEER ANTES DE MEDIR — decisiones del 24-sep-2026 (Gadea):** (1) latencia y llamadas con nuestros logs `[TURN_METRICS]` + `scripts/turn_metrics.py`, no con Langfuse (plan gratuito superado, reinicio 16-oct); (2) pruebas A/B por escalones, juzgando solo los diálogos que cambian. Todo en `docs/robustness/protocolo-medicion.md`.
 
+### ✅ 28-sep noche (Gadea) — PASO 9 (l2-2) y PASO 10 (limpieza segura) HECHOS. Siguiente: RAG calidad + latencia
+
+**l2-2:** `RAG_PROMPT_CACHE` promocionado por coste (el caché funciona, ~75 % de tokens), no por tiempo: la latencia
+la marca la generación (lista del juez v3 + respuestas largas). **Paso 10:** el código por defecto = PRE (3 flags
+retirados, 14 con valor por defecto de PRE, red `tests/test_flags_pinned.py`); lo grande (caminos antiguos,
+cascada, partir módulos) va a **"Limpieza 2"** en Plan Coral. **Siguiente, según el orden de Gadea:** RAG calidad +
+latencia (acortar respuestas, contexto por servicio, "escribiendo…" l2-3), luego conversaciones reales.
+
 ### 🟡 28-sep tarde (Gadea) — PASO 9 en curso (l2-2). ORDEN NUEVO de lo que queda
 
 Orden decidido por Gadea tras el paso 8 (plan maestro, PARTE 8): (1) cerrar l2-2 — `RAG_PROMPT_CACHE` (caché del

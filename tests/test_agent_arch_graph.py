@@ -30,10 +30,9 @@ def _signals_offline(monkeypatch):
     return sup_mock
 
 
-def test_agent_arch_defaults_to_off():
-    # El DEFAULT del setting es off (robusto aunque la suite entera se corra con
-    # AGENT_ARCH=true por env para la prueba de equivalencia flag-on).
-    assert Settings.model_fields["agent_arch"].default is False
+def test_agent_arch_defaults_to_on():
+    # Paso 10 (28-sep): el valor por defecto del código es el de PRE (el grafo sirve desde el Stage B).
+    assert Settings.model_fields["agent_arch"].default is True
 
 
 @pytest.mark.asyncio

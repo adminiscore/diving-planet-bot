@@ -27,7 +27,9 @@ def make_state(**over) -> ConversationState:
 # ── nodo en aislamiento (State in → update out) ──
 
 @pytest.mark.asyncio
-async def test_node_contact_number():
+async def test_node_contact_number(monkeypatch):
+    from src.config import settings as _flags  # camino antiguo: el flag sigue existiendo
+    monkeypatch.setattr(_flags, "s4_fixes", False)
     conv = make_state()
     result = await deflection_node({"conv_state": conv, "message": "dame tu whatsapp", "signals": {}})
     assert "🔒" in result["reply"]          # deflexión de contacto (fija el límite)
@@ -37,7 +39,9 @@ async def test_node_contact_number():
 
 
 @pytest.mark.asyncio
-async def test_node_contact_number_via_signal():
+async def test_node_contact_number_via_signal(monkeypatch):
+    from src.config import settings as _flags  # camino antiguo: el flag sigue existiendo
+    monkeypatch.setattr(_flags, "s4_fixes", False)
     """La señal LLM `asks_for_contact_number` también dispara la deflexión de
     contacto, aunque la keyword no matchee."""
     conv = make_state()
@@ -81,6 +85,8 @@ async def test_node_fallback_delegates_without_dropping_turn(monkeypatch):
     "eres un bot o una persona real?",
 ])
 async def test_deflection_equivalent_graph_vs_cascade(monkeypatch, message):
+    from src.config import settings as _flags  # camino antiguo: el flag sigue existiendo
+    monkeypatch.setattr(_flags, "s4_fixes", False)
     # Routing LLM offline → determinista (los detectores regex manejan contacto/
     # identidad); la deflexión no toca el núcleo, así que la respuesta es fija.
     monkeypatch.setattr("src.agents.supervisor.detect_routing_signals", AsyncMock(return_value={}))

@@ -448,7 +448,7 @@ medias (u3-1 ✅, u3-4 ✅ promocionada, u3-5 🟡); PRE con u3-4 encendido. Sui
 | **7** ✅ 27-sep | Resto de U3 (`SIGNALS_GATE`, `SLOT_ANSWERS_JEV`, `REGEX_JEV_GATE`; core 23/32, 93,0 %) | u3-6 (+ s4-18, s4-19) · u3-7 · u3-3 | como el paso 4 |
 | **8** ✅ 28-sep | **Cierre de calidad** (paso8: 86,6 %, reales 83,2 % ✅, oculto 76,4 % −1,2 pts, dentro del ruido; cerrado por decisión de Gadea) | u3-2 (redefinida) | ronda COMPLETA del golden (116 + examen oculto) con el juez g-8: examen oculto **≥ 77,6 %** (referencia `2026-09-27-paso3-A`) y mejor que ella en reales, sin regresiones propias. El 78,3 % del cierre de L1 se midió con el juez antiguo y no es comparable |
 | **9** | L2 que queda | l2-2, l2-3 (l2-1 cerrada el 26-sep: obsoleta) | caché y "escribiendo…" medidos: latencia percibida ↓ y calidad igual |
-| **10** | S4: un solo cerebro y código ordenado | s4-1, s4-2, s4-3, s4-4 (si u3-3 no lo cubre), retirar flags promocionados | sin cascada legacy; módulos partidos por nodo; flags promocionados convertidos en código; suite verde |
+| **10** ✅ 28-sep (parcial seguro) | S4: un solo cerebro y código ordenado — hecho lo 100 % seguro (3 flags retirados, 14 con el valor por defecto de PRE, `test_flags_pinned`); el resto pasa a "Limpieza 2" | s4-1, s4-2, s4-3, s4-4 (si u3-3 no lo cubre), retirar flags promocionados | sin cascada legacy; módulos partidos por nodo; flags promocionados convertidos en código; suite verde |
 | **11** | R6: robustez de producción | r6-2 (guardrails), g-5 (carga) | el bot nunca deja sin respuesta; inyección medida; p95 con N clientes a la vez |
 | **12** | Q5: calidad continua y entrega | q5-1, g-3, g-4, g-4b, g-6, m0-4, q5-2 | gate en CI; simulador; bucle producción → golden; testers reales; SOAK; entrega |
 
