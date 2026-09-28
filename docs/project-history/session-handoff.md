@@ -13,6 +13,13 @@ Read this file before changing code in the Diving Planet Bot. For a quick versio
 
 > **📏 LEER ANTES DE MEDIR — decisiones del 24-sep-2026 (Gadea):** (1) latencia y llamadas con nuestros logs `[TURN_METRICS]` + `scripts/turn_metrics.py`, no con Langfuse (plan gratuito superado, reinicio 16-oct); (2) pruebas A/B por escalones, juzgando solo los diálogos que cambian. Todo en `docs/robustness/protocolo-medicion.md`.
 
+### 🟡 28-sep tarde (Gadea) — PASO 9 en curso (l2-2). ORDEN NUEVO de lo que queda
+
+Orden decidido por Gadea tras el paso 8 (plan maestro, PARTE 8): (1) cerrar l2-2 — `RAG_PROMPT_CACHE` (caché del
+prompt, ~75 % de tokens cacheados) con el juez v3 de lista completa (el v3b se descartó, HISTORY 0.29.62), ronda
+`cache-B2` en curso; (2) **paso 10, limpieza** antes de tocar más el RAG; (3) **RAG calidad + latencia** (+ l2-3
+"escribiendo…"); (4) **conversaciones reales** (cliente o equipo) como examen fresco.
+
 ### ✅ 28-sep (Gadea) — PASO 8 CERRADO (decisión de Gadea: mejora clara; el oculto −1,2 está en el ruido). Siguiente: PASO 9 (latencia)
 
 `2026-09-27-paso8` frente a `paso3-A` (HISTORY 0.29.57-0.29.59): criterios 83,6 → 86,6 %, diálogos sin fallos 38 → 55/116;

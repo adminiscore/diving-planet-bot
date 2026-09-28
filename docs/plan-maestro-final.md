@@ -452,6 +452,14 @@ medias (u3-1 ✅, u3-4 ✅ promocionada, u3-5 🟡); PRE con u3-4 encendido. Sui
 | **11** | R6: robustez de producción | r6-2 (guardrails), g-5 (carga) | el bot nunca deja sin respuesta; inyección medida; p95 con N clientes a la vez |
 | **12** | Q5: calidad continua y entrega | q5-1, g-3, g-4, g-4b, g-6, m0-4, q5-2 | gate en CI; simulador; bucle producción → golden; testers reales; SOAK; entrega |
 
+> **Reordenado el 28-sep (Gadea), tras el paso 8.** Orden vigente de lo que queda: **(1)** cerrar l2-2 (caché del
+> prompt, ronda B en curso); **(2) paso 10 · limpieza** (flags promocionados a código, sin cascada legacy, módulos
+> partidos) ANTES de volver a tocar el RAG, que hoy tiene 9 flags vivos; **(3) RAG, calidad y latencia juntas**:
+> mejor contexto por servicio (del mapa del paso 8: inventa/contradice 25, incompleta 22, "no lo tengo" 11), latencia
+> de los turnos con RAG y el "escribiendo…" (l2-3); **(4) conversaciones reales** (del cliente o probadas por el
+> equipo) como examen fresco y para el bucle producción → golden (g-4, q5-2), porque el examen oculto no se movió en el
+> paso 8 (77,6 → 76,4 %) mientras lo que miramos subía: el golden se agota como guía. Después, R6 y el resto de Q5.
+
 > **Reordenado el 27-sep (Gadea), con datos.** Los 138 fallos de la ronda A del paso 3 (`2026-09-27-paso3-A`),
 > clasificados por causa: **contenido del RAG 76 (55 %; 21 de los 36 del examen oculto)**, entender los datos del
 > cliente 30, escalado y post-venta 14, flujo y plantillas 13, intención / "recordar" 5. Por eso el RAG pasa del
