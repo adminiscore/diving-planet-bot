@@ -1,6 +1,10 @@
 History
 =======
 
+0.29.66 - (2026-09-28)
+----------------------
+* **Juez de grounding con un modelo más rápido: DESCARTADO, se queda gpt-4.1.** Banco `scripts/sonda_juez_grounding.py` (14 casos, 5 repeticiones, llamadas en serie para medir el tiempo): **gpt-4.1 70/70, p50 0,84 s** · gpt-4.1-mini 48/70, p50 0,94 s · gpt-4o-mini 37/70, p50 0,90 s. Los modelos pequeños no son más rápidos con este prompt (la salida es la lista de datos, igual de larga) y dejan pasar inventos ("llevamos 30 años", "instructores PADI 5 estrellas", "incluye recogida en el hotel", "no pierdes tu reserva ni tu dinero") o rechazan datos correctos ("pagar presencialmente con tarjeta o efectivo"). No se toca PRE. Siguiente de la latencia del RAG: respuestas más cortas (la generación crece con la longitud: 220 caracteres 1,1 s, 720 caracteres 2,8 s).
+
 0.29.65 - (2026-09-28)
 ----------------------
 * **l2-3 hecha: "escribiendo…" en el chat mientras el bot prepara la respuesta** (flag `CHATWOOT_TYPING_INDICATOR`, encendido en PRE y por defecto en el código, regla de `test_flags_pinned`). Una pregunta con RAG tarda ~4 s (medido dentro de PRE el 28-sep con 8 preguntas: búsqueda ~0,4 s, escribir la respuesta con gpt-4.1-mini ~1,9 s y crece con la longitud — 220 caracteres 1,1 s, 720 caracteres 2,8 s —, juez gpt-4.1 ~1,2 s; un rechazo del juez duplica el tiempo). Sin aviso, el cliente no sabe si le han leído.

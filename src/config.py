@@ -142,6 +142,7 @@ class Settings(BaseSettings):
     # al contexto; el veredicto lo calcula el codigo con esas marcas. Con gpt-4.1: banco
     # `scripts/sonda_juez_grounding.py` 30/30 estable (v2 con gpt-4.1-mini: 21/30, dejaba pasar "llevamos
     # 30 años", "debes haber completado la teoría", "hay barcos hundidos"); +0,25 s de mediana. ENCENDIDO por defecto (= PRE, paso 10).
+    # 28-sep (HISTORY 0.29.66): v3 con gpt-4.1-mini 48/70 y gpt-4o-mini 37/70 frente a 70/70, y NO más rápidos: se queda gpt-4.1.
     grounding_v3: bool = True
     grounding_v3_model: str = "gpt-4.1"
     # Paso 9 (l2-2, 28-sep): el catalogo va al final del prompt del SISTEMA (fijo por idioma) y el primero en

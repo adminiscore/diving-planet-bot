@@ -19,8 +19,8 @@ Primer paso de "RAG calidad + latencia" (orden de Gadea). Una pregunta con RAG t
 gpt-4.1-mini ~1,9 s, juez gpt-4.1 ~1,2 s; un rechazo lo duplica). Ahora el cliente ve "escribiendo…" mientras tanto:
 `set_typing()` en `src/channels/chatwoot.py`, flag `CHATWOOT_TYPING_INDICATOR` (encendido en PRE; revert = "false").
 Nunca rompe el turno si Chatwoot falla. No cambia las respuestas → sin ronda de calidad. HISTORY 0.29.65.
-**Siguiente, en orden:** (1) banco del juez de grounding con gpt-4.1-mini (¿mismos veredictos, ~0,5 s menos?) antes de
-tocar PRE; (2) respuestas más cortas solo si la ronda core no empeora; (3) contexto por servicio (mapa del paso 8).
+**Siguiente, en orden:** (1) ~~juez de grounding con gpt-4.1-mini~~ **descartado** (HISTORY 0.29.66: 48/70 frente a
+70/70 y no más rápido); (2) respuestas más cortas solo si la ronda core no empeora; (3) contexto por servicio (mapa del paso 8).
 
 ### ✅ 28-sep noche (Gadea) — PASO 9 (l2-2) y PASO 10 (limpieza segura) HECHOS. Siguiente: RAG calidad + latencia
 
