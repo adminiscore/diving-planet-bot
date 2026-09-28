@@ -1,6 +1,10 @@
 History
 =======
 
+0.29.73 - (2026-09-29)
+----------------------
+* **Cierre de la sesión (Gadea) para el relevo.** Handoff con bloque "RETOMAR AQUÍ" del 29-sep (fase RAG, cómo medir sin desplegar, avisos), plan maestro PARTE 8 con la tabla rag-1 → rag-6 y Plan Coral al día. **Siguiente: rag-3** (búsqueda con estado), que incluye unificar ya los nombres de servicio entre `services.json` y `pricing.json`.
+
 0.29.72 - (2026-09-29)
 ----------------------
 * **`RAG_KB_V2` PROMOCIONADO (rag-2 cerrada).** Ronda core A/B en PRE (dos deploys seguidos: 96adcb9 flag apagado, 92d16dc encendido): criterios 92,5 % → **94,3 %** (juez gpt-5-mini; 7 mejoras, 3 "regresiones" revisadas a mano: una es ruido de muestreo en una repregunta de asesor que A y B hacen igual, otra pasa a "no aplica" y la tercera es el nombre "Fun Dives - 2 dives (1 day)" de `services.json`, que la referencia del juez (`pricing.json`) llama "Certified Diver - 2 dives": incoherencia de nombres entre fuentes, no invento). Diálogos sin fallos 22/32 en los dos. Turnos RAG: p50 5,3 → 4,9 s, p95 8,8 → 9,5 s (un turno lento), 4,7 llamadas en los dos.

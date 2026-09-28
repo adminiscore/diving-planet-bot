@@ -13,7 +13,83 @@ Read this file before changing code in the Diving Planet Bot. For a quick versio
 
 > **📏 LEER ANTES DE MEDIR — decisiones del 24-sep-2026 (Gadea):** (1) latencia y llamadas con nuestros logs `[TURN_METRICS]` + `scripts/turn_metrics.py`, no con Langfuse (plan gratuito superado, reinicio 16-oct); (2) pruebas A/B por escalones, juzgando solo los diálogos que cambian. Todo en `docs/robustness/protocolo-medicion.md`.
 
-### ▶️ RETOMAR AQUÍ — cierre del 28-sep noche (Álvaro). Rama `feature/pre_alvaro`, PRE = esta rama
+### ▶️ RETOMAR AQUÍ — cierre del 29-sep (Gadea). Rama `feature/pre_gadea`, PRE = esta rama
+
+**Cómo está todo.** PRE sirve el último commit de `feature/pre_gadea` (código del bot = `4e1cbc4`; lo posterior son docs; `check_deploy` en verde, 27 ajustes del compose = PRE).
+Suite 2810 passed, ruff limpio en `src`. `feature/pre_alvaro` y `feature/pre_pruebaGon` no tenían nada nuevo: **quien
+siga, que integre `feature/pre_gadea` en su rama antes de subir** (todas las `pre_*` despliegan el mismo PRE).
+Estamos en el bloque **"RAG, calidad y latencia"**, ahora organizado como la **fase RAG de Plan Coral** (rag-1 → rag-6,
+en orden; plan maestro PARTE 8, bloque "Estado al 29-sep").
+
+**Por qué la fase RAG.** Análisis a fondo (`docs/robustness/analisis-rag-2026-09-29.md`): el RAG era el mayor lastre
+(60 de 113 fallos del paso 8) y la causa es **la estructura y los datos, no el modelo** — el mismo dato en 3-4 sitios
+con formatos distintos, FAQs clonadas por origen, teléfono y tono de "escríbenos" heredados de los chats, búsqueda que
+no usa lo que ya sabemos del cliente, 42 reglas en el prompt y nada medido por piezas.
+
+**Hecho hoy (HISTORY 0.29.70-0.29.72):**
+
+| # | Qué | Estado | Dónde |
+|---|---|---|---|
+| rag-1 | Medir el RAG por piezas: búsqueda / redacción / juez / contradicción, por dato | ✅ instrumento + línea base | `scripts/rag_piezas.py`, `docs/robustness/rag-piezas/` (README con todas las tablas) |
+| rag-2 | Base curada como fuente única, flag `RAG_KB_V2` (esquema `kb_v2`) | ✅ **PROMOCIONADA** | `scripts/kb_v2.py`, `data/knowledge_base/curada/`, `docs/robustness/rag-2/` |
+| — | Decisiones de negocio D1-D8 de Gadea aplicadas a las fuentes de verdad | ✅ | `docs/robustness/rag-2/decisiones.md` |
+| — | Golden: `anticipacion-cierre-sistema` alineado con `how_to_book` (web tras el cierre, sin WhatsApp) | ✅ | `golden-dialogues.json` |
+
+- **Decisiones D1-D8 (Gadea, 29-sep):** pagan en COP "los colombianos (vivan donde vivan) y los residentes en
+  Colombia"; refresh tras más de 2 años "normalmente se requiere; los muy experimentados los revisa un asesor"; **nada
+  de teléfono en la base** (el WhatsApp solo por el camino de s4-14, si lo piden); descuento del 10 % el segundo día,
+  vigente; almuerzo solo el día 1 desde Cartagena y nunca desde las islas; llegada a Cartagena 4:15 en todo;
+  extranjeros pagan el 100 % con tarjeta en la web (el anticipo del 50 % es solo para colombianos); 5 % por equipo
+  propio solo en buceo recreativo y cursos.
+- **Base v2:** 364 documentos (antes 718). Una ficha por servicio y origen con la MISMA línea de datos que el catálogo
+  (`catalog.service_fact_parts`); 107 FAQs curadas (sin las 25 que repetían un servicio, sin listas de precios, sin
+  teléfono; reescritas por gpt-4.1, auditadas y revisadas a mano); políticas y descuentos con 3 formas de preguntarlos
+  (`curada/preguntas.json`); el texto de cada regla sigue en `policies.json` / `discounts.json`. Con el flag, la
+  búsqueda **no usa los empujones por tema/fuente** (regex ajustadas a la base v1 que enterraban las políticas).
+  CI regenera `kb_v2` en cada deploy (`scripts/kb_v2.py --yes`, paso nuevo en `ci.yml`).
+- **Medido:** `rag_piezas` (47 × 2): dato en el top-8 71 → 85 %, en el contexto visto 85 → 94 %, la respuesta lo cubre
+  82 → 89 %, contradicciones 5 → 1, p50 igual. Ronda core A/B en PRE: criterios 92,5 → **94,3 %** (22/32 los dos;
+  3 "regresiones" revisadas a mano: ruido, "no aplica" y un nombre de servicio distinto entre fuentes). Turnos RAG
+  p50 5,3 → 4,9 s. Marcha atrás: `RAG_KB_V2: "false"` en el compose **y** en `config.py`.
+
+**Siguiente, en orden (no saltarse pasos):**
+1. **rag-3 · búsqueda con estado.** Lo que queda de búsqueda en `rag_piezas` es que la ficha del servicio que el cliente
+   YA eligió no entra en el top-8 con preguntas genéricas ("¿a qué hora acaba el día 1?" con el Open Water elegido),
+   más el formulario médico del refresher y la dirección de la oficina. Idea: con `selected_service`/origen conocidos,
+   su ficha va siempre al contexto y la búsqueda prioriza su origen. **Dentro de rag-3, arreglar ya:** unificar los
+   nombres de servicio entre `services.json` y `pricing.json` ("Fun Dives - 2 dives (1 day)" frente a "Certified
+   Diver - 2 dives (1 day)", y los que difieran igual): el juez del golden usa `pricing.json` como referencia y marca
+   de invento el nombre de `services.json`. Decidir el nombre oficial (el de la web) y dejarlo en un solo sitio.
+   Hecho cuando: top-8 ≥ 90 % en `rag_piezas` y ronda core A/B sin regresiones.
+2. **rag-4 · dieta del prompt:** el bot tiene el dato delante y contesta "no lo tengo, te paso con un asesor" (pago por
+   transferencia, "¿ya es fijo que se sale?") — reglas del prompt tipo "el equipo confirma".
+3. rag-5 (latencia estructural) → rag-6 (experimento base entera en el prompt). Después, conversaciones reales, R6, Q5.
+   Un reordenador podría subir el top-8 de 85 % hacia el 97 % de techo (el dato está en algún candidato): valorar en
+   rag-3 o rag-5 según su coste en segundos.
+
+**Cómo medir un cambio del RAG (lo que se usó hoy):**
+- **Escalón 0 sin desplegar:** `python -m scripts.rag_piezas --name X --reps 2 --codigo-local --env FLAG=true`
+  (copia el código LOCAL a `/tmp/codigo-local` dentro de `dp-pre-bot` y lo corre con la base, claves y modelos de PRE;
+  el bot no lo ve). ~3 $ y ~12 min por medición de 47 × 2. `--solo-busqueda` (céntimos), `--comparar A.json B.json`,
+  `--repuntuar A.json` (si cambian las anclas de `preguntas.json`). Nunca usa el examen oculto (el script lo comprueba).
+  Para cargar una base nueva sin desplegar: `pre_access.subir_codigo_local()` + `docker exec -w /tmp/codigo-local -e
+  PYTHONPATH=/tmp/codigo-local dp-pre-bot python -m scripts.kb_v2 --yes`.
+- **Escalón 1:** push con el flag apagado → `check_deploy` → ronda core A → `turn_metrics --from-run ... --out` y log de
+  PRE **antes del siguiente deploy** → push con el flag encendido (config.py Y compose, `test_flags_pinned`) → ronda B
+  → `judge_golden_set` de las dos → `python -m scripts.ab_judge_compare 2026-09-28-rag2-A 2026-09-28-rag2-B` (nombres
+  de ronda, sin ruta) → leer a mano lo que empeora.
+
+**Avisos:**
+- **La verdad del negocio está en `data/knowledge_base/*.json` (services, policies, discounts, pricing).** La base v2
+  se genera de ahí + `curada/`; si se cambia un dato, se cambia en la fuente y CI regenera. No editar `kb_v2` a mano.
+  `data/knowledge_base/faqs.json` es la fuente de la base v1 (ya no la usa el bot): las FAQs vivas son
+  `curada/faqs.json`.
+- **OpenAI, una sola cuenta para PRE y pruebas** (ver aviso del 28-sep abajo). Hoy: ~15 $.
+- **Fechas:** los ficheros de hoy llevan `2026-09-28` en el nombre (fecha del PC) aunque la página y los docs digan 29-sep.
+- **Plan Coral:** Gadea edita la página directamente; desde otra organización los cambios van a la cola
+  `docs/tracking/data/plan-coral-cambios-pendientes.json` (48 entradas antiguas siguen sin revisar).
+
+### ✅ 28-sep noche (Álvaro) — l2-3, juez pequeño descartado, `RAG_CONCISE` aparcado, `RAG_REGEN_FEEDBACK`. Sus "Siguiente" 1-2 quedan absorbidos por rag-2 (29-sep)
 
 **Cómo está todo.** `feature/pre_alvaro` contiene todo lo de Gadea (`4c4f0f1`, pasos 9 y 10) + lo de hoy, y es lo
 que sirve PRE (`python -m scripts.check_deploy` en verde, 26 ajustes del compose = PRE). Suite 2800 passed (modo
