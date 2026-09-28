@@ -162,7 +162,7 @@ class Settings(BaseSettings):
     # rag-2 (29-sep, fase RAG de Plan Coral): la busqueda lee la base curada del esquema `kb_v2` (una ficha por
     # servicio y origen, FAQs sin telefono ni listas de precios, politicas con sus formas de preguntarlas;
     # `scripts/kb_v2.py`). Apagado = `public.kb_documents` de siempre. Marcha atras: apagarlo.
-    rag_kb_v2: bool = False
+    rag_kb_v2: bool = True
 
     # Paso 6 (27-sep): respuestas fijas y salida deterministas de S4. s4-14: si piden un telefono se
     # da el WhatsApp oficial (decision de Gadea; antes "no manejo un numero"); s4-15: "¿eres un bot?"
