@@ -243,10 +243,11 @@ antes de avanzar. Estamos en el bloque **"RAG, calidad y latencia"** del orden d
   `python docs/robustness/golden-set/compare_rounds.py <A> <B> --raw` → **leer a mano** lo que empeora; mirar en los
   logs de PRE (`[RAG][GROUNDING] attempt 1 rejected`) si el cambio actuó en ese turno.
 
-**Mapa de Coral (29-sep):** https://claude.ai/artifact/SnK5Dku1vAinbJ94b8aNGd — el bot dibujado por dentro (vista general + zoom en Reserva y RAG),
+**Mapa de Coral (29-sep, rediseñado v2, HISTORY 0.29.80):** https://claude.ai/artifact/SnK5Dku1vAinbJ94b8aNGd — el bot dibujado por dentro (vista general + zoom en Reserva y RAG),
 con los tiempos de la última ronda. Se regenera con `ENV_FILE=.env.ci python -m scripts.arquitectura` y se republica
 en la misma URL (paso 12 de `/closework`); `tests/test_arquitectura.py` obliga a describir cada caja nueva del grafo
-en `docs/arquitectura/componentes.json`. Es privado de Álvaro: compartirlo desde su menú para que lo vea el equipo.
+en `docs/arquitectura/componentes.json`, y cada interruptor nuevo necesita su nombre y frase en llano en el mismo fichero
+(`"interruptores"`). Es privado de Álvaro: compartirlo desde su menú para que lo vea el equipo.
 
 **Riesgos y avisos aprendidos hoy:**
 - **Disco del VPS (29-sep):** se llenó con el registro de Chatwoot (26 GB, sin tope). Ya hay tope de 50 MB × 3 por

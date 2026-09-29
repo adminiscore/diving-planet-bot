@@ -1,684 +1,780 @@
 <title>Mapa de Coral</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=Figtree:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500&family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
 <style>
-  /* Un solo mundo visual, a propósito: pantalla de ordenador de buceo sobre fondo abisal. */
+  /* Sistema: monocromo editorial (tinta, hueso, bordes finos, píldoras). Un solo color: el cobalto, que es el
+     mensaje del cliente viajando por el bot y la franja de la ronda de arriba. Sin sombras: separan los bordes. */
   :root {
-    color-scheme: dark;
-    --abismo: #061a22;
-    --fondo: #08222c;
-    --superficie: #0d2f3b;
-    --superficie-2: #123a48;
-    --linea: #1f4c5a;
-    --texto: #e4f3f0;
-    --texto-2: #92b6b8;
-    --texto-3: #5f8589;
-    --coral: #ff7a59;
-    --espuma: #6be4d2;
-    --arena: #f2c66d;
-    --alga: #7ccb8b;
-    --lila: #b7a6f2;
-    --cielo: #8fcbff;
-    --gris: #6e8a91;
-    --melocoton: #ffb38a;
-    --ok: #7ccb8b;
-    --aviso: #f2c66d;
-    --mal: #ff6b6b;
-    --display: "Chakra Petch", "Segoe UI", system-ui, sans-serif;
-    --cuerpo: "Figtree", "Segoe UI", system-ui, sans-serif;
+    --canvas: #ffffff;
+    --recessed: #f7f7f7;
+    --card: #ffffff;
+    --edge: #c9c9cd;
+    --edge-soft: #e4e4e7;
+    --ink: #1f1f1f;
+    --graphite: #4c4c4c;
+    --slate: #717173;
+    --inverted: #1f1f1f;
+    --on-inverted: #ffffff;
+    --cobalt: #1227fd;
+    --cobalt-soft: rgba(18, 39, 253, .12);
+    --promo: linear-gradient(to right, #1227fd, #6fa0ff);
+    --dots: rgba(31, 31, 31, .07);
+    --display: "Manrope", "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    --ui: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
     --mono: "JetBrains Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+    --r-card: 22.5px;
+    --r-list: 20px;
+    --r-small: 12px;
   }
-  html, body { background: var(--abismo); }
-  body {
-    margin: 0; color: var(--texto); font: 15px/1.5 var(--cuerpo);
-    padding-inline: 16px; padding-block: 12px 40px;
-    background:
-      radial-gradient(1200px 500px at 70% -10%, rgba(107,228,210,.08), transparent 60%),
-      radial-gradient(900px 400px at 0% 110%, rgba(255,122,89,.06), transparent 60%),
-      var(--abismo);
-    min-height: 100%;
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      color-scheme: dark;
+      --canvas: #121213; --recessed: #19191b; --card: #1f1f21; --edge: #3a3a3e; --edge-soft: #2c2c30;
+      --ink: #f4f4f5; --graphite: #c7c7cc; --slate: #9a9aa0; --inverted: #f4f4f5; --on-inverted: #121213;
+      --cobalt: #6f8dff; --cobalt-soft: rgba(111, 141, 255, .16); --dots: rgba(255, 255, 255, .06);
+    }
   }
-  .envoltura { max-width: 1480px; margin: 0 auto; display: grid; gap: 14px; }
-  h1, h2, h3 { font-family: var(--display); letter-spacing: .02em; margin: 0; text-wrap: balance; }
-  button, select { font: 600 13px/1 var(--cuerpo); }
-  :focus-visible { outline: 2px solid var(--espuma); outline-offset: 2px; }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --canvas: #121213; --recessed: #19191b; --card: #1f1f21; --edge: #3a3a3e; --edge-soft: #2c2c30;
+    --ink: #f4f4f5; --graphite: #c7c7cc; --slate: #9a9aa0; --inverted: #f4f4f5; --on-inverted: #121213;
+    --cobalt: #6f8dff; --cobalt-soft: rgba(111, 141, 255, .16); --dots: rgba(255, 255, 255, .06);
+  }
 
-  /* HUD */
-  .hud { display: grid; gap: 12px; }
-  .hud-fila { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; justify-content: space-between; }
-  .marca { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
-  .marca h1 { font-size: 26px; font-weight: 700; }
-  .marca h1 span { color: var(--coral); }
-  .marca .sello { font: 500 12px var(--mono); color: var(--texto-2); }
-  .migas { display: flex; align-items: center; gap: 8px; font: 600 14px var(--display); color: var(--texto-2); }
-  .migas button { background: none; border: 0; color: var(--espuma); cursor: pointer; padding: 4px 0; font: inherit; }
-  .migas .actual { color: var(--texto); }
-  .controles { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
-  .btn { background: var(--superficie); color: var(--texto); border: 1px solid var(--linea); border-radius: 8px; padding: 8px 12px; cursor: pointer; }
-  .btn:hover { border-color: var(--espuma); }
-  .btn[aria-pressed="true"] { background: var(--superficie-2); border-color: var(--espuma); color: var(--espuma); }
-  .sel { background: var(--superficie); color: var(--texto); border: 1px solid var(--linea); border-radius: 8px; padding: 7px 10px; }
-  .medidores { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; }
-  .medidor { background: linear-gradient(180deg, var(--superficie), var(--fondo)); border: 1px solid var(--linea); border-radius: 10px; padding: 8px 12px; }
-  .medidor b { display: block; font: 600 20px var(--display); font-variant-numeric: tabular-nums; }
-  .medidor small { color: var(--texto-2); font-size: 12px; }
+  html, body { background: var(--canvas); }
+  body { margin: 0; color: var(--ink); font: 400 16px/1.5 var(--ui); letter-spacing: -.005em; -webkit-font-smoothing: antialiased; }
+  .promo { background: var(--promo); color: #fff; text-align: center; font: 400 14px/1.4 var(--ui); padding-block: 10px; padding-inline: 16px; }
+  .pagina { max-width: 1200px; margin: 0 auto; padding-inline: 16px; padding-block: 40px 64px; display: grid; gap: 40px; }
+  h1, h2, h3 { font-family: var(--display); font-weight: 500; margin: 0; text-wrap: balance; }
+  h1 { font-size: clamp(34px, 5vw, 52px); line-height: 1; letter-spacing: -.012em; }
+  h2 { font-size: 24px; line-height: 28px; letter-spacing: -.01em; }
+  h3 { font-size: 24px; line-height: 28px; letter-spacing: -.01em; }
+  p { margin: 0; }
+  button, select, input { font: inherit; color: inherit; }
+  :focus-visible { outline: 2px solid var(--cobalt); outline-offset: 2px; }
+  .mute { color: var(--slate); }
+  .etiqueta { font: 600 12px/18px var(--ui); letter-spacing: .015em; text-transform: uppercase; color: var(--slate); }
+  .mono { font-family: var(--mono); font-size: 12.5px; letter-spacing: 0; }
 
-  /* Tablero */
-  .escena { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 14px; align-items: start; }
-  .tablero { background: var(--fondo); border: 1px solid var(--linea); border-radius: 14px; overflow: hidden; position: relative; }
-  .tablero-cab { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; flex-wrap: wrap; padding: 12px 16px 0; }
-  .tablero-cab h2 { font-size: 18px; }
-  .tablero-cab p { margin: 0; color: var(--texto-2); font-size: 13px; }
-  .lienzo { overflow: auto; padding: 6px 4px 8px; }
-  .lienzo svg { display: block; }
-  .rejilla { background-image: radial-gradient(rgba(143,203,255,.10) 1px, transparent 1px); background-size: 22px 22px; }
-  .aviso-historial { margin: 10px 16px 0; padding: 8px 12px; border-radius: 8px; border: 1px dashed var(--arena); color: var(--arena); font-size: 13px; }
-  .leyenda { display: flex; flex-wrap: wrap; gap: 6px 14px; padding: 8px 16px 12px; font-size: 12px; color: var(--texto-2); border-top: 1px solid var(--linea); }
-  .leyenda i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; }
+  /* Cabecera */
+  .cab { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 16px 24px; }
+  .cab .lema { color: var(--slate); font: 400 18px/24px var(--display); margin-top: 12px; max-width: 60ch; }
+  .sello { display: inline-flex; align-items: center; gap: 8px; border: 1px solid var(--edge); border-radius: 9999px; padding: 6px 14px; font: 400 13px var(--ui); color: var(--graphite); }
+  .sello i { width: 8px; height: 8px; border-radius: 50%; background: var(--cobalt); }
 
-  /* nodos y flechas del SVG */
+  /* Píldoras */
+  .pill { display: inline-flex; align-items: center; gap: 8px; min-height: 36px; border-radius: 9999px; border: 1px solid var(--edge); background: var(--card); padding: 0 16px; font: 600 14px var(--ui); cursor: pointer; white-space: nowrap; }
+  .pill:hover { border-color: var(--ink); }
+  .pill.dark, .pill[aria-pressed="true"] { background: var(--inverted); color: var(--on-inverted); border-color: var(--inverted); }
+  .segmento { display: inline-flex; background: var(--recessed); border: 1px solid var(--edge-soft); border-radius: 9999px; padding: 3px; gap: 2px; flex-wrap: wrap; }
+  .segmento button { border: 0; background: transparent; border-radius: 9999px; padding: 7px 14px; font: 600 14px var(--ui); color: var(--graphite); cursor: pointer; white-space: nowrap; }
+  .segmento button[aria-pressed="true"] { background: var(--card); color: var(--ink); box-shadow: 0 0 0 1px var(--edge); }
+  .select-pill { appearance: none; border: 1px solid var(--edge); background: var(--card); border-radius: 9999px; min-height: 36px; padding: 0 34px 0 16px; font: 600 14px var(--ui); cursor: pointer;
+    background-image: linear-gradient(45deg, transparent 50%, var(--slate) 50%), linear-gradient(135deg, var(--slate) 50%, transparent 50%);
+    background-position: calc(100% - 18px) 16px, calc(100% - 13px) 16px; background-size: 5px 5px; background-repeat: no-repeat; }
+
+  /* Cifras */
+  .cifras { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 8px; }
+  .cifra { border: 1px solid var(--edge); border-radius: var(--r-card); padding: 20px 24px; background: var(--card); display: grid; gap: 4px; }
+  .cifra b { font: 500 32px/38px var(--display); letter-spacing: -.01em; font-variant-numeric: tabular-nums; }
+  .cifra span { font: 400 14px/22px var(--ui); color: var(--slate); }
+
+  /* Mapa */
+  .tarjeta { border: 1px solid var(--edge); border-radius: var(--r-card); background: var(--card); }
+  .mapa { display: grid; grid-template-columns: minmax(0, 1fr) 340px; }
+  .mapa-cuerpo { min-width: 0; display: grid; grid-template-rows: auto auto 1fr auto; border-right: 1px solid var(--edge); }
+  .mapa-barra { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; justify-content: space-between; padding: 16px 24px; border-bottom: 1px solid var(--edge); }
+  .mapa-barra .ctrl { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  .mapa-titulo { padding: 20px 24px 0; display: grid; gap: 4px; }
+  .mapa-titulo p { color: var(--slate); font-size: 14px; }
+  .lienzo { position: relative; margin: 16px; border-radius: var(--r-list); background-color: var(--recessed);
+    background-image: radial-gradient(var(--dots) 1px, transparent 1px); background-size: 20px 20px; overflow: hidden; min-height: 320px; }
+  .lienzo svg { display: block; width: 100%; height: auto; }
+  .aviso { margin: 12px 24px 0; padding: 10px 16px; border-radius: var(--r-small); border: 1px dashed var(--ink); font-size: 14px; }
+  .leyenda { display: flex; flex-wrap: wrap; gap: 8px 20px; padding: 0 24px 20px; font-size: 13px; color: var(--slate); }
+  .leyenda span { display: inline-flex; align-items: center; gap: 8px; }
+  .leyenda svg { flex: none; }
+
+  /* SVG */
   .nodo { cursor: pointer; }
-  .nodo rect.caja { fill: var(--superficie); stroke-width: 1.6; transition: fill .25s; }
-  .nodo:hover rect.caja, .nodo:focus rect.caja { fill: var(--superficie-2); }
-  .nodo.sel rect.caja { stroke-width: 3; }
-  .nodo.activo rect.caja { fill: #154556; }
-  .nodo .titulo { font: 600 13px var(--display); fill: var(--texto); }
-  .nodo .sub { font: 500 10.5px var(--mono); fill: var(--texto-2); }
-  .nodo .zoom { font: 700 10px var(--display); letter-spacing: .06em; }
-  .nodo.nuevo rect.anillo { stroke: var(--ok); stroke-width: 2; stroke-dasharray: 5 4; fill: none; }
-  .flecha { fill: none; stroke-width: 1.6; opacity: .75; }
-  .flecha.datos, .flecha.infra, .flecha.paralelo { stroke-dasharray: 4 5; opacity: .55; }
-  .flecha.respaldo { stroke-dasharray: 2 5; opacity: .55; }
-  .flecha.pulso { opacity: 1; stroke-width: 2.4; }
-  .etq { font: 500 10.5px var(--mono); fill: var(--texto-2); paint-order: stroke; stroke: var(--fondo); stroke-width: 4px; stroke-linejoin: round; }
-  .paquete { filter: url(#brillo); }
+  .nodo .caja { fill: var(--card); stroke: var(--edge); stroke-width: 1; transition: stroke .2s; }
+  .nodo.servicio .caja { fill: var(--canvas); }
+  .nodo:hover .caja, .nodo:focus .caja { stroke: var(--graphite); }
+  .nodo:focus { outline: none; }
+  .nodo:focus-visible .caja { stroke: var(--cobalt); stroke-width: 2; }
+  .nodo.sel .caja { stroke: var(--ink); stroke-width: 2; }
+  .nodo.activo .caja { stroke: var(--cobalt); stroke-width: 1.5; }
+  .nodo .icono-fondo { fill: var(--recessed); stroke: var(--edge-soft); }
+  .nodo .icono { fill: none; stroke: var(--graphite); stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+  .nodo.activo .icono { stroke: var(--cobalt); }
+  .nodo .t { font: 600 13.5px var(--ui); fill: var(--ink); letter-spacing: -.005em; }
+  .nodo .m { font: 400 12px var(--ui); fill: var(--slate); }
+  .nodo .progreso { fill: var(--cobalt); }
+  .nodo .abrir-fondo { fill: var(--recessed); stroke: var(--edge); }
+  .nodo .abrir { fill: none; stroke: var(--ink); stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+  .nodo.nuevo .anillo { fill: none; stroke: var(--ink); stroke-dasharray: 4 4; }
+  .banda { font: 600 12px var(--ui); letter-spacing: .015em; text-transform: uppercase; fill: var(--slate); }
+  .banda-linea { stroke: var(--edge); stroke-dasharray: 2 4; }
+  .flecha { fill: none; stroke: var(--edge); stroke-width: 1.5; }
+  .flecha.respaldo, .flecha.vuelta, .flecha.bucle, .flecha.atras { stroke-dasharray: 5 5; }
+  .flecha { transition: opacity .25s, stroke .25s; }
+  .flecha.oculta { opacity: 0; }
+  .flecha.foco { stroke: var(--ink); opacity: 1; }
+  .flecha.viaje { stroke: var(--cobalt); opacity: 1; }
+  .flecha.datos, .flecha.paralelo, .flecha.infra { stroke-dasharray: 2 4; }
+  .flecha.pulso { stroke: var(--cobalt); opacity: 1; stroke-dasharray: 2 4; animation: correr .6s linear infinite; }
+  @keyframes correr { to { stroke-dashoffset: -12; } }
+  .punta { fill: var(--edge); }
+  .punta-foco { fill: var(--ink); }
+  .pct rect { fill: var(--card); stroke: var(--edge); }
+  .pct text { font: 600 11px var(--ui); fill: var(--graphite); font-variant-numeric: tabular-nums; }
+  .paquete { fill: var(--cobalt); }
+  .paquete-halo { fill: var(--cobalt-soft); }
+  .paquete.resp { fill: var(--ink); }
+  .paquete-halo.resp { fill: rgba(31, 31, 31, .10); }
 
   /* Panel */
-  .panel { background: var(--fondo); border: 1px solid var(--linea); border-radius: 14px; padding: 16px; display: grid; gap: 12px; position: sticky; top: calc(env(safe-area-inset-top, 0px) + 12px); }
-  .panel h3 { font-size: 20px; }
-  .panel .tipo { display: inline-block; font: 600 11px var(--display); letter-spacing: .08em; text-transform: uppercase; padding: 3px 8px; border-radius: 99px; border: 1px solid currentColor; }
-  .panel p { margin: 0; }
-  .panel .que { font-size: 15px; }
-  .panel dl { margin: 0; display: grid; grid-template-columns: auto 1fr; gap: 6px 10px; font-size: 13px; }
-  .panel dt { color: var(--texto-2); }
-  .panel dd { margin: 0; overflow-wrap: anywhere; }
-  .mono { font-family: var(--mono); font-size: 12.5px; }
+  .panel { padding: 24px; display: grid; gap: 16px; align-content: start; min-width: 0; }
+  .panel .tag { justify-self: start; border: 1px solid var(--edge); border-radius: 9999px; padding: 3px 12px; }
+  .panel .que { font-size: 16px; line-height: 24px; color: var(--graphite); }
+  .hechos { background: var(--recessed); border-radius: var(--r-list); padding: 8px 16px; display: grid; }
+  .hecho { display: grid; grid-template-columns: 110px minmax(0, 1fr); gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--edge-soft); font-size: 14px; line-height: 20px; }
+  .hecho:last-child { border-bottom: 0; }
+  .hecho dt { color: var(--slate); }
+  .hecho dd { margin: 0; overflow-wrap: anywhere; }
+  .panel ul { margin: 0; padding-left: 18px; color: var(--graphite); font-size: 13px; display: grid; gap: 4px; }
   .chips { display: flex; flex-wrap: wrap; gap: 6px; }
-  .chip { font: 500 12px var(--mono); padding: 3px 8px; border-radius: 6px; background: var(--superficie); border: 1px solid var(--linea); }
-  .chip.on { border-color: var(--ok); color: var(--ok); }
-  .chip.off { border-color: var(--gris); color: var(--texto-2); }
-  .chip.nada { border-color: var(--aviso); color: var(--aviso); }
-  .barra { height: 8px; border-radius: 99px; background: var(--superficie); overflow: hidden; }
-  .barra span { display: block; height: 100%; background: linear-gradient(90deg, var(--espuma), var(--arena)); }
-  .panel ul { margin: 0; padding-left: 18px; font-size: 13px; color: var(--texto-2); }
-  .vacio { color: var(--texto-2); font-size: 14px; }
+  .chip { display: inline-flex; align-items: center; gap: 6px; border-radius: 9999px; padding: 4px 12px; font: 600 12.5px var(--ui); border: 1px solid var(--edge); background: var(--card); }
+  .chip.on { background: var(--inverted); color: var(--on-inverted); border-color: var(--inverted); }
+  .chip.off { color: var(--slate); }
+  .chip.nada { border-style: dashed; color: var(--graphite); }
+  .vacio { color: var(--slate); font-size: 15px; line-height: 24px; }
+  .vacio b { color: var(--ink); font-weight: 600; }
 
-  /* Interruptores y modelos */
-  .bloque { background: var(--fondo); border: 1px solid var(--linea); border-radius: 14px; padding: 16px; display: grid; gap: 12px; }
-  .bloque-cab { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 8px; }
-  .bloque-cab h2 { font-size: 18px; }
-  .bloque-cab p { margin: 0; color: var(--texto-2); font-size: 13px; }
-  .filtros { display: flex; gap: 6px; flex-wrap: wrap; }
-  .lista { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 8px; }
-  .item { background: var(--superficie); border: 1px solid var(--linea); border-radius: 10px; padding: 10px 12px; display: grid; gap: 6px; }
-  .item-cab { display: flex; justify-content: space-between; gap: 8px; align-items: center; }
-  .item-cab code { font: 500 12.5px var(--mono); overflow-wrap: anywhere; }
-  .item small { color: var(--texto-2); font-size: 12px; }
-  .enlaces { display: flex; flex-wrap: wrap; gap: 4px 8px; }
-  .enlaces button { background: none; border: 0; padding: 0; color: var(--espuma); cursor: pointer; font: 500 12px var(--cuerpo); text-decoration: underline; text-underline-offset: 2px; }
-  .pie { color: var(--texto-3); font-size: 12px; display: grid; gap: 4px; }
-  .pie code { font-family: var(--mono); color: var(--texto-2); }
-  .error { padding: 24px; color: var(--mal); }
+  /* Secciones de abajo */
+  .seccion { display: grid; gap: 24px; }
+  .seccion-cab { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px 24px; }
+  .seccion-cab h2 { font-size: 32px; line-height: 38px; letter-spacing: -.01em; color: var(--slate); }
+  .seccion-cab p { color: var(--slate); font-size: 15px; margin-top: 6px; max-width: 62ch; }
+  .zona { display: grid; gap: 8px; }
+  .zona-cab { display: flex; align-items: baseline; gap: 10px; }
+  .zona-cab h3 { font-size: 18px; line-height: 24px; }
+  .lista { background: var(--recessed); border-radius: var(--r-list); padding: 4px 20px; }
+  .fila { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px 24px; padding: 16px 0; border-bottom: 1px solid var(--edge-soft); align-items: start; }
+  .fila:last-child { border-bottom: 0; }
+  .fila h4 { margin: 0; font: 600 15px/22px var(--ui); }
+  .fila p { color: var(--graphite); font-size: 14px; line-height: 22px; }
+  .fila .pie-fila { display: flex; flex-wrap: wrap; gap: 4px 12px; margin-top: 6px; font-size: 13px; color: var(--slate); align-items: center; }
+  .enlace { background: none; border: 0; padding: 0; color: var(--ink); cursor: pointer; font: 600 13px var(--ui); text-decoration: underline; text-decoration-color: var(--edge); text-underline-offset: 3px; }
+  .enlace:hover { text-decoration-color: var(--ink); }
+  .modelos { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 8px; }
+  .modelo { border: 1px solid var(--edge); border-radius: var(--r-card); padding: 24px; display: grid; gap: 12px; align-content: start; background: var(--card); }
+  .modelo b { font: 500 24px/28px var(--display); letter-spacing: -.01em; overflow-wrap: anywhere; }
+  .barra { height: 6px; border-radius: 9999px; background: var(--recessed); border: 1px solid var(--edge-soft); overflow: hidden; }
+  .barra span { display: block; height: 100%; background: var(--ink); }
+  .pie { color: var(--slate); font-size: 13px; line-height: 20px; display: grid; gap: 4px; border-top: 1px solid var(--edge); padding-top: 24px; }
+  .pie code { font-family: var(--mono); font-size: 12px; color: var(--graphite); }
+  .error { padding: 32px; color: var(--ink); }
 
-  @media (max-width: 980px) {
-    .escena { grid-template-columns: 1fr; }
-    .panel { position: static; }
+  @media (max-width: 960px) {
+    .mapa { grid-template-columns: 1fr; }
+    .mapa-cuerpo { border-right: 0; border-bottom: 1px solid var(--edge); }
   }
+  @media (max-width: 520px) {
+    .fila { grid-template-columns: 1fr; }
+    .hecho { grid-template-columns: 1fr; gap: 2px; }
+    .lienzo { margin: 12px 8px; }
+  }
+  @media (prefers-reduced-motion: reduce) { .flecha.pulso { animation: none; } }
 </style>
 
-<div class="envoltura">
-  <header class="hud">
-    <div class="hud-fila">
-      <div class="marca">
-        <h1>Mapa de <span>Coral</span></h1>
-        <span class="sello" id="sello">cargando…</span>
-      </div>
-      <div class="controles">
-        <button class="btn" id="b-pausa" aria-pressed="false">Pausar</button>
-        <label class="mono" for="s-vel" style="color:var(--texto-2)">Velocidad</label>
-        <select class="sel" id="s-vel">
-          <option value="0.5">×0,5</option>
-          <option value="1" selected>×1</option>
-          <option value="2">×2</option>
-        </select>
-        <button class="btn" id="b-apoyo" aria-pressed="true">Datos y servicios</button>
-        <button class="btn" id="b-entero" aria-pressed="false">Ver entero</button>
-        <label class="mono" for="s-version" style="color:var(--texto-2)">Comparar con</label>
-        <select class="sel" id="s-version"><option value="">versión actual</option></select>
-      </div>
+<div class="promo" id="promo">Cargando los datos de la última ronda…</div>
+
+<main class="pagina">
+  <header class="cab">
+    <div>
+      <h1>Mapa de Coral</h1>
+      <p class="lema">Cómo funciona el bot por dentro: por dónde pasa cada mensaje, qué pieza decide, cuánto tarda y qué se puede encender o apagar.</p>
     </div>
-    <div class="medidores" id="medidores"></div>
-    <nav class="migas" id="migas" aria-label="Nivel del mapa"></nav>
+    <span class="sello" id="sello"><i></i>…</span>
   </header>
 
-  <section class="escena">
-    <div class="tablero">
-      <div class="tablero-cab">
-        <h2 id="v-titulo">…</h2>
-        <p id="v-sub"></p>
+  <section class="cifras" id="cifras" aria-label="Cifras de la última ronda"></section>
+
+  <section class="tarjeta mapa" aria-label="Mapa del bot">
+    <div class="mapa-cuerpo">
+      <div class="mapa-barra">
+        <div class="segmento" id="vistas" role="group" aria-label="Qué parte ver"></div>
+        <div class="ctrl">
+          <button class="pill" id="b-pausa" aria-pressed="false">Pausar</button>
+          <div class="segmento" id="vel" role="group" aria-label="Velocidad">
+            <button data-v="0.5" aria-pressed="false">0,5×</button><button data-v="1" aria-pressed="true">1×</button><button data-v="2" aria-pressed="false">2×</button>
+          </div>
+          <button class="pill" id="b-servicios" aria-pressed="true">Servicios</button>
+          <label for="s-version" class="etiqueta" style="position:absolute;left:-9999px">Comparar con una versión anterior</label>
+          <select class="select-pill" id="s-version"><option value="">Comparar: versión actual</option></select>
+        </div>
       </div>
-      <div id="aviso" class="aviso-historial" hidden></div>
-      <div class="lienzo rejilla" id="lienzo"></div>
+      <div class="mapa-titulo"><h2 id="v-titulo">…</h2><p id="v-sub"></p></div>
+      <div>
+        <div class="aviso" id="aviso" hidden></div>
+        <div class="lienzo" id="lienzo"></div>
+      </div>
       <div class="leyenda" id="leyenda"></div>
     </div>
     <aside class="panel" id="panel" aria-live="polite">
-      <p class="vacio">Pulsa una caja para ver qué hace, dónde está en el código, qué modelo usa y cuánto tarda. Las cajas con <b style="color:var(--espuma)">ENTRAR ▸</b> se abren por dentro.</p>
+      <p class="etiqueta">Detalle</p>
+      <p class="vacio">Pulsa una pieza para ver <b>qué hace</b>, <b>dónde está en el código</b>, qué modelo usa y cuánto tarda. Las piezas con <b>›</b> se abren por dentro.</p>
     </aside>
   </section>
 
-  <section class="bloque" id="b-interruptores">
-    <div class="bloque-cab">
+  <section class="seccion" aria-labelledby="h-int">
+    <div class="seccion-cab">
       <div>
-        <h2>Interruptores</h2>
-        <p>Cada uno enciende o apaga una parte del bot. Verde = encendido en PRE.</p>
+        <h2 id="h-int">Interruptores</h2>
+        <p>Cada uno enciende o apaga una parte del bot sin tocar el código. Lo que ves es cómo están en PRE, el servidor de pruebas.</p>
       </div>
-      <div class="filtros" id="filtros"></div>
+      <div class="segmento" id="filtros" role="group" aria-label="Filtrar interruptores"></div>
     </div>
-    <div class="lista" id="lista-flags"></div>
+    <div id="zonas" class="seccion" style="gap:32px"></div>
   </section>
 
-  <section class="bloque">
-    <div class="bloque-cab">
+  <section class="seccion" aria-labelledby="h-mod">
+    <div class="seccion-cab">
       <div>
-        <h2>Modelos</h2>
-        <p>Qué modelo usa cada parte y cuántas llamadas hizo en la última ronda de pruebas.</p>
+        <h2 id="h-mod">Modelos de IA</h2>
+        <p>Qué modelo hace cada trabajo y cuántas veces se le llamó en la última ronda de pruebas.</p>
       </div>
     </div>
-    <div class="lista" id="lista-modelos"></div>
+    <div class="modelos" id="modelos"></div>
   </section>
 
   <footer class="pie">
-    <span id="pie-datos"></span>
-    <span>Se genera desde el código con <code>python -m scripts.arquitectura</code> y se republica en este mismo enlace. Si alguien añade una caja al bot sin describirla, las pruebas fallan.</span>
+    <span id="pie-ronda"></span>
+    <span>Se genera desde el código con <code>python -m scripts.arquitectura</code> y se vuelve a publicar en este mismo enlace. Si alguien añade una pieza o un interruptor sin describirlo, las pruebas del repositorio fallan.</span>
   </footer>
-</div>
+</main>
 
 <script>
 (() => {
   "use strict";
-  const $ = (s) => document.querySelector(s);
+  const $ = (s, r = document) => r.querySelector(s);
+  const $$ = (s, r = document) => [...r.querySelectorAll(s)];
   const NS = "http://www.w3.org/2000/svg";
-  const fmt = (n, d = 1) => (n == null || isNaN(n)) ? "–" : Number(n).toLocaleString("es-ES", { maximumFractionDigits: d, minimumFractionDigits: 0 });
-  const reducido = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+  const num = (n, d = 1) => (n == null || isNaN(n)) ? "–" : Number(n).toLocaleString("es-ES", { maximumFractionDigits: d });
+  const reducido = matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-  const COLOR = {
-    entrada: "var(--espuma)", externo: "var(--lila)", cerebro: "var(--cielo)", agente: "var(--coral)",
-    respaldo: "var(--gris)", salida: "var(--melocoton)", datos: "var(--alga)", llm: "var(--arena)",
-    paralelo: "var(--alga)", infra: "var(--gris)",
+  /* ---------- constantes de dibujo: un solo patrón para todas las piezas ---------- */
+  const W = 188, H = 76, HS = 64, GY = 16, M = 24, RG = 64;
+  const NO_FLUJO = new Set(["datos", "infra", "paralelo"]);
+  const TIPO = {
+    entrada: "Entrada", externo: "Servicio externo", cerebro: "Decide", agente: "Ruta", respaldo: "Respaldo",
+    salida: "Salida", datos: "Datos", llm: "IA", paralelo: "En paralelo", infra: "Infraestructura",
   };
-  const HEX = {
-    "var(--espuma)": "#6be4d2", "var(--lila)": "#b7a6f2", "var(--cielo)": "#8fcbff", "var(--coral)": "#ff7a59",
-    "var(--gris)": "#6e8a91", "var(--melocoton)": "#ffb38a", "var(--alga)": "#7ccb8b", "var(--arena)": "#f2c66d",
+  const ICONO = {
+    entrada: "M3 10h9M9 6.5 12.5 10 9 13.5M16 4v12",
+    externo: "M6.5 15.5h7.5a3.6 3.6 0 0 0 .4-7.2 4.8 4.8 0 0 0-9.2 1.4 2.9 2.9 0 0 0 1.3 5.8z",
+    cerebro: "M5 3v14M5 10c5 0 5-6 10-6M5 10c5 0 5 6 10 6",
+    agente: "M10 9a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM4 17c1-3.4 3.4-5 6-5s5 1.6 6 5",
+    respaldo: "M7 5 3 9l4 4M3 9h9a4.5 4.5 0 0 1 0 9h-2",
+    salida: "M3.5 10 16.5 4l-5 13-2-5.2z",
+    datos: "M4 5.5c0-1.9 12-1.9 12 0v9c0 1.9-12 1.9-12 0zM4 5.5c0 1.9 12 1.9 12 0M4 10c0 1.9 12 1.9 12 0",
+    llm: "M10 2.5l1.7 4.8 4.8 1.7-4.8 1.7L10 15.5l-1.7-4.8L3.5 9l4.8-1.7z",
+    paralelo: "M4 6h12M4 10h12M4 14h12",
+    infra: "M3.5 4h13v5h-13zM3.5 11h13v5h-13zM6.5 6.5h.01M6.5 13.5h.01",
   };
-  const NOMBRE_TIPO = {
-    entrada: "entrada", externo: "servicio externo", cerebro: "decide", agente: "ruta / agente", respaldo: "respaldo",
-    salida: "salida", datos: "datos", llm: "llamada a IA", paralelo: "en paralelo", infra: "infraestructura",
-  };
-  const FLUJO_NO = new Set(["datos", "infra", "paralelo"]);
-  const ATRAS = new Set(["vuelta", "bucle"]);
 
-  let D = null, INDICE = null, COMPARA = null;
-  const E = { vista: "general", sel: null, pausa: reducido, vel: 1, apoyo: true, filtro: "todos" };
-  try { const v = localStorage.getItem("mapa-coral-apoyo"); if (v !== null) E.apoyo = v === "1"; } catch (_) {}
+  const S = { D: null, INDICE: null, COMPARA: null, comp: new Map(), vista: "general", sel: null,
+    pausa: reducido, vel: 1, servicios: true, filtro: "todos", L: null, ancho: 0 };
+  try { const v = localStorage.getItem("mapa-coral-servicios"); if (v !== null) S.servicios = v === "1"; } catch (_) {}
 
-  let comp = new Map(), L = null, paquetes = [], ultimo = 0, reloj = 0, proximo = 0;
+  /* ---------- medir texto de verdad (para que nada se salga de su caja) ---------- */
+  const ctx = document.createElement("canvas").getContext("2d");
+  function lineas(texto, fuente, maxAncho, max = 2) {
+    ctx.font = fuente;
+    const palabras = String(texto).split(/\s+/), out = [];
+    let cur = "";
+    for (const p of palabras) {
+      const prueba = cur ? cur + " " + p : p;
+      if (ctx.measureText(prueba).width <= maxAncho || !cur) cur = prueba;
+      else { out.push(cur); cur = p; }
+    }
+    if (cur) out.push(cur);
+    if (out.length > max) { out.length = max; out[max - 1] = recortar(out[max - 1] + "…", fuente, maxAncho); }
+    return out.map((l) => recortar(l, fuente, maxAncho));
+  }
+  function recortar(t, fuente, maxAncho) {
+    ctx.font = fuente;
+    if (ctx.measureText(t).width <= maxAncho) return t;
+    let s = t.replace(/…$/, "");
+    while (s.length > 1 && ctx.measureText(s + "…").width > maxAncho) s = s.slice(0, -1);
+    return s + "…";
+  }
 
   /* ---------- carga ---------- */
   async function cargar() {
-    try {
-      const r = await fetch("arquitectura.json", { cache: "no-store" });
-      D = await r.json();
-    } catch (e) {
-      $("#lienzo").innerHTML = '<p class="error">No se pudieron leer los datos del mapa (arquitectura.json). Hay que publicarlo junto a la página.</p>';
-      return;
-    }
-    try { INDICE = await (await fetch("historial/indice.json", { cache: "no-store" })).json(); } catch (_) { INDICE = null; }
-    comp = new Map(D.componentes.map((c) => [c.id, c]));
-    pintarHud();
-    pintarVersiones();
-    pintarFlags();
-    pintarModelos();
-    irA("general");
+    try { S.D = await (await fetch("arquitectura.json", { cache: "no-store" })).json(); }
+    catch (_) { $("#lienzo").innerHTML = '<p class="error">No se pudieron leer los datos del mapa (arquitectura.json). Hay que publicarlos junto a la página.</p>'; return; }
+    try { S.INDICE = await (await fetch("historial/indice.json", { cache: "no-store" })).json(); } catch (_) {}
+    S.comp = new Map(S.D.componentes.map((c) => [c.id, c]));
+    await Promise.race([document.fonts ? document.fonts.ready : Promise.resolve(), new Promise((r) => setTimeout(r, 1500))]);
+    cabecera(); vistas(); versiones(); interruptores(); modelos();
+    ir("general");
+    new ResizeObserver(() => { const w = $("#lienzo").clientWidth; if (Math.abs(w - S.ancho) > 24) pintar(); }).observe($("#lienzo"));
     requestAnimationFrame(bucle);
   }
 
-  /* ---------- HUD ---------- */
-  function pintarHud() {
-    const m = D.meta, r = D.ronda || {};
-    $("#sello").textContent = `datos del ${String(m.generado).slice(0, 10)} · ${m.rama} @ ${m.commit}`;
-    const t = r.por_tipo || {}, cl = r.cliente || {}, en = (r.enrutador || {}).by_backend || {}, q = r.calidad || {};
-    const totalEn = Object.values(en).reduce((a, b) => a + b, 0);
-    const med = [
-      [fmt(cl.latency_p50) + " s", `respuesta típica (95 %: ${fmt(cl.latency_p95)} s)`],
-      [fmt((t.reserva || {}).latency_p50) + " s", `turno de reserva · ${fmt((t.reserva || {}).turns, 0)} turnos`],
-      [fmt((t.rag || {}).latency_p50) + " s", `turno con pregunta (RAG) · ${fmt((t.rag || {}).turns, 0)} turnos`],
-      [q.criteria_pass_pct != null ? fmt(q.criteria_pass_pct) + " %" : "–", q.dialogues ? `examen: ${q.dialogues_passed} de ${q.dialogues} conversaciones sin fallos` : "calidad sin medir"],
-      [totalEn ? `${en.jev || 0} de ${totalEn}` : "–", "mensajes que decidió Jev solo"],
+  function cabecera() {
+    const { meta, ronda: r = {} } = S.D, t = r.por_tipo || {}, cl = r.cliente || {}, q = r.calidad || {};
+    const en = (r.enrutador || {}).by_backend || {}, totalEn = Object.values(en).reduce((a, b) => a + b, 0);
+    const fecha = (s) => s ? new Date(s).toLocaleDateString("es-ES", { day: "numeric", month: "short" }) : "";
+    $("#promo").textContent = r.etiqueta ? `Tiempos y tráfico de la ronda de pruebas «${r.etiqueta}» · ${fecha(r.run_at)}` : "Sin ronda de pruebas con tiempos";
+    $("#sello").innerHTML = `<i></i>${esc(meta.rama)} · ${esc(meta.commit)} · ${esc(fecha(meta.generado))}`;
+    const cifras = [
+      [`${num(cl.latency_p50)} s`, `Respuesta típica al cliente. El 95 % tarda menos de ${num(cl.latency_p95)} s`],
+      [`${num((t.reserva || {}).latency_p50)} s`, `Turno de reserva (${num((t.reserva || {}).turns, 0)} turnos)`],
+      [`${num((t.rag || {}).latency_p50)} s`, `Turno con pregunta (${num((t.rag || {}).turns, 0)} turnos)`],
+      [q.criteria_pass_pct != null ? `${num(q.criteria_pass_pct)} %` : "–", q.dialogues ? `Criterios del examen · ${q.dialogues_passed} de ${q.dialogues} conversaciones perfectas` : "Calidad sin medir"],
+      [totalEn ? `${Math.round(100 * (en.jev || 0) / totalEn)} %` : "–", "Mensajes que el enrutador rápido (Jev) decidió solo"],
     ];
-    $("#medidores").innerHTML = med.map(([b, s]) => `<div class="medidor"><b>${b}</b><small>${s}</small></div>`).join("");
-    $("#pie-datos").textContent = r.etiqueta ? `Tiempos y tráfico de la ronda «${r.etiqueta}» (${String(r.run_at || "").slice(0, 16).replace("T", " ")}). ${D.pesos_fuente || ""}` : "Sin ronda de pruebas con tiempos.";
+    $("#cifras").innerHTML = cifras.map(([b, s]) => `<div class="cifra"><b>${esc(b)}</b><span>${esc(s)}</span></div>`).join("");
+    $("#pie-ronda").textContent = r.etiqueta ? `Tiempos de «${r.etiqueta}» (${r.fichero}). ${S.D.pesos_fuente || ""}` : "";
   }
 
-  function pintarMigas() {
-    const v = D.vistas[E.vista];
-    const partes = [`<button data-v="general" ${E.vista === "general" ? 'class="actual" aria-current="page"' : ""}>${D.vistas.general.titulo}</button>`];
-    if (E.vista !== "general") partes.push("<span aria-hidden='true'>›</span>", `<span class="actual" aria-current="page">${v.titulo}</span>`);
-    $("#migas").innerHTML = partes.join(" ");
-    $("#migas").querySelectorAll("button[data-v]").forEach((b) => b.addEventListener("click", () => irA(b.dataset.v)));
+  function vistas() {
+    const orden = ["general", "booking", "info"].filter((k) => S.D.vistas[k]);
+    const corto = { general: "Por fuera", booking: "Reserva", info: "Preguntas (RAG)" };
+    $("#vistas").innerHTML = orden.map((k) => `<button data-v="${k}" aria-pressed="false">${esc(corto[k] || S.D.vistas[k].titulo)}</button>`).join("");
+    $$("#vistas button").forEach((b) => b.addEventListener("click", () => ir(b.dataset.v)));
   }
 
-  /* ---------- disposición por capas (se recalcula sola si cambia el grafo) ---------- */
-  function disponer(vista) {
-    const nodos = D.componentes.filter((c) => c.vista === vista);
+  function ir(vista) {
+    S.vista = vista;
+    const v = S.D.vistas[vista];
+    $("#v-titulo").textContent = v.titulo;
+    $("#v-sub").textContent = v.subtitulo;
+    $$("#vistas button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.v === vista)));
+    if (S.sel && S.comp.get(S.sel).vista !== vista) S.sel = null;
+    pintar();
+    if (S.sel) detalle(S.sel);
+    else panelVacio();
+  }
+
+  /* ---------- disposición en tablero: filas que se leen como un texto y se ajustan al ancho ---------- */
+  function disponer(vista, ancho) {
+    const nodos = S.D.componentes.filter((c) => c.vista === vista);
     const flujo = nodos.filter((c) => c.carril === "flujo");
     const ids = new Set(flujo.map((c) => c.id));
-    const aristas = D.aristas.filter((a) => a.vista === vista);
-    // Flechas hacia delante: todas las del flujo salvo la vuelta al cliente y las que cierran un ciclo (el
-    // reintento del revisor), que se detectan con un recorrido en profundidad y se dibujan como bucle.
-    const cand = aristas.filter((a) => ids.has(a.de) && ids.has(a.a) && a.estilo !== "vuelta" && !FLUJO_NO.has(a.estilo));
-    const atras = new Set(), estado = new Map();
-    const dfs = (id) => {
-      estado.set(id, 1);
-      for (const a of cand.filter((x) => x.de === id)) {
-        if (estado.get(a.a) === 1) atras.add(a);
-        else if (!estado.has(a.a)) dfs(a.a);
-      }
-      estado.set(id, 2);
-    };
-    const destinos0 = new Set(cand.map((a) => a.a));
-    flujo.filter((c) => !destinos0.has(c.id)).forEach((c) => dfs(c.id));
-    flujo.forEach((c) => { if (!estado.has(c.id)) dfs(c.id); });
-    atras.forEach((a) => { a._atras = true; });
+    const aristas = S.D.aristas.filter((a) => a.vista === vista);
+    const fijos = new Map(flujo.filter((c) => c.capa_de).map((c) => [c.id, c.capa_de]));
+    const cand = aristas.filter((a) => ids.has(a.de) && ids.has(a.a) && a.estilo !== "vuelta" && !NO_FLUJO.has(a.estilo) && !fijos.has(a.a));
+    // Las flechas que cierran un ciclo (el reintento del revisor) se marcan como "atrás" y no cuentan al colocar.
+    const atras = new Set(), marca = new Map();
+    const dfs = (id) => { marca.set(id, 1); for (const a of cand.filter((x) => x.de === id)) { if (marca.get(a.a) === 1) atras.add(a); else if (!marca.has(a.a)) dfs(a.a); } marca.set(id, 2); };
+    const destinos = new Set(cand.map((a) => a.a));
+    flujo.filter((c) => !destinos.has(c.id)).forEach((c) => dfs(c.id));
+    flujo.forEach((c) => { if (!marca.has(c.id)) dfs(c.id); });
+    aristas.forEach((a) => { a._atras = atras.has(a); });
     const hacia = cand.filter((a) => !atras.has(a));
     const capa = new Map(flujo.map((c) => [c.id, 0]));
-    for (let i = 0; i < flujo.length + 2; i++) {
+    for (let i = 0; i <= flujo.length; i++) {
       let cambio = false;
-      for (const a of hacia) {
-        const n = capa.get(a.de) + 1;
-        if (n > capa.get(a.a)) { capa.set(a.a, n); cambio = true; }
-      }
+      for (const a of hacia) { const n = capa.get(a.de) + 1; if (n > capa.get(a.a)) { capa.set(a.a, n); cambio = true; } }
+      for (const [id, anc] of fijos) { if (capa.get(id) !== capa.get(anc)) { capa.set(id, capa.get(anc)); cambio = true; } }
       if (!cambio) break;
     }
     const nCapas = Math.max(0, ...capa.values()) + 1;
-    const capas = Array.from({ length: nCapas }, () => []);
-    flujo.forEach((c) => capas[capa.get(c.id)].push(c.id));
-    const W = 152, H = 64, CW = vista === "general" ? 178 : 196, RH = 84, M = 28;
-    const altoMax = Math.max(...capas.map((c) => c.length)) * RH;
-    const pos = new Map();
-    capas.forEach((col, i) => {
-      if (i > 0) {
-        const media = (id) => {
-          const ps = hacia.filter((a) => a.a === id && pos.has(a.de)).map((a) => pos.get(a.de).y);
-          return ps.length ? ps.reduce((x, y) => x + y, 0) / ps.length : 1e9;
-        };
-        col.sort((a, b) => media(a) - media(b));
-      }
-      const y0 = M + 24 + (altoMax - col.length * RH) / 2;
-      col.forEach((id, j) => pos.set(id, { x: M + i * CW, y: y0 + j * RH, w: W, h: H }));
-    });
-    let ancho = M * 2 + (nCapas - 1) * CW + W;
-    let alto = M + 24 + altoMax + 8;
-    const fila = (lista, yFila, h) => {
-      const xs = lista.map((c) => {
-        const vec = aristas.filter((a) => (a.de === c.id && pos.has(a.a)) || (a.a === c.id && pos.has(a.de)))
-          .map((a) => pos.get(a.de === c.id ? a.a : a.de).x);
-        return { id: c.id, x: vec.length ? vec.reduce((p, q) => p + q, 0) / vec.length : M };
-      }).sort((a, b) => a.x - b.x);
-      let min = M;
-      xs.forEach((o) => { o.x = Math.max(o.x, min); min = o.x + W + 22; pos.set(o.id, { x: o.x, y: yFila, w: W, h }); });
-      ancho = Math.max(ancho, min + M);
-    };
-    const apoyo = nodos.filter((c) => c.carril === "apoyo");
-    const infra = nodos.filter((c) => c.carril === "infra");
-    if (E.apoyo && apoyo.length) { fila(apoyo, alto + 40, 58); alto += 40 + 58 + 8; }
-    if (E.apoyo && infra.length) { fila(infra, alto + 26, 50); alto += 26 + 50 + 8; }
-    return { pos, ancho, alto: alto + M, aristas: aristas.filter((a) => pos.has(a.de) && pos.has(a.a)) };
+    const huecos = Array.from({ length: nCapas }, () => []);
+    flujo.forEach((c) => huecos[capa.get(c.id)].push(c.id));
+    huecos.forEach((h) => h.sort((a, b) => (fijos.has(a) ? 1 : 0) - (fijos.has(b) ? 1 : 0)));
+
+    const util = Math.max(W, ancho - 2 * M);
+    const cols = Math.max(1, Math.min(nCapas, Math.floor((util + 40) / (W + 40))));
+    const gx = cols > 1 ? Math.min(140, (util - cols * W) / (cols - 1)) : 0;
+    const anchoUsado = cols * W + (cols - 1) * gx;
+    const x0 = M + (util - anchoUsado) / 2;
+    const pos = new Map(), filaDe = new Map(), filas = [];
+    let y = M;
+    for (let f = 0; f * cols < nCapas; f++) {
+      const trozo = huecos.slice(f * cols, f * cols + cols);
+      const alto = Math.max(...trozo.map((h) => h.length)) * (H + GY) - GY;
+      trozo.forEach((h, j) => {
+        const yh = y + (alto - (h.length * (H + GY) - GY)) / 2;
+        h.forEach((id, k) => { pos.set(id, { x: x0 + j * (W + gx), y: yh + k * (H + GY), w: W, h: H }); filaDe.set(id, f); });
+      });
+      filas.push({ y, alto });
+      y += alto + RG;
+    }
+    y -= RG;
+    let banda = null;
+    const extra = nodos.filter((c) => c.carril !== "flujo");
+    if (S.servicios && extra.length) {
+      y += 56;
+      banda = y - 22;
+      const colsS = Math.max(1, Math.floor((util + 16) / (W + 16)));
+      const gxs = colsS > 1 ? Math.min(40, (util - colsS * W) / (colsS - 1)) : 0;
+      extra.forEach((c, i) => {
+        const col = i % colsS, fila = Math.floor(i / colsS);
+        pos.set(c.id, { x: M + col * (W + gxs), y: y + fila * (HS + 12), w: W, h: HS, servicio: true });
+        filaDe.set(c.id, filas.length + fila);
+      });
+      y += Math.ceil(extra.length / colsS) * (HS + 12) - 12;
+    }
+    return { pos, filaDe, filas, banda, ancho: Math.max(ancho, W + 2 * M), alto: y + M, aristas: aristas.filter((a) => pos.has(a.de) && pos.has(a.a)) };
   }
 
-  /* ---------- camino y reparto de los paquetes ---------- */
+  /* ---------- trazado de flechas ---------- */
+  function ortogonal(pts, r = 10) {
+    let d = `M${pts[0][0]},${pts[0][1]}`;
+    for (let i = 1; i < pts.length - 1; i++) {
+      const [x0, y0] = pts[i - 1], [x1, y1] = pts[i], [x2, y2] = pts[i + 1];
+      const d1 = Math.hypot(x1 - x0, y1 - y0), d2 = Math.hypot(x2 - x1, y2 - y1), rr = Math.min(r, d1 / 2, d2 / 2);
+      const ax = x1 - (x1 - x0) / (d1 || 1) * rr, ay = y1 - (y1 - y0) / (d1 || 1) * rr;
+      const bx = x1 + (x2 - x1) / (d2 || 1) * rr, by = y1 + (y2 - y1) / (d2 || 1) * rr;
+      d += ` L${ax},${ay} Q${x1},${y1} ${bx},${by}`;
+    }
+    const u = pts[pts.length - 1];
+    return d + ` L${u[0]},${u[1]}`;
+  }
+  function trazo(a, L) {
+    const s = L.pos.get(a.de), t = L.pos.get(a.a), fs = L.filaDe.get(a.de), ft = L.filaDe.get(a.a);
+    if (s.servicio || t.servicio) {
+      const [x1, y1, x2, y2] = s.y < t.y ? [s.x + s.w / 2, s.y + s.h, t.x + t.w / 2, t.y] : [s.x + s.w / 2, s.y, t.x + t.w / 2, t.y + t.h];
+      const c = (y2 - y1) / 2;
+      return `M${x1},${y1} C${x1},${y1 + c} ${x2},${y2 - c} ${x2},${y2}`;
+    }
+    const atras = a._atras || a.estilo === "vuelta" || a.estilo === "bucle" && t.x <= s.x;
+    if (atras) {
+      const yl = L.filas[ft].y - 22;
+      if (fs === ft) return ortogonal([[s.x + s.w / 2, s.y], [s.x + s.w / 2, yl], [t.x + t.w / 2, yl], [t.x + t.w / 2, t.y]]);
+      const xr = L.ancho - 10; // por el margen derecho, sin cruzar cajas
+      return ortogonal([[s.x + s.w, s.y + s.h / 2], [xr, s.y + s.h / 2], [xr, yl], [t.x + t.w / 2, yl], [t.x + t.w / 2, t.y]]);
+    }
+    if (Math.abs(s.x - t.x) < 1) { // misma columna (respaldo de una ruta a la cascada)
+      const xr = s.x + s.w + 18;
+      return ortogonal([[s.x + s.w, s.y + s.h / 2], [xr, s.y + s.h / 2], [xr, t.y + t.h / 2], [t.x + t.w, t.y + t.h / 2]]);
+    }
+    const sx = s.x + s.w, sy = s.y + s.h / 2, tx = t.x, ty = t.y + t.h / 2;
+    if (fs === ft) {
+      const salto = (tx - sx) > (W + 150);
+      if (!salto) { const c = (tx - sx) / 2; return `M${sx},${sy} C${sx + c},${sy} ${tx - c},${ty} ${tx},${ty}`; }
+      const fila = L.filas[fs], yl = fila.y + fila.alto + 20;
+      return ortogonal([[s.x + s.w / 2, s.y + s.h], [s.x + s.w / 2, yl], [t.x + t.w / 2, yl], [t.x + t.w / 2, t.y + t.h]]);
+    }
+    const fila = L.filas[fs], yl = fila.y + fila.alto + RG / 2;
+    return ortogonal([[sx, sy], [sx + 16, sy], [sx + 16, yl], [tx - 16, yl], [tx - 16, ty], [tx, ty]]);
+  }
+
+  /* ---------- reparto de los paquetes (tráfico real de la ronda; si no se mide, el peso curado) ---------- */
   function salidas(id) {
-    const cands = L.aristas.filter((a) => a.de === id && !FLUJO_NO.has(a.estilo));
+    const cands = S.L.aristas.filter((a) => a.de === id && !NO_FLUJO.has(a.estilo));
     if (!cands.length) return [];
-    const nOf = (cid) => ((comp.get(cid) || {}).tiempos || {}).n;
-    const nS = nOf(id);
-    const conPeso = cands.filter((a) => a.peso != null);
-    const resto = 1 - conPeso.reduce((s, a) => s + a.peso, 0);
-    const libres = cands.filter((a) => a.peso == null);
-    const conN = libres.filter((a) => nOf(a.a) != null);
-    const sumN = conN.reduce((s, a) => s + nOf(a.a), 0);
-    const base = libres.map((a) => {
-      if (nOf(a.a) != null) return nOf(a.a);
-      if (sumN && nS != null) return Math.max(0, nS - sumN);
-      return sumN ? sumN * 0.02 : 1;
-    });
+    const n = (cid) => ((S.comp.get(cid) || {}).tiempos || {}).n, nS = n(id);
+    const conPeso = cands.filter((a) => a.peso != null), libres = cands.filter((a) => a.peso == null);
+    const resto = Math.max(0, 1 - conPeso.reduce((s, a) => s + a.peso, 0));
+    const sumN = libres.filter((a) => n(a.a) != null).reduce((s, a) => s + n(a.a), 0);
+    const base = libres.map((a) => n(a.a) != null ? n(a.a) : (sumN && nS != null ? Math.max(0, nS - sumN) : sumN ? sumN * 0.02 : 1));
     const tot = base.reduce((s, x) => s + x, 0) || 1;
-    return [
-      ...conPeso.map((a) => ({ a, p: a.peso })),
-      ...libres.map((a, i) => ({ a, p: Math.max(0, resto) * base[i] / tot })),
-    ];
+    return [...conPeso.map((a) => ({ a, p: a.peso })), ...libres.map((a, i) => ({ a, p: resto * base[i] / tot }))];
   }
   function elegir(id) {
-    const s = salidas(id);
-    let r = Math.random() * s.reduce((t, x) => t + x.p, 0);
+    const s = salidas(id); let r = Math.random() * s.reduce((t, x) => t + x.p, 0);
     for (const x of s) { r -= x.p; if (r <= 0) return x.a; }
     return s.length ? s[s.length - 1].a : null;
   }
-  function origenes() {
-    const destinos = new Set(L.aristas.filter((a) => !ATRAS.has(a.estilo)).map((a) => a.a));
-    return D.componentes.filter((c) => c.vista === E.vista && c.carril === "flujo" && !destinos.has(c.id)).map((c) => c.id);
-  }
 
   /* ---------- dibujo ---------- */
-  function el(tag, attrs = {}, padre) {
+  function el(tag, attrs, padre) {
     const n = document.createElementNS(NS, tag);
-    for (const [k, v] of Object.entries(attrs)) n.setAttribute(k, v);
+    for (const [k, v] of Object.entries(attrs || {})) n.setAttribute(k, v);
     if (padre) padre.appendChild(n);
     return n;
   }
-  function trazo(a) {
-    const s = L.pos.get(a.de), t = L.pos.get(a.a);
-    const sx = s.x + s.w, sy = s.y + s.h / 2, tx = t.x, ty = t.y + t.h / 2;
-    const cS = comp.get(a.de).carril, cT = comp.get(a.a).carril;
-    if (cS !== "flujo" || cT !== "flujo") {
-      const arriba = s.y < t.y;
-      const x1 = s.x + s.w / 2, y1 = arriba ? s.y + s.h : s.y, x2 = t.x + t.w / 2, y2 = arriba ? t.y : t.y + t.h;
-      const d = (y2 - y1) / 2;
-      return `M${x1},${y1} C${x1},${y1 + d} ${x2},${y2 - d} ${x2},${y2}`;
-    }
-    if (tx > sx + 4) {
-      const c = Math.max(30, (tx - sx) / 2);
-      return `M${sx},${sy} C${sx + c},${sy} ${tx - c},${ty} ${tx},${ty}`;
-    }
-    const x1 = s.x + s.w / 2, x2 = t.x + t.w / 2;
-    const abajo = a.estilo === "bucle" || a._atras;
-    const yb = abajo ? Math.max(s.y + s.h, t.y + t.h) + 34 : Math.min(s.y, t.y) - 30;
-    const y1 = abajo ? s.y + s.h : s.y, y2 = abajo ? t.y + t.h : t.y;
-    return `M${x1},${y1} C${x1},${yb} ${x2},${yb} ${x2},${y2}`;
-  }
-  function colorArista(a) {
-    if (a.estilo === "vuelta") return "#ff7a59";
-    if (a.estilo === "bucle") return "#f2c66d";
-    if (FLUJO_NO.has(a.estilo)) return "#7ccb8b";
-    if (a.estilo === "respaldo") return "#6e8a91";
-    return "#6be4d2";
-  }
-
-  function pintarTablero() {
-    L = disponer(E.vista);
-    const svg = el("svg", { viewBox: `0 0 ${L.ancho} ${L.alto}`, width: E.entero ? "100%" : L.ancho, role: "img",
-      "aria-label": `${D.vistas[E.vista].titulo}: ${D.vistas[E.vista].subtitulo}` });
-    if (!E.entero) svg.setAttribute("height", L.alto);
-    const defs = el("defs", {}, svg);
-    const f = el("filter", { id: "brillo", x: "-100%", y: "-100%", width: "300%", height: "300%" }, defs);
-    el("feGaussianBlur", { stdDeviation: "2.5", result: "b" }, f);
-    const mg = el("feMerge", {}, f); el("feMergeNode", { in: "b" }, mg); el("feMergeNode", { in: "SourceGraphic" }, mg);
-    ["#6be4d2", "#7ccb8b", "#ff7a59", "#f2c66d", "#6e8a91"].forEach((c) => {
-      const m = el("marker", { id: "p" + c.slice(1), viewBox: "0 0 10 10", refX: "9", refY: "5", markerWidth: "7", markerHeight: "7", orient: "auto-start-reverse" }, defs);
-      el("path", { d: "M0,0 L10,5 L0,10 z", fill: c }, m);
-    });
-    const gA = el("g", {}, svg), gE = el("g", {}, svg), gN = el("g", {}, svg);
-    el("g", { id: "g-paquetes" }, svg);
-
-    // flechas (+ porcentaje de reparto cuando hay varias salidas)
-    const reparto = new Map();
-    D.componentes.filter((c) => c.vista === E.vista).forEach((c) => {
-      const s = L.pos.has(c.id) ? salidas(c.id) : [];
-      if (s.length > 1) s.forEach((x) => reparto.set(x.a.de + ">" + x.a.a, x.p));
-    });
-    L.aristas.forEach((a, i) => {
-      const col = colorArista(a);
-      const p = el("path", { d: trazo(a), class: `flecha ${a.estilo || "normal"}`, stroke: col, "marker-end": `url(#p${col.slice(1)})`, id: `ar-${i}` }, gA);
-      a._path = p;
-      const pct = reparto.get(a.de + ">" + a.a);
-      let txt = a.etiqueta && !["si toca", "sale"].includes(a.etiqueta) ? a.etiqueta : "";
-      if (pct != null) txt = (txt ? txt + " · " : "") + (pct >= 0.995 ? "casi todo" : pct < 0.01 ? "<1 %" : fmt(pct * 100, 0) + " %");
-      a._etq = txt; // se coloca en el punto medio cuando el SVG ya está en la página
-    });
-    // nodos
-    D.componentes.filter((c) => L.pos.has(c.id)).forEach((c) => {
-      const b = L.pos.get(c.id), col = COLOR[c.tipo] || "var(--gris)";
-      const g = el("g", { class: "nodo", transform: `translate(${b.x},${b.y})`, tabindex: "0", role: "button",
-        "aria-label": `${c.titulo}. ${c.que_hace}` }, gN);
-      g.dataset.id = c.id;
-      el("rect", { class: "caja", width: b.w, height: b.h, rx: 10, stroke: HEX[col] || "#6e8a91" }, g);
-      el("rect", { x: 0, y: 0, width: 5, height: b.h, rx: 2.5, fill: HEX[col] || "#6e8a91" }, g);
-      const t = el("text", { class: "titulo", x: 14, y: 24 }, g); t.textContent = recorta(c.titulo, 18);
-      const sub = el("text", { class: "sub", x: 14, y: 42 }, g);
-      sub.textContent = c.tiempos ? `p50 ${fmt(c.tiempos.p50, 2)} s · ${c.tiempos.n}×`
-        : c.tiempo_medido ? `~${fmt(c.tiempo_medido.p50)} s (medido)` : (NOMBRE_TIPO[c.tipo] || c.tipo);
-      if (c.modelos && c.modelos.length && b.h > 56 && !c.zoom) {
-        const m = el("text", { class: "sub", x: 14, y: 56, fill: "#f2c66d" }, g); m.textContent = recorta(c.modelos[0].pre, 20);
-      }
-      if (c.zoom) { const z = el("text", { class: "zoom", x: b.w - 10, y: b.h - 9, "text-anchor": "end", fill: "#6be4d2" }, g); z.textContent = "ENTRAR ▸"; }
-      if (COMPARA && !COMPARA.ids.has(c.id)) { el("rect", { class: "anillo", x: -5, y: -5, width: b.w + 10, height: b.h + 10, rx: 13 }, g); g.classList.add("nuevo"); }
-      if (E.sel === c.id) g.classList.add("sel");
-      g.addEventListener("click", () => seleccionar(c.id));
-      g.addEventListener("dblclick", () => c.zoom && irA(c.zoom));
-      g.addEventListener("keydown", (ev) => { if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); seleccionar(c.id); } });
-    });
+  function pintar() {
     const lienzo = $("#lienzo");
-    lienzo.replaceChildren(svg);
-    // etiquetas en el punto medio de cada flecha
+    S.ancho = lienzo.clientWidth || 800;
+    const L = S.L = disponer(S.vista, S.ancho);
+    S.D.aristas.forEach((x) => { x._viajes = 0; });
+    const svg = el("svg", { viewBox: `0 0 ${L.ancho} ${L.alto}`, role: "img", "aria-label": `${S.D.vistas[S.vista].titulo}. ${S.D.vistas[S.vista].subtitulo}` });
+    const defs = el("defs", {}, svg);
+    for (const [id, cls] of [["punta", "punta"], ["punta-foco", "punta-foco"]]) {
+      const m = el("marker", { id, viewBox: "0 0 10 10", refX: "8.5", refY: "5", markerWidth: "7", markerHeight: "7", orient: "auto-start-reverse" }, defs);
+      el("path", { d: "M1,1 L9,5 L1,9 z", class: cls }, m);
+    }
+    const gA = el("g", {}, svg), gP = el("g", {}, svg), gN = el("g", {}, svg);
+    S.gPaq = el("g", {}, svg);
+    if (L.banda != null) {
+      el("line", { x1: M, x2: L.ancho - M, y1: L.banda - 14, y2: L.banda - 14, class: "banda-linea" }, gA);
+      el("text", { x: M, y: L.banda, class: "banda" }, gA).textContent = "Datos, servicios e infraestructura";
+    }
+    const reparto = new Map();
+    for (const c of S.D.componentes) if (c.vista === S.vista && L.pos.has(c.id)) { const s = salidas(c.id); if (s.length > 1) s.forEach((x) => reparto.set(x.a, x.p)); }
     L.aristas.forEach((a) => {
-      if (!a._etq) return;
-      const len = a._path.getTotalLength(), pt = a._path.getPointAtLength(len * 0.5);
-      const t = el("text", { class: "etq", x: pt.x, y: pt.y - 4, "text-anchor": "middle" }, gE); t.textContent = a._etq;
+      const ps = L.pos.get(a.de), pt = L.pos.get(a.a);
+      const salidaLarga = (S.comp.get(a.a) || {}).tipo === "salida" && !a._atras
+        && !(L.filaDe.get(a.de) === L.filaDe.get(a.a) && pt.x - (ps.x + ps.w) < W);
+      const soloFoco = NO_FLUJO.has(a.estilo) || (a.estilo === "respaldo" && ps.x === pt.x) || salidaLarga;
+      const cls = ["flecha", a.estilo || "normal", a._atras ? "atras" : "", soloFoco ? "oculta" : ""].join(" ");
+      a._path = el("path", { d: trazo(a, L), class: cls, "marker-end": "url(#punta)" }, gA);
+      a._soloFoco = soloFoco;
     });
-    paquetes = [];
-    reloj = 0; proximo = 0;
-    pintarLeyenda();
+    // porcentaje de reparto en las salidas con varias opciones (solo si hay datos o peso)
+    L.aristas.forEach((a) => {
+      const p = reparto.get(a);
+      if (p == null || a._soloFoco || S.L.aristas.filter((x) => x.de === a.de && !NO_FLUJO.has(x.estilo)).length < 2) return;
+      const len = a._path.getTotalLength(), pt = a._path.getPointAtLength(Math.max(0, len - 34));
+      const txt = p >= 0.995 ? "todo" : p < 0.01 ? "<1 %" : `${Math.round(p * 100)} %`;
+      const g = el("g", { class: "pct", transform: `translate(${pt.x},${pt.y})` }, gP);
+      ctx.font = "600 11px Inter"; const w = ctx.measureText(txt).width + 14;
+      el("rect", { x: -w / 2, y: -9, width: w, height: 18, rx: 9 }, g);
+      el("text", { x: 0, y: 4, "text-anchor": "middle" }, g).textContent = txt;
+    });
+    for (const c of S.D.componentes) if (L.pos.has(c.id)) nodo(c, L.pos.get(c.id), gN);
+    lienzo.replaceChildren(svg);
+    S.paq = []; S.reloj = 0; S.proximo = 0;
+    if (S.sel) enfocar(S.sel);
+    leyenda();
   }
-  const recorta = (s, n) => (s.length > n ? s.slice(0, n - 1) + "…" : s);
 
-  function pintarLeyenda() {
-    const tipos = [...new Set(D.componentes.filter((c) => c.vista === E.vista).map((c) => c.tipo))];
-    const sw = tipos.map((t) => `<span><i style="background:${HEX[COLOR[t]] || "#6e8a91"}"></i>${NOMBRE_TIPO[t] || t}</span>`);
-    sw.push('<span><i style="background:#6be4d2;border-radius:50%"></i>mensaje del cliente</span>',
-      '<span><i style="background:#ff7a59;border-radius:50%"></i>respuesta</span>',
-      '<span style="color:var(--texto-3)">línea discontinua = consulta datos o corre en paralelo · % = reparto real de la última ronda</span>');
-    $("#leyenda").innerHTML = sw.join("");
+  function nodo(c, b, padre) {
+    const g = el("g", { class: `nodo${b.servicio ? " servicio" : ""}`, transform: `translate(${b.x},${b.y})`, tabindex: "0", role: "button", "aria-label": `${c.titulo}. ${c.que_hace}` }, padre);
+    g.dataset.id = c.id;
+    el("rect", { class: "caja", width: b.w, height: b.h, rx: 16 }, g);
+    const cy = b.h / 2;
+    el("circle", { class: "icono-fondo", cx: 30, cy, r: 16 }, g);
+    el("path", { class: "icono", d: ICONO[c.tipo] || ICONO.cerebro, transform: `translate(20,${cy - 10})` }, g);
+    const zoom = !!c.zoom, maxW = b.w - 58 - (zoom ? 30 : 12);
+    const titulo = lineas(c.titulo, "600 13.5px Inter", maxW, 2);
+    const meta = c.tiempos ? `${num(c.tiempos.p50, 2)} s · ${c.tiempos.n} turnos`
+      : c.tiempo_medido ? `~${num(c.tiempo_medido.p50)} s medido` : TIPO[c.tipo] || c.tipo;
+    const alto = titulo.length * 17 + 16, y0 = cy - alto / 2 + 12;
+    titulo.forEach((l, i) => { el("text", { class: "t", x: 56, y: y0 + i * 17 }, g).textContent = l; });
+    el("text", { class: "m", x: 56, y: y0 + titulo.length * 17 + 2 }, g).textContent = recortar(meta, "400 12px Inter", maxW);
+    if (zoom) {
+      el("circle", { class: "abrir-fondo", cx: b.w - 22, cy, r: 12 }, g);
+      el("path", { class: "abrir", d: `M${b.w - 24},${cy - 4} l4,4 -4,4` }, g);
+    }
+    g._prog = el("rect", { class: "progreso", x: 16, y: b.h - 6, width: 0, height: 2.5, rx: 1.25 }, g);
+    if (S.COMPARA && !S.COMPARA.ids.has(c.id)) { el("rect", { class: "anillo", x: -5, y: -5, width: b.w + 10, height: b.h + 10, rx: 20 }, g); g.classList.add("nuevo"); }
+    if (S.sel === c.id) g.classList.add("sel");
+    g.addEventListener("click", (e) => { if (zoom && e.target.closest(".abrir, .abrir-fondo")) ir(c.zoom); else seleccionar(c.id); });
+    g.addEventListener("dblclick", () => zoom && ir(c.zoom));
+    g.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); seleccionar(c.id); } });
   }
 
-  /* ---------- panel de detalle ---------- */
-  function seleccionar(id) {
-    E.sel = id;
-    document.querySelectorAll(".nodo").forEach((n) => n.classList.toggle("sel", n.dataset.id === id));
-    const c = comp.get(id), col = HEX[COLOR[c.tipo]] || "#6e8a91";
-    const partes = [
-      `<div><span class="tipo" style="color:${col}">${NOMBRE_TIPO[c.tipo] || c.tipo}</span></div>`,
-      `<h3>${c.titulo}</h3>`,
-      `<p class="que">${c.que_hace}</p>`,
-    ];
-    if (c.detalle && c.detalle.length) partes.push(`<ul>${c.detalle.map((d) => `<li class="mono">${d}</li>`).join("")}</ul>`);
-    const dl = [];
-    if (c.donde) dl.push(["En el código", `<span class="mono">${c.donde}</span>`]);
-    if (c.modelos.length) dl.push(["Modelo", c.modelos.map((m) => `<span class="mono">${m.pre}</span> <small style="color:var(--texto-3)">(${m.ajuste})</small>`).join("<br>")]);
-    if (c.tiempos) dl.push(["Tiempo", `típico ${fmt(c.tiempos.p50, 2)} s · lento (95 %) ${fmt(c.tiempos.p95, 2)} s · ${c.tiempos.n} turnos`]);
-    else if (c.tiempo_medido) dl.push(["Tiempo", `~${fmt(c.tiempo_medido.p50)} s · ${c.tiempo_medido.fuente}`]);
-    if (dl.length) partes.push(`<dl>${dl.map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join("")}</dl>`);
-    if (c.tiempos) {
-      const max = Math.max(...D.componentes.filter((x) => x.tiempos).map((x) => x.tiempos.p95));
-      partes.push(`<div class="barra" title="p95 frente a la caja más lenta"><span style="width:${Math.max(3, 100 * c.tiempos.p95 / max)}%"></span></div>`);
-    }
-    if (c.interruptores.length) {
-      partes.push(`<div><small style="color:var(--texto-2)">Interruptores que la cambian</small><div class="chips" style="margin-top:6px">${c.interruptores.map(chipFlag).join("")}</div></div>`);
-    }
-    if (c.nota) partes.push(`<p style="color:var(--texto-2);font-size:13px">${c.nota}</p>`);
-    if (c.zoom) partes.push(`<button class="btn" id="b-entrar">Ver por dentro ▸</button>`);
-    $("#panel").innerHTML = partes.join("");
-    const be = $("#b-entrar"); if (be) be.addEventListener("click", () => irA(c.zoom));
+  function leyenda() {
+    const ic = (t) => `<svg width="22" height="22" viewBox="0 0 22 22" aria-hidden="true"><circle cx="11" cy="11" r="10" fill="var(--recessed)" stroke="var(--edge-soft)"/><path d="${ICONO[t]}" transform="translate(1,1)" fill="none" stroke="var(--graphite)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+    const tipos = [...new Set(S.D.componentes.filter((c) => c.vista === S.vista).map((c) => c.tipo))];
+    $("#leyenda").innerHTML = [
+      '<span><svg width="22" height="10" aria-hidden="true"><circle cx="5" cy="5" r="4" fill="var(--cobalt)"/></svg>Mensaje del cliente</span>',
+      '<span><svg width="22" height="10" aria-hidden="true"><circle cx="5" cy="5" r="4" fill="var(--ink)"/></svg>Respuesta</span>',
+      '<span><svg width="30" height="10" aria-hidden="true"><line x1="0" y1="5" x2="30" y2="5" stroke="var(--edge)" stroke-width="1.5" stroke-dasharray="5 5"/></svg>Vuelta o respaldo</span>',
+      ...tipos.map((t) => `<span>${ic(t)}${esc(TIPO[t] || t)}</span>`),
+    ].join("");
   }
-  function chipFlag(f) {
+
+  /* ---------- detalle ---------- */
+  function panelVacio() {
+    $("#panel").innerHTML = '<p class="etiqueta">Detalle</p><p class="vacio">Pulsa una pieza para ver <b>qué hace</b>, <b>dónde está en el código</b>, qué modelo usa y cuánto tarda. Las piezas con <b>›</b> se abren por dentro.</p>';
+  }
+  function enfocar(id) {
+    $$(".nodo").forEach((n) => n.classList.toggle("sel", n.dataset.id === id));
+    for (const a of S.L.aristas) {
+      const toca = a.de === id || a.a === id;
+      a._path.classList.toggle("foco", toca);
+      a._path.setAttribute("marker-end", toca ? "url(#punta-foco)" : "url(#punta)");
+    }
+  }
+  function seleccionar(id) { S.sel = id; enfocar(id); detalle(id); }
+  function chip(f) {
     const cls = f.sin_efecto ? "nada" : f.pre ? "on" : "off";
-    const txt = f.sin_efecto ? "sin efecto" : f.pre ? "encendido" : "apagado";
-    return `<span class="chip ${cls}" title="${f.nombre}: ${txt} en PRE">${f.nombre.toUpperCase()} · ${txt}</span>`;
+    const estado = f.sin_efecto ? "Sin efecto" : f.pre ? "Encendido" : "Apagado";
+    return `<span class="chip ${cls}" title="${esc(f.nombre.toUpperCase())}">${esc(f.titulo || f.nombre)} · ${estado}</span>`;
   }
-
-  /* ---------- navegación ---------- */
-  function irA(vista) {
-    E.vista = vista;
-    const v = D.vistas[vista];
-    $("#v-titulo").textContent = v.titulo;
-    $("#v-sub").textContent = v.subtitulo;
-    pintarMigas();
-    pintarTablero();
-    if (E.sel && !(comp.get(E.sel) && comp.get(E.sel).vista === vista)) {
-      E.sel = null;
-      $("#panel").innerHTML = '<p class="vacio">Pulsa una caja para ver su detalle.</p>';
-    }
-    if (vista !== "general" && v.padre && !E.sel) seleccionar(v.padre === "info" ? "r_revisor" : "b_extraction");
+  function estado(f) {
+    const cls = f.sin_efecto ? "nada" : f.pre ? "on" : "off";
+    return `<span class="chip ${cls}">${f.sin_efecto ? "Sin efecto" : f.pre ? "Encendido" : "Apagado"}</span>`;
+  }
+  function detalle(id) {
+    const c = S.comp.get(id);
+    const hechos = [];
+    if (c.tiempos) hechos.push(["Tiempo", `${num(c.tiempos.p50, 2)} s lo normal · ${num(c.tiempos.p95, 2)} s en los más lentos (95 %)`], ["Uso", `${c.tiempos.n} turnos en la última ronda`]);
+    else if (c.tiempo_medido) hechos.push(["Tiempo", `~${num(c.tiempo_medido.p50)} s · ${esc(c.tiempo_medido.fuente)}`]);
+    if (c.modelos.length) hechos.push(["Modelo", c.modelos.map((m) => `${esc(m.pre)} <span class="mute mono">${esc(m.ajuste)}</span>`).join("<br>")]);
+    if (c.donde) hechos.push(["En el código", `<span class="mono">${esc(c.donde)}</span>`]);
+    $("#panel").innerHTML = `
+      <span class="etiqueta tag">${esc(TIPO[c.tipo] || c.tipo)}</span>
+      <h3>${esc(c.titulo)}</h3>
+      <p class="que">${esc(c.que_hace)}</p>
+      ${hechos.length ? `<dl class="hechos">${hechos.map(([k, v]) => `<div class="hecho"><dt>${k}</dt><dd>${v}</dd></div>`).join("")}</dl>` : ""}
+      ${c.detalle && c.detalle.length ? `<ul>${c.detalle.map((d) => `<li class="mono">${esc(d)}</li>`).join("")}</ul>` : ""}
+      ${c.interruptores.length ? `<div style="display:grid;gap:8px"><p class="etiqueta">Interruptores que la cambian</p><div class="chips">${c.interruptores.map(chip).join("")}</div></div>` : ""}
+      ${c.nota ? `<p class="mute" style="font-size:14px;line-height:22px">${esc(c.nota)}</p>` : ""}
+      ${c.zoom ? `<button class="pill dark" id="b-abrir" style="justify-self:start">Ver por dentro</button>` : ""}`;
+    const b = $("#b-abrir"); if (b) b.addEventListener("click", () => ir(c.zoom));
   }
 
   /* ---------- historial ---------- */
-  function pintarVersiones() {
-    const s = $("#s-version");
-    const vs = (INDICE && INDICE.versiones) || [];
-    vs.slice().reverse().forEach((v, i) => {
-      const o = document.createElement("option");
-      o.value = v.fichero; o.textContent = `${v.fecha} · ${v.commit}${i === 0 ? " (la última)" : ""}`;
-      s.appendChild(o);
-    });
-    if (vs.length <= 1) s.title = "Solo hay una versión guardada: las diferencias aparecerán cuando cambie la estructura del bot.";
-    s.addEventListener("change", async () => {
+  function versiones() {
+    const sel = $("#s-version"), vs = (S.INDICE && S.INDICE.versiones) || [];
+    vs.slice().reverse().forEach((v) => { const o = document.createElement("option"); o.value = v.fichero; o.textContent = `Comparar con el ${v.fecha} (${v.commit})`; sel.appendChild(o); });
+    sel.addEventListener("change", async () => {
       const aviso = $("#aviso");
-      if (!s.value) { COMPARA = null; aviso.hidden = true; pintarTablero(); return; }
+      if (!sel.value) { S.COMPARA = null; aviso.hidden = true; pintar(); return; }
       try {
-        const v = await (await fetch("historial/" + s.value, { cache: "no-store" })).json();
-        const est = v.estructura, ahora = new Set(D.componentes.map((c) => c.id));
-        const antes = new Set(est.componentes.map((c) => c.id));
+        const v = await (await fetch("historial/" + sel.value, { cache: "no-store" })).json(), est = v.estructura;
+        const antes = new Set(est.componentes.map((c) => c.id)), ahora = new Set(S.D.componentes.map((c) => c.id));
+        const nuevas = S.D.componentes.filter((c) => !antes.has(c.id)).map((c) => c.titulo);
         const quitadas = est.componentes.filter((c) => !ahora.has(c.id)).map((c) => c.titulo);
-        const nuevas = D.componentes.filter((c) => !antes.has(c.id)).map((c) => c.titulo);
-        const flags = D.interruptores.filter((f) => { const o = est.interruptores[f.nombre]; return !o || o.pre !== f.pre || o.codigo !== f.codigo; }).map((f) => f.nombre);
-        COMPARA = { ids: antes };
+        const flags = S.D.interruptores.filter((f) => { const o = est.interruptores[f.nombre]; return !o || o.pre !== f.pre; }).map((f) => f.titulo);
+        S.COMPARA = { ids: antes };
         aviso.hidden = false;
-        aviso.textContent = (nuevas.length || quitadas.length || flags.length)
-          ? `Desde ${v.meta.generado.slice(0, 10)}: ${nuevas.length} piezas nuevas (anillo verde)${quitadas.length ? ", quitadas: " + quitadas.join(", ") : ""}${flags.length ? ", interruptores cambiados: " + flags.join(", ") : ""}.`
-          : `Sin cambios de estructura desde ${v.meta.generado.slice(0, 10)}.`;
-        pintarTablero();
+        aviso.textContent = nuevas.length || quitadas.length || flags.length
+          ? `Desde el ${v.meta.generado.slice(0, 10)}: ${nuevas.length ? nuevas.length + " piezas nuevas (borde discontinuo)" : "ninguna pieza nueva"}${quitadas.length ? "; quitadas: " + quitadas.join(", ") : ""}${flags.length ? "; interruptores nuevos o cambiados: " + flags.join(", ") : ""}.`
+          : `Sin cambios de estructura desde el ${v.meta.generado.slice(0, 10)}.`;
+        pintar();
       } catch (_) { aviso.hidden = false; aviso.textContent = "No se pudo leer esa versión del historial."; }
     });
   }
 
-  /* ---------- interruptores y modelos ---------- */
-  function pintarFlags() {
-    const grupos = [["todos", "Todos"], ["on", "Encendidos"], ["off", "Apagados"], ["nada", "Sin efecto"]];
-    $("#filtros").innerHTML = grupos.map(([k, t]) => `<button class="btn" data-f="${k}" aria-pressed="${E.filtro === k}">${t}</button>`).join("");
-    $("#filtros").querySelectorAll("button").forEach((b) => b.addEventListener("click", () => { E.filtro = b.dataset.f; pintarFlags(); }));
-    const lista = D.interruptores.filter((f) => E.filtro === "todos" || (E.filtro === "nada" ? f.sin_efecto : !f.sin_efecto && (E.filtro === "on" ? f.pre : !f.pre)));
-    $("#lista-flags").innerHTML = lista.map((f) => `
-      <div class="item">
-        <div class="item-cab"><code>${f.nombre.toUpperCase()}</code>${chipFlag(f)}</div>
-        <small>${f.sin_efecto ? f.sin_efecto : `En el código: ${f.codigo ? "encendido" : "apagado"}${f.fijado_en_pre ? " · fijado en PRE" : ""}`}</small>
-        ${f.usado_por.length ? `<div class="enlaces">${f.usado_por.map((id) => `<button data-ir="${id}">${comp.get(id).titulo}</button>`).join("")}</div>` : `<small style="color:var(--texto-3)">No se dibuja en el mapa.</small>`}
-      </div>`).join("");
-    enlazar("#lista-flags");
+  /* ---------- interruptores ---------- */
+  function interruptores() {
+    const F = S.D.interruptores;
+    const cuenta = { todos: F.length, on: F.filter((f) => !f.sin_efecto && f.pre).length, off: F.filter((f) => !f.sin_efecto && !f.pre).length, nada: F.filter((f) => f.sin_efecto).length };
+    const nombres = { todos: "Todos", on: "Encendidos", off: "Apagados", nada: "Sin efecto" };
+    $("#filtros").innerHTML = Object.keys(nombres).map((k) => `<button data-f="${k}" aria-pressed="${S.filtro === k}">${nombres[k]} ${cuenta[k]}</button>`).join("");
+    $$("#filtros button").forEach((b) => b.addEventListener("click", () => { S.filtro = b.dataset.f; interruptores(); }));
+    const pasa = (f) => S.filtro === "todos" || (S.filtro === "nada" ? !!f.sin_efecto : !f.sin_efecto && (S.filtro === "on") === f.pre);
+    const areas = (S.D.areas && S.D.areas.length ? S.D.areas : [...new Set(F.map((f) => f.area))]);
+    $("#zonas").innerHTML = areas.map((area) => {
+      const lista = F.filter((f) => f.area === area && pasa(f));
+      if (!lista.length) return "";
+      return `<div class="zona"><div class="zona-cab"><h3>${esc(area)}</h3><span class="mute" style="font-size:14px">${lista.length}</span></div>
+        <div class="lista">${lista.map((f) => `
+          <div class="fila">
+            <div>
+              <h4>${esc(f.titulo)}</h4>
+              <p>${esc(f.texto)}</p>
+              ${f.sin_efecto ? `<p class="mute" style="font-size:13px">Sin efecto: ${esc(f.sin_efecto)}</p>` : ""}
+              <div class="pie-fila"><span class="mono">${esc(f.nombre.toUpperCase())}</span>
+                ${f.usado_por.length ? `<span>Afecta a</span>${f.usado_por.map((id) => `<button class="enlace" data-ir="${id}">${esc(S.comp.get(id).titulo)}</button>`).join("")}` : ""}</div>
+            </div>
+            ${estado(f)}
+          </div>`).join("")}</div></div>`;
+    }).join("") || '<p class="mute">Ningún interruptor en este filtro.</p>';
+    enlazar("#zonas");
   }
-  function pintarModelos() {
-    $("#lista-modelos").innerHTML = D.modelos.map((m) => `
-      <div class="item">
-        <div class="item-cab"><code>${m.pre}</code><small class="mono">${m.llamadas_ultima_ronda != null ? fmt(m.llamadas_ultima_ronda, 0) + " llamadas" : ""}</small></div>
-        <small class="mono">${m.ajuste}</small>
-        <div class="enlaces">${m.usado_por.map((id) => `<button data-ir="${id}">${comp.get(id).titulo}</button>`).join("")}</div>
-      </div>`).join("");
-    enlazar("#lista-modelos");
+
+  /* ---------- modelos, agrupados por el modelo real ---------- */
+  function modelos() {
+    const grupos = new Map();
+    for (const m of S.D.modelos) {
+      const g = grupos.get(m.pre) || { modelo: m.pre, proveedor: m.proveedor, ajustes: [], usado: new Set(), llamadas: m.llamadas_ultima_ronda };
+      g.ajustes.push(m.ajuste); m.usado_por.forEach((u) => g.usado.add(u)); grupos.set(m.pre, g);
+    }
+    const lista = [...grupos.values()].sort((a, b) => (b.llamadas || 0) - (a.llamadas || 0));
+    const max = Math.max(1, ...lista.map((g) => g.llamadas || 0));
+    $("#modelos").innerHTML = lista.map((g) => `
+      <article class="modelo">
+        <span class="etiqueta">${esc(g.proveedor)}</span>
+        <b>${esc(g.modelo)}</b>
+        <div style="display:grid;gap:6px">
+          <span style="font-size:14px">${g.llamadas != null ? `${num(g.llamadas, 0)} llamadas en la última ronda` : "Sin llamadas contadas en la ronda"}</span>
+          <div class="barra"><span style="width:${g.llamadas ? Math.max(2, 100 * g.llamadas / max) : 0}%"></span></div>
+        </div>
+        <div style="display:grid;gap:6px"><span class="mute" style="font-size:13px">Lo usan</span>
+          <div class="chips">${[...g.usado].map((id) => `<button class="chip enlace" style="text-decoration:none" data-ir="${id}">${esc(S.comp.get(id).titulo)}</button>`).join("")}</div></div>
+        <span class="mono mute">${g.ajustes.map(esc).join(" · ")}</span>
+      </article>`).join("");
+    enlazar("#modelos");
   }
-  function enlazar(sel) {
-    document.querySelectorAll(`${sel} [data-ir]`).forEach((b) => b.addEventListener("click", () => {
-      const c = comp.get(b.dataset.ir);
-      if (c.vista !== E.vista) irA(c.vista);
+  function enlazar(raiz) {
+    $$(`${raiz} [data-ir]`).forEach((b) => b.addEventListener("click", () => {
+      const c = S.comp.get(b.dataset.ir);
+      if (c.vista !== S.vista) ir(c.vista);
       seleccionar(c.id);
-      $(".tablero").scrollIntoView({ behavior: reducido ? "auto" : "smooth", block: "start" });
+      $(".mapa").scrollIntoView({ behavior: reducido ? "auto" : "smooth", block: "start" });
     }));
   }
 
-  /* ---------- animación ---------- */
-  function espera(id) {
-    const c = comp.get(id) || {}, t = c.tiempos || c.tiempo_medido;
-    return Math.min(2200, Math.max(140, (t ? t.p50 : 0.25) * 380)) / E.vel;
+  /* ---------- animación: un solo patrón (paquete + barra de progreso en la pieza que trabaja) ---------- */
+  function espera(id) { const c = S.comp.get(id) || {}, t = c.tiempos || c.tiempo_medido; return Math.min(2400, Math.max(160, (t ? t.p50 : 0.25) * 420)) / S.vel; }
+  function origen() {
+    const dest = new Set(S.L.aristas.filter((a) => !a._atras && a.estilo !== "vuelta" && !NO_FLUJO.has(a.estilo)).map((a) => a.a));
+    const o = S.D.componentes.find((c) => c.vista === S.vista && c.carril === "flujo" && !dest.has(c.id));
+    return o && o.id;
   }
-  function nuevoPaquete() {
-    const os = origenes(); if (!os.length) return;
-    const id = os[0];
-    paquetes.push({ en: id, arista: null, t: 0, dur: 0, esperaHasta: reloj + espera(id), saltos: 0, resp: false, nodo: el("circle", { r: 5.5, class: "paquete", fill: "#6be4d2" }, $("#g-paquetes")) });
+  function paquete() {
+    const id = origen(); if (!id) return;
+    const halo = el("circle", { r: 9, class: "paquete-halo" }, S.gPaq), punto = el("circle", { r: 4.5, class: "paquete" }, S.gPaq);
+    S.paq.push({ en: id, desde: S.reloj, hasta: S.reloj + espera(id), halo, punto, saltos: 0 });
   }
-  function pulsar(id) {
-    L.aristas.filter((a) => a.de === id && FLUJO_NO.has(a.estilo)).forEach((a) => {
+  function pulso(id) {
+    for (const a of S.L.aristas) {
+      if (a.de !== id || !NO_FLUJO.has(a.estilo)) continue;
       a._path.classList.add("pulso");
-      setTimeout(() => a._path && a._path.classList.remove("pulso"), 600 / E.vel);
-      const len = a._path.getTotalLength();
-      const c = el("circle", { r: 3.5, fill: "#7ccb8b", class: "paquete" }, $("#g-paquetes"));
-      const t0 = reloj, dur = 700 / E.vel;
-      paquetes.push({ efimero: true, t0, dur, path: a._path, len, nodo: c });
-    });
+      setTimeout(() => a._path && a._path.classList.remove("pulso"), 900 / S.vel);
+    }
   }
+  function mover(p, x, y) { p.punto.setAttribute("cx", x); p.punto.setAttribute("cy", y); p.halo.setAttribute("cx", x); p.halo.setAttribute("cy", y); }
   function bucle(ahora) {
-    const dt = Math.min(64, ahora - (ultimo || ahora)); ultimo = ahora;
-    if (!E.pausa && L) {
-      reloj += dt;
-      if (reloj >= proximo) { nuevoPaquete(); proximo = reloj + 900 / E.vel; }
-      const activos = new Set();
-      paquetes = paquetes.filter((p) => {
-        if (p.efimero) {
-          const k = (reloj - p.t0) / p.dur;
-          if (k >= 1) { p.nodo.remove(); return false; }
-          const pt = p.path.getPointAtLength(p.len * k); p.nodo.setAttribute("cx", pt.x); p.nodo.setAttribute("cy", pt.y);
-          return true;
-        }
+    const dt = Math.min(64, ahora - (S.ultimo || ahora)); S.ultimo = ahora;
+    if (!S.pausa && S.L) {
+      S.reloj += dt;
+      if (S.reloj >= S.proximo) { paquete(); S.proximo = S.reloj + 1100 / S.vel; }
+      const trabajo = new Map();
+      S.paq = S.paq.filter((p) => {
         if (p.arista) {
           p.t += dt;
           const k = Math.min(1, p.t / p.dur), pt = p.arista._path.getPointAtLength(p.len * k);
-          p.nodo.setAttribute("cx", pt.x); p.nodo.setAttribute("cy", pt.y);
-          if (k >= 1) {
-            if (p.arista.estilo === "vuelta") { p.nodo.remove(); return false; } // la respuesta llegó al chat
-            p.en = p.arista.a; p.arista = null; p.esperaHasta = reloj + espera(p.en);
-            if (["envio", "b_salida", "r_salida", "r_nolotengo"].includes(p.en)) { p.resp = true; p.nodo.setAttribute("fill", "#ff7a59"); }
-            pulsar(p.en);
-          }
+          mover(p, pt.x, pt.y);
+          if (k < 1) return true;
+          if (--p.arista._viajes <= 0) p.arista._path.classList.remove("viaje");
+          if (p.arista.estilo === "vuelta") { p.punto.remove(); p.halo.remove(); return false; }
+          p.en = p.arista.a; p.arista = null; p.desde = S.reloj; p.hasta = S.reloj + espera(p.en);
+          const c = S.comp.get(p.en);
+          if (c && c.tipo === "salida") { p.punto.classList.add("resp"); p.halo.classList.add("resp"); }
+          pulso(p.en);
           return true;
         }
-        const b = L.pos.get(p.en);
-        if (!b) { p.nodo.remove(); return false; }
-        p.nodo.setAttribute("cx", b.x + b.w - 12); p.nodo.setAttribute("cy", b.y + b.h - 12);
-        activos.add(p.en);
-        if (reloj < p.esperaHasta) return true;
+        const b = S.L.pos.get(p.en);
+        if (!b) { p.punto.remove(); p.halo.remove(); return false; }
+        mover(p, b.x + b.w - 10, b.y + 10);
+        trabajo.set(p.en, Math.max(trabajo.get(p.en) || 0, (S.reloj - p.desde) / Math.max(1, p.hasta - p.desde)));
+        if (S.reloj < p.hasta) return true;
         const a = p.saltos < 40 ? elegir(p.en) : null;
-        if (!a) { p.nodo.remove(); return false; }
-        p.saltos++; p.arista = a; p.t = 0; p.len = a._path.getTotalLength(); p.dur = Math.max(260, p.len * 2.2) / E.vel;
+        if (!a) { p.punto.remove(); p.halo.remove(); return false; }
+        p.saltos++; p.arista = a; p.t = 0; p.len = a._path.getTotalLength(); p.dur = Math.max(280, p.len * 2.4) / S.vel;
+        a._viajes = (a._viajes || 0) + 1; a._path.classList.add("viaje");
         return true;
       });
-      document.querySelectorAll(".nodo").forEach((n) => n.classList.toggle("activo", activos.has(n.dataset.id)));
+      for (const g of $$(".nodo", $("#lienzo"))) {
+        const k = trabajo.get(g.dataset.id), activo = k != null;
+        g.classList.toggle("activo", activo);
+        const b = S.L.pos.get(g.dataset.id);
+        if (b && g._prog) g._prog.setAttribute("width", activo ? Math.min(1, k) * (b.w - 32) : 0);
+      }
     }
     requestAnimationFrame(bucle);
   }
 
   /* ---------- controles ---------- */
   const bp = $("#b-pausa");
-  bp.setAttribute("aria-pressed", String(E.pausa)); bp.textContent = E.pausa ? "Seguir" : "Pausar";
+  const pausaUI = () => { bp.setAttribute("aria-pressed", String(S.pausa)); bp.textContent = S.pausa ? "Reanudar" : "Pausar"; };
+  pausaUI();
   if (reducido) bp.title = "Tu sistema pide menos movimiento: la animación empieza en pausa.";
-  bp.addEventListener("click", () => { E.pausa = !E.pausa; bp.setAttribute("aria-pressed", String(E.pausa)); bp.textContent = E.pausa ? "Seguir" : "Pausar"; });
-  $("#s-vel").addEventListener("change", (e) => { E.vel = Number(e.target.value); });
-  const ba = $("#b-apoyo"); ba.setAttribute("aria-pressed", String(E.apoyo));
-  ba.addEventListener("click", () => {
-    E.apoyo = !E.apoyo; ba.setAttribute("aria-pressed", String(E.apoyo));
-    try { localStorage.setItem("mapa-coral-apoyo", E.apoyo ? "1" : "0"); } catch (_) {}
-    pintarTablero();
-  });
-
-  const bw = $("#b-entero");
-  bw.addEventListener("click", () => {
-    E.entero = !E.entero; bw.setAttribute("aria-pressed", String(E.entero));
-    if (L) pintarTablero();
+  bp.addEventListener("click", () => { S.pausa = !S.pausa; pausaUI(); });
+  $$("#vel button").forEach((b) => b.addEventListener("click", () => {
+    S.vel = Number(b.dataset.v); $$("#vel button").forEach((x) => x.setAttribute("aria-pressed", String(x === b)));
+  }));
+  const bs = $("#b-servicios");
+  bs.setAttribute("aria-pressed", String(S.servicios));
+  bs.addEventListener("click", () => {
+    S.servicios = !S.servicios; bs.setAttribute("aria-pressed", String(S.servicios));
+    try { localStorage.setItem("mapa-coral-servicios", S.servicios ? "1" : "0"); } catch (_) {}
+    if (S.L) pintar();
   });
 
   cargar();

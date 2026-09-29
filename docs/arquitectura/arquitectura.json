@@ -1,7 +1,7 @@
 {
  "meta": {
-  "generado": "2026-09-29T17:38:39+00:00",
-  "commit": "0508a73",
+  "generado": "2026-09-29T17:41:37+00:00",
+  "commit": "de3e278",
   "rama": "feature/pre_alvaro"
  },
  "vistas": {
@@ -20,6 +20,15 @@
    "padre": "info"
   }
  },
+ "areas": [
+  "Chat",
+  "Arquitectura",
+  "Enrutador",
+  "Reserva",
+  "Preguntas",
+  "Respuestas fijas",
+  "Solo pruebas"
+ ],
  "componentes": [
   {
    "id": "cliente",
@@ -75,6 +84,7 @@
    "interruptores": [
     {
      "nombre": "chatwoot_typing_indicator",
+     "titulo": "“Escribiendo…” en el chat",
      "codigo": true,
      "pre": true,
      "sin_efecto": false
@@ -92,6 +102,7 @@
    "interruptores": [
     {
      "nombre": "agent_arch",
+     "titulo": "Grafo de agentes",
      "codigo": true,
      "pre": true,
      "sin_efecto": false
@@ -123,12 +134,14 @@
    "interruptores": [
     {
      "nombre": "jev_router_enabled",
+     "titulo": "Jev decide la ruta",
      "codigo": false,
      "pre": true,
      "sin_efecto": false
     },
     {
      "nombre": "s4_fixes",
+     "titulo": "Respuestas fijas revisadas",
      "codigo": true,
      "pre": true,
      "sin_efecto": false
@@ -241,6 +254,7 @@
    "que_hace": "El camino antiguo, en orden fijo. Si ninguna regla de una ruta resuelve el mensaje, la ruta se lo pasa aquí.",
    "donde": "src/agents/supervisor.py:_shared_turn_handler",
    "nota": "Candidata a desaparecer en la 'Limpieza 2' cuando las rutas lo cubran todo.",
+   "capa_de": "booking",
    "modelos": [],
    "interruptores": []
   },
@@ -314,6 +328,7 @@
    "interruptores": [
     {
      "nombre": "jev_router_enabled",
+     "titulo": "Jev decide la ruta",
      "codigo": false,
      "pre": true,
      "sin_efecto": false
@@ -428,12 +443,14 @@
    "interruptores": [
     {
      "nombre": "rag_v2",
+     "titulo": "Catálogo en cada respuesta",
      "codigo": true,
      "pre": true,
      "sin_efecto": false
     },
     {
      "nombre": "s4_fixes",
+     "titulo": "Respuestas fijas revisadas",
      "codigo": true,
      "pre": true,
      "sin_efecto": false
@@ -465,12 +482,14 @@
    "interruptores": [
     {
      "nombre": "answer_and_continue",
+     "titulo": "Contesta y sigue",
      "codigo": true,
      "pre": true,
      "sin_efecto": false
     },
     {
      "nombre": "corrections_v2",
+     "titulo": "Correcciones sin repetir",
      "codigo": true,
      "pre": true,
      "sin_efecto": false
@@ -527,6 +546,7 @@
    "interruptores": [
     {
      "nombre": "recommend_inferred_minicourse",
+     "titulo": "Recomendar el minicurso",
      "codigo": true,
      "pre": true,
      "sin_efecto": false
@@ -556,6 +576,7 @@
    "interruptores": [
     {
      "nombre": "notes_in_parallel",
+     "titulo": "Notas en paralelo",
      "codigo": true,
      "pre": true,
      "sin_efecto": false
@@ -580,6 +601,7 @@
    "interruptores": [
     {
      "nombre": "ack_in_parallel",
+     "titulo": "Acuse en paralelo",
      "codigo": true,
      "pre": true,
      "sin_efecto": false
@@ -598,6 +620,7 @@
    "interruptores": [
     {
      "nombre": "answer_and_continue",
+     "titulo": "Contesta y sigue",
      "codigo": true,
      "pre": true,
      "sin_efecto": false
@@ -696,12 +719,14 @@
    "interruptores": [
     {
      "nombre": "rag_v2",
+     "titulo": "Catálogo en cada respuesta",
      "codigo": true,
      "pre": true,
      "sin_efecto": false
     },
     {
      "nombre": "rag_prompt_cache",
+     "titulo": "Catálogo en caché",
      "codigo": true,
      "pre": true,
      "sin_efecto": false
@@ -727,6 +752,7 @@
    "interruptores": [
     {
      "nombre": "rag_concise",
+     "titulo": "Respuestas cortas",
      "codigo": false,
      "pre": false,
      "sin_efecto": false
@@ -766,6 +792,7 @@
    "interruptores": [
     {
      "nombre": "grounding_v3",
+     "titulo": "Revisor dato a dato",
      "codigo": true,
      "pre": true,
      "sin_efecto": false
@@ -787,6 +814,7 @@
    "interruptores": [
     {
      "nombre": "rag_regen_feedback",
+     "titulo": "Reintento con motivo",
      "codigo": true,
      "pre": true,
      "sin_efecto": false
@@ -1338,6 +1366,9 @@
  "interruptores": [
   {
    "nombre": "ack_in_parallel",
+   "area": "Reserva",
+   "titulo": "Acuse en paralelo",
+   "texto": "La frase cálida del principio se prepara mientras se entiende el mensaje.",
    "codigo": true,
    "pre": true,
    "fijado_en_pre": true,
@@ -1348,6 +1379,9 @@
   },
   {
    "nombre": "agent_arch",
+   "area": "Arquitectura",
+   "titulo": "Grafo de agentes",
+   "texto": "Cada mensaje pasa por el enrutador y una de las 5 rutas. Apagado, vuelve el camino antiguo (la cascada).",
    "codigo": true,
    "pre": true,
    "fijado_en_pre": true,
@@ -1358,6 +1392,9 @@
   },
   {
    "nombre": "answer_and_continue",
+   "area": "Reserva",
+   "titulo": "Contesta y sigue",
+   "texto": "Si el cliente pregunta algo en mitad de la reserva, se contesta y la reserva sigue en el mismo mensaje.",
    "codigo": true,
    "pre": true,
    "fijado_en_pre": true,
@@ -1369,6 +1406,9 @@
   },
   {
    "nombre": "chatwoot_typing_indicator",
+   "area": "Chat",
+   "titulo": "“Escribiendo…” en el chat",
+   "texto": "El cliente ve que el bot está preparando la respuesta mientras espera.",
    "codigo": true,
    "pre": true,
    "fijado_en_pre": true,
@@ -1379,6 +1419,9 @@
   },
   {
    "nombre": "corrections_v2",
+   "area": "Reserva",
+   "titulo": "Correcciones sin repetir",
+   "texto": "Cuando un dato cambia, pregunta «¿lo cambio?» una sola vez, y nunca por un cambio que se lee igual.",
    "codigo": true,
    "pre": true,
    "fijado_en_pre": true,
@@ -1389,6 +1432,9 @@
   },
   {
    "nombre": "grounding_v3",
+   "area": "Preguntas",
+   "titulo": "Revisor dato a dato",
+   "texto": "El revisor repasa cada dato de la respuesta y lo marca SÍ o NO frente a la información.",
    "codigo": true,
    "pre": true,
    "fijado_en_pre": true,
@@ -1399,6 +1445,9 @@
   },
   {
    "nombre": "jev_router_enabled",
+   "area": "Enrutador",
+   "titulo": "Jev decide la ruta",
+   "texto": "Un clasificador rápido (~0,3 s) decide qué tipo de mensaje es; si duda o falla, decide un LLM (~1,3 s).",
    "codigo": false,
    "pre": true,
    "fijado_en_pre": true,
@@ -1410,6 +1459,9 @@
   },
   {
    "nombre": "llm_activity_veto_cutover",
+   "area": "Reserva",
+   "titulo": "El LLM corrige la actividad",
+   "texto": "Si el mensaje es ambiguo, el LLM puede corregir la actividad que dedujeron las reglas.",
    "codigo": true,
    "pre": true,
    "fijado_en_pre": false,
@@ -1418,6 +1470,9 @@
   },
   {
    "nombre": "llm_activity_veto_shadow_mode",
+   "area": "Solo pruebas",
+   "titulo": "Corrección de actividad en sombra",
+   "texto": "Apunta lo que corregiría el LLM, sin cambiar nada.",
    "codigo": false,
    "pre": false,
    "fijado_en_pre": false,
@@ -1426,6 +1481,9 @@
   },
   {
    "nombre": "llm_certification_veto_cutover",
+   "area": "Reserva",
+   "titulo": "El LLM corrige la certificación",
+   "texto": "El LLM puede corregir si el cliente es buzo certificado cuando las reglas se equivocan.",
    "codigo": false,
    "pre": false,
    "fijado_en_pre": false,
@@ -1434,6 +1492,9 @@
   },
   {
    "nombre": "llm_certification_veto_shadow_mode",
+   "area": "Solo pruebas",
+   "titulo": "Corrección de certificación en sombra",
+   "texto": "Apunta lo que corregiría el LLM, sin cambiar nada.",
    "codigo": false,
    "pre": false,
    "fijado_en_pre": false,
@@ -1442,6 +1503,9 @@
   },
   {
    "nombre": "llm_extraction_cutover_certification",
+   "area": "Reserva",
+   "titulo": "El LLM completa la certificación",
+   "texto": "Si las reglas no saben si el cliente es buzo certificado, lo deduce el LLM.",
    "codigo": true,
    "pre": true,
    "fijado_en_pre": true,
@@ -1450,6 +1514,9 @@
   },
   {
    "nombre": "llm_extraction_cutover_group",
+   "area": "Reserva",
+   "titulo": "El LLM completa el grupo",
+   "texto": "Si las reglas no saben cuántos son o sus edades, lo deduce el LLM.",
    "codigo": true,
    "pre": true,
    "fijado_en_pre": true,
@@ -1458,6 +1525,9 @@
   },
   {
    "nombre": "llm_extraction_cutover_location",
+   "area": "Reserva",
+   "titulo": "El LLM completa el origen",
+   "texto": "Si las reglas no saben si sale de Cartagena o de las islas, lo deduce el LLM.",
    "codigo": true,
    "pre": true,
    "fijado_en_pre": true,
@@ -1466,6 +1536,9 @@
   },
   {
    "nombre": "llm_extraction_cutover_logistics",
+   "area": "Reserva",
+   "titulo": "El LLM completa el perfil",
+   "texto": "Si las reglas no saben la nacionalidad, los días o si necesita refresh, lo deduce el LLM.",
    "codigo": true,
    "pre": true,
    "fijado_en_pre": true,
@@ -1474,6 +1547,9 @@
   },
   {
    "nombre": "llm_extraction_shadow_mode",
+   "area": "Solo pruebas",
+   "titulo": "Extracción en sombra",
+   "texto": "Apunta en el registro lo que haría el LLM, sin cambiar nada.",
    "codigo": false,
    "pre": false,
    "fijado_en_pre": false,
@@ -1482,6 +1558,9 @@
   },
   {
    "nombre": "llm_group_allocation_veto_cutover",
+   "area": "Reserva",
+   "titulo": "El LLM corrige quién hace qué",
+   "texto": "Si el reparto de actividades no suma el total del grupo, el LLM lo completa.",
    "codigo": true,
    "pre": true,
    "fijado_en_pre": false,
@@ -1490,6 +1569,9 @@
   },
   {
    "nombre": "llm_group_allocation_veto_shadow_mode",
+   "area": "Solo pruebas",
+   "titulo": "Corrección de reparto en sombra",
+   "texto": "Apunta lo que corregiría el LLM, sin cambiar nada.",
    "codigo": false,
    "pre": false,
    "fijado_en_pre": false,
@@ -1498,6 +1580,9 @@
   },
   {
    "nombre": "llm_group_size_veto_cutover",
+   "area": "Reserva",
+   "titulo": "El LLM corrige cuántos son",
+   "texto": "«Mi pareja y nuestros dos hijos» son 4, no 2: el LLM corrige el número cuando las reglas fallan.",
    "codigo": true,
    "pre": true,
    "fijado_en_pre": false,
@@ -1506,6 +1591,9 @@
   },
   {
    "nombre": "llm_group_size_veto_shadow_mode",
+   "area": "Solo pruebas",
+   "titulo": "Corrección de grupo en sombra",
+   "texto": "Apunta lo que corregiría el LLM, sin cambiar nada.",
    "codigo": false,
    "pre": false,
    "fijado_en_pre": false,
@@ -1514,6 +1602,9 @@
   },
   {
    "nombre": "llm_location_veto_cutover",
+   "area": "Reserva",
+   "titulo": "El LLM corrige el origen",
+   "texto": "El LLM puede corregir si sale de Cartagena o de las islas cuando las reglas se equivocan.",
    "codigo": false,
    "pre": false,
    "fijado_en_pre": false,
@@ -1522,6 +1613,9 @@
   },
   {
    "nombre": "llm_location_veto_shadow_mode",
+   "area": "Solo pruebas",
+   "titulo": "Corrección de origen en sombra",
+   "texto": "Apunta lo que corregiría el LLM, sin cambiar nada.",
    "codigo": false,
    "pre": false,
    "fijado_en_pre": false,
@@ -1530,6 +1624,9 @@
   },
   {
    "nombre": "llm_nationality_veto_cutover",
+   "area": "Reserva",
+   "titulo": "El LLM corrige la nacionalidad",
+   "texto": "El LLM puede corregir si el cliente es colombiano cuando las reglas se equivocan.",
    "codigo": false,
    "pre": false,
    "fijado_en_pre": false,
@@ -1538,6 +1635,9 @@
   },
   {
    "nombre": "llm_nationality_veto_shadow_mode",
+   "area": "Solo pruebas",
+   "titulo": "Corrección de nacionalidad en sombra",
+   "texto": "Apunta lo que corregiría el LLM, sin cambiar nada.",
    "codigo": false,
    "pre": false,
    "fijado_en_pre": false,
@@ -1546,6 +1646,9 @@
   },
   {
    "nombre": "notes_in_parallel",
+   "area": "Reserva",
+   "titulo": "Notas en paralelo",
+   "texto": "Las notas para el asesor se preparan a la vez que el resto del turno, no antes (ahorra ~0,75 s).",
    "codigo": true,
    "pre": true,
    "fijado_en_pre": true,
@@ -1556,6 +1659,9 @@
   },
   {
    "nombre": "rag_concise",
+   "area": "Preguntas",
+   "titulo": "Respuestas cortas",
+   "texto": "Contestar solo lo preguntado en 2-4 frases. Probado el 28-sep: ahorra poco o inventa huecos.",
    "codigo": false,
    "pre": false,
    "fijado_en_pre": false,
@@ -1566,6 +1672,9 @@
   },
   {
    "nombre": "rag_contesta_lo_que_sabe",
+   "area": "Preguntas",
+   "titulo": "Contestar la parte que sabe",
+   "texto": "Decir lo que sí se sabe antes de decir que falta el resto. Medido el 29-sep: empeora.",
    "codigo": false,
    "pre": false,
    "fijado_en_pre": false,
@@ -1574,6 +1683,9 @@
   },
   {
    "nombre": "rag_ficha_del_servicio",
+   "area": "Preguntas",
+   "titulo": "Ficha del plan siempre a mano",
+   "texto": "Si se sabe qué plan mira el cliente, su ficha entera va a la respuesta. Medido el 29-sep: no mejora.",
    "codigo": false,
    "pre": false,
    "fijado_en_pre": false,
@@ -1582,6 +1694,9 @@
   },
   {
    "nombre": "rag_kb_v2",
+   "area": "Preguntas",
+   "titulo": "Base de conocimiento curada",
+   "texto": "La búsqueda usa la base nueva: una ficha por servicio y preguntas frecuentes limpias.",
    "codigo": true,
    "pre": true,
    "fijado_en_pre": true,
@@ -1590,6 +1705,9 @@
   },
   {
    "nombre": "rag_prompt_cache",
+   "area": "Preguntas",
+   "titulo": "Catálogo en caché",
+   "texto": "El catálogo va en una parte fija de las instrucciones que OpenAI reutiliza: cada respuesta sale más barata.",
    "codigo": true,
    "pre": true,
    "fijado_en_pre": true,
@@ -1600,6 +1718,9 @@
   },
   {
    "nombre": "rag_regen_feedback",
+   "area": "Preguntas",
+   "titulo": "Reintento con motivo",
+   "texto": "Si el revisor dice NO, el segundo intento sabe qué frase quitar en vez de repetir el invento.",
    "codigo": true,
    "pre": true,
    "fijado_en_pre": true,
@@ -1610,6 +1731,9 @@
   },
   {
    "nombre": "rag_v2",
+   "area": "Preguntas",
+   "titulo": "Catálogo en cada respuesta",
+   "texto": "El bot ve el catálogo entero al contestar y el revisor solo rechaza datos del negocio sin respaldo.",
    "codigo": true,
    "pre": true,
    "fijado_en_pre": true,
@@ -1621,6 +1745,9 @@
   },
   {
    "nombre": "recommend_inferred_minicourse",
+   "area": "Reserva",
+   "titulo": "Recomendar el minicurso",
+   "texto": "Si el cliente dice que es su primera vez, le recomienda el minicurso y lo confirma con él.",
    "codigo": true,
    "pre": true,
    "fijado_en_pre": true,
@@ -1631,6 +1758,9 @@
   },
   {
    "nombre": "s4_fixes",
+   "area": "Respuestas fijas",
+   "titulo": "Respuestas fijas revisadas",
+   "texto": "Teléfono oficial, «¿eres un bot?», quejas a una persona y otros textos fijos corregidos.",
    "codigo": true,
    "pre": true,
    "fijado_en_pre": true,
@@ -1654,6 +1784,7 @@
     "b_notas",
     "b_acuse"
    ],
+   "proveedor": "OpenAI",
    "llamadas_ultima_ronda": 187
   },
   {
@@ -1663,6 +1794,7 @@
    "usado_por": [
     "r_revisor"
    ],
+   "proveedor": "OpenAI",
    "llamadas_ultima_ronda": 47
   },
   {
@@ -1673,6 +1805,7 @@
     "router",
     "openrouter"
    ],
+   "proveedor": "OpenRouter",
    "llamadas_ultima_ronda": null
   },
   {
@@ -1683,6 +1816,7 @@
     "kb",
     "r_buscar"
    ],
+   "proveedor": "OpenAI",
    "llamadas_ultima_ronda": null
   },
   {
@@ -1694,6 +1828,7 @@
     "b_setup",
     "r_reescribir"
    ],
+   "proveedor": "OpenAI",
    "llamadas_ultima_ronda": 187
   },
   {
@@ -1703,6 +1838,7 @@
    "usado_por": [
     "preparacion"
    ],
+   "proveedor": "OpenAI",
    "llamadas_ultima_ronda": null
   },
   {
@@ -1712,6 +1848,7 @@
    "usado_por": [
     "r_escribir"
    ],
+   "proveedor": "OpenAI",
    "llamadas_ultima_ronda": 47
   }
  ],

@@ -1,5 +1,5 @@
 {
-  "about": "Textos curados del Mapa de Coral. Lo que sale del código (grafo LangGraph, interruptores, modelos, tiempos) lo añade `python -m scripts.arquitectura`; aquí va lo que el código no dice: qué hace cada pieza en lenguaje llano, las piezas que no son nodos del grafo y sus flechas. `nodo_grafo` enlaza con el nodo real (y con sus tiempos). `donde` = fichero:símbolo (el script comprueba que existe). `carril`: flujo (camino del mensaje), apoyo (servicios y datos), infra. `peso` en una flecha = parte de los paquetes animados que toman esa salida cuando la foto de la ronda no lo mide (fuente en `pesos_fuente`).",
+  "about": "Textos curados del Mapa de Coral. Lo que sale del código (grafo LangGraph, interruptores, modelos, tiempos) lo añade `python -m scripts.arquitectura`; aquí va lo que el código no dice: qué hace cada pieza en lenguaje llano, las piezas que no son nodos del grafo y sus flechas. `nodo_grafo` enlaza con el nodo real (y con sus tiempos). `donde` = fichero:símbolo (el script comprueba que existe). `carril`: flujo (camino del mensaje), apoyo (servicios y datos), infra. `peso` en una flecha = parte de los paquetes animados que toman esa salida cuando la foto de la ronda no lo mide (fuente en `pesos_fuente`). `capa_de` = colocar la pieza en la misma columna que otra (la cascada, debajo de las rutas). `interruptores` = nombre y frase en llano de CADA interruptor de settings (el script falla si falta uno).",
   "vistas": {
     "general": {
       "titulo": "Coral por fuera",
@@ -157,7 +157,8 @@
       "titulo": "Cascada (respaldo)",
       "que_hace": "El camino antiguo, en orden fijo. Si ninguna regla de una ruta resuelve el mensaje, la ruta se lo pasa aquí.",
       "donde": "src/agents/supervisor.py:_shared_turn_handler",
-      "nota": "Candidata a desaparecer en la 'Limpieza 2' cuando las rutas lo cubran todo."
+      "nota": "Candidata a desaparecer en la 'Limpieza 2' cuando las rutas lo cubran todo.",
+      "capa_de": "booking"
     },
     {
       "id": "cierre",
@@ -826,5 +827,186 @@
     "llm_extraction_cutover_logistics": "Solo lo lee supervisor._maybe_apply_llm_extraction_cutover, que nadie llama.",
     "llm_extraction_shadow_mode": "Su función (_maybe_log_llm_extraction_shadow) no la llama nadie."
   },
-  "pesos_fuente": "Ronda regen-B2 (28-sep): el revisor rechazó el primer intento en 6 de ~39 turnos con RAG (~15 %) y 1 de esos 6 volvió a fallar (~20 %). El paso a la cascada (~8 %) y los textos fijos (~10 %) son estimaciones."
+  "pesos_fuente": "Ronda regen-B2 (28-sep): el revisor rechazó el primer intento en 6 de ~39 turnos con RAG (~15 %) y 1 de esos 6 volvió a fallar (~20 %). El paso a la cascada (~8 %) y los textos fijos (~10 %) son estimaciones.",
+  "interruptores": {
+    "agent_arch": {
+      "area": "Arquitectura",
+      "titulo": "Grafo de agentes",
+      "texto": "Cada mensaje pasa por el enrutador y una de las 5 rutas. Apagado, vuelve el camino antiguo (la cascada)."
+    },
+    "chatwoot_typing_indicator": {
+      "area": "Chat",
+      "titulo": "“Escribiendo…” en el chat",
+      "texto": "El cliente ve que el bot está preparando la respuesta mientras espera."
+    },
+    "jev_router_enabled": {
+      "area": "Enrutador",
+      "titulo": "Jev decide la ruta",
+      "texto": "Un clasificador rápido (~0,3 s) decide qué tipo de mensaje es; si duda o falla, decide un LLM (~1,3 s)."
+    },
+    "notes_in_parallel": {
+      "area": "Reserva",
+      "titulo": "Notas en paralelo",
+      "texto": "Las notas para el asesor se preparan a la vez que el resto del turno, no antes (ahorra ~0,75 s)."
+    },
+    "ack_in_parallel": {
+      "area": "Reserva",
+      "titulo": "Acuse en paralelo",
+      "texto": "La frase cálida del principio se prepara mientras se entiende el mensaje."
+    },
+    "answer_and_continue": {
+      "area": "Reserva",
+      "titulo": "Contesta y sigue",
+      "texto": "Si el cliente pregunta algo en mitad de la reserva, se contesta y la reserva sigue en el mismo mensaje."
+    },
+    "corrections_v2": {
+      "area": "Reserva",
+      "titulo": "Correcciones sin repetir",
+      "texto": "Cuando un dato cambia, pregunta «¿lo cambio?» una sola vez, y nunca por un cambio que se lee igual."
+    },
+    "recommend_inferred_minicourse": {
+      "area": "Reserva",
+      "titulo": "Recomendar el minicurso",
+      "texto": "Si el cliente dice que es su primera vez, le recomienda el minicurso y lo confirma con él."
+    },
+    "rag_v2": {
+      "area": "Preguntas",
+      "titulo": "Catálogo en cada respuesta",
+      "texto": "El bot ve el catálogo entero al contestar y el revisor solo rechaza datos del negocio sin respaldo."
+    },
+    "grounding_v3": {
+      "area": "Preguntas",
+      "titulo": "Revisor dato a dato",
+      "texto": "El revisor repasa cada dato de la respuesta y lo marca SÍ o NO frente a la información."
+    },
+    "rag_prompt_cache": {
+      "area": "Preguntas",
+      "titulo": "Catálogo en caché",
+      "texto": "El catálogo va en una parte fija de las instrucciones que OpenAI reutiliza: cada respuesta sale más barata."
+    },
+    "rag_concise": {
+      "area": "Preguntas",
+      "titulo": "Respuestas cortas",
+      "texto": "Contestar solo lo preguntado en 2-4 frases. Probado el 28-sep: ahorra poco o inventa huecos."
+    },
+    "rag_regen_feedback": {
+      "area": "Preguntas",
+      "titulo": "Reintento con motivo",
+      "texto": "Si el revisor dice NO, el segundo intento sabe qué frase quitar en vez de repetir el invento."
+    },
+    "rag_kb_v2": {
+      "area": "Preguntas",
+      "titulo": "Base de conocimiento curada",
+      "texto": "La búsqueda usa la base nueva: una ficha por servicio y preguntas frecuentes limpias."
+    },
+    "rag_ficha_del_servicio": {
+      "area": "Preguntas",
+      "titulo": "Ficha del plan siempre a mano",
+      "texto": "Si se sabe qué plan mira el cliente, su ficha entera va a la respuesta. Medido el 29-sep: no mejora."
+    },
+    "rag_contesta_lo_que_sabe": {
+      "area": "Preguntas",
+      "titulo": "Contestar la parte que sabe",
+      "texto": "Decir lo que sí se sabe antes de decir que falta el resto. Medido el 29-sep: empeora."
+    },
+    "s4_fixes": {
+      "area": "Respuestas fijas",
+      "titulo": "Respuestas fijas revisadas",
+      "texto": "Teléfono oficial, «¿eres un bot?», quejas a una persona y otros textos fijos corregidos."
+    },
+    "llm_extraction_shadow_mode": {
+      "area": "Solo pruebas",
+      "titulo": "Extracción en sombra",
+      "texto": "Apunta en el registro lo que haría el LLM, sin cambiar nada."
+    },
+    "llm_extraction_cutover_certification": {
+      "area": "Reserva",
+      "titulo": "El LLM completa la certificación",
+      "texto": "Si las reglas no saben si el cliente es buzo certificado, lo deduce el LLM."
+    },
+    "llm_extraction_cutover_group": {
+      "area": "Reserva",
+      "titulo": "El LLM completa el grupo",
+      "texto": "Si las reglas no saben cuántos son o sus edades, lo deduce el LLM."
+    },
+    "llm_extraction_cutover_location": {
+      "area": "Reserva",
+      "titulo": "El LLM completa el origen",
+      "texto": "Si las reglas no saben si sale de Cartagena o de las islas, lo deduce el LLM."
+    },
+    "llm_extraction_cutover_logistics": {
+      "area": "Reserva",
+      "titulo": "El LLM completa el perfil",
+      "texto": "Si las reglas no saben la nacionalidad, los días o si necesita refresh, lo deduce el LLM."
+    },
+    "llm_activity_veto_shadow_mode": {
+      "area": "Solo pruebas",
+      "titulo": "Corrección de actividad en sombra",
+      "texto": "Apunta lo que corregiría el LLM, sin cambiar nada."
+    },
+    "llm_activity_veto_cutover": {
+      "area": "Reserva",
+      "titulo": "El LLM corrige la actividad",
+      "texto": "Si el mensaje es ambiguo, el LLM puede corregir la actividad que dedujeron las reglas."
+    },
+    "llm_certification_veto_shadow_mode": {
+      "area": "Solo pruebas",
+      "titulo": "Corrección de certificación en sombra",
+      "texto": "Apunta lo que corregiría el LLM, sin cambiar nada."
+    },
+    "llm_certification_veto_cutover": {
+      "area": "Reserva",
+      "titulo": "El LLM corrige la certificación",
+      "texto": "El LLM puede corregir si el cliente es buzo certificado cuando las reglas se equivocan."
+    },
+    "llm_nationality_veto_shadow_mode": {
+      "area": "Solo pruebas",
+      "titulo": "Corrección de nacionalidad en sombra",
+      "texto": "Apunta lo que corregiría el LLM, sin cambiar nada."
+    },
+    "llm_nationality_veto_cutover": {
+      "area": "Reserva",
+      "titulo": "El LLM corrige la nacionalidad",
+      "texto": "El LLM puede corregir si el cliente es colombiano cuando las reglas se equivocan."
+    },
+    "llm_location_veto_shadow_mode": {
+      "area": "Solo pruebas",
+      "titulo": "Corrección de origen en sombra",
+      "texto": "Apunta lo que corregiría el LLM, sin cambiar nada."
+    },
+    "llm_location_veto_cutover": {
+      "area": "Reserva",
+      "titulo": "El LLM corrige el origen",
+      "texto": "El LLM puede corregir si sale de Cartagena o de las islas cuando las reglas se equivocan."
+    },
+    "llm_group_size_veto_shadow_mode": {
+      "area": "Solo pruebas",
+      "titulo": "Corrección de grupo en sombra",
+      "texto": "Apunta lo que corregiría el LLM, sin cambiar nada."
+    },
+    "llm_group_size_veto_cutover": {
+      "area": "Reserva",
+      "titulo": "El LLM corrige cuántos son",
+      "texto": "«Mi pareja y nuestros dos hijos» son 4, no 2: el LLM corrige el número cuando las reglas fallan."
+    },
+    "llm_group_allocation_veto_shadow_mode": {
+      "area": "Solo pruebas",
+      "titulo": "Corrección de reparto en sombra",
+      "texto": "Apunta lo que corregiría el LLM, sin cambiar nada."
+    },
+    "llm_group_allocation_veto_cutover": {
+      "area": "Reserva",
+      "titulo": "El LLM corrige quién hace qué",
+      "texto": "Si el reparto de actividades no suma el total del grupo, el LLM lo completa."
+    }
+  },
+  "areas": [
+    "Chat",
+    "Arquitectura",
+    "Enrutador",
+    "Reserva",
+    "Preguntas",
+    "Respuestas fijas",
+    "Solo pruebas"
+  ]
 }

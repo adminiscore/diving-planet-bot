@@ -104,6 +104,19 @@ def validar(curado: dict, g: dict, bools: dict, modelos: dict) -> list[str]:
     for f in curado.get("sin_efecto", {}):
         if f not in bools:
             errores.append(f"sin_efecto: '{f}' no está en settings")
+    textos = curado.get("interruptores", {})
+    for f in bools:
+        if f not in textos:
+            errores.append(f"el interruptor '{f}' no tiene nombre ni frase en llano: añádelo a \"interruptores\" en "
+                           "docs/arquitectura/componentes.json")
+    for f, info in textos.items():
+        if f not in bools:
+            errores.append(f"interruptores: '{f}' ya no está en settings")
+        elif info.get("area") not in curado.get("areas", []):
+            errores.append(f"interruptores.{f}: zona '{info.get('area')}' no está en \"areas\"")
+    for c in curado["componentes"]:
+        if c.get("capa_de") and c["capa_de"] not in {x["id"] for x in curado["componentes"] if x["vista"] == c["vista"]}:
+            errores.append(f"{c['id']}: capa_de '{c['capa_de']}' no está en su vista")
     for vista, mapa in curado.get("grafo", {}).items():
         for extremo, cid in mapa.items():
             if cid not in comps:
@@ -140,8 +153,9 @@ def construir(curado: dict, g: dict, bools: dict, modelos: dict, pre: dict, foto
     for c in curado["componentes"]:
         c = dict(c)
         c["modelos"] = [{"ajuste": m, "codigo": modelos[m], "pre": pre.get(m, modelos[m])} for m in c.get("modelos", [])]
-        c["interruptores"] = [{"nombre": f, "codigo": bools[f], "pre": bool(pre.get(f, bools[f])),
-                               "sin_efecto": f in curado.get("sin_efecto", {})} for f in c.get("interruptores", [])]
+        c["interruptores"] = [{"nombre": f, "titulo": curado["interruptores"][f]["titulo"], "codigo": bools[f],
+                               "pre": bool(pre.get(f, bools[f])), "sin_efecto": f in curado.get("sin_efecto", {})}
+                              for f in c.get("interruptores", [])]
         nodo = c.get("nodo_grafo")
         if nodo and nodo in nodos_foto:
             c["tiempos"] = nodos_foto[nodo]
@@ -178,10 +192,12 @@ def construir(curado: dict, g: dict, bools: dict, modelos: dict, pre: dict, foto
             usados_f.setdefault(f["nombre"], []).append(c["id"])
         for m in c["modelos"]:
             usados_m.setdefault(m["ajuste"], []).append(c["id"])
-    interruptores = [{"nombre": k, "codigo": v, "pre": bool(pre.get(k, v)), "fijado_en_pre": k in pre,
-                      "usado_por": usados_f.get(k, []), "sin_efecto": curado.get("sin_efecto", {}).get(k)}
+    interruptores = [{"nombre": k, **curado["interruptores"][k], "codigo": v, "pre": bool(pre.get(k, v)),
+                      "fijado_en_pre": k in pre, "usado_por": usados_f.get(k, []),
+                      "sin_efecto": curado.get("sin_efecto", {}).get(k)}
                      for k, v in sorted(bools.items())]
     modelos_out = [{"ajuste": k, "codigo": v, "pre": pre.get(k, v), "usado_por": usados_m.get(k, []),
+                    "proveedor": "OpenRouter" if "/" in str(pre.get(k, v)) else "OpenAI",
                     "llamadas_ultima_ronda": llamadas.get(pre.get(k, v))} for k, v in sorted(modelos.items())]
 
     ronda = {}
@@ -195,7 +211,7 @@ def construir(curado: dict, g: dict, bools: dict, modelos: dict, pre: dict, foto
     return {
         "meta": {"generado": datetime.now(UTC).isoformat(timespec="seconds"),
                  "commit": _git("rev-parse", "--short", "HEAD"), "rama": _git("rev-parse", "--abbrev-ref", "HEAD")},
-        "vistas": curado["vistas"], "componentes": comps, "aristas": aristas,
+        "vistas": curado["vistas"], "areas": curado.get("areas", []), "componentes": comps, "aristas": aristas,
         "interruptores": interruptores, "modelos": modelos_out, "ronda": ronda,
         "pesos_fuente": curado.get("pesos_fuente"),
     }

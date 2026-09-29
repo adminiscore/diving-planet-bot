@@ -1,6 +1,13 @@
 History
 =======
 
+0.29.80 - (2026-09-29)
+----------------------
+* **`feature/pre_alvaro` integra `feature/l1_gonzalo`** (fase RAG: rag-1 a rag-4; `RAG_KB_V2` promocionado, `RAG_FICHA_DEL_SERVICIO` y `RAG_CONTESTA_LO_QUE_SABE` apagados con medida). Conflicto solo en este fichero: las entradas de Álvaro del 29-sep pasan a 0.29.78 (mapa) y 0.29.79 (disco).
+* **Mapa de Coral rediseñado (versión 2, misma URL).** Estilo monocromo editorial (referencia Revolut que pasó Álvaro): blanco, tinta, bordes finos sin sombras, píldoras, Manrope/Inter, un solo color (cobalto) para el mensaje que viaja y la franja de la ronda; modo oscuro. Todas las piezas con el mismo patrón (icono de línea, título medido que pasa a dos líneas en vez de salirse, dato, barra de progreso cuando trabaja).
+  - Colocación en **tablero por filas** que se ajusta al ancho (sin barra horizontal; comprobado sin solapes a 826 y 360 px). La cascada va bajo las 5 rutas; las flechas a datos y servicios y las salidas anticipadas solo se ven al seleccionar una pieza o cuando un mensaje las recorre (se iluminan en cobalto); las vueltas van por el margen; solo quedan etiquetas con el reparto real del enrutador.
+  - **Interruptores explicados**: cada uno con nombre y frase en llano, agrupados por zona (Chat, Arquitectura, Enrutador, Reserva, Preguntas, Respuestas fijas, Solo pruebas), estado en PRE y a qué piezas afecta. `scripts/arquitectura.py` falla (y `tests/test_arquitectura.py`) si se añade un interruptor sin su frase en `docs/arquitectura/componentes.json`. **Modelos** agrupados por modelo real, con qué piezas lo usan y sus llamadas en la última ronda.
+
 0.29.79 - (2026-09-29)
 ----------------------
 * **Incidente PRE: disco del VPS lleno (100 %, 68 MB libres) → el deploy de `ac2d594` falló al reconstruir.** Causa: el registro json del contenedor `dp-chatwoot` había crecido hasta **26 GB** (y 1,1 GB el de `dp-chatwoot-worker`); Docker no tenía tope de tamaño en ningún servicio. Origen probable: el sondeo del bot a la API de Chatwoot cada segundo (`poll_active_conversations_once`), que Chatwoot apunta petición a petición. No eran datos (bases de datos y volúmenes, 285 MB, intactos).

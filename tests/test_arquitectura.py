@@ -49,3 +49,10 @@ def test_el_historial_ignora_los_tiempos():
     assert arq.estructura(sin) == arq.estructura(con)
     delta = arq.cambios(arq.estructura(sin), {**arq.estructura(sin), "interruptores": {}})
     assert delta["interruptores"] and not delta["piezas_nuevas"]
+
+
+def test_un_interruptor_nuevo_sin_frase_en_llano_hace_fallar():
+    curado, g, bools, modelos = _entradas()
+    bools = {**bools, "flag_nuevo_de_prueba": False}
+    errores = arq.validar(curado, g, bools, modelos)
+    assert any("flag_nuevo_de_prueba" in e and "llano" in e for e in errores)
