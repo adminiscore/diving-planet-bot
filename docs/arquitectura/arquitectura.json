@@ -1,7 +1,7 @@
 {
  "meta": {
-  "generado": "2026-09-29T18:02:44+00:00",
-  "commit": "296d2e4",
+  "generado": "2026-09-29T18:25:38+00:00",
+  "commit": "52ca861",
   "rama": "feature/pre_alvaro"
  },
  "vistas": {
@@ -223,6 +223,7 @@
    "zoom": "info",
    "que_hace": "Políticas con texto fijo (alcohol, alergias, edad…) y, para el resto, busca la respuesta en la base de conocimiento (RAG).",
    "donde": "src/agents/info_agent.py:info_node",
+   "nota": "Por esta ruta solo llegan las preguntas que no son de reserva. La mayoría de las preguntas se contestan desde la Reserva («contesta y sigue»), así que el RAG trabaja muchas más veces de las que pasa un mensaje por aquí.",
    "modelos": [],
    "interruptores": [],
    "tiempos": {
@@ -257,7 +258,7 @@
    "titulo": "Cascada (respaldo)",
    "que_hace": "El camino antiguo, en orden fijo. Si ninguna regla de una ruta resuelve el mensaje, la ruta se lo pasa aquí.",
    "donde": "src/agents/supervisor.py:_shared_turn_handler",
-   "nota": "Candidata a desaparecer en la 'Limpieza 2' cuando las rutas lo cubran todo.",
+   "nota": "Cuántos mensajes caen aquí está SIN MEDIR: la cascada no deja tiempos propios en los registros. En la animación se usa una estimación pequeña y por eso no lleva porcentaje. Candidata a desaparecer en la 'Limpieza 2'.",
    "capa_de": "booking",
    "modelos": [],
    "interruptores": []
@@ -664,7 +665,12 @@
    "titulo": "Llega una pregunta",
    "que_hace": "Desde la ruta Información o desde la reserva ('contesta y sigue').",
    "modelos": [],
-   "interruptores": []
+   "interruptores": [],
+   "conteo": {
+    "n": 41,
+    "que": "preguntas",
+    "fuente": "2026-09-28-rag2-B.json"
+   }
   },
   {
    "id": "r_reglas",
@@ -782,7 +788,12 @@
     "p50": 1.9,
     "fuente": "medido dentro de PRE el 28-sep (8 preguntas, HISTORY 0.29.65)"
    },
-   "marca": "openai"
+   "marca": "openai",
+   "conteo": {
+    "n": 47,
+    "que": "veces",
+    "fuente": "logs-pre-2026-09-28-rag2-B.txt"
+   }
   },
   {
    "id": "r_guardas",
@@ -793,7 +804,12 @@
    "que_hace": "Sin LLM: ningún precio, link, cupo o teléfono que no esté en la información; nunca pedir datos personales.",
    "donde": "src/agents/grounding_check.py:currency_amounts_grounded",
    "modelos": [],
-   "interruptores": []
+   "interruptores": [],
+   "conteo": {
+    "n": 47,
+    "que": "veces",
+    "fuente": "logs-pre-2026-09-28-rag2-B.txt"
+   }
   },
   {
    "id": "r_revisor",
@@ -823,7 +839,12 @@
     "p50": 1.2,
     "fuente": "medido dentro de PRE el 28-sep (8 preguntas, HISTORY 0.29.65)"
    },
-   "marca": "openai"
+   "marca": "openai",
+   "conteo": {
+    "n": 47,
+    "que": "veces",
+    "fuente": "logs-pre-2026-09-28-rag2-B.txt"
+   }
   },
   {
    "id": "r_reintento",
@@ -842,7 +863,12 @@
      "sin_efecto": false
     }
    ],
-   "modelos": []
+   "modelos": [],
+   "conteo": {
+    "n": 10,
+    "que": "veces",
+    "fuente": "logs-pre-2026-09-28-rag2-B.txt"
+   }
   },
   {
    "id": "r_nolotengo",
@@ -853,7 +879,12 @@
    "que_hace": "Si el reintento también falla, un mensaje honesto que ofrece un asesor.",
    "donde": "src/agents/rag_agent.py:FALLBACK_ES",
    "modelos": [],
-   "interruptores": []
+   "interruptores": [],
+   "conteo": {
+    "n": 3,
+    "que": "veces",
+    "fuente": "logs-pre-2026-09-28-rag2-B.txt"
+   }
   },
   {
    "id": "r_salida",
@@ -863,7 +894,12 @@
    "titulo": "Respuesta aprobada",
    "que_hace": "La respuesta que pasó el revisor vuelve a la ruta que preguntó.",
    "modelos": [],
-   "interruptores": []
+   "interruptores": [],
+   "conteo": {
+    "n": 37,
+    "que": "veces",
+    "fuente": "logs-pre-2026-09-28-rag2-B.txt"
+   }
   }
  ],
  "aristas": [
@@ -1072,45 +1108,50 @@
    "a": "cascada",
    "etiqueta": "sin regla",
    "estilo": "respaldo",
-   "peso": 0.08,
+   "peso": 0.05,
    "origen": "curada",
-   "vista": "general"
+   "vista": "general",
+   "peso_fuente": "estimado"
   },
   {
    "de": "changes",
    "a": "cascada",
    "etiqueta": "sin regla",
    "estilo": "respaldo",
-   "peso": 0.08,
+   "peso": 0.05,
    "origen": "curada",
-   "vista": "general"
+   "vista": "general",
+   "peso_fuente": "estimado"
   },
   {
    "de": "deflection",
    "a": "cascada",
    "etiqueta": "sin regla",
    "estilo": "respaldo",
-   "peso": 0.08,
+   "peso": 0.05,
    "origen": "curada",
-   "vista": "general"
+   "vista": "general",
+   "peso_fuente": "estimado"
   },
   {
    "de": "info",
    "a": "cascada",
    "etiqueta": "sin regla",
    "estilo": "respaldo",
-   "peso": 0.08,
+   "peso": 0.05,
    "origen": "curada",
-   "vista": "general"
+   "vista": "general",
+   "peso_fuente": "estimado"
   },
   {
    "de": "booking",
    "a": "cascada",
    "etiqueta": "sin regla",
    "estilo": "respaldo",
-   "peso": 0.08,
+   "peso": 0.05,
    "origen": "curada",
-   "vista": "general"
+   "vista": "general",
+   "peso_fuente": "estimado"
   },
   {
    "de": "cascada",
@@ -1268,19 +1309,21 @@
    "de": "r_reglas",
    "a": "r_reescribir",
    "etiqueta": "no es texto fijo",
-   "peso": 0.9,
+   "peso": 0.97,
    "origen": "curada",
    "estilo": "normal",
-   "vista": "info"
+   "vista": "info",
+   "peso_fuente": "estimado"
   },
   {
    "de": "r_reglas",
    "a": "r_salida",
    "etiqueta": "texto fijo",
    "estilo": "atajo",
-   "peso": 0.1,
+   "peso": 0.03,
    "origen": "curada",
-   "vista": "info"
+   "vista": "info",
+   "peso_fuente": "estimado"
   },
   {
    "de": "r_reescribir",
@@ -1334,55 +1377,61 @@
    "de": "r_guardas",
    "a": "r_revisor",
    "etiqueta": "pasa",
-   "peso": 0.97,
+   "peso": 1.0,
    "origen": "curada",
    "estilo": "normal",
-   "vista": "info"
+   "vista": "info",
+   "peso_fuente": "medido"
   },
   {
    "de": "r_guardas",
    "a": "r_reintento",
    "etiqueta": "falla",
    "estilo": "bucle",
-   "peso": 0.03,
+   "peso": 0.0,
    "origen": "curada",
-   "vista": "info"
+   "vista": "info",
+   "peso_fuente": "medido"
   },
   {
    "de": "r_revisor",
    "a": "r_salida",
    "etiqueta": "todo SÍ",
-   "peso": 0.85,
+   "peso": 0.7872,
    "origen": "curada",
    "estilo": "normal",
-   "vista": "info"
+   "vista": "info",
+   "peso_fuente": "medido"
   },
   {
    "de": "r_revisor",
    "a": "r_reintento",
    "etiqueta": "algún NO",
    "estilo": "bucle",
-   "peso": 0.15,
+   "peso": 0.2128,
    "origen": "curada",
-   "vista": "info"
+   "vista": "info",
+   "peso_fuente": "medido"
   },
   {
    "de": "r_reintento",
    "a": "r_escribir",
    "etiqueta": "quita esto",
    "estilo": "bucle",
-   "peso": 0.8,
+   "peso": 0.7,
    "origen": "curada",
-   "vista": "info"
+   "vista": "info",
+   "peso_fuente": "medido"
   },
   {
    "de": "r_reintento",
    "a": "r_nolotengo",
    "etiqueta": "2º NO",
    "estilo": "bucle",
-   "peso": 0.2,
+   "peso": 0.3,
    "origen": "curada",
-   "vista": "info"
+   "vista": "info",
+   "peso_fuente": "medido"
   }
  ],
  "interruptores": [
@@ -1828,7 +1877,8 @@
     "openrouter"
    ],
    "proveedor": "OpenRouter",
-   "llamadas_ultima_ronda": null
+   "llamadas_ultima_ronda": null,
+   "nota": "Decidió solo 81 de 93 mensajes; en los otros 12 decidió el LLM de respaldo (sus llamadas cuentan en gpt-4o-mini)."
   },
   {
    "ajuste": "openai_embedding_model",
@@ -1938,5 +1988,5 @@
    "model": "gpt-5-mini (medium)"
   }
  },
- "pesos_fuente": "Ronda regen-B2 (28-sep): el revisor rechazó el primer intento en 6 de ~39 turnos con RAG (~15 %) y 1 de esos 6 volvió a fallar (~20 %). El paso a la cascada (~8 %) y los textos fijos (~10 %) son estimaciones."
+ "pesos_fuente": "Los % del enrutador y de las fases de la reserva salen de la foto de la ronda; los del revisor y el reintento, de los logs de PRE de la misma ronda. La cascada y los textos fijos no dejan rastro medible: se animan con una estimación y no llevan porcentaje."
 }

@@ -1,6 +1,15 @@
 History
 =======
 
+0.29.82 - (2026-09-29)
+----------------------
+* **Mapa de Coral v4: los números cuadran y solo se ven los medidos** (revisión pedida por Álvaro: cada ruta enseñaba "92 %" y el 8 % restante no aparecía; era una estimación de la cascada, sin medir).
+  - Regla nueva: **solo lleva % un reparto medido** (la foto de la ronda o los logs de PRE de la misma ronda) y los de cada pieza **suman 100** (redondeo por mayor resto). Lo estimado (la cascada, los textos fijos del RAG) se anima pero no lleva número, y la pieza dice "sin medir". El panel de cada pieza enseña su reparto completo ("Después").
+  - **Reparto del RAG medido con los logs** (`scripts/arquitectura.py` `conteos_rag`, `logs-pre-<ronda>.txt`): en `rag2-B`, 41 preguntas; 47 respuestas escritas = 47 revisiones = las 47 llamadas a gpt-4.1-mini y a gpt-4.1 de la foto; revisor 37 SÍ / 10 NO (79 / 21 %); reintento 7 vuelven a escribir / 3 "no lo tengo" (70 / 30 %); 37 aprobadas + 3 "no lo tengo" + 1 texto fijo = 41. Test con un log sintético.
+  - **Enrutador** 85 / 8 / 4 / 2 / 1 % (79 + 7 + 4 + 2 + 1 = 93 mensajes). **Reserva**: bajo "Disponibilidad" y "Entender los datos", "3 % contesta aquí" (2 de 79 y 2 de 77). **Jev**: decidió solo 81 de 93; los otros 12, el LLM de respaldo. La pieza "Información" explica por qué solo recibe 4 mensajes cuando hubo 41 preguntas (la mayoría se contestan desde la Reserva, «contesta y sigue»).
+  - El botón "Servicios" solo ocultaba la banda de abajo del todo (no se veía el efecto): ahora es **"Conexiones"** y muestra a la vez todas las líneas hacia datos, servicios y tareas en paralelo. La banda de servicios se ve siempre.
+  - Pendiente para medir la cascada: que el bot anote en `[TURN_METRICS]` cuándo una ruta cae en ella (hoy no deja rastro).
+
 0.29.81 - (2026-09-29)
 ----------------------
 * **Mapa de Coral v3:** cada pieza que usa un servicio o un modelo lleva su **logo** (OpenAI, OpenRouter/Jev, Chatwoot, Redis, PostgreSQL, GitHub Actions, Docker; monocromos, de Simple Icons CC0, en `docs/arquitectura/logos.json`). Si la pieza llama a un modelo y no se dice otra cosa, `scripts/arquitectura.py` pone el logo de su proveedor; falla si se cita un logo que no existe (test nuevo). Corregido el recorte de los % del enrutador en el borde izquierdo (margen propio para la línea de reparto y las etiquetas, que ya no pueden salirse del lienzo).

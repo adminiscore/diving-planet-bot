@@ -138,7 +138,8 @@
       "nodo_grafo": "info",
       "zoom": "info",
       "que_hace": "Políticas con texto fijo (alcohol, alergias, edad…) y, para el resto, busca la respuesta en la base de conocimiento (RAG).",
-      "donde": "src/agents/info_agent.py:info_node"
+      "donde": "src/agents/info_agent.py:info_node",
+      "nota": "Por esta ruta solo llegan las preguntas que no son de reserva. La mayoría de las preguntas se contestan desde la Reserva («contesta y sigue»), así que el RAG trabaja muchas más veces de las que pasa un mensaje por aquí."
     },
     {
       "id": "booking",
@@ -159,7 +160,7 @@
       "titulo": "Cascada (respaldo)",
       "que_hace": "El camino antiguo, en orden fijo. Si ninguna regla de una ruta resuelve el mensaje, la ruta se lo pasa aquí.",
       "donde": "src/agents/supervisor.py:_shared_turn_handler",
-      "nota": "Candidata a desaparecer en la 'Limpieza 2' cuando las rutas lo cubran todo.",
+      "nota": "Cuántos mensajes caen aquí está SIN MEDIR: la cascada no deja tiempos propios en los registros. En la animación se usa una estimación pequeña y por eso no lleva porcentaje. Candidata a desaparecer en la 'Limpieza 2'.",
       "capa_de": "booking"
     },
     {
@@ -587,35 +588,35 @@
       "a": "cascada",
       "etiqueta": "sin regla",
       "estilo": "respaldo",
-      "peso": 0.08
+      "peso": 0.05
     },
     {
       "de": "changes",
       "a": "cascada",
       "etiqueta": "sin regla",
       "estilo": "respaldo",
-      "peso": 0.08
+      "peso": 0.05
     },
     {
       "de": "deflection",
       "a": "cascada",
       "etiqueta": "sin regla",
       "estilo": "respaldo",
-      "peso": 0.08
+      "peso": 0.05
     },
     {
       "de": "info",
       "a": "cascada",
       "etiqueta": "sin regla",
       "estilo": "respaldo",
-      "peso": 0.08
+      "peso": 0.05
     },
     {
       "de": "booking",
       "a": "cascada",
       "etiqueta": "sin regla",
       "estilo": "respaldo",
-      "peso": 0.08
+      "peso": 0.05
     },
     {
       "de": "cascada",
@@ -738,14 +739,14 @@
       "de": "r_reglas",
       "a": "r_reescribir",
       "etiqueta": "no es texto fijo",
-      "peso": 0.9
+      "peso": 0.97
     },
     {
       "de": "r_reglas",
       "a": "r_salida",
       "etiqueta": "texto fijo",
       "estilo": "atajo",
-      "peso": 0.1
+      "peso": 0.03
     },
     {
       "de": "r_reescribir",
@@ -837,7 +838,7 @@
     "llm_extraction_cutover_logistics": "Solo lo lee supervisor._maybe_apply_llm_extraction_cutover, que nadie llama.",
     "llm_extraction_shadow_mode": "Su función (_maybe_log_llm_extraction_shadow) no la llama nadie."
   },
-  "pesos_fuente": "Ronda regen-B2 (28-sep): el revisor rechazó el primer intento en 6 de ~39 turnos con RAG (~15 %) y 1 de esos 6 volvió a fallar (~20 %). El paso a la cascada (~8 %) y los textos fijos (~10 %) son estimaciones.",
+  "pesos_fuente": "Los % del enrutador y de las fases de la reserva salen de la foto de la ronda; los del revisor y el reintento, de los logs de PRE de la misma ronda. La cascada y los textos fijos no dejan rastro medible: se animan con una estimación y no llevan porcentaje.",
   "interruptores": {
     "agent_arch": {
       "area": "Arquitectura",

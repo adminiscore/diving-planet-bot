@@ -152,9 +152,45 @@ def _git(*args: str) -> str:
         return ""
 
 
+def conteos_rag(foto_path: Path | None) -> dict | None:
+    """Reparto MEDIDO dentro del RAG con los logs de PRE de la misma ronda (`logs-pre-<ronda>.txt`).
+
+    Cada respuesta escrita pasa por las comprobaciones fijas y, si las pasa, por el revisor; si algo la rechaza,
+    se reintenta una vez y, si vuelve a fallar, sale el "no lo tengo". Líneas del log: `[RAG] Query` (aprobada),
+    `attempt 1 rejected (<motivo>)` y `Rejecting after 2 attempts ... reason=<motivo>` (motivo del juez = HALLUCINATED;
+    otro = una comprobación fija). Sin log de la ronda, None (el mapa no pone % a lo que no se mide).
+    """
+    if foto_path is None:
+        return None
+    log = ROOT / "docs" / "robustness" / f"logs-pre-{foto_path.stem}.txt"
+    if not log.exists():
+        return None
+    lineas = log.read_text(encoding="utf-8", errors="replace").splitlines()
+    aprobadas = sum("[RAG] Query" in ln for ln in lineas)
+    rech1 = [ln for ln in lineas if "attempt 1 rejected" in ln]
+    rech2 = [ln for ln in lineas if "Rejecting after 2 attempts" in ln]
+    if not aprobadas + len(rech1):
+        return None
+    guarda = sum("HALLUCINATED" not in ln for ln in rech1) + sum("HALLUCINATED" not in ln for ln in rech2)
+    juez_no = len(rech1) + len(rech2) - guarda
+    intentos = aprobadas + len(rech1) + len(rech2)  # cada rechazo es un intento que no se aprobó
+    revisiones = aprobadas + juez_no
+    reintentos = len(rech1) + len(rech2)
+    frac = lambda a, b: round(a / b, 4) if b else 0.0  # noqa: E731
+    return {
+        "fuente": log.name,
+        "conteos": {"r_escribir": intentos, "r_guardas": intentos, "r_revisor": revisiones, "r_reintento": reintentos,
+                    "r_nolotengo": len(rech2), "r_salida": aprobadas},
+        "pesos": {("r_guardas", "r_revisor"): frac(intentos - guarda, intentos), ("r_guardas", "r_reintento"): frac(guarda, intentos),
+                  ("r_revisor", "r_salida"): frac(aprobadas, revisiones), ("r_revisor", "r_reintento"): frac(juez_no, revisiones),
+                  ("r_reintento", "r_escribir"): frac(len(rech1), reintentos), ("r_reintento", "r_nolotengo"): frac(len(rech2), reintentos)},
+    }
+
+
 def construir(curado: dict, g: dict, bools: dict, modelos: dict, pre: dict, foto_path: Path | None, foto: dict) -> dict:
     nodos_foto = foto.get("nodes", {})
     llamadas = foto.get("models", {}) or {}
+    rag = conteos_rag(foto_path)
     comps = []
     for c in curado["componentes"]:
         c = dict(c)
@@ -168,6 +204,10 @@ def construir(curado: dict, g: dict, bools: dict, modelos: dict, pre: dict, foto
         nodo = c.get("nodo_grafo")
         if nodo and nodo in nodos_foto:
             c["tiempos"] = nodos_foto[nodo]
+        if rag and c["id"] in rag["conteos"]:
+            c["conteo"] = {"n": rag["conteos"][c["id"]], "que": "veces", "fuente": rag["fuente"]}
+        if c["id"] == "r_entrada" and (foto.get("by_type") or {}).get("rag"):
+            c["conteo"] = {"n": foto["by_type"]["rag"]["turns"], "que": "preguntas", "fuente": foto_path.name if foto_path else ""}
         comps.append(c)
 
     # Aristas: las del grafo real (con sus extremos traducidos) + las curadas, sin duplicar.
@@ -193,6 +233,11 @@ def construir(curado: dict, g: dict, bools: dict, modelos: dict, pre: dict, foto
     vista_de = {c["id"]: c["vista"] for c in comps}
     for a in aristas:
         a["vista"] = vista_de[a["de"]]
+        # Un peso curado es una ESTIMACIÓN (sirve para animar, no lleva %); el medido en los logs lo sustituye.
+        if rag and (a["de"], a["a"]) in rag["pesos"]:
+            a["peso"], a["peso_fuente"] = rag["pesos"][(a["de"], a["a"])], "medido"
+        elif a.get("peso") is not None:
+            a["peso_fuente"] = a.get("peso_fuente", "estimado")
 
     usados_f: dict[str, list[str]] = {}
     usados_m: dict[str, list[str]] = {}
@@ -208,6 +253,13 @@ def construir(curado: dict, g: dict, bools: dict, modelos: dict, pre: dict, foto
     modelos_out = [{"ajuste": k, "codigo": v, "pre": pre.get(k, v), "usado_por": usados_m.get(k, []),
                     "proveedor": "OpenRouter" if "/" in str(pre.get(k, v)) else "OpenAI",
                     "llamadas_ultima_ronda": llamadas.get(pre.get(k, v))} for k, v in sorted(modelos.items())]
+    backends = ((foto.get("router") or {}).get("by_backend") or {}) if foto else {}
+    if backends:  # Jev no sale en las llamadas a OpenAI: su uso es el reparto del enrutador
+        total = sum(backends.values())
+        for m in modelos_out:
+            if m["ajuste"] == "jev_model":
+                m["nota"] = (f"Decidió solo {backends.get('jev', 0)} de {total} mensajes; en los otros "
+                             f"{total - backends.get('jev', 0)} decidió el LLM de respaldo (sus llamadas cuentan en gpt-4o-mini).")
 
     ronda = {}
     if foto:

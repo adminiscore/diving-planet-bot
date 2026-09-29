@@ -247,7 +247,10 @@ antes de avanzar. Estamos en el bloque **"RAG, calidad y latencia"** del orden d
 con los tiempos de la última ronda. Se regenera con `ENV_FILE=.env.ci python -m scripts.arquitectura` y se republica
 en la misma URL (paso 12 de `/closework`); `tests/test_arquitectura.py` obliga a describir cada caja nueva del grafo
 en `docs/arquitectura/componentes.json`, y cada interruptor nuevo necesita su nombre y frase en llano en el mismo fichero
-(`"interruptores"`). Es privado de Álvaro: compartirlo desde su menú para que lo vea el equipo.
+(`"interruptores"`). Es privado de Álvaro: compartirlo desde su menú para que lo vea el equipo. **Regla de los números
+(HISTORY 0.29.82):** solo lleva % lo medido (foto de la ronda o `logs-pre-<ronda>.txt`, que `scripts.arquitectura` lee
+si existe) y los de cada pieza suman 100; un `peso` curado es una estimación y no se muestra. Guardar el log de PRE de
+cada ronda junto a su foto para que el reparto del RAG salga medido.
 
 **Riesgos y avisos aprendidos hoy:**
 - **Disco del VPS (29-sep):** se llenó con el registro de Chatwoot (26 GB, sin tope). Ya hay tope de 50 MB × 3 por
