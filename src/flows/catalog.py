@@ -270,6 +270,78 @@ def _load_services() -> dict:
 
 SERVICES = _load_services()
 
+
+def _load_raw_services() -> dict:
+    """Las entradas de services.json TAL CUAL, sin la transformacion de `_load_services`.
+
+    Hacen falta para `service_fact_sheet` (rag-3): la ficha de la base v2 se construye desde el
+    JSON crudo (`included_es`, `duration_note_es`…), no desde las claves renombradas de `SERVICES`
+    (`includes_es`, ya unido y saneado). Construir la ficha desde dos entradas distintas es
+    exactamente lo que rag-2 vino a evitar: dos textos del mismo servicio que pueden diferir."""
+    path = Path(__file__).resolve().parents[2] / "data" / "knowledge_base" / "services.json"
+    return json.loads(path.read_text(encoding="utf-8-sig")).get("services", {})
+
+
+RAW_SERVICES = _load_raw_services()
+
+# Etiquetas de la ficha de servicio. Vienen de `scripts/kb_v2.py` (rag-2), donde nacieron para
+# construir la base curada; viven aqui desde rag-3 porque ahora la ficha se usa en DOS sitios
+# (la base v2 y el contexto del turno) y tienen que ser el mismo texto.
+_SHEET_T = {
+    "es": {"ficha": "Ficha del servicio", "desde": "saliendo desde Cartagena",
+           "islas": "para quien ya está en las Islas del Rosario (recogida en el hotel si tiene acceso marítimo)",
+           "datos": "Datos", "incluye": "Incluye", "no_incluye": "No incluye", "itinerario": "Itinerario",
+           "requisitos": "Requisitos", "preparacion": "Antes de la actividad", "reserva": "Reserva",
+           "info": "Más información", "edad10": "edad mínima 10"},
+    "en": {"ficha": "Service sheet", "desde": "departing from Cartagena",
+           "islas": "for guests already on the Rosario Islands (hotel pick-up if it has boat access)",
+           "datos": "Facts", "incluye": "Included", "no_incluye": "Not included",
+           "itinerario": "Itinerary", "requisitos": "Requirements", "preparacion": "Before the activity",
+           "reserva": "Booking", "info": "More info", "edad10": "minimum age 10"},
+}
+
+
+def _sheet_list(titulo: str, items) -> str:
+    if isinstance(items, str):
+        return f"{titulo}: {items}" if items.strip() else ""
+    items = [i for i in (items or []) if i]
+    return f"{titulo}:\n" + "\n".join(f"- {i}" for i in items) if items else ""
+
+
+def service_fact_sheet(service_id: str, lang: str, svc: dict | None = None) -> str:
+    """La ficha autocontenida de un servicio: qué es, datos, incluye/no incluye, itinerario,
+    requisitos, preparación y enlaces.
+
+    UNA sola fuente para dos usos (rag-3, 29-sep): el documento de la base curada v2
+    (`scripts/kb_v2.ficha_servicio`, que solo le añade sus metadatos) y el contexto del turno
+    cuando ya se sabe qué servicio mira el cliente. Antes, el contexto solo inyectaba
+    incluye/no incluye, así que "¿a qué hora acaba el día 1?" con el Open Water elegido dependía
+    de que la búsqueda encontrase la ficha — y no la encontraba (`rag_piezas`: fuera del top-8).
+
+    `svc` es la entrada CRUDA de services.json; por defecto la de `RAW_SERVICES`."""
+    svc = RAW_SERVICES[service_id] if svc is None else svc
+    t = _SHEET_T[lang]
+    island = service_id.endswith("_already_on_island")
+    partes = service_fact_parts(service_id, lang) if service_id in SERVICES else []
+    if partes and not any("edad" in p or "age" in p for p in partes) and SERVICES[service_id].get("min_age") == 10:
+        partes.append(t["edad10"])
+    bloques = [
+        f"{t['ficha']}: {svc.get(f'name_{lang}') or service_id} — {t['islas'] if island else t['desde']}",
+        svc.get(f"description_{lang}") or "",
+        f"{t['datos']}: " + "; ".join(partes) + "." if partes else "",
+        svc.get(f"duration_note_{lang}") or "",
+        _sheet_list(t["incluye"], svc.get(f"included_{lang}")),
+        _sheet_list(t["no_incluye"], svc.get(f"not_included_{lang}")),
+        _sheet_list(t["itinerario"], svc.get(f"itinerary_{lang}")),
+        _sheet_list(t["requisitos"], svc.get(f"requirements_{lang}")),
+        _sheet_list(t["preparacion"], svc.get(f"preparation_{lang}")),
+        " · ".join(x for x in (
+            f"{t['reserva']}: {svc['booking_url']}" if svc.get("booking_url") and not svc.get("contact_only") else "",
+            f"{t['info']}: {svc['url']}" if svc.get("url") else "") if x),
+    ]
+    return "\n\n".join(b for b in bloques if b.strip())
+
+
 # Servicio desde Cartagena -> su variante "ya en las islas". Se deriva de la
 # convencion de ids de services.json (`<id>_already_on_island`, que valida
 # `src.domain.activities.validate`) en vez de mantenerse a mano: la lista escrita

@@ -1799,7 +1799,30 @@ def _build_extra_context(state: ConversationState) -> str | None:
             from src.flows.catalog import SERVICES
 
             active_service = SERVICES.get(active_service_id)
-            if active_service:
+            if active_service and settings.rag_ficha_del_servicio:
+                # rag-3: la ficha ENTERA, la misma que la base v2 (`catalog.service_fact_sheet`), no solo
+                # incluye/no incluye. El caso que lo abrió: "what time does the course finish on the first
+                # day?" con el Open Water elegido — la hora está en el itinerario de la ficha, y la búsqueda
+                # no metía la ficha en el top-8 (`rag_piezas`, 2026-09-28-rag2-B2).
+                from src.flows.catalog import service_fact_sheet
+
+                name = active_service.get(f"name_{state.language}", active_service_id)
+                es = state.language == "es"
+                parts.append(
+                    f"Actividad que el cliente esta viendo/considerando ahora: {name}. Su ficha completa:"
+                     if es else
+                     f"Activity the customer is currently viewing/considering: {name}. Its full sheet:"
+                )
+                parts.append(service_fact_sheet(active_service_id, state.language))
+                parts.append(
+                    "Usa esta ficha como fuente de verdad para lo que incluye o no, equipo, seguro, "
+                     "horarios, itinerario y requisitos de ESTA actividad; no necesitas buscar en otra parte."
+                     if es else
+                     "Use this sheet as the source of truth for what is or isn't included, equipment, "
+                     "insurance, schedule, itinerary and requirements of THIS activity; no need to search "
+                     "elsewhere."
+                )
+            elif active_service:
                 name = active_service.get(f"name_{state.language}", active_service_id)
                 includes = active_service.get(f"includes_{state.language}")
                 not_included = active_service.get(f"not_included_{state.language}") or []

@@ -59,27 +59,17 @@ def _lista(titulo: str, items) -> str:
 
 
 def ficha_servicio(service_id: str, svc: dict, lang: str) -> dict:
-    from src.flows.catalog import SERVICES, service_fact_parts
+    """El documento de un servicio en la base v2: la ficha + sus metadatos.
 
-    t = _T[lang]
+    El TEXTO lo construye `catalog.service_fact_sheet` (rag-3): la misma funcion que arma la ficha
+    que se inyecta en el contexto del turno cuando ya se sabe que servicio mira el cliente. Vivia
+    aqui hasta rag-2, cuando solo la usaba la base; se movio al tener dos usos, para que la ficha
+    de la base y la del contexto no puedan decir cosas distintas -- que es el principio de rag-2.
+    `tests/test_rag3_ficha_servicio.py` fija que el texto no cambio al moverlo."""
+    from src.flows.catalog import service_fact_sheet
+
     island = service_id.endswith("_already_on_island")
-    partes = service_fact_parts(service_id, lang) if service_id in SERVICES else []
-    if partes and not any("edad" in p or "age" in p for p in partes) and SERVICES[service_id].get("min_age") == 10:
-        partes.append(t["edad10"])
-    bloques = [
-        f"{t['ficha']}: {svc.get(f'name_{lang}') or service_id} — {t['islas'] if island else t['desde']}",
-        svc.get(f"description_{lang}") or "",
-        f"{t['datos']}: " + "; ".join(partes) + "." if partes else "",
-        svc.get(f"duration_note_{lang}") or "",
-        _lista(t["incluye"], svc.get(f"included_{lang}")),
-        _lista(t["no_incluye"], svc.get(f"not_included_{lang}")),
-        _lista(t["itinerario"], svc.get(f"itinerary_{lang}")),
-        _lista(t["requisitos"], svc.get(f"requirements_{lang}")),
-        _lista(t["preparacion"], svc.get(f"preparation_{lang}")),
-        " · ".join(x for x in (f"{t['reserva']}: {svc['booking_url']}" if svc.get("booking_url") and not svc.get("contact_only") else "",
-                               f"{t['info']}: {svc['url']}" if svc.get("url") else "") if x),
-    ]
-    texto = "\n\n".join(b for b in bloques if b.strip())
+    texto = service_fact_sheet(service_id, lang, svc)
     return {"content": texto, "metadata": {
         "source": "services", "key": f"ficha:{service_id}", "service_id": service_id, "lang": lang,
         "origin": "islas" if island else "cartagena", "topics": detect_topics(texto)}}
