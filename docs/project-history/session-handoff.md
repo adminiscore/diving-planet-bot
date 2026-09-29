@@ -13,6 +13,35 @@ Read this file before changing code in the Diving Planet Bot. For a quick versio
 
 > **📏 LEER ANTES DE MEDIR — decisiones del 24-sep-2026 (Gadea):** (1) latencia y llamadas con nuestros logs `[TURN_METRICS]` + `scripts/turn_metrics.py`, no con Langfuse (plan gratuito superado, reinicio 16-oct); (2) pruebas A/B por escalones, juzgando solo los diálogos que cambian. Todo en `docs/robustness/protocolo-medicion.md`.
 
+### 🔧 29-sep tarde (Gonzalo) — rag-3 y rag-4 medidos: **A/B NEGATIVO, los dos flags apagados**
+
+**Resultado que manda** (47 casos × 1 por lado, `rag_piezas --codigo-local`, ~2,8 $): con
+`RAG_FICHA_DEL_SERVICIO` + `RAG_CONTESTA_LO_QUE_SABE` encendidos, **la cobertura no se mueve
+(89 % → 89 %)**, los fallos de búsqueda bajan 4 → 2, pero los **rechazos del juez suben 2 → 8**,
+las regeneraciones 2 → 7 y aparece **un dato PROHIBIDO**. Por caso: gana 3, pierde 4. **No se
+promociona ninguno. PRE no cambia.**
+
+**La lección, que vale más que el resultado**: en `refresher-antes-en` el bot dice que el refresher
+lleva "4 horas de teoría" — eso es del **curso Open Water**. Con la ficha ENTERA del servicio en el
+contexto (rag-3b) **más** la instrucción de "di lo que tengas" (rag-4), el modelo **cruza datos
+entre servicios**. Los dos cambios se potencian mal: uno mete más material y el otro empuja a
+usarlo.
+
+**Y un aviso de método**: rag-4 medido sobre 5 casos daba 57 % → 79 % de cobertura. Sobre los 47,
+nada. Cinco casos no bastan para decidir.
+
+**Siguiente, en orden:**
+1. **rag-4 SOLO sobre los 47** (~2,8 $): lo de hoy mezcla los dos flags y no se sabe si el daño lo
+   mete rag-4, rag-3b o la interacción. La hipótesis dice que es la combinación.
+2. Si se confirma, **acotar rag-3b**: inyectar solo itinerario y requisitos, no la ficha entera.
+3. `refresher-antes-en` aparte: el formulario médico ya fallaba en rag-2 y ahora además se confunde
+   con el curso. Huele a que **el refresher necesita su propia ficha en la base curada**.
+
+**⚠️ Error propio, para que no se repita**: la primera tanda se perdió a medias (23 de 47, ~0,7 $)
+porque **un push a `feature/pre_gadea` dispara un deploy que RECREA el contenedor**, y
+`rag_piezas --codigo-local` corre DENTRO de él. El handoff ya avisaba para las rondas en PRE: vale
+igual para las mediciones con código local. **No empujar a `pre_*` hasta terminar de medir.**
+
 ### 🔧 29-sep tarde (Gonzalo) — rag-3 a medias: la mitad de los nombres HECHA y medida; la de la búsqueda, detrás de flag
 
 Detalle completo: `docs/robustness/rag-3/README.md`. HISTORY 0.29.74. **PRE no ha cambiado** (el flag nuevo
