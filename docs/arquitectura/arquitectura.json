@@ -1,0 +1,1759 @@
+{
+ "meta": {
+  "generado": "2026-09-29T17:07:05+00:00",
+  "commit": "bb518ac",
+  "rama": "feature/pre_alvaro"
+ },
+ "vistas": {
+  "general": {
+   "titulo": "Coral por fuera",
+   "subtitulo": "El camino de un mensaje, de que el cliente escribe a que recibe la respuesta"
+  },
+  "booking": {
+   "titulo": "Reserva por dentro",
+   "subtitulo": "Las 5 fases que arman la reserva; cada una puede contestar y terminar el turno",
+   "padre": "booking"
+  },
+  "info": {
+   "titulo": "Preguntas (RAG) por dentro",
+   "subtitulo": "Cómo contesta una pregunta sin inventar: buscar, escribir, revisar",
+   "padre": "info"
+  }
+ },
+ "componentes": [
+  {
+   "id": "cliente",
+   "vista": "general",
+   "carril": "flujo",
+   "tipo": "entrada",
+   "titulo": "Cliente",
+   "que_hace": "Escribe por WhatsApp o por la web. Puede mandar texto, pulsar un botón o mandar una nota de voz.",
+   "modelos": [],
+   "interruptores": []
+  },
+  {
+   "id": "chatwoot",
+   "vista": "general",
+   "carril": "flujo",
+   "tipo": "externo",
+   "titulo": "Chatwoot",
+   "que_hace": "La plataforma de chat. Recibe el mensaje del cliente, avisa al bot y muestra lo que el bot contesta.",
+   "nota": "Servidor propio en el VPS (contenedor dp-chatwoot).",
+   "modelos": [],
+   "interruptores": []
+  },
+  {
+   "id": "entrada",
+   "vista": "general",
+   "carril": "flujo",
+   "tipo": "entrada",
+   "titulo": "Entrada",
+   "que_hace": "El mensaje llega por dos puertas: el aviso de Chatwoot (webhook) y una revisión cada segundo, que atrapa los clics en botones.",
+   "donde": "src/channels/chatwoot.py:chatwoot_webhook",
+   "detalle": [
+    "Aviso: POST /webhooks/chatwoot",
+    "Revisión cada 1 s: poll_active_conversations_once"
+   ],
+   "modelos": [],
+   "interruptores": []
+  },
+  {
+   "id": "preparacion",
+   "vista": "general",
+   "carril": "flujo",
+   "tipo": "entrada",
+   "titulo": "Preparar el turno",
+   "que_hace": "Descarta mensajes repetidos, cierra la conversación para que no se mezclen dos mensajes, carga lo que ya sabe del cliente, pasa las notas de voz a texto y enciende el 'escribiendo…'.",
+   "donde": "src/channels/chatwoot.py:handle_message",
+   "modelos": [
+    {
+     "ajuste": "openai_transcription_model",
+     "codigo": "gpt-4o-mini-transcribe",
+     "pre": "gpt-4o-mini-transcribe"
+    }
+   ],
+   "interruptores": [
+    {
+     "nombre": "chatwoot_typing_indicator",
+     "codigo": true,
+     "pre": true,
+     "sin_efecto": false
+    }
+   ]
+  },
+  {
+   "id": "route_message",
+   "vista": "general",
+   "carril": "flujo",
+   "tipo": "cerebro",
+   "titulo": "Director del turno",
+   "que_hace": "Abre la traza del turno y manda el mensaje al grafo de agentes. Al final recoge las tareas en paralelo.",
+   "donde": "src/agents/supervisor.py:route_message",
+   "interruptores": [
+    {
+     "nombre": "agent_arch",
+     "codigo": true,
+     "pre": true,
+     "sin_efecto": false
+    }
+   ],
+   "modelos": []
+  },
+  {
+   "id": "router",
+   "vista": "general",
+   "carril": "flujo",
+   "tipo": "cerebro",
+   "titulo": "Enrutador",
+   "nodo_grafo": "router",
+   "que_hace": "Decide qué tipo de mensaje es. Primero pregunta a Jev (un clasificador rápido); si duda o falla, a un LLM. Luego unas reglas eligen una de las 5 rutas.",
+   "donde": "src/orchestration/graph.py:_router_node",
+   "modelos": [
+    {
+     "ajuste": "jev_model",
+     "codigo": "typesafe/jev-1.13",
+     "pre": "typesafe/jev-1.13"
+    },
+    {
+     "ajuste": "extraction_model",
+     "codigo": "gpt-4o-mini",
+     "pre": "gpt-4o-mini"
+    }
+   ],
+   "interruptores": [
+    {
+     "nombre": "jev_router_enabled",
+     "codigo": false,
+     "pre": true,
+     "sin_efecto": false
+    },
+    {
+     "nombre": "s4_fixes",
+     "codigo": true,
+     "pre": true,
+     "sin_efecto": false
+    }
+   ],
+   "detalle": [
+    "Jev: jev_router.detect_routing_signals_jev_full (OpenRouter)",
+    "LLM de respaldo: escalation.detect_routing_signals",
+    "Reglas: orchestration/router.classify_route"
+   ],
+   "tiempos": {
+    "n": 93,
+    "p50": 1.332,
+    "p95": 3.958
+   }
+  },
+  {
+   "id": "safety",
+   "vista": "general",
+   "carril": "flujo",
+   "tipo": "agente",
+   "titulo": "Seguridad",
+   "nodo_grafo": "safety",
+   "que_hace": "Datos personales, links rotos, temas delicados o cuando hace falta una persona: pasa el caso a un asesor.",
+   "donde": "src/agents/escalation_agent.py:escalation_node",
+   "modelos": [],
+   "interruptores": [],
+   "tiempos": {
+    "n": 6,
+    "p50": 0.002,
+    "p95": 0.002
+   }
+  },
+  {
+   "id": "changes",
+   "vista": "general",
+   "carril": "flujo",
+   "tipo": "agente",
+   "titulo": "Cambios",
+   "nodo_grafo": "changes",
+   "que_hace": "Cancelar, cambiar de fecha o de número de personas: explica la política y ofrece botones.",
+   "donde": "src/agents/changes_agent.py:changes_node",
+   "modelos": [],
+   "interruptores": [],
+   "tiempos": {
+    "n": 2,
+    "p50": 0.003,
+    "p95": 0.004
+   }
+  },
+  {
+   "id": "deflection",
+   "vista": "general",
+   "carril": "flujo",
+   "tipo": "agente",
+   "titulo": "Desvío",
+   "nodo_grafo": "deflection",
+   "que_hace": "Preguntas que tienen respuesta fija: '¿me das un teléfono?', '¿eres un bot?'.",
+   "donde": "src/agents/deflection_agent.py:deflection_node",
+   "modelos": [],
+   "interruptores": [],
+   "tiempos": {
+    "n": 1,
+    "p50": 0.002,
+    "p95": 0.002
+   }
+  },
+  {
+   "id": "info",
+   "vista": "general",
+   "carril": "flujo",
+   "tipo": "agente",
+   "titulo": "Información",
+   "nodo_grafo": "info",
+   "zoom": "info",
+   "que_hace": "Políticas con texto fijo (alcohol, alergias, edad…) y, para el resto, busca la respuesta en la base de conocimiento (RAG).",
+   "donde": "src/agents/info_agent.py:info_node",
+   "modelos": [],
+   "interruptores": [],
+   "tiempos": {
+    "n": 4,
+    "p50": 4.591,
+    "p95": 5.551
+   }
+  },
+  {
+   "id": "booking",
+   "vista": "general",
+   "carril": "flujo",
+   "tipo": "agente",
+   "titulo": "Reserva",
+   "nodo_grafo": "booking",
+   "zoom": "booking",
+   "que_hace": "La ruta más usada: entiende qué quiere el cliente, pregunta lo que falta y arma el resumen con el link para pagar.",
+   "donde": "src/agents/booking_agent.py:booking_node",
+   "modelos": [],
+   "interruptores": [],
+   "tiempos": {
+    "n": 80,
+    "p50": 1.836,
+    "p95": 7.856
+   }
+  },
+  {
+   "id": "cascada",
+   "vista": "general",
+   "carril": "flujo",
+   "tipo": "respaldo",
+   "titulo": "Cascada (respaldo)",
+   "que_hace": "El camino antiguo, en orden fijo. Si ninguna regla de una ruta resuelve el mensaje, la ruta se lo pasa aquí.",
+   "donde": "src/agents/supervisor.py:_shared_turn_handler",
+   "nota": "Candidata a desaparecer en la 'Limpieza 2' cuando las rutas lo cubran todo.",
+   "modelos": [],
+   "interruptores": []
+  },
+  {
+   "id": "cierre",
+   "vista": "general",
+   "carril": "flujo",
+   "tipo": "salida",
+   "titulo": "Cerrar el turno",
+   "que_hace": "Junta la respuesta con lo que se preparó en paralelo y, cada 24 mensajes, actualiza el resumen de la conversación.",
+   "donde": "src/agents/conversation_summarizer.py:maybe_update_summary",
+   "modelos": [
+    {
+     "ajuste": "openai_model",
+     "codigo": "gpt-4o-mini",
+     "pre": "gpt-4o-mini"
+    }
+   ],
+   "interruptores": []
+  },
+  {
+   "id": "envio",
+   "vista": "general",
+   "carril": "flujo",
+   "tipo": "salida",
+   "titulo": "Enviar",
+   "que_hace": "Deja una nota privada para el equipo si hace falta, pasa a un humano si toca, envía la respuesta (con botones) y apaga el 'escribiendo…'.",
+   "donde": "src/channels/chatwoot.py:finalize_chatwoot_delivery",
+   "modelos": [],
+   "interruptores": []
+  },
+  {
+   "id": "estado",
+   "vista": "general",
+   "carril": "apoyo",
+   "tipo": "datos",
+   "titulo": "Memoria de la conversación",
+   "que_hace": "Lo que el bot sabe de cada cliente (actividad, personas, fechas, historial). Se lee al empezar y se guarda al terminar.",
+   "donde": "src/state_store.py:save_state",
+   "nota": "Redis (contenedor dp-pre-redis).",
+   "modelos": [],
+   "interruptores": []
+  },
+  {
+   "id": "openai",
+   "vista": "general",
+   "carril": "apoyo",
+   "tipo": "externo",
+   "titulo": "OpenAI",
+   "que_hace": "Los modelos que escriben, extraen datos, revisan y pasan la voz a texto. Todas las llamadas pasan por un punto con límite de 30 s.",
+   "donde": "src/llm_client.py:trace_openai",
+   "nota": "Misma cuenta para PRE y para las pruebas: si se queda sin crédito, el bot no contesta.",
+   "modelos": [],
+   "interruptores": []
+  },
+  {
+   "id": "openrouter",
+   "vista": "general",
+   "carril": "apoyo",
+   "tipo": "externo",
+   "titulo": "OpenRouter (Jev)",
+   "que_hace": "Donde vive Jev, el clasificador rápido que elige la ruta y detecta señales (pregunta, corrección, pide persona…).",
+   "donde": "src/agents/jev_router.py:detect_routing_signals_jev_full",
+   "modelos": [
+    {
+     "ajuste": "jev_model",
+     "codigo": "typesafe/jev-1.13",
+     "pre": "typesafe/jev-1.13"
+    }
+   ],
+   "interruptores": [
+    {
+     "nombre": "jev_router_enabled",
+     "codigo": false,
+     "pre": true,
+     "sin_efecto": false
+    }
+   ]
+  },
+  {
+   "id": "kb",
+   "vista": "general",
+   "carril": "apoyo",
+   "tipo": "datos",
+   "titulo": "Base de conocimiento",
+   "que_hace": "Preguntas frecuentes, políticas y servicios convertidos en vectores para buscar por significado (718 documentos).",
+   "donde": "src/knowledge/vector_store.py:search_knowledge_base",
+   "modelos": [
+    {
+     "ajuste": "openai_embedding_model",
+     "codigo": "text-embedding-3-small",
+     "pre": "text-embedding-3-small"
+    }
+   ],
+   "nota": "Postgres + pgvector, tabla kb_documents. Se recarga en cada deploy (scripts/load_embeddings.py).",
+   "interruptores": []
+  },
+  {
+   "id": "catalogo",
+   "vista": "general",
+   "carril": "apoyo",
+   "tipo": "datos",
+   "titulo": "Catálogo",
+   "que_hace": "Planes, precios, duración y qué incluye cada uno. Es la fuente de verdad que ven el bot y el revisor.",
+   "donde": "src/flows/catalog.py:catalog_facts",
+   "modelos": [],
+   "interruptores": []
+  },
+  {
+   "id": "metricas",
+   "vista": "general",
+   "carril": "apoyo",
+   "tipo": "externo",
+   "titulo": "Métricas",
+   "que_hace": "Cada turno deja una línea [TURN_METRICS] con tiempos y llamadas; de ahí salen los números de este mapa.",
+   "donde": "src/observability.py:turn_metrics_line",
+   "nota": "Langfuse sigue conectado (plan gratuito agotado hasta el 16-oct).",
+   "modelos": [],
+   "interruptores": []
+  },
+  {
+   "id": "ci",
+   "vista": "general",
+   "carril": "infra",
+   "tipo": "infra",
+   "titulo": "GitHub CI",
+   "que_hace": "Cada push a una rama pre_* pasa las pruebas y, si salen bien, despliega en PRE.",
+   "donde": ".github/workflows/ci.yml",
+   "modelos": [],
+   "interruptores": []
+  },
+  {
+   "id": "pre",
+   "vista": "general",
+   "carril": "infra",
+   "tipo": "infra",
+   "titulo": "Servidor PRE",
+   "que_hace": "El VPS donde corren el bot, Chatwoot, Postgres y Redis. python -m scripts.check_deploy comprueba que sirve lo último.",
+   "donde": "docker-compose.vps.yml",
+   "modelos": [],
+   "interruptores": []
+  },
+  {
+   "id": "b_entrada",
+   "vista": "booking",
+   "carril": "flujo",
+   "tipo": "entrada",
+   "titulo": "Viene del enrutador",
+   "que_hace": "El enrutador decidió que es un mensaje de reserva.",
+   "modelos": [],
+   "interruptores": []
+  },
+  {
+   "id": "b_setup",
+   "vista": "booking",
+   "carril": "flujo",
+   "tipo": "agente",
+   "titulo": "Preparar",
+   "nodo_grafo": "setup",
+   "que_hace": "Detecta el idioma en el primer mensaje, apunta el nombre y lanza en paralelo las notas y el acuse.",
+   "donde": "src/agents/conversational_core.py:_setup_phase",
+   "modelos": [
+    {
+     "ajuste": "openai_model",
+     "codigo": "gpt-4o-mini",
+     "pre": "gpt-4o-mini"
+    }
+   ],
+   "interruptores": [],
+   "tiempos": {
+    "n": 80,
+    "p50": 0.034,
+    "p95": 0.065
+   }
+  },
+  {
+   "id": "b_availability",
+   "vista": "booking",
+   "carril": "flujo",
+   "tipo": "agente",
+   "titulo": "Disponibilidad",
+   "nodo_grafo": "availability",
+   "que_hace": "Fechas cerradas y preguntas de disponibilidad (estas las contesta el RAG).",
+   "donde": "src/agents/conversational_core.py:_availability_phase",
+   "interruptores": [
+    {
+     "nombre": "rag_v2",
+     "codigo": true,
+     "pre": true,
+     "sin_efecto": false
+    },
+    {
+     "nombre": "s4_fixes",
+     "codigo": true,
+     "pre": true,
+     "sin_efecto": false
+    }
+   ],
+   "modelos": [],
+   "tiempos": {
+    "n": 80,
+    "p50": 0.006,
+    "p95": 0.01
+   }
+  },
+  {
+   "id": "b_routing",
+   "vista": "booking",
+   "carril": "flujo",
+   "tipo": "agente",
+   "titulo": "Señales",
+   "nodo_grafo": "routing",
+   "que_hace": "Lee las señales de Jev: respuestas cortas a lo que se preguntó, correcciones, '¿me recuerdas…?'. Si hay una pregunta, lanza la respuesta en paralelo.",
+   "donde": "src/agents/conversational_core.py:_routing_phase",
+   "modelos": [
+    {
+     "ajuste": "extraction_model",
+     "codigo": "gpt-4o-mini",
+     "pre": "gpt-4o-mini"
+    }
+   ],
+   "interruptores": [
+    {
+     "nombre": "answer_and_continue",
+     "codigo": true,
+     "pre": true,
+     "sin_efecto": false
+    },
+    {
+     "nombre": "corrections_v2",
+     "codigo": true,
+     "pre": true,
+     "sin_efecto": false
+    }
+   ],
+   "tiempos": {
+    "n": 78,
+    "p50": 0.01,
+    "p95": 0.776
+   }
+  },
+  {
+   "id": "b_extraction",
+   "vista": "booking",
+   "carril": "flujo",
+   "tipo": "agente",
+   "titulo": "Entender los datos",
+   "nodo_grafo": "extraction",
+   "que_hace": "Saca del mensaje actividad, personas, fechas, certificación, origen y nacionalidad: primero con reglas y luego con un LLM que rellena y comprueba.",
+   "donde": "src/agents/conversational_core.py:_extraction_phase",
+   "modelos": [
+    {
+     "ajuste": "extraction_model",
+     "codigo": "gpt-4o-mini",
+     "pre": "gpt-4o-mini"
+    }
+   ],
+   "detalle": [
+    "LLM: llm_extractor.extract_and_verify / fill_gaps / verify_fields"
+   ],
+   "interruptores": [],
+   "tiempos": {
+    "n": 76,
+    "p50": 0.86,
+    "p95": 1.926
+   }
+  },
+  {
+   "id": "b_slotfill_close",
+   "vista": "booking",
+   "carril": "flujo",
+   "tipo": "agente",
+   "titulo": "Preguntar o cerrar",
+   "nodo_grafo": "slotfill_close",
+   "que_hace": "Si falta un dato, lo pregunta. Si está todo, arma el resumen con el precio y el link de reserva. Pone delante la respuesta a la pregunta del cliente, si la hubo.",
+   "donde": "src/agents/conversational_core.py:_slotfill_close_phase",
+   "modelos": [
+    {
+     "ajuste": "extraction_model",
+     "codigo": "gpt-4o-mini",
+     "pre": "gpt-4o-mini"
+    }
+   ],
+   "interruptores": [
+    {
+     "nombre": "recommend_inferred_minicourse",
+     "codigo": true,
+     "pre": true,
+     "sin_efecto": false
+    }
+   ],
+   "tiempos": {
+    "n": 75,
+    "p50": 0.825,
+    "p95": 6.806
+   }
+  },
+  {
+   "id": "b_notas",
+   "vista": "booking",
+   "carril": "apoyo",
+   "tipo": "paralelo",
+   "titulo": "Notas (en paralelo)",
+   "que_hace": "Apunta datos sueltos que un asesor querría recordar. Corre mientras el turno sigue.",
+   "donde": "src/agents/notes_extractor.py:extract_notes",
+   "modelos": [
+    {
+     "ajuste": "extraction_model",
+     "codigo": "gpt-4o-mini",
+     "pre": "gpt-4o-mini"
+    }
+   ],
+   "interruptores": [
+    {
+     "nombre": "notes_in_parallel",
+     "codigo": true,
+     "pre": true,
+     "sin_efecto": false
+    }
+   ]
+  },
+  {
+   "id": "b_acuse",
+   "vista": "booking",
+   "carril": "apoyo",
+   "tipo": "paralelo",
+   "titulo": "Acuse (en paralelo)",
+   "que_hace": "Una frase cálida corta ('¡Qué buen plan!') preparada mientras se entiende el mensaje.",
+   "donde": "src/agents/llm_extractor.py:compose_acknowledgement",
+   "modelos": [
+    {
+     "ajuste": "extraction_model",
+     "codigo": "gpt-4o-mini",
+     "pre": "gpt-4o-mini"
+    }
+   ],
+   "interruptores": [
+    {
+     "nombre": "ack_in_parallel",
+     "codigo": true,
+     "pre": true,
+     "sin_efecto": false
+    }
+   ]
+  },
+  {
+   "id": "b_pregunta",
+   "vista": "booking",
+   "carril": "apoyo",
+   "tipo": "paralelo",
+   "titulo": "Respuesta a la pregunta (en paralelo)",
+   "zoom": "info",
+   "que_hace": "Si el cliente pregunta algo en mitad de la reserva, el RAG lo contesta a la vez y la respuesta va delante ('contesta y sigue').",
+   "donde": "src/agents/conversational_core.py:_maybe_launch_answer",
+   "interruptores": [
+    {
+     "nombre": "answer_and_continue",
+     "codigo": true,
+     "pre": true,
+     "sin_efecto": false
+    }
+   ],
+   "modelos": []
+  },
+  {
+   "id": "b_salida",
+   "vista": "booking",
+   "carril": "flujo",
+   "tipo": "salida",
+   "titulo": "Vuelve a cerrar el turno",
+   "que_hace": "La respuesta sale hacia 'Cerrar el turno' y 'Enviar'.",
+   "modelos": [],
+   "interruptores": []
+  },
+  {
+   "id": "r_entrada",
+   "vista": "info",
+   "carril": "flujo",
+   "tipo": "entrada",
+   "titulo": "Llega una pregunta",
+   "que_hace": "Desde la ruta Información o desde la reserva ('contesta y sigue').",
+   "modelos": [],
+   "interruptores": []
+  },
+  {
+   "id": "r_reglas",
+   "vista": "info",
+   "carril": "flujo",
+   "tipo": "agente",
+   "titulo": "Textos fijos y atajos",
+   "que_hace": "Bloquea datos personales y contesta con texto fijo lo que ya tiene respuesta cerrada (políticas, vista general del buceo).",
+   "donde": "src/agents/info_agent.py:info_node",
+   "modelos": [],
+   "interruptores": []
+  },
+  {
+   "id": "r_reescribir",
+   "vista": "info",
+   "carril": "flujo",
+   "tipo": "llm",
+   "titulo": "Reescribir la pregunta",
+   "que_hace": "Convierte '¿y en pesos?' en una pregunta completa usando lo que se habló antes.",
+   "donde": "src/agents/query_rewriter.py:condense_query",
+   "modelos": [
+    {
+     "ajuste": "openai_model",
+     "codigo": "gpt-4o-mini",
+     "pre": "gpt-4o-mini"
+    }
+   ],
+   "interruptores": []
+  },
+  {
+   "id": "r_buscar",
+   "vista": "info",
+   "carril": "flujo",
+   "tipo": "datos",
+   "titulo": "Buscar",
+   "que_hace": "Busca los 8 documentos más parecidos por significado y por palabras, y los mezcla.",
+   "donde": "src/knowledge/vector_store.py:search_knowledge_base",
+   "modelos": [
+    {
+     "ajuste": "openai_embedding_model",
+     "codigo": "text-embedding-3-small",
+     "pre": "text-embedding-3-small"
+    }
+   ],
+   "tiempo_medido": {
+    "p50": 0.4,
+    "fuente": "medido dentro de PRE el 28-sep (8 preguntas, HISTORY 0.29.65)"
+   },
+   "interruptores": []
+  },
+  {
+   "id": "r_confianza",
+   "vista": "info",
+   "carril": "flujo",
+   "tipo": "cerebro",
+   "titulo": "¿Es fiable lo encontrado?",
+   "que_hace": "Si lo encontrado no se parece lo bastante a la pregunta, contesta solo con el catálogo y lo que sabe del cliente.",
+   "donde": "src/agents/rag_agent.py:_is_confident",
+   "modelos": [],
+   "interruptores": []
+  },
+  {
+   "id": "r_catalogo",
+   "vista": "info",
+   "carril": "apoyo",
+   "tipo": "datos",
+   "titulo": "Catálogo",
+   "que_hace": "El catálogo entero va siempre en las instrucciones del bot y en las del revisor.",
+   "donde": "src/flows/catalog.py:catalog_facts",
+   "interruptores": [
+    {
+     "nombre": "rag_v2",
+     "codigo": true,
+     "pre": true,
+     "sin_efecto": false
+    },
+    {
+     "nombre": "rag_prompt_cache",
+     "codigo": true,
+     "pre": true,
+     "sin_efecto": false
+    }
+   ],
+   "modelos": []
+  },
+  {
+   "id": "r_escribir",
+   "vista": "info",
+   "carril": "flujo",
+   "tipo": "llm",
+   "titulo": "Escribir la respuesta",
+   "que_hace": "Escribe la respuesta con el tono de Coral usando solo lo encontrado. Es el paso más lento (~1,9 s).",
+   "donde": "src/agents/rag_agent.py:build_system_prompt",
+   "modelos": [
+    {
+     "ajuste": "rag_answer_model",
+     "codigo": "gpt-4.1-mini",
+     "pre": "gpt-4.1-mini"
+    }
+   ],
+   "interruptores": [
+    {
+     "nombre": "rag_concise",
+     "codigo": false,
+     "pre": false,
+     "sin_efecto": false
+    }
+   ],
+   "tiempo_medido": {
+    "p50": 1.9,
+    "fuente": "medido dentro de PRE el 28-sep (8 preguntas, HISTORY 0.29.65)"
+   }
+  },
+  {
+   "id": "r_guardas",
+   "vista": "info",
+   "carril": "flujo",
+   "tipo": "cerebro",
+   "titulo": "Comprobaciones fijas",
+   "que_hace": "Sin LLM: ningún precio, link, cupo o teléfono que no esté en la información; nunca pedir datos personales.",
+   "donde": "src/agents/grounding_check.py:currency_amounts_grounded",
+   "modelos": [],
+   "interruptores": []
+  },
+  {
+   "id": "r_revisor",
+   "vista": "info",
+   "carril": "flujo",
+   "tipo": "llm",
+   "titulo": "Revisor",
+   "que_hace": "Repasa cada dato de la respuesta y marca SÍ si la información lo dice o NO si no. Con un solo NO, la respuesta no se envía (~1,2 s).",
+   "donde": "src/agents/grounding_check.py:is_grounded",
+   "modelos": [
+    {
+     "ajuste": "grounding_v3_model",
+     "codigo": "gpt-4.1",
+     "pre": "gpt-4.1"
+    }
+   ],
+   "interruptores": [
+    {
+     "nombre": "grounding_v3",
+     "codigo": true,
+     "pre": true,
+     "sin_efecto": false
+    }
+   ],
+   "tiempo_medido": {
+    "p50": 1.2,
+    "fuente": "medido dentro de PRE el 28-sep (8 preguntas, HISTORY 0.29.65)"
+   }
+  },
+  {
+   "id": "r_reintento",
+   "vista": "info",
+   "carril": "flujo",
+   "tipo": "cerebro",
+   "titulo": "Reintento con motivo",
+   "que_hace": "Si el revisor dice NO, se vuelve a escribir diciéndole qué frase quitar. Una sola vez.",
+   "donde": "src/agents/rag_agent.py:regen_feedback",
+   "interruptores": [
+    {
+     "nombre": "rag_regen_feedback",
+     "codigo": true,
+     "pre": true,
+     "sin_efecto": false
+    }
+   ],
+   "modelos": []
+  },
+  {
+   "id": "r_nolotengo",
+   "vista": "info",
+   "carril": "flujo",
+   "tipo": "salida",
+   "titulo": "\"No lo tengo a la mano\"",
+   "que_hace": "Si el reintento también falla, un mensaje honesto que ofrece un asesor.",
+   "donde": "src/agents/rag_agent.py:FALLBACK_ES",
+   "modelos": [],
+   "interruptores": []
+  },
+  {
+   "id": "r_salida",
+   "vista": "info",
+   "carril": "flujo",
+   "tipo": "salida",
+   "titulo": "Respuesta aprobada",
+   "que_hace": "La respuesta que pasó el revisor vuelve a la ruta que preguntó.",
+   "modelos": [],
+   "interruptores": []
+  }
+ ],
+ "aristas": [
+  {
+   "de": "route_message",
+   "a": "router",
+   "origen": "grafo",
+   "estilo": "normal",
+   "etiqueta": "grafo",
+   "vista": "general"
+  },
+  {
+   "de": "router",
+   "a": "booking",
+   "origen": "grafo",
+   "estilo": "condicional",
+   "etiqueta": "si toca",
+   "vista": "general"
+  },
+  {
+   "de": "router",
+   "a": "changes",
+   "origen": "grafo",
+   "estilo": "condicional",
+   "etiqueta": "si toca",
+   "vista": "general"
+  },
+  {
+   "de": "router",
+   "a": "deflection",
+   "origen": "grafo",
+   "estilo": "condicional",
+   "etiqueta": "si toca",
+   "vista": "general"
+  },
+  {
+   "de": "router",
+   "a": "info",
+   "origen": "grafo",
+   "estilo": "condicional",
+   "etiqueta": "si toca",
+   "vista": "general"
+  },
+  {
+   "de": "router",
+   "a": "safety",
+   "origen": "grafo",
+   "estilo": "condicional",
+   "etiqueta": "si toca",
+   "vista": "general"
+  },
+  {
+   "de": "booking",
+   "a": "cierre",
+   "origen": "grafo",
+   "estilo": "normal",
+   "etiqueta": "sale",
+   "vista": "general"
+  },
+  {
+   "de": "changes",
+   "a": "cierre",
+   "origen": "grafo",
+   "estilo": "normal",
+   "etiqueta": "sale",
+   "vista": "general"
+  },
+  {
+   "de": "deflection",
+   "a": "cierre",
+   "origen": "grafo",
+   "estilo": "normal",
+   "etiqueta": "sale",
+   "vista": "general"
+  },
+  {
+   "de": "info",
+   "a": "cierre",
+   "origen": "grafo",
+   "estilo": "normal",
+   "etiqueta": "sale",
+   "vista": "general"
+  },
+  {
+   "de": "safety",
+   "a": "cierre",
+   "origen": "grafo",
+   "estilo": "normal",
+   "etiqueta": "sale",
+   "vista": "general"
+  },
+  {
+   "de": "b_entrada",
+   "a": "b_setup",
+   "origen": "grafo",
+   "estilo": "normal",
+   "etiqueta": "empieza",
+   "vista": "booking"
+  },
+  {
+   "de": "b_availability",
+   "a": "b_salida",
+   "origen": "grafo",
+   "estilo": "condicional",
+   "etiqueta": "si toca",
+   "vista": "booking"
+  },
+  {
+   "de": "b_availability",
+   "a": "b_routing",
+   "origen": "grafo",
+   "estilo": "condicional",
+   "etiqueta": "si toca",
+   "vista": "booking"
+  },
+  {
+   "de": "b_extraction",
+   "a": "b_salida",
+   "origen": "grafo",
+   "estilo": "condicional",
+   "etiqueta": "si toca",
+   "vista": "booking"
+  },
+  {
+   "de": "b_extraction",
+   "a": "b_slotfill_close",
+   "origen": "grafo",
+   "estilo": "condicional",
+   "etiqueta": "si toca",
+   "vista": "booking"
+  },
+  {
+   "de": "b_routing",
+   "a": "b_salida",
+   "origen": "grafo",
+   "estilo": "condicional",
+   "etiqueta": "si toca",
+   "vista": "booking"
+  },
+  {
+   "de": "b_routing",
+   "a": "b_extraction",
+   "origen": "grafo",
+   "estilo": "condicional",
+   "etiqueta": "si toca",
+   "vista": "booking"
+  },
+  {
+   "de": "b_setup",
+   "a": "b_salida",
+   "origen": "grafo",
+   "estilo": "condicional",
+   "etiqueta": "si toca",
+   "vista": "booking"
+  },
+  {
+   "de": "b_setup",
+   "a": "b_availability",
+   "origen": "grafo",
+   "estilo": "condicional",
+   "etiqueta": "si toca",
+   "vista": "booking"
+  },
+  {
+   "de": "b_slotfill_close",
+   "a": "b_salida",
+   "origen": "grafo",
+   "estilo": "normal",
+   "etiqueta": "sale",
+   "vista": "booking"
+  },
+  {
+   "de": "cliente",
+   "a": "chatwoot",
+   "etiqueta": "escribe",
+   "origen": "curada",
+   "estilo": "normal",
+   "vista": "general"
+  },
+  {
+   "de": "chatwoot",
+   "a": "entrada",
+   "etiqueta": "avisa",
+   "origen": "curada",
+   "estilo": "normal",
+   "vista": "general"
+  },
+  {
+   "de": "entrada",
+   "a": "preparacion",
+   "etiqueta": "mensaje",
+   "origen": "curada",
+   "estilo": "normal",
+   "vista": "general"
+  },
+  {
+   "de": "preparacion",
+   "a": "route_message",
+   "etiqueta": "turno listo",
+   "origen": "curada",
+   "estilo": "normal",
+   "vista": "general"
+  },
+  {
+   "de": "safety",
+   "a": "cascada",
+   "etiqueta": "sin regla",
+   "estilo": "respaldo",
+   "peso": 0.08,
+   "origen": "curada",
+   "vista": "general"
+  },
+  {
+   "de": "changes",
+   "a": "cascada",
+   "etiqueta": "sin regla",
+   "estilo": "respaldo",
+   "peso": 0.08,
+   "origen": "curada",
+   "vista": "general"
+  },
+  {
+   "de": "deflection",
+   "a": "cascada",
+   "etiqueta": "sin regla",
+   "estilo": "respaldo",
+   "peso": 0.08,
+   "origen": "curada",
+   "vista": "general"
+  },
+  {
+   "de": "info",
+   "a": "cascada",
+   "etiqueta": "sin regla",
+   "estilo": "respaldo",
+   "peso": 0.08,
+   "origen": "curada",
+   "vista": "general"
+  },
+  {
+   "de": "booking",
+   "a": "cascada",
+   "etiqueta": "sin regla",
+   "estilo": "respaldo",
+   "peso": 0.08,
+   "origen": "curada",
+   "vista": "general"
+  },
+  {
+   "de": "cascada",
+   "a": "cierre",
+   "etiqueta": "respuesta",
+   "origen": "curada",
+   "estilo": "normal",
+   "vista": "general"
+  },
+  {
+   "de": "cierre",
+   "a": "envio",
+   "etiqueta": "respuesta",
+   "origen": "curada",
+   "estilo": "normal",
+   "vista": "general"
+  },
+  {
+   "de": "envio",
+   "a": "chatwoot",
+   "etiqueta": "contesta",
+   "estilo": "vuelta",
+   "origen": "curada",
+   "vista": "general"
+  },
+  {
+   "de": "envio",
+   "a": "estado",
+   "etiqueta": "guarda",
+   "estilo": "datos",
+   "origen": "curada",
+   "vista": "general"
+  },
+  {
+   "de": "preparacion",
+   "a": "estado",
+   "etiqueta": "lee",
+   "estilo": "datos",
+   "origen": "curada",
+   "vista": "general"
+  },
+  {
+   "de": "router",
+   "a": "openrouter",
+   "etiqueta": "pregunta a Jev",
+   "estilo": "datos",
+   "origen": "curada",
+   "vista": "general"
+  },
+  {
+   "de": "info",
+   "a": "kb",
+   "etiqueta": "busca",
+   "estilo": "datos",
+   "origen": "curada",
+   "vista": "general"
+  },
+  {
+   "de": "info",
+   "a": "openai",
+   "etiqueta": "escribe y revisa",
+   "estilo": "datos",
+   "origen": "curada",
+   "vista": "general"
+  },
+  {
+   "de": "booking",
+   "a": "openai",
+   "etiqueta": "entiende datos",
+   "estilo": "datos",
+   "origen": "curada",
+   "vista": "general"
+  },
+  {
+   "de": "booking",
+   "a": "catalogo",
+   "etiqueta": "precios y links",
+   "estilo": "datos",
+   "origen": "curada",
+   "vista": "general"
+  },
+  {
+   "de": "info",
+   "a": "catalogo",
+   "etiqueta": "consulta",
+   "estilo": "datos",
+   "origen": "curada",
+   "vista": "general"
+  },
+  {
+   "de": "cierre",
+   "a": "metricas",
+   "etiqueta": "tiempos",
+   "estilo": "datos",
+   "origen": "curada",
+   "vista": "general"
+  },
+  {
+   "de": "ci",
+   "a": "pre",
+   "etiqueta": "despliega",
+   "estilo": "infra",
+   "origen": "curada",
+   "vista": "general"
+  },
+  {
+   "de": "b_setup",
+   "a": "b_notas",
+   "etiqueta": "lanza",
+   "estilo": "paralelo",
+   "origen": "curada",
+   "vista": "booking"
+  },
+  {
+   "de": "b_setup",
+   "a": "b_acuse",
+   "etiqueta": "lanza",
+   "estilo": "paralelo",
+   "origen": "curada",
+   "vista": "booking"
+  },
+  {
+   "de": "b_routing",
+   "a": "b_pregunta",
+   "etiqueta": "hay pregunta",
+   "estilo": "paralelo",
+   "origen": "curada",
+   "vista": "booking"
+  },
+  {
+   "de": "b_pregunta",
+   "a": "b_slotfill_close",
+   "etiqueta": "va delante",
+   "estilo": "paralelo",
+   "origen": "curada",
+   "vista": "booking"
+  },
+  {
+   "de": "b_acuse",
+   "a": "b_slotfill_close",
+   "etiqueta": "se usa",
+   "estilo": "paralelo",
+   "origen": "curada",
+   "vista": "booking"
+  },
+  {
+   "de": "r_entrada",
+   "a": "r_reglas",
+   "etiqueta": "pregunta",
+   "origen": "curada",
+   "estilo": "normal",
+   "vista": "info"
+  },
+  {
+   "de": "r_reglas",
+   "a": "r_reescribir",
+   "etiqueta": "no es texto fijo",
+   "peso": 0.9,
+   "origen": "curada",
+   "estilo": "normal",
+   "vista": "info"
+  },
+  {
+   "de": "r_reglas",
+   "a": "r_salida",
+   "etiqueta": "texto fijo",
+   "estilo": "atajo",
+   "peso": 0.1,
+   "origen": "curada",
+   "vista": "info"
+  },
+  {
+   "de": "r_reescribir",
+   "a": "r_buscar",
+   "etiqueta": "pregunta completa",
+   "origen": "curada",
+   "estilo": "normal",
+   "vista": "info"
+  },
+  {
+   "de": "r_buscar",
+   "a": "r_confianza",
+   "etiqueta": "8 documentos",
+   "origen": "curada",
+   "estilo": "normal",
+   "vista": "info"
+  },
+  {
+   "de": "r_confianza",
+   "a": "r_escribir",
+   "etiqueta": "contexto",
+   "origen": "curada",
+   "estilo": "normal",
+   "vista": "info"
+  },
+  {
+   "de": "r_catalogo",
+   "a": "r_escribir",
+   "etiqueta": "siempre",
+   "estilo": "datos",
+   "origen": "curada",
+   "vista": "info"
+  },
+  {
+   "de": "r_catalogo",
+   "a": "r_revisor",
+   "etiqueta": "siempre",
+   "estilo": "datos",
+   "origen": "curada",
+   "vista": "info"
+  },
+  {
+   "de": "r_escribir",
+   "a": "r_guardas",
+   "etiqueta": "borrador",
+   "origen": "curada",
+   "estilo": "normal",
+   "vista": "info"
+  },
+  {
+   "de": "r_guardas",
+   "a": "r_revisor",
+   "etiqueta": "pasa",
+   "peso": 0.97,
+   "origen": "curada",
+   "estilo": "normal",
+   "vista": "info"
+  },
+  {
+   "de": "r_guardas",
+   "a": "r_reintento",
+   "etiqueta": "falla",
+   "estilo": "bucle",
+   "peso": 0.03,
+   "origen": "curada",
+   "vista": "info"
+  },
+  {
+   "de": "r_revisor",
+   "a": "r_salida",
+   "etiqueta": "todo SÍ",
+   "peso": 0.85,
+   "origen": "curada",
+   "estilo": "normal",
+   "vista": "info"
+  },
+  {
+   "de": "r_revisor",
+   "a": "r_reintento",
+   "etiqueta": "algún NO",
+   "estilo": "bucle",
+   "peso": 0.15,
+   "origen": "curada",
+   "vista": "info"
+  },
+  {
+   "de": "r_reintento",
+   "a": "r_escribir",
+   "etiqueta": "quita esto",
+   "estilo": "bucle",
+   "peso": 0.8,
+   "origen": "curada",
+   "vista": "info"
+  },
+  {
+   "de": "r_reintento",
+   "a": "r_nolotengo",
+   "etiqueta": "2º NO",
+   "estilo": "bucle",
+   "peso": 0.2,
+   "origen": "curada",
+   "vista": "info"
+  }
+ ],
+ "interruptores": [
+  {
+   "nombre": "ack_in_parallel",
+   "codigo": true,
+   "pre": true,
+   "fijado_en_pre": true,
+   "usado_por": [
+    "b_acuse"
+   ],
+   "sin_efecto": null
+  },
+  {
+   "nombre": "agent_arch",
+   "codigo": true,
+   "pre": true,
+   "fijado_en_pre": true,
+   "usado_por": [
+    "route_message"
+   ],
+   "sin_efecto": null
+  },
+  {
+   "nombre": "answer_and_continue",
+   "codigo": true,
+   "pre": true,
+   "fijado_en_pre": true,
+   "usado_por": [
+    "b_routing",
+    "b_pregunta"
+   ],
+   "sin_efecto": null
+  },
+  {
+   "nombre": "chatwoot_typing_indicator",
+   "codigo": true,
+   "pre": true,
+   "fijado_en_pre": true,
+   "usado_por": [
+    "preparacion"
+   ],
+   "sin_efecto": null
+  },
+  {
+   "nombre": "corrections_v2",
+   "codigo": true,
+   "pre": true,
+   "fijado_en_pre": true,
+   "usado_por": [
+    "b_routing"
+   ],
+   "sin_efecto": null
+  },
+  {
+   "nombre": "grounding_v3",
+   "codigo": true,
+   "pre": true,
+   "fijado_en_pre": true,
+   "usado_por": [
+    "r_revisor"
+   ],
+   "sin_efecto": null
+  },
+  {
+   "nombre": "jev_router_enabled",
+   "codigo": false,
+   "pre": true,
+   "fijado_en_pre": true,
+   "usado_por": [
+    "router",
+    "openrouter"
+   ],
+   "sin_efecto": null
+  },
+  {
+   "nombre": "llm_activity_veto_cutover",
+   "codigo": true,
+   "pre": true,
+   "fijado_en_pre": false,
+   "usado_por": [],
+   "sin_efecto": null
+  },
+  {
+   "nombre": "llm_activity_veto_shadow_mode",
+   "codigo": false,
+   "pre": false,
+   "fijado_en_pre": false,
+   "usado_por": [],
+   "sin_efecto": null
+  },
+  {
+   "nombre": "llm_certification_veto_cutover",
+   "codigo": false,
+   "pre": false,
+   "fijado_en_pre": false,
+   "usado_por": [],
+   "sin_efecto": null
+  },
+  {
+   "nombre": "llm_certification_veto_shadow_mode",
+   "codigo": false,
+   "pre": false,
+   "fijado_en_pre": false,
+   "usado_por": [],
+   "sin_efecto": null
+  },
+  {
+   "nombre": "llm_extraction_cutover_certification",
+   "codigo": true,
+   "pre": true,
+   "fijado_en_pre": true,
+   "usado_por": [],
+   "sin_efecto": "Solo lo lee supervisor._maybe_apply_llm_extraction_cutover, que nadie llama."
+  },
+  {
+   "nombre": "llm_extraction_cutover_group",
+   "codigo": true,
+   "pre": true,
+   "fijado_en_pre": true,
+   "usado_por": [],
+   "sin_efecto": "Solo lo lee supervisor._maybe_apply_llm_extraction_cutover, que nadie llama."
+  },
+  {
+   "nombre": "llm_extraction_cutover_location",
+   "codigo": true,
+   "pre": true,
+   "fijado_en_pre": true,
+   "usado_por": [],
+   "sin_efecto": "Solo lo lee supervisor._maybe_apply_llm_extraction_cutover, que nadie llama."
+  },
+  {
+   "nombre": "llm_extraction_cutover_logistics",
+   "codigo": true,
+   "pre": true,
+   "fijado_en_pre": true,
+   "usado_por": [],
+   "sin_efecto": "Solo lo lee supervisor._maybe_apply_llm_extraction_cutover, que nadie llama."
+  },
+  {
+   "nombre": "llm_extraction_shadow_mode",
+   "codigo": false,
+   "pre": false,
+   "fijado_en_pre": false,
+   "usado_por": [],
+   "sin_efecto": "Su función (_maybe_log_llm_extraction_shadow) no la llama nadie."
+  },
+  {
+   "nombre": "llm_group_allocation_veto_cutover",
+   "codigo": true,
+   "pre": true,
+   "fijado_en_pre": false,
+   "usado_por": [],
+   "sin_efecto": null
+  },
+  {
+   "nombre": "llm_group_allocation_veto_shadow_mode",
+   "codigo": false,
+   "pre": false,
+   "fijado_en_pre": false,
+   "usado_por": [],
+   "sin_efecto": null
+  },
+  {
+   "nombre": "llm_group_size_veto_cutover",
+   "codigo": true,
+   "pre": true,
+   "fijado_en_pre": false,
+   "usado_por": [],
+   "sin_efecto": null
+  },
+  {
+   "nombre": "llm_group_size_veto_shadow_mode",
+   "codigo": false,
+   "pre": false,
+   "fijado_en_pre": false,
+   "usado_por": [],
+   "sin_efecto": null
+  },
+  {
+   "nombre": "llm_location_veto_cutover",
+   "codigo": false,
+   "pre": false,
+   "fijado_en_pre": false,
+   "usado_por": [],
+   "sin_efecto": null
+  },
+  {
+   "nombre": "llm_location_veto_shadow_mode",
+   "codigo": false,
+   "pre": false,
+   "fijado_en_pre": false,
+   "usado_por": [],
+   "sin_efecto": null
+  },
+  {
+   "nombre": "llm_nationality_veto_cutover",
+   "codigo": false,
+   "pre": false,
+   "fijado_en_pre": false,
+   "usado_por": [],
+   "sin_efecto": null
+  },
+  {
+   "nombre": "llm_nationality_veto_shadow_mode",
+   "codigo": false,
+   "pre": false,
+   "fijado_en_pre": false,
+   "usado_por": [],
+   "sin_efecto": null
+  },
+  {
+   "nombre": "notes_in_parallel",
+   "codigo": true,
+   "pre": true,
+   "fijado_en_pre": true,
+   "usado_por": [
+    "b_notas"
+   ],
+   "sin_efecto": null
+  },
+  {
+   "nombre": "rag_concise",
+   "codigo": false,
+   "pre": false,
+   "fijado_en_pre": false,
+   "usado_por": [
+    "r_escribir"
+   ],
+   "sin_efecto": null
+  },
+  {
+   "nombre": "rag_prompt_cache",
+   "codigo": true,
+   "pre": true,
+   "fijado_en_pre": true,
+   "usado_por": [
+    "r_catalogo"
+   ],
+   "sin_efecto": null
+  },
+  {
+   "nombre": "rag_regen_feedback",
+   "codigo": true,
+   "pre": true,
+   "fijado_en_pre": true,
+   "usado_por": [
+    "r_reintento"
+   ],
+   "sin_efecto": null
+  },
+  {
+   "nombre": "rag_v2",
+   "codigo": true,
+   "pre": true,
+   "fijado_en_pre": true,
+   "usado_por": [
+    "b_availability",
+    "r_catalogo"
+   ],
+   "sin_efecto": null
+  },
+  {
+   "nombre": "recommend_inferred_minicourse",
+   "codigo": true,
+   "pre": true,
+   "fijado_en_pre": true,
+   "usado_por": [
+    "b_slotfill_close"
+   ],
+   "sin_efecto": null
+  },
+  {
+   "nombre": "s4_fixes",
+   "codigo": true,
+   "pre": true,
+   "fijado_en_pre": true,
+   "usado_por": [
+    "router",
+    "b_availability"
+   ],
+   "sin_efecto": null
+  }
+ ],
+ "modelos": [
+  {
+   "ajuste": "extraction_model",
+   "codigo": "gpt-4o-mini",
+   "pre": "gpt-4o-mini",
+   "usado_por": [
+    "router",
+    "b_routing",
+    "b_extraction",
+    "b_slotfill_close",
+    "b_notas",
+    "b_acuse"
+   ],
+   "llamadas_ultima_ronda": 236
+  },
+  {
+   "ajuste": "grounding_v3_model",
+   "codigo": "gpt-4.1",
+   "pre": "gpt-4.1",
+   "usado_por": [
+    "r_revisor"
+   ],
+   "llamadas_ultima_ronda": 44
+  },
+  {
+   "ajuste": "jev_model",
+   "codigo": "typesafe/jev-1.13",
+   "pre": "typesafe/jev-1.13",
+   "usado_por": [
+    "router",
+    "openrouter"
+   ],
+   "llamadas_ultima_ronda": null
+  },
+  {
+   "ajuste": "openai_embedding_model",
+   "codigo": "text-embedding-3-small",
+   "pre": "text-embedding-3-small",
+   "usado_por": [
+    "kb",
+    "r_buscar"
+   ],
+   "llamadas_ultima_ronda": null
+  },
+  {
+   "ajuste": "openai_model",
+   "codigo": "gpt-4o-mini",
+   "pre": "gpt-4o-mini",
+   "usado_por": [
+    "cierre",
+    "b_setup",
+    "r_reescribir"
+   ],
+   "llamadas_ultima_ronda": 236
+  },
+  {
+   "ajuste": "openai_transcription_model",
+   "codigo": "gpt-4o-mini-transcribe",
+   "pre": "gpt-4o-mini-transcribe",
+   "usado_por": [
+    "preparacion"
+   ],
+   "llamadas_ultima_ronda": null
+  },
+  {
+   "ajuste": "rag_answer_model",
+   "codigo": "gpt-4.1-mini",
+   "pre": "gpt-4.1-mini",
+   "usado_por": [
+    "r_escribir"
+   ],
+   "llamadas_ultima_ronda": 44
+  }
+ ],
+ "ronda": {
+  "etiqueta": "regen-B2 (RAG_REGEN_FEEDBACK on, ofrece asesor)",
+  "run_at": "2026-09-28T15:32:36Z",
+  "fichero": "2026-09-28-regen-B2.json",
+  "commit": "c5b4500",
+  "por_tipo": {
+   "reserva": {
+    "turns": 54,
+    "latency_p50": 2.725,
+    "latency_p95": 6.316,
+    "latency_avg": 3.136,
+    "llm_calls_avg": 2.19,
+    "llm_calls_p95": 5.0,
+    "llm_calls_max": 6,
+    "embeddings_avg": 0,
+    "llm_share": 0.7,
+    "tokens_avg": 0,
+    "cost_avg_usd": 0
+   },
+   "rag": {
+    "turns": 39,
+    "latency_p50": 7.191,
+    "latency_p95": 10.881,
+    "latency_avg": 7.166,
+    "llm_calls_avg": 5.28,
+    "llm_calls_p95": 8.0,
+    "llm_calls_max": 10,
+    "embeddings_avg": 1.08,
+    "llm_share": 0.934,
+    "tokens_avg": 0,
+    "cost_avg_usd": 0
+   }
+  },
+  "enrutador": {
+   "by_backend": {
+    "llm_fallback": 38,
+    "jev": 49,
+    "llm": 1,
+    "llm_uncertain": 5
+   },
+   "ms_p50": 750.0,
+   "ms_p95": 2027.45
+  },
+  "cliente": {
+   "turns": 93,
+   "conversations": 32,
+   "no_reply": 0,
+   "multi_bubble": 0,
+   "latency_p50": 5.0,
+   "latency_p95": 10.4,
+   "latency_max": 12
+  },
+  "llamadas_por_modelo": {
+   "gpt-4o-mini": 236,
+   "gpt-4.1-mini": 44,
+   "gpt-4.1": 44
+  },
+  "calidad": {
+   "criteria_pass_pct": 93.3,
+   "dialogues_passed": 22,
+   "dialogues": 32,
+   "model": "gpt-5-mini (medium)"
+  }
+ },
+ "pesos_fuente": "Ronda regen-B2 (28-sep): el revisor rechazó el primer intento en 6 de ~39 turnos con RAG (~15 %) y 1 de esos 6 volvió a fallar (~20 %). El paso a la cascada (~8 %) y los textos fijos (~10 %) son estimaciones."
+}

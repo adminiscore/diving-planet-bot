@@ -55,6 +55,11 @@ antes de avanzar. Estamos en el bloque **"RAG, calidad y latencia"** del orden d
   `python docs/robustness/golden-set/compare_rounds.py <A> <B> --raw` → **leer a mano** lo que empeora; mirar en los
   logs de PRE (`[RAG][GROUNDING] attempt 1 rejected`) si el cambio actuó en ese turno.
 
+**Mapa de Coral (29-sep):** https://claude.ai/artifact/SnK5Dku1vAinbJ94b8aNGd — el bot dibujado por dentro (vista general + zoom en Reserva y RAG),
+con los tiempos de la última ronda. Se regenera con `ENV_FILE=.env.ci python -m scripts.arquitectura` y se republica
+en la misma URL (paso 12 de `/closework`); `tests/test_arquitectura.py` obliga a describir cada caja nueva del grafo
+en `docs/arquitectura/componentes.json`. Es privado de Álvaro: compartirlo desde su menú para que lo vea el equipo.
+
 **Riesgos y avisos aprendidos hoy:**
 - **OpenAI: una sola cuenta para PRE y para las pruebas.** El 28-sep se quedó sin crédito a mitad de una prueba y PRE
   dejó de contestar a todos. Antes de un bucle largo, estimar el coste (≈0,025 $ por respuesta del RAG con contexto

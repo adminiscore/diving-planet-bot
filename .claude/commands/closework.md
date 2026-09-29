@@ -110,7 +110,20 @@ It waits for the GitHub run of that commit, then checks by SSH that PRE serves t
 healthy, and has every flag/model that `docker-compose.vps.yml` pins. Do not report the work as deployed
 until it exits 0; if CI failed it prints the failing step.
 
-12. Finish by reporting:
+12. Keep the **Mapa de Coral** up to date (https://claude.ai/artifact/SnK5Dku1vAinbJ94b8aNGd). If the graph, `src/agents/`, `src/config.py`,
+`docker-compose.vps.yml` or a new measured round changed, regenerate its data and republish it at the SAME URL:
+
+```powershell
+$env:ENV_FILE=".env.ci"; python -m scripts.arquitectura
+```
+
+It fails (and so does `tests/test_arquitectura.py` in CI) if a graph node has no description or a cited file,
+function, flag or model no longer exists: fix `docs/arquitectura/componentes.json`. Then publish
+`docs/arquitectura/mapa-coral.html` with the Artifact tool, `url` = the map's URL, and `files` =
+`arquitectura.json`, `historial/indice.json` and every `historial/*.json` (new versions appear there only when the
+structure changed). Commit the regenerated files.
+
+13. Finish by reporting:
 
 - Commit hash.
 - Remote branch.

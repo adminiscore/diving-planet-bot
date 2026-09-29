@@ -1,6 +1,13 @@
 History
 =======
 
+0.29.70 - (2026-09-29)
+----------------------
+* **Mapa de Coral: el bot dibujado por dentro, animado y generado desde el código** (https://claude.ai/artifact/SnK5Dku1vAinbJ94b8aNGd, privado; se comparte desde su menú). Vista general (del mensaje del cliente a la respuesta: entrada por Chatwoot, enrutador con Jev, las 5 rutas, la cascada de respaldo, cierre y envío, más datos, servicios e infraestructura) y zoom en la **Reserva** (sus 5 fases y las tareas en paralelo) y en el **RAG** (buscar → escribir → comprobaciones → revisor → reintento con motivo → "no lo tengo"). Paquetes animados que se reparten según el tráfico real de la última ronda; cada caja enseña qué hace en lenguaje llano, dónde está en el código, su modelo, sus interruptores y sus tiempos p50/p95.
+  - Se genera con `python -m scripts.arquitectura`: lee el grafo LangGraph real, el subgrafo de la reserva, los 31 interruptores y 7 modelos de `settings`, lo que fija PRE y la foto de tiempos más reciente, y lo junta con los textos de `docs/arquitectura/componentes.json`. Guarda un historial (`docs/arquitectura/historial/`) cuando cambia la estructura, y el mapa marca qué cambió.
+  - `tests/test_arquitectura.py`: CI falla si alguien añade una caja al grafo sin describirla o si el mapa cita un fichero, función, interruptor o modelo que ya no existe. `/closework` tiene el paso para regenerarlo y republicarlo.
+  - Hallazgo que el mapa deja a la vista: 5 interruptores **sin efecto** en el camino real (`LLM_EXTRACTION_CUTOVER_*` y `LLM_EXTRACTION_SHADOW_MODE`: sus funciones no las llama nadie) → candidatos para la "Limpieza 2".
+
 0.29.69 - (2026-09-28)
 ----------------------
 * **Cierre de la sesión (Álvaro) para el relevo.** Nueva herramienta `scripts/sonda_rag_turnos_pre.py` (la que se usó en 0.29.67-0.29.68, antes en scripts sueltos): repite dentro de PRE turnos reales de una ronda con su historial, con un flag apagado y encendido, y guarda cada rechazo del juez con su motivo; salta siempre el examen oculto; `--dry` para ver casos y coste sin gastar. Tests `tests/test_sonda_rag_turnos_pre.py`. Suite 2800 passed (normal y `AGENT_ARCH_SHADOW`).
