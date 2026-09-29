@@ -108,6 +108,10 @@
   .nodo .icono-fondo { fill: var(--recessed); stroke: var(--edge-soft); }
   .nodo .icono { fill: none; stroke: var(--graphite); stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
   .nodo.activo .icono { stroke: var(--cobalt); }
+  .nodo .logo { fill: var(--ink); }
+  .nodo.activo .logo { fill: var(--cobalt); }
+  .marca-mini { display: inline-flex; align-items: center; gap: 8px; }
+  .marca-mini svg { flex: none; }
   .nodo .t { font: 600 13.5px var(--ui); fill: var(--ink); letter-spacing: -.005em; }
   .nodo .m { font: 400 12px var(--ui); fill: var(--slate); }
   .nodo .progreso { fill: var(--cobalt); }
@@ -267,7 +271,8 @@
   const reducido = matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   /* ---------- constantes de dibujo: un solo patrón para todas las piezas ---------- */
-  const W = 188, H = 76, HS = 64, GY = 16, M = 24, RG = 64;
+  // PL: margen izquierdo del tablero, donde bajan las líneas que reparten hacia la primera columna y sus %.
+  const W = 188, H = 76, HS = 64, GY = 16, M = 24, RG = 64, PL = 64, BUS = 26;
   const NO_FLUJO = new Set(["datos", "infra", "paralelo"]);
   const TIPO = {
     entrada: "Entrada", externo: "Servicio externo", cerebro: "Decide", agente: "Ruta", respaldo: "Respaldo",
@@ -286,7 +291,7 @@
     infra: "M3.5 4h13v5h-13zM3.5 11h13v5h-13zM6.5 6.5h.01M6.5 13.5h.01",
   };
 
-  const S = { D: null, INDICE: null, COMPARA: null, comp: new Map(), vista: "general", sel: null,
+  const S = { D: null, INDICE: null, LOGOS: {}, COMPARA: null, comp: new Map(), vista: "general", sel: null,
     pausa: reducido, vel: 1, servicios: true, filtro: "todos", L: null, ancho: 0 };
   try { const v = localStorage.getItem("mapa-coral-servicios"); if (v !== null) S.servicios = v === "1"; } catch (_) {}
 
@@ -318,6 +323,7 @@
     try { S.D = await (await fetch("arquitectura.json", { cache: "no-store" })).json(); }
     catch (_) { $("#lienzo").innerHTML = '<p class="error">No se pudieron leer los datos del mapa (arquitectura.json). Hay que publicarlos junto a la página.</p>'; return; }
     try { S.INDICE = await (await fetch("historial/indice.json", { cache: "no-store" })).json(); } catch (_) {}
+    try { S.LOGOS = (await (await fetch("logos.json", { cache: "no-store" })).json()).logos; } catch (_) { S.LOGOS = {}; }
     S.comp = new Map(S.D.componentes.map((c) => [c.id, c]));
     await Promise.race([document.fonts ? document.fonts.ready : Promise.resolve(), new Promise((r) => setTimeout(r, 1500))]);
     cabecera(); vistas(); versiones(); interruptores(); modelos();
@@ -390,11 +396,11 @@
     flujo.forEach((c) => huecos[capa.get(c.id)].push(c.id));
     huecos.forEach((h) => h.sort((a, b) => (fijos.has(a) ? 1 : 0) - (fijos.has(b) ? 1 : 0)));
 
-    const util = Math.max(W, ancho - 2 * M);
+    const util = Math.max(W, ancho - PL - M);
     const cols = Math.max(1, Math.min(nCapas, Math.floor((util + 40) / (W + 40))));
     const gx = cols > 1 ? Math.min(140, (util - cols * W) / (cols - 1)) : 0;
     const anchoUsado = cols * W + (cols - 1) * gx;
-    const x0 = M + (util - anchoUsado) / 2;
+    const x0 = PL + (util - anchoUsado) / 2;
     const pos = new Map(), filaDe = new Map(), filas = [];
     let y = M;
     for (let f = 0; f * cols < nCapas; f++) {
@@ -417,7 +423,7 @@
       const gxs = colsS > 1 ? Math.min(40, (util - colsS * W) / (colsS - 1)) : 0;
       extra.forEach((c, i) => {
         const col = i % colsS, fila = Math.floor(i / colsS);
-        pos.set(c.id, { x: M + col * (W + gxs), y: y + fila * (HS + 12), w: W, h: HS, servicio: true });
+        pos.set(c.id, { x: PL + col * (W + gxs), y: y + fila * (HS + 12), w: W, h: HS, servicio: true });
         filaDe.set(c.id, filas.length + fila);
       });
       y += Math.ceil(extra.length / colsS) * (HS + 12) - 12;
@@ -464,7 +470,7 @@
       return ortogonal([[s.x + s.w / 2, s.y + s.h], [s.x + s.w / 2, yl], [t.x + t.w / 2, yl], [t.x + t.w / 2, t.y + t.h]]);
     }
     const fila = L.filas[fs], yl = fila.y + fila.alto + RG / 2;
-    return ortogonal([[sx, sy], [sx + 16, sy], [sx + 16, yl], [tx - 16, yl], [tx - 16, ty], [tx, ty]]);
+    return ortogonal([[sx, sy], [sx + 16, sy], [sx + 16, yl], [tx - BUS, yl], [tx - BUS, ty], [tx, ty]]);
   }
 
   /* ---------- reparto de los paquetes (tráfico real de la ronda; si no se mide, el peso curado) ---------- */
@@ -524,10 +530,11 @@
     L.aristas.forEach((a) => {
       const p = reparto.get(a);
       if (p == null || a._soloFoco || S.L.aristas.filter((x) => x.de === a.de && !NO_FLUJO.has(x.estilo)).length < 2) return;
-      const len = a._path.getTotalLength(), pt = a._path.getPointAtLength(Math.max(0, len - 34));
+      const len = a._path.getTotalLength(), pt = a._path.getPointAtLength(Math.max(0, len - 44));
       const txt = p >= 0.995 ? "todo" : p < 0.01 ? "<1 %" : `${Math.round(p * 100)} %`;
-      const g = el("g", { class: "pct", transform: `translate(${pt.x},${pt.y})` }, gP);
       ctx.font = "600 11px Inter"; const w = ctx.measureText(txt).width + 14;
+      const cx = Math.min(Math.max(pt.x, w / 2 + 4), L.ancho - w / 2 - 4); // nunca fuera del lienzo
+      const g = el("g", { class: "pct", transform: `translate(${cx},${pt.y})` }, gP);
       el("rect", { x: -w / 2, y: -9, width: w, height: 18, rx: 9 }, g);
       el("text", { x: 0, y: 4, "text-anchor": "middle" }, g).textContent = txt;
     });
@@ -544,7 +551,13 @@
     el("rect", { class: "caja", width: b.w, height: b.h, rx: 16 }, g);
     const cy = b.h / 2;
     el("circle", { class: "icono-fondo", cx: 30, cy, r: 16 }, g);
-    el("path", { class: "icono", d: ICONO[c.tipo] || ICONO.cerebro, transform: `translate(20,${cy - 10})` }, g);
+    const logo = c.marca && S.LOGOS[c.marca];
+    if (logo) { // el logo del servicio o modelo que usa la pieza, en vez de un icono genérico
+      el("path", { class: "logo", d: logo.d, transform: `translate(22,${cy - 8}) scale(${16 / 24})` }, g);
+      g.appendChild(el("title", {})).textContent = `Usa ${logo.nombre}`;
+    } else {
+      el("path", { class: "icono", d: ICONO[c.tipo] || ICONO.cerebro, transform: `translate(20,${cy - 10})` }, g);
+    }
     const zoom = !!c.zoom, maxW = b.w - 58 - (zoom ? 30 : 12);
     const titulo = lineas(c.titulo, "600 13.5px Inter", maxW, 2);
     const meta = c.tiempos ? `${num(c.tiempos.p50, 2)} s · ${c.tiempos.n} turnos`
@@ -571,11 +584,16 @@
       '<span><svg width="22" height="10" aria-hidden="true"><circle cx="5" cy="5" r="4" fill="var(--cobalt)"/></svg>Mensaje del cliente</span>',
       '<span><svg width="22" height="10" aria-hidden="true"><circle cx="5" cy="5" r="4" fill="var(--ink)"/></svg>Respuesta</span>',
       '<span><svg width="30" height="10" aria-hidden="true"><line x1="0" y1="5" x2="30" y2="5" stroke="var(--edge)" stroke-width="1.5" stroke-dasharray="5 5"/></svg>Vuelta o respaldo</span>',
+      ...[...new Set(S.D.componentes.filter((c) => c.vista === S.vista && c.marca && S.LOGOS[c.marca]).map((c) => c.marca))]
+        .map((m) => `<span class="marca-mini">${logoMini(S.LOGOS[m], 16)}${esc(S.LOGOS[m].nombre)}</span>`),
       ...tipos.map((t) => `<span>${ic(t)}${esc(TIPO[t] || t)}</span>`),
     ].join("");
   }
 
   /* ---------- detalle ---------- */
+  function logoMini(logo, t) {
+    return `<svg width="${t}" height="${t}" viewBox="0 0 24 24" aria-hidden="true"><path d="${logo.d}" fill="var(--ink)"/></svg>`;
+  }
   function panelVacio() {
     $("#panel").innerHTML = '<p class="etiqueta">Detalle</p><p class="vacio">Pulsa una pieza para ver <b>qué hace</b>, <b>dónde está en el código</b>, qué modelo usa y cuánto tarda. Las piezas con <b>›</b> se abren por dentro.</p>';
   }
@@ -603,6 +621,8 @@
     if (c.tiempos) hechos.push(["Tiempo", `${num(c.tiempos.p50, 2)} s lo normal · ${num(c.tiempos.p95, 2)} s en los más lentos (95 %)`], ["Uso", `${c.tiempos.n} turnos en la última ronda`]);
     else if (c.tiempo_medido) hechos.push(["Tiempo", `~${num(c.tiempo_medido.p50)} s · ${esc(c.tiempo_medido.fuente)}`]);
     if (c.modelos.length) hechos.push(["Modelo", c.modelos.map((m) => `${esc(m.pre)} <span class="mute mono">${esc(m.ajuste)}</span>`).join("<br>")]);
+    const logo = c.marca && S.LOGOS[c.marca];
+    if (logo) hechos.unshift(["Servicio", `<span class="marca-mini">${logoMini(logo, 16)}${esc(logo.nombre)}</span>`]);
     if (c.donde) hechos.push(["En el código", `<span class="mono">${esc(c.donde)}</span>`]);
     $("#panel").innerHTML = `
       <span class="etiqueta tag">${esc(TIPO[c.tipo] || c.tipo)}</span>

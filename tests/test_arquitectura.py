@@ -56,3 +56,18 @@ def test_un_interruptor_nuevo_sin_frase_en_llano_hace_fallar():
     bools = {**bools, "flag_nuevo_de_prueba": False}
     errores = arq.validar(curado, g, bools, modelos)
     assert any("flag_nuevo_de_prueba" in e and "llano" in e for e in errores)
+
+
+def test_cada_pieza_con_modelo_o_servicio_lleva_un_logo_que_existe():
+    curado, g, bools, modelos = _entradas()
+    _, _, pre = arq.ajustes()
+    datos = arq.construir(curado, g, bools, modelos, pre, None, {})
+    logos = json.loads(arq.LOGOS.read_text(encoding="utf-8"))["logos"]
+    for c in datos["componentes"]:
+        if c["modelos"]:
+            assert c.get("marca") in logos, c["id"]
+    assert {c["id"]: c["marca"] for c in datos["componentes"] if c["id"] in ("router", "r_revisor")} == {
+        "router": "openrouter", "r_revisor": "openai"}
+    curado = copy.deepcopy(curado)
+    curado["componentes"][0]["marca"] = "logo_inventado"
+    assert any("logo_inventado" in e for e in arq.validar(curado, g, bools, modelos))

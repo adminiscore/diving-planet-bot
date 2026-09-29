@@ -1,5 +1,5 @@
 {
-  "about": "Textos curados del Mapa de Coral. Lo que sale del código (grafo LangGraph, interruptores, modelos, tiempos) lo añade `python -m scripts.arquitectura`; aquí va lo que el código no dice: qué hace cada pieza en lenguaje llano, las piezas que no son nodos del grafo y sus flechas. `nodo_grafo` enlaza con el nodo real (y con sus tiempos). `donde` = fichero:símbolo (el script comprueba que existe). `carril`: flujo (camino del mensaje), apoyo (servicios y datos), infra. `peso` en una flecha = parte de los paquetes animados que toman esa salida cuando la foto de la ronda no lo mide (fuente en `pesos_fuente`). `capa_de` = colocar la pieza en la misma columna que otra (la cascada, debajo de las rutas). `interruptores` = nombre y frase en llano de CADA interruptor de settings (el script falla si falta uno).",
+  "about": "Textos curados del Mapa de Coral. Lo que sale del código (grafo LangGraph, interruptores, modelos, tiempos) lo añade `python -m scripts.arquitectura`; aquí va lo que el código no dice: qué hace cada pieza en lenguaje llano, las piezas que no son nodos del grafo y sus flechas. `nodo_grafo` enlaza con el nodo real (y con sus tiempos). `donde` = fichero:símbolo (el script comprueba que existe). `carril`: flujo (camino del mensaje), apoyo (servicios y datos), infra. `peso` en una flecha = parte de los paquetes animados que toman esa salida cuando la foto de la ronda no lo mide (fuente en `pesos_fuente`). `capa_de` = colocar la pieza en la misma columna que otra (la cascada, debajo de las rutas). `interruptores` = nombre y frase en llano de CADA interruptor de settings (el script falla si falta uno). `marca` = logo del servicio que usa la pieza (en docs/arquitectura/logos.json); si no se pone y la pieza llama a un modelo, el script pone el de su proveedor.",
   "vistas": {
     "general": {
       "titulo": "Coral por fuera",
@@ -32,7 +32,8 @@
       "tipo": "externo",
       "titulo": "Chatwoot",
       "que_hace": "La plataforma de chat. Recibe el mensaje del cliente, avisa al bot y muestra lo que el bot contesta.",
-      "nota": "Servidor propio en el VPS (contenedor dp-chatwoot)."
+      "nota": "Servidor propio en el VPS (contenedor dp-chatwoot).",
+      "marca": "chatwoot"
     },
     {
       "id": "entrada",
@@ -45,7 +46,8 @@
       "detalle": [
         "Aviso: POST /webhooks/chatwoot",
         "Revisión cada 1 s: poll_active_conversations_once"
-      ]
+      ],
+      "marca": "chatwoot"
     },
     {
       "id": "preparacion",
@@ -179,7 +181,8 @@
       "tipo": "salida",
       "titulo": "Enviar",
       "que_hace": "Deja una nota privada para el equipo si hace falta, pasa a un humano si toca, envía la respuesta (con botones) y apaga el 'escribiendo…'.",
-      "donde": "src/channels/chatwoot.py:finalize_chatwoot_delivery"
+      "donde": "src/channels/chatwoot.py:finalize_chatwoot_delivery",
+      "marca": "chatwoot"
     },
     {
       "id": "estado",
@@ -189,7 +192,8 @@
       "titulo": "Memoria de la conversación",
       "que_hace": "Lo que el bot sabe de cada cliente (actividad, personas, fechas, historial). Se lee al empezar y se guarda al terminar.",
       "donde": "src/state_store.py:save_state",
-      "nota": "Redis (contenedor dp-pre-redis)."
+      "nota": "Redis (contenedor dp-pre-redis).",
+      "marca": "redis"
     },
     {
       "id": "openai",
@@ -199,7 +203,8 @@
       "titulo": "OpenAI",
       "que_hace": "Los modelos que escriben, extraen datos, revisan y pasan la voz a texto. Todas las llamadas pasan por un punto con límite de 30 s.",
       "donde": "src/llm_client.py:trace_openai",
-      "nota": "Misma cuenta para PRE y para las pruebas: si se queda sin crédito, el bot no contesta."
+      "nota": "Misma cuenta para PRE y para las pruebas: si se queda sin crédito, el bot no contesta.",
+      "marca": "openai"
     },
     {
       "id": "openrouter",
@@ -214,7 +219,8 @@
       ],
       "interruptores": [
         "jev_router_enabled"
-      ]
+      ],
+      "marca": "openrouter"
     },
     {
       "id": "kb",
@@ -227,7 +233,8 @@
       "modelos": [
         "openai_embedding_model"
       ],
-      "nota": "Postgres + pgvector, tabla kb_documents. Se recarga en cada deploy (scripts/load_embeddings.py)."
+      "nota": "Postgres + pgvector, tabla kb_documents. Se recarga en cada deploy (scripts/load_embeddings.py).",
+      "marca": "postgresql"
     },
     {
       "id": "catalogo",
@@ -255,7 +262,8 @@
       "tipo": "infra",
       "titulo": "GitHub CI",
       "que_hace": "Cada push a una rama pre_* pasa las pruebas y, si salen bien, despliega en PRE.",
-      "donde": ".github/workflows/ci.yml"
+      "donde": ".github/workflows/ci.yml",
+      "marca": "githubactions"
     },
     {
       "id": "pre",
@@ -264,7 +272,8 @@
       "tipo": "infra",
       "titulo": "Servidor PRE",
       "que_hace": "El VPS donde corren el bot, Chatwoot, Postgres y Redis. python -m scripts.check_deploy comprueba que sirve lo último.",
-      "donde": "docker-compose.vps.yml"
+      "donde": "docker-compose.vps.yml",
+      "marca": "docker"
     },
     {
       "id": "b_entrada",
@@ -444,7 +453,8 @@
       "tiempo_medido": {
         "p50": 0.4,
         "fuente": "medido dentro de PRE el 28-sep (8 preguntas, HISTORY 0.29.65)"
-      }
+      },
+      "marca": "postgresql"
     },
     {
       "id": "r_confianza",

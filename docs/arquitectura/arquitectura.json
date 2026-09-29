@@ -1,7 +1,7 @@
 {
  "meta": {
-  "generado": "2026-09-29T17:41:37+00:00",
-  "commit": "de3e278",
+  "generado": "2026-09-29T18:02:44+00:00",
+  "commit": "296d2e4",
   "rama": "feature/pre_alvaro"
  },
  "vistas": {
@@ -48,6 +48,7 @@
    "titulo": "Chatwoot",
    "que_hace": "La plataforma de chat. Recibe el mensaje del cliente, avisa al bot y muestra lo que el bot contesta.",
    "nota": "Servidor propio en el VPS (contenedor dp-chatwoot).",
+   "marca": "chatwoot",
    "modelos": [],
    "interruptores": []
   },
@@ -63,6 +64,7 @@
     "Aviso: POST /webhooks/chatwoot",
     "Revisión cada 1 s: poll_active_conversations_once"
    ],
+   "marca": "chatwoot",
    "modelos": [],
    "interruptores": []
   },
@@ -89,7 +91,8 @@
      "pre": true,
      "sin_efecto": false
     }
-   ]
+   ],
+   "marca": "openai"
   },
   {
    "id": "route_message",
@@ -152,6 +155,7 @@
     "LLM de respaldo: escalation.detect_routing_signals",
     "Reglas: orchestration/router.classify_route"
    ],
+   "marca": "openrouter",
    "tiempos": {
     "n": 93,
     "p50": 0.533,
@@ -273,7 +277,8 @@
      "pre": "gpt-4o-mini"
     }
    ],
-   "interruptores": []
+   "interruptores": [],
+   "marca": "openai"
   },
   {
    "id": "envio",
@@ -283,6 +288,7 @@
    "titulo": "Enviar",
    "que_hace": "Deja una nota privada para el equipo si hace falta, pasa a un humano si toca, envía la respuesta (con botones) y apaga el 'escribiendo…'.",
    "donde": "src/channels/chatwoot.py:finalize_chatwoot_delivery",
+   "marca": "chatwoot",
    "modelos": [],
    "interruptores": []
   },
@@ -295,6 +301,7 @@
    "que_hace": "Lo que el bot sabe de cada cliente (actividad, personas, fechas, historial). Se lee al empezar y se guarda al terminar.",
    "donde": "src/state_store.py:save_state",
    "nota": "Redis (contenedor dp-pre-redis).",
+   "marca": "redis",
    "modelos": [],
    "interruptores": []
   },
@@ -307,6 +314,7 @@
    "que_hace": "Los modelos que escriben, extraen datos, revisan y pasan la voz a texto. Todas las llamadas pasan por un punto con límite de 30 s.",
    "donde": "src/llm_client.py:trace_openai",
    "nota": "Misma cuenta para PRE y para las pruebas: si se queda sin crédito, el bot no contesta.",
+   "marca": "openai",
    "modelos": [],
    "interruptores": []
   },
@@ -333,7 +341,8 @@
      "pre": true,
      "sin_efecto": false
     }
-   ]
+   ],
+   "marca": "openrouter"
   },
   {
    "id": "kb",
@@ -351,6 +360,7 @@
     }
    ],
    "nota": "Postgres + pgvector, tabla kb_documents. Se recarga en cada deploy (scripts/load_embeddings.py).",
+   "marca": "postgresql",
    "interruptores": []
   },
   {
@@ -384,6 +394,7 @@
    "titulo": "GitHub CI",
    "que_hace": "Cada push a una rama pre_* pasa las pruebas y, si salen bien, despliega en PRE.",
    "donde": ".github/workflows/ci.yml",
+   "marca": "githubactions",
    "modelos": [],
    "interruptores": []
   },
@@ -395,6 +406,7 @@
    "titulo": "Servidor PRE",
    "que_hace": "El VPS donde corren el bot, Chatwoot, Postgres y Redis. python -m scripts.check_deploy comprueba que sirve lo último.",
    "donde": "docker-compose.vps.yml",
+   "marca": "docker",
    "modelos": [],
    "interruptores": []
   },
@@ -425,6 +437,7 @@
     }
    ],
    "interruptores": [],
+   "marca": "openai",
    "tiempos": {
     "n": 79,
     "p50": 0.036,
@@ -495,6 +508,7 @@
      "sin_efecto": false
     }
    ],
+   "marca": "openai",
    "tiempos": {
     "n": 77,
     "p50": 0.009,
@@ -521,6 +535,7 @@
     "LLM: llm_extractor.extract_and_verify / fill_gaps / verify_fields"
    ],
    "interruptores": [],
+   "marca": "openai",
    "tiempos": {
     "n": 77,
     "p50": 0.647,
@@ -552,6 +567,7 @@
      "sin_efecto": false
     }
    ],
+   "marca": "openai",
    "tiempos": {
     "n": 75,
     "p50": 0.828,
@@ -581,7 +597,8 @@
      "pre": true,
      "sin_efecto": false
     }
-   ]
+   ],
+   "marca": "openai"
   },
   {
    "id": "b_acuse",
@@ -606,7 +623,8 @@
      "pre": true,
      "sin_efecto": false
     }
-   ]
+   ],
+   "marca": "openai"
   },
   {
    "id": "b_pregunta",
@@ -674,7 +692,8 @@
      "pre": "gpt-4o-mini"
     }
    ],
-   "interruptores": []
+   "interruptores": [],
+   "marca": "openai"
   },
   {
    "id": "r_buscar",
@@ -695,6 +714,7 @@
     "p50": 0.4,
     "fuente": "medido dentro de PRE el 28-sep (8 preguntas, HISTORY 0.29.65)"
    },
+   "marca": "postgresql",
    "interruptores": []
   },
   {
@@ -761,7 +781,8 @@
    "tiempo_medido": {
     "p50": 1.9,
     "fuente": "medido dentro de PRE el 28-sep (8 preguntas, HISTORY 0.29.65)"
-   }
+   },
+   "marca": "openai"
   },
   {
    "id": "r_guardas",
@@ -801,7 +822,8 @@
    "tiempo_medido": {
     "p50": 1.2,
     "fuente": "medido dentro de PRE el 28-sep (8 preguntas, HISTORY 0.29.65)"
-   }
+   },
+   "marca": "openai"
   },
   {
    "id": "r_reintento",

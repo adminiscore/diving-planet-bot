@@ -30,10 +30,12 @@ os.environ.setdefault("ENV_FILE", ".env.ci")
 ROOT = Path(__file__).resolve().parent.parent
 DIR = ROOT / "docs" / "arquitectura"
 CURADO = DIR / "componentes.json"
+LOGOS = DIR / "logos.json"
 SALIDA = DIR / "arquitectura.json"
 HISTORIAL = DIR / "historial"
 SNAPSHOTS = ROOT / "docs" / "robustness" / "snapshots"
 _EXTREMOS = ("__start__", "__end__")
+_MARCA_PROVEEDOR = {"OpenAI": "openai", "OpenRouter": "openrouter"}
 
 
 def grafos() -> dict[str, dict]:
@@ -114,6 +116,10 @@ def validar(curado: dict, g: dict, bools: dict, modelos: dict) -> list[str]:
             errores.append(f"interruptores: '{f}' ya no está en settings")
         elif info.get("area") not in curado.get("areas", []):
             errores.append(f"interruptores.{f}: zona '{info.get('area')}' no está en \"areas\"")
+    logos = json.loads(LOGOS.read_text(encoding="utf-8"))["logos"] if LOGOS.exists() else {}
+    for c in curado["componentes"]:
+        if c.get("marca") and c["marca"] not in logos:
+            errores.append(f"{c['id']}: no hay logo '{c['marca']}' en docs/arquitectura/logos.json")
     for c in curado["componentes"]:
         if c.get("capa_de") and c["capa_de"] not in {x["id"] for x in curado["componentes"] if x["vista"] == c["vista"]}:
             errores.append(f"{c['id']}: capa_de '{c['capa_de']}' no está en su vista")
@@ -156,6 +162,9 @@ def construir(curado: dict, g: dict, bools: dict, modelos: dict, pre: dict, foto
         c["interruptores"] = [{"nombre": f, "titulo": curado["interruptores"][f]["titulo"], "codigo": bools[f],
                                "pre": bool(pre.get(f, bools[f])), "sin_efecto": f in curado.get("sin_efecto", {})}
                               for f in c.get("interruptores", [])]
+        # Logo: el del servicio que usa la pieza; si no se dice y llama a un modelo, el de su proveedor.
+        if not c.get("marca") and c["modelos"]:
+            c["marca"] = _MARCA_PROVEEDOR.get("OpenRouter" if "/" in str(c["modelos"][0]["pre"]) else "OpenAI")
         nodo = c.get("nodo_grafo")
         if nodo and nodo in nodos_foto:
             c["tiempos"] = nodos_foto[nodo]

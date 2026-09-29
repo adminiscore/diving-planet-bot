@@ -1,6 +1,10 @@
 History
 =======
 
+0.29.81 - (2026-09-29)
+----------------------
+* **Mapa de Coral v3:** cada pieza que usa un servicio o un modelo lleva su **logo** (OpenAI, OpenRouter/Jev, Chatwoot, Redis, PostgreSQL, GitHub Actions, Docker; monocromos, de Simple Icons CC0, en `docs/arquitectura/logos.json`). Si la pieza llama a un modelo y no se dice otra cosa, `scripts/arquitectura.py` pone el logo de su proveedor; falla si se cita un logo que no existe (test nuevo). Corregido el recorte de los % del enrutador en el borde izquierdo (margen propio para la línea de reparto y las etiquetas, que ya no pueden salirse del lienzo).
+
 0.29.80 - (2026-09-29)
 ----------------------
 * **`feature/pre_alvaro` integra `feature/l1_gonzalo`** (fase RAG: rag-1 a rag-4; `RAG_KB_V2` promocionado, `RAG_FICHA_DEL_SERVICIO` y `RAG_CONTESTA_LO_QUE_SABE` apagados con medida). Conflicto solo en este fichero: las entradas de Álvaro del 29-sep pasan a 0.29.78 (mapa) y 0.29.79 (disco).

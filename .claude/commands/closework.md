@@ -120,7 +120,7 @@ $env:ENV_FILE=".env.ci"; python -m scripts.arquitectura
 It fails (and so does `tests/test_arquitectura.py` in CI) if a graph node has no description or a cited file,
 function, flag or model no longer exists: fix `docs/arquitectura/componentes.json`. Then publish
 `docs/arquitectura/mapa-coral.html` with the Artifact tool, `url` = the map's URL, and `files` =
-`arquitectura.json`, `historial/indice.json` and every `historial/*.json` (new versions appear there only when the
+`arquitectura.json`, `logos.json`, `historial/indice.json` and every `historial/*.json` (new versions appear there only when the
 structure changed). Commit the regenerated files.
 
 13. Finish by reporting:
