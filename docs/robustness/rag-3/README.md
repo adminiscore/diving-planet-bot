@@ -165,3 +165,58 @@ decidir por latencia hace falta la ronda core.
 - `catalog.extra_block_es/en` es **código muerto**: nadie lo consume. Para la limpieza de s4-25.
 - Los `name_*` de `pricing.json` no los lee el bot: marcarlos como etiquetas internas en su
   `_comment` para que nadie vuelva a tomarlos por oficiales.
+
+
+---
+
+# A/B completo de rag-3b + rag-4 (47 casos, 29-sep) — **NEGATIVO, no se promociona ninguno**
+
+Los dos flags juntos, porque cada uno resuelve la mitad del otro: rag-3b mete el dato en el
+contexto y rag-4 hace que el bot lo diga. Medido con `rag_piezas --codigo-local`, 47 casos × 1 por
+lado (~2,8 $). Ficheros: `2026-09-29-rag34-{off,on}.json`.
+
+| | apagado | encendido |
+|---|---|---|
+| **cobertura de la respuesta** | 89 % | **89 %** — no se mueve |
+| falta por búsqueda | 4 | **2** ✅ (rag-3b sí hace lo suyo) |
+| falta por redacción | 6 | 6 |
+| falta por juez/guardas | 0 | **2** |
+| **dice algo PROHIBIDO** | 0 | **1** |
+| "no lo tengo" | 0 | 1 |
+| **rechazos del juez · regeneraciones** | 2 · 2 | **8 · 7** |
+| p50 · llamadas LLM | 2,9 s · 3,1 | 3,0 s · 3,4 |
+| contexto medio | 33,8k | 34,9k |
+
+**Por caso: gana 3, pierde 4.** Gana `salida-confirmada` (los dos datos, el caso diagnosticado) y
+`edad-minima-ninos/snorkel-6`; pierde `dos-buceos-un-dia-en/mismo-dia`,
+`equipaje-mochilas/una-por-persona` y los dos de `fotos-fotografo`.
+
+**Lo que de verdad lo tumba: el dato prohibido.** En `refresher-antes-en` el bot dice *"you'll need
+to complete the theory part of the refresher course, which takes about 4 hours"*. Las 4 horas de
+teoría son del **curso Open Water**, no del refresher. El mecanismo se entiende y es la lección:
+**con la ficha entera del servicio en el contexto (rag-3b) MÁS la instrucción de "di lo que tengas"
+(rag-4), el modelo cruza datos entre servicios.** Los dos cambios se potencian mal: uno mete más
+material y el otro empuja a usarlo.
+
+Eso explica también los rechazos del juez (2 → 8): el guard de grounding está haciendo su trabajo y
+frenando afirmaciones sin respaldo, a costa de 7 regeneraciones.
+
+**Lo de 5 casos no generalizó.** rag-4 solo daba 57 % → 79 % de cobertura en los 5 casos de
+redacción; en los 47 la cobertura no se mueve. Con 1 repetición por lado hay ruido de muestreo
+(`equipaje-mochilas` mejoraba en la tanda de 5 y empeora aquí), pero el salto de rechazos y el dato
+prohibido no son ruido.
+
+**Veredicto: los dos flags se quedan APAGADOS.** PRE no cambia.
+
+## Lo que hay que probar después, en este orden
+
+1. **rag-4 SOLO, sobre los 47** (~2,8 $). No está medido: lo de hoy mezcla los dos flags, así que
+   no se sabe si el daño lo mete rag-4, rag-3b o la interacción. Es la pregunta que decide si
+   rag-4 es promocionable por su cuenta, y la hipótesis de arriba dice que el problema es la
+   COMBINACIÓN.
+2. **Si el problema es la interacción**, acotar rag-3b: en vez de la ficha entera, inyectar solo el
+   itinerario y los requisitos (lo que la búsqueda no trae), para no dar material de otros
+   servicios.
+3. Y mirar `refresher-antes-en` aparte: el formulario médico del refresher ya salía como fallo de
+   búsqueda en rag-2, y ahora además se confunde con el curso. Huele a que el refresher necesita su
+   propia ficha en la base curada.
