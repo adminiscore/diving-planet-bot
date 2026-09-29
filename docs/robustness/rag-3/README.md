@@ -220,3 +220,55 @@ prohibido no son ruido.
 3. Y mirar `refresher-antes-en` aparte: el formulario médico del refresher ya salía como fallo de
    búsqueda en rag-2, y ahora además se confunde con el curso. Huele a que el refresher necesita su
    propia ficha en la base curada.
+
+
+---
+
+# rag-4 SOLO (47 casos) — **el daño es de rag-4, no de la interacción**
+
+Era la pregunta que dejó abierta el A/B conjunto, y la hipótesis escrita antes de medir decía que el
+problema sería la COMBINACIÓN. **Era falsa.**
+
+| | base (los dos apagados) | **rag-4 solo** | los dos |
+|---|---|---|---|
+| **cobertura de la respuesta** | 89 % | **83 %** | 89 % |
+| falta por búsqueda | 4 | 4 | 2 |
+| falta por redacción | 6 | 6 | 6 |
+| falta por juez/guardas | 0 | **4** | 2 |
+| contradice | 0 | **1** | 0 |
+| dice algo prohibido | 0 | **1** | 1 |
+| "no lo tengo" | 0 | **3** | 1 |
+| rechazos · regeneraciones | 2 · 2 | **8 · 5** | 8 · 7 |
+
+**Por caso: gana 2, pierde 6.** Y entre las pérdidas está `pago-transferencia` (sus dos datos), que
+es **uno de los casos que el enunciado de rag-4 nombraba como objetivo**. El arreglo empeora el caso
+que venía a arreglar.
+
+**Mecanismo.** Decirle "contesta lo que sí sabes" le hace **afirmar más**; el juez de grounding
+rechaza esas afirmaciones sin respaldo (2 → 8 rechazos) y, tras regenerar, el bot acaba diciendo
+"no lo tengo" más veces que antes (0 → 3). O sea: la regla produce **lo contrario** de lo que
+buscaba.
+
+Dato curioso y coherente: con los dos flags la cobertura vuelve a 89 %. rag-3b **compensa en parte
+el daño de rag-4**, porque al meter la ficha en el contexto hay más material con respaldo y menos
+afirmación inventada. No es una razón para encender los dos: es la explicación de por qué el A/B
+conjunto salía "plano" en lugar de negativo.
+
+**Veredicto: rag-4 se descarta.** El flag se queda en el código, apagado y documentado, para que
+nadie lo vuelva a intentar sin leer esto.
+
+## El patrón, que es lo que de verdad hay que llevarse
+
+Es la **tercera vez** en este proyecto que un matiz añadido al prompt sale negativo con medida:
+
+| cuándo | dónde | qué se intentó | resultado |
+|---|---|---|---|
+| 24-sep (Gadea) | prompt de RELLENO | "una pregunta no es una afirmación" | arreglaba 1, rompía 2 |
+| 25-sep (Gonzalo) | prompt de VERIFICACIÓN | lo mismo, en otra tarea | no quitaba ningún invento y rompía un caso |
+| 29-sep (Gonzalo) | prompt del RAG | "contesta lo que sí sabes" | cobertura 89 % → 83 % |
+
+Las tres veces la sonda pequeña decía que funcionaba y la medida completa lo desmintió. **Este
+prompt no admite más matices**: lo que ha movido la aguja en la fase RAG ha sido la estructura y los
+datos (rag-2: base curada, 71 % → 85 % de top-8), que es exactamente lo que concluía el análisis del
+29-sep — *"el lastre es la estructura y los datos, no el modelo"*. Conviene creérselo antes de
+gastar la siguiente tanda en el prompt.

@@ -1,6 +1,14 @@
 History
 =======
 
+0.29.77 - (2026-09-29)
+----------------------
+* **rag-4 SOLO, medido sobre los 47: el daño es de rag-4, no de la interacción. DESCARTADO.** La hipótesis escrita antes de medir decía que el problema sería la combinación con rag-3b; **era falsa**. rag-4 solo baja la **cobertura de 89 % a 83 %**, sube los rechazos del juez de 2 a 8, y mete 1 contradicción, 1 dato prohibido y 3 "no lo tengo" (antes 0). Por caso: **gana 2, pierde 6** — y entre las pérdidas está `pago-transferencia`, que era **uno de los casos que el enunciado de rag-4 nombraba como objetivo**.
+* **Mecanismo**: decirle "contesta lo que sí sabes" le hace **afirmar más**; el guard de grounding rechaza esas afirmaciones sin respaldo y, tras regenerar, el bot acaba diciendo "no lo tengo" MÁS veces que antes. La regla produce lo contrario de lo que buscaba. (Con los dos flags la cobertura vuelve a 89 % porque rag-3b compensa en parte: al meter la ficha hay más material con respaldo. No es razón para encenderlos.)
+* **⚠️ El patrón, que vale más que el resultado: es la TERCERA vez que un matiz en el prompt sale negativo con medida** — relleno (24-sep, Gadea), verificación (25-sep) y ahora el RAG. Las tres veces la sonda pequeña decía que funcionaba y la tanda completa lo desmintió. **Este prompt no admite más matices**: lo que ha movido la aguja en la fase RAG es la estructura y los datos (rag-2: top-8 71 % → 85 %), que es justo lo que concluía el análisis del 29-sep. Conviene creérselo antes de gastar la siguiente tanda en el prompt.
+* El flag `RAG_CONTESTA_LO_QUE_SABE` se queda en el código, **apagado y documentado**, para que nadie lo reintente sin leer `docs/robustness/rag-3/README.md`.
+
+
 0.29.76 - (2026-09-29)
 ----------------------
 * **A/B completo de rag-3b + rag-4 (47 casos): NEGATIVO. Los dos flags se quedan apagados; PRE no cambia.** Medidos juntos porque cada uno resuelve la mitad del otro (uno mete el dato en el contexto, el otro hace que el bot lo diga). Resultado: **la cobertura no se mueve (89 % → 89 %)**, los fallos de búsqueda bajan 4 → 2 (rag-3b sí hace lo suyo), pero **los rechazos del juez suben 2 → 8** y las regeneraciones 2 → 7. Por caso: **gana 3, pierde 4**.

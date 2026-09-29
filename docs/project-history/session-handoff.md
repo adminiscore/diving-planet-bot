@@ -13,6 +13,41 @@ Read this file before changing code in the Diving Planet Bot. For a quick versio
 
 > **📏 LEER ANTES DE MEDIR — decisiones del 24-sep-2026 (Gadea):** (1) latencia y llamadas con nuestros logs `[TURN_METRICS]` + `scripts/turn_metrics.py`, no con Langfuse (plan gratuito superado, reinicio 16-oct); (2) pruebas A/B por escalones, juzgando solo los diálogos que cambian. Todo en `docs/robustness/protocolo-medicion.md`.
 
+### 🔧 29-sep tarde (Gonzalo) — **rag-4 DESCARTADO con medida; rag-3b sin promocionar**
+
+**rag-4 solo, sobre los 47: peor que la base.** Cobertura **89 % → 83 %**, rechazos del juez 2 → 8,
+y aparecen 1 contradicción, 1 dato prohibido y 3 "no lo tengo" (antes 0). Por caso **gana 2, pierde
+6**, y entre las pérdidas está `pago-transferencia` — **uno de los casos que el propio enunciado de
+rag-4 nombraba como objetivo**. El flag se queda apagado y documentado en `config.py` para que no se
+reintente a ciegas.
+
+**Mecanismo**: "contesta lo que sí sabes" le hace AFIRMAR más, el guard de grounding rechaza esas
+afirmaciones y, tras regenerar, acaba diciendo "no lo tengo" MÁS que antes. Lo contrario de lo
+buscado.
+
+**⚠️ Y esto es lo que hay que llevarse: es la TERCERA vez que un matiz en el prompt sale negativo
+con medida** — relleno (24-sep, Gadea), verificación (25-sep) y RAG (hoy). Las tres veces la sonda
+pequeña decía que funcionaba y la tanda completa lo desmintió. **Lo que mueve la aguja es la
+estructura y los datos** (rag-2: top-8 71 % → 85 %), que es justo lo que concluía el análisis del
+29-sep. Antes de gastar otra tanda en el prompt, leer esto.
+
+**rag-3b** (`RAG_FICHA_DEL_SERVICIO`) queda apagado también: hace lo suyo (fallos de búsqueda 4 → 2)
+pero no mueve la cobertura y cuesta algo de latencia. Vivo, medido y sin promocionar.
+
+**Siguiente, por orden de lo que dicen los datos:**
+1. **La otra mitad de rag-3 que sigue sin hacer**: "la búsqueda prioriza su origen". Es la única que
+   movería el `top-8` (85 %, criterio de cierre ≥ 90 %), y va por estructura, no por prompt.
+2. **`refresher-antes-en` necesita ficha propia en la base curada**: su formulario médico ya fallaba
+   en rag-2 y ahora además el bot le atribuye las 4 h de teoría del Open Water.
+3. **Hueco de negocio detectado**: el itinerario del Open Water da la hora de fin del día 2 (15:00)
+   pero **no la del día 1**, que es justo lo que pregunta un caso del golden. Para la lista D1-D8.
+
+**Avisos operativos de hoy:** (a) un push a `pre_*` recrea el contenedor y mata una medición con
+`--codigo-local` (me costó media tanda); (b) `rag_piezas` manda las 47 respuestas por UNA sesión
+SSH, así que un corte de red tira la tanda entera (me pasó, sin coste al no llegar respuestas):
+merecería guardar según llegan; (c) la clave `dp_pre_vps` llegó con finales de línea CRLF y OpenSSH
+no la parsea — instalada convertida a LF.
+
 ### 🔧 29-sep tarde (Gonzalo) — rag-3 y rag-4 medidos: **A/B NEGATIVO, los dos flags apagados**
 
 **Resultado que manda** (47 casos × 1 por lado, `rag_piezas --codigo-local`, ~2,8 $): con

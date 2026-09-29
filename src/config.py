@@ -177,7 +177,12 @@ class Settings(BaseSettings):
     # partes el modelo tira la respuesta entera aunque tenga la mitad. Medido (`rag_piezas`, 2026-09-28-rag2-B2): de
     # los fallos que quedan tras rag-2, 9 son de redaccion y TODOS con el dato ya en el contexto; en
     # `salida-confirmada` el bot suelta la plantilla LITERAL de esa regla teniendo delante "se opera todos los dias
-    # salvo 25-dic y 1-ene" y "solo se suspende por mal tiempo". APAGADO hasta su A/B.
+    # salvo 25-dic y 1-ene" y "solo se suspende por mal tiempo".
+    # DESCARTADO 29-sep con medida (HISTORY 0.29.77): sobre los 47 casos la cobertura BAJA de 89 % a 83 %, los
+    # rechazos del juez suben de 2 a 8 y aparecen 1 contradiccion, 1 dato prohibido y 3 "no lo tengo". Decirle
+    # "contesta lo que sabes" le hace AFIRMAR mas, el guard rechaza y tras regenerar dice "no lo tengo" MAS que
+    # antes: lo contrario de lo que buscaba. Se deja aqui apagado para que no se reintente sin leer
+    # docs/robustness/rag-3/README.md.
     rag_contesta_lo_que_sabe: bool = False
 
     # Paso 6 (27-sep): respuestas fijas y salida deterministas de S4. s4-14: si piden un telefono se
