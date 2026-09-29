@@ -114,6 +114,22 @@ def load_reference() -> str:
     for name in ("pricing", "policies", "discounts", "availability", "escalation_rules"):
         data = json.loads((KB_DIR / f"{name}.json").read_text(encoding="utf-8-sig"))
         parts.append(f"### {name}.json\n{json.dumps(data, ensure_ascii=False, separators=(',', ':'))}")
+    # rag-3 (29-sep, Gonzalo): el nombre OFICIAL de cada servicio es el de services.json — es el de
+    # la web (su `url` y su `booking_url` apuntan a divingplanet.org: .../book/salidas-de-buceo/...)
+    # y es el unico que lee el bot (`catalog.SERVICES`). Los `name_es`/`name_en` de pricing.json son
+    # etiquetas de la hoja de tarifas interna (TARIFA PLENA FINAL.csv), no las usa nadie en el bot y
+    # tienen otra granularidad (las 4 especialidades comparten una sola entrada de precio). Sin esto
+    # el juez los tomaba por oficiales: en la ronda 2026-09-28-rag2-B marco `sin-invenciones` como
+    # no_cumple en `reserva-ingles` porque el bot dijo "Fun Dives - 2 dives (1 day)" y su referencia
+    # solo conocia "Certified Diver - 2 dives (1 day)" (revisado a mano por Gadea: no era invento).
+    services = json.loads((KB_DIR / "services.json").read_text(encoding="utf-8-sig"))["services"]
+    nombres = [{"id": sid, "es": s.get("name_es"), "en": s.get("name_en")} for sid, s in services.items()]
+    parts.append(
+        "### services.json (NOMBRES OFICIALES de los servicios: los de la web)\n"
+        "Esta es la lista de nombres validos. Si el bot llama a un servicio por uno de estos nombres "
+        "NO es una invencion, aunque pricing.json use otra etiqueta interna para el mismo servicio.\n"
+        + json.dumps(nombres, ensure_ascii=False, separators=(',', ':'))
+    )
     activities = json.loads((KB_DIR / "activities.json").read_text(encoding="utf-8-sig"))["activities"]
     compact = [{k: a.get(k) for k in ("id", "label", "requires_certification", "min_age", "max_age")} for a in activities]
     parts.append(f"### activities.json (extracto)\n{json.dumps(compact, ensure_ascii=False, separators=(',', ':'))}")

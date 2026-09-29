@@ -1,7 +1,7 @@
 {
  "meta": {
-  "generado": "2026-09-29T17:07:05+00:00",
-  "commit": "bb518ac",
+  "generado": "2026-09-29T17:38:39+00:00",
+  "commit": "0508a73",
   "rama": "feature/pre_alvaro"
  },
  "vistas": {
@@ -141,8 +141,8 @@
    ],
    "tiempos": {
     "n": 93,
-    "p50": 1.332,
-    "p95": 3.958
+    "p50": 0.533,
+    "p95": 1.794
    }
   },
   {
@@ -157,9 +157,9 @@
    "modelos": [],
    "interruptores": [],
    "tiempos": {
-    "n": 6,
+    "n": 7,
     "p50": 0.002,
-    "p95": 0.002
+    "p95": 0.009
    }
   },
   {
@@ -175,7 +175,7 @@
    "interruptores": [],
    "tiempos": {
     "n": 2,
-    "p50": 0.003,
+    "p50": 0.004,
     "p95": 0.004
    }
   },
@@ -210,8 +210,8 @@
    "interruptores": [],
    "tiempos": {
     "n": 4,
-    "p50": 4.591,
-    "p95": 5.551
+    "p50": 3.168,
+    "p95": 3.5
    }
   },
   {
@@ -227,9 +227,9 @@
    "modelos": [],
    "interruptores": [],
    "tiempos": {
-    "n": 80,
-    "p50": 1.836,
-    "p95": 7.856
+    "n": 79,
+    "p50": 1.76,
+    "p95": 7.384
    }
   },
   {
@@ -411,8 +411,8 @@
    ],
    "interruptores": [],
    "tiempos": {
-    "n": 80,
-    "p50": 0.034,
+    "n": 79,
+    "p50": 0.036,
     "p95": 0.065
    }
   },
@@ -441,9 +441,9 @@
    ],
    "modelos": [],
    "tiempos": {
-    "n": 80,
-    "p50": 0.006,
-    "p95": 0.01
+    "n": 79,
+    "p50": 0.007,
+    "p95": 0.013
    }
   },
   {
@@ -477,9 +477,9 @@
     }
    ],
    "tiempos": {
-    "n": 78,
-    "p50": 0.01,
-    "p95": 0.776
+    "n": 77,
+    "p50": 0.009,
+    "p95": 0.019
    }
   },
   {
@@ -503,9 +503,9 @@
    ],
    "interruptores": [],
    "tiempos": {
-    "n": 76,
-    "p50": 0.86,
-    "p95": 1.926
+    "n": 77,
+    "p50": 0.647,
+    "p95": 2.586
    }
   },
   {
@@ -534,8 +534,8 @@
    ],
    "tiempos": {
     "n": 75,
-    "p50": 0.825,
-    "p95": 6.806
+    "p50": 0.828,
+    "p95": 6.662
    }
   },
   {
@@ -1565,6 +1565,30 @@
    "sin_efecto": null
   },
   {
+   "nombre": "rag_contesta_lo_que_sabe",
+   "codigo": false,
+   "pre": false,
+   "fijado_en_pre": false,
+   "usado_por": [],
+   "sin_efecto": null
+  },
+  {
+   "nombre": "rag_ficha_del_servicio",
+   "codigo": false,
+   "pre": false,
+   "fijado_en_pre": false,
+   "usado_por": [],
+   "sin_efecto": null
+  },
+  {
+   "nombre": "rag_kb_v2",
+   "codigo": true,
+   "pre": true,
+   "fijado_en_pre": true,
+   "usado_por": [],
+   "sin_efecto": null
+  },
+  {
    "nombre": "rag_prompt_cache",
    "codigo": true,
    "pre": true,
@@ -1630,7 +1654,7 @@
     "b_notas",
     "b_acuse"
    ],
-   "llamadas_ultima_ronda": 236
+   "llamadas_ultima_ronda": 187
   },
   {
    "ajuste": "grounding_v3_model",
@@ -1639,7 +1663,7 @@
    "usado_por": [
     "r_revisor"
    ],
-   "llamadas_ultima_ronda": 44
+   "llamadas_ultima_ronda": 47
   },
   {
    "ajuste": "jev_model",
@@ -1670,7 +1694,7 @@
     "b_setup",
     "r_reescribir"
    ],
-   "llamadas_ultima_ronda": 236
+   "llamadas_ultima_ronda": 187
   },
   {
    "ajuste": "openai_transcription_model",
@@ -1688,68 +1712,68 @@
    "usado_por": [
     "r_escribir"
    ],
-   "llamadas_ultima_ronda": 44
+   "llamadas_ultima_ronda": 47
   }
  ],
  "ronda": {
-  "etiqueta": "regen-B2 (RAG_REGEN_FEEDBACK on, ofrece asesor)",
-  "run_at": "2026-09-28T15:32:36Z",
-  "fichero": "2026-09-28-regen-B2.json",
-  "commit": "c5b4500",
+  "etiqueta": "rag2-B",
+  "run_at": "2026-09-28T20:49:15Z",
+  "fichero": "2026-09-28-rag2-B.json",
+  "commit": "92d16dc",
   "por_tipo": {
    "reserva": {
-    "turns": 54,
-    "latency_p50": 2.725,
-    "latency_p95": 6.316,
-    "latency_avg": 3.136,
-    "llm_calls_avg": 2.19,
-    "llm_calls_p95": 5.0,
-    "llm_calls_max": 6,
+    "turns": 52,
+    "latency_p50": 1.434,
+    "latency_p95": 3.724,
+    "latency_avg": 1.762,
+    "llm_calls_avg": 1.67,
+    "llm_calls_p95": 3.0,
+    "llm_calls_max": 4,
     "embeddings_avg": 0,
-    "llm_share": 0.7,
+    "llm_share": 0.873,
     "tokens_avg": 0,
     "cost_avg_usd": 0
    },
    "rag": {
-    "turns": 39,
-    "latency_p50": 7.191,
-    "latency_p95": 10.881,
-    "latency_avg": 7.166,
-    "llm_calls_avg": 5.28,
-    "llm_calls_p95": 8.0,
-    "llm_calls_max": 10,
-    "embeddings_avg": 1.08,
-    "llm_share": 0.934,
+    "turns": 41,
+    "latency_p50": 4.889,
+    "latency_p95": 9.469,
+    "latency_avg": 5.495,
+    "llm_calls_avg": 4.73,
+    "llm_calls_p95": 7.0,
+    "llm_calls_max": 8,
+    "embeddings_avg": 1.1,
+    "llm_share": 0.982,
     "tokens_avg": 0,
     "cost_avg_usd": 0
    }
   },
   "enrutador": {
    "by_backend": {
-    "llm_fallback": 38,
-    "jev": 49,
-    "llm": 1,
-    "llm_uncertain": 5
+    "jev": 81,
+    "llm_uncertain": 10,
+    "llm_fallback": 1,
+    "llm": 1
    },
-   "ms_p50": 750.0,
-   "ms_p95": 2027.45
+   "ms_p50": 505.0,
+   "ms_p95": 609.75
   },
   "cliente": {
    "turns": 93,
    "conversations": 32,
    "no_reply": 0,
    "multi_bubble": 0,
-   "latency_p50": 5.0,
-   "latency_p95": 10.4,
-   "latency_max": 12
+   "latency_p50": 3.0,
+   "latency_p95": 9.4,
+   "latency_max": 13
   },
   "llamadas_por_modelo": {
-   "gpt-4o-mini": 236,
-   "gpt-4.1-mini": 44,
-   "gpt-4.1": 44
+   "gpt-4o-mini": 187,
+   "gpt-4.1-mini": 47,
+   "gpt-4.1": 47
   },
   "calidad": {
-   "criteria_pass_pct": 93.3,
+   "criteria_pass_pct": 94.3,
    "dialogues_passed": 22,
    "dialogues": 32,
    "model": "gpt-5-mini (medium)"

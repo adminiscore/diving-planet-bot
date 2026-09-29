@@ -159,6 +159,31 @@ class Settings(BaseSettings):
     # paso 8 acababan así en "no lo tengo"). El juez sigue juzgando la segunda. PROMOCIONADO 28-sep (HISTORY 0.29.68):
     # escalón 0 12 -> 2 "no lo tengo"; core regen-A 93,0 % -> regen-B2 93,3 %, sin regresiones del flag.
     rag_regen_feedback: bool = True
+    # rag-2 (29-sep, fase RAG de Plan Coral): la busqueda lee la base curada del esquema `kb_v2` (una ficha por
+    # servicio y origen, FAQs sin telefono ni listas de precios, politicas con sus formas de preguntarlas;
+    # `scripts/kb_v2.py`). Apagado = `public.kb_documents` de siempre. PROMOCIONADO 29-sep (HISTORY 0.29.72): core
+    # rag2-A 92,5 % -> rag2-B 94,3 %, sin regresiones atribuibles. Marcha atras: apagarlo (aqui y en el compose).
+    rag_kb_v2: bool = True
+    # rag-3 (29-sep): si ya se sabe QUE servicio mira el cliente, su ficha entera (la misma que la de la base v2,
+    # `catalog.service_fact_sheet`) va SIEMPRE al contexto, en vez de depender de que la busqueda la encuentre.
+    # Motivo medido (`rag_piezas`, 2026-09-28-rag2-B2): con `selected_service` puesto, la ficha NO entraba en el
+    # top-8 ante preguntas genericas -- "what time does the course finish on the first day?" con el Open Water
+    # elegido, y la direccion del centro con el Curso Referido. El dato existe (el itinerario lleva la hora de
+    # encuentro); el problema es de busqueda. Sustituye a la inyeccion parcial de incluye/no incluye, que se
+    # quedaba corta. APAGADO hasta su A/B (rag_piezas + ronda core).
+    rag_ficha_del_servicio: bool = False
+    # rag-4 (29-sep): la regla del "no lo tengo" del prompt del RAG es TODO-O-NADA -- dice "si la respuesta no esta
+    # en el contexto, dilo" y no dice nada de contestar la parte que SI esta, asi que ante una pregunta con varias
+    # partes el modelo tira la respuesta entera aunque tenga la mitad. Medido (`rag_piezas`, 2026-09-28-rag2-B2): de
+    # los fallos que quedan tras rag-2, 9 son de redaccion y TODOS con el dato ya en el contexto; en
+    # `salida-confirmada` el bot suelta la plantilla LITERAL de esa regla teniendo delante "se opera todos los dias
+    # salvo 25-dic y 1-ene" y "solo se suspende por mal tiempo".
+    # DESCARTADO 29-sep con medida (HISTORY 0.29.77): sobre los 47 casos la cobertura BAJA de 89 % a 83 %, los
+    # rechazos del juez suben de 2 a 8 y aparecen 1 contradiccion, 1 dato prohibido y 3 "no lo tengo". Decirle
+    # "contesta lo que sabes" le hace AFIRMAR mas, el guard rechaza y tras regenerar dice "no lo tengo" MAS que
+    # antes: lo contrario de lo que buscaba. Se deja aqui apagado para que no se reintente sin leer
+    # docs/robustness/rag-3/README.md.
+    rag_contesta_lo_que_sabe: bool = False
 
     # Paso 6 (27-sep): respuestas fijas y salida deterministas de S4. s4-14: si piden un telefono se
     # da el WhatsApp oficial (decision de Gadea; antes "no manejo un numero"); s4-15: "¿eres un bot?"

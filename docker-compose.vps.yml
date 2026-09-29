@@ -206,6 +206,10 @@ services:
       # 28-sep, PROMOCIONADO (HISTORY 0.29.68): si el juez rechaza la respuesta del RAG, la segunda muestra recibe
       # QUE se rechazo (antes repetia el invento y acababa en "no lo tengo"). Revert = "false" aqui y en config.py.
       RAG_REGEN_FEEDBACK: "true"
+      # rag-2 (29-sep), PROMOCIONADO (HISTORY 0.29.72): base curada kb_v2 (una ficha por servicio y origen, sin
+      # telefono ni precios repetidos) y busqueda sin empujones por regex. rag_piezas: top-8 71 -> 85 %,
+      # contradicciones 5 -> 1; core rag2-A 92,5 % -> rag2-B 94,3 %. Revert = "false" aqui y en config.py.
+      RAG_KB_V2: "true"
       # Refactor multi-agente (docs/multi-agent-refactor-plan.md) — validación en
       # PRE antes del corte del legacy (Fase 5.2). STAGE B (ahora): el GRAFO sirve
       # de verdad (agent_arch on) — router → 5 nodos reales + subgrafo booking. La

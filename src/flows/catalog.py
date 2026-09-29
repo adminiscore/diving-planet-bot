@@ -270,6 +270,78 @@ def _load_services() -> dict:
 
 SERVICES = _load_services()
 
+
+def _load_raw_services() -> dict:
+    """Las entradas de services.json TAL CUAL, sin la transformacion de `_load_services`.
+
+    Hacen falta para `service_fact_sheet` (rag-3): la ficha de la base v2 se construye desde el
+    JSON crudo (`included_es`, `duration_note_es`…), no desde las claves renombradas de `SERVICES`
+    (`includes_es`, ya unido y saneado). Construir la ficha desde dos entradas distintas es
+    exactamente lo que rag-2 vino a evitar: dos textos del mismo servicio que pueden diferir."""
+    path = Path(__file__).resolve().parents[2] / "data" / "knowledge_base" / "services.json"
+    return json.loads(path.read_text(encoding="utf-8-sig")).get("services", {})
+
+
+RAW_SERVICES = _load_raw_services()
+
+# Etiquetas de la ficha de servicio. Vienen de `scripts/kb_v2.py` (rag-2), donde nacieron para
+# construir la base curada; viven aqui desde rag-3 porque ahora la ficha se usa en DOS sitios
+# (la base v2 y el contexto del turno) y tienen que ser el mismo texto.
+_SHEET_T = {
+    "es": {"ficha": "Ficha del servicio", "desde": "saliendo desde Cartagena",
+           "islas": "para quien ya está en las Islas del Rosario (recogida en el hotel si tiene acceso marítimo)",
+           "datos": "Datos", "incluye": "Incluye", "no_incluye": "No incluye", "itinerario": "Itinerario",
+           "requisitos": "Requisitos", "preparacion": "Antes de la actividad", "reserva": "Reserva",
+           "info": "Más información", "edad10": "edad mínima 10"},
+    "en": {"ficha": "Service sheet", "desde": "departing from Cartagena",
+           "islas": "for guests already on the Rosario Islands (hotel pick-up if it has boat access)",
+           "datos": "Facts", "incluye": "Included", "no_incluye": "Not included",
+           "itinerario": "Itinerary", "requisitos": "Requirements", "preparacion": "Before the activity",
+           "reserva": "Booking", "info": "More info", "edad10": "minimum age 10"},
+}
+
+
+def _sheet_list(titulo: str, items) -> str:
+    if isinstance(items, str):
+        return f"{titulo}: {items}" if items.strip() else ""
+    items = [i for i in (items or []) if i]
+    return f"{titulo}:\n" + "\n".join(f"- {i}" for i in items) if items else ""
+
+
+def service_fact_sheet(service_id: str, lang: str, svc: dict | None = None) -> str:
+    """La ficha autocontenida de un servicio: qué es, datos, incluye/no incluye, itinerario,
+    requisitos, preparación y enlaces.
+
+    UNA sola fuente para dos usos (rag-3, 29-sep): el documento de la base curada v2
+    (`scripts/kb_v2.ficha_servicio`, que solo le añade sus metadatos) y el contexto del turno
+    cuando ya se sabe qué servicio mira el cliente. Antes, el contexto solo inyectaba
+    incluye/no incluye, así que "¿a qué hora acaba el día 1?" con el Open Water elegido dependía
+    de que la búsqueda encontrase la ficha — y no la encontraba (`rag_piezas`: fuera del top-8).
+
+    `svc` es la entrada CRUDA de services.json; por defecto la de `RAW_SERVICES`."""
+    svc = RAW_SERVICES[service_id] if svc is None else svc
+    t = _SHEET_T[lang]
+    island = service_id.endswith("_already_on_island")
+    partes = service_fact_parts(service_id, lang) if service_id in SERVICES else []
+    if partes and not any("edad" in p or "age" in p for p in partes) and SERVICES[service_id].get("min_age") == 10:
+        partes.append(t["edad10"])
+    bloques = [
+        f"{t['ficha']}: {svc.get(f'name_{lang}') or service_id} — {t['islas'] if island else t['desde']}",
+        svc.get(f"description_{lang}") or "",
+        f"{t['datos']}: " + "; ".join(partes) + "." if partes else "",
+        svc.get(f"duration_note_{lang}") or "",
+        _sheet_list(t["incluye"], svc.get(f"included_{lang}")),
+        _sheet_list(t["no_incluye"], svc.get(f"not_included_{lang}")),
+        _sheet_list(t["itinerario"], svc.get(f"itinerary_{lang}")),
+        _sheet_list(t["requisitos"], svc.get(f"requirements_{lang}")),
+        _sheet_list(t["preparacion"], svc.get(f"preparation_{lang}")),
+        " · ".join(x for x in (
+            f"{t['reserva']}: {svc['booking_url']}" if svc.get("booking_url") and not svc.get("contact_only") else "",
+            f"{t['info']}: {svc['url']}" if svc.get("url") else "") if x),
+    ]
+    return "\n\n".join(b for b in bloques if b.strip())
+
+
 # Servicio desde Cartagena -> su variante "ya en las islas". Se deriva de la
 # convencion de ids de services.json (`<id>_already_on_island`, que valida
 # `src.domain.activities.validate`) en vez de mantenerse a mano: la lista escrita
@@ -362,6 +434,52 @@ COMPANION_PRICE = _load_companion_price()
 _FACTS_CACHE: dict[str, str] = {}
 
 
+def service_fact_parts(service_id: str, lang: str) -> list[str]:
+    """Los datos de un servicio tal como los dice el catálogo (precio, días, noches, lancha, almuerzo,
+    certificación, edad). rag-2: la ficha del servicio en la base v2 usa esta misma línea, así el
+    catálogo y la ficha no pueden decir cosas distintas."""
+    svc = SERVICES[service_id]
+    es = lang == "es"
+    parts = []
+    if svc.get("price_usd") is not None:
+        online = money.usd_cop(svc.get("price_usd"), svc.get("price_cop"))
+        normal = money.usd_cop(svc.get("price_usd_normal"), svc.get("price_cop_normal"))
+        parts.append(f"{online} online, {normal} normal" if es else f"{online} online, {normal} regular")
+    else:
+        parts.append("precio: lo cotiza un asesor" if es else "price: quoted by an advisor")
+    days = svc.get("duration_days")
+    if days:
+        parts.append((f"{days} día" + ("s" if days > 1 else "")) if es else (f"{days} day" + ("s" if days > 1 else "")))
+    if svc.get("includes_night_dive"):
+        parts.append("incluye un buceo nocturno" if es else "includes a night dive")
+    island = service_id.endswith("_already_on_island")
+    if service_id in OVERNIGHT_SERVICES and not island:
+        parts.append("hay que dormir en las islas (alojamiento no incluido), no es ida y vuelta el mismo día"
+                     if es else "you must stay overnight on the islands (lodging not included), not a same-day round trip")
+    elif svc.get("overnight") == "optional" and not island:
+        parts.append("el día 1 puedes volver a Cartagena o dormir en las islas (alojamiento no incluido)"
+                     if es else "on day 1 you can return to Cartagena or stay on the islands (lodging not included)")
+    elif not island and days == 1:
+        parts.append("ida y vuelta desde Cartagena el mismo día" if es else "same-day round trip from Cartagena")
+    includes = (svc.get("includes_es") or "").lower()
+    if "transporte" in includes and not island:
+        # 28-sep (ronda cache-B2): "no es ida y vuelta el mismo dia" se leia como "no hay lancha".
+        parts.append("lancha Cartagena-Islas-Cartagena incluida" if es else
+                     "boat Cartagena-Islands-Cartagena included")
+    # rag-2 (D5, Gadea 29-sep): desde Cartagena el almuerzo va solo el día 1; desde las islas, nunca.
+    if "almuerzo" not in includes:
+        parts.append("almuerzo NO incluido" if es else "lunch NOT included")
+    elif days and days > 1:
+        parts.append("almuerzo solo el día 1" if es else "lunch on day 1 only")
+    else:
+        parts.append("almuerzo incluido" if es else "lunch included")
+    parts.append(("requiere certificación" if svc.get("requires_cert") else "sin certificación previa")
+                 if es else ("certification required" if svc.get("requires_cert") else "no prior certification"))
+    if svc.get("min_age") and svc["min_age"] != 10:
+        parts.append(f"edad mínima {svc['min_age']}" if es else f"minimum age {svc['min_age']}")
+    return parts
+
+
 def catalog_facts(lang: str) -> str:
     """Paso 5 (RAG, flag `rag_v2`): el catalogo entero como hechos compactos para el contexto
     del RAG — precio online y normal, duracion, si obliga a dormir en las islas y si pide
@@ -382,38 +500,8 @@ def catalog_facts(lang: str) -> str:
         if svc.get("category") == "private":
             continue
         name = svc.get("name_es" if es else "name_en") or service_id
-        parts = []
-        if svc.get("price_usd") is not None:
-            online = money.usd_cop(svc.get("price_usd"), svc.get("price_cop"))
-            normal = money.usd_cop(svc.get("price_usd_normal"), svc.get("price_cop_normal"))
-            parts.append(f"{online} online, {normal} normal" if es else f"{online} online, {normal} regular")
-        else:
-            parts.append("precio: lo cotiza un asesor" if es else "price: quoted by an advisor")
-        days = svc.get("duration_days")
-        if days:
-            parts.append((f"{days} día" + ("s" if days > 1 else "")) if es else (f"{days} day" + ("s" if days > 1 else "")))
-        if svc.get("includes_night_dive"):
-            parts.append("incluye un buceo nocturno" if es else "includes a night dive")
         island = service_id.endswith("_already_on_island")
-        if service_id in OVERNIGHT_SERVICES and not island:
-            parts.append("hay que dormir en las islas (alojamiento no incluido), no es ida y vuelta el mismo día"
-                         if es else "you must stay overnight on the islands (lodging not included), not a same-day round trip")
-        elif svc.get("overnight") == "optional" and not island:
-            parts.append("el día 1 puedes volver a Cartagena o dormir en las islas (alojamiento no incluido)"
-                         if es else "on day 1 you can return to Cartagena or stay on the islands (lodging not included)")
-        elif not island and days == 1:
-            parts.append("ida y vuelta desde Cartagena el mismo día" if es else "same-day round trip from Cartagena")
-        includes = (svc.get("includes_es") or "").lower()
-        if "transporte" in includes and not island:
-            # 28-sep (ronda cache-B2): "no es ida y vuelta el mismo dia" se leia como "no hay lancha".
-            parts.append("lancha Cartagena-Islas-Cartagena incluida" if es else
-                         "boat Cartagena-Islands-Cartagena included")
-        parts.append(("almuerzo incluido" if "almuerzo" in includes else "almuerzo NO incluido")
-                     if es else ("lunch included" if "almuerzo" in includes else "lunch NOT included"))
-        parts.append(("requiere certificación" if svc.get("requires_cert") else "sin certificación previa")
-                     if es else ("certification required" if svc.get("requires_cert") else "no prior certification"))
-        if svc.get("min_age") and svc["min_age"] != 10:
-            parts.append(f"edad mínima {svc['min_age']}" if es else f"minimum age {svc['min_age']}")
+        parts = service_fact_parts(service_id, lang)
         groups[island].append(f"- {name}: " + "; ".join(parts) + ".")
     # El refresher se vende con el servicio que le da el registro de actividades (hoy el minicurso). Paso 8
     # (28-sep): sin el atajo fijo del refresher, el RAG decia "el refresh no esta listado con precio".
@@ -442,7 +530,12 @@ def catalog_facts(lang: str) -> str:
                "Edad mínima 10 años salvo que se indique otra.",
                "Operamos todos los días del año salvo el 25 de diciembre y el 1 de enero. Tú no ves los cupos: "
                "el cliente elige la fecha y el número de personas en el calendario del link de reserva.",
-               "Moneda: colombianos/residentes pagan en COP y extranjeros en USD, mismo precio; si no sabes "
+               "Descuentos: 10% online (ya aplicado en el precio 'online'); 10% extra para grupos de 5 o más en "
+               "buceo recreativo, minicurso y snorkel (no en cursos PADI; no es automático: lo aplica el equipo); "
+               "5% si el cliente trae su equipo COMPLETO, solo en buceo recreativo y cursos (no en snorkel ni "
+               "minicurso); 10% el segundo día de buceo (buceo recreativo y cursos).",
+               "Moneda: los colombianos (vivan donde vivan) y los residentes en Colombia pagan en COP; el resto, en "
+               "USD; mismo precio; si no sabes "
                "la nacionalidad del cliente, da las dos monedas. NO existe precio ni descuento especial para "
                "colombianos: si el cliente lo menciona, díselo claramente (solo cambia la moneda). No sumes ni "
                "calcules totales. Si el cliente "
@@ -457,7 +550,12 @@ def catalog_facts(lang: str) -> str:
                "Minimum age 10 unless stated otherwise.",
                "We operate every day of the year except December 25 and January 1. You can't see open slots: "
                "the customer picks the date and number of people in the booking link's calendar.",
-               "Currency: Colombians/residents pay in COP and foreigners in USD, same price; if you don't "
+               "Discounts: 10% online (already in the 'online' price); an extra 10% for groups of 5 or more in "
+               "recreational diving, mini course and snorkeling (not PADI courses; not automatic: the team applies "
+               "it); 5% if the customer brings their COMPLETE gear, only for recreational diving and courses (not "
+               "snorkeling or the mini course); 10% on the second day of diving (recreational diving and courses).",
+               "Currency: Colombians (wherever they live) and residents of Colombia pay in COP; everyone else in "
+               "USD; same price; if you don't "
                "know the customer's nationality, give both currencies. There is NO special price or discount for "
                "Colombians: if the customer mentions one, say so clearly (only the currency changes). Do not add "
                "up or compute totals. If the "

@@ -452,6 +452,24 @@ medias (u3-1 ✅, u3-4 ✅ promocionada, u3-5 🟡); PRE con u3-4 encendido. Sui
 | **11** | R6: robustez de producción | r6-2 (guardrails), g-5 (carga) | el bot nunca deja sin respuesta; inyección medida; p95 con N clientes a la vez |
 | **12** | Q5: calidad continua y entrega | q5-1, g-3, g-4, g-4b, g-6, m0-4, q5-2 | gate en CI; simulador; bucle producción → golden; testers reales; SOAK; entrega |
 
+> **Estado al 29-sep (Gadea), dentro de (3) "RAG, calidad y latencia" → fase RAG de Plan Coral.** Tras un análisis
+> a fondo (`docs/robustness/analisis-rag-2026-09-29.md`: el lastre es la estructura y los datos, no el modelo), el
+> bloque se ordena en tareas **rag-1 → rag-6**, en este orden y sin saltarse ninguna:
+>
+> | Tarea | Qué | Estado |
+> |---|---|---|
+> | **rag-1** | Medir el RAG por piezas (búsqueda / redacción / juez): `scripts/rag_piezas.py`, 47 preguntas visibles | ✅ 29-sep (HISTORY 0.29.70) |
+> | **rag-2** | Base curada como fuente única (`RAG_KB_V2`, esquema `kb_v2`) + decisiones de negocio D1-D8 | ✅ **PROMOCIONADA** 29-sep (0.29.71-0.29.72): top-8 71 → 85 %, contradicciones 5 → 1, core 92,5 → 94,3 % |
+> | **rag-3** | Búsqueda con estado (la ficha del servicio/origen conocido entra siempre) + **unificar los nombres de servicio entre `services.json` y `pricing.json`** | ⏭️ **SIGUIENTE** |
+> | rag-4 | Dieta del prompt (42 → ~10-12 reglas; quitar el "no lo tengo, te paso con un asesor" teniendo el dato) | pendiente |
+> | rag-5 | Latencia estructural (catálogo por servicio, reescritura en paralelo, juez solo si hace falta) | pendiente |
+> | rag-6 | Experimento: la base curada entera en el prompt | pendiente (después de rag-2 ✓) |
+>
+> Los "Siguiente" del bloque de Álvaro de abajo (falso rechazo del COP del paquete de 5, huecos en inglés, descuento
+> de grupo) quedan absorbidos por rag-2: en `rag_piezas` el precio en COP del paquete de 5, el punto de encuentro en
+> inglés y el descuento de grupo salen bien con la base nueva. Detalle, comandos y avisos: `session-handoff.md`
+> (bloque "RETOMAR AQUÍ" del 29-sep). **PRE sirve `feature/pre_gadea` (código del bot = 4e1cbc4):** integrarla antes de subir otra rama.
+
 > **Estado al 28-sep noche (Álvaro), dentro de (3) "RAG, calidad y latencia":** l2-3 "escribiendo…" hecho y
 > encendido; juez de grounding con modelo más rápido descartado; respuestas cortas (`RAG_CONCISE`) aparcadas y
 > apagadas; `RAG_REGEN_FEEDBACK` promocionado ("no lo tengo" 12 → 2 en los casos difíciles del paso 8, core 93,0 →

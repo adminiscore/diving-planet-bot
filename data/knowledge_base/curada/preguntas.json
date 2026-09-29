@@ -1,0 +1,473 @@
+{
+  "_comment": "rag-2: formas de preguntar cada política y descuento (el texto vive en policies.json / discounts.json). Solo ayudan a que la búsqueda los encuentre.",
+  "reglas": {
+    "politica:flight_after_diving": {
+      "es": [
+        "¿Cuántas horas tengo que esperar para volar después de bucear?",
+        "¿Puedo tomar un vuelo el mismo día que buceo?",
+        "¿Cuánto tiempo debo dejar entre el buceo y mi vuelo?"
+      ],
+      "en": [
+        "How long do I have to wait to fly after diving?",
+        "Can I fly the same day I dive?",
+        "What's the minimum time between diving and flying?"
+      ]
+    },
+    "politica:refresh_requirement": {
+      "es": [
+        "Hace más de dos años que no buceo, ¿necesito un refresh?",
+        "¿Cuándo es obligatorio hacer un refresco de buceo?",
+        "¿Qué pasa si llevo mucho tiempo sin bucear?"
+      ],
+      "en": [
+        "It's been over two years since my last dive, do I need a refresher?",
+        "When is a refresher course required?",
+        "What if I haven't dived in a long time?"
+      ]
+    },
+    "politica:certification_required": {
+      "es": [
+        "¿Necesito mostrar mi carné de buzo para bucear?",
+        "¿Puedo enviarles una foto de mi certificación?",
+        "¿Qué pasa si olvido mi carné de buceo?"
+      ],
+      "en": [
+        "Do I need to show my diver card to join?",
+        "Can I send you a picture of my certification?",
+        "What if I forget my diver card?"
+      ]
+    },
+    "politica:meeting_point": {
+      "es": [
+        "¿Dónde es el punto de encuentro?",
+        "¿A qué hora y dónde nos vemos para la salida?",
+        "¿Dónde queda el muelle de la Bodeguita?"
+      ],
+      "en": [
+        "Where is the meeting point?",
+        "What time and where do we meet for the trip?",
+        "Where is Muelle de la Bodeguita located?"
+      ]
+    },
+    "politica:cancellation": {
+      "es": [
+        "¿Cuál es su política de cancelación?",
+        "¿Puedo cancelar mi reserva?",
+        "¿Dónde puedo ver los términos y condiciones?"
+      ],
+      "en": [
+        "What's your cancellation policy?",
+        "Can I cancel my booking?",
+        "Where can I read your terms and conditions?"
+      ]
+    },
+    "politica:reschedule": {
+      "es": [
+        "¿Puedo cambiar la fecha de mi reserva?",
+        "¿Cómo hago para reprogramar mi actividad?",
+        "¿Qué pasa si quiero mover mi buceo a otro día?"
+      ],
+      "en": [
+        "Can I reschedule my booking?",
+        "How do I change the date of my dive?",
+        "What if I need to move my reservation to another day?"
+      ]
+    },
+    "politica:modify_booking": {
+      "es": [
+        "¿Puedo agregar o quitar personas de mi reserva?",
+        "¿Cómo cambio el número de personas en mi grupo?",
+        "¿Qué hago si somos más o menos personas al final?"
+      ],
+      "en": [
+        "Can I add or remove people from my booking?",
+        "How do I change the number of people in my reservation?",
+        "What if my group size changes?"
+      ]
+    },
+    "politica:colombian_pricing": {
+      "es": [
+        "¿El precio es diferente para colombianos?",
+        "¿Puedo pagar en pesos si soy colombiano?",
+        "¿Hay descuento por ser residente en Colombia?"
+      ],
+      "en": [
+        "Is the price different for Colombians?",
+        "Can I pay in COP if I'm Colombian?",
+        "Do residents get a discount?"
+      ]
+    },
+    "politica:mixed_nationality_group": {
+      "es": [
+        "¿Qué pasa si en mi grupo hay colombianos y extranjeros?",
+        "¿Cómo se paga si somos un grupo mixto?",
+        "¿El precio cambia si hay residentes y turistas juntos?"
+      ],
+      "en": [
+        "What if my group has both Colombians and foreigners?",
+        "How do we pay if our group is mixed nationality?",
+        "Does the price change if there are residents and tourists together?"
+      ]
+    },
+    "politica:island_pickup": {
+      "es": [
+        "¿Pueden recogerme si ya estoy en las Islas del Rosario?",
+        "¿Cómo funciona el transporte desde mi hotel en las islas?",
+        "¿El precio es diferente si me recogen en la isla?"
+      ],
+      "en": [
+        "Can you pick me up if I'm already on the Rosario Islands?",
+        "How does transport work from my hotel on the islands?",
+        "Is the price different if I'm picked up on the island?"
+      ]
+    },
+    "politica:age_minimum": {
+      "es": [
+        "¿Cuál es la edad mínima para bucear?",
+        "¿Pueden participar niños en las actividades?",
+        "¿Desde qué edad pueden hacer el minicurso?"
+      ],
+      "en": [
+        "What's the minimum age for diving?",
+        "Can kids join the activities?",
+        "From what age can you do the mini course?"
+      ]
+    },
+    "politica:medical_restrictions": {
+      "es": [
+        "¿Necesito llenar algún formulario médico?",
+        "¿Hay restricciones médicas para bucear?",
+        "¿Qué requisitos médicos hay para los cursos?"
+      ],
+      "en": [
+        "Do I need to fill out a medical form?",
+        "Are there any medical restrictions for diving?",
+        "What are the medical requirements for courses?"
+      ]
+    },
+    "politica:no_alcohol_policy": {
+      "es": [
+        "¿Puedo tomar alcohol antes de bucear?",
+        "¿Hay alguna restricción sobre bebidas antes del buceo?",
+        "¿Se permite consumir algo antes de la inmersión?"
+      ],
+      "en": [
+        "Can I drink alcohol before diving?",
+        "Are there any restrictions on drinking before the dive?",
+        "Is it allowed to consume anything before diving?"
+      ]
+    },
+    "politica:booking_system_info": {
+      "es": [
+        "¿Cómo funciona el sistema de reservas?",
+        "¿Hasta qué hora puedo reservar para mañana?",
+        "¿Puedo reservar el mismo día del buceo?"
+      ],
+      "en": [
+        "How does the booking system work?",
+        "Until what time can I book for tomorrow?",
+        "Can I book on the same day as the dive?"
+      ]
+    },
+    "politica:insurance_form_requirement": {
+      "es": [
+        "¿Qué debo hacer para el seguro?",
+        "¿Dónde lleno el formato del seguro?",
+        "¿Me envían algún formulario para el seguro?"
+      ],
+      "en": [
+        "What do I need to do for the insurance?",
+        "Where do I fill out the insurance form?",
+        "Will you send me a form for the insurance?"
+      ]
+    },
+    "politica:operating_hours": {
+      "es": [
+        "¿Cuáles son los horarios de operación?",
+        "¿A qué hora salen y regresan los tours?",
+        "¿Hasta qué hora están abiertos?"
+      ],
+      "en": [
+        "What are your operating hours?",
+        "What time do the tours start and end?",
+        "Until what time are you open?"
+      ]
+    },
+    "politica:closed_days": {
+      "es": [
+        "¿Cierran algún día del año?",
+        "¿Abren en festivos?",
+        "¿Hay días que no operan?"
+      ],
+      "en": [
+        "Are you closed any days of the year?",
+        "Are you open on holidays?",
+        "Are there days you don't operate?"
+      ]
+    },
+    "politica:food_policy": {
+      "es": [
+        "¿Qué incluye la comida del tour?",
+        "¿Puedo llevar mi propia comida?",
+        "¿Tienen opciones para vegetarianos o alérgicos?"
+      ],
+      "en": [
+        "What food is included in the tour?",
+        "Can I bring my own food?",
+        "Do you have options for vegetarians or people with allergies?"
+      ]
+    },
+    "politica:photos_videos_policy": {
+      "es": [
+        "¿Incluyen fotos o videos en el tour?",
+        "¿El instructor puede tomar fotos?",
+        "¿Cuánto cuesta obtener fotos o videos?"
+      ],
+      "en": [
+        "Are photos or videos included in the tour?",
+        "Can the instructor take pictures?",
+        "How much does it cost to get photos or videos?"
+      ]
+    },
+    "politica:packages_certification_requirement": {
+      "es": [
+        "¿Los paquetes de varios buceos son solo para certificados?",
+        "¿Puedo tomar el paquete si no tengo certificación?",
+        "¿Qué nivel necesito para los paquetes de 5, 7 o 9 buceos?"
+      ],
+      "en": [
+        "Are the multi-dive packages only for certified divers?",
+        "Can I take the package if I'm not certified?",
+        "What level do I need for the 5, 7, or 9 dive packages?"
+      ]
+    },
+    "politica:courses_overnight_requirement": {
+      "es": [
+        "¿Es necesario quedarse en las islas para el curso?",
+        "¿Puedo ir y volver desde Cartagena cada día del curso?",
+        "¿El alojamiento está incluido en el curso?"
+      ],
+      "en": [
+        "Do I need to stay on the islands for the course?",
+        "Can I commute from Cartagena each day of the course?",
+        "Is accommodation included in the course?"
+      ]
+    },
+    "politica:private_services": {
+      "es": [
+        "¿Ofrecen servicios privados o grupos cerrados?",
+        "¿Cuánto cuesta un tour privado?",
+        "¿Puedo reservar solo para mi grupo?"
+      ],
+      "en": [
+        "Do you offer private or closed group services?",
+        "How much does a private tour cost?",
+        "Can I book just for my group?"
+      ]
+    },
+    "politica:adaptive_diving": {
+      "es": [
+        "¿Atienden personas con discapacidad?",
+        "¿Tienen buceo adaptado?",
+        "¿Qué tipo de discapacidades aceptan?"
+      ],
+      "en": [
+        "Do you serve people with disabilities?",
+        "Do you offer adaptive diving?",
+        "What types of disabilities do you accept?"
+      ]
+    },
+    "politica:island_pickup_free": {
+      "es": [
+        "¿Incluyen recogida en mi hotel en las islas?",
+        "¿El transporte en lancha desde mi hotel tiene costo?",
+        "¿Pueden recogerme si ya estoy en las Islas del Rosario?"
+      ],
+      "en": [
+        "Is pick-up from my hotel on the islands included?",
+        "Is boat transport from my hotel extra?",
+        "Can you pick me up if I'm already on the Rosario Islands?"
+      ]
+    },
+    "politica:luggage_policy": {
+      "es": [
+        "¿Puedo llevar una maleta en la lancha?",
+        "¿Dónde puedo dejar mi equipaje grande?",
+        "¿Solo se permite una mochila por persona?"
+      ],
+      "en": [
+        "Can I bring a suitcase on the boat?",
+        "Is there somewhere to store my luggage?",
+        "Is it just one bag per person?"
+      ]
+    },
+    "politica:instruction_languages": {
+      "es": [
+        "¿En qué idioma son las clases?",
+        "¿Puedo tomar el curso si no hablo español o inglés?",
+        "¿Las actividades se dan en otros idiomas?"
+      ],
+      "en": [
+        "What languages are the courses in?",
+        "Can I join if I don't speak English or Spanish?",
+        "Are activities offered in other languages?"
+      ]
+    },
+    "politica:how_to_book": {
+      "es": [
+        "¿Cómo hago la reserva?",
+        "¿Puedo reservar después de las 4:30 PM?",
+        "¿El descuento aplica solo por la web?"
+      ],
+      "en": [
+        "How do I book?",
+        "Can I book after 4:30 PM?",
+        "Is the discount only for online bookings?"
+      ]
+    },
+    "politica:waiver_form": {
+      "es": [
+        "¿Dónde lleno el formulario de exoneración?",
+        "¿Me envían el formato para firmar?",
+        "¿Es obligatorio el waiver para bucear?"
+      ],
+      "en": [
+        "Where do I fill out the waiver form?",
+        "Will you send me the form to sign?",
+        "Is the waiver required to dive?"
+      ]
+    },
+    "politica:minicourse_scope": {
+      "es": [
+        "¿El minicurso da certificación?",
+        "¿Necesito algo de PADI para el minicurso?",
+        "¿Qué incluye el minicurso de buceo?"
+      ],
+      "en": [
+        "Does the mini-course give certification?",
+        "Do I need anything from PADI for the mini-course?",
+        "What's included in the try-dive?"
+      ]
+    },
+    "politica:foreign_card_payment": {
+      "es": [
+        "¿Puedo pagar con tarjeta extranjera?",
+        "¿El pago es completo para extranjeros?",
+        "¿Qué documento uso si pago con tarjeta internacional?"
+      ],
+      "en": [
+        "Can I pay with a foreign card?",
+        "Do international guests pay 100% upfront?",
+        "What ID do I use with a foreign card?"
+      ]
+    },
+    "politica:payment_fallback": {
+      "es": [
+        "¿Qué pasa si falla el pago online?",
+        "¿Puedo pagar por transferencia si hay problemas?",
+        "¿Tienen otra opción de pago si la web no funciona?"
+      ],
+      "en": [
+        "What if the online payment fails?",
+        "Can I pay by bank transfer if there's an issue?",
+        "Is there another payment option if the website doesn't work?"
+      ]
+    },
+    "politica:mixed_group_boat": {
+      "es": [
+        "¿Snorkel y buceo van juntos en la lancha?",
+        "¿Se separan los grupos de snorkel y buceo?",
+        "¿Dónde se hace el snorkel si voy con buzos?"
+      ],
+      "en": [
+        "Are snorkeling and diving groups together on the boat?",
+        "Do you split snorkelers and divers?",
+        "Where do snorkelers go if I'm with divers?"
+      ]
+    },
+    "politica:other_island_hotels": {
+      "es": [
+        "¿Qué otros hoteles hay cerca de su base?",
+        "¿El alojamiento está incluido?",
+        "¿Puedo quedarme en otro hotel de la isla?"
+      ],
+      "en": [
+        "What other hotels are near your base?",
+        "Is accommodation included?",
+        "Can I stay at a different hotel on the island?"
+      ]
+    },
+    "politica:return_different_day": {
+      "es": [
+        "¿Puedo regresar a Cartagena otro día?",
+        "¿Cómo hago si quiero quedarme más días en la isla?",
+        "¿El regreso en fecha diferente está incluido?"
+      ],
+      "en": [
+        "Can I return to Cartagena on a different day?",
+        "How do I stay extra days on the island?",
+        "Is return on a different date included?"
+      ]
+    },
+    "descuento:online_direct_booking": {
+      "es": [
+        "¿El 10% de descuento es solo por la web?",
+        "¿El descuento aplica si reservo por PADI?",
+        "¿Cómo obtengo el descuento online?"
+      ],
+      "en": [
+        "Is the 10% discount only for booking on your website?",
+        "Does the discount apply if I book through PADI?",
+        "How do I get the online discount?"
+      ]
+    },
+    "descuento:second_day": {
+      "es": [
+        "¿Hay descuento por bucear dos días?",
+        "¿El segundo día de buceo tiene algún beneficio?",
+        "¿Qué descuento hay para el segundo día?"
+      ],
+      "en": [
+        "Is there a discount for a second day of diving?",
+        "Do I get a benefit for diving two days?",
+        "What's the discount for the second day?"
+      ]
+    },
+    "descuento:group_discount": {
+      "es": [
+        "¿Cómo funciona el descuento para grupos?",
+        "¿El descuento de grupo se aplica automáticamente al reservar online?",
+        "¿Qué tengo que hacer para obtener el 20% de descuento si somos 5 o más?"
+      ],
+      "en": [
+        "How does the group discount work?",
+        "Is the group discount applied automatically when booking online?",
+        "What do we need to do to get the 20% discount for 5 or more people?"
+      ]
+    },
+    "descuento:own_equipment_discount": {
+      "es": [
+        "¿Hay descuento si llevo mi propio equipo?",
+        "¿El 5% aplica si solo llevo parte del equipo?",
+        "¿Qué necesito traer para obtener el descuento por equipo propio?"
+      ],
+      "en": [
+        "Is there a discount if I bring my own gear?",
+        "Does the 5% discount apply if I only bring some of my equipment?",
+        "What do I need to bring to get the own equipment discount?"
+      ]
+    },
+    "descuento:colombian_cop_pricing": {
+      "es": [
+        "¿Puedo pagar en pesos colombianos si soy colombiano?",
+        "¿Hay algún descuento especial para colombianos?",
+        "¿Los precios son diferentes para extranjeros y colombianos?"
+      ],
+      "en": [
+        "Can I pay in COP if I'm Colombian?",
+        "Is there any special discount for Colombians?",
+        "Are the prices different for locals and foreigners?"
+      ]
+    }
+  }
+}

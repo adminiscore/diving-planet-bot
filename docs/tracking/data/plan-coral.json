@@ -1,5 +1,5 @@
 {
- "exported_at": "2026-09-23T11:21:56+00:00",
+ "exported_at": "2026-09-28T21:19:02+00:00",
  "source": "https://claude.ai/artifact/XiGd3kguTNwwqTnH7mQwgi",
  "about": "Copia de la base de datos de la página Plan Coral (fases, tareas, fotos, capas, bitácora). La página la usa como respaldo de solo lectura si no puede conectar con su base de datos; en el repo sirve de historial versionado.",
  "collections": {
@@ -14,14 +14,14 @@
    {
     "id": "L1",
     "code": "L1",
-    "goal": "Quitar trabajo repetido y en serie sin cambiar lo que responde el bot. Empieza cuando G1+G2 estén hechas (examen robusto) y con la línea base de m0-4. CONDICIÓN DE CIERRE: justo antes de la ronda completa que cierra L1, hacer el paso 4 de g-7 (borrar conversations.json); tope 6-oct.",
+    "goal": "CERRADA el 24-sep. Quitar trabajo repetido y en serie sin cambiar lo que responde el bot: l1-1 (juez de grounding unico), l1-2, l1-4 (notas en paralelo), l1-8 (cierre: g-7 paso 4 + ronda completa). l1-3 y l1-5 medidas y pasadas a U3; l1-6 y l1-7 van detras de U3. Resultado: turno p50 4,62 -> 3,34 s (-28 %), calidad igual y examen oculto 73 -> 78 %.",
     "name": "Mejoras de latencia baratas",
     "order": 2
    },
    {
     "id": "L2",
     "code": "L2",
-    "goal": "Modelo más pequeño donde el eval lo permita, caché y latencia percibida.",
+    "goal": "Modelo más pequeño donde el eval lo permita, caché y latencia percibida. (24-sep) l2-4 Jev se adelanta: research + prueba en local en paralelo con L1. l2-3 ('escribiendo') y l2-2 (caché) van en paralelo con U3. l2-1 después de U3.",
     "name": "Modelos a medida y caché",
     "order": 3
    },
@@ -47,6 +47,13 @@
     "order": 6
    },
    {
+    "id": "RAG",
+    "code": "RAG",
+    "goal": "ORDEN (Gadea, 29-sep, tras el análisis docs/robustness/analisis-rag-2026-09-29.md): rag-1 (E, medir) → rag-2 (A, base curada) → rag-3 (B, búsqueda con estado) → rag-4 (D, dieta del prompt) → rag-5 (C/F, latencia estructural) → rag-6 (G, experimento). Diagnóstico: el RAG es el mayor lastre (60 de 113 fallos del paso 8; turnos con RAG p50 ~4-4,6 s, p95 ~8 s) y la causa es la ESTRUCTURA y los DATOS, no el modelo: un RAG genérico (buscar trozos + redactar + juez) sobre un dominio pequeño y estructurado, con el mismo dato en 3-4 sitios, la base escrita desde los chats antiguos (teléfono, 'escríbenos'), búsqueda que no usa lo que ya sabemos del cliente y un prompt de 42 reglas. REGLA: nada de parches; cada paso con su medida (escalón 0 + ronda core A/B, leer a mano lo que empeora). Viene después de los pasos 9-10 y antes de las conversaciones reales.",
+    "name": "RAG: base curada y búsqueda con estado",
+    "order": 3.6
+   },
+   {
     "id": "S4",
     "code": "S4",
     "goal": "Un solo cerebro: quitar la cascada y partir los módulos gigantes.",
@@ -56,9 +63,9 @@
    {
     "id": "U3",
     "code": "U3",
-    "goal": "Una llamada estructurada (intención + datos + señales) detrás de flag, con A/B por caso.",
+    "goal": "ORDEN DE CALIDAD (reordenado 27-sep con los 138 fallos de la ronda A: RAG 55 %, datos del cliente 22 %, escalado 10 %, flujo 9 %, intención 4 %): u3-5 → RAG (l1-6 + l1-7) → arreglos deterministas de S4 → u3-6 → u3-7 → u3-3 → cierre (u3-2, examen oculto ≥ 77,6 % con el juez g-8). Entender el mensaje una sola vez y bien. 🟦 REGLA (Gadea, 24-sep): toda DECISIÓN de opciones fijas (sí/no o elegir de una lista) se prueba primero con JEV, siempre con cascada por confianza (si duda, el LLM de hoy). Los 5 casos: router (u3-1, hecho y encendido), u3-4 (¿trae una pregunta?), u3-6 (detect_special_signals), u3-7 (resolve_slot_answer en sí/no y listas), u3-3 (respaldo del intent_detector) y el juez de grounding en l1-6/l1-7. NO para extraer valores (fechas, cifras, nombres) ni para escribir texto. Hecho: u3-1 (Jev en el router + acuse en paralelo). Siguiente: u3-4.",
     "name": "Entender el mensaje una sola vez",
-    "order": 4
+    "order": 2.5
    }
   ],
   "tasks": [
@@ -133,29 +140,31 @@
    {
     "id": "g-7",
     "createdAt": "2026-09-22T15:00:00Z",
-    "note": "EN CURSO (22-sep). Pasos 0-3 hechos; falta el 4 (borrar conversations.json y su codigo) tras unos dias con los interruptores activos en PRE. Detalle: docs/robustness/g7-retirar-conversations-plan.md y g7-paso0-resultados.md. PASO 0 (analisis en una copia local del RAG): sin chats la recuperacion se rellena con documentos oficiales; 2 huecos reales (como reservar, formularios); con chats el bot decia que hay que enviar foto del carne. Inventario de 404 hechos: 327 ya en la KB, 13 desfasados (Todo Mar, precios viejos). Few-shot: 29 % de ejemplos = bienvenida automatica. PASO 1: interruptores RAG_EXCLUDE_SOURCES / RAG_FEWSHOT_ENABLED con conducta identica por defecto (verificado contra el indice real). PASO 2: decisiones de Gadea a la KB (reservas por la web tambien tras el cierre -sin WhatsApp de ultima hora-, formulario de exoneracion, carne, minicurso = bautizo, pago con pasaporte, link de transferencia si falla, snorkel en grupos mixtos, otros hoteles) + FAQ de formularios. PASO 3 (A/B en PRE el mismo dia, 2+2 rondas del core): con chats 86,0 % / 89,8 %, sin chats 86,8 % / 86,5 %; 'no lo tengo', latencia y temas sensibles sin empeorar; ningun dialogo empeora de forma consistente. Unico hueco: '¿me recuerda los hoteles?' (FAQ oficial en 0,36-0,38 bajo el umbral 0,40) -> tapado con FAQ de hoteles (7 formulaciones ES/EN entre 0,41 y 0,54); verificacion B3 en PRE en curso. Interruptores ACTIVOS en PRE (docker-compose.vps.yml). Marcha atras: quitar esas 2 lineas + redeploy. mined-candidates.json borrado de feature/agent-arch (a56d124).",
+    "note": "HECHA (24-sep, paso 4 dentro de l1-8, commit 4d49ff8). Borrados conversations.json (y la copia .bak local), su indexado en load_embeddings, la fuente 'conversations' de los pesos de vector_store, el few-shot de rag_agent y su interruptor, load_conversations y los scripts import_whatsapp_conversations / cleanup_conversations_keep_chunked; fuera del compose RAG_EXCLUDE_SOURCES y RAG_FEWSHOT_ENABLED (rag_exclude_sources queda como interruptor genérico). El deploy reindexa desde cero: 718 documentos oficiales (services 352, faqs 270, policies 68, pricing 28). La ronda completa del golden de l1-8 valida este estado.\n\nHISTORIA: pasos 0-3 el 22-sep (análisis, interruptores, huecos tapados en la KB con decisiones de Gadea, A/B 2+2 en PRE sin empeorar; FAQ de hoteles). Detalle: docs/robustness/g7-retirar-conversations-plan.md y g7-paso0-resultados.md.",
     "order": 7,
-    "owner": "—",
+    "owner": "Gadea",
     "phase": "G",
-    "status": "en_curso",
+    "status": "hecha",
     "title": "G-7 · Retirar los chats antiguos (conversations.json) del indice y del few-shot",
-    "updatedAt": "2026-09-22T22:40:00Z"
+    "updatedAt": "2026-09-24T11:25:00Z",
+    "updatedBy": "u_IyyAjn0k84KqlRrCIGkx8g"
    },
    {
     "id": "g-8",
     "createdAt": "2026-09-22T15:00:00Z",
-    "note": "En la ronda v7 el juez acerto el 75 % de sus 'no cumple' con casos reales (91,5 % en la calibracion sintetica). La mayoria de sus errores vienen de criterios demasiado estrictos (exigir un dato que el cliente no pidio, dos criterios para un mismo fallo) o de datos que el juez no ve en su referencia (activities/faqs en ingles). Afinar esos criterios en real-cases-review.json y ampliar la calibracion con veredictos de casos reales. Resultado v7 revisado: 83,8 % de criterios (juez 80,5 %), 38/116 dialogos sin fallos; reales 78,8 % y 9/73.",
+    "note": "✅ HECHA (27-sep; paso 2 del plan secuencial, HISTORY 0.29.39-0.29.40). Juez final contra los 192 veredictos humanos de la v7: falsos suspensos 43 → 26-27, fallos que se escapan 7 → 4-6; examen oculto (prueba ciega) escapan 2 → 1-2, falsos 12 → 10-11. Álvaro (26-sep): golden v8 (8 criterios quitados y 7 reescritos según las notas humanas, ninguno del examen oculto), sin-invenciones aclarado, regla 'un fallo, un criterio' → falsos 24 pero escapadas 16. Gadea (27-sep): la regla la aplica el CÓDIGO: el criterio general solo detecta y enumera problemas con cita; se descuentan los que citan lo mismo que un criterio que ya suspendió y una pregunta cerrada confirma que es el mismo error (dos fallos distintos pueden citar la misma respuesta); generales descontados entre sí en orden; revisar respuesta por respuesta; 'preguntar si quiere un asesor' no es escalar; sin-fugas incluye ids internos. Ruido del juez: ±2 escapadas / ±3 falsos entre pasadas idénticas. Herramienta: scripts/rejudge_generals.py (probar cambios de generales por céntimos). Siguiente: paso 3, ronda A nueva.\n\n(Nota original) En la ronda v7 el juez acerto el 75 % de sus 'no cumple' con casos reales (91,5 % en la calibracion sintetica). La mayoria de sus errores vienen de criterios demasiado estrictos o de datos que el juez no ve en su referencia.",
     "order": 8,
-    "owner": "—",
+    "owner": "Álvaro / Gadea",
     "phase": "G",
-    "status": "pendiente",
-    "title": "G-8 · Afinar criterios de los casos reales y recalibrar el juez con ellos"
+    "status": "hecha",
+    "title": "G-8 · Afinar criterios de los casos reales y recalibrar el juez con ellos",
+    "updatedAt": "2026-09-27T12:30:00Z"
    },
    {
     "id": "l1-1",
     "note": "HECHA (23-sep). Implementada por Gonzalo (6bd3985, flag rag_single_grounding_judge) y medida por Gadea con A/B en PRE el mismo dia (2+2 rondas del core). El flag queda ENCENDIDO en PRE (docker-compose.vps.yml, 4ffa9aa). Marcha atras: quitar esa linea y redesplegar.\n\nRESCATES (lado A, juez actual): la repregunta al juez se hizo 24 veces y solo salvo 1 respuesta (4 %); las otras 23 llamadas repitieron el veredicto y hubo que reescribir igual.\n\nRESULTADO A -> B: llamadas al juez de grounding 83 -> 54 (-35 %); llamadas LLM por turno 3,70/3,88 -> 3,55/3,53; turno RAG 5,7/6,0 -> 5,3/5,2 llamadas (maximo 9-10 -> 7); coste por turno -10 %; 'no lo tengo' 11 -> 8 respuestas. Calidad igual: A 85,0 % / 87,1 % frente a B 87,5 % / 87,2 % (sin fallos 14/17 -> 16/17). Revisados a mano los criterios que empeoran frente a las DOS rondas A: todos son ruido del juez (mismo texto aprobado en A) o variacion al redactar sin rechazo del juez de grounding; ninguno por l1-1. Latencia: B1 la mejor ronda (media 4,4 s en Langfuse); B2 tuvo 10 min lentos de OpenAI (el router, que l1-1 no toca, tambien subio).\n\nPendiente menor: cuando L1 cierre, quitar la rama del reintento del codigo (hoy solo la apaga el flag).\n\nMATIZ de Gonzalo: quitar el reintento NO es gratis cuando rescata (evita una regeneracion, mas cara); por eso se midio antes con el log [RAG][GROUNDING][RESCUE].",
     "order": 1,
-    "owner": "Gonzalo",
+    "owner": "Gonzalo / Gadea",
     "phase": "L1",
     "status": "hecha",
     "title": "RAG sin doble juez: juzgar una vez; si falla, regenerar y juzgar",
@@ -173,88 +182,109 @@
    },
    {
     "id": "l1-3",
-    "note": "",
+    "note": "CERRADA sin A/B (24-sep, decisión de Gadea): MEDIDA y no rentable ahora. Langfuse, rondas del core de hoy: condense_query corre en 16 de 186 turnos (~9 %), ~0,9 s cada una. La regla propuesta ('la pregunta nombra su producto') solo evitaría 1 de las 8 reescrituras por ronda (~1 turno de 93): no compensa un A/B de ~3,5 h. La mitad (4 de 8) son preguntas que se entienden solas SIN nombrar actividad ('me recuerda los hoteles', 'donde es el punto de encuentro', 'how do i pay', un saludo): detectarlo sin listas de frases exige entender la pregunta -> PASA A U3 como una pregunta sí/no más de Jev ('¿se entiende sin la conversación anterior?'), dentro de la llamada que ya se hará en cada turno, sin coste extra. Ya hecho de antes: sin historial o con 8+ palabras no se reescribe.\nAL TERMINAR → l1-5.",
     "order": 3,
-    "owner": "Álvaro",
+    "owner": "Gadea",
     "phase": "L1",
-    "status": "pendiente",
-    "title": "Saltar condense_query si no hay historial o el mensaje es autónomo"
+    "status": "hecha",
+    "title": "Saltar condense_query si no hay historial o el mensaje es autónomo",
+    "updatedAt": "2026-09-24T09:40:00Z"
    },
    {
     "id": "l1-4",
-    "note": "asyncio.create_task tras enviar",
+    "note": "HECHA y ENCENDIDA en PRE (24-sep, NOTES_IN_PARALLEL=true, commits 4fba093 + ee918f8). Implementada por Álvaro (notas en paralelo detrás de flag) y arreglada por Gadea con Claude.\n\nARREGLO DE LA CARRERA: la foto de lo que lee extract_notes (historial copiado, notas existentes, idioma) se toma en _setup_phase ANTES de lanzar la tarea; al terminar, las notas se suman al remembered_facts actual. 3 tests nuevos; los 2 de la carrera fallan con el código anterior (comprobado en un worktree).\n\nA/B ABREVIADO: 2 rondas B nuevas contra las A del 23-sep. B 89,3 % / 88,1 % (19 y 16 sin fallos) frente a A 86,7 % / 86,8 %. El caso real de la regresión (refresh-menos-de-dos-anos) pasa en las dos B. Nodo setup p50 0,039 s (antes 0,78-0,91 s). Latencia del turno medida el mismo día por Álvaro el 23-sep: p50 4,57 → 3,72 s (−18 %).\n\nREVISIÓN A MANO: el otro 'fallo' del 23-sep (\"Lamento que el enlace no te haya funcionado\") es el MISMO texto en las 5 rondas, también en A con el flag apagado: no era de l1-4 (es un fallo previo del router, que marca link roto con 'miré en el link que no incluye las fotos'; ver u3-4). Lo que falla en las dos B y pasa en las dos A hoy (regreso otro día) es la misma invención del RAG en las 4 rondas: l1-7. LECCIÓN: comparar el TEXTO del bot, no solo el veredicto del juez.\n\nAL TERMINAR → l1-3 (siguiente).",
     "order": 4,
-    "owner": "Álvaro",
+    "owner": "Gadea",
     "phase": "L1",
-    "status": "pendiente",
-    "title": "Sacar del turno extract_notes, maybe_update_summary y trazas"
+    "status": "hecha",
+    "title": "Sacar del turno extract_notes, maybe_update_summary y trazas",
+    "updatedAt": "2026-09-24T16:20:02.696Z",
+    "updatedBy": "u_IyyAjn0k84KqlRrCIGkx8g"
    },
    {
     "id": "l1-5",
-    "note": "",
+    "note": "CERRADA sin A/B (24-sep): MEDIDA y resuelta por U3. Langfuse, rondas del core de hoy: en cada turno ROUTER (0,7-2,4 s, siempre solo) → NOTAS (ya en paralelo por l1-4) + EXTRACCIÓN (extract_fields / detect_signals) → RESPUESTA (RAG o acuse) → JUEZ DE GROUNDING. Después del router todo son dependencias reales (la respuesta usa lo extraído; el juez juzga la respuesta). El único hueco es router → extracción: paralelizarlo exigiría extraer 'por si acaso' y reescribir la extracción para que no toque el estado (riesgo), y U3 lo sustituye: con Jev el router pasa de ~1,3 s a ~0,27 s.\nAL TERMINAR → l1-8 (cierre de L1).",
     "order": 5,
-    "owner": "Gonzalo",
+    "owner": "Gadea",
     "phase": "L1",
-    "status": "pendiente",
-    "title": "Paralelizar llamadas independientes (medido)"
+    "status": "hecha",
+    "title": "Paralelizar llamadas independientes (medido)",
+    "updatedAt": "2026-09-24T10:00:00Z"
    },
    {
     "id": "l1-6",
     "createdAt": "2026-09-22T15:00:00Z",
-    "note": "El RAG responde 'ese detalle no lo tengo a la mano' con la respuesta en la base de conocimiento (plan acompanante, equipaje, regateo, Baru, total en COP, nacido en Colombia). Revisar recuperacion y el juez de grounding (encaja con l1-1/l1-2: juzgar una vez, checks deterministas primero). MATIZ (Gonzalo, 23-sep): la linea base del RAG del 17-sep se midio con la config local (umbral 0,50, top-k 5, gpt-4o). Con la de PRE (0,40, top-k 8, gpt-4o-mini) pasa de 6 fallbacks a 1, asi que parte del 'no lo tengo' era el umbral. OJO (g-7, 22-sep): (1) el RAG NO es determinista: la misma pregunta a veces se contesta y a veces da 'no lo tengo' (el juez de grounding decide distinto); (2) umbral RAG_MIN_SCORE 0,40 al limite: '¿me recuerda los hoteles?' sacaba la FAQ oficial con 0,36-0,38 y daba 'no lo tengo' (tapado con una FAQ que queda en 0,41). Medir con 2 rondas por lado. Golden v7 (22-sep): 17 dialogos afectados (3 en el examen oculto). Casos de regresion: clima-y-cancelacion-reserva-existente, confirmacion-salida-y-pago-sin-concepto, descuento-efectivo, equipaje-mochilas-y-almacenamiento, grupo-mixto-precio-cop-total, logistica-isla-fragata-regreso-otro-dia, manual-acompanante-mayor, nacionalidad-ambigua, paquete-5-buceos-cop-refresh-y-hoteles, paquete-5-buceos-islas-residente-sin-recogida, paquete-5-buceos-precio-overnight-isla-grande-baru, precio-paquetes-5-o-3-buceos-y-opcion-2-diurnos, precios-y-disponibilidad-con-negociacion, snorkel-precio-residente-y-pago-link. REGLA: arreglar la CAUSA con una solucion global (sin regex nuevos, sin mirar solo estos casos); los casos listados son la prueba de cierre y el examen oculto (21 casos reales) mide si mejora de verdad.",
-    "order": 6,
-    "owner": "—",
-    "phase": "L1",
-    "status": "pendiente",
+    "note": "✅ HECHA (27-sep, Gadea; HISTORY 0.29.47-0.29.48) — RAG_V2=true se queda en PRE. Sonda de los 57 turnos del RAG que fallaron en la ronda A, dentro del contenedor de PRE (scripts/sonda_rag_pre.py): casi la mitad no eran de la búsqueda. Arreglos globales: el catálogo entero como hechos en el contexto (precio, duración, dormir en las islas) en vez de los atajos de precio por regex; juez de grounding v2 (solo rechaza datos del negocio sin respaldo, gpt-4.1-mini); disponibilidad por el RAG; Jev decide si el cliente pide 'recordar' (15 preguntas de la ronda A se quedaban sin contestar); importes en COP ya no son 'teléfonos'. 'No lo tengo a la mano' por el juez: 37 (ronda A) → 2. Ronda B core frente a u35-B: criterios 86,2 → 91,2 %, diálogos 16 → 20/32.\n\n▶ PASO 5 del plan (reordenado 27-sep, Gadea): ADELANTADA justo tras u3-5. El RAG es el 55 % de los fallos de la ronda A del paso 3 (76 de 138; 21 de los 36 del examen oculto). Con u3-4 el RAG contesta 195 turnos y 'no lo tengo' sale en 36 (23 en el cierre de L1).\n\nPISTA DEL CIERRE DE L1 (24-sep): en la ronda completa 'no lo tengo' paso de 18 a 23 turnos, casi todos PRIMEROS mensajes que saludan y preguntan a la vez ('Buenos dias. Me gustaria hacer una reserva para el paquete de 5 buceos', '...cual es el costo para colombianos?', 'Hola, quisiera averiguar por las salidas de buceo de 2 dias'). Dos ya los rechazaba el juez de grounding antes de l1-1. Revisar que llega al juez en el primer turno (saludo + pregunta).\n🟦 PROBAR JEV (decisión de Gadea, 24-sep) en el juez de grounding (is_grounded, sí/no), SIEMPRE con cascada: Jev decide lo que tenga claro y el LLM el resto. Con cuidado: compara con un contexto largo y lee de forma literal, que son dos puntos flojos de Jev. Se diseña junto con l1-7.\n▶ ORDEN 10 — MOVIDA DE L1 A U3 (24-sep, decision de Gadea): es calidad, no latencia, y se disena junto con l1-7 (mismo juez de grounding) cuando U3 este hecho.\nAL TERMINAR → l1-7 (o juntas).\n\nEl RAG responde 'ese detalle no lo tengo a la mano' con la respuesta en la base de conocimiento (plan acompanante, equipaje, regateo, Baru, total en COP, nacido en Colombia). Revisar recuperacion y el juez de grounding (encaja con l1-1/l1-2: juzgar una vez, checks deterministas primero). MATIZ (Gonzalo, 23-sep): la linea base del RAG del 17-sep se midio con la config local (umbral 0,50, top-k 5, gpt-4o). Con la de PRE (0,40, top-k 8, gpt-4o-mini) pasa de 6 fallbacks a 1, asi que parte del 'no lo tengo' era el umbral. OJO (g-7, 22-sep): (1) el RAG NO es determinista: la misma pregunta a veces se contesta y a veces da 'no lo tengo' (el juez de grounding decide distinto); (2) umbral RAG_MIN_SCORE 0,40 al limite: '¿me recuerda los hoteles?' sacaba la FAQ oficial con 0,36-0,38 y daba 'no lo tengo' (tapado con una FAQ que queda en 0,41). Medir con 2 rondas por lado. Golden v7 (22-sep): 17 dialogos afectados (3 en el examen oculto). Casos de regresion: clima-y-cancelacion-reserva-existente, confirmacion-salida-y-pago-sin-concepto, descuento-efectivo, equipaje-mochilas-y-almacenamiento, grupo-mixto-precio-cop-total, logistica-isla-fragata-regreso-otro-dia, manual-acompanante-mayor, nacionalidad-ambigua, paquete-5-buceos-cop-refresh-y-hoteles, paquete-5-buceos-islas-residente-sin-recogida, paquete-5-buceos-precio-overnight-isla-grande-baru, precio-paquetes-5-o-3-buceos-y-opcion-2-diurnos, precios-y-disponibilidad-con-negociacion, snorkel-precio-residente-y-pago-link. REGLA: arreglar la CAUSA con una solucion global (sin regex nuevos, sin mirar solo estos casos); los casos listados son la prueba de cierre y el examen oculto (21 casos reales) mide si mejora de verdad.",
+    "order": 5.1,
+    "owner": "Gadea",
+    "phase": "U3",
+    "status": "hecha",
     "title": "L1-6 · RAG: 'no lo tengo' teniendo el dato en la KB",
-    "updatedAt": "2026-09-23T02:58:50Z"
+    "updatedAt": "2026-09-27T21:00:00Z"
    },
    {
     "id": "l1-7",
     "createdAt": "2026-09-22T15:00:00Z",
-    "note": "Respuestas seguras pero falsas que el grounding deja pasar: 'la base no esta en un hotel', 'el regreso otro dia esta incluido', 'el Open Water no se ofrece desde las islas', 'no se paga por la web', 'pagar con pasaporte', descuento de grupo automatico del 20 %, barcos hundidos, curso basico tratado como minicurso, duracion de inmersion 40-50 min, almuerzo incluido desde las islas. El check de grounding debe cazar contradicciones con la KB, no solo invenciones sin fuente. Golden v7 (22-sep): 21 dialogos afectados (6 en el examen oculto). Casos de regresion: colombianos-precio-minicurso-dos-inmersiones, curso-alojamiento-y-recogida-islas, curso-open-water-precio-cop-hoteles-y-transporte, curso-open-water-principiantes-idioma-frances-anticipacion, curso-open-water-transporte-y-regreso-otro-dia, curso-referido-pide-datos-centro, familia-mixta-precio-descuento-refresher, logistica-isla-fragata-regreso-otro-dia, nacionalidad-ambigua, open-water-hoteles-noche-fotos-horario, open-water-precio-para-colombianos-corrige-mito, programa-fotos-y-alojamiento, recogida-ubuntu-comida-y-certificacion, referral-mas-refresher-hotel-y-domingo-pascua, refresher-que-completar-antes. REGLA: arreglar la CAUSA con una solucion global (sin regex nuevos, sin mirar solo estos casos); los casos listados son la prueba de cierre y el examen oculto (21 casos reales) mide si mejora de verdad.",
-    "order": 7,
-    "owner": "—",
+    "note": "✅ HECHA con l1-6 (27-sep, Gadea; HISTORY 0.29.47-0.29.48). Con el catálogo en el contexto dejan de salir 'cursos de 2 días ida y vuelta', 'paquete de 3 inmersiones en 1 día' y 'regreso otro día incluido'; el juez v2 rechaza datos del negocio que no respalda el contexto. 4 diálogos del core pasan a 'sin invenciones'. Queda vigilar: una invención ('debes haber completado la teoría') que el juez v2 dejó pasar en la ronda B.\n\n▶ PASO 5 del plan (reordenado 27-sep, Gadea): ADELANTADA con l1-6 (se diseñan juntas). Primer caso: 'regreso otro día' contradice la política en casi todas las rondas.\n\n🟦 PROBAR JEV en el juez de grounding con cascada (ver l1-6): se diseñan juntas.\n▶ ORDEN 10 — MOVIDA DE L1 A U3 (24-sep): junto con l1-6.\nAL TERMINAR → l2-1 y el resto de L2.\n\nRespuestas seguras pero falsas que el grounding deja pasar: 'la base no esta en un hotel', 'el regreso otro dia esta incluido', 'el Open Water no se ofrece desde las islas', 'no se paga por la web', 'pagar con pasaporte', descuento de grupo automatico del 20 %, barcos hundidos, curso basico tratado como minicurso, duracion de inmersion 40-50 min, almuerzo incluido desde las islas. El check de grounding debe cazar contradicciones con la KB, no solo invenciones sin fuente. Golden v7 (22-sep): 21 dialogos afectados (6 en el examen oculto). Casos de regresion: colombianos-precio-minicurso-dos-inmersiones, curso-alojamiento-y-recogida-islas, curso-open-water-precio-cop-hoteles-y-transporte, curso-open-water-principiantes-idioma-frances-anticipacion, curso-open-water-transporte-y-regreso-otro-dia, curso-referido-pide-datos-centro, familia-mixta-precio-descuento-refresher, logistica-isla-fragata-regreso-otro-dia, nacionalidad-ambigua, open-water-hoteles-noche-fotos-horario, open-water-precio-para-colombianos-corrige-mito, programa-fotos-y-alojamiento, recogida-ubuntu-comida-y-certificacion, referral-mas-refresher-hotel-y-domingo-pascua, refresher-que-completar-antes. REGLA: arreglar la CAUSA con una solucion global (sin regex nuevos, sin mirar solo estos casos); los casos listados son la prueba de cierre y el examen oculto (21 casos reales) mide si mejora de verdad.",
+    "order": 5.2,
+    "owner": "Gadea",
+    "phase": "U3",
+    "status": "hecha",
+    "title": "L1-7 · RAG: inventa o contradice la referencia",
+    "updatedAt": "2026-09-27T21:00:00Z"
+   },
+   {
+    "id": "l1-8",
+    "createdAt": "2026-09-24T08:00:00Z",
+    "note": "HECHA (24-sep). (1) g-7 paso 4: chats antiguos fuera del codigo y del indice (718 documentos oficiales). (2) Juez de grounding unico como unica conducta (sin flag). (3) Ronda COMPLETA del golden (116 dialogos, 465 turnos, 0 sin respuesta; se reanudo tras un corte de red de Chatwoot en el turno 262) + juez gpt-5-mini (1,97 $). (4) Foto de Langfuse = punto de L1 en la pagina.\n\nRESULTADO frente a la linea base v7 (22-sep), juez SIN revisar en los dos: criterios 80,5 -> 81,5 %; sinteticos 91,3 -> 92,0 %; reales 74,9 -> 74,4 %; EXAMEN OCULTO 73,1 -> 78,3 % (2 -> 4 dialogos sin fallos). Latencia (Langfuse): turno p50 4,62 -> 3,34 s (-28 %), p95 9,00 -> 7,33 s (-19 %), llamadas/turno 4,07 -> 3,99, coste/turno -7 %. Cliente: media 5,17 -> 4,15 s.\n\nREVISION: 26 criterios empeoran y 38 mejoran (una ronda por lado: ruido ~10). Los que empeoran son causas conocidas (u3-4 ignora la pregunta, l1-6 'no lo tengo', l1-7 inventa, s4-17 '¿cuanto tiempo?' -> precios). 'No lo tengo' 18 -> 23 turnos, casi todo en PRIMEROS mensajes (saludo + pregunta de precio o paquete); dos ya fallaban antes con el juez doble -> anotado en l1-6.\n\nL1 CERRADA. Siguiente: U3 (u3-1 Jev ya en A/B).",
+    "order": 8,
+    "owner": "Gadea",
     "phase": "L1",
-    "status": "pendiente",
-    "title": "L1-7 · RAG: inventa o contradice la referencia"
+    "status": "hecha",
+    "title": "L1-8 · Cierre de L1: g-7 paso 4 + ronda completa del golden",
+    "updatedAt": "2026-09-24T13:10:00Z"
    },
    {
     "id": "l2-1",
-    "note": "Revisar primero: en PRE ya se usan gpt-4o-mini y gpt-4.1-mini.",
+    "note": "✅ CERRADA (29-sep): Álvaro midió el 28-sep (HISTORY 0.29.66) el juez de grounding con modelos pequeños en el banco: gpt-4.1 70/70 frente a gpt-4.1-mini 48/70 y gpt-4o-mini 37/70, y no son más rápidos → se queda gpt-4.1. La reescritura de la pregunta (condense_query) pasa a la fase RAG (rag-5, latencia estructural).\n\n▶ DESPUES de U3 (con el entendimiento nuevo ya medido).\n\nRevisar primero: en PRE ya se usan gpt-4o-mini y gpt-4.1-mini.",
     "order": 1,
     "owner": "Gonzalo",
     "phase": "L2",
-    "status": "pendiente",
-    "title": "Juez de grounding y condense_query en modelo pequeño, A/B contra eval_rag_answers"
+    "status": "hecha",
+    "title": "Juez de grounding y condense_query en modelo pequeño, A/B contra eval_rag_answers",
+    "updatedAt": "2026-09-29T09:00:00Z"
    },
    {
     "id": "l2-2",
-    "note": "",
+    "note": "✅ HECHA (28-sep, Gadea; HISTORY 0.29.61-0.29.63) — RAG_PROMPT_CACHE promocionado por COSTE (el caché reutiliza ~75 % de los tokens del RAG a mitad de precio), no por tiempo: la latencia la marca la generación (la lista del juez v3 con gpt-4.1 y las respuestas largas del RAG). Se probó un juez más corto (v3b) y se descartó: con contexto real rechazaba datos del catálogo. La caché semántica de FAQs pasa al bloque del RAG.\n\n▶ EN PARALELO con U3 (desde el cierre de L1), no bloquea.\n\n",
     "order": 2,
-    "owner": "Gonzalo",
+    "owner": "Gadea",
     "phase": "L2",
-    "status": "pendiente",
-    "title": "Prompt caching de OpenAI + caché semántica de FAQ"
+    "status": "hecha",
+    "title": "Prompt caching de OpenAI + caché semántica de FAQ",
+    "updatedAt": "2026-09-28T19:00:00Z"
    },
    {
     "id": "l2-3",
-    "note": "",
+    "note": "✅ HECHA (28-sep, Álvaro; HISTORY 0.29.65): 'escribiendo…' en el chat mientras el bot prepara la respuesta (~4 s con RAG). Flag CHATWOOT_TYPING_INDICATOR encendido en PRE. No cambia las respuestas.\n\n▶ EN PARALELO con U3 (desde el cierre de L1), no bloquea: es la latencia que NOTA el cliente.\n\n",
     "order": 3,
-    "owner": "Gonzalo",
+    "owner": "Álvaro",
     "phase": "L2",
-    "status": "pendiente",
-    "title": "Streaming / \"escribiendo\" en Chatwoot"
+    "status": "hecha",
+    "title": "Streaming / \"escribiendo\" en Chatwoot",
+    "updatedAt": "2026-09-28T21:00:00Z"
    },
    {
     "id": "l2-4",
     "createdAt": "2026-09-21T21:30:00Z",
-    "note": "Jev (TypeSafe, System One model, 15-sep-2026): decisiones tipadas sin generar texto (~0,4 s, coste de salida 0). Candidatos: detect_routing_signals (9 booleanos, hoy p50 ~1,1 s en cada turno), clasificacion de actividad (Choice) y is_grounded en cascada por probabilidad calibrada. NO para respuesta RAG, acuses, fill_gaps ni el juez del golden (no da evidencia). Benchmarks del fabricante: 68% (paridad con GPT-5.6 Terra; Opus 5 73%). RIESGO: sin evaluacion multilingue publicada y el 65% de nuestro trafico es ES. Contexto 32k. Hacer DESPUES de G1+G2, detras de flag, A/B por caso.",
+    "note": "▶ ORDEN 1b — EN PARALELO con l1-4, sin PRE, ANTES de diseñar U3 (su resultado decide el diseño de U3). Paso 1: RESEARCH de Claude sobre Jev antes de tocar codigo: que es y si existe de verdad, acceso/API y precio, latencia desde Europa (VPS Hetzner), soporte y pruebas en espanol, que hace con los datos (mensajes de clientes = datos personales: decision del owner). PASO 1 HECHO (24-sep, research de Claude): Jev EXISTE (TypeSafe AI, San Francisco, lanzado el 15-sep-2026). Acceso: API directa en acceso anticipado con lista de espera; tambien via Cloudflare (modelo typesafe/jev con credenciales de Cloudflare, sin lista de espera mencionada), Vercel y OpenRouter. Solo 3 tipos de respuesta: Noul (si/no con probabilidad), Choice (hasta 255 opciones) y Score (2-10 niveles); NO extrae valores ni genera texto, y su doc marca como puntos flojos leer literal, aritmetica, contar y comparar fechas -> sirve para las 9 senales del router (9 Noul en UNA llamada) y la eleccion de actividad (Choice); NO sirve para fill_gaps (fechas, personas, edades). Latencia 70-500 ms y 0,042 $/millon de tokens de entrada, salida gratis (cifras del fabricante). Contexto 32k (Cloudflare) o 64k (Opper): no coinciden. ESPANOL: preentrenado en 50+ idiomas pero SIN evaluacion multilingue publicada; un dato independiente: con el texto en espanol pierde 3-6,4 puntos de acierto y ~duplica el error de calibracion (XNLI/PAWS-X) -> probar ES por separado es obligatorio. DATOS: no entrena con datos de clientes, DPA disponible, servidores en EE. UU., ZDR solo para empresas; por Cloudflare aplica tambien su politica -> usar tráfico real es decision del owner; en local solo la bateria. VEREDICTO: SI al paso 2, con acceso por la lista de espera o por Cloudflare.\nPASO 2 HECHO (24-sep, en local; scripts/jev_router_eval.py y jev_router_holdout.py; salidas en docs/robustness/l2-4-jev/). Acceso por OpenRouter (Decisions API, typesafe/jev-1.13; clave OPENROUTER_API_KEY en .env.dev). Bateria 9 senales x 8 repeticiones: v1 (traduccion tal cual) 30/37 = router; v2 (la opcion 'ninguno' del tema sensible nombra las senales especificas + actividades en espanol) 32/37 frente a 30/37, seguridad 11/11 frente a 8/11; Jev determinista (8/8 o 0/8), el router no ('soy epileptica' 3/8). Latencia p50 ~275 ms frente a ~1,27 s; ~0,00012 $/llamada. 257 mensajes del golden sin examen oculto: 207 coinciden; de 50 desacuerdos Jev acierta ~41 (el router marca disponibilidad donde no la hay en 18, comparar con 0-1 opciones en 14, discapacidad por idioma, link roto por 'no incluye las fotos'). PENDIENTE (paso 2c): Jev no marca 6 preguntas claras de disponibilidad -> umbral mas bajo solo para las 4 senales que el esquema pide marcar 'ante la duda' (sensible, discapacidad, link roto, disponibilidad), medido otra vez en bateria + 257 mensajes. VEREDICTO PROVISIONAL: apto como base de U3 para las senales.\nPASO 2c HECHO (24-sep): umbral 0,3 para las 4 senales 'ante la duda' DESCARTADO: en los 257 mensajes recupera 3 preguntas de disponibilidad reales pero anade 5 falsas (fechas sueltas) y 1 queja falsa, o sea copia el defecto del router. Se queda la v2 con umbral 0,5 (jev_router_eval --v2). FIABILIDAD: 1 llamada de ~600 tardo >30 s (API alpha) -> en U3, tiempo maximo corto y el router actual como respaldo.\nEVALUACION TERMINADA: Jev queda APROBADO como base de las senales en U3 (ver u3-1).\nPaso 2 (solo si el research lo aconseja): adaptador de detect_routing_signals con Jev detras de flag, SOLO en local; battery_router_signals (37 casos x 8 repeticiones) contra el router actual, acierto por senal separando ES/EN, latencia p50/p95 medida desde el VPS y coste. Aprueba si: acierto >= router actual (33/37), 0 fallos en senales de seguridad (escalado, medico, datos personales) y ~0,5 s o menos. Clave de API solo en .env.dev.\nAL TERMINAR → alimenta u3-1 (Jev para el router + 1 llamada LLM para los datos, o U3 con una sola llamada LLM si Jev no pasa).\n\nJev (TypeSafe, System One model, 15-sep-2026): decisiones tipadas sin generar texto (~0,4 s, coste de salida 0). Candidatos: detect_routing_signals (9 booleanos, hoy p50 ~1,1 s en cada turno), clasificacion de actividad (Choice) y is_grounded en cascada por probabilidad calibrada. NO para respuesta RAG, acuses, fill_gaps ni el juez del golden (no da evidencia). Benchmarks del fabricante: 68% (paridad con GPT-5.6 Terra; Opus 5 73%). RIESGO: sin evaluacion multilingue publicada y el 65% de nuestro trafico es ES. Contexto 32k. Hacer DESPUES de G1+G2, detras de flag, A/B por caso.",
     "order": 4,
-    "owner": "—",
+    "owner": "Gadea",
     "phase": "L2",
-    "status": "pendiente",
-    "title": "L2-4 · Evaluar Jev como clasificador (router, actividad, grounding en cascada)"
+    "status": "hecha",
+    "title": "L2-4 · Evaluar Jev como clasificador (router, actividad, grounding en cascada)",
+    "updatedAt": "2026-09-24T13:52:59.952Z",
+    "updatedBy": "u_IyyAjn0k84KqlRrCIGkx8g"
    },
    {
     "id": "m0-1",
@@ -265,6 +295,17 @@
     "status": "hecha",
     "title": "Spans por nodo y resumen por turno en Langfuse (nº llamadas, ms por nodo)",
     "updatedAt": "2026-09-18T10:00:00Z"
+   },
+   {
+    "id": "m0-10",
+    "createdAt": "2026-09-24T15:00:00Z",
+    "note": "HECHA (24-sep, 4dc60c1 + 6f83e36). A/B por escalones: 0) local con los 257 mensajes del golden; 1) 1+1 rondas en PRE en la misma franja; 2) 2+2 solo si hay dudas; ronda completa solo al cerrar fase. El juez reutiliza los veredictos de preguntas idénticas (judge-cache.jsonl): ~40 % menos de juez por ronda. Un A/B pasa de ~2,3 $ a ~0,7 $. Detalle: docs/robustness/protocolo-medicion.md.",
+    "order": 10,
+    "owner": "Gadea",
+    "phase": "M0",
+    "status": "hecha",
+    "title": "Protocolo de medición por escalones + cache de veredictos del juez",
+    "updatedAt": "2026-09-24T15:00:00Z"
    },
    {
     "id": "m0-2",
@@ -337,6 +378,17 @@
     "updatedAt": "2026-09-17T14:30:00Z"
    },
    {
+    "id": "m0-9",
+    "createdAt": "2026-09-24T14:10:00Z",
+    "note": "HECHA (24-sep, d962b1d). Se superó el plan gratuito de Langfuse (>55.000 unidades, reinicio 16-oct) y se decidió no pagar. Cada turno escribe en el log de PRE una línea [TURN_METRICS] (sin texto del cliente): tiempo del turno, llamadas al LLM, tiempo de cada paso del grafo y router usado. `python -m scripts.turn_metrics --from-run <ronda>.jsonl` saca la misma foto que Langfuse. Sacar la foto antes del siguiente deploy.",
+    "order": 9,
+    "owner": "Gadea",
+    "phase": "M0",
+    "status": "hecha",
+    "title": "Medición propia sin Langfuse ([TURN_METRICS] + scripts/turn_metrics)",
+    "updatedAt": "2026-09-24T14:10:00Z"
+   },
+   {
     "id": "q5-1",
     "note": "",
     "order": 1,
@@ -356,13 +408,13 @@
    },
    {
     "id": "r6-1",
-    "note": "Evidencia real (Gonzalo, 23-sep): eval_rag_answers se quedo colgado 5 h 44 min con 40 s de CPU, parado en el caso 4 de 39. No hay timeout por llamada LLM en ningun sitio: una conexion parada bloquea el proceso para siempre. En produccion seria un turno que nunca responde.",
+    "note": "HECHA y verificada en PRE (23-sep, commit c4bb91a). Causa concreta del agujero: el cliente de OpenAI trae por defecto Timeout(connect=5, read=600) con max_retries=2, o sea hasta ~30 min colgado en UNA llamada. Eso fue el cuelgue de 5h44m de eval_rag_answers. Ahora LLM_TIMEOUT_SECONDS=30 (el turno entero va a p95 9s, asi que ninguna llamada legitima se acerca).\n\nSe aplica en UN punto para las 12+ llamadas: todas pasan por trace_openai(), y en el camino trazado de PRE va en la construccion del cliente de Langfuse (observability.traced_openai_client), que es donde protege con el tracing activo.\n\nTRAMPA EVITADA: with_options() sobre un mock devuelve OTRO objeto, asi que aplicarlo a ciegas habria roto en cadena las decenas de tests que parchean AsyncOpenAI en su modulo. El timeout solo se aplica a clientes REALES; un mock pasa intacto, y hay test que lo fija.\n\nUn timeout degrada (extraccion vacia + log [LLM_EXTRACTOR][DEGRADED]) pero no tumba el turno. 4 tests en tests/test_r6_llm_timeout.py.\n\nVERIFICADO: en el contenedor settings.llm_timeout_seconds=30.0, y ronda rapida contra PRE 12/12 turnos respondidos, 0 sin respuesta, max 16s.\n\nPENDIENTE de r6-1: el backoff ante 429 queda en el default del SDK (max_retries=2); si se quiere afinar, es tarea aparte.",
     "order": 1,
-    "owner": "Gonzalo",
+    "owner": "Álvaro",
     "phase": "R6",
-    "status": "pendiente",
+    "status": "hecha",
     "title": "Timeouts por llamada LLM, fallback y backoff ante 429",
-    "updatedAt": "2026-09-23T02:58:50Z"
+    "updatedAt": "2026-09-24T08:00:00Z"
    },
    {
     "id": "r6-2",
@@ -373,6 +425,74 @@
     "status": "pendiente",
     "title": "Guardrails contra inyección de prompts / jailbreak",
     "updatedAt": "2026-09-17T09:10:00Z"
+   },
+   {
+    "id": "rag-1",
+    "createdAt": "2026-09-29T09:00:00Z",
+    "note": "HECHA (29-sep, Gadea). Instrumento: scripts/rag_piezas.py + docs/robustness/rag-piezas/preguntas.json (47 preguntas visibles, 93 datos con anclas; nunca el examen oculto, el script lo comprueba). Corre rag_answer DENTRO de PRE con el estado del cliente y espía reescritura, top-8, contexto visto, respuestas, juez y guardas; un verificador gpt-4.1 marca cada dato (dice / no dice / contradice). Causa por dato: búsqueda / redacción / juez-guardas / contradice. Comandos: completo (~0,03 $ por pregunta), --solo-busqueda, --comparar A B, --repuntuar.\n\nLÍNEA BASE (47 × 2, 2026-09-28-base.json): dato en el top-8 69 % (top-1 49 %); en el contexto visto (con catálogo y estado) 83 %; la respuesta cubre el 81 %; faltan por búsqueda 17 · contradice 7 · redacción 7 · juez 3; 16 rechazos, 2 'no lo tengo'; p50 3,2 s, p90 5,4 s; contexto medio 31.600 caracteres (26.000 del prompt de sistema). Ruido: 8 de 93 datos cambian entre repeticiones.\n\nQUÉ DICE: la búsqueda es la mayor causa. (1) Los clones 'si ya estoy en las islas' llenan el top-8 (8 de 8 en inglés) y el modelo contesta con la variante equivocada aunque el catálogo diga lo contrario. (2) Los trozos de precios tapan moneda y descuentos. (3) Las políticas cortas (equipaje, regreso otro día, formulario médico, dirección) no llegan. Las contradicciones nacen de la base, no del modelo. Detalle: docs/robustness/rag-piezas/README.md.",
+    "order": 1,
+    "owner": "Gadea",
+    "phase": "RAG",
+    "status": "hecha",
+    "title": "RAG-1 (E) · Medir por piezas: recall de la búsqueda y fidelidad de la respuesta",
+    "updatedAt": "2026-09-29T14:00:00Z",
+    "updatedBy": "u_IyyAjn0k84KqlRrCIGkx8g"
+   },
+   {
+    "id": "rag-2",
+    "createdAt": "2026-09-29T09:00:00Z",
+    "note": "HECHA y PROMOCIONADA (29-sep, Gadea con Claude; HISTORY 0.29.70-0.29.72). RAG_KB_V2 encendido en PRE (4e1cbc4). Marcha atrás: RAG_KB_V2 'false' en docker-compose.vps.yml y config.py.\n\nQUÉ: (1) inventario (scripts/kb_inventario.py): 50 fragmentos con teléfono, 25 FAQs que repetían un servicio (los clones del top-8), precios duplicados. (2) Decisiones de Gadea D1-D8 en las fuentes (docs/robustness/rag-2/decisiones.md): moneda 'colombianos y residentes', refresh sin teléfono, llegada 4:15, extranjeros solo tarjeta en web (50 % solo colombianos), almuerzo solo día 1 desde Cartagena, 5 % equipo solo buceo y cursos. (3) Base v2 (scripts/kb_v2.py, esquema kb_v2, 364 docs vs 718): una ficha por servicio y origen con la misma línea que el catálogo, 107 FAQs curadas y revisadas, políticas y descuentos con 3 formas de preguntarlos, sin teléfono ni trozos de precios; búsqueda sin empujones por regex (enterraban las políticas). CI la regenera en cada deploy.\n\nMEDIDO: rag_piezas (47 × 2): dato en el top-8 71 % → 85 %, en el contexto visto 85 % → 94 %, cobertura 82 % → 89 %, contradicciones 5 → 1, p50 3,2 → 3,1 s. Ronda core A/B en PRE: criterios 92,5 % → 94,3 % (7 mejoras; 3 'regresiones' revisadas: ruido, 'no aplica' y un nombre de servicio distinto entre services.json y pricing.json). Turnos RAG p50 5,3 → 4,9 s.\n\nQUEDA (a otras tareas): la ficha del servicio elegido que no entra con preguntas genéricas → rag-3; 'no lo tengo, te paso con un asesor' teniendo el dato → rag-4; unificar nombres de servicio entre services.json y pricing.json (menor); un reordenador podría subir el top-8 de 85 % hacia el 97 % de techo.",
+    "order": 2,
+    "owner": "Gadea",
+    "phase": "RAG",
+    "status": "hecha",
+    "title": "RAG-2 (A) · Base de conocimiento curada como fuente única",
+    "updatedAt": "2026-09-28T21:18:24.251Z",
+    "updatedBy": "u_IyyAjn0k84KqlRrCIGkx8g"
+   },
+   {
+    "id": "rag-3",
+    "createdAt": "2026-09-29T09:00:00Z",
+    "note": "SIGUIENTE (tras rag-2, promocionada el 29-sep).\n\nQué: (1) cuando ya se conocen el servicio o el origen del cliente, su ficha (base v2 de rag-2, key 'ficha:<service_id>', metadata origin) entra SIEMPRE en el contexto y la búsqueda prioriza su origen. Hoy search_knowledge_base solo recibe el texto y el idioma. Lo que queda de búsqueda en rag_piezas (B2) es justo esto: con el Open Water elegido, '¿a qué hora acaba el día 1?' no trae su ficha; más el formulario médico del refresher y la dirección de la oficina. (2) ARREGLAR YA dentro de rag-3 (decisión de Gadea, 29-sep): unificar los nombres de servicio entre services.json y pricing.json — p. ej. 'Fun Dives - 2 dives (1 day)' frente a 'Certified Diver - 2 dives (1 day)'; el juez del golden usa pricing.json como referencia y marcó de invento el nombre de services.json en la ronda core rag2-B. Nombre oficial = el de la web; un solo sitio.\nIdea extra: un reordenador podría subir el top-8 de 85 % hacia el 97 % de techo (el dato está en algún candidato); valorar su coste en segundos.\nRiesgo: bajo. Cómo se mide: python -m scripts.rag_piezas --codigo-local --env ... y --comparar con 2026-09-28-rag2-B2.json; después ronda core A/B. Hecho cuando: top-8 ≥ 90 % en rag_piezas, nombres unificados (test que lo compruebe) y ronda core sin regresiones. Detalle: session-handoff.md, bloque RETOMAR AQUÍ del 29-sep.",
+    "order": 3,
+    "owner": "—",
+    "phase": "RAG",
+    "status": "pendiente",
+    "title": "RAG-3 (B) · Búsqueda que usa lo que ya sabemos del cliente + unificar nombres de servicio",
+    "updatedAt": "2026-09-29T23:00:00Z"
+   },
+   {
+    "id": "rag-4",
+    "createdAt": "2026-09-29T09:00:00Z",
+    "note": "Qué: pasar de 42 reglas (30 prohibiciones 'NUNCA/NO', acumuladas fallo a fallo) a ~10-12 priorizadas (seguridad y dinero primero, estilo aparte); fuera las que ya cubren las guardas deterministas o el catálogo, y las que contradicen la base (p. ej. 'el pago lo cierra el equipo' frente a 'manda al link'). Absorbe RAG_CONCISE (aparcado el 28-sep: con tope inventaba huecos): respuestas cortas saldrán de un contexto limpio.\nRiesgo: medio (cambia cómo redacta el bot). Cómo se mide: banco del juez + rag-1 + ronda core A/B.",
+    "order": 4,
+    "owner": "—",
+    "phase": "RAG",
+    "status": "pendiente",
+    "title": "RAG-4 (D) · Dieta del prompt del RAG",
+    "updatedAt": "2026-09-29T09:00:00Z"
+   },
+   {
+    "id": "rag-5",
+    "createdAt": "2026-09-29T09:00:00Z",
+    "note": "Qué: (C) en vez del catálogo entero (~3.200 tokens), solo la ficha del servicio en juego; (F) reescritura de la pregunta en paralelo con la búsqueda de la pregunta sola; juez LLM solo cuando la respuesta trae datos del negocio que no salen del catálogo (lo numérico ya lo comprueban las guardas). Objetivo: contexto de ~3.000-4.000 tokens (hoy ~8.000) → turnos con RAG de ~4 s a ~2,5-3 s.\nPor qué: el suelo actual es ~4 s en serie (reescritura + búsqueda 0,4 s + respuesta 1,9 s + juez 1,2 s), ~7 s con regeneración; el caché del prompt (l2-2) ahorra coste pero no tiempo, lo domina la generación.\nRiesgo: medio. Cómo se mide: turn_metrics + ronda core A/B.",
+    "order": 5,
+    "owner": "—",
+    "phase": "RAG",
+    "status": "pendiente",
+    "title": "RAG-5 (C/F) · Latencia estructural del RAG",
+    "updatedAt": "2026-09-29T09:00:00Z"
+   },
+   {
+    "id": "rag-6",
+    "createdAt": "2026-09-29T09:00:00Z",
+    "note": "SOLO DESPUÉS de rag-2. El dominio es pequeño (hoy ~40.000 tokens por idioma; curada, ~15-20.000): probar a meterla entera con caché del prompt en lugar de buscar trozos, para eliminar los 'no lo tengo' por búsqueda. Comparar calidad, latencia y coste contra rag-2+rag-3 con rag-1 y una ronda core. Riesgo: a medir (latencia y 'perderse en el medio').",
+    "order": 6,
+    "owner": "—",
+    "phase": "RAG",
+    "status": "pendiente",
+    "title": "RAG-6 (G) · Experimento: base curada entera en el prompt en vez de búsqueda",
+    "updatedAt": "2026-09-29T09:00:00Z"
    },
    {
     "id": "s4-1",
@@ -426,52 +546,57 @@
    {
     "id": "s4-14",
     "createdAt": "2026-09-17T14:30:00Z",
-    "note": "Decisión de Gadea. Golden-set: pide-telefono.",
+    "note": "✅ HECHA (27-sep, Gadea; paso 6, HISTORY 0.29.49-0.29.50) — S4_FIXES=true se queda en PRE. Ronda B: core 91,2 → 92,6 %; casos del paso 6 (12 diálogos fuera del core) 83,6 → 91,6 % frente a la ronda A del paso 3. pide-telefono pasa: se da el WhatsApp oficial.\n\n▶ PASO 6 del plan (reordenado 27-sep): arreglos deterministas de salida, flujo y escalado, justo tras el RAG. Flujo y plantillas + escalado = 27 de los 138 fallos de la ronda A del paso 3.\n\nDecisión de Gadea. Golden-set: pide-telefono.",
     "order": 14,
-    "owner": "—",
+    "owner": "Gadea",
     "phase": "S4",
-    "status": "pendiente",
-    "title": "Si piden teléfono, dar el WhatsApp oficial (hoy dice 'no manejo teléfono')"
+    "status": "hecha",
+    "title": "Si piden teléfono, dar el WhatsApp oficial (hoy dice 'no manejo teléfono')",
+    "updatedAt": "2026-09-27T21:30:00Z"
    },
    {
     "id": "s4-15",
     "createdAt": "2026-09-17T14:30:00Z",
-    "note": "Golden-set: es-un-bot (responde 'De temas técnicos mejor no te cuento').",
+    "note": "✅ HECHA (27-sep, Gadea; paso 6, HISTORY 0.29.49-0.29.50) — S4_FIXES=true se queda en PRE. Ronda B: core 91,2 → 92,6 %; casos del paso 6 (12 diálogos fuera del core) 83,6 → 91,6 % frente a la ronda A del paso 3. es-un-bot pasa (honesto).\n\n▶ PASO 6 del plan (reordenado 27-sep): arreglos deterministas de salida, flujo y escalado, justo tras el RAG. Flujo y plantillas + escalado = 27 de los 138 fallos de la ronda A del paso 3.\n\nGolden-set: es-un-bot (responde 'De temas técnicos mejor no te cuento').",
     "order": 15,
-    "owner": "—",
+    "owner": "Gadea",
     "phase": "S4",
-    "status": "pendiente",
-    "title": "'¿Eres un bot?': decir claramente que es un asistente virtual"
+    "status": "hecha",
+    "title": "'¿Eres un bot?': decir claramente que es un asistente virtual",
+    "updatedAt": "2026-09-27T21:30:00Z"
    },
    {
     "id": "s4-16",
     "createdAt": "2026-09-17T14:30:00Z",
-    "note": "Gadea: el pase es correcto, pero mejor con una disculpa/reconocimiento. Golden-set: queja.",
+    "note": "✅ HECHA (27-sep, Gadea; paso 6, HISTORY 0.29.49-0.29.50) — S4_FIXES=true se queda en PRE. Ronda B: core 91,2 → 92,6 %; casos del paso 6 (12 diálogos fuera del core) 83,6 → 91,6 % frente a la ronda A del paso 3. queja pasa (empatía).\n\n▶ PASO 6 del plan (reordenado 27-sep): arreglos deterministas de salida, flujo y escalado, justo tras el RAG. Flujo y plantillas + escalado = 27 de los 138 fallos de la ronda A del paso 3.\n\nGadea: el pase es correcto, pero mejor con una disculpa/reconocimiento. Golden-set: queja.",
     "order": 16,
-    "owner": "—",
+    "owner": "Gadea",
     "phase": "S4",
-    "status": "pendiente",
-    "title": "Mejora: empatía al pasar una queja a staff"
+    "status": "hecha",
+    "title": "Mejora: empatía al pasar una queja a staff",
+    "updatedAt": "2026-09-27T21:30:00Z"
    },
    {
     "id": "s4-17",
     "createdAt": "2026-09-21T14:20:00Z",
-    "note": "Conv 1164 (Gadea, widget, 21-sep). El atajo de precios del RAG (_PRICE_QUESTION en rag_agent.py) toma cualquier 'cuánto' suelto como pregunta de precio. Arreglar el mecanismo (entender la pregunta, U3), no con otro patrón. Golden-set: manual-duracion-curso.",
+    "note": "✅ CERRADA (29-sep): resuelta por RAG_V2 (paso 5, 27-sep): los atajos de precio por regex ya no contestan y '¿Cuánto tiempo dura?' recibe la duración (manual-duracion-curso / duracion cumple desde la ronda paso5-B).\n\nConv 1164 (Gadea, widget, 21-sep). El atajo de precios del RAG (_PRICE_QUESTION en rag_agent.py) toma cualquier 'cuánto' suelto como pregunta de precio. Arreglar el mecanismo (entender la pregunta, U3), no con otro patrón. Golden-set: manual-duracion-curso.",
     "order": 17,
     "owner": "—",
     "phase": "S4",
-    "status": "pendiente",
-    "title": "'¿Cuánto tiempo dura?' responde con la lista de precios"
+    "status": "hecha",
+    "title": "'¿Cuánto tiempo dura?' responde con la lista de precios",
+    "updatedAt": "2026-09-29T09:00:00Z"
    },
    {
     "id": "s4-18",
     "createdAt": "2026-09-21T14:20:00Z",
-    "note": "Conv 1164 + golden-set (reserva-ingles 'You told me: certified diving'). Una referencia a algo dicho no es una petición de recordatorio; en 1164 se repitió en bucle. Golden-set: manual-duracion-curso.",
+    "note": "🟡 PARCIAL (27-sep, paso 5): el 'recordar' mal disparado lo decide ahora Jev (asks_recall, banco 11/12 y 0/14 falsas); en la ronda A salía 15 veces y cancelaba la respuesta.\n\nConv 1164 + golden-set (reserva-ingles 'You told me: certified diving'). Una referencia a algo dicho no es una petición de recordatorio; en 1164 se repitió en bucle. Golden-set: manual-duracion-curso.",
     "order": 18,
     "owner": "—",
     "phase": "S4",
     "status": "pendiente",
-    "title": "'El curso que te he pedido…' dispara el recall ('Me habías dicho…') en vez de responder"
+    "title": "'El curso que te he pedido…' dispara el recall ('Me habías dicho…') en vez de responder",
+    "updatedAt": "2026-09-27T21:00:00Z"
    },
    {
     "id": "s4-19",
@@ -495,32 +620,68 @@
    {
     "id": "s4-20",
     "createdAt": "2026-09-22T15:00:00Z",
-    "note": "Confirma 'todo en orden' con reservas que no puede ver, no pasa a una persona a la agencia, a la aprobacion de logs PADI ni a la evaluacion medica ('habla con el staff' sin hacer el pase), no da el telefono oficial (decision de Gadea: darlo), escala una queja sin una frase de empatia y a '¿eres una persona?' no dice que es un asistente virtual. Golden v7 (22-sep): 8 dialogos afectados (1 en el examen oculto). Casos de regresion: agencia-solicita-tarifas-escalar, aprobacion-logs-padi, confirma-estado-reserva-escalar, confirma-reserva-existente-escalar, es-un-bot, pide-telefono, queja. REGLA: arreglar la CAUSA con una solucion global (sin regex nuevos, sin mirar solo estos casos); los casos listados son la prueba de cierre y el examen oculto (21 casos reales) mide si mejora de verdad.",
+    "note": "✅ HECHA (27-sep, Gadea; paso 6, HISTORY 0.29.49-0.29.50) — S4_FIXES=true se queda en PRE. Ronda B: core 91,2 → 92,6 %; casos del paso 6 (12 diálogos fuera del core) 83,6 → 91,6 % frente a la ronda A del paso 3. Pasan confirma-estado-reserva, confirma-reserva-existente y aprobacion-logs-padi; la agencia pasa a staff (y ya se reconoce desde el 'Soy X de la agencia…'); tras el pase, un 'gracias' ya no vuelve a vender.\n\n▶ PASO 6 del plan (reordenado 27-sep): arreglos deterministas de salida, flujo y escalado, justo tras el RAG. Flujo y plantillas + escalado = 27 de los 138 fallos de la ronda A del paso 3.\n\nConfirma 'todo en orden' con reservas que no puede ver, no pasa a una persona a la agencia, a la aprobacion de logs PADI ni a la evaluacion medica ('habla con el staff' sin hacer el pase), no da el telefono oficial (decision de Gadea: darlo), escala una queja sin una frase de empatia y a '¿eres una persona?' no dice que es un asistente virtual. Golden v7 (22-sep): 8 dialogos afectados (1 en el examen oculto). Casos de regresion: agencia-solicita-tarifas-escalar, aprobacion-logs-padi, confirma-estado-reserva-escalar, confirma-reserva-existente-escalar, es-un-bot, pide-telefono, queja. REGLA: arreglar la CAUSA con una solucion global (sin regex nuevos, sin mirar solo estos casos); los casos listados son la prueba de cierre y el examen oculto (21 casos reales) mide si mejora de verdad.",
     "order": 20,
-    "owner": "—",
+    "owner": "Gadea",
     "phase": "S4",
-    "status": "pendiente",
-    "title": "S4-20 · Post-venta y escalado: pasar a una persona cuando toca"
+    "status": "hecha",
+    "title": "S4-20 · Post-venta y escalado: pasar a una persona cuando toca",
+    "updatedAt": "2026-09-27T21:30:00Z"
    },
    {
     "id": "s4-21",
     "createdAt": "2026-09-22T15:00:00Z",
-    "note": "Arreglos de mecanismo, no de conversacion: (1) respuesta vacia '{\" \"}' en algunos turnos; (2) se muestra un id interno al cliente ('padi_open_water_referral'); (3) la pregunta de origen ofrece 'ida y vuelta el mismo dia' tambien a cursos de 2 dias que obligan a pernoctar; (4) el aviso de privacidad salta con 'con tarjeta de credito son los mismos 2.215.000?' (una pregunta de precio); (5) responde en espanol a clientes que escriben en ingles (2 casos). Golden v7 (22-sep): 5 dialogos afectados (2 en el examen oculto). Casos de regresion: curso-open-water-disponibilidad-pasos-y-precio-citado, recogida-ubuntu-comida-y-certificacion, referral-mas-refresher-hotel-y-domingo-pascua. REGLA: arreglar la CAUSA con una solucion global (sin regex nuevos, sin mirar solo estos casos); los casos listados son la prueba de cierre y el examen oculto (21 casos reales) mide si mejora de verdad.",
+    "note": "✅ HECHA (27-sep, Gadea; paso 6, HISTORY 0.29.49-0.29.50) — S4_FIXES=true se queda en PRE. Ronda B: core 91,2 → 92,6 %; casos del paso 6 (12 diálogos fuera del core) 83,6 → 91,6 % frente a la ronda A del paso 3. Pasan idioma y precio citado; 'ida y vuelta' solo si se sabe que el plan es de un día.\n\n▶ PASO 6 del plan (reordenado 27-sep): arreglos deterministas de salida, flujo y escalado, justo tras el RAG. Flujo y plantillas + escalado = 27 de los 138 fallos de la ronda A del paso 3.\n\nArreglos de mecanismo, no de conversacion: (1) respuesta vacia '{\" \"}' en algunos turnos; (2) se muestra un id interno al cliente ('padi_open_water_referral'); (3) la pregunta de origen ofrece 'ida y vuelta el mismo dia' tambien a cursos de 2 dias que obligan a pernoctar; (4) el aviso de privacidad salta con 'con tarjeta de credito son los mismos 2.215.000?' (una pregunta de precio); (5) responde en espanol a clientes que escriben en ingles (2 casos). Golden v7 (22-sep): 5 dialogos afectados (2 en el examen oculto). Casos de regresion: curso-open-water-disponibilidad-pasos-y-precio-citado, recogida-ubuntu-comida-y-certificacion, referral-mas-refresher-hotel-y-domingo-pascua. REGLA: arreglar la CAUSA con una solucion global (sin regex nuevos, sin mirar solo estos casos); los casos listados son la prueba de cierre y el examen oculto (21 casos reales) mide si mejora de verdad.",
     "order": 21,
-    "owner": "—",
+    "owner": "Gadea",
     "phase": "S4",
-    "status": "pendiente",
-    "title": "S4-21 · Fallos de salida y plantillas (deterministas)"
+    "status": "hecha",
+    "title": "S4-21 · Fallos de salida y plantillas (deterministas)",
+    "updatedAt": "2026-09-27T21:30:00Z"
    },
    {
     "id": "s4-22",
     "createdAt": "2026-09-22T15:00:00Z",
-    "note": "Da el precio de Cartagena (o solo los paquetes desde las islas) sin saber el origen y sin decirlo, o fija una moneda sin conocer la nacionalidad. Con el origen o la nacionalidad sin decir, debe preguntar o dar ambas opciones rotuladas. Golden v7 (22-sep): 7 dialogos afectados (3 en el examen oculto). Casos de regresion: paquete-5-buceos-cop-refresh-y-hoteles, paquete-5-inmersiones, paquete-en-carrito, precios-y-disponibilidad-con-negociacion. REGLA: arreglar la CAUSA con una solucion global (sin regex nuevos, sin mirar solo estos casos); los casos listados son la prueba de cierre y el examen oculto (21 casos reales) mide si mejora de verdad.",
+    "note": "✅ HECHA (27-sep, Gadea; paso 6, HISTORY 0.29.49-0.29.50) — S4_FIXES=true se queda en PRE. Ronda B: core 91,2 → 92,6 %; casos del paso 6 (12 diálogos fuera del core) 83,6 → 91,6 % frente a la ronda A del paso 3. Pasan paquete-en-carrito (no asume ubicación) y precios-y-disponibilidad (precio de 2 buceos, no acepta el propuesto).\n\n▶ PASO 6 del plan (reordenado 27-sep): arreglos deterministas de salida, flujo y escalado, justo tras el RAG. Flujo y plantillas + escalado = 27 de los 138 fallos de la ronda A del paso 3.\n\nDa el precio de Cartagena (o solo los paquetes desde las islas) sin saber el origen y sin decirlo, o fija una moneda sin conocer la nacionalidad. Con el origen o la nacionalidad sin decir, debe preguntar o dar ambas opciones rotuladas. Golden v7 (22-sep): 7 dialogos afectados (3 en el examen oculto). Casos de regresion: paquete-5-buceos-cop-refresh-y-hoteles, paquete-5-inmersiones, paquete-en-carrito, precios-y-disponibilidad-con-negociacion. REGLA: arreglar la CAUSA con una solucion global (sin regex nuevos, sin mirar solo estos casos); los casos listados son la prueba de cierre y el examen oculto (21 casos reales) mide si mejora de verdad.",
     "order": 22,
+    "owner": "Gadea",
+    "phase": "S4",
+    "status": "hecha",
+    "title": "S4-22 · Cotizar sin saber desde donde sale el cliente",
+    "updatedAt": "2026-09-27T21:30:00Z"
+   },
+   {
+    "id": "s4-23",
+    "createdAt": "2026-09-25T21:45:00Z",
+    "note": "HECHA (25-sep noche, Álvaro, HISTORY 0.29.27). Desde el 24-sep 23:04 UTC todos los pushes fallaban en CI (alembic upgrade head) y el job 'Deploy to PRE' se saltaba sin avisar: PRE se quedó en d3dc51e día y medio. Causa reproducida: SQLAlchemy 2.1.0 (salió el 24-sep 20:36 UTC) ya no instala greenlet y alembic/env.py lo necesita. Arreglo: sqlalchemy[asyncio]>=2.0.0,<2.1. Lección: tras cada push a pre_* comprobar que el deploy corrió (comandos en el handoff).",
+    "order": 23,
+    "owner": "Álvaro",
+    "phase": "S4",
+    "status": "hecha",
+    "title": "S4-23 · CI roto por SQLAlchemy 2.1: el deploy a PRE se saltaba en silencio",
+    "updatedAt": "2026-09-25T21:45:00Z"
+   },
+   {
+    "id": "s4-24",
+    "createdAt": "2026-09-25T21:10:00Z",
+    "note": "HECHA (25-sep, Álvaro, HISTORY 0.29.25-26). Inventario verificado en un solo sitio (README, 'LLM models'): en PRE todo es gpt-4o-mini salvo la respuesta del RAG (gpt-4.1-mini). Fijados en docker-compose.vps.yml y como valor por defecto del código; tests/test_models_pinned.py vigila que no se separen. Ya no hace falta ponerlos en ningún .env (quitad OPENAI_MODEL=gpt-4o si lo tenéis).",
+    "order": 24,
+    "owner": "Álvaro",
+    "phase": "S4",
+    "status": "hecha",
+    "title": "S4-24 · Modelos de PRE fijados en el compose y como valor por defecto del código",
+    "updatedAt": "2026-09-25T21:10:00Z"
+   },
+   {
+    "id": "s4-25",
+    "createdAt": "2026-09-28T19:00:00Z",
+    "note": "Creada el 28-sep al cerrar el paso 10 (Gadea: en el paso 10 solo lo 100 % seguro; lo demás, a otro paso para cuando toque repasar la limpieza). Hecho en el paso 10: 3 flags retirados (SLOT_ANSWERS_JEV, REGEX_JEV_GATE, SIGNALS_GATE), 14 interruptores con el valor por defecto de PRE y la red tests/test_flags_pinned.py.\n\nQueda: (1) borrar los CAMINOS ANTIGUOS de los 14 interruptores ya encendidos (atajos de precio del RAG, jueces de grounding v1/v2, textos fijos de disponibilidad y del teléfono, \"¿lo cambio?\" antiguo…) y los tests que los fijan en apagado (buscar \"camino antiguo: el flag sigue existiendo\" en tests/); (2) s4-1: quitar agent_arch y los gates muertos de la cascada; (3) s4-2: partir conversational_core.py (~5.000 líneas) y supervisor.py (~3.400) por nodo; (4) s4-3 regex muerto; (5) s4-4 huecos del detector. Cambios grandes: cada uno con su suite y una ronda core de equivalencia.",
+    "order": 25,
     "owner": "—",
     "phase": "S4",
     "status": "pendiente",
-    "title": "S4-22 · Cotizar sin saber desde donde sale el cliente"
+    "title": "S4-25 · Limpieza 2: caminos antiguos, cascada y módulos",
+    "updatedAt": "2026-09-28T19:00:00Z"
    },
    {
     "id": "s4-3",
@@ -542,33 +703,35 @@
    },
    {
     "id": "s4-5",
-    "note": "",
+    "note": "CERRADA como se puede cerrar (25-sep, HISTORY 0.29.22). langsmith NO se puede retirar: langchain-core la exige como dependencia, asi que quitarla de pyproject.toml no la desinstala, solo la deja sin pin (el siguiente build de PRE podria traer otra version). Se queda pineada por reproducibilidad, con el porque en el comentario.\n\nLo que si se hizo: las 4 plantillas .env.*.example ponian LANGCHAIN_TRACING_V2=true (quien montara PRO copiandolas volveria a tener un 429 por turno) y RAG_TOP_K=5 cuando PRE usa 8 (la trampa de la linea base falsa del 17-sep). Arregladas, con OPENROUTER_API_KEY, Langfuse y SYNTH_CHATWOOT_TOKEN.\n\nCONFIRMADO en PRE: RAG_ANSWER_MODEL=gpt-4.1-mini (activo ya en las plantillas).\n\nTRAMPA EN LOCAL: un .env.dev sin OPENAI_MODEL mide con gpt-4o (default del codigo), no con la config de PRE. Cada uno debe comprobar el suyo antes de medir; comando en HISTORY 0.29.22.",
     "order": 5,
     "owner": "Álvaro",
     "phase": "S4",
-    "status": "pendiente",
-    "title": "Retirar la dependencia langsmith"
+    "status": "hecha",
+    "title": "Retirar la dependencia langsmith",
+    "updatedAt": "2026-09-25T17:00:00Z"
    },
    {
     "id": "s4-6",
     "createdAt": "2026-09-17T10:30:00Z",
-    "note": "Hallazgo 17-sep (golden-set cambio-fecha-carrito): el bot dice 'entiendo que necesitas cambiar la fecha' y sigue preguntando la nacionalidad. Decisión del owner: sin reserva pagada, pasa a asesor. Arreglar por el mecanismo común, no con regex.",
+    "note": "✅ HECHA (27-sep, Gadea; paso 6, HISTORY 0.29.49-0.29.50) — S4_FIXES=true se queda en PRE. Ronda B: core 91,2 → 92,6 %; casos del paso 6 (12 diálogos fuera del core) 83,6 → 91,6 % frente a la ronda A del paso 3. cambio-fecha-carrito pasa (asesor y sin inventar).\n\n▶ PASO 6 del plan (reordenado 27-sep): arreglos deterministas de salida, flujo y escalado, justo tras el RAG. Flujo y plantillas + escalado = 27 de los 138 fallos de la ronda A del paso 3.\n\nHallazgo 17-sep (golden-set cambio-fecha-carrito): el bot dice 'entiendo que necesitas cambiar la fecha' y sigue preguntando la nacionalidad. Decisión del owner: sin reserva pagada, pasa a asesor. Arreglar por el mecanismo común, no con regex.",
     "order": 6,
     "owner": "Gadea",
     "phase": "S4",
-    "status": "pendiente",
+    "status": "hecha",
     "title": "Cambio de fecha con carrito abierto: pasar a asesor",
-    "updatedAt": "2026-09-17T10:30:00Z"
+    "updatedAt": "2026-09-27T21:30:00Z"
    },
    {
     "id": "s4-7",
     "createdAt": "2026-09-17T14:30:00Z",
-    "note": "Golden-set ronda 1: reserva-completa-saludo-a-pago y reserva-ingles.",
+    "note": "✅ HECHA (27-sep, Gadea; paso 6, HISTORY 0.29.49-0.29.50) — S4_FIXES=true se queda en PRE. Ronda B: core 91,2 → 92,6 %; casos del paso 6 (12 diálogos fuera del core) 83,6 → 91,6 % frente a la ronda A del paso 3. '¿Cómo pago?' da el link (pasan reserva-ingles y reserva-completa-saludo-a-pago); los links reales de reserva van en el contexto del RAG.\n\n▶ PASO 6 del plan (reordenado 27-sep): arreglos deterministas de salida, flujo y escalado, justo tras el RAG. Flujo y plantillas + escalado = 27 de los 138 fallos de la ronda A del paso 3.\n\n25-sep (Álvaro, ronda B2 de u3-4): en dos diálogos el RAG contesta a '¿cómo pago?' que 'un asesor te enviará el enlace' aunque el enlace ya se dio. Con u3-4 encendido el RAG contesta más preguntas, así que esto pesa más.\n\nGolden-set ronda 1: reserva-completa-saludo-a-pago y reserva-ingles.",
     "order": 7,
-    "owner": "—",
+    "owner": "Gadea",
     "phase": "S4",
-    "status": "pendiente",
-    "title": "'Cómo pago' debe dar el link (ES propone quitar la certificación; EN pasa a asesor y 'You told me: certified diving')"
+    "status": "hecha",
+    "title": "'Cómo pago' debe dar el link (ES propone quitar la certificación; EN pasa a asesor y 'You told me: certified diving')",
+    "updatedAt": "2026-09-27T21:30:00Z"
    },
    {
     "id": "s4-8",
@@ -592,53 +755,351 @@
    },
    {
     "id": "u3-1",
-    "note": "",
+    "note": "HECHA (24-sep). Tres pasos, medidos con el protocolo nuevo:\n• PASO 1 — Jev para las 9 señales del router, ENCENDIDO en PRE con cascada por confianza (si Jev duda, decide el router LLM; ~10 % de los turnos). Router ~1,3 s -> ~0,4 s; 0 regresiones frente a las dos rondas A.\n• PASO 2 — '¿se entiende sola?' para saltar condense_query: DESCARTADO en el escalón 0 (Jev solo seguro en 14 de 109 mensajes; ~0,01 s de media). Sin código.\n• PASO 3 — el acuse cálido EN PARALELO, ENCENDIDO en PRE (ACK_IN_PARALLEL). Al medir se vio que la extracción ya era casi siempre UNA llamada (fusionarla ahorraba poco) y que la cadena lenta era extracción (0,85 s) -> acuse (1,0 s) en el 48 % de los turnos. Con una pregunta de sí/no pendiente sigue en serie (necesita el valor recién extraído). Escalón 1 (1+1, misma franja): turnos de reserva p50 2,61 -> 2,07 s (-21 %), media 2,90 -> 2,14 s (-26 %); calidad 86,4 -> 86,5 %; 0 regresiones por el acuse (texto leído). Diseño: docs/robustness/u3-1-paso3-diseno.md. HISTORY 0.29.15-0.29.17.\nSe aparca: fusionar las variantes de extracción (poca ganancia, mucho riesgo) -> se revisará por calidad en u3-4 / u3-5.\nAL TERMINAR → u3-2.",
     "order": 1,
     "owner": "Gadea",
     "phase": "U3",
-    "status": "pendiente",
-    "title": "Una llamada estructurada: intención + slots + señales (flag unified_understanding)"
+    "status": "hecha",
+    "title": "Una llamada estructurada: intención + slots + señales (flag unified_understanding)",
+    "updatedAt": "2026-09-24T16:10:00Z"
    },
    {
     "id": "u3-2",
-    "note": "Solo se promociona si calidad ≥ actual y latencia baja.",
-    "order": 2,
+    "note": "✅ HECHA (28-sep, Gadea; HISTORY 0.29.59-0.29.60) — PASO 8 CERRADO por decisión de Gadea. Ronda completa paso8 frente a paso3-A: 83,6 → 86,6 %, 38 → 55/116 sin fallos; reales 83,2 % (mejor que la A), examen oculto 76,4 % (−1,2, dentro del ruido; 1 → 4/21 sin fallos). No se repite la ronda; los fallos que quedan (113; RAG 60, datos 28) se repasan al final del plan. Siguiente: paso 9 (latencia; los turnos con RAG subieron p50 3,7 → 4,8 s).\n\n▶ PASO 8 del plan = CIERRE DE CALIDAD (redefinida): ronda COMPLETA del golden (116 + examen oculto) con el juez g-8. Criterio: examen oculto ≥ 77,6 % (referencia 2026-09-27-paso3-A) y mejor que ella en casos reales, sin regresiones propias. El 78,3 % del cierre de L1 era con el juez antiguo: no comparable.\n\n▶ ORDEN 6.\nAL TERMINAR → u3-3.\n\nSolo se promociona si calidad ≥ actual y latencia baja.",
+    "order": 8,
     "owner": "Gadea",
     "phase": "U3",
-    "status": "pendiente",
-    "title": "A/B por caso: eval-set (230) + todas las baterías + latencia"
+    "status": "hecha",
+    "title": "U3-2 · Cierre de calidad: ronda completa + examen oculto (≥ 77,6 %, juez g-8)",
+    "updatedAt": "2026-09-28T13:00:00Z"
    },
    {
     "id": "u3-3",
-    "note": "",
-    "order": 3,
+    "note": "✅ HECHA (27-sep, Gadea; HISTORY 0.29.54-0.29.56) — REGEX_JEV_GATE=true se queda en PRE. El fast-path + respaldo ya existía; lo nuevo: Jev verifica lo que lee el regex en TODOS los turnos y descarta solo si está SEGURO de que el cliente no lo afirma (p < 0,2). Escalón 0: −5 datos inventados, 0 buenos perdidos. Ronda B core: la puerta no actuó en ningún turno (diferencias = ruido, ±2 diálogos); se confirma en la ronda completa del paso 8. PASO 7 CERRADO.\n\n▶ PASO 7 del plan (reordenado 27-sep): sin fallos medidos detrás; va al final de U3 (y s4-4 depende de ella).\n\n🟦 USAR JEV (decisión de Gadea, 24-sep): el respaldo del intent_detector (2.367 líneas de reglas) se prueba con Jev: decisiones de opciones fijas en vez de listas de frases, que es la regla del equipo (nada de parches regex). Cascada por confianza + flag + protocolo de medición.\n▶ ORDEN 7.\nAL TERMINAR → u3-4.\n\n",
+    "order": 7,
     "owner": "Gadea",
     "phase": "U3",
-    "status": "pendiente",
-    "title": "intent_detector como fast-path determinista + backstop LLM"
+    "status": "hecha",
+    "title": "intent_detector como fast-path determinista + backstop LLM",
+    "updatedAt": "2026-09-28T00:30:00Z"
    },
    {
     "id": "u3-4",
     "createdAt": "2026-09-22T15:00:00Z",
-    "note": "Causa n.º 1 con clientes reales: el bot sigue con el siguiente paso ('¿desde donde saldrias?', '¿mas de 2 anos?', '¿con cual te animas?') o suelta el mensaje fijo de disponibilidad ('las salidas son diarias...') en vez de responder la pregunta (descuentos, hoteles, fechas, fotos, delfines, maleta, punto de encuentro, agencia). Tambien malinterpreta mensajes (el 'link no incluye fotos' -> 'lamento que el enlace no funcione'; cambio de fecha -> menu del almuerzo). Es justo lo que U3 resuelve: una sola lectura estructurada del mensaje (intencion + pregunta + datos) que el flujo respete. Golden v7 (22-sep): 47 dialogos afectados (13 en el examen oculto). Casos de regresion: cambio-fecha-carrito, cambio-fecha-por-enfermedad, certificado-fechas-fotos-y-reserva, certificado-precio-dia-paquete-5-y-hoteles-base, confirma-fecha-y-punto-encuentro, confirmacion-salida-y-pago-sin-concepto, contacto-hoteles-cocoliso-san-pedro, curso-alojamiento-y-recogida-islas, curso-open-water-disponibilidad-pasos-y-precio-citado, curso-open-water-principiantes-idioma-frances-anticipacion, curso-open-water-transporte-y-regreso-otro-dia, descuento-online-sin-codigo, desde-islas-buzo-certificado, equipaje-maleta-y-bolso-en-lancha, familia-mixta-precio-descuento-refresher, minicurso-islas-y-acompanante-lancha, moneda-precios-principiante-y-snorkel, paquete-5-buceos-islas-residente-sin-recogida, paquete-5-buceos-precio-overnight-isla-grande-baru, pareja-certificados-cop-descuento-almuerzo, precio-desde-islas-vs-cartagena, precio-fundive-datos-faltan, precio-paquetes-5-o-3-buceos-y-opcion-2-diurnos, premisa-falsa-lunes, principiante-hora-lugar-y-precio, recogida-ubuntu-comida-y-certificacion, referral-mas-refresher-hotel-y-domingo-pascua, refresher-que-completar-antes, regateo-grupo-6, regreso-otro-dia-paquete-5, reserva-paquete-5-buceos-solicita, semana-santa-solo-avanzado-islas, snorkel-precio-residente-y-pago-link, tours-diarios-isla-grande. REGLA: arreglar la CAUSA con una solucion global (sin regex nuevos, sin mirar solo estos casos); los casos listados son la prueba de cierre y el examen oculto (21 casos reales) mide si mejora de verdad.",
+    "note": "✅ HECHA (26-sep, Gadea) — PROMOCIONADO: ANSWER_AND_CONTINUE=true se queda en PRE. Ronda B3 frente a la A del 24-sep: diálogos sin fallos 17 → 18/32, criterios 87,3 → 88,6 %, el RAG contesta 29 → 42 turnos, latencia por tipo de turno mejor (RAG p50 4,25 → 3,88 s; reserva 1,64 → 1,28 s), +14 % llamadas. 0 regresiones propias (las 5 del juez leídas con el log de PRE: recordar mal disparado → u3-6, RAG → l1-7, un error del juez). Las 3 regresiones de la B2 resueltas. 0 '¿lo cambio?' en toda la ronda. Qué se hizo el 26-sep: affirms_activity recalibrada (2 preguntas a Jev + regla), preguntas de u3-5 en el código (puerta + filtro de contradicciones), relleno con puerta, y 3 arreglos del escalón 0 (affirms_* aunque Jev dude; filtro en todos los turnos; relleno del sí/no recién preguntado). Detalle: docs/robustness/u3-4-diseno.md, 'Ronda B3'; HISTORY 0.29.29-0.29.33.\n\n▶ ESTADO (26-sep, sigue Gadea). Ronda B2 en PRE (25-sep noche) con v5: NO promocionado, flag apagado. Agregado empatado (criterios 87,3 -> 87,4 %; dialogos sin fallos 17 -> 16/32). Caso a caso, con el log de PRE: 4 mejoras reales (la puerta de Jev ya no inventa 'estas en la isla'; guarda el curso Open Water en un turno con pregunta; 'how do I pay' contesta y da el enlace; pregunta el origen para cotizar) y 3 regresiones propias con causa: (1) Jev tira una actividad afirmada ('soy open y me gustaria salir un dia... no se que tienen'); (2) 'complete el curso basico' dentro de una pregunta no se guarda -> repregunta; (3) 'listo, como pago' -> el LLM dice 'no certificado' al revisar datos guardados -> '¿lo cambio?' fantasma. v5 arregla 5 de las 8 regresiones de v1; el RAG contesta 12 preguntas mas. Las 3 regresiones ya estan en el banco de calibracion; la candidata de certificado de u3-5 resuelve 2. Siguiente: recalibrar affirms_activity, meter u3-5 (tambien contra contradicciones de datos guardados), relleno con puerta, escalon 0 -> ronda B3. Detalle: docs/robustness/u3-4-diseno.md 'Ronda B2', HISTORY 0.29.28.\n\nHISTORIAL: 24-sep (Gadea) diseño 'contesta y sigue' detrás del flag ANSWER_AND_CONTINUE + Jev asks_question en la misma llamada del router; escalón 0 (preguntas contestadas 94 → 123 de 165) y ronda B en PRE (diálogos 17 → 19 de 32, 3 regresiones con causa → no promocionado). 25-sep mañana (Gonzalo) arreglo 1 (si el RAG no sabe, su respuesta va sola), arreglo 2 (el regex lee y el LLM verifica) y la puerta de Jev (affirms_location / affirms_activity); v3-v6 medidas en local, banco de calibración scripts/sonda_afirma_vs_pregunta.py. 25-sep noche (Álvaro) ronda B2 con v5. Detalle: docs/robustness/u3-4-diseno.md.\n\nCausa n.º 1 con clientes reales: el bot sigue con el siguiente paso ('¿desde donde saldrias?', '¿mas de 2 anos?', '¿con cual te animas?') o suelta el mensaje fijo de disponibilidad ('las salidas son diarias...') en vez de responder la pregunta (descuentos, hoteles, fechas, fotos, delfines, maleta, punto de encuentro, agencia). Tambien malinterpreta mensajes (el 'link no incluye fotos' -> 'lamento que el enlace no funcione'; cambio de fecha -> menu del almuerzo). Es justo lo que U3 resuelve: una sola lectura estructurada del mensaje (intencion + pregunta + datos) que el flujo respete. Golden v7 (22-sep): 47 dialogos afectados (13 en el examen oculto). Casos de regresion: cambio-fecha-carrito, cambio-fecha-por-enfermedad, certificado-fechas-fotos-y-reserva, certificado-precio-dia-paquete-5-y-hoteles-base, confirma-fecha-y-punto-encuentro, confirmacion-salida-y-pago-sin-concepto, contacto-hoteles-cocoliso-san-pedro, curso-alojamiento-y-recogida-islas, curso-open-water-disponibilidad-pasos-y-precio-citado, curso-open-water-principiantes-idioma-frances-anticipacion, curso-open-water-transporte-y-regreso-otro-dia, descuento-online-sin-codigo, desde-islas-buzo-certificado, equipaje-maleta-y-bolso-en-lancha, familia-mixta-precio-descuento-refresher, minicurso-islas-y-acompanante-lancha, moneda-precios-principiante-y-snorkel, paquete-5-buceos-islas-residente-sin-recogida, paquete-5-buceos-precio-overnight-isla-grande-baru, pareja-certificados-cop-descuento-almuerzo, precio-desde-islas-vs-cartagena, precio-fundive-datos-faltan, precio-paquetes-5-o-3-buceos-y-opcion-2-diurnos, premisa-falsa-lunes, principiante-hora-lugar-y-precio, recogida-ubuntu-comida-y-certificacion, referral-mas-refresher-hotel-y-domingo-pascua, refresher-que-completar-antes, regateo-grupo-6, regreso-otro-dia-paquete-5, reserva-paquete-5-buceos-solicita, semana-santa-solo-avanzado-islas, snorkel-precio-residente-y-pago-link, tours-diarios-isla-grande. REGLA: arreglar la CAUSA con una solucion global (sin regex nuevos, sin mirar solo estos casos); los casos listados son la prueba de cierre y el examen oculto (21 casos reales) mide si mejora de verdad.",
     "order": 4,
-    "owner": "—",
+    "owner": "Gadea / Gonzalo / Álvaro",
     "phase": "U3",
-    "status": "pendiente",
-    "title": "U3-4 · Contestar lo que el cliente pregunta antes de seguir con el flujo"
+    "status": "hecha",
+    "title": "U3-4 · Contestar lo que el cliente pregunta antes de seguir con el flujo",
+    "updatedAt": "2026-09-26T11:30:00Z"
    },
    {
     "id": "u3-5",
     "createdAt": "2026-09-22T15:00:00Z",
-    "note": "El bot propone cambios del carrito que nadie pidio ('¿lo cambio? con certificacion -> sin certificacion', '4 -> 3 personas', 'acompanante -> sin decidir') y da por hechos datos que el cliente no dijo ('han buceado recientemente', 1 persona donde dijo 2). Aparece en conversaciones reales largas y desordenadas. Ya se ve en la suite de tests (Gonzalo, 23-sep): 3 tests de test_conversational_core.py (companion_beginner_added_mid_flow, companion_signal_adds_minicourse_not_regex_match, slang_companion_with_different_activity_still_trusts_llm) fallan en el HEAD de pre_gadea porque sale confirm_correction donde se espera el slot. Pertenece a la extraccion unica de U3 (fill_gaps / veto por campo), no a parches por campo. Golden v7 (22-sep): 23 dialogos afectados (6 en el examen oculto). Casos de regresion: acompanante-goteo, actividad-cambia-varias, cambio-fecha-por-enfermedad, curso-alojamiento-y-recogida-islas, curso-open-water-precio-cop-hoteles-y-transporte, curso-referido-pide-datos-centro, grupo-cambia-dos-veces, grupo-mixto-precio-cop-total, minicurso-islas-y-acompanante-lancha, ninos-6-y-10, paquete-5-buceos-islas-residente-sin-recogida, paquete-5-buceos-precio-overnight-isla-grande-baru, precio-desde-islas-vs-cartagena, principiante-hora-lugar-y-precio, referral-mas-refresher-hotel-y-domingo-pascua, reserva-completa-saludo-a-pago, snorkel-precio-residente-y-pago-link. REGLA: arreglar la CAUSA con una solucion global (sin regex nuevos, sin mirar solo estos casos); los casos listados son la prueba de cierre y el examen oculto (21 casos reales) mide si mejora de verdad.",
+    "note": "✅ HECHA (27-sep, Gadea; calibración de Álvaro; HISTORY 0.29.42-0.29.46) — CORRECTIONS_V2=true se queda en PRE. Ronda B frente a la A del paso 3: empate (86,7 → 86,2 %), 16/32 sin fallos en ambas, 8 mejoras, 0 regresiones propias de estos pasos. Qué hace: (1) '¿lo cambio?' una sola vez y nunca X → X; (2) Jev como señal de corrección ('somos 4 al final' se aplica sin preguntar; banco 20/25, 0 falsas); (3) la nacionalidad no se deduce del idioma (pregunta de Jev ampliada con la residencia, 20/20). Replay: '¿lo cambio?' 10 → 2. PENDIENTE aparte: la recomendación del minicurso deducido (decisión de Gadea: recomendar y que lo confirme el cliente) en su flag RECOMMEND_INFERRED_MINICOURSE, APAGADO, con el plural y el acompañante ya arreglados: falta su escalón.\n\n▶ PASO 4 del plan (27-sep): pasos 1-3 hechos (¿lo cambio? 10 → 2 en el replay; Jev como señal de corrección; nacionalidad no deducida del idioma; minicurso recomendado y confirmado por el cliente, decisión de Gadea). Ronda B en PRE en curso.\n\n▶ AVANCE (26-sep, Gadea): las preguntas de Jev de Álvaro (certificado, grupo, nacionalidad) YA en el código y en PRE (con u3-4): tiran el dato que el cliente solo nombra dentro de una pregunta, y el filtro de contradicciones de Jev (en todos los turnos) acaba con el '¿lo cambio?' fantasma: en el replay 21 → 13 y en la ronda B3 0 propuestos. QUEDA: 'cursos de buceo… primera vez' → minicurso supuesto (el relleno con puerta; regla del owner: recomendar, no asumir) y 'Vamos en família a Cartagena' → no colombiano (nacionalidad por el idioma). Ninguno en la muestra core.\n\n▶ EN CURSO (25-sep, Álvaro): preguntas de Jev para is_certified, group_size e is_colombian CALIBRADAS en el banco (python -m scripts.sonda_afirma_vs_pregunta u35): 66/67 sobre casos reales del golden, 28 de ellos no usados para escribir las frases. Aún NO en el código: entran con u3-4 (paso 2 del 'Siguiente paso tras la ronda B2'), detrás del mismo flag. La de certificado sirve también para filtrar las contradicciones de datos ya guardados → mata el '¿lo cambio?' fantasma ('listo, como pago' → '¿lo cambio a sin certificación?', regresión de la ronda B2). Aquí va también la nacionalidad inventada desde una pregunta (decisión de Gadea, 24-sep). NO arreglarlo tocando el tono de la instrucción de relleno: hace perder datos (medido 24-sep y 12-sep). HISTORY 0.29.24.\n\n▶ ORDEN 9 (sobre el entendimiento nuevo de U3).\nAL TERMINAR → l1-6 + l1-7.\n\nEl bot propone cambios del carrito que nadie pidio ('¿lo cambio? con certificacion -> sin certificacion', '4 -> 3 personas', 'acompanante -> sin decidir') y da por hechos datos que el cliente no dijo ('han buceado recientemente', 1 persona donde dijo 2). Aparece en conversaciones reales largas y desordenadas. Ya se ve en la suite de tests (Gonzalo, 23-sep): 3 tests de test_conversational_core.py (companion_beginner_added_mid_flow, companion_signal_adds_minicourse_not_regex_match, slang_companion_with_different_activity_still_trusts_llm) fallan en el HEAD de pre_gadea porque sale confirm_correction donde se espera el slot. Pertenece a la extraccion unica de U3 (fill_gaps / veto por campo), no a parches por campo. Golden v7 (22-sep): 23 dialogos afectados (6 en el examen oculto). Casos de regresion: acompanante-goteo, actividad-cambia-varias, cambio-fecha-por-enfermedad, curso-alojamiento-y-recogida-islas, curso-open-water-precio-cop-hoteles-y-transporte, curso-referido-pide-datos-centro, grupo-cambia-dos-veces, grupo-mixto-precio-cop-total, minicurso-islas-y-acompanante-lancha, ninos-6-y-10, paquete-5-buceos-islas-residente-sin-recogida, paquete-5-buceos-precio-overnight-isla-grande-baru, precio-desde-islas-vs-cartagena, principiante-hora-lugar-y-precio, referral-mas-refresher-hotel-y-domingo-pascua, reserva-completa-saludo-a-pago, snorkel-precio-residente-y-pago-link. REGLA: arreglar la CAUSA con una solucion global (sin regex nuevos, sin mirar solo estos casos); los casos listados son la prueba de cierre y el examen oculto (21 casos reales) mide si mejora de verdad.",
     "order": 5,
-    "owner": "—",
+    "owner": "Álvaro / Gadea",
     "phase": "U3",
-    "status": "pendiente",
-    "title": "U3-5 · Extraccion sin inventar: nada de '¿lo cambio?' fantasma"
+    "status": "hecha",
+    "title": "U3-5 · Extraccion sin inventar: nada de '¿lo cambio?' fantasma",
+    "updatedAt": "2026-09-27T16:45:00Z"
+   },
+   {
+    "id": "u3-6",
+    "createdAt": "2026-09-24T17:00:00Z",
+    "note": "✅ HECHA (27-sep, Gadea; HISTORY 0.29.51-0.29.52) — SIGNALS_GATE=true se queda en PRE. Jev como filtro previo del LLM de señales (companion_joins + asks_recall, misma llamada): si Jev está seguro de que no hay otra persona ni petición de recordar (y el refresher no está en juego), no se llama al LLM. Banco 0/14 acompañantes perdidos, 13/14 turnos sin la llamada; escalón 0 dentro del ruido. Ronda B core: calidad empatada (92,6 → 92,2 %), 0 regresiones propias, llamadas LLM por turno 3,46 → 3,04 (−12 %), 47 de 93 turnos sin la llamada. El 'recordar' mal disparado (s4-18) lo cerró asks_recall en el paso 5.\n\n▶ PASO 7 del plan (reordenado 27-sep): después del RAG y de los arreglos deterministas. 'Me habías dicho…' 3 → 8 en la ronda A, pero la intención / recordar solo explica 5 de los 138 fallos.\n\n▶ EVIDENCIA (26-sep, ronda B3 de u3-4): 'Great. We will book diving… How do we book/pay for the $50 ref…' → detect_special_signals dispara recall_field=booking_recap y el camino de 'recordar' contesta con el resumen y sale ANTES de extraer: ni contesta la pregunta ni guarda 'hotel en la isla' (que Jev sí afirmaba) → repregunta '¿desde dónde saldrías?'. Única regresión de la B3 que tocaba a u3-4, y es de aquí. Log: docs/robustness/u3-4/logs-pre-ronda-B3.txt.\n\n🟦 USAR JEV (decisión de Gadea, 24-sep). La red de respaldo `detect_special_signals` (src/agents/llm_extractor.py) decide casi todo con opciones fijas: recall_field (lista), companion_activity (lista), mentions_other_person / companion_is_singular / refresher_interested / other_companions (sí/no). Encaja igual que el router (u3-1). companion_qty es una CIFRA: se queda en el LLM. Aporta: ~0,85 s en ~1 de cada 4 turnos (22 de 92 en la ronda A2). Mismo método que u3-1: config en el adaptador, cascada por confianza (si Jev duda, el LLM de hoy), flag, escalón 0 en local y escalón 1 en PRE (docs/robustness/protocolo-medicion.md).",
+    "order": 6,
+    "owner": "Gadea",
+    "phase": "U3",
+    "status": "hecha",
+    "title": "U3-6 · detect_special_signals con Jev (probar)",
+    "updatedAt": "2026-09-27T22:05:00Z"
+   },
+   {
+    "id": "u3-7",
+    "createdAt": "2026-09-24T17:00:00Z",
+    "note": "✅ HECHA (27-sep, Gadea; HISTORY 0.29.53-0.29.55) — SLOT_ANSWERS_JEV=true se queda en PRE. El router le pasa a Jev la pregunta pendiente y Jev contesta los sí/no y las listas (las cifras siguen en el LLM); cascada con confianza >= 0,8. Banco 28/30, 0 equivocadas con confianza. Ronda B core: diálogos sin fallos 20 → 23/32, criterios 92,2 → 93,0 %, p95 5,45 → 4,84 s, llamadas LLM/turno 3,04 → 2,85; las 8 decisiones de Jev en la ronda, correctas; 0 regresiones propias.\n\n▶ PASO 7 del plan (reordenado 27-sep): sin fallos medidos detrás en la ronda A; va tras u3-6.\n\n🟦 USAR JEV (decisión de Gadea, 24-sep). `resolve_slot_answer` interpreta la respuesta a una pregunta pendiente cuando el parser falla: safety, nationality, certification, refresher (sí/no) y course_level (lista) encajan en Jev; qty (cifra) se queda en el LLM (contar es un punto flojo de Jev). Aporta estabilidad (Jev responde siempre igual) y algo de velocidad; pocos turnos. Cascada por confianza + flag + protocolo de medición.",
+    "order": 6.5,
+    "owner": "Gadea",
+    "phase": "U3",
+    "status": "hecha",
+    "title": "U3-7 · resolve_slot_answer con Jev en sí/no y listas (probar)",
+    "updatedAt": "2026-09-27T23:30:00Z"
    }
   ],
   "snapshots": [
+   {
+    "id": "s-cierre-l1-0924",
+    "all": {
+     "cost_avg_usd": 0.001092,
+     "embeddings_avg": 0.25,
+     "latency_avg": 3.813,
+     "latency_p50": 3.337,
+     "latency_p95": 7.325,
+     "llm_calls_avg": 3.99,
+     "llm_calls_max": 8,
+     "llm_calls_p95": 7,
+     "llm_share": 1.071,
+     "tokens_avg": 7823,
+     "turns": 476
+    },
+    "business": {
+     "by_turn_type": {
+      "cambios": 5,
+      "deflection": 8,
+      "escalado": 14,
+      "info": 3,
+      "rag": 131,
+      "reserva": 298,
+      "saludo": 17
+     },
+     "conversations": 120,
+     "escalation_rate_pct": 10.8,
+     "fallback_pct_of_turns": 4.8,
+     "fallback_turns": 23,
+     "funnel": {
+      "carrito_con_personas": {
+       "conversations": 13,
+       "pct": 10.8
+      },
+      "eligen_actividad": {
+       "conversations": 13,
+       "pct": 10.8
+      },
+      "hablan": {
+       "conversations": 120,
+       "pct": 100
+      },
+      "link_de_pago": {
+       "conversations": 12,
+       "pct": 10
+      }
+     },
+     "turns": 476,
+     "turns_per_conversation": 3.97
+    },
+    "by_turn_type": {
+     "cambios": {
+      "cost_avg_usd": 0.00026,
+      "embeddings_avg": 0,
+      "latency_avg": 1.275,
+      "latency_p50": 1.284,
+      "latency_p95": 1.632,
+      "llm_calls_avg": 1.2,
+      "llm_calls_max": 2,
+      "llm_calls_p95": 1.8,
+      "llm_share": 0.958,
+      "tokens_avg": 2927,
+      "turns": 5
+     },
+     "deflection": {
+      "cost_avg_usd": 0.000248,
+      "embeddings_avg": 0,
+      "latency_avg": 1.26,
+      "latency_p50": 1.331,
+      "latency_p95": 1.545,
+      "llm_calls_avg": 1,
+      "llm_calls_max": 1,
+      "llm_calls_p95": 1,
+      "llm_share": 0.961,
+      "tokens_avg": 2816,
+      "turns": 8
+     },
+     "escalado": {
+      "cost_avg_usd": 0.000248,
+      "embeddings_avg": 0,
+      "latency_avg": 1.22,
+      "latency_p50": 1.28,
+      "latency_p95": 1.602,
+      "llm_calls_avg": 1,
+      "llm_calls_max": 1,
+      "llm_calls_p95": 1,
+      "llm_share": 0.963,
+      "tokens_avg": 2843,
+      "turns": 14
+     },
+     "info": {
+      "cost_avg_usd": 0.000294,
+      "embeddings_avg": 0,
+      "latency_avg": 1.839,
+      "latency_p50": 1.83,
+      "latency_p95": 1.953,
+      "llm_calls_avg": 1.67,
+      "llm_calls_max": 2,
+      "llm_calls_p95": 2,
+      "llm_share": 0.96,
+      "tokens_avg": 3102,
+      "turns": 3
+     },
+     "rag": {
+      "cost_avg_usd": 0.002324,
+      "embeddings_avg": 0.92,
+      "latency_avg": 5.776,
+      "latency_p50": 5.76,
+      "latency_p95": 8.932,
+      "llm_calls_avg": 5.21,
+      "llm_calls_max": 8,
+      "llm_calls_p95": 7,
+      "llm_share": 1.015,
+      "tokens_avg": 13812,
+      "turns": 131
+     },
+     "reserva": {
+      "cost_avg_usd": 0.00068,
+      "embeddings_avg": 0,
+      "latency_avg": 3.309,
+      "latency_p50": 3.127,
+      "latency_p95": 5.354,
+      "llm_calls_avg": 3.89,
+      "llm_calls_max": 7,
+      "llm_calls_p95": 6,
+      "llm_share": 1.124,
+      "tokens_avg": 5956,
+      "turns": 298
+     },
+     "saludo": {
+      "cost_avg_usd": 0.000298,
+      "embeddings_avg": 0,
+      "latency_avg": 1.954,
+      "latency_p50": 1.622,
+      "latency_p95": 3.836,
+      "llm_calls_avg": 1.47,
+      "llm_calls_max": 3,
+      "llm_calls_p95": 2.2,
+      "llm_share": 0.9,
+      "tokens_avg": 3130,
+      "turns": 17
+     }
+    },
+    "by_type": {
+     "rag": {
+      "cost_avg_usd": 0.002324,
+      "embeddings_avg": 0.92,
+      "latency_avg": 5.776,
+      "latency_p50": 5.76,
+      "latency_p95": 8.932,
+      "llm_calls_avg": 5.21,
+      "llm_calls_max": 8,
+      "llm_calls_p95": 7,
+      "llm_share": 1.015,
+      "tokens_avg": 13812,
+      "turns": 131
+     },
+     "reserva": {
+      "cost_avg_usd": 0.000624,
+      "embeddings_avg": 0,
+      "latency_avg": 3.068,
+      "latency_p50": 3.008,
+      "latency_p95": 5.174,
+      "llm_calls_avg": 3.53,
+      "llm_calls_max": 7,
+      "llm_calls_p95": 6,
+      "llm_share": 1.111,
+      "tokens_avg": 5549,
+      "turns": 345
+     }
+    },
+    "client_latency": {
+     "conversations": 116,
+     "latency_max": 14,
+     "latency_p50": 4,
+     "latency_p95": 8,
+     "multi_bubble": 1,
+     "no_reply": 0,
+     "turns": 465
+    },
+    "commit": "4d49ff8",
+    "environment": "staging",
+    "label": "Cierre L1 · 116 diálogos (sin chats antiguos)",
+    "merged_traces": {
+     "traces": 0,
+     "turns": 0
+    },
+    "models": {
+     "gpt-4.1-mini-2025-04-14": 138,
+     "gpt-4o-mini-2024-07-18": 1761
+    },
+    "nodes": {
+     "availability": {
+      "n": 440,
+      "p50": 0.006,
+      "p95": 0.01
+     },
+     "booking": {
+      "n": 440,
+      "p50": 1.998,
+      "p95": 6.001
+     },
+     "changes": {
+      "n": 5,
+      "p50": 0.003,
+      "p95": 0.036
+     },
+     "deflection": {
+      "n": 8,
+      "p50": 0.003,
+      "p95": 0.005
+     },
+     "extraction": {
+      "n": 296,
+      "p50": 1.039,
+      "p95": 3.196
+     },
+     "info": {
+      "n": 9,
+      "p50": 4.061,
+      "p95": 6.68
+     },
+     "router": {
+      "n": 476,
+      "p50": 1.29,
+      "p95": 1.827
+     },
+     "routing": {
+      "n": 420,
+      "p50": 0.008,
+      "p95": 5.877
+     },
+     "safety": {
+      "n": 14,
+      "p50": 0.002,
+      "p95": 0.004
+     },
+     "setup": {
+      "n": 440,
+      "p50": 0.04,
+      "p95": 0.057
+     },
+     "slotfill_close": {
+      "n": 275,
+      "p50": 0.769,
+      "p95": 1.054
+     }
+    },
+    "quality": {
+     "criteria_failed": 156,
+     "criteria_judged": 841,
+     "criteria_pass_pct": 81.5,
+     "dialogues": 116,
+     "dialogues_pass_pct": 30.2,
+     "dialogues_passed": 35,
+     "judge_raw_pass_pct": 81.5,
+     "model": "gpt-5-mini (medium) SIN revisión humana — comparable con v7 sin revisar: 80,5 % (examen oculto 73,1 → 78,3 %)",
+     "results_file": "docs/robustness/golden-set/results/2026-09-24-l1-cierre__gpt-5-mini-medium.json",
+     "to_review": 16
+    },
+    "run_at": "2026-09-24T10:55:12.159000+00:00",
+    "run_file": "docs/robustness/synthetic-runs/2026-09-24-l1-cierre.jsonl",
+    "taken_at": "2026-09-24T12:57:37+00:00",
+    "turns_with_summary": 476,
+    "window": {
+     "first_turn": "2026-09-24T09:27:03.341000+00:00",
+     "from": "2026-09-24T09:22:12Z",
+     "last_turn": "2026-09-24T10:55:12.159000+00:00",
+     "to": "2026-09-24T10:55:16Z"
+    }
+   },
    {
     "id": "s-golden-negocio-0921",
     "all": {
@@ -1495,6 +1956,286 @@
      "last_turn": "2026-09-17T08:56:21.730000+00:00",
      "to": "2026-09-17T08:58:27Z"
     }
+   },
+   {
+    "id": "s-paso3-A-0927",
+    "all": {
+     "cost_avg_usd": 0,
+     "embeddings_avg": 0.37,
+     "latency_avg": 2.541,
+     "latency_p50": 2.158,
+     "latency_p95": 5.634,
+     "llm_calls_avg": 3.99,
+     "llm_calls_max": 9,
+     "llm_calls_p95": 7.8,
+     "llm_share": 1.175,
+     "tokens_avg": 0,
+     "turns": 465
+    },
+    "business": {
+     "by_turn_type": {
+      "cambios": 3,
+      "deflection": 4,
+      "escalado": 12,
+      "info": 2,
+      "rag": 195,
+      "reserva": 233,
+      "saludo": 16
+     },
+     "conversations": 116,
+     "escalation_rate_pct": 10.3,
+     "fallback_pct_of_turns": 7.7,
+     "fallback_turns": 36,
+     "funnel": {
+      "carrito_con_personas": {
+       "conversations": 11,
+       "pct": 9.5
+      },
+      "eligen_actividad": {
+       "conversations": 11,
+       "pct": 9.5
+      },
+      "hablan": {
+       "conversations": 116,
+       "pct": 100
+      },
+      "link_de_pago": {
+       "conversations": 10,
+       "pct": 8.6
+      }
+     },
+     "turns": 465,
+     "turns_per_conversation": 4.01
+    },
+    "by_turn_type": {
+     "cambios": {
+      "cost_avg_usd": 0,
+      "embeddings_avg": 0,
+      "latency_avg": 1.138,
+      "latency_p50": 1.397,
+      "latency_p95": 1.6,
+      "llm_calls_avg": 0.67,
+      "llm_calls_max": 1,
+      "llm_calls_p95": 1,
+      "llm_share": 0.645,
+      "tokens_avg": 0,
+      "turns": 3
+     },
+     "deflection": {
+      "cost_avg_usd": 0,
+      "embeddings_avg": 0,
+      "latency_avg": 0.654,
+      "latency_p50": 0.348,
+      "latency_p95": 1.403,
+      "llm_calls_avg": 0.25,
+      "llm_calls_max": 1,
+      "llm_calls_p95": 0.85,
+      "llm_share": 0.451,
+      "tokens_avg": 0,
+      "turns": 4
+     },
+     "escalado": {
+      "cost_avg_usd": 0,
+      "embeddings_avg": 0,
+      "latency_avg": 0.547,
+      "latency_p50": 0.385,
+      "latency_p95": 1.395,
+      "llm_calls_avg": 0.17,
+      "llm_calls_max": 1,
+      "llm_calls_p95": 1,
+      "llm_share": 0.322,
+      "tokens_avg": 0,
+      "turns": 12
+     },
+     "info": {
+      "cost_avg_usd": 0,
+      "embeddings_avg": 0,
+      "latency_avg": 0.57,
+      "latency_p50": 0.57,
+      "latency_p95": 0.767,
+      "llm_calls_avg": 0.5,
+      "llm_calls_max": 1,
+      "llm_calls_p95": 0.95,
+      "llm_share": 0.404,
+      "tokens_avg": 0,
+      "turns": 2
+     },
+     "rag": {
+      "cost_avg_usd": 0,
+      "embeddings_avg": 0.89,
+      "latency_avg": 3.762,
+      "latency_p50": 3.692,
+      "latency_p95": 6.197,
+      "llm_calls_avg": 5.73,
+      "llm_calls_max": 9,
+      "llm_calls_p95": 8,
+      "llm_share": 1.192,
+      "tokens_avg": 0,
+      "turns": 195
+     },
+     "reserva": {
+      "cost_avg_usd": 0,
+      "embeddings_avg": 0,
+      "latency_avg": 1.808,
+      "latency_p50": 1.593,
+      "latency_p95": 3.087,
+      "llm_calls_avg": 3.11,
+      "llm_calls_max": 7,
+      "llm_calls_p95": 5,
+      "llm_share": 1.195,
+      "tokens_avg": 0,
+      "turns": 233
+     },
+     "saludo": {
+      "cost_avg_usd": 0,
+      "embeddings_avg": 0,
+      "latency_avg": 0.816,
+      "latency_p50": 0.402,
+      "latency_p95": 1.999,
+      "llm_calls_avg": 0.44,
+      "llm_calls_max": 2,
+      "llm_calls_p95": 1.25,
+      "llm_share": 0.389,
+      "tokens_avg": 0,
+      "turns": 16
+     }
+    },
+    "by_type": {
+     "rag": {
+      "cost_avg_usd": 0,
+      "embeddings_avg": 0.89,
+      "latency_avg": 3.762,
+      "latency_p50": 3.692,
+      "latency_p95": 6.197,
+      "llm_calls_avg": 5.73,
+      "llm_calls_max": 9,
+      "llm_calls_p95": 8,
+      "llm_share": 1.192,
+      "tokens_avg": 0,
+      "turns": 195
+     },
+     "reserva": {
+      "cost_avg_usd": 0,
+      "embeddings_avg": 0,
+      "latency_avg": 1.66,
+      "latency_p50": 1.452,
+      "latency_p95": 3.081,
+      "llm_calls_avg": 2.73,
+      "llm_calls_max": 7,
+      "llm_calls_p95": 5,
+      "llm_share": 1.148,
+      "tokens_avg": 0,
+      "turns": 270
+     }
+    },
+    "client_latency": {
+     "conversations": 116,
+     "latency_max": 8,
+     "latency_p50": 2,
+     "latency_p95": 6,
+     "multi_bubble": 1,
+     "no_reply": 0,
+     "turns": 465
+    },
+    "commit": "415f3bc",
+    "environment": "staging",
+    "label": "Paso 3 · ronda A · 116 diálogos (u3-4 on, juez g-8, golden v8)",
+    "merged_traces": {
+     "traces": 0,
+     "turns": 0
+    },
+    "models": {
+     "gpt-4.1-mini": 208,
+     "gpt-4o-mini": 1647
+    },
+    "nodes": {
+     "availability": {
+      "n": 438,
+      "p50": 0.006,
+      "p95": 0.011
+     },
+     "booking": {
+      "n": 438,
+      "p50": 1.775,
+      "p95": 5.095
+     },
+     "changes": {
+      "n": 3,
+      "p50": 0.003,
+      "p95": 0.005
+     },
+     "deflection": {
+      "n": 4,
+      "p50": 0.001,
+      "p95": 0.002
+     },
+     "extraction": {
+      "n": 417,
+      "p50": 0.794,
+      "p95": 2.401
+     },
+     "info": {
+      "n": 8,
+      "p50": 3.704,
+      "p95": 5.442
+     },
+     "router": {
+      "n": 465,
+      "p50": 0.332,
+      "p95": 1.406
+     },
+     "routing": {
+      "n": 427,
+      "p50": 0.012,
+      "p95": 0.732
+     },
+     "safety": {
+      "n": 12,
+      "p50": 0.002,
+      "p95": 0.005
+     },
+     "setup": {
+      "n": 438,
+      "p50": 0.039,
+      "p95": 0.065
+     },
+     "slotfill_close": {
+      "n": 400,
+      "p50": 0.258,
+      "p95": 3.778
+     }
+    },
+    "quality": {
+     "criteria_failed": 138,
+     "criteria_judged": 840,
+     "criteria_pass_pct": 83.6,
+     "dialogues": 116,
+     "dialogues_pass_pct": 32.8,
+     "dialogues_passed": 38,
+     "judge_raw_pass_pct": 83.6,
+     "model": "gpt-5-mini (medium), juez g-8 + golden v8 — NUEVA REFERENCIA: no comparable con las rondas anteriores (sintéticos 93,0 %, reales 78,6 %, examen oculto 77,6 %)",
+     "results_file": "docs/robustness/golden-set/results/2026-09-27-paso3-A__gpt-5-mini-medium.json",
+     "to_review": 19
+    },
+    "router": {
+     "by_backend": {
+      "jev": 423,
+      "llm": 1,
+      "llm_uncertain": 41
+     },
+     "ms_p50": 323,
+     "ms_p95": 411.1
+    },
+    "run_at": "2026-09-27T11:58:37Z",
+    "run_file": "docs/robustness/synthetic-runs/2026-09-27-paso3-A.jsonl",
+    "taken_at": "2026-09-27T11:59:04+00:00",
+    "turns_with_summary": 465,
+    "window": {
+     "first_turn": "2026-09-27T10:46:07Z",
+     "from": "2026-09-27T10:41:16Z",
+     "last_turn": "2026-09-27T11:58:37Z",
+     "to": "2026-09-27T12:00:44Z"
+    }
    }
   ],
   "layers": [
@@ -1661,6 +2402,18 @@
     "text": "22-sep (tarde): G2 hecha y LINEA BASE v7. Ronda completa (116 dialogos, 465 turnos) + juez gpt-5-mini (1,95 $) + revision humana de sus 192 veredictos: 83,8 % de criterios y 38/116 sin fallos; sinteticos 93 % (28/43), REALES 78,8 % (9/73). Los guiones sinteticos ocultaban fallos que los reales sacan en decenas de casos. Causas: ignora la pregunta y sigue el flujo (29 dialogos), cambios/datos inventados (21), el RAG inventa o contradice la KB (21), malinterpreta (8), cotiza sin origen (7), 'no lo tengo' (7-16), mensaje fijo de disponibilidad (7-16). Tareas nuevas SIN responsable y agrupadas por causa, cada una con sus casos de regresion: u3-4, u3-5, l1-6, l1-7, g-7, g-8, s4-20, s4-21, s4-22. Hallazgo: los chats antiguos indexados en el RAG sirven datos caducos ('Marina Todo Mar'). Regresion de nacionalidad provocada por la KB y arreglada (50b4ec1). Juez con casos reales: 75 % en sus 'no cumple' (criterios a afinar, g-8). Regla: soluciones globales por causa; el examen oculto (21 casos) mide si mejora de verdad."
    },
    {
+    "id": "l-0923-alvaro-l14",
+    "at": "2026-09-23T23:30:00Z",
+    "byLabel": "Álvaro (con Claude)",
+    "text": "23-sep (noche): r6-1 hecha y verificada (timeout de 30 s por llamada en un unico punto; el default del SDK eran 600 s con 2 reintentos = el cuelgue de 5h44m). l1-4 MEDIDA y NO promocionada: la latencia mejora (-95 % el nodo setup, -18 % el turno) pero el A/B destapa 2 criterios que empeoran en las DOS rondas B frente a las DOS A. Causa raiz: _maybe_capture_notes lee state.history y las fases meten ahi la respuesta del propio bot 18 veces por turno, asi que en paralelo las notas salen distintas y contaminan el RAG de los turnos siguientes. Flag apagado en PRE. Arreglo propuesto: congelar el historial al crear la tarea; hay que repetir el A/B. Tambien: quitado de .env.pre el tracing muerto de LangSmith, que se comia un 429 por turno."
+   },
+   {
+    "id": "l-0923-alvaro-r61",
+    "at": "2026-09-23T21:30:00Z",
+    "byLabel": "Álvaro (con Claude)",
+    "text": "23-sep (noche): r6-1 hecha y verificada en PRE. Timeout de 30s por llamada al LLM en un unico punto (trace_openai + la construccion del cliente de Langfuse). El default del SDK eran 600s de lectura con 2 reintentos = hasta ~30 min colgado, que es el cuelgue de 5h44m que vio Gonzalo. Suite: 2580 -> 2584 passed, 0 failed (los +4 son los tests nuevos); los 3 fallos que citaba la 0.29.9 YA NO se reproducen.\n\nCORRECCION sobre el handoff de la tarde: l1-4 NO estaba hecha. Las dos siguen esperandose dentro del turno (conversational_core.py:3078 y supervisor.py:2802); no salian como nodos en Langfuse porque viven dentro de otras funciones. Y ojo al implementarla: save_state va justo despues de route_message, asi que un create_task a secas perderia las notas y el resumen.\n\nHALLAZGO NUEVO (con el acceso SSH que paso Gadea): PRE sigue mandando trazas a LANGSMITH y comiendose 429 por cuota agotada, ~7 errores cada 20 min. .env.pre del VPS todavia tiene LANGSMITH_API_KEY / LANGSMITH_PROJECT / LANGCHAIN_TRACING_V*, y langsmith 0.10.10 sigue instalado: langchain ve la clave y activa el tracing viejo solo. Es ruido y trabajo de red desperdiciado en cada turno. Encaja en s4-5 (retirar la dependencia langsmith); el arreglo rapido es quitar esas 3 variables de .env.pre."
+   },
+   {
     "id": "l-0923-gonzalo-baseline",
     "at": "2026-09-23T08:20:00Z",
     "byLabel": "Gonzalo",
@@ -1695,6 +2448,180 @@
     "at": "2026-09-23T11:10:00Z",
     "byLabel": "Gadea (con Claude)",
     "text": "23-sep: l1-1 HECHA y ENCENDIDA en PRE. A/B el mismo dia con 2+2 rondas del core. Con el juez actual, la repregunta al juez de grounding solo salvo 1 de 24 respuestas (4 %). Con el juez unico: 35 % menos llamadas a ese juez, 10 % menos coste por turno, el peor turno del RAG baja de 9-10 llamadas a 7 y el 'no lo tengo' baja de 11 a 8. Calidad igual o algo mejor (85,0/87,1 % -> 87,5/87,2 %); lo que empeora frente a las dos rondas A se reviso a mano y es ruido del juez. Hallazgo para l1-6: el juez de grounding rechaza mas de la mitad de lo que ve (47 de 83 en A) y 11 respuestas acabaron en 'no lo tengo' tras dos intentos. Leccion de proceso: no parar el script que lanza un juez mientras ese juez corre (se le corta la salida y muere)."
+   },
+   {
+    "id": "l-0924-gadea-u34",
+    "at": "2026-09-24T19:00:00Z",
+    "byLabel": "Gadea (con Claude)",
+    "text": "24-sep noche: u3-4 'contesta y sigue' detrás de flag (ANSWER_AND_CONTINUE): el RAG contesta en paralelo y la reserva sigue en el mismo turno; la pregunta la detecta el regex o Jev (asks_question >= 0,7, misma llamada del router). Escalón 0 local (replay del golden, scripts/replay_golden_local.py): preguntas contestadas 94 → 123 de 165. Ronda B en PRE: diálogos 17 → 19 de 32, latencia por tipo de turno igual o mejor, pero 3 regresiones con causa → no promocionado. Decisión: la nacionalidad inventada desde una pregunta va a u3-5. Handoff al equipo en session-handoff.md."
+   },
+   {
+    "id": "l-0924-jev-regla",
+    "at": "2026-09-24T17:00:00Z",
+    "byLabel": "Gadea (con Claude)",
+    "text": "🟦 DECISIÓN (24-sep, para todo el equipo): toda decisión de OPCIONES FIJAS del bot (sí/no o elegir de una lista) se prueba primero con JEV (TypeSafe, vía OpenRouter), con cascada por confianza (si Jev duda, decide el LLM de hoy) y con el protocolo de medición. Casos: el router (hecho, encendido en PRE), u3-4 '¿el mensaje trae una pregunta que contestar?', u3-6 detect_special_signals, u3-7 resolve_slot_answer (sí/no y listas), u3-3 respaldo del intent_detector y el juez de grounding (l1-6/l1-7). NO para extraer valores (fechas, cifras, nombres: contar es un punto flojo de Jev) ni para escribir texto. Adaptador de referencia: src/agents/jev_router.py. Siguiente: u3-4."
+   },
+   {
+    "id": "l-0924-l1-cierre-jev",
+    "at": "2026-09-24T13:40:00Z",
+    "byLabel": "Gadea (con Claude)",
+    "text": "24-sep (tarde): L1 CERRADA y Jev ENCENDIDO en PRE. Cierre: g-7 paso 4 (fuera los chats antiguos: índice de 718 documentos oficiales) + juez único sin flag + ronda completa del golden: examen oculto 73,1 -> 78,3 %, criterios 80,5 -> 81,5 % (juez sin revisar en los dos), turno p50 4,62 -> 3,34 s (-28 %). Jev (u3-1): -25 % de latencia de cliente; su única regresión (un descuento que no aparece leído como problema en tiempo real) tenía confianza 0,38 -> cascada por confianza: si Jev duda, decide el router de siempre (~10 % de los turnos). Con la cascada, 0 regresiones frente a las dos rondas A. Lecciones: A/B en la misma franja horaria (una hora después, los mismos turnos iban ~0,8 s más lentos), leer el texto del bot, un juez por proceso; run_synthetic_pre ya reintenta las lecturas de Chatwoot (un corte de red tumbó la ronda completa). Pendiente: decidir plan de pago de Langfuse (superado el gratuito)."
+   },
+   {
+    "id": "l-0924-l14-jev",
+    "at": "2026-09-24T09:10:00Z",
+    "byLabel": "Gadea (con Claude)",
+    "text": "24-sep: l1-4 HECHA y encendida en PRE (arreglo de la carrera + 2 rondas B: 89,3/88,1 % frente a 86,7/86,8 %; setup 0,039 s). El 'enlace no te ha funcionado' del 23-sep era el mismo texto en A y en B: ruido del juez, no l1-4. l2-4 Jev (en local, por OpenRouter): research hecho; en la batería del router Jev 32/37 frente a 30/37, seguridad 11/11 frente a 8/11, siempre responde igual (el router detecta 'soy epiléptica' solo 3 de 8 veces) y tarda ~275 ms frente a ~1,27 s. En 257 mensajes del golden fuera de la batería (sin examen oculto), de 50 desacuerdos Jev acierta ~41: el router marca disponibilidad donde no la hay (18 casos, una causa del mensaje fijo de u3-4). Pendiente en Jev: 6 preguntas claras de disponibilidad que no marca → umbral más bajo para las señales 'ante la duda'. Siguiente: l1-3 y ese ajuste de Jev."
+   },
+   {
+    "id": "l-0924-orden",
+    "at": "2026-09-24T08:00:00Z",
+    "byLabel": "Gadea (con Claude)",
+    "text": "24-sep: ORDEN DE EJECUCION acordado (cada tarea dice en su nota 'AL TERMINAR →'). 1) l1-4: arreglo de la carrera del historial + solo 2 rondas B (se reaprovechan las A del 23-sep). 1b) En paralelo y sin PRE: l2-4 Jev, primero un research de Claude sobre la herramienta y luego prueba en local con battery_router_signals; su resultado decide el diseno de U3. 2) l1-3. 3) l1-5. 4) l1-8 cierre de L1 (g-7 paso 4 + ronda completa con examen oculto). 5-9) U3 adelantada a L2: la gran ganancia de latencia (router + extraccion + cierre en una llamada) y las causas de calidad u3-4/u3-5. En paralelo con U3: l2-3 'escribiendo' y l2-2 cache de prompts. 10) l1-6 + l1-7, movidas de L1 a U3 (son calidad, no latencia). Objetivo realista tras U3+L2: ~1,5-2 s en reserva y ~3-4 s en RAG."
+   },
+   {
+    "id": "l-0924-plan",
+    "at": "2026-09-24T10:00:00Z",
+    "byLabel": "Gadea (con Claude)",
+    "text": "24-sep (mediodía): l1-3 y l1-5 cerradas sin A/B tras medirlas en Langfuse: l1-3 solo ahorraría ~1 reescritura de cada 93 turnos con la regla propuesta (la otra mitad pasa a U3 como pregunta de Jev); en l1-5 lo que va en fila tras el router son dependencias reales y el hueco router→extracción lo quita U3 con Jev. Jev: el umbral bajo para las señales 'ante la duda' se DESCARTA (recupera 3 preguntas de disponibilidad reales pero añade 5 falsas: copia el defecto del router); se queda la v2 con umbral 0,5. Aviso: 1 llamada a Jev de ~600 tardó más de 30 s (API en alpha) → en U3, tiempo máximo corto y el router actual de respaldo. SIGUIENTE: l1-8 (cierre de L1) y después U3."
+   },
+   {
+    "id": "l-0924-protocolo",
+    "at": "2026-09-24T14:40:00Z",
+    "byLabel": "Gadea (con Claude)",
+    "text": "📏 DECISIONES DE MEDICIÓN (24-sep, para todo el equipo — leer antes de medir): (1) Latencia y llamadas con NUESTROS logs hasta que vuelva Langfuse (plan gratuito superado, reinicio 16-oct; no se paga por ahora): cada turno escribe [TURN_METRICS] y la foto se saca con `python -m scripts.turn_metrics --from-run <ronda>.jsonl`, misma forma que la de Langfuse. Sacar la foto ANTES del siguiente deploy (se pierden los logs del contenedor). (2) A/B más baratos, por escalones: 0) probar la decisión en local con los 257 mensajes del golden; 1) en PRE 1+1 rondas y el juez SOLO en los diálogos cuyo texto cambia (~0,3-0,5 $ frente a ~2,3 $); 2) 2+2 solo si hay dudas o el cambio es grande; ronda completa solo al cerrar fase. Se mantiene: latencia en la misma franja horaria, leer el texto de lo que empeora, un juez por proceso, sin push mientras corre una ronda. Detalle: docs/robustness/protocolo-medicion.md."
+   },
+   {
+    "id": "l-0924-turn-metrics",
+    "at": "2026-09-24T14:10:00Z",
+    "byLabel": "Gadea (con Claude)",
+    "text": "24-sep: MEDICIÓN PROPIA SIN LANGFUSE (se superó el plan gratuito: >55.000 unidades, reinicio el 16-oct). Decisión de Gadea: opción A, gratis. Cada turno escribe en el log de PRE una línea [TURN_METRICS] (sin texto del cliente) con el tiempo del turno, las llamadas al LLM, el tiempo de cada paso del grafo y el router usado. scripts/turn_metrics.py la lee por SSH y saca la MISMA foto que Langfuse (--from-run <ronda>.jsonl). Comprobado en PRE (commit d962b1d): 12/12 turnos; el paso del router con Jev tarda 0,42 s (antes ~1,4 s). Sin límites de uso. Langfuse sigue encendido por si vuelve a aceptar datos."
+   },
+   {
+    "id": "l-0924-u31-cierre",
+    "at": "2026-09-24T16:10:00Z",
+    "byLabel": "Gadea (con Claude)",
+    "text": "24-sep (noche): u3-1 HECHA. Jev (paso 1) y el acuse cálido en paralelo (paso 3) ENCENDIDOS en PRE; el paso 2 se descartó en el escalón 0 por céntimos. Primer A/B con el protocolo nuevo (1+1 rondas, misma franja, latencia con turn_metrics, juez con cache): turnos de reserva -21 % en p50 (2,61 -> 2,07 s) y -26 % en media, calidad igual, y el juez costó 0,36 + 0,32 $ (antes ~0,47 $ por ronda) gracias a la cache. Hoy en PRE: router ~0,4 s (Jev), notas y acuse en paralelo; turno completo p50 ~2,5 s en el core (el 22-sep, v7: 4,6 s)."
+   },
+   {
+    "id": "l-0925-alvaro-ci-roto",
+    "at": "2026-09-25T21:45:00Z",
+    "byLabel": "Álvaro (con Claude)",
+    "text": "25-sep noche: CI estaba ROTO desde el 24-sep 23:04 UTC y el deploy a PRE se saltaba en silencio: PRE se quedo en d3dc51e y no recibio nada posterior (los arreglos de u3-4 incluidos; ninguna medida afectada, fueron locales). Causa reproducida: SQLAlchemy 2.1.0 (salio el 24-sep 20:36 UTC) ya no instala greenlet y alembic/env.py lo necesita. Arreglo: sqlalchemy[asyncio]>=2.0.0,<2.1. Verificado reproduciendo CI en entorno limpio: 876 passed. HISTORY 0.29.27. Leccion: tras cada push a pre_* comprobar que el deploy corrio (como, en el handoff)."
+   },
+   {
+    "id": "l-0925-alvaro-s45",
+    "at": "2026-09-25T17:00:00Z",
+    "byLabel": "Álvaro (con Claude)",
+    "text": "25-sep: s4-5 cerrada. langsmith no se puede quitar (la exige langchain-core); se queda pineada. Arregladas las plantillas .env.*.example: ya no encienden LangSmith y RAG_TOP_K=8 como PRE. Commit solo local (un push a pre_* despliega PRE). Para seguir con u3-5 en la maquina de Alvaro falta OPENROUTER_API_KEY en .env.dev."
+   },
+   {
+    "id": "l-0925-alvaro-u34-B2",
+    "at": "2026-09-25T22:30:00Z",
+    "byLabel": "Álvaro (con Claude)",
+    "text": "25-sep noche: u3-4 ronda B2 en PRE (v5). 4 mejoras reales, 3 regresiones propias con causa en el log -> NO promocionado, flag apagado. v5 arregla 5 de las 8 regresiones de v1. Las 3 regresiones ya estan en el banco de calibracion y 2 las resuelve la candidata de certificado de u3-5. Siguiente paso en u3-4-diseno.md. HISTORY 0.29.28."
+   },
+   {
+    "id": "l-0925-alvaro-u34-fundive",
+    "at": "2026-09-25T18:00:00Z",
+    "byLabel": "Álvaro (con Claude)",
+    "text": "25-sep: u3-4, explicado el caso 'costo de un fundive' que quedaba sin explicar (HISTORY 0.29.23). No es la verificacion ni la puerta de Jev: en un turno con pregunta no se rellenan huecos (arreglo 2), asi que solo sobrevive lo que lee el regex, y el regex no lee 'fundive' junto ('fun dive' separado si). Es una familia: 4 de las 12 perdidas estrictas de v5 (3 datos reales y 1 acierto: en 'que actividad le recomiendan' el camino apagado se inventaba snorkel). Propuesta para DESPUES de la ronda B: rellenar solo los campos con puerta de Jev y pasar lo rellenado por la puerta. Codigo sin tocar."
+   },
+   {
+    "id": "l-0925-alvaro-u35-calibracion",
+    "at": "2026-09-25T19:30:00Z",
+    "byLabel": "Álvaro (con Claude)",
+    "text": "25-sep: u3-5, preguntas de Jev para is_certified, group_size e is_colombian CALIBRADAS en el banco (python -m scripts.sonda_afirma_vs_pregunta u35): 66/67 sobre casos reales del golden, 28 de ellos no usados para escribir ninguna frase. Aun NO en el codigo: van despues de la ronda B de u3-4 (detras del flag, escalon 0, leer por caso). Correccion a la propuesta del 'fundive': Jev no ve el historial, asi que la puerta solo vale para valores del mensaje actual (recupera 2 de los 3 datos reales). HISTORY 0.29.24."
+   },
+   {
+    "id": "l-0925-gonzalo-u34",
+    "at": "2026-09-25T11:00:00Z",
+    "byLabel": "Gonzalo (con Claude)",
+    "text": "25-sep: u3-4, los dos arreglos de la ronda B del 24-sep. (1) Si el RAG contesta 'no lo tengo', la respuesta va sola (sin pegarle la pregunta de la reserva). (2) En un turno con pregunta el regex lee y el LLM verifica, sin rellenar huecos. Hallazgo: la verificación no distingue 'el cliente AFIRMA esto' de 'lo pregunta'; esa pregunta cerrada se la hace ahora Jev en la misma llamada del router (affirms_location / affirms_activity). v5 = arreglos + puerta: los 'location' inventados desaparecen y los errores reales bajan de 5 a 2 en el escalón 0. Descartados con medida: el matiz en el prompt de verificación y la puerta sin verificación (v6). Aviso: Jev no es determinista (±5 en 'preguntas contestadas'); leer por caso. Y la suite se corre con ENV_FILE=.env.ci (con .env hace llamadas reales)."
+   },
+   {
+    "id": "l-0926-gadea-u34-b3",
+    "at": "2026-09-26T11:30:00Z",
+    "byLabel": "Gadea (con Claude)",
+    "text": "26-sep: u3-4 'contesta y sigue' PROMOCIONADO y encendido en PRE (ANSWER_AND_CONTINUE=true). Sobre lo de Álvaro y Gonzalo: affirms_activity recalibrada (en 57 mensajes del golden fuera del banco tiraba 23 actividades dichas de verdad: 34 → 53/57), las preguntas de u3-5 en el código, relleno con puerta y tres arreglos del escalón 0 (los '¿lo cambio?' del replay 21 → 13). Ronda B3: diálogos 17 → 18/32, criterios 87,3 → 88,6 %, latencia por tipo de turno mejor, 0 regresiones propias, 0 '¿lo cambio?'. Siguiente: u3-5 (lo que queda), u3-6 (el 'recordar' mal disparado), l1-6/l1-7, s4-7, s4-21. Detalle: docs/robustness/u3-4-diseno.md."
+   },
+   {
+    "id": "l-0927-gadea-g8",
+    "at": "2026-09-27T12:30:00Z",
+    "byLabel": "Gadea (con Claude)",
+    "text": "27-sep: PASO 2 (g-8, el juez) CERRADO sobre el trabajo de Álvaro. Las 16 escapadas eran sobre todo criterios generales que cedían por parecido de tema. Arreglo global: 'un fallo, un criterio' lo aplica el código (el general solo detecta con citas; se descuenta lo que cita lo mismo que un fallo ya contado y es el mismo error). Resultado: falsos suspensos 43 → 26-27, escapadas 7 → 4-6, examen oculto sin empeorar. Siguiente: PASO 3, ronda A nueva con u3-4 encendido y el juez nuevo."
+   },
+   {
+    "id": "l-0927-gadea-paso3",
+    "at": "2026-09-27T14:00:00Z",
+    "byLabel": "Gadea (con Claude)",
+    "text": "27-sep: PASO 3 HECHO — ronda A nueva del golden completo (116 diálogos, con examen oculto) con u3-4 encendido y el juez g-8 (golden v8). Es la NUEVA REFERENCIA para lo que queda de U3; no es comparable con las rondas anteriores (cambian juez y criterios). Calidad: criterios 83,6 % (sintéticos 93,0 %, reales 78,6 %, examen oculto 77,6 %), diálogos sin fallos 38/116. Latencia frente al cierre de L1 (24-sep): turno p50 3,34 → 2,16 s, p95 7,33 → 5,63 s; cliente p50 4 → 2 s; el RAG contesta 131 → 195 turnos. Señales para el paso 4: '¿lo cambio?' 21 → 12 (u3-5), 'Me habías dicho' 3 → 8 (u3-6), 'no lo tengo a la mano' 23 → 36 (l1-6, el RAG contesta más). Coste del juez 2,16 $."
+   },
+   {
+    "id": "l-0927-gadea-reorden",
+    "at": "2026-09-27T16:30:00Z",
+    "byLabel": "Gadea (con Claude)",
+    "text": "27-sep: PLAN DE CALIDAD REORDENADO con datos. Los 138 fallos de la ronda A del paso 3, clasificados por causa: contenido del RAG 76 (55 %; 21 de los 36 del examen oculto), entender los datos del cliente 30, escalado y post-venta 14, flujo y plantillas 13, intención / recordar 5. Nuevo orden: 4 u3-5 (en curso) → 5 RAG (l1-6 + l1-7, ADELANTADO) → 6 arreglos deterministas de S4 (s4-21, s4-22, s4-7, s4-20, s4-6, s4-14…16) → 7 u3-6, u3-7, u3-3 → 8 cierre de calidad (ronda completa; examen oculto ≥ 77,6 % con el juez g-8: el 78,3 % del cierre de L1 era con el juez antiguo) → 9 L2 → 10 S4 → 11 R6 → 12 Q5. Estimación: casos reales 78,6 % → 84-87 %, examen oculto 77,6 % → 82-85 %."
+   },
+   {
+    "id": "l-0927-gadea-u35",
+    "at": "2026-09-27T16:45:00Z",
+    "byLabel": "Gadea (con Claude)",
+    "text": "27-sep noche: u3-5 PROMOCIONADO (CORRECTIONS_V2=true en PRE). '¿lo cambio?' una sola vez y nunca X → X; Jev como señal de corrección ('somos 4 al final' se aplica sin preguntar); la nacionalidad no se deduce del idioma. Replay: '¿lo cambio?' 10 → 2. Ronda B: empate y 8 mejoras, 0 regresiones propias. La recomendación del minicurso (decisión de Gadea) queda en su propio flag, apagado, pendiente de su escalón (su única regresión, el plural 'MINI CURSOS' y el acompañante, ya arreglada). Siguiente: PASO 5, el RAG (l1-6 + l1-7), el 55 % de los fallos."
+   },
+   {
+    "id": "l-0928-alvaro-cierre",
+    "at": "2026-09-28T21:30:00Z",
+    "byLabel": "Alvaro (con Claude)",
+    "text": "28-sep cierre: rama feature/pre_alvaro lista para el relevo (PRE = esta rama, suite 2800). Nueva herramienta scripts/sonda_rag_turnos_pre.py. Siguiente: falso rechazo del precio COP del paquete de 5 buceos (pista: extra_context del estado). Handoff: bloque RETOMAR AQUI. HISTORY 0.29.69."
+   },
+   {
+    "id": "l-0928-alvaro-concise",
+    "at": "2026-09-28T15:10:00Z",
+    "byLabel": "Alvaro (con Claude)",
+    "text": "28-sep: juez de grounding con gpt-4.1-mini descartado (48/70 vs 70/70, no mas rapido). RAG_CONCISE (respuestas cortas, apagado): escalon 0 con 3 variantes; con tope ahorra ~1 s pero inventa huecos, la suave no empeora pero ahorra ~0,3 s. Pendiente decidir A/B. OJO: OpenAI sin credito, PRE no contesta hasta recargar. HISTORY 0.29.66-0.29.67."
+   },
+   {
+    "id": "l-0928-alvaro-l23",
+    "at": "2026-09-28T21:00:00Z",
+    "byLabel": "Alvaro (con Claude)",
+    "text": "28-sep: l2-3 hecha, 'escribiendo…' en el chat (CHATWOOT_TYPING_INDICATOR). Latencia RAG medida en PRE: ~4 s (respuesta 1,9 s, juez 1,2 s, busqueda 0,4 s). Siguiente: juez de grounding con gpt-4.1-mini en el banco. HISTORY 0.29.65."
+   },
+   {
+    "id": "l-0928-alvaro-regen",
+    "at": "2026-09-28T19:30:00Z",
+    "byLabel": "Alvaro (con Claude)",
+    "text": "28-sep: RAG_REGEN_FEEDBACK promocionado (la regeneracion del RAG sabe que rechazo el juez). No lo tengo 12 -> 2 en los casos dificiles del paso 8; core regen-A 93,0 % -> regen-B2 93,3 %, 21 -> 22/32 sin fallos, sin regresiones del flag (leidas a mano). Siguiente: el juez rechaza el precio correcto del paquete de 5 en COP. HISTORY 0.29.68."
+   },
+   {
+    "id": "l-0929-gadea-analisis-rag",
+    "at": "2026-09-29T09:00:00Z",
+    "byLabel": "Gadea (con Claude)",
+    "text": "29-sep: análisis profundo del RAG (docs/robustness/analisis-rag-2026-09-29.md). Conclusión: es la estructura y los datos, no el modelo. Nueva fase RAG con el orden rag-1 (medir) → rag-2 (base curada) → rag-3 (búsqueda con estado) → rag-4 (dieta del prompt) → rag-5 (latencia) → rag-6 (experimento). Cerradas l2-1 (juez pequeño descartado por Álvaro) y s4-17 (resuelta por RAG_V2)."
+   },
+   {
+    "id": "l-0929-gadea-rag1",
+    "at": "2026-09-29T14:00:00Z",
+    "byLabel": "Gadea (con Claude)",
+    "text": "29-sep: rag-1 HECHA, el RAG ya se mide por piezas (scripts/rag_piezas.py, 47 preguntas visibles). Línea base: el dato llega al top-8 el 69 % de las veces (al contexto visto, con catálogo, el 83 %); la respuesta cubre el 81 %. La mayor causa es la búsqueda: los clones 'ya en las islas' llenan el top-8 y el bot contesta con la variante equivocada; los precios tapan moneda y descuentos; las políticas cortas no llegan. Siguiente: rag-2 (base curada), medido con este instrumento."
+   },
+   {
+    "id": "l-0929-gadea-rag2-cierre",
+    "at": "2026-09-29T22:30:00Z",
+    "byLabel": "Gadea (con Claude)",
+    "text": "29-sep: rag-2 CERRADA y RAG_KB_V2 PROMOCIONADO en PRE. Ronda core A/B: 92,5 % → 94,3 % de criterios, sin regresiones atribuibles, turnos RAG p50 5,3 → 4,9 s. Golden: criterio de reservas tras el cierre alineado (web, sin WhatsApp). Siguiente: rag-3 (búsqueda con estado)."
+   },
+   {
+    "id": "l-0929-gadea-rag2",
+    "at": "2026-09-29T20:00:00Z",
+    "byLabel": "Gadea (con Claude)",
+    "text": "29-sep: rag-2 casi cerrada. Base curada v2 detrás de RAG_KB_V2 (364 docs vs 718, sin teléfonos, una ficha por servicio y origen) + decisiones de negocio D1-D8 de Gadea en los datos. Medido en PRE sin desplegar: el dato llega al top-8 85 % (antes 71 %), la respuesta lo cubre 89 % (82 %), contradicciones 1 (5), mismo tiempo. Falta la ronda core A/B (necesita push)."
+   },
+   {
+    "id": "l-0929-gadea-relevo",
+    "at": "2026-09-29T23:00:00Z",
+    "byLabel": "Gadea (con Claude)",
+    "text": "29-sep: relevo para Álvaro y Gonzalo. Todo subido a feature/pre_gadea (PRE = esa rama; integradla antes de subir la vuestra). Hecho hoy: rag-1 (medir por piezas) y rag-2 (base curada, PROMOCIONADA, core 92,5 → 94,3 %). SIGUIENTE: rag-3, búsqueda con estado + unificar los nombres de servicio entre services.json y pricing.json. Cómo retomar: session-handoff.md, bloque RETOMAR AQUÍ del 29-sep; HISTORY 0.29.70-0.29.73."
    }
   ]
  }
