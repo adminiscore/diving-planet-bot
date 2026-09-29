@@ -191,7 +191,7 @@
       "carril": "apoyo",
       "tipo": "datos",
       "titulo": "Memoria de la conversación",
-      "que_hace": "Lo que el bot sabe de cada cliente (actividad, personas, fechas, historial). Se lee al empezar y se guarda al terminar.",
+      "que_hace": "Lo que el bot sabe de cada cliente: actividad, personas, fechas, origen, historial y notas. Se lee al empezar cada turno y se guarda al terminar; también evita procesar dos veces el mismo mensaje.",
       "donde": "src/state_store.py:save_state",
       "nota": "Redis (contenedor dp-pre-redis).",
       "marca": "redis"
@@ -229,13 +229,16 @@
       "carril": "apoyo",
       "tipo": "datos",
       "titulo": "Base de conocimiento",
-      "que_hace": "Preguntas frecuentes, políticas y servicios convertidos en vectores para buscar por significado (718 documentos).",
+      "que_hace": "La base curada: una ficha por plan y origen, preguntas frecuentes limpias y políticas, guardadas como vectores para buscar por significado (364 documentos).",
       "donde": "src/knowledge/vector_store.py:search_knowledge_base",
       "modelos": [
         "openai_embedding_model"
       ],
-      "nota": "Postgres + pgvector, tabla kb_documents. Se recarga en cada deploy (scripts/load_embeddings.py).",
-      "marca": "postgresql"
+      "nota": "Postgres + pgvector, tabla kb_v2.kb_documents; se regenera en cada deploy (scripts/kb_v2.py). La base antigua (public.kb_documents, 718 documentos) queda de respaldo si se apaga RAG_KB_V2.",
+      "marca": "postgresql",
+      "interruptores": [
+        "rag_kb_v2"
+      ]
     },
     {
       "id": "catalogo",
@@ -243,7 +246,7 @@
       "carril": "apoyo",
       "tipo": "datos",
       "titulo": "Catálogo",
-      "que_hace": "Planes, precios, duración y qué incluye cada uno. Es la fuente de verdad que ven el bot y el revisor.",
+      "que_hace": "Planes, precios (USD y COP), duración, qué incluye cada uno y sus links de reserva. Es la fuente de verdad: la reserva cotiza con él y el RAG y el revisor lo ven siempre.",
       "donde": "src/flows/catalog.py:catalog_facts"
     },
     {
@@ -252,7 +255,7 @@
       "carril": "apoyo",
       "tipo": "externo",
       "titulo": "Métricas",
-      "que_hace": "Cada turno deja una línea [TURN_METRICS] con tiempos y llamadas; de ahí salen los números de este mapa.",
+      "que_hace": "Cada turno deja una línea [TURN_METRICS] con su tiempo, sus llamadas a la IA y el tiempo de cada pieza; de ahí salen los números de este mapa.",
       "donde": "src/observability.py:turn_metrics_line",
       "nota": "Langfuse sigue conectado (plan gratuito agotado hasta el 16-oct)."
     },
@@ -637,19 +640,19 @@
     {
       "de": "envio",
       "a": "estado",
-      "etiqueta": "guarda",
+      "etiqueta": "guarda lo aprendido",
       "estilo": "datos"
     },
     {
       "de": "preparacion",
       "a": "estado",
-      "etiqueta": "lee",
+      "etiqueta": "lee lo que ya sabe",
       "estilo": "datos"
     },
     {
       "de": "router",
       "a": "openrouter",
-      "etiqueta": "pregunta a Jev",
+      "etiqueta": "pregunta a Jev la ruta",
       "estilo": "datos"
     },
     {
@@ -661,13 +664,13 @@
     {
       "de": "info",
       "a": "openai",
-      "etiqueta": "escribe y revisa",
+      "etiqueta": "escribe y revisa respuestas",
       "estilo": "datos"
     },
     {
       "de": "booking",
       "a": "openai",
-      "etiqueta": "entiende datos",
+      "etiqueta": "entiende los datos del cliente",
       "estilo": "datos"
     },
     {
@@ -679,13 +682,13 @@
     {
       "de": "info",
       "a": "catalogo",
-      "etiqueta": "consulta",
+      "etiqueta": "precios y fichas",
       "estilo": "datos"
     },
     {
       "de": "cierre",
       "a": "metricas",
-      "etiqueta": "tiempos",
+      "etiqueta": "tiempos del turno",
       "estilo": "datos"
     },
     {
@@ -819,6 +822,30 @@
       "etiqueta": "2º NO",
       "estilo": "bucle",
       "peso": 0.2
+    },
+    {
+      "de": "router",
+      "a": "openai",
+      "etiqueta": "LLM de respaldo si Jev duda",
+      "estilo": "datos"
+    },
+    {
+      "de": "preparacion",
+      "a": "openai",
+      "etiqueta": "notas de voz a texto",
+      "estilo": "datos"
+    },
+    {
+      "de": "cierre",
+      "a": "openai",
+      "etiqueta": "resumen cada 24 mensajes",
+      "estilo": "datos"
+    },
+    {
+      "de": "booking",
+      "a": "kb",
+      "etiqueta": "busca (preguntas en la reserva)",
+      "estilo": "datos"
     }
   ],
   "grafo": {

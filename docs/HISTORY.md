@@ -1,6 +1,15 @@
 History
 =======
 
+0.29.83 - (2026-09-29)
+----------------------
+* **Mapa de Coral v5: conexiones que se entienden.** Con "Conexiones" encendido se dibujaban a la vez todas las líneas hacia datos y servicios y cruzaban el mapa. Ahora:
+  - En reposo no hay líneas hacia servicios: cuando una pieza usa uno, **se ilumina la caja del servicio**.
+  - **Al pasar el ratón o pulsar una pieza** se dibujan solo sus conexiones, con su etiqueta ("busca", "guarda lo aprendido", "notas de voz a texto"…), y el resto del mapa se atenúa. Las líneas bajan por los pasillos entre columnas hasta un carril sobre la banda de servicios y entran por el lateral: comprobado que **ninguna de las 63 cruza una caja** (vistas general, reserva y RAG, a 826, 600 y 360 px).
+  - El botón **"Conexiones"** pone en cada pieza los logos de lo que usa (y en cada servicio, cuántas piezas lo usan), sin líneas.
+  - **Detalle al pulsar** cualquier pieza: "Recibe de" / "Envía a" con la etiqueta de cada conexión y enlace a la otra pieza; en OpenAI y OpenRouter, las llamadas de la ronda por modelo (gpt-4o-mini 187, gpt-4.1-mini 47, gpt-4.1 47; Jev decidió 81 de 93).
+  - Datos al día: la base de conocimiento es la curada de rag-2 (364 documentos, `kb_v2`, interruptor `RAG_KB_V2`); conexiones que faltaban: el enrutador usa OpenAI como respaldo, las notas de voz y el resumen usan OpenAI, y la reserva también busca en la base (preguntas en mitad de la reserva). Nueva versión en el historial del mapa.
+
 0.29.82 - (2026-09-29)
 ----------------------
 * **Mapa de Coral v4: los números cuadran y solo se ven los medidos** (revisión pedida por Álvaro: cada ruta enseñaba "92 %" y el 8 % restante no aparecía; era una estimación de la cascada, sin medir).

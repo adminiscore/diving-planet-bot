@@ -126,7 +126,22 @@
   .flecha.oculta { opacity: 0; }
   .flecha.foco { stroke: var(--ink); opacity: 1; }
   .flecha.viaje { stroke: var(--cobalt); opacity: 1; }
-  #lienzo.conexiones .flecha.datos, #lienzo.conexiones .flecha.paralelo, #lienzo.conexiones .flecha.infra { opacity: 1; stroke: var(--graphite); }
+  .flecha.datos.foco, .flecha.paralelo.foco, .flecha.infra.foco { stroke-dasharray: none; stroke: var(--ink); opacity: 1; }
+  .nodo { transition: opacity .2s; }
+  .nodo.tenue { opacity: .28; }
+  .nodo.usado .caja { stroke: var(--cobalt); stroke-width: 1.5; }
+  .nodo.usado .logo { fill: var(--cobalt); }
+  .nodo.usado .icono { stroke: var(--cobalt); }
+  .nodo .mini-logo { fill: var(--graphite); }
+  .nodo .mini-icono { fill: none; stroke: var(--graphite); stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+  .etq-foco rect { fill: var(--ink); }
+  .etq-foco text { font: 600 11px var(--ui); fill: var(--canvas); }
+  .banda { paint-order: stroke; stroke: var(--recessed); stroke-width: 6px; stroke-linejoin: round; }
+  .conex { display: grid; gap: 6px; }
+  .conex button { display: flex; align-items: baseline; gap: 8px; text-align: left; background: none; border: 0; padding: 0; cursor: pointer; font: 400 14px/20px var(--ui); color: var(--ink); }
+  .conex button b { font-weight: 600; text-decoration: underline; text-decoration-color: var(--edge); text-underline-offset: 3px; }
+  .conex button:hover b { text-decoration-color: var(--ink); }
+  .conex button span { color: var(--slate); }
   .flecha.datos, .flecha.paralelo, .flecha.infra { stroke-dasharray: 2 4; }
   .flecha.pulso { stroke: var(--cobalt); opacity: 1; stroke-dasharray: 2 4; animation: correr .6s linear infinite; }
   @keyframes correr { to { stroke-dashoffset: -12; } }
@@ -230,7 +245,7 @@
     </div>
     <aside class="panel" id="panel" aria-live="polite">
       <p class="etiqueta">Detalle</p>
-      <p class="vacio">Pulsa una pieza para ver <b>qué hace</b>, <b>dónde está en el código</b>, qué modelo usa y cuánto tarda. Las piezas con <b>›</b> se abren por dentro.</p>
+      <p class="vacio">Pasa el ratón por una pieza para ver <b>con qué se conecta</b>; púlsala para ver <b>qué hace</b>, dónde está en el código, qué modelo usa y cuánto tarda. Las piezas con <b>›</b> se abren por dentro.</p>
     </aside>
   </section>
 
@@ -293,7 +308,7 @@
   };
 
   const S = { D: null, INDICE: null, LOGOS: {}, COMPARA: null, comp: new Map(), vista: "general", sel: null,
-    pausa: reducido, vel: 1, servicios: true, filtro: "todos", L: null, ancho: 0 };
+    pausa: reducido, vel: 1, servicios: true, conexiones: false, filtro: "todos", L: null, ancho: 0 };
 
   /* ---------- medir texto de verdad (para que nada se salga de su caja) ---------- */
   const ctx = document.createElement("canvas").getContext("2d");
@@ -416,9 +431,12 @@
     y -= RG;
     let banda = null;
     const extra = nodos.filter((c) => c.carril !== "flujo");
+    let carril = null;
     if (S.servicios && extra.length) {
-      y += 56;
-      banda = y - 22;
+      const y0 = y;
+      carril = y0 + 22;   // por aquí van las conexiones con los servicios, sin cruzar cajas
+      banda = y0 + 56;
+      y = y0 + 76;
       const colsS = Math.max(1, Math.floor((util + 16) / (W + 16)));
       const gxs = colsS > 1 ? Math.min(40, (util - colsS * W) / (colsS - 1)) : 0;
       extra.forEach((c, i) => {
@@ -428,7 +446,9 @@
       });
       y += Math.ceil(extra.length / colsS) * (HS + 12) - 12;
     }
-    return { pos, filaDe, filas, banda, ancho: Math.max(ancho, W + 2 * M), alto: y + M, aristas: aristas.filter((a) => pos.has(a.de) && pos.has(a.a)) };
+    const gxs = extra.length ? Math.min(40, Math.max(0, (util - Math.max(1, Math.floor((util + 16) / (W + 16))) * W) / Math.max(1, Math.floor((util + 16) / (W + 16)) - 1))) : 0;
+    return { pos, filaDe, filas, banda, carril, gx, gxs: gxs || 24, ancho: Math.max(ancho, W + 2 * M), alto: y + M,
+      aristas: aristas.filter((a) => pos.has(a.de) && pos.has(a.a)) };
   }
 
   /* ---------- trazado de flechas ---------- */
@@ -447,9 +467,16 @@
   function trazo(a, L) {
     const s = L.pos.get(a.de), t = L.pos.get(a.a), fs = L.filaDe.get(a.de), ft = L.filaDe.get(a.a);
     if (s.servicio || t.servicio) {
-      const [x1, y1, x2, y2] = s.y < t.y ? [s.x + s.w / 2, s.y + s.h, t.x + t.w / 2, t.y] : [s.x + s.w / 2, s.y, t.x + t.w / 2, t.y + t.h];
-      const c = (y2 - y1) / 2;
-      return `M${x1},${y1} C${x1},${y1 + c} ${x2},${y2 - c} ${x2},${y2}`;
+      // Conexión con un servicio: sale por el lateral, baja por el pasillo entre columnas hasta el carril que hay
+      // sobre la banda de servicios y entra por el lateral izquierdo del servicio. Nunca cruza una caja.
+      const lado = (b) => {
+        const cy = b.y + b.h / 2;
+        if (b.servicio) { const xc = b.x - L.gxs / 2; return [[b.x, cy], [xc, cy], [xc, L.carril]]; }
+        const hueco = Math.min(L.gx > 0 ? L.gx / 2 : 20, (L.ancho - (b.x + b.w)) / 2);
+        const xg = b.x + b.w + hueco;
+        return [[b.x + b.w, cy], [xg, cy], [xg, L.carril]];
+      };
+      return ortogonal([...lado(s), ...lado(t).reverse()]);
     }
     const atras = a._atras || a.estilo === "vuelta" || a.estilo === "bucle" && t.x <= s.x;
     if (atras) {
@@ -524,7 +551,7 @@
     S.gPaq = el("g", {}, svg);
     if (L.banda != null) {
       el("line", { x1: M, x2: L.ancho - M, y1: L.banda - 14, y2: L.banda - 14, class: "banda-linea" }, gA);
-      el("text", { x: M, y: L.banda, class: "banda" }, gA).textContent = "Datos, servicios e infraestructura";
+      S.textoBanda = [M, L.banda];
     }
     L.aristas.forEach((a) => {
       const ps = L.pos.get(a.de), pt = L.pos.get(a.a);
@@ -561,10 +588,12 @@
       });
       if (oculto > 0) { const b = L.pos.get(c.id); pastilla(`${oculto} % contesta aquí`, b.x + b.w / 2, b.y + b.h + 16); }
     }
+    if (S.textoBanda && L.banda != null) el("text", { x: M, y: L.banda, class: "banda" }, gP).textContent = "Datos, servicios e infraestructura";
+    S.gEtq = el("g", {}, svg);
     for (const c of S.D.componentes) if (L.pos.has(c.id)) nodo(c, L.pos.get(c.id), gN);
     lienzo.replaceChildren(svg);
     S.paq = []; S.reloj = 0; S.proximo = 0;
-    if (S.sel) enfocar(S.sel);
+    enfocar(S.sel);
     leyenda();
   }
 
@@ -592,7 +621,9 @@
     const meta = partes.length ? partes.join(" · ") : c.tipo === "respaldo" ? "Respaldo · sin medir" : TIPO[c.tipo] || c.tipo;
     const alto = titulo.length * 17 + 16, y0 = cy - alto / 2 + 12;
     titulo.forEach((l, i) => { el("text", { class: "t", x: 56, y: y0 + i * 17 }, g).textContent = l; });
-    el("text", { class: "m", x: 56, y: y0 + titulo.length * 17 + 2 }, g).textContent = recortar(meta, "400 12px Inter", maxW);
+    const ym = y0 + titulo.length * 17 + 2;
+    if (S.conexiones) usos(c, b, g, ym, maxW);
+    else el("text", { class: "m", x: 56, y: ym }, g).textContent = recortar(meta, "400 12px Inter", maxW);
     if (zoom) {
       el("circle", { class: "abrir-fondo", cx: b.w - 22, cy, r: 12 }, g);
       el("path", { class: "abrir", d: `M${b.w - 24},${cy - 4} l4,4 -4,4` }, g);
@@ -601,8 +632,36 @@
     if (S.COMPARA && !S.COMPARA.ids.has(c.id)) { el("rect", { class: "anillo", x: -5, y: -5, width: b.w + 10, height: b.h + 10, rx: 20 }, g); g.classList.add("nuevo"); }
     if (S.sel === c.id) g.classList.add("sel");
     g.addEventListener("click", (e) => { if (zoom && e.target.closest(".abrir, .abrir-fondo")) ir(c.zoom); else seleccionar(c.id); });
+    g.addEventListener("mouseenter", () => enfocar(c.id));
+    g.addEventListener("mouseleave", () => enfocar(S.sel));
+    g.addEventListener("focus", () => enfocar(c.id));
+    g.addEventListener("blur", () => enfocar(S.sel));
     g.addEventListener("dblclick", () => zoom && ir(c.zoom));
     g.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); seleccionar(c.id); } });
+  }
+
+  // Con "Conexiones": en vez del tiempo, los logos de los servicios que usa la pieza (o, en un servicio, cuántas lo usan).
+  function conexionesDe(id) {
+    return S.L.aristas.filter((a) => NO_FLUJO.has(a.estilo) && (a.de === id || a.a === id))
+      .map((a) => (a.de === id ? a.a : a.de));
+  }
+  function usos(c, b, g, ym, maxW) {
+    const otros = [...new Set(conexionesDe(c.id))];
+    if (b.servicio) {
+      const quien = otros.filter((o) => !S.L.pos.get(o).servicio);
+      el("text", { class: "m", x: 56, y: ym }, g).textContent = quien.length ? `Lo usan ${quien.length} ${quien.length === 1 ? "pieza" : "piezas"}` : "Sin conexiones aquí";
+      return;
+    }
+    if (!otros.length) { el("text", { class: "m", x: 56, y: ym }, g).textContent = "No usa servicios"; return; }
+    el("text", { class: "m", x: 56, y: ym }, g).textContent = "Usa";
+    let x = 84;
+    for (const o of otros) {
+      if (x + 16 > 56 + maxW) break;
+      const oc = S.comp.get(o), logo = oc.marca && S.LOGOS[oc.marca];
+      if (logo) el("path", { class: "mini-logo", d: logo.d, transform: `translate(${x},${ym - 11}) scale(${14 / 24})` }, g);
+      else el("path", { class: "mini-icono", d: ICONO[oc.tipo] || ICONO.datos, transform: `translate(${x},${ym - 11}) scale(${14 / 20})` }, g);
+      x += 20;
+    }
   }
 
   function leyenda() {
@@ -624,14 +683,33 @@
     return `<svg width="${t}" height="${t}" viewBox="0 0 24 24" aria-hidden="true"><path d="${logo.d}" fill="var(--ink)"/></svg>`;
   }
   function panelVacio() {
-    $("#panel").innerHTML = '<p class="etiqueta">Detalle</p><p class="vacio">Pulsa una pieza para ver <b>qué hace</b>, <b>dónde está en el código</b>, qué modelo usa y cuánto tarda. Las piezas con <b>›</b> se abren por dentro.</p>';
+    $("#panel").innerHTML = '<p class="etiqueta">Detalle</p><p class="vacio">Pasa el ratón por una pieza para ver <b>con qué se conecta</b>; púlsala para ver <b>qué hace</b>, dónde está en el código, qué modelo usa y cuánto tarda. Las piezas con <b>›</b> se abren por dentro.</p>';
   }
   function enfocar(id) {
-    $$(".nodo").forEach((n) => n.classList.toggle("sel", n.dataset.id === id));
+    if (!S.L) return;
+    const vecinos = new Set(id ? [id] : []);
     for (const a of S.L.aristas) {
-      const toca = a.de === id || a.a === id;
+      const toca = !!id && (a.de === id || a.a === id);
+      if (toca) { vecinos.add(a.de); vecinos.add(a.a); }
       a._path.classList.toggle("foco", toca);
       a._path.setAttribute("marker-end", toca ? "url(#punta-foco)" : "url(#punta)");
+    }
+    $$(".nodo", $("#lienzo")).forEach((n) => {
+      n.classList.toggle("sel", n.dataset.id === S.sel);
+      n.classList.toggle("tenue", !!id && !vecinos.has(n.dataset.id));
+    });
+    // Etiqueta de cada conexión con un servicio: junto al otro extremo, para no amontonarlas.
+    if (!S.gEtq) return;
+    S.gEtq.replaceChildren();
+    if (!id) return;
+    for (const a of S.L.aristas) {
+      if (!NO_FLUJO.has(a.estilo) || (a.de !== id && a.a !== id) || !a.etiqueta) continue;
+      const len = a._path.getTotalLength(), pt = a._path.getPointAtLength(a.de === id ? Math.max(0, len - 36) : Math.min(len, 36));
+      ctx.font = "600 11px Inter"; const w = ctx.measureText(a.etiqueta).width + 14;
+      const cx = Math.min(Math.max(pt.x, w / 2 + 4), S.L.ancho - w / 2 - 4);
+      const g = el("g", { class: "etq-foco", transform: `translate(${cx},${pt.y - 14})` }, S.gEtq);
+      el("rect", { x: -w / 2, y: -9, width: w, height: 18, rx: 9 }, g);
+      el("text", { x: 0, y: 4, "text-anchor": "middle" }, g).textContent = a.etiqueta;
     }
   }
   function seleccionar(id) { S.sel = id; enfocar(id); detalle(id); }
@@ -661,6 +739,20 @@
     const logo = c.marca && S.LOGOS[c.marca];
     if (logo) hechos.unshift(["Servicio", `<span class="marca-mini">${logoMini(logo, 16)}${esc(logo.nombre)}</span>`]);
     if (c.donde) hechos.push(["En el código", `<span class="mono">${esc(c.donde)}</span>`]);
+    const prov = { openai: "OpenAI", openrouter: "OpenRouter" }[c.marca];
+    if (prov && c.carril !== "flujo") {
+      const ms = S.D.modelos.filter((m) => m.proveedor === prov);
+      const vistos = new Map();
+      ms.forEach((m) => { if (!vistos.has(m.pre)) vistos.set(m.pre, m); });
+      hechos.push(["En la ronda", [...vistos.values()].map((m) => `${esc(m.pre)} · ${m.llamadas_ultima_ronda != null ? num(m.llamadas_ultima_ronda, 0) + " llamadas" : esc(m.nota || "sin contar")}`).join("<br>")]);
+    }
+    const nombre = (x) => esc((S.comp.get(x) || {}).titulo || x);
+    const llegan = S.D.aristas.filter((a) => a.a === id), salen = S.D.aristas.filter((a) => a.de === id);
+    const item = (otro, txt) => `<button data-ir="${otro}"><b>${nombre(otro)}</b><span>${esc(txt || "")}</span></button>`;
+    const conex = [
+      llegan.length ? `<p class="etiqueta">Recibe de</p><div class="conex">${llegan.map((a) => item(a.de, a.etiqueta)).join("")}</div>` : "",
+      salen.length ? `<p class="etiqueta">Envía a</p><div class="conex">${salen.map((a) => item(a.a, a.etiqueta)).join("")}</div>` : "",
+    ].join("");
     $("#panel").innerHTML = `
       <span class="etiqueta tag">${esc(TIPO[c.tipo] || c.tipo)}</span>
       <h3>${esc(c.titulo)}</h3>
@@ -669,8 +761,14 @@
       ${c.detalle && c.detalle.length ? `<ul>${c.detalle.map((d) => `<li class="mono">${esc(d)}</li>`).join("")}</ul>` : ""}
       ${c.interruptores.length ? `<div style="display:grid;gap:8px"><p class="etiqueta">Interruptores que la cambian</p><div class="chips">${c.interruptores.map(chip).join("")}</div></div>` : ""}
       ${c.nota ? `<p class="mute" style="font-size:14px;line-height:22px">${esc(c.nota)}</p>` : ""}
+      ${conex ? `<div style="display:grid;gap:8px">${conex}</div>` : ""}
       ${c.zoom ? `<button class="pill dark" id="b-abrir" style="justify-self:start">Ver por dentro</button>` : ""}`;
     const b = $("#b-abrir"); if (b) b.addEventListener("click", () => ir(c.zoom));
+    $$("#panel .conex [data-ir]").forEach((x) => x.addEventListener("click", () => {
+      const o = S.comp.get(x.dataset.ir);
+      if (o.vista !== S.vista) ir(o.vista);
+      seleccionar(o.id);
+    }));
   }
 
   /* ---------- historial ---------- */
@@ -771,8 +869,10 @@
   function pulso(id) {
     for (const a of S.L.aristas) {
       if (a.de !== id || !NO_FLUJO.has(a.estilo)) continue;
-      a._path.classList.add("pulso");
-      setTimeout(() => a._path && a._path.classList.remove("pulso"), 900 / S.vel);
+      const n = $(`#lienzo .nodo[data-id="${a.a}"]`);
+      if (!n) continue;
+      n.classList.add("usado");
+      clearTimeout(n._t); n._t = setTimeout(() => n.classList.remove("usado"), 900 / S.vel);
     }
   }
   function mover(p, x, y) { p.punto.setAttribute("cx", x); p.punto.setAttribute("cy", y); p.halo.setAttribute("cx", x); p.halo.setAttribute("cy", y); }
@@ -827,10 +927,11 @@
     S.vel = Number(b.dataset.v); $$("#vel button").forEach((x) => x.setAttribute("aria-pressed", String(x === b)));
   }));
   const bc = $("#b-conexiones");
+  bc.title = "Muestra en cada pieza los servicios que usa. Pasa el ratón por una pieza para ver sus líneas.";
   bc.addEventListener("click", () => {
-    const on = bc.getAttribute("aria-pressed") !== "true";
-    bc.setAttribute("aria-pressed", String(on));
-    $("#lienzo").classList.toggle("conexiones", on);
+    S.conexiones = bc.getAttribute("aria-pressed") !== "true";
+    bc.setAttribute("aria-pressed", String(S.conexiones));
+    if (S.L) pintar();
   });
 
   cargar();
