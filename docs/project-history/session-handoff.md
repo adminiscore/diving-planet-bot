@@ -13,6 +13,45 @@ Read this file before changing code in the Diving Planet Bot. For a quick versio
 
 > **📏 LEER ANTES DE MEDIR — decisiones del 24-sep-2026 (Gadea):** (1) latencia y llamadas con nuestros logs `[TURN_METRICS]` + `scripts/turn_metrics.py`, no con Langfuse (plan gratuito superado, reinicio 16-oct); (2) pruebas A/B por escalones, juzgando solo los diálogos que cambian. Todo en `docs/robustness/protocolo-medicion.md`.
 
+### 🔧 29-sep tarde (Gonzalo) — rag-3 a medias: la mitad de los nombres HECHA y medida; la de la búsqueda, detrás de flag
+
+Detalle completo: `docs/robustness/rag-3/README.md`. HISTORY 0.29.74. **PRE no ha cambiado** (el flag nuevo
+nace apagado y `test_flags_pinned` sigue verde).
+
+**rag-3a · hecho y medido. El fallo era del juez, no del bot.** Los nombres difieren en 34 de 36 y no es un
+renombrado 1 a 1, pero los `name_*` de `pricing.json` **no los lee nadie en el bot**: solo llegan al juez. El
+oficial es el de la web (`services.json` lleva `url` y `booking_url`; el enlace real es
+`book.divingplanet.org/book/salidas-de-buceo/1`). `load_reference()` ya le da los nombres oficiales, y el caso
+`reserva-ingles · sin-invenciones` pasa de **no_cumple a cumple**. Medido re-juzgando la ronda
+`2026-09-28-rag2-B` ya grabada: **0,49 $ y sin desplegar nada**.
+
+**⚠️ Lo más importante para todos: el ruido del juez ya está MEDIDO.** Re-juzgando el MISMO transcript, **4 de
+256 veredictos (1,6 %) cambian sin causa**, y la misma ronda se mueve de 94,3 % a 93,9 %. **Una diferencia de
+menos de 1 punto entre dos rondas no significa nada.** Y como la referencia cambió, **un A/B nuevo tiene que
+juzgar A y B con la misma referencia**: los números anteriores al 29-sep no son estrictamente comparables.
+
+**rag-3b · hecho, detrás de `RAG_FICHA_DEL_SERVICIO` (apagado), falta su A/B.** Si se sabe qué servicio mira el
+cliente, su ficha entera va al contexto (antes solo incluye/no incluye, que no lleva horarios ni itinerario).
+Escalón 0 local y **gratis** (`scripts/rag3_contexto_local.py`): datos que llegan por el estado **9 → 19 de 92,
+gana 10 y pierde 0**, incluidos los dos de `ow-horario-dia1`. La ficha se construye ahora en UN sitio
+(`catalog.service_fact_sheet`, que `kb_v2` llama), byte a byte idéntica, con foto y test — importa porque CI
+regenera `kb_v2` en cada deploy.
+
+**🔴 Lo que NO pude hacer y hace falta de alguien:** `rag_piezas` corre dentro de `dp-pre-bot` por SSH y en mi
+máquina no está `~/.ssh/dp_pre_vps` (probé también con la genérica: `Permission denied`). Con la clave, el modo
+`--solo-busqueda` cuesta **céntimos y ~1 min** y basta para el primer veredicto de rag-3b; el completo son ~3 $.
+
+**Siguiente, en orden:**
+1. `rag_piezas` con el flag encendido → si no hay regresiones, ronda core A/B y promoción.
+2. **La otra mitad de rag-3 que sigue sin hacer**: "la búsqueda prioriza su origen". Es la que movería el
+   `top-8`; lo de hoy mueve `en_contexto`. El criterio de cierre del plan (top-8 ≥ 90 %) depende de ella.
+3. De los 5 fallos de búsqueda, este cambio cubre 2. De los otros: `salida-confirmada` tiene el dato **en el
+   top-8 pero no llega al contexto** (huele a recorte por tamaño → rag-5); la dirección del centro está en una
+   FAQ curada, no en la ficha.
+
+**De paso, visto y sin tocar:** `catalog.extra_block_es/en` es código muerto (nadie lo consume) → s4-25; y los
+`name_*` de `pricing.json` deberían marcarse como etiquetas internas en su `_comment`.
+
 ### ▶️ RETOMAR AQUÍ — cierre del 29-sep (Gadea). Rama `feature/pre_gadea`, PRE = esta rama
 
 **Cómo está todo.** PRE sirve el último commit de `feature/pre_gadea` (código del bot = `4e1cbc4`; lo posterior son docs; `check_deploy` en verde, 27 ajustes del compose = PRE).
