@@ -99,9 +99,59 @@ Entre los ganados, **los dos datos de `ow-horario-dia1`**, el caso que abrió ra
 **Lo que NO arregla:** la dirección del centro (está en una FAQ curada, no en la ficha), el
 formulario médico y `salida-confirmada` (sin servicio en el estado). De los 5 fallos, cubre **2**.
 
-**Lo que falta para promocionarlo:** `rag_piezas` de verdad. No se pudo lanzar: corre dentro de
-`dp-pre-bot` por SSH y en esta máquina no está `~/.ssh/dp_pre_vps`. El modo `--solo-busqueda`
-cuesta céntimos y ~1 min (el modo completo, ~3 $ y 12 min) — basta con tener la clave.
+### Medido con `rag_piezas` de verdad (29-sep, con la clave ya puesta)
+
+Con `--codigo-local` (el código local dentro de `dp-pre-bot`, sin desplegar), los dos lados:
+
+| | flag apagado | flag encendido |
+|---|---|---|
+| dato en el top-8 | 85 % | 85 % — **intacto**, no se toca la búsqueda |
+| **dato en el contexto visto** | 94 % | **97 %** |
+| causa `busqueda` | 5 | **3** |
+| contexto medio | 33,8k | 34,2k caracteres (+1,2 %) |
+
+Por dato: **gana 2, pierde 0**, y son exactamente `ow-horario-dia1 · dia1` y `· dia2-regreso`, los
+dos con `top8=None` — la búsqueda no los encontraba nunca. Ficheros:
+`2026-09-29-rag3-{off,on}.json`.
+
+Esto **valida la limitación del medidor local**: predijo 10 ganancias y netas son 2, porque las
+otras 8 ya llegaban por la búsqueda o el catálogo. La advertencia estaba escrita; ahora está
+cuantificada.
+
+### ⚠️ Pero el dato llega y el bot sigue sin decirlo — y cuesta 2 s
+
+Modo completo sobre el caso (`--casos ow-horario-dia1 --reps 2`, ~0,12 $ los dos lados):
+
+| | apagado | encendido |
+|---|---|---|
+| dato en el contexto | 0 % | **100 %** |
+| **cobertura de la respuesta** | 50 % | **50 %** (igual) |
+| falta por | búsqueda 2 | **redacción 2** |
+| rechazos del juez · regeneraciones | 1 · 1 | 2 · 2 |
+| p50 · llamadas LLM | 5,7 s · 4,0 | **7,7 s · 5,0** |
+
+La causa se mueve de *búsqueda* a *redacción*: el modelo tiene el dato delante y no lo dice. Leída
+la respuesta, el cuadro es de tres piezas:
+
+1. **Mejora real y visible**: con el flag, el bot recita el día 1 entero (8:00 a.m. en la
+   Bodeguita, lancha, piscina, 2 inmersiones de certificación, almuerzo, traslado al hotel). Sin
+   él no tenía nada de eso.
+2. **No menciona el día 2 aunque lo tiene delante** ("return to Cartagena at 3:00 p.m."). Eso es
+   redacción: **rag-4**.
+3. **Y lo que el cliente preguntaba literalmente —a qué hora ACABA el día 1— no existe en los
+   datos**: el itinerario da la secuencia del día 1 pero no su hora de fin, mientras que del día 2
+   sí da las 15:00 y la llegada a las 16:15. El bot dice "no lo tengo, un asesor te lo confirma",
+   que para esa subpregunta es la conducta correcta. **Hueco de negocio, no de RAG**: candidato a
+   la lista de decisiones (D1-D8).
+
+Y el primer intento de respuesta fue tumbado por el juez de grounding por inventarse *"usually
+finish in the early afternoon"* — de ahí la regeneración y los 2 s de más.
+
+**Veredicto: NO se promociona solo.** Hace lo que se diseñó (el dato llega al contexto) pero no
+mueve la nota por sí mismo y cuesta ~2 s y una llamada de más en ese caso. Tiene sentido
+promocionarlo **junto con rag-4**, que es lo que convierte "está en el contexto" en "lo dice".
+Aviso de muestra: las cifras de latencia y rechazos son de **2 repeticiones sobre 1 caso**; para
+decidir por latencia hace falta la ronda core.
 
 ---
 

@@ -37,9 +37,18 @@ gana 10 y pierde 0**, incluidos los dos de `ow-horario-dia1`. La ficha se constr
 (`catalog.service_fact_sheet`, que `kb_v2` llama), byte a byte idéntica, con foto y test — importa porque CI
 regenera `kb_v2` en cada deploy.
 
-**🔴 Lo que NO pude hacer y hace falta de alguien:** `rag_piezas` corre dentro de `dp-pre-bot` por SSH y en mi
-máquina no está `~/.ssh/dp_pre_vps` (probé también con la genérica: `Permission denied`). Con la clave, el modo
-`--solo-busqueda` cuesta **céntimos y ~1 min** y basta para el primer veredicto de rag-3b; el completo son ~3 $.
+**rag-3b MEDIDO (Gadea pasó la clave; ojo, venía con finales de línea CRLF y OpenSSH no la parsea —
+convertida a LF al instalarla).** `rag_piezas --codigo-local`, los dos lados: dato en el contexto **94 → 97 %**,
+causa `busqueda` **5 → 3**, top-8 intacto (85 %, no se toca la búsqueda), contexto +1,2 %. Por dato **gana 2 y
+pierde 0**: los de `ow-horario-dia1`, ambos con `top8=None`.
+
+**🔴 Veredicto: NO promocionar rag-3b solo.** En modo completo sobre ese caso el dato pasa a estar en el
+contexto el **100 %** de las veces… y la cobertura de la respuesta **se queda en 50 %**: la causa se mueve de
+*búsqueda* a **redacción**, y cuesta **+2 s** (p50 5,7 → 7,7 s) y una llamada LLM más. El bot ahora recita el
+día 1 entero (mejora real), no menciona el día 2 aunque lo tiene delante (**eso es rag-4**) y dice "no lo
+tengo" a la hora de fin del día 1 — que **no existe en los datos**: el itinerario da la secuencia del día 1 pero
+no su hora de fin, mientras del día 2 sí da las 15:00. **Hueco de negocio, para la lista D1-D8.** Tiene sentido
+promocionarlo junto con rag-4.
 
 **Siguiente, en orden:**
 1. `rag_piezas` con el flag encendido → si no hay regresiones, ronda core A/B y promoción.
