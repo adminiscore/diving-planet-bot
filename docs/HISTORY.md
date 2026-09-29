@@ -1,6 +1,12 @@
 History
 =======
 
+0.29.71 - (2026-09-29)
+----------------------
+* **Incidente PRE: disco del VPS lleno (100 %, 68 MB libres) → el deploy de `ac2d594` falló al reconstruir.** Causa: el registro json del contenedor `dp-chatwoot` había crecido hasta **26 GB** (y 1,1 GB el de `dp-chatwoot-worker`); Docker no tenía tope de tamaño en ningún servicio. Origen probable: el sondeo del bot a la API de Chatwoot cada segundo (`poll_active_conversations_once`), que Chatwoot apunta petición a petición. No eran datos (bases de datos y volúmenes, 285 MB, intactos).
+  - Arreglo (autorizado por Álvaro): vaciados esos dos registros (disco 100 % → 26 %, 27 GB libres); `docker-compose.vps.yml` con un tope común `x-logging` (json-file, 50 MB × 3) en los 11 servicios; redeploy (`5d9fc0e`, `check_deploy` en verde) y `dp-chatwoot` + `dp-chatwoot-worker` recreados con `--no-deps` para aplicarlo (Chatwoot 200). Postgres, Redis y Caddy tomarán el tope la próxima vez que se recreen.
+  - Pendiente (no urgente): valorar bajar la frecuencia del sondeo de 1 s o el nivel de log de Chatwoot; `vps-disk-cleanup.yml` no habría servido (solo limpia caché e imágenes, 48 MB).
+
 0.29.70 - (2026-09-29)
 ----------------------
 * **Mapa de Coral: el bot dibujado por dentro, animado y generado desde el código** (https://claude.ai/artifact/SnK5Dku1vAinbJ94b8aNGd, privado; se comparte desde su menú). Vista general (del mensaje del cliente a la respuesta: entrada por Chatwoot, enrutador con Jev, las 5 rutas, la cascada de respaldo, cierre y envío, más datos, servicios e infraestructura) y zoom en la **Reserva** (sus 5 fases y las tareas en paralelo) y en el **RAG** (buscar → escribir → comprobaciones → revisor → reintento con motivo → "no lo tengo"). Paquetes animados que se reparten según el tráfico real de la última ronda; cada caja enseña qué hace en lenguaje llano, dónde está en el código, su modelo, sus interruptores y sus tiempos p50/p95.

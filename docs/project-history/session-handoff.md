@@ -61,6 +61,9 @@ en la misma URL (paso 12 de `/closework`); `tests/test_arquitectura.py` obliga a
 en `docs/arquitectura/componentes.json`. Es privado de Álvaro: compartirlo desde su menú para que lo vea el equipo.
 
 **Riesgos y avisos aprendidos hoy:**
+- **Disco del VPS (29-sep):** se llenó con el registro de Chatwoot (26 GB, sin tope). Ya hay tope de 50 MB × 3 por
+  servicio en `docker-compose.vps.yml` (HISTORY 0.29.71). Si un deploy falla en "Redeploy dp-pre-bot", mirar primero
+  `df -h /` y `du -xsh /var/lib/docker/containers` por SSH antes que el código.
 - **OpenAI: una sola cuenta para PRE y para las pruebas.** El 28-sep se quedó sin crédito a mitad de una prueba y PRE
   dejó de contestar a todos. Antes de un bucle largo, estimar el coste (≈0,025 $ por respuesta del RAG con contexto
   real; una ronda core + juez ≈ 0,8 $). Si las dos ramas de un A/B empeoran a la vez, mirar si hay `429 insufficient_quota`.
