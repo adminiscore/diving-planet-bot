@@ -17,9 +17,19 @@
 #      the pre or pro bot data stores.
 # =============================================================================
 
+# Tope de tamaño de los registros de cada contenedor (29-sep-2026): el de Chatwoot llegó a 26 GB sin límite y
+# llenó el disco del VPS (100 %), y el deploy falló por falta de espacio. 50 MB × 3 ficheros por servicio.
+# Se aplica al recrear cada contenedor (el bot se recrea en cada deploy; el resto, con `docker compose up -d <servicio>`).
+x-logging: &registro-limitado
+  driver: json-file
+  options:
+    max-size: "50m"
+    max-file: "3"
+
 services:
   # --- Shared Caddy Reverse Proxy (automatic HTTPS) ---
   caddy:
+    logging: *registro-limitado
     image: caddy:2-alpine
     container_name: dp-caddy
     restart: unless-stopped
@@ -35,6 +45,7 @@ services:
 
   # ==================== PRE (Staging) ====================
   dp-pre-postgres:
+    logging: *registro-limitado
     image: pgvector/pgvector:pg16
     container_name: dp-pre-postgres
     restart: unless-stopped
@@ -54,6 +65,7 @@ services:
       - dp-net
 
   dp-pre-redis:
+    logging: *registro-limitado
     image: redis:7-alpine
     container_name: dp-pre-redis
     restart: unless-stopped
@@ -69,6 +81,7 @@ services:
       - dp-net
 
   dp-pre-bot:
+    logging: *registro-limitado
     build: .
     container_name: dp-pre-bot
     restart: unless-stopped
@@ -212,6 +225,7 @@ services:
 
   # ==================== PRO (Production) ====================
   dp-pro-postgres:
+    logging: *registro-limitado
     image: pgvector/pgvector:pg16
     container_name: dp-pro-postgres
     restart: unless-stopped
@@ -231,6 +245,7 @@ services:
       - dp-net
 
   dp-pro-redis:
+    logging: *registro-limitado
     image: redis:7-alpine
     container_name: dp-pro-redis
     restart: unless-stopped
@@ -246,6 +261,7 @@ services:
       - dp-net
 
   dp-pro-bot:
+    logging: *registro-limitado
     build: .
     container_name: dp-pro-bot
     restart: unless-stopped
@@ -265,6 +281,7 @@ services:
 
   # ==================== Chatwoot (shared inbox, own data store) ====================
   dp-chatwoot-postgres:
+    logging: *registro-limitado
     image: pgvector/pgvector:pg16
     container_name: dp-chatwoot-postgres
     restart: unless-stopped
@@ -283,6 +300,7 @@ services:
       - dp-net
 
   dp-chatwoot-redis:
+    logging: *registro-limitado
     image: redis:7-alpine
     container_name: dp-chatwoot-redis
     restart: unless-stopped
@@ -298,6 +316,7 @@ services:
       - dp-net
 
   dp-chatwoot:
+    logging: *registro-limitado
     image: chatwoot/chatwoot:latest
     container_name: dp-chatwoot
     restart: unless-stopped
@@ -323,6 +342,7 @@ services:
       - dp-net
 
   dp-chatwoot-worker:
+    logging: *registro-limitado
     image: chatwoot/chatwoot:latest
     container_name: dp-chatwoot-worker
     restart: unless-stopped
