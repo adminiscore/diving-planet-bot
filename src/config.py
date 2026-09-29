@@ -172,6 +172,13 @@ class Settings(BaseSettings):
     # encuentro); el problema es de busqueda. Sustituye a la inyeccion parcial de incluye/no incluye, que se
     # quedaba corta. APAGADO hasta su A/B (rag_piezas + ronda core).
     rag_ficha_del_servicio: bool = False
+    # rag-4 (29-sep): la regla del "no lo tengo" del prompt del RAG es TODO-O-NADA -- dice "si la respuesta no esta
+    # en el contexto, dilo" y no dice nada de contestar la parte que SI esta, asi que ante una pregunta con varias
+    # partes el modelo tira la respuesta entera aunque tenga la mitad. Medido (`rag_piezas`, 2026-09-28-rag2-B2): de
+    # los fallos que quedan tras rag-2, 9 son de redaccion y TODOS con el dato ya en el contexto; en
+    # `salida-confirmada` el bot suelta la plantilla LITERAL de esa regla teniendo delante "se opera todos los dias
+    # salvo 25-dic y 1-ene" y "solo se suspende por mal tiempo". APAGADO hasta su A/B.
+    rag_contesta_lo_que_sabe: bool = False
 
     # Paso 6 (27-sep): respuestas fijas y salida deterministas de S4. s4-14: si piden un telefono se
     # da el WhatsApp oficial (decision de Gadea; antes "no manejo un numero"); s4-15: "¿eres un bot?"

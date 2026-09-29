@@ -263,6 +263,48 @@ Reply with ONE word: GROUNDED or HALLUCINATED."""
 # reserva-ingles, criterio "incluye el link de reserva"). La base de conocimiento dice que se paga en el
 # link de reserva online; el bot lo envía con el resumen. `build_system_prompt` sustituye las dos
 # viñetas de antes por estas (un test comprueba que las de antes siguen en el cuerpo).
+# rag-4 (29-sep): la regla del "no lo tengo" es TODO-O-NADA. Dice "si la respuesta no esta en el
+# contexto, dilo" y no dice nada de contestar la parte que SI esta, asi que ante una pregunta con
+# varias partes el modelo tira la respuesta entera aunque tenga la mitad. Medido en `rag_piezas`
+# (2026-09-28-rag2-B2): de los fallos que quedan tras rag-2, 9 son de redaccion y TODOS con el dato
+# ya en el contexto. Caso claro, `salida-confirmada`: el contexto dice "operan todos los dias salvo
+# 25-dic y 1-ene" y "solo se suspende por mal tiempo", y el bot contesta con la plantilla LITERAL de
+# esta regla ("ese detalle puntual no lo tengo a la mano") sin decir ninguna de las dos cosas.
+RAG_NO_TENGO_OLD_ES = (
+    "- Si la respuesta no está en el contexto, dilo con naturalidad y ofrece ayudar con otra cosa o "
+    "seguir con la reserva (\"eso puntual no lo tengo a la mano, pero te ayudo con las actividades, "
+    "precios o a armar tu reserva\")."
+)
+RAG_NO_TENGO_V2_ES = (
+    "- Antes de decir que no tienes algo, CONTESTA lo que sí está en el contexto. Si la pregunta "
+    "tiene varias partes (o pide un dato concreto dentro de un tema del que sí sabes), responde las "
+    "partes que puedas con lo que hay y di que no tienes SOLO la que falta. Decir \"no lo tengo\" "
+    "cuando el contexto responde una parte es un error: por ejemplo, si preguntan si una salida es "
+    "fija y el contexto dice que se opera todos los días salvo el 25 de diciembre y el 1 de enero y "
+    "que una salida solo se suspende por mal tiempo, eso se dice — lo que no confirmas es el cupo de "
+    "esa fecha concreta.\n"
+    "- Si de verdad no hay NADA en el contexto sobre lo que preguntan, dilo con naturalidad y ofrece "
+    "ayudar con otra cosa o seguir con la reserva (\"eso puntual no lo tengo a la mano, pero te ayudo "
+    "con las actividades, precios o a armar tu reserva\")."
+)
+RAG_NO_TENGO_OLD_EN = (
+    "- If the answer is not in the context, say so naturally and offer to help with something else "
+    "or continue the booking (\"I don't have that specific detail handy, but I can help you with "
+    "activities, prices or putting your booking together\")."
+)
+RAG_NO_TENGO_V2_EN = (
+    "- Before saying you don't have something, ANSWER what the context does cover. If the question "
+    "has several parts (or asks for one specific detail inside a topic you do know), answer the "
+    "parts you can with what you have and say you don't have ONLY the missing one. Saying \"I don't "
+    "have it\" when the context answers part of the question is a mistake: for example, if they ask "
+    "whether a departure is confirmed and the context says you operate every day except 25 December "
+    "and 1 January and that trips are only cancelled for bad weather, say that — what you don't "
+    "confirm is the slot for that specific date.\n"
+    "- If there is really NOTHING in the context about what they asked, say so naturally and offer "
+    "to help with something else or continue the booking (\"I don't have that specific detail handy, "
+    "but I can help you with activities, prices or putting your booking together\")."
+)
+
 RAG_PAYMENT_OLD_ES = (
     "- Aunque en el contexto aparezcan flujos de pago (formularios, porcentajes como 50%, transferencias, etc.), "
     "NO describas el proceso exacto de pago ni montos de anticipo. Explica de forma general que un asesor humano te "

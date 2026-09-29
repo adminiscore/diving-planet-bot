@@ -185,6 +185,18 @@ def build_system_prompt(lang: str, query: str | None = None) -> str:
         )
 
         prompt = prompt.replace(RAG_PAYMENT_OLD_ES, RAG_PAYMENT_V2_ES).replace(RAG_PAYMENT_OLD_EN, RAG_PAYMENT_V2_EN)
+    if settings.rag_contesta_lo_que_sabe:
+        # rag-4: contestar la parte que SÍ está en el contexto antes de decir que falta el resto.
+        from src.prompts.info import (  # lazy
+            RAG_NO_TENGO_OLD_EN,
+            RAG_NO_TENGO_OLD_ES,
+            RAG_NO_TENGO_V2_EN,
+            RAG_NO_TENGO_V2_ES,
+        )
+
+        prompt = prompt.replace(RAG_NO_TENGO_OLD_ES, RAG_NO_TENGO_V2_ES).replace(
+            RAG_NO_TENGO_OLD_EN, RAG_NO_TENGO_V2_EN
+        )
     if settings.rag_concise:
         from src.prompts.info import (  # lazy
             RAG_CONCISE_EN,
