@@ -30,6 +30,10 @@ import yaml
 
 from scripts.pre_access import pre_ssh
 
+# La consola de Windows usa cp1252 y no sabe escribir los "✓" / "✗" del informe: sin esto el script
+# se cae con UnicodeEncodeError JUSTO al imprimir que todo está bien (30-sep, paso 3 de /startcontext).
+sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+
 ROOT = Path(__file__).resolve().parent.parent
 REPO_DIR_EN_PRE = "/opt/diving-planet-bot"
 CONTENEDOR = "dp-pre-bot"

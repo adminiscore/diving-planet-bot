@@ -13,6 +13,40 @@ Read this file before changing code in the Diving Planet Bot. For a quick versio
 
 > **📏 LEER ANTES DE MEDIR — decisiones del 24-sep-2026 (Gadea):** (1) latencia y llamadas con nuestros logs `[TURN_METRICS]` + `scripts/turn_metrics.py`, no con Langfuse (plan gratuito superado, reinicio 16-oct); (2) pruebas A/B por escalones, juzgando solo los diálogos que cambian. Todo en `docs/robustness/protocolo-medicion.md`.
 
+### 🔎 30-sep noche (Gonzalo) — paso 1 de rag-5 HECHO: por qué se rehace. Son las notas… y apuntan basura
+
+Detalle: `docs/robustness/rag-5/README.md`. HISTORY 0.29.87. **PRE no ha cambiado** (solo docs, un script de
+medida y el arreglo de `check_deploy` en Windows). Suite de las zonas tocadas en verde.
+
+**Respuesta al paso 1**: la causa son las **notas**, como sospechaba Gadea — pero por lo que DICEN, no por
+cuándo llegan. Experimento de control en local (`scripts/rag5_por_que_se_rehace.py`, réplica fiel: rehace el
+41 % frente al 50 % de PRE): notas vacías → **99 %** aprovechado, tarden lo que tarden; notas reales → **59 %**.
+Y las notas cambian en **47 de 47** rehechos.
+
+**Lo importante: las notas que entran son en buena parte basura.** De 26 notas nuevas leídas a mano, **7 son
+buenas, 4 son datos de reserva y 15 son la pregunta del cliente apuntada como hecho, o inventada** ("how much would
+that be" → "not Colombian"; "incluye el almuerzo?" → "pregunta sobre el almuerzo incluido"). El extractor
+**incumple sus propias instrucciones**, que ya prohíben todo eso. Van al contexto del RAG con "no los ignores",
+al lead del asesor, y con el tope de 8 empujan fuera las notas buenas. Es la familia de u3-4/u3-5 otra vez.
+
+**Por eso NO vale la propuesta del handoff** ("lanzar el adelantado cuando estén las notas"): perdería ~0,8 s de
+los 1,2 s que gana rag-5 y dejaría intacto el problema de calidad.
+
+**Siguiente, en orden:**
+1. **Puerta estructural con Jev para las notas** (el patrón de u3-4): solo capturar si el mensaje cuenta algo
+   del cliente. **NO tocar el prompt del extractor** — ya dice lo correcto, y sería el 4.º matiz de prompt que la
+   medida tumba. Jev ya contesta `affirms_nationality` y habría parado el "not Colombian" (0,02).
+2. **Calibrar la pregunta ANTES de medir** contra los 26 casos de `docs/robustness/rag-5/por-que-se-rehace-notas-reales.json`:
+   tiene que dejar pasar los 7 buenos (intérprete, presupuesto, cuenta local…) y parar los 15 de basura.
+3. Repetir `scripts/rag5_por_que_se_rehace.py` con la puerta (proyección: 59 % → ~76 % aprovechado) y comprobar que
+   las 7 notas buenas siguen entrando. Luego la ronda core B del paso 4 de abajo.
+4. Los pasos 2 y 3 del bloque de Gadea de abajo (primer mensaje y otros caminos) siguen igual de pendientes.
+
+**Avisos de hoy:** (a) mi primera pasada salió "99 % aprovechado" y era FALSA: tenía `NOTES_IN_PARALLEL=false`
+(copiado de la réplica de u3-4) y así las notas se calculan antes de lanzar el adelantado. En PRE está a `true`;
+(b) una pasada local se arrastró 4 h por errores de conexión con OpenAI desde mi máquina (en PRE, 0 errores en el
+mismo rato): lanzad el script con `timeout 1800`; (c) `check_deploy` se caía en Windows al imprimir "✓", arreglado.
+
 ### ▶️ RETOMAR AQUÍ — 30-sep noche (Gadea → Álvaro): rag-5 medido (el RAG adelantado gana 1,2 s cuando se aprovecha, pero solo en el 29 % de los turnos); siguiente, subir ese %
 
 **Estado.** PRE sirve `feature/pre_gadea` (ver el commit del cierre en `git log`; `check_deploy` en verde).

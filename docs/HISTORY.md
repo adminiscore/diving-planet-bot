@@ -1,6 +1,16 @@
 History
 =======
 
+0.29.87 - (2026-09-30)
+----------------------
+* **rag-5 · por qué se tira la respuesta adelantada: son las NOTAS, y lo que apuntan es en buena parte basura.** Paso 1 del "Siguiente" del handoff. Instrumento nuevo, local y casi gratis: `scripts/rag5_por_que_se_rehace.py` (mismo montaje que `replay_golden_local`, con los interruptores de rag-5 como en PRE; compara el resumen antes y después en cada rehecho). La réplica reproduce PRE: se rehace el **41 %** (PRE, 50 %).
+* **Experimento de control — el contenido, no el momento.** Notas vacías e instantáneas: **99 %** aprovechado. Notas vacías que tardan 1,2 s: **99 %**. Notas reales: **59 %**. La espera no deja a la extracción cambiar el resumen; lo que lo cambia es lo que dicen las notas. **La hipótesis de Gadea era correcta en la causa.** Y en los 47 rehechos, **las notas cambian en los 47**.
+* **⚠️ Fallo de calidad del extractor de notas, de la familia de u3-4/u3-5.** Leídas las 26 notas nuevas de los rehechos donde solo cambian las notas: **7 son buenas, 4 son datos de reserva (prohibidos como nota) y 15 son la pregunta misma apuntada como hecho, o inventada** — "how much would that be" → **"not Colombian"**; "incluye el almuerzo?" → "pregunta sobre el almuerzo incluido"; "Is there a discount code?" → "Inquiring about discount code". **El extractor incumple sus propias instrucciones**, que ya prohíben literalmente inventar, apuntar preguntas y apuntar nacionalidad/grupo/actividad. Importa más que la latencia: esas notas entran al contexto del RAG con "tenlos en cuenta, no los ignores", van a la nota de lead del asesor, y con el tope de 8 notas empujan fuera datos buenos.
+* **Proyección**: sin las 19 notas que incumplen las reglas, el aprovechamiento local pasaría de **59 % a ~76 %**, y los rehechos restantes serían los correctos (el cliente acaba de dar un dato que la respuesta necesita).
+* **Propuesta (sin hacer)**: NO tocar el prompt del extractor — ya dice lo correcto y el modelo lo incumple, y sería el cuarto matiz de prompt contra la medida. Sí una **puerta estructural con Jev**, el patrón que funcionó en u3-4: capturar notas solo si el mensaje cuenta algo del cliente. Jev ya contesta `affirms_nationality` y habría cazado el "not Colombian" (0,02). Calibrar la pregunta contra los 26 casos ANTES de medir. Detalle: `docs/robustness/rag-5/README.md`.
+* **De paso**: `scripts/check_deploy.py` se caía en Windows al imprimir el "✓" (consola cp1252) — justo el paso 3 de `/startcontext`. Arreglado.
+
+
 0.29.86 - (2026-09-30)
 ----------------------
 * **rag-5 · el RAG arranca a la vez que el enrutador (flag `RAG_ADELANTADO`, ENCENDIDO en PRE, sin promocionar).** Mientras Jev decide la ruta (~0,7 s) ya se está buscando y redactando la respuesta; solo se usa si su contexto es EXACTAMENTE el de la llamada de siempre (huella: pregunta, idioma, historial, resumen sin la hora y origen). Si algo cambió, se tira y se rehace (nunca contesta con otro contexto ni tarda más que antes); si el turno no pide respuesta, se cancela al cerrarlo.

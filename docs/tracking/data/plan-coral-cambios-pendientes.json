@@ -1,13 +1,32 @@
 {
-  "que_es": "Cola de cambios PENDIENTES DE APLICAR a la pagina Plan Coral. NO es una copia de su base de datos (eso es plan-coral.json, que se regenera exportando). Aqui se deja lo que alguien no ha podido escribir en la pagina, listo para volcarlo tal cual.",
-  "pagina": "https://claude.ai/artifact/XiGd3kguTNwwqTnH7mQwgi",
-  "por_que_existe": "En la sesion de Claude Code de Gonzalo la herramienta ArtifactData NO aparece: buscada 6 veces (select:ArtifactData, select:artifact_data/ArtifactDB/ArtifactStore/ArtifactCollections y 2 busquedas por descripcion) y siempre 'No matching deferred tools found'. No es cuenta ni permisos: esa misma sesion SI tiene DesignSync y RemoteTrigger, que autentican con el login de claude.ai, y la config tiene oauthAccount con organizationRole admin, sin ninguna ANTHROPIC_API_KEY. Si la herramienta existiera pero estuviera capada por no ser propietario, apareceria en la lista y fallaria AL LLAMARLA; no aparece en absoluto. Tampoco se intento republicar el HTML en ningun momento. Hipotesis viva: diferencia de version de Claude Code (pedir a Gadea la suya y comparar).",
-  "como_aplicar": {
-    "con_claude": "Con la herramienta ArtifactData (NO con Artifact, y sin republicar el HTML): leer el documento, y hacer update pasando su version como if_version. Coleccion tasks -> doc_id = el id de la tarea. Coleccion log -> documentos nuevos.",
-    "a_mano": "Abrir la pagina con sesion iniciada y copiar cada campo en su tarea o en la bitacora.",
-    "al_terminar": "Dejar 'pendientes' como lista vacia, poner la fecha en 'aplicado_el' y quien lo aplico en 'aplicado_por', todo en el MISMO commit. Si esta lista se queda llena, el repo y la pagina han divergido: esa es la senal."
+ "que_es": "Cola de cambios PENDIENTES DE APLICAR a la pagina Plan Coral. NO es una copia de su base de datos (eso es plan-coral.json, que se regenera exportando). Aqui se deja lo que alguien no ha podido escribir en la pagina, listo para volcarlo tal cual.",
+ "pagina": "https://claude.ai/artifact/XiGd3kguTNwwqTnH7mQwgi",
+ "por_que_existe": "En la sesion de Claude Code de Gonzalo la herramienta ArtifactData NO aparece: buscada 6 veces (select:ArtifactData, select:artifact_data/ArtifactDB/ArtifactStore/ArtifactCollections y 2 busquedas por descripcion) y siempre 'No matching deferred tools found'. No es cuenta ni permisos: esa misma sesion SI tiene DesignSync y RemoteTrigger, que autentican con el login de claude.ai, y la config tiene oauthAccount con organizationRole admin, sin ninguna ANTHROPIC_API_KEY. Si la herramienta existiera pero estuviera capada por no ser propietario, apareceria en la lista y fallaria AL LLAMARLA; no aparece en absoluto. Tampoco se intento republicar el HTML en ningun momento. Hipotesis viva: diferencia de version de Claude Code (pedir a Gadea la suya y comparar).",
+ "como_aplicar": {
+  "con_claude": "Con la herramienta ArtifactData (NO con Artifact, y sin republicar el HTML): leer el documento, y hacer update pasando su version como if_version. Coleccion tasks -> doc_id = el id de la tarea. Coleccion log -> documentos nuevos.",
+  "a_mano": "Abrir la pagina con sesion iniciada y copiar cada campo en su tarea o en la bitacora.",
+  "al_terminar": "Dejar 'pendientes' como lista vacia, poner la fecha en 'aplicado_el' y quien lo aplico en 'aplicado_por', todo en el MISMO commit. Si esta lista se queda llena, el repo y la pagina han divergido: esa es la senal."
+ },
+ "aplicado_el": null,
+ "aplicado_por": null,
+ "pendientes": [
+  {
+   "coleccion": "tasks",
+   "operacion": "update",
+   "doc_id": "rag-5",
+   "campos": {
+    "note": "30-sep noche (Gonzalo): PASO 1 HECHO — por que se rehace el adelantado. Son las NOTAS, por lo que dicen y no por cuando llegan: en local, notas vacias -> 99 % aprovechado (tarden 0 o 1,2 s); notas reales -> 59 %; y cambian en 47 de 47 rehechos. Pero de 26 notas nuevas leidas a mano solo 7 son buenas: 4 son datos de reserva y 15 son la pregunta del cliente apuntada como hecho, o inventada ('how much would that be' -> 'not Colombian'). El extractor incumple sus propias instrucciones. Siguiente: puerta estructural con Jev para las notas (NO tocar el prompt), calibrada antes contra esos 26 casos. Proyeccion: 59 % -> ~76 % aprovechado. Detalle: docs/robustness/rag-5/README.md."
+   }
   },
-  "aplicado_el": "2026-09-30",
-  "aplicado_por": "Gadea con Claude (ArtifactData). Aplicadas las 4 de Gonzalo del 29-sep (rag-3 en curso, rag-4 descartada, 2 de bitacora) y, de las 48 antiguas del 26-sep, solo las que aportaban algo (s4-10 y s4-13 hechas; notas del re-triaje en s4-8/9/11/12/18/19 y m0-4; tareas r6-3 y r6-4; 6 entradas de bitacora). Las otras 36 estaban superadas: la pagina ya tenia un estado posterior (casi siempre 'hecha') y aplicarlas habria devuelto tareas cerradas a 'pendiente'. Anadida la entrada de Alvaro del 29-sep (disco de PRE y Mapa de Coral).",
-  "pendientes": []
+  {
+   "coleccion": "log",
+   "operacion": "set",
+   "doc_id": "l-0930-gonzalo-rag5-notas",
+   "campos": {
+    "at": "2026-09-30T23:50:00Z",
+    "byLabel": "Gonzalo (con Claude)",
+    "text": "30-sep: rag-5 paso 1 — el adelantado se rehace por las NOTAS (confirmada la hipotesis de Gadea), pero el hallazgo es de calidad: el extractor de notas apunta preguntas e hipotesis como hechos del cliente, y a veces inventa ('not Colombian' a partir de 'how much would that be'). 15 de 26 notas nuevas son basura. Van al contexto del RAG con 'no los ignores' y al lead del asesor. Familia de u3-4/u3-5. HISTORY 0.29.87."
+   }
+  }
+ ]
 }
