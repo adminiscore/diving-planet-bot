@@ -210,9 +210,9 @@ services:
       # telefono ni precios repetidos) y busqueda sin empujones por regex. rag_piezas: top-8 71 -> 85 %,
       # contradicciones 5 -> 1; core rag2-A 92,5 % -> rag2-B 94,3 %. Revert = "false" aqui y en config.py.
       RAG_KB_V2: "true"
-      # rag-3 (30-sep): la busqueda baja las fichas del otro origen del cliente (origen del estado). rag_piezas: fichas
-      # cruzadas en el top-8 20 -> 0, top-8 de busqueda 89 -> 92 % (con la ficha del refresher). ENCENDIDO para la
-      # ronda core B; si no pasa, "false" aqui y en config.py.
+      # rag-3 (30-sep), PROMOCIONADO (HISTORY 0.29.84-0.29.85): la busqueda baja las fichas del otro origen del cliente
+      # (origen del estado). rag_piezas: fichas cruzadas en el top-8 20 -> 0; core rag3-A 22/32 -> rag3-B 23/32.
+      # Revert = "false" aqui y en config.py.
       RAG_BUSQUEDA_ORIGEN: "true"
       # Refactor multi-agente (docs/multi-agent-refactor-plan.md) — validación en
       # PRE antes del corte del legacy (Fase 5.2). STAGE B (ahora): el GRAFO sirve
