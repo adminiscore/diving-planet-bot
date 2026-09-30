@@ -13,6 +13,38 @@ Read this file before changing code in the Diving Planet Bot. For a quick versio
 
 > **📏 LEER ANTES DE MEDIR — decisiones del 24-sep-2026 (Gadea):** (1) latencia y llamadas con nuestros logs `[TURN_METRICS]` + `scripts/turn_metrics.py`, no con Langfuse (plan gratuito superado, reinicio 16-oct); (2) pruebas A/B por escalones, juzgando solo los diálogos que cambian. Todo en `docs/robustness/protocolo-medicion.md`.
 
+### ▶️ RETOMAR AQUÍ — 30-sep (Gadea): todo integrado; siguiente, rag-3 por la búsqueda
+
+**Estado.** PRE sirve `feature/pre_alvaro` @ `a1edcc2` (`check_deploy --branch feature/pre_alvaro` en verde, 27 ajustes =
+PRE). `feature/pre_gadea` = `pre_alvaro` + estos docs (avance rápido, sin conflictos). En PRE: `RAG_KB_V2` encendido;
+`RAG_FICHA_DEL_SERVICIO` (rag-3b) y `RAG_CONTESTA_LO_QUE_SABE` (rag-4) apagados con medida. Plan Coral al día y **cola
+vacía** (de las 48 entradas antiguas, 36 estaban superadas y no se aplicaron; ver `aplicado_por` en la cola).
+
+**Lo que hicieron el 29-sep** (detalle en los bloques de abajo y HISTORY 0.29.74-0.29.83):
+- **Gonzalo — fase RAG:** rag-3a hecha (el fallo de nombres era del juez: `load_reference()` ya le da los nombres
+  oficiales de `services.json`); ruido del juez **medido** (1,6 % de veredictos cambian sin causa: < 1 punto entre rondas
+  no significa nada); rag-3b medido y sin promocionar (el dato llega al contexto 94 → 97 %, pero el bot no lo dice más y
+  cuesta latencia); **rag-4 DESCARTADA** (cobertura 89 → 83 %): tercera vez que un matiz del prompt sale negativo con
+  medida → **lo que mueve la aguja es estructura y datos, no el prompt**.
+- **Álvaro — infraestructura y mapa:** incidente del disco de PRE lleno por el registro de Chatwoot (26 GB) → registros
+  con tope de 50 MB × 3 en los 11 contenedores; **Mapa de Coral** (https://claude.ai/artifact/SnK5Dku1vAinbJ94b8aNGd,
+  privado de Álvaro), generado desde el código con `python -m scripts.arquitectura` y vigilado por CI; halló 5
+  interruptores sin efecto (`LLM_EXTRACTION_CUTOVER_*`, `LLM_EXTRACTION_SHADOW_MODE`) → s4-25.
+
+**Siguiente, en orden:**
+1. **rag-3 · que la búsqueda priorice el ORIGEN del cliente** (Cartagena / ya en las islas). Es la única mitad que mueve
+   el top-8 (85 %; cierre ≥ 90 %) y va por estructura (metadatos `origin` de las fichas de `kb_v2`), no por prompt.
+   Medir con `rag_piezas --codigo-local` contra `2026-09-28-rag2-B2.json`, y luego ronda core A/B.
+2. **Ficha propia del refresher en la base curada** (formulario médico; con la ficha del minicurso el bot le atribuía
+   las 4 h de teoría del Open Water).
+3. **Decisión de negocio (Gadea):** a qué hora acaba el día 1 del Open Water (el itinerario solo da la del día 2).
+4. `salida-confirmada`: el dato está en el top-8 pero no llega al contexto → mirar recorte por tamaño (rag-5).
+- No urgentes: bajar el sondeo del bot a Chatwoot (1 s) que llenó el disco; los 5 interruptores sin efecto a s4-25;
+  compartir el Mapa de Coral con el equipo desde su menú.
+
+**Avisos que siguen valiendo:** un push a `pre_*` recrea el contenedor y **mata cualquier medición en curso**
+(`rag_piezas --codigo-local` corre dentro): avisar al equipo antes de subir. La suite, siempre con `ENV_FILE=.env.ci`.
+
 ### 🔧 29-sep tarde (Gonzalo) — **rag-4 DESCARTADO con medida; rag-3b sin promocionar**
 
 **rag-4 solo, sobre los 47: peor que la base.** Cobertura **89 % → 83 %**, rechazos del juez 2 → 8,
@@ -125,7 +157,7 @@ promocionarlo junto con rag-4.
 **De paso, visto y sin tocar:** `catalog.extra_block_es/en` es código muerto (nadie lo consume) → s4-25; y los
 `name_*` de `pricing.json` deberían marcarse como etiquetas internas en su `_comment`.
 
-### ▶️ RETOMAR AQUÍ — cierre del 29-sep (Gadea). Rama `feature/pre_gadea`, PRE = esta rama
+### ✅ 29-sep (Gadea) — rag-1 y rag-2 (`RAG_KB_V2` promocionado); cierre para el relevo
 
 **Cómo está todo.** PRE sirve el último commit de `feature/pre_gadea` (código del bot = `4e1cbc4`; lo posterior son docs; `check_deploy` en verde, 27 ajustes del compose = PRE).
 Suite 2810 passed, ruff limpio en `src`. `feature/pre_alvaro` y `feature/pre_pruebaGon` no tenían nada nuevo: **quien
