@@ -69,16 +69,19 @@ rag_agent.logger.addHandler(_Log())
 
 _condense = rag_agent.condense_query
 async def _spy_condense(query, history=None, lang="es"):
+    t0 = time.perf_counter()
     out = await _condense(query, history=history, lang=lang)
     T["reescrita"] = out
+    T["t_reescritura"] = round(time.perf_counter() - t0, 3)
     return out
 rag_agent.condense_query = _spy_condense
 
 _search = rag_agent.search_knowledge_base
 async def _spy_search(query, lang="es", top_k=None, **kw):
     # **kw: parametros nuevos de la busqueda (p. ej. `origin`, rag-3) pasan tal cual; sin esto la tanda da TypeError
+    t0 = time.perf_counter()
     docs = await _search(query, lang=lang, top_k=top_k, **kw)
-    T.setdefault("busquedas", []).append({"query": query, "docs": [
+    T.setdefault("busquedas", []).append({"query": query, "s": round(time.perf_counter() - t0, 3), "docs": [
         {"key": (d.get("metadata") or {}).get("key"), "source": (d.get("metadata") or {}).get("source"),
          "vector": round(float(d.get("score_vector", 0) or 0), 3), "confiado": rag_agent._is_confident(d),
          "content": d.get("content") or ""} for d in docs]})
@@ -97,8 +100,10 @@ _grounded = rag_agent.is_grounded
 async def _spy_grounded(answer, context, lang="es"):
     if SOLO_BUSQUEDA:
         return True, ""
+    t0 = time.perf_counter()
     ok, why = await _grounded(answer, context, lang=lang)
-    T.setdefault("juicios", []).append({"ok": ok, "why": why[:400]})
+    T.setdefault("juicios", []).append({"ok": ok, "why": why[:400], "s": round(time.perf_counter() - t0, 3),
+                                        "contexto_chars": len(context or "")})
     return ok, why
 rag_agent.is_grounded = _spy_grounded
 
@@ -119,7 +124,8 @@ class _SpyClient:
         t0 = time.perf_counter()
         r = await self._real.chat.completions.create(**kw)
         T["llamadas"][-1].update({"respuesta": r.choices[0].message.content or "", "s": round(time.perf_counter() - t0, 2),
-                                  "prompt_tokens": getattr(r.usage, "prompt_tokens", 0)})
+                                  "prompt_tokens": getattr(r.usage, "prompt_tokens", 0),
+                                  "completion_tokens": getattr(r.usage, "completion_tokens", 0)})
         return r
 _trace = rag_agent.trace_openai
 rag_agent.trace_openai = lambda c: _SpyClient(_trace(c))
@@ -287,6 +293,23 @@ def puntuar(caso: dict, fila: dict) -> dict:
             "regeneraciones": max(0, sum(1 for x in llamadas if "respuesta" in x) - 1)}
 
 
+def _tiempos_por_pieza(filas: list[dict]) -> dict:
+    """rag-5: media por respuesta de cada pieza del RAG (las mediciones anteriores al 30-sep no llevan cronómetros)."""
+    con = [f for f in filas if "t_reescritura" in f or any("s" in b for b in f.get("busquedas") or [])]
+    if not con:
+        return {"n": 0}
+    media = lambda xs: statistics.mean(xs) if xs else 0.0  # noqa: E731
+    reesc = [f.get("t_reescritura", 0.0) for f in con]
+    busq = [sum(b.get("s", 0.0) for b in f.get("busquedas") or []) for f in con]
+    red = [sum(x.get("s", 0.0) for x in f.get("llamadas") or []) for f in con]
+    juez = [sum(j.get("s", 0.0) for j in f.get("juicios") or []) for f in con]
+    total = [f["s"] for f in con]
+    return {"n": len(con), "reescritura": media(reesc), "busqueda": media(busq), "redaccion": media(red),
+            "juez": media(juez), "resto": media([t - a - b - c - d for t, a, b, c, d in zip(total, reesc, busq, red, juez)]),
+            "tokens_entrada": media([x.get("prompt_tokens", 0) for f in con for x in f.get("llamadas") or []]),
+            "tokens_salida": media([x.get("completion_tokens", 0) for f in con for x in f.get("llamadas") or []])}
+
+
 def resumen(filas: list[dict], solo_busqueda: bool) -> dict:
     todos = [d for f in filas for d in f["puntos"]["datos"]]
     datos = [d for d in todos if not d.get("opcional")]
@@ -324,6 +347,8 @@ def resumen(filas: list[dict], solo_busqueda: bool) -> dict:
             "regeneraciones": sum(f["puntos"]["regeneraciones"] for f in filas),
             "segundos_p50": statistics.median(s) if s else 0, "segundos_p90": s[int(len(s) * 0.9)] if s else 0,
             "llamadas_llm_media": statistics.mean(f["n_llm"] for f in filas) if filas else 0,
+            # rag-5 (30-sep): dónde se va el tiempo DENTRO del RAG (medias por respuesta, en segundos)
+            "piezas": _tiempos_por_pieza(filas),
         })
     return r
 
@@ -347,6 +372,11 @@ def imprimir(r: dict, etiqueta: str = "") -> None:
         if r.get("errores"):
             print(f"  ⚠️ {r['errores']} respuestas son ERROR del proceso, no del bot: la medición NO vale (ver 'respuesta' en el JSON)")
         print(f"  TIEMPO    p50 {r['segundos_p50']:.1f} s · p90 {r['segundos_p90']:.1f} s · llamadas LLM {r['llamadas_llm_media']:.1f}")
+        p = r.get("piezas") or {}
+        if p.get("n"):
+            print(f"  PIEZAS    (media por respuesta) reescritura {p['reescritura']:.2f} s · búsqueda {p['busqueda']:.2f} s · "
+                  f"redacción {p['redaccion']:.2f} s ({p['tokens_salida']:.0f} tokens de salida) · juez {p['juez']:.2f} s · "
+                  f"resto {p['resto']:.2f} s · prompt {p['tokens_entrada']:.0f} tokens")
 
 
 def comparar(a_path: Path, b_path: Path) -> None:

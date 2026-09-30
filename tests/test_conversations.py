@@ -358,7 +358,11 @@ async def test_escalation_note_includes_language():
 
 
 @pytest.mark.asyncio
-async def test_free_text_in_welcome_step_not_sent_to_rag_if_too_short():
+async def test_free_text_in_welcome_step_not_sent_to_rag_if_too_short(monkeypatch):
+    from src.config import (
+        settings as _flags,  # rag-5: el RAG adelantado se llama y se cancela; aquí se mira el enrutado
+    )
+    monkeypatch.setattr(_flags, "rag_adelantado", False)
     state = make_state()
     await route_message(state, "zzz")  # no language signal -> stays at LANGUAGE step
     with patch("src.agents.supervisor.rag_answer", new_callable=AsyncMock, return_value=RAG_MOCK) as mock_rag:

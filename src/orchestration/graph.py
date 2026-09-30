@@ -94,6 +94,11 @@ async def _router_node(state: BotState) -> dict:
     if not getattr(conv, "kids_mention_detected", False) and _detect_kids_mention(message):
         conv.kids_mention_detected = True
 
+    # rag-5: el RAG arranca ya, a la vez que el enrutador; la reserva lo aprovecha si el contexto no cambió.
+    from src.agents.conversational_core import lanzar_rag_adelantado
+
+    lanzar_rag_adelantado(conv, message)
+
     msg_lower = message.strip().lower()
     signals = {} if msg_lower.isdigit() else await detect_routing_signals(
         message, lang=conv.language, pending_slot=conv.core_pending_slot,

@@ -2923,6 +2923,7 @@ async def route_message(state: ConversationState, message: str) -> str:
             await_pending_notes,
             cancel_pending_ack,
             cancel_pending_answer,
+            cancelar_rag_adelantado,
         )
         if state.pending_escalation_reason == escalation_before:  # un traspaso a persona va solo
             response = await attach_unused_answer(state, response)
@@ -2931,6 +2932,7 @@ async def route_message(state: ConversationState, message: str) -> str:
         # usó se cancelan.
         cancel_pending_ack(state)
         cancel_pending_answer(state)
+        cancelar_rag_adelantado(state)  # rag-5: la respuesta adelantada que nadie usó
         await conversation_summarizer.maybe_update_summary(state)
         turn.update(
             reply=response,

@@ -243,6 +243,8 @@ def turn_metrics_line(conversation_id: str, facts: dict, started_at: str, second
         "models": models,
         "nodes": facts.get("_nodes") or {},
     }
+    if facts.get("rag_adelantado"):
+        payload["rag_adelantado"] = facts["rag_adelantado"]  # rag-5: aprovechado / rehecho / descartado
     return f"{TURN_METRICS_TAG} {json.dumps(payload, ensure_ascii=False, default=str)}"
 
 

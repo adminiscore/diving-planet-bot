@@ -152,6 +152,10 @@ async def test_en_una_pregunta_el_regex_no_escribe_datos(monkeypatch, signals, r
 
 
 async def test_sin_pregunta_no_se_lanza_nada(monkeypatch, signals, rag):
+    from src.config import (
+        settings as _flags,  # rag-5: el RAG adelantado se llama y se cancela; aquí se mira el enrutado
+    )
+    monkeypatch.setattr(_flags, "rag_adelantado", False)
     monkeypatch.setattr(settings, "answer_and_continue", True)
     st = _state()
     await route_message(st, "queremos bucear, somos certificados")

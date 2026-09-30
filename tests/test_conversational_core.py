@@ -580,6 +580,7 @@ async def test_sensitive_medical_still_escalates_before_core():
 @pytest.mark.asyncio
 async def test_gap_fill_logs_in_harvester_format(monkeypatch, caplog):
     import logging as _logging
+
     from scripts.harvest_cutover_logs import parse_lines
 
     state = make_state("es")
@@ -1981,11 +1982,15 @@ def _at_activity_stage(lang: str = "es") -> ConversationState:
 
 
 @pytest.mark.asyncio
-async def test_comparing_options_object_routes_to_rag_not_cart():
+async def test_comparing_options_object_routes_to_rag_not_cart(monkeypatch):
     """El fallo en vivo: "mi pareja duda entre buceo y minicurso" (sin "?")
     se tomaba como reserva de AMBAS actividades. Con la señal objeto
     comparing_options debe ir a RAG (explicar) y NO construir carrito ni
     encolar cantidades de acompañante."""
+    from src.config import (
+        settings as _flags,  # rag-5: el RAG adelantado se llama y se cancela; aquí se mira el enrutado
+    )
+    monkeypatch.setattr(_flags, "rag_adelantado", False)
     state = _at_activity_stage()
     obj = {"comparing_options": {
         "comparing": True,
@@ -2005,10 +2010,14 @@ async def test_comparing_options_object_routes_to_rag_not_cart():
 
 
 @pytest.mark.asyncio
-async def test_deliberation_backstop_without_llm_signal_routes_to_rag():
+async def test_deliberation_backstop_without_llm_signal_routes_to_rag(monkeypatch):
     """Aunque la señal LLM no marque nada ({}), el backstop determinista de
     frases de duda ("no sé si … o …") debe enrutar a RAG igual — sin depender
     del "?" (que es lo único que hoy lo salva)."""
+    from src.config import (
+        settings as _flags,  # rag-5: el RAG adelantado se llama y se cancela; aquí se mira el enrutado
+    )
+    monkeypatch.setattr(_flags, "rag_adelantado", False)
     state = _at_activity_stage()
     with patch("src.agents.supervisor.detect_routing_signals",
                new=AsyncMock(return_value={})), \

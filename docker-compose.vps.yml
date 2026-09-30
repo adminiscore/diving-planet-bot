@@ -214,6 +214,9 @@ services:
       # (origen del estado). rag_piezas: fichas cruzadas en el top-8 20 -> 0; core rag3-A 22/32 -> rag3-B 23/32.
       # Revert = "false" aqui y en config.py.
       RAG_BUSQUEDA_ORIGEN: "true"
+      # rag-5 (30-sep): el RAG arranca a la vez que el enrutador (Jev) y se aprovecha solo con el mismo contexto
+      # (si no, se rehace). ENCENDIDO para la ronda core B; si no pasa, "false" aqui y en config.py.
+      RAG_ADELANTADO: "true"
       # Refactor multi-agente (docs/multi-agent-refactor-plan.md) — validación en
       # PRE antes del corte del legacy (Fase 5.2). STAGE B (ahora): el GRAFO sirve
       # de verdad (agent_arch on) — router → 5 nodos reales + subgrafo booking. La
