@@ -1264,8 +1264,12 @@ async def rag_answer(
     history: list[dict] | None = None,
     extra_context: str | None = None,
     verify_grounding: bool = True,
+    origin: str | None = None,
 ) -> str:
-    """`verify_grounding=False` keeps the deterministic price/URL guards but skips
+    """`origin` (rag-3, flag `rag_busqueda_origen`): `state.location` del cliente ("cartagena" / "island"); la
+    busqueda baja las fichas del otro origen.
+
+    `verify_grounding=False` keeps the deterministic price/URL guards but skips
     the LLM grounding-judge, which false-negatives on correct answers that combine
     several KB chunks (e.g. a full course program). Used by the conversation agent
     so it can answer multi-part questions naturally; RAG defaults stay strict."""
@@ -1372,11 +1376,15 @@ async def rag_answer(
     # food) that same doc dropped to 0.377 (below threshold) and lost to the
     # food FAQs instead — the customer got "no lo tengo a la mano" for a
     # question the KB actually answers well.
+    # rag-3: el origen del estado, no leido del resumen (la deteccion por frases de abajo solo casa en espanol).
+    origen_kb = {"cartagena": "cartagena", "island": "islas"}.get(origin or "") if settings.rag_busqueda_origen else None
+    buscar_kw = {"origin": origen_kb} if origen_kb else {}
+
     bare_docs = None
     bare_safe_query = None
     if retrieval_query != condensed_query:
         bare_safe_query = redact_pii(condensed_query)
-        bare_docs = await search_knowledge_base(bare_safe_query, lang=lang)
+        bare_docs = await search_knowledge_base(bare_safe_query, lang=lang, **buscar_kw)
         if any(_is_confident(d) for d in bare_docs):
             retrieval_query = condensed_query
 
@@ -1408,7 +1416,7 @@ async def rag_answer(
     if bare_docs is not None and safe_query == bare_safe_query:
         docs = bare_docs
     else:
-        docs = await search_knowledge_base(safe_query, lang=lang)
+        docs = await search_knowledge_base(safe_query, lang=lang, **buscar_kw)
 
     # Helper to call the LLM with unstructured context (either KB docs o solo extra_context)
     async def _answer_with_llm(

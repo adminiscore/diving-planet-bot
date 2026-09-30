@@ -45,7 +45,7 @@ PREGUNTAS = DIR / "preguntas.json"
 GOLDEN = ROOT / "docs/robustness/golden-set/golden-dialogues.json"
 
 _REMOTO = r'''
-import asyncio, json, logging, time, types
+import asyncio, inspect, json, logging, time, types
 from openai import AsyncOpenAI
 from src.config import settings
 from src.observability import _TURN_FACTS
@@ -75,8 +75,9 @@ async def _spy_condense(query, history=None, lang="es"):
 rag_agent.condense_query = _spy_condense
 
 _search = rag_agent.search_knowledge_base
-async def _spy_search(query, lang="es", top_k=None):
-    docs = await _search(query, lang=lang, top_k=top_k)
+async def _spy_search(query, lang="es", top_k=None, **kw):
+    # **kw: parametros nuevos de la busqueda (p. ej. `origin`, rag-3) pasan tal cual; sin esto la tanda da TypeError
+    docs = await _search(query, lang=lang, top_k=top_k, **kw)
     T.setdefault("busquedas", []).append({"query": query, "docs": [
         {"key": (d.get("metadata") or {}).get("key"), "source": (d.get("metadata") or {}).get("source"),
          "vector": round(float(d.get("score_vector", 0) or 0), 3), "confiado": rag_agent._is_confident(d),
@@ -146,7 +147,9 @@ async def una(c, rep):
     tok = _TURN_FACTS.set({})
     t0 = time.perf_counter()
     try:
-        ans = await rag_agent.rag_answer(c["pregunta"], lang=c["lang"], history=st.history, extra_context=extra)
+        # rag-3: el origen del estado, como hace el bot (solo si esta version de rag_answer lo acepta)
+        kw = {"origin": st.location} if st.location and "origin" in inspect.signature(rag_agent.rag_answer).parameters else {}
+        ans = await rag_agent.rag_answer(c["pregunta"], lang=c["lang"], history=st.history, extra_context=extra, **kw)
     except Exception as exc:  # noqa: BLE001
         ans = f"ERROR {type(exc).__name__}: {exc}"
     s = round(time.perf_counter() - t0, 2)
@@ -243,6 +246,17 @@ def puntuar(caso: dict, fila: dict) -> dict:
     llamadas = fila.get("llamadas") or []
     visto = (llamadas[0]["sistema"] + "\n" + llamadas[0]["usuario"]) if llamadas else ""
     visto_n = norm(visto)
+    # rag-3: lo que el modelo tiene SIN buscar (prompt de sistema con el catálogo + resumen del estado). Un dato que ya
+    # está ahí no depende de la búsqueda: el top-8 "de búsqueda" se cuenta sin ellos.
+    marca = "Contexto adicional de la situacion:"
+    sin_buscar = ""
+    if llamadas:
+        usuario = llamadas[0]["usuario"]
+        sin_buscar = llamadas[0]["sistema"] + ("\n" + usuario.split(marca, 1)[1] if marca in usuario else "")
+    sin_buscar_n = norm(sin_buscar)
+    origen = {"cartagena": "cartagena", "island": "islas"}.get((caso.get("estado") or {}).get("location") or "")
+    cruzadas = sum(1 for d in top8 if origen and str(d.get("key") or "").startswith("ficha:")
+                   and ("islas" if str(d["key"]).endswith("_already_on_island") else "cartagena") != origen)
     frag_n = norm("\n".join(d["content"] for d in (fila.get("fragmentos") or [])))
     verif = (fila.get("verificacion") or {}).get("datos") or {}
     datos = []
@@ -265,10 +279,11 @@ def puntuar(caso: dict, fila: dict) -> dict:
         datos.append({"id": h["id"], "calculo": bool(h.get("calculo")), "opcional": bool(h.get("opcional")),
                       "rango_top8": rango,
                       "en_fragmentos": None if h.get("calculo") else presente(h, frag_n),
-                      "en_contexto": en_contexto, "respuesta": v, "causa": causa})
+                      "en_contexto": en_contexto, "respuesta": v, "causa": causa,
+                      "de_busqueda": (not h.get("calculo")) and not presente(h, sin_buscar_n)})
     prohibidas = (fila.get("verificacion") or {}).get("prohibidas") or {}
     return {"datos": datos, "prohibidas_afirmadas": sum(1 for v in prohibidas.values() if v is True),
-            "contexto_chars": len(visto), "confiado": fila.get("fragmentos") is not None,
+            "contexto_chars": len(visto), "confiado": fila.get("fragmentos") is not None, "cruzadas_top8": cruzadas,
             "regeneraciones": max(0, sum(1 for x in llamadas if "respuesta" in x) - 1)}
 
 
@@ -283,6 +298,11 @@ def resumen(filas: list[dict], solo_busqueda: bool) -> dict:
         "recall_top1": sum(1 for d in busc if d["rango_top8"] == 1) / n,
         "recall_top3": sum(1 for d in busc if d["rango_top8"] and d["rango_top8"] <= 3) / n,
         "recall_top8": sum(1 for d in busc if d["rango_top8"]) / n,
+        # rag-3 (30-sep): solo los datos que NO llegan ya por el catálogo o el estado — lo que de verdad pide la búsqueda
+        "recall_top8_busqueda": (sum(1 for d in busc if d.get("de_busqueda") and d["rango_top8"])
+                                 / (sum(1 for d in busc if d.get("de_busqueda")) or 1)),
+        "datos_de_busqueda": sum(1 for d in busc if d.get("de_busqueda")),
+        "fichas_otro_origen_top8": sum(f["puntos"].get("cruzadas_top8", 0) for f in filas),
         "en_fragmentos": sum(1 for d in busc if d["en_fragmentos"]) / n,
         "en_contexto": sum(1 for d in busc if d["en_contexto"]) / n,
         "sin_confianza": sum(1 for f in filas if not f["puntos"]["confiado"]) / (len(filas) or 1),
@@ -299,6 +319,7 @@ def resumen(filas: list[dict], solo_busqueda: bool) -> dict:
             "extras_cubiertos": f"{sum(1 for d in extras if d['causa'] == 'ok')}/{len(extras)}",
             "prohibidas_afirmadas": sum(f["puntos"]["prohibidas_afirmadas"] for f in filas),
             "no_lo_tengo": sum(1 for f in filas if f.get("fallback")),
+            "errores": sum(1 for f in filas if str(f.get("respuesta") or "").startswith("ERROR ")),
             "rechazos": sum(len(f.get("rechazos") or []) for f in filas),
             "regeneraciones": sum(f["puntos"]["regeneraciones"] for f in filas),
             "segundos_p50": statistics.median(s) if s else 0, "segundos_p90": s[int(len(s) * 0.9)] if s else 0,
@@ -312,6 +333,9 @@ def imprimir(r: dict, etiqueta: str = "") -> None:
     print(f"== {etiqueta} {r['casos']} respuestas, {r['datos']} datos")
     print(f"  BÚSQUEDA  recall@1 {pc(r['recall_top1'])} · @3 {pc(r['recall_top3'])} · @8 {pc(r['recall_top8'])} · "
           f"en fragmentos usados {pc(r['en_fragmentos'])} · en contexto visto (con catálogo y estado) {pc(r['en_contexto'])}")
+    if "recall_top8_busqueda" in r:
+        print(f"            top-8 de los datos que dependen de la búsqueda {pc(r['recall_top8_busqueda'])} "
+              f"({r['datos_de_busqueda']} datos) · fichas del otro origen en el top-8: {r['fichas_otro_origen_top8']}")
     print(f"            sin confianza (solo estado+catálogo) {pc(r['sin_confianza'])} · atajos {r['atajos']} · "
           f"contexto medio {r['contexto_chars_media'] / 1000:.1f}k caracteres")
     if "cobertura" in r:
@@ -320,6 +344,8 @@ def imprimir(r: dict, etiqueta: str = "") -> None:
               f"{c.get('redaccion', 0)} · juez/guardas {c.get('juez_corta', 0)} · contradice {c.get('contradice', 0)} · "
               f"prohibidas {r['prohibidas_afirmadas']} · extras opcionales {r.get('extras_cubiertos', '—')}")
         print(f"  JUEZ      \"no lo tengo\" {r['no_lo_tengo']} · rechazos {r['rechazos']} · regeneraciones {r['regeneraciones']}")
+        if r.get("errores"):
+            print(f"  ⚠️ {r['errores']} respuestas son ERROR del proceso, no del bot: la medición NO vale (ver 'respuesta' en el JSON)")
         print(f"  TIEMPO    p50 {r['segundos_p50']:.1f} s · p90 {r['segundos_p90']:.1f} s · llamadas LLM {r['llamadas_llm_media']:.1f}")
 
 

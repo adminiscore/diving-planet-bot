@@ -4903,10 +4903,12 @@ async def _rag_answer(
     # es donde se usan (van dentro del contexto del RAG), así que aquí se espera.
     await await_pending_notes(state)
     extra_context = supervisor._build_extra_context(state)
+    # rag-3: el origen va solo con el flag (con el flag apagado la llamada es la de siempre).
+    origen_kw = {"origin": state.location} if settings.rag_busqueda_origen and state.location else {}
     return await supervisor.rag_answer(
         rag_query or message, lang=state.language,
         history=state.history if history is None else history,
-        extra_context=extra_context,
+        extra_context=extra_context, **origen_kw,
     )
 
 

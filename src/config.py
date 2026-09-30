@@ -172,6 +172,11 @@ class Settings(BaseSettings):
     # encuentro); el problema es de busqueda. Sustituye a la inyeccion parcial de incluye/no incluye, que se
     # quedaba corta. APAGADO hasta su A/B (rag_piezas + ronda core).
     rag_ficha_del_servicio: bool = False
+    # rag-3 (30-sep, Gadea): con el origen del cliente en el estado (Cartagena / ya en las islas), la busqueda baja
+    # las fichas del OTRO origen. Offline (47 preguntas visibles): quita las 10 fichas del origen equivocado que se
+    # colaban en el top-8 sin perder ningun dato. El origen llega del estado (`state.location`), no de leer el
+    # resumen: la deteccion por frases solo funcionaba en espanol. Apagado hasta su medida.
+    rag_busqueda_origen: bool = False
     # rag-4 (29-sep): la regla del "no lo tengo" del prompt del RAG es TODO-O-NADA -- dice "si la respuesta no esta
     # en el contexto, dilo" y no dice nada de contestar la parte que SI esta, asi que ante una pregunta con varias
     # partes el modelo tira la respuesta entera aunque tenga la mitad. Medido (`rag_piezas`, 2026-09-28-rag2-B2): de

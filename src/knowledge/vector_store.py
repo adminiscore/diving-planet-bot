@@ -305,10 +305,31 @@ async def _bm25_search(query: str, lang: str = "es", k: int = 8) -> list[dict]:
     return results
 
 
+# rag-3: cuanto baja una ficha del otro origen (score_final ~ similitud 0,3-0,8 + RRF): la saca del top-8 salvo que
+# sea con mucho lo mas parecido a la pregunta (medido offline: las 10 fichas cruzadas salen y no se pierde ningun dato).
+PENALIZACION_OTRO_ORIGEN = 0.15
+
+
+def penalizar_otro_origen(results: list[dict], origin: str | None) -> list[dict]:
+    """rag-3: baja los documentos cuyo `metadata.origin` (fichas de `kb_v2`: "cartagena" / "islas") no es el del
+    cliente. Sin origen conocido, o en documentos sin origen (FAQs, politicas), no cambia nada."""
+    if not origin:
+        return results
+    out = []
+    for doc in results:
+        doc_origin = (doc.get("metadata") or {}).get("origin")
+        if doc_origin and doc_origin != origin:
+            doc = dict(doc)
+            doc["score_final"] = float(doc.get("score_final", doc.get("score", 0.0)) or 0.0) - PENALIZACION_OTRO_ORIGEN
+        out.append(doc)
+    return out
+
+
 async def search_knowledge_base(
     query: str,
     lang: str = "es",
     top_k: int | None = None,
+    origin: str | None = None,
 ) -> list[dict]:
     """
     Embed the query and return the top_k most similar documents.
@@ -340,6 +361,8 @@ async def search_knowledge_base(
     # preguntas visibles de rag_piezas). Se ordena solo por vector + palabras (RRF).
     reranked_results = (fused_results if settings.rag_kb_v2
                         else _apply_topic_and_source_boost(fused_results, query_topics))
+    if settings.rag_busqueda_origen:
+        reranked_results = penalizar_otro_origen(reranked_results, origin)
     reranked_results.sort(key=lambda result: result.get("score_final", result.get("score", 0.0)), reverse=True)
 
     top_meta = [
