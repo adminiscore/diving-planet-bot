@@ -59,5 +59,5 @@ def test_la_ficha_lleva_el_itinerario():
     """El caso que abrió rag-3: "¿a qué hora acaba el día 1?" con el Open Water elegido. El dato
     está en el itinerario, y sin él en la ficha inyectarla no arreglaría nada."""
     ficha = catalog.service_fact_sheet("open_water", "en")
-    assert "Itinerary:" in ficha
+    assert "Itinerary for " in ficha  # rag-3 (30-sep): cada sección lleva el nombre de su servicio
     assert "8:00 a.m." in ficha, "la hora de encuentro tiene que viajar en la ficha"

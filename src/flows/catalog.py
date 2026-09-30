@@ -292,12 +292,12 @@ _SHEET_T = {
            "islas": "para quien ya está en las Islas del Rosario (recogida en el hotel si tiene acceso marítimo)",
            "datos": "Datos", "incluye": "Incluye", "no_incluye": "No incluye", "itinerario": "Itinerario",
            "requisitos": "Requisitos", "preparacion": "Antes de la actividad", "reserva": "Reserva",
-           "info": "Más información", "edad10": "edad mínima 10"},
+           "info": "Más información", "edad10": "edad mínima 10", "de": "de"},
     "en": {"ficha": "Service sheet", "desde": "departing from Cartagena",
            "islas": "for guests already on the Rosario Islands (hotel pick-up if it has boat access)",
            "datos": "Facts", "incluye": "Included", "no_incluye": "Not included",
            "itinerario": "Itinerary", "requisitos": "Requirements", "preparacion": "Before the activity",
-           "reserva": "Booking", "info": "More info", "edad10": "minimum age 10"},
+           "reserva": "Booking", "info": "More info", "edad10": "minimum age 10", "de": "for"},
 }
 
 
@@ -322,19 +322,23 @@ def service_fact_sheet(service_id: str, lang: str, svc: dict | None = None) -> s
     svc = RAW_SERVICES[service_id] if svc is None else svc
     t = _SHEET_T[lang]
     island = service_id.endswith("_already_on_island")
+    nombre = svc.get(f"name_{lang}") or service_id
+    # rag-3 (30-sep, ronda core rag3-B): con dos fichas en el contexto (curso referido + refresher) el modelo mezclo
+    # sus requisitos ("both require ... your referral paperwork"). Cada seccion lleva el nombre de SU servicio.
+    de = f" {t['de']} {nombre}"
     partes = service_fact_parts(service_id, lang) if service_id in SERVICES else []
     if partes and not any("edad" in p or "age" in p for p in partes) and SERVICES[service_id].get("min_age") == 10:
         partes.append(t["edad10"])
     bloques = [
-        f"{t['ficha']}: {svc.get(f'name_{lang}') or service_id} — {t['islas'] if island else t['desde']}",
+        f"{t['ficha']}: {nombre} — {t['islas'] if island else t['desde']}",
         svc.get(f"description_{lang}") or "",
-        f"{t['datos']}: " + "; ".join(partes) + "." if partes else "",
+        f"{t['datos']}{de}: " + "; ".join(partes) + "." if partes else "",
         svc.get(f"duration_note_{lang}") or "",
-        _sheet_list(t["incluye"], svc.get(f"included_{lang}")),
-        _sheet_list(t["no_incluye"], svc.get(f"not_included_{lang}")),
-        _sheet_list(t["itinerario"], svc.get(f"itinerary_{lang}")),
-        _sheet_list(t["requisitos"], svc.get(f"requirements_{lang}")),
-        _sheet_list(t["preparacion"], svc.get(f"preparation_{lang}")),
+        _sheet_list(t["incluye"] + de, svc.get(f"included_{lang}")),
+        _sheet_list(t["no_incluye"] + de, svc.get(f"not_included_{lang}")),
+        _sheet_list(t["itinerario"] + de, svc.get(f"itinerary_{lang}")),
+        _sheet_list(t["requisitos"] + de, svc.get(f"requirements_{lang}")),
+        _sheet_list(t["preparacion"] + de, svc.get(f"preparation_{lang}")),
         " · ".join(x for x in (
             f"{t['reserva']}: {svc['booking_url']}" if svc.get("booking_url") and not svc.get("contact_only") else "",
             f"{t['info']}: {svc['url']}" if svc.get("url") else "") if x),

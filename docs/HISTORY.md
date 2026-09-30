@@ -1,6 +1,20 @@
 History
 =======
 
+0.29.85 - (2026-09-30)
+----------------------
+* **rag-3 CERRADA: paquete promocionado en PRE (`RAG_BUSQUEDA_ORIGEN` encendido + ficha del refresher + datos).** Ronda core A/B en PRE (A = `pre_alvaro` a1edcc2; B = 8f2bb84), juzgadas con la misma referencia: diálogos sin fallos 22 → **23/32**, criterios 93,0 → 93,4 % (dentro del ruido medido del juez); turnos RAG p50 5,2 → 4,9 s, p95 8,5 → 8,3 s. 4 mejoras ("regreso otro día" escala bien, acompañante en lancha, una fuga y una repregunta menos). De las 6 "regresiones", leídas: 1 real (`referral-mas-refresher`: con las fichas del curso referido y del refresher juntas el bot dijo que "los dos" piden teoría, piscina y carta de referido — el cruce entre servicios que ya vio Gonzalo), 2 de flujo (no RAG), 2 de ruido del juez (misma respuesta en A y B) y 1 dato de más pero cierto (suplemento de Nitrox).
+* **Arreglo del cruce, por estructura:** cada sección de la ficha lleva el nombre de su servicio ("Requisitos del Curso Referido", "Requirements for Refresher"; `catalog.service_fact_sheet`). Caso de regresión nuevo en `rag_piezas` (`referido-mas-refresher`, preguntas v4). Medido: neutro en el conjunto (cobertura 88 → 87 %, todos los cambios oscilan 1 de 2), el cruce no aparece en 16 intentos (8 + 8), y en ese caso la cobertura 75 → 100 %. Foto de las fichas regenerada a propósito.
+* Datos (decisiones de Gadea, 30-sep): el **refresher es la misma información que el minicurso** → ficha propia del refresher por origen en `kb_v2` (la del minicurso con su encabezado); el minicurso lleva el **formulario médico** (lo exige la política para cursos y minicursos); el **día 1 del Open Water termina hacia las 12:00-13:00** (y en el Referido, quien vuelve el día 1 lo hace como el resto de planes). ⚠️ Contradicción que queda: el Open Water "ya en las islas" dice que el día 1 se vuelve al hotel hacia las 4:30 p.m.
+* **Umbral de confianza calibrado para la base v2 y NO cambiado:** las preguntas que la base no puede responder puntúan tan alto como las buenas (hasta 0,59); bajar de 0,40 solo arreglaría `salida-confirmada` y metería ruido.
+* `RAG_KB_ESQUEMA` (por defecto `kb_v2`) + `kb_v2 --esquema`: medir una base nueva sin tocar la que usa PRE (queda el esquema `kb_v2_prueba` en la base de PRE, sin uso por el bot).
+
+0.29.84 - (2026-09-30)
+----------------------
+* **rag-3 · la búsqueda prioriza el origen del cliente (flag `RAG_BUSQUEDA_ORIGEN`).** Experimento offline con los candidatos guardados: bajar las fichas del otro origen **no sube el top-8** (85 → 85 %) pero saca las 10 fichas del origen equivocado que se colaban. El origen llega de `state.location`: la detección por frases del resumen solo casaba en español (**en inglés la búsqueda nunca supo el origen**).
+* **La métrica del top-8 estaba mal planteada:** mezclaba datos que ya llegan por el catálogo del prompt. `rag_piezas` mide ahora también el top-8 **de los datos que dependen de la búsqueda** (89 %) y las fichas del otro origen en el top-8; y avisa si una medición trae errores del proceso (una primera tanda salió rota por el espía y se descartó).
+* Cola de Plan Coral aplicada y vaciada (de las 48 entradas antiguas, 36 estaban superadas); `feature/pre_gadea` integra `pre_alvaro`.
+
 0.29.83 - (2026-09-29)
 ----------------------
 * **Mapa de Coral v5: conexiones que se entienden.** Con "Conexiones" encendido se dibujaban a la vez todas las líneas hacia datos y servicios y cruzaban el mapa. Ahora:

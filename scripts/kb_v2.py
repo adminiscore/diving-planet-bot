@@ -101,7 +101,8 @@ def fichas_refresher(services: dict) -> list[dict]:
         sid = ids[0]
         for lang in ("es", "en"):
             titulo, nota = _REFRESHER[lang]
-            ficha = service_fact_sheet(sid, lang, services[sid])
+            # las secciones dicen "Requisitos de Refresher", no "de Minicurso": dos fichas juntas no se mezclan
+            ficha = service_fact_sheet(sid, lang, {**services[sid], f"name_{lang}": "Refresher"})
             separador = "\n\n"
             cuerpo = ficha.split(separador, 1)[1] if separador in ficha else ficha  # sin el título del minicurso
             texto = separador.join([titulo.format(origen=_T[lang]["islas" if origen == "islas" else "desde"]),

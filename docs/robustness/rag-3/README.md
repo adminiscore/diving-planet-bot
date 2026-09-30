@@ -272,3 +272,23 @@ prompt no admite más matices**: lo que ha movido la aguja en la fase RAG ha sid
 datos (rag-2: base curada, 71 % → 85 % de top-8), que es exactamente lo que concluía el análisis del
 29-sep — *"el lastre es la estructura y los datos, no el modelo"*. Conviene creérselo antes de
 gastar la siguiente tanda en el prompt.
+
+---
+
+## rag-3 · búsqueda por origen, ficha del refresher y cierre (30-sep, Gadea)
+
+| medición (`rag_piezas`, 47 × 2) | rag2-B2 | origen | paquete | secciones |
+|---|---|---|---|---|
+| top-8 de los datos que dependen de la búsqueda | 89 % | 89 % | **92 %** | 92 % |
+| fichas del otro origen en el top-8 | 20 | **0** | 0 | 0 |
+| cobertura de la respuesta | 89 % | 89 % | 88 % | 87 % |
+| rechazos del juez / "no lo tengo" | 15 / 2 | 8 / 0 | 6 / 0 | 9 / 2 |
+| p50 / p90 | 3,1 / 5,5 s | 3,2 / 5,6 s | 3,0 / 4,7 s | 3,0 / 4,8 s |
+
+- **Origen** (`RAG_BUSQUEDA_ORIGEN`): limpia el top-8 pero no mueve la cobertura: el modelo ya se guiaba por el estado y el catálogo.
+- **Paquete** = origen + ficha del refresher (misma información que el minicurso, decisión de Gadea) + formulario médico del minicurso + fin del día 1 del Open Water. El formulario médico del refresher pasa de 0/2 a 2/2.
+- **Secciones con el nombre del servicio**, tras la ronda core (el bot mezcló los requisitos del curso referido y del refresher): neutro en el conjunto; el cruce no aparece en 16 intentos del caso `referido-mas-refresher`.
+- **Ronda core A/B** (A = pre_alvaro a1edcc2, B = 8f2bb84): 22 → 23/32 diálogos sin fallos, 93,0 → 93,4 %, RAG p50 5,2 → 4,9 s. PROMOCIONADO.
+- **Umbral de confianza**: calibrado para `kb_v2` con los 47 positivos y los 16 negativos de `calibrate_rag_threshold.py`; no separa (los negativos llegan a 0,59), no se cambia.
+
+Quedan de búsqueda: `salida-confirmada` (la FAQ correcta en 0,379, bajo el umbral), la dirección del centro en inglés y el día 2 del Open Water con el servicio elegido (rag-3b, apagado).

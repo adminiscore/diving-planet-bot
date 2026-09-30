@@ -1,6 +1,6 @@
 {
-  "about": "rag-1 (Plan Coral, fase RAG): preguntas VISIBLES para medir el RAG por piezas (búsqueda, redacción, juez). Nunca del examen oculto. Cada caso: pregunta del cliente, estado que el bot ya conoce (va a _build_extra_context como en una conversación real), historial opcional, los datos que la respuesta NECESITA y lo que NO debe decir. 'anclas' = textos que prueban que el dato está en el contexto (se normalizan: minúsculas, sin tildes, sin separadores de miles; ' + ' = todas las partes); 'opcional' = dato útil que el cliente no pidió (se informa aparte, no cuenta en la cobertura); 'calculo' = dato que la respuesta debe calcular (no cuenta para la búsqueda). La verdad sale de data/knowledge_base y del catálogo (src/flows/catalog.py), no de las respuestas del bot. v3 (29-sep): moneda según la decisión D1 de Gadea ('colombianos y residentes'); fuera el total del grupo (el catálogo prohíbe calcular totales).",
-  "version": 3,
+  "about": "rag-1 (Plan Coral, fase RAG): preguntas VISIBLES para medir el RAG por piezas (búsqueda, redacción, juez). Nunca del examen oculto. Cada caso: pregunta del cliente, estado que el bot ya conoce (va a _build_extra_context como en una conversación real), historial opcional, los datos que la respuesta NECESITA y lo que NO debe decir. 'anclas' = textos que prueban que el dato está en el contexto (se normalizan: minúsculas, sin tildes, sin separadores de miles; ' + ' = todas las partes); 'opcional' = dato útil que el cliente no pidió (se informa aparte, no cuenta en la cobertura); 'calculo' = dato que la respuesta debe calcular (no cuenta para la búsqueda). La verdad sale de data/knowledge_base y del catálogo (src/flows/catalog.py), no de las respuestas del bot. v3 (29-sep): moneda según la decisión D1 de Gadea ('colombianos y residentes'); fuera el total del grupo (el catálogo prohíbe calcular totales). v4 (30-sep): caso de regresión referido-mas-refresher (ronda core rag3-B: el bot mezcló los requisitos de las dos fichas).",
+  "version": 4,
   "creado": "2026-09-29",
   "casos": [
     {
@@ -1334,6 +1334,34 @@
             "minicurso"
           ]
         }
+      ]
+    },
+    {
+      "id": "referido-mas-refresher",
+      "origen": "golden:referral-mas-refresher-hotel-y-domingo-pascua#1",
+      "lang": "en",
+      "pregunta": "Hi. We want to complete our PADI open water: we have referrals and e-learning certificates. We would also like a refresher first. How does the 2 day open water referral course cost plus a mini course the day before. 2 persons. Thanks",
+      "estado": {},
+      "necesita": [
+        {
+          "id": "precio-referido",
+          "hecho": "Gives the Open Water Referral Course price (474 USD online from Cartagena, or 432 USD already on the islands), saying which origin it is.",
+          "anclas": [
+            "474",
+            "432"
+          ]
+        },
+        {
+          "id": "precio-refresher",
+          "hecho": "Gives the refresher price (booked as the Dive Mini Course: 183 USD online from Cartagena, or 134 USD already on the islands), saying which origin it is.",
+          "anclas": [
+            "183",
+            "134"
+          ]
+        }
+      ],
+      "no_debe": [
+        "The refresher (or mini course) requires having completed theory and pool sessions beforehand or bringing a referral letter/paperwork (that is a requirement of the referral course only)."
       ]
     }
   ]
