@@ -1,31 +1,19 @@
 ---
-description: Load project context before starting a session
+description: Cargar el contexto al empezar una sesión (handoff, estado de PRE, ramas de los compañeros, Plan Coral)
 ---
-# Start context
+# Start context — empezar la sesión
 
-Use this workflow at the beginning of a work session to understand the repo before editing anything.
+Úsalo al empezar, antes de tocar nada. Escribe en español.
 
-1. Read `docs/project-history/README.md`.
-2. Read `docs/HISTORY.md`.
-3. Read `docs/project-history/session-handoff.md`.
-4. Check the current Git state:
-
-```powershell
-git status --short --branch
-```
-
-5. Review the latest commits:
-
-```powershell
-git log --oneline -8
-```
-
-6. Summarize for the user:
-
-- Current branch and sync state.
-- Latest version/history milestone.
-- Relevant architecture context.
-- Sensitive-data rule reminder.
-- Recommended next step.
-
-7. Do not edit code or docs unless the user explicitly asks for implementation.
+1. Lee el bloque **"▶️ RETOMAR AQUÍ"** de `docs/project-history/session-handoff.md` (y el aviso "📏 LEER ANTES DE
+   MEDIR"), la cabeza de `docs/HISTORY.md` y el último bloque "Estado al …" de la PARTE 8 de
+   `docs/plan-maestro-final.md`.
+2. Git: `git status --short --branch`, `git log --oneline -8`, `git fetch --all` y, para cada rama `pre_*`,
+   `git log --oneline HEAD..origin/<rama>` — di qué han subido los demás desde el último relevo (con su HISTORY).
+3. PRE: qué rama y commit sirve y si está sano:
+   `python -m scripts.check_deploy --branch <rama que diga el handoff> --no-wait`.
+4. Plan Coral: si `docs/tracking/data/plan-coral-cambios-pendientes.json` tiene `pendientes`, avisa (hay que
+   aplicarlos con ArtifactData, ver `/closework` paso 8).
+5. Resume al usuario: rama y sincronía, qué sirve PRE, qué hicieron los demás, el "Siguiente" del handoff y el
+   recordatorio de datos sensibles (nada de claves ni datos de clientes en el chat o el repo).
+6. No edites código ni docs hasta que el usuario lo pida.

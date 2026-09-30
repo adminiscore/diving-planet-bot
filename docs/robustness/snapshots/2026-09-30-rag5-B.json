@@ -1,0 +1,313 @@
+{
+ "label": "2026-09-30-rag5-B",
+ "source": "turn_metrics (log de PRE)",
+ "taken_at": "2026-09-30T13:08:12+00:00",
+ "run_at": "2026-09-30T11:43:34Z",
+ "commit": "a0fe659",
+ "environment": "staging",
+ "window": {
+  "from": "2026-09-30T11:22:53Z",
+  "to": "2026-09-30T11:45:48Z",
+  "first_turn": "2026-09-30T11:27:45Z",
+  "last_turn": "2026-09-30T11:43:34Z"
+ },
+ "all": {
+  "turns": 93,
+  "latency_p50": 2.797,
+  "latency_p95": 7.695,
+  "latency_avg": 3.347,
+  "llm_calls_avg": 3.49,
+  "llm_calls_p95": 7.0,
+  "llm_calls_max": 9,
+  "embeddings_avg": 1.03,
+  "llm_share": 1.188,
+  "tokens_avg": 0,
+  "cost_avg_usd": 0
+ },
+ "by_type": {
+  "reserva": {
+   "turns": 52,
+   "latency_p50": 1.587,
+   "latency_p95": 3.294,
+   "latency_avg": 1.732,
+   "llm_calls_avg": 2.19,
+   "llm_calls_p95": 4.0,
+   "llm_calls_max": 5,
+   "embeddings_avg": 0.63,
+   "llm_share": 1.232,
+   "tokens_avg": 0,
+   "cost_avg_usd": 0
+  },
+  "rag": {
+   "turns": 41,
+   "latency_p50": 5.308,
+   "latency_p95": 8.943,
+   "latency_avg": 5.395,
+   "llm_calls_avg": 5.15,
+   "llm_calls_p95": 8.0,
+   "llm_calls_max": 9,
+   "embeddings_avg": 1.54,
+   "llm_share": 1.17,
+   "tokens_avg": 0,
+   "cost_avg_usd": 0
+  }
+ },
+ "by_turn_type": {
+  "cambios": {
+   "turns": 2,
+   "latency_p50": 2.051,
+   "latency_p95": 3.295,
+   "latency_avg": 2.051,
+   "llm_calls_avg": 1.0,
+   "llm_calls_p95": 1.9,
+   "llm_calls_max": 2,
+   "embeddings_avg": 0.5,
+   "llm_share": 1.067,
+   "tokens_avg": 0,
+   "cost_avg_usd": 0
+  },
+  "deflection": {
+   "turns": 1,
+   "latency_p50": 0.606,
+   "latency_p95": 0.606,
+   "latency_avg": 0.606,
+   "llm_calls_avg": 0.0,
+   "llm_calls_p95": 0.0,
+   "llm_calls_max": 0,
+   "embeddings_avg": 0,
+   "llm_share": 0.0,
+   "tokens_avg": 0,
+   "cost_avg_usd": 0
+  },
+  "escalado": {
+   "turns": 7,
+   "latency_p50": 0.617,
+   "latency_p95": 1.947,
+   "latency_avg": 0.875,
+   "llm_calls_avg": 0.29,
+   "llm_calls_p95": 1.4,
+   "llm_calls_max": 2,
+   "embeddings_avg": 0.43,
+   "llm_share": 0.457,
+   "tokens_avg": 0,
+   "cost_avg_usd": 0
+  },
+  "rag": {
+   "turns": 41,
+   "latency_p50": 5.308,
+   "latency_p95": 8.943,
+   "latency_avg": 5.395,
+   "llm_calls_avg": 5.15,
+   "llm_calls_p95": 8.0,
+   "llm_calls_max": 9,
+   "embeddings_avg": 1.54,
+   "llm_share": 1.17,
+   "tokens_avg": 0,
+   "cost_avg_usd": 0
+  },
+  "reserva": {
+   "turns": 39,
+   "latency_p50": 1.617,
+   "latency_p95": 3.065,
+   "latency_avg": 1.902,
+   "llm_calls_avg": 2.79,
+   "llm_calls_p95": 4.1,
+   "llm_calls_max": 5,
+   "embeddings_avg": 0.74,
+   "llm_share": 1.385,
+   "tokens_avg": 0,
+   "cost_avg_usd": 0
+  },
+  "saludo": {
+   "turns": 3,
+   "latency_p50": 0.631,
+   "latency_p95": 3.501,
+   "latency_avg": 1.686,
+   "llm_calls_avg": 0.33,
+   "llm_calls_p95": 0.9,
+   "llm_calls_max": 1,
+   "embeddings_avg": 0,
+   "llm_share": 0.207,
+   "tokens_avg": 0,
+   "cost_avg_usd": 0
+  }
+ },
+ "turns_with_summary": 93,
+ "business": {
+  "conversations": 32,
+  "turns": 93,
+  "turns_per_conversation": 2.91,
+  "funnel": {
+   "hablan": {
+    "conversations": 32,
+    "pct": 100.0
+   },
+   "eligen_actividad": {
+    "conversations": 4,
+    "pct": 12.5
+   },
+   "carrito_con_personas": {
+    "conversations": 4,
+    "pct": 12.5
+   },
+   "link_de_pago": {
+    "conversations": 7,
+    "pct": 21.9
+   }
+  },
+  "escalation_rate_pct": 18.8,
+  "fallback_turns": 3,
+  "fallback_pct_of_turns": 3.2,
+  "by_turn_type": {
+   "rag": 41,
+   "reserva": 39,
+   "escalado": 7,
+   "saludo": 3,
+   "cambios": 2,
+   "deflection": 1
+  }
+ },
+ "nodes": {
+  "info": {
+   "n": 4,
+   "p50": 3.279,
+   "p95": 6.744
+  },
+  "booking": {
+   "n": 79,
+   "p50": 1.659,
+   "p95": 6.73
+  },
+  "slotfill_close": {
+   "n": 75,
+   "p50": 0.88,
+   "p95": 6.15
+  },
+  "extraction": {
+   "n": 77,
+   "p50": 0.767,
+   "p95": 2.146
+  },
+  "router": {
+   "n": 93,
+   "p50": 0.61,
+   "p95": 2.084
+  },
+  "setup": {
+   "n": 79,
+   "p50": 0.034,
+   "p95": 0.062
+  },
+  "routing": {
+   "n": 77,
+   "p50": 0.006,
+   "p95": 0.014
+  },
+  "availability": {
+   "n": 79,
+   "p50": 0.005,
+   "p95": 0.009
+  },
+  "changes": {
+   "n": 2,
+   "p50": 0.004,
+   "p95": 0.004
+  },
+  "safety": {
+   "n": 7,
+   "p50": 0.001,
+   "p95": 0.004
+  },
+  "deflection": {
+   "n": 1,
+   "p50": 0.001,
+   "p95": 0.001
+  }
+ },
+ "router": {
+  "by_backend": {
+   "jev": 81,
+   "llm_uncertain": 11,
+   "llm": 1
+  },
+  "ms_p50": 583.0,
+  "ms_p95": 688.35
+ },
+ "models": {
+  "gpt-4o-mini": 214,
+  "gpt-4.1-mini": 60,
+  "gpt-4.1": 51
+ },
+ "rag_adelantado": {
+  "resultados": {
+   "sin_adelantar": 33,
+   "descartado": 36,
+   "aprovechado": 12,
+   "rehecho": 12
+  },
+  "latencia_turnos_rag": {
+   "aprovechado": {
+    "n": 12,
+    "p50": 3.799,
+    "p95": 9.035
+   },
+   "descartado": {
+    "n": 3,
+    "p50": 5.178,
+    "p95": 7.669
+   },
+   "rehecho": {
+    "n": 12,
+    "p50": 6.164,
+    "p95": 9.23
+   },
+   "sin_adelantar": {
+    "n": 14,
+    "p50": 4.872,
+    "p95": 6.906
+   }
+  },
+  "rehecho_por": {}
+ },
+ "run_file": "docs/robustness/synthetic-runs/2026-09-30-rag5-B.jsonl",
+ "client_latency": {
+  "turns": 93,
+  "conversations": 32,
+  "no_reply": 0,
+  "multi_bubble": 0,
+  "latency_p50": 3.0,
+  "latency_p95": 8.0,
+  "latency_max": 11
+ },
+ "quality": {
+  "results_file": "docs/robustness/golden-set/results/2026-09-30-rag5-B__gpt-5-mini-medium.json",
+  "model": "gpt-5-mini (medium)",
+  "dialogues": 32,
+  "dialogues_passed": 22,
+  "dialogues_pass_pct": 68.8,
+  "criteria_judged": 226,
+  "criteria_failed": 16,
+  "criteria_pass_pct": 92.9,
+  "not_applicable": 25,
+  "to_review": 5,
+  "errors": 0,
+  "by_category": {
+   "adaptado": 100.0,
+   "cambios": 100.0,
+   "curso": 88.9,
+   "deflection": 100.0,
+   "descuentos": 85.7,
+   "escalado": 100.0,
+   "grupo": 100.0,
+   "info": 85.7,
+   "logistica": 95.2,
+   "nacionalidad": 83.3,
+   "post-venta": 100.0,
+   "refresher": 84.6,
+   "reserva": 100.0,
+   "saludo": 100.0,
+   "seguridad": 100.0,
+   "tras-link": 70.6
+  }
+ }
+}

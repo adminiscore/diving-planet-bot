@@ -1,23 +1,19 @@
 ---
-description: Validate, update history, commit, and push current work
+description: Cerrar la sesión y dejar el relevo listo: validar, integrar, HISTORY, handoff, Plan Coral, mapa, commit, push y deploy
 ---
-# Close work
+# Close work — cierre de sesión y relevo
 
-Use this workflow before handing work to teammates. Keep commits focused and never stage sensitive exports.
+Objetivo: que quien venga detrás (Gadea, Álvaro, Gonzalo o una sesión nueva de Claude) pueda retomar leyendo UN
+bloque del handoff, con Plan Coral y el mapa al día, y con PRE sirviendo lo que dice el repo. Hazlo en orden; no
+te saltes pasos. Escribe todo en español.
 
-1. Read the operating context:
+## 1. Contexto y estado
 
-- `docs/project-history/README.md`
-- `docs/HISTORY.md`
-- `docs/project-history/session-handoff.md`
+- Lee `docs/project-history/session-handoff.md` (el bloque "▶️ RETOMAR AQUÍ" de arriba), la cabeza de
+  `docs/HISTORY.md` y, en `docs/plan-maestro-final.md`, la PARTE 8 (bloques "Estado al …").
+- `git status --short --branch` y `git log --oneline -10`.
 
-2. Check branch and pending changes:
-
-```powershell
-git status --short --branch
-```
-
-3. Inspect changed files and confirm there are no sensitive/raw files staged or unstaged:
+## 2. Datos sensibles
 
 ```powershell
 git diff --stat -- . ':!wasap'
@@ -25,108 +21,117 @@ git diff --cached --stat -- . ':!wasap'
 git status --short --ignored -- wasap data/knowledge_base
 ```
 
-Never stage `wasap/`, raw `_chat.txt`, media exports, `.bak`, `pre_dedup`, payment links, IDs, phone numbers, emails, or customer-identifying content unless sanitized.
+Nunca subas `wasap/`, `_chat.txt`, exportaciones de medios, `.bak`, `pre_dedup`, links de pago, IDs, teléfonos,
+correos ni nada que identifique a un cliente sin anonimizar. Nunca pegues claves en el chat ni en el repo (van en
+`.env.dev`). La contraseña de la base de datos no se repite nunca.
 
-4. Review conflicts/divergence before pushing:
+## 3. Integrar lo de los demás ANTES de subir
+
+Todas las ramas `pre_*` despliegan el MISMO PRE: lo que no esté integrado se pisa.
 
 ```powershell
-git fetch origin
-git status --short --branch
-git log --oneline --left-right --cherry-pick HEAD...@{upstream}
+git fetch --all
+git log --oneline HEAD..origin/<rama>        # para cada rama pre_* y la del compañero que esté trabajando
 ```
 
-If the branch is behind or diverged, stop and ask the user how to reconcile before pushing.
+Si otra rama tiene commits que la tuya no tiene: avance rápido si se puede (`git merge --ff-only`); si divergen,
+PARA y pregunta cómo reconciliar. Tu propia rama frente a su upstream: `git log --oneline --left-right
+--cherry-pick HEAD...@{upstream}`.
 
-5. Run standard validation when code changed:
+## 4. Validación (si cambió código)
+
+La suite SIEMPRE con `ENV_FILE=.env.ci` (sin él usa la clave real: ~20 min facturables y fallos aleatorios):
 
 ```powershell
-python -m pytest tests/test_chatwoot_buttons.py tests/test_conversational_core.py tests/test_rag_safety.py
+$env:ENV_FILE=".env.ci"; python -m pytest -q -p no:cacheprovider; $env:ENV_FILE=$null
 python -m ruff check src
-python -m compileall src tests
 ```
 
-While the `agent_arch` flag exists (multi-agent refactor, see
-`docs/multi-agent-refactor-plan.md`), a change in the routing/agent path must be green in the
-**3 modes** — that equivalence is the refactor's safety net:
+- Si cambió un prompt: `python scripts/snapshot_prompts.py --compare <antes>.json` (prueba que no cambió sin querer).
+- Si cambiaste un interruptor en `docker-compose.vps.yml`, cámbialo también en `src/config.py` (`tests/test_flags_pinned.py`).
+- Si añadiste un interruptor: su frase en `docs/arquitectura/componentes.json` (`tests/test_arquitectura.py`).
 
-```powershell
-python -m pytest -q
-$env:AGENT_ARCH="true"; python -m pytest -q; $env:AGENT_ARCH=$null
-$env:AGENT_ARCH_SHADOW="true"; python -m pytest -q; $env:AGENT_ARCH_SHADOW=$null
-```
+## 5. Rondas y mediciones: guardar ANTES de subir
 
-If you moved a prompt, also prove it did not change:
+- Un push a `pre_*` **recrea el contenedor**: borra sus logs y mata cualquier medición en curso (una ronda, un
+  `rag_piezas --codigo-local`, un juez). Antes de subir, mira que nadie esté midiendo:
+  `ssh ... "ps -eo args | grep 'docker exec -i' | grep -v grep"` (vacío = libre) y, si trabajas con otros, avísales.
+- Si hiciste una ronda: foto (`python -m scripts.turn_metrics --from-run <ronda>.jsonl --out docs/robustness/snapshots/<ronda>.json`)
+  y log de PRE (`docker logs dp-pre-bot > docs/robustness/logs-pre-<ronda>.txt`) ANTES del push, y súbelos con el commit.
 
-```powershell
-python scripts/snapshot_prompts.py -o before.json   # before the change
-python scripts/snapshot_prompts.py --compare before.json
-```
+## 6. HISTORY
 
-If retrieval/vector-store changed, also run:
+Si hubo un hito: sección nueva arriba de `docs/HISTORY.md` (siguiente versión, fecha `YYYY-MM-DD`, viñetas cortas:
+qué, por qué, cómo se midió, resultado, marcha atrás si hay flag).
 
-```powershell
-python -m pytest tests/test_retrieval_rerank.py
-```
+## 7. Handoff: UN solo punto de entrada
 
-6. Update `docs/HISTORY.md` if the work is a meaningful milestone:
+En `docs/project-history/session-handoff.md`:
 
-- Add a new version section at the top.
-- Use approximate semver.
-- Use date `YYYY-MM-DD`.
-- Keep bullets short and user-facing.
+- Escribe (o reescribe) el bloque **`### ▶️ RETOMAR AQUÍ — <fecha> (<quién>): <resumen en una línea>`** justo debajo
+  del aviso "📏 LEER ANTES DE MEDIR", con este esquema:
+  - **Estado:** qué rama sirve PRE y en qué commit; qué flags nuevos están encendidos/apagados; suite y ruff; si
+    Plan Coral y el mapa están al día; qué deben integrar los demás.
+  - **Hecho hoy (HISTORY x.y.z):** tabla o viñetas con qué, estado (promocionado / apagado con medida /
+    descartado) y dónde está.
+  - **Siguiente, en orden:** los pasos concretos, con su criterio de "hecho".
+  - **Cómo medir** lo siguiente (comandos exactos) y **avisos** aprendidos hoy.
+- El "RETOMAR AQUÍ" anterior pasa a histórico: cambia su título a `### ✅ <fecha> (<quién>) — <resumen>`. Solo
+  puede haber UN "RETOMAR AQUÍ" (compruébalo con `grep -c "RETOMAR AQUÍ"`).
+- Si el orden del plan cambió, añade o actualiza el bloque "Estado al <fecha>" de la PARTE 8 del plan maestro.
 
-7. Review and update `docs/project-history/session-handoff.md` before closing:
+## 8. Plan Coral (https://claude.ai/artifact/XiGd3kguTNwwqTnH7mQwgi)
 
-- Update it if architecture, workflow, risks, validation, current product context, environment details, or next-session priorities changed.
-- If no update is needed, explicitly mention in the final report that `session-handoff.md` was reviewed and did not require changes.
-- Do not leave important session context only in chat; preserve it in `session-handoff.md` for the next developer/session.
+- **Si tienes la herramienta `ArtifactData`:** primero aplica la cola `docs/tracking/data/plan-coral-cambios-pendientes.json`
+  si tiene entradas (lee antes cada tarea: NO apliques un estado que la página ya tenga superado —p. ej. devolver a
+  "pendiente" algo que ya está "hecha"—; las notas antiguas van DETRÁS de la nota actual, marcadas con su fecha y
+  autor); deja `pendientes: []` con `aplicado_el` y `aplicado_por`. Después actualiza las tareas que tocaste
+  (estado `pendiente` / `en_curso` / `hecha` / `bloqueada`, nota con qué se hizo, cómo se midió y qué queda) y añade
+  una entrada de bitácora (`log`, con `at`, `byLabel` y `text`). Escribe siempre con `if_version` (la versión leída).
+- **Si NO la tienes** (sesiones de otra organización): escribe los cambios en la cola, con `coleccion`, `operacion`,
+  `doc_id` y `campos` (o `anteponer_a_la_nota`), y súbela con el commit.
+- No asignes responsables: `owner` = "—" salvo que el equipo lo diga.
+- Tras cambios grandes (cerrar una fase), refresca la copia del repo: exporta las colecciones con ArtifactData
+  (`list` con `out_dir`), `python docs/tracking/consolidate_export.py <carpeta>`, `python docs/tracking/embed_backup.py`
+  y republica `docs/tracking/plan-coral.html` en la MISMA URL (comprueba antes que el código de la página publicada es
+  el del repo).
 
-8. Stage only intended files explicitly, for example:
+## 9. Mapa de Coral (https://claude.ai/artifact/SnK5Dku1vAinbJ94b8aNGd)
 
-```powershell
-git add docs/HISTORY.md docs/project-history/session-handoff.md <changed-files>
-```
-
-9. Commit with a concise message:
-
-```powershell
-git commit -m "feat: describe the completed milestone"
-```
-
-10. Push the current branch:
-
-```powershell
-git push origin HEAD
-```
-
-11. If the branch is a `pre_*` branch (every push to one deploys PRE), confirm the deploy really happened.
-A red CI skips the deploy WITHOUT any warning (24-25 Sep 2026: PRE served old code for a day and a half):
-
-```powershell
-python -m scripts.check_deploy
-```
-
-It waits for the GitHub run of that commit, then checks by SSH that PRE serves that commit and branch, is
-healthy, and has every flag/model that `docker-compose.vps.yml` pins. Do not report the work as deployed
-until it exits 0; if CI failed it prints the failing step.
-
-12. Keep the **Mapa de Coral** up to date (https://claude.ai/artifact/SnK5Dku1vAinbJ94b8aNGd). If the graph, `src/agents/`, `src/config.py`,
-`docker-compose.vps.yml` or a new measured round changed, regenerate its data and republish it at the SAME URL:
+Si cambió el grafo, `src/agents/`, `src/config.py`, `docker-compose.vps.yml` o hay una ronda medida nueva:
 
 ```powershell
 $env:ENV_FILE=".env.ci"; python -m scripts.arquitectura
 ```
 
-It fails (and so does `tests/test_arquitectura.py` in CI) if a graph node has no description or a cited file,
-function, flag or model no longer exists: fix `docs/arquitectura/componentes.json`. Then publish
-`docs/arquitectura/mapa-coral.html` with the Artifact tool, `url` = the map's URL, and `files` =
-`arquitectura.json`, `logos.json`, `historial/indice.json` and every `historial/*.json` (new versions appear there only when the
-structure changed). Commit the regenerated files.
+Falla si una pieza del grafo no tiene descripción o se cita un fichero, función, interruptor o modelo que no existe:
+arréglalo en `docs/arquitectura/componentes.json`. Luego publica `docs/arquitectura/mapa-coral.html` con el Artifact
+tool (`url` = la del mapa; `files` = `arquitectura.json`, `logos.json`, `historial/indice.json` y cada
+`historial/*.json`) y haz commit de lo regenerado. Comprueba que el mapa conoce todos los interruptores de
+`settings` y enseña la última ronda.
 
-13. Finish by reporting:
+## 10. Commit y push
 
-- Commit hash.
-- Remote branch.
-- Validation results.
-- Deploy check result (`scripts.check_deploy`) when a `pre_*` branch was pushed.
-- Any deferred work.
+Añade solo lo que toca (`git add <ficheros>`), commit con mensaje en español que diga qué y cómo se midió, y:
+
+```powershell
+git push origin HEAD
+```
+
+## 11. Comprobar el deploy (ramas `pre_*`)
+
+Un CI en rojo se salta el deploy SIN avisar. No des nada por desplegado hasta que esto salga bien:
+
+```powershell
+python -m scripts.check_deploy
+```
+
+Si la API de GitHub da 403 (límite de peticiones), repite con `--no-wait` pasados unos segundos. Si CI falló, dice
+qué paso falló.
+
+## 12. Informe final (al usuario, en español)
+
+- Commit y rama; si PRE sirve ese commit (resultado de `check_deploy`).
+- Validación (suite y ruff).
+- Qué quedó en el handoff, en Plan Coral y en el mapa (o por qué no hizo falta tocarlos).
+- Lo pendiente y el coste aproximado de la sesión (OpenAI) si hubo rondas o mediciones.

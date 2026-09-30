@@ -81,9 +81,12 @@ async def test_si_el_contexto_cambio_entre_medias_se_rehace_con_el_de_verdad(fla
          patch("src.agents.supervisor._build_extra_context", side_effect=lambda s: next(resumenes)):
         _turno_hasta_la_reserva(state, "¿qué incluye?")
         core._maybe_launch_answer(state, "¿qué incluye?", {})
-        respuesta = await core._take_parallel_answer(state)
+        with patch("src.observability.note_turn") as note:
+            respuesta = await core._take_parallel_answer(state)
     assert len(rag.llamadas) == 2
     assert respuesta == "respuesta con [despues]"
+    # queda apuntado QUÉ cambió, para saber por qué no se aprovechó
+    assert note.call_args.kwargs == {"rag_adelantado": "rehecho", "rag_rehecho_por": "resumen"}
 
 
 @pytest.mark.asyncio

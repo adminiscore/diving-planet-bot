@@ -13,7 +13,65 @@ Read this file before changing code in the Diving Planet Bot. For a quick versio
 
 > **📏 LEER ANTES DE MEDIR — decisiones del 24-sep-2026 (Gadea):** (1) latencia y llamadas con nuestros logs `[TURN_METRICS]` + `scripts/turn_metrics.py`, no con Langfuse (plan gratuito superado, reinicio 16-oct); (2) pruebas A/B por escalones, juzgando solo los diálogos que cambian. Todo en `docs/robustness/protocolo-medicion.md`.
 
-### ▶️ RETOMAR AQUÍ — 30-sep tarde (Gadea): rag-3 CERRADA y promocionada; siguiente, ronda completa con el examen oculto
+### ▶️ RETOMAR AQUÍ — 30-sep noche (Gadea → Álvaro): rag-5 medido (el RAG adelantado gana 1,2 s cuando se aprovecha, pero solo en el 29 % de los turnos); siguiente, subir ese %
+
+**Estado.** PRE sirve `feature/pre_gadea` (ver el commit del cierre en `git log`; `check_deploy` en verde).
+**Álvaro y Gonzalo: integrad `feature/pre_gadea` en vuestra rama antes de subir.** En PRE: `RAG_KB_V2` y
+`RAG_BUSQUEDA_ORIGEN` promocionados; **`RAG_ADELANTADO` (rag-5) ENCENDIDO pero SIN promocionar** (comentario en
+`src/config.py` y `docker-compose.vps.yml`); `RAG_FICHA_DEL_SERVICIO` y `RAG_CONTESTA_LO_QUE_SABE` apagados con medida.
+Suite 2845 passed, ruff limpio. Plan Coral (tarea rag-5 "en curso" + bitácora) y Mapa de Coral al día.
+
+**Hecho hoy (HISTORY 0.29.86):**
+
+| Qué | Estado | Dónde |
+|---|---|---|
+| RAG a la vez que el enrutador, con huella de contexto | encendido en PRE, sin promocionar | `conversational_core.lanzar_rag_adelantado` / `_adoptar_o_rehacer` / `cancelar_rag_adelantado`; `graph.py` (nodo del enrutador) |
+| Ronda core A/B (rag5-A = e92c6bb, rag5-B = a0fe659) | medida: calidad igual, −1,2 s en el 29 % de los turnos RAG | `docs/robustness/snapshots/2026-09-30-rag5-{A,B}.json`, `golden-set/results/2026-09-30-rag5-{A,B}__gpt-5-mini-medium.json`, `logs-pre-2026-09-30-rag5-B.txt` |
+| Diagnóstico de por qué se rehace (`rag_rehecho_por`) + bloque `rag_adelantado` en la foto | hecho, **sin datos aún** (se añadió después de la ronda B) | `observability.py`, `scripts/turn_metrics.py` |
+| Test de mapa atrasado + mapa regenerado | hecho | `tests/test_arquitectura.py` |
+
+Números de la ronda B: aprovechado 12 (p50 5,5 → **3,8 s**), rehecho 12 (sin cambio), sin adelantar 14 (primer
+mensaje), descartado 36 + 3 turnos RAG que contestaron por otro camino. Mediana RAG 5,37 → 5,31 s; llamadas por
+turno 3,0 → 3,49. Calidad 22/32 en las dos (criterios 94,8 → 92,9 %); leídas las 11 regresiones, ninguna es de rag-5
+(las 2 de turnos aprovechados salen igual en A).
+
+**Siguiente, en orden (acordado con Gadea el 30-sep):**
+1. **Saber por qué se rehace.** Repetir la ronda core con el código actual (ya apunta `rag_rehecho_por`) o, más barato,
+   leer los motivos en los turnos de cualquier ronda nueva. Hipótesis: el **resumen** cambia porque las notas de ESTE
+   mensaje (extracción) se calculan después de lanzar el adelantado. Si es eso, la solución NO es ignorar las notas
+   (se contestaría con contexto viejo), sino **lanzar el adelantado cuando las notas estén** (o las notas antes, a la
+   vez que Jev). Hecho = motivos contados en la foto y cambio aplicado.
+2. **Primer mensaje** (14 turnos RAG sin adelantar): hoy no se adelanta porque el idioma no está decidido en
+   WELCOME/LANGUAGE. Aplicar al adelantado la misma regla rápida de idioma que usa el bot al empezar; si la regla no
+   sabe el idioma, no se adelanta.
+3. **Otros caminos** (3 turnos RAG descartaron su adelantado: buceo adaptado, ruta de información): que adopten el
+   adelantado igual que `_maybe_launch_answer`.
+4. Repetir la ronda core B (~1 h, ~1-2 $) y comparar con rag5-A. **Criterio para promocionar:** se aprovecha en
+   ≥ 50 % de los turnos RAG, la mediana RAG baja de forma visible (≥ 0,5 s) y la calidad no cambia (regresiones leídas
+   a mano). Si no llega, apagar `RAG_ADELANTADO` (cuesta ~+16 % de llamadas).
+5. Después, al final del bloque RAG: **ronda COMPLETA del golden con el examen oculto** (116 + 21, ~2 $) y rag-6.
+- Descartado ya (no reintentar): juez más rápido (B) y prompt más fino (C), caché de respuestas (por el contexto).
+- Pendientes menores: el Open Water "ya en las islas" dice vuelta al hotel 4:30 p.m. el día 1 (frente a 12-13 h,
+  preguntar a Gadea); a veces da solo precios "ya en las islas" sin saber el origen; "no lo tengo a la mano" con el
+  precio en COP del paquete de 5 (sale en A y B); "¡Qué bien que venga alguien más!" sin que haya acompañante (flujo,
+  sale en A y B); se puede borrar el esquema `kb_v2_prueba` de la base de PRE.
+
+**Cómo medir:**
+```bash
+ENV_FILE=.env.dev python -m scripts.run_synthetic_pre --name <fecha>-rag5-C --sample core   # ~1 h; sin pushes mientras corre
+ssh ... "docker logs dp-pre-bot" > docs/robustness/logs-pre-<ronda>.txt                     # ANTES de cualquier push
+python -m scripts.turn_metrics --from-run docs/robustness/synthetic-runs/<ronda>.jsonl --label <ronda> --out docs/robustness/snapshots/<ronda>.json
+#   → bloque "rag_adelantado": resultados, latencia_turnos_rag por resultado, rehecho_por
+ENV_FILE=.env.dev python -m scripts.judge_golden_set --run docs/robustness/synthetic-runs/<ronda>.jsonl --snapshot docs/robustness/snapshots/<ronda>.json
+ENV_FILE=.env.dev python -m scripts.ab_judge_compare 2026-09-30-rag5-A <ronda>
+```
+**Avisos de hoy:** (a) el juez necesita `ENV_FILE=.env.dev` (sin él sale al instante con "Falta OPENAI_API_KEY");
+(b) para ver si una regresión es de rag-5, cruzad el `conv` de la ronda con `rag_adelantado` de `[TURN_METRICS]`: solo
+cuenta si el turno fue "aprovechado"; (c) el test nuevo del mapa falla en cuanto se guarda una foto de ronda o se
+cambia un flag sin regenerar el mapa: `ENV_FILE=.env.ci python -m scripts.arquitectura`, commit y republicar
+(`/closework` paso 9); (d) tests de enrutamiento que cuentan llamadas al RAG deben fijar `rag_adelantado` apagado.
+
+### ✅ 30-sep tarde (Gadea) — rag-3 CERRADA y promocionada
 
 **Estado.** PRE sirve `feature/pre_gadea` (incluye todo `pre_alvaro`): **Álvaro y Gonzalo, integrad `feature/pre_gadea`
 en vuestra rama antes de subir.** En PRE: `RAG_KB_V2` y `RAG_BUSQUEDA_ORIGEN` encendidos; `RAG_FICHA_DEL_SERVICIO`

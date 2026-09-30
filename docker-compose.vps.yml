@@ -215,7 +215,7 @@ services:
       # Revert = "false" aqui y en config.py.
       RAG_BUSQUEDA_ORIGEN: "true"
       # rag-5 (30-sep): el RAG arranca a la vez que el enrutador (Jev) y se aprovecha solo con el mismo contexto
-      # (si no, se rehace). ENCENDIDO para la ronda core B; si no pasa, "false" aqui y en config.py.
+      # (si no, se rehace). ENCENDIDO SIN PROMOCIONAR (HISTORY 0.29.86); si no pasa, "false" aqui y en config.py.
       RAG_ADELANTADO: "true"
       # Refactor multi-agente (docs/multi-agent-refactor-plan.md) — validación en
       # PRE antes del corte del legacy (Fase 5.2). STAGE B (ahora): el GRAFO sirve

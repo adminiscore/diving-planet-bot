@@ -452,6 +452,15 @@ medias (u3-1 ✅, u3-4 ✅ promocionada, u3-5 🟡); PRE con u3-4 encendido. Sui
 | **11** | R6: robustez de producción | r6-2 (guardrails), g-5 (carga) | el bot nunca deja sin respuesta; inyección medida; p95 con N clientes a la vez |
 | **12** | Q5: calidad continua y entrega | q5-1, g-3, g-4, g-4b, g-6, m0-4, q5-2 | gate en CI; simulador; bucle producción → golden; testers reales; SOAK; entrega |
 
+> **Estado al 30-sep noche (Gadea), fase RAG:** rag-1, rag-2 y rag-3 ✅ promocionadas (HISTORY 0.29.70-0.29.85);
+> rag-4 ❌ descartada con medida (89 → 83 %). **rag-5 ⏳ en curso** (0.29.86): el RAG arranca a la vez que el
+> enrutador (`RAG_ADELANTADO`, encendido en PRE sin promocionar); gana 1,2 s cuando se aprovecha, pero solo en el 29 %
+> de los turnos RAG. Siguiente: subir ese % (motivos de rehacer, primer mensaje, otros caminos) y repetir la ronda
+> core; criterio ≥ 50 % aprovechado, mediana RAG −0,5 s, calidad igual. Juez más rápido, prompt más fino y caché de
+> respuestas, descartados. **Orden acordado:** terminar rag-5 → ronda COMPLETA con el examen oculto (al final del
+> bloque, no antes) → rag-6. Detalle: `session-handoff.md`, "RETOMAR AQUÍ" del 30-sep noche. La tabla de abajo es
+> la del 29-sep (sus estados de rag-3/rag-4 están superados).
+
 > **Estado al 29-sep (Gadea), dentro de (3) "RAG, calidad y latencia" → fase RAG de Plan Coral.** Tras un análisis
 > a fondo (`docs/robustness/analisis-rag-2026-09-29.md`: el lastre es la estructura y los datos, no el modelo), el
 > bloque se ordena en tareas **rag-1 → rag-6**, en este orden y sin saltarse ninguna:

@@ -90,3 +90,24 @@ def test_el_script_hace_la_misma_foto_que_langfuse():
     assert snap["nodes"]["booking"]["n"] == 3
     assert snap["router"]["by_backend"] == {"jev": 2, "llm": 1}
     assert snap["business"]["conversations"] == 2
+
+
+def test_la_foto_cuenta_el_rag_adelantado_y_que_lo_hizo_rehacer():
+    """rag-5: cuántos turnos aprovecharon el RAG lanzado a la vez que el enrutador, su latencia y, de los que se
+    rehicieron, qué parte del contexto cambió."""
+    def linea(turn_type, latencia, **extra):
+        m = {"start": "2026-09-30T10:00:00", "turn_type": turn_type, "latency": latencia, **extra}
+        return f"INFO: {obs.TURN_METRICS_TAG} {json.dumps(m)}"
+
+    turnos = turn_metrics.parse_lines([
+        linea("rag", 3.8, rag_adelantado="aprovechado"),
+        linea("rag", 6.2, rag_adelantado="rehecho", rag_rehecho_por="historial,resumen"),
+        linea("rag", 5.9, rag_adelantado="rehecho", rag_rehecho_por="resumen"),
+        linea("reserva", 1.0, rag_adelantado="descartado"),
+        linea("reserva", 1.1),
+    ])
+    foto = turn_metrics.rag_adelantado(turnos)
+    assert foto["resultados"] == {"aprovechado": 1, "rehecho": 2, "descartado": 1, "sin_adelantar": 1}
+    assert foto["latencia_turnos_rag"]["aprovechado"]["n"] == 1
+    assert foto["latencia_turnos_rag"]["rehecho"]["n"] == 2
+    assert foto["rehecho_por"] == {"resumen": 2, "historial": 1}

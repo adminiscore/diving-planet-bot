@@ -182,7 +182,8 @@ class Settings(BaseSettings):
     rag_busqueda_origen: bool = True
     # rag-5 (30-sep): el RAG arranca a la vez que el enrutador (Jev) en vez de despues, y se aprovecha solo si su
     # contexto es exactamente el de la llamada de siempre (si no, se rehace). Estimado: -0,7 s por pregunta, ~+20 %
-    # de coste (los RAG que se descartan en turnos sin pregunta). ENCENDIDO para la ronda core B (30-sep).
+    # de coste (los RAG que se descartan en turnos sin pregunta). Medido (rag5-A/B, HISTORY 0.29.86): -1,2 s cuando
+    # se aprovecha, pero solo en el 29 % de los turnos RAG; calidad igual. ENCENDIDO SIN PROMOCIONAR hasta subir ese %.
     rag_adelantado: bool = True
     # rag-4 (29-sep): la regla del "no lo tengo" del prompt del RAG es TODO-O-NADA -- dice "si la respuesta no esta
     # en el contexto, dilo" y no dice nada de contestar la parte que SI esta, asi que ante una pregunta con varias

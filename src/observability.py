@@ -245,6 +245,8 @@ def turn_metrics_line(conversation_id: str, facts: dict, started_at: str, second
     }
     if facts.get("rag_adelantado"):
         payload["rag_adelantado"] = facts["rag_adelantado"]  # rag-5: aprovechado / rehecho / descartado
+    if facts.get("rag_rehecho_por"):
+        payload["rag_rehecho_por"] = facts["rag_rehecho_por"]  # rag-5: qué parte de la huella cambió
     return f"{TURN_METRICS_TAG} {json.dumps(payload, ensure_ascii=False, default=str)}"
 
 

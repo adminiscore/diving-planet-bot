@@ -91,3 +91,19 @@ def test_reparto_del_rag_medido_con_los_logs_de_la_ronda(tmp_path, monkeypatch):
     for origen in ("r_guardas", "r_revisor", "r_reintento"):
         assert abs(sum(v for (de, _), v in pesos.items() if de == origen) - 1) < 1e-3
     assert arq.conteos_rag(tmp_path / "sin-log.json") is None
+
+
+def test_el_mapa_publicado_no_se_ha_quedado_atras():
+    """30-sep: el mapa se quedó un día atrás (sin `rag_busqueda_origen` ni `rag_adelantado`, con 364 documentos) y
+    nada lo dijo. `arquitectura.json` tiene que ser lo que saldría hoy: mismas piezas, flechas, interruptores (con su
+    valor en código y en PRE) y modelos, y los tiempos de la última ronda medida. Si falla:
+    `ENV_FILE=.env.ci python -m scripts.arquitectura`, commit y republicar el mapa (ver /closework)."""
+    curado, g, bools, modelos = _entradas()
+    _, _, pre = arq.ajustes()
+    foto_path, foto = arq.ultima_foto()
+    hoy = arq.construir(curado, g, bools, modelos, pre, foto_path, foto)
+    guardado = json.loads(arq.SALIDA.read_text(encoding="utf-8"))
+    assert arq.estructura(guardado) == arq.estructura(hoy)
+    assert {c["id"]: c.get("que_hace") for c in guardado["componentes"]} == \
+        {c["id"]: c.get("que_hace") for c in hoy["componentes"]}
+    assert guardado["ronda"]["etiqueta"] == hoy["ronda"]["etiqueta"]

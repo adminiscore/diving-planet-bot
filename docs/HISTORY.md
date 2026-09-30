@@ -1,6 +1,17 @@
 History
 =======
 
+0.29.86 - (2026-09-30)
+----------------------
+* **rag-5 · el RAG arranca a la vez que el enrutador (flag `RAG_ADELANTADO`, ENCENDIDO en PRE, sin promocionar).** Mientras Jev decide la ruta (~0,7 s) ya se está buscando y redactando la respuesta; solo se usa si su contexto es EXACTAMENTE el de la llamada de siempre (huella: pregunta, idioma, historial, resumen sin la hora y origen). Si algo cambió, se tira y se rehace (nunca contesta con otro contexto ni tarda más que antes); si el turno no pide respuesta, se cancela al cerrarlo.
+* **Ronda core A/B** (A = e92c6bb, B = a0fe659; 93 turnos cada una; `docs/robustness/snapshots/2026-09-30-rag5-{A,B}.json`):
+  - Turnos donde se **aprovecha** (12): p50 **5,5 → 3,8 s** (−1,2 s de media, emparejados con A). **Rehechos** (12): sin cambio (+0,5 s, ruido). **Sin adelantar** (14, primer mensaje): igual. **Descartados** 36 (turnos sin pregunta) + 3 turnos con RAG que contestaron por otro camino.
+  - Solo se aprovecha en el **29 % de los turnos con RAG** → la mediana RAG apenas se mueve (5,37 → 5,31 s). Llamadas por turno 3,0 → 3,49 (~+16 %, ~+0,01 $ por conversación).
+  - **Calidad igual:** 22/32 diálogos en las dos; criterios 94,8 → 92,9 %. Leídas las 11 regresiones: **ninguna la causa rag-5**. 9 salen en turnos que fueron por el camino de siempre (rehecho/descartado), y las 2 de turnos aprovechados ("no lo tengo a la mano" con el precio en COP del paquete de 5; "¡Qué bien que venga alguien más!" sin acompañante) salen igual y el mismo número de veces en A. Dos "fugas" son el link de reserva normal (ruido del juez).
+* **Diagnóstico para subir el 29 %:** `[TURN_METRICS]` apunta `rag_rehecho_por` (qué parte de la huella cambió: mensaje / idioma / historial / resumen / origen) y `turn_metrics` saca en la foto el bloque `rag_adelantado` (resultados, latencia de los turnos RAG por resultado y motivos de rehacer).
+* **Mapa de Coral al día** (`rag_busqueda_origen`, `rag_adelantado`, 368 documentos, tiempos de rag5-B) y **test nuevo que falla si el mapa se queda atrás** del código, de PRE o de la última ronda (`test_el_mapa_publicado_no_se_ha_quedado_atras`): si falla, `ENV_FILE=.env.ci python -m scripts.arquitectura` y republicar.
+* `/closework` y `/startcontext` reescritos: integrar ramas de los demás, no subir si alguien mide en PRE, foto y log antes del push, un solo "RETOMAR AQUÍ", Plan Coral y mapa en el cierre.
+
 0.29.85 - (2026-09-30)
 ----------------------
 * **rag-3 CERRADA: paquete promocionado en PRE (`RAG_BUSQUEDA_ORIGEN` encendido + ficha del refresher + datos).** Ronda core A/B en PRE (A = `pre_alvaro` a1edcc2; B = 8f2bb84), juzgadas con la misma referencia: diálogos sin fallos 22 → **23/32**, criterios 93,0 → 93,4 % (dentro del ruido medido del juez); turnos RAG p50 5,2 → 4,9 s, p95 8,5 → 8,3 s. 4 mejoras ("regreso otro día" escala bien, acompañante en lancha, una fuga y una repregunta menos). De las 6 "regresiones", leídas: 1 real (`referral-mas-refresher`: con las fichas del curso referido y del refresher juntas el bot dijo que "los dos" piden teoría, piscina y carta de referido — el cruce entre servicios que ya vio Gonzalo), 2 de flujo (no RAG), 2 de ruido del juez (misma respuesta en A y B) y 1 dato de más pero cierto (suplemento de Nitrox).

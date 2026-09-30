@@ -4924,6 +4924,7 @@ def _entradas_rag(state: ConversationState, history: list) -> dict:
 # corrección, un cambio de idioma...), se tira y se lanza la de siempre: nunca contesta con otro contexto y nunca
 # tarda más que hoy. Si el turno no llega a pedir respuesta, se cancela al cerrarlo (ese es el coste extra).
 _HORA_DEL_RESUMEN = re.compile(r"^(Fecha y hora actual|Current date and time): [^(]*\([^)]*\)\.\s*")
+_PARTES_HUELLA = ("mensaje", "idioma", "historial", "resumen", "origen")  # en el orden de `_huella_rag`
 
 
 def _huella_rag(message: str, entradas: dict) -> tuple:
@@ -4969,13 +4970,16 @@ async def _adoptar_o_rehacer(state: ConversationState, message: str, history: li
 
     await await_pending_notes(state)
     entradas = _entradas_rag(state, history)
-    if _huella_rag(message, entradas) == adelantado["huella"]:
+    huella = _huella_rag(message, entradas)
+    if huella == adelantado["huella"]:
         note_turn(rag_used=True, rag_adelantado="aprovechado")
         logger.info("[CORE][RAG5] respuesta adelantada aprovechada")
         return await adelantado["task"]
     adelantado["task"].cancel()
-    note_turn(rag_adelantado="rehecho")
-    logger.info("[CORE][RAG5] el contexto cambió entre medias: se rehace la respuesta")
+    # Diagnóstico (30-sep): la mitad de los intentos de la ronda rag5-B se rehicieron y no se sabía por qué.
+    cambio = ",".join(n for n, a, b in zip(_PARTES_HUELLA, adelantado["huella"], huella, strict=True) if a != b)
+    note_turn(rag_adelantado="rehecho", rag_rehecho_por=cambio)
+    logger.info(f"[CORE][RAG5] el contexto cambió entre medias ({cambio}): se rehace la respuesta")
     return await supervisor.rag_answer(message, **entradas)
 
 
