@@ -15,7 +15,8 @@ def docs():
 
 
 def test_una_ficha_por_servicio_y_origen_en_cada_idioma(docs):
-    fichas = [d for d in docs if d["metadata"]["key"].startswith("ficha:")]
+    fichas = [d for d in docs if d["metadata"]["key"].startswith("ficha:")
+              and not d["metadata"]["key"].startswith("ficha:refresher:")]  # las del refresher, en su test
     por_idioma = {lang: {d["metadata"]["service_id"] for d in fichas if d["metadata"]["lang"] == lang}
                   for lang in ("es", "en")}
     assert por_idioma["es"] == por_idioma["en"] and len(por_idioma["es"]) == len(fichas) // 2
@@ -61,3 +62,25 @@ async def test_con_la_base_v2_no_hay_empujones_por_regex(monkeypatch):
         monkeypatch.setattr(settings, "rag_kb_v2", flag)
         docs = await vector_store.search_knowledge_base("¿qué equipo llevo?", lang="es")
         assert docs[0]["id"] == primero
+
+
+def test_el_refresher_tiene_ficha_propia_por_origen_y_es_la_del_minicurso(docs):
+    """rag-3 (30-sep, Gadea: "el refresher es la misma info que el minicurso"): una ficha por origen e idioma, con
+    el formulario médico que piden cursos y minicursos."""
+    fichas = {(d["metadata"]["origin"], d["metadata"]["lang"]): d for d in docs
+              if d["metadata"]["key"].startswith("ficha:refresher:")}
+    assert set(fichas) == {(o, lang) for o in ("cartagena", "islas") for lang in ("es", "en")}
+    es = fichas[("cartagena", "es")]
+    assert es["content"].startswith("Ficha del servicio: Refresher") and "Minicurso de Buceo" in es["content"]
+    assert "formulario médico" in es["content"] and es["metadata"]["service_id"] == "minicourse"
+
+
+@pytest.mark.asyncio
+async def test_el_esquema_de_la_base_v2_se_puede_cambiar_para_medir(monkeypatch):
+    monkeypatch.setattr(vector_store, "_pool", None)
+    monkeypatch.setattr(settings, "rag_kb_v2", True)
+    monkeypatch.setattr(settings, "rag_kb_esquema", "kb_v2_prueba")
+    with patch("asyncpg.create_pool", new=AsyncMock(return_value=object())) as crear:
+        await vector_store._get_pool()
+    assert crear.call_args.kwargs["server_settings"] == {"search_path": "kb_v2_prueba,public"}
+    monkeypatch.setattr(vector_store, "_pool", None)

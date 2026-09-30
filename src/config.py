@@ -164,6 +164,9 @@ class Settings(BaseSettings):
     # `scripts/kb_v2.py`). Apagado = `public.kb_documents` de siempre. PROMOCIONADO 29-sep (HISTORY 0.29.72): core
     # rag2-A 92,5 % -> rag2-B 94,3 %, sin regresiones atribuibles. Marcha atras: apagarlo (aqui y en el compose).
     rag_kb_v2: bool = True
+    # Esquema de la base v2 que lee la busqueda con `rag_kb_v2`. Solo para medir una base nueva sin tocar la que usa
+    # PRE (p. ej. RAG_KB_ESQUEMA=kb_v2_prueba con `rag_piezas --codigo-local`); en PRE es siempre "kb_v2".
+    rag_kb_esquema: str = "kb_v2"
     # rag-3 (29-sep): si ya se sabe QUE servicio mira el cliente, su ficha entera (la misma que la de la base v2,
     # `catalog.service_fact_sheet`) va SIEMPRE al contexto, en vez de depender de que la busqueda la encuentre.
     # Motivo medido (`rag_piezas`, 2026-09-28-rag2-B2): con `selected_service` puesto, la ficha NO entraba en el

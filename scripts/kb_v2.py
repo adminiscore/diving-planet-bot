@@ -32,7 +32,7 @@ from src.config import settings
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-SCHEMA = "kb_v2"
+SCHEMA = settings.rag_kb_esquema  # "kb_v2"; otro solo para medir sin tocar PRE (--esquema)
 CURADA = DATA_DIR / "curada"
 
 _T = {
@@ -75,6 +75,43 @@ def ficha_servicio(service_id: str, svc: dict, lang: str) -> dict:
         "origin": "islas" if island else "cartagena", "topics": detect_topics(texto)}}
 
 
+_REFRESHER = {
+    "es": ("Ficha del servicio: Refresher (repaso para buzos certificados con más de 2 años sin bucear) — {origen}",
+           "El refresher es la MISMA actividad que el Minicurso de Buceo: misma información, itinerario, requisitos y "
+           "precio. Se reserva como '{nombre}'. Lo que sigue es la ficha de ese minicurso."),
+    "en": ("Service sheet: Refresher (review for certified divers who haven't dived in more than 2 years) — {origen}",
+           "The refresher is the SAME activity as the Dive Mini Course: same information, itinerary, requirements and "
+           "price. It is booked as '{nombre}'. Below is that mini course's sheet."),
+}
+
+
+def fichas_refresher(services: dict) -> list[dict]:
+    """rag-3 (30-sep, decisión de Gadea: "el refresher es la misma info que el minicurso"): una ficha propia del
+    refresher por origen, que es la del servicio con el que se vende (registro de actividades, `refresher` →
+    minicurso) con un encabezado que dice qué es. Sin ella, "necesito un refresher, ¿qué completo antes?" no
+    encontraba el formulario médico y el bot le atribuía las 4 h de teoría del Open Water (`rag_piezas`)."""
+    from src.domain import activities as dom
+    from src.flows.catalog import service_fact_sheet
+
+    docs = []
+    for location, origen in (("cartagena", "cartagena"), ("island", "islas")):
+        ids = dom.service_ids("refresher", location)
+        if not ids or ids[0] not in services:
+            continue
+        sid = ids[0]
+        for lang in ("es", "en"):
+            titulo, nota = _REFRESHER[lang]
+            ficha = service_fact_sheet(sid, lang, services[sid])
+            separador = "\n\n"
+            cuerpo = ficha.split(separador, 1)[1] if separador in ficha else ficha  # sin el título del minicurso
+            texto = separador.join([titulo.format(origen=_T[lang]["islas" if origen == "islas" else "desde"]),
+                                    nota.format(nombre=services[sid].get(f"name_{lang}") or sid), cuerpo])
+            docs.append({"content": texto, "metadata": {
+                "source": "services", "key": f"ficha:refresher:{sid}", "service_id": sid, "lang": lang,
+                "origin": origen, "topics": detect_topics(texto)}})
+    return docs
+
+
 def _qa(pregunta: str, otras: list[str], respuesta: str, lang: str) -> str:
     t = _T[lang]
     otras = [o for o in otras if o and o.strip() != pregunta.strip()]
@@ -95,6 +132,7 @@ def build_kb_v2() -> list[dict]:
             continue
         for lang in ("es", "en"):
             docs.append(ficha_servicio(sid, svc, lang))
+    docs.extend(fichas_refresher(services))
     for f in faqs:
         for lang in ("es", "en"):
             texto = _qa(f[f"question_{lang}"], f.get(f"preguntas_alt_{lang}") or [], f[f"answer_{lang}"], lang)
@@ -114,9 +152,10 @@ def build_kb_v2() -> list[dict]:
     return docs
 
 
-_DDL = f"""
-CREATE SCHEMA IF NOT EXISTS {SCHEMA};
-CREATE TABLE IF NOT EXISTS {SCHEMA}.kb_documents (
+def _ddl(schema: str) -> str:
+    return f"""
+CREATE SCHEMA IF NOT EXISTS {schema};
+CREATE TABLE IF NOT EXISTS {schema}.kb_documents (
     id SERIAL PRIMARY KEY,
     content TEXT NOT NULL,
     metadata JSONB DEFAULT '{{}}',
@@ -124,20 +163,20 @@ CREATE TABLE IF NOT EXISTS {SCHEMA}.kb_documents (
     created_at TIMESTAMP DEFAULT NOW(),
     content_tsv tsvector GENERATED ALWAYS AS (to_tsvector('simple', coalesce(content, ''))) STORED
 );
-CREATE INDEX IF NOT EXISTS kb_v2_content_tsv_idx ON {SCHEMA}.kb_documents USING GIN (content_tsv);
+CREATE INDEX IF NOT EXISTS kb_v2_content_tsv_idx ON {schema}.kb_documents USING GIN (content_tsv);
 """
 
 
-async def cargar(docs: list[dict], embeddings: list[list[float]]) -> int:
+async def cargar(docs: list[dict], embeddings: list[list[float]], schema: str = SCHEMA) -> int:
     conn = await asyncpg.connect(settings.database_url)
     try:
         async with conn.transaction():
-            await conn.execute(_DDL)
-            await conn.execute(f"DELETE FROM {SCHEMA}.kb_documents")
+            await conn.execute(_ddl(schema))
+            await conn.execute(f"DELETE FROM {schema}.kb_documents")
             await conn.executemany(
-                f"INSERT INTO {SCHEMA}.kb_documents (content, metadata, embedding) VALUES ($1, $2, $3)",
+                f"INSERT INTO {schema}.kb_documents (content, metadata, embedding) VALUES ($1, $2, $3)",
                 [(d["content"], json.dumps(d["metadata"], ensure_ascii=False), str(e)) for d, e in zip(docs, embeddings)])
-        return int(await conn.fetchval(f"SELECT COUNT(*) FROM {SCHEMA}.kb_documents"))
+        return int(await conn.fetchval(f"SELECT COUNT(*) FROM {schema}.kb_documents"))
     finally:
         await conn.close()
 
@@ -146,6 +185,8 @@ def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("--yes", action="store_true", help="genera embeddings y carga kb_v2 (reemplaza su contenido)")
     ap.add_argument("--dry-run", action="store_true")
+    ap.add_argument("--esquema", default=SCHEMA, help="esquema destino (por defecto el de la busqueda, kb_v2); "
+                    "otro para medir una base nueva sin tocar la de PRE")
     args = ap.parse_args()
     docs = build_kb_v2()
     por = Counter(f"{d['metadata']['source']}/{d['metadata']['lang']}" for d in docs)
@@ -159,8 +200,8 @@ def main() -> None:
     for n in range(0, len(docs), 256):
         embeddings += generate_embeddings(cliente, [d["content"] for d in docs[n:n + 256]])
     logger.info(f"{len(embeddings)} embeddings con {EMBEDDING_MODEL}")
-    total = asyncio.run(cargar(docs, embeddings))
-    logger.info(f"cargados {total} documentos en {SCHEMA}.kb_documents")
+    total = asyncio.run(cargar(docs, embeddings, args.esquema))
+    logger.info(f"cargados {total} documentos en {args.esquema}.kb_documents")
 
 
 if __name__ == "__main__":
