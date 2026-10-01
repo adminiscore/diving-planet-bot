@@ -1,0 +1,137 @@
+{
+ "_comment": "1-oct (Gadea con Claude): respuestas rechazadas por el juez v3 en las mediciones de rag_piezas del 1-oct, etiquetadas a mano ANTES de probar el v4. invento = debe rechazarse; falso = debe pasar (el dato es cierto o no es un dato del negocio); dudoso = no cuenta. Diseño (juez-A, juez-B, moneda A/B) etiquetado y leído antes; ciego (B2, B3, B4, dif, B2-moneda) etiquetado sin cambiar el prompt.",
+ "etiquetas": {
+  "2026-10-01-juez-A|residente-cop|0|0": {
+   "etiqueta": "falso"
+  },
+  "2026-10-01-juez-A|acompanante-madre|0|0": {
+   "etiqueta": "invento"
+  },
+  "2026-10-01-juez-A|fragata-transporte|0|0": {
+   "etiqueta": "falso"
+  },
+  "2026-10-01-juez-A|refresher-1-5-anos|0|0": {
+   "etiqueta": "falso"
+  },
+  "2026-10-01-juez-B|refresh-menos-2-anos|0|0": {
+   "etiqueta": "falso"
+  },
+  "2026-10-01-juez-B|pago-transferencia|0|0": {
+   "etiqueta": "invento"
+  },
+  "2026-10-01-juez-B|acompanante-madre|0|0": {
+   "etiqueta": "falso"
+  },
+  "2026-10-01-juez-B|fragata-transporte|0|0": {
+   "etiqueta": "falso"
+  },
+  "2026-10-01-juez-B|ow-duracion|0|0": {
+   "etiqueta": "falso"
+  },
+  "2026-10-01-juez-B|referido-datos-centro|0|0": {
+   "etiqueta": "invento"
+  },
+  "2026-10-01-juez-B|referido-mas-refresher|0|0": {
+   "etiqueta": "invento"
+  },
+  "2026-10-01-juez-A-moneda|moneda-pagina|1|0": {
+   "etiqueta": "dudoso"
+  },
+  "2026-10-01-juez-B-moneda|residente-cop|0|0": {
+   "etiqueta": "falso"
+  },
+  "2026-10-01-juez-B-moneda|residente-cop|3|0": {
+   "etiqueta": "falso"
+  },
+  "2026-10-01-juez-B2|grupo-mixto-total-cop|0|0": {
+   "etiqueta": "invento"
+  },
+  "2026-10-01-juez-B2|equipaje-mochilas|0|0": {
+   "etiqueta": "dudoso"
+  },
+  "2026-10-01-juez-B2|fragata-transporte|0|0": {
+   "etiqueta": "falso"
+  },
+  "2026-10-01-juez-B2|referido-datos-centro|0|0": {
+   "etiqueta": "invento"
+  },
+  "2026-10-01-juez-B2|referido-datos-centro|0|1": {
+   "etiqueta": "falso"
+  },
+  "2026-10-01-juez-B2|referido-mas-refresher|0|0": {
+   "etiqueta": "invento"
+  },
+  "2026-10-01-juez-B3|pago-transferencia|0|0": {
+   "etiqueta": "invento"
+  },
+  "2026-10-01-juez-B3|pago-transferencia|0|1": {
+   "etiqueta": "falso"
+  },
+  "2026-10-01-juez-B3|fragata-transporte|0|0": {
+   "etiqueta": "falso"
+  },
+  "2026-10-01-juez-B3|fotos-fotografo|0|0": {
+   "etiqueta": "dudoso"
+  },
+  "2026-10-01-juez-B3|refresher-1-5-anos|0|0": {
+   "etiqueta": "falso"
+  },
+  "2026-10-01-juez-B3|referido-mas-refresher|0|0": {
+   "etiqueta": "invento"
+  },
+  "2026-10-01-juez-B4|refresh-menos-2-anos|0|0": {
+   "etiqueta": "falso"
+  },
+  "2026-10-01-juez-B4|residente-cop|0|0": {
+   "etiqueta": "falso"
+  },
+  "2026-10-01-juez-B4|pago-transferencia|0|0": {
+   "etiqueta": "invento"
+  },
+  "2026-10-01-juez-B4|pago-transferencia|0|1": {
+   "etiqueta": "falso"
+  },
+  "2026-10-01-juez-B4|fragata-transporte|0|0": {
+   "etiqueta": "falso"
+  },
+  "2026-10-01-juez-B4|refresher-1-5-anos|0|0": {
+   "etiqueta": "falso"
+  },
+  "2026-10-01-juez-B4|referido-mas-refresher|0|0": {
+   "etiqueta": "invento"
+  },
+  "2026-10-01-juez-A-dif|acompanante-madre|0|0": {
+   "etiqueta": "invento"
+  },
+  "2026-10-01-juez-A-dif|acompanante-madre|0|1": {
+   "etiqueta": "falso"
+  },
+  "2026-10-01-juez-A-dif|acompanante-madre|1|0": {
+   "etiqueta": "invento"
+  },
+  "2026-10-01-juez-A-dif|pago-transferencia|2|0": {
+   "etiqueta": "invento"
+  },
+  "2026-10-01-juez-A-dif|acompanante-madre|2|0": {
+   "etiqueta": "invento"
+  },
+  "2026-10-01-juez-B4-dif|pago-transferencia|0|0": {
+   "etiqueta": "invento"
+  },
+  "2026-10-01-juez-B4-dif|pago-transferencia|0|1": {
+   "etiqueta": "falso"
+  },
+  "2026-10-01-juez-B4-dif|pago-transferencia|1|0": {
+   "etiqueta": "invento"
+  },
+  "2026-10-01-juez-B4-dif|pago-transferencia|2|0": {
+   "etiqueta": "invento"
+  },
+  "2026-10-01-juez-B4-dif|pago-transferencia|2|1": {
+   "etiqueta": "falso"
+  },
+  "2026-10-01-juez-B2-moneda|residente-cop|1|0": {
+   "etiqueta": "falso"
+  }
+ }
+}

@@ -1,7 +1,7 @@
 {
  "meta": {
-  "generado": "2026-10-01T11:27:23+00:00",
-  "commit": "578b380",
+  "generado": "2026-10-01T12:31:17+00:00",
+  "commit": "230dffc",
   "rama": "feature/pre_gadea"
  },
  "vistas": {
@@ -863,6 +863,20 @@
      "codigo": true,
      "pre": true,
      "sin_efecto": false
+    },
+    {
+     "nombre": "juez_por_tipo",
+     "titulo": "Revisor que clasifica cada frase",
+     "codigo": false,
+     "pre": false,
+     "sin_efecto": false
+    },
+    {
+     "nombre": "juez_segunda_opinion",
+     "titulo": "Segunda opinión cuando el revisor rechaza",
+     "codigo": false,
+     "pre": false,
+     "sin_efecto": false
     }
    ],
    "tiempo_medido": {
@@ -1587,6 +1601,32 @@
    "usado_por": [
     "router",
     "openrouter"
+   ],
+   "sin_efecto": null
+  },
+  {
+   "nombre": "juez_por_tipo",
+   "area": "Preguntas",
+   "titulo": "Revisor que clasifica cada frase",
+   "texto": "El revisor marca el tipo de cada frase y solo cuentan los datos. Medido el 1-oct: deja pasar más inventos; apagado.",
+   "codigo": false,
+   "pre": false,
+   "fijado_en_pre": false,
+   "usado_por": [
+    "r_revisor"
+   ],
+   "sin_efecto": null
+  },
+  {
+   "nombre": "juez_segunda_opinion",
+   "area": "Preguntas",
+   "titulo": "Segunda opinión cuando el revisor rechaza",
+   "texto": "Si el revisor rechaza, el enrutador rápido mira las frases rechazadas; si solo dicen 'no lo tengo' u ofrecen un asesor, la respuesta pasa.",
+   "codigo": false,
+   "pre": false,
+   "fijado_en_pre": false,
+   "usado_por": [
+    "r_revisor"
    ],
    "sin_efecto": null
   },

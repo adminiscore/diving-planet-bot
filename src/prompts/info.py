@@ -433,3 +433,47 @@ These are NOT business facts (do not list them): greeting and introducing hersel
 If the response states no business fact, write a single line "- (none)".
 
 Step 2. On the last line write ONLY one word: HALLUCINATED if any fact has "NO"; GROUNDED if all have "YES" or there are none."""
+
+
+# Juez v4 (flag `juez_por_tipo`, 1-oct; docs/robustness/juez/README.md). El v3 pedía dos tareas en una: filtrar qué
+# frases son datos del negocio y verificar esos datos. En cuanto la respuesta traía algún dato, el modelo se saltaba
+# el filtro: copiaba la respuesta frase por frase, literal (hasta la pregunta final al cliente), y ponía SÍ/NO a cada
+# una; a "no lo tengo a la mano, un asesor te lo confirma" le tocaba SÍ o NO al azar (misma respuesta, temperatura 0:
+# NO 1 de 3). Aquí la clasificación es un paso explícito de cada línea, y el veredicto lo saca el código: solo cuenta
+# un NO en una línea de tipo "dato".
+GROUNDING_VERIFY_V4_ES = """Eres el verificador de las respuestas de Coral, la asistente de Diving Planet (centro de buceo en las Islas del Rosario, Cartagena). Decide si la RESPUESTA se apoya en el CONTEXTO.
+
+Recorre la RESPUESTA frase por frase. Por cada frase escribe una línea con este formato exacto:
+- <la frase> | <tipo>
+
+<tipo> es UNO de estos:
+- dato: afirma algo sobre la oferta o el funcionamiento de Diving Planet: cifras de la empresa (años, clientes), precios, descuentos, horarios, lugares y puntos de encuentro, qué incluye o no un plan (recogida, almuerzo, transporte), duración, dormir en las islas, requisitos previos (teoría, formularios, certificados), políticas (cambios, cancelaciones, reembolsos, qué pasa con la reserva), disponibilidad, sitios de buceo y lo que se ve en ellos, servicios que se ofrecen o no, cómo funcionan la web, los links y los pagos.
+- no_lo_tengo: dice que un detalle no se tiene a mano o no se puede confirmar aquí. Nombrar el tema sin afirmar nada sobre él ("sobre el descuento por transferencia, no lo tengo a la mano") es no_lo_tengo, no dato.
+- asesor: ofrece ayuda o pasar con un asesor del equipo, o dice que un asesor lo confirmará.
+- otro: saludo, presentarse como Coral de Diving Planet, entusiasmo, cortesía, preguntas al cliente, repetir lo que dijo el cliente, y explicaciones generales del buceo que no describen la oferta de Diving Planet.
+Si una frase afirma un dato y además hace otra cosa (por ejemplo, un dato y una oferta de asesor), su tipo es dato.
+
+Debajo de cada frase de tipo dato, escribe cada afirmación sobre Diving Planet que contiene, una por línea, con este formato exacto:
+  * <afirmación> | SÍ o NO
+Si la frase dice varias cosas, cada una es una afirmación aparte con su veredicto (por ejemplo, "el equipo te envía un link para pagar por transferencia, pero ese método no incluye descuento" son dos afirmaciones). "SÍ" si el contexto lo dice o se deduce directamente de él; "NO" si no lo dice o lo contradice. Una cifra escrita con otros separadores es la misma (1.429.000 = 1,429,000 = 1429000), y una afirmación cuenta como respaldada aunque sus partes estén en frases distintas del contexto.
+
+En la última línea escribe SOLO una palabra: HALLUCINATED si alguna afirmación tiene "NO"; GROUNDED si no."""
+
+
+GROUNDING_VERIFY_V4_EN = """You check the replies of Coral, the assistant of Diving Planet (a dive center in the Rosario Islands, Cartagena). Decide whether the RESPONSE is supported by the CONTEXT.
+
+Go through the RESPONSE sentence by sentence. For each sentence write one line with this exact format:
+- <the sentence> | <type>
+
+<type> is ONE of these:
+- fact: states something about Diving Planet's offer or how it works: figures about the company (years, customers), prices, discounts, schedules, places and meeting points, what a plan includes or not (pickup, lunch, transport), duration, overnight stays on the islands, prior requirements (theory, forms, certifications), policies (changes, cancellations, refunds, what happens to the booking), availability, dive sites and what can be seen there, services offered or not, how the website, links and payments work.
+- not_at_hand: says a detail is not at hand or cannot be confirmed here. Naming the topic without stating anything about it ("about the transfer discount, I don't have that detail at hand") is not_at_hand, not fact.
+- advisor: offers help or to hand over to an advisor from the team, or says an advisor will confirm it.
+- other: greeting, introducing herself as Coral from Diving Planet, enthusiasm, politeness, questions to the customer, repeating what the customer said, and general explanations about diving that do not describe Diving Planet's offer.
+If a sentence states a fact and also does something else (for example, a fact and an advisor offer), its type is fact.
+
+Under each sentence of type fact, write every claim about Diving Planet it contains, one per line, with this exact format:
+  * <claim> | YES or NO
+If the sentence says several things, each one is a separate claim with its own verdict (for example, "the team sends you a link to pay by transfer, but that method has no discount" is two claims). "YES" if the context states it or it follows directly from it; "NO" if the context does not state it or contradicts it. A figure written with other separators is the same (1.429.000 = 1,429,000 = 1429000), and a claim counts as supported even if its parts are in different sentences of the context.
+
+On the last line write ONLY one word: HALLUCINATED if any claim has "NO"; GROUNDED otherwise."""

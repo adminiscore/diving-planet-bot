@@ -527,7 +527,9 @@
         "grounding_v3_model"
       ],
       "interruptores": [
-        "grounding_v3"
+        "grounding_v3",
+        "juez_por_tipo",
+        "juez_segunda_opinion"
       ],
       "tiempo_medido": {
         "p50": 1.2,
@@ -951,6 +953,16 @@
       "area": "Reserva",
       "titulo": "Solo apuntar notas si hay algo que apuntar",
       "texto": "El enrutador rápido dice si el mensaje cuenta algo del cliente (salud, ocasión, límites...). Si está seguro de que no, no se apunta nada: evita notas inventadas a partir de preguntas."
+    },
+    "juez_por_tipo": {
+      "area": "Preguntas",
+      "titulo": "Revisor que clasifica cada frase",
+      "texto": "El revisor marca el tipo de cada frase y solo cuentan los datos. Medido el 1-oct: deja pasar más inventos; apagado."
+    },
+    "juez_segunda_opinion": {
+      "area": "Preguntas",
+      "titulo": "Segunda opinión cuando el revisor rechaza",
+      "texto": "Si el revisor rechaza, el enrutador rápido mira las frases rechazadas; si solo dicen 'no lo tengo' u ofrecen un asesor, la respuesta pasa."
     },
     "rag_adelantado": {
       "area": "Preguntas",

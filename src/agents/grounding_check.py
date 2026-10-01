@@ -13,6 +13,8 @@ from src.prompts.info import (
     GROUNDING_VERIFY_V2_ES,
     GROUNDING_VERIFY_V3_EN,
     GROUNDING_VERIFY_V3_ES,
+    GROUNDING_VERIFY_V4_EN,
+    GROUNDING_VERIFY_V4_ES,
 )
 
 logger = logging.getLogger("uvicorn.error")
@@ -291,7 +293,10 @@ async def is_grounded(answer: str, context: str, lang: str = "es") -> tuple[bool
     if not answer.strip() or not context.strip():
         return False, "empty_answer_or_context"
 
-    if settings.grounding_v3:
+    por_tipo = settings.grounding_v3 and settings.juez_por_tipo
+    if por_tipo:
+        system = GROUNDING_VERIFY_V4_ES if lang == "es" else GROUNDING_VERIFY_V4_EN
+    elif settings.grounding_v3:
         system = GROUNDING_VERIFY_V3_ES if lang == "es" else GROUNDING_VERIFY_V3_EN
     elif settings.rag_v2:
         system = GROUNDING_VERIFY_V2_ES if lang == "es" else GROUNDING_VERIFY_V2_EN
@@ -308,28 +313,46 @@ async def is_grounded(answer: str, context: str, lang: str = "es") -> tuple[bool
             f"RESPONSE:\n{redact_pii(answer)}"
         )
 
+    # rag_v2: el mismo modelo que escribe la respuesta (gpt-4.1-mini en PRE) sigue la
+    # distincion "dato del negocio / todo lo demas"; gpt-4o-mini fallaba en los dos sentidos.
+    model = (
+        settings.grounding_v3_model if settings.grounding_v3
+        else (settings.rag_answer_model or settings.openai_model) if settings.rag_v2
+        else settings.openai_model
+    )
+    # v4 copia cada frase de la respuesta (con tipo y veredicto): necesita más sitio que la lista de datos.
+    tope = 700 if por_tipo else 300 if settings.grounding_v3 else 30
+    if model.startswith(("gpt-5", "o")):
+        # J1 (1-oct): juez de razonamiento. No admite temperatura y su razonamiento cuenta en el tope de salida.
+        extra = {"reasoning_effort": settings.grounding_reasoning_effort, "max_completion_tokens": tope + 4000}
+    else:
+        extra = {"temperature": 0, "max_tokens": tope}
     try:
         client = trace_openai(AsyncOpenAI(api_key=settings.openai_api_key))
         response = await client.chat.completions.create(
-            # rag_v2: el mismo modelo que escribe la respuesta (gpt-4.1-mini en PRE) sigue la
-            # distincion "dato del negocio / todo lo demas"; gpt-4o-mini fallaba en los dos sentidos.
-            model=(
-                settings.grounding_v3_model if settings.grounding_v3
-                else (settings.rag_answer_model or settings.openai_model) if settings.rag_v2
-                else settings.openai_model
-            ),
+            model=model,
             messages=[
                 {"role": "system", "content": system},
                 {"role": "user", "content": user_content},
             ],
-            temperature=0,
-            max_tokens=300 if settings.grounding_v3 else 30,
+            **extra,
         )
         content = (response.choices[0].message.content or "").strip()
-        if settings.grounding_v3:
+        if por_tipo:
+            grounded, unsupported = veredicto_por_tipo(content)
+            reason = "GROUNDED" if grounded else "HALLUCINATED " + " | ".join(unsupported)[:200]
+        elif settings.grounding_v3:
             grounded = verdict_from_fact_list(content)
             unsupported = [ln.strip() for ln in content.splitlines()
                            if ln.strip().startswith("-") and _FACT_NO.search(ln.strip().rstrip(" ."))]
+            if not grounded and unsupported and settings.juez_segunda_opinion:
+                # J2 (1-oct): Jev revisa las frases marcadas NO; si ninguna afirma nada del negocio (solo "no lo
+                # tengo", asesor o cortesía), la respuesta pasa. Ver `juez_segunda_opinion`.
+                from src.agents.juez_segunda_opinion import ninguna_afirma
+
+                frases = [re.sub(r"[\s:.]*\bNO\b\.?\s*$", "", u.lstrip("- ").strip()) for u in unsupported]
+                if await ninguna_afirma(frases):
+                    grounded = True
             reason = "GROUNDED" if grounded else "HALLUCINATED " + " | ".join(unsupported)[:200]
         else:
             verdict = content.upper()
@@ -343,6 +366,34 @@ async def is_grounded(answer: str, context: str, lang: str = "es") -> tuple[bool
 
 
 _FACT_NO = re.compile(r"(?:\bNO\b|\bNO\.)\s*$", re.IGNORECASE)
+
+
+_TIPOS_DATO = {"dato", "fact"}
+
+
+def veredicto_por_tipo(text: str) -> tuple[bool, list[str]]:
+    """Juez v4 (flag `juez_por_tipo`, 1-oct), dos niveles: "- <frase> | <tipo>" por frase y, debajo de las de tipo
+    dato, "* <afirmación> | SÍ/NO" por afirmación. Solo cuenta un NO de una afirmación que cuelga de una frase de
+    tipo dato: lo que el v3 dejaba al filtro implícito del modelo (que se saltaba) lo decide el código, y partir en
+    afirmaciones evita que una parte cierta tape una inventada (primera versión, una línea por frase: se colaban
+    "…pero ese método no incluye descuento"). Devuelve (respaldada, ["- <afirmación> NO", ...]), el formato de motivo
+    del v3 para la segunda redacción con motivo. Sin ninguna línea con formato, decide su última palabra."""
+    no_respaldadas, lineas_con_formato, tipo_actual = [], 0, ""
+    for ln in text.splitlines():
+        linea = ln.strip()
+        partes = [p.strip() for p in linea.lstrip("-*").split("|")]
+        if len(partes) < 2:
+            continue
+        lineas_con_formato += 1
+        if linea.startswith("*"):
+            if tipo_actual in _TIPOS_DATO and _FACT_NO.search(partes[-1].rstrip(" .")):
+                no_respaldadas.append(f"- {' | '.join(partes[:-1])} NO")
+        else:
+            tipo_actual = partes[-1].lower().rstrip(" .")
+    if not lineas_con_formato:
+        ultima = (text.strip().splitlines() or [""])[-1].strip().upper()
+        return not ultima.startswith("HALLUCINATED"), []
+    return not no_respaldadas, no_respaldadas
 
 
 def verdict_from_fact_list(text: str) -> bool:

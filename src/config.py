@@ -145,6 +145,17 @@ class Settings(BaseSettings):
     # 28-sep (HISTORY 0.29.66): v3 con gpt-4.1-mini 48/70 y gpt-4o-mini 37/70 frente a 70/70, y NO más rápidos: se queda gpt-4.1.
     grounding_v3: bool = True
     grounding_v3_model: str = "gpt-4.1"
+    # 1-oct (docs/robustness/juez/README.md): juez v4. Una linea por frase con su tipo (dato / no_lo_tengo / asesor /
+    # otro) y el veredicto lo saca el codigo (solo cuenta un NO en un dato). El v3 se saltaba su propio filtro en
+    # cuanto la respuesta traia un dato y ponia SI/NO al azar a "no lo tengo a la mano, un asesor te lo confirma".
+    # APAGADO: se mide primero con el banco (scripts/sonda_juez_tipo.py).
+    juez_por_tipo: bool = False
+    # J1 (1-oct): con un modelo de razonamiento como juez (GROUNDING_V3_MODEL=gpt-5-mini), su esfuerzo de razonamiento.
+    grounding_reasoning_effort: str = "low"
+    # J2 (1-oct): segunda opinion de Jev sobre las frases que el juez marca NO (src/agents/juez_segunda_opinion.py).
+    # Solo cuando el juez rechaza; si Jev esta seguro de que ninguna afirma nada del negocio, la respuesta pasa.
+    # APAGADO: se mide con rag_piezas (actual vs J1 vs J2).
+    juez_segunda_opinion: bool = False
     # Paso 9 (l2-2, 28-sep): el catalogo va al final del prompt del SISTEMA (fijo por idioma) y el primero en
     # el contexto del juez, para que el prompt caching de OpenAI lo reutilice entre conversaciones (antes iba
     # en el mensaje del usuario, detras del historial: nunca se cacheaba). ENCENDIDO por defecto (= PRE, paso 10).
