@@ -221,6 +221,9 @@ services:
       # tengo", asesor), la respuesta pasa. PROMOCIONADO 1-oct (ronda core 2026-10-01-juez-B, HISTORY 0.29.90): el rescate
       # leido a mano no cuela ningun invento. Revert = "false" aqui y en config.py.
       JUEZ_SEGUNDA_OPINION: "true"
+      # 1-oct (Alvaro): el juez ve la presentacion oficial (PADI 5 Estrellas, 30 años). Banco
+      # scripts/sonda_juez_presentacion.py: ciertos 3 -> 12/12, inventos 17 -> 18/18. ENCENDIDO para su ronda core B.
+      JUEZ_PRESENTACION: "true"
       # rag-5 (30-sep): el RAG arranca a la vez que el enrutador (Jev) y se aprovecha solo con el mismo contexto
       # (si no, se rehace). PROMOCIONADO 1-oct (HISTORY 0.29.88). Revert = "false" aqui y en config.py.
       RAG_ADELANTADO: "true"

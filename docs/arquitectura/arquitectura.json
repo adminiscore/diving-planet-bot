@@ -1,8 +1,8 @@
 {
  "meta": {
-  "generado": "2026-10-01T15:22:57+00:00",
-  "commit": "266648d",
-  "rama": "feature/fase4-p2"
+  "generado": "2026-10-01T16:39:36+00:00",
+  "commit": "79ac8c3",
+  "rama": "feature/pre_alvaro"
  },
  "vistas": {
   "general": {
@@ -877,6 +877,13 @@
      "codigo": true,
      "pre": true,
      "sin_efecto": false
+    },
+    {
+     "nombre": "juez_presentacion",
+     "titulo": "El revisor conoce la presentación",
+     "codigo": true,
+     "pre": true,
+     "sin_efecto": false
     }
    ],
    "tiempo_medido": {
@@ -1612,6 +1619,19 @@
    "codigo": false,
    "pre": false,
    "fijado_en_pre": false,
+   "usado_por": [
+    "r_revisor"
+   ],
+   "sin_efecto": null
+  },
+  {
+   "nombre": "juez_presentacion",
+   "area": "Preguntas",
+   "titulo": "El revisor conoce la presentación",
+   "texto": "El revisor ve la presentación oficial (PADI 5 Estrellas, 30 años) para no tomarla por inventada cuando el bot la dice.",
+   "codigo": true,
+   "pre": true,
+   "fijado_en_pre": true,
    "usado_por": [
     "r_revisor"
    ],

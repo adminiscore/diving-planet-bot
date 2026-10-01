@@ -1499,8 +1499,15 @@ async def rag_answer(
         messages.append({"role": "user", "content": user_content})
 
         grounding_context = _build_grounding_context(context, extra_context=extra_context, history=history)
-        if catalog_prefix:
-            grounding_context = f"{catalog_prefix_juez or catalog_prefix}\n\n{grounding_context}"
+        cabeza = [catalog_prefix_juez or catalog_prefix] if catalog_prefix else []
+        if settings.juez_presentacion:
+            # Lo que el bot tiene ordenado decir de la empresa, el juez tiene que poder comprobarlo. Va tras el
+            # catálogo: los dos son fijos por idioma, así que el prefijo sigue siendo cacheable.
+            from src.prompts.info import JUEZ_PRESENTACION_EN, JUEZ_PRESENTACION_ES  # lazy
+
+            cabeza.append(JUEZ_PRESENTACION_ES if lang == "es" else JUEZ_PRESENTACION_EN)
+        if cabeza:
+            grounding_context = "\n\n".join([*cabeza, grounding_context])
         # Paso 6 (s4_fixes): corregir un precio que cita el cliente ("¿son los mismos 2.215.000?" -> "el
         # precio es 2.450.000, no 2.215.000") nombra su cifra; el guard la tomaba por inventada y la
         # respuesta acababa en "no lo tengo". Sus propias cifras cuentan; el juez sigue rechazando que

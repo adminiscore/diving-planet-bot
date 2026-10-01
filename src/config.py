@@ -162,6 +162,12 @@ class Settings(BaseSettings):
     # proceder con la cancelacion, te paso con un asesor" (p=0,25) y eso costo una regresion — primer dato real para
     # el umbral, pero un caso no basta para subirlo. Revert = False aqui y en el compose.
     juez_segunda_opinion: bool = True
+    # 1-oct (Alvaro, paso 1 del "Siguiente" de Gonzalo): el juez ve la presentacion de Diving Planet (PADI 5
+    # Estrellas, 30 años), la misma frase que el bot tiene ordenado decir (prompts/info.py PRESENTACION_*). Sin ella
+    # el juez tiraba esas frases por inventadas (ronda 2026-10-01-juez-B). APAGADO hasta medirlo
+    # (scripts/sonda_juez_presentacion.py y ronda core). Banco 1-oct: ciertos que pasan 3 -> 12 de 12, inventos
+    # cazados 17 -> 18 de 18 (docs/robustness/juez/presentacion-2026-10-01.json). ENCENDIDO para su ronda core B (= PRE).
+    juez_presentacion: bool = True
     # Paso 9 (l2-2, 28-sep): el catalogo va al final del prompt del SISTEMA (fijo por idioma) y el primero en
     # el contexto del juez, para que el prompt caching de OpenAI lo reutilice entre conversaciones (antes iba
     # en el mensaje del usuario, detras del historial: nunca se cacheaba). ENCENDIDO por defecto (= PRE, paso 10).

@@ -211,6 +211,10 @@ def _collect() -> dict[str, str]:
     # sea determinista (el bloque few-shot depende de la query).
     add("info/rag.intro.es", info.RAG_INTRO_ES)
     add("info/rag.intro.en", info.RAG_INTRO_EN)
+    add("info/presentacion.es", info.PRESENTACION_ES)
+    add("info/presentacion.en", info.PRESENTACION_EN)
+    add("info/juez_presentacion.es", info.JUEZ_PRESENTACION_ES)
+    add("info/juez_presentacion.en", info.JUEZ_PRESENTACION_EN)
     add("info/rag.security.es", info.RAG_SECURITY_ES)
     add("info/rag.security.en", info.RAG_SECURITY_EN)
     add("info/rag.body.es", info.RAG_BODY_ES)

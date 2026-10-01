@@ -263,3 +263,39 @@ async def test_con_cache_el_catalogo_va_al_prompt_del_sistema(monkeypatch):
     assert system.endswith(catalog_facts("es").splitlines()[-1]) or "CATÁLOGO OFICIAL" in system
     assert "CATÁLOGO OFICIAL" not in user
     assert judged[0].startswith("CATÁLOGO OFICIAL")
+
+
+@pytest.mark.asyncio
+async def test_el_juez_ve_la_presentacion_tras_el_catalogo(monkeypatch):
+    """1-oct (`juez_presentacion`): lo que el bot tiene ordenado decir de la empresa (PADI 5 Estrellas, 30 años) va
+    en el contexto del juez, después del catálogo (los dos prefijos fijos, cacheables). Apagado, no va."""
+    from src.prompts.info import JUEZ_PRESENTACION_ES, PRESENTACION_ES, RAG_INTRO_ES
+
+    assert PRESENTACION_ES in RAG_INTRO_ES  # una sola fuente: la misma frase que dice el bot
+    for flag in (True, False):
+        monkeypatch.setattr(settings, "rag_v2", True)
+        monkeypatch.setattr(settings, "rag_prompt_cache", True)
+        monkeypatch.setattr(settings, "juez_presentacion", flag)
+        judged: list = []
+
+        async def _busqueda(*a, **k):
+            return [{"content": "El curso dura 2 dias.", "score": 0.99, "metadata": {"source": "faqs"}}]
+
+        async def _same(q, history=None, lang="es"):
+            return q
+
+        async def _docs_back(docs, lang="es"):
+            return docs
+
+        async def _juez(answer, context, lang="es"):
+            judged.append(context)
+            return True, "GROUNDED"
+
+        monkeypatch.setattr(rag_agent, "search_knowledge_base", _busqueda)
+        monkeypatch.setattr(rag_agent, "_expand_with_parent_context", _docs_back)
+        monkeypatch.setattr(rag_agent, "condense_query", _same)
+        monkeypatch.setattr(rag_agent, "is_grounded", _juez)
+        monkeypatch.setattr(rag_agent, "AsyncOpenAI", _openai("Llevamos 30 años.", []))
+        await rag_agent.rag_answer("¿cuánto lleváis?", lang="es")
+        assert judged[0].startswith("CATÁLOGO OFICIAL")
+        assert (JUEZ_PRESENTACION_ES in judged[0]) is flag
