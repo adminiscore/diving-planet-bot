@@ -514,9 +514,7 @@
       "titulo": "Comprobaciones fijas",
       "que_hace": "Sin LLM: ningún precio, link, cupo o teléfono que no esté en la información; nunca pedir datos personales.",
       "donde": "src/agents/grounding_check.py:currency_amounts_grounded",
-      "interruptores": [
-        "rag_precio_con_origen"
-      ]
+      "interruptores": []
     },
     {
       "id": "r_revisor",
@@ -533,7 +531,8 @@
         "grounding_v3",
         "juez_por_tipo",
         "juez_segunda_opinion",
-        "juez_presentacion"
+        "juez_presentacion",
+        "juez_privacidad_por_linea"
       ],
       "tiempo_medido": {
         "p50": 1.2,
@@ -1083,10 +1082,10 @@
       "titulo": "El revisor conoce la presentación",
       "texto": "El revisor ve la presentación oficial (PADI 5 Estrellas, 30 años) para no tomarla por inventada cuando el bot la dice."
     },
-    "rag_precio_con_origen": {
+    "juez_privacidad_por_linea": {
       "area": "Preguntas",
-      "titulo": "Precio siempre con su origen",
-      "texto": "Si el bot da un precio que cambia según salga de Cartagena o esté ya en las islas, sin decir cuál, lo reescribe una vez diciéndolo (sin quitar el precio)."
+      "titulo": "El revisor ve los precios completos",
+      "texto": "Los datos personales se tapan frase a frase: una mención de 'pasaporte' en una pregunta frecuente ya no borra los precios del catálogo que el revisor necesita comprobar."
     }
   },
   "areas": [

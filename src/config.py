@@ -170,11 +170,12 @@ class Settings(BaseSettings):
     # 2026-10-01-presentacion-B, HISTORY 0.29.91): rechazos del juez 3 -> 0, turnos con pregunta 4,29 -> 3,91 s, la
     # cancelacion pasa a una persona; calidad dentro del ruido. Revert = False aqui y en el compose.
     juez_presentacion: bool = True
-    # 1-oct (Alvaro, paso 2 del "Siguiente" de Gonzalo): si la respuesta del RAG da un precio que cambia segun el
-    # origen (Cartagena / ya en las islas) sin decirlo y no se sabe el origen del cliente, se reescribe UNA vez
-    # pidiendo rotularlo (no quitarlo). Reproducido en PRE: el juez tiraba esos precios (3 de 5) y el reintento los
-    # borraba. `grounding_check.precio_sin_origen`. APAGADO hasta medirlo.
-    rag_precio_con_origen: bool = False
+    # 2-oct (Alvaro, paso 2 del "Siguiente" de Gonzalo): el juez tapa los datos personales LINEA A LINEA. `redact_pii`
+    # sobre el contexto entero tapaba todos los precios >= 1.000.000 COP del catalogo si una FAQ decia "pasaporte"
+    # o "Bancolombia", y el juez rechazaba el precio correcto (paquete de 5 en conversacion; reproducido en PRE con
+    # scripts/reproducir_juez_pre.py: 50 precios tapados). Por lineas: 0 precios tapados y la cedula de un cliente
+    # se sigue tapando. APAGADO hasta medirlo.
+    juez_privacidad_por_linea: bool = False
     # Paso 9 (l2-2, 28-sep): el catalogo va al final del prompt del SISTEMA (fijo por idioma) y el primero en
     # el contexto del juez, para que el prompt caching de OpenAI lo reutilice entre conversaciones (antes iba
     # en el mensaje del usuario, detras del historial: nunca se cacheaba). ENCENDIDO por defecto (= PRE, paso 10).

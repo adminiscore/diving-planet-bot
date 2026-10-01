@@ -89,6 +89,15 @@ def redact_pii(text: str) -> str:
     return redacted
 
 
+def redact_pii_por_lineas(text: str) -> str:
+    """`redact_pii` línea a línea, para textos largos que juntan muchas fuentes (el contexto del juez: catálogo,
+    FAQs, historial). La regla "hay una palabra de documento → tapo todos los números largos" solo tiene sentido
+    dentro de un mismo mensaje: sobre el texto entero, "pasaporte" en una FAQ tapaba los precios del catálogo."""
+    if not text:
+        return text
+    return "\n".join(redact_pii(linea) for linea in text.split("\n"))
+
+
 def privacy_block_message(lang: str = "es") -> str:
     if lang == "en":
         return (

@@ -21,7 +21,6 @@ from src.agents.grounding_check import (
     inactive_certified_companion_not_contradicted,
     is_coherent_text,
     is_grounded,
-    precio_sin_origen,
     requests_personal_data,
     urls_grounded,
 )
@@ -1250,12 +1249,8 @@ def regen_feedback(reject_reason: str, lang: str) -> str | None:
         RAG_REGEN_FEEDBACK_ES,
         RAG_REGEN_GUARD_EN,
         RAG_REGEN_GUARD_ES,
-        RAG_REGEN_ORIGEN_EN,
-        RAG_REGEN_ORIGEN_ES,
     )
 
-    if reject_reason == "precio_sin_origen":  # el precio es bueno: no se quita, se rotula
-        return RAG_REGEN_ORIGEN_ES if lang == "es" else RAG_REGEN_ORIGEN_EN
     guards = RAG_REGEN_GUARD_ES if lang == "es" else RAG_REGEN_GUARD_EN
     if reject_reason in guards:
         facts = guards[reject_reason]
@@ -1551,10 +1546,6 @@ async def rag_answer(
                 last_reject = "garbled_output"
             elif not currency_amounts_grounded(answer, amounts_context):
                 last_reject = "ungrounded_amount"
-            elif settings.rag_precio_con_origen and attempt == 0 and precio_sin_origen(answer, extra_context):
-                # Solo el primer intento: si el segundo tampoco dice el origen, sigue al juez como siempre
-                # (nunca convierte un precio en "no lo tengo").
-                last_reject = "precio_sin_origen"
             elif not urls_grounded(answer, grounding_context):
                 last_reject = "ungrounded_url"
             elif not capacity_claims_grounded(answer, grounding_context):

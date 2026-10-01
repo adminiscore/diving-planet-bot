@@ -1,7 +1,7 @@
 {
  "meta": {
-  "generado": "2026-10-01T21:55:07+00:00",
-  "commit": "4b74b95",
+  "generado": "2026-10-01T22:13:32+00:00",
+  "commit": "f4c4da3",
   "rama": "feature/pre_alvaro"
  },
  "vistas": {
@@ -833,15 +833,7 @@
    "titulo": "Comprobaciones fijas",
    "que_hace": "Sin LLM: ningún precio, link, cupo o teléfono que no esté en la información; nunca pedir datos personales.",
    "donde": "src/agents/grounding_check.py:currency_amounts_grounded",
-   "interruptores": [
-    {
-     "nombre": "rag_precio_con_origen",
-     "titulo": "Precio siempre con su origen",
-     "codigo": false,
-     "pre": false,
-     "sin_efecto": false
-    }
-   ],
+   "interruptores": [],
    "modelos": [],
    "conteo": {
     "n": 39,
@@ -891,6 +883,13 @@
      "titulo": "El revisor conoce la presentación",
      "codigo": true,
      "pre": true,
+     "sin_efecto": false
+    },
+    {
+     "nombre": "juez_privacidad_por_linea",
+     "titulo": "El revisor ve los precios completos",
+     "codigo": false,
+     "pre": false,
      "sin_efecto": false
     }
    ],
@@ -1646,6 +1645,19 @@
    "sin_efecto": null
   },
   {
+   "nombre": "juez_privacidad_por_linea",
+   "area": "Preguntas",
+   "titulo": "El revisor ve los precios completos",
+   "texto": "Los datos personales se tapan frase a frase: una mención de 'pasaporte' en una pregunta frecuente ya no borra los precios del catálogo que el revisor necesita comprobar.",
+   "codigo": false,
+   "pre": false,
+   "fijado_en_pre": false,
+   "usado_por": [
+    "r_revisor"
+   ],
+   "sin_efecto": null
+  },
+  {
    "nombre": "juez_segunda_opinion",
    "area": "Preguntas",
    "titulo": "Segunda opinión cuando el revisor rechaza",
@@ -1953,19 +1965,6 @@
    "fijado_en_pre": true,
    "usado_por": [
     "kb"
-   ],
-   "sin_efecto": null
-  },
-  {
-   "nombre": "rag_precio_con_origen",
-   "area": "Preguntas",
-   "titulo": "Precio siempre con su origen",
-   "texto": "Si el bot da un precio que cambia según salga de Cartagena o esté ya en las islas, sin decir cuál, lo reescribe una vez diciéndolo (sin quitar el precio).",
-   "codigo": false,
-   "pre": false,
-   "fijado_en_pre": false,
-   "usado_por": [
-    "r_guardas"
    ],
    "sin_efecto": null
   },

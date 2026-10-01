@@ -5,7 +5,7 @@ from openai import AsyncOpenAI
 
 from src.config import settings
 from src.llm_client import trace_openai
-from src.privacy import redact_pii
+from src.privacy import redact_pii, redact_pii_por_lineas
 from src.prompts.info import (
     GROUNDING_VERIFY_EN,
     GROUNDING_VERIFY_ES,
@@ -104,54 +104,6 @@ def _capacity_claim_numbers(text: str) -> set[str]:
         if raw:
             numbers |= _number_variants(raw)
     return numbers
-
-
-# Precio sin origen (1-oct, flag `rag_precio_con_origen`). Casi todos los planes cuestan distinto saliendo desde
-# Cartagena y si ya estás en las islas (paquete de 5 para colombianos: 1.429.000 frente a 1.000.000 COP). Reproducido
-# en PRE (`scripts/reproducir_juez_pre.py`, `paquete-5-buceos-cop-refresh-y-hoteles`, 5 veces): en el 2º mensaje el bot
-# daba el de Cartagena SIN decirlo, el juez lo tiraba (3 de 5) y el reintento quitaba el precio. La regla del prompt
-# ("da el precio rotulado o pregunta") existe; esto la hace cumplir sin LLM.
-_ORIGEN_EN_RESPUESTA = re.compile(
-    r"cartagena|ya\s+(?:est[aá]s?\s+|est[aá]n\s+|se\s+encuentran?\s+)?en\s+las\s+islas|desde\s+las\s+islas"
-    r"|already\s+on\s+the\s+islands?|from\s+the\s+islands?|on\s+the\s+islands?\s+already",
-    re.IGNORECASE,
-)
-# Lo que `supervisor._build_extra_context` dice cuando YA se sabe el origen del cliente.
-_ORIGEN_CONOCIDO = ("saldra desde Cartagena", "departing from Cartagena", "ya esta en las Islas del Rosario",
-                    "already on the Rosario Islands")
-_PRECIOS_POR_ORIGEN: set[str] | None = None
-
-
-def precios_que_dependen_del_origen() -> set[str]:
-    """Importes del catálogo de los planes cuyo precio cambia entre Cartagena y 'ya en las islas' (de los dos lados)."""
-    global _PRECIOS_POR_ORIGEN
-    if _PRECIOS_POR_ORIGEN is None:
-        from src.flows.catalog import ISLAND_SERVICE_MAP, SERVICES  # lazy
-
-        importes: set[str] = set()
-        for desde_cartagena, ya_en_islas in ISLAND_SERVICE_MAP.items():
-            c, i = SERVICES[desde_cartagena], SERVICES[ya_en_islas]
-            for k in ("price_usd", "price_usd_normal", "price_cop", "price_cop_normal"):
-                if c.get(k) and i.get(k) and c[k] != i[k]:
-                    importes.update({str(int(c[k])), str(int(i[k]))})
-        _PRECIOS_POR_ORIGEN = importes
-    return _PRECIOS_POR_ORIGEN
-
-
-def precio_sin_origen(answer: str, extra_context: str | None) -> bool:
-    """True si la respuesta da un precio que depende del origen sin decir el origen, y el cliente no lo ha dicho."""
-    if not answer:
-        return False
-    if extra_context and any(m in extra_context for m in _ORIGEN_CONOCIDO):
-        return False
-    if _ORIGEN_EN_RESPUESTA.search(answer):
-        return False
-    ambiguos = precios_que_dependen_del_origen()
-    for amount in _ANSWER_AMOUNT.findall(answer):
-        core = _NUMBER_TOKEN.search(amount)
-        if core and _number_variants(core.group(0)) & ambiguos:
-            return True
-    return False
 
 
 def capacity_claims_grounded(answer: str, context: str) -> bool:
@@ -350,15 +302,21 @@ async def is_grounded(answer: str, context: str, lang: str = "es") -> tuple[bool
         system = GROUNDING_VERIFY_V2_ES if lang == "es" else GROUNDING_VERIFY_V2_EN
     else:
         system = GROUNDING_VERIFY_ES if lang == "es" else GROUNDING_VERIFY_EN
+    # 2-oct (flag `juez_privacidad_por_linea`): `redact_pii` tapa TODOS los numeros largos de un texto si en
+    # cualquier parte sale "pasaporte", "cuenta", "Bancolombia"... Pensado para un mensaje del cliente; sobre el
+    # contexto entero del juez, una FAQ de pagos borraba todos los precios del catalogo >= 1.000.000 COP y el juez
+    # rechazaba el precio correcto (reproducido en PRE: `paquete-5-buceos-cop-refresh-y-hoteles`, 50 precios
+    # tapados). Por lineas, una cedula del cliente se sigue tapando (palabra y numero van juntos).
+    tapar = redact_pii_por_lineas if settings.juez_privacidad_por_linea else redact_pii
     if lang == "es":
         user_content = (
-            f"CONTEXTO:\n{redact_pii(context)}\n\n"
-            f"RESPUESTA:\n{redact_pii(answer)}"
+            f"CONTEXTO:\n{tapar(context)}\n\n"
+            f"RESPUESTA:\n{tapar(answer)}"
         )
     else:
         user_content = (
-            f"CONTEXT:\n{redact_pii(context)}\n\n"
-            f"RESPONSE:\n{redact_pii(answer)}"
+            f"CONTEXT:\n{tapar(context)}\n\n"
+            f"RESPONSE:\n{tapar(answer)}"
         )
 
     # rag_v2: el mismo modelo que escribe la respuesta (gpt-4.1-mini en PRE) sigue la
