@@ -174,8 +174,9 @@ class Settings(BaseSettings):
     # sobre el contexto entero tapaba todos los precios >= 1.000.000 COP del catalogo si una FAQ decia "pasaporte"
     # o "Bancolombia", y el juez rechazaba el precio correcto (paquete de 5 en conversacion; reproducido en PRE con
     # scripts/reproducir_juez_pre.py: 50 precios tapados). Por lineas: 0 precios tapados y la cedula de un cliente
-    # se sigue tapando. APAGADO hasta medirlo.
-    juez_privacidad_por_linea: bool = False
+    # se sigue tapando. Escalon 0 (el dialogo x5 en PRE): rechazos 10 -> 0, precio dado 0/5 -> 5/5, "no lo tengo"
+    # 4 -> 0. ENCENDIDO para su ronda core B (= PRE).
+    juez_privacidad_por_linea: bool = True
     # Paso 9 (l2-2, 28-sep): el catalogo va al final del prompt del SISTEMA (fijo por idioma) y el primero en
     # el contexto del juez, para que el prompt caching de OpenAI lo reutilice entre conversaciones (antes iba
     # en el mensaje del usuario, detras del historial: nunca se cacheaba). ENCENDIDO por defecto (= PRE, paso 10).

@@ -225,6 +225,9 @@ services:
       # scripts/sonda_juez_presentacion.py: ciertos 3 -> 12/12, inventos 17 -> 18/18. PROMOCIONADO (HISTORY 0.29.91):
       # ronda core presentacion-B, rechazos del juez 3 -> 0 y la cancelacion pasa a una persona.
       JUEZ_PRESENTACION: "true"
+      # 2-oct (Alvaro): el juez tapa los datos personales linea a linea (antes una FAQ con "pasaporte" tapaba todos los
+      # precios del catalogo >= 1.000.000 COP). Escalon 0: rechazos 10 -> 0, precio 0/5 -> 5/5. ENCENDIDO para su ronda B.
+      JUEZ_PRIVACIDAD_POR_LINEA: "true"
       # rag-5 (30-sep): el RAG arranca a la vez que el enrutador (Jev) y se aprovecha solo con el mismo contexto
       # (si no, se rehace). PROMOCIONADO 1-oct (HISTORY 0.29.88). Revert = "false" aqui y en config.py.
       RAG_ADELANTADO: "true"
