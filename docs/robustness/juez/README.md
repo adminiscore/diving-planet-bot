@@ -83,3 +83,92 @@ rag_piezas, 48 casos × 1 (A = PRE, B = local con `kb_v2_prueba`): top-8 de bús
 transferencia 3/3 → 1/3**: el juez rechaza "el pago por transferencia no tiene descuento especial" (se deduce de la
 lista cerrada de descuentos) y después la frase "no lo tengo a la mano, un asesor te lo confirma" → "no lo tengo".
 Es la causa 4 (la oferta de asesor rechazada), que sigue viva.
+
+---
+
+## Ronda core en PRE: J2 y búsqueda doble (1-oct tarde, Gonzalo) — J2 PROMOCIONADO, búsqueda doble SIN DECIDIR
+
+Paso 1 del "Siguiente" del handoff. `run_synthetic_pre --sample core` contra PRE sirviendo `4c330ef` (J2 y
+`RAG_BUSQUEDA_DOBLE` encendidos), 32 conversaciones / 93 turnos, sin respuestas perdidas. A = `2026-10-01-rag5-C`.
+Ficheros: `synthetic-runs/2026-10-01-juez-B.jsonl`, `snapshots/2026-10-01-juez-B.json`,
+`logs-pre-2026-10-01-juez-B.txt`, `golden-set/results/2026-10-01-{rag5-C,juez-B}__gpt-5-mini-medium.json`.
+
+### ⚠️ Antes de comparar: A se re-juzgó con la referencia de hoy
+
+A se juzgó a las 11:38 del 1-oct; a las 14:44 `d900c71` cambió `policies.json` (la regla del 10 % con transferencia),
+que forma parte de la REFERENCIA del juez del golden. Juzgar B con la referencia nueva y comparar con A con la vieja
+habría medido el instrumento, no el bot. Comprobado: con la referencia de hoy, A daba 0/190 en caché. **Solo el cambio
+de referencia mueve A de 94,2 % a 92,6 %**: comparada con su cifra vieja, B (93,0 %) habría parecido 1,2 puntos PEOR.
+
+### Resultados
+
+| | A | B |
+|---|---|---|
+| criterios cumplidos (misma referencia) | 92,6 % (17 fallos) | **93,0 %** (16 fallos) |
+| diálogos sin fallos | 22/32 | **22/32** |
+| latencia del cliente p50 · p95 · máx | 3,0 · 6,0 · 8 s | **3,0 · 6,0 · 8 s** |
+| llamadas LLM por turno · máximo | 2,70 · 8 | **2,69 · 6** |
+| búsquedas (embeddings) por turno | 0,98 | **1,30** (+33 %, la búsqueda doble) |
+| **rechazos del juez de grounding** | **8** | **3** (+1 rescatado por J2) |
+
+Calidad y latencia, iguales. Los rechazos del juez bajan de 8 a 4 (3 + 1 rescatado), sobre todo por los arreglos de
+moneda y datos del 1-oct, no por J2.
+
+### J2: lectura a mano (`scripts/j2_rescates.py`, nuevo)
+
+La línea `[RAG][GROUNDING][JEV]` del registro trae las frases cortadas a 60 caracteres y sin conversación. El script
+empareja cada una con su turno (validado: las 32 conversaciones tienen los mismos turnos en registro y ronda).
+
+**1 rescate, correcto.** `paquete-5-buceos-cop-refresh-y-hoteles`, turno 2, "¿y en pesos? ¿para colombianos?": Jev
+deja pasar "El detalle exacto del costo actualizado te lo puede confirmar un asesor" (p = 0,17). No afirma nada del
+negocio. **Ningún invento coló.** (La respuesta rescatada no es buena — no da el precio en pesos que está en el
+catálogo —, pero eso no es de J2: ver abajo.)
+
+**3 rechazos mantenidos, bien mantenidos** (las frases sí afirman cosas): los precios en pesos del paquete de 5
+(0,96-0,97), "30 años" / "PADI 5 estrellas" / "instructores expertos" (0,90-0,91), y "Para proceder con la
+cancelación, te paso con un asesor…" (**0,25**).
+
+**Veredicto J2: PROMOCIONADO.** Por construcción nunca empeora: solo convierte un rechazo en aprobado, y solo si Jev
+está seguro; si falla, se mantiene el rechazo. Umbral: se queda en 0,2. La cancelación a 0,25 es el primer dato real
+a favor de subirlo, pero un caso no basta (la afirmación más baja del banco está en 0,28).
+
+### Las regresiones las causa el JUEZ, no los interruptores
+
+4 mejoras y 4 regresiones por criterio. **3 de las 4 regresiones están en las 3 conversaciones donde el juez de
+grounding rechazó algo, y en las 3 lo rechazado era verdadero o inofensivo:**
+
+| conversación | qué tiró el juez | ¿era falso? | regresión |
+|---|---|---|---|
+| `clima-y-cancelacion-reserva-existente` ("¿Podemos cancelar porfa?") | "te paso con un asesor" | inofensivo; J2 no lo rescató por 0,05 | **no pasa al cliente con un asesor** |
+| `certificado-fechas-fotos-y-reserva` | "30 años", "PADI 5 estrellas" | **verdadero**: está en las instrucciones del propio bot | vuelve a preguntar el plan |
+| `paquete-5-buceos-cop-refresh-y-hoteles` | 1.429.000 / 1.587.000 COP | **correcto**: es el precio del catálogo | repregunta la certificación |
+
+En la ronda A esas mismas conversaciones pasaron porque el juez, que no es determinista, no golpeó en esos turnos.
+**El juez de grounding rechaza datos verdaderos**, y la segunda redacción estropea la respuesta:
+
+1. **Precios en pesos en conversación.** El arreglo de la regla de moneda (`catalog.para_el_juez`) se midió con
+   preguntas sueltas (15/15); aquí la pregunta llega en el SEGUNDO turno y falla igual. Es la causa real del pendiente
+   "no lo tengo a la mano con el precio en COP del paquete de 5": no es el bot, es el juez.
+2. **Los datos de marca del propio bot.** "30 años" y "PADI 5 estrellas" están en `RAG_INTRO` (`src/prompts/info.py`,
+   la presentación que el bot tiene ORDENADO decir). El juez comprueba contra el contexto de la búsqueda, donde esa
+   presentación no está. (El 28-sep "llevamos 30 años" se anotó como invento en el comentario de
+   `RAG_REGEN_FEEDBACK_ES`; no lo es.)
+3. **La oferta de asesor**, la causa 4 de siempre, ahora en una cancelación: el cliente se queda sin quien le gestione
+   la cancelación.
+
+### Búsqueda doble: SIN DECIDIR, a propósito
+
+B cambia a la vez la búsqueda doble, J2 y los datos nuevos del 1-oct, así que la ronda no aísla su efecto; y
+`rag_piezas` no la ve (preguntas sueltas; la reescritura depende del historial). Indicio a favor: el formulario médico
+del refresher pasa a cumplir (era un fallo de búsqueda conocido) y J2 no actuó en esa conversación. Coste: +33 % de
+búsquedas, baratas. **Para decidir: una ronda core con SOLO este interruptor cambiado.**
+
+### Siguiente
+
+1. **Darle al juez lo que el bot tiene ordenado decir** (la presentación de `RAG_INTRO`), igual que `para_el_juez` le da
+   el catálogo: una fuente, y el juez deja de tirar los datos de marca. Calibrar con una sonda antes.
+2. **Los precios en pesos en conversación**: reproducir el turno 2 de `paquete-5-buceos-cop` y ver qué contexto ve el
+   juez.
+3. **La oferta de asesor por código** (paso 3 del handoff): el caso de la cancelación es justo eso, y ahora con daño
+   real al cliente.
+4. La ronda aislada de la búsqueda doble.

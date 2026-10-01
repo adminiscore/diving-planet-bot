@@ -218,7 +218,8 @@ services:
       # pasa, "false" aqui y en config.py.
       RAG_BUSQUEDA_DOBLE: "true"
       # 1-oct (J2): si el juez rechaza, Jev revisa las frases marcadas NO; si ninguna afirma nada del negocio (solo "no lo
-      # tengo", asesor), la respuesta pasa. ENCENDIDO SIN PROMOCIONAR para la ronda core; si no pasa, "false" aqui y en config.py.
+      # tengo", asesor), la respuesta pasa. PROMOCIONADO 1-oct (ronda core 2026-10-01-juez-B, HISTORY 0.29.90): el rescate
+      # leido a mano no cuela ningun invento. Revert = "false" aqui y en config.py.
       JUEZ_SEGUNDA_OPINION: "true"
       # rag-5 (30-sep): el RAG arranca a la vez que el enrutador (Jev) y se aprovecha solo con el mismo contexto
       # (si no, se rehace). PROMOCIONADO 1-oct (HISTORY 0.29.88). Revert = "false" aqui y en config.py.

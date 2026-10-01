@@ -7,7 +7,28 @@
   "a_mano": "Abrir la pagina con sesion iniciada y copiar cada campo en su tarea o en la bitacora.",
   "al_terminar": "Dejar 'pendientes' como lista vacia, poner la fecha en 'aplicado_el' y quien lo aplico en 'aplicado_por', todo en el MISMO commit. Si esta lista se queda llena, el repo y la pagina han divergido: esa es la senal."
  },
- "aplicado_el": "2026-10-01",
- "aplicado_por": "Gadea (con Claude): nota de Gonzalo en rag-5 (delante de la de Gadea) y entrada de bitácora l-0930-gonzalo-rag5-notas",
- "pendientes": []
+ "aplicado_el": null,
+ "aplicado_por": null,
+ "pendientes": [
+  {
+   "coleccion": "log",
+   "operacion": "set",
+   "doc_id": "l-1001-gonzalo-ronda-juez",
+   "campos": {
+    "at": "2026-10-01T19:30:00Z",
+    "byLabel": "Gonzalo (con Claude)",
+    "text": "1-oct noche: ronda core en PRE (2026-10-01-juez-B vs rag5-C, misma referencia del juez: A re-juzgada). Calidad 92,6 -> 93,0 %, dialogos 22/32 las dos, latencia igual, rechazos del juez 8 -> 3. J2 (JUEZ_SEGUNDA_OPINION) PROMOCIONADO: 1 rescate leido a mano, ningun invento. RAG_BUSQUEDA_DOBLE sin decidir (la ronda no lo aisla). Hallazgo: 3 de las 4 regresiones las causa el juez de grounding rechazando cosas VERDADERAS (precios en pesos del catalogo, '30 años'/'PADI 5 estrellas' de las instrucciones del propio bot, oferta de asesor en una cancelacion). HISTORY 0.29.90."
+   }
+  },
+  {
+   "coleccion": "log",
+   "operacion": "set",
+   "doc_id": "l-1001-gonzalo-referencia",
+   "campos": {
+    "at": "2026-10-01T19:35:00Z",
+    "byLabel": "Gonzalo (con Claude)",
+    "text": "Aviso de metodo: juzgad A y B con la MISMA referencia del juez. Hoy un cambio en policies.json entre las dos rondas movia A de 94,2 a 92,6 % por si solo: comparada con la cifra vieja, B habria parecido 1,2 puntos peor siendo 0,4 mejor. --dry-cache lo delata (0 % en cache)."
+   }
+  }
+ ]
 }

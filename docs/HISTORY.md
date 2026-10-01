@@ -1,6 +1,16 @@
 History
 =======
 
+0.29.90 - (2026-10-01)
+----------------------
+* **Ronda core en PRE para J2 y la búsqueda doble** (paso 1 del handoff; `2026-10-01-juez-B`, 32 conversaciones / 93 turnos, A = `rag5-C`). **J2 PROMOCIONADO; búsqueda doble SIN DECIDIR, a propósito.** Calidad y latencia iguales: criterios 92,6 → 93,0 %, diálogos 22/32 en las dos, latencia del cliente 3,0 / 6,0 / 8 s en las dos. Rechazos del juez de grounding **8 → 3** (+1 rescatado), sobre todo por los arreglos de moneda y datos del 1-oct.
+* **⚠️ A se re-juzgó con la referencia de hoy**: `d900c71` cambió `policies.json` (parte de la referencia del juez) después de juzgar A. Con la referencia de hoy A pasa de **94,2 % a 92,6 %**: comparada con su cifra vieja, B habría parecido 1,2 puntos PEOR siendo 0,4 mejor. Es la regla del 29-sep (A y B con la misma referencia), y aquí se ve su peso.
+* **J2, leído a mano** (`scripts/j2_rescates.py`, nuevo: empareja cada línea del juez con su turno, que el registro no dice): **1 rescate, correcto** ("te lo puede confirmar un asesor", p 0,17) — **ningún invento coló**; 3 rechazos bien mantenidos. Por construcción J2 nunca empeora nada. Umbral en 0,2: dejó sin rescatar "Para proceder con la cancelación, te paso con un asesor" (p 0,25), primer dato real para subirlo, pero un caso no basta.
+* **Hallazgo: las regresiones las causa el JUEZ, no los interruptores.** 3 de las 4 están en las 3 conversaciones donde el juez rechazó algo, y en las 3 lo rechazado era verdadero o inofensivo: los **precios en pesos del paquete de 5, que son los del catálogo** (el arreglo de moneda se midió con preguntas sueltas y aquí la pregunta llega en el segundo turno: es la causa real del pendiente "no lo tengo con el precio en COP"); **"30 años" y "PADI 5 estrellas", que están en las instrucciones del propio bot** (`RAG_INTRO`) pero no en el contexto que el juez comprueba; y la oferta de asesor en una **cancelación**, que deja al cliente sin quien se la gestione.
+* **Búsqueda doble sin decidir**: la ronda cambia a la vez ella, J2 y los datos nuevos; `rag_piezas` no la ve (la reescritura depende del historial). Indicio a favor: el formulario médico del refresher pasa a cumplir. Coste +33 % de búsquedas. Hace falta una ronda con solo ese interruptor. Detalle: `docs/robustness/juez/README.md`.
+* Mapa de Coral regenerado con los tiempos de esta ronda (`test_arquitectura` volvía a fallar por la foto nueva). **No se pudo republicar**: el artifact del mapa no está compartido con la cuenta de Gonzalo.
+
+
 0.29.89 - (2026-10-01)
 ----------------------
 * **rag-6 DESCARTADA sin gastar** (la base curada entera en el prompt): ocupa ~40.700 tokens en español (~30.000 solo el origen del cliente) frente a ~9.000 del prompt de hoy, la búsqueda ya trae el 92 % de los datos que dependen de ella y rag-3b mostró que más material hace cruzar datos entre servicios. La sustituye **"el juez que rechaza datos buenos"** (`docs/robustness/juez/README.md`).

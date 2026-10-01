@@ -13,7 +13,39 @@ Read this file before changing code in the Diving Planet Bot. For a quick versio
 
 > **📏 LEER ANTES DE MEDIR — decisiones del 24-sep-2026 (Gadea):** (1) latencia y llamadas con nuestros logs `[TURN_METRICS]` + `scripts/turn_metrics.py`, no con Langfuse (plan gratuito superado, reinicio 16-oct); (2) pruebas A/B por escalones, juzgando solo los diálogos que cambian. Todo en `docs/robustness/protocolo-medicion.md`.
 
-### ▶️ RETOMAR AQUÍ — 1-oct tarde (Gadea): rag-6 descartada; arreglado lo que hace rechazar al juez respuestas buenas (medido en local); siguiente, ronda core en PRE
+### ▶️ RETOMAR AQUÍ — 1-oct noche (Gonzalo): ronda core hecha; J2 PROMOCIONADO; búsqueda doble sin decidir; el juez tira datos verdaderos
+
+**Estado.** PRE sirve `feature/pre_gadea` (este cierre solo cambia comentarios de interruptores: la conducta es la
+misma). **Promocionados**: `RAG_KB_V2`, `RAG_BUSQUEDA_ORIGEN`, `RAG_ADELANTADO`, `NOTAS_PUERTA_JEV` y ahora
+**`JUEZ_SEGUNDA_OPINION`**. **Encendido sin decidir**: `RAG_BUSQUEDA_DOBLE`. Detalle: `docs/robustness/juez/README.md`
+(sección "Ronda core en PRE"), HISTORY 0.29.90.
+
+**Ronda `2026-10-01-juez-B` frente a `rag5-C`** (misma referencia del juez en las dos: A se re-juzgó, ver el aviso):
+calidad 92,6 → 93,0 %, diálogos 22/32 en las dos, latencia del cliente igual, rechazos del juez 8 → 3 (+1 rescatado).
+
+**J2, leído a mano** con `scripts/j2_rescates.py` (nuevo): 1 rescate, correcto, ningún invento. **Promocionado.**
+
+**Lo importante: las regresiones las causa el juez de grounding, rechazando cosas VERDADERAS.** 3 de las 4 están en
+las 3 conversaciones donde el juez rechazó algo: los **precios en pesos del paquete de 5 (son los del catálogo)**,
+**"30 años" / "PADI 5 estrellas" (están en `RAG_INTRO`, las instrucciones del propio bot)** y la oferta de asesor en
+una **cancelación**. En la ronda A esas conversaciones pasaron porque el juez no golpeó en esos turnos.
+
+**Siguiente, en orden:**
+1. **Darle al juez la presentación de `RAG_INTRO`**, como `para_el_juez` ya le da el catálogo: lo que el bot tiene
+   ordenado decir, el juez tiene que poder comprobarlo. Calibrar con una sonda antes de medir.
+2. **Precios en pesos en conversación**: el arreglo de moneda se midió con preguntas sueltas (15/15) y aquí falla en el
+   SEGUNDO turno. Reproducir el turno 2 de `paquete-5-buceos-cop-refresh-y-hoteles` y ver qué contexto ve el juez.
+3. **Oferta de asesor por código** (era el paso 3 del bloque de Gadea): la cancelación es justo ese caso, con daño real.
+4. **Búsqueda doble**: ronda core con SOLO ese interruptor cambiado (esta no lo aísla).
+5. Después, la ronda COMPLETA con el examen oculto (decisión de Gadea).
+
+**Avisos:** (a) **juzgad A y B con la misma referencia**: si entre las dos cambia `pricing/policies/discounts/
+availability/escalation_rules/activities/faqs.json` o `judge_golden_set.py`, re-juzgad A (`--dry-cache` lo delata: 0 %
+en caché); hoy la diferencia era de 1,6 puntos, más que el efecto medido; (b) **el Mapa de Coral no está compartido con
+Gonzalo**: está regenerado en el repo (`docs/arquitectura/`) pero falta republicarlo (`/closework` paso 9); (c) la
+página de Plan Coral sigue sin dejar escribir desde otra organización: 2 entradas en la cola.
+
+### ✅ — 1-oct tarde (Gadea): rag-6 descartada; arreglado lo que hace rechazar al juez respuestas buenas (medido en local); siguiente, ronda core en PRE
 
 **Estado.** PRE sirve `feature/pre_gadea` (commit del cierre en `git log`; `check_deploy` en verde). **Álvaro y
 Gonzalo: integrad `feature/pre_gadea` antes de subir.** Promocionados: `RAG_KB_V2`, `RAG_BUSQUEDA_ORIGEN`,

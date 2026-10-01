@@ -155,7 +155,12 @@ class Settings(BaseSettings):
     # J2 (1-oct): segunda opinion de Jev sobre las frases que el juez marca NO (src/agents/juez_segunda_opinion.py).
     # Solo cuando el juez rechaza; si Jev esta seguro de que ninguna afirma nada del negocio, la respuesta pasa.
     # rag_piezas 1-oct (96 respuestas por lado): cobertura 88 -> 90 %, contradicciones 3 -> 1, misma latencia. Calibrado
-    # (scripts/sonda_juez_jev.py): 0 afirmaciones del negocio colan de 102. ENCENDIDO SIN PROMOCIONAR para la ronda core.
+    # (scripts/sonda_juez_jev.py): 0 afirmaciones del negocio colan de 102.
+    # PROMOCIONADO 1-oct (Gonzalo, ronda core 2026-10-01-juez-B, HISTORY 0.29.90): rescata 1, mantiene 3, y el rescate
+    # leido a mano no cuela ningun invento (era "te lo confirma un asesor"). Por construccion nunca empeora nada: solo
+    # convierte un rechazo en aprobado, y solo si Jev esta seguro. Umbral 0,2: en la ronda dejo SIN rescatar "para
+    # proceder con la cancelacion, te paso con un asesor" (p=0,25) y eso costo una regresion — primer dato real para
+    # el umbral, pero un caso no basta para subirlo. Revert = False aqui y en el compose.
     juez_segunda_opinion: bool = True
     # Paso 9 (l2-2, 28-sep): el catalogo va al final del prompt del SISTEMA (fijo por idioma) y el primero en
     # el contexto del juez, para que el prompt caching de OpenAI lo reutilice entre conversaciones (antes iba
@@ -195,6 +200,11 @@ class Settings(BaseSettings):
     # 1-oct (analisis del juez, docs/robustness/juez/README.md): se busca tambien con la pregunta tal cual y se unen
     # los dos rankings por posicion. La reescritura se comia el tema en 7 de 54 rechazos del juez ("how do i pay" ->
     # "How do I pay for the Fun Dives?"). ENCENDIDO para la medida (rag_piezas y ronda core).
+    # SIN DECIDIR tras la ronda core 2026-10-01-juez-B (HISTORY 0.29.90), a proposito: esa ronda cambia a la vez esto,
+    # J2 y los datos nuevos del 1-oct, asi que no aisla su efecto; y rag_piezas no lo ve (mide preguntas sueltas, y la
+    # reescritura depende del historial). Unico indicio a favor: el formulario medico del refresher pasa a cumplir, que
+    # era un fallo de busqueda conocido. Coste: +33 % de busquedas por turno (0,98 -> 1,30), baratas. Para decidir hace
+    # falta una ronda core con SOLO este interruptor cambiado.
     rag_busqueda_doble: bool = True
     # rag-5 (30-sep): el RAG arranca a la vez que el enrutador (Jev) en vez de despues, y se aprovecha solo si su
     # contexto es exactamente el de la llamada de siempre (si no, se rehace). Estimado: -0,7 s por pregunta, ~+20 %
