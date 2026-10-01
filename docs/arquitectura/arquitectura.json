@@ -1,7 +1,7 @@
 {
  "meta": {
-  "generado": "2026-10-01T17:48:57+00:00",
-  "commit": "b3cc6f3",
+  "generado": "2026-10-01T21:55:07+00:00",
+  "commit": "4b74b95",
   "rama": "feature/pre_alvaro"
  },
  "vistas": {
@@ -833,8 +833,16 @@
    "titulo": "Comprobaciones fijas",
    "que_hace": "Sin LLM: ningún precio, link, cupo o teléfono que no esté en la información; nunca pedir datos personales.",
    "donde": "src/agents/grounding_check.py:currency_amounts_grounded",
+   "interruptores": [
+    {
+     "nombre": "rag_precio_con_origen",
+     "titulo": "Precio siempre con su origen",
+     "codigo": false,
+     "pre": false,
+     "sin_efecto": false
+    }
+   ],
    "modelos": [],
-   "interruptores": [],
    "conteo": {
     "n": 39,
     "que": "veces",
@@ -1945,6 +1953,19 @@
    "fijado_en_pre": true,
    "usado_por": [
     "kb"
+   ],
+   "sin_efecto": null
+  },
+  {
+   "nombre": "rag_precio_con_origen",
+   "area": "Preguntas",
+   "titulo": "Precio siempre con su origen",
+   "texto": "Si el bot da un precio que cambia según salga de Cartagena o esté ya en las islas, sin decir cuál, lo reescribe una vez diciéndolo (sin quitar el precio).",
+   "codigo": false,
+   "pre": false,
+   "fijado_en_pre": false,
+   "usado_por": [
+    "r_guardas"
    ],
    "sin_efecto": null
   },

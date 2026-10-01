@@ -410,6 +410,20 @@ RAG_REGEN_GUARD_ES = {
     "phone_number": "- un número de teléfono (nunca se le da al cliente)",
     "requests_personal_data": "- pedirle datos personales al cliente (nunca se piden por el chat)",
 }
+# 1-oct (flag `rag_precio_con_origen`, `grounding_check.precio_sin_origen`): el precio es BUENO pero depende de desde
+# dónde sale el cliente; la segunda muestra no lo quita, lo rotula (antes el reintento borraba el precio).
+RAG_REGEN_ORIGEN_ES = (
+    "Tu respuesta anterior NO se envió: das un precio sin decir desde dónde sale el cliente, y ese plan cuesta distinto "
+    "saliendo desde Cartagena y si ya está en las islas. NO quites el precio: escribe la misma respuesta diciendo a qué "
+    "origen corresponde (\"saliendo desde Cartagena\" / \"si ya estás en las islas\"), o da los dos precios rotulados, "
+    "con los importes del catálogo."
+)
+RAG_REGEN_ORIGEN_EN = (
+    "Your previous reply was NOT sent: it gives a price without saying where the customer departs from, and that plan "
+    "costs differently departing from Cartagena and if already on the islands. Do NOT remove the price: write the same "
+    "reply saying which origin it is for (\"departing from Cartagena\" / \"if you're already on the islands\"), or give "
+    "both prices labelled, with the catalog amounts."
+)
 RAG_REGEN_GUARD_EN = {
     "ungrounded_amount": "- a price, percentage or figure that is not in the context",
     "ungrounded_url": "- a link that is not in the context",

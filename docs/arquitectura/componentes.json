@@ -513,7 +513,10 @@
       "tipo": "cerebro",
       "titulo": "Comprobaciones fijas",
       "que_hace": "Sin LLM: ningún precio, link, cupo o teléfono que no esté en la información; nunca pedir datos personales.",
-      "donde": "src/agents/grounding_check.py:currency_amounts_grounded"
+      "donde": "src/agents/grounding_check.py:currency_amounts_grounded",
+      "interruptores": [
+        "rag_precio_con_origen"
+      ]
     },
     {
       "id": "r_revisor",
@@ -1079,6 +1082,11 @@
       "area": "Preguntas",
       "titulo": "El revisor conoce la presentación",
       "texto": "El revisor ve la presentación oficial (PADI 5 Estrellas, 30 años) para no tomarla por inventada cuando el bot la dice."
+    },
+    "rag_precio_con_origen": {
+      "area": "Preguntas",
+      "titulo": "Precio siempre con su origen",
+      "texto": "Si el bot da un precio que cambia según salga de Cartagena o esté ya en las islas, sin decir cuál, lo reescribe una vez diciéndolo (sin quitar el precio)."
     }
   },
   "areas": [

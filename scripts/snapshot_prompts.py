@@ -201,6 +201,8 @@ def _collect() -> dict[str, str]:
     add("info/rag_intro.short_en", info.RAG_INTRO_SHORT_EN)
     add("info/rag_regen_feedback.es", info.RAG_REGEN_FEEDBACK_ES)
     add("info/rag_regen_feedback.en", info.RAG_REGEN_FEEDBACK_EN)
+    add("info/rag_regen_origen.es", info.RAG_REGEN_ORIGEN_ES)
+    add("info/rag_regen_origen.en", info.RAG_REGEN_ORIGEN_EN)
     add_json("info/rag_regen_guard.es", info.RAG_REGEN_GUARD_ES)
     add_json("info/rag_regen_guard.en", info.RAG_REGEN_GUARD_EN)
 
