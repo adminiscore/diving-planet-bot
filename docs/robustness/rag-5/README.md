@@ -146,3 +146,43 @@ llamada de notas en los turnos que solo preguntan).
    palabras que llevaban DENTRO las notas. Casi todo era el bloque de notas. Se corrigió leyendo el bloque entero.
 3. **Una pasada se arrastró 4 horas** por errores de conexión con OpenAI desde mi máquina (en PRE, en el mismo
    rato, 0 errores): el script no tenía tope de tiempo. Ahora se lanza con `timeout 1800`.
+
+---
+
+## 6. La puerta de Jev para las notas, medida (1-oct, Gadea con Claude)
+
+Flag `NOTAS_PUERTA_JEV` (`jev_router.SHARES_OPEN_FACT`): en la llamada a Jev que ya hace el enrutador (coste 0) va
+"¿cuenta algo del cliente que haya que apuntar?", con la definición del propio extractor (salud, alergias,
+accesibilidad, ocasiones, idioma, límites de presupuesto o agenda). Si Jev está SEGURO de que no (p < 0,2), no se
+llama al extractor. El prompt del extractor no se toca.
+
+**Calibrada antes de medir** (`scripts/sonda_notas.py`, N=2, conservador; sin el examen oculto): positivos perdidos
+0/17 de diseño y **0/7 ciegos** (casos reales que no se usaron para redactarla); negativos parados 43/44. Decisión de
+Gadea: "residentes en Colombia (3 años)" se queda parado (0,11): la residencia es un dato de reserva.
+
+**Réplica local, mismas condiciones, las dos pasadas a la vez** (`NOTAS_REALES=1`, `SUFIJO=-sin-puerta` /
+`-con-puerta`; 95 diálogos, 116 turnos que llegan a usar la respuesta adelantada en las dos):
+
+| | sin puerta | con puerta |
+|---|---|---|
+| respuesta adelantada **aprovechada** | 70 (60 %) | **107 (92 %)** |
+| rehecha | 46 | 9 (paso de la conversación, origen, grupo, certificación: los correctos) |
+| llamadas al extractor de notas | 289 | **37** (−87 %) |
+| mensajes con alguna nota | 127 | 32 |
+
+**¿Se come notas buenas?** Leídas a mano las 96 que entraban sin puerta y ya no: ninguna de salud, ocasión ni
+límite. Son datos de reserva ("no soy colombiano", "somos 4", "desde cartagena"), la pregunta apuntada como hecho
+("incluye el almuerzo?" → "pregunta sobre el almuerzo incluido") o inventadas ("how much would that be" → "not
+Colombian"). Único dudoso: "will have two large hiking backpacks" (equipaje). Las buenas siguen entrando: intérprete,
+cuenta local, presupuesto, vuelo esa misma noche, "no tiene claro si volverá", edades de los niños.
+
+**Lo que queda:** en respuestas cortas siguen entrando datos de reserva ciertos ("soy certificado, voy solo",
+"residente", "todos extranjeros"): no son inventos y no hacen rehacer casi nunca, pero no deberían ser notas. No se
+toca ahora (sería ajustar el umbral contra estos mismos casos).
+
+Ficheros: `por-que-se-rehace-notas-reales-{sin,con}-puerta.json` y `…-notas-capturadas.json` (cada llamada al
+extractor). ⚠️ Aviso de método: una pasada parada con `TaskStop` siguió viva y escribió su resumen en el mismo log;
+los ficheros de resultados se comprobaron (116 turnos y número de llamadas de cada pasada buena).
+
+Siguiente: ronda core B en PRE (calidad leída por caso y latencia), con los pasos 2 y 3 del bloque de Gadea si se
+hacen antes.
