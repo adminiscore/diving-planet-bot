@@ -163,6 +163,22 @@ B cambia a la vez la búsqueda doble, J2 y los datos nuevos del 1-oct, así que 
 del refresher pasa a cumplir (era un fallo de búsqueda conocido) y J2 no actuó en esa conversación. Coste: +33 % de
 búsquedas, baratas. **Para decidir: una ronda core con SOLO este interruptor cambiado.**
 
+### Paso 1 (Álvaro, 1-oct noche): el juez ve la presentación — `JUEZ_PRESENTACION` PROMOCIONADO
+
+- **Qué:** la presentación oficial (PADI 5 Estrellas, 30 años) vive en `prompts/info.py` `PRESENTACION_ES/EN`; la usan
+  `RAG_INTRO` (idéntico byte a byte) y `JUEZ_PRESENTACION_*`, que va en el contexto del juez tras el catálogo.
+- **Banco** (`scripts/sonda_juez_presentacion.py`, juez de producción con J2, contexto real, ×3; criterio fijado antes:
+  ciertos ≥ 2/3 y ningún invento pasa): ciertos 3 → **12/12**; inventos parecidos 17 → **18/18**
+  (`presentacion-2026-10-01.json`).
+- **Ronda core `2026-10-01-presentacion-B`** frente a `juez-B` (solo cambia este flag): rechazos del juez 3 → **0**
+  (los 3 de A eran verdades), "no lo tengo" 0 → 0, turnos con pregunta p50 4,29 → 3,91 s, cliente igual. La
+  cancelación pasa a una persona.
+- **El juez de las rondas** suspendía "tenemos 30 años" por la misma razón: `judge_golden_set.load_reference` incluye la
+  presentación. Re-juzgadas A y B con esa referencia: 94,3 % (24/32) y 93,4 % (23/32), −0,9 puntos, dentro del ruido.
+  Regresiones leídas: repreguntas de la reserva (2), "sales de Cartagena" supuesto y un link oficial tomado por fuga;
+  ninguna en un turno donde actuara el flag (en B el juez no rechazó nada).
+- **Pendiente visto:** cruce referido/refresher ("ambos requieren teoría y piscina previas") que el juez no caza.
+
 ### Siguiente
 
 1. **Darle al juez lo que el bot tiene ordenado decir** (la presentación de `RAG_INTRO`), igual que `para_el_juez` le da

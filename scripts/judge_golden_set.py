@@ -130,8 +130,16 @@ def load_reference() -> str:
         "NO es una invencion, aunque pricing.json use otra etiqueta interna para el mismo servicio.\n"
         + json.dumps(nombres, ensure_ascii=False, separators=(',', ':'))
     )
+    # 1-oct (Alvaro): la presentacion oficial que el bot tiene ORDENADO decir (PADI 5 Estrellas, 30 años), la misma
+    # frase unica que ve el juez de grounding (src/prompts/info.py PRESENTACION_ES). Sin ella este juez marcaba
+    # "tenemos 30 años de experiencia" como invencion (ronda 2026-10-01-presentacion-B). Cambia la referencia:
+    # las rondas anteriores hay que re-juzgarlas para comparar.
+    from src.prompts.info import PRESENTACION_ES  # lazy
+
+    parts.append("### Presentacion oficial de Diving Planet (el bot la dice por instruccion; es cierta)\n"
+                 f"Diving Planet es {PRESENTACION_ES}.")
     activities = json.loads((KB_DIR / "activities.json").read_text(encoding="utf-8-sig"))["activities"]
-    compact = [{k: a.get(k) for k in ("id", "label", "requires_certification", "min_age", "max_age")} for a in activities]
+    compact =[{k: a.get(k) for k in ("id", "label", "requires_certification", "min_age", "max_age")} for a in activities]
     parts.append(f"### activities.json (extracto)\n{json.dumps(compact, ensure_ascii=False, separators=(',', ':'))}")
     faqs = json.loads((KB_DIR / "faqs.json").read_text(encoding="utf-8-sig"))["faqs"]
     qa = [{"p": f.get("question_es"), "r": f.get("answer_es")} for f in faqs]

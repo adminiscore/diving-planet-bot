@@ -166,7 +166,9 @@ class Settings(BaseSettings):
     # Estrellas, 30 años), la misma frase que el bot tiene ordenado decir (prompts/info.py PRESENTACION_*). Sin ella
     # el juez tiraba esas frases por inventadas (ronda 2026-10-01-juez-B). APAGADO hasta medirlo
     # (scripts/sonda_juez_presentacion.py y ronda core). Banco 1-oct: ciertos que pasan 3 -> 12 de 12, inventos
-    # cazados 17 -> 18 de 18 (docs/robustness/juez/presentacion-2026-10-01.json). ENCENDIDO para su ronda core B (= PRE).
+    # cazados 17 -> 18 de 18 (docs/robustness/juez/presentacion-2026-10-01.json). PROMOCIONADO 1-oct (ronda core
+    # 2026-10-01-presentacion-B, HISTORY 0.29.91): rechazos del juez 3 -> 0, turnos con pregunta 4,29 -> 3,91 s, la
+    # cancelacion pasa a una persona; calidad dentro del ruido. Revert = False aqui y en el compose.
     juez_presentacion: bool = True
     # Paso 9 (l2-2, 28-sep): el catalogo va al final del prompt del SISTEMA (fijo por idioma) y el primero en
     # el contexto del juez, para que el prompt caching de OpenAI lo reutilice entre conversaciones (antes iba

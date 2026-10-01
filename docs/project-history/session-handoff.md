@@ -13,7 +13,34 @@ Read this file before changing code in the Diving Planet Bot. For a quick versio
 
 > **📏 LEER ANTES DE MEDIR — decisiones del 24-sep-2026 (Gadea):** (1) latencia y llamadas con nuestros logs `[TURN_METRICS]` + `scripts/turn_metrics.py`, no con Langfuse (plan gratuito superado, reinicio 16-oct); (2) pruebas A/B por escalones, juzgando solo los diálogos que cambian. Todo en `docs/robustness/protocolo-medicion.md`.
 
-### ▶️ RETOMAR AQUÍ — 1-oct noche (Gonzalo): ronda core hecha; J2 PROMOCIONADO; búsqueda doble sin decidir; el juez tira datos verdaderos
+### ▶️ RETOMAR AQUÍ — 1-oct noche (Álvaro): paso 1 HECHO, `JUEZ_PRESENTACION` PROMOCIONADO; siguiente: el precio en pesos (paso 2)
+
+**Estado.** PRE sirve `feature/pre_alvaro` (= `feature/pre_gadea` de Gonzalo + este paso; `check_deploy` en verde).
+**Integrad `feature/pre_alvaro` en vuestra rama antes de subir.** Promocionados: `RAG_KB_V2`, `RAG_BUSQUEDA_ORIGEN`,
+`RAG_ADELANTADO`, `NOTAS_PUERTA_JEV`, `JUEZ_SEGUNDA_OPINION` y ahora **`JUEZ_PRESENTACION`**. Encendido sin decidir:
+`RAG_BUSQUEDA_DOBLE`. Mapa de Coral republicado (ronda `presentacion-B`). HISTORY 0.29.91; detalle en
+`docs/robustness/juez/README.md`, sección "Paso 1".
+
+**Qué se hizo:** el juez de grounding ve la presentación oficial (`prompts/info.py` `PRESENTACION_*`, la misma frase que
+dice el bot). Banco `scripts/sonda_juez_presentacion.py`: ciertos 3 → 12/12, inventos 17 → 18/18. Ronda core
+`2026-10-01-presentacion-B` frente a `juez-B`: rechazos del juez **3 → 0**, turnos con pregunta 4,29 → 3,91 s, la
+cancelación pasa a una persona. El juez de las rondas (`judge_golden_set.load_reference`) también conoce ya la
+presentación: **A y B re-juzgados con esa referencia** (94,3 % y 93,4 %, dentro del ruido; regresiones leídas, ninguna
+del flag). **Ojo: cualquier ronda anterior al 1-oct noche hay que re-juzgarla para comparar.**
+
+**Siguiente, en orden (el resto del "Siguiente" de Gonzalo):**
+2. **Precio en pesos del paquete de 5 en conversación**: en `juez-B` el juez lo tiró en el 2º turno; en `presentacion-B`
+   no se repitió (0 rechazos), así que hay que REPRODUCIRLO a propósito: turno 2 de
+   `paquete-5-buceos-cop-refresh-y-hoteles` con su historial y su `extra_context` (`scripts/sonda_rag_turnos_pre.py`
+   repite turnos reales, pero sin el `extra_context`; ver si hace falta añadirlo).
+3. **Oferta de asesor por código**, no por el modelo (que el juez no la pueda quitar). Con `JUEZ_PRESENTACION` la
+   cancelación ya pasó, pero sigue dependiendo de que el juez no la rechace.
+4. **Búsqueda doble**: ronda core con SOLO ese interruptor cambiado.
+5. Después, la ronda COMPLETA con el examen oculto (decisión de Gadea).
+- Pendiente visto: cruce referido/refresher en `referral-mas-refresher` ("ambos requieren teoría y piscina previas")
+  que el juez no caza.
+
+### ✅ 1-oct noche (Gonzalo) — SUPERADO por el bloque de arriba: ronda core hecha; J2 PROMOCIONADO; búsqueda doble sin decidir; el juez tira datos verdaderos
 
 **Estado.** PRE sirve `feature/pre_gadea` (este cierre solo cambia comentarios de interruptores: la conducta es la
 misma). **Promocionados**: `RAG_KB_V2`, `RAG_BUSQUEDA_ORIGEN`, `RAG_ADELANTADO`, `NOTAS_PUERTA_JEV` y ahora

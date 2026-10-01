@@ -452,6 +452,11 @@ medias (u3-1 ✅, u3-4 ✅ promocionada, u3-5 🟡); PRE con u3-4 encendido. Sui
 | **11** | R6: robustez de producción | r6-2 (guardrails), g-5 (carga) | el bot nunca deja sin respuesta; inyección medida; p95 con N clientes a la vez |
 | **12** | Q5: calidad continua y entrega | q5-1, g-3, g-4, g-4b, g-6, m0-4, q5-2 | gate en CI; simulador; bucle producción → golden; testers reales; SOAK; entrega |
 
+> **Estado al 1-oct noche (Álvaro), fase RAG:** tras la ronda de Gonzalo (`juez-B`, J2 promocionado), **paso 1 del
+> arreglo del juez HECHO: `JUEZ_PRESENTACION` promocionado** (el juez ve la presentación oficial; rechazos 3 → 0, la
+> cancelación pasa a una persona; HISTORY 0.29.91). Siguiente: precio en pesos en conversación → oferta de asesor por
+> código → búsqueda doble aislada → ronda COMPLETA con el examen oculto. Detalle: `session-handoff.md`, "RETOMAR AQUÍ".
+
 > **Estado al 1-oct tarde (Gadea), fase RAG:** rag-1, 2, 3 y 5 ✅ promocionadas; rag-4 ❌; **rag-6 ❌ descartada sin
 > gastar** (la base entera son 30-40k tokens frente a 9k, techo bajo, riesgo de cruces). La sustituye **"el juez que
 > rechaza datos buenos"** (HISTORY 0.29.89): regla de moneda en dos versiones, búsqueda doble, datos nuevos y J2
