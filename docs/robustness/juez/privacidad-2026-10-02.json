@@ -1,0 +1,45 @@
+{
+ "que": "Escalon 0 de JUEZ_PRIVACIDAD_POR_LINEA (2-oct, Alvaro): dialogo del golden paquete-5-buceos-cop-refresh-y-hoteles x5 en PRE con el bot real (scripts/reproducir_juez_pre.py, --flag juez_privacidad_por_linea solo en el proceso). Por turno: juicios del juez de grounding, rechazos, si da el precio COP y respuesta del turno 2. Sin contextos (ocupan ~0,5 MB; se regeneran con el script).",
+ "causa": "redact_pii sobre el contexto entero: _grouped_id_matches tapa todos los numeros agrupados de >=7 cifras si en el texto aparece una palabra de documento (pasaporte, cuenta, Bancolombia...). Una FAQ de pagos lo activaba y tapaba 50 precios del catalogo >= 1.000.000 COP; el juez veia [REDACTED_NUMBER] y rechazaba 1.429.000 COP.",
+ "comando": "python -m scripts.reproducir_juez_pre paquete-5-buceos-cop-refresh-y-hoteles --reps 5 [--flag juez_privacidad_por_linea]",
+ "variantes": {
+  "apagado": {
+   "rechazos_del_juez_total": 10,
+   "turno2_precio_dado": "0/5",
+   "turno2_no_lo_tengo": 4,
+   "turno2_respuestas": [
+    "¡Con gusto te ayudo! 🌊 Ese detalle en concreto no lo tengo a la mano, pero puedo ayudarte con las actividades, precios, logística o a armar tu reserva. ¿Quieres que te pase con un asesor para resolver eso puntual?",
+    "¡Con gusto te ayudo! 🌊 Ese detalle en concreto no lo tengo a la mano, pero puedo ayudarte con las actividades, precios, logística o a armar tu reserva. ¿Quieres que te pase con un asesor para resolver eso puntual?",
+    "¡Claro que sí! Para colombianos, el paquete de 5 inmersiones se paga en pesos colombianos (COP), que es la moneda que usamos para clientes nacionales y residentes en Colombia. El precio es el mismo que para extranjeros, solo cambia la moneda.\n\nEl detalle exacto del valor con descuento online o normal te lo puede confirmar un asesor para que tengas la cifra precisa.\n\n¿Quieres que te pase el link pa",
+    "¡Con gusto te ayudo! 🌊 Ese detalle en concreto no lo tengo a la mano, pero puedo ayudarte con las actividades, precios, logística o a armar tu reserva. ¿Quieres que te pase con un asesor para resolver eso puntual?",
+    "¡Con gusto te ayudo! 🌊 Ese detalle en concreto no lo tengo a la mano, pero puedo ayudarte con las actividades, precios, logística o a armar tu reserva. ¿Quieres que te pase con un asesor para resolver eso puntual?"
+   ],
+   "turno2_motivo_rechazo": [
+    "HALLUCINATED - El paquete de 5 inmersiones (2 días) cuesta 1.429.000 COP si reservas online con el 10% de descuento, o 1.587.000 COP si reservas de forma normal. NO",
+    "HALLUCINATED - El paquete de 5 inmersiones cuesta 1.429.000 COP si reservas online con el 10% de descuento. NO | - El paquete de 5 inmersiones cuesta 1.587.000 COP si reservas normal, sin descuento. NO",
+    "HALLUCINATED - El paquete de 5 inmersiones cuesta 1.429.000 COP para colombianos si reservas en línea con el 10% de descuento. NO | - El paquete de 5 inmersiones cuesta 1.587.000 COP para colombianos si reservas n",
+    "HALLUCINATED - El paquete de 5 inmersiones cuesta 1.429.000 COP si reservas online con el 10% de descuento incluido, o 1.587.000 COP si reservas de forma normal. NO",
+    "HALLUCINATED - El paquete de 5 inmersiones (2 días) cuesta 1.429.000 COP para colombianos si reservas online con el 10% de descuento. NO | - El paquete de 5 inmersiones (2 días) cuesta 1.587.000 COP para colombian"
+   ]
+  },
+  "encendido": {
+   "rechazos_del_juez_total": 0,
+   "turno2_precio_dado": "5/5",
+   "turno2_no_lo_tengo": 0,
+   "turno2_respuestas": [
+    "¡Claro que sí! Para colombianos, el paquete de 5 inmersiones (2 días, con un buceo nocturno y almuerzo el primer día) cuesta 1.429.000 COP si reservas online con el 10% de descuento, o 1.587.000 COP si reservas normal. \n\n¿Quieres que te pase el link para que puedas reservar y asegurar tu cupo?\n\n¡Genial! Para recomendarte el plan perfecto: ¿Eres buzo certificado? (Y si no, ¡tranquilo! El minicurso ",
+    "¡Claro que sí! Para colombianos, el paquete de 5 inmersiones (2 días) cuesta 1.429.000 COP si reservas online con el 10% de descuento, y 1.587.000 COP si reservas normal, sin descuento. El precio es el mismo para todos, solo cambia la moneda según tu nacionalidad o residencia.\n\n¿Quieres que te pase el link para que puedas reservar y asegurar tu cupo?\n\n¡Genial! Para recomendarte el plan perfecto: ¿",
+    "¡Claro que sí! Para colombianos el precio está en pesos colombianos (COP), que es la moneda que usamos para residentes y nacionales. \n\nEl paquete de 5 inmersiones (2 días) cuesta 1.429.000 COP si reservas online con el 10% de descuento, o 1.587.000 COP si reservas normal. \n\nNo hay un descuento especial solo por ser colombiano, el precio es el mismo que para extranjeros, solo cambia la moneda. \n\n¿Q",
+    "¡Claro que sí! Para colombianos, el precio del paquete de 5 inmersiones es 1.429.000 COP si reservas online (con el 10% de descuento incluido) o 1.587.000 COP si reservas sin el descuento online. \n\nRecuerda que el precio es el mismo para todos, solo cambia la moneda según seas colombiano o extranjero. ¿Quieres que te pase el link para que puedas reservar ya?\n\n¡Genial! Para recomendarte el plan per",
+    "¡Claro que sí! Para colombianos, el paquete de 5 inmersiones (2 días) cuesta 1.429.000 COP si reservas online con el 10% de descuento, o 1.587.000 COP si reservas normal, sin descuento. \n\n¿Quieres que te pase el link para que puedas reservar directo y asegurar tu cupo?\n\n¡Genial! Para recomendarte el plan perfecto: ¿Eres buzo certificado? (Y si no, ¡tranquilo! El minicurso es ideal para empezar. 🤿)"
+   ],
+   "turno2_motivo_rechazo": [
+    null,
+    null,
+    null,
+    null,
+    null
+   ]
+  }
+ }
+}

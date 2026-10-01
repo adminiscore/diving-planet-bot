@@ -1,6 +1,17 @@
 History
 =======
 
+0.29.92 - (2026-10-02)
+----------------------
+* **Paso 2 del "Siguiente" de Gonzalo HECHO: el precio en pesos del paquete de 5 — `JUEZ_PRIVACIDAD_POR_LINEA` PROMOCIONADO** (Álvaro). En `juez-B` el juez de grounding tiró en el 2º turno "1.429.000 COP online / 1.587.000 COP normal", que es el precio del catálogo.
+  - **Causa real: el filtro de datos personales del juez tapaba los precios.** `redact_pii` tapa TODOS los números agrupados de 7 cifras o más si en cualquier parte del texto aparece una palabra de documento ("pasaporte", "cuenta", "Bancolombia"…). Sobre el contexto ENTERO del juez, una FAQ de pagos ("con tarjeta extranjera se usa el pasaporte") la activaba y tapaba **50 precios del catálogo de 1.000.000 COP o más**: el juez veía `[REDACTED_NUMBER]` y rechazaba el precio bueno. Las preguntas sueltas (`rag_piezas`) no lo veían porque esa FAQ solo entra con la búsqueda de una conversación.
+  - **Arreglo:** `privacy.redact_pii_por_lineas` (la misma regla, línea a línea), usado en `grounding_check.is_grounded` para CONTEXTO y RESPUESTA con el flag. Por líneas: 0 precios tapados y la cédula de un cliente se sigue tapando. Límite conocido: si "cédula" y su número van en líneas distintas, el número no se tapa (solo afecta a lo que ve el juez). Tests: `tests/test_juez_privacidad.py`.
+  - **Herramienta nueva `scripts/reproducir_juez_pre.py`**: repite un diálogo del golden dentro de `dp-pre-bot` con el bot real y guarda, por cada juicio, la respuesta, el veredicto, el motivo y el contexto ENTERO que vio el juez (`--flag` enciende un interruptor solo en ese proceso; se niega con el examen oculto). Así se encontró la causa.
+  - **Escalón 0** (el diálogo ×5 en PRE, `docs/robustness/juez/privacidad-2026-10-02.json`): rechazos del juez **10 → 0**, precio en pesos en el turno 2 **0/5 → 5/5**, "no lo tengo" **4 → 0**.
+  - **Ronda core `2026-10-01-privacidad-B`** frente a `presentacion-B` (solo cambia este flag): rechazos del juez 0 → 0, el paquete de 5 da el precio en los dos turnos, criterios **93,4 → 94,3 %** (ruido), diálogos 23 → 24/32, turnos con pregunta p50 **3,91 → 3,36 s**, cliente p50/p95 3,0/6,0 → 2,0/5,0 s. Regresiones leídas (2), ninguna del flag: "¡Qué bien que venga alguien más!" en `manual-duracion-curso` sale IGUAL en las dos rondas (el juez lo vio solo en B; fallo antiguo de la reserva, pendiente) y un "¿cierto?" de redacción en `paquete-5`.
+  - **Descartado antes, con medida: `RAG_PRECIO_CON_ORIGEN`** (decir "para colombianos" junto al precio en pesos y una guarda que lo exigía). Hipótesis equivocada: empeoró el escalón 0 (4 frente a 3 "no lo tengo"). Quitado del código; no llegó a PRE.
+  - Mapa de Coral regenerado con los tiempos de esta ronda.
+
 0.29.91 - (2026-10-01)
 ----------------------
 * **Paso 1 del "Siguiente" de Gonzalo HECHO: el juez ve la presentación oficial — `JUEZ_PRESENTACION` PROMOCIONADO** (Álvaro). En `juez-B` el juez de grounding tiraba "30 años" y "PADI 5 estrellas", que el bot tiene ORDENADO decir (`RAG_INTRO`), y la oferta de asesor de una cancelación.

@@ -175,7 +175,10 @@ class Settings(BaseSettings):
     # o "Bancolombia", y el juez rechazaba el precio correcto (paquete de 5 en conversacion; reproducido en PRE con
     # scripts/reproducir_juez_pre.py: 50 precios tapados). Por lineas: 0 precios tapados y la cedula de un cliente
     # se sigue tapando. Escalon 0 (el dialogo x5 en PRE): rechazos 10 -> 0, precio dado 0/5 -> 5/5, "no lo tengo"
-    # 4 -> 0. ENCENDIDO para su ronda core B (= PRE).
+    # 4 -> 0. PROMOCIONADO 2-oct (HISTORY 0.29.92): ronda core 2026-10-01-privacidad-B frente a presentacion-B,
+    # el paquete de 5 da el precio en pesos, calidad 93,4 -> 94,3 % (ruido), turnos con pregunta p50 3,91 -> 3,36 s.
+    # Limite conocido: si la palabra "cedula" y su numero van en lineas distintas, el numero no se tapa (solo afecta
+    # a lo que ve el juez). Revert = False aqui y en el compose.
     juez_privacidad_por_linea: bool = True
     # Paso 9 (l2-2, 28-sep): el catalogo va al final del prompt del SISTEMA (fijo por idioma) y el primero en
     # el contexto del juez, para que el prompt caching de OpenAI lo reutilice entre conversaciones (antes iba

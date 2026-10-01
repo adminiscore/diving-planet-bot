@@ -13,7 +13,35 @@ Read this file before changing code in the Diving Planet Bot. For a quick versio
 
 > **📏 LEER ANTES DE MEDIR — decisiones del 24-sep-2026 (Gadea):** (1) latencia y llamadas con nuestros logs `[TURN_METRICS]` + `scripts/turn_metrics.py`, no con Langfuse (plan gratuito superado, reinicio 16-oct); (2) pruebas A/B por escalones, juzgando solo los diálogos que cambian. Todo en `docs/robustness/protocolo-medicion.md`.
 
-### ▶️ RETOMAR AQUÍ — 1-oct noche (Álvaro): paso 1 HECHO, `JUEZ_PRESENTACION` PROMOCIONADO; siguiente: el precio en pesos (paso 2)
+### ▶️ RETOMAR AQUÍ — 2-oct (Álvaro): paso 2 HECHO, `JUEZ_PRIVACIDAD_POR_LINEA` PROMOCIONADO; siguiente: oferta de asesor por código (paso 3)
+
+**Estado.** PRE sirve `feature/pre_alvaro` (`check_deploy` en verde). **Integrad `feature/pre_alvaro` en vuestra rama
+antes de subir.** Promocionados: `RAG_KB_V2`, `RAG_BUSQUEDA_ORIGEN`, `RAG_ADELANTADO`, `NOTAS_PUERTA_JEV`,
+`JUEZ_SEGUNDA_OPINION`, `JUEZ_PRESENTACION` y ahora **`JUEZ_PRIVACIDAD_POR_LINEA`**. Encendido sin decidir:
+`RAG_BUSQUEDA_DOBLE`. Mapa de Coral republicado (ronda `privacidad-B`). HISTORY 0.29.92; detalle en
+`docs/robustness/juez/README.md`, sección "Paso 2".
+
+**Qué se hizo:** el juez rechazaba el precio en pesos del paquete de 5 porque **su filtro de datos personales tapaba los
+precios del catálogo**: `redact_pii` sobre el contexto entero, con "pasaporte" en una FAQ de pagos, tapa todos los
+números de 7+ cifras (50 precios). Ahora tapa línea a línea (`privacy.redact_pii_por_lineas`). Escalón 0 (×5 en PRE):
+precio 0/5 → 5/5, rechazos 10 → 0. Ronda core `2026-10-01-privacidad-B` frente a `presentacion-B`: calidad 93,4 →
+94,3 % (ruido), turnos con pregunta p50 3,91 → 3,36 s; regresiones leídas, ninguna del flag. La primera hipótesis
+(`RAG_PRECIO_CON_ORIGEN`) empeoró el escalón 0 y se quitó del código.
+
+**Herramienta nueva para los rechazos del juez:** `python -m scripts.reproducir_juez_pre <dialogo> --reps N --out f.jsonl
+[--flag nombre]` repite un diálogo del golden en `dp-pre-bot` y guarda el contexto EXACTO que ve el juez. Usadla antes de
+arreglar cualquier rechazo (no funciona con el examen oculto, a propósito).
+
+**Siguiente, en orden:**
+3. **Oferta de asesor por código**, no por el modelo (que el juez no la pueda quitar). Con `JUEZ_PRESENTACION` la
+   cancelación ya pasó, pero sigue dependiendo de que el juez no la rechace.
+4. **Búsqueda doble**: ronda core con SOLO ese interruptor cambiado (A = `privacidad-B`).
+5. Después, la ronda COMPLETA con el examen oculto (decisión de Gadea).
+- Pendientes vistos: cruce referido/refresher en `referral-mas-refresher` que el juez no caza; y en
+  `manual-duracion-curso` la reserva dice "¡Qué bien que venga alguien más!" cuando el cliente dijo "para mí" (sale en
+  `presentacion-B` y en `privacidad-B`).
+
+### ✅ 1-oct noche (Álvaro) — SUPERADO por el bloque de arriba: paso 1 HECHO, `JUEZ_PRESENTACION` PROMOCIONADO
 
 **Estado.** PRE sirve `feature/pre_alvaro` (= `feature/pre_gadea` de Gonzalo + este paso; `check_deploy` en verde).
 **Integrad `feature/pre_alvaro` en vuestra rama antes de subir.** Promocionados: `RAG_KB_V2`, `RAG_BUSQUEDA_ORIGEN`,

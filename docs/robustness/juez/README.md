@@ -179,12 +179,31 @@ búsquedas, baratas. **Para decidir: una ronda core con SOLO este interruptor ca
   ninguna en un turno donde actuara el flag (en B el juez no rechazó nada).
 - **Pendiente visto:** cruce referido/refresher ("ambos requieren teoría y piscina previas") que el juez no caza.
 
+### Paso 2 (Álvaro, 2-oct): el precio en pesos — `JUEZ_PRIVACIDAD_POR_LINEA` PROMOCIONADO
+
+- **Reproducido a propósito** con `scripts/reproducir_juez_pre.py` (nuevo): el diálogo `paquete-5-buceos-cop` entero,
+  dentro de `dp-pre-bot`, espiando el juez (respuesta, veredicto, motivo y contexto entero). Sin el arreglo, 4 de 5
+  conversaciones acaban en "no lo tengo" en el turno 2.
+- **Causa:** no era la regla de moneda ni falta de datos. `redact_pii` se aplicaba al contexto ENTERO del juez, y con una
+  palabra de documento en cualquier sitio ("pasaporte" en la FAQ de pagos con tarjeta extranjera) tapa todos los números
+  de 7 cifras o más: **50 precios del catálogo** pasaban a `[REDACTED_NUMBER]`. Solo pasa en conversación porque esa FAQ
+  la trae la búsqueda con historial.
+- **Arreglo:** `redact_pii_por_lineas` (la misma regla línea a línea) en `is_grounded`. 0 precios tapados; la cédula de
+  un cliente se sigue tapando (`tests/test_juez_privacidad.py`). Límite: palabra y número en líneas distintas.
+- **Escalón 0** (×5 en PRE, `privacidad-2026-10-02.json`): rechazos 10 → **0**, precio 0/5 → **5/5**, "no lo tengo"
+  4 → **0**.
+- **Ronda core `2026-10-01-privacidad-B`** frente a `presentacion-B` (solo cambia este flag): rechazos 0 → 0; criterios
+  93,4 → 94,3 % (ruido); turnos con pregunta p50 3,91 → 3,36 s. Las 2 regresiones leídas no son del flag (una sale igual
+  en las dos rondas; la otra es redacción).
+- **Lección:** la primera hipótesis ("al juez le falta saber que el precio en pesos es el de los colombianos",
+  `RAG_PRECIO_CON_ORIGEN`) empeoró el escalón 0 y se quitó. Lo que encontró la causa fue ver el contexto EXACTO que
+  recibe el juez, no el que creemos que recibe: antes de arreglar un rechazo del juez, reproducirlo con
+  `reproducir_juez_pre.py`.
+
 ### Siguiente
 
-1. **Darle al juez lo que el bot tiene ordenado decir** (la presentación de `RAG_INTRO`), igual que `para_el_juez` le da
-   el catálogo: una fuente, y el juez deja de tirar los datos de marca. Calibrar con una sonda antes.
-2. **Los precios en pesos en conversación**: reproducir el turno 2 de `paquete-5-buceos-cop` y ver qué contexto ve el
-   juez.
+1. ✅ **Darle al juez lo que el bot tiene ordenado decir** (la presentación de `RAG_INTRO`): `JUEZ_PRESENTACION`, Paso 1.
+2. ✅ **Los precios en pesos en conversación**: `JUEZ_PRIVACIDAD_POR_LINEA`, Paso 2.
 3. **La oferta de asesor por código** (paso 3 del handoff): el caso de la cancelación es justo eso, y ahora con daño
    real al cliente.
 4. La ronda aislada de la búsqueda doble.

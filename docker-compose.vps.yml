@@ -226,7 +226,8 @@ services:
       # ronda core presentacion-B, rechazos del juez 3 -> 0 y la cancelacion pasa a una persona.
       JUEZ_PRESENTACION: "true"
       # 2-oct (Alvaro): el juez tapa los datos personales linea a linea (antes una FAQ con "pasaporte" tapaba todos los
-      # precios del catalogo >= 1.000.000 COP). Escalon 0: rechazos 10 -> 0, precio 0/5 -> 5/5. ENCENDIDO para su ronda B.
+      # precios del catalogo >= 1.000.000 COP). Escalon 0: rechazos 10 -> 0, precio 0/5 -> 5/5. PROMOCIONADO (HISTORY
+      # 0.29.92): ronda core privacidad-B, el paquete de 5 da el precio en pesos, calidad igual. Revert = "false" aqui y en config.py.
       JUEZ_PRIVACIDAD_POR_LINEA: "true"
       # rag-5 (30-sep): el RAG arranca a la vez que el enrutador (Jev) y se aprovecha solo con el mismo contexto
       # (si no, se rehace). PROMOCIONADO 1-oct (HISTORY 0.29.88). Revert = "false" aqui y en config.py.
