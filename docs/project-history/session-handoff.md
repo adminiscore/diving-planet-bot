@@ -13,6 +13,61 @@ Read this file before changing code in the Diving Planet Bot. For a quick versio
 
 > **📏 LEER ANTES DE MEDIR — decisiones del 24-sep-2026 (Gadea):** (1) latencia y llamadas con nuestros logs `[TURN_METRICS]` + `scripts/turn_metrics.py`, no con Langfuse (plan gratuito superado, reinicio 16-oct); (2) pruebas A/B por escalones, juzgando solo los diálogos que cambian. Todo en `docs/robustness/protocolo-medicion.md`.
 
+### ▶️ RETOMAR AQUÍ — 1-oct (Gadea): rag-5 CERRADA y promocionada (turnos con pregunta 5,4 → 3,4 s, calidad igual); siguiente, rag-6 y DESPUÉS la ronda completa con el examen oculto
+
+**Estado.** PRE sirve `feature/pre_gadea` (commit del cierre en `git log`; `check_deploy` en verde). **Álvaro y
+Gonzalo: integrad `feature/pre_gadea` en vuestra rama antes de subir.** Promocionados en PRE: `RAG_KB_V2`,
+`RAG_BUSQUEDA_ORIGEN`, **`RAG_ADELANTADO`** y **`NOTAS_PUERTA_JEV`** (nuevo). Apagados con medida:
+`RAG_FICHA_DEL_SERVICIO` (rag-3b) y `RAG_CONTESTA_LO_QUE_SABE` (rag-4). Suite 2859 passed, ruff limpio. Plan Coral
+(rag-5 hecha, bitácora, cola vacía) y Mapa de Coral (ronda rag5-C, flag nuevo) al día. ⚠️ La clave de OpenRouter
+(Jev) tenía un tope de 3 $ y se agotó el 1-oct (Jev 403, PRE caía al enrutador LLM): Gadea la subió a 30 $/mes.
+
+**Hecho hoy (HISTORY 0.29.88; detalle en `docs/robustness/rag-5/README.md` §6-8):**
+
+| Qué | Estado | Dónde |
+|---|---|---|
+| Puerta de Jev para el extractor de notas (paso 1 de Gonzalo convertido en arreglo) | **promocionado** | `jev_router.SHARES_OPEN_FACT`, `conversational_core._jev_sin_nada_que_apuntar`, `scripts/sonda_notas.py` |
+| El primer mensaje también adelanta el RAG | **promocionado** (va con `RAG_ADELANTADO`) | `conversational_core.lanzar_rag_adelantado` |
+| El buceo adaptado aprovecha la adelantada y busca con el origen | **promocionado** | `conversational_core.rag_con_adelantado`, `info_agent`, `supervisor._shared_turn_handler` |
+| Ronda core rag5-C | medida | `snapshots/2026-10-01-rag5-C.json`, `golden-set/results/2026-10-01-rag5-C__gpt-5-mini-medium.json`, `logs-pre-2026-10-01-rag5-C.txt` |
+
+Ronda C frente a rag5-A (sin adelanto): turnos con pregunta p50 **5,37 → 3,44 s**, p95 8,45 → 6,87 s; cliente p95
+8,4 → 6,0 s; llamadas por turno 3,0 → 2,7; adelanto aprovechado **36 de 40**; **23/32** (A 22/32). Las 7
+regresiones, leídas: ninguna es de rag-5.
+
+**Siguiente, en orden (decidido por Gadea el 1-oct: el examen oculto va DESPUÉS de rag-6, una sola vez):**
+1. **rag-6 · experimento: la base curada entera en el prompt** (con caché) en vez de buscar trozos. Objetivo: quitar
+   los "no lo tengo" por búsqueda. Medir primero con `rag_piezas --codigo-local` (top-8 y cobertura no aplican igual:
+   comparar cobertura de datos, contradicciones, rechazos del juez y "no lo tengo" contra la base de hoy) y, si gana,
+   ronda core A/B (A = rag5-C). Riesgos a medir: latencia (~15-20.000 tokens de prompt más: la caché ahorra coste, no
+   tiempo de generación) y "perderse en el medio". Detrás de flag y sin promocionar hasta medir. Hecho = promocionado
+   o descartado con medida.
+2. **Ronda COMPLETA del golden con el examen oculto** (116 + 21, ~2 $, ~2 h) con el estado final del bloque RAG.
+   Referencia: paso 8 (oculto 76,4 %). Es la ÚNICA pasada del oculto del bloque: no mirar sus casos para arreglar
+   nada antes. Hecho = resultado comparado con el paso 8 y leído por caso.
+- Pendientes menores (sin daño medido, no tocar sin datos): datos de reserva ciertos en respuestas cortas que aún
+  entran como nota (4 en la ronda C; si hiciera falta: "solo contesta la pregunta pendiente" de u3-7 y
+  `shares_open_fact` < 0,7, validado con un banco nuevo); "no lo tengo a la mano" con el precio en COP del paquete
+  de 5 y "¡Qué bien que venga alguien más!" sin acompañante (salen en A, B y C); Open Water "ya en las islas" (vuelta
+  4:30 p.m. el día 1, preguntar a Gadea); el esquema `kb_v2_prueba` de la base de PRE se puede borrar.
+
+**Cómo medir:**
+```bash
+ENV_FILE=.env.dev python -m scripts.rag_piezas --codigo-local ...                     # rag-6, piezas (ver rag-3/README)
+ENV_FILE=.env.dev python -m scripts.run_synthetic_pre --name <ronda> --sample core     # ~1 h; el script antepone la fecha al nombre
+ssh ... "docker logs dp-pre-bot" > docs/robustness/logs-pre-<ronda>.txt               # ANTES de cualquier push
+ENV_FILE=.env.dev python -m scripts.turn_metrics --from-run docs/robustness/synthetic-runs/<ronda>.jsonl --label <ronda> --out docs/robustness/snapshots/<ronda>.json
+ENV_FILE=.env.dev python -m scripts.judge_golden_set --run docs/robustness/synthetic-runs/<ronda>.jsonl --snapshot docs/robustness/snapshots/<ronda>.json
+ENV_FILE=.env.dev python -m scripts.ab_judge_compare 2026-10-01-rag5-C <ronda>
+ENV_FILE=.env.dev python -m scripts.run_synthetic_pre --name <ronda> --sample golden   # la ronda COMPLETA (con el oculto), al final
+```
+**Avisos de hoy:** (a) si Jev da 403 "Key limit exceeded", es el tope de la clave de OpenRouter (la misma en local y
+en PRE); (b) `TaskStop` no mata siempre el proceso de Python: una pasada parada siguió escribiendo en el mismo log;
+comprobad los ficheros de resultado (número de turnos) antes de leer resúmenes; (c) `rag5_por_que_se_rehace` acepta
+`SUFIJO` para no pisar resultados y guarda cada nota capturada; (d) la foto de la ronda trae `rag_adelantado` y los
+turnos llevan `notas` (saltadas / extraidas) en `[TURN_METRICS]`; (e) tests que cuentan llamadas al RAG deben fijar
+`rag_adelantado` apagado (ahora también el primer mensaje adelanta).
+
 ### 🔎 30-sep noche (Gonzalo) — paso 1 de rag-5 HECHO: por qué se rehace. Son las notas… y apuntan basura
 
 Detalle: `docs/robustness/rag-5/README.md`. HISTORY 0.29.87. **PRE no ha cambiado** (solo docs, un script de
@@ -47,7 +102,7 @@ los 1,2 s que gana rag-5 y dejaría intacto el problema de calidad.
 (b) una pasada local se arrastró 4 h por errores de conexión con OpenAI desde mi máquina (en PRE, 0 errores en el
 mismo rato): lanzad el script con `timeout 1800`; (c) `check_deploy` se caía en Windows al imprimir "✓", arreglado.
 
-### ▶️ RETOMAR AQUÍ — 30-sep noche (Gadea → Álvaro): rag-5 medido (el RAG adelantado gana 1,2 s cuando se aprovecha, pero solo en el 29 % de los turnos); siguiente, subir ese %
+### ✅ 30-sep noche (Gadea → Álvaro) — rag-5 medido: el RAG adelantado gana 1,2 s cuando se aprovecha, pero solo en el 29 % de los turnos (superado el 1-oct)
 
 **Estado.** PRE sirve `feature/pre_gadea` (ver el commit del cierre en `git log`; `check_deploy` en verde).
 **Álvaro y Gonzalo: integrad `feature/pre_gadea` en vuestra rama antes de subir.** En PRE: `RAG_KB_V2` y

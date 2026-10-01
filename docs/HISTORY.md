@@ -1,6 +1,14 @@
 History
 =======
 
+0.29.88 - (2026-10-01)
+----------------------
+* **rag-5 CERRADA: `RAG_ADELANTADO` y `NOTAS_PUERTA_JEV` PROMOCIONADOS.** Ronda core A/B en PRE (rag5-A = e92c6bb sin adelanto; rag5-C = 404b6db): turnos con pregunta p50 **5,37 → 3,44 s**, p95 8,45 → 6,87 s; todos los turnos p50 2,71 → 2,16 s, p95 7,93 → 5,45 s; cliente p95 8,4 → 6,0 s; llamadas por turno 3,0 → **2,7**. Adelanto aprovechado en **36 de 40** turnos con pregunta (rag5-B: 12 de 41). Calidad igual: **23/32** (A 22/32), criterios 94,8 → 94,2 % (ruido). Leídas las 7 regresiones: ninguna es de rag-5 (3 ya salían en A o B, 1 variación del RAG con el mismo contexto, 1 escalado del enrutador LLM de respaldo antes del RAG —"the discount of 10% is not showing up", caso conocido de Jev—, 2 ruido del juez). Coste: gpt-4.1 igual (46), gpt-4.1-mini +7, gpt-4o-mini −35; por conversación entre ~+1 % y ~+12 % si las llamadas canceladas se facturan.
+* **Puerta de Jev para el extractor de notas (`NOTAS_PUERTA_JEV`, `jev_router.SHARES_OPEN_FACT`).** Pregunta nueva en la llamada del enrutador (coste 0): "¿cuenta algo del cliente que haya que apuntar?", con la definición del propio extractor; si Jev está seguro de que no (p < 0,2), no se llama al extractor. El prompt del extractor no se toca. Calibrada ANTES de medir (`scripts/sonda_notas.py`): 0/17 positivos de diseño y **0/7 ciegos** perdidos, 43/44 negativos parados. Réplica local (Gonzalo, `rag5_por_que_se_rehace`): aprovechado 60 → 92 %, llamadas al extractor 289 → 37; leídas las 96 notas que dejan de entrar: ninguna de salud, ocasión ni límite (datos de reserva, preguntas apuntadas como hecho e inventos). En PRE: extractor en 9 de 77 turnos, 6 notas en 93 turnos. Decisión de Gadea: la residencia es dato de reserva (se queda parada).
+* **El primer mensaje también adelanta** (regla rápida de idioma de `_setup_phase`, sin llamadas; si no sabe el idioma, no se adelanta). Réplica: 116 → 151 turnos que llegan a usar la adelantada, 93 % aprovechado.
+* **El buceo adaptado (nodo `info` y cascada) aprovecha la adelantada** (`conversational_core.rag_con_adelantado`) y **busca con el origen del cliente** (`RAG_BUSQUEDA_ORIGEN`), que ese camino no recibía.
+* Quedan, sin daño medido: datos de reserva ciertos en respuestas cortas ("soy certificado, voy solo"), 4 notas en la ronda; "llevaremos dos mochilas" (equipaje) ya no se apunta. Marcha atrás: `false` en `src/config.py` y `docker-compose.vps.yml`.
+
 0.29.87 - (2026-09-30)
 ----------------------
 * **rag-5 · por qué se tira la respuesta adelantada: son las NOTAS, y lo que apuntan es en buena parte basura.** Paso 1 del "Siguiente" del handoff. Instrumento nuevo, local y casi gratis: `scripts/rag5_por_que_se_rehace.py` (mismo montaje que `replay_golden_local`, con los interruptores de rag-5 como en PRE; compara el resumen antes y después en cada rehecho). La réplica reproduce PRE: se rehace el **41 %** (PRE, 50 %).
