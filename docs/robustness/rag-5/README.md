@@ -186,3 +186,19 @@ los ficheros de resultados se comprobaron (116 turnos y número de llamadas de c
 
 Siguiente: ronda core B en PRE (calidad leída por caso y latencia), con los pasos 2 y 3 del bloque de Gadea si se
 hacen antes.
+
+## 7. El primer mensaje también se adelanta (1-oct, Gadea con Claude)
+
+Hasta hoy el RAG adelantado no se lanzaba en el primer mensaje (el idioma aún no está decidido): en la ronda rag5-B
+eran 14 de los 41 turnos con pregunta. Ahora `lanzar_rag_adelantado` usa la misma regla rápida de idioma con la que
+empieza `_setup_phase` (`catalog._detect_language_from_text`, sin llamadas) y deja la foto como la dejará él (idioma
+y paso de conversación libre). Si la regla no sabe el idioma, no se adelanta (no se adivina lo que decidiría el LLM).
+Si al final se decide otra cosa, la huella no coincide y se rehace, como siempre.
+
+Réplica local con la puerta de notas (`SUFIJO=-primer-mensaje`): turnos que llegan a usar la respuesta adelantada
+116 → **151** (+35, los primeros mensajes con pregunta); aprovechada **140 (93 %)**, rehecha 11. Los 4 rehechos por
+notas que quedan son notas buenas (cuenta local, intérprete, "no tiene claro si volverá", edad del niño): ahí
+rehacer es lo correcto.
+
+Coste: el primer mensaje que es solo un saludo también lanza el adelantado, que se descarta (como en cualquier turno
+sin pregunta). Se cuenta en la ronda core B.

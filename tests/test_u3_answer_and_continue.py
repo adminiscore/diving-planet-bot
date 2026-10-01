@@ -107,6 +107,9 @@ def _llm_reads(monkeypatch, message, patch):
 
 async def test_con_flag_contesta_y_guarda_el_dato(monkeypatch, signals, rag):
     monkeypatch.setattr(settings, "answer_and_continue", True)
+    # rag-5: desde el 1-oct el primer mensaje también lanza el RAG adelantado (y aquí se descarta); se cuenta la
+    # respuesta de ESTE turno.
+    monkeypatch.setattr(settings, "rag_adelantado", False)
     _llm_reads(monkeypatch, "somos 3, ¿qué incluye el precio?", {"group_size": 3})
     st = _state()
     await route_message(st, "queremos bucear, somos certificados, desde cartagena")

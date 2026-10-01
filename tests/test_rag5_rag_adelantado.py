@@ -105,15 +105,46 @@ async def test_si_el_turno_no_la_usa_se_cancela_al_cerrarlo(flags):
     assert tarea.cancelled() and state._rag_adelantado is None
 
 
-def test_no_se_adelanta_en_el_primer_turno_ni_con_el_flag_apagado(flags, monkeypatch):
+def test_no_se_adelanta_con_el_flag_apagado(flags, monkeypatch):
     state = _estado()
-    state.step = Step.WELCOME
-    core.lanzar_rag_adelantado(state, "¿qué incluye?")
-    assert getattr(state, "_rag_adelantado", None) is None
-    state.step = Step.FREE_TEXT
     monkeypatch.setattr(settings, "rag_adelantado", False)
     core.lanzar_rag_adelantado(state, "¿qué incluye?")
     assert getattr(state, "_rag_adelantado", None) is None
+
+
+def _primer_turno() -> ConversationState:
+    s = ConversationState(conversation_id="rag5-primero")
+    s.step = Step.WELCOME
+    return s
+
+
+def test_primer_mensaje_sin_idioma_claro_no_se_adelanta(flags):
+    """Si la regla rápida no sabe el idioma, `_setup_phase` preguntará al LLM: no se adivina."""
+    state = _primer_turno()
+    core.lanzar_rag_adelantado(state, "👍")
+    assert getattr(state, "_rag_adelantado", None) is None
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("mensaje, idioma", [("hola, cuánto cuesta el minicurso?", "es"),
+                                             ("how much is the mini course?", "en")])
+async def test_primer_mensaje_se_adelanta_con_el_idioma_y_el_paso_que_dejara_setup(flags, monkeypatch, mensaje, idioma):
+    """La foto queda como la dejará `_setup_phase` (idioma y conversación libre): la huella coincide y el RAG corre
+    una sola vez, en el idioma bueno. El resumen falso depende del idioma y del paso, para que se note si no."""
+    async def _sin_notas(*a, **k):
+        return None
+
+    monkeypatch.setattr(core, "_maybe_capture_notes", _sin_notas)
+    rag = _RagFalso()
+    state = _primer_turno()
+    with patch("src.agents.supervisor.rag_answer", new=rag), \
+         patch("src.agents.supervisor._build_extra_context", side_effect=lambda s: f"{s.language}|{s.step}"):
+        core.lanzar_rag_adelantado(state, mensaje)
+        await core._setup_phase(state, mensaje, {})
+        core._maybe_launch_answer(state, mensaje, {})
+        await core._take_parallel_answer(state)
+    assert len(rag.llamadas) == 1
+    assert rag.llamadas[0][1]["lang"] == idioma and state.language == idioma
 
 
 @pytest.mark.asyncio

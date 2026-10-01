@@ -4958,11 +4958,16 @@ def _huella_rag(message: str, entradas: dict) -> tuple:
 
 def lanzar_rag_adelantado(state: ConversationState, message: str) -> None:
     """Al empezar el turno, antes del enrutador: lanza el RAG con lo que ya se sabe (el historial con ESTE
-    mensaje, como lo dejará `_setup_phase`). No en el primer turno: el idioma aún no está decidido."""
+    mensaje, como lo dejará `_setup_phase`).
+
+    Primer mensaje (1-oct): el idioma aún no está decidido. Se usa la misma regla rápida con la que empieza
+    `_setup_phase` (sin llamadas) y la foto queda como la dejará él (idioma y paso de conversación libre). Si la
+    regla no sabe el idioma (`_setup_phase` preguntaría al LLM), no se adelanta. Si al final decide otra cosa, la
+    huella no coincide y se rehace, como siempre."""
     if not (settings.rag_adelantado and settings.answer_and_continue):
         return
     texto = (message or "").strip()
-    if not texto or texto.isdigit() or state.step in (Step.WELCOME, Step.LANGUAGE):
+    if not texto or texto.isdigit():
         return
     import copy
 
@@ -4971,6 +4976,15 @@ def lanzar_rag_adelantado(state: ConversationState, message: str) -> None:
     history = [*(state.history or []), {"role": "user", "content": message}]
     foto = copy.copy(state)
     foto.history = history
+    if state.step in (Step.WELCOME, Step.LANGUAGE):
+        from src.flows.catalog import _detect_language_from_text
+
+        lang = _detect_language_from_text(message)
+        if not lang:
+            return
+        foto.language = foto.detected_language = lang
+        foto.step = Step.FREE_TEXT
+        foto.quick_replies = []
     entradas = _entradas_rag(foto, history)
 
     async def _correr() -> str:
