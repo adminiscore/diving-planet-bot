@@ -57,3 +57,29 @@ tomorrow?").
 4. Ofrecer un asesor: volver a medir después de 1-3 (la mitad mencionaban colombianos); si persiste, arreglo aparte.
 
 Abordables: ~43 de 54 rechazos (80 %). Los 6 inventos de política deben seguir rechazándose.
+
+## Arreglos 1-3 hechos y medidos en local (1-oct, rag_piezas, sin desplegar)
+
+Datos (decisiones de Gadea, 1-oct): **acompañante** desde Cartagena incluye lancha, almuerzo, seguro y entrada al
+Parque Nacional Natural (80 USD / 288.000 COP online, 89 / 320.000 normal); ya en las islas, el mismo precio, sin
+almuerzo (regla D5). FAQ propia del acompañante y de Isla Grande; FAQ 23 con los 30 años. Base de prueba cargada en
+`kb_v2_prueba` (372 documentos).
+
+**Regla de moneda: una para el que redacta y otra para el juez.** Primera redacción común ("decir 'para colombianos
+cuesta X COP' es correcto"): el juez bien, pero el bot dejó de corregir el mito del precio especial (1/4 frente a
+4/4). Segunda (el hecho sin la instrucción): el bot bien (4/4), el juez volvió a rechazar. Causa: necesitan cosas
+distintas. Ahora `catalog.para_el_juez` cambia solo esa línea en el catálogo que ve el juez. `scripts/sonda_juez_moneda.py`
+(juez real, N=3): 15/15 respuestas correctas aceptadas (antes: paquete de 5 "para colombianos" 0/3), 12/12 inventos
+rechazados (descuento para colombianos, tarifa especial, acompañante a 50 USD, almuerzo en islas). rag_piezas, 4
+casos de moneda × 4: todo 100 % y el mito corregido 4/4.
+
+**Búsqueda doble** (`RAG_BUSQUEDA_DOBLE`): primera versión (intercalar por posición y quedarse en 8) sacaba del top-8
+la FAQ de los hoteles base; segunda: solo si la reescritura cambió la pregunta (con la reescrita igual, la única
+diferencia era la marca de origen) y la reescrita INTACTA + hasta 4 piezas que solo trae la original. rag_piezas
+medía el top-8 sobre la última búsqueda registrada (la secundaria): corregido para medir la principal.
+
+rag_piezas, 48 casos × 1 (A = PRE, B = local con `kb_v2_prueba`): top-8 de búsqueda 92 % = 92 %; cobertura 89 → 87 %
+(ruido de 1 muestra); casos que cambiaban, × 3: hoteles base 3/3 = 3/3, plan de acompañante 2/3 → 3/3, **pago por
+transferencia 3/3 → 1/3**: el juez rechaza "el pago por transferencia no tiene descuento especial" (se deduce de la
+lista cerrada de descuentos) y después la frase "no lo tengo a la mano, un asesor te lo confirma" → "no lo tengo".
+Es la causa 4 (la oferta de asesor rechazada), que sigue viva.

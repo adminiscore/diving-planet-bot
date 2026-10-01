@@ -6,6 +6,7 @@ services, policies, and FAQs that fall outside the predefined
 decision tree.
 """
 
+import asyncio
 import contextvars
 import json
 import logging
@@ -1096,6 +1097,22 @@ def _score_for_threshold(doc: dict) -> float:
         return 0.0
 
 
+BUSQUEDA_DOBLE_EXTRA = 4
+
+
+def fusionar_busquedas(reescrita: list[dict], original: list[dict], extra: int = BUSQUEDA_DOBLE_EXTRA) -> list[dict]:
+    """Las piezas de la consulta reescrita, INTACTAS, más hasta `extra` que solo trae la pregunta original (en su
+    orden). Primera versión (intercalar por posición y quedarse en 8): sacaba del top-8 piezas buenas de la
+    reescrita ("¿me recuerda los hoteles?" perdía la FAQ de los hoteles base). Así nunca se pierde lo de hoy; no se
+    ordena por puntuación porque la de dos consultas distintas no se compara."""
+    def clave(doc: dict):
+        return doc.get("id") or (doc.get("metadata") or {}).get("key") or doc.get("content")
+
+    vistas = {clave(d) for d in reescrita}
+    nuevas = [d for d in original if clave(d) not in vistas]
+    return [*reescrita, *nuevas[:extra]]
+
+
 def _is_confident(doc: dict) -> bool:
     """Decide whether a retrieved doc is a confident match.
 
@@ -1299,11 +1316,12 @@ async def rag_answer(
         return privacy_block_message(lang)
 
     catalog_prefix: str | None = None
+    catalog_prefix_juez: str | None = None
     if settings.rag_v2:
         # Paso 5: el catalogo va entero al contexto (fuente de verdad de precios, duracion y
         # pernocta) y los atajos de precio por regex dejan de contestar: se disparaban con
         # "cuánto" aunque se preguntara otra cosa y no sabian de que servicio se hablaba.
-        from src.flows.catalog import catalog_facts  # lazy
+        from src.flows.catalog import catalog_facts, para_el_juez  # lazy
 
         facts = catalog_facts(lang)
         if settings.s4_fixes:
@@ -1323,6 +1341,7 @@ async def rag_answer(
             # Paso 9 (l2-2): al prompt del sistema y a la cabeza del contexto del juez (prefijos fijos
             # que OpenAI cachea); en el mensaje del usuario, detras del historial, nunca se cacheaba.
             catalog_prefix = facts
+            catalog_prefix_juez = para_el_juez(facts, lang)  # 1-oct: la regla de moneda como hecho
         else:
             extra_context = f"{extra_context}\n\n{facts}" if extra_context else facts
 
@@ -1397,6 +1416,7 @@ async def rag_answer(
             retrieval_query = condensed_query
 
     # Lightly bias retrieval using known origin from extra_context (Cartagena vs already on the islands)
+    antes_del_origen = retrieval_query
     if extra_context:
         lowered_ctx = extra_context.lower()
 
@@ -1421,10 +1441,30 @@ async def rag_answer(
     # Retrieve relevant documents (parent expansion happens later, only if confident).
     # Reuse the bare-query search above instead of repeating it when nothing
     # (origin bias included) ended up changing the query further.
+    # 1-oct (flag `rag_busqueda_doble`): se busca TAMBIÉN con la pregunta tal cual y se unen los dos rankings. La
+    # reescritura mete el servicio de la conversación y a veces se come el tema ("great, how do i pay" -> "How do I
+    # pay for the Fun Dives?": las 6 piezas de pago salen con la original y ninguna con la reescrita;
+    # `docs/robustness/juez/README.md`). Las dos búsquedas van a la vez. Solo si la reescritura CAMBIÓ la pregunta, y
+    # la original lleva la misma marca de origen: en rag_piezas, con la reescrita idéntica, la única diferencia era
+    # la marca y la búsqueda sin ella sacaba del top-8 una pieza buena.
+    sufijo_origen = retrieval_query[len(antes_del_origen):]
+    reescrita_distinta = query.strip() != condensed_query.strip()
+    original_q = redact_pii(query + sufijo_origen) if settings.rag_busqueda_doble and reescrita_distinta else ""
+    buscar_original = bool(original_q.strip()) and original_q not in (safe_query, bare_safe_query)
+    originales = None
     if bare_docs is not None and safe_query == bare_safe_query:
         docs = bare_docs
+        if buscar_original:
+            originales = await search_knowledge_base(original_q, lang=lang, **buscar_kw)
+    elif buscar_original:
+        docs, originales = await asyncio.gather(
+            search_knowledge_base(safe_query, lang=lang, **buscar_kw),
+            search_knowledge_base(original_q, lang=lang, **buscar_kw),
+        )
     else:
         docs = await search_knowledge_base(safe_query, lang=lang, **buscar_kw)
+    if originales:
+        docs = fusionar_busquedas(docs, originales)
 
     # Helper to call the LLM with unstructured context (either KB docs o solo extra_context)
     async def _answer_with_llm(
@@ -1460,7 +1500,7 @@ async def rag_answer(
 
         grounding_context = _build_grounding_context(context, extra_context=extra_context, history=history)
         if catalog_prefix:
-            grounding_context = f"{catalog_prefix}\n\n{grounding_context}"
+            grounding_context = f"{catalog_prefix_juez or catalog_prefix}\n\n{grounding_context}"
         # Paso 6 (s4_fixes): corregir un precio que cita el cliente ("¿son los mismos 2.215.000?" -> "el
         # precio es 2.450.000, no 2.215.000") nombra su cifra; el guard la tomaba por inventada y la
         # respuesta acababa en "no lo tengo". Sus propias cifras cuentan; el juez sigue rechazando que

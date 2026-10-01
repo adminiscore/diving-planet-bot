@@ -1,7 +1,7 @@
 {
  "meta": {
-  "generado": "2026-10-01T10:08:45+00:00",
-  "commit": "e6d7e2e",
+  "generado": "2026-10-01T11:27:23+00:00",
+  "commit": "578b380",
   "rama": "feature/pre_gadea"
  },
  "vistas": {
@@ -722,7 +722,7 @@
    "carril": "flujo",
    "tipo": "datos",
    "titulo": "Buscar",
-   "que_hace": "Busca los 8 documentos más parecidos por significado y por palabras, y los mezcla.",
+   "que_hace": "Busca los 8 documentos más parecidos por significado y por palabras, y los mezcla. Busca con la pregunta reescrita y con la del cliente tal cual, y une los dos resultados por posición.",
    "donde": "src/knowledge/vector_store.py:search_knowledge_base",
    "modelos": [
     {
@@ -731,12 +731,27 @@
      "pre": "text-embedding-3-small"
     }
    ],
+   "interruptores": [
+    {
+     "nombre": "rag_busqueda_origen",
+     "titulo": "Buscar según de dónde sale el cliente",
+     "codigo": true,
+     "pre": true,
+     "sin_efecto": false
+    },
+    {
+     "nombre": "rag_busqueda_doble",
+     "titulo": "Buscar también con la pregunta tal cual",
+     "codigo": true,
+     "pre": true,
+     "sin_efecto": false
+    }
+   ],
    "tiempo_medido": {
     "p50": 0.4,
     "fuente": "medido dentro de PRE el 28-sep (8 preguntas, HISTORY 0.29.65)"
    },
-   "marca": "postgresql",
-   "interruptores": []
+   "marca": "postgresql"
   },
   {
    "id": "r_confianza",
@@ -1800,6 +1815,19 @@
    "sin_efecto": null
   },
   {
+   "nombre": "rag_busqueda_doble",
+   "area": "Preguntas",
+   "titulo": "Buscar también con la pregunta tal cual",
+   "texto": "Además de la pregunta reescrita con el contexto, se busca con la que escribió el cliente y se mezclan los dos resultados: la reescritura a veces cambiaba el tema.",
+   "codigo": true,
+   "pre": true,
+   "fijado_en_pre": true,
+   "usado_por": [
+    "r_buscar"
+   ],
+   "sin_efecto": null
+  },
+  {
    "nombre": "rag_busqueda_origen",
    "area": "Preguntas",
    "titulo": "Buscar según de dónde sale el cliente",
@@ -1807,7 +1835,9 @@
    "codigo": true,
    "pre": true,
    "fijado_en_pre": true,
-   "usado_por": [],
+   "usado_por": [
+    "r_buscar"
+   ],
    "sin_efecto": null
   },
   {

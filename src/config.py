@@ -180,6 +180,10 @@ class Settings(BaseSettings):
     # colaban en el top-8 sin perder ningun dato. El origen llega del estado (`state.location`), no de leer el
     # resumen: la deteccion por frases solo funcionaba en espanol. PROMOCIONADO 30-sep (HISTORY 0.29.85).
     rag_busqueda_origen: bool = True
+    # 1-oct (analisis del juez, docs/robustness/juez/README.md): se busca tambien con la pregunta tal cual y se unen
+    # los dos rankings por posicion. La reescritura se comia el tema en 7 de 54 rechazos del juez ("how do i pay" ->
+    # "How do I pay for the Fun Dives?"). ENCENDIDO para la medida (rag_piezas y ronda core).
+    rag_busqueda_doble: bool = True
     # rag-5 (30-sep): el RAG arranca a la vez que el enrutador (Jev) en vez de despues, y se aprovecha solo si su
     # contexto es exactamente el de la llamada de siempre (si no, se rehace). Estimado: -0,7 s por pregunta, ~+20 %
     # de coste (los RAG que se descartan en turnos sin pregunta). Medido (rag5-A/B, HISTORY 0.29.86): -1,2 s cuando

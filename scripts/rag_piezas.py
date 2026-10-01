@@ -248,7 +248,11 @@ def cargar_casos(filtro: str | None) -> list[dict]:
 def puntuar(caso: dict, fila: dict) -> dict:
     """Por dato: dónde está (top-8 bruto, contexto visto) y qué hizo la respuesta."""
     busquedas = fila.get("busquedas") or []
-    top8 = busquedas[-1]["docs"] if busquedas else []
+    # 1-oct (`rag_busqueda_doble`): con dos búsquedas a la vez, la última registrada puede ser la de la pregunta
+    # original (la secundaria). El top-8 se mide en la principal: la que no es la pregunta tal cual.
+    original = norm(caso.get("pregunta") or "")
+    principales = [b for b in busquedas if not norm(b.get("query") or "").startswith(original)] if original else []
+    top8 = (principales or busquedas)[-1]["docs"] if busquedas else []
     llamadas = fila.get("llamadas") or []
     visto = (llamadas[0]["sistema"] + "\n" + llamadas[0]["usuario"]) if llamadas else ""
     visto_n = norm(visto)

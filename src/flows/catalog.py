@@ -528,9 +528,13 @@ def catalog_facts(lang: str) -> str:
         head = ("CATÁLOGO OFICIAL (fuente de verdad; precios por persona, 'online' = con el 10% de "
                 "descuento por reservar en la web):")
         out = [head, "Saliendo desde Cartagena:", *groups[False],
-               f"- Acompañante (no bucea, va en la lancha): {companion} online, {companion_normal} normal.",
+               f"- Acompañante (no bucea, va en la lancha con el grupo): {companion} online, {companion_normal} normal; "
+               "incluye lancha, almuerzo, seguro y entrada al Parque Nacional Natural.",
                "Si ya estás en las Islas del Rosario (recogida en tu hotel si tiene acceso marítimo):",
                *groups[True],
+               f"- Acompañante - ya en las islas (no bucea, va en la lancha con el grupo): {companion} online, "
+               f"{companion_normal} normal (el mismo precio); incluye seguro y entrada al Parque Nacional Natural; "
+               "almuerzo NO incluido.",
                "Edad mínima 10 años salvo que se indique otra.",
                "Operamos todos los días del año salvo el 25 de diciembre y el 1 de enero. Tú no ves los cupos: "
                "el cliente elige la fecha y el número de personas en el calendario del link de reserva.",
@@ -539,18 +543,22 @@ def catalog_facts(lang: str) -> str:
                "5% si el cliente trae su equipo COMPLETO, solo en buceo recreativo y cursos (no en snorkel ni "
                "minicurso); 10% el segundo día de buceo (buceo recreativo y cursos).",
                "Moneda: los colombianos (vivan donde vivan) y los residentes en Colombia pagan en COP; el resto, en "
-               "USD; mismo precio; si no sabes "
-               "la nacionalidad del cliente, da las dos monedas. NO existe precio ni descuento especial para "
-               "colombianos: si el cliente lo menciona, díselo claramente (solo cambia la moneda). No sumes ni "
-               "calcules totales. Si el cliente "
+               "USD; es el mismo precio en las dos monedas: el precio en COP de cada plan es el que pagan los "
+               "colombianos. NO existe descuento ni tarifa rebajada para colombianos: si el cliente cree que la hay, "
+               "díselo claramente (solo cambia la moneda). Si no sabes la nacionalidad del cliente, da las dos "
+               "monedas. No sumes ni calcules totales. Si el cliente "
                "cita un precio que no coincide con el catálogo, dale el del catálogo sin repetir su cifra."]
     else:
         head = ("OFFICIAL CATALOG (source of truth; prices per person, 'online' = with the 10% discount "
                 "for booking on the website):")
         out = [head, "Departing from Cartagena:", *groups[False],
-               f"- Companion (doesn't dive, rides the boat): {companion} online, {companion_normal} regular.",
+               f"- Companion (doesn't dive, rides the boat with the group): {companion} online, {companion_normal} "
+               "regular; includes boat, lunch, insurance and the National Natural Park entrance fee.",
                "If already on the Rosario Islands (pickup at your hotel if it has boat access):",
                *groups[True],
+               f"- Companion - already on the islands (doesn't dive, rides the boat with the group): {companion} online, "
+               f"{companion_normal} regular (the same price); includes insurance and the National Natural Park entrance "
+               "fee; lunch NOT included.",
                "Minimum age 10 unless stated otherwise.",
                "We operate every day of the year except December 25 and January 1. You can't see open slots: "
                "the customer picks the date and number of people in the booking link's calendar.",
@@ -558,15 +566,38 @@ def catalog_facts(lang: str) -> str:
                "recreational diving, mini course and snorkeling (not PADI courses; not automatic: the team applies "
                "it); 5% if the customer brings their COMPLETE gear, only for recreational diving and courses (not "
                "snorkeling or the mini course); 10% on the second day of diving (recreational diving and courses).",
-               "Currency: Colombians (wherever they live) and residents of Colombia pay in COP; everyone else in "
-               "USD; same price; if you don't "
-               "know the customer's nationality, give both currencies. There is NO special price or discount for "
-               "Colombians: if the customer mentions one, say so clearly (only the currency changes). Do not add "
-               "up or compute totals. If the "
+               "Currency: Colombians (wherever they live) and residents of Colombia pay in COP; everyone else in USD; "
+               "it is the same price in both currencies: each plan's COP price is what Colombians pay. There is NO "
+               "discount or reduced rate for Colombians: if the customer thinks there is one, say so clearly (only "
+               "the currency changes). If you don't know the customer's nationality, give both currencies. Do not "
+               "add up or compute totals. If the "
                "customer quotes a price that doesn't match the catalog, give the catalog price without repeating theirs."]
     text = chr(10).join(out)
     _FACTS_CACHE[lang] = text
     return text
+
+
+# 1-oct (análisis del juez, `docs/robustness/juez/README.md`): el juez y el que redacta leen el mismo catálogo pero
+# necesitan cosas distintas de la regla de moneda. Al que redacta le hace falta la INSTRUCCIÓN (si el cliente cree
+# que hay tarifa especial para colombianos, decirle que no); al juez, el HECHO. Con la instrucción, el juez rechazaba
+# el precio COP correcto en cuanto la respuesta decía "para colombianos" (14 de 54 rechazos); con el hecho en el
+# texto del que redacta, el bot dejaba de corregir el mito (1/4). Cada uno recibe la suya.
+_MONEDA_PARA_EL_JUEZ = {
+    "es": ("Moneda: los colombianos (vivan donde vivan) y los residentes en Colombia pagan en COP y el resto en USD; "
+           "es el mismo precio en las dos monedas. El precio en COP de cada plan es el precio para colombianos: una "
+           "respuesta que da ese precio 'para colombianos' es correcta. Lo que no existe es un descuento ni una "
+           "tarifa rebajada para colombianos."),
+    "en": ("Currency: Colombians (wherever they live) and residents of Colombia pay in COP and everyone else in USD; "
+           "it is the same price in both currencies. Each plan's COP price is the price for Colombians: a response "
+           "that gives that price 'for Colombians' is correct. What does not exist is a discount or a reduced rate "
+           "for Colombians."),
+}
+
+
+def para_el_juez(hechos: str, lang: str) -> str:
+    """El catálogo que ve el juez de grounding: el mismo, con la regla de moneda como hecho (ver arriba)."""
+    linea = _MONEDA_PARA_EL_JUEZ["es" if lang == "es" else "en"]
+    return chr(10).join(linea if ln.startswith(("Moneda:", "Currency:")) else ln for ln in hechos.split(chr(10)))
 
 
 def catalog_booking_links(lang: str) -> str:

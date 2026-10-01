@@ -450,10 +450,14 @@
       "carril": "flujo",
       "tipo": "datos",
       "titulo": "Buscar",
-      "que_hace": "Busca los 8 documentos más parecidos por significado y por palabras, y los mezcla.",
+      "que_hace": "Busca los 8 documentos más parecidos por significado y por palabras, y los mezcla. Busca con la pregunta reescrita y con la del cliente tal cual, y une los dos resultados por posición.",
       "donde": "src/knowledge/vector_store.py:search_knowledge_base",
       "modelos": [
         "openai_embedding_model"
+      ],
+      "interruptores": [
+        "rag_busqueda_origen",
+        "rag_busqueda_doble"
       ],
       "tiempo_medido": {
         "p50": 0.4,
@@ -952,6 +956,11 @@
       "area": "Preguntas",
       "titulo": "Empezar a contestar mientras se clasifica",
       "texto": "La respuesta a la pregunta empieza a la vez que el enrutador decide qué es el mensaje; si al final no hacía falta o el contexto cambió, se tira."
+    },
+    "rag_busqueda_doble": {
+      "area": "Preguntas",
+      "titulo": "Buscar también con la pregunta tal cual",
+      "texto": "Además de la pregunta reescrita con el contexto, se busca con la que escribió el cliente y se mezclan los dos resultados: la reescritura a veces cambiaba el tema."
     },
     "rag_busqueda_origen": {
       "area": "Preguntas",

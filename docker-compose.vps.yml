@@ -214,6 +214,9 @@ services:
       # (origen del estado). rag_piezas: fichas cruzadas en el top-8 20 -> 0; core rag3-A 22/32 -> rag3-B 23/32.
       # Revert = "false" aqui y en config.py.
       RAG_BUSQUEDA_ORIGEN: "true"
+      # 1-oct: busqueda con la pregunta original Y la reescrita, unidas por posicion. ENCENDIDO para la medida; si no
+      # pasa, "false" aqui y en config.py.
+      RAG_BUSQUEDA_DOBLE: "true"
       # rag-5 (30-sep): el RAG arranca a la vez que el enrutador (Jev) y se aprovecha solo con el mismo contexto
       # (si no, se rehace). PROMOCIONADO 1-oct (HISTORY 0.29.88). Revert = "false" aqui y en config.py.
       RAG_ADELANTADO: "true"
