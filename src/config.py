@@ -154,8 +154,9 @@ class Settings(BaseSettings):
     grounding_reasoning_effort: str = "low"
     # J2 (1-oct): segunda opinion de Jev sobre las frases que el juez marca NO (src/agents/juez_segunda_opinion.py).
     # Solo cuando el juez rechaza; si Jev esta seguro de que ninguna afirma nada del negocio, la respuesta pasa.
-    # APAGADO: se mide con rag_piezas (actual vs J1 vs J2).
-    juez_segunda_opinion: bool = False
+    # rag_piezas 1-oct (96 respuestas por lado): cobertura 88 -> 90 %, contradicciones 3 -> 1, misma latencia. Calibrado
+    # (scripts/sonda_juez_jev.py): 0 afirmaciones del negocio colan de 102. ENCENDIDO SIN PROMOCIONAR para la ronda core.
+    juez_segunda_opinion: bool = True
     # Paso 9 (l2-2, 28-sep): el catalogo va al final del prompt del SISTEMA (fijo por idioma) y el primero en
     # el contexto del juez, para que el prompt caching de OpenAI lo reutilice entre conversaciones (antes iba
     # en el mensaje del usuario, detras del historial: nunca se cacheaba). ENCENDIDO por defecto (= PRE, paso 10).

@@ -452,6 +452,14 @@ medias (u3-1 ✅, u3-4 ✅ promocionada, u3-5 🟡); PRE con u3-4 encendido. Sui
 | **11** | R6: robustez de producción | r6-2 (guardrails), g-5 (carga) | el bot nunca deja sin respuesta; inyección medida; p95 con N clientes a la vez |
 | **12** | Q5: calidad continua y entrega | q5-1, g-3, g-4, g-4b, g-6, m0-4, q5-2 | gate en CI; simulador; bucle producción → golden; testers reales; SOAK; entrega |
 
+> **Estado al 1-oct tarde (Gadea), fase RAG:** rag-1, 2, 3 y 5 ✅ promocionadas; rag-4 ❌; **rag-6 ❌ descartada sin
+> gastar** (la base entera son 30-40k tokens frente a 9k, techo bajo, riesgo de cruces). La sustituye **"el juez que
+> rechaza datos buenos"** (HISTORY 0.29.89): regla de moneda en dos versiones, búsqueda doble, datos nuevos y J2
+> (segunda opinión de Jev), medidos en local (rag_piezas: 87 → 90 %, rechazos 14 → 7, misma latencia); J1 (juez de
+> razonamiento) y el juez por tipo, descartados con medida. **Siguiente:** ronda core en PRE para promocionar o apagar
+> `RAG_BUSQUEDA_DOBLE` y `JUEZ_SEGUNDA_OPINION`; **después, la ronda COMPLETA con el examen oculto**, una sola vez, como
+> cierre del bloque RAG. Detalle: `session-handoff.md`, "RETOMAR AQUÍ" del 1-oct tarde.
+
 > **Estado al 1-oct (Gadea), fase RAG:** rag-1, rag-2, rag-3 y **rag-5 ✅ promocionadas**; rag-4 ❌ descartada.
 > rag-5 (HISTORY 0.29.88): el RAG arranca a la vez que el enrutador y la puerta de Jev para las notas evita que se
 > rehaga; turnos con pregunta p50 5,37 → 3,44 s, calidad igual (23/32). **Orden decidido por Gadea el 1-oct:

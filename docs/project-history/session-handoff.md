@@ -13,7 +13,67 @@ Read this file before changing code in the Diving Planet Bot. For a quick versio
 
 > **📏 LEER ANTES DE MEDIR — decisiones del 24-sep-2026 (Gadea):** (1) latencia y llamadas con nuestros logs `[TURN_METRICS]` + `scripts/turn_metrics.py`, no con Langfuse (plan gratuito superado, reinicio 16-oct); (2) pruebas A/B por escalones, juzgando solo los diálogos que cambian. Todo en `docs/robustness/protocolo-medicion.md`.
 
-### ▶️ RETOMAR AQUÍ — 1-oct (Gadea): rag-5 CERRADA y promocionada (turnos con pregunta 5,4 → 3,4 s, calidad igual); siguiente, rag-6 y DESPUÉS la ronda completa con el examen oculto
+### ▶️ RETOMAR AQUÍ — 1-oct tarde (Gadea): rag-6 descartada; arreglado lo que hace rechazar al juez respuestas buenas (medido en local); siguiente, ronda core en PRE
+
+**Estado.** PRE sirve `feature/pre_gadea` (commit del cierre en `git log`; `check_deploy` en verde). **Álvaro y
+Gonzalo: integrad `feature/pre_gadea` antes de subir.** Promocionados: `RAG_KB_V2`, `RAG_BUSQUEDA_ORIGEN`,
+`RAG_ADELANTADO`, `NOTAS_PUERTA_JEV`. **Encendidos SIN promocionar, para la ronda core:** `RAG_BUSQUEDA_DOBLE` y
+`JUEZ_SEGUNDA_OPINION`. Apagados con medida: `JUEZ_POR_TIPO`, `RAG_FICHA_DEL_SERVICIO`, `RAG_CONTESTA_LO_QUE_SABE`; J1
+(juez gpt-5-mini) descartado. Datos nuevos en la base (los carga el CI en `kb_v2`): acompañante, 30 años, Isla Grande y
+la regla del 10 % con transferencia. Suite 2878 passed, ruff limpio. Plan Coral y Mapa de Coral al día.
+
+**Hecho hoy por la tarde (HISTORY 0.29.89; detalle y cifras en `docs/robustness/juez/README.md`):**
+
+| Qué | Estado | Dónde |
+|---|---|---|
+| rag-6 (base entera en el prompt) | **descartada** sin gastar: 30-40k tokens, techo bajo, riesgo de cruces | README del juez |
+| Análisis de 54 rechazos del juez (6 rondas) | hecho | `scripts/juez_rechazos.py`, `docs/robustness/juez/rechazos-*.json` |
+| Regla de moneda: una para el que redacta y otra para el juez | en código, medido en local | `catalog.para_el_juez`, `scripts/sonda_juez_moneda.py` |
+| Búsqueda doble (original + reescrita) | encendido, sin promocionar | `rag_agent.fusionar_busquedas`, flag `RAG_BUSQUEDA_DOBLE` |
+| Datos: acompañante, 30 años, Isla Grande, 10 % con transferencia por fallo | en la base | `curada/faqs.json`, `policies.json`, `curada/preguntas.json`, `catalog.py` |
+| Juez por tipo | **apagado con medida** (esconde inventos en frases de "asesor") | flag `JUEZ_POR_TIPO`, `scripts/sonda_juez_tipo.py` |
+| J1 juez de razonamiento | **descartado con medida** (+1,7 s p50, más rechazos) | `GROUNDING_V3_MODEL=gpt-5-mini` |
+| J2 segunda opinión de Jev | encendido, sin promocionar | `src/agents/juez_segunda_opinion.py`, `scripts/sonda_juez_jev.py`, flag `JUEZ_SEGUNDA_OPINION` |
+
+rag_piezas, 96 respuestas por lado: PRE 87 % · 14 rechazos · 3,2/5,5 s; actual con arreglos 88 % · 8 rechazos; **J2 90 % ·
+7 rechazos · contradicciones 3 → 1 · 3,1/5,7 s**; J1 87 % · 20 rechazos · 4,8/10,2 s
+(`docs/robustness/rag-piezas/2026-10-01-cmp-*.json`). En preguntas sueltas el "no lo tengo" del juez es casi nulo
+(1/96): el problema está en las conversaciones (17 de ~276 en las rondas), por eso falta la ronda core.
+
+**Siguiente, en orden:**
+1. **Ronda core en PRE** con lo que hay desplegado (A = `2026-10-01-rag5-C`). Mirar: "no lo tengo" genéricos (en rag5-C
+   hubo 2 finales tras 2 rechazos), rechazos y segundas redacciones, latencia de los turnos con pregunta, y calidad
+   leída por caso. En el log de PRE, `[RAG][GROUNDING][JEV]` dice cada vez que Jev rescata o mantiene un rechazo:
+   **leer a mano cada rescate** (ninguno puede ser un invento). Hecho = promocionar o apagar `RAG_BUSQUEDA_DOBLE` y
+   `JUEZ_SEGUNDA_OPINION` con esa medida.
+2. Umbral de J2: fijado antes de medir en 0,2 (rescata 9/20 frases de asesor). Con 0,25 rescataría 12/20 sin colar
+   nada en el banco, pero el margen es estrecho (la afirmación más baja, 0,28): solo subirlo validándolo en datos
+   nuevos (la ronda).
+3. Si en la ronda siguen "no lo tengo" por la frase de asesor del segundo intento: quitar del mensaje de corrección
+   la orden de escribirla (`RAG_REGEN_FEEDBACK_ES`/`_EN`) y añadir la oferta de asesor por código, después del juez.
+4. Después: **ronda COMPLETA con el examen oculto**, una sola vez, como cierre del bloque RAG (decisión de Gadea).
+- Pendientes que salen igual en todas las configuraciones (no son de hoy): `refresher-antes-en` dice algo prohibido y
+  `descuento-codigo-familia` contradice "online sin código". El esquema `kb_v2_prueba` de la base de PRE se usa para
+  medir sin tocar `kb_v2`; se puede borrar al terminar.
+
+**Cómo medir:**
+```bash
+ENV_FILE=.env.dev python -m scripts.run_synthetic_pre --name <fecha>-juez-B --sample core    # ~1 h; sin pushes mientras corre
+ssh ... "docker logs dp-pre-bot" > docs/robustness/logs-pre-<ronda>.txt                      # ANTES de cualquier push
+ENV_FILE=.env.dev python -m scripts.turn_metrics --from-run docs/robustness/synthetic-runs/<ronda>.jsonl --label <ronda> --out docs/robustness/snapshots/<ronda>.json
+ENV_FILE=.env.dev python -m scripts.judge_golden_set --run docs/robustness/synthetic-runs/<ronda>.jsonl --snapshot docs/robustness/snapshots/<ronda>.json
+ENV_FILE=.env.dev python -m scripts.ab_judge_compare 2026-10-01-rag5-C <ronda>
+python -m scripts.juez_rechazos <ronda>                                                         # rechazos del juez de la ronda
+grep -a "GROUNDING\]\[JEV\]" docs/robustness/logs-pre-<ronda>.txt                               # rescates de J2, leer a mano
+```
+**Avisos de hoy:** (a) el juez y el que redacta leen el mismo catálogo pero necesitan cosas distintas: una regla
+escrita para uno puede romper al otro; medid los dos (`sonda_juez_moneda` y los casos de moneda de rag_piezas); (b)
+rag_piezas mide preguntas sueltas: no ve los problemas que dependen de la conversación (segunda redacción, historial);
+(c) `rag_piezas --codigo-local` comparte la carpeta del contenedor: no lancéis dos a la vez; (d) los heredoc de bash
+convierten la barra-n de las cadenas Python en saltos de línea reales: editad con el editor; (e) `policies.json` y
+`curada/preguntas.json` están en el repo con CRLF: al reescribirlos, mantenedlo o el diff sale entero.
+
+### ✅ 1-oct mañana (Gadea) — rag-5 CERRADA y promocionada (turnos con pregunta 5,4 → 3,4 s, calidad igual)
 
 **Estado.** PRE sirve `feature/pre_gadea` (commit del cierre en `git log`; `check_deploy` en verde). **Álvaro y
 Gonzalo: integrad `feature/pre_gadea` en vuestra rama antes de subir.** Promocionados en PRE: `RAG_KB_V2`,
