@@ -29,7 +29,10 @@ from src.agents.intent_detector import (
 )
 from src.agents.lead_summary import build_lead_summary
 from src.agents.llm_extractor import fill_gaps, missing_fields, verify_fields
-from src.agents.rag_agent import is_fallback_answer, rag_answer
+from src.agents.rag_agent import (  # noqa: F401 — el núcleo llama a `supervisor.rag_answer`
+    is_fallback_answer,
+    rag_answer,
+)
 from src.config import settings
 from src.domain import activities as dom
 from src.flows import cart_render, eligibility
@@ -3248,8 +3251,10 @@ async def _shared_turn_handler(
         if state.step in (Step.WELCOME, Step.LANGUAGE):
             state.step = Step.MAIN_MENU
         state.history.append({"role": "user", "content": message})
-        extra_context = _build_extra_context(state)
-        answer = await rag_answer(message, lang=state.language, history=state.history, extra_context=extra_context)
+        # rag-5: aprovecha la respuesta adelantada si el contexto es el mismo (si no, la llamada de siempre).
+        from src.agents.conversational_core import rag_con_adelantado
+
+        answer = await rag_con_adelantado(state, message, state.history)
         state.history.append({"role": "assistant", "content": answer})
         return answer
 

@@ -163,3 +163,30 @@ async def test_la_adelantada_no_marca_el_turno_como_rag_hasta_que_se_aprovecha(f
         core.lanzar_rag_adelantado(state, "¿qué incluye?")
         await state._rag_adelantado["task"]
     assert vistos == [True] and RAG_ADELANTADO.get() is False
+
+
+@pytest.mark.asyncio
+async def test_el_camino_de_buceo_adaptado_tambien_aprovecha_la_adelantada(flags):
+    """1-oct: el nodo `info` (y la cascada) llamaban al RAG por su cuenta y tiraban la adelantada."""
+    rag = _RagFalso()
+    state = _estado()
+    with patch("src.agents.supervisor.rag_answer", new=rag), \
+         patch("src.agents.supervisor._build_extra_context", return_value="Buceo adaptado."):
+        core.lanzar_rag_adelantado(state, "mi madre no puede hacer deporte")
+        state.history.append({"role": "user", "content": "mi madre no puede hacer deporte"})
+        respuesta = await core.rag_con_adelantado(state, "mi madre no puede hacer deporte", state.history)
+    assert len(rag.llamadas) == 1 and "Buceo adaptado." in respuesta
+    assert getattr(state, "_rag_adelantado", None) is None
+
+
+@pytest.mark.asyncio
+async def test_sin_adelantada_el_camino_de_buceo_adaptado_busca_con_el_origen(flags, monkeypatch):
+    """La llamada de siempre sale de `_entradas_rag`: con `rag_busqueda_origen`, la búsqueda recibe el origen."""
+    monkeypatch.setattr(settings, "rag_busqueda_origen", True)
+    rag = _RagFalso()
+    state = _estado()
+    state.location = "cartagena"
+    with patch("src.agents.supervisor.rag_answer", new=rag), \
+         patch("src.agents.supervisor._build_extra_context", return_value="x"):
+        await core.rag_con_adelantado(state, "¿es accesible la lancha?", state.history)
+    assert rag.llamadas[0][1]["origin"] == "cartagena"

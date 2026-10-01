@@ -5018,6 +5018,18 @@ async def _adoptar_o_rehacer(state: ConversationState, message: str, history: li
     return await supervisor.rag_answer(message, **entradas)
 
 
+async def rag_con_adelantado(state: ConversationState, message: str, history: list) -> str:
+    """rag-5 (1-oct): el RAG de los caminos que contestan fuera de la reserva (buceo adaptado: nodo `info` y la
+    cascada). En la ronda rag5-B esos turnos tiraban su respuesta adelantada y hacían otra. Ahora la adoptan con la
+    misma huella que la reserva; las entradas salen de `_entradas_rag`, así que la búsqueda también recibe el origen
+    del cliente (rag-3), que este camino no pasaba."""
+    adelantado = getattr(state, "_rag_adelantado", None)
+    if adelantado is not None and adelantado["mensaje"] == message:
+        state._rag_adelantado = None
+        return await _adoptar_o_rehacer(state, message, history, adelantado)
+    return await _rag_answer(state, message, history=history)
+
+
 def cancelar_rag_adelantado(state: ConversationState) -> None:
     """Cierre del turno: una respuesta adelantada que el turno no usó se cancela."""
     from src.observability import note_turn

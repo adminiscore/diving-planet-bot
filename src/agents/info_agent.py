@@ -45,17 +45,16 @@ logger = logging.getLogger("uvicorn.error")
 
 
 async def info_node(state: BotState) -> dict:
+    from src.agents.conversational_core import rag_con_adelantado
     from src.agents.supervisor import (
         _ADAPTIVE_DIVING_PATTERN,
         _PRIVATE_GROUP_EVENT_RE,
         _SAME_PRICE_DIFFERENT_NATIONALITY_RE,
         _alcohol_and_food_policy_answer,
-        _build_extra_context,
         _maybe_answer_age_eligibility,
         _private_group_event_answer,
         _same_price_different_nationality_answer,
         _shared_turn_handler,
-        rag_answer,
     )
 
     conv = state["conv_state"]
@@ -122,10 +121,8 @@ async def info_node(state: BotState) -> dict:
         if conv.step in (Step.WELCOME, Step.LANGUAGE):
             conv.step = Step.MAIN_MENU
         conv.history.append({"role": "user", "content": message})
-        extra_context = _build_extra_context(conv)
-        answer = await rag_answer(
-            message, lang=conv.language, history=conv.history, extra_context=extra_context
-        )
+        # rag-5: aprovecha la respuesta adelantada si el contexto es el mismo (si no, la llamada de siempre).
+        answer = await rag_con_adelantado(conv, message, conv.history)
         conv.history.append({"role": "assistant", "content": answer})
         logger.info("[NODE:info] DIVE TO HEAL no-precio -> RAG")
         return {"reply": answer}

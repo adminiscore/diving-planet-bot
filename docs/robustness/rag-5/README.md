@@ -202,3 +202,26 @@ rehacer es lo correcto.
 
 Coste: el primer mensaje que es solo un saludo también lanza el adelantado, que se descarta (como en cualquier turno
 sin pregunta). Se cuenta en la ronda core B.
+
+## 8. Los otros caminos también aprovechan la adelantada (1-oct, Gadea con Claude)
+
+En la ronda rag5-B, 3 turnos con pregunta tiraron su adelantada: los tres eran de **buceo adaptado** (DIVE TO HEAL),
+que contesta en el nodo `info` (y su copia en la cascada, `supervisor._shared_turn_handler`) llamando al RAG por su
+cuenta. Ahora los dos usan `conversational_core.rag_con_adelantado`: adopta la adelantada con la misma huella que la
+reserva y, si no, hace la llamada de siempre. Las entradas salen de `_entradas_rag`, así que **ese camino también
+busca con el origen del cliente** (`RAG_BUSQUEDA_ORIGEN`, promocionado en rag-3), que antes no recibía.
+
+Réplica local (`SUFIJO=-otros-caminos`): turnos que llegan a usar la adelantada 151 → **155**; aprovechada **143
+(92 %)**. Los 4 nuevos son los de buceo adaptado del golden visible: 2 aprovechados (los seguimientos) y 2 rehechos
+correctamente (el mensaje que ACTIVA el contexto de buceo adaptado: la respuesta tiene que saberlo).
+
+**Resumen de rag-5 en la réplica local** (mismas 95 conversaciones, notas reales):
+
+| | rag5-B (PRE, 30-sep) | sin puerta (local) | + puerta de notas | + primer mensaje | + otros caminos |
+|---|---|---|---|---|---|
+| turnos que llegan a usar la adelantada | 24 de 41 con pregunta | 116 | 116 | 151 | **155** |
+| aprovechada | 12 (29 % de los turnos RAG) | 60 % | 92 % | 93 % | **92 %** |
+| llamadas al extractor de notas | — | 289 | 37 | 38 | 34 |
+
+Siguiente: ronda core B en PRE (calidad leída por caso, latencia, coste de las adelantadas descartadas y cuántas
+notas de reserva entran en respuestas cortas).
