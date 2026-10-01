@@ -47,6 +47,7 @@ from src.flows.state import ConversationState  # noqa: E402
 _FRASES = re.compile(r"(?<=[.!?])\s+")
 REGISTRO: list[dict] = []
 DIALOGO = {"id": None}  # el diálogo en curso, para rastrear cada caso
+NOTAS: list[dict] = []  # cada llamada al extractor de notas (con notas reales)
 _original = core._adoptar_o_rehacer
 
 
@@ -138,7 +139,17 @@ async def main() -> None:
     if os.environ.get("NOTAS_REALES") == "1":
         # Tercera pasada: las notas DE VERDAD (una llamada a gpt-4o-mini por mensaje con 3+ palabras). Si ahora
         # se rehace mucho más que con notas vacías, la causa es lo que DICEN las notas.
-        print("notas: REALES")
+        print(f"notas: REALES · puerta de Jev (`NOTAS_PUERTA_JEV`): {settings.notas_puerta_jev}")
+        # 1-oct: se apunta CADA nota capturada (no solo las de los rehechos), para comprobar que la puerta no se come
+        # las buenas. Con la puerta, los mensajes que Jev descarta ni siquiera llegan al extractor.
+        _extraer = core.extract_notes
+
+        async def _extraer_y_apuntar(message, **kw):
+            notas = await _extraer(message, **kw)
+            NOTAS.append({"dialogo": DIALOGO["id"], "mensaje": message, "notas": notas})
+            return notas
+
+        core.extract_notes = _extraer_y_apuntar
     else:
         core.extract_notes = lambda *a, **k: asyncio.sleep(retardo, result=[])
         print(f"notas: vacías, tardan {retardo} s")
@@ -160,10 +171,17 @@ async def main() -> None:
     import json
     from pathlib import Path
 
-    salida = Path("docs/robustness/rag-5") / f"por-que-se-rehace-{os.environ.get('NOTAS_REALES') and 'notas-reales' or 'notas-vacias'}.json"
+    # `SUFIJO` (1-oct): para no pisar el registro de otra pasada (p. ej. "-con-puerta").
+    nombre = f"por-que-se-rehace-{os.environ.get('NOTAS_REALES') and 'notas-reales' or 'notas-vacias'}"
+    salida = Path("docs/robustness/rag-5") / f"{nombre}{os.environ.get('SUFIJO', '')}.json"
     salida.parent.mkdir(parents=True, exist_ok=True)
     salida.write_text(json.dumps(REGISTRO, ensure_ascii=False, indent=1), encoding="utf-8")
     print(f"registro completo -> {salida}")
+    if NOTAS:
+        salida_notas = salida.with_name(salida.stem + "-notas-capturadas.json")
+        salida_notas.write_text(json.dumps(NOTAS, ensure_ascii=False, indent=1), encoding="utf-8")
+        con = [n for n in NOTAS if n["notas"]]
+        print(f"extractor llamado {len(NOTAS)} veces, con alguna nota {len(con)} -> {salida_notas}")
 
     rehechos = [r for r in REGISTRO if r["partes"]]
     aprov = len(REGISTRO) - len(rehechos)

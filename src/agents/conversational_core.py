@@ -2151,6 +2151,25 @@ def _notes_snapshot(state: ConversationState) -> dict:
     }
 
 
+def _jev_sin_nada_que_apuntar(routing_signals: dict) -> bool:
+    """rag-5 (flag `notas_puerta_jev`): ¿Jev está SEGURO de que el mensaje no cuenta nada del cliente que haya que
+    apuntar? Entonces no se llama al extractor de notas, que en esos mensajes apuntaba la pregunta como si fuera un
+    hecho ("how much would that be" -> "not Colombian"). Sin la respuesta de Jev (apagado o falló), lo de siempre."""
+    from src.agents.jev_router import NOTES_SKIP_MAX, SHARES_OPEN_FACT
+    from src.observability import note_turn
+
+    if not settings.notas_puerta_jev:
+        return False
+    p = routing_signals.get(SHARES_OPEN_FACT)
+    if p is None:
+        return False
+    saltar = p < NOTES_SKIP_MAX
+    note_turn(notas="saltadas" if saltar else "extraidas")
+    if saltar:
+        logger.info(f"[CORE][NOTAS] Jev: nada que apuntar ({p:.2f}): no se llama al extractor")
+    return saltar
+
+
 async def _maybe_capture_notes(
     state: ConversationState, message: str, *, snapshot: dict | None = None
 ) -> None:
@@ -3617,7 +3636,9 @@ async def _setup_phase(
     # l1-4: justo por eso —solo escribe estado— puede salir del turno. Con
     # `defer_background_tasks` la llama el canal tras ENVIAR la respuesta
     # (ver `supervisor.run_deferred_turn_tasks`), y el cliente no la espera.
-    if settings.notes_in_parallel:
+    if _jev_sin_nada_que_apuntar(routing_signals):
+        pass  # rag-5: Jev está seguro de que no hay nada que apuntar -> no se llama al extractor
+    elif settings.notes_in_parallel:
         # l1-4: se lanza y NO se espera aquí. La espera va justo antes de quien las
         # usa (`_build_extra_context`, contexto del RAG) y, como red de seguridad,
         # al cerrar el turno en `supervisor.route_message` — antes del `save_state`.

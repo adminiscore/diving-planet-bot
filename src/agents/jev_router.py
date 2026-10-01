@@ -317,6 +317,30 @@ _COMPANION_JOINS_Q = {
     ),
 }
 
+# rag-5 (1-oct): ¿el mensaje cuenta algo del cliente que haya que APUNTAR como nota? Puerta del extractor de
+# notas (`conversational_core._maybe_capture_notes`): Gonzalo midió el 30-sep que de 26 notas nuevas solo 7
+# eran buenas y 15 eran la pregunta del cliente apuntada como hecho, o inventada ("how much would that be" ->
+# "not Colombian"), pese a que el prompt del extractor ya lo prohíbe. Redactada con la definición del propio
+# extractor (`src/prompts/memory.py`), no con los casos de la prueba ciega. Solo se salta el extractor cuando
+# Jev está SEGURO de que no hay nada (p < NOTES_SKIP_MAX): ante la duda, la conducta de hoy. Calibrada con
+# `scripts/sonda_notas.py`.
+SHARES_OPEN_FACT = "shares_open_fact"
+NOTES_SKIP_MAX = 0.2
+_SHARES_OPEN_FACT_Q = {
+    "type": "noul",
+    "instructions": (
+        "The customer tells us something about THEMSELVES or the people travelling with them that a dive advisor "
+        "should remember and that is NOT a booking detail: a health or medical condition, an injury, a pregnancy, "
+        "medication or an allergy; a disability or accessibility need; not knowing how to swim, or fear or "
+        "nerves about the water; a diet; a special occasion (birthday, honeymoon, anniversary); a language "
+        "need; or a hard limit on their budget or their schedule. It counts even if the same message also asks "
+        "a question. It is FALSE when the message only asks something (prices, schedules, what is included, "
+        "discounts, hotels, whether something is possible), only gives booking details (which activity, how "
+        "many people, where they stay or set out from, their nationality or city, their certification or last "
+        "dive, dates), mentions something only as a hypothesis, or is thanks or small talk."
+    ),
+}
+
 # u3-7 (paso 7, promocionado el 27-sep): la respuesta a la pregunta PENDIENTE cuando el parser no la
 # entiende ("uf, hace muchisimo", "vivo en Bogota", "ya estamos por playa blanca"). Hoy la interpreta
 # el LLM (`resolve_slot_answer`); los si/no y las listas los contesta Jev en la misma llamada. Las
@@ -358,7 +382,7 @@ def pending_answer_value(slot: str, answer: dict) -> dict:
 _U34_QUESTIONS = (
     ASKS_QUESTION, AFFIRMS_LOCATION, AFFIRMS_ACTIVITY, ACTIVITY_HYPOTHESIS,
     AFFIRMS_CERTIFICATION, AFFIRMS_GROUP, AFFIRMS_NATIONALITY, CORRECTS, ASKS_RECALL, NEEDS_STAFF,
-    CHANGES_DATE, COMPANION_JOINS, PENDING_ANSWER,
+    CHANGES_DATE, COMPANION_JOINS, PENDING_ANSWER, SHARES_OPEN_FACT,
 )
 
 
@@ -395,6 +419,8 @@ def _questions_for_turn(pending_slot: str | None = None) -> dict:
         q[NEEDS_STAFF] = _NEEDS_STAFF_Q
         q[CHANGES_DATE] = _CHANGES_DATE_Q
     q[COMPANION_JOINS] = _COMPANION_JOINS_Q
+    if settings.notas_puerta_jev:
+        q[SHARES_OPEN_FACT] = _SHARES_OPEN_FACT_Q
     return q
 
 
@@ -446,6 +472,8 @@ def answers_to_signals(answers: dict, threshold: float = THRESHOLD) -> dict:
     if COMPANION_JOINS in answers:
         # Se emite la PROBABILIDAD: el filtro solo actua cuando Jev esta seguro de que NO.
         out[COMPANION_JOINS] = (answers.get(COMPANION_JOINS) or {}).get("noul", 1.0)
+    if SHARES_OPEN_FACT in answers:
+        out[SHARES_OPEN_FACT] = (answers.get(SHARES_OPEN_FACT) or {}).get("noul", 1.0)
     if CHANGES_DATE in answers:
         out[CHANGES_DATE] = (answers.get(CHANGES_DATE) or {}).get("noul", 0.0) >= CHANGES_DATE_MIN
     for name in (AFFIRMS_LOCATION, AFFIRMS_CERTIFICATION, AFFIRMS_GROUP, AFFIRMS_NATIONALITY):
@@ -493,7 +521,7 @@ async def detect_routing_signals_jev(message: str, *, lang: str = "es") -> dict 
 # Señales de u3-4/u3-5 que NO son del router: viajan aparte (ver `detect_routing_signals_jev_full`).
 _TURN_SIGNALS = (
     AFFIRMS_LOCATION, AFFIRMS_ACTIVITY, AFFIRMS_CERTIFICATION, AFFIRMS_GROUP, AFFIRMS_NATIONALITY, CORRECTS,
-    ASKS_RECALL, NEEDS_STAFF, CHANGES_DATE, COMPANION_JOINS,
+    ASKS_RECALL, NEEDS_STAFF, CHANGES_DATE, COMPANION_JOINS, SHARES_OPEN_FACT,
 )  # AFFIRMS_P y PENDING_ANSWER se anaden a mano en `detect_routing_signals_jev_full`
 
 

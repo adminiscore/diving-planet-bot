@@ -185,6 +185,13 @@ class Settings(BaseSettings):
     # de coste (los RAG que se descartan en turnos sin pregunta). Medido (rag5-A/B, HISTORY 0.29.86): -1,2 s cuando
     # se aprovecha, pero solo en el 29 % de los turnos RAG; calidad igual. ENCENDIDO SIN PROMOCIONAR hasta subir ese %.
     rag_adelantado: bool = True
+    # rag-5 (1-oct): puerta de Jev para el extractor de notas. Gonzalo midio el 30-sep que de 26 notas nuevas solo 7
+    # eran buenas y 15 eran la pregunta del cliente apuntada como hecho, o inventada; y que son las que hacen rehacer
+    # la respuesta adelantada. Con el flag, Jev contesta en la llamada del enrutador "¿cuenta algo del cliente que
+    # haya que apuntar?" y, si esta SEGURO de que no (p < 0,2), no se llama al extractor. Calibrado con
+    # `scripts/sonda_notas.py`: 0/24 positivos perdidos (7 de ellos casos reales ciegos), 43/44 negativos parados.
+    # ENCENDIDO para la ronda core B.
+    notas_puerta_jev: bool = True
     # rag-4 (29-sep): la regla del "no lo tengo" del prompt del RAG es TODO-O-NADA -- dice "si la respuesta no esta
     # en el contexto, dilo" y no dice nada de contestar la parte que SI esta, asi que ante una pregunta con varias
     # partes el modelo tira la respuesta entera aunque tenga la mitad. Medido (`rag_piezas`, 2026-09-28-rag2-B2): de

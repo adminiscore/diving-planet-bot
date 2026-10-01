@@ -1,7 +1,7 @@
 {
  "meta": {
-  "generado": "2026-09-30T13:10:29+00:00",
-  "commit": "a0fe659",
+  "generado": "2026-10-01T07:32:42+00:00",
+  "commit": "0f02625",
   "rama": "feature/pre_gadea"
  },
  "vistas": {
@@ -602,6 +602,13 @@
     {
      "nombre": "notes_in_parallel",
      "titulo": "Notas en paralelo",
+     "codigo": true,
+     "pre": true,
+     "sin_efecto": false
+    },
+    {
+     "nombre": "notas_puerta_jev",
+     "titulo": "Solo apuntar notas si hay algo que apuntar",
      "codigo": true,
      "pre": true,
      "sin_efecto": false
@@ -1756,6 +1763,19 @@
    "sin_efecto": null
   },
   {
+   "nombre": "notas_puerta_jev",
+   "area": "Reserva",
+   "titulo": "Solo apuntar notas si hay algo que apuntar",
+   "texto": "El enrutador rápido dice si el mensaje cuenta algo del cliente (salud, ocasión, límites...). Si está seguro de que no, no se apunta nada: evita notas inventadas a partir de preguntas.",
+   "codigo": true,
+   "pre": true,
+   "fijado_en_pre": true,
+   "usado_por": [
+    "b_notas"
+   ],
+   "sin_efecto": null
+  },
+  {
    "nombre": "notes_in_parallel",
    "area": "Reserva",
    "titulo": "Notas en paralelo",
@@ -2044,7 +2064,12 @@
    "gpt-4.1-mini": 60,
    "gpt-4.1": 51
   },
-  "calidad": null
+  "calidad": {
+   "criteria_pass_pct": 92.9,
+   "dialogues_passed": 22,
+   "dialogues": 32,
+   "model": "gpt-5-mini (medium)"
+  }
  },
  "pesos_fuente": "Los % del enrutador y de las fases de la reserva salen de la foto de la ronda; los del revisor y el reintento, de los logs de PRE de la misma ronda. La cascada y los textos fijos no dejan rastro medible: se animan con una estimación y no llevan porcentaje."
 }
