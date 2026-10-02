@@ -13,7 +13,24 @@ Read this file before changing code in the Diving Planet Bot. For a quick versio
 
 > **📏 LEER ANTES DE MEDIR — decisiones del 24-sep-2026 (Gadea):** (1) latencia y llamadas con nuestros logs `[TURN_METRICS]` + `scripts/turn_metrics.py`, no con Langfuse (plan gratuito superado, reinicio 16-oct); (2) pruebas A/B por escalones, juzgando solo los diálogos que cambian. Todo en `docs/robustness/protocolo-medicion.md`.
 
-### ▶️ RETOMAR AQUÍ — 2-oct (Álvaro): paso 2 HECHO, `JUEZ_PRIVACIDAD_POR_LINEA` PROMOCIONADO; siguiente: oferta de asesor por código (paso 3)
+### ▶️ RETOMAR AQUÍ — 2-oct (Álvaro): pasos 2 y 3 CERRADOS; siguiente: la ronda aislada de la búsqueda doble (paso 4)
+
+**Paso 3 (oferta de asesor por código): medido, hoy no hace falta, no se construye** (HISTORY 0.29.93; README del juez,
+"Paso 3"). Con `reproducir_juez_pre.py` ×5 en PRE: una cancelación directa recibe 5/5 la oferta de asesor, que ya es
+texto fijo del código; en `clima-y-cancelacion` el "¿Podemos cancelar porfa?" recibe 5/5 "Ya le pasé tu caso" sin pasar
+por el RAG. 0 rechazos del juez en las dos últimas rondas. **Corrección:** la mejora de la cancelación en
+`presentacion-B` no fue por `JUEZ_PRESENTACION` (ese turno no pasó por el RAG; fue la lectura de Jev). Diseño apuntado en
+el README por si vuelve el fallo.
+
+**Siguiente, en orden:**
+4. **Búsqueda doble**: ronda core con SOLO `RAG_BUSQUEDA_DOBLE` cambiado. A = `2026-10-01-privacidad-B` (encendida, como
+   está PRE); B = apagada (`false` en `src/config.py` y en el compose, push, `check_deploy`, ronda). Decidir con la
+   calidad, las búsquedas por turno y los turnos donde la búsqueda original aporta piezas.
+5. Después, la ronda COMPLETA con el examen oculto (decisión de Gadea).
+- Pendientes vistos: cruce referido/refresher en `referral-mas-refresher` que el juez no caza; y en
+  `manual-duracion-curso` la reserva dice "¡Qué bien que venga alguien más!" cuando el cliente dijo "para mí".
+
+### ✅ 2-oct (Álvaro) — SUPERADO por el bloque de arriba: paso 2 HECHO, `JUEZ_PRIVACIDAD_POR_LINEA` PROMOCIONADO
 
 **Estado.** PRE sirve `feature/pre_alvaro` (`check_deploy` en verde). **Integrad `feature/pre_alvaro` en vuestra rama
 antes de subir.** Promocionados: `RAG_KB_V2`, `RAG_BUSQUEDA_ORIGEN`, `RAG_ADELANTADO`, `NOTAS_PUERTA_JEV`,

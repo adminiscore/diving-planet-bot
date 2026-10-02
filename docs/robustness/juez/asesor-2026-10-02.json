@@ -1,0 +1,326 @@
+{
+ "que": "Paso 3 (2-oct, Alvaro): antes de construir la oferta de asesor por codigo, medir si hoy el juez la quita. Dos dialogos del golden con cancelacion, x5 en PRE con el bot real y los interruptores de PRE (scripts/reproducir_juez_pre.py). Por turno: cuantas veces juzgo el juez (0 = no paso por el RAG), rechazos, si la respuesta lleva asesor y la respuesta.",
+ "dialogos": {
+  "clima-y-cancelacion-reserva-existente": [
+   {
+    "rep": 0,
+    "turno": 1,
+    "msg": "Hola, cómo vas?",
+    "juicios": 1,
+    "rechazos": [],
+    "menciona_asesor": false,
+    "respuesta": "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n\n¡Hola! Aquí estoy, lista para ayudarte con todo lo que necesites sobre buceo en las Islas del Rosario. ¿Qué plan tienes en mente o qué te gustaría saber?"
+   },
+   {
+    "rep": 0,
+    "turno": 2,
+    "msg": "Pregunta, supongo que no están saliendo con el clima verdad?",
+    "juicios": 0,
+    "rechazos": [],
+    "menciona_asesor": false,
+    "respuesta": "Las condiciones del tiempo pueden cambiar rápidamente. Te conecto con el equipo para darte información actualizada."
+   },
+   {
+    "rep": 0,
+    "turno": 3,
+    "msg": "En caso de que no pueda viajar podemos mover la fecha de esto? O cuál es la política para cancelación?",
+    "juicios": 0,
+    "rechazos": [],
+    "menciona_asesor": true,
+    "respuesta": "Los cambios de fecha estan sujetos a disponibilidad y a nuestros terminos y condiciones. Ver: https://divingplanet.org/terminos-y-condiciones/\n\n¿Quieres que te conecte con un asesor para gestionar el cambio de fecha, o prefieres volver al menú principal?"
+   },
+   {
+    "rep": 0,
+    "turno": 4,
+    "msg": "Podemos cancelar porfa?",
+    "juicios": 0,
+    "rechazos": [],
+    "menciona_asesor": true,
+    "respuesta": "¡Con gusto! 🙌 Ya le pasé tu caso a un asesor del equipo y te escribe por aquí enseguida. Si mientras tanto necesitas algo más, cuéntame."
+   },
+   {
+    "rep": 0,
+    "turno": 5,
+    "msg": "Mi vuelo es mañana y con lo del cierre me tocó cancelar",
+    "juicios": 0,
+    "rechazos": [],
+    "menciona_asesor": true,
+    "respuesta": "¡Con gusto! 🙌 Ya le pasé tu caso a un asesor del equipo y te escribe por aquí enseguida. Si mientras tanto necesitas algo más, cuéntame."
+   },
+   {
+    "rep": 0,
+    "turno": 6,
+    "msg": "Cuál es el proceso? Te diría que reagendemos, pero no tengo claro si vuelvo este año o no",
+    "juicios": 1,
+    "rechazos": [],
+    "menciona_asesor": true,
+    "respuesta": "Entiendo que la situación está complicada con el vuelo y la incertidumbre de volver este año. Lo que hacemos normalmente es primero intentar reprogramar la actividad, pero si no tienes claro cuándo regresar, también puedes cancelar.\n\nEl proceso es así: para cambios o cancelaciones, todo está sujeto a disponibilidad y a los términos y condiciones que aceptaste al reservar (https://divingplanet.org/terminos-y-condiciones/). Si la actividad se cancela por cierre oficial, se puede reprogramar o, si "
+   },
+   {
+    "rep": 1,
+    "turno": 1,
+    "msg": "Hola, cómo vas?",
+    "juicios": 1,
+    "rechazos": [],
+    "menciona_asesor": false,
+    "respuesta": "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n\n¡Hola! Aquí estoy, lista para ayudarte con todo lo que necesites sobre buceo en las Islas del Rosario. ¿Quieres saber sobre nuestros planes, cursos o tours? ¡Cuéntame!"
+   },
+   {
+    "rep": 1,
+    "turno": 2,
+    "msg": "Pregunta, supongo que no están saliendo con el clima verdad?",
+    "juicios": 0,
+    "rechazos": [],
+    "menciona_asesor": false,
+    "respuesta": "Las condiciones del tiempo pueden cambiar rápidamente. Te conecto con el equipo para darte información actualizada."
+   },
+   {
+    "rep": 1,
+    "turno": 3,
+    "msg": "En caso de que no pueda viajar podemos mover la fecha de esto? O cuál es la política para cancelación?",
+    "juicios": 0,
+    "rechazos": [],
+    "menciona_asesor": true,
+    "respuesta": "Los cambios de fecha estan sujetos a disponibilidad y a nuestros terminos y condiciones. Ver: https://divingplanet.org/terminos-y-condiciones/\n\n¿Quieres que te conecte con un asesor para gestionar el cambio de fecha, o prefieres volver al menú principal?"
+   },
+   {
+    "rep": 1,
+    "turno": 4,
+    "msg": "Podemos cancelar porfa?",
+    "juicios": 0,
+    "rechazos": [],
+    "menciona_asesor": true,
+    "respuesta": "¡Con gusto! 🙌 Ya le pasé tu caso a un asesor del equipo y te escribe por aquí enseguida. Si mientras tanto necesitas algo más, cuéntame."
+   },
+   {
+    "rep": 1,
+    "turno": 5,
+    "msg": "Mi vuelo es mañana y con lo del cierre me tocó cancelar",
+    "juicios": 0,
+    "rechazos": [],
+    "menciona_asesor": true,
+    "respuesta": "¡Con gusto! 🙌 Ya le pasé tu caso a un asesor del equipo y te escribe por aquí enseguida. Si mientras tanto necesitas algo más, cuéntame."
+   },
+   {
+    "rep": 1,
+    "turno": 6,
+    "msg": "Cuál es el proceso? Te diría que reagendemos, pero no tengo claro si vuelvo este año o no",
+    "juicios": 2,
+    "rechazos": [],
+    "menciona_asesor": true,
+    "respuesta": "Tranquilo, te cuento: si no tienes claro cuándo volverás, lo mejor es que esperes un poco antes de reagendar. Cuando decidas la fecha, nos avisas y el cambio está sujeto a disponibilidad según nuestros términos y condiciones (https://divingplanet.org/terminos-y-condiciones/).\n\nSi finalmente no puedes venir este año y quieres cancelar, también puedes hacerlo, pero la política de cancelación está en esos mismos términos.\n\n¿Quieres que te pase con un asesor para que te explique bien el proceso y te"
+   },
+   {
+    "rep": 2,
+    "turno": 1,
+    "msg": "Hola, cómo vas?",
+    "juicios": 1,
+    "rechazos": [],
+    "menciona_asesor": false,
+    "respuesta": "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n\n¡Hola! Aquí estoy, lista para ayudarte con todo lo que necesites sobre buceo en las Islas del Rosario. ¿Qué plan tienes en mente? ¿Quieres bucear, hacer snorkel o tal vez un curso?"
+   },
+   {
+    "rep": 2,
+    "turno": 2,
+    "msg": "Pregunta, supongo que no están saliendo con el clima verdad?",
+    "juicios": 0,
+    "rechazos": [],
+    "menciona_asesor": false,
+    "respuesta": "Las condiciones del tiempo pueden cambiar rápidamente. Te conecto con el equipo para darte información actualizada."
+   },
+   {
+    "rep": 2,
+    "turno": 3,
+    "msg": "En caso de que no pueda viajar podemos mover la fecha de esto? O cuál es la política para cancelación?",
+    "juicios": 0,
+    "rechazos": [],
+    "menciona_asesor": true,
+    "respuesta": "Los cambios de fecha estan sujetos a disponibilidad y a nuestros terminos y condiciones. Ver: https://divingplanet.org/terminos-y-condiciones/\n\n¿Quieres que te conecte con un asesor para gestionar el cambio de fecha, o prefieres volver al menú principal?"
+   },
+   {
+    "rep": 2,
+    "turno": 4,
+    "msg": "Podemos cancelar porfa?",
+    "juicios": 0,
+    "rechazos": [],
+    "menciona_asesor": true,
+    "respuesta": "¡Con gusto! 🙌 Ya le pasé tu caso a un asesor del equipo y te escribe por aquí enseguida. Si mientras tanto necesitas algo más, cuéntame."
+   },
+   {
+    "rep": 2,
+    "turno": 5,
+    "msg": "Mi vuelo es mañana y con lo del cierre me tocó cancelar",
+    "juicios": 0,
+    "rechazos": [],
+    "menciona_asesor": true,
+    "respuesta": "¡Con gusto! 🙌 Ya le pasé tu caso a un asesor del equipo y te escribe por aquí enseguida. Si mientras tanto necesitas algo más, cuéntame."
+   },
+   {
+    "rep": 2,
+    "turno": 6,
+    "msg": "Cuál es el proceso? Te diría que reagendemos, pero no tengo claro si vuelvo este año o no",
+    "juicios": 1,
+    "rechazos": [],
+    "menciona_asesor": true,
+    "respuesta": "Tranquilo, te cuento: si quieres cambiar la fecha, eso depende de la disponibilidad y de los términos y condiciones que aceptaste al reservar (https://divingplanet.org/terminos-y-condiciones/). \n\nSi no estás seguro de volver este año, puedes esperar un poco antes de decidir y, si finalmente no puedes venir, la cancelación también se maneja según esos términos. En caso de que la actividad se cancele por cierre oficial, se intenta reprogramar primero y si no es posible, se hace reembolso completo."
+   },
+   {
+    "rep": 3,
+    "turno": 1,
+    "msg": "Hola, cómo vas?",
+    "juicios": 1,
+    "rechazos": [],
+    "menciona_asesor": false,
+    "respuesta": "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n\n¡Hola! Aquí estoy, lista para ayudarte con todo lo que necesites sobre buceo en las Islas del Rosario. ¿En qué te puedo colaborar hoy?"
+   },
+   {
+    "rep": 3,
+    "turno": 2,
+    "msg": "Pregunta, supongo que no están saliendo con el clima verdad?",
+    "juicios": 0,
+    "rechazos": [],
+    "menciona_asesor": false,
+    "respuesta": "Las condiciones del tiempo pueden cambiar rápidamente. Te conecto con el equipo para darte información actualizada."
+   },
+   {
+    "rep": 3,
+    "turno": 3,
+    "msg": "En caso de que no pueda viajar podemos mover la fecha de esto? O cuál es la política para cancelación?",
+    "juicios": 0,
+    "rechazos": [],
+    "menciona_asesor": true,
+    "respuesta": "Los cambios de fecha estan sujetos a disponibilidad y a nuestros terminos y condiciones. Ver: https://divingplanet.org/terminos-y-condiciones/\n\n¿Quieres que te conecte con un asesor para gestionar el cambio de fecha, o prefieres volver al menú principal?"
+   },
+   {
+    "rep": 3,
+    "turno": 4,
+    "msg": "Podemos cancelar porfa?",
+    "juicios": 0,
+    "rechazos": [],
+    "menciona_asesor": true,
+    "respuesta": "¡Con gusto! 🙌 Ya le pasé tu caso a un asesor del equipo y te escribe por aquí enseguida. Si mientras tanto necesitas algo más, cuéntame."
+   },
+   {
+    "rep": 3,
+    "turno": 5,
+    "msg": "Mi vuelo es mañana y con lo del cierre me tocó cancelar",
+    "juicios": 0,
+    "rechazos": [],
+    "menciona_asesor": true,
+    "respuesta": "¡Con gusto! 🙌 Ya le pasé tu caso a un asesor del equipo y te escribe por aquí enseguida. Si mientras tanto necesitas algo más, cuéntame."
+   },
+   {
+    "rep": 3,
+    "turno": 6,
+    "msg": "Cuál es el proceso? Te diría que reagendemos, pero no tengo claro si vuelvo este año o no",
+    "juicios": 2,
+    "rechazos": [
+     "HALLUCINATED - Puedes esperar y avisar cuando tengas una fecha definida para reagendar. NO"
+    ],
+    "menciona_asesor": true,
+    "respuesta": "Tranquilo, te cuento: si quieres cambiar la fecha, eso depende de la disponibilidad y de los términos y condiciones que aceptaste al reservar (los puedes ver aquí: https://divingplanet.org/terminos-y-condiciones/).\n\nSobre el detalle de si puedes reagendar sin tener fecha clara este año, eso puntual no lo tengo a la mano, pero un asesor te lo puede confirmar y apoyar con el proceso.\n\n¿Quieres que te conecte con un asesor para que te explique todo mejor y te ayude con lo que decidas?"
+   },
+   {
+    "rep": 4,
+    "turno": 1,
+    "msg": "Hola, cómo vas?",
+    "juicios": 1,
+    "rechazos": [],
+    "menciona_asesor": false,
+    "respuesta": "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n\n¡Hola! Aquí estoy, lista para ayudarte con todo lo que necesites sobre buceo en las Islas del Rosario. ¿Quieres saber sobre nuestros planes, cursos o alguna actividad en particular? ¡Cuéntame!"
+   },
+   {
+    "rep": 4,
+    "turno": 2,
+    "msg": "Pregunta, supongo que no están saliendo con el clima verdad?",
+    "juicios": 0,
+    "rechazos": [],
+    "menciona_asesor": false,
+    "respuesta": "Las condiciones del tiempo pueden cambiar rápidamente. Te conecto con el equipo para darte información actualizada."
+   },
+   {
+    "rep": 4,
+    "turno": 3,
+    "msg": "En caso de que no pueda viajar podemos mover la fecha de esto? O cuál es la política para cancelación?",
+    "juicios": 0,
+    "rechazos": [],
+    "menciona_asesor": true,
+    "respuesta": "Los cambios de fecha estan sujetos a disponibilidad y a nuestros terminos y condiciones. Ver: https://divingplanet.org/terminos-y-condiciones/\n\n¿Quieres que te conecte con un asesor para gestionar el cambio de fecha, o prefieres volver al menú principal?"
+   },
+   {
+    "rep": 4,
+    "turno": 4,
+    "msg": "Podemos cancelar porfa?",
+    "juicios": 0,
+    "rechazos": [],
+    "menciona_asesor": true,
+    "respuesta": "¡Con gusto! 🙌 Ya le pasé tu caso a un asesor del equipo y te escribe por aquí enseguida. Si mientras tanto necesitas algo más, cuéntame."
+   },
+   {
+    "rep": 4,
+    "turno": 5,
+    "msg": "Mi vuelo es mañana y con lo del cierre me tocó cancelar",
+    "juicios": 0,
+    "rechazos": [],
+    "menciona_asesor": true,
+    "respuesta": "¡Con gusto! 🙌 Ya le pasé tu caso a un asesor del equipo y te escribe por aquí enseguida. Si mientras tanto necesitas algo más, cuéntame."
+   },
+   {
+    "rep": 4,
+    "turno": 6,
+    "msg": "Cuál es el proceso? Te diría que reagendemos, pero no tengo claro si vuelvo este año o no",
+    "juicios": 2,
+    "rechazos": [],
+    "menciona_asesor": true,
+    "respuesta": "Tranqui, te cuento: si no sabes si vuelves este año, lo mejor es cancelar por ahora. Cuando decidas una nueva fecha, puedes reprogramar tu actividad, pero siempre sujeto a disponibilidad y a los términos y condiciones que tenemos aquí: https://divingplanet.org/terminos-y-condiciones/\n\nSi la cancelación es por el cierre que mencionas, normalmente intentamos reprogramar primero; si no se puede, se hace reembolso completo.\n\n¿Quieres que te pase con un asesor para que te ayude con la cancelación y t"
+   }
+  ],
+  "cancelacion-indirecta": [
+   {
+    "rep": 0,
+    "turno": 1,
+    "msg": "hola tengo una reserva pero me surgio un imprevisto y no puedo asistir",
+    "juicios": 0,
+    "rechazos": [],
+    "menciona_asesor": true,
+    "respuesta": "Al reservar aceptas nuestros terminos y condiciones, politica de cancelacion y tratamiento de datos personales. Ver: https://divingplanet.org/terminos-y-condiciones/\n\n¿Quieres que te conecte con un asesor para gestionar la cancelación, o prefieres volver al menú principal?"
+   },
+   {
+    "rep": 1,
+    "turno": 1,
+    "msg": "hola tengo una reserva pero me surgio un imprevisto y no puedo asistir",
+    "juicios": 0,
+    "rechazos": [],
+    "menciona_asesor": true,
+    "respuesta": "Al reservar aceptas nuestros terminos y condiciones, politica de cancelacion y tratamiento de datos personales. Ver: https://divingplanet.org/terminos-y-condiciones/\n\n¿Quieres que te conecte con un asesor para gestionar la cancelación, o prefieres volver al menú principal?"
+   },
+   {
+    "rep": 2,
+    "turno": 1,
+    "msg": "hola tengo una reserva pero me surgio un imprevisto y no puedo asistir",
+    "juicios": 0,
+    "rechazos": [],
+    "menciona_asesor": true,
+    "respuesta": "Al reservar aceptas nuestros terminos y condiciones, politica de cancelacion y tratamiento de datos personales. Ver: https://divingplanet.org/terminos-y-condiciones/\n\n¿Quieres que te conecte con un asesor para gestionar la cancelación, o prefieres volver al menú principal?"
+   },
+   {
+    "rep": 3,
+    "turno": 1,
+    "msg": "hola tengo una reserva pero me surgio un imprevisto y no puedo asistir",
+    "juicios": 0,
+    "rechazos": [],
+    "menciona_asesor": true,
+    "respuesta": "Al reservar aceptas nuestros terminos y condiciones, politica de cancelacion y tratamiento de datos personales. Ver: https://divingplanet.org/terminos-y-condiciones/\n\n¿Quieres que te conecte con un asesor para gestionar la cancelación, o prefieres volver al menú principal?"
+   },
+   {
+    "rep": 4,
+    "turno": 1,
+    "msg": "hola tengo una reserva pero me surgio un imprevisto y no puedo asistir",
+    "juicios": 0,
+    "rechazos": [],
+    "menciona_asesor": true,
+    "respuesta": "Al reservar aceptas nuestros terminos y condiciones, politica de cancelacion y tratamiento de datos personales. Ver: https://divingplanet.org/terminos-y-condiciones/\n\n¿Quieres que te conecte con un asesor para gestionar la cancelación, o prefieres volver al menú principal?"
+   }
+  ]
+ }
+}

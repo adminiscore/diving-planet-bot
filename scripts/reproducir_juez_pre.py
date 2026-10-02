@@ -59,7 +59,13 @@ def turnos(dialogo: str) -> list[str]:
         raise SystemExit(f"no existe el diálogo {dialogo}")
     if d.get("suite") == "oculto":
         raise SystemExit("ese diálogo es del EXAMEN OCULTO: no se mira para arreglar nada")
-    return d["turns"]
+    if d.get("turns"):
+        return d["turns"]
+    # Los diálogos sin `turns` propios citan un caso de un lote (como en `run_synthetic_pre.golden_cases`).
+    from scripts.run_synthetic_pre import load_batches
+
+    por_tag = {tag: ts for casos in load_batches().values() for tag, ts in casos}
+    return por_tag[d["source"]["tag"]]
 
 
 def main() -> None:

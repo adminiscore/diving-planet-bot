@@ -167,8 +167,9 @@ class Settings(BaseSettings):
     # el juez tiraba esas frases por inventadas (ronda 2026-10-01-juez-B). APAGADO hasta medirlo
     # (scripts/sonda_juez_presentacion.py y ronda core). Banco 1-oct: ciertos que pasan 3 -> 12 de 12, inventos
     # cazados 17 -> 18 de 18 (docs/robustness/juez/presentacion-2026-10-01.json). PROMOCIONADO 1-oct (ronda core
-    # 2026-10-01-presentacion-B, HISTORY 0.29.91): rechazos del juez 3 -> 0, turnos con pregunta 4,29 -> 3,91 s, la
-    # cancelacion pasa a una persona; calidad dentro del ruido. Revert = False aqui y en el compose.
+    # 2026-10-01-presentacion-B, HISTORY 0.29.91): rechazos del juez 3 -> 0, turnos con pregunta 4,29 -> 3,91 s;
+    # calidad dentro del ruido. (Que la cancelacion pasara a una persona en esa ronda NO fue por este flag: ese turno
+    # no paso por el RAG; HISTORY 0.29.93.) Revert = False aqui y en el compose.
     juez_presentacion: bool = True
     # 2-oct (Alvaro, paso 2 del "Siguiente" de Gonzalo): el juez tapa los datos personales LINEA A LINEA. `redact_pii`
     # sobre el contexto entero tapaba todos los precios >= 1.000.000 COP del catalogo si una FAQ decia "pasaporte"

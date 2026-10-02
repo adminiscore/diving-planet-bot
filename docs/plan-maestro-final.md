@@ -455,12 +455,13 @@ medias (u3-1 ✅, u3-4 ✅ promocionada, u3-5 🟡); PRE con u3-4 encendido. Sui
 > **Estado al 2-oct (Álvaro), fase RAG:** **paso 2 HECHO: `JUEZ_PRIVACIDAD_POR_LINEA` promocionado.** El juez rechazaba
 > el precio en pesos del paquete de 5 porque su filtro de datos personales tapaba los precios del catálogo (una FAQ con
 > "pasaporte" lo activaba); ahora tapa línea a línea. Escalón 0: precio 0/5 → 5/5; ronda core igual de calidad y más
-> rápida (HISTORY 0.29.92). Siguiente: oferta de asesor por código → búsqueda doble aislada → ronda COMPLETA con el
-> examen oculto. Detalle: `session-handoff.md`, "RETOMAR AQUÍ".
+> rápida (HISTORY 0.29.92). **Paso 3 (oferta de asesor por código) medido y cerrado sin construir**: hoy no pasa (la
+> oferta en cancelaciones ya es texto fijo del código; 0 rechazos del juez en las dos últimas rondas; HISTORY 0.29.93).
+> Siguiente: búsqueda doble aislada → ronda COMPLETA con el examen oculto. Detalle: `session-handoff.md`, "RETOMAR AQUÍ".
 
 > **Estado al 1-oct noche (Álvaro), fase RAG:** tras la ronda de Gonzalo (`juez-B`, J2 promocionado), **paso 1 del
 > arreglo del juez HECHO: `JUEZ_PRESENTACION` promocionado** (el juez ve la presentación oficial; rechazos 3 → 0, la
-> cancelación pasa a una persona; HISTORY 0.29.91). Siguiente: precio en pesos en conversación → oferta de asesor por
+> cancelación pasa a una persona —corregido el 2-oct: no fue por este flag—; HISTORY 0.29.91). Siguiente: precio en pesos en conversación → oferta de asesor por
 > código → búsqueda doble aislada → ronda COMPLETA con el examen oculto. Detalle: `session-handoff.md`, "RETOMAR AQUÍ".
 
 > **Estado al 1-oct tarde (Gadea), fase RAG:** rag-1, 2, 3 y 5 ✅ promocionadas; rag-4 ❌; **rag-6 ❌ descartada sin

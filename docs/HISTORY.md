@@ -1,6 +1,14 @@
 History
 =======
 
+0.29.93 - (2026-10-02)
+----------------------
+* **Paso 3 del "Siguiente" de Gonzalo: la oferta de asesor por código — MEDIDA, HOY NO HACE FALTA, no se construye** (Álvaro). La idea era que el "¿te paso con un asesor?" lo pusiera el código después del juez, por la cancelación de `juez-B` (el juez tiró la oferta y la segunda redacción ofreció actividades a quien quería cancelar).
+  - Medido antes de construir (`reproducir_juez_pre.py` ×5 en PRE, `docs/robustness/juez/asesor-2026-10-02.json`): una cancelación directa recibe **5/5** la política y la oferta de asesor, que **ya es texto fijo del código** (ruta de cambios; el juez no la ve). En `clima-y-cancelacion-reserva-existente`, "¿Podemos cancelar porfa?" recibe **5/5 "Ya le pasé tu caso a un asesor"** sin pasar por el RAG (el caso ya pasó a una persona por el clima). Rechazos del juez en las dos últimas rondas: 0.
+  - **Corrección de 0.29.91:** que la cancelación pasara a una persona en `presentacion-B` **no fue por `JUEZ_PRESENTACION`**: ese turno no pasó por el RAG. En `juez-B` Jev leyó el mensaje como pregunta y lo mandó al RAG; en `presentacion-B`, como cortesía tras el pase a una persona. Corregidos los comentarios de `config.py`, el compose y el README del juez.
+  - Diseño apuntado por si vuelve (`docs/robustness/juez/README.md`, "Paso 3"): el que redacta marca `[ASESOR]`, el código la quita antes del juez y añade una frase fija si se aprueba.
+  - `scripts/reproducir_juez_pre.py` acepta los diálogos del golden que citan un caso de un lote.
+
 0.29.92 - (2026-10-02)
 ----------------------
 * **Paso 2 del "Siguiente" de Gonzalo HECHO: el precio en pesos del paquete de 5 — `JUEZ_PRIVACIDAD_POR_LINEA` PROMOCIONADO** (Álvaro). En `juez-B` el juez de grounding tiró en el 2º turno "1.429.000 COP online / 1.587.000 COP normal", que es el precio del catálogo.
@@ -17,7 +25,7 @@ History
 * **Paso 1 del "Siguiente" de Gonzalo HECHO: el juez ve la presentación oficial — `JUEZ_PRESENTACION` PROMOCIONADO** (Álvaro). En `juez-B` el juez de grounding tiraba "30 años" y "PADI 5 estrellas", que el bot tiene ORDENADO decir (`RAG_INTRO`), y la oferta de asesor de una cancelación.
   - Una sola fuente: `prompts/info.py` `PRESENTACION_ES/EN` (la usan `RAG_INTRO`, idéntico byte a byte, y `JUEZ_PRESENTACION_*`); va en el contexto del juez tras el catálogo (prefijo fijo, cacheable). Test en `tests/test_rag_v2.py`.
   - **Banco** `scripts/sonda_juez_presentacion.py` (juez de producción con J2, contexto real, ×3; criterio fijado antes): frases ciertas que pasan **3 → 12 de 12**; inventos parecidos cazados ("50 años", "único de Sudamérica", "3 barcos", "instructores con 30 años"…) **17 → 18 de 18**. `docs/robustness/juez/presentacion-2026-10-01.json`.
-  - **Ronda core `2026-10-01-presentacion-B`** frente a `juez-B` (solo cambia este flag): rechazos del juez de grounding **3 → 0** (los 3 eran verdades: precio COP del paquete de 5, 30 años / PADI 5 estrellas, asesor en la cancelación), "no lo tengo" 0 → 0, turnos con pregunta p50 **4,29 → 3,91 s** (menos reescrituras), cliente p50/p95 3,0/6,0 s igual. **La cancelación ahora pasa a una persona.**
+  - **Ronda core `2026-10-01-presentacion-B`** frente a `juez-B` (solo cambia este flag): rechazos del juez de grounding **3 → 0** (los 3 eran verdades: precio COP del paquete de 5, 30 años / PADI 5 estrellas, asesor en la cancelación), "no lo tengo" 0 → 0, turnos con pregunta p50 **4,29 → 3,91 s** (menos reescrituras), cliente p50/p95 3,0/6,0 s igual. ~~La cancelación ahora pasa a una persona.~~ (Corregido en 0.29.93: no fue por este flag; ese turno no pasó por el RAG.)
   - **El juez de las rondas tampoco conocía la presentación** y suspendía "tenemos 30 años de experiencia" como invención: `judge_golden_set.load_reference` la incluye (misma frase única). Con la referencia nueva se re-juzgaron A y B: A 94,3 % (24/32), B 93,4 % (23/32), −0,9 puntos, **dentro del ruido del juez** (1,6 puntos medidos por Gonzalo). Las 4 regresiones, leídas: ninguna en un turno donde actuara el flag (en B el juez no rechazó nada): repreguntas de la reserva (2), "sales de Cartagena" supuesto y un link oficial de reserva tomado por fuga. **Las cifras de `juez-B` cambian con la referencia nueva (93,0 → 94,3 %)**: para comparar con rondas anteriores, re-juzgarlas.
   - Visto y pendiente (no de este flag): en `referral-mas-refresher` el bot dijo que referido y refresher "requieren teoría y piscina previas" (cruce entre servicios) y el juez no lo cazó.
 

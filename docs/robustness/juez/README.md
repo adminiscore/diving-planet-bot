@@ -171,8 +171,8 @@ búsquedas, baratas. **Para decidir: una ronda core con SOLO este interruptor ca
   ciertos ≥ 2/3 y ningún invento pasa): ciertos 3 → **12/12**; inventos parecidos 17 → **18/18**
   (`presentacion-2026-10-01.json`).
 - **Ronda core `2026-10-01-presentacion-B`** frente a `juez-B` (solo cambia este flag): rechazos del juez 3 → **0**
-  (los 3 de A eran verdades), "no lo tengo" 0 → 0, turnos con pregunta p50 4,29 → 3,91 s, cliente igual. La
-  cancelación pasa a una persona.
+  (los 3 de A eran verdades), "no lo tengo" 0 → 0, turnos con pregunta p50 4,29 → 3,91 s, cliente igual. ~~La
+  cancelación pasa a una persona.~~ **Corregido el 2-oct:** en `presentacion-B` ese turno no pasó por el RAG (ver Paso 3).
 - **El juez de las rondas** suspendía "tenemos 30 años" por la misma razón: `judge_golden_set.load_reference` incluye la
   presentación. Re-juzgadas A y B con esa referencia: 94,3 % (24/32) y 93,4 % (23/32), −0,9 puntos, dentro del ruido.
   Regresiones leídas: repreguntas de la reserva (2), "sales de Cartagena" supuesto y un link oficial tomado por fuga;
@@ -200,10 +200,36 @@ búsquedas, baratas. **Para decidir: una ronda core con SOLO este interruptor ca
   recibe el juez, no el que creemos que recibe: antes de arreglar un rechazo del juez, reproducirlo con
   `reproducir_juez_pre.py`.
 
+### Paso 3 (Álvaro, 2-oct): la oferta de asesor por código — MEDIDO, NO HACE FALTA HOY (no se construye)
+
+- **La idea** (Gadea, 1-oct): que la frase "¿te paso con un asesor?" la ponga el código después del juez, para que el
+  juez no la pueda quitar. Motivo: en `juez-B`, ante "¿Podemos cancelar porfa?", el juez tiró "te paso con un asesor"
+  y la segunda redacción acabó ofreciendo actividades a quien quería cancelar.
+- **Antes de construirla, medido** con `reproducir_juez_pre.py` (×5 en PRE, `asesor-2026-10-02.json`):
+  - `cancelacion-indirecta` ("tengo una reserva pero me surgió un imprevisto"): **5/5** con la política y "¿Quieres que
+    te conecte con un asesor para gestionar la cancelación…?". Ya es **texto fijo del código** (`supervisor`, ruta de
+    cambios): el juez no lo ve.
+  - `clima-y-cancelacion-reserva-existente`: los turnos 4 y 5 ("¿Podemos cancelar porfa?", "me tocó cancelar")
+    **5/5 "Ya le pasé tu caso a un asesor"**, sin pasar por el RAG: el caso ya pasó a una persona en el turno 2 (el
+    clima) y Jev lee el mensaje como cortesía (`_courtesy_after_handoff`). El turno 6 sí pasa por el RAG: 1 rechazo en
+    5 ("puedes esperar y avisar cuando tengas fecha para reagendar", una política que el contexto no dice: rechazo
+    correcto), y la segunda redacción mantuvo el asesor.
+- **Lo de `juez-B` fue la excepción, no la regla:** esa vez Jev leyó "¿Podemos cancelar porfa?" como pregunta y la mandó
+  al RAG. **Y la mejora de la cancelación en `presentacion-B` tampoco fue por `JUEZ_PRESENTACION`** (se corrige el
+  Paso 1): fue esta misma lectura de Jev.
+- Rondas: rechazos del juez de grounding 3 (`juez-B`) → 0 (`presentacion-B`) → 0 (`privacidad-B`). Ofertas de asesor del
+  RAG con otra pregunta pegada detrás: 0 en las dos últimas rondas.
+- **Decisión:** no se construye. Cambiar cómo escribe el RAG para un fallo que hoy no se ve ni se puede medir en una
+  ronda (0 casos) es riesgo sin beneficio medible. **Si vuelve** (un rechazo del juez que quita una oferta de asesor, o
+  "no lo tengo" por la frase de asesor del segundo intento), el diseño está pensado: el que redacta marca `[ASESOR]` en
+  vez de escribir la oferta, el código la quita antes de las guardas y del juez y añade una frase fija al final si la
+  respuesta se aprueba (todo lo que escribe el modelo se sigue juzgando; solo se salta el juez el texto fijo), y la
+  pregunta de la reserva no se pega detrás (como con el "no lo tengo", u3-4).
+- `reproducir_juez_pre.py` acepta ya los diálogos del golden que citan un caso de un lote (sin `turns` propios).
+
 ### Siguiente
 
 1. ✅ **Darle al juez lo que el bot tiene ordenado decir** (la presentación de `RAG_INTRO`): `JUEZ_PRESENTACION`, Paso 1.
 2. ✅ **Los precios en pesos en conversación**: `JUEZ_PRIVACIDAD_POR_LINEA`, Paso 2.
-3. **La oferta de asesor por código** (paso 3 del handoff): el caso de la cancelación es justo eso, y ahora con daño
-   real al cliente.
+3. ✅ **La oferta de asesor por código**: medido, hoy no hace falta (Paso 3); diseño apuntado por si vuelve.
 4. La ronda aislada de la búsqueda doble.
