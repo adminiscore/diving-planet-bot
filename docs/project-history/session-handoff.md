@@ -47,6 +47,33 @@ hoy** (el paso 8 se re-juzgó: mismas conversaciones, oculto 76,4 → 79,0 %, o 
 - **Crédito de OpenAI:** se acabó juzgando esta ronda (PRE no contestó hasta la recarga). Antes de una ronda completa
   (~2 $ de bot + ~2 $ de juez), sumar lo gastado en el día y recargar si hace falta.
 
+**Resumen de la sesión de Álvaro (29-sep → 2-oct), para retomar sin perder contexto:**
+
+| fecha | qué | dónde |
+|---|---|---|
+| 29-sep | **Mapa de Coral**: arquitectura animada generada desde el código (`scripts/arquitectura.py` → `docs/arquitectura/`), con historial de versiones y test que obliga a regenerarlo (`test_el_mapa_publicado_no_se_ha_quedado_atras`) | HISTORY 0.29.78 y 0.29.80-0.29.83 (rediseño), `docs/arquitectura/` |
+| 29-sep | **Incidente: disco de PRE lleno** por el registro de Chatwoot → tope de registros 50 MB × 3 en todos los contenedores (`x-logging` del compose) | HISTORY 0.29.79 |
+| 29-sep | Merge de `feature/l1_gonzalo` (rag-1 a rag-4) en `feature/pre_alvaro`; rediseño del mapa | `de3e278` |
+| 1-oct | Merge de lo de Gonzalo y Gadea (juez, J2, rag-5); **paso 1**: `JUEZ_PRESENTACION` promocionado | HISTORY 0.29.91 |
+| 2-oct | **Paso 2**: `JUEZ_PRIVACIDAD_POR_LINEA` promocionado (la privacidad del juez tapaba los precios); `RAG_PRECIO_CON_ORIGEN` probado y quitado; herramienta `scripts/reproducir_juez_pre.py` | HISTORY 0.29.92 |
+| 2-oct | **Paso 3**: oferta de asesor por código, medida y NO construida (hoy no pasa); corregido lo de la cancelación del paso 1 | HISTORY 0.29.93 |
+| 2-oct | **Paso 4**: `RAG_BUSQUEDA_DOBLE` promocionada tras su ronda aislada | HISTORY 0.29.94 |
+| 2-oct | **Paso 5**: ronda COMPLETA con el examen oculto; paso 8 re-juzgado; `scripts/golden_por_grupo.py` | HISTORY 0.29.95 |
+
+- **Rondas de la sesión** (todas en `docs/robustness/`: `synthetic-runs/`, `snapshots/`, `logs-pre-*.txt`,
+  `golden-set/results/`): `2026-10-01-presentacion-B`, `2026-10-01-privacidad-B`, `2026-10-02-busqueda-simple` (core) y
+  `2026-10-02-completa` (golden entero). Bancos: `juez/presentacion-2026-10-01.json`, `juez/privacidad-2026-10-02.json`,
+  `juez/asesor-2026-10-02.json`. Detalle por paso: `docs/robustness/juez/README.md` ("Paso 1" a "Paso 4").
+- **`2026-09-27-paso8__gpt-5-mini-medium.json` está RE-JUZGADO** con la referencia de hoy (el original, en `1c7d20a`):
+  comparad contra él, no contra las cifras de HISTORY 0.29.59.
+- **Plan Coral:** desde esta cuenta no se puede escribir en la página (la organización no deja usar los datos del
+  artifact desde Claude Code). **Gadea: aplicad la cola** `docs/tracking/data/plan-coral-cambios-pendientes.json` (8
+  entradas: 7 de bitácora del 1-2 oct y `rag-7` → hecha) con ArtifactData y vaciadla en el mismo commit (instrucciones
+  dentro del fichero).
+- **Mapa de Coral:** https://claude.ai/artifact/SnK5Dku1vAinbJ94b8aNGd (cuenta de Álvaro, privado: pedidle que os lo
+  comparta). Republicado con la ronda completa. Para actualizarlo: `python -m scripts.arquitectura` y republicar con
+  `arquitectura.json` y `historial/*`.
+
 ### ✅ 2-oct tarde (Álvaro) — SUPERADO por el bloque de arriba: pasos 1-4 CERRADOS, `RAG_BUSQUEDA_DOBLE` PROMOCIONADA
 
 **Estado.** PRE sirve `feature/pre_alvaro` (`check_deploy` en verde). **Integrad `feature/pre_alvaro` en vuestra rama
