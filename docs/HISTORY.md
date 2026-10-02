@@ -1,6 +1,14 @@
 History
 =======
 
+0.29.94 - (2026-10-02)
+----------------------
+* **Paso 4 del "Siguiente" de Gonzalo HECHO: la ronda aislada de la búsqueda doble — `RAG_BUSQUEDA_DOBLE` PROMOCIONADA** (Álvaro). Ronda core `2026-10-02-busqueda-simple` con SOLO ese interruptor apagado, frente a `2026-10-01-privacidad-B` (encendido).
+  - Calidad igual: criterios 94,3 % encendida / 93,4 % apagada, diálogos 24 / 23 de 32 (ruido). Latencia igual: RAG p50 3,36 / 3,29 s (las dos búsquedas van a la vez). Búsquedas por turno 1,39 / 1,00 (+39 %, fracciones de céntimo).
+  - Encendida, 11 de 38 respuestas reciben 1-4 piezas más; la diferencia que se nota es "great, how do i pay" (añade el pago por transferencia si falla el online, con el 10 %), el caso que la motivó.
+  - Las 5 regresiones de la ronda apagada, leídas: ninguna viene de la búsqueda (tres salen igual en las dos rondas, una del enrutador y un "no lo tengo" en un turno donde la búsqueda doble no añadía nada).
+  - Con esto quedan cerrados los pasos 1-4. **Siguiente: la ronda COMPLETA del golden con el examen oculto** (cierre del bloque RAG). Mapa de Coral regenerado.
+
 0.29.93 - (2026-10-02)
 ----------------------
 * **Paso 3 del "Siguiente" de Gonzalo: la oferta de asesor por código — MEDIDA, HOY NO HACE FALTA, no se construye** (Álvaro). La idea era que el "¿te paso con un asesor?" lo pusiera el código después del juez, por la cancelación de `juez-B` (el juez tiró la oferta y la segunda redacción ofreció actividades a quien quería cancelar).

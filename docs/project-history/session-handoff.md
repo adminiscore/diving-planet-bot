@@ -13,7 +13,30 @@ Read this file before changing code in the Diving Planet Bot. For a quick versio
 
 > **📏 LEER ANTES DE MEDIR — decisiones del 24-sep-2026 (Gadea):** (1) latencia y llamadas con nuestros logs `[TURN_METRICS]` + `scripts/turn_metrics.py`, no con Langfuse (plan gratuito superado, reinicio 16-oct); (2) pruebas A/B por escalones, juzgando solo los diálogos que cambian. Todo en `docs/robustness/protocolo-medicion.md`.
 
-### ▶️ RETOMAR AQUÍ — 2-oct (Álvaro): pasos 2 y 3 CERRADOS; siguiente: la ronda aislada de la búsqueda doble (paso 4)
+### ▶️ RETOMAR AQUÍ — 2-oct tarde (Álvaro): pasos 1-4 CERRADOS, `RAG_BUSQUEDA_DOBLE` PROMOCIONADA; siguiente: la ronda COMPLETA con el examen oculto
+
+**Estado.** PRE sirve `feature/pre_alvaro` (`check_deploy` en verde). **Integrad `feature/pre_alvaro` en vuestra rama
+antes de subir.** Promocionados en el bloque del juez: `JUEZ_SEGUNDA_OPINION`, `JUEZ_PRESENTACION`,
+`JUEZ_PRIVACIDAD_POR_LINEA` y ahora **`RAG_BUSQUEDA_DOBLE`**. No queda ningún interruptor "encendido sin decidir".
+Mapa de Coral republicado. HISTORY 0.29.94; detalle en `docs/robustness/juez/README.md`, "Paso 4".
+
+**Paso 4:** ronda core `2026-10-02-busqueda-simple` (solo la búsqueda doble apagada) frente a `privacidad-B`: calidad
+94,3 / 93,4 % (ruido), latencia igual (las dos búsquedas van a la vez), +39 % de búsquedas (baratas); encendida, 11 de 38
+respuestas reciben piezas extra y "how do i pay" añade el pago por transferencia si falla el online. Las 5 regresiones
+de la ronda apagada, leídas: ninguna es de la búsqueda.
+
+**Siguiente:**
+5. **Ronda COMPLETA del golden con el examen oculto** (116 + 21 diálogos, ~2 $, ~2 h), con el estado de hoy. Es la
+   ÚNICA pasada del oculto del bloque RAG: no mirar sus casos para arreglar nada antes. Referencia: paso 8 (oculto
+   76,4 %). `run_synthetic_pre --name completa --sample golden` → logs de PRE ANTES de cualquier push →
+   `turn_metrics` → `judge_golden_set` (ver "Cómo medir" más abajo). **Ojo:** el juez de las rondas cambió de
+   referencia el 1-oct (presentación): para comparar con el paso 8, re-juzgar el paso 8 con la referencia de hoy.
+   Hecho = resultado comparado y leído por caso.
+- Pendientes vistos (no de este bloque): cruce referido/refresher en `referral-mas-refresher` que el juez no caza;
+  "¡Qué bien que venga alguien más!" en `manual-duracion-curso`; la repregunta "¿Cuántos serían para buceo
+  certificado?" en `minicurso-islas` (sale en todas las rondas).
+
+### ✅ 2-oct (Álvaro) — SUPERADO por el bloque de arriba: pasos 2 y 3 CERRADOS
 
 **Paso 3 (oferta de asesor por código): medido, hoy no hace falta, no se construye** (HISTORY 0.29.93; README del juez,
 "Paso 3"). Con `reproducir_juez_pre.py` ×5 en PRE: una cancelación directa recibe 5/5 la oferta de asesor, que ya es

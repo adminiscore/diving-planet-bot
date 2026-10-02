@@ -452,6 +452,12 @@ medias (u3-1 ✅, u3-4 ✅ promocionada, u3-5 🟡); PRE con u3-4 encendido. Sui
 | **11** | R6: robustez de producción | r6-2 (guardrails), g-5 (carga) | el bot nunca deja sin respuesta; inyección medida; p95 con N clientes a la vez |
 | **12** | Q5: calidad continua y entrega | q5-1, g-3, g-4, g-4b, g-6, m0-4, q5-2 | gate en CI; simulador; bucle producción → golden; testers reales; SOAK; entrega |
 
+> **Estado al 2-oct tarde (Álvaro), fase RAG:** **pasos 1-4 del arreglo del juez CERRADOS.** Paso 4: la búsqueda
+> doble, medida sola (ronda `busqueda-simple`, apagada), no cambia calidad ni latencia y aporta piezas extra en 11 de 38
+> respuestas ("how do i pay" → pago por transferencia si falla el online): **`RAG_BUSQUEDA_DOBLE` promocionada**
+> (HISTORY 0.29.94). Ya no queda ningún interruptor sin decidir. **Siguiente: la ronda COMPLETA con el examen oculto**,
+> una sola vez, como cierre del bloque RAG. Detalle: `session-handoff.md`, "RETOMAR AQUÍ".
+
 > **Estado al 2-oct (Álvaro), fase RAG:** **paso 2 HECHO: `JUEZ_PRIVACIDAD_POR_LINEA` promocionado.** El juez rechazaba
 > el precio en pesos del paquete de 5 porque su filtro de datos personales tapaba los precios del catálogo (una FAQ con
 > "pasaporte" lo activaba); ahora tapa línea a línea. Escalón 0: precio 0/5 → 5/5; ronda core igual de calidad y más

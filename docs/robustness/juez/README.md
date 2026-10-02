@@ -156,7 +156,7 @@ En la ronda A esas mismas conversaciones pasaron porque el juez, que no es deter
 3. **La oferta de asesor**, la causa 4 de siempre, ahora en una cancelación: el cliente se queda sin quien le gestione
    la cancelación.
 
-### Búsqueda doble: SIN DECIDIR, a propósito
+### Búsqueda doble: SIN DECIDIR, a propósito (→ DECIDIDA el 2-oct: PROMOCIONADA, ver "Paso 4")
 
 B cambia a la vez la búsqueda doble, J2 y los datos nuevos del 1-oct, así que la ronda no aísla su efecto; y
 `rag_piezas` no la ve (preguntas sueltas; la reescritura depende del historial). Indicio a favor: el formulario médico
@@ -227,9 +227,36 @@ búsquedas, baratas. **Para decidir: una ronda core con SOLO este interruptor ca
   pregunta de la reserva no se pega detrás (como con el "no lo tengo", u3-4).
 - `reproducir_juez_pre.py` acepta ya los diálogos del golden que citan un caso de un lote (sin `turns` propios).
 
+### Paso 4 (Álvaro, 2-oct): la ronda aislada de la búsqueda doble — `RAG_BUSQUEDA_DOBLE` PROMOCIONADA
+
+Ronda core `2026-10-02-busqueda-simple` con SOLO este interruptor apagado (`a892f2c`), frente a
+`2026-10-01-privacidad-B` (encendido, todo lo demás igual; misma referencia del juez: 30 % de criterios desde la caché).
+
+| | encendida (privacidad-B) | apagada (busqueda-simple) |
+|---|---|---|
+| criterios · diálogos sin fallos | 94,3 % · 24/32 | 93,4 % · 23/32 (ruido) |
+| RAG p50 · p95 | 3,36 · 5,25 s | 3,29 · 5,35 s |
+| todos los turnos p50 · cliente p50/p95 | 1,95 s · 2/5 s | 2,11 s · 3/5 s |
+| búsquedas por turno | 1,39 | 1,00 |
+| respuestas con piezas extra (contexto > 8) | 11 de 38 | 0 de 38 |
+| rechazos del juez de grounding · "no lo tengo" | 0 · 0 | 2 · 0 |
+
+- **Las 11 respuestas con piezas extra, leídas frente a la ronda apagada:** la diferencia que se nota es "great, how do i
+  pay" (con la búsqueda doble añade que, si falla el pago online, el equipo manda un link de transferencia y se mantiene
+  el 10 %: el caso que la motivó); "¿cuánto dura?" del Open Water sale con el itinerario más detallado; el resto, igual.
+- **Las 5 regresiones de la ronda apagada, leídas: ninguna viene de la búsqueda.** "Desde Cartagena" supuesto
+  (`referral`), "más de dos años" (`refresher-que-completar-antes`) y "¿Cuántos serían para buceo certificado?"
+  (`minicurso-islas`, lo pega la reserva) salen IGUAL en las dos rondas (ruido del juez); `descuento-online-sin-codigo`
+  lo decide el enrutador (una vez "link roto" y pase a una persona, otra vez el RAG); y el "no lo tengo" del refresher en `paquete-5` (juez: "no necesitas
+  ningún refresh… trae tu carné") es en un turno donde la búsqueda doble no añadió nada ni encendida (8 piezas).
+  Los 2 rechazos del juez de la ronda apagada son esos dos embellecimientos (el del acompañante y el del refresher).
+- **Decisión: PROMOCIONADA.** Calidad y latencia iguales (las dos búsquedas van a la vez), coste de búsqueda +39 %
+  (fracciones de céntimo), y protege del caso en que la reescritura se come el tema, que sí aparece en la ronda.
+
 ### Siguiente
 
 1. ✅ **Darle al juez lo que el bot tiene ordenado decir** (la presentación de `RAG_INTRO`): `JUEZ_PRESENTACION`, Paso 1.
 2. ✅ **Los precios en pesos en conversación**: `JUEZ_PRIVACIDAD_POR_LINEA`, Paso 2.
 3. ✅ **La oferta de asesor por código**: medido, hoy no hace falta (Paso 3); diseño apuntado por si vuelve.
-4. La ronda aislada de la búsqueda doble.
+4. ✅ La ronda aislada de la búsqueda doble: `RAG_BUSQUEDA_DOBLE` promocionada (Paso 4).
+5. **La ronda COMPLETA del golden con el examen oculto** (cierre del bloque RAG, decisión de Gadea).

@@ -224,9 +224,13 @@ class Settings(BaseSettings):
     # reescritura depende del historial). Unico indicio a favor: el formulario medico del refresher pasa a cumplir, que
     # era un fallo de busqueda conocido. Coste: +33 % de busquedas por turno (0,98 -> 1,30), baratas. Para decidir hace
     # falta una ronda core con SOLO este interruptor cambiado.
-    # 2-oct (Alvaro, paso 4): APAGADO para esa ronda aislada (B = apagado; A = 2026-10-01-privacidad-B, encendido y
-    # todo lo demas igual). Se decide con su resultado.
-    rag_busqueda_doble: bool = False
+    # 2-oct (Alvaro, paso 4): ronda aislada 2026-10-02-busqueda-simple (APAGADO, todo lo demas igual) frente a
+    # 2026-10-01-privacidad-B (encendido): criterios 94,3 % encendido / 93,4 % apagado (ruido), RAG p50 3,36 / 3,29 s
+    # (igual: las dos busquedas van a la vez), busquedas por turno 1,39 / 1,00. Encendido, 11 de 38 respuestas
+    # reciben 1-4 piezas mas; la que se nota es "how do i pay" (el pago por transferencia si falla el online, el caso
+    # que lo motivo). Ninguna regresion de la ronda apagada viene de la busqueda. PROMOCIONADO 2-oct (HISTORY
+    # 0.29.94). Revert = False aqui y en el compose.
+    rag_busqueda_doble: bool = True
     # rag-5 (30-sep): el RAG arranca a la vez que el enrutador (Jev) en vez de despues, y se aprovecha solo si su
     # contexto es exactamente el de la llamada de siempre (si no, se rehace). Estimado: -0,7 s por pregunta, ~+20 %
     # de coste (los RAG que se descartan en turnos sin pregunta). Medido (rag5-A/B, HISTORY 0.29.86): -1,2 s cuando
