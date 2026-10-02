@@ -452,6 +452,13 @@ medias (u3-1 ✅, u3-4 ✅ promocionada, u3-5 🟡); PRE con u3-4 encendido. Sui
 | **11** | R6: robustez de producción | r6-2 (guardrails), g-5 (carga) | el bot nunca deja sin respuesta; inyección medida; p95 con N clientes a la vez |
 | **12** | Q5: calidad continua y entrega | q5-1, g-3, g-4, g-4b, g-6, m0-4, q5-2 | gate en CI; simulador; bucle producción → golden; testers reales; SOAK; entrega |
 
+> **Estado al 2-oct noche (Álvaro), fase RAG: BLOQUE CERRADO** con la ronda COMPLETA del golden y el examen oculto
+> (`2026-10-02-completa`, frente al paso 8 re-juzgado con el mismo juez): criterios 86,6 → **88,0 %**, diálogos sin
+> fallos 53 → 59/116; **reales 81,7 → 86,3 %**; sintéticos 97 % igual; **examen oculto 79,0 → 76,5 %, plano** (ruido del
+> juez 2-3 puntos). Turnos con pregunta p50 4,85 → 3,50 s, peor respuesta 34 → 8 s, "no lo tengo" 31 → 1. A vigilar:
+> el link de reserva sale menos (32 → 21 conversaciones). Siguiente propuesto (`session-handoff.md`): juez (links
+> como fuga, acompañante desde islas), dar el link cuando se pide, "no existe desde las islas". HISTORY 0.29.95.
+
 > **Estado al 2-oct tarde (Álvaro), fase RAG:** **pasos 1-4 del arreglo del juez CERRADOS.** Paso 4: la búsqueda
 > doble, medida sola (ronda `busqueda-simple`, apagada), no cambia calidad ni latencia y aporta piezas extra en 11 de 38
 > respuestas ("how do i pay" → pago por transferencia si falla el online): **`RAG_BUSQUEDA_DOBLE` promocionada**

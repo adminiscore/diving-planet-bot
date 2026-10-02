@@ -1,6 +1,16 @@
 History
 =======
 
+0.29.95 - (2026-10-02)
+----------------------
+* **Paso 5: ronda COMPLETA del golden con el examen oculto — cierre del bloque RAG** (Álvaro). `2026-10-02-completa` (PRE `019d363`, 116 diálogos / 465 turnos, 0 sin respuesta) frente al paso 8 (`2026-09-27-paso8`), las dos con **el juez de hoy**: el paso 8 se re-juzgó con la referencia actual (2,03 $; el resultado original queda en `1c7d20a`). Re-juzgar las mismas conversaciones movió el oculto 76,4 → 79,0 % y las reales 83,2 → 81,7 %: **el ruido del juez es de 2-3 puntos por grupo**.
+  - **Calidad (mismo juez):** total **86,6 → 88,0 %**, diálogos sin fallos **53 → 59 de 116**. Sintéticos 97,0 → 96,7 % (techo). **Reales 81,7 → 86,3 %** (14 → 18/52): la mejora clara, en lo que trabajó el bloque (precios y moneda del catálogo, pernocta, transporte, formulario médico del refresher, regreso otro día). **Examen oculto 79,0 → 76,5 %** (3 → 4/21): **plano**, dentro del ruido; no mejora. 50 criterios mejoran (31 en reales) y 34 empeoran (13 en el oculto).
+  - **Latencia y coste:** turnos con pregunta p50 **4,85 → 3,50 s**, p95 8,0 → 6,3 s; todos los turnos p95 7,4 → 5,5 s; peor respuesta 34 → 8 s; llamadas LLM por turno 3,5 → 3,1. **"No lo tengo a la mano": 31 → 1 turnos.** Escalados iguales (13,8 %).
+  - **A vigilar: el link de reserva sale en 21 conversaciones (antes 32).** El RAG ofrece el link ("¿quieres que te lo pase?") o pregunta antes el origen. Los criterios de link del juez no empeoran (9/10 frente a 8/10), pero uno del oculto falla por eso (el cliente pide el link y recibe una pregunta) y en `grupo-mixto-cotiza-y-pide-link` (visible) lo pide dos veces.
+  - **Regresiones leídas, por patrón** (para arreglar con casos VISIBLES; el oculto no se usa para ajustar): (a) **falso positivo del juez**: los links públicos de reserva cuentan como "fuga" (5 casos, conocido desde el paso 8); (b) **falso positivo del juez**: el acompañante "ya en las islas" al mismo precio es decisión de Gadea (1-oct) y está en la base de Coral, pero no en la referencia del juez (`pricing.json` solo lo tiene desde Cartagena); (c) el bot dice que un plan no existe desde las islas cuando el catálogo lo tiene (2 inmersiones en `precio-desde-islas-vs-cartagena`, visible; paquete de 5 en el oculto); (d) supuestos: "el hotel tiene acceso en lancha" (Fragata), "el curso está en tu carrito"; (e) el link pedido explícitamente que no llega (arriba).
+  - **El crédito de OpenAI se acabó juzgando** (a 57/116; un día con 3 rondas core, la completa y el re-juicio): PRE dejó de contestar hasta la recarga. El juez retomó con la caché. Coste del juicio de hoy: 1,22 $ tras la recarga.
+  - Script nuevo `scripts/golden_por_grupo.py`: nota por grupo (sintéticos / reales / oculto) con la cuenta de `judge_golden_set`. Ojo: en 0.29.59 los diálogos sin fallos por grupo (35/43, 9/52, 4/21) contaban "revisar" como fallo y el total (55/116) no; el script da las dos cifras.
+
 0.29.94 - (2026-10-02)
 ----------------------
 * **Paso 4 del "Siguiente" de Gonzalo HECHO: la ronda aislada de la búsqueda doble — `RAG_BUSQUEDA_DOBLE` PROMOCIONADA** (Álvaro). Ronda core `2026-10-02-busqueda-simple` con SOLO ese interruptor apagado, frente a `2026-10-01-privacidad-B` (encendido).

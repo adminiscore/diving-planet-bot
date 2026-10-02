@@ -13,7 +13,41 @@ Read this file before changing code in the Diving Planet Bot. For a quick versio
 
 > **📏 LEER ANTES DE MEDIR — decisiones del 24-sep-2026 (Gadea):** (1) latencia y llamadas con nuestros logs `[TURN_METRICS]` + `scripts/turn_metrics.py`, no con Langfuse (plan gratuito superado, reinicio 16-oct); (2) pruebas A/B por escalones, juzgando solo los diálogos que cambian. Todo en `docs/robustness/protocolo-medicion.md`.
 
-### ▶️ RETOMAR AQUÍ — 2-oct tarde (Álvaro): pasos 1-4 CERRADOS, `RAG_BUSQUEDA_DOBLE` PROMOCIONADA; siguiente: la ronda COMPLETA con el examen oculto
+### ▶️ RETOMAR AQUÍ — 2-oct noche (Álvaro): BLOQUE RAG CERRADO con la ronda completa (paso 5); siguiente: el próximo bloque
+
+**Estado.** PRE sirve `feature/pre_alvaro` (`019d363`, `check_deploy` en verde; después solo docs). **Integrad
+`feature/pre_alvaro` en vuestra rama antes de subir.** Ningún interruptor sin decidir. HISTORY 0.29.95.
+
+**Ronda completa `2026-10-02-completa`** (116 diálogos con el examen oculto) frente al paso 8, **las dos con el juez de
+hoy** (el paso 8 se re-juzgó: mismas conversaciones, oculto 76,4 → 79,0 %, o sea ruido de 2-3 puntos):
+
+| | paso 8 (re-juzgado) | hoy |
+|---|---|---|
+| criterios · diálogos sin fallos | 86,6 % · 53/116 | **88,0 % · 59/116** |
+| sintéticos | 97,0 % | 96,7 % |
+| reales | 81,7 % (14/52) | **86,3 % (18/52)** |
+| examen oculto | 79,0 % (3/21) | 76,5 % (4/21) — plano, dentro del ruido |
+| turnos con pregunta p50 · p95 | 4,85 · 8,0 s | **3,50 · 6,3 s** |
+| peor respuesta · llamadas LLM/turno | 34 s · 3,5 | **8 s · 3,1** |
+| "no lo tengo a la mano" | 31 turnos | **1** |
+| conversaciones con link de reserva | 32 | **21** ⚠️ |
+
+`python -m scripts.golden_por_grupo <resultados...>` da la nota por grupo.
+
+**Siguiente (propuesta, a decidir con Gadea), en orden y con casos VISIBLES (el oculto no se usa para ajustar):**
+1. **El juez**: (a) los links públicos de reserva no son "fuga" (`global:sin-fugas`, 5 falsos positivos); (b) la
+   referencia del juez no tiene el acompañante "ya en las islas" (decisión de Gadea del 1-oct, está en la base de
+   Coral): añadirlo a `pricing.json` (es también el catálogo del bot: comprobar que dice lo mismo que la ficha).
+2. **El link de reserva**: si el cliente lo pide, darlo (o preguntar el origen UNA vez y darlo); hoy el RAG lo ofrece
+   en vez de darlo. Casos visibles: `grupo-mixto-cotiza-y-pide-link`, `cotiza-buceo-snorkel-y-pide-link-especial`.
+3. **"Ese plan no existe desde las islas"** cuando el catálogo lo tiene (`precio-desde-islas-vs-cartagena`).
+4. Supuestos sueltos: "el hotel tiene acceso en lancha" (`logistica-isla-fragata-regreso-otro-dia`), "está en tu
+   carrito" y "¡Qué bien que venga alguien más!" (`manual-duracion-curso`), "¿Cuántos serían para buceo
+   certificado?" (`minicurso-islas`).
+- **Crédito de OpenAI:** se acabó juzgando esta ronda (PRE no contestó hasta la recarga). Antes de una ronda completa
+  (~2 $ de bot + ~2 $ de juez), sumar lo gastado en el día y recargar si hace falta.
+
+### ✅ 2-oct tarde (Álvaro) — SUPERADO por el bloque de arriba: pasos 1-4 CERRADOS, `RAG_BUSQUEDA_DOBLE` PROMOCIONADA
 
 **Estado.** PRE sirve `feature/pre_alvaro` (`check_deploy` en verde). **Integrad `feature/pre_alvaro` en vuestra rama
 antes de subir.** Promocionados en el bloque del juez: `JUEZ_SEGUNDA_OPINION`, `JUEZ_PRESENTACION`,
