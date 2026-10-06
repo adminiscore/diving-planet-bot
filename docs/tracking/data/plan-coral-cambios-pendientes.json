@@ -108,6 +108,16 @@
         "byLabel": "Alvaro (con Claude)",
         "text": "6-oct: punto 2 (dar el link de reserva) MEDIDO, no es un fallo: el golden acepta pedir antes el dato que falta, a un colombiano no se le da link directo (asesor, 50 %) y el juez no echa de menos el link en ninguna conversacion visible que lo perdio. El patron real es el ORIGEN del cliente: 15 de 63 fallos visibles (cotiza desde Cartagena sin saberlo, supone 'ya en las islas', niega planes desde islas). Siguiente: punto 3, origen. HISTORY 0.29.97."
       }
+    },
+    {
+      "coleccion": "log",
+      "operacion": "set",
+      "doc_id": "l-1006-alvaro-origen",
+      "campos": {
+        "at": "2026-10-06T23:00:00Z",
+        "byLabel": "Alvaro (con Claude)",
+        "text": "6-oct noche: punto 3 (origen del cliente en los precios) MEDIDO y APAGADO. Flag RAG_ORIGEN_PREGUNTA: con texto estricto deja de suponer Cartagena pero repregunta el origen cuando el cliente ya lo dio a entender (ronda core origen-B: 93,9 -> 93,4 %, 2 de 4 regresiones del flag); con texto flexible deja de repreguntar pero vuelve a cotizar Cartagena. Decision para Gadea: aceptar 'precio desde Cartagena rotulado + pregunta del origen detras' (ajustar criterios), 'los dos precios rotulados', o 'preguntar antes de cotizar' hecho por codigo. HISTORY 0.29.98."
+      }
     }
   ]
 }

@@ -13,7 +13,18 @@ Read this file before changing code in the Diving Planet Bot. For a quick versio
 
 > **📏 LEER ANTES DE MEDIR — decisiones del 24-sep-2026 (Gadea):** (1) latencia y llamadas con nuestros logs `[TURN_METRICS]` + `scripts/turn_metrics.py`, no con Langfuse (plan gratuito superado, reinicio 16-oct); (2) pruebas A/B por escalones, juzgando solo los diálogos que cambian. Todo en `docs/robustness/protocolo-medicion.md`.
 
-### ▶️ RETOMAR AQUÍ — 6-oct (Álvaro): puntos 1 y 2 CERRADOS; siguiente: el ORIGEN del cliente en los precios (punto 3)
+### ▶️ RETOMAR AQUÍ — 6-oct noche (Álvaro): puntos 1 y 2 CERRADOS; punto 3 (origen) MEDIDO y APAGADO, falta una decisión de Gadea
+
+**Punto 3 — el origen del cliente en los precios** (HISTORY 0.29.98; evidencia `docs/robustness/origen-2026-10-06.json`):
+flag `RAG_ORIGEN_PREGUNTA` hecho y medido, **apagado**. Con el texto estricto (V1) deja de suponer Cartagena pero
+repregunta el origen cuando el cliente ya lo dio a entender (ronda core `2026-10-06-origen-B`: 93,9 → 93,4 %, 2 de 4
+regresiones del flag); con el flexible (V2) deja de repreguntar pero vuelve a cotizar Cartagena. **Decisión de Gadea
+(negocio)**: (a) aceptar "precio desde Cartagena rotulado + la reserva pregunta el origen detrás" y ajustar los
+criterios del golden que piden "pregunta antes de cotizar"; (b) "los dos precios rotulados"; (c) "pregunta antes de
+cotizar" hecho por código cuando piden precio y el origen no consta. Aparte, dos fallos de otra causa: preguntar por
+hoteles de las islas se registra como "ya en las islas" (`precio-desde-islas-vs-cartagena`) y el RAG negó un plan de 2
+inmersiones desde las islas que existe.
+- La prueba del 1-oct `privacidad-B` está **re-juzgada con la referencia curada** (el resultado viejo, en `e37f5f3`).
 
 **Punto 1 — el juez del golden usa la referencia `curada`** (por defecto desde hoy; HISTORY 0.29.96): la misma base que
 el bot (catálogo, links de reserva públicos, fichas de la base v2, FAQs curadas) + dos aclaraciones del negocio

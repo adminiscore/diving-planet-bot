@@ -457,7 +457,8 @@ medias (u3-1 ✅, u3-4 ✅ promocionada, u3-5 🟡); PRE con u3-4 encendido. Sui
 > completa, los veredictos que dependen de la referencia mejoran (links como "fuga", precios del catálogo,
 > acompañante desde islas). Regla: A y B con la misma referencia. **Punto 2 (link) medido: no es un fallo** (el
 > golden acepta pedir antes el dato; a colombianos, asesor). Siguiente: el ORIGEN del cliente en los precios (15 de 63
-> fallos visibles). HISTORY 0.29.96-0.29.97.
+> fallos visibles). HISTORY 0.29.96-0.29.97. **Punto 3 (origen) medido y APAGADO**: con texto, o repregunta o
+> supone; falta decidir con Gadea qué conducta quiere el negocio (HISTORY 0.29.98).
 
 > **Estado al 2-oct noche (Álvaro), fase RAG: BLOQUE CERRADO** con la ronda COMPLETA del golden y el examen oculto
 > (`2026-10-02-completa`, frente al paso 8 re-juzgado con el mismo juez): criterios 86,6 → **88,0 %**, diálogos sin

@@ -1,0 +1,609 @@
+{
+ "que": "Punto 3 (6-oct, Alvaro): el ORIGEN del cliente en los precios. Escalon 0 en PRE con scripts/reproducir_juez_pre.py (1 repeticion por dialogo, flag rag_origen_pregunta solo en el proceso). OFF = sin flag; V1 = texto 'todavia NO sabemos el origen'; V2 = texto 'la conversacion manda, preguntar solo ante un precio'. Respuestas recortadas (ultimos 600 caracteres).",
+ "dialogos": {
+  "acompanante-madre-desde-cartagena": {
+   "V1": [
+    {
+     "turno": 1,
+     "msg": "Hola, buenas tardes!",
+     "respuesta": "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n\nCuéntame, ¿qué te gustaría vivir con nosotros? 🤿\n• *Buceo* en las Islas del Rosario, si ya eres buzo certificado\n• *Minicurso* para probar el buceo por primera vez (¡no necesitas experiencia!)\n• *Snorkel* para disfrutar el arrecife desde la superficie, ideal en familia\n• *Cursos PADI* completos, del Open Water en adelante\nDime qué te llama la atención y lo armamos juntos. 🌊"
+    },
+    {
+     "turno": 2,
+     "msg": "Una consulta",
+     "respuesta": "Claro, estoy aquí para ayudarte.\n\n¿Con cuál te animas — *buceo*, *minicurso*, *snorkel* o un *curso PADI*? 🌊"
+    },
+    {
+     "turno": 3,
+     "msg": "Mi madre puede acompañarme en el buceo y se quedar en la isla de apoyo?",
+     "respuesta": "s, el acompañante va en la lancha con el grupo con seguro y entrada al Parque, pero el almuerzo no está incluido.\n\nSobre quedarse en la isla de apoyo, la logística de alojamiento no la manejamos directamente, pero si tu mamá quiere quedarse en algún hotel o lugar de las islas, podemos coordinar la recogida en hoteles con acceso marítimo para el regreso o para el buceo.\n\n¿Me cuentas desde dónde saldrían ustedes? Así te doy info más precisa y te ayudo con los planes.\n\n¡Genial! Para recomendarte el plan perfecto: ¿Eres buzo certificado? (Y si no, ¡tranquilo! El minicurso es ideal para empezar. 🤿)"
+    }
+   ],
+   "OFF": [
+    {
+     "turno": 1,
+     "msg": "Hola, buenas tardes!",
+     "respuesta": "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n\nCuéntame, ¿qué te gustaría vivir con nosotros? 🤿\n• *Buceo* en las Islas del Rosario, si ya eres buzo certificado\n• *Minicurso* para probar el buceo por primera vez (¡no necesitas experiencia!)\n• *Snorkel* para disfrutar el arrecife desde la superficie, ideal en familia\n• *Cursos PADI* completos, del Open Water en adelante\nDime qué te llama la atención y lo armamos juntos. 🌊"
+    },
+    {
+     "turno": 2,
+     "msg": "Una consulta",
+     "respuesta": "Claro, estoy aquí para ayudarte.\n\n¿Con cuál te animas — *buceo*, *minicurso*, *snorkel* o un *curso PADI*? 🌊"
+    },
+    {
+     "turno": 3,
+     "msg": "Mi madre puede acompañarme en el buceo y se quedar en la isla de apoyo?",
+     "respuesta": "ncha, seguro, entrada al Parque Nacional y almuerzo si salen desde Cartagena. \n\nSi ella se queda en la isla de apoyo, eso se puede coordinar, pero ten en cuenta que el acompañante va en la lancha con el grupo durante las salidas. Para quedarse en la isla, lo ideal es que tenga alojamiento propio o que lo coordinen aparte, porque el acompañante no incluye hospedaje.\n\n¿Quieres que te cuente los precios para acompañante y buceo desde Cartagena o ya están en las islas?\n\n¡Genial! Para recomendarte el plan perfecto: ¿Eres buzo certificado? (Y si no, ¡tranquilo! El minicurso es ideal para empezar. 🤿)"
+    }
+   ]
+  },
+  "colombianos-precio-minicurso-dos-inmersiones": {
+   "V1": [
+    {
+     "turno": 1,
+     "msg": "Ya vi la página, está increíble!",
+     "respuesta": "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n\nCuéntame, ¿qué te gustaría vivir con nosotros? 🤿\n• *Buceo* en las Islas del Rosario, si ya eres buzo certificado\n• *Minicurso* para probar el buceo por primera vez (¡no necesitas experiencia!)\n• *Snorkel* para disfrutar el arrecife desde la superficie, ideal en familia\n• *Cursos PADI* completos, del Open Water en adelante\nDime qué te llama la atención y lo armamos juntos. 🌊"
+    },
+    {
+     "turno": 2,
+     "msg": "Cuál es la tarifa especial para Colombianos? Mi pareja y yo somos de Bogotá",
+     "respuesta": "¡Qué bueno que me cuentes que son de Bogotá! 🇨🇴 Mira, para los colombianos y residentes en Colombia el precio es el mismo que para todos los demás, solo que se paga en pesos colombianos (COP) en lugar de dólares (USD). No hay tarifa especial ni descuento por ser colombiano, solo cambia la moneda de pago.\n\nPara darte el precio exacto necesito saber si ustedes salen desde Cartagena o si ya están en las Islas del Rosario, porque los planes y tarifas varían un poco según el punto de partida. ¿Desde dónde piensan salir?"
+    },
+    {
+     "turno": 3,
+     "msg": "Y de cuata duración aproximada sería la inmersión, tengo entendido que son una o dos?",
+     "respuesta": "2 inmersiones por día, porque la logística y el tiempo no permiten hacer solo una. Si ya estás en las islas, sí puedes hacer solo 1 inmersión, pero desde Cartagena el mínimo es 2.\n\nSobre la duración exacta de cada inmersión, ese detalle puntual no lo tengo a la mano, pero un asesor te lo puede confirmar sin problema.\n\n¿Quieres que te cuente los planes que tenemos para 2 inmersiones desde Cartagena o prefieres que te explique las opciones si ya estás en las islas?\n\n¡Genial! Para recomendarte el plan perfecto: ¿Sois buzos certificados? (Y si no, ¡tranquilo! El minicurso es ideal para empezar. 🤿)"
+    },
+    {
+     "turno": 4,
+     "msg": "Yo vi un video en YT de alguien que hizo el paquete con ustedes e hicieron dos inmersiones en dos distintos puntos",
+     "respuesta": "Qué bueno que viste el video, suena emocionante hacer dos inmersiones en diferentes puntos.\n\n¡Genial! Para recomendarte el plan perfecto: ¿Sois buzos certificados? (Y si no, ¡tranquilo! El minicurso es ideal para empezar. 🤿)"
+    },
+    {
+     "turno": 5,
+     "msg": "Eso es una tarifa diferente?",
+     "respuesta": " en distintos puntos o por el número de inmersiones, ese detalle puntual no lo tengo a la mano, pero un asesor te lo puede confirmar sin problema.\n\nRecuerda que para los colombianos, el precio es el mismo que para todos, solo que se paga en pesos colombianos (COP).\n\n¿Quieres que te explique los planes y precios para varios días o para el paquete que viste en el video? ¿Y desde dónde piensan salir, desde Cartagena o ya en las islas? Así te doy la info más precisa.\n\n¡Genial! Para recomendarte el plan perfecto: ¿Sois buzos certificados? (Y si no, ¡tranquilo! El minicurso es ideal para empezar. 🤿)"
+    }
+   ],
+   "V2": [
+    {
+     "turno": 1,
+     "msg": "Ya vi la página, está increíble!",
+     "respuesta": "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n\nCuéntame, ¿qué te gustaría vivir con nosotros? 🤿\n• *Buceo* en las Islas del Rosario, si ya eres buzo certificado\n• *Minicurso* para probar el buceo por primera vez (¡no necesitas experiencia!)\n• *Snorkel* para disfrutar el arrecife desde la superficie, ideal en familia\n• *Cursos PADI* completos, del Open Water en adelante\nDime qué te llama la atención y lo armamos juntos. 🌊"
+    },
+    {
+     "turno": 2,
+     "msg": "Cuál es la tarifa especial para Colombianos? Mi pareja y yo somos de Bogotá",
+     "respuesta": "¡Qué bueno que me cuentes que son de Bogotá! 😊 Mira, para los colombianos y residentes en Colombia, el precio es el mismo que para todos los demás, solo que pagan en pesos colombianos (COP) en vez de dólares (USD). No hay tarifa especial ni descuento por ser colombianos, solo cambia la moneda de pago.\n\n¿Quieres que te pase los precios en pesos de algún plan en particular? ¿O prefieren algo para bucear o para probar snorkel?"
+    },
+    {
+     "turno": 3,
+     "msg": "Y de cuata duración aproximada sería la inmersión, tengo entendido que son una o dos?",
+     "respuesta": "¡Claro que sí! Desde Cartagena, las salidas de buceo incluyen 2 inmersiones en un día completo, porque la logística de la lancha y el tiempo no permiten hacer solo una inmersión ni una extra.\n\nSobre la duración exacta de cada inmersión, eso lo puede confirmar un asesor del equipo, que te dará el detalle según el plan y las condiciones.\n\n¿Quieres que te pase el link para que veas fechas y precios en pesos, o prefieres que te cuente más de algún paquete?\n\n¡Genial! Para recomendarte el plan perfecto: ¿Sois buzos certificados? (Y si no, ¡tranquilo! El minicurso es ideal para empezar. 🤿)"
+    },
+    {
+     "turno": 4,
+     "msg": "Yo vi un video en YT de alguien que hizo el paquete con ustedes e hicieron dos inmersiones en dos distintos puntos",
+     "respuesta": "Qué bueno que viste ese video, suena emocionante hacer inmersiones en diferentes puntos.\n\n¡Genial! Para recomendarte el plan perfecto: ¿Sois buzos certificados? (Y si no, ¡tranquilo! El minicurso es ideal para empezar. 🤿)"
+    },
+    {
+     "turno": 5,
+     "msg": "Eso es una tarifa diferente?",
+     "respuesta": "stintos. Los paquetes que incluyen varias inmersiones, como el de 2 inmersiones en un día o los paquetes de varios días, tienen un precio fijo según lo que incluye el plan.\n\nSi viste un video de alguien haciendo dos inmersiones en diferentes sitios, seguramente era uno de esos paquetes que ya contemplan varias inmersiones en distintos puntos de buceo.\n\n¿Quieres que te cuente más de algún paquete en particular o te paso los precios en pesos para que veas opciones?\n\n¡Genial! Para recomendarte el plan perfecto: ¿Sois buzos certificados? (Y si no, ¡tranquilo! El minicurso es ideal para empezar. 🤿)"
+    }
+   ],
+   "OFF": [
+    {
+     "turno": 1,
+     "msg": "Ya vi la página, está increíble!",
+     "respuesta": "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n\nCuéntame, ¿qué te gustaría vivir con nosotros? 🤿\n• *Buceo* en las Islas del Rosario, si ya eres buzo certificado\n• *Minicurso* para probar el buceo por primera vez (¡no necesitas experiencia!)\n• *Snorkel* para disfrutar el arrecife desde la superficie, ideal en familia\n• *Cursos PADI* completos, del Open Water en adelante\nDime qué te llama la atención y lo armamos juntos. 🌊"
+    },
+    {
+     "turno": 2,
+     "msg": "Cuál es la tarifa especial para Colombianos? Mi pareja y yo somos de Bogotá",
+     "respuesta": "¡Qué bueno que estén planeando bucear con nosotros desde Bogotá! 🇨🇴 Te cuento que no hay una tarifa especial para colombianos; el precio es el mismo para todos, solo que ustedes pagan en pesos colombianos (COP) y los extranjeros en dólares (USD). \n\nAsí que ustedes verán los precios en pesos, y el resto de clientes en dólares, pero el valor es igual para todos. ¿Quieres que te pase los precios en pesos para que los revises? ¿O prefieres que te ayude a armar un plan para ti y tu pareja?"
+    },
+    {
+     "turno": 3,
+     "msg": "Y de cuata duración aproximada sería la inmersión, tengo entendido que son una o dos?",
+     "respuesta": "¡Claro que sí! Desde Cartagena, las salidas de buceo incluyen 2 inmersiones en un día completo, porque la logística y el tiempo de la lancha no permiten hacer solo una inmersión.\n\nSobre la duración exacta de cada inmersión, ese detalle puntual no lo tengo a la mano, pero un asesor puede confirmártelo sin problema.\n\n¿Quieres que te cuente más sobre ese plan o prefieres que te ayude a armar la reserva para ti y tu pareja?\n\n¡Genial! Para recomendarte el plan perfecto: ¿Sois buzos certificados? (Y si no, ¡tranquilo! El minicurso es ideal para empezar. 🤿)"
+    },
+    {
+     "turno": 4,
+     "msg": "Yo vi un video en YT de alguien que hizo el paquete con ustedes e hicieron dos inmersiones en dos distintos puntos",
+     "respuesta": "Qué bueno que hayas visto ese video, suena emocionante hacer inmersiones en diferentes puntos.\n\n¡Genial! Para recomendarte el plan perfecto: ¿Sois buzos certificados? (Y si no, ¡tranquilo! El minicurso es ideal para empezar. 🤿)"
+    },
+    {
+     "turno": 5,
+     "msg": "Eso es una tarifa diferente?",
+     "respuesta": "s puntos; lo que cambia es el plan que elijas. Por ejemplo, la salida de buceo de 2 inmersiones en un día tiene un precio, y el paquete de 3 inmersiones (que incluye inmersiones en varios puntos y una nocturna) tiene otro precio diferente porque es un plan más completo y requiere quedarse a dormir en las islas.\n\nSi quieres, te puedo contar los precios en pesos colombianos para que compares y veas cuál se ajusta mejor a tus días y a lo que quieren vivir. ¿Quieres?\n\n¡Genial! Para recomendarte el plan perfecto: ¿Sois buzos certificados? (Y si no, ¡tranquilo! El minicurso es ideal para empezar. 🤿)"
+    }
+   ]
+  },
+  "minicurso-precio-colombianos-origen-pendiente": {
+   "V1": [
+    {
+     "turno": 1,
+     "msg": "Me gustaría agendar un día de buceo con ustedes",
+     "respuesta": "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n\n¡Genial! Para recomendarte el plan perfecto: ¿Eres buzo certificado? (Y si no, ¡tranquilo! El minicurso es ideal para empezar. 🤿)"
+    },
+    {
+     "turno": 2,
+     "msg": "Buceo para principiantes",
+     "respuesta": "Entiendo que estás interesado en el buceo como principiante.\n\n¿Desde dónde saldrías? Podemos recogerte saliendo *desde Cartagena* (ida y vuelta el mismo día) o, si ya estás *en las islas*, coordinamos la recogida en tu hotel."
+    },
+    {
+     "turno": 3,
+     "msg": "2 personas",
+     "respuesta": "Entendido, son 2 personas.\n\n¿Desde dónde saldrías? Podemos recogerte saliendo *desde Cartagena* (ida y vuelta el mismo día) o, si ya estás *en las islas*, coordinamos la recogida en tu hotel."
+    },
+    {
+     "turno": 4,
+     "msg": "Ese es el precio para ciudadanos colombianos? somos de Bogotá",
+     "respuesta": ", solo que en pesos, no hay descuento especial por ser colombiano.\n\nAhora, para el minicurso de buceo para principiantes de 1 día, el precio online es 655.000 COP por persona, con lancha y almuerzo incluidos, saliendo desde Cartagena. Si ya están en las islas, el precio cambia un poco y el almuerzo no está incluido.\n\n¿Desde dónde prefieren salir ustedes? Así te paso el link correcto para que puedan reservar con el descuento online.\n\n¿Desde dónde saldrías? Podemos recogerte saliendo *desde Cartagena* (ida y vuelta el mismo día) o, si ya estás *en las islas*, coordinamos la recogida en tu hotel."
+    }
+   ],
+   "V2": [
+    {
+     "turno": 1,
+     "msg": "Me gustaría agendar un día de buceo con ustedes",
+     "respuesta": "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n\n¡Genial! Para recomendarte el plan perfecto: ¿Eres buzo certificado? (Y si no, ¡tranquilo! El minicurso es ideal para empezar. 🤿)"
+    },
+    {
+     "turno": 2,
+     "msg": "Buceo para principiantes",
+     "respuesta": "Entiendo que no estás certificado para bucear.\n\n¿Desde dónde saldrías? Podemos recogerte saliendo *desde Cartagena* (ida y vuelta el mismo día) o, si ya estás *en las islas*, coordinamos la recogida en tu hotel."
+    },
+    {
+     "turno": 3,
+     "msg": "2 personas",
+     "respuesta": "Entendido, son 2 personas.\n\n¿Desde dónde saldrías? Podemos recogerte saliendo *desde Cartagena* (ida y vuelta el mismo día) o, si ya estás *en las islas*, coordinamos la recogida en tu hotel."
+    },
+    {
+     "turno": 4,
+     "msg": "Ese es el precio para ciudadanos colombianos? somos de Bogotá",
+     "respuesta": "¡Claro que sí! Como son de Bogotá, ustedes pagan en pesos colombianos (COP). El precio es el mismo que para extranjeros, solo cambia la moneda. \n\nPara principiantes, el minicurso de buceo de 1 día, ida y vuelta desde Cartagena, cuesta 655.000 COP por persona si reservas online con el 10% de descuento. Incluye lancha, almuerzo y todo el equipo. \n\n¿Quieres que te pase el link para que puedan reservar?\n\n¿Desde dónde saldrías? Podemos recogerte saliendo *desde Cartagena* (ida y vuelta el mismo día) o, si ya estás *en las islas*, coordinamos la recogida en tu hotel."
+    }
+   ],
+   "OFF": [
+    {
+     "turno": 1,
+     "msg": "Me gustaría agendar un día de buceo con ustedes",
+     "respuesta": "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n\n¡Genial! Para recomendarte el plan perfecto: ¿Eres buzo certificado? (Y si no, ¡tranquilo! El minicurso es ideal para empezar. 🤿)"
+    },
+    {
+     "turno": 2,
+     "msg": "Buceo para principiantes",
+     "respuesta": "Entiendo que estás interesado en el buceo como principiante.\n\n¿Desde dónde saldrías? Podemos recogerte saliendo *desde Cartagena* (ida y vuelta el mismo día) o, si ya estás *en las islas*, coordinamos la recogida en tu hotel."
+    },
+    {
+     "turno": 3,
+     "msg": "2 personas",
+     "respuesta": "Entendido, son 2 personas.\n\n¿Desde dónde saldrías? Podemos recogerte saliendo *desde Cartagena* (ida y vuelta el mismo día) o, si ya estás *en las islas*, coordinamos la recogida en tu hotel."
+    },
+    {
+     "turno": 4,
+     "msg": "Ese es el precio para ciudadanos colombianos? somos de Bogotá",
+     "respuesta": "¡Claro que sí! Como son de Bogotá, ustedes pagan en pesos colombianos (COP). El precio es el mismo que para extranjeros, solo cambia la moneda. \n\nPara el minicurso de buceo para principiantes, saliendo desde Cartagena, el precio online con descuento es 655.000 COP por persona. \n\n¿Quieres que te ayude a armar la reserva para los dos?\n\n¿Desde dónde saldrías? Podemos recogerte saliendo *desde Cartagena* (ida y vuelta el mismo día) o, si ya estás *en las islas*, coordinamos la recogida en tu hotel."
+    }
+   ]
+  },
+  "open-water-precio-para-colombianos-corrige-mito": {
+   "V1": [
+    {
+     "turno": 1,
+     "msg": "Buenos días. Estoy interesada en el curso básico de buceo. Cuál es el costo para colombianos?",
+     "respuesta": "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n\n¡Buenos días! Qué bueno que quieras hacer el curso básico de buceo, es una experiencia increíble para descubrir el mundo submarino de las Islas del Rosario.\n\nPara darte el costo exacto para colombianos, necesito saber si saldrías desde Cartagena o si ya estás en las Islas del Rosario, porque el precio cambia según el punto de partida. ¿Desde dónde harías el curso?"
+    },
+    {
+     "turno": 2,
+     "msg": "Estoy interesada en el curso básico de buceo. Según la página tienen un precio especial para colombianos. Me podrían dar el costo por favor",
+     "respuesta": " ya estás en las Islas del Rosario, porque cambia un poco según el punto de partida.\n\n- Desde Cartagena, el curso básico cuesta 2.450.000 COP si reservas online (con el 10% de descuento) o 2.722.000 COP normal.\n- Si ya estás en las islas, el precio es un poco menor, pero necesito confirmar si ese es tu caso.\n\nPor cierto, no hay un precio especial solo por ser colombiano, el precio es el mismo para todos, solo cambia la moneda para colombianos (COP) o extranjeros (USD).\n\n¿Desde dónde harías el curso, desde Cartagena o ya en las islas? Así te doy el dato exacto y el link para reservar. ¿Quieres?"
+    }
+   ],
+   "V2": [
+    {
+     "turno": 1,
+     "msg": "Buenos días. Estoy interesada en el curso básico de buceo. Cuál es el costo para colombianos?",
+     "respuesta": "2.450.000 COP si reservas online (con 10% de descuento) o 2.722.000 COP si reservas normal. \n\nEste curso dura 2 días, incluye teoría online, práctica en piscina y 4 inmersiones en las Islas del Rosario, con lancha y almuerzo el primer día. Hay que dormir en las islas (hotel no incluido).\n\n¿Quieres que te pase el link para que puedas reservar o te cuento más detalles?\n\n¿Desde dónde saldrías? Este plan dura varios días y hay que *dormir en las islas* (el alojamiento no está incluido): puedes salir *desde Cartagena* el primer día o, si ya estás *en las islas*, coordinamos la recogida en tu hotel."
+    },
+    {
+     "turno": 2,
+     "msg": "Estoy interesada en el curso básico de buceo. Según la página tienen un precio especial para colombianos. Me podrían dar el costo por favor",
+     "respuesta": "reservas online (con el 10% de descuento) o 2.722.000 COP si reservas normal. \n\nEste curso dura 2 días, incluye teoría online, práctica en piscina y 4 inmersiones en las Islas del Rosario, con lancha y almuerzo el primer día. Hay que dormir en las islas (el alojamiento no está incluido).\n\n¿Quieres que te pase el link para que puedas reservar o te cuento más detalles?\n\n¿Desde dónde saldrías? Este plan dura varios días y hay que *dormir en las islas* (el alojamiento no está incluido): puedes salir *desde Cartagena* el primer día o, si ya estás *en las islas*, coordinamos la recogida en tu hotel."
+    }
+   ],
+   "OFF": [
+    {
+     "turno": 1,
+     "msg": "Buenos días. Estoy interesada en el curso básico de buceo. Cuál es el costo para colombianos?",
+     "respuesta": "a, seguro, almuerzo el primer día y la tarjeta de certificación PADI.\n\nSi prefieres algo más corto para tu primera vez, también está el Minicurso de Buceo (bautizo) de 1 día, que cuesta 655.000 COP online o 727.000 COP normal, ideal para principiantes sin certificación previa.\n\n¿Quieres que te ayude con más detalles o con el link para reservar alguno de estos cursos?\n\n¿Desde dónde saldrías? Este plan dura varios días y hay que *dormir en las islas* (el alojamiento no está incluido): puedes salir *desde Cartagena* el primer día o, si ya estás *en las islas*, coordinamos la recogida en tu hotel."
+    },
+    {
+     "turno": 2,
+     "msg": "Estoy interesada en el curso básico de buceo. Según la página tienen un precio especial para colombianos. Me podrían dar el costo por favor",
+     "respuesta": "structor, transporte en lancha Cartagena-Islas-Cartagena, seguro, almuerzo el primer día y la certificación PADI. Hay que dormir en las islas (el alojamiento no está incluido).\n\nNo hay un precio especial aparte de la moneda para colombianos; simplemente pagas en pesos colombianos.\n\n¿Quieres que te comparta el link para que puedas reservar o te ayudo con más detalles?\n\n¿Desde dónde saldrías? Este plan dura varios días y hay que *dormir en las islas* (el alojamiento no está incluido): puedes salir *desde Cartagena* el primer día o, si ya estás *en las islas*, coordinamos la recogida en tu hotel."
+    }
+   ]
+  },
+  "paquete-5-buceos-cop-refresh-y-hoteles": {
+   "V1": [
+    {
+     "turno": 1,
+     "msg": "Buenos días. Quiero hacer el paquete de 5 buceos. Cuál es el costo para colombianos por favor?",
+     "respuesta": "epende de si sales desde Cartagena o si ya estás en las islas, porque los precios cambian un poco según el punto de partida.\n\n- Desde Cartagena, el precio online (con 10% de descuento por reservar en la web) es 1.429.000 COP por persona.\n- Si ya estás en las Islas del Rosario, el precio online es 1.000.000 COP por persona (sin incluir almuerzos).\n\n¿Desde dónde saldrías tú para hacer el paquete? Así te doy el precio exacto y te paso el link para que puedas reservar.\n\n¡Genial! Para recomendarte el plan perfecto: ¿Eres buzo certificado? (Y si no, ¡tranquilo! El minicurso es ideal para empezar. 🤿)"
+    },
+    {
+     "turno": 2,
+     "msg": "Gracias - y en pesos? Para colombianos?",
+     "respuesta": "moneda que usamos para residentes y nacionales. No hay descuento especial por ser colombiano, solo cambia la moneda.\n\nPara el paquete de 5 inmersiones, el precio online (con el 10% de descuento por reservar en la web) es:\n\n- Desde Cartagena: 1.429.000 COP por persona.\n- Si ya estás en las Islas del Rosario: 1.000.000 COP por persona (sin incluir almuerzos).\n\n¿Desde dónde planeas salir para hacer el paquete? Así te paso el link correcto para que reserves. ¡Cuéntame!\n\n¡Genial! Para recomendarte el plan perfecto: ¿Eres buzo certificado? (Y si no, ¡tranquilo! El minicurso es ideal para empezar. 🤿)"
+    },
+    {
+     "turno": 3,
+     "msg": "Gracias - yo complete el curso básico el 3 de abril 2025. Tengo que hacer algo especial?",
+     "respuesta": "as hacer un refresher para volver a bucear con seguridad. Solo asegúrate de que tu equipo esté en buen estado y, si quieres, puedes hacer un repaso rápido con nosotros para sentirte más cómodo.\n\n¿Desde dónde planeas salir para hacer el paquete de 5 inmersiones? Así te cuento los detalles y precios según tu punto de partida, y te paso el link para reservar. ¡Cuéntame!\n\n¿Desde dónde saldrías? Este plan dura varios días y hay que *dormir en las islas* (el alojamiento no está incluido): puedes salir *desde Cartagena* el primer día o, si ya estás *en las islas*, coordinamos la recogida en tu hotel."
+    },
+    {
+     "turno": 4,
+     "msg": "Y me recuerda los hoteles por favor?",
+     "respuesta": "de esos, la recogida en lancha es directa y sin problema. 🛥️\n\nAdemás, otros hoteles con acceso marítimo donde también coordinamos recogida son: Rosario de Mar, Secreto, Ubuntu, Mulata, Eco Hotel Las Palmeras y Pao Pao. Para Pao Pao la recogida se coordina con un asesor porque puede que tengas que caminar un poco hasta el muelle, según el acceso.\n\nEl alojamiento no está incluido en nuestros planes, así que la reserva la haces directamente con el hotel que elijas.\n\n¿Quieres que te ayude a coordinar la recogida o te paso el link para reservar el paquete de 5 inmersiones? ¿Desde dónde saldrías tú?"
+    }
+   ],
+   "V2": [
+    {
+     "turno": 1,
+     "msg": "Buenos días. Quiero hacer el paquete de 5 buceos. Cuál es el costo para colombianos por favor?",
+     "respuesta": "s días! El paquete de 5 inmersiones para colombianos que sale desde Cartagena cuesta 1.429.000 COP si reservas online (con el 10% de descuento) y 1.587.000 COP si reservas normal. Incluye lancha ida y vuelta, 5 inmersiones (4 diurnas y 1 nocturna), seguro, equipo, y almuerzo el primer día.\n\nSi ya estás en las Islas del Rosario, el precio es diferente, dime si es tu caso para darte esa info.\n\n¿Quieres que te ayude con el link para reservar o tienes alguna otra duda?\n\n¡Genial! Para recomendarte el plan perfecto: ¿Eres buzo certificado? (Y si no, ¡tranquilo! El minicurso es ideal para empezar. 🤿)"
+    },
+    {
+     "turno": 2,
+     "msg": "Gracias - y en pesos? Para colombianos?",
+     "respuesta": "¡Claro que sí! Para colombianos, el paquete de 5 inmersiones desde Cartagena cuesta 1.429.000 COP si reservas online con el 10% de descuento, y 1.587.000 COP si reservas normal. \n\nSi ya estás en las Islas del Rosario, el precio es diferente, dime si es tu caso y te paso esa info.\n\n¿Quieres que te ayude con el link para reservar?\n\n¡Genial! Para recomendarte el plan perfecto: ¿Eres buzo certificado? (Y si no, ¡tranquilo! El minicurso es ideal para empezar. 🤿)"
+    },
+    {
+     "turno": 3,
+     "msg": "Gracias - yo complete el curso básico el 3 de abril 2025. Tengo que hacer algo especial?",
+     "respuesta": "ción Open Water Diver, que es perfecta para hacer el paquete de 5 inmersiones.\n\nComo tu certificación es reciente (menos de 2 años), no necesitas hacer ningún refresher ni trámite especial para bucear con nosotros. Solo asegúrate de traer tu carné de certificación.\n\n¿Quieres que te ayude a armar la reserva del paquete de 5 inmersiones? ¿O tienes alguna otra pregunta?\n\n¿Desde dónde saldrías? Este plan dura varios días y hay que *dormir en las islas* (el alojamiento no está incluido): puedes salir *desde Cartagena* el primer día o, si ya estás *en las islas*, coordinamos la recogida en tu hotel."
+    },
+    {
+     "turno": 4,
+     "msg": "Y me recuerda los hoteles por favor?",
+     "respuesta": "Las Palmeras y Pao Pao. En estos también coordinamos la recogida, aunque en algunos casos la lancha llega directo al hotel y en otros te indicamos el muelle o una caminata corta hasta el punto más cercano.\n\nRecuerda que el alojamiento no está incluido en nuestros planes y se reserva directamente con el hotel.\n\n¿Quieres que te ayude con algo más para tu plan de buceo?\n\n¿Desde dónde saldrías? Este plan dura varios días y hay que *dormir en las islas* (el alojamiento no está incluido): puedes salir *desde Cartagena* el primer día o, si ya estás *en las islas*, coordinamos la recogida en tu hotel."
+    }
+   ],
+   "OFF": [
+    {
+     "turno": 1,
+     "msg": "Buenos días. Quiero hacer el paquete de 5 buceos. Cuál es el costo para colombianos por favor?",
+     "respuesta": "es una experiencia espectacular con 4 buceos diurnos y 1 nocturno, pasando una noche en las islas.\n\nPara colombianos, el costo es 1.429.000 COP si reservas online con el 10% de descuento, o 1.587.000 COP si reservas normal sin descuento. Incluye lancha Cartagena-Islas-Cartagena, equipo, seguro, almuerzo el primer día y la entrada al Parque Nacional Natural. El alojamiento en las islas no está incluido.\n\n¿Quieres que te pase el link para que puedas reservar directo?\n\n¡Genial! Para recomendarte el plan perfecto: ¿Eres buzo certificado? (Y si no, ¡tranquilo! El minicurso es ideal para empezar. 🤿)"
+    },
+    {
+     "turno": 2,
+     "msg": "Gracias - y en pesos? Para colombianos?",
+     "respuesta": "¡Claro que sí! Para colombianos, el paquete de 5 inmersiones cuesta 1.429.000 COP si reservas online con el 10% de descuento, o 1.587.000 COP si reservas sin el descuento online. \n\n¿Quieres que te pase el link para que puedas reservar directo?\n\n¡Genial! Para recomendarte el plan perfecto: ¿Eres buzo certificado? (Y si no, ¡tranquilo! El minicurso es ideal para empezar. 🤿)"
+    },
+    {
+     "turno": 3,
+     "msg": "Gracias - yo complete el curso básico el 3 de abril 2025. Tengo que hacer algo especial?",
+     "respuesta": "certificado Open Water Diver y listo para bucear con autonomía hasta 18 metros. 🌊\n\nComo llevas menos de 2 años desde tu certificación, no necesitas hacer un refresher para volver al agua. Solo asegúrate de traer tu certificación y equipo, o si quieres, puedes rentar con nosotros.\n\n¿Quieres que te ayude a armar el paquete de 5 inmersiones para que disfrutes al máximo?\n\n¿Desde dónde saldrías? Este plan dura varios días y hay que *dormir en las islas* (el alojamiento no está incluido): puedes salir *desde Cartagena* el primer día o, si ya estás *en las islas*, coordinamos la recogida en tu hotel."
+    },
+    {
+     "turno": 4,
+     "msg": "Y me recuerda los hoteles por favor?",
+     "respuesta": "meras y Pao Pao. En algunos casos la lancha llega directo al hotel; en otros, te indicamos el muelle o una caminata corta hasta el punto de encuentro.\n\nEl alojamiento no está incluido en los planes de buceo y se reserva directamente con el hotel que elijas.\n\n¿Quieres que te ayude a coordinar la recogida o te paso los links para que veas más detalles de estos hoteles?\n\n¿Desde dónde saldrías? Este plan dura varios días y hay que *dormir en las islas* (el alojamiento no está incluido): puedes salir *desde Cartagena* el primer día o, si ya estás *en las islas*, coordinamos la recogida en tu hotel."
+    }
+   ]
+  },
+  "paquete-5-buceos-precio-overnight-isla-grande-baru": {
+   "V1": [
+    {
+     "turno": 1,
+     "msg": "Hello My name is [NOMBRE], i'd like to inquiry about the modalities for a 2 day dive package at the rosario islands. i'll be heading in on april 13th and 14th leaving on the 15th in the morning. What ",
+     "respuesta": "ment, but if you bring your complete gear (regulator, BCD, wetsuit, mask, fins), you get a 5% discount. Also, remember to wait at least 18 hours after diving before flying.\n\nGetting to our meeting point in Cartagena is easy—Muelle de la Bodeguita is well known and accessible. We recommend arriving a bit early to check in smoothly.\n\nWould you like me to share the booking link for this 2-day 4-dive package so you can pick your dates and secure your spot?\n\nGreat! So I can recommend the perfect plan: Are you a certified diver? (And if not, no worries — the mini-course is the ideal way to start. 🤿)"
+    },
+    {
+     "turno": 2,
+     "msg": "certified diver",
+     "respuesta": "Great to hear that you're a certified diver!\n\nWhich hotel or island are you staying at? That way we can arrange pickup."
+    },
+    {
+     "turno": 3,
+     "msg": "beginner",
+     "respuesta": "I see you're a beginner.\n\nAnd how many people should I plan for? That way I can give you the exact price. 😊"
+    },
+    {
+     "turno": 4,
+     "msg": "Looking for recommendations for hotels for a solo backpacker is Isla Grande part of rosario island?",
+     "respuesta": "backpacker, I recommend staying at either Hotel San Pedro de Majagua or Hotel Cocoliso on Isla Grande—both are convenient because our dive base is right there, and pick-up for diving is easy.\n\nOther good options with maritime access nearby are Rosario de Mar, Secreto, Ubuntu, Mulata, and Eco Hotel Las Palmeras. You book accommodation directly with the hotel, and if your hotel has boat access, we include pick-up and drop-off at no extra charge.\n\nWould you like help with diving plans while you stay on Isla Grande?\n\nAnd how many people should I plan for? That way I can give you the exact price. 😊"
+    },
+    {
+     "turno": 5,
+     "msg": "or Playa Tranquila on Isla Barú",
+     "respuesta": "I see you're interested in Playa Tranquila on Isla Barú.\n\nAnd how many people should I plan for? That way I can give you the exact price. 😊"
+    },
+    {
+     "turno": 6,
+     "msg": "Price?  Can you help me with this information?",
+     "respuesta": "Sure thing! Since you’re already on the Rosario Islands, the 2-day 4-dive package price is 204 USD / 830,000 COP online (with the 10% online discount). This plan includes 4 daytime dives over 2 days, but lunch is not included because you’re on the islands. Pick-up and return by boat from your hotel on the islands with maritime access is included at no extra charge.\n\nIf you want, I can share the booking link so you can pick your exact dates and secure your spot. Would you like that?\n\nAnd how many people should I plan for? That way I can give you the exact price. 😊"
+    }
+   ],
+   "OFF": [
+    {
+     "turno": 1,
+     "msg": "Hello My name is [NOMBRE], i'd like to inquiry about the modalities for a 2 day dive package at the rosario islands. i'll be heading in on april 13th and 14th leaving on the 15th in the morning. What ",
+     "respuesta": "he afternoon.\n\nWhat to bring: your diving certification card, swimwear, a towel, sunscreen (reef-safe), and any personal items you want. If you have your own complete diving gear (regulator, BCD, wetsuit, mask, fins), you get a 5% discount. Otherwise, equipment rental is included.\n\nGetting to our location is straightforward: the boat leaves from Cartagena’s Muelle de la Bodeguita pier. It’s about an hour’s ride through beautiful Caribbean waters—very scenic and relaxing.\n\nDo you want me to share the booking link and prices for this 2-day package? Also, do you have your own gear or need rental?"
+    },
+    {
+     "turno": 2,
+     "msg": "certified diver",
+     "respuesta": "Great to hear that you're a certified diver!\n\nWhich hotel or island are you staying at? That way we can arrange pickup."
+    },
+    {
+     "turno": 3,
+     "msg": "beginner",
+     "respuesta": "I see you're a beginner.\n\nAnd how many people should I plan for? That way I can give you the exact price. 😊"
+    },
+    {
+     "turno": 4,
+     "msg": "Looking for recommendations for hotels for a solo backpacker is Isla Grande part of rosario island?",
+     "respuesta": "nitely part of the Rosario Islands and it's where our dive base is located. For a solo backpacker, I recommend Hotel San Pedro de Majagua or Hotel Cocoliso on Isla Grande—they are convenient because our dive center is right there, and pick-up for diving is direct.\n\nOther good options with maritime access nearby are Rosario de Mar, Secreto, Ubuntu, Mulata, and Eco Hotel Las Palmeras. You can book accommodation directly with any of these hotels.\n\nWould you like help with diving plans while you stay on Isla Grande?\n\nAnd how many people should I plan for? That way I can give you the exact price. 😊"
+    },
+    {
+     "turno": 5,
+     "msg": "or Playa Tranquila on Isla Barú",
+     "respuesta": "I see you're mentioning Playa Tranquila on Isla Barú.\n\nAnd how many people should I plan for? That way I can give you the exact price. 😊"
+    },
+    {
+     "turno": 6,
+     "msg": "Price?  Can you help me with this information?",
+     "respuesta": "Sure thing! Since you’re already on the Rosario Islands, the 2-day dive packages have prices without transport from Cartagena or lunch included.\n\nFor example, the 4-dive package over 2 days is about 204 USD / 830,000 COP online price. Equipment rental is included if you don’t bring your own complete gear.\n\nIf you want, I can share the exact booking link so you can pick your dates and see the final price. Would you like that?\n\nAnd how many people should I plan for? That way I can give you the exact price. 😊"
+    }
+   ]
+  },
+  "paquete-en-carrito": {
+   "V1": [
+    {
+     "turno": 1,
+     "msg": "quiero bucear certificado",
+     "respuesta": "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n\n¿Desde dónde saldrías? Podemos recogerte saliendo *desde Cartagena* (ida y vuelta el mismo día) o, si ya estás *en las islas*, coordinamos la recogida en tu hotel."
+    },
+    {
+     "turno": 2,
+     "msg": "somos 2",
+     "respuesta": "Entendido, son 2 personas.\n\n¿Desde dónde saldrías? Podemos recogerte saliendo *desde Cartagena* (ida y vuelta el mismo día) o, si ya estás *en las islas*, coordinamos la recogida en tu hotel."
+    },
+    {
+     "turno": 3,
+     "msg": "y tienen algo para mas dias, como un paquete?",
+     "respuesta": "í! Tenemos varios paquetes para buzos certificados que quieren más días de buceo y disfrutar a fondo las Islas del Rosario.\n\nPor ejemplo, hay paquetes de 3, 5, 7 y hasta 9 inmersiones que se extienden de 1 a 4 días. Algunos incluyen buceo nocturno y otros solo diurnos, según prefieras. Eso sí, para estos paquetes de varios días normalmente hay que quedarse a dormir en las islas, porque no son ida y vuelta el mismo día.\n\nPara darte precios y detalles exactos, ¿me confirmas si saldrían desde Cartagena o si ya están en las islas? Así te cuento las opciones y costos según el origen. ¿Qué me dices?"
+    }
+   ],
+   "V2": [
+    {
+     "turno": 1,
+     "msg": "quiero bucear certificado",
+     "respuesta": "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n\n¿Desde dónde saldrías? Podemos recogerte saliendo *desde Cartagena* (ida y vuelta el mismo día) o, si ya estás *en las islas*, coordinamos la recogida en tu hotel."
+    },
+    {
+     "turno": 2,
+     "msg": "somos 2",
+     "respuesta": "Entendido, son 2.\n\n¿Desde dónde saldrías? Podemos recogerte saliendo *desde Cartagena* (ida y vuelta el mismo día) o, si ya estás *en las islas*, coordinamos la recogida en tu hotel."
+    },
+    {
+     "turno": 3,
+     "msg": "y tienen algo para mas dias, como un paquete?",
+     "respuesta": "rno).\n- Paquete de 9 inmersiones en 4 días (con buceo nocturno y bioluminiscencia).\n\nEstos paquetes incluyen recogida en tu hotel (si tiene acceso por lancha), equipo, seguro y acompañamiento profesional, pero no incluyen almuerzo ni transporte desde Cartagena.\n\nSi quieres, te puedo compartir los links para que veas más detalles o para que armes la reserva. ¿Quieres?\n\n¿Desde dónde saldrías? Este plan dura varios días y hay que *dormir en las islas* (el alojamiento no está incluido): puedes salir *desde Cartagena* el primer día o, si ya estás *en las islas*, coordinamos la recogida en tu hotel."
+    }
+   ],
+   "OFF": [
+    {
+     "turno": 1,
+     "msg": "quiero bucear certificado",
+     "respuesta": "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n\n¿Desde dónde saldrías? Podemos recogerte saliendo *desde Cartagena* (ida y vuelta el mismo día) o, si ya estás *en las islas*, coordinamos la recogida en tu hotel."
+    },
+    {
+     "turno": 2,
+     "msg": "somos 2",
+     "respuesta": "Entendido, son 2.\n\n¿Desde dónde saldrías? Podemos recogerte saliendo *desde Cartagena* (ida y vuelta el mismo día) o, si ya estás *en las islas*, coordinamos la recogida en tu hotel."
+    },
+    {
+     "turno": 3,
+     "msg": "y tienen algo para mas dias, como un paquete?",
+     "respuesta": "n 4 días (con buceo nocturno incluido).\n\nEstos paquetes incluyen equipo, seguro y acompañamiento profesional, pero no incluyen almuerzo ni transporte desde Cartagena, porque son para quienes ya están en las islas con acceso marítimo.\n\nSi quieres, te paso los links para que veas detalles y puedas reservar. ¿Desde dónde estarían saliendo, para darte la info más exacta?\n\n¿Desde dónde saldrías? Este plan dura varios días y hay que *dormir en las islas* (el alojamiento no está incluido): puedes salir *desde Cartagena* el primer día o, si ya estás *en las islas*, coordinamos la recogida en tu hotel."
+    }
+   ]
+  },
+  "pareja-certificados-cop-descuento-almuerzo": {
+   "V1": [
+    {
+     "turno": 1,
+     "msg": "somos buzos certificados",
+     "respuesta": "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n\n¿Desde dónde saldrías? Podemos recogerte saliendo *desde Cartagena* (ida y vuelta el mismo día) o, si ya estás *en las islas*, coordinamos la recogida en tu hotel."
+    },
+    {
+     "turno": 2,
+     "msg": "nos gusta, somos 2 personas y queremos el de saliendo de cartagena, además somos colombianos",
+     "respuesta": "Entendido, son 2 personas y ambos son colombianos.\n\nTe recomiendo el plan de *2 inmersiones en 1 día* en las Islas del Rosario. (Si prefieres un *paquete multi-día* de 3 o más inmersiones, dímelo.)\n\n¿Ha pasado *más de 2 años* desde la última inmersión de alguno del grupo?"
+    },
+    {
+     "turno": 3,
+     "msg": "dice que hay un bono aadicional",
+     "respuesta": "Entiendo que mencionas un bono adicional, gracias por compartirlo.\n\n¿Ha pasado *más de 2 años* desde la última inmersión de alguno del grupo?"
+    },
+    {
+     "turno": 4,
+     "msg": "incluye el almuerzo?",
+     "respuesta": "¡Claro que sí! El plan de 2 inmersiones saliendo desde Cartagena incluye almuerzo durante el día. 😊\n\nEl almuerzo es arroz con pollo o arroz con vegetales para quienes prefieren opción vegetariana o tienen alguna restricción (solo avisa si tienes alergias).\n\n¿Quieres que te ayude con el link para reservar?\n\n¿Ha pasado *más de 2 años* desde la última inmersión de alguno del grupo?"
+    }
+   ],
+   "OFF": [
+    {
+     "turno": 1,
+     "msg": "somos buzos certificados",
+     "respuesta": "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n\n¿Desde dónde saldrías? Podemos recogerte saliendo *desde Cartagena* (ida y vuelta el mismo día) o, si ya estás *en las islas*, coordinamos la recogida en tu hotel."
+    },
+    {
+     "turno": 2,
+     "msg": "nos gusta, somos 2 personas y queremos el de saliendo de cartagena, además somos colombianos",
+     "respuesta": "Entendido, son 2 personas y ambos son colombianos, ¡qué bien!\n\nTe recomiendo el plan de *2 inmersiones en 1 día* en las Islas del Rosario. (Si prefieres un *paquete multi-día* de 3 o más inmersiones, dímelo.)\n\n¿Ha pasado *más de 2 años* desde la última inmersión de alguno del grupo?"
+    },
+    {
+     "turno": 3,
+     "msg": "dice que hay un bono aadicional",
+     "respuesta": "Entiendo que mencionas un bono adicional, gracias por compartirlo.\n\n¿Ha pasado *más de 2 años* desde la última inmersión de alguno del grupo?"
+    },
+    {
+     "turno": 4,
+     "msg": "incluye el almuerzo?",
+     "respuesta": "¡Claro que sí! El plan de 2 inmersiones saliendo desde Cartagena incluye almuerzo el mismo día, junto con agua y dulces de coco entre inmersiones. 🍽️\n\n¿Quieres que te ayude con el link para reservar o prefieres que te cuente más opciones?\n\n¿Ha pasado *más de 2 años* desde la última inmersión de alguno del grupo?"
+    }
+   ]
+  },
+  "precio-desde-islas-vs-cartagena": {
+   "V1": [
+    {
+     "turno": 1,
+     "msg": "Hola!! Te contacto desde Argentina.  Estaremos visitando Cartagena y queria coordinar inmersiones en Isla del Rosario.  Somos una pareja Advanced O.W.",
+     "respuesta": "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n\nPara recomendarte bien: ¿ya tienen el *Curso Advanced Open Water* o quieren sacarla con el curso? 🤿"
+    },
+    {
+     "turno": 2,
+     "msg": "Gracias por la información.\nMe podrías decir cual es el hotel en islas de Rosario? Para evaluar si tomar la propuesta desde Cartagena o quedarnos en el Hotel",
+     "respuesta": "inamos recogida en otros hoteles con acceso marítimo en la zona, como Rosario de Mar, Secreto, Ubuntu, Mulata, Eco Hotel Las Palmeras y Pao Pao.\n\nEl alojamiento no está incluido en los planes de buceo, así que debes reservarlo directamente con el hotel que elijas. Si te quedas en alguno de estos hoteles en las islas, la recogida y regreso en lancha están incluidos sin costo adicional.\n\n¿Quieres que te explique las diferencias de precios y logística entre salir desde Cartagena o desde las islas?\n\nPara recomendarte bien: ¿ya tienen el *Curso Advanced Open Water* o quieren sacarla con el curso? 🤿"
+    },
+    {
+     "turno": 3,
+     "msg": "Me pasas el precio por noche ? O me contacto con el hotel ?",
+     "respuesta": "Tranqui, el precio por noche lo maneja directamente cada hotel, así que lo mejor es que contactes con ellos para esa info puntual. Nosotros no manejamos tarifas de alojamiento, solo la parte de buceo y logística.\n\nSi quieres, te puedo ayudar a armar tu plan de inmersiones desde las islas o desde Cartagena, y te paso los links para reservar. ¿Quieres?\n\nPara recomendarte bien: ¿ya tienen el *Curso Advanced Open Water* o quieren sacarla con el curso? 🤿"
+    },
+    {
+     "turno": 4,
+     "msg": "Ese? Desde ahi sale la lancha de buceo ?",
+     "respuesta": "¡Hola! Si ya estás en las Islas del Rosario y te hospedas en un hotel con acceso marítimo, la lancha de buceo te recoge directamente en tu hotel para llevarte a nuestro centro de buceo. No necesitas ir a otro punto; la recogida es puerta a puerta en la isla.\n\nAsí que sí, desde tu hotel sale la lancha para las inmersiones, sin necesidad de desplazarte al muelle principal. ¿Quieres que te cuente sobre los paquetes de buceo que puedes reservar ya estando en las islas?\n\nPara recomendarte bien: ¿ya tienen el *Curso Advanced Open Water* o quieren sacarla con el curso? 🤿"
+    },
+    {
+     "turno": 5,
+     "msg": "Me puedes decir el precio de las 2 inmersiones? Desde ese hotel?",
+     "respuesta": " plan que más se acerca es el paquete de 3 inmersiones (2 diurnas + 1 nocturna) que cuesta 188 USD online (665.000 COP) o 209 USD normal (739.000 COP) por persona, pero incluye también un buceo nocturno.\n\nSi quieres solo 2 inmersiones diurnas sin nocturno, no hay un paquete específico solo con 2 inmersiones desde las islas; los paquetes son de 3 inmersiones o más. \n\n¿Quieres que te ayude a reservar el paquete de 3 inmersiones o prefieres que te cuente otras opciones para bucear desde las islas?\n\nPara recomendarte bien: ¿ya tienen el *Curso Advanced Open Water* o quieren sacarla con el curso? 🤿"
+    },
+    {
+     "turno": 6,
+     "msg": "Osea quedandonos en el hotel",
+     "respuesta": "Entiendo que se quedarán en el hotel.\n\nPara recomendarte bien: ¿ya tienen el *Curso Advanced Open Water* o quieren sacarla con el curso? 🤿"
+    },
+    {
+     "turno": 7,
+     "msg": "Este costo es el mismo saliendo del continente o de la isla?",
+     "respuesta": "¡Buena pregunta! Los precios desde las Islas del Rosario son diferentes a los que salen desde Cartagena porque no incluyen el transporte en lancha desde el continente ni el almuerzo. \n\nAsí que el costo que te di para las inmersiones desde la isla es distinto (generalmente más bajo) que el que sale desde Cartagena, ya que la logística es diferente.\n\n¿Quieres que te pase los precios exactos para bucear desde las islas y te ayudo con los links para reservar?\n\nPara recomendarte bien: ¿ya tienen el *Curso Advanced Open Water* o quieren sacarla con el curso? 🤿"
+    }
+   ],
+   "OFF": [
+    {
+     "turno": 1,
+     "msg": "Hola!! Te contacto desde Argentina.  Estaremos visitando Cartagena y queria coordinar inmersiones en Isla del Rosario.  Somos una pareja Advanced O.W.",
+     "respuesta": "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n\nPara recomendarte bien: ¿ya tienen el *Curso Advanced Open Water* o quieren sacarla con el curso? 🤿"
+    },
+    {
+     "turno": 2,
+     "msg": "Gracias por la información.\nMe podrías decir cual es el hotel en islas de Rosario? Para evaluar si tomar la propuesta desde Cartagena o quedarnos en el Hotel",
+     "respuesta": "el Cocoliso. También coordinamos recogida en otros hoteles con acceso marítimo en la zona, como Rosario de Mar, Secreto, Ubuntu, Mulata, Eco Hotel Las Palmeras y Pao Pao.\n\nEl alojamiento no está incluido en los planes de buceo, así que lo reservas directamente con el hotel que prefieras. Si te quedas en alguno de estos hoteles con acceso por lancha, la recogida y regreso están incluidos sin costo adicional.\n\n¿Quieres que te cuente las opciones de planes y precios para bucear ya desde las islas?\n\nPara recomendarte bien: ¿ya tienen el *Curso Advanced Open Water* o quieren sacarla con el curso? 🤿"
+    },
+    {
+     "turno": 3,
+     "msg": "Me pasas el precio por noche ? O me contacto con el hotel ?",
+     "respuesta": "Tranqui, el precio por noche lo manejan directamente los hoteles, nosotros no lo gestionamos ni tenemos tarifas fijas. Lo mejor es que contactes al hotel que te interese para reservar y consultar precios.\n\nSi quieres, te puedo ayudar con los planes de buceo desde las islas, que ya incluyen la recogida en tu hotel si tiene acceso marítimo. ¿Quieres que te cuente las opciones y precios?\n\nPara recomendarte bien: ¿ya tienen el *Curso Advanced Open Water* o quieren sacarla con el curso? 🤿"
+    },
+    {
+     "turno": 4,
+     "msg": "Ese? Desde ahi sale la lancha de buceo ?",
+     "respuesta": "¡Exacto! Si ya estás en las Islas del Rosario y te hospedas en un hotel con acceso por lancha, la recogida para bucear sale directamente desde tu hotel. Nosotros pasamos a recogerte entre 9:30 y 9:45 a.m., te llevamos a nuestro centro de buceo para preparar todo, y luego regresamos al hotel después de las inmersiones.\n\nAsí evitas tener que ir hasta Cartagena y es mucho más cómodo para ti. ¿Quieres que te cuente las opciones de paquetes de buceo desde las islas y sus precios?\n\nPara recomendarte bien: ¿ya tienen el *Curso Advanced Open Water* o quieren sacarla con el curso? 🤿"
+    },
+    {
+     "turno": 5,
+     "msg": "Me puedes decir el precio de las 2 inmersiones? Desde ese hotel?",
+     "respuesta": "rnas + 1 nocturna) por 188 USD online (665.000 COP para colombianos) o 209 USD normal (739.000 COP).\n\nSi solo quieren hacer 2 inmersiones diurnas sin el nocturno, eso normalmente se coordina con un asesor, porque el paquete oficial incluye el buceo nocturno.\n\n¿Quieres que te comparta el link para reservar el paquete de 3 inmersiones desde las islas? Así aprovechan la experiencia completa con nocturno incluido. ¿O prefieren que te pase con un asesor para ver si se puede hacer solo 2 inmersiones?\n\nPara recomendarte bien: ¿ya tienen el *Curso Advanced Open Water* o quieren sacarla con el curso? 🤿"
+    },
+    {
+     "turno": 6,
+     "msg": "Osea quedandonos en el hotel",
+     "respuesta": "Entiendo que se quedarán en el hotel.\n\nPara recomendarte bien: ¿ya tienen el *Curso Advanced Open Water* o quieren sacarla con el curso? 🤿"
+    },
+    {
+     "turno": 7,
+     "msg": "Este costo es el mismo saliendo del continente o de la isla?",
+     "respuesta": "pregunta! Los precios para bucear desde las Islas del Rosario son diferentes a los que salen desde Cartagena porque no incluyen el transporte en lancha desde el continente ni el almuerzo.\n\nAsí que el costo que te di para las inmersiones desde el hotel en la isla es distinto (generalmente más bajo) que el que sale desde Cartagena.\n\n¿Quieres que te comparta los precios exactos para el plan de 2 inmersiones desde las islas? ¿O prefieres que te cuente las opciones desde Cartagena para que compares?\n\nPara recomendarte bien: ¿ya tienen el *Curso Advanced Open Water* o quieren sacarla con el curso? 🤿"
+    }
+   ]
+  },
+  "precio-fundive-datos-faltan": {
+   "V1": [
+    {
+     "turno": 1,
+     "msg": "Hola buenos días, mi nombre es [NOMBRE]. Quería averiguar por el costo de un fundive para este fin de semana",
+     "respuesta": "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n\n¡Genial! Para recomendarte el plan perfecto: ¿Eres buzo certificado? (Y si no, ¡tranquilo! El minicurso es ideal para empezar. 🤿)"
+    }
+   ],
+   "OFF": [
+    {
+     "turno": 1,
+     "msg": "Hola buenos días, mi nombre es [NOMBRE]. Quería averiguar por el costo de un fundive para este fin de semana",
+     "respuesta": "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n\n¡Genial! Para recomendarte el plan perfecto: ¿Eres buzo certificado? (Y si no, ¡tranquilo! El minicurso es ideal para empezar. 🤿)"
+    }
+   ]
+  },
+  "reserva-paquete-5-buceos-solicita": {
+   "V1": [
+    {
+     "turno": 1,
+     "msg": "Buenos días. Me gustaría hacer una reserva para el paquete de 5 buceos por favor?",
+     "respuesta": "s! El paquete de 5 inmersiones es una experiencia increíble para buzos certificados, con 4 inmersiones diurnas y 1 nocturna en dos días. \n\nPara ayudarte mejor, ¿me puedes decir si saldrías desde Cartagena o si ya estás en las Islas del Rosario? Así te paso la info y el link de reserva exactos según tu ubicación. \n\nRecuerda que para este paquete necesitas tener certificación Open Water o superior. ¿Quieres que te explique los detalles del plan mientras me confirmas?\n\n¡Genial! Para recomendarte el plan perfecto: ¿Eres buzo certificado? (Y si no, ¡tranquilo! El minicurso es ideal para empezar. 🤿)"
+    }
+   ],
+   "OFF": [
+    {
+     "turno": 1,
+     "msg": "Buenos días. Me gustaría hacer una reserva para el paquete de 5 buceos por favor?",
+     "respuesta": "🌊\n\n¡Buenos días! El paquete de 5 inmersiones es una experiencia espectacular para buzos certificados, con 4 buceos diurnos y 1 nocturno en 2 días, incluyendo lancha rápida y almuerzo el primer día. \n\n¿Desde dónde saldrías, desde Cartagena o ya estás en las Islas del Rosario? Así te paso el link correcto para que puedas hacer la reserva. También necesito confirmar que tienes tu certificación de buceo, porque este paquete es solo para buzos certificados. ¿Me cuentas?\n\n¡Genial! Para recomendarte el plan perfecto: ¿Eres buzo certificado? (Y si no, ¡tranquilo! El minicurso es ideal para empezar. 🤿)"
+    }
+   ]
+  },
+  "curso-open-water-transporte-y-regreso-otro-dia": {
+   "V2": [
+    {
+     "turno": 1,
+     "msg": "Hi,\nMy understanding is that the transportation to rosario is included, in case I decided to do PADI Open Water Diver certification course., correct?",
+     "respuesta": "tagena to the Rosario Islands and back is included. You'll also have lunch on day 1, dive insurance, equipment for the practical sessions, and the National Park entrance fee covered. You do need to stay overnight on the islands (hotel not included), as it's a 2-day course.\n\nWould you like me to help you with more details or the booking link?\n\nWhere would you be departing from? This plan takes several days and you need to *stay on the islands* (accommodation is not included): you can leave *from Cartagena* on the first day or, if you're already *on the islands*, we arrange pickup at your hotel."
+    },
+    {
+     "turno": 2,
+     "msg": "What if I decide to stay one day longer in rosario, can you provide de transfer back to cartagena?",
+     "respuesta": "\nJust keep in mind that the return on a different day is not included in the original plan price, so the team will help you with the details and any additional arrangements.\n\nAre you thinking of extending your stay after the Open Water course? I can help you with the next steps or put you in touch with an advisor to coordinate your transfer.\n\nWhere would you be departing from? This plan takes several days and you need to *stay on the islands* (accommodation is not included): you can leave *from Cartagena* on the first day or, if you're already *on the islands*, we arrange pickup at your hotel."
+    },
+    {
+     "turno": 3,
+     "msg": "Thanks.\nAnother question is, where is the meeting point in cartagena?",
+     "respuesta": "Perfect! The meeting point in Cartagena is at 8:00 a.m. at Muelle de la Bodeguita, just 5 minutes from the historic center. When you arrive, no need to queue—just ask for DIVING PLANET at entrance 3.\n\nIf you want, I can share the exact location link or help with anything else for your day trip. Would you like that?\n\nWhere would you be departing from? This plan takes several days and you need to *stay on the islands* (accommodation is not included): you can leave *from Cartagena* on the first day or, if you're already *on the islands*, we arrange pickup at your hotel."
+    }
+   ]
+  },
+  "referral-mas-refresher-hotel-y-domingo-pascua": {
+   "V2": [
+    {
+     "turno": 1,
+     "msg": "Hi. We want to complete our PADI open water: we have referrals and e-learning certificates. We would also like a refresher first. How does the 2 day open water referral course cost plus a mini course ",
+     "respuesta": "h online price\n- Open Water Referral Course (2 days): 474 USD / 1,680,000 COP each online price\n\nThe refresher is a one-day review with pool practice and 1 ocean dive, perfect to get comfortable again before the certification dives.\n\nBoth include boat transfers Cartagena-Islands-Cartagena, equipment, insurance, and lunch on the refresher day and day 1 of the referral course.\n\nWould you like me to help you with the booking links or any other details? 🐠\n\nWhere would you be departing from? We can pick you up *from Cartagena* or, if you're already *on the islands*, we arrange pickup at your hotel."
+    },
+    {
+     "turno": 2,
+     "msg": "Ok. Thanks. We will work out the best days. Do you recommend any hotels on the island convenient for the diving?",
+     "respuesta": "n Pedro de Majagua and Hotel Cocoliso, so if you stay at either, pick-up is direct and easy.\n\nOther good options with maritime access nearby are Rosario de Mar, Secreto, Ubuntu, Mulata, Eco Hotel Las Palmeras, and Pao Pao. We can coordinate pick-up from these hotels too, sometimes directly at the hotel dock or a nearby meeting point.\n\nWould you like me to share more details about any of these hotels or help with anything else while you plan your days?\n\nWhere would you be departing from? We can pick you up *from Cartagena* or, if you're already *on the islands*, we arrange pickup at your hotel."
+    },
+    {
+     "turno": 3,
+     "msg": "Great. We will book diving with you on the website and will book our hotel on the island . Hope you are operating on Easter Sunday? We want to dive on April 5 and 6. How do we book/pay for the $50 ref",
+     "respuesta": "or the refresher (called Dive Mini Course) easily on our website. Here is the booking link for the refresher departing from Cartagena:  \nhttps://book.divingplanet.org/book/minicurso-de-buceo/2?language=en\n\nIf you are already on the islands, use this link instead:  \nhttps://book.divingplanet.org/book/dive-mini-course-already-on-island/20?language=en\n\nJust pick your date and number of people, and payment is done securely online.\n\nWould you like me to help you with the booking links for your Open Water referral course too?\n\nWhich hotel or island are you staying at? That way we can arrange pickup."
+    }
+   ]
+  }
+ }
+}

@@ -1,6 +1,14 @@
 History
 =======
 
+0.29.98 - (2026-10-06)
+----------------------
+* **Punto 3 (el ORIGEN del cliente en los precios): medido, flag `RAG_ORIGEN_PREGUNTA` APAGADO, decisión de negocio pendiente** (Álvaro). Evidencia: `docs/robustness/origen-2026-10-06.json`.
+  - **Causa:** con el origen sin registrar (`state.location` vacío) el contexto del RAG no decía nada y el modelo elegía uno (casi siempre Cartagena). Tres problemas distintos: (1) origen desconocido → cotiza uno; (2) origen mal registrado: preguntar por los hoteles de las islas se guarda como "ya está en las islas" (`precio-desde-islas-vs-cartagena`); (3) el RAG dijo que "desde las islas no hay plan de 2 inmersiones" y sí lo hay (124 USD; el juez de grounding no lo cazó).
+  - **El flag** (contexto + la pregunta del origen sale una sola vez, con sus botones; `tests/test_rag_origen_pregunta.py`): **V1** ("todavía NO sabemos el origen; no cotices uno, pregúntalo"): escalón 0 en PRE, deja de suponer Cartagena (pregunta, o da los dos precios rotulados). **Ronda core `2026-10-06-origen-B`** frente a `privacidad-B` re-juzgada con la referencia curada: 93,9 → 93,4 % (ruido), 23 → 21/32; RAG p50 3,36 → 4,01 s (A es de otro día). 2 de las 4 regresiones, del flag: repregunta el origen cuando el cliente ya lo dio a entender ("reservaremos hotel en la isla"; "¿el transporte desde Cartagena va incluido?", donde además la pregunta tapó la oferta de asesor). **V2** ("lo que diga la conversación manda; pregunta solo ante un precio"): arregla esas dos, pero vuelve a cotizar Cartagena en 2 de 3 casos con el origen de verdad desconocido. Con texto, o pregunta de más o supone de más.
+  - **Decisión pendiente (Gadea, negocio):** el golden pide "pregunta el origen ANTES de cotizar" (10 criterios), salvo uno que acepta "o da los dos precios rotulados". Opciones: (a) aceptar "precio desde Cartagena rotulado + la reserva pregunta el origen justo detrás" (lo que hace hoy) y ajustar esos criterios; (b) "los dos precios rotulados"; (c) preguntar antes de cotizar, hecho por CÓDIGO (sin depender del modelo) cuando el cliente pide un precio y el origen no consta. Hasta decidir, apagado (la conducta de antes).
+  - Gasto del día ~6,3 $ (juez nuevo ~2,7 $, punto 3 ~3,6 $).
+
 0.29.97 - (2026-10-06)
 ----------------------
 * **Punto 2 (dar el link de reserva cuando se pide): MEDIDO, no es un fallo, no se toca el bot** (Álvaro). En la ronda completa el link salía en 21 conversaciones frente a 32 del paso 8, y el bot a menudo ofrece el link ("¿quieres que te lo pase?") en vez de darlo. Leído:
