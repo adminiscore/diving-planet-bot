@@ -1728,6 +1728,11 @@ def _build_extra_context(state: ConversationState) -> str | None:
                 "pickup info; do not mention the Cartagena Muelle de la Bodeguita "
                 "departure unless they explicitly ask about it."
             )
+    elif settings.rag_origen_pregunta:
+        # 6-oct (punto 3): sin esto el contexto callaba y el modelo cotizaba un origen por su cuenta.
+        from src.prompts.info import RAG_ORIGEN_DESCONOCIDO_EN, RAG_ORIGEN_DESCONOCIDO_ES  # lazy
+
+        parts.append(RAG_ORIGEN_DESCONOCIDO_ES if state.language == "es" else RAG_ORIGEN_DESCONOCIDO_EN)
 
     # Isla / hotel
     if getattr(state, "island", None):

@@ -4810,6 +4810,8 @@ async def _slotfill_close_phase(
         if _answer_replaces_the_booking_question(state, answer, finalized=finalized):
             state.quick_replies = []
             response = answer
+        elif _answer_asks_the_origin(state, answer):
+            response = answer  # la misma pregunta que la de la reserva: va una vez, con sus botones de origen
         else:
             response = f"{answer.rstrip()}\n\n{response}"
         response = greeting + response
@@ -5168,15 +5170,31 @@ async def _prepend_parallel_answer(state: ConversationState, response: str, gree
     answer = await _take_parallel_answer(state)
     if not answer:
         return response
-    if _is_rag_fallback(answer):
+    body = response[len(greeting):] if greeting and response.startswith(greeting) else response
+    if _is_rag_fallback(answer) or (_answer_asks_the_origin(state, answer) and _PREGUNTA_ORIGEN_RE.search(body)):
         merged = f"{greeting}{answer.rstrip()}"
     else:
-        body = response[len(greeting):] if greeting and response.startswith(greeting) else response
         merged = f"{greeting}{answer.rstrip()}\n\n{body}"
     last = state.history[-1] if state.history else {}
     if last.get("role") == "assistant" and last.get("content") == response:
         last["content"] = merged
     return merged
+
+
+# 6-oct (flag `rag_origen_pregunta`): con el origen desconocido el RAG pregunta ya "¿saldrías desde Cartagena o ya
+# estás en las islas?"; si detrás se pegaba la pregunta del origen de la reserva, el cliente leía la misma pregunta dos
+# veces seguidas.
+_PREGUNTA_ORIGEN_RE = re.compile(
+    r"desde d[oó]nde (saldr|sal)|sal(es|en|dr[ií]as?|dr[ií]an) desde cartagena o|"
+    r"where (would|will) you (be )?(depart|leav)|depart(ing)? from cartagena or|from cartagena or (are you |you're )?already",
+    re.IGNORECASE,
+)
+
+
+def _answer_asks_the_origin(state: ConversationState, answer: str) -> bool:
+    """¿La reserva iba a preguntar el origen y la respuesta del RAG ya lo pregunta? Entonces va sola."""
+    return (settings.rag_origen_pregunta and state.core_pending_slot == SLOT_LOCATION
+            and bool(_PREGUNTA_ORIGEN_RE.search(answer)))
 
 
 def _answer_already_asks(answer: str) -> bool:

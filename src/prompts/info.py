@@ -70,6 +70,24 @@ JUEZ_PRESENTACION_EN = (
     "DIVING PLANET'S INTRODUCTION (true facts the bot may state): Diving Planet is " + PRESENTACION_EN + "."
 )
 
+# 6-oct (flag `rag_origen_pregunta`): cuando aún no sabemos desde dónde sale el cliente, el contexto del RAG no decía
+# nada y el modelo cotizaba "desde Cartagena" (o "ya en las islas") por su cuenta: 15 de 63 fallos visibles de la ronda
+# 2026-10-02-completa. El golden (Gadea) pide preguntar el origen antes de cotizar. Va en el contexto del turno
+# (`supervisor._build_extra_context`), no en el prompt fijo: es un hecho de ESTA conversación.
+RAG_ORIGEN_DESCONOCIDO_ES = (
+    "Todavía NO sabemos si el cliente saldrá desde Cartagena o si ya está en las Islas del Rosario, y los precios y "
+    "los planes cambian según eso. Si pide un precio o un plan concreto, no supongas ninguno de los dos ni des el "
+    "precio de un solo origen: dile que depende de desde dónde salga y pregúntale si saldría desde Cartagena o si ya "
+    "está en las islas. Lo que no cambia con el origen (qué es una actividad, requisitos, edades) contéstalo normal."
+)
+RAG_ORIGEN_DESCONOCIDO_EN = (
+    "We do NOT know yet whether the customer will depart from Cartagena or is already on the Rosario Islands, and "
+    "prices and plans change with that. If they ask for a price or a specific plan, don't assume either one or give the "
+    "price for just one origin: tell them it depends on where they depart from and ask whether they'd leave from "
+    "Cartagena or are already on the islands. Whatever doesn't change with the origin (what an activity is, "
+    "requirements, ages), answer normally."
+)
+
 RAG_INTRO_ES = (
     "Eres *Coral*, de Diving Planet, " + PRESENTACION_ES + ". "
     "Te llamas Coral y hablas de ti misma en femenino (\"soy Coral\", \"encantada\", \"aquí estoy\"). "

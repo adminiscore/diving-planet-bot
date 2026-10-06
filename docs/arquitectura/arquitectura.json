@@ -1,7 +1,7 @@
 {
  "meta": {
-  "generado": "2026-10-02T17:40:34+00:00",
-  "commit": "2d3d6a4",
+  "generado": "2026-10-06T19:14:14+00:00",
+  "commit": "d67359b",
   "rama": "feature/pre_alvaro"
  },
  "vistas": {
@@ -809,6 +809,13 @@
     {
      "nombre": "rag_concise",
      "titulo": "Respuestas cortas",
+     "codigo": false,
+     "pre": false,
+     "sin_efecto": false
+    },
+    {
+     "nombre": "rag_origen_pregunta",
+     "titulo": "Pregunta el origen antes de dar precio",
      "codigo": false,
      "pre": false,
      "sin_efecto": false
@@ -1965,6 +1972,19 @@
    "fijado_en_pre": true,
    "usado_por": [
     "kb"
+   ],
+   "sin_efecto": null
+  },
+  {
+   "nombre": "rag_origen_pregunta",
+   "area": "Preguntas",
+   "titulo": "Pregunta el origen antes de dar precio",
+   "texto": "Si aún no sabemos si el cliente sale desde Cartagena o ya está en las islas, Coral lo pregunta antes de cotizar en vez de suponer uno; y esa pregunta sale una sola vez.",
+   "codigo": false,
+   "pre": false,
+   "fijado_en_pre": true,
+   "usado_por": [
+    "r_escribir"
    ],
    "sin_efecto": null
   },

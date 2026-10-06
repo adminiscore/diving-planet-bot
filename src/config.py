@@ -181,6 +181,11 @@ class Settings(BaseSettings):
     # Limite conocido: si la palabra "cedula" y su numero van en lineas distintas, el numero no se tapa (solo afecta
     # a lo que ve el juez). Revert = False aqui y en el compose.
     juez_privacidad_por_linea: bool = True
+    # 6-oct (Alvaro, punto 3: el ORIGEN del cliente): si aun no sabemos si sale desde Cartagena o ya esta en las islas,
+    # el contexto del RAG lo dice y pide preguntarlo antes de cotizar (prompts/info.py RAG_ORIGEN_DESCONOCIDO_*); y si
+    # la respuesta ya pregunta el origen, la reserva no pega detras su propia pregunta del origen. Antes el modelo
+    # cotizaba un origen por su cuenta: 15 de 63 fallos visibles de la ronda 2026-10-02-completa. APAGADO hasta medirlo.
+    rag_origen_pregunta: bool = False
     # Paso 9 (l2-2, 28-sep): el catalogo va al final del prompt del SISTEMA (fijo por idioma) y el primero en
     # el contexto del juez, para que el prompt caching de OpenAI lo reutilice entre conversaciones (antes iba
     # en el mensaje del usuario, detras del historial: nunca se cacheaba). ENCENDIDO por defecto (= PRE, paso 10).
