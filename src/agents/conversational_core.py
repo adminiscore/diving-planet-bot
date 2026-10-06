@@ -5184,9 +5184,11 @@ async def _prepend_parallel_answer(state: ConversationState, response: str, gree
 # 6-oct (flag `rag_origen_pregunta`): con el origen desconocido el RAG pregunta ya "¿saldrías desde Cartagena o ya
 # estás en las islas?"; si detrás se pegaba la pregunta del origen de la reserva, el cliente leía la misma pregunta dos
 # veces seguidas.
+# Solo se mira cuando la reserva iba a preguntar justo el origen (`SLOT_LOCATION`), así que basta con reconocer las
+# formas de preguntarlo ("¿desde dónde prefieren salir?", "¿saldrían desde Cartagena o ya están en las islas?").
 _PREGUNTA_ORIGEN_RE = re.compile(
-    r"desde d[oó]nde (saldr|sal)|sal(es|en|dr[ií]as?|dr[ií]an) desde cartagena o|"
-    r"where (would|will) you (be )?(depart|leav)|depart(ing)? from cartagena or|from cartagena or (are you |you're )?already",
+    r"desde d[oó]nde|(sal|part)\w* desde cartagena o|(depart|leav)\w* from cartagena or|"
+    r"where (would|will|do) you (be )?(depart|leav|start)|cartagena or (are you |you're )?already",
     re.IGNORECASE,
 )
 

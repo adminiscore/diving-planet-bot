@@ -34,6 +34,9 @@ def test_el_contexto_avisa_del_origen_desconocido_solo_si_no_lo_sabemos(monkeypa
 @pytest.mark.parametrize("flag,slot,respuesta,va_sola", [
     (True, core.SLOT_LOCATION, PREGUNTA_RAG, True),
     (True, core.SLOT_LOCATION, "Where would you be departing from: Cartagena or the islands?", True),
+    # escalón 0 en PRE (6-oct): formas reales del RAG que la primera versión no reconocía
+    (True, core.SLOT_LOCATION, "¿Desde dónde prefieren salir ustedes? Así te paso el link correcto.", True),
+    (True, core.SLOT_LOCATION, "¿me confirmas si saldrían desde Cartagena o si ya están en las islas?", True),
     (False, core.SLOT_LOCATION, PREGUNTA_RAG, False),
     (True, core.SLOT_QTY, PREGUNTA_RAG, False),
     (True, core.SLOT_LOCATION, "El minicurso cuesta 655.000 COP desde Cartagena.", False),
