@@ -66,6 +66,15 @@ python -m scripts.judge_golden_set --run x --seed-from <resultado>.json  # meter
 
 Si la cache crece demasiado (más de ~20 MB) se puede borrar sin perder nada: solo se vuelve a pagar el juez.
 
+**La referencia del juez (6-oct, HISTORY 0.29.96).** El juez comprueba contra una "referencia del negocio". Desde el
+6-oct la de por defecto es la **curada**: la misma base que usa el bot (catálogo, links de reserva, fichas de
+servicio de la base v2 y FAQs curadas, más dos aclaraciones del negocio). La **antigua** (`--referencia antigua`) es
+la de antes: las FAQs de antes de rag-2. **A y B se juzgan siempre con la misma**: los resultados apuntan la suya
+(campo `referencia`; los de antes del 6-oct no lo tienen y son de la antigua) y `ab_judge_compare` avisa si no
+coinciden. Cualquier cambio en la base de conocimiento cambia también la referencia curada: re-juzgad A.
+Calibración (70 veredictos con etiqueta humana, `scripts/calibrate_judge.py --referencia ...`): antigua 85,7 %,
+curada 85,7-90,0 % en 3 pasadas (el ruido del juez sobre 70 veredictos es de ~3 puntos).
+
 Reglas que se mantienen:
 
 - **La latencia solo se compara en la misma franja horaria.** El 24-sep, las mismas rondas una

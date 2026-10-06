@@ -11,6 +11,12 @@ import sys
 
 R = "docs/robustness/golden-set/results/{}__gpt-5-mini-medium.json"
 A, B = (json.load(open(R.format(n), encoding="utf-8")) for n in sys.argv[1:3])
+# 6-oct: el juez tiene dos referencias del negocio (judge_golden_set.REFERENCIAS); los resultados de antes no la
+# apuntan y son de la antigua. Con referencias distintas la comparacion mide el juez, no el bot.
+ref_a, ref_b = A.get("referencia", "antigua"), B.get("referencia", "antigua")
+if ref_a != ref_b:
+    print(f"!! OJO: A se juzgo con la referencia '{ref_a}' y B con '{ref_b}'. Re-juzgad una con la otra "
+          "(judge_golden_set --referencia) antes de sacar conclusiones.\n")
 for n, d in (("A", A), ("B", B)):
     s = d["summary"]
     print(f"{n}: dialogos {s['dialogues_passed']}/{s['dialogues']} ({s['dialogues_pass_pct']}%) | criterios "

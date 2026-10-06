@@ -88,6 +88,16 @@
         "status": "hecha",
         "note": "2-oct noche (Alvaro): HECHA. El 'Siguiente' de Gonzalo, en orden: (1) JUEZ_PRESENTACION promocionado (el juez ve la presentacion oficial; rechazos 3 -> 0); (2) JUEZ_PRIVACIDAD_POR_LINEA promocionado (el filtro de datos personales del juez tapaba 50 precios del catalogo; precio en pesos 0/5 -> 5/5); (3) oferta de asesor por codigo MEDIDA y no construida (hoy no pasa: la oferta en cancelaciones ya es texto fijo); (4) RAG_BUSQUEDA_DOBLE promocionada (ronda aislada: calidad y latencia iguales, piezas extra en 11 de 38 respuestas). Cierre del bloque RAG con la ronda COMPLETA y el examen oculto frente al paso 8 re-juzgado: 86,6 -> 88,0 %, reales 81,7 -> 86,3 %, oculto 79,0 -> 76,5 % (plano), preguntas p50 4,85 -> 3,50 s, 'no lo tengo' 31 -> 1. Herramientas: scripts/reproducir_juez_pre.py, scripts/golden_por_grupo.py. Siguiente propuesto en session-handoff.md. HISTORY 0.29.91-0.29.95."
       }
+    },
+    {
+      "coleccion": "log",
+      "operacion": "set",
+      "doc_id": "l-1006-alvaro-juez-referencia",
+      "campos": {
+        "at": "2026-10-06T19:00:00Z",
+        "byLabel": "Alvaro (con Claude)",
+        "text": "6-oct: el juez del golden compara con la MISMA base que usa el bot (referencia 'curada', por defecto): catalogo, links de reserva publicos, fichas de la base v2 y FAQs curadas, mas dos aclaraciones del negocio. Calibracion (70 veredictos humanos): antigua 85,7 %, curada 85,7-90 % en 3 pasadas. En las 95 conversaciones visibles de la ronda completa, nota total igual (90,8 %) y los 7 veredictos que dependen de la referencia, bien. Regla nueva: A y B con la misma referencia. El bot no cambia. Siguiente: dar el link de reserva cuando se pide. HISTORY 0.29.96."
+      }
     }
   ]
 }

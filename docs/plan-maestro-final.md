@@ -452,6 +452,11 @@ medias (u3-1 ✅, u3-4 ✅ promocionada, u3-5 🟡); PRE con u3-4 encendido. Sui
 | **11** | R6: robustez de producción | r6-2 (guardrails), g-5 (carga) | el bot nunca deja sin respuesta; inyección medida; p95 con N clientes a la vez |
 | **12** | Q5: calidad continua y entrega | q5-1, g-3, g-4, g-4b, g-6, m0-4, q5-2 | gate en CI; simulador; bucle producción → golden; testers reales; SOAK; entrega |
 
+> **Estado al 6-oct (Álvaro):** punto 1 del bloque siguiente HECHO: **el juez del golden compara con la misma base
+> que usa el bot** (referencia `curada`, por defecto; HISTORY 0.29.96). Calibración 85,7 → 85,7-90 %; en la ronda
+> completa, los veredictos que dependen de la referencia mejoran (links como "fuga", precios del catálogo,
+> acompañante desde islas). Regla: A y B con la misma referencia. Siguiente: dar el link de reserva cuando se pide.
+
 > **Estado al 2-oct noche (Álvaro), fase RAG: BLOQUE CERRADO** con la ronda COMPLETA del golden y el examen oculto
 > (`2026-10-02-completa`, frente al paso 8 re-juzgado con el mismo juez): criterios 86,6 → **88,0 %**, diálogos sin
 > fallos 53 → 59/116; **reales 81,7 → 86,3 %**; sintéticos 97 % igual; **examen oculto 79,0 → 76,5 %, plano** (ruido del

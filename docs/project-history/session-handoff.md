@@ -13,7 +13,26 @@ Read this file before changing code in the Diving Planet Bot. For a quick versio
 
 > **📏 LEER ANTES DE MEDIR — decisiones del 24-sep-2026 (Gadea):** (1) latencia y llamadas con nuestros logs `[TURN_METRICS]` + `scripts/turn_metrics.py`, no con Langfuse (plan gratuito superado, reinicio 16-oct); (2) pruebas A/B por escalones, juzgando solo los diálogos que cambian. Todo en `docs/robustness/protocolo-medicion.md`.
 
-### ▶️ RETOMAR AQUÍ — 2-oct noche (Álvaro): BLOQUE RAG CERRADO con la ronda completa (paso 5); siguiente: el próximo bloque
+### ▶️ RETOMAR AQUÍ — 6-oct (Álvaro): punto 1 HECHO (el juez compara con la base del bot); siguiente: el link de reserva (punto 2)
+
+**Punto 1 — el juez del golden usa la referencia `curada`** (por defecto desde hoy; HISTORY 0.29.96): la misma base que
+el bot (catálogo, links de reserva públicos, fichas de la base v2, FAQs curadas) + dos aclaraciones del negocio
+("todo el año" es correcto; si piden teléfono, el WhatsApp oficial). Calibración 85,7 % (antigua) → 85,7-90 % (curada,
+3 pasadas); en las 95 conversaciones visibles de la ronda completa, la nota total igual (90,8 %) y los 7 veredictos que
+dependen de la referencia, bien (links como "fuga", precios del catálogo...). **El bot no cambió.**
+- **Regla nueva:** A y B con la MISMA referencia; los resultados de antes del 6-oct son de la `antigua` (no llevan el
+  campo). Para comparar con una ronda anterior, re-juzgadla (la de por defecto ya es la curada); `ab_judge_compare`
+  avisa si no coinciden. Detalle en `docs/robustness/protocolo-medicion.md`.
+
+**Siguiente, en orden (casos VISIBLES; el oculto no se usa para ajustar):**
+2. **El link de reserva**: si el cliente lo pide, darlo (o preguntar el origen UNA vez y darlo); hoy el RAG lo ofrece
+   en vez de darlo. Casos: `grupo-mixto-cotiza-y-pide-link`, `cotiza-buceo-snorkel-y-pide-link-especial`,
+   `certificado-fechas-fotos-y-reserva` (el juez nuevo también lo marca).
+3. **"Ese plan no existe desde las islas"** cuando el catálogo lo tiene (`precio-desde-islas-vs-cartagena`).
+4. Supuestos sueltos ("el hotel tiene acceso en lancha", "está en tu carrito", "¡Qué bien que venga alguien más!",
+   "¿Cuántos serían para buceo certificado?").
+
+### ✅ 2-oct noche (Álvaro) — SUPERADO por el bloque de arriba: BLOQUE RAG CERRADO con la ronda completa (paso 5)
 
 **Estado.** PRE sirve `feature/pre_alvaro` (`019d363`, `check_deploy` en verde; después solo docs). **Integrad
 `feature/pre_alvaro` en vuestra rama antes de subir.** Ningún interruptor sin decidir. HISTORY 0.29.95.

@@ -15,7 +15,9 @@ Veredictos: `cumple`, `no_cumple`, `no_aplica`, `revisar` (lo decide una persona
 
 El juez recibe la referencia del negocio desde el repo (precios, politicas, descuentos,
 disponibilidad, escalado y un extracto de actividades), primero y siempre igual, para
-aprovechar la cache de prompts de OpenAI.
+aprovechar la cache de prompts de OpenAI. Desde el 6-oct, por defecto la `curada`: la misma base
+que usa el bot (catalogo, links de reserva, fichas de servicio y FAQs curadas); `--referencia
+antigua` da la de antes (resultados sin campo `referencia`). A y B, siempre con la misma.
 
 Uso (en serie):
 
@@ -51,6 +53,11 @@ RESULTS_DIR = Path("docs/robustness/golden-set/results")
 KB_DIR = Path("data/knowledge_base")
 VERDICTS = ("cumple", "no_cumple", "no_aplica")
 BOOKING_LINK = "book.divingplanet.org"
+# 6-oct (Alvaro): de donde saca el juez la verdad del negocio (ver `load_reference`). "antigua" = la de siempre
+# (faqs.json de antes de rag-2); "curada" = la MISMA base que usa el bot desde rag-2. Cambiar la referencia cambia
+# los veredictos: para comparar dos rondas, juzgadlas con la misma (el fichero de resultados la apunta).
+REFERENCIAS = ("antigua", "curada")
+REFERENCIA_POR_DEFECTO = "curada"  # 6-oct, tras la calibracion y la ronda 2026-10-02-completa (HISTORY 0.29.96)
 
 # USD por millon de tokens (entrada, entrada en cache, salida), tabla de modelos de
 # Langfuse a 2026-09-17. Solo para informar del coste de cada ronda.
@@ -108,8 +115,16 @@ def latest_conversations(run_file: str) -> dict[str, list[dict]]:
     return {tag: sorted(by_conv[(tag, conv)], key=lambda r: r["turn"]) for tag, conv in latest.items()}
 
 
-def load_reference() -> str:
-    """Referencia del negocio para el juez, desde los ficheros de la base de conocimiento."""
+def load_reference(referencia: str = REFERENCIA_POR_DEFECTO) -> str:
+    """Referencia del negocio para el juez, desde los ficheros de la base de conocimiento.
+
+    `referencia="curada"` (6-oct): en vez de `faqs.json` (las FAQs de antes de rag-2), lo que usa el bot desde rag-2:
+    su catálogo, los links de reserva (públicos), las fichas de servicio de la base v2 y las FAQs curadas. Con la
+    antigua el juez comparaba con datos que Gadea corrigió (almuerzo solo el día 1, 18 h antes de volar, hora límite
+    4:30, recogida si el hotel tiene muelle, acompañante ya en las islas...) y tomaba los links de reserva por
+    identificadores internos (`global:sin-fugas`, 5 falsos positivos en la ronda 2026-10-02-completa)."""
+    if referencia not in REFERENCIAS:
+        raise ValueError(f"referencia desconocida: {referencia!r} (validas: {REFERENCIAS})")
     parts = []
     for name in ("pricing", "policies", "discounts", "availability", "escalation_rules"):
         data = json.loads((KB_DIR / f"{name}.json").read_text(encoding="utf-8-sig"))
@@ -141,9 +156,36 @@ def load_reference() -> str:
     activities = json.loads((KB_DIR / "activities.json").read_text(encoding="utf-8-sig"))["activities"]
     compact =[{k: a.get(k) for k in ("id", "label", "requires_certification", "min_age", "max_age")} for a in activities]
     parts.append(f"### activities.json (extracto)\n{json.dumps(compact, ensure_ascii=False, separators=(',', ':'))}")
-    faqs = json.loads((KB_DIR / "faqs.json").read_text(encoding="utf-8-sig"))["faqs"]
+    if referencia == "antigua":
+        faqs = json.loads((KB_DIR / "faqs.json").read_text(encoding="utf-8-sig"))["faqs"]
+        qa = [{"p": f.get("question_es"), "r": f.get("answer_es")} for f in faqs]
+        parts.append(f"### faqs.json (preguntas frecuentes, en espanol)\n{json.dumps(qa, ensure_ascii=False, separators=(',', ':'))}")
+        return "\n\n".join(parts)
+    # Imports tardios: la referencia antigua (y los tests que la usan) no los necesitan.
+    from scripts.kb_v2 import CURADA, build_kb_v2
+    from src.flows.catalog import catalog_booking_links, catalog_facts, para_el_juez
+
+    # El catalogo con la regla de moneda como HECHO (la misma version que ve el juez de grounding, 1-oct).
+    parts.append("### Catalogo del bot (precios, duracion, noches e inclusiones de cada servicio y origen)\n"
+                 + para_el_juez(catalog_facts("es"), "es"))
+    parts.append("### Links oficiales de reserva\nSon PUBLICOS: el bot los comparte con el cliente para que reserve y "
+                 "pague, y lo mismo los de divingplanet.org. Un link de book.divingplanet.org (con su ruta y su numero) "
+                 "NO es una fuga ni un identificador interno.\n" + catalog_booking_links("es"))
+    # Calibracion del 6-oct (70 veredictos con etiqueta humana): con el catalogo delante, el juez castigaba "buceamos
+    # todo el año / operamos todos los dias" por no nombrar los dos cierres (4 fallos falsos; las personas lo dieron
+    # por bueno). Telefono: la decision del dueño del golden (`pide-telefono`: si lo pide, el WhatsApp oficial).
+    parts.append("### Aclaraciones del negocio\n"
+                 "- Decir que buceamos todo el año o que salimos todos los dias es CORRECTO: los unicos cierres son el 25 "
+                 "de diciembre y el 1 de enero, y solo hace falta nombrarlos si el cliente pregunta por esas fechas.\n"
+                 "- Telefono (decision del dueño): si el cliente PIDE un telefono para llamar, el bot le da el WhatsApp "
+                 "oficial de esta referencia; si no lo pide, el bot no da numeros y el contacto con un asesor se "
+                 "gestiona por dentro (ofrecer pasar con un asesor es correcto).")
+    fichas = [d["content"] for d in build_kb_v2() if d["metadata"]["source"] == "services" and d["metadata"]["lang"] == "es"]
+    parts.append("### Fichas de los servicios (base de conocimiento del bot)\n" + "\n\n---\n\n".join(fichas))
+    faqs = json.loads((CURADA / "faqs.json").read_text(encoding="utf-8"))["faqs"]
     qa = [{"p": f.get("question_es"), "r": f.get("answer_es")} for f in faqs]
-    parts.append(f"### faqs.json (preguntas frecuentes, en espanol)\n{json.dumps(qa, ensure_ascii=False, separators=(',', ':'))}")
+    parts.append("### faqs curadas (las que usa el bot; si contradicen a una version anterior, mandan estas)\n"
+                 + json.dumps(qa, ensure_ascii=False, separators=(',', ':')))
     return "\n\n".join(parts)
 
 
@@ -513,7 +555,7 @@ def seed_cache_from_results(results_file: str, model: str, effort: str | None) -
     golden = json.loads(GOLDEN_FILE.read_text(encoding="utf-8"))
     by_id = {d["id"]: d for d in golden["dialogues"]}
     runs = latest_conversations(report["run_file"])
-    reference, cache, n = load_reference(), load_cache(), 0
+    reference, cache, n = load_reference(report.get("referencia", "antigua")), load_cache(), 0
     for d in report.get("dialogs") or report.get("dialogues") or []:
         dialogue, records = by_id.get(d["id"]), runs.get(d["id"])
         if not dialogue or not records:
@@ -652,6 +694,9 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--no-cache", action="store_true", help="juzgar todo de nuevo, sin reutilizar veredictos")
     parser.add_argument("--dry-cache", action="store_true", help="solo contar cuantos criterios saldrian de la cache (sin API)")
     parser.add_argument("--seed-from", help="meter en la cache los veredictos de este resultado ya juzgado y salir")
+    parser.add_argument("--referencia", choices=REFERENCIAS, default=REFERENCIA_POR_DEFECTO,
+                        help="de donde saca el juez la verdad del negocio (ver load_reference); fuera de la de por "
+                             "defecto, el fichero de resultados lleva __ref-<referencia>")
     args = parser.parse_args(argv)
 
     if args.seed_from:
@@ -661,7 +706,7 @@ def main(argv: list[str] | None = None) -> int:
 
     golden = json.loads(GOLDEN_FILE.read_text(encoding="utf-8"))
     runs = latest_conversations(args.run)
-    reference = load_reference()
+    reference = load_reference(args.referencia)
     client = None
     if not args.dry_cache:
         from openai import OpenAI  # import tardio: los tests no necesitan la clave
@@ -701,6 +746,7 @@ def main(argv: list[str] | None = None) -> int:
         "golden_version": golden["version"],
         "model": args.model,
         "effort": args.effort,
+        "referencia": args.referencia,
         "missing_dialogues": missing,
         "usage": usage,
         "cost_usd": cost_usd(args.model, usage),
@@ -710,7 +756,8 @@ def main(argv: list[str] | None = None) -> int:
         "dialogues": results,
     }
     RESULTS_DIR.mkdir(parents=True, exist_ok=True)
-    out = RESULTS_DIR / f"{Path(args.run).stem}__{args.model}-{args.effort}.json"
+    sufijo = "" if args.referencia == REFERENCIA_POR_DEFECTO else f"__ref-{args.referencia}"
+    out = RESULTS_DIR / f"{Path(args.run).stem}__{args.model}-{args.effort}{sufijo}.json"
     out.write_text(json.dumps(report, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
 
     if args.snapshot:
@@ -718,6 +765,7 @@ def main(argv: list[str] | None = None) -> int:
         snap["quality"] = {
             "results_file": out.as_posix(),
             "model": f"{args.model} ({args.effort})",
+            "referencia": args.referencia,
             **{k: v for k, v in summary.items() if k != "by_category"},
             "by_category": {k: v["criteria_pass_pct"] for k, v in summary["by_category"].items()},
         }

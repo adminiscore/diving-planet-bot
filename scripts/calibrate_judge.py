@@ -28,6 +28,8 @@ from pathlib import Path
 
 from scripts.judge_golden_set import (
     GOLDEN_FILE,
+    REFERENCIA_POR_DEFECTO,
+    REFERENCIAS,
     cost_usd,
     criteria_for,
     latest_conversations,
@@ -87,6 +89,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--labels", nargs="+", default=[str(CALIBRATION_DIR / "labels-claude.json"), str(CALIBRATION_DIR / "labels-gadea.json")], help="uno o varios ficheros de etiquetas")
     parser.add_argument("--reference-labeler", help="id del etiquetador que manda si hay varias etiquetas")
     parser.add_argument("--split", choices=["tune", "holdout", "all"], default="all", help="tune para iterar; holdout solo para la medicion final")
+    parser.add_argument("--referencia", choices=REFERENCIAS, default=REFERENCIA_POR_DEFECTO,
+                        help="referencia del negocio del juez (judge_golden_set.load_reference)")
     args = parser.parse_args(argv)
 
     from openai import OpenAI
@@ -102,7 +106,7 @@ def main(argv: list[str] | None = None) -> int:
     runs = latest_conversations(calib["run_file"])
     golden = json.loads(GOLDEN_FILE.read_text(encoding="utf-8"))
     dialogues = {d["id"]: d for d in golden["dialogues"]}
-    client, ref_text = OpenAI(api_key=api_key), load_reference()
+    client, ref_text = OpenAI(api_key=api_key), load_reference(args.referencia)
 
     todo = []
     for item in calib["items"]:
@@ -118,7 +122,8 @@ def main(argv: list[str] | None = None) -> int:
     print(f"{len(todo)} veredictos etiquetados; acuerdo entre personas: {human_agreement}", flush=True)
 
     per_round = llm_calls_per_round()
-    report = {"judged_at": datetime.now(UTC).isoformat(timespec="seconds"), "human_agreement": human_agreement, "models": {}}
+    report = {"judged_at": datetime.now(UTC).isoformat(timespec="seconds"), "referencia": args.referencia,
+              "human_agreement": human_agreement, "models": {}}
     for spec in args.models:
         model, _, effort = spec.partition(":")
         pairs = defaultdict(list)
@@ -143,7 +148,7 @@ def main(argv: list[str] | None = None) -> int:
             "rows": rows,
         }
 
-    out = CALIBRATION_DIR / f"results-{datetime.now(UTC):%Y-%m-%d-%H%M}.json"
+    out = CALIBRATION_DIR / f"results-{datetime.now(UTC):%Y-%m-%d-%H%M}-ref-{args.referencia}.json"
     out.write_text(json.dumps(report, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
     print("\nmodelo            split    acuerdo  fallos-falsos  fallos-escapados  revisar  coste-ronda")
     for spec, r in report["models"].items():

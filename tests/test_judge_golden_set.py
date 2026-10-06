@@ -42,6 +42,29 @@ def test_reference_includes_the_business_sources():
     assert "mixed_nationality_group" in ref
 
 
+def test_referencia_curada_es_la_base_que_usa_el_bot():
+    """6-oct: con la antigua (faqs.json de antes de rag-2) el juez no sabia que el acompanante tambien va ya en las
+    islas (decision de Gadea, 1-oct) y tomaba los links de reserva por identificadores internos."""
+    ref = load_reference("curada")
+    assert "Acompañante - ya en las islas" in ref
+    assert "book.divingplanet.org" in ref and "NO es una fuga" in ref
+    assert "Fichas de los servicios" in ref and "faqs curadas" in ref
+    assert "### faqs.json" not in ref
+    for name in ("pricing.json", "policies.json", "discounts.json", "availability.json", "escalation_rules.json"):
+        assert name in ref
+
+
+def test_referencia_antigua_sigue_igual_y_otra_no_existe():
+    ref = load_reference("antigua")
+    assert "### faqs.json" in ref and "Fichas de los servicios" not in ref
+    try:
+        load_reference("otra")
+    except ValueError:
+        pass
+    else:
+        raise AssertionError("una referencia desconocida debe fallar")
+
+
 def test_own_criterion_overrides_global_with_same_id():
     dialogue = {"criteria": [{"id": "un-saludo", "check": "propio"}]}
     ids = [c["id"] for c in criteria_for(dialogue, [{"id": "un-saludo", "check": "g"}, {"id": "idioma", "check": "g"}])]
