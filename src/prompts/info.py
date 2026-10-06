@@ -74,18 +74,25 @@ JUEZ_PRESENTACION_EN = (
 # nada y el modelo cotizaba "desde Cartagena" (o "ya en las islas") por su cuenta: 15 de 63 fallos visibles de la ronda
 # 2026-10-02-completa. El golden (Gadea) pide preguntar el origen antes de cotizar. Va en el contexto del turno
 # (`supervisor._build_extra_context`), no en el prompt fijo: es un hecho de ESTA conversación.
+# Versión 2 (ronda 2026-10-06-origen-B): "todavía NO sabemos" pisaba lo que el cliente ya había dado a entender
+# ("reservaremos hotel en la isla", "¿el transporte desde Cartagena va incluido?") y el bot repreguntaba el origen,
+# a veces en lugar de lo que tocaba (ofrecer un asesor). Ahora: lo que diga la conversación manda; preguntar solo
+# ante un precio y si de verdad no se sabe.
 RAG_ORIGEN_DESCONOCIDO_ES = (
-    "Todavía NO sabemos si el cliente saldrá desde Cartagena o si ya está en las Islas del Rosario, y los precios y "
-    "los planes cambian según eso. Si pide un precio o un plan concreto, no supongas ninguno de los dos ni des el "
-    "precio de un solo origen: dile que depende de desde dónde salga y pregúntale si saldría desde Cartagena o si ya "
-    "está en las islas. Lo que no cambia con el origen (qué es una actividad, requisitos, edades) contéstalo normal."
+    "En la ficha del cliente aún no consta si saldrá desde Cartagena o si ya está en las Islas del Rosario. Si por lo "
+    "que ha dicho en la conversación ya se entiende (por ejemplo, que sale desde Cartagena o pregunta por el "
+    "transporte desde allí, o que se aloja en un hotel de las islas y bucea desde allí), úsalo y NO se lo preguntes. "
+    "Solo si pide un PRECIO y de verdad no se sabe: no supongas un origen ni des el precio de uno solo; pregúntale si "
+    "saldría desde Cartagena o si ya está en las islas, o dale los dos precios, cada uno rotulado. Para todo lo demás, "
+    "contesta normal sin preguntar el origen."
 )
 RAG_ORIGEN_DESCONOCIDO_EN = (
-    "We do NOT know yet whether the customer will depart from Cartagena or is already on the Rosario Islands, and "
-    "prices and plans change with that. If they ask for a price or a specific plan, don't assume either one or give the "
-    "price for just one origin: tell them it depends on where they depart from and ask whether they'd leave from "
-    "Cartagena or are already on the islands. Whatever doesn't change with the origin (what an activity is, "
-    "requirements, ages), answer normally."
+    "The customer's file doesn't say yet whether they will depart from Cartagena or are already on the Rosario "
+    "Islands. If what they said in the conversation already makes it clear (for example, they depart from Cartagena "
+    "or ask about transport from there, or they stay at an island hotel and dive from there), use it and do NOT ask. "
+    "Only if they ask for a PRICE and it really isn't known: don't assume an origin or give the price for just one; "
+    "ask whether they'd leave from Cartagena or are already on the islands, or give both prices, each one labelled. "
+    "For everything else, answer normally without asking about the origin."
 )
 
 RAG_INTRO_ES = (
