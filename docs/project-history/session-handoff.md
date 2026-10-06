@@ -13,7 +13,7 @@ Read this file before changing code in the Diving Planet Bot. For a quick versio
 
 > **📏 LEER ANTES DE MEDIR — decisiones del 24-sep-2026 (Gadea):** (1) latencia y llamadas con nuestros logs `[TURN_METRICS]` + `scripts/turn_metrics.py`, no con Langfuse (plan gratuito superado, reinicio 16-oct); (2) pruebas A/B por escalones, juzgando solo los diálogos que cambian. Todo en `docs/robustness/protocolo-medicion.md`.
 
-### ▶️ RETOMAR AQUÍ — 6-oct (Álvaro): punto 1 HECHO (el juez compara con la base del bot); siguiente: el link de reserva (punto 2)
+### ▶️ RETOMAR AQUÍ — 6-oct (Álvaro): puntos 1 y 2 CERRADOS; siguiente: el ORIGEN del cliente en los precios (punto 3)
 
 **Punto 1 — el juez del golden usa la referencia `curada`** (por defecto desde hoy; HISTORY 0.29.96): la misma base que
 el bot (catálogo, links de reserva públicos, fichas de la base v2, FAQs curadas) + dos aclaraciones del negocio
@@ -24,11 +24,17 @@ dependen de la referencia, bien (links como "fuga", precios del catálogo...). *
   campo). Para comparar con una ronda anterior, re-juzgadla (la de por defecto ya es la curada); `ab_judge_compare`
   avisa si no coinciden. Detalle en `docs/robustness/protocolo-medicion.md`.
 
+**Punto 2 (el link de reserva): MEDIDO, no es un fallo, no se toca** (HISTORY 0.29.97): el golden acepta "pide antes el
+dato que falta", a un colombiano no se le da link directo (asesor, 50 %), y el juez no echa de menos el link en
+ninguna conversación visible que lo perdió.
+
 **Siguiente, en orden (casos VISIBLES; el oculto no se usa para ajustar):**
-2. **El link de reserva**: si el cliente lo pide, darlo (o preguntar el origen UNA vez y darlo); hoy el RAG lo ofrece
-   en vez de darlo. Casos: `grupo-mixto-cotiza-y-pide-link`, `cotiza-buceo-snorkel-y-pide-link-especial`,
-   `certificado-fechas-fotos-y-reserva` (el juez nuevo también lo marca).
-3. **"Ese plan no existe desde las islas"** cuando el catálogo lo tiene (`precio-desde-islas-vs-cartagena`).
+3. **El ORIGEN del cliente en las respuestas con precio** (15 de 63 fallos visibles, el patrón más repetido): cotiza
+   "desde Cartagena" sin saberlo, supone "ya en las islas", niega planes desde las islas que existen
+   (`precio-desde-islas-vs-cartagena`), repregunta el origen tras "somos de Bogotá". Casos: `minicurso-precio-
+   colombianos-origen-pendiente`, `precio-fundive-datos-faltan`, `paquete-en-carrito`, `paquete-5-buceos-cop-
+   refresh-y-hoteles`, `paquete-5-buceos-precio-overnight-isla-grande-baru`. Regla de hoy (s4-22, `rag_agent`): "da el
+   precio desde Cartagena y el de ya en las islas, rotulados, o pregúntale"; el bot suele dar solo Cartagena.
 4. Supuestos sueltos ("el hotel tiene acceso en lancha", "está en tu carrito", "¡Qué bien que venga alguien más!",
    "¿Cuántos serían para buceo certificado?").
 

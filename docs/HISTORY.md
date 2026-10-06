@@ -1,6 +1,13 @@
 History
 =======
 
+0.29.97 - (2026-10-06)
+----------------------
+* **Punto 2 (dar el link de reserva cuando se pide): MEDIDO, no es un fallo, no se toca el bot** (Álvaro). En la ronda completa el link salía en 21 conversaciones frente a 32 del paso 8, y el bot a menudo ofrece el link ("¿quieres que te lo pase?") en vez de darlo. Leído:
+  - **Es la conducta pedida:** el golden acepta "da el link, o pide primero el dato que falta" (`grupo-mixto-cotiza-y-pide-link`, `certificado-fechas-fotos-y-reserva`), y **a un colombiano no se le da link directo** (paga el 50 % con un asesor: `conversational_core`, "gating colombiano"), así que el link lo manda la reserva cuando ya sabe origen y nacionalidad. En el paso 8 el RAG daba links con el precio sin saberlos (p. ej. a quien preguntaba el precio "para colombianos").
+  - En las conversaciones visibles que perdieron el link, **el juez no echa de menos el link en ninguna** (el único criterio de link de esas conversaciones, cumple). `cotiza-buceo-snorkel-y-pide-link-especial` pedía ofrecer un asesor ante un "link especial", no un link.
+* **Lo que sí sale (para el punto siguiente): el ORIGEN del cliente.** 15 de los 63 fallos de las 95 conversaciones visibles (referencia curada) son de origen: cotiza "desde Cartagena" sin saberlo (6), supone "ya en las islas" (3), niega un plan desde las islas que existe (1), repregunta el origen tras "somos de Bogotá" (1) y 4 de precio/moneda ligados al origen. La regla del RAG (s4-22) dice "da el precio desde Cartagena y el de ya en las islas, cada uno rotulado, o pregúntale"; el bot suele dar solo el de Cartagena. Pasa a ser el punto 3.
+
 0.29.96 - (2026-10-06)
 ----------------------
 * **Punto 1 del bloque siguiente HECHO: el juez del golden compara con la MISMA base que usa el bot** (Álvaro). `scripts/judge_golden_set.py` `--referencia curada` (por defecto desde hoy): en vez de `faqs.json` (las 135 FAQs de antes de rag-2), el catálogo del bot (con la regla de moneda como hecho, `para_el_juez`), los links de reserva marcados como PÚBLICOS, las fichas de servicio de la base v2 (`kb_v2.build_kb_v2`, las mismas que busca el bot) y las 109 FAQs curadas, más dos aclaraciones del negocio (decir "todo el año / todos los días" es correcto; si el cliente pide un teléfono, el WhatsApp oficial —decisión del dueño, criterio `pide-telefono`—). `--referencia antigua` da la de antes, byte a byte (la cache sigue valiendo).
