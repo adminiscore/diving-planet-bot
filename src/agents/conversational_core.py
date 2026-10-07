@@ -5007,23 +5007,69 @@ async def _rag_answer(
     # l1-4: las notas de ESTE mensaje pueden estar calculándose en paralelo. Aquí
     # es donde se usan (van dentro del contexto del RAG), así que aquí se espera.
     await await_pending_notes(state)
-    entradas = _entradas_rag(state, state.history if history is None else history)
+    entradas = _entradas_rag(state, state.history if history is None else history, message)
     answer = await supervisor.rag_answer(rag_query or message, **entradas)
     # 7-oct (opción C): si cotiza sin origen, se pregunta el origen; quien la recibe deja el estado preparado
     # (`_fijar_origen_antes_del_precio`).
     return _origen_antes_del_precio(state, message, answer) or answer
 
 
-def _entradas_rag(state: ConversationState, history: list) -> dict:
+def _entradas_rag(state: ConversationState, history: list, message: str = "") -> dict:
     """Lo que recibe el RAG además de la pregunta: idioma, historial, resumen del estado y (rag-3, con su flag)
     el origen. Una sola fuente para la llamada normal y para la adelantada de rag-5, que compara sus huellas."""
     from src.agents import supervisor  # lazy
 
-    entradas = {"lang": state.language, "history": history, "extra_context": supervisor._build_extra_context(state)}
+    extra = supervisor._build_extra_context(state)
+    plan = _plan_nombrado(state, message)
+    if plan:
+        extra = f"{extra}\n\n{plan}" if extra else plan
+    entradas = {"lang": state.language, "history": history, "extra_context": extra}
     # rag-3: el origen va solo con el flag (con el flag apagado la llamada es la de siempre).
     if settings.rag_busqueda_origen and state.location:
         entradas["origin"] = state.location
     return entradas
+
+
+# s4-27 (7-oct, Gonzalo; flag `rag_plan_nombrado`): "¿el precio de las 2 inmersiones? desde ese hotel" (cliente ya en
+# las islas) -> el RAG ofrecía el paquete de 3 y decía que desde las islas no hay 2 inmersiones sueltas (existe: 124
+# USD). El catálogo del prompt sí lo trae; la búsqueda trae las fichas de los paquetes de las islas (sus itinerarios
+# repiten "2 inmersiones") y, con el historial real de la conversación, el modelo se iba al paquete (rag_piezas: 0-1/3
+# con el historial real, 3/3 con uno limpio, 3/3 con el plan puesto en el estado; docs/robustness/s4-27/). Si el
+# cliente NOMBRA cuántas inmersiones y su origen consta, el contexto dice qué plan del catálogo es: solo añade un dato,
+# no decide nada. El número de inmersiones de cada plan sale de su id (`2_dives_1_day...`), no de una lista a mano.
+_NUMEROS = {"una": 1, "uno": 1, "one": 1, "dos": 2, "two": 2, "tres": 3, "three": 3, "cuatro": 4, "four": 4,
+            "cinco": 5, "five": 5, "siete": 7, "seven": 7, "nueve": 9, "nine": 9}
+_N_INMERSIONES_RE = re.compile(
+    r"\b(\d|una|uno|one|dos|two|tres|three|cuatro|four|cinco|five|siete|seven|nueve|nine)\s+"
+    r"(?:inmersi[oó]n(?:es)?|immersions?|buceos?|dives?)\b",
+    re.IGNORECASE,
+)
+
+
+def _plan_nombrado(state: ConversationState, message: str) -> str | None:
+    """El plan del catálogo que nombra el cliente ("las 2 inmersiones") para su origen, como una línea del contexto;
+    None si el flag está apagado, el origen no consta, no nombra un número de inmersiones o ningún plan lo tiene."""
+    if not settings.rag_plan_nombrado or state.location not in ("cartagena", "island") or not message:
+        return None
+    m = _N_INMERSIONES_RE.search(message)
+    if not m:
+        return None
+    raw = m.group(1).lower()
+    n = int(raw) if raw.isdigit() else _NUMEROS[raw]
+    from src.flows.catalog import SERVICES, service_fact_parts  # lazy
+
+    en_islas = state.location == "island"
+    planes = [sid for sid in SERVICES
+              if re.match(rf"{n}_dives?_", sid) and sid.endswith("_already_on_island") == en_islas]
+    if not planes or state.selected_service in planes:
+        return None
+    es = state.language == "es"
+    nombre = "name_es" if es else "name_en"
+    lineas = [f"- {SERVICES[sid].get(nombre, sid)}: {'; '.join(service_fact_parts(sid, state.language))}."
+              for sid in planes]
+    cabeza = (f"El cliente nombra {n} inmersion(es). En el catálogo, para su origen, eso es:" if es else
+              f"The customer names {n} dive(s). In the catalog, for their origin, that is:")
+    return "\n".join([cabeza, *lineas])
 
 
 # rag-5 (30-sep): el RAG arranca A LA VEZ que el enrutador (Jev, ~0,7 s) en vez de después, y solo se usa si su
@@ -5072,7 +5118,7 @@ def lanzar_rag_adelantado(state: ConversationState, message: str) -> None:
         foto.language = foto.detected_language = lang
         foto.step = Step.FREE_TEXT
         foto.quick_replies = []
-    entradas = _entradas_rag(foto, history)
+    entradas = _entradas_rag(foto, history, message)
 
     async def _correr() -> str:
         from src.agents.rag_agent import RAG_ADELANTADO
@@ -5091,7 +5137,7 @@ async def _adoptar_o_rehacer(state: ConversationState, message: str, history: li
     from src.observability import note_turn
 
     await await_pending_notes(state)
-    entradas = _entradas_rag(state, history)
+    entradas = _entradas_rag(state, history, message)
     huella = _huella_rag(message, entradas)
     if huella == adelantado["huella"]:
         note_turn(rag_used=True, rag_adelantado="aprovechado")

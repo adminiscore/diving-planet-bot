@@ -229,6 +229,13 @@ class Settings(BaseSettings):
     # mueve dentro del grupo sin preguntar "¿seguís siendo 2?" (acompanante-goteo). Si duda, se pregunta como hoy.
     # Banco ciego: 0/10 nuevas por debajo, 9/10 ya contadas. PROMOCIONADO 7-oct (mini-ronda s426-extra-B: goteo pasa).
     jev_persona_ya_contada: bool = True
+    # s4-27 (7-oct, Gonzalo): si el cliente NOMBRA cuantas inmersiones ("el precio de las 2 inmersiones") y su origen
+    # consta, el contexto del RAG dice que plan del catalogo es (`conversational_core._plan_nombrado`). Caso:
+    # precio-desde-islas-vs-cartagena, el RAG negaba las 2 inmersiones desde las islas (124 USD) y ofrecia el paquete
+    # de 3; rag_piezas con el historial real 0-1/3, con el plan en el contexto 3/3 (docs/robustness/s4-27/).
+    # Escalon 0 en PRE (codigo local, 3 reps): t5 da los 124 USD 3/3 (hoy 0/3). ENCENDIDO para su ronda core B
+    # (s427-B); si no pasa, False aqui y quitar la linea del compose.
+    rag_plan_nombrado: bool = True
     # Paso 9 (l2-2, 28-sep): el catalogo va al final del prompt del SISTEMA (fijo por idioma) y el primero en
     # el contexto del juez, para que el prompt caching de OpenAI lo reutilice entre conversaciones (antes iba
     # en el mensaje del usuario, detras del historial: nunca se cacheaba). ENCENDIDO por defecto (= PRE, paso 10).
