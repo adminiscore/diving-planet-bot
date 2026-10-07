@@ -13,7 +13,45 @@ Read this file before changing code in the Diving Planet Bot. For a quick versio
 
 > **📏 LEER ANTES DE MEDIR — decisiones del 24-sep-2026 (Gadea):** (1) latencia y llamadas con nuestros logs `[TURN_METRICS]` + `scripts/turn_metrics.py`, no con Langfuse (plan gratuito superado, reinicio 16-oct); (2) pruebas A/B por escalones, juzgando solo los diálogos que cambian. Todo en `docs/robustness/protocolo-medicion.md`.
 
-### ▶️ RETOMAR AQUÍ — 6-oct noche (Álvaro): puntos 1 y 2 CERRADOS; punto 3 (origen) MEDIDO y APAGADO, falta una decisión de Gadea
+### ▶️ RETOMAR AQUÍ — 7-oct (Álvaro → Gonzalo): punto 3 decidido (opción C) e implementado, APAGADO; falta medirlo
+
+**Estado.** PRE sirve `feature/pre_alvaro` con `RAG_ORIGEN_PREGUNTA` **apagado** (la conducta de siempre). **Integrad
+`feature/pre_alvaro` en vuestra rama antes de subir.** HISTORY 0.29.96-0.29.99. El juez del golden usa por defecto la
+referencia `curada` (0.29.96): juzgad A y B con la misma.
+
+**Decisión de Álvaro (7-oct) para el punto 3: opción C** — si el cliente pide un precio y no sabemos desde dónde sale,
+el bot pregunta el origen ANTES de cotizar, y lo hace el código, no el modelo. Implementado
+(`conversational_core._origen_antes_del_precio`, HISTORY 0.29.99): texto fijo con botones, la pregunta del precio se
+guarda (`state.pregunta_precio_pendiente`) y se contesta en cuanto el cliente dice el origen; no se pregunta si el
+precio es del hotel ni si el CLIENTE ya nombró Cartagena o las islas (así se evita la repregunta de V1). 19 tests en
+`tests/test_rag_origen_pregunta.py`. **No se ha medido en PRE.**
+
+**Siguiente, en orden (Gonzalo):**
+1. **Escalón 0 de la opción C en PRE** (~0,5 $): `python -m scripts.reproducir_juez_pre <diálogo> --reps 1 --flag
+   rag_origen_pregunta --out <f>.jsonl` para `open-water-precio-para-colombianos-corrige-mito`,
+   `minicurso-precio-colombianos-origen-pendiente`, `paquete-5-buceos-cop-refresh-y-hoteles`,
+   `colombianos-precio-minicurso-dos-inmersiones`, `precio-fundive-datos-faltan`, `reserva-paquete-5-buceos-solicita`
+   (deben preguntar el origen y NO cotizar) y `referral-mas-refresher-hotel-y-domingo-pascua`,
+   `curso-open-water-transporte-y-regreso-otro-dia` (NO deben repreguntar: eran las 2 regresiones de V1). Comparad con
+   OFF/V1/V2 en `docs/robustness/origen-2026-10-06.json`. Ojo: los diálogos del golden tienen los turnos escritos, así
+   que no contestan a la pregunta del origen; "contestar la pregunta guardada" lo cubre el test de conversación entera.
+2. Si pasa: encenderlo para su ronda (`True` en `src/config.py` y `"true"` en el compose, "ENCENDIDO para su ronda core
+   B"), push, `check_deploy`, ronda core (`run_synthetic_pre --name origen-c-B --sample core`) frente a A =
+   `2026-10-01-privacidad-B` (ya juzgada con la referencia curada). Leer cada regresión; promocionar o apagar.
+3. **Punto 4, supuestos sueltos** (casos visibles): "el hotel tiene acceso en lancha" (`logistica-isla-fragata-regreso-
+   otro-dia`), "está en tu carrito" y "¡Qué bien que venga alguien más!" (`manual-duracion-curso`), "¿Cuántos serían
+   para buceo certificado?" (`minicurso-islas-y-acompanante-lancha`). Y dos causas de origen aparte: preguntar por los
+   hoteles de las islas se registra como "ya en las islas" (`precio-desde-islas-vs-cartagena`), y el RAG negó el plan de
+   2 inmersiones desde las islas (existe: 124 USD).
+4. **Después, el plan principal**: `docs/plan-maestro-final.md`, PARTE 8, **paso 11 — R6, robustez de producción**
+   (r6-2 guardrails, g-5 carga: el bot nunca deja sin respuesta, inyección medida, p95 con N clientes a la vez); luego el
+   **paso 12 — Q5** (calidad continua y entrega).
+- **Crédito de OpenAI:** el 6-oct se gastaron ~6,3 $; antes de una ronda, mirad el saldo (si se acaba, PRE no contesta).
+- Pendiente de otros: la cola de Plan Coral (`docs/tracking/data/plan-coral-cambios-pendientes.json`) la aplica Gadea
+  (desde la cuenta de Álvaro no se puede escribir en la página); el Mapa de Coral es privado de Álvaro (pedidle que os lo
+  comparta).
+
+### ✅ 6-oct noche (Álvaro) — SUPERADO por el bloque de arriba: puntos 1 y 2 CERRADOS; punto 3 (origen) MEDIDO y APAGADO
 
 **Punto 3 — el origen del cliente en los precios** (HISTORY 0.29.98; evidencia `docs/robustness/origen-2026-10-06.json`):
 flag `RAG_ORIGEN_PREGUNTA` hecho y medido, **apagado**. Con el texto estricto (V1) deja de suponer Cartagena pero

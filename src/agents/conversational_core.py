@@ -4799,7 +4799,21 @@ async def _slotfill_close_phase(
     # acuse (un "¡genial!" delante de una respuesta sobra). Se omite la pregunta de la
     # reserva solo en el caso que ya cubría `_answer_question`: la respuesta ya invita a
     # elegir actividad y lo siguiente sería el menú entero (fallo en vivo 2026-07-24).
+    if settings.rag_origen_pregunta and state.pregunta_precio_pendiente and (state.location or state.detected_location):
+        # 7-oct (opción C del punto 3): el cliente ya dijo desde dónde sale; se contesta la pregunta del precio que
+        # quedó pendiente (si este mensaje no trae otra pregunta, que manda). Se consume pase lo que pase.
+        pendiente, state.pregunta_precio_pendiente = state.pregunta_precio_pendiente, None
+        if not _has_pending_answer(state):
+            logger.info("[CORE][ORIGEN] ya sabemos el origen: se contesta la pregunta del precio pendiente")
+            state._pending_answer = asyncio.create_task(_rag_answer(state, pendiente, history=list(state.history)))
     answer = await _take_parallel_answer(state)
+    if answer and _es_pregunta_de_origen(answer):
+        # 7-oct: la pregunta del origen ocupa el turno (con sus botones); la de la reserva queda para después.
+        cancel_pending_ack(state)
+        _fijar_origen_antes_del_precio(state, message)
+        response = greeting + answer
+        state.history.append({"role": "assistant", "content": response})
+        return response
     if answer and finalized and settings.s4_fixes and _is_rag_fallback(answer):
         # s4-7 (paso 6): con el cierre de la reserva (resumen + link) en este turno, un "eso no lo
         # tengo a la mano" no aporta nada y, por la regla de arriba, TAPABA el cierre: "great, how do
@@ -4878,6 +4892,9 @@ async def _answer_question(
     # reescrita para RAG cuando el mensaje crudo recupera mal (deliberación);
     # el historial sigue teniendo el mensaje real del cliente.
     answer = await _rag_answer(state, message, rag_query=rag_query)
+    if _es_pregunta_de_origen(answer):
+        _fijar_origen_antes_del_precio(state, message)
+        return answer
     _named_certified_product_confirms_certification(state, message)
     pending = state.core_pending_slot or next_missing_slot(state)
     # No re-anclar el slot si la propia respuesta RAG ya cierra con una
@@ -4922,6 +4939,9 @@ async def _rag_answer(
 ) -> str:
     from src.agents import supervisor  # lazy
 
+    fija = _origen_antes_del_precio(state, message)
+    if fija:
+        return fija  # quien la recibe deja el estado preparado (`_fijar_origen_antes_del_precio`)
     # l1-4: las notas de ESTE mensaje pueden estar calculándose en paralelo. Aquí
     # es donde se usan (van dentro del contexto del RAG), así que aquí se espera.
     await await_pending_notes(state)
@@ -4971,6 +4991,8 @@ def lanzar_rag_adelantado(state: ConversationState, message: str) -> None:
     texto = (message or "").strip()
     if not texto or texto.isdigit():
         return
+    if _origen_antes_del_precio(state, message):
+        return  # 7-oct: se preguntará el origen antes de cotizar; si este mensaje lo dice, se hace la llamada normal
     import copy
 
     from src.agents import supervisor  # lazy
@@ -5005,6 +5027,11 @@ async def _adoptar_o_rehacer(state: ConversationState, message: str, history: li
     from src.agents import supervisor  # lazy
     from src.observability import note_turn
 
+    fija = _origen_antes_del_precio(state, message)
+    if fija:
+        adelantado["task"].cancel()
+        note_turn(rag_adelantado="descartado")
+        return fija
     await await_pending_notes(state)
     entradas = _entradas_rag(state, history)
     huella = _huella_rag(message, entradas)
@@ -5028,8 +5055,12 @@ async def rag_con_adelantado(state: ConversationState, message: str, history: li
     adelantado = getattr(state, "_rag_adelantado", None)
     if adelantado is not None and adelantado["mensaje"] == message:
         state._rag_adelantado = None
-        return await _adoptar_o_rehacer(state, message, history, adelantado)
-    return await _rag_answer(state, message, history=history)
+        answer = await _adoptar_o_rehacer(state, message, history, adelantado)
+    else:
+        answer = await _rag_answer(state, message, history=history)
+    if _es_pregunta_de_origen(answer):
+        _fijar_origen_antes_del_precio(state, message)
+    return answer
 
 
 def cancelar_rag_adelantado(state: ConversationState) -> None:
@@ -5171,7 +5202,11 @@ async def _prepend_parallel_answer(state: ConversationState, response: str, gree
     if not answer:
         return response
     body = response[len(greeting):] if greeting and response.startswith(greeting) else response
-    if _is_rag_fallback(answer) or (_answer_asks_the_origin(state, answer) and _PREGUNTA_ORIGEN_RE.search(body)):
+    if _es_pregunta_de_origen(answer):
+        ultimo = next((h.get("content") or "" for h in reversed(state.history or []) if h.get("role") == "user"), "")
+        _fijar_origen_antes_del_precio(state, ultimo)
+        merged = f"{greeting}{answer.rstrip()}"
+    elif _is_rag_fallback(answer) or (_answer_asks_the_origin(state, answer) and _PREGUNTA_ORIGEN_RE.search(body)):
         merged = f"{greeting}{answer.rstrip()}"
     else:
         merged = f"{greeting}{answer.rstrip()}\n\n{body}"
@@ -5197,6 +5232,58 @@ def _answer_asks_the_origin(state: ConversationState, answer: str) -> bool:
     """¿La reserva iba a preguntar el origen y la respuesta del RAG ya lo pregunta? Entonces va sola."""
     return (settings.rag_origen_pregunta and state.core_pending_slot == SLOT_LOCATION
             and bool(_PREGUNTA_ORIGEN_RE.search(answer)))
+
+
+# 7-oct (Álvaro, opción C del punto 3; flag `rag_origen_pregunta`): si el cliente pide un PRECIO y no sabemos desde
+# dónde sale, el bot pregunta el origen ANTES de cotizar (lo pide el golden) y lo hace el CÓDIGO, no el modelo: con
+# instrucciones en el contexto del RAG (6-oct, V1 y V2) o repreguntaba lo que el cliente ya había dado a entender o
+# volvía a cotizar Cartagena. La pregunta del precio se guarda y se contesta en cuanto el cliente dice el origen.
+ORIGEN_ANTES_DEL_PRECIO_ES = (
+    "Para darte el precio exacto necesito saber desde dónde sales: ¿saldrías *desde Cartagena* o ya estás *en las "
+    "Islas del Rosario*? Los planes y los precios cambian según el punto de salida. 🌊"
+)
+ORIGEN_ANTES_DEL_PRECIO_EN = (
+    "To give you the exact price I need to know where you're starting from: would you leave *from Cartagena* or are "
+    "you already *on the Rosario Islands*? Plans and prices change depending on the departure point. 🌊"
+)
+_PIDE_PRECIO_RE = re.compile(
+    r"cu[aá]nto (cuesta|cuestan|vale|valen|sale|salen|cobran|ser[ií]a|es\b)|\bprecios?\b|\bcostos?\b|\bcoste\b|"
+    r"\btarifas?\b|\bvalor\b|how much|\bprices?\b|\bcosts?\b|\brates?\b|\bfees?\b",
+    re.IGNORECASE,
+)
+# El precio de algo que no vendemos (el hotel, la noche) no depende de desde dónde sale el cliente.
+_PRECIO_AJENO_RE = re.compile(
+    r"hotel|alojamiento|hospedaje|por noche|la noche|habitaci|taxi|\bnights?\b|\brooms?\b|accommodation|lodging",
+    re.IGNORECASE,
+)
+# Pistas del origen en lo que ha escrito el CLIENTE (el saludo del bot nombra los dos orígenes). Si el cliente ya
+# nombró Cartagena o las islas, el origen se deja al RAG como siempre: preguntarlo sería repreguntar (lección de V1).
+_PISTA_ORIGEN_RE = re.compile(r"cartagena|\bislas?\b|\bislands?\b|bar[uú]|tierra bomba", re.IGNORECASE)
+
+
+def _origen_antes_del_precio(state: ConversationState, message: str) -> str | None:
+    """El texto fijo que pregunta el origen, si toca preguntarlo antes de cotizar; si no, None."""
+    if not settings.rag_origen_pregunta or state.location or state.detected_location:
+        return None
+    texto = message or ""
+    if not _PIDE_PRECIO_RE.search(texto) or _PRECIO_AJENO_RE.search(texto):
+        return None
+    del_cliente = [h.get("content") or "" for h in (state.history or []) if h.get("role") == "user"]
+    if any(_PISTA_ORIGEN_RE.search(t) for t in [*del_cliente, texto]):
+        return None
+    return ORIGEN_ANTES_DEL_PRECIO_ES if state.language == "es" else ORIGEN_ANTES_DEL_PRECIO_EN
+
+
+def _es_pregunta_de_origen(answer: str | None) -> bool:
+    return bool(answer) and (ORIGEN_ANTES_DEL_PRECIO_ES in answer or ORIGEN_ANTES_DEL_PRECIO_EN in answer)
+
+
+def _fijar_origen_antes_del_precio(state: ConversationState, pregunta: str) -> None:
+    """La pregunta del origen ocupa el turno: queda pendiente el origen (con los botones de siempre) y se guarda la
+    pregunta del precio para contestarla cuando el cliente lo diga."""
+    ask_slot(state, SLOT_LOCATION)  # solo por lo que deja en el estado: el slot pendiente y sus botones
+    state.pregunta_precio_pendiente = pregunta
+    logger.info("[CORE][ORIGEN] precio sin origen -> se pregunta el origen antes de cotizar")
 
 
 def _answer_already_asks(answer: str) -> bool:

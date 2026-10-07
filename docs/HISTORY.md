@@ -1,6 +1,14 @@
 History
 =======
 
+0.29.99 - (2026-10-07)
+----------------------
+* **Punto 3, opción C (decisión de Álvaro): el CÓDIGO pregunta el origen antes de dar un precio** — hecho y con tests, **flag `RAG_ORIGEN_PREGUNTA` APAGADO, sin medir en PRE** (lo sigue Gonzalo).
+  - Cuándo (`conversational_core._origen_antes_del_precio`): el cliente pide un precio (cuánto cuesta, precio, costo, tarifa, how much…), el origen no consta (`state.location`) y el CLIENTE no ha nombrado Cartagena ni las islas en ningún mensaje (lo que dice el saludo del bot no cuenta). No si el precio es del hotel o de una noche.
+  - Qué hace: en vez del RAG, un texto fijo (`ORIGEN_ANTES_DEL_PRECIO_ES/EN`) que pregunta "¿desde Cartagena o ya en las islas?" con los botones de origen; la pregunta ocupa el turno (la de la reserva espera) y se guarda en `state.pregunta_precio_pendiente`. Cuando el cliente dice el origen, la reserva lanza el RAG con esa pregunta guardada y la contesta con el precio de su origen, sin que la repita. Cubre la reserva (respuesta en paralelo, `_answer_question`, `_prepend_parallel_answer`), la respuesta adelantada (no se lanza; si ya iba, se descarta) y el nodo `info` y la cascada (`rag_con_adelantado`). Se mantiene: si una respuesta del RAG ya pregunta el origen, la reserva no repite la suya.
+  - **Quitado** el aviso para el RAG de las versiones V1/V2 del 6-oct (`RAG_ORIGEN_DESCONOCIDO_*`): con texto el modelo o repreguntaba o volvía a suponer.
+  - Tests: `tests/test_rag_origen_pregunta.py` (19: cuándo se pregunta y cuándo no —flag, origen ya registrado, sin precio, precio del hotel, origen nombrado en el mensaje o antes—, la conversación entera "¿cuánto cuesta?" → pregunta el origen sin el RAG → "desde cartagena" → contesta la pregunta guardada, y el flag apagado). A petición de Álvaro no se corrió la suite entera en local (sí los tests de lo tocado: 127 passed); la corre el CI del push.
+
 0.29.98 - (2026-10-06)
 ----------------------
 * **Punto 3 (el ORIGEN del cliente en los precios): medido, flag `RAG_ORIGEN_PREGUNTA` APAGADO, decisión de negocio pendiente** (Álvaro). Evidencia: `docs/robustness/origen-2026-10-06.json`.

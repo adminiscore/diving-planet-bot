@@ -118,6 +118,16 @@
         "byLabel": "Alvaro (con Claude)",
         "text": "6-oct noche: punto 3 (origen del cliente en los precios) MEDIDO y APAGADO. Flag RAG_ORIGEN_PREGUNTA: con texto estricto deja de suponer Cartagena pero repregunta el origen cuando el cliente ya lo dio a entender (ronda core origen-B: 93,9 -> 93,4 %, 2 de 4 regresiones del flag); con texto flexible deja de repreguntar pero vuelve a cotizar Cartagena. Decision para Gadea: aceptar 'precio desde Cartagena rotulado + pregunta del origen detras' (ajustar criterios), 'los dos precios rotulados', o 'preguntar antes de cotizar' hecho por codigo. HISTORY 0.29.98."
       }
+    },
+    {
+      "coleccion": "log",
+      "operacion": "set",
+      "doc_id": "l-1007-alvaro-origen-c",
+      "campos": {
+        "at": "2026-10-07T12:00:00Z",
+        "byLabel": "Alvaro (con Claude)",
+        "text": "7-oct: punto 3 (origen) decidido, opcion C: si el cliente pide un precio y no sabemos desde donde sale, el CODIGO pregunta el origen antes de cotizar (texto fijo con botones), guarda la pregunta y la contesta cuando el cliente lo dice. Implementado con 19 tests, flag RAG_ORIGEN_PREGUNTA APAGADO, sin medir en PRE: lo sigue Gonzalo (escalon 0 y ronda core). Despues: punto 4 (supuestos) y paso 11 del plan (R6). HISTORY 0.29.99."
+      }
     }
   ]
 }

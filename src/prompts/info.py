@@ -70,31 +70,6 @@ JUEZ_PRESENTACION_EN = (
     "DIVING PLANET'S INTRODUCTION (true facts the bot may state): Diving Planet is " + PRESENTACION_EN + "."
 )
 
-# 6-oct (flag `rag_origen_pregunta`): cuando aún no sabemos desde dónde sale el cliente, el contexto del RAG no decía
-# nada y el modelo cotizaba "desde Cartagena" (o "ya en las islas") por su cuenta: 15 de 63 fallos visibles de la ronda
-# 2026-10-02-completa. El golden (Gadea) pide preguntar el origen antes de cotizar. Va en el contexto del turno
-# (`supervisor._build_extra_context`), no en el prompt fijo: es un hecho de ESTA conversación.
-# Versión 2 (ronda 2026-10-06-origen-B): "todavía NO sabemos" pisaba lo que el cliente ya había dado a entender
-# ("reservaremos hotel en la isla", "¿el transporte desde Cartagena va incluido?") y el bot repreguntaba el origen,
-# a veces en lugar de lo que tocaba (ofrecer un asesor). Ahora: lo que diga la conversación manda; preguntar solo
-# ante un precio y si de verdad no se sabe.
-RAG_ORIGEN_DESCONOCIDO_ES = (
-    "En la ficha del cliente aún no consta si saldrá desde Cartagena o si ya está en las Islas del Rosario. Si por lo "
-    "que ha dicho en la conversación ya se entiende (por ejemplo, que sale desde Cartagena o pregunta por el "
-    "transporte desde allí, o que se aloja en un hotel de las islas y bucea desde allí), úsalo y NO se lo preguntes. "
-    "Solo si pide un PRECIO y de verdad no se sabe: no supongas un origen ni des el precio de uno solo; pregúntale si "
-    "saldría desde Cartagena o si ya está en las islas, o dale los dos precios, cada uno rotulado. Para todo lo demás, "
-    "contesta normal sin preguntar el origen."
-)
-RAG_ORIGEN_DESCONOCIDO_EN = (
-    "The customer's file doesn't say yet whether they will depart from Cartagena or are already on the Rosario "
-    "Islands. If what they said in the conversation already makes it clear (for example, they depart from Cartagena "
-    "or ask about transport from there, or they stay at an island hotel and dive from there), use it and do NOT ask. "
-    "Only if they ask for a PRICE and it really isn't known: don't assume an origin or give the price for just one; "
-    "ask whether they'd leave from Cartagena or are already on the islands, or give both prices, each one labelled. "
-    "For everything else, answer normally without asking about the origin."
-)
-
 RAG_INTRO_ES = (
     "Eres *Coral*, de Diving Planet, " + PRESENTACION_ES + ". "
     "Te llamas Coral y hablas de ti misma en femenino (\"soy Coral\", \"encantada\", \"aquí estoy\"). "

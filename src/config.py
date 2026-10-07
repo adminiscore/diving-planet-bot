@@ -181,15 +181,14 @@ class Settings(BaseSettings):
     # Limite conocido: si la palabra "cedula" y su numero van en lineas distintas, el numero no se tapa (solo afecta
     # a lo que ve el juez). Revert = False aqui y en el compose.
     juez_privacidad_por_linea: bool = True
-    # 6-oct (Alvaro, punto 3: el ORIGEN del cliente): si aun no sabemos si sale desde Cartagena o ya esta en las islas,
-    # el contexto del RAG lo dice y pide preguntarlo antes de cotizar (prompts/info.py RAG_ORIGEN_DESCONOCIDO_*); y si
-    # la respuesta ya pregunta el origen, la reserva no pega detras su propia pregunta del origen. Antes el modelo
-    # cotizaba un origen por su cuenta: 15 de 63 fallos visibles de la ronda 2026-10-02-completa. Escalon 0 (11 dialogos
-    # del golden en PRE): deja de suponer Cartagena (pregunta, o da los dos precios rotulados). Ronda core
-    # 2026-10-06-origen-B frente a privacidad-B (re-juzgada con la referencia curada): 93,9 -> 93,4 % (ruido), pero 2 de
-    # las 4 regresiones eran del flag: "todavia NO sabemos el origen" pisaba lo que el cliente ya habia dado a entender
-    # ("reservaremos hotel en la isla", "¿el transporte desde Cartagena va incluido?") y el bot repreguntaba. Texto
-    # nuevo: si la conversacion ya lo deja claro, usarlo; preguntar solo ante un precio. APAGADO hasta medirlo.
+    # Punto 3 (el ORIGEN del cliente en los precios; 15 de 63 fallos visibles de la ronda 2026-10-02-completa: el modelo
+    # cotizaba un origen por su cuenta). 6-oct: dos versiones con un AVISO en el contexto del RAG, medidas y quitadas
+    # (V1 "no lo sabemos, preguntalo": ronda 2026-10-06-origen-B 93,9 -> 93,4 %, repreguntaba lo ya dado a entender; V2
+    # "la conversacion manda": volvia a cotizar Cartagena). 7-oct, opcion C (decision de Alvaro): lo hace el CODIGO
+    # (`conversational_core._origen_antes_del_precio`): si el cliente pide un precio, el origen no consta y el cliente
+    # no ha nombrado Cartagena ni las islas, el bot pregunta el origen con un texto fijo (con sus botones), guarda la
+    # pregunta y la contesta en cuanto el cliente lo dice. Y si una respuesta ya pregunta el origen, la reserva no
+    # repite su pregunta. APAGADO hasta su escalon 0 y su ronda core.
     rag_origen_pregunta: bool = False
     # Paso 9 (l2-2, 28-sep): el catalogo va al final del prompt del SISTEMA (fijo por idioma) y el primero en
     # el contexto del juez, para que el prompt caching de OpenAI lo reutilice entre conversaciones (antes iba

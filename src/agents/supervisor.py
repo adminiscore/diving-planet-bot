@@ -1728,11 +1728,9 @@ def _build_extra_context(state: ConversationState) -> str | None:
                 "pickup info; do not mention the Cartagena Muelle de la Bodeguita "
                 "departure unless they explicitly ask about it."
             )
-    elif settings.rag_origen_pregunta:
-        # 6-oct (punto 3): sin esto el contexto callaba y el modelo cotizaba un origen por su cuenta.
-        from src.prompts.info import RAG_ORIGEN_DESCONOCIDO_EN, RAG_ORIGEN_DESCONOCIDO_ES  # lazy
-
-        parts.append(RAG_ORIGEN_DESCONOCIDO_ES if state.language == "es" else RAG_ORIGEN_DESCONOCIDO_EN)
+    # 6-oct: con el origen desconocido aquí iba un aviso para el RAG (V1 "no lo sabemos, pregúntalo"; V2 "la
+    # conversación manda"). Medido y quitado: con texto el modelo o repreguntaba o volvía a suponer. Desde el 7-oct lo
+    # hace el código (`conversational_core._origen_antes_del_precio`, opción C).
 
     # Isla / hotel
     if getattr(state, "island", None):

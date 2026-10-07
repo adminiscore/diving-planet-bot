@@ -154,6 +154,10 @@ class ConversationState:
     # None when there is no pending slot.
     core_pending_slot: str | None = None
 
+    # 7-oct (flag `rag_origen_pregunta`, opción C del punto 3): el cliente pidió un precio sin que supiéramos
+    # desde dónde sale; el bot le preguntó el origen y guarda aquí la pregunta para contestarla en cuanto lo diga.
+    pregunta_precio_pendiente: str | None = None
+
     # Actividad del acompañante detectada por la red de precisión LLM
     # (detect_special_signals) cuando la cantidad quedó pendiente de preguntar
     # (plural sin número, p. ej. "mis amigos" — nunca se debe adivinar cuántos
