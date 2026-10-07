@@ -200,32 +200,34 @@ class Settings(BaseSettings):
     # COMPANION_NONE_MAX, la misma puerta de u3-6), la regex de "menciona a alguien" (`_mentions_person`) no puede
     # contradecirlo. "Si cuantos dias son?" casaba "son" (hijo, en ingles) y el flujo preguntaba la actividad de un
     # acompañante inexistente ("¡Qué bien que venga alguien más!", manual-duracion-curso) con Jev en 0,04. Sin Jev
-    # (flag o Jev apagados, o fallo) = la regex de hoy. En medicion: encendido aqui y en el compose; revert = False en los dos.
+    # (flag o Jev apagados, o fallo) = la regex de hoy.
+    # PROMOCIONADO 7-oct (ronda core s426-B frente a origen-c2-B: 93,0 -> 95,6 %, 8 mejoras / 1 regresion ajena, del enrutador; HISTORY 0.30.1). Revert = False aqui y en el compose.
     jev_acompanante_manda: bool = True
     # Punto 4 (s4-26, 7-oct): la red de "mencion perdida" (palabra clave de una actividad + alguien mencionado) ya no
     # saca un acompañante de la nada: sin actividad principal la mencion es la del grupo, y con la principal sabida una
     # mencion GENERICA ("buceo") es contexto del producto principal (la regla que ya se aplicaba con un curso
     # nombrado). Preguntaba "¿Cuántos serían para buceo certificado?" en minicurso-islas-y-acompanante-lancha y
-    # logistica-isla-fragata-regreso-otro-dia. En medicion.
+    # logistica-isla-fragata-regreso-otro-dia. PROMOCIONADO 7-oct (s426-B; HISTORY 0.30.1).
     red_menciones_con_principal: bool = True
     # Punto 4 (s4-26, 7-oct): con la reserva ya cerrada (tarjeta con precio y link enviada) y sin cambios en este turno,
     # una pregunta ("¿cuánto dura?") se contesta SOLA; antes se le pegaba detras la tarjeta entera otra vez
-    # (manual-duracion-curso: no-lista-precios / sin-repreguntas). En medicion.
+    # (manual-duracion-curso: no-lista-precios / sin-repreguntas). PROMOCIONADO 7-oct (s426-B; HISTORY 0.30.1).
     cierre_sin_repetir: bool = True
     # Punto 4 (s4-26, 7-oct): una CONDICION del cliente ("si tu hotel tiene acceso por lancha") no pasa a HECHO en el
     # turno siguiente sin que nadie lo diga (logistica-isla-fragata-regreso-otro-dia: "como te alojas en un hotel con
     # acceso por lancha, como el Fragata, la recogida esta incluida"). prompts/info.py RAG_CONDICIONES_*. Escalon 0 en
-    # PRE (7-oct, codigo local, 3 reps): la condicion se mantiene 3/3 (antes se daba por cumplida 2/2). En medicion:
-    # encendido aqui y en el compose.
+    # PRE (7-oct, codigo local, 3 reps): la condicion se mantiene 3/3 (antes se daba por cumplida 2/2). PROMOCIONADO 7-oct
+    # (s426-B) pero PARCIAL: en la mini-ronda s426-extra-B volvio a darla por cumplida (en total 3/4). Es una regla de
+    # prompt: ayuda, no garantiza.
     rag_condiciones_abiertas: bool = True
     # Punto 4 (s4-26, 7-oct): el contexto del RAG llama "el plan que esta armando" a lo que el cliente ya eligio, no
     # "su carrito": el cliente no ve ningun carrito y el modelo repetia la palabra ("el curso que tienes en tu carrito",
-    # manual-duracion-curso, 3 de 6 en el escalon 0; el juez lo da por invento). En medicion (aqui y en el compose).
+    # manual-duracion-curso, 3 de 6 en el escalon 0; el juez lo da por invento). PROMOCIONADO 7-oct (s426-B: ya no sale).
     rag_plan_elegido: bool = True
     # Punto 4 (s4-26, 7-oct): una pregunta mas de Jev en la misma llamada (`adds_person`): ¿el mensaje SUMA a una persona
     # nueva o habla de alguien ya contado? Si Jev esta seguro de que no es nueva (< 0,2), "él quiere hacer snorkel" se
     # mueve dentro del grupo sin preguntar "¿seguís siendo 2?" (acompanante-goteo). Si duda, se pregunta como hoy.
-    # Banco ciego: 0/10 nuevas por debajo, 9/10 ya contadas. En medicion (aqui y en el compose).
+    # Banco ciego: 0/10 nuevas por debajo, 9/10 ya contadas. PROMOCIONADO 7-oct (mini-ronda s426-extra-B: goteo pasa).
     jev_persona_ya_contada: bool = True
     # Paso 9 (l2-2, 28-sep): el catalogo va al final del prompt del SISTEMA (fijo por idioma) y el primero en
     # el contexto del juez, para que el prompt caching de OpenAI lo reutilice entre conversaciones (antes iba

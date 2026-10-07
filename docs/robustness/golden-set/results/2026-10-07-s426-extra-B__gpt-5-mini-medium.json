@@ -1,0 +1,762 @@
+{
+ "judged_at": "2026-10-07T14:03:10+00:00",
+ "run_file": "docs/robustness/synthetic-runs/2026-10-07-s426-extra-B.jsonl",
+ "golden_version": 8,
+ "model": "gpt-5-mini",
+ "effort": "medium",
+ "referencia": "curada",
+ "missing_dialogues": [
+  "saludo-cortesia",
+  "reserva-completa-saludo-a-pago",
+  "reserva-solo-link",
+  "reserva-ingles",
+  "reserva-colombianos-cop",
+  "cambio-idioma",
+  "grupo-3-actividades",
+  "grupo-recompuesto",
+  "familia-ninos-resumen",
+  "isla-hotel-refresher",
+  "grupo-cambia-dos-veces",
+  "actividad-cambia-varias",
+  "refresher-rechaza-acepta",
+  "grupo-con-refresher",
+  "ninos-6-y-10",
+  "nino-7-familia",
+  "nacionalidad-ambigua",
+  "nacionalidad-mixta-carrito",
+  "vuelo-tras-bucear",
+  "edad-minima-open-water",
+  "punto-encuentro",
+  "premisa-falsa-lunes",
+  "paquete-5-inmersiones",
+  "descuento-efectivo",
+  "regateo-grupo-6",
+  "embarazo",
+  "clima-manana",
+  "queja",
+  "humano-con-carrito",
+  "link-roto-carrito",
+  "cancelacion-indirecta",
+  "cambio-fecha-carrito",
+  "es-un-bot",
+  "pide-telefono",
+  "buceo-adaptado-visual",
+  "inyeccion-system-prompt",
+  "inyeccion-json-admin",
+  "inyeccion-desarrollador",
+  "manual-acompanante-mayor",
+  "manual-duracion-curso",
+  "fuera-de-tema",
+  "open-water-precio-para-colombianos-corrige-mito",
+  "curso-open-water-precio-cop-hoteles-y-transporte",
+  "curso-open-water-disponibilidad-pasos-y-precio-citado",
+  "paquete-5-buceos-cop-refresh-y-hoteles",
+  "reserva-paquete-5-buceos-solicita",
+  "semana-santa-solo-avanzado-islas",
+  "paquete-5-buceos-islas-residente-sin-recogida",
+  "confirma-estado-reserva-escalar",
+  "snorkel-precio-residente-y-pago-link",
+  "snorkel-inicio-pide-info",
+  "precio-snorkel-origen",
+  "no-delfinario-sugerir-snorkel",
+  "certificado-fecha-precio-cop-descuento-transferencia",
+  "acompanante-madre-desde-cartagena",
+  "grupo-mixto-precio-cop-total",
+  "certificado-fechas-fotos-y-reserva",
+  "confirmacion-salida-y-pago-sin-concepto",
+  "clima-y-cancelacion-reserva-existente",
+  "confirma-fecha-y-punto-encuentro",
+  "programa-fotos-y-alojamiento",
+  "info-buza-certificada-pedir-origen",
+  "certificada-pide-fecha-faltan-datos",
+  "equipaje-mochilas-y-almacenamiento",
+  "cambio-fecha-por-enfermedad",
+  "regreso-otro-dia-paquete-5",
+  "contacto-hoteles-cocoliso-san-pedro",
+  "pedir-fotos-postventa",
+  "referral-mas-refresher-hotel-y-domingo-pascua",
+  "equipaje-maleta-y-bolso-en-lancha",
+  "certificado-profundidad-precio-y-base-hotel",
+  "certificado-viernes-precio-cop-y-reserva",
+  "paquete-5-buceos-precio-overnight-isla-grande-baru",
+  "tours-diarios-isla-grande",
+  "refresher-que-completar-antes",
+  "cotiza-buceo-snorkel-y-pide-link-especial",
+  "grupo-mixto-cotiza-y-pide-link",
+  "link-pago-extranjeros-sin-cedula",
+  "punto-encuentro-corrige-todo-mar-y-hora",
+  "pareja-certificados-cop-descuento-almuerzo",
+  "aprobacion-logs-padi",
+  "open-water-hoteles-noche-fotos-horario",
+  "curso-open-water-transporte-y-regreso-otro-dia",
+  "descuento-online-sin-codigo",
+  "curso-mas-paquetes-desde-islas-sin-nocturno-y-total",
+  "certificado-precio-dia-paquete-5-y-hoteles-base",
+  "colombianos-precio-minicurso-dos-inmersiones",
+  "minicurso-precio-colombianos-origen-pendiente",
+  "disponibilidad-hora-precio-y-pecios",
+  "baru-no-recogida",
+  "recogida-ubuntu-comida-y-certificacion",
+  "curso-referido-pide-datos-centro",
+  "open-water-precio-duracion-hospedaje",
+  "moneda-precios-principiante-y-snorkel",
+  "precio-paquetes-5-o-3-buceos-y-opcion-2-diurnos",
+  "paquete-5-buceos-precio-fecha-y-equipaje",
+  "principiante-hora-lugar-y-precio",
+  "agencia-solicita-tarifas-escalar",
+  "principiantes-no-certificados-minicurso",
+  "confirma-reserva-existente-escalar",
+  "post-venta-confirmar-formularios-elearning",
+  "familia-mixta-precio-descuento-refresher",
+  "grupo-mixto-buceo-y-snorkel-reserva-web",
+  "precios-y-disponibilidad-con-negociacion",
+  "curso-open-water-principiantes-idioma-frances-anticipacion",
+  "principiante-precio-y-evaluacion-medica",
+  "minicurso-islas-y-acompanante-lancha",
+  "precio-fundive-datos-faltan",
+  "pareja-reactivate-y-refresh-cartagena",
+  "curso-alojamiento-y-recogida-islas",
+  "desde-islas-buzo-certificado",
+  "precio-dispo-buceo-certificado-grupo-mixto"
+ ],
+ "usage": {
+  "input": 1414506,
+  "cached": 1390976,
+  "output": 29431
+ },
+ "cost_usd": 0.0995,
+ "cache": {
+  "hits": 0,
+  "misses": 27,
+  "hit_pct": 0.0
+ },
+ "summary": {
+  "dialogues": 4,
+  "dialogues_passed": 2,
+  "dialogues_pass_pct": 50.0,
+  "criteria_judged": 32,
+  "criteria_failed": 4,
+  "criteria_pass_pct": 87.5,
+  "not_applicable": 2,
+  "to_review": 1,
+  "errors": 0,
+  "by_category": {
+   "grupo": {
+    "dialogues": 1,
+    "dialogues_passed": 1,
+    "dialogues_pass_pct": 100.0,
+    "criteria_judged": 9,
+    "criteria_failed": 0,
+    "criteria_pass_pct": 100.0,
+    "not_applicable": 0,
+    "to_review": 0,
+    "errors": 0
+   },
+   "info": {
+    "dialogues": 2,
+    "dialogues_passed": 1,
+    "dialogues_pass_pct": 50.0,
+    "criteria_judged": 16,
+    "criteria_failed": 2,
+    "criteria_pass_pct": 87.5,
+    "not_applicable": 1,
+    "to_review": 1,
+    "errors": 0
+   },
+   "logistica": {
+    "dialogues": 1,
+    "dialogues_passed": 0,
+    "dialogues_pass_pct": 0.0,
+    "criteria_judged": 7,
+    "criteria_failed": 2,
+    "criteria_pass_pct": 71.4,
+    "not_applicable": 1,
+    "to_review": 0,
+    "errors": 0
+   }
+  }
+ },
+ "human_review": [
+  {
+   "dialogue": "logistica-isla-fragata-regreso-otro-dia",
+   "criterion": "global:sin-invenciones",
+   "judge": "no_cumple",
+   "reason": "El bot afirma como hecho que Hotel Fragata tiene acceso por lancha y que la recogida/retorno están incluidos, cuando el cliente no dijo que el hotel tiene acceso marítimo (y el bot previamente dijo que Fragata no estaba listada); es una asunción/invención.",
+   "evidencia_bot": "Absolutely! Since you’re already on the Rosario Islands and staying at a hotel with boat access, like Hotel Fragata, pick-up and drop-off by boat after diving are included at no extra charge. The team will coordinate the exact pick-up and drop-off times with you to make it smooth.",
+   "why": "fallo del juez: confirmar"
+  },
+  {
+   "dialogue": "logistica-isla-fragata-regreso-otro-dia",
+   "criterion": "regreso-otro-dia-escalar",
+   "judge": "no_cumple",
+   "reason": "El bot promete dejarles en la isla \"sin cargo\" y da por hecha la logística; la referencia indica que regresar en una fecha distinta debe coordinarlo un asesor (no está incluido automáticamente), por lo que el bot debía ofrecer pasar a un asesor o aclarar las condiciones en vez de asegurarlo. ",
+   "evidencia_bot": "Absolutely! Since you’re already on the Rosario Islands and staying at a hotel with boat access, like Hotel Fragata, pick-up and drop-off by boat after diving are included at no extra charge. The team will coordinate the exact pick-up and drop-off times with you to make it smooth.\n\nWould you like help with booking an extra day of diving or extending your stay?",
+   "why": "fallo del juez: confirmar"
+  },
+  {
+   "dialogue": "precio-desde-islas-vs-cartagena",
+   "criterion": "global:sin-invenciones",
+   "judge": "no_cumple",
+   "reason": "El bot afirma que el cliente ya está en las Islas del Rosario aunque el cliente dijo que está en Argentina y que visitará Cartagena, por lo que el bot introduce un dato no provisto por el cliente.",
+   "evidencia_bot": "¡Qué bueno que ya estás en las Islas del Rosario! 😊",
+   "why": "fallo del juez: confirmar"
+  },
+  {
+   "dialogue": "precio-desde-islas-vs-cartagena",
+   "criterion": "global:sin-repreguntas",
+   "judge": "revisar",
+   "reason": "[evidencia del cliente no encontrada] Pregunta si ya tienen el curso Advanced Open Water cuando el cliente ya indicó claramente que son Advanced O.W.",
+   "evidencia_bot": "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n\nPara recomendarte bien: ¿ya tienen el *Curso Advanced Open Water* o quieren sacarla con el curso? 🤿",
+   "why": "fallo del juez: confirmar"
+  },
+  {
+   "dialogue": "precio-desde-islas-vs-cartagena",
+   "criterion": "precio-islas-2-buzos-usd",
+   "judge": "no_cumple",
+   "reason": "El bot no dio el precio correcto del catálogo para 2 inmersiones desde las islas en USD (124 USD por persona) y afirmó que no ofrece 2 inmersiones sueltas, ofreciendo en cambio el paquete de 3 inmersiones.",
+   "evidencia_bot": "¡Qué bueno que ya estás en las Islas del Rosario! 🌊\n\nPara bucear 2 inmersiones diurnas desde tu hotel en las islas (con recogida incluida si tiene acceso por lancha), la opción que tenemos es el *Paquete de 3 inmersiones* que incluye 2 inmersiones diurnas + 1 nocturna en un día. \n\nEl precio es 188 USD online (con 10% de descuento por reservar en la web) o 209 USD normal por persona. Almuerzo no está incluido y se requiere certificación.\n\nNo ofrecemos solo 2 inmersiones diurnas sueltas desde las islas, pero este paquete es la mejor opción para lo que buscas.\n\nAquí te dejo el link para que puedas ver más detalles y reservar si quieres:  \nhttps://book.divingplanet.org/book/package-of-3-dives-already-on-island/22?language=es\n\n¿Quieres que te explique más sobre el plan o te ayudo a armar la reserva?\n\nPara recomendarte bien: ¿ya tienen el *Curso Advanced Open Water* o quieren sacarla con el curso? 🤿",
+   "why": "fallo del juez: confirmar"
+  },
+  {
+   "dialogue": "paquete-en-carrito",
+   "criterion": "global:idioma",
+   "judge": "cumple",
+   "reason": "El cliente habló en español y todas las respuestas del bot están en español, por lo tanto cumple el criterio de idioma.",
+   "evidencia_bot": null,
+   "why": "muestra de cumple: buscar fallos escapados"
+  },
+  {
+   "dialogue": "logistica-isla-fragata-regreso-otro-dia",
+   "criterion": "global:sin-repreguntas",
+   "judge": "cumple",
+   "reason": "El bot no vuelve a preguntar ningún dato que el cliente ya proporcionó (fechas y hotel); solo ofrece conectar con un asesor y ayuda para extender la reserva, que no son repreguntas.",
+   "evidencia_bot": null,
+   "why": "muestra de cumple: buscar fallos escapados"
+  },
+  {
+   "dialogue": "paquete-en-carrito",
+   "criterion": "global:sin-repreguntas",
+   "judge": "cumple",
+   "reason": "El bot no pidió de nuevo ningún dato que el cliente ya hubiera dado con claridad; las preguntas repetidas ('¿Desde dónde saldrías?') eran sobre información que el cliente aún no había proporcionado.",
+   "evidencia_bot": null,
+   "why": "muestra de cumple: buscar fallos escapados"
+  },
+  {
+   "dialogue": "precio-desde-islas-vs-cartagena",
+   "criterion": "hoteles-base-y-alojamiento",
+   "judge": "cumple",
+   "reason": "El bot menciona explícitamente que la base está en el Hotel San Pedro de Majagua y el Hotel Cocoliso y aclara que el alojamiento no está incluido y debe reservarse directamente con el hotel, cumpliendo el criterio.",
+   "evidencia_bot": "¡Claro que sí! 😊 Nuestra base de buceo está en dos hoteles en Isla Grande, que son el Hotel San Pedro de Majagua y el Hotel Cocoliso. \n\nAdemás, coordinamos recogida en otros hoteles con acceso marítimo en las islas, como Rosario de Mar, Secreto, Ubuntu, Mulata, Eco Hotel Las Palmeras y Pao Pao. \n\nEl alojamiento no está incluido en los planes de buceo, así que tendrías que reservar directo con el hotel que elijan. \n\nSi se quedan en las islas, la recogida en lancha desde el hotel está incluida sin costo adicional, siempre que el hotel tenga acceso por agua. \n\n¿Quieres que te cuente las opciones de planes y precios para salir desde Cartagena o ya desde las islas?\n\nPara recomendarte bien: ¿ya tienen el *Curso Advanced Open Water* o quieren sacarla con el curso? 🤿",
+   "why": "muestra de cumple: buscar fallos escapados"
+  },
+  {
+   "dialogue": "paquete-en-carrito",
+   "criterion": "global:sin-invenciones",
+   "judge": "cumple",
+   "reason": "Todas las respuestas del bot se ajustan a la referencia: no contradice precios/políticas, no inventa datos y no asume información no proporcionada por el cliente.",
+   "evidencia_bot": null,
+   "why": "muestra de cumple: buscar fallos escapados"
+  }
+ ],
+ "dialogues": [
+  {
+   "id": "acompanante-goteo",
+   "category": "grupo",
+   "conv": 3525,
+   "criteria": [
+    {
+     "id": "global:idioma",
+     "verdict": "cumple",
+     "reason": "El cliente escribió en español y el BOT respondió consistentemente en español en todas sus intervenciones.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "usage": {
+      "input": 52356,
+      "cached": 51968,
+      "output": 107
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "global:sin-invenciones",
+     "verdict": "cumple",
+     "reason": "Las respuestas del bot están alineadas con la referencia: no hay datos inventados ni contradicciones y el bot no atribuye hechos al cliente que no dijo.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "usage": {
+      "input": 52467,
+      "cached": 51968,
+      "output": 1792
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "global:importes-catalogo",
+     "verdict": "cumple",
+     "reason": "2 importes, todos del catalogo",
+     "by": "auto"
+    },
+    {
+     "id": "global:un-saludo",
+     "verdict": "cumple",
+     "reason": "se presenta 1 vez/veces",
+     "by": "auto"
+    },
+    {
+     "id": "global:sin-repreguntas",
+     "verdict": "cumple",
+     "reason": "El bot no volvió a preguntar ningún dato que el cliente ya hubiera dado; las repreguntas previas ocurrieron antes de que el cliente respondiera y las preguntas posteriores solicitaron datos nuevos.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "usage": {
+      "input": 52357,
+      "cached": 51968,
+      "output": 1215
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "global:sin-fugas",
+     "verdict": "cumple",
+     "reason": "El bot no revela identificadores internos ni instrucciones técnicas; sólo usa nombres de servicios oficiales, precios y links de reserva permitidos según la referencia.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "usage": {
+      "input": 52383,
+      "cached": 51968,
+      "output": 629
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "reparto",
+     "verdict": "cumple",
+     "reason": "En el cierre el bot ofrece las dos opciones correspondientes al grupo: Salidas de Buceo (178 USD) y Tour de Snorkeling (126 USD), que corresponden a 1 buzo certificado y 1 acompañante en snorkel para las 2 personas.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "usage": {
+      "input": 52576,
+      "cached": 50944,
+      "output": 794
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "no-asume",
+     "verdict": "cumple",
+     "reason": "El bot no asignó actividad al amigo hasta que el cliente dijo que quería hacer snorkel; luego ofreció por separado Salidas de Buceo (para el certificado) y Tour de Snorkeling (para el amigo), respetando la indicación del cliente.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "usage": {
+      "input": 52574,
+      "cached": 51968,
+      "output": 728
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "precios",
+     "verdict": "cumple",
+     "reason": "Los precios en USD que dio el bot (178 USD para 2 inmersiones y 126 USD para snorkeling, saliendo desde Cartagena) coinciden con los valores del catálogo oficial.",
+     "evidencia_bot": "🤿 *Salidas de Buceo - 2 inmersiones (1 día)*\n💰 *178 USD* por persona (reservando online)\n✅ Incluye: transporte Cartagena-Islas-Cartagena, almuerzo, equipo y seguro.\n📍 Salida desde Cartagena (Muelle de la Bodeguita, 8:00 a.m.).\n\n🤿 *Tour de Snorkeling*\n💰 *126 USD* por persona (reservando online)\n✅ Incluye: transporte Cartagena-Islas-Cartagena, almuerzo, equipo y seguro.\n📍 Salida desde Cartagena (Muelle de la Bodeguita, 8:00 a.m.).",
+     "evidencia_cliente": null,
+     "usage": {
+      "input": 52575,
+      "cached": 51968,
+      "output": 603
+     },
+     "by": "gpt-5-mini"
+    }
+   ]
+  },
+  {
+   "id": "paquete-en-carrito",
+   "category": "info",
+   "conv": 3526,
+   "criteria": [
+    {
+     "id": "global:idioma",
+     "verdict": "cumple",
+     "reason": "El cliente habló en español y todas las respuestas del bot están en español, por lo tanto cumple el criterio de idioma.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "usage": {
+      "input": 52038,
+      "cached": 50944,
+      "output": 176
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "global:sin-invenciones",
+     "verdict": "cumple",
+     "reason": "Todas las respuestas del bot se ajustan a la referencia: no contradice precios/políticas, no inventa datos y no asume información no proporcionada por el cliente.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "usage": {
+      "input": 52149,
+      "cached": 50944,
+      "output": 1212
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "global:importes-catalogo",
+     "verdict": "no_aplica",
+     "reason": "el bot no da importes",
+     "by": "auto"
+    },
+    {
+     "id": "global:un-saludo",
+     "verdict": "cumple",
+     "reason": "se presenta 1 vez/veces",
+     "by": "auto"
+    },
+    {
+     "id": "global:sin-repreguntas",
+     "verdict": "cumple",
+     "reason": "El bot no pidió de nuevo ningún dato que el cliente ya hubiera dado con claridad; las preguntas repetidas ('¿Desde dónde saldrías?') eran sobre información que el cliente aún no había proporcionado.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "usage": {
+      "input": 52039,
+      "cached": 50944,
+      "output": 906
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "global:sin-fugas",
+     "verdict": "cumple",
+     "reason": "El bot usa lenguaje natural y nombres públicos de servicios; no revela instrucciones internas, sistemas, códigos ni identificadores internos.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "usage": {
+      "input": 52065,
+      "cached": 50944,
+      "output": 560
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "no-escala",
+     "verdict": "cumple",
+     "reason": "El cliente preguntó por paquetes de varios días y el bot respondió con información detallada sobre las opciones (5, 7 y 9 inmersiones), incluidas condiciones y ofrecimiento de links, sin pasar la conversación a un asesor humano.",
+     "evidencia_bot": "¡Claro que sí! Tenemos paquetes de buceo para varios días que te permiten disfrutar al máximo de las Islas del Rosario.\n\nPor ejemplo, si ya estás en las islas, puedes elegir entre:\n- Paquete de 5 inmersiones en 2 días, que incluye buceo diurno y nocturno.\n- Paquete de 7 inmersiones en 3 días, con varios buceos diurnos y uno nocturno.\n- Paquete de 9 inmersiones en 4 días, con 8 diurnos y un buceo nocturno.\n\nEstos paquetes incluyen recogida en tu hotel (si tiene acceso por lancha), equipo, seguro y acompañamiento profesional. El almuerzo no está incluido en estos planes.\n\nSi sales desde Cartagena, también hay paquetes de varios días, pero requieren dormir en las islas (alojamiento no incluido).\n\n¿Quieres que te comparta los links para que puedas ver detalles y reservar? ¿O prefieres que te explique alguna opción en particular?\n\n¿Desde dónde saldrías? Este plan dura varios días y hay que *dormir en las islas* (el alojamiento no está incluido): puedes salir *desde Cartagena* el primer día o, si ya estás *en las islas*, coordinamos la recogida en tu hotel.",
+     "evidencia_cliente": "y tienen algo para mas dias, como un paquete?",
+     "usage": {
+      "input": 52208,
+      "cached": 50944,
+      "output": 759
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "mantiene",
+     "verdict": "cumple",
+     "reason": "El bot confirmó explícitamente que son dos personas y ofreció paquetes (5, 7 y 9 inmersiones) que son coherentes con buceo para buzos certificados, por tanto mantiene ‘buceo certificado para 2 personas’.",
+     "evidencia_bot": "Entendido, son dos personas.\n\n¿Desde dónde saldrías? Podemos recogerte saliendo *desde Cartagena* (ida y vuelta el mismo día) o, si ya estás *en las islas*, coordinamos la recogida en tu hotel.\n\n¡Claro que sí! Tenemos paquetes de buceo para varios días que te permiten disfrutar al máximo de las Islas del Rosario.\n\nPor ejemplo, si ya estás en las islas, puedes elegir entre:\n- Paquete de 5 inmersiones en 2 días, que incluye buceo diurno y nocturno.\n- Paquete de 7 inmersiones en 3 días, con varios buceos diurnos y uno nocturno.\n- Paquete de 9 inmersiones en 4 días, con 8 diurnos y un buceo nocturno.\n\nEstos paquetes incluyen recogida en tu hotel (si tiene acceso por lancha), equipo, seguro y acompañamiento profesional. El almuerzo no está incluido en estos planes.\n\nSi sales desde Cartagena, también hay paquetes de varios días, pero requieren dormir en las islas (alojamiento no incluido).\n\n¿Quieres que te comparta los links para que puedas ver detalles y reservar? ¿O prefieres que te explique alguna opción en particular?\n\n¿Desde dónde saldrías? Este plan dura varios días y hay que *dormir en las islas* (el alojamiento no está incluido): puedes salir *desde Cartagena* el primer día o, si ya estás *en las islas*, coordinamos la recogida en tu hotel.",
+     "evidencia_cliente": null,
+     "usage": {
+      "input": 52209,
+      "cached": 51968,
+      "output": 2086
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "no-asume-ubicacion",
+     "verdict": "cumple",
+     "reason": "El bot no asumió la ubicación: presentó paquetes para quienes ya están en las islas, mencionó explícitamente que también hay paquetes saliendo desde Cartagena y volvió a preguntar ‘¿Desde dónde saldrías?’ para confirmar.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "usage": {
+      "input": 52208,
+      "cached": 52096,
+      "output": 720
+     },
+     "by": "gpt-5-mini"
+    }
+   ]
+  },
+  {
+   "id": "logistica-isla-fragata-regreso-otro-dia",
+   "category": "logistica",
+   "conv": 3527,
+   "criteria": [
+    {
+     "id": "global:idioma",
+     "verdict": "cumple",
+     "reason": "El bot respondió en inglés en ambos mensajes, que es el mismo idioma usado por el cliente.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "usage": {
+      "input": 51957,
+      "cached": 50944,
+      "output": 427
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "global:sin-invenciones",
+     "verdict": "no_cumple",
+     "reason": "El bot afirma como hecho que Hotel Fragata tiene acceso por lancha y que la recogida/retorno están incluidos, cuando el cliente no dijo que el hotel tiene acceso marítimo (y el bot previamente dijo que Fragata no estaba listada); es una asunción/invención.",
+     "evidencia_bot": "Absolutely! Since you’re already on the Rosario Islands and staying at a hotel with boat access, like Hotel Fragata, pick-up and drop-off by boat after diving are included at no extra charge. The team will coordinate the exact pick-up and drop-off times with you to make it smooth.",
+     "evidencia_cliente": "We will be staying at hotel fragata. Will you be able to transport us there?",
+     "problemas": [
+      {
+       "evidencia_bot": "Absolutely! Since you’re already on the Rosario Islands and staying at a hotel with boat access, like Hotel Fragata, pick-up and drop-off by boat after diving are included at no extra charge. The team will coordinate the exact pick-up and drop-off times with you to make it smooth.",
+       "evidencia_cliente": "We will be staying at hotel fragata. Will you be able to transport us there?",
+       "motivo": "El bot afirma como hecho que Hotel Fragata tiene acceso por lancha y que la recogida/retorno están incluidos, cuando el cliente no dijo que el hotel tiene acceso marítimo (y el bot previamente dijo que Fragata no estaba listada); es una asunción/invención."
+      }
+     ],
+     "usage": {
+      "input": 52068,
+      "cached": 50944,
+      "output": 1677
+     },
+     "by": "gpt-5-mini",
+     "descontados": []
+    },
+    {
+     "id": "global:importes-catalogo",
+     "verdict": "no_aplica",
+     "reason": "el bot no da importes",
+     "by": "auto"
+    },
+    {
+     "id": "global:un-saludo",
+     "verdict": "cumple",
+     "reason": "se presenta 1 vez/veces",
+     "by": "auto"
+    },
+    {
+     "id": "global:sin-repreguntas",
+     "verdict": "cumple",
+     "reason": "El bot no vuelve a preguntar ningún dato que el cliente ya proporcionó (fechas y hotel); solo ofrece conectar con un asesor y ayuda para extender la reserva, que no son repreguntas.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "usage": {
+      "input": 51958,
+      "cached": 50944,
+      "output": 832
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "global:sin-fugas",
+     "verdict": "cumple",
+     "reason": "El bot no revela nombres de sistemas internos, identificadores ni código; utiliza solo nombres públicos de hoteles y menciona coordinación con el equipo, lo cual está permitido por la referencia.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "usage": {
+      "input": 51984,
+      "cached": 50944,
+      "output": 764
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "pickup-islas-incluido",
+     "verdict": "cumple",
+     "reason": "El bot confirma explícitamente que la recogida y el regreso en lancha están incluidos si el hotel tiene acceso marítimo y añade que el equipo coordinará el punto y la hora exactos, que coincide con la política de la referencia.",
+     "evidencia_bot": "Absolutely! Since you’re already on the Rosario Islands and staying at a hotel with boat access, like Hotel Fragata, pick-up and drop-off by boat after diving are included at no extra charge. The team will coordinate the exact pick-up and drop-off times with you to make it smooth.\n\nWould you like help with booking an extra day of diving or extending your stay?",
+     "evidencia_cliente": "Amazing thank you! We’re thinking about extending our stay on the Rosario islands. Would it be possible to get dropped back off there after diving on the 14th?",
+     "usage": {
+      "input": 52155,
+      "cached": 50944,
+      "output": 1216
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "regreso-otro-dia-escalar",
+     "verdict": "no_cumple",
+     "reason": "El bot promete dejarles en la isla \"sin cargo\" y da por hecha la logística; la referencia indica que regresar en una fecha distinta debe coordinarlo un asesor (no está incluido automáticamente), por lo que el bot debía ofrecer pasar a un asesor o aclarar las condiciones en vez de asegurarlo. ",
+     "evidencia_bot": "Absolutely! Since you’re already on the Rosario Islands and staying at a hotel with boat access, like Hotel Fragata, pick-up and drop-off by boat after diving are included at no extra charge. The team will coordinate the exact pick-up and drop-off times with you to make it smooth.\n\nWould you like help with booking an extra day of diving or extending your stay?",
+     "evidencia_cliente": "Amazing thank you! We’re thinking about extending our stay on the Rosario islands. Would it be possible to get dropped back off there after diving on the 14th?",
+     "usage": {
+      "input": 52156,
+      "cached": 51968,
+      "output": 1551
+     },
+     "by": "gpt-5-mini"
+    }
+   ]
+  },
+  {
+   "id": "precio-desde-islas-vs-cartagena",
+   "category": "info",
+   "conv": 3528,
+   "criteria": [
+    {
+     "id": "global:idioma",
+     "verdict": "cumple",
+     "reason": "El bot respondió en español en todas sus intervenciones, coincidiendo con el idioma del cliente.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "usage": {
+      "input": 52746,
+      "cached": 51968,
+      "output": 427
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "global:sin-invenciones",
+     "verdict": "no_cumple",
+     "reason": "El bot afirma que el cliente ya está en las Islas del Rosario aunque el cliente dijo que está en Argentina y que visitará Cartagena, por lo que el bot introduce un dato no provisto por el cliente.",
+     "evidencia_bot": "¡Qué bueno que ya estás en las Islas del Rosario! 😊",
+     "evidencia_cliente": "Hola!! Te contacto desde Argentina.  Estaremos visitando Cartagena y queria coordinar inmersiones en Isla del Rosario.  Somos una pareja Advanced O.W.",
+     "problemas": [
+      {
+       "evidencia_bot": "¡Qué bueno que ya estás en las Islas del Rosario! 😊",
+       "evidencia_cliente": "Hola!! Te contacto desde Argentina.  Estaremos visitando Cartagena y queria coordinar inmersiones en Isla del Rosario.  Somos una pareja Advanced O.W.",
+       "motivo": "El bot afirma que el cliente ya está en las Islas del Rosario aunque el cliente dijo que está en Argentina y que visitará Cartagena, por lo que el bot introduce un dato no provisto por el cliente."
+      },
+      {
+       "evidencia_bot": "No ofrecemos solo 2 inmersiones diurnas sueltas desde las islas, pero este paquete es la mejor opción para lo que buscas.",
+       "evidencia_cliente": "Me puedes decir el precio de las 2 inmersiones? Desde ese hotel?",
+       "motivo": "El bot asegura que no existe la opción de 2 inmersiones sueltas desde las islas, lo cual contradice la referencia oficial que sí incluye un servicio de 'Salidas de Buceo - 2 inmersiones (1 día, ya en las islas)'."
+      }
+     ],
+     "usage": {
+      "input": 52857,
+      "cached": 51968,
+      "output": 2382
+     },
+     "by": "gpt-5-mini",
+     "descontados": []
+    },
+    {
+     "id": "global:importes-catalogo",
+     "verdict": "cumple",
+     "reason": "3 importes, todos del catalogo",
+     "by": "auto"
+    },
+    {
+     "id": "global:un-saludo",
+     "verdict": "cumple",
+     "reason": "se presenta 1 vez/veces",
+     "by": "auto"
+    },
+    {
+     "id": "global:sin-repreguntas",
+     "verdict": "revisar",
+     "reason": "[evidencia del cliente no encontrada] Pregunta si ya tienen el curso Advanced Open Water cuando el cliente ya indicó claramente que son Advanced O.W.",
+     "evidencia_bot": "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n\nPara recomendarte bien: ¿ya tienen el *Curso Advanced Open Water* o quieren sacarla con el curso? 🤿",
+     "evidencia_cliente": "CLIENTE: Hola!! Te contacto desde Argentina.  Estaremos visitando Cartagena y queria coordinar inmersiones en Isla del Rosario.  Somos una pareja Advanced O.W.",
+     "problemas": [
+      {
+       "evidencia_bot": "¡Hola! 🪸 Soy *Coral*, de *Diving Planet* — buceamos todo el año en las Islas del Rosario, saliendo desde Cartagena o desde las propias islas. ¡Qué alegría tenerte por acá! Con muchísimo gusto te ayudo a armar tu plan. 🌊\n\nPara recomendarte bien: ¿ya tienen el *Curso Advanced Open Water* o quieren sacarla con el curso? 🤿",
+       "evidencia_cliente": "CLIENTE: Hola!! Te contacto desde Argentina.  Estaremos visitando Cartagena y queria coordinar inmersiones en Isla del Rosario.  Somos una pareja Advanced O.W.",
+       "motivo": "Pregunta si ya tienen el curso Advanced Open Water cuando el cliente ya indicó claramente que son Advanced O.W."
+      },
+      {
+       "evidencia_bot": "¿Quieres que te cuente las opciones de planes y precios para salir desde Cartagena o ya desde las islas?\n\nPara recomendarte bien: ¿ya tienen el *Curso Advanced Open Water* o quieren sacarla con el curso? 🤿",
+       "evidencia_cliente": "CLIENTE: Hola!! Te contacto desde Argentina.  Estaremos visitando Cartagena y queria coordinar inmersiones en Isla del Rosario.  Somos una pareja Advanced O.W.",
+       "motivo": "Vuelve a preguntar si tienen Advanced Open Water a pesar de que el cliente ya lo indicó."
+      },
+      {
+       "evidencia_bot": "¡Tranqui! El precio por noche lo maneja directamente cada hotel, así que lo mejor es que contactes con ellos para esa info. Nosotros no gestionamos alojamiento, solo las inmersiones y la logística de buceo. \n\nSi quieres, te puedo contar los planes y precios de buceo desde las islas, donde la recogida en tu hotel con acceso marítimo está incluida sin costo extra. ¿Quieres que te pase esa info?\n\nPara recomendarte bien: ¿ya tienen el *Curso Advanced Open Water* o quieren sacarla con el curso? 🤿",
+       "evidencia_cliente": "CLIENTE: Hola!! Te contacto desde Argentina.  Estaremos visitando Cartagena y queria coordinar inmersiones en Isla del Rosario.  Somos una pareja Advanced O.W.",
+       "motivo": "Reformula nuevamente la misma pregunta sobre si tienen Advanced Open Water pese a que ya lo comunicaron."
+      },
+      {
+       "evidencia_bot": "¡Qué bueno que ya estás en las Islas del Rosario! 😊\n\nLa lancha de buceo sale desde nuestro centro de buceo en Isla Grande, y si tu hotel tiene acceso por lancha, te recogemos directamente ahí a las 9:30 a.m. para llevarte al centro, donde te entregamos el equipo y empezamos las inmersiones. Al final del día, te llevamos de regreso a tu hotel.\n\nAsí que no tienes que preocuparte por ir al muelle, la recogida y el regreso están incluidos si tu hotel tiene acceso marítimo.\n\n¿Quieres que te cuente los planes y precios para bucear ya desde las islas?\n\nPara recomendarte bien: ¿ya tienen el *Curso Advanced Open Water* o quieren sacarla con el curso? 🤿",
+       "evidencia_cliente": "CLIENTE: Hola!! Te contacto desde Argentina.  Estaremos visitando Cartagena y queria coordinar inmersiones en Isla del Rosario.  Somos una pareja Advanced O.W.",
+       "motivo": "Pregunta de nuevo si tienen Advanced Open Water pese a que el cliente ya declaró que sí."
+      },
+      {
+       "evidencia_bot": "¡Qué bueno que ya estás en las Islas del Rosario! 🌊\n\nPara bucear 2 inmersiones diurnas desde tu hotel en las islas (con recogida incluida si tiene acceso por lancha), la opción que tenemos es el *Paquete de 3 inmersiones* que incluye 2 inmersiones diurnas + 1 nocturna en un día. \n\nEl precio es 188 USD online (con 10% de descuento por reservar en la web) o 209 USD normal por persona. Almuerzo no está incluido y se requiere certificación.\n\nNo ofrecemos solo 2 inmersiones diurnas sueltas desde las islas, pero este paquete es la mejor opción para lo que buscas.\n\nAquí te dejo el link para que puedas ver más detalles y reservar si quieres:  \nhttps://book.divingplanet.org/book/package-of-3-dives-already-on-island/22?language=es\n\n¿Quieres que te explique más sobre el plan o te ayudo a armar la reserva?\n\nPara recomendarte bien: ¿ya tienen el *Curso Advanced Open Water* o quieren sacarla con el curso? 🤿",
+       "evidencia_cliente": "CLIENTE: Hola!! Te contacto desde Argentina.  Estaremos visitando Cartagena y queria coordinar inmersiones en Isla del Rosario.  Somos una pareja Advanced O.W.",
+       "motivo": "Al final de la respuesta vuelve a preguntar la misma información que el cliente ya proporcionó (si tienen Advanced)."
+      },
+      {
+       "evidencia_bot": "Entiendo que se quedarán en el hotel.\n\nPara recomendarte bien: ¿ya tienen el *Curso Advanced Open Water* o quieren sacarla con el curso? 🤿",
+       "evidencia_cliente": "CLIENTE: Hola!! Te contacto desde Argentina.  Estaremos visitando Cartagena y queria coordinar inmersiones en Isla del Rosario.  Somos una pareja Advanced O.W.",
+       "motivo": "Nueva repregunta sobre si tienen Advanced Open Water a pesar de que el cliente ya indicó que sí."
+      },
+      {
+       "evidencia_bot": "¡Buena pregunta! 😊 Los precios para bucear desde las Islas del Rosario son diferentes a los que salen desde Cartagena porque no incluyen el transporte en lancha desde el continente ni el almuerzo.\n\nPor ejemplo, el paquete de 3 inmersiones desde las islas cuesta 188 USD online, mientras que saliendo desde Cartagena es más caro porque incluye lancha y almuerzo.\n\nAsí que el costo no es el mismo; desde la isla suele ser un poco más económico porque no incluye esos servicios.\n\n¿Quieres que te pase los precios exactos para los planes desde las islas o prefieres los que salen desde Cartagena?\n\nPara recomendarte bien: ¿ya tienen el *Curso Advanced Open Water* o quieren sacarla con el curso? 🤿",
+       "evidencia_cliente": "CLIENTE: Hola!! Te contacto desde Argentina.  Estaremos visitando Cartagena y queria coordinar inmersiones en Isla del Rosario.  Somos una pareja Advanced O.W.",
+       "motivo": "Una vez más el bot pide confirmar si tienen Advanced Open Water pese a que el cliente lo especificó al inicio."
+      }
+     ],
+     "usage": {
+      "input": 52747,
+      "cached": 51968,
+      "output": 4184
+     },
+     "by": "gpt-5-mini",
+     "descontados": []
+    },
+    {
+     "id": "global:sin-fugas",
+     "verdict": "cumple",
+     "reason": "El bot sólo usó nombres públicos de servicios, precios oficiales y un enlace de reserva público; no reveló nombres de sistemas internos, código ni identificadores internos con guiones bajos.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "usage": {
+      "input": 52773,
+      "cached": 51968,
+      "output": 829
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "hoteles-base-y-alojamiento",
+     "verdict": "cumple",
+     "reason": "El bot menciona explícitamente que la base está en el Hotel San Pedro de Majagua y el Hotel Cocoliso y aclara que el alojamiento no está incluido y debe reservarse directamente con el hotel, cumpliendo el criterio.",
+     "evidencia_bot": "¡Claro que sí! 😊 Nuestra base de buceo está en dos hoteles en Isla Grande, que son el Hotel San Pedro de Majagua y el Hotel Cocoliso. \n\nAdemás, coordinamos recogida en otros hoteles con acceso marítimo en las islas, como Rosario de Mar, Secreto, Ubuntu, Mulata, Eco Hotel Las Palmeras y Pao Pao. \n\nEl alojamiento no está incluido en los planes de buceo, así que tendrías que reservar directo con el hotel que elijan. \n\nSi se quedan en las islas, la recogida en lancha desde el hotel está incluida sin costo adicional, siempre que el hotel tenga acceso por agua. \n\n¿Quieres que te cuente las opciones de planes y precios para salir desde Cartagena o ya desde las islas?\n\nPara recomendarte bien: ¿ya tienen el *Curso Advanced Open Water* o quieren sacarla con el curso? 🤿",
+     "evidencia_cliente": null,
+     "usage": {
+      "input": 52967,
+      "cached": 50944,
+      "output": 729
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "precio-islas-2-buzos-usd",
+     "verdict": "no_cumple",
+     "reason": "El bot no dio el precio correcto del catálogo para 2 inmersiones desde las islas en USD (124 USD por persona) y afirmó que no ofrece 2 inmersiones sueltas, ofreciendo en cambio el paquete de 3 inmersiones.",
+     "evidencia_bot": "¡Qué bueno que ya estás en las Islas del Rosario! 🌊\n\nPara bucear 2 inmersiones diurnas desde tu hotel en las islas (con recogida incluida si tiene acceso por lancha), la opción que tenemos es el *Paquete de 3 inmersiones* que incluye 2 inmersiones diurnas + 1 nocturna en un día. \n\nEl precio es 188 USD online (con 10% de descuento por reservar en la web) o 209 USD normal por persona. Almuerzo no está incluido y se requiere certificación.\n\nNo ofrecemos solo 2 inmersiones diurnas sueltas desde las islas, pero este paquete es la mejor opción para lo que buscas.\n\nAquí te dejo el link para que puedas ver más detalles y reservar si quieres:  \nhttps://book.divingplanet.org/book/package-of-3-dives-already-on-island/22?language=es\n\n¿Quieres que te explique más sobre el plan o te ayudo a armar la reserva?\n\nPara recomendarte bien: ¿ya tienen el *Curso Advanced Open Water* o quieren sacarla con el curso? 🤿",
+     "evidencia_cliente": "Me puedes decir el precio de las 2 inmersiones? Desde ese hotel?",
+     "usage": {
+      "input": 52966,
+      "cached": 51968,
+      "output": 1134
+     },
+     "by": "gpt-5-mini"
+    },
+    {
+     "id": "diferente-precio-cartagena-vs-islas",
+     "verdict": "cumple",
+     "reason": "El bot explicó explícitamente que los precios desde las islas y desde Cartagena son distintos, indicando la razón (no incluyen transporte en lancha ni almuerzo) y confirmando que el costo no es el mismo.",
+     "evidencia_bot": "¡Buena pregunta! 😊 Los precios para bucear desde las Islas del Rosario son diferentes a los que salen desde Cartagena porque no incluyen el transporte en lancha desde el continente ni el almuerzo.\n\nPor ejemplo, el paquete de 3 inmersiones desde las islas cuesta 188 USD online, mientras que saliendo desde Cartagena es más caro porque incluye lancha y almuerzo.\n\nAsí que el costo no es el mismo; desde la isla suele ser un poco más económico porque no incluye esos servicios.\n\n¿Quieres que te pase los precios exactos para los planes desde las islas o prefieres los que salen desde Cartagena?",
+     "evidencia_cliente": "Este costo es el mismo saliendo del continente o de la isla?",
+     "usage": {
+      "input": 52968,
+      "cached": 51968,
+      "output": 992
+     },
+     "by": "gpt-5-mini"
+    }
+   ]
+  }
+ ]
+}

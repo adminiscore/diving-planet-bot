@@ -13,7 +13,34 @@ Read this file before changing code in the Diving Planet Bot. For a quick versio
 
 > **📏 LEER ANTES DE MEDIR — decisiones del 24-sep-2026 (Gadea):** (1) latencia y llamadas con nuestros logs `[TURN_METRICS]` + `scripts/turn_metrics.py`, no con Langfuse (plan gratuito superado, reinicio 16-oct); (2) pruebas A/B por escalones, juzgando solo los diálogos que cambian. Todo en `docs/robustness/protocolo-medicion.md`.
 
-### ▶️ RETOMAR AQUÍ — 7-oct tarde (Gonzalo): punto 3 CERRADO — opción C medida, arreglada y ENCENDIDA en PRE
+### ▶️ RETOMAR AQUÍ — 7-oct noche (Gadea con Claude): punto 4 (s4-26) CERRADO — 6 arreglos PROMOCIONADOS en PRE
+
+**Estado.** PRE sirve `feature/pre_gadea` con los 6 flags del punto 4 **encendidos** (HISTORY 0.30.1). Ronda core
+`2026-10-07-s426-B`: **93,0 → 95,6 %**, 8 mejoras, 1 regresión ajena (enrutador). `acompanante-goteo` y
+`paquete-en-carrito` pasan todo en la mini-ronda `s426-extra-B`. Tests: `tests/test_s4_26_supuestos.py`.
+
+**Ojo antes de la próxima ronda:**
+- **El juez del golden cambió** (confirmar un nivel PADI ambiguo no es repreguntar; decisión de Gadea): la caché no
+  vale. **A para la próxima ronda core = `2026-10-07-s426-B`, re-juzgada con el juez nuevo** antes de comparar.
+- **Latencia:** RAG p50 4,2 s / p95 9,4 s en B, por la franja de la tarde de OpenAI (ver HISTORY). Medid la próxima ronda
+  por la mañana y comparad.
+- Ahorrar crédito de OpenAI (Gadea): re-juzgar/relanzar solo lo afectado (`--ids`, caché, escalones con pocas reps).
+- `scripts/reproducir_juez_pre.py --codigo-local` prueba vuestro código en PRE sin desplegar.
+
+**Siguiente, en orden (decidido con Gadea):**
+1. **s4-27 — búsqueda:** el plan concreto siempre en el contexto + fichas gemelas de origen (NO fichas cortas). Ojo: la
+   reescritura de la pregunta solo corre con < 8 palabras, así que "a qué plan se refiere" debe salir de otro sitio
+   (propuesta: una pregunta de Jev en la misma llamada). Primero, escalón barato: forzar la ficha correcta y ver si el bot
+   da los 124 USD de las 2 inmersiones desde las islas (`precio-desde-islas-vs-cartagena`). Medir con `rag_piezas`.
+2. **s4-28 — revisión de las regex que DECIDEN solas** (~108 regex, ~156 usos): inventario propone/decide; donde Jev ya
+   tiene la pregunta, manda Jev (patrón `_menciona_a_alguien`); registrar desacuerdos regex-Jev y pasarlos por el golden
+   visible y los logs de PRE para encontrar casos que se nos pasaron.
+3. Pendientes del punto 4: `logistica-isla-fragata` (la regla de la condición es parcial: 3/4) y el criterio
+   `acompanante-lancha-escalar` de `minicurso-islas-y-acompanante-lancha`, desfasado con la decisión del 1-oct
+   (el acompañante desde las islas existe, al mismo precio): proponer a Gadea actualizarlo.
+4. s4-29 (futuro): no repetir una pregunta que el cliente ignoró dos veces. Después, plan principal: paso 11 (R6), 12 (Q5).
+
+### (anterior) 7-oct tarde (Gonzalo): punto 3 CERRADO — opción C medida, arreglada y ENCENDIDA en PRE
 
 **Estado.** PRE sirve `feature/pre_alvaro` con `RAG_ORIGEN_PREGUNTA` **encendido** (promocionado). **Integrad
 `feature/pre_alvaro` en vuestra rama antes de subir.** HISTORY 0.30.0; evidencia en `docs/robustness/origen-c/README.md`.

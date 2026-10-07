@@ -1,6 +1,21 @@
 History
 =======
 
+0.30.1 - (2026-10-07)
+----------------------
+* **Punto 4 (s4-26, supuestos sueltos de la reserva): 6 arreglos por causa, medidos y PROMOCIONADOS** (Claude con Gadea). Causas encontradas reproduciendo los diálogos visibles en local (replay con el estado de la reserva turno a turno) y en PRE (`reproducir_juez_pre --codigo-local`, opción nueva: prueba sin desplegar). Examen oculto sin tocar.
+  - `JEV_ACOMPANANTE_MANDA`: la regex de "menciona a alguien" leía el "son" de "¿cuántos días son?" como *son* (hijo) contra Jev 0,04 → "¡Qué bien que venga alguien más!". Ahora, si Jev está seguro de que no hay otra persona, manda Jev en las 5 decisiones del acompañante (`_menciona_a_alguien`).
+  - `RED_MENCIONES_CON_PRINCIPAL`: la red de "mención perdida" convertía "buceo"/"diving" en un acompañante de buceo certificado ("¿Cuántos serían para buceo certificado?"), saltándose a Jev y al LLM. Sin actividad principal no hay "otra"; con ella, una mención genérica es del producto principal (`_menciones_de_otro_producto`).
+  - `CIERRE_SIN_REPETIR`: con la reserva cerrada y sin cambios, "¿cuánto dura?" se contesta sola (antes se le pegaba la tarjeta con precio y link).
+  - `JEV_PERSONA_YA_CONTADA`: pregunta nueva de Jev en la misma llamada (`adds_person`): "él quiere hacer snorkel" no es una persona nueva → se reparte el grupo sin "¿seguís siendo 2?". Banco propio + banco ciego: 0/20 personas nuevas por debajo del umbral.
+  - `RAG_CONDICIONES_ABIERTAS` (regla de prompt): el RAG no da por cumplida una condición del cliente ("si tu hotel tiene acceso por lancha"). **Parcial:** 3 de 4 bien (antes 0/2); en la mini-ronda volvió a darla por cumplida.
+  - `RAG_PLAN_ELEGIDO`: el contexto del RAG ya no dice "carrito" ("el curso que tienes en tu carrito").
+  - **Descartados con medida:** el reparto afirmado por la actividad (acababa en "¿lo cambio?" y en un reparto peor) y la regla de prompt "el catálogo es la lista completa" (el RAG siguió negando las 2 inmersiones desde las islas, 3/3).
+  - **Ronda core `2026-10-07-s426-B`** (1289e58) frente a `origen-c2-B`, referencia curada: **93,0 → 95,6 %**, 22 → 24/32 sin fallos, **8 mejoras / 1 regresión ajena** (`descuento-online-sin-codigo`: el turno lo decide el enrutador LLM por duda de Jev, 0,38; esta vez contestó bien el descuento pero no ofreció el asesor). **Mini-ronda `s426-extra-B`** (4 diálogos del punto 4 fuera de la core): `acompanante-goteo` y `paquete-en-carrito` pasan todo; `logistica-isla-fragata` sigue (la condición, ver arriba); `precio-desde-islas` sigue por la búsqueda (s4-27).
+  - **Latencia:** RAG p50 3,5 → 4,2 s, p95 4,6 → 9,4 s; reserva p50 igual (1,44 s). Mismas llamadas por turno y Jev igual (396 ms): es la franja horaria de OpenAI (B a las 13:00 UTC, A a las 10:30; las rondas de la tarde salen siempre 3,9-4,3 s de p50 con cualquier código). El p95 lo arrastran 2 turnos sueltos (21 y 14 s) con las mismas llamadas que en A. **Vigilar en la próxima ronda (por la mañana).**
+  - **Juez del golden:** confirmar un dato ambiguo (un nivel PADI nombrado sin decir si ya se tiene) NO es repreguntar (decisión de Gadea). Cambia el prompt del juez: la caché se invalida; re-juzgar la A de la próxima ronda (`s426-B`) antes de comparar.
+  - **Nuevas en Plan Coral:** s4-27 (búsqueda: el plan concreto siempre en el contexto + fichas gemelas de origen), s4-28 (revisión de las regex que deciden solas), s4-29 (futuro: no repetir una pregunta ignorada dos veces). Gasto OpenAI de la tarde ≈ 2,5 $ (escalones 0 + rondas + juez 0,52 $).
+
 0.30.0 - (2026-10-07)
 ----------------------
 * **Punto 3, opción C: medida, arreglada y PROMOCIONADA (encendida en PRE); la puerta mira si la RESPUESTA cotiza** (Gonzalo). Evidencia: `docs/robustness/origen-c/README.md`.
