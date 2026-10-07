@@ -13,7 +13,15 @@ Read this file before changing code in the Diving Planet Bot. For a quick versio
 
 > **📏 LEER ANTES DE MEDIR — decisiones del 24-sep-2026 (Gadea):** (1) latencia y llamadas con nuestros logs `[TURN_METRICS]` + `scripts/turn_metrics.py`, no con Langfuse (plan gratuito superado, reinicio 16-oct); (2) pruebas A/B por escalones, juzgando solo los diálogos que cambian. Todo en `docs/robustness/protocolo-medicion.md`.
 
-### ▶️ RETOMAR AQUÍ — 7-oct noche (Gadea con Claude): punto 4 (s4-26) CERRADO — 6 arreglos PROMOCIONADOS en PRE
+### ▶️ RETOMAR AQUÍ — 7-oct noche (Gadea con Claude → sigue Gonzalo): punto 4 (s4-26) CERRADO — 6 arreglos PROMOCIONADOS en PRE
+
+**Para Gonzalo (Gadea, 7-oct):** continúas tú desde aquí, con el orden de abajo (s4-27 → s4-28). Todo está subido en
+`feature/pre_gadea` y PRE lo sirve sano. **Dos decisiones pendientes de Gadea**, no las toques sin su visto bueno:
+(a) actualizar el criterio `acompanante-lancha-escalar` (`minicurso-islas-y-acompanante-lancha`) a la decisión del 1-oct
+(el acompañante desde las islas existe, al mismo precio); (b) en `manual-duracion-curso` el juez marca como invento que
+"quiero sacarme la certificación" se lea como Open Water: si para el negocio la primera certificación es siempre el Open
+Water, ajustar el criterio. Herramientas nuevas: `python -m scripts.depurar_dialogo <dialogo>` (replay local con el
+estado de la reserva por turno: así se encontraron las causas del punto 4) y `reproducir_juez_pre --codigo-local`.
 
 **Estado.** PRE sirve `feature/pre_gadea` con los 6 flags del punto 4 **encendidos** (HISTORY 0.30.1). Ronda core
 `2026-10-07-s426-B`: **93,0 → 95,6 %**, 8 mejoras, 1 regresión ajena (enrutador). `acompanante-goteo` y
