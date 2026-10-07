@@ -1,7 +1,7 @@
 {
  "meta": {
-  "generado": "2026-10-07T11:45:42+00:00",
-  "commit": "47109dc",
+  "generado": "2026-10-07T12:55:28+00:00",
+  "commit": "e760ada",
   "rama": "feature/pre_gadea"
  },
  "vistas": {
@@ -1586,6 +1586,17 @@
    "sin_efecto": null
   },
   {
+   "nombre": "cierre_sin_repetir",
+   "area": "Reserva",
+   "titulo": "No repite la tarjeta de la reserva",
+   "texto": "Con la reserva ya cerrada y sin cambios, una pregunta como '¿cuánto dura?' se contesta sola, sin volver a pegar el precio y el link.",
+   "codigo": true,
+   "pre": true,
+   "fijado_en_pre": true,
+   "usado_por": [],
+   "sin_efecto": null
+  },
+  {
    "nombre": "corrections_v2",
    "area": "Reserva",
    "titulo": "Correcciones sin repetir",
@@ -1609,6 +1620,28 @@
    "usado_por": [
     "r_revisor"
    ],
+   "sin_efecto": null
+  },
+  {
+   "nombre": "jev_acompanante_manda",
+   "area": "Reserva",
+   "titulo": "Jev decide si viene alguien más",
+   "texto": "Si Jev está seguro de que el mensaje no mete a otra persona, una palabra suelta ya no inventa un acompañante: 'cuántos días son' no es 'son' (hijo, en inglés).",
+   "codigo": true,
+   "pre": true,
+   "fijado_en_pre": true,
+   "usado_por": [],
+   "sin_efecto": null
+  },
+  {
+   "nombre": "jev_persona_ya_contada",
+   "area": "Reserva",
+   "titulo": "Sabe si 'él' ya estaba contado",
+   "texto": "Jev distingue a alguien que ya está en el grupo ('él quiere hacer snorkel') de una persona nueva ('también viene mi hermana'); en el primer caso Coral reparte el grupo sin preguntar '¿seguís siendo 2?'.",
+   "codigo": true,
+   "pre": true,
+   "fijado_en_pre": true,
+   "usado_por": [],
    "sin_efecto": null
   },
   {
@@ -1941,6 +1974,17 @@
    "sin_efecto": null
   },
   {
+   "nombre": "rag_condiciones_abiertas",
+   "area": "Preguntas",
+   "titulo": "No da por cumplida una condición",
+   "texto": "Si algo depende de un dato del cliente que no consta (que su hotel tenga acceso por lancha), Coral lo dice como condición también en los turnos siguientes, en vez de darlo por hecho.",
+   "codigo": true,
+   "pre": true,
+   "fijado_en_pre": true,
+   "usado_por": [],
+   "sin_efecto": null
+  },
+  {
    "nombre": "rag_contesta_lo_que_sabe",
    "area": "Preguntas",
    "titulo": "Contestar la parte que sabe",
@@ -1986,6 +2030,17 @@
    "usado_por": [
     "r_escribir"
    ],
+   "sin_efecto": null
+  },
+  {
+   "nombre": "rag_plan_elegido",
+   "area": "Preguntas",
+   "titulo": "Habla del plan, no del carrito",
+   "texto": "Lo que el cliente ya eligió se le describe a Coral como 'el plan que está armando': el cliente no ve ningún carrito y Coral ya no le dice 'el curso que tienes en tu carrito'.",
+   "codigo": true,
+   "pre": true,
+   "fijado_en_pre": true,
+   "usado_por": [],
    "sin_efecto": null
   },
   {
@@ -2039,6 +2094,17 @@
    "usado_por": [
     "b_slotfill_close"
    ],
+   "sin_efecto": null
+  },
+  {
+   "nombre": "red_menciones_con_principal",
+   "area": "Reserva",
+   "titulo": "'Buceo' no es un segundo plan",
+   "texto": "Una mención genérica de buceo ya no saca un acompañante de buceo certificado de la nada: sin actividad principal es la del grupo, y con ella es parte del mismo plan.",
+   "codigo": true,
+   "pre": true,
+   "fijado_en_pre": true,
+   "usado_por": [],
    "sin_efecto": null
   },
   {

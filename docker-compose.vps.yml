@@ -235,6 +235,16 @@ services:
       # PRE pasa (docs/robustness/origen-c/). Ronda core B: la puerta pasa a mirar si la RESPUESTA cotiza; ronda
       # origen-c2-B sin regresiones reales -> PROMOCIONADO, ENCENDIDO. Revert = "false" aqui y en config.py.
       RAG_ORIGEN_PREGUNTA: "true"
+      # Punto 4 (s4-26, 7-oct), supuestos sueltos de la reserva, EN MEDICION (ronda core frente a origen-c2-B):
+      # Jev manda sobre la regex de "menciona a alguien"; la red de "mencion perdida"
+      # no saca un acompañante de "buceo"; el cierre sin cambios no se repite tras una respuesta; el RAG no da por
+      # cumplida una condicion del cliente; el contexto del RAG no dice "carrito"; Jev distingue persona nueva de ya contada. Revert = quitar estas lineas y False en config.py.
+      JEV_ACOMPANANTE_MANDA: "true"
+      RED_MENCIONES_CON_PRINCIPAL: "true"
+      CIERRE_SIN_REPETIR: "true"
+      RAG_CONDICIONES_ABIERTAS: "true"
+      RAG_PLAN_ELEGIDO: "true"
+      JEV_PERSONA_YA_CONTADA: "true"
       # rag-5 (30-sep): el RAG arranca a la vez que el enrutador (Jev) y se aprovecha solo con el mismo contexto
       # (si no, se rehace). PROMOCIONADO 1-oct (HISTORY 0.29.88). Revert = "false" aqui y en config.py.
       RAG_ADELANTADO: "true"

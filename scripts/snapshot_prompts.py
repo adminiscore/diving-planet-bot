@@ -195,6 +195,8 @@ def _collect() -> dict[str, str]:
     add("info/rag_payment.v2_en", info.RAG_PAYMENT_V2_EN)
     add("info/rag_concise.es", info.RAG_CONCISE_ES)
     add("info/rag_concise.en", info.RAG_CONCISE_EN)
+    add("info/rag_condiciones.es", info.RAG_CONDICIONES_ES)
+    add("info/rag_condiciones.en", info.RAG_CONDICIONES_EN)
     add("info/rag_intro.long_es", info.RAG_INTRO_LONG_ES)
     add("info/rag_intro.short_es", info.RAG_INTRO_SHORT_ES)
     add("info/rag_intro.long_en", info.RAG_INTRO_LONG_EN)

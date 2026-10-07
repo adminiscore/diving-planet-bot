@@ -320,6 +320,23 @@ RAG_NO_TENGO_V2_EN = (
     "but I can help you with activities, prices or putting your booking together\")."
 )
 
+# s4-26 (7-oct, flag `rag_condiciones_abiertas`): una CONDICION dicha en un turno ("si tu hotel tiene acceso por lancha,
+# te recogemos") pasaba a HECHO en el siguiente ("como te alojas en un hotel con acceso por lancha, como el Fragata, la
+# recogida esta incluida"), sin que nadie lo dijera (logistica-isla-fragata-regreso-otro-dia, 2/2 en PRE; el Fragata
+# no esta en la lista de hoteles).
+RAG_CONDICIONES_ES = (
+    "Condiciones del cliente: si algo depende de un dato del cliente que no consta (que su hotel tenga acceso por "
+    "lancha, su nivel de buceo, su edad…), dilo como condición (\"si tu hotel tiene acceso por lancha, …\"). No lo "
+    "des por cumplido aunque ya lo hayas dicho antes como condición: solo es un hecho si lo dice el cliente o el "
+    "contexto (por ejemplo, si su hotel está en la lista de hoteles con recogida)."
+)
+RAG_CONDICIONES_EN = (
+    "Customer conditions: if something depends on a customer detail that is not stated (whether their hotel has "
+    "boat access, their diving level, their age…), say it as a condition (\"if your hotel has boat access, …\"). Do "
+    "not treat it as met even if you already mentioned it as a condition: it is only a fact if the customer or the "
+    "context says so (for example, if their hotel is on the list of hotels with pick-up)."
+)
+
 RAG_PAYMENT_OLD_ES = (
     "- Aunque en el contexto aparezcan flujos de pago (formularios, porcentajes como 50%, transferencias, etc.), "
     "NO describas el proceso exacto de pago ni montos de anticipo. Explica de forma general que un asesor humano te "

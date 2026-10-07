@@ -1192,6 +1192,21 @@ def _mentions_person(message: str) -> bool:
     return bool(_MENTIONS_PERSON_RE.search(masked))
 
 
+def _menciona_a_alguien(state: ConversationState, message: str) -> bool:
+    """s4-26 (flag `jev_acompanante_manda`): ¿el mensaje menciona a otra persona? Si Jev esta seguro de que
+    no (companion_joins < COMPANION_NONE_MAX, la puerta de u3-6), manda Jev; si no lo sabemos, la regex de
+    siempre. Todas las decisiones del acompañante del turno pasan por aqui."""
+    if settings.jev_acompanante_manda:
+        from src.agents.jev_router import COMPANION_NONE_MAX  # lazy
+
+        p = getattr(state, "_jev_companion", None)
+        if p is not None and p < COMPANION_NONE_MAX:
+            if _mentions_person(message):
+                logger.info(f"[CORE][S4-26] la regex ve a otra persona y Jev no ({p:.2f}): manda Jev")
+            return False
+    return _mentions_person(message)
+
+
 # Compañero SINGULAR e inequívoco (un/una/mi/a + sustantivo en singular, o "a
 # friend"/"someone"): el número de personas es 1 sin ambigüedad, se puede
 # asumir con seguridad sin preguntar. Deliberadamente NO matchea plurales
@@ -1378,6 +1393,25 @@ def _mentioned_product_activities(message: str) -> list:
         if "minicourse" in acts and not _EXPLICIT_MINICOURSE_NAME_RE.search(message):
             acts.remove("minicourse")
     return acts
+
+
+def _menciones_de_otro_producto(state: ConversationState, message: str, acts: list) -> list:
+    """s4-26 (flag `red_menciones_con_principal`): lo que la red de "mención perdida" puede tomar por
+    la actividad de un ACOMPAÑANTE. Sin actividad principal no hay "otra" actividad: la mención es la
+    del grupo y la pide su propia pregunta ("My husband and I are booked for the diving excursion" ->
+    "How many people for certified diving?", con el buceo ya descartado por Jev). Con la principal
+    sabida, una mención GENÉRICA (sin su respaldo específico) es contexto del producto principal, la
+    misma regla que `_mentioned_product_activities` aplica cuando se nombra un curso ("regalarle a mi
+    esposo una experiencia de buceo" en un minicurso -> "¿Cuántos serían para buceo certificado?")."""
+    main = _effective_activity(state)
+    if not main:
+        return []
+    out = list(acts)
+    if main != "certified_diving" and "certified_diving" in out and not _STRONG_CERTIFIED_DIVING_RE.search(message):
+        out.remove("certified_diving")
+    if main != "minicourse" and "minicourse" in out and not _EXPLICIT_MINICOURSE_NAME_RE.search(message):
+        out.remove("minicourse")
+    return out
 
 
 # Auditoría 2026-08-26 (batería sintética contra PRE, Grupo 3, portado de
@@ -1960,7 +1994,7 @@ def _recommend_inferred_minicourse(intent, state: ConversationState, message: st
     # Con acompanante o reparto del grupo el flujo pregunta otra cosa antes que la actividad y la
     # recomendacion no llegaba a mostrarse ("regalarle a mi esposo una experiencia de buceo", ronda B).
     if (intent.group_allocation or state.detected_group_allocation or state.pending_companion_activity
-            or state.pending_companion_queue or _mentions_person(message)):
+            or state.pending_companion_queue or _menciona_a_alguien(state, message)):
         return
     suggestion = "padi_open_water" if _asks_for_a_course(message) else "minicourse"
     logger.info(f"[CORE][U3-5] minicurso deducido, no elegido: se recomienda {suggestion} y lo confirma el cliente")
@@ -3008,9 +3042,28 @@ def _add_or_ask_companion(state: ConversationState, message: str, activity: str,
         and not _ADDITION_CUE_RE.search(message)
     ):
         state.pending_companion_in_group = {"activity": activity, "qty": qty}
+        if _jev_dice_ya_contada(state):
+            # s4-26: "él quiere hacer snorkel" habla de alguien del grupo; es lo mismo que contestar "seguimos
+            # siendo {total}" a la pregunta, sin hacerla (acompanante-goteo: "¿seguís siendo 2?" tras "con mi amigo").
+            logger.info(f"[CORE][S4-26] companion {activity} x{qty}: Jev, ya contado en {total} -> se mueve")
+            _apply_group_total(state, total)
+            return
         logger.info(f"[CORE] companion {activity} x{qty}: ¿ya contado en {total}? -> se pregunta el total")
         return
     _merge_companion_activity(state, activity, qty)
+
+
+def _jev_dice_ya_contada(state: ConversationState) -> bool:
+    """s4-26 (flag `jev_persona_ya_contada`): ¿Jev esta SEGURO de que el mensaje no suma a una persona nueva
+    (adds_person < ADDS_PERSON_NOT_MAX), sino que habla de alguien que ya estaba en el grupo? Ausente = no lo
+    sabemos -> se pregunta el total, como hoy. Banco ciego (frases propias, no del golden): 0/10 personas nuevas
+    por debajo del umbral (la mas baja 0,45), 9/10 ya contadas por debajo."""
+    if not settings.jev_persona_ya_contada:
+        return False
+    from src.agents.jev_router import ADDS_PERSON_NOT_MAX  # lazy
+
+    p = getattr(state, "_jev_adds_person", None)
+    return p is not None and p < ADDS_PERSON_NOT_MAX
 
 
 def _apply_group_total(state: ConversationState, total: int) -> bool:
@@ -3844,6 +3897,9 @@ async def _routing_phase(
     # u3-6: probabilidad de Jev de que el mensaje meta a otra persona en la reserva (filtro previo del
     # LLM de señales). Ausente = no lo sabemos -> se llama al LLM como hoy.
     state._jev_companion = routing_signals.get("companion_joins")
+    # s4-26: probabilidad de Jev de que el mensaje SUME a una persona nueva (no a alguien ya contado). Ausente = no lo
+    # sabemos.
+    state._jev_adds_person = routing_signals.get("adds_person")
 
     # COMPRENDER (carryover PRIMERO): si hay un slot pendiente y este mensaje
     # lo RESUELVE, el carryover gana aunque el mensaje "parezca pregunta" por
@@ -4193,7 +4249,7 @@ async def _extraction_phase_body(
     # sin ampliar el disparo a mensajes que no mencionan actividad alguna.
     companion_ambiguous = bool(
         (prev_main_activity in _ACTIVITY_TO_CART_TYPE or state.detected_activity in _ACTIVITY_TO_CART_TYPE)
-        and _mentions_person(message)
+        and _menciona_a_alguien(state, message)
         and not companion_merged_fastpath
         and not group_composition_resolved_by_base_extraction
     )
@@ -4258,7 +4314,7 @@ async def _extraction_phase_body(
         # principio que 6.bis: verificacion determinista del TEXTO por encima
         # de la señal del LLM cuando hay evidencia real de que se equivoca.
         llm_mentions_other_person = bool(signals.get("mentions_other_person"))
-        regex_mentions_other_person = _mentions_person(message)
+        regex_mentions_other_person = _menciona_a_alguien(state, message)
         if (
             llm_mentions_other_person
             and not regex_mentions_other_person
@@ -4434,7 +4490,7 @@ async def _extraction_phase_body(
             # retomaba al final SIN NINGÚN motivo. Si ya estamos en contexto
             # de niños Y el regex determinista (que NO reconoce "niño") no ve
             # a nadie más, no se confía solo en la señal LLM más amplia.
-            and not (state.kids_mention_detected and not _mentions_person(message))
+            and not (state.kids_mention_detected and not _menciona_a_alguien(state, message))
             # Hallazgo en vivo (batería de grupos mixtos contra PRE,
             # 2026-09-01, lote 8): un cliente que dijo explícitamente "solo
             # yo" recibía, turnos después (incluso tras cerrar la reserva),
@@ -4520,7 +4576,9 @@ async def _extraction_phase_body(
     # otra persona (`_mentions_person`) para no disparar en cada mención
     # suelta.
     mentioned = _mentioned_product_activities(message)
-    if mentioned and _mentions_person(message) and not state.pending_companion_queue:
+    if settings.red_menciones_con_principal:
+        mentioned = _menciones_de_otro_producto(state, message, mentioned)
+    if mentioned and _menciona_a_alguien(state, message) and not state.pending_companion_queue:
         accounted = set((state.detected_group_allocation or {}).keys())
         main_act = _effective_activity(state)
         if main_act:
@@ -4684,6 +4742,7 @@ async def _slotfill_close_phase(
     resolved_short = carry["resolved_short"]
     prev_pending = carry["prev_pending"]
     finalized = False
+    cierre_previo = None
 
     # El reparto sigue a un cambio de la actividad principal cuando solo tenia la
     # anterior (tarea 7b, 2026-09-15): "mejor snorkel" con {certified_diving: 2}
@@ -4781,6 +4840,7 @@ async def _slotfill_close_phase(
                 state.step = Step.FREE_TEXT
             else:
                 finalized = True
+                cierre_previo = state.mixed_last_summary
                 response = _finalize(state)
                 # Materializar la nota de lead (el cierre no-colombiano deja solo
                 # pending_lead_note_reason; en el camino legacy la construye
@@ -4823,6 +4883,11 @@ async def _slotfill_close_phase(
         cancel_pending_ack(state)
         if _answer_replaces_the_booking_question(state, answer, finalized=finalized):
             state.quick_replies = []
+            response = answer
+        elif settings.cierre_sin_repetir and finalized and cierre_previo and state.mixed_last_summary == cierre_previo:
+            # s4-26: la reserva ya estaba cerrada y no ha cambiado; la tarjeta (precio, link) ya la tiene el cliente.
+            # Repetirla detrás de cada respuesta ("¿cuánto dura?") era el fallo de manual-duracion-curso.
+            logger.info("[CORE][S4-26] cierre igual al ya enviado: va solo la respuesta")
             response = answer
         elif _answer_asks_the_origin(state, answer):
             response = answer  # la misma pregunta que la de la reserva: va una vez, con sus botones de origen

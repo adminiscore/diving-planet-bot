@@ -203,6 +203,10 @@ def build_system_prompt(lang: str, query: str | None = None) -> str:
         prompt = prompt.replace(RAG_NO_TENGO_OLD_ES, RAG_NO_TENGO_V2_ES).replace(
             RAG_NO_TENGO_OLD_EN, RAG_NO_TENGO_V2_EN
         )
+    if settings.rag_condiciones_abiertas:
+        from src.prompts.info import RAG_CONDICIONES_EN, RAG_CONDICIONES_ES  # lazy
+
+        prompt = f"{prompt}\n\n{RAG_CONDICIONES_ES if lang == 'es' else RAG_CONDICIONES_EN}"
     if settings.rag_concise:
         from src.prompts.info import (  # lazy
             RAG_CONCISE_EN,

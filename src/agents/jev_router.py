@@ -317,6 +317,26 @@ _COMPANION_JOINS_Q = {
     ),
 }
 
+# s4-26 (7-oct, flag `jev_persona_ya_contada`): ¿el mensaje SUMA a una persona nueva al grupo, o habla de alguien que
+# ya estaba? "él quiere hacer snorkel" y "también viene mi hermana que quiere snorkel" dan la misma señal de
+# acompañante y el flujo preguntaba el total ("¿seguís siendo 2?", acompanante-goteo). Solo se usa el lado seguro: por
+# debajo de ADDS_PERSON_NOT_MAX (Jev seguro de que NO es nueva) se mueve dentro del grupo sin preguntar; si duda, se
+# pregunta como hoy. Calibrada con un banco propio y otro ciego (frases distintas): nuevas 0/20 por debajo (la mas baja
+# 0,45), ya contadas 18/20 por debajo.
+ADDS_PERSON = "adds_person"
+ADDS_PERSON_NOT_MAX = 0.2
+_ADDS_PERSON_Q = {
+    "type": "noul",
+    "instructions": (
+        "The message ADDS a new person to the group: someone who joins or comes too and was not counted before "
+        "('también viene mi hermana', 'se suma un amigo', 'my cousin is coming too', 'y otro más que hace snorkel', "
+        "'add one more person'). It is FALSE when it only says what someone ALREADY in the group will do or is like, "
+        "referring to them with a pronoun or a role ('él quiere hacer snorkel', 'ella no está certificada', 'he'd "
+        "rather snorkel', 'mi amigo al final hará snorkel', 'el otro prefiere el minicurso'), when it gives the total "
+        "('somos 3'), or when it talks only about the customer."
+    ),
+}
+
 # rag-5 (1-oct): ¿el mensaje cuenta algo del cliente que haya que APUNTAR como nota? Puerta del extractor de
 # notas (`conversational_core._maybe_capture_notes`): Gonzalo midió el 30-sep que de 26 notas nuevas solo 7
 # eran buenas y 15 eran la pregunta del cliente apuntada como hecho, o inventada ("how much would that be" ->
@@ -382,7 +402,7 @@ def pending_answer_value(slot: str, answer: dict) -> dict:
 _U34_QUESTIONS = (
     ASKS_QUESTION, AFFIRMS_LOCATION, AFFIRMS_ACTIVITY, ACTIVITY_HYPOTHESIS,
     AFFIRMS_CERTIFICATION, AFFIRMS_GROUP, AFFIRMS_NATIONALITY, CORRECTS, ASKS_RECALL, NEEDS_STAFF,
-    CHANGES_DATE, COMPANION_JOINS, PENDING_ANSWER, SHARES_OPEN_FACT,
+    CHANGES_DATE, COMPANION_JOINS, PENDING_ANSWER, SHARES_OPEN_FACT, ADDS_PERSON,
 )
 
 
@@ -419,6 +439,8 @@ def _questions_for_turn(pending_slot: str | None = None) -> dict:
         q[NEEDS_STAFF] = _NEEDS_STAFF_Q
         q[CHANGES_DATE] = _CHANGES_DATE_Q
     q[COMPANION_JOINS] = _COMPANION_JOINS_Q
+    if settings.jev_persona_ya_contada:
+        q[ADDS_PERSON] = _ADDS_PERSON_Q
     if settings.notas_puerta_jev:
         q[SHARES_OPEN_FACT] = _SHARES_OPEN_FACT_Q
     return q
@@ -472,6 +494,9 @@ def answers_to_signals(answers: dict, threshold: float = THRESHOLD) -> dict:
     if COMPANION_JOINS in answers:
         # Se emite la PROBABILIDAD: el filtro solo actua cuando Jev esta seguro de que NO.
         out[COMPANION_JOINS] = (answers.get(COMPANION_JOINS) or {}).get("noul", 1.0)
+    if ADDS_PERSON in answers:
+        # Ausente o sin respuesta = 1.0 ("puede ser nueva"): se pregunta el total, como hoy.
+        out[ADDS_PERSON] = (answers.get(ADDS_PERSON) or {}).get("noul", 1.0)
     if SHARES_OPEN_FACT in answers:
         out[SHARES_OPEN_FACT] = (answers.get(SHARES_OPEN_FACT) or {}).get("noul", 1.0)
     if CHANGES_DATE in answers:

@@ -1964,21 +1964,28 @@ def _build_extra_context(state: ConversationState) -> str | None:
             f"{it.get('qty', 0)} x {it.get('label') or it.get('type', '')}" for it in cart
         )
         if state.language == "es":
+            # s4-26 (flag `rag_plan_elegido`): el cliente no ve ningun "carrito" (ve la tarjeta con el link) y el modelo
+            # repetia la palabra ("el curso que tienes en tu carrito", manual-duracion-curso: el juez lo da por invento).
+            donde = "en el plan que está armando" if settings.rag_plan_elegido else "en su carrito"
+            el_plan = "el plan" if settings.rag_plan_elegido else "el carrito"
             parts.append(
-                f"El cliente YA tiene estas actividades en su carrito: {items}. "
+                f"El cliente YA tiene estas actividades {donde}: {items}. "
                 "No vuelvas a preguntar por estas actividades; tenlas en cuenta como contexto. "
                 "Cuando hables de equipo, seguro u otros detalles de la actividad, usa el "
-                "mismo termino que tiene en el carrito (buceo, snorkel o minicurso) sin "
-                "mezclarlo con otra actividad — por ejemplo, si el carrito tiene snorkel, "
+                f"mismo termino que tiene en {el_plan} (buceo, snorkel o minicurso) sin "
+                f"mezclarlo con otra actividad — por ejemplo, si {el_plan} tiene snorkel, "
                 "habla de 'equipo de snorkel', no de 'equipo de buceo'."
             )
         else:
+            where = "in the plan they are putting together" if settings.rag_plan_elegido else "in their cart"
+            the_item = "the plan item" if settings.rag_plan_elegido else "the cart item"
+            the_plan = "the plan" if settings.rag_plan_elegido else "the cart"
             parts.append(
-                f"The customer ALREADY has these activities in their cart: {items}. "
+                f"The customer ALREADY has these activities {where}: {items}. "
                 "Do not ask again about these activities; treat them as known context. "
                 "When talking about equipment, insurance, or other activity details, use "
-                "the SAME term as the cart item (diving, snorkeling, or mini-course) — do "
-                "not mix it with another activity (e.g. if the cart has snorkeling, say "
+                f"the SAME term as {the_item} (diving, snorkeling, or mini-course) — do "
+                f"not mix it with another activity (e.g. if {the_plan} has snorkeling, say "
                 "'snorkeling gear', not 'diving gear')."
             )
 
