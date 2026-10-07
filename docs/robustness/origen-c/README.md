@@ -54,3 +54,36 @@ almuerzo?") fallaría igual. Dos arreglos con fundamento, para después de la ro
 Mi primer comparador contaba como "pregunta el origen" el **saludo de bienvenida** ("departing from Cartagena or
 right from the islands"), que es una frase afirmativa. Falseaba el turno 1 de casi todos los diálogos. Ahora solo
 cuenta el origen dentro de una frase que acaba en "?", y la C se reconoce por su texto exacto.
+
+## Escalón 1: ronda core `origen-c-B` (7-oct) — la idea funciona, la puerta miraba lo que no era
+
+Flag encendido en PRE (`6d6babf`), ronda core (32 conv / 93 turnos, 0 sin respuesta, p50 2,0 s, p95 5,4 s) frente a A =
+`2026-10-01-privacidad-B` (referencia curada; A seguía 100 % en caché, misma referencia). La puerta saltó 5 veces, en
+4 conversaciones (`[CORE][ORIGEN]` en `logs-pre-2026-10-07-origen-c-B.txt`).
+
+**A 93,9 % → B 92,9 %** (214/228 → 210/226), 4 mejoras, 8 regresiones. Leídas una a una:
+
+| regresión | ¿la puerta? | qué es |
+|---|---|---|
+| `moneda-precios…` / `moneda-por-nacionalidad` (ya no_cumple en A, pero peor) | **sí, t5** | **real.** "Amigo el precio que está allí es en dólares o pesos colombianos": dice "precio" pero pregunta la MONEDA. A explicaba USD/COP; B solo repite la pregunta del origen (que el bot ya había hecho en t4). |
+| `paquete-5-buceos-cop` / `sin-invenciones` → revisar | sí, t1 | **real, ya conocido:** "Gracias - y en pesos?" (t2) cotiza 1.429.000 COP sin origen. A cotizaba igual: no está peor que hoy. |
+| `open-water-precio…` / `importes-catalogo` cumple → no_aplica | sí, t1-t2 | **buscada:** ya no da importes sin saber el origen. |
+| `referral…` / `hoteles-base-sin-incluir` | no (t2) | variación del RAG: en t2 (hoteles) la puerta no intervino; olvidó "alojamiento no incluido". |
+| `grupo-con-refresher` (×2), `manual-duracion-curso`, `minicurso-islas…`, `pedir-fotos-postventa` | no | ruido: la puerta no saltó ni una vez en esas conversaciones. |
+
+Mejoras: `paquete-5` `precio-cop-segun-origen` y `sin-repreguntas` (lo que se buscaba), y dos de ruido.
+
+**Lección:** las dos fallas reales son la misma: la puerta decidía mirando **la pregunta** (¿dice "precio"?). Falla
+por los dos lados: pregunta de moneda con "precio" (se calla de más) y repregunta de importe sin "precio" (cotiza).
+
+## Arreglo (7-oct, Gonzalo): la puerta mira la RESPUESTA
+
+`_origen_antes_del_precio(state, message, answer)`: el RAG se llama siempre y la pregunta del origen **sustituye** a
+su respuesta solo si esa respuesta **lleva un importe** (`_IMPORTE_RE`: "1.429.000 COP", "USD 178", "$630,000"…), el
+origen no consta, el cliente no lo ha dado a entender, no es precio del hotel, y el cliente pide un precio **o**
+repregunta con la pregunta del origen ya hecha y sin contestar (`state.pregunta_precio_pendiente`: "¿y en pesos?").
+Un importe en la respuesta a otra cosa ("¿qué incluye?") se deja como hoy. Coste: la llamada al RAG que antes se
+ahorraba (con rag-5 va en paralelo al enrutador: no añade espera).
+
+Tests (`tests/test_rag_origen_pregunta.py`): los dos casos de la ronda, y uno de punta a punta de "¿y en pesos?" que
+**falla con el código anterior** y pasa con este.

@@ -2,9 +2,12 @@
 
 6-oct: un aviso en el contexto del RAG, medido y quitado (o repreguntaba o volvía a suponer Cartagena).
 7-oct, opción C (decisión de Álvaro): lo hace el CÓDIGO. Se fija:
-1. cuándo se pregunta el origen antes de cotizar: pide un precio, el origen no consta y el cliente no ha nombrado
-   Cartagena ni las islas; no si el precio es del hotel, ni con el flag apagado;
-2. en la reserva: la pregunta del origen ocupa el turno (sin el RAG, con sus botones) y se guarda la del precio;
+1. cuándo se pregunta el origen en vez de cotizar: la respuesta del RAG lleva un importe, el cliente pide un precio
+   (o repregunta tras la pregunta del origen sin contestarla: "¿y en pesos?"), el origen no consta y el cliente no ha
+   nombrado Cartagena ni las islas; no si el precio es del hotel, ni si la respuesta no cotiza (la MONEDA: ronda
+   origen-c-B, 7-oct), ni con el flag apagado;
+2. en la reserva: la pregunta del origen ocupa el turno (en lugar de la cotización, con sus botones) y se guarda la
+   del precio;
 3. cuando el cliente dice el origen, se contesta la pregunta del precio que quedó pendiente;
 4. si una respuesta del RAG ya pregunta el origen, la reserva no repite la suya.
 """
@@ -19,10 +22,12 @@ from src.config import settings
 from src.flows.state import ConversationState, Step
 
 PREGUNTA_RAG = "El precio depende de desde dónde salgan. ¿Saldrían desde Cartagena o ya están en las islas?"
+COTIZA = "El minicurso cuesta 655.000 COP (o 178 USD)."
 
 
-def _estado(location=None, historial=None) -> ConversationState:
+def _estado(location=None, historial=None, pendiente=None) -> ConversationState:
     s = ConversationState(conversation_id="origen", language="es")
+    s.pregunta_precio_pendiente = pendiente
     s.step = Step.FREE_TEXT
     s.location = location
     s.history = historial or []
@@ -45,7 +50,24 @@ def _estado(location=None, historial=None) -> ConversationState:
 ])
 def test_cuando_se_pregunta_el_origen_antes_de_cotizar(monkeypatch, flag, location, historial, mensaje, pregunta):
     monkeypatch.setattr(settings, "rag_origen_pregunta", flag)
-    assert bool(core._origen_antes_del_precio(_estado(location, historial), mensaje)) is pregunta
+    assert bool(core._origen_antes_del_precio(_estado(location, historial), mensaje, COTIZA)) is pregunta
+
+
+@pytest.mark.parametrize("mensaje,respuesta,pendiente,pregunta", [
+    # ronda origen-c-B (7-oct): dice "precio" pero pregunta la MONEDA; la respuesta no cotiza -> va tal cual
+    ("Amigo el precio que está allí es en dólares o pesos colombianos",
+     "Los precios en dólares son para internacionales y en pesos (COP) para colombianos.", None, False),
+    # ronda origen-c-B: repregunta sin palabras de precio tras la pregunta del origen -> el RAG cotizaba Cartagena
+    ("Gracias - y en pesos? Para colombianos?", "El paquete de 5 inmersiones cuesta 1.429.000 COP.",
+     "¿Cuál es el costo para colombianos?", True),
+    ("Gracias - y en pesos? Para colombianos?", "El paquete de 5 inmersiones cuesta 1.429.000 COP.", None, False),
+    ("¿qué incluye el minicurso?", COTIZA, None, False),  # un importe en la respuesta a otra cosa: como hoy
+    ("how much is it?", "It costs USD 178 per person.", None, True),
+])
+def test_la_puerta_mira_si_la_respuesta_cotiza(monkeypatch, mensaje, respuesta, pendiente, pregunta):
+    monkeypatch.setattr(settings, "rag_origen_pregunta", True)
+    estado = _estado(pendiente=pendiente)
+    assert bool(core._origen_antes_del_precio(estado, mensaje, respuesta)) is pregunta
 
 
 @pytest.mark.parametrize("flag,slot,respuesta,va_sola", [
@@ -85,7 +107,7 @@ def conversacion(monkeypatch):
 
     async def _rag(message, **kwargs):
         preguntas.append({"message": message, "extra_context": kwargs.get("extra_context") or ""})
-        return "RESPUESTA_RAG"
+        return f"RESPUESTA_RAG: {COTIZA}"
 
     monkeypatch.setattr(supervisor, "rag_answer", _rag)
     return preguntas
@@ -96,8 +118,7 @@ async def test_pide_precio_sin_origen_se_pregunta_y_luego_se_contesta(monkeypatc
     st = ConversationState(conversation_id="origen-c", language="es")
     await route_message(st, "queremos bucear, somos certificados")
     resp = await route_message(st, "¿cuánto cuesta?")
-    assert core.ORIGEN_ANTES_DEL_PRECIO_ES in resp and "RESPUESTA_RAG" not in resp
-    assert conversacion == []  # el RAG no cotiza sin origen
+    assert core.ORIGEN_ANTES_DEL_PRECIO_ES in resp and "RESPUESTA_RAG" not in resp  # la cotización no sale
     assert st.core_pending_slot == core.SLOT_LOCATION and st.quick_replies  # con sus botones
     assert st.pregunta_precio_pendiente == "¿cuánto cuesta?"
     assert resp.count("¿") == 1  # una sola pregunta, sin la de la reserva detrás
@@ -116,3 +137,15 @@ async def test_con_el_flag_apagado_el_rag_cotiza_como_siempre(monkeypatch, conve
     resp = await route_message(st, "¿cuánto cuesta?")
     assert resp.startswith("RESPUESTA_RAG")
     assert core.ORIGEN_ANTES_DEL_PRECIO_ES not in resp
+
+
+async def test_y_en_pesos_tras_la_pregunta_del_origen_tampoco_cotiza(monkeypatch, conversacion):
+    """Ronda origen-c-B (7-oct): "Gracias - y en pesos?" no lleva palabras de precio y el RAG cotizaba Cartagena."""
+    monkeypatch.setattr(settings, "rag_origen_pregunta", True)
+    st = ConversationState(conversation_id="origen-pesos", language="es")
+    await route_message(st, "queremos bucear, somos certificados")
+    await route_message(st, "¿cuánto cuesta?")
+    resp = await route_message(st, "Gracias - y en pesos?")
+    assert conversacion[-1]["message"] == "Gracias - y en pesos?"  # el RAG contestó (y cotizaba)...
+    assert "RESPUESTA_RAG" not in resp and core.ORIGEN_ANTES_DEL_PRECIO_ES in resp  # ...y se pregunta el origen
+    assert st.pregunta_precio_pendiente  # sigue pendiente: se contesta cuando diga el origen

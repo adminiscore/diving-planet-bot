@@ -1,6 +1,14 @@
 History
 =======
 
+0.30.0 - (2026-10-07)
+----------------------
+* **Punto 3, opción C: escalón 0 y ronda core medidos; la puerta pasa a mirar la RESPUESTA** (Gonzalo). Evidencia: `docs/robustness/origen-c/README.md`.
+  - **Escalón 0 en PRE** (8 diálogos del relevo): PASA — mejor que hoy en todos, peor en ninguno, sin las repreguntas de V1. Hueco: "¿y en pesos?" (`scripts/origen_c_comparar.py`, nuevo).
+  - **Ronda core `2026-10-07-origen-c-B`** (flag encendido, `6d6babf`) frente a `2026-10-01-privacidad-B`, referencia curada: **93,9 → 92,9 %**, 4 mejoras / 8 regresiones. Leídas: 2 reales y ambas de la misma causa — la puerta miraba la PREGUNTA ("¿dice precio?"): una pregunta de MONEDA ("el precio que está allí es en dólares o pesos?") se quedaba sin contestar, y "Gracias - y en pesos?" cotizaba sin origen. Otra "regresión" es la buscada (ya no da importes sin origen); las otras 5 son de conversaciones donde la puerta no saltó (ruido).
+  - **Arreglo:** `_origen_antes_del_precio(state, message, answer)` — el RAG se llama siempre y la pregunta del origen SUSTITUYE a su respuesta solo si **lleva un importe** (`_IMPORTE_RE`), el origen no consta ni se ha dado a entender, no es precio del hotel, y el cliente pide un precio o repregunta con la pregunta del origen sin contestar (`pregunta_precio_pendiente`). Tests nuevos con los dos casos de la ronda y uno de punta a punta de "¿y en pesos?" que falla con el código anterior.
+  - Flag **sigue ENCENDIDO** en PRE para medir el arreglo (ronda `origen-c2`); si no pasa, se apaga.
+
 0.29.99 - (2026-10-07)
 ----------------------
 * **Punto 3, opción C (decisión de Álvaro): el CÓDIGO pregunta el origen antes de dar un precio** — hecho y con tests, **flag `RAG_ORIGEN_PREGUNTA` APAGADO, sin medir en PRE** (lo sigue Gonzalo).

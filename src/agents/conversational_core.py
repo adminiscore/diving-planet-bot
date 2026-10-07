@@ -4939,14 +4939,14 @@ async def _rag_answer(
 ) -> str:
     from src.agents import supervisor  # lazy
 
-    fija = _origen_antes_del_precio(state, message)
-    if fija:
-        return fija  # quien la recibe deja el estado preparado (`_fijar_origen_antes_del_precio`)
     # l1-4: las notas de ESTE mensaje pueden estar calculándose en paralelo. Aquí
     # es donde se usan (van dentro del contexto del RAG), así que aquí se espera.
     await await_pending_notes(state)
     entradas = _entradas_rag(state, state.history if history is None else history)
-    return await supervisor.rag_answer(rag_query or message, **entradas)
+    answer = await supervisor.rag_answer(rag_query or message, **entradas)
+    # 7-oct (opción C): si cotiza sin origen, se pregunta el origen; quien la recibe deja el estado preparado
+    # (`_fijar_origen_antes_del_precio`).
+    return _origen_antes_del_precio(state, message, answer) or answer
 
 
 def _entradas_rag(state: ConversationState, history: list) -> dict:
@@ -4991,8 +4991,6 @@ def lanzar_rag_adelantado(state: ConversationState, message: str) -> None:
     texto = (message or "").strip()
     if not texto or texto.isdigit():
         return
-    if _origen_antes_del_precio(state, message):
-        return  # 7-oct: se preguntará el origen antes de cotizar; si este mensaje lo dice, se hace la llamada normal
     import copy
 
     from src.agents import supervisor  # lazy
@@ -5027,24 +5025,21 @@ async def _adoptar_o_rehacer(state: ConversationState, message: str, history: li
     from src.agents import supervisor  # lazy
     from src.observability import note_turn
 
-    fija = _origen_antes_del_precio(state, message)
-    if fija:
-        adelantado["task"].cancel()
-        note_turn(rag_adelantado="descartado")
-        return fija
     await await_pending_notes(state)
     entradas = _entradas_rag(state, history)
     huella = _huella_rag(message, entradas)
     if huella == adelantado["huella"]:
         note_turn(rag_used=True, rag_adelantado="aprovechado")
         logger.info("[CORE][RAG5] respuesta adelantada aprovechada")
-        return await adelantado["task"]
+        answer = await adelantado["task"]
+        return _origen_antes_del_precio(state, message, answer) or answer  # 7-oct: opción C, ver `_rag_answer`
     adelantado["task"].cancel()
     # Diagnóstico (30-sep): la mitad de los intentos de la ronda rag5-B se rehicieron y no se sabía por qué.
     cambio = ",".join(n for n, a, b in zip(_PARTES_HUELLA, adelantado["huella"], huella, strict=True) if a != b)
     note_turn(rag_adelantado="rehecho", rag_rehecho_por=cambio)
     logger.info(f"[CORE][RAG5] el contexto cambió entre medias ({cambio}): se rehace la respuesta")
-    return await supervisor.rag_answer(message, **entradas)
+    answer = await supervisor.rag_answer(message, **entradas)
+    return _origen_antes_del_precio(state, message, answer) or answer
 
 
 async def rag_con_adelantado(state: ConversationState, message: str, history: list) -> str:
@@ -5261,12 +5256,29 @@ _PRECIO_AJENO_RE = re.compile(
 _PISTA_ORIGEN_RE = re.compile(r"cartagena|\bislas?\b|\bislands?\b|bar[uú]|tierra bomba", re.IGNORECASE)
 
 
-def _origen_antes_del_precio(state: ConversationState, message: str) -> str | None:
-    """El texto fijo que pregunta el origen, si toca preguntarlo antes de cotizar; si no, None."""
+# 7-oct (Gonzalo, ronda core origen-c-B): la puerta mira la RESPUESTA, no solo la pregunta. Mirando solo la pregunta
+# fallaba por los dos lados: "Amigo el precio que está allí es en dólares o pesos?" (dice "precio", pero pregunta la
+# MONEDA; antes se contestaba y con la puerta se quedaba sin respuesta) y "Gracias - y en pesos?" (pide un importe sin
+# ninguna palabra de precio; el RAG cotizaba Cartagena). La regla de la opción C es "no cotizar sin origen": se
+# comprueba justo eso, que la respuesta lleve un importe.
+_IMPORTE_RE = re.compile(
+    r"\d[\d.,]*\s*(?:cop|usd|us\$|d[oó]lares|dollars|pesos)\b|(?:usd|cop|us\$|\$)\s*\d",
+    re.IGNORECASE,
+)
+
+
+def _origen_antes_del_precio(state: ConversationState, message: str, answer: str | None) -> str | None:
+    """El texto fijo que pregunta el origen, si la respuesta del RAG (`answer`) cotiza sin saber desde dónde sale el
+    cliente; si no, None (y la respuesta va tal cual).
+
+    Cotiza = lleva un importe, y el cliente pide un precio o repregunta tras la pregunta del origen sin contestarla
+    ("¿y en pesos?"). Un importe en la respuesta a otra cosa ("¿qué incluye?") se deja como hoy."""
     if not settings.rag_origen_pregunta or state.location or state.detected_location:
         return None
     texto = message or ""
-    if not _PIDE_PRECIO_RE.search(texto) or _PRECIO_AJENO_RE.search(texto):
+    if not answer or not _IMPORTE_RE.search(answer) or _PRECIO_AJENO_RE.search(texto):
+        return None
+    if not (_PIDE_PRECIO_RE.search(texto) or state.pregunta_precio_pendiente):
         return None
     del_cliente = [h.get("content") or "" for h in (state.history or []) if h.get("role") == "user"]
     if any(_PISTA_ORIGEN_RE.search(t) for t in [*del_cliente, texto]):
