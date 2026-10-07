@@ -188,8 +188,10 @@ class Settings(BaseSettings):
     # (`conversational_core._origen_antes_del_precio`): si el cliente pide un precio, el origen no consta y el cliente
     # no ha nombrado Cartagena ni las islas, el bot pregunta el origen con un texto fijo (con sus botones), guarda la
     # pregunta y la contesta en cuanto el cliente lo dice. Y si una respuesta ya pregunta el origen, la reserva no
-    # repite su pregunta. APAGADO hasta su escalon 0 y su ronda core.
-    rag_origen_pregunta: bool = False
+    # repite su pregunta. Escalon 0 en PRE (7-oct, Gonzalo, docs/robustness/origen-c/): PASA -- mejor que hoy en los 8
+    # dialogos, peor en ninguno, sin las repreguntas de V1; hueco: "¿y en pesos?" (precio sin palabras de precio).
+    # ENCENDIDO para su ronda core B (origen-c-B); si no pasa, False aqui y "false" en el compose.
+    rag_origen_pregunta: bool = True
     # Paso 9 (l2-2, 28-sep): el catalogo va al final del prompt del SISTEMA (fijo por idioma) y el primero en
     # el contexto del juez, para que el prompt caching de OpenAI lo reutilice entre conversaciones (antes iba
     # en el mensaje del usuario, detras del historial: nunca se cacheaba). ENCENDIDO por defecto (= PRE, paso 10).

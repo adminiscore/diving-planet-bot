@@ -231,9 +231,9 @@ services:
       # precios del catalogo >= 1.000.000 COP). Escalon 0: rechazos 10 -> 0, precio 0/5 -> 5/5. PROMOCIONADO (HISTORY
       # 0.29.92): ronda core privacidad-B, el paquete de 5 da el precio en pesos, calidad igual. Revert = "false" aqui y en config.py.
       JUEZ_PRIVACIDAD_POR_LINEA: "true"
-      # 6-oct (Alvaro, punto 3): origen desconocido -> preguntar antes de cotizar. APAGADO: su ronda B repreguntaba
-      # cuando el cliente ya lo habia dado a entender; texto nuevo pendiente de medir.
-      RAG_ORIGEN_PREGUNTA: "false"
+      # Punto 3 (origen desconocido -> preguntar antes de cotizar). 7-oct: opcion C, lo hace el CODIGO; su escalon 0 en
+      # PRE pasa (docs/robustness/origen-c/). ENCENDIDO para su ronda core B; si no pasa, "false" aqui y en config.py.
+      RAG_ORIGEN_PREGUNTA: "true"
       # rag-5 (30-sep): el RAG arranca a la vez que el enrutador (Jev) y se aprovecha solo con el mismo contexto
       # (si no, se rehace). PROMOCIONADO 1-oct (HISTORY 0.29.88). Revert = "false" aqui y en config.py.
       RAG_ADELANTADO: "true"
