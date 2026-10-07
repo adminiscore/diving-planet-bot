@@ -31,12 +31,16 @@ respuesta solo si **lleva un importe** (y el cliente pide precio o repregunta co
    `sin-repreguntas` en casi todas las rondas), "¿Cuántos serían para buceo certificado?" (`minicurso-islas-y-
    acompanante-lancha`). Y dos de origen aparte: preguntar por los hoteles de las islas se registra como "ya en las
    islas" (`precio-desde-islas-vs-cartagena`), y el RAG negó el plan de 2 inmersiones desde las islas (existe: 124 USD).
+   **En Plan Coral es la tarea `s4-26`** (7-oct, Gadea), que agrupa también `s4-8` (repregunta con el acompañante,
+   `acompanante-goteo`), `s4-12` (con carrito abierto ofrece solo paquetes de islas, `paquete-en-carrito`) y `s4-18`.
 2. **Vigilar** `referral-mas-refresher…/hoteles-base-sin-incluir`: criterio inestable de siempre, pero falló en las dos
    rondas de la opción C (el RAG olvida "el alojamiento no está incluido"). Si vuelve a salir, mirarlo.
 3. **Después, el plan principal**: `docs/plan-maestro-final.md`, PARTE 8, **paso 11 — R6** y luego **paso 12 — Q5**.
 - **A para la próxima ronda core:** `2026-10-07-origen-c2-B` (ya juzgada con la referencia curada).
 - Crédito de OpenAI: hoy ≈ 1,6 $. Mirad el saldo antes de una ronda.
-- Cola de Plan Coral (`docs/tracking/data/plan-coral-cambios-pendientes.json`): añadida la entrada del 7-oct.
+- Cola de Plan Coral (`docs/tracking/data/plan-coral-cambios-pendientes.json`): **aplicada y vaciada** (7-oct, Gadea),
+  y Plan Coral repasado entero: fases U3 y L2 cerradas, fase RAG cerrada el 2-oct, capas y fotos al día, s4-9 y s4-19
+  cerradas con medida, `m0-4` a pendiente (va con Q5). Mapa de Coral republicado con la ronda `origen-c2-B`.
 
 ### ✅ 7-oct (Álvaro → Gonzalo) — SUPERADO por el bloque de arriba: punto 3 decidido (opción C) e implementado
 
