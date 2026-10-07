@@ -192,7 +192,9 @@ class Settings(BaseSettings):
     # dialogos, peor en ninguno, sin las repreguntas de V1; hueco: "¿y en pesos?" (precio sin palabras de precio).
     # Ronda core origen-c-B (7-oct): 93,9 -> 92,9 %; la puerta miraba la PREGUNTA ("¿dice precio?") y fallaba por los
     # dos lados (pregunta de MONEDA sin contestar; "¿y en pesos?" cotizaba). Arreglo: mira si la RESPUESTA del RAG
-    # lleva un importe. ENCENDIDO para medir el arreglo (origen-c2); si no pasa, False aqui y "false" en el compose.
+    # lleva un importe. Ronda core origen-c2-B (7-oct): 93,9 -> 93,0 % (ruido), ninguna regresion real; la puerta salta
+    # donde debe (5 veces, incluido "¿y en pesos?") y ya no en la pregunta de la moneda. PROMOCIONADO: ENCENDIDO.
+    # Revert = False aqui y "false" en el compose.
     rag_origen_pregunta: bool = True
     # Paso 9 (l2-2, 28-sep): el catalogo va al final del prompt del SISTEMA (fijo por idioma) y el primero en
     # el contexto del juez, para que el prompt caching de OpenAI lo reutilice entre conversaciones (antes iba

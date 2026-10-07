@@ -128,6 +128,16 @@
         "byLabel": "Alvaro (con Claude)",
         "text": "7-oct: punto 3 (origen) decidido, opcion C: si el cliente pide un precio y no sabemos desde donde sale, el CODIGO pregunta el origen antes de cotizar (texto fijo con botones), guarda la pregunta y la contesta cuando el cliente lo dice. Implementado con 19 tests, flag RAG_ORIGEN_PREGUNTA APAGADO, sin medir en PRE: lo sigue Gonzalo (escalon 0 y ronda core). Despues: punto 4 (supuestos) y paso 11 del plan (R6). HISTORY 0.29.99."
       }
+    },
+    {
+      "coleccion": "log",
+      "operacion": "set",
+      "doc_id": "l-1007-gonzalo-origen-c",
+      "campos": {
+        "at": "2026-10-07T13:00:00Z",
+        "byLabel": "Gonzalo (con Claude)",
+        "text": "7-oct: punto 3 (origen) opcion C medida y PROMOCIONADA. Escalon 0 en PRE: pasa (mejor que hoy en los 8 dialogos). Ronda core origen-c-B: 93,9 -> 92,9 %, 2 regresiones reales con la misma causa (la puerta miraba la PREGUNTA: una pregunta de moneda se quedaba sin contestar y '¿y en pesos?' cotizaba). Arreglo: la puerta mira si la RESPUESTA lleva un importe. Ronda origen-c2-B: 93,9 -> 93,0 % (ruido), ninguna regresion real. RAG_ORIGEN_PREGUNTA ENCENDIDO en PRE. Siguiente: punto 4 (supuestos sueltos). Evidencia: docs/robustness/origen-c/README.md."
+      }
     }
   ]
 }

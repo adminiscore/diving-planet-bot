@@ -3,11 +3,13 @@ History
 
 0.30.0 - (2026-10-07)
 ----------------------
-* **Punto 3, opción C: escalón 0 y ronda core medidos; la puerta pasa a mirar la RESPUESTA** (Gonzalo). Evidencia: `docs/robustness/origen-c/README.md`.
+* **Punto 3, opción C: medida, arreglada y PROMOCIONADA (encendida en PRE); la puerta mira si la RESPUESTA cotiza** (Gonzalo). Evidencia: `docs/robustness/origen-c/README.md`.
   - **Escalón 0 en PRE** (8 diálogos del relevo): PASA — mejor que hoy en todos, peor en ninguno, sin las repreguntas de V1. Hueco: "¿y en pesos?" (`scripts/origen_c_comparar.py`, nuevo).
   - **Ronda core `2026-10-07-origen-c-B`** (flag encendido, `6d6babf`) frente a `2026-10-01-privacidad-B`, referencia curada: **93,9 → 92,9 %**, 4 mejoras / 8 regresiones. Leídas: 2 reales y ambas de la misma causa — la puerta miraba la PREGUNTA ("¿dice precio?"): una pregunta de MONEDA ("el precio que está allí es en dólares o pesos?") se quedaba sin contestar, y "Gracias - y en pesos?" cotizaba sin origen. Otra "regresión" es la buscada (ya no da importes sin origen); las otras 5 son de conversaciones donde la puerta no saltó (ruido).
   - **Arreglo:** `_origen_antes_del_precio(state, message, answer)` — el RAG se llama siempre y la pregunta del origen SUSTITUYE a su respuesta solo si **lleva un importe** (`_IMPORTE_RE`), el origen no consta ni se ha dado a entender, no es precio del hotel, y el cliente pide un precio o repregunta con la pregunta del origen sin contestar (`pregunta_precio_pendiente`). Tests nuevos con los dos casos de la ronda y uno de punta a punta de "¿y en pesos?" que falla con el código anterior.
-  - Flag **sigue ENCENDIDO** en PRE para medir el arreglo (ronda `origen-c2`); si no pasa, se apaga.
+  - **Escalón 0 del arreglo (C2)**: "¿y en pesos?" ya pregunta el origen, la pregunta de la moneda se contesta, y "¿es otra tarifa?" ya no repite la pregunta del origen (`docs/robustness/origen-c2/`).
+  - **Ronda core `2026-10-07-origen-c2-B`**: **93,9 → 93,0 %** (ruido), 3 mejoras / 6 regresiones, **ninguna real** (2 buscadas: ya no da importes sin origen; `manual-duracion` es el punto 4; `hoteles-base-sin-incluir` es un criterio inestable — vigilar; 2 de ruido). p50 2,0 s, p95 5,0 s.
+  - **PROMOCIONADO: `RAG_ORIGEN_PREGUNTA` ENCENDIDO en PRE.** Gasto del día ≈ 1,6 $.
 
 0.29.99 - (2026-10-07)
 ----------------------

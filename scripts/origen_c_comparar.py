@@ -8,7 +8,10 @@ criterios vienen del relevo del 7-oct:
 
     python -m scripts.origen_c_comparar
 
-Lee `docs/robustness/origen-2026-10-06.json` (OFF/V1/V2) y `docs/robustness/origen-c/<diálogo>.jsonl` (C).
+Lee `docs/robustness/origen-2026-10-06.json` (OFF/V1/V2), `docs/robustness/origen-c/<diálogo>.jsonl` (C: la puerta
+mira la pregunta) y, si existe, `docs/robustness/origen-c2/<diálogo>.jsonl` (C2, 7-oct tras la ronda origen-c-B: la
+puerta mira si la respuesta cotiza). `moneda-precios-principiante-y-snorkel` (la regresión real de la ronda) solo
+tiene C y C2: su criterio es CONTESTAR la moneda, no preguntar el origen.
 """
 import json
 import re
@@ -28,6 +31,7 @@ DEBE_PREGUNTAR = [
 NO_DEBE_REPREGUNTAR = [
     "referral-mas-refresher-hotel-y-domingo-pascua",
     "curso-open-water-transporte-y-regreso-otro-dia",
+    "moneda-precios-principiante-y-snorkel",
 ]
 # Un importe: 1.429.000 COP, 178 USD, $630,000, USD 124...
 _IMPORTE = re.compile(r"\d[\d.,]{2,}\s*(?:cop|usd|d[oó]lares|pesos)|(?:usd|cop|\$)\s*\d[\d.,]{1,}", re.I)
@@ -40,8 +44,8 @@ _ORIGEN = re.compile(
 )
 
 
-def _filas_c(dialogo: str) -> list[dict]:
-    p = Path("docs/robustness/origen-c") / f"{dialogo}.jsonl"
+def _filas_c(dialogo: str, carpeta: str = "origen-c") -> list[dict]:
+    p = Path("docs/robustness") / carpeta / f"{dialogo}.jsonl"
     if not p.exists():
         return []
     filas = [json.loads(x) for x in p.read_text(encoding="utf-8").splitlines() if x.strip()]
@@ -85,6 +89,7 @@ def main() -> None:
         for d in grupo:
             versiones = {v: previo.get(d, {}).get(v, []) for v in ("OFF", "V1", "V2")}
             versiones["C"] = _filas_c(d)
+            versiones["C2"] = _filas_c(d, "origen-c2")
             n = max((len(v) for v in versiones.values()), default=0)
             print(f"\n· {d}")
             print(f"    {'turno':<6}" + "".join(f"{v:<18}" for v in versiones))

@@ -13,7 +13,32 @@ Read this file before changing code in the Diving Planet Bot. For a quick versio
 
 > **📏 LEER ANTES DE MEDIR — decisiones del 24-sep-2026 (Gadea):** (1) latencia y llamadas con nuestros logs `[TURN_METRICS]` + `scripts/turn_metrics.py`, no con Langfuse (plan gratuito superado, reinicio 16-oct); (2) pruebas A/B por escalones, juzgando solo los diálogos que cambian. Todo en `docs/robustness/protocolo-medicion.md`.
 
-### ▶️ RETOMAR AQUÍ — 7-oct (Álvaro → Gonzalo): punto 3 decidido (opción C) e implementado, APAGADO; falta medirlo
+### ▶️ RETOMAR AQUÍ — 7-oct tarde (Gonzalo): punto 3 CERRADO — opción C medida, arreglada y ENCENDIDA en PRE
+
+**Estado.** PRE sirve `feature/pre_alvaro` con `RAG_ORIGEN_PREGUNTA` **encendido** (promocionado). **Integrad
+`feature/pre_alvaro` en vuestra rama antes de subir.** HISTORY 0.30.0; evidencia en `docs/robustness/origen-c/README.md`.
+
+**Qué pasó hoy.** Escalón 0 de la opción C en PRE: pasa. Ronda core `origen-c-B`: 93,9 → 92,9 %, con 2 regresiones
+reales y una sola causa: la puerta miraba **la pregunta** ("¿dice precio?"); una pregunta de MONEDA ("el precio que está
+allí ¿es en dólares o pesos?") se quedaba sin contestar y "Gracias - y en pesos?" cotizaba sin origen. **Arreglo**
+(`_origen_antes_del_precio(state, message, answer)`): el RAG contesta siempre y la pregunta del origen sustituye a su
+respuesta solo si **lleva un importe** (y el cliente pide precio o repregunta con la del origen pendiente). Ronda
+`origen-c2-B`: 93,9 → 93,0 % (ruido), ninguna regresión real. Tests: `tests/test_rag_origen_pregunta.py` (25).
+
+**Siguiente, en orden:**
+1. **Punto 4, supuestos sueltos** (casos visibles): "el hotel tiene acceso en lancha" (`logistica-isla-fragata-regreso-
+   otro-dia`), "está en tu carrito" y "¡Qué bien que venga alguien más!" (`manual-duracion-curso`: falla
+   `sin-repreguntas` en casi todas las rondas), "¿Cuántos serían para buceo certificado?" (`minicurso-islas-y-
+   acompanante-lancha`). Y dos de origen aparte: preguntar por los hoteles de las islas se registra como "ya en las
+   islas" (`precio-desde-islas-vs-cartagena`), y el RAG negó el plan de 2 inmersiones desde las islas (existe: 124 USD).
+2. **Vigilar** `referral-mas-refresher…/hoteles-base-sin-incluir`: criterio inestable de siempre, pero falló en las dos
+   rondas de la opción C (el RAG olvida "el alojamiento no está incluido"). Si vuelve a salir, mirarlo.
+3. **Después, el plan principal**: `docs/plan-maestro-final.md`, PARTE 8, **paso 11 — R6** y luego **paso 12 — Q5**.
+- **A para la próxima ronda core:** `2026-10-07-origen-c2-B` (ya juzgada con la referencia curada).
+- Crédito de OpenAI: hoy ≈ 1,6 $. Mirad el saldo antes de una ronda.
+- Cola de Plan Coral (`docs/tracking/data/plan-coral-cambios-pendientes.json`): añadida la entrada del 7-oct.
+
+### ✅ 7-oct (Álvaro → Gonzalo) — SUPERADO por el bloque de arriba: punto 3 decidido (opción C) e implementado
 
 **Estado.** PRE sirve `feature/pre_alvaro` con `RAG_ORIGEN_PREGUNTA` **apagado** (la conducta de siempre). **Integrad
 `feature/pre_alvaro` en vuestra rama antes de subir.** HISTORY 0.29.96-0.29.99. El juez del golden usa por defecto la

@@ -87,3 +87,35 @@ ahorraba (con rag-5 va en paralelo al enrutador: no añade espera).
 
 Tests (`tests/test_rag_origen_pregunta.py`): los dos casos de la ronda, y uno de punta a punta de "¿y en pesos?" que
 **falla con el código anterior** y pasa con este.
+
+### Escalón 0 del arreglo (C2) en PRE (`f3dc306`)
+
+Los 8 diálogos del relevo y el de la moneda (`docs/robustness/origen-c2/`, columna C2 de `scripts/origen_c_comparar.py`):
+
+- **`paquete-5-buceos-cop`, t2 ("Gracias - y en pesos?"):** C cotizaba 1.429.000 COP; **C2 pregunta el origen.** Hueco cerrado.
+- **`moneda-precios…`, t5:** C2 **contesta la moneda** ("USD si eres internacional, COP si eres colombiano") y la
+  reserva pregunta el origen detrás, como antes de la opción C.
+- **`colombianos-precio-minicurso-dos-inmersiones`, t5 ("¿Eso es una tarifa diferente?"):** C repetía la pregunta del
+  origen; C2 contesta lo preguntado (misma tarifa, cambia la moneda) sin importes.
+- El resto, igual que C: pregunta el origen donde debe y no repregunta en los 2 diálogos de V1 (`referral` t3 cotiza
+  con "hotel on the island" ya dicho: correcto).
+
+## Escalón 1 del arreglo: ronda core `origen-c2-B` (7-oct) — PROMOCIONADO
+
+PRE `f3dc306`, flag encendido. 32 conv / 93 turnos, 0 sin respuesta, p50 2,0 s, p95 5,0 s, 0 errores. La puerta saltó
+5 veces, justo donde debe: `open-water` t1-t2, `paquete-5` t1 **y t2 ("¿y en pesos?")**, `referral` t1; en la
+moneda ya no.
+
+**A 93,9 % → C2 93,0 %** (214/228 → 211/227; ruido del juez ≈ 1 punto), 3 mejoras, 6 regresiones, ninguna real:
+
+| regresión | qué es |
+|---|---|
+| `open-water…` y `paquete-5…` / `importes-catalogo` cumple → no_aplica | **buscadas:** ya no da importes sin origen |
+| `manual-duracion-curso` / `sin-repreguntas` | supuesto "viene alguien más": punto 4, ya conocido (no_cumple en 9 de las últimas rondas) |
+| `referral…` / `hoteles-base-sin-incluir` | criterio inestable (no_cumple en ~20 de 60 rondas, p. ej. `juez-B` del 1-oct, sin la opción C). Salió en las dos rondas de C: **vigilar** |
+| `buceo-adaptado-visual` / `sin-repreguntas`, `reserva-ingles` / `idioma` ("Muelle de la Bodeguita") | la puerta no saltó en esas conversaciones: ruido |
+
+Mejoras: `paquete-5` `precio-cop-segun-origen` y `sin-repreguntas` (lo buscado), `manual-acompanante-mayor` (ruido).
+
+**Decisión (Gonzalo, 7-oct): `RAG_ORIGEN_PREGUNTA` se queda ENCENDIDO en PRE.** Gasto del día ≈ 1,6 $ (dos rondas core
+y dos escalones 0).
