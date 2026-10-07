@@ -233,8 +233,10 @@ class Settings(BaseSettings):
     # consta, el contexto del RAG dice que plan del catalogo es (`conversational_core._plan_nombrado`). Caso:
     # precio-desde-islas-vs-cartagena, el RAG negaba las 2 inmersiones desde las islas (124 USD) y ofrecia el paquete
     # de 3; rag_piezas con el historial real 0-1/3, con el plan en el contexto 3/3 (docs/robustness/s4-27/).
-    # Escalon 0 en PRE (codigo local, 3 reps): t5 da los 124 USD 3/3 (hoy 0/3). ENCENDIDO para su ronda core B
-    # (s427-B); si no pasa, False aqui y quitar la linea del compose.
+    # Escalon 0 en PRE (codigo local, 3 reps): t5 da los 124 USD 3/3 (hoy 0/3). Ronda core s427-B (7-oct) frente a
+    # s426-B re-juzgada: 95,2 -> 96,0 %, 24 -> 26/32 sin fallos, 1 regresion ajena (descuento-online: el enrutador
+    # duda, ningun mensaje nombra inmersiones), latencia igual. PROMOCIONADO: ENCENDIDO. Revert = False aqui y quitar
+    # la linea del compose.
     rag_plan_nombrado: bool = True
     # Paso 9 (l2-2, 28-sep): el catalogo va al final del prompt del SISTEMA (fijo por idioma) y el primero en
     # el contexto del juez, para que el prompt caching de OpenAI lo reutilice entre conversaciones (antes iba

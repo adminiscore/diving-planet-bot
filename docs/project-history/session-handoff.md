@@ -13,7 +13,29 @@ Read this file before changing code in the Diving Planet Bot. For a quick versio
 
 > **📏 LEER ANTES DE MEDIR — decisiones del 24-sep-2026 (Gadea):** (1) latencia y llamadas con nuestros logs `[TURN_METRICS]` + `scripts/turn_metrics.py`, no con Langfuse (plan gratuito superado, reinicio 16-oct); (2) pruebas A/B por escalones, juzgando solo los diálogos que cambian. Todo en `docs/robustness/protocolo-medicion.md`.
 
-### ▶️ RETOMAR AQUÍ — 7-oct noche (Gadea con Claude → sigue Gonzalo): punto 4 (s4-26) CERRADO — 6 arreglos PROMOCIONADOS en PRE
+### ▶️ RETOMAR AQUÍ — 7-oct noche (Gonzalo): s4-27 paso 1 HECHO y PROMOCIONADO — el plan que nombra el cliente va al contexto
+
+**Estado.** PRE sirve `feature/pre_gadea` (sana, `check_deploy` en verde) con `RAG_PLAN_NOMBRADO` **encendido**
+(HISTORY 0.30.2; evidencia `docs/robustness/s4-27/README.md`). Integrad `feature/pre_gadea` antes de subir.
+
+**Qué se hizo.** El caso de los 124 USD (`precio-desde-islas`, "¿el precio de las 2 inmersiones? desde ese hotel"):
+no era el catálogo (lo trae) ni solo la búsqueda; con el historial real el modelo se iba al paquete de 3. Con el plan
+nombrado en el contexto acierta 3/3 (antes 0/3). `_plan_nombrado`: N inmersiones + origen conocido → la línea del
+catálogo de ese plan. Ronda core `2026-10-07-s427-B`: **95,2 → 96,0 %**, 26/32 sin fallos, 1 regresión ajena.
+
+**Siguiente, en orden:**
+1. **s4-27, lo que queda:** referencias SIN número ("ese plan", "el de un día"): la pregunta de Jev en la misma llamada
+   que propuso Gadea. Antes, comprobar en el golden visible cuántos fallos son de ese tipo (si son pocos, no compensa).
+   Y la otra causa de origen de la lista: "Somos una pareja Advanced O.W." + "coordinar inmersiones en Isla del Rosario"
+   se registra como `location=island` y `padi_advanced` (quieren hacer el curso), y el bot repite "¿ya tienen el
+   Advanced o quieren sacarlo?" en cada turno (`precio-desde-islas`, visto con el replay; va con s4-29).
+2. **s4-28** — revisión de las regex que deciden solas (ver el bloque de abajo).
+3. Pendientes del punto 4 y decisiones de Gadea: las del bloque de abajo, sin cambios.
+- **A para la próxima ronda core:** `2026-10-07-s427-B` (juzgada con el juez nuevo).
+- `descuento-online-sin-codigo` falla según lo que decida el enrutador LLM cuando Jev duda (0,38): sale en las dos
+  últimas rondas, una vez a favor y otra en contra. Candidato claro para s4-28.
+
+### (anterior) 7-oct noche (Gadea con Claude → sigue Gonzalo): punto 4 (s4-26) CERRADO — 6 arreglos PROMOCIONADOS en PRE
 
 **Para Gonzalo (Gadea, 7-oct):** continúas tú desde aquí, con el orden de abajo (s4-27 → s4-28). Todo está subido en
 `feature/pre_gadea` y PRE lo sirve sano. **Dos decisiones pendientes de Gadea**, no las toques sin su visto bueno:

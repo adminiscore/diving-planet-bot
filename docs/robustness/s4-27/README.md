@@ -46,3 +46,22 @@ turno 7 ("¿es el mismo costo desde el continente o la isla?") compara bien las 
 
 Nota: `rag_piezas` arma el contexto por su cuenta (`_build_extra_context`), no pasa por `_entradas_rag`, así que este
 arreglo se mide con la conversación entera, no con `rag_piezas`.
+
+## Ronda core `2026-10-07-s427-B` — PROMOCIONADO
+
+PRE `b51f72e`, flag encendido. A = `2026-10-07-s426-B` **re-juzgada con el juez nuevo** (el de Gadea del 7-oct; la
+caché no valía): 95,2 %. 32 conv / 93 turnos, 0 sin respuesta, 0 errores.
+
+- **Calidad: 95,2 → 96,0 %**, diálogos sin fallos **24 → 26/32**, 2 mejoras (`buceo-adaptado-visual`
+  `sin-repreguntas`, `descuento-online-sin-codigo` `escala-si-no-aparece`), 1 regresión.
+- **La regresión no es suya:** `descuento-online-sin-codigo` / `descuento-automatico-sin-codigo`. Ningún mensaje de esa
+  conversación nombra inmersiones (el cambio no pudo entrar). Es el turno que decide el enrutador LLM cuando Jev duda
+  (ya anotado en la ronda `s426-B`): esta vez lo tomó como "link roto" y escaló sin explicar el 10 % automático.
+- En la ronda solo 2 mensajes nombran inmersiones (`paquete-5-buceos-cop` t1, `minicurso-islas-y-acompanante-lancha`
+  t4); ninguna de las dos conversaciones empeora. El caso que lo motiva (`precio-desde-islas`) no está en la core: su
+  medida es el escalón 0 (3/3).
+- **Latencia igual** (las dos rondas por la tarde): todos los turnos p50 2,51 → 2,56 s, p95 6,8 → 6,4 s; llamadas LLM
+  por turno 2,81 → 2,58.
+
+**Decisión (Gonzalo, 7-oct): `RAG_PLAN_NOMBRADO` se queda ENCENDIDO en PRE.** Gasto ≈ 0,9 $ (A re-juzgada 0,56 $,
+escalones y ronda).

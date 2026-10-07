@@ -1,6 +1,13 @@
 History
 =======
 
+0.30.2 - (2026-10-07)
+----------------------
+* **s4-27 (búsqueda): el plan que NOMBRA el cliente va al contexto del RAG — PROMOCIONADO** (Gonzalo). Evidencia: `docs/robustness/s4-27/README.md`.
+  - **Causa** (`precio-desde-islas-vs-cartagena`, "¿el precio de las 2 inmersiones? desde ese hotel"): el catálogo del prompt trae las 2 inmersiones desde las islas (124 USD), pero la búsqueda trae las fichas de los paquetes de las islas (sus itinerarios repiten "2 inmersiones") y, con el historial real, el modelo ofrecía el paquete de 3 y negaba el plan. `rag_piezas` (casos nuevos): historial limpio 3/3, historial real 1/3, con el plan en el estado 3/3.
+  - **Arreglo** (`RAG_PLAN_NOMBRADO`, `conversational_core._plan_nombrado`): si el cliente nombra cuántas inmersiones y su origen consta, el contexto dice qué plan del catálogo es (el número sale del id del plan). Solo añade un dato. No cubre "ese plan" sin número (queda la propuesta de Jev).
+  - **Escalón 0 en PRE** (código local): 124 USD 3/3 (hoy 0/3). **Ronda core `s427-B`** frente a `s426-B` re-juzgada con el juez nuevo: **95,2 → 96,0 %**, 24 → 26/32 sin fallos, 1 regresión ajena (`descuento-online`: el enrutador duda), latencia igual. Tests: `tests/test_s4_27_plan_nombrado.py` (11).
+
 0.30.1 - (2026-10-07)
 ----------------------
 * **Punto 4 (s4-26, supuestos sueltos de la reserva): 6 arreglos por causa, medidos y PROMOCIONADOS** (Claude con Gadea). Causas encontradas reproduciendo los diálogos visibles en local (replay con el estado de la reserva turno a turno) y en PRE (`reproducir_juez_pre --codigo-local`, opción nueva: prueba sin desplegar). Examen oculto sin tocar.
