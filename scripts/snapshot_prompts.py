@@ -182,6 +182,8 @@ def _collect() -> dict[str, str]:
     add("info/grounding_verify_v2.system.en", info.GROUNDING_VERIFY_V2_EN)
     add("info/grounding_verify_v3.system.es", info.GROUNDING_VERIFY_V3_ES)
     add("info/grounding_verify_v3.system.en", info.GROUNDING_VERIFY_V3_EN)
+    add("info/grounding_verify_v3_luna.system.es", info.GROUNDING_VERIFY_V3_LUNA_ES)
+    add("info/grounding_verify_v3_luna.system.en", info.GROUNDING_VERIFY_V3_LUNA_EN)
     add("info/grounding_verify_v4.system.es", info.GROUNDING_VERIFY_V4_ES)
     add("info/grounding_verify_v4.system.en", info.GROUNDING_VERIFY_V4_EN)
     # rag-4: las dos mitades del "no lo tengo" (la de hoy y la que contesta lo que sí sabe).

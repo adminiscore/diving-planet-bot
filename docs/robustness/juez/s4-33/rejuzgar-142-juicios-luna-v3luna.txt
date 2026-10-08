@@ -1,0 +1,166 @@
+142 juicios · PRE rechaza 13 · nuevo (gpt-6-luna, ['juez_v3_luna']) rechaza 42 · de acuerdo 109 · tiempo mediana 2.40s
+
+[PRE aprueba, nuevo RECHAZA] CONS-certificado-fecha-precio-cop-descuento-transferencia t8
+  respuesta: '¡Claro! Si te refieres a cuánto va a subir el precio, no tengo información sobre futuros aumentos. Para buzos certificados, la salida de dos inmersiones desde Cartagena cuesta **178 USD reservando online** o **197 USD a tarifa normal**. ¿Saldrías desde Cartagena o ya estás en las islas?'
+  PRE:   GROUNDED
+  nuevo: HALLUCINATED - No se tiene información sobre futuros aumentos de precio. NO
+
+[PRE aprueba, nuevo RECHAZA] CONS-certificado-fecha-precio-cop-descuento-transferencia t9
+  respuesta: '¡Claro! El 10% de descuento online aplica al reservar y pagar por la página. La transferencia solo se ofrece si falla el sistema de reservas o el pago en línea; en ese caso, se mantiene el descuento. Tener una cuenta local no cambia esa condición.\n\nComo tienes extranjería, el pago regular se hace completo con tarjeta en la web. ¿Quieres que te comparta el enlace de la salida desde Cartagena para r'
+  PRE:   GROUNDED
+  nuevo: HALLUCINATED - Tener una cuenta local no cambia la condición para pagar por transferencia. — NO
+
+[PRE rechaza, nuevo APRUEBA] CONS-minicurso-precio-colombianos-origen-pendiente t4
+  respuesta: '¡Claro que sí! Si son colombianos, pagan en pesos colombianos; el precio es el mismo, solo cambia la moneda. No hay un descuento especial por ser colombiano.\n\nPara principiantes, el *Minicurso de Buceo* saliendo desde Cartagena cuesta **$655.000 COP por persona reservando online**. Incluye lancha ida y vuelta y almuerzo. Para reservar, pueden elegir la fecha y las 2 personas aquí: https://book.div'
+  PRE:   HALLUCINATED - Si son colombianos, pagan en pesos colombianos; el precio es el mismo, solo cambia la moneda. NO
+  nuevo: GROUNDED
+
+[PRE aprueba, nuevo RECHAZA] CONS2-certificado-fecha-precio-cop-descuento-transferencia t7
+  respuesta: 'Si eres cliente extranjero, el pago se hace completo al reservar, con tarjeta en la página web; no se paga el día de la salida. El precio se muestra en USD y puedes usar tu pasaporte como documento de identificación. ¿Quieres que te comparta el enlace para la salida de 2 inmersiones desde Cartagena?'
+  PRE:   GROUNDED
+  nuevo: HALLUCINATED - Los clientes extranjeros no pagan el día de la salida. NO
+
+[PRE aprueba, nuevo RECHAZA] CONS2-familia-mixta-precio-descuento-refresher t5
+  respuesta: 'There isn’t a discount code. The 10% online discount is applied automatically when you book directly through our website. Since your group has 6 people, a 10% group discount may also apply to the recreational dives and snorkeling, but the team needs to apply it—it isn’t automatic. Would you like the booking links for both activities?'
+  PRE:   GROUNDED
+  nuevo: HALLUCINATED - There isn’t a discount code. — NO
+
+[PRE aprueba, nuevo RECHAZA] CONS2-refresher-rechaza-acepta t2
+  respuesta: 'Sí, el refresher tiene un costo propio; no es un recargo adicional a otra salida. Como llevas 5 años sin bucear, normalmente se requiere hacerlo antes de volver al agua.\n\nSi sales desde Cartagena, el precio online es **655.000 COP** y el precio normal es **727.000 COP**. Incluye el repaso en piscina, una inmersión en el mar, equipo, lancha y almuerzo. Se reserva como *Minicurso de Buceo*: https://'
+  PRE:   GROUNDED
+  nuevo: HALLUCINATED - El refresher tiene un costo propio y no es un recargo adicional a otra salida — NO
+
+[PRE aprueba, nuevo RECHAZA] curso-referido-pide-datos-centro t2
+  respuesta: 'If [NOMBRE] has completed the e-learning, the next step is the in-water portion of the Open Water course. The course takes 2 days and requires an overnight stay on the islands; lodging isn’t included. Would you like me to connect you with the team to confirm the details?'
+  PRE:   GROUNDED
+  nuevo: HALLUCINATED - The next step after completing the e-learning is the in-water portion of the Open Water course. — NO
+
+[PRE aprueba, nuevo RECHAZA] curso-referido-pide-datos-centro t6
+  respuesta: 'If [NOMBRE] has completed the e-learning **and pool sessions** with a PADI dive center, the relevant option is the **Open Water Referral Course** in Cartagena. They’ll need to bring the referral paperwork signed by their PADI instructor. The practical certification takes 2 days, with 4 instructor-supervised dives in the Rosario Islands.\n\nThe referral paperwork should contain the diver’s details an'
+  PRE:   GROUNDED
+  nuevo: HALLUCINATED - The referral paperwork should contain the diver’s details and confirmation of completed training. NO | - The assistant does not have the exact fields for the transfer form. NO
+
+[PRE aprueba, nuevo RECHAZA] open-water-hoteles-noche-fotos-horario t8
+  respuesta: 'Of course—and no need to apologize! The Open Water course is a great way to learn while staying in the Rosario Islands. I don’t have the detailed daily timetable or the first-day finish time available, so I can’t confirm how much time you’ll have at the hotel. A team advisor can check the itinerary for your dates and help you plan around it.\n\nWould you like me to connect you with an advisor for th'
+  PRE:   GROUNDED
+  nuevo: HALLUCINATED - The detailed daily timetable is not available. NO | - The first-day finish time is not available. NO
+
+[PRE aprueba, nuevo RECHAZA] paquete-5-buceos-islas-residente-sin-recogida t6
+  respuesta: '¡Claro! Como ya estás en Cocoliso, el paquete de **5 inmersiones para dos días** cuesta **COP 1.000.000 por persona al reservar online**. Incluye un buceo nocturno; el almuerzo no está incluido. Es para buzos certificados y requiere presentar el carnet.\n\nPuedes reservar aquí: https://book.divingplanet.org/book/package-of-5-dives-already-on-island/21?language=es\n\nEn el calendario eliges la fecha y '
+  PRE:   GROUNDED
+  nuevo: HALLUCINATED - Se requiere presentar el carnet: NO
+
+[PRE aprueba, nuevo RECHAZA] principiante-hora-lugar-y-precio t3
+  respuesta: 'Of course! The meeting time and location depend on whether you’re departing from Cartagena or already staying on the islands. I can’t confirm the exact details or tomorrow’s availability here, but a team advisor can help finalize them. Where will you be departing from?'
+  PRE:   GROUNDED
+  nuevo: HALLUCINATED - The meeting time and location depend on whether you’re departing from Cartagena or staying on the islands. — NO | - The exact meeting details are not available here. — NO | - Tomorrow’s availability
+
+[PRE aprueba, nuevo RECHAZA] principiante-hora-lugar-y-precio t4
+  respuesta: 'Sure! Since you’re a beginner and haven’t mentioned a certification, the Dive Mini Course is the suitable option—no prior certification is required.\n\n- **Departing from Cartagena:** USD 183 online / USD 204 regular. It includes the round-trip boat and lunch.\n- **Already on the Rosario Islands:** USD 134 online / USD 149 regular. Lunch isn’t included.\n\nWhich departure point applies to you?'
+  PRE:   GROUNDED
+  nuevo: HALLUCINATED - The Dive Mini Course departing from Cartagena costs USD 204 regular. NO
+
+[PRE aprueba, nuevo RECHAZA] ON-acompanante-madre-desde-cartagena t3
+  respuesta: '¡Qué plan tan chévere! Tu mamá puede acompañarte sin problema aunque no bucee. Tenemos el plan de acompañante para quienes no se sumergen pero van en la lancha con el grupo. \n\nSi salen desde Cartagena, el acompañante tiene lancha ida y vuelta, almuerzo, seguro y entrada al Parque Nacional Natural incluidos. Si ya están en las islas, el acompañante va en la lancha con el grupo con seguro y entrada '
+  PRE:   GROUNDED
+  nuevo: HALLUCINATED - Diving Planet no maneja directamente la logística de alojamiento. NO
+
+[PRE aprueba, nuevo RECHAZA] ON-colombianos-precio-minicurso-dos-inmersiones t5
+  respuesta: '¡Buena pregunta! Sobre si la tarifa es diferente por hacer inmersiones en distintos puntos o por el número de inmersiones, ese detalle puntual no lo tengo a la mano, pero un asesor te lo puede confirmar sin problema.\n\nRecuerda que para los colombianos, el precio es el mismo que para todos, solo que se paga en pesos colombianos (COP).\n\n¿Quieres que te explique los planes y precios para varios días '
+  PRE:   GROUNDED
+  nuevo: HALLUCINATED - Hay un paquete que el cliente vio en el video. NO
+
+[PRE aprueba, nuevo RECHAZA] ON-paquete-5-buceos-precio-overnight-isla-grande-baru t1
+  respuesta: 'Hi [NOMBRE]! Diving for two days in the Rosario Islands is an amazing experience—you’ll love the vibrant reefs and warm Caribbean waters. Since you’ll be in Cartagena and plan to dive on April 13th and 14th, leaving on the 15th morning, the 4-dive package over 2 days is a great fit. \n\nHere’s how it works: You meet at 8:00 a.m. at Muelle de la Bodeguita in Cartagena, then take a speedboat (about 1 '
+  PRE:   GROUNDED
+  nuevo: HALLUCINATED - Muelle de la Bodeguita is well known and accessible. NO
+
+[PRE aprueba, nuevo RECHAZA] ON-paquete-en-carrito t3
+  respuesta: '¡Claro que sí! Tenemos varios paquetes para buzos certificados que quieren más días de buceo y disfrutar a fondo las Islas del Rosario.\n\nPor ejemplo, hay paquetes de 3, 5, 7 y hasta 9 inmersiones que se extienden de 1 a 4 días. Algunos incluyen buceo nocturno y otros solo diurnos, según prefieras. Eso sí, para estos paquetes de varios días normalmente hay que quedarse a dormir en las islas, porque'
+  PRE:   GROUNDED
+  nuevo: HALLUCINATED - Para los paquetes de varios días normalmente hay que dormir en las islas. NO | - Los paquetes de varios días no son ida y vuelta el mismo día. NO
+
+[PRE aprueba, nuevo RECHAZA] ON-precio-desde-islas-vs-cartagena t5
+  respuesta: '¡Qué bueno que ya están en las islas! Desde tu hotel con acceso marítimo, la recogida en lancha para las inmersiones está incluida sin costo adicional.\n\nSobre el precio de 2 inmersiones diurnas, el plan que más se acerca es el paquete de 3 inmersiones (2 diurnas + 1 nocturna) que cuesta 188 USD online (665.000 COP) o 209 USD normal (739.000 COP) por persona, pero incluye también un buceo nocturno.'
+  PRE:   GROUNDED
+  nuevo: HALLUCINATED - No hay un paquete específico de solo 2 inmersiones diurnas desde las islas. NO | - Los paquetes desde las islas son de 3 inmersiones o más. NO
+
+[PRE aprueba, nuevo RECHAZA] V2-colombianos-precio-minicurso-dos-inmersiones t3
+  respuesta: '¡Claro que sí! Desde Cartagena, las salidas de buceo incluyen 2 inmersiones en un día completo, porque la logística de la lancha y el tiempo no permiten hacer solo una inmersión ni una extra.\n\nSobre la duración exacta de cada inmersión, eso lo puede confirmar un asesor del equipo, que te dará el detalle según el plan y las condiciones.\n\n¿Quieres que te pase el link para que veas fechas y precios e'
+  PRE:   GROUNDED
+  nuevo: HALLUCINATED - La duración exacta de cada inmersión depende del plan y las condiciones. NO | - Un asesor puede confirmar la duración exacta de cada inmersión. NO | - El link permite ver fechas y precios en pesos. 
+
+[PRE aprueba, nuevo RECHAZA] V2-colombianos-precio-minicurso-dos-inmersiones t5
+  respuesta: '¡Buena pregunta! 😊 No, la tarifa no es diferente por hacer inmersiones en dos puntos distintos. Los paquetes que incluyen varias inmersiones, como el de 2 inmersiones en un día o los paquetes de varios días, tienen un precio fijo según lo que incluye el plan.\n\nSi viste un video de alguien haciendo dos inmersiones en diferentes sitios, seguramente era uno de esos paquetes que ya contemplan varias i'
+  PRE:   GROUNDED
+  nuevo: HALLUCINATED - La tarifa no cambia por hacer inmersiones en dos puntos distintos. — NO | - Los paquetes contemplan inmersiones en distintos puntos de buceo. — NO
+
+[PRE aprueba, nuevo RECHAZA] V2-minicurso-precio-colombianos-origen-pendiente t4
+  respuesta: '¡Claro que sí! Como son de Bogotá, ustedes pagan en pesos colombianos (COP). El precio es el mismo que para extranjeros, solo cambia la moneda. \n\nPara principiantes, el minicurso de buceo de 1 día, ida y vuelta desde Cartagena, cuesta 655.000 COP por persona si reservas online con el 10% de descuento. Incluye lancha, almuerzo y todo el equipo. \n\n¿Quieres que te pase el link para que puedan reserva'
+  PRE:   GROUNDED
+  nuevo: HALLUCINATED - El minicurso incluye todo el equipo: NO
+
+[PRE rechaza, nuevo APRUEBA] V2-paquete-5-buceos-cop-refresh-y-hoteles t1
+  respuesta: '¡Buenos días! El paquete de 5 inmersiones para colombianos que sale desde Cartagena cuesta 1.429.000 COP si reservas online (con el 10% de descuento) y 1.587.000 COP si reservas normal. Incluye lancha ida y vuelta, 5 inmersiones (4 diurnas y 1 nocturna), seguro, equipo, almuerzo el primer día y una noche de alojamiento en las islas (hotel no incluido).\n\nSi ya estás en las Islas del Rosario, el pre'
+  PRE:   HALLUCINATED - Incluye una noche de alojamiento en las islas (hotel no incluido). NO
+  nuevo: GROUNDED
+
+[PRE aprueba, nuevo RECHAZA] V2-paquete-5-buceos-cop-refresh-y-hoteles t3
+  respuesta: '¡Qué bueno que ya tienes tu curso básico completado! Eso te da la certificación Open Water Diver, que es perfecta para hacer el paquete de 5 inmersiones.\n\nComo tu certificación es reciente (menos de 2 años), no necesitas hacer ningún refresher ni trámite especial para bucear con nosotros. Solo asegúrate de traer tu carné de certificación.\n\n¿Quieres que te ayude a armar la reserva del paquete de 5 '
+  PRE:   GROUNDED
+  nuevo: HALLUCINATED - No se necesita ningún trámite especial para bucear con Diving Planet: NO | - Hay que traer el carné de certificación: NO
+
+[PRE aprueba, nuevo RECHAZA] V2-referral-mas-refresher-hotel-y-domingo-pascua t3
+  respuesta: 'Perfect! We are here to help. We operate every day of the year except December 25 and January 1, so diving on Easter Sunday, April 5, is no problem at all.\n\nAbout the refresher course: the price is actually 183 USD online if you book departing from Cartagena, or 134 USD online if you are already on the Rosario Islands. The $50 price you mentioned is not in our catalog.\n\nYou can book and pay for th'
+  PRE:   GROUNDED
+  nuevo: HALLUCINATED - Payment is secure — NO
+
+[PRE aprueba, nuevo RECHAZA] acompanante-madre-desde-cartagena t3
+  respuesta: '¡Qué plan tan chévere! Claro que tu mamá puede acompañarte en la lancha aunque no bucee. El plan de acompañante incluye lancha, seguro, entrada al Parque Nacional y almuerzo si salen desde Cartagena. \n\nSi ella se queda en la isla de apoyo, eso se puede coordinar, pero ten en cuenta que el acompañante va en la lancha con el grupo durante las salidas. Para quedarse en la isla, lo ideal es que tenga '
+  PRE:   GROUNDED
+  nuevo: HALLUCINATED - El acompañante no incluye hospedaje: NO | - Se puede coordinar que la acompañante se quede en la isla de apoyo: NO
+
+[PRE aprueba, nuevo RECHAZA] colombianos-precio-minicurso-dos-inmersiones t5
+  respuesta: '¡Qué buena pregunta! No, la tarifa no es diferente por hacer inmersiones en distintos puntos; lo que cambia es el plan que elijas. Por ejemplo, la salida de buceo de 2 inmersiones en un día tiene un precio, y el paquete de 3 inmersiones (que incluye inmersiones en varios puntos y una nocturna) tiene otro precio diferente porque es un plan más completo y requiere quedarse a dormir en las islas.\n\nSi'
+  PRE:   GROUNDED
+  nuevo: HALLUCINATED - La tarifa no cambia por hacer inmersiones en distintos puntos; depende del plan elegido. NO | - El paquete de 3 inmersiones incluye inmersiones en varios puntos. NO
+
+[PRE aprueba, nuevo RECHAZA] paquete-5-buceos-cop-refresh-y-hoteles t3
+  respuesta: '¡Qué bueno que ya tienes tu curso básico desde abril de 2025! Eso significa que estás certificado Open Water Diver y listo para bucear con autonomía hasta 18 metros. 🌊\n\nComo llevas menos de 2 años desde tu certificación, no necesitas hacer un refresher para volver al agua. Solo asegúrate de traer tu certificación y equipo, o si quieres, puedes rentar con nosotros.\n\n¿Quieres que te ayude a armar el'
+  PRE:   GROUNDED
+  nuevo: HALLUCINATED - Estar certificado Open Water Diver por haber completado el curso básico: NO | - Hay que traer la certificación: NO | - Se puede rentar equipo con Diving Planet: NO
+
+[PRE aprueba, nuevo RECHAZA] paquete-5-buceos-cop-refresh-y-hoteles t4
+  respuesta: '¡Claro que sí! Para que tu experiencia de buceo sea más cómoda, nuestra base está en dos hoteles de Isla Grande: el Hotel San Pedro de Majagua y el Hotel Cocoliso. Si te alojas en alguno de estos, la recogida en lancha es directa y sin complicaciones.\n\nTambién coordinamos recogida en otros hoteles con acceso marítimo cerca, como Rosario de Mar, Secreto, Ubuntu, Mulata, Eco Hotel Las Palmeras y Pao'
+  PRE:   GROUNDED
+  nuevo: HALLUCINATED - Se pueden pasar links para ver más detalles de los hoteles: NO
+
+[PRE aprueba, nuevo RECHAZA] paquete-5-buceos-precio-overnight-isla-grande-baru t1
+  respuesta: "Hi [NOMBRE]! Diving for two days in the Rosario Islands is an amazing plan—you'll love the coral reefs and warm Caribbean waters.\n\nFor a 2-day dive package departing from Cartagena, we offer a 4-dive package with 4 daytime dives over 2 days. You’ll need to stay overnight on the islands (hotel not included). The package includes boat transport from Cartagena, lunch on day 1, diving equipment, guide"
+  PRE:   GROUNDED
+  nuevo: HALLUCINATED - Customers should bring swimwear. NO | - Customers should bring a towel. NO | - Customers should bring reef-safe sunscreen. NO | - Customers may bring personal items they want. NO | - Complete gear m
+
+[PRE aprueba, nuevo RECHAZA] paquete-5-buceos-precio-overnight-isla-grande-baru t4
+  respuesta: "Hi! Yes, Isla Grande is definitely part of the Rosario Islands and it's where our dive base is located. For a solo backpacker, I recommend Hotel San Pedro de Majagua or Hotel Cocoliso on Isla Grande—they are convenient because our dive center is right there, and pick-up for diving is direct.\n\nOther good options with maritime access nearby are Rosario de Mar, Secreto, Ubuntu, Mulata, and Eco Hotel "
+  PRE:   GROUNDED
+  nuevo: HALLUCINATED - The response recommends Hotel San Pedro de Majagua or Hotel Cocoliso for a solo backpacker. NO
+
+[PRE aprueba, nuevo RECHAZA] paquete-5-buceos-precio-overnight-isla-grande-baru t6
+  respuesta: 'Sure thing! Since you’re already on the Rosario Islands, the 2-day dive packages have prices without transport from Cartagena or lunch included.\n\nFor example, the 4-dive package over 2 days is about 204 USD / 830,000 COP online price. Equipment rental is included if you don’t bring your own complete gear.\n\nIf you want, I can share the exact booking link so you can pick your dates and see the final'
+  PRE:   GROUNDED
+  nuevo: HALLUCINATED - Equipment rental is included if the customer does not bring their own complete gear. NO
+
+[PRE aprueba, nuevo RECHAZA] precio-desde-islas-vs-cartagena t4
+  respuesta: '¡Exacto! Si ya estás en las Islas del Rosario y te hospedas en un hotel con acceso por lancha, la recogida para bucear sale directamente desde tu hotel. Nosotros pasamos a recogerte entre 9:30 y 9:45 a.m., te llevamos a nuestro centro de buceo para preparar todo, y luego regresamos al hotel después de las inmersiones.\n\nAsí evitas tener que ir hasta Cartagena y es mucho más cómodo para ti. ¿Quieres'
+  PRE:   GROUNDED
+  nuevo: HALLUCINATED - La recogida es entre 9:30 y 9:45 a.m. NO
+
+[PRE aprueba, nuevo RECHAZA] precio-desde-islas-vs-cartagena t5
+  respuesta: '¡Qué bueno que ya están en las Islas del Rosario! Desde ahí, el plan de 2 inmersiones diurnas solo no está disponible como paquete independiente, pero sí ofrecemos el paquete de 3 inmersiones (2 diurnas + 1 nocturna) por 188 USD online (665.000 COP para colombianos) o 209 USD normal (739.000 COP).\n\nSi solo quieren hacer 2 inmersiones diurnas sin el nocturno, eso normalmente se coordina con un ases'
+  PRE:   GROUNDED
+  nuevo: HALLUCINATED - El plan de 2 inmersiones diurnas no está disponible como paquete independiente desde las islas. NO | - Hacer solo 2 inmersiones diurnas normalmente se coordina con un asesor. NO
+
+[PRE aprueba, nuevo RECHAZA] precio-desde-islas-vs-cartagena t7
+  respuesta: '¡Buena pregunta! Los precios para bucear desde las Islas del Rosario son diferentes a los que salen desde Cartagena porque no incluyen el transporte en lancha desde el continente ni el almuerzo.\n\nAsí que el costo que te di para las inmersiones desde el hotel en la isla es distinto (generalmente más bajo) que el que sale desde Cartagena.\n\n¿Quieres que te comparta los precios exactos para el plan de'
+  PRE:   GROUNDED
+  nuevo: HALLUCINATED - El precio desde las islas es generalmente más bajo que el precio desde Cartagena. NO

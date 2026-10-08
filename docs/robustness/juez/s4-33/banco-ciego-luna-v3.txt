@@ -1,0 +1,73 @@
+
+######## gpt-6-luna
+  ciego : inventos que deja pasar 1/28 (mejor 0) · verdades que deja pasar 9/28 (mejor todas) · aprobadas que siguen pasando 19/22
+  tiempo por juicio: mediana 2.30s · p90 3.19s (78 juicios)
+[falso -> RECHAZA] 2026-10-01-juez-B2|fragata-transporte|0|0
+    respuesta: 'Hi! Staying at Hotel Fragata in the Rosario Islands is great for diving with us. Since your hotel has maritime access, boat pick-up and drop-off are included at no extra charge. In some cases, the boat arrives directly at the hotel; if not, we’ll coordinate the nearest dock or meeting point for you.'
+    juez: HALLUCINATED - Hotel Fragata has maritime access. — NO
+[falso -> RECHAZA] 2026-10-01-juez-B2|fragata-transporte|0|0
+    respuesta: 'Hi! Staying at Hotel Fragata in the Rosario Islands is great for diving with us. Since your hotel has maritime access, boat pick-up and drop-off are included at no extra charge. In some cases, the boat arrives directly at the hotel; if not, we’ll coordinate the nearest dock or meeting point for you.'
+    juez: HALLUCINATED - Hotel Fragata has maritime access. — NO
+[falso -> RECHAZA] 2026-10-01-juez-B2|referido-datos-centro|0|1
+    respuesta: 'You can fill out the referral form with the dive center name as Diving Planet. We are located in Cartagena, Colombia, operating in the Rosario Islands Coral Reefs National Natural Park.\n\nIf you need any more details for the form or about the course, I’m here to help! Would you like information on th'
+    juez: HALLUCINATED - The referral form can be filled out with the dive center name as Diving Planet. NO
+[falso -> RECHAZA] 2026-10-01-juez-B2|referido-datos-centro|0|1
+    respuesta: 'You can fill out the referral form with the dive center name as Diving Planet. We are located in Cartagena, Colombia, operating in the Rosario Islands Coral Reefs National Natural Park.\n\nIf you need any more details for the form or about the course, I’m here to help! Would you like information on th'
+    juez: HALLUCINATED - The referral form can be filled out with the dive center name as Diving Planet. NO
+[falso -> RECHAZA] 2026-10-01-juez-B3|fragata-transporte|0|0
+    respuesta: 'Hello! Staying at Hotel Fragata on the Rosario Islands is great for diving with us. Since your hotel has maritime access, boat pick-up and drop-off are included at no extra charge. Sometimes the boat arrives directly at the hotel; other times, we’ll coordinate the nearest dock or meeting point for y'
+    juez: HALLUCINATED - Hotel Fragata has maritime access. — NO | - Boat pick-up and drop-off are included at no extra charge for guests staying at Hotel Fragata. — NO | - The boat may arrive directly at Hotel Fragata, or 
+[falso -> RECHAZA] 2026-10-01-juez-B3|fragata-transporte|0|0
+    respuesta: 'Hello! Staying at Hotel Fragata on the Rosario Islands is great for diving with us. Since your hotel has maritime access, boat pick-up and drop-off are included at no extra charge. Sometimes the boat arrives directly at the hotel; other times, we’ll coordinate the nearest dock or meeting point for y'
+    juez: HALLUCINATED - Hotel Fragata has maritime access. — NO | - A team advisor will arrange the exact pick-up details closer to the dive dates. — NO | - The customer is planning to dive in April. — NO
+[falso -> RECHAZA] 2026-10-01-juez-B3|refresher-1-5-anos|0|0
+    respuesta: "Hi! It's great you're getting back into diving — the Rosario Islands are perfect for it. Since it's been more than 1.5 years but less than 2, a refresher is usually recommended for safety and confidence, but strictly required after 2 years.\n\nAbout the cost: the refresher is the same as our Dive Mini"
+    juez: HALLUCINATED - A refresher is usually recommended after more than 1.5 years without diving. NO | - A refresher is strictly required only after 2 years without diving. NO
+[falso -> RECHAZA] 2026-10-01-juez-B3|refresher-1-5-anos|0|0
+    respuesta: "Hi! It's great you're getting back into diving — the Rosario Islands are perfect for it. Since it's been more than 1.5 years but less than 2, a refresher is usually recommended for safety and confidence, but strictly required after 2 years.\n\nAbout the cost: the refresher is the same as our Dive Mini"
+    juez: HALLUCINATED - A refresher is usually recommended after more than 1.5 years without diving. NO | - A refresher is strictly required only after 2 years. NO
+[falso -> RECHAZA] 2026-10-01-juez-B4|refresh-menos-2-anos|0|0
+    respuesta: '¡Qué bueno que ya tienes tu certificación básica desde abril del 2025! Como llevas menos de 2 años sin bucear, no necesitas hacer un refresh para volver al agua con seguridad y confianza. \n\nSolo recuerda revisar tu equipo y condiciones físicas antes de la inmersión, y listo para disfrutar. ¿Quieres '
+    juez: HALLUCINATED - La certificación básica del cliente es de abril de 2025. NO | - Si lleva menos de 2 años sin bucear, no necesita hacer un refresh. NO | - Se recomienda revisar el equipo y las condiciones físicas an
+[falso -> RECHAZA] 2026-10-01-juez-B4|refresh-menos-2-anos|0|0
+    respuesta: '¡Qué bueno que ya tienes tu certificación básica desde abril del 2025! Como llevas menos de 2 años sin bucear, no necesitas hacer un refresh para volver al agua con seguridad y confianza. \n\nSolo recuerda revisar tu equipo y condiciones físicas antes de la inmersión, y listo para disfrutar. ¿Quieres '
+    juez: HALLUCINATED - La certificación básica del cliente es de abril de 2025. NO | - Si lleva menos de 2 años sin bucear, no necesita hacer un refresh. NO | - Se recomienda revisar el equipo y las condiciones físicas an
+[falso -> RECHAZA] 2026-10-01-juez-B4|residente-cop|0|0
+    respuesta: '¡Hola! Claro que sí, si eres residente en Colombia y llevas 3 años aquí, pagas en pesos colombianos (COP). El precio es el mismo que para todos, solo cambia la moneda de pago, no hay un descuento especial por ser colombiano o residente. ¿Quieres que te cuente sobre los planes o precios en pesos?'
+    juez: HALLUCINATED - Llevar 3 años en Colombia basta para pagar en pesos colombianos. NO
+[falso -> RECHAZA] 2026-10-01-juez-B4|residente-cop|0|0
+    respuesta: '¡Hola! Claro que sí, si eres residente en Colombia y llevas 3 años aquí, pagas en pesos colombianos (COP). El precio es el mismo que para todos, solo cambia la moneda de pago, no hay un descuento especial por ser colombiano o residente. ¿Quieres que te cuente sobre los planes o precios en pesos?'
+    juez: HALLUCINATED - Llevar 3 años en Colombia basta para pagar en pesos. NO
+[falso -> RECHAZA] 2026-10-01-juez-B4|pago-transferencia|0|1
+    respuesta: '¡Claro que sí! Si tienes problemas para pagar en la web, el equipo puede enviarte un enlace para pagar por transferencia. Sobre si hay descuento por pagar así, ese detalle puntual no lo tengo a la mano, pero un asesor te lo puede confirmar.\n\n¿Quieres que te ayude a armar la reserva?'
+    juez: HALLUCINATED - Un asesor puede confirmar si hay descuento por pagar por transferencia: NO
+[falso -> RECHAZA] 2026-10-01-juez-B4|fragata-transporte|0|0
+    respuesta: "Hi! Staying at Hotel Fragata on the Rosario Islands is great for diving with us. Since your hotel has maritime access, boat pick-up and drop-off are included at no extra charge. In some cases, the boat arrives directly at the hotel; if not, we'll coordinate the nearest dock or meeting point for you."
+    juez: HALLUCINATED - Hotel Fragata is on the Rosario Islands. — NO | - Hotel Fragata has maritime access. — NO
+[falso -> RECHAZA] 2026-10-01-juez-B4|fragata-transporte|0|0
+    respuesta: "Hi! Staying at Hotel Fragata on the Rosario Islands is great for diving with us. Since your hotel has maritime access, boat pick-up and drop-off are included at no extra charge. In some cases, the boat arrives directly at the hotel; if not, we'll coordinate the nearest dock or meeting point for you."
+    juez: HALLUCINATED - Hotel Fragata is on the Rosario Islands. — NO | - Hotel Fragata has maritime access. — NO
+[falso -> RECHAZA] 2026-10-01-juez-B4|refresher-1-5-anos|0|0
+    respuesta: "Hi! It's great you're getting back to diving after some time. Since it's been more than 1.5 years but less than 2, a refresher might not be strictly required yet, but it depends on your comfort and confidence in the water.\n\nIf you do decide to take a refresher (recommended if you want to feel fully "
+    juez: HALLUCINATED - A refresher might not be strictly required if it has been more than 1.5 years but less than 2 years since the last dive. — NO
+[falso -> RECHAZA] 2026-10-01-juez-B4|refresher-1-5-anos|0|0
+    respuesta: "Hi! It's great you're getting back to diving after some time. Since it's been more than 1.5 years but less than 2, a refresher might not be strictly required yet, but it depends on your comfort and confidence in the water.\n\nIf you do decide to take a refresher (recommended if you want to feel fully "
+    juez: HALLUCINATED - A refresher might not be strictly required if it has been more than 1.5 years but less than 2 years since the last dive. — NO
+[invento -> PASA] 2026-10-01-juez-A-dif|pago-transferencia|2|0
+    respuesta: '¡Qué bueno que tienes cuenta local! Mira, el descuento que ofrecemos es del 10% por reservar y pagar en línea, es decir, usando el sistema de pago en nuestra web. Si pagas por transferencia, ese descuento online no aplica porque es un método alternativo que coordinamos solo si el pago en línea falla'
+    juez: GROUNDED
+[falso -> RECHAZA] 2026-10-01-juez-B4-dif|pago-transferencia|2|1
+    respuesta: '¡Qué bueno que preguntes eso! El descuento por pago online es del 10% y se aplica cuando reservas y pagas en la web con tarjeta. Sobre si hay descuento por pagar por transferencia, ese detalle puntual no lo tengo a la mano, pero un asesor puede confirmártelo.\n\nSi quieres, te puedo ayudar a armar tu '
+    juez: HALLUCINATED - El descuento por pago online es del 10% y se aplica al reservar y pagar en la web con tarjeta. NO | - Un asesor puede confirmar si hay descuento por transferencia. NO | - La reserva online se paga c
+[falso -> RECHAZA] 2026-10-01-juez-B4-dif|pago-transferencia|2|1
+    respuesta: '¡Qué bueno que preguntes eso! El descuento por pago online es del 10% y se aplica cuando reservas y pagas en la web con tarjeta. Sobre si hay descuento por pagar por transferencia, ese detalle puntual no lo tengo a la mano, pero un asesor puede confirmártelo.\n\nSi quieres, te puedo ayudar a armar tu '
+    juez: HALLUCINATED - El descuento por pago online es del 10% y se aplica al reservar y pagar en la web con tarjeta. NO
+[aprobada -> RECHAZA] 2026-10-01-juez-B2|ow-regreso-otro-dia|0|0
+    respuesta: "That's a great plan! If you want to stay an extra day on the Rosario Islands after your PADI Basic Course, we can definitely help arrange your boat transfer back to Cartagena on a different day. This transfer is not included in the course package, but our team will coordinate it for you depending on"
+    juez: HALLUCINATED - Staying an extra day on the Rosario Islands after the PADI Basic Course: NO
+[aprobada -> RECHAZA] 2026-10-01-juez-B4|ow-horario-dia1|0|0
+    respuesta: 'Hello! The PADI Basic Course (Open Water) is a fantastic way to start your diving adventure in the beautiful Rosario Islands. On the first day, the course includes pool training and theory sessions, plus your lunch is included. Activities generally start in the morning around 8:00 a.m. and finish by'
+    juez: HALLUCINATED - The PADI Basic Course includes pool training and theory sessions on the first day. NO | - The customer will have the evening free after the first day’s training. NO | - The assistant can help with t
+[aprobada -> RECHAZA] 2026-10-01-juez-B4|grupo-mixto-total-cop|0|0
+    respuesta: '¡Qué plan tan chévere para el grupo! Tienes un buzo avanzado y dos personas que quieren hacer el bautismo (Minicurso de Buceo), saliendo desde Cartagena.\n\nTe cuento los precios en pesos colombianos (COP):\n\n- Curso Avanzado PADI (para el buzo avanzado): 2.175.000 COP online por persona.\n- Minicurso d'
+    juez: HALLUCINATED - El total exacto lo confirma un asesor al reservar. NO

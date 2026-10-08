@@ -467,6 +467,31 @@ If the response states no business fact, write a single line "- (none)".
 Step 2. On the last line write ONLY one word: HALLUCINATED if any fact has "NO"; GROUNDED if all have "YES" or there are none."""
 
 
+# s4-33 (8-oct, flag `juez_v3_luna`): el v3 con GPT-6 Luna como juez. Banco de `scripts/sonda_juez_modelo.py`, grupo de
+# DISEÑO con el v3 tal cual: Luna no deja pasar ningún invento (0/8) pero tumba 11 de 18 verdades y 5 de 18 aprobadas,
+# siempre por lo mismo: (1) enumera lo que el CLIENTE dijo de sí mismo ("el cliente tiene el curso desde abril de 2025",
+# "lleva 3 años residiendo en Colombia") y lo marca NO; (2) enumera valoraciones y ofertas de ayuda que el v3 ya excluye
+# ("el 6 de febrero es un día perfecto", "te ayudamos con la logística", "el asesor confirma el cálculo"); (3) no hace
+# deducciones directas ("el hotel Fragata tiene acceso en lancha" con Fragata en la lista de hoteles con acceso). El v3
+# se mantiene entero (lo que caza los inventos) y se añaden esas tres aclaraciones antes del paso 2.
+_JUEZ_LUNA_ES = """
+
+Aclaraciones (léelas antes de enumerar):
+- Lo que el CLIENTE ha dicho de sí mismo (sus fechas, el curso que ya tiene, cuánto lleva viviendo en Colombia, su hotel, cuántos son) NO es un dato del negocio: no lo enumeres aunque la respuesta lo repita. Si la respuesta aplica una regla del contexto a un dato del cliente ("como eres residente, pagas en COP"), enumera y comprueba solo la regla.
+- Tampoco son datos del negocio las valoraciones generales del destino, de un día o de la experiencia ("un día perfecto", "buenas condiciones todo el año", "una experiencia increíble") ni ofrecer ayuda o coordinación, o decir quién confirma algo ("te ayudamos con la logística", "el equipo lo coordina", "un asesor te confirma el cálculo").
+- Un dato está respaldado ("SÍ") si se deduce directamente del contexto aunque no esté escrito igual: si el contexto da una lista (por ejemplo, los hoteles con acceso en lancha) y la respuesta dice que un elemento de esa lista tiene esa propiedad; si dos datos del contexto juntos lo dan; si el contexto da la lista COMPLETA de algo (por ejemplo, los descuentos que existen) y la respuesta dice que otro no existe; o si el contexto pone un umbral (algo se exige "si han pasado más de 2 años") y la respuesta dice que por debajo no se exige. Lo que el contexto no dice ni permite deducir sigue siendo "NO", y un elemento que NO está en una lista de ejemplos ("hoteles como…") no hereda su propiedad."""
+_JUEZ_LUNA_EN = """
+
+Clarifications (read them before listing):
+- What the CUSTOMER said about themselves (their dates, the course they already have, how long they have lived in Colombia, their hotel, how many they are) is NOT a business fact: do not list it even if the response repeats it. If the response applies a rule from the context to something the customer said ("since you are a resident, you pay in COP"), list and check only the rule.
+- These are not business facts either: general opinions about the destination, a day or the experience ("a perfect day", "great conditions all year", "an amazing experience"), and offering help or coordination, or saying who will confirm something ("we'll help you with the logistics", "the team will coordinate it", "an advisor will confirm the total").
+- A fact is supported ("YES") if it follows directly from the context even if it is not written the same way: if the context gives a list (for example, the hotels with boat access) and the response says an item of that list has that property; if two facts of the context together give it; if the context gives the COMPLETE list of something (for example, the discounts that exist) and the response says another one does not exist; or if the context sets a threshold (something is required "if more than 2 years have passed") and the response says it is not required below it. Whatever the context neither states nor lets you deduce is still "NO", and an item that is NOT in a list of examples ("hotels such as…") does not inherit its property."""
+_PASO_2_ES = "\n\nPaso 2."
+_PASO_2_EN = "\n\nStep 2."
+GROUNDING_VERIFY_V3_LUNA_ES = GROUNDING_VERIFY_V3_ES.replace(_PASO_2_ES, _JUEZ_LUNA_ES + _PASO_2_ES, 1)
+GROUNDING_VERIFY_V3_LUNA_EN = GROUNDING_VERIFY_V3_EN.replace(_PASO_2_EN, _JUEZ_LUNA_EN + _PASO_2_EN, 1)
+
+
 # Juez v4 (flag `juez_por_tipo`, 1-oct; docs/robustness/juez/README.md). El v3 pedía dos tareas en una: filtrar qué
 # frases son datos del negocio y verificar esos datos. En cuanto la respuesta traía algún dato, el modelo se saltaba
 # el filtro: copiaba la respuesta frase por frase, literal (hasta la pregunta final al cliente), y ponía SÍ/NO a cada

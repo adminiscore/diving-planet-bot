@@ -190,6 +190,11 @@ class Settings(BaseSettings):
     # proceder con la cancelacion, te paso con un asesor" (p=0,25) y eso costo una regresion — primer dato real para
     # el umbral, pero un caso no basta para subirlo. Revert = False aqui y en el compose.
     juez_segunda_opinion: bool = True
+    # s4-33 (8-oct, Alvaro): instrucciones del juez de grounding v3 para GPT-6 Luna (prompts/info.py
+    # GROUNDING_VERIFY_V3_LUNA_*): el v3 entero + 3 aclaraciones (lo que dice el cliente de si mismo no se comprueba;
+    # valoraciones y ofertas de ayuda no son datos; las deducciones directas del contexto cuentan). Va con
+    # GROUNDING_V3_MODEL=gpt-6-luna. APAGADO hasta medirlo (banco sonda_juez_modelo, escalon 0, A/B core).
+    juez_v3_luna: bool = False
     # 1-oct (Alvaro, paso 1 del "Siguiente" de Gonzalo): el juez ve la presentacion de Diving Planet (PADI 5
     # Estrellas, 30 años), la misma frase que el bot tiene ordenado decir (prompts/info.py PRESENTACION_*). Sin ella
     # el juez tiraba esas frases por inventadas (ronda 2026-10-01-juez-B). APAGADO hasta medirlo

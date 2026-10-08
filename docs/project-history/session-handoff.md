@@ -30,7 +30,24 @@ respuesta aquí debajo de cada punto (o en Plan Coral) y quien siga la aplica.
 Pendiente de antes (sigue): el criterio del Open Water en `manual-duracion-curso` y el ajuste de privacidad de
 OpenRouter para medir DeepSeek oficial como referencia.
 
-### ▶️ RETOMAR AQUÍ — 8-oct, cierre (Álvaro con Claude): s4-31 CERRADA; siguiente s4-33 (el revisor a Luna)
+### ▶️ RETOMAR AQUÍ — 8-oct noche (Álvaro con Claude): s4-31 CERRADA; s4-33 EN CURSO — Luna como revisor aún NO
+
+**s4-33** (HISTORY 0.31.3, evidencia `docs/robustness/juez/s4-33/`): instrucciones del revisor para Luna hechas
+(`juez_v3_luna`, **apagado**). Con el banco etiquetado sale mejor que gpt-4.1 (ciego: inventos colados 5/28 → 1/28,
+verdades 9/28 → 13/28, aprobadas 22/22 → 19/22), **pero re-juzgando 142 juicios REALES de PRE** (`scripts/rejuzgar_juicios.py`)
+tumba 42 frente a 13 de gpt-4.1, casi todos falsos rechazos de respuestas escritas por Luna ("hay que presentar el
+carné", "USD 204 normal", "trae bañador y toalla"). No se lanza la ronda. **El revisor sigue en gpt-4.1.**
+
+**Siguiente para s4-33, a elegir (con Gadea):**
+- (a) **Etiquetar** los 142 juicios reales (`juicios-reales-142.jsonl`; prioridad: los 33 desacuerdos de
+  `rejuzgar-142-juicios-luna-v3luna.txt`) y ajustar con ese banco, que sí se parece a PRE; medir con `rejuzgar_juicios`.
+- (b) Luna como juez **con razonamiento bajo** (más fiable, más lenta): medir con el banco y con los 142.
+- (c) Otra vía para abaratar: **gpt-4.1-mini con el v3** (≈5 veces más barato que gpt-4.1), mismo método.
+`python -m scripts.rejuzgar_juicios docs/robustness/juez/s4-33/juicios-reales-142.jsonl --modelo <m> [--flag juez_v3_luna]`
+
+**El resto del orden sigue igual** (abajo): decisiones de Gadea, s4-28, flujo de la reserva, examen oculto, R6/Q5.
+
+### ✅ 8-oct, cierre (Álvaro con Claude) — SUPERADO: s4-31 CERRADA; siguiente s4-33 (el revisor a Luna)
 
 **s4-31 cerrada** (HISTORY 0.31.2): el prompt del RAG no necesita reescribirse para Luna. Mapa de los 58 fallos leído
 entero (`docs/robustness/fallos-por-causa-2026-10-08-luna-visible.json`): lo único de las respuestas del RAG que fallaba

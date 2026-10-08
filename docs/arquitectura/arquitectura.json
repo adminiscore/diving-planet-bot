@@ -1,7 +1,7 @@
 {
  "meta": {
-  "generado": "2026-10-08T19:54:11+00:00",
-  "commit": "7eaeabf",
+  "generado": "2026-10-08T21:20:56+00:00",
+  "commit": "1768fd0",
   "rama": "feature/pre_alvaro"
  },
  "vistas": {
@@ -905,6 +905,13 @@
      "codigo": true,
      "pre": true,
      "sin_efecto": false
+    },
+    {
+     "nombre": "juez_v3_luna",
+     "titulo": "Instrucciones del revisor para Luna",
+     "codigo": false,
+     "pre": false,
+     "sin_efecto": false
     }
    ],
    "tiempo_medido": {
@@ -1744,6 +1751,19 @@
    "texto": "Si el revisor rechaza, el enrutador rápido mira las frases rechazadas; si solo dicen 'no lo tengo' u ofrecen un asesor, la respuesta pasa.",
    "codigo": true,
    "pre": true,
+   "fijado_en_pre": true,
+   "usado_por": [
+    "r_revisor"
+   ],
+   "sin_efecto": null
+  },
+  {
+   "nombre": "juez_v3_luna",
+   "area": "Preguntas",
+   "titulo": "Instrucciones del revisor para Luna",
+   "texto": "Con GPT-6 Luna como revisor: lo que el cliente dice de sí mismo no se comprueba, las valoraciones y ofertas de ayuda no son datos, y una deducción directa de la información cuenta como respaldada.",
+   "codigo": false,
+   "pre": false,
    "fijado_en_pre": true,
    "usado_por": [
     "r_revisor"

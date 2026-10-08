@@ -13,6 +13,8 @@ from src.prompts.info import (
     GROUNDING_VERIFY_V2_ES,
     GROUNDING_VERIFY_V3_EN,
     GROUNDING_VERIFY_V3_ES,
+    GROUNDING_VERIFY_V3_LUNA_EN,
+    GROUNDING_VERIFY_V3_LUNA_ES,
     GROUNDING_VERIFY_V4_EN,
     GROUNDING_VERIFY_V4_ES,
 )
@@ -296,6 +298,9 @@ async def is_grounded(answer: str, context: str, lang: str = "es") -> tuple[bool
     por_tipo = settings.grounding_v3 and settings.juez_por_tipo
     if por_tipo:
         system = GROUNDING_VERIFY_V4_ES if lang == "es" else GROUNDING_VERIFY_V4_EN
+    elif settings.grounding_v3 and settings.juez_v3_luna:
+        # s4-33 (8-oct): el v3 con tres aclaraciones para GPT-6 Luna como juez (prompts/info.py).
+        system = GROUNDING_VERIFY_V3_LUNA_ES if lang == "es" else GROUNDING_VERIFY_V3_LUNA_EN
     elif settings.grounding_v3:
         system = GROUNDING_VERIFY_V3_ES if lang == "es" else GROUNDING_VERIFY_V3_EN
     elif settings.rag_v2:

@@ -200,6 +200,8 @@ services:
       # Ver HISTORY 0.29.57-0.29.58. Ronda B (28-sep): 91,3 -> 93,0 %, 21 -> 23/32, 0 regresiones propias
       # -> PROMOCIONADO (vigilar p95: 5,3 -> 7,0 s por las regeneraciones). Revert = "false" + redeploy.
       GROUNDING_V3: "true"
+      # s4-33 (8-oct): instrucciones del juez v3 para GPT-6 Luna (va con GROUNDING_V3_MODEL). APAGADO hasta medirlo.
+      JUEZ_V3_LUNA: "false"
       # u3-5 (decision de Gadea): el minicurso deducido se RECOMIENDA y lo confirma el cliente; a quien pide
       # un curso se le recomienda el Open Water. Ver HISTORY 0.29.45-0.29.58. Escalon 0 correcto, sin
       # regresiones en la ronda B (no se activa en el core) -> PROMOCIONADO. Revert = "false" + redeploy.
