@@ -13,7 +13,32 @@ Read this file before changing code in the Diving Planet Bot. For a quick versio
 
 > **📏 LEER ANTES DE MEDIR — decisiones del 24-sep-2026 (Gadea):** (1) latencia y llamadas con nuestros logs `[TURN_METRICS]` + `scripts/turn_metrics.py`, no con Langfuse (plan gratuito superado, reinicio 16-oct); (2) pruebas A/B por escalones, juzgando solo los diálogos que cambian. Todo en `docs/robustness/protocolo-medicion.md`.
 
-### ▶️ RETOMAR AQUÍ — 8-oct noche (Álvaro con Claude): s4-31 EN CURSO, primera causa arreglada (`ORIGEN_CONSERVA_RESPUESTA`)
+### ▶️ RETOMAR AQUÍ — 8-oct, cierre (Álvaro con Claude): s4-31 CERRADA; siguiente s4-33 (el revisor a Luna)
+
+**s4-31 cerrada** (HISTORY 0.31.2): el prompt del RAG no necesita reescribirse para Luna. Mapa de los 58 fallos leído
+entero (`docs/robustness/fallos-por-causa-2026-10-08-luna-visible.json`): lo único de las respuestas del RAG que fallaba
+de verdad era la puerta del origen (arreglada, `ORIGEN_CONSERVA_RESPUESTA`); el resto es flujo de reserva (17), origen /
+extracción (s4-28), búsqueda menor y criterios. `RAG_FICHA_DEL_SERVICIO` re-medido con Luna: sin ganancia y +0,8 s →
+sigue apagado.
+
+**Siguiente, en orden:**
+1. **s4-33 — el revisor (juez de grounding) a Luna** (decisión de Gadea): ajustar su prompt con el grupo de DISEÑO de
+   `scripts/sonda_juez_modelo.py` y comprobar en el CIEGO sin tocar nada (no perder inventos cazados, recuperar las
+   aprobadas); que deje de rechazar "el residente / nacido en Colombia paga en COP" (verdad, rechazada a menudo); escalón 0
+   en PRE (`reproducir_juez_pre --codigo-local --env GROUNDING_V3_MODEL=gpt-6-luna`); A/B de la core frente a
+   `2026-10-08-respaldo-B` o una A del mismo día. Es la pieza más cara (~9x el resto) y añade ~1,3 s.
+2. **Decisiones para Gadea** (salen del mapa): ¿total de grupo con unidades × precio?; `RAG_CONDICIONES_ABIERTAS` con los
+   hoteles base (Cocoliso, San Pedro de Majagua tienen acceso); `hora-fin-dia1` (4:30 en el criterio, 12:00-13:00 en la
+   base); propina de fotos (50.000 COP / 14 USD) en el catálogo o fuera del criterio de importes; `acompanante-lancha-escalar`.
+3. **s4-28** (sigue): origen supuesto o no registrado ("hotel Ubuntu" no se registra como islas; el RAG lista solo
+   Cartagena) y el extractor LLM que se inventa `location=cartagena` con el origen pendiente ("May 3rd").
+4. Flujo de la reserva: los 17 fallos de textos fijos del mapa (repreguntas, "¿eres certificado?" a quien hace el curso,
+   el precio en COP pedido que no llega), por causa, como s4-26.
+5. Después: la ronda COMPLETA con el examen oculto (la nota real con Luna) y el plan principal (paso 11 R6, paso 12 Q5).
+- Respaldo: ganó 4 de 156 en la ronda visible. Seguir mirando `rag_respaldo`.
+- Gasto de OpenAI del 8-oct ≈ 15,5 $.
+
+### ✅ 8-oct noche (Álvaro con Claude) — SUPERADO: s4-31 EN CURSO, primera causa arreglada (`ORIGEN_CONSERVA_RESPUESTA`)
 
 **Estado.** PRE sirve `feature/pre_alvaro` (= `feature/pre_gadea` del 8-oct + s4-31). **Integrad `feature/pre_alvaro`
 antes de subir.** HISTORY 0.31.1. Modelos sin cambios respecto al bloque de Gadea de abajo.

@@ -1,6 +1,14 @@
 History
 =======
 
+0.31.2 - (2026-10-08)
+----------------------
+* **s4-31 CERRADA (Álvaro con Claude): el prompt del RAG NO necesita reescribirse para Luna.** Con el mapa de los 58 fallos de la ronda visible leído entero (`docs/robustness/fallos-por-causa-2026-10-08-luna-visible.json`, columna `causa`): 17 del flujo de la reserva, 6 de la puerta del origen (**arreglados**, 0.31.1), 9 de búsqueda o respuesta incompleta, 4 de origen supuesto o no registrado, 3 del escalado, 1 de la deflexión, 1 de estado (extracción), y **10 del juez o de criterios** (2 de reglas del bot que chocan con el criterio: los totales de grupo prohibidos por el prompt y `RAG_CONDICIONES_ABIERTAS` dudando del acceso de Cocoliso, hotel base; 3 de criterios discutibles; la hora actual que el bot dice es la de su contexto, cierta; 3 de la propina de fotos fuera del catálogo; 1 pendiente de Gadea). Ninguno pide cambiar el tono o las reglas generales del prompt para Luna.
+  - **`RAG_FICHA_DEL_SERVICIO` (rag-3b) re-medido con Luna: sigue apagado.** `rag_piezas` (16 casos con servicio elegido, `--codigo-local`): el dato llega al contexto 90 → 97 %, pero la cobertura de la respuesta 90 → 87 % (gana `referido/punto-encuentro`, pierde 2: ruido de 1 repetición) y p50 3,1 → 3,9 s. Y no habría ayudado en el caso real (`open-water-hoteles-noche-fotos-horario`): el origen no consta, así que no hay servicio elegido del que sacar la ficha. `docs/robustness/rag-piezas/2026-10-08-luna-ficha-{A,B}.json`.
+  - **Umbral de confianza:** 10 de 160 respuestas se contestaron sin la base (lo encontrado puntuaba < 0,40); solo 2 acabaron en fallo (política de fotos 0,39; punto de encuentro 0,41 en otro fragmento). No se toca por 2 casos.
+  - **Lo que sale de s4-31, a otras tareas:** origen supuesto o no registrado (4) y el extractor que se inventa `location` con el origen pendiente → **s4-28**; los textos fijos de la reserva (17) → arreglos de flujo por causa (como s4-26); **para Gadea**: totales de grupo (¿se permite dar el total con unidades × precio?), `RAG_CONDICIONES_ABIERTAS` con los hoteles base, `hora-fin-dia1` (4:30 frente a 12:00-13:00 de la base), la propina de fotos en el catálogo y `acompanante-lancha-escalar`.
+  - Gasto OpenAI del día ≈ 15,5 $ (Gadea ~10 $; tarde ~5,5 $).
+
 0.31.1 - (2026-10-08)
 ----------------------
 * **s4-31 (prompt del RAG para Luna, por causa) EN CURSO — primera causa arreglada: `ORIGEN_CONSERVA_RESPUESTA` PROMOCIONADO** (Álvaro con Claude).
