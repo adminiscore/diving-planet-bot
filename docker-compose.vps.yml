@@ -239,6 +239,8 @@ services:
       # PRE pasa (docs/robustness/origen-c/). Ronda core B: la puerta pasa a mirar si la RESPUESTA cotiza; ronda
       # origen-c2-B sin regresiones reales -> PROMOCIONADO, ENCENDIDO. Revert = "false" aqui y en config.py.
       RAG_ORIGEN_PREGUNTA: "true"
+      # s4-31 (8-oct, Alvaro): la puerta del origen conserva la respuesta sin las frases con importe. ENCENDIDO para su mini-ronda B.
+      ORIGEN_CONSERVA_RESPUESTA: "true"
       # Punto 4 (s4-26, 7-oct), supuestos sueltos de la reserva. PROMOCIONADOS 7-oct (ronda core s426-B: 93,0 -> 95,6 %; HISTORY 0.30.1):
       # Jev manda sobre la regex de "menciona a alguien"; la red de "mencion perdida"
       # no saca un acompañante de "buceo"; el cierre sin cambios no se repite tras una respuesta; el RAG no da por

@@ -500,7 +500,8 @@
       ],
       "interruptores": [
         "rag_concise",
-        "rag_origen_pregunta"
+        "rag_origen_pregunta",
+        "origen_conserva_respuesta"
       ],
       "tiempo_medido": {
         "p50": 1.9,
@@ -1147,6 +1148,11 @@
       "area": "Preguntas",
       "titulo": "Sabe qué plan nombra el cliente",
       "texto": "Si el cliente dice cuántas inmersiones quiere ('el precio de las 2 inmersiones') y sabemos desde dónde sale, Coral recibe el plan exacto del catálogo, en vez de confundirlo con un paquete que también trae 2 inmersiones."
+    },
+    "origen_conserva_respuesta": {
+      "area": "Preguntas",
+      "titulo": "Al preguntar el origen, conserva el resto",
+      "texto": "Cuando Coral tiene que preguntar desde dónde sale el cliente antes de dar un precio, ya no tira la respuesta entera: quita solo las frases con importes y conserva lo demás (por ejemplo, que no hay precio especial para colombianos)."
     }
   },
   "areas": [

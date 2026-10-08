@@ -149,3 +149,47 @@ async def test_y_en_pesos_tras_la_pregunta_del_origen_tampoco_cotiza(monkeypatch
     assert conversacion[-1]["message"] == "Gracias - y en pesos?"  # el RAG contestó (y cotizaba)...
     assert "RESPUESTA_RAG" not in resp and core.ORIGEN_ANTES_DEL_PRECIO_ES in resp  # ...y se pregunta el origen
     assert st.pregunta_precio_pendiente  # sigue pendiente: se contesta cuando diga el origen
+
+
+# s4-31 (8-oct, flag `origen_conserva_respuesta`): la puerta del origen ya no tira la respuesta entera. Ronda
+# 2026-10-08-luna-visible: 6 de 33 fallos del RAG eran de perder lo que no era el precio.
+MITO = ("¡Qué bueno que quieras hacer el curso! Para colombianos no hay un precio especial: el precio es el mismo para "
+        "todos, solo cambia la moneda (pagas en pesos). El curso cuesta 2.450.000 COP online saliendo desde Cartagena. "
+        "¿Quieres que te pase el link?")
+
+
+def test_conserva_lo_que_no_es_precio_y_pregunta_el_origen(monkeypatch):
+    monkeypatch.setattr(settings, "rag_origen_pregunta", True)
+    monkeypatch.setattr(settings, "origen_conserva_respuesta", True)
+    salida = core._origen_antes_del_precio(_estado(), "Cuál es el costo para colombianos?", MITO)
+    assert "no hay un precio especial" in salida and "solo cambia la moneda" in salida  # lo que no es precio, queda
+    assert "COP" not in salida and "2.450.000" not in salida                            # ningún importe
+    assert "link" not in salida                                                         # su pregunta final, fuera
+    assert salida.endswith(core.ORIGEN_ANTES_DEL_PRECIO_ES) and core._es_pregunta_de_origen(salida)
+
+
+@pytest.mark.parametrize("respuesta", ["Cuesta 655.000 COP. ¿Te lo reservo?", "El minicurso: 183 USD online."])
+def test_si_solo_habia_precio_queda_solo_la_pregunta(monkeypatch, respuesta):
+    monkeypatch.setattr(settings, "rag_origen_pregunta", True)
+    monkeypatch.setattr(settings, "origen_conserva_respuesta", True)
+    assert core._origen_antes_del_precio(_estado(), "¿cuánto cuesta?", respuesta) == core.ORIGEN_ANTES_DEL_PRECIO_ES
+
+
+def test_con_el_flag_apagado_la_pregunta_sustituye_como_antes(monkeypatch):
+    monkeypatch.setattr(settings, "rag_origen_pregunta", True)
+    monkeypatch.setattr(settings, "origen_conserva_respuesta", False)
+    assert core._origen_antes_del_precio(_estado(), "Cuál es el costo para colombianos?", MITO) == \
+        core.ORIGEN_ANTES_DEL_PRECIO_ES
+
+
+def test_tambien_quita_el_link_y_lo_que_incluye(monkeypatch):
+    """Escalón 0 en PRE (8-oct): se dejaba el link de Cartagena mientras se preguntaba el origen, y "Incluye lancha y
+    almuerzo" (solo es de Cartagena) se quedaba sin sujeto."""
+    monkeypatch.setattr(settings, "rag_origen_pregunta", True)
+    monkeypatch.setattr(settings, "origen_conserva_respuesta", True)
+    respuesta = ("¡Claro que sí! Incluye teoría online y 4 inmersiones.\nSon 2 días y hay que dormir una noche en las "
+                 "islas; el alojamiento no está incluido. Reserva aquí: https://book.divingplanet.org/book/basic-course/4")
+    salida = core._origen_antes_del_precio(_estado(), "¿cuánto cuesta el curso?", respuesta.replace("4 inmersiones.",
+                                                                                                "4 inmersiones. 693 USD."))
+    assert "book.divingplanet.org" not in salida and "Incluye" not in salida
+    assert "el alojamiento no está incluido" in salida  # lo que vale para los dos orígenes, queda

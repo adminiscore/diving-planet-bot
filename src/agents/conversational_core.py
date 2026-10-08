@@ -5444,7 +5444,51 @@ def _origen_antes_del_precio(state: ConversationState, message: str, answer: str
     del_cliente = [h.get("content") or "" for h in (state.history or []) if h.get("role") == "user"]
     if any(_PISTA_ORIGEN_RE.search(t) for t in [*del_cliente, texto]):
         return None
-    return ORIGEN_ANTES_DEL_PRECIO_ES if state.language == "es" else ORIGEN_ANTES_DEL_PRECIO_EN
+    pregunta = ORIGEN_ANTES_DEL_PRECIO_ES if state.language == "es" else ORIGEN_ANTES_DEL_PRECIO_EN
+    if settings.origen_conserva_respuesta:
+        resto = _sin_importes(answer)
+        if resto:
+            return f"{resto}\n\n{pregunta}"
+    return pregunta
+
+
+# s4-31 (8-oct, flag `origen_conserva_respuesta`): en la ronda del golden visible con Luna (`2026-10-08-luna-visible`),
+# 6 de los 33 fallos del RAG eran de la puerta del origen: la pregunta fija SUSTITUÍA la respuesta entera y se perdía lo
+# que no era el precio ("no hay precio especial para colombianos, solo cambia la moneda", "con 1,5 años no hace falta
+# el refresher", "el refresher tiene el coste del minicurso"). Ahora se quitan solo las frases con un importe y la
+# pregunta final de la respuesta (la sustituye la del origen); si no queda nada que decir, solo la pregunta.
+_FRASE_RE = re.compile(r"(?<=[.!?])\s+")
+# Escalón 0 en PRE (8-oct): además del importe dependen del origen el link de reserva (uno por origen: se dejaba el de
+# Cartagena mientras se preguntaba el origen) y lo que incluye ("Incluye lancha ida y vuelta y almuerzo" es solo de
+# Cartagena, y sin la frase del precio se quedaba sin sujeto).
+_DEPENDE_DEL_ORIGEN_RE = re.compile(
+    rf"{_IMPORTE_RE.pattern}|book\.divingplanet\.org|^\W*(?:esto |el plan |el curso |el paquete )?(?:incluye|includes|it includes)\b"
+    r"|desde cartagena|from cartagena|cartagena-islas|islands-cartagena|almuerzo|\blunch\b",
+    re.IGNORECASE,
+)
+
+
+def _sin_importes(answer: str) -> str:
+    lineas = []
+    for linea in (answer or "").splitlines():
+        if not _DEPENDE_DEL_ORIGEN_RE.search(linea):
+            lineas.append(linea)
+            continue
+        frases = [f for f in _FRASE_RE.split(linea) if f.strip() and not _DEPENDE_DEL_ORIGEN_RE.search(f)]
+        if frases:
+            lineas.append(" ".join(frases))
+        elif lineas and lineas[-1].rstrip().endswith(":"):
+            lineas.pop()  # el título de una lista que se ha quitado entera ("los precios son:")
+    # La pregunta final (casi siempre "¿quieres el link / que te ayude a reservar?") la sustituye la del origen.
+    while lineas and not lineas[-1].strip():
+        lineas.pop()
+    if lineas:
+        frases = _FRASE_RE.split(lineas[-1].strip())
+        while frases and "?" in frases[-1]:
+            frases.pop()
+        lineas[-1] = " ".join(frases)
+    texto = re.sub(r"\n{3,}", "\n\n", "\n".join(lineas)).strip()
+    return texto if len(texto) >= 40 else ""
 
 
 def _es_pregunta_de_origen(answer: str | None) -> bool:
